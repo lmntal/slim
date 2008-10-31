@@ -58,8 +58,8 @@ int get_instr_id(char *);
 DIGIT    [0-9]
 
 %%
- /* ¥ë¡¼¥ë¤Ï¹Ô¤ÎÀèÆ¬¤«¤é½ñ¤¯¡£¥ë¡¼¥ë°Ê³°¡Ê¥³¥á¥ó¥È¤ä¥¢¥¯¥·¥ç¥ó¡Ë¤òÀèÆ¬¤«¤é
-    ½ñ¤¯¤³¤È¤Ï¤Ç¤­¤Ê¤¤ */
+ /* ãƒ«ãƒ¼ãƒ«ã¯è¡Œã®å…ˆé ­ã‹ã‚‰æ›¸ãã€‚ãƒ«ãƒ¼ãƒ«ä»¥å¤–ï¼ˆã‚³ãƒ¡ãƒ³ãƒˆã‚„ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ï¼‰ã‚’å…ˆé ­ã‹ã‚‰
+    æ›¸ãã“ã¨ã¯ã§ããªã„ */
 
 "/*"[^*/]*"*/" /* eat coment */
 "//".*         /* eat one line comment */
@@ -71,22 +71,22 @@ DIGIT    [0-9]
 
  /* ruleset id */
 @{DIGIT}+ {
-  /* ¤³¤Î»şÅÀ¤ÇVMÆâ¤Ç°ì°Ì¤Î¥ë¡¼¥ë¥»¥Ã¥ÈID¤ËÊÑ´¹¤¹¤ë */
+  /* ã“ã®æ™‚ç‚¹ã§VMå†…ã§ä¸€ä½ã®ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆIDã«å¤‰æ›ã™ã‚‹ */
   int id_local = atoi(yytext+1);
   int id_global;
   struct lexer_context *c;
 
   c = yyget_extra(yyscanner);
-  /* ¥Æ¡¼¥Ö¥ë¤Ë¤¢¤ì¤Ğ¤½¤ì¤ò»È¤¦ */
+  /* ãƒ†ãƒ¼ãƒ–ãƒ«ã«ã‚ã‚Œã°ãã‚Œã‚’ä½¿ã† */
   if (st_lookup(c->ruleset_id_tbl, (st_data_t)id_local, (st_data_t)&id_global)) yylval->_int = id_global;
   else {
-    /* ¤Ê¤±¤ì¤Ğ¿·¤·¤¯ÄÉ²Ã */
+    /* ãªã‘ã‚Œã°æ–°ã—ãè¿½åŠ  */
     id_global = lmn_gen_ruleset_id();
     st_insert(c->ruleset_id_tbl, (st_data_t)id_local, (st_data_t)id_global);
     yylval->_int = id_global;
   }
   return RULESET_ID; }
-"null" { yylval->str = ANONYMOUS; /* ¼è¤ê¹ç¤¨¤º¶õ¤ÎÊ¸»úÎó¤Ë¤·¤Æ¤ª¤¯ */
+"null" { yylval->str = ANONYMOUS; /* å–ã‚Šåˆãˆãšç©ºã®æ–‡å­—åˆ—ã«ã—ã¦ãŠã */
          return DQUOTED_STRING; }
 
  /* label */
@@ -114,8 +114,8 @@ L{DIGIT}+ { yylval->_int = atoi(yytext+1); return LABEL; }
  /* instruction name */
 [a-z2]+ {
   yylval->_int = get_instr_id(yytext);
- /* ÊÑ¿ô¤Î¥ê¥¹¥È¤ÈÌ¿Îá¤Î¥ê¥¹¤È¤ò¹½Ê¸²òÀÏ¤ÇÈ½ÊÌ¤¬ÉÔ²ÄÇ½¤Ê¤Î¤Ç
-¡¡¡¡Ì¿Îá¤Î¥ê¥¹¥È¤ò»ı¤ÄÃæ´Ö¸ìÌ¿Îá¤òÆÃ±Ù¤Ë°·¤¦ */
+ /* å¤‰æ•°ã®ãƒªã‚¹ãƒˆã¨å‘½ä»¤ã®ãƒªã‚¹ã¨ã‚’æ§‹æ–‡è§£æã§åˆ¤åˆ¥ãŒä¸å¯èƒ½ãªã®ã§
+ã€€ã€€å‘½ä»¤ã®ãƒªã‚¹ãƒˆã‚’æŒã¤ä¸­é–“èªå‘½ä»¤ã‚’ç‰¹æ‚¦ã«æ‰±ã† */
   if (yylval->_int == INSTR_LOOP) { return INST_TK_LOOP; }
   if (yylval->_int == INSTR_RUN) { return INST_TK_RUN; }
   if (yylval->_int == INSTR_NOT) { return INST_TK_NOT; }
@@ -147,7 +147,7 @@ L{DIGIT}+ { yylval->_int = atoi(yytext+1); return LABEL; }
 
 %%
 
-/* Ì¿Îá¤ÎÌ¾Á°¤«¤éID¤òÆÀ¤ë */
+/* å‘½ä»¤ã®åå‰ã‹ã‚‰IDã‚’å¾—ã‚‹ */
 int get_instr_id(char *name)
 {
   int i;

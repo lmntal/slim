@@ -48,7 +48,7 @@
 %locations
 %parse-param {yyscan_t scanner}
 %parse-param {IL* result_tree}
-/* ¥í¡¼¥«¥ë¤Î¥ë¡¼¥ë¥»¥Ã¥ÈID¤«¤é¥°¥í¡¼¥Ğ¥ë¤ÊID¤Ø¤Î¥Æ¡¼¥Ö¥ë */
+/* ãƒ­ãƒ¼ã‚«ãƒ«ã®ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆIDã‹ã‚‰ã‚°ãƒ­ãƒ¼ãƒãƒ«ãªIDã¸ã®ãƒ†ãƒ¼ãƒ–ãƒ« */
 %lex-param {yyscan_t scanner}
 
 %union {              /* define stack type */
@@ -140,7 +140,7 @@ KW_MODULE modules { $$ = $2; }
 
 modules:
  /*empty*/ { $$ = module_list_make(); }
-| modules SQUOTED_STRING LBRACE  RBRACE { $$ = $1; } /* ¤³¤Î¾ì¹ç¤â¤¢¤ë */
+| modules SQUOTED_STRING LBRACE  RBRACE { $$ = $1; } /* ã“ã®å ´åˆã‚‚ã‚ã‚‹ */
 | modules SQUOTED_STRING LBRACE RULESET_ID RBRACE {
   module_list_push($1, module_make($2, $4));
   $$ = $1;
@@ -200,12 +200,12 @@ instructions:
 | instructions instruction { inst_list_push($1, $2); $$ = $1; }
 ;
 
- /* COMMIT¤òÆÃÊÌ¤Ëinst_make¤Ç½èÍı¤·¤Æ¤¤¤ë¤Î¤ÇÃí°Õ */
+ /* COMMITã‚’ç‰¹åˆ¥ã«inst_makeã§å‡¦ç†ã—ã¦ã„ã‚‹ã®ã§æ³¨æ„ */
 instruction:
  INST_NAME LBRACKET args RBRACKET {
   $$ = inst_make($1, $3);
 }
-  /* ÊÑ¿ô¤Î¥ê¥¹¥È¤ÈÌ¿Îá¤Î¥ê¥¹¥È¤¬reduce/reduce ¥³¥ó¥Õ¥ê¥¯¥È¤òµ¯¤³¤¹¤Î¤ÇÊÌ¤Ë°·¤¦ */
+  /* å¤‰æ•°ã®ãƒªã‚¹ãƒˆã¨å‘½ä»¤ã®ãƒªã‚¹ãƒˆãŒreduce/reduce ã‚³ãƒ³ãƒ•ãƒªã‚¯ãƒˆã‚’èµ·ã“ã™ã®ã§åˆ¥ã«æ‰±ã† */
 |  INST_TK_LOOP LBRACKET inst_list_arg RBRACKET { $$ = inst_make($1, $3); }
 |  INST_TK_RUN LBRACKET inst_list_arg RBRACKET { $$ = inst_make($1, $3); }
 |  INST_TK_NOT LBRACKET inst_list_arg RBRACKET { $$ = inst_make($1, $3); }
@@ -284,15 +284,15 @@ void yyerror (YYLTYPE *loc, yyscan_t scanner, IL *il, char *s)
 
 int parse(FILE *in, IL *il);
 
-/* in¤«¤éÃæ´Ö¸À¸ì¤òÆÉ¤ß¹ş¤ß¡¢¹½Ê¸ÌÚ¤òºî¤ë¡£¹½Ê¸ÌÚ¤Ïil¤ËÀßÄê¤µ¤ì¤ë¡£
-   Àµ¾ï¤Ë½èÍı¤µ¤ì¤¿¾ì¹ç¤Ï0¡¤¥¨¥é¡¼¤¬µ¯¤­¤¿¾ì¹ç¤Ï0°Ê³°¤òÊÖ¤¹¡£*/
+/* inã‹ã‚‰ä¸­é–“è¨€èªã‚’èª­ã¿è¾¼ã¿ã€æ§‹æ–‡æœ¨ã‚’ä½œã‚‹ã€‚æ§‹æ–‡æœ¨ã¯ilã«è¨­å®šã•ã‚Œã‚‹ã€‚
+   æ­£å¸¸ã«å‡¦ç†ã•ã‚ŒãŸå ´åˆã¯0ï¼Œã‚¨ãƒ©ãƒ¼ãŒèµ·ããŸå ´åˆã¯0ä»¥å¤–ã‚’è¿”ã™ã€‚*/
 int parse(FILE *in, IL *il)
 {
   int r;
   yyscan_t scanner;
   struct lexer_context c;
 
-  /* ¥ë¡¼¥ë¥»¥Ã¥È¤Î¥í¡¼¥«¥ë¤ÊID¤È¥°¥í¡¼¥Ğ¥ë¤ÊID¤ÎÂĞ±şÉ½ */
+  /* ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã®ãƒ­ãƒ¼ã‚«ãƒ«ãªIDã¨ã‚°ãƒ­ãƒ¼ãƒãƒ«ãªIDã®å¯¾å¿œè¡¨ */
   c.ruleset_id_tbl = st_init_numtable();
 
   yylex_init(&scanner);

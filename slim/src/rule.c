@@ -45,9 +45,9 @@
  * Rule
  */
 
-/* ¼Â¹Ô»ş¤Î¥ë¡¼¥ë¤ÎÉ½¸½¡£¥ë¡¼¥ë¤Î½èÍı¤ÏÃæ´Ö¸ìÌ¿ÎáÎó¤òÊÑ´¹¤·¤¿¥Ğ¥¤¥Ê¥êÉ½
-   ¸½¤òinst_seq¤Ë»ı¤Ä¤«¡¢´Ø¿ô¤òtranslated¤Ë»ı¤Ä¡£´Ø¿ô¤Ï,¥È¥é¥ó¥¹¥ì¡¼¥¿
-   ¤Ë¤è¤ê¡¢¥ë¡¼¥ë¤òÊÑ´¹¤·¤ÆÀ¸À®¤µ¤ì¤¿´Ø¿ô¤òÁÛÄê¤·¤Æ¤¤¤ë¡£*/
+/* å®Ÿè¡Œæ™‚ã®ãƒ«ãƒ¼ãƒ«ã®è¡¨ç¾ã€‚ãƒ«ãƒ¼ãƒ«ã®å‡¦ç†ã¯ä¸­é–“èªå‘½ä»¤åˆ—ã‚’å¤‰æ›ã—ãŸãƒã‚¤ãƒŠãƒªè¡¨
+   ç¾ã‚’inst_seqã«æŒã¤ã‹ã€é–¢æ•°ã‚’translatedã«æŒã¤ã€‚é–¢æ•°ã¯,ãƒˆãƒ©ãƒ³ã‚¹ãƒ¬ãƒ¼ã‚¿
+   ã«ã‚ˆã‚Šã€ãƒ«ãƒ¼ãƒ«ã‚’å¤‰æ›ã—ã¦ç”Ÿæˆã•ã‚ŒãŸé–¢æ•°ã‚’æƒ³å®šã—ã¦ã„ã‚‹ã€‚*/
 struct LmnRule {
   BYTE *inst_seq;
   int inst_seq_len;
@@ -66,14 +66,14 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   LmnRule rule = LMN_MALLOC(struct LmnRule);
 
   rule->inst_seq = inst_seq;
-  rule->inst_seq_len = inst_seq_len;  /* inst_seq¤ÎÄ¹¤µ */
+  rule->inst_seq_len = inst_seq_len;  /* inst_seqã®é•·ã• */
   rule->translated = translated;
-  rule->name = name;                  /* ¥ë¡¼¥ëÌ¾ */
+  rule->name = name;                  /* ãƒ«ãƒ¼ãƒ«å */
   return rule;
 }
 
 /* create new rule with byte sequence of instructions.
-   inst_seq_size¤Ïinst_seq¤ÎÄ¹¤µ(¥Ğ¥¤¥ÈÃ±°Ì)¤òÉ½¤¹ */
+   inst_seq_sizeã¯inst_seqã®é•·ã•(ãƒã‚¤ãƒˆå˜ä½)ã‚’è¡¨ã™ */
 LmnRule lmn_rule_make(BYTE *inst_seq, int inst_seq_len, lmn_interned_str name)
 {
   return make_rule(inst_seq, inst_seq_len, NULL, name);
@@ -85,7 +85,7 @@ LmnRule lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name
   return make_rule(NULL, 0, translated, name);
 }
 
-/* rule¤ò¥³¥Ô¡¼¤·¤Æ¿·¤·¤¤¥ë¡¼¥ë¤òºîÀ®¤¹¤ë */
+/* ruleã‚’ã‚³ãƒ”ãƒ¼ã—ã¦æ–°ã—ã„ãƒ«ãƒ¼ãƒ«ã‚’ä½œæˆã™ã‚‹ */
 LmnRule lmn_rule_copy(LmnRule rule)
 {
   BYTE *inst_seq;
@@ -95,27 +95,27 @@ LmnRule lmn_rule_copy(LmnRule rule)
   return make_rule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
 }
 
-/* rule¤Èrule¤ÎÍ×ÁÇ¤ò²òÊü¤¹¤ë */
+/* ruleã¨ruleã®è¦ç´ ã‚’è§£æ”¾ã™ã‚‹ */
 void lmn_rule_free(LmnRule rule)
 {
   LMN_FREE(rule->inst_seq);
   LMN_FREE(rule);
 }
 
-/* ¥ë¡¼¥ë¤Î½èÍı¤ò¹Ô¤¦´Ø¿ô¤òÊÖ¤¹¡£¥ë¡¼¥ë¤¬´Ø¿ô¤ò»ı¤¿¤Ê¤±¤ì¤ĞNULL¤òÊÖ¤¹ */
+/* ãƒ«ãƒ¼ãƒ«ã®å‡¦ç†ã‚’è¡Œã†é–¢æ•°ã‚’è¿”ã™ã€‚ãƒ«ãƒ¼ãƒ«ãŒé–¢æ•°ã‚’æŒãŸãªã‘ã‚Œã°NULLã‚’è¿”ã™ */
 LmnTranslated lmn_rule_get_translated(LmnRule rule)
 {
   return rule->translated;
 }
 
-/* ¥ë¡¼¥ë¤Î½èÍı¤ò¹Ô¤¦Ãæ´Ö¸ìÌ¿ÎáÎó¤òÊÑ´¹¤·¤¿¥Ğ¥¤¥ÈÎó¤òÊÖ¤¹¡£¥ë¡¼¥ë¤¬Îó¤ò
-   »ı¤¿¤Ê¤±¤ì¤ĞNULL¤òÊÖ¤¹¡£*/
+/* ãƒ«ãƒ¼ãƒ«ã®å‡¦ç†ã‚’è¡Œã†ä¸­é–“èªå‘½ä»¤åˆ—ã‚’å¤‰æ›ã—ãŸãƒã‚¤ãƒˆåˆ—ã‚’è¿”ã™ã€‚ãƒ«ãƒ¼ãƒ«ãŒåˆ—ã‚’
+   æŒãŸãªã‘ã‚Œã°NULLã‚’è¿”ã™ã€‚*/
 BYTE *lmn_rule_get_inst_seq(LmnRule rule)
 {
   return rule->inst_seq;
 }
 
-/* ¥ë¡¼¥ë¤ÎÌ¾Á°¤òÊÖ¤¹ */
+/* ãƒ«ãƒ¼ãƒ«ã®åå‰ã‚’è¿”ã™ */
 lmn_interned_str lmn_rule_get_name(LmnRule rule)
 {
   return rule->name;
@@ -129,7 +129,7 @@ lmn_interned_str lmn_rule_get_name(LmnRule rule)
 struct LmnRuleSet {
   LmnRulesetId id;      /* RuleSet ID */
   int num, cap;         /* # of rules, and # of capacity */
-  LmnRule *rules;       /* ¥ë¡¼¥ë¤Î¥ê¥¹¥È */
+  LmnRule *rules;       /* ãƒ«ãƒ¼ãƒ«ã®ãƒªã‚¹ãƒˆ */
 };
 
 /* Generates and returns new RuleSet id */
@@ -196,17 +196,17 @@ struct LmnRuleSetTable {
   LmnRuleSet *entry;
 } *ruleset_table;
 
-/* ¥ë¡¼¥ë¥»¥Ã¥È¥Æ¡¼¥Ö¥ë¤Î½é´ü²½ */
+/* ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆãƒ†ãƒ¼ãƒ–ãƒ«ã®åˆæœŸåŒ– */
 static void init_ruleset_table()
 {
   ruleset_table = LMN_MALLOC(struct LmnRuleSetTable);
   ruleset_table->size = 64;
   ruleset_table->entry = LMN_NALLOC(LmnRuleSet, ruleset_table->size);
-  /* °ÂÁ´¤Ê¥á¥â¥ê²òÊü¤Î°Ù¥¼¥í¥¯¥ê¥¢ */
+  /* å®‰å…¨ãªãƒ¡ãƒ¢ãƒªè§£æ”¾ã®ç‚ºã‚¼ãƒ­ã‚¯ãƒªã‚¢ */
   memset(ruleset_table->entry, 0, ruleset_table->size * sizeof(ruleset_table->entry[0]));
 }
 
-/* ¥ë¡¼¥ë¥»¥Ã¥È¥Æ¡¼¥Ö¥ë¤Î²òÊü½èÍı */
+/* ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆãƒ†ãƒ¼ãƒ–ãƒ«ã®è§£æ”¾å‡¦ç† */
 static void destroy_ruleset_table()
 {
   unsigned int i;
@@ -223,12 +223,12 @@ static void destroy_ruleset_table()
 /* Associates id with ruleset */
 void lmn_set_ruleset(LmnRuleSet ruleset, int id)
 {
-  /* É¬Í×¤Ê¤é¤ĞÍÆÎÌ¤ò³ÈÄ¥ */
+  /* å¿…è¦ãªã‚‰ã°å®¹é‡ã‚’æ‹¡å¼µ */
   while (ruleset_table->size < (unsigned int)id) {
     int old_size = ruleset_table->size;
     ruleset_table->size *= 2;
     ruleset_table->entry = LMN_REALLOC(LmnRuleSet, ruleset_table->entry, ruleset_table->size);
-    /* °ÂÁ´¤Ê¥á¥â¥ê²òÊü¤Î°Ù¥¼¥í¥¯¥ê¥¢ */
+    /* å®‰å…¨ãªãƒ¡ãƒ¢ãƒªè§£æ”¾ã®ç‚ºã‚¼ãƒ­ã‚¯ãƒªã‚¢ */
     memset(ruleset_table->entry + old_size, 0, (ruleset_table->size - old_size) * sizeof(LmnRuleSet));
   }
 
@@ -259,7 +259,7 @@ static void destroy_system_ruleset()
 }
 
 /* Adds rule to the system ruleset.
-   rule¤Î²òÊü¤Ï¸Æ¤Ó½Ğ¤µ¤ìÂ¦¤¬¹Ô¤¦ */
+   ruleã®è§£æ”¾ã¯å‘¼ã³å‡ºã•ã‚Œå´ãŒè¡Œã† */
 void lmn_add_system_rule(LmnRule rule)
 {
   lmn_ruleset_put(system_ruleset, rule);

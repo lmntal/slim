@@ -58,9 +58,9 @@
 #define K 2654435761UL
 /* maximum capacity */
 #define MAX_CAP 0x80000000UL
-/* ÊÌ¤ËºÇÂçÍÆÎÌ¤òÀ©¸Â¤¹¤ëÉ¬Í×¤Ï¤Ê¤¤¤¬¡¢À©¸Â¤ò¤·¤Ê¤¤¾ì¹ç¤Ï,
-   K¤¬Äê¿ô¤Ê¤Î¤Ç¥¤¥ó¥Ç¥Ã¥¯¥¹¤Î·×»»¤Î»ş¤Ë¡¢hash_val¤ò32bit¤Ë
-   ¾ö¤ß¹ş¤àÉ¬Í×¤¬¤¢¤ë */
+/* åˆ¥ã«æœ€å¤§å®¹é‡ã‚’åˆ¶é™ã™ã‚‹å¿…è¦ã¯ãªã„ãŒã€åˆ¶é™ã‚’ã—ãªã„å ´åˆã¯,
+   KãŒå®šæ•°ãªã®ã§ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®è¨ˆç®—ã®æ™‚ã«ã€hash_valã‚’32bitã«
+   ç•³ã¿è¾¼ã‚€å¿…è¦ãŒã‚ã‚‹ */
 
 #if SIZEOF_LONG == 4
 # define EMPTY_KEY 0xffffffffUL
@@ -129,9 +129,9 @@ void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType data)
 
   /*
    * EFFICIENCY:
-   * ¥ª¡¼¥×¥ó¥¢¥É¥ì¥¹Ë¡¤Ç¤Ï¤³¤Î¸¡ºº¤¬É¬Í×
-   * e->key==DELETED_KEY¤Î»ş¤Î¤ßcontains()¸¡ºº¤ò¤¹¤ë¤Ê¤É¸úÎ¨ÌÌ¤ÇÍ×ÂĞºö
-   * ¡Ê½èÍı·Ï¥³¥¢Éô¤Ç¤Ïdelete()¤¬»ÈÍÑ¤µ¤ì¤Ê¤¤¤¿¤á¡Ë
+   * ã‚ªãƒ¼ãƒ—ãƒ³ã‚¢ãƒ‰ãƒ¬ã‚¹æ³•ã§ã¯ã“ã®æ¤œæŸ»ãŒå¿…è¦
+   * e->key==DELETED_KEYã®æ™‚ã®ã¿contains()æ¤œæŸ»ã‚’ã™ã‚‹ãªã©åŠ¹ç‡é¢ã§è¦å¯¾ç­–
+   * ï¼ˆå‡¦ç†ç³»ã‚³ã‚¢éƒ¨ã§ã¯delete()ãŒä½¿ç”¨ã•ã‚Œãªã„ãŸã‚ï¼‰
    */
   if (hashtbl_contains(ht, key)) return;
 #ifdef DEBUG
@@ -149,7 +149,7 @@ void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType data)
   }
 }
 
-/* CONTRACT: value¤Î²òÊü¤Ï¸Æ½Ğ¤·Â¦¤¬¹Ô¤¦¤³¤È */
+/* CONTRACT: valueã®è§£æ”¾ã¯å‘¼å‡ºã—å´ãŒè¡Œã†ã“ã¨ */
 void hashtbl_delete(SimpleHashtbl *ht, HashKeyType key) {
   struct HashEntry* e;
 #ifdef DEBUG
@@ -160,7 +160,7 @@ void hashtbl_delete(SimpleHashtbl *ht, HashKeyType key) {
     ht->num--;
     e->key = DELETED_KEY;
   }
-  /* EFFICIENCY: hashtbl_reduce() ¤¬É¬Í× */
+  /* EFFICIENCY: hashtbl_reduce() ãŒå¿…è¦ */
 }
 
 void hashtbl_clear(SimpleHashtbl *ht) {
@@ -286,7 +286,7 @@ static void hashset_extend(HashSet *set)
 
   for(i = 0; i < cap; i++) {
     if(tbl[i] != EMPTY_KEY) {
-      entry = hashset_get_p(set, tbl[i], DELETED_KEY); /* ¿·¤·¤¤index */
+      entry = hashset_get_p(set, tbl[i], DELETED_KEY); /* æ–°ã—ã„index */
       *entry = tbl[i];
     }
   }
@@ -322,7 +322,7 @@ void hashset_delete(HashSet *set, HashKeyType key) {
     set->num--;
     *entry = DELETED_KEY;
   }
-  /* EFFICIENCY: hashset_reduce() ¤¬É¬Í× */
+  /* EFFICIENCY: hashset_reduce() ãŒå¿…è¦ */
 }
 
 HashSetIterator hashset_iterator(HashSet *set) {

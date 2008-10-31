@@ -162,7 +162,7 @@ LMN_EXTERN void lmn_fatal(const char *msg, ...);
  * Global data
  */
 
-/* dump§Œ∑¡º∞ */
+/* dump„ÅÆÂΩ¢Âºè */
 enum OutputFormat { DEFAULT, DOT, DEV };
 
 struct LmnEnv {

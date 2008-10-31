@@ -55,7 +55,7 @@ void sym_tbl_init()
 {
   sym_tbl = st_init_strtable();
   sym_rev_tbl = st_init_numtable();
-  next_sym_id = 1; /* 0¤ÏID¤Ë»È¤ï¤Ê¤¤ */
+  next_sym_id = 1; /* 0ã¯IDã«ä½¿ã‚ãªã„ */
 }
 
 int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i)
@@ -66,7 +66,7 @@ int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i)
 
 void sym_tbl_destroy()
 {
-  /* ¥Æ¡¼¥Ö¥ëÃæ¤ÎÊ¸»úÎó¤ÎÎÎ°è¤ò²òÊü */
+  /* ãƒ†ãƒ¼ãƒ–ãƒ«ä¸­ã®æ–‡å­—åˆ—ã®é ˜åŸŸã‚’è§£æ”¾ */
   st_foreach(sym_tbl, free_sym_tbl_entry, 0);
 
   st_free_table(sym_tbl);
@@ -83,10 +83,10 @@ lmn_interned_str lmn_intern(char *name)
 {
   lmn_interned_str new_id;
 
-  /* ¤¹¤Ç¤Ëname¤ËÂĞ±ş¤¹¤ëÃÍ¤¬¤¢¤ë¤Ê¤é¤½¤ì¤òÊÖ¤¹ */
+  /* ã™ã§ã«nameã«å¯¾å¿œã™ã‚‹å€¤ãŒã‚ã‚‹ãªã‚‰ãã‚Œã‚’è¿”ã™ */
   if (st_lookup(sym_tbl, name, (st_data_t *)&new_id)) return new_id;
 
-  /* ¿·¤·¤¤ID¤òºî¤ë */
+  /* æ–°ã—ã„IDã‚’ä½œã‚‹ */
   new_id = create_new_id();
   name = strdup(name);
   st_add_direct(sym_tbl, name, (st_data_t)new_id);

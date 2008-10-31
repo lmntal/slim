@@ -50,7 +50,7 @@ static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_inte
 int functor_entry_free(LmnFunctorEntry *e);
 const LmnFunctorEntry *lmn_id_to_functor(int functor_id);
 
-/* ¥Õ¥¡¥ó¥¯¥¿¤ÎÈæ³Ó */
+/* ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿ã®æ¯”è¼ƒ */
 static int functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y)
 {
   return
@@ -69,7 +69,7 @@ static struct st_hash_type type_functorhash = {
   functor_hash
 };
 
-/* ¥Õ¥¡¥ó¥¯¥¿¹½Â¤ÂÎ¤«¤éID¤Ø¤ÎÂĞ±ş¤òÍ×ÁÇ¤Ë»ı¤Ä¤Î¥Æ¡¼¥Ö¥ë */
+/* ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿æ§‹é€ ä½“ã‹ã‚‰IDã¸ã®å¯¾å¿œã‚’è¦ç´ ã«æŒã¤ã®ãƒ†ãƒ¼ãƒ–ãƒ« */
 st_table *functor_id_tbl;
 
 void lmn_functor_tbl_init()
@@ -80,8 +80,8 @@ void lmn_functor_tbl_init()
   lmn_functor_table.size = 128;
   lmn_functor_table.entry = LMN_NALLOC(LmnFunctorEntry, lmn_functor_table.size);
 
-  /* Í½Ìó¤µ¤ì¤¿¥Õ¥¡¥ó¥¯¥¿¤ò½çÈÖ¤ËÅĞÏ¿¤·¤Æ¤¤¤¯ */
-  /* ¥×¥í¥­¥·¤ÏÂè»°°ú¿ô¤ò¿ÆËì¤Ë»ÈÍÑ¤¹¤ë¤Î¤Ç»°°ú¿ô¤È¤·¤ÆÅĞÏ¿¤¹¤ë */
+  /* äºˆç´„ã•ã‚ŒãŸãƒ•ã‚¡ãƒ³ã‚¯ã‚¿ã‚’é †ç•ªã«ç™»éŒ²ã—ã¦ã„ã */
+  /* ãƒ—ãƒ­ã‚­ã‚·ã¯ç¬¬ä¸‰å¼•æ•°ã‚’è¦ªè†œã«ä½¿ç”¨ã™ã‚‹ã®ã§ä¸‰å¼•æ•°ã¨ã—ã¦ç™»éŒ²ã™ã‚‹ */
   functor_intern(TRUE, ANONYMOUS, lmn_intern("$in"), 3);
   functor_intern(TRUE, ANONYMOUS, lmn_intern("$out"), 3);
   functor_intern(TRUE, ANONYMOUS, lmn_intern("$*"), 3);
@@ -123,7 +123,7 @@ const LmnFunctorEntry *lmn_id_to_functor(int functor_id)
   else return NULL;
 }
 
-/* ¥Õ¥¡¥ó¥¯¥¿¤ÎID¤òÊÖ¤¹ */
+/* ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿ã®IDã‚’è¿”ã™ */
 static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_interned_str name, int arity)
 {
   int id;
@@ -134,12 +134,12 @@ static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_inte
   entry.name = name;
   entry.arity = arity;
 
-  /* ¤¹¤Ç¤Ë¥Æ¡¼¥Ö¥ëÆâ¤Ë¤¢¤ë¤Ê¤é¤½¤ì¤òÊÖ¤¹ */
+  /* ã™ã§ã«ãƒ†ãƒ¼ãƒ–ãƒ«å†…ã«ã‚ã‚‹ãªã‚‰ãã‚Œã‚’è¿”ã™ */
   if (st_lookup(functor_id_tbl, &entry, (st_data_t *)&id)) return id;
   else {
     struct LmnFunctorEntry *new_entry;
 
-    /* É¬Í×¤Ê¤é¤Ğ¥µ¥¤¥º¤ò³ÈÄ¥ */
+    /* å¿…è¦ãªã‚‰ã°ã‚µã‚¤ã‚ºã‚’æ‹¡å¼µ */
     while (lmn_functor_table.num_entry >= lmn_functor_table.size) {
       lmn_functor_table.size *= 2;
       lmn_functor_table.entry = LMN_REALLOC(LmnFunctorEntry,
@@ -147,12 +147,12 @@ static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_inte
                                             lmn_functor_table.size);
     }
 
-    /* id¤Ï¥Ç¡¼¥¿¤ò³ÊÇ¼¤¹¤ëÇÛÎó¤Î¥¤¥ó¥Ç¥Ã¥¯¥¹ */
+    /* idã¯ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹é…åˆ—ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ */
     id = lmn_functor_table.num_entry++;
-    /* id¤Î°ÌÃÖ¤Ë¥Õ¥¡¥ó¥¯¥¿¤Î¥Ç¡¼¥¿¤ò¥³¥Ô¡¼ */
+    /* idã®ä½ç½®ã«ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿ã®ãƒ‡ãƒ¼ã‚¿ã‚’ã‚³ãƒ”ãƒ¼ */
     lmn_functor_table.entry[id] = entry;
 
-    /* ¥Õ¥¡¥ó¥¯¥¿¤ÈID¤ÎÂĞ±ş¤ò¥Æ¡¼¥Ö¥ë¤Ë³ÊÇ¼¤¹¤ë */
+    /* ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿ã¨IDã®å¯¾å¿œã‚’ãƒ†ãƒ¼ãƒ–ãƒ«ã«æ ¼ç´ã™ã‚‹ */
     new_entry = LMN_MALLOC(struct LmnFunctorEntry);
     *new_entry = entry;
     st_insert(functor_id_tbl, new_entry, (st_data_t)id);

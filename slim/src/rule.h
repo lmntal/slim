@@ -45,9 +45,9 @@
  * Rule
  */
 
-/* �ؿ��ˤ��롼��ν�����ɽ�����ȥ�󥹥졼���ˤ�ꡢ�롼����Ѵ�����
-   �������줿�ؿ������ꤷ�Ƥ��롣����ͤ�Ŭ�Ѥ������������TRUE,���Ԥ�
-   �����FALSE���֤� */
+/* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
+   生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
+   た場合FALSEを返す */
 typedef BOOL (*LmnTranslated)(LmnMembrane *);
 typedef struct LmnRule *LmnRule;
 

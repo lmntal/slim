@@ -2,21 +2,21 @@
 #include <string.h>
 
 /**
- * ¥³¥ó¥¹¥È¥é¥¯¥¿
+ * ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
  */
 State *state_make(LmnMembrane *mem) {
   State *new = LMN_MALLOC(State);
   new->mem = mem;
   new->flags = 0x00U;
-  /* successor¤Îµ­²±°è¤ò¥¼¥í¥¯¥ê¥¢¤¹¤ë */
+  /* successorã®è¨˜æ†¶åŸŸã‚’ã‚¼ãƒ­ã‚¯ãƒªã‚¢ã™ã‚‹ */
   memset(&new->successor, 0x00U, sizeof(Vector));
-  /* ¥Ï¥Ã¥·¥åÃÍ¤Ï¤¢¤é¤«¤¸¤á·×»»¤·¤Æ¤ª¤¯ */
+  /* ãƒãƒƒã‚·ãƒ¥å€¤ã¯ã‚ã‚‰ã‹ã˜ã‚è¨ˆç®—ã—ã¦ãŠã */
   new->hash = mhash(new->mem);
   return new;
 }
 
 /**
- * µ­²±°ès¤ÎºÇ½é¤În¥Ğ¥¤¥È¤¬¥¼¥í¤Ç¤¢¤ë¤³¤È¤ò³ÎÇ§¤¹¤ë
+ * è¨˜æ†¶åŸŸsã®æœ€åˆã®nãƒã‚¤ãƒˆãŒã‚¼ãƒ­ã§ã‚ã‚‹ã“ã¨ã‚’ç¢ºèªã™ã‚‹
  */
 static inline BOOL mem_is_zero(const void *s, size_t n) {
   const unsigned char *p = (const unsigned char *)s;
@@ -32,7 +32,7 @@ inline void state_succ_init(State *s, int init_size) {
 }
 
 /**
- * ¥Ç¥¹¥È¥é¥¯¥¿
+ * ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
  */
 void state_free(State *s) {
   lmn_mem_drop(s->mem);
@@ -48,8 +48,8 @@ inline int state_hash(LmnWord s) {
 }
 
 /**
- * °ú¿ô¤È¤·¤Æ¤¢¤¿¤¨¤é¤ì¤¿State¤¬Åù¤·¤¤¤«¤É¤¦¤«¤òÈ½Äê¤¹¤ë
- * ¥Ï¥Ã¥·¥åÃÍ¤¬Åù¤·¤¤¾ì¹ç¤ÏÆ±·¿È½Äê¤ò¹Ô¤¦
+ * å¼•æ•°ã¨ã—ã¦ã‚ãŸãˆã‚‰ã‚ŒãŸStateãŒç­‰ã—ã„ã‹ã©ã†ã‹ã‚’åˆ¤å®šã™ã‚‹
+ * ãƒãƒƒã‚·ãƒ¥å€¤ãŒç­‰ã—ã„å ´åˆã¯åŒå‹åˆ¤å®šã‚’è¡Œã†
  */
 static int state_equals(HashKeyType s1, HashKeyType s2) {
   State *ss1 = (State *)s1;
@@ -62,15 +62,15 @@ static int state_equals(HashKeyType s1, HashKeyType s2) {
 }
 
 /**
- * Í¿¤¨¤é¤ì¤¿2¤Ä¤Î¾õÂÖ¤¬¸ß¤¤¤Ë°Û¤Ê¤Ã¤Æ¤¤¤ì¤Ğ¿¿¤ò¡¢µÕ¤ËÅù¤·¤¤¾ì¹ç¤Ïµ¶¤òÊÖ¤¹
+ * ä¸ãˆã‚‰ã‚ŒãŸ2ã¤ã®çŠ¶æ…‹ãŒäº’ã„ã«ç•°ãªã£ã¦ã„ã‚Œã°çœŸã‚’ã€é€†ã«ç­‰ã—ã„å ´åˆã¯å½ã‚’è¿”ã™
  */
 int state_cmp(HashKeyType s1, HashKeyType s2) {
   return !state_equals(s1, s2);
 }
 
 /**
- * Ëì¥¹¥¿¥Ã¥¯¤ÎÂåÂØÉÊ
- * ¼«¿È¤ò´Ş¤á¤¿Á´¤Æ¤ÎÀèÁÄËì¤òµ¯¤³¤¹
+ * è†œã‚¹ã‚¿ãƒƒã‚¯ã®ä»£æ›¿å“
+ * è‡ªèº«ã‚’å«ã‚ãŸå…¨ã¦ã®å…ˆç¥–è†œã‚’èµ·ã“ã™
  */
 inline void activate_ancestors(LmnMembrane *mem) {
   LmnMembrane *cur;

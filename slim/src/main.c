@@ -102,7 +102,7 @@ static int parse_options(int argc, char *argv[])
       printf("log_options entries must have positive 4th member.\n");
       exit(1);
       break;
-    case 'd': /* ³«È¯ÍÑ. dump¤ÎÉ½¼¨¤ò³«È¯ÍÑ¤Ë¤¹¤ë */
+    case 'd': /* é–‹ç™ºç”¨. dumpã®è¡¨ç¤ºã‚’é–‹ç™ºç”¨ã«ã™ã‚‹ */
       lmn_env.output_format = DEV;
       break;
     case 't': /* trace mode */
@@ -138,7 +138,7 @@ static int parse_options(int argc, char *argv[])
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;
     case 'O':
-      /* -O¤Ë°ú¿ô¤¬ÉÕ¤«¤Ê¤¤¾ì¹ç optarg¤Ï 0 ¤ËÀßÄê¤µ¤ì¤ë */
+      /* -Oã«å¼•æ•°ãŒä»˜ã‹ãªã„å ´åˆ optargã¯ 0 ã«è¨­å®šã•ã‚Œã‚‹ */
       if (optarg) {
         if (isdigit(optarg[0])) {
           int l = optarg[0] - '0';
@@ -161,7 +161,7 @@ static int parse_options(int argc, char *argv[])
   return optind;
 }
 
-/* lmn_env¹½Â¤ÂÎ¤Î½é´ü²½ */
+/* lmn_envæ§‹é€ ä½“ã®åˆæœŸåŒ– */
 static void init_env(void)
 {
   lmn_env.trace = FALSE;
@@ -182,7 +182,7 @@ void destroy_rules();
 void sym_tbl_destroy();
 void sym_tbl_init();
 
-/* ½èÍı·ÏÆâÉô¤Î½é´ü²½½èÍı */
+/* å‡¦ç†ç³»å†…éƒ¨ã®åˆæœŸåŒ–å‡¦ç† */
 static void init_internal(void)
 {
   init_env();

@@ -79,7 +79,7 @@ H=if(false, T, F), {$t[T]}, {$f[F]} :- $f[H].
  * Note that this is an eager conditional and the two alternatives
  * may start evaluation before Bool has been evaluated.
  */	
-//2006.7.23 by inui (else Àá¤Ë if Ê¸¤òÀ¸À®¤¹¤ë¤è¤¦¤Ê¥×¥í¥»¥¹¤ò½ñ¤¯¤ÈÌµ¸Â¥ë¡¼¥×¤¹¤ë¤Î¤ÇÃí°Õ)
+//2006.7.23 by inui (else ç¯€ã« if æ–‡ã‚’ç”Ÿæˆã™ã‚‹ã‚ˆã†ãªãƒ—ãƒ­ã‚»ã‚¹ã‚’æ›¸ãã¨ç„¡é™ãƒ«ãƒ¼ãƒ—ã™ã‚‹ã®ã§æ³¨æ„)
 H='?'(true,  Te, Fe) :- ground(Fe) | H=Te.
 H='?'(false, Te, Fe) :- ground(Te) | H=Fe.
 }.

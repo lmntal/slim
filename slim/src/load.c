@@ -53,13 +53,13 @@
 #define ENV_LMNTAL_HOME  "LMNTAL_HOME"
 #define ENV_CFLAGS       "SLIM_CFLAGS"
 
-/* Java½èÍı·Ï¤Ë¤è¤ë¥³¥ó¥Ñ¥¤¥ë»ş¤ËÍÑ¤¤¤ëºÇÅ¬²½¥ª¥×¥·¥ç¥ó */
+/* Javaå‡¦ç†ç³»ã«ã‚ˆã‚‹ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«æ™‚ã«ç”¨ã„ã‚‹æœ€é©åŒ–ã‚ªãƒ—ã‚·ãƒ§ãƒ³ */
 const char* OPTIMIZE_FLAGS[] = {"-O0",
                                 "-O1",
                                 "-O2",
                                 "-O3"};
 
-/* ¥³¥ó¥Ñ¥¤¥é¥Õ¥é¥°¤ÎºÇÂçÄ¹¡£¥Ğ¥Ã¥Õ¥¡¤¢¤Õ¤ì¤ÎÂĞºö */
+/* ã‚³ãƒ³ãƒ‘ã‚¤ãƒ©ãƒ•ãƒ©ã‚°ã®æœ€å¤§é•·ã€‚ãƒãƒƒãƒ•ã‚¡ã‚ãµã‚Œã®å¯¾ç­– */
 #define CFLAGS_MAX_SIZE 1024
 
 /* prototypes */
@@ -73,7 +73,7 @@ LmnRuleSet load_file(char *file_name);
 void load_il_files(char *path);
 
 /*----------------------------------------------------------------------
- * Dump(¥Ç¥Ğ¥Ã¥°ÍÑ)¡£ºÇ½é»ÈÍÑ¤·¤¿¤À¤±¤Ê¤Î¤Ç dump_*¤Ï¾Ã¤·¤ÆOK
+ * Dump(ãƒ‡ãƒãƒƒã‚°ç”¨)ã€‚æœ€åˆä½¿ç”¨ã—ãŸã ã‘ãªã®ã§ dump_*ã¯æ¶ˆã—ã¦OK
  */
 
 static void dump_functor(Functor f)
@@ -288,17 +288,17 @@ void dump_il(IL il)
 #include "atom.h"
 #include "rule.h"
 
-/* ¹½Ê¸ÌÚ¤ÎÆÉ¤ß¹ş¤ß»ş¤Ë»È¤¦¥Ç¡¼¥¿¡£³Æ¥ë¡¼¥ë¤Î²òÀÏ¤¸¤ËºîÀ®¤·¡¤²òÀÏ¸å¤ËÇË
-   ´ş¤¹¤ë¡£¥é¥Ù¥ë¤Ï³Æ¥ë¡¼¥ë¤Ë¥í¡¼¥«¥ë¤Ê¤â¤Î¤È¤·¤Æ½èÍı¤·¤Æ¤¤¤ë */
+/* æ§‹æ–‡æœ¨ã®èª­ã¿è¾¼ã¿æ™‚ã«ä½¿ã†ãƒ‡ãƒ¼ã‚¿ã€‚å„ãƒ«ãƒ¼ãƒ«ã®è§£æã˜ã«ä½œæˆã—ï¼Œè§£æå¾Œã«ç ´
+   æ£„ã™ã‚‹ã€‚ãƒ©ãƒ™ãƒ«ã¯å„ãƒ«ãƒ¼ãƒ«ã«ãƒ­ãƒ¼ã‚«ãƒ«ãªã‚‚ã®ã¨ã—ã¦å‡¦ç†ã—ã¦ã„ã‚‹ */
 typedef struct Context {
-  /* ¥é¥Ù¥ë¤Î¤«¤é¥é¥Ù¥ë¤Î¤¢¤ë°ÌÃÖ¤ÎÂĞ±ş*/
+  /* ãƒ©ãƒ™ãƒ«ã®ã‹ã‚‰ãƒ©ãƒ™ãƒ«ã®ã‚ã‚‹ä½ç½®ã®å¯¾å¿œ*/
   st_table *label_to_loc;
-  /* ¥é¥Ù¥ë¤ò»²¾È¤·¤Æ¤¤¤ë°ÌÃÖ¤È»²¾È¤·¤Æ¤¤¤ë¥é¥Ù¥ë¤ÎÂĞ±ş */
+  /* ãƒ©ãƒ™ãƒ«ã‚’å‚ç…§ã—ã¦ã„ã‚‹ä½ç½®ã¨å‚ç…§ã—ã¦ã„ã‚‹ãƒ©ãƒ™ãƒ«ã®å¯¾å¿œ */
   st_table *loc_to_label_ref;
 
-  /* ½ñ¤­¹ş¤ß°ÌÃÖ¤Èbyte_seq¤Î¥­¥ã¥Ñ¥·¥Æ¥£ */
+  /* æ›¸ãè¾¼ã¿ä½ç½®ã¨byte_seqã®ã‚­ãƒ£ãƒ‘ã‚·ãƒ†ã‚£ */
   unsigned int loc, cap;
-  /* ¥ë¡¼¥ë¤ÎÌ¿ÎáÎó¤ò½ñ¤­¹ş¤àÎÎ°è */
+  /* ãƒ«ãƒ¼ãƒ«ã®å‘½ä»¤åˆ—ã‚’æ›¸ãè¾¼ã‚€é ˜åŸŸ */
   BYTE *byte_seq;
 } *Context;
 
@@ -306,7 +306,7 @@ typedef struct Context {
 void expand_byte_sec(Context c);
 static void load_instruction(Instruction inst, Context c);
 
-/* Context¤òºîÀ®¤¹¤ë */
+/* Contextã‚’ä½œæˆã™ã‚‹ */
 static Context context_make()
 {
   Context c = LMN_MALLOC(struct Context);
@@ -318,20 +318,20 @@ static Context context_make()
   return c;
 }
 
-/* Context¤Î²òÊü */
+/* Contextã®è§£æ”¾ */
 static void context_free(Context c)
 {
   LMN_FREE(c);
 }
 
-/* Ì¿ÎáÎó¤ò½ñ¤­¹ş¤àÎÎ°è¤ò¹­¤²¤ë */
+/* å‘½ä»¤åˆ—ã‚’æ›¸ãè¾¼ã‚€é ˜åŸŸã‚’åºƒã’ã‚‹ */
 void expand_byte_sec(Context c)
 {
   c->cap *= 2;
   c->byte_seq = LMN_REALLOC(BYTE, c->byte_seq, c->cap);
 }
 
-/* ¸½ºß¤Î°ì¤Ë½ñ¤­¹şTYPE·¿¤Î¥Ç¡¼¥¿¤ò½ñ¤­¹ş¤à */
+/* ç¾åœ¨ã®ä¸€ã«æ›¸ãè¾¼TYPEå‹ã®ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã‚€ */
 #define WRITE(TYPE, VALUE, CONTEXT)                              \
   do {                                                           \
     while ((CONTEXT)->loc + sizeof(TYPE) >= (CONTEXT)->cap) {    \
@@ -342,7 +342,7 @@ void expand_byte_sec(Context c)
 
 
 
-/* ¸½ºß¤Î½ñ¤­¹ş¤ß°ÌÃÖ¤ò°ÜÆ°¤¹¤ë */
+/* ç¾åœ¨ã®æ›¸ãè¾¼ã¿ä½ç½®ã‚’ç§»å‹•ã™ã‚‹ */
 #define MOVE(TYPE, CONTEXT)  (CONTEXT)->loc += sizeof(TYPE)
 
 /* WRITE & MOVE */
@@ -357,7 +357,7 @@ void expand_byte_sec(Context c)
     (CONTEXT)->loc += sizeof(TYPE);                              \
   } while (0)
 
-/* LCO¤Î°ÌÃÖ¤Ë½ñ¤­¹ş¤à */
+/* LCOã®ä½ç½®ã«æ›¸ãè¾¼ã‚€ */
 #define WRITE_HERE(TYPE, VALUE, CONTEXT, LOC)                    \
   do {                                                           \
     do {                                                         \
@@ -440,8 +440,8 @@ static void load_arg(InstrArg arg, Context c)
       unsigned int start, t;
       InstList inst_list;
 
-      /* Ì¿ÎáÎó¤ÎÄ¹¤µ¤òµá¤á¤ë¤¿¤á¡¢³«»Ï°ÌÃÖ¤òµ­Ï¿¤¹¤ë */
-      /* INSTR_NOT¤Ç¥µ¥ÖÌ¿ÎáÎó¤ÎÄ¹¤µ¤òÃÎ¤ëÉ¬Í×¤¬¤¢¤ë */
+      /* å‘½ä»¤åˆ—ã®é•·ã•ã‚’æ±‚ã‚ã‚‹ãŸã‚ã€é–‹å§‹ä½ç½®ã‚’è¨˜éŒ²ã™ã‚‹ */
+      /* INSTR_NOTã§ã‚µãƒ–å‘½ä»¤åˆ—ã®é•·ã•ã‚’çŸ¥ã‚‹å¿…è¦ãŒã‚ã‚‹ */
       start = c->loc;
       MOVE(LmnSubInstrSize, c);
 
@@ -450,7 +450,7 @@ static void load_arg(InstrArg arg, Context c)
         load_instruction(inst_list_get(inst_list, i), c);
       }
 
-      /* start¤Î°ÌÃÖ¤Ë¸½ºß¤Î°ÌÃÖ¤È¤Îº¹¤ò½ñ¤­¹ş¤à */
+      /* startã®ä½ç½®ã«ç¾åœ¨ã®ä½ç½®ã¨ã®å·®ã‚’æ›¸ãè¾¼ã‚€ */
       t = c->loc;
       c->loc = start;
       WRITE(LmnSubInstrSize, t - (start + sizeof(LmnSubInstrSize)), c);
@@ -474,8 +474,8 @@ static void load_instruction(Instruction inst, Context c)
   WRITE_MOVE(LmnInstrOp, inst_get_id(inst), c);
   arg_num = arg_list_num(args);
 
-  /* REMOVEATOM¤Ï°ú¿ô¤Î¿ô¤¬2¤È3¤Î¾ì¹ç¤¬¤¢¤ë¡£Âè»°°ú¿ô¤Î
-     ¥Õ¥¡¥ó¥¯¥¿¤ÏÌµ»ë¤¹¤ë */
+  /* REMOVEATOMã¯å¼•æ•°ã®æ•°ãŒ2ã¨3ã®å ´åˆãŒã‚ã‚‹ã€‚ç¬¬ä¸‰å¼•æ•°ã®
+     ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿ã¯ç„¡è¦–ã™ã‚‹ */
   if (inst_get_id(inst) == INSTR_REMOVEATOM &&
       arg_num == 3) {
     arg_num = 2;
@@ -530,7 +530,7 @@ static LmnRule load_rule(Rule rule)
   load_inst_block(rule_get_guard(rule), c);
   load_inst_block(rule_get_body(rule), c);
 
-  /* ¥é¥Ù¥ë¤ò»²¾È¤·¤Æ¤¤¤ë°ÌÃÖ¤Ë¡¢¼Âºİ¤Î¥é¥Ù¥ë¤Î°ÌÃÖ¤ò½ñ¤­¹ş¤à */
+  /* ãƒ©ãƒ™ãƒ«ã‚’å‚ç…§ã—ã¦ã„ã‚‹ä½ç½®ã«ã€å®Ÿéš›ã®ãƒ©ãƒ™ãƒ«ã®ä½ç½®ã‚’æ›¸ãè¾¼ã‚€ */
   st_foreach(c->loc_to_label_ref, fill_label_ref, c);
 
   st_free_table(c->label_to_loc);
@@ -557,7 +557,7 @@ static LmnRuleSet load_ruleset(RuleSet rs)
   lmn_set_ruleset(runtime_ruleset, ruleset_get_id(rs));
 
   if (ruleset_is_system_ruleset(rs)) {
-    /* ³Æ¥ë¡¼¥ë¤ò¥·¥¹¥Æ¥à¥ë¡¼¥ë¥»¥Ã¥È¤ËÄÉ²Ã¤¹¤ë */
+    /* å„ãƒ«ãƒ¼ãƒ«ã‚’ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã«è¿½åŠ ã™ã‚‹ */
     for (i = 0; i < lmn_ruleset_rule_num(runtime_ruleset); i++) {
       LmnRule rule2 = lmn_rule_copy(lmn_ruleset_get_rule(runtime_ruleset, i));
       lmn_add_system_rule(rule2);
@@ -567,7 +567,7 @@ static LmnRuleSet load_ruleset(RuleSet rs)
   return runtime_ruleset;
 }
 
-/* ºÇ½é¤Î¥ë¡¼¥ë¥»¥Ã¥È¤òÊÖ¤¹ */
+/* æœ€åˆã®ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã‚’è¿”ã™ */
 static LmnRuleSet load_il(IL il)
 {
   LmnRuleSet t, first_ruleset = NULL;
@@ -599,15 +599,15 @@ static LmnRuleSet load_il(IL il)
 
 int parse(FILE *in, IL *il);
 
-/* ¥Õ¥¡¥¤¥ë¤«¤éÃæ´Ö¸À¸ì¤òÆÉ¤ß¹ş¤ß¥é¥ó¥¿¥¤¥àÃæ¤ËÇÛÃÖ¤¹¤ë¡£
-   ºÇ½é¤Î¥ë¡¼¥ë¥»¥Ã¥È¤òÊÖ¤¹ */
+/* ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰ä¸­é–“è¨€èªã‚’èª­ã¿è¾¼ã¿ãƒ©ãƒ³ã‚¿ã‚¤ãƒ ä¸­ã«é…ç½®ã™ã‚‹ã€‚
+   æœ€åˆã®ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã‚’è¿”ã™ */
 LmnRuleSet load(FILE *in)
 {
   IL il;
   LmnRuleSet first_ruleset;
 
   if (parse(in, &il)) {
-    /* ¹½Ê¸²òÀÏ¤Ë¼ºÇÔ */
+    /* æ§‹æ–‡è§£æã«å¤±æ•— */
     exit(EXIT_FAILURE);
   }
 
@@ -628,11 +628,11 @@ void build_cmd(char *buf, char *file_name)
     strncat(buf, getenv(ENV_CFLAGS), CFLAGS_MAX_SIZE);
   }
 
-  /* ºÇÅ¬²½¥ì¥Ù¥ë */
+  /* æœ€é©åŒ–ãƒ¬ãƒ™ãƒ« */
   strcat(buf, " ");
   strcat(buf, OPTIMIZE_FLAGS[lmn_env.optimization_level]);
 
-  /* ¥Õ¥¡¥¤¥ëÌ¾ */
+  /* ãƒ•ã‚¡ã‚¤ãƒ«å */
   strcat(buf, " \"");
   strcat(buf, file_name);
   strcat(buf, "\"");
@@ -645,9 +645,9 @@ FILE *compile(char *filename) {
   return popen(buf, "r");
 }
 
-/* ¥Õ¥¡¥¤¥ë¤«¤éÃæ´Ö¸À¸ì¤òÆÉ¤ß¹ş¤ß¥é¥ó¥¿¥¤¥àÃæ¤ËÇÛÃÖ¤·¡¢ºÇ½é¤Î¥ë¡¼¥ë¥»¥Ã¥È¤òÊÖ¤¹¡£
-   ¥Õ¥¡¥¤¥ë¤Î³ÈÄ¥»Ò¤¬ lmn ¤Î¾ì¹ç¡¢Java¤Ë¤è¤ë½èÍı·Ï¤Ç¥Õ¥¡¥¤¥ë¤ò¥³¥ó¥Ñ¥¤¥ë¤·¡¢
-   Ãæ´Ö¸À¸ì¤òÀ¸À®¤¹¤ë¡£ */
+/* ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰ä¸­é–“è¨€èªã‚’èª­ã¿è¾¼ã¿ãƒ©ãƒ³ã‚¿ã‚¤ãƒ ä¸­ã«é…ç½®ã—ã€æœ€åˆã®ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã‚’è¿”ã™ã€‚
+   ãƒ•ã‚¡ã‚¤ãƒ«ã®æ‹¡å¼µå­ãŒ lmn ã®å ´åˆã€Javaã«ã‚ˆã‚‹å‡¦ç†ç³»ã§ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã—ã€
+   ä¸­é–“è¨€èªã‚’ç”Ÿæˆã™ã‚‹ã€‚ */
 LmnRuleSet load_file(char *file_name)
 {
   FILE *fp;
@@ -657,7 +657,7 @@ LmnRuleSet load_file(char *file_name)
 
   len = strlen(file_name);
 
-  /* ³ÈÄ¥»Ò¤¬so¤Ê¤é¥ê¥ó¥¯¤¹¤ë */
+  /* æ‹¡å¼µå­ãŒsoãªã‚‰ãƒªãƒ³ã‚¯ã™ã‚‹ */
   if (!strcmp(file_name + len -3, ".so")) {
     /*
     sohandle = dlopen(file_name, RTLD_LAZY);
@@ -670,7 +670,7 @@ LmnRuleSet load_file(char *file_name)
     }
     */
   }else if ((fp = fopen(file_name, "r"))) {
-    /* ³ÈÄ¥»Ò¤¬lmn¤Ê¤é¤ĞJava¤Ë¤è¤ë½èÍı·Ï¤ÇÃæ´Ö¸À¸ì¤Ë¥³¥ó¥Ñ¥¤¥ë¤¹¤ë */
+    /* æ‹¡å¼µå­ãŒlmnãªã‚‰ã°Javaã«ã‚ˆã‚‹å‡¦ç†ç³»ã§ä¸­é–“è¨€èªã«ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã™ã‚‹ */
     if (!strcmp(&file_name[len-4], ".lmn")) {
       if (getenv(ENV_LMNTAL_HOME)) {
         FILE *fp_compiled;
@@ -700,7 +700,7 @@ LmnRuleSet load_file(char *file_name)
   return rs;
 }
 
-/* path¤Î¥Ç¥£¥ì¥¯¥È¥êÆâ¤Î³ÈÄ¥»Ò¤¬il¤Î¥Õ¥¡¥¤¥ë¤òÃæ´Ö¥³¡¼¥É¤È¤·¤Æ¥í¡¼¥É¤¹¤ë */
+/* pathã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå†…ã®æ‹¡å¼µå­ãŒilã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ä¸­é–“ã‚³ãƒ¼ãƒ‰ã¨ã—ã¦ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ */
 void load_il_files(char *path)
 {
   char *buf;
@@ -715,17 +715,17 @@ void load_il_files(char *path)
   dir = opendir(path);
   if (dir) {
     while ( (dp = readdir(dir)) != NULL ){
-      /* ¥Õ¥¡¥¤¥ë¤Ø¤Î¥Ñ¥¹¤ò¹½ÃÛ */
+      /* ãƒ•ã‚¡ã‚¤ãƒ«ã¸ã®ãƒ‘ã‚¹ã‚’æ§‹ç¯‰ */
       sprintf(buf, "%s%s%s", path, DIR_SEPARATOR_STR, dp->d_name);
       stat(buf, &st);
       if (S_ISREG(st.st_mode)) {
         len = strlen(dp->d_name);
-        /* ³ÈÄ¥»Ò¤¬ il ¤« lmn¤Î¥Õ¥¡¥¤¥ë¤À¤±¤ò¥í¡¼¥É¤¹¤ë */
-        /* ÄÉ²Ã: so ¤Î¥Õ¥¡¥¤¥ë¤â¥í¡¼¥É¤·¤Æ¤ß¤ë */
+        /* æ‹¡å¼µå­ãŒ il ã‹ lmnã®ãƒ•ã‚¡ã‚¤ãƒ«ã ã‘ã‚’ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ */
+        /* è¿½åŠ : so ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚‚ãƒ­ãƒ¼ãƒ‰ã—ã¦ã¿ã‚‹ */
         if (!strcmp(dp->d_name + len - 3, ".il") ||
             !strcmp(dp->d_name + len - 4, ".lmn") ||
             !strcmp(dp->d_name + len - 3, ".so")) {
-          /* ¥Õ¥¡¥¤¥ë¤Ø¤Î¥Ñ¥¹¤ò¹½ÃÛ */
+          /* ãƒ•ã‚¡ã‚¤ãƒ«ã¸ã®ãƒ‘ã‚¹ã‚’æ§‹ç¯‰ */
           buf[0] = '\0';
           strcpy(buf, path);
           strcat(buf, DIR_SEPARATOR_STR);

@@ -49,7 +49,7 @@ AUTHOR
 
 HISTORY
 	2004/05/22(Sat)
-    2008/09/18(Sat) Java¤Î¥¤¥ó¥é¥¤¥ó¤ò»ÈÍÑ¤·¤Æ¤¤¤ëÉôÊ¬¤òºï½ü
+    2008/09/18(Sat) Javaã®ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³ã‚’ä½¿ç”¨ã—ã¦ã„ã‚‹éƒ¨åˆ†ã‚’å‰Šé™¤
 */
 
 {
@@ -78,10 +78,10 @@ H=list.is_empty('.'(Value, Next), Return) :- H='.'(Value, Next), Return=false.
 /*
  * list.unshift(+List, +Obj, -NewList)
  *
- * ¥ê¥¹¥ÈList¤ÎÀèÆ¬¤ËObj¤ò³ÊÇ¼¤·¤Ş¤¹¡£
- * @param +List ¥ê¥¹¥È
- * @param +Obj ÀèÆ¬¤Ë³ÊÇ¼¤¹¤ëÍ×ÁÇ
- * @param -NewList ¹¹¿·¤µ¤ì¤¿¥ê¥¹¥È
+ * ãƒªã‚¹ãƒˆListã®å…ˆé ­ã«Objã‚’æ ¼ç´ã—ã¾ã™ã€‚
+ * @param +List ãƒªã‚¹ãƒˆ
+ * @param +Obj å…ˆé ­ã«æ ¼ç´ã™ã‚‹è¦ç´ 
+ * @param -NewList æ›´æ–°ã•ã‚ŒãŸãƒªã‚¹ãƒˆ
  */
 // H=list.unshift([], Obj) :- H='.'(Obj, []).
 // H=list.unshift('.'(Value, Next), Obj) :- H='.'(Obj, '.'(Value, Next)).
@@ -90,10 +90,10 @@ H=list.is_empty('.'(Value, Next), Return) :- H='.'(Value, Next), Return=false.
 /*
  * list.shift(+List, -Ret, -NewList)
  *
- * ¥ê¥¹¥ÈList¤ÎÀèÆ¬Í×ÁÇ¤ò¼è¤ê½Ğ¤·¤Ş¤¹¡£
- * @param +List ¥ê¥¹¥È
- * @param -Ret ¼è¤ê½Ğ¤µ¤ì¤¿Í×ÁÇ
- * @param -NewList ¹¹¿·¤µ¤ì¤¿¥ê¥¹¥È
+ * ãƒªã‚¹ãƒˆListã®å…ˆé ­è¦ç´ ã‚’å–ã‚Šå‡ºã—ã¾ã™ã€‚
+ * @param +List ãƒªã‚¹ãƒˆ
+ * @param -Ret å–ã‚Šå‡ºã•ã‚ŒãŸè¦ç´ 
+ * @param -NewList æ›´æ–°ã•ã‚ŒãŸãƒªã‚¹ãƒˆ
  */
 // H=list.shift([], Return) :- H=[], Return=nil.
 // H=list.shift('.'(Value, Next), Return) :- H=Next, Return=Value.
@@ -121,7 +121,7 @@ H=list.of_queue(queue.new(Head, Tail)) :-
 /**
  * list.grep(+F, +List, -Res):
  *
- * ¥ê¥¹¥ÈList¤ÎÍ×ÁÇ¤Î¤¦¤ÁF¤Ë¤è¤Ã¤Ætrue¤¬ÊÖ¤ë¤â¤Î¤Î¤ß¤ò´Ş¤à¥ê¥¹¥È¤òRes¤ËÊÖ¤·¤Ş¤¹¡£
+ * ãƒªã‚¹ãƒˆListã®è¦ç´ ã®ã†ã¡Fã«ã‚ˆã£ã¦trueãŒè¿”ã‚‹ã‚‚ã®ã®ã¿ã‚’å«ã‚€ãƒªã‚¹ãƒˆã‚’Resã«è¿”ã—ã¾ã™ã€‚
  * @example r=list.grep(f, [1,2,3,4,5]).
  *          H=[f,N] :- N<3 | H=[true, N].
  *          H=[f,N] :- N>=3 | H=[false,N].
@@ -134,15 +134,15 @@ H=list.grep_s0([]) :- H=[].
 /**
  * list.map(+F, +List, -Res):
  *
- * F¤È¥ê¥¹¥ÈList¤Î³ÆÍ×ÁÇ¤È¤Î2Í×ÁÇ¥ê¥¹¥È¤«¤é¤Ê¤ë¥ê¥¹¥È¤òRes¤ËÊÖ¤·¤Ş¤¹¡£
- * H=list.map(F, [B1, ..., Bn]) ¤Ï H=[[F, B1], [F, B2], ..., [F, Bn]]¤Ç¤¹¡£
+ * Fã¨ãƒªã‚¹ãƒˆListã®å„è¦ç´ ã¨ã®2è¦ç´ ãƒªã‚¹ãƒˆã‹ã‚‰ãªã‚‹ãƒªã‚¹ãƒˆã‚’Resã«è¿”ã—ã¾ã™ã€‚
+ * H=list.map(F, [B1, ..., Bn]) ã¯ H=[[F, B1], [F, B2], ..., [F, Bn]]ã§ã™ã€‚
  */
 H=list.map(F, List) :- H=list.fold(F, [], List).
 
 /*
  * list.fold(+F, +I, +List, -Res):
  * 
- * H=list.fold(F, I, [B1, ..., Bn]) ¤Ï H=[[F, B1], [F, B2], ..., [F, Bn]|I] ¤Ç¤¹¡£
+ * H=list.fold(F, I, [B1, ..., Bn]) ã¯ H=[[F, B1], [F, B2], ..., [F, Bn]|I] ã§ã™ã€‚
  * @example r=list.fold("+", 0, [1,2,3]). (H=[ ["+",A]|B] :- A+B=C | H=C).
  */
 //H=list.fold(F, I, []) :- unary(F), unary(I) | H=I.
@@ -203,7 +203,7 @@ H=list.flatten([[CAR|CADR]|CDR]) :- H=list.flatten([CAR|list.append(CADR,CDR)]).
  */
 H=list.choose_k(L, K) :- ground(L), K=0 | H=[[]].
 H=list.choose_k([], K) :- int(K), K=\=0 | H=[].
-// Hd ¤òÁª¤Ö¾ì¹ç¤È¤½¤¦¤Ç¤Ê¤¤¾ì¹ç¤ÎÁ´ÁÈ¤ß¹ç¤ï¤»¤ò¤¯¤Ã¤Ä¤±¤ë 
+// Hd ã‚’é¸ã¶å ´åˆã¨ãã†ã§ãªã„å ´åˆã®å…¨çµ„ã¿åˆã‚ã›ã‚’ãã£ã¤ã‘ã‚‹ 
 H=list.choose_k([Hd|Tl], K) :- int(K), ground(Tl) |
     H=list.append(list.dist(Hd, list.choose_k(Tl, K-1)), list.choose_k(Tl, K)).
 
@@ -216,7 +216,7 @@ H=list.dist(A, [Hd|Tl]) :- ground(A) | H=[[A|Hd]|list.dist(A, Tl)].
  * 
  * List -> List
  * 
- * uniq ¤Ç¤Ê¤¤¤³¤È¤¬½ñ¤±¤Ê¤¤¤Î¤ÇËì¤ÎÈ¿±ş½ªÎ»¤ò¾ò·ï¤Ë not ¤ÎÆ°ºî¤ò¤µ¤»¤ë¤è¤¦¤Ë¤·¤¿¡£
+ * uniq ã§ãªã„ã“ã¨ãŒæ›¸ã‘ãªã„ã®ã§è†œã®åå¿œçµ‚äº†ã‚’æ¡ä»¶ã« not ã®å‹•ä½œã‚’ã•ã›ã‚‹ã‚ˆã†ã«ã—ãŸã€‚
  */
 //H=list.uniq(L) :- ground(L) | H={r=list.uniq0(L)}.
 //H=list.uniq0([]) :- H=[], fin.
@@ -229,8 +229,8 @@ H=list.dist(A, [Hd|Tl]) :- ground(A) | H=[[A|Hd]|list.dist(A, Tl)].
  * 
  * List -> List
  * 
- * not_uniq ¤òÄÉ²Ã¤·¤¿¤Î¤Ç¤³¤¦½ñ¤±¤ë
- * ¸½¾õ¡¢uniq() ¤ÎÍúÎò¤¬¶¦Í­¤µ¤ì¤Æ¤·¤Ş¤¦¡£
+ * not_uniq ã‚’è¿½åŠ ã—ãŸã®ã§ã“ã†æ›¸ã‘ã‚‹
+ * ç¾çŠ¶ã€uniq() ã®å±¥æ­´ãŒå…±æœ‰ã•ã‚Œã¦ã—ã¾ã†ã€‚
  */
 // H=list.uniq([     ]) :-                H=[                ].
 // H=list.uniq([Hd|Tl]) :-     uniq(Hd) | H=[Hd|list.uniq(Tl)].
@@ -259,9 +259,9 @@ H=list.length([],Len) :- H=[], Len=0.
 /**
  *  list.update(List, N, X, NewList, Old)
  *
- *  List¤ÎNÈÖÌÜ(N=0,1,2,...)¤ÎÍ×ÁÇ¤ò¿·Í×ÁÇX¤ÇÃÖ´¹¤·¡¢ÃÖ´¹ÂĞ¾İ¤È¤Ê¤Ã¤¿Í×ÁÇOld¤òÊÖ¤·¤Ş¤¹¡£
- *  ¤¿¤À¤·¡¢N > list.length(List) ¤Î¾ì¹ç¤ÏÃÖ´¹¤Ï¹Ô¤ï¤º¡¢X¤ò¤½¤Î¤Ş¤ŞÊÖ¤·¤Ş¤¹¡£
- *  2006/06/07 º´¡¹ÌÚ
+ *  Listã®Nç•ªç›®(N=0,1,2,...)ã®è¦ç´ ã‚’æ–°è¦ç´ Xã§ç½®æ›ã—ã€ç½®æ›å¯¾è±¡ã¨ãªã£ãŸè¦ç´ Oldã‚’è¿”ã—ã¾ã™ã€‚
+ *  ãŸã ã—ã€N > list.length(List) ã®å ´åˆã¯ç½®æ›ã¯è¡Œã‚ãšã€Xã‚’ãã®ã¾ã¾è¿”ã—ã¾ã™ã€‚
+ *  2006/06/07 ä½ã€…æœ¨
  */
 H=list.update([], N, X, Ls) :- N>0 | H=X, Ls=[].
 H=list.update([Head|Tail], N, X, Ls) :- N=0 | H=Head, Ls=[X|Tail].
@@ -270,9 +270,9 @@ H=list.update([Head|Tail], N, X, Ls) :- N>0 | H=list.update(Tail,N-1,X,Ls1), Ls=
 /**
  *  list.get(List, N, Got, NewList)
  *
- *  List¤ÎNÈÖÌÜ(N=0,1,2,...)¤ÎÍ×ÁÇ¤ò»²¾È¤·¡¢Got¤È¤·¤ÆÊÖ¤·¤Ş¤¹¡£
- *  ¤â¤È¤ÎList¤«¤éGot¤ò¼è¤ê½ü¤¤¤¿¤â¤Î¤ò¡¢NewList¤È¤·¤ÆÊÖ¤·¤Ş¤¹¡£
- *  2006/06/07 º´¡¹ÌÚ
+ *  Listã®Nç•ªç›®(N=0,1,2,...)ã®è¦ç´ ã‚’å‚ç…§ã—ã€Gotã¨ã—ã¦è¿”ã—ã¾ã™ã€‚
+ *  ã‚‚ã¨ã®Listã‹ã‚‰Gotã‚’å–ã‚Šé™¤ã„ãŸã‚‚ã®ã‚’ã€NewListã¨ã—ã¦è¿”ã—ã¾ã™ã€‚
+ *  2006/06/07 ä½ã€…æœ¨
  */
 H=list.get([Head|Tail], N, Got) :- N=0 | Got=Head, H=Tail.
 H=list.get([Head|Tail], N, Got) :- N>0 | H=[Head|list.get(Tail,N-1,Got)].
@@ -280,10 +280,10 @@ H=list.get([Head|Tail], N, Got) :- N>0 | H=[Head|list.get(Tail,N-1,Got)].
 /**
  * list.set(+List, +N, +New, -Old, -NewList)
  *
- * List ¤Î N ÈÖÌÜ(N=0,1,2,...)¤ÎÍ×ÁÇ¤Ë New ¤ò¥»¥Ã¥È¤·¤¿¥ê¥¹¥È¤òÊÖ¤·¤Ş¤¹¡¥
- * ¸µ¡¹¤¢¤Ã¤¿Í×ÁÇ¤Ï Old ¤ËÊÖ¤·¤Ş¤¹¡¥
- * List ¤¬¶õ¤À¤Ã¤¿¤ê¡¤¥ê¥¹¥È¤ÎÄ¹¤µ¤òÄ¶¤¨¤Æ¥»¥Ã¥È¤·¤è¤¦¤È¤·¤¿¾ì¹ç¤Ï
- * ¥ê¥¹¥È¤ÏÊÑ¹¹¤µ¤ì¤º¡¤¥»¥Ã¥È¤·¤è¤¦¤È¤·¤¿Í×ÁÇ¤Ï Old ¤Ë ÊÖ¤ê¤Ş¤¹¡¥
+ * List ã® N ç•ªç›®(N=0,1,2,...)ã®è¦ç´ ã« New ã‚’ã‚»ãƒƒãƒˆã—ãŸãƒªã‚¹ãƒˆã‚’è¿”ã—ã¾ã™ï¼
+ * å…ƒã€…ã‚ã£ãŸè¦ç´ ã¯ Old ã«è¿”ã—ã¾ã™ï¼
+ * List ãŒç©ºã ã£ãŸã‚Šï¼Œãƒªã‚¹ãƒˆã®é•·ã•ã‚’è¶…ãˆã¦ã‚»ãƒƒãƒˆã—ã‚ˆã†ã¨ã—ãŸå ´åˆã¯
+ * ãƒªã‚¹ãƒˆã¯å¤‰æ›´ã•ã‚Œãšï¼Œã‚»ãƒƒãƒˆã—ã‚ˆã†ã¨ã—ãŸè¦ç´ ã¯ Old ã« è¿”ã‚Šã¾ã™ï¼
  * 2006/09/23 inui
  */
 H=list.set([], N, New, Old) :- int(N) | H=[], Old=New.

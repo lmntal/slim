@@ -2,14 +2,14 @@
  * mhash.c
  *
  * cf. devel/sample/khiroto/mhash.lmn
- * Ëì³¬ÁØ¤ò¾å¸ş¤­¤Ë¤¿¤É¤é¤Ê¤¤ÅÀ¤¬¹­¸ÍÈÇ¤È°Û¤Ê¤ë
- * ¡ÊÍıÍ³¤Ï¥³¥á¥ó¥È¤ä¥í¡¼¥«¥ë¥Ú¡¼¥¸»²¾È¡Ë
+ * è†œéšå±¤ã‚’ä¸Šå‘ãã«ãŸã©ã‚‰ãªã„ç‚¹ãŒåºƒæˆ¸ç‰ˆã¨ç•°ãªã‚‹
+ * ï¼ˆç†ç”±ã¯ã‚³ãƒ¡ãƒ³ãƒˆã‚„ãƒ­ãƒ¼ã‚«ãƒ«ãƒšãƒ¼ã‚¸å‚ç…§ï¼‰
  *
- * ½é´üÃÍ¤Ë¤è¤Ã¤Æ¤Ï¥ª¡¼¥Ğ¡¼¥Õ¥í¡¼¤¬À¸¤¸¤Æ¤·¤Ş¤¤¡¢
- * ·×»»·ë²Ì¤¬·×»»½ç½ø¤Ë°ø¤Ã¤Æ¤·¤Ş¤¦¤³¤È¤¬¤¢¤ë¤Î¤Ç
- * Ãí°Õ¤¹¤ë¤³¤È
+ * åˆæœŸå€¤ã«ã‚ˆã£ã¦ã¯ã‚ªãƒ¼ãƒãƒ¼ãƒ•ãƒ­ãƒ¼ãŒç”Ÿã˜ã¦ã—ã¾ã„ã€
+ * è¨ˆç®—çµæœãŒè¨ˆç®—é †åºã«å› ã£ã¦ã—ã¾ã†ã“ã¨ãŒã‚ã‚‹ã®ã§
+ * æ³¨æ„ã™ã‚‹ã“ã¨
  *
- * TODO: ¥Ç¡¼¥¿¥¢¥È¥à¡ÊÉâÆ°¾®¿ôÅÀ¿ô¡¢Ê¸»úÎó¡Ë¤Î¥Ï¥Ã¥·¥åÃÍ
+ * TODO: ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ ï¼ˆæµ®å‹•å°æ•°ç‚¹æ•°ã€æ–‡å­—åˆ—ï¼‰ã®ãƒãƒƒã‚·ãƒ¥å€¤
  */
 
 #include "mhash.h"
@@ -23,15 +23,15 @@
 #define ATOM_OBJ  0
 #define MEM_OBJ   1
 
-/* ²Ã¾è¤ª¤è¤Ó¾è»»¤ò¹Ô¤¦ºİ¤Î¾êÍ¾±é»»¤ËÍÑ¤¤¤ëÄê¿ô */
+/* åŠ ä¹—ãŠã‚ˆã³ä¹—ç®—ã‚’è¡Œã†éš›ã®å‰°ä½™æ¼”ç®—ã«ç”¨ã„ã‚‹å®šæ•° */
 #define ADD_MOD_FACTOR  (INT_MAX/100)
 #define MUL_MOD_FACTOR  (INT_MAX/100000)
 
-/* ¥·¥ó¥Ü¥ë¥¢¥È¥à¤Î¥Ï¥Ã¥·¥åÃÍ */
+/* ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ ã®ãƒãƒƒã‚·ãƒ¥å€¤ */
 static inline unsigned int atom_hash(LmnAtomPtr a) {
   return LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(a));
 }
-/* ¥Ç¡¼¥¿¥¢¥È¥à¤Î¥Ï¥Ã¥·¥åÃÍ */
+/* ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ ã®ãƒãƒƒã‚·ãƒ¥å€¤ */
 static inline int data_hash(LmnAtomPtr a, LmnArity n) {
   int ret;
   switch(LMN_ATOM_GET_ATTR(a, n)) {
@@ -39,7 +39,7 @@ static inline int data_hash(LmnAtomPtr a, LmnArity n) {
       ret = LMN_ATOM_GET_LINK(a,n);
       break;
     case LMN_DBL_ATTR:
-      /* TODO: Ì¤¼ÂÁõ */
+      /* TODO: æœªå®Ÿè£… */
       LMN_ASSERT(FALSE);
       break;
     default:
@@ -49,26 +49,26 @@ static inline int data_hash(LmnAtomPtr a, LmnArity n) {
   return ret;
 }
 
-/* Ëì -> ¥Ï¥Ã¥·¥åÃÍ */
+/* è†œ -> ãƒãƒƒã‚·ãƒ¥å€¤ */
 static SimpleHashtbl mem2h;
 
 static int mhash_internal(LmnMembrane *mem)
 {
   /*
-   * Å¬Åö¤Ê½é´üÃÍ
-   *   add: ²Ã»»¤Î´ğËÜÃÍ
-   *   mul: ¾è»»¤Î´ğËÜÃÍ
+   * é©å½“ãªåˆæœŸå€¤
+   *   add: åŠ ç®—ã®åŸºæœ¬å€¤
+   *   mul: ä¹—ç®—ã®åŸºæœ¬å€¤
    */
   long long int add = 3412;
   long long int mul = 3412;
-  /* °ì»şÊÑ¿ô */
+  /* ä¸€æ™‚å¤‰æ•° */
   LmnAtomPtr a = NULL;
   LmnMembrane *m = NULL;
   HashEntry *obj = NULL;
-  /* ÍúÎò´ÉÍı */
-  SimpleHashtbl objs0;  /* Á´¤Æ¤Î»ÒËì¤ª¤è¤Ó»Ò¥¢¥È¥à */
-  SimpleHashtbl objs1;  /* Ì¤½èÍı */
-  HashSet objs2;        /* ´û½èÍı */
+  /* å±¥æ­´ç®¡ç† */
+  SimpleHashtbl objs0;  /* å…¨ã¦ã®å­è†œãŠã‚ˆã³å­ã‚¢ãƒˆãƒ  */
+  SimpleHashtbl objs1;  /* æœªå‡¦ç† */
+  HashSet objs2;        /* æ—¢å‡¦ç† */
   hashtbl_init(&objs0, 128);
   hashtbl_init(&objs1, 128);
   hashset_init(&objs2, 128);
@@ -98,16 +98,16 @@ static int mhash_internal(LmnMembrane *mem)
   /* objs0 <- mem */
   for(m = mem->child_head; m; m = m->next) {
     hashtbl_put(&objs0, (HashKeyType)m, (HashValueType)MEM_OBJ);
-    /* »ÒËì¤Ï¤¢¤é¤«¤¸¤á·×»»¤·¤Æ¤ª¤¯ */
+    /* å­è†œã¯ã‚ã‚‰ã‹ã˜ã‚è¨ˆç®—ã—ã¦ãŠã */
     hashtbl_put(&mem2h, (HashKeyType)m, (HashValueType)mhash_internal(m));
   }
 
   while (hashtbl_num(&objs0) > 0) {
-    /* ½é´üÃÍ */
-    long long int mol;           /* Ê¬»Ò¤Î¥Ï¥Ã¥·¥åÃÍ */
-    long long int tmp = 0;       /* ´ğËÜ·×»»Ã±°Ì¤Î¥Ï¥Ã¥·¥åÃÍ */
-    long long int mol_add = 0;   /* ´ğËÜ·×»»Ã±°Ì¤Î²Ã»»´ğËÜÃÍ */
-    long long int mol_mul = 41;  /* ´ğËÜ·×»»Ã±°Ì¤Î¾è»»´ğËÜÃÍ */
+    /* åˆæœŸå€¤ */
+    long long int mol;           /* åˆ†å­ã®ãƒãƒƒã‚·ãƒ¥å€¤ */
+    long long int tmp = 0;       /* åŸºæœ¬è¨ˆç®—å˜ä½ã®ãƒãƒƒã‚·ãƒ¥å€¤ */
+    long long int mol_add = 0;   /* åŸºæœ¬è¨ˆç®—å˜ä½ã®åŠ ç®—åŸºæœ¬å€¤ */
+    long long int mol_mul = 41;  /* åŸºæœ¬è¨ˆç®—å˜ä½ã®ä¹—ç®—åŸºæœ¬å€¤ */
 
     hashtbl_clear(&objs1);
     hashset_clear(&objs2);
@@ -117,7 +117,7 @@ static int mhash_internal(LmnMembrane *mem)
     hashtbl_put(&objs1, (HashKeyType)obj->key, (HashValueType)obj->data);
     hashtbl_delete(&objs0, (HashKeyType)obj->key);
 
-    /* Ê¬»Ò¤Î¥Ï¥Ã¥·¥åÃÍ¤Î·×»» */
+    /* åˆ†å­ã®ãƒãƒƒã‚·ãƒ¥å€¤ã®è¨ˆç®— */
     while (hashtbl_num(&objs1) > 0) {
       HashKeyType objptr;
       HashValueType objtag;
@@ -133,20 +133,20 @@ static int mhash_internal(LmnMembrane *mem)
       /* DEBUG */
       assert(!hashtbl_contains(&objs1,objptr));
 
-      if (ATOM_OBJ == objtag) { /* ¥¢¥È¥à */
+      if (ATOM_OBJ == objtag) { /* ã‚¢ãƒˆãƒ  */
         int i;
 
         a = (LmnAtomPtr)objptr;
         tmp = atom_hash(a);
 
-        for (i = 0; i < LMN_ATOM_GET_ARITY(a); i++) { /* ¥ê¥ó¥¯Àè */
-          if (LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a)) && i == 2) continue; /* Ëì */
+        for (i = 0; i < LMN_ATOM_GET_ARITY(a); i++) { /* ãƒªãƒ³ã‚¯å…ˆ */
+          if (LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a)) && i == 2) continue; /* è†œ */
           LmnWord link = LMN_ATOM_GET_LINK(a, i);
           LmnLinkAttr attr = LMN_ATOM_GET_ATTR(a, i);
-          tmp *= 31; /* Å¬Åö¤ÊÃÍ */
+          tmp *= 31; /* é©å½“ãªå€¤ */
           assert(tmp>=0);
 
-          if (LMN_ATTR_IS_DATA(attr)) { /* ¥Ç¡¼¥¿¥¢¥È¥à */
+          if (LMN_ATTR_IS_DATA(attr)) { /* ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ  */
             tmp += data_hash(a, i);
             assert(tmp>=0);
           }
@@ -158,11 +158,11 @@ static int mhash_internal(LmnMembrane *mem)
             unsigned int t = 0;
             LmnAtomPtr in; /* inside proxy */
 
-            m = LMN_PROXY_GET_MEM(LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0)); /* »ÒËì */
+            m = LMN_PROXY_GET_MEM(LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0)); /* å­è†œ */
             if(!hashset_contains(&objs2, (HashKeyType)m)) {
               hashtbl_put(&objs1, (HashKeyType)m, MEM_OBJ);
             }
-            /* Ëì¤ò´Ó¤¯¥ê¥ó¥¯¤Î½èÍı */
+            /* è†œã‚’è²«ããƒªãƒ³ã‚¯ã®å‡¦ç† */
             while (!LMN_ATTR_IS_DATA(attr) &&
             LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)link)) {
               in = (LmnAtomPtr)LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0);
@@ -171,19 +171,19 @@ static int mhash_internal(LmnMembrane *mem)
               m = LMN_PROXY_GET_MEM((LmnAtomPtr)in);
               assert(hashtbl_get_default(&mem2h, (HashKeyType)m, 0));
               t += hashtbl_get_default(&mem2h, (HashKeyType)m, 0);
-              t *= 13; /* Å¬Åö¤ÊÃÍ */
+              t *= 13; /* é©å½“ãªå€¤ */
               assert(t>0);
             }
-            if (LMN_ATTR_IS_DATA(attr)) { /* ÀÜÂ³Àè¤¬¥Ç¡¼¥¿¥¢¥È¥à */
+            if (LMN_ATTR_IS_DATA(attr)) { /* æ¥ç¶šå…ˆãŒãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ  */
               t += data_hash((LmnAtomPtr)in, 1);
             }
-            else { /* ÀÜÂ³Àè¤¬¥·¥ó¥Ü¥ë¥¢¥È¥à */
+            else { /* æ¥ç¶šå…ˆãŒã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ  */
               t += atom_hash((LmnAtomPtr)link);
               t *= (unsigned int)(attr + 1);
               assert(t>0);
             }
           }
-          else { /* ¥·¥ó¥Ü¥ë¥¢¥È¥à */
+          else { /* ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ  */
             if(!hashset_contains(&objs2, (HashKeyType)link)) {
               hashtbl_put(&objs1, (HashKeyType)link, ATOM_OBJ);
             }
@@ -192,12 +192,12 @@ static int mhash_internal(LmnMembrane *mem)
           }
         }
       }
-      else if (MEM_OBJ == objtag) { /* Ëì */
+      else if (MEM_OBJ == objtag) { /* è†œ */
         LmnWord link;
         LmnLinkAttr attr;
         LmnAtomPtr in;
         AtomListEntry *insides;
-        unsigned int myhash; /* ¤³¤ÎËì¤Î¥Ï¥Ã¥·¥åÃÍ */
+        unsigned int myhash; /* ã“ã®è†œã®ãƒãƒƒã‚·ãƒ¥å€¤ */
 
         m = (LmnMembrane *)objptr;
         assert(hashtbl_contains(&mem2h, (HashKeyType)m));
@@ -206,9 +206,9 @@ static int mhash_internal(LmnMembrane *mem)
         /*
          * TODO:
          * a(X1). {{'+'(X1)}}
-         * ¤Î¤è¤¦¤Ê¹½Â¤¤Ç¹­¸ÍÈÇ¤ÈÆ±¤¸¥Ğ¥°
-         * ¡Êmem2h¤Ë¤Ê¤¤Ëì¤òget¤·¤è¤¦¤È¤¹¤ë¡Ë
-         * ¤¬½Ğ¤ë¤Î¤Ç¡¤¾å¸ş¤­¤Ë¤¿¤É¤é¤Ê¤¤¤è¤¦¤Ë¤·¤¿
+         * ã®ã‚ˆã†ãªæ§‹é€ ã§åºƒæˆ¸ç‰ˆã¨åŒã˜ãƒã‚°
+         * ï¼ˆmem2hã«ãªã„è†œã‚’getã—ã‚ˆã†ã¨ã™ã‚‹ï¼‰
+         * ãŒå‡ºã‚‹ã®ã§ï¼Œä¸Šå‘ãã«ãŸã©ã‚‰ãªã„ã‚ˆã†ã«ã—ãŸ
          */
 //        insides = lmn_mem_get_atomlist(m, LMN_IN_PROXY_FUNCTOR);
 //        if (insides) {
@@ -217,19 +217,19 @@ static int mhash_internal(LmnMembrane *mem)
 //              a = LMN_ATOM_GET_NEXT(a)) {
 //            unsigned int s = 0, t = 0;
 //
-//            /* Ëì¤Î³°Â¦¤ò¤¿¤É¤ë */
+//            /* è†œã®å¤–å´ã‚’ãŸã©ã‚‹ */
 //            LmnAtomPtr out = (LmnAtomPtr)LMN_ATOM_GET_LINK(a, 0);
-//            if(LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_ATTR(out, 1)) { /* ¥ê¥ó¥¯Àè¤¬Ëì¤Î¾ì¹ç */
+//            if(LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_ATTR(out, 1)) { /* ãƒªãƒ³ã‚¯å…ˆãŒè†œã®å ´åˆ */
 //              LmnMembrane *mm = LMN_PROXY_GET_MEM(out);
 //              if (!hashset_contains(&objs2, (HashKeyType)mm)) {
 //                hashtbl_put(&objs1, (HashKeyType)mm, (HashValueType)MEM_OBJ);
 //              }
 //            }
-//            else { /* ¥ê¥ó¥¯Àè¤¬¥¢¥È¥à¤Î¾ì¹ç */
-//              if (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(out, 1))) { /* ¥Ç¡¼¥¿¥¢¥È¥à */
+//            else { /* ãƒªãƒ³ã‚¯å…ˆãŒã‚¢ãƒˆãƒ ã®å ´åˆ */
+//              if (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(out, 1))) { /* ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ  */
 //                tmp += data_hash(out, 1);
 //              }
-//              else { /* ¥·¥ó¥Ü¥ë¥¢¥È¥à */
+//              else { /* ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ  */
 //                LmnAtomPtr aa = (LmnAtomPtr)LMN_ATOM_GET_LINK(out, 1);
 //                if (!hashset_contains(&objs2, (HashKeyType)aa)) {
 //                  hashtbl_put(&objs1, (HashKeyType)aa, (HashValueType)ATOM_OBJ);
@@ -239,7 +239,7 @@ static int mhash_internal(LmnMembrane *mem)
 //            in = out;
 //            link = LMN_ATOM_GET_LINK(out, 1);
 //            attr = LMN_ATOM_GET_ATTR(out, 1);
-//            /* Ëì¤ò´Ó¤¯¥ê¥ó¥¯¤Î½èÍı */
+//            /* è†œã‚’è²«ããƒªãƒ³ã‚¯ã®å‡¦ç† */
 //            while (!LMN_ATTR_IS_DATA(attr) &&
 //                LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)link)) {
 //              in = (LmnAtomPtr)LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0);
@@ -251,20 +251,20 @@ static int mhash_internal(LmnMembrane *mem)
 //              s *= 13;
 //              assert(s>0);
 //            }
-//            if (LMN_ATTR_IS_DATA(attr)) { /* ¥Ç¡¼¥¿¥¢¥È¥à */
+//            if (LMN_ATTR_IS_DATA(attr)) { /* ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ  */
 //              s += data_hash(in, 1);
 //            }
-//            else { /* ¥·¥ó¥Ü¥ë¥¢¥È¥à */
+//            else { /* ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ  */
 //              s += atom_hash((LmnAtomPtr)link);
 //              s *= (unsigned int)(attr + 1);
 //              assert(s>0);
 //            }
 //
-//            /* Ëì¤ÎÆâÂ¦¤ò¤¿¤É¤ë */
+//            /* è†œã®å†…å´ã‚’ãŸã©ã‚‹ */
 //            in = a;
 //            link = LMN_ATOM_GET_LINK(a, 1);
 //            attr = LMN_ATOM_GET_ATTR(a, 1);
-//            /* Ëì¤ò´Ó¤¯¥ê¥ó¥¯¤Î½èÍı */
+//            /* è†œã‚’è²«ããƒªãƒ³ã‚¯ã®å‡¦ç† */
 //            while (!LMN_ATTR_IS_DATA(attr) &&
 //                LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)link)) {
 //              in = (LmnAtomPtr)LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0);
@@ -276,12 +276,12 @@ static int mhash_internal(LmnMembrane *mem)
 //              t *= 13;
 //              assert(t>0);
 //            }
-//            if (LMN_ATTR_IS_DATA(attr)) { /* ¥Ç¡¼¥¿¥¢¥È¥à */
+//            if (LMN_ATTR_IS_DATA(attr)) { /* ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ  */
 //              assert(LMN_IN_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)a));
 //              t *= data_hash(in, 1);
 //              assert(t>=0);
 //            }
-//            else { /* ¥·¥ó¥Ü¥ë¥¢¥È¥à */
+//            else { /* ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ  */
 //              t *= atom_hash((LmnAtomPtr)link);
 //              assert(t>=0);
 //              t *= (unsigned int)(attr + 1);
@@ -307,11 +307,11 @@ static int mhash_internal(LmnMembrane *mem)
         hashsetiter_next(&i2)) {
       /*
        * a(X1). {{'+'(X1)}}
-       * ¤Î¤è¤¦¤Ê¤È¤­¡¤Ëì³¬ÁØºÇ¾å°Ì¤Ë¤ª¤¤¤Æ
-       * ¡Ö¥¢¥È¥à->Ëì¡×¤È¤¤¤¦Áöºº½ç¤È¡ÖËì->¥¢¥È¥à¡×¤È¤¤¤¦Áöºº½ç¤Ç
-       * ·ë²Ì¤¬°ã¤Ã¤Æ¤·¤Ş¤Ã¤Æ¤¤¤¿¤¿¤á°Ê²¼¤ÎifÊ¸¤òÄÉ²Ã
-       * ¡ÊÁ°¼Ô¤Ç¤Ï»ÒËì¤¬£±²ó¡¤¸å¼Ô¤Ç¤Ï£²²ó½èÍı¤µ¤ì¤Æ¤¤¤¿¡Ë
-       * ¥á¥¤¥ó¥ë¡¼¥×¤Ç¥¢¥È¥à->Ëì¤Î½ç¤Ç½èÍı¤¹¤ë¤Ê¤É¡¤Â¾¤ËÂĞ½èÊıË¡¤¢¤ê
+       * ã®ã‚ˆã†ãªã¨ãï¼Œè†œéšå±¤æœ€ä¸Šä½ã«ãŠã„ã¦
+       * ã€Œã‚¢ãƒˆãƒ ->è†œã€ã¨ã„ã†èµ°æŸ»é †ã¨ã€Œè†œ->ã‚¢ãƒˆãƒ ã€ã¨ã„ã†èµ°æŸ»é †ã§
+       * çµæœãŒé•ã£ã¦ã—ã¾ã£ã¦ã„ãŸãŸã‚ä»¥ä¸‹ã®ifæ–‡ã‚’è¿½åŠ 
+       * ï¼ˆå‰è€…ã§ã¯å­è†œãŒï¼‘å›ï¼Œå¾Œè€…ã§ã¯ï¼’å›å‡¦ç†ã•ã‚Œã¦ã„ãŸï¼‰
+       * ãƒ¡ã‚¤ãƒ³ãƒ«ãƒ¼ãƒ—ã§ã‚¢ãƒˆãƒ ->è†œã®é †ã§å‡¦ç†ã™ã‚‹ãªã©ï¼Œä»–ã«å¯¾å‡¦æ–¹æ³•ã‚ã‚Š
        */
       if(hashtbl_get(&objs0, hashsetiter_entry(&i2)) != MEM_OBJ) {
         hashtbl_delete(&objs0, hashsetiter_entry(&i2));
@@ -331,7 +331,7 @@ static int mhash_internal(LmnMembrane *mem)
   hashtbl_destroy(&objs1);
   hashset_destroy(&objs2);
   assert(INT_MIN <= mul^add && mul^add <= INT_MAX);
-  return (int)(mul ^ add) + mem->name; /* ËìÌ¾¤òÈ¿±Ç¤µ¤»¤ë */
+  return (int)(mul ^ add) + mem->name; /* è†œåã‚’åæ˜ ã•ã›ã‚‹ */
 }
 
 int mhash(LmnWord mem)

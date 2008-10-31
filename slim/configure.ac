@@ -26,7 +26,7 @@ AC_SUBST(CFLAGS)
 CFLAGS="-Wall $CFLAGS"
 
 
-# ³«È¯»ş¤Ë¤Ï¤³¤Î¥ª¥×¥·¥ç¥ó¤òÉÕ¤±¤ë¤è¤¦¤Ë¤¹¤ë
+# é–‹ç™ºæ™‚ã«ã¯ã“ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã‚’ä»˜ã‘ã‚‹ã‚ˆã†ã«ã™ã‚‹
 AC_ARG_ENABLE(devel,
 [  --enable-devel            turn on settings for devel [[default no]]])
 
@@ -38,11 +38,11 @@ fi
 
 if test "$GCC" = "yes" && test "$enable_devel" = "yes"; then
   CFLAGS="-ggdb -Wall -Wchar-subscripts -Wmissing-declarations -Wredundant-decls -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wcast-align -Wsign-compare -Winline"
-# ¸½¾õ¥³¥ó¥Ñ¥¤¥ë¤ÇÃå¤Ê¤¤¤Î¤Ç¥³¥á¥ó¥È¥¢¥¦¥È
+# ç¾çŠ¶ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã§ç€ãªã„ã®ã§ã‚³ãƒ¡ãƒ³ãƒˆã‚¢ã‚¦ãƒˆ
 #  CFLAGS="-std=c89 -pedantic $CFLAGS"
 fi
 
-# ¥Ç¥Ğ¥Ã¥°¥Õ¥é¥°ON
+# ãƒ‡ãƒãƒƒã‚°ãƒ•ãƒ©ã‚°ON
 AC_ARG_ENABLE(debug,
 [  --enable-debug            turn on debugging [[default no]]])
 

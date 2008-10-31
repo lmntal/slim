@@ -94,7 +94,7 @@ void lmn_free_atom(LmnWord atom, LmnLinkAttr attr)
   }
 }
 
-/* ¥·¥ó¥Ü¥ë¥¢¥È¥à¤È¥ê¥ó¥¯¤ÇÀÜÂ³¤·¤Æ¤¤¤ë¥Ç¡¼¥¿¥¢¥È¥à¤ò²òÊü¤¹¤ë */
+/* ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ ã¨ãƒªãƒ³ã‚¯ã§æ¥ç¶šã—ã¦ã„ã‚‹ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ ã‚’è§£æ”¾ã™ã‚‹ */
 void free_symbol_atom_with_buddy_data(LmnAtomPtr atom)
 {
   unsigned int i;
@@ -110,7 +110,7 @@ void free_symbol_atom_with_buddy_data(LmnAtomPtr atom)
 
 BOOL lmn_eq_func(LmnWord atom0, LmnLinkAttr attr0, LmnWord atom1, LmnLinkAttr attr1)
 {
-  /* TODO: TOFIX ¥·¥ó¥Ü¥ë¥¢¥È¥à¤Îattr¤¬¤¹¤Ù¤ÆÅù¤·¤¤ÃÍ¤Ç¤¢¤ë¤³¤È¤ò³ÎÇ§¤¹¤ë */
+  /* TODO: TOFIX ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ ã®attrãŒã™ã¹ã¦ç­‰ã—ã„å€¤ã§ã‚ã‚‹ã“ã¨ã‚’ç¢ºèªã™ã‚‹ */
   if (attr0 != attr1) return FALSE;
   switch (attr0) {
   case LMN_INT_ATTR:

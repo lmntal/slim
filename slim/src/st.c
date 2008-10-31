@@ -216,8 +216,8 @@ void st_free_table(st_table *table) {
     }\
 } while (0)
 
-/* ������key�Ǥ���ơ��֥���ͤ�value�����ꤹ�롣
- ���������Ĥ���ʤ����0���֤������Ĥ����1���֤���*/
+/* キーがkeyであるテーブルの値をvalueに設定する。
+ キーが見つからなければ0を返し，見つかれば1を返す。*/
 int st_lookup(st_table *table, register st_data_t key, st_data_t *value) {
   unsigned int hash_val, bin_pos;
   register st_table_entry *ptr;
@@ -252,7 +252,7 @@ do {\
     table->num_entries++;\
 } while (0)
 
-/* �ϥå���ɽ�˿����ʥ���ȥ꡼���ɲä��� */
+/* ハッシュ表に新たなエントリーを追加する */
 int st_insert(register st_table *table, register st_data_t key, st_data_t value) {
   unsigned int hash_val, bin_pos;
   register st_table_entry *ptr;
@@ -269,7 +269,7 @@ int st_insert(register st_table *table, register st_data_t key, st_data_t value)
   }
 }
 
-/* �ͤν�ʣ������å������˥ϥå���ɽ�˿����ʥ���ȥ꡼���ɲä��� */
+/* 値の重複をチェックせずにハッシュ表に新たなエントリーを追加する */
 void st_add_direct(st_table *table, st_data_t key, st_data_t value) {
   unsigned int hash_val, bin_pos;
 
@@ -421,15 +421,15 @@ void st_cleanup_safe(st_table *table, st_data_t never) {
   table->num_entries = num_entries;
 }
 
-/* �ơ��֥�γ����Ǥ��Ф����������˥���������������͡�
- * �軰������arg��func��ƤӽФ���
+/* テーブルの各要素に対し，第一引数にキー，第二引数に値，
+ * 第三引数にargでfuncを呼び出す．
  *
- * func������ͤ�ST_CHECK��ST_CONTINUE��ST_STOP��ST_DELETE
- * �Τ��������ꤹ�뤫�ǡ��ơ��֥�����Ǥ��оݤ�Ǥ�դν�����¹Ԥ��뤳�Ȥ��Ǥ��롥
- * �㤨��ST_DELETE������ͤ˻��ꤷ�����ϡ��ơ��֥���Τ��٤ƤΥ���ȥ꡼�����Ѥ���
- * Ǥ�դν�����¹Ԥ����塤�ơ��֥����ˤ��뤳�Ȥ��Ǥ��롥
+ * funcの戻り値にST_CHECK，ST_CONTINUE，ST_STOP，ST_DELETE
+ * のいずれを指定するかで，テーブルの要素を対象に任意の処理を実行することができる．
+ * 例えばST_DELETEを戻り値に指定した場合は，テーブル内のすべてのエントリーを利用して
+ * 任意の処理を実行した後，テーブルを空にすることができる．
  *
- * �ʤ����軰����arg�ϡ�func�ν����˥ơ��֥�������ǰʳ��Υǡ�����ɬ�פʾ������Ѥ��롥
+ * なお，第三引数argは，funcの処理にテーブル内の要素以外のデータが必要な場合に利用する．
  */
 int st_foreach(st_table *table, int(*func)( ANYARGS), st_data_t arg) {
   st_table_entry *ptr, *last, *tmp;

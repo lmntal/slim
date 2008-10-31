@@ -201,7 +201,7 @@ double functor_get_float_value(Functor f)
   return f->v.float_value;
 }
 
-/* ¥·¥ó¥Ü¥ë¥¢¥È¥à¤Î¥Õ¥¡¥ó¥¯¥¿¤ÎID¤ò¼èÆÀ */
+/* ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ ã®ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿ã®IDã‚’å–å¾— */
 int functor_get_id(Functor f)
 {
   return f->v.functor_id;
@@ -377,7 +377,7 @@ Instruction inst_make(enum LmnInstruction id, ArgList args)
   i->id = id;
   i->args = args;
 
-  /* COMMIT¤ÎÂèÆó°ú¿ô¤òÊÑ¿ôÈÖ¹æ¤Ç¤Ï¤Ê¤¯¹ÔÈÖ¹æ¤È¤¹¤ë */
+  /* COMMITã®ç¬¬äºŒå¼•æ•°ã‚’å¤‰æ•°ç•ªå·ã§ã¯ãªãè¡Œç•ªå·ã¨ã™ã‚‹ */
   if (id == INSTR_COMMIT) {
     InstrArg line_num_arg = arg_list_get(args, 1);
     line_num_arg->type = LineNum;
@@ -433,7 +433,7 @@ Instruction inst_list_get(InstList l, int index)
   return (Instruction)vec_get(l, index);
 }
 
-/* amatch, memmatch¤Ê¤É¡¢Ì¿Îá¤ò¤Ş¤È¤á¤¿¤â¤Î */
+/* amatch, memmatchãªã©ã€å‘½ä»¤ã‚’ã¾ã¨ã‚ãŸã‚‚ã® */
 
 InstBlock inst_block_make(int label, InstList instrs )
 {
@@ -610,7 +610,7 @@ RuleSet rulesets_get(RuleSets rulesets, int i)
   return (RuleSet)vec_get(rulesets, i);
 }
 
-/* Module, ¥â¥¸¥å¡¼¥ëÌ¾¤È¥ë¡¼¥ë¥»¥Ã¥È¤ÎÂĞ±ş */
+/* Module, ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«åã¨ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã®å¯¾å¿œ */
 
 Module module_make(lmn_interned_str name_id, int ruleset_id)
 {

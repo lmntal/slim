@@ -1,146 +1,146 @@
 -*- mode: org; -*-
 #+STARTUP: showall
 
-* ����ѥ���
-����Autoconf, Automake�Ȥ����ġ����ȤäƤ��ޤ���������,����ѥ���
-���δĶ��򸡺�����,Ŭ�ڤ�Makefile��config.h�κ����򤷤ޤ���
-autoconf��version 2.61�ʾ�Ǥʤ��ȥ���ѥ���Ǥ��ޤ���
+* コンパイル
+現在Autoconf, Automakeというツールを使っています。これらは,コンパイル
+時の環境を検査して,適切なMakefileとconfig.hの作成をします。
+autoconfはversion 2.61以上でないとコンパイルできません。
 
-** configure����
-configure��GNU�ϤΥץ������Ǥ褯�Ȥ���Ķ��ΰ㤤��ۼ����Ƥ���륹
-����ץȤǤ���configure.ac�Τ���ǥ��쥯�ȥ�ǥ��ޥ�ɤ�ʲ���¹Ԥ���
-���Ǻ����Ǥ��ޤ���
+** configureを作る
+configureはGNU系のプログラムでよく使われる環境の違いを吸収してくれるス
+クリプトです。configure.acのあるディレクトリでコマンドを以下を実行する
+事で作成できます。
 
   $ autoreconf
 
-����configure�ϥ����ƥ�򸡺����ơ�Ŭ�ڤ�Makefile��config.h��������ޤ���
-configure�򿷤���������configure.ac, Makefile.am src/Makefile.am��
-�ѹ��������Ͼ嵭�Τ�����Ԥ�configure����ޤ���
+このconfigureはシステムを検査して，適切なMakefileとconfig.hを作成します。
+configureを新しく作る場合やconfigure.ac, Makefile.am src/Makefile.amを
+変更した場合は上記のの操作を行いconfigureを作ります。
 
-** �Ķ��ѿ������ꤹ��
+** 環境変数を設定する
 
-����ѥ����Ԥ��٤ˤϴĶ��ѿ� LMNTAL_HOME ��Java�ˤ������ϤΥѥ������ꤹ��ɬ�פ�
-���롣�饤�֥��Υ���ѥ����Java�ˤ������ϤΥ���ѥ�����Ѥ���Τ�
-���줬ɬ�פˤʤ롣
+コンパイルを行う為には環境変数 LMNTAL_HOME をJavaによる処理系のパスに設定する必要が
+ある。ライブラリのコンパイルにJavaによる処理系のコンパイラ使用するので
+これが必要になる。
 
-��: 
- # �Ǹ�˥���å�����դ��ʤ�
- # $LMNTAL_HOME/bin�˼¹ԥե����� lmntal ������褦�ˤ���
+例: 
+ # 最後にスラッシュは付けない
+ # $LMNTAL_HOME/binに実行ファイル lmntal があるようにする
  export LMNTAL_HOME=/home/taisuke/workspace/devel  
 
-** .h, .c�ե������src�ǥ��쥯�ȥ���ɲä������
-src/Makefile.am ���ɲä����ե������񤭲ä��롣
+** .h, .cファイルをsrcディレクトリに追加した場合
+src/Makefile.am に追加したファイルを書き加える。
 
-** configure�Υ��ץ����
-./configure ���˥��ץ�����դ�����
+** configureのオプション
+./configure 時にオプションが付けられる
 - --enable-debug 
--- DEBUG �� define ����
+-- DEBUG を define する
 - --enable-devel
--- ��ȯ�ѤΥ���ѥ��륪�ץ���������
+-- 開発用のコンパイルオプションを設定
 
-* �����ǥ���
-- C89�λ��ͤ˽���
-- ��������autoconf�ˤ��inline������ɤ�int32_t���ʤɤ����ѤǤ���
-- ����Ū��Unix/Linux�Ķ���ư�����
-- 32/64bit��ư�����
-- SLIM���鳰���˸�������ؿ��������ޥ����ʤɤˤ�lmn�ǻϤޤ�ץ�ե��å������դ���
-- ����ѥ�����Υ�˥󥰤ϥ��顼��Ʊ���˰���
-- ��ȯ����--enable-devel���ץ�����Ȥ�
-- �ƥ��Ȥ����ˤ˼»ܤ���
-- �ƥ��ȤϾ�˹�������
-- �ɥ�����Ȥȥ����ɤ�������򵯤����ʤ�
+* コーディング
+- C89の仕様に従う
+- ただし、autoconfによりinlineキーワードやint32_t型などが使用できる
+- 一般的なUnix/Linux環境で動作させる
+- 32/64bitで動作させる
+- SLIMから外部に公開する関数、型，マクロなどにはlmnで始まるプレフィックスを付ける
+- コンパイル時のワーニングはエラーと同等に扱う
+- 開発時は--enable-develオプションを使う
+- テストは頻繁に実施する
+- テストは常に更新する
+- ドキュメントとコードに不整合を起こさない
 
-- �������϶����2
-- �ʤ�٤����ΤΥ����ǥ��󥰥��������Ʊ���褦�ˤ���(��̩�ǤϤʤ���)
+- タブ幅は空白で2
+- なるべく全体のコーディングスタイルは同じようにする(厳密ではないが)
 
-* �ƥ���
+* テスト
 
-SLIM�ǥ��쥯�ȥ�ʲ��� 
+SLIMディレクトリ以下で 
 
  make check 
 
-��¹ԡ�
+を実行。
 
-* �ǥХå�
+* デバッグ
 ** dmalloc (http://dmalloc.com/)
-����꡼������������ʥ��ɥ쥹�ؤν񤭹��ߤ򸡽Ф���
+メモリリークおよび不正なアドレスへの書き込みを検出する
 
-*** �Ȥ�����
+*** 使いかた
 http://dmalloc.com/docs/latest/online/dmalloc_4.html#SEC4
-�˥��塼�ȥꥢ�뤬���롣
+にチュートリアルがある。
 
-automake��dmalloc�褦�ε�ǽ�����ä��ΤǤ����Ȥä��Ȥ��μ�硣
-$ ���դ��Ƥ���Ԥϥ����륳�ޥ��
+automakeでdmallocようの機能があったのでそれを使ったときの手順。
+$ が付いている行はシェルコマンド
 
 1. $ function dmalloc { eval `command dmalloc -b $*`; }
 
-2. ./configure�� --with-dmalloc ���դ��Ƽ¹�
+2. ./configureに --with-dmalloc を付けて実行
 
 3. $ dmalloc -l dmalloc_log -i 100 low 
-      * -l dmaloc_log : �����ե������̾��
-      * -i 100 : �����å��������١������������������ץ��������٤��ʤ�
-      * low    : �����å����뵡ǽ�ο��� runtime < low < medium < high
-                 �ν�˥����å���¿���ʤ롣
-4. �ץ�������¹�
-5. ������ dmalloc_log �˽񤫤��
+      * -l dmaloc_log : ログファイルの名前
+      * -i 100 : チェックする頻度。数字が小さい方がプログラムは遅くなる
+      * low    : チェックする機能の数。 runtime < low < medium < high
+                 の順にチェックが多くなる。
+4. プログラムを実行
+5. ログが dmalloc_log に書かれる
 
 ** valgrind (http://valgrind.org/)
-����꡼����̤������ѿ��λ��ȡ�����Υ����С��ե����ʤɤ򸡽ФǤ���
-���������Ǥ���
+メモリリークや未初期化変数の参照、配列のオーバーフローなどを検出できま
+す。便利です。
 
-* �ɥ������
+* ドキュメント
 - NEWS
--- �ƥС��������ѹ���
+-- 各バージョンの変更点
 
 - ChangeLog
--- ̤����
+-- 未使用
 
 - doc/slim.1.in 
---  man�ڡ���
+--  manページ
 
 - AUTHORS
--- ����ȥ�ӥ塼��
+-- コントリビュータ
 
 - COPYING
--- ������ɽ��
+-- 権利の表記
 
 - INSTALL
--- ���󥹥ȡ�����
+-- インストール手順
 
 - README
--- �桼�������ֽ����ɤ�
--- �������饤�󥹥ȡ���/���󥤥󥹥ȡ������Ȥ����ؤξ���é�����
-   �ˤ���
+-- ユーザが一番初めに読む
+-- ここからインストール/アンインストール手順や使い方への情報が辿れる様
+   にする
 
-- DEVELOP(��ȯ�ѡ����ۤ��ʤ�)
+- DEVELOP(開発用、配布しない)
 
-* ��Ϣ����
+* 関連資料
 
-autoconf,automake�Υޥ˥奢��ϥ���饤��Ǹ��뤳�Ȥ�����롣
-  autoconf�Υޥ˥奢��: http://www.gnu.org/software/autoconf/manual/index.html
-  automake�Υޥ˥奢��: http://sources.redhat.com/automake/automake.html
+autoconf,automakeのマニュアルはオンラインで見ることが出来る。
+  autoconfのマニュアル: http://www.gnu.org/software/autoconf/manual/index.html
+  automakeのマニュアル: http://sources.redhat.com/automake/automake.html
 
-  �ޤ���autoconf,automake�Υޥ˥奢���info�ɥ�����ȤȤ����󶡤����
-  ���ꡢ���󥹥ȡ��뤵��������info���ޥ�ɤ�Ȥä��ɤळ�Ȥ�����롣
+  また、autoconf,automakeのマニュアルはinfoドキュメントとして提供されて
+  おり、インストールされて入ればinfoコマンドを使って読むことが出来る。
 
-* ��꡼���μ��
+* リリースの手順
 
-1. �С����������䤹
-  configure.ac�ե�����ε��Ҥǡ�AC_INIT������������ѹ���
+1. バージョンを増やす
+  configure.acファイルの記述で，AC_INITの第二引数を変更。
 
-2. �ɥ�����Ȥε���
-  NEWS�˰����ΥС�����󤫤���ѹ����򵭽Ҥ��롣����¾���ޥ˥奢��ڡ�
-  ���ʤɤ�ɬ�פ�����н������롣
+2. ドキュメントの記述
+  NEWSに以前のバージョンからの変更点を記述する。その他，マニュアルペー
+  ジなども必要があれば修正する。
 
-3. make dist�������ѥե�������������
-  make dist��¹Ԥ���ȡ�SLIM�ǥ��쥯�ȥ��
-    slim-(�С������).tar.gz
-  �Ȥ����ե����뤬����롣���줬���ۥե�����ˤʤ롣
+3. make distで配布用ファイルを作成する
+  make distを実行すると、SLIMディレクトリに
+    slim-(バージョン).tar.gz
+  というファイルが出来る。これが配布ファイルになる。
 
-  ���κ�Ȥϡ�SLIM��ȯ����ѤΥǥ��쥯�ȥ�ǹԤ��ȡ�����������ѹ���ȿ�Ǥ���Ƥ��ޤ�
-  ���⤷��ʤ��Τǡ�CVS���鿷���˥����å������Ȥ��������������⡣
+  この作業は、SLIM開発作業用のディレクトリで行うと、ローカルの変更が反映されてしまう
+  かもしれないので、CVSから新たにチェックアウトした方がいいかも。
 
-4. �����ѥե�������������
-  ����ʪ�򥦥��֥ڡ������֤���
+4. 配布用ファイルを公開する
+  配布物をウェブページに置く。
 
-5. �����֥ڡ����ξ���򹹿�
+5. ウェブページの情報を更新

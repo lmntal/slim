@@ -44,7 +44,7 @@
 #include "vector.h"
 #include "functor.h"
 
-/* ·¿Ì¾¤Î²ò·è¤Î°Ù¤Ë¾å¤Ë»ı¤Ã¤Æ¤­¤¿ */
+/* å‹åã®è§£æ±ºã®ç‚ºã«ä¸Šã«æŒã£ã¦ããŸ */
 typedef Vector *InstList;
 
 /* List of instrction variables */
@@ -119,7 +119,7 @@ void inst_list_push(InstList l, Instruction inst);
 unsigned int inst_list_num(InstList l);
 Instruction inst_list_get(InstList l, int index);
 
-/* amatch, memmatch¤Ê¤É¡¢Ì¿Îá¤ò¤Ş¤È¤á¤¿¤â¤Î */
+/* amatch, memmatchãªã©ã€å‘½ä»¤ã‚’ã¾ã¨ã‚ãŸã‚‚ã® */
 
 typedef struct InstBlock *InstBlock;
 
@@ -166,7 +166,7 @@ int rulesets_num(RuleSets rulesets);
 RuleSet rulesets_get(RuleSets rulesets, int i);
 
 
-/* Module, ¥â¥¸¥å¡¼¥ëÌ¾¤È¥ë¡¼¥ë¥»¥Ã¥È¤ÎÂĞ±ş */
+/* Module, ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«åã¨ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã®å¯¾å¿œ */
 
 typedef struct Module *Module;
 
@@ -184,7 +184,7 @@ int module_list_num(ModuleList l);
 Module module_list_get(ModuleList l, int i);
 
 /* Inline */
-/* ¥Õ¥¡¥¤¥ëÌ¾¤¬ÊÂ¤ó¤Ç¤¤¤ë¤À¤±¡© */
+/* ãƒ•ã‚¡ã‚¤ãƒ«åãŒä¸¦ã‚“ã§ã„ã‚‹ã ã‘ï¼Ÿ */
 
 typedef Vector *InlineList;
 InlineList inline_list_make(void);
@@ -200,11 +200,11 @@ ModuleList il_get_module_list(IL il);
 InlineList il_get_inline_list(IL il);
 void il_free(IL il);
 
-/* »ú¶ç²òÀÏ´ï¤ÇÍÑ¤¤¤ë¾ğÊó¡£¤³¤³¤ËÊØµ¹¾å¤³¤³¤ËÃÖ¤¤¤Æ¤ª¤¯¤¬¡¢Å¬ÀÚ¤Ê¾ì½ê¤Ç¤Ï¤Ê¤¤¤È»×¤¦ */
+/* å­—å¥è§£æå™¨ã§ç”¨ã„ã‚‹æƒ…å ±ã€‚ã“ã“ã«ä¾¿å®œä¸Šã“ã“ã«ç½®ã„ã¦ãŠããŒã€é©åˆ‡ãªå ´æ‰€ã§ã¯ãªã„ã¨æ€ã† */
 #include "st.h"
 struct lexer_context {
-  /* °ì¤Ä¤ÎÃæ´Ö¸À¸ì¥Õ¥¡¥¤¥ë¤Ë¥í¡¼¥«¥ë¤Ê¥ë¡¼¥ë¥»¥Ã¥È¤ÎID¤È¥°¥í¡¼¥Ğ¥ë¤ÊID¤Î
-     ÂĞ±şÉ½ */
+  /* ä¸€ã¤ã®ä¸­é–“è¨€èªãƒ•ã‚¡ã‚¤ãƒ«ã«ãƒ­ãƒ¼ã‚«ãƒ«ãªãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã®IDã¨ã‚°ãƒ­ãƒ¼ãƒãƒ«ãªIDã®
+     å¯¾å¿œè¡¨ */
   st_table *ruleset_id_tbl;
 };
 

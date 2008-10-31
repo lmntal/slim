@@ -56,7 +56,7 @@ typedef struct LmnFunctorEntry {
 
 extern struct LmnFunctorTable lmn_functor_table;
 
-/* ¥¢¥¯¥»¥¹¤ò¹âÂ®¤Ë¤¹¤ë¤¿¤á¤Ë¥Ş¥¯¥í¤Ë¤¹¤ë */
+/* ã‚¢ã‚¯ã‚»ã‚¹ã‚’é«˜é€Ÿã«ã™ã‚‹ãŸã‚ã«ãƒã‚¯ãƒ­ã«ã™ã‚‹ */
 #define LMN_FUNCTOR_NAME_ID(F)     (lmn_functor_table.entry[(F)].name)
 #define LMN_FUNCTOR_ARITY(F)    (lmn_functor_table.entry[(F)].arity)
 #define LMN_FUNCTOR_MODULE_ID(F)     (lmn_functor_table.entry[(F)].module)

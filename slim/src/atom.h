@@ -78,8 +78,8 @@
  *  Proxy is implememted as a special atom. The 3rd link is a pointer
  *  to the current membrane.
  */
-/* е╫еэене╖д╬3╚╓╠▄д╬░·┐Ї╚╓╣цд╬╬╬░шдЄ remove_proxy, insert_proxy
-   д╟═°═╤├ц */
+/* уГЧуГнуВнуВ╖уБо3чХкчЫоуБох╝ХцХ░чХкхП╖уБощаШхЯЯуВТ remove_proxy, insert_proxy
+   уБзхИйчФиф╕н */
 
 typedef LmnWord *LmnAtomPtr;
 typedef uint8_t LmnLinkAttr;
@@ -89,8 +89,8 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_ATTR_MASK      (0x7fU)
 #define LMN_ATTR_FLAG      (0x80U)
 
-/* еъеєеп╚╓╣цд╬е┐е░д╬еяб╝е╔┐Їбге╒ебеєепе┐д╚╞▒д╕еяб╝е╔д╦двды╩мд╧
-   ┐Їдид╩дд */
+/* уГкуГ│уВпчХкхП╖уБоуВ┐уВ░уБоуГпуГ╝уГЙцХ░уАВуГХуВбуГ│уВпуВ┐уБихРМуБШуГпуГ╝уГЙуБлуБВуВЛхИЖуБп
+   цХ░уБИуБкуБД */
 #define LMN_ATTR_WORDS(ARITY)  \
   (((ARITY)+(LMN_FUNCTOR_BYTES - 1))>>LMN_WORD_SHIFT)
 
@@ -120,7 +120,7 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_ATOM_SET_FUNCTOR(ATOM,X)      \
   (*(LmnFunctor*)((LmnWord*)(ATOM)+2)=(X))
 #define LMN_ATOM_GET_ARITY(ATOM)          (LMN_FUNCTOR_ARITY(LMN_ATOM_GET_FUNCTOR(ATOM)))
-/* еве╚ерд╬еъеєепд╬┐Їб╩е╫еэене╖д╧┬ш╗░░·┐Їд╧╜ъ┬░╦ьб╦ */
+/* уВвуГИуГауБоуГкуГ│уВпуБоцХ░я╝ИуГЧуГнуВнуВ╖уБпчммф╕Йх╝ХцХ░уБпцЙАх▒ЮшЖЬя╝Й */
 #define LMN_FUNCTOR_GET_LINK_NUM(F)   \
   ((LMN_FUNCTOR_ARITY(F)) -  \
    (LMN_IS_PROXY_FUNCTOR(F) ? 1U : 0U))
@@ -137,7 +137,7 @@ typedef uint8_t LmnLinkAttr;
   (*LMN_ATOM_PLINK(ATOM,N)=(X))
 
 /* word size of atom */
-/* 3д╬▓├╗╗д╧ prev,next,functorд╬еяб╝е╔ */
+/* 3уБохКачоЧуБп prev,next,functorуБоуГпуГ╝уГЙ */
 #define LMN_ATOM_WORDS(ARITY)          \
   (3+LMN_ATTR_WORDS(ARITY)+(ARITY))
 

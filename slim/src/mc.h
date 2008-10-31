@@ -7,19 +7,19 @@
 #include "vector.h"
 
 /**
- * task.c��interpret()���Ѥ�����ե饰�򽸤᤿���
+ * task.cのinterpret()で用いられるフラグを集めたもの
  *
- * nd_exec: �����Ū�¹ԥե饰
- *   ������롼��Ŭ�Ѱ�����FALSE
- *   ������롼��Ŭ�Ѱʹߡ�TRUE
- * system_rule_committed: �ܥǥ��¹���ե饰
- *   �ܥǥ��¹���Τ�TRUE (i.e. �롼��Υܥǥ�����Ƭ��COMMIT̿��ν������ϻ���TRUE�ȤʤꡢPROCEED̿��ν�����λ����FALSE�ˤʤ�)
- *   ���դ˽и�����PROCEED��GROUP��λ��ɽ���ˤȱ��դ˽и�����PROCEED����̤��뤿��˻���
- * system_rule_proceeded: �����ƥ�롼��Ŭ�������ե饰
- *   �����ƥ�롼��Ŭ����������TRUE
- *   �����ƥ�롼��¹Ի���interpret()�����FALSE���֤����ͤȤʤäƤ��뤿�ᡢ�����ƥ�롼��Ŭ��������ɽ���ե饰�Ȥ�������ˤ�����Ѥ���
- * property_rule: �����롼��¹���ե饰
- *   �����롼��Ŭ����������TRUE���֤���Ū�ǻ���
+ * nd_exec: 非決定的実行フラグ
+ *   初期化ルール適用以前：FALSE
+ *   初期化ルール適用以降：TRUE
+ * system_rule_committed: ボディ実行中フラグ
+ *   ボディ実行中のみTRUE (i.e. ルールのボディ部冒頭のCOMMIT命令の処理開始時にTRUEとなり、PROCEED命令の処理終了時にFALSEになる)
+ *   左辺に出現するPROCEED（GROUP終了を表す）と右辺に出現するPROCEEDを区別するために使用
+ * system_rule_proceeded: システムルール適用成功フラグ
+ *   システムルール適用成功時：TRUE
+ *   システムルール実行時はinterpret()が常にFALSEを返す仕様となっているため、システムルール適用成功を表すフラグとして代わりにこれを用いる
+ * property_rule: 性質ルール実行中フラグ
+ *   性質ルール適用成功時にTRUEを返す目的で使用
  */
 typedef struct McFlags {
   BOOL nd_exec;
@@ -31,8 +31,8 @@ typedef struct McFlags {
 typedef struct State State;
 
 struct State {
-  LmnMembrane *mem; /* �������Х�롼���� */
-  int hash;         /* �ϥå����� */
+  LmnMembrane *mem; /* グローバルルート膜 */
+  int hash;         /* ハッシュ値 */
   BOOL flags;       /* flags (unsigned char) */
   Vector successor; /* successor nodes */
 };

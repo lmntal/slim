@@ -3,14 +3,14 @@ bin_PROGRAMS = slim
 slim_LDADD = -ldl
 
 AM_YFLAGS = -d
-# Flex¤¬À¸À®¤¹¤ë¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë¤ò»ØÄê¤¹¤ë
+# FlexãŒç”Ÿæˆã™ã‚‹ãƒ˜ãƒƒãƒ€ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æŒ‡å®šã™ã‚‹
 AM_LFLAGS = --header-file=il_lex.h
 
-# »öÁ°¤ËÉ¬Í×¤Ê¥Õ¥¡¥¤¥ë
+# äº‹å‰ã«å¿…è¦ãªãƒ•ã‚¡ã‚¤ãƒ«
 BUILT_SOURCES = arch.h il_parser.h il_lex.h
 
-# il_parser.y ¤Ï il_parser.l¤è¤êÀè¤Ë½ñ¤¯
-# ¤³¤Î°ìÍ÷¤Ï¡¢¥Õ¥¡¥¤¥ë¤ò¼êÆ°¤ÇÎóµó¤¹¤ë¤Ë¤Ï¤É¤¦¤·¤¿¤é¤¤¤¤¡©
+# il_parser.y ã¯ il_parser.lã‚ˆã‚Šå…ˆã«æ›¸ã
+# ã“ã®ä¸€è¦§ã¯ã€ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰‹å‹•ã§åˆ—æŒ™ã™ã‚‹ã«ã¯ã©ã†ã—ãŸã‚‰ã„ã„ï¼Ÿ
 slim_SOURCES = main.c membrane.c rule.c alloc.c error.c task.c memory_pool.c internal_hash.c \
 	vector.c dumper.c system_ruleset.c atom.c \
 	atom.h dumper.h instruction.h internal_hash.h lmntal.h membrane.h \
@@ -20,7 +20,7 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.c task.c memory_pool.c int
 
 DISTCLEANFILES := arch.h ../lib/config.lmn
 
-# »ú¶ç²òÀÏµ¡¤Î¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë¤òÀ¸À®
+# å­—å¥è§£ææ©Ÿã®ãƒ˜ãƒƒãƒ€ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ç”Ÿæˆ
 il_lex.h:
 	$(LEX) $(LFLAGS) $(AM_LFLAGS) il_lex.l
 

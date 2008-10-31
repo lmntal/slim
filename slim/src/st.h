@@ -3,10 +3,10 @@
 /* @(#) st.h 5.1 89/12/14 */
 
 /* http://sobjc.googlecode.com/svn/trunk/runtime/st.c
- ¤ò¸µ¤ËÊÑ¹¹¤·¤¿¡£
- st.h,st.c¤Ï¥Ñ¥Ö¥ê¥Ã¥¯¥É¥á¥¤¥ó¤Î¥Ï¥Ã¥·¥å¥Æ¡¼¥Ö¥ë¥é¥¤¥Ö¥é¥ê¤Ç¡¢
- ruby¤Ç¤â»È¤ï¤ì¤Æ¤¤¤ë¡£¥ª¥ê¥¸¥Ê¥ë¤Îst.h,st.c¤Ã¤Æ¤É¤³¤«¤éÆş¼ê
- ¤Ç¤­¤ë¤Î¤À¤í¤¦¤«¡© */
+ ã‚’å…ƒã«å¤‰æ›´ã—ãŸã€‚
+ st.h,st.cã¯ãƒ‘ãƒ–ãƒªãƒƒã‚¯ãƒ‰ãƒ¡ã‚¤ãƒ³ã®ãƒãƒƒã‚·ãƒ¥ãƒ†ãƒ¼ãƒ–ãƒ«ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã§ã€
+ rubyã§ã‚‚ä½¿ã‚ã‚Œã¦ã„ã‚‹ã€‚ã‚ªãƒªã‚¸ãƒŠãƒ«ã®st.h,st.cã£ã¦ã©ã“ã‹ã‚‰å…¥æ‰‹
+ ã§ãã‚‹ã®ã ã‚ã†ã‹ï¼Ÿ */
 
 #ifndef ST_INCLUDED
 #define ST_INCLUDED
@@ -17,26 +17,26 @@ typedef void *st_data_t;
 typedef struct st_table st_table, *st_table_t;
 
 struct st_hash_type {
-  int (*compare)(); /* ÂĞ¾İ¤Î2¤Ä¤Î¥¨¥ó¥È¥ê¡¼(st_table_entry)¤¬Æ±¤¸¥Á¥§¥¤¥ó¤ËÂ°¤¹¤ë¤Ê¤é¤Ğµ¶¡¢¤½¤¦¤Ç¤Ê¤±¤ì¤Ğ¿¿¤òÊÖ¤¹´Ø¿ô */
-  int (*hash)();    /* ¥Ï¥Ã¥·¥å´Ø¿ô */
+  int (*compare)(); /* å¯¾è±¡ã®2ã¤ã®ã‚¨ãƒ³ãƒˆãƒªãƒ¼(st_table_entry)ãŒåŒã˜ãƒã‚§ã‚¤ãƒ³ã«å±ã™ã‚‹ãªã‚‰ã°å½ã€ãã†ã§ãªã‘ã‚Œã°çœŸã‚’è¿”ã™é–¢æ•° */
+  int (*hash)();    /* ãƒãƒƒã‚·ãƒ¥é–¢æ•° */
 };
 
-/* num_bins = 5, num_entries = 3 ¤Ê¤ë struct st_table_entry **bins ¤ÎÎã
- * ("¢ª"¤Ï¥İ¥¤¥ó¥¿, NULL¤Ï¥İ¥¤¥ó¥¿¤Î»Ø¤·¼¨¤¹Àè¤¬Â¸ºß¤·¤Ê¤¤¤³¤È¤òÉ½¤¹)
+/* num_bins = 5, num_entries = 3 ãªã‚‹ struct st_table_entry **bins ã®ä¾‹
+ * ("â†’"ã¯ãƒã‚¤ãƒ³ã‚¿, NULLã¯ãƒã‚¤ãƒ³ã‚¿ã®æŒ‡ã—ç¤ºã™å…ˆãŒå­˜åœ¨ã—ãªã„ã“ã¨ã‚’è¡¨ã™)
  *
- *  bins[0]¢ª(st_table_entry)¢ª(st_table_entry)
- *  bins[1]¢ª NULL
- *  bins[2]¢ª(st_table_entry)
- *  bins[3]¢ª NULL
- *  bins[4]¢ª NULL
+ *  bins[0]â†’(st_table_entry)â†’(st_table_entry)
+ *  bins[1]â†’ NULL
+ *  bins[2]â†’(st_table_entry)
+ *  bins[3]â†’ NULL
+ *  bins[4]â†’ NULL
  */
 struct st_table {
   struct st_hash_type *type;
-  int num_bins; /* ¥Ï¥Ã¥·¥åÉ½¤Î¥µ¥¤¥º(¥¹¥í¥Ã¥È¿ô) */
-  int num_entries; /* ¥Ï¥Ã¥·¥åÉ½¤ËÊü¤ê¹ş¤Ş¤ì¤¿Í×ÁÇ¤Î¸Ä¿ô
-                      (³Æ¥¹¥í¥Ã¥È¤ÏÆ±°ì¤Î¥Ï¥Ã¥·¥åÃÍ¤ò»ı¤ÄÍ×ÁÇ¤ò³ÊÇ¼¤¹¤ë(Linked)¥ê¥¹¥È¹½Â¤(struct st_table_entry *)¤ò»ı¤Á¡¢
-                       Æ±¤¸¥ê¥¹¥ÈÆâ¤ËÊü¤ê¹ş¤Ş¤ì¤¿³ÆÍ×ÁÇ¤ÏÊÌ¸Ä¤Ë¥«¥¦¥ó¥È¤¹¤ë) */
-  struct st_table_entry **bins; /* ¥Á¥§¥¤¥óË¡¤Ë´ğ¤Å¤¯¥Ï¥Ã¥·¥åÉ½ËÜÂÎ */
+  int num_bins; /* ãƒãƒƒã‚·ãƒ¥è¡¨ã®ã‚µã‚¤ã‚º(ã‚¹ãƒ­ãƒƒãƒˆæ•°) */
+  int num_entries; /* ãƒãƒƒã‚·ãƒ¥è¡¨ã«æ”¾ã‚Šè¾¼ã¾ã‚ŒãŸè¦ç´ ã®å€‹æ•°
+                      (å„ã‚¹ãƒ­ãƒƒãƒˆã¯åŒä¸€ã®ãƒãƒƒã‚·ãƒ¥å€¤ã‚’æŒã¤è¦ç´ ã‚’æ ¼ç´ã™ã‚‹(Linked)ãƒªã‚¹ãƒˆæ§‹é€ (struct st_table_entry *)ã‚’æŒã¡ã€
+                       åŒã˜ãƒªã‚¹ãƒˆå†…ã«æ”¾ã‚Šè¾¼ã¾ã‚ŒãŸå„è¦ç´ ã¯åˆ¥å€‹ã«ã‚«ã‚¦ãƒ³ãƒˆã™ã‚‹) */
+  struct st_table_entry **bins; /* ãƒã‚§ã‚¤ãƒ³æ³•ã«åŸºã¥ããƒãƒƒã‚·ãƒ¥è¡¨æœ¬ä½“ */
 };
 
 #define st_is_member(table,key) st_lookup(table,key,(st_data_t *)0)

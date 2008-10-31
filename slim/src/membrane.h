@@ -57,8 +57,8 @@ struct LmnMembrane {
   BOOL             is_activated;
 };
 
-/* ¤³¤Î¹½Â¤ÂÎ¤òAtom¤È¤·¤Æ°·¤¦¤³¤È¤Ç,¤³¤Î¹½Â¤ÂÎ¼«¿È¤¬
-   Head¤ÈTail¤ÎÎ¾Êı¤ÎÌòÌÜ¤ò²Ì¤¿¤·¤Æ¤¤¤ë */
+/* ã“ã®æ§‹é€ ä½“ã‚’Atomã¨ã—ã¦æ‰±ã†ã“ã¨ã§,ã“ã®æ§‹é€ ä½“è‡ªèº«ãŒ
+   Headã¨Tailã®ä¸¡æ–¹ã®å½¹ç›®ã‚’æœãŸã—ã¦ã„ã‚‹ */
 typedef struct AtomListEntry {
   LmnWord tail, head;
   struct SimpleHashtbl record;
@@ -84,11 +84,11 @@ LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr 
 LMN_EXTERN inline unsigned int lmn_mem_count_descendants(LmnMembrane *mem);
 LMN_EXTERN inline unsigned int lmn_mem_count_children(LmnMembrane *mem);
 
-/* Æ±·¿À­È½Äê */
+/* åŒå‹æ€§åˆ¤å®š */
 LMN_EXTERN BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
 
-/* ¥¢¥È¥à¤ò¥¢¥È¥à¥ê¥¹¥È¤«¤éºï½ü¤¹¤ë.
-   ¥ê¥¹¥È¤Î¤Ä¤Ê¤®ÊÑ¤¨¤À¤±¤ò¹Ô¤¦ */
+/* ã‚¢ãƒˆãƒ ã‚’ã‚¢ãƒˆãƒ ãƒªã‚¹ãƒˆã‹ã‚‰å‰Šé™¤ã™ã‚‹.
+   ãƒªã‚¹ãƒˆã®ã¤ãªãå¤‰ãˆã ã‘ã‚’è¡Œã† */
 #define REMOVE_FROM_ATOMLIST(atom)                 \
   do { \
     LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT(atom), LMN_ATOM_GET_PREV(atom)); \

@@ -52,7 +52,7 @@
 struct AtomRec {
   BOOL done;
   SimpleHashtbl args;
-  int link_num; /* °ìÏ¢¤Î¥×¥í¥­¥·¤Ë³ä¤êÅö¤Æ¤é¤ì¤¿ÈÖ¹æ, proxy only */
+  int link_num; /* ä¸€é€£ã®ãƒ—ãƒ­ã‚­ã‚·ã«å‰²ã‚Šå½“ã¦ã‚‰ã‚ŒãŸç•ªå·, proxy only */
 };
 
 struct DumpState {
@@ -101,7 +101,7 @@ static BOOL is_direct_printable(const char *s)
   return TRUE;
 }
 
-/* ht¤«¤éatom¤ËÂĞ±ş¤¹¤ëAtomRec¤ò¼èÆÀ¡£¤Ê¤±¤ì¤ĞÄÉ²Ã¤·¤Æ¤«¤éÊÖ¤¹ */
+/* htã‹ã‚‰atomã«å¯¾å¿œã™ã‚‹AtomRecã‚’å–å¾—ã€‚ãªã‘ã‚Œã°è¿½åŠ ã—ã¦ã‹ã‚‰è¿”ã™ */
 static struct AtomRec *get_atomrec(SimpleHashtbl *ht, LmnAtomPtr atom)
 {
   if (hashtbl_contains(ht, (HashKeyType)atom)) {
@@ -140,10 +140,10 @@ static void dump_link(LmnAtomPtr atom, int i, SimpleHashtbl *ht, struct DumpStat
 
   t = get_atomrec(ht, atom);
   if (hashtbl_contains(&t->args, i)) {
-    /* ¥ê¥ó¥¯Ì¾²è·è¤Ş¤Ã¤Æ¤¤¤ë */
+    /* ãƒªãƒ³ã‚¯åç”»æ±ºã¾ã£ã¦ã„ã‚‹ */
     link = hashtbl_get(&t->args, i);
   } else {
-    /* ¥ê¥ó¥¯Ì¾¤¬·è¤Ş¤Ã¤Æ¤¤¤Ê¤¤¤Î¤Ç¿·¤¿¤Ëºî¤ë */
+    /* ãƒªãƒ³ã‚¯åãŒæ±ºã¾ã£ã¦ã„ãªã„ã®ã§æ–°ãŸã«ä½œã‚‹ */
     link = s->link_num++;
     hashtbl_put(&t->args, i, link);
   }
@@ -452,7 +452,7 @@ static void lmn_dump_cell_internal(LmnMembrane *mem,
     vec_init(&pred_atoms[i], 16);
   }
 
-  /* Í¥Àè½ç°Ì¤Ë±ş¤¸¤Æµ¯ÅÀ¤È¤Ê¤ë¥¢¥È¥à¤ò¿¶¤êÊ¬¤±¤ë */
+  /* å„ªå…ˆé †ä½ã«å¿œã˜ã¦èµ·ç‚¹ã¨ãªã‚‹ã‚¢ãƒˆãƒ ã‚’æŒ¯ã‚Šåˆ†ã‘ã‚‹ */
 
   for (iter = hashtbl_iterator(&mem->atomset);
        !hashtbliter_isend(&iter);
@@ -508,8 +508,8 @@ static void lmn_dump_cell_internal(LmnMembrane *mem,
       for (j = 0; j < pred_atoms[i].num; j++) {
         LmnAtomPtr atom = LMN_ATOM(vec_get(&pred_atoms[i], j));
         if (dump_toplevel_atom(atom, ht, s, indent + INDENT_INCR)) {
-          /* TODO ¥¢¥È¥à¤Î½ĞÎÏ¤Î¸å¤Ë¤Ï¾ï¤Ë ". "¤¬Æş¤Ã¤Æ¤·¤Ş¤¦.
-             ¥¢¥È¥à¤Î´Ö¤Ë ", "¤ò¶´¤ó¤ÀÊı¤¬¸«±É¤¨¤¬ÎÉ¤¤ */
+          /* TODO ã‚¢ãƒˆãƒ ã®å‡ºåŠ›ã®å¾Œã«ã¯å¸¸ã« ". "ãŒå…¥ã£ã¦ã—ã¾ã†.
+             ã‚¢ãƒˆãƒ ã®é–“ã« ", "ã‚’æŒŸã‚“ã æ–¹ãŒè¦‹æ „ãˆãŒè‰¯ã„ */
           fprintf(stdout, ". ");
           printed = TRUE;
         }
@@ -528,7 +528,7 @@ static void lmn_dump_cell_internal(LmnMembrane *mem,
         fprintf(stdout, ", ");
     }
     if (mem->child_head) {
-      /* ºÇ¸å¤ÎËì¤Î¸å¤Ë ". "¤ò½ĞÎÏ */
+      /* æœ€å¾Œã®è†œã®å¾Œã« ". "ã‚’å‡ºåŠ› */
       fprintf(stdout, ". ");
     }
   }
@@ -548,11 +548,11 @@ static void lmn_dump_cell_nonewline(LmnMembrane *mem)
   hashtbl_init(&ht, 128);
   lmn_dump_cell_internal(mem, &ht, &s, 0);
 
-  { /* hashtbl¤Î²òÊü */
+  { /* hashtblã®è§£æ”¾ */
     HashIterator iter;
 
-    /* ³«Êü½èÍı. º£¤Î¤È¤³¤ídata¤Ë0°Ê³°¤¬Æş¤Ã¤Æ¤¤¤¿¾ì¹ç
-       struct AtomRec¤Î¥İ¥¤¥ó¥¿¤¬³ÊÇ¼¤µ¤ì¤Æ¤¤¤ë */
+    /* é–‹æ”¾å‡¦ç†. ä»Šã®ã¨ã“ã‚dataã«0ä»¥å¤–ãŒå…¥ã£ã¦ã„ãŸå ´åˆ
+       struct AtomRecã®ãƒã‚¤ãƒ³ã‚¿ãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹ */
     for (iter = hashtbl_iterator(&ht); !hashtbliter_isend(&iter); hashtbliter_next(&iter)) {
       if (hashtbliter_entry(&iter)->data) {
         atomrec_free((struct AtomRec *)hashtbliter_entry(&iter)->data);
@@ -794,8 +794,8 @@ void lmn_dump_dot(LmnMembrane *mem)
   {
     HashIterator iter;
 
-    /* ³«Êü½èÍı. º£¤Î¤È¤³¤ídata¤Ë0°Ê³°¤¬Æş¤Ã¤Æ¤¤¤¿¾ì¹ç
-       struct AtomRec¤Î¥İ¥¤¥ó¥¿¤¬³ÊÇ¼¤µ¤ì¤Æ¤¤¤ë */
+    /* é–‹æ”¾å‡¦ç†. ä»Šã®ã¨ã“ã‚dataã«0ä»¥å¤–ãŒå…¥ã£ã¦ã„ãŸå ´åˆ
+       struct AtomRecã®ãƒã‚¤ãƒ³ã‚¿ãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹ */
     for (iter = hashtbl_iterator(&ht); !hashtbliter_isend(&iter); hashtbliter_next(&iter)) {
       if (hashtbliter_entry(&iter)->data) {
         atomrec_free((struct AtomRec *)hashtbliter_entry(&iter)->data);

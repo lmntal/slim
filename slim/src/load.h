@@ -45,7 +45,7 @@ LmnRuleSet load(FILE *in);
 LmnRuleSet load_file(char *file_name);
 void load_il_files(char *path);
 
-/* ºÇÅ¬²½¥ì¥Ù¥ë¤ÎºÇÂçÃÍ */
+/* æœ€é©åŒ–ãƒ¬ãƒ™ãƒ«ã®æœ€å¤§å€¤ */
 #define OPTIMIZE_LEVEL_MAX 3
 
 #endif /* LMN_MEMBRANE_H */

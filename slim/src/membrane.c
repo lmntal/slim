@@ -43,14 +43,14 @@
 #include "functor.h"
 #include <ctype.h>
 
-/* �롼�륻�åȤ�����ɲä��� */
+/* ルールセットを膜に追加する */
 void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
   Vector *v = &mem->rulesets;
   int i, n=vec_num(v);
 
   if (ruleset==NULL) LMN_ASSERT(FALSE);
-  /* ��ʣ����������õ���򤷤Ƥ��� */
+  /* 重複検査．線形探索をしている */
   for (i=0; i<n&&(vec_get(v, i)!=(LmnWord)ruleset); i++) ;
   if (i==n) {
     vec_push(&mem->rulesets, (LmnWord)ruleset);
@@ -66,14 +66,14 @@ void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 /*   return entry->head == (LmnAtomPtr)entry; */
 /* } */
 
-/* ���ȥ�ꥹ�Ȥ���ˤ���. */
+/* アトムリストを空にする. */
 #define EMPTY_ATOMLIST(X)                       \
   do {                                          \
     LMN_ATOM_SET_PREV((X), (X));                \
     LMN_ATOM_SET_NEXT((X), (X));                \
   } while (0)
 
-/* ���������ȥ�ꥹ�Ȥ��� */
+/* 新しいアトムリストを作る */
 static AtomListEntry *make_atomlist()
 {
   AtomListEntry *as = LMN_MALLOC(struct AtomListEntry);
@@ -83,11 +83,11 @@ static AtomListEntry *make_atomlist()
   return as;
 }
 
-/* ���ȥ�ꥹ�Ȥβ������� */
+/* アトムリストの解放処理 */
 static void free_atomlist(AtomListEntry *as)
 {
-  /* lmn_mem_move_cells�ǥ��ȥ�ꥹ�Ȥκ����Ѥ�ԤäƤ��ƥݥ��󥿤�NLL
-     �ˤʤ��礬����Τǡ�������Ԥ�ɬ�פ����롣*/
+  /* lmn_mem_move_cellsでアトムリスとの再利用を行っていてポインタがNLL
+     になる場合があるので、検査を行う必要がある。*/
   if (as) {
     hashtbl_destroy(&as->record);
     LMN_FREE(as);
@@ -100,7 +100,7 @@ void mem_push_symbol_atom(LmnMembrane *mem, LmnAtomPtr atom)
   LmnFunctor f = LMN_ATOM_GET_FUNCTOR(atom);
 
   as = (AtomListEntry *)hashtbl_get_default(&mem->atomset, f, 0);
-  if (!as) { /* ������˽��ƥ��ȥ�atom��PUSH���줿��� */
+  if (!as) { /* 本膜内に初めてアトムatomがPUSHされた場合 */
     as = make_atomlist();
     hashtbl_put(&mem->atomset, (HashKeyType)f, (HashValueType)as);
   }
@@ -176,11 +176,11 @@ LmnMembrane *lmn_mem_make(void)
 
   memset(mem, 0, sizeof(LmnMembrane)); /* set all data to 0 */
   vec_init(&mem->rulesets, 1);
-  hashtbl_init(&mem->atomset, 16); /* EFFICIENCY: ����������Ϥ����Ĥ�Ŭ���� */
+  hashtbl_init(&mem->atomset, 16); /* EFFICIENCY: 初期サイズはいくつが適当？ */
   return mem;
 }
 
-/* ����Υץ������Ȼ�����˴����� */
+/* 膜内のプロセスと子膜を破棄する */
 void lmn_mem_drop(LmnMembrane *mem)
 {
   HashIterator iter;
@@ -212,7 +212,7 @@ void lmn_mem_drop(LmnMembrane *mem)
   mem->atom_num = 0;
 }
 
-/* ��mem�β�����Ԥ� */
+/* 膜memの解放を行う */
 void lmn_mem_free(LmnMembrane *mem)
 {
   HashIterator iter;
@@ -276,8 +276,8 @@ BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count)
 }
 
 /* return TRUE if # of freelinks in mem is equal to count */
-/* EFFICIENCY: �ꥹ�Ȥ򤿤ɤäƿ�������Ƥ���Τ�O(n)��
-   count������ۤ��礭���ʤ�ʤ��������Ϥʤ��� */
+/* EFFICIENCY: リストをたどって数を数えているのでO(n)。
+   countがそれほど大きくならなければ問題はないが */
 BOOL lmn_mem_nfreelinks(LmnMembrane *mem, unsigned int count)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
@@ -308,7 +308,7 @@ void lmn_mem_link_data_atoms(LmnMembrane *mem,
   mem_push_symbol_atom(mem, ap);
 }
 
-/* atom1, atom2�򥷥�ܥ륢�ȥ�˸��ꤷ�� unify link */
+/* atom1, atom2をシンボルアトムに限定した unify link */
 void lmn_mem_unify_symbol_atom_args(LmnAtomPtr atom1,
                                     int pos1,
                                     LmnAtomPtr atom2,
@@ -325,7 +325,7 @@ void lmn_mem_unify_symbol_atom_args(LmnAtomPtr atom1,
   LMN_ATOM_SET_ATTR(ap1, attr1, attr2);
 }
 
-/* atom1, atom2�ϥ���ܥ륢�ȥ�ΤϤ� */
+/* atom1, atom2はシンボルアトムのはず */
 void lmn_mem_unify_atom_args(LmnMembrane *mem,
                    LmnAtomPtr atom1,
                    int pos1,
@@ -356,7 +356,7 @@ void lmn_mem_unify_atom_args(LmnMembrane *mem,
   }
 }
 
-/* ����ܥ륢�ȥ�˸��ꤷ��newlink */
+/* シンボルアトムに限定したnewlink */
 void lmn_newlink_in_symbols(LmnAtomPtr atom0,
                             int pos0,
                             LmnAtomPtr atom1,
@@ -368,8 +368,8 @@ void lmn_newlink_in_symbols(LmnAtomPtr atom0,
   LMN_ATOM_SET_ATTR(atom1, pos1, pos0);
 }
 
-/* ����ܥ륢�ȥ�atom0��, ����ܥ�or�ǡ������ȥ� atom1 �δ֤˥�󥯤�ĥ��
-   ���Υ����ɤ���ʣ���Ƹ��줿�Τ�,�ؿ���ʬ�䤷�� */
+/* シンボルアトムatom0と, シンボルorデータアトム atom1 の間にリンクを張る
+   このコードが重複して現れたので,関数に分割した */
 static inline void newlink_symbol_and_something(LmnAtomPtr atom0,
                                                 int pos,
                                                 LmnWord atom1,
@@ -418,8 +418,8 @@ void lmn_mem_relink_atom_args(LmnMembrane *mem,
                               LmnLinkAttr attr1,
                               int pos1)
 {
-  /* TODO: relink�Ǥ�atom0,atom1���ǡ����ˤʤ뤳�ȤϤʤ��Ϥ�
-           ���Τ��Ȥ��ǧ���� */
+  /* TODO: relinkではatom0,atom1がデータになることはないはず
+           このことを確認する */
   LMN_ASSERT(!LMN_ATTR_IS_DATA(attr0) &&
              !LMN_ATTR_IS_DATA(attr1));
 
@@ -451,12 +451,12 @@ void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
         }
       }
 
-      if (destent) { /* Ʊ���ե��󥯥��Υ��ȥ�ꥹ�Ȥ������� */
+      if (destent) { /* 同じファンクタのアトムリストがある場合 */
         append_atomlist(destent, srcent);
       }
       else {
-        /* ���ȥ�ꥹ�Ȥ�����Ѥ���dest�˰ܤ� */
-        hashtbliter_entry(&iter)->data = 0; /* free����ʤ��褦�� NULL �ˤ��� */
+        /* アトムリストを再利用してdestに移す */
+        hashtbliter_entry(&iter)->data = 0; /* freeされないように NULL にする */
         hashtbl_put(&destmem->atomset, (HashKeyType)f, (HashValueType)srcent);
       }
     }
@@ -486,11 +486,11 @@ static inline void alter_functor(LmnMembrane *mem, LmnAtomPtr atom, LmnFunctor f
   mem_push_symbol_atom(mem, atom);
 }
 
-/* cf. Java������ */
+/* cf. Java処理系 */
 /*
  * TODO:
- * �ȤƤ����Ψ�ʤΤǡ�������REMOVE������Ȥä��������᤹��
- * HashSet��Ȥ��褦�ˤ���
+ * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
+ * HashSetを使うようにする
  */
 void lmn_mem_remove_proxies(LmnMembrane *mem)
 {
@@ -510,7 +510,7 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
         opxy != lmn_atomlist_end(ent);
         opxy = LMN_ATOM_GET_NEXT(opxy)) {
       LmnAtomPtr a0 = LMN_ATOM(LMN_ATOM_GET_LINK(opxy, 0));
-      if (LMN_PROXY_GET_MEM(a0)->parent != mem && /* opxy�Υ���褬����Ǥʤ���� */
+      if (LMN_PROXY_GET_MEM(a0)->parent != mem && /* opxyのリンク先が子膜でない場合 */
           !LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(opxy, 1))) {
         LmnAtomPtr a1 = LMN_ATOM(LMN_ATOM_GET_LINK(opxy, 1));
         LmnFunctor f1 = LMN_ATOM_GET_FUNCTOR(a1);
@@ -564,11 +564,11 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
   vec_destroy(&change_list);
 }
 
-/* cf. Java������ */
+/* cf. Java処理系 */
 /*
  * TODO:
- * �ȤƤ����Ψ�ʤΤǡ�������REMOVE������Ȥä��������᤹��
- * HashSet��Ȥ��褦�ˤ���
+ * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
+ * HashSetを使うようにする
  */
 void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
 {
@@ -582,7 +582,7 @@ void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
   if (!ent) return;
 
   vec_init(&remove_list, 16);
-  vec_init(&change_list, 16); /* inside proxy �ˤ��륢�ȥ� */
+  vec_init(&change_list, 16); /* inside proxy にするアトム */
 
   for (star = atomlist_head(ent);
       star != lmn_atomlist_end(ent);
@@ -631,11 +631,11 @@ void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
   vec_destroy(&remove_list);
 }
 
-/* cf. Java������ */
+/* cf. Java処理系 */
 /*
  * TODO:
- * �ȤƤ����Ψ�ʤΤǡ�������REMOVE������Ȥä��������᤹��
- * HashSet��Ȥ��褦�ˤ���
+ * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
+ * HashSetを使うようにする
  */
 void lmn_mem_remove_temporary_proxies(LmnMembrane *mem)
 {
@@ -668,11 +668,11 @@ void lmn_mem_remove_temporary_proxies(LmnMembrane *mem)
   vec_destroy(&remove_list);
 }
 
-/* cf. Java������ */
+/* cf. Java処理系 */
 /*
  * TODO:
- * �ȤƤ����Ψ�ʤΤǡ�������REMOVE������Ȥä��������᤹��
- * HashSet��Ȥ��褦�ˤ���
+ * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
+ * HashSetを使うようにする
  */
 void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
 {
@@ -719,10 +719,10 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
   vec_destroy(&remove_list);
 }
 
-/* mem -> atoms ��hashtbl��old atom -> newatom��hashtbl��Ĥ�����Ǥ���.
-   �����ɬ����˥��ԡ����롣������,������ȡ���Ĥ�hashtbl���礭���ʤäƤ��ޤ�
-   ���꤬����
-   071204 oldatom->newatom��hashtbl��Ĥ����礷��
+/* mem -> atoms のhashtblはold atom -> newatomのhashtbl一つに統合できる.
+   子膜を必ず先にコピーする。しかし,これだと、一つのhashtblが大きくなってしまう
+   問題がある
+   071204 oldatom->newatomのhashtbl一つに統合した
 */
 SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 {
@@ -781,14 +781,14 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
         if (f == LMN_OUT_PROXY_FUNCTOR) {
           LmnAtomPtr srcinside = LMN_ATOM(LMN_ATOM_GET_LINK(srcatom, 0));
           LmnAtomPtr newinside = LMN_ATOM(hashtbl_get(atoms, (HashKeyType)srcinside));
-          /* ɬ������ˤĤʤ��äƤ���Ϥ� */
+          /* 必ず子膜につながっているはず */
           LMN_ASSERT(LMN_ATOM_GET_FUNCTOR(srcinside) == LMN_IN_PROXY_FUNCTOR &&
               LMN_PROXY_GET_MEM(srcinside)->parent == LMN_PROXY_GET_MEM(srcatom));
           lmn_newlink_in_symbols(newatom, 0, newinside, 0);
         }
       }
 
-      /* ��������³ */
+      /* リンク先と接続 */
       for (i = start; i < end; i++) {
         LmnLinkAttr attr = LMN_ATOM_GET_ATTR(srcatom, i);
         if(!(LMN_INT_ATTR == attr) && hashtbl_contains(atoms, LMN_ATOM_GET_LINK(srcatom, i))) {
@@ -797,7 +797,7 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
           LmnWord newargatom = lmn_copy_atom(LMN_ATOM_GET_LINK(srcatom, i), attr);
           newlink_symbol_and_something(newatom, i, newargatom, attr);
           if (!(LMN_INT_ATTR == attr)) {
-            /* TODO: �ǡ������ȥ�ΰ������������� */
+            /* TODO: データアトムの扱いが怪しい？ */
             /*hashtbl_put(atoms, LMN_ATOM_GET_LINK(srcatom, i), newargatom);*/
           }
         }
@@ -834,14 +834,14 @@ inline unsigned int lmn_mem_count_children(LmnMembrane *mem) {
   return n;
 }
 
-/* ���Ʊ����Ƚ�� �������� */
+/* 膜の同型性判定 ここから */
 /*----------------------------------------------------------------------*/
 typedef struct AtomVecData {
   LmnFunctor fid;
   Vector *atom_ptrs;
 } atomvec_data;
 
-/* ��¤��'atomvec_data'�˴ط�������꡼���ΰ��������� */
+/* 構造体'atomvec_data'に関係するメモリーの領域を解放する */
 static void free_atomvec_data(Vector *vec) {
   unsigned int i;
 
@@ -854,23 +854,23 @@ static void free_atomvec_data(Vector *vec) {
   vec_free(vec);
 }
 
-/* ����ľ���Τ��٤ƤΥ��ȥ�(��¹����Υ��ȥ�ϴޤޤʤ�)�ˤĤ��ơ��ޤ��ե��󥯥����Ȥ˥��롼��ʬ����Ԥ���
- * ���롼��ʬ���ˤϹ�¤��'atomvec_data'���Ѥ��롣��¤��'atomvec_data'����������륢�ȥ�Υե��󥯥���ID(= 0,1,2,...)�ȡ�
- * ���Υե��󥯥�����������ȥ�Υ��ɥ쥹���������٥�����'atom_ptrs'�Ȥ����Ȥ��ƻ��ġ�
- * ����ľ���Τ��٤ƤΥ��ȥ�Υ��ɥ쥹�򡢤��줾���б����빽¤��'atomvec_data'�����������
- * ���ι�¤�Τ��ܥ᥽�åɤ�����ͤȤʤ�٥����������ǤȤ��Ƴ�Ǽ���Ƥ�����
+/* 本膜直下のすべてのアトム(子孫膜内のアトムは含まない)について、まずファンクタごとにグループ分けを行う。
+ * グループ分けには構造体'atomvec_data'を用いる。構造体'atomvec_data'は整理されるアトムのファンクタのID(= 0,1,2,...)と、
+ * そのファンクタを持つ全アトムのアドレスを管理するベクター'atom_ptrs'とを情報として持つ。
+ * 本膜直下のすべてのアトムのアドレスを、それぞれ対応する構造体'atomvec_data'内に整理し、
+ * この構造体を本メソッドの戻り値となるベクターの要素として格納していく。
  *
- * ��Ʊ����Ƚ��Υ��르�ꥺ��Ǥϡ��־����ɤΥ��ȥ�פ���ޥå��󥰤򳫻ϤǤ���褦�ˤ��뤳�Ȥ�
- * ��ɸ�Ȥ��Ƥ��뤿�ᡢ������¤�Τ����������٥������ˤĤ��ơ���¤����Υ��ȥ������¿����פ˥����Ȥ��Ƥ��ɬ�פ����롣
- * �����ǡ�¿����פȤ�����ͳ�ϡ���Υ��ƥåפ��ܥ٥�������(���Ū��)POP���ʤ��饢�ȥ�Υ��ɥ쥹�������Ф����Ȥ�
- * �ʤ뤿��Ǥ��롣(�����ɤΥ��ȥफ����Ф���뤳�Ȥˤʤ뤳�Ȥ����դ���) */
+ * 本同型性判定のアルゴリズムでは、「少数派のアトム」からマッチングを開始できるようにすることを
+ * 目標としているため、先程構造体を整理したベクターについて、構造体内のアトム数が「多い順」にソートしてやる必要がある。
+ * ここで「多い順」とした理由は、後のステップで本ベクターを(結果的に)POPしながらアトムのアドレス情報を取り出すことに
+ * なるためである。(少数派のアトムから取り出されることになることに注意せよ) */
 static Vector *lmn_mem_mk_matching_vec(LmnMembrane *mem) {
   Vector *vec, *v_tmp;
   HashIterator atom_iter;
   LmnFunctor f;
   LmnAtomPtr a;
   AtomListEntry *ent;
-  unsigned int anum_max; /* �����¸�ߤ��륢�ȥ��ե��󥯥���˥��롼�ײ������ݤΡ�������礭���κ����� */
+  unsigned int anum_max; /* 膜内に存在するアトムをファンクタ毎にグループ化した際の、集合の大きさの最大値 */
   int i, j;
 
   vec = vec_make(1);
@@ -888,8 +888,8 @@ static Vector *lmn_mem_mk_matching_vec(LmnMembrane *mem) {
     ad->atom_ptrs = vec_make(1);
     vec_push(vec, (LmnWord)ad);
 
-    /* ����ľ���Υ��ȥ���⡢�ե��󥯥���f�Ǥ����ΤΥ��ɥ쥹��٥�����atom_ptrs����������롣
-     * ��ǥ����Ȥ���ط��ǡ��Ǥ�¿���Υ��ȥ�Υ��ɥ쥹��������빽¤��(atomvec_data)��Υ��ȥ������Ƥ��롣 */
+    /* 本膜直下のアトムの内、ファンクタがfであるもののアドレスをベクターatom_ptrs内に整理する。
+     * 後でソートする関係で、最も多くのアトムのアドレスを管理する構造体(atomvec_data)内のアトム数を求めている。 */
     for (a = atomlist_head(ent);
          a != lmn_atomlist_end(ent);
          a = LMN_ATOM_GET_NEXT(a)) {
@@ -898,8 +898,8 @@ static Vector *lmn_mem_mk_matching_vec(LmnMembrane *mem) {
         anum_max = vec_num(((atomvec_data *)vec_peek(vec))->atom_ptrs);
       }
     }
-    /* �ե��󥯥�f����ĥ��ȥब�������1�Ĥ�¸�ߤ��ʤ���硢���Υե��󥯥��Τ���˳䤤�����꡼���ΰ��������롣
-     * ������դ�ȥ���꡼����������Τ�����!! */
+    /* ファンクタfを持つアトムが本膜内に1つも存在しない場合、このファンクタのために割いたメモリーの領域を解放する。
+     * これを怠るとメモリリークが起こるので注意!! */
     if (vec_peek(vec) && vec_is_empty(((atomvec_data *)vec_peek(vec))->atom_ptrs)) {
       vec_free(((atomvec_data *)vec_peek(vec))->atom_ptrs);
       LMN_FREE((atomvec_data *)vec_pop(vec));
@@ -918,7 +918,7 @@ static Vector *lmn_mem_mk_matching_vec(LmnMembrane *mem) {
       }
     }
     vec_clear(vec);
-    /* ��¤����Υ��ȥ������¿����פ˥����� */
+    /* 構造体内のアトム数が「多い順」にソート */
     while (!vec_is_empty(v_tmp)) {
       vec_push(vec, vec_pop(v_tmp));
     }
@@ -928,9 +928,9 @@ static Vector *lmn_mem_mk_matching_vec(LmnMembrane *mem) {
   return vec;
 }
 
-/* �������ľ���Τ��٤Ƥλ���ؤΥݥ��󥿤��ݻ�����٥�����vec��
- * ��¹�����¿����˥����Ȥ��롣�����Ȥ��줿vec������Ǥϸ�Υ��ƥåפ�
- * POP����뤿�ᡢ��¹����ξ��ʤ����줫���˥ޥå��󥰤��оݤȤʤ뤳�Ȥˤʤ롣 */
+/* ある膜の直下のすべての子膜へのポインタを保持するベクターvecを
+ * 子孫膜数の多い順にソートする。ソートされたvec内の要素は後のステップで
+ * POPされるため、子孫膜数の少ない子膜から順にマッチングの対象となることになる。 */
 static void lmn_mem_mk_sorted_children(Vector *vec) {
   unsigned int num_descendants_max;
   int i, n;
@@ -959,34 +959,34 @@ static void lmn_mem_mk_sorted_children(Vector *vec) {
   vec_free(v_mems_tmp);
 }
 
-/* ���ȥ�a1��a2�����Ȥ���ʬ��(= ���륢�ȥफ���󥯤ˤ�ä�ľ��é�뤳�ȤΤǤ���ץ������ν���)
- * �ι�¤���ߤ��˰��פ��뤫�ݤ���Ƚ�ꤹ�롣Ʊ����Ƚ���Ԥ���Ǥ��濴Ū����ô�äƤ��롣
- * ξʬ�ҹ�¤�������˰��פ�����ϡ���������̲ᤷ�������ȥ�(i.e. ʬ����������ȥ�)�Υ��ɥ쥹��
- * �����ѤΥ٥�����(v_log1��v_log2)����¸����롣
+/* アトムa1、a2を起点とする分子(= あるアトムからリンクによって直接辿ることのできるプロセスの集合)
+ * の構造が互いに一致するか否かを判定する。同型性判定を行う上での中心的役割を担っている。
+ * 両分子構造が完全に一致する場合は、走査中に通過した全アトム(i.e. 分子内の全アトム)のアドレスが
+ * ログ用のベクター(v_log1、v_log2)に保存される。
  *
- * �ʤ�����5������ 'current_depth' �ϡ�Ʊ����Ƚ���оݤȤʤäƤ�����ο���ˤޤ�
- * �������ڤ֤Τ��ɤ�����Τ�Ρ�������Υץ������������оݤ��ܤ�ݤ� current_depth ��1���ä���
- * �դ˿�����Υץ������˰ܤ�ݤ�1�������롣Ʊ����Ƚ���оݤ���ο�����0�ˤʤäƤ��뤿�ᡢ
- * 0̤���ο�����¸�ߤ���ץ��������������ʤ��褦�ˤ��롣 */
+ * なお、第5引数の 'current_depth' は、同型性判定対象となっている膜の親膜にまで
+ * 走査が及ぶのを防ぐためのもの。子膜内のプロセスに走査対象が移る際に current_depth は1増加し、
+ * 逆に親膜内のプロセスに移る際は1減少する。同型性判定対象の膜の深さは0になっているため、
+ * 0未満の深さに存在するプロセスは走査しないようにする。 */
 static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Vector *v_log2, int current_depth) {
   LmnAtomPtr l1, l2;
   LmnLinkAttr attr1, attr2;
   unsigned int arity;
   int i;
-  BOOL ret_next_step; /* a1, a2��ľ����³����Ƥ��륢�ȥ���Ф��ƺƵ�Ū���ܥ᥽�åɤ�Ŭ�Ѥ��뤿��˻��� */
+  BOOL ret_next_step; /* a1, a2と直接接続されているアトムに対して再帰的に本メソッドを適用するために使用 */
   int next_depth;
 
   vec_push(v_log1, (LmnWord)a1);
   vec_push(v_log2, (LmnWord)a2);
 
-  /* a1��a2�Υե��󥯥������פ��뤳�Ȥ��ǧ(�԰��פξ���̵���˵����֤�) */
+  /* a1、a2のファンクタが一致することを確認(不一致の場合は無条件に偽を返す) */
   if (LMN_ATOM_GET_FUNCTOR(a1) != LMN_ATOM_GET_FUNCTOR(a2)) {
     return FALSE;
   }
 
   arity = LMN_ATOM_GET_ARITY(a1);
   if (LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a1))) {
-    /* �ץ��������ȥ����3�����Ͻ�°��ؤΥݥ��󥿤ʤΤǤ���ʬ����� */
+    /* プロキシアトムの第3引数は所属膜へのポインタなのでその分を除外 */
     --arity;
   }
   for (i = 0; i < arity; ++i) {
@@ -994,14 +994,14 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
     attr2 = LMN_ATOM_GET_ATTR(a2, i);
 
     if (!LMN_ATTR_IS_DATA(attr1) && !LMN_ATTR_IS_DATA(attr2)) {
-      /* ���ȥ�a1��a2����i��󥯤���³�褬���˥���ܥ�(or �ץ�����)���ȥ�Υ�����
-       * (���ξ��Ϥޤ���ξ���ȥ����i��󥯤���³�襢�ȥ�ˤ����벿���ܤΥ�󥯤���������Τ����ǧ����
-       * ���줬���פ��뤳�Ȥ��ǧ����(�԰��פξ��ϵ����֤�)��³���ơ���³�襷��ܥ�(or �ץ�����)���ȥ��
-       * �����������줬�������¸�ߤ��뤫�ɤ���������å���������ˤޤ�¸�ߤ��ʤ������Υ��ȥ�Ǥ�����ϡ�
-       * ������Ф��ƺƵ�Ū���ܥ᥽�åɤ�Ŭ�Ѥ���a1�����a2�����Ȥ���ʬ�����ΤΥޥå��󥰤�Ԥ�) */
+      /* アトムa1、a2の第iリンクの接続先が共にシンボル(or プロキシ)アトムのケース
+       * (この場合はまず、両アトムの第iリンクが接続先アトムにおける何本目のリンクに相当するのかを確認し、
+       * これが一致することを確認する(不一致の場合は偽を返す)。続いて、接続先シンボル(or プロキシ)アトムを
+       * 取得し、これがログ上に存在するかどうかをチェック。ログ上にまだ存在しない新規のアトムである場合は、
+       * これに対して再帰的に本メソッドを適用し、a1およびa2を起点とする分子全体のマッチングを行う) */
       if (attr1 != attr2) {
           /* {c(X,Y), c(X,Y)} vs. {c(X,Y), c(Y,X)}
-            * ����Τ褦�ˡ�2���ȥ�֤Υ�󥯤���³������ۤʤäƤ������FALSE���֤� */
+            * の例のように、2アトム間のリンクの接続順序が異なっている場合はFALSEを返す */
         return FALSE;
       }
       l1 = (LmnAtomPtr)LMN_ATOM_GET_LINK(a1, i);
@@ -1009,11 +1009,11 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
 
       if ((vec_contains(v_log1, (LmnWord)l1) && !vec_contains(v_log2, (LmnWord)l2))
         || (!vec_contains(v_log1, (LmnWord)l1) && vec_contains(v_log2, (LmnWord)l2))) {
-         /* ��������ˤ����Ƥϡ�����ޤǤΥȥ졼�����̲�ѤߤΥ��ȥ�˴ԤäƤ��� (i.e. ʬ����˴ľ��ι�¤(= ��ϩ)��¸�ߤ���)
-          * ��ΤΡ��⤦��������Ǥ�Ʊ�ͤ���ϩ����ǧ�Ǥ�������¤���԰��פ�ǧ���줿����˵����֤� */
+         /* 片方の膜においては、これまでのトレースで通過済みのアトムに還ってきた (i.e. 分子内に環状の構造(= 閉路)が存在した)
+          * ものの、もう片方の膜では同様の閉路が確認できず、構造の不一致が認められたために偽を返す */
         return FALSE;
       } else if (vec_contains(v_log1, (LmnWord)l1) && vec_contains(v_log2, (LmnWord)l2)) {
-         /* ��1��2����б�����ʬ�Ҥ�������ϩ������������ϡ���(i+1)��󥯤���³��Υ����å��˰ܤ� */
+         /* 膜1、2内の対応する分子が共に閉路を形成した場合は、第(i+1)リンクの接続先のチェックに移る */
         continue;
       }
 
@@ -1025,8 +1025,8 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
         next_depth = current_depth;
       }
       if (next_depth < 0) {
-        /* ���������оݥ��ȥब���⤽���Ʊ����Ƚ���оݤȤʤäƤ�����ο���ʾ�γ��ؤ�
-         * ��°���Ƥ��뤿�ᡢ�����̵�뤷�Ƽ��Υ��ȥ�������оݤ�����ľ�� */
+        /* 次の走査対象アトムがそもそもの同型性判定対象となっていた膜の親膜以上の階層に
+         * 所属しているため、これを無視して次のアトムを走査対象に選び直す */
         continue;
       }
 
@@ -1036,15 +1036,15 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
         return FALSE;
       }
     } else if (LMN_ATTR_IS_DATA(attr1) && LMN_ATTR_IS_DATA(attr2)) {
-      /* ���ȥ�a1��a2����i��󥯤���³�褬���˥ǡ������ȥ�Υ�����
-       * (���ξ�����³��ǡ������ȥ���ͤ���Ӥ����ߤ�����������м��Υ��(i.e. ��(i+1)���)����³�襢�ȥ�
-       * ����Ӻ�Ȥ˰ܤꡢ�������ʤ����ϵ����֤�) */
+      /* アトムa1、a2の第iリンクの接続先が共にデータアトムのケース
+       * (この場合は接続先データアトムの値を比較し、互いに等しければ次のリンク(i.e. 第(i+1)リンク)の接続先アトム
+       * の比較作業に移り、等しくない場合は偽を返す) */
       if (LMN_ATOM_GET_LINK(a1, i) != LMN_ATOM_GET_LINK(a2, i)) {
         return FALSE;
       }
     } else {
-      /* ���ȥ�a1��a2����i��󥯤���³�襢�ȥ�μ��ब�ߤ��˰��פ��ʤ�������
-       * (���ξ���̵���˵����֤�) */
+      /* アトムa1、a2の第iリンクの接続先アトムの種類が互いに一致しないケース
+       * (この場合は無条件に偽を返す) */
       return FALSE;
     }
   }
@@ -1053,12 +1053,12 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
 }
 
 static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current_depth) {
-  Vector *atomvec_mem1, *atomvec_mem2; /* atomvec_memX (X = 1,2)�ϡ���memX ľ���Υ��ȥ�ξ�����ݻ�����Vector��
-                                              * ����Υ��ȥ��ե��󥯥�����������������ɤΥ��ȥफ��ޥå��󥰤򳫻ϤǤ���褦�ˤ�����Ū�ǻ��Ѥ��롣 */
+  Vector *atomvec_mem1, *atomvec_mem2; /* atomvec_memX (X = 1,2)は、膜memX 直下のアトムの情報を保持するVector。
+                                              * 膜内のアトムをファンクタ毎に整理し、少数派のアトムからマッチングを開始できるようにする目的で使用する。 */
   BOOL is_the_same_functor;
   int i, j;
 
-  /* Step1. ξ��λ�¹��θĿ���ξ����Υ��ȥ�θĿ�����̾���ߤ������������Ȥ��ǧ */
+  /* Step1. 両膜の子孫膜の個数、両膜内のアトムの個数、膜名が互いに等しいことを確認 */
   if (lmn_mem_count_descendants(mem1) != lmn_mem_count_descendants(mem2)
       || mem1->atom_num != mem2->atom_num
       || mem1->name != mem2->name) return FALSE;
@@ -1067,12 +1067,12 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
     atomvec_mem1 = lmn_mem_mk_matching_vec(mem1);
     atomvec_mem2 = lmn_mem_mk_matching_vec(mem2);
 
-    /* Step2. ξ����Υ��ȥ�μ�������ߤ������������Ȥ��ǧ */
+    /* Step2. 両膜内のアトムの種類数が互いに等しいことを確認 */
     if (vec_num(atomvec_mem1) != vec_num(atomvec_mem2)) {
       free_atomvec_data(atomvec_mem1); free_atomvec_data(atomvec_mem2);
       return FALSE;
     }
-    /* Step3. ξ����˴ޤޤ�륢�ȥ�Υե��󥯥�����ӸĿ����ߤ������������Ȥ��ǧ */
+    /* Step3. 両膜内に含まれるアトムのファンクタおよび個数が互いに等しいことを確認 */
     for (i = 0; i < vec_num(atomvec_mem1); ++i) {
       is_the_same_functor = FALSE;
       for (j = 0; j < vec_num(atomvec_mem2); ++j) {
@@ -1093,25 +1093,25 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
       }
     }
   }
-  /* �����ʳ���ξ��ϸߤ������������λ�¹��������ξ����Υ��ȥ�Υե��󥯥��μ���
-   * ����Ӥ��θĿ��������˰��פ��뤳�Ȥ���ǧ����Ƥ��롣
-   * (i.e. ��̤���Ʊ���Ǥʤ�(��)�פˤʤ�ʤ�С�����ˤ������󥯤���³�ط� or ��¹�줬�ۤʤäƤ��뤳�Ȥ��̣����)
-   * �ʹߡ������ɤΥ��ȥफ���˺������Ƥ��������ȥ�����Ȥ��������μ¹Ԥ˰ܤäƤ����� */
+  /* この段階で両膜は互いに等しい数の子孫膜を持ち、両膜内のアトムのファンクタの種類
+   * およびその個数が完全に一致することが確認されている。
+   * (i.e. 結果が「同型でない(偽)」になるならば、本膜におけるリンクの接続関係 or 子孫膜が異なっていることを意味する)
+   * 以降、少数派のアトムから順に根に定めていき、アトムを起点とする走査の実行に移っていく。 */
   {
     LmnAtomPtr a1, a2;
     BOOL matched;
-    BOOL has_atoms; /* ���줬���ʤ��Ȥ�1�ĤΥ���ܥ�(or �ץ�����)���ȥ����Ĥ��Ȥ�ɽ���ե饰 */
-    BOOL has_descendants; /* ���줬��¹�����Ĥ��Ȥ�ɽ���ե饰 */
-    Vector *v_log1, *v_log2; /* ��������̲ᤷ�����ȥ�Υ������������Vector */
-    Vector *v_atoms_not_checked1, *v_atoms_not_checked2; /* Ʊ������Ƚ���Ƚ�꤬�Ѥ�Ǥ��ʤ����ȥ�ν�����������Vector (�ƥ��ȥ�ؤΥݥ��󥿤���¸) */
-    Vector *v_mems_children1, *v_mems_children2; /* ����ľ���λ�����������Vector (����Vector�����ˤʤ�ޤǻ�������Ȥ���������³��) */
+    BOOL has_atoms; /* 本膜が少なくとも1つのシンボル(or プロキシ)アトムを持つことを表すフラグ */
+    BOOL has_descendants; /* 本膜が子孫膜を持つことを表すフラグ */
+    Vector *v_log1, *v_log2; /* 走査中に通過したアトムのログを管理するVector */
+    Vector *v_atoms_not_checked1, *v_atoms_not_checked2; /* 同型性の判定の判定が済んでいないアトムの集合を管理するVector (各アトムへのポインタを保存) */
+    Vector *v_mems_children1, *v_mems_children2; /* 本膜直下の子膜を管理するVector (このVectorが空になるまで子膜を起点とする走査が続く) */
     LmnMembrane *m;
     int n;
     unsigned int length;
 
     /* init */
     {
-      /* mem1, mem2ľ���λ��������������θĿ������������Ȥ��ǧ */
+      /* mem1, mem2直下の子膜を取得し、その個数が等しいことを確認 */
       {
         length = lmn_mem_count_children(mem1);
         if (length) {
@@ -1132,7 +1132,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           for (m = mem2->child_head; m; m = m->next) {
             vec_push(v_mems_children2, (LmnWord)m);
           }
-          /* ����ľ���λ�������ߤ��˰��פ��ʤ�����ľ���˵����֤� */
+          /* 本膜直下の子膜数が互いに一致しない場合は直ちに偽を返す */
           if (vec_num(v_mems_children1) != vec_num(v_mems_children2)) {
             free_atomvec_data(atomvec_mem1); free_atomvec_data(atomvec_mem2);
             vec_free(v_mems_children1); vec_free(v_mems_children2);
@@ -1141,7 +1141,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           }
         }
       }
-      /* �ʹߡ�̤�����������ѥ��ȥ���������vector�ν���� */
+      /* 以降、未走査／走査済アトムを管理するvectorの初期化 */
       length = mem1->atom_num;
       assert(length == mem2->atom_num);
       if (length) {
@@ -1158,10 +1158,10 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
 
         assert(vec_num(atomvec_mem1) == vec_num(atomvec_mem2));
 
-        /* �٥�����atomvec_mem{1,2}�ˤ�¿���ɤΥ��ȥफ�������ꤳ�ޤ�Ƥ��뤿�ᡢ
-         * �٥�����v_atoms_not_checked{1,2}�ˤ�¿���ɤΥ��ȥ�Υݥ��󥿤�����
-         * ���ꤳ�ޤ�Ƥ������Ȥˤʤ롣�椨�ˡ�v_atoms_not_checked{1,2}��POP���Ƥ���
-         * ���ȤǾ����ɤΥ��ȥफ���˼��Ф��Ƥ������Ȥ��Ǥ���褦�ˤʤ롣 */
+        /* ベクターatomvec_mem{1,2}には多数派のアトムから順に放りこまれているため、
+         * ベクターv_atoms_not_checked{1,2}には多数派のアトムのポインタから順に
+         * 放りこまれていくことになる。ゆえに、v_atoms_not_checked{1,2}をPOPしていく
+         * ことで少数派のアトムから順に取り出していくことができるようになる。 */
         for (i = 0; i < vec_num(atomvec_mem1); ++i) {
           for (n = 0; n < vec_num(((atomvec_data *)vec_get(atomvec_mem1, i))->atom_ptrs); ++n) {
             vec_push(v_atoms_not_checked1,
@@ -1175,39 +1175,39 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
       }
     }
 
-    /* �ʹ�atomvec_mem1/2�ϻ��Ѥ��ʤ����ᤳ���ʳ��ǥ��꡼��������Ƥ��� */
+    /* 以降atomvec_mem1/2は使用しないためこの段階でメモリーを解放しておく */
     free_atomvec_data(atomvec_mem1); free_atomvec_data(atomvec_mem2);
 
-    /* Step4. ���ȥ�����Ȥ������� (has_atoms�����ξ��Τ߹Ԥ��Ф褤) */
+    /* Step4. アトムを起点とする走査 (has_atomsが真の場合のみ行えばよい) */
     if (has_atoms) {
       matched = FALSE;
 
       assert(vec_num(v_atoms_not_checked1) == vec_num(v_atoms_not_checked2));
 
       while (!vec_is_empty(v_atoms_not_checked1)) {
-        /* ��1�⤫��1�ĥ��ȥ����Ф�����򺬤Ȥ��롣
-         * ��1��Υ��ȥ���⡢(�ե��󥯥���)�����ɤΤ�Τ����˺��������Ƥ������Ȥ����դ��衣 */
+        /* 膜1内から1つアトムを取り出しこれを根とする。
+         * 膜1内のアトムの内、(ファンクタが)少数派のものから順に根に定められていくことに注意せよ。 */
         a1 = (LmnAtomPtr)vec_pop(v_atoms_not_checked1);
 
         /* fprintf(stdout, "fid(a1):%u\n", (unsigned int)LMN_ATOM_GET_FUNCTOR(a1)); */
 
         for (i = vec_num(v_atoms_not_checked2); i > 0 && !matched; --i) {
-          a2 = (LmnAtomPtr)vec_get(v_atoms_not_checked2, i-1); /* ��2�⤫�麬a1���б����륢�ȥ�θ������� (��: �����μ�����vec_pop�ϻ����Բ�!!) */
+          a2 = (LmnAtomPtr)vec_get(v_atoms_not_checked2, i-1); /* 膜2内から根a1に対応するアトムの候補を取得 (注: ここの実装にvec_popは使用不可!!) */
           vec_clear(v_log1);
           memset(v_log1->tbl, 0, sizeof(LmnAtomPtr) * v_log1->cap);
           vec_clear(v_log2);
           memset(v_log2->tbl, 0, sizeof(LmnAtomPtr) * v_log2->cap);
 
-          /* a2��������a1���б����륢�ȥ�Ǥ��뤫�ݤ���ºݤ˥���չ�¤��ȥ졼�����Ƴ�ǧ���롣
-           * a2��a1�Ȥ�1:1���б�������˸¤ä� matched �˿����֤ꡢ
-           * v_log{1,2}��ˤ�a{1,2}�����Ȥ���ʬ����������ȥ�Υ��ɥ쥹�����������Ȥ��Ƶ�Ͽ����롣 */
+          /* a2が本当にa1に対応するアトムであるか否かを実際にグラフ構造をトレースして確認する。
+           * a2とa1とが1:1に対応する場合に限って matched に真が返り、
+           * v_log{1,2}内にはa{1,2}を起点とする分子内の全アトムのアドレスが走査ログとして記録される。 */
           matched = lmn_mem_trace_links(a1, a2, v_log1, v_log2, current_depth);
           if (matched) {
            /* fprintf(stdout, "fid(a2):%u\n", (unsigned int)LMN_ATOM_GET_FUNCTOR(a2)); */
 
-            /* ξ�����¸�ߤ��뤢��ʬ��Ʊ�ΤΥޥå��󥰤������������ˤ��������롣
-             * ��2���̤�ޥå��󥰤Υ��ȥ��������Ƥ����٥�����(v_atoms_not_checked2)
-             * ���麬a1���б����륢�ȥ�a2�����롣 */
+            /* 両膜内に存在するある分子同士のマッチングに成功した場合にここに入る。
+             * 膜2内の未マッチングのアトムを管理していたベクター(v_atoms_not_checked2)
+             * から根a1に対応するアトムa2を除去する。 */
             assert(vec_num(v_log1) == vec_num(v_log2));
             for (n = 0; n < vec_num(v_atoms_not_checked2); ++n) {
               if ((LmnAtomPtr)vec_get(v_atoms_not_checked2, n) == a2) {
@@ -1217,7 +1217,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
             }
             assert(vec_num(v_atoms_not_checked1) == vec_num(v_atoms_not_checked2));
 
-            /* �������¸�ߤ��뤹�٤ƤΥ��ȥ��̤�����å����ȥ�Υꥹ�Ȥ���POP���� */
+            /* ログ上に存在するすべてのアトムを、未チェックアトムのリストからPOPする */
             {
               for (n = 0; n < vec_num(v_log1); ++n) {
                 for (i = 0; i < vec_num(v_atoms_not_checked1); ++i) {
@@ -1240,7 +1240,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           }
         }
         if (!matched) {
-          /* ��1��ˤ�����a1�򺬤Ȥ���ʬ�Ҥ��б�����ʬ�Ҥ���2���¸�ߤ��ʤ����ˤ��������� (���ξ���̵���˵����֤�) */
+          /* 膜1内におけるa1を根とする分子に対応する分子が膜2内に存在しない場合にここに入る (この場合は無条件に偽を返す) */
           vec_free(v_log1); vec_free(v_log2);
           vec_free(v_atoms_not_checked1); vec_free(v_atoms_not_checked2);
           if (has_descendants) {
@@ -1248,30 +1248,30 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           }
           return FALSE;
         }
-        /* ��1ľ���Υ��ȥ����ˤޤ�̤�����å��Τ�Τ��ޤޤ�Ƥ�����ϡ�
-         * �ޥå��󥰤��³���뤿��˥ե饰matched�򵶤˥��åȤ��Ƥ��� */
+        /* 膜1直下のアトムの中にまだ未チェックのものが含まれている場合は、
+         * マッチングを継続するためにフラグmatchedを偽にセットしておく */
         if (!vec_is_empty(v_atoms_not_checked1)) {
           matched = FALSE;
         }
       }
     }
-    /* �����ʳ���������Ρ֥��ȥ�����Ȥ��������פϤ��٤ƴ�λ����
-     * ξ��ľ���Υ���չ�¤�ϴ����˰��פ��뤳�Ȥ��ݾڤ���Ƥ��롣
-     * ��������ϡ�ξ�����¸�ߤ��뤹�٤Ƥλ���ˤĤ��ơ����ι�¤�����פ��뤫�ɤ����ˤĤ���Ĵ�٤Ƥ�����
-     * �ʹߡ�mem1��λ����1�ĸ��ꤷ��mem2ľ���λ��줫���б������Τ����ꤹ���Ȥ�
-     * �ܤäƤ���������̤����Ȥʤ륱�����ˤ��������®�٤���夵���뤿�ᡢ
-     * ��¹��������ʤ����줫��ͥ��Ū�˸��ꤹ�����ˤ��롣 */
-    if (has_descendants) { /* ���줬¸�ߤ�����Τ߰ʹߤν�����Ԥ� */
+    /* この段階で本膜内の「アトムを起点とする走査」はすべて完了し、
+     * 両膜直下のグラフ構造は完全に一致することが保証されている。
+     * ここからは、両膜内に存在するすべての子膜について、その構造が一致するかどうかについて調べていく。
+     * 以降、mem1内の子膜を1つ固定し、mem2直下の子膜から対応するものを特定する作業に
+     * 移っていくが、結果が偽となるケースにおける処理速度を向上させるため、
+     * 子孫膜数が少ない子膜から優先的に固定する方針を取る。 */
+    if (has_descendants) { /* 子膜が存在する場合のみ以降の処理を行う */
       LmnMembrane *cm1, *cm2;
 
-      /* ��¹�����¿�����v_mems_children1, v_mems_children2�򥽡��� */
+      /* 子孫膜数の多い順にv_mems_children1, v_mems_children2をソート */
       {
         assert(vec_num(v_mems_children1) == vec_num(v_mems_children2));
         lmn_mem_mk_sorted_children(v_mems_children1);
         lmn_mem_mk_sorted_children(v_mems_children2);
       }
 
-      /* Step5. ��������Ȥ������� */
+      /* Step5. 子膜を起点とする走査 */
       matched = FALSE;
       while (!vec_is_empty(v_mems_children1)) {
         cm1 = (LmnMembrane *)vec_pop(v_mems_children1);
@@ -1282,8 +1282,8 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           cm2 = (LmnMembrane *)vec_get(v_mems_children2, i-1);
           matched = lmn_mem_equals_rec(cm1, cm2, current_depth + 1);
           if (matched) {
-            /* cm1��Ʊ������(=cm2)��v_mems_children2��˸��Ĥ��ä����ˤ��������롣
-             * v_mems_children2����cm2��������� */
+            /* cm1と同型の膜(=cm2)がv_mems_children2内に見つかった場合にここに入る。
+             * v_mems_children2からcm2を取り除く。 */
             for (n = 0; n < vec_num(v_mems_children2); ++n) {
               if (cm2 == (LmnMembrane *)vec_get(v_mems_children2, n)) {
                 vec_pop_n(v_mems_children2, n);
@@ -1293,7 +1293,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           }
         }
         if (!matched) {
-          /* cm1��Ʊ�����줬v_mems_children2���¸�ߤ��ʤ���� */
+          /* cm1と同型の膜がv_mems_children2内に存在しない場合 */
           if (has_atoms) {
             vec_free(v_log1); vec_free(v_log2);
             vec_free(v_atoms_not_checked1); vec_free(v_atoms_not_checked2);
@@ -1306,7 +1306,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
         }
       }
     }
-    /* mem1, mem2��λ�¹���ޤह�٤ƤΥץ�������Ʊ����Ƚ������� */
+    /* mem1, mem2内の子孫膜を含むすべてのプロセスの同型性判定に成功 */
     if (has_atoms) {
       vec_free(v_log1); vec_free(v_log2);
       vec_free(v_atoms_not_checked1); vec_free(v_atoms_not_checked2);
@@ -1323,4 +1323,4 @@ BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2) {
   return lmn_mem_equals_rec(mem1, mem2, 0);
 }
 /*----------------------------------------------------------------------*/
-/* ���Ʊ����Ƚ�� �����ޤ� */
+/* 膜の同型性判定 ここまで */

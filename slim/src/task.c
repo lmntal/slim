@@ -64,30 +64,30 @@ unsigned int trace_num = 0; /* for tracer */
 #define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
 
 /*
-  Java¤Ë¤è¤ë½èÍı·Ï¤Ç¤Ï¥ê¥ó¥¯¤Ï¥ê¥ó¥¯¥ª¥Ö¥¸¥§¥¯¥È¤ÇÉ½¸½¤¹¤ë¤¬¡¢SLIM¤Ç¤Ï
-  ¥ê¥ó¥¯¥ª¥Ö¥¸¥§¥¯¥È¤Ï¤Ê¤¯Ä¾ÀÜ¥ê¥ó¥¯Àè¤Î¥¢¥È¥à¤È°ú¿ôÈÖ¹æ¤Ç¥ê¥ó¥¯¤òÉ½¤¹¡£
-  ¤·¤«¤·¡¢¤³¤ÎSLIM¤Î¼ÂÁõÊıË¡¤Ç¤Ï¡¤a(L,L).  a(X,Y) :- b(X), b(Y). ¤Î¾ì¹ç
-  ¤Ë2.¤Î¤è¤¦¤Ë¤Ê¤ê¤¦¤Ş¤¯¤¤¤«¤Ê¤¤¡£¤³¤ì¤Ï¡¢GETLINK¤ÇÆÀ¤¿¥ê¥ó¥¯¤ÎÃÍ¤¬
-  INHERIT_LINK ¤Ë¤è¤ë¥ê¥ó¥¯¤Î¤Ä¤Ê¤®ÂØ¤¨¤Î²áÄø¤Ç¹¹¿·¤µ¤ì¤Ê¤¤¤«¤é¤À¡£¤½¤³
-  ¤Ç¡¢3.¤Î¤è¤¦¤Ë¤·¤ÆGETLINK ¤Ç¤Î¥ê¥ó¥¯Àè¤Î¼èÆÀ¤ò¼Âºİ¤Ë¤ÏÃÙ±ä¤µ¤»¤ë¤è¤¦
-  ¤Ë¤·¤ÆÀµ¾ï¤ËÆ°ºî¤µ¤»¤ë°Æ¤ò¹Í¤¨¤¿¡£
+  Javaã«ã‚ˆã‚‹å‡¦ç†ç³»ã§ã¯ãƒªãƒ³ã‚¯ã¯ãƒªãƒ³ã‚¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã§è¡¨ç¾ã™ã‚‹ãŒã€SLIMã§ã¯
+  ãƒªãƒ³ã‚¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã¯ãªãç›´æ¥ãƒªãƒ³ã‚¯å…ˆã®ã‚¢ãƒˆãƒ ã¨å¼•æ•°ç•ªå·ã§ãƒªãƒ³ã‚¯ã‚’è¡¨ã™ã€‚
+  ã—ã‹ã—ã€ã“ã®SLIMã®å®Ÿè£…æ–¹æ³•ã§ã¯ï¼Œa(L,L).  a(X,Y) :- b(X), b(Y). ã®å ´åˆ
+  ã«2.ã®ã‚ˆã†ã«ãªã‚Šã†ã¾ãã„ã‹ãªã„ã€‚ã“ã‚Œã¯ã€GETLINKã§å¾—ãŸãƒªãƒ³ã‚¯ã®å€¤ãŒ
+  INHERIT_LINK ã«ã‚ˆã‚‹ãƒªãƒ³ã‚¯ã®ã¤ãªãæ›¿ãˆã®éç¨‹ã§æ›´æ–°ã•ã‚Œãªã„ã‹ã‚‰ã ã€‚ãã“
+  ã§ã€3.ã®ã‚ˆã†ã«ã—ã¦GETLINK ã§ã®ãƒªãƒ³ã‚¯å…ˆã®å–å¾—ã‚’å®Ÿéš›ã«ã¯é…å»¶ã•ã›ã‚‹ã‚ˆã†
+  ã«ã—ã¦æ­£å¸¸ã«å‹•ä½œã•ã›ã‚‹æ¡ˆã‚’è€ƒãˆãŸã€‚
 
-  ¸½ºß¤Ï3.¤ÎÊıË¡¤ò¼è¤Ã¤Æ¤¤¤ë¡£¶ñÂÎÅª¤Ë¤Ï wt¤Èat¤Ë¥ê¥ó¥¯Àè¤Î¥¢¥È¥à¤È°ú¿ô
-  ÈÖ¹æ¤Ç¤Ï¤Ê¤¯¥ê¥ó¥¯¸µ¤Î¥¢¥È¥à¤È°ú¿ôÈÖ¹æ¤òÊİ»ı¤¹¤ë¡£¤µ¤é¤Ë¡¢¥ê¥ó¥¯¸µ¤ò
-  Êİ»ı¤·¤Æ¤¤¤ë¾ì¹ç¤Ë¤ÏwtÆâ¤ÎÃÍ¤Î²¼°Ì1¥Ó¥Ã¥È¤ò1¤Ë¤·¡¢¥ê¥ó¥¯Àè¤òÊİ»ı¤·¤Æ
-  ¤¤¤ë¾ì¹ç¤È¶èÊÌ¤ò¤·¤Æ¤¤¤ë¡£¤É¤Á¤é¤Î¾ì¹ç¤âÆ±¤¸¥Ş¥¯¥í¤ò»È¤¤Æ±ÍÍ¤Î¥³¡¼¥É
-  ¤Ç¥ê¥ó¥¯Àè¤Î¼èÆÀ¤¬½Ğ¤­¤ë¤è¤¦¤Ë¤·¤Æ¤¤¤ë¡£
+  ç¾åœ¨ã¯3.ã®æ–¹æ³•ã‚’å–ã£ã¦ã„ã‚‹ã€‚å…·ä½“çš„ã«ã¯ wtã¨atã«ãƒªãƒ³ã‚¯å…ˆã®ã‚¢ãƒˆãƒ ã¨å¼•æ•°
+  ç•ªå·ã§ã¯ãªããƒªãƒ³ã‚¯å…ƒã®ã‚¢ãƒˆãƒ ã¨å¼•æ•°ç•ªå·ã‚’ä¿æŒã™ã‚‹ã€‚ã•ã‚‰ã«ã€ãƒªãƒ³ã‚¯å…ƒã‚’
+  ä¿æŒã—ã¦ã„ã‚‹å ´åˆã«ã¯wtå†…ã®å€¤ã®ä¸‹ä½1ãƒ“ãƒƒãƒˆã‚’1ã«ã—ã€ãƒªãƒ³ã‚¯å…ˆã‚’ä¿æŒã—ã¦
+  ã„ã‚‹å ´åˆã¨åŒºåˆ¥ã‚’ã—ã¦ã„ã‚‹ã€‚ã©ã¡ã‚‰ã®å ´åˆã‚‚åŒã˜ãƒã‚¯ãƒ­ã‚’ä½¿ã„åŒæ§˜ã®ã‚³ãƒ¼ãƒ‰
+  ã§ãƒªãƒ³ã‚¯å…ˆã®å–å¾—ãŒå‡ºãã‚‹ã‚ˆã†ã«ã—ã¦ã„ã‚‹ã€‚
 
-  1. ¥ê¥ó¥¯¥ª¥Ö¥¸¥§¥¯¥È¤¬¤¢¤ë¾ì¹ç(Java¤Ë¤è¤ë½èÍı·Ï)
+  1. ãƒªãƒ³ã‚¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒã‚ã‚‹å ´åˆ(Javaã«ã‚ˆã‚‹å‡¦ç†ç³»)
 
     0--+       0----b       0 +--b       +--b
     a  |  =>   a       =>   a |      =>  |
     1--+       1            1 +--b       +--b
 
-  2. ¥ê¥ó¥¯¥ª¥Ö¥¸¥§¥¯¥È¤¬¤Ê¤¤¾ì¹ç(SLIM)
-     A,B¤ÏGETLINK¤ÇÆÀ¤¿¡¢¥ê¥ó¥¯Àè¤òÉ½¤·¤Æ¤¤¤ë
+  2. ãƒªãƒ³ã‚¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒãªã„å ´åˆ(SLIM)
+     A,Bã¯GETLINKã§å¾—ãŸã€ãƒªãƒ³ã‚¯å…ˆã‚’è¡¨ã—ã¦ã„ã‚‹
 
-                  (B¤ÎÀè¤ò»Ø¤¹)    (A¤ÎÀè¤ò»Ø¤¹)    (ÉÔÀµ¤Ê¾õÂÖ)
+                  (Bã®å…ˆã‚’æŒ‡ã™)    (Aã®å…ˆã‚’æŒ‡ã™)    (ä¸æ­£ãªçŠ¶æ…‹)
       A                A                  A               A
       |                |             b--> |          b--> |
   +---0<---+       +---0              <---0
@@ -97,11 +97,11 @@ unsigned int trace_num = 0; /* for tracer */
       B                B                  B               B
 
 
-  3. ¥ê¥ó¥¯¥ª¥Ö¥¸¥§¥¯¥È¤¬¤Ê¤¤¾ì¹ç¡¢¥ê¥ó¥¯¤Ï¥ê¥ó¥¯¸µ¤òÊİ»ı(SLIM)
-      A,B¤ÏGETLINK¤ò¹Ô¤Ã¤¿ºİ¤Î¥ê¥ó¥¯¸µ¤Î¾ğÊó¤ò»ı¤Ä¡£¼Âºİ¤Î¥ê¥ó¥¯Àè¤Ï
-      ¥ê¥ó¥¯¤Î¤Ä¤Ê¤®ÂØ¤¨¤ò¹Ô¤¦ºİ¤ËÆÀ¤ë¡£
+  3. ãƒªãƒ³ã‚¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒãªã„å ´åˆã€ãƒªãƒ³ã‚¯ã¯ãƒªãƒ³ã‚¯å…ƒã‚’ä¿æŒ(SLIM)
+      A,Bã¯GETLINKã‚’è¡Œã£ãŸéš›ã®ãƒªãƒ³ã‚¯å…ƒã®æƒ…å ±ã‚’æŒã¤ã€‚å®Ÿéš›ã®ãƒªãƒ³ã‚¯å…ˆã¯
+      ãƒªãƒ³ã‚¯ã®ã¤ãªãæ›¿ãˆã‚’è¡Œã†éš›ã«å¾—ã‚‹ã€‚
 
-             (B¤Î¥ê¥ó¥¯Àè¤òÆÀ¤ë)                (A¤Î¥ê¥ó¥¯Àè¤òÆÀ¤ë)  a¤¬¾ÃÌÇ
+             (Bã®ãƒªãƒ³ã‚¯å…ˆã‚’å¾—ã‚‹)                (Aã®ãƒªãƒ³ã‚¯å…ˆã‚’å¾—ã‚‹)  aãŒæ¶ˆæ»…
                                  +---------+      +---------+       +---------+-+      +-----------+
                                  |         |      |         |       |         | |      |           |
     B                B           v     B   |      v     B   |       v     B   | |      v           |
@@ -113,12 +113,12 @@ unsigned int trace_num = 0; /* for tracer */
         A              A                A                A                 A
 */
 
-/* ¥ê¥ó¥¯Àè¤Î¥¢¥È¥à¤òÆÀ¤ë */
+/* ãƒªãƒ³ã‚¯å…ˆã®ã‚¢ãƒˆãƒ ã‚’å¾—ã‚‹ */
 #define LINKED_ATOM(LINKI) wt[LINKI]
-/* ¥ê¥ó¥¯Àè¤Î¥¢¥È¥à¤Î°ú¿ô¤Îattribute¤òÆÀ¤ë */
+/* ãƒªãƒ³ã‚¯å…ˆã®ã‚¢ãƒˆãƒ ã®å¼•æ•°ã®attributeã‚’å¾—ã‚‹ */
 #define LINKED_ATTR(LINKI) at[LINKI]
 
-/* Ëì¥¹¥¿¥Ã¥¯ */
+/* è†œã‚¹ã‚¿ãƒƒã‚¯ */
 struct Entity {
   LmnMembrane  *mem;
   struct Entity  *next;
@@ -182,17 +182,17 @@ static LmnMembrane* memstack_peek()
 /*   printf("\n"); */
 /* } */
 
-/* MC ¤Ç¤Î¤ß»ÈÍÑ¤Î´Ø¿ô¡¦¥Ç¡¼¥¿¹½Â¤¤ÎÄêµÁ ¤³¤³¤«¤é  */
+/* MC ã§ã®ã¿ä½¿ç”¨ã®é–¢æ•°ãƒ»ãƒ‡ãƒ¼ã‚¿æ§‹é€ ã®å®šç¾© ã“ã“ã‹ã‚‰  */
 /*----------------------------------------------------------------------*/
 
 /* prototypes */
 LMN_EXTERN void nd_exec(void);
 LMN_EXTERN void ltl_search1(void);
 
-/* Èó·èÄêÅª¼Â¹Ô¤ÇÍÑ¤¤¤ë¥Õ¥é¥°½¸¹ç */
+/* éæ±ºå®šçš„å®Ÿè¡Œã§ç”¨ã„ã‚‹ãƒ•ãƒ©ã‚°é›†åˆ */
 McFlags mc_flags;
 
-/* ¥Õ¥é¥°½¸¹ç¤ò½é´ü²½¤¹¤ë(c.f. mc.h) */
+/* ãƒ•ãƒ©ã‚°é›†åˆã‚’åˆæœŸåŒ–ã™ã‚‹(c.f. mc.h) */
 static inline void init_mc_flags(void) {
   mc_flags.nd_exec = FALSE;
   mc_flags.system_rule_committed = FALSE;
@@ -205,19 +205,19 @@ static struct st_hash_type type_statehash = {
   state_hash
 };
 
-/* Ë¬ÌäºÑ¤ß¥Î¡¼¥É¤¬³ÊÇ¼¤µ¤ì¤ë */
+/* è¨ªå•æ¸ˆã¿ãƒãƒ¼ãƒ‰ãŒæ ¼ç´ã•ã‚Œã‚‹ */
 static st_table *States;
 
-/* Ãµº÷ÍÑ¥¹¥¿¥Ã¥¯ */
+/* æ¢ç´¢ç”¨ã‚¹ã‚¿ãƒƒã‚¯ */
 static Vector Stack;
 
-/* Å¸³«¤µ¤ì¤¿»Ò¥Î¡¼¥É¤¬³ÊÇ¼¤µ¤ì¤ë */
+/* å±•é–‹ã•ã‚ŒãŸå­ãƒãƒ¼ãƒ‰ãŒæ ¼ç´ã•ã‚Œã‚‹ */
 static st_table *expanded;
 
 /* for LTL */
 LmnMembrane *seed = NULL; /* root of second DFS */
 
-/* ¥°¥í¡¼¥Ğ¥ë¥ë¡¼¥ÈËì¤ò¥³¥Ô¡¼¤¹¤ë */
+/* ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œã‚’ã‚³ãƒ”ãƒ¼ã™ã‚‹ */
 static inline SimpleHashtbl *copy_global_root(LmnMembrane *srcmem, LmnMembrane *dstmem) {
   unsigned int i;
   SimpleHashtbl *copymap = lmn_mem_copy_cells(dstmem, srcmem);
@@ -227,7 +227,7 @@ static inline SimpleHashtbl *copy_global_root(LmnMembrane *srcmem, LmnMembrane *
   return copymap;
 }
 
-/* LTL¥â¥Ç¥ë¸¡ºº¡¦Èó·èÄêÅª¼Â¹Ô»ş¤Ëmem¤ª¤è¤Ómem¤ÎÀèÁÄ¤ò³èÀ­²½¤¹¤ë */
+/* LTLãƒ¢ãƒ‡ãƒ«æ¤œæŸ»ãƒ»éæ±ºå®šçš„å®Ÿè¡Œæ™‚ã«memãŠã‚ˆã³memã®å…ˆç¥–ã‚’æ´»æ€§åŒ–ã™ã‚‹ */
 static inline void activate(LmnMembrane *mem) {
   if (!mc_flags.property_rule) {
     activate_ancestors(mem);
@@ -235,8 +235,8 @@ static inline void activate(LmnMembrane *mem) {
 }
 
 /**
- * Èó·èÄê(--nd ¤Ş¤¿¤Ï --nd_result)¼Â¹Ô½ªÎ»»ş¤Ë¾õÂÖÁ«°Ü¥°¥é¥Õ¤ò½ĞÎÏ¤¹¤ë¡¥
- * ¹â³¬´Ø¿ôst_foreach(c.f. st.c)¤ËÅê¤²¤Æ»ÈÍÑ¡¥
+ * éæ±ºå®š(--nd ã¾ãŸã¯ --nd_result)å®Ÿè¡Œçµ‚äº†æ™‚ã«çŠ¶æ…‹é·ç§»ã‚°ãƒ©ãƒ•ã‚’å‡ºåŠ›ã™ã‚‹ï¼
+ * é«˜éšé–¢æ•°st_foreach(c.f. st.c)ã«æŠ•ã’ã¦ä½¿ç”¨ï¼
  */
 static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
   unsigned int j = 0;
@@ -255,8 +255,8 @@ static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_da
 }
 
 /**
- * Èó·èÄê¼Â¹Ô or LTL¥â¥Ç¥ë¸¡ºº½ªÎ»¸å¤ËStatesÆâ¤ËÂ¸ºß¤¹¤ë¥Á¥§¥¤¥ó¤ò¤¹¤Ù¤Æfree¤¹¤ë
- * ¹â³¬´Ø¿ôst_foreach(c.f. st.c)¤ËÅê¤²¤Æ»ÈÍÑ
+ * éæ±ºå®šå®Ÿè¡Œ or LTLãƒ¢ãƒ‡ãƒ«æ¤œæŸ»çµ‚äº†å¾Œã«Stateså†…ã«å­˜åœ¨ã™ã‚‹ãƒã‚§ã‚¤ãƒ³ã‚’ã™ã¹ã¦freeã™ã‚‹
+ * é«˜éšé–¢æ•°st_foreach(c.f. st.c)ã«æŠ•ã’ã¦ä½¿ç”¨
  */
 static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tbl_ptr) {
   State *tmp = (State *)state_ptr;
@@ -273,10 +273,10 @@ static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tb
   return ST_CONTINUE;
 }
 /*----------------------------------------------------------------------*/
-/* MC ¤Ç¤Î¤ß»ÈÍÑ¤Î´Ø¿ô¡¦¥Ç¡¼¥¿¹½Â¤¤ÎÄêµÁ ¤³¤³¤Ş¤Ç */
+/* MC ã§ã®ã¿ä½¿ç”¨ã®é–¢æ•°ãƒ»ãƒ‡ãƒ¼ã‚¿æ§‹é€ ã®å®šç¾© ã“ã“ã¾ã§ */
 
-/* Ëìmem¤Çruleset¤Î¥ë¡¼¥ë¤ÎÅ¬ÍÑ¤ò»î¤ß¤ë¡£Å¬ÍÑ¤¬µ¯¤³¤Ã¤¿¾ì¹çTRUE¤òÊÖ¤·¡¢
-   µ¯¤³¤é¤Ê¤«¤Ã¤¿¾ì¹ç¤Ë¤ÏFALSE¤òÊÖ¤¹¡£ */
+/* è†œmemã§rulesetã®ãƒ«ãƒ¼ãƒ«ã®é©ç”¨ã‚’è©¦ã¿ã‚‹ã€‚é©ç”¨ãŒèµ·ã“ã£ãŸå ´åˆTRUEã‚’è¿”ã—ã€
+   èµ·ã“ã‚‰ãªã‹ã£ãŸå ´åˆã«ã¯FALSEã‚’è¿”ã™ã€‚ */
 static BOOL react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
   int i;
@@ -293,8 +293,8 @@ static BOOL react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
     translated = lmn_rule_get_translated(rule);
     inst_seq = lmn_rule_get_inst_seq(rule);
 
-    /* ¤Ş¤º¡¢¥È¥é¥ó¥¹¥ì¡¼¥ÈºÑ¤ß¤Î´Ø¿ô¤ò¼Â¹Ô¤¹¤ë
-       ¤½¤ì¤¬¤Ê¤¤¾ì¹çÌ¿ÎáÎó¤òinterpret¤Ç¼Â¹Ô¤¹¤ë */
+    /* ã¾ãšã€ãƒˆãƒ©ãƒ³ã‚¹ãƒ¬ãƒ¼ãƒˆæ¸ˆã¿ã®é–¢æ•°ã‚’å®Ÿè¡Œã™ã‚‹
+       ãã‚ŒãŒãªã„å ´åˆå‘½ä»¤åˆ—ã‚’interpretã§å®Ÿè¡Œã™ã‚‹ */
     if ((translated &&  translated(mem)) ||
         (inst_seq && interpret(inst_seq, &dummy))) {
       if (lmn_env.trace) {
@@ -307,7 +307,7 @@ static BOOL react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
   return FALSE;
 }
 
-/* ¥ê¥ó¥¯¥ª¥Ö¥¸¥§¥¯¥È¤ÎÂåÂØ */
+/* ãƒªãƒ³ã‚¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ä»£æ›¿ */
 typedef struct LinkObj {
   LmnWord ap;
   LmnLinkAttr pos;
@@ -352,12 +352,12 @@ void lmn_run(LmnRuleSet start_ruleset)
   /* make global root membrane */
   mem = lmn_mem_make();
 
-  /* ÄÌ¾ï¼Â¹Ô»ş */
+  /* é€šå¸¸å®Ÿè¡Œæ™‚ */
   if (!lmn_env.nd && !lmn_env.ltl) {
     memstack_init();
     memstack_push(mem);
   }
-  /* LTL¥â¥Ç¥ë¸¡ºº¡¦Èó·èÄêÅª¼Â¹Ô»ş */
+  /* LTLãƒ¢ãƒ‡ãƒ«æ¤œæŸ»ãƒ»éæ±ºå®šçš„å®Ÿè¡Œæ™‚ */
   else {
     init_mc_flags();
     activate(mem);
@@ -369,14 +369,14 @@ void lmn_run(LmnRuleSet start_ruleset)
   /* initialize rule */
   react_ruleset(mem, start_ruleset);
 
-  /* ÄÌ¾ï¼Â¹Ô»ş */
+  /* é€šå¸¸å®Ÿè¡Œæ™‚ */
   if (!lmn_env.nd && !lmn_env.ltl) {
     while(!memstack_isempty()){
       LmnMembrane *mem = memstack_peek();
       LmnMembrane *m;
       if(!exec(mem)) {
         if (!react_ruleset(mem, system_ruleset)) {
-          /* ¥ë¡¼¥ë¤¬²¿¤âÅ¬ÍÑ¤µ¤ì¤Ê¤±¤ì¤ĞËì¥¹¥¿¥Ã¥¯¤«¤éÀèÆ¬¤ò¼è¤ê½ü¤¯ */
+          /* ãƒ«ãƒ¼ãƒ«ãŒä½•ã‚‚é©ç”¨ã•ã‚Œãªã‘ã‚Œã°è†œã‚¹ã‚¿ãƒƒã‚¯ã‹ã‚‰å…ˆé ­ã‚’å–ã‚Šé™¤ã */
           m = memstack_pop(&memstack);
         }
       }
@@ -384,7 +384,7 @@ void lmn_run(LmnRuleSet start_ruleset)
 
     memstack_destroy();
 
-    /* ¸å»ÏËö */
+    /* å¾Œå§‹æœ« */
     lmn_dump_cell(mem);
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
@@ -394,7 +394,7 @@ void lmn_run(LmnRuleSet start_ruleset)
     LMN_FREE(at_t);
     free_atom_memory_pools();
   }
-  /* LTL¥â¥Ç¥ë¸¡ºº¡¦Èó·èÄêÅª¼Â¹Ô»ş */
+  /* LTLãƒ¢ãƒ‡ãƒ«æ¤œæŸ»ãƒ»éæ±ºå®šçš„å®Ÿè¡Œæ™‚ */
   else {
     lmn_mc_nd_run(mem);
   }
@@ -415,24 +415,24 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
   vec_init(&Stack, 2048);
   expanded = st_init_table(&type_statehash);
 
-  /* ½é´ü¥×¥í¥»¥¹¤«¤éÆÀ¤é¤ì¤ë½é´ü¾õÂÖ¤òÀ¸À® */
+  /* åˆæœŸãƒ—ãƒ­ã‚»ã‚¹ã‹ã‚‰å¾—ã‚‰ã‚Œã‚‹åˆæœŸçŠ¶æ…‹ã‚’ç”Ÿæˆ */
   initial_state = state_make(mem);
   st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
   vec_push(&Stack, (LmnWord)initial_state);
 
-  /* ½é´ü²½¥ë¡¼¥ë¤ò¶èÊÌ¤¹¤ë¤¿¤á */
+  /* åˆæœŸåŒ–ãƒ«ãƒ¼ãƒ«ã‚’åŒºåˆ¥ã™ã‚‹ãŸã‚ */
   mc_flags.nd_exec = TRUE;
 
-  /* Èó·èÄêÅª¼Â¹Ô */
+  /* éæ±ºå®šçš„å®Ÿè¡Œ */
   if(lmn_env.nd) {
     nd_exec();
 
-    /* ¾õÂÖÁ«°Ü¥°¥é¥Õ¤ò½ĞÎÏ¤¹¤ë */
+    /* çŠ¶æ…‹é·ç§»ã‚°ãƒ©ãƒ•ã‚’å‡ºåŠ›ã™ã‚‹ */
     if (!lmn_env.nd_result) {
       st_foreach(States, print_state_transition_graph, 0);
     }
   }
-  /* LTL¥â¥Ç¥ë¸¡ºº */
+  /* LTLãƒ¢ãƒ‡ãƒ«æ¤œæŸ» */
   else {
     set_fst(initial_state);
     ltl_search1();
@@ -443,7 +443,7 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
 
   /* finalize */
   {
-    HashSet rm_tbl; /* LTL¥â¥Ç¥ë¸¡ºº¥â¡¼¥É»ş¤ËÆó½Å²òÊü¤òËÉ»ß¤¹¤ë¤¿¤á */
+    HashSet rm_tbl; /* LTLãƒ¢ãƒ‡ãƒ«æ¤œæŸ»ãƒ¢ãƒ¼ãƒ‰æ™‚ã«äºŒé‡è§£æ”¾ã‚’é˜²æ­¢ã™ã‚‹ãŸã‚ */
     hashset_init(&rm_tbl, 16);
     st_foreach(States, kill_States_chains, &rm_tbl);
     hashset_destroy(&rm_tbl);
@@ -520,14 +520,14 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
 /* DEBUG: */
 /* static void print_wt(void); */
 
-/* mem != NULL ¤Ê¤é¤Ğ mem¤ËUNIFY¤òÄÉ²Ã¡¢¤½¤¦¤Ç¤Ê¤±¤ì¤Ğ
-   UNIFY¤ÏËì¤Ë½êÂ°¤·¤Ê¤¤ */
+/* mem != NULL ãªã‚‰ã° memã«UNIFYã‚’è¿½åŠ ã€ãã†ã§ãªã‘ã‚Œã°
+   UNIFYã¯è†œã«æ‰€å±ã—ãªã„ */
 static HashSet *insertconnectors(LmnMembrane *mem, Vector *links)
 {
   unsigned int i, j;
   HashSet *retset = hashset_make(8);
-  /* EFFICIENCY: retset¤¬Hash Set¤Ç¤¢¤ë°ÕÌ£¤Ï?¡¡¥Ù¥¯¥¿¤Ç¤¤¤¤¤Î¤Ç¤Ï¡©
-     Ãæ´ÖÌ¿Îá¤Ç¥»¥Ã¥È¤ò»È¤¦¤è¤¦¤Ë½ñ¤«¤ì¤Æ¤¤¤ë */
+  /* EFFICIENCY: retsetãŒHash Setã§ã‚ã‚‹æ„å‘³ã¯?ã€€ãƒ™ã‚¯ã‚¿ã§ã„ã„ã®ã§ã¯ï¼Ÿ
+     ä¸­é–“å‘½ä»¤ã§ã‚»ãƒƒãƒˆã‚’ä½¿ã†ã‚ˆã†ã«æ›¸ã‹ã‚Œã¦ã„ã‚‹ */
 
   for(i = 0; i < links->num; i++) {
     LmnWord linkid1 = vec_get(links, i);
@@ -538,7 +538,7 @@ static HashSet *insertconnectors(LmnMembrane *mem, Vector *links)
       /* is buddy? */
       if (LINKED_ATOM(linkid2) == LMN_ATOM_GET_LINK(LINKED_ATOM(linkid1), LINKED_ATTR(linkid1)) &&
           LINKED_ATTR(linkid2) == LMN_ATOM_GET_ATTR(LINKED_ATOM(linkid1), LINKED_ATTR(linkid1))) {
-        /* '='¥¢¥È¥à¤ò¤Ï¤µ¤à */
+        /* '='ã‚¢ãƒˆãƒ ã‚’ã¯ã•ã‚€ */
         LmnAtomPtr eq;
         LmnAtomPtr a1, a2;
         LmnLinkAttr t1, t2;
@@ -548,8 +548,8 @@ static HashSet *insertconnectors(LmnMembrane *mem, Vector *links)
           eq = lmn_new_atom(LMN_UNIFY_FUNCTOR);
         }
 
-        /* ¥ê¥ó¥¯¤¬¥ê¥ó¥¯¤Î¸µ¤ò»ı¤Ä¾ì¹ç¡¢¤¢¤é¤«¤¸¤á¥ê¥ó¥¯Àè¤Î¼èÆÀ¤ò¤·¤Æ¤¤¤Ê¤±¤ì¤Ğ
-           ¤Ê¤é¤Ê¤¤¡£¥ê¥ó¥¯¸µ¤Ïnew_link»ş¤Ë½ñ¤­´¹¤¨¤é¤ì¤Æ¤·¤Ş¤¦¡£*/
+        /* ãƒªãƒ³ã‚¯ãŒãƒªãƒ³ã‚¯ã®å…ƒã‚’æŒã¤å ´åˆã€ã‚ã‚‰ã‹ã˜ã‚ãƒªãƒ³ã‚¯å…ˆã®å–å¾—ã‚’ã—ã¦ã„ãªã‘ã‚Œã°
+           ãªã‚‰ãªã„ã€‚ãƒªãƒ³ã‚¯å…ƒã¯new_linkæ™‚ã«æ›¸ãæ›ãˆã‚‰ã‚Œã¦ã—ã¾ã†ã€‚*/
 
         a1 = LMN_ATOM(LINKED_ATOM(linkid1));
         a2 = LMN_ATOM(LINKED_ATOM(linkid2));
@@ -600,25 +600,25 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       READ_VAL(LmnInstrVar, instr, seti);
       READ_VAL(LmnInstrVar, instr, list_num);
 
-      vec_init(&links, list_num); /* TODO: vector_init¤Î»ÅÍÍÊÑ¹¹¤ËÈ¼¤¤ÊÑ¹¹¤¹¤ë */
+      vec_init(&links, list_num); /* TODO: vector_initã®ä»•æ§˜å¤‰æ›´ã«ä¼´ã„å¤‰æ›´ã™ã‚‹ */
       for (i = 0; i < list_num; i++) {
         LmnInstrVar t;
         READ_VAL(LmnInstrVar, instr, t);
-        vec_push(&links, (LmnWord)t); /* TODO: vector_init¤Î»ÅÍÍÊÑ¹¹¤ËÈ¼¤¤ÊÑ¹¹¤¹¤ë(¥¤¥ó¥Ç¥Ã¥¯¥¹¥¢¥¯¥»¥¹¤Ë) */
+        vec_push(&links, (LmnWord)t); /* TODO: vector_initã®ä»•æ§˜å¤‰æ›´ã«ä¼´ã„å¤‰æ›´ã™ã‚‹(ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚¢ã‚¯ã‚»ã‚¹ã«) */
       }
 
       wt[seti] = (LmnWord)insertconnectors(NULL, &links);
       if (lmn_env.nd || lmn_env.ltl) { at[seti] = 0; /* MC */ }
       vec_destroy(&links);
 
-      /* EFFICIENCY: ²òÊü¤Î¤¿¤á¤ÎºÆµ¢ */
+      /* EFFICIENCY: è§£æ”¾ã®ãŸã‚ã®å†å¸° */
       if(interpret(instr, next_instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       }
       /**
        * MC -->
-       * ¸õÊä¼èÆÀ¤Î¤¿¤áFALSE¤òÊÖ¤¹
+       * å€™è£œå–å¾—ã®ãŸã‚FALSEã‚’è¿”ã™
        */
       else if(mc_flags.nd_exec && !mc_flags.property_rule) {
         hashset_free((HashSet *)wt[seti]);
@@ -643,7 +643,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
 
       for (i = 0; i < list_num; i++) {
         READ_VAL(LmnInstrVar, instr, enti);
-        vec_push(&links, (LmnWord)enti); /* TODO: vector_init¤Î»ÅÍÍÊÑ¹¹¤ËÈ¼¤¤ÊÑ¹¹¤¹¤ë */
+        vec_push(&links, (LmnWord)enti); /* TODO: vector_initã®ä»•æ§˜å¤‰æ›´ã«ä¼´ã„å¤‰æ›´ã™ã‚‹ */
       }
 
       READ_VAL(LmnInstrVar, instr, memi);
@@ -651,14 +651,14 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       if (lmn_env.nd || lmn_env.ltl) { at[seti] = 0; /* MC */ }
       vec_destroy(&links);
 
-      /* EFFICIENCY: ²òÊü¤Î¤¿¤á¤ÎºÆµ¢ */
+      /* EFFICIENCY: è§£æ”¾ã®ãŸã‚ã®å†å¸° */
       if(interpret(instr, next_instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       }
       /**
        * MC -->
-       * ¸õÊä¼èÆÀ¤Î¤¿¤áFALSE¤òÊÖ¤¹
+       * å€™è£œå–å¾—ã®ãŸã‚FALSEã‚’è¿”ã™
        */
       else if(mc_flags.nd_exec && !mc_flags.property_rule) {
         hashset_free((HashSet *)wt[seti]);
@@ -671,9 +671,9 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
     }
     case INSTR_JUMP:
     {
-      /* EFFICIENCY: ¿·¤¿¤Ëºî¶ÈÇÛÎó¤òmalloc¤·¤Æ¤¤¤ë¤Î¤ÇÈó¾ï¤ËÃÙ¤¤
-                     -O3 ¤ÇÀ¸À®¤µ¤ì¤ëÃæ´ÖÌ¿Îá¤ËJUMP¤¬´Ş¤Ş¤ì¤Ê¤¤¤¿¤á
-                     ¤³¤ì¤Ç¤â¤è¤¤ */
+      /* EFFICIENCY: æ–°ãŸã«ä½œæ¥­é…åˆ—ã‚’mallocã—ã¦ã„ã‚‹ã®ã§éå¸¸ã«é…ã„
+                     -O3 ã§ç”Ÿæˆã•ã‚Œã‚‹ä¸­é–“å‘½ä»¤ã«JUMPãŒå«ã¾ã‚Œãªã„ãŸã‚
+                     ã“ã‚Œã§ã‚‚ã‚ˆã„ */
       LmnInstrVar num, i, n;
       LmnJumpOffset offset;
       BOOL ret;
@@ -777,55 +777,55 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       /*
        * MC mode
        *
-       * ¥°¥í¡¼¥Ğ¥ëÊÑ¿ôglobal_root¤Ë³ÊÇ¼¤µ¤ì¤Æ¤¤¤ë¥°¥í¡¼¥Ğ¥ë¥ë¡¼¥ÈËì¤ò¥³¥Ô¡¼¤·¤Æ¡¤
-       * ¤½¤Î¥³¥Ô¡¼¤ËÂĞ¤·¤Æ¥Ü¥Ç¥£Ì¿Îá¤òÅ¬ÍÑ¤¹¤ë¡¥
-       * ¤½¤Îºİ¤ËÊÑ¿ôÇÛÎó¤Î¾ğÊó¤â¥³¥Ô¡¼Á°¤Î¤â¤Î¤«¤é¥³¥Ô¡¼¸å¤Î¤â¤Î¤Ø¤È½ñ¤­´¹¤¨¤ë¡¥
+       * ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°global_rootã«æ ¼ç´ã•ã‚Œã¦ã„ã‚‹ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œã‚’ã‚³ãƒ”ãƒ¼ã—ã¦ï¼Œ
+       * ãã®ã‚³ãƒ”ãƒ¼ã«å¯¾ã—ã¦ãƒœãƒ‡ã‚£å‘½ä»¤ã‚’é©ç”¨ã™ã‚‹ï¼
+       * ãã®éš›ã«å¤‰æ•°é…åˆ—ã®æƒ…å ±ã‚‚ã‚³ãƒ”ãƒ¼å‰ã®ã‚‚ã®ã‹ã‚‰ã‚³ãƒ”ãƒ¼å¾Œã®ã‚‚ã®ã¸ã¨æ›¸ãæ›ãˆã‚‹ï¼
        *
-       * ¡¦À­¼Á¥ë¡¼¥ë¤Î¾ì¹ç
-       *   À­¼Á¥ë¡¼¥ëÅ¬ÍÑ·ë²Ì¤¬global_root¤Ë³ÊÇ¼¤µ¤ì¤ë
-       * ¡¦¥·¥¹¥Æ¥à¥ë¡¼¥ë¤Î¾ì¹ç
-       *   ¥·¥¹¥Æ¥à¥ë¡¼¥ëÅ¬ÍÑ·ë²Ì¤ò¿·¤¿¤Ê¾õÂÖ¤È¤·¤ÆÀ¸À®¤¹¤ë
+       * ãƒ»æ€§è³ªãƒ«ãƒ¼ãƒ«ã®å ´åˆ
+       *   æ€§è³ªãƒ«ãƒ¼ãƒ«é©ç”¨çµæœãŒglobal_rootã«æ ¼ç´ã•ã‚Œã‚‹
+       * ãƒ»ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«ã®å ´åˆ
+       *   ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«é©ç”¨çµæœã‚’æ–°ãŸãªçŠ¶æ…‹ã¨ã—ã¦ç”Ÿæˆã™ã‚‹
        *
-       * CONTRACT: COMMITÌ¿Îá¤ËÅşÃ£¤·¤¿¥ë¡¼¥ë¤Ï¥Ş¥Ã¥Á¥ó¥°¸¡ºº¤ËÀ®¸ù¤·¤Æ¤¤¤ë
+       * CONTRACT: COMMITå‘½ä»¤ã«åˆ°é”ã—ãŸãƒ«ãƒ¼ãƒ«ã¯ãƒãƒƒãƒãƒ³ã‚°æ¤œæŸ»ã«æˆåŠŸã—ã¦ã„ã‚‹
        */
       if (mc_flags.nd_exec) {
         unsigned int i;
 
-        /* ¥°¥í¡¼¥Ğ¥ë¥ë¡¼¥ÈËì¤Î¥³¥Ô¡¼ */
+        /* ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œã®ã‚³ãƒ”ãƒ¼ */
         LmnMembrane *tmp_global_root = lmn_mem_make();
         SimpleHashtbl *copymap = copy_global_root(global_root, tmp_global_root);
 
-        /* ÊÑ¿ôÇÛÎó¤ª¤è¤ÓÂ°À­ÇÛÎó¤Î¥³¥Ô¡¼ */
+        /* å¤‰æ•°é…åˆ—ãŠã‚ˆã³å±æ€§é…åˆ—ã®ã‚³ãƒ”ãƒ¼ */
         LmnWord *wtcp = LMN_NALLOC(LmnWord, wt_size);
         LmnByte *atcp = LMN_NALLOC(LmnByte, wt_size);
         for(i = 0; i < wt_size; i++) {
           wtcp[i] = atcp[i] = 0;
         }
 
-        /* copymap¤Î¾ğÊó¤ò´ğ¤ËÊÑ¿ôÇÛÎó¤ò½ñ´¹¤¨¤ë */
+        /* copymapã®æƒ…å ±ã‚’åŸºã«å¤‰æ•°é…åˆ—ã‚’æ›¸æ›ãˆã‚‹ */
         for (i = 0; i < wt_size; i++) {
           atcp[i] = at[i];
-          if(LMN_INT_ATTR == at[i]) { /* int¤Î¤ß¥İ¥¤¥ó¥¿¤Ç¤Ê¤¤¤¿¤á */
+          if(LMN_INT_ATTR == at[i]) { /* intã®ã¿ãƒã‚¤ãƒ³ã‚¿ã§ãªã„ãŸã‚ */
             wtcp[i] = wt[i];
           }
           else if(hashtbl_contains(copymap, wt[i])) {
             wtcp[i] = hashtbl_get_default(copymap, wt[i], 0);
           }
-          else if(wt[i] == (LmnWord)global_root) { /* ¥°¥í¡¼¥Ğ¥ë¥ë¡¼¥ÈËì */
+          else if(wt[i] == (LmnWord)global_root) { /* ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œ */
             wtcp[i] = (LmnWord)tmp_global_root;
           }
         }
         hashtbl_free(copymap);
 
-        /* ÊÑ¿ôÇÛÎó¤ª¤è¤ÓÂ°À­ÇÛÎó¤ò¥³¥Ô¡¼¤ÈÆş¤ì´¹¤¨¤ë */
+        /* å¤‰æ•°é…åˆ—ãŠã‚ˆã³å±æ€§é…åˆ—ã‚’ã‚³ãƒ”ãƒ¼ã¨å…¥ã‚Œæ›ãˆã‚‹ */
         SWAP(LmnWord *, wtcp, wt);
         SWAP(LmnByte *, atcp, at);
 
-        if (!mc_flags.property_rule) { /* ¥·¥¹¥Æ¥à¥ë¡¼¥ë */
-          /* º¸ÊÕ¤Ë½Ğ¸½¤¹¤ëPROCEED¤È±¦ÊÕ¤Ë½Ğ¸½¤¹¤ëPROCEED¤ò¶èÊÌ¤¹¤ë¤¿¤á */
+        if (!mc_flags.property_rule) { /* ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ« */
+          /* å·¦è¾ºã«å‡ºç¾ã™ã‚‹PROCEEDã¨å³è¾ºã«å‡ºç¾ã™ã‚‹PROCEEDã‚’åŒºåˆ¥ã™ã‚‹ãŸã‚ */
           mc_flags.system_rule_committed = TRUE;
 
-          /* global_root¤ËÂĞ¤·¤Æ¥Ü¥Ç¥£¤òÅ¬ÍÑ¤¹¤ë */
+          /* global_rootã«å¯¾ã—ã¦ãƒœãƒ‡ã‚£ã‚’é©ç”¨ã™ã‚‹ */
           interpret(instr, &instr);
 
           State *new_state = state_make(tmp_global_root);
@@ -833,16 +833,16 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
           if (!st_lookup(expanded, (st_data_t)new_state, (st_data_t *)&state_on_table)) {
             st_insert(expanded, (st_data_t)new_state, (st_data_t)new_state);
           }
-          else { /* ²áµî¤Ë½Ğ¸½¤·¤¿¾õÂÖ */
+          else { /* éå»ã«å‡ºç¾ã—ãŸçŠ¶æ…‹ */
             state_free(new_state);
           }
         }
-        else { /* À­¼Á¥ë¡¼¥ë */
+        else { /* æ€§è³ªãƒ«ãƒ¼ãƒ« */
           global_root = tmp_global_root;
           interpret(instr, &instr);
         }
 
-        /* ÊÑ¿ôÇÛÎó¤ª¤è¤ÓÂ°À­ÇÛÎó¤ò¸µ¤ËÌá¤¹¡Ê¤¤¤é¤Ê¤¤¤«¤â¡©¡Ë */
+        /* å¤‰æ•°é…åˆ—ãŠã‚ˆã³å±æ€§é…åˆ—ã‚’å…ƒã«æˆ»ã™ï¼ˆã„ã‚‰ãªã„ã‹ã‚‚ï¼Ÿï¼‰ */
         SWAP(LmnWord *, wtcp, wt);
         SWAP(LmnByte *, atcp, at);
 
@@ -850,8 +850,8 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
         LMN_FREE(atcp);
 
         /*
-         * À­¼Á¥ë¡¼¥ë¡§return TRUE
-         * ¥·¥¹¥Æ¥à¥ë¡¼¥ë¡§return FALSE
+         * æ€§è³ªãƒ«ãƒ¼ãƒ«ï¼šreturn TRUE
+         * ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«ï¼šreturn FALSE
          */
         return mc_flags.property_rule;
       }
@@ -917,7 +917,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
         if (atomlist_ent) {
           at[atomi] = LMN_ATTR_MAKE_LINK(0);
           /*
-           * TODO: (TOFIX)64bit´Ä¶­¤Çwarning¤¬½Ğ¤ë
+           * TODO: (TOFIX)64bitç’°å¢ƒã§warningãŒå‡ºã‚‹
            */
           record = (LmnAtomPtr)atomlist_get_record(atomlist_ent, findatomid);
           if(!record) {
@@ -1203,8 +1203,8 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, posi);
 
-      /* ¥ê¥ó¥¯Àè¤Î¼èÆÀ¤ò¤»¤º¤Ë¥ê¥ó¥¯¸µ¤Î¾ğÊó¤ò³ÊÇ¼¤·¤Æ¤ª¤¯¡£
-         ¥ê¥ó¥¯¸µ¤¬³ÊÇ¼¤µ¤ì¤Æ¤¤¤ë¤³¤È¤ò¼¨¤¹¤¿¤áºÇ²¼°Ì¤Î¥Ó¥Ã¥È¤òÎ©¤Æ¤ë */
+      /* ãƒªãƒ³ã‚¯å…ˆã®å–å¾—ã‚’ã›ãšã«ãƒªãƒ³ã‚¯å…ƒã®æƒ…å ±ã‚’æ ¼ç´ã—ã¦ãŠãã€‚
+         ãƒªãƒ³ã‚¯å…ƒãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹ã“ã¨ã‚’ç¤ºã™ãŸã‚æœ€ä¸‹ä½ã®ãƒ“ãƒƒãƒˆã‚’ç«‹ã¦ã‚‹ */
       wt[linki] = LMN_ATOM_GET_LINK(wt[atomi], posi);
       at[linki] = LMN_ATOM_GET_ATTR(wt[atomi], posi);
       break;
@@ -1229,13 +1229,13 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
     case INSTR_PROCEED:
       /**
        * MC -->
-       * mc_flags.system_rule_committed¤Ë¤è¤Ã¤Æ
-       * º¸ÊÕ¤Ë½Ğ¸½¤¹¤ëPROCEED¤È±¦ÊÕ¤Ë½Ğ¸½¤¹¤ëPROCEED¤ò¶èÊÌ¤¹¤ëÉ¬Í×¤¬¤¢¤ë
+       * mc_flags.system_rule_committedã«ã‚ˆã£ã¦
+       * å·¦è¾ºã«å‡ºç¾ã™ã‚‹PROCEEDã¨å³è¾ºã«å‡ºç¾ã™ã‚‹PROCEEDã‚’åŒºåˆ¥ã™ã‚‹å¿…è¦ãŒã‚ã‚‹
        */
       if(mc_flags.nd_exec && mc_flags.system_rule_committed) {
         mc_flags.system_rule_committed = FALSE;
         mc_flags.system_rule_proceeded = TRUE;
-        return FALSE; /* ¼¡¤Î¸õÊä¤ò¼èÆÀ¤¹¤ë¤¿¤á¤Ë¼ºÇÔ¤¹¤ë */
+        return FALSE; /* æ¬¡ã®å€™è£œã‚’å–å¾—ã™ã‚‹ãŸã‚ã«å¤±æ•—ã™ã‚‹ */
       }
       /**
        * <-- MC
@@ -1291,7 +1291,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       if (lmn_env.nd || lmn_env.ltl) { /* MC */
         at[newmemi] = 0;
         activate(mp);
-      } else { /* ÄÌ¾ï¼Â¹Ô»ş */
+      } else { /* é€šå¸¸å®Ÿè¡Œæ™‚ */
         memstack_push(mp);
       }
       break;
@@ -1337,7 +1337,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       if(mp->parent->child_head == mp) mp->parent->child_head = mp->next;
       if(mp->prev) mp->prev->next = mp->next;
       if(mp->next) mp->next->prev = mp->prev;
-      mp->parent = NULL; /* removeproxies ¤Î¤¿¤á¤ËÉ¬Í× */
+      mp->parent = NULL; /* removeproxies ã®ãŸã‚ã«å¿…è¦ */
       break;
     }
     case INSTR_FREEMEM:
@@ -1370,12 +1370,12 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       if (lmn_env.nd || lmn_env.ltl) {
         activate((LmnMembrane *)wt[memi]); /* MC */
       } else {
-        memstack_push((LmnMembrane *)wt[memi]); /* ÄÌ¾ï¼Â¹Ô»ş */
+        memstack_push((LmnMembrane *)wt[memi]); /* é€šå¸¸å®Ÿè¡Œæ™‚ */
       }
       break;
     }
     case INSTR_UNLOCKMEM:
-    { /* ²¿¤â¤·¤Ê¤¤ */
+    { /* ä½•ã‚‚ã—ãªã„ */
       LmnInstrVar memi;
       READ_VAL(LmnInstrVar, instr, memi);
       break;
@@ -1400,11 +1400,11 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       READ_VAL(lmn_interned_str, instr, module_name_id);
 
       if ((ruleset = lmn_get_module_ruleset(module_name_id))) {
-        /* ¥Æ¡¼¥Ö¥ëÆâ¤Ë¥ë¡¼¥ë¥»¥Ã¥È¤¬¤¢¤ë¾ì¹ç */
+        /* ãƒ†ãƒ¼ãƒ–ãƒ«å†…ã«ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆãŒã‚ã‚‹å ´åˆ */
         lmn_mem_add_ruleset((LmnMembrane*)wt[memi], ruleset);
       }
       else {
-        /* ¥Æ¡¼¥Ö¥ëÆâ¤Ë¥ë¡¼¥ë¥»¥Ã¥È¤¬¤Ê¤¤¾ì¹ç */
+        /* ãƒ†ãƒ¼ãƒ–ãƒ«å†…ã«ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆãŒãªã„å ´åˆ */
         fprintf(stderr, "Undefined module %s\n", lmn_id_to_name(module_name_id));
       }
       break;
@@ -1514,7 +1514,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       unsigned int i, atom_num;
       BOOL ret_flag = TRUE;
       LmnInstrVar funci, srclisti, avolisti;
-      Vector *srcvec, *avovec; /* ÊÑ¿ôÈÖ¹æ¤Î¥ê¥¹¥È */
+      Vector *srcvec, *avovec; /* å¤‰æ•°ç•ªå·ã®ãƒªã‚¹ãƒˆ */
       HashSet visited_atoms;
       Vector stack, visited_root;
       LinkObj *start;
@@ -1526,9 +1526,9 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       srcvec = (Vector*) wt[srclisti];
       avovec = (Vector*) wt[avolisti];
 
-      vec_init(&stack, 16); /* ºÆµ¢½üµîÍÑ¥¹¥¿¥Ã¥¯ */
+      vec_init(&stack, 16); /* å†å¸°é™¤å»ç”¨ã‚¹ã‚¿ãƒƒã‚¯ */
       start = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(srcvec, 0)), LINKED_ATTR(vec_get(srcvec, 0)));
-      if(!LMN_ATTR_IS_DATA(start->pos)) { /* data atom ¤ÏÀÑ¤Ş¤Ê¤¤ */
+      if(!LMN_ATTR_IS_DATA(start->pos)) { /* data atom ã¯ç©ã¾ãªã„ */
         vec_push(&stack, (LmnWord)start);
       } else {
         LMN_FREE(start);
@@ -1552,7 +1552,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
           continue;
         }
 
-        /* ÂĞ¤Î¥ê¥ó¥¯¤¬¶Ø»ß¥ê¥ó¥¯¤Ç¤Ê¤¤¤« */
+        /* å¯¾ã®ãƒªãƒ³ã‚¯ãŒç¦æ­¢ãƒªãƒ³ã‚¯ã§ãªã„ã‹ */
         for(i = 0; i < avovec->num; i++) {
           LmnAtomPtr avolink = (LmnAtomPtr)LINKED_ATOM(vec_get(avovec, i));
           LmnLinkAttr avoattr = LINKED_ATTR(vec_get(avovec, i));
@@ -1567,14 +1567,14 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
           break;
         }
 
-        /* Ëì¤ò²£ÀÚ¤Ã¤Æ¤¤¤Ê¤¤¤« */
+        /* è†œã‚’æ¨ªåˆ‡ã£ã¦ã„ãªã„ã‹ */
         if(LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(lo->ap))) {
           LMN_FREE(lo);
           ret_flag = FALSE;
           break;
         }
 
-        /* º¬¤ËÅşÃ£¤·¤¿¾ì¹ç */
+        /* æ ¹ã«åˆ°é”ã—ãŸå ´åˆ */
         for(i = 0; i < visited_root.num; i++) {
           unsigned int index = vec_get(srcvec, i);
           if (lo->ap == (LmnWord)LMN_ATOM_GET_LINK((LmnAtomPtr)LINKED_ATOM(index), LINKED_ATTR(index))
@@ -1587,12 +1587,12 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
         atom_num++;
         hashset_add(&visited_atoms, (LmnWord)lo->ap);
 
-        /* »Ò¤ÎÅ¸³« */
+        /* å­ã®å±•é–‹ */
         for(i = 0; i < LMN_ATOM_GET_ARITY(lo->ap); i++) {
           LinkObj *next;
           if (i == lo->pos)
             continue;
-          if(!LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(lo->ap, i))) { /* data atom ¤ÏÀÑ¤Ş¤Ê¤¤ */
+          if(!LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(lo->ap, i))) { /* data atom ã¯ç©ã¾ãªã„ */
             next = LinkObj_make((LmnWord)LMN_ATOM_GET_LINK(lo->ap, i), LMN_ATTR_GET_VALUE(LMN_ATOM_GET_ATTR(lo->ap, i)));
             vec_push(&stack, (LmnWord)next);
           }
@@ -1603,7 +1603,7 @@ ISGROUND_CONT:
       } /* main loop: end */
 
       for(i = 0; i < visited_root.num; i++) {
-        if(!vec_get(&visited_root, i)) { /* Ì¤Ë¬Ìä¤Îº¬¤¬¤¢¤ë */
+        if(!vec_get(&visited_root, i)) { /* æœªè¨ªå•ã®æ ¹ãŒã‚ã‚‹ */
           ret_flag=FALSE;
           break;
         }
@@ -1623,9 +1623,9 @@ ISGROUND_CONT:
       unsigned int i, j;
       BOOL ret_flag = TRUE;
       LmnInstrVar srci, dsti;
-      Vector *srcv, *dstv; /* ÊÑ¿ôÈÖ¹æ¤Î¥ê¥¹¥È¡ÊÈæ³Ó¸µ¡¢Èæ³ÓÀè¡Ë */
+      Vector *srcv, *dstv; /* å¤‰æ•°ç•ªå·ã®ãƒªã‚¹ãƒˆï¼ˆæ¯”è¼ƒå…ƒã€æ¯”è¼ƒå…ˆï¼‰ */
       Vector stack1, stack2;
-      SimpleHashtbl map; /* Èæ³Ó¸µ¢ªÈæ³ÓÀè */
+      SimpleHashtbl map; /* æ¯”è¼ƒå…ƒâ†’æ¯”è¼ƒå…ˆ */
       LinkObj *start1, *start2;
 
       READ_VAL(LmnInstrVar, instr, srci);
@@ -1640,11 +1640,11 @@ ISGROUND_CONT:
       vec_init(&stack2, 16);
       start1 = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(srcv, 0)), LINKED_ATTR(vec_get(srcv, 0)));
       start2 = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(dstv, 0)), LINKED_ATTR(vec_get(dstv, 0)));
-      if (!LMN_ATTR_IS_DATA(start1->pos) && !LMN_ATTR_IS_DATA(start2->pos)) { /* ¤È¤â¤Ë¥·¥ó¥Ü¥ë¥¢¥È¥à¤Î¾ì¹ç */
+      if (!LMN_ATTR_IS_DATA(start1->pos) && !LMN_ATTR_IS_DATA(start2->pos)) { /* ã¨ã‚‚ã«ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ ã®å ´åˆ */
         vec_push(&stack1, (LmnWord)start1);
         vec_push(&stack2, (LmnWord)start2);
       }
-      else { /* data atom ¤ÏÀÑ¤Ş¤Ê¤¤ */
+      else { /* data atom ã¯ç©ã¾ãªã„ */
         if(!lmn_eq_func(start1->ap, start1->pos, start2->ap, start2->pos)) ret_flag = FALSE;
         LMN_FREE(start1);
         LMN_FREE(start2);
@@ -1672,35 +1672,35 @@ ISGROUND_CONT:
             break;
           }
         }
-        if(i != j){ /* º¬¤Î°ÌÃÖ¤¬°ã¤¦ */
+        if(i != j){ /* æ ¹ã®ä½ç½®ãŒé•ã† */
           LMN_FREE(l1); LMN_FREE(l2);
           ret_flag = FALSE;
           break;
         }
-        if(contains1) { /* º¬¤ËÅşÃ£¤·¤¿¾ì¹ç */
+        if(contains1) { /* æ ¹ã«åˆ°é”ã—ãŸå ´åˆ */
           LMN_FREE(l1); LMN_FREE(l2);
           continue;
         }
 
-        if(l1->pos != l2->pos){ /* °ú¿ô¸¡ºº */
+        if(l1->pos != l2->pos){ /* å¼•æ•°æ¤œæŸ» */
           LMN_FREE(l1); LMN_FREE(l2);
           ret_flag = FALSE;
           break;
         }
 
-        if(LMN_ATOM_GET_FUNCTOR(l1->ap) != LMN_ATOM_GET_FUNCTOR(l2->ap)){ /* ¥Õ¥¡¥ó¥¯¥¿¸¡ºº */
+        if(LMN_ATOM_GET_FUNCTOR(l1->ap) != LMN_ATOM_GET_FUNCTOR(l2->ap)){ /* ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿æ¤œæŸ» */
           LMN_FREE(l1); LMN_FREE(l2);
           ret_flag = FALSE;
           break;
         }
 
-        if(!hashtbl_contains(&map, l1->ap)) hashtbl_put(&map, l1->ap, l2->ap); /* Ì¤½Ğ */
-        else if(hashtbl_get(&map, l1->ap) != l2->ap) { /* ´û½Ğ¤ÇÉÔ°ìÃ× */
+        if(!hashtbl_contains(&map, l1->ap)) hashtbl_put(&map, l1->ap, l2->ap); /* æœªå‡º */
+        else if(hashtbl_get(&map, l1->ap) != l2->ap) { /* æ—¢å‡ºã§ä¸ä¸€è‡´ */
           LMN_FREE(l1); LMN_FREE(l2);
           ret_flag = FALSE;
           break;
         }
-        else continue; /* ´û½Ğ¤Ç°ìÃ× */
+        else continue; /* æ—¢å‡ºã§ä¸€è‡´ */
 
         for(i = 0; i < LMN_ATOM_GET_ARITY(l1->ap); i++) {
           LinkObj *n1, *n2;
@@ -1711,7 +1711,7 @@ ISGROUND_CONT:
             vec_push(&stack1, (LmnWord)n1);
             vec_push(&stack2, (LmnWord)n2);
           }
-          else { /* data atom ¤ÏÀÑ¤Ş¤Ê¤¤ */
+          else { /* data atom ã¯ç©ã¾ãªã„ */
             if(!lmn_eq_func(LMN_ATOM_GET_LINK(l1->ap, i), LMN_ATOM_GET_ATTR(l1->ap, i),
                   LMN_ATOM_GET_LINK(l2->ap, i), LMN_ATOM_GET_ATTR(l2->ap, i))) {
               LMN_FREE(l1); LMN_FREE(l2);
@@ -1736,7 +1736,7 @@ EQGROUND_NEQGROUND_BREAK:
     {
       unsigned int i;
       LmnInstrVar dstlist, srclist, memi;
-      Vector *srcvec, *dstlovec, *retvec; /* ÊÑ¿ôÈÖ¹æ¤Î¥ê¥¹¥È */
+      Vector *srcvec, *dstlovec, *retvec; /* å¤‰æ•°ç•ªå·ã®ãƒªã‚¹ãƒˆ */
       SimpleHashtbl *atommap = LMN_MALLOC(SimpleHashtbl);
       Vector stack;
       LinkObj *start;
@@ -1748,15 +1748,15 @@ EQGROUND_NEQGROUND_BREAK:
 
       srcvec = (Vector *)wt[srclist];
 
-      vec_init(&stack, 16); /* ºÆµ¢½üµîÍÑ¥¹¥¿¥Ã¥¯ */
+      vec_init(&stack, 16); /* å†å¸°é™¤å»ç”¨ã‚¹ã‚¿ãƒƒã‚¯ */
 
       hashtbl_init(atommap, 256);
-      /* atommap¤Î½é´üÀßÄê¡§¥ë¡¼¥×Æâ¤Ç¿Æ¥¢¥È¥à¤ò»²¾È¤¹¤ëÉ¬Í×¤¬¤¢¤ë¤¿¤á */
+      /* atommapã®åˆæœŸè¨­å®šï¼šãƒ«ãƒ¼ãƒ—å†…ã§è¦ªã‚¢ãƒˆãƒ ã‚’å‚ç…§ã™ã‚‹å¿…è¦ãŒã‚ã‚‹ãŸã‚ */
       start = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(srcvec, 0)),
                            (LmnLinkAttr)LINKED_ATTR(vec_get(srcvec, 0)));
       cpatom = (LmnAtomPtr)lmn_copy_atom(start->ap, start->pos);
       hashtbl_put(atommap, (HashKeyType)start->ap, (HashValueType)cpatom);
-      if (!LMN_ATTR_IS_DATA(start->pos)) { /* data atom ¤Ç¤Ê¤¤¾ì¹ç */
+      if (!LMN_ATTR_IS_DATA(start->pos)) { /* data atom ã§ãªã„å ´åˆ */
         mem_push_symbol_atom((LmnMembrane *)wt[memi], cpatom);
         for(i = 0; i < LMN_ATOM_GET_ARITY(cpatom); i++) {
           if(start->pos == i)
@@ -1767,7 +1767,7 @@ EQGROUND_NEQGROUND_BREAK:
               LinkObj *next = LinkObj_make((LmnWord)LMN_ATOM_GET_LINK(start->ap, i), LMN_ATOM_GET_ATTR(start->ap, i));
               vec_push(&stack, (LmnWord)next);
             }
-            else { /* data atom ¤Ï¥¹¥¿¥Ã¥¯¤ËÀÑ¤Ş¤Ê¤¤¤ÇÂ¨¥³¥Ô¡¼¤¹¤ë */
+            else { /* data atom ã¯ã‚¹ã‚¿ãƒƒã‚¯ã«ç©ã¾ãªã„ã§å³ã‚³ãƒ”ãƒ¼ã™ã‚‹ */
               LmnWord cpdata = lmn_copy_atom(LMN_ATOM_GET_LINK(start->ap, i), attr);
               lmn_mem_push_atom((LmnMembrane *)wt[memi], cpdata, attr);
               hashtbl_put(atommap, (HashKeyType)LMN_ATOM_GET_LINK(start->ap, i), (HashValueType)cpatom);
@@ -1777,15 +1777,15 @@ EQGROUND_NEQGROUND_BREAK:
           }
         }
       }
-      else { /* data atom ¤Î¾ì¹ç */
+      else { /* data atom ã®å ´åˆ */
         lmn_mem_push_atom((LmnMembrane *)wt[memi], (LmnWord)cpatom, start->pos);
       }
-      /* atommap¤Î½é´üÀßÄê¡§¤³¤³¤Ş¤Ç */
+      /* atommapã®åˆæœŸè¨­å®šï¼šã“ã“ã¾ã§ */
 
       while(stack.num != 0) { /* main loop: start */
         LinkObj *lo = (LinkObj *)vec_pop(&stack);
 
-        /* º¬¤ËÅşÃ£¤·¤¿¾ì¹ç */
+        /* æ ¹ã«åˆ°é”ã—ãŸå ´åˆ */
         for(i = 0; i < srcvec->num; i++){
           unsigned int index = vec_get(srcvec, i);
           if (lo->ap == (LmnWord)LMN_ATOM_GET_LINK((LmnAtomPtr)LINKED_ATOM(index), LINKED_ATTR(index))
@@ -1795,7 +1795,7 @@ EQGROUND_NEQGROUND_BREAK:
         }
 
         if(!hashtbl_contains(atommap, (HashKeyType)lo->ap)) {
-          /* ¥¢¥È¥à¤Î¥³¥Ô¡¼¤òºîÀ®¤·¤Æ¿Æ¥¢¥È¥à¤Î¥³¥Ô¡¼¤ÈÀÜÂ³¤¹¤ë */
+          /* ã‚¢ãƒˆãƒ ã®ã‚³ãƒ”ãƒ¼ã‚’ä½œæˆã—ã¦è¦ªã‚¢ãƒˆãƒ ã®ã‚³ãƒ”ãƒ¼ã¨æ¥ç¶šã™ã‚‹ */
           LmnAtomPtr cpbuddy = (LmnAtomPtr)hashtbl_get(atommap, (HashKeyType)(LmnAtomPtr)LMN_ATOM_GET_LINK(lo->ap, lo->pos));
           cpatom = (LmnAtomPtr)lmn_copy_atom(lo->ap, lo->pos);
           mem_push_symbol_atom((LmnMembrane *)wt[memi], (LmnAtomPtr)cpatom);
@@ -1808,7 +1808,7 @@ EQGROUND_NEQGROUND_BREAK:
               LinkObj *next = LinkObj_make((LmnWord)LMN_ATOM_GET_LINK(lo->ap, i), LMN_ATOM_GET_ATTR(lo->ap, i));
               vec_push(&stack, (LmnWord)next);
             }
-            else { /* data atom ¤Ï¥¹¥¿¥Ã¥¯¤ËÀÑ¤Ş¤Ê¤¤¤ÇÂ¨¥³¥Ô¡¼¤¹¤ë */
+            else { /* data atom ã¯ã‚¹ã‚¿ãƒƒã‚¯ã«ç©ã¾ãªã„ã§å³ã‚³ãƒ”ãƒ¼ã™ã‚‹ */
               LmnAtomPtr cpdata = (LmnAtomPtr)lmn_copy_atom(LMN_ATOM_GET_LINK(lo->ap, i), LMN_ATOM_GET_ATTR(lo->ap, i));
               hashtbl_put(atommap, (HashKeyType)LMN_ATOM_GET_LINK(lo->ap, i), (HashValueType)cpatom);
               lmn_mem_push_atom((LmnMembrane *)wt[memi], (LmnWord)cpdata, LMN_ATOM_GET_ATTR(lo->ap, i));
@@ -1818,7 +1818,7 @@ EQGROUND_NEQGROUND_BREAK:
           }
         }
         else {
-          /* ¥¢¥È¥à¤Î¥³¥Ô¡¼¤òÉ½¤«¤é¼èÆÀ¤·¤Æ¿Æ¥¢¥È¥à¤Î¥³¥Ô¡¼¤ÈÀÜÂ³¤¹¤ë */
+          /* ã‚¢ãƒˆãƒ ã®ã‚³ãƒ”ãƒ¼ã‚’è¡¨ã‹ã‚‰å–å¾—ã—ã¦è¦ªã‚¢ãƒˆãƒ ã®ã‚³ãƒ”ãƒ¼ã¨æ¥ç¶šã™ã‚‹ */
           LmnAtomPtr cpbuddy = (LmnAtomPtr)hashtbl_get(atommap, (HashKeyType)(LmnAtomPtr)LMN_ATOM_GET_LINK(lo->ap, lo->pos));
           cpatom = (LmnAtomPtr)hashtbl_get(atommap, (HashKeyType)lo->ap);
           LMN_ATOM_SET_LINK(cpbuddy, LMN_ATOM_GET_ATTR(lo->ap, lo->pos), (LmnWord)cpatom);
@@ -1837,7 +1837,7 @@ COPYGROUND_CONT:
         vec_push(dstlovec, (LmnWord)new);
       }
 
-      /* ÊÖ¤êÃÍ¤ÎºîÀ® */
+      /* è¿”ã‚Šå€¤ã®ä½œæˆ */
       retvec = vec_make(2);
       vec_push(retvec, (LmnWord)dstlovec);
       vec_push(retvec, (LmnWord)atommap);
@@ -1847,7 +1847,7 @@ COPYGROUND_CONT:
       LMN_FREE(start);
       vec_destroy(&stack);
 
-      /* ²òÊü¤Î¤¿¤á¤ÎºÆµ¢ */
+      /* è§£æ”¾ã®ãŸã‚ã®å†å¸° */
       interpret(instr, next_instr);
 
       while(dstlovec->num) {
@@ -1865,7 +1865,7 @@ COPYGROUND_CONT:
       /**
        * <-- MC
        */
-      return TRUE; /* COPYGROUND¤Ï¥Ü¥Ç¥£¤Ë½Ğ¸½¤¹¤ë */
+      return TRUE; /* COPYGROUNDã¯ãƒœãƒ‡ã‚£ã«å‡ºç¾ã™ã‚‹ */
 
       break;
     }
@@ -1874,7 +1874,7 @@ COPYGROUND_CONT:
     {
       unsigned int i;
       LmnInstrVar listi, memi;
-      Vector *srcvec; /* ÊÑ¿ôÈÖ¹æ¤Î¥ê¥¹¥È */
+      Vector *srcvec; /* å¤‰æ•°ç•ªå·ã®ãƒªã‚¹ãƒˆ */
       HashSet visited_atoms;
       Vector stack;
       LinkObj *start;
@@ -1886,19 +1886,19 @@ COPYGROUND_CONT:
 
       srcvec = (Vector *)wt[listi];
 
-      vec_init(&stack, 16); /* ºÆµ¢½üµîÍÑ¥¹¥¿¥Ã¥¯ */
+      vec_init(&stack, 16); /* å†å¸°é™¤å»ç”¨ã‚¹ã‚¿ãƒƒã‚¯ */
       start = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(srcvec, 0)), LINKED_ATTR(vec_get(srcvec, 0)));
       if(!LMN_ATTR_IS_DATA(start->pos)) {
         vec_push(&stack, (LmnWord)start);
       }
-      else { /* data atom ¤ÏÀÑ¤Ş¤Ê¤¤ */
+      else { /* data atom ã¯ç©ã¾ãªã„ */
         switch (op) {
           case INSTR_REMOVEGROUND:
             lmn_mem_remove_atom((LmnMembrane*)wt[memi], start->ap, start->pos);
             LMN_FREE(start);
             break;
           case INSTR_FREEGROUND:
-            /* data atom¤ÏÀÜÂ³¤µ¤ì¤¿symbol atom¤¬free¤µ¤ì¤ë¤È°ì½ï¤Ëfree¤µ¤ì¤ë */
+            /* data atomã¯æ¥ç¶šã•ã‚ŒãŸsymbol atomãŒfreeã•ã‚Œã‚‹ã¨ä¸€ç·’ã«freeã•ã‚Œã‚‹ */
             LMN_FREE(start);
             break;
         }
@@ -1913,7 +1913,7 @@ COPYGROUND_CONT:
           continue;
 
         hashset_add(&visited_atoms, (LmnWord)lo->ap);
-        for(i = 0; i < srcvec->num; i++) { /* º¬¤ËÅşÃ£¤·¤¿¤« */
+        for(i = 0; i < srcvec->num; i++) { /* æ ¹ã«åˆ°é”ã—ãŸã‹ */
           unsigned int index = vec_get(srcvec, i);
           if (lo->ap == (LmnWord)LMN_ATOM_GET_LINK((LmnAtomPtr)LINKED_ATOM(index), LINKED_ATTR(index))
               && lo->pos == LMN_ATOM_GET_ATTR((LmnAtomPtr)LINKED_ATOM(index), LINKED_ATTR(index))) {
@@ -1929,13 +1929,13 @@ COPYGROUND_CONT:
             next = LinkObj_make((LmnWord)LMN_ATOM_GET_LINK(lo->ap, i), LMN_ATTR_GET_VALUE(LMN_ATOM_GET_ATTR(lo->ap, i)));
             vec_push(&stack, (LmnWord)next);
           }
-          else { /* data atom ¤ÏÀÑ¤Ş¤Ê¤¤ */
+          else { /* data atom ã¯ç©ã¾ãªã„ */
             switch (op) {
               case INSTR_REMOVEGROUND:
                 lmn_mem_remove_atom((LmnMembrane*)wt[memi], (LmnWord)LMN_ATOM_GET_LINK(lo->ap, i), LMN_ATOM_GET_ATTR(lo->ap, i));
                 break;
               case INSTR_FREEGROUND:
-                /* data atom¤ÏÀÜÂ³¤µ¤ì¤¿symbol atom¤¬free¤µ¤ì¤ë¤È°ì½ï¤Ëfree¤µ¤ì¤ë */
+                /* data atomã¯æ¥ç¶šã•ã‚ŒãŸsymbol atomãŒfreeã•ã‚Œã‚‹ã¨ä¸€ç·’ã«freeã•ã‚Œã‚‹ */
                 break;
             }
           }
@@ -2022,8 +2022,8 @@ REMOVE_FREE_GROUND_CONT:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      /* ¥Ç¡¼¥¿¥¢¥È¥à¤Ï£±°ú¿ô¤Ê¤Î¤Ç,¤³¤ÎÌ¿Îá¤¬½Ğ¤ë¾õ¶·¤Ç¤Ï
-         ¤Ç¤Ï¾ï¤ËFALSE¤Î¤Ï¤º */
+      /* ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ ã¯ï¼‘å¼•æ•°ãªã®ã§,ã“ã®å‘½ä»¤ãŒå‡ºã‚‹çŠ¶æ³ã§ã¯
+         ã§ã¯å¸¸ã«FALSEã®ã¯ãš */
       if (LMN_ATTR_IS_DATA(at[atom1]) ||
           LMN_ATTR_IS_DATA(at[atom2]) ||
           LMN_ATOM(wt[atom1]) != LMN_ATOM(wt[atom2]))
@@ -2079,7 +2079,7 @@ REMOVE_FREE_GROUND_CONT:
       READ_VAL(LmnInstrVar, instr, listi);
       wt[listi] = (LmnWord)listvec;
       if (lmn_env.nd || lmn_env.ltl) { at[listi] = 0; /* MC */ }
-      /* ²òÊü¤Î¤¿¤á¤ÎºÆµ¢ */
+      /* è§£æ”¾ã®ãŸã‚ã®å†å¸° */
       if(interpret(instr, next_instr)) {
         vec_free(listvec);
         return TRUE;
@@ -2115,7 +2115,7 @@ REMOVE_FREE_GROUND_CONT:
           else
             assert(0);
           break;
-        case LINK_LIST: /* LinkObj¤òfree¤¹¤ë¤Î¤Ï¤³¤³¡© */
+        case LINK_LIST: /* LinkObjã‚’freeã™ã‚‹ã®ã¯ã“ã“ï¼Ÿ */
         {
           LinkObj *lo = (LinkObj *)vec_get((Vector *)wt[listi], (unsigned int)posi);
           wt[dsti] = (LmnWord)lo->ap;
@@ -2454,8 +2454,8 @@ REMOVE_FREE_GROUND_CONT:
       READ_VAL(LmnInstrVar, instr, atomi);
 
       if(LMN_ATTR_IS_DATA(at[atomi])) {
-        /* ¤³¤³¤ÇÆÀ¤ë¥Õ¥¡¥ó¥¯¥¿¤Ï¥¬¡¼¥ÉÌ¿ÎáÃæ¤Ç°ì»şÅª¤Ë»È¤ï¤ì¤ë¤À¤±¤Ê¤Î¤Ç
-           double ¤Ï¥İ¥¤¥ó¥¿¤Î¥³¥Ô¡¼¤Ç½½Ê¬¤Ê¤Ï¤º */
+        /* ã“ã“ã§å¾—ã‚‹ãƒ•ã‚¡ãƒ³ã‚¯ã‚¿ã¯ã‚¬ãƒ¼ãƒ‰å‘½ä»¤ä¸­ã§ä¸€æ™‚çš„ã«ä½¿ã‚ã‚Œã‚‹ã ã‘ãªã®ã§
+           double ã¯ãƒã‚¤ãƒ³ã‚¿ã®ã‚³ãƒ”ãƒ¼ã§ååˆ†ãªã¯ãš */
         wt[funci]=wt[atomi];
       }
       else {
@@ -2533,8 +2533,8 @@ REMOVE_FREE_GROUND_CONT:
         LmnAtomPtr orig = (LmnAtomPtr)hashsetiter_entry(&it);
         LmnAtomPtr copy = (LmnAtomPtr)hashtbl_get(delmap, (HashKeyType)orig);
         lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
-        /* mem ¤¬¤Ê¤¤¤Î¤Ç»ÅÊı¤Ê¤¯Ä¾ÀÜ¥¢¥È¥à¥ê¥¹¥È¤ò¤Ä¤Ê¤®ÊÑ¤¨¤ë
-           UNIFY¥¢¥È¥à¤Ïnatom¤Ë´Ş¤Ş¤ì¤Ê¤¤¤Î¤ÇÂç¾æÉ× */
+        /* mem ãŒãªã„ã®ã§ä»•æ–¹ãªãç›´æ¥ã‚¢ãƒˆãƒ ãƒªã‚¹ãƒˆã‚’ã¤ãªãå¤‰ãˆã‚‹
+           UNIFYã‚¢ãƒˆãƒ ã¯natomã«å«ã¾ã‚Œãªã„ã®ã§å¤§ä¸ˆå¤« */
         LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT(copy), LMN_ATOM_GET_PREV(copy));
         LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(copy), LMN_ATOM_GET_NEXT(copy));
 
@@ -2802,29 +2802,29 @@ REMOVE_FREE_GROUND_CONT:
 /*   fprintf(stderr, "\n"); */
 /* } */
 
-/* MC¡¦Èó·èÄêÅª¼Â¹Ô¤Î¥á¥¤¥ó¥ë¡¼¥Á¥ó ¤³¤³¤«¤é */
+/* MCãƒ»éæ±ºå®šçš„å®Ÿè¡Œã®ãƒ¡ã‚¤ãƒ³ãƒ«ãƒ¼ãƒãƒ³ ã“ã“ã‹ã‚‰ */
 /*----------------------------------------------------------------------*/
 
-/* ËÜËì¤ÎÁ´¥ë¡¼¥ë¥»¥Ã¥È¤òÅ¬ÍÑ¤¹¤ë */
-/* must_be_activated_right_under¤Ï¤½¤ÎËìÄ¾²¼¤Ë¤ª¤¤¤Æ¥ë¡¼¥ë¤¬Å¬±ş¤µ¤ì¡¢
- * ¤½¤ÎËì¤¬stable¤Ç¤¢¤ë²ÄÇ½À­¤¬¤Ê¤¯¤Ê¤Ã¤¿¾ì¹ç¤ËTRUE¤òÂåÆş¤¹¤ë
- * »ÒËì¤Ç¥ë¡¼¥ë¤¬È¿±ş¤¹¤ë¾ì¹ç¤â¤¢¤ë¤¿¤á¡¢FALSE¤Ç¤¢¤Ã¤Æ¤âÄ¾¤Á¤Ë¤³¤ÎËì¤¬stable¤Ç¤¢¤ë¤È¤Ï¸À¤¨¤Ê¤¤
- * Ìá¤êÃÍ¤ò¤½¤Î¤Ş¤Ş¸«¤ë¤È¥·¥¹¥Æ¥à¥ë¡¼¥ë¥»¥Ã¥È¤ÎÈ¿±ş¤ò¸«Æ¨¤¹¤¿¤á»È¤¨¤Ê¤¤
+/* æœ¬è†œã®å…¨ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã‚’é©ç”¨ã™ã‚‹ */
+/* must_be_activated_right_underã¯ãã®è†œç›´ä¸‹ã«ãŠã„ã¦ãƒ«ãƒ¼ãƒ«ãŒé©å¿œã•ã‚Œã€
+ * ãã®è†œãŒstableã§ã‚ã‚‹å¯èƒ½æ€§ãŒãªããªã£ãŸå ´åˆã«TRUEã‚’ä»£å…¥ã™ã‚‹
+ * å­è†œã§ãƒ«ãƒ¼ãƒ«ãŒåå¿œã™ã‚‹å ´åˆã‚‚ã‚ã‚‹ãŸã‚ã€FALSEã§ã‚ã£ã¦ã‚‚ç›´ã¡ã«ã“ã®è†œãŒstableã§ã‚ã‚‹ã¨ã¯è¨€ãˆãªã„
+ * æˆ»ã‚Šå€¤ã‚’ãã®ã¾ã¾è¦‹ã‚‹ã¨ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã®åå¿œã‚’è¦‹é€ƒã™ãŸã‚ä½¿ãˆãªã„
  */
 static BOOL react_all_rulesets(LmnMembrane *cur_mem, BOOL *must_be_activated_right_under) {
   unsigned int i;
-  struct Vector rulesets = cur_mem->rulesets; /* ËÜËì¤Î¥ë¡¼¥ë¥»¥Ã¥È¤Î½¸¹ç */
+  struct Vector rulesets = cur_mem->rulesets; /* æœ¬è†œã®ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã®é›†åˆ */
   BOOL temp_must_be_activated = TRUE;
 
   mc_flags.system_rule_proceeded = FALSE;
   for (i = 0; i < rulesets.num; i++) {
-    LmnRuleSet ruleset = (LmnRuleSet)vec_get(&rulesets, i); /* ¥ë¡¼¥ë¥»¥Ã¥È */
+    LmnRuleSet ruleset = (LmnRuleSet)vec_get(&rulesets, i); /* ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆ */
     react_ruleset(cur_mem, ruleset); /* return FALSE */
   }
-  if (!mc_flags.system_rule_proceeded) { /* ÄÌ¾ï¤Î¥ë¡¼¥ë¥»¥Ã¥È¤¬Å¬ÍÑ¤Ç¤­¤Ê¤«¤Ã¤¿¾ì¹ç */
-    /* ¥·¥¹¥Æ¥à¥ë¡¼¥ë¥»¥Ã¥È¤ÎÅ¬ÍÑ */
+  if (!mc_flags.system_rule_proceeded) { /* é€šå¸¸ã®ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆãŒé©ç”¨ã§ããªã‹ã£ãŸå ´åˆ */
+    /* ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆã®é©ç”¨ */
     if (!react_ruleset(cur_mem, system_ruleset)) {
-      /* ËÜËì¤Î¥ë¡¼¥ë¥»¥Ã¥ÈÅ¬ÍÑ¸¡ºº¤¬¡Ê¥·¥¹¥Æ¥à¥ë¡¼¥ë¥»¥Ã¥È´Ş¤á¤Æ¡ËÁ´¤Æ¼ºÇÔ¤·¤¿¾ì¹ç */
+      /* æœ¬è†œã®ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆé©ç”¨æ¤œæŸ»ãŒï¼ˆã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«ã‚»ãƒƒãƒˆå«ã‚ã¦ï¼‰å…¨ã¦å¤±æ•—ã—ãŸå ´åˆ */
       temp_must_be_activated = FALSE;
     }
   }
@@ -2836,20 +2836,20 @@ static BOOL react_all_rulesets(LmnMembrane *cur_mem, BOOL *must_be_activated_rig
 }
 
 /*
- * ¾õÂÖ¤òÅ¸³«¤¹¤ë
- * °ú¿ô¤È¤·¤ÆÍ¿¤¨¤é¤ì¤¿Ëì¤È¡¢¤½¤ÎËì¤Ë½êÂ°¤¹¤ëÁ´¤Æ¤Î¥¢¥¯¥Æ¥£¥ÖËì¤ËÂĞ¤·¤Æ
- * ¥ë¡¼¥ëÅ¬ÍÑ¸¡ºº¤ò¹Ô¤¦
- * »ÒËì¤«¤é¥ë¡¼¥ëÅ¬ÍÑ¤ò¹Ô¤Ã¤Æ¤¤¤¯
+ * çŠ¶æ…‹ã‚’å±•é–‹ã™ã‚‹
+ * å¼•æ•°ã¨ã—ã¦ä¸ãˆã‚‰ã‚ŒãŸè†œã¨ã€ãã®è†œã«æ‰€å±ã™ã‚‹å…¨ã¦ã®ã‚¢ã‚¯ãƒ†ã‚£ãƒ–è†œã«å¯¾ã—ã¦
+ * ãƒ«ãƒ¼ãƒ«é©ç”¨æ¤œæŸ»ã‚’è¡Œã†
+ * å­è†œã‹ã‚‰ãƒ«ãƒ¼ãƒ«é©ç”¨ã‚’è¡Œã£ã¦ã„ã
  */
-/* must_be_activated¤Ï¤³¤ÎËì¤¬stable¤Ç¤¢¤ë²ÄÇ½À­¤¬¤Ê¤¯¤Ê¤Ã¤¿¤È¤­¤ËTRUE¤òÂåÆş¤¹¤ë
- * »ÒËì¤È¼«¿È¤Î¥ë¡¼¥ëÅ¬±ş¥Æ¥¹¥È¤¬½ªÎ»¤·¤¿¤È¤­FALSE¤Ê¤é¤³¤ÎËì¤Ïstable¤Ç¤¢¤ë
+/* must_be_activatedã¯ã“ã®è†œãŒstableã§ã‚ã‚‹å¯èƒ½æ€§ãŒãªããªã£ãŸã¨ãã«TRUEã‚’ä»£å…¥ã™ã‚‹
+ * å­è†œã¨è‡ªèº«ã®ãƒ«ãƒ¼ãƒ«é©å¿œãƒ†ã‚¹ãƒˆãŒçµ‚äº†ã—ãŸã¨ãFALSEãªã‚‰ã“ã®è†œã¯stableã§ã‚ã‚‹
  */
 static BOOL expand_inner(LmnMembrane *cur_mem, BOOL *must_be_activated) {
   BOOL ret_flag = FALSE;
   for (; cur_mem; cur_mem = cur_mem->next) {
     BOOL temp_must_be_activated = FALSE;
     
-    if (expand_inner(cur_mem->child_head, &temp_must_be_activated)) { /* ÂåÉ½»ÒËì¤ËÂĞ¤·¤ÆºÆµ¢¤¹¤ë */
+    if (expand_inner(cur_mem->child_head, &temp_must_be_activated)) { /* ä»£è¡¨å­è†œã«å¯¾ã—ã¦å†å¸°ã™ã‚‹ */
       ret_flag = TRUE;
     }
 
@@ -2866,27 +2866,27 @@ static BOOL expand_inner(LmnMembrane *cur_mem, BOOL *must_be_activated) {
   return ret_flag;
 }
 
-/* ¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤ò°İ»ı¤¹¤ë¤¿¤á¤Î¥é¥Ã¥Ñ¡¼ */
+/* ã‚¤ãƒ³ã‚¿ãƒ¼ãƒ•ã‚§ã‚¤ã‚¹ã‚’ç¶­æŒã™ã‚‹ãŸã‚ã®ãƒ©ãƒƒãƒ‘ãƒ¼ */
 static BOOL expand(LmnMembrane *cur_mem) {
   BOOL dummy = FALSE;
   return expand_inner(cur_mem, &dummy);
 }
 
-/* ¼õÍıÄºÅÀ¤Ç¤¢¤ë¤Ê¤é¤ĞTRUE */
+/* å—ç†é ‚ç‚¹ã§ã‚ã‚‹ãªã‚‰ã°TRUE */
 static inline int is_accepting(LmnMembrane *mem) {
-  /* ËìÌ¾¤¬"accept"¤ò´Ş¤à */
+  /* è†œåãŒ"accept"ã‚’å«ã‚€ */
   return NULL != strstr(LMN_MEM_NAME(mem), "accept");
 }
-/* TRUE¤¬ÊÖ¤ë¤Ê¤é¤ĞneverÀáËöÈø¤Ø¤ÎÅşÃ£¤ò°ÕÌ£¤¹¤ë(i.e. È¿Îã¤Î¸¡½Ğ) */
+/* TRUEãŒè¿”ã‚‹ãªã‚‰ã°neverç¯€æœ«å°¾ã¸ã®åˆ°é”ã‚’æ„å‘³ã™ã‚‹(i.e. åä¾‹ã®æ¤œå‡º) */
 static inline int is_end_state(LmnMembrane *mem) {
-  /* ËìÌ¾¤¬"end"¤ò´Ş¤à */
+  /* è†œåãŒ"end"ã‚’å«ã‚€ */
   return NULL != strstr(LMN_MEM_NAME(mem), "end");
 }
 
 static inline void violate() {
   unsigned int i;
   fprintf(stdout, "cycle(or error) found:\n");
-  /* ·ë²Ì½ĞÎÏ */
+  /* çµæœå‡ºåŠ› */
   for (i = 0; i < vec_num(&Stack); i++) {
     State *tmp_s = (State *)vec_get(&Stack, i);
     if (is_snd(tmp_s)) printf("*");
@@ -2895,16 +2895,16 @@ static inline void violate() {
   }
   fprintf(stdout, "\n");
 
-  if (!lmn_env.ltl_all) { /* °ì¤Ä¥¨¥é¡¼¤¬¸«¤Ä¤«¤Ã¤¿¤é½ªÎ»¤¹¤ë */
+  if (!lmn_env.ltl_all) { /* ä¸€ã¤ã‚¨ãƒ©ãƒ¼ãŒè¦‹ã¤ã‹ã£ãŸã‚‰çµ‚äº†ã™ã‚‹ */
     exit(0);
   }
 }
 
 /**
- * ¤¢¤ë¾õÂÖ(s)¤«¤éÄ¾ÀÜÁ«°Ü²ÄÇ½¤Ê¾õÂÖ¤ò¤¹¤Ù¤Æpush¤¹¤ë¤¿¤á¤Î´Ø¿ô
- * ¹â³¬´Ø¿ôst_foreach(c.f. st.c)¤ËÅê¤²¤Æ»ÈÍÑ¤¹¤ë¤³¤È¤Ç¡¤¥Æ¡¼¥Ö¥ëÆâ¤Îs¤Î¼¡¤Î¾õÂÖ¤ò¼¡¡¹¤È¼è¤ê½Ğ¤·¤Æ¤¤¤¯
+ * ã‚ã‚‹çŠ¶æ…‹(s)ã‹ã‚‰ç›´æ¥é·ç§»å¯èƒ½ãªçŠ¶æ…‹ã‚’ã™ã¹ã¦pushã™ã‚‹ãŸã‚ã®é–¢æ•°
+ * é«˜éšé–¢æ•°st_foreach(c.f. st.c)ã«æŠ•ã’ã¦ä½¿ç”¨ã™ã‚‹ã“ã¨ã§ï¼Œãƒ†ãƒ¼ãƒ–ãƒ«å†…ã®sã®æ¬¡ã®çŠ¶æ…‹ã‚’æ¬¡ã€…ã¨å–ã‚Šå‡ºã—ã¦ã„ã
  *
- * successor_state¡§(st_table *)expandedÆâ¤ËÀ°Íı¤µ¤ì¤¿s¤Î¼¡¤Î¾õÂÖ
+ * successor_stateï¼š(st_table *)expandedå†…ã«æ•´ç†ã•ã‚ŒãŸsã®æ¬¡ã®çŠ¶æ…‹
  */
 static int gen_successor_states(st_data_t _k, st_data_t successor_state, void *current_state) {
   State *s = (State *)current_state;
@@ -2912,14 +2912,14 @@ static int gen_successor_states(st_data_t _k, st_data_t successor_state, void *c
 
   vec_push(&s->successor, (LmnWord)ss);
 
-  /* s->successor¤Ë¥¨¥ó¥È¥ê¡¼¤òpush¤·¤¿¤é¡¤¤³¤Î¥¨¥ó¥È¥ê¡¼¤òfree¤¹¤ë */
+  /* s->successorã«ã‚¨ãƒ³ãƒˆãƒªãƒ¼ã‚’pushã—ãŸã‚‰ï¼Œã“ã®ã‚¨ãƒ³ãƒˆãƒªãƒ¼ã‚’freeã™ã‚‹ */
   return ST_DELETE;
 }
 
 /**
- * 2nd DFS¤Î·ë²Ì¼õÍıÄºÅÀ¤¬¸«¤Ä¤«¤Ã¤¿ºİ¤Ë¡¤States¾å¤Î¤¹¤Ù¤Æ¤Î¥¨¥ó¥È¥ê¡¼(=¾õÂÖ)¤ËÎ©¤Ã¤Æ¤¤¤ë
- * ¡Ö2nd DFS¼Â¹Ô»ş¤Ë¥Á¥§¥Ã¥¯¤·¤¿¼õÍıÄºÅÀ¤Ç¤¹¡×¥Õ¥é¥°¤ò²ò½ü¤¹¤ë¡¥
- * ¹â³¬´Ø¿ôst_foreach(c.f. st.c)¤ËÅê¤²¤Æ»ÈÍÑ¡¥
+ * 2nd DFSã®çµæœå—ç†é ‚ç‚¹ãŒè¦‹ã¤ã‹ã£ãŸéš›ã«ï¼ŒStatesä¸Šã®ã™ã¹ã¦ã®ã‚¨ãƒ³ãƒˆãƒªãƒ¼(=çŠ¶æ…‹)ã«ç«‹ã£ã¦ã„ã‚‹
+ * ã€Œ2nd DFSå®Ÿè¡Œæ™‚ã«ãƒã‚§ãƒƒã‚¯ã—ãŸå—ç†é ‚ç‚¹ã§ã™ã€ãƒ•ãƒ©ã‚°ã‚’è§£é™¤ã™ã‚‹ï¼
+ * é«˜éšé–¢æ•°st_foreach(c.f. st.c)ã«æŠ•ã’ã¦ä½¿ç”¨ï¼
  */
 static int unset_snd_all(st_data_t _k, st_data_t s, st_data_t _a) {
   unset_snd((State *)s);
@@ -2927,11 +2927,11 @@ static int unset_snd_all(st_data_t _k, st_data_t s, st_data_t _a) {
 }
 
 /*
- *  2ÃÊ³¬ÌÜ¤ÎDFS
- *  ltl_search1()¤ÇÈ¯¸«¤·¤¿¼õÍıÄºÅÀ¤ä¡¢ËÜ¥á¥½¥Ã¥É¼Â¹ÔÃæ¤Ë¿·¤¿¤ËÈ¯¸«¤·¤¿¼õÍıÄºÅÀ¤Î½¸¹ç¤Ø
- *  ¤¢¤ëÅ¬Åö¤Ê¼õÍıÄºÅÀ¤«¤éÅşÃ£²ÄÇ½¤Ç¤¢¤ë¤«¤É¤¦¤«¤òÈ½Äê¤¹¤ë¡£
- *  ¤¹¤Ê¤ï¤Á¼õÍıÄºÅÀ¤«¤é¼õÍıÄºÅÀ¤Ø»ê¤ëÊÄÏ©(¼õÍı¥µ¥¤¥¯¥ë)¤ÎÂ¸ºß¤ò³ÎÇ§¤¹¤ë¤³¤È¤Ç¡¢
- *  Í¿¤¨¤é¤ì¤¿LTL¼°¤òËşÂ­¤¹¤ë¼Â¹Ô·ĞÏ©¤¬Â¸ºß¤¹¤ë¤«Èİ¤«¤òÈ½Äê¤¹¤ë¡£
+ *  2æ®µéšç›®ã®DFS
+ *  ltl_search1()ã§ç™ºè¦‹ã—ãŸå—ç†é ‚ç‚¹ã‚„ã€æœ¬ãƒ¡ã‚½ãƒƒãƒ‰å®Ÿè¡Œä¸­ã«æ–°ãŸã«ç™ºè¦‹ã—ãŸå—ç†é ‚ç‚¹ã®é›†åˆã¸
+ *  ã‚ã‚‹é©å½“ãªå—ç†é ‚ç‚¹ã‹ã‚‰åˆ°é”å¯èƒ½ã§ã‚ã‚‹ã‹ã©ã†ã‹ã‚’åˆ¤å®šã™ã‚‹ã€‚
+ *  ã™ãªã‚ã¡å—ç†é ‚ç‚¹ã‹ã‚‰å—ç†é ‚ç‚¹ã¸è‡³ã‚‹é–‰è·¯(å—ç†ã‚µã‚¤ã‚¯ãƒ«)ã®å­˜åœ¨ã‚’ç¢ºèªã™ã‚‹ã“ã¨ã§ã€
+ *  ä¸ãˆã‚‰ã‚ŒãŸLTLå¼ã‚’æº€è¶³ã™ã‚‹å®Ÿè¡ŒçµŒè·¯ãŒå­˜åœ¨ã™ã‚‹ã‹å¦ã‹ã‚’åˆ¤å®šã™ã‚‹ã€‚
  */
 static void ltl_search2() {
   unsigned int i, j;
@@ -2961,7 +2961,7 @@ static void ltl_search2() {
 
     for (j = 0; j < Stack.num; j++) {
       State *tmp_state = (State *)vec_get(&Stack, j);
-      /* ¤³¤³¤ÏpointerÈæ³Ó¤À¤±¤Ç¤¤¤¤¤«¤â */
+      /* ã“ã“ã¯pointeræ¯”è¼ƒã ã‘ã§ã„ã„ã‹ã‚‚ */
       if (/*lmn_mem_equals((HashKeyType)tmp_state->mem, (HashKeyType)ssmem)*/
       tmp_state->mem==ssmem && is_fst(tmp_state)) {
         on_stack = TRUE;
@@ -2976,7 +2976,7 @@ static void ltl_search2() {
       return;
     }
 
-    /* second DFS ¤ÇÌ¤Ë¬Ìä¢ªºÆµ¢ */
+    /* second DFS ã§æœªè¨ªå•â†’å†å¸° */
     if(!is_snd(ss)) {
       set_snd(ss);
       ltl_search2();
@@ -2984,7 +2984,7 @@ static void ltl_search2() {
   }
 }
 
-/* nested(¤Ş¤¿¤Ïdouble)DFS¤Ë¤ª¤±¤ë1ÃÊ³¬ÌÜ¤Î¼Â¹Ô */
+/* nested(ã¾ãŸã¯double)DFSã«ãŠã‘ã‚‹1æ®µéšç›®ã®å®Ÿè¡Œ */
 void ltl_search1() {
   unsigned int i, j;
   State *s = (State *)vec_peek(&Stack);
@@ -3014,10 +3014,10 @@ void ltl_search1() {
   }
 
   /*
-   * ¾õÂÖÅ¸³«
+   * çŠ¶æ…‹å±•é–‹
    */
   for (i = 0; i < s->mem->rulesets.num; i++) {
-    LmnRuleSet ruleset = (LmnRuleSet)vec_get(&s->mem->rulesets, i); /* À­¼Á¥ë¡¼¥ë */
+    LmnRuleSet ruleset = (LmnRuleSet)vec_get(&s->mem->rulesets, i); /* æ€§è³ªãƒ«ãƒ¼ãƒ« */
     LmnRule rule;
     BYTE *inst_seq;
     LmnRuleInstr dummy;
@@ -3026,24 +3026,24 @@ void ltl_search1() {
       rule = lmn_ruleset_get_rule(ruleset, j);
       inst_seq = lmn_rule_get_inst_seq(rule);
 
-      global_root = s->mem; /* ¥³¥Ô¡¼¸µ¤È¤Ê¤ë¥°¥í¡¼¥Ğ¥ë¥ë¡¼¥ÈËì */
-      wt[0] = (LmnWord)s->mem; /* ¥°¥í¡¼¥Ğ¥ë¥ë¡¼¥ÈËì¤¬À­¼Á¥ë¡¼¥ë¤òÊİ»ı¤¹¤ë */
+      global_root = s->mem; /* ã‚³ãƒ”ãƒ¼å…ƒã¨ãªã‚‹ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œ */
+      wt[0] = (LmnWord)s->mem; /* ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œãŒæ€§è³ªãƒ«ãƒ¼ãƒ«ã‚’ä¿æŒã™ã‚‹ */
 
       mc_flags.property_rule = TRUE;
 
       /**
-       * À­¼Á¥ë¡¼¥ëÅ¬ÍÑ
-       * ¥°¥í¡¼¥Ğ¥ëÊÑ¿ôglobal_root¤ËÀ­¼Á¥ë¡¼¥ëÅ¬ÍÑ·ë²Ì¤¬³ÊÇ¼¤µ¤ì¤ë
+       * æ€§è³ªãƒ«ãƒ¼ãƒ«é©ç”¨
+       * ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°global_rootã«æ€§è³ªãƒ«ãƒ¼ãƒ«é©ç”¨çµæœãŒæ ¼ç´ã•ã‚Œã‚‹
        */
       if (interpret(inst_seq, &dummy)) {
         mc_flags.property_rule = FALSE;
 
         /**
-         * global_root¤¬»Ø¤¹Ëì¤ËÂĞ¤·¤Æ¥·¥¹¥Æ¥à¥ë¡¼¥ëÅ¬ÍÑ¸¡ºº¤ò¹Ô¤¦
-         * ¥·¥¹¥Æ¥à¥ë¡¼¥ëÅ¬ÍÑ¤Ïglobal_root¤¬»Ø¤¹Ëì¤Î¥³¥Ô¡¼¤ËÂĞ¤·¤Æ¹Ô¤¦
+         * global_rootãŒæŒ‡ã™è†œã«å¯¾ã—ã¦ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«é©ç”¨æ¤œæŸ»ã‚’è¡Œã†
+         * ã‚·ã‚¹ãƒ†ãƒ ãƒ«ãƒ¼ãƒ«é©ç”¨ã¯global_rootãŒæŒ‡ã™è†œã®ã‚³ãƒ”ãƒ¼ã«å¯¾ã—ã¦è¡Œã†
          */
         if (!expand(global_root->child_head)) { /* stutter extension */
-          /* ¥°¥í¡¼¥Ğ¥ë¥ë¡¼¥ÈËì¤Î¥³¥Ô¡¼ */
+          /* ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œã®ã‚³ãƒ”ãƒ¼ */
           State *newstate;
           LmnMembrane *newmem = lmn_mem_make();
           SimpleHashtbl *copymap = copy_global_root(global_root, newmem);
@@ -3063,8 +3063,8 @@ void ltl_search1() {
   }
 
   if (expanded->num_entries > 0) {
-    /* expanded¤ÎÆâÍÆ¤òState->succeccor¤ËÊİÂ¸¤·¡¢¤½¤Î¸å
-     * expandedÆâ¤Î¥¨¥ó¥È¥ê¡¼¤ò¤¹¤Ù¤Æfree¤¹¤ë */
+    /* expandedã®å†…å®¹ã‚’State->succeccorã«ä¿å­˜ã—ã€ãã®å¾Œ
+     * expandedå†…ã®ã‚¨ãƒ³ãƒˆãƒªãƒ¼ã‚’ã™ã¹ã¦freeã™ã‚‹ */
     state_succ_init(s, expanded->num_entries);
     st_foreach(expanded, gen_successor_states, s);
 
@@ -3074,7 +3074,7 @@ void ltl_search1() {
 
       if (!st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_table)) {
         st_add_direct(States, ss, (st_data_t)ss);
-        /* push ¤Èset ¤ò£±¤Ä¤Î´Ø¿ô¤Ë¤¹¤ë */
+        /* push ã¨set ã‚’ï¼‘ã¤ã®é–¢æ•°ã«ã™ã‚‹ */
         vec_push(&Stack, (LmnWord)ss);
         set_fst(ss);
         ltl_search1();
@@ -3084,7 +3084,7 @@ void ltl_search1() {
         if(s->mem != ss->mem) {
           state_free(ss);
         }
-        else { /* ¼«¸Ê¥ë¡¼¥×¤Î¾ì¹ç¤ÏËì¤Ï²òÊü¤·¤Ê¤¤ */
+        else { /* è‡ªå·±ãƒ«ãƒ¼ãƒ—ã®å ´åˆã¯è†œã¯è§£æ”¾ã—ãªã„ */
           vec_destroy(&ss->successor);
           LMN_FREE(ss);
         }
@@ -3117,9 +3117,9 @@ void ltl_search1() {
 }
 
 /**
- * Èó·èÄê(--nd ¤Ş¤¿¤Ï --nd_result)¼Â¹Ô»ş¤Ë¡¤¾õÂÖcurrent_state¤Î¼¡¤Î¾õÂÖ¤òÀ°Íı¤¹¤ë¤¿¤á¤Î´Ø¿ô¡¥
- * ¥Æ¡¼¥Ö¥ëexpandedÆâ¤ËÀ°Íı¤µ¤ì¤¿¾õÂÖ¤¬´ûÂ¸¤Ç¤¢¤ë(´û¤ËStatesÆâ¤ËÂ¸ºß¤¹¤ë)¤«Èİ¤«¤Ë´ğ¤Å¤¤¤Æ
- * ¾õÂÖ¶õ´Ö¤ò³ÈÄ¥¤¹¤ë¤«Èİ¤«È½ÃÇ¤¹¤ë¡¥¹â³¬´Ø¿ôst_foreach(c.f. st.c)¤ËÅê¤²¤Æ»ÈÍÑ¡¥
+ * éæ±ºå®š(--nd ã¾ãŸã¯ --nd_result)å®Ÿè¡Œæ™‚ã«ï¼ŒçŠ¶æ…‹current_stateã®æ¬¡ã®çŠ¶æ…‹ã‚’æ•´ç†ã™ã‚‹ãŸã‚ã®é–¢æ•°ï¼
+ * ãƒ†ãƒ¼ãƒ–ãƒ«expandedå†…ã«æ•´ç†ã•ã‚ŒãŸçŠ¶æ…‹ãŒæ—¢å­˜ã§ã‚ã‚‹(æ—¢ã«Stateså†…ã«å­˜åœ¨ã™ã‚‹)ã‹å¦ã‹ã«åŸºã¥ã„ã¦
+ * çŠ¶æ…‹ç©ºé–“ã‚’æ‹¡å¼µã™ã‚‹ã‹å¦ã‹åˆ¤æ–­ã™ã‚‹ï¼é«˜éšé–¢æ•°st_foreach(c.f. st.c)ã«æŠ•ã’ã¦ä½¿ç”¨ï¼
  */
 static int expand_states_and_stack(st_data_t k, st_data_t successor_state, void *current_state) {
   if (k != 0 && successor_state != 0) {
@@ -3128,40 +3128,40 @@ static int expand_states_and_stack(st_data_t k, st_data_t successor_state, void 
     State *ss_on_table;
 
     if (!st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_table)) {
-      /* expanded¤ÎÆâÍÆ¤òState->successor¤ËÊİÂ¸¤¹¤ë¡Ê¿·µ¬¡Ë */
+      /* expandedã®å†…å®¹ã‚’State->successorã«ä¿å­˜ã™ã‚‹ï¼ˆæ–°è¦ï¼‰ */
       if (!lmn_env.nd_result) {
         vec_push(&s->successor, (LmnWord)ss);
       }
 
-      st_add_direct(States, ss, (st_data_t)ss); /* ¾õÂÖ¶õ´Ö¤ËÄÉ²Ã */
-      vec_push(&Stack, (LmnWord)ss); /* ¥¹¥¿¥Ã¥¯¤ËÄÉ²Ã */
+      st_add_direct(States, ss, (st_data_t)ss); /* çŠ¶æ…‹ç©ºé–“ã«è¿½åŠ  */
+      vec_push(&Stack, (LmnWord)ss); /* ã‚¹ã‚¿ãƒƒã‚¯ã«è¿½åŠ  */
     } else {
-      /* expanded¤ÎÆâÍÆ¤òState->successor¤ËÊİÂ¸¤¹¤ë¡Ê¹çÎ®¡Ë */
+      /* expandedã®å†…å®¹ã‚’State->successorã«ä¿å­˜ã™ã‚‹ï¼ˆåˆæµï¼‰ */
       if (!lmn_env.nd_result) {
         vec_push(&s->successor, (LmnWord)ss_on_table);
       }
       state_free(ss); /* free dupulicate state */
     }
-    return ST_DELETE; /* Stack(¤Ş¤¿¤Ïs->successor)¤Ë¥¨¥ó¥È¥ê¡¼¤ÎÆâÍÆ¤òÊİÂ¸¤·¤¿¤é¤³¤Î¥¨¥ó¥È¥ê¡¼¤òfree¤·¤Æ¤ª¤¯ */
+    return ST_DELETE; /* Stack(ã¾ãŸã¯s->successor)ã«ã‚¨ãƒ³ãƒˆãƒªãƒ¼ã®å†…å®¹ã‚’ä¿å­˜ã—ãŸã‚‰ã“ã®ã‚¨ãƒ³ãƒˆãƒªãƒ¼ã‚’freeã—ã¦ãŠã */
   } else {
-    /* ¤³¤Îbin¤Ë¤Ï¥¨¥ó¥È¥ê¡¼(st_table_entry)¤¬Â¸ºß¤·¤Ê¤¤¤Î¤Ç¼¡¤Îbin¤ò¥Á¥§¥Ã¥¯¤¹¤ë */
+    /* ã“ã®binã«ã¯ã‚¨ãƒ³ãƒˆãƒªãƒ¼(st_table_entry)ãŒå­˜åœ¨ã—ãªã„ã®ã§æ¬¡ã®binã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹ */
     return ST_CONTINUE;
   }
 }
 
 /*
  * nondeterministic execution
- * ¿¼¤µÍ¥Àè¤ÇÁ´¼Â¹Ô·ĞÏ©¤ò¼èÆÀ¤¹¤ë
+ * æ·±ã•å„ªå…ˆã§å…¨å®Ÿè¡ŒçµŒè·¯ã‚’å–å¾—ã™ã‚‹
  */
 void nd_exec() {
 
   while (vec_num(&Stack) != 0) {
-    State *s = (State *)vec_peek(&Stack); /* Å¸³«¸µ */
-    if (!s->flags) { /* ¾õÂÖ¤¬Ì¤Å¸³«¤Ç¤¢¤ë¾ì¹ç */
-      global_root = s->mem; /* ¥°¥í¡¼¥Ğ¥ë¥ë¡¼¥ÈËì¤òÂç°èÊÑ¿ô¤ËÅĞÏ¿¤¹¤ë */
-      s->flags = TRUE; /* Å¸³«ºÑ¤ß¥Õ¥é¥° */
+    State *s = (State *)vec_peek(&Stack); /* å±•é–‹å…ƒ */
+    if (!s->flags) { /* çŠ¶æ…‹ãŒæœªå±•é–‹ã§ã‚ã‚‹å ´åˆ */
+      global_root = s->mem; /* ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œã‚’å¤§åŸŸå¤‰æ•°ã«ç™»éŒ²ã™ã‚‹ */
+      s->flags = TRUE; /* å±•é–‹æ¸ˆã¿ãƒ•ãƒ©ã‚° */
 
-      expand(s->mem); /* Å¸³«Àè¤òexpanded¤Ë³ÊÇ¼¤¹¤ë */
+      expand(s->mem); /* å±•é–‹å…ˆã‚’expandedã«æ ¼ç´ã™ã‚‹ */
 
       /* dump: execution result */
       if (lmn_env.nd_result && expanded->num_entries == 0) {
@@ -3177,7 +3177,7 @@ void nd_exec() {
         fprintf(stdout, "\n");
       }
 
-      /* expanded¤ÎÆâÍÆ¤òState->successor¤ËÊİÂ¸¤¹¤ë */
+      /* expandedã®å†…å®¹ã‚’State->successorã«ä¿å­˜ã™ã‚‹ */
       if (!lmn_env.nd_result && expanded->num_entries != 0) {
         state_succ_init(s, expanded->num_entries);
       }
@@ -3185,12 +3185,12 @@ void nd_exec() {
       st_foreach(expanded, expand_states_and_stack, s);
     }
     else { /* s->toggle == TRUE */
-      vec_pop(&Stack); /* ¾õÂÖ¤¬Å¸³«ºÑ¤ß¤Ç¤¢¤ë¾ì¹ç */
+      vec_pop(&Stack); /* çŠ¶æ…‹ãŒå±•é–‹æ¸ˆã¿ã§ã‚ã‚‹å ´åˆ */
     }
 
-    /* ¤³¤ÎÃÊ³¬¤Çexpanded¤Ï¶õ¤Ç¤¢¤ëÉ¬Í×¤¬¤¢¤ë */
+    /* ã“ã®æ®µéšã§expandedã¯ç©ºã§ã‚ã‚‹å¿…è¦ãŒã‚ã‚‹ */
     assert(expanded->num_entries == 0);
   }
 }
 /*----------------------------------------------------------------------*/
-/* MC¡¦Èó·èÄêÅª¼Â¹Ô¤Î¥á¥¤¥ó¥ë¡¼¥Á¥ó ¤³¤³¤Ş¤Ç */
+/* MCãƒ»éæ±ºå®šçš„å®Ÿè¡Œã®ãƒ¡ã‚¤ãƒ³ãƒ«ãƒ¼ãƒãƒ³ ã“ã“ã¾ã§ */
