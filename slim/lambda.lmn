@@ -1,2 +1,0 @@
- lambda(A,B)=rm :- A=rm, B=rm.
- rm(lambda(L1,L1)).
