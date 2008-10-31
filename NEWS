@@ -1,0 +1,17 @@
+SLIM (0.4.0)  --
+  * The conv_il was integrated to SLIM.
+  * Internal compilation
+   - You can give a LMNtal code to SLIM directly.
+  * support optimization flag
+  * support system libralies
+  * support -I option
+  * Bug fixes
+
+SLIM (0.3.0) -- 2008/03/04 00:55
+  * module system is available
+
+SLIM (0.2.0) -- 2008/02/21 08:55
+  * new features SHOULD be described here
+
+SLIM (0.1.0) -- 2007/10/13 17:30
+  * new features SHOULD be described here
