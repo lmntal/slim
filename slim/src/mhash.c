@@ -336,10 +336,11 @@ static int mhash_internal(LmnMembrane *mem)
 
 int mhash(LmnWord mem)
 {
-  int ret = 1;
-/*   hashtbl_init(&mem2h, 32); */
-/*   ret =  mhash_internal((LmnMembrane *)mem); */
-/*   hashtbl_destroy(&mem2h); */
+  int ret;
+
+  hashtbl_init(&mem2h, 32);
+  ret =  mhash_internal((LmnMembrane *)mem);
+  hashtbl_destroy(&mem2h);
   return ret;
 }
 
