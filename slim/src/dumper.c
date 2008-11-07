@@ -90,10 +90,14 @@ static void dump_state_init(struct DumpState *s)
   s->link_num = 0;
 }
 
-static BOOL is_direct_printable(const char *s)
+static BOOL is_direct_printable(LmnFunctor f)
 {
-  LMN_ASSERT(*s);
+  const char *s;
 
+  if (LMN_IS_PROXY_FUNCTOR(f) ||
+      f == LMN_NIL_FUNCTOR) return TRUE;
+
+  s = LMN_FUNCTOR_STR(f);
   if (!(isalpha(*s) && islower(*s))) return FALSE;
   while (*(++s)) {
     if (!(isalpha(*s) || isdigit(*s) || *s=='_')) return FALSE;
@@ -125,7 +129,7 @@ static void dump_atomname(LmnFunctor f)
   {
     const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
 
-    if (LMN_IS_PROXY_FUNCTOR(f) || is_direct_printable(atom_name)) {
+    if (is_direct_printable(f)) {
       fprintf(stdout, "%s", atom_name);
     } else {
       fprintf(stdout, "'%s'", atom_name);
@@ -477,6 +481,7 @@ static void lmn_dump_cell_internal(LmnMembrane *mem,
       }
       /* 1 argument, link to the last argument */
       else if (arity == 1 &&
+               f != LMN_NIL_FUNCTOR &&
                (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(atom, 0)) ||
                 (int)LMN_ATTR_GET_VALUE(LMN_ATOM_GET_ATTR(atom, 0)) ==
                 LMN_ATOM_GET_ARITY(LMN_ATOM_GET_LINK(atom, 0)) - 1)) {

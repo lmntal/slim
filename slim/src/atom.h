@@ -159,8 +159,8 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_PROXY_SET_MEM(PROXY_ATOM,X)  LMN_ATOM_SET_LINK((PROXY_ATOM), 2, (X))
 #define LMN_IS_PROXY_FUNCTOR(FUNC)   ((FUNC) < 3)
 
-/* DEBUG: print atom name (for debug) */
 #define LMN_ATOM_STR(ATOM) LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(ATOM)))
+#define LMN_FUNCTOR_STR(F) LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(F))
 
 /* link attribute of primitive data type */
 /* low 7 bits of link attribute */
