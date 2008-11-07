@@ -3,7 +3,7 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [0.4.0], [lang@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [0.4.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CONFIG_SRCDIR([src/main.c])
