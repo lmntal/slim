@@ -56,6 +56,19 @@ Show proxy atoms.
 .TP
 .BI --hideruleset
 Hide ruleset from result
+
+.TP
+.BI --nd
+Nondeterministic execution mode, print all execution paths
+.TP
+.BI --nd_result
+Nondeterministic execution mode, print only deadlock paths
+.TP
+.BI --ltl
+Model checking mode
+.TP
+.BI --ltl_all
+LTL model checking mode, print all errors
 .TP
 .BI --help
 Print (on the standard output) a description of the command line
