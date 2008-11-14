@@ -192,53 +192,53 @@ static BOOL dump_list(LmnAtomPtr atom,
 
   fprintf(stdout, "[");
   while (TRUE) {
-    LmnFunctor f = LMN_ATOM_GET_FUNCTOR(atom);
-    if (!LMN_ATTR_IS_DATA(attr) &&
-        f == LMN_LIST_FUNCTOR   &&
-        LMN_ATTR_GET_VALUE(attr) == 2) {
-      struct AtomRec *rec;
+    if (!LMN_ATTR_IS_DATA(attr)) {
+      LmnFunctor f = LMN_ATOM_GET_FUNCTOR(atom);
+      if (f == LMN_LIST_FUNCTOR   &&
+          LMN_ATTR_GET_VALUE(attr) == 2) {
+        struct AtomRec *rec;
 
-      rec = get_atomrec(ht, atom);
+        rec = get_atomrec(ht, atom);
       
-      if (rec->done) { /* cyclic */
-        int link = s->link_num++;
-        fprintf(stdout, "|");
-        hashtbl_put(&rec->args, LMN_ATTR_GET_VALUE(attr), link);
-        fprintf(stdout, LINK_FORMAT, link);
+        if (rec->done) { /* cyclic */
+          int link = s->link_num++;
+          fprintf(stdout, "|");
+          hashtbl_put(&rec->args, LMN_ATTR_GET_VALUE(attr), link);
+          fprintf(stdout, LINK_FORMAT, link);
+          break;
+        }
+        rec->done = TRUE;
+
+        if (!first) fprintf(stdout, ",");
+        first = FALSE;
+
+        if (hashtbl_contains(&rec->args, 0)) {
+          /* link 0 was already printed */
+          int link = hashtbl_get(&rec->args, 0);
+          fprintf(stdout, LINK_FORMAT, link);
+        }
+        else {
+          dump_atom(LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0)),
+                    ht,
+                    LMN_ATOM_GET_ATTR(atom, 0),
+                    s,
+                    indent,
+                    call_depth + 1);
+        }
+        attr = LMN_ATOM_GET_ATTR(atom, 1);
+        atom = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 1));
+      }
+      else if (f == LMN_NIL_FUNCTOR) {
+        struct AtomRec *rec;
+        rec = atomrec_make();
+        rec->done = TRUE;
+        hashtbl_put(ht, (HashKeyType)atom, (HashValueType)rec);
         break;
       }
-      rec->done = TRUE;
-
-      if (!first) fprintf(stdout, ",");
-      first = FALSE;
-
-      if (hashtbl_contains(&rec->args, 0)) {
-        /* link 0 was already printed */
-        int link = hashtbl_get(&rec->args, 0);
-        fprintf(stdout, LINK_FORMAT, link);
-      }
-      else {
-        dump_atom(LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0)),
-                  ht,
-                  LMN_ATOM_GET_ATTR(atom, 0),
-                  s,
-                  indent,
-                  call_depth + 1);
-      }
-      attr = LMN_ATOM_GET_ATTR(atom, 1);
-      atom = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 1));
-    }
-    else if (!LMN_ATTR_IS_DATA(attr) &&
-             f == LMN_NIL_FUNCTOR) {
-      struct AtomRec *rec;
-      rec = atomrec_make();
-      rec->done = TRUE;
-      hashtbl_put(ht, (HashKeyType)atom, (HashValueType)rec);
-      break;
     }
     else { /* list ends with non nil data */
       fprintf(stdout, "|");
-      dump_atom(atom, ht, LMN_ATTR_GET_VALUE(attr), s, indent, call_depth + 1);
+      dump_atom(atom, ht, attr, s, indent, call_depth + 1);
       break;
     }
   }
