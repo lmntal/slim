@@ -504,10 +504,10 @@ static void load_inst_block(InstBlock ib, Context c)
 static int fill_label_ref(st_data_t loc, st_data_t label, void *c_)
 {
   Context  c = (Context)c_;
-  int target_loc;
+  st_data_t target_loc;
 
-  if (st_lookup(c->label_to_loc, label, (void *)&target_loc)) {
-    WRITE_HERE(LmnJumpOffset, target_loc - (int)loc - sizeof(LmnJumpOffset), c, (int)loc);
+  if (st_lookup(c->label_to_loc, label, &target_loc)) {
+    WRITE_HERE(LmnJumpOffset, (int)target_loc - (int)loc - sizeof(LmnJumpOffset), c, (int)loc);
   } else {
     fprintf(stderr, "implementation error: label not found L%d\n", (int)label);
     exit(EXIT_FAILURE);
