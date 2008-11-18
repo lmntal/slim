@@ -65,6 +65,7 @@ static void usage(void)
           "  --dot           Output result in dot language\n"
           "  --nd            Nondeterministic execution mode, print all execution paths\n"
           "  --nd_result     Nondeterministic execution mode, print only deadlock paths\n"
+          "  --nd_dump       Nondeterministic execution mode, print all state instantly\n"
           "  --ltl           LTL model checking mode\n"
           "  --ltl_all       LTL model checking mode, print all errors\n"
           "  --version       Prints version and exits.\n"
@@ -91,8 +92,9 @@ static int parse_options(int argc, char *argv[])
     {"dot", 0, 0, 1004},
     {"nd", 0, 0, 1005},
     {"nd_result", 0, 0, 1006},
-    {"ltl", 0, 0, 1007},
-    {"ltl_all", 0, 0, 1008},
+    {"nd_dump", 0, 0, 1007},
+    {"ltl", 0, 0, 1008},
+    {"ltl_all", 0, 0, 1009},
     {0, 0, 0, 0}
   };
 
@@ -128,9 +130,13 @@ static int parse_options(int argc, char *argv[])
       lmn_env.nd_result = TRUE;
       break;
     case 1007:
-      lmn_env.ltl = TRUE;
+      lmn_env.nd = TRUE;
+      lmn_env.nd_dump = TRUE;
       break;
     case 1008:
+      lmn_env.ltl = TRUE;
+      break;
+    case 1009:
       lmn_env.ltl = TRUE;
       lmn_env.ltl_all = TRUE;
       break;
@@ -170,6 +176,7 @@ static void init_env(void)
   lmn_env.output_format = DEFAULT;
   lmn_env.nd = FALSE;
   lmn_env.nd_result = FALSE;
+  lmn_env.nd_dump = FALSE;
   lmn_env.ltl = FALSE;
   lmn_env.ltl_all = FALSE;
   lmn_env.optimization_level = 0;

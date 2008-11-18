@@ -171,6 +171,7 @@ struct LmnEnv {
   BOOL show_ruleset;
   BOOL nd;
   BOOL nd_result;
+  BOOL nd_dump;
   BOOL ltl;
   BOOL ltl_all;
   enum OutputFormat output_format;

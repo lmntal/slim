@@ -64,6 +64,9 @@ Nondeterministic execution mode, print all execution paths
 .BI --nd_result
 Nondeterministic execution mode, print only deadlock paths
 .TP
+.BI --nd_dump
+Nondeterministic execution mode, print all state instantly
+.TP
 .BI --ltl
 Model checking mode
 .TP

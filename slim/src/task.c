@@ -187,6 +187,7 @@ static LmnMembrane* memstack_peek()
 
 /* prototypes */
 LMN_EXTERN void nd_exec(void);
+LMN_EXTERN void nd_dump_exec(void);
 LMN_EXTERN void ltl_search1(void);
 
 /* 非決定的実行で用いるフラグ集合 */
@@ -425,11 +426,20 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
 
   /* 非決定的実行 */
   if(lmn_env.nd) {
-    nd_exec();
-
-    /* 状態遷移グラフを出力する */
-    if (!lmn_env.nd_result) {
-      st_foreach(States, print_state_transition_graph, 0);
+    
+    /* --nd_resultの実行 */
+    if(lmn_env.nd_result){
+    	nd_exec();
+    }
+    /* --nd_dumpの実行 */
+    else if(lmn_env.nd_dump){
+    	nd_dump_exec();
+    }
+    /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
+    else{
+    	nd_exec();
+    	printf("init:%lu\n", (long unsigned int)initial_state);
+        st_foreach(States, print_state_transition_graph, 0);
     }
   }
   /* LTLモデル検査 */
@@ -3117,7 +3127,7 @@ void ltl_search1() {
 }
 
 /**
- * 非決定(--nd または --nd_result)実行時に，状態current_stateの次の状態を整理するための関数．
+ * 非決定(--ndなど)実行時に，状態current_stateの次の状態を整理するための関数．
  * テーブルexpanded内に整理された状態が既存である(既にStates内に存在する)か否かに基づいて
  * 状態空間を拡張するか否か判断する．高階関数st_foreach(c.f. st.c)に投げて使用．
  */
@@ -3194,3 +3204,40 @@ void nd_exec() {
 }
 /*----------------------------------------------------------------------*/
 /* MC・非決定的実行のメインルーチン ここまで */
+
+
+
+/*
+ * nd_exec()のdump版
+ * 状態が見つかった時点で状態情報の出力を行う。
+ */
+void nd_dump_exec() {
+
+  while (vec_num(&Stack) != 0) {
+    State *s = (State *)vec_peek(&Stack); /* 展開元 */
+    if (!s->flags) { /* 状態が未展開である場合 */
+      global_root = s->mem; /* グローバルルート膜を大域変数に登録する */
+      s->flags = TRUE; /* 展開済みフラグ */
+
+      expand(s->mem); /* 展開先をexpandedに格納する */
+      
+      /* 状態を出力（状態ID:ハッシュ値:遷移先の数:状態） */
+      fprintf(stdout, "%lu:%d:%d:", (long unsigned int)s, s->hash, expanded->num_entries);
+      lmn_dump_cell(s->mem);
+      
+      /* expandedの内容をState->successorに保存する */
+      if (expanded->num_entries != 0) {
+        state_succ_init(s, expanded->num_entries);
+      }
+      
+      st_foreach(expanded, expand_states_and_stack, s);
+    }
+    else { /* s->toggle == TRUE */
+      vec_pop(&Stack); /* 状態が展開済みである場合 */
+    }
+
+    /* この段階でexpandedは空である必要がある */
+    assert(expanded->num_entries == 0);
+  }
+}
+
