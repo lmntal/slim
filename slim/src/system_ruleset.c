@@ -292,7 +292,6 @@ static BOOL exec_mod_operation_on_body(LmnMembrane *mem)
         REMOVE_FROM_ATOMLIST(op);
         lmn_delete_atom(op);
 
-        LMN_FREE(x0); LMN_FREE(x1);
         return TRUE;
       }
     }
