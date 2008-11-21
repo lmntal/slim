@@ -141,6 +141,10 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_ATOM_WORDS(ARITY)          \
   (3+LMN_ATTR_WORDS(ARITY)+(ARITY))
 
+/* returns TRUE if ATOM's(with attribute ATTR) functor is FUNC */
+#define LMN_HAS_FUNCTOR(ATOM, ATTR, FUNC) \
+  (LMN_ATTR_IS_DATA(ATTR) ? FALSE : LMN_ATOM_GET_FUNCTOR(ATOM) == (FUNC))
+
 /* operations for link attribute */
 #define LMN_ATTR_IS_DATA(X)           ((X)&~LMN_ATTR_MASK)
 

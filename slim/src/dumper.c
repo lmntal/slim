@@ -144,7 +144,7 @@ static void dump_link(LmnAtomPtr atom, int i, SimpleHashtbl *ht, struct DumpStat
 
   t = get_atomrec(ht, atom);
   if (hashtbl_contains(&t->args, i)) {
-    /* リンク名画決まっている */
+    /* リンク名が決まっている */
     link = hashtbl_get(&t->args, i);
   } else {
     /* リンク名が決まっていないので新たに作る */
@@ -192,14 +192,12 @@ static BOOL dump_list(LmnAtomPtr atom,
 
   fprintf(stdout, "[");
   while (TRUE) {
-    if (!LMN_ATTR_IS_DATA(attr)) {
-      LmnFunctor f = LMN_ATOM_GET_FUNCTOR(atom);
-      if (f == LMN_LIST_FUNCTOR   &&
-          LMN_ATTR_GET_VALUE(attr) == 2) {
+    if (LMN_HAS_FUNCTOR(atom, attr, LMN_LIST_FUNCTOR) &&
+        LMN_ATTR_GET_VALUE(attr) == 2) {
         struct AtomRec *rec;
 
         rec = get_atomrec(ht, atom);
-      
+
         if (rec->done) { /* cyclic */
           int link = s->link_num++;
           fprintf(stdout, "|");
@@ -216,8 +214,7 @@ static BOOL dump_list(LmnAtomPtr atom,
           /* link 0 was already printed */
           int link = hashtbl_get(&rec->args, 0);
           fprintf(stdout, LINK_FORMAT, link);
-        }
-        else {
+        } else {
           dump_atom(LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0)),
                     ht,
                     LMN_ATOM_GET_ATTR(atom, 0),
@@ -228,15 +225,13 @@ static BOOL dump_list(LmnAtomPtr atom,
         attr = LMN_ATOM_GET_ATTR(atom, 1);
         atom = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 1));
       }
-      else if (f == LMN_NIL_FUNCTOR) {
-        struct AtomRec *rec;
-        rec = atomrec_make();
-        rec->done = TRUE;
-        hashtbl_put(ht, (HashKeyType)atom, (HashValueType)rec);
-        break;
-      }
-    }
-    else { /* list ends with non nil data */
+    else if (LMN_HAS_FUNCTOR(atom, attr, LMN_NIL_FUNCTOR)) {
+      struct AtomRec *rec;
+      rec = atomrec_make();
+      rec->done = TRUE;
+      hashtbl_put(ht, (HashKeyType)atom, (HashValueType)rec);
+      break;
+    } else { /* list ends with non nil data */
       fprintf(stdout, "|");
       dump_atom(atom, ht, attr, s, indent, call_depth + 1);
       break;
