@@ -63,6 +63,17 @@ else
   AC_MSG_RESULT(enable GNU gprof: no)
 fi
 
+# profiling flag
+AC_ARG_ENABLE(profile,
+[  --enable-profile            turn on runtime profiling [[default no]]])
+
+if test "$enable_profile" = "yes"; then
+  AC_MSG_RESULT(enable profile: yes)
+  AC_DEFINE([PROFILE],,[elable profile])
+else
+  AC_MSG_RESULT(enable profile: no)
+fi
+
 AM_WITH_DMALLOC
 
 # ----------------------------------------------------------------------

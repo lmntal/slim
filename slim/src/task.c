@@ -53,6 +53,10 @@
 #include "mhash.h"
 #include <string.h>
 
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
 LmnWord *wt, *wt_t; /* variable vector used in interpret */
 LmnByte *at, *at_t; /* attribute vector */
 unsigned int wt_size;
@@ -450,6 +454,10 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
   }
 
   fprintf(stdout, "# of States = %d\n", States->num_entries);
+
+#ifdef PROFILE
+  calc_hash_conflict(States);
+#endif
 
   /* finalize */
   {

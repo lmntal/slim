@@ -43,6 +43,10 @@
 #include <assert.h>
 #include <stdio.h>
 
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
 /* Hashtable
  *
  *  This hashtable uses 'open addressing with double hashing'.
@@ -84,6 +88,10 @@ void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size)
   ht->cap = round2up(init_size);
   ht->tbl = (HashEntry *)malloc(sizeof(struct HashEntry) * ht->cap);
   memset(ht->tbl, 0xffU, sizeof(struct HashEntry) * ht->cap);
+
+#ifdef PROFILE
+  status_add_hashtbl_space(sizeof(struct HashEntry) * ht->cap);
+#endif
 }
 
 SimpleHashtbl *hashtbl_make(unsigned int init_size)
@@ -96,10 +104,17 @@ SimpleHashtbl *hashtbl_make(unsigned int init_size)
 void hashtbl_destroy(SimpleHashtbl *ht)
 {
   free(ht->tbl);
+#ifdef PROFILE
+  status_remove_hashtbl_space(sizeof(struct HashEntry) * ht->cap);
+#endif
 }
 
 void hashtbl_free(SimpleHashtbl *ht)
 {
+#ifdef PROFILE
+  status_remove_hashtbl_space(sizeof(struct HashEntry) * ht->cap);
+#endif
+
   free(ht->tbl);
   free(ht);
 }
@@ -204,6 +219,11 @@ static void hashtbl_extend(SimpleHashtbl *ht)
     }
   }
   free(tbl);
+
+#ifdef PROFILE
+  status_remove_hashtbl_space(sizeof(struct HashEntry) * cap);
+  status_add_hashtbl_space(sizeof(struct HashEntry) * ht->cap);
+#endif
 }
 
 static HashKeyType round2up(unsigned int n)

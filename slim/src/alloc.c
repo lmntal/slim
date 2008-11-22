@@ -41,6 +41,7 @@
 #include "atom.h"
 #include "functor.h"
 #include <malloc.h>
+#include <math.h>
 
 #define ARYSIZE(ary)	(sizeof(ary)/sizeof((ary)[0]))
 
@@ -55,17 +56,31 @@ LmnAtomPtr lmn_new_atom(LmnFunctor f)
   LmnAtomPtr ap;
   int arity = LMN_FUNCTOR_ARITY(f);
   
-  if(atom_memory_pools[arity] == 0){
-    atom_memory_pools[arity] = memory_pool_new(sizeof(LmnWord)*LMN_ATOM_WORDS(arity));
+  if (atom_memory_pools[arity] == 0) {
+    atom_memory_pools[arity] =
+      memory_pool_new(sizeof(LmnWord)*LMN_ATOM_WORDS(arity));
   }
   ap = (LmnAtomPtr)memory_pool_malloc(atom_memory_pools[arity]);
   LMN_ATOM_SET_FUNCTOR(ap, f);
+
+#ifdef PROFILE
+  status_add_atom_space(LMN_ATOM_WORDS(arity) * sizeof(LmnWord));
+#endif
+
   return ap;
 }
 
 void lmn_delete_atom(LmnAtomPtr ap)
 {
   memory_pool_free(atom_memory_pools[LMN_FUNCTOR_ARITY(LMN_ATOM_GET_FUNCTOR(ap))], ap);
+#ifdef PROFILE
+  {
+    int arity;
+
+    arity = LMN_FUNCTOR_ARITY(LMN_ATOM_GET_FUNCTOR(ap));
+    status_remove_atom_space(LMN_ATOM_WORDS(arity) * sizeof(LmnWord));
+  }
+#endif
 }
 
 void free_atom_memory_pools(void)

@@ -172,11 +172,17 @@ void lmn_mem_remove_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr attr)
 
 LmnMembrane *lmn_mem_make(void)
 {
-  LmnMembrane *mem = LMN_MALLOC(LmnMembrane);
+  LmnMembrane *mem;
+
+  mem = LMN_MALLOC(LmnMembrane);
 
   memset(mem, 0, sizeof(LmnMembrane)); /* set all data to 0 */
   vec_init(&mem->rulesets, 1);
   hashtbl_init(&mem->atomset, 16); /* EFFICIENCY: 初期サイズはいくつが適当？ */
+
+#ifdef PROFILE
+  status_add_membrane_space(sizeof(LmnMembrane));
+#endif
   return mem;
 }
 
@@ -229,6 +235,11 @@ void lmn_mem_free(LmnMembrane *mem)
   vec_destroy(&mem->rulesets);
 
   LMN_FREE(mem);
+
+#ifdef PROFILE
+  status_remove_membrane_space(sizeof(LmnMembrane));
+#endif
+
 }
 
 /* add newmem to parent child membranes */

@@ -47,6 +47,10 @@
 #include "load.h"
 #include "arch.h"
 
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
 /* global environment */
 struct LmnEnv  lmn_env;
 
@@ -198,6 +202,10 @@ static void init_internal(void)
   init_rules();
 
   init_default_system_ruleset();
+
+#ifdef PROFILE
+  runtime_status_init();
+#endif
 }
 
 static void finalize(void)
@@ -205,6 +213,11 @@ static void finalize(void)
   sym_tbl_destroy();
   lmn_functor_tbl_destroy();
   destroy_rules();
+
+#ifdef PROFILE
+  runtime_status_finalize();
+#endif
+
 }
 
 int main(int argc, char *argv[])
@@ -239,6 +252,11 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+#ifdef PROFILE
+  output_runtime_status(stdout);
+  output_hash_conflict(stdout);
+#endif
+  
   finalize();
   return 0;
 }
