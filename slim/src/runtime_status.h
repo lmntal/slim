@@ -54,5 +54,7 @@ void status_remove_hashtbl_space(unsigned long size);
 void output_runtime_status(FILE *f);
 void calc_hash_conflict(st_table_t states);
 void output_hash_conflict(FILE *f);
+void status_start_running(void);
+void status_finish_running(void);
 
 #endif

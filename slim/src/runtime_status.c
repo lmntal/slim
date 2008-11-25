@@ -37,9 +37,9 @@
  * $Id$
  */
 
+#include <time.h>
 #include "runtime_status.h"
 #include "mc.h"
-
 
 struct RuntimeStatus {
   unsigned long atom_num;             /* # of atoms */
@@ -55,7 +55,8 @@ struct RuntimeStatus {
   unsigned long total_state_space;          /* total state size */
   unsigned long peak_total_state_space;     /* peal total state size */
   st_table_t hash_conflict_tbl;       /* key: # of conflicts, value: kinds */
-  unsigned long hash_num;            /* # of hash value */
+  unsigned long hash_num;             /* # of hash value */
+  clock_t start_time, end_time;        /* running start/end time */
 } runtime_status;
 
 static void runtime_status_update(void);
@@ -76,12 +77,21 @@ void runtime_status_init()
   runtime_status.peak_total_state_space = 0;
   runtime_status.hash_conflict_tbl = st_init_numtable();
   runtime_status.hash_num = 0;
-  
 }
 
 void runtime_status_finalize()
 {
   st_free_table(runtime_status.hash_conflict_tbl);
+}
+
+void status_start_running()
+{
+  runtime_status.start_time = clock();
+}
+
+void status_finish_running()
+{
+  runtime_status.end_time = clock();
 }
 
 void status_add_atom_space(unsigned long size)
@@ -152,6 +162,8 @@ void output_runtime_status(FILE *f)
 {
   fprintf(f, "\n== Runtime Status ==========================================\n");
 
+  fprintf(f, "%-30s: %10.2lf\n", "running time (sec)",
+          (runtime_status.end_time - runtime_status.start_time)/(double)CLOCKS_PER_SEC);
   fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
   fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
          runtime_status.peak_membrane_num);
