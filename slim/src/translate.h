@@ -1,5 +1,5 @@
 /*
- * membrane.h
+ * translate.h
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -33,20 +33,15 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: load.h,v 1.4 2008/09/29 04:47:03 taisuke Exp $
+ * $Id: translate.h,v 1.4 2008/09/29 04:47:03 taisuke Exp $
  */
 
-#ifndef LMN_LOAD_H
-#define LMN_LOAD_H
+#ifndef LMN_TRANSLATE_H
+#define LMN_TRANSLATE_H
 
-#include <stdlib.h>
+#include <stdio.h>
 
-LmnRuleSet load(FILE *in);
-LmnRuleSet load_file(char *file_name);
-void load_il_files(char *path);
-FILE *fopen_il_file(char *name);
+void translate(FILE *fp);
 
-/* 最適化レベルの最大値 */
-#define OPTIMIZE_LEVEL_MAX 3
+#endif
 
-#endif /* LMN_MEMBRANE_H */

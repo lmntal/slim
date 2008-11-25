@@ -174,6 +174,7 @@ struct LmnEnv {
   BOOL nd_dump;
   BOOL ltl;
   BOOL ltl_all;
+  BOOL translate;
   enum OutputFormat output_format;
   int optimization_level;
   char *load_path[256];

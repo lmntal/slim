@@ -49,6 +49,7 @@
 #include "syntax.h"
 #include "arch.h"
 #include "rule.h"
+#include "load.h"
 
 #define ENV_LMNTAL_HOME  "LMNTAL_HOME"
 #define ENV_CFLAGS       "SLIM_CFLAGS"
@@ -66,11 +67,8 @@ const char* OPTIMIZE_FLAGS[] = {"-O0",
 
 void dump_module(Module m);
 void dump_il(IL il);
-LmnRuleSet load(FILE *in);
 void build_cmd(char *buf, char *file_name);
 FILE *compile(char *filename);
-LmnRuleSet load_file(char *file_name);
-void load_il_files(char *path);
 
 /*----------------------------------------------------------------------
  * Dump(デバッグ用)。最初使用しただけなので dump_*は消してOK
@@ -599,6 +597,40 @@ static LmnRuleSet load_il(IL il)
 
 int parse(FILE *in, IL *il);
 
+/* ファイルが*.lmnならコンパイル結果のFILE*を返し、
+   ファイルが*.ilならfopen結果のFILE*を返し、
+   それ以外の拡張子だったり存在しないファイルだったらNULLを返す */
+FILE *fopen_il_file(char *file_name)
+{
+  FILE *fp;
+  int len = strlen(file_name);
+  
+  if ((fp = fopen(file_name, "r"))) {
+    /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
+    if (!strcmp(&file_name[len-4], ".lmn")) {
+      if (getenv(ENV_LMNTAL_HOME)) {
+        FILE *fp_compiled;
+        
+        fp_compiled = compile(file_name);
+        if (!fp_compiled) {
+          fprintf(stderr, "Failed to run lmntal compiler");
+          exit(EXIT_FAILURE);
+        }
+
+        return fp_compiled;
+      }
+      else {
+        fprintf(stderr, "environment variable \"LMNTAL_HOME\" is not set");
+      }
+    }
+    else if(!strcmp(&file_name[len-3], ".il")) {
+      return fp;
+    }
+  }
+  
+  return 0;
+}
+
 /* ファイルから中間言語を読み込みランタイム中に配置する。
    最初のルールセットを返す */
 LmnRuleSet load(FILE *in)
@@ -653,7 +685,7 @@ LmnRuleSet load_file(char *file_name)
   FILE *fp;
   int len;
   LmnRuleSet rs;
-  void *sohandle;
+  /*void *sohandle;*/
 
   len = strlen(file_name);
 
@@ -669,30 +701,10 @@ LmnRuleSet load_file(char *file_name)
       rs = so_load(file_name, sohandle);
     }
     */
-  }else if ((fp = fopen(file_name, "r"))) {
-    /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
-    if (!strcmp(&file_name[len-4], ".lmn")) {
-      if (getenv(ENV_LMNTAL_HOME)) {
-        FILE *fp_compiled;
-        
-        fp_compiled = compile(file_name);
-        if (!fp_compiled) {
-          fprintf(stderr, "Failed to run lmntal compiler");
-          exit(EXIT_FAILURE);
-        }
-
-        rs = load(fp_compiled);
-        fclose(fp_compiled);
-      }
-      else {
-        fprintf(stderr, "environment variable \"LMNTAL_HOME\" is not set");
-      }
-    }
-    else {
-      rs = load(fp);
-    }
-  }
-  else {
+  }else if((fp=fopen_il_file(file_name)) != 0){
+    rs = load(fp);
+    fclose(fp);
+  }else {
     perror(file_name);
     exit(EXIT_FAILURE);
   }

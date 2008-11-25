@@ -45,6 +45,7 @@
 #include "symbol.h"
 #include "functor.h"
 #include "load.h"
+#include "translate.h"
 #include "arch.h"
 
 #ifdef PROFILE
@@ -72,6 +73,7 @@ static void usage(void)
           "  --nd_dump       Nondeterministic execution mode, print all state instantly\n"
           "  --ltl           LTL model checking mode\n"
           "  --ltl_all       LTL model checking mode, print all errors\n"
+          "  --translate     Output Translated C code -- under construction\n"
           "  --version       Prints version and exits.\n"
           "  --help          This Help.\n"
           );
@@ -99,6 +101,7 @@ static int parse_options(int argc, char *argv[])
     {"nd_dump", 0, 0, 1007},
     {"ltl", 0, 0, 1008},
     {"ltl_all", 0, 0, 1009},
+    {"translate", 0, 0, 1010},
     {0, 0, 0, 0}
   };
 
@@ -144,6 +147,9 @@ static int parse_options(int argc, char *argv[])
       lmn_env.ltl = TRUE;
       lmn_env.ltl_all = TRUE;
       break;
+    case 1010:
+      lmn_env.translate = TRUE;
+      break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;
@@ -183,6 +189,7 @@ static void init_env(void)
   lmn_env.nd_dump = FALSE;
   lmn_env.ltl = FALSE;
   lmn_env.ltl_all = FALSE;
+  lmn_env.translate = FALSE;
   lmn_env.optimization_level = 0;
   lmn_env.load_path_num = 0;
 }
@@ -233,20 +240,31 @@ int main(int argc, char *argv[])
     char *f = argv[optid];
     LmnRuleSet start_ruleset;
 
-    if (!strcmp("-", f)) {
-      in = stdin;
-      start_ruleset = load(stdin);
+    if (lmn_env.translate) {
+      if (!strcmp("-", f)) {
+	in = stdin;
+	translate(stdin);
+      }
+      else{
+	FILE *fp = fopen_il_file(f);
+	translate(fp);
+	fclose(fp);
+      }
+    }else{
+      if (!strcmp("-", f)) {
+	in = stdin;
+	start_ruleset = load(stdin);
+      }
+      else start_ruleset = load_file(f);
+
+      /* load directories(system & load path) */
+      load_il_files(SLIM_LIB_DIR);
+      for (i = lmn_env.load_path_num-1; i >= 0; i--) {
+	load_il_files(lmn_env.load_path[i]);
+      }
+
+      lmn_run(start_ruleset);
     }
-    else start_ruleset = load_file(f);
-
-    /* load directories(system & load path) */
-    load_il_files(SLIM_LIB_DIR);
-    for (i = lmn_env.load_path_num-1; i >= 0; i--) {
-      load_il_files(lmn_env.load_path[i]);
-    }
-
-    lmn_run(start_ruleset);
-
   } else {
     fprintf(stderr, "no input file\n");
     exit(1);
