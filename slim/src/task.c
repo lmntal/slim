@@ -2303,6 +2303,42 @@ REMOVE_FREE_GROUND_CONT:
       if(!((int)wt[atom1] != (int)wt[atom2])) return FALSE;
       break;
     }
+    case INSTR_ILTFUNC:
+    {
+      LmnInstrVar func1, func2;
+      READ_VAL(LmnInstrVar, instr, func1);
+      READ_VAL(LmnInstrVar, instr, func2);
+
+      if(!((int)wt[func1] < (int)wt[func2])) return FALSE;
+      break;
+    }
+    case INSTR_ILEFUNC:
+    {
+      LmnInstrVar func1, func2;
+      READ_VAL(LmnInstrVar, instr, func1);
+      READ_VAL(LmnInstrVar, instr, func2);
+
+      if(!((int)wt[func1] <= (int)wt[func2])) return FALSE;
+      break;
+    }
+    case INSTR_IGTFUNC:
+    {
+      LmnInstrVar func1, func2;
+      READ_VAL(LmnInstrVar, instr, func1);
+      READ_VAL(LmnInstrVar, instr, func2);
+
+      if(!((int)wt[func1] > (int)wt[func2])) return FALSE;
+      break;
+    }
+    case INSTR_IGEFUNC:
+    {
+      LmnInstrVar func1, func2;
+      READ_VAL(LmnInstrVar, instr, func1);
+      READ_VAL(LmnInstrVar, instr, func2);
+
+      if(!((int)wt[func1] >= (int)wt[func2])) return FALSE;
+      break;
+    }
     case  INSTR_FADD:
     {
       LmnInstrVar dstatom, atom1, atom2;
@@ -2608,6 +2644,29 @@ REMOVE_FREE_GROUND_CONT:
       }
       break;
     }
+    case INSTR_EQFUNC:
+    {
+      LmnInstrVar func0;
+      LmnLinkAttr func1;
+
+      READ_VAL(LmnFunctor, instr, func0);
+      READ_VAL(LmnFunctor, instr, func1);
+
+      if (at[func0] != at[func1]) return FALSE;
+      switch (at[func0]) {
+      case LMN_INT_ATTR:
+        if ((int)wt[func0] != (int)wt[func1]) return FALSE;
+        break;
+      case LMN_DBL_ATTR:
+        if (*(double*)(&wt[func0]) !=
+            *(double*)(&wt[func1])) return FALSE;
+        break;
+      default:
+        if (wt[func0] != wt[func1]) return FALSE;
+        break;
+      }
+      break;
+    }
     case INSTR_ADDATOM:
     {
       LmnInstrVar memi, atomi;
@@ -2782,6 +2841,15 @@ REMOVE_FREE_GROUND_CONT:
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
       if (interpret(instr, &instr)) return TRUE;
+      instr += subinstr_size;
+      break;
+    }
+    case INSTR_LOOP:
+    {
+      LmnSubInstrSize subinstr_size;
+      READ_VAL(LmnSubInstrSize, instr, subinstr_size);
+
+      while (interpret(instr, &instr)) ;
       instr += subinstr_size;
       break;
     }

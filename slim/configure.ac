@@ -145,6 +145,6 @@ AC_CHECK_FUNC([strchr])
 # Create output files
 #
 echo $SLIM_VERSION > VERSION
-AC_OUTPUT(Makefile src/Makefile src/genconfig lib/Makefile test/Makefile test/system_check/Makefile doc/Makefile doc/slim.1)
+AC_OUTPUT(Makefile src/Makefile src/genconfig lib/Makefile test/Makefile test/system_check/Makefile doc/Makefile doc/slim.1 libltdl/Makefile)
 
 
