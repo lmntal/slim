@@ -43,6 +43,11 @@
 #include "functor.h"
 #include <ctype.h>
 
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
+
 /* ルールセットを膜に追加する */
 void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
