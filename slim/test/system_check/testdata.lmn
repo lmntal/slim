@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% - ´ðËÜ¥Æ¥¹¥È
+%% - åŸºæœ¬ãƒ†ã‚¹ãƒˆ
 
 append(c(1,c(2,c(3,n))),c(4,c(5,n)),result), ( append(X,Y,Z), n(X) :- Y=Z ), ( append(X,Y,Z), c(A,X1,X) :- c(A,Z1,Z), append(X1,Y,Z1) ). %result(c(1,c(2,c(3,c(4,c(5,n)))))) %ok
 append(c(1,c(2,c(3,n))),c(4,c(5,n)),result). append(X,Y,Z), n(X) :- Y=Z. append(X,Y,Z), c(A,X1,X) :- c(A,Z1,Z), append(X1,Y,Z1). %result(c(1,c(2,c(3,c(4,c(5,n)))))) %ok
@@ -7,7 +7,7 @@ append([1,2,3],[4,5],result), ( Z=append([],Y) :- Y=Z ), ( Z=append([A|X],Y) :- 
 append([1,2,3],[4,5],result). Z=append([],Y) :- Y=Z. Z=append([A|X],Y) :- Z=[A|append(X,Y)]. %result([1,2,3,4,5]) %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% - ¥¢¥È¥àÆ±°ìÀ­¸¡ºº¤Î¥Æ¥¹¥È
+%% - ã‚¢ãƒˆãƒ åŒä¸€æ€§æ¤œæŸ»ã®ãƒ†ã‚¹ãƒˆ
 
 f(A),a(A,B),f(C),a(D,C) :- end(B,D). a(f,f),a(f,f). %end(f,f) %ok
 f(A),a(A,B),f(C),a(C,D) :- end(B,D). a(f,f),a(f,f). %end(f,f) %ok
@@ -16,7 +16,7 @@ p(A),f(X),p(X) :- unary(A) | .  p(f),p(f),p(f). %p(f) %ok
 {p(A),f(X),p(X),$s[A]} :- {$s[X],q(X)}.{p(f),p(f),p(f)}. %{p(f),q(f)} %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% - Ã±°ì²½ = ¤Î¥Æ¥¹¥È
+%% - å˜ä¸€åŒ– = ã®ãƒ†ã‚¹ãƒˆ
 
 p(X,X). %p(X,X) %ok
 p(X,Y),Y=X. %p(X,X) %ok
@@ -30,31 +30,31 @@ p(a,b), ( Y=p(X)     :- X=Y     ). %a(b) %ok
 p(a,b), ( Y=E,E=p(X) :- X=F,F=Y ). %a(b) %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% - ¼«Í³¥ê¥ó¥¯´ÉÍý¥¢¥È¥à¤Î¥Æ¥¹¥È
+%% - è‡ªç”±ãƒªãƒ³ã‚¯ç®¡ç†ã‚¢ãƒˆãƒ ã®ãƒ†ã‚¹ãƒˆ
 
-%% À¸À®¤Î¥Æ¥¹¥È
+%% ç”Ÿæˆã®ãƒ†ã‚¹ãƒˆ
 b(X),{c(X)}. %b(X), {c(X)} %ok
-%% ¥Þ¥Ã¥Á¥ó¥°¤Î¥Æ¥¹¥È
+%% ãƒžãƒƒãƒãƒ³ã‚°ã®ãƒ†ã‚¹ãƒˆ
 b(X),{c(X)}, (b(X),{c(X)}:- ok). %ok %ok
-%% À¸À®¤È¥Þ¥Ã¥Á¥ó¥°¤Î¥Æ¥¹¥È
+%% ç”Ÿæˆã¨ãƒžãƒƒãƒãƒ³ã‚°ã®ãƒ†ã‚¹ãƒˆ
 a, (a:-b(X),{c(X)}), (b(X),{c(X)}:-d(Y),{e(Y)}) %d(X),{e(X)}. %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% - ¥×¥í¥»¥¹Ê¸Ì®¤Î¥Æ¥¹¥È
+%% - ãƒ—ãƒ­ã‚»ã‚¹æ–‡è„ˆã®ãƒ†ã‚¹ãƒˆ
 
 1,1,1,1,1,{},({$p},1:-{$p,1}).   %{1,1,1,1,1}  %ok
 {{a(X)},b(X,Y),1},{c(Y)}, ({$p,1} :- {$p}). %{{a(X)},b(X,Y)},{c(Y)} %ok
 
-%% RemoveProxies ¤Î¥Æ¥¹¥È
+%% RemoveProxies ã®ãƒ†ã‚¹ãƒˆ
 {{a(X)},b(X,Y)},{c(Y)}, ({$p},{$q} :- {$p,$q}). %{{a(X)},c(b(X))} %ok
-%% RemoveToplevelProxies ¤Î¥Æ¥¹¥È
+%% RemoveToplevelProxies ã®ãƒ†ã‚¹ãƒˆ
 {a(  X)},{b(X)},        ({$p},{$q} :-  $p,$q ). %a(b)   %ok
 {a(A,X)},{b(X)},c(A),   ({$p},{$q} :-  $p,$q ). %b(a(c))  %ok
 
-%% InsertProxies ¤Î¥Æ¥¹¥È
+%% InsertProxies ã®ãƒ†ã‚¹ãƒˆ
 {{a(A,X)},b(B,X)},c(A,B),    ({{$p},$q} :- {$p,$q}). %{b(B,a(A))},c(A,B) %ok
 
-%% Á´ÈÌ
+%% å…¨èˆ¬
 {{a(A,X)},b(B,X)},{d(B)},c(A),  ( {{$p},$q},{$r}   :- {{$p},$q,  $r} ). %{{a(A,X)},b(d,X)},c(A)  %ok
 {{a(A,X)},b(B,X)},{d(B)},c(A),a,( {{$p},$q},{$r},a :- {{$p},$q},{$r} ). %{{a(A,X)},b(B,X)},{d(B)},c(A) %ok
 {{a(A,X)},b(B,X)},{d(B)},c(A),  ( {{$p},$q},{$r}   :- {$p,$q,$r}     ). %{a(X,b(d))},c(X)  %ok
@@ -67,12 +67,12 @@ a, (a:-b(X),{c(X)}), (b(X),{c(X)}:-d(Y),{e(Y)}) %d(X),{e(X)}. %ok
 {a(A,X)},{b(X)},{c(A)},      ({$p},{$q} :- {$p,$q}). %{b(a(c))} %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% - ¥ë¡¼¥ëÊ¸Ì®¤Î¥Æ¥¹¥È
+%% - ãƒ«ãƒ¼ãƒ«æ–‡è„ˆã®ãƒ†ã‚¹ãƒˆ
 
 {@p}:-@p. a. {a:-b}. %b  %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% ÌÀ¼¨Åª¤Ê¼«Í³¥ê¥ó¥¯°ú¿ôÉÕ¤­¤Î¥×¥í¥»¥¹Ê¸Ì®¤Î¥Æ¥¹¥È
+%% æ˜Žç¤ºçš„ãªè‡ªç”±ãƒªãƒ³ã‚¯å¼•æ•°ä»˜ãã®ãƒ—ãƒ­ã‚»ã‚¹æ–‡è„ˆã®ãƒ†ã‚¹ãƒˆ
 
 ( {$p[X],   a(X)} :- $p[X],   ok(X) ), {a(4)}.        %ok(4)  %ok
 ( {$p[X],   a(X)} :- $p[X],   ok(X) ), {a(X),{4(X)}}. %ok(X),{4(X)} %ok
@@ -81,7 +81,7 @@ a, (a:-b(X),{c(X)}), (b(X),{c(X)}:-d(Y),{e(Y)}) %d(X),{e(X)}. %ok
 ( {$p[Y|*A],a(Y)} :- $a=4 | $p[X|*A], $a=X ), {a(b)}. %b(4)  %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% ½ô¡¹¤Î¥Æ¥¹¥È
+%% è«¸ã€…ã®ãƒ†ã‚¹ãƒˆ
 
 a(X,X). (a(X,X) :- b(Y,Y)).   %b(L,L) %ok
   A=f(f(f(f(A)))),    c,c, ( c, X=f(Y) :- X=g(Y) ).                      %f(g(g(f(A))),A) %ok
@@ -94,7 +94,7 @@ a(X,X). (a(X,X) :- b(Y,Y)).   %b(L,L) %ok
 %( go :- { pi(X), res(X), ( pi(X) :- X=3.14 ) }@"localhost" ), ( {res($p),@r} :- result=$p ), ( result(pi) :- e,go ), go. %e,e,e,result(3.14)  %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% ½ô¡¹¤Î¥Æ¥¹¥È2
+%% è«¸ã€…ã®ãƒ†ã‚¹ãƒˆ2
 
 {$p[X,Y],f(X,Y)}:-$p[Z,Z],$p[W,W].    {f(X,Z),g(X,Z)}. %g(A,A),g(B,B) %ok
 {$p[X,Y],f(X,Y)}:-$p[Z,Z].            {f(X,Z),g(X,Z)}. %g(A,A)  %ok
@@ -119,25 +119,25 @@ p(A,B,C,D,E) :- A=B,C=D,g(E).  e(A),p(A,B,B,C,C). %e(g)  %ok
 {$p[A,B,C,D,E], f(A,B,C,D,E)} :- $p[L,L,M,M,N],g(N), $p[A,A,B,B,C],g(C).  {e(A,B,C,D,E),f(A,B,C,D,E)}. %g(e(_14,_14,_16,_16)), g(e(_18,_18,_20,_20)) %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% ¥¬¡¼¥É±é»» ¤Î¥Æ¥¹¥È
+%% ã‚¬ãƒ¼ãƒ‰æ¼”ç®— ã®ãƒ†ã‚¹ãƒˆ
 %% int
-%% ¸¡ºº
+%% æ¤œæŸ»
 i($i) :- int($i) | j($i). i(3), i(4), i(5). % j(3), j(4), j(5). %ok
 i($i) :- int($i) | yes. i('3').           % yes.           %ok
 i($i) :- int($i) | yes. i("3").           % yes.           %ng
 i($i) :- int($i) | yes. i(a).             % yes.           %ng
-%% ±é»»
+%% æ¼”ç®—
 sum($i,$j,$k)  :- $z=$i+$j+$k  | ans($z). sum(21,24,5). % ans(50) %ok
 msum($i,$j,$k) :- $z=-$i-$j-$k | ans($z). msum(4,8,12). % ans(-24) %ok
 pro($i,$j,$k)  :- $z=$i*$j*$k  | ans($z). pro(3,4,5). % ans(60) %ok
 dib($i,$j)     :- $z=$i/$j     | ans($z). dib(96,12). % ans(8). %ok
 mod($i,$j)     :- $z=$i mod $j | ans($z). mod(100,3). % ans(1). %ok
-%% ÉÔÅù¹æÈæ³Ó
+%% ä¸ç­‰å·æ¯”è¼ƒ
 big($i,$j)     :- $i > $j  | yes. big(5,3).    % yes. %ok
 small($i,$j)   :- $i < $j  | yes. small(6,40). % yes. %ok
 bigeq($i,$j)   :- $i >= $j | yes. bigeq(8,4). % yes. %ok
 smalleq($i,$j) :- $i =< $j | yes. smalleq(9,20). % yes. %ok
-%% Åù¹æÈæ³Ó
+%% ç­‰å·æ¯”è¼ƒ
 eq($i,$j) :- $i = $j | yes. eq(9, 9). % yes. %ok
 eq($i,$j) :- $i == $j | yes. eq(9, 9). % yes. %ok
 eq($i,$j) :- $i =:= $j | yes. eq(9, 9). % yes. %ok
@@ -145,20 +145,20 @@ neq($i, $j) :- $i \= $j | yes. eq(10, 10). % yes. %ng
 neq($i, $j) :- $i =\= $j | yes. eq(10, 10). % yes. %ng
 
 %% float
-%% ¸¡ºº
+%% æ¤œæŸ»
 f($f) :- float($f) | yes. f(0.0), f(-0.0), f(1.0), f(2.2). f(-3.5). % yes,yes,yes,yes,yes. %ok
 f($f) :- float($f) | yes. f(0). f(a). f("5.0"). f('5.0').         % f(0). f(a). f("5.0"). yes. %ok
-%% ±é»»
+%% æ¼”ç®—
 sum($i,$j,$k)  :- $z=$i +. $j +. $k  | ans($z). sum(21.0,24.2,5.3). % ans(50.5) %ok
 msum($i,$j,$k) :- $z=-.$i-.$j-.$k | ans($z). msum(4.0,8.3,12.5). % ans(-24.8) %ok
 pro($i,$j,$k)  :- $z=$i*.$j*.$k  | ans($z). pro(0.3,0.4,0.5). % ans(0.06) %ok
 dib($i,$j)     :- $z=$i/.$j     | ans($z). dib(9.6,1.2). % ans(8.0). %ok
-%% ÉÔÅù¹æÈæ³Ó
+%% ä¸ç­‰å·æ¯”è¼ƒ
 big($i,$j)     :- $i >. $j  | yes. big(5.3,3.2).    % yes. %ok
 small($i,$j)   :- $i <. $j  | yes. small(6.1,40.9). % yes. %ok
 bigeq($i,$j)   :- $i >=. $j | yes. bigeq(8.22,4.33). % yes. %ok
 smalleq($i,$j) :- $i =<. $j | yes. smalleq(9.567,20.332). % yes. %ok
-%% Åù¹æÈæ³Ó
+%% ç­‰å·æ¯”è¼ƒ
 eq($i,$j) :- $i = $j | yes. eq(9.3, 9.3). % yes. %ok
 eq($i,$j) :- $i == $j | yes. eq(9.2, 9.2). % yes. %ok
 eq($i,$j) :- $i =:=. $j | yes. eq(9.1, 9.1). % yes. %ok
@@ -169,7 +169,7 @@ neq($i, $j) :- $i =\=. $j | yes. eq(10.6, 10.6). % yes. %ng
 s($s) :- string($s) | yes. s("hoge"), s(""). %yes, yes %ok
 s($s) :- string($s) | yes. s(hoge), s('hoge'). %s(hoge), s(hoge) %ok
 
-%% Åù¹æÈæ³Ó
+%% ç­‰å·æ¯”è¼ƒ
 eq($s,$t) :- $s == $t | yes. eq("hello", "hello"). %yes. %ok
 eq($s,$t) :- $s == $t | yes. eq("hello", 'hello'). %yes. %ng
 neq($s, $t) :- string($s), unary($t), $s \= $t | yes. neq("hello", 'hello'). %yes. %ok
@@ -177,16 +177,16 @@ neq($s, $t) :- string($s), string($t), $s \= $t | yes. neq("hello", 'hello'). %y
 
 
 %% unary
-%% ¸¡ºº
+%% æ¤œæŸ»
 u($u) :- unary($u) | yes. u(a). u(longlonglonglonglongname). u(1). u("year"). u(2.2). %yes,yes,yes,yes,yes.%ok
 u($u) :- unary($u) | yes. u({}). % u({}). %ok
 u($u) :- unary($u) | yes. u(m(m)). % u(m(m)). %ok
 
-%% Èæ³Ó
+%% æ¯”è¼ƒ
 u($u), v($v) :- unary($u), unary($v), $u = $v | yes. u(a), v(a). % yes. %ok
 
 %% ground
-%% ¸¡ºº
+%% æ¤œæŸ»
 a($x) :- ground($x) | b($x).  a(n).               % b(n)       %ok
 a($x) :- ground($x) | b($x).  a(n(m(l,l),m(l,l))) % b(n(m(l,l),m(l,l))) %ok
 a($x) :- ground($x) | b($x).  a(g(G,G)).          % b(g(H,H))  %ok
@@ -200,7 +200,7 @@ a($x,Y) :- ground($x) | b($x,Y). a(z,{}).         % b(z,{})     %ok
 a($x),b(Y) :- ground($x) | c($x,Y). a(b).         % a(b).       %ok
 a($x),b($y) :- ground($x), ground($y) | c($x,$y). a(m),b(n). % c(m,n)   %ok
 a($x),b($y) :- ground($x), ground($y) | c($x,$y). a(m(M)), b(n(M)). % c(m(N), n(N)). %ng
-%% Èæ³Ó
+%% æ¯”è¼ƒ
 a($x),b($y) :- ground($x), $x = $y  | c($x).  a(m), b(m). % c(m). %ok
 a($x),b($y) :- ground($x), $x = $y  | c($y).  a(m), b(m). % c(m). %ok
 a($x),b($y) :- ground($x), $x == $y | c($x).  a(m), b(m). % c(m). %ok
@@ -208,7 +208,7 @@ a($x),b($y) :- ground($x), $x = $y  | c($x).  a(n(m,l)), b(n(m,l)). % c(n(m,l)).
 a($x),b($y) :- ground($x), $x = $y  | c($x).  a(x(X1,Y1,y(W1,Z1))), X1=W1, Y1=Z1. b(x(X2,Y2,y(W2,Z2))), X2=W2,Y2=Z2. % c(x(X3,Y3,y(W3,Z3))), X3=W3, Y3=Z3. %ok
 a($x),b($y) :- ground($x), $x = $y  | c($x).  a(x(X1,Y1,y(W1,Z1))), X1=W1, Y1=Z1. b(x(X2,Y2,y(W2,Z2))), X2=Z2,Y2=W2. % c(x(X3,Y3,y(W3,Z3))), X3=W3, Y3=Z3. %ng
 
-%% Êä´°
+%% è£œå®Œ
 a($x) :- int($x),unary($x),ground($x) | b($x). a(3), a(g), a(t(t)). % b(3), a(g), a(t(t)). %ok
 a($x), b($y) :- unary($x), $x = $y | c($x,$y). a(g(g)), b(g(g)), a(m), b(m). % c(m,m), a(g(g)), b(g(g)). %ok
 a($x), b($y) :- unary($y), $x = $y | c($x,$y). a(g(g)), b(g(g)), a(m), b(m). % c(m,m), a(g(g)), b(g(g)). %ok
@@ -216,16 +216,16 @@ a($x), b($y) :- unary($x), ground($y), $x = $y | c($x,$y). a(g(g)), b(g(g)), a(m
 a($x), b($y) :- ground($x), unary($y), $x = $y | c($x,$y). a(g(g)), b(g(g)), a(m), b(m). % c(m,m), a(g(g)), b(g(g)). %ok
 a($x), b($y) :- unary($x), $x \= $y | c($x,$y). a(g(g)), b(g(g)), a(m), b(m). % c(m,g(g)), a(g(g)), b(m). %ok
 
-%% Ê£À½
+%% è¤‡è£½
 a($x) :- ground($x) | b($x,$x,$x). a(m). a(t(t,t)). a(o(o(O),O)).  % b(m,m,m), b(t(t,t),t(t,t),t(t,t)), b(o(o(O1),O1),o(o(O2),O2),o(o(O3),O3)). %ok
 a($x) :- ground($x) | $x=$x. a(m), a(t(t,t)), a(o(o(O),O)). % m=m. t(t,t,t(t,t)). o(o(O1),O1,o(o(O2),O2)). %ok
 a($x) :- ground($x) | t(T1,T2,T3),{ T1=$x,{T2=$x,{T3=$x}}}. a(m). % t(S1,S2,S3), {m(S1),{m(S2),{m(S3)}}}. %ok
 
-%% 2006/11/24¥Ð¥°Êó¹ð(from nakano)
+%% 2006/11/24ãƒã‚°å ±å‘Š(from nakano)
 {w(a)}. {w(D)} :- ground(D) |{x(D)}. % {x(a)}. %ok
 
-%% Â¿°ú¿ôground
-%% ¸¡ºº
+%% å¤šå¼•æ•°ground
+%% æ¤œæŸ»
 a(X,Y), $x[X,Y] :- ground($x) | b(Z,W), $x[Z,W]. a(m(M),M).             %b(m(N),N).         %ok
 a(X,Y), $x[X,Y] :- ground($x) | b(Z,W), $x[Z,W]. a(t,t).                %a(t,t).            %ok
 a(X,Y), $x[X,Y] :- ground($x) | b(Z,W), $x[Z,W]. a(A,B),{t(A,B)}.       %a(C,D),{t(C,D)}.   %ok
@@ -236,11 +236,11 @@ a(X,Y,Z,W), $x[X,Y,Z,W] :- ground($x) | b(A,B,C,D), $x[A,B,C,D]. a(m(M1,M2,M3),M
 a(L,R), $x[L,R] :- ground($x) | $x[X,X]. a([1,2,3|A],A). % R=[1,2,3|R]. %ok
 L=[2|L1], R1=[4|R], $list[L1,R1] :- ground($list) | L=R. r=[1,2,3,4,5]. % r=[1,5]. %ok
 
-%% Èæ³Ó
+%% æ¯”è¼ƒ
 a(X,Y,Z,W), $x[X,Y], $y[Z,W] :- $x = $y | b(A,B), $x[A,B]. a(t(A),A,t(B),B). % b(t(T),T).%ok
 a(X,Y,Z,W), $x[X,Y], $y[Z,W] :- $x \= $y | $x[A,B], $y[A,B]. a(M,M,N,N). % a(F,F,G,G). %ok
 
-%% ¥¢¥È¥à¿ô·×Â¬¤Î¥Æ¥¹¥È
+%% ã‚¢ãƒˆãƒ æ•°è¨ˆæ¸¬ã®ãƒ†ã‚¹ãƒˆ
 {a(X,Y,Z,W),$x[X,Y],$y[Z,W]} :- ground($x), ground($y) | b. {a(A,A,B,B)}. %b. %ok
 {a(X,Y,Z,W),$x[X,Y],$y[Z,W]} :- ground($x), ground($y) | b. {a(A,A,B,B),t}. %{a(C,C,D,D),t}. %ok
 {a(X,Y,Z,W),$x[X,Y],$y[Z,W]} :- ground($x), ground($y) | b. {a(A,t(A),B,t(B))}. %b. %ok
@@ -256,30 +256,30 @@ a($x) :- unary($x), uniq($x) | b($x). a(1), a(2), a(2). % b(1), b(2), a(2).   %o
 a($x),b($y) :- uniq($x,$y) | c($x,$y). a(1), a(2), a(1). b(2), b(2), b(2). % c(1,2), c(2,2). a(1). b(2). %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% simpagation rule ¤Î¥Æ¥¹¥È
+%% simpagation rule ã®ãƒ†ã‚¹ãƒˆ
 
 a \ b :- c. a,b. % a,c. %ok
 a(X) \ b(X) :- c(X). a(b). % a(c). %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% natoms, nmems¤Î¥Æ¥¹¥È
+%% natoms, nmemsã®ãƒ†ã‚¹ãƒˆ
 {{a(X)}, v(X)}. {{a(X)}, v(X)} :- s. %s. %ok
 {a(X)}, v(X). {a(X)}, v(X) :- s. %s. %ok
 {{a(X)}, v(X)}. {{a(X)}, v(X),$p} :- s,$p. %s %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% system ruleset ¤Î¥Æ¥¹¥È
+%% system ruleset ã®ãƒ†ã‚¹ãƒˆ
 r(1+2). %r(3). %ok
 r(3-1). %r(2). %ok
 r(5*5). %r(25). %ok
 r(8/4). %r(2). %ok
 
-%% ËìÌ¾¤Î¥Æ¥¹¥È
+%% è†œåã®ãƒ†ã‚¹ãƒˆ
 m{a(b)}. m{a(b)} :- c. %c %ok
 m{a(b). a(b):-c}. %m{c}. %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% ¥¹¥¯¥ê¥×¥È¼«ÂÎ¤Î¥Æ¥¹¥È
+%% ã‚¹ã‚¯ãƒªãƒ—ãƒˆè‡ªä½“ã®ãƒ†ã‚¹ãƒˆ
 a. %a. %ok
 a. %b. %ng
 a. %ng_but_ok %ok
