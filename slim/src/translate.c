@@ -37,8 +37,123 @@
  */
 
 #include "translate.h"
+#include "syntax.h"
+#include "arch.h"
+#include "symbol.h"
+#include <stdio.h>
 
-void translate(FILE *fp)
+/* just for debug ! */
+FILE *OUT;
+
+int parse(FILE *in, IL *il);
+
+/* 各ブロックが関数になるように変えた */
+/* 関数名は BOOL trans_FILENAME_RULESETID_RULEID_BLOCKID (?) */
+/* SLIMから読み出すためのインターフェイスはまだ適当 */
+/* 出力されたCソースをコンパイルする方法もまだ未定 */
+
+void translate_inst(Instruction inst)
 {
+  //fprintf(OUT, "\t%d\n", inst_get_id(inst));
+}
+
+void translate_block(InstBlock ib, char *filename, int rulesetid, int ruleid, char *defaultlabel)
+{
+  InstList il = inst_block_get_instructions(ib);
+  int num = inst_list_num(il);
+  int i;
+  
+  fprintf(OUT, "BOOL trans_%s_%d_%d_", filename, rulesetid, ruleid);
+  if(inst_block_has_label(ib)){
+    fprintf(OUT, "%d", inst_block_get_label(ib));
+  }else{
+    fprintf(OUT, "%s", defaultlabel);
+  }
+  fprintf(OUT, "(LmnMembrane *mem)\n{\n");
+
+  for(i=0; i<num; ++i){
+    translate_inst(inst_list_get(il, i));
+  }
+
+  fprintf(OUT, "}\n");
+}
+
+void translate_rule(Rule r, char *filename, int rulesetid, int ruleid)
+{
+  fprintf(OUT, "/*%s*/\n", lmn_id_to_name(rule_get_name(r)));
+  translate_block(rule_get_mmatch(r), filename, rulesetid, ruleid, "mmatch");
+  translate_block(rule_get_guard(r), filename, rulesetid, ruleid, "guard");
+  translate_block(rule_get_body(r), filename, rulesetid, ruleid, "body");
+}
+
+void translate_ruleset(RuleSet rs, char *filename)
+{
+  RuleList rl = ruleset_get_rulelist(rs);
+  int rulesetid = ruleset_get_id(rs);
+  int num = rulelist_num(rl);
+  int i;
+
+  fprintf(OUT, "BOOL trans_%s_%d_is_system_ruleset = %d;\n", filename, rulesetid, ruleset_is_system_ruleset(rs));
+  fprintf(OUT, "int trans_%s_%d_num = %d;\n", filename, rulesetid, num);
+  fprintf(OUT, "trans_%s_%d_data[] = {\n", filename, rulesetid);
+  for(i=0; i<num; ++i){
+    fprintf(OUT, "\ttrnas_%s_%d_%d_mmatch", filename, rulesetid, i);
+    if(i != num-1) fprintf(OUT, ",");
+    fprintf(OUT, "\n");
+  }
+  fprintf(OUT, "};\n");
+  fprintf(OUT, "\n");
+  
+  for(i=0; i<num; ++i){
+    translate_rule(rulelist_get(rl, i), filename, rulesetid, i);
+    if(i != num-1) fprintf(OUT, "\n");
+  }
+}
+
+void translate(char *filepath, FILE *in)
+{
+  IL il;
+  char *filename;
+
+  /* just for debug ! */
+  //OUT = stderr;
+  //OUT = stdout;
+  OUT = fopen("/dev/null", "w");
+
+  if (parse(in, &il)) {
+    /* 構文解析に失敗 */
+    exit(EXIT_FAILURE);
+  }
+
+  if(filepath == NULL){
+    filename = strdup("anonymous");
+  }else{
+    char *begin = strrchr(filepath, DIR_SEPARATOR_CHAR);
+    char *end;
+    
+    if(begin != NULL){
+      begin += 1;
+    }else{
+      begin = filepath;
+    }
+    
+    end = strrchr(begin, '.');
+    filename = malloc(end-begin +1);
+    strncpy(filename, begin, end-begin);
+  }
+
+  fprintf(OUT, "int init_%s(void){}\n\n", filename);
+  
+  {
+    RuleSets rss = il_get_rulesets(il);
+    int num = rulesets_num(rss);
+    int i;
+    for(i=0; i<num; ++i){
+      translate_ruleset(rulesets_get(rss, i), filename);
+      if(i != num-1) fprintf(OUT, "\n");
+    }
+  }
+
+  free(filename);
   fprintf(stderr, "--translate is under construction\n");
 }

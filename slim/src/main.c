@@ -242,25 +242,25 @@ int main(int argc, char *argv[])
 
     if (lmn_env.translate) {
       if (!strcmp("-", f)) {
-	in = stdin;
-	translate(stdin);
+        in = stdin;
+        translate(NULL, stdin);
       }
       else{
-	FILE *fp = fopen_il_file(f);
-	translate(fp);
-	fclose(fp);
+        FILE *fp = fopen_il_file(f);
+        translate(f, fp);
+        fclose(fp);
       }
     }else{
       if (!strcmp("-", f)) {
-	in = stdin;
-	start_ruleset = load(stdin);
+        in = stdin;
+        start_ruleset = load(stdin);
       }
       else start_ruleset = load_file(f);
 
       /* load directories(system & load path) */
       load_il_files(SLIM_LIB_DIR);
       for (i = lmn_env.load_path_num-1; i >= 0; i--) {
-	load_il_files(lmn_env.load_path[i]);
+        load_il_files(lmn_env.load_path[i]);
       }
 
 #ifdef PROFILE

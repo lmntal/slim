@@ -41,7 +41,7 @@
 
 #include <stdio.h>
 
-void translate(FILE *fp);
+void translate(char *filepath, FILE *fp);
 
 #endif
 
