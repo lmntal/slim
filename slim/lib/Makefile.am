@@ -21,4 +21,5 @@ LMNTAL="$(LMNTAL_HOME)/bin/lmntal"
 	@if !(test -x $(LMNTAL)); then \
 	  echo Cannot execute $(LMNTAL) ; false; \
 	fi
-	!($(LMNTAL) $(LMN_CFLAGS) $< 2>&1 | tee $@ | grep ERROR)
+	$(LMNTAL) $(LMN_CFLAGS) $< >$@ 2>__error_temp.txt
+	!(grep -i error __error_temp.txt)
