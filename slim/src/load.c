@@ -651,8 +651,9 @@ LmnRuleSet load(FILE *in)
 void build_cmd(char *buf, char *file_name)
 {
   buf[0] = '\0';
+  strcat(buf, "\"");
   strcat(buf, getenv(ENV_LMNTAL_HOME));
-  strcat(buf, "/bin/lmntal");
+  strcat(buf, "/bin/lmntal\"");
   strcat(buf, " --slimcode");
 
   if (getenv(ENV_CFLAGS)) {
