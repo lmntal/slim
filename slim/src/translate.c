@@ -178,8 +178,8 @@ void translate(char *filepath, FILE *in)
 
   /* just for debug ! */
   //OUT = stderr;
-  OUT = stdout;
-  //OUT = fopen("/dev/null", "w");
+  //OUT = stdout;
+  OUT = fopen("/dev/null", "w");
 
   if (parse(in, &il)) {
     /* 構文解析に失敗 */
