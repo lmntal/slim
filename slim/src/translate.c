@@ -52,18 +52,77 @@ int parse(FILE *in, IL *il);
 /* SLIMから読み出すためのインターフェイスはまだ適当 */
 /* 出力されたCソースをコンパイルする方法もまだ未定 */
 
-void translate_inst(Instruction inst)
+/* とりあえずwtとatを参照する場合はWT,ATマクロを使うことにする */
+/* とりあえずwt_sizeを参照する場合はWT_SIZEマクロを使うことにする */
+/* その他グローバル変数hgoeはHOGEというマクロでアクセスする */
+/* 関数はとりあえずそのまま */
+
+/* 機械出力する部分の予定 */
+void translate_instruction_generated(Instruction inst, ArgList al, char *header, int indent, char *failcode)
 {
-  //fprintf(OUT, "\t%d\n", inst_get_id(inst));
+  fprintf(OUT, "other %d\n", inst_get_id(inst));
 }
 
-void translate_block(InstBlock ib, char *filename, int rulesetid, int ruleid, char *defaultlabel)
+/* return nextbegin index */
+int translate_instructions(InstList il, int begin, int end, char *header, int indent, char *failcode)
+{
+  int i;
+  for(i=begin; i<end; ++i){
+    Instruction inst = inst_list_get(il, i);
+    ArgList al = inst_get_args(inst);
+
+    switch(inst_get_id(inst)){
+    case INSTR_SPEC:
+    case INSTR_COMMIT:
+      {
+        break;
+      }
+    case INSTR_FINDATOM:
+      {
+        fprintf(OUT, "findatom for(;;){%d\n", inst_arg_get_var(arg_list_get(al,0)));
+        i = translate_instructions(il, i+1, end, header, indent+1, "continue;\n");
+        --i;
+        fprintf(OUT, "}\n");
+        fprintf(OUT, failcode);
+        break;
+      }
+    case INSTR_ANYMEM:
+      {
+        fprintf(OUT, "anymem for(;;){%d\n", inst_arg_get_var(arg_list_get(al,0)));
+        i = translate_instructions(il, i+1, end, header, indent+1, "continue;\n");
+        --i;
+        fprintf(OUT, "}\n");
+        fprintf(OUT, failcode);
+        break;
+      }
+    case INSTR_JUMP:
+      {
+        fprintf(OUT, "if(trans_%s_%d(mem)) return 1;\nelse %s", header, inst_arg_get_label(arg_list_get(al, 0)), failcode);
+        break;
+      }
+    case INSTR_PROCEED:
+      {
+        fprintf(OUT, "return 1;\n");
+        break;
+      }
+    default:
+      {
+        translate_instruction_generated(inst, al, header, indent, failcode);
+        break;
+      }
+    }
+  }
+
+  return end;
+}
+
+void translate_block(InstBlock ib, char *header, char *defaultlabel)
 {
   InstList il = inst_block_get_instructions(ib);
   int num = inst_list_num(il);
   int i;
   
-  fprintf(OUT, "BOOL trans_%s_%d_%d_", filename, rulesetid, ruleid);
+  fprintf(OUT, "BOOL trans_%s_", header);
   if(inst_block_has_label(ib)){
     fprintf(OUT, "%d", inst_block_get_label(ib));
   }else{
@@ -71,19 +130,17 @@ void translate_block(InstBlock ib, char *filename, int rulesetid, int ruleid, ch
   }
   fprintf(OUT, "(LmnMembrane *mem)\n{\n");
 
-  for(i=0; i<num; ++i){
-    translate_inst(inst_list_get(il, i));
-  }
+  translate_instructions(il, 0, num, header, 0, "return 0;\n");
 
   fprintf(OUT, "}\n");
 }
 
-void translate_rule(Rule r, char *filename, int rulesetid, int ruleid)
+void translate_rule(Rule r, char *header)
 {
   fprintf(OUT, "/*%s*/\n", lmn_id_to_name(rule_get_name(r)));
-  translate_block(rule_get_mmatch(r), filename, rulesetid, ruleid, "mmatch");
-  translate_block(rule_get_guard(r), filename, rulesetid, ruleid, "guard");
-  translate_block(rule_get_body(r), filename, rulesetid, ruleid, "body");
+  translate_block(rule_get_mmatch(r), header, "mmatch");
+  translate_block(rule_get_guard(r), header, "guard");
+  translate_block(rule_get_body(r), header, "body");
 }
 
 void translate_ruleset(RuleSet rs, char *filename)
@@ -103,9 +160,13 @@ void translate_ruleset(RuleSet rs, char *filename)
   }
   fprintf(OUT, "};\n");
   fprintf(OUT, "\n");
-  
+
   for(i=0; i<num; ++i){
-    translate_rule(rulelist_get(rl, i), filename, rulesetid, i);
+    char header[500];
+    sprintf(header, "%s_%d_%d", filename, rulesetid, i);
+  
+    translate_rule(rulelist_get(rl, i), header);
+
     if(i != num-1) fprintf(OUT, "\n");
   }
 }
@@ -117,8 +178,8 @@ void translate(char *filepath, FILE *in)
 
   /* just for debug ! */
   //OUT = stderr;
-  //OUT = stdout;
-  OUT = fopen("/dev/null", "w");
+  OUT = stdout;
+  //OUT = fopen("/dev/null", "w");
 
   if (parse(in, &il)) {
     /* 構文解析に失敗 */
@@ -140,6 +201,7 @@ void translate(char *filepath, FILE *in)
     end = strrchr(begin, '.');
     filename = malloc(end-begin +1);
     strncpy(filename, begin, end-begin);
+    filename[end-begin] = '\0';
   }
 
   fprintf(OUT, "int init_%s(void){}\n\n", filename);
