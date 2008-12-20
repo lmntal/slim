@@ -887,7 +887,7 @@ static Vector *lmn_mem_mk_matching_vec(LmnMembrane *mem) {
   LmnAtomPtr a;
   AtomListEntry *ent;
   unsigned int anum_max; /* 膜内に存在するアトムをファンクタ毎にグループ化した際の、集合の大きさの最大値 */
-  int i, j;
+  unsigned int i, j;
 
   vec = vec_make(1);
   memset(vec->tbl, 0, sizeof(atomvec_data *) * vec->cap);
@@ -949,7 +949,7 @@ static Vector *lmn_mem_mk_matching_vec(LmnMembrane *mem) {
  * POPされるため、子孫膜数の少ない子膜から順にマッチングの対象となることになる。 */
 static void lmn_mem_mk_sorted_children(Vector *vec) {
   unsigned int num_descendants_max;
-  int i, n;
+  unsigned int i, n;
   Vector *v_mems_tmp;
 
   assert(vec_num(vec));
@@ -988,7 +988,7 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
   LmnAtomPtr l1, l2;
   LmnLinkAttr attr1, attr2;
   unsigned int arity;
-  int i;
+  unsigned int i;
   BOOL ret_next_step; /* a1, a2と直接接続されているアトムに対して再帰的に本メソッドを適用するために使用 */
   int next_depth;
 
@@ -1072,7 +1072,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
   Vector *atomvec_mem1, *atomvec_mem2; /* atomvec_memX (X = 1,2)は、膜memX 直下のアトムの情報を保持するVector。
                                               * 膜内のアトムをファンクタ毎に整理し、少数派のアトムからマッチングを開始できるようにする目的で使用する。 */
   BOOL is_the_same_functor;
-  int i, j;
+  unsigned int i, j;
 
   /* Step1. 両膜の子孫膜の個数、両膜内のアトムの個数、膜名が互いに等しいことを確認 */
   if (lmn_mem_count_descendants(mem1) != lmn_mem_count_descendants(mem2)
@@ -1122,7 +1122,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
     Vector *v_atoms_not_checked1, *v_atoms_not_checked2; /* 同型性の判定の判定が済んでいないアトムの集合を管理するVector (各アトムへのポインタを保存) */
     Vector *v_mems_children1, *v_mems_children2; /* 本膜直下の子膜を管理するVector (このVectorが空になるまで子膜を起点とする走査が続く) */
     LmnMembrane *m;
-    int n;
+    unsigned int n;
     unsigned int length;
 
     /* init */
