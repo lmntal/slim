@@ -4,7 +4,7 @@
 /**
  * コンストラクタ
  */
-State *state_make(LmnMembrane *mem) {
+State *state_make(LmnMembrane *mem, lmn_interned_str rule) {
   State *new = LMN_MALLOC(State);
   new->mem = mem;
   new->flags = 0x00U;
@@ -12,6 +12,7 @@ State *state_make(LmnMembrane *mem) {
   memset(&new->successor, 0x00U, sizeof(Vector));
   /* ハッシュ値はあらかじめ計算しておく */
   new->hash = mhash(new->mem);
+  new->rule_name = rule;
   return new;
 }
 

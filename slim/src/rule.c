@@ -121,6 +121,12 @@ lmn_interned_str lmn_rule_get_name(LmnRule rule)
   return rule->name;
 }
 
+/* ルール名のセット */
+void lmn_rule_set_name(LmnRule rule, lmn_interned_str rule_name)
+{
+  rule->name = rule_name;
+}
+
 /*----------------------------------------------------------------------
  * Rule Set
  */

@@ -132,10 +132,7 @@ struct MemStack {
   struct Entity  *head;
 } memstack;
 
-static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next);
-static void dump_state_transition_graph(FILE *file);
-static void exit_ltl_model_checking(void);
-
+static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next);
 
 static void memstack_init()
 {
@@ -304,7 +301,7 @@ static BOOL react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
     /* まず、トランスレート済みの関数を実行する
        それがない場合命令列をinterpretで実行する */
     if ((translated &&  translated(mem)) ||
-        (inst_seq && interpret(inst_seq, &dummy))) {
+        (inst_seq && interpret(rule, inst_seq, &dummy))) {
       if (lmn_env.trace) {
         fprintf(stdout, "(%s)\n\n", lmn_id_to_name(lmn_rule_get_name(rule)));
       }
@@ -424,8 +421,7 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
   expanded = st_init_table(&type_statehash);
 
   /* 初期プロセスから得られる初期状態を生成 */
-  initial_state = state_make(mem);
-  mc_flags.initial_state = initial_state;
+  initial_state = state_make(mem, ANONYMOUS);
   st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
   vec_push(&Stack, (LmnWord)initial_state);
 
@@ -445,23 +441,19 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
     }
     /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
     else{
-      nd_exec();
+    	nd_exec();
+    	printf("init:%lu\n", (long unsigned int)initial_state);
+        st_foreach(States, print_state_transition_graph, 0);
     }
-    dump_state_transition_graph(stdout);
-    fprintf(stdout, "# of States = %d\n", States->num_entries);
   }
   /* LTLモデル検査 */
   else {
     set_fst(initial_state);
     ltl_search1();
-
     printf("no cycles found\n");
-    fprintf(stdout, "# of States = %d\n", States->num_entries);
-
-    if (lmn_env.ltl_nd)
-      dump_state_transition_graph(stdout);
   }
 
+  fprintf(stdout, "# of States = %d\n", States->num_entries);
 
 #ifdef PROFILE
   calc_hash_conflict(States);
@@ -592,7 +584,7 @@ static HashSet *insertconnectors(LmnMembrane *mem, Vector *links)
   return retset;
 }
 
-static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
+static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr)
 {
 /*   LmnRuleInstr start = instr; */
   LmnInstrOp op;
@@ -638,7 +630,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
-      if(interpret(instr, next_instr)) {
+      if(interpret(rule, instr, next_instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       }
@@ -678,7 +670,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
-      if(interpret(instr, next_instr)) {
+      if(interpret(rule, instr, next_instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       }
@@ -753,7 +745,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       at = at2;
       wt_size = wt_size_org;
 
-      ret = interpret(instr, next_instr);
+      ret = interpret(rule, instr, next_instr);
       LMN_FREE(wt);
       LMN_FREE(at);
       wt = wt_org;
@@ -798,8 +790,11 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
     }
     case INSTR_COMMIT:
     {
-      instr += sizeof(lmn_interned_str) + sizeof(LmnLineNum);
-
+      lmn_interned_str rule_name;
+      LmnLineNum line_num;
+      READ_VAL(lmn_interned_str, instr, rule_name);
+      READ_VAL(LmnLineNum, instr, line_num);
+      lmn_rule_set_name(rule, rule_name);
       /*
        * MC mode
        *
@@ -852,9 +847,9 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
           mc_flags.system_rule_committed = TRUE;
 
           /* global_rootに対してボディを適用する */
-          interpret(instr, &instr);
+          interpret(rule, instr, &instr);
 
-          State *new_state = state_make(tmp_global_root);
+          State *new_state = state_make(tmp_global_root, lmn_rule_get_name(rule));
           State *state_on_table;
           if (!st_lookup(expanded, (st_data_t)new_state, (st_data_t *)&state_on_table)) {
             st_insert(expanded, (st_data_t)new_state, (st_data_t)new_state);
@@ -865,7 +860,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
         }
         else { /* 性質ルール */
           global_root = tmp_global_root;
-          interpret(instr, &instr);
+          interpret(rule, instr, &instr);
         }
 
         /* 変数配列および属性配列を元に戻す（いらないかも？） */
@@ -911,7 +906,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
             if(LMN_ATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
               continue;
             wt[atomi] = (LmnWord)atom;
-            if (interpret(instr, &instr)) {
+            if (interpret(rule, instr, &instr)) {
               *next_instr = instr;
               return TRUE;
             }
@@ -977,7 +972,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
             LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(atom), record);
             LMN_ATOM_SET_PREV(atom, record);
 
-            if (interpret(instr, &instr)) {
+            if (interpret(rule, instr, &instr)) {
               *next_instr = instr;
 #if DBG
               printf("count=%d\n", count);
@@ -1018,7 +1013,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       while (mp) {
         wt[mem1] = (LmnWord)mp;
         if (lmn_env.nd || lmn_env.ltl) { at[mem1] = 0; /* MC */ }
-        if (mp->name == memn && interpret(instr, &instr)) {
+        if (mp->name == memn && interpret(rule, instr, &instr)) {
           *next_instr = instr;
           return TRUE;
         }
@@ -1281,7 +1276,7 @@ static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next_instr)
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      if (interpret(instr, &instr)) {
+      if (interpret(rule, instr, &instr)) {
         return FALSE;
       }
       instr += subinstr_size;
@@ -1874,7 +1869,7 @@ COPYGROUND_CONT:
       vec_destroy(&stack);
 
       /* 解放のための再帰 */
-      interpret(instr, next_instr);
+      interpret(rule, instr, next_instr);
 
       while(dstlovec->num) {
         LMN_FREE(vec_get(dstlovec, dstlovec->num-1));
@@ -2106,7 +2101,7 @@ REMOVE_FREE_GROUND_CONT:
       wt[listi] = (LmnWord)listvec;
       if (lmn_env.nd || lmn_env.ltl) { at[listi] = 0; /* MC */ }
       /* 解放のための再帰 */
-      if(interpret(instr, next_instr)) {
+      if(interpret(rule, instr, next_instr)) {
         vec_free(listvec);
         return TRUE;
       }
@@ -2839,7 +2834,7 @@ REMOVE_FREE_GROUND_CONT:
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      if (!interpret(instr, &instr)) return FALSE;
+      if (!interpret(rule, instr, &instr)) return FALSE;
       instr += subinstr_size;
       break;
     }
@@ -2848,7 +2843,7 @@ REMOVE_FREE_GROUND_CONT:
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      if (interpret(instr, &instr)) return TRUE;
+      if (interpret(rule, instr, &instr)) return TRUE;
       instr += subinstr_size;
       break;
     }
@@ -2857,7 +2852,7 @@ REMOVE_FREE_GROUND_CONT:
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      while (interpret(instr, &instr)) ;
+      while (interpret(rule, instr, &instr)) ;
       instr += subinstr_size;
       break;
     }
@@ -2984,13 +2979,13 @@ static inline void violate() {
   for (i = 0; i < vec_num(&Stack); i++) {
     State *tmp_s = (State *)vec_get(&Stack, i);
     if (is_snd(tmp_s)) printf("*");
-    printf("%d:\t", i);
+    printf("%d (%s):\t", i, lmn_id_to_name(tmp_s->rule_name));
     lmn_dump_mem(((State *)vec_get(&Stack, i))->mem);
   }
   fprintf(stdout, "\n");
 
   if (!lmn_env.ltl_all) { /* 一つエラーが見つかったら終了する */
-    exit_ltl_model_checking();
+    exit(0);
   }
 }
 
@@ -3129,7 +3124,7 @@ void ltl_search1() {
        * 性質ルール適用
        * グローバル変数global_rootに性質ルール適用結果が格納される
        */
-      if (interpret(inst_seq, &dummy)) {
+      if (interpret(rule, inst_seq, &dummy)) {
         mc_flags.property_rule = FALSE;
 
         /**
@@ -3143,7 +3138,7 @@ void ltl_search1() {
           SimpleHashtbl *copymap = copy_global_root(global_root, newmem);
           hashtbl_free(copymap);
 
-          newstate = state_make(newmem);
+          newstate = state_make(newmem, lmn_rule_get_name(rule));
           st_insert(expanded, newstate, (st_data_t)newstate);
 #ifdef DEBUG
           fprintf(stdout, "stutter:\t");
@@ -3325,17 +3320,3 @@ void nd_dump_exec() {
   }
 }
 
-
-static void dump_state_transition_graph(FILE *file)
-{
-  fprintf(file, "init:%lu\n", (long unsigned int)mc_flags.initial_state);
-  st_foreach(States, print_state_transition_graph, 0);
-}
-
-static void exit_ltl_model_checking()
-{
-  if (lmn_env.ltl_nd) {
-    dump_state_transition_graph(stdout);
-  }
-  exit(0);
-}
