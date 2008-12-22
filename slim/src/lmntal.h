@@ -174,6 +174,7 @@ struct LmnEnv {
   BOOL nd_dump;
   BOOL ltl;
   BOOL ltl_all;
+  BOOL ltl_nd;       /* dump state transition graph after ltl model checking */
   BOOL translate;
   enum OutputFormat output_format;
   int optimization_level;

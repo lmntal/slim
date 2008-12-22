@@ -6,6 +6,8 @@
 #include "membrane.h"
 #include "vector.h"
 
+typedef struct State State;
+
 /**
  * task.cのinterpret()で用いられるフラグを集めたもの
  *
@@ -26,9 +28,10 @@ typedef struct McFlags {
   BOOL system_rule_committed;
   BOOL system_rule_proceeded;
   BOOL property_rule;
-} McFlags;
+  /* 非決定的実行時の初期状態 */
+  State *initial_state;
 
-typedef struct State State;
+} McFlags;
 
 struct State {
   LmnMembrane *mem; /* グローバルルート膜 */

@@ -133,6 +133,9 @@ struct MemStack {
 } memstack;
 
 static BOOL interpret(LmnRuleInstr instr, LmnRuleInstr *next);
+static void dump_state_transition_graph(FILE *file);
+static void exit_ltl_model_checking(void);
+
 
 static void memstack_init()
 {
@@ -422,6 +425,7 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
 
   /* 初期プロセスから得られる初期状態を生成 */
   initial_state = state_make(mem);
+  mc_flags.initial_state = initial_state;
   st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
   vec_push(&Stack, (LmnWord)initial_state);
 
@@ -441,19 +445,23 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
     }
     /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
     else{
-    	nd_exec();
-    	printf("init:%lu\n", (long unsigned int)initial_state);
-        st_foreach(States, print_state_transition_graph, 0);
+      nd_exec();
     }
+    dump_state_transition_graph(stdout);
+    fprintf(stdout, "# of States = %d\n", States->num_entries);
   }
   /* LTLモデル検査 */
   else {
     set_fst(initial_state);
     ltl_search1();
+
     printf("no cycles found\n");
+    fprintf(stdout, "# of States = %d\n", States->num_entries);
+
+    if (lmn_env.ltl_nd)
+      dump_state_transition_graph(stdout);
   }
 
-  fprintf(stdout, "# of States = %d\n", States->num_entries);
 
 #ifdef PROFILE
   calc_hash_conflict(States);
@@ -2982,7 +2990,7 @@ static inline void violate() {
   fprintf(stdout, "\n");
 
   if (!lmn_env.ltl_all) { /* 一つエラーが見つかったら終了する */
-    exit(0);
+    exit_ltl_model_checking();
   }
 }
 
@@ -3317,3 +3325,17 @@ void nd_dump_exec() {
   }
 }
 
+
+static void dump_state_transition_graph(FILE *file)
+{
+  fprintf(file, "init:%lu\n", (long unsigned int)mc_flags.initial_state);
+  st_foreach(States, print_state_transition_graph, 0);
+}
+
+static void exit_ltl_model_checking()
+{
+  if (lmn_env.ltl_nd) {
+    dump_state_transition_graph(stdout);
+  }
+  exit(0);
+}

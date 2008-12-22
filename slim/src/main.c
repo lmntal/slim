@@ -102,6 +102,7 @@ static int parse_options(int argc, char *argv[])
     {"ltl", 0, 0, 1008},
     {"ltl_all", 0, 0, 1009},
     {"translate", 0, 0, 1010},
+    {"ltl_nd", 0, 0, 1011},
     {0, 0, 0, 0}
   };
 
@@ -149,6 +150,10 @@ static int parse_options(int argc, char *argv[])
       break;
     case 1010:
       lmn_env.translate = TRUE;
+      break;
+    case 1011:
+      lmn_env.ltl = TRUE;
+      lmn_env.ltl_nd = TRUE;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
