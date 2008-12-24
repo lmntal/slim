@@ -153,6 +153,7 @@ static int parse_options(int argc, char *argv[])
       break;
     case 1011:
       lmn_env.ltl = TRUE;
+      lmn_env.ltl_all = TRUE;
       lmn_env.ltl_nd = TRUE;
       break;
     case 'I':

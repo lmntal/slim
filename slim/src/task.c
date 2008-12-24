@@ -436,20 +436,18 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
 
     /* --nd_resultの実行 */
     if(lmn_env.nd_result){
-    	nd_exec();
+      nd_exec();
     }
     /* --nd_dumpの実行 */
     else if(lmn_env.nd_dump){
-    	nd_dump_exec();
+      nd_dump_exec();
     }
     /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
     else{
-    	nd_exec();
-    	fprintf(stdout, "init:%lu\n", (long unsigned int)initial_state);
-      st_foreach(States, print_state_transition_graph, 0);
+      nd_exec();
+      dump_state_transition_graph(stdout);
+      fprintf(stdout, "# of States = %d\n", States->num_entries);
     }
-    dump_state_transition_graph(stdout);
-    fprintf(stdout, "# of States = %d\n", States->num_entries);
   }
   /* LTLモデル検査 */
   else {
@@ -2986,7 +2984,11 @@ static inline void violate() {
     State *tmp_s = (State *)vec_get(&Stack, i);
     if (is_snd(tmp_s)) printf("*");
     printf("%d (%s):\t", i, lmn_id_to_name(tmp_s->rule_name));
-    lmn_dump_mem(((State *)vec_get(&Stack, i))->mem);
+    if (lmn_env.ltl_nd){
+    	fprintf(stdout, "%lu\n", vec_get(&Stack, i));
+    }else{
+    	lmn_dump_mem(((State *)vec_get(&Stack, i))->mem);
+    }
   }
   fprintf(stdout, "\n");
 
