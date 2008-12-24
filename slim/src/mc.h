@@ -6,6 +6,15 @@
 #include "membrane.h"
 #include "vector.h"
 
+typedef struct State State;
+struct State {
+  LmnMembrane *mem; /* グローバルルート膜 */
+  int hash;         /* ハッシュ値 */
+  BOOL flags;       /* flags (unsigned char) */
+  Vector successor; /* successor nodes */
+  lmn_interned_str rule_name;
+};
+
 /**
  * task.cのinterpret()で用いられるフラグを集めたもの
  *
@@ -20,23 +29,15 @@
  *   システムルール実行時はinterpret()が常にFALSEを返す仕様となっているため、システムルール適用成功を表すフラグとして代わりにこれを用いる
  * property_rule: 性質ルール実行中フラグ
  *   性質ルール適用成功時にTRUEを返す目的で使用
+ * initial_state: 非決定的実行時の初期状態
  */
 typedef struct McFlags {
   BOOL nd_exec;
   BOOL system_rule_committed;
   BOOL system_rule_proceeded;
   BOOL property_rule;
+  State *initial_state;
 } McFlags;
-
-typedef struct State State;
-
-struct State {
-  LmnMembrane *mem; /* グローバルルート膜 */
-  int hash;         /* ハッシュ値 */
-  BOOL flags;       /* flags (unsigned char) */
-  Vector successor; /* successor nodes */
-  lmn_interned_str rule_name;
-};
 
 LMN_EXTERN State *state_make(LmnMembrane *mem, lmn_interned_str rule_name);
 LMN_EXTERN inline void state_succ_init(State *s, int init_size);
