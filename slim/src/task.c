@@ -133,6 +133,8 @@ struct MemStack {
 } memstack;
 
 static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next);
+static void dump_state_transition_graph(FILE *file);
+static void exit_ltl_model_checking(void);
 
 static void memstack_init()
 {
@@ -422,6 +424,7 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
 
   /* 初期プロセスから得られる初期状態を生成 */
   initial_state = state_make(mem, ANONYMOUS);
+  mc_flags.initial_state = initial_state;
   st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
   vec_push(&Stack, (LmnWord)initial_state);
 
@@ -430,7 +433,7 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
 
   /* 非決定的実行 */
   if(lmn_env.nd) {
-    
+
     /* --nd_resultの実行 */
     if(lmn_env.nd_result){
     	nd_exec();
@@ -442,18 +445,21 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
     /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
     else{
     	nd_exec();
-    	printf("init:%lu\n", (long unsigned int)initial_state);
-        st_foreach(States, print_state_transition_graph, 0);
+    	fprintf(stdout, "init:%lu\n", (long unsigned int)initial_state);
+      st_foreach(States, print_state_transition_graph, 0);
     }
+    dump_state_transition_graph(stdout);
+    fprintf(stdout, "# of States = %d\n", States->num_entries);
   }
   /* LTLモデル検査 */
   else {
     set_fst(initial_state);
     ltl_search1();
-    printf("no cycles found\n");
+    fprintf(stdout, "no cycles found\n");
+    fprintf(stdout, "# of States = %d\n", States->num_entries);
+    if (lmn_env.ltl_nd)
+      dump_state_transition_graph(stdout);
   }
-
-  fprintf(stdout, "# of States = %d\n", States->num_entries);
 
 #ifdef PROFILE
   calc_hash_conflict(States);
@@ -2937,7 +2943,7 @@ static BOOL expand_inner(LmnMembrane *cur_mem, BOOL *must_be_activated) {
   BOOL ret_flag = FALSE;
   for (; cur_mem; cur_mem = cur_mem->next) {
     BOOL temp_must_be_activated = FALSE;
-    
+
     if (expand_inner(cur_mem->child_head, &temp_must_be_activated)) { /* 代表子膜に対して再帰する */
       ret_flag = TRUE;
     }
@@ -2985,7 +2991,7 @@ static inline void violate() {
   fprintf(stdout, "\n");
 
   if (!lmn_env.ltl_all) { /* 一つエラーが見つかったら終了する */
-    exit(0);
+    exit_ltl_model_checking();
   }
 }
 
@@ -3285,7 +3291,6 @@ void nd_exec() {
 /* MC・非決定的実行のメインルーチン ここまで */
 
 
-
 /*
  * nd_exec()のdump版
  * 状態が見つかった時点で状態情報の出力を行う。
@@ -3299,16 +3304,16 @@ void nd_dump_exec() {
       s->flags = TRUE; /* 展開済みフラグ */
 
       expand(s->mem); /* 展開先をexpandedに格納する */
-      
+
       /* 状態を出力（状態ID:ハッシュ値:遷移先の数:状態） */
       fprintf(stdout, "%lu:%d:%d:", (long unsigned int)s, s->hash, expanded->num_entries);
       lmn_dump_cell(s->mem);
-      
+
       /* expandedの内容をState->successorに保存する */
       if (expanded->num_entries != 0) {
         state_succ_init(s, expanded->num_entries);
       }
-      
+
       st_foreach(expanded, expand_states_and_stack, s);
     }
     else { /* s->toggle == TRUE */
@@ -3320,3 +3325,17 @@ void nd_dump_exec() {
   }
 }
 
+static void dump_state_transition_graph(FILE *file)
+{
+  fprintf(file, "init:%lu\n", (long unsigned int)mc_flags.initial_state);
+  st_foreach(States, print_state_transition_graph, 0);
+  fprintf(file, "\n");
+}
+
+static void exit_ltl_model_checking()
+{
+  if (lmn_env.ltl_nd) {
+    dump_state_transition_graph(stdout);
+  }
+  exit(0);
+}
