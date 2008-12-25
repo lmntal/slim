@@ -13,6 +13,7 @@ struct State {
   BOOL flags;       /* flags (unsigned char) */
   Vector successor; /* successor nodes */
   lmn_interned_str rule_name;
+  Vector succ_rules;
 };
 
 /**

@@ -13,6 +13,7 @@ State *state_make(LmnMembrane *mem, lmn_interned_str rule) {
   /* ハッシュ値はあらかじめ計算しておく */
   new->hash = mhash(new->mem);
   new->rule_name = rule;
+  memset(&new->succ_rules, 0x00U, sizeof(Vector));
   return new;
 }
 
@@ -30,6 +31,9 @@ static inline BOOL mem_is_zero(const void *s, size_t n) {
 
 inline void state_succ_init(State *s, int init_size) {
   vec_init(&s->successor, init_size);
+  if (lmn_env.ltl_nd || lmn_env.nd){	
+  	vec_init(&s->succ_rules, init_size);
+  }
 }
 
 /**
