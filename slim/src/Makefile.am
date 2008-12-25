@@ -7,7 +7,7 @@ AM_YFLAGS = -d
 AM_LFLAGS = --header-file=il_lex.h
 
 # 事前に必要なファイル
-BUILT_SOURCES = arch.h il_parser.h il_lex.h translate_generated.c
+BUILT_SOURCES = arch.h il_parser.h il_lex.h
 
 # il_parser.y は il_parser.lより先に書く
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
@@ -16,7 +16,7 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.c task.c memory_pool.c int
 	atom.h dumper.h instruction.h internal_hash.h lmntal.h membrane.h \
 	memory_pool.h rule.h system_ruleset.h task.h vector.h st.c symbol.h symbol.c functor.h functor.c \
     syntax.h syntax.c il_parser.y il_lex.l instruction.c load.h load.c st.h arch.h \
-    mc.h mc.c mhash.h mhash.c runtime_status.h runtime_status.c translate.c translate.h translate_generated.c
+    mc.h mc.c mhash.h mhash.c runtime_status.h runtime_status.c translate.c translate.h
 
 DISTCLEANFILES := arch.h ../lib/config.lmn
 
