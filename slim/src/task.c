@@ -251,9 +251,7 @@ static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_da
 
   fprintf(stdout, "%lu::", (long unsigned int)tmp); /* dump src state's ID */
   while (j < vec_num(&tmp->successor)) { /* dump dst state's IDs */
-    fprintf(stdout, "%lu", vec_get(&tmp->successor, j));
-    fprintf(stdout, "(%s)", lmn_id_to_name(vec_get(&tmp->succ_rules, j)));
-    j++;
+    fprintf(stdout, "%lu", vec_get(&tmp->successor, j++));
     if (j < vec_num(&tmp->successor)) {
       fprintf(stdout,",");
     }
@@ -2857,8 +2855,8 @@ REMOVE_FREE_GROUND_CONT:
     {
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
-			LmnRuleInstr next;
-      while (interpret(rule, instr, &next)) ;
+
+      while (interpret(rule, instr, &instr)) ;
       instr += subinstr_size;
       break;
     }
@@ -3171,10 +3169,6 @@ void ltl_search1() {
       State *ss = (State *)vec_get(&s->successor, j);
       State *ss_on_table;
 
-      if (lmn_env.ltl_nd){
-				vec_push(&s->succ_rules, ss->rule_name);
-			}	
-
       if (!st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_table)) {
         st_add_direct(States, ss, (st_data_t)ss);
         /* push とset を１つの関数にする */
@@ -3229,8 +3223,7 @@ static int expand_states_and_stack(st_data_t k, st_data_t successor_state, void 
     State *s  = (State *)current_state;
     State *ss = (State *)successor_state;
     State *ss_on_table;
-		
-		vec_push(&s->succ_rules, ss->rule_name); //succesorへの適用ルールを展開元へ保存
+
     if (!st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_table)) {
       /* expandedの内容をState->successorに保存する（新規） */
       if (!lmn_env.nd_result) {
