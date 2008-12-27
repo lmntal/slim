@@ -43,7 +43,7 @@
 
 typedef struct LmnFunctorTable {
   unsigned int size;
-  unsigned int num_entry;
+  unsigned int next_id;
   struct LmnFunctorEntry *entry;
 } LmnFunctorTable;
 
@@ -65,5 +65,42 @@ void lmn_functor_tbl_init(void);
 void lmn_functor_tbl_destroy(void);
 LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, int arity);
 
-#endif /* LMN_RULE_H */
+
+/* predefined functors */
+
+#define IN_PROXY_NAME    "$in"
+#define OUT_PROXY_NAME   "$out"
+#define STAR_PROXY_NAME  "$*"
+#define UNIFY_ATOM_NAME  "="
+#define CONS_ATOM_NAME   "."
+#define NIL_ATOM_NAME    "[]"
+#define RESUME_ATOM_NAME "$res"
+#define IADD_ATOM_NAME   "+"
+#define ISUB_ATOM_NAME   "-"
+#define IMUL_ATOM_NAME   "*"
+#define IDIV_ATOM_NAME   "/"
+#define IMOD_ATOM_NAME   "mod"
+#define FADD_ATOM_NAME   "+."
+#define FSUB_ATOM_NAME   "-."
+#define FMUL_ATOM_NAME   "*."
+#define FDIV_ATOM_NAME   "/."
+
+#define LMN_IN_PROXY_FUNCTOR   0 
+#define LMN_OUT_PROXY_FUNCTOR  1
+#define LMN_STAR_PROXY_FUNCTOR 2
+#define LMN_UNIFY_FUNCTOR      3
+#define LMN_LIST_FUNCTOR       4
+#define LMN_NIL_FUNCTOR        5
+#define LMN_RESUME_FUNCTOR     6
+#define LMN_ARITHMETIC_IADD_FUNCTOR 7
+#define LMN_ARITHMETIC_ISUB_FUNCTOR 8
+#define LMN_ARITHMETIC_IMUL_FUNCTOR 9
+#define LMN_ARITHMETIC_IDIV_FUNCTOR 10
+#define LMN_ARITHMETIC_MOD_FUNCTOR  11
+#define LMN_ARITHMETIC_FADD_FUNCTOR 12
+#define LMN_ARITHMETIC_FSUB_FUNCTOR 13
+#define LMN_ARITHMETIC_FMUL_FUNCTOR 14
+#define LMN_ARITHMETIC_FDIV_FUNCTOR 15
+
+#endif /* LMN_FUNCTOR_H */
 

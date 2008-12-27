@@ -172,26 +172,6 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_INT_ATTR        (LMN_ATTR_FLAG | 0)
 #define LMN_DBL_ATTR        (LMN_ATTR_FLAG | 1)
 
-/* special functors */
-
-#define LMN_IN_PROXY_FUNCTOR   0
-#define LMN_OUT_PROXY_FUNCTOR  1
-#define LMN_STAR_PROXY_FUNCTOR 2
-#define LMN_UNIFY_FUNCTOR      3
-#define LMN_LIST_FUNCTOR       4
-#define LMN_NIL_FUNCTOR        5
-#define LMN_RESUME_FUNCTOR     6
-#define LMN_ARITHMETIC_IADD_FUNCTOR 7
-#define LMN_ARITHMETIC_ISUB_FUNCTOR 8
-#define LMN_ARITHMETIC_IMUL_FUNCTOR 9
-#define LMN_ARITHMETIC_IDIV_FUNCTOR 10
-#define LMN_ARITHMETIC_MOD_FUNCTOR  11
-#define LMN_ARITHMETIC_FADD_FUNCTOR 12
-#define LMN_ARITHMETIC_FSUB_FUNCTOR 13
-#define LMN_ARITHMETIC_FMUL_FUNCTOR 14
-#define LMN_ARITHMETIC_FDIV_FUNCTOR 15
-#define LMN_PRINT_FUNCTOR 16
-
 /*----------------------------------------------------------------------
  * functions
  */

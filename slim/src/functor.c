@@ -41,12 +41,50 @@
 #include "st.h"
 #include "atom.h"
 #include "symbol.h"
+#include "util.h"
+
+struct PredefinedFunctor {
+  LmnFunctor id;
+  BOOL special;
+  char  *name;
+  LmnArity arity;
+};
+
+/* 予約されたファンクタの定義 */
+struct PredefinedFunctor predefined_functors[] = {
+  /* プロキシは第三引数を親膜に使用するので三引数として登録する */
+  {LMN_IN_PROXY_FUNCTOR,        TRUE,  IN_PROXY_NAME,    3},
+  {LMN_OUT_PROXY_FUNCTOR,       TRUE,  OUT_PROXY_NAME,   3},
+  {LMN_STAR_PROXY_FUNCTOR,      TRUE,  STAR_PROXY_NAME,  3},
+  {LMN_UNIFY_FUNCTOR,           FALSE, UNIFY_ATOM_NAME,  2},
+  {LMN_LIST_FUNCTOR,            FALSE, CONS_ATOM_NAME,   3},
+  {LMN_NIL_FUNCTOR,             FALSE, NIL_ATOM_NAME,    1},
+  {LMN_RESUME_FUNCTOR,          TRUE,  RESUME_ATOM_NAME, 1},
+  {LMN_ARITHMETIC_IADD_FUNCTOR, FALSE, IADD_ATOM_NAME,   3},
+  {LMN_ARITHMETIC_ISUB_FUNCTOR, FALSE, ISUB_ATOM_NAME,   3},
+  {LMN_ARITHMETIC_IMUL_FUNCTOR, FALSE, IMUL_ATOM_NAME,   3},
+  {LMN_ARITHMETIC_IDIV_FUNCTOR, FALSE, IDIV_ATOM_NAME,   3},
+  {LMN_ARITHMETIC_MOD_FUNCTOR , FALSE, IMOD_ATOM_NAME,   3},
+  {LMN_ARITHMETIC_FADD_FUNCTOR, FALSE, FADD_ATOM_NAME,   3},
+  {LMN_ARITHMETIC_FSUB_FUNCTOR, FALSE, FSUB_ATOM_NAME,   3},
+  {LMN_ARITHMETIC_FMUL_FUNCTOR, FALSE, FMUL_ATOM_NAME,   3},
+  {LMN_ARITHMETIC_FDIV_FUNCTOR, FALSE, FDIV_ATOM_NAME,   3},
+};
 
 struct LmnFunctorTable lmn_functor_table;
 
 /* prototypes */
 
-static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_interned_str name, int arity);
+static LmnFunctor functor_intern(BOOL special,
+                                 lmn_interned_str module,
+                                 lmn_interned_str name,
+                                 int arity);
+static void register_functor(int id,
+                             BOOL special,
+                             lmn_interned_str module,
+                             lmn_interned_str name,
+                             int arity);
+
 int functor_entry_free(LmnFunctorEntry *e);
 const LmnFunctorEntry *lmn_id_to_functor(int functor_id);
 
@@ -74,31 +112,24 @@ st_table *functor_id_tbl;
 
 void lmn_functor_tbl_init()
 {
+  int i;
+  const int predefined_size = ARY_SIZEOF(predefined_functors);
+
   functor_id_tbl = st_init_table(&type_functorhash);
 
-  lmn_functor_table.num_entry = 0;
-  lmn_functor_table.size = 128;
+  lmn_functor_table.size = predefined_size;
   lmn_functor_table.entry = LMN_NALLOC(LmnFunctorEntry, lmn_functor_table.size);
+  lmn_functor_table.next_id = predefined_size;
 
   /* 予約されたファンクタを順番に登録していく */
-  /* プロキシは第三引数を親膜に使用するので三引数として登録する */
-  functor_intern(TRUE, ANONYMOUS, lmn_intern("$in"), 3);
-  functor_intern(TRUE, ANONYMOUS, lmn_intern("$out"), 3);
-  functor_intern(TRUE, ANONYMOUS, lmn_intern("$*"), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("="), 2);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("."), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("[]"), 1);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("$res"), 1);
-  /* for the system ruleset executing arithmetic operations */  
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("+"), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("-"), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("*"), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("/"), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("mod"), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("+."), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("-."), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("*."), 3);
-  functor_intern(FALSE, ANONYMOUS, lmn_intern("/."), 3);
+  for (i = 0; i < predefined_size; i++) {
+    struct PredefinedFunctor *f = &predefined_functors[i];
+    register_functor(f->id,
+                     f->special,
+                     ANONYMOUS,
+                     lmn_intern(f->name),
+                     f->arity);
+  }
 }
 
 int functor_entry_free(LmnFunctorEntry *e)
@@ -118,13 +149,34 @@ const LmnFunctorEntry *lmn_id_to_functor(int functor_id)
 {
   LmnFunctorEntry *entry;
 
-  if (st_lookup(functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry))
+  if (st_lookup(functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry)) 
     return entry;
   else return NULL;
 }
 
+static void register_functor(int id,
+                             BOOL special,
+                             lmn_interned_str module,
+                             lmn_interned_str name,
+                             int arity)
+{
+  struct LmnFunctorEntry *entry = LMN_MALLOC(struct LmnFunctorEntry);
+
+  entry->special = special;
+  entry->module = module;
+  entry->name = name;
+  entry->arity = arity;
+
+  st_insert(functor_id_tbl, entry, (st_data_t)id);
+  /* idの位置にファンクタのデータをコピー */
+  lmn_functor_table.entry[id] = *entry;
+}
+
 /* ファンクタのIDを返す */
-static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_interned_str name, int arity)
+static LmnFunctor functor_intern(BOOL special,
+                                 lmn_interned_str module,
+                                 lmn_interned_str name,
+                                 int arity)
 {
   int id;
   LmnFunctorEntry entry;
@@ -140,7 +192,7 @@ static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_inte
     struct LmnFunctorEntry *new_entry;
 
     /* 必要ならばサイズを拡張 */
-    while (lmn_functor_table.num_entry >= lmn_functor_table.size) {
+    while (lmn_functor_table.next_id >= lmn_functor_table.size) {
       lmn_functor_table.size *= 2;
       lmn_functor_table.entry = LMN_REALLOC(LmnFunctorEntry,
                                             lmn_functor_table.entry,
@@ -148,7 +200,7 @@ static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_inte
     }
 
     /* idはデータを格納する配列のインデックス */
-    id = lmn_functor_table.num_entry++;
+    id = lmn_functor_table.next_id++;
     /* idの位置にファンクタのデータをコピー */
     lmn_functor_table.entry[id] = entry;
 
@@ -161,7 +213,9 @@ static LmnFunctor functor_intern(BOOL special, lmn_interned_str module, lmn_inte
   }
 }
 
-LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, int arity)
+LmnFunctor lmn_functor_intern(lmn_interned_str module,
+                              lmn_interned_str name,
+                              int arity)
 {
   return functor_intern(FALSE, module, name, arity);
 }
