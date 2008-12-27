@@ -84,6 +84,8 @@ LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, in
 #define FSUB_ATOM_NAME   "-."
 #define FMUL_ATOM_NAME   "*."
 #define FDIV_ATOM_NAME   "/."
+#define UNARY_PLUS_NAME  "+"
+#define UNARY_MINUS_NAME "-"
 
 #define LMN_IN_PROXY_FUNCTOR   0 
 #define LMN_OUT_PROXY_FUNCTOR  1
@@ -101,6 +103,8 @@ LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, in
 #define LMN_ARITHMETIC_FSUB_FUNCTOR 13
 #define LMN_ARITHMETIC_FMUL_FUNCTOR 14
 #define LMN_ARITHMETIC_FDIV_FUNCTOR 15
+#define LMN_UNARY_PLUS_FUNCTOR 16
+#define LMN_UNARY_MINUS_FUNCTOR 17
 
 #endif /* LMN_FUNCTOR_H */
 

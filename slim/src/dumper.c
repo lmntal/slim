@@ -397,6 +397,15 @@ static BOOL dump_toplevel_atom(LmnAtomPtr atom,
        f == LMN_OUT_PROXY_FUNCTOR)) {
     return dump_proxy(atom, ht, LMN_ATTR_MAKE_LINK(0), s, 0);
   }
+  else if (f == LMN_UNARY_PLUS_FUNCTOR ||
+           f == LMN_UNARY_MINUS_FUNCTOR) {
+    fprintf(stdout, "%s", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)));
+    return dump_atom(LMN_ATOM_GET_LINK(atom, 0),
+                     ht,
+                     LMN_ATOM_GET_ATTR(atom, 0),
+                     s,
+                     1);
+  }
   else {
     return dump_symbol_atom(atom, ht, LMN_ATTR_MAKE_LINK(0), s, 0);
   }
