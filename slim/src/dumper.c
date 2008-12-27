@@ -59,7 +59,7 @@ struct DumpState {
   int link_num;
 };
 
-static BOOL dump_atom(LmnAtomPtr atom,
+static BOOL dump_atom(LmnWord atom,
                       SimpleHashtbl *ht,
                       LmnLinkAttr attr,
                       struct DumpState *s,
@@ -150,7 +150,7 @@ static void dump_arg(LmnAtomPtr atom,
   if (hashtbl_contains(&rec->args, i)) {
     dump_link(atom, i, ht, s);
   } else {
-    dump_atom(LMN_ATOM(LMN_ATOM_GET_LINK(atom, i)),
+    dump_atom(LMN_ATOM_GET_LINK(atom, i),
               ht,
               LMN_ATOM_GET_ATTR(atom, i),
               s,
@@ -201,6 +201,7 @@ static BOOL dump_list(LmnAtomPtr atom,
 {
   BOOL first = TRUE;
   LmnLinkAttr attr;
+  LmnWord a = (LmnWord)atom;
 
   if (get_atomrec(ht, atom)->done) {
     dump_link(atom, 2, ht, s);
@@ -210,39 +211,40 @@ static BOOL dump_list(LmnAtomPtr atom,
   attr = LMN_ATTR_MAKE_LINK(2); /* 2 is output link position */
 
   fprintf(stdout, "[");
+  /* リストの要素を出力していく*/
   while (TRUE) {
-    if (LMN_HAS_FUNCTOR(atom, attr, LMN_LIST_FUNCTOR) &&
+    if (LMN_HAS_FUNCTOR(a, attr, LMN_LIST_FUNCTOR) &&
         LMN_ATTR_GET_VALUE(attr) == 2) {
-        struct AtomRec *rec;
+      struct AtomRec *rec;
 
-        rec = get_atomrec(ht, atom);
+      rec = get_atomrec(ht, LMN_ATOM(a));
 
-        if (rec->done) { /* cyclic */
-          int link = s->link_num++;
-          fprintf(stdout, "|");
-          hashtbl_put(&rec->args, LMN_ATTR_GET_VALUE(attr), link);
-          fprintf(stdout, LINK_FORMAT, link);
-          break;
-        }
-        rec->done = TRUE;
-
-        if (!first) fprintf(stdout, ",");
-        first = FALSE;
-
-        dump_arg(atom, 0, ht, s, call_depth + 1);
-
-        attr = LMN_ATOM_GET_ATTR(atom, 1);
-        atom = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 1));
+      if (rec->done) { /* cyclic */
+        int link = s->link_num++;
+        fprintf(stdout, "|");
+        hashtbl_put(&rec->args, LMN_ATTR_GET_VALUE(attr), link);
+        fprintf(stdout, LINK_FORMAT, link);
+        break;
       }
-    else if (LMN_HAS_FUNCTOR(atom, attr, LMN_NIL_FUNCTOR)) {
+      rec->done = TRUE;
+
+      if (!first) fprintf(stdout, ",");
+      first = FALSE;
+
+      dump_arg(LMN_ATOM(a), 0, ht, s, call_depth + 1);
+
+      attr = LMN_ATOM_GET_ATTR(a, 1);
+      a = LMN_ATOM_GET_LINK(a, 1);
+    }
+    else if (LMN_HAS_FUNCTOR(a, attr, LMN_NIL_FUNCTOR)) {
       struct AtomRec *rec;
       rec = atomrec_make();
       rec->done = TRUE;
-      hashtbl_put(ht, (HashKeyType)atom, (HashValueType)rec);
+      hashtbl_put(ht, (HashKeyType)a, (HashValueType)rec);
       break;
     } else { /* list ends with non nil data */
       fprintf(stdout, "|");
-      dump_atom(atom, ht, attr, s, call_depth + 1);
+      dump_atom(a, ht, attr, s, call_depth + 1);
       break;
     }
   }
@@ -357,7 +359,7 @@ static BOOL dump_symbol_atom(LmnAtomPtr atom,
   return TRUE;
 }
 
-static BOOL dump_atom(LmnAtomPtr atom,
+static BOOL dump_atom(LmnWord atom,
                       SimpleHashtbl *ht,
                       LmnLinkAttr attr,
                       struct DumpState *s,
@@ -372,14 +374,14 @@ static BOOL dump_atom(LmnAtomPtr atom,
     if (!lmn_env.show_proxy &&
         (f == LMN_IN_PROXY_FUNCTOR ||
          f == LMN_OUT_PROXY_FUNCTOR)) {
-      return dump_proxy(atom, ht, attr, s, call_depth);
+      return dump_proxy(LMN_ATOM(atom), ht, attr, s, call_depth);
     }
     else if (f == LMN_LIST_FUNCTOR &&
              link_pos == 2) {
-      return dump_list(atom, ht, s, call_depth);
+      return dump_list(LMN_ATOM(atom), ht, s, call_depth);
     }
     else {
-      return dump_symbol_atom(atom, ht, link_pos, s, call_depth);
+      return dump_symbol_atom(LMN_ATOM(atom), ht, link_pos, s, call_depth);
     }
   }
 }
@@ -389,9 +391,10 @@ static BOOL dump_toplevel_atom(LmnAtomPtr atom,
                                SimpleHashtbl *ht,
                                struct DumpState *s)
 {
+  const LmnFunctor f = LMN_ATOM_GET_FUNCTOR(atom);
   if (!lmn_env.show_proxy &&
-      (LMN_ATOM_GET_FUNCTOR(atom) == LMN_IN_PROXY_FUNCTOR ||
-       LMN_ATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR)) {
+      (f == LMN_IN_PROXY_FUNCTOR ||
+       f == LMN_OUT_PROXY_FUNCTOR)) {
     return dump_proxy(atom, ht, LMN_ATTR_MAKE_LINK(0), s, 0);
   }
   else {
