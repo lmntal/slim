@@ -1,7 +1,8 @@
 /*
- * error.c - error handling
+ * propositional_symbol.h - Propositional symbol definition
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,27 +34,47 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: error.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
+ * $Id$
  */
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include "lmntal.h"
+#ifndef LMN_PROP_DEFINITION_H
+#define LMN_PROP_DEFINITION_H
 
-void do_lmn_fatal(const char *msg)
-{
-  fputs(msg, stderr);
-  fputc('\n', stderr);
-  fflush(stderr);
-}
+#include "stdio.h"
+#include "vector.h"
+#include "automata.h"
+#include "rule.h"
 
-void lmn_report(const char *msg, ...)
-{
-  va_list args;
-  va_start(args, msg);
-  /* use raw port */
-  vfprintf(stderr, msg, args);
-  va_end(args);
-  fputc('\n', stderr);
-  fflush(stderr);
-}
+typedef struct SymbolDefinition *SymbolDefinition;
+typedef struct Proposition *Proposition;
+typedef Vector *PropSyms;
+
+/* propositional symbol definition */
+ 
+SymbolDefinition propsym_make(unsigned int sym_id, Proposition p);
+void propsym_free(SymbolDefinition s);
+unsigned int propsym_symbol_id(SymbolDefinition s);
+int propsym_load_file(FILE *in, Automata a, PropSyms *propsyms);
+void propsym_dump(SymbolDefinition s);
+Proposition propsym_get_proposition(SymbolDefinition s);
+
+/* proposition */
+
+Proposition proposition_make(const char *head,
+                             const char *guard,
+                             const char *body);
+void proposition_free(Proposition p);
+LmnRule proposition_get_rule(Proposition p);
+BOOL proposition_eval(Proposition prop, LmnMembrane *mem);
+  
+/* propositional symbol definitions */
+
+PropSyms propsyms_make(void);
+void propsyms_set(PropSyms props,
+                      unsigned int id,
+                      SymbolDefinition symdef);
+unsigned int propsyms_num(PropSyms props);
+SymbolDefinition propsyms_get(PropSyms props, unsigned int i);
+void propsyms_free(PropSyms props);
+
+#endif

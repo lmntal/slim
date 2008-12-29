@@ -180,7 +180,7 @@ Functor module_symbol_functor_make(lmn_interned_str module,
                                    lmn_interned_str name,
                                    int arity)
 {
-  Functor f = functor_make(SYMBOL);
+  Functor f = functor_make(STX_SYMBOL);
 
   f->v.functor_id = lmn_functor_intern(module, name, arity);
   return f;
@@ -484,7 +484,7 @@ Rule rule_make_anonymous(InstBlock amatch, InstBlock mmatch, InstBlock guard, In
   return r;
 }
 
-static void rule_free(Rule rule)
+void stx_rule_free(Rule rule)
 {
   inst_block_free(rule->amatch);
   inst_block_free(rule->mmatch);
@@ -528,7 +528,7 @@ RuleList rulelist_make()
 static void rulelist_free(RuleList l) {
   unsigned int i;
 
-  for (i = 0; i< rulelist_num(l); i++) rule_free(rulelist_get(l, i));
+  for (i = 0; i< rulelist_num(l); i++) stx_rule_free(rulelist_get(l, i));
   vec_free(l);
 }
 

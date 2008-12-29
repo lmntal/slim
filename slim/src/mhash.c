@@ -334,7 +334,7 @@ static int mhash_internal(LmnMembrane *mem)
   return (int)(mul ^ add) + mem->name; /* 膜名を反映させる */
 }
 
-int mhash(LmnWord mem)
+int mhash(LmnMembrane *mem)
 {
   int ret;
 

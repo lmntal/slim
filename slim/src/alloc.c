@@ -40,6 +40,8 @@
 #include "lmntal.h"
 #include "atom.h"
 #include "functor.h"
+#include "runtime_status.h"
+#include "error.h"
 #include <malloc.h>
 #include <math.h>
 

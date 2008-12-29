@@ -57,7 +57,7 @@ int var_list_get(VarList l, int i);
 
 /* Functor */
 
-enum FunctorType {SYMBOL, INT_FUNC, FLOAT_FUNC, IN_PROXY, OUT_PROXY, UNIFY};
+enum FunctorType {STX_SYMBOL, INT_FUNC, FLOAT_FUNC, STX_IN_PROXY, STX_OUT_PROXY, STX_UNIFY};
 
 typedef struct Functor *Functor;
 
@@ -135,6 +135,7 @@ typedef struct Rule *Rule;
 
 Rule rule_make_anonymous(InstBlock amatch, InstBlock mmatch, InstBlock guard, InstBlock body);
 lmn_interned_str rule_get_name(Rule rule);
+void stx_rule_free(Rule rule);
 InstBlock rule_get_amatch(Rule rule);
 InstBlock rule_get_mmatch(Rule rule);
 InstBlock rule_get_guard(Rule rule);

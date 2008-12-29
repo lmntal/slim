@@ -1,5 +1,5 @@
 /*
- * il_lex.l - Intermediate Language scanner
+ * il_lexer.l - Intermediate Language scanner
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -50,8 +50,15 @@
 #include "instruction.h"
 #include "rule.h"
 
+#define _POSIX_SOURCE 1
+#define YY_NO_INPUT
+#define YY_NO_UNISTD_H
+
 struct lexer_context;
 int get_instr_id(char *);
+
+int ilget_column  (yyscan_t yyscanner);
+void ilset_column (int  column_no , yyscan_t yyscanner);
 
 %}
 

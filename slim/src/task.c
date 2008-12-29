@@ -51,11 +51,17 @@
 #include "st.h"
 #include "mc.h"
 #include "mhash.h"
+#include "automata.h"
+#include "propositional_symbol.h"
+#include "functor.h"
+#include "error.h"
 #include <string.h>
 
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
+
+static void do_mc(LmnMembrane *world_mem);
 
 LmnWord *wt, *wt_t; /* variable vector used in interpret */
 LmnByte *at, *at_t; /* attribute vector */
@@ -136,6 +142,27 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next);
 static void dump_state_transition_graph(FILE *file);
 static void exit_ltl_model_checking(void);
 
+void task_init()
+{
+  wt_size = 1024;
+  wt = LMN_NALLOC(LmnWord, wt_size);
+  wt_t = LMN_NALLOC(LmnWord, wt_size);
+  at = LMN_NALLOC(LmnByte, wt_size);
+  at_t = LMN_NALLOC(LmnByte, wt_size);
+  memset(wt, 0, sizeof(LmnWord) * wt_size);
+  memset(wt_t, 0, sizeof(LmnWord) * wt_size);
+  memset(at, 0, sizeof(LmnByte) * wt_size);
+  memset(at_t, 0, sizeof(LmnByte) * wt_size);
+}
+
+void task_finalize()
+{
+  LMN_FREE(wt);
+  LMN_FREE(wt_t);
+  LMN_FREE(at);
+  LMN_FREE(at_t);
+}
+
 static void memstack_init()
 {
   memstack.head = LMN_MALLOC(struct Entity);
@@ -198,6 +225,7 @@ LMN_EXTERN void ltl_search1(void);
 
 /* 非決定的実行で用いるフラグ集合 */
 McFlags mc_flags;
+MCData mc_data;
 
 /* フラグ集合を初期化する(c.f. mc.h) */
 static inline void init_mc_flags(void) {
@@ -218,7 +246,7 @@ static st_table *States;
 /* 探索用スタック */
 static Vector Stack;
 
-/* 展開された子ノードが格納される */
+/* 展開されたシステムの状態が格納される */
 static st_table *expanded;
 
 /* for LTL */
@@ -282,31 +310,38 @@ static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tb
 /*----------------------------------------------------------------------*/
 /* MC でのみ使用の関数・データ構造の定義 ここまで */
 
+BOOL react_rule(LmnMembrane *mem, LmnRule rule)
+{
+  LmnTranslated translated;
+  BYTE *inst_seq;
+  LmnRuleInstr dummy;
+  BOOL result;
+
+  translated = lmn_rule_get_translated(rule);
+  inst_seq = lmn_rule_get_inst_seq(rule);
+
+  /* まず、トランスレート済みの関数を実行する
+     それがない場合命令列をinterpretで実行する */
+  wt[0] = (LmnWord)mem;
+  result =
+    (translated &&  translated(mem)) ||
+    (inst_seq && interpret(rule, inst_seq, &dummy));
+  if (lmn_env.trace && result) {
+    fprintf(stdout, "(%s)\n\n", lmn_id_to_name(lmn_rule_get_name(rule)));
+  }
+  return result;
+}
+
 /* 膜memでrulesetのルールの適用を試みる。適用が起こった場合TRUEを返し、
    起こらなかった場合にはFALSEを返す。 */
 static BOOL react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
   int i;
-  LmnRuleInstr dummy;
   int n;
-  LmnRule rule;
-  LmnTranslated translated;
-  BYTE *inst_seq;
 
-  wt[0] = (LmnWord)mem;
   n = lmn_ruleset_rule_num(ruleset);
   for (i = 0; i < n; i++) {
-    rule = lmn_ruleset_get_rule(ruleset, i);
-    translated = lmn_rule_get_translated(rule);
-    inst_seq = lmn_rule_get_inst_seq(rule);
-
-    /* まず、トランスレート済みの関数を実行する
-       それがない場合命令列をinterpretで実行する */
-    if ((translated &&  translated(mem)) ||
-        (inst_seq && interpret(rule, inst_seq, &dummy))) {
-      if (lmn_env.trace) {
-        fprintf(stdout, "(%s)\n\n", lmn_id_to_name(lmn_rule_get_name(rule)));
-      }
+    if (react_rule(mem, lmn_ruleset_get_rule(ruleset, i))) {
       return TRUE;
     }
   }
@@ -349,71 +384,36 @@ void lmn_run(LmnRuleSet start_ruleset)
 {
   LmnMembrane *mem;
 
-  /* Initialize for running */
-  wt_size = 1024;
-  wt = LMN_NALLOC(LmnWord, wt_size);
-  wt_t = LMN_NALLOC(LmnWord, wt_size);
-  at = LMN_NALLOC(LmnByte, wt_size);
-  at_t = LMN_NALLOC(LmnByte, wt_size);
-
-  /* make global root membrane */
+  memstack_init();
   mem = lmn_mem_make();
-
-  /* 通常実行時 */
-  if (!lmn_env.nd && !lmn_env.ltl) {
-    memstack_init();
-    memstack_push(mem);
-  }
-  /* LTLモデル検査・非決定的実行時 */
-  else {
-    init_mc_flags();
-    activate(mem);
-  }
+  memstack_push(mem);
+  react_ruleset(mem, start_ruleset);
 
   /* for tracer */
   global_root = mem;
 
-  /* initialize rule */
-  react_ruleset(mem, start_ruleset);
-
   /* 通常実行時 */
-  if (!lmn_env.nd && !lmn_env.ltl) {
-    while(!memstack_isempty()){
-      LmnMembrane *mem = memstack_peek();
-      LmnMembrane *m;
-      if(!exec(mem)) {
-        if (!react_ruleset(mem, system_ruleset)) {
-          /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
-          m = memstack_pop(&memstack);
-        }
+  while(!memstack_isempty()){
+    LmnMembrane *mem = memstack_peek();
+    LmnMembrane *m;
+    if(!exec(mem)) {
+      if (!react_ruleset(mem, system_ruleset)) {
+        /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+        m = memstack_pop(&memstack);
       }
     }
-
-    memstack_destroy();
-
-    /* 後始末 */
-    lmn_dump_cell(mem);
-    lmn_mem_drop(mem);
-    lmn_mem_free(mem);
-    LMN_FREE(wt);
-    LMN_FREE(wt_t);
-    LMN_FREE(at);
-    LMN_FREE(at_t);
-    free_atom_memory_pools();
   }
-  /* LTLモデル検査・非決定的実行時 */
-  else {
-    lmn_mc_nd_run(mem);
-  }
+
+  lmn_dump_cell(mem); 
+  /* 後始末 */
+  memstack_destroy();
+  lmn_mem_drop(mem);
+  lmn_mem_free(mem);
 }
 
-void lmn_mc_nd_run(LmnMembrane *mem) {
+static void do_mc(LmnMembrane *world_mem)
+{
   State *initial_state;
-  unsigned int i;
-
-  for (i = 0; i < wt_size; i++) {
-    wt[i] = at[i] = 0;
-  }
 
   /**
    * initialize containers
@@ -422,17 +422,16 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
   vec_init(&Stack, 2048);
   expanded = st_init_table(&type_statehash);
 
-  /* 初期プロセスから得られる初期状態を生成 */
-  initial_state = state_make(mem, ANONYMOUS);
-  mc_flags.initial_state = initial_state;
-  st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
-  vec_push(&Stack, (LmnWord)initial_state);
-
   /* 初期化ルールを区別するため */
   mc_flags.nd_exec = TRUE;
 
   /* 非決定的実行 */
   if(lmn_env.nd) {
+    /* 初期プロセスから得られる初期状態を生成 */
+    initial_state = state_make_for_nd(world_mem, ANONYMOUS); /* TODO: 状態ID-1はとりあえず */
+    mc_flags.initial_state = initial_state;
+    st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
+    vec_push(&Stack, (LmnWord)initial_state);
 
     /* --nd_resultの実行 */
     if(lmn_env.nd_result){
@@ -446,18 +445,46 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
     else{
       nd_exec();
       dump_state_transition_graph(stdout);
-      fprintf(stdout, "# of States = %d\n", States->num_entries);
     }
   }
-  /* LTLモデル検査 */
   else {
+    /* 初期プロセスから得られる初期状態を生成 */
+    initial_state = state_make(world_mem,
+                               automata_get_init_state(mc_data.property_automata),
+                               ANONYMOUS);
+    st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
+    vec_push(&Stack, (LmnWord)initial_state);
+
+
+    /* LTLモデル検査 */
     set_fst(initial_state);
     ltl_search1();
     fprintf(stdout, "no cycles found\n");
-    fprintf(stdout, "# of States = %d\n", States->num_entries);
     if (lmn_env.ltl_nd)
       dump_state_transition_graph(stdout);
   }
+  fprintf(stdout, "# of States = %d\n", States->num_entries);
+}
+
+void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
+{
+  LmnMembrane *mem;
+
+  mc_data.property_automata = automata;
+  mc_data.propsyms = propsyms;
+
+  /* -- ここから -- TODO シミュレーション実行と重複した準備処理 */
+
+  /* make global root membrane */
+  mem = lmn_mem_make();
+  react_ruleset(mem, start_ruleset);
+
+  init_mc_flags();
+  activate(mem);
+  /* for tracer */
+  global_root = mem;
+
+  do_mc(mem);
 
 #ifdef PROFILE
   calc_hash_conflict(States);
@@ -474,12 +501,40 @@ void lmn_mc_nd_run(LmnMembrane *mem) {
   st_free_table(States);
   vec_destroy(&Stack);
   st_free_table(expanded);
-  LMN_FREE(wt);
-  LMN_FREE(wt_t);
-  LMN_FREE(at);
-  LMN_FREE(at_t);
-  free_atom_memory_pools();
 }
+
+void run_nd(LmnRuleSet start_ruleset)
+{
+  LmnMembrane *mem;
+
+  /* make global root membrane */
+  mem = lmn_mem_make();
+  react_ruleset(mem, start_ruleset);
+
+  init_mc_flags();
+  activate(mem);
+  /* for tracer */
+  global_root = mem;
+
+  do_mc(mem);
+
+#ifdef PROFILE
+  calc_hash_conflict(States);
+#endif
+
+  /* finalize */
+  {
+    HashSet rm_tbl; /* LTLモデル検査モード時に二重解放を防止するため */
+    hashset_init(&rm_tbl, 16);
+    st_foreach(States, kill_States_chains, &rm_tbl);
+    hashset_destroy(&rm_tbl);
+  }
+
+  st_free_table(States);
+  vec_destroy(&Stack);
+  st_free_table(expanded);
+}
+
 
 /* Utility for reading data */
 
@@ -592,10 +647,11 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
 {
 /*   LmnRuleInstr start = instr; */
   LmnInstrOp op;
+
   while (TRUE) {
   LOOP:;
     READ_VAL(LmnInstrOp, instr, op);
-/*     fprintf(stderr, "op: %d %d\n", op, (instr - start)); */
+/*     fprintf(stdout, "op: %d %d\n", op, (instr - start)); */
 /*     lmn_dump_mem((LmnMembrane*)wt[0]); */
     switch (op) {
     case INSTR_SPEC:
@@ -796,9 +852,12 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
     {
       lmn_interned_str rule_name;
       LmnLineNum line_num;
+
       READ_VAL(lmn_interned_str, instr, rule_name);
       READ_VAL(LmnLineNum, instr, line_num);
+
       lmn_rule_set_name(rule, rule_name);
+
       /*
        * MC mode
        *
@@ -816,63 +875,73 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
       if (mc_flags.nd_exec) {
         unsigned int i;
 
-        /* グローバルルート膜のコピー */
-        LmnMembrane *tmp_global_root = lmn_mem_make();
-        SimpleHashtbl *copymap = copy_global_root(global_root, tmp_global_root);
-
-        /* 変数配列および属性配列のコピー */
-        LmnWord *wtcp = LMN_NALLOC(LmnWord, wt_size);
-        LmnByte *atcp = LMN_NALLOC(LmnByte, wt_size);
-        for(i = 0; i < wt_size; i++) {
-          wtcp[i] = atcp[i] = 0;
-        }
-
-        /* copymapの情報を基に変数配列を書換える */
-        for (i = 0; i < wt_size; i++) {
-          atcp[i] = at[i];
-          if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
-            wtcp[i] = wt[i];
-          }
-          else if(hashtbl_contains(copymap, wt[i])) {
-            wtcp[i] = hashtbl_get_default(copymap, wt[i], 0);
-          }
-          else if(wt[i] == (LmnWord)global_root) { /* グローバルルート膜 */
-            wtcp[i] = (LmnWord)tmp_global_root;
-          }
-        }
-        hashtbl_free(copymap);
-
-        /* 変数配列および属性配列をコピーと入れ換える */
-        SWAP(LmnWord *, wtcp, wt);
-        SWAP(LmnByte *, atcp, at);
-
         if (!mc_flags.property_rule) { /* システムルール */
+
+          /* グローバルルート膜のコピー */
+          LmnMembrane *tmp_global_root = lmn_mem_make();
+          SimpleHashtbl *copymap = copy_global_root(global_root, tmp_global_root);
+
+          /* 変数配列および属性配列のコピー */
+          LmnWord *wtcp = LMN_NALLOC(LmnWord, wt_size);
+          LmnByte *atcp = LMN_NALLOC(LmnByte, wt_size);
+          for(i = 0; i < wt_size; i++) {
+            wtcp[i] = atcp[i] = 0;
+          }
+
+          /* copymapの情報を基に変数配列を書換える */
+          for (i = 0; i < wt_size; i++) {
+            atcp[i] = at[i];
+            if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
+              wtcp[i] = wt[i];
+            }
+            else if(hashtbl_contains(copymap, wt[i])) {
+              wtcp[i] = hashtbl_get_default(copymap, wt[i], 0);
+            }
+            else if(wt[i] == (LmnWord)global_root) { /* グローバルルート膜 */
+              wtcp[i] = (LmnWord)tmp_global_root;
+            }
+          }
+          hashtbl_free(copymap);
+
+          /* 変数配列および属性配列をコピーと入れ換える */
+          SWAP(LmnWord *, wtcp, wt);
+          SWAP(LmnByte *, atcp, at);
+
           /* 左辺に出現するPROCEEDと右辺に出現するPROCEEDを区別するため */
           mc_flags.system_rule_committed = TRUE;
-
-          /* global_rootに対してボディを適用する */
           interpret(rule, instr, &instr);
 
-          State *new_state = state_make(tmp_global_root, lmn_rule_get_name(rule));
-          State *state_on_table;
-          if (!st_lookup(expanded, (st_data_t)new_state, (st_data_t *)&state_on_table)) {
-            st_insert(expanded, (st_data_t)new_state, (st_data_t)new_state);
+          { /* 新しい状態の作成 */
+            State *new_state;
+            if (lmn_env.nd) {
+              new_state = state_make_for_nd(tmp_global_root,
+                                            lmn_rule_get_name(rule));
+            } else { /* ltl mc */
+              new_state = state_make(tmp_global_root,
+                                     mc_flags.property_state,
+                                     lmn_rule_get_name(rule));
+            }
+            st_data_t t;
+            if (!st_lookup(expanded, (st_data_t)new_state, (st_data_t *)&t)) {
+              st_add_direct(expanded, (st_data_t)new_state, (st_data_t)new_state);
+            } else {
+              /* 追加されなかった場合 */
+              state_free(new_state);
+            }
           }
-          else { /* 過去に出現した状態 */
-            state_free(new_state);
-          }
+
+          /* 変数配列および属性配列を元に戻す（いらないかも？） */
+          SWAP(LmnWord *, wtcp, wt);
+          SWAP(LmnByte *, atcp, at);
+
+          LMN_FREE(wtcp);
+          LMN_FREE(atcp);
         }
         else { /* 性質ルール */
-          global_root = tmp_global_root;
-          interpret(rule, instr, &instr);
+          /* TODO: ここのコードは不必要 */
+/*           global_root = tmp_global_root; */
+/*           interpret(instr, &instr); */
         }
-
-        /* 変数配列および属性配列を元に戻す（いらないかも？） */
-        SWAP(LmnWord *, wtcp, wt);
-        SWAP(LmnByte *, atcp, at);
-
-        LMN_FREE(wtcp);
-        LMN_FREE(atcp);
 
         /*
          * 性質ルール：return TRUE
@@ -2910,7 +2979,7 @@ static BOOL react_all_rulesets(LmnMembrane *cur_mem, BOOL *must_be_activated_rig
   BOOL temp_must_be_activated = TRUE;
 
   mc_flags.system_rule_proceeded = FALSE;
-  for (i = 0; i < rulesets.num; i++) {
+  for (i = 0; i < vec_num(&rulesets); i++) {
     LmnRuleSet ruleset = (LmnRuleSet)vec_get(&rulesets, i); /* ルールセット */
     react_ruleset(cur_mem, ruleset); /* return FALSE */
   }
@@ -2942,7 +3011,8 @@ static BOOL expand_inner(LmnMembrane *cur_mem, BOOL *must_be_activated) {
   for (; cur_mem; cur_mem = cur_mem->next) {
     BOOL temp_must_be_activated = FALSE;
 
-    if (expand_inner(cur_mem->child_head, &temp_must_be_activated)) { /* 代表子膜に対して再帰する */
+    /* 代表子膜に対して再帰する */
+    if (expand_inner(cur_mem->child_head, &temp_must_be_activated)) { 
       ret_flag = TRUE;
     }
 
@@ -2983,7 +3053,11 @@ static inline void violate() {
   for (i = 0; i < vec_num(&Stack); i++) {
     State *tmp_s = (State *)vec_get(&Stack, i);
     if (is_snd(tmp_s)) printf("*");
-    printf("%d (%s):\t", i, lmn_id_to_name(tmp_s->rule_name));
+    else printf(" ");
+    printf("%d (%s): %s: ",
+           i,
+           lmn_id_to_name(tmp_s->rule_name),
+           automata_state_name(mc_data.property_automata, tmp_s->state_name));
     if (lmn_env.ltl_nd){
     	fprintf(stdout, "%lu\n", vec_get(&Stack, i));
     }else{
@@ -3083,82 +3157,66 @@ static void ltl_search2() {
 
 /* nested(またはdouble)DFSにおける1段階目の実行 */
 void ltl_search1() {
-  unsigned int i, j;
+  unsigned int j;
   State *s = (State *)vec_peek(&Stack);
+  AutomataState property_automata_state = automata_get_state(mc_data.property_automata, s->state_name);
 
-#ifdef DEBUG
-  fprintf(stdout, "\n----- enter function: ltl_search1() -----\n");
-  fprintf(stdout, "seed=");
-  lmn_dump_mem(seed);
-  fprintf(stdout, "\n");
-
-  fprintf(stdout, "stack:\n");
-  for(i = vec_num(&Stack) - 1; i >= 0; i--) {
-    State *tmp_s = (State *)vec_get(&Stack, i);
-    fprintf(stdout, "%d: (fst=%d,snd=%d):\t", i, is_fst(tmp_s) ? 1 : 0, is_snd(tmp_s) ? 1 : 0);
-    lmn_dump_mem(tmp_s->mem);
-  }
-  fprintf(stdout, "\n");
-#endif
-
-  if (is_end_state(s->mem->child_head)) {
+/*   printf("ltl search1, state: %p\n", s); */
+  if (atmstate_is_end(property_automata_state)) {
     violate();
     unset_fst((State *)vec_pop(&Stack));
-#ifdef DEBUG
-    fprintf(stdout, "+++++ return function: ltl_search1() +++++\n\n");
-#endif
     return;
   }
 
   /*
    * 状態展開
    */
-  for (i = 0; i < s->mem->rulesets.num; i++) {
-    LmnRuleSet ruleset = (LmnRuleSet)vec_get(&s->mem->rulesets, i); /* 性質ルール */
-    LmnRule rule;
-    BYTE *inst_seq;
-    LmnRuleInstr dummy;
+  
+  {
+    unsigned int i_trans;
 
-    for (j = 0; j < lmn_ruleset_rule_num(ruleset); j++) {
-      rule = lmn_ruleset_get_rule(ruleset, j);
-      inst_seq = lmn_rule_get_inst_seq(rule);
-
-      global_root = s->mem; /* コピー元となるグローバルルート膜 */
-      wt[0] = (LmnWord)s->mem; /* グローバルルート膜が性質ルールを保持する */
+    for (i_trans = 0;
+         i_trans < atmstate_transition_num(property_automata_state);
+         i_trans++) {
+      Transition transition = atmstate_get_transition(property_automata_state,
+                                                    i_trans);
 
       mc_flags.property_rule = TRUE;
-
+      mc_flags.property_state = transition_next(transition);
       /**
        * 性質ルール適用
        * グローバル変数global_rootに性質ルール適用結果が格納される
        */
-      if (interpret(rule, inst_seq, &dummy)) {
+      lmn_mem_get_atomlist(s->mem, lmn_functor_intern(ANONYMOUS, lmn_intern("a"), 1));
+      if (eval_formula(s->mem,
+                       mc_data.propsyms,
+                       transition_get_formula(transition))) {
         mc_flags.property_rule = FALSE;
+
+        global_root = s->mem; /* コピー元となるグローバルルート膜 */
+        wt[0] = (LmnWord)s->mem; /* グローバルルート膜が性質ルールを保持する */
 
         /**
          * global_rootが指す膜に対してシステムルール適用検査を行う
          * システムルール適用はglobal_rootが指す膜のコピーに対して行う
          */
-        if (!expand(global_root->child_head)) { /* stutter extension */
+        if (!expand(global_root)) { /* stutter extension */
           /* グローバルルート膜のコピー */
           State *newstate;
           LmnMembrane *newmem = lmn_mem_make();
           SimpleHashtbl *copymap = copy_global_root(global_root, newmem);
           hashtbl_free(copymap);
 
-          newstate = state_make(newmem, lmn_rule_get_name(rule));
+          /* 性質ルールのみが適用されている。ルール名(遷移のラベル)はどうする？ */
+           newstate = state_make(newmem,
+                                 transition_next(transition),
+                                 ANONYMOUS); 
           st_insert(expanded, newstate, (st_data_t)newstate);
-#ifdef DEBUG
-          fprintf(stdout, "stutter:\t");
-          lmn_dump_mem(newmem);
-#endif
         }
-        lmn_mem_drop(global_root);
-        lmn_mem_free(global_root);
       }
     }
   }
-
+  
   if (expanded->num_entries > 0) {
     /* expandedの内容をState->succeccorに保存し、その後
      * expanded内のエントリーをすべてfreeする */
@@ -3172,7 +3230,7 @@ void ltl_search1() {
       if (!st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_table)) {
         st_add_direct(States, ss, (st_data_t)ss);
         /* push とset を１つの関数にする */
-        vec_push(&Stack, (LmnWord)ss);
+        vec_push(&Stack, (vec_data_t)ss);
         set_fst(ss);
         ltl_search1();
       }
@@ -3189,7 +3247,7 @@ void ltl_search1() {
     }
 
     /* entering second DFS */
-    if (is_accepting(s->mem->child_head)) {
+    if (atmstate_is_accept(property_automata_state)) {
       seed = s->mem;
 
       set_snd(s);

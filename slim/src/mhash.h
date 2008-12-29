@@ -7,6 +7,6 @@
 
 #include "lmntal.h"
 
-int mhash(LmnWord mem);
+int mhash(LmnMembrane *mem);
 
 #endif

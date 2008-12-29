@@ -1,7 +1,8 @@
 /*
- * error.c - error handling
+ * ltl2ba_adapter.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,27 +34,17 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: error.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
+ * $Id$
  */
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include "lmntal.h"
+#ifndef LTL2BA_ADAPTER_H
+#define LTL2BA_ADAPTER_H
 
-void do_lmn_fatal(const char *msg)
-{
-  fputs(msg, stderr);
-  fputc('\n', stderr);
-  fflush(stderr);
-}
+#include <stdio.h>
 
-void lmn_report(const char *msg, ...)
-{
-  va_list args;
-  va_start(args, msg);
-  /* use raw port */
-  vfprintf(stderr, msg, args);
-  va_end(args);
-  fputc('\n', stderr);
-  fflush(stderr);
-}
+/* 環境変数: ltl2baコマンドのパス */
+#define ENV_LTL2BA  "LTL2BA"
+
+FILE *ltl2ba_str(char *ltl);
+
+#endif

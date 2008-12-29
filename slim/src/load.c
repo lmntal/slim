@@ -44,24 +44,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include "load.h"
 #include "lmntal.h"
 #include "symbol.h"
 #include "syntax.h"
 #include "arch.h"
 #include "rule.h"
+#include "lmntal_system_adapter.h"
+#include "il_parser.h"
+#include "il_lexer.h"
 #include "load.h"
-
-#define ENV_LMNTAL_HOME  "LMNTAL_HOME"
-#define ENV_CFLAGS       "SLIM_CFLAGS"
-
-/* Java処理系によるコンパイル時に用いる最適化オプション */
-const char* OPTIMIZE_FLAGS[] = {"-O0",
-                                "-O1",
-                                "-O2",
-                                "-O3"};
-
-/* コンパイラフラグの最大長。バッファあふれの対策 */
-#define CFLAGS_MAX_SIZE 1024
 
 /* prototypes */
 
@@ -77,7 +69,7 @@ FILE *compile(char *filename);
 static void dump_functor(Functor f)
 {
   switch (functor_get_type(f)) {
-  case SYMBOL:
+  case STX_SYMBOL:
     printf("%s.%s_%d[%d]",
            lmn_id_to_name(LMN_FUNCTOR_MODULE_ID(functor_get_id(f))),
            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(functor_get_id(f))),
@@ -91,13 +83,13 @@ static void dump_functor(Functor f)
   case FLOAT_FUNC:
     printf("%f", functor_get_float_value(f));
     break;
-  case IN_PROXY:
+  case STX_IN_PROXY:
     printf("$in");
     break;
-  case OUT_PROXY:
+  case STX_OUT_PROXY:
     printf("$out");
     break;
-  case UNIFY:
+  case STX_UNIFY:
     printf("=");
     break;
   default:
@@ -400,7 +392,7 @@ static void load_arg(InstrArg arg, Context c)
       Functor functor = inst_arg_get_functor(arg);
 
       switch (functor_get_type(functor)) {
-      case SYMBOL:
+      case STX_SYMBOL:
         WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
         WRITE_MOVE(LmnFunctor, functor_get_id(functor), c);
         break;
@@ -412,15 +404,15 @@ static void load_arg(InstrArg arg, Context c)
         WRITE_MOVE(LmnLinkAttr, LMN_DBL_ATTR, c);
         WRITE_MOVE(double, functor_get_float_value(functor), c);
         break;
-      case IN_PROXY:
+      case STX_IN_PROXY:
         WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
         WRITE_MOVE(LmnFunctor, LMN_IN_PROXY_FUNCTOR, c);
         break;
-      case OUT_PROXY:
+      case STX_OUT_PROXY:
         WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
         WRITE_MOVE(LmnFunctor, LMN_OUT_PROXY_FUNCTOR, c);
         break;
-      case UNIFY:
+      case STX_UNIFY:
         WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
         WRITE_MOVE(LmnFunctor, LMN_UNIFY_FUNCTOR, c);
         break;
@@ -514,7 +506,7 @@ static int fill_label_ref(st_data_t loc, st_data_t label, void *c_)
   return ST_CONTINUE;
 }
 
-static LmnRule load_rule(Rule rule)
+LmnRule load_rule(Rule rule)
 {
   LmnRule runtime_rule;
   Context c;
@@ -595,42 +587,6 @@ static LmnRuleSet load_il(IL il)
   return first_ruleset;
 }
 
-int parse(FILE *in, IL *il);
-
-/* ファイルが*.lmnならコンパイル結果のFILE*を返し、
-   ファイルが*.ilならfopen結果のFILE*を返し、
-   それ以外の拡張子だったり存在しないファイルだったらNULLを返す */
-FILE *fopen_il_file(char *file_name)
-{
-  FILE *fp;
-  int len = strlen(file_name);
-  
-  if ((fp = fopen(file_name, "r"))) {
-    /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
-    if (!strcmp(&file_name[len-4], ".lmn")) {
-      if (getenv(ENV_LMNTAL_HOME)) {
-        FILE *fp_compiled;
-        
-        fp_compiled = compile(file_name);
-        if (!fp_compiled) {
-          fprintf(stderr, "Failed to run lmntal compiler");
-          exit(EXIT_FAILURE);
-        }
-
-        return fp_compiled;
-      }
-      else {
-        fprintf(stderr, "environment variable \"LMNTAL_HOME\" is not set");
-      }
-    }
-    else if(!strcmp(&file_name[len-3], ".il")) {
-      return fp;
-    }
-  }
-  
-  return 0;
-}
-
 /* ファイルから中間言語を読み込みランタイム中に配置する。
    最初のルールセットを返す */
 LmnRuleSet load(FILE *in)
@@ -638,7 +594,7 @@ LmnRuleSet load(FILE *in)
   IL il;
   LmnRuleSet first_ruleset;
 
-  if (parse(in, &il)) {
+  if (il_parse(in, &il)) {
     /* 構文解析に失敗 */
     exit(EXIT_FAILURE);
   }
@@ -646,36 +602,6 @@ LmnRuleSet load(FILE *in)
   first_ruleset = load_il(il);
   il_free(il);
   return first_ruleset;
-}
-
-void build_cmd(char *buf, char *file_name)
-{
-  buf[0] = '\0';
-  strcat(buf, "\"");
-  strcat(buf, getenv(ENV_LMNTAL_HOME));
-  strcat(buf, "/bin/lmntal\"");
-  strcat(buf, " --slimcode");
-
-  if (getenv(ENV_CFLAGS)) {
-    strcat(buf, " ");
-    strncat(buf, getenv(ENV_CFLAGS), CFLAGS_MAX_SIZE);
-  }
-
-  /* 最適化レベル */
-  strcat(buf, " ");
-  strcat(buf, OPTIMIZE_FLAGS[lmn_env.optimization_level]);
-
-  /* ファイル名 */
-  strcat(buf, " \"");
-  strcat(buf, file_name);
-  strcat(buf, "\"");
-}
-
-FILE *compile(char *filename) {
-  char buf[2048];
-        
-  build_cmd(buf, filename);
-  return popen(buf, "r");
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置し、最初のルールセットを返す。
@@ -702,10 +628,31 @@ LmnRuleSet load_file(char *file_name)
       rs = so_load(file_name, sohandle);
     }
     */
-  }else if((fp=fopen_il_file(file_name)) != 0){
-    rs = load(fp);
+  }else if ((fp = fopen(file_name, "r"))) {
+    /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
+    if (!strcmp(&file_name[len-4], ".lmn")) {
+      if (getenv(ENV_LMNTAL_HOME)) {
+        FILE *fp_compiled;
+        
+        fp_compiled = lmntal_compile_file(file_name);
+        if (!fp_compiled) {
+          fprintf(stderr, "Failed to run lmntal compiler");
+          exit(EXIT_FAILURE);
+        }
+
+        rs = load(fp_compiled);
+        fclose(fp_compiled);
+      }
+      else {
+        fprintf(stderr, "environment variable \"LMNTAL_HOME\" is not set");
+      }
+    }
+    else {
+      rs = load(fp);
+    }
     fclose(fp);
-  }else {
+  }
+  else {
     perror(file_name);
     exit(EXIT_FAILURE);
   }
@@ -752,3 +699,80 @@ void load_il_files(char *path)
   LMN_FREE(buf);
 }
 
+/* ファイルが*.lmnならコンパイル結果のFILE*を返し、
+   ファイルが*.ilならfopen結果のFILE*を返し、
+   それ以外の拡張子だったり存在しないファイルだったらNULLを返す */
+FILE *fopen_il_file(char *file_name)
+{
+  FILE *fp;
+  int len = strlen(file_name);
+  
+  if ((fp = fopen(file_name, "r"))) {
+    /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
+    if (!strcmp(&file_name[len-4], ".lmn")) {
+      if (getenv(ENV_LMNTAL_HOME)) {
+        FILE *fp_compiled;
+        
+        fp_compiled = lmntal_compile_file(file_name);
+        if (!fp_compiled) {
+          fprintf(stderr, "Failed to run lmntal compiler");
+          exit(EXIT_FAILURE);
+        }
+
+        return fp_compiled;
+      }
+      else {
+        fprintf(stderr, "environment variable \"LMNTAL_HOME\" is not set");
+      }
+    }
+    else if(!strcmp(&file_name[len-3], ".il")) {
+      return fp;
+    }
+  }
+  
+  return 0;
+}
+
+int ilparse(yyscan_t scanner, IL *il, Rule *rule);
+
+/* inから中間言語を読み込み、構文木を作る。構文木はilに設定される。
+   正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
+int il_parse(FILE *in, IL *il)
+{
+  int r;
+  yyscan_t scanner;
+  struct lexer_context c;
+
+  /* ルールセットのローカルなIDとグローバルなIDの対応表 */
+  c.ruleset_id_tbl = st_init_numtable();
+
+  illex_init(&scanner);
+  ilset_extra(&c, scanner);
+  ilset_in(in, scanner);
+  r = ilparse(scanner, il, NULL);
+  illex_destroy(scanner);
+
+  st_free_table(c.ruleset_id_tbl);
+
+  return r;
+}
+
+int il_parse_rule(FILE *in, Rule *rule)
+{
+  int r;
+  yyscan_t scanner;
+  struct lexer_context c;
+
+  /* ルールセットのローカルなIDとグローバルなIDの対応表 */
+  c.ruleset_id_tbl = st_init_numtable();
+
+  illex_init(&scanner);
+  ilset_extra(&c, scanner);
+  ilset_in(in, scanner);
+  r = ilparse(scanner, NULL, rule);
+  illex_destroy(scanner);
+
+  st_free_table(c.ruleset_id_tbl);
+
+  return r;
+}

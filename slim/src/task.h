@@ -41,6 +41,7 @@
 
 #include "membrane.h"
 #include "rule.h"
+#include "automata.h"
 
 /* 中間命令で出現するデータ構造
  * LINK_LIST    リンクオブジェクトのリスト
@@ -51,9 +52,14 @@
 #define LIST_AND_MAP  2
 #define MAP           3
 
+void task_init(void);
+void task_finalize(void);
 void memstack_push(LmnMembrane *mem);
 struct Vector user_system_rulesets; /* system ruleset defined by user */
 LMN_EXTERN void lmn_run(LmnRuleSet ruleset);
 LMN_EXTERN void lmn_mc_nd_run(LmnMembrane *mem);
+void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms);
+void run_nd(LmnRuleSet start_ruleset);
+BOOL react_rule(LmnMembrane *mem, LmnRule rule);
 
 #endif

@@ -1,7 +1,8 @@
 /*
- * error.c - error handling
+ * lmntal_system_adapter.c
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,27 +34,71 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: error.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
+ * $Id$
  */
 
+#include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <stdlib.h>
+#include "lmntal_system_adapter.h"
 #include "lmntal.h"
+#include "arch.h"
 
-void do_lmn_fatal(const char *msg)
+/* Java処理系によるコンパイル時に用いる最適化オプション */
+const char* OPTIMIZE_FLAGS[] = {"-O0",
+                                "-O1",
+                                "-O2",
+                                "-O3"};
+
+/* コンパイラフラグの最大長。バッファあふれの対策 */
+#define CFLAGS_MAX_SIZE 1024
+
+void lmntal_build_cmd(char *buf, ...);
+
+void lmntal_build_cmd(char *buf, ...)
 {
-  fputs(msg, stderr);
-  fputc('\n', stderr);
-  fflush(stderr);
+  va_list argp;
+
+  buf[0] = '\0';
+  strcat(buf, getenv(ENV_LMNTAL_HOME));
+  strcat(buf, "/bin/lmntal");
+  if (getenv(ENV_CFLAGS)) {
+    strcat(buf, " ");
+    strncat(buf, getenv(ENV_CFLAGS), CFLAGS_MAX_SIZE);
+  }
+
+  /* 最適化レベル */
+  strcat(buf, " ");
+  strcat(buf, OPTIMIZE_FLAGS[lmn_env.optimization_level]);
+
+  va_start(argp, buf);
+
+  while (TRUE) {
+    char *p = va_arg(argp, char*);
+    if (!p) break;
+    strcat(buf, " ");
+    strcat(buf, p);
+    fflush(stdout);
+  }
+
+  va_end(argp);
 }
 
-void lmn_report(const char *msg, ...)
+FILE *lmntal_compile_file(char *filename)
 {
-  va_list args;
-  va_start(args, msg);
-  /* use raw port */
-  vfprintf(stderr, msg, args);
-  va_end(args);
-  fputc('\n', stderr);
-  fflush(stderr);
+  char buf[2048];
+
+  lmntal_build_cmd(buf, "--slimcode", filename, 0);
+  return popen(buf, "r");
+}
+
+FILE *lmntal_compile_rule_str(char *rule_str)
+{
+  char buf[2048], buf2[2048];
+
+  buf[0] = '\0';
+  sprintf(buf2, "\"%s\"", rule_str);
+  lmntal_build_cmd(buf, "--slimcode", "--compile-rule", "-e", buf2, 0);
+  return popen(buf, "r");
 }

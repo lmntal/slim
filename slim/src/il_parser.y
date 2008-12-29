@@ -47,7 +47,8 @@
 %pure-parser
 %locations
 %parse-param {yyscan_t scanner}
-%parse-param {IL* result_tree}
+%parse-param {IL* ret_il}
+%parse-param {Rule* ret_rule}
 /* ローカルのルールセットIDからグローバルなIDへのテーブル */
 %lex-param {yyscan_t scanner}
 
@@ -119,13 +120,16 @@
 %type <inline_list> inlines;
 
 %{
-#include "il_lex.h"
-void yyerror (YYLTYPE*, yyscan_t, IL *, char *);
+#include "il_lexer.h"
+void ilerror (YYLTYPE*, yyscan_t, IL *, Rule *, char *);
 %}
 
 %% /* Grammar rules and actions follow.  */
 
-start: world _EOF { *result_tree = $1; };
+start:
+  world _EOF { *ret_il = $1; }   /* 中間言語全体のパース */
+| rule { *ret_rule = $1; }  /* ルールのみの入力をパース */
+;
 
 world:
   ruleSetList { $$ = il_make($1, module_list_make(), inline_list_make()); }
@@ -255,8 +259,8 @@ LBRACKET instructions RBRACKET {
 ;
 
 functor:
-  INSIDE_PROXY { $$ = functor_make(IN_PROXY); }
-| OUTSIDE_PROXY { $$ = functor_make(OUT_PROXY); }
+  INSIDE_PROXY { $$ = functor_make(STX_IN_PROXY); }
+| OUTSIDE_PROXY { $$ = functor_make(STX_OUT_PROXY); }
 | SQUOTED_STRING UNDERBAR INT {$$ = symbol_functor_make($1, $3); }
 | SQUOTED_STRING PERIOD SQUOTED_STRING UNDERBAR INT {
     $$ = module_symbol_functor_make($1, $3, $5);
@@ -275,33 +279,8 @@ functor:
 #include "st.h"
 
 /* Called by yyparse on error.  */
-void yyerror (YYLTYPE *loc, yyscan_t scanner, IL *il, char *s)
+void ilerror (YYLTYPE *loc, yyscan_t scanner, IL *il, Rule *rule, char *s)
 {
-  fprintf (stderr, "error %s line: %d\n", s, yyget_lineno(scanner));
+  fprintf (stderr, "il parser: error %s line: %d\n", s, ilget_lineno(scanner));
   exit(1);
-}
-
-
-int parse(FILE *in, IL *il);
-
-/* inから中間言語を読み込み、構文木を作る。構文木はilに設定される。
-   正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
-int parse(FILE *in, IL *il)
-{
-  int r;
-  yyscan_t scanner;
-  struct lexer_context c;
-
-  /* ルールセットのローカルなIDとグローバルなIDの対応表 */
-  c.ruleset_id_tbl = st_init_numtable();
-
-  yylex_init(&scanner);
-  yyset_extra(&c, scanner);
-  yyset_in(in, scanner);
-  r = yyparse(scanner, il);
-  yylex_destroy(scanner);
-
-  st_free_table(c.ruleset_id_tbl);
-
-  return r;
 }

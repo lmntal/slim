@@ -46,6 +46,7 @@ typedef struct Vector {
   unsigned int num, cap;
 } Vector;
 
+typedef struct Vector *PVector;
 typedef LmnWord vec_data_t;
 
 LMN_EXTERN Vector *vec_init(Vector *vec, unsigned int init_size);
@@ -60,6 +61,7 @@ LMN_EXTERN BOOL vec_contains(Vector *vec, LmnWord keyp);
 LMN_EXTERN inline void vec_clear(Vector *vec);
 LMN_EXTERN inline void vec_destroy(Vector *vec);
 LMN_EXTERN inline void vec_free(Vector *vec);
+void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 #define vec_num(V) ((V)->num)
 #define vec_is_empty(V) ((V)->num == 0)
 

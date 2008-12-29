@@ -147,3 +147,19 @@ inline void vec_free(Vector *vec) {
   free(vec);
 }
 
+/* ベクタのサイズを size に変更し、新規に追加された項目を val に設定する*/
+void vec_resize(Vector *vec, unsigned int size, vec_data_t val)
+{
+  unsigned int i, n;
+  
+  while (size > vec->cap) {
+    vec_extend(vec);
+  }
+
+  /* 追加された項目を val に設定 */
+  n = vec->num;
+  for (i=vec->num; i<size; i++) {
+    vec->tbl[i] = val;
+  }
+  vec->num = size;
+}

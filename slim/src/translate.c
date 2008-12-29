@@ -181,7 +181,7 @@ void translate(char *filepath, FILE *in)
   //OUT = stdout;
   OUT = fopen("/dev/null", "w");
 
-  if (parse(in, &il)) {
+  if (il_parse(in, &il)) {
     /* 構文解析に失敗 */
     exit(EXIT_FAILURE);
   }

@@ -47,6 +47,10 @@
 #include "load.h"
 #include "translate.h"
 #include "arch.h"
+#include "automata.h"
+#include "lmntal_system_adapter.h"
+#include "propositional_symbol.h"
+#include "mc.h"
 
 #ifdef PROFILE
 #include "runtime_status.h"
@@ -73,9 +77,13 @@ static void usage(void)
           "  --nd_dump       Nondeterministic execution mode, print all state instantly\n"
           "  --ltl           LTL model checking mode\n"
           "  --ltl_all       LTL model checking mode, print all errors\n"
+          "  --ltl_nd        --ltl_all and print all seached states and paths\n"
           "  --translate     Output Translated C code -- under construction\n"
           "  --version       Prints version and exits.\n"
           "  --help          This Help.\n"
+          "  --nc <file>     Never claim\n"
+          "  --psym <file>   Propositional symbol definition file\n"
+          "  --ltl_f <ltl>   LTL formula\n"
           );
   exit(1);
 }
@@ -101,8 +109,11 @@ static int parse_options(int argc, char *argv[])
     {"nd_dump", 0, 0, 1007},
     {"ltl", 0, 0, 1008},
     {"ltl_all", 0, 0, 1009},
-    {"translate", 0, 0, 1010},
-    {"ltl_nd", 0, 0, 1011},
+    {"nc", 1, 0, 1010},
+    {"psym", 1, 0, 1011},
+    {"ltl_f", 1, 0, 1012},
+    {"translate", 0, 0, 1013},
+    {"ltl_nd", 0, 0, 1014},
     {0, 0, 0, 0}
   };
 
@@ -149,9 +160,18 @@ static int parse_options(int argc, char *argv[])
       lmn_env.ltl_all = TRUE;
       break;
     case 1010:
-      lmn_env.translate = TRUE;
+      lmn_env.automata_file = optarg;
       break;
     case 1011:
+      lmn_env.propositional_symbol = optarg;
+      break;
+    case 1012:
+      lmn_env.ltl_exp = optarg;
+      break;
+    case 1013:
+      lmn_env.translate = TRUE;
+      break;
+    case 1014:
       lmn_env.ltl = TRUE;
       lmn_env.ltl_all = TRUE;
       lmn_env.ltl_nd = TRUE;
@@ -198,6 +218,9 @@ static void init_env(void)
   lmn_env.translate = FALSE;
   lmn_env.optimization_level = 0;
   lmn_env.load_path_num = 0;
+  lmn_env.automata_file = NULL;
+  lmn_env.propositional_symbol = NULL;
+  lmn_env.ltl_exp = NULL;
 }
 
 void init_default_system_ruleset();
@@ -215,6 +238,7 @@ static void init_internal(void)
   init_rules();
 
   init_default_system_ruleset();
+  task_init();
 
 #ifdef PROFILE
   runtime_status_init();
@@ -226,6 +250,8 @@ static void finalize(void)
   sym_tbl_destroy();
   lmn_functor_tbl_destroy();
   destroy_rules();
+  task_finalize();
+  free_atom_memory_pools();
 
 #ifdef PROFILE
   runtime_status_finalize();
@@ -241,12 +267,40 @@ int main(int argc, char *argv[])
   init_internal();
 
   optid = parse_options(argc, argv);
+
   if (optid < argc) {
     FILE *in;
     char *f = argv[optid];
     LmnRuleSet start_ruleset;
 
-    if (lmn_env.translate) {
+    if (!strcmp("-", f)) {
+      in = stdin;
+      start_ruleset = load(stdin);
+    }
+    else start_ruleset = load_file(f);
+
+    /* load directories(system & load path) */
+    load_il_files(SLIM_LIB_DIR);
+    for (i = lmn_env.load_path_num-1; i >= 0; i--) {
+      load_il_files(lmn_env.load_path[i]);
+    }
+
+    if (lmn_env.ltl) {
+      Automata automata;
+      PVector prop_defs;
+      int r;
+      
+      r = mc_load_property(&automata, &prop_defs);
+      if (!r) {
+        run_mc(start_ruleset, automata, prop_defs);
+      } else {
+        mc_explain_error(r);
+      }
+
+      automata_free(automata);
+      propsyms_free(prop_defs);
+    }
+    else if (lmn_env.translate) {
       if (!strcmp("-", f)) {
         in = stdin;
         translate(NULL, stdin);
@@ -256,19 +310,11 @@ int main(int argc, char *argv[])
         translate(f, fp);
         fclose(fp);
       }
-    }else{
-      if (!strcmp("-", f)) {
-        in = stdin;
-        start_ruleset = load(stdin);
-      }
-      else start_ruleset = load_file(f);
-
-      /* load directories(system & load path) */
-      load_il_files(SLIM_LIB_DIR);
-      for (i = lmn_env.load_path_num-1; i >= 0; i--) {
-        load_il_files(lmn_env.load_path[i]);
-      }
-
+    } 
+    else if (lmn_env.nd) {
+      run_nd(start_ruleset);
+    } else {
+      /* シミュレーション実行 */
 #ifdef PROFILE
       status_start_running();
 #endif

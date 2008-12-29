@@ -476,6 +476,10 @@ int st_foreach(st_table *table, int(*func)( ANYARGS), st_data_t arg) {
   return 0;
 }
 
+unsigned int st_num(st_table *table) {
+  return table->num_entries;
+}
+
 /*
  * hash_32 - 32 bit Fowler/Noll/Vo FNV-1a hash code
  *

@@ -5,6 +5,7 @@
 #include "internal_hash.h"
 #include "membrane.h"
 #include "vector.h"
+#include "automata.h"
 
 typedef struct State State;
 struct State {
@@ -13,6 +14,7 @@ struct State {
   BOOL flags;       /* flags (unsigned char) */
   Vector successor; /* successor nodes */
   lmn_interned_str rule_name;
+  BYTE state_name;
 };
 
 /**
@@ -36,12 +38,21 @@ typedef struct McFlags {
   BOOL system_rule_committed;
   BOOL system_rule_proceeded;
   BOOL property_rule;
+  BYTE property_state;
   State *initial_state;
 } McFlags;
 
-LMN_EXTERN State *state_make(LmnMembrane *mem, lmn_interned_str rule_name);
+typedef struct MCData { /* TODO: 構造体の名前 */
+  Automata property_automata;
+  Vector *propsyms;
+} MCData;
+
+
+LMN_EXTERN State *state_make(LmnMembrane *mem, BYTE state_name, lmn_interned_str rule);
+State *state_make_for_nd(LmnMembrane *mem, lmn_interned_str rule);
 LMN_EXTERN inline void state_succ_init(State *s, int init_size);
 LMN_EXTERN void state_free(State *s);
+BYTE state_property_state(State *state);
 
 /* flag of the first DFS (nested DFS, on-stack state) */
 #define FST_MASK (0x01U)
@@ -55,9 +66,12 @@ LMN_EXTERN void state_free(State *s);
 #define unset_snd(S)  ((S)->flags &= (~SND_MASK))
 #define is_snd(S)     ((S)->flags & SND_MASK)
 
-LMN_EXTERN int state_hash(LmnWord s);
+LMN_EXTERN int state_hash(State *s);
 LMN_EXTERN int state_cmp(HashKeyType s1, HashKeyType s2);
 
 LMN_EXTERN inline void activate_ancestors(LmnMembrane *mem);
 
+int mc_load_property(Automata *a, PVector *prop_defs);
+LMN_EXTERN void mc_explain_error(int error_id);
+LMN_EXTERN char *mc_error_msg(int error_id);
 #endif

@@ -1,7 +1,8 @@
 /*
- * error.c - error handling
+ * lmntal_system_adapter.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,27 +34,16 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: error.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
+ * $Id$
  */
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include "lmntal.h"
+#ifndef LMNTAL_SYSTEM_ADAPTER
+#define LMNTAL_SYSTEM_ADAPTER
 
-void do_lmn_fatal(const char *msg)
-{
-  fputs(msg, stderr);
-  fputc('\n', stderr);
-  fflush(stderr);
-}
+#define ENV_LMNTAL_HOME  "LMNTAL_HOME"
+#define ENV_CFLAGS       "SLIM_CFLAGS"
 
-void lmn_report(const char *msg, ...)
-{
-  va_list args;
-  va_start(args, msg);
-  /* use raw port */
-  vfprintf(stderr, msg, args);
-  va_end(args);
-  fputc('\n', stderr);
-  fflush(stderr);
-}
+FILE *lmntal_compile_file(char *filename);
+FILE *lmntal_compile_rule_str(char *rule_str);
+
+#endif

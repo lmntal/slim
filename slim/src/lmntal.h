@@ -146,9 +146,6 @@ LMN_EXTERN void lmn_free (void *p);
 #define LMN_REALLOC(TYPE, P, NUM)      ((TYPE *)lmn_realloc((P), (NUM) * sizeof(TYPE)))
 #define LMN_FREE(P)                    (lmn_free((void*)(P)))
 
-/* Error */
-LMN_EXTERN void lmn_fatal(const char *msg, ...);
-
 /* Assertion */
 
 #include <assert.h>
@@ -180,6 +177,10 @@ struct LmnEnv {
   int optimization_level;
   char *load_path[256];
   int load_path_num;
+  char *automata_file; /* never claim file */
+  /* file for propositional symbol definitions */
+  char *propositional_symbol; 
+  char *ltl_exp; 
 };
 
 extern struct LmnEnv  lmn_env;
