@@ -1620,11 +1620,14 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
       srcvec = (Vector*) wt[srclisti];
       avovec = (Vector*) wt[avolisti];
 
+      atom_num = 0;
       vec_init(&stack, 16); /* 再帰除去用スタック */
       start = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(srcvec, 0)), LINKED_ATTR(vec_get(srcvec, 0)));
+
       if(!LMN_ATTR_IS_DATA(start->pos)) { /* data atom は積まない */
         vec_push(&stack, (LmnWord)start);
       } else {
+        atom_num++;
         LMN_FREE(start);
       }
 
@@ -1636,7 +1639,6 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
 
       hashset_init(&visited_atoms, 256);
 
-      atom_num = 0;
 
       while(stack.num != 0) { /* main loop: start */
         LinkObj *lo = (LinkObj *)vec_pop(&stack);
@@ -1689,6 +1691,8 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
           if(!LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(lo->ap, i))) { /* data atom は積まない */
             next = LinkObj_make((LmnWord)LMN_ATOM_GET_LINK(lo->ap, i), LMN_ATTR_GET_VALUE(LMN_ATOM_GET_ATTR(lo->ap, i)));
             vec_push(&stack, (LmnWord)next);
+          } else {
+            atom_num++;
           }
         }
 
