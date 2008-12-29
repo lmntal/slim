@@ -452,6 +452,7 @@ static void do_mc(LmnMembrane *world_mem)
     initial_state = state_make(world_mem,
                                automata_get_init_state(mc_data.property_automata),
                                ANONYMOUS);
+    mc_flags.initial_state = initial_state;
     st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
     vec_push(&Stack, (LmnWord)initial_state);
 
