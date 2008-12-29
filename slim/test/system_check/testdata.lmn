@@ -245,6 +245,8 @@ a(X,Y,Z,W), $x[X,Y], $y[Z,W] :- $x \= $y | $x[A,B], $y[A,B]. a(M,M,N,N). % a(F,F
 {a(X,Y,Z,W),$x[X,Y],$y[Z,W]} :- ground($x), ground($y) | b. {a(A,A,B,B),t}. %{a(C,C,D,D),t}. %ok
 {a(X,Y,Z,W),$x[X,Y],$y[Z,W]} :- ground($x), ground($y) | b. {a(A,t(A),B,t(B))}. %b. %ok
 {a(X,Y,Z,W),$x[X,Y],$y[Z,W]} :- ground($x), ground($y) | b. {a(A,m(A),B,m(B)),t}. %{a(C,m(C),D,m(D)),t}. %ok
+{a($p)} :- ground($p) | b. {a(0)}. %b. %ok
+{a($p)} :- ground($p) | b. {a(b(0))}. %b. %ok
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% uniq
