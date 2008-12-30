@@ -77,8 +77,8 @@ Proposition proposition_make(const char *head,
   char *rule_str;
   
   p->head = strdup(head);
-  p->guard = (guard == NULL ? "" : strdup(guard));
-  p->body = (body == NULL ? "" : strdup(body));
+  p->guard = (guard == NULL ? strdup("") : strdup(guard));
+  p->body = (body == NULL ? strdup("") : strdup(body));
 
   rule_str = rule_str_for_compile(head, guard, body);
   fp = lmntal_compile_rule_str(rule_str);
@@ -98,6 +98,7 @@ void proposition_free(Proposition p)
 {
   LMN_FREE(p->head);
   LMN_FREE(p->guard);
+  LMN_FREE(p->body);
   lmn_rule_free(p->rule);
   LMN_FREE(p);
 }
