@@ -44,6 +44,8 @@
 #include "lmntal_system_adapter.h"
 #include "lmntal.h"
 #include "arch.h"
+#include "process_util.h"
+#include "vector.h"
 
 /* Java処理系によるコンパイル時に用いる最適化オプション */
 const char* OPTIMIZE_FLAGS[] = {"-O0",
@@ -51,54 +53,103 @@ const char* OPTIMIZE_FLAGS[] = {"-O0",
                                 "-O2",
                                 "-O3"};
 
+#define LMNTAL_BIN_REL_PATH "/bin/lmntal"
+#define OPT_SLIM_CODE "--slimcode"
+#define OPT_COMPILE_RULE "--compile-rule"
+#define OPT_EVAL "-e"
+
 /* コンパイラフラグの最大長。バッファあふれの対策 */
 #define CFLAGS_MAX_SIZE 1024
 
-void lmntal_build_cmd(char *buf, ...);
+static void lmntal_build_cmd(char **program, char **ret_args[],  va_list opt_args);
+static void add_arg(Vector *args, const char *arg);
+static FILE *run_lmntal_system(int dummy, ... );
 
-void lmntal_build_cmd(char *buf, ...)
+void add_arg(Vector *args, const char *arg)
 {
-  va_list argp;
+  vec_push(args, (vec_data_t)LMN_CALLOC(char, strlen(arg) + 1));
+  sprintf((char *)vec_get(args, vec_num(args)-1), "%s", arg);
+}
 
-  buf[0] = '\0';
-  strcat(buf, getenv(ENV_LMNTAL_HOME));
-  strcat(buf, "/bin/lmntal");
+/* LMNtal systemを呼ぶためのコマンドと引数を構築する。
+   opt_argsはコマンドに渡す引数を指定する。
+   programにはコマンドのパス文字列を返す
+   ret_argsにはコマンドの引数を返す。ret_argsの最後の要素は0である。
+*/
+void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args) 
+{
+  const char *lmntal_home = getenv(ENV_LMNTAL_HOME);
+  Vector *args = vec_make(16);
+
+  *program = LMN_CALLOC(char,
+                        strlen(lmntal_home) + strlen(LMNTAL_BIN_REL_PATH) + 1);
+  sprintf(*program, "%s%s", lmntal_home, LMNTAL_BIN_REL_PATH);
+
   if (getenv(ENV_CFLAGS)) {
-    strcat(buf, " ");
-    strncat(buf, getenv(ENV_CFLAGS), CFLAGS_MAX_SIZE);
+    add_arg(args, getenv(ENV_CFLAGS));
   }
 
   /* 最適化レベル */
-  strcat(buf, " ");
-  strcat(buf, OPTIMIZE_FLAGS[lmn_env.optimization_level]);
+  add_arg(args, OPTIMIZE_FLAGS[lmn_env.optimization_level]);
 
-  va_start(argp, buf);
-
+  /* opt_argsにある引数を追加 */
   while (TRUE) {
-    char *p = va_arg(argp, char*);
+    char *p = va_arg(opt_args, char*);
     if (!p) break;
-    strcat(buf, " ");
-    strcat(buf, p);
-    fflush(stdout);
+    add_arg(args, p);
+  }
+  
+  /* 最後の要素は0で終端する */
+  vec_push(args, 0);
+  { /* vectorの要素をコピー */
+    unsigned int i;
+    *ret_args = LMN_CALLOC(char*, vec_num(args));
+    for (i = 0; i < vec_num(args); i++) {
+      (*ret_args)[i] = (char *)vec_get(args, i);
+    }
   }
 
-  va_end(argp);
+  vec_free(args);
 }
 
+/* LMNtalソースコードのファイルを中間言語にコンパイルし結果のストリームを返す*/
 FILE *lmntal_compile_file(char *filename)
 {
-  char buf[2048];
-
-  lmntal_build_cmd(buf, "--slimcode", filename, 0);
-  return popen(buf, "r");
+  return run_lmntal_system(0 /*dummy*/, OPT_SLIM_CODE, filename, 0);
 }
 
+/* LMNtalのルールを中間言語にコンパイルし結果のストリームを返す*/
 FILE *lmntal_compile_rule_str(char *rule_str)
 {
-  char buf[2048], buf2[2048];
+  return run_lmntal_system(0, /*dummy*/
+                           OPT_SLIM_CODE,
+                           OPT_COMPILE_RULE,
+                           OPT_EVAL,
+                           rule_str,
+                           0);
+}
 
-  buf[0] = '\0';
-  sprintf(buf2, "\"%s\"", rule_str);
-  lmntal_build_cmd(buf, "--slimcode", "--compile-rule", "-e", buf2, 0);
-  return popen(buf, "r");
+/* LMNtal systemを呼び出す。プログラムを呼び出し時に渡す引数を
+   可変長引数で受け取る。引数の最後は 0 でなければならない。
+   e.g.
+     run_lmntal_system(0, "-O3", "--compileonly", 0);
+*/
+FILE *run_lmntal_system(int dummy, ... )
+{
+  va_list argp;
+  char *program_name;
+  char **args;
+  FILE *ret;
+  unsigned int i;
+  
+  va_start(argp, dummy);
+  lmntal_build_cmd(&program_name, &args, argp);
+  ret = run_program(program_name, args);
+
+  /* 解放処理 */
+  for (i = 0; args[i]; i++) LMN_FREE(args[i]);
+  LMN_FREE(args);
+  LMN_FREE(program_name);
+
+  return ret;
 }
