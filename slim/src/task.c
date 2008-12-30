@@ -290,6 +290,17 @@ static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_da
 }
 
 /**
+ * --ltl_nd時に使用．状態の名前（accept_s0など）を表示．
+ * 高階関数st_foreach(c.f. st.c)に投げて使用．
+ */
+static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
+  unsigned int j = 0;
+  State *tmp = (State *)state_ptr;
+  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
+  return ST_CONTINUE;
+}
+
+/**
  * 非決定実行 or LTLモデル検査終了後にStates内に存在するチェインをすべてfreeする
  * 高階関数st_foreach(c.f. st.c)に投げて使用
  */
@@ -461,8 +472,10 @@ static void do_mc(LmnMembrane *world_mem)
     set_fst(initial_state);
     ltl_search1();
     fprintf(stdout, "no cycles found\n");
-    if (lmn_env.ltl_nd)
+    if (lmn_env.ltl_nd){
       dump_state_transition_graph(stdout);
+      st_foreach(States, print_state_name, 0);
+    }
   }
   fprintf(stdout, "# of States = %d\n", States->num_entries);
 }
