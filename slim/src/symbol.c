@@ -84,12 +84,12 @@ lmn_interned_str lmn_intern(char *name)
   lmn_interned_str new_id;
 
   /* すでにnameに対応する値があるならそれを返す */
-  if (st_lookup(sym_tbl, name, (st_data_t *)&new_id)) return new_id;
+  if (st_lookup(sym_tbl, (st_data_t)name, (st_data_t *)&new_id)) return new_id;
 
   /* 新しいIDを作る */
   new_id = create_new_id();
   name = strdup(name);
-  st_add_direct(sym_tbl, name, (st_data_t)new_id);
+  st_add_direct(sym_tbl, (st_data_t)name, (st_data_t)new_id);
   st_add_direct(sym_rev_tbl, (st_data_t)new_id, (st_data_t)name);
   return new_id;
 }

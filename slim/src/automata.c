@@ -130,7 +130,7 @@ unsigned int automata_state_id(Automata a, char *state_name)
 {
   unsigned int id;
 
-  if (st_lookup(a->state_name_to_id, state_name, (st_data_t*)&id)) {
+  if (st_lookup(a->state_name_to_id, (st_data_t)state_name, (st_data_t*)&id)) {
     return id;
   } else {
     /* 0から順にIDを付ける */
@@ -138,8 +138,8 @@ unsigned int automata_state_id(Automata a, char *state_name)
     char *str0 = strdup(state_name);
     char *str1 = strdup(state_name);
 
-    st_add_direct(a->state_name_to_id, str0, (st_data_t)new_id);
-    st_add_direct(a->id_to_state_name, (st_data_t)new_id, str1);
+    st_add_direct(a->state_name_to_id, (st_data_t)str0, (st_data_t)new_id);
+    st_add_direct(a->id_to_state_name, (st_data_t)new_id, (st_data_t)str1);
     return new_id;
   }
 }
@@ -184,13 +184,13 @@ unsigned int automata_propsym_to_id(Automata a, char *prop_name)
 {
   unsigned int id;
 
-  if (st_lookup(a->prop_to_id, prop_name, (st_data_t*)&id)) {
+  if (st_lookup(a->prop_to_id, (st_data_t)prop_name, (st_data_t*)&id)) {
     return id;
   } else {
     /* 0から順にIDを付ける */
     unsigned int new_id = st_num(a->prop_to_id);
     char *str = strdup(prop_name);
-    st_add_direct(a->prop_to_id, str, (st_data_t)new_id);
+    st_add_direct(a->prop_to_id, (st_data_t)str, (st_data_t)new_id);
     return new_id;
   }
 }

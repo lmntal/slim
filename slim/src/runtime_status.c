@@ -185,7 +185,7 @@ static int dispersal_f(st_data_t key, st_data_t s_, st_data_t tbl_)
   State *s = (State*)s_;
   
   int n;
-  if (!st_lookup((st_table_t)tbl, (st_data_t)s->hash, (st_data_t)&n)) {
+  if (!st_lookup((st_table_t)tbl, (st_data_t)s->hash, (st_data_t*)&n)) {
     n = 0;
   }
   st_insert((st_table_t)tbl, (st_data_t)s->hash, (st_data_t)(n+1));
@@ -200,7 +200,7 @@ static int accum_f(st_data_t hash_value, st_data_t num, st_data_t tbl_)
   st_table_t hash_to_values = (st_table_t)tbl_;
   
   int n;
-  if (!st_lookup((st_table_t)hash_to_values, (st_data_t)num, (st_data_t)&n)) {
+  if (!st_lookup((st_table_t)hash_to_values, (st_data_t)num, (st_data_t*)&n)) {
     n = 0;
   }
   st_insert((st_table_t)hash_to_values, (st_data_t)num, (st_data_t)(n+1));

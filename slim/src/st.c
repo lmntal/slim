@@ -551,8 +551,8 @@ unsigned int st_num(st_table *table) {
  */
 #define FNV_32_PRIME 0x01000193
 
-int st_strhash(register const char *string) {
-  register unsigned int hval = FNV1_32A_INIT;
+long st_strhash(register const char *string) {
+  register unsigned long hval = FNV1_32A_INIT;
 
   /*
    * FNV-1a hash each octet in the buffer
@@ -571,7 +571,7 @@ int st_numcmp(long x, long y) {
   return x != y;
 }
 
-int st_numhash(long n) {
+long st_numhash(long n) {
   return n;
 }
 

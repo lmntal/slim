@@ -446,7 +446,7 @@ static void free_context(Context ctx)
 
 static int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash)
 {
-  if (st_lookup(ctx->done_mem, mem, (st_data_t*)hash)) return 1;
+  if (st_lookup(ctx->done_mem, (st_data_t)mem, (st_data_t*)hash)) return 1;
   else return 0;
 }
 
@@ -457,7 +457,7 @@ static int is_done_mol(Context ctx, void *p)
 
 static void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash)
 {
-  st_insert(ctx->done_mem, mem, (st_data_t)hash);
+  st_insert(ctx->done_mem, (st_data_t)mem, (st_data_t)hash);
 }
 
 static void add_done_mol(Context ctx, void *p)

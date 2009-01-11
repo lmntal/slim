@@ -85,8 +85,11 @@ DIGIT    [0-9]
 
   c = yyget_extra(yyscanner);
   /* テーブルにあればそれを使う */
-  if (st_lookup(c->ruleset_id_tbl, (st_data_t)id_local, (st_data_t)&id_global)) yylval->_int = id_global;
-  else {
+  if (st_lookup(c->ruleset_id_tbl,
+                (st_data_t)id_local,
+                (st_data_t*)&id_global)) {
+    yylval->_int = id_global;
+  } else {
     /* なければ新しく追加 */
     id_global = lmn_gen_ruleset_id();
     st_insert(c->ruleset_id_tbl, (st_data_t)id_local, (st_data_t)id_global);

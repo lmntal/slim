@@ -69,7 +69,7 @@ void state_free(State *s) {
   LMN_FREE(s);
 }
 
-inline int state_hash(State *s) {
+inline long state_hash(State *s) {
   return s->hash;
 }
 

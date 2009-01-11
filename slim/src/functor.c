@@ -169,7 +169,7 @@ static void register_functor(int id,
   entry->name = name;
   entry->arity = arity;
 
-  st_insert(functor_id_tbl, entry, (st_data_t)id);
+  st_insert(functor_id_tbl, (st_data_t)entry, (st_data_t)id);
   /* idの位置にファンクタのデータをコピー */
   lmn_functor_table.entry[id] = *entry;
 }
@@ -189,7 +189,7 @@ static LmnFunctor functor_intern(BOOL special,
   entry.arity = arity;
 
   /* すでにテーブル内にあるならそれを返す */
-  if (st_lookup(functor_id_tbl, &entry, (st_data_t *)&id)) return id;
+  if (st_lookup(functor_id_tbl, (st_data_t)&entry, (st_data_t *)&id)) return id;
   else {
     struct LmnFunctorEntry *new_entry;
 
@@ -209,7 +209,7 @@ static LmnFunctor functor_intern(BOOL special,
     /* ファンクタとIDの対応をテーブルに格納する */
     new_entry = LMN_MALLOC(struct LmnFunctorEntry);
     *new_entry = entry;
-    st_insert(functor_id_tbl, new_entry, (st_data_t)id);
+    st_insert(functor_id_tbl, (st_data_t)new_entry, (st_data_t)id);
 
     return id;
   }

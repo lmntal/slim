@@ -66,7 +66,7 @@ BYTE state_property_state(State *state);
 #define unset_snd(S)  ((S)->flags &= (~SND_MASK))
 #define is_snd(S)     ((S)->flags & SND_MASK)
 
-LMN_EXTERN int state_hash(State *s);
+LMN_EXTERN long state_hash(State *s);
 LMN_EXTERN int state_cmp(HashKeyType s1, HashKeyType s2);
 
 LMN_EXTERN inline void activate_ancestors(LmnMembrane *mem);

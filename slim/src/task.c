@@ -508,7 +508,7 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
   {
     HashSet rm_tbl; /* LTLモデル検査モード時に二重解放を防止するため */
     hashset_init(&rm_tbl, 16);
-    st_foreach(States, kill_States_chains, &rm_tbl);
+    st_foreach(States, kill_States_chains, (st_data_t)&rm_tbl);
     hashset_destroy(&rm_tbl);
   }
 
@@ -540,7 +540,7 @@ void run_nd(LmnRuleSet start_ruleset)
   {
     HashSet rm_tbl; /* LTLモデル検査モード時に二重解放を防止するため */
     hashset_init(&rm_tbl, 16);
-    st_foreach(States, kill_States_chains, &rm_tbl);
+    st_foreach(States, kill_States_chains, (st_data_t)&rm_tbl);
     hashset_destroy(&rm_tbl);
   }
 
@@ -3229,7 +3229,7 @@ void ltl_search1() {
            newstate = state_make(newmem,
                                  transition_next(transition),
                                  ANONYMOUS); 
-          st_insert(expanded, newstate, (st_data_t)newstate);
+           st_insert(expanded, (st_data_t)newstate, (st_data_t)newstate);
         }
       }
     }
@@ -3239,14 +3239,14 @@ void ltl_search1() {
     /* expandedの内容をState->succeccorに保存し、その後
      * expanded内のエントリーをすべてfreeする */
     state_succ_init(s, expanded->num_entries);
-    st_foreach(expanded, gen_successor_states, s);
+    st_foreach(expanded, gen_successor_states, (st_data_t)s);
 
     for(j = 0; j < vec_num(&s->successor); j++) { /* for each (s,l,s') */
       State *ss = (State *)vec_get(&s->successor, j);
       State *ss_on_table;
 
       if (!st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_table)) {
-        st_add_direct(States, ss, (st_data_t)ss);
+        st_add_direct(States, (st_data_t)ss, (st_data_t)ss);
         /* push とset を１つの関数にする */
         vec_push(&Stack, (vec_data_t)ss);
         set_fst(ss);
@@ -3306,7 +3306,7 @@ static int expand_states_and_stack(st_data_t k, st_data_t successor_state, void 
         vec_push(&s->successor, (LmnWord)ss);
       }
 
-      st_add_direct(States, ss, (st_data_t)ss); /* 状態空間に追加 */
+      st_add_direct(States, (st_data_t)ss, (st_data_t)ss); /* 状態空間に追加 */
       vec_push(&Stack, (LmnWord)ss); /* スタックに追加 */
     } else {
       /* expandedの内容をState->successorに保存する（合流） */
@@ -3355,7 +3355,7 @@ void nd_exec() {
         state_succ_init(s, expanded->num_entries);
       }
 
-      st_foreach(expanded, expand_states_and_stack, s);
+      st_foreach(expanded, expand_states_and_stack, (st_data_t)s);
     }
     else { /* s->toggle == TRUE */
       vec_pop(&Stack); /* 状態が展開済みである場合 */
@@ -3392,7 +3392,7 @@ void nd_dump_exec() {
         state_succ_init(s, expanded->num_entries);
       }
 
-      st_foreach(expanded, expand_states_and_stack, s);
+      st_foreach(expanded, expand_states_and_stack, (st_data_t)s);
     }
     else { /* s->toggle == TRUE */
       vec_pop(&Stack); /* 状態が展開済みである場合 */

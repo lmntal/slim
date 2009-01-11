@@ -521,7 +521,7 @@ LmnRule load_rule(Rule rule)
   load_inst_block(rule_get_body(rule), c);
 
   /* ラベルを参照している位置に、実際のラベルの位置を書き込む */
-  st_foreach(c->loc_to_label_ref, fill_label_ref, c);
+  st_foreach(c->loc_to_label_ref, fill_label_ref, (st_data_t)c);
 
   st_free_table(c->label_to_loc);
   st_free_table(c->loc_to_label_ref);

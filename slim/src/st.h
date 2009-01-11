@@ -13,12 +13,12 @@
 
 #include <stddef.h>
 
-typedef void *st_data_t;
+typedef long st_data_t;
 typedef struct st_table st_table, *st_table_t;
 
 struct st_hash_type {
-  int (*compare)(); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数 */
-  int (*hash)();    /* ハッシュ関数 */
+  long (*compare)(); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数 */
+  long (*hash)();    /* ハッシュ関数 */
 };
 
 /* num_bins = 5, num_entries = 3 なる struct st_table_entry **bins の例
@@ -74,8 +74,8 @@ unsigned int st_num(st_table *);
 void st_free_table(st_table *);
 void st_cleanup_safe(st_table *, st_data_t);
 st_table *st_copy(st_table *);
-int st_strhash(const char *);
+long st_strhash(const char *);
 int st_numcmp(long, long);
-int st_numhash(long);
+long st_numhash(long);
 
 #endif /* ST_INCLUDED */
