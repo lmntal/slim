@@ -2,8 +2,6 @@
  * mhash.c
  *
  * cf. devel/sample/khiroto/mhash.lmn
- * 膜階層を上向きにたどらない点が広戸版と異なる
- * （理由はコメントやローカルページ参照）
  *
  * 初期値によってはオーバーフローが生じてしまい、
  * 計算結果が計算順序に因ってしまうことがあるので
@@ -16,27 +14,409 @@
 #include "internal_hash.h"
 #include "atom.h"
 #include "membrane.h"
-#include <limits.h>
 #include "functor.h"
+#include "st.h"
+/* #include "symbol.h" /\* TODO: for debug *\/ */
+#include <limits.h>
 
-/* tag */
-#define ATOM_OBJ  0
-#define MEM_OBJ   1
+/* 膜が自分に至るリンクを持つ場合に，膜のハッシュ値の計算が無限ループに
+   なるのを防ぐために現在計算中の膜のハッシュ値が必要になる場合は定数を
+   返す
+*/
 
-/* 加乗および乗算を行う際の剰余演算に用いる定数 */
-#define ADD_MOD_FACTOR  (INT_MAX/100)
-#define MUL_MOD_FACTOR  (INT_MAX/100000)
 
-/* シンボルアトムのハッシュ値 */
-static inline unsigned int atom_hash(LmnAtomPtr a) {
-  return LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(a));
+/* #define C 31 /\* 深さを深くした場合、31は小さすぎるかも *\/ */
+#define C 101 /* 深さを深くした場合、31は小さすぎるかも */
+#define B 13
+#define ADD_0 0
+#define MUL_0 41
+#define MEM_ADD_0 3412
+#define MEM_MUL_0 3412
+#define CALUCULATING_MEM 1
+#define DEPTH 3
+
+typedef unsigned long hash_t;
+
+typedef struct Context {
+  HashSet *done_mol; /* 計算済みの分子 */
+  st_table_t done_mem; /* 計算済みの膜とハッシュ値 */
+} *Context;
+
+static Context init_context(void);
+static void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash);
+static void add_done_mol(Context ctx, void *p);
+static int is_done_mol(Context ctx, void *p);
+static void free_context(Context ctx);
+static int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash);
+
+static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx);
+static hash_t molecule(LmnAtomPtr atom,
+                       LmnMembrane *calc_mem,
+                       Context ctx);
+static void do_molecule(LmnWord atom,
+                        LmnLinkAttr attr,
+                        LmnMembrane *calc_mem,
+                        Context ctx,
+                        int i_parent,
+                        hash_t *sum,
+                        hash_t *mul);
+static hash_t unit(LmnWord atom,
+                   LmnLinkAttr attr,
+                   LmnMembrane *calc_mem,
+                   Context ctx,
+                   int depth);
+static hash_t atomunit(LmnWord atom,
+                       LmnLinkAttr attr,
+                       LmnMembrane *calc_mem,
+                       int depth,
+                       Context ctx);
+static hash_t memunit(LmnMembrane *mem,
+                      LmnAtomPtr from_in_proxy,
+                      LmnMembrane *calc_mem,
+                      Context ctx,
+                      int depth);
+static hash_t mem_fromlink(LmnMembrane *mem,
+                           LmnAtomPtr in_proxy,
+                           LmnMembrane *calc_mem,
+                           Context ctx);
+static hash_t link(LmnWord atom,
+                   LmnLinkAttr attr,
+                   LmnMembrane *calc_mem,
+                   Context ctx);
+static hash_t atomlink(LmnWord atom, LmnLinkAttr attr);
+static hash_t memlink(LmnAtomPtr in_proxy, LmnMembrane *calc_mem, Context ctx);
+static hash_t atom_type(LmnWord atom, LmnLinkAttr attr);
+static hash_t symbol_atom_type(LmnAtomPtr atom);
+static hash_t data_atom_type(LmnWord atom, LmnLinkAttr attr);
+
+hash_t mhash(LmnMembrane *mem)
+{
+  Context c = init_context();
+  hash_t t;
+
+/*   printf("------- mhash(%s,%p) ------------\n", LMN_MEM_NAME(mem), mem); */
+  t = membrane(mem, NULL, c);
+  free_context(c);
+  return t;
 }
-/* データアトムのハッシュ値 */
-static inline int data_hash(LmnAtomPtr a, LmnArity n) {
-  int ret;
-  switch(LMN_ATOM_GET_ATTR(a, n)) {
+
+static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
+{
+  hash_t hash_sum = MEM_ADD_0;
+  hash_t hash_mul = MEM_MUL_0;
+  HashIterator iter;
+  LmnAtomPtr atom;
+  hash_t t;
+  hash_t u;
+  hash_t hash;
+
+  if (mem == calc_mem) return CALUCULATING_MEM;
+  if (calculated_mem_hash(ctx, mem, &t)) return (hash_t)t;
+
+/*   printf("mem atom num = %d\n", mem->atom_num); */
+/*   lmn_dump_mem(mem); */
+  /* atoms */
+  for (iter = hashtbl_iterator(&mem->atomset);
+       !hashtbliter_isend(&iter);
+       hashtbliter_next(&iter)) {
+    AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
+    LmnAtomPtr head = atomlist_head(ent);
+
+    /* プロキシは除く */
+    if (head != lmn_atomlist_end(ent) &&
+        LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(head))) continue;
+
+    for (atom = head;
+         atom != lmn_atomlist_end(ent);
+         atom = LMN_ATOM_GET_NEXT(atom)) {
+/*       printf("membrane: atom0 %s\n", */
+/*              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom)))); */
+      if (!is_done_mol(ctx, atom)) {
+/*         printf("membrane: atom %s\n", */
+/*                lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom)))); */
+        u = molecule(atom, mem, ctx);
+        hash_sum += u;
+        hash_mul *= u;
+      }
+    }
+  }
+
+  /* membranes */
+  {
+    LmnMembrane *child_mem;
+    
+    for(child_mem = mem->child_head; child_mem; child_mem = child_mem->next) {
+      hash_t u = memunit(child_mem, NULL, mem, ctx, 0);
+ /*      hash_t u = membrane(child_mem, NULL, done); */
+      hash_sum += u;
+      hash_mul *= u;
+    }
+  }
+
+
+  hash = hash_sum ^ hash_mul;
+  add_mem_hash(ctx, mem, hash);
+/*   printf("mem(%s,%p) %lu, %lu, hash = %lu\n", */
+/*          LMN_MEM_NAME(mem), mem, hash_sum, hash_mul, hash); */
+  return hash;
+}
+
+static hash_t molecule(LmnAtomPtr atom, LmnMembrane *calc_mem, Context ctx)
+{
+  hash_t sum = ADD_0, mul = MUL_0;
+  
+  do_molecule((LmnWord)atom,
+              LMN_ATTR_MAKE_LINK(0),
+              calc_mem,
+              ctx,
+              -1,
+              &sum,
+              &mul);
+  return sum ^ mul;
+}
+
+static void do_molecule(LmnWord atom,
+                        LmnLinkAttr attr,
+                        LmnMembrane *calc_mem,
+                        Context ctx,
+                        int i_parent,
+                        hash_t *sum,
+                        hash_t *mul)
+{
+  hash_t t;
+  const int is_data = LMN_ATTR_IS_DATA(attr);
+
+  if (!is_data && LMN_ATOM_GET_FUNCTOR(atom) == LMN_IN_PROXY_FUNCTOR) {
+    /* 分子の計算では膜の外部に出て行かない */
+    return;
+  }
+  else {
+    const int arity = LMN_ATOM_GET_ARITY(atom);
+    int i_arg;
+    LmnAtomPtr sym_atom = LMN_ATOM(atom);
+
+    if (!is_data) {
+      if (is_done_mol(ctx, sym_atom)) return;
+      add_done_mol(ctx, sym_atom);
+    }
+
+    t = unit(atom, attr, calc_mem, ctx, 0);
+    (*sum) += t;
+    (*mul) *= t;
+
+    if (!is_data &&
+        LMN_IS_SYMBOL_FUNCTOR(LMN_ATOM_GET_FUNCTOR(atom))) {
+      for (i_arg = 0; i_arg < arity; i_arg++) {
+        if (i_arg != i_parent) {
+          LmnLinkAttr to_attr = LMN_ATOM_GET_ATTR(atom, i_arg);
+          do_molecule(LMN_ATOM_GET_LINK(atom, i_arg),
+                      to_attr,
+                      calc_mem,
+                      ctx,
+                      /* ↓ リンク先がシンボルアトムの場合にのみ意味のある値 */
+                      LMN_ATTR_GET_VALUE(to_attr), 
+                      sum,
+                      mul);
+        }
+      }
+    }
+  }
+}
+
+static hash_t unit(LmnWord atom,
+                   LmnLinkAttr attr,
+                   LmnMembrane *calc_mem,
+                   Context ctx,
+                   int depth)
+{
+  if (LMN_ATTR_IS_DATA(attr)) {
+    return data_atom_type(atom, attr);
+  }
+  else if (LMN_ATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR) {
+    const LmnAtomPtr in_proxy = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0));
+    return memunit(LMN_PROXY_GET_MEM(in_proxy),
+                   LMN_ATOM(in_proxy),
+                   calc_mem,
+                   ctx,
+                   depth);
+  }
+  else if (LMN_ATOM_GET_FUNCTOR(atom) == LMN_IN_PROXY_FUNCTOR) {
+    return symbol_atom_type(LMN_ATOM(atom));
+  }
+  else {
+    return atomunit(atom, attr, calc_mem, depth, ctx);
+  }
+}
+
+/* アトム中心の計算単位 */
+static hash_t atomunit(LmnWord atom,
+                       LmnLinkAttr attr,
+                       LmnMembrane *calc_mem,
+                       int depth,
+                       Context ctx)
+{
+  hash_t hash = 0;
+
+  if (depth == DEPTH) {
+    return link(atom, attr, calc_mem, ctx);
+  }
+  else if (LMN_ATTR_IS_DATA(attr)) {
+    return atomlink(atom, attr);
+  }
+  else {
+    const int arity = LMN_ATOM_GET_ARITY(atom);
+    const int i_from = (depth == 0) ? -1 : (int)LMN_ATTR_GET_VALUE(attr);
+    int i_arg;
+
+    hash = atom_type(atom, attr);
+    for (i_arg = 0; i_arg < arity; i_arg++) {
+      if (i_arg != i_from) {
+        hash_t t = unit(LMN_ATOM_GET_LINK(atom, i_arg),
+                                      LMN_ATOM_GET_ATTR(atom, i_arg),
+                                      calc_mem,
+                                      ctx,
+                                      depth + 1);
+        hash = C*hash+t;
+      }
+    }
+/*     printf("atomunit(%s,%p,r=%d): %lu\n", */
+/*            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom))), */
+/*            (void*)atom, depth, hash); */
+    return hash;
+  }
+}
+
+static hash_t memunit(LmnMembrane *mem,
+                      LmnAtomPtr from_in_proxy,
+                      LmnMembrane *calc_mem,
+                      Context ctx,
+                      int depth)
+{
+  hash_t hash = 0;
+  AtomListEntry *insides;
+
+  if (depth == DEPTH) return memlink(from_in_proxy, calc_mem, ctx);
+  else {
+    insides = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+
+    if (insides) {
+      LmnAtomPtr in, out;
+      for (in = atomlist_head(insides);
+           in != lmn_atomlist_end(insides);
+           in = LMN_ATOM_GET_NEXT(in)) {
+        if (in != from_in_proxy) {
+          out = LMN_ATOM(LMN_ATOM_GET_LINK(in, 0));
+          hash += unit(LMN_ATOM_GET_LINK(out, 1),
+                       LMN_ATOM_GET_ATTR(out, 1),
+                       calc_mem,
+                       ctx,
+                       depth + 1)
+            * mem_fromlink(mem, in, calc_mem, ctx);
+        }
+      }
+    }
+
+    hash += membrane(mem, calc_mem, ctx); /* hiroto論文にないh(Mem)の加算処理 */
+/*  printf("memunit(%s,%p,r=%d): %lu\n", LMN_MEM_NAME(mem), mem, depth, hash); */
+    return hash;
+  }
+}
+
+static hash_t mem_fromlink(LmnMembrane *mem,
+                           LmnAtomPtr in_proxy,
+                           LmnMembrane *calc_mem,
+                           Context ctx)
+{
+  LmnWord atom;
+  hash_t hash = 0;
+  LmnLinkAttr attr;
+
+  for (;;) {
+    atom = LMN_ATOM_GET_LINK(in_proxy, 1);
+    attr = LMN_ATOM_GET_ATTR(in_proxy, 1);
+    if (LMN_ATTR_IS_DATA(attr) ||
+        LMN_ATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) break;
+    in_proxy = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0));
+    hash = B * hash + membrane(LMN_PROXY_GET_MEM(in_proxy), calc_mem, ctx);
+  }
+          
+/*   printf("memlink(a_to:%s) = %lu\n", */
+/*          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom))), */
+/*          hash * (LMN_ATTR_GET_VALUE(attr) + 1) * atom_type(atom, attr)); */
+  return membrane(mem, calc_mem, ctx) ^ (hash * atomlink(atom, attr));
+}
+
+static hash_t link(LmnWord atom,
+                   LmnLinkAttr attr,
+                   LmnMembrane *calc_mem,
+                   Context ctx)
+{
+  if (LMN_ATTR_IS_DATA(attr)) {
+    return atomlink(atom, attr);
+  }
+  else {
+/*     printf("atom : %s\n", */
+/*            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom)))); */
+
+
+     if (LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR(atom)) {
+       return memlink(LMN_ATOM(LMN_ATOM_GET_LINK(LMN_ATOM(atom), 0)),
+                      calc_mem,
+                      ctx);
+    }
+    else {
+      return atomlink(atom, attr);
+    }
+  }
+}
+
+static hash_t memlink(LmnAtomPtr in_proxy, LmnMembrane *calc_mem, Context ctx)
+{
+  LmnWord atom;
+  hash_t hash = 0;
+  LmnLinkAttr attr;
+
+  for (;;) {
+    hash = B * hash + membrane(LMN_PROXY_GET_MEM(in_proxy), calc_mem, ctx);
+
+    atom = LMN_ATOM_GET_LINK(in_proxy, 1);
+    attr = LMN_ATOM_GET_ATTR(in_proxy, 1);
+    if (LMN_ATTR_IS_DATA(attr) ||
+        LMN_ATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) break;
+    in_proxy = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0));
+  }
+          
+/*   printf("memlink(a_to:%s) = %lu\n", */
+/*          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom))), */
+/*          hash * (LMN_ATTR_GET_VALUE(attr) + 1) * atom_type(atom, attr)); */
+  return hash * atomlink(atom, attr);
+}
+
+static hash_t atomlink(LmnWord atom, LmnLinkAttr attr)
+{
+  const int i_from = LMN_ATTR_IS_DATA(attr) ? 0 : LMN_ATTR_GET_VALUE(attr);
+  return (i_from+1) * atom_type(atom, attr);
+}
+
+static hash_t atom_type(LmnWord atom, LmnLinkAttr attr)
+{
+  if (LMN_ATTR_IS_DATA(attr)) {
+    return data_atom_type(atom, attr);
+  }
+  else {
+    return symbol_atom_type(LMN_ATOM(atom));
+  }
+}
+
+static hash_t symbol_atom_type(LmnAtomPtr atom)
+{
+  return LMN_ATOM_GET_FUNCTOR(atom);
+}
+
+static hash_t data_atom_type(LmnWord atom, LmnLinkAttr attr) {
+  switch(attr) {
     case LMN_INT_ATTR:
-      ret = LMN_ATOM_GET_LINK(a,n);
+      return atom;
       break;
     case LMN_DBL_ATTR:
       /* TODO: 未実装 */
@@ -46,301 +426,42 @@ static inline int data_hash(LmnAtomPtr a, LmnArity n) {
       LMN_ASSERT(FALSE);
       break;
   }
-  return ret;
+  return -1;
 }
 
-/* 膜 -> ハッシュ値 */
-static SimpleHashtbl mem2h;
-
-static int mhash_internal(LmnMembrane *mem)
+static Context init_context(void)
 {
-  /*
-   * 適当な初期値
-   *   add: 加算の基本値
-   *   mul: 乗算の基本値
-   */
-  long long int add = 3412;
-  long long int mul = 3412;
-  /* 一時変数 */
-  LmnAtomPtr a = NULL;
-  LmnMembrane *m = NULL;
-  HashEntry *obj = NULL;
-  /* 履歴管理 */
-  SimpleHashtbl objs0;  /* 全ての子膜および子アトム */
-  SimpleHashtbl objs1;  /* 未処理 */
-  HashSet objs2;        /* 既処理 */
-  hashtbl_init(&objs0, 128);
-  hashtbl_init(&objs1, 128);
-  hashset_init(&objs2, 128);
-  HashIterator i0;
-  HashIterator i1;
-  HashSetIterator i2;
-
-  HashIterator atomit;
-
-  /*
-   * objs0 <- atom
-   */
-  for (atomit = hashtbl_iterator(&mem->atomset);
-      !hashtbliter_isend(&atomit);
-      hashtbliter_next(&atomit)) {
-    AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&atomit)->data;
-    if (atomlist_head(ent) != lmn_atomlist_end(ent) &&
-        LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(atomlist_head(ent)))) {
-      continue; /* skip proxies */
-    }
-    for (a = atomlist_head(ent);
-        a != lmn_atomlist_end(ent);
-        a = LMN_ATOM_GET_NEXT(a)) {
-      hashtbl_put(&objs0, (HashKeyType)a, (HashValueType)ATOM_OBJ);
-    }
-  }
-  /* objs0 <- mem */
-  for(m = mem->child_head; m; m = m->next) {
-    hashtbl_put(&objs0, (HashKeyType)m, (HashValueType)MEM_OBJ);
-    /* 子膜はあらかじめ計算しておく */
-    hashtbl_put(&mem2h, (HashKeyType)m, (HashValueType)mhash_internal(m));
-  }
-
-  while (hashtbl_num(&objs0) > 0) {
-    /* 初期値 */
-    long long int mol;           /* 分子のハッシュ値 */
-    long long int tmp = 0;       /* 基本計算単位のハッシュ値 */
-    long long int mol_add = 0;   /* 基本計算単位の加算基本値 */
-    long long int mol_mul = 41;  /* 基本計算単位の乗算基本値 */
-
-    hashtbl_clear(&objs1);
-    hashset_clear(&objs2);
-    i0 = hashtbl_iterator(&objs0);
-    obj = hashtbliter_entry(&i0);
-
-    hashtbl_put(&objs1, (HashKeyType)obj->key, (HashValueType)obj->data);
-    hashtbl_delete(&objs0, (HashKeyType)obj->key);
-
-    /* 分子のハッシュ値の計算 */
-    while (hashtbl_num(&objs1) > 0) {
-      HashKeyType objptr;
-      HashValueType objtag;
-
-      i1 = hashtbl_iterator(&objs1);
-      obj = hashtbliter_entry(&i1);
-      objptr = obj->key;
-      objtag = obj->data;
-
-      hashset_add(&objs2, (HashKeyType)obj->key);
-      hashtbl_delete(&objs1, (HashKeyType)obj->key);
-
-      /* DEBUG */
-      assert(!hashtbl_contains(&objs1,objptr));
-
-      if (ATOM_OBJ == objtag) { /* アトム */
-        int i;
-
-        a = (LmnAtomPtr)objptr;
-        tmp = atom_hash(a);
-
-        for (i = 0; i < LMN_ATOM_GET_ARITY(a); i++) { /* リンク先 */
-          if (LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a)) && i == 2) continue; /* 膜 */
-          LmnWord link = LMN_ATOM_GET_LINK(a, i);
-          LmnLinkAttr attr = LMN_ATOM_GET_ATTR(a, i);
-          tmp *= 31; /* 適当な値 */
-          assert(tmp>=0);
-
-          if (LMN_ATTR_IS_DATA(attr)) { /* データアトム */
-            tmp += data_hash(a, i);
-            assert(tmp>=0);
-          }
-          else if (LMN_IN_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)link)) {
-            tmp += (atom_hash((LmnAtomPtr)link) * ((unsigned int)attr + 1));
-            assert(tmp>=0);
-          }
-          else if (LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)link)) {
-            unsigned int t = 0;
-            LmnAtomPtr in; /* inside proxy */
-
-            m = LMN_PROXY_GET_MEM(LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0)); /* 子膜 */
-            if(!hashset_contains(&objs2, (HashKeyType)m)) {
-              hashtbl_put(&objs1, (HashKeyType)m, MEM_OBJ);
-            }
-            /* 膜を貫くリンクの処理 */
-            while (!LMN_ATTR_IS_DATA(attr) &&
-            LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)link)) {
-              in = (LmnAtomPtr)LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0);
-              link = LMN_ATOM_GET_LINK(in, 1);
-              attr = LMN_ATOM_GET_ATTR(in, 1);
-              m = LMN_PROXY_GET_MEM((LmnAtomPtr)in);
-              assert(hashtbl_get_default(&mem2h, (HashKeyType)m, 0));
-              t += hashtbl_get_default(&mem2h, (HashKeyType)m, 0);
-              t *= 13; /* 適当な値 */
-              assert(t>0);
-            }
-            if (LMN_ATTR_IS_DATA(attr)) { /* 接続先がデータアトム */
-              t += data_hash((LmnAtomPtr)in, 1);
-            }
-            else { /* 接続先がシンボルアトム */
-              t += atom_hash((LmnAtomPtr)link);
-              t *= (unsigned int)(attr + 1);
-              assert(t>0);
-            }
-          }
-          else { /* シンボルアトム */
-            if(!hashset_contains(&objs2, (HashKeyType)link)) {
-              hashtbl_put(&objs1, (HashKeyType)link, ATOM_OBJ);
-            }
-            tmp += (atom_hash((LmnAtomPtr)link) * ((unsigned int)attr + 1));
-            assert(tmp>=0);
-          }
-        }
-      }
-      else if (MEM_OBJ == objtag) { /* 膜 */
-        LmnWord link;
-        LmnLinkAttr attr;
-        LmnAtomPtr in;
-        AtomListEntry *insides;
-        unsigned int myhash; /* この膜のハッシュ値 */
-
-        m = (LmnMembrane *)objptr;
-        assert(hashtbl_contains(&mem2h, (HashKeyType)m));
-        myhash = (unsigned int)hashtbl_get_default(&mem2h, (HashKeyType)m, 0);
-        tmp = myhash;
-        /*
-         * TODO:
-         * a(X1). {{'+'(X1)}}
-         * のような構造で広戸版と同じバグ
-         * （mem2hにない膜をgetしようとする）
-         * が出るので，上向きにたどらないようにした
-         */
-//        insides = lmn_mem_get_atomlist(m, LMN_IN_PROXY_FUNCTOR);
-//        if (insides) {
-//          for (a = atomlist_head(insides);
-//              a != lmn_atomlist_end(insides);
-//              a = LMN_ATOM_GET_NEXT(a)) {
-//            unsigned int s = 0, t = 0;
-//
-//            /* 膜の外側をたどる */
-//            LmnAtomPtr out = (LmnAtomPtr)LMN_ATOM_GET_LINK(a, 0);
-//            if(LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_ATTR(out, 1)) { /* リンク先が膜の場合 */
-//              LmnMembrane *mm = LMN_PROXY_GET_MEM(out);
-//              if (!hashset_contains(&objs2, (HashKeyType)mm)) {
-//                hashtbl_put(&objs1, (HashKeyType)mm, (HashValueType)MEM_OBJ);
-//              }
-//            }
-//            else { /* リンク先がアトムの場合 */
-//              if (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(out, 1))) { /* データアトム */
-//                tmp += data_hash(out, 1);
-//              }
-//              else { /* シンボルアトム */
-//                LmnAtomPtr aa = (LmnAtomPtr)LMN_ATOM_GET_LINK(out, 1);
-//                if (!hashset_contains(&objs2, (HashKeyType)aa)) {
-//                  hashtbl_put(&objs1, (HashKeyType)aa, (HashValueType)ATOM_OBJ);
-//                }
-//              }
-//            }
-//            in = out;
-//            link = LMN_ATOM_GET_LINK(out, 1);
-//            attr = LMN_ATOM_GET_ATTR(out, 1);
-//            /* 膜を貫くリンクの処理 */
-//            while (!LMN_ATTR_IS_DATA(attr) &&
-//                LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)link)) {
-//              in = (LmnAtomPtr)LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0);
-//              link = LMN_ATOM_GET_LINK(in, 1);
-//              attr = LMN_ATOM_GET_ATTR(in, 1);
-//lmn_dump_cell(LMN_PROXY_GET_MEM(in));
-//              assert(hashtbl_get_default(&mem2h, (HashKeyType)LMN_PROXY_GET_MEM(in), 0));
-//              s += (unsigned int)hashtbl_get_default(&mem2h, (HashKeyType)LMN_PROXY_GET_MEM(in), 0);
-//              s *= 13;
-//              assert(s>0);
-//            }
-//            if (LMN_ATTR_IS_DATA(attr)) { /* データアトム */
-//              s += data_hash(in, 1);
-//            }
-//            else { /* シンボルアトム */
-//              s += atom_hash((LmnAtomPtr)link);
-//              s *= (unsigned int)(attr + 1);
-//              assert(s>0);
-//            }
-//
-//            /* 膜の内側をたどる */
-//            in = a;
-//            link = LMN_ATOM_GET_LINK(a, 1);
-//            attr = LMN_ATOM_GET_ATTR(a, 1);
-//            /* 膜を貫くリンクの処理 */
-//            while (!LMN_ATTR_IS_DATA(attr) &&
-//                LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)link)) {
-//              in = (LmnAtomPtr)LMN_ATOM_GET_LINK((LmnAtomPtr)link, 0);
-//              link = LMN_ATOM_GET_LINK(in, 1);
-//              attr = LMN_ATOM_GET_ATTR(in, 1);
-//lmn_dump_cell(LMN_PROXY_GET_MEM(in));
-//              assert(hashtbl_get_default(&mem2h, (HashKeyType)LMN_PROXY_GET_MEM(in), 0));
-//              t += (int)hashtbl_get_default(&mem2h, (HashKeyType)LMN_PROXY_GET_MEM(in), 0);
-//              t *= 13;
-//              assert(t>0);
-//            }
-//            if (LMN_ATTR_IS_DATA(attr)) { /* データアトム */
-//              assert(LMN_IN_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR((LmnAtomPtr)a));
-//              t *= data_hash(in, 1);
-//              assert(t>=0);
-//            }
-//            else { /* シンボルアトム */
-//              t *= atom_hash((LmnAtomPtr)link);
-//              assert(t>=0);
-//              t *= (unsigned int)(attr + 1);
-//              assert(t>=0);
-//            }
-//            tmp += myhash ^ t * s;
-//            assert(tmp>0);
-//          }
-//        }
-      }
-      else {
-        assert(0);
-      }
-      mol_add += tmp;
-      mol_add %= ADD_MOD_FACTOR;
-      mol_mul *= (tmp % MUL_MOD_FACTOR);
-      assert(mol_mul>=0);
-      mol_mul %= (MUL_MOD_FACTOR / 10);
-    }
-
-    for (i2 = hashset_iterator(&objs2);
-        !hashsetiter_isend(&i2);
-        hashsetiter_next(&i2)) {
-      /*
-       * a(X1). {{'+'(X1)}}
-       * のようなとき，膜階層最上位において
-       * 「アトム->膜」という走査順と「膜->アトム」という走査順で
-       * 結果が違ってしまっていたため以下のif文を追加
-       * （前者では子膜が１回，後者では２回処理されていた）
-       * メインループでアトム->膜の順で処理するなど，他に対処方法あり
-       */
-      if(hashtbl_get(&objs0, hashsetiter_entry(&i2)) != MEM_OBJ) {
-        hashtbl_delete(&objs0, hashsetiter_entry(&i2));
-      }
-    }
-
-    mol = mol_add ^ mol_mul;
-    add += mol;
-    assert(add>0);
-    add %= (unsigned int)ADD_MOD_FACTOR;
-    mul *= mol;
-    assert(mul>=0);
-    mul %= (unsigned int)MUL_MOD_FACTOR;
-  }
-
-  hashtbl_destroy(&objs0);
-  hashtbl_destroy(&objs1);
-  hashset_destroy(&objs2);
-  assert(INT_MIN <= mul^add && mul^add <= INT_MAX);
-  return (int)(mul ^ add) + mem->name; /* 膜名を反映させる */
+  Context c = LMN_MALLOC(struct Context);
+  c->done_mol = hashset_make(64);
+  c->done_mem = st_init_ptrtable();
+  return c;
 }
 
-int mhash(LmnMembrane *mem)
+static void free_context(Context ctx)
 {
-  int ret;
+  hashset_free(ctx->done_mol);
+  st_free_table(ctx->done_mem);
+  LMN_FREE(ctx);
+}
 
-  hashtbl_init(&mem2h, 32);
-  ret =  mhash_internal((LmnMembrane *)mem);
-  hashtbl_destroy(&mem2h);
-  return ret;
+static int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash)
+{
+  if (st_lookup(ctx->done_mem, mem, (st_data_t*)hash)) return 1;
+  else return 0;
+}
+
+static int is_done_mol(Context ctx, void *p)
+{
+  return hashset_contains(ctx->done_mol, (HashKeyType)p);
+}
+
+static void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash)
+{
+  st_insert(ctx->done_mem, mem, (st_data_t)hash);
+}
+
+static void add_done_mol(Context ctx, void *p)
+{
+  hashset_add(ctx->done_mol, (HashKeyType)p);
 }
 

@@ -1,5 +1,6 @@
 #include <string.h>
 #include "mc.h"
+#include <string.h>
 #include "mhash.h"
 #include "propositional_symbol.h"
 #include "ltl2ba_adapter.h"

@@ -10,7 +10,7 @@
 typedef struct State State;
 struct State {
   LmnMembrane *mem; /* グローバルルート膜 */
-  int hash;         /* ハッシュ値 */
+  unsigned long hash;         /* ハッシュ値 */
   BOOL flags;       /* flags (unsigned char) */
   Vector successor; /* successor nodes */
   lmn_interned_str rule_name;
@@ -47,9 +47,9 @@ typedef struct MCData { /* TODO: 構造体の名前 */
   Vector *propsyms;
 } MCData;
 
-
 LMN_EXTERN State *state_make(LmnMembrane *mem, BYTE state_name, lmn_interned_str rule);
 State *state_make_for_nd(LmnMembrane *mem, lmn_interned_str rule);
+LMN_EXTERN State *state_copy(State *s);
 LMN_EXTERN inline void state_succ_init(State *s, int init_size);
 LMN_EXTERN void state_free(State *s);
 BYTE state_property_state(State *state);

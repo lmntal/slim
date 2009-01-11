@@ -7,6 +7,6 @@
 
 #include "lmntal.h"
 
-int mhash(LmnMembrane *mem);
+unsigned long mhash(LmnMembrane *mem);
 
 #endif
