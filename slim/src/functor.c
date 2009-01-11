@@ -99,7 +99,7 @@ static int functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y)
       x->arity == y->arity);
 }
 
-static int functor_hash(LmnFunctorEntry *x)
+static long functor_hash(LmnFunctorEntry *x)
 {
   return abs((x->module*31*31 + x->name*31 + x->arity));
 }

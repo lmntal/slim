@@ -294,7 +294,6 @@ static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_da
  * 高階関数st_foreach(c.f. st.c)に投げて使用．
  */
 static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  unsigned int j = 0;
   State *tmp = (State *)state_ptr;
   fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
   return ST_CONTINUE;
@@ -3384,7 +3383,7 @@ void nd_dump_exec() {
       expand(s->mem); /* 展開先をexpandedに格納する */
 
       /* 状態を出力（状態ID:ハッシュ値:遷移先の数:状態） */
-      fprintf(stdout, "%lu:%d:%d:", (long unsigned int)s, s->hash, expanded->num_entries);
+      fprintf(stdout, "%lu:%lu:%u:", (long unsigned int)s, s->hash, expanded->num_entries);
       lmn_dump_cell(s->mem);
 
       /* expandedの内容をState->successorに保存する */

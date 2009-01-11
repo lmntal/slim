@@ -17,7 +17,7 @@ typedef long st_data_t;
 typedef struct st_table st_table, *st_table_t;
 
 struct st_hash_type {
-  long (*compare)(); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数 */
+  int (*compare)(); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数 */
   long (*hash)();    /* ハッシュ関数 */
 };
 

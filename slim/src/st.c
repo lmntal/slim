@@ -36,7 +36,7 @@ static struct st_hash_type type_strhash = { strcmp, st_strhash, };
 
 /* ST Objective-C additions */
 static int st_ptrcmp(void *, void *);
-static int st_ptrhash(void *);
+static long st_ptrhash(void *);
 static struct st_hash_type type_ptrhash = { st_ptrcmp, st_ptrhash };
 
 static void rehash(st_table *);
@@ -580,6 +580,6 @@ int st_ptrcmp(void *x, void *y) {
   return x != y;
 }
 
-int st_ptrhash(void *n) {
-  return (int) n;
+long st_ptrhash(void *n) {
+  return (long) n;
 }

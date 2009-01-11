@@ -39,6 +39,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include "lmntal.h"
+#include "error.h"
 
 void do_lmn_fatal(const char *msg)
 {
