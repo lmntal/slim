@@ -1027,12 +1027,21 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
   /* 階層の切り替えを検知した場合，両膜内のプロセスの種類および個数が一致するかの確認を行う */
   if (need_to_check_this_membrane_processes) {
     Vector *atomvec_mem1, *atomvec_mem2;
+    LmnMembrane *mem1, *mem2;
 
     /* ここの処理をする際，a1およびa2は共にプロキシアトムのはず */
     assert(LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a1)) && LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a2)));
 
-    atomvec_mem1 = lmn_mem_mk_matching_vec(LMN_PROXY_GET_MEM(a1));
-    atomvec_mem2 = lmn_mem_mk_matching_vec(LMN_PROXY_GET_MEM(a2));
+    mem1 = LMN_PROXY_GET_MEM(a1);
+    mem2 = LMN_PROXY_GET_MEM(a2);
+
+    /* 両膜の子孫膜の個数、両膜内のアトムの個数、膜名が互いに等しいことを確認 */
+    if (lmn_mem_count_descendants(mem1) != lmn_mem_count_descendants(mem2)
+          || mem1->atom_num != mem2->atom_num
+          || mem1->name != mem2->name) return FALSE;
+
+    atomvec_mem1 = lmn_mem_mk_matching_vec(mem1);
+    atomvec_mem2 = lmn_mem_mk_matching_vec(mem2);
 
     /* 両膜内のアトムの種類数が互いに等しいことを確認 */
     if (vec_num(atomvec_mem1) != vec_num(atomvec_mem2)) {
