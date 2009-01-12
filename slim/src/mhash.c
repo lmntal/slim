@@ -19,6 +19,10 @@
 /* #include "symbol.h" /\* TODO: for debug *\/ */
 #include <limits.h>
 
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
 /* 膜が自分に至るリンクを持つ場合に，膜のハッシュ値の計算が無限ループに
    なるのを防ぐために現在計算中の膜のハッシュ値が必要になる場合は定数を
    返す
@@ -28,6 +32,7 @@
 /* #define C 31 /\* 深さを深くした場合、31は小さすぎるかも *\/ */
 #define C 101 /* 深さを深くした場合、31は小さすぎるかも */
 #define B 13
+#define E 3
 #define ADD_0 0
 #define MUL_0 41
 #define MEM_ADD_0 3412
@@ -94,8 +99,17 @@ hash_t mhash(LmnMembrane *mem)
   Context c = init_context();
   hash_t t;
 
+#ifdef PROFILE
+  status_start_state_hash_calc();
+#endif
+
 /*   printf("------- mhash(%s,%p) ------------\n", LMN_MEM_NAME(mem), mem); */
   t = membrane(mem, NULL, c);
+
+#ifdef PROFILE
+  status_finish_state_hash_calc();
+#endif
+
   free_context(c);
   return t;
 }
@@ -276,7 +290,10 @@ static hash_t atomunit(LmnWord atom,
                                       calc_mem,
                                       ctx,
                                       depth + 1);
-        hash = C*hash+t;
+        /* TODO: ここでtに定数を掛けたほうがいいかも再帰的にCを掛けてい
+           るので、係数が重なる危険性がある */
+        hash = C*hash+t*E;
+                       
       }
     }
 /*     printf("atomunit(%s,%p,r=%d): %lu\n", */

@@ -57,6 +57,12 @@ struct RuntimeStatus {
   st_table_t hash_conflict_tbl;       /* key: # of conflicts, value: kinds */
   unsigned long hash_num;             /* # of hash value */
   clock_t start_time, end_time;        /* running start/end time */
+  clock_t tmp_state_hash_start;
+  double total_state_hash_time;      /* total time of state hashing */
+  unsigned long mhash_call_num;      /* # of mhash call */
+  unsigned long mem_equals_num;      /* # of mem_equals call */
+  double total_mem_equals_time;      /* total time of mem equals */
+  clock_t tmp_mem_equals_start;
 } runtime_status;
 
 static void runtime_status_update(void);
@@ -77,6 +83,10 @@ void runtime_status_init()
   runtime_status.peak_total_state_space = 0;
   runtime_status.hash_conflict_tbl = st_init_numtable();
   runtime_status.hash_num = 0;
+  runtime_status.total_state_hash_time = 0.0;
+  runtime_status.mhash_call_num = 0;
+  runtime_status.mem_equals_num = 0;
+  runtime_status.total_mem_equals_time = 0.0;
 }
 
 void runtime_status_finalize()
@@ -158,6 +168,30 @@ static void runtime_status_update()
     runtime_status.peak_total_state_space = runtime_status.total_state_space;
 }
 
+void status_start_state_hash_calc()
+{
+  runtime_status.mhash_call_num++;
+  runtime_status.tmp_state_hash_start =  clock();
+}
+
+void status_finish_state_hash_calc()
+{
+  runtime_status.total_state_hash_time +=
+    (clock() - runtime_status.tmp_state_hash_start)/(double)CLOCKS_PER_SEC;
+}
+
+void status_start_mem_equals_calc()
+{
+  runtime_status.mem_equals_num++;
+  runtime_status.tmp_mem_equals_start =  clock();
+}
+
+void status_finish_mem_equals_calc()
+{
+  runtime_status.total_mem_equals_time +=
+    (clock() - runtime_status.tmp_mem_equals_start)/(double)CLOCKS_PER_SEC;
+}
+
 void output_runtime_status(FILE *f)
 {
   fprintf(f, "\n== Runtime Status ==========================================\n");
@@ -175,7 +209,14 @@ void output_runtime_status(FILE *f)
          runtime_status.peak_hashtbl_space);
   fprintf(f, "%-30s: %10lu\n", "rough peak state space (Bytes)",
           runtime_status.peak_total_state_space);
-  
+  fprintf(f, "%-30s: %10lu\n", "# of mhash calls",
+          runtime_status.mhash_call_num);
+  fprintf(f, "%-30s: %10.2lf\n", "total hash time (sec)",
+          runtime_status.total_state_hash_time);
+  fprintf(f, "%-30s: %10lu\n", "# of mem_equals calls",
+          runtime_status.mem_equals_num);
+  fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
+          runtime_status.total_mem_equals_time);
   fprintf(f, "============================================================\n");
 }
 

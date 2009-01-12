@@ -285,6 +285,10 @@ int main(int argc, char *argv[])
       load_il_files(lmn_env.load_path[i]);
     }
 
+#ifdef PROFILE
+      status_start_running();
+#endif
+
     if (lmn_env.ltl) {
       Automata automata;
       PVector prop_defs;
@@ -315,18 +319,16 @@ int main(int argc, char *argv[])
       run_nd(start_ruleset);
     } else {
       /* シミュレーション実行 */
-#ifdef PROFILE
-      status_start_running();
-#endif
       lmn_run(start_ruleset);
-#ifdef PROFILE
-      status_finish_running();
-#endif
     }
   } else {
     fprintf(stderr, "no input file\n");
     exit(1);
   }
+
+#ifdef PROFILE
+      status_finish_running();
+#endif
 
 #ifdef PROFILE
   output_runtime_status(stdout);

@@ -1401,7 +1401,19 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
 }
 
 BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2) {
-  return lmn_mem_equals_rec(mem1, mem2, 0);
+  BOOL t;
+
+#ifdef PROFILE
+  status_start_mem_equals_calc();
+#endif
+
+  t = lmn_mem_equals_rec(mem1, mem2, 0);
+
+#ifdef PROFILE
+  status_finish_mem_equals_calc();
+#endif
+
+  return t;
 }
 /*----------------------------------------------------------------------*/
 /* 膜の同型性判定 ここまで */
