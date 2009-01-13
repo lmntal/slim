@@ -205,13 +205,9 @@ static void do_molecule(LmnWord atom,
     return;
   }
   else {
-    const int arity = LMN_ATOM_GET_ARITY(atom);
-    int i_arg;
-    LmnAtomPtr sym_atom = LMN_ATOM(atom);
-
     if (!is_data) {
-      if (is_done_mol(ctx, sym_atom)) return;
-      add_done_mol(ctx, sym_atom);
+      if (is_done_mol(ctx, LMN_ATOM(atom))) return;
+      add_done_mol(ctx, LMN_ATOM(atom));
     }
 
     t = unit(atom, attr, calc_mem, ctx, 0);
@@ -220,6 +216,9 @@ static void do_molecule(LmnWord atom,
 
     if (!is_data &&
         LMN_IS_SYMBOL_FUNCTOR(LMN_ATOM_GET_FUNCTOR(atom))) {
+      const int arity = LMN_ATOM_GET_ARITY(atom);
+      int i_arg;
+
       for (i_arg = 0; i_arg < arity; i_arg++) {
         if (i_arg != i_parent) {
           LmnLinkAttr to_attr = LMN_ATOM_GET_ATTR(atom, i_arg);
