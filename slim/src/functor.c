@@ -1,5 +1,5 @@
 /*
- * functor.c - functor operations 
+ * functor.c - functor operations
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -71,6 +71,9 @@ struct PredefinedFunctor predefined_functors[] = {
   {LMN_ARITHMETIC_FDIV_FUNCTOR, FALSE, FDIV_ATOM_NAME,   3},
   {LMN_UNARY_PLUS_FUNCTOR,      FALSE, UNARY_PLUS_NAME,  1},
   {LMN_UNARY_MINUS_FUNCTOR,     FALSE, UNARY_MINUS_NAME, 1},
+  {LMN_MEM_EQ_FUNCTOR,          FALSE, MEM_EQ_ATOM_NAME, 5},
+  {LMN_TRUE_FUNCTOR,            FALSE, TRUE_ATOM_NAME,   1},
+  {LMN_FALSE_FUNCTOR,           FALSE, FALSE_ATOM_NAME,  1},
 };
 
 struct LmnFunctorTable lmn_functor_table;
@@ -151,7 +154,7 @@ const LmnFunctorEntry *lmn_id_to_functor(int functor_id)
 {
   LmnFunctorEntry *entry;
 
-  if (st_lookup(functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry)) 
+  if (st_lookup(functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry))
     return entry;
   else return NULL;
 }

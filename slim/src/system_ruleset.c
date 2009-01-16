@@ -491,6 +491,72 @@ static BOOL exec_fdiv_operation_on_body(LmnMembrane *mem)
   }
   return FALSE;
 }
+
+static BOOL mem_eq(LmnMembrane *mem)
+{
+  AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_MEM_EQ_FUNCTOR, 0);
+  LmnMembrane *mem0, *mem1;
+  LmnAtomPtr op, ret, out0, out1, in0, in1, result_atom;
+  LmnLinkAttr out_attr0, out_attr1, ret_attr;
+  BOOL result;
+  if (!ent) return FALSE;
+
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
+    out_attr0 = LMN_ATOM_GET_ATTR(op, 0);
+    if (LMN_ATTR_IS_DATA(out_attr0)) return FALSE;
+    out0 = LMN_ATOM(LMN_ATOM_GET_LINK(op, 0));
+    if (LMN_ATOM_GET_FUNCTOR(out0) != LMN_OUT_PROXY_FUNCTOR) {
+      return FALSE;
+    }
+
+    in0 = LMN_ATOM(LMN_ATOM_GET_LINK(out0, 0));
+    out_attr1 = LMN_ATOM_GET_ATTR(op, 1);
+    if (LMN_ATTR_IS_DATA(out_attr1)) return FALSE;
+    out1 = LMN_ATOM(LMN_ATOM_GET_LINK(op, 1));
+    if (LMN_ATOM_GET_FUNCTOR(out1) != LMN_OUT_PROXY_FUNCTOR) {
+          return FALSE;
+    }
+
+    in1 = LMN_ATOM(LMN_ATOM_GET_LINK(out1, 0));
+
+    mem0 = LMN_PROXY_GET_MEM(in0);
+    mem1 = LMN_PROXY_GET_MEM(in1);
+
+    result = lmn_mem_equals(mem0, mem1);
+
+    if(result){
+      result_atom = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
+    }else{
+      result_atom = lmn_mem_newatom(mem, LMN_FALSE_FUNCTOR);
+    }
+    lmn_mem_unify_atom_args(mem, op, 0, op, 2);
+    lmn_mem_unify_atom_args(mem, op, 1, op, 3);
+
+    ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 4));
+    ret_attr = LMN_ATOM_GET_ATTR(op, 4);
+
+    if (LMN_ATTR_IS_DATA(ret_attr)) {
+      LMN_ATOM_SET_LINK(result_atom, 0, ret);
+      LMN_ATOM_SET_ATTR(result_atom, 0, ret_attr);
+    }
+    else {
+      LMN_ATOM_SET_LINK(result_atom, 0, ret);
+      LMN_ATOM_SET_ATTR(result_atom, 0, ret_attr);
+      LMN_ATOM_SET_LINK(ret, LMN_ATTR_GET_VALUE(ret_attr), result_atom);
+      LMN_ATOM_SET_ATTR(ret, LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
+    }
+
+    mem->atom_num--;
+    REMOVE_FROM_ATOMLIST(op);
+    lmn_delete_atom(op);
+
+    return TRUE;
+
+  }
+  return FALSE;
+}
+
+
 /* -------------------------------------------------------------- */
 
 void init_default_system_ruleset()
@@ -507,4 +573,5 @@ void init_default_system_ruleset()
   lmn_add_system_rule(lmn_rule_make_translated(exec_fsub_operation_on_body, ANONYMOUS));
   lmn_add_system_rule(lmn_rule_make_translated(exec_fmul_operation_on_body, ANONYMOUS));
   lmn_add_system_rule(lmn_rule_make_translated(exec_fdiv_operation_on_body, ANONYMOUS));
+  lmn_add_system_rule(lmn_rule_make_translated(mem_eq, ANONYMOUS));
 }
