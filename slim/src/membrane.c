@@ -285,9 +285,9 @@ BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count)
 
 BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count)
 {
-	unsigned int i;
-	LmnMembrane *mp = mem->child_head;
-	for(i = 0; mp && i <= count; mp = mp->next, i++);
+  unsigned int i;
+  LmnMembrane *mp = mem->child_head;
+  for(i = 0; mp && i <= count; mp = mp->next, i++);
   return i == count;
 }
 
@@ -852,6 +852,8 @@ inline unsigned int lmn_mem_count_children(LmnMembrane *mem) {
 
 /* 膜の同型性判定 ここから */
 /*----------------------------------------------------------------------*/
+#define CHECKED_MEM_DEPTH 0
+
 typedef struct AtomVecData {
   LmnFunctor fid;
   Vector *atom_ptrs;
@@ -1024,9 +1026,9 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
   BOOL need_to_check_next_membrane_processes;
   int next_depth;
 
-  /* 階層の切り替えを検知した場合，両膜内のプロセスの種類および個数が一致するかの確認を行う */
+  /* 本メソッドを再帰的に呼び出していく過程で，a1(,a2)へのリンクを辿ることが親膜から子膜への遷移を意味する場合，
+   * a1, a2の所属膜を対象とした同型性判定を行う必要がある */
   if (need_to_check_this_membrane_processes) {
-    Vector *atomvec_mem1, *atomvec_mem2;
     LmnMembrane *mem1, *mem2;
 
     /* ここの処理をする際，a1およびa2は共にプロキシアトムのはず */
@@ -1035,25 +1037,9 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
     mem1 = LMN_PROXY_GET_MEM(a1);
     mem2 = LMN_PROXY_GET_MEM(a2);
 
-    /* 両膜の子孫膜の個数、両膜内のアトムの個数、膜名が互いに等しいことを確認 */
-    if (lmn_mem_count_descendants(mem1) != lmn_mem_count_descendants(mem2)
-          || mem1->atom_num != mem2->atom_num
-          || mem1->name != mem2->name) return FALSE;
-
-    atomvec_mem1 = lmn_mem_mk_matching_vec(mem1);
-    atomvec_mem2 = lmn_mem_mk_matching_vec(mem2);
-
-    /* 両膜内のアトムの種類数が互いに等しいことを確認 */
-    if (vec_num(atomvec_mem1) != vec_num(atomvec_mem2)) {
-      free_atomvec_data(atomvec_mem1); free_atomvec_data(atomvec_mem2);
+    if (!lmn_mem_equals(mem1, mem2)) {
       return FALSE;
     }
-    /* 両膜内に含まれるアトムのファンクタおよび個数が互いに等しいことを確認 */
-    if (!lmn_mem_is_the_same_matching_vec(atomvec_mem1, atomvec_mem2)) {
-      return FALSE;
-    }
-
-    free_atomvec_data(atomvec_mem1); free_atomvec_data(atomvec_mem2);
   }
 
   vec_push(v_log1, (LmnWord)a1);
@@ -1064,12 +1050,11 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
     return FALSE;
   }
 
-  arity = LMN_ATOM_GET_ARITY(a1);
-  if (LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a1))) {
-    /* プロキシアトムの第3引数は所属膜へのポインタなのでその分を除外 */
-    --arity;
-  }
-  for (i = 0; i < arity; ++i) {
+  arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_ATOM_GET_FUNCTOR(a1));
+
+  /* a1(= a2) = $in かつa1の所属膜が同型性判定対象膜である場合，a1の第0リンクの接続先である$outは同型性判定対象膜の親膜内の
+   * プロセスということになり，トレースの対象に含めてはならない．この基準に基づき，次の変数iの初期値（0 or 1）が決定される． */
+  for (i = ((LMN_ATOM_GET_FUNCTOR(a1) == LMN_IN_PROXY_FUNCTOR && current_depth == CHECKED_MEM_DEPTH) ? 1U : 0U); i < arity; ++i) {
     attr1 = LMN_ATOM_GET_ATTR(a1, i);
     attr2 = LMN_ATOM_GET_ATTR(a2, i);
 
@@ -1080,11 +1065,12 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
      * これに対して再帰的に本メソッドを適用し、a1およびa2を起点とする分子全体のマッチングを行う) */
     if (!LMN_ATTR_IS_DATA(attr1) && !LMN_ATTR_IS_DATA(attr2))
     {
+      /* {c(X,Y), c(X,Y)} vs. {c(X,Y), c(Y,X)}
+       * の例のように、2アトム間のリンクの接続順序が異なっている場合はFALSEを返す */
       if (attr1 != attr2) {
-          /* {c(X,Y), c(X,Y)} vs. {c(X,Y), c(Y,X)}
-            * の例のように、2アトム間のリンクの接続順序が異なっている場合はFALSEを返す */
         return FALSE;
       }
+
       l1 = (LmnAtomPtr)LMN_ATOM_GET_LINK(a1, i);
       l2 = (LmnAtomPtr)LMN_ATOM_GET_LINK(a2, i);
 
@@ -1098,30 +1084,42 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
         continue;
       }
 
-      if (LMN_ATOM_GET_FUNCTOR(l1) == LMN_IN_PROXY_FUNCTOR) {
+      /* a1-->l1 (, a2-->l2) なるリンクのトレースが親膜-->子膜 or 子膜-->親膜なる
+       * トレース対象プロセスの所属膜の切り替えを意味する際に，現在トレースしているプロセスの深さを表す変数の値を更新する．
+       * (子膜への遷移の際に値が1増加し，逆に親膜内に戻る際は値が1減少する)
+       *
+       * (注) "a1=$out かつ l1=$in ならば子膜への遷移" としてはいけない．
+       *      必ずa1, l1の所属膜が異なっていることも必要条件に含めるようにする．
+       *      "{{'+'(L)}}, a(L)."のようなケースでは，間に膜の境界を含まないにも関わらず$inと$outが隣接する．
+       */
+      if (LMN_ATOM_GET_FUNCTOR(l1) == LMN_IN_PROXY_FUNCTOR && LMN_ATOM_GET_FUNCTOR(a1) == LMN_OUT_PROXY_FUNCTOR
+          && LMN_PROXY_GET_MEM(l1) != LMN_PROXY_GET_MEM(a1)) {
         next_depth = current_depth + 1;
-      } else if (LMN_ATOM_GET_FUNCTOR(l1) == LMN_OUT_PROXY_FUNCTOR) {
+      } else if (LMN_ATOM_GET_FUNCTOR(l1) == LMN_OUT_PROXY_FUNCTOR && LMN_ATOM_GET_FUNCTOR(a1) == LMN_IN_PROXY_FUNCTOR
+          && LMN_PROXY_GET_MEM(l1) != LMN_PROXY_GET_MEM(a1)) {
         next_depth = current_depth - 1;
       } else {
         next_depth = current_depth;
       }
-      if (next_depth < 0) {
-        /* 次の走査対象アトムがそもそもの同型性判定対象となっていた膜の親膜以上の階層に
-         * 所属しているため、これを無視して次のアトムを走査対象に選び直す */
-        continue;
-      }
+
+      /* "i = ((LMN_ATOM_GET_FUNCTOR(a1) == LMN_IN_PROXY_FUNCTOR && current_depth == CHECKED_MEM_DEPTH) ? 1U : 0U)"
+       * なる本forループにおけるiの初期化処理により，直後の探索対象アトム(l1, l2)の所属膜が同型性判定対象外の膜になることはないはず */
+      assert(next_depth >= CHECKED_MEM_DEPTH);
 
       /*
-       * a1-->l1 (, a2-->l2) なる遷移の際に階層が切り換わる場合，遷移先の階層(i.e. l1およびl2それぞれの所属膜)直下に
-       * 含まれるプロセスの集合が互いに一致していることを確認する必要が生じる．
+       * a1-->l1 (, a2-->l2) なるリンクが存在し，かつl1の所属膜がa1の所属膜の子膜である場合，
+       * 遷移先の階層(i.e. l1およびl2それぞれの所属膜)直下に含まれるプロセスの集合が互いに一致していることを確認する必要が生じる．
        *   例)
        *   mem1 = {p(L1, R1), {-L1, +R2}, p(L2, R2), {+L2, +R3}, p(L3, R3), {-L3, +R4}, p(L4, R4), {+L4, +R5}, p(L5, R5), {+L5, -R1}.}
        *   mem2 = {p(L1, R1), {-L1, +R2}, p(L2, R2), {+L2, +R3}, p(L3, R3), {+L3, +R4}, p(L4, R4), {-L4, +R5}, p(L5, R5), {+L5, -R1}.}
        *   のようなmem1とmem2の比較を正しく行う上で必要な措置．
+       *
+       * (注) "ここをa1の所属膜とl1の所属膜が異なる場合" なる判定を行うと処理が無限ループする可能性があるので注意すること．
+       *   無限ループする例)
+       *   mem1 = mem2 = {r(lambda(cp(cp(L3,L4,L0),cp(L5,L6,L1),L2),lambda(L7,apply(L3,apply(L5,apply(L4,apply(L6,L7))))))). {top. '+'(L0). '+'(L1). '+'(L2). }.}
        */
       need_to_check_next_membrane_processes = FALSE;
-      if (LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a1)) && LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(l1))) {
-        assert(LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(a2)) && LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(l2)));
+      if (next_depth > current_depth) {
         need_to_check_next_membrane_processes = TRUE;
       }
       ret_next_step = lmn_mem_trace_links(l1, l2, v_log1, v_log2, next_depth, need_to_check_next_membrane_processes);
@@ -1152,7 +1150,7 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
 
 static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current_depth) {
   Vector *atomvec_mem1, *atomvec_mem2; /* atomvec_memX (X = 1,2)は、膜memX 直下のアトムの情報を保持するVector。
-                                              * 膜内のアトムをファンクタ毎に整理し、少数派のアトムからマッチングを開始できるようにする目的で使用する。 */
+                                        * 膜内のアトムをファンクタ毎に整理し、少数派のアトムからマッチングを開始できるようにする目的で使用する。 */
   unsigned int i;
 
   /* Step1. 両膜の子孫膜の個数、両膜内のアトムの個数、膜名が互いに等しいことを確認 */
@@ -1270,7 +1268,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
          * 膜1内のアトムの内、(ファンクタが)少数派のものから順に根に定められていくことに注意せよ。 */
         a1 = (LmnAtomPtr)vec_pop(v_atoms_not_checked1);
 
-        /* fprintf(stdout, "fid(a1):%u\n", (unsigned int)LMN_ATOM_GET_FUNCTOR(a1)); */
+        /*fprintf(stdout, "fid(a1):%u\n", (unsigned int)LMN_ATOM_GET_FUNCTOR(a1));*/
 
         for (i = vec_num(v_atoms_not_checked2); i > 0 && !matched; --i) {
           a2 = (LmnAtomPtr)vec_get(v_atoms_not_checked2, i-1); /* 膜2内から根a1に対応するアトムの候補を取得 (注: ここの実装にvec_popは使用不可!!) */
@@ -1284,7 +1282,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
            * v_log{1,2}内にはa{1,2}を起点とする分子内の全アトムのアドレスが走査ログとして記録される。 */
           matched = lmn_mem_trace_links(a1, a2, v_log1, v_log2, current_depth, FALSE);
           if (matched) {
-           /* fprintf(stdout, "fid(a2):%u\n", (unsigned int)LMN_ATOM_GET_FUNCTOR(a2)); */
+            /*fprintf(stdout, "fid(a2):%u\n", (unsigned int)LMN_ATOM_GET_FUNCTOR(a2));*/
 
             /* 両膜内に存在するある分子同士のマッチングに成功した場合にここに入る。
              * 膜2内の未マッチングのアトムを管理していたベクター(v_atoms_not_checked2)
@@ -1305,17 +1303,17 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
                   if ((LmnAtomPtr)vec_get(v_log1, n) == (LmnAtomPtr)vec_get(v_atoms_not_checked1, i)) {
                     vec_pop_n(v_atoms_not_checked1, i);
                     break;
-                    }
                   }
                 }
+              }
               for (n = 0; n < vec_num(v_log2); ++n) {
                 for (i = 0; i < vec_num(v_atoms_not_checked2); ++i) {
                   if ((LmnAtomPtr)vec_get(v_log2, n) == (LmnAtomPtr)vec_get(v_atoms_not_checked2, i)) {
                     vec_pop_n(v_atoms_not_checked2, i);
                     break;
-                   }
-                 }
-               }
+                  }
+                }
+              }
             }
             assert(vec_num(v_atoms_not_checked1) == vec_num(v_atoms_not_checked2));
           }
@@ -1407,7 +1405,7 @@ BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2) {
   status_start_mem_equals_calc();
 #endif
 
-  t = lmn_mem_equals_rec(mem1, mem2, 0);
+  t = lmn_mem_equals_rec(mem1, mem2, CHECKED_MEM_DEPTH);
 
 #ifdef PROFILE
   status_finish_mem_equals_calc();
