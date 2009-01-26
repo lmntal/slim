@@ -9,8 +9,8 @@ AM_YFLAGS=-d -p $(patsubst %_parser.y,%,$<) -o $(patsubst %.y,%.c,$<)
 PARSERS := il_parser il_lexer nc_parser nc_lexer propsym_parser propsym_lexer
 
 # 事前に必要なファイル
-BUILT_SOURCES = arch.h $(patsubst %, %.c, $(PARSERS))
-CLEANFILES = arch.h $(patsubst %, %.h, $(PARSERS)) $(patsubst %, %.c, $(PARSERS))
+BUILT_SOURCES = arch.h $(patsubst %, %.c, $(PARSERS)) translate_generated.c
+CLEANFILES = arch.h $(patsubst %, %.h, $(PARSERS)) $(patsubst %, %.c, $(PARSERS)) translate_generated.c
 
 # .yファイルは .lより先に書く
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
@@ -19,7 +19,7 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_po
 	atom.h dumper.h instruction.h internal_hash.h lmntal.h membrane.h \
 	memory_pool.h rule.h system_ruleset.h task.h vector.h st.c symbol.h symbol.c functor.h functor.c \
 	syntax.h syntax.c il_parser.y il_lexer.l instruction.c load.h load.c st.h arch.h \
-    mc.h mc.c mhash.h mhash.c runtime_status.h runtime_status.c translate.c translate.h \
+    mc.h mc.c mhash.h mhash.c runtime_status.h runtime_status.c translate.c translate.h translate_generator.rb translate_generator.in \
 	nc_parser.y nc_lexer.l automata.h automata.c \
 	lmntal_system_adapter.h lmntal_system_adapter.c \
 	propsym_parser.y propsym_lexer.l \
@@ -38,8 +38,5 @@ DISTCLEANFILES := arch.h ../lib/config.lmn
 arch.h ../lib/config.lmn: genconfig
 	$(SHELL) ./genconfig
 
-translate_generator.exe: translate_generator.cpp
-	$(CXX) -Wall $< -o $@
-
-translate_generated.c: translate_generator.in translate_generator.exe
-	./translate_generator.exe <$< >$@
+translate_generated.c: translate_generator.in translate_generator.rb
+	ruby ./translate_generator.rb <$< >$@
