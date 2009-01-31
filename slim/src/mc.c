@@ -1,10 +1,48 @@
-#include <string.h>
+/*
+ * mc.c
+ *
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
+ */
+
 #include "mc.h"
-#include <string.h>
 #include "mhash.h"
 #include "propositional_symbol.h"
 #include "ltl2ba_adapter.h"
 #include "error.h"
+#include <string.h>
 
 enum MC_ERRORNO {
   MC_ERR_NC_ENV,
@@ -14,7 +52,7 @@ enum MC_ERRORNO {
   MC_PROP_OPEN_ERROR,
   MC_PROP_LOAD_ERROR,
 };
-  
+
 /* 状態IDが本来不必要な場合に使用する状態ID */
 #define DEFAULT_STATE_ID 0
 
@@ -39,6 +77,17 @@ State *state_make(LmnMembrane *mem, BYTE state_name, lmn_interned_str rule) {
  */
 State *state_make_for_nd(LmnMembrane *mem, lmn_interned_str rule) {
   return state_make(mem, DEFAULT_STATE_ID, rule);
+}
+
+/**
+ * コンストラクタ
+ */
+StateTransition *strans_make(State *s, unsigned long id, LmnRule rule) {
+  StateTransition *strans = LMN_MALLOC(StateTransition);
+  strans->succ_state = s;
+  strans->id = id;
+  strans->rule = rule;
+  return strans;
 }
 
 /**
@@ -69,6 +118,10 @@ void state_free(State *s) {
   LMN_FREE(s);
 }
 
+void strans_free(StateTransition *strans) {
+  LMN_FREE(strans);
+}
+
 inline long state_hash(State *s) {
   return s->hash;
 }
@@ -87,7 +140,7 @@ static int state_equals(HashKeyType k1, HashKeyType k2) {
   State *s2 = (State *)k2;
 
   int t;
-  t = 
+  t =
     s1->state_name == s2->state_name &&
     state_hash(s1) == state_hash(s2) &&
     lmn_mem_equals(s1->mem, s2->mem);
@@ -129,14 +182,14 @@ int mc_load_property(Automata *a, PVector *prop_defs)
     if (!(nc_fp = fopen(lmn_env.automata_file, "r"))) goto NC_OPEN_ERROR;
   }
   if (never_claim_load(nc_fp, a)) goto NC_LOAD_ERROR;
-  
+
   if (!lmn_env.propositional_symbol) goto PROP_ENV;
   if (!(prop_fp = fopen(lmn_env.propositional_symbol, "r"))) goto PROP_OPEN_ERROR;
   if (propsym_load_file(prop_fp, *a, prop_defs)) goto PROP_LOAD_ERROR;
 
   r = 0;
   goto RET;
-  
+
 NC_ENV: r = MC_ERR_NC_ENV; goto FINALLY;
 PROP_ENV: r = MC_ERR_PROP_ENV; goto FINALLY;
 NC_OPEN_ERROR: r = MC_NC_OPEN_ERROR; goto FINALLY;

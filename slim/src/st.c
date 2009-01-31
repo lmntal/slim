@@ -1,6 +1,6 @@
 /* This is a public domain general purpose hash table package written by Peter Moore @ UCB. */
 
-/* static	char	sccsid[] = "@(#) st.c 5.1 89/12/14 Crucible"; */
+/* static char  sccsid[] = "@(#) st.c 5.1 89/12/14 Crucible"; */
 
 #include "config.h"
 #include "string.h"
@@ -438,7 +438,7 @@ int st_foreach(st_table *table, int(*func)( ANYARGS), st_data_t arg) {
 
   for (i = 0; i < table->num_bins; i++) {
     last = 0;
-    for (ptr = table->bins[i]; ptr != 0;) {
+    for (ptr = table->bins[i]; ptr != 0;) { /* エントリーの存在するチェインでのみfuncが呼ばれる */
       retval = (*func)(ptr->key, ptr->record, arg);
       switch (retval) {
       case ST_CHECK: /* check if hash is modified during iteration */
@@ -526,10 +526,10 @@ unsigned int st_num(st_table *table) {
  * PERFORMANCE OF THIS SOFTWARE.
  *
  * By:
- *	chongo <Landon Curt Noll> /\oo/\
+ *  chongo <Landon Curt Noll> /\oo/\
  *      http://www.isthe.com/chongo/
  *
- * Share and Enjoy!	:-)
+ * Share and Enjoy! :-)
  */
 
 /*

@@ -51,6 +51,7 @@
 #include "st.h"
 #include "mc.h"
 #include "mhash.h"
+#include "por.h"
 #include "automata.h"
 #include "propositional_symbol.h"
 #include "functor.h"
@@ -223,10 +224,6 @@ LMN_EXTERN void nd_exec(void);
 LMN_EXTERN void nd_dump_exec(void);
 LMN_EXTERN void ltl_search1(void);
 
-/* 非決定的実行で用いるフラグ集合 */
-McFlags mc_flags;
-MCData mc_data;
-
 /* フラグ集合を初期化する(c.f. mc.h) */
 static inline void init_mc_flags(void) {
   mc_flags.nd_exec = FALSE;
@@ -240,14 +237,8 @@ static struct st_hash_type type_statehash = {
   state_hash
 };
 
-/* 訪問済みノードが格納される */
-static st_table *States;
-
 /* 探索用スタック */
 static Vector Stack;
-
-/* 展開されたシステムの状態が格納される */
-static st_table *expanded;
 
 /* for LTL */
 LmnMembrane *seed = NULL; /* root of second DFS */
@@ -266,6 +257,37 @@ static inline SimpleHashtbl *copy_global_root(LmnMembrane *srcmem, LmnMembrane *
 static inline void activate(LmnMembrane *mem) {
   if (!mc_flags.property_rule) {
     activate_ancestors(mem);
+  }
+}
+
+/**
+ * PORが有効の場合に必要となる変数やデータ構造の初期化を行い真を返す．
+ * PORが無効の場合は何もせずに偽を返す．
+ */
+static BOOL init_por_vars() {
+  if (lmn_env.por) {
+    States_POR = st_init_table(&type_statehash);
+    strans_independency = st_init_numtable();
+    succ_strans = vec_make(5);
+    ample_candidate = vec_make(1);
+    Stack_POR = vec_make(256);
+    mc_data.next_strans_id = 0U;
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+static BOOL free_por_vars() {
+  if (lmn_env.por) {
+    st_free_table(States_POR);
+    st_free_table(strans_independency);
+    vec_free(succ_strans);
+    vec_free(ample_candidate);
+    vec_free(Stack_POR);
+    return TRUE;
+  } else {
+    return FALSE;
   }
 }
 
@@ -402,7 +424,6 @@ void lmn_run(LmnRuleSet start_ruleset)
   /* for tracer */
   global_root = mem;
 
-  /* 通常実行時 */
   while(!memstack_isempty()){
     LmnMembrane *mem = memstack_peek();
     LmnMembrane *m;
@@ -414,7 +435,7 @@ void lmn_run(LmnRuleSet start_ruleset)
     }
   }
 
-  lmn_dump_cell(mem); 
+  lmn_dump_cell(mem);
   /* 後始末 */
   memstack_destroy();
   lmn_mem_drop(mem);
@@ -431,6 +452,7 @@ static void do_mc(LmnMembrane *world_mem)
   States = st_init_table(&type_statehash);
   vec_init(&Stack, 2048);
   expanded = st_init_table(&type_statehash);
+  init_por_vars();
 
   /* 初期化ルールを区別するため */
   mc_flags.nd_exec = TRUE;
@@ -476,7 +498,7 @@ static void do_mc(LmnMembrane *world_mem)
       st_foreach(States, print_state_name, 0);
     }
   }
-  fprintf(stdout, "# of States = %d\n", States->num_entries);
+  fprintf(stdout, "# of States = %d\n", st_num(States));
 }
 
 void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
@@ -514,6 +536,7 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
   st_free_table(States);
   vec_destroy(&Stack);
   st_free_table(expanded);
+  free_por_vars();
 }
 
 void run_nd(LmnRuleSet start_ruleset)
@@ -546,6 +569,7 @@ void run_nd(LmnRuleSet start_ruleset)
   st_free_table(States);
   vec_destroy(&Stack);
   st_free_table(expanded);
+  free_por_vars();
 }
 
 
@@ -878,7 +902,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
        * そのコピーに対してボディ命令を適用する．
        * その際に変数配列の情報もコピー前のものからコピー後のものへと書き換える．
        *
-       * ・性質ルールの場合
+       * ・性質ルールの場合(廃止)
        *   性質ルール適用結果がglobal_rootに格納される
        * ・システムルールの場合
        *   システムルール適用結果を新たな状態として生成する
@@ -935,11 +959,22 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
                                      lmn_rule_get_name(rule));
             }
             st_data_t t;
-            if (!st_lookup(expanded, (st_data_t)new_state, (st_data_t *)&t)) {
+            BOOL is_really_new_state = !st_lookup(expanded, (st_data_t)new_state, (st_data_t *)&t);
+            if (is_really_new_state) {
               st_add_direct(expanded, (st_data_t)new_state, (st_data_t)new_state);
             } else {
               /* 追加されなかった場合 */
               state_free(new_state);
+            }
+            /* ample(s)計算中の場合はnew_state(または t)への遷移stransを生成する */
+            if (mc_flags.calculating_ample) {
+              StateTransition *strans;
+              if (is_really_new_state) {
+                strans = strans_make(new_state, mc_data.next_strans_id++, rule);
+              } else {
+                strans = strans_make((State *)t, mc_data.next_strans_id++, rule);
+              }
+              vec_push(succ_strans, (LmnWord)strans);
             }
           }
 
@@ -3029,7 +3064,7 @@ static BOOL expand_inner(LmnMembrane *cur_mem, BOOL *must_be_activated) {
     BOOL temp_must_be_activated = FALSE;
 
     /* 代表子膜に対して再帰する */
-    if (expand_inner(cur_mem->child_head, &temp_must_be_activated)) { 
+    if (expand_inner(cur_mem->child_head, &temp_must_be_activated)) {
       ret_flag = TRUE;
     }
 
@@ -3047,21 +3082,28 @@ static BOOL expand_inner(LmnMembrane *cur_mem, BOOL *must_be_activated) {
 }
 
 /* インターフェイスを維持するためのラッパー */
-static BOOL expand(LmnMembrane *cur_mem) {
+BOOL expand(LmnMembrane *cur_mem) {
   BOOL dummy = FALSE;
+
+  global_root = cur_mem; /* ルール適用直前のStateのグローバルルート膜を大域変数に保存しておく
+                          * (これのコピーに対してルール適用をすることで状態空間を拡張していく) */
+  if (lmn_env.ltl) {
+    wt[0] = (LmnWord)cur_mem; /* グローバルルート膜が性質ルールを保持する */
+  }
+
   return expand_inner(cur_mem, &dummy);
 }
 
 /* 受理頂点であるならばTRUE */
-static inline int is_accepting(LmnMembrane *mem) {
-  /* 膜名が"accept"を含む */
-  return NULL != strstr(LMN_MEM_NAME(mem), "accept");
-}
+/* static inline int is_accepting(LmnMembrane *mem) { */
+/* 膜名が"accept"を含む */
+/*   return NULL != strstr(LMN_MEM_NAME(mem), "accept"); */
+/* } */
 /* TRUEが返るならばnever節末尾への到達を意味する(i.e. 反例の検出) */
-static inline int is_end_state(LmnMembrane *mem) {
-  /* 膜名が"end"を含む */
-  return NULL != strstr(LMN_MEM_NAME(mem), "end");
-}
+/* static inline int is_end_state(LmnMembrane *mem) { */
+/* 膜名が"end"を含む */
+/*   return NULL != strstr(LMN_MEM_NAME(mem), "end");*/
+/* } */
 
 static inline void violate() {
   unsigned int i;
@@ -3181,6 +3223,7 @@ void ltl_search1() {
 /*   printf("ltl search1, state: %p\n", s); */
   if (atmstate_is_end(property_automata_state)) {
     violate();
+    unset_open((State *)vec_peek(&Stack));
     unset_fst((State *)vec_pop(&Stack));
     return;
   }
@@ -3188,21 +3231,20 @@ void ltl_search1() {
   /*
    * 状態展開
    */
-  
+
   {
     unsigned int i_trans;
 
     for (i_trans = 0;
          i_trans < atmstate_transition_num(property_automata_state);
          i_trans++) {
-      Transition transition = atmstate_get_transition(property_automata_state,
+      AutomataTransition transition = atmstate_get_transition(property_automata_state,
                                                     i_trans);
 
       mc_flags.property_rule = TRUE;
       mc_flags.property_state = transition_next(transition);
       /**
-       * 性質ルール適用
-       * グローバル変数global_rootに性質ルール適用結果が格納される
+       * 性質ルールの適用
        */
       lmn_mem_get_atomlist(s->mem, lmn_functor_intern(ANONYMOUS, lmn_intern("a"), 1));
       if (eval_formula(s->mem,
@@ -3210,14 +3252,17 @@ void ltl_search1() {
                        transition_get_formula(transition))) {
         mc_flags.property_rule = FALSE;
 
-        global_root = s->mem; /* コピー元となるグローバルルート膜 */
-        wt[0] = (LmnWord)s->mem; /* グローバルルート膜が性質ルールを保持する */
-
         /**
-         * global_rootが指す膜に対してシステムルール適用検査を行う
-         * システムルール適用はglobal_rootが指す膜のコピーに対して行う
+         * global_rootに対してシステムルール適用検査を行う．
+         * システムルール適用はglobal_rootのコピーに対して行い，
+         * 展開された"次の状態"はすべてexpandedに放り込まれる．
+         * 状態展開にexpandが使用された場合は現状態から遷移可能なすべての状態が生成されるのに対し，
+         * ampleが使用された場合はPartial Order Reductionに基づき，本当に必要な次状態のみが生成される．
+         * なお，適用可能なシステムルールが存在しない場合は，何も処理を行わない特殊なシステムルール(stutter extension rule)
+         * が存在するものと考えてε遷移をさせ，受理頂点に次状態が存在しない場合でも受理サイクルを形成できるようにする．
+         * (c.f. "The Spin Model Checker" pp.130-131)
          */
-        if (!expand(global_root)) { /* stutter extension */
+        if (!ample(s)) { /* stutter extension */
           /* グローバルルート膜のコピー */
           State *newstate;
           LmnMembrane *newmem = lmn_mem_make();
@@ -3227,17 +3272,17 @@ void ltl_search1() {
           /* 性質ルールのみが適用されている。ルール名(遷移のラベル)はどうする？ */
            newstate = state_make(newmem,
                                  transition_next(transition),
-                                 ANONYMOUS); 
-           st_insert(expanded, (st_data_t)newstate, (st_data_t)newstate);
+                                 ANONYMOUS);
+          st_insert(expanded, (st_data_t)newstate, (st_data_t)newstate);
         }
       }
     }
   }
-  
-  if (expanded->num_entries > 0) {
+
+  if (st_num(expanded) > 0) {
     /* expandedの内容をState->succeccorに保存し、その後
      * expanded内のエントリーをすべてfreeする */
-    state_succ_init(s, expanded->num_entries);
+    state_succ_init(s, st_num(expanded));
     st_foreach(expanded, gen_successor_states, (st_data_t)s);
 
     for(j = 0; j < vec_num(&s->successor); j++) { /* for each (s,l,s') */
@@ -3248,6 +3293,7 @@ void ltl_search1() {
         st_add_direct(States, (st_data_t)ss, (st_data_t)ss);
         /* push とset を１つの関数にする */
         vec_push(&Stack, (vec_data_t)ss);
+        set_open(ss); /* 状態ssがスタック上に存在する旨のフラグを立てる(POR用) */
         set_fst(ss);
         ltl_search1();
       }
@@ -3285,6 +3331,7 @@ void ltl_search1() {
   fprintf(stdout, "+++++ return function: ltl_search1() +++++\n\n");
 #endif
 
+  unset_open((State *)vec_peek(&Stack)); /* スタックから取り除かれる旨のフラグをセット(POR用) */
   unset_fst((State *)vec_pop(&Stack));
 }
 
@@ -3293,32 +3340,28 @@ void ltl_search1() {
  * テーブルexpanded内に整理された状態が既存である(既にStates内に存在する)か否かに基づいて
  * 状態空間を拡張するか否か判断する．高階関数st_foreach(c.f. st.c)に投げて使用．
  */
-static int expand_states_and_stack(st_data_t k, st_data_t successor_state, void *current_state) {
-  if (k != 0 && successor_state != 0) {
-    State *s  = (State *)current_state;
-    State *ss = (State *)successor_state;
-    State *ss_on_table;
+static int expand_states_and_stack(st_data_t _k, st_data_t successor_state, void *current_state) {
+  State *s  = (State *)current_state;
+  State *ss = (State *)successor_state;
+  State *ss_on_table;
 
-    if (!st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_table)) {
-      /* expandedの内容をState->successorに保存する（新規） */
-      if (!lmn_env.nd_result) {
-        vec_push(&s->successor, (LmnWord)ss);
-      }
-
-      st_add_direct(States, (st_data_t)ss, (st_data_t)ss); /* 状態空間に追加 */
-      vec_push(&Stack, (LmnWord)ss); /* スタックに追加 */
-    } else {
-      /* expandedの内容をState->successorに保存する（合流） */
-      if (!lmn_env.nd_result) {
-        vec_push(&s->successor, (LmnWord)ss_on_table);
-      }
-      state_free(ss); /* free dupulicate state */
+  if (!st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_table)) {
+    /* expandedの内容をState->successorに保存する（新規） */
+    if (!lmn_env.nd_result) {
+      vec_push(&s->successor, (LmnWord)ss);
     }
-    return ST_DELETE; /* Stack(またはs->successor)にエントリーの内容を保存したらこのエントリーをfreeしておく */
+
+    st_add_direct(States, (st_data_t)ss, (st_data_t)ss); /* 状態空間に追加 */
+    vec_push(&Stack, (LmnWord)ss); /* スタックに追加 */
+    set_open(ss); /* set ss to open, i.e., on the search stack */
   } else {
-    /* このbinにはエントリー(st_table_entry)が存在しないので次のbinをチェックする */
-    return ST_CONTINUE;
+    /* expandedの内容をState->successorに保存する（合流） */
+    if (!lmn_env.nd_result) {
+      vec_push(&s->successor, (LmnWord)ss_on_table);
+    }
+    state_free(ss); /* free duplicated state */
   }
+  return ST_DELETE; /* Stack(またはs->successor)にエントリーの内容を保存したらこのエントリーをfreeしておく */
 }
 
 /*
@@ -3329,14 +3372,12 @@ void nd_exec() {
 
   while (vec_num(&Stack) != 0) {
     State *s = (State *)vec_peek(&Stack); /* 展開元 */
-    if (!s->flags) { /* 状態が未展開である場合 */
-      global_root = s->mem; /* グローバルルート膜を大域変数に登録する */
-      s->flags = TRUE; /* 展開済みフラグ */
+    if (!is_expanded(s)) { /* 状態が未展開である場合 */
 
-      expand(s->mem); /* 展開先をexpandedに格納する */
+      ample(s); /* 展開先をexpandedに格納する */
 
       /* dump: execution result */
-      if (lmn_env.nd_result && expanded->num_entries == 0) {
+      if (lmn_env.nd_result && st_num(expanded) == 0) {
         unsigned int i, j;
         fprintf(stdout, "execution result:\n");
         for (i = 0, j = 0; i < vec_num(&Stack); i++) {
@@ -3350,18 +3391,21 @@ void nd_exec() {
       }
 
       /* expandedの内容をState->successorに保存する */
-      if (!lmn_env.nd_result && expanded->num_entries != 0) {
-        state_succ_init(s, expanded->num_entries);
+      if (!lmn_env.nd_result && st_num(expanded) != 0) {
+        state_succ_init(s, st_num(expanded));
       }
 
       st_foreach(expanded, expand_states_and_stack, (st_data_t)s);
+      set_expanded(s); /* sに展開済みフラグを立てる */
     }
-    else { /* s->toggle == TRUE */
-      vec_pop(&Stack); /* 状態が展開済みである場合 */
+    else {
+      /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
+      vec_pop(&Stack);
+      unset_open(s);
     }
 
     /* この段階でexpandedは空である必要がある */
-    assert(expanded->num_entries == 0);
+    LMN_ASSERT(st_num(expanded) == 0);
   }
 }
 /*----------------------------------------------------------------------*/
@@ -3376,29 +3420,31 @@ void nd_dump_exec() {
 
   while (vec_num(&Stack) != 0) {
     State *s = (State *)vec_peek(&Stack); /* 展開元 */
-    if (!s->flags) { /* 状態が未展開である場合 */
-      global_root = s->mem; /* グローバルルート膜を大域変数に登録する */
-      s->flags = TRUE; /* 展開済みフラグ */
+    if (!is_expanded(s)) { /* 状態が未展開である場合 */
 
-      expand(s->mem); /* 展開先をexpandedに格納する */
+      ample(s); /* 展開先をexpandedに格納する */
 
       /* 状態を出力（状態ID:ハッシュ値:遷移先の数:状態） */
-      fprintf(stdout, "%lu:%lu:%u:", (long unsigned int)s, s->hash, expanded->num_entries);
+      fprintf(stdout, "%lu:%lu:%d:", (long unsigned int)s, s->hash, st_num(expanded));
       lmn_dump_cell(s->mem);
 
       /* expandedの内容をState->successorに保存する */
-      if (expanded->num_entries != 0) {
-        state_succ_init(s, expanded->num_entries);
+      if (st_num(expanded) != 0) {
+        state_succ_init(s, st_num(expanded));
       }
 
       st_foreach(expanded, expand_states_and_stack, (st_data_t)s);
+      set_expanded(s); /* sに展開済みフラグを立てる */
     }
-    else { /* s->toggle == TRUE */
-      vec_pop(&Stack); /* 状態が展開済みである場合 */
+    else
+    {
+      /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
+      vec_pop(&Stack);
+      unset_open(s);
     }
 
     /* この段階でexpandedは空である必要がある */
-    assert(expanded->num_entries == 0);
+    LMN_ASSERT(st_num(expanded) == 0);
   }
 }
 

@@ -48,7 +48,7 @@
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static void automata_state_free(AutomataState s);
-static void transition_free(Transition t);
+static void transition_free(AutomataTransition t);
 
 struct Automata {
 /*   atmstate_id_t init_state; */
@@ -64,10 +64,10 @@ struct AutomataState {
   atmstate_id_t id;
   BOOL is_accept;
   BOOL is_end;
-  Vector transitions; /* Vector of Transition */
+  Vector transitions; /* Vector of AutomataTransition */
 };
 
-struct Transition {
+struct AutomataTransition {
   unsigned int next;
   PLFormula f; /* 実際は命題論理式 */
 };
@@ -93,7 +93,7 @@ Automata automata_make()
 void automata_free(Automata a)
 {
   unsigned int i;
-  
+
   /* free key strings */
   st_foreach(a->state_name_to_id, free_key_str_f, (st_data_t)0);
   st_free_table(a->state_name_to_id);
@@ -147,7 +147,7 @@ unsigned int automata_state_id(Automata a, char *state_name)
 const char *automata_state_name(Automata a, atmstate_id_t id)
 {
   char *name;
-  
+
   if (st_lookup(a->id_to_state_name, (st_data_t)(int)id, (st_data_t*)&name)) {
     return name;
   } else {
@@ -166,7 +166,7 @@ void automata_add_state(Automata a, AutomataState s)
 
 AutomataState automata_get_state(Automata a, BYTE state_id)
 {
-  LMN_ASSERT(vec_get(a->states, state_id) != 0);
+  LMN_ASSERT(vec_get(&a->states, state_id) != 0);
   return (AutomataState)vec_get(&a->states, state_id);
 }
 
@@ -218,13 +218,13 @@ static void automata_state_free(AutomataState s)
   unsigned int i;
 
   for (i = 0; i < vec_num(&s->transitions); i++) {
-    transition_free((Transition)vec_get(&s->transitions, i));
+    transition_free((AutomataTransition)vec_get(&s->transitions, i));
   }
   vec_destroy(&s->transitions);
   LMN_FREE(s);
 }
 
-void atmstate_add_transition(AutomataState s, Transition t)
+void atmstate_add_transition(AutomataState s, AutomataTransition t)
 {
   vec_push(&s->transitions, (vec_data_t)t);
 }
@@ -239,9 +239,9 @@ unsigned int atmstate_transition_num(AutomataState s)
   return vec_num(&s->transitions);
 }
 
-Transition atmstate_get_transition(AutomataState s, unsigned int index)
+AutomataTransition atmstate_get_transition(AutomataState s, unsigned int index)
 {
-  return (Transition)vec_get(&s->transitions, index);
+  return (AutomataTransition)vec_get(&s->transitions, index);
 }
 
 BOOL atmstate_is_accept(AutomataState s)
@@ -259,27 +259,27 @@ BOOL atmstate_is_end(AutomataState s)
  * transition
  */
 
-Transition transition_make(unsigned int next, PLFormula f)
+AutomataTransition transition_make(unsigned int next, PLFormula f)
 {
-  Transition t = LMN_MALLOC(struct Transition);
+  AutomataTransition t = LMN_MALLOC(struct AutomataTransition);
 
   t->next = next;
   t->f = f;
   return t;
 }
 
-void transition_free(Transition t)
+void transition_free(AutomataTransition t)
 {
   free_formula(t->f);
   LMN_FREE(t);
 }
 
-BYTE transition_next(Transition t)
+BYTE transition_next(AutomataTransition t)
 {
   return t->next;
 }
 
-PLFormula transition_get_formula(Transition t)
+PLFormula transition_get_formula(AutomataTransition t)
 {
   return t->f;
 }
@@ -296,9 +296,9 @@ static int nc_parse(FILE *in, Automata *automata)
 {
   int r;
   yyscan_t scanner;
-  
+
   *automata = automata_make();
-  
+
   nclex_init(&scanner);
   ncset_in(in, scanner);
   r = ncparse(scanner, *automata);

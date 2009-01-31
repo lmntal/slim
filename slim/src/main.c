@@ -78,12 +78,13 @@ static void usage(void)
           "  --ltl           LTL model checking mode\n"
           "  --ltl_all       LTL model checking mode, print all errors\n"
           "  --ltl_nd        --ltl_all and print all seached states and paths\n"
-          "  --translate     Output Translated C code -- under construction\n"
-          "  --version       Prints version and exits.\n"
-          "  --help          This Help.\n"
+          "  --por           Enable partial order reduction to build the state graph\n"
           "  --nc <file>     Never claim\n"
           "  --psym <file>   Propositional symbol definition file\n"
           "  --ltl_f <ltl>   LTL formula\n"
+          "  --translate     Output Translated C code -- under construction\n"
+          "  --version       Prints version and exits.\n"
+          "  --help          This Help.\n"
           );
   exit(1);
 }
@@ -114,6 +115,7 @@ static int parse_options(int argc, char *argv[])
     {"ltl_f", 1, 0, 1012},
     {"translate", 0, 0, 1013},
     {"ltl_nd", 0, 0, 1014},
+    {"por", 0, 0, 1015},
     {0, 0, 0, 0}
   };
 
@@ -176,6 +178,9 @@ static int parse_options(int argc, char *argv[])
       lmn_env.ltl_all = TRUE;
       lmn_env.ltl_nd = TRUE;
       break;
+    case 1015:
+      lmn_env.por = TRUE;
+      break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;
@@ -215,6 +220,8 @@ static void init_env(void)
   lmn_env.nd_dump = FALSE;
   lmn_env.ltl = FALSE;
   lmn_env.ltl_all = FALSE;
+  lmn_env.ltl_nd = FALSE;
+  lmn_env.por = FALSE;
   lmn_env.translate = FALSE;
   lmn_env.optimization_level = 0;
   lmn_env.load_path_num = 0;
@@ -293,7 +300,7 @@ int main(int argc, char *argv[])
       Automata automata;
       PVector prop_defs;
       int r;
-      
+
       r = mc_load_property(&automata, &prop_defs);
       if (!r) {
         run_mc(start_ruleset, automata, prop_defs);
@@ -314,7 +321,7 @@ int main(int argc, char *argv[])
         translate(f, fp);
         fclose(fp);
       }
-    } 
+    }
     else if (lmn_env.nd) {
       run_nd(start_ruleset);
     } else {
@@ -334,7 +341,7 @@ int main(int argc, char *argv[])
   output_runtime_status(stdout);
   output_hash_conflict(stdout);
 #endif
-  
+
   finalize();
   return 0;
 }

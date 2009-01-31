@@ -55,7 +55,7 @@
   int _int;
   char *str;
   struct AutomataState *state;
-  struct Transition *transition;
+  struct AutomataTransition *transition;
   struct Vector *vector;
   struct PLFormula *PLFormula;
 }
@@ -117,7 +117,7 @@ state:
     cur = automata_state_id(automata, $1);
     s = atmstate_make(cur, is_accept_state, 0);
     for (i = 0; i < vec_num($4); i++) {
-      atmstate_add_transition(s, (Transition)vec_get($4, i));
+      atmstate_add_transition(s, (AutomataTransition)vec_get($4, i));
     }
     $$ = s;
 

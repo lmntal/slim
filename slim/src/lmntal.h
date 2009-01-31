@@ -171,7 +171,8 @@ struct LmnEnv {
   BOOL nd_dump;
   BOOL ltl;
   BOOL ltl_all;
-  BOOL ltl_nd;       /* dump state transition graph after ltl model checking */
+  BOOL ltl_nd;       /* dump state transition graph after LTL model checking */
+  BOOL por;          /* to enable partial order reduction for nondeterministic execution or LTL model checking */
   BOOL translate;
   enum OutputFormat output_format;
   int optimization_level;
@@ -179,8 +180,8 @@ struct LmnEnv {
   int load_path_num;
   char *automata_file; /* never claim file */
   /* file for propositional symbol definitions */
-  char *propositional_symbol; 
-  char *ltl_exp; 
+  char *propositional_symbol;
+  char *ltl_exp;
 };
 
 extern struct LmnEnv  lmn_env;

@@ -59,6 +59,7 @@ LMN_EXTERN LmnTranslated lmn_rule_get_translated(LmnRule rule);
 LMN_EXTERN lmn_interned_str lmn_rule_get_name(LmnRule rule);
 LMN_EXTERN void lmn_rule_set_name(LmnRule rule, lmn_interned_str rule_name);
 LMN_EXTERN BYTE *lmn_rule_get_inst_seq(LmnRule rule);
+LMN_EXTERN BOOL lmn_rule_is_invisible(LmnRule rule);
 
 /*----------------------------------------------------------------------
  * Rule Set

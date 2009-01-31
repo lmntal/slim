@@ -53,6 +53,7 @@ struct LmnRule {
   int inst_seq_len;
   LmnTranslated translated;
   lmn_interned_str name;
+  BOOL is_invisible;
 };
 
 /* prototypes */
@@ -69,6 +70,7 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->inst_seq_len = inst_seq_len;  /* inst_seqの長さ */
   rule->translated = translated;
   rule->name = name;                  /* ルール名 */
+  rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
   return rule;
 }
 
@@ -125,6 +127,10 @@ lmn_interned_str lmn_rule_get_name(LmnRule rule)
 void lmn_rule_set_name(LmnRule rule, lmn_interned_str rule_name)
 {
   rule->name = rule_name;
+}
+
+BOOL lmn_rule_is_invisible(LmnRule rule) {
+  return rule->is_invisible == TRUE;
 }
 
 /*----------------------------------------------------------------------

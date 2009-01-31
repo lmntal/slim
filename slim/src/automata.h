@@ -46,7 +46,7 @@
 
 typedef struct Automata *Automata;
 typedef struct AutomataState *AutomataState;
-typedef struct Transition *Transition;
+typedef struct AutomataTransition *AutomataTransition;
 
 typedef BYTE atmstate_id_t;
 
@@ -70,19 +70,19 @@ AutomataState atmstate_make(unsigned int id,
 
 /* state of automata */
 
-void atmstate_add_transition(AutomataState s, Transition t);
+void atmstate_add_transition(AutomataState s, AutomataTransition t);
 void automata_add_state(Automata a, AutomataState s);
 atmstate_id_t atmstate_id(AutomataState s);
 unsigned int atmstate_transition_num(AutomataState s);
-Transition atmstate_get_transition(AutomataState s, unsigned int index);
+AutomataTransition atmstate_get_transition(AutomataState s, unsigned int index);
 BOOL atmstate_is_accept(AutomataState s);
 BOOL atmstate_is_end(AutomataState s);
 
 /* transition of automata */
 
-Transition transition_make(unsigned int next, PLFormula f);
-BYTE transition_next(Transition t);
-PLFormula transition_get_formula(Transition t);
+AutomataTransition transition_make(unsigned int next, PLFormula f);
+BYTE transition_next(AutomataTransition t);
+PLFormula transition_get_formula(AutomataTransition t);
 
 /* propositional Logic Formula */
 

@@ -1,5 +1,5 @@
 /*
- * task.h
+ * por.h
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -33,34 +33,24 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: task.h,v 1.5 2008/10/16 18:14:32 sasaki Exp $
+ * $Id$
  */
 
-#ifndef LMN_TASK_H
-#define LMN_TASK_H
+#ifndef POR_H
+#define POR_H
 
-#include "membrane.h"
-#include "rule.h"
-#include "automata.h"
+#include "lmntal.h"
+#include "mc.h"
+#include "vector.h"
+#include "st.h"
 
-/* 中間命令で出現するデータ構造
- * LINK_LIST    リンクオブジェクトのリスト
- * LIST_AND_MAP 第１要素がリンクオブジェクトのリストで第２要素がマップ
- * MAP          マップ
- */
-#define LINK_LIST     1
-#define LIST_AND_MAP  2
-#define MAP           3
+st_table *strans_independency; /* 独立性情報テーブル: 構造体StateTransitionのidをキーとし，bins[id]は高々1個のエントリーを持つ．
+                                *   エントリーの値はVectorであり，キーとなったidを持つ遷移と独立な関係にある遷移のidがpushされたものとなる．*/
+st_table *States_POR;    /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
+Vector *Stack_POR;       /* C1のチェックにあたってstate graphを展開するする際に使用 */
+Vector *succ_strans;     /* ある状態sから可能な遷移の集合を管理 */
+Vector *ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる */
 
-void task_init(void);
-void task_finalize(void);
-void memstack_push(LmnMembrane *mem);
-struct Vector user_system_rulesets; /* system ruleset defined by user */
-LMN_EXTERN void lmn_run(LmnRuleSet ruleset);
-LMN_EXTERN void lmn_mc_nd_run(LmnMembrane *mem);
-void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms);
-void run_nd(LmnRuleSet start_ruleset);
-BOOL react_rule(LmnMembrane *mem, LmnRule rule);
-LMN_EXTERN BOOL expand(LmnMembrane *mem);
+LMN_EXTERN BOOL ample(State *s);
 
 #endif
