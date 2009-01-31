@@ -48,7 +48,7 @@
 
 LMN_EXTERN BOOL independency_check(State *s);
 LMN_EXTERN BOOL is_independent_of_ample(StateTransition *strans);
- LMN_EXTERN int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a);
+/* LMN_EXTERN int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a); */
 /* LMN_EXTERN void dump__ample_candidate(void); */
 
 /**
@@ -548,17 +548,17 @@ static BOOL push_succstates_to_expanded(State *s) {
 }
 
 /* FOR DEBUG ONLY                                                               */
- int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a) {
-   Vector *v = (Vector *)vec;
-   unsigned long id = (unsigned long)key;
-   unsigned int i;
-   fprintf(stdout, "[%lu]-->", id);
-   for (i = 0; i < vec_num(v); ++i) {
-     fprintf(stdout, " %lu", (unsigned long)vec_get(v, i));
-   }
-   fprintf(stdout, "\n");
-   return ST_CONTINUE;
- }
+/* int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a) {  */
+/*   Vector *v = (Vector *)vec;                                                 */
+/*   unsigned long id = (unsigned long)key;                                     */
+/*   unsigned int i;                                                            */
+/*   fprintf(stdout, "[%lu]-->", id);                                           */
+/*   for (i = 0; i < vec_num(v); ++i) {                                         */
+/*     fprintf(stdout, " %lu", (unsigned long)vec_get(v, i));                   */
+/*   }                                                                          */
+/*   fprintf(stdout, "\n");                                                     */
+/*   return ST_CONTINUE;                                                        */
+/* }                                                                            */
 /*                                                                              */
 /* void dump__ample_candidate() {                                               */
 /*   unsigned int i;                                                            */
