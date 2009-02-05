@@ -660,39 +660,138 @@ LmnRuleSet load_file(char *file_name)
   return rs;
 }
 
-/* pathのディレクトリ内の拡張子がilのファイルを中間コードとしてロードする */
+
+/* st_tableを使ってstring->intを作ろうとするとkeyがメモリリークするので
+   ファイルの量は大したことないと期待してとりあえず線型走査
+   多分uniqueのほうで似たようなコードがあるはずなので
+   もっと汎用的な方法があればこの部分は消す
+ */
+struct stringint_
+{
+  char *first;
+  int second;
+};
+typedef struct stringint_ stringint;
+
+stringint *stringint_new(char *s, int i)
+{
+  stringint *r = LMN_MALLOC(stringint);
+  r->first = strdup(s);
+  r->second = i;
+  return r;
+}
+
+void stringint_delete(stringint *x)
+{
+  free(x->first);
+  free(x);
+}
+
+/*stringint専用
+  (s,?)がVectorにすでに含まれる場合はそのindexを、
+  含まれない場合は(s,0)を追加してからそのindexを返す
+  */
+static int vec_inserted_index(Vector *v, char *s)
+{
+  int i;
+  for(i=0; i<vec_num(v); ++i){
+    if(! strcmp(((stringint*)vec_get(v, i))->first, s)) return i;
+  }
+  vec_push(v, (LmnWord)stringint_new(s, 0));
+  return vec_num(v) - 1;
+}
+
+/* 一応使い方 */
+/* stringint *hoge = vec_get(V, vec_inserted_index(V, "hoge")); */
+/* hoge->second = 20; */
+
+
+static const char * const extension_table[] = {
+  ""
+  ,".lmn"
+  ,".il"
+  /*,".so"*/
+};
+
+/* pathのディレクトリ内のファイルを中間コードとしてロードする */
+/* 拡張子を除いた名前がおなじファイルがある場合extension_tableで指定した優先順で1種類のみ読み込む */
 void load_il_files(char *path)
 {
-  char *buf;
-  DIR* dir;
-  struct dirent* dp;
-  struct stat st;
-  int path_len;
-  int len;
-
-  path_len = strlen(path);
-  buf = LMN_NALLOC(char, path_len + NAME_MAX + 2);
-  dir = opendir(path);
+  int path_len = strlen(path);
+  char *buf = LMN_NALLOC(char, path_len + NAME_MAX + 2);
+  DIR *dir = opendir(path);
+  
   if (dir) {
+    Vector *loading_files_type = vec_make(8);
+    struct stat st;
+    struct dirent* dp;
+    
+    /* 読み込むファイルをリストアップする */
     while ( (dp = readdir(dir)) != NULL ){
-      /* ファイルへのパスを構築 */
       sprintf(buf, "%s%s%s", path, DIR_SEPARATOR_STR, dp->d_name);
       stat(buf, &st);
       if (S_ISREG(st.st_mode)) {
-        len = strlen(dp->d_name);
-        /* 拡張子が il か lmnのファイルだけをロードする */
-        /* 追加: so のファイルもロードしてみる */
-        if (!strcmp(dp->d_name + len - 3, ".il") ||
-            !strcmp(dp->d_name + len - 4, ".lmn") ||
-            !strcmp(dp->d_name + len - 3, ".so")) {
-          /* ファイルへのパスを構築 */
-          buf[0] = '\0';
-          strcpy(buf, path);
-          strcat(buf, DIR_SEPARATOR_STR);
-          strcat(buf, dp->d_name);
-          load_file(buf);
+        int len = strlen(dp->d_name);
+        char *dot_pos = strrchr(dp->d_name, '.');
+        char *basename = NULL;
+        char *extension = NULL;
+
+        if(dot_pos){
+          int filetype;
+          int basename_len = dot_pos - dp->d_name;
+          int extension_len = len - basename_len;
+          basename = LMN_CALLOC(char, basename_len+1);
+          extension = LMN_CALLOC(char, extension_len+1);
+          strncpy(basename, dp->d_name, basename_len);
+          strncpy(extension, dp->d_name+basename_len, extension_len);
+
+          {
+            int i = 0;
+            for(i=1; i<sizeof(extension_table)/sizeof(extension_table[0]); ++i){
+              if(! strcmp(extension, extension_table[i])){
+                filetype = i;
+              }
+            }
+          }
+          
+          if(filetype > 0){ /* 読み込むべき拡張子なら追加 */
+            int index = vec_inserted_index(loading_files_type, basename);
+            stringint *ent = (stringint*)vec_get(loading_files_type, index);
+            int old_filetype = ent->second;
+            if(filetype > old_filetype){
+              ent->second = filetype;
+            }
+          }
+
+          free(basename);
+          free(extension);
         }
       }
+    }
+
+    /* 読み込む */
+    {
+      int i;
+      int num = vec_num(loading_files_type);
+      for(i=0; i<num; ++i){
+        stringint *ent = vec_get(loading_files_type, i);
+        char *basename = ent->first;
+        char *extension = extension_table[ent->second];
+      
+        sprintf(buf, "%s%s%s%s", path, DIR_SEPARATOR_STR, basename, extension);
+        load_file(buf);
+      }
+    }
+
+    /* 開放 */
+    {
+      int i;
+      int num = vec_num(loading_files_type);
+      for(i=0; i<num; ++i){
+        stringint *ent = vec_get(loading_files_type, i);
+        stringint_delete(ent);
+      }
+      vec_free(loading_files_type);
     }
   }
   closedir(dir);
