@@ -42,7 +42,7 @@
 #include "functor.h"
 #include "runtime_status.h"
 #include "error.h"
-#include <malloc.h>
+#include <stdlib.h>
 #include <math.h>
 
 #define ARYSIZE(ary)	(sizeof(ary)/sizeof((ary)[0]))
