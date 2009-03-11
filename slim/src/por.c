@@ -379,6 +379,7 @@ BOOL independency_check(State *s) {
           t2 = ss2_j2->succ_state;
 
           if (t1 == t2
+              && ss1_i2 != ss2_j2 /* ss1=ss2となった際に，同一の遷移同士で独立性を定義しないようにする */
               && ss2_j2->rule == s_i->rule
               && ss1_i2->rule == s_j->rule) {
             /* 遷移s_iと遷移s_jが独立であるため，IDを書換えた上で独立性情報テーブルを更新する */
