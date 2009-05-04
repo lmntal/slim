@@ -141,8 +141,12 @@ smalleq($i,$j) :- $i =< $j | yes. smalleq(9,20). % yes. %ok
 eq($i,$j) :- $i = $j | yes. eq(9, 9). % yes. %ok
 eq($i,$j) :- $i == $j | yes. eq(9, 9). % yes. %ok
 eq($i,$j) :- $i =:= $j | yes. eq(9, 9). % yes. %ok
-neq($i, $j) :- $i \= $j | yes. eq(10, 10). % yes. %ng
-neq($i, $j) :- $i =\= $j | yes. eq(10, 10). % yes. %ng
+neq($i, $j) :- $i \= $j | yes. neq(10, 10). % yes. %ng
+neq($i, $j) :- $i \= $j | yes. neq(10, 11). % yes. %ok
+neq($i) :- $i \= 0 | yes. neq(0). % yes. %ng
+neq($i) :- $i \= 0 | yes. neq(1). % yes. %ok
+neq($i, $j) :- $i =\= $j | yes. neq(10, 10). % yes. %ng
+neq($i, $j) :- $i =\= $j | yes. neq(10, 11). % yes. %ok
 
 %% float
 %% 検査
@@ -162,8 +166,8 @@ smalleq($i,$j) :- $i =<. $j | yes. smalleq(9.567,20.332). % yes. %ok
 eq($i,$j) :- $i = $j | yes. eq(9.3, 9.3). % yes. %ok
 eq($i,$j) :- $i == $j | yes. eq(9.2, 9.2). % yes. %ok
 eq($i,$j) :- $i =:=. $j | yes. eq(9.1, 9.1). % yes. %ok
-neq($i, $j) :- $i \= $j | yes. eq(10.4, 10.4). % yes. %ng
-neq($i, $j) :- $i =\=. $j | yes. eq(10.6, 10.6). % yes. %ng
+neq($i, $j) :- $i \= $j | yes. neq(10.4, 10.4). % yes. %ng
+neq($i, $j) :- $i =\=. $j | yes. neq(10.6, 10.6). % yes. %ng
 
 %% string
 s($s) :- string($s) | yes. s("hoge"), s(""). %yes, yes %ok

@@ -2795,6 +2795,30 @@ REMOVE_FREE_GROUND_CONT:
       }
       break;
     }
+    case INSTR_NEQFUNC:
+    {
+      LmnInstrVar func0;
+      LmnLinkAttr func1;
+
+      READ_VAL(LmnFunctor, instr, func0);
+      READ_VAL(LmnFunctor, instr, func1);
+
+      if (at[func0] == at[func1]) {
+        switch (at[func0]) {
+        case LMN_INT_ATTR:
+          if ((int)wt[func0] == (int)wt[func1]) return FALSE;
+          break;
+        case LMN_DBL_ATTR:
+          if (*(double*)(&wt[func0]) ==
+              *(double*)(&wt[func1])) return FALSE;
+          break;
+        default:
+          if (wt[func0] == wt[func1]) return FALSE;
+          break;
+        }
+      }
+      break;
+    }
     case INSTR_ADDATOM:
     {
       LmnInstrVar memi, atomi;
