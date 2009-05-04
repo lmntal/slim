@@ -79,18 +79,19 @@ lmn_interned_str create_new_id()
   return next_sym_id++;
 }
 
-lmn_interned_str lmn_intern(char *name)
+lmn_interned_str lmn_intern(const char *name)
 {
   lmn_interned_str new_id;
+  char *name2;
 
   /* すでにnameに対応する値があるならそれを返す */
   if (st_lookup(sym_tbl, (st_data_t)name, (st_data_t *)&new_id)) return new_id;
 
   /* 新しいIDを作る */
   new_id = create_new_id();
-  name = strdup(name);
-  st_add_direct(sym_tbl, (st_data_t)name, (st_data_t)new_id);
-  st_add_direct(sym_rev_tbl, (st_data_t)new_id, (st_data_t)name);
+  name2 = strdup(name);
+  st_add_direct(sym_tbl, (st_data_t)name2, (st_data_t)new_id);
+  st_add_direct(sym_rev_tbl, (st_data_t)new_id, (st_data_t)name2);
   return new_id;
 }
 
