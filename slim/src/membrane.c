@@ -48,6 +48,8 @@
 #endif
 
 
+BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
+
 /* ルールセットを膜に追加する */
 void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
@@ -1398,20 +1400,25 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
   return TRUE;
 }
 
-BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2) {
+BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
+{
   BOOL t;
 
 #ifdef PROFILE
   status_start_mem_equals_calc();
 #endif
 
-  t = lmn_mem_equals_rec(mem1, mem2, CHECKED_MEM_DEPTH);
+  t = lmn_mem_equals(mem1, mem2);
 
 #ifdef PROFILE
   status_finish_mem_equals_calc();
 #endif
-
   return t;
+}
+
+BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
+{
+  return lmn_mem_equals_rec(mem1, mem2, CHECKED_MEM_DEPTH);
 }
 /*----------------------------------------------------------------------*/
 /* 膜の同型性判定 ここまで */
