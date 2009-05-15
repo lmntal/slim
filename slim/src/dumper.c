@@ -69,6 +69,14 @@ static void lmn_dump_cell_internal(LmnMembrane *mem,
                                    struct DumpState *s);
 
 static void dump_link(LmnAtomPtr atom, int i, SimpleHashtbl *ht, struct DumpState *s);
+static BOOL lmn_dump_mem_internal(LmnMembrane *mem,
+                                  SimpleHashtbl *ht,
+                                  struct DumpState *s);
+
+static BOOL dump_atom_args(LmnAtomPtr atom,
+                           SimpleHashtbl *ht,
+                           struct DumpState *s,
+                           int call_depth);
 
 static struct AtomRec *atomrec_make()
 {
@@ -309,7 +317,24 @@ static BOOL dump_proxy(LmnAtomPtr atom,
     }
   }
   else {
-    fprintf(stdout, LINK_FORMAT, t->link_num);
+    BOOL dumped = FALSE;
+    /* outプロキシの接続先である膜の自由リンクが一つで、一引数の'+'アトムに
+       接続している場合、膜をその場に出力する */
+    if (LMN_ATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR) {
+      const LmnAtomPtr in = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0));
+      if (!LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(in, 1)) &&
+          LMN_ATOM_GET_FUNCTOR(LMN_ATOM_GET_LINK(in, 1)) == LMN_UNARY_PLUS_FUNCTOR) {
+        LmnMembrane *mem = LMN_PROXY_GET_MEM(in);
+        if (lmn_mem_nfreelinks(mem, 1)) {
+          get_atomrec(ht, LMN_ATOM(LMN_ATOM_GET_LINK(in, 1)))->done = TRUE;
+          lmn_dump_mem_internal(mem, ht, s);
+          dumped = TRUE;
+        }
+      }
+    }
+    if (!dumped) {
+      fprintf(stdout, LINK_FORMAT, t->link_num);
+    }
   }
   return TRUE;
 }
@@ -322,8 +347,6 @@ static BOOL dump_symbol_atom(LmnAtomPtr atom,
 {
   LmnFunctor f;
   LmnArity arity;
-  int i;
-  int limit;
   struct AtomRec *t;
   
   f = LMN_ATOM_GET_FUNCTOR(atom);
@@ -342,8 +365,32 @@ static BOOL dump_symbol_atom(LmnAtomPtr atom,
   if (t->done) return FALSE;
   t->done = TRUE;
 
+
+  if (call_depth == 0 &&
+      (f == LMN_UNARY_PLUS_FUNCTOR ||
+       f == LMN_UNARY_MINUS_FUNCTOR)) {
+    fprintf(stdout, "%s", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)));
+    return dump_atom(LMN_ATOM_GET_LINK(atom, 0),
+                     ht,
+                     LMN_ATOM_GET_ATTR(atom, 0),
+                     s,
+                     1);
+  }
   dump_atomname(f);
-  limit = arity;
+  dump_atom_args(atom, ht, s, call_depth);
+  return TRUE;
+}
+
+  
+static BOOL dump_atom_args(LmnAtomPtr atom,
+                           SimpleHashtbl *ht,
+                           struct DumpState *s,
+                           int call_depth)
+{
+
+  int i;
+  int limit = LMN_ATOM_GET_ARITY(atom);
+
   if (call_depth > 0) limit--;
 
   if (limit > 0) {
@@ -397,15 +444,6 @@ static BOOL dump_toplevel_atom(LmnAtomPtr atom,
        f == LMN_OUT_PROXY_FUNCTOR)) {
     return dump_proxy(atom, ht, LMN_ATTR_MAKE_LINK(0), s, 0);
   }
-  else if (f == LMN_UNARY_PLUS_FUNCTOR ||
-           f == LMN_UNARY_MINUS_FUNCTOR) {
-    fprintf(stdout, "%s", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)));
-    return dump_atom(LMN_ATOM_GET_LINK(atom, 0),
-                     ht,
-                     LMN_ATOM_GET_ATTR(atom, 0),
-                     s,
-                     1);
-  }
   else {
     return dump_symbol_atom(atom, ht, LMN_ATTR_MAKE_LINK(0), s, 0);
   }
@@ -422,16 +460,22 @@ static void dump_ruleset(struct Vector *v)
   }
 }
                   
-static void lmn_dump_mem_internal(LmnMembrane *mem,
+static BOOL lmn_dump_mem_internal(LmnMembrane *mem,
                                   SimpleHashtbl *ht,
                                   struct DumpState *s)
 {
+  if (hashtbl_contains(ht, (HashKeyType)mem)) return FALSE;
+  
+  hashtbl_put(ht, (HashKeyType)mem, (HashValueType)0);
+
   if (mem->name != ANONYMOUS) {
     fprintf(stdout, "%s", lmn_id_to_name(mem->name));
   }
   fprintf(stdout, "{");
   lmn_dump_cell_internal(mem, ht, s);
   fprintf(stdout, "}");
+
+  return TRUE;
 }
 
 static void lmn_dump_cell_internal(LmnMembrane *mem,
@@ -446,7 +490,7 @@ static void lmn_dump_cell_internal(LmnMembrane *mem,
 
   if (!mem) return;
 
-  if (hashtbl_contains(ht, (HashKeyType)mem)) return;
+/*   if (hashtbl_contains(ht, (HashKeyType)mem)) return; */
 
   for (i = 0; i < PRI_NUM; i++) {
     vec_init(&pred_atoms[i], 16);
@@ -523,12 +567,15 @@ static void lmn_dump_cell_internal(LmnMembrane *mem,
 
   { /* dump chidren */
     LmnMembrane *m;
+    BOOL dumped = FALSE;
     for (m = mem->child_head; m; m = m->next) {
-      lmn_dump_mem_internal(m, ht, s);
-      if (m->next)
-        fprintf(stdout, ", ");
+      if (lmn_dump_mem_internal(m, ht, s)) {
+        dumped = TRUE;
+        if (m->next)
+          fprintf(stdout, ", ");
+      }
     }
-    if (mem->child_head) {
+    if (dumped) {
       /* 最後の膜の後に ". "を出力 */
       fprintf(stdout, ". ");
     }
