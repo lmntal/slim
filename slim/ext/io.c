@@ -36,7 +36,7 @@ void print_line(LmnMembrane *mem, LmnWord a0, LmnLinkAttr t0)
   print_any(mem, a0, t0);
 }
 
-void init_print(void)
+void init_io(void)
 {
   lmn_register_c_fun("print_any", print_line, 1);
   lmn_register_c_fun("print_line", print_line, 1);

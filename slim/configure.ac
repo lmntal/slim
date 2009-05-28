@@ -23,7 +23,7 @@ AC_PROG_LEX
 AM_PROG_LEX
 
 AC_SUBST(CFLAGS)
-CFLAGS="-Wall $CFLAGS"
+CFLAGS="-Wall -export-dynamic $CFLAGS"
 
 
 # 開発時にはこのオプションを付けるようにする
@@ -37,7 +37,7 @@ else
 fi
 
 if test "$GCC" = "yes" && test "$enable_devel" = "yes"; then
-  CFLAGS="-ggdb -Wall -Wchar-subscripts -Wmissing-declarations -Wredundant-decls -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wcast-align -Wsign-compare -Winline"
+  CFLAGS=$CFLAGS "-ggdb -Wchar-subscripts -Wmissing-declarations -Wredundant-decls -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wcast-align -Wsign-compare -Winline"
 # 現状コンパイルで着ないのでコメントアウト
 #  CFLAGS="-std=c89 -pedantic $CFLAGS"
 fi
@@ -145,6 +145,6 @@ AC_CHECK_FUNC([strchr])
 # Create output files
 #
 echo $SLIM_VERSION > VERSION
-AC_OUTPUT(Makefile src/Makefile src/genconfig lib/Makefile test/Makefile test/system_check/Makefile doc/Makefile doc/slim.1)
+AC_OUTPUT(Makefile src/Makefile src/genconfig lib/Makefile ext/Makefile test/Makefile test/system_check/Makefile doc/Makefile doc/slim.1)
 
 
