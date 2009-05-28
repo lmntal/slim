@@ -51,6 +51,7 @@
 #include "lmntal_system_adapter.h"
 #include "propositional_symbol.h"
 #include "mc.h"
+#include "ext.h"
 
 #ifdef PROFILE
 #include "runtime_status.h"
@@ -246,10 +247,13 @@ static void init_internal(void)
 
   init_default_system_ruleset();
   task_init();
-
+  ext_init();
+  
 #ifdef PROFILE
   runtime_status_init();
 #endif
+
+  load_ext_files(SLIM_EXT_DIR);
 }
 
 static void finalize(void)
@@ -259,7 +263,8 @@ static void finalize(void)
   destroy_rules();
   task_finalize();
   free_atom_memory_pools();
-
+  ext_finalize();
+  
 #ifdef PROFILE
   runtime_status_finalize();
 #endif

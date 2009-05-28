@@ -18,6 +18,7 @@ datarootdir=@datarootdir@  # for autoconf 2.60 and later.
 slim_datadir=@datadir@/slim
 
 slim_libdir=`echo "$slim_datadir/lib" | $pathfix`
+slim_extdir=`echo "$slim_datadir/ext" | $pathfix`
 
 #============================================================
 # arch.h
@@ -30,6 +31,7 @@ cat > arch.h <<EOF
 
 #define SLIM_DATA_DIR "$slim_datadir"
 #define SLIM_LIB_DIR "$slim_libdir"
+#define SLIM_EXT_DIR "$slim_extdir"
 
 #if defined __CYGWIN32__ && !defined __CYGWIN__
 #  define __CYGWIN__  __CYGWIN32__
@@ -47,6 +49,12 @@ cat > arch.h <<EOF
 #  define PATH_SEPARATOR_CHAR   ':'
 #  define PATH_SEPARATOR_STR    ":"
 #endif /* !DIR_SEPARATOR_CHAR */
+
+#if defined  _WIN32 || defined __CYGWIN__
+#  define DL_FILE_TYPE          "dll"
+#else
+#  define DL_FILE_TYPE          "so"
+#endif
 
 #endif /* LMN_ARCH_H */
 EOF
@@ -71,6 +79,7 @@ R=config.mandir :- R="$mandir".
 R=config.sysdatadir :- R="$slim_datadir".
 %% System Library Directory
 R=config.syslibdir :- R="$slim_libdir".
+R=config.sysextdir :- R="$slim_extdir".
 
 }.
 EOF

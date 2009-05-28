@@ -189,4 +189,6 @@ H = integer.lcm(M, N) :- int(M),int(N) | H = M*N/integer.gcd(M, N).
 H = integer.factorial(N) :- N =< 1 | H = 1.
 H = integer.factorial(N) :- N >= 2 | H = N*integer.factorial(N-1).
 
+integer.set(A,B,C) :- unary(C), int(A), int(B) |
+    '$c_callback'("integer_set", A, B, C).
 }.

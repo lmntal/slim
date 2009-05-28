@@ -23,3 +23,4 @@ LMNTAL="$(LMNTAL_HOME)/bin/lmntal"
 	fi
 	$(LMNTAL) $(LMN_CFLAGS) $< >$@ 2>__error_temp.txt
 	!(grep -i error __error_temp.txt)
+

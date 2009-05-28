@@ -56,6 +56,7 @@
 #include "propositional_symbol.h"
 #include "functor.h"
 #include "error.h"
+#include "ext.h"
 #include <string.h>
 
 #ifdef PROFILE
@@ -70,6 +71,17 @@ unsigned int wt_size;
 
 LmnMembrane *global_root;   /* for tracer */
 unsigned int trace_num = 0; /* for tracer */
+
+typedef void (* callback_0)(LmnMembrane *); 
+typedef void (* callback_1)(LmnMembrane *, LmnWord, LmnLinkAttr); 
+typedef void (* callback_2)(LmnMembrane *,
+                            LmnWord, LmnLinkAttr,
+                            LmnWord, LmnLinkAttr); 
+typedef void (* callback_3)(LmnMembrane *,
+                            LmnWord, LmnLinkAttr,
+                            LmnWord, LmnLinkAttr,
+                            LmnWord, LmnLinkAttr); 
+
 
 #define SWAP(T,X,Y)       do { T t=(X); (X)=(Y); (Y)=t;} while(0)
 #define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
@@ -3005,6 +3017,62 @@ REMOVE_FREE_GROUND_CONT:
       instr += subinstr_size;
       break;
     }
+    case INSTR_CCALLBACK:
+    {
+      LmnInstrVar atomi;
+      LmnAtomPtr atom;
+      struct CCallback *c;
+      
+      READ_VAL(LmnInstrVar, instr, atomi);
+
+      atom = LMN_ATOM(wt[atomi]);
+      
+      if (!LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(atom, 0))) {
+        LmnAtomPtr f_name = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0));
+        lmn_interned_str name = LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(f_name));
+        int arity = LMN_FUNCTOR_ARITY(LMN_ATOM_GET_FUNCTOR(atom));
+
+        c = ext_get_callback(name);
+        if (!c) break;
+
+        if (arity-1 != c->arity) {
+          fprintf(stderr, "EXTERNAL FUNC: invalid arity - %s\n", LMN_SYMBOL_STR(name));
+          break;
+        }
+
+        switch (arity) {
+        case 1:
+          ((callback_0)c->f)((LmnMembrane *)wt[0]);
+          break;
+        case 2:
+          ((callback_1)c->f)((LmnMembrane *)wt[0],
+                          LMN_ATOM_GET_LINK(atom, 1), LMN_ATOM_GET_ATTR(atom, 1));
+          break;
+        case 3:
+          ((callback_2)c->f)((LmnMembrane *)wt[0],
+                          LMN_ATOM_GET_LINK(atom, 1), LMN_ATOM_GET_ATTR(atom, 1),
+                          LMN_ATOM_GET_LINK(atom, 2), LMN_ATOM_GET_ATTR(atom, 2));
+          break;
+        case 4:
+          ((callback_3)c->f)((LmnMembrane *)wt[0],
+                          LMN_ATOM_GET_LINK(atom, 1), LMN_ATOM_GET_ATTR(atom, 1),
+                          LMN_ATOM_GET_LINK(atom, 2), LMN_ATOM_GET_ATTR(atom, 2),
+                          LMN_ATOM_GET_LINK(atom, 3), LMN_ATOM_GET_ATTR(atom, 3));
+          break;
+        default:
+          printf("EXTERNAL FUNCTION: too many arguments\n");
+          break;
+        }
+      }
+
+      lmn_mem_remove_atom((LmnMembrane *)wt[0], wt[atomi], at[atomi]);
+      lmn_mem_remove_atom((LmnMembrane *)wt[0],
+                          LMN_ATOM_GET_LINK(atom, 0),
+                          LMN_ATOM_GET_ATTR(atom, 0));
+      lmn_free_atom(LMN_ATOM_GET_LINK(atom, 0), LMN_ATOM_GET_ATTR(atom, 0));
+      lmn_free_atom(wt[atomi], at[atomi]);
+      break;
+    }
     default:
       fprintf(stderr, "interpret: Unknown operation %d\n", op);
       exit(1);
@@ -3118,6 +3186,7 @@ BOOL expand(LmnMembrane *cur_mem) {
   return expand_inner(cur_mem, &dummy);
 }
 
+/* REFACTOR: 不必要なコード */
 /* 受理頂点であるならばTRUE */
 /* static inline int is_accepting(LmnMembrane *mem) { */
 /* 膜名が"accept"を含む */
@@ -3270,6 +3339,7 @@ void ltl_search1() {
       /**
        * 性質ルールの適用
        */
+       /* REFACTOR: この行は無意味 */
       lmn_mem_get_atomlist(s->mem, lmn_functor_intern(ANONYMOUS, lmn_intern("a"), 1));
       if (eval_formula(s->mem,
                        mc_data.propsyms,
