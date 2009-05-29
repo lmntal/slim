@@ -141,6 +141,8 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
                          Vector *srcvec,
                          Vector **ret_dstlovec,
                          SimpleHashtbl **ret_atommap);
+void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec);
+void lmn_mem_free_ground(Vector *srcvec);
 
 /* リンクオブジェクトの代替 */
 typedef struct LinkObj {

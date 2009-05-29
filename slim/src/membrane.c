@@ -922,6 +922,72 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
   *ret_atommap = atommap;
 }
 
+HashSet *ground_atoms(Vector *srcvec                         )
+{
+  HashSet *atoms = hashset_make(16);
+  Vector *stack = vec_make(16);
+  unsigned int i;
+
+  for (i = 0; i < vec_num(srcvec); i++) {
+    LinkObj l = (LinkObj)vec_get(srcvec, i);
+
+    if (!LMN_ATTR_IS_DATA(l->pos)) {
+      /* 自己ループしているリンクは無視する */
+      if (l->ap != LMN_ATOM_GET_LINK(l->ap, l->pos)) {
+      /* 根のリンクのリンクポインタを0に設定する */
+        LMN_ATOM_SET_LINK(l->ap, l->pos, 0);
+        hashset_add(atoms, (HashKeyType)l->ap);
+        vec_push(stack, l->ap);
+      }
+    }
+  }
+
+  while (vec_num(stack) > 0) {
+    LmnAtomPtr src_atom = LMN_ATOM(vec_pop(stack));
+    for (i = 0; i < LMN_ATOM_GET_ARITY(src_atom); i++) {
+      LmnWord next_src = LMN_ATOM_GET_LINK(src_atom, i);
+      LmnLinkAttr next_attr = LMN_ATOM_GET_ATTR(src_atom, i);
+
+      /* LMN_ATOM_GET_LINK(src_atom, i)が0になる場合は、根に到達した場合 */
+      if (!LMN_ATTR_IS_DATA(next_attr) &&
+          LMN_ATOM_GET_LINK(src_atom, i) != 0) {
+        if (!hashset_contains(atoms, next_src)) { /* next_srcは未訪問 */
+          hashset_add(atoms, (HashKeyType)next_src);
+          vec_push(stack, next_src);
+        } 
+      }
+    }
+  }
+
+  vec_free(stack);
+  return atoms;
+}
+
+void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
+{
+  HashSet *atoms = ground_atoms(srcvec);
+  HashSetIterator it;
+
+  for (it = hashset_iterator(atoms);
+       !hashsetiter_isend(&it);
+       hashsetiter_next(&it)) {
+    mem_remove_symbol_atom(mem, LMN_ATOM(hashsetiter_entry(&it)));
+   }
+  hashset_free(atoms);
+}
+
+void lmn_mem_free_ground(Vector *srcvec)
+{
+  HashSet *atoms = ground_atoms(srcvec);
+  HashSetIterator it;
+
+  for (it = hashset_iterator(atoms);
+       !hashsetiter_isend(&it);
+       hashsetiter_next(&it)) {
+    free_symbol_atom_with_buddy_data(LMN_ATOM(hashsetiter_entry(&it)));
+  }
+  hashset_free(atoms);
+}
 
 /* 膜の同型性判定 ここから */
 /*----------------------------------------------------------------------*/
