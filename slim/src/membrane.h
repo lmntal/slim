@@ -70,6 +70,7 @@ typedef struct AtomListEntry {
 #define LMN_MEM_NAME(MP) LMN_SYMBOL_STR(LMN_MEM_NAME_ID(MP))
 
 LMN_EXTERN LmnMembrane *lmn_mem_make(void);
+LMN_EXTERN void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_free(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_drop(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_add_child_mem(LmnMembrane *parentmem, LmnMembrane *newmem);
@@ -123,6 +124,10 @@ LMN_EXTERN void lmn_mem_unify_symbol_atom_args(LmnAtomPtr atom1,
                                                int pos1,
                                                LmnAtomPtr atom2,
                                                int pos2);
+LMN_EXTERN void lmn_relink_symbols(LmnAtomPtr atom0,
+                                   int pos0,
+                                   LmnAtomPtr atom1,
+                                   int pos1);
 LMN_EXTERN void lmn_mem_relink_atom_args(LmnMembrane *mem,
                                          LmnWord atom0,
                                          LmnLinkAttr attr0,

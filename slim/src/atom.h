@@ -40,6 +40,7 @@
 #define LMN_ATOM_H
 
 #include "lmntal.h"
+#include "symbol.h"
 
 /*
  * Atom Structure

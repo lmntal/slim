@@ -192,7 +192,9 @@ u($u), v($v) :- unary($u), unary($v), $u = $v | yes. u(a), v(a). % yes. %ok
 %% ground
 %% 検査
 a($x) :- ground($x) | b($x).  a(n).               % b(n)       %ok
+a($x) :- ground($x) | b($x).  a(0).               % b(0)       %ok
 a($x) :- ground($x) | b($x).  a(n(m(l,l),m(l,l))) % b(n(m(l,l),m(l,l))) %ok
+a($x) :- ground($x) | b($x).  a(n(m(0,0),m(0,0))) % b(n(m(0,0),m(0,0))) %ok
 a($x) :- ground($x) | b($x).  a(g(G,G)).          % b(g(H,H))  %ok
 a($x) :- ground($x) | b($x).  a([1,2,3]).         % b([1,2,3]) %ok
 a($x) :- ground($x) | b($x).  a(p(q(r(s(t(u(v(w(x(X1,X2,X3),W1)),X1)),X2)),X3),W1)). % b(p(q(r(s(t(u(v(w(x(Y1,Y2,Y3),Z1)),Y1)),Y2)),Y3),Z1)). %ok

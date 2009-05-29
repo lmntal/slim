@@ -426,6 +426,7 @@ void lmn_run(LmnRuleSet start_ruleset)
   while(!memstack_isempty()){
     LmnMembrane *mem = memstack_peek();
     LmnMembrane *m;
+
     if(!exec(mem)) {
       if (!react_ruleset(mem, system_ruleset)) {
         /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
@@ -1467,18 +1468,12 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
     }
     case INSTR_REMOVEMEM:
     {
-      LmnInstrVar memi;
-      LmnMembrane *mp;
+      LmnInstrVar memi, parenti;
 
       READ_VAL(LmnInstrVar, instr, memi);
-      instr += sizeof(LmnInstrVar); /* ingnore parent */
+      READ_VAL(LmnInstrVar, instr, parenti);
 
-      mp = (LmnMembrane*)wt[memi];
-      LMN_ASSERT(mp->parent);
-      if(mp->parent->child_head == mp) mp->parent->child_head = mp->next;
-      if(mp->prev) mp->prev->next = mp->next;
-      if(mp->next) mp->next->prev = mp->prev;
-      mp->parent = NULL; /* removeproxies のために必要 */
+      lmn_mem_remove_mem((LmnMembrane *)wt[parenti], (LmnMembrane *)wt[memi]);
       break;
     }
     case INSTR_FREEMEM:

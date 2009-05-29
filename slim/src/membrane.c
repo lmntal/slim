@@ -193,6 +193,15 @@ LmnMembrane *lmn_mem_make(void)
   return mem;
 }
 
+void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem)
+{
+  LMN_ASSERT(parent);
+  if (parent->child_head == mem) parent->child_head = mem->next;
+  if (mem->prev) mem->prev->next = mem->next;
+  if (mem->next) mem->next->prev = mem->prev;
+  mem->parent = NULL; /* removeproxies のために必要 */
+}
+
 /* 膜内のプロセスと子膜を破棄する */
 void lmn_mem_drop(LmnMembrane *mem)
 {
@@ -412,7 +421,7 @@ void lmn_mem_newlink(LmnMembrane *mem,
   if (LMN_ATTR_IS_DATA(attr0)) {
     if (LMN_ATTR_IS_DATA(attr1)) { /* both data */
       LMN_ASSERT(pos0 == 0 && pos1 == 0);
-      lmn_mem_link_data_atoms(mem, atom0, pos0, atom1, pos1);
+      lmn_mem_link_data_atoms(mem, atom0, attr0, atom1, attr1);
     }
     else { /* atom0 data, atom1 symbol */
       LMN_ATOM_SET_LINK(LMN_ATOM(atom1), pos1, atom0);
@@ -426,6 +435,17 @@ void lmn_mem_newlink(LmnMembrane *mem,
   else { /* both symbol */
     lmn_newlink_in_symbols(LMN_ATOM(atom0), pos0, LMN_ATOM(atom1), pos1);
   }
+}
+
+void lmn_relink_symbols(LmnAtomPtr atom0,
+                        int pos0,
+                        LmnAtomPtr atom1,
+                        int pos1)
+{
+  newlink_symbol_and_something(LMN_ATOM(atom0),
+                               pos0,
+                               LMN_ATOM_GET_LINK(LMN_ATOM(atom1), pos1),
+                               LMN_ATOM_GET_ATTR(LMN_ATOM(atom1), pos1));
 }
 
 void lmn_mem_relink_atom_args(LmnMembrane *mem,
@@ -877,22 +897,21 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
     LinkObj l = (LinkObj)vec_get(srcvec, i);
     LmnWord cpatom;
 
-    /* コピー済みでなければコピーする */
-    if ((cpatom = hashtbl_get_default(atommap, l->ap, 0)) == 0) {
-      cpatom = lmn_copy_atom(l->ap, l->pos);
-      hashtbl_put(atommap, (HashKeyType)l->ap, (HashValueType)cpatom);
-      mem_push_symbol_atom(mem, LMN_ATOM(cpatom));
-    }
-
-    vec_push(*ret_dstlovec, (LmnWord)LinkObj_make(cpatom, l->pos));
-
     if (LMN_ATTR_IS_DATA(l->pos)) {
+      cpatom = l->ap;
       lmn_mem_push_atom(mem, (LmnWord)cpatom, l->pos);
     } else { /* symbol atom */
+      /* コピー済みでなければコピーする */
+      if ((cpatom = hashtbl_get_default(atommap, l->ap, 0)) == 0) {
+        cpatom = lmn_copy_atom(l->ap, l->pos);
+        hashtbl_put(atommap, (HashKeyType)l->ap, (HashValueType)cpatom);
+        mem_push_symbol_atom(mem, LMN_ATOM(cpatom));
+      }
       /* 根のリンクのリンクポインタを0に設定する */
       LMN_ATOM_SET_LINK(cpatom, l->pos, 0);
       vec_push(stack, l->ap);
     }
+    vec_push(*ret_dstlovec, (LmnWord)LinkObj_make(cpatom, l->pos));
   }
 
   while (vec_num(stack) > 0) {
@@ -909,6 +928,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
         LmnWord next_copied = hashtbl_get_default(atommap, next_src, 0);
         if (next_copied == 0) { /* next_srcは未訪問 */
           next_copied = lmn_copy_atom(next_src, next_attr);
+          mem_push_symbol_atom(mem, LMN_ATOM(next_copied));
           hashtbl_put(atommap, (HashKeyType)next_src, (HashValueType)next_copied);
           vec_push(stack, next_src);
         } 
@@ -922,7 +942,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
   *ret_atommap = atommap;
 }
 
-HashSet *ground_atoms(Vector *srcvec                         )
+HashSet *ground_atoms(Vector *srcvec)
 {
   HashSet *atoms = hashset_make(16);
   Vector *stack = vec_make(16);
