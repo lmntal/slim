@@ -136,6 +136,19 @@ LMN_EXTERN void lmn_mem_remove_proxies(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem);
 LMN_EXTERN void lmn_mem_remove_temporary_proxies(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem);
+
+void lmn_mem_copy_ground(LmnMembrane *mem,
+                         Vector *srcvec,
+                         Vector **ret_dstlovec,
+                         SimpleHashtbl **ret_atommap);
+
+/* リンクオブジェクトの代替 */
+typedef struct LinkObj {
+  LmnWord ap;
+  LmnLinkAttr pos;
+} *LinkObj;
+
+LinkObj LinkObj_make(LmnWord ap, LmnLinkAttr pos);
 /* LmnAtomPtr* lmn_atomlist_end(AtomSetEntry * ent); */
 #define lmn_atomlist_end(p_atomset_entry) ((LmnAtomPtr)p_atomset_entry)
 

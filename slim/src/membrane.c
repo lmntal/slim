@@ -849,6 +849,80 @@ inline unsigned int lmn_mem_count_children(LmnMembrane *mem) {
   return n;
 }
 
+LinkObj LinkObj_make(LmnWord ap, LmnLinkAttr pos) {
+  LinkObj ret = LMN_MALLOC(struct LinkObj);
+  ret->ap = ap;
+  ret->pos = pos;
+  return ret;
+}
+
+/* 膜memのsrcvecを根に持つgroundプロセスを
+   コピーする。srcvecはリンクオブジェクトのベクタ。
+   ret_dstlovecはコピーされた根のリンクオブジェクトのベクタ。
+   ret_atommapはコピー元とコピー先のアトムの対応 */
+void lmn_mem_copy_ground(LmnMembrane *mem,
+                         Vector *srcvec,
+                         Vector **ret_dstlovec,
+                         SimpleHashtbl **ret_atommap)
+{
+  SimpleHashtbl *atommap = hashtbl_make(64);
+  Vector *stack = vec_make(16);
+  unsigned int i;
+  *ret_dstlovec = vec_make(16);
+
+  /* 根をスタックに積む。スタックにはリンクオブジェクトではなくアトムを
+     積むため、ここで根の先のアトムをコピーしスタックに積むする必要があ
+     る */
+  for (i = 0; i < vec_num(srcvec); i++) {
+    LinkObj l = (LinkObj)vec_get(srcvec, i);
+    LmnWord cpatom;
+
+    /* コピー済みでなければコピーする */
+    if ((cpatom = hashtbl_get_default(atommap, l->ap, 0)) == 0) {
+      cpatom = lmn_copy_atom(l->ap, l->pos);
+      hashtbl_put(atommap, (HashKeyType)l->ap, (HashValueType)cpatom);
+      mem_push_symbol_atom(mem, LMN_ATOM(cpatom));
+    }
+
+    vec_push(*ret_dstlovec, (LmnWord)LinkObj_make(cpatom, l->pos));
+
+    if (LMN_ATTR_IS_DATA(l->pos)) {
+      lmn_mem_push_atom(mem, (LmnWord)cpatom, l->pos);
+    } else { /* symbol atom */
+      /* 根のリンクのリンクポインタを0に設定する */
+      LMN_ATOM_SET_LINK(cpatom, l->pos, 0);
+      vec_push(stack, l->ap);
+    }
+  }
+
+  while (vec_num(stack) > 0) {
+    LmnAtomPtr src_atom = LMN_ATOM(vec_pop(stack));
+    LmnAtomPtr copied = LMN_ATOM(hashtbl_get(atommap, (HashKeyType)src_atom));
+
+    for (i = 0; i < LMN_ATOM_GET_ARITY(src_atom); i++) {
+      LmnWord next_src = LMN_ATOM_GET_LINK(src_atom, i);
+      LmnLinkAttr next_attr = LMN_ATOM_GET_ATTR(src_atom, i);
+
+      /* LMN_ATOM_GET_LINK(copied, i)が0になる場合は、根に到達した場合 */
+      if (!LMN_ATTR_IS_DATA(next_attr) &&
+          LMN_ATOM_GET_LINK(copied, i) != 0) {
+        LmnWord next_copied = hashtbl_get_default(atommap, next_src, 0);
+        if (next_copied == 0) { /* next_srcは未訪問 */
+          next_copied = lmn_copy_atom(next_src, next_attr);
+          hashtbl_put(atommap, (HashKeyType)next_src, (HashValueType)next_copied);
+          vec_push(stack, next_src);
+        } 
+        LMN_ATOM_SET_LINK(copied, i, next_copied);
+
+      }
+    }
+  }
+
+  vec_free(stack);
+  *ret_atommap = atommap;
+}
+
+
 /* 膜の同型性判定 ここから */
 /*----------------------------------------------------------------------*/
 #define CHECKED_MEM_DEPTH 0
