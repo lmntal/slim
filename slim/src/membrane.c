@@ -809,16 +809,13 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
       /* リンク先と接続 */
       for (i = start; i < end; i++) {
         LmnLinkAttr attr = LMN_ATOM_GET_ATTR(srcatom, i);
-        if(!(LMN_INT_ATTR == attr) && hashtbl_contains(atoms, LMN_ATOM_GET_LINK(srcatom, i))) {
-          newlink_symbol_and_something(newatom, i, hashtbl_get(atoms, LMN_ATOM_GET_LINK(srcatom, i)), attr);
-        } else { /* LMN_INT_ATTR == attr || !hashtbl_contains() */
-          LmnWord newargatom = lmn_copy_atom(LMN_ATOM_GET_LINK(srcatom, i), attr);
+        LmnWord a = LMN_ATOM_GET_LINK(srcatom, i);
+        if (LMN_ATTR_IS_DATA(attr)) {
+          LmnWord newargatom = lmn_copy_atom(a, attr);
           newlink_symbol_and_something(newatom, i, newargatom, attr);
-          if (!(LMN_INT_ATTR == attr)) {
-            /* TODO: データアトムの扱いが怪しい？ */
-            /*hashtbl_put(atoms, LMN_ATOM_GET_LINK(srcatom, i), newargatom);*/
-          }
-        }
+        } else if(hashtbl_contains(atoms, a)) {
+          newlink_symbol_and_something(newatom, i, hashtbl_get(atoms, a), attr);
+        }  
       }
     }
   }
