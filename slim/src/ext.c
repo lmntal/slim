@@ -112,7 +112,6 @@ int load_ext(const char *dir, const char *file_name)
 {
   lt_dlhandle h = NULL;
   lt_ptr p = NULL;
-  int error = 0;
   char *path;
   char *base_name;
   char *init_f_name;
@@ -121,7 +120,6 @@ int load_ext(const char *dir, const char *file_name)
   h = lt_dlopen(path);
   free(path);
   if (h == NULL) {
-    error = 1;
     fprintf(stderr, "EXT.C: %s\n", lt_dlerror());
     printf("dl_open fail\n");
     goto ERROR;
@@ -136,22 +134,18 @@ int load_ext(const char *dir, const char *file_name)
   free(base_name);
 
   if (lt_dlerror() != NULL) {
-    error = 1;
-    fprintf(stderr, "EXT.C: %s\n", lt_dlerror());
-    printf("EXT.C: dl_sym fail\n");
+    fprintf(stderr, "EXT.C: init call(%s) fail, %s\n", file_name, lt_dlerror());
     goto ERROR;
   }
   
   ((init_f_type)p)();
 
+  return TRUE;
+  
  ERROR:
-  if (error) {
-    fprintf(stderr, "EXT.C: %s\n", lt_dlerror());
-  }
+  fprintf(stderr, "EXT.C: %s\n", lt_dlerror());
     
-/*   if (h != NULL) lt_dlclose(h); */
-
-  return !error;
+  return FALSE;
 }
 
 /* pathディレクトリにある共有ライブラリをロードし初期化関数を呼び出す */

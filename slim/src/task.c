@@ -218,6 +218,30 @@ static LmnMembrane* memstack_peek()
   return memstack.head->next->mem;
 }
 
+/* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
+   に、その膜がスタックに積まれている事がある。そのため、安全な削除を行
+   うために、この手続きが必要になる。外部の機能を使わない通常の実行時に
+   はこの手続きは必要ない*/
+void lmn_memstack_delete(LmnMembrane *mem)
+{
+  struct Entity *pre, *cur;
+
+  if (lmn_env.nd) return;
+  
+  pre = memstack.head;
+  cur = memstack.head->next;
+
+  while (cur != NULL) {
+    if (cur->mem == mem) {
+      pre->next = cur->next;
+      LMN_FREE(cur);
+      break;
+    }
+    pre = cur;
+    cur = cur->next;
+  }
+}
+
 /* DEBUG: */
 /* static void memstack_printall() */
 /* { */
@@ -227,6 +251,7 @@ static LmnMembrane* memstack_peek()
 /*   } */
 /*   printf("\n"); */
 /* } */
+
 
 /* MC でのみ使用の関数・データ構造の定義 ここから  */
 /*----------------------------------------------------------------------*/
@@ -303,6 +328,37 @@ static BOOL free_por_vars() {
   }
 }
 
+void make_new_state(LmnMembrane *root, LmnRule rule)
+{ /* 新しい状態の作成 */
+  State *new_state;
+  if (lmn_env.nd) {
+    new_state = state_make_for_nd(root,
+                                  lmn_rule_get_name(rule));
+  } else { /* ltl mc */
+    new_state = state_make(root,
+                           mc_flags.property_state,
+                           lmn_rule_get_name(rule));
+  }
+  st_data_t t;
+  BOOL is_really_new_state = !st_lookup(expanded, (st_data_t)new_state, (st_data_t *)&t);
+  if (is_really_new_state) {
+    st_add_direct(expanded, (st_data_t)new_state, (st_data_t)new_state);
+  } else {
+    /* 追加されなかった場合 */
+    state_free(new_state);
+  }
+  /* ample(s)計算中の場合はnew_state(または t)への遷移stransを生成する */
+  if (mc_flags.calculating_ample) {
+    StateTransition *strans;
+    if (is_really_new_state) {
+      strans = strans_make(new_state, mc_data.next_strans_id++, rule);
+    } else {
+      strans = strans_make((State *)t, mc_data.next_strans_id++, rule);
+    }
+    vec_push(succ_strans, (LmnWord)strans);
+  }
+}
+
 /**
  * 非決定(--nd または --nd_result)実行終了時に状態遷移グラフを出力する．
  * 高階関数st_foreach(c.f. st.c)に投げて使用．
@@ -373,24 +429,94 @@ BOOL react_rule(LmnMembrane *mem, LmnRule rule)
   if (lmn_env.trace && result) {
     fprintf(stdout, "(%s)\n\n", lmn_id_to_name(lmn_rule_get_name(rule)));
   }
+
   return result;
+}
+
+/* ルールセットのルールを可能な限り適用する。非決定実行時にはルールセッ
+   トのルールが適用できなくなってから状態を生成し、途中の状態は生成され
+   ない。ルールセットのルールが非決定性を含んでいたとしても、決定的にルー
+   ル適用を行うので、生成される状態は高々一つである */
+static BOOL react_ruleset_atomic(LmnMembrane *mem, LmnRuleSet ruleset)
+{
+  int i, n;
+  BOOL reacted = TRUE;
+
+  n = lmn_ruleset_rule_num(ruleset);
+  
+  /* MC */
+  if (lmn_env.nd) {
+    LmnMembrane *org_global_root, *new_global_root, *new_mem;
+    SimpleHashtbl *copymap;
+    BOOL reacted_once = FALSE;
+    BOOL nd_exec_org;
+
+    printf("-- atomic --\n");
+    org_global_root = global_root;
+    new_global_root = lmn_mem_make();
+    global_root = new_global_root;
+    copymap = copy_global_root(org_global_root, new_global_root);
+    new_mem = (LmnMembrane *)hashtbl_get_default(copymap, (LmnWord)mem, 0);
+
+    if (!new_mem) {
+      /* memは子膜ではなく、グローバルルート膜だった */
+      new_mem = new_global_root;
+    }
+    hashtbl_free(copymap);
+
+    nd_exec_org = mc_flags.nd_exec;
+    mc_flags.nd_exec = FALSE;
+
+    while (reacted) {
+      reacted = FALSE;
+      for (i = 0; i < n; i++) {
+        reacted = reacted || react_rule(new_mem,
+                                        lmn_ruleset_get_rule(ruleset, i));
+      }
+      reacted_once = reacted_once || reacted;
+    }
+
+    mc_flags.nd_exec = nd_exec_org;
+    if (reacted_once) {
+      make_new_state(new_global_root, atomic_dummy_rule());
+      global_root = org_global_root;
+    } else {
+      global_root = org_global_root;
+      lmn_mem_drop(new_global_root);
+      lmn_mem_free(new_global_root);
+    }
+  } else { /* 通常実行時 */
+    while (reacted) {
+      reacted = FALSE;
+      for (i = 0; i < n; i++) {
+        reacted = reacted || react_rule(mem, lmn_ruleset_get_rule(ruleset, i));
+      }
+    }
+  }
+  return FALSE;
 }
 
 /* 膜memでrulesetのルールの適用を試みる。適用が起こった場合TRUEを返し、
    起こらなかった場合にはFALSEを返す。 */
-static BOOL react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
+BOOL lmn_react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
-  int i;
-  int n;
+  int i, n;
+  BOOL result = FALSE;
+  
+  if (lmn_ruleset_is_atomic(ruleset)) {
+    result = react_ruleset_atomic(mem, ruleset);
+  }
+  else {
+    n = lmn_ruleset_rule_num(ruleset);
 
-  n = lmn_ruleset_rule_num(ruleset);
-  for (i = 0; i < n; i++) {
-    if (react_rule(mem, lmn_ruleset_get_rule(ruleset, i))) {
-      return TRUE;
+    for (i = 0; i < n; i++) {
+      if (react_rule(mem, lmn_ruleset_get_rule(ruleset, i))) {
+        result = TRUE;
+      }
     }
   }
 
-  return FALSE;
+  return result;
 }
 
 static int exec(LmnMembrane *mem)
@@ -401,7 +527,7 @@ static int exec(LmnMembrane *mem)
   if (!flag) {
 
     for (i = 0; i < mem->rulesets.num; i++) {
-      if (react_ruleset(mem, (LmnRuleSet)vec_get(&mem->rulesets, i))) {
+      if (lmn_react_ruleset(mem, (LmnRuleSet)vec_get(&mem->rulesets, i))) {
         flag = TRUE;
         break;
       }
@@ -418,7 +544,7 @@ void lmn_run(LmnRuleSet start_ruleset)
   memstack_init();
   mem = lmn_mem_make();
   memstack_push(mem);
-  react_ruleset(mem, start_ruleset);
+  lmn_react_ruleset(mem, start_ruleset);
 
   /* for tracer */
   global_root = mem;
@@ -428,7 +554,7 @@ void lmn_run(LmnRuleSet start_ruleset)
     LmnMembrane *m;
 
     if(!exec(mem)) {
-      if (!react_ruleset(mem, system_ruleset)) {
+      if (!lmn_react_ruleset(mem, system_ruleset)) {
         /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
         m = memstack_pop(&memstack);
       }
@@ -512,7 +638,7 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
 
   /* make global root membrane */
   mem = lmn_mem_make();
-  react_ruleset(mem, start_ruleset);
+  lmn_react_ruleset(mem, start_ruleset);
 
   init_mc_flags();
   activate(mem);
@@ -545,7 +671,7 @@ void run_nd(LmnRuleSet start_ruleset)
 
   /* make global root membrane */
   mem = lmn_mem_make();
-  react_ruleset(mem, start_ruleset);
+  lmn_react_ruleset(mem, start_ruleset);
 
   init_mc_flags();
   activate(mem);
@@ -948,35 +1074,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
           mc_flags.system_rule_committed = TRUE;
           interpret(rule, instr, &instr);
 
-          { /* 新しい状態の作成 */
-            State *new_state;
-            if (lmn_env.nd) {
-              new_state = state_make_for_nd(tmp_global_root,
-                                            lmn_rule_get_name(rule));
-            } else { /* ltl mc */
-              new_state = state_make(tmp_global_root,
-                                     mc_flags.property_state,
-                                     lmn_rule_get_name(rule));
-            }
-            st_data_t t;
-            BOOL is_really_new_state = !st_lookup(expanded, (st_data_t)new_state, (st_data_t *)&t);
-            if (is_really_new_state) {
-              st_add_direct(expanded, (st_data_t)new_state, (st_data_t)new_state);
-            } else {
-              /* 追加されなかった場合 */
-              state_free(new_state);
-            }
-            /* ample(s)計算中の場合はnew_state(または t)への遷移stransを生成する */
-            if (mc_flags.calculating_ample) {
-              StateTransition *strans;
-              if (is_really_new_state) {
-                strans = strans_make(new_state, mc_data.next_strans_id++, rule);
-              } else {
-                strans = strans_make((State *)t, mc_data.next_strans_id++, rule);
-              }
-              vec_push(succ_strans, (LmnWord)strans);
-            }
-          }
+          make_new_state(tmp_global_root, rule);
 
           /* 変数配列および属性配列を元に戻す（いらないかも？） */
           SWAP(LmnWord *, wtcp, wt);
@@ -2868,10 +2966,11 @@ EQGROUND_NEQGROUND_BREAK:
     }
     case INSTR_CCALLBACK:
     {
-      LmnInstrVar atomi;
+      LmnInstrVar memi, atomi;
       LmnAtomPtr atom;
       const struct CCallback *c;
       
+      READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
 
       atom = LMN_ATOM(wt[atomi]);
@@ -2889,21 +2988,28 @@ EQGROUND_NEQGROUND_BREAK:
           break;
         }
 
+        lmn_mem_remove_atom((LmnMembrane *)wt[memi], wt[atomi], at[atomi]);
+        lmn_mem_remove_atom((LmnMembrane *)wt[memi],
+                            LMN_ATOM_GET_LINK(atom, 0),
+                            LMN_ATOM_GET_ATTR(atom, 0));
+        lmn_free_atom(LMN_ATOM_GET_LINK(atom, 0), LMN_ATOM_GET_ATTR(atom, 0));
+        lmn_free_atom(wt[atomi], at[atomi]);
+
         switch (arity) {
         case 1:
-          ((callback_0)c->f)((LmnMembrane *)wt[0]);
+          ((callback_0)c->f)((LmnMembrane *)wt[memi]);
           break;
         case 2:
-          ((callback_1)c->f)((LmnMembrane *)wt[0],
+          ((callback_1)c->f)((LmnMembrane *)wt[memi],
                           LMN_ATOM_GET_LINK(atom, 1), LMN_ATOM_GET_ATTR(atom, 1));
           break;
         case 3:
-          ((callback_2)c->f)((LmnMembrane *)wt[0],
+          ((callback_2)c->f)((LmnMembrane *)wt[memi],
                           LMN_ATOM_GET_LINK(atom, 1), LMN_ATOM_GET_ATTR(atom, 1),
                           LMN_ATOM_GET_LINK(atom, 2), LMN_ATOM_GET_ATTR(atom, 2));
           break;
         case 4:
-          ((callback_3)c->f)((LmnMembrane *)wt[0],
+          ((callback_3)c->f)((LmnMembrane *)wt[memi],
                           LMN_ATOM_GET_LINK(atom, 1), LMN_ATOM_GET_ATTR(atom, 1),
                           LMN_ATOM_GET_LINK(atom, 2), LMN_ATOM_GET_ATTR(atom, 2),
                           LMN_ATOM_GET_LINK(atom, 3), LMN_ATOM_GET_ATTR(atom, 3));
@@ -2914,12 +3020,6 @@ EQGROUND_NEQGROUND_BREAK:
         }
       }
 
-      lmn_mem_remove_atom((LmnMembrane *)wt[0], wt[atomi], at[atomi]);
-      lmn_mem_remove_atom((LmnMembrane *)wt[0],
-                          LMN_ATOM_GET_LINK(atom, 0),
-                          LMN_ATOM_GET_ATTR(atom, 0));
-      lmn_free_atom(LMN_ATOM_GET_LINK(atom, 0), LMN_ATOM_GET_ATTR(atom, 0));
-      lmn_free_atom(wt[atomi], at[atomi]);
       break;
     }
     default:
@@ -2974,11 +3074,11 @@ static BOOL react_all_rulesets(LmnMembrane *cur_mem, BOOL *must_be_activated_rig
   mc_flags.system_rule_proceeded = FALSE;
   for (i = 0; i < vec_num(&rulesets); i++) {
     LmnRuleSet ruleset = (LmnRuleSet)vec_get(&rulesets, i); /* ルールセット */
-    react_ruleset(cur_mem, ruleset); /* return FALSE */
+    lmn_react_ruleset(cur_mem, ruleset); /* return FALSE */
   }
   if (!mc_flags.system_rule_proceeded) { /* 通常のルールセットが適用できなかった場合 */
     /* システムルールセットの適用 */
-    if (!react_ruleset(cur_mem, system_ruleset)) {
+    if (!lmn_react_ruleset(cur_mem, system_ruleset)) {
       /* 本膜のルールセット適用検査が（システムルールセット含めて）全て失敗した場合 */
       temp_must_be_activated = FALSE;
     }

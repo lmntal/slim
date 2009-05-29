@@ -50,18 +50,50 @@
 
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
 
-/* ルールセットを膜に追加する */
+/* ルールセットを膜に追加する。ルールセットは、比較のためにポインタの値
+   の昇順に並べるようにする */
 void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
   Vector *v = &mem->rulesets;
   int i, n=vec_num(v);
 
   if (ruleset==NULL) LMN_ASSERT(FALSE);
-  /* 重複検査．線形探索をしている */
-  for (i=0; i<n&&(vec_get(v, i)!=(LmnWord)ruleset); i++) ;
-  if (i==n) {
-    vec_push(&mem->rulesets, (LmnWord)ruleset);
+
+  for (i = 0; i<n; i++) {
+    LmnRuleSet r = (LmnRuleSet)vec_get(v, i);
+    if (r == ruleset) break;
+    else if (r < ruleset) continue;
+    else if (r > ruleset) {
+      int j;
+      LmnRuleSet pre = ruleset;
+      vec_push(v, 0);
+      for (j = i; j<n+1; j++) {
+        LmnRuleSet t = (LmnRuleSet)vec_get(v, j);
+        vec_set(v, j, (LmnWord)pre);
+        pre = t;
+      }
+      break;
+    }
   }
+  if (i == n) {
+    vec_push(v, (LmnWord)ruleset);
+  }
+}
+
+int lmn_mem_ruleset_num(LmnMembrane *mem)
+{
+  printf("mem = %p\n", mem);
+ return vec_num(&mem->rulesets);;
+}
+
+LmnRuleSet lmn_mem_get_ruleset(LmnMembrane *mem, int i)
+{
+  return (LmnRuleSet)vec_get(&mem->rulesets, i);
+}
+
+LmnMembrane *lmn_mem_parent(LmnMembrane *mem)
+{
+  return mem->parent;
 }
 
 /*----------------------------------------------------------------------
@@ -1196,7 +1228,7 @@ static BOOL lmn_mem_trace_links(LmnAtomPtr a1, LmnAtomPtr a2, Vector *v_log1, Ve
     mem1 = LMN_PROXY_GET_MEM(a1);
     mem2 = LMN_PROXY_GET_MEM(a2);
 
-    if (!lmn_mem_equals(mem1, mem2)) {
+    if (!mem_equals(mem1, mem2)) {
       return FALSE;
     }
   }
@@ -1323,14 +1355,22 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
 
     /* Step2. 両膜内のアトムの種類数が互いに等しいことを確認 */
     if (vec_num(atomvec_mem1) != vec_num(atomvec_mem2)) {
-      free_atomvec_data(atomvec_mem1); free_atomvec_data(atomvec_mem2);
-      return FALSE;
+      goto STEP_1_FALSE;
     }
     /* Step3. 両膜内に含まれるアトムのファンクタおよび個数が互いに等しいことを確認 */
     if (!lmn_mem_is_the_same_matching_vec(atomvec_mem1, atomvec_mem2)) {
-      return FALSE;
+      goto STEP_1_FALSE;
     }
+
+    /* Step3.5. 両膜内に含まれるルールセットが等しいことを確認 */
+    if (vec_num(&mem1->rulesets) != vec_num(&mem2->rulesets)) goto STEP_1_FALSE;
+    /* ルールセットはポインタの値で昇順にソートされている */
+    for (i = 0; i < vec_num(&mem1->rulesets); i++) {
+      if (vec_get(&mem1->rulesets, i) != vec_get(&mem2->rulesets, i)) goto STEP_1_FALSE;
+    }
+
   }
+
   /* この段階で両膜は互いに等しい数の子孫膜を持ち、両膜内のアトムのファンクタの種類
    * およびその個数が完全に一致することが確認されている。
    * (i.e. 結果が「同型でない(偽)」になるならば、本膜におけるリンクの接続関係 or 子孫膜が異なっていることを意味する)
@@ -1379,6 +1419,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           }
         }
       }
+
       /* 以降、未走査／走査済アトムを管理するvectorの初期化 */
       length = mem1->atom_num;
       assert(length == mem2->atom_num);
@@ -1493,6 +1534,8 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
         }
       }
     }
+
+
     /* この段階で本膜内の「アトムを起点とする走査」はすべて完了し、
      * 両膜直下のグラフ構造は完全に一致することが保証されている。
      * ここからは、両膜内に存在するすべての子膜について、その構造が一致するかどうかについて調べていく。
@@ -1501,6 +1544,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
      * 子孫膜数が少ない子膜から優先的に固定する方針を取る。 */
     if (has_descendants) { /* 子膜が存在する場合のみ以降の処理を行う */
       LmnMembrane *cm1, *cm2;
+
 
       /* 子孫膜数の多い順にv_mems_children1, v_mems_children2をソート */
       {
@@ -1520,6 +1564,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           cm2 = (LmnMembrane *)vec_get(v_mems_children2, i-1);
           matched = lmn_mem_equals_rec(cm1, cm2, current_depth + 1);
           if (matched) {
+
             /* cm1と同型の膜(=cm2)がv_mems_children2内に見つかった場合にここに入る。
              * v_mems_children2からcm2を取り除く。 */
             for (n = 0; n < vec_num(v_mems_children2); ++n) {
@@ -1531,6 +1576,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
           }
         }
         if (!matched) {
+
           /* cm1と同型の膜がv_mems_children2内に存在しない場合 */
           if (has_atoms) {
             vec_free(v_log1); vec_free(v_log2);
@@ -1544,6 +1590,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
         }
       }
     }
+      
     /* mem1, mem2内の子孫膜を含むすべてのプロセスの同型性判定に成功 */
     if (has_atoms) {
       vec_free(v_log1); vec_free(v_log2);
@@ -1555,9 +1602,19 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
   }
 
   return TRUE;
+
+ STEP_1_FALSE:
+  free_atomvec_data(atomvec_mem1);
+  free_atomvec_data(atomvec_mem2);
+  return FALSE;
 }
 
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
+{
+return lmn_mem_equals_rec(mem1, mem2, CHECKED_MEM_DEPTH);
+}
+
+BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
 {
   BOOL t;
 
@@ -1565,17 +1622,12 @@ BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
   status_start_mem_equals_calc();
 #endif
 
-  t = lmn_mem_equals(mem1, mem2);
+  t = mem_equals(mem1, mem2);
 
 #ifdef PROFILE
   status_finish_mem_equals_calc();
 #endif
   return t;
-}
-
-BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
-{
-  return lmn_mem_equals_rec(mem1, mem2, CHECKED_MEM_DEPTH);
 }
 /*----------------------------------------------------------------------*/
 /* 膜の同型性判定 ここまで */

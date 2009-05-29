@@ -81,6 +81,12 @@ LmnRule lmn_rule_make(BYTE *inst_seq, int inst_seq_len, lmn_interned_str name)
   return make_rule(inst_seq, inst_seq_len, NULL, name);
 }
 
+/* 中身のない、名前だけを持つルールを生成する */
+LmnRule lmn_rule_make_dummy(lmn_interned_str name)
+{
+  return make_rule(NULL, -1, NULL, name);
+}
+
 /* create new rule with a translated function */
 LmnRule lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name)
 {
@@ -133,6 +139,19 @@ BOOL lmn_rule_is_invisible(LmnRule rule) {
   return rule->is_invisible == TRUE;
 }
 
+LmnRule atomic_dummy_rule(void)
+{
+  static struct LmnRule rule;
+  static BOOL first = TRUE;
+
+  if (first) {
+    first = FALSE;
+    rule.name = lmn_intern("atomic");
+  }
+
+  return &rule;
+}
+
 /*----------------------------------------------------------------------
  * Rule Set
  */
@@ -142,6 +161,8 @@ struct LmnRuleSet {
   LmnRulesetId id;      /* RuleSet ID */
   int num, cap;         /* # of rules, and # of capacity */
   LmnRule *rules;       /* ルールのリスト */
+  /* 非決定実行時にルールセットをatomicに実行するかのフラグ */
+  BOOL atomic;          
 };
 
 /* Generates and returns new RuleSet id */
@@ -161,6 +182,7 @@ LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size)
   ruleset->rules = LMN_CALLOC(LmnRule, init_size);
   ruleset->num = 0;
   ruleset->cap = init_size;
+  ruleset->atomic = FALSE;
 
   return ruleset;
 }
@@ -200,6 +222,16 @@ LmnRule lmn_ruleset_get_rule(LmnRuleSet ruleset, int i)
 int lmn_ruleset_get_id(LmnRuleSet ruleset)
 {
   return ruleset->id;
+}
+
+BOOL lmn_ruleset_is_atomic(LmnRuleSet ruleset)
+{
+  return ruleset->atomic;
+}
+
+void lmn_ruleset_set_atomic(LmnRuleSet ruleset, BOOL b)
+{
+  ruleset->atomic = b;
 }
 
 /* table, mapping RuleSet ID to RuleSet */

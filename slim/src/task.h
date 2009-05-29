@@ -62,5 +62,7 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms);
 void run_nd(LmnRuleSet start_ruleset);
 BOOL react_rule(LmnMembrane *mem, LmnRule rule);
 LMN_EXTERN BOOL expand(LmnMembrane *mem);
+LMN_EXTERN void lmn_memstack_delete(LmnMembrane *mem);
+LMN_EXTERN BOOL lmn_react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset);
 
 #endif

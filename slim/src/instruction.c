@@ -140,7 +140,7 @@ struct InstrSpec spec[] = {
     {"run", INSTR_RUN, {InstrList}},
     {"not", INSTR_NOT, {InstrList}},
     {"inline", INSTR_INLINE, {InstrVar, String, InstrVar}},
-    {"ccallback", INSTR_CCALLBACK, {InstrVar}},
+    {"ccallback", INSTR_CCALLBACK, {InstrVar, InstrVar}},
 
     /* special */
     {"group", INSTR_GROUP, {InstrList}},

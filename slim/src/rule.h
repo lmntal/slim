@@ -52,6 +52,8 @@ typedef BOOL (*LmnTranslated)(LmnMembrane *);
 typedef struct LmnRule *LmnRule;
 
 LMN_EXTERN LmnRule lmn_rule_make(LmnRuleInstr instr, int instr_len, lmn_interned_str name);
+
+LmnRule atomic_dummy_rule(void);
 LMN_EXTERN LmnRule lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name);
 LMN_EXTERN LmnRule lmn_rule_copy(LmnRule rule);
 LMN_EXTERN void lmn_rule_free(LmnRule rule);
@@ -76,6 +78,8 @@ LMN_EXTERN int lmn_ruleset_get_id(LmnRuleSet ruleset);
 LMN_EXTERN void lmn_set_ruleset(LmnRuleSet ruleset, int id);
 LMN_EXTERN unsigned int lmn_ruleset_rule_num(LmnRuleSet ruleset);
 LMN_EXTERN LmnRule lmn_ruleset_get_rule(LmnRuleSet ruleset, int i);
+LMN_EXTERN BOOL lmn_ruleset_is_atomic(LmnRuleSet ruleset);
+LMN_EXTERN void lmn_ruleset_set_atomic(LmnRuleSet ruleset, BOOL b);
 
 /*----------------------------------------------------------------------
  * System Rule Set

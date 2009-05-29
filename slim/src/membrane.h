@@ -45,6 +45,7 @@
 #include "vector.h"
 #include "rule.h"
 
+/* TODO: 構造体の定義を隠すために.cファイルに定義を移動する */
 struct LmnMembrane {
   LmnMembrane 	   *parent;
   LmnMembrane 	   *child_head;
@@ -78,12 +79,16 @@ LMN_EXTERN LmnAtomPtr lmn_mem_newatom(LmnMembrane *mem, LmnFunctor f);
 LMN_EXTERN void lmn_mem_push_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr attr);
 LMN_EXTERN void mem_push_symbol_atom(LmnMembrane *mem, LmnAtomPtr atom);
 LMN_EXTERN void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset);
+LMN_EXTERN inline int lmn_mem_ruleset_num(LmnMembrane *mem);
+LMN_EXTERN inline LmnRuleSet  lmn_mem_get_ruleset(LmnMembrane *mem, int i);
 LMN_EXTERN BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
 LMN_EXTERN LmnAtomPtr* atomlist_get_record(AtomListEntry *atomlist, int findatomid);
 LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr attr);
 LMN_EXTERN inline unsigned int lmn_mem_count_descendants(LmnMembrane *mem);
 LMN_EXTERN inline unsigned int lmn_mem_count_children(LmnMembrane *mem);
+LMN_EXTERN inline LmnMembrane *lmn_mem_parent(LmnMembrane *mem);
+
 
 /* 同型性判定 */
 LMN_EXTERN BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
@@ -98,7 +103,7 @@ LMN_EXTERN BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
 
 LMN_EXTERN BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN BOOL lmn_mem_nfreelinks(LmnMembrane *mem, unsigned int count);
-LMN_EXTERN void lmn_mem_movecells(LmnMembrane *destmem, LmnMembrane *srcmem);
+LMN_EXTERN void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
 LMN_EXTERN void lmn_mem_newlink(LmnMembrane *mem,
                                 LmnWord atom0,
                                 LmnLinkAttr attr0,

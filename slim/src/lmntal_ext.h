@@ -6,3 +6,4 @@
 #include "symbol.h"
 #include "membrane.h"
 #include "rule.h"
+#include "task.h"
