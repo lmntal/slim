@@ -2964,7 +2964,7 @@ EQGROUND_NEQGROUND_BREAK:
       instr += subinstr_size;
       break;
     }
-    case INSTR_CCALLBACK:
+    case INSTR_CALLBACK:
     {
       LmnInstrVar memi, atomi;
       LmnAtomPtr atom;

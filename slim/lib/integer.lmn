@@ -198,5 +198,5 @@ H = integer.factorial(N) :- N >= 2 | H = N*integer.factorial(N-1).
  * $g must be a ground term.
  */
 integer.set(A,B,C) :- ground(C), int(A), int(B) |
-    '$c_callback'("integer_set", A, B, C).
+    '$callback'("integer_set", A, B, C).
 }.

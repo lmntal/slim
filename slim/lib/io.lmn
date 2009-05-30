@@ -39,7 +39,7 @@
 {
 module(io).
 
-io.print(X) :- unary(X) | '$c_callback'("print_line", X). 
-io.println(X) :- unary(X) | '$c_callback'("print_line", X). 
+io.print(X) :- unary(X) | '$callback'("print_line", X). 
+io.println(X) :- unary(X) | '$callback'("print_line", X). 
 
 }.

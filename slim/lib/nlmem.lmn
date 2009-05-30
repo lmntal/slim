@@ -18,7 +18,7 @@ R=nlmem.copy(M) :- R=nlmem.copy(M, copied).
  * R=copied(M,M'), {$p[M|*Z]}, {$p[M'|*Z']}, cpd(*Z')
  */
 nlmem.copy(M,B,C) :- unary(B) |
-    '$c_callback'("nlmem_copy", M, B, C).
+    '$callback'("nlmem_copy", M, B, C).
 
 nlmem.kill({$p,@p}), :- nlmem.kill({$p,@p}, killed).
 
@@ -32,7 +32,7 @@ nlmem.kill({$p,@p}), :- nlmem.kill({$p,@p}, killed).
  * @param +KillTagAtom 破棄された膜の自由リンクに接続されるunaryアトム
  * @example nlmem.kill(M, kld),{$p[M|*Z]} ==> kld(*Z)
  */
-nlmem.kill(M, T) :- unary(T) | '$c_callback'("nlmem_kill", M, T).
+nlmem.kill(M, T) :- unary(T) | '$callback'("nlmem_kill", M, T).
 
 }.
 
