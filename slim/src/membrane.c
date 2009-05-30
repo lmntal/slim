@@ -82,8 +82,7 @@ void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 
 int lmn_mem_ruleset_num(LmnMembrane *mem)
 {
-  printf("mem = %p\n", mem);
- return vec_num(&mem->rulesets);;
+ return vec_num(&mem->rulesets);
 }
 
 LmnRuleSet lmn_mem_get_ruleset(LmnMembrane *mem, int i)

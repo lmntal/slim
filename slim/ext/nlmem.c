@@ -92,6 +92,7 @@ void nlmem_kill(LmnMembrane *mem,
   }
   
   lmn_mem_remove_mem(mem, org_mem);
+  lmn_memstack_delete(org_mem);
   lmn_mem_drop(org_mem);
   lmn_mem_free(org_mem);
   lmn_mem_remove_atom(mem, a0, t0);

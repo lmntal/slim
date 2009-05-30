@@ -451,7 +451,6 @@ static BOOL react_ruleset_atomic(LmnMembrane *mem, LmnRuleSet ruleset)
     BOOL reacted_once = FALSE;
     BOOL nd_exec_org;
 
-    printf("-- atomic --\n");
     org_global_root = global_root;
     new_global_root = lmn_mem_make();
     global_root = new_global_root;
@@ -512,6 +511,7 @@ BOOL lmn_react_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
     for (i = 0; i < n; i++) {
       if (react_rule(mem, lmn_ruleset_get_rule(ruleset, i))) {
         result = TRUE;
+        break;
       }
     }
   }
