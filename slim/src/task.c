@@ -151,7 +151,7 @@ struct MemStack {
   struct Entity  *head;
 } memstack;
 
-static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next);
+static BOOL interpret(LmnRule rule, LmnRuleInstr instr);
 static void dump_state_transition_graph(FILE *file);
 static void exit_ltl_model_checking(void);
 
@@ -414,7 +414,6 @@ BOOL react_rule(LmnMembrane *mem, LmnRule rule)
 {
   LmnTranslated translated;
   BYTE *inst_seq;
-  LmnRuleInstr dummy;
   BOOL result;
 
   translated = lmn_rule_get_translated(rule);
@@ -425,7 +424,7 @@ BOOL react_rule(LmnMembrane *mem, LmnRule rule)
   wt[0] = (LmnWord)mem;
   result =
     (translated &&  translated(mem)) ||
-    (inst_seq && interpret(rule, inst_seq, &dummy));
+    (inst_seq && interpret(rule, inst_seq));
   if (lmn_env.trace && result) {
     fprintf(stdout, "(%s)\n\n", lmn_id_to_name(lmn_rule_get_name(rule)));
   }
@@ -806,7 +805,7 @@ static HashSet *insertconnectors(LmnMembrane *mem, Vector *links)
   return retset;
 }
 
-static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr)
+static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
 {
 /*   LmnRuleInstr start = instr; */
   LmnInstrOp op;
@@ -853,7 +852,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
-      if(interpret(rule, instr, next_instr)) {
+      if(interpret(rule, instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       }
@@ -893,7 +892,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
-      if(interpret(rule, instr, next_instr)) {
+      if(interpret(rule, instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       }
@@ -968,7 +967,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
       at = at2;
       wt_size = wt_size_org;
 
-      ret = interpret(rule, instr, next_instr);
+      ret = interpret(rule, instr);
       LMN_FREE(wt);
       LMN_FREE(at);
       wt = wt_org;
@@ -1009,6 +1008,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
         wt[t] = wt_t[t];
         at[t] = at_t[t];
       }
+
       break;
     }
     case INSTR_COMMIT:
@@ -1072,7 +1072,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
 
           /* 左辺に出現するPROCEEDと右辺に出現するPROCEEDを区別するため */
           mc_flags.system_rule_committed = TRUE;
-          interpret(rule, instr, &instr);
+          interpret(rule, instr);
 
           make_new_state(tmp_global_root, rule);
 
@@ -1125,8 +1125,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
             if(LMN_ATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
               continue;
             wt[atomi] = (LmnWord)atom;
-            if (interpret(rule, instr, &instr)) {
-              *next_instr = instr;
+            if (interpret(rule, instr)) {
               return TRUE;
             }
           }
@@ -1191,8 +1190,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
             LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(atom), record);
             LMN_ATOM_SET_PREV(atom, record);
 
-            if (interpret(rule, instr, &instr)) {
-              *next_instr = instr;
+            if (interpret(rule, instr)) {
 #if DBG
               printf("count=%d\n", count);
 #endif
@@ -1232,8 +1230,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
       while (mp) {
         wt[mem1] = (LmnWord)mp;
         if (lmn_env.nd || lmn_env.ltl) { at[mem1] = 0; /* MC */ }
-        if (mp->name == memn && interpret(rule, instr, &instr)) {
-          *next_instr = instr;
+        if (mp->name == memn && interpret(rule, instr)) {
           return TRUE;
         }
         mp = mp->next;
@@ -1485,17 +1482,15 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr, LmnRuleInstr *next_instr
         fprintf(stdout, "%d: ", trace_num++);
         lmn_dump_cell(global_root);
       }
-      *next_instr = instr;
       return TRUE;
     case INSTR_STOP:
-      *next_instr = instr;
       return FALSE;
     case INSTR_NOT:
     {
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      if (interpret(rule, instr, &instr)) {
+      if (interpret(rule, instr)) {
         return FALSE;
       }
       instr += subinstr_size;
@@ -2006,7 +2001,7 @@ EQGROUND_NEQGROUND_BREAK:
       at[dstlist] = (LmnByte)LIST_AND_MAP;
 
       /* 解放のための再帰。ベクタを解放するための中間ご命令がない */
-      interpret(rule, instr, next_instr);
+      interpret(rule, instr);
 
       while(dstlovec->num) {
         LMN_FREE(vec_get(dstlovec, dstlovec->num-1));
@@ -2185,7 +2180,7 @@ EQGROUND_NEQGROUND_BREAK:
       wt[listi] = (LmnWord)listvec;
       if (lmn_env.nd || lmn_env.ltl) { at[listi] = 0; /* MC */ }
       /* 解放のための再帰 */
-      if(interpret(rule, instr, next_instr)) {
+      if(interpret(rule, instr)) {
         vec_free(listvec);
         return TRUE;
       }
@@ -2942,7 +2937,7 @@ EQGROUND_NEQGROUND_BREAK:
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      if (!interpret(rule, instr, &instr)) return FALSE;
+      if (!interpret(rule, instr)) return FALSE;
       instr += subinstr_size;
       break;
     }
@@ -2951,7 +2946,7 @@ EQGROUND_NEQGROUND_BREAK:
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      if (interpret(rule, instr, &instr)) return TRUE;
+      if (interpret(rule, instr)) return TRUE;
       instr += subinstr_size;
       break;
     }
@@ -2960,7 +2955,7 @@ EQGROUND_NEQGROUND_BREAK:
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      while (interpret(rule, instr, &instr)) ;
+      while (interpret(rule, instr)) ;
       instr += subinstr_size;
       break;
     }
