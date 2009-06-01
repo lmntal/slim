@@ -3,7 +3,7 @@
  */
 
 #include <stdio.h>
-#include "../src/lmntal_ext.h"
+#include "../lmntal_ext.h"
 
 void init_print(void);
 

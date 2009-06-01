@@ -1,7 +1,7 @@
 /* atomic */
 
 #include <stdio.h>
-#include "../src/lmntal_ext.h"
+#include "../lmntal_ext.h"
 
 LMN_EXTERN void init_nlmem(void);
 
