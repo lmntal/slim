@@ -56,7 +56,7 @@
 #include "propositional_symbol.h"
 #include "functor.h"
 #include "error.h"
-#include "ext.h"
+#include "ccallback.h"
 #include <string.h>
 
 #ifdef PROFILE
@@ -2975,7 +2975,7 @@ EQGROUND_NEQGROUND_BREAK:
         lmn_interned_str name = LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(f_name));
         int arity = LMN_FUNCTOR_ARITY(LMN_ATOM_GET_FUNCTOR(atom));
 
-        c = ext_get_callback(name);
+        c = get_ccallback(name);
         if (!c) break;
 
         if (arity-1 != c->arity) {

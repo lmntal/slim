@@ -24,7 +24,10 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_po
 	lmntal_system_adapter.h lmntal_system_adapter.c \
 	propsym_parser.y propsym_lexer.l \
 	propositional_symbol.h propositional_symbol.c ltl2ba_adapter.h ltl2ba_adapter.c \
-	util.h process_util.h process_util.c  ext.h ext.c file_util.h file_util.c lmntal_ext.h
+	util.h process_util.h process_util.c  file_util.h file_util.c lmntal_ext.h \
+	ccallback.h ccallback.c env.c \
+	ext/init_exts.c ext/integer.c ext/atomic.c ext/nlmem.c ext/io.c
+#	ext.h ext.c 
 
 DISTCLEANFILES := arch.h ../lib/config.lmn
 

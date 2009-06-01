@@ -51,13 +51,10 @@
 #include "ltdl.h"
 #include "file_util.h"
 #include "arch.h"
+#include "ccallback.h"
 
 #define INIT_F_PREFIX "init_"
 typedef void (* init_f_type)(void);
-
-st_table_t callback_tbl;
-
-int free_v(st_data_t key, st_data_t v, st_data_t _t);
 
 void ext_init()
 {
@@ -66,44 +63,11 @@ void ext_init()
     fprintf(stderr, "EXT.C: %s\n", lt_dlerror());
     exit(1);
   }
-
-  callback_tbl = st_init_numtable();
 }
 
 void ext_finalize()
 {
-  st_foreach(callback_tbl, free_v, 0);
-  st_free_table(callback_tbl);
-
   lt_dlexit();
-}
-
-int free_v(st_data_t key, st_data_t v, st_data_t _t)
-{
-  LMN_FREE(v);
-  return ST_CONTINUE;
-}
-
-/* コールバックを名前nameで登録する。arityはコールバックに引数として
-   渡されるアトムのリンク数 */
-void lmn_register_c_fun(const char *name, void *f, int arity)
-{
-  struct CCallback *c = LMN_MALLOC(struct CCallback);
-  c->f = f;
-  c->arity = arity;
-  st_insert(callback_tbl, (st_data_t)lmn_intern(name), (st_data_t)c);
-}
-
-/* nameで登録されたコールバック返す */
-const struct CCallback *ext_get_callback(lmn_interned_str name)
-{
-  st_data_t t;
-
-  if (st_lookup(callback_tbl, name, &t)) {
-    return (struct CCallback *)t;
-  } else {
-    return NULL;
-  }
 }
 
 /* dirディレクトリにある共有ライブラリfile_nameを

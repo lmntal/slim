@@ -1,5 +1,5 @@
 /*
- * ext.h
+ * ccallback.h
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,15 +37,20 @@
  * $Id$
  */
 
-#ifndef LMN_EXT
-#define LMN_EXT
+#ifndef LMN_CCALLBACK
+#define LMN_CCALLBACK
 
 #include "lmntal.h"
 
-const struct CCallback *ext_get_callback(lmn_interned_str name);
-void ext_init(void);
-void ext_finalize(void);
-int load_ext(const char *dir, const char *file_name);
-void load_ext_files(char *path);
+/* LMNtalから呼ばれるCのコールバック */
+struct CCallback {
+  void *f;
+  int arity;
+};
+
+void ccallback_init(void);
+void ccallback_finalize(void);
+void lmn_register_c_fun(const char *name, void *f, int arity);
+const struct CCallback *get_ccallback(lmn_interned_str name);
 
 #endif

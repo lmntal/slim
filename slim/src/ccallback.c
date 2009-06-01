@@ -1,5 +1,5 @@
 /*
- * ext.h
+ * ccallback.c
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,15 +37,50 @@
  * $Id$
  */
 
-#ifndef LMN_EXT
-#define LMN_EXT
+#include "ccallback.h"
+#include "st.h"
+#include "symbol.h"
 
-#include "lmntal.h"
+int free_v(st_data_t key, st_data_t v, st_data_t _t);
 
-const struct CCallback *ext_get_callback(lmn_interned_str name);
-void ext_init(void);
-void ext_finalize(void);
-int load_ext(const char *dir, const char *file_name);
-void load_ext_files(char *path);
+st_table_t ccallback_tbl;
 
-#endif
+void ccallback_init()
+{
+  ccallback_tbl = st_init_numtable();
+}
+
+void ccallback_finalize()
+{
+  st_foreach(ccallback_tbl, free_v, 0);
+  st_free_table(ccallback_tbl);
+}
+
+int free_v(st_data_t key, st_data_t v, st_data_t _t)
+{
+  LMN_FREE(v);
+  return ST_CONTINUE;
+}
+
+/* コールバックを名前nameで登録する。arityはコールバックに引数として
+   渡されるアトムのリンク数 */
+void lmn_register_c_fun(const char *name, void *f, int arity)
+{
+  struct CCallback *c = LMN_MALLOC(struct CCallback);
+  c->f = f;
+  c->arity = arity;
+  st_insert(ccallback_tbl, (st_data_t)lmn_intern(name), (st_data_t)c);
+}
+
+/* nameで登録されたコールバック返す */
+const struct CCallback *get_ccallback(lmn_interned_str name)
+{
+  st_data_t t;
+
+  if (st_lookup(ccallback_tbl, name, &t)) {
+    return (struct CCallback *)t;
+  } else {
+    return NULL;
+  }
+}
+

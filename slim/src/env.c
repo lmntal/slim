@@ -1,5 +1,5 @@
 /*
- * ext.h
+ * env.c
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,15 +37,7 @@
  * $Id$
  */
 
-#ifndef LMN_EXT
-#define LMN_EXT
-
 #include "lmntal.h"
 
-const struct CCallback *ext_get_callback(lmn_interned_str name);
-void ext_init(void);
-void ext_finalize(void);
-int load_ext(const char *dir, const char *file_name);
-void load_ext_files(char *path);
-
-#endif
+/* global environment */
+struct LmnEnv  lmn_env;

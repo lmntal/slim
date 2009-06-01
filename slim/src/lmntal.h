@@ -156,11 +156,6 @@ LMN_EXTERN void lmn_free (void *p);
 #endif
 
 /*----------------------------------------------------------------------
- * For external functions
- */
-void lmn_register_c_fun(const char *name, void *f, int arity);
-
-/*----------------------------------------------------------------------
  * Global data
  */
 
