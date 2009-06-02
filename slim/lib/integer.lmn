@@ -199,4 +199,19 @@ H = integer.factorial(N) :- N >= 2 | H = N*integer.factorial(N-1).
  */
 integer.set(A,B,C) :- ground(C), int(A), int(B) |
     '$callback'("integer_set", A, B, C).
+
+/*
+ * H = integer.rnd(N):
+ * 
+ * H is bound to a random number between 0 and N-1.
+ */
+H = integer.rnd(N) :- int(N) | '$callback'("integer_rand", N, H).
+
+/*
+ * integer.srnd(N):
+ * 
+ * sets N as the seed for random numbers
+ */
+ integer.srnd(N) :- int(N) | '$callback'("integer_srand", N).
+
 }.
