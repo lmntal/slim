@@ -51,7 +51,7 @@
 #include "lmntal_system_adapter.h"
 #include "propositional_symbol.h"
 #include "mc.h"
-#include "ext.h"
+/* #include "ext.h" */
 
 #ifdef PROFILE
 #include "runtime_status.h"
@@ -92,7 +92,7 @@ static void usage(void)
 
 static void version(void)
 {
-  printf("The Slim LMNtal Implementation, version %s\n", SLIM_VERSION);
+  printf("The Slim LMNtal Implementation, version %s (%s)\n", SLIM_VERSION, "$Revision$");
   exit(1);
 }
 
