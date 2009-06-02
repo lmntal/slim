@@ -38,6 +38,14 @@
 
 #include "atom.h"
 #include "functor.h"
+#include "membrane.h"
+
+LmnAtomPtr LMN_ATOM_GET_NEXT(const LmnAtomPtr ATOM)
+{
+  LmnAtomPtr NEXT;
+  while (NEXT = LMN_ATOM_GET_NEXT_RAW(ATOM), NEXT !=lmn_atomlist_end(NEXT) && LMN_ATOM_GET_FUNCTOR(NEXT) == LMN_RESUME_FUNCTOR) {printf("hoge\n");}
+  return NEXT;
+}
 
 LmnWord lmn_copy_atom(LmnWord atom, LmnLinkAttr attr)
 {

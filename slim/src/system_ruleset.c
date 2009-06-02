@@ -60,6 +60,9 @@ static BOOL delete_redundant_outproxies(LmnMembrane *mem)
        o0 != lmn_atomlist_end(ent);
        o0 = LMN_ATOM_GET_NEXT(o0)) {
     LmnAtomPtr o1;
+
+    if(LMN_ATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
+
     if (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(o0, 1))) return FALSE;
     o1 = LMN_ATOM(LMN_ATOM_GET_LINK(o0, 1));
     if (LMN_ATOM_GET_FUNCTOR(o1) == LMN_OUT_PROXY_FUNCTOR) {
@@ -67,6 +70,7 @@ static BOOL delete_redundant_outproxies(LmnMembrane *mem)
       LmnAtomPtr i1 = LMN_ATOM(LMN_ATOM_GET_LINK(o1, 0));
       LmnMembrane *m0 = LMN_PROXY_GET_MEM(i0);
       LmnMembrane *m1 = LMN_PROXY_GET_MEM(i1);
+
       if (m0 == m1) {
         REMOVE_FROM_ATOMLIST(o0); /* for efficiency */
         REMOVE_FROM_ATOMLIST(o1);
@@ -96,8 +100,12 @@ static BOOL delete_redundant_inproxies(LmnMembrane *mem)
   for (o0 = atomlist_head(ent);
        o0 != lmn_atomlist_end(ent);
        o0 = LMN_ATOM_GET_NEXT(o0)) {
-    LmnAtomPtr i0 = LMN_ATOM(LMN_ATOM_GET_LINK(o0, 0));
-    LmnAtomPtr i1;
+    LmnAtomPtr i0, i1;
+
+    if(LMN_ATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
+
+    i0 = LMN_ATOM(LMN_ATOM_GET_LINK(o0, 0));
+
     if (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(i0, 1))) return FALSE;
     i1 =LMN_ATOM( LMN_ATOM_GET_LINK(i0, 1));
     if (LMN_ATOM_GET_FUNCTOR(i1) == LMN_IN_PROXY_FUNCTOR) {
@@ -130,7 +138,7 @@ static BOOL exec_iadd_operation_on_body(LmnMembrane *mem)
   /* when '+'/3 operation atom does not exist, do nothing */
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent);  op = LMN_ATOM_GET_NEXT(op)) {
     x0_attr = LMN_ATOM_GET_ATTR(op, 0);
     x1_attr = LMN_ATOM_GET_ATTR(op, 1);
     ret_attr = LMN_ATOM_GET_ATTR(op, 2);
@@ -164,7 +172,7 @@ static BOOL exec_isub_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent);  op = LMN_ATOM_GET_NEXT(op)) {
     x0_attr = LMN_ATOM_GET_ATTR(op, 0);
     x1_attr = LMN_ATOM_GET_ATTR(op, 1);
     ret_attr = LMN_ATOM_GET_ATTR(op, 2);

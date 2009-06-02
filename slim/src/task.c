@@ -1168,7 +1168,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
             LMN_ATOM_SET_NEXT(record, atom);
             LMN_ATOM_SET_PREV(atom, record);
           } else {
-            atom = LMN_ATOM_GET_NEXT(record);
+            atom = LMN_ATOM_GET_NEXT_RAW(record);
           }
 #define DBG 0
 #if DBG
@@ -1176,15 +1176,15 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
 #endif
           for (;
                atom != lmn_atomlist_end(atomlist_ent);
-               atom = LMN_ATOM_GET_NEXT(atom)) {
+               atom = LMN_ATOM_GET_NEXT_RAW(atom)) {
 #if DBG
             count++;
 #endif
             if(LMN_ATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
               continue;
             wt[atomi] = (LmnWord)atom;
-            LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT(record), LMN_ATOM_GET_PREV(record));
-            LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(record), LMN_ATOM_GET_NEXT(record));
+            LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT_RAW(record), LMN_ATOM_GET_PREV(record));
+            LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(record), LMN_ATOM_GET_NEXT_RAW(record));
             LMN_ATOM_SET_NEXT(record, atom);
             LMN_ATOM_SET_PREV(record, LMN_ATOM_GET_PREV(atom));
             LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(atom), record);
@@ -2671,8 +2671,8 @@ EQGROUND_NEQGROUND_BREAK:
         lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
         /* mem がないので仕方なく直接アトムリストをつなぎ変える
            UNIFYアトムはnatomに含まれないので大丈夫 */
-        LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT(copy), LMN_ATOM_GET_PREV(copy));
-        LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(copy), LMN_ATOM_GET_NEXT(copy));
+        LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT_RAW(copy), LMN_ATOM_GET_PREV(copy));
+        LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(copy), LMN_ATOM_GET_NEXT_RAW(copy));
 
         lmn_delete_atom(orig);
       }

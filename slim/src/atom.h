@@ -111,8 +111,9 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_ATOM_SET_PREV(ATOM,X)         \
   (*LMN_ATOM_PPREV(ATOM)=(LmnWord)(X))
 /* get/set next atom of ATOM */
-#define LMN_ATOM_GET_NEXT(ATOM)           \
+#define LMN_ATOM_GET_NEXT_RAW(ATOM)           \
   ((LmnAtomPtr)*LMN_ATOM_PNEXT(ATOM))
+inline LmnAtomPtr LMN_ATOM_GET_NEXT(const LmnAtomPtr ATOM); 
 #define LMN_ATOM_SET_NEXT(ATOM,X)         \
   (*LMN_ATOM_PNEXT(ATOM)=(LmnWord)(X))
 /* get/set ATOM functor */

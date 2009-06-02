@@ -97,8 +97,8 @@ LMN_EXTERN BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
    リストのつなぎ変えだけを行う */
 #define REMOVE_FROM_ATOMLIST(atom)                 \
   do { \
-    LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT(atom), LMN_ATOM_GET_PREV(atom)); \
-    LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(atom), LMN_ATOM_GET_NEXT(atom)); \
+    LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT_RAW(atom), LMN_ATOM_GET_PREV(atom)); \
+    LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(atom), LMN_ATOM_GET_NEXT_RAW(atom)); \
   } while (0)
 
 LMN_EXTERN BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count);
