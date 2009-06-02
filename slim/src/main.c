@@ -51,6 +51,7 @@
 #include "lmntal_system_adapter.h"
 #include "propositional_symbol.h"
 #include "mc.h"
+#include "ccallback.h"
 /* #include "ext.h" */
 
 #ifdef PROFILE
@@ -265,6 +266,7 @@ static void finalize(void)
   free_atom_memory_pools();
 /*   ext_finalize(); */
   
+  ccallback_finalize();
 #ifdef PROFILE
   runtime_status_finalize();
 #endif
