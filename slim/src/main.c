@@ -93,7 +93,7 @@ static void usage(void)
 
 static void version(void)
 {
-  printf("The Slim LMNtal Implementation, version %s (%s)\n", SLIM_VERSION, "$Rev$");
+  printf("The Slim LMNtal Implementation, version %s\n", SLIM_VERSION);
   exit(1);
 }
 

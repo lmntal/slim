@@ -1,6 +1,6 @@
 .\" SLIM manual page
 .\" $Id: slim.1.in,v 1.3 2008/09/19 05:18:17 taisuke Exp $ -*-nroff-*-
-.TH SLIM 1 "$Date: 2008/09/19 05:18:17 $" "SLIM @SLIM_VERSION@ $Rev$" "LMNtal Runtime"
+.TH SLIM 1 "$Date: 2008/09/19 05:18:17 $" "SLIM @SLIM_VERSION@" "LMNtal Runtime"
 .SH NAME
 slim \- a LMNtal runtime
 .SH SYNOPSIS
