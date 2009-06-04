@@ -75,3 +75,25 @@ char *basename_ext(const char *path)
 
   return buf;
 }
+
+char *extension(const char *path)
+{
+  int len = strlen(path);
+  int i;
+  char *ext;
+  
+  for (i = len-1; i >= 0; i--) {
+    if (path[i] == '.') {
+      break;
+    }
+  }
+
+  if (i < 0) {
+    ext = strdup("");
+  } else {
+    ext = malloc(sizeof(char) * (len - i));
+    sprintf(ext, "%s", path + i + 1);
+  }
+
+  return ext;
+}

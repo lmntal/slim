@@ -54,6 +54,7 @@
 #include "il_parser.h"
 #include "il_lexer.h"
 #include "load.h"
+#include "file_util.h"
 
 /* prototypes */
 
@@ -660,58 +661,45 @@ LmnRuleSet load_file(char *file_name)
   return rs;
 }
 
-
-/* st_tableを使ってstring->intを作ろうとするとkeyがメモリリークするので
-   ファイルの量は大したことないと期待してとりあえず線型走査
-   多分uniqueのほうで似たようなコードがあるはずなので
-   もっと汎用的な方法があればこの部分は消す
- */
-struct stringint_
-{
-  char *first;
-  int second;
-};
-typedef struct stringint_ stringint;
-
-stringint *stringint_new(char *s, int i)
-{
-  stringint *r = LMN_MALLOC(stringint);
-  r->first = strdup(s);
-  r->second = i;
-  return r;
-}
-
-void stringint_delete(stringint *x)
-{
-  free(x->first);
-  free(x);
-}
-
-/*stringint専用
-  (s,?)がVectorにすでに含まれる場合はそのindexを、
-  含まれない場合は(s,0)を追加してからそのindexを返す
-  */
-static int vec_inserted_index(Vector *v, char *s)
-{
-  int i;
-  for(i=0; i<vec_num(v); ++i){
-    if(! strcmp(((stringint*)vec_get(v, i))->first, s)) return i;
-  }
-  vec_push(v, (LmnWord)stringint_new(s, 0));
-  return vec_num(v) - 1;
-}
-
-/* 一応使い方 */
-/* stringint *hoge = vec_get(V, vec_inserted_index(V, "hoge")); */
-/* hoge->second = 20; */
-
-
 static const char * const extension_table[] = {
   ""
-  ,".lmn"
-  ,".il"
-  /*,".so"*/
+  ,"lmn"
+  ,"il"
+  /*,"so"*/
 };
+
+static int file_type(const char *extension)
+{
+  int i = 0;
+  int filetype = 0;
+  
+  for(i=1; i<sizeof(extension_table)/sizeof(extension_table[0]); ++i){
+    if(! strcmp(extension, extension_table[i])){
+      filetype = i;
+      break;
+    }
+  }
+
+  return filetype;
+}  
+
+int load_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path)
+{
+  const char *extension = extension_table[filetype];
+  char *buf = LMN_NALLOC(char, strlen((char *)path) + NAME_MAX + 2);
+
+  sprintf(buf, "%s%s%s.%s", (char *)path, DIR_SEPARATOR_STR, (char *)basename, extension);
+  load_file(buf);
+  LMN_FREE(buf);
+  return ST_CONTINUE;
+}
+
+
+int free_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path)
+{
+  LMN_FREE(basename);
+  return ST_CONTINUE;
+}
 
 /* pathのディレクトリ内のファイルを中間コードとしてロードする */
 /* 拡張子を除いた名前がおなじファイルがある場合extension_tableで指定した優先順で1種類のみ読み込む */
@@ -722,7 +710,7 @@ void load_il_files(char *path)
   DIR *dir = opendir(path);
   
   if (dir) {
-    Vector *loading_files_type = vec_make(8);
+    st_table_t loading_files_type = st_init_strtable();
     struct stat st;
     struct dirent* dp;
     
@@ -731,68 +719,30 @@ void load_il_files(char *path)
       sprintf(buf, "%s%s%s", path, DIR_SEPARATOR_STR, dp->d_name);
       stat(buf, &st);
       if (S_ISREG(st.st_mode)) {
-        int len = strlen(dp->d_name);
-        char *dot_pos = strrchr(dp->d_name, '.');
-        char *basename = NULL;
-        char *extension = NULL;
+        char *ext = extension(dp->d_name);
+        int filetype = file_type(ext);
 
-        if(dot_pos){
-          int filetype;
-          int basename_len = dot_pos - dp->d_name;
-          int extension_len = len - basename_len;
-          basename = LMN_CALLOC(char, basename_len+1);
-          extension = LMN_CALLOC(char, extension_len+1);
-          strncpy(basename, dp->d_name, basename_len);
-          strncpy(extension, dp->d_name+basename_len, extension_len);
-
-          {
-            int i = 0;
-            for(i=1; i<sizeof(extension_table)/sizeof(extension_table[0]); ++i){
-              if(! strcmp(extension, extension_table[i])){
-                filetype = i;
-              }
+        if(filetype > 0){ /* 読み込むべき拡張子なら追加 */
+          char *basename = basename_ext(dp->d_name);
+          st_data_t old_filetype;
+          if (st_lookup(loading_files_type, (st_data_t)basename, &old_filetype)) {
+            if(filetype > old_filetype) {
+              st_insert(loading_files_type, (st_data_t)basename, filetype);
             }
+            LMN_FREE(basename);
+          } else {
+            st_insert(loading_files_type, (st_data_t)basename, filetype);
           }
-          
-          if(filetype > 0){ /* 読み込むべき拡張子なら追加 */
-            int index = vec_inserted_index(loading_files_type, basename);
-            stringint *ent = (stringint*)vec_get(loading_files_type, index);
-            int old_filetype = ent->second;
-            if(filetype > old_filetype){
-              ent->second = filetype;
-            }
-          }
-
-          free(basename);
-          free(extension);
         }
+        LMN_FREE(ext);
       }
     }
 
     /* 読み込む */
-    {
-      int i;
-      int num = vec_num(loading_files_type);
-      for(i=0; i<num; ++i){
-        stringint *ent = vec_get(loading_files_type, i);
-        char *basename = ent->first;
-        char *extension = extension_table[ent->second];
-      
-        sprintf(buf, "%s%s%s%s", path, DIR_SEPARATOR_STR, basename, extension);
-        load_file(buf);
-      }
-    }
-
+    st_foreach(loading_files_type, load_loading_tbl_entry, (st_data_t)path);
     /* 開放 */
-    {
-      int i;
-      int num = vec_num(loading_files_type);
-      for(i=0; i<num; ++i){
-        stringint *ent = vec_get(loading_files_type, i);
-        stringint_delete(ent);
-      }
-      vec_free(loading_files_type);
-    }
+    st_foreach(loading_files_type, free_loading_tbl_entry, (st_data_t)path);
+    st_free_table(loading_files_type);
   }
   closedir(dir);
   LMN_FREE(buf);

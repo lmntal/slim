@@ -52,6 +52,8 @@
 #include "propositional_symbol.h"
 #include "mc.h"
 #include "ccallback.h"
+#include "special_atom.h"
+#include "slim_header/string.h"
 /* #include "ext.h" */
 
 #ifdef PROFILE
@@ -249,9 +251,12 @@ static void init_internal(void)
   init_default_system_ruleset();
   task_init();
 /*   ext_init(); */
-
+  sp_atom_init();
   ccallback_init();
   init_builtin_extensions();
+
+  string_init();
+
 #ifdef PROFILE
   runtime_status_init();
 #endif
@@ -259,14 +264,17 @@ static void init_internal(void)
 
 static void finalize(void)
 {
+  string_finalize();
+  
   sym_tbl_destroy();
   lmn_functor_tbl_destroy();
   destroy_rules();
   task_finalize();
   free_atom_memory_pools();
 /*   ext_finalize(); */
-  
   ccallback_finalize();
+  sp_atom_finalize();
+
 #ifdef PROFILE
   runtime_status_finalize();
 #endif

@@ -45,6 +45,7 @@
 #include "atom.h"
 #include "symbol.h"
 #include "functor.h"
+#include "special_atom.h"
 
 #define MAX_DEPTH 1000
 #define LINK_FORMAT "L%d"
@@ -193,6 +194,9 @@ static BOOL dump_data_atom(LmnWord data,
     break;
   case  LMN_DBL_ATTR:
     fprintf(stdout, "%f", *(double*)data);
+    break;
+  case LMN_SP_ATOM_ATTR:
+    SP_ATOM_DUMP(data, stdout);
     break;
   default:
     fprintf(stdout, "*[%d]", attr);

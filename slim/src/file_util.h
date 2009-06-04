@@ -41,5 +41,6 @@
 
 char *build_path(const char *dir, const char *component);
 char *basename_ext(const char *path);
+char *extension(const char *path);
 
 #endif /* !LMN_UTIL_H */

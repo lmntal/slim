@@ -158,6 +158,7 @@ struct InstrSpec spec[] = {
     {"isintfunc", INSTR_ISINTFUNC, {InstrVar}},
 
     {"isfloat", INSTR_ISFLOAT, {InstrVar}},
+    {"isstring", INSTR_ISSTRING, {InstrVar}},
 
     /* guard: float */
     {"fadd", INSTR_FADD, {InstrVar, InstrVar, InstrVar}},

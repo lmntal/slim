@@ -37,6 +37,7 @@
  */
 
 #include "atom.h"
+#include "special_atom.h"
 #include "functor.h"
 #include "membrane.h"
 
@@ -70,6 +71,8 @@ LmnWord lmn_copy_data_atom(LmnWord atom, LmnLinkAttr attr)
       *d = *(double*)atom;
       return (LmnWord)d;
     }
+  case LMN_SP_ATOM_ATTR:
+    return SP_ATOM_COPY(atom);
   default:
     LMN_ASSERT(FALSE);
     return -1;
@@ -83,6 +86,9 @@ static inline void free_data_atom(LmnWord atom, LmnLinkAttr attr)
     break;
   case LMN_DBL_ATTR:
     LMN_FREE((double*)atom);
+    break;
+  case LMN_SP_ATOM_ATTR:
+    SP_ATOM_FREE(atom);
     break;
   default:
     LMN_ASSERT(FALSE);

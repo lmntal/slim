@@ -175,6 +175,8 @@ inline LmnAtomPtr LMN_ATOM_GET_NEXT(const LmnAtomPtr ATOM);
 
 #define LMN_INT_ATTR        (LMN_ATTR_FLAG | 0)
 #define LMN_DBL_ATTR        (LMN_ATTR_FLAG | 1)
+#define LMN_SP_ATOM_ATTR    (LMN_ATTR_FLAG | 2)
+#define LMN_STRING_ATTR     LMN_SP_ATOM_ATTR
 
 /*----------------------------------------------------------------------
  * functions

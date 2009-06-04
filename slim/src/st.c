@@ -252,7 +252,8 @@ do {\
     table->num_entries++;\
 } while (0)
 
-/* ハッシュ表に新たなエントリーを追加する */
+/* ハッシュ表に新たなエントリーを追加する。エントリが存在した場合はその
+   エントリの値のみを更新し、キーは元々のものを更新しない。 */
 int st_insert(register st_table *table, register st_data_t key, st_data_t value) {
   unsigned int hash_val, bin_pos;
   register st_table_entry *ptr;
