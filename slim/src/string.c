@@ -46,6 +46,8 @@
 #include "slim_header/string.h"
 #include <stdio.h>
 
+inline static void string_expand_buf(LmnString s, unsigned long size);
+
 struct LmnString {
   LMN_SP_ATOM_HEADER;
 
@@ -114,7 +116,7 @@ LmnString lmn_string_make(char *s)
   return p;
 }
 
-LmnString lmn_string_make_empty(unsigned long buf_size)
+LmnString string_make_empty_with_size(unsigned long buf_size)
 {
   struct LmnString *p = LMN_MALLOC(struct LmnString);
   LMN_SP_ATOM_SET_TYPE(p, string_atom_type);
@@ -123,6 +125,11 @@ LmnString lmn_string_make_empty(unsigned long buf_size)
   p->buf = LMN_NALLOC(char, p->buf_size);
   p->buf[0] = '\0';
   return p;
+}
+
+LmnString lmn_string_make_empty()
+{
+  return string_make_empty_with_size(1);
 }
 
 LmnString lmn_string_copy(LmnString s)
@@ -140,23 +147,44 @@ void lmn_string_free(LmnString s)
   LMN_FREE(s);
 }
 
-/* void lmn_string_push_raw_c(LmNString str_atom, int c) */
-/* { */
-  
-/* } */
+inline static void string_expand_buf(LmnString s, unsigned long size)
+{
+  s->buf_size = size;
+  s->buf = LMN_REALLOC(char, s->buf, size);
+}
 
-/* LmnWord lmn_string_concat(LmnString str_atom0, LmnString str_atom1) */
-/* { */
-/*   LmnWord ret_atom = */
-/*     lmn_string_make_empty(LMN_STRING_LEN(LMN_SP_ATOM_DATA(str_atom0)) + */
-/*                           LMN_STRING_LEN(LMN_SP_ATOM_DATA(str_atom1))); */
-                                               
-/*   char *s = LMN_NALLOC(char, */
-/*                        strlen(LMN_SP_ATOM_DATA(str_atom0)) + */
-/*                        strlen(LMN_SP_ATOM_DATA(str_atom1)) + */
-/*                        1); */
-/*   sprintf(s, "%s%s", (char *)LMN_SP_ATOM_DATA(str_atom0), (char *)LMN_SP_ATOM_DATA(str_atom1)); */
-/* } */
+void lmn_string_push_raw_c(LmnString s, int c)
+{
+  if (s->len+1 == s->buf_size) {
+    /* バッファのサイズをどれくらい増加すべきか */
+    string_expand_buf(s, s->buf_size+1); 
+  }
+  s->len++;
+  s->buf[s->len-1] = c;
+  s->buf[s->len] = '\0';
+}
+
+/* srcの文字列をdstの末尾に追加する。srcの内容は変わらない */
+void lmn_string_push(LmnString dst, const LmnString src)
+{
+  const unsigned long len = dst->len + src->len;
+  if (len >= dst->buf_size) {
+    /* バッファのサイズをどれくらい増加すべきか */
+    string_expand_buf(dst, len + 1); 
+  }
+  dst->len = len;
+  strcat(dst->buf, src->buf);
+}
+
+LmnString lmn_string_concat(LmnString s0, LmnString s1)
+{
+  LmnString ret_atom = string_make_empty_with_size(s0->len + s1->len + 1);
+
+  lmn_string_push(ret_atom, s0);
+  lmn_string_push(ret_atom, s1);
+
+  return ret_atom;
+}
 
 /*----------------------------------------------------------------------
  * Callbacks
@@ -191,24 +219,19 @@ void cb_string_make(LmnMembrane *mem,
   lmn_free_atom(a0, t0);
 }
 
-/* void cb_string_concat(LmnMembrane *mem, */
-/*                       LmnWord a0, LmnLinkAttr t0, */
-/*                       LmnWord a1, LmnLinkAttr t1, */
-/*                       LmnWord a2, LmnLinkAttr t2) */
-/* { */
-/*   char *s = LMN_NALLOC(char, */
-/*                        strlen(LMN_SP_ATOM_DATA(a0)) + */
-/*                        strlen(LMN_SP_ATOM_DATA(a1)) + */
-/*                        1); */
-/*   sprintf(s, "%s%s", (char *)LMN_SP_ATOM_DATA(a0), (char *)LMN_SP_ATOM_DATA(a1)); */
+void cb_string_concat(LmnMembrane *mem,
+                      LmnWord a0, LmnLinkAttr t0,
+                      LmnWord a1, LmnLinkAttr t1,
+                      LmnWord a2, LmnLinkAttr t2)
+{
+  LmnString s = lmn_string_concat(LMN_STRING(a0), LMN_STRING(a1));
+  LINK_STR(mem, a2, t2, s);
 
-/*   LINK_STR(mem, a2, t2, lmn_sp_atom_make(string_atom_type, s)); */
-
-/*   lmn_mem_remove_atom(mem, a0, t0); */
-/*   lmn_free_atom(a0, t0); */
-/*   lmn_mem_remove_atom(mem, a1, t1); */
-/*   lmn_free_atom(a1, t1); */
-/* } */
+  lmn_mem_remove_atom(mem, a0, t0);
+  lmn_free_atom(a0, t0);
+  lmn_mem_remove_atom(mem, a1, t1);
+  lmn_free_atom(a1, t1);
+}
 
 void cb_string_length(LmnMembrane *mem,
                       LmnWord a0, LmnLinkAttr t0,
@@ -327,7 +350,7 @@ void string_init()
                                           sp_cb_string_dump,
                                           sp_cb_string_is_ground);
   lmn_register_c_fun("string_make", cb_string_make, 2);
-/*   lmn_register_c_fun("string_concat", cb_string_concat, 3); */
+  lmn_register_c_fun("string_concat", cb_string_concat, 3);
   lmn_register_c_fun("string_length", cb_string_length, 2);
   lmn_register_c_fun("string_reverse", cb_string_reverse, 2);
   lmn_register_c_fun("string_substr", cb_string_substr, 4);

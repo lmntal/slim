@@ -214,4 +214,13 @@ H = integer.rnd(N) :- int(N) | '$callback'("integer_rand", N, H).
  */
  integer.srnd(N) :- int(N) | '$callback'("integer_srand", N).
 
+
+/*
+ * H = integer.of_str($s):
+ * 
+ * @param +$n 文字列
+ * H is bound to the integer of string
+ */
+H=integer.of_str(S) :- string(S) | '$callback'("integer_of_string", S, H).
+
 }.

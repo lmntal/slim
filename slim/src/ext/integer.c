@@ -114,7 +114,6 @@ void integer_of_string(LmnMembrane *mem,
                     a1, t1, LMN_ATTR_GET_VALUE(t1),
                     (LmnWord)a, LMN_ATTR_MAKE_LINK(0), 0);
   } else { /* 変換できた */
-    printf("%p %p\n", s, t);
     lmn_mem_newlink(mem,
                     a1, t1, LMN_ATTR_GET_VALUE(t1),
                     n, LMN_INT_ATTR, 0);

@@ -58,8 +58,6 @@ struct LmnPort {
   BOOL error;     /* error has occurred */
   BOOL owner;     /* TRUE if this port owns underlying
                      file pointer */
-  unsigned long line;
-  
   lmn_interned_str name;
 
   void *data;    /* used internally */

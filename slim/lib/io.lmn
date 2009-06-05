@@ -39,7 +39,29 @@
 {
 module(io).
 
-io.print(X) :- unary(X) | '$callback'("print_line", X). 
-io.println(X) :- unary(X) | '$callback'("print_line", X). 
+// io.println(X) :- unary(X) |
+//     '$callback'("print_line", X). 
 
+H = io.read_line('$port'(Port), RetPort) :-
+    '$callback'("port_read_line", Port, P, H),
+    '$port'(P, RetPort).
+
+H=io.stdin :- '$callback'("port_stdin", P), '$port'(P, H).
+H=io.stdout :- '$callback'("port_stdout", P), '$port'(P, H).
+
+io.print_char('$port'(Port), C, RetPort) :- unary(C) |
+    '$callback'("port_putc", Port, C, P),
+    '$port'(P, RetPort).
+
+io.print('$port'(Port), S, RetPort) :- string(S) |
+    '$callback'("port_puts", Port, S, P),
+    '$port'(P, RetPort).
+
+io.print_newline('$port'(Port), RetPort) :-
+    '$callback'("cb_print_newline_with_port", Port, P),
+    '$port'(P, RetPort).
+
+io.print_line('$port'(Port), S, RetPort) :- string(S) |
+    '$callback'("cb_print_line_with_port", Port, S, P),
+    '$port'(P, RetPort).
 }.
