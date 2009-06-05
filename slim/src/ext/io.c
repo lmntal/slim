@@ -14,8 +14,8 @@ void init_print(void);
  * -a1     : 返すポート
  */
 void cb_print_newline_with_port(LmnMembrane *mem,
-                                LmnWord a0, LmnLinkAttr t0,
-                                LmnWord a1, LmnLinkAttr t1)
+                                LmnAtom a0, LmnLinkAttr t0,
+                                LmnAtom a1, LmnLinkAttr t1)
 {
   port_put_raw_s(LMN_PORT(a0), "\n");
   
@@ -30,9 +30,9 @@ void cb_print_newline_with_port(LmnMembrane *mem,
  * -a2     : 返すポート
  */
 void cb_print_line_with_port(LmnMembrane *mem,
-                             LmnWord a0, LmnLinkAttr t0,
-                             LmnWord a1, LmnLinkAttr t1,
-                             LmnWord a2, LmnLinkAttr t2)
+                             LmnAtom a0, LmnLinkAttr t0,
+                             LmnAtom a1, LmnLinkAttr t1,
+                             LmnAtom a2, LmnLinkAttr t2)
 {
   port_puts(LMN_PORT(a0), LMN_STRING(a1));
   port_put_raw_s(LMN_PORT(a0), "\n");
@@ -52,9 +52,9 @@ void cb_print_line_with_port(LmnMembrane *mem,
  * -a2     : 読み込んだ文字列 | eof()
  */
 void cb_input_line_with_oprt(LmnMembrane *mem,
-                             LmnWord a0, LmnLinkAttr t0,
-                             LmnWord a1, LmnLinkAttr t1,
-                             LmnWord a2, LmnLinkAttr t2)
+                             LmnAtom a0, LmnLinkAttr t0,
+                             LmnAtom a1, LmnLinkAttr t1,
+                             LmnAtom a2, LmnLinkAttr t2)
 {
   const int N = 256;
   char buf[N], *s=NULL, *p; /* sは行の文字列の先頭、pは作業用 */
@@ -77,18 +77,18 @@ void cb_input_line_with_oprt(LmnMembrane *mem,
   }
   
   if (ferror(stdin)) {/* error */
-    LmnAtomPtr atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
+    LmnSAtom atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
     lmn_mem_newlink(mem,
                     a0, t0, LMN_ATTR_GET_VALUE(t0),
-                    (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), 0);
+                    LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), 0);
     mem_push_symbol_atom(mem, atom);
     if (s) LMN_FREE(s);
   }
   else if (feof(stdin) && s == NULL) { /* eof */
-    LmnAtomPtr atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("eof"), 1));
+    LmnSAtom atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("eof"), 1));
     lmn_mem_newlink(mem,
                     a0, t0, LMN_ATTR_GET_VALUE(t0),
-                    (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), 0);
+                    LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), 0);
     mem_push_symbol_atom(mem, atom);
   }
   else {
@@ -99,11 +99,11 @@ void cb_input_line_with_oprt(LmnMembrane *mem,
     *p = '\0';
 
     a = lmn_string_make(s);
-    lmn_mem_push_atom(mem, (LmnWord)a, LMN_STRING_ATTR);
+    lmn_mem_push_atom(mem, LMN_ATOM(a), LMN_STRING_ATTR);
 
     lmn_mem_newlink(mem,
                     a0, t0, LMN_ATTR_GET_VALUE(t0),
-                    (LmnWord)a, LMN_STRING_ATTR, 0);
+                    LMN_ATOM(a), LMN_STRING_ATTR, 0);
   }
 }
 

@@ -63,13 +63,13 @@ struct LmnString {
 #define LINK_STR(MEM, TO_ATOM, TO_ATTR, STR_ATOM)    \
   lmn_mem_newlink((MEM),                                         \
                     (TO_ATOM), (TO_ATTR), LMN_ATTR_GET_VALUE((TO_ATTR)), \
-                  (LmnWord)(STR_ATOM), LMN_SP_ATOM_ATTR, 0)
+                    LMN_ATOM((STR_ATOM)), LMN_SP_ATOM_ATTR, 0)
   
 
 
 static int string_atom_type;
 
-BOOL lmn_is_string(LmnWord atom, LmnLinkAttr attr)
+BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr)
 {
   return
     attr == LMN_SP_ATOM_ATTR &&
@@ -191,8 +191,8 @@ LmnString lmn_string_concat(LmnString s0, LmnString s1)
  */
 
 void cb_string_make(LmnMembrane *mem,
-                    LmnWord a0, LmnLinkAttr t0,
-                    LmnWord a1, LmnLinkAttr t1)
+                    LmnAtom a0, LmnLinkAttr t0,
+                    LmnAtom a1, LmnLinkAttr t1)
 {
   char *s;
   
@@ -211,7 +211,7 @@ void cb_string_make(LmnMembrane *mem,
       break;
     }
   } else { /* symbol atom */
-    s = strdup(LMN_ATOM_STR(a0));
+    s = strdup(LMN_SATOM_STR(a0));
   }
 
   LINK_STR(mem, a1, t1, lmn_string_make(s));
@@ -220,9 +220,9 @@ void cb_string_make(LmnMembrane *mem,
 }
 
 void cb_string_concat(LmnMembrane *mem,
-                      LmnWord a0, LmnLinkAttr t0,
-                      LmnWord a1, LmnLinkAttr t1,
-                      LmnWord a2, LmnLinkAttr t2)
+                      LmnAtom a0, LmnLinkAttr t0,
+                      LmnAtom a1, LmnLinkAttr t1,
+                      LmnAtom a2, LmnLinkAttr t2)
 {
   LmnString s = lmn_string_concat(LMN_STRING(a0), LMN_STRING(a1));
   LINK_STR(mem, a2, t2, s);
@@ -234,8 +234,8 @@ void cb_string_concat(LmnMembrane *mem,
 }
 
 void cb_string_length(LmnMembrane *mem,
-                      LmnWord a0, LmnLinkAttr t0,
-                      LmnWord a1, LmnLinkAttr t1)
+                      LmnAtom a0, LmnLinkAttr t0,
+                      LmnAtom a1, LmnLinkAttr t1)
 {
   int len = LMN_STRING_LEN(a0);
 
@@ -247,8 +247,8 @@ void cb_string_length(LmnMembrane *mem,
 }
 
 void cb_string_reverse(LmnMembrane *mem,
-                       LmnWord a0, LmnLinkAttr t0,
-                       LmnWord a1, LmnLinkAttr t1)
+                       LmnAtom a0, LmnLinkAttr t0,
+                       LmnAtom a1, LmnLinkAttr t1)
 {
   int i, j;
   char *s = LMN_STRING_BUF(a0);
@@ -264,10 +264,10 @@ void cb_string_reverse(LmnMembrane *mem,
 }
 
 void cb_string_substr(LmnMembrane *mem,
-                      LmnWord a0, LmnLinkAttr t0,
+                      LmnAtom a0, LmnLinkAttr t0,
                       long begin, LmnLinkAttr t1,
                       long end, LmnLinkAttr t2,
-                      LmnWord a3, LmnLinkAttr t3)
+                      LmnAtom a3, LmnLinkAttr t3)
 {
   const char *src = (const char *)LMN_STRING_BUF(a0);
   char *s;
@@ -284,7 +284,7 @@ void cb_string_substr(LmnMembrane *mem,
   }
 
   ret = lmn_string_make(s);
-  lmn_mem_push_atom(mem, (LmnWord)ret, LMN_SP_ATOM_ATTR);
+  lmn_mem_push_atom(mem, LMN_ATOM(ret), LMN_SP_ATOM_ATTR);
   LINK_STR(mem, a3, t3, ret);
 
   lmn_mem_remove_atom(mem, a0, t0);
@@ -296,9 +296,9 @@ void cb_string_substr(LmnMembrane *mem,
 }
 
 void cb_string_substr_right(LmnMembrane *mem,
-                            LmnWord a0, LmnLinkAttr t0,
+                            LmnAtom a0, LmnLinkAttr t0,
                             long begin, LmnLinkAttr t1,
-                            LmnWord a2, LmnLinkAttr t2)
+                            LmnAtom a2, LmnLinkAttr t2)
 {
   const char *src = LMN_STRING_BUF(a0);
   char *s;
@@ -311,7 +311,7 @@ void cb_string_substr_right(LmnMembrane *mem,
   snprintf(s, len - begin + 1, "%s", src+begin);
 
   ret = lmn_string_make(s);
-  lmn_mem_push_atom(mem, (LmnWord)ret, LMN_SP_ATOM_ATTR);
+  lmn_mem_push_atom(mem, LMN_ATOM(ret), LMN_SP_ATOM_ATTR);
   LINK_STR(mem, a2, t2, ret);
 
   lmn_mem_remove_atom(mem, a0, t0);

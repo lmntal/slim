@@ -6,7 +6,7 @@
 LMN_EXTERN void init_nlmem(void);
 
 void atomic_ruleset(LmnMembrane *mem,
-                    LmnWord a0, LmnLinkAttr t0)
+                    LmnAtom a0, LmnLinkAttr t0)
 {
   if (LMN_INT_ATTR == t0) {
     int i, n = lmn_mem_ruleset_num(mem);

@@ -629,6 +629,7 @@ LmnRuleSet load_file(char *file_name)
       rs = so_load(file_name, sohandle);
     }
     */
+    rs = NULL; /* ワーニングの抑制 */
   }else if ((fp = fopen(file_name, "r"))) {
     /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
     if (!strcmp(&file_name[len-4], ".lmn")) {

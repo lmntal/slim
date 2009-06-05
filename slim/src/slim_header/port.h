@@ -94,7 +94,7 @@ lmn_interned_str lmn_port_name(LmnPort port_atom);
 
 int port_get_raw_c(LmnPort port_atom);
 int port_unget_raw_c(LmnPort port_atom, int c);
-int port_putc(LmnPort port_atom, LmnAtomPtr unary_atom);
+int port_putc(LmnPort port_atom, LmnSAtom unary_atom);
 void port_puts(LmnPort port_atom, LmnString str);
 void port_put_raw_s(LmnPort port_atom, const char *str);
 

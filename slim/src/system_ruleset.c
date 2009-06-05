@@ -52,22 +52,22 @@ static BOOL delete_redundant_outproxies(LmnMembrane *mem)
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
                                                           LMN_OUT_PROXY_FUNCTOR,
                                                           0);
-  LmnAtomPtr o0;
+  LmnSAtom o0;
 
   if (!ent) return FALSE;
 
   for (o0 = atomlist_head(ent);
        o0 != lmn_atomlist_end(ent);
-       o0 = LMN_ATOM_GET_NEXT(o0)) {
-    LmnAtomPtr o1;
+       o0 = LMN_SATOM_GET_NEXT(o0)) {
+    LmnSAtom o1;
 
-    if(LMN_ATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
+    if(LMN_SATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
 
-    if (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(o0, 1))) return FALSE;
-    o1 = LMN_ATOM(LMN_ATOM_GET_LINK(o0, 1));
-    if (LMN_ATOM_GET_FUNCTOR(o1) == LMN_OUT_PROXY_FUNCTOR) {
-      LmnAtomPtr i0 = LMN_ATOM(LMN_ATOM_GET_LINK(o0, 0));
-      LmnAtomPtr i1 = LMN_ATOM(LMN_ATOM_GET_LINK(o1, 0));
+    if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(o0, 1))) return FALSE;
+    o1 = LMN_SATOM(LMN_SATOM_GET_LINK(o0, 1));
+    if (LMN_SATOM_GET_FUNCTOR(o1) == LMN_OUT_PROXY_FUNCTOR) {
+      LmnSAtom i0 = LMN_SATOM(LMN_SATOM_GET_LINK(o0, 0));
+      LmnSAtom i1 = LMN_SATOM(LMN_SATOM_GET_LINK(o1, 0));
       LmnMembrane *m0 = LMN_PROXY_GET_MEM(i0);
       LmnMembrane *m1 = LMN_PROXY_GET_MEM(i1);
 
@@ -93,23 +93,23 @@ static BOOL delete_redundant_inproxies(LmnMembrane *mem)
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
                                                           LMN_OUT_PROXY_FUNCTOR,
                                                           0);
-  LmnAtomPtr o0;
+  LmnSAtom o0;
 
   if (!ent) return FALSE;
 
   for (o0 = atomlist_head(ent);
        o0 != lmn_atomlist_end(ent);
-       o0 = LMN_ATOM_GET_NEXT(o0)) {
-    LmnAtomPtr i0, i1;
+       o0 = LMN_SATOM_GET_NEXT(o0)) {
+    LmnSAtom i0, i1;
 
-    if(LMN_ATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
+    if(LMN_SATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
 
-    i0 = LMN_ATOM(LMN_ATOM_GET_LINK(o0, 0));
+    i0 = LMN_SATOM(LMN_SATOM_GET_LINK(o0, 0));
 
-    if (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(i0, 1))) return FALSE;
-    i1 =LMN_ATOM( LMN_ATOM_GET_LINK(i0, 1));
-    if (LMN_ATOM_GET_FUNCTOR(i1) == LMN_IN_PROXY_FUNCTOR) {
-      LmnAtomPtr o1 = LMN_ATOM(LMN_ATOM_GET_LINK(i1, 0));
+    if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(i0, 1))) return FALSE;
+    i1 =LMN_SATOM(LMN_SATOM_GET_LINK(i0, 1));
+    if (LMN_SATOM_GET_FUNCTOR(i1) == LMN_IN_PROXY_FUNCTOR) {
+      LmnSAtom o1 = LMN_SATOM(LMN_SATOM_GET_LINK(i1, 0));
       REMOVE_FROM_ATOMLIST(o0);
       REMOVE_FROM_ATOMLIST(o1);
       lmn_delete_atom(o0);
@@ -130,7 +130,7 @@ static BOOL delete_redundant_inproxies(LmnMembrane *mem)
 static BOOL exec_iadd_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_IADD_FUNCTOR, 0);
-  LmnAtomPtr op, ret; /* let op be an operation atom such as '+'/3, '-'/3, 'mod'/3, and so on */
+  LmnSAtom op, ret; /* let op be an operation atom such as '+'/3, '-'/3, 'mod'/3, and so on */
                       /* let ret be the atom pointer for returned value (= y) */
   LmnLinkAttr ret_attr, x0_attr, x1_attr;
   int x0, x1, y;
@@ -138,19 +138,19 @@ static BOOL exec_iadd_operation_on_body(LmnMembrane *mem)
   /* when '+'/3 operation atom does not exist, do nothing */
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent);  op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent);  op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       if (x0_attr == LMN_INT_ATTR && x1_attr == LMN_INT_ATTR) {
-        x0 = (int)LMN_ATOM_GET_LINK(op, 0);
-        x1 = (int)LMN_ATOM_GET_LINK(op, 1);
+        x0 = (int)LMN_SATOM_GET_LINK(op, 0);
+        x1 = (int)LMN_SATOM_GET_LINK(op, 1);
         y = x0 + x1;
 
-        ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-        LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
-        LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+        ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+        LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
+        LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
         mem->atom_num--; /* x1, x2 are deleted and y is produced, so atom_num is decreased by 1 */
         REMOVE_FROM_ATOMLIST(op);
@@ -166,25 +166,25 @@ static BOOL exec_iadd_operation_on_body(LmnMembrane *mem)
 static BOOL exec_isub_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_ISUB_FUNCTOR, 0);
-  LmnAtomPtr op, ret;
+  LmnSAtom op, ret;
   LmnLinkAttr ret_attr, x0_attr, x1_attr;;
   int x0, x1, y;
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent);  op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent);  op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       if (x0_attr == LMN_INT_ATTR && x1_attr == LMN_INT_ATTR) {
-        x0 = (int)LMN_ATOM_GET_LINK(op, 0);
-        x1 = (int)LMN_ATOM_GET_LINK(op, 1);
+        x0 = (int)LMN_SATOM_GET_LINK(op, 0);
+        x1 = (int)LMN_SATOM_GET_LINK(op, 1);
         y = x0 - x1;
 
-        ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-        LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
-        LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+        ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+        LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
+        LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
         mem->atom_num--;
         REMOVE_FROM_ATOMLIST(op);
@@ -200,25 +200,25 @@ static BOOL exec_isub_operation_on_body(LmnMembrane *mem)
 static BOOL exec_imul_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_IMUL_FUNCTOR, 0);
-  LmnAtomPtr op, ret;
+  LmnSAtom op, ret;
   LmnLinkAttr ret_attr, x0_attr, x1_attr;;
   int x0, x1, y;
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       if (x0_attr == LMN_INT_ATTR && x1_attr == LMN_INT_ATTR) {
-        x0 = (int)LMN_ATOM_GET_LINK(op, 0);
-        x1 = (int)LMN_ATOM_GET_LINK(op, 1);
+        x0 = (int)LMN_SATOM_GET_LINK(op, 0);
+        x1 = (int)LMN_SATOM_GET_LINK(op, 1);
         y = x0 * x1;
 
-        ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-        LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
-        LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+        ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+        LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
+        LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
         mem->atom_num--;
         REMOVE_FROM_ATOMLIST(op);
@@ -234,29 +234,29 @@ static BOOL exec_imul_operation_on_body(LmnMembrane *mem)
 static BOOL exec_idiv_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_IDIV_FUNCTOR, 0);
-  LmnAtomPtr op, ret;
+  LmnSAtom op, ret;
   LmnLinkAttr ret_attr, x0_attr, x1_attr;;
   int x0, x1, y;
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       if (x0_attr == LMN_INT_ATTR && x1_attr == LMN_INT_ATTR) {
-        x0 = (int)LMN_ATOM_GET_LINK(op, 0);
-        x1 = (int)LMN_ATOM_GET_LINK(op, 1);
+        x0 = (int)LMN_SATOM_GET_LINK(op, 0);
+        x1 = (int)LMN_SATOM_GET_LINK(op, 1);
         if (x1 != 0) {
           y = x0 / x1;
         } else {
           continue;
         }
 
-        ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-        LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
-        LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+        ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+        LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
+        LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
         mem->atom_num--;
         REMOVE_FROM_ATOMLIST(op);
@@ -272,29 +272,29 @@ static BOOL exec_idiv_operation_on_body(LmnMembrane *mem)
 static BOOL exec_mod_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_MOD_FUNCTOR, 0);
-  LmnAtomPtr op, ret;
+  LmnSAtom op, ret;
   LmnLinkAttr ret_attr, x0_attr, x1_attr;;
   int x0, x1, y;
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       if (x0_attr == LMN_INT_ATTR && x1_attr == LMN_INT_ATTR) {
-        x0 = (int)LMN_ATOM_GET_LINK(op, 0);
-        x1 = (int)LMN_ATOM_GET_LINK(op, 1);
+        x0 = (int)LMN_SATOM_GET_LINK(op, 0);
+        x1 = (int)LMN_SATOM_GET_LINK(op, 1);
         if (x1 != 0) {
           y = x0 % x1;
         } else {
           continue;
         }
 
-        ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-        LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
-        LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+        ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+        LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_INT_ATTR);
+        LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
         mem->atom_num--;
         REMOVE_FROM_ATOMLIST(op);
@@ -310,40 +310,40 @@ static BOOL exec_mod_operation_on_body(LmnMembrane *mem)
 static BOOL exec_fadd_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_FADD_FUNCTOR, 0);
-  LmnAtomPtr op, ret;
+  LmnSAtom op, ret;
   LmnLinkAttr ret_attr, x0_attr, x1_attr;
   double *x0, *x1, *y;
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       x0  = LMN_MALLOC(double); x1  = LMN_MALLOC(double);
       y   = LMN_MALLOC(double);
 
       if (x0_attr == LMN_INT_ATTR) {
-        *x0 = (double)LMN_ATOM_GET_LINK(op, 0);
+        *x0 = (double)LMN_SATOM_GET_LINK(op, 0);
       } else {
         LMN_FREE(x0); /* when x0 is a floating point variable,
                            the memory allocation for x0 is needless
                              because it has been already allocated */
-        REF_CAST(LmnWord, x0) = LMN_ATOM_GET_LINK(op, 0);
+        REF_CAST(LmnAtom, x0) = LMN_SATOM_GET_LINK(op, 0);
       }
       if (x1_attr == LMN_INT_ATTR) {
-        *x1 = (double)LMN_ATOM_GET_LINK(op, 1);
+        *x1 = (double)LMN_SATOM_GET_LINK(op, 1);
       } else {
         LMN_FREE(x1); /* when x1 is a floating point variable,
                            the memory allocation for x1 is needless */
-        REF_CAST(LmnWord, x1) = LMN_ATOM_GET_LINK(op, 1);
+        REF_CAST(LmnAtom, x1) = LMN_SATOM_GET_LINK(op, 1);
       }
       *y = *x0 + *x1;
 
-      ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-      LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_DBL_ATTR);
-      LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+      ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+      LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_DBL_ATTR);
+      LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
       mem->atom_num--;
       REMOVE_FROM_ATOMLIST(op);
@@ -359,37 +359,37 @@ static BOOL exec_fadd_operation_on_body(LmnMembrane *mem)
 static BOOL exec_fsub_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_FSUB_FUNCTOR, 0);
-  LmnAtomPtr op, ret;
+  LmnSAtom op, ret;
   LmnLinkAttr ret_attr, x0_attr, x1_attr;
   double *x0, *x1, *y;
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       x0 = LMN_MALLOC(double); x1 = LMN_MALLOC(double);
       y  = LMN_MALLOC(double);
 
       if (x0_attr == LMN_INT_ATTR) {
-        *x0 = (double)LMN_ATOM_GET_LINK(op, 0);
+        *x0 = (double)LMN_SATOM_GET_LINK(op, 0);
       } else {
         LMN_FREE(x0);
-        REF_CAST(LmnWord, x0) = LMN_ATOM_GET_LINK(op, 0);
+        REF_CAST(LmnAtom, x0) = LMN_SATOM_GET_LINK(op, 0);
       }
       if (x1_attr == LMN_INT_ATTR) {
-        *x1 = (double)LMN_ATOM_GET_LINK(op, 1);
+        *x1 = (double)LMN_SATOM_GET_LINK(op, 1);
       } else {
         LMN_FREE(x1);
-        REF_CAST(LmnWord, x1) = LMN_ATOM_GET_LINK(op, 1);
+        REF_CAST(LmnAtom, x1) = LMN_SATOM_GET_LINK(op, 1);
       }
       *y = *x0 - *x1;
 
-      ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-      LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_DBL_ATTR);
-      LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+      ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+      LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_DBL_ATTR);
+      LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
       mem->atom_num--;
       REMOVE_FROM_ATOMLIST(op);
@@ -405,37 +405,37 @@ static BOOL exec_fsub_operation_on_body(LmnMembrane *mem)
 static BOOL exec_fmul_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_FMUL_FUNCTOR, 0);
-  LmnAtomPtr op, ret;
+  LmnSAtom op, ret;
   LmnLinkAttr ret_attr, x0_attr, x1_attr;
   double *x0, *x1, *y;
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       x0  = LMN_MALLOC(double); x1  = LMN_MALLOC(double);
       y   = LMN_MALLOC(double);
 
       if (x0_attr == LMN_INT_ATTR) {
-        *x0 = (double)LMN_ATOM_GET_LINK(op, 0);
+        *x0 = (double)LMN_SATOM_GET_LINK(op, 0);
       } else {
         LMN_FREE(x0);
-        REF_CAST(LmnWord, x0) = LMN_ATOM_GET_LINK(op, 0);
+        REF_CAST(LmnAtom, x0) = LMN_SATOM_GET_LINK(op, 0);
       }
       if (x1_attr == LMN_INT_ATTR) {
-        *x1 = (double)LMN_ATOM_GET_LINK(op, 1);
+        *x1 = (double)LMN_SATOM_GET_LINK(op, 1);
       } else {
         LMN_FREE(x1);
-        REF_CAST(LmnWord, x1) = LMN_ATOM_GET_LINK(op, 1);
+        REF_CAST(LmnAtom, x1) = LMN_SATOM_GET_LINK(op, 1);
       }
       *y = *x0 * *x1;
 
-      ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-      LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_DBL_ATTR);
-      LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+      ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+      LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_DBL_ATTR);
+      LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
       mem->atom_num--;
       REMOVE_FROM_ATOMLIST(op);
@@ -451,31 +451,31 @@ static BOOL exec_fmul_operation_on_body(LmnMembrane *mem)
 static BOOL exec_fdiv_operation_on_body(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_FDIV_FUNCTOR, 0);
-  LmnAtomPtr op, ret;
+  LmnSAtom op, ret;
   LmnLinkAttr ret_attr, x0_attr, x1_attr;
   double *x0, *x1, *y;
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
-    x0_attr = LMN_ATOM_GET_ATTR(op, 0);
-    x1_attr = LMN_ATOM_GET_ATTR(op, 1);
-    ret_attr = LMN_ATOM_GET_ATTR(op, 2);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+    x0_attr = LMN_SATOM_GET_ATTR(op, 0);
+    x1_attr = LMN_SATOM_GET_ATTR(op, 1);
+    ret_attr = LMN_SATOM_GET_ATTR(op, 2);
     if (LMN_ATTR_IS_DATA(x0_attr) && LMN_ATTR_IS_DATA(x1_attr)) {
       x0  = LMN_MALLOC(double); x1  = LMN_MALLOC(double);
       y   = LMN_MALLOC(double);
 
       if (x0_attr == LMN_INT_ATTR) {
-        *x0 = (double)LMN_ATOM_GET_LINK(op, 0);
+        *x0 = (double)LMN_SATOM_GET_LINK(op, 0);
       } else {
         LMN_FREE(x0);
-        REF_CAST(LmnWord, x0) = LMN_ATOM_GET_LINK(op, 0);
+        REF_CAST(LmnAtom, x0) = LMN_SATOM_GET_LINK(op, 0);
       }
       if (x1_attr == LMN_INT_ATTR) {
-        *x1 = (double)LMN_ATOM_GET_LINK(op, 1);
+        *x1 = (double)LMN_SATOM_GET_LINK(op, 1);
       } else {
         LMN_FREE(x1);
-        REF_CAST(LmnWord, x1) = LMN_ATOM_GET_LINK(op, 1);
+        REF_CAST(LmnAtom, x1) = LMN_SATOM_GET_LINK(op, 1);
       }
 
       if (*x1 != 0) {
@@ -485,9 +485,9 @@ static BOOL exec_fdiv_operation_on_body(LmnMembrane *mem)
         continue;
       }
 
-      ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 2));
-      LMN_ATOM_SET_ATTR(ret, ret_attr, LMN_DBL_ATTR);
-      LMN_ATOM_SET_LINK(ret, ret_attr, (LmnWord)y);
+      ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 2));
+      LMN_SATOM_SET_ATTR(ret, ret_attr, LMN_DBL_ATTR);
+      LMN_SATOM_SET_LINK(ret, ret_attr, y);
 
       mem->atom_num--;
       REMOVE_FROM_ATOMLIST(op);
@@ -504,28 +504,28 @@ static BOOL mem_eq(LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_MEM_EQ_FUNCTOR, 0);
   LmnMembrane *mem0, *mem1;
-  LmnAtomPtr op, ret, out0, out1, in0, in1, result_atom;
+  LmnSAtom op, ret, out0, out1, in0, in1, result_atom;
   LmnLinkAttr out_attr0, out_attr1, ret_attr;
   BOOL result;
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_ATOM_GET_NEXT(op)) {
-    out_attr0 = LMN_ATOM_GET_ATTR(op, 0);
+  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+    out_attr0 = LMN_SATOM_GET_ATTR(op, 0);
     if (LMN_ATTR_IS_DATA(out_attr0)) return FALSE;
-    out0 = LMN_ATOM(LMN_ATOM_GET_LINK(op, 0));
-    if (LMN_ATOM_GET_FUNCTOR(out0) != LMN_OUT_PROXY_FUNCTOR) {
+    out0 = LMN_SATOM(LMN_SATOM_GET_LINK(op, 0));
+    if (LMN_SATOM_GET_FUNCTOR(out0) != LMN_OUT_PROXY_FUNCTOR) {
       return FALSE;
     }
 
-    in0 = LMN_ATOM(LMN_ATOM_GET_LINK(out0, 0));
-    out_attr1 = LMN_ATOM_GET_ATTR(op, 1);
+    in0 = LMN_SATOM(LMN_SATOM_GET_LINK(out0, 0));
+    out_attr1 = LMN_SATOM_GET_ATTR(op, 1);
     if (LMN_ATTR_IS_DATA(out_attr1)) return FALSE;
-    out1 = LMN_ATOM(LMN_ATOM_GET_LINK(op, 1));
-    if (LMN_ATOM_GET_FUNCTOR(out1) != LMN_OUT_PROXY_FUNCTOR) {
+    out1 = LMN_SATOM(LMN_SATOM_GET_LINK(op, 1));
+    if (LMN_SATOM_GET_FUNCTOR(out1) != LMN_OUT_PROXY_FUNCTOR) {
           return FALSE;
     }
 
-    in1 = LMN_ATOM(LMN_ATOM_GET_LINK(out1, 0));
+    in1 = LMN_SATOM(LMN_SATOM_GET_LINK(out1, 0));
 
     mem0 = LMN_PROXY_GET_MEM(in0);
     mem1 = LMN_PROXY_GET_MEM(in1);
@@ -540,18 +540,18 @@ static BOOL mem_eq(LmnMembrane *mem)
     lmn_mem_unify_atom_args(mem, op, 0, op, 2);
     lmn_mem_unify_atom_args(mem, op, 1, op, 3);
 
-    ret = LMN_ATOM(LMN_ATOM_GET_LINK(op, 4));
-    ret_attr = LMN_ATOM_GET_ATTR(op, 4);
+    ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 4));
+    ret_attr = LMN_SATOM_GET_ATTR(op, 4);
 
     if (LMN_ATTR_IS_DATA(ret_attr)) {
-      LMN_ATOM_SET_LINK(result_atom, 0, ret);
-      LMN_ATOM_SET_ATTR(result_atom, 0, ret_attr);
+      LMN_SATOM_SET_LINK(result_atom, 0, ret);
+      LMN_SATOM_SET_ATTR(result_atom, 0, ret_attr);
     }
     else {
-      LMN_ATOM_SET_LINK(result_atom, 0, ret);
-      LMN_ATOM_SET_ATTR(result_atom, 0, ret_attr);
-      LMN_ATOM_SET_LINK(ret, LMN_ATTR_GET_VALUE(ret_attr), result_atom);
-      LMN_ATOM_SET_ATTR(ret, LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
+      LMN_SATOM_SET_LINK(result_atom, 0, ret);
+      LMN_SATOM_SET_ATTR(result_atom, 0, ret_attr);
+      LMN_SATOM_SET_LINK(ret, LMN_ATTR_GET_VALUE(ret_attr), result_atom);
+      LMN_SATOM_SET_ATTR(ret, LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
     }
 
     mem->atom_num--;

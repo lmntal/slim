@@ -208,9 +208,9 @@ LmnString port_read_line(LmnPort port)
 }
 
 /* 文字はunaryアトムで表現している */
-int port_putc(LmnPort port, LmnAtomPtr unary_atom)
+int port_putc(LmnPort port, LmnSAtom unary_atom)
 {
-  const char *s = LMN_ATOM_STR(unary_atom);
+  const char *s = LMN_SATOM_STR(unary_atom);
     
   switch (LMN_PORT_TYPE(port)) {
   case LMN_PORT_FILE:
@@ -264,45 +264,45 @@ void port_puts(LmnPort port, LmnString str)
  * -a0: 標準入力ポートを返す
  */
 void cb_stdin_port(LmnMembrane *mem,
-                   LmnWord a0, LmnLinkAttr t0)
+                   LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPort atom = lmn_stdin_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
-  lmn_mem_push_atom(mem, (LmnWord)atom, attr);
+  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  (LmnWord)atom, attr, 0);
+                  LMN_ATOM(atom), attr, 0);
 }
 
 /*
  * -a0: 標準出力ポートを返す
  */
 void cb_stdout_port(LmnMembrane *mem,
-                    LmnWord a0, LmnLinkAttr t0)
+                    LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPort atom = lmn_stdout_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
-  lmn_mem_push_atom(mem, (LmnWord)atom, attr);
+  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  (LmnWord)atom, attr, 0);
+                  LMN_ATOM(atom), attr, 0);
 }
 
 /*
  * -a0: 標準エラーポートを返す
  */
 void cb_stderr_port(LmnMembrane *mem,
-                    LmnWord a0, LmnLinkAttr t0)
+                    LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPort atom = lmn_stderr_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
-  lmn_mem_push_atom(mem, (LmnWord)atom, attr);
+  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  (LmnWord)atom, attr, 0);
+                  LMN_ATOM(atom), attr, 0);
 }
 
 /*
@@ -311,20 +311,20 @@ void cb_stderr_port(LmnMembrane *mem,
  * -a2: 文字
  */
 void cb_port_getc(LmnMembrane *mem,
-                  LmnWord a0, LmnLinkAttr t0,
-                  LmnWord a1, LmnLinkAttr t1,
-                  LmnWord a2, LmnLinkAttr t2)
+                  LmnAtom a0, LmnLinkAttr t0,
+                  LmnAtom a1, LmnLinkAttr t1,
+                  LmnAtom a2, LmnLinkAttr t2)
 {
   if (lmn_port_closed(LMN_PORT(a0))) {
-    LmnAtomPtr a = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
+    LmnSAtom a = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
     mem_push_symbol_atom(mem, a);
     lmn_mem_newlink(mem,
                     a1, t1, LMN_ATTR_GET_VALUE(t1),
-                    (LmnWord)a, LMN_ATTR_MAKE_LINK(0), 0);
+                    LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
   } else {
     int c;
     char buf[8];
-    LmnAtomPtr a;
+    LmnSAtom a;
 
     c = port_get_raw_c(LMN_PORT(a0));
     if (c == EOF) sprintf(buf, "eof");
@@ -333,7 +333,7 @@ void cb_port_getc(LmnMembrane *mem,
     mem_push_symbol_atom(mem, a);
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    (LmnWord)a, LMN_ATTR_MAKE_LINK(0), 0);
+                    LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
     
   }
 
@@ -349,9 +349,9 @@ void cb_port_getc(LmnMembrane *mem,
  * -a2: ポートを返す
  */
 void cb_port_putc(LmnMembrane *mem,
-                  LmnWord a0, LmnLinkAttr t0,
-                  LmnWord a1, LmnLinkAttr t1,
-                  LmnWord a2, LmnLinkAttr t2)
+                  LmnAtom a0, LmnLinkAttr t0,
+                  LmnAtom a1, LmnLinkAttr t1,
+                  LmnAtom a2, LmnLinkAttr t2)
 {
   if (lmn_port_closed(LMN_PORT(a0))) {
     /* do nothing */
@@ -373,9 +373,9 @@ void cb_port_putc(LmnMembrane *mem,
  * a2: ポートを返す
  */
 void cb_port_puts(LmnMembrane *mem,
-                  LmnWord a0, LmnLinkAttr t0,
-                  LmnWord a1, LmnLinkAttr t1,
-                  LmnWord a2, LmnLinkAttr t2)
+                  LmnAtom a0, LmnLinkAttr t0,
+                  LmnAtom a1, LmnLinkAttr t1,
+                  LmnAtom a2, LmnLinkAttr t2)
 {
   if (lmn_port_closed(LMN_PORT(a0))) {
     /* do nothing */
@@ -397,23 +397,23 @@ void cb_port_puts(LmnMembrane *mem,
  * -a2: 文字列
  */
 void cb_port_read_line(LmnMembrane *mem,
-                       LmnWord a0, LmnLinkAttr t0,
-                       LmnWord a1, LmnLinkAttr t1,
-                       LmnWord a2, LmnLinkAttr t2)
+                       LmnAtom a0, LmnLinkAttr t0,
+                       LmnAtom a1, LmnLinkAttr t1,
+                       LmnAtom a2, LmnLinkAttr t2)
 {
   LmnString s = port_read_line(LMN_PORT(a0));
 
   if (s != NULL) {
-    lmn_mem_push_atom(mem, (LmnWord)s, LMN_SP_ATOM_ATTR);
+    lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_SP_ATOM_ATTR);
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    (LmnWord)s, LMN_SP_ATOM_ATTR, 0);
+                    LMN_ATOM(s), LMN_SP_ATOM_ATTR, 0);
   } else {
-    LmnAtomPtr eof = lmn_new_atom(eof_functor);
-    mem_push_symbol_atom(mem, (LmnWord)eof);
+    LmnSAtom eof = lmn_new_atom(eof_functor);
+    mem_push_symbol_atom(mem, LMN_SATOM(eof));
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    (LmnWord)eof, LMN_ATTR_MAKE_LINK(0), 0);
+                    LMN_ATOM(eof), LMN_ATTR_MAKE_LINK(0), 0);
   }
 
   lmn_mem_newlink(mem,

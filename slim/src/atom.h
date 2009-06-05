@@ -82,7 +82,8 @@
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxy
    で利用中 */
 
-typedef LmnWord *LmnAtomPtr;
+typedef LmnWord LmnAtom;
+typedef void *LmnSAtom;
 typedef uint8_t LmnLinkAttr;
 
 #define LMN_ATOM_ATTR(X)   ((LmnLinkAttr)(X))
@@ -95,57 +96,60 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_ATTR_WORDS(ARITY)  \
   (((ARITY)+(LMN_FUNCTOR_BYTES - 1))>>LMN_WORD_SHIFT)
 
-#define LMN_ATOM(X)                 ((LmnAtomPtr)(X))
+#define LMN_ATOM(X)                 ((LmnAtom)(X))
+#define LMN_SATOM(X)                 ((LmnSAtom)(X))
 
-#define LMN_ATOM_PPREV(ATOM)        (((LmnWord*)(ATOM)))
-#define LMN_ATOM_PNEXT(ATOM)        (((LmnWord*)(ATOM))+1)
-#define LMN_ATOM_PATTR(ATOM,N)                        \
+#define LMN_SATOM_PPREV(ATOM)        (((LmnWord*)(ATOM)))
+#define LMN_SATOM_PNEXT(ATOM)        (((LmnWord*)(ATOM))+1)
+#define LMN_SATOM_PATTR(ATOM,N)                        \
   ((LmnLinkAttr*)(((BYTE*)(((LmnWord*)(ATOM))+2))+    \
               LMN_FUNCTOR_BYTES+(N)*LMN_ATTR_BYTES))
-#define LMN_ATOM_PLINK(ATOM,N)                            \
-  (((LmnWord*)(ATOM))+3+LMN_ATTR_WORDS(LMN_ATOM_GET_ARITY(ATOM))+(N))
+#define LMN_SATOM_PLINK(ATOM,N)                            \
+  (((LmnWord*)(ATOM))+3+LMN_ATTR_WORDS(LMN_SATOM_GET_ARITY(ATOM))+(N))
 
 /* get/set prev atom of ATOM */
-#define LMN_ATOM_GET_PREV(ATOM)           \
-  ((LmnAtomPtr)*LMN_ATOM_PPREV(ATOM))
-#define LMN_ATOM_SET_PREV(ATOM,X)         \
-  (*LMN_ATOM_PPREV(ATOM)=(LmnWord)(X))
+#define LMN_SATOM_GET_PREV(ATOM)           \
+  (LMN_SATOM(*LMN_SATOM_PPREV(LMN_SATOM(ATOM))))
+#define LMN_SATOM_SET_PREV(ATOM,X)         \
+  (*LMN_SATOM_PPREV(LMN_SATOM(ATOM))=LMN_ATOM((X)))
 /* get/set next atom of ATOM */
-#define LMN_ATOM_GET_NEXT_RAW(ATOM)           \
-  ((LmnAtomPtr)*LMN_ATOM_PNEXT(ATOM))
-inline LmnAtomPtr LMN_ATOM_GET_NEXT(const LmnAtomPtr ATOM); 
-#define LMN_ATOM_SET_NEXT(ATOM,X)         \
-  (*LMN_ATOM_PNEXT(ATOM)=(LmnWord)(X))
+/* 履歴アトムを読み飛ばずに、そのまま次を返す */
+#define LMN_SATOM_GET_NEXT_RAW(ATOM)           \
+  (LMN_SATOM(*LMN_SATOM_PNEXT(LMN_SATOM(ATOM))))
+inline LmnSAtom LMN_SATOM_GET_NEXT(const LmnSAtom ATOM); 
+#define LMN_SATOM_SET_NEXT(ATOM,X)         \
+  (*LMN_SATOM_PNEXT(LMN_SATOM(ATOM))=LMN_ATOM((X)))
 /* get/set ATOM functor */
-#define LMN_ATOM_GET_FUNCTOR(ATOM)        \
-  LMN_FUNCTOR(*(((LmnWord*)(ATOM))+2))
-#define LMN_ATOM_SET_FUNCTOR(ATOM,X)      \
+#define LMN_SATOM_GET_FUNCTOR(ATOM)        \
+  LMN_FUNCTOR(*(((LmnWord*)LMN_SATOM(ATOM))+2))
+#define LMN_SATOM_SET_FUNCTOR(ATOM,X)      \
   (*(LmnFunctor*)((LmnWord*)(ATOM)+2)=(X))
-#define LMN_ATOM_GET_ARITY(ATOM)          (LMN_FUNCTOR_ARITY(LMN_ATOM_GET_FUNCTOR(ATOM)))
+#define LMN_SATOM_GET_ARITY(ATOM)   \
+  (LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM))))
 /* アトムのリンクの数（プロキシは第三引数は所属膜） */
 #define LMN_FUNCTOR_GET_LINK_NUM(F)   \
-  ((LMN_FUNCTOR_ARITY(F)) -  \
+  ((LMN_FUNCTOR_ARITY(F)) -           \
    (LMN_IS_PROXY_FUNCTOR(F) ? 1U : 0U))
 
 /* get/set N th link attribute of  ATOM */
-#define LMN_ATOM_GET_ATTR(ATOM,N)    \
-  (*LMN_ATOM_PATTR(ATOM,N))
-#define LMN_ATOM_SET_ATTR(ATOM,N,X)  \
-  ((*LMN_ATOM_PATTR(ATOM,N))=(X))
+#define LMN_SATOM_GET_ATTR(ATOM,N)    \
+  (*LMN_SATOM_PATTR(LMN_SATOM(ATOM),N))
+#define LMN_SATOM_SET_ATTR(ATOM,N,X)  \
+  ((*LMN_SATOM_PATTR(LMN_SATOM(ATOM),N))=(X))
 /* get/set N th link of ATOM */ 
-#define LMN_ATOM_GET_LINK(ATOM, N)        \
-  (*LMN_ATOM_PLINK(ATOM,N))
-#define LMN_ATOM_SET_LINK(ATOM,N,X)       \
-  (*LMN_ATOM_PLINK(ATOM,N)=(X))
+#define LMN_SATOM_GET_LINK(ATOM, N)        \
+  (LMN_ATOM(*LMN_SATOM_PLINK(LMN_SATOM(ATOM),N)))
+#define LMN_SATOM_SET_LINK(ATOM,N,X)       \
+  (*LMN_SATOM_PLINK(LMN_SATOM(ATOM),N)=(LmnWord)(X))
 
 /* word size of atom */
 /* 3の加算は prev,next,functorのワード */
-#define LMN_ATOM_WORDS(ARITY)          \
+#define LMN_SATOM_WORDS(ARITY)          \
   (3+LMN_ATTR_WORDS(ARITY)+(ARITY))
 
 /* returns TRUE if ATOM's(with attribute ATTR) functor is FUNC */
 #define LMN_HAS_FUNCTOR(ATOM, ATTR, FUNC) \
-  (LMN_ATTR_IS_DATA(ATTR) ? FALSE : LMN_ATOM_GET_FUNCTOR(ATOM) == (FUNC))
+  (LMN_ATTR_IS_DATA(ATTR) ? FALSE : LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM)) == (FUNC))
 
 /* operations for link attribute */
 #define LMN_ATTR_IS_DATA(X)           ((X)&~LMN_ATTR_MASK)
@@ -161,13 +165,14 @@ inline LmnAtomPtr LMN_ATOM_GET_NEXT(const LmnAtomPtr ATOM);
 
 /* get/set membrane of proxy */ 
 #define LMN_PROXY_GET_MEM(PROXY_ATOM)  \
-  ((LmnMembrane *)LMN_ATOM_GET_LINK((PROXY_ATOM), 2))
-#define LMN_PROXY_SET_MEM(PROXY_ATOM,X)  LMN_ATOM_SET_LINK((PROXY_ATOM), 2, (X))
+  ((LmnMembrane *)LMN_SATOM_GET_LINK((PROXY_ATOM), 2))
+#define LMN_PROXY_SET_MEM(PROXY_ATOM,X)  LMN_SATOM_SET_LINK((PROXY_ATOM), 2, (LmnWord)(X))
 #define LMN_PROXY_FUNCTOR_NUM        3
 #define LMN_IS_PROXY_FUNCTOR(FUNC)   ((FUNC) < LMN_PROXY_FUNCTOR_NUM)
 #define LMN_IS_SYMBOL_FUNCTOR(FUNC)   ((FUNC) >= LMN_PROXY_FUNCTOR_NUM)
 
-#define LMN_ATOM_STR(ATOM) LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(ATOM)))
+#define LMN_SATOM_STR(ATOM) \
+  LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM))))
 #define LMN_FUNCTOR_STR(F) LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(F))
 
 /* link attribute of primitive data type */
@@ -182,18 +187,18 @@ inline LmnAtomPtr LMN_ATOM_GET_NEXT(const LmnAtomPtr ATOM);
  * functions
  */
 
-LMN_EXTERN LmnWord lmn_copy_atom(LmnWord atom, LmnLinkAttr attr);
-LMN_EXTERN LmnWord lmn_copy_data_atom(LmnWord atom, LmnLinkAttr);
-LMN_EXTERN void lmn_free_atom(LmnWord atom, LmnLinkAttr attr);
-LMN_EXTERN void free_symbol_atom_with_buddy_data(LmnAtomPtr atom);
-LMN_EXTERN BOOL lmn_eq_func(LmnWord atom0, LmnLinkAttr attr0, LmnWord atom1, LmnLinkAttr attr1);
+LMN_EXTERN LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr);
+LMN_EXTERN LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr);
+LMN_EXTERN void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr);
+LMN_EXTERN void free_symbol_atom_with_buddy_data(LmnSAtom atom);
+LMN_EXTERN BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0, LmnAtom atom1, LmnLinkAttr attr1);
 
 /*----------------------------------------------------------------------
  * allocation
  */
 
-LMN_EXTERN LmnAtomPtr lmn_new_atom(LmnFunctor f);
-LMN_EXTERN void lmn_delete_atom(LmnAtomPtr ap);
+LMN_EXTERN LmnSAtom lmn_new_atom(LmnFunctor f);
+LMN_EXTERN void lmn_delete_atom(LmnSAtom ap);
 LMN_EXTERN void free_atom_memory_pools(void);
   
 #endif /* LMN_ATOM_H */

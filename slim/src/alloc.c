@@ -53,17 +53,17 @@
 
 static memory_pool *atom_memory_pools[128];
 
-LmnAtomPtr lmn_new_atom(LmnFunctor f)
+LmnSAtom lmn_new_atom(LmnFunctor f)
 {
-  LmnAtomPtr ap;
+  LmnSAtom ap;
   int arity = LMN_FUNCTOR_ARITY(f);
   
   if (atom_memory_pools[arity] == 0) {
     atom_memory_pools[arity] =
-      memory_pool_new(sizeof(LmnWord)*LMN_ATOM_WORDS(arity));
+      memory_pool_new(sizeof(LmnWord)*LMN_SATOM_WORDS(arity));
   }
-  ap = (LmnAtomPtr)memory_pool_malloc(atom_memory_pools[arity]);
-  LMN_ATOM_SET_FUNCTOR(ap, f);
+  ap = LMN_SATOM(memory_pool_malloc(atom_memory_pools[arity]));
+  LMN_SATOM_SET_FUNCTOR(ap, f);
 
 #ifdef PROFILE
   status_add_atom_space(LMN_ATOM_WORDS(arity) * sizeof(LmnWord));
@@ -72,14 +72,14 @@ LmnAtomPtr lmn_new_atom(LmnFunctor f)
   return ap;
 }
 
-void lmn_delete_atom(LmnAtomPtr ap)
+void lmn_delete_atom(LmnSAtom ap)
 {
-  memory_pool_free(atom_memory_pools[LMN_FUNCTOR_ARITY(LMN_ATOM_GET_FUNCTOR(ap))], ap);
+  memory_pool_free(atom_memory_pools[LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(ap))], ap);
 #ifdef PROFILE
   {
     int arity;
 
-    arity = LMN_FUNCTOR_ARITY(LMN_ATOM_GET_FUNCTOR(ap));
+    arity = LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(ap));
     status_remove_atom_space(LMN_ATOM_WORDS(arity) * sizeof(LmnWord));
   }
 #endif

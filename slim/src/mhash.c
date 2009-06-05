@@ -55,44 +55,44 @@ static void free_context(Context ctx);
 static int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash);
 
 static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx);
-static hash_t molecule(LmnAtomPtr atom,
+static hash_t molecule(LmnSAtom atom,
                        LmnMembrane *calc_mem,
                        Context ctx);
-static void do_molecule(LmnWord atom,
+static void do_molecule(LmnAtom atom,
                         LmnLinkAttr attr,
                         LmnMembrane *calc_mem,
                         Context ctx,
                         int i_parent,
                         hash_t *sum,
                         hash_t *mul);
-static hash_t unit(LmnWord atom,
+static hash_t unit(LmnAtom atom,
                    LmnLinkAttr attr,
                    LmnMembrane *calc_mem,
                    Context ctx,
                    int depth);
-static hash_t atomunit(LmnWord atom,
+static hash_t atomunit(LmnAtom atom,
                        LmnLinkAttr attr,
                        LmnMembrane *calc_mem,
                        int depth,
                        Context ctx);
 static hash_t memunit(LmnMembrane *mem,
-                      LmnAtomPtr from_in_proxy,
+                      LmnSAtom from_in_proxy,
                       LmnMembrane *calc_mem,
                       Context ctx,
                       int depth);
 static hash_t mem_fromlink(LmnMembrane *mem,
-                           LmnAtomPtr in_proxy,
+                           LmnSAtom in_proxy,
                            LmnMembrane *calc_mem,
                            Context ctx);
-static hash_t link(LmnWord atom,
+static hash_t link(LmnAtom atom,
                    LmnLinkAttr attr,
                    LmnMembrane *calc_mem,
                    Context ctx);
-static hash_t atomlink(LmnWord atom, LmnLinkAttr attr);
-static hash_t memlink(LmnAtomPtr in_proxy, LmnMembrane *calc_mem, Context ctx);
-static hash_t atom_type(LmnWord atom, LmnLinkAttr attr);
-static hash_t symbol_atom_type(LmnAtomPtr atom);
-static hash_t data_atom_type(LmnWord atom, LmnLinkAttr attr);
+static hash_t atomlink(LmnAtom atom, LmnLinkAttr attr);
+static hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context ctx);
+static hash_t atom_type(LmnAtom atom, LmnLinkAttr attr);
+static hash_t symbol_atom_type(LmnSAtom atom);
+static hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr);
 
 hash_t mhash(LmnMembrane *mem)
 {
@@ -119,7 +119,7 @@ static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
   hash_t hash_sum = MEM_ADD_0;
   hash_t hash_mul = MEM_MUL_0;
   HashIterator iter;
-  LmnAtomPtr atom;
+  LmnSAtom atom;
   hash_t t;
   hash_t u;
   hash_t hash;
@@ -134,20 +134,20 @@ static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
        !hashtbliter_isend(&iter);
        hashtbliter_next(&iter)) {
     AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
-    LmnAtomPtr head = atomlist_head(ent);
+    LmnSAtom head = atomlist_head(ent);
 
     /* プロキシは除く */
     if (head != lmn_atomlist_end(ent) &&
-        LMN_IS_PROXY_FUNCTOR(LMN_ATOM_GET_FUNCTOR(head))) continue;
+        LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(head))) continue;
 
     for (atom = head;
          atom != lmn_atomlist_end(ent);
-         atom = LMN_ATOM_GET_NEXT(atom)) {
+         atom = LMN_SATOM_GET_NEXT(atom)) {
 /*       printf("membrane: atom0 %s\n", */
-/*              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom)))); */
+/*              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom)))); */
       if (!is_done_mol(ctx, atom)) {
 /*         printf("membrane: atom %s\n", */
-/*                lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom)))); */
+/*                lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom)))); */
         u = molecule(atom, mem, ctx);
         hash_sum += u;
         hash_mul *= u;
@@ -175,11 +175,11 @@ static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
   return hash;
 }
 
-static hash_t molecule(LmnAtomPtr atom, LmnMembrane *calc_mem, Context ctx)
+static hash_t molecule(LmnSAtom atom, LmnMembrane *calc_mem, Context ctx)
 {
   hash_t sum = ADD_0, mul = MUL_0;
   
-  do_molecule((LmnWord)atom,
+  do_molecule(LMN_ATOM(atom),
               LMN_ATTR_MAKE_LINK(0),
               calc_mem,
               ctx,
@@ -189,7 +189,7 @@ static hash_t molecule(LmnAtomPtr atom, LmnMembrane *calc_mem, Context ctx)
   return sum ^ mul;
 }
 
-static void do_molecule(LmnWord atom,
+static void do_molecule(LmnAtom atom,
                         LmnLinkAttr attr,
                         LmnMembrane *calc_mem,
                         Context ctx,
@@ -200,14 +200,14 @@ static void do_molecule(LmnWord atom,
   hash_t t;
   const int is_data = LMN_ATTR_IS_DATA(attr);
 
-  if (!is_data && LMN_ATOM_GET_FUNCTOR(atom) == LMN_IN_PROXY_FUNCTOR) {
+  if (!is_data && LMN_SATOM_GET_FUNCTOR(atom) == LMN_IN_PROXY_FUNCTOR) {
     /* 分子の計算では膜の外部に出て行かない */
     return;
   }
   else {
     if (!is_data) {
-      if (is_done_mol(ctx, LMN_ATOM(atom))) return;
-      add_done_mol(ctx, LMN_ATOM(atom));
+      if (is_done_mol(ctx, LMN_SATOM(atom))) return;
+      add_done_mol(ctx, LMN_SATOM(atom));
     }
 
     t = unit(atom, attr, calc_mem, ctx, 0);
@@ -215,14 +215,14 @@ static void do_molecule(LmnWord atom,
     (*mul) *= t;
 
     if (!is_data &&
-        LMN_IS_SYMBOL_FUNCTOR(LMN_ATOM_GET_FUNCTOR(atom))) {
-      const int arity = LMN_ATOM_GET_ARITY(atom);
+        LMN_IS_SYMBOL_FUNCTOR(LMN_SATOM_GET_FUNCTOR(atom))) {
+      const int arity = LMN_SATOM_GET_ARITY(atom);
       int i_arg;
 
       for (i_arg = 0; i_arg < arity; i_arg++) {
         if (i_arg != i_parent) {
-          LmnLinkAttr to_attr = LMN_ATOM_GET_ATTR(atom, i_arg);
-          do_molecule(LMN_ATOM_GET_LINK(atom, i_arg),
+          LmnLinkAttr to_attr = LMN_SATOM_GET_ATTR(atom, i_arg);
+          do_molecule(LMN_SATOM_GET_LINK(atom, i_arg),
                       to_attr,
                       calc_mem,
                       ctx,
@@ -236,7 +236,7 @@ static void do_molecule(LmnWord atom,
   }
 }
 
-static hash_t unit(LmnWord atom,
+static hash_t unit(LmnAtom atom,
                    LmnLinkAttr attr,
                    LmnMembrane *calc_mem,
                    Context ctx,
@@ -245,16 +245,16 @@ static hash_t unit(LmnWord atom,
   if (LMN_ATTR_IS_DATA(attr)) {
     return data_atom_type(atom, attr);
   }
-  else if (LMN_ATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR) {
-    const LmnAtomPtr in_proxy = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0));
+  else if (LMN_SATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR) {
+    const LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
     return memunit(LMN_PROXY_GET_MEM(in_proxy),
-                   LMN_ATOM(in_proxy),
+                   LMN_SATOM(in_proxy),
                    calc_mem,
                    ctx,
                    depth);
   }
-  else if (LMN_ATOM_GET_FUNCTOR(atom) == LMN_IN_PROXY_FUNCTOR) {
-    return symbol_atom_type(LMN_ATOM(atom));
+  else if (LMN_SATOM_GET_FUNCTOR(atom) == LMN_IN_PROXY_FUNCTOR) {
+    return symbol_atom_type(LMN_SATOM(atom));
   }
   else {
     return atomunit(atom, attr, calc_mem, depth, ctx);
@@ -262,7 +262,7 @@ static hash_t unit(LmnWord atom,
 }
 
 /* アトム中心の計算単位 */
-static hash_t atomunit(LmnWord atom,
+static hash_t atomunit(LmnAtom atom,
                        LmnLinkAttr attr,
                        LmnMembrane *calc_mem,
                        int depth,
@@ -277,15 +277,15 @@ static hash_t atomunit(LmnWord atom,
     return atomlink(atom, attr);
   }
   else {
-    const int arity = LMN_ATOM_GET_ARITY(atom);
+    const int arity = LMN_SATOM_GET_ARITY(atom);
     const int i_from = (depth == 0) ? -1 : (int)LMN_ATTR_GET_VALUE(attr);
     int i_arg;
 
     hash = atom_type(atom, attr);
     for (i_arg = 0; i_arg < arity; i_arg++) {
       if (i_arg != i_from) {
-        hash_t t = unit(LMN_ATOM_GET_LINK(atom, i_arg),
-                                      LMN_ATOM_GET_ATTR(atom, i_arg),
+        hash_t t = unit(LMN_SATOM_GET_LINK(atom, i_arg),
+                                      LMN_SATOM_GET_ATTR(atom, i_arg),
                                       calc_mem,
                                       ctx,
                                       depth + 1);
@@ -296,14 +296,14 @@ static hash_t atomunit(LmnWord atom,
       }
     }
 /*     printf("atomunit(%s,%p,r=%d): %lu\n", */
-/*            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom))), */
+/*            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom))), */
 /*            (void*)atom, depth, hash); */
     return hash;
   }
 }
 
 static hash_t memunit(LmnMembrane *mem,
-                      LmnAtomPtr from_in_proxy,
+                      LmnSAtom from_in_proxy,
                       LmnMembrane *calc_mem,
                       Context ctx,
                       int depth)
@@ -316,14 +316,14 @@ static hash_t memunit(LmnMembrane *mem,
     insides = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
 
     if (insides) {
-      LmnAtomPtr in, out;
+      LmnSAtom in, out;
       for (in = atomlist_head(insides);
            in != lmn_atomlist_end(insides);
-           in = LMN_ATOM_GET_NEXT(in)) {
+           in = LMN_SATOM_GET_NEXT(in)) {
         if (in != from_in_proxy) {
-          out = LMN_ATOM(LMN_ATOM_GET_LINK(in, 0));
-          hash += unit(LMN_ATOM_GET_LINK(out, 1),
-                       LMN_ATOM_GET_ATTR(out, 1),
+          out = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
+          hash += unit(LMN_SATOM_GET_LINK(out, 1),
+                       LMN_SATOM_GET_ATTR(out, 1),
                        calc_mem,
                        ctx,
                        depth + 1)
@@ -339,30 +339,30 @@ static hash_t memunit(LmnMembrane *mem,
 }
 
 static hash_t mem_fromlink(LmnMembrane *mem,
-                           LmnAtomPtr in_proxy,
+                           LmnSAtom in_proxy,
                            LmnMembrane *calc_mem,
                            Context ctx)
 {
-  LmnWord atom;
+  LmnAtom atom;
   hash_t hash = 0;
   LmnLinkAttr attr;
 
   for (;;) {
-    atom = LMN_ATOM_GET_LINK(in_proxy, 1);
-    attr = LMN_ATOM_GET_ATTR(in_proxy, 1);
+    atom = LMN_SATOM_GET_LINK(in_proxy, 1);
+    attr = LMN_SATOM_GET_ATTR(in_proxy, 1);
     if (LMN_ATTR_IS_DATA(attr) ||
-        LMN_ATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) break;
-    in_proxy = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0));
+        LMN_SATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) break;
+    in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
     hash = B * hash + membrane(LMN_PROXY_GET_MEM(in_proxy), calc_mem, ctx);
   }
           
 /*   printf("memlink(a_to:%s) = %lu\n", */
-/*          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom))), */
+/*          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom))), */
 /*          hash * (LMN_ATTR_GET_VALUE(attr) + 1) * atom_type(atom, attr)); */
   return membrane(mem, calc_mem, ctx) ^ (hash * atomlink(atom, attr));
 }
 
-static hash_t link(LmnWord atom,
+static hash_t link(LmnAtom atom,
                    LmnLinkAttr attr,
                    LmnMembrane *calc_mem,
                    Context ctx)
@@ -372,11 +372,11 @@ static hash_t link(LmnWord atom,
   }
   else {
 /*     printf("atom : %s\n", */
-/*            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom)))); */
+/*            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom)))); */
 
 
-     if (LMN_OUT_PROXY_FUNCTOR == LMN_ATOM_GET_FUNCTOR(atom)) {
-       return memlink(LMN_ATOM(LMN_ATOM_GET_LINK(LMN_ATOM(atom), 0)),
+     if (LMN_OUT_PROXY_FUNCTOR == LMN_SATOM_GET_FUNCTOR(atom)) {
+       return memlink(LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0)),
                       calc_mem,
                       ctx);
     }
@@ -386,50 +386,50 @@ static hash_t link(LmnWord atom,
   }
 }
 
-static hash_t memlink(LmnAtomPtr in_proxy, LmnMembrane *calc_mem, Context ctx)
+static hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context ctx)
 {
-  LmnWord atom;
+  LmnAtom atom;
   hash_t hash = 0;
   LmnLinkAttr attr;
 
   for (;;) {
     hash = B * hash + membrane(LMN_PROXY_GET_MEM(in_proxy), calc_mem, ctx);
 
-    atom = LMN_ATOM_GET_LINK(in_proxy, 1);
-    attr = LMN_ATOM_GET_ATTR(in_proxy, 1);
+    atom = LMN_SATOM_GET_LINK(in_proxy, 1);
+    attr = LMN_SATOM_GET_ATTR(in_proxy, 1);
     if (LMN_ATTR_IS_DATA(attr) ||
-        LMN_ATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) break;
-    in_proxy = LMN_ATOM(LMN_ATOM_GET_LINK(atom, 0));
+        LMN_SATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) break;
+    in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
   }
           
 /*   printf("memlink(a_to:%s) = %lu\n", */
-/*          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_ATOM_GET_FUNCTOR(atom))), */
+/*          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom))), */
 /*          hash * (LMN_ATTR_GET_VALUE(attr) + 1) * atom_type(atom, attr)); */
   return hash * atomlink(atom, attr);
 }
 
-static hash_t atomlink(LmnWord atom, LmnLinkAttr attr)
+static hash_t atomlink(LmnAtom atom, LmnLinkAttr attr)
 {
   const int i_from = LMN_ATTR_IS_DATA(attr) ? 0 : LMN_ATTR_GET_VALUE(attr);
   return (i_from+1) * atom_type(atom, attr);
 }
 
-static hash_t atom_type(LmnWord atom, LmnLinkAttr attr)
+static hash_t atom_type(LmnAtom atom, LmnLinkAttr attr)
 {
   if (LMN_ATTR_IS_DATA(attr)) {
     return data_atom_type(atom, attr);
   }
   else {
-    return symbol_atom_type(LMN_ATOM(atom));
+    return symbol_atom_type(LMN_SATOM(atom));
   }
 }
 
-static hash_t symbol_atom_type(LmnAtomPtr atom)
+static hash_t symbol_atom_type(LmnSAtom atom)
 {
-  return LMN_ATOM_GET_FUNCTOR(atom);
+  return LMN_SATOM_GET_FUNCTOR(atom);
 }
 
-static hash_t data_atom_type(LmnWord atom, LmnLinkAttr attr) {
+static hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
   switch(attr) {
     case LMN_INT_ATTR:
       return atom;

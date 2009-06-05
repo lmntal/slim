@@ -337,7 +337,7 @@ BYTE *translate_instructions(BYTE *instr, Vector *v, char *header, char *success
         assert(FALSE);
       } else { /* symbol atom */
         LmnFunctor f;
-        LmnAtomPtr atom;
+        LmnSAtom atom;
 
         READ_VAL(LmnFunctor, instr, f);
         fprintf(OUT, "findatom\n");
@@ -372,7 +372,7 @@ BYTE *translate_instructions(BYTE *instr, Vector *v, char *header, char *success
     }
     case INSTR_NEWATOM:{
       LmnInstrVar atomi, memi;
-      LmnWord ap;
+      LmnAtom ap;
       LmnLinkAttr attr;
 
       READ_VAL(LmnInstrVar, instr, atomi);
@@ -439,7 +439,7 @@ BYTE *translate_instructions(BYTE *instr, Vector *v, char *header, char *success
     }
     case INSTR_RELINK:{
       LmnInstrVar atom1, atom2, pos1, pos2, memi;
-      LmnAtomPtr ap;
+      LmnSAtom ap;
       LmnByte attr;
 
       READ_VAL(LmnInstrVar, instr, atom1);

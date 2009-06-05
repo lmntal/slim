@@ -65,7 +65,7 @@ typedef struct AtomListEntry {
   struct SimpleHashtbl record;
 } AtomListEntry;
 
-#define atomlist_head(LIST)    (LMN_ATOM((LIST)->head))
+#define atomlist_head(LIST)    (LMN_SATOM((LIST)->head))
 
 #define LMN_MEM_NAME_ID(MP) ((MP)->name)
 #define LMN_MEM_NAME(MP) LMN_SYMBOL_STR(LMN_MEM_NAME_ID(MP))
@@ -75,16 +75,16 @@ LMN_EXTERN void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_free(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_drop(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_add_child_mem(LmnMembrane *parentmem, LmnMembrane *newmem);
-LMN_EXTERN LmnAtomPtr lmn_mem_newatom(LmnMembrane *mem, LmnFunctor f);
-LMN_EXTERN void lmn_mem_push_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr attr);
-LMN_EXTERN void mem_push_symbol_atom(LmnMembrane *mem, LmnAtomPtr atom);
+LMN_EXTERN LmnSAtom lmn_mem_newatom(LmnMembrane *mem, LmnFunctor f);
+LMN_EXTERN void lmn_mem_push_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
+LMN_EXTERN void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom);
 LMN_EXTERN void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset);
 LMN_EXTERN inline int lmn_mem_ruleset_num(LmnMembrane *mem);
 LMN_EXTERN inline LmnRuleSet  lmn_mem_get_ruleset(LmnMembrane *mem, int i);
 LMN_EXTERN BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
-LMN_EXTERN LmnAtomPtr* atomlist_get_record(AtomListEntry *atomlist, int findatomid);
-LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr attr);
+LMN_EXTERN LmnSAtom* atomlist_get_record(AtomListEntry *atomlist, int findatomid);
+LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN inline unsigned int lmn_mem_count_descendants(LmnMembrane *mem);
 LMN_EXTERN inline unsigned int lmn_mem_count_children(LmnMembrane *mem);
 LMN_EXTERN inline LmnMembrane *lmn_mem_parent(LmnMembrane *mem);
@@ -97,47 +97,47 @@ LMN_EXTERN BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
    リストのつなぎ変えだけを行う */
 #define REMOVE_FROM_ATOMLIST(atom)                 \
   do { \
-    LMN_ATOM_SET_PREV(LMN_ATOM_GET_NEXT_RAW(atom), LMN_ATOM_GET_PREV(atom)); \
-    LMN_ATOM_SET_NEXT(LMN_ATOM_GET_PREV(atom), LMN_ATOM_GET_NEXT_RAW(atom)); \
+    LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(atom), LMN_SATOM_GET_PREV(atom)); \
+    LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(atom), LMN_SATOM_GET_NEXT_RAW(atom)); \
   } while (0)
 
 LMN_EXTERN BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN BOOL lmn_mem_nfreelinks(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
 LMN_EXTERN void lmn_mem_newlink(LmnMembrane *mem,
-                                LmnWord atom0,
+                                LmnAtom atom0,
                                 LmnLinkAttr attr0,
                                 int pos0,
-                                LmnWord atom1,
+                                LmnAtom atom1,
                                 LmnLinkAttr attr1,
                                 int pos1);
-LMN_EXTERN void lmn_newlink_in_symbols(LmnAtomPtr atom0,
+LMN_EXTERN void lmn_newlink_in_symbols(LmnSAtom atom0,
                                        int pos0,
-                                       LmnAtomPtr atom1,
+                                       LmnSAtom atom1,
                                        int pos1);
 LMN_EXTERN void lmn_mem_link_data_atoms(LmnMembrane *mem,
-                                        LmnWord d1,
+                                        LmnAtom d1,
                                         LmnLinkAttr attr1,
-                                        LmnWord d2,
+                                        LmnAtom d2,
                                         LmnLinkAttr attr2);
 LMN_EXTERN void lmn_mem_unify_atom_args(LmnMembrane *mem,
-                             LmnAtomPtr atom1,
+                             LmnSAtom atom1,
                              int pos1,
-                             LmnAtomPtr atom2,
+                             LmnSAtom atom2,
                              int pos2);
-LMN_EXTERN void lmn_mem_unify_symbol_atom_args(LmnAtomPtr atom1,
+LMN_EXTERN void lmn_mem_unify_symbol_atom_args(LmnSAtom atom1,
                                                int pos1,
-                                               LmnAtomPtr atom2,
+                                               LmnSAtom atom2,
                                                int pos2);
-LMN_EXTERN void lmn_relink_symbols(LmnAtomPtr atom0,
+LMN_EXTERN void lmn_relink_symbols(LmnSAtom atom0,
                                    int pos0,
-                                   LmnAtomPtr atom1,
+                                   LmnSAtom atom1,
                                    int pos1);
 LMN_EXTERN void lmn_mem_relink_atom_args(LmnMembrane *mem,
-                                         LmnWord atom0,
+                                         LmnAtom atom0,
                                          LmnLinkAttr attr0,
                                          int pos0,
-                                         LmnWord atom1,
+                                         LmnAtom atom1,
                                          LmnLinkAttr attr1,
                                          int pos1);
 LMN_EXTERN void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
@@ -156,12 +156,12 @@ void lmn_mem_free_ground(Vector *srcvec);
 
 /* リンクオブジェクトの代替 */
 typedef struct LinkObj {
-  LmnWord ap;
+  LmnAtom ap;
   LmnLinkAttr pos;
 } *LinkObj;
 
-LinkObj LinkObj_make(LmnWord ap, LmnLinkAttr pos);
-/* LmnAtomPtr* lmn_atomlist_end(AtomSetEntry * ent); */
-#define lmn_atomlist_end(p_atomset_entry) ((LmnAtomPtr)p_atomset_entry)
+LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
+/* LmnSAtom* lmn_atomlist_end(AtomSetEntry * ent); */
+#define lmn_atomlist_end(p_atomset_entry) (LMN_SATOM(p_atomset_entry))
 
 #endif /* LMN_MEMBRANE_H */

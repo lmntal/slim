@@ -19,9 +19,9 @@ void init_integer(void);
  * Creates a (multi)set $g[$a], $g[$a+1], ..., $g[$b].
  */
 void integer_set(LmnMembrane *mem,
-                 LmnWord a0, LmnLinkAttr t0,
-                 LmnWord a1, LmnLinkAttr t1,
-                 LmnWord a2, LmnLinkAttr t2)
+                 LmnAtom a0, LmnLinkAttr t0,
+                 LmnAtom a1, LmnLinkAttr t1,
+                 LmnAtom a2, LmnLinkAttr t2)
 {
   int i, j, n;
   int start = (int)a0;
@@ -64,7 +64,7 @@ void integer_set(LmnMembrane *mem,
  * sets N as the seed for random numbers
  */
 void integer_srand(LmnMembrane *mem,
-                   LmnWord a0, LmnLinkAttr t0)
+                   LmnAtom a0, LmnLinkAttr t0)
 {
   srand(a0);
   lmn_mem_remove_atom(mem, a0, t0);
@@ -78,8 +78,8 @@ void integer_srand(LmnMembrane *mem,
  * H is bound to a random number between 0 and N-1.
  */
 void integer_rand(LmnMembrane *mem,
-                  LmnWord a0, LmnLinkAttr t0,
-                  LmnWord a1, LmnLinkAttr t1)
+                  LmnAtom a0, LmnLinkAttr t0,
+                  LmnAtom a1, LmnLinkAttr t1)
 {
   LmnWord n = rand() % a0;
 
@@ -98,8 +98,8 @@ void integer_rand(LmnMembrane *mem,
  * H is bound to a random number between 0 and N-1.
  */
 void integer_of_string(LmnMembrane *mem,
-                       LmnWord a0, LmnLinkAttr t0,
-                       LmnWord a1, LmnLinkAttr t1)
+                       LmnAtom a0, LmnLinkAttr t0,
+                       LmnAtom a1, LmnLinkAttr t1)
 {
   const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
   char *t = NULL;
@@ -107,12 +107,12 @@ void integer_of_string(LmnMembrane *mem,
 
   n = strtol(s, &t, 10);
   if (t == NULL || s == t) {
-    LmnAtomPtr a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
-                                                           lmn_intern("fail"),
-                                                           1));
+    LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
+                                                         lmn_intern("fail"),
+                                                         1));
     lmn_mem_newlink(mem,
                     a1, t1, LMN_ATTR_GET_VALUE(t1),
-                    (LmnWord)a, LMN_ATTR_MAKE_LINK(0), 0);
+                    LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
   } else { /* 変換できた */
     lmn_mem_newlink(mem,
                     a1, t1, LMN_ATTR_GET_VALUE(t1),
