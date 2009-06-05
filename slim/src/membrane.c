@@ -49,6 +49,8 @@
 
 
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
+static inline void lmn_mem_remove_data_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr attr);
+inline static void mem_remove_symbol_atom(LmnMembrane *mem, LmnAtomPtr atom);
 
 /* ルールセットを膜に追加する。ルールセットは、比較のためにポインタの値
    の昇順に並べるようにする */
@@ -179,6 +181,20 @@ static inline void append_atomlist(AtomListEntry *e1, AtomListEntry *e2)
   EMPTY_ATOMLIST(e2);
 }
 
+
+static inline void mem_remove_symbol_atom_with_buddy_data(LmnMembrane *mem, LmnAtomPtr atom)
+{
+  unsigned int i;
+  unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(LMN_ATOM_GET_FUNCTOR(atom));
+  /* free linked data atoms */
+  for (i = 0; i < end; i++) {
+    if (LMN_ATTR_IS_DATA(LMN_ATOM_GET_ATTR(atom, i))) {
+      lmn_mem_remove_data_atom(mem, LMN_ATOM_GET_LINK(atom, i), LMN_ATOM_GET_ATTR(atom, i));
+    }
+  }
+  mem_remove_symbol_atom(mem, atom);
+}
+
 static inline void mem_remove_symbol_atom(LmnMembrane *mem, LmnAtomPtr atom)
 {
   LmnFunctor f = LMN_ATOM_GET_FUNCTOR(atom);
@@ -194,10 +210,15 @@ static inline void mem_remove_symbol_atom(LmnMembrane *mem, LmnAtomPtr atom)
   }
 }
 
+static inline void lmn_mem_remove_data_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr attr)
+{
+  mem->atom_num--;
+}
+
 void lmn_mem_remove_atom(LmnMembrane *mem, LmnWord atom, LmnLinkAttr attr)
 {
   if (LMN_ATTR_IS_DATA(attr)) {
-    mem->atom_num--;
+    lmn_mem_remove_data_atom(mem, atom, attr);
   }
   else {
     mem_remove_symbol_atom(mem, LMN_ATOM(atom));
@@ -1021,7 +1042,7 @@ void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
   for (it = hashset_iterator(atoms);
        !hashsetiter_isend(&it);
        hashsetiter_next(&it)) {
-    mem_remove_symbol_atom(mem, LMN_ATOM(hashsetiter_entry(&it)));
+    mem_remove_symbol_atom_with_buddy_data(mem, LMN_ATOM(hashsetiter_entry(&it)));
    }
   hashset_free(atoms);
 }
