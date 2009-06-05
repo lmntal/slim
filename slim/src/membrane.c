@@ -451,7 +451,6 @@ void lmn_mem_newlink(LmnMembrane *mem,
 {
   if (LMN_ATTR_IS_DATA(attr0)) {
     if (LMN_ATTR_IS_DATA(attr1)) { /* both data */
-      LMN_ASSERT(pos0 == 0 && pos1 == 0);
       lmn_mem_link_data_atoms(mem, atom0, attr0, atom1, attr1);
     }
     else { /* atom0 data, atom1 symbol */
@@ -1190,7 +1189,6 @@ static BOOL lmn_mem_is_the_same_matching_vec(Vector *vec1, Vector *vec2) {
             != vec_num(((atomvec_data *)vec_get(vec2, j))->atom_ptrs)
          ))
     {
-      free_atomvec_data(vec1); free_atomvec_data(vec2);
       return FALSE;
     }
   }
