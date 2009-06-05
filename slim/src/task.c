@@ -1846,6 +1846,10 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
               next = LinkObj_make((LmnWord)LMN_ATOM_GET_LINK(lo->ap, i), LMN_ATTR_GET_VALUE(LMN_ATOM_GET_ATTR(lo->ap, i)));
               vec_push(&stack, (LmnWord)next);
             } else {
+              if (LMN_ATOM_GET_ATTR(lo->ap, i) == LMN_SP_ATOM_ATTR) {
+                ret_flag = FALSE;
+                break;
+              }
               atom_num++;
             }
           }
@@ -2575,7 +2579,6 @@ EQGROUND_NEQGROUND_BREAK:
     case INSTR_ALLOCATOM:
     {
       LmnInstrVar atomi;
-      LmnAtomPtr ap;
       LmnLinkAttr attr;
 
       READ_VAL(LmnInstrVar, instr, atomi);
@@ -2585,10 +2588,12 @@ EQGROUND_NEQGROUND_BREAK:
         READ_DATA_ATOM(wt[atomi], attr);
       } else { /* symbol atom */
         LmnFunctor f;
-        fprintf(stderr, "symbol atom can't be created in GUARD\n");
-        exit(EXIT_FAILURE);
+/*         fprintf(stderr, "symbol atom can't be created in GUARD\n"); */
+/*         exit(EXIT_FAILURE); */
         READ_VAL(LmnFunctor, instr, f);
-        wt[atomi] = (LmnWord)ap;
+
+        /* 本来のallocatomは格納するのは定数アトムだが、簡単のためにファンクタを格納する */
+        wt[atomi] = f;
       }
       break;
     }
@@ -3060,6 +3065,41 @@ EQGROUND_NEQGROUND_BREAK:
         }
       }
 
+      break;
+    }
+    case INSTR_GETCLASS:
+    {
+      LmnInstrVar reti, atomi;
+      
+      READ_VAL(LmnInstrVar, instr, reti);
+      READ_VAL(LmnInstrVar, instr, atomi);
+
+      if (LMN_ATTR_IS_DATA(at[atomi])) {
+        switch (at[atomi]) {
+        case LMN_INT_ATTR:
+          wt[reti] = lmn_functor_intern(ANONYMOUS, lmn_intern("int"), 1);
+          break;
+        case LMN_DBL_ATTR:
+          wt[reti] = lmn_functor_intern(ANONYMOUS, lmn_intern("float"), 1);
+          break;
+        case LMN_SP_ATOM_ATTR:
+          wt[reti] = lmn_functor_intern(ANONYMOUS, SP_ATOM_NAME(wt[atomi]), 1);
+          break;
+        }
+      } else { /* symbol atom */
+        wt[reti] = lmn_functor_intern(ANONYMOUS, lmn_intern("symbol"), 1);
+      }
+      break;
+    }
+    case INSTR_SUBCLASS:
+    {
+      LmnInstrVar subi, superi;
+      
+      READ_VAL(LmnInstrVar, instr, subi);
+      READ_VAL(LmnInstrVar, instr, superi);
+
+      /* サブやスーパークラスなどの階層の概念がないので単純比較を行う */
+      if (wt[subi] != wt[superi]) return FALSE;
       break;
     }
     default:

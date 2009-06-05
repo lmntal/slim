@@ -54,6 +54,7 @@
 #include "ccallback.h"
 #include "special_atom.h"
 #include "slim_header/string.h"
+#include "slim_header/port.h"
 /* #include "ext.h" */
 
 #ifdef PROFILE
@@ -256,7 +257,8 @@ static void init_internal(void)
   init_builtin_extensions();
 
   string_init();
-
+  port_init();
+  
 #ifdef PROFILE
   runtime_status_init();
 #endif
@@ -264,6 +266,7 @@ static void init_internal(void)
 
 static void finalize(void)
 {
+  port_finalize();
   string_finalize();
   
   sym_tbl_destroy();

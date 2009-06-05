@@ -5,6 +5,7 @@
 #include <time.h>
 #include <errno.h>
 #include "../lmntal_ext.h"
+#include "../slim_header/string.h"
 #include "../special_atom.h"
 
 void init_integer(void);
@@ -100,7 +101,7 @@ void integer_of_string(LmnMembrane *mem,
                        LmnWord a0, LmnLinkAttr t0,
                        LmnWord a1, LmnLinkAttr t1)
 {
-  const char *s = (const char *)LMN_SP_ATOM_DATA(a0);
+  const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
   char *t = NULL;
   long n;
 

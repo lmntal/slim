@@ -1,3 +1,42 @@
+/*
+ * string.c - String implementation
+ *
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
+ */
+
 #include "lmntal.h"
 #include "atom.h"
 #include "membrane.h"
@@ -8,24 +47,25 @@
 #include <stdio.h>
 
 struct LmnString {
+  LMN_SP_ATOM_HEADER;
+
   unsigned long buf_size, len;
   char *buf; /* Cの文字列形式 */
 };
 
-#define LMN_STRING(obj) ((struct LmnString *)obj)
 #define LMN_STRING_LEN(obj) (LMN_STRING(obj)->len)
 #define LMN_STRING_BUF(obj) (LMN_STRING(obj)->buf)
 #define LMN_STRING_BUF_SIZE(obj) (LMN_STRING(obj)->buf_size)
 
 
 #define LINK_STR(MEM, TO_ATOM, TO_ATTR, STR_ATOM)    \
-  lmn_mem_newlink(MEM,                                                  \
-                  TO_ATOM, TO_ATTR, LMN_ATTR_GET_VALUE(TO_ATTR), \
-                  STR_ATOM, LMN_SP_ATOM_ATTR, 0)
+  lmn_mem_newlink((MEM),                                         \
+                    (TO_ATOM), (TO_ATTR), LMN_ATTR_GET_VALUE((TO_ATTR)), \
+                  (LmnWord)(STR_ATOM), LMN_SP_ATOM_ATTR, 0)
   
 
 
-int string_atom_type;
+static int string_atom_type;
 
 BOOL lmn_is_string(LmnWord atom, LmnLinkAttr attr)
 {
@@ -35,9 +75,9 @@ BOOL lmn_is_string(LmnWord atom, LmnLinkAttr attr)
 }
 
 /* 文字列をCの文字列の形式で返す */
-const char* lmn_string_c_str(LmnWord atom)
+const char* lmn_string_c_str(LmnString atom)
 {
-  return (const char *)LMN_STRING_BUF(LMN_SP_ATOM_DATA(atom));
+  return (const char *)LMN_STRING_BUF(atom);
 }
 
 char *int_to_str(int n)
@@ -62,43 +102,61 @@ char *int_to_str(int n)
   return s;
 }
 
-LmnWord lmn_string_make(const char *s)
+LmnString lmn_string_make(char *s)
 {
   struct LmnString *p = LMN_MALLOC(struct LmnString);
+  LMN_SP_ATOM_SET_TYPE(p, string_atom_type);
   p->len = strlen(s);
   p->buf_size = p->len + 1;
   p->buf = LMN_NALLOC(char, p->buf_size);
   strcpy(p->buf, s);
-  return lmn_sp_atom_make(string_atom_type, p);
+  free(s);
+  return p;
 }
 
-LmnWord lmn_string_make_empty(unsigned long buf_size)
+LmnString lmn_string_make_empty(unsigned long buf_size)
 {
   struct LmnString *p = LMN_MALLOC(struct LmnString);
+  LMN_SP_ATOM_SET_TYPE(p, string_atom_type);
   p->len = 0;
   p->buf_size = buf_size > 0 ? buf_size : 1;
   p->buf = LMN_NALLOC(char, p->buf_size);
   p->buf[0] = '\0';
-  return lmn_sp_atom_make(string_atom_type, p);
+  return p;
 }
 
-void lmn_string_push_raw_c(LmnWord str_atom, int c)
+LmnString lmn_string_copy(LmnString s)
 {
+  struct LmnString *p = LMN_MALLOC(struct LmnString);
+  *p = *s;
+  p->buf = LMN_NALLOC(char, p->buf_size);
+  strcpy(p->buf, s->buf);
+  return p;
+}
+
+void lmn_string_free(LmnString s)
+{
+  LMN_FREE(s->buf);
+  LMN_FREE(s);
+}
+
+/* void lmn_string_push_raw_c(LmNString str_atom, int c) */
+/* { */
   
-}
+/* } */
 
-LmnWord lmn_string_concat(LmnWord str_atom0, LmnWord str_atom1)
-{
-  LmnWord ret_atom =
-    lmn_string_make_empty(LMN_STRING_LEN(LMN_SP_ATOM_DATA(str_atom0)) +
-                          LMN_STRING_LEN(LMN_SP_ATOM_DATA(str_atom1)));
+/* LmnWord lmn_string_concat(LmnString str_atom0, LmnString str_atom1) */
+/* { */
+/*   LmnWord ret_atom = */
+/*     lmn_string_make_empty(LMN_STRING_LEN(LMN_SP_ATOM_DATA(str_atom0)) + */
+/*                           LMN_STRING_LEN(LMN_SP_ATOM_DATA(str_atom1))); */
                                                
-  char *s = LMN_NALLOC(char,
-                       strlen(LMN_SP_ATOM_DATA(str_atom0)) +
-                       strlen(LMN_SP_ATOM_DATA(str_atom1)) +
-                       1);
-  sprintf(s, "%s%s", (char *)LMN_SP_ATOM_DATA(str_atom0), (char *)LMN_SP_ATOM_DATA(str_atom1));
-}
+/*   char *s = LMN_NALLOC(char, */
+/*                        strlen(LMN_SP_ATOM_DATA(str_atom0)) + */
+/*                        strlen(LMN_SP_ATOM_DATA(str_atom1)) + */
+/*                        1); */
+/*   sprintf(s, "%s%s", (char *)LMN_SP_ATOM_DATA(str_atom0), (char *)LMN_SP_ATOM_DATA(str_atom1)); */
+/* } */
 
 /*----------------------------------------------------------------------
  * Callbacks
@@ -128,35 +186,35 @@ void cb_string_make(LmnMembrane *mem,
     s = strdup(LMN_ATOM_STR(a0));
   }
 
-  LINK_STR(mem, a1, t1, lmn_sp_atom_make(string_atom_type, s));
+  LINK_STR(mem, a1, t1, lmn_string_make(s));
   lmn_mem_remove_atom(mem, a0, t0);
   lmn_free_atom(a0, t0);
 }
 
-void cb_string_concat(LmnMembrane *mem,
-                      LmnWord a0, LmnLinkAttr t0,
-                      LmnWord a1, LmnLinkAttr t1,
-                      LmnWord a2, LmnLinkAttr t2)
-{
-  char *s = LMN_NALLOC(char,
-                       strlen(LMN_SP_ATOM_DATA(a0)) +
-                       strlen(LMN_SP_ATOM_DATA(a1)) +
-                       1);
-  sprintf(s, "%s%s", (char *)LMN_SP_ATOM_DATA(a0), (char *)LMN_SP_ATOM_DATA(a1));
+/* void cb_string_concat(LmnMembrane *mem, */
+/*                       LmnWord a0, LmnLinkAttr t0, */
+/*                       LmnWord a1, LmnLinkAttr t1, */
+/*                       LmnWord a2, LmnLinkAttr t2) */
+/* { */
+/*   char *s = LMN_NALLOC(char, */
+/*                        strlen(LMN_SP_ATOM_DATA(a0)) + */
+/*                        strlen(LMN_SP_ATOM_DATA(a1)) + */
+/*                        1); */
+/*   sprintf(s, "%s%s", (char *)LMN_SP_ATOM_DATA(a0), (char *)LMN_SP_ATOM_DATA(a1)); */
 
-  LINK_STR(mem, a2, t2, lmn_sp_atom_make(string_atom_type, s));
+/*   LINK_STR(mem, a2, t2, lmn_sp_atom_make(string_atom_type, s)); */
 
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
-  lmn_mem_remove_atom(mem, a1, t1);
-  lmn_free_atom(a1, t1);
-}
+/*   lmn_mem_remove_atom(mem, a0, t0); */
+/*   lmn_free_atom(a0, t0); */
+/*   lmn_mem_remove_atom(mem, a1, t1); */
+/*   lmn_free_atom(a1, t1); */
+/* } */
 
 void cb_string_length(LmnMembrane *mem,
                       LmnWord a0, LmnLinkAttr t0,
                       LmnWord a1, LmnLinkAttr t1)
 {
-  int len = strlen((char *)LMN_SP_ATOM_DATA(a0));
+  int len = LMN_STRING_LEN(a0);
 
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1),
                   len, LMN_INT_ATTR, 0);
@@ -170,7 +228,7 @@ void cb_string_reverse(LmnMembrane *mem,
                        LmnWord a1, LmnLinkAttr t1)
 {
   int i, j;
-  char *s = (char *)LMN_SP_ATOM_DATA(a0);
+  char *s = LMN_STRING_BUF(a0);
   
   for (i = 0, j = strlen(s)-1; i < j; i++, j--) {
     char t = s[i];
@@ -188,8 +246,9 @@ void cb_string_substr(LmnMembrane *mem,
                       long end, LmnLinkAttr t2,
                       LmnWord a3, LmnLinkAttr t3)
 {
-  const char *src = (const char *)LMN_SP_ATOM_DATA(a0);
+  const char *src = (const char *)LMN_STRING_BUF(a0);
   char *s;
+  LmnString ret;
 
   if (begin <= end) {
     int len = strlen(src);
@@ -201,8 +260,9 @@ void cb_string_substr(LmnMembrane *mem,
     s = strdup("");
   }
 
-  LINK_STR(mem, a3, t3,
-           lmn_sp_atom_make(string_atom_type, s));
+  ret = lmn_string_make(s);
+  lmn_mem_push_atom(mem, (LmnWord)ret, LMN_SP_ATOM_ATTR);
+  LINK_STR(mem, a3, t3, ret);
 
   lmn_mem_remove_atom(mem, a0, t0);
   lmn_free_atom(a0, t0);
@@ -217,17 +277,19 @@ void cb_string_substr_right(LmnMembrane *mem,
                             long begin, LmnLinkAttr t1,
                             LmnWord a2, LmnLinkAttr t2)
 {
-  const char *src = (const char *)LMN_SP_ATOM_DATA(a0);
+  const char *src = LMN_STRING_BUF(a0);
   char *s;
   int len = strlen(src);
+  LmnString ret;
 
-  if (begin < 0) {printf("hgoe\n"); begin = 0;}
+  if (begin < 0) { begin = 0;}
   if (begin > len) begin = len;
   s = LMN_NALLOC(char, len - begin + 1);
   snprintf(s, len - begin + 1, "%s", src+begin);
 
-  LINK_STR(mem, a2, t2,
-           lmn_sp_atom_make(string_atom_type, s));
+  ret = lmn_string_make(s);
+  lmn_mem_push_atom(mem, (LmnWord)ret, LMN_SP_ATOM_ATTR);
+  LINK_STR(mem, a2, t2, ret);
 
   lmn_mem_remove_atom(mem, a0, t0);
   lmn_free_atom(a0, t0);
@@ -236,19 +298,20 @@ void cb_string_substr_right(LmnMembrane *mem,
 }
 
 
-void *sp_cb_string_copy(void *data)
+void *sp_cb_string_copy(void *s)
 {
-  return strdup((char *)data);
+  
+  return lmn_string_copy(s);
 }
 
-void sp_cb_string_free(void *data)
+void sp_cb_string_free(void *s)
 {
-  LMN_FREE((char *)data);
+  lmn_string_free(s);
 }
 
-void sp_cb_string_dump(void *data, FILE *stream)
+void sp_cb_string_dump(void *s, FILE *stream)
 {
-  fprintf(stream, "\"%s\"", (char *)data);
+  fprintf(stream, "\"%s\"", LMN_STRING_BUF(s));
 }
 
 BOOL sp_cb_string_is_ground(void *data)
@@ -264,7 +327,7 @@ void string_init()
                                           sp_cb_string_dump,
                                           sp_cb_string_is_ground);
   lmn_register_c_fun("string_make", cb_string_make, 2);
-  lmn_register_c_fun("string_concat", cb_string_concat, 3);
+/*   lmn_register_c_fun("string_concat", cb_string_concat, 3); */
   lmn_register_c_fun("string_length", cb_string_length, 2);
   lmn_register_c_fun("string_reverse", cb_string_reverse, 2);
   lmn_register_c_fun("string_substr", cb_string_substr, 4);

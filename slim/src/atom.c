@@ -72,7 +72,7 @@ LmnWord lmn_copy_data_atom(LmnWord atom, LmnLinkAttr attr)
       return (LmnWord)d;
     }
   case LMN_SP_ATOM_ATTR:
-    return SP_ATOM_COPY(atom);
+    return (LmnWord)SP_ATOM_COPY(atom);
   default:
     LMN_ASSERT(FALSE);
     return -1;

@@ -201,5 +201,8 @@ struct InstrSpec spec[] = {
     {"imulfunc", INSTR_IMULFUNC, {InstrVar, InstrVar, InstrVar}},
     {"idivfunc", INSTR_IDIVFUNC, {InstrVar, InstrVar, InstrVar}},
     {"imodfunc", INSTR_IMODFUNC, {InstrVar, InstrVar, InstrVar}},
+
+    {"getclass", INSTR_GETCLASS, {InstrVar, InstrVar}},
+    {"subclass", INSTR_SUBCLASS, {InstrVar, InstrVar}},
     {0}
   };

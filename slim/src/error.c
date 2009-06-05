@@ -41,10 +41,9 @@
 #include "lmntal.h"
 #include "error.h"
 
-void do_lmn_fatal(const char *msg)
+void do_lmn_fatal(const char *file, int line, const char *msg)
 {
-  fputs(msg, stderr);
-  fputc('\n', stderr);
+  fprintf(stderr,"%s(%d) %s\n", file, line, msg);
   fflush(stderr);
 }
 

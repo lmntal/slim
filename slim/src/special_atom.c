@@ -37,6 +37,7 @@
  */
 
 #include "special_atom.h"
+#include "symbol.h"
 #include "vector.h"
 
 Vector *sp_atom_callback_tbl;
@@ -54,14 +55,6 @@ void sp_atom_finalize()
     LMN_FREE(vec_get(sp_atom_callback_tbl, i));
   }
   vec_free(sp_atom_callback_tbl);
-}
-
-LmnWord lmn_sp_atom_make(int type, void *data)
-{
-  struct SpecialAtom *a = LMN_MALLOC(struct SpecialAtom);
-  a->type = type;
-  a->data = data;
-  return (LmnWord)a;
 }
 
 int lmn_sp_atom_register(const char *name,

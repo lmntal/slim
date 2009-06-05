@@ -52,17 +52,22 @@
 
 #include "lmntal.h"
 
-typedef struct SpecialAtom {
+struct LmnSPAtomHeader {
   LmnByte type;
-  void *data;
-} *SpecialAtom;
+};
 
-  
+typedef struct LmnSPAtomHeader LmnSpAtom;
+
+#define LMN_SP_ATOM(atom) ((struct LmnSPAtomHeader *)(atom))
+
+/* スペシャルアトムは構造体の最初の要素としてに必ずこのヘッダを含めなけ
+   ればならない */
+#define LMN_SP_ATOM_HEADER \
+  struct LmnSPAtomHeader hdr
 
 /* アトムのタイプのID */
-#define LMN_SP_ATOM_TYPE(X) (((struct SpecialAtom *)X)->type)
-/* スペシャルアトムの独自データ */
-#define LMN_SP_ATOM_DATA(X) (((struct SpecialAtom *)X)->data)
+#define LMN_SP_ATOM_TYPE(X) (LMN_SP_ATOM(X)->type)
+#define LMN_SP_ATOM_SET_TYPE(obj, t) (LMN_SP_ATOM((obj))->type = (t))
 
 typedef void *(*f_copy)(void*);
 typedef void (*f_free)(void*);
@@ -80,36 +85,26 @@ struct SpecialAtomCallback {
 void sp_atom_init(void);
 void sp_atom_finalize(void);
 
-
 /* 新しいスペシャルアトムのタイプを登録する。登録されたタイプのIDを返す */
 int lmn_sp_atom_register(const char *name,   /* move owner */
                          f_copy f_copy,
                          f_free f_free,
                          f_dump f_dump,
                          f_is_ground f_is_ground);
-/* タイプのIDがtypeのスペシャルアトムを独自データdataで作成する */
-LmnWord lmn_sp_atom_make(int type, void *data);
 
 struct SpecialAtomCallback * sp_atom_get_callback(int id);
 
 #define SP_ATOM_NAME(ATOM)  \
-  (sp_atom_get_callback(LMN_SP_ATOM_TYPE((SpecialAtom)ATOM))->name)
+  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->name)
 #define SP_ATOM_COPY(ATOM) \
-  lmn_sp_atom_make(LMN_SP_ATOM_TYPE(ATOM), \
-                   sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM)) \
-                   ->copy(LMN_SP_ATOM_DATA(ATOM)))
+  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->copy((void *)(ATOM)))
 
 #define SP_ATOM_FREE(ATOM) \
-  (sp_atom_get_callback(LMN_SP_ATOM_TYPE((SpecialAtom)ATOM))    \
-  ->free(LMN_SP_ATOM_DATA((SpecialAtom)ATOM)), \
-   LMN_FREE(ATOM))
-
-#define SP_ATOM_DUMP(ATOM, STREAM)                          \
-  sp_atom_get_callback(LMN_SP_ATOM_TYPE((SpecialAtom)ATOM)) \
-  ->dump(LMN_SP_ATOM_DATA((SpecialAtom)ATOM), STREAM)
+  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->free((void *)(ATOM)))
+#define SP_ATOM_DUMP(ATOM, STREAM) \
+  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->dump((void *)(ATOM), (STREAM)))
 #define SP_ATOM_IS_GROUND(ATOM) \
-  sp_atom_get_callback(LMN_SP_ATOM_TYPE((SpecialAtom)ATOM)) \
-    ->is_ground(LMN_SP_ATOM_DATA((SpecialAtom)ATOM))
+  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->is_ground((void *)(ATOM)))
 
 #endif /* LMN_SPECIALATOM_H */
 
