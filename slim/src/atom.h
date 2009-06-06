@@ -126,11 +126,13 @@ inline LmnSAtom LMN_SATOM_GET_NEXT(const LmnSAtom ATOM);
   (*(LmnFunctor*)((LmnWord*)(ATOM)+2)=(X))
 #define LMN_SATOM_GET_ARITY(ATOM)   \
   (LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM))))
-/* アトムのリンクの数（プロキシは第三引数は所属膜） */
+/* アトムのリンクの数（プロキシの第三引数は所属膜） */
 #define LMN_FUNCTOR_GET_LINK_NUM(F)   \
   ((LMN_FUNCTOR_ARITY(F)) -           \
    (LMN_IS_PROXY_FUNCTOR(F) ? 1U : 0U))
-
+/* アトムのリンクの数（プロキシの第三引数は所属膜） */
+#define LMN_SATOM_GET_LINK_NUM(ATOM)   \
+  (LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM))))
 /* get/set N th link attribute of  ATOM */
 #define LMN_SATOM_GET_ATTR(ATOM,N)    \
   (*LMN_SATOM_PATTR(LMN_SATOM(ATOM),N))
@@ -150,6 +152,8 @@ inline LmnSAtom LMN_SATOM_GET_NEXT(const LmnSAtom ATOM);
 /* returns TRUE if ATOM's(with attribute ATTR) functor is FUNC */
 #define LMN_HAS_FUNCTOR(ATOM, ATTR, FUNC) \
   (LMN_ATTR_IS_DATA(ATTR) ? FALSE : LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM)) == (FUNC))
+#define LMN_SATOM_IS_PROXY(ATOM) \
+  (LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR((ATOM))))
 
 /* operations for link attribute */
 #define LMN_ATTR_IS_DATA(X)           ((X)&~LMN_ATTR_MASK)
@@ -187,8 +191,10 @@ inline LmnSAtom LMN_SATOM_GET_NEXT(const LmnSAtom ATOM);
  * functions
  */
 
-LMN_EXTERN LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr);
-LMN_EXTERN LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr);
+LMN_EXTERN inline LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr);
+LMN_EXTERN inline LmnSAtom lmn_copy_satom(LmnSAtom atom);
+LMN_EXTERN inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr);
+LMN_EXTERN LmnSAtom lmn_copy_satom_with_datom(LmnSAtom atom);
 LMN_EXTERN void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN void free_symbol_atom_with_buddy_data(LmnSAtom atom);
 LMN_EXTERN BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0, LmnAtom atom1, LmnLinkAttr attr1);

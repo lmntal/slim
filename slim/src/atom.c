@@ -48,19 +48,30 @@ LmnSAtom LMN_SATOM_GET_NEXT(const LmnSAtom ATOM)
   return NEXT;
 }
 
-LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr)
+/* アトムをコピーして返す。atomがシンボルアトムの場合、リンク先のデータ
+   アトムもコピーされる */
+inline LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr)
 {
   if (LMN_ATTR_IS_DATA(attr)) {
     return lmn_copy_data_atom(atom, attr);
   } else { /* symbol atom */
-    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
-    LmnSAtom newatom = lmn_new_atom(f);
-    memcpy((void *)newatom, (void *)atom, LMN_WORD_BYTES*LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(f)));
-    return LMN_ATOM(newatom);
+    return LMN_ATOM(lmn_copy_satom(LMN_SATOM(atom)));
   }
 }
 
-LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr)
+inline LmnSAtom lmn_copy_satom(LmnSAtom atom)
+{
+  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
+  LmnSAtom newatom = lmn_new_atom(f);
+  
+  memcpy((void *)newatom,
+         (void *)atom,
+         LMN_WORD_BYTES*LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(f)));
+
+  return newatom;
+}
+
+inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr)
 {
   switch (attr) {
   case LMN_INT_ATTR:
@@ -77,6 +88,27 @@ LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr)
     LMN_ASSERT(FALSE);
     return -1;
   }
+}
+
+LmnSAtom lmn_copy_satom_with_datom(LmnSAtom atom)
+{
+  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
+  LmnSAtom newatom = lmn_new_atom(f);
+  unsigned int i, arity = LMN_SATOM_GET_LINK_NUM(atom);
+  
+  memcpy((void *)newatom,
+         (void *)atom,
+         LMN_WORD_BYTES*LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(f)));
+
+  /* リンク先のデータアトムをコピーする */
+  for (i = 0; i < arity; i++) {
+    if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) {
+      LMN_SATOM_SET_LINK(newatom, i,
+                         lmn_copy_data_atom(LMN_SATOM_GET_LINK(atom, i),
+                                            LMN_SATOM_GET_ATTR(atom, i)));
+    }
+  }
+  return newatom;
 }
 
 static inline void free_data_atom(LmnAtom atom, LmnLinkAttr attr)

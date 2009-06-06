@@ -90,6 +90,9 @@ typedef void (* callback_4)(LmnMembrane *,
                             LmnAtom, LmnLinkAttr); 
 
 
+inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *at);
+inline static void free_links(Vector *links);
+
 #define SWAP(T,X,Y)       do { T t=(X); (X)=(Y); (Y)=t;} while(0)
 #define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
 
@@ -1747,130 +1750,26 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_ISGROUND:
     {
-      unsigned int i, atom_num;
-      BOOL ret_flag = TRUE;
       LmnInstrVar funci, srclisti, avolisti;
-      Vector *srcvec, *avovec; /* 変数番号のリスト */
-      HashSet visited_atoms;
-      Vector stack, visited_root;
-      LinkObj start;
-
+      Vector *srcvec, *avovec;
+      unsigned long natoms;
+      BOOL b;
+      
       READ_VAL(LmnInstrVar, instr, funci);
       READ_VAL(LmnInstrVar, instr, srclisti);
       READ_VAL(LmnInstrVar, instr, avolisti);
 
-      srcvec = (Vector*) wt[srclisti];
-      avovec = (Vector*) wt[avolisti];
+      /* リンクオブジェクトのベクタを構築 */
+      srcvec = links_from_idxs((Vector *)wt[srclisti], wt, at);
+      avovec = links_from_idxs((Vector *)wt[avolisti], wt, at);
 
-      atom_num = 0;
-      if (vec_num(srcvec) == 1 &&
-          LMN_ATTR_IS_DATA(LINKED_ATTR(vec_get(srcvec, 0)))) {
-        switch (LINKED_ATTR(vec_get(srcvec, 0))) {
-        case LMN_SP_ATOM_ATTR:
-          ret_flag = SP_ATOM_IS_GROUND(LINKED_ATOM(vec_get(srcvec, 0)));
-          break;
-        default:
-          ret_flag = TRUE;
-          break;
-        }
-        atom_num=1;
-      } else {
-        vec_init(&stack, 16); /* 再帰除去用スタック */
-        start = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(srcvec, 0)), LINKED_ATTR(vec_get(srcvec, 0)));
+      b = lmn_mem_is_ground(srcvec, avovec, &natoms);
 
-        if(!LMN_ATTR_IS_DATA(start->pos)) { /* data atom は積まない */
-          vec_push(&stack, (LmnWord)start);
-        } else {
-          atom_num++;
-          LMN_FREE(start);
-        }
-
-        vec_init(&visited_root, 16);
-        for(i = 0; i < srcvec->num; i++) {
-          vec_push(&visited_root, FALSE);
-        }
-        vec_set(&visited_root, 0, TRUE);
-
-        hashset_init(&visited_atoms, 256);
-
-
-        while(stack.num != 0) { /* main loop: start */
-          LinkObj lo = (LinkObj )vec_pop(&stack);
-
-          if(hashset_contains(&visited_atoms, (HashKeyType)lo->ap)) {
-            LMN_FREE(lo);
-            continue;
-          }
-
-          /* 対のリンクが禁止リンクでないか */
-          for(i = 0; i < avovec->num; i++) {
-            LmnSAtom avolink = LMN_SATOM(LINKED_ATOM(vec_get(avovec, i)));
-            LmnLinkAttr avoattr = LINKED_ATTR(vec_get(avovec, i));
-            if(LMN_SATOM(LMN_SATOM_GET_LINK(lo->ap, lo->pos)) == avolink &&
-               LMN_SATOM_GET_ATTR(lo->ap, lo->pos) == avoattr) {
-              ret_flag = FALSE;
-              break;
-            }
-          }
-          if(!ret_flag) {
-            LMN_FREE(lo);
-            break;
-          }
-
-          /* 膜を横切っていないか */
-          if(LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(lo->ap))) {
-            LMN_FREE(lo);
-            ret_flag = FALSE;
-            break;
-          }
-
-          /* 根に到達した場合 */
-          for(i = 0; i < visited_root.num; i++) {
-            unsigned int index = vec_get(srcvec, i);
-            if (lo->ap == LMN_SATOM_GET_LINK(LINKED_ATOM(index), LINKED_ATTR(index))
-                && lo->pos == LMN_SATOM_GET_ATTR(LINKED_ATOM(index), LINKED_ATTR(index))) {
-              vec_set(&visited_root, i, TRUE);
-              goto ISGROUND_CONT;
-            }
-          }
-
-          atom_num++;
-          hashset_add(&visited_atoms, (LmnWord)lo->ap);
-
-          /* 子の展開 */
-          for(i = 0; i < LMN_SATOM_GET_ARITY(lo->ap); i++) {
-            LinkObj next;
-            if (i == lo->pos)
-              continue;
-            if(!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(lo->ap, i))) { /* data atom は積まない */
-              next = LinkObj_make((LmnWord)LMN_SATOM_GET_LINK(lo->ap, i), LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(lo->ap, i)));
-              vec_push(&stack, (LmnWord)next);
-            } else {
-              if (LMN_SATOM_GET_ATTR(lo->ap, i) == LMN_SP_ATOM_ATTR) {
-                ret_flag = FALSE;
-                break;
-              }
-              atom_num++;
-            }
-          }
-
-        ISGROUND_CONT:
-          LMN_FREE(lo);
-        } /* main loop: end */
-
-        for(i = 0; i < visited_root.num; i++) {
-          if(!vec_get(&visited_root, i)) { /* 未訪問の根がある */
-            ret_flag=FALSE;
-            break;
-          }
-        }
-
-        hashset_destroy(&visited_atoms);
-        vec_destroy(&stack);
-        vec_destroy(&visited_root);
-      }
-      if(!ret_flag) return FALSE;
-      wt[funci] = (LmnWord)atom_num;
+      free_links(srcvec);
+      free_links(avovec);
+      
+      if (!b) return FALSE;
+      wt[funci] = (LmnWord)natoms;
       at[funci] = LMN_INT_ATTR;
       break;
     }
@@ -1994,28 +1893,19 @@ EQGROUND_NEQGROUND_BREAK:
       LmnInstrVar dstlist, srclist, memi;
       Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
       SimpleHashtbl *atommap;
-      int i;
       
       READ_VAL(LmnInstrVar, instr, dstlist);
       READ_VAL(LmnInstrVar, instr, srclist);
       READ_VAL(LmnInstrVar, instr, memi);
 
       /* リンクオブジェクトのベクタを構築 */
-      srcvec = vec_make(16);
-      for (i = 0; i < vec_num((Vector *)wt[srclist]); i++) {
-        LinkObj l = LinkObj_make(wt[vec_get((Vector *)wt[srclist], i)],
-                                 at[vec_get((Vector *)wt[srclist], i)]);
-        vec_push(srcvec, (LmnWord)l);
-      }
+      srcvec = links_from_idxs((Vector *)wt[srclist], wt, at);
 
       lmn_mem_copy_ground((LmnMembrane *)wt[memi],
                           srcvec,
                           &dstlovec,
                           &atommap);
-      for (i = 0; i < vec_num(srcvec); i++) {
-        LMN_FREE(vec_get(srcvec, i));
-      }
-      vec_free(srcvec);
+      free_links(srcvec);
 
       /* 返り値の作成 */
       retvec = vec_make(2);
@@ -2049,7 +1939,6 @@ EQGROUND_NEQGROUND_BREAK:
     case INSTR_REMOVEGROUND:
     case INSTR_FREEGROUND:
     {
-      unsigned int i;
       LmnInstrVar listi, memi;
       Vector *srcvec; /* 変数番号のリスト */
 
@@ -2058,13 +1947,7 @@ EQGROUND_NEQGROUND_BREAK:
         READ_VAL(LmnInstrVar, instr, memi);
       }
 
-      /* リンクオブジェクトのベクタを構築 */
-      srcvec = vec_make(16);
-      for (i = 0; i < vec_num((Vector *)wt[listi]); i++) {
-        LinkObj l = LinkObj_make(wt[vec_get((Vector *)wt[listi], i)],
-                                 at[vec_get((Vector *)wt[listi], i)]);
-        vec_push(srcvec, (LmnWord)l);
-      }
+      srcvec = links_from_idxs((Vector *)wt[listi], wt, at);
 
       switch (op) {
       case INSTR_REMOVEGROUND:
@@ -2075,10 +1958,7 @@ EQGROUND_NEQGROUND_BREAK:
         break;
       }
 
-      for (i = 0; i < vec_num(srcvec); i++) {
-        LMN_FREE(vec_get(srcvec, i));
-      }
-      vec_free(srcvec);
+      free_links(srcvec);
 
       break;
     }
@@ -3584,4 +3464,29 @@ static void exit_ltl_model_checking()
     dump_state_transition_graph(stdout);
   }
   exit(0);
+}
+
+inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *at)
+{
+  unsigned long i;
+  Vector *v = vec_make(16);
+  
+  /* リンクオブジェクトのベクタを構築 */
+  v = vec_make(16);
+  for (i = 0; i < vec_num(link_idxs); i++) {
+    LinkObj l = LinkObj_make(wt[vec_get(link_idxs, i)],
+                             at[vec_get(link_idxs, i)]);
+    vec_push(v, (LmnWord)l);
+  }
+  return v;
+}
+
+inline static void free_links(Vector *links)
+{
+  unsigned long i;
+  
+  for (i = 0; i < vec_num(links); i++) {
+    LMN_FREE(vec_get(links, i));
+  }
+  vec_free(links);
 }

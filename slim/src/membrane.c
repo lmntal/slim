@@ -51,6 +51,10 @@
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
 static inline void lmn_mem_remove_data_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 inline static void mem_remove_symbol_atom(LmnMembrane *mem, LmnSAtom atom);
+BOOL ground_atoms(Vector *srcvec,
+                  Vector *avovec,
+                  HashSet **atoms,
+                  unsigned long *natoms);
 
 /* ルールセットを膜に追加する。ルールセットは、比較のためにポインタの値
    の昇順に並べるようにする */
@@ -982,7 +986,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
           mem_push_symbol_atom(mem, LMN_SATOM(next_copied));
           hashtbl_put(atommap, (HashKeyType)next_src, (HashValueType)next_copied);
           vec_push(stack, next_src);
-        } 
+        }
         LMN_SATOM_SET_LINK(copied, i, next_copied);
 
       }
@@ -993,69 +997,164 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
   *ret_atommap = atommap;
 }
 
-HashSet *ground_atoms(Vector *srcvec)
+/* srcvecのリンクの列が基底項プロセスに到達(avovecのリンクに到達する場
+   合は基底項プロセスではない)している場合、真を返し、natomsに基底項プ
+   ロセスないのアトムの数を格納する。*/
+BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms)
 {
-  HashSet *atoms = hashset_make(16);
+  BOOL b;
+  HashSet *atoms;
+
+  b = ground_atoms(srcvec, avovec, &atoms, natoms);
+  if (b) { hashset_free(atoms); }
+  return b;
+}
+
+/* srcvecから出るリンクのリストが基底項プロセスに到達している場合、
+   avovecに基底項プロセスに存在するシンボルアトム、natomsにアトムの数、戻り値に真を返す。
+   リストが基底項プロセスに到達していない場合にはatomsはNULLとなり、偽
+   を返す。ただし、リンクがavovecに到達している場合には、基底項プロセスとはならない。 */
+BOOL ground_atoms(Vector *srcvec,
+                  Vector *avovec,
+                  HashSet **atoms,
+                  unsigned long *natoms)
+{
+  HashSet *visited = hashset_make(16);
+  SimpleHashtbl *guard = NULL; 
+  HashSet *root = hashset_make(16);
   Vector *stack = vec_make(16);
   unsigned int i;
+  unsigned int n; /* 到達したアトムの数 */
+  unsigned int n_root_data;   /* 根にあるデータアトムの数 */
+  unsigned int n_reach_root;  /* 到達した根の数 */
+  BOOL ok;
 
+  n = 0;
+  n_reach_root = 0;
+  n_root_data = 0;
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObj l = (LinkObj)vec_get(srcvec, i);
+    if (LMN_ATTR_IS_DATA(l->pos)) {
+      n_reach_root++;
+      n++;
+      n_root_data++;
+      continue;
+    }
 
-    if (!LMN_ATTR_IS_DATA(l->pos)) {
-      /* 自己ループしているリンクは無視する */
-      if (l->ap != LMN_SATOM_GET_LINK(l->ap, l->pos)) {
-      /* 根のリンクのリンクポインタを0に設定する */
-        LMN_SATOM_SET_LINK(l->ap, l->pos, 0);
-        hashset_add(atoms, (HashKeyType)l->ap);
-        vec_push(stack, l->ap);
+    /* 自己ループしているリンクは無視する */
+    if (l->ap == LMN_SATOM_GET_LINK(l->ap, l->pos)) {
+      n_reach_root++;
+      continue;
+    }
+    
+    hashset_add(root, (HashKeyType)LMN_SATOM_GET_LINK(l->ap, l->pos));
+    if (vec_num(stack) == 0) {
+      vec_push(stack, l->ap);
+    }
+  }
+
+  if (avovec != NULL && vec_num(avovec) > 0) {
+    guard = hashtbl_make(16);
+    for (i = 0; i < vec_num(avovec); i++) {
+      LinkObj l = (LinkObj)vec_get(avovec, i);
+      if (!LMN_ATTR_IS_DATA(l->pos)) {
+        hashtbl_put(guard, l->ap, (HashValueType)l->pos);
       }
     }
   }
 
-  while (vec_num(stack) > 0) {
-    LmnSAtom src_atom = LMN_SATOM(vec_pop(stack));
-    for (i = 0; i < LMN_SATOM_GET_ARITY(src_atom); i++) {
-      LmnAtom next_src = LMN_SATOM_GET_LINK(src_atom, i);
-      LmnLinkAttr next_attr = LMN_SATOM_GET_ATTR(src_atom, i);
+  ok = TRUE;
+  if (n_root_data == 0) {
+    while (vec_num(stack) > 0) {
+      LmnSAtom src_atom = LMN_SATOM(vec_pop(stack));
+      if (LMN_SATOM_IS_PROXY(src_atom)) { ok = FALSE; break; }
+      if (hashset_contains(visited, (HashKeyType)src_atom)) continue;
+      if (hashset_contains(root, (HashKeyType)src_atom)) {n_reach_root++; continue; }
+      hashset_add(visited, (HashKeyType)src_atom);
+      n++;
+      for (i = 0; i < LMN_SATOM_GET_ARITY(src_atom); i++) {
+        LmnAtom next_src = LMN_SATOM_GET_LINK(src_atom, i);
+        LmnLinkAttr next_attr = LMN_SATOM_GET_ATTR(src_atom, i);
 
-      /* LMN_SATOM_GET_LINK(src_atom, i)が0になる場合は、根に到達した場合 */
-      if (!LMN_ATTR_IS_DATA(next_attr) &&
-          LMN_SATOM_GET_LINK(src_atom, i) != 0) {
-        if (!hashset_contains(atoms, next_src)) { /* next_srcは未訪問 */
-          hashset_add(atoms, (HashKeyType)next_src);
+        if (!LMN_ATTR_IS_DATA(next_attr)) {
+          if (guard) {
+            int t = hashtbl_get_default(guard, (HashKeyType)next_src, -1);
+            if (t >= 0 && t == LMN_ATTR_GET_VALUE(next_attr)) {
+              ok = FALSE;
+              break;
+            }
+          }
           vec_push(stack, next_src);
-        } 
+        } else {
+          n++;
+        }
       }
     }
+  } else if (vec_num(stack) >= 2 && n_root_data > 0) {
+    ok = FALSE;
+  } else if (vec_num(stack) >= 3) {
+    ok = FALSE;
   }
 
   vec_free(stack);
-  return atoms;
+  hashset_free(root);
+  if (guard) hashtbl_free(guard);
+
+  if (ok && n_reach_root == vec_num(srcvec)) {
+    *natoms = n;
+    *atoms = visited;
+    return TRUE;
+  }
+  else {
+    hashset_free(visited);
+    *atoms = NULL;
+    return FALSE;
+  }
 }
 
 void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
 {
-  HashSet *atoms = ground_atoms(srcvec);
+  HashSet *atoms;
+  unsigned long i, t;
   HashSetIterator it;
 
+  if (!ground_atoms(srcvec, NULL, &atoms, &t)) {
+    fprintf(stderr, "remove ground false\n");
+  };
   for (it = hashset_iterator(atoms);
        !hashsetiter_isend(&it);
        hashsetiter_next(&it)) {
     mem_remove_symbol_atom_with_buddy_data(mem, LMN_SATOM(hashsetiter_entry(&it)));
    }
+
+  /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
+     アトムに接続してい場合の処理をする */
+  for (i = 0; i < vec_num(srcvec); i++) {
+    LinkObj l = (LinkObj)vec_get(srcvec, i);
+    if (LMN_ATTR_IS_DATA(l->pos))
+      lmn_mem_remove_data_atom(mem, l->ap, l->pos);
+  }
   hashset_free(atoms);
 }
 
 void lmn_mem_free_ground(Vector *srcvec)
 {
-  HashSet *atoms = ground_atoms(srcvec);
+  HashSet *atoms;
+  unsigned long i, t;
   HashSetIterator it;
-
+  
+  ground_atoms(srcvec, NULL, &atoms, &t);
   for (it = hashset_iterator(atoms);
        !hashsetiter_isend(&it);
        hashsetiter_next(&it)) {
     free_symbol_atom_with_buddy_data(LMN_SATOM(hashsetiter_entry(&it)));
+  }
+
+  /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
+     アトムに接続してい場合の処理をする */
+  for (i = 0; i < vec_num(srcvec); i++) {
+    LinkObj l = (LinkObj)vec_get(srcvec, i);
+    if (LMN_ATTR_IS_DATA(l->pos)) lmn_free_atom(l->ap, l->pos);
   }
   hashset_free(atoms);
 }
