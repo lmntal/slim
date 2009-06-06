@@ -229,6 +229,12 @@ void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr)
   }
 }
 
+inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr)
+{
+  lmn_mem_remove_atom(mem, atom, attr);
+  lmn_free_atom(atom, attr);
+}
+
 /*----------------------------------------------------------------------
  * Membrane
  */
@@ -256,6 +262,13 @@ void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem)
   if (mem->prev) mem->prev->next = mem->next;
   if (mem->next) mem->next->prev = mem->prev;
   mem->parent = NULL; /* removeproxies のために必要 */
+}
+
+inline void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem)
+{
+  lmn_mem_remove_mem(parent, mem);
+  lmn_mem_drop(mem);
+  lmn_mem_free(mem);
 }
 
 /* 膜内のプロセスと子膜を破棄する */
@@ -1118,9 +1131,8 @@ void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
   unsigned long i, t;
   HashSetIterator it;
 
-  if (!ground_atoms(srcvec, NULL, &atoms, &t)) {
-    fprintf(stderr, "remove ground false\n");
-  };
+  ground_atoms(srcvec, NULL, &atoms, &t);
+
   for (it = hashset_iterator(atoms);
        !hashsetiter_isend(&it);
        hashsetiter_next(&it)) {
@@ -1158,6 +1170,35 @@ void lmn_mem_free_ground(Vector *srcvec)
   }
   hashset_free(atoms);
 }
+
+void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec)
+{
+  HashSet *atoms;
+  unsigned long i, t;
+  HashSetIterator it;
+
+  if (!ground_atoms(srcvec, NULL, &atoms, &t)) {
+    fprintf(stderr, "remove ground false\n");
+  };
+  for (it = hashset_iterator(atoms);
+       !hashsetiter_isend(&it);
+       hashsetiter_next(&it)) {
+    mem_remove_symbol_atom_with_buddy_data(mem, LMN_SATOM(hashsetiter_entry(&it)));
+    free_symbol_atom_with_buddy_data(LMN_SATOM(hashsetiter_entry(&it)));
+   }
+
+  /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
+     アトムに接続してい場合の処理をする */
+  for (i = 0; i < vec_num(srcvec); i++) {
+    LinkObj l = (LinkObj)vec_get(srcvec, i);
+    if (LMN_ATTR_IS_DATA(l->pos)) {
+      lmn_mem_remove_data_atom(mem, l->ap, l->pos);
+      lmn_free_atom(l->ap, l->pos);
+    }
+  }
+  hashset_free(atoms);
+}
+
 
 /* 膜の同型性判定 ここから */
 /*----------------------------------------------------------------------*/

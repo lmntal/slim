@@ -1765,7 +1765,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
 
       b = lmn_mem_is_ground(srcvec, avovec, &natoms);
 
-      free_links(srcvec);
+      free_links(srcvec); 
       free_links(avovec);
       
       if (!b) return FALSE;
@@ -2906,12 +2906,10 @@ EQGROUND_NEQGROUND_BREAK:
           break;
         }
 
-        lmn_mem_remove_atom((LmnMembrane *)wt[memi], wt[atomi], at[atomi]);
-        lmn_mem_remove_atom((LmnMembrane *)wt[memi],
+        lmn_mem_delete_atom((LmnMembrane *)wt[memi], wt[atomi], at[atomi]);
+        lmn_mem_delete_atom((LmnMembrane *)wt[memi],
                             LMN_SATOM_GET_LINK(atom, 0),
                             LMN_SATOM_GET_ATTR(atom, 0));
-        lmn_free_atom(LMN_SATOM_GET_LINK(atom, 0), LMN_SATOM_GET_ATTR(atom, 0));
-        lmn_free_atom(wt[atomi], at[atomi]);
 
         switch (arity) {
         case 1:
@@ -3472,7 +3470,6 @@ inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *a
   Vector *v = vec_make(16);
   
   /* リンクオブジェクトのベクタを構築 */
-  v = vec_make(16);
   for (i = 0; i < vec_num(link_idxs); i++) {
     LinkObj l = LinkObj_make(wt[vec_get(link_idxs, i)],
                              at[vec_get(link_idxs, i)]);

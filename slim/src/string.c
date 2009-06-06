@@ -215,8 +215,7 @@ void cb_string_make(LmnMembrane *mem,
   }
 
   LINK_STR(mem, a1, t1, lmn_string_make(s));
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
+  lmn_mem_delete_atom(mem, a0, t0);
 }
 
 void cb_string_concat(LmnMembrane *mem,
@@ -227,10 +226,8 @@ void cb_string_concat(LmnMembrane *mem,
   LmnString s = lmn_string_concat(LMN_STRING(a0), LMN_STRING(a1));
   LINK_STR(mem, a2, t2, s);
 
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
-  lmn_mem_remove_atom(mem, a1, t1);
-  lmn_free_atom(a1, t1);
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, a1, t1);
 }
 
 void cb_string_length(LmnMembrane *mem,
@@ -242,8 +239,7 @@ void cb_string_length(LmnMembrane *mem,
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1),
                   len, LMN_INT_ATTR, 0);
 
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
+  lmn_mem_delete_atom(mem, a0, t0);
 }
 
 void cb_string_reverse(LmnMembrane *mem,
@@ -287,12 +283,9 @@ void cb_string_substr(LmnMembrane *mem,
   lmn_mem_push_atom(mem, LMN_ATOM(ret), LMN_SP_ATOM_ATTR);
   LINK_STR(mem, a3, t3, ret);
 
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
-  lmn_mem_remove_atom(mem, begin, t1);
-  lmn_free_atom(begin, t1);
-  lmn_mem_remove_atom(mem, end, t2);
-  lmn_free_atom(end, t2);
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, begin, t1);
+  lmn_mem_delete_atom(mem, end, t2);
 }
 
 void cb_string_substr_right(LmnMembrane *mem,
@@ -314,10 +307,8 @@ void cb_string_substr_right(LmnMembrane *mem,
   lmn_mem_push_atom(mem, LMN_ATOM(ret), LMN_SP_ATOM_ATTR);
   LINK_STR(mem, a2, t2, ret);
 
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
-  lmn_mem_remove_atom(mem, begin, t1);
-  lmn_free_atom(begin, t1);
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, begin, t1);
 }
 
 

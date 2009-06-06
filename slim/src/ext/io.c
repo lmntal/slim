@@ -40,9 +40,7 @@ void cb_print_line_with_port(LmnMembrane *mem,
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   a0, t0, 0);
-  lmn_mem_remove_atom(mem, a1, t1);
-  lmn_free_atom(a1, t1);
-  
+  lmn_mem_delete_atom(mem, a1, t1);
 }
 
 

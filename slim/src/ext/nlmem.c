@@ -44,8 +44,7 @@ void nlmem_copy(LmnMembrane *mem,
     }
 
     hashtbl_free(atom_map);
-    lmn_mem_remove_atom(mem, a1, t1);
-    lmn_free_atom(a1, t1);
+    lmn_mem_delete_atom(mem, a1, t1);
     /* 第一引数に接続されたタグアトムと第三引数を接続する */
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
@@ -85,20 +84,15 @@ void nlmem_kill(LmnMembrane *mem,
         out_attr = LMN_SATOM_GET_ATTR(in, 0);
         tag_atom = lmn_mem_newatom(mem, kill_tag_func);
         lmn_relink_symbols(tag_atom, 0, out, 1);
-        lmn_mem_remove_atom(mem, LMN_ATOM(out), out_attr);
-        lmn_free_atom(LMN_ATOM(out), out_attr);
+        lmn_mem_delete_atom(mem, LMN_ATOM(out), out_attr);
       }
     }
   }
   
-  lmn_mem_remove_mem(mem, org_mem);
   lmn_memstack_delete(org_mem);
-  lmn_mem_drop(org_mem);
-  lmn_mem_free(org_mem);
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
-  lmn_mem_remove_atom(mem, a1, t1);
-  lmn_free_atom(a1, t1);
+  lmn_mem_delete_mem(mem, org_mem);
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, a1, t1);
 }
 
 void init_nlmem(void)

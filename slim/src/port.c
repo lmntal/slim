@@ -359,8 +359,7 @@ void cb_port_putc(LmnMembrane *mem,
     port_puts(LMN_PORT(a0), LMN_STRING(a1));
   }
 
-  lmn_mem_remove_atom(mem, a1, t1);
-  lmn_free_atom(a1, t1);
+  lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   a0, t0, 0);
@@ -383,8 +382,7 @@ void cb_port_puts(LmnMembrane *mem,
     port_puts(LMN_PORT(a0), LMN_STRING(a1));
   }
 
-  lmn_mem_remove_atom(mem, a1, t1);
-  lmn_free_atom(a1, t1);
+  lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   a0, t0, 0);

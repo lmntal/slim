@@ -16,14 +16,11 @@ void atomic_ruleset(LmnMembrane *mem,
       lmn_ruleset_set_atomic(lmn_mem_get_ruleset(mem, i), do_atomic);
       lmn_mem_add_ruleset(lmn_mem_parent(mem), lmn_mem_get_ruleset(mem, i));
     }
-    lmn_mem_remove_atom(mem, a0, t0);
-    lmn_free_atom(a0, t0);
+    lmn_mem_delete_atom(mem, a0, t0);
   }
 
   lmn_memstack_delete(mem);
-  lmn_mem_remove_mem(mem->parent, mem);
-  lmn_mem_drop(mem);
-  lmn_mem_free(mem);
+  lmn_mem_delete_mem(mem->parent, mem);
 }
 
 

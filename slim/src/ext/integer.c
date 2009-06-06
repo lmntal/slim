@@ -45,13 +45,10 @@ void integer_set(LmnMembrane *mem,
     hashtbl_free(atommap);
   }
 
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_mem_remove_atom(mem, a1, t1);
-  lmn_free_atom(a0, t0);
-  lmn_free_atom(a1, t1);
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, a1, t1);
 
-  lmn_mem_remove_ground(mem, srcvec);
-  lmn_mem_free_ground(srcvec);
+  lmn_mem_delete_ground(mem, srcvec);
 
   for (i = 0; i < vec_num(srcvec); i++) LMN_FREE(vec_get(srcvec, i));
   vec_free(srcvec);
@@ -67,8 +64,7 @@ void integer_srand(LmnMembrane *mem,
                    LmnAtom a0, LmnLinkAttr t0)
 {
   srand(a0);
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
+  lmn_mem_delete_atom(mem, a0, t0);
 }
 
 
@@ -88,8 +84,7 @@ void integer_rand(LmnMembrane *mem,
                   n, LMN_INT_ATTR, 0);
   lmn_mem_push_atom(mem, n, LMN_INT_ATTR);
 
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
+  lmn_mem_delete_atom(mem, a0, t0);
 }
 
 /*
@@ -120,8 +115,7 @@ void integer_of_string(LmnMembrane *mem,
     lmn_mem_push_atom(mem, n, LMN_INT_ATTR);
   }
 
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_free_atom(a0, t0);
+  lmn_mem_delete_atom(mem, a0, t0);
 }
 
 void init_integer(void)

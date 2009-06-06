@@ -73,6 +73,7 @@ typedef struct AtomListEntry {
 LMN_EXTERN LmnMembrane *lmn_mem_make(void);
 LMN_EXTERN void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_free(LmnMembrane *mem);
+LMN_EXTERN inline void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_drop(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_add_child_mem(LmnMembrane *parentmem, LmnMembrane *newmem);
 LMN_EXTERN LmnSAtom lmn_mem_newatom(LmnMembrane *mem, LmnFunctor f);
@@ -85,6 +86,7 @@ LMN_EXTERN BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
 LMN_EXTERN LmnSAtom* atomlist_get_record(AtomListEntry *atomlist, int findatomid);
 LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
+LMN_EXTERN inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN inline unsigned int lmn_mem_count_descendants(LmnMembrane *mem);
 LMN_EXTERN inline unsigned int lmn_mem_count_children(LmnMembrane *mem);
 LMN_EXTERN inline LmnMembrane *lmn_mem_parent(LmnMembrane *mem);
@@ -154,6 +156,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
                          SimpleHashtbl **ret_atommap);
 void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec);
 void lmn_mem_free_ground(Vector *srcvec);
+void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec);
 
 /* リンクオブジェクトの代替 */
 typedef struct LinkObj {
