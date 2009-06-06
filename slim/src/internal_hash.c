@@ -77,7 +77,7 @@
 #define INT_HASH(val)  ((val)*K)
 
 static void hashtbl_extend(SimpleHashtbl *ht);
-static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key, unsigned long dummy_key);
+static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key);
 static HashKeyType round2up(unsigned int n);
 static inline HashKeyType* hashset_get_p(HashSet* set, HashKeyType key, unsigned long dummy_key);
 
@@ -121,39 +121,29 @@ void hashtbl_free(SimpleHashtbl *ht)
 
 HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key)
 {
-  return hashtbl_get_p(ht, key, EMPTY_KEY)->data;
+  return hashtbl_get_p(ht, key)->data;
 }
 
 HashValueType hashtbl_get_default(SimpleHashtbl *ht,
                                   HashKeyType key,
                                   HashValueType default_value)
 {
-  HashEntry *e =  hashtbl_get_p(ht, key, EMPTY_KEY);
+  HashEntry *e =  hashtbl_get_p(ht, key);
   if (e->key == EMPTY_KEY) return default_value;
   else return e->data;
 }
 
 int hashtbl_contains(SimpleHashtbl *ht, HashKeyType key)
 {
-  return hashtbl_get_p(ht, key, EMPTY_KEY)->key != EMPTY_KEY;
+  return hashtbl_get_p(ht, key)->key != EMPTY_KEY;
 }
 
 void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType data)
 {
   struct HashEntry *e;
 
-  /*
-   * EFFICIENCY:
-   * オープンアドレス法ではこの検査が必要
-   * e->key==DELETED_KEYの時のみcontains()検査をするなど効率面で要対策
-   * （処理系コア部ではdelete()が使用されないため）
-   */
-  if (hashtbl_contains(ht, key)) return;
-#ifdef DEBUG
-  assert(key < DELETED_KEY);
-#endif
-  e = hashtbl_get_p(ht, key, DELETED_KEY);
-  if (e->key >= DELETED_KEY) {
+  e = hashtbl_get_p(ht, key);
+  if (e->key == EMPTY_KEY) {
     ht->num++;
     e->key = key;
   }
@@ -164,31 +154,17 @@ void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType data)
   }
 }
 
-/* CONTRACT: valueの解放は呼出し側が行うこと */
-void hashtbl_delete(SimpleHashtbl *ht, HashKeyType key) {
-  struct HashEntry* e;
-#ifdef DEBUG
-  assert(key < DELETED_KEY);
-#endif
-  e= hashtbl_get_p(ht, key, EMPTY_KEY);
-  if(e->key != EMPTY_KEY) {
-    ht->num--;
-    e->key = DELETED_KEY;
-  }
-  /* EFFICIENCY: hashtbl_reduce() が必要 */
-}
-
 void hashtbl_clear(SimpleHashtbl *ht) {
   memset(ht->tbl, 0xffU, sizeof(struct HashEntry) * ht->cap);
 }
 
-static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key, unsigned long dummykey)
+static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key)
 {
   HashKeyType probe;
   HashKeyType increment = (key | 1) & (ht->cap-1);
 
   for (probe = INT_HASH(key) & (ht->cap-1);
-       ht->tbl[probe].key < dummykey && ht->tbl[probe].key != key;
+       ht->tbl[probe].key != EMPTY_KEY && ht->tbl[probe].key != key;
        probe = (probe + increment) & (ht->cap-1)) {
   }
 
@@ -213,7 +189,7 @@ static void hashtbl_extend(SimpleHashtbl *ht)
 
   for (i = 0; i < cap; i++) {
     if (tbl[i].key != EMPTY_KEY) {
-      e = hashtbl_get_p(ht, tbl[i].key, DELETED_KEY);
+      e = hashtbl_get_p(ht, tbl[i].key);
       e->key = tbl[i].key;
       e->data = tbl[i].data;
     }

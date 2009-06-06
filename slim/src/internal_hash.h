@@ -68,7 +68,6 @@ HashValueType hashtbl_get_default(SimpleHashtbl *ht,
                                   HashValueType default_value);
 int hashtbl_contains(SimpleHashtbl *ht, HashKeyType key);
 void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType val);
-void hashtbl_delete(SimpleHashtbl *ht, HashKeyType key);
 void hashtbl_clear(SimpleHashtbl *ht);
 void hashtbl_destroy(SimpleHashtbl *ht);
 void hashtbl_free(SimpleHashtbl *ht);
