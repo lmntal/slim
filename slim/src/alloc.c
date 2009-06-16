@@ -66,7 +66,7 @@ LmnSAtom lmn_new_atom(LmnFunctor f)
   LMN_SATOM_SET_FUNCTOR(ap, f);
 
 #ifdef PROFILE
-  status_add_atom_space(LMN_ATOM_WORDS(arity) * sizeof(LmnWord));
+  status_add_atom_space(LMN_SATOM_WORDS(arity) * sizeof(LmnWord));
 #endif
 
   return ap;
@@ -80,7 +80,7 @@ void lmn_delete_atom(LmnSAtom ap)
     int arity;
 
     arity = LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(ap));
-    status_remove_atom_space(LMN_ATOM_WORDS(arity) * sizeof(LmnWord));
+    status_remove_atom_space(LMN_SATOM_WORDS(arity) * sizeof(LmnWord));
   }
 #endif
 }
