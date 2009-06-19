@@ -49,6 +49,13 @@ H = io.read_line('$port'(Port), RetPort) :-
 H=io.stdin :- '$callback'('port_stdin', P), '$port'(P, H).
 H=io.stdout :- '$callback'('port_stdout', P), '$port'(P, H).
 
+io.close_port('$port'(Port), RetPort) :-
+    '$callback'('cb_port_close', Port, P),
+    '$port'(P, RetPort).
+
+io.free_port('$port'(Port)) :-
+    '$callback'('cb_port_free', Port).
+
 io.print_char('$port'(Port), C, RetPort) :- unary(C) |
     '$callback'('port_putc', Port, C, P),
     '$port'(P, RetPort).
@@ -63,5 +70,21 @@ io.print_newline('$port'(Port), RetPort) :-
 
 io.print_line('$port'(Port), S, RetPort) :- string(S) |
     '$callback'('cb_print_line_with_port', Port, S, P),
+    '$port'(P, RetPort).
+
+io.print_mem('$port'(Port), {$p[], @p}, RetPort) :-  |
+    '$callback'('cb_dump_mem', Port, {$p[], @p}, P),
+    '$port'(P, RetPort).
+
+/* string port */
+
+H=io.open_output_string() :-
+    '$port'('$callback'('cb_make_output_string'), H).
+
+H=io.open_input_string(S) :- string(S) |
+    '$port'('$callback'('cb_make_input_string', S), H).
+
+H=io.output_string('$port'(Port), RetPort) :-
+    '$callback'('cb_port_output_string', Port, P, H),
     '$port'(P, RetPort).
 }.
