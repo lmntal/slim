@@ -189,13 +189,19 @@ void lmn_string_push_raw_c(LmnString s, int c)
 /* srcの文字列をdstの末尾に追加する。srcの内容は変わらない */
 void lmn_string_push(LmnString dst, const LmnString src)
 {
-  const unsigned long len = dst->len + src->len;
+  lmn_string_push_raw_s(dst, src->buf);
+}
+
+/* Cの文字列srcをdstの末尾に追加する。*/
+void lmn_string_push_raw_s(LmnString dst, const char *src)
+{
+  const unsigned long len = dst->len + strlen(src);
   if (len >= dst->buf_size) {
     /* バッファのサイズをどれくらい増加すべきか */
     string_expand_buf(dst, len + 1); 
   }
   dst->len = len;
-  strcat(dst->buf, src->buf);
+  strcat(dst->buf, src);
 }
 
 LmnString lmn_string_concat(LmnString s0, LmnString s1)
@@ -206,6 +212,17 @@ LmnString lmn_string_concat(LmnString s0, LmnString s1)
   lmn_string_push(ret_atom, s1);
 
   return ret_atom;
+}
+
+int lmn_string_get(LmnString s, int i)
+{
+  if (i < 0 || i >= LMN_STRING_LEN(s)) return EOF;
+  else return s->buf[i];
+}
+
+inline unsigned long lmn_string_len(LmnString s)
+{
+  return LMN_STRING_LEN(s);
 }
 
 /*----------------------------------------------------------------------

@@ -1104,8 +1104,11 @@ BOOL ground_atoms(Vector *srcvec,
               }
             }
             vec_push(stack, next_src);
-          } else {
+          } else if (lmn_data_atom_is_ground(next_src, next_attr)) {
             n++;
+          } else {
+            ok = FALSE;
+            break;
           }
         }
       }
