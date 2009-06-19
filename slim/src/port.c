@@ -287,8 +287,13 @@ LmnString port_read_line(LmnPort port)
 /* 文字はunaryアトムで表現している */
 int port_putc(LmnPort port, LmnSAtom unary_atom)
 {
-  const char *s = LMN_SATOM_STR(unary_atom);
-    
+  return port_put_raw_s(port, LMN_SATOM_STR(unary_atom));
+}
+
+/* Cの文字列をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
+   処理された場合は負でない数を返す*/
+int port_put_raw_c(LmnPort port, int c)
+{
   if (lmn_port_closed(port)) return EOF;
   if (LMN_PORT_DIR(port) != LMN_PORT_OUTPUT) return EOF;
 
@@ -296,17 +301,16 @@ int port_putc(LmnPort port, LmnSAtom unary_atom)
   case LMN_PORT_FILE:
     {
       FILE *f = (FILE *)LMN_PORT_DATA(port);
-      return fputs(s, f);
+      return fputc(c, f);
     }
     break;
   case LMN_PORT_OSTR:
-    lmn_string_push_raw_s((LmnString)LMN_PORT_DATA(port), s);
+    lmn_string_push_raw_c((LmnString)LMN_PORT_DATA(port), c);
     return 1;
   default:
     lmn_fatal("unexpected port type");
     break;
   }
-  return EOF;
 }
 
 /* Cの文字列をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
@@ -601,9 +605,11 @@ BOOL sp_cb_port_eq(void *_p1, void *_p2)
   return FALSE;
 }
 
-void sp_cb_port_dump(void *data, FILE *stream)
+void sp_cb_port_dump(void *data, LmnPort port)
 {
-  fprintf(stream, "<%s>", LMN_SYMBOL_STR(LMN_PORT(data)->name));
+  port_put_raw_s(port, "<");
+  port_put_raw_s(port, LMN_SYMBOL_STR(LMN_PORT(data)->name));
+  port_put_raw_s(port, ">");
 }
 
 BOOL sp_cp_port_is_ground(void *data)

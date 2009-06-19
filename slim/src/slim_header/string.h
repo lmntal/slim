@@ -40,6 +40,7 @@
 #ifndef LMN_STRING_H
 #define LMN_STRING_H
 
+#include "atom.h"
 typedef struct LmnString *LmnString;
 
 #define LMN_STRING(obj) ((struct LmnString *)(obj))

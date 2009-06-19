@@ -130,6 +130,22 @@ typedef struct LmnMembrane LmnMembrane;
 #endif
 
 /*----------------------------------------------------------------------
+ * Special Atom
+ */
+
+struct LmnSPAtomHeader {
+  LmnByte type;
+};
+
+typedef struct LmnSPAtomHeader LmnSpAtom;
+
+/* スペシャルアトムは構造体の最初の要素としてに必ずこのヘッダを含めなけ
+   ればならない */
+#define LMN_SP_ATOM_HEADER \
+  struct LmnSPAtomHeader hdr
+
+
+/*----------------------------------------------------------------------
  * Utility
  */
 

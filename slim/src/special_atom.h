@@ -51,19 +51,9 @@
 #define LMN_SPECIAL_ATOM_H
 
 #include "lmntal.h"
-
-struct LmnSPAtomHeader {
-  LmnByte type;
-};
-
-typedef struct LmnSPAtomHeader LmnSpAtom;
+#include "slim_header/port.h"
 
 #define LMN_SP_ATOM(atom) ((struct LmnSPAtomHeader *)(atom))
-
-/* スペシャルアトムは構造体の最初の要素としてに必ずこのヘッダを含めなけ
-   ればならない */
-#define LMN_SP_ATOM_HEADER \
-  struct LmnSPAtomHeader hdr
 
 /* アトムのタイプのID */
 #define LMN_SP_ATOM_TYPE(X) (LMN_SP_ATOM(X)->type)
@@ -72,7 +62,7 @@ typedef struct LmnSPAtomHeader LmnSpAtom;
 typedef void *(*f_copy)(void*);
 typedef BOOL (*f_eq)(void*, void*);
 typedef void (*f_free)(void*);
-typedef void (*f_dump)(void *, FILE *);
+typedef void (*f_dump)(void *, LmnPort);
 typedef BOOL (*f_is_ground)(void*);
 
 struct SpecialAtomCallback {
@@ -104,8 +94,8 @@ struct SpecialAtomCallback * sp_atom_get_callback(int id);
 
 #define SP_ATOM_FREE(ATOM) \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->free((void *)(ATOM)))
-#define SP_ATOM_DUMP(ATOM, STREAM) \
-  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->dump((void *)(ATOM), (STREAM)))
+#define SP_ATOM_DUMP(ATOM, PORT) \
+  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->dump((void *)(ATOM), (PORT)))
 #define SP_ATOM_IS_GROUND(ATOM) \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->is_ground((void *)(ATOM)))
 #define SP_ATOM_EQ(ATOM1, ATOM2)                                       \

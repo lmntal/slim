@@ -46,7 +46,6 @@
 #define LMN_PORT_H
 
 #include "../lmntal.h"
-#include "../special_atom.h"
 #include "../slim_header/string.h"
 
 struct LmnPort {
@@ -103,6 +102,7 @@ int port_get_raw_c(LmnPort port_atom);
 int port_unget_raw_c(LmnPort port_atom, int c);
 int port_putc(LmnPort port_atom, LmnSAtom unary_atom);
 int port_puts(LmnPort port_atom, LmnString str);
+int port_put_raw_c(LmnPort port_atom, int c);
 int port_put_raw_s(LmnPort port_atom, const char *str);
 
 #endif

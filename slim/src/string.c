@@ -44,6 +44,7 @@
 #include "functor.h"
 #include "special_atom.h"
 #include "slim_header/string.h"
+#include "util.h"
 #include <stdio.h>
 
 inline static void string_expand_buf(LmnString s, unsigned long size);
@@ -97,28 +98,6 @@ BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr)
 const char* lmn_string_c_str(LmnString atom)
 {
   return (const char *)LMN_STRING_BUF(atom);
-}
-
-char *int_to_str(int n)
-{
-  char *s;
-  int keta = 0;
-  
-  if (n == 0) keta = 1;
-  else {
-    int m = n;
-    keta = 0;
-    if (m < 0) { m = - m, keta = 1; }
-    while (m > 0) {
-      m /= 10;
-      keta++;
-    }
-  }
-
-  s = LMN_NALLOC(char, keta + 1);
-  sprintf(s, "%d", n);
-
-  return s;
 }
 
 LmnString lmn_string_make(const char *s)
@@ -367,20 +346,21 @@ void sp_cb_string_free(void *s)
   lmn_string_free(s);
 }
 
-void sp_cb_string_dump(void *s, FILE *stream)
+void sp_cb_string_dump(void *s, LmnPort port)
 {
   char *p = LMN_STRING_BUF(s);
 
-  fprintf(stream, "\"");
+  port_put_raw_c(port, '"');
   while (*p) {
     if (char_to_escape_char[(int)*p]) {
-      fprintf(stream, "\\%c", char_to_escape_char[(int)*p]);
+      port_put_raw_c(port, '\\');
+      port_put_raw_c(port, char_to_escape_char[(int)*p]);
     } else {
-      fprintf(stream, "%c", *p);
+      port_put_raw_c(port, *p);
     }
     p++;
   }
-  fprintf(stream, "\"");
+  port_put_raw_c(port, '"');
 }
 
 BOOL sp_cb_string_is_ground(void *data)

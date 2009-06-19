@@ -1,5 +1,5 @@
 /*
- * util.h - common utility functions and macros
+ * util.c - common utility functions and macros
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                          <lmntal@ueda.info.waseda.ac.jp>
@@ -37,11 +37,27 @@
  * $Id$
  */
 
-#ifndef LMN_UTIL_H
+#include "util.h"
+#include "lmntal.h"
 
-/* 配列の要素数 */
-#define ARY_SIZEOF(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
+char *int_to_str(int n)
+{
+  char *s;
+  int keta = 0;
+  
+  if (n == 0) keta = 1;
+  else {
+    int m = n;
+    keta = 0;
+    if (m < 0) { m = - m, keta = 1; }
+    while (m > 0) {
+      m /= 10;
+      keta++;
+    }
+  }
 
-char *int_to_str(int n);
+  s = LMN_NALLOC(char, keta + 1);
+  sprintf(s, "%d", n);
 
-#endif /* !LMN_UTIL_H */
+  return s;
+}

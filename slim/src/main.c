@@ -55,6 +55,7 @@
 #include "special_atom.h"
 #include "slim_header/string.h"
 #include "slim_header/port.h"
+#include "dumper.h"
 /* #include "ext.h" */
 
 #ifdef PROFILE
@@ -256,6 +257,7 @@ static void init_internal(void)
   ccallback_init();
   init_builtin_extensions();
 
+  dumper_init();
   string_init();
   port_init();
   
@@ -268,6 +270,7 @@ static void finalize(void)
 {
   port_finalize();
   string_finalize();
+  dumper_finalize();
   
   sym_tbl_destroy();
   lmn_functor_tbl_destroy();

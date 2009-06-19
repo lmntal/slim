@@ -40,9 +40,14 @@
 #define LMN_DUMPER_H
 
 #include "lmntal.h"
+#include "slim_header/port.h"
 
-LMN_EXTERN void lmn_dump_mem(LmnMembrane *mem);
+LMN_EXTERN void dumper_init(void);
+LMN_EXTERN void dumper_finalize(void);
+LMN_EXTERN void lmn_dump_mem_stdout(LmnMembrane *mem);
+LMN_EXTERN void lmn_dump_mem(LmnMembrane *mem, LmnPort port);
 LMN_EXTERN void lmn_dump_mem_dev(LmnMembrane *mem);
-LMN_EXTERN void lmn_dump_cell(LmnMembrane *mem);
-LMN_EXTERN void lmn_dump_dot(LmnMembrane *mem);
+LMN_EXTERN void lmn_dump_cell_stdout(LmnMembrane *mem);
+LMN_EXTERN void lmn_dump_cell(LmnMembrane *mem, LmnPort port);
+/* LMN_EXTERN void lmn_dump_dot(LmnMembrane *mem); */
 #endif /* LMN_DUMPER_H */

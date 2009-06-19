@@ -385,7 +385,7 @@ static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_da
     }
   }
   fprintf(stdout, "::");
-  lmn_dump_cell(tmp->mem); /* dump src state's global root membrane */
+  lmn_dump_cell_stdout(tmp->mem); /* dump src state's global root membrane */
   return ST_CONTINUE;
 }
 
@@ -570,7 +570,7 @@ void lmn_run(LmnRuleSet start_ruleset)
     }
   }
 
-  lmn_dump_cell(mem);
+  lmn_dump_cell_stdout(mem);
   /* 後始末 */
   memstack_destroy();
   lmn_mem_drop(mem);
@@ -1506,7 +1506,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
 
       if (lmn_env.trace) { /* tracer */
         fprintf(stdout, "%d: ", trace_num++);
-        lmn_dump_cell(global_root);
+        lmn_dump_cell_stdout(global_root);
       }
       return TRUE;
     case INSTR_STOP:
@@ -3140,7 +3140,7 @@ static inline void violate() {
     if (lmn_env.ltl_nd){
     	fprintf(stdout, "%lu\n", vec_get(&Stack, i));
     }else{
-    	lmn_dump_mem(((State *)vec_get(&Stack, i))->mem);
+    	lmn_dump_mem_stdout(((State *)vec_get(&Stack, i))->mem);
     }
   }
   fprintf(stdout, "\n");
@@ -3405,7 +3405,7 @@ void nd_exec() {
           State *dump_s = (State *)vec_get(&Stack, i);
           if (dump_s->flags) {
             fprintf(stdout, "%d(%10lu):\t", j++, (LmnWord)dump_s);
-            lmn_dump_cell(dump_s->mem);
+            lmn_dump_cell_stdout(dump_s->mem);
           }
         }
         fprintf(stdout, "\n");
@@ -3447,7 +3447,7 @@ void nd_dump_exec() {
 
       /* 状態を出力（状態ID:ハッシュ値:遷移先の数:状態） */
       fprintf(stdout, "%lu:%lu:%d:", (long unsigned int)s, s->hash, st_num(expanded));
-      lmn_dump_cell(s->mem);
+      lmn_dump_cell_stdout(s->mem);
 
       /* expandedの内容をState->successorに保存する */
       if (st_num(expanded) != 0) {
