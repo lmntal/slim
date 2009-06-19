@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include "syntax.h"
 #include "st.h"
+#include "symbol.h"
 
 %}
 
@@ -122,6 +123,7 @@
 %{
 #include "il_lexer.h"
 void ilerror (YYLTYPE*, yyscan_t, IL *, Rule *, char *);
+
 %}
 
 %% /* Grammar rules and actions follow.  */
@@ -262,6 +264,7 @@ functor:
   INSIDE_PROXY { $$ = functor_make(STX_IN_PROXY); }
 | OUTSIDE_PROXY { $$ = functor_make(STX_OUT_PROXY); }
 | SQUOTED_STRING UNDERBAR INT {$$ = symbol_functor_make($1, $3); }
+| DQUOTED_STRING UNDERBAR INT {$$ = string_functor_make($1); }
 | SQUOTED_STRING PERIOD SQUOTED_STRING UNDERBAR INT {
     $$ = module_symbol_functor_make($1, $3, $5);
   }

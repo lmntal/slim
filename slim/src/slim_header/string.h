@@ -47,9 +47,10 @@ typedef struct LmnString *LmnString;
 void string_init(void);
 void string_finalize(void);
 
-LmnString lmn_string_make(char *s);
+LmnString lmn_string_make(const char *s);
 LmnString lmn_string_make_empty(void);
 void lmn_string_free(LmnString s);
+BOOL lmn_string_eq(LmnString s1, LmnString s2);
 LmnString lmn_string_copy(LmnString s);
 BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr);
 const char *lmn_string_c_str(LmnString atom);

@@ -966,7 +966,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
     LmnAtom cpatom;
 
     if (LMN_ATTR_IS_DATA(l->pos)) {
-      cpatom = l->ap;
+      cpatom = lmn_copy_data_atom(l->ap, l->pos);
       lmn_mem_push_atom(mem, cpatom, l->pos);
     } else { /* symbol atom */
       /* コピー済みでなければコピーする */
@@ -1045,13 +1045,19 @@ BOOL ground_atoms(Vector *srcvec,
   n = 0;
   n_reach_root = 0;
   n_root_data = 0;
+  ok = TRUE;
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObj l = (LinkObj)vec_get(srcvec, i);
     if (LMN_ATTR_IS_DATA(l->pos)) {
-      n_reach_root++;
-      n++;
-      n_root_data++;
-      continue;
+      if (lmn_data_atom_is_ground(l->ap, l->pos)) {
+        n_reach_root++;
+        n++;
+        n_root_data++;
+        continue;
+      } else {
+        ok = FALSE;
+        break;
+      }
     }
 
     /* 自己ループしているリンクは無視する */
@@ -1066,49 +1072,50 @@ BOOL ground_atoms(Vector *srcvec,
     }
   }
 
-  if (avovec != NULL && vec_num(avovec) > 0) {
-    guard = hashtbl_make(16);
-    for (i = 0; i < vec_num(avovec); i++) {
-      LinkObj l = (LinkObj)vec_get(avovec, i);
-      if (!LMN_ATTR_IS_DATA(l->pos)) {
-        hashtbl_put(guard, l->ap, (HashValueType)l->pos);
-      }
-    }
-  }
-
-  ok = TRUE;
-  if (n_root_data == 0) {
-    while (vec_num(stack) > 0) {
-      LmnSAtom src_atom = LMN_SATOM(vec_pop(stack));
-      if (LMN_SATOM_IS_PROXY(src_atom)) { ok = FALSE; break; }
-      if (hashset_contains(visited, (HashKeyType)src_atom)) continue;
-      if (hashset_contains(root, (HashKeyType)src_atom)) {n_reach_root++; continue; }
-      hashset_add(visited, (HashKeyType)src_atom);
-      n++;
-      for (i = 0; i < LMN_SATOM_GET_ARITY(src_atom); i++) {
-        LmnAtom next_src = LMN_SATOM_GET_LINK(src_atom, i);
-        LmnLinkAttr next_attr = LMN_SATOM_GET_ATTR(src_atom, i);
-
-        if (!LMN_ATTR_IS_DATA(next_attr)) {
-          if (guard) {
-            int t = hashtbl_get_default(guard, (HashKeyType)next_src, -1);
-            if (t >= 0 && t == LMN_ATTR_GET_VALUE(next_attr)) {
-              ok = FALSE;
-              break;
-            }
-          }
-          vec_push(stack, next_src);
-        } else {
-          n++;
+  if (ok) {
+    if (avovec != NULL && vec_num(avovec) > 0) {
+      guard = hashtbl_make(16);
+      for (i = 0; i < vec_num(avovec); i++) {
+        LinkObj l = (LinkObj)vec_get(avovec, i);
+        if (!LMN_ATTR_IS_DATA(l->pos)) {
+          hashtbl_put(guard, l->ap, (HashValueType)l->pos);
         }
       }
     }
-  } else if (vec_num(stack) >= 2 && n_root_data > 0) {
-    ok = FALSE;
-  } else if (vec_num(stack) >= 3) {
-    ok = FALSE;
-  }
 
+    if (n_root_data == 0) {
+      while (vec_num(stack) > 0) {
+        LmnSAtom src_atom = LMN_SATOM(vec_pop(stack));
+        if (LMN_SATOM_IS_PROXY(src_atom)) { ok = FALSE; break; }
+        if (hashset_contains(visited, (HashKeyType)src_atom)) continue;
+        if (hashset_contains(root, (HashKeyType)src_atom)) {n_reach_root++; continue; }
+        hashset_add(visited, (HashKeyType)src_atom);
+        n++;
+        for (i = 0; i < LMN_SATOM_GET_ARITY(src_atom); i++) {
+          LmnAtom next_src = LMN_SATOM_GET_LINK(src_atom, i);
+          LmnLinkAttr next_attr = LMN_SATOM_GET_ATTR(src_atom, i);
+
+          if (!LMN_ATTR_IS_DATA(next_attr)) {
+            if (guard) {
+              int t = hashtbl_get_default(guard, (HashKeyType)next_src, -1);
+              if (t >= 0 && t == LMN_ATTR_GET_VALUE(next_attr)) {
+                ok = FALSE;
+                break;
+              }
+            }
+            vec_push(stack, next_src);
+          } else {
+            n++;
+          }
+        }
+      }
+    } else if (vec_num(stack) >= 2 && n_root_data > 0) {
+      ok = FALSE;
+    } else if (vec_num(stack) >= 3) {
+      ok = FALSE;
+    }
+  }
+  
   vec_free(stack);
   hashset_free(root);
   if (guard) hashtbl_free(guard);

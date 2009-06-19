@@ -97,6 +97,7 @@ void cb_input_line_with_oprt(LmnMembrane *mem,
     *p = '\0';
 
     a = lmn_string_make(s);
+    LMN_FREE(s);
     lmn_mem_push_atom(mem, LMN_ATOM(a), LMN_STRING_ATTR);
 
     lmn_mem_newlink(mem,

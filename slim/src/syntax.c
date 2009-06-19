@@ -96,6 +96,7 @@ struct Functor {
   union {
     int int_value;
     double float_value;
+    lmn_interned_str str;
     int functor_id;
   } v;
 };
@@ -171,6 +172,14 @@ Functor float_functor_make(double v)
   return f;
 }
 
+Functor string_functor_make(lmn_interned_str name)
+{
+  Functor f = functor_make(STRING_FUNC);
+
+  f->v.str = name;
+  return f;
+}
+
 Functor symbol_functor_make(lmn_interned_str name, int arity)
 {
   return module_symbol_functor_make(ANONYMOUS, name, arity);
@@ -199,6 +208,11 @@ int functor_get_int_value(Functor f)
 double functor_get_float_value(Functor f)
 {
   return f->v.float_value;
+}
+
+lmn_interned_str functor_get_string_value(Functor f)
+{
+  return f->v.str;
 }
 
 /* シンボルアトムのファンクタのIDを取得 */

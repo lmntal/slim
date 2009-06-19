@@ -62,6 +62,7 @@ void dump_module(Module m);
 void dump_il(IL il);
 void build_cmd(char *buf, char *file_name);
 FILE *compile(char *filename);
+char *scan_c_str(const char *s);
 
 /*----------------------------------------------------------------------
  * Dump(デバッグ用)。最初使用しただけなので dump_*は消してOK
@@ -251,6 +252,9 @@ void dump_il(IL il)
  *    * float functor
  *        BYTE(LMN_FLOAT_ATTR)
  *        double                : double nvalue
+ *    * string functor
+ *        BYTE(LMN_STRING_ATTR)
+ *        lmn_interned_str      : string id
  *    * symbol functor
  *        BYTE(0)
  *        LmnFunctor(functor id)
@@ -404,6 +408,14 @@ static void load_arg(InstrArg arg, Context c)
       case FLOAT_FUNC:
         WRITE_MOVE(LmnLinkAttr, LMN_DBL_ATTR, c);
         WRITE_MOVE(double, functor_get_float_value(functor), c);
+        break;
+      case STRING_FUNC:
+        {
+          char *s = scan_c_str(lmn_id_to_name(functor_get_string_value(functor)));
+          WRITE_MOVE(LmnLinkAttr, LMN_STRING_ATTR, c);
+          WRITE_MOVE(lmn_interned_str, lmn_intern(s), c);
+          LMN_FREE(s);
+        }
         break;
       case STX_IN_PROXY:
         WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
@@ -825,4 +837,45 @@ int il_parse_rule(FILE *in, Rule *rule)
   st_free_table(c.ruleset_id_tbl);
 
   return r;
+}
+
+/* エスケープキャラクタから文字への対応表 */
+static char escape_char_map[] =
+  {0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0, '"',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\\',   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\n',   0,
+   0,   0, '\r',  0,'\t',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
+  
+/* エスケープシーケンスを含むCの文字列を、エスケープキャラクタを実際の
+   文字に変換した、新しい文字列を返す */
+char *scan_c_str(const char *src)
+{
+  int len = strlen(src);
+  char *s = malloc(sizeof(char) * len + 1);
+  int i, j;
+
+  for (i = 0, j = 0; i < len; i++, j++) {
+    char c;
+    if (i < len - 1 && src[i] == '\\' && escape_char_map[(int)src[i+1]]) {
+      c = escape_char_map[(int)src[i+1]];
+      i++;
+    } else {
+      c = src[i];
+    }
+    s[j] = c;
+  }
+  s[j] = '\0';
+  return s;
 }

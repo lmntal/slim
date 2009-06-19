@@ -724,6 +724,13 @@ void run_nd(LmnRuleSet start_ruleset)
         (dest) = (LmnWord)x;                    \
         break;                                  \
      }                                          \
+     case LMN_STRING_ATTR:                      \
+     {                                          \
+        lmn_interned_str s;                     \
+        READ_VAL(lmn_interned_str, instr, s);   \
+        (dest) = (LmnWord)lmn_string_make(lmn_id_to_name(s));   \
+        break;                                  \
+     }                                          \
      default:                                   \
         lmn_fatal("Implementation error");      \
      }                                          \
@@ -759,6 +766,15 @@ void run_nd(LmnRuleSet start_ruleset)
               double t;                                \
               READ_VAL(double, instr, t);              \
               (result) = (*(double*)(x) == t);         \
+              break;                                   \
+            }                                          \
+          case LMN_STRING_ATTR:                        \
+            {                                          \
+              lmn_interned_str s;                      \
+              LmnString str1;                          \
+              READ_VAL(lmn_interned_str, instr, s);    \
+              str1 = lmn_string_make(lmn_id_to_name(s)); \
+              (result) = lmn_string_eq(str1, (LmnString)(x));   \
               break;                                   \
             }                                          \
           default:                                     \
@@ -1801,7 +1817,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
         vec_push(&stack2, (LmnWord)start2);
       }
       else { /* data atom は積まない */
-        if(!lmn_eq_func(start1->ap, start1->pos, start2->ap, start2->pos)) ret_flag = FALSE;
+        if(!lmn_data_atom_eq(start1->ap, start1->pos, start2->ap, start2->pos)) ret_flag = FALSE;
         LMN_FREE(start1);
         LMN_FREE(start2);
       }
@@ -1868,8 +1884,8 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
             vec_push(&stack2, (LmnWord)n2);
           }
           else { /* data atom は積まない */
-            if(!lmn_eq_func(LMN_SATOM_GET_LINK(l1->ap, i), LMN_SATOM_GET_ATTR(l1->ap, i),
-                  LMN_SATOM_GET_LINK(l2->ap, i), LMN_SATOM_GET_ATTR(l2->ap, i))) {
+            if(!lmn_data_atom_eq(LMN_SATOM_GET_LINK(l1->ap, i), LMN_SATOM_GET_ATTR(l1->ap, i),
+                                 LMN_SATOM_GET_LINK(l2->ap, i), LMN_SATOM_GET_ATTR(l2->ap, i))) {
               LMN_FREE(l1); LMN_FREE(l2);
               ret_flag = FALSE;
               goto EQGROUND_NEQGROUND_BREAK;
@@ -1970,7 +1986,11 @@ EQGROUND_NEQGROUND_BREAK:
       if (LMN_ATTR_IS_DATA(at[atomi])) {
         switch (at[atomi]) {
         case LMN_SP_ATOM_ATTR:
-          return FALSE;
+          /* スペシャルアトムはgroundの結果をunaryの結果とする */
+          if (!SP_ATOM_IS_GROUND(wt[atomi])) {
+            return FALSE;
+          }
+          break;
         default:
           break;
         }

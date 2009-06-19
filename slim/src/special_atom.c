@@ -60,6 +60,7 @@ void sp_atom_finalize()
 int lmn_sp_atom_register(const char *name,
                          f_copy f_copy,
                          f_free f_free,
+                         f_eq f_eq,
                          f_dump f_dump,
                          f_is_ground f_is_ground)
 {
@@ -67,6 +68,7 @@ int lmn_sp_atom_register(const char *name,
   c->name = lmn_intern(name),
   c->copy = f_copy;
   c->free = f_free;
+  c->eq = f_eq;
   c->dump = f_dump;
   c->is_ground = f_is_ground;
 

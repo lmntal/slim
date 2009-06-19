@@ -40,7 +40,7 @@
 #include "special_atom.h"
 #include "functor.h"
 #include "membrane.h"
-
+#include "error.h"
 LmnSAtom LMN_SATOM_GET_NEXT(const LmnSAtom ATOM)
 {
   LmnSAtom NEXT;
@@ -165,5 +165,35 @@ BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0, LmnAtom atom1, LmnLinkAttr at
     return *(double *)atom0 == *(double *)atom1;
   default: /* symbol atom */
     return LMN_SATOM_GET_FUNCTOR(atom0) == LMN_SATOM_GET_FUNCTOR(atom1);
+  }
+}
+
+inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr)
+{
+  switch (attr) {
+  case LMN_INT_ATTR:
+  case LMN_DBL_ATTR:
+    return TRUE;
+  case LMN_SP_ATOM_ATTR:
+    return SP_ATOM_IS_GROUND(atom);
+  default:
+    lmn_fatal("Implementation error");
+  }
+}
+
+inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
+                             LmnAtom atom2, LmnLinkAttr attr2)
+{
+  if (attr1 != attr2) return FALSE;
+  
+  switch (attr1) {
+  case LMN_INT_ATTR:
+    return atom1 == atom2;
+  case LMN_DBL_ATTR:
+    return *(double*)atom1 == *(double*)atom2;
+  case LMN_SP_ATOM_ATTR:
+    return SP_ATOM_EQ(atom1, atom2);
+  default:
+    lmn_fatal("Implementation error");
   }
 }

@@ -435,6 +435,12 @@ void sp_cb_port_free(void *data)
   }
 }
 
+/* てきとーに定義した */
+BOOL sp_cb_port_eq(void *_p1, void *_p2)
+{
+  return FALSE;
+}
+
 void sp_cb_port_dump(void *data, FILE *stream)
 {
   fprintf(stream, "<%s>", LMN_SYMBOL_STR(LMN_PORT(data)->name));
@@ -452,6 +458,7 @@ void port_init()
   port_atom_type = lmn_sp_atom_register("port",
                                         sp_cb_port_copy,
                                         sp_cb_port_free,
+                                        sp_cb_port_eq,
                                         sp_cb_port_dump,
                                         sp_cp_port_is_ground);
 

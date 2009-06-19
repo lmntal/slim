@@ -70,6 +70,7 @@ typedef struct LmnSPAtomHeader LmnSpAtom;
 #define LMN_SP_ATOM_SET_TYPE(obj, t) (LMN_SP_ATOM((obj))->type = (t))
 
 typedef void *(*f_copy)(void*);
+typedef BOOL (*f_eq)(void*, void*);
 typedef void (*f_free)(void*);
 typedef void (*f_dump)(void *, FILE *);
 typedef BOOL (*f_is_ground)(void*);
@@ -79,6 +80,7 @@ struct SpecialAtomCallback {
   f_copy copy;
   f_free free;
   f_dump dump;
+  f_eq eq;
   f_is_ground is_ground;
 };
 
@@ -89,6 +91,7 @@ void sp_atom_finalize(void);
 int lmn_sp_atom_register(const char *name,   /* move owner */
                          f_copy f_copy,
                          f_free f_free,
+                         f_eq f_eq,
                          f_dump f_dump,
                          f_is_ground f_is_ground);
 
@@ -105,6 +108,9 @@ struct SpecialAtomCallback * sp_atom_get_callback(int id);
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->dump((void *)(ATOM), (STREAM)))
 #define SP_ATOM_IS_GROUND(ATOM) \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->is_ground((void *)(ATOM)))
+#define SP_ATOM_EQ(ATOM1, ATOM2)                                       \
+  (LMN_SP_ATOM_TYPE(ATOM1) == LMN_SP_ATOM_TYPE(ATOM2) && \
+   sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM1))->eq((void *)(ATOM1), (void *)(ATOM2)))
 
 #endif /* LMN_SPECIALATOM_H */
 

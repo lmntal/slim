@@ -198,6 +198,9 @@ LMN_EXTERN LmnSAtom lmn_copy_satom_with_datom(LmnSAtom atom);
 LMN_EXTERN void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN void free_symbol_atom_with_buddy_data(LmnSAtom atom);
 LMN_EXTERN BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0, LmnAtom atom1, LmnLinkAttr attr1);
+LMN_EXTERN inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr);
+LMN_EXTERN inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
+                                        LmnAtom atom2, LmnLinkAttr attr2);
 
 /*----------------------------------------------------------------------
  * allocation

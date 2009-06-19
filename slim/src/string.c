@@ -65,7 +65,24 @@ struct LmnString {
                     (TO_ATOM), (TO_ATTR), LMN_ATTR_GET_VALUE((TO_ATTR)), \
                     LMN_ATOM((STR_ATOM)), LMN_SP_ATOM_ATTR, 0)
   
-
+/* 文字からエスケープキャラクタへの対応表 */
+static char char_to_escape_char[] =
+  {0,   0,   0,   0,   0,   0,   0,   0,   0, 't', 'n',   0,   0,  'r',   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0, '"',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\\',   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
 
 static int string_atom_type;
 
@@ -104,7 +121,7 @@ char *int_to_str(int n)
   return s;
 }
 
-LmnString lmn_string_make(char *s)
+LmnString lmn_string_make(const char *s)
 {
   struct LmnString *p = LMN_MALLOC(struct LmnString);
   LMN_SP_ATOM_SET_TYPE(p, string_atom_type);
@@ -112,7 +129,6 @@ LmnString lmn_string_make(char *s)
   p->buf_size = p->len + 1;
   p->buf = LMN_NALLOC(char, p->buf_size);
   strcpy(p->buf, s);
-  free(s);
   return p;
 }
 
@@ -145,6 +161,12 @@ void lmn_string_free(LmnString s)
 {
   LMN_FREE(s->buf);
   LMN_FREE(s);
+}
+
+BOOL lmn_string_eq(LmnString s1, LmnString s2)
+{
+  return LMN_STRING_LEN(s1) == LMN_STRING_LEN(s2) &&
+    !strcmp(LMN_STRING_BUF(s1), LMN_STRING_BUF(s2));
 }
 
 inline static void string_expand_buf(LmnString s, unsigned long size)
@@ -194,27 +216,30 @@ void cb_string_make(LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0,
                     LmnAtom a1, LmnLinkAttr t1)
 {
-  char *s;
+  const char *s;
+  BOOL to_be_freed = FALSE;
   
   if (LMN_ATTR_IS_DATA(t0)) {
     switch (t0) {
     case LMN_INT_ATTR:
       s = int_to_str(a0);
+      to_be_freed = TRUE;
       break;
     case LMN_DBL_ATTR:
 /*       s = double_to_str(a0); */
-      s = strdup("not implemented");
+      s = "not implemented";
       break;
     default:
       fprintf(stderr, "STRING.C: unexpected argument");
-      s = strdup("error");
+      s = "error";
       break;
     }
   } else { /* symbol atom */
-    s = strdup(LMN_SATOM_STR(a0));
+    s = LMN_SATOM_STR(a0);
   }
 
   LINK_STR(mem, a1, t1, lmn_string_make(s));
+  if (to_be_freed) LMN_FREE(s); 
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
@@ -280,6 +305,7 @@ void cb_string_substr(LmnMembrane *mem,
   }
 
   ret = lmn_string_make(s);
+  LMN_FREE(s);
   lmn_mem_push_atom(mem, LMN_ATOM(ret), LMN_SP_ATOM_ATTR);
   LINK_STR(mem, a3, t3, ret);
 
@@ -304,6 +330,7 @@ void cb_string_substr_right(LmnMembrane *mem,
   snprintf(s, len - begin + 1, "%s", src+begin);
 
   ret = lmn_string_make(s);
+  LMN_FREE(s);
   lmn_mem_push_atom(mem, LMN_ATOM(ret), LMN_SP_ATOM_ATTR);
   LINK_STR(mem, a2, t2, ret);
 
@@ -325,7 +352,18 @@ void sp_cb_string_free(void *s)
 
 void sp_cb_string_dump(void *s, FILE *stream)
 {
-  fprintf(stream, "\"%s\"", LMN_STRING_BUF(s));
+  char *p = LMN_STRING_BUF(s);
+
+  fprintf(stream, "\"");
+  while (*p) {
+    if (char_to_escape_char[(int)*p]) {
+      fprintf(stream, "\\%c", char_to_escape_char[(int)*p]);
+    } else {
+      fprintf(stream, "%c", *p);
+    }
+    p++;
+  }
+  fprintf(stream, "\"");
 }
 
 BOOL sp_cb_string_is_ground(void *data)
@@ -333,11 +371,17 @@ BOOL sp_cb_string_is_ground(void *data)
   return TRUE;
 }
 
+BOOL sp_cb_string_eq(void *s1, void *s2)
+{
+  return lmn_string_eq((LmnString)s1, (LmnString)s2);
+}
+
 void string_init()
 {
   string_atom_type = lmn_sp_atom_register("string",
                                           sp_cb_string_copy,
                                           sp_cb_string_free,
+                                          sp_cb_string_eq,
                                           sp_cb_string_dump,
                                           sp_cb_string_is_ground);
   lmn_register_c_fun("string_make", cb_string_make, 2);
