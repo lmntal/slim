@@ -345,9 +345,9 @@ AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f)
 }
 
 /* return NULL when atomlist don't exists. */
-LmnSAtom* atomlist_get_record(AtomListEntry *atomlist, int findatomid)
+LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid)
 {
-  return (LmnSAtom*)hashtbl_get_default(&atomlist->record, findatomid, 0);
+  return (LmnSAtom)hashtbl_get_default(&atomlist->record, findatomid, 0);
 }
 
 /* make atom which functor is f, and push atom into mem */
@@ -550,11 +550,9 @@ void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 
       if (LMN_IS_PROXY_FUNCTOR(f)) {
         LmnSAtom a;
-        for (a = atomlist_head(srcent);
-             a != lmn_atomlist_end(srcent);
-             a = LMN_SATOM_GET_NEXT(a)) {
+        EACH_ATOM(a, srcent, {
           LMN_PROXY_SET_MEM(a, destmem);
-        }
+        });
       }
 
       if (destent) { /* 同じファンクタのアトムリストがある場合 */
@@ -563,6 +561,7 @@ void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
       else {
         /* アトムリストを再利用してdestに移す */
         hashtbliter_entry(&iter)->data = 0; /* freeされないように NULL にする */
+        hashtbl_clear(&srcent->record);
         hashtbl_put(&destmem->atomset, (HashKeyType)f, (HashValueType)srcent);
       }
     }
@@ -612,9 +611,7 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
   if (ent) {
     LmnSAtom opxy;
 
-    for (opxy = atomlist_head(ent);
-        opxy != lmn_atomlist_end(ent);
-         opxy = LMN_SATOM_GET_NEXT(opxy)) {
+    EACH_ATOM(opxy, ent, {
       LmnSAtom a0 = LMN_SATOM(LMN_SATOM_GET_LINK(opxy, 0));
       if (LMN_PROXY_GET_MEM(a0)->parent != mem && /* opxyのリンク先が子膜でない場合 */
           !LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(opxy, 1))) {
@@ -638,7 +635,7 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
           }
         }
       }
-    }
+    });
   }
 
   for (i = 0; i < vec_num(&remove_list); i++) {
@@ -655,11 +652,9 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
   if (ent) {
     LmnSAtom a;
     /* clear mem attribute */
-    for (a = atomlist_head(ent);
-        a != lmn_atomlist_end(ent);
-         a = LMN_SATOM_GET_NEXT(a)) {
+    EACH_ATOM(a, ent, {
       vec_push(&change_list, (LmnWord)a);
-    }
+    });
   }
 
   { /* change to star proxy */
@@ -690,9 +685,7 @@ void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
   vec_init(&remove_list, 16);
   vec_init(&change_list, 16); /* inside proxy にするアトム */
 
-  for (star = atomlist_head(ent);
-      star != lmn_atomlist_end(ent);
-       star = LMN_SATOM_GET_NEXT(star)) {
+  EACH_ATOM(star, ent, {
     oldstar = LMN_SATOM(LMN_SATOM_GET_LINK(star, 0));
     if (LMN_PROXY_GET_MEM(oldstar) == child_mem) { /* (1) */
       if (!vec_contains(&remove_list, (LmnWord)star)) {
@@ -721,7 +714,7 @@ void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
         lmn_newlink_in_symbols(star, 0, outside, 0);
       }
     }
-  }
+  });
 
   {
     for (i = 0; i < vec_num(&change_list); i++) {
@@ -756,16 +749,14 @@ void lmn_mem_remove_temporary_proxies(LmnMembrane *mem)
 
   vec_init(&remove_list, 16);
 
-  for (star = atomlist_head(ent);
-      star != lmn_atomlist_end(ent);
-       star = LMN_SATOM_GET_NEXT(star)) {
+  EACH_ATOM(star, ent, {
     outside = LMN_SATOM(LMN_SATOM_GET_LINK(star, 0));
     if (!vec_contains(&remove_list, (LmnWord)star)) {
       lmn_mem_unify_atom_args(mem, star, 1, outside, 1);
       vec_push(&remove_list, (LmnWord)star);
       vec_push(&remove_list, (LmnWord)outside);
     }
-  }
+  });
   for (i = 0; i < remove_list.num; i++) {
     mem_remove_symbol_atom(mem, LMN_SATOM(vec_get(&remove_list, i)));
     lmn_delete_atom(LMN_SATOM(vec_get(&remove_list, i)));
@@ -794,9 +785,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
 
   vec_init(&remove_list, 16);
 
-  for (outside = atomlist_head(ent);
-      outside != lmn_atomlist_end(ent);
-       outside = LMN_SATOM_GET_NEXT(outside)) {
+  EACH_ATOM(outside, ent, {
     LmnSAtom a0;
     a0 = LMN_SATOM(LMN_SATOM_GET_LINK(outside, 0));
     if (LMN_PROXY_GET_MEM(a0) &&
@@ -816,7 +805,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
         }
       }
     }
-  }
+  });
 
   for (i = 0; i < remove_list.num; i++) {
     mem_remove_symbol_atom(mem, LMN_SATOM(vec_get(&remove_list, i)));
@@ -867,9 +856,7 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 
     LMN_ASSERT(ent);
 
-    for (srcatom = atomlist_head(ent);
-         srcatom != lmn_atomlist_end(ent);
-         srcatom = LMN_SATOM_GET_NEXT_RAW(srcatom)) {
+    EACH_ATOM(srcatom, ent, ({
       LmnFunctor f;
       LmnSAtom newatom;
       unsigned int start, end;
@@ -905,7 +892,7 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
           newlink_symbol_and_something(newatom, i, hashtbl_get(atoms, a), attr);
         }  
       }
-    }
+        }));
   }
   destmem->atom_num = srcmem->atom_num;
 
@@ -1268,14 +1255,12 @@ static Vector *lmn_mem_mk_matching_vec(LmnMembrane *mem) {
 
     /* 本膜直下のアトムの内、ファンクタがfであるもののアドレスをベクターatom_ptrs内に整理する。
      * 後でソートする関係で、最も多くのアトムのアドレスを管理する構造体(atomvec_data)内のアトム数を求めている。 */
-    for (a = atomlist_head(ent);
-         a != lmn_atomlist_end(ent);
-         a = LMN_SATOM_GET_NEXT(a)) {
+    EACH_ATOM(a, ent, {
       vec_push(((atomvec_data *)vec_peek(vec))->atom_ptrs, (LmnWord)a);
       if (vec_num(((atomvec_data *)vec_peek(vec))->atom_ptrs) > anum_max) {
         anum_max = vec_num(((atomvec_data *)vec_peek(vec))->atom_ptrs);
       }
-    }
+    });
     /* ファンクタfを持つアトムが本膜内に1つも存在しない場合、このファンクタのために割いたメモリーの領域を解放する。
      * これを怠るとメモリリークが起こるので注意!! */
     if (vec_peek(vec) && vec_is_empty(((atomvec_data *)vec_peek(vec))->atom_ptrs)) {
@@ -1525,6 +1510,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
     if (vec_num(atomvec_mem1) != vec_num(atomvec_mem2)) {
       goto STEP_1_FALSE;
     }
+
     /* Step3. 両膜内に含まれるアトムのファンクタおよび個数が互いに等しいことを確認 */
     if (!lmn_mem_is_the_same_matching_vec(atomvec_mem1, atomvec_mem2)) {
       goto STEP_1_FALSE;
@@ -1532,6 +1518,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
 
     /* Step3.5. 両膜内に含まれるルールセットが等しいことを確認 */
     if (vec_num(&mem1->rulesets) != vec_num(&mem2->rulesets)) goto STEP_1_FALSE;
+
     /* ルールセットはポインタの値で昇順にソートされている */
     for (i = 0; i < vec_num(&mem1->rulesets); i++) {
       if (vec_get(&mem1->rulesets, i) != vec_get(&mem2->rulesets, i)) goto STEP_1_FALSE;

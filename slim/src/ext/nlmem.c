@@ -27,10 +27,8 @@ void nlmem_copy(LmnMembrane *mem,
     if (ent) {
       LmnSAtom org_in, org_out, trg_in, trg_out;
       LmnSAtom tag_atom;
-      
-      for (org_in = atomlist_head(ent);
-           org_in != lmn_atomlist_end(ent);
-           org_in = LMN_SATOM_GET_NEXT(org_in)) {
+
+      EACH_ATOM(org_in, ent, {
         /* タグアトムを作り、リンクの接続を行う */
         trg_in = LMN_SATOM(hashtbl_get(atom_map, (HashKeyType)org_in));
         org_out = LMN_SATOM(LMN_SATOM_GET_LINK(org_in, 0));
@@ -40,7 +38,7 @@ void nlmem_copy(LmnMembrane *mem,
         lmn_relink_symbols(tag_atom, 2, org_out, 1);
         lmn_newlink_in_symbols(tag_atom, 0, org_out, 1);
         lmn_newlink_in_symbols(tag_atom, 1, trg_out, 1);
-      }
+      });
     }
 
     hashtbl_free(atom_map);
@@ -75,17 +73,15 @@ void nlmem_kill(LmnMembrane *mem,
       LmnSAtom in, out;
       LmnLinkAttr out_attr;
       LmnSAtom tag_atom;
-      
-      for (in = atomlist_head(ent);
-           in != lmn_atomlist_end(ent);
-           in = LMN_SATOM_GET_NEXT(in)) {
+
+      EACH_ATOM(in, ent, {
         if (in == org_in) continue;
         out = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
         out_attr = LMN_SATOM_GET_ATTR(in, 0);
         tag_atom = lmn_mem_newatom(mem, kill_tag_func);
         lmn_relink_symbols(tag_atom, 0, out, 1);
         lmn_mem_delete_atom(mem, LMN_ATOM(out), out_attr);
-      }
+      });
     }
   }
   

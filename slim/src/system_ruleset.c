@@ -56,9 +56,7 @@ static BOOL delete_redundant_outproxies(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (o0 = atomlist_head(ent);
-       o0 != lmn_atomlist_end(ent);
-       o0 = LMN_SATOM_GET_NEXT(o0)) {
+  EACH_ATOM(o0, ent, {
     LmnSAtom o1;
 
     if(LMN_SATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
@@ -83,7 +81,7 @@ static BOOL delete_redundant_outproxies(LmnMembrane *mem)
         return TRUE;
       }
     }
-  }
+  });
   return FALSE;
 }
 
@@ -97,9 +95,7 @@ static BOOL delete_redundant_inproxies(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (o0 = atomlist_head(ent);
-       o0 != lmn_atomlist_end(ent);
-       o0 = LMN_SATOM_GET_NEXT(o0)) {
+  EACH_ATOM(o0, ent, ({
     LmnSAtom i0, i1;
 
     if(LMN_SATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
@@ -119,7 +115,7 @@ static BOOL delete_redundant_inproxies(LmnMembrane *mem)
       REMOVE_FROM_ATOMLIST(i1);
       return TRUE;
     }
-  }
+  }));
   return FALSE;
 }
 
@@ -138,7 +134,7 @@ static BOOL exec_iadd_operation_on_body(LmnMembrane *mem)
   /* when '+'/3 operation atom does not exist, do nothing */
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent);  op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -159,7 +155,7 @@ static BOOL exec_iadd_operation_on_body(LmnMembrane *mem)
         return TRUE;
       }
     }
-  }
+  });
   return FALSE;
 }
 
@@ -172,7 +168,7 @@ static BOOL exec_isub_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent);  op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, ({
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -193,7 +189,7 @@ static BOOL exec_isub_operation_on_body(LmnMembrane *mem)
         return TRUE;
       }
     }
-  }
+  }));
   return FALSE;
 }
 
@@ -206,7 +202,7 @@ static BOOL exec_imul_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -227,7 +223,7 @@ static BOOL exec_imul_operation_on_body(LmnMembrane *mem)
         return TRUE;
       }
     }
-  }
+  });
   return FALSE;
 }
 
@@ -240,7 +236,7 @@ static BOOL exec_idiv_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -265,7 +261,7 @@ static BOOL exec_idiv_operation_on_body(LmnMembrane *mem)
         return TRUE;
       }
     }
-  }
+  });
   return FALSE;
 }
 
@@ -278,7 +274,7 @@ static BOOL exec_mod_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -303,7 +299,7 @@ static BOOL exec_mod_operation_on_body(LmnMembrane *mem)
         return TRUE;
       }
     }
-  }
+  });
   return FALSE;
 }
 
@@ -316,7 +312,7 @@ static BOOL exec_fadd_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -352,7 +348,7 @@ static BOOL exec_fadd_operation_on_body(LmnMembrane *mem)
       LMN_FREE(x0); LMN_FREE(x1); /* deallocation to prevent the memory leak error */
       return TRUE;
     }
-  }
+  });
   return FALSE;
 }
 
@@ -365,7 +361,7 @@ static BOOL exec_fsub_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -398,7 +394,7 @@ static BOOL exec_fsub_operation_on_body(LmnMembrane *mem)
       LMN_FREE(x0); LMN_FREE(x1);
       return TRUE;
     }
-  }
+  });
   return FALSE;
 }
 
@@ -411,7 +407,7 @@ static BOOL exec_fmul_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -444,7 +440,7 @@ static BOOL exec_fmul_operation_on_body(LmnMembrane *mem)
       LMN_FREE(x0); LMN_FREE(x1);
       return TRUE;
     }
-  }
+  });
   return FALSE;
 }
 
@@ -457,7 +453,7 @@ static BOOL exec_fdiv_operation_on_body(LmnMembrane *mem)
 
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     x0_attr = LMN_SATOM_GET_ATTR(op, 0);
     x1_attr = LMN_SATOM_GET_ATTR(op, 1);
     ret_attr = LMN_SATOM_GET_ATTR(op, 2);
@@ -496,7 +492,7 @@ static BOOL exec_fdiv_operation_on_body(LmnMembrane *mem)
       LMN_FREE(x0); LMN_FREE(x1);
       return TRUE;
     }
-  }
+  });
   return FALSE;
 }
 
@@ -509,7 +505,7 @@ static BOOL mem_eq(LmnMembrane *mem)
   BOOL result;
   if (!ent) return FALSE;
 
-  for (op = atomlist_head(ent); op != lmn_atomlist_end(ent); op = LMN_SATOM_GET_NEXT(op)) {
+  EACH_ATOM(op, ent, {
     out_attr0 = LMN_SATOM_GET_ATTR(op, 0);
     if (LMN_ATTR_IS_DATA(out_attr0)) return FALSE;
     out0 = LMN_SATOM(LMN_SATOM_GET_LINK(op, 0));
@@ -560,7 +556,7 @@ static BOOL mem_eq(LmnMembrane *mem)
 
     return TRUE;
 
-  }
+  });
   return FALSE;
 }
 

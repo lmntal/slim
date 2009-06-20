@@ -67,6 +67,18 @@ typedef struct AtomListEntry {
 
 #define atomlist_head(LIST)    (LMN_SATOM((LIST)->head))
 
+/* アトムリストENTのアトムに対してCODEを実行する。
+   それぞれのループでCODEを実行する前に、Vにアトムが割り当てられる。
+   履歴アトムがアトムリストにある場合は、読み飛ばす */
+#define EACH_ATOM(V, ENT, CODE)     \
+  for ((V) = atomlist_head((ENT)); \
+       (V) != lmn_atomlist_end((ENT)); \
+       (V) = LMN_SATOM_GET_NEXT_RAW((V))) { \
+    if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR) { \
+      (CODE);                                               \
+    } \
+  }
+
 #define LMN_MEM_NAME_ID(MP) ((MP)->name)
 #define LMN_MEM_NAME(MP) LMN_SYMBOL_STR(LMN_MEM_NAME_ID(MP))
 
@@ -84,7 +96,7 @@ LMN_EXTERN inline int lmn_mem_ruleset_num(LmnMembrane *mem);
 LMN_EXTERN inline LmnRuleSet  lmn_mem_get_ruleset(LmnMembrane *mem, int i);
 LMN_EXTERN BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
-LMN_EXTERN LmnSAtom* atomlist_get_record(AtomListEntry *atomlist, int findatomid);
+LMN_EXTERN LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid);
 LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN inline unsigned int lmn_mem_count_descendants(LmnMembrane *mem);

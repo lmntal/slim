@@ -1145,16 +1145,14 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
         atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt[memi], f);
         if (atomlist_ent) {
           at[atomi] = LMN_ATTR_MAKE_LINK(0);
-          for (atom = atomlist_head(atomlist_ent);
-               atom != lmn_atomlist_end(atomlist_ent);
-               atom = LMN_SATOM_GET_NEXT(atom)) {
+          EACH_ATOM(atom, atomlist_ent, {
             if(LMN_SATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
               continue;
             wt[atomi] = (LmnWord)atom;
             if (interpret(rule, instr)) {
               return TRUE;
             }
-          }
+          });
         }
        return FALSE;
       }

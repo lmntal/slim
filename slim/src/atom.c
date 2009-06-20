@@ -41,12 +41,6 @@
 #include "functor.h"
 #include "membrane.h"
 #include "error.h"
-LmnSAtom LMN_SATOM_GET_NEXT(const LmnSAtom ATOM)
-{
-  LmnSAtom NEXT;
-  while (NEXT = LMN_SATOM_GET_NEXT_RAW(ATOM), NEXT !=lmn_atomlist_end(NEXT) && LMN_SATOM_GET_FUNCTOR(NEXT) == LMN_RESUME_FUNCTOR) {printf("hoge\n");}
-  return NEXT;
-}
 
 /* アトムをコピーして返す。atomがシンボルアトムの場合、リンク先のデータ
    アトムもコピーされる */

@@ -557,9 +557,7 @@ static void lmn_dump_cell_internal(LmnPort port,
     LmnFunctor f = hashtbliter_entry(&iter)->key;
     LmnSAtom atom;
     LMN_ASSERT(ent);
-    for (atom = atomlist_head(ent);
-         atom != lmn_atomlist_end(ent);
-         atom = LMN_SATOM_GET_NEXT(atom)) {
+    EACH_ATOM(atom, ent, {
       int arity = LMN_SATOM_GET_ARITY(atom);
       if(LMN_SATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
         continue;
@@ -589,7 +587,7 @@ static void lmn_dump_cell_internal(LmnPort port,
       else {
         vec_push(&pred_atoms[P3], (LmnWord)atom);
       }
-    }
+    });
   }
 
   if (!lmn_env.show_proxy) {
@@ -779,11 +777,9 @@ void lmn_dump_mem_dev(LmnMembrane *mem)
     AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
     LmnSAtom atom;
 
-    for (atom = atomlist_head(ent);
-         atom != lmn_atomlist_end(ent);
-         atom = LMN_SATOM_GET_NEXT(atom)) {
+    EACH_ATOM(atom, ent, {
       dump_atom_dev(atom);
-    }
+    });
   }
 
   dump_ruleset_dev(&mem->rulesets);
@@ -815,10 +811,7 @@ static void dump_dot_cell(LmnMembrane *mem,
     AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
     LmnSAtom atom;
     LMN_ASSERT(ent);
-    for (atom = atomlist_head(ent);
-         atom != lmn_atomlist_end(ent);
-         atom = LMN_SATOM_GET_NEXT(atom)) {
-
+    EACH_ATOM(atom, ent, {
       fprintf(stdout, "%lu [label = \"", (LmnWord)atom);
       dump_atomname(lmn_stdout_port(), LMN_SATOM_GET_FUNCTOR(atom));
       fprintf(stdout, "\", shape = circle];\n");
@@ -830,7 +823,7 @@ static void dump_dot_cell(LmnMembrane *mem,
           fprintf(stdout, "\", shape = box];\n");
         }
       }
-    }
+    });
   }
 
   /* dump connections */
@@ -841,9 +834,7 @@ static void dump_dot_cell(LmnMembrane *mem,
 /*     LmnFunctor f = hashtbliter_entry(&iter)->key; */
     LmnSAtom atom;
     LMN_ASSERT(ent);
-    for (atom = atomlist_head(ent);
-         atom != lmn_atomlist_end(ent);
-         atom = LMN_SATOM_GET_NEXT(atom)) {
+    EACH_ATOM(atom, ent, {
       struct AtomRec *ar = (struct AtomRec *)hashtbl_get_default(ht, (HashKeyType)atom, 0);
       unsigned int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
 
@@ -871,7 +862,7 @@ static void dump_dot_cell(LmnMembrane *mem,
         }
         fprintf(stdout, "\n");
       }
-    }
+    });
   }
 
 

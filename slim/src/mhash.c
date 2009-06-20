@@ -137,22 +137,15 @@ static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
     LmnSAtom head = atomlist_head(ent);
 
     /* プロキシは除く */
-    if (head != lmn_atomlist_end(ent) &&
-        LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(head))) continue;
+    if (LMN_IS_PROXY_FUNCTOR(hashtbliter_entry(&iter)->key)) continue;
 
-    for (atom = head;
-         atom != lmn_atomlist_end(ent);
-         atom = LMN_SATOM_GET_NEXT(atom)) {
-/*       printf("membrane: atom0 %s\n", */
-/*              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom)))); */
+    EACH_ATOM(atom, ent, {
       if (!is_done_mol(ctx, atom)) {
-/*         printf("membrane: atom %s\n", */
-/*                lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom)))); */
         u = molecule(atom, mem, ctx);
         hash_sum += u;
         hash_mul *= u;
       }
-    }
+    });
   }
 
   /* membranes */
@@ -317,9 +310,7 @@ static hash_t memunit(LmnMembrane *mem,
 
     if (insides) {
       LmnSAtom in, out;
-      for (in = atomlist_head(insides);
-           in != lmn_atomlist_end(insides);
-           in = LMN_SATOM_GET_NEXT(in)) {
+      EACH_ATOM(in, insides, {
         if (in != from_in_proxy) {
           out = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
           hash += unit(LMN_SATOM_GET_LINK(out, 1),
@@ -329,7 +320,7 @@ static hash_t memunit(LmnMembrane *mem,
                        depth + 1)
             * mem_fromlink(mem, in, calc_mem, ctx);
         }
-      }
+      });
     }
 
     hash += membrane(mem, calc_mem, ctx); /* hiroto論文にないh(Mem)の加算処理 */

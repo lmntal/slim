@@ -116,7 +116,6 @@ typedef uint8_t LmnLinkAttr;
 /* 履歴アトムを読み飛ばずに、そのまま次を返す */
 #define LMN_SATOM_GET_NEXT_RAW(ATOM)           \
   (LMN_SATOM(*LMN_SATOM_PNEXT(LMN_SATOM(ATOM))))
-inline LmnSAtom LMN_SATOM_GET_NEXT(const LmnSAtom ATOM); 
 #define LMN_SATOM_SET_NEXT(ATOM,X)         \
   (*LMN_SATOM_PNEXT(LMN_SATOM(ATOM))=LMN_ATOM((X)))
 /* get/set ATOM functor */
