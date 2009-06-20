@@ -185,6 +185,8 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_DBL_ATTR        (LMN_ATTR_FLAG | 1)
 #define LMN_SP_ATOM_ATTR    (LMN_ATTR_FLAG | 2)
 #define LMN_STRING_ATTR     LMN_SP_ATOM_ATTR
+/* 定数文字列アトム */
+#define LMN_CONST_STR_ATTR  (LMN_ATTR_FLAG | 3)
 
 /*----------------------------------------------------------------------
  * functions
@@ -193,7 +195,7 @@ typedef uint8_t LmnLinkAttr;
 LMN_EXTERN inline LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN inline LmnSAtom lmn_copy_satom(LmnSAtom atom);
 LMN_EXTERN inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr);
-LMN_EXTERN LmnSAtom lmn_copy_satom_with_datom(LmnSAtom atom);
+LMN_EXTERN LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom);
 LMN_EXTERN void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN void free_symbol_atom_with_buddy_data(LmnSAtom atom);
 LMN_EXTERN BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0, LmnAtom atom1, LmnLinkAttr attr1);

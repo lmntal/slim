@@ -134,7 +134,6 @@ static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
        !hashtbliter_isend(&iter);
        hashtbliter_next(&iter)) {
     AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
-    LmnSAtom head = atomlist_head(ent);
 
     /* プロキシは除く */
     if (LMN_IS_PROXY_FUNCTOR(hashtbliter_entry(&iter)->key)) continue;

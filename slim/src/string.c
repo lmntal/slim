@@ -45,6 +45,7 @@
 #include "special_atom.h"
 #include "slim_header/string.h"
 #include "util.h"
+#include "dumper.h"
 #include <stdio.h>
 
 inline static void string_expand_buf(LmnString s, unsigned long size);
@@ -66,25 +67,6 @@ struct LmnString {
                     (TO_ATOM), (TO_ATTR), LMN_ATTR_GET_VALUE((TO_ATTR)), \
                     LMN_ATOM((STR_ATOM)), LMN_SP_ATOM_ATTR, 0)
   
-/* 文字からエスケープキャラクタへの対応表 */
-static char char_to_escape_char[] =
-  {0,   0,   0,   0,   0,   0,   0,   0,   0, 't', 'n',   0,   0,  'r',   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0, '"',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\\',   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
-
 static int string_atom_type;
 
 BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr)
@@ -348,18 +330,8 @@ void sp_cb_string_free(void *s)
 
 void sp_cb_string_dump(void *s, LmnPort port)
 {
-  char *p = LMN_STRING_BUF(s);
-
   port_put_raw_c(port, '"');
-  while (*p) {
-    if (char_to_escape_char[(int)*p]) {
-      port_put_raw_c(port, '\\');
-      port_put_raw_c(port, char_to_escape_char[(int)*p]);
-    } else {
-      port_put_raw_c(port, *p);
-    }
-    p++;
-  }
+  dump_escaped(port, LMN_STRING_BUF(s));
   port_put_raw_c(port, '"');
 }
 

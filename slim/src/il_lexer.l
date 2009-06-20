@@ -60,6 +60,28 @@ int get_instr_id(char *);
 int ilget_column  (yyscan_t yyscanner);
 void ilset_column (int  column_no , yyscan_t yyscanner);
 
+
+/* エスケープキャラクタから文字への対応表 */
+static char escape_char_map[] =
+  {0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0, '"',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\\',   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\n',   0,
+   0,   0, '\r',  0,'\t',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
+  
+char *unescape_c_str(const char *s);
+
 %}
 
 DIGIT    [0-9]
@@ -139,19 +161,26 @@ L{DIGIT}+ { yylval->_int = atoi(yytext+1); return LABEL; }
   return INST_NAME; }
 
  /* double quoted string */
-\"("\\\""|[^"])*\" { char *t = malloc(sizeof(char)*yyleng-1);
-                     strncpy(t, yytext+1, yyleng-2);
-                     t[yyleng-2] = '\0';
-          yylval->str = lmn_intern(t);
-          free(t);
-          return DQUOTED_STRING; }
+\"("\\\""|[^"])*\" {
+    char *t, *t2;
+    t = malloc(sizeof(char)*yyleng-1);
+    strncpy(t, yytext+1, yyleng-2);
+    t[yyleng-2] = '\0';
+    t2 = unescape_c_str(t);
+    yylval->str = lmn_intern(t2);
+    free(t);
+    free(t2);
+    return DQUOTED_STRING; }
 
  /* single quoted string */
-'[^']*' { char *t = malloc(sizeof(char)*yyleng-1);
-                    strncpy(t, yytext+1, yyleng-2);
-                    t[yyleng-2] = '\0';
-          yylval->id = lmn_intern(t);
+'[^']*' { char *t, *t2;
+          t = malloc(sizeof(char)*yyleng-1);
+          strncpy(t, yytext+1, yyleng-2);
+          t[yyleng-2] = '\0';
+          t2 = unescape_c_str(t);
+          yylval->id = lmn_intern(t2);
           free(t);
+          free(t2);
           return SQUOTED_STRING; }
 <<EOF>>              { yyterminate(); return _EOF; }
 
@@ -166,3 +195,26 @@ int get_instr_id(char *name)
   }
   return -1;
 }
+
+/* エスケープシーケンスを含むCの文字列を、エスケープキャラクタを実際の
+   文字に変換した、新しい文字列を返す */
+char *unescape_c_str(const char *src)
+{
+  int len = strlen(src);
+  char *s = malloc(sizeof(char) * len + 1);
+  int i, j;
+
+  for (i = 0, j = 0; i < len; i++, j++) {
+    char c;
+    if (i < len - 1 && src[i] == '\\' && escape_char_map[(int)src[i+1]]) {
+      c = escape_char_map[(int)src[i+1]];
+      i++;
+    } else {
+      c = src[i];
+    }
+    s[j] = c;
+  }
+  s[j] = '\0';
+  return s;
+}
+

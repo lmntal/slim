@@ -98,6 +98,9 @@ LMN_EXTERN BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
 LMN_EXTERN LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid);
 LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
+LMN_EXTERN inline void lmn_mem_remove_data_atom(LmnMembrane *mem,
+                                                LmnAtom atom,
+                                                LmnLinkAttr attr);
 LMN_EXTERN inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN inline unsigned int lmn_mem_count_descendants(LmnMembrane *mem);
 LMN_EXTERN inline unsigned int lmn_mem_count_children(LmnMembrane *mem);

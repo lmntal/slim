@@ -736,6 +736,8 @@ void run_nd(LmnRuleSet start_ruleset)
      }                                          \
    } while (0)
 
+/* attrに応じて、ファンクタを読み込み、destに定数アトムを生成する。
+   attrは適切な値に変更する場合がある */
 #define READ_CONST_DATA_ATOM(dest, attr)        \
   do {                                          \
     switch (attr) {                             \
@@ -746,6 +748,14 @@ void run_nd(LmnRuleSet start_ruleset)
        (dest) = (LmnWord)instr;                 \
        instr += sizeof(double);                 \
        break;                                   \
+     case LMN_STRING_ATTR:                      \
+     {                                          \
+        lmn_interned_str s;                     \
+        READ_VAL(lmn_interned_str, instr, s);   \
+        (dest) = s;                             \
+        (attr) = LMN_CONST_STR_ATTR;            \
+        break;                                  \
+     }                                          \
      default:                                   \
         lmn_fatal("Implementation error");      \
      }                                          \
@@ -1781,7 +1791,7 @@ static BOOL interpret(LmnRule rule, LmnRuleInstr instr)
 
       free_links(srcvec); 
       free_links(avovec);
-      
+
       if (!b) return FALSE;
       wt[funci] = (LmnWord)natoms;
       at[funci] = LMN_INT_ATTR;
@@ -2105,8 +2115,7 @@ EQGROUND_NEQGROUND_BREAK:
       LmnInstrVar memi;
       READ_VAL(LmnInstrVar, instr, memi);
 
-      if (((LmnMembrane *)wt[memi])->is_activated)
-      {
+      if (((LmnMembrane *)wt[memi])->is_activated) {
         return FALSE;
       }
 
@@ -2483,7 +2492,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnLinkAttr, instr, attr);
       at[atomi] = attr;
       if (LMN_ATTR_IS_DATA(attr)) {
-        READ_DATA_ATOM(wt[atomi], attr);
+        READ_CONST_DATA_ATOM(wt[atomi], at[atomi]);
       } else { /* symbol atom */
         LmnFunctor f;
 /*         fprintf(stderr, "symbol atom can't be created in GUARD\n"); */
@@ -2657,7 +2666,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnLinkAttr, instr, attr);
       at[funci] = attr;
       if(LMN_ATTR_IS_DATA(attr)) {
-        READ_CONST_DATA_ATOM(wt[funci], attr);
+        READ_CONST_DATA_ATOM(wt[funci], at[funci]);
       }
       else {
         LmnFunctor f;
@@ -2973,17 +2982,17 @@ EQGROUND_NEQGROUND_BREAK:
       if (LMN_ATTR_IS_DATA(at[atomi])) {
         switch (at[atomi]) {
         case LMN_INT_ATTR:
-          wt[reti] = lmn_functor_intern(ANONYMOUS, lmn_intern("int"), 1);
+          wt[reti] = lmn_intern("int");
           break;
         case LMN_DBL_ATTR:
-          wt[reti] = lmn_functor_intern(ANONYMOUS, lmn_intern("float"), 1);
+          wt[reti] = lmn_intern("float");
           break;
         case LMN_SP_ATOM_ATTR:
-          wt[reti] = lmn_functor_intern(ANONYMOUS, SP_ATOM_NAME(wt[atomi]), 1);
+          wt[reti] = SP_ATOM_NAME(wt[atomi]);
           break;
         }
       } else { /* symbol atom */
-        wt[reti] = lmn_functor_intern(ANONYMOUS, lmn_intern("symbol"), 1);
+        wt[reti] = lmn_intern("symbol");
       }
       break;
     }

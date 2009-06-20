@@ -92,6 +92,7 @@ LmnPort lmn_stdin_port(void);
 LmnPort lmn_stdout_port(void);
 LmnPort lmn_stderr_port(void);
 
+void lmn_port_free(LmnPort port);
 void lmn_port_close(LmnPort port);
 BOOL lmn_port_closed(LmnPort port_atom);
 BOOL lmn_port_error_occurred(LmnPort port_atom);

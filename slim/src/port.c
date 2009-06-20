@@ -58,6 +58,10 @@ static LmnFunctor eof_functor;
 #define LMN_PORT_DIR(obj) (LMN_PORT(obj)->direction)
 
 
+#define FILE_PORT_FP(obj) ((FILE *)LMN_PORT_DATA(obj))
+
+static LmnPort port_copy_sub(LmnPort port);
+
 /*
  * Internal Constructor.
  */
@@ -72,27 +76,53 @@ static LmnPort make_port(LmnPortDirection dir, LmnPortType type, const char *nam
   port->name = lmn_intern(name);
   port->data = NULL;
   port->owner = TRUE;
-
   return port;
 }
 
 void lmn_port_free(LmnPort port)
 {
+  if (port->owner) {
+    switch (LMN_PORT_TYPE(port)) {
+    case LMN_PORT_FILE:
+      break;
+    case LMN_PORT_OSTR:
+      lmn_string_free(LMN_PORT_DATA(port));
+      break;
+    case LMN_PORT_ISTR:
+      lmn_port_close(port);
+      break;
+    default:
+      lmn_fatal("not implemented");
+    }
+  }
+  LMN_FREE(port);
+}
+
+/* ownerが真の場合、生成したポートがオーナーとなる。ただし、portがオー
+   ナーでなかった場合はオーナーにはならない*/
+LmnPort lmn_port_copy(LmnPort port, BOOL owner)
+{
+  LmnPort new_port = port_copy_sub(port);
+  new_port->owner = owner && LMN_PORT_OWNER(port);
+  if (new_port->owner) port->owner = FALSE;
+  
   switch (LMN_PORT_TYPE(port)) {
   case LMN_PORT_FILE:
     break;
   case LMN_PORT_OSTR:
-    lmn_string_free(LMN_PORT_DATA(port));
     break;
   case LMN_PORT_ISTR:
-    lmn_port_close(port);
     break;
-  default:
-    lmn_fatal("not implemented");
-  }    
-  LMN_FREE(port);
+  }
+  return new_port;
 }
 
+static LmnPort port_copy_sub(LmnPort port)
+{
+  LmnPort new = LMN_MALLOC(struct LmnPort);
+  memcpy(new, port, sizeof(struct LmnPort));
+  return new;
+}
 
 static LmnPort lmn_stdin;
 static LmnPort lmn_stdout;
@@ -100,17 +130,17 @@ static LmnPort lmn_stderr;
 
 LmnPort lmn_stdin_port()
 {
-  return lmn_stdin;
+  return lmn_port_copy(lmn_stdin, FALSE);
 }
 
 LmnPort lmn_stdout_port()
 {
-  return lmn_stdout;
+  return lmn_port_copy(lmn_stdout, FALSE);
 }
 
 LmnPort lmn_stderr_port()
 {
-  return lmn_stderr;
+  return lmn_port_copy(lmn_stderr, FALSE);
 }
 
 LmnPort lmn_make_file_port(FILE *file,
@@ -153,7 +183,7 @@ LmnPort lmn_make_output_string_port()
 void lmn_port_close(LmnPort port)
 {
   if (lmn_port_closed(port)) return;
-  
+
   switch (LMN_PORT_TYPE(port)) {
   case LMN_PORT_FILE:
     fclose((FILE *)LMN_PORT_DATA(port));
@@ -375,6 +405,7 @@ void cb_port_free(LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0)
 {
   lmn_port_free(LMN_PORT(a0));
+  lmn_mem_remove_data_atom(mem, a0, t0);
 }
 
 /*
@@ -445,9 +476,9 @@ void cb_port_getc(LmnMembrane *mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
     
-lmn_mem_newlink(mem,
-                a1, t1, LMN_ATTR_GET_VALUE(t2),
-                a0, t0, 0);
+  lmn_mem_newlink(mem,
+                  a1, t1, LMN_ATTR_GET_VALUE(t1),
+                  a0, t0, 0);
   
 }
 
@@ -589,14 +620,12 @@ void cb_port_output_string(LmnMembrane *mem,
 
 void *sp_cb_port_copy(void *data)
 {
-  lmn_fatal("PORT.C: unexpected");
+  return lmn_port_copy(LMN_PORT(data), FALSE);
 }
 
 void sp_cb_port_free(void *data)
 {
-  if (LMN_PORT_OWNER(LMN_PORT(data))) {
-    lmn_port_free(LMN_PORT(data));
-  }
+  lmn_port_free(LMN_PORT(data));
 }
 
 /* てきとーに定義した */
@@ -628,17 +657,17 @@ void port_init()
                                         sp_cb_port_dump,
                                         sp_cp_port_is_ground);
 
-  lmn_stdin = lmn_make_file_port(stdin, "stdin", LMN_PORT_INPUT, FALSE);
-  lmn_stdout = lmn_make_file_port(stdout, "stdout", LMN_PORT_OUTPUT, FALSE);
-  lmn_stderr = lmn_make_file_port(stderr, "stderr", LMN_PORT_OUTPUT, FALSE);
+  lmn_stdin = lmn_make_file_port(stdin, "stdin", LMN_PORT_INPUT, TRUE);
+  lmn_stdout = lmn_make_file_port(stdout, "stdout", LMN_PORT_OUTPUT, TRUE);
+  lmn_stderr = lmn_make_file_port(stderr, "stderr", LMN_PORT_OUTPUT, TRUE);
 
-  lmn_register_c_fun("port_stdin", cb_stdin_port, 1);
-  lmn_register_c_fun("port_stdout", cb_stdout_port, 1);
-  lmn_register_c_fun("port_stderr", cb_stderr_port, 1);
-  lmn_register_c_fun("port_getc", cb_port_getc, 3);
-  lmn_register_c_fun("port_putc", cb_port_putc, 3);
-  lmn_register_c_fun("port_puts", cb_port_puts, 3);
-  lmn_register_c_fun("port_read_line", cb_port_read_line, 3);
+  lmn_register_c_fun("cb_port_stdin", cb_stdin_port, 1);
+  lmn_register_c_fun("cb_port_stdout", cb_stdout_port, 1);
+  lmn_register_c_fun("cb_port_stderr", cb_stderr_port, 1);
+  lmn_register_c_fun("cb_port_getc", cb_port_getc, 3);
+  lmn_register_c_fun("cb_port_putc", cb_port_putc, 3);
+  lmn_register_c_fun("cb_port_puts", cb_port_puts, 3);
+  lmn_register_c_fun("cb_port_read_line", cb_port_read_line, 3);
   lmn_register_c_fun("cb_make_output_string", cb_make_output_string, 1);
   lmn_register_c_fun("cb_make_input_string", cb_make_input_string, 2);
   lmn_register_c_fun("cb_port_output_string", cb_port_output_string, 3);

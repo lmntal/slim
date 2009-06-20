@@ -49,7 +49,6 @@
 
 
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
-static inline void lmn_mem_remove_data_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 inline static void mem_remove_symbol_atom(LmnMembrane *mem, LmnSAtom atom);
 BOOL ground_atoms(Vector *srcvec,
                   Vector *avovec,
@@ -214,7 +213,7 @@ static inline void mem_remove_symbol_atom(LmnMembrane *mem, LmnSAtom atom)
   }
 }
 
-static inline void lmn_mem_remove_data_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr)
+inline void lmn_mem_remove_data_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr)
 {
   mem->atom_num--;
 }
@@ -958,7 +957,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
     } else { /* symbol atom */
       /* コピー済みでなければコピーする */
       if ((cpatom = hashtbl_get_default(atommap, l->ap, 0)) == 0) {
-        cpatom = lmn_copy_atom(l->ap, l->pos);
+        cpatom = LMN_ATOM(lmn_copy_satom_with_data(LMN_SATOM(l->ap)));
         hashtbl_put(atommap, (HashKeyType)l->ap, (HashValueType)cpatom);
         mem_push_symbol_atom(mem, LMN_SATOM(cpatom));
       }
@@ -982,7 +981,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
           LMN_SATOM_GET_LINK(copied, i) != 0) {
         LmnAtom next_copied = hashtbl_get_default(atommap, next_src, 0);
         if (next_copied == 0) { /* next_srcは未訪問 */
-          next_copied = lmn_copy_atom(next_src, next_attr);
+          next_copied = LMN_ATOM(lmn_copy_satom_with_data(LMN_SATOM(next_src)));
           mem_push_symbol_atom(mem, LMN_SATOM(next_copied));
           hashtbl_put(atommap, (HashKeyType)next_src, (HashValueType)next_copied);
           vec_push(stack, next_src);

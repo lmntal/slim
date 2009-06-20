@@ -50,6 +50,7 @@
 #include "error.h"
 #include "ccallback.h"
 #include "task.h"
+#include "slim_header/port.h"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -63,6 +64,25 @@ struct AtomRec {
 struct DumpState {
   int link_num;
 };
+
+/* 文字からエスケープキャラクタへの対応表 */
+char char_to_escape_char[] =
+  {0,   0,   0,   0,   0,   0,   0,   0,   0, 't', 'n',   0,   0,  'r',   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0, '"',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\\',   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
 
 static BOOL dump_atom(LmnPort port,
                       LmnAtom atom,
@@ -152,7 +172,7 @@ static void dump_atomname(LmnPort port, LmnFunctor f)
       port_put_raw_s(port, atom_name);
     } else {
       port_put_raw_s(port, "'");
-      port_put_raw_s(port, atom_name);
+      dump_escaped(port, atom_name);
       port_put_raw_s(port, "'");
     }
   }
@@ -666,6 +686,7 @@ void lmn_dump_cell_stdout(LmnMembrane *mem)
   LmnPort port = lmn_stdout_port();
   lmn_dump_cell(mem, port);
   port_put_raw_s(port, "\n");
+  lmn_port_free(port);
 }
 
 void lmn_dump_cell(LmnMembrane *mem, LmnPort port)
@@ -691,6 +712,7 @@ void lmn_dump_mem_stdout(LmnMembrane *mem)
   LmnPort port = lmn_stdout_port();
   lmn_dump_mem(mem, port);
   port_put_raw_s(port, "\n");
+  lmn_port_free(port);
 }
 
 /* print membrane structure */
@@ -801,7 +823,7 @@ static void dump_dot_cell(LmnMembrane *mem,
 {
   unsigned int i;
   HashIterator iter;
-
+  LmnPort out = lmn_stdout_port();
   if (!mem) return;
 
   /* dump node labels */
@@ -813,13 +835,13 @@ static void dump_dot_cell(LmnMembrane *mem,
     LMN_ASSERT(ent);
     EACH_ATOM(atom, ent, {
       fprintf(stdout, "%lu [label = \"", (LmnWord)atom);
-      dump_atomname(lmn_stdout_port(), LMN_SATOM_GET_FUNCTOR(atom));
+      dump_atomname(out, LMN_SATOM_GET_FUNCTOR(atom));
       fprintf(stdout, "\", shape = circle];\n");
       for (i = 0; i < LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom)); i++) {
         LmnLinkAttr attr = LMN_SATOM_GET_ATTR(atom, i);
         if (LMN_ATTR_IS_DATA(attr)) {
           fprintf(stdout, "%lu [label = \"", (LmnWord)LMN_SATOM_PLINK(atom, i));
-          dump_data_atom(lmn_stdout_port(), LMN_SATOM_GET_LINK(atom, i), attr);
+          dump_data_atom(out, LMN_SATOM_GET_LINK(atom, i), attr);
           fprintf(stdout, "\", shape = box];\n");
         }
       }
@@ -941,4 +963,17 @@ void dumper_init()
 
 void dumper_finalize()
 {
+}
+
+void dump_escaped(LmnPort port, const char *s)
+{
+  while (*s) {
+    if (char_to_escape_char[(int)*s]) {
+      port_put_raw_c(port, '\\');
+      port_put_raw_c(port, char_to_escape_char[(int)*s]);
+    } else {
+      port_put_raw_c(port, *s);
+    }
+    s++;
+  }
 }

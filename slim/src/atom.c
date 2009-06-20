@@ -84,7 +84,7 @@ inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr)
   }
 }
 
-LmnSAtom lmn_copy_satom_with_datom(LmnSAtom atom)
+LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom)
 {
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
   LmnSAtom newatom = lmn_new_atom(f);
@@ -112,6 +112,8 @@ static inline void free_data_atom(LmnAtom atom, LmnLinkAttr attr)
     break;
   case LMN_DBL_ATTR:
     LMN_FREE((double*)atom);
+    break;
+  case LMN_CONST_STR_ATTR:
     break;
   case LMN_SP_ATOM_ATTR:
     SP_ATOM_FREE(atom);
