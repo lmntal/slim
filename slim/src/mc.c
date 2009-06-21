@@ -38,10 +38,14 @@
  */
 
 #include "mc.h"
+#include "nd.h"
+#include "por.h"
+#include "task.h"
 #include "mhash.h"
 #include "propositional_symbol.h"
 #include "ltl2ba_adapter.h"
 #include "error.h"
+#include "dumper.h"
 #include <string.h>
 
 enum MC_ERRORNO {
@@ -53,13 +57,58 @@ enum MC_ERRORNO {
   MC_PROP_LOAD_ERROR,
 };
 
-/* 状態IDが本来不必要な場合に使用する状態ID */
-#define DEFAULT_STATE_ID 0
+/* for LTL */
+static LmnMembrane *seed = NULL; /* root of second DFS */
+
+static int unset_snd_all(st_data_t _k, st_data_t s, st_data_t _a);
+static void violate(Vector *stack);
+static void exit_ltl_model_checking(void);
+static Vector *mc_expand(State *state, BYTE prop_state);
+static void do_mc(LmnMembrane *world_mem);
+static void ltl_search2(Vector *stack);
+static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a);
+
+void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
+{
+  RC_SET_MODE(cxt, REACT_ND);
+  struct NDReactCxtData *v = LMN_MALLOC(struct NDReactCxtData);
+  cxt->v = v;
+/*   v->initial_state = NULL; */
+/*   v->calculating_ample = FALSE; */
+  v->roots = vec_make(64);
+  v->rules = vec_make(64);
+  v->property_state = prop_state;
+/*   v->mc = FALSE; */
+}
+
+void nd_react_cxt_destroy(struct ReactCxt *cxt)
+{
+  vec_free(((struct NDReactCxtData *)(cxt->v))->roots);
+  vec_free(((struct NDReactCxtData *)(cxt->v))->rules);
+  LMN_FREE(cxt->v);
+}
+
+void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
+                               LmnMembrane *mem,
+                               LmnRule rule)
+{
+  vec_push(((struct NDReactCxtData *)cxt->v)->roots, (LmnWord)mem);
+  vec_push(((struct NDReactCxtData *)cxt->v)->rules, (LmnWord)rule);
+}
+
+/*----------------------------------------------------------------------
+ * State
+ */
+
+struct st_hash_type type_statehash = {
+  state_cmp,
+  state_hash
+};
 
 /**
  * コンストラクタ
  */
-State *state_make(LmnMembrane *mem, BYTE state_name, lmn_interned_str rule) {
+State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule) {
   State *new = LMN_MALLOC(State);
   new->mem = mem;
   new->state_name = state_name;
@@ -68,14 +117,14 @@ State *state_make(LmnMembrane *mem, BYTE state_name, lmn_interned_str rule) {
   memset(&new->successor, 0x00U, sizeof(Vector));
   /* ハッシュ値はあらかじめ計算しておく */
   new->hash = mhash(new->mem);
-  new->rule_name = rule;
+  new->rule = rule;
   return new;
 }
 
 /**
  * コンストラクタ
  */
-State *state_make_for_nd(LmnMembrane *mem, lmn_interned_str rule) {
+State *state_make_for_nd(LmnMembrane *mem, LmnRule rule) {
   return state_make(mem, DEFAULT_STATE_ID, rule);
 }
 
@@ -129,6 +178,21 @@ inline long state_hash(State *s) {
 BYTE state_property_state(State *state)
 {
   return state->state_name;
+}
+
+void state_set_property_state(State *state, BYTE prop_state)
+{
+  state->state_name = prop_state;
+}
+
+inline LmnMembrane *state_mem(State *state)
+{
+  return state->mem;
+}
+
+inline LmnRule state_rule(State *state)
+{
+  return state->rule;
 }
 
 /**
@@ -241,3 +305,319 @@ char *mc_error_msg(int error_id)
     return NULL;
   }
 }
+
+/*----------------------------------------------------------------------
+ * LTL Model Checking
+ */
+
+/* nested(またはdouble)DFSにおける1段階目の実行 */
+void ltl_search1(LmnMembrane *global_root, Vector *stack)
+{
+  unsigned int j, i, i_trans;
+  State *s = (State *)vec_peek(stack);
+  AutomataState property_automata_state = automata_get_state(mc_data.property_automata, s->state_name);
+  Vector *expanded_list = vec_make(32);
+  unsigned int succ_num = 0;
+
+/*   printf("ltl search1, state: %p\n", s); */
+  if (atmstate_is_end(property_automata_state)) {
+    printf("violate 0\n");
+    violate(stack);
+    unset_open((State *)vec_peek(stack));
+    unset_fst((State *)vec_pop(stack));
+    return;
+  }
+
+  /*
+   * 状態展開
+   */
+  for (i_trans = 0;
+       i_trans < atmstate_transition_num(property_automata_state);
+       i_trans++) {
+    AutomataTransition transition = atmstate_get_transition(property_automata_state,
+                                                            i_trans);
+
+    /**
+     * 性質ルールの適用
+     */
+    if (eval_formula(state_mem(s),
+                     mc_data.propsyms,
+                     transition_get_formula(transition))) {
+      /**
+       * global_rootに対してシステムルール適用検査を行う．
+       * システムルール適用はglobal_rootのコピーに対して行い，
+       * 展開された"次の状態"はすべてexpandedに放り込まれる．
+       * 状態展開にexpandが使用された場合は現状態から遷移可能なすべての状態が生成されるのに対し，
+       * ampleが使用された場合はPartial Order Reductionに基づき，本当に必要な次状態のみが生成される．
+       * なお，適用可能なシステムルールが存在しない場合は，何も処理を行わない特殊なシステムルール(stutter extension rule)
+       * が存在するものと考えてε遷移をさせ，受理頂点に次状態が存在しない場合でも受理サイクルを形成できるようにする．
+       * (c.f. "The Spin Model Checker" pp.130-131)
+       */
+      Vector *expanded = mc_expand(s, transition_next(transition));
+
+      if (vec_num(expanded) == 0) { /* stutter extension */
+        /* グローバルルート膜のコピー */
+        State *newstate;
+        SimpleHashtbl *copymap;
+        LmnMembrane *newmem = lmn_mem_copy(state_mem(s), &copymap);
+        hashtbl_free(copymap);
+
+        /* 性質ルールのみが適用されている。ルール名(遷移のラベル)はどうする？ */
+        newstate = state_make(newmem,
+                              transition_next(transition),
+                              dummy_rule());
+        vec_push(expanded, (LmnWord)newstate);
+      }
+
+      succ_num += vec_num(expanded);
+      vec_push(expanded_list, (LmnWord)expanded);
+    }
+  }
+
+  state_succ_init(s, succ_num);
+  for (i = 0; i < vec_num(expanded_list); i++) {
+    Vector *expanded = (Vector *)vec_get(expanded_list, i);
+      /* expandedの内容をState->succeccorに保存し、その後
+       * expanded内のエントリーをすべてfreeする */
+    for(j = 0; j < vec_num(expanded); j++) { /* for each (s,l,s') */
+      State *ss = (State *)vec_get(expanded, j);
+      State *succ = insert_state(States, ss);
+
+      if (succ == ss) {
+        /* push とset を１つの関数にする */
+        vec_push(stack, (vec_data_t)ss);
+        set_open(ss); /* 状態ssがスタック上に存在する旨のフラグを立てる(POR用) */
+        set_fst(ss);
+        ltl_search1(global_root, stack);
+      }
+      else { /* contains */
+        state_free(ss);
+      }
+      vec_push(&s->successor, (LmnWord)succ);
+    }
+    vec_free(expanded);
+  }
+
+  /* entering second DFS */
+  if (atmstate_is_accept(property_automata_state)) {
+    seed = s->mem;
+
+    set_snd(s);
+    vec_push(stack, (LmnWord)s);
+    ltl_search2(stack);
+    vec_pop(stack);
+
+    /* reset hashset */
+#ifdef DEBUG
+    fprintf(stdout, "reset States\n\n");
+#endif
+    /* EFFICIENCY: 状態全てに対して行っている。もっといい方法があるのでは？*/
+    st_foreach(States, unset_snd_all, 0);
+    seed = NULL;
+  }
+
+#ifdef DEBUG
+  fprintf(stdout, "+++++ return function: ltl_search1() +++++\n\n");
+#endif
+
+  unset_open((State *)vec_peek(stack)); /* スタックから取り除かれる旨のフラグをセット(POR用) */
+  unset_fst((State *)vec_pop(stack));
+  vec_free(expanded_list);
+}
+
+/*
+ *  2段階目のDFS
+ *  ltl_search1()で発見した受理頂点や、本メソッド実行中に新たに発見した受理頂点の集合へ
+ *  ある適当な受理頂点から到達可能であるかどうかを判定する。
+ *  すなわち受理頂点から受理頂点へ至る閉路(受理サイクル)の存在を確認することで、
+ *  与えられたLTL式を満足する実行経路が存在するか否かを判定する。
+ */
+static void ltl_search2(Vector *stack)
+{
+  unsigned int i, j;
+  State *s = (State *)vec_peek(stack);
+
+#ifdef DEBUG
+  fprintf(stdout, "\n----- enter function: ltl_search2() -----\n");
+  fprintf(stdout, "seed=");
+  lmn_dump_mem(seed);
+  fprintf(stdout, "\n");
+
+  fprintf(stdout, "stack:\n");
+  for(i = vec_num(stack) - 1; i >= 0; i--) {
+    State *tmp_s = (State *)vec_get(stack, i);
+    fprintf(stdout, "%d\n", is_snd(tmp_s));
+    fprintf(stdout, "%d: (fst=%d,snd=%d):\t", i, is_fst(tmp_s) ? 1 : 0, is_snd(tmp_s) ? 1 : 0);
+    lmn_dump_mem(tmp_s->mem);
+  }
+  fprintf(stdout, "\n");
+#endif
+
+  for(i = 0; i < vec_num(&s->successor); i++) { /* for each (s,l,s') */
+    State *ss = (State *)vec_get(&s->successor, i);
+    LmnMembrane *ssmem = ss->mem;
+
+    BOOL on_stack = FALSE;
+
+    for (j = 0; j < vec_num(stack); j++) {
+      State *tmp_state = (State *)vec_get(stack, j);
+      /* ここはpointer比較だけでいいかも */
+      if (/*lmn_mem_equals((HashKeyType)tmp_state->mem, (HashKeyType)ssmem)*/
+      tmp_state->mem==ssmem && is_fst(tmp_state)) {
+        on_stack = TRUE;
+      }
+    }
+    if (on_stack || lmn_mem_equals(seed, ssmem)) {
+      violate(stack);
+
+#ifdef DEBUG
+      fprintf(stdout, "+++++ return function: ltl_search2() +++++\n\n");
+#endif
+      return;
+    }
+
+    /* second DFS で未訪問→再帰 */
+    if(!is_snd(ss)) {
+      set_snd(ss);
+      ltl_search2(stack);
+    }
+  }
+}
+
+/**
+ * 2nd DFSの結果受理頂点が見つかった際に，States上のすべてのエントリー(=状態)に立っている
+ * 「2nd DFS実行時にチェックした受理頂点です」フラグを解除する．
+ * 高階関数st_foreach(c.f. st.c)に投げて使用．
+ */
+static int unset_snd_all(st_data_t _k, st_data_t s, st_data_t _a) {
+  unset_snd((State *)s);
+  return ST_CONTINUE;
+}
+
+static void violate(Vector *stack)
+{
+  unsigned int i;
+  fprintf(stdout, "cycle(or error) found:\n");
+  /* 結果出力 */
+  for (i = 0; i < vec_num(stack); i++) {
+    State *tmp_s = (State *)vec_get(stack, i);
+    if (is_snd(tmp_s)) printf("*");
+    else printf(" ");
+    printf("%d (%s): %s: ",
+           i,
+           lmn_id_to_name(lmn_rule_get_name(state_rule(tmp_s))),
+           automata_state_name(mc_data.property_automata,
+                               state_property_state(tmp_s)));
+    if (lmn_env.ltl_nd){
+    	fprintf(stdout, "%lu\n", vec_get(stack, i));
+    }else{
+    	lmn_dump_mem_stdout(((State *)vec_get(stack, i))->mem);
+    }
+  }
+  fprintf(stdout, "\n");
+
+  if (!lmn_env.ltl_all) { /* 一つエラーが見つかったら終了する */
+    exit_ltl_model_checking();
+  }
+}
+
+static void exit_ltl_model_checking()
+{
+/*   if (lmn_env.ltl_nd) { */
+/*     dump_state_transition_graph(init_state, stdout); */
+/*   } */
+  exit(0);
+}
+
+static Vector *mc_expand(State *state, BYTE prop_state)
+{
+  Vector *r;
+  unsigned long i, n;
+
+  if (lmn_env.por) r = ample(state);
+  else r = nd_expand(state);
+
+  n = vec_num(r);
+  /* 性質の状態を設定 */
+  for (i = 0; i < n; i++) {
+    state_set_property_state((State *)vec_get(r, i), prop_state);
+  }
+  return r;
+}
+
+/* モデル検査を行う。automataは性質のオートマトン、propsymsは性質のシンボル */
+void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
+{
+  LmnMembrane *mem;
+
+  States = st_init_table(&type_statehash);
+  init_por_vars();
+
+  mc_data.property_automata = automata;
+  mc_data.propsyms = propsyms;
+
+  /* -- ここから -- TODO シミュレーション実行と重複した準備処理 */
+
+  /* make global root membrane */
+  mem = lmn_mem_make();
+  { /* 初期構造の生成 */
+    struct ReactCxt init_rc;
+    stand_alone_react_cxt_init(&init_rc);
+    RC_SET_GROOT_MEM(&init_rc, mem);
+    lmn_react_ruleset(&init_rc, mem, start_ruleset);
+    stand_alone_react_cxt_destroy(&init_rc);
+  }
+  
+  activate_ancestors(mem);
+
+  do_mc(mem);
+
+#ifdef PROFILE
+  calc_hash_conflict(States);
+#endif
+
+  /* finalize */
+  state_space_free(States);
+  free_por_vars();
+}
+
+static void do_mc(LmnMembrane *world_mem)
+{
+  State *initial_state;
+  Vector *stack;
+
+  /* 初期プロセスから得られる初期状態を生成 */
+  initial_state = state_make(world_mem,
+                             automata_get_init_state(mc_data.property_automata),
+                             dummy_rule());
+  st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
+
+  stack = vec_make(1024);
+  vec_push(stack, (LmnWord)initial_state);
+
+
+  /* LTLモデル検査 */
+  set_fst(initial_state);
+  ltl_search1(world_mem, stack);
+  fprintf(stdout, "no cycles found\n");
+
+  if (lmn_env.ltl_nd){
+    dump_state_transition_graph(initial_state, stdout);
+    st_foreach(States, print_state_name, 0);
+  }
+  fprintf(stdout, "# of States = %d\n", st_num(States));
+
+  vec_free(stack);
+}
+
+/**
+ * --ltl_nd時に使用．状態の名前（accept_s0など）を表示．
+ * 高階関数st_foreach(c.f. st.c)に投げて使用．
+ */
+static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a)
+{
+  State *tmp = (State *)state_ptr;
+  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
+  return ST_CONTINUE;
+}
+

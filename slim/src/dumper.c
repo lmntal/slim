@@ -49,7 +49,7 @@
 #include "util.h"
 #include "error.h"
 #include "ccallback.h"
-#include "task.h"
+#include "slim_header/memstack.h"
 #include "slim_header/port.h"
 
 #define MAX_DEPTH 1000
@@ -934,7 +934,8 @@ void lmn_dump_dot(LmnMembrane *mem)
 }
 
 
-void cb_dump_mem(LmnMembrane *mem,
+void cb_dump_mem(ReactCxt rc,
+                 LmnMembrane *mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,
                  LmnAtom a2, LmnLinkAttr t2)
@@ -952,7 +953,9 @@ void cb_dump_mem(LmnMembrane *mem,
                   a0, t0, 0,
                   a2, t2, LMN_ATTR_GET_VALUE(t2));
 
-  lmn_memstack_delete(m);
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    lmn_memstack_delete(RC_MEMSTACK(rc), m);
+  }
   lmn_mem_delete_mem(m->parent, m);
 }
 

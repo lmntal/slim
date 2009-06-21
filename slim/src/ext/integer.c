@@ -18,7 +18,8 @@ void init_integer(void);
  *
  * Creates a (multi)set $g[$a], $g[$a+1], ..., $g[$b].
  */
-void integer_set(LmnMembrane *mem,
+void integer_set(ReactCxt rc,
+                 LmnMembrane *mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,
                  LmnAtom a2, LmnLinkAttr t2)
@@ -60,7 +61,8 @@ void integer_set(LmnMembrane *mem,
  * 
  * sets N as the seed for random numbers
  */
-void integer_srand(LmnMembrane *mem,
+void integer_srand(ReactCxt rc,
+                   LmnMembrane *mem,
                    LmnAtom a0, LmnLinkAttr t0)
 {
   srand(a0);
@@ -73,7 +75,8 @@ void integer_srand(LmnMembrane *mem,
  * 
  * H is bound to a random number between 0 and N-1.
  */
-void integer_rand(LmnMembrane *mem,
+void integer_rand(ReactCxt rc,
+                  LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1)
 {
@@ -92,7 +95,8 @@ void integer_rand(LmnMembrane *mem,
  * 
  * H is bound to a random number between 0 and N-1.
  */
-void integer_of_string(LmnMembrane *mem,
+void integer_of_string(ReactCxt rc,
+                       LmnMembrane *mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1)
 {

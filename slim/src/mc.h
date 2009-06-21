@@ -46,24 +46,10 @@
 #include "vector.h"
 #include "automata.h"
 #include "rule.h"
+#include "react_context.h"
+#include "nd.h"
 
-typedef struct State State;
 typedef struct StateTransition StateTransition;
-
-struct State {
-  LmnMembrane *mem;     /* グローバルルート膜 */
-  unsigned long hash; /* mhash(mem) */
-  BOOL flags;           /* nested DFSの際にDFS{1,2}いずれの走査を受けたかや，successorが展開済であるか否かを管理するフラグ */
-  Vector successor;     /* 通常時: Vector of States，ample(s)計算中: Vector of StateTransitions */
-  lmn_interned_str rule_name;
-  BYTE state_name;
-};
-
-/* 訪問済みノードが格納される */
-st_table *States;
-
-/* 展開されたシステムの状態が格納される */
-st_table *expanded;
 
 struct StateTransition {
   State *succ_state;     /* 遷移先状態 */
@@ -89,33 +75,51 @@ struct StateTransition {
  * calculating_ample: ample(s)計算中フラグ
  *   PORが有効かつample/1(c.f. por.c)実行中のみTRUE
  */
-typedef struct McFlags {
-  BOOL nd_exec;
-  BOOL system_rule_committed;
-  BOOL system_rule_proceeded;
-  BOOL property_rule;
-  BYTE property_state;
-  State *initial_state;
-  BOOL calculating_ample;
-} McFlags;
 
-typedef struct MCData { /* TODO: 構造体の名前 */
+struct NDReactCxtData {
+/*   State *initial_state; */
+/*   BOOL calculating_ample; */
+/*   unsigned long next_strans_id; */
+
+  Vector *roots;
+  Vector *rules;
+  BYTE property_state;
+
+/*   BOOL mc; */
+
+};
+
+#define RC_EXPANDED(rc) (((struct NDReactCxtData *)(rc)->v)->roots)
+#define RC_EXPANDED_RULES(rc) (((struct NDReactCxtData *)(rc)->v)->rules)
+#define RC_PROPERTY_STATE(rc) (((struct NDReactCxtData *)(rc)->v)->property_state)
+
+struct MCConst {
   Automata property_automata;
   Vector *propsyms;
-  unsigned long next_strans_id;
-  StateTransition *prev_strans;
-} MCData;
+} mc_data;
 
-McFlags mc_flags;
-MCData mc_data;
 
-LMN_EXTERN State *state_make(LmnMembrane *mem, BYTE state_name, lmn_interned_str rule);
-State *state_make_for_nd(LmnMembrane *mem, lmn_interned_str rule);
+void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state_id);
+void nd_react_cxt_destroy(struct ReactCxt *cxt);
+
+void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
+                               LmnMembrane *mem,
+                               LmnRule rule);
+
+
+/* 状態IDが本来不必要な場合に使用する状態ID */
+#define DEFAULT_STATE_ID 0
+
+LMN_EXTERN State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule);
+State *state_make_for_nd(LmnMembrane *mem, LmnRule rule);
 LMN_EXTERN State *state_copy(State *s);
 LMN_EXTERN inline void state_succ_init(State *s, int init_size);
 LMN_EXTERN void state_free(State *s);
 LMN_EXTERN void strans_free(StateTransition *strans);
 BYTE state_property_state(State *state);
+void state_set_property_state(State *state, BYTE prop_state);
+LMN_EXTERN inline LmnMembrane *state_mem(State *state);
+LMN_EXTERN inline LmnRule state_rule(State *state);
 LMN_EXTERN StateTransition *strans_make(State *s, unsigned long id, LmnRule rule);
 
 /* flag of the first DFS (nested DFS, on-stack state) */
@@ -149,12 +153,15 @@ LMN_EXTERN StateTransition *strans_make(State *s, unsigned long id, LmnRule rule
 #define set_ample(S)                   ((S)->flags |= REPRESENTATIVE_MASK)
 #define is_ample(S)                    ((S)->flags & REPRESENTATIVE_MASK)
 
-LMN_EXTERN long state_hash(State *s);
-LMN_EXTERN int state_cmp(HashKeyType s1, HashKeyType s2);
+LMN_EXTERN inline long state_hash(State *s);
+LMN_EXTERN inline int state_cmp(HashKeyType s1, HashKeyType s2);
+
+extern struct st_hash_type type_statehash;
 
 LMN_EXTERN inline void activate_ancestors(LmnMembrane *mem);
 
 int mc_load_property(Automata *a, PVector *prop_defs);
 LMN_EXTERN void mc_explain_error(int error_id);
 LMN_EXTERN char *mc_error_msg(int error_id);
+
 #endif

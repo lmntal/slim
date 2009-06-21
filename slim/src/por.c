@@ -44,12 +44,35 @@
 #include "st.h"
 #include "vector.h"
 #include "rule.h"
+#include "error.h"
 
+
+unsigned long next_strans_id;
 
 LMN_EXTERN BOOL independency_check(State *s);
 LMN_EXTERN BOOL is_independent_of_ample(StateTransition *strans);
 /* LMN_EXTERN int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a); */
 /* LMN_EXTERN void dump__ample_candidate(void); */
+
+/**
+ * PORの変数やデータ構造の初期化を行う
+ */
+void init_por_vars() {
+  States_POR = st_init_table(&type_statehash);
+  strans_independency = st_init_numtable();
+  succ_strans = vec_make(5);
+  ample_candidate = vec_make(1);
+  Stack_POR = vec_make(256);
+  next_strans_id = 0U;
+}
+
+void free_por_vars() {
+  st_free_table(States_POR);
+  st_free_table(strans_independency);
+  vec_free(succ_strans);
+  vec_free(ample_candidate);
+  vec_free(Stack_POR);
+}
 
 /**
  * ample(s)が満たすべき必要条件の1つであるC1の検査を行う．
@@ -232,8 +255,7 @@ static BOOL push_independent_strans_to_table(unsigned long i1, unsigned long i2)
  *
  * 本関数はst_foreach内から呼び出す形で使用し，実行後にテーブルexpandedは空になる．
  */
-static int expand_States_POR(st_data_t _k, st_data_t next_state, st_data_t _arg) {
-  State *s = (State *)next_state;
+static void expand_States_POR(State *s) {
   st_data_t s_on_table;
   unsigned int i;
 
@@ -247,21 +269,34 @@ static int expand_States_POR(st_data_t _k, st_data_t next_state, st_data_t _arg)
     }
     state_free(s);
   }
-  return ST_DELETE;
 }
 
-static void gen_successors(State *s) {
-  vec_clear(succ_strans);
+static void gen_successors(State *s)
+{
+  Vector *expanded;
+  Vector *succ_strans;
+  unsigned long expanded_num, i;
+  
+  succ_strans = vec_make(32);
 
-  expand(s->mem);
-  if (vec_num(succ_strans) != 0) {
-    st_foreach(expanded, expand_States_POR, 0);
-
-    state_succ_init(s, vec_num(succ_strans));
-    while (!vec_is_empty(succ_strans)) {
-      vec_push(&s->successor, vec_pop(succ_strans));
-    }
+  expanded = nd_expand(s);
+  expanded_num = vec_num(expanded);
+  for (i = 0; i < expanded_num; i++) {
+    vec_push(succ_strans,
+             (LmnWord)strans_make((State *)vec_get(expanded, i),
+                                  next_strans_id++,
+                                  state_rule((State *)vec_get(expanded, i))));
   }
+
+  for (i = 0; i < expanded_num; i++) {
+    expand_States_POR((State *)vec_get(expanded, i));
+  }
+  
+  state_succ_init(s, vec_num(succ_strans));
+  while (!vec_is_empty(succ_strans)) {
+    vec_push(&s->successor, vec_pop(succ_strans));
+  }
+
   set_expanded(s); /* 展開済フラグを立てる */
 }
 
@@ -289,7 +324,7 @@ static void gen_successors(State *s) {
 BOOL independency_check(State *s) {
 
   unsigned int i, j;
-
+  
   /* >>>>>>>>>>>>>>>>>>>> Step 1. <<<<<<<<<<<<<<<<<<<< */
 
   /* 状態sの次の状態がまだ完全に展開されていない場合はen(s)を求める */
@@ -498,10 +533,16 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_data_t 
   return ST_CONTINUE;
 }
 
-static void push_ample_to_expanded(State *s) {
+static Vector *push_ample_to_expanded(State *s) {
   unsigned int i;
   State *ss;
   StateTransition *strans;
+  Vector *expanded;
+  st_table_t tbl;
+
+  tbl = st_init_table(&type_statehash);
+
+  expanded = vec_make(32);
 
   LMN_ASSERT(st_num(expanded) == 0);
   for (i = 0; i < vec_num(&s->successor); ++i) {
@@ -512,12 +553,15 @@ static void push_ample_to_expanded(State *s) {
        * その際，ssがテーブル内で重複しないよう注意し，放り込むことができた場合は
        * ssがample(s)の要素である旨のフラグを立てておく． */
       st_table_t t;
-      if (!st_lookup(expanded, (st_data_t)ss, (st_data_t *)&t)) {
-        st_add_direct(expanded, (st_data_t)ss, (st_data_t)ss);
+      if (!st_lookup(tbl, (st_data_t)ss, (st_data_t *)&t)) {
+        st_add_direct(tbl, (st_data_t)ss, (st_data_t)ss);
+        vec_push(expanded, (LmnWord)ss);
         set_ample(ss);
       }
     }
   }
+  st_free_table(tbl);
+  return expanded;
 }
 
 /**
@@ -526,25 +570,30 @@ static void push_ample_to_expanded(State *s) {
  * expanded内にpushする際，ample(s)内に含まれることを表すフラグを立てる．
  * ただし，sが未展開の場合やsから直接遷移可能な状態が存在しない場合は偽を返す．
  */
-static BOOL push_succstates_to_expanded(State *s) {
-
-  LMN_ASSERT(st_num(expanded) == 0);
+static Vector *push_succstates_to_expanded(State *s)
+{
 
   if (is_expanded(s) && !vec_is_empty(&s->successor)) {
+    Vector *expanded;
+    st_table_t tbl = st_init_table(&type_statehash);
+    
+    expanded = vec_make(32);
     unsigned int i;
     for (i = 0; i < vec_num(&s->successor); ++i) {
       StateTransition *s2ss = (StateTransition *)vec_get(&s->successor, i);
       State *ss = s2ss->succ_state;
 
       st_data_t t;
-      if (!st_lookup(expanded, (st_data_t)ss, (st_data_t *)&t)) {
-        st_add_direct(expanded, (st_data_t)ss, (st_data_t)ss);
+      if (!st_lookup(tbl, (st_data_t)ss, (st_data_t *)&t)) {
+        st_add_direct(tbl, (st_data_t)ss, (st_data_t)ss);
+        vec_push(expanded, (LmnWord)ss);
         set_ample(ss);
       }
     }
-    return TRUE;
+    st_free_table(tbl);
+    return expanded;
   } else {
-    return FALSE;
+    return NULL;
   }
 }
 
@@ -601,7 +650,7 @@ static int destroy_tmp_state_graph(st_data_t _k, st_data_t state, st_data_t _a) 
 
 static void finalize_ample() {
   /* StateTransitionのIDを0に戻す */
-  mc_data.next_strans_id = 0U;
+  next_strans_id = 0U;
 
   /* 独立性情報テーブルの解放 */
   st_foreach(strans_independency, independency_vec_free, 0);
@@ -609,69 +658,61 @@ static void finalize_ample() {
   /* States_POR上の状態の内，ample(s)内の要素でないものをすべて解放する．
    * また，StateTransitionは実際に構築するstate graph内では不要なため，ここですべて解放する */
   st_foreach(States_POR, destroy_tmp_state_graph, 0);
-
-  /* ample(s)の計算終了フラグ */
-  mc_flags.calculating_ample = FALSE;
 }
 
-BOOL ample(State *s) {
-
+Vector *ample(State *s) {
   /* POR無効の場合は状態展開にexpand/1を用い，full-stateグラフを構築する */
-  if (!lmn_env.por)
-  {
-    return expand(s->mem);
-  }
-  /* POR有効の場合 */
-  else
-  {
-    /* init */
-    mc_flags.calculating_ample = TRUE;
-    st_add_direct(States_POR, (st_data_t)s, (st_data_t)s);
-    set_ample(s); /* s(展開元)が簡約グラフ内に含まれる旨のフラグを立てる */
-    vec_clear(ample_candidate);
+  Vector *expanded;
+    
+  /* init */
+  st_add_direct(States_POR, (st_data_t)s, (st_data_t)s);
+  set_ample(s); /* s(展開元)が簡約グラフ内に含まれる旨のフラグを立てる */
+  vec_clear(ample_candidate);
 
-    /* check C0: |en(s)|<=1 ならば，C0によりただちに ample(s)=en(s) と決定される */
-    if (!independency_check(s)) {
-      push_succstates_to_expanded(s);
-      finalize_ample();
-      if (st_num(expanded) == 1) {
-        return TRUE;
+  /* check C0: |en(s)|<=1 ならば，C0によりただちに ample(s)=en(s) と決定される */
+  if (!independency_check(s)) {
+    expanded = push_succstates_to_expanded(s);
+    if (expanded == NULL) { lmn_fatal("unexpected"); }
+    finalize_ample();
+    if (expanded != NULL) {
+      return expanded;
+    } else {
+      /* |en(s)|=0 i.e. 遷移先が存在しない場合は偽を返す */
+      expanded = vec_make(1);
+      return expanded;
+    }
+  }
+
+  /* C1から導かれるLemmaを満たすような，sで可能な遷移の集合を求める．
+   * この処理により，sにおいてC1を満足するためには絶対にample(s)内に含めておかなくてはならない
+   * 遷移の集合がample_candidate内にPUSHされる */
+  st_foreach(strans_independency, build_ample_satisfying_lemma, (st_data_t)s);
+
+  /* ここでample_candidateが空の場合は，sで可能なすべての遷移が互いに独立であることになるので，
+   * その中でC2，C3を共に満足する1本をample_candidateの要素とする */
+  if (vec_is_empty(ample_candidate)) {
+    unsigned int i;
+    BOOL found_proper_candidate;
+
+    found_proper_candidate = FALSE;
+    for (i = 0; i < vec_num(&s->successor); ++i) {
+      vec_push(ample_candidate, (LmnWord)((StateTransition *)vec_get(&s->successor, i))->id);
+      if (check_C2(s) && check_C3(s)) {
+        found_proper_candidate = TRUE;
+        break;
       } else {
-        /* |en(s)|=0 i.e. 遷移先が存在しない場合は偽を返す */
-        LMN_ASSERT(st_num(expanded) == 0);
-        return FALSE;
+        /* 選択した遷移がC2もしくはC3のいずれかに反したため，これを候補から除外する */
+        vec_clear(ample_candidate);
       }
     }
-
-    /* C1から導かれるLemmaを満たすような，sで可能な遷移の集合を求める．
-     * この処理により，sにおいてC1を満足するためには絶対にample(s)内に含めておかなくてはならない
-     * 遷移の集合がample_candidate内にPUSHされる */
-    st_foreach(strans_independency, build_ample_satisfying_lemma, (st_data_t)s);
-
-    /* ここでample_candidateが空の場合は，sで可能なすべての遷移が互いに独立であることになるので，
-     * その中でC2，C3を共に満足する1本をample_candidateの要素とする */
-    if (vec_is_empty(ample_candidate)) {
-      unsigned int i;
-      BOOL found_proper_candidate;
-
-      found_proper_candidate = FALSE;
-      for (i = 0; i < vec_num(&s->successor); ++i) {
-        vec_push(ample_candidate, (LmnWord)((StateTransition *)vec_get(&s->successor, i))->id);
-        if (check_C2(s) && check_C3(s)) {
-          found_proper_candidate = TRUE;
-          break;
-        } else {
-          /* 選択した遷移がC2もしくはC3のいずれかに反したため，これを候補から除外する */
-          vec_clear(ample_candidate);
-        }
-      }
-      /* sにおいてC1を満たす遷移は存在したものの，さらにC2もC3も満たすものが1本も存在しない場合はen(s)を返して終了する */
-      if (!found_proper_candidate) {
-        push_succstates_to_expanded(s);
-        finalize_ample();
-        return TRUE;
-      }
-    } else {
+    /* sにおいてC1を満たす遷移は存在したものの，さらにC2もC3も満たすものが1本も存在しない場合はen(s)を返して終了する */
+    if (!found_proper_candidate) {
+      expanded = push_succstates_to_expanded(s);
+      if (expanded == NULL) { lmn_fatal("unexpected"); }
+      finalize_ample();
+      return expanded;
+    }
+  } else {
     /* ample_candidateが空でない場合，まずample_candidate = en(s)であるかどうかチェックする．
      * ample_candidate = en(s)である場合(i.e. en(s)内のすべての遷移が互いに依存している場合)はen(s)を返して終了する．
      *
@@ -679,35 +720,36 @@ BOOL ample(State *s) {
      * このチェックに通らない場合，C0〜C3をすべて満足するようなen(s)の真部分集合は存在しないことになるため，
      * C0に従い，en(s)を返して終了する．
      */
-      if (vec_num(ample_candidate) == vec_num(&s->successor) ||
-          !check_C2(s) || !check_C3(s)) {
-        push_succstates_to_expanded(s);
-        finalize_ample();
-        return TRUE;
-      }
-    }
-
-    /******************************************************************
-     * この段階で少なくとも状態sにおいてはC0〜C3のすべてを満たすen(s)の
-     * 真部分集合ample_candidateが求まっていることになる．
-     * ここからは，sから始まるfull-stateグラフを対象にこれがC1を
-     * 満足しているか否かチェックしていく．
-     ******************************************************************/
-    if (!check_C1(s)) {
-      /* C1〜C3をすべて満足するample(s)が決定不能のため，C0に従いen(s)を返して終了する */
-      push_succstates_to_expanded(s);
+    if (vec_num(ample_candidate) == vec_num(&s->successor) ||
+        !check_C2(s) || !check_C3(s)) {
+      expanded = push_succstates_to_expanded(s);
+      if (expanded == NULL) { lmn_fatal("unexpected"); }
       finalize_ample();
-      return TRUE;
+      return expanded;
     }
-
-    /* C0〜C3をすべて満たすen(s)の真部分集合が求まったので，s->successor[i]->succ_stateの内，
-     * s->successor[i]->idがample_candidate内に含まれているものをテーブルexpanded内に重複なく放り込んでいく．
-     * その際，テーブルに放り込まれた各Stateにample(s)のメンバーに選ばれた旨のフラグを立てておく． */
-    push_ample_to_expanded(s);
-
-    /* finalize */
-    finalize_ample();
-
-    return TRUE;
   }
+
+  /******************************************************************
+   * この段階で少なくとも状態sにおいてはC0〜C3のすべてを満たすen(s)の
+   * 真部分集合ample_candidateが求まっていることになる．
+   * ここからは，sから始まるfull-stateグラフを対象にこれがC1を
+   * 満足しているか否かチェックしていく．
+   ******************************************************************/
+  if (!check_C1(s)) {
+    /* C1〜C3をすべて満足するample(s)が決定不能のため，C0に従いen(s)を返して終了する */
+    expanded = push_succstates_to_expanded(s);
+    if (expanded == NULL) { lmn_fatal("unexpected"); }
+    finalize_ample();
+    return expanded;
+  }
+
+  /* C0〜C3をすべて満たすen(s)の真部分集合が求まったので，s->successor[i]->succ_stateの内，
+   * s->successor[i]->idがample_candidate内に含まれているものをテーブルexpanded内に重複なく放り込んでいく．
+   * その際，テーブルに放り込まれた各Stateにample(s)のメンバーに選ばれた旨のフラグを立てておく． */
+  expanded = push_ample_to_expanded(s);
+
+  /* finalize */
+  finalize_ample();
+
+  return expanded;
 }

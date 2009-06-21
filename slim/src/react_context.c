@@ -1,7 +1,8 @@
 /*
- * task.h
+ * react_context.c
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,34 +34,26 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: task.h,v 1.5 2008/10/16 18:14:32 sasaki Exp $
+ * $Id$
  */
 
-#ifndef LMN_TASK_H
-#define LMN_TASK_H
+#include "react_context.h"
 
-#include "membrane.h"
-#include "rule.h"
-#include "automata.h"
+inline void stand_alone_react_cxt_init(struct ReactCxt *cxt)
+{
+  RC_SET_MODE(cxt, REACT_STAND_ALONE);
+}
 
-/* 中間命令で出現するデータ構造
- * LINK_LIST    リンクオブジェクトのリスト
- * LIST_AND_MAP 第１要素がリンクオブジェクトのリストで第２要素がマップ
- * MAP          マップ
- */
-#define LINK_LIST     1
-#define LIST_AND_MAP  2
-#define MAP           3
+inline void stand_alone_react_cxt_destroy(struct ReactCxt *cxt)
+{
+}
 
-void task_init(void);
-void task_finalize(void);
-void memstack_push(LmnMembrane *mem);
-struct Vector user_system_rulesets; /* system ruleset defined by user */
-LMN_EXTERN void lmn_run(LmnRuleSet ruleset);
-LMN_EXTERN void lmn_mc_nd_run(LmnMembrane *mem);
-void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms);
-void run_nd(LmnRuleSet start_ruleset);
-BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule);
-LMN_EXTERN BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset);
+inline void react_context_init(struct ReactCxt *rc, LmnWord mode)
+{
+  rc->mode = mode;
+  rc->global_root = NULL;
+}
 
-#endif
+inline void react_context_destroy(struct ReactCxt *rc)
+{
+}

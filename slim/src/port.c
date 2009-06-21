@@ -45,6 +45,7 @@
 #include "error.h"
 #include "special_atom.h"
 #include "symbol.h"
+#include "task.h"
 #include "slim_header/string.h"
 #include "slim_header/port.h"
 
@@ -411,7 +412,8 @@ void cb_port_free(LmnMembrane *mem,
 /*
  * -a0: 標準入力ポートを返す
  */
-void cb_stdin_port(LmnMembrane *mem,
+void cb_stdin_port(ReactCxt rc,
+                   LmnMembrane *mem,
                    LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPort atom = lmn_stdin_port();
@@ -426,7 +428,8 @@ void cb_stdin_port(LmnMembrane *mem,
 /*
  * -a0: 標準出力ポートを返す
  */
-void cb_stdout_port(LmnMembrane *mem,
+void cb_stdout_port(ReactCxt rc,
+                    LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPort atom = lmn_stdout_port();
@@ -441,7 +444,8 @@ void cb_stdout_port(LmnMembrane *mem,
 /*
  * -a0: 標準エラーポートを返す
  */
-void cb_stderr_port(LmnMembrane *mem,
+void cb_stderr_port(ReactCxt rc,
+                    LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPort atom = lmn_stderr_port();
@@ -458,7 +462,8 @@ void cb_stderr_port(LmnMembrane *mem,
  * -a1: ポートを返す
  * -a2: 文字
  */
-void cb_port_getc(LmnMembrane *mem,
+void cb_port_getc(ReactCxt rc,
+                  LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -487,7 +492,8 @@ void cb_port_getc(LmnMembrane *mem,
  * +a1: unaryアトム
  * -a2: ポートを返す
  */
-void cb_port_putc(LmnMembrane *mem,
+void cb_port_putc(ReactCxt rc,
+                  LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -506,7 +512,8 @@ void cb_port_putc(LmnMembrane *mem,
  * a1: 文字列
  * a2: ポートを返す
  */
-void cb_port_puts(LmnMembrane *mem,
+void cb_port_puts(ReactCxt rc,
+                  LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -525,7 +532,8 @@ void cb_port_puts(LmnMembrane *mem,
  * -a1: ポートを返す
  * -a2: 文字列
  */
-void cb_port_read_line(LmnMembrane *mem,
+void cb_port_read_line(ReactCxt rc,
+                       LmnMembrane *mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1,
                        LmnAtom a2, LmnLinkAttr t2)

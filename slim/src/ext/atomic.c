@@ -2,10 +2,13 @@
 
 #include <stdio.h>
 #include "../lmntal_ext.h"
+#include "../react_context.h"
+#include "../slim_header/memstack.h"
 
 LMN_EXTERN void init_nlmem(void);
 
-void atomic_ruleset(LmnMembrane *mem,
+void atomic_ruleset(ReactCxt rc,
+                    LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
   if (LMN_INT_ATTR == t0) {
@@ -19,7 +22,9 @@ void atomic_ruleset(LmnMembrane *mem,
     lmn_mem_delete_atom(mem, a0, t0);
   }
 
-  lmn_memstack_delete(mem);
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    lmn_memstack_delete(RC_MEMSTACK(rc), mem);
+  }
   lmn_mem_delete_mem(mem->parent, mem);
 }
 

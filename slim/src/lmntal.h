@@ -146,6 +146,24 @@ typedef struct LmnSPAtomHeader LmnSpAtom;
 
 
 /*----------------------------------------------------------------------
+ * React Context
+ */
+
+typedef struct ReactCxt *ReactCxt;
+
+/*----------------------------------------------------------------------
+ * Mem Stack
+ */
+
+struct Vector;
+
+typedef struct Vector Vector;
+
+typedef struct Vector *LmnMemStack;
+
+
+
+/*----------------------------------------------------------------------
  * Utility
  */
 

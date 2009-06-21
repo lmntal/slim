@@ -158,6 +158,7 @@ LMN_EXTERN void lmn_mem_relink_atom_args(LmnMembrane *mem,
                                          LmnLinkAttr attr1,
                                          int pos1);
 LMN_EXTERN void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
+LMN_EXTERN LmnMembrane *lmn_mem_copy(LmnMembrane *srcmem, SimpleHashtbl **copymap);
 LMN_EXTERN SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *dest, LmnMembrane *srcmem);
 LMN_EXTERN void lmn_mem_remove_proxies(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem);
@@ -182,5 +183,7 @@ typedef struct LinkObj {
 LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
 /* LmnSAtom* lmn_atomlist_end(AtomSetEntry * ent); */
 #define lmn_atomlist_end(p_atomset_entry) (LMN_SATOM(p_atomset_entry))
+
+extern struct st_hash_type type_memhash;
 
 #endif /* LMN_MEMBRANE_H */

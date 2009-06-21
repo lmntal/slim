@@ -41,10 +41,11 @@
 
 #include "lmntal.h"
 
-typedef struct Vector {
+struct Vector {
   LmnWord* tbl;
   unsigned int num, cap;
-} Vector;
+};
+
 
 typedef struct Vector *PVector;
 typedef LmnWord vec_data_t;

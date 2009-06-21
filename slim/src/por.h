@@ -51,6 +51,11 @@ Vector *Stack_POR;       /* C1のチェックにあたってstate graphを展開
 Vector *succ_strans;     /* ある状態sから可能な遷移の集合を管理 */
 Vector *ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる */
 
-LMN_EXTERN BOOL ample(State *s);
+extern unsigned long next_strans_id;
+
+LMN_EXTERN Vector *ample(State *s);
+
+void init_por_vars(void);
+void free_por_vars(void);
 
 #endif

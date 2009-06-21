@@ -2,10 +2,12 @@
 
 #include <stdio.h>
 #include "../lmntal_ext.h"
+#include "../slim_header/memstack.h"
 
 LMN_EXTERN void init_nlmem(void);
 
-void nlmem_copy(LmnMembrane *mem,
+void nlmem_copy(ReactCxt rc,
+                LmnMembrane *mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1,
                 LmnAtom a2, LmnLinkAttr t2)
@@ -51,7 +53,8 @@ void nlmem_copy(LmnMembrane *mem,
   }
 }
 
-void nlmem_kill(LmnMembrane *mem,
+void nlmem_kill(ReactCxt rc,
+                LmnMembrane *mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1)
 {
@@ -85,7 +88,7 @@ void nlmem_kill(LmnMembrane *mem,
     }
   }
   
-  lmn_memstack_delete(org_mem);
+  lmn_memstack_delete(RC_MEMSTACK(rc), org_mem);
   lmn_mem_delete_mem(mem, org_mem);
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);

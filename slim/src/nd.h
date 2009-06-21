@@ -1,7 +1,8 @@
 /*
- * task.h
+ * nd.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,34 +34,38 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: task.h,v 1.5 2008/10/16 18:14:32 sasaki Exp $
+ * $Id$
  */
 
-#ifndef LMN_TASK_H
-#define LMN_TASK_H
+#ifndef LMN_ND_H
+#define LMN_ND_H
 
+#include "lmntal.h"
+#include "st.h"
 #include "membrane.h"
 #include "rule.h"
-#include "automata.h"
+#include "vector.h"
 
-/* 中間命令で出現するデータ構造
- * LINK_LIST    リンクオブジェクトのリスト
- * LIST_AND_MAP 第１要素がリンクオブジェクトのリストで第２要素がマップ
- * MAP          マップ
- */
-#define LINK_LIST     1
-#define LIST_AND_MAP  2
-#define MAP           3
+typedef st_table_t StateSpace;
 
-void task_init(void);
-void task_finalize(void);
-void memstack_push(LmnMembrane *mem);
-struct Vector user_system_rulesets; /* system ruleset defined by user */
-LMN_EXTERN void lmn_run(LmnRuleSet ruleset);
-LMN_EXTERN void lmn_mc_nd_run(LmnMembrane *mem);
-void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms);
+typedef struct State State;
+
+struct State {
+  LmnMembrane *mem;     /* グローバルルート膜 */
+  unsigned long hash; /* mhash(mem) */
+  BOOL flags;           /* nested DFSの際にDFS{1,2}いずれの走査を受けたかや，successorが展開済であるか否かを管理するフラグ */
+  Vector successor;     /* 通常時: Vector of States，ample(s)計算中: Vector of StateTransitions */
+  LmnRule rule;
+  BYTE state_name;
+};
+
+/* 訪問済みノードが格納される */
+extern st_table *States;
+
+Vector *nd_expand(State *state);
 void run_nd(LmnRuleSet start_ruleset);
-BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule);
-LMN_EXTERN BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset);
+State *insert_state(StateSpace states, State *s);
+void dump_state_transition_graph(State *init_state, FILE *file);
+void state_space_free(StateSpace states);
 
 #endif

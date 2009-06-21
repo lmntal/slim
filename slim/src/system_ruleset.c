@@ -38,16 +38,17 @@
 
 #include "lmntal.h"
 #include "membrane.h"
-#include "task.h"
+#include "react_context.h"
 #include "functor.h"
 #include "symbol.h"
+#include "slim_header/memstack.h"
 
 /* prototypes */
 
 void init_default_system_ruleset(void);
 
 /* delete out proxies connected each other */
-static BOOL delete_redundant_outproxies(LmnMembrane *mem)
+static BOOL delete_redundant_outproxies(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
                                                           LMN_OUT_PROXY_FUNCTOR,
@@ -77,7 +78,7 @@ static BOOL delete_redundant_outproxies(LmnMembrane *mem)
         lmn_mem_unify_atom_args(m0, i0, 1, i1, 1);
         REMOVE_FROM_ATOMLIST(i0);
         REMOVE_FROM_ATOMLIST(i1);
-        memstack_push(m0);
+        lmn_memstack_push(RC_MEMSTACK(rc), m0);
         return TRUE;
       }
     }
@@ -86,7 +87,7 @@ static BOOL delete_redundant_outproxies(LmnMembrane *mem)
 }
 
 /* delete in proxies connected each other */
-static BOOL delete_redundant_inproxies(LmnMembrane *mem)
+static BOOL delete_redundant_inproxies(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
                                                           LMN_OUT_PROXY_FUNCTOR,
@@ -123,7 +124,7 @@ static BOOL delete_redundant_inproxies(LmnMembrane *mem)
  * -------------------------------------------------------------- */
 #define REF_CAST(T,X) (*(T*)&(X))
 
-static BOOL exec_iadd_operation_on_body(LmnMembrane *mem)
+static BOOL exec_iadd_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_IADD_FUNCTOR, 0);
   LmnSAtom op, ret; /* let op be an operation atom such as '+'/3, '-'/3, 'mod'/3, and so on */
@@ -159,7 +160,7 @@ static BOOL exec_iadd_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL exec_isub_operation_on_body(LmnMembrane *mem)
+static BOOL exec_isub_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_ISUB_FUNCTOR, 0);
   LmnSAtom op, ret;
@@ -193,7 +194,7 @@ static BOOL exec_isub_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL exec_imul_operation_on_body(LmnMembrane *mem)
+static BOOL exec_imul_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_IMUL_FUNCTOR, 0);
   LmnSAtom op, ret;
@@ -227,7 +228,7 @@ static BOOL exec_imul_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL exec_idiv_operation_on_body(LmnMembrane *mem)
+static BOOL exec_idiv_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_IDIV_FUNCTOR, 0);
   LmnSAtom op, ret;
@@ -265,7 +266,7 @@ static BOOL exec_idiv_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL exec_mod_operation_on_body(LmnMembrane *mem)
+static BOOL exec_mod_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_MOD_FUNCTOR, 0);
   LmnSAtom op, ret;
@@ -303,7 +304,7 @@ static BOOL exec_mod_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL exec_fadd_operation_on_body(LmnMembrane *mem)
+static BOOL exec_fadd_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_FADD_FUNCTOR, 0);
   LmnSAtom op, ret;
@@ -352,7 +353,7 @@ static BOOL exec_fadd_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL exec_fsub_operation_on_body(LmnMembrane *mem)
+static BOOL exec_fsub_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_FSUB_FUNCTOR, 0);
   LmnSAtom op, ret;
@@ -398,7 +399,7 @@ static BOOL exec_fsub_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL exec_fmul_operation_on_body(LmnMembrane *mem)
+static BOOL exec_fmul_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_FMUL_FUNCTOR, 0);
   LmnSAtom op, ret;
@@ -444,7 +445,7 @@ static BOOL exec_fmul_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL exec_fdiv_operation_on_body(LmnMembrane *mem)
+static BOOL exec_fdiv_operation_on_body(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_ARITHMETIC_FDIV_FUNCTOR, 0);
   LmnSAtom op, ret;
@@ -496,7 +497,7 @@ static BOOL exec_fdiv_operation_on_body(LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL mem_eq(LmnMembrane *mem)
+static BOOL mem_eq(ReactCxt rc, LmnMembrane *mem)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_MEM_EQ_FUNCTOR, 0);
   LmnMembrane *mem0, *mem1;

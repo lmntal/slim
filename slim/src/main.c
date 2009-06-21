@@ -51,6 +51,7 @@
 #include "lmntal_system_adapter.h"
 #include "propositional_symbol.h"
 #include "mc.h"
+#include "nd.h"
 #include "ccallback.h"
 #include "special_atom.h"
 #include "slim_header/string.h"

@@ -139,14 +139,14 @@ BOOL lmn_rule_is_invisible(LmnRule rule) {
   return rule->is_invisible == TRUE;
 }
 
-LmnRule atomic_dummy_rule(void)
+LmnRule dummy_rule(void)
 {
   static struct LmnRule rule;
   static BOOL first = TRUE;
 
   if (first) {
     first = FALSE;
-    rule.name = lmn_intern("atomic");
+    rule.name = lmn_intern("");
   }
 
   return &rule;

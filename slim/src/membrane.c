@@ -41,6 +41,8 @@
 #include "rule.h"
 #include "dumper.h" /* for debug */
 #include "functor.h"
+#include "st.h"
+#include "mhash.h"
 #include <ctype.h>
 
 #ifdef PROFILE
@@ -54,6 +56,12 @@ BOOL ground_atoms(Vector *srcvec,
                   Vector *avovec,
                   HashSet **atoms,
                   unsigned long *natoms);
+static int mem_cmp(LmnMembrane *mem1, LmnMembrane *mem2);
+
+struct st_hash_type type_memhash = {
+  mem_cmp,
+  mhash
+};
 
 /* ルールセットを膜に追加する。ルールセットは、比較のためにポインタの値
    の昇順に並べるようにする */
@@ -813,11 +821,20 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
   vec_destroy(&remove_list);
 }
 
-/* mem -> atoms のhashtblはold atom -> newatomのhashtbl一つに統合できる.
-   子膜を必ず先にコピーする。しかし,これだと、一つのhashtblが大きくなってしまう
-   問題がある
-   071204 oldatom->newatomのhashtbl一つに統合した
-*/
+LmnMembrane *lmn_mem_copy(LmnMembrane *src, SimpleHashtbl **ret_copymap)
+{
+  unsigned int i;
+  SimpleHashtbl *copymap;
+  LmnMembrane *new_mem = lmn_mem_make();
+  
+  copymap = lmn_mem_copy_cells(new_mem, src);
+  for (i = 0; i < src->rulesets.num; i++) {
+    vec_push(&new_mem->rulesets, vec_get(&src->rulesets, i));
+  }
+  *ret_copymap = copymap;
+  return new_mem;
+}
+
 SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 {
   SimpleHashtbl *atoms;
@@ -1761,6 +1778,11 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
   free_atomvec_data(atomvec_mem1);
   free_atomvec_data(atomvec_mem2);
   return FALSE;
+}
+
+int mem_cmp(LmnMembrane *mem1, LmnMembrane *mem2)
+{
+  return !mem_equals(mem1, mem2);
 }
 
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)

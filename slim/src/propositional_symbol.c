@@ -49,6 +49,7 @@
 #include "symbol.h"
 #include "task.h"
 #include "error.h"
+#include "react_context.h"
 
 struct SymbolDefinition {
   unsigned int sym_id;
@@ -189,7 +190,13 @@ Proposition propsym_get_proposition(SymbolDefinition s)
 
 BOOL proposition_eval(Proposition prop, LmnMembrane *mem)
 {
-  return react_rule(mem, proposition_get_rule(prop));
+  struct ReactCxt rc;
+  BOOL b;
+  
+  stand_alone_react_cxt_init(&rc);
+  b = react_rule(&rc, mem, proposition_get_rule(prop));
+  stand_alone_react_cxt_destroy(&rc);
+  return b;
 }
 
 

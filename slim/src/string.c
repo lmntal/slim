@@ -44,6 +44,7 @@
 #include "functor.h"
 #include "special_atom.h"
 #include "slim_header/string.h"
+#include "task.h"
 #include "util.h"
 #include "dumper.h"
 #include <stdio.h>
@@ -190,7 +191,8 @@ inline unsigned long lmn_string_len(LmnString s)
  * Callbacks
  */
 
-void cb_string_make(LmnMembrane *mem,
+void cb_string_make(ReactCxt rc,
+                    LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0,
                     LmnAtom a1, LmnLinkAttr t1)
 {
@@ -221,7 +223,8 @@ void cb_string_make(LmnMembrane *mem,
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void cb_string_concat(LmnMembrane *mem,
+void cb_string_concat(ReactCxt rc,
+                      LmnMembrane *mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       LmnAtom a1, LmnLinkAttr t1,
                       LmnAtom a2, LmnLinkAttr t2)
@@ -233,7 +236,8 @@ void cb_string_concat(LmnMembrane *mem,
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
-void cb_string_length(LmnMembrane *mem,
+void cb_string_length(ReactCxt rc,
+                      LmnMembrane *mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       LmnAtom a1, LmnLinkAttr t1)
 {
@@ -245,7 +249,8 @@ void cb_string_length(LmnMembrane *mem,
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void cb_string_reverse(LmnMembrane *mem,
+void cb_string_reverse(ReactCxt rc,
+                       LmnMembrane *mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1)
 {
@@ -262,7 +267,8 @@ void cb_string_reverse(LmnMembrane *mem,
                   a0, t0, 0);
 }
 
-void cb_string_substr(LmnMembrane *mem,
+void cb_string_substr(ReactCxt rc,
+                      LmnMembrane *mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       long begin, LmnLinkAttr t1,
                       long end, LmnLinkAttr t2,
@@ -292,7 +298,8 @@ void cb_string_substr(LmnMembrane *mem,
   lmn_mem_delete_atom(mem, end, t2);
 }
 
-void cb_string_substr_right(LmnMembrane *mem,
+void cb_string_substr_right(ReactCxt rc,
+                            LmnMembrane *mem,
                             LmnAtom a0, LmnLinkAttr t0,
                             long begin, LmnLinkAttr t1,
                             LmnAtom a2, LmnLinkAttr t2)
