@@ -160,7 +160,8 @@ LMN_EXTERN void lmn_mem_relink_atom_args(LmnMembrane *mem,
                                          LmnLinkAttr attr1,
                                          int pos1);
 LMN_EXTERN void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
-LMN_EXTERN LmnMembrane *lmn_mem_copy(LmnMembrane *srcmem, SimpleHashtbl **copymap);
+LMN_EXTERN LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *srcmem, SimpleHashtbl **copymap);
+LMN_EXTERN LmnMembrane *lmn_mem_copy(LmnMembrane *srcmem);
 LMN_EXTERN SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *dest, LmnMembrane *srcmem);
 LMN_EXTERN void lmn_mem_remove_proxies(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem);

@@ -162,7 +162,8 @@ struct LmnRuleSet {
   int num, cap;         /* # of rules, and # of capacity */
   LmnRule *rules;       /* ルールのリスト */
   /* 非決定実行時にルールセットをatomicに実行するかのフラグ */
-  BOOL atomic;          
+  int atomic;
+  BOOL valid;
 };
 
 /* Generates and returns new RuleSet id */
@@ -183,6 +184,7 @@ LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size)
   ruleset->num = 0;
   ruleset->cap = init_size;
   ruleset->atomic = FALSE;
+  ruleset->valid = TRUE;
 
   return ruleset;
 }
@@ -213,25 +215,35 @@ unsigned int lmn_ruleset_rule_num(LmnRuleSet ruleset)
 }
 
 /* Returns the ith rule in ruleset */
-LmnRule lmn_ruleset_get_rule(LmnRuleSet ruleset, int i)
+inline LmnRule lmn_ruleset_get_rule(LmnRuleSet ruleset, int i)
 {
   return ruleset->rules[i];
 }
 
 /* Returns id of ruleset */
-int lmn_ruleset_get_id(LmnRuleSet ruleset)
+inline int lmn_ruleset_get_id(LmnRuleSet ruleset)
 {
   return ruleset->id;
 }
 
-BOOL lmn_ruleset_is_atomic(LmnRuleSet ruleset)
+inline AtomicType lmn_ruleset_atomic_type(LmnRuleSet ruleset)
 {
   return ruleset->atomic;
 }
 
-void lmn_ruleset_set_atomic(LmnRuleSet ruleset, BOOL b)
+inline void lmn_ruleset_set_atomic(LmnRuleSet ruleset, AtomicType t)
 {
-  ruleset->atomic = b;
+  ruleset->atomic = t;
+}
+
+inline BOOL lmn_ruleset_is_valid(LmnRuleSet ruleset)
+{
+  return ruleset->valid;
+}
+
+inline void lmn_ruleset_set_valid(LmnRuleSet ruleset, BOOL b)
+{
+  ruleset->valid = b;
 }
 
 /* table, mapping RuleSet ID to RuleSet */

@@ -44,6 +44,7 @@
 
 struct StateSpace {
   State *init_state;
+  Vector *end_states;
   st_table_t tbl;
 };
 
@@ -54,7 +55,6 @@ static void nd_loop(StateSpace states, State *init_state);
 static int kill_States_chains(st_data_t _k,
                               st_data_t state_ptr,
                               st_data_t rm_tbl_ptr);
-static void do_nd(LmnMembrane *world_mem);
 static BOOL expand_inner(struct ReactCxt *rc,
                          LmnMembrane *cur_mem);
 static int print_state_name_f(st_data_t _k, st_data_t state_ptr, st_data_t _a);
@@ -169,6 +169,10 @@ static void nd_loop(StateSpace states, State *init_state) {
     expanded = nd_expand(states, s); /* 展開先をexpandedに格納する */
     expanded_num = vec_num(expanded);
 
+    if (expanded_num == 0) {
+      state_space_add_end_state(states, s);
+    }
+    
     state_succ_init(s, vec_num(expanded));
     for (i = 0; i < expanded_num; i++) {
       State *src_succ = (State *)vec_get(expanded, i);
@@ -195,7 +199,13 @@ void run_nd(LmnRuleSet start_ruleset)
 {
   LmnMembrane *mem;
   struct ReactCxt init_rc;
+  StateSpace states;
   
+  /**
+   * initialize containers
+   */
+  init_por_vars();
+
   stand_alone_react_cxt_init(&init_rc);
 
   /* make global root membrane */
@@ -206,23 +216,28 @@ void run_nd(LmnRuleSet start_ruleset)
   
   activate_ancestors(mem);
 
-  do_nd(mem);
-
+  states = do_nd(mem);
 #ifdef PROFILE
   calc_hash_conflict(states);
 #endif
 
+  dump_state_transition_graph(states, stdout);
+  fprintf(stdout, "# of States = %lu\n", state_space_num(states));
+  
+  lmn_mem_free(mem);
+  state_space_free(states);
+
+  /* finalize */
+  free_por_vars();
+
+     
 }
 
-static void do_nd(LmnMembrane *world_mem)
+StateSpace do_nd(LmnMembrane *world_mem_org)
 {
   State *initial_state;
   StateSpace states = state_space_make();
-  
-  /**
-   * initialize containers
-   */
-  init_por_vars();
+  LmnMembrane *world_mem = lmn_mem_copy(world_mem_org);
 
   /* 初期プロセスから得られる初期状態を生成 */
   initial_state = state_make_for_nd(world_mem, ANONYMOUS);
@@ -236,14 +251,9 @@ static void do_nd(LmnMembrane *world_mem)
   /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
 /*   else{ */
   nd_loop(states, initial_state);
-  dump_state_transition_graph(states, stdout);
 /*   } */
- 
-  fprintf(stdout, "# of States = %lu\n", state_space_num(states));
 
-  /* finalize */
-  free_por_vars();
-  state_space_free(states);
+  return states;
 }
 
 /**
@@ -294,6 +304,7 @@ StateSpace state_space_make()
   struct StateSpace *ss = LMN_MALLOC(struct StateSpace);
   ss->init_state = NULL;
   ss->tbl = st_init_table(&type_statehash);
+  ss->end_states = vec_make(64);
   return ss;
 }
 
@@ -305,6 +316,7 @@ void state_space_free(StateSpace states)
   st_foreach(states->tbl, kill_States_chains, (st_data_t)&rm_tbl);
   hashset_destroy(&rm_tbl);
   st_free_table(states->tbl);
+  vec_free(states->end_states);
   LMN_FREE(states);
 }
 
@@ -324,13 +336,16 @@ unsigned long state_space_num(StateSpace states)
   return st_num(states->tbl);
 }
 
+/* 状態空間にすでに含まれている状態sを最終状態として登録する */
+void state_space_add_end_state(StateSpace states, State *s)
+{
+  vec_push(states->end_states, (LmnWord)s);
+}
 
-/* /\* 状態空間に状態sを追加する。すでに、状態空間内に状態sが存在した場合は、 */
-/*    追加せずにFALSEを返す *\/ */
-/* BOOL state_space_add(StateSpace states, State *s) */
-/* { */
-/*   return st_insert_new(states, (hash_data_t)s, (hash_data_t)s); */
-/* } */
+const Vector *state_space_end_states(StateSpace states)
+{
+  return states->end_states;
+}
 
 /**
  * 非決定実行 or LTLモデル検査終了後にStates内に存在するチェインをすべてfreeする
@@ -372,6 +387,13 @@ State *state_space_get(const StateSpace states, State *s)
   } else {
     return NULL;
   }
+}
+
+/* 状態空間から状態sを削除する。ただし、状態空間のサクセッサは更新され
+   ないので注意 */
+void state_space_remove(const StateSpace states, State *s)
+{
+  st_delete(states->tbl, (st_data_t)s, 0);
 }
 
 void dump_state_transition_graph(StateSpace states, FILE *file)

@@ -69,17 +69,21 @@ LMN_EXTERN BOOL lmn_rule_is_invisible(LmnRule rule);
 
 typedef struct LmnRuleSet *LmnRuleSet;
 
+typedef enum AtomicType { ATOMIC_NONE, ATOMIC_ND, ATOMIC_DET} AtomicType;
+
 LMN_EXTERN int lmn_gen_ruleset_id(void);
 LMN_EXTERN LmnRuleSet lmn_ruleset_from_id(int id);
 LMN_EXTERN LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size);
 LMN_EXTERN void lmn_ruleset_free(LmnRuleSet ruleset);
 LMN_EXTERN void lmn_ruleset_put(LmnRuleSet ruleset, LmnRule rule);
-LMN_EXTERN int lmn_ruleset_get_id(LmnRuleSet ruleset);
-LMN_EXTERN void lmn_set_ruleset(LmnRuleSet ruleset, int id);
-LMN_EXTERN unsigned int lmn_ruleset_rule_num(LmnRuleSet ruleset);
-LMN_EXTERN LmnRule lmn_ruleset_get_rule(LmnRuleSet ruleset, int i);
-LMN_EXTERN BOOL lmn_ruleset_is_atomic(LmnRuleSet ruleset);
-LMN_EXTERN void lmn_ruleset_set_atomic(LmnRuleSet ruleset, BOOL b);
+LMN_EXTERN inline int lmn_ruleset_get_id(LmnRuleSet ruleset);
+LMN_EXTERN inline void lmn_set_ruleset(LmnRuleSet ruleset, int id);
+LMN_EXTERN inline unsigned int lmn_ruleset_rule_num(LmnRuleSet ruleset);
+LMN_EXTERN inline LmnRule lmn_ruleset_get_rule(LmnRuleSet ruleset, int i);
+LMN_EXTERN inline AtomicType lmn_ruleset_atomic_type(LmnRuleSet ruleset);
+LMN_EXTERN inline void lmn_ruleset_set_atomic(LmnRuleSet ruleset, AtomicType b);
+LMN_EXTERN inline void lmn_ruleset_set_valid(LmnRuleSet ruleset, BOOL b);
+LMN_EXTERN inline BOOL lmn_ruleset_is_valid(LmnRuleSet ruleset);
 
 /*----------------------------------------------------------------------
  * System Rule Set

@@ -115,7 +115,7 @@ inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp) {
 }
 
 /* get */
-inline LmnWord vec_get(Vector *vec, unsigned int index) {
+inline LmnWord vec_get(const Vector *vec, unsigned int index) {
   LMN_ASSERT(index < vec->num);
   return(vec->tbl[index]);
 }

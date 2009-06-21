@@ -220,7 +220,7 @@ static BOOL react_ruleset_atomic(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rules
     BOOL reacted_once = FALSE;
 
     stand_alone_react_cxt_init(&stand_alone_rc);
-    new_global_root = lmn_mem_copy(RC_GROOT_MEM(rc), &copymap);
+    new_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
     RC_SET_GROOT_MEM(&stand_alone_rc, new_global_root);
 
     /* コピーされた膜を取得 */
@@ -266,6 +266,68 @@ static BOOL react_ruleset_atomic(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rules
   return ok;
 }
 
+void set_all_ruleset_validation(LmnMembrane *mem, BOOL b)
+{
+  
+  if (mem == NULL) return;
+
+  for (; mem; mem = mem->next) {
+    unsigned int i, n = lmn_mem_ruleset_num(mem);
+    for (i = 0; i < n; i++) {
+      lmn_ruleset_set_valid(lmn_mem_get_ruleset(mem, i), b);
+    }
+    set_all_ruleset_validation(mem->child_head, b);
+  }
+  
+}
+
+static BOOL react_ruleset_atomic2(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ruleset)
+{
+  int i, n;
+  BOOL ok = FALSE;
+  n = lmn_ruleset_rule_num(ruleset);
+  
+  /* MC */
+  if (RC_GET_MODE(rc, REACT_ND)) {
+    StateSpace states;
+    const Vector *end_states;
+    
+    set_all_ruleset_validation(RC_GROOT_MEM(rc), FALSE);
+    lmn_ruleset_set_valid(ruleset, TRUE);
+    lmn_ruleset_set_atomic(ruleset, FALSE);
+
+    states = do_nd(mem);
+    end_states = state_space_end_states(states);
+
+    set_all_ruleset_validation(RC_GROOT_MEM(rc), TRUE);
+    lmn_ruleset_set_atomic(ruleset, TRUE);
+
+    for (i = 0; i < vec_num(end_states); i++) {
+      nd_react_cxt_add_expanded(rc,
+                                state_mem((State *)vec_get(end_states, i)),
+                                dummy_rule());
+      state_space_remove(states, (State *)vec_get(end_states, i));
+      state_free_without_mem((State *)vec_get(end_states, i));
+    } 
+
+    ok = end_states > 0;
+    state_space_free(states);
+  } else { /* 通常実行時 */
+    BOOL reacted_once = FALSE;
+
+    while (TRUE) {
+      BOOL reacted = FALSE;
+      for (i = 0; i < n; i++) {
+        reacted = reacted || react_rule(rc, mem, lmn_ruleset_get_rule(ruleset, i));
+      }
+      reacted_once = reacted_once || reacted;
+      if (!reacted) break;
+    }
+    ok = reacted_once;
+  }
+  return ok;
+}
+
 /* 膜memでrulesetのルールの適用を試みる。適用が起こった場合TRUEを返し、
    起こらなかった場合にはFALSEを返す。 */
 BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset)
@@ -273,10 +335,9 @@ BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset
   int i, n;
   BOOL result = FALSE;
   
-  if (lmn_ruleset_is_atomic(ruleset)) {
-    result = react_ruleset_atomic(rc, mem, ruleset);
-  }
-  else {
+  if (!lmn_ruleset_is_valid(ruleset)) return FALSE;
+
+  if (lmn_ruleset_atomic_type(ruleset) == ATOMIC_NONE) {
     n = lmn_ruleset_rule_num(ruleset);
 
     for (i = 0; i < n; i++) {
@@ -285,6 +346,10 @@ BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset
         break;
       }
     }
+  } else if (lmn_ruleset_atomic_type(ruleset) == ATOMIC_ND) {
+    result = react_ruleset_atomic2(rc, mem, ruleset);
+  } else if (lmn_ruleset_atomic_type(ruleset) == ATOMIC_DET) {
+    result = react_ruleset_atomic(rc, mem, ruleset);
   }
 
   return result;
@@ -710,7 +775,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         unsigned int i;
         /* グローバルルート膜のコピー */
         SimpleHashtbl *copymap;
-        LmnMembrane *tmp_global_root = lmn_mem_copy(RC_GROOT_MEM(rc), &copymap);
+        LmnMembrane *tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
 
         /* 変数配列および属性配列のコピー */
         LmnWord *wtcp = LMN_NALLOC(LmnWord, wt_size);

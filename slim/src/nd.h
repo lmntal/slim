@@ -61,12 +61,16 @@ typedef struct StateSpace *StateSpace;
 
 Vector *nd_expand(const StateSpace states, State *state);
 void run_nd(LmnRuleSet start_ruleset);
+StateSpace do_nd(LmnMembrane *world_mem);
 State *insert_state(StateSpace states, State *s);
 State *state_space_get(const StateSpace states, State *s);
 StateSpace state_space_make(void);
 void state_space_free(StateSpace states);
 unsigned long state_space_num(StateSpace states);
 void state_space_set_init_state(StateSpace states, State* init_state);
+void state_space_add_end_state(StateSpace states, State *s);
+const Vector *state_space_end_states(StateSpace states);
+void state_space_remove(const StateSpace states, State *s);
 
 void dump_state_transition_graph(StateSpace states, FILE *file);
 void print_state_name(StateSpace states);

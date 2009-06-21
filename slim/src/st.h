@@ -64,7 +64,7 @@ st_table *st_init_strtable(void);
 st_table *st_init_strtable_with_size(int);
 st_table *st_init_ptrtable(void);
 st_table *st_init_ptrtable_with_size(int);
-int st_delete(st_table *, st_data_t *, st_data_t *);
+int st_delete(st_table *, st_data_t , st_data_t *);
 int st_delete_safe(st_table *, st_data_t *, st_data_t *, st_data_t);
 int st_insert(st_table *, st_data_t, st_data_t);
 int st_lookup(st_table *, st_data_t, st_data_t *);

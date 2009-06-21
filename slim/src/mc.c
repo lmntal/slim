@@ -60,7 +60,6 @@ enum MC_ERRORNO {
 /* for LTL */
 static LmnMembrane *seed = NULL; /* root of second DFS */
 
-static int unset_snd_all(st_data_t _k, st_data_t s, st_data_t _a);
 static void violate(Vector *stack);
 static void exit_ltl_model_checking(void);
 static Vector *mc_expand(const StateSpace states,
@@ -162,6 +161,11 @@ inline void state_succ_init(State *s, int init_size) {
 void state_free(State *s) {
   lmn_mem_drop(s->mem);
   lmn_mem_free(s->mem);
+  state_free_without_mem(s);
+}
+
+void state_free_without_mem(State *s)
+{
   if (!mem_is_zero(&s->successor, sizeof(Vector))) {
     vec_destroy(&s->successor);
   }
@@ -358,9 +362,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
       if (vec_num(expanded) == 0) { /* stutter extension */
         /* グローバルルート膜のコピー */
         State *newstate;
-        SimpleHashtbl *copymap;
-        LmnMembrane *newmem = lmn_mem_copy(state_mem(s), &copymap);
-        hashtbl_free(copymap);
+        LmnMembrane *newmem = lmn_mem_copy(state_mem(s));
 
         /* 性質ルールのみが適用されている。ルール名(遷移のラベル)はどうする？ */
         newstate = state_make(newmem,

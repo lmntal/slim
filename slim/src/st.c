@@ -340,13 +340,13 @@ st_copy(st_table *old_table) {
   return new_table;
 }
 
-int st_delete(register st_table *table, register st_data_t *key,
+int st_delete(register st_table *table, register st_data_t key,
     st_data_t *value) {
   unsigned int hash_val;
   st_table_entry *tmp;
   register st_table_entry *ptr;
 
-  hash_val = do_hash_bin(*key, table);
+  hash_val = do_hash_bin(key, table);
   ptr = table->bins[hash_val];
 
   if (ptr == 0) {
@@ -355,24 +355,22 @@ int st_delete(register st_table *table, register st_data_t *key,
     return 0;
   }
 
-  if (EQUAL(table, *key, ptr->key)) {
+  if (EQUAL(table, key, ptr->key)) {
     table->bins[hash_val] = ptr->next;
     table->num_entries--;
     if (value != 0)
       *value = ptr->record;
-    *key = ptr->key;
     free(ptr);
     return 1;
   }
 
   for (; ptr->next != 0; ptr = ptr->next) {
-    if (EQUAL(table, ptr->next->key, *key)) {
+    if (EQUAL(table, ptr->next->key, key)) {
       tmp = ptr->next;
       ptr->next = ptr->next->next;
       table->num_entries--;
       if (value != 0)
         *value = tmp->record;
-      *key = tmp->key;
       free(tmp);
       return 1;
     }

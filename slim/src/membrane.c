@@ -831,7 +831,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
   vec_destroy(&remove_list);
 }
 
-LmnMembrane *lmn_mem_copy(LmnMembrane *src, SimpleHashtbl **ret_copymap)
+LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, SimpleHashtbl **ret_copymap)
 {
   unsigned int i;
   SimpleHashtbl *copymap;
@@ -843,6 +843,16 @@ LmnMembrane *lmn_mem_copy(LmnMembrane *src, SimpleHashtbl **ret_copymap)
   }
   *ret_copymap = copymap;
   return new_mem;
+}
+
+LmnMembrane *lmn_mem_copy(LmnMembrane *src)
+{
+  SimpleHashtbl *copymap;
+  LmnMembrane *copied;
+
+  copied = lmn_mem_copy_with_map(src, &copymap);
+  hashtbl_free(copymap);
+  return copied;
 }
 
 SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)

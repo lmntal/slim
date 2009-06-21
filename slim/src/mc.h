@@ -115,6 +115,7 @@ State *state_make_for_nd(LmnMembrane *mem, LmnRule rule);
 LMN_EXTERN State *state_copy(State *s);
 LMN_EXTERN inline void state_succ_init(State *s, int init_size);
 LMN_EXTERN void state_free(State *s);
+LMN_EXTERN void state_free_without_mem(State *s);
 LMN_EXTERN void strans_free(StateTransition *strans);
 BYTE state_property_state(State *state);
 void state_set_property_state(State *state, BYTE prop_state);
