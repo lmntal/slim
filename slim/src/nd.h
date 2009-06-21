@@ -46,8 +46,6 @@
 #include "rule.h"
 #include "vector.h"
 
-typedef st_table_t StateSpace;
-
 typedef struct State State;
 
 struct State {
@@ -59,13 +57,18 @@ struct State {
   BYTE state_name;
 };
 
-/* 訪問済みノードが格納される */
-extern st_table *States;
+typedef struct StateSpace *StateSpace;
 
-Vector *nd_expand(State *state);
+Vector *nd_expand(const StateSpace states, State *state);
 void run_nd(LmnRuleSet start_ruleset);
 State *insert_state(StateSpace states, State *s);
-void dump_state_transition_graph(State *init_state, FILE *file);
+State *state_space_get(const StateSpace states, State *s);
+StateSpace state_space_make(void);
 void state_space_free(StateSpace states);
+unsigned long state_space_num(StateSpace states);
+void state_space_set_init_state(StateSpace states, State* init_state);
+
+void dump_state_transition_graph(StateSpace states, FILE *file);
+void print_state_name(StateSpace states);
 
 #endif

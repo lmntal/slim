@@ -42,26 +42,30 @@
 #include "task.h"
 #include "dumper.h"
 
-st_table *States;
+struct StateSpace {
+  State *init_state;
+  st_table_t tbl;
+};
 
 static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem);
 static BOOL react_all_rulesets(struct ReactCxt *rc,
                                LmnMembrane *cur_mem);
-static void nd_loop(State *init_state);
+static void nd_loop(StateSpace states, State *init_state);
 static int kill_States_chains(st_data_t _k,
                               st_data_t state_ptr,
                               st_data_t rm_tbl_ptr);
 static void do_nd(LmnMembrane *world_mem);
 static BOOL expand_inner(struct ReactCxt *rc,
                          LmnMembrane *cur_mem);
+static int print_state_name_f(st_data_t _k, st_data_t state_ptr, st_data_t _a);
 
 /* 状態stateから１ステップで遷移する状態のベクタを返す。
    返される状態のベクタには、重複はない */
-Vector *nd_expand(State *state)
+Vector *nd_expand(const StateSpace states, State *state)
 {
   Vector *r;
 
-  if (lmn_env.por) { r = ample(state); }
+  if (lmn_env.por) { r = ample(states, state); }
   else  {
     struct ReactCxt rc;
   
@@ -82,7 +86,6 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
   
   expand_inner(rc, cur_mem);
   expanded_roots = RC_EXPANDED(rc);
-
   s = st_init_table(&type_memhash);
   expanded = vec_make(32);
   for (i = 0; i < vec_num(expanded_roots); i++) {
@@ -117,19 +120,22 @@ static BOOL expand_inner(struct ReactCxt *rc,
                          LmnMembrane *cur_mem)
 {
   BOOL ret_flag = FALSE;
+
   for (; cur_mem; cur_mem = cur_mem->next) {
+    unsigned long org_num = vec_num(RC_EXPANDED(rc));
 
     /* 代表子膜に対して再帰する */
     if (expand_inner(rc, cur_mem->child_head)) {
       ret_flag = TRUE;
     }
 
-    if (cur_mem->is_activated && react_all_rulesets(rc, cur_mem)) {
+    if (lmn_mem_is_active(cur_mem) && react_all_rulesets(rc, cur_mem)) {
       ret_flag = TRUE;
     }
 
-    if(!ret_flag){
-      cur_mem->is_activated = FALSE;
+    if (org_num == vec_num(RC_EXPANDED(rc))) {
+      /* 状態が一つも生成されなかった */
+      lmn_mem_set_active(cur_mem, FALSE);
     }
   }
   return ret_flag;
@@ -139,7 +145,7 @@ static BOOL expand_inner(struct ReactCxt *rc,
  * nondeterministic execution
  * 深さ優先で全実行経路を取得する
  */
-static void nd_loop(State *init_state) {
+static void nd_loop(StateSpace states, State *init_state) {
   Vector *stack;
   unsigned long i;
   
@@ -160,13 +166,13 @@ static void nd_loop(State *init_state) {
       continue;
     }      
 
-    expanded = nd_expand(s); /* 展開先をexpandedに格納する */
+    expanded = nd_expand(states, s); /* 展開先をexpandedに格納する */
     expanded_num = vec_num(expanded);
 
     state_succ_init(s, vec_num(expanded));
     for (i = 0; i < expanded_num; i++) {
       State *src_succ = (State *)vec_get(expanded, i);
-      State *succ = insert_state(States, src_succ);
+      State *succ = insert_state(states, src_succ);
 
       if (succ == src_succ) { /* succが状態空間に追加された */
         vec_push(stack, (LmnWord)src_succ);
@@ -189,7 +195,7 @@ void run_nd(LmnRuleSet start_ruleset)
 {
   LmnMembrane *mem;
   struct ReactCxt init_rc;
-
+  
   stand_alone_react_cxt_init(&init_rc);
 
   /* make global root membrane */
@@ -203,29 +209,25 @@ void run_nd(LmnRuleSet start_ruleset)
   do_nd(mem);
 
 #ifdef PROFILE
-  calc_hash_conflict(States);
+  calc_hash_conflict(states);
 #endif
 
-  /* finalize */
-  state_space_free(States);
-  
-  free_por_vars();
 }
 
 static void do_nd(LmnMembrane *world_mem)
 {
   State *initial_state;
-
+  StateSpace states = state_space_make();
+  
   /**
    * initialize containers
    */
-  States = st_init_table(&type_statehash);
   init_por_vars();
 
   /* 初期プロセスから得られる初期状態を生成 */
   initial_state = state_make_for_nd(world_mem, ANONYMOUS);
 /*   mc_flags.initial_state = initial_state; */
-  st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
+  state_space_set_init_state(states, initial_state);
 
 /*   /\* --nd_dumpの実行 *\/ */
 /*   else if(lmn_env.nd_dump){ */
@@ -233,11 +235,15 @@ static void do_nd(LmnMembrane *world_mem)
 /*   } */
   /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
 /*   else{ */
-  nd_loop(initial_state);
-  dump_state_transition_graph(initial_state, stdout);
+  nd_loop(states, initial_state);
+  dump_state_transition_graph(states, stdout);
 /*   } */
  
-  fprintf(stdout, "# of States = %d\n", st_num(States));
+  fprintf(stdout, "# of States = %lu\n", state_space_num(states));
+
+  /* finalize */
+  free_por_vars();
+  state_space_free(states);
 }
 
 /**
@@ -283,15 +289,48 @@ static BOOL react_all_rulesets(struct ReactCxt *rc,
   return ok;
 }
 
+StateSpace state_space_make()
+{
+  struct StateSpace *ss = LMN_MALLOC(struct StateSpace);
+  ss->init_state = NULL;
+  ss->tbl = st_init_table(&type_statehash);
+  return ss;
+}
+
 void state_space_free(StateSpace states)
 {
   HashSet rm_tbl; /* LTLモデル検査モード時に二重解放を防止するため */
 
   hashset_init(&rm_tbl, 16);
-  st_foreach(states, kill_States_chains, (st_data_t)&rm_tbl);
+  st_foreach(states->tbl, kill_States_chains, (st_data_t)&rm_tbl);
   hashset_destroy(&rm_tbl);
-  st_free_table(states);
+  st_free_table(states->tbl);
+  LMN_FREE(states);
 }
+
+void state_space_set_init_state(StateSpace states, State* init_state)
+{
+  states->init_state = init_state;
+  st_insert(states->tbl, (st_data_t)init_state, (st_data_t)init_state);
+}
+
+State *state_space_init_state(StateSpace states)
+{
+  return states->init_state;
+}
+
+unsigned long state_space_num(StateSpace states)
+{
+  return st_num(states->tbl);
+}
+
+
+/* /\* 状態空間に状態sを追加する。すでに、状態空間内に状態sが存在した場合は、 */
+/*    追加せずにFALSEを返す *\/ */
+/* BOOL state_space_add(StateSpace states, State *s) */
+/* { */
+/*   return st_insert_new(states, (hash_data_t)s, (hash_data_t)s); */
+/* } */
 
 /**
  * 非決定実行 or LTLモデル検査終了後にStates内に存在するチェインをすべてfreeする
@@ -316,18 +355,44 @@ static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tb
 State *insert_state(StateSpace states, State *s)
 {
   State *t;
-  if (st_lookup(states, (st_data_t)s, (st_data_t *)&t)) {
+  if (st_lookup(states->tbl, (st_data_t)s, (st_data_t *)&t)) {
     return t;
   } else {
-    st_add_direct(states, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
+    st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
     return s;
   }
 }
 
-void dump_state_transition_graph(State *init_state, FILE *file)
+/* 状態空間内のsと等価な状態を返す。存在しない場合は、NULLを返す */
+State *state_space_get(const StateSpace states, State *s)
 {
-  fprintf(file, "init:%lu\n", (long unsigned int)init_state);
-  st_foreach(States, print_state_transition_graph, 0);
+  st_data_t t;
+  if (st_lookup(states->tbl, (st_data_t)s, &t)) {
+    return (State *)t;
+  } else {
+    return NULL;
+  }
+}
+
+void dump_state_transition_graph(StateSpace states, FILE *file)
+{
+  fprintf(file, "init:%lu\n", (long unsigned int)state_space_init_state(states));
+  st_foreach(states->tbl, print_state_transition_graph, 0);
   fprintf(file, "\n");
 }
 
+
+/**
+ * --ltl_nd時に使用．状態の名前（accept_s0など）を表示．
+ * 高階関数st_foreach(c.f. st.c)に投げて使用．
+ */
+void print_state_name(StateSpace states)
+{
+  st_foreach(states->tbl, print_state_name_f, 0);
+}
+
+static int print_state_name_f(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
+  State *tmp = (State *)state_ptr;
+  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
+  return ST_CONTINUE;
+}

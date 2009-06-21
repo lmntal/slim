@@ -1174,10 +1174,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       mp = lmn_mem_make(); /*lmn_new_mem(memf);*/
       lmn_mem_add_child_mem((LmnMembrane*)wt[parentmemi], mp);
       wt[newmemi] = (LmnWord)mp;
-      if (RC_GET_MODE(rc, REACT_ND)) { /* MC */
-        at[newmemi] = 0;
-        activate_ancestors(mp);
-      } else if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+      lmn_mem_set_active(mp, TRUE);
+      if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
         lmn_memstack_push(RC_MEMSTACK(rc), mp);
       }
       break;
@@ -1722,7 +1720,7 @@ EQGROUND_NEQGROUND_BREAK:
       LmnInstrVar memi;
       READ_VAL(LmnInstrVar, instr, memi);
 
-      if (((LmnMembrane *)wt[memi])->is_activated) {
+      if (!lmn_mem_is_active((LmnMembrane *)wt[memi])) {
         return FALSE;
       }
 

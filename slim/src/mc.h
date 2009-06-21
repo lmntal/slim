@@ -164,4 +164,6 @@ int mc_load_property(Automata *a, PVector *prop_defs);
 LMN_EXTERN void mc_explain_error(int error_id);
 LMN_EXTERN char *mc_error_msg(int error_id);
 
+void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms);
+
 #endif

@@ -105,6 +105,8 @@ LMN_EXTERN inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLi
 LMN_EXTERN inline unsigned int lmn_mem_count_descendants(LmnMembrane *mem);
 LMN_EXTERN inline unsigned int lmn_mem_count_children(LmnMembrane *mem);
 LMN_EXTERN inline LmnMembrane *lmn_mem_parent(LmnMembrane *mem);
+LMN_EXTERN inline void lmn_mem_set_active(LmnMembrane *mem, BOOL active);
+LMN_EXTERN inline BOOL lmn_mem_is_active(LmnMembrane *mem);
 
 
 /* 同型性判定 */

@@ -59,13 +59,13 @@ inline BOOL lmn_memstack_isempty(LmnMemStack memstack)
 inline void lmn_memstack_push(LmnMemStack memstack, LmnMembrane *mem)
 {
   vec_push(memstack, (LmnWord)mem);
-  mem->is_activated = TRUE;
+  lmn_mem_set_active(mem, TRUE);
 }
 
 inline LmnMembrane *lmn_memstack_pop(LmnMemStack memstack)
 {
   LmnMembrane *m = (LmnMembrane *)vec_pop(memstack);
-  m->is_activated = FALSE;
+  lmn_mem_set_active(m, FALSE);
   return m;
 }
 

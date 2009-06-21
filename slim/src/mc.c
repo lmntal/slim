@@ -63,10 +63,11 @@ static LmnMembrane *seed = NULL; /* root of second DFS */
 static int unset_snd_all(st_data_t _k, st_data_t s, st_data_t _a);
 static void violate(Vector *stack);
 static void exit_ltl_model_checking(void);
-static Vector *mc_expand(State *state, BYTE prop_state);
-static void do_mc(LmnMembrane *world_mem);
-static void ltl_search2(Vector *stack);
-static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a);
+static Vector *mc_expand(const StateSpace states,
+                         State *state,
+                         BYTE prop_state);
+static void do_mc(StateSpace states, LmnMembrane *world_mem);
+static void ltl_search2(StateSpace states, Vector *stack);
 
 void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
 {
@@ -225,7 +226,7 @@ int state_cmp(HashKeyType s1, HashKeyType s2) {
 inline void activate_ancestors(LmnMembrane *mem) {
   LmnMembrane *cur;
   for (cur=mem; cur; cur=cur->parent) {
-    cur->is_activated = TRUE;
+    lmn_mem_set_active(mem, TRUE);
   }
 }
 
@@ -311,7 +312,7 @@ char *mc_error_msg(int error_id)
  */
 
 /* nested(またはdouble)DFSにおける1段階目の実行 */
-void ltl_search1(LmnMembrane *global_root, Vector *stack)
+void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
 {
   unsigned int j, i, i_trans;
   State *s = (State *)vec_peek(stack);
@@ -321,7 +322,6 @@ void ltl_search1(LmnMembrane *global_root, Vector *stack)
 
 /*   printf("ltl search1, state: %p\n", s); */
   if (atmstate_is_end(property_automata_state)) {
-    printf("violate 0\n");
     violate(stack);
     unset_open((State *)vec_peek(stack));
     unset_fst((State *)vec_pop(stack));
@@ -353,7 +353,7 @@ void ltl_search1(LmnMembrane *global_root, Vector *stack)
        * が存在するものと考えてε遷移をさせ，受理頂点に次状態が存在しない場合でも受理サイクルを形成できるようにする．
        * (c.f. "The Spin Model Checker" pp.130-131)
        */
-      Vector *expanded = mc_expand(s, transition_next(transition));
+      Vector *expanded = mc_expand(states, s, transition_next(transition));
 
       if (vec_num(expanded) == 0) { /* stutter extension */
         /* グローバルルート膜のコピー */
@@ -381,14 +381,14 @@ void ltl_search1(LmnMembrane *global_root, Vector *stack)
        * expanded内のエントリーをすべてfreeする */
     for(j = 0; j < vec_num(expanded); j++) { /* for each (s,l,s') */
       State *ss = (State *)vec_get(expanded, j);
-      State *succ = insert_state(States, ss);
+      State *succ = insert_state(states, ss);
 
       if (succ == ss) {
         /* push とset を１つの関数にする */
         vec_push(stack, (vec_data_t)ss);
         set_open(ss); /* 状態ssがスタック上に存在する旨のフラグを立てる(POR用) */
         set_fst(ss);
-        ltl_search1(global_root, stack);
+        ltl_search1(states, global_root, stack);
       }
       else { /* contains */
         state_free(ss);
@@ -404,15 +404,14 @@ void ltl_search1(LmnMembrane *global_root, Vector *stack)
 
     set_snd(s);
     vec_push(stack, (LmnWord)s);
-    ltl_search2(stack);
+    ltl_search2(states, stack);
+    unset_snd(s);
     vec_pop(stack);
 
     /* reset hashset */
 #ifdef DEBUG
     fprintf(stdout, "reset States\n\n");
 #endif
-    /* EFFICIENCY: 状態全てに対して行っている。もっといい方法があるのでは？*/
-    st_foreach(States, unset_snd_all, 0);
     seed = NULL;
   }
 
@@ -432,7 +431,7 @@ void ltl_search1(LmnMembrane *global_root, Vector *stack)
  *  すなわち受理頂点から受理頂点へ至る閉路(受理サイクル)の存在を確認することで、
  *  与えられたLTL式を満足する実行経路が存在するか否かを判定する。
  */
-static void ltl_search2(Vector *stack)
+static void ltl_search2(StateSpace states, Vector *stack)
 {
   unsigned int i, j;
   State *s = (State *)vec_peek(stack);
@@ -479,19 +478,10 @@ static void ltl_search2(Vector *stack)
     /* second DFS で未訪問→再帰 */
     if(!is_snd(ss)) {
       set_snd(ss);
-      ltl_search2(stack);
+      ltl_search2(states, stack);
+      unset_snd(ss);
     }
   }
-}
-
-/**
- * 2nd DFSの結果受理頂点が見つかった際に，States上のすべてのエントリー(=状態)に立っている
- * 「2nd DFS実行時にチェックした受理頂点です」フラグを解除する．
- * 高階関数st_foreach(c.f. st.c)に投げて使用．
- */
-static int unset_snd_all(st_data_t _k, st_data_t s, st_data_t _a) {
-  unset_snd((State *)s);
-  return ST_CONTINUE;
 }
 
 static void violate(Vector *stack)
@@ -529,13 +519,15 @@ static void exit_ltl_model_checking()
   exit(0);
 }
 
-static Vector *mc_expand(State *state, BYTE prop_state)
+static Vector *mc_expand(const StateSpace states,
+                         State *state,
+                         BYTE prop_state)
 {
   Vector *r;
   unsigned long i, n;
 
-  if (lmn_env.por) r = ample(state);
-  else r = nd_expand(state);
+  if (lmn_env.por) r = ample(states, state);
+  else r = nd_expand(states, state);
 
   n = vec_num(r);
   /* 性質の状態を設定 */
@@ -549,8 +541,9 @@ static Vector *mc_expand(State *state, BYTE prop_state)
 void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
 {
   LmnMembrane *mem;
-
-  States = st_init_table(&type_statehash);
+  StateSpace states;
+  
+  states = state_space_make();
   init_por_vars();
 
   mc_data.property_automata = automata;
@@ -570,18 +563,18 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
   
   activate_ancestors(mem);
 
-  do_mc(mem);
+  do_mc(states, mem);
 
 #ifdef PROFILE
-  calc_hash_conflict(States);
+  calc_hash_conflict(states);
 #endif
 
   /* finalize */
-  state_space_free(States);
+  state_space_free(states);
   free_por_vars();
 }
 
-static void do_mc(LmnMembrane *world_mem)
+static void do_mc(StateSpace states, LmnMembrane *world_mem)
 {
   State *initial_state;
   Vector *stack;
@@ -590,7 +583,7 @@ static void do_mc(LmnMembrane *world_mem)
   initial_state = state_make(world_mem,
                              automata_get_init_state(mc_data.property_automata),
                              dummy_rule());
-  st_add_direct(States, (st_data_t)initial_state, (st_data_t)initial_state);
+  state_space_set_init_state(states, initial_state);
 
   stack = vec_make(1024);
   vec_push(stack, (LmnWord)initial_state);
@@ -598,26 +591,14 @@ static void do_mc(LmnMembrane *world_mem)
 
   /* LTLモデル検査 */
   set_fst(initial_state);
-  ltl_search1(world_mem, stack);
+  ltl_search1(states, world_mem, stack);
   fprintf(stdout, "no cycles found\n");
 
   if (lmn_env.ltl_nd){
-    dump_state_transition_graph(initial_state, stdout);
-    st_foreach(States, print_state_name, 0);
+    dump_state_transition_graph(states, stdout);
+    print_state_name(states);
   }
-  fprintf(stdout, "# of States = %d\n", st_num(States));
+  fprintf(stdout, "# of States = %d\n", state_space_num(states));
 
   vec_free(stack);
 }
-
-/**
- * --ltl_nd時に使用．状態の名前（accept_s0など）を表示．
- * 高階関数st_foreach(c.f. st.c)に投げて使用．
- */
-static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a)
-{
-  State *tmp = (State *)state_ptr;
-  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
-  return ST_CONTINUE;
-}
-

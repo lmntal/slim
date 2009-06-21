@@ -93,19 +93,29 @@ void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
   }
 }
 
-int lmn_mem_ruleset_num(LmnMembrane *mem)
+inline int lmn_mem_ruleset_num(LmnMembrane *mem)
 {
  return vec_num(&mem->rulesets);
 }
 
-LmnRuleSet lmn_mem_get_ruleset(LmnMembrane *mem, int i)
+inline LmnRuleSet lmn_mem_get_ruleset(LmnMembrane *mem, int i)
 {
   return (LmnRuleSet)vec_get(&mem->rulesets, i);
 }
 
-LmnMembrane *lmn_mem_parent(LmnMembrane *mem)
+inline LmnMembrane *lmn_mem_parent(LmnMembrane *mem)
 {
   return mem->parent;
+}
+
+inline void lmn_mem_set_active(LmnMembrane *mem, BOOL active)
+{
+  mem->is_activated = active;
+}
+
+inline BOOL lmn_mem_is_active(LmnMembrane *mem)
+{
+  return mem->is_activated;
 }
 
 /*----------------------------------------------------------------------

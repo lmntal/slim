@@ -53,7 +53,7 @@ Vector *ample_candidate; /* ample(s)の候補を管理するVector．本Vector�
 
 extern unsigned long next_strans_id;
 
-LMN_EXTERN Vector *ample(State *s);
+LMN_EXTERN Vector *ample(const StateSpace states, State *s);
 
 void init_por_vars(void);
 void free_por_vars(void);

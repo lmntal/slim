@@ -49,8 +49,8 @@
 
 unsigned long next_strans_id;
 
-LMN_EXTERN BOOL independency_check(State *s);
-LMN_EXTERN BOOL is_independent_of_ample(StateTransition *strans);
+static BOOL independency_check(const StateSpace states, State *s);
+static BOOL is_independent_of_ample(StateTransition *strans);
 /* LMN_EXTERN int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a); */
 /* LMN_EXTERN void dump__ample_candidate(void); */
 
@@ -89,7 +89,7 @@ void free_por_vars() {
  *
  * このC1の検査は，sを起点とするstate graph(の中で必要な部分)をBFSで構築しながら進めていく．
  */
-static BOOL check_C1(State *s) {
+static BOOL check_C1(const StateSpace states, State *s) {
 
   unsigned int i;
   State *ss;
@@ -114,7 +114,7 @@ static BOOL check_C1(State *s) {
 
     ss = strans->succ_state;
     if (!is_independency_checked(ss)) {
-      independency_check(ss);
+      independency_check(states, ss);
       for (i = 0; i < vec_num(&ss->successor); ++i) {
         strans2 = (StateTransition *)vec_get(&ss->successor, i);
         if (!vec_contains(ample_candidate, (LmnWord)strans2->id)) {
@@ -159,7 +159,7 @@ static BOOL check_C2(State *s) {
  * sで可能な遷移の内，ample_candidate内に含まれるIDを持つものによって
  * 行き着くStateがStack上に乗っているならば偽を返す(不完全な閉路形成の禁止)
  */
-static BOOL check_C3(State *s) {
+static BOOL check_C3(const StateSpace states, State *s) {
   unsigned int i;
   StateTransition *s2ss;
   State *ss;
@@ -170,9 +170,11 @@ static BOOL check_C3(State *s) {
       /* States_POR上に存在するss自体はStackに積まれていない．
        * (∵Stackに積まれているのはStates上に存在するStateのため)
        * ゆえに，ssに相当するStates上のStateがStack上に存在するか否かチェックする必要がある */
-      st_data_t ss_on_States;
-      if (st_lookup(States, (st_data_t)ss, (st_data_t *)&ss_on_States)) {
-        if (is_open((State *)ss_on_States)) {
+      State *ss_on_States;
+
+      if ((ss_on_States = state_space_get(states, ss))) {
+        if (ss_on_States != NULL &&
+            is_open((State *)ss_on_States)) {
           return FALSE;
         }
       }
@@ -184,7 +186,7 @@ static BOOL check_C3(State *s) {
 /**
  * 遷移stransがample(s)内のすべての遷移と互いに独立であれば真を返す
  */
-BOOL is_independent_of_ample(StateTransition *strans) {
+static BOOL is_independent_of_ample(StateTransition *strans) {
   unsigned int i;
   unsigned long id;
   st_data_t vec_independency;
@@ -271,7 +273,7 @@ static void expand_States_POR(State *s) {
   }
 }
 
-static void gen_successors(State *s)
+static void gen_successors(const StateSpace states, State *s)
 {
   Vector *expanded;
   Vector *succ_strans;
@@ -279,7 +281,7 @@ static void gen_successors(State *s)
   
   succ_strans = vec_make(32);
 
-  expanded = nd_expand(s);
+  expanded = nd_expand(states, s);
   expanded_num = vec_num(expanded);
   for (i = 0; i < expanded_num; i++) {
     vec_push(succ_strans,
@@ -321,7 +323,7 @@ static void gen_successors(State *s)
  *   独立性情報テーブル（independency_table）内に情報がPUSHされる．
  *   正常に独立性情報テーブルの拡張できたならばTRUEを返す．
  */
-BOOL independency_check(State *s) {
+static BOOL independency_check(const StateSpace states, State *s) {
 
   unsigned int i, j;
   
@@ -331,7 +333,7 @@ BOOL independency_check(State *s) {
   if (!is_expanded(s)) {
 
     /* sから直接遷移可能なすべての状態を生成すると共に，各状態への遷移StateTransitionを生成してVector succ_strans内に放り込む */
-    gen_successors(s);
+    gen_successors(states, s);
 
     /* s->successor[i]->idを独立性情報テーブル内に放り込んでいく
      * ここで放り込まれるidはまだ独立性情報テーブル内には存在しないはずのものである */
@@ -376,7 +378,7 @@ BOOL independency_check(State *s) {
 
     /* ssから可能な遷移および遷移先状態をすべて求める．
      * ただしこの段階では，ssからの各遷移に付与されたIDは仮のものである． */
-    gen_successors(ss);
+    gen_successors(states, ss);
   }
 
   /* sを起点とする遷移同士で独立な関係にあるものを調べ，独立性情報テーブルを更新する．
@@ -660,7 +662,7 @@ static void finalize_ample() {
   st_foreach(States_POR, destroy_tmp_state_graph, 0);
 }
 
-Vector *ample(State *s) {
+Vector *ample(const StateSpace states, State *s) {
   /* POR無効の場合は状態展開にexpand/1を用い，full-stateグラフを構築する */
   Vector *expanded;
     
@@ -670,7 +672,7 @@ Vector *ample(State *s) {
   vec_clear(ample_candidate);
 
   /* check C0: |en(s)|<=1 ならば，C0によりただちに ample(s)=en(s) と決定される */
-  if (!independency_check(s)) {
+  if (!independency_check(states, s)) {
     expanded = push_succstates_to_expanded(s);
     if (expanded == NULL) { lmn_fatal("unexpected"); }
     finalize_ample();
@@ -697,7 +699,7 @@ Vector *ample(State *s) {
     found_proper_candidate = FALSE;
     for (i = 0; i < vec_num(&s->successor); ++i) {
       vec_push(ample_candidate, (LmnWord)((StateTransition *)vec_get(&s->successor, i))->id);
-      if (check_C2(s) && check_C3(s)) {
+      if (check_C2(s) && check_C3(states, s)) {
         found_proper_candidate = TRUE;
         break;
       } else {
@@ -721,7 +723,7 @@ Vector *ample(State *s) {
      * C0に従い，en(s)を返して終了する．
      */
     if (vec_num(ample_candidate) == vec_num(&s->successor) ||
-        !check_C2(s) || !check_C3(s)) {
+        !check_C2(s) || !check_C3(states, s)) {
       expanded = push_succstates_to_expanded(s);
       if (expanded == NULL) { lmn_fatal("unexpected"); }
       finalize_ample();
@@ -735,7 +737,7 @@ Vector *ample(State *s) {
    * ここからは，sから始まるfull-stateグラフを対象にこれがC1を
    * 満足しているか否かチェックしていく．
    ******************************************************************/
-  if (!check_C1(s)) {
+  if (!check_C1(states, s)) {
     /* C1〜C3をすべて満足するample(s)が決定不能のため，C0に従いen(s)を返して終了する */
     expanded = push_succstates_to_expanded(s);
     if (expanded == NULL) { lmn_fatal("unexpected"); }
