@@ -922,7 +922,7 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
         LmnLinkAttr attr = LMN_SATOM_GET_ATTR(srcatom, i);
         LmnAtom a = LMN_SATOM_GET_LINK(srcatom, i);
         if (LMN_ATTR_IS_DATA(attr)) {
-          LmnAtom newargatom = lmn_copy_atom(a, attr);
+          LmnAtom newargatom = lmn_copy_data_atom(a, attr);
           newlink_symbol_and_something(newatom, i, newargatom, attr);
         } else if(hashtbl_contains(atoms, a)) {
           newlink_symbol_and_something(newatom, i, hashtbl_get(atoms, a), attr);

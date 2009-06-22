@@ -1,0 +1,211 @@
+
+{
+system_ruleset.
+
+/**
+ * H = '+'(A,B):
+ *
+ * H is bound to A+B
+ */
+H='+'(A, B) :- int(A),int(B),A+B=C | H=C.
+
+/**
+ * H = '-'(A,B):
+ *
+ * H is bound to A-B
+ */
+H='-'(A, B) :- int(A),int(B),A-B=C | H=C.
+
+/**
+ * H = '*'(A,B):
+ *
+ * H is bound to A*B
+ */
+H='*'(A, B) :- int(A),int(B),A*B=C | H=C.
+
+/**
+ * H = '/'(A,B):
+ *
+ * H is bound to A/B
+ */
+H='/'(A, B) :- int(A),int(B),A/B=C | H=C.
+
+/**
+ * H = mod(A,B):
+ *
+ * H is bound to A mod B
+ */
+H=mod(A, B) :- int(A),int(B),A mod B = C | H=C.
+
+/*
+ * H='>'(A,B):
+ *
+ * H is bound to true when A>B, false otherwise
+ */
+H='>'(A, B) :- int(A),int(B),A>B | H=true.
+H='>'(A, B) :- int(A),int(B),A=<B | H=false.
+
+/*
+ * H='<'(A,B):
+ *
+ * H is bound to true when A<B, false otherwise
+ */
+H='<'(A, B) :- int(A),int(B),A>=B | H=false.
+H='<'(A, B) :- int(A),int(B),A<B | H=true.
+
+/*
+ * H='>='(A,B):
+ *
+ * H is bound to true when A>=B, false otherwise
+ */
+H='>='(A, B) :- int(A),int(B),A>=B | H=true.
+H='>='(A, B) :- int(A),int(B),A<B | H=false.
+
+/*
+ * H='=<'(A,B):
+ *
+ * H is bound to true when A=<B, false otherwise
+ */
+H='=<'(A, B) :- int(A),int(B),A>B | H=false.
+H='=<'(A, B) :- int(A),int(B),A=<B | H=true.
+
+/*
+ * H='=='(A,B):
+ *
+ * H is bound to true when A==B, false otherwise
+ */
+H='=='(A, B) :- int(A),int(B),A=B | H=true.
+H='=='(A, B) :- int(A),int(B),A-B>0 | H=false.
+H='=='(A, B) :- int(A),int(B),A-B<0 | H=false.
+
+/* 
+ * H='!='(A,B):
+ *
+ * H is bound to true when A!=B, false otherwise
+ */
+H='!='(A, B) :- int(A),int(B),A=B | H=false.
+H='!='(A, B) :- int(A),int(B),A-B>0 | H=true.
+H='!='(A, B) :- int(A),int(B),A-B<0 | H=true.
+
+/*
+ * H='<<'(A,B):
+ *
+ * H is bound to A shift left by N bits
+ */
+H = '<<'(A, N) :- int(A),int(N),N>0 | H='<<'(A*2,N-1).
+H = '<<'(A, 0) :- H=A.
+
+/*
+ * H='>>'(A,B):
+ *
+ * H is bound to A shift right by N bits
+ */
+H = '>>'(A, N) :- int(A),int(N),N>0 | H='>>'(A/2,N-1).
+H = '>>'(A, 0) :- H=A.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+/**
+ * H = '+.'(A,B):
+ *
+ * H is bound to A+B
+ */
+H='+.'(A, B) :- float(A),float(B),A+.B=C | H=C.
+
+/**
+ * H = '-'(A,B):
+ *
+ * H is bound to A-B
+ */
+H='-.'(A, B) :- float(A),float(B),A-B=C | H=C.
+
+/**
+ * H = '*.'(A,B):
+ *
+ * H is bound to A*B
+ */
+H='*.'(A, B) :- float(A),float(B),A*B=C | H=C.
+
+/**
+ * H = '/'(A,B):
+ *
+ * H is bound to A/B
+ */
+H='/'(A, B) :- float(A),float(B),A/B=C | H=C.
+
+/**
+ * H = mod(A,B):
+ *
+ * H is bound to A mod B
+ */
+H=mod(A, B) :- float(A),float(B),A mod B = C | H=C.
+
+/*
+ * H='>'(A,B):
+ *
+ * H is bound to true when A>B, false otherwise
+ */
+H='>'(A, B) :- float(A),float(B),A>B | H=true.
+H='>'(A, B) :- float(A),float(B),A=<B | H=false.
+
+/*
+ * H='<'(A,B):
+ *
+ * H is bound to true when A<B, false otherwise
+ */
+H='<'(A, B) :- float(A),float(B),A>=B | H=false.
+H='<'(A, B) :- float(A),float(B),A<B | H=true.
+
+/*
+ * H='>='(A,B):
+ *
+ * H is bound to true when A>=B, false otherwise
+ */
+H='>='(A, B) :- float(A),float(B),A>=B | H=true.
+H='>='(A, B) :- float(A),float(B),A<B | H=false.
+
+/*
+ * H='=<'(A,B):
+ *
+ * H is bound to true when A=<B, false otherwise
+ */
+H='=<'(A, B) :- float(A),float(B),A>B | H=false.
+H='=<'(A, B) :- float(A),float(B),A=<B | H=true.
+
+/*
+ * H='=='(A,B):
+ *
+ * H is bound to true when A==B, false otherwise
+ */
+H='=='(A, B) :- float(A),float(B),A=B | H=true.
+H='=='(A, B) :- float(A),float(B),A-B>0 | H=false.
+H='=='(A, B) :- float(A),float(B),A-B<0 | H=false.
+
+/* 
+ * H='!='(A,B):
+ *
+ * H is bound to true when A!=B, false otherwise
+ */
+H='!='(A, B) :- float(A),float(B),A=B | H=false.
+H='!='(A, B) :- float(A),float(B),A-B>0 | H=true.
+H='!='(A, B) :- float(A),float(B),A-B<0 | H=true.
+
+/*
+ * H='<<'(A,B):
+ *
+ * H is bound to A shift left by N bits
+ */
+H = '<<'(A, N) :- float(A),float(N),N>0 | H='<<'(A*2,N-1).
+H = '<<'(A, 0) :- H=A.
+
+/*
+ * H='>>'(A,B):
+ *
+ * H is bound to A shift right by N bits
+ */
+H = '>>'(A, N) :- float(A),float(N),N>0 | H='>>'(A/2,N-1).
+H = '>>'(A, 0) :- H=A.
+
+}.

@@ -223,7 +223,8 @@ void run_nd(LmnRuleSet start_ruleset)
 
   dump_state_transition_graph(states, stdout);
   fprintf(stdout, "# of States = %lu\n", state_space_num(states));
-  
+
+  lmn_mem_drop(mem);
   lmn_mem_free(mem);
   state_space_free(states);
 

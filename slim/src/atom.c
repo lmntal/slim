@@ -72,7 +72,8 @@ inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr)
     return atom;
   case LMN_DBL_ATTR:
     {
-      double *d = LMN_MALLOC(double);
+      double *d;
+      LMN_COPY_DBL_ATOM(d, atom);
       *d = *(double*)atom;
       return LMN_ATOM(d);
     }

@@ -785,6 +785,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         }
 
         /* copymapの情報を基に変数配列を書換える */
+        /* TODO: wt_sizeまでループを回さずにすませられないか */
         for (i = 0; i < wt_size; i++) {
           atcp[i] = at[i];
           if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
@@ -795,6 +796,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           }
           else if(wt[i] == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
             wtcp[i] = (LmnWord)tmp_global_root;
+          }
+          else if (at[i] == LMN_DBL_ATTR) {
+            LMN_COPY_DBL_ATOM(wtcp[i], wt[i]);
           }
         }
         hashtbl_free(copymap);

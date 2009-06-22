@@ -203,6 +203,12 @@ LMN_EXTERN inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
                                         LmnAtom atom2, LmnLinkAttr attr2);
 
+#define LMN_COPY_DBL_ATOM(dest, src) \
+  do { \
+    (dest) = LMN_ATOM(LMN_MALLOC(double));     \
+    *((double *)dest) = *(double*)(src);       \
+  } while (0)
+
 /*----------------------------------------------------------------------
  * allocation
  */
