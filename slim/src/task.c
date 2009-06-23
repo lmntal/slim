@@ -1789,7 +1789,7 @@ EQGROUND_NEQGROUND_BREAK:
       LmnInstrVar memi;
       READ_VAL(LmnInstrVar, instr, memi);
 
-      if (!lmn_mem_is_active((LmnMembrane *)wt[memi])) {
+      if (lmn_mem_is_active((LmnMembrane *)wt[memi])) {
         return FALSE;
       }
 
