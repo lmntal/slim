@@ -71,6 +71,7 @@ void state_space_set_init_state(StateSpace states, State* init_state);
 void state_space_add_end_state(StateSpace states, State *s);
 const Vector *state_space_end_states(StateSpace states);
 void state_space_remove(const StateSpace states, State *s);
+st_table_t state_space_tbl(StateSpace states);
 
 void dump_state_transition_graph(StateSpace states, FILE *file);
 void print_state_name(StateSpace states);

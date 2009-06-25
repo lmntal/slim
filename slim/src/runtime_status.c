@@ -40,6 +40,7 @@
 #include <time.h>
 #include "runtime_status.h"
 #include "mc.h"
+#include "nd.h"
 
 struct RuntimeStatus {
   unsigned long atom_num;             /* # of atoms */
@@ -250,14 +251,14 @@ static int accum_f(st_data_t hash_value, st_data_t num, st_data_t tbl_)
   return ST_CONTINUE;
 }
 
-void calc_hash_conflict(st_table_t states)
+void calc_hash_conflict(StateSpace states)
 {
   st_table_t hash_to_values;
 
   hash_to_values = st_init_numtable();
 
   /* hash_valueはハッシュ値とそのハッシュ値を持つ状態の数表を作る */
-  st_foreach(states, dispersal_f, (st_data_t)hash_to_values);
+  st_foreach(state_space_tbl(states), dispersal_f, (st_data_t)hash_to_values);
   /* conflict数とconflictしているハッシュ値の種類を集計 */
   st_foreach(hash_to_values, accum_f, (st_data_t)runtime_status.hash_conflict_tbl);
 

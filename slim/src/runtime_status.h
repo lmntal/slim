@@ -42,6 +42,7 @@
 
 #include "stdio.h"
 #include "st.h"
+#include "nd.h"
 
 void runtime_status_init(void);
 void runtime_status_finalize(void);
@@ -56,7 +57,7 @@ void status_finish_state_hash_calc(void);
 void status_start_mem_equals_calc(void);
 void status_finish_mem_equals_calc(void);
 void output_runtime_status(FILE *f);
-void calc_hash_conflict(st_table_t states);
+void calc_hash_conflict(StateSpace states);
 void output_hash_conflict(FILE *f);
 void status_start_running(void);
 void status_finish_running(void);

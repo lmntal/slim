@@ -397,6 +397,11 @@ void state_space_remove(const StateSpace states, State *s)
   st_delete(states->tbl, (st_data_t)s, 0);
 }
 
+st_table_t state_space_tbl(StateSpace states)
+{
+  return states->tbl;
+}
+
 void dump_state_transition_graph(StateSpace states, FILE *file)
 {
   fprintf(file, "init:%lu\n", (long unsigned int)state_space_init_state(states));
