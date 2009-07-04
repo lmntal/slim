@@ -452,7 +452,7 @@ static BOOL dump_atom_args(LmnPort port,
 {
 
   int i;
-  int limit = LMN_SATOM_GET_ARITY(atom);
+  int limit = LMN_SATOM_GET_LINK_NUM(atom);
 
   if (call_depth > 0) limit--;
 
