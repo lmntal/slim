@@ -105,14 +105,17 @@ LmnPort lmn_port_copy(LmnPort port, BOOL owner)
 {
   LmnPort new_port = port_copy_sub(port);
   new_port->owner = owner && LMN_PORT_OWNER(port);
-  if (new_port->owner) port->owner = FALSE;
   
   switch (LMN_PORT_TYPE(port)) {
   case LMN_PORT_FILE:
+    if (new_port->owner) port->owner = FALSE;
     break;
   case LMN_PORT_OSTR:
+    new_port->data = lmn_string_copy(LMN_STRING(port->data));
+    port->owner = TRUE;
     break;
   case LMN_PORT_ISTR:
+    if (new_port->owner) port->owner = FALSE;
     break;
   }
   return new_port;
@@ -177,7 +180,6 @@ LmnPort lmn_make_output_string_port()
 
   port->data = lmn_string_make_empty();
   port->owner = TRUE;
-
   return port;
 }
 
@@ -385,7 +387,8 @@ int port_puts(LmnPort port, LmnString str)
  * +a0: ポート
  * -a1: ポートを返す
  */
-void cb_port_close(LmnMembrane *mem,
+void cb_port_close(ReactCxt rc,
+                   LmnMembrane *mem,
                    LmnAtom a0, LmnLinkAttr t0,
                    LmnAtom a1, LmnLinkAttr t1)
 {
@@ -402,7 +405,8 @@ void cb_port_close(LmnMembrane *mem,
  *
  * +a0: ポート
  */
-void cb_port_free(LmnMembrane *mem,
+void cb_port_free(ReactCxt rc,
+                  LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0)
 {
   lmn_port_free(LMN_PORT(a0));
@@ -563,7 +567,8 @@ void cb_port_read_line(ReactCxt rc,
  %
  * -a0: 出力文字列ポート
  */
-void cb_make_output_string(LmnMembrane *mem,
+void cb_make_output_string(ReactCxt rc,
+                           LmnMembrane *mem,
                            LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPort port = lmn_make_output_string_port();
@@ -579,7 +584,8 @@ void cb_make_output_string(LmnMembrane *mem,
  * +a0: 文字列
  * -a1: 入力文字列ポート
  */
-void cb_make_input_string(LmnMembrane *mem,
+void cb_make_input_string(ReactCxt rc,
+                          LmnMembrane *mem,
                           LmnAtom a0, LmnLinkAttr t0,
                           LmnAtom a1, LmnLinkAttr t1)
 {
@@ -598,7 +604,8 @@ void cb_make_input_string(LmnMembrane *mem,
  * -a1: ポートを返す
  * -a2: 文字列
  */
-void cb_port_output_string(LmnMembrane *mem,
+void cb_port_output_string(ReactCxt rc,
+                           LmnMembrane *mem,
                            LmnAtom a0, LmnLinkAttr t0,
                            LmnAtom a1, LmnLinkAttr t1,
                            LmnAtom a2, LmnLinkAttr t2)
@@ -628,7 +635,7 @@ void cb_port_output_string(LmnMembrane *mem,
 
 void *sp_cb_port_copy(void *data)
 {
-  return lmn_port_copy(LMN_PORT(data), FALSE);
+  return lmn_port_copy(LMN_PORT(data), TRUE);
 }
 
 void sp_cb_port_free(void *data)
