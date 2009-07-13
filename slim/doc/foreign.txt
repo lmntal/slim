@@ -28,7 +28,8 @@ LMNtalプログラムの実行中に、SLIMから呼び出されるコールバ�
 いくつも作成することができる。
 
 関数は以下の形式で記述する。
- void 関数名(LmnMembrane mem,
+ void 関数名(ReactCxt rc,
+             LmnMembrane mem,
              LmnAtom atom1, LmnLinkAttr attr1,
              LmnAtom atom2, LmnLinkAttr attr2,
                       ・・・
@@ -43,8 +44,9 @@ LMNtalプログラムの実行中に、SLIMから呼び出されるコールバ�
 
 | 引数番号 | 型          | 意味               |h
 | 1        | LmnMembrane | 関数を呼び出した際の所属膜 |
-| 2N       | LmnAtom     | 第N引数のリンク先のアトム(or整数などのデータ)  |
-| 2N+1     | LmnAttr     | 第N引数のリンク先の属性  |
+| 2        | LmnMembrane | 関数を呼び出した際の所属膜 |
+| 2N+1     | LmnAtom     | 第N引数のリンク先のアトム(or整数などのデータ)  |
+| 2N+2     | LmnAttr     | 第N引数のリンク先の属性  |
 
 引数で渡されたリンクは、関数内でリンク先のプロセスの解放や、リンクの接
 続を行わなければ、リンクの一方がどこにも接続されていない状態になってし
@@ -53,7 +55,7 @@ LMNtalプログラムの実行中に、SLIMから呼び出されるコールバ�
 例:
 
  /* 第一引数のアトムの名前を出力する */
- void print_any(LmnMembrane *mem, LmnWord a0, LmnLinkAttr t0)
+ void print_any(ReactCxt rc, LmnMembrane *mem, LmnWord a0, LmnLinkAttr t0)
  {
    if (LMN_ATTR_IS_DATA(t0)) {
      switch (t0) {
