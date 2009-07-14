@@ -138,7 +138,7 @@ static int parse_options(int argc, char *argv[])
     case 't': /* trace mode */
       lmn_env.trace = TRUE;
       break;
-    case 'p': //gocho
+    case 'p':
 #ifdef PROFILE
       if (optarg) {
         if (isdigit(optarg[0])) {
