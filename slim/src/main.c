@@ -126,7 +126,7 @@ static int parse_options(int argc, char *argv[])
     {0, 0, 0, 0}
   };
 
-  while ((c = getopt_long(argc, argv, "+dtI:O::", long_options, &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "+dtI:Op::", long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
       printf("log_options entries must have positive 4th member.\n");
@@ -138,6 +138,24 @@ static int parse_options(int argc, char *argv[])
     case 't': /* trace mode */
       lmn_env.trace = TRUE;
       break;
+    case 'p': //gocho
+#ifdef PROFILE
+      if (optarg) {
+        if (isdigit(optarg[0])) {
+          int l = optarg[0] - '0';
+          lmn_env.profile_level = l <= 2 ? l : 2;
+        } else {
+          fprintf(stderr, "invalid argument: -p %s\n", optarg);
+          exit(EXIT_FAILURE);
+        }
+      } else {
+          lmn_env.profile_level = 1;
+      }
+      fprintf(stdout, "Profile Level %d\n", lmn_env.profile_level);
+      break;
+#else
+      usage(); break;
+#endif
     case 1000: version(); break;
     case 1001: /* help */ /*FALLTHROUGH*/
     case '?': usage(); break;
@@ -231,6 +249,7 @@ static void init_env(void)
   lmn_env.por = FALSE;
   lmn_env.translate = FALSE;
   lmn_env.optimization_level = 0;
+  lmn_env.profile_level = 0;
   lmn_env.load_path_num = 0;
   lmn_env.automata_file = NULL;
   lmn_env.propositional_symbol = NULL;
@@ -261,7 +280,7 @@ static void init_internal(void)
   dumper_init();
   string_init();
   port_init();
-  
+
 #ifdef PROFILE
   runtime_status_init();
 #endif
@@ -272,7 +291,7 @@ static void finalize(void)
   port_finalize();
   string_finalize();
   dumper_finalize();
-  
+
   sym_tbl_destroy();
   lmn_functor_tbl_destroy();
   destroy_rules();

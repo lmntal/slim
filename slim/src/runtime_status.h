@@ -43,6 +43,7 @@
 #include "stdio.h"
 #include "st.h"
 #include "nd.h"
+#include "rule.h"
 
 void runtime_status_init(void);
 void runtime_status_finalize(void);
@@ -61,5 +62,14 @@ void calc_hash_conflict(StateSpace states);
 void output_hash_conflict(FILE *f);
 void status_start_running(void);
 void status_finish_running(void);
+
+void status_start_rule(void);
+void status_finish_rule(LmnRule rule, BOOL result);
+void status_rule_output(LmnRule rule);
+void status_backtrack_counter(void);
+void status_start_expand();
+void status_finish_expand();
+void status_start_commit();
+void status_finish_commit();
 
 #endif

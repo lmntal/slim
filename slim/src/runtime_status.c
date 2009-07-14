@@ -41,6 +41,7 @@
 #include "runtime_status.h"
 #include "mc.h"
 #include "nd.h"
+#include "rule.h"
 
 struct RuntimeStatus {
   unsigned long atom_num;             /* # of atoms */
@@ -64,6 +65,19 @@ struct RuntimeStatus {
   unsigned long mem_equals_num;      /* # of mem_equals call */
   double total_mem_equals_time;      /* total time of mem equals */
   clock_t tmp_mem_equals_start;
+
+  time_t time1, time2;               /* clock()のオーバーフロー時に使う */
+  double total_expand_time;         /* 状態展開時間 */
+  double total_commit_time;
+  clock_t tmp_expand_start;
+  clock_t tmp_commit_start;
+  unsigned long tmp_rule_trial_num;
+  unsigned long tmp_rule_apply_num;
+  unsigned long tmp_rule_backtrack_num;
+  unsigned long total_rule_trial_num;
+  unsigned long total_rule_apply_num;
+  unsigned long total_rule_backtrack_num;
+
 } runtime_status;
 
 static void runtime_status_update(void);
@@ -88,6 +102,15 @@ void runtime_status_init()
   runtime_status.mhash_call_num = 0;
   runtime_status.mem_equals_num = 0;
   runtime_status.total_mem_equals_time = 0.0;
+
+  runtime_status.total_expand_time        = 0.0;
+  runtime_status.total_commit_time        = 0.0;
+  runtime_status.tmp_rule_trial_num       = 0;
+  runtime_status.tmp_rule_apply_num       = 0;
+  runtime_status.tmp_rule_backtrack_num   = 0;
+  runtime_status.total_rule_trial_num     = 0;
+  runtime_status.total_rule_apply_num     = 0;
+  runtime_status.total_rule_backtrack_num = 0;
 }
 
 void runtime_status_finalize()
@@ -98,11 +121,13 @@ void runtime_status_finalize()
 void status_start_running()
 {
   runtime_status.start_time = clock();
+  time(&(runtime_status.time1));
 }
 
 void status_finish_running()
 {
   runtime_status.end_time = clock();
+  time(&(runtime_status.time2));
 }
 
 void status_add_atom_space(unsigned long size)
@@ -147,7 +172,7 @@ void status_remove_membrane_space(unsigned long size)
 void status_add_hashtbl_space(unsigned long size)
 {
   runtime_status.hashtbl_space += size;
-  if (runtime_status.hashtbl_space > runtime_status.peak_hashtbl_space) 
+  if (runtime_status.hashtbl_space > runtime_status.peak_hashtbl_space)
     runtime_status.peak_hashtbl_space = runtime_status.hashtbl_space;
 
   runtime_status_update();
@@ -164,7 +189,7 @@ static void runtime_status_update()
     runtime_status.atom_space
     + runtime_status.membrane_space
     + runtime_status.hashtbl_space;
-  
+
   if (runtime_status.total_state_space > runtime_status.peak_total_state_space)
     runtime_status.peak_total_state_space = runtime_status.total_state_space;
 }
@@ -195,10 +220,14 @@ void status_finish_mem_equals_calc()
 
 void output_runtime_status(FILE *f)
 {
+  double tmp_total_time =
+    (runtime_status.end_time - runtime_status.start_time)/(double)CLOCKS_PER_SEC;
+  if(tmp_total_time < 0.0) {
+    difftime(runtime_status.time2, runtime_status.time1);
+  }
   fprintf(f, "\n== Runtime Status ==========================================\n");
 
-  fprintf(f, "%-30s: %10.2lf\n", "running time (sec)",
-          (runtime_status.end_time - runtime_status.start_time)/(double)CLOCKS_PER_SEC);
+  fprintf(f, "%-30s: %10.2lf\n", "running time (sec)", tmp_total_time);
   fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
   fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
          runtime_status.peak_membrane_num);
@@ -210,22 +239,59 @@ void output_runtime_status(FILE *f)
          runtime_status.peak_hashtbl_space);
   fprintf(f, "%-30s: %10lu\n", "rough peak state space (Bytes)",
           runtime_status.peak_total_state_space);
-  fprintf(f, "%-30s: %10lu\n", "# of mhash calls",
-          runtime_status.mhash_call_num);
-  fprintf(f, "%-30s: %10.2lf\n", "total hash time (sec)",
-          runtime_status.total_state_hash_time);
-  fprintf(f, "%-30s: %10lu\n", "# of mem_equals calls",
-          runtime_status.mem_equals_num);
-  fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
-          runtime_status.total_mem_equals_time);
+
+  if (lmn_env.nd || lmn_env.ltl) {
+    fprintf(f, "%-30s: %10lu\n", "# of mhash calls",
+            runtime_status.mhash_call_num);
+    fprintf(f, "%-30s: %10.2lf\n", "total hash time (sec)",
+            runtime_status.total_state_hash_time);
+    fprintf(f, "%-30s: %10lu\n", "# of mem_equals calls",
+            runtime_status.mem_equals_num);
+    fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
+            runtime_status.total_mem_equals_time);
+  }
   fprintf(f, "============================================================\n");
+
+  if (lmn_env.profile_level >= 1) {
+    fprintf(f, "\n== More Status =============================================\n");
+    fprintf(f, "%-30s: %10lu\n", "# of rule trial",
+            runtime_status.total_rule_trial_num + runtime_status.total_rule_backtrack_num);
+    fprintf(f, "%-30s: %10lu\n", "# of rule apply",
+            runtime_status.total_rule_apply_num);
+    fprintf(f, "%-30s: %10lu\n", "# of backtrack",
+            runtime_status.total_rule_backtrack_num);
+    if (lmn_env.nd || lmn_env.ltl) {
+      fprintf(f, "%-30s: %10.2lf \n", "total expand time (sec)",
+              runtime_status.total_expand_time);
+      fprintf(f, "%-30s: %10.2lf \n", " --part of mem-copy (sec)",
+              runtime_status.total_commit_time);
+      fprintf(f, "%-30s: %10.2lf \n", " --else (sec)",
+              runtime_status.total_expand_time - runtime_status.total_commit_time);
+    }
+    fprintf(f,   "============================================================\n");
+    if (lmn_env.profile_level >= 2) {
+      fprintf(f, "\n== Detail: Rule Status =====================================\n");
+      lmn_rule_show_detail(f);
+    }
+    if(lmn_env.nd || lmn_env.ltl){
+      fprintf(f, "\n== Time Rate ===============================================\n");
+      fprintf(f, "%-30s: %10.2lf(100%%)\n", "running time (sec)", tmp_total_time);
+      fprintf(f, "%-30s: %10.1lf%%\n", "total hash time",
+              (runtime_status.total_state_hash_time / tmp_total_time)*100);
+      fprintf(f, "%-30s: %10.1lf%%\n", "total mem_equals time",
+              (runtime_status.total_mem_equals_time / tmp_total_time)*100);
+      fprintf(f, "%-30s: %10.1lf%%\n", "total expand time",
+              (runtime_status.total_expand_time     / tmp_total_time)*100);
+      fprintf(f, "============================================================\n");
+    }
+  }
 }
 
 static int dispersal_f(st_data_t key, st_data_t s_, st_data_t tbl_)
 {
   st_table_t tbl = (st_table_t)tbl_;
   State *s = (State*)s_;
-  
+
   int n;
   if (!st_lookup((st_table_t)tbl, (st_data_t)s->hash, (st_data_t*)&n)) {
     n = 0;
@@ -240,7 +306,7 @@ static int dispersal_f(st_data_t key, st_data_t s_, st_data_t tbl_)
 static int accum_f(st_data_t hash_value, st_data_t num, st_data_t tbl_)
 {
   st_table_t hash_to_values = (st_table_t)tbl_;
-  
+
   int n;
   if (!st_lookup((st_table_t)hash_to_values, (st_data_t)num, (st_data_t*)&n)) {
     n = 0;
@@ -285,4 +351,64 @@ void output_hash_conflict(FILE *f)
   st_foreach(runtime_status.hash_conflict_tbl, dispersal_print_f, (st_data_t)f);
   fprintf(f, "----------------\n");
   fprintf(f, "============================================================\n");
+}
+
+void status_start_rule()
+{
+  runtime_status.tmp_rule_trial_num     = 1;
+  runtime_status.tmp_rule_apply_num     = 0;
+  runtime_status.tmp_rule_backtrack_num = 0;
+}
+
+void status_finish_rule(LmnRule rule, BOOL result)
+{
+  unsigned long tmp_ap, tmp_tr, tmp_ba;
+  if(result && !(lmn_env.nd || lmn_env.ltl)) {
+  runtime_status.tmp_rule_apply_num = 1; /* for tracer only */
+  }
+  tmp_ap = runtime_status.tmp_rule_apply_num;
+  tmp_tr = runtime_status.tmp_rule_trial_num;
+  tmp_ba = runtime_status.tmp_rule_backtrack_num;
+  runtime_status.total_rule_apply_num     += tmp_ap;
+  runtime_status.total_rule_trial_num     += tmp_tr;
+  runtime_status.total_rule_backtrack_num += tmp_ba;
+  if(lmn_env.profile_level >= 2) {
+    lmn_rule_profile(rule, tmp_ap, tmp_tr, tmp_ba);
+  }
+}
+
+/* for Tracer only */
+void status_rule_output(LmnRule rule) {
+  fprintf(stdout,  "   %5s %5lu %5lu %5lu\n", lmn_id_to_name(lmn_rule_get_name(rule)),
+      runtime_status.tmp_rule_apply_num,
+      runtime_status.tmp_rule_trial_num + runtime_status.tmp_rule_backtrack_num,
+      runtime_status.tmp_rule_backtrack_num);
+}
+
+void status_backtrack_counter()
+{
+  runtime_status.tmp_rule_backtrack_num++;
+}
+
+void status_start_commit()
+{
+  runtime_status.tmp_rule_apply_num++;
+  runtime_status.tmp_commit_start = clock();
+}
+
+void status_finish_commit()
+{
+  runtime_status.total_commit_time +=
+    (clock() - runtime_status.tmp_commit_start) / (double)CLOCKS_PER_SEC;
+}
+
+void status_start_expand()
+{
+  runtime_status.tmp_expand_start = clock();
+}
+
+void status_finish_expand()
+{
+  runtime_status.total_expand_time +=
+    (clock() - runtime_status.tmp_expand_start) / (double)CLOCKS_PER_SEC;
 }

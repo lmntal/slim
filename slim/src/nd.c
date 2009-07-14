@@ -41,6 +41,9 @@
 #include "por.h"
 #include "task.h"
 #include "dumper.h"
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
 
 struct StateSpace {
   State *init_state;
@@ -64,16 +67,24 @@ static int print_state_name_f(st_data_t _k, st_data_t state_ptr, st_data_t _a);
 Vector *nd_expand(const StateSpace states, State *state)
 {
   Vector *r;
+#ifdef PROFILE
+  status_start_expand();
+#endif
 
   if (lmn_env.por) { r = ample(states, state); }
   else  {
     struct ReactCxt rc;
-  
+
     nd_react_cxt_init(&rc, DEFAULT_STATE_ID);
     RC_SET_GROOT_MEM(&rc, state_mem(state));
     r = expand_sub(&rc, state_mem(state));
     nd_react_cxt_destroy(&rc);
   }
+
+#ifdef PROFILE
+  status_finish_expand();
+#endif
+
   return r;
 }
 
@@ -83,7 +94,7 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
   Vector *expanded_roots;
   Vector *expanded;
   st_table *s;
-  
+
   expand_inner(rc, cur_mem);
   expanded_roots = RC_EXPANDED(rc);
   s = st_init_table(&type_memhash);
@@ -148,23 +159,23 @@ static BOOL expand_inner(struct ReactCxt *rc,
 static void nd_loop(StateSpace states, State *init_state) {
   Vector *stack;
   unsigned long i;
-  
+
   stack = vec_make(2048);
   vec_push(stack, (LmnWord)init_state);
 
   while (vec_num(stack) != 0) {
     /* 展開元の状態。popはしないでsuccessorの展開が終わるまで
        スタックに積んでおく */
-    State *s = (State *)vec_peek(stack); 
+    State *s = (State *)vec_peek(stack);
     Vector *expanded;
     unsigned long expanded_num;
-    
+
     if (is_expanded(s)) {
       /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
       vec_pop(stack);
       unset_open(s);
       continue;
-    }      
+    }
 
     expanded = nd_expand(states, s); /* 展開先をexpandedに格納する */
     expanded_num = vec_num(expanded);
@@ -172,7 +183,7 @@ static void nd_loop(StateSpace states, State *init_state) {
     if (expanded_num == 0) {
       state_space_add_end_state(states, s);
     }
-    
+
     state_succ_init(s, vec_num(expanded));
     for (i = 0; i < expanded_num; i++) {
       State *src_succ = (State *)vec_get(expanded, i);
@@ -200,7 +211,7 @@ void run_nd(LmnRuleSet start_ruleset)
   LmnMembrane *mem;
   struct ReactCxt init_rc;
   StateSpace states;
-  
+
   /**
    * initialize containers
    */
@@ -211,9 +222,14 @@ void run_nd(LmnRuleSet start_ruleset)
   /* make global root membrane */
   mem = lmn_mem_make();
   RC_SET_GROOT_MEM(&init_rc, mem);
-  lmn_react_ruleset(&init_rc, mem, start_ruleset);
-  stand_alone_react_cxt_destroy(&init_rc);
-  
+
+  {
+    BOOL temp_env_p = lmn_env.profile_level;
+    lmn_env.profile_level = 0;
+    lmn_react_ruleset(&init_rc, mem, start_ruleset);
+    lmn_env.profile_level = temp_env_p;
+  }
+
   activate_ancestors(mem);
 
   states = do_nd(mem);
@@ -231,7 +247,7 @@ void run_nd(LmnRuleSet start_ruleset)
   /* finalize */
   free_por_vars();
 
-     
+
 }
 
 StateSpace do_nd(LmnMembrane *world_mem_org)

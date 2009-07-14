@@ -405,7 +405,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
     seed = s->mem;
 
     set_snd(s);
-    vec_push(stack, (LmnWord)s);
+    /* vec_push(stack, (LmnWord)s); */
     ltl_search2(states, stack);
     unset_snd(s);
     vec_pop(stack);
@@ -544,7 +544,7 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
 {
   LmnMembrane *mem;
   StateSpace states;
-  
+
   states = state_space_make();
   init_por_vars();
 
@@ -559,10 +559,15 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
     struct ReactCxt init_rc;
     stand_alone_react_cxt_init(&init_rc);
     RC_SET_GROOT_MEM(&init_rc, mem);
-    lmn_react_ruleset(&init_rc, mem, start_ruleset);
+    {
+      BOOL temp_env_p = lmn_env.profile_level;
+      lmn_env.profile_level = 0;
+      lmn_react_ruleset(&init_rc, mem, start_ruleset);
+      lmn_env.profile_level = temp_env_p;
+    }
     stand_alone_react_cxt_destroy(&init_rc);
   }
-  
+
   activate_ancestors(mem);
 
   do_mc(states, mem);

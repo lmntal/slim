@@ -96,6 +96,18 @@ extern LmnRuleSet system_ruleset;
 void lmn_add_system_rule(LmnRule rule);
 
 /*----------------------------------------------------------------------
+ * Rule Status
+ */
+typedef struct LmnRuleStatus {
+  unsigned long trial_num;
+  unsigned long apply_num;
+  unsigned long backtrack_num;
+} LmnRuleStatus;
+
+LMN_EXTERN void lmn_rule_show_detail(FILE *f);
+LMN_EXTERN void lmn_rule_profile(LmnRule rule, LmnWord ap, LmnWord tr, LmnWord ba);
+
+/*----------------------------------------------------------------------
  * Module
  */
 

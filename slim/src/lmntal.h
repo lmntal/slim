@@ -210,6 +210,7 @@ struct LmnEnv {
   BOOL translate;
   enum OutputFormat output_format;
   int optimization_level;
+  int profile_level;
   char *load_path[256];
   int load_path_num;
   char *automata_file; /* never claim file */

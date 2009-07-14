@@ -55,6 +55,7 @@ struct LmnRule {
   lmn_interned_str name;
   BOOL is_invisible;
   st_table *history_tbl;
+  LmnRuleStatus status;
 };
 
 /* prototypes */
@@ -73,6 +74,11 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->name = name;                  /* ルール名 */
   rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
   rule->history_tbl = st_init_strtable();
+  if(lmn_env.profile_level >= 2) {
+    rule->status.trial_num = 0;
+    rule->status.apply_num = 0;
+    rule->status.backtrack_num = 0;
+  }
   return rule;
 }
 
@@ -348,6 +354,43 @@ static void destroy_system_ruleset()
 void lmn_add_system_rule(LmnRule rule)
 {
   lmn_ruleset_put(system_ruleset, rule);
+}
+
+/*----------------------------------------------------------------------
+ * Rule Status
+ */
+
+static void print_rule_status(FILE *f, LmnRule r, int rs_id)
+{
+  fprintf(f, "   %-30s: %10s%s%d\n",        "rule name @ ruleset id", lmn_id_to_name(r->name), "@", rs_id);
+  fprintf(f, "   %-30s: %10lu / %lu / %lu\n","# of apply / trial / backtrack",
+        r->status.apply_num, r->status.trial_num + r->status.backtrack_num, r->status.backtrack_num);
+  fprintf(f, "   ---------------------------------------------------------\n");
+}
+
+void lmn_rule_show_detail(FILE *f)
+{
+  unsigned int i, j;
+  for (i = 0; i< ruleset_table->size; i++) {
+  if(!ruleset_table->entry[i]) {
+    continue;
+  }
+  LmnRuleSet rs = ruleset_table->entry[i];
+    for(j = 0; j < vec_num(rs); j++) {
+      LmnRule r = lmn_ruleset_get_rule(rs, j);
+      if(r->status.trial_num != 0) {
+        print_rule_status(f, r, lmn_ruleset_get_id(rs));
+      }
+    }
+  }
+  return;
+}
+
+void lmn_rule_profile(LmnRule rule, LmnWord ap, LmnWord tr, LmnWord ba)
+{
+  rule->status.apply_num         += ap;
+  rule->status.trial_num         += tr;
+  rule->status.backtrack_num     += ba;
 }
 
 /*----------------------------------------------------------------------
