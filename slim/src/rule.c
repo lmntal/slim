@@ -54,6 +54,7 @@ struct LmnRule {
   LmnTranslated translated;
   lmn_interned_str name;
   BOOL is_invisible;
+  st_table *history_tbl;
 };
 
 /* prototypes */
@@ -71,6 +72,7 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->translated = translated;
   rule->name = name;                  /* ルール名 */
   rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
+  rule->history_tbl = st_init_strtable();
   return rule;
 }
 
@@ -100,7 +102,9 @@ LmnRule lmn_rule_copy(LmnRule rule)
 
   inst_seq = LMN_NALLOC(BYTE, rule->inst_seq_len);
   inst_seq = memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
-  return make_rule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
+  LmnRule new_rule = make_rule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
+  new_rule->history_tbl = st_copy(rule->history_tbl);
+  return new_rule;
 }
 
 /* ruleとruleの要素を解放する */
@@ -150,6 +154,16 @@ LmnRule dummy_rule(void)
   }
 
   return &rule;
+}
+
+/* uniq履歴照合(TURE:含まれる、FALSE:含まれない) */
+BOOL lmn_rule_his_check(LmnRule rule, char *id){
+  if(st_is_member(rule->history_tbl, (st_data_t)id))return TRUE;
+  return FALSE;
+}
+
+struct st_table *lmn_rule_get_history(LmnRule rule){
+  return rule->history_tbl;
 }
 
 /*----------------------------------------------------------------------
@@ -296,6 +310,21 @@ LmnRuleSet lmn_ruleset_from_id(int id)
 {
   if (ruleset_table->size <= (unsigned int)id) return NULL;
   else return ruleset_table->entry[id];
+}
+
+struct st_table *lmn_rule_get_histbl(LmnRule rule)
+{
+  return rule->history_tbl;
+}
+
+/* rulesetをコピーして新しいルールセットを作成する */
+LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
+{
+  LmnRuleSet new_ruleset = lmn_ruleset_make(ruleset->id, 16);
+  unsigned int i = 0;
+
+  for(; i<ruleset->num; i++) lmn_ruleset_put(new_ruleset, lmn_rule_copy(ruleset->rules[i]));
+  return new_ruleset;
 }
 
 /*----------------------------------------------------------------------

@@ -46,12 +46,15 @@
 #include "special_atom.h"
 #include "symbol.h"
 #include "task.h"
+#include "vector.h"
 #include "slim_header/string.h"
 #include "slim_header/port.h"
 
 
 static int port_atom_type; /* special atom type */
 static LmnFunctor eof_functor;
+static Vector *his_id;
+static char *id;
 
 #define LMN_PORT_DATA(obj) (LMN_PORT(obj)->data)
 #define LMN_PORT_TYPE(obj) (LMN_PORT(obj)->type)
@@ -80,6 +83,10 @@ static LmnPort make_port(LmnPortDirection dir, LmnPortType type, const char *nam
   return port;
 }
 
+LmnPort lmn_make_port(LmnPortDirection dir, LmnPortType type, const char *name){
+  return make_port(dir, type, name);
+}
+
 void lmn_port_free(LmnPort port)
 {
   if (port->owner) {
@@ -91,6 +98,8 @@ void lmn_port_free(LmnPort port)
       break;
     case LMN_PORT_ISTR:
       lmn_port_close(port);
+      break;
+    case LMN_PORT_OVAR:
       break;
     default:
       lmn_fatal("not implemented");
@@ -105,7 +114,7 @@ LmnPort lmn_port_copy(LmnPort port, BOOL owner)
 {
   LmnPort new_port = port_copy_sub(port);
   new_port->owner = owner && LMN_PORT_OWNER(port);
-  
+
   switch (LMN_PORT_TYPE(port)) {
   case LMN_PORT_FILE:
     if (new_port->owner) port->owner = FALSE;
@@ -235,7 +244,7 @@ int port_get_raw_c(LmnPort port)
 {
   if (lmn_port_closed(port)) return EOF;
   if (LMN_PORT_DIR(port) != LMN_PORT_INPUT) return EOF;
-  
+
   switch (LMN_PORT_TYPE(port)) {
   case LMN_PORT_FILE:
     {
@@ -295,7 +304,7 @@ LmnString port_read_line(LmnPort port)
 {
   int c0, c1;
   LmnString s;
-  
+
   if (lmn_port_closed(port)) return NULL;
   if (LMN_PORT_DIR(port) != LMN_PORT_INPUT) return NULL;
 
@@ -364,6 +373,12 @@ int port_put_raw_s(LmnPort port, const char *str)
   case LMN_PORT_OSTR:
     lmn_string_push_raw_s((LmnString)LMN_PORT_DATA(port), str);
     return 1;
+  case LMN_PORT_OVAR:
+    id = malloc(16);
+    sprintf(id, "%s", str);
+    vec_push(his_id, (LmnWord)id);
+    return 1;
+    break;
   default:
     lmn_fatal("unexpected port type");
     break;
@@ -484,11 +499,11 @@ void cb_port_getc(ReactCxt rc,
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
-    
+
   lmn_mem_newlink(mem,
                   a1, t1, LMN_ATTR_GET_VALUE(t1),
                   a0, t0, 0);
-  
+
 }
 
 /*
@@ -508,7 +523,7 @@ void cb_port_putc(ReactCxt rc,
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   a0, t0, 0);
-  
+
 }
 
 /*
@@ -528,7 +543,7 @@ void cb_port_puts(ReactCxt rc,
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   a0, t0, 0);
-  
+
 }
 
 /*
@@ -697,3 +712,6 @@ void port_finalize()
   lmn_port_free(lmn_stderr);
 }
 
+void port_his_id_set(Vector *vec){
+  his_id = vec;
+}

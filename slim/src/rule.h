@@ -62,6 +62,8 @@ LMN_EXTERN lmn_interned_str lmn_rule_get_name(LmnRule rule);
 LMN_EXTERN void lmn_rule_set_name(LmnRule rule, lmn_interned_str rule_name);
 LMN_EXTERN BYTE *lmn_rule_get_inst_seq(LmnRule rule);
 LMN_EXTERN BOOL lmn_rule_is_invisible(LmnRule rule);
+LMN_EXTERN struct st_table *lmn_rule_get_histbl(LmnRule rule);
+LMN_EXTERN BOOL lmn_rule_his_check(LmnRule rule, char *id);
 
 /*----------------------------------------------------------------------
  * Rule Set
@@ -84,6 +86,7 @@ LMN_EXTERN inline AtomicType lmn_ruleset_atomic_type(LmnRuleSet ruleset);
 LMN_EXTERN inline void lmn_ruleset_set_atomic(LmnRuleSet ruleset, AtomicType b);
 LMN_EXTERN inline void lmn_ruleset_set_valid(LmnRuleSet ruleset, BOOL b);
 LMN_EXTERN inline BOOL lmn_ruleset_is_valid(LmnRuleSet ruleset);
+LMN_EXTERN LmnRuleSet lmn_ruleset_copy(LmnRuleSet rulset);
 
 /*----------------------------------------------------------------------
  * System Rule Set

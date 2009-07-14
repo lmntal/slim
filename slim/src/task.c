@@ -74,25 +74,25 @@ unsigned int wt_size;
 unsigned int trace_num = 0; /* for tracer */
 
 typedef void (* callback_0)(ReactCxt,
-                            LmnMembrane *); 
+                            LmnMembrane *);
 typedef void (* callback_1)(ReactCxt,
                             LmnMembrane *,
-                            LmnAtom, LmnLinkAttr); 
+                            LmnAtom, LmnLinkAttr);
 typedef void (* callback_2)(ReactCxt,
                             LmnMembrane *,
                             LmnAtom, LmnLinkAttr,
-                            LmnAtom, LmnLinkAttr); 
+                            LmnAtom, LmnLinkAttr);
 typedef void (* callback_3)(ReactCxt,
                             LmnMembrane *,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr,
-                            LmnAtom, LmnLinkAttr); 
+                            LmnAtom, LmnLinkAttr);
 typedef void (* callback_4)(ReactCxt,
                             LmnMembrane *,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr,
-                            LmnAtom, LmnLinkAttr); 
+                            LmnAtom, LmnLinkAttr);
 
 
 inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *at);
@@ -210,7 +210,7 @@ static BOOL react_ruleset_atomic(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rules
   int i, n;
   BOOL ok = FALSE;
   n = lmn_ruleset_rule_num(ruleset);
-  
+
   /* MC */
   if (RC_GET_MODE(rc, REACT_ND)) {
     struct ReactCxt stand_alone_rc;
@@ -268,7 +268,7 @@ static BOOL react_ruleset_atomic(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rules
 
 void set_all_ruleset_validation(LmnMembrane *mem, BOOL b)
 {
-  
+
   if (mem == NULL) return;
 
   for (; mem; mem = mem->next) {
@@ -278,7 +278,7 @@ void set_all_ruleset_validation(LmnMembrane *mem, BOOL b)
     }
     set_all_ruleset_validation(mem->child_head, b);
   }
-  
+
 }
 
 static BOOL react_ruleset_atomic2(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ruleset)
@@ -286,12 +286,12 @@ static BOOL react_ruleset_atomic2(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rule
   int i, n;
   BOOL ok = FALSE;
   n = lmn_ruleset_rule_num(ruleset);
-  
+
   /* MC */
   if (RC_GET_MODE(rc, REACT_ND)) {
     StateSpace states;
     const Vector *end_states;
-    
+
     set_all_ruleset_validation(RC_GROOT_MEM(rc), FALSE);
     lmn_ruleset_set_valid(ruleset, TRUE);
     lmn_ruleset_set_atomic(ruleset, FALSE);
@@ -308,7 +308,7 @@ static BOOL react_ruleset_atomic2(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rule
                                 dummy_rule());
       state_space_remove(states, (State *)vec_get(end_states, i));
       state_free_without_mem((State *)vec_get(end_states, i));
-    } 
+    }
 
     ok = end_states > 0;
     state_space_free(states);
@@ -334,7 +334,7 @@ BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset
 {
   int i, n;
   BOOL result = FALSE;
-  
+
   if (!lmn_ruleset_is_valid(ruleset)) return FALSE;
 
   if (lmn_ruleset_atomic_type(ruleset) == ATOMIC_NONE) {
@@ -380,7 +380,7 @@ static void mem_oriented_loop(struct ReactCxt *rc, LmnMembrane *mem)
       if (!lmn_react_ruleset(rc, mem, system_ruleset)) {
         /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
         lmn_memstack_pop(memstack);
-        
+
       }
     }
   }
@@ -1462,7 +1462,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       Vector *srcvec, *avovec;
       unsigned long natoms;
       BOOL b;
-      
+
       READ_VAL(LmnInstrVar, instr, funci);
       READ_VAL(LmnInstrVar, instr, srclisti);
       READ_VAL(LmnInstrVar, instr, avolisti);
@@ -1473,12 +1473,52 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       b = lmn_mem_is_ground(srcvec, avovec, &natoms);
 
-      free_links(srcvec); 
+      free_links(srcvec);
       free_links(avovec);
 
       if (!b) return FALSE;
       wt[funci] = (LmnWord)natoms;
       at[funci] = LMN_INT_ATTR;
+      break;
+    }
+    case INSTR_UNIQ:
+    {
+
+      LmnInstrVar llist, n;
+      Vector *srcvec;
+      Vector str_id;
+      char *id, id_init = '\0';
+
+      vec_init(&str_id, 1024);
+      port_his_id_set(&str_id); //str_idのポインタをport内へ渡す
+      READ_VAL(LmnInstrVar, instr, llist);
+
+      unsigned int i = 0;
+
+      for (; i < llist; i++) {
+        READ_VAL(LmnInstrVar, instr, n);
+        srcvec = (Vector*) wt[n];
+
+        /*グラフをstr_idに取得*/
+        dump_his_id_make((LmnWord)wt[vec_get(srcvec, 0)], (LmnLinkAttr)at[vec_get(srcvec, 0)]);
+      }
+
+      /* str_id展開 */
+      id = malloc(str_id.cap);
+      sprintf(id, "%s", &id_init); //idの初期化
+      unsigned int l = 0;
+      for(; l<str_id.num; l++)
+        sprintf(id, "%s%s", id, (char *)vec_get(&str_id, l));
+      if(llist == 0) sprintf(id, "%s<>", id);
+      vec_destroy(&str_id);
+
+      /* 履歴と照合 */
+      if(lmn_rule_his_check(rule, id))
+        return FALSE;
+
+      /* 履歴に挿入 */
+      st_insert(lmn_rule_get_histbl(rule), (st_data_t)id, (st_data_t)st_strhash(id));
+
       break;
     }
     case INSTR_EQGROUND:
@@ -1601,7 +1641,7 @@ EQGROUND_NEQGROUND_BREAK:
       LmnInstrVar dstlist, srclist, memi;
       Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
       SimpleHashtbl *atommap;
-      
+
       READ_VAL(LmnInstrVar, instr, dstlist);
       READ_VAL(LmnInstrVar, instr, srclist);
       READ_VAL(LmnInstrVar, instr, memi);
@@ -2256,7 +2296,8 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = &((LmnMembrane *)wt[srcmemi])->rulesets;
       for (i = 0; i< v->num; i++) {
-        lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], (LmnRuleSet)vec_get(v, i));
+        lmn_mem_add_ruleset(
+            (LmnMembrane *)wt[destmemi], (LmnRuleSet)lmn_ruleset_copy((LmnRuleSet)vec_get(v, i)));
       }
       break;
     }
@@ -2588,12 +2629,12 @@ EQGROUND_NEQGROUND_BREAK:
       LmnInstrVar memi, atomi;
       LmnSAtom atom;
       const struct CCallback *c;
-      
+
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
 
       atom = LMN_SATOM(wt[atomi]);
-      
+
       if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0))) {
         LmnSAtom f_name = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
         lmn_interned_str name = LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(f_name));
@@ -2653,7 +2694,7 @@ EQGROUND_NEQGROUND_BREAK:
     case INSTR_GETCLASS:
     {
       LmnInstrVar reti, atomi;
-      
+
       READ_VAL(LmnInstrVar, instr, reti);
       READ_VAL(LmnInstrVar, instr, atomi);
 
@@ -2677,7 +2718,7 @@ EQGROUND_NEQGROUND_BREAK:
     case INSTR_SUBCLASS:
     {
       LmnInstrVar subi, superi;
-      
+
       READ_VAL(LmnInstrVar, instr, subi);
       READ_VAL(LmnInstrVar, instr, superi);
 
@@ -2725,7 +2766,7 @@ inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *a
 {
   unsigned long i;
   Vector *v = vec_make(16);
-  
+
   /* リンクオブジェクトのベクタを構築 */
   for (i = 0; i < vec_num(link_idxs); i++) {
     LinkObj l = LinkObj_make(wt[vec_get(link_idxs, i)],
@@ -2738,7 +2779,7 @@ inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *a
 inline static void free_links(Vector *links)
 {
   unsigned long i;
-  
+
   for (i = 0; i < vec_num(links); i++) {
     LMN_FREE(vec_get(links, i));
   }
