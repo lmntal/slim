@@ -405,7 +405,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
     seed = s->mem;
 
     set_snd(s);
-    /* vec_push(stack, (LmnWord)s); */
+    vec_push(stack, (LmnWord)s);
     ltl_search2(states, stack);
     unset_snd(s);
     vec_pop(stack);

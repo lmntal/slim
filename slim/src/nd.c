@@ -229,7 +229,7 @@ void run_nd(LmnRuleSet start_ruleset)
     lmn_react_ruleset(&init_rc, mem, start_ruleset);
     lmn_env.profile_level = temp_env_p;
   }
-
+  stand_alone_react_cxt_destroy(&init_rc);
   activate_ancestors(mem);
 
   states = do_nd(mem);
