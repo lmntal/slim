@@ -2335,8 +2335,12 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = &((LmnMembrane *)wt[srcmemi])->rulesets;
       for (i = 0; i< v->num; i++) {
-        lmn_mem_add_ruleset(
+        if (!(RC_GET_MODE(rc, REACT_ND))) {
+          lmn_mem_add_ruleset(
             (LmnMembrane *)wt[destmemi], (LmnRuleSet)lmn_ruleset_copy((LmnRuleSet)vec_get(v, i)));
+        }else{
+          lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], (LmnRuleSet)vec_get(v, i));
+        }
       }
       break;
     }

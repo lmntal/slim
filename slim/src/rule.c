@@ -117,6 +117,7 @@ LmnRule lmn_rule_copy(LmnRule rule)
 void lmn_rule_free(LmnRule rule)
 {
   LMN_FREE(rule->inst_seq);
+  LMN_FREE(rule->history_tbl);
   LMN_FREE(rule);
 }
 
