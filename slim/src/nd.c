@@ -107,11 +107,12 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
     if (st_lookup(s, (st_data_t)root, &t)) {
       lmn_mem_free(root);
     } else {
-      t = (st_data_t)root;
+      st_insert(s, (st_data_t)root, (st_data_t)root);
+
+      state = state_make_for_nd((LmnMembrane *)root,
+                                (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
+      vec_push(expanded, (LmnWord)state);
     }
-    state = state_make_for_nd((LmnMembrane *)t,
-                              (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
-    vec_push(expanded, (LmnWord)state);
   }
 
   st_free_table(s);
