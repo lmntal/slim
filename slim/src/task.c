@@ -256,6 +256,9 @@ static BOOL react_ruleset_atomic(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rules
                                         new_mem,
                                         lmn_ruleset_get_rule(ruleset, i));
       }
+      if (reacted) {
+        lmn_react_systemruleset(&stand_alone_rc, new_mem);
+      }
       reacted_once = reacted_once || reacted;
       if (!reacted) break;
     }
@@ -275,6 +278,9 @@ static BOOL react_ruleset_atomic(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rules
       BOOL reacted = FALSE;
       for (i = 0; i < n; i++) {
         reacted = reacted || react_rule(rc, mem, lmn_ruleset_get_rule(ruleset, i));
+      }
+      if (reacted) {
+        lmn_react_systemruleset(&stand_alone_rc, new_mem);
       }
       reacted_once = reacted_once || reacted;
       if (!reacted) break;
@@ -338,6 +344,9 @@ static BOOL react_ruleset_atomic2(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rule
       for (i = 0; i < n; i++) {
         reacted = reacted || react_rule(rc, mem, lmn_ruleset_get_rule(ruleset, i));
       }
+      if (reacted) {
+        lmn_react_systemruleset(&stand_alone_rc, new_mem);
+      }
       reacted_once = reacted_once || reacted;
       if (!reacted) break;
     }
@@ -371,6 +380,23 @@ BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset
   }
 
   return result;
+}
+
+/* system rulesetをmem以下の全膜へ適用 */
+static void react_systemruleset(struct ReactCxt *rc, LmnMembrane *mem)
+{
+  for(; mem; mem = mem->next) {
+    react_systemruleset(rc, mem->child_head);
+    react_ruleset_atomic(rc, mem, system_ruleset);
+  }
+}
+
+void lmn_react_systemruleset(struct ReactCxt *rc, LmnMembrane *mem)
+{
+  LmnWord tmp_rc_mode = rc->mode;
+  RC_SET_MODE(rc, REACT_STAND_ALONE);
+  react_systemruleset(rc, mem);
+  RC_SET_MODE(rc, tmp_rc_mode);
 }
 
 static int react_rulesets(struct ReactCxt *rc, LmnMembrane *mem)
@@ -417,7 +443,7 @@ void lmn_run(LmnRuleSet start_ruleset)
   RC_SET_GROOT_MEM(&mrc, mem);
   lmn_memstack_push(RC_MEMSTACK(&mrc), mem);
   {
-    BOOL temp_env_p = lmn_env.profile_level;
+    int temp_env_p = lmn_env.profile_level;
     if(lmn_env.trace && lmn_env.profile_level >= 1) {
         fprintf(stdout, "  %6s|%6s|%6s|%6s\n", " Name", " Apply", " Trial", " BackTrack");
     }
@@ -805,7 +831,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         SimpleHashtbl *copymap;
         LmnMembrane *tmp_global_root;
 #ifdef PROFILE
-        status_start_commit();
+        if (lmn_env.profile_level >= 1) {
+          status_start_commit();
+        }
 #endif
         tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
 
@@ -839,10 +867,11 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         SWAP(LmnWord *, wtcp, wt);
         SWAP(LmnByte *, atcp, at);
 #ifdef PROFILE
-        status_finish_commit();
+        if (lmn_env.profile_level >= 1) {
+          status_finish_commit();
+        }
 #endif
         interpret(rc, rule, instr);
-
         nd_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
         /* 変数配列および属性配列を元に戻す（いらないかも？） */
@@ -957,6 +986,11 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 #endif
               return TRUE;
             }
+#ifdef PROFILE
+            if (lmn_env.profile_level >= 1) {
+              status_backtrack_counter();
+            }
+#endif
           }
         }
         return FALSE;
@@ -1236,6 +1270,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
        * 左辺に出現するPROCEEDと右辺に出現するPROCEEDを区別する必要がある
        */
       if(RC_GET_MODE(rc, REACT_ND)) {
+        /* マッチングバックトラックの前に、system rulesetを適用する */
+        lmn_react_systemruleset(rc, (LmnMembrane *)wt[0]);
         return FALSE; /* 次の候補を取得するために失敗する */
       }
       /**

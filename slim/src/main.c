@@ -126,7 +126,7 @@ static int parse_options(int argc, char *argv[])
     {0, 0, 0, 0}
   };
 
-  while ((c = getopt_long(argc, argv, "+dtI:Op::", long_options, &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "+dtI:O::p::", long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
       printf("log_options entries must have positive 4th member.\n");

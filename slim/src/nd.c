@@ -225,9 +225,10 @@ void run_nd(LmnRuleSet start_ruleset)
   RC_SET_GROOT_MEM(&init_rc, mem);
 
   {
-    BOOL temp_env_p = lmn_env.profile_level;
+    int temp_env_p = lmn_env.profile_level;
     lmn_env.profile_level = 0;
     lmn_react_ruleset(&init_rc, mem, start_ruleset);
+    lmn_react_systemruleset(&init_rc, mem);
     lmn_env.profile_level = temp_env_p;
   }
   stand_alone_react_cxt_destroy(&init_rc);
@@ -306,14 +307,14 @@ static BOOL react_all_rulesets(struct ReactCxt *rc,
     ok = ok || lmn_react_ruleset(rc, cur_mem,
                                  (LmnRuleSet)vec_get(&rulesets, i));
   }
-
+#ifdef OLD
   if (!ok) { /* 通常のルールセットが適用できなかった場合 */
     /* システムルールセットの適用 */
     if (lmn_react_ruleset(rc, cur_mem, system_ruleset)) {
       ok = TRUE;
     }
   }
-
+#endif
   return ok;
 }
 

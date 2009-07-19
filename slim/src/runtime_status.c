@@ -344,6 +344,7 @@ static int dispersal_print_f(st_data_t hash_, st_data_t n_, st_data_t f_)
 
 void output_hash_conflict(FILE *f)
 {
+  if (!lmn_env.nd && !lmn_env.ltl) return;
   fprintf(f, "\n== hash conflict ===========================================\n");
   fprintf(f, "# of hash values : %lu\n", runtime_status.hash_num);
   fprintf(f, "----------------\n");

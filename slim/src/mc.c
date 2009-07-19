@@ -560,9 +560,10 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
     stand_alone_react_cxt_init(&init_rc);
     RC_SET_GROOT_MEM(&init_rc, mem);
     {
-      BOOL temp_env_p = lmn_env.profile_level;
+      int temp_env_p = lmn_env.profile_level;
       lmn_env.profile_level = 0;
       lmn_react_ruleset(&init_rc, mem, start_ruleset);
+      lmn_react_systemruleset(&init_rc, mem);
       lmn_env.profile_level = temp_env_p;
     }
     stand_alone_react_cxt_destroy(&init_rc);
@@ -605,7 +606,7 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
     dump_state_transition_graph(states, stdout);
     print_state_name(states);
   }
-  fprintf(stdout, "# of States = %d\n", state_space_num(states));
+  fprintf(stdout, "# of States = %lu\n", state_space_num(states));
 
   vec_free(stack);
 }

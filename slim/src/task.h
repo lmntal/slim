@@ -59,5 +59,6 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
 LMN_EXTERN void lmn_run(LmnRuleSet ruleset);
 BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule);
 LMN_EXTERN BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset);
+LMN_EXTERN void lmn_react_systemruleset(struct ReactCxt *rc, LmnMembrane *mem);
 
 #endif
