@@ -280,7 +280,7 @@ static BOOL react_ruleset_atomic(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rules
         reacted = reacted || react_rule(rc, mem, lmn_ruleset_get_rule(ruleset, i));
       }
       if (reacted) {
-        lmn_react_systemruleset(&stand_alone_rc, new_mem);
+        lmn_react_systemruleset(rc, mem);
       }
       reacted_once = reacted_once || reacted;
       if (!reacted) break;
@@ -345,7 +345,7 @@ static BOOL react_ruleset_atomic2(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rule
         reacted = reacted || react_rule(rc, mem, lmn_ruleset_get_rule(ruleset, i));
       }
       if (reacted) {
-        lmn_react_systemruleset(&stand_alone_rc, new_mem);
+        lmn_react_systemruleset(rc, mem);
       }
       reacted_once = reacted_once || reacted;
       if (!reacted) break;
