@@ -2371,7 +2371,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = &((LmnMembrane *)wt[srcmemi])->rulesets;
       for (i = 0; i< v->num; i++) {
-        if (!(RC_GET_MODE(rc, REACT_ND))) {
+        if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
           lmn_mem_add_ruleset(
             (LmnMembrane *)wt[destmemi], (LmnRuleSet)lmn_ruleset_copy((LmnRuleSet)vec_get(v, i)));
         }else{
