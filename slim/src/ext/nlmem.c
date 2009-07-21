@@ -88,7 +88,9 @@ void nlmem_kill(ReactCxt rc,
     }
   }
   
-  lmn_memstack_delete(RC_MEMSTACK(rc), org_mem);
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    lmn_memstack_delete(RC_MEMSTACK(rc), org_mem);
+  }
   lmn_mem_delete_mem(mem, org_mem);
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);

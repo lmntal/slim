@@ -82,8 +82,6 @@ void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem)
 {
   unsigned long i, j, n = vec_num(memstack);
 
-  if (lmn_env.nd || lmn_env.ltl) return;
-
   for (i = n-1; i >= 0; i--) {
     if ((LmnMembrane *)vec_get(memstack, i) == mem) {
       /* 空いた分後ろの要素を前にを詰める */

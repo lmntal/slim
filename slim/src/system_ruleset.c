@@ -78,7 +78,7 @@ static BOOL delete_redundant_outproxies(ReactCxt rc, LmnMembrane *mem)
         lmn_mem_unify_atom_args(m0, i0, 1, i1, 1);
         REMOVE_FROM_ATOMLIST(i0);
         REMOVE_FROM_ATOMLIST(i1);
-        if (!lmn_env.nd && !lmn_env.ltl) {
+        if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
           lmn_memstack_push(RC_MEMSTACK(rc), m0);
         }
         return TRUE;
