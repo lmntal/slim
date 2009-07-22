@@ -386,16 +386,29 @@ BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset
 static void react_systemruleset(struct ReactCxt *rc, LmnMembrane *mem)
 {
   for(; mem; mem = mem->next) {
+    int i;
+    int n = lmn_ruleset_rule_num(system_ruleset);
     react_systemruleset(rc, mem->child_head);
-    react_ruleset_atomic(rc, mem, system_ruleset);
+    while (TRUE) {
+      BOOL reacted = FALSE;
+      for (i = 0; i < n; i++) {
+        reacted = reacted || react_rule(rc, mem, lmn_ruleset_get_rule(system_ruleset, i));
+      }
+      if (!reacted) break;
+    }
   }
 }
 
 void lmn_react_systemruleset(struct ReactCxt *rc, LmnMembrane *mem)
 {
   LmnWord tmp_rc_mode = rc->mode;
+  int temp_prof = lmn_env.profile_level;
+  lmn_env.profile_level = 0;
   RC_SET_MODE(rc, REACT_STAND_ALONE);
+
   react_systemruleset(rc, mem);
+
+  lmn_env.profile_level = temp_prof;
   RC_SET_MODE(rc, tmp_rc_mode);
 }
 
@@ -872,6 +885,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         }
 #endif
         interpret(rc, rule, instr);
+        lmn_react_systemruleset(rc, (LmnMembrane *)wt[0]);
         nd_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
         /* 変数配列および属性配列を元に戻す（いらないかも？） */
@@ -1264,19 +1278,19 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       break;
     }
     case INSTR_PROCEED:
+#ifdef OLD
       /**
        * MC -->
        * mc_flags.system_rule_committedによって
        * 左辺に出現するPROCEEDと右辺に出現するPROCEEDを区別する必要がある
        */
       if(RC_GET_MODE(rc, REACT_ND)) {
-        /* マッチングバックトラックの前に、system rulesetを適用する */
-        lmn_react_systemruleset(rc, (LmnMembrane *)wt[0]);
         return FALSE; /* 次の候補を取得するために失敗する */
       }
       /**
        * <-- MC
        */
+#endif
       return TRUE;
     case INSTR_STOP:
       return FALSE;
