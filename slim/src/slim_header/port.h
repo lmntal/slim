@@ -82,7 +82,6 @@ typedef enum LmnPortType {
   LMN_PORT_FILE, /* CのFILE*の代替のポート */
   LMN_PORT_ISTR, /* 文字列からの入力ポート */
   LMN_PORT_OSTR, /* 文字列からの出力ポート */
-  LMN_PORT_OVAR, /* 変数への出力 */
 /*   LMN_PORT_PROC /\* virtual port *\/ */
 } LmnPortType;
 
@@ -92,6 +91,9 @@ void port_finalize(void);
 LmnPort lmn_stdin_port(void);
 LmnPort lmn_stdout_port(void);
 LmnPort lmn_stderr_port(void);
+
+LmnPort lmn_make_input_string_port(LmnString s);
+LmnPort lmn_make_output_string_port();
 
 LmnPort lmn_make_port(LmnPortDirection dir, LmnPortType type, const char *name);
 void lmn_port_free(LmnPort port);
@@ -107,6 +109,5 @@ int port_putc(LmnPort port_atom, LmnSAtom unary_atom);
 int port_puts(LmnPort port_atom, LmnString str);
 int port_put_raw_c(LmnPort port_atom, int c);
 int port_put_raw_s(LmnPort port_atom, const char *str);
-void port_his_id_set(Vector *vec);
 
 #endif

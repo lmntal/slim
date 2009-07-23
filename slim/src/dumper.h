@@ -50,7 +50,7 @@ LMN_EXTERN void lmn_dump_mem_dev(LmnMembrane *mem);
 LMN_EXTERN void lmn_dump_cell_stdout(LmnMembrane *mem);
 LMN_EXTERN void lmn_dump_cell(LmnMembrane *mem, LmnPort port);
 LMN_EXTERN void lmn_dump_dot(LmnMembrane *mem);
-LMN_EXTERN void dump_his_id_make(LmnWord atom, LmnLinkAttr attr);
+LMN_EXTERN void lmn_dump_atom(LmnPort port, LmnWord atom, LmnLinkAttr attr);
 
 void dump_escaped(LmnPort port, const char *s);
 

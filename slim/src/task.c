@@ -60,6 +60,7 @@
 #include "special_atom.h"
 #include "slim_header/string.h"
 #include "slim_header/memstack.h"
+#include "slim_header/port.h"
 #include "react_context.h"
 #include <string.h>
 
@@ -1572,41 +1573,43 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_UNIQ:
     {
+      if (!RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+        lmn_fatal(
+            "Instraction uniq can't be used with --nd or --ltl option.");
+      }
 
       LmnInstrVar llist, n;
       Vector *srcvec;
-      Vector str_id;
-      char *id, id_init = '\0';
+      LmnPort port;
+      char *id;
 
-      vec_init(&str_id, 1024);
-      port_his_id_set(&str_id); //str_idのポインタをport内へ渡す
+      port = (LmnPort)lmn_make_output_string_port();
       READ_VAL(LmnInstrVar, instr, llist);
 
       unsigned int i = 0;
-
       for (; i < llist; i++) {
         READ_VAL(LmnInstrVar, instr, n);
         srcvec = (Vector*) wt[n];
 
         /*グラフをstr_idに取得*/
-        dump_his_id_make((LmnWord)wt[vec_get(srcvec, 0)], (LmnLinkAttr)at[vec_get(srcvec, 0)]);
+        lmn_dump_atom(
+            port, (LmnWord)wt[vec_get(srcvec, 0)], (LmnLinkAttr)at[vec_get(srcvec, 0)]);
+        port_put_raw_s(port, ":");
       }
 
-      /* str_id展開 */
-      id = malloc(str_id.cap);
-      sprintf(id, "%s", &id_init); //idの初期化
-      unsigned int l = 0;
-      for(; l<str_id.num; l++)
-        sprintf(id, "%s%s", id, (char *)vec_get(&str_id, l));
-      if(llist == 0) sprintf(id, "%s<>", id);
-      vec_destroy(&str_id);
 
-      /* 履歴と照合 */
-      if(lmn_rule_his_check(rule, id))
+      /* 履歴表と照合 */
+      if(lmn_rule_his_check(rule, (char *)lmn_string_c_str(port->data))){
+        lmn_port_free(port);
         return FALSE;
+      }
 
       /* 履歴に挿入 */
-      st_insert(lmn_rule_get_histbl(rule), (st_data_t)id, (st_data_t)st_strhash(id));
+      id = malloc(lmn_string_len(port->data));
+      strcpy(id, (char *)lmn_string_c_str(port->data));
+      st_insert(
+          lmn_rule_get_histbl(rule), (st_data_t)id, (st_data_t)st_strhash(id));
+      lmn_port_free(port);
 
       break;
     }

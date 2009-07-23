@@ -981,14 +981,13 @@ void dump_escaped(LmnPort port, const char *s)
   }
 }
 
-/* uniq：履歴管理のためのid生成 */
-void dump_his_id_make(LmnWord atom, LmnLinkAttr attr)
+void lmn_dump_atom(LmnPort port, LmnWord atom, LmnLinkAttr attr)
 {
   struct DumpState s;
   SimpleHashtbl ht;
-  LmnPort port = lmn_make_port(LMN_PORT_OUTPUT, LMN_PORT_OVAR, "output variable port");
+
   dump_state_init(&s);
   hashtbl_init(&ht, 0);
   dump_atom(port, atom, &ht, attr, &s, 0);
-  lmn_port_free(port);
+  hashtbl_destroy(&ht);
 }

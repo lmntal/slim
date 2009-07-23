@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "string.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include "st.h"
 
@@ -477,6 +478,29 @@ int st_foreach(st_table *table, int(*func)( ANYARGS), st_data_t arg) {
 
 unsigned int st_num(st_table *table) {
   return table->num_entries;
+}
+
+/*　st_tableが持つ要素を表示する　*/
+void st_print(st_table *st){
+  printf("st_pt = %p\n", st);
+  st_table_entry *entry;
+  unsigned int nb = st->num_bins, ne = st->num_entries;
+  printf("st->num_bins = %d, st->num_entries = %d\n", nb, ne);
+  unsigned int i = 0;
+  for(; i<nb; i++){
+    entry = st->bins[i];
+    if(entry!=NULL){
+      while(entry!=NULL){
+        /* デフォルトでは要素をすべて数値で出力 */
+        printf("%d entry->key = %d, ->record = %d, ->hash = %d\n",
+            i, (int)entry->key, (int)entry->record, (int)entry->hash);
+        entry = entry->next;
+      }
+    }else{
+      /* このprintf文を消せばnull entryは表示されない */
+      //printf("%d null entry\n", i);
+    }
+  }
 }
 
 /*

@@ -46,15 +46,12 @@
 #include "special_atom.h"
 #include "symbol.h"
 #include "task.h"
-#include "vector.h"
 #include "slim_header/string.h"
 #include "slim_header/port.h"
 
 
 static int port_atom_type; /* special atom type */
 static LmnFunctor eof_functor;
-static Vector *his_id;
-static char *id;
 
 #define LMN_PORT_DATA(obj) (LMN_PORT(obj)->data)
 #define LMN_PORT_TYPE(obj) (LMN_PORT(obj)->type)
@@ -98,8 +95,6 @@ void lmn_port_free(LmnPort port)
       break;
     case LMN_PORT_ISTR:
       lmn_port_close(port);
-      break;
-    case LMN_PORT_OVAR:
       break;
     default:
       lmn_fatal("not implemented");
@@ -373,12 +368,6 @@ int port_put_raw_s(LmnPort port, const char *str)
   case LMN_PORT_OSTR:
     lmn_string_push_raw_s((LmnString)LMN_PORT_DATA(port), str);
     return 1;
-  case LMN_PORT_OVAR:
-    id = malloc(16);
-    sprintf(id, "%s", str);
-    vec_push(his_id, (LmnWord)id);
-    return 1;
-    break;
   default:
     lmn_fatal("unexpected port type");
     break;
@@ -710,8 +699,4 @@ void port_finalize()
   lmn_port_free(lmn_stdin);
   lmn_port_free(lmn_stdout);
   lmn_port_free(lmn_stderr);
-}
-
-void port_his_id_set(Vector *vec){
-  his_id = vec;
 }
