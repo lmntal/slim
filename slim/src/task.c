@@ -954,7 +954,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       } else { /* symbol atom */
         LmnFunctor f;
         AtomListEntry *atomlist_ent;
-        LmnSAtom atom, record;
+        LmnSAtom start_atom, atom, record;
 
         READ_VAL(LmnFunctor, instr, f);
         atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt[memi], f);
@@ -965,21 +965,21 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
            */
           record = LMN_SATOM(atomlist_get_record(atomlist_ent, findatomid));
           if(!record) {
-            atom = atomlist_head(atomlist_ent);
+            start_atom = atomlist_head(atomlist_ent);
             record = lmn_new_atom(LMN_RESUME_FUNCTOR);
             hashtbl_put(&atomlist_ent->record, findatomid, (HashKeyType)record);
             LMN_SATOM_SET_NEXT(atomlist_ent, record);
             LMN_SATOM_SET_PREV(record, atomlist_ent);
-            LMN_SATOM_SET_NEXT(record, atom);
-            LMN_SATOM_SET_PREV(atom, record);
+            LMN_SATOM_SET_NEXT(record, start_atom);
+            LMN_SATOM_SET_PREV(start_atom, record);
           } else {
-            atom = LMN_SATOM_GET_NEXT_RAW(record);
+            start_atom = LMN_SATOM_GET_NEXT_RAW(record);
           }
 #define DBG 0
 #if DBG
           int count=0;
 #endif
-          for (;
+          for (atom = start_atom;
                atom != lmn_atomlist_end(atomlist_ent);
                atom = LMN_SATOM_GET_NEXT_RAW(atom)) {
 #if DBG
@@ -1007,6 +1007,24 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             }
 #endif
           }
+
+          /* 現在のfindatom2の実装にはバグがある（cf. 言語班Wiki
+             findatom2議論）。バグを回避するために、履歴アトムの後ろの
+             アトムすべてからのマッチングに失敗した場合、履歴アトムの前
+             のアトムに対してマッチングを試みる */
+          EACH_ATOM(atom, atomlist_ent, {
+              if (atom == start_atom) break;
+              wt[atomi] = (LmnWord)atom;
+              if (interpret(rc, rule, instr)) {
+                return TRUE;
+              }
+#ifdef PROFILE
+              if (lmn_env.profile_level >= 1) {
+                status_backtrack_counter();
+              }
+#endif
+          });
+
         }
         return FALSE;
       }
