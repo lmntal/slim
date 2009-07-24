@@ -379,8 +379,8 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef PROFILE
-  output_runtime_status(stdout);
-  output_hash_conflict(stdout);
+  output_runtime_status(stderr);
+  output_hash_conflict(stderr);
 #endif
 
   finalize();
