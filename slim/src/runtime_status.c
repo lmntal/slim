@@ -58,7 +58,7 @@ struct RuntimeStatus {
   unsigned long peak_total_state_space;     /* peal total state size */
   st_table_t hash_conflict_tbl;       /* key: # of conflicts, value: kinds */
   unsigned long hash_num;             /* # of hash value */
-  clock_t start_time, end_time;        /* running start/end time */
+  clock_t start_time, end_time;        /* elapsed start/end time */
   clock_t tmp_state_hash_start;
   double total_state_hash_time;      /* total time of state hashing */
   unsigned long mhash_call_num;      /* # of mhash call */
@@ -223,11 +223,11 @@ void output_runtime_status(FILE *f)
   double tmp_total_time =
     (runtime_status.end_time - runtime_status.start_time)/(double)CLOCKS_PER_SEC;
   if(tmp_total_time < 0.0) {
-    difftime(runtime_status.time2, runtime_status.time1);
+    tmp_total_time = difftime(runtime_status.time2, runtime_status.time1);
   }
   fprintf(f, "\n== Runtime Status ==========================================\n");
 
-  fprintf(f, "%-30s: %10.2lf\n", "running time (sec)", tmp_total_time);
+  fprintf(f, "%-30s: %10.2lf\n", "elapsed time (sec)", tmp_total_time);
   fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
   fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
          runtime_status.peak_membrane_num);
