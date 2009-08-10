@@ -182,6 +182,11 @@ int lmn_string_get(LmnString s, int i)
   else return s->buf[i];
 }
 
+void lmn_string_set_raw_c(LmnString s, int c, int i)
+{
+  s->buf[i] = c;
+}
+
 inline unsigned long lmn_string_len(LmnString s)
 {
   return LMN_STRING_LEN(s);

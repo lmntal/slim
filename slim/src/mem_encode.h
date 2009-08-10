@@ -1,8 +1,7 @@
 /*
- * nd.h
+ * mem_encode.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,50 +33,21 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#ifndef LMN_ND_H
-#define LMN_ND_H
+#ifndef LMN_ENCODE_H
+#define LMN_ENCODE_H
 
 #include "lmntal.h"
-#include "st.h"
 #include "membrane.h"
-#include "mem_encode.h"
-#include "rule.h"
-#include "vector.h"
 
-typedef struct State State;
+typedef struct BinStr *BinStr;
 
-struct State {
-  LmnMembrane *mem;     /* グローバルルート膜 */
-  unsigned long hash; /* mhash(mem) */
-  BOOL flags;           /* nested DFSの際にDFS{1,2}いずれの走査を受けたかや，successorが展開済であるか否かを管理するフラグ */
-  Vector successor;     /* 通常時: Vector of States，ample(s)計算中: Vector of StateTransitions */
-  LmnRule rule;
-  BYTE state_name;
-  BinStr mem_id;
-};
+BinStr lmn_mem_encode(LmnMembrane *mem);
+void binstr_free(BinStr p);
+int binstr_comp(const BinStr a, const BinStr b);
+void binstr_dump(const BinStr p);
+unsigned long binstr_hash(const BinStr a);
+int binstr_byte_size(BinStr p);
 
-typedef struct StateSpace *StateSpace;
-
-#define state_mem_id(s)  ((s)->mem_id)
-
-Vector *nd_expand(const StateSpace states, State *state);
-void run_nd(LmnRuleSet start_ruleset);
-StateSpace do_nd(LmnMembrane *world_mem);
-State *insert_state(StateSpace states, State *s);
-State *state_space_get(const StateSpace states, State *s);
-StateSpace state_space_make(void);
-void state_space_free(StateSpace states);
-unsigned long state_space_num(StateSpace states);
-void state_space_set_init_state(StateSpace states, State* init_state);
-void state_space_add_end_state(StateSpace states, State *s);
-const Vector *state_space_end_states(StateSpace states);
-void state_space_remove(const StateSpace states, State *s);
-st_table_t state_space_tbl(StateSpace states);
-
-void dump_state_transition_graph(StateSpace states, FILE *file);
-void print_state_name(StateSpace states);
-
-#endif
+#endif /* LMN_MEMBRANE_H */

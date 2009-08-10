@@ -66,6 +66,12 @@ struct RuntimeStatus {
   double total_mem_equals_time;      /* total time of mem equals */
   clock_t tmp_mem_equals_start;
 
+  unsigned long mem_encode_num;      /* # of mem_encode call */
+  double total_mem_encode_time;      /* total time of mem encode */
+  clock_t tmp_mem_encode_start;
+  unsigned long encode_space;           /* memory size by mem encode (Byte) */
+  unsigned long encode_len_average;     /* average length of mem encode */
+
   time_t time1, time2;               /* clock()のオーバーフロー時に使う */
   double total_expand_time;         /* 状態展開時間 */
   double total_commit_time;
@@ -102,6 +108,8 @@ void runtime_status_init()
   runtime_status.mhash_call_num = 0;
   runtime_status.mem_equals_num = 0;
   runtime_status.total_mem_equals_time = 0.0;
+  runtime_status.mem_encode_num = 0;
+  runtime_status.total_mem_encode_time = 0.0;
 
   runtime_status.total_expand_time        = 0.0;
   runtime_status.total_commit_time        = 0.0;
@@ -218,6 +226,18 @@ void status_finish_mem_equals_calc()
     (clock() - runtime_status.tmp_mem_equals_start)/(double)CLOCKS_PER_SEC;
 }
 
+void status_start_mem_encode_calc()
+{
+  runtime_status.mem_encode_num++;
+  runtime_status.tmp_mem_encode_start =  clock();
+}
+
+void status_finish_mem_encode_calc()
+{
+  runtime_status.total_mem_encode_time +=
+    (clock() - runtime_status.tmp_mem_encode_start)/(double)CLOCKS_PER_SEC;
+}
+
 void output_runtime_status(FILE *f)
 {
   double tmp_total_time =
@@ -237,8 +257,12 @@ void output_runtime_status(FILE *f)
          runtime_status.peak_membrane_space);
   fprintf(f, "%-30s: %10lu\n", "peak hash table space (Bytes)",
          runtime_status.peak_hashtbl_space);
+  fprintf(f, "%-30s: %10lu\n", "membrane encode space (Bytes)",
+         runtime_status.encode_space);
+  fprintf(f, "%-30s: %10lu\n", "avg. encode len (Bytes)",
+         runtime_status.encode_len_average);
   fprintf(f, "%-30s: %10lu\n", "rough peak state space (Bytes)",
-          runtime_status.peak_total_state_space);
+          runtime_status.peak_total_state_space + runtime_status.encode_space);
 
   if (lmn_env.nd || lmn_env.ltl) {
     fprintf(f, "%-30s: %10lu\n", "# of mhash calls",
@@ -249,6 +273,10 @@ void output_runtime_status(FILE *f)
             runtime_status.mem_equals_num);
     fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
             runtime_status.total_mem_equals_time);
+    fprintf(f, "%-30s: %10lu\n", "# of mem_encode calls",
+            runtime_status.mem_encode_num);
+    fprintf(f, "%-30s: %10.2lf\n", "total mem_encode time (sec)",
+            runtime_status.total_mem_encode_time);
   }
   fprintf(f, "============================================================\n");
 
@@ -352,6 +380,25 @@ void output_hash_conflict(FILE *f)
   st_foreach(runtime_status.hash_conflict_tbl, dispersal_print_f, (st_data_t)f);
   fprintf(f, "----------------\n");
   fprintf(f, "============================================================\n");
+}
+
+static int encode_info_f(st_data_t key, st_data_t s_, st_data_t t)
+{
+  State *s = (State*)s_;
+  BinStr bs = state_mem_id(s);
+  if (bs) {
+    int bs_size = binstr_byte_size(bs);
+
+    runtime_status.encode_space += bs_size;
+  }
+  return ST_CONTINUE;
+}
+
+void calc_encode_info(StateSpace states)
+{
+  runtime_status.encode_space = 0;
+  st_foreach(state_space_tbl(states), encode_info_f, (st_data_t)0);
+  runtime_status.encode_len_average = runtime_status.encode_space / state_space_num(states);
 }
 
 void status_start_rule()

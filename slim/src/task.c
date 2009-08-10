@@ -1953,7 +1953,7 @@ EQGROUND_NEQGROUND_BREAK:
       wt[listi] = (LmnWord)listvec;
       if (RC_GET_MODE(rc, REACT_ND)) { at[listi] = 0; /* MC */ }
       /* 解放のための再帰 */
-      if(interpret(rc, rule, instr)) {
+      if (interpret(rc, rule, instr)) {
         vec_free(listvec);
         return TRUE;
       }

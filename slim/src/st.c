@@ -235,6 +235,11 @@ int st_lookup(st_table *table, register st_data_t key, st_data_t *value) {
   }
 }
 
+int st_contains(st_table *table, st_data_t key) {
+  st_data_t t;
+  return st_lookup(table, key, &t);
+}
+
 #define ADD_DIRECT(table, key, value, hash_val, bin_pos)\
 do {\
     st_table_entry *entry;\
@@ -478,6 +483,17 @@ int st_foreach(st_table *table, int(*func)( ANYARGS), st_data_t arg) {
 
 unsigned int st_num(st_table *table) {
   return table->num_entries;
+}
+
+static int insert_f(st_data_t key, st_data_t value, st_data_t tbl1)
+{
+  st_insert((st_table_t)tbl1, key, value);
+  return ST_CONTINUE;
+}
+
+void st_concat(st_table *tbl1, const st_table *tbl2)
+{
+  st_foreach((st_table *)tbl2, insert_f, (st_data_t)tbl1);
 }
 
 /*　st_tableが持つ要素を表示する　*/

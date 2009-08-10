@@ -37,10 +37,12 @@
  * $Id$
  */
 
+#include "lmntal.h"
 #include "nd.h"
 #include "por.h"
 #include "task.h"
 #include "dumper.h"
+#include "error.h"
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
@@ -61,6 +63,7 @@ static int kill_States_chains(st_data_t _k,
 static BOOL expand_inner(struct ReactCxt *rc,
                          LmnMembrane *cur_mem);
 static int print_state_name_f(st_data_t _k, st_data_t state_ptr, st_data_t _a);
+static void dump_state_data(State *state);
 
 /* 状態stateから１ステップで遷移する状態のベクタを返す。
    返される状態のベクタには、重複はない */
@@ -97,20 +100,19 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
 
   expand_inner(rc, cur_mem);
   expanded_roots = RC_EXPANDED(rc);
-  s = st_init_table(&type_memhash);
+  s = st_init_table(&type_statehash);
   expanded = vec_make(32);
   for (i = 0; i < vec_num(expanded_roots); i++) {
     State *state;
-    LmnMembrane *root = (LmnMembrane *)vec_get(expanded_roots, i);
     st_data_t t;
 
-    if (st_lookup(s, (st_data_t)root, &t)) {
-      lmn_mem_free(root);
-    } else {
-      st_insert(s, (st_data_t)root, (st_data_t)root);
+    state = state_make_for_nd((LmnMembrane *)vec_get(expanded_roots, i),
+                              (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
 
-      state = state_make_for_nd((LmnMembrane *)root,
-                                (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
+    if (st_lookup(s, (st_data_t)state, &t)) {
+      state_free(state);
+    } else {
+      st_insert(s, (st_data_t)state, (st_data_t)state);
       vec_push(expanded, (LmnWord)state);
     }
   }
@@ -194,6 +196,7 @@ static void nd_loop(StateSpace states, State *init_state) {
         vec_push(stack, (LmnWord)src_succ);
         /* set ss to open, i.e., on the search stack */
         set_open(src_succ);
+        dump_state_data(succ);
       } else { /* src_succは追加されなかった（すでに同じ状態がある) */
         state_free(src_succ);
       }
@@ -201,6 +204,9 @@ static void nd_loop(StateSpace states, State *init_state) {
     }
     vec_free(expanded);
     set_expanded(s); /* sに展開済みフラグを立てる */
+
+    /* 膜のエンコードを行っている場合は、展開済みになった状態の膜を解放する */
+    if (lmn_env.mem_enc) state_free_mem(s);
   }
 
   vec_free(stack);
@@ -234,9 +240,12 @@ void run_nd(LmnRuleSet start_ruleset)
   stand_alone_react_cxt_destroy(&init_rc);
   activate_ancestors(mem);
 
+  fprintf(stdout, "States\n");
+
   states = do_nd(mem);
 #ifdef PROFILE
   calc_hash_conflict(states);
+  calc_encode_info(states);
 #endif
 
   dump_state_transition_graph(states, stdout);
@@ -262,6 +271,7 @@ StateSpace do_nd(LmnMembrane *world_mem_org)
   initial_state = state_make_for_nd(world_mem, ANONYMOUS);
 /*   mc_flags.initial_state = initial_state; */
   state_space_set_init_state(states, initial_state);
+  dump_state_data(initial_state);
 
 /*   /\* --nd_dumpの実行 *\/ */
 /*   else if(lmn_env.nd_dump){ */
@@ -273,6 +283,13 @@ StateSpace do_nd(LmnMembrane *world_mem_org)
 /*   } */
 
   return states;
+}
+
+static void dump_state_data(State *state)
+{
+  fprintf(stdout, "%lu::", (long unsigned int)state); /* dump src state's ID */
+  if (!state->mem) lmn_fatal("unexpected");
+  lmn_dump_cell_stdout(state->mem); /* dump src state's global root membrane */
 }
 
 /**
@@ -290,8 +307,8 @@ static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_da
       fprintf(stdout,",");
     }
   }
-  fprintf(stdout, "::");
-  lmn_dump_cell_stdout(tmp->mem); /* dump src state's global root membrane */
+  fprintf(stdout, "\n");
+
   return ST_CONTINUE;
 }
 
@@ -422,6 +439,7 @@ st_table_t state_space_tbl(StateSpace states)
 
 void dump_state_transition_graph(StateSpace states, FILE *file)
 {
+  fprintf(file, "\nTransitions\n");
   fprintf(file, "init:%lu\n", (long unsigned int)state_space_init_state(states));
   st_foreach(states->tbl, print_state_transition_graph, 0);
   fprintf(file, "\n");

@@ -43,7 +43,10 @@
 #include "functor.h"
 #include "st.h"
 #include "mhash.h"
+#include "error.h"
+#include "util.h"
 #include <ctype.h>
+#include <limits.h>
 
 #ifdef PROFILE
 #include "runtime_status.h"
@@ -1802,12 +1805,12 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
 
 int mem_cmp(LmnMembrane *mem1, LmnMembrane *mem2)
 {
-  return !mem_equals(mem1, mem2);
+  return !lmn_mem_equals(mem1, mem2);
 }
 
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
 {
-return lmn_mem_equals_rec(mem1, mem2, CHECKED_MEM_DEPTH);
+  return lmn_mem_equals_rec(mem1, mem2, CHECKED_MEM_DEPTH);
 }
 
 BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
@@ -1823,7 +1826,9 @@ BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
 #ifdef PROFILE
   status_finish_mem_equals_calc();
 #endif
+
   return t;
 }
 /*----------------------------------------------------------------------*/
 /* 膜の同型性判定 ここまで */
+

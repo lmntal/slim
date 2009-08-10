@@ -217,6 +217,7 @@ struct LmnEnv {
   /* file for propositional symbol definitions */
   char *propositional_symbol;
   char *ltl_exp;
+  BOOL mem_enc;
 };
 
 extern struct LmnEnv  lmn_env;

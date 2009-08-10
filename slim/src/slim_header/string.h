@@ -59,6 +59,7 @@ void lmn_string_push(LmnString dst, const LmnString src);
 void lmn_string_push_raw_c(LmnString s, int c);
 void lmn_string_push_raw_s(LmnString dst, const char *src);
 int lmn_string_get(LmnString s, int i);
+void lmn_string_set_raw_c(LmnString s, int c, int i);
 inline unsigned long lmn_string_len(LmnString s);
 
 #endif

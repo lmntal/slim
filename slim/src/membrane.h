@@ -44,6 +44,7 @@
 #include "internal_hash.h"
 #include "vector.h"
 #include "rule.h"
+#include "slim_header/port.h"
 
 /* TODO: 構造体の定義を隠すために.cファイルに定義を移動する */
 struct LmnMembrane {

@@ -46,6 +46,11 @@
 #include "ltl2ba_adapter.h"
 #include "error.h"
 #include "dumper.h"
+#include "mem_encode.h"
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
 #include <string.h>
 
 enum MC_ERRORNO {
@@ -116,8 +121,14 @@ State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule) {
   /* successorの記憶域をゼロクリアする */
   memset(&new->successor, 0x00U, sizeof(Vector));
   /* ハッシュ値はあらかじめ計算しておく */
-  new->hash = mhash(new->mem);
   new->rule = rule;
+  if (lmn_env.mem_enc) {
+    new->mem_id = lmn_mem_encode(mem);
+    new->hash =   binstr_hash(new->mem_id);
+  } else {
+    new->mem_id = NULL;
+    new->hash = mhash(new->mem);
+  }
   return new;
 }
 
@@ -159,8 +170,10 @@ inline void state_succ_init(State *s, int init_size) {
  * デストラクタ
  */
 void state_free(State *s) {
-  lmn_mem_drop(s->mem);
-  lmn_mem_free(s->mem);
+  if (s->mem) {
+    lmn_mem_drop(s->mem);
+    lmn_mem_free(s->mem);
+  }
   state_free_without_mem(s);
 }
 
@@ -169,7 +182,15 @@ void state_free_without_mem(State *s)
   if (!mem_is_zero(&s->successor, sizeof(Vector))) {
     vec_destroy(&s->successor);
   }
+  if (s->mem_id) binstr_free(s->mem_id);
   LMN_FREE(s);
+}
+
+inline void state_free_mem(State *s)
+{
+  lmn_mem_drop(s->mem);
+  lmn_mem_free(s->mem);
+  s->mem = NULL;
 }
 
 void strans_free(StateTransition *strans) {
@@ -209,10 +230,20 @@ static int state_equals(HashKeyType k1, HashKeyType k2) {
   State *s2 = (State *)k2;
 
   int t;
-  t =
-    s1->state_name == s2->state_name &&
-    state_hash(s1) == state_hash(s2) &&
-    lmn_mem_equals(s1->mem, s2->mem);
+
+  if (lmn_env.mem_enc) {
+    t =
+      s1->state_name == s2->state_name &&
+      state_hash(s1) == state_hash(s2) &&
+      binstr_comp(s1->mem_id, s2->mem_id) == 0;
+  }
+  else {
+    t =
+      s1->state_name == s2->state_name &&
+      state_hash(s1) == state_hash(s2) &&
+      lmn_mem_equals(s1->mem, s2->mem);
+  }
+
   return t;
 }
 

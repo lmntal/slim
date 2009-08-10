@@ -37,6 +37,7 @@
  */
 
 #include "vector.h"
+#include <stdlib.h>
 
 /* init */
 Vector *vec_init(Vector *vec, unsigned int init_size) {
@@ -162,4 +163,10 @@ void vec_resize(Vector *vec, unsigned int size, vec_data_t val)
     vec->tbl[i] = val;
   }
   vec->num = size;
+}
+
+LMN_EXTERN void vec_sort(const Vector *vec,
+                         int (*compare)(const void*, const void*))
+{
+  qsort(vec->tbl, vec->num, sizeof(vec_data_t), compare);
 }

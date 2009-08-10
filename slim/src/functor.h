@@ -56,6 +56,8 @@ typedef struct LmnFunctorEntry {
 
 extern struct LmnFunctorTable lmn_functor_table;
 
+#define FUNCTOR_MAX ((1 << (8*sizeof(LmnFunctor)))-1)
+
 /* アクセスを高速にするためにマクロにする */
 #define LMN_FUNCTOR_NAME_ID(F)     (lmn_functor_table.entry[(F)].name)
 #define LMN_FUNCTOR_ARITY(F)    (lmn_functor_table.entry[(F)].arity)

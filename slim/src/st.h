@@ -68,6 +68,7 @@ int st_delete(st_table *, st_data_t , st_data_t *);
 int st_delete_safe(st_table *, st_data_t *, st_data_t *, st_data_t);
 int st_insert(st_table *, st_data_t, st_data_t);
 int st_lookup(st_table *, st_data_t, st_data_t *);
+int st_contains(st_table *, st_data_t);
 int st_foreach(st_table *, int(*)(ANYARGS), st_data_t);
 void st_add_direct(st_table *, st_data_t, st_data_t);
 unsigned int st_num(st_table *);
@@ -78,5 +79,9 @@ void st_print(st_table *st);
 long st_strhash(const char *);
 int st_numcmp(long, long);
 long st_numhash(long);
+
+/* tbl1にtbl2のすべてのエントリを追加する。tbl1とtbl2に同じキーを持つエ
+   ントリが存在する場合の動作は（とりあえず）未定義。 */
+void st_concat(st_table *tbl1, const st_table *tbl2);
 
 #endif /* ST_INCLUDED */
