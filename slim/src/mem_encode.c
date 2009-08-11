@@ -35,6 +35,8 @@
  *
  */
 
+/* TODO: rule set */
+
 /* 膜を一意のバイト列に変換する */
 
 /* encode specification
@@ -67,7 +69,13 @@
  * escape from membrane
  *   tag: 0110
  * from of traversal
- *   tag: 0001
+ *   tag: 0111
+ * rule sets(only one ruleset):
+ *   tag: 0100
+ *   ruleset id
+ * rule sets:
+ *   tag: 0101
+ *   ruleset ids
  * int atom:
  *   tag: 1100
  * double atom:
@@ -97,6 +105,8 @@
 #define TAG_MEM_REF          0x5
 #define TAG_ESCAPE_MEM       0x6
 #define TAG_FROM             0x7
+#define TAG_RULESET1         0x8
+#define TAG_RULESET          0x9
 #define TAG_INT_DATA         0xc
 #define TAG_DBL_DATA         0xd
 
@@ -107,6 +117,8 @@
 #define FUNCTOR_SIZE (sizeof(LmnFunctor) * 2)
 #define BS_INT_SIZE (SIZEOF_LONG * 2)
 #define BS_MEM_NAME_SIZE (sizeof(lmn_interned_str) * 2)
+#define BS_RULESET_SIZE 4
+#define BS_RULESET_NUM_SIZE 4
 
 /* エンコードの結果を書き込む、バイナリストリング */
 
@@ -257,6 +269,13 @@ static inline BYTE binstr_get_byte(BinStr bs, int pos)
   return (BS_GET(bs->v, pos+1)<<4) | BS_GET(bs->v, pos);
 }
 
+static inline uint16_t binstr_get_int16(BinStr bs, int pos)
+{
+  return
+    (long)((binstr_get_byte(bs, pos+6)<<24) | (binstr_get_byte(bs, pos+4)<<16) |
+           (binstr_get_byte(bs, pos+2)<<8) | (binstr_get_byte(bs, pos)));
+}
+
 static inline LmnFunctor binstr_get_functor(BinStr bs, int pos)
 {
   if (sizeof(LmnFunctor) == 2) {
@@ -309,6 +328,24 @@ static inline lmn_interned_str binstr_get_mem_name(BinStr bs, int pos)
   } else {
     lmn_fatal("unexpected");
   }
+}
+
+static inline binstr_get_ruleset_num(BinStr bs, int pos)
+{
+#if BS_RULESET_NUM_SIZE == 4
+  return binstr_get_int16(bs, pos);
+#else
+  #error unexpected
+#endif
+}
+
+static inline binstr_get_ruleset(BinStr bs, int pos)
+{
+#if BS_RULESET_SIZE == 4
+  return binstr_get_int16(bs, pos);
+#else
+  #error unexpected
+#endif
 }
 
 /* start以降を指すポインタをすべて無効にする */
@@ -423,6 +460,28 @@ void binstr_dump(const BinStr bs)
         n = binstr_get_int(bs, pos);
         pos += BS_INT_SIZE;
         printf("%ld", n);
+      }
+      break;
+    case TAG_RULESET1:
+      {
+        int j, n, rs_id;
+
+        rs_id = binstr_get_ruleset(bs, pos);
+        pos += BS_RULESET_SIZE;
+        printf("@%d", rs_id);
+      }
+      break;
+    case TAG_RULESET:
+      {
+        int j, n, rs_id;
+
+        n = binstr_get_ruleset_num(bs, pos);
+        pos += BS_RULESET_NUM_SIZE;
+        for (j = 0; j < n; j++) {
+          rs_id = binstr_get_ruleset(bs, pos);
+          pos += BS_RULESET_SIZE;
+          printf("@%d", rs_id);
+        }
       }
       break;
     default:
@@ -558,7 +617,7 @@ static inline int bsptr_push_visited_atom(BinStrPtr p, int n, int arg)
   return
     bsptr_push1(p, TAG_ATOM_REF)           &&
     bsptr_push(p, (BYTE*)&n, ATOM_REF_SIZE) &&
-    bsptr_push(p, (BYTE*)&n, ATOM_REF_ARG_SIZE);
+    bsptr_push(p, (BYTE*)&arg, ATOM_REF_ARG_SIZE);
 }
 
 static inline int bsptr_push_visited_mem(BinStrPtr p, int n)
@@ -576,6 +635,25 @@ static inline int bsptr_push_escape_mem(BinStrPtr p)
 static inline int bsptr_push_from(BinStrPtr p)
 {
   return bsptr_push1(p, TAG_FROM);
+}
+
+static inline int bsptr_push_start_rulesets(BinStrPtr p, int n)
+{
+  if (n == 1) return bsptr_push1(p, TAG_RULESET1);
+  else {
+    return
+      bsptr_push1(p, TAG_RULESET) &&
+      bsptr_push(p, (BYTE*)&n, BS_RULESET_NUM_SIZE);
+  }
+    
+}
+
+static inline int bsptr_push_ruleset(BinStrPtr p, LmnRuleSet rs)
+{
+  int id;
+
+  id = lmn_ruleset_get_id(rs);
+  return bsptr_push(p, (BYTE*)&id, BS_RULESET_SIZE); 
 }
 
 /* トラバーサルにおいて、すでに訪問済みのアトムや膜の記録を行う。ログは
@@ -612,7 +690,13 @@ void visitlog_copy_to(VisitLog from, VisitLog to)
   if (from == NULL || from == to) return;
 
   visitlog_copy_to(from->pred, to);
-  if (from->visited) st_concat(to->visited, from->visited);
+  if (from->visited) {
+    if (!to->visited) {
+      to->visited = st_init_ptrtable();
+    }
+      
+    st_concat(to->visited, from->visited);
+  }
   if (to->n > from->n) lmn_fatal("unexpected");
   to->n = from->n;
 }
@@ -670,6 +754,7 @@ void write_mol(LmnAtom atom,
                int from,
                BinStrPtr bsp,
                VisitLog visited);
+void write_rulesets(LmnMembrane *mem, BinStrPtr bsp);
 
 BinStr encode_root_mem(LmnMembrane *mem)
 {
@@ -677,12 +762,11 @@ BinStr encode_root_mem(LmnMembrane *mem)
   BinStrPtr bsp = bsptr_make(bs);
   VisitLog visited = visitlog_make(NULL);
   
-  write_mem(mem,
-            0,
-            -1,
-            -1,
-            bsp,
-            visited);
+
+  write_mem_atoms(mem, bsp, visited);
+  write_mems(mem, bsp, visited);
+  write_rulesets(mem, bsp);
+
   /* 最後に、ポインタの位置を修正する */
   bs->cur = bsp->pos;
   visitlog_free(visited);
@@ -719,6 +803,7 @@ void write_mem(LmnMembrane *mem,
 
   write_mem_atoms(mem, bsp, visited);
   write_mems(mem, bsp, visited);
+  write_rulesets(mem, bsp);
 
   bsptr_push_end_mem(bsp);
 }
@@ -835,13 +920,10 @@ void write_mols(Vector *atoms,
   natom = vec_num(atoms);
   first = TRUE;
   for (i = 0; i < natom; i++) {
-    LmnFunctor f;
     LmnSAtom atom = LMN_SATOM(vec_get(atoms, i));
 
-    f = LMN_SATOM_GET_FUNCTOR(atom);
-    
     if (!atom ||
-        (!first && f != first_func) ||  /* 最適化、最小のファンク以外は試す必要なし */
+        (!first && LMN_SATOM_GET_FUNCTOR(atom) != first_func) ||  /* 最適化、最小のファンク以外は試す必要なし */
         visitlog_contains(visited, (LmnWord)atom)) {
       v_bsp[i] = NULL;
       v_visited[i] = NULL;
@@ -853,7 +935,7 @@ void write_mols(Vector *atoms,
       v_bsp[i] = new_bsptr;
       v_visited[i] = new_visited;
 
-      if (!first) { first = FALSE; first_func = f; }
+      if (!first) { first = FALSE; first_func = LMN_SATOM_GET_FUNCTOR(atom); }
     } 
   }
 
@@ -933,6 +1015,19 @@ void write_mems(LmnMembrane *mem,
   vec_free(v_visited);
 }
 
+void write_rulesets(LmnMembrane *mem, BinStrPtr bsp)
+{
+  int i, n;
+
+  n = lmn_mem_ruleset_num(mem);
+  if (n == 0) return;
+  bsptr_push_start_rulesets(bsp, n);
+
+  for (i = 0; i < n; i++) {
+    bsptr_push_ruleset(bsp, lmn_mem_get_ruleset(mem, i));
+  }
+}
+
 /* memから一意のバイナリストリングを計算する */
 BinStr lmn_mem_encode(LmnMembrane *mem)
 {
@@ -989,4 +1084,243 @@ static Vector *mem_atoms(LmnMembrane *mem)
 
   vec_free(functors);
   return atoms;
+}
+
+
+
+
+static int binstr_decode_cell(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
+static int binstr_decode_mol(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
+static int binstr_decode_atom(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
+
+/* エンコードされた膜をデコードし、構造を再構築する */
+LmnMembrane *lmn_binstr_decode(const BinStr bs)
+{
+  LmnMembrane *groot;
+  void **log;
+  int nvisit;
+  
+  log = LMN_NALLOC(void *, bs->cur * TAG_IN_BYTE);
+
+  groot = lmn_mem_make();
+  nvisit = 0;
+  binstr_decode_cell(bs, 0, log, &nvisit, groot, NULL, 0);
+  LMN_FREE(log);
+  return groot;
+}
+
+int binstr_decode_cell(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg)
+{
+  int i;
+
+  for (i = 0; pos < bs->cur; i++) {
+    unsigned int tag = BS_GET(bs->v, pos);
+
+    if (tag == TAG_MEM_END) {
+      pos++;
+      break;
+    }
+    else if (tag == TAG_RULESET1) {
+      int rs_id;
+
+      pos++;
+      rs_id = binstr_get_ruleset(bs, pos);
+      pos += BS_RULESET_SIZE;
+
+      lmn_mem_add_ruleset(mem, lmn_ruleset_from_id(rs_id));
+    }
+    else if (tag == TAG_RULESET) {
+      int j, n, rs_id;
+
+      pos++;
+      n = binstr_get_ruleset_num(bs, pos);
+      pos += BS_RULESET_NUM_SIZE;
+      for (j = 0; j < n; j++) {
+        rs_id = binstr_get_ruleset(bs, pos);
+        pos += BS_RULESET_SIZE;
+        lmn_mem_add_ruleset(mem, lmn_ruleset_from_id(rs_id));
+      }
+        
+    }
+    else {
+      if (i == 0) {
+        /* 最初の要素は膜の外からアトムをたどって来た可能性がある */
+        pos = binstr_decode_mol(bs, pos, log, nvisit, mem, from_atom, from_arg);
+      } else { /* それ以外は、アトムからたどられて到達されていない */
+        pos = binstr_decode_mol(bs, pos, log, nvisit, mem, NULL, from_arg);
+      }
+    }
+  }
+  return pos;
+}
+
+int binstr_decode_mol(BinStr bs,
+                      int pos,
+                      void **log,
+                      int *nvisit,
+                      LmnMembrane *mem,
+                      LmnSAtom from_atom,
+                      int from_arg)
+{
+  unsigned int tag;
+  lmn_interned_str mem_name;
+
+  if (pos >= bs->cur) return pos;
+  
+  tag = BS_GET(bs->v, pos);
+  pos++;
+
+  mem_name = ANONYMOUS;
+  
+  switch (tag) {
+  case TAG_ATOM_START:
+    return binstr_decode_atom(bs, pos, log, nvisit, mem, from_atom, from_arg);
+  case TAG_NAMED_MEM_START:
+      mem_name = binstr_get_mem_name(bs, pos);
+      pos += BS_MEM_NAME_SIZE;
+      /* fall through */
+  case TAG_MEM_START:
+    {
+      LmnMembrane *new_mem;
+
+      new_mem = lmn_mem_make();
+      lmn_mem_set_name(new_mem, mem_name);
+      lmn_mem_add_child_mem(mem, new_mem);
+
+      log[(*nvisit)++] = new_mem;
+      if (from_atom) {
+        LmnSAtom in, out;
+
+        in = lmn_mem_newatom(new_mem, LMN_IN_PROXY_FUNCTOR);
+        out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+        lmn_newlink_in_symbols(in, 0, out, 0);
+        lmn_newlink_in_symbols(out, 1, from_atom, from_arg);
+
+        pos = binstr_decode_cell(bs, pos, log, nvisit, new_mem, in, 1);
+        pos = binstr_decode_mol(bs, pos, log, nvisit, new_mem, in, 1);
+      } else {
+        pos = binstr_decode_cell(bs, pos, log, nvisit, new_mem, from_atom, from_arg);
+      }
+    }
+    break;
+  case TAG_MEM_END:
+    break;
+  case TAG_ESCAPE_MEM:
+    {
+      LmnMembrane *parent;
+      LmnSAtom in, out;
+
+      parent = mem->parent;
+
+      if (from_atom) {
+        in = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
+        out = lmn_mem_newatom(parent, LMN_OUT_PROXY_FUNCTOR);
+        lmn_newlink_in_symbols(in, 0, out, 0);
+        lmn_newlink_in_symbols(in, 1, from_atom, from_arg);
+
+        pos = binstr_decode_mol(bs, pos, log, nvisit, parent, out, 1);
+      } else {
+        pos = binstr_decode_mol(bs, pos, log, nvisit, parent, NULL, 1);
+      }
+    }
+    break;
+  case TAG_ATOM_REF:
+    {
+      unsigned int ref, arg;
+      LmnSAtom atom;
+        
+      ref = binstr_get_ref_num(bs, pos);
+      pos += ATOM_REF_SIZE;
+      arg =  binstr_get_arg_ref(bs, pos);
+      pos += ATOM_REF_ARG_SIZE;
+
+      atom = LMN_SATOM(log[ref]);
+      if (from_atom) {
+        lmn_newlink_in_symbols(atom, arg, from_atom, from_arg);
+      }
+    }
+    break;
+  case TAG_MEM_REF:
+    {
+      unsigned int ref;
+      LmnSAtom in, out;
+      LmnMembrane *ref_mem;
+      
+      ref = binstr_get_ref_num(bs, pos);
+      pos += MEM_REF_SIZE;
+      ref_mem = (LmnMembrane *)log[ref];
+
+      if (from_atom == NULL) {
+        pos = binstr_decode_mol(bs, pos, log, nvisit, ref_mem, NULL, from_arg);
+      } else {
+        in = lmn_mem_newatom(ref_mem, LMN_IN_PROXY_FUNCTOR);
+        out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+        lmn_newlink_in_symbols(in, 0, out, 0);
+        lmn_newlink_in_symbols(out, 1, from_atom, from_arg);
+
+        pos = binstr_decode_mol(bs, pos, log, nvisit, ref_mem, in, 1);
+      }
+    }
+    break;
+  case TAG_INT_DATA:
+    {
+      long n;
+
+      n = binstr_get_int(bs, pos);
+      pos += BS_INT_SIZE;
+      LMN_SATOM_SET_LINK(from_atom, from_arg, n);
+      LMN_SATOM_SET_ATTR(from_atom, from_arg, LMN_INT_ATTR);
+    }
+    break;
+  default:
+    printf("tag = %d\n", tag);
+    lmn_fatal("unexpected");
+    break;
+  }
+  return pos;
+}
+
+int binstr_decode_atom(BinStr bs,
+                       int pos,
+                       void **log,
+                       int *nvisit,
+                       LmnMembrane *mem,
+                       LmnSAtom from_atom,
+                       int from_arg)
+{
+  LmnFunctor f;
+  int arity, i;
+  LmnSAtom atom;
+
+  f = binstr_get_functor(bs, pos);
+  pos += FUNCTOR_SIZE;
+  arity = LMN_FUNCTOR_ARITY(f);
+
+  atom = lmn_mem_newatom(mem, f);
+  log[(*nvisit)++] = atom;
+
+  for (i = 0; i < arity; i++) {
+    /* zero clear */
+    LMN_SATOM_SET_LINK(atom, i, 0);
+  }
+  
+  for (i = 0; i < arity; i++) {
+    unsigned int tag = BS_GET(bs->v, pos);
+
+    switch (tag) {
+    case TAG_FROM:
+      lmn_newlink_in_symbols(from_atom, from_arg, atom, i);
+      pos++;
+      break;
+    default:
+      if (LMN_SATOM_GET_LINK(atom, i)) {
+        /* すでにリンクが設定されているので、相手側から訪問済み */
+        pos = binstr_decode_mol(bs, pos, log, nvisit, mem, NULL, i);
+      } else {
+        pos = binstr_decode_mol(bs, pos, log, nvisit, mem, atom, i);
+      }
+      break;
+    }
+  }
+  return pos;
 }

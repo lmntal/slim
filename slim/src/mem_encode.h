@@ -50,4 +50,6 @@ void binstr_dump(const BinStr p);
 unsigned long binstr_hash(const BinStr a);
 int binstr_byte_size(BinStr p);
 
+LmnMembrane *lmn_binstr_decode(const BinStr bs);
+
 #endif /* LMN_MEMBRANE_H */
