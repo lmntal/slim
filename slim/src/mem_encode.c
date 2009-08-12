@@ -120,6 +120,19 @@
 #define BS_RULESET_SIZE 4
 #define BS_RULESET_NUM_SIZE 4
 
+
+/* 最終的なエンコード結果を表すバイナリストリング */
+struct LmnBinStr {
+  BYTE *v;
+  unsigned int len;
+};
+
+inline void lmn_binstr_free(struct LmnBinStr *bs)
+{
+  LMN_FREE(bs->v);
+  LMN_FREE(bs);
+}
+
 /* エンコード処理に用いるバイナリストリング */
 struct BinStr {
   BYTE *v;
@@ -134,6 +147,8 @@ struct BinStr {
   /* 作業用 */
   Vector *ptrs2;
 };
+
+typedef struct BinStr *BinStr;
 
 /* BinStrの特定の位置を指し示すポインタ。BinStrへの書き込みはBinStrPtr
    を介して行う。他のBinStrPtrの書き込みにより、現在のBinStrPtrが無効に
@@ -188,9 +203,9 @@ void binstr_free(BinStr p)
 }
 
 /* TODO: instance size */
-int binstr_byte_size(BinStr p)
+int binstr_byte_size(LmnBinStr p)
 {
-  return p->size / TAG_IN_BYTE;
+  return (p->len / TAG_IN_BYTE) + sizeof(struct LmnBinStr);
 }
 
 /* See http://isthe.com/chongo/tech/comp/fnv/ */
@@ -203,10 +218,10 @@ int binstr_byte_size(BinStr p)
 #endif
 
 /* バイナリストリングのハッシュ値を返す */
-unsigned long binstr_hash(const BinStr a)
+unsigned long binstr_hash(const LmnBinStr a)
 {
   unsigned long hval = FNV_BASIS;
-  int i = a->cur / TAG_IN_BYTE;
+  int i = a->len / TAG_IN_BYTE;
 
   /*
    * FNV-1a hash each octet in the buffer
@@ -263,18 +278,18 @@ int binstr_set(struct BinStr *bs, BYTE b, int pos)
 }
 
 /* bsの位置posから1バイト読み込み，返す */
-static inline BYTE binstr_get_byte(BinStr bs, int pos)
+static inline BYTE binstr_get_byte(BYTE *bs, int pos)
 {
-  return (BS_GET(bs->v, pos+1)<<4) | BS_GET(bs->v, pos);
+  return (BS_GET(bs, pos+1)<<4) | BS_GET(bs, pos);
 }
 
-static inline uint16_t binstr_get_int16(BinStr bs, int pos)
+static inline uint16_t binstr_get_int16(BYTE *bs, int pos)
 {
   return
     (long)((binstr_get_byte(bs, pos+2)<<8) | (binstr_get_byte(bs, pos)));
 }
 
-static inline LmnFunctor binstr_get_functor(BinStr bs, int pos)
+static inline LmnFunctor binstr_get_functor(BYTE *bs, int pos)
 {
   if (sizeof(LmnFunctor) == 2) {
     long f = binstr_get_int16(bs, pos);
@@ -284,7 +299,7 @@ static inline LmnFunctor binstr_get_functor(BinStr bs, int pos)
   }
 }
 
-static inline unsigned int binstr_get_ref_num(BinStr bs, int pos)
+static inline unsigned int binstr_get_ref_num(BYTE *bs, int pos)
 {
   if (ATOM_REF_SIZE == 4) {
     return binstr_get_int16(bs, pos);
@@ -293,7 +308,7 @@ static inline unsigned int binstr_get_ref_num(BinStr bs, int pos)
   }
 }
 
-static inline unsigned int binstr_get_arg_ref(BinStr bs, int pos)
+static inline unsigned int binstr_get_arg_ref(BYTE *bs, int pos)
 {
   if (ATOM_REF_ARG_SIZE == 2) {
     return binstr_get_byte(bs, pos);
@@ -302,7 +317,7 @@ static inline unsigned int binstr_get_arg_ref(BinStr bs, int pos)
   }
 }
 
-static inline long binstr_get_int(BinStr bs, int pos)
+static inline long binstr_get_int(BYTE *bs, int pos)
 {
 #if SIZEOF_LONG == 4
   return binstr_get_int16(bs, pos);
@@ -317,7 +332,7 @@ static inline long binstr_get_int(BinStr bs, int pos)
 #endif
 }
 
-static inline lmn_interned_str binstr_get_mem_name(BinStr bs, int pos)
+static inline lmn_interned_str binstr_get_mem_name(BYTE *bs, int pos)
 {
   if (sizeof(lmn_interned_str) == SIZEOF_LONG) {
     return binstr_get_int(bs, pos);
@@ -326,7 +341,7 @@ static inline lmn_interned_str binstr_get_mem_name(BinStr bs, int pos)
   }
 }
 
-static inline long binstr_get_ruleset_num(BinStr bs, int pos)
+static inline long binstr_get_ruleset_num(BYTE *bs, int pos)
 {
 #if BS_RULESET_NUM_SIZE == 4
   return binstr_get_int16(bs, pos);
@@ -335,7 +350,7 @@ static inline long binstr_get_ruleset_num(BinStr bs, int pos)
 #endif
 }
 
-static inline long binstr_get_ruleset(BinStr bs, int pos)
+static inline long binstr_get_ruleset(BYTE *bs, int pos)
 {
 #if BS_RULESET_SIZE == 4
   return binstr_get_int16(bs, pos);
@@ -366,16 +381,16 @@ static void binstr_invalidate_ptrs(struct BinStr *p, int start)
 
 /* バイナリストリングaとbの比較を行いaがbより、小さい、同じ、大きい場合
    に、それぞれ負の値、0、正の値を返す。*/
-int binstr_comp(const BinStr a, const BinStr b)
+int binstr_comp(const LmnBinStr a, const LmnBinStr b)
 {
-  if (a->cur != b->cur) return a->cur - b->cur;
-  else if (a->cur & 1) {
-    int r = memcmp(a->v, b->v, a->cur / TAG_IN_BYTE);
+  if (a->len != b->len) return a->len - b->len;
+  else if (a->len & 1) {
+    int r = memcmp(a->v, b->v, a->len / TAG_IN_BYTE);
     if (!r) return r;
-    return (a->v[a->cur>>1] & 0x0f) - (b->v[b->cur>>1] & 0x0f);
+    return (a->v[a->len>>1] & 0x0f) - (b->v[b->len>>1] & 0x0f);
   }
   else {
-    return memcmp(a->v, b->v, a->cur / TAG_IN_BYTE);
+    return memcmp(a->v, b->v, a->len / TAG_IN_BYTE);
   }
 }
 
@@ -384,6 +399,18 @@ void binstr_add_ptr(const struct BinStr *bs, struct BinStrPtr* ptr)
 {
   vec_push(bs->ptrs, (vec_data_t)ptr);
   vec_push(bs->all_ptrs, (vec_data_t)ptr);
+}
+
+static inline struct LmnBinStr *binstr_to_lmn_binstr(BinStr bs)
+{
+  struct LmnBinStr *ret_bs;
+  int size = (bs->cur+1)/2;
+  ret_bs = LMN_MALLOC(struct LmnBinStr);
+  ret_bs->v = LMN_NALLOC(BYTE, size);
+  memcpy(ret_bs->v, bs->v, size);
+  ret_bs->len = bs->cur;
+
+  return ret_bs;
 }
 
 void binstr_dump(const BinStr bs)
@@ -398,7 +425,7 @@ void binstr_dump(const BinStr bs)
     switch (tag) {
     case TAG_ATOM_START:
       {
-        LmnFunctor f = binstr_get_functor(bs, pos);
+        LmnFunctor f = binstr_get_functor(bs->v, pos);
         pos += FUNCTOR_SIZE;
         printf("%s(", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)));
       }
@@ -416,7 +443,7 @@ void binstr_dump(const BinStr bs)
     case TAG_NAMED_MEM_START:
       {
         lmn_interned_str name;
-        name = binstr_get_mem_name(bs, pos);
+        name = binstr_get_mem_name(bs->v, pos);
         pos += BS_MEM_NAME_SIZE;
         printf("%s{", lmn_id_to_name(name));
       }
@@ -424,9 +451,9 @@ void binstr_dump(const BinStr bs)
     case TAG_ATOM_REF:
       {
         unsigned int ref, arg;
-        ref = binstr_get_ref_num(bs, pos);
+        ref = binstr_get_ref_num(bs->v, pos);
         pos += ATOM_REF_SIZE;
-        arg =  binstr_get_arg_ref(bs, pos);
+        arg =  binstr_get_arg_ref(bs->v, pos);
         pos += ATOM_REF_ARG_SIZE;
         printf("$%d_%d", ref, arg);
       }
@@ -434,7 +461,7 @@ void binstr_dump(const BinStr bs)
     case TAG_MEM_REF:
       {
         unsigned int ref;
-        ref = binstr_get_ref_num(bs, pos);
+        ref = binstr_get_ref_num(bs->v, pos);
         pos += MEM_REF_SIZE;
         printf("#%d", ref);
       }
@@ -453,7 +480,7 @@ void binstr_dump(const BinStr bs)
       {
         long n;
 
-        n = binstr_get_int(bs, pos);
+        n = binstr_get_int(bs->v, pos);
         pos += BS_INT_SIZE;
         printf("%ld", n);
       }
@@ -462,7 +489,7 @@ void binstr_dump(const BinStr bs)
       {
         int j, n, rs_id;
 
-        rs_id = binstr_get_ruleset(bs, pos);
+        rs_id = binstr_get_ruleset(bs->v, pos);
         pos += BS_RULESET_SIZE;
         printf("@%d", rs_id);
       }
@@ -471,10 +498,10 @@ void binstr_dump(const BinStr bs)
       {
         int j, n, rs_id;
 
-        n = binstr_get_ruleset_num(bs, pos);
+        n = binstr_get_ruleset_num(bs->v, pos);
         pos += BS_RULESET_NUM_SIZE;
         for (j = 0; j < n; j++) {
-          rs_id = binstr_get_ruleset(bs, pos);
+          rs_id = binstr_get_ruleset(bs->v, pos);
           pos += BS_RULESET_SIZE;
           printf("@%d", rs_id);
         }
@@ -507,7 +534,7 @@ static inline BinStrPtr bsptr_copy(BinStrPtr p)
   binstr_add_ptr(q->binstr, q);
   return q;
 }
-                                    
+
 /* toをfromと同じ位置を指すようにする。fromとtoは同じバイナリすとリング
    を指すポインタの必要がある。 */
 static inline void bsptr_copy_to(const BinStrPtr from, BinStrPtr to)
@@ -1034,8 +1061,9 @@ void write_rulesets(LmnMembrane *mem, BinStrPtr bsp)
 }
 
 /* memから一意のバイナリストリングを計算する */
-BinStr lmn_mem_encode(LmnMembrane *mem)
+LmnBinStr lmn_mem_encode(LmnMembrane *mem)
 {
+  LmnBinStr ret_bs;
   BinStr bs;
   
 #ifdef PROFILE
@@ -1047,7 +1075,10 @@ BinStr lmn_mem_encode(LmnMembrane *mem)
 #ifdef PROFILE
   status_finish_mem_encode_calc();
 #endif
-  return bs;
+
+  ret_bs = binstr_to_lmn_binstr(bs);
+  binstr_free(bs);
+  return ret_bs;
 }
 
 /* 膜にあるアトムのファンクタを降順で返す */
@@ -1094,18 +1125,18 @@ static Vector *mem_atoms(LmnMembrane *mem)
 
 
 
-static int binstr_decode_cell(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
-static int binstr_decode_mol(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
-static int binstr_decode_atom(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
+static int binstr_decode_cell(LmnBinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
+static int binstr_decode_mol(LmnBinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
+static int binstr_decode_atom(LmnBinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg);
 
 /* エンコードされた膜をデコードし、構造を再構築する */
-LmnMembrane *lmn_binstr_decode(const BinStr bs)
+LmnMembrane *lmn_binstr_decode(const LmnBinStr bs)
 {
   LmnMembrane *groot;
   void **log;
   int nvisit;
   
-  log = LMN_NALLOC(void *, bs->cur * TAG_IN_BYTE);
+  log = LMN_NALLOC(void *, bs->len * TAG_IN_BYTE);
 
   groot = lmn_mem_make();
   lmn_mem_set_active(groot, TRUE);
@@ -1115,11 +1146,11 @@ LmnMembrane *lmn_binstr_decode(const BinStr bs)
   return groot;
 }
 
-int binstr_decode_cell(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg)
+int binstr_decode_cell(LmnBinStr bs, int pos, void **log, int *nvisit, LmnMembrane *mem, LmnSAtom from_atom, int from_arg)
 {
   int i;
 
-  for (i = 0; pos < bs->cur; i++) {
+  for (i = 0; pos < bs->len; i++) {
     unsigned int tag = BS_GET(bs->v, pos);
 
     if (tag == TAG_MEM_END) {
@@ -1130,7 +1161,7 @@ int binstr_decode_cell(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane 
       int rs_id;
 
       pos++;
-      rs_id = binstr_get_ruleset(bs, pos);
+      rs_id = binstr_get_ruleset(bs->v, pos);
       pos += BS_RULESET_SIZE;
 
       lmn_mem_add_ruleset(mem, lmn_ruleset_from_id(rs_id));
@@ -1139,10 +1170,10 @@ int binstr_decode_cell(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane 
       int j, n, rs_id;
 
       pos++;
-      n = binstr_get_ruleset_num(bs, pos);
+      n = binstr_get_ruleset_num(bs->v, pos);
       pos += BS_RULESET_NUM_SIZE;
       for (j = 0; j < n; j++) {
-        rs_id = binstr_get_ruleset(bs, pos);
+        rs_id = binstr_get_ruleset(bs->v, pos);
         pos += BS_RULESET_SIZE;
         lmn_mem_add_ruleset(mem, lmn_ruleset_from_id(rs_id));
       }
@@ -1160,7 +1191,7 @@ int binstr_decode_cell(BinStr bs, int pos, void **log, int *nvisit, LmnMembrane 
   return pos;
 }
 
-int binstr_decode_mol(BinStr bs,
+int binstr_decode_mol(LmnBinStr bs,
                       int pos,
                       void **log,
                       int *nvisit,
@@ -1171,7 +1202,7 @@ int binstr_decode_mol(BinStr bs,
   unsigned int tag;
   lmn_interned_str mem_name;
 
-  if (pos >= bs->cur) return pos;
+  if (pos >= bs->len) return pos;
   
   tag = BS_GET(bs->v, pos);
   pos++;
@@ -1182,7 +1213,7 @@ int binstr_decode_mol(BinStr bs,
   case TAG_ATOM_START:
     return binstr_decode_atom(bs, pos, log, nvisit, mem, from_atom, from_arg);
   case TAG_NAMED_MEM_START:
-      mem_name = binstr_get_mem_name(bs, pos);
+      mem_name = binstr_get_mem_name(bs->v, pos);
       pos += BS_MEM_NAME_SIZE;
       /* fall through */
   case TAG_MEM_START:
@@ -1235,9 +1266,9 @@ int binstr_decode_mol(BinStr bs,
       unsigned int ref, arg;
       LmnSAtom atom;
         
-      ref = binstr_get_ref_num(bs, pos);
+      ref = binstr_get_ref_num(bs->v, pos);
       pos += ATOM_REF_SIZE;
-      arg =  binstr_get_arg_ref(bs, pos);
+      arg =  binstr_get_arg_ref(bs->v, pos);
       pos += ATOM_REF_ARG_SIZE;
 
       atom = LMN_SATOM(log[ref]);
@@ -1252,7 +1283,7 @@ int binstr_decode_mol(BinStr bs,
       LmnSAtom in, out;
       LmnMembrane *ref_mem;
       
-      ref = binstr_get_ref_num(bs, pos);
+      ref = binstr_get_ref_num(bs->v, pos);
       pos += MEM_REF_SIZE;
       ref_mem = (LmnMembrane *)log[ref];
 
@@ -1272,7 +1303,7 @@ int binstr_decode_mol(BinStr bs,
     {
       long n;
 
-      n = binstr_get_int(bs, pos);
+      n = binstr_get_int(bs->v, pos);
       pos += BS_INT_SIZE;
       LMN_SATOM_SET_LINK(from_atom, from_arg, n);
       LMN_SATOM_SET_ATTR(from_atom, from_arg, LMN_INT_ATTR);
@@ -1286,7 +1317,7 @@ int binstr_decode_mol(BinStr bs,
   return pos;
 }
 
-int binstr_decode_atom(BinStr bs,
+int binstr_decode_atom(LmnBinStr bs,
                        int pos,
                        void **log,
                        int *nvisit,
@@ -1298,7 +1329,7 @@ int binstr_decode_atom(BinStr bs,
   int arity, i;
   LmnSAtom atom;
 
-  f = binstr_get_functor(bs, pos);
+  f = binstr_get_functor(bs->v, pos);
   pos += FUNCTOR_SIZE;
   arity = LMN_FUNCTOR_ARITY(f);
 

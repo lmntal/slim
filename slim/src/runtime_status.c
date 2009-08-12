@@ -385,7 +385,7 @@ void output_hash_conflict(FILE *f)
 static int encode_info_f(st_data_t key, st_data_t s_, st_data_t t)
 {
   State *s = (State*)s_;
-  BinStr bs = state_mem_id(s);
+  LmnBinStr bs = state_mem_id(s);
   if (bs) {
     int bs_size = binstr_byte_size(bs);
 

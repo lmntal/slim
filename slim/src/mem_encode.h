@@ -41,15 +41,14 @@
 #include "lmntal.h"
 #include "membrane.h"
 
-typedef struct BinStr *BinStr;
+typedef struct LmnBinStr *LmnBinStr;
 
-BinStr lmn_mem_encode(LmnMembrane *mem);
-void binstr_free(BinStr p);
-int binstr_comp(const BinStr a, const BinStr b);
-void binstr_dump(const BinStr p);
-unsigned long binstr_hash(const BinStr a);
-int binstr_byte_size(BinStr p);
+LmnBinStr lmn_mem_encode(LmnMembrane *mem);
+void lmn_binstr_free(LmnBinStr p);
+int binstr_comp(const LmnBinStr a, const LmnBinStr b);
+unsigned long binstr_hash(const LmnBinStr a);
+int binstr_byte_size(LmnBinStr p);
 
-LmnMembrane *lmn_binstr_decode(const BinStr bs);
+LmnMembrane *lmn_binstr_decode(const LmnBinStr bs);
 
 #endif /* LMN_MEMBRANE_H */

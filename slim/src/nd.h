@@ -56,7 +56,7 @@ struct State {
   Vector successor;     /* 通常時: Vector of States，ample(s)計算中: Vector of StateTransitions */
   LmnRule rule;
   BYTE state_name;
-  BinStr mem_id;
+  LmnBinStr mem_id;
 };
 
 typedef struct StateSpace *StateSpace;

@@ -182,7 +182,7 @@ void state_free_without_mem(State *s)
   if (!mem_is_zero(&s->successor, sizeof(Vector))) {
     vec_destroy(&s->successor);
   }
-  if (s->mem_id) binstr_free(s->mem_id);
+  if (s->mem_id) lmn_binstr_free(s->mem_id);
   LMN_FREE(s);
 }
 
