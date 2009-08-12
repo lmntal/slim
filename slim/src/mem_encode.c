@@ -120,8 +120,7 @@
 #define BS_RULESET_SIZE 4
 #define BS_RULESET_NUM_SIZE 4
 
-/* エンコードの結果を書き込む、バイナリストリング */
-
+/* エンコード処理に用いるバイナリストリング */
 struct BinStr {
   BYTE *v;
   /* バッファのサイズ（4ビット単位） */
@@ -272,14 +271,13 @@ static inline BYTE binstr_get_byte(BinStr bs, int pos)
 static inline uint16_t binstr_get_int16(BinStr bs, int pos)
 {
   return
-    (long)((binstr_get_byte(bs, pos+6)<<24) | (binstr_get_byte(bs, pos+4)<<16) |
-           (binstr_get_byte(bs, pos+2)<<8) | (binstr_get_byte(bs, pos)));
+    (long)((binstr_get_byte(bs, pos+2)<<8) | (binstr_get_byte(bs, pos)));
 }
 
 static inline LmnFunctor binstr_get_functor(BinStr bs, int pos)
 {
   if (sizeof(LmnFunctor) == 2) {
-    long f = (binstr_get_byte(bs, pos+2)<<8 | binstr_get_byte(bs, pos));
+    long f = binstr_get_int16(bs, pos);
     return (LmnFunctor)(FUNCTOR_MAX - f);
   } else {
     lmn_fatal("unexpected");
@@ -289,7 +287,7 @@ static inline LmnFunctor binstr_get_functor(BinStr bs, int pos)
 static inline unsigned int binstr_get_ref_num(BinStr bs, int pos)
 {
   if (ATOM_REF_SIZE == 4) {
-    return binstr_get_byte(bs, pos+2)<<8 | binstr_get_byte(bs, pos);
+    return binstr_get_int16(bs, pos);
   } else {
     lmn_fatal("unexpected");
   }
@@ -307,9 +305,7 @@ static inline unsigned int binstr_get_arg_ref(BinStr bs, int pos)
 static inline long binstr_get_int(BinStr bs, int pos)
 {
 #if SIZEOF_LONG == 4
-    return (long)(
-      (binstr_get_byte(bs, pos+6)<<24) | (binstr_get_byte(bs, pos+4)<<16) |
-      (binstr_get_byte(bs, pos+2)<<8) | (binstr_get_byte(bs, pos)));
+  return binstr_get_int16(bs, pos);
 #elif SIZEOF_LONG == 8
     return (long)(
       (binstr_get_byte(bs, pos+14)<<56) | (binstr_get_byte(bs, pos+12)<<48) |
@@ -330,7 +326,7 @@ static inline lmn_interned_str binstr_get_mem_name(BinStr bs, int pos)
   }
 }
 
-static inline binstr_get_ruleset_num(BinStr bs, int pos)
+static inline long binstr_get_ruleset_num(BinStr bs, int pos)
 {
 #if BS_RULESET_NUM_SIZE == 4
   return binstr_get_int16(bs, pos);
@@ -339,7 +335,7 @@ static inline binstr_get_ruleset_num(BinStr bs, int pos)
 #endif
 }
 
-static inline binstr_get_ruleset(BinStr bs, int pos)
+static inline long binstr_get_ruleset(BinStr bs, int pos)
 {
 #if BS_RULESET_SIZE == 4
   return binstr_get_int16(bs, pos);
@@ -542,7 +538,9 @@ static inline int bsptr_push(struct BinStrPtr *p, const BYTE *v, int size)
   for (i = 0; i < half_len; i++) {
     if (binstr_set(p->binstr, v[i] & 0x0f, p->pos)) p->pos++;
     else { bsptr_invalidate(p); return 0;}
-    if (binstr_set(p->binstr, (v[i] & 0xf0)>>TAG_BIT_SIZE, p->pos)) p->pos++;
+    if (binstr_set(p->binstr, (v[i]>>TAG_BIT_SIZE & 0x0f), p->pos)) {
+      p->pos++;
+    }
     else { bsptr_invalidate(p); return 0;}
   }
   if (size & 1) {
@@ -554,6 +552,8 @@ static inline int bsptr_push(struct BinStrPtr *p, const BYTE *v, int size)
 
 static inline int bsptr_push1(struct BinStrPtr *p, const BYTE v)
 {
+  if (!bsptr_valid(p)) return 0;
+
   if (binstr_set(p->binstr, v & 0x0f, p->pos)) {
     p->pos++;
     return 1;
@@ -590,6 +590,7 @@ static inline int bsptr_push_atom(BinStrPtr p, LmnSAtom a)
 {
   /* ファンクタの最大値からファンクタの値を引いて、大小を反転させる */
   LmnFunctor f = (LmnFunctor)FUNCTOR_MAX - LMN_SATOM_GET_FUNCTOR(a);
+
   return
     bsptr_push1(p, TAG_ATOM_START) &&
     bsptr_push(p, (const BYTE*)&f, FUNCTOR_SIZE);
@@ -645,15 +646,14 @@ static inline int bsptr_push_start_rulesets(BinStrPtr p, int n)
       bsptr_push1(p, TAG_RULESET) &&
       bsptr_push(p, (BYTE*)&n, BS_RULESET_NUM_SIZE);
   }
-    
 }
 
 static inline int bsptr_push_ruleset(BinStrPtr p, LmnRuleSet rs)
 {
-  int id;
+  int id ;
 
   id = lmn_ruleset_get_id(rs);
-  return bsptr_push(p, (BYTE*)&id, BS_RULESET_SIZE); 
+  return bsptr_push(p, (BYTE*)&id, BS_RULESET_SIZE);
 }
 
 /* トラバーサルにおいて、すでに訪問済みのアトムや膜の記録を行う。ログは
@@ -782,12 +782,16 @@ void write_mem(LmnMembrane *mem,
                VisitLog visited)
 {
   int n_visited;
-/*   st_data_t t; */
   
   if (!bsptr_valid(bsp)) return;
 
   if ((n_visited = visitlog_get(visited, (LmnWord)mem)) >= 0) {
     bsptr_push_visited_mem(bsp, n_visited);
+
+    if (from_atom) {
+      /* 引き続きアトムをたどる */
+      write_mol(from_atom, attr, from, bsp, visited);
+    }
     return;
   }
 
@@ -798,6 +802,7 @@ void write_mem(LmnMembrane *mem,
   if (!bsptr_valid(bsp)) return;
 
   if (from_atom != 0) {
+    /* 引き続きアトムをたどる */
     write_mol(from_atom, attr, from, bsp, visited);
   }
 
@@ -851,8 +856,8 @@ void write_mol(LmnAtom atom,
     LmnSAtom in = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
     LmnMembrane *in_mem = LMN_PROXY_GET_MEM(in);
 
-    write_mem(in_mem, LMN_SATOM_GET_LINK(in, 1), LMN_SATOM_GET_ATTR(in, 1), LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(in, 1)), bsp, visited);
-    write_mol(LMN_SATOM_GET_LINK(in, 1),
+    write_mem(in_mem,
+              LMN_SATOM_GET_LINK(in, 1),
               LMN_SATOM_GET_ATTR(in, 1),
               LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(in, 1)),
               bsp,
@@ -899,7 +904,7 @@ void write_mols(Vector *atoms,
                 VisitLog visited)
 {
 #define INIT_ATOMS_ARRAY_SIZE 1024
-
+  
   int i, natom;
   BinStrPtr ary_bsp[INIT_ATOMS_ARRAY_SIZE], *v_bsp;
   VisitLog ary_visited[INIT_ATOMS_ARRAY_SIZE], *v_visited;
@@ -1032,7 +1037,7 @@ void write_rulesets(LmnMembrane *mem, BinStrPtr bsp)
 BinStr lmn_mem_encode(LmnMembrane *mem)
 {
   BinStr bs;
-
+  
 #ifdef PROFILE
   status_start_mem_encode_calc();
 #endif
@@ -1103,6 +1108,7 @@ LmnMembrane *lmn_binstr_decode(const BinStr bs)
   log = LMN_NALLOC(void *, bs->cur * TAG_IN_BYTE);
 
   groot = lmn_mem_make();
+  lmn_mem_set_active(groot, TRUE);
   nvisit = 0;
   binstr_decode_cell(bs, 0, log, &nvisit, groot, NULL, 0);
   LMN_FREE(log);
@@ -1185,6 +1191,7 @@ int binstr_decode_mol(BinStr bs,
 
       new_mem = lmn_mem_make();
       lmn_mem_set_name(new_mem, mem_name);
+      lmn_mem_set_active(new_mem, TRUE);
       lmn_mem_add_child_mem(mem, new_mem);
 
       log[(*nvisit)++] = new_mem;
@@ -1197,7 +1204,6 @@ int binstr_decode_mol(BinStr bs,
         lmn_newlink_in_symbols(out, 1, from_atom, from_arg);
 
         pos = binstr_decode_cell(bs, pos, log, nvisit, new_mem, in, 1);
-        pos = binstr_decode_mol(bs, pos, log, nvisit, new_mem, in, 1);
       } else {
         pos = binstr_decode_cell(bs, pos, log, nvisit, new_mem, from_atom, from_arg);
       }

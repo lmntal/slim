@@ -229,6 +229,12 @@ lmn_interned_str lmn_port_name(LmnPort port_atom)
   return LMN_PORT(port_atom)->name;
 }
 
+/* 出力文字列ポートに書き込まれた文字列のコピー返す。 */
+LmnString lmn_port_output_string(LmnPort ostr_port)
+{
+  return lmn_string_copy(LMN_STRING(LMN_PORT_DATA(ostr_port)));
+}
+
 /*----------------------------------------------------------------------
  * Read & Write
  */
@@ -617,7 +623,7 @@ void cb_port_output_string(ReactCxt rc,
   LmnPort port = LMN_PORT(a0);
 
   if (LMN_PORT_TYPE(port) == LMN_PORT_OSTR) {
-    LmnString s = lmn_string_copy(LMN_STRING(LMN_PORT_DATA(port)));
+    LmnString s = lmn_port_output_string(port);
     lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_STRING_ATTR);
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),

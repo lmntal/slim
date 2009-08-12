@@ -218,6 +218,7 @@ struct LmnEnv {
   char *propositional_symbol;
   char *ltl_exp;
   BOOL mem_enc;
+  BOOL mem_enc_optmem;
 };
 
 extern struct LmnEnv  lmn_env;

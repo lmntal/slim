@@ -188,9 +188,11 @@ void state_free_without_mem(State *s)
 
 inline void state_free_mem(State *s)
 {
-  lmn_mem_drop(s->mem);
-  lmn_mem_free(s->mem);
-  s->mem = NULL;
+  if (s->mem) {
+    lmn_mem_drop(s->mem);
+    lmn_mem_free(s->mem);
+    s->mem = NULL;
+  }
 }
 
 void strans_free(StateTransition *strans) {

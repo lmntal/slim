@@ -124,6 +124,7 @@ static int parse_options(int argc, char *argv[])
     {"ltl_nd", 0, 0, 1014},
     {"por", 0, 0, 1015},
     {"mem-enc", 0, 0, 2000},
+    {"mem-enc-optmem", 0, 0, 2001},
     {0, 0, 0, 0}
   };
 
@@ -210,6 +211,10 @@ static int parse_options(int argc, char *argv[])
     case 2000:
       lmn_env.mem_enc = TRUE;
       break;
+    case 2001:
+      lmn_env.mem_enc = TRUE;
+      lmn_env.mem_enc_optmem = TRUE;
+      break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;
@@ -259,6 +264,8 @@ static void init_env(void)
   lmn_env.propositional_symbol = NULL;
   lmn_env.ltl_exp = NULL;
   lmn_env.mem_enc = FALSE;
+  lmn_env.mem_enc_optmem = FALSE;
+
 }
 
 void init_default_system_ruleset();

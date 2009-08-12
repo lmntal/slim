@@ -84,6 +84,7 @@ typedef struct AtomListEntry {
 #define LMN_MEM_NAME(MP) LMN_SYMBOL_STR(LMN_MEM_NAME_ID(MP))
 
 LMN_EXTERN LmnMembrane *lmn_mem_make(void);
+LMN_EXTERN inline void lmn_mem_set_name(LmnMembrane *mem, lmn_interned_str name);
 LMN_EXTERN void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_free(LmnMembrane *mem);
 LMN_EXTERN inline void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem);

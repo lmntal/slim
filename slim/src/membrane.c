@@ -275,6 +275,11 @@ LmnMembrane *lmn_mem_make(void)
   return mem;
 }
 
+inline void lmn_mem_set_name(LmnMembrane *mem, lmn_interned_str name)
+{
+  mem->name = name;
+}
+
 void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem)
 {
   LMN_ASSERT(parent);
@@ -480,8 +485,8 @@ void lmn_newlink_in_symbols(LmnSAtom atom0,
 {
   LMN_SATOM_SET_LINK(atom0, pos0, atom1);
   LMN_SATOM_SET_LINK(atom1, pos1, atom0);
-  LMN_SATOM_SET_ATTR(atom0, pos0, pos1);
-  LMN_SATOM_SET_ATTR(atom1, pos1, pos0);
+  LMN_SATOM_SET_ATTR(atom0, pos0, LMN_ATTR_MAKE_LINK(pos1));
+  LMN_SATOM_SET_ATTR(atom1, pos1, LMN_ATTR_MAKE_LINK(pos0));
 }
 
 /* シンボルアトムatom0と, シンボルorデータアトム atom1 の間にリンクを張る

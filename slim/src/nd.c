@@ -77,11 +77,21 @@ Vector *nd_expand(const StateSpace states, State *state)
   if (lmn_env.por) { r = ample(states, state); }
   else  {
     struct ReactCxt rc;
+    LmnMembrane *mem;
 
+    mem = state_mem(state);
+    if (!mem) {
+      mem = lmn_binstr_decode(state_mem_id(state));
+    }
     nd_react_cxt_init(&rc, DEFAULT_STATE_ID);
-    RC_SET_GROOT_MEM(&rc, state_mem(state));
-    r = expand_sub(&rc, state_mem(state));
+    RC_SET_GROOT_MEM(&rc, mem);
+    r = expand_sub(&rc, mem);
     nd_react_cxt_destroy(&rc);
+
+    if (!state_mem(state)) {
+      lmn_mem_drop(mem);
+      lmn_mem_free(mem);
+    }
   }
 
 #ifdef PROFILE
@@ -197,6 +207,11 @@ static void nd_loop(StateSpace states, State *init_state) {
         /* set ss to open, i.e., on the search stack */
         set_open(src_succ);
         dump_state_data(succ);
+
+        if (lmn_env.mem_enc_optmem) {
+          /* メモリ最適化のために、サクセッサの作成後に膜を解放する */
+          state_free_mem(succ);
+        }
       } else { /* src_succは追加されなかった（すでに同じ状態がある) */
         state_free(src_succ);
       }
@@ -206,7 +221,9 @@ static void nd_loop(StateSpace states, State *init_state) {
     set_expanded(s); /* sに展開済みフラグを立てる */
 
     /* 膜のエンコードを行っている場合は、展開済みになった状態の膜を解放する */
-    if (lmn_env.mem_enc) state_free_mem(s);
+    if (lmn_env.mem_enc) {
+      state_free_mem(s);
+    }
   }
 
   vec_free(stack);
@@ -257,8 +274,6 @@ void run_nd(LmnRuleSet start_ruleset)
 
   /* finalize */
   free_por_vars();
-
-
 }
 
 StateSpace do_nd(LmnMembrane *world_mem_org)
