@@ -77,7 +77,8 @@ const Vector *state_space_end_states(StateSpace states);
 void state_space_remove(const StateSpace states, State *s);
 st_table_t state_space_tbl(StateSpace states);
 
+void dump_all_state_mem(StateSpace states, FILE *file);
 void dump_state_transition_graph(StateSpace states, FILE *file);
-void print_state_name(StateSpace states);
+void dump_state_name(StateSpace states, FILE *file);
 
 #endif

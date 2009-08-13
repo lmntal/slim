@@ -62,8 +62,11 @@ static int kill_States_chains(st_data_t _k,
                               st_data_t rm_tbl_ptr);
 static BOOL expand_inner(struct ReactCxt *rc,
                          LmnMembrane *cur_mem);
-static int print_state_name_f(st_data_t _k, st_data_t state_ptr, st_data_t _a);
 static void dump_state_data(State *state);
+
+static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a);
+static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a);
+static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a);
 
 /* 状態stateから１ステップで遷移する状態のベクタを返す。
    返される状態のベクタには、重複はない */
@@ -308,6 +311,16 @@ static void dump_state_data(State *state)
 }
 
 /**
+ * --ltl_nd実行終了時に状態の内容を出力する．
+ * 高階関数st_foreach(c.f. st.c)に投げて使用．
+ */
+static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
+  State *tmp = (State *)state_ptr;
+  dump_state_data(tmp);
+  return ST_CONTINUE;
+}
+
+/**
  * 非決定(--nd または --nd_result)実行終了時に状態遷移グラフを出力する．
  * 高階関数st_foreach(c.f. st.c)に投げて使用．
  */
@@ -324,6 +337,12 @@ static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_da
   }
   fprintf(stdout, "\n");
 
+  return ST_CONTINUE;
+}
+
+static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
+  State *tmp = (State *)state_ptr;
+  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
   return ST_CONTINUE;
 }
 
@@ -452,12 +471,18 @@ st_table_t state_space_tbl(StateSpace states)
   return states->tbl;
 }
 
+
+void dump_all_state_mem(StateSpace states, FILE *file)
+{
+  fprintf(file, "\nStates\n");
+  st_foreach(states->tbl, print_state_mem, 0);
+}
+
 void dump_state_transition_graph(StateSpace states, FILE *file)
 {
   fprintf(file, "\nTransitions\n");
   fprintf(file, "init:%lu\n", (long unsigned int)state_space_init_state(states));
   st_foreach(states->tbl, print_state_transition_graph, 0);
-  fprintf(file, "\n");
 }
 
 
@@ -465,13 +490,9 @@ void dump_state_transition_graph(StateSpace states, FILE *file)
  * --ltl_nd時に使用．状態の名前（accept_s0など）を表示．
  * 高階関数st_foreach(c.f. st.c)に投げて使用．
  */
-void print_state_name(StateSpace states)
+void dump_state_name(StateSpace states, FILE *file)
 {
-  st_foreach(states->tbl, print_state_name_f, 0);
+  fprintf(file, "\nLabels\n");
+  st_foreach(states->tbl, print_state_name, 0);
 }
 
-static int print_state_name_f(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  State *tmp = (State *)state_ptr;
-  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
-  return ST_CONTINUE;
-}
