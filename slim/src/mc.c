@@ -634,12 +634,12 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
   set_fst(initial_state);
   ltl_search1(states, world_mem, stack);
   fprintf(stdout, "no cycles found\n");
+  fprintf(stdout, "\n");
 
   if (lmn_env.ltl_nd){
     dump_all_state_mem(states, stdout);
     dump_state_transition_graph(states, stdout);
     dump_state_name(states, stdout);
-    fprintf(stdout, "\n");
   }
   fprintf(stdout, "# of States = %lu\n", state_space_num(states));
 

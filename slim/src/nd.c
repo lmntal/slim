@@ -267,6 +267,7 @@ void run_nd(LmnRuleSet start_ruleset)
   calc_hash_conflict(states);
   calc_encode_info(states);
 #endif
+  fprintf(stdout, "\n");
 
   dump_state_transition_graph(states, stdout);
   fprintf(stdout, "# of States = %lu\n", state_space_num(states));
@@ -474,15 +475,17 @@ st_table_t state_space_tbl(StateSpace states)
 
 void dump_all_state_mem(StateSpace states, FILE *file)
 {
-  fprintf(file, "\nStates\n");
+  fprintf(file, "States\n");
   st_foreach(states->tbl, print_state_mem, 0);
+  fprintf(file, "\n");
 }
 
 void dump_state_transition_graph(StateSpace states, FILE *file)
 {
-  fprintf(file, "\nTransitions\n");
+  fprintf(file, "Transitions\n");
   fprintf(file, "init:%lu\n", (long unsigned int)state_space_init_state(states));
   st_foreach(states->tbl, print_state_transition_graph, 0);
+  fprintf(file, "\n");
 }
 
 
@@ -492,7 +495,8 @@ void dump_state_transition_graph(StateSpace states, FILE *file)
  */
 void dump_state_name(StateSpace states, FILE *file)
 {
-  fprintf(file, "\nLabels\n");
+  fprintf(file, "Labels\n");
   st_foreach(states->tbl, print_state_name, 0);
+  fprintf(file, "\n");
 }
 
