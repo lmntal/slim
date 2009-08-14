@@ -1307,6 +1307,7 @@ int binstr_decode_mol(LmnBinStr bs,
       pos += BS_INT_SIZE;
       LMN_SATOM_SET_LINK(from_atom, from_arg, n);
       LMN_SATOM_SET_ATTR(from_atom, from_arg, LMN_INT_ATTR);
+      lmn_mem_push_atom(mem, n, LMN_INT_ATTR);
     }
     break;
   default:
