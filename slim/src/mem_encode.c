@@ -199,8 +199,8 @@ int binstr_byte_size(LmnBinStr p)
 /* バイナリストリングのハッシュ値を返す */
 unsigned long binstr_hash(const LmnBinStr a)
 {
-  unsigned long hval = FNV_BASIS;
-  int i = a->len / TAG_IN_BYTE;
+   unsigned long hval = FNV_BASIS;
+  int i = (a->len+1) / TAG_IN_BYTE;
 
   /*
    * FNV-1a hash each octet in the buffer
@@ -363,13 +363,8 @@ static void binstr_invalidate_ptrs(struct BinStr *p, int start)
 int binstr_comp(const LmnBinStr a, const LmnBinStr b)
 {
   if (a->len != b->len) return a->len - b->len;
-  else if (a->len & 1) {
-    int r = memcmp(a->v, b->v, a->len / TAG_IN_BYTE);
-    if (!r) return r;
-    return (a->v[a->len>>1] & 0x0f) - (b->v[b->len>>1] & 0x0f);
-  }
   else {
-    return memcmp(a->v, b->v, a->len / TAG_IN_BYTE);
+    return memcmp(a->v, b->v, (a->len+1) / TAG_IN_BYTE);
   }
 }
 
@@ -387,6 +382,9 @@ static inline struct LmnBinStr *binstr_to_lmn_binstr(BinStr bs)
   ret_bs->v = LMN_NALLOC(BYTE, size);
   memcpy(ret_bs->v, bs->v, size);
   ret_bs->len = bs->cur;
+  if (ret_bs->len & 1) {
+    ret_bs->v[ret_bs->len >> 1] = ret_bs->v[ret_bs->len >> 1] & 0x0f;
+  }
 
   return ret_bs;
 }
@@ -930,6 +928,9 @@ void write_mols(Vector *atoms,
         last_valid_bsp = new_bsptr;
         last_valid_visitlog = new_visited;
         last_valid_i = i;
+      } else {
+        bsptr_destroy(&new_bsptr);
+        visitlog_destroy(&new_visited);
       }
     } 
   }
@@ -983,6 +984,9 @@ void write_mems(LmnMembrane *mem,
         last_valid_bsp = new_bsptr;
         last_valid_visitlog = new_visited;
         last_valid = TRUE;
+      } else {
+        bsptr_destroy(&new_bsptr);
+        visitlog_destroy(&new_visited);
       }
     }
   }

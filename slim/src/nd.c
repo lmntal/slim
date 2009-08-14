@@ -427,7 +427,7 @@ static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tb
   State *tmp = (State *)state_ptr;
   HashSet *rm_tbl = (HashSet *)rm_tbl_ptr;
 
-  if(hashset_contains(rm_tbl, (HashKeyType)tmp->mem)) {
+  if(tmp->mem && hashset_contains(rm_tbl, (HashKeyType)tmp->mem)) {
     vec_destroy(&tmp->successor);
     LMN_FREE(tmp);
   }
