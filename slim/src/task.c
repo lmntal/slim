@@ -482,7 +482,7 @@ void lmn_run(LmnRuleSet start_ruleset)
   do {                                          \
     switch (attr) {                             \
     case LMN_INT_ATTR:                          \
-       READ_VAL(int, instr, (dest));            \
+       READ_VAL(long, instr, (dest));           \
        break;                                   \
      case LMN_DBL_ATTR:                         \
      {                                          \
@@ -510,7 +510,7 @@ void lmn_run(LmnRuleSet start_ruleset)
   do {                                          \
     switch (attr) {                             \
     case LMN_INT_ATTR:                          \
-       READ_VAL(int, instr, (dest));            \
+       READ_VAL(long, instr, (dest));           \
        break;                                   \
      case LMN_DBL_ATTR:                         \
        (dest) = (LmnWord)instr;                 \
@@ -534,9 +534,9 @@ void lmn_run(LmnRuleSet start_ruleset)
           switch(attr) {                               \
           case LMN_INT_ATTR:                           \
             {                                          \
-              int t;                                   \
-              READ_VAL(int, instr, t);                 \
-              (result) = ((int)(x) == t);              \
+              long t;                                  \
+              READ_VAL(long, instr, t);                \
+              (result) = ((long)(x) == t);             \
               break;                                   \
             }                                          \
           case LMN_DBL_ATTR:                           \
@@ -2007,7 +2007,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      wt[dstatom] = (LmnWord)((int)wt[atom1] + (int)wt[atom2]);
+      wt[dstatom] = (LmnWord)((long)wt[atom1] + (long)wt[atom2]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2018,7 +2018,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      wt[dstatom] = (LmnWord)((int)wt[atom1] - (int)wt[atom2]);
+      wt[dstatom] = (LmnWord)((long)wt[atom1] - (long)wt[atom2]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2029,7 +2029,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      wt[dstatom] = (LmnWord)((int)wt[atom1] * (int)wt[atom2]);
+      wt[dstatom] = (LmnWord)((long)wt[atom1] * (long)wt[atom2]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2040,7 +2040,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      wt[dstatom] = (LmnWord)((int)wt[atom1] / (int)wt[atom2]);
+      wt[dstatom] = (LmnWord)((long)wt[atom1] / (long)wt[atom2]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2049,7 +2049,7 @@ EQGROUND_NEQGROUND_BREAK:
       LmnInstrVar dstatom, atomi;
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atomi);
-      wt[dstatom] = (LmnWord)(-(int)wt[atomi]);
+      wt[dstatom] = (LmnWord)(-(long)wt[atomi]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2060,7 +2060,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      wt[dstatom] = (LmnWord)((int)wt[atom1] % (int)wt[atom2]);
+      wt[dstatom] = (LmnWord)((long)wt[atom1] % (long)wt[atom2]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2080,7 +2080,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      wt[dstatom] = (LmnWord)((int)wt[atom1] & (int)wt[atom2]);
+      wt[dstatom] = (LmnWord)((long)wt[atom1] & (long)wt[atom2]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2091,7 +2091,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      wt[dstatom] = (LmnWord)((int)wt[atom1] | (int)wt[atom2]);
+      wt[dstatom] = (LmnWord)((long)wt[atom1] | (long)wt[atom2]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2102,7 +2102,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      wt[dstatom] = (LmnWord)((int)wt[atom1] ^ (int)wt[atom2]);
+      wt[dstatom] = (LmnWord)((long)wt[atom1] ^ (long)wt[atom2]);
       at[dstatom] = LMN_INT_ATTR;
       break;
     }
@@ -2112,7 +2112,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!((int)wt[atom1] < (int)wt[atom2])) return FALSE;
+      if(!((long)wt[atom1] < (long)wt[atom2])) return FALSE;
       break;
     }
     case INSTR_ILE:
@@ -2121,7 +2121,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!((int)wt[atom1] <= (int)wt[atom2])) return FALSE;
+      if(!((long)wt[atom1] <= (long)wt[atom2])) return FALSE;
       break;
     }
     case INSTR_IGT:
@@ -2130,7 +2130,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!((int)wt[atom1] > (int)wt[atom2])) return FALSE;
+      if(!((long)wt[atom1] > (long)wt[atom2])) return FALSE;
       break;
     }
     case INSTR_IGE:
@@ -2139,7 +2139,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!((int)wt[atom1] >= (int)wt[atom2])) return FALSE;
+      if(!((long)wt[atom1] >= (long)wt[atom2])) return FALSE;
       break;
     }
     case INSTR_IEQ:
@@ -2148,7 +2148,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!((int)wt[atom1] == (int)wt[atom2])) return FALSE;
+      if(!((long)wt[atom1] == (long)wt[atom2])) return FALSE;
       break;
     }
     case INSTR_INE:
@@ -2157,7 +2157,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!((int)wt[atom1] != (int)wt[atom2])) return FALSE;
+      if(!((long)wt[atom1] != (long)wt[atom2])) return FALSE;
       break;
     }
     case INSTR_ILTFUNC:
@@ -2166,7 +2166,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, func1);
       READ_VAL(LmnInstrVar, instr, func2);
 
-      if(!((int)wt[func1] < (int)wt[func2])) return FALSE;
+      if(!((long)wt[func1] < (long)wt[func2])) return FALSE;
       break;
     }
     case INSTR_ILEFUNC:
@@ -2175,7 +2175,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, func1);
       READ_VAL(LmnInstrVar, instr, func2);
 
-      if(!((int)wt[func1] <= (int)wt[func2])) return FALSE;
+      if(!((long)wt[func1] <= (long)wt[func2])) return FALSE;
       break;
     }
     case INSTR_IGTFUNC:
@@ -2184,7 +2184,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, func1);
       READ_VAL(LmnInstrVar, instr, func2);
 
-      if(!((int)wt[func1] > (int)wt[func2])) return FALSE;
+      if(!((long)wt[func1] > (long)wt[func2])) return FALSE;
       break;
     }
     case INSTR_IGEFUNC:
@@ -2193,7 +2193,7 @@ EQGROUND_NEQGROUND_BREAK:
       READ_VAL(LmnInstrVar, instr, func1);
       READ_VAL(LmnInstrVar, instr, func2);
 
-      if(!((int)wt[func1] >= (int)wt[func2])) return FALSE;
+      if(!((long)wt[func1] >= (long)wt[func2])) return FALSE;
       break;
     }
     case  INSTR_FADD:
@@ -2518,7 +2518,7 @@ EQGROUND_NEQGROUND_BREAK:
       if (at[func0] != at[func1]) return FALSE;
       switch (at[func0]) {
       case LMN_INT_ATTR:
-        if ((int)wt[func0] != (int)wt[func1]) return FALSE;
+        if ((long)wt[func0] != (long)wt[func1]) return FALSE;
         break;
       case LMN_DBL_ATTR:
         if (*(double*)(&wt[func0]) !=
@@ -2541,7 +2541,7 @@ EQGROUND_NEQGROUND_BREAK:
       if (at[func0] == at[func1]) {
         switch (at[func0]) {
         case LMN_INT_ATTR:
-          if ((int)wt[func0] == (int)wt[func1]) return FALSE;
+          if ((long)wt[func0] == (long)wt[func1]) return FALSE;
           break;
         case LMN_DBL_ATTR:
           if (*(double*)(&wt[func0]) ==

@@ -265,7 +265,7 @@ static inline BYTE binstr_get_byte(BYTE *bs, int pos)
 static inline uint16_t binstr_get_int16(BYTE *bs, int pos)
 {
   return
-    (long)((binstr_get_byte(bs, pos+2)<<8) | (binstr_get_byte(bs, pos)));
+    (uint16_t)((binstr_get_byte(bs, pos+2)<<8) | (binstr_get_byte(bs, pos)));
 }
 
 static inline LmnFunctor binstr_get_functor(BYTE *bs, int pos)
@@ -299,13 +299,11 @@ static inline unsigned int binstr_get_arg_ref(BYTE *bs, int pos)
 static inline long binstr_get_int(BYTE *bs, int pos)
 {
 #if SIZEOF_LONG == 4
-  return binstr_get_int16(bs, pos);
+  return (long)(binstr_get_int16(bs, pos+4)<<16 | binstr_get_int16(bs, pos));
 #elif SIZEOF_LONG == 8
-    return (long)(
-      (binstr_get_byte(bs, pos+14)<<56) | (binstr_get_byte(bs, pos+12)<<48) |
-      (binstr_get_byte(bs, pos+10)<<40) | (binstr_get_byte(bs, pos+8)<<32) |
-      (binstr_get_byte(bs, pos+6)<<24) | (binstr_get_byte(bs, pos+4)<<16) |
-      (binstr_get_byte(bs, pos+2)<<8) | (binstr_get_byte(bs, pos)));
+  return (long)
+    (binstr_get_int16(bs, pos+12)<<48 | binstr_get_int16(bs, pos+8)<<32 |
+     binstr_get_int16(bs, pos+4)<<16  | binstr_get_int16(bs, pos));
 #else
     #error "not supported"
 #endif

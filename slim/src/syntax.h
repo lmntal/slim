@@ -62,7 +62,7 @@ enum FunctorType {STX_SYMBOL, INT_FUNC, FLOAT_FUNC, STRING_FUNC, STX_IN_PROXY, S
 typedef struct Functor *Functor;
 
 Functor functor_make(enum FunctorType type);
-Functor int_functor_make(int v);
+Functor int_functor_make(long v);
 Functor float_functor_make(double v);
 Functor symbol_functor_make(lmn_interned_str name, int arity);
 Functor string_functor_make(lmn_interned_str name);
@@ -70,7 +70,7 @@ Functor module_symbol_functor_make(lmn_interned_str module,
                                    lmn_interned_str name,
                                    int arity);
 enum FunctorType functor_get_type(Functor f);
-int functor_get_int_value(Functor f);
+long functor_get_int_value(Functor f);
 double functor_get_float_value(Functor f);
 lmn_interned_str functor_get_string_value(Functor f);
 int functor_get_id(Functor f);

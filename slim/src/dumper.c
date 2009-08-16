@@ -236,7 +236,7 @@ static BOOL dump_data_atom(LmnPort port,
   switch (attr) {
   case  LMN_INT_ATTR:
     {
-      char *s = int_to_str((int)data);
+      char *s = int_to_str((long)data);
       port_put_raw_s(port, s);
       LMN_FREE(s);
     }

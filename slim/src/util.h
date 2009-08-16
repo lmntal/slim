@@ -42,7 +42,7 @@
 /* 配列の要素数 */
 #define ARY_SIZEOF(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
-char *int_to_str(int n);
+char *int_to_str(long n);
 int comp_int_f(const void *a, const void *b);
 int comp_int_greater_f(const void *a_, const void *b_);
 

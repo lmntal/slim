@@ -402,7 +402,7 @@ static void load_arg(InstrArg arg, Context c)
         break;
       case INT_FUNC:
         WRITE_MOVE(LmnLinkAttr, LMN_INT_ATTR, c);
-        WRITE_MOVE(int, functor_get_int_value(functor), c);
+        WRITE_MOVE(long, functor_get_int_value(functor), c);
         break;
       case FLOAT_FUNC:
         WRITE_MOVE(LmnLinkAttr, LMN_DBL_ATTR, c);

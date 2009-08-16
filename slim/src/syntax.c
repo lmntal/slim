@@ -94,7 +94,7 @@ struct InstBlock {
 struct Functor {
   enum FunctorType type;
   union {
-    int int_value;
+    long int_value;
     double float_value;
     lmn_interned_str str;
     int functor_id;
@@ -156,7 +156,7 @@ static void functor_free(Functor f)
   LMN_FREE(f);
 }
 
-Functor int_functor_make(int v)
+Functor int_functor_make(long v)
 {
   Functor f = functor_make(INT_FUNC);
 
@@ -200,7 +200,7 @@ enum FunctorType functor_get_type(Functor f)
   return f->type;
 }
 
-int functor_get_int_value(Functor f)
+long functor_get_int_value(Functor f)
 {
   return f->v.int_value;
 }

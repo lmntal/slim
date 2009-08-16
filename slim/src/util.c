@@ -40,7 +40,7 @@
 #include "util.h"
 #include "lmntal.h"
 
-char *int_to_str(int n)
+char *int_to_str(long n)
 {
   char *s;
   int keta = 0;
@@ -57,7 +57,7 @@ char *int_to_str(int n)
   }
 
   s = LMN_NALLOC(char, keta + 1);
-  sprintf(s, "%d", n);
+  sprintf(s, "%ld", n);
 
   return s;
 }
