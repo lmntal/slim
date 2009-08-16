@@ -1022,8 +1022,10 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
       LmnLinkAttr next_attr = LMN_SATOM_GET_ATTR(src_atom, i);
 
       /* LMN_SATOM_GET_LINK(copied, i)が0になる場合は、根に到達した場合 */
-      if (!LMN_ATTR_IS_DATA(next_attr) &&
-          LMN_SATOM_GET_LINK(copied, i) != 0) {
+      if (LMN_ATTR_IS_DATA(next_attr)) {
+        lmn_mem_push_atom(mem, next_src, next_attr);
+      }
+      else if (LMN_SATOM_GET_LINK(copied, i) != 0) {
         LmnAtom next_copied = hashtbl_get_default(atommap, next_src, 0);
         if (next_copied == 0) { /* next_srcは未訪問 */
           next_copied = LMN_ATOM(lmn_copy_satom_with_data(LMN_SATOM(next_src)));

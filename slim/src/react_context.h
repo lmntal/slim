@@ -60,6 +60,7 @@ struct ReactCxt {
 #define  REACT_MEM_ORIENTED  1  /* 膜主導テスト */
 #define  REACT_STAND_ALONE   2  /* 特別な処理を行わない */
 #define  REACT_ND            4  /* 状態の展開(非決定実行) */
+#define  REACT_PROPERTY      8  /* モデル検査時における性質ルールの適用 */
 
 inline void stand_alone_react_cxt_init(struct ReactCxt *cxt);
 inline void stand_alone_react_cxt_destroy(struct ReactCxt *cxt);

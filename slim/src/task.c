@@ -897,6 +897,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         LMN_FREE(atcp);
 
         return FALSE;
+      } else if (RC_GET_MODE(rc, REACT_PROPERTY)) {
+        return TRUE;
       }
       break;
     }

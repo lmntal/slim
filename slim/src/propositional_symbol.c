@@ -68,6 +68,9 @@ static char *rule_str_for_compile(const char *head,
                                   const char *body);
 static int propsym_parse(FILE *in, Automata a, PVector *definitions);
 
+static inline void property_react_cxt_init(struct ReactCxt *cxt);
+static inline void property_react_cxt_destroy(struct ReactCxt *cxt);
+
 Proposition proposition_make(const char *head,
                              const char *guard,
                              const char *body)
@@ -193,12 +196,21 @@ BOOL proposition_eval(Proposition prop, LmnMembrane *mem)
   struct ReactCxt rc;
   BOOL b;
   
-  stand_alone_react_cxt_init(&rc);
+  property_react_cxt_init(&rc);
+  RC_SET_GROOT_MEM(&rc, mem);
   b = react_rule(&rc, mem, proposition_get_rule(prop));
-  stand_alone_react_cxt_destroy(&rc);
+  property_react_cxt_destroy(&rc);
   return b;
 }
 
+static inline void property_react_cxt_init(struct ReactCxt *cxt)
+{
+  RC_SET_MODE(cxt, REACT_PROPERTY);
+}
+
+static inline void property_react_cxt_destroy(struct ReactCxt *cxt)
+{
+}
 
 /*----------------------------------------------------------------------
  * propositional symbol definitions
@@ -237,3 +249,4 @@ void propsyms_set(PropSyms props,
   }
   vec_set(props, id, (vec_data_t)symdef);
 }
+
