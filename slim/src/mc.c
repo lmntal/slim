@@ -62,16 +62,13 @@ enum MC_ERRORNO {
   MC_PROP_LOAD_ERROR,
 };
 
-/* for LTL */
-static LmnMembrane *seed = NULL; /* root of second DFS */
-
 static void violate(Vector *stack);
 static void exit_ltl_model_checking(void);
 static Vector *mc_expand(const StateSpace states,
                          State *state,
                          BYTE prop_state);
 static void do_mc(StateSpace states, LmnMembrane *world_mem);
-static void ltl_search2(StateSpace states, Vector *stack);
+static void ltl_search2(StateSpace states, Vector *stack, LmnWord seed_index);
 
 void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
 {
@@ -361,7 +358,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
   if (atmstate_is_end(property_automata_state)) {
     violate(stack);
     unset_open((State *)vec_peek(stack));
-    unset_fst((State *)vec_pop(stack));
+    vec_pop(stack);
     return;
   }
 
@@ -435,19 +432,20 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
 
   /* entering second DFS */
   if (atmstate_is_accept(property_automata_state)) {
-    seed = s->mem;
-
+    /** Rev.199: Nested-DFSの修正に伴う主な変更点
+     * 1. seedを探索スタック中の位置(seed_index)として表現
+     * 2. 状態はdfs1,2中であることを表すフラグを持っているが、探索後にこのフラグは解除しないよう変更
+     *    nested-dfsは、dfs1で展開ができなくなった状態からdfs2が始まる。(dfs2で状態を新規に展開する機会はない)
+     *    最悪の場合でも、全ての状態はdfs1,2で1度ずつ(計2度)のみの検査で済む。
+     *    そのため、各dfsで1度検査した状態は、再び同じdfsで検査する必要はない。
+     * 3. dfs1,2で探索スタックを共有しているため、dfs2で積まれる(seed以降の)状態への閉路が検出されないよう工夫をする。
+     * 　 というのも、受理頂点を含まない閉路が検出されてしまう恐れがあるためだ。
+     *    そのため、dfs2で比較元として扱うsuccessorの比較先を、探索スタック内のseedの位置(seed_index)までとして、変更した。
+     */
+    LmnWord seed_index = vec_num(stack) - 1;
     set_snd(s);
-    vec_push(stack, (LmnWord)s);
-    ltl_search2(states, stack);
-    unset_snd(s);
-    vec_pop(stack);
-
-    /* reset hashset */
-#ifdef DEBUG
-    fprintf(stdout, "reset States\n\n");
-#endif
-    seed = NULL;
+    ltl_search2(states, stack, seed_index);
+    seed_index = NULL;
   }
 
 #ifdef DEBUG
@@ -455,7 +453,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
 #endif
 
   unset_open((State *)vec_peek(stack)); /* スタックから取り除かれる旨のフラグをセット(POR用) */
-  unset_fst((State *)vec_pop(stack));
+  vec_pop(stack);
   vec_free(expanded_list);
 }
 
@@ -466,7 +464,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
  *  すなわち受理頂点から受理頂点へ至る閉路(受理サイクル)の存在を確認することで、
  *  与えられたLTL式を満足する実行経路が存在するか否かを判定する。
  */
-static void ltl_search2(StateSpace states, Vector *stack)
+static void ltl_search2(StateSpace states, Vector *stack, LmnWord seed_index)
 {
   unsigned int i, j;
   State *s = (State *)vec_peek(stack);
@@ -474,7 +472,7 @@ static void ltl_search2(StateSpace states, Vector *stack)
 #ifdef DEBUG
   fprintf(stdout, "\n----- enter function: ltl_search2() -----\n");
   fprintf(stdout, "seed=");
-  lmn_dump_mem(seed);
+  lmn_dump_mem_stdout(seed->mem);
   fprintf(stdout, "\n");
 
   fprintf(stdout, "stack:\n");
@@ -482,39 +480,34 @@ static void ltl_search2(StateSpace states, Vector *stack)
     State *tmp_s = (State *)vec_get(stack, i);
     fprintf(stdout, "%d\n", is_snd(tmp_s));
     fprintf(stdout, "%d: (fst=%d,snd=%d):\t", i, is_fst(tmp_s) ? 1 : 0, is_snd(tmp_s) ? 1 : 0);
-    lmn_dump_mem(tmp_s->mem);
+    lmn_dump_mem_stdout(tmp_s->mem);
   }
   fprintf(stdout, "\n");
 #endif
 
   for(i = 0; i < vec_num(&s->successor); i++) { /* for each (s,l,s') */
     State *ss = (State *)vec_get(&s->successor, i);
-    LmnMembrane *ssmem = ss->mem;
 
-    BOOL on_stack = FALSE;
-
-    for (j = 0; j < vec_num(stack); j++) {
+    /* successorが探索スタック上の状態であるかを検査 (seedから始める)*/
+    for (j = seed_index; j > 0; j--) {
       State *tmp_state = (State *)vec_get(stack, j);
-      /* ここはpointer比較だけでいいかも */
-      if (/*lmn_mem_equals((HashKeyType)tmp_state->mem, (HashKeyType)ssmem)*/
-      tmp_state->mem==ssmem && is_fst(tmp_state)) {
-        on_stack = TRUE;
-      }
-    }
-    if (on_stack || lmn_mem_equals(seed, ssmem)) {
-      violate(stack);
-
+      if (tmp_state == ss) {
+        set_snd(ss);
+        set_snd(tmp_state);
+        violate(stack);
 #ifdef DEBUG
-      fprintf(stdout, "+++++ return function: ltl_search2() +++++\n\n");
+        fprintf(stdout, "+++++ return function: ltl_search2() +++++\n\n");
 #endif
-      return;
+        return;
+      }
     }
 
     /* second DFS で未訪問→再帰 */
     if(!is_snd(ss)) {
       set_snd(ss);
-      ltl_search2(states, stack);
-      unset_snd(ss);
+      vec_push(stack, (LmnWord)ss);
+      ltl_search2(states, stack, seed_index);
+      vec_pop(stack);
     }
   }
 }
