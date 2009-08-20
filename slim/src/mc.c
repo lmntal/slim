@@ -68,7 +68,7 @@ static Vector *mc_expand(const StateSpace states,
                          State *state,
                          BYTE prop_state);
 static void do_mc(StateSpace states, LmnMembrane *world_mem);
-static void ltl_search2(StateSpace states, Vector *stack, LmnWord seed_index);
+static void ltl_search2(StateSpace states, Vector *stack, State *seed);
 
 void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
 {
@@ -346,7 +346,7 @@ char *mc_error_msg(int error_id)
  */
 
 /* nested(またはdouble)DFSにおける1段階目の実行 */
-void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
+void ltl_search1(StateSpace states, Vector *stack)
 {
   unsigned int j, i, i_trans;
   State *s = (State *)vec_peek(stack);
@@ -358,7 +358,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
   if (atmstate_is_end(property_automata_state)) {
     violate(stack);
     unset_open((State *)vec_peek(stack));
-    vec_pop(stack);
+    unset_fst((State *)vec_pop(stack));
     return;
   }
 
@@ -420,7 +420,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
         vec_push(stack, (vec_data_t)ss);
         set_open(ss); /* 状態ssがスタック上に存在する旨のフラグを立てる(POR用) */
         set_fst(ss);
-        ltl_search1(states, global_root, stack);
+        ltl_search1(states, stack);
       }
       else { /* contains */
         state_free(ss);
@@ -432,20 +432,10 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
 
   /* entering second DFS */
   if (atmstate_is_accept(property_automata_state)) {
-    /** Rev.199: Nested-DFSの修正に伴う主な変更点
-     * 1. seedを探索スタック中の位置(seed_index)として表現
-     * 2. 状態はdfs1,2中であることを表すフラグを持っているが、探索後にこのフラグは解除しないよう変更
-     *    nested-dfsは、dfs1で展開ができなくなった状態からdfs2が始まる。(dfs2で状態を新規に展開する機会はない)
-     *    最悪の場合でも、全ての状態はdfs1,2で1度ずつ(計2度)のみの検査で済む。
-     *    そのため、各dfsで1度検査した状態は、再び同じdfsで検査する必要はない。
-     * 3. dfs1,2で探索スタックを共有しているため、dfs2で積まれる(seed以降の)状態への閉路が検出されないよう工夫をする。
-     * 　 というのも、受理頂点を含まない閉路が検出されてしまう恐れがあるためだ。
-     *    そのため、dfs2で比較元として扱うsuccessorの比較先を、探索スタック内のseedの位置(seed_index)までとして、変更した。
-     */
-    LmnWord seed_index = vec_num(stack) - 1;
+    State *seed = s;
     set_snd(s);
-    ltl_search2(states, stack, seed_index);
-    seed_index = NULL;
+    ltl_search2(states, stack, seed);
+    seed = NULL;
   }
 
 #ifdef DEBUG
@@ -453,7 +443,7 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
 #endif
 
   unset_open((State *)vec_peek(stack)); /* スタックから取り除かれる旨のフラグをセット(POR用) */
-  vec_pop(stack);
+  unset_fst((State *)vec_pop(stack));
   vec_free(expanded_list);
 }
 
@@ -464,9 +454,9 @@ void ltl_search1(StateSpace states, LmnMembrane *global_root, Vector *stack)
  *  すなわち受理頂点から受理頂点へ至る閉路(受理サイクル)の存在を確認することで、
  *  与えられたLTL式を満足する実行経路が存在するか否かを判定する。
  */
-static void ltl_search2(StateSpace states, Vector *stack, LmnWord seed_index)
+static void ltl_search2(StateSpace states, Vector *stack, State *seed)
 {
-  unsigned int i, j;
+  unsigned int i;
   State *s = (State *)vec_peek(stack);
 
 #ifdef DEBUG
@@ -485,28 +475,27 @@ static void ltl_search2(StateSpace states, Vector *stack, LmnWord seed_index)
   fprintf(stdout, "\n");
 #endif
 
+
   for(i = 0; i < vec_num(&s->successor); i++) { /* for each (s,l,s') */
     State *ss = (State *)vec_get(&s->successor, i);
 
-    /* successorが探索スタック上の状態であるかを検査 (seedから始める)*/
-    for (j = seed_index; j > 0; j--) {
-      State *tmp_state = (State *)vec_get(stack, j);
-      if (tmp_state == ss) {
-        set_snd(ss);
-        set_snd(tmp_state);
-        violate(stack);
+    /* successorがseedと同一の状態 or successorが探索スタック上の状態ならば反例を出力 */
+    if(ss == seed || (is_fst(ss) && !is_snd(ss))) {
+      set_snd(ss);
+      violate(stack);
 #ifdef DEBUG
-        fprintf(stdout, "+++++ return function: ltl_search2() +++++\n\n");
+      fprintf(stdout, "+++++ return function: ltl_search2() +++++\n\n");
 #endif
-        return;
-      }
+      return;
     }
 
     /* second DFS で未訪問→再帰 */
     if(!is_snd(ss)) {
       set_snd(ss);
+/*      set_open(ss); */
       vec_push(stack, (LmnWord)ss);
-      ltl_search2(states, stack, seed_index);
+      ltl_search2(states, stack, seed);
+/*      unset_open((State *)vec_pop(stack)); */
       vec_pop(stack);
     }
   }
@@ -625,7 +614,7 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
 
   /* LTLモデル検査 */
   set_fst(initial_state);
-  ltl_search1(states, world_mem, stack);
+  ltl_search1(states, stack);
   fprintf(stdout, "no cycles found\n");
   fprintf(stdout, "\n");
 
