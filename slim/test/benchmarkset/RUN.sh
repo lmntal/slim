@@ -74,7 +74,7 @@ do
          # runtime_statusの出力先は標準エラーなので, 標準出力(ディスクリプタ1番)は捨ててしまう.
          # 標準出力を捨てるようにしていても状態遷移グラフの出力が行われると遅くなるようなので, 状態遷移グラフを出力しない--no_dumpオプションを使用する
          # runtime_statusの出力をcsv形式にするオプション--sp_verboseも使用
-         $slimDIR --nd $@ --sp_verbose --no_dump --psym --nd "$paraDIR$m$bar$i$arch" \
+         $slimDIR --nd $@ --sp_verbose --no_dump "$paraDIR$m$bar$i$arch" \
             1>/dev/null  2>> "$dumpDIR$m$bar$i.csv"
 
          sleep 2
