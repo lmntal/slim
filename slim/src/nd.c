@@ -74,7 +74,7 @@ Vector *nd_expand(const StateSpace states, State *state)
 {
   Vector *r;
 #ifdef PROFILE
-  status_start_expand();
+  if (lmn_env.profile_level>0)  status_start_expand();
 #endif
 
   if (lmn_env.por) { r = ample(states, state); }
@@ -98,7 +98,7 @@ Vector *nd_expand(const StateSpace states, State *state)
   }
 
 #ifdef PROFILE
-  status_finish_expand();
+  if (lmn_env.profile_level>0) status_finish_expand();
 #endif
 
   return r;
@@ -260,12 +260,15 @@ void run_nd(LmnRuleSet start_ruleset)
   stand_alone_react_cxt_destroy(&init_rc);
   activate_ancestors(mem);
 
-  fprintf(stdout, "States\n");
+  if (lmn_env.dump) {
+    fprintf(stdout, "States\n");
+  }
 
   states = do_nd(mem);
 #ifdef PROFILE
   calc_hash_conflict(states);
   calc_encode_info(states);
+  status_set_state_num(state_space_num(states));
 #endif
   fprintf(stdout, "\n");
 
@@ -306,6 +309,7 @@ StateSpace do_nd(LmnMembrane *world_mem_org)
 
 static void dump_state_data(State *state)
 {
+  if (!lmn_env.dump) return;
   fprintf(stdout, "%lu::", (long unsigned int)state); /* dump src state's ID */
   if (!state->mem) lmn_fatal("unexpected");
   lmn_dump_cell_stdout(state->mem); /* dump src state's global root membrane */
@@ -475,6 +479,7 @@ st_table_t state_space_tbl(StateSpace states)
 
 void dump_all_state_mem(StateSpace states, FILE *file)
 {
+  if (!lmn_env.dump) return;
   fprintf(file, "States\n");
   st_foreach(states->tbl, print_state_mem, 0);
   fprintf(file, "\n");
@@ -482,6 +487,7 @@ void dump_all_state_mem(StateSpace states, FILE *file)
 
 void dump_state_transition_graph(StateSpace states, FILE *file)
 {
+  if (!lmn_env.dump) return;
   fprintf(file, "Transitions\n");
   fprintf(file, "init:%lu\n", (long unsigned int)state_space_init_state(states));
   st_foreach(states->tbl, print_state_transition_graph, 0);
@@ -495,6 +501,7 @@ void dump_state_transition_graph(StateSpace states, FILE *file)
  */
 void dump_state_name(StateSpace states, FILE *file)
 {
+  if (!lmn_env.dump) return;
   fprintf(file, "Labels\n");
   st_foreach(states->tbl, print_state_name, 0);
   fprintf(file, "\n");

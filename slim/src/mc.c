@@ -505,27 +505,31 @@ static void violate(Vector *stack)
 {
   unsigned int i;
   fprintf(stdout, "cycle(or error) found:\n");
-  /* 結果出力 */
-  for (i = 0; i < vec_num(stack); i++) {
-    State *tmp_s = (State *)vec_get(stack, i);
-    if (is_snd(tmp_s)) printf("*");
-    else printf(" ");
-    printf("%d (%s): %s: ",
-           i,
-           lmn_id_to_name(lmn_rule_get_name(state_rule(tmp_s))),
-           automata_state_name(mc_data.property_automata,
-                               state_property_state(tmp_s)));
-    if (lmn_env.ltl_nd){
-    	fprintf(stdout, "%lu\n", vec_get(stack, i));
-    }else{
-    	lmn_dump_mem_stdout(((State *)vec_get(stack, i))->mem);
+  if (lmn_env.dump) {
+    /* 結果出力 */
+    for (i = 0; i < vec_num(stack); i++) {
+      State *tmp_s = (State *)vec_get(stack, i);
+      if (is_snd(tmp_s)) printf("*");
+      else printf(" ");
+      printf("%d (%s): %s: ",
+             i,
+             lmn_id_to_name(lmn_rule_get_name(state_rule(tmp_s))),
+             automata_state_name(mc_data.property_automata,
+                                 state_property_state(tmp_s)));
+      if (lmn_env.ltl_nd){
+    	  fprintf(stdout, "%lu\n", vec_get(stack, i));
+      }else{
+    	  lmn_dump_mem_stdout(((State *)vec_get(stack, i))->mem);
+      }
     }
+    fprintf(stdout, "\n");
   }
-  fprintf(stdout, "\n");
-
   if (!lmn_env.ltl_all) { /* 一つエラーが見つかったら終了する */
     exit_ltl_model_checking();
   }
+#ifdef PROFILE
+  status_count_counterexample();
+#endif
 }
 
 static void exit_ltl_model_checking()
@@ -624,6 +628,10 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
     dump_state_name(states, stdout);
   }
   fprintf(stdout, "# of States = %lu\n", state_space_num(states));
+
+#ifdef PROFILE
+  status_set_state_num(state_space_num(states));
+#endif
 
   vec_free(stack);
 }

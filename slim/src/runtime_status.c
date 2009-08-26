@@ -41,6 +41,7 @@
 #include "runtime_status.h"
 #include "mc.h"
 #include "nd.h"
+#include "st.h"
 #include "rule.h"
 
 struct RuntimeStatus {
@@ -83,6 +84,8 @@ struct RuntimeStatus {
   unsigned long total_rule_trial_num;
   unsigned long total_rule_apply_num;
   unsigned long total_rule_backtrack_num;
+  unsigned long counter_example_num;
+  unsigned long state_num;
 
 } runtime_status;
 
@@ -119,6 +122,8 @@ void runtime_status_init()
   runtime_status.total_rule_trial_num     = 0;
   runtime_status.total_rule_apply_num     = 0;
   runtime_status.total_rule_backtrack_num = 0;
+  runtime_status.counter_example_num      = 0;
+  runtime_status.state_num                = 0;
 }
 
 void runtime_status_finalize()
@@ -245,73 +250,105 @@ void output_runtime_status(FILE *f)
   if(tmp_total_time < 0.0) {
     tmp_total_time = difftime(runtime_status.time2, runtime_status.time1);
   }
-  fprintf(f, "\n== Runtime Status ==========================================\n");
 
-  fprintf(f, "%-30s: %10.2lf\n", "elapsed time (sec)", tmp_total_time);
-  fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
-  fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
-         runtime_status.peak_membrane_num);
-  fprintf(f, "%-30s: %10lu\n", "peak atom space (Bytes)",
-         runtime_status.peak_atom_space);
-  fprintf(f, "%-30s: %10lu\n", "peak membrane space (Bytes)",
-         runtime_status.peak_membrane_space);
-  fprintf(f, "%-30s: %10lu\n", "peak hash table space (Bytes)",
-         runtime_status.peak_hashtbl_space);
-  fprintf(f, "%-30s: %10lu\n", "membrane encode space (Bytes)",
-         runtime_status.encode_space);
-  fprintf(f, "%-30s: %10lu\n", "avg. encode len (Bytes)",
-         runtime_status.encode_len_average);
-  fprintf(f, "%-30s: %10lu\n", "rough peak state space (Bytes)",
-          runtime_status.peak_total_state_space + runtime_status.encode_space);
 
-  if (lmn_env.nd || lmn_env.ltl) {
-    fprintf(f, "%-30s: %10lu\n", "# of mhash calls",
-            runtime_status.mhash_call_num);
-    fprintf(f, "%-30s: %10.2lf\n", "total hash time (sec)",
-            runtime_status.total_state_hash_time);
-    fprintf(f, "%-30s: %10lu\n", "# of mem_equals calls",
-            runtime_status.mem_equals_num);
-    fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
-            runtime_status.total_mem_equals_time);
-    fprintf(f, "%-30s: %10lu\n", "# of mem_encode calls",
-            runtime_status.mem_encode_num);
-    fprintf(f, "%-30s: %10.2lf\n", "total mem_encode time (sec)",
-            runtime_status.total_mem_encode_time);
-  }
-  fprintf(f, "============================================================\n");
+  if (!lmn_env.sp_verbose) { /* 通常はこちら */
 
-  if (lmn_env.profile_level >= 1) {
-    fprintf(f, "\n== More Status =============================================\n");
-    fprintf(f, "%-30s: %10lu\n", "# of rule trial",
-            runtime_status.total_rule_trial_num + runtime_status.total_rule_backtrack_num);
-    fprintf(f, "%-30s: %10lu\n", "# of rule apply",
-            runtime_status.total_rule_apply_num);
-    fprintf(f, "%-30s: %10lu\n", "# of backtrack",
-            runtime_status.total_rule_backtrack_num);
+    fprintf(f, "\n== Runtime Status ==========================================\n");
     if (lmn_env.nd || lmn_env.ltl) {
-      fprintf(f, "%-30s: %10.2lf \n", "total expand time (sec)",
-              runtime_status.total_expand_time);
-      fprintf(f, "%-30s: %10.2lf \n", " --part of mem-copy (sec)",
-              runtime_status.total_commit_time);
-      fprintf(f, "%-30s: %10.2lf \n", " --else (sec)",
-              runtime_status.total_expand_time - runtime_status.total_commit_time);
+      fprintf(f, "%-30s: %10lu\n", "# of states", runtime_status.state_num);
+      if (lmn_env.ltl_all){
+        fprintf(f, "%-30s: %10lu\n", "# of counter examples", runtime_status.counter_example_num);
+      }
     }
-    fprintf(f,   "============================================================\n");
-    if (lmn_env.profile_level >= 2) {
-      fprintf(f, "\n== Detail: Rule Status =====================================\n");
-      lmn_rule_show_detail(f);
+    fprintf(f, "%-30s: %10.2lf\n", "elapsed time (sec)", tmp_total_time);
+    fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
+    fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
+           runtime_status.peak_membrane_num);
+    fprintf(f, "%-30s: %10lu\n", "peak atom space (Bytes)",
+           runtime_status.peak_atom_space);
+    fprintf(f, "%-30s: %10lu\n", "peak membrane space (Bytes)",
+           runtime_status.peak_membrane_space);
+    fprintf(f, "%-30s: %10lu\n", "peak hash table space (Bytes)",
+           runtime_status.peak_hashtbl_space);
+    fprintf(f, "%-30s: %10lu\n", "membrane encode space (Bytes)",
+           runtime_status.encode_space);
+    fprintf(f, "%-30s: %10lu\n", "avg. encode len (Bytes)",
+           runtime_status.encode_len_average);
+    fprintf(f, "%-30s: %10lu\n", "rough peak state space (Bytes)",
+           runtime_status.peak_total_state_space + runtime_status.encode_space);
+
+    if (lmn_env.nd || lmn_env.ltl) {
+      fprintf(f, "%-30s: %10lu\n", "# of mhash calls",
+              runtime_status.mhash_call_num);
+      fprintf(f, "%-30s: %10.2lf\n", "total hash time (sec)",
+              runtime_status.total_state_hash_time);
+      fprintf(f, "%-30s: %10lu\n", "# of mem_equals calls",
+              runtime_status.mem_equals_num);
+      fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
+              runtime_status.total_mem_equals_time);
+      fprintf(f, "%-30s: %10lu\n", "# of mem_encode calls",
+              runtime_status.mem_encode_num);
+      fprintf(f, "%-30s: %10.2lf\n", "total mem_encode time (sec)",
+              runtime_status.total_mem_encode_time);
     }
-    if(lmn_env.nd || lmn_env.ltl){
-      fprintf(f, "\n== Time Rate ===============================================\n");
-      fprintf(f, "%-30s: %10.2lf(100%%)\n", "running time (sec)", tmp_total_time);
-      fprintf(f, "%-30s: %10.1lf%%\n", "total hash time",
-              (runtime_status.total_state_hash_time / tmp_total_time)*100);
-      fprintf(f, "%-30s: %10.1lf%%\n", "total mem_equals time",
-              (runtime_status.total_mem_equals_time / tmp_total_time)*100);
-      fprintf(f, "%-30s: %10.1lf%%\n", "total expand time",
-              (runtime_status.total_expand_time     / tmp_total_time)*100);
-      fprintf(f, "============================================================\n");
+    fprintf(f, "============================================================\n");
+
+    if (lmn_env.profile_level >= 1) {
+      fprintf(f, "\n== More Status =============================================\n");
+      fprintf(f, "%-30s: %10lu\n", "# of rule trial",
+              runtime_status.total_rule_trial_num + runtime_status.total_rule_backtrack_num);
+      fprintf(f, "%-30s: %10lu\n", "# of rule apply",
+              runtime_status.total_rule_apply_num);
+      fprintf(f, "%-30s: %10lu\n", "# of backtrack",
+              runtime_status.total_rule_backtrack_num);
+      if (lmn_env.nd || lmn_env.ltl) {
+        fprintf(f, "%-30s: %10.2lf \n", "total state expand time (sec)",
+                runtime_status.total_expand_time);
+        fprintf(f, "%-30s: %10.2lf \n", " --part of mem-copy (sec)",
+                runtime_status.total_commit_time);
+        fprintf(f, "%-30s: %10.2lf \n", " --else (sec)",
+                runtime_status.total_expand_time - runtime_status.total_commit_time);
+      }
+      fprintf(f,   "============================================================\n");
+      if (lmn_env.profile_level >= 2) {
+        fprintf(f, "\n== Detail: Rule Status =====================================\n");
+        lmn_rule_show_detail(f);
+      }
+      if(lmn_env.nd || lmn_env.ltl){
+        fprintf(f, "\n== Time Rate ===============================================\n");
+        fprintf(f, "%-30s: %10.2lf(100%%)\n", "elapse time (sec)", tmp_total_time);
+        fprintf(f, "%-30s: %10.1lf%%\n", "total hash time",
+                (runtime_status.total_state_hash_time / tmp_total_time)*100);
+        fprintf(f, "%-30s: %10.1lf%%\n", "total mem_equals time",
+                (runtime_status.total_mem_equals_time / tmp_total_time)*100);
+        fprintf(f, "%-30s: %10.1lf%%\n", "total expand time",
+                (runtime_status.total_expand_time     / tmp_total_time)*100);
+        fprintf(f, "============================================================\n");
+      }
     }
+
+  } else { /* sp_verboseオプション選択時はこちら。benchmarkの集計用に、csv形式で出力するモードを仮設した */
+    fprintf(f, "%lu, ", runtime_status.state_num);
+    fprintf(f, "%lu, ", runtime_status.counter_example_num);
+    fprintf(f, "%1.2lf, ", tmp_total_time);
+    fprintf(f, "%lu, ", runtime_status.peak_atom_num);
+    fprintf(f, "%lu, ", runtime_status.peak_membrane_num);
+    fprintf(f, "%lu, ", runtime_status.peak_atom_space);
+    fprintf(f, "%lu, ", runtime_status.peak_membrane_space);
+    fprintf(f, "%lu, ", runtime_status.peak_hashtbl_space);
+    fprintf(f, "%lu, ", runtime_status.encode_space);
+    fprintf(f, "%lu, ", runtime_status.encode_len_average);
+    fprintf(f, "%lu, ", runtime_status.peak_total_state_space + runtime_status.encode_space);
+    fprintf(f, "%lu, ", runtime_status.mhash_call_num);
+    fprintf(f, "%1.2lf, ", runtime_status.total_state_hash_time);
+    fprintf(f, "%lu, ", runtime_status.mem_equals_num);
+    fprintf(f, "%1.2lf, ", runtime_status.total_mem_equals_time);
+    fprintf(f, "%lu, ", runtime_status.mem_encode_num);
+    fprintf(f, "%1.2lf, ", runtime_status.total_mem_encode_time);
+    fprintf(f, "%1.2lf, ", runtime_status.total_expand_time);
+    fprintf(f, "%1.2lf, ", runtime_status.total_commit_time);
+    fprintf(f, "%1.2lf, ", runtime_status.total_expand_time - runtime_status.total_commit_time);
   }
 }
 
@@ -326,7 +363,7 @@ static int dispersal_f(st_data_t key, st_data_t s_, st_data_t tbl_)
   }
   st_insert((st_table_t)tbl, (st_data_t)s->hash, (st_data_t)(n+1));
 /*   fprintf(stdout, "%d :: ", s->hash); */
-/*   lmn_dump_mem(s->mem); */
+/*   lmn_dump_mem_stdout(s->mem); */
 
   return ST_CONTINUE;
 }
@@ -373,13 +410,20 @@ static int dispersal_print_f(st_data_t hash_, st_data_t n_, st_data_t f_)
 void output_hash_conflict(FILE *f)
 {
   if (!lmn_env.nd && !lmn_env.ltl) return;
-  fprintf(f, "\n== hash conflict ===========================================\n");
-  fprintf(f, "# of hash values : %lu\n", runtime_status.hash_num);
-  fprintf(f, "----------------\n");
-  fprintf(f, "%9s %6s\n", "conflicts", "kinds");
-  st_foreach(runtime_status.hash_conflict_tbl, dispersal_print_f, (st_data_t)f);
-  fprintf(f, "----------------\n");
-  fprintf(f, "============================================================\n");
+
+  if (!lmn_env.sp_verbose) {
+    fprintf(f, "\n== hash conflict ===========================================\n");
+    fprintf(f, "# of hash values : %lu\n", runtime_status.hash_num);
+    fprintf(f, "----------------\n");
+    fprintf(f, "%9s %6s\n", "conflicts", "kinds");
+    st_foreach(runtime_status.hash_conflict_tbl, dispersal_print_f, (st_data_t)f);
+    fprintf(f, "----------------\n");
+    fprintf(f, "============================================================\n");
+
+  } else {
+    fprintf(f, "%lu, ", runtime_status.hash_num);
+    fprintf(f, "%lu\n", runtime_status.state_num - runtime_status.hash_num);
+  }
 }
 
 static int encode_info_f(st_data_t key, st_data_t s_, st_data_t t)
@@ -460,3 +504,14 @@ void status_finish_expand()
   runtime_status.total_expand_time +=
     (clock() - runtime_status.tmp_expand_start) / (double)CLOCKS_PER_SEC;
 }
+
+void status_count_counterexample()
+{
+  runtime_status.counter_example_num++;
+}
+
+void status_set_state_num(unsigned long n)
+{
+  runtime_status.state_num = n;
+}
+

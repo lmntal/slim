@@ -219,6 +219,8 @@ struct LmnEnv {
   char *ltl_exp;
   BOOL mem_enc;
   BOOL mem_enc_optmem;
+  BOOL sp_verbose;
+  BOOL dump;
 };
 
 extern struct LmnEnv  lmn_env;

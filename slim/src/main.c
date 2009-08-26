@@ -125,6 +125,8 @@ static int parse_options(int argc, char *argv[])
     {"por", 0, 0, 1015},
     {"mem-enc", 0, 0, 2000},
     {"mem-enc-optmem", 0, 0, 2001},
+    {"no_dump", 0,0, 5000},
+    {"sp_verbose", 0, 0, 5001},
     {0, 0, 0, 0}
   };
 
@@ -215,6 +217,14 @@ static int parse_options(int argc, char *argv[])
       lmn_env.mem_enc = TRUE;
       lmn_env.mem_enc_optmem = TRUE;
       break;
+    case 5000: /* 状態遷移グラフのdumpをしない */
+      lmn_env.dump = FALSE;
+      break;
+#ifdef PROFILE
+    case 5001: /* runtime_statusの特殊出力用 */
+      lmn_env.sp_verbose = TRUE;
+      break;
+#endif
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;
@@ -265,7 +275,8 @@ static void init_env(void)
   lmn_env.ltl_exp = NULL;
   lmn_env.mem_enc = FALSE;
   lmn_env.mem_enc_optmem = FALSE;
-
+  lmn_env.dump = TRUE;
+  lmn_env.sp_verbose = FALSE;
 }
 
 void init_default_system_ruleset();
@@ -387,10 +398,7 @@ int main(int argc, char *argv[])
   }
 
 #ifdef PROFILE
-      status_finish_running();
-#endif
-
-#ifdef PROFILE
+  status_finish_running();
   output_runtime_status(stderr);
   output_hash_conflict(stderr);
 #endif

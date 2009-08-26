@@ -65,14 +65,15 @@ void calc_hash_conflict(StateSpace states);
 void output_hash_conflict(FILE *f);
 void status_start_running(void);
 void status_finish_running(void);
-
 void status_start_rule(void);
 void status_finish_rule(LmnRule rule, BOOL result);
 void status_rule_output(LmnRule rule);
 void status_backtrack_counter(void);
-void status_start_expand();
-void status_finish_expand();
-void status_start_commit();
-void status_finish_commit();
+void status_start_expand(void);
+void status_finish_expand(void);
+void status_start_commit(void);
+void status_finish_commit(void);
+void status_count_counterexaple(void);
+void status_set_state_num(unsigned long n);
 
 #endif
