@@ -1,0 +1,83 @@
+% leader_bully.lmn
+%      2009.08.04  gocho
+%
+% Leader Election Algorithm
+%   (Bully Algorithm version)
+%
+% http://www.f.waseda.jp/nakazato/1506-08Elect.pdf
+
+% p_num=4  ->  leader_bully_p4.il
+% p_num=5  ->  leader_bully_p5.il
+% p_num=6  ->  leader_bully_p6.il
+% p_num=7  ->  leader_bully_p7.il
+% p_num=8  ->  leader_bully_p8.il
+
+% property0: リーダーが同時に2人以上存在することはない
+
+
+% Init phase
+init{
+  p_num=3. // # of processes
+  init0 @@ p_num(P)   :- int(P) |
+           p_num(P,P).
+  init1 @@ p_num(P,M) :- P>0, int(M), Q=P-1 |
+           p_set(Q,P,M), p_init{id(P), st(normal), send{}, leader(-1)}.
+  init2 @@ p_set(P,Q,M), p_init{$p} :- Q<M, R=Q+1 |
+           p_set(P,R,M), p_init{to(R), $p}. % loop: for(int Q; Q<M; Q++)
+  back1 @@ p_set(P,Q,M), p_init{$p} :- Q=:=M |
+           p_num(P,M),   p{$p}.             % loop_finalize: Q==M -> goto init1
+}.
+init_finalize @@
+  bully{$b,@b}, init{p{$p,st(normal)}, p_num(0,P), $i,@i} :- int(P) |
+  bully{$b,@b,$i, p{$p, st(elect)}}, p_num(P). % only 1st time, start @elect@
+
+bully{
+  chan=[top]. // massage controller (queue)
+  phase(0).
+
+% Election phase
+  notic @@ % process P that found the coordinator was not responding starts an election
+    phase(0), p{st(leadr), crash, $p}, p{st(normal), send{$s}, $q} :- 
+    phase(0), p{st(leadr), crash, $p}, p{st(elect), $s, send{}, $q}.
+  elect @@ % P sends ELECTION messages to all processes with higher process numbers
+    phase(0), p{id(I), st(elect), send{$s}, to(T), $p}, chan=[X |F]
+                    :- int(I), int(T), \+($p=($q,crash)) |
+    phase(0), p{id(I), st(elect), send{$s, to(T)}, $p}, chan=[e(I,T),X |F].
+  okAck @@ % If one of the higher-numbered processes responds, the process takes over the election process.
+    phase(0), p{id(I), send{$s},  st(S),    $p}, A=[e(F,T),top |B], chan=X
+                    :- I=:=T, unary(S), int(F), \+($p=($q,crash)) |
+    phase(0), p{id(I), send{},$s, st(elect),$p}, A=[top |B],  chan=Z, '.'(a(T,F),X,Z).
+  ngAck @@ % else: broken process cannnot return ack
+    phase(0), p{id(I), crash, $p}, A=[e(F,T),top |B]  :- I=:=T, int(F) |
+    phase(0), p{id(I), crash, $p}, A=[top |B].
+  loseE @@ % If one of the higher-numbered processes responds, P terminates its job.
+    phase(0), p{id(I), st(S),    send{to(W), $s}, $p}, A=[a(F,T),top |B]
+                   :- I=:=T, W=:=F, unary(S), \+($p=($q,crash)) |
+    phase(0), p{id(I), st(lose), send{$s}, to(W), $p}, A=[top |B].
+  lose2 @@ % else: broken process cannot receive ack
+    phase(0), p{id(I), crash, $p}, A=[a(F,T),top |B]  :- I=:=T, int(F) |
+    phase(0), p{id(I), crash, $p}, A=[top |B].
+
+% Coodinate phase:
+% The newly elected coordinator announce that
+%       it is the new coordinator by sending messages to all processes
+  iam_L @@ % Leader report to others atomically (not use channel, directly.)
+    phase(1), p{id(I), st(leadr),$p}, p{leader(L), st(S), $q}
+                      :- I=\=L, unary(S), \+($p=($r,crash)), \+($q=($r,crash)) |
+    phase(1), p{id(I), st(leadr),$p}, p{leader(I), st(normal), $q}.
+}.
+
+% leader crash!!
+crash @@ bully{$b,@b, phase(0), p{$p, send{$s}, st(leadr), leader(L)}}, p_num(P)
+                       :- int(L), \+($p=($q, crash)), Q=P-1 |
+         bully{$b,@b, phase(0), p{$p, send{}, $s, st(-1), leader(-1), crash}}, p_num(Q).
+% When the ex-coordinator process comes back, the process start another election
+recvr @@ bully{$b,@b, phase(0), p{$p, crash, st(S)}}, p_num(P) :-unary(S), Q=P+1 |
+         bully{$b,@b, phase(0), p{$p, st(elect)}}, p_num(Q).
+
+% If no one responds, P becomes the coordinator.
+lead0 @@ bully{$b,@b, phase(0), p{id(I),st(elect),send{$s}, leader(L), $p}}/
+                                                       :-int(I),int(L) |
+         bully{$b,@b, phase(1), p{id(I),st(leadr),send{},$s,leader(I), $p}}.
+lead1 @@ bully{$b,@b, phase(1)}/ :-
+         bully{$b,@b, phase(0)}.

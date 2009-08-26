@@ -1,0 +1,163 @@
+% rms_mutex.lmn 
+% 		2008.09.10  gocho
+%     modified 2009.08.21
+%
+% Rate Monotonic Sceduling + Mutex
+%
+
+% property0: 優先度逆転 + rate monotonic & mutexによる, rmsの潜在的なバグを示す
+%            ※mutexを確保している優先度の低いタスクに, mutexが必要な優先度の高いタスクが割り込むと,
+%              mutexを確保できず, デッドロックや, 処理を割り込めないことで優先度が逆転しまう危険性がある
+%              このモデルでは, mutexを確保できないとfreezeするようになっているため, 
+%              システムがデッドロックする
+
+% 初期プロセスはinput膜内のtask数をいじくって変更する
+
+% 各タスクを状態を表す膜間を移動させることで、そのタスクの状態を表現する
+% 各膜は、検査等のマッチングに成功するためのフラグとして、時間を表すtimeアトムを必要とする。
+% このtimeを移動させることで、システム全体で1単位時間毎に同期を取っている。
+
+% task処理は、優先度に基づいて割り込むので、task選択の終了をstable判定で行っている
+task_set_OK @@
+  {$p,@p, schej{$s,@s, wait{$w}}}/ :-
+  {$p,@p, schej{$s,@s, task{$w}}}.
+
+{
+  % input膜は、初期プロセスを初期化するための膜
+  input{
+    % id:  ただの識別詞。システムでは一切使用されない。検証結果を読むためのもの。
+    % r :  リリース時間(生成されてから実行可能状態になるまでの時間)
+    % c :  最悪処理時間(処理に必要な時間)
+    % d :  相対デッドライン時間(生成されてから処理終了までの時区間)
+    % t :  実行周期時間(タスクが生成されるまでの時区間)
+    task{id(a), r(0), c(1), d(6), t(6)}.
+    task{id(b), r(0), c(3), d(8), t(8)}.
+    task{id(c), r(0), c(4), d(12),t(12)}.
+//    task{id(d), r(2), c(2), d(8), t(8)}.  /* ここまで込みがrms_t4.il */
+//    task{id(e), r(1), c(1), d(6), t(5)}.  /* ここまで込みがrms_t5.il */
+//    task{id(f), r(3), c(1), d(4), t(9)}.  /* ここまで込みがrms_t6.il */
+//    task{id(g), r(6), c(9), d(20),t(20)}. /* ここまで込みがrms_t7.il */
+//    task{id(h), r(1), c(1), d(6), t(8)}.  /* ここまで込みがrms_t8.il */
+
+    initN @@ % rate monotonicに基づき、静的な優先度を設定する。
+             % また、処理後の値と更新後の値を保持するよう各パラメタの値をコピーする
+             % nはタスクの総周期を求めるために使用する
+      task{r(R),   c(C),   d(D),   t(T),   $t} :- int(R),int(C),int(D),int(T),P=-1*C |
+      task{r(R,R), c(C,C), d(D,D), t(T,T), p(P), $t}, n(T).
+    initM @@ % Mutexが必要なタスクとして初期化される場合もある
+      task{r(R),   c(C),   d(D),   t(T),   $t} :- int(R),int(C),int(D),int(T),P=-1*C |
+      task{r(R,R), c(C,C), d(D,D), t(T,T), p(P), mutex(0), $t}, n(T).
+    _lcm0 @@ % 以下、全タスクの総周期を求めるために、各タスクの周期の最小公倍数を計算する
+      n(X), n(Y)    :- X>=Y |
+      lcm(X,Y).
+    _lcm1 @@
+      lcm(X,Y)      :- X>=Y, P=X*Y |
+      gcd(X,Y), lcm(P).
+    _lcm2 @@
+      gcd(X,Y)      :- Z=(X mod Y), Z=\=0 |
+      gcd(Y,Z).
+    _lcm3 @@
+      gcd(X,Y)      :- (X mod Y)=:=0 |
+      gcd(Y).
+    _lcm4 @@
+      gcd(X),lcm(Y) :- Z=Y/X |
+      n(Z).
+  }.
+  init_end @@ % 初期化処理が終了したならば、タスク生成膜(spawn)へセルを移動する 
+    spawn{@r}, input{$p[],@p,n(N)}/   :- int(N) |
+    spawn{@r,$p[],time(0)}, lim(N).
+
+
+
+  % schej膜は、実際にタスク処理を行う(タスクの処理時間cを進める)
+  schej{
+    % タスク処理時になにか資源(mutex)が必要なタスクは、mutexを獲得する
+    mutex(1).
+    mutex @@ % mutexが必要なタスクは、mutexを確保する
+      task{mutex(0), $t}, mutex(M) :- M>0, M2=M-1 |
+      task{mutex(1), $t}, mutex(M2).
+
+    schj0 @@ % 1単位時間タスクを処理したら、そのタスクのデッドラインを越えてしまう場合(next: scheduler_die)
+      time(T), task{c(C,CC), d(D,DD),$t} :- \+($t=($m, mutex(L))), int(CC),int(DD), C=\=0,    Y=T+1,Y>D  |
+      dime(T), dead{c(C,CC),d(DD,DD),$t}.
+    schj1 @@ % 1単位時間タスクを処理した後に、timeをready膜へ移行させるフラグを立てる(next: time_goto_ready)
+      time(T), task{c(C,CC), d(D,DD),$t} :- \+($t=($m, mutex(L))), int(CC),int(DD), C>0,X=C-1,Y=T+1,Y=<D |
+      cime(Y), task{c(X,CC), d(D,DD),$t}.
+    schj1 @@ % mutexが必要なタスクは、mutex獲得フラグがTrue(1で表現)でないと、処理されない
+      time(T), task{c(C,CC), d(D,DD), mutex(1), $t} :- int(CC),int(DD), C>0,X=C-1,Y=T+1,Y=<D |
+      cime(Y), task{c(X,CC), d(D,DD), mutex(1), $t}.
+  }.
+  schedlr_is_dead @@ % タスクのデッドライン越えを検出した場合、スケジューラは死ぬ。
+    schej{$s,@s, dead{$t}}/ :-
+    death{$s,@s, dead{$t}}.
+  task_goto_slee1 @@ % タスク処理が終了したならば、処理されたタスクはスリープ状態(sleep膜)へ移行し、再びspawnされる時間を待つ
+    schej{$p,@p, time(T), task{c(C,CC),$t}}/, sleep{$s,@s} :- \+($t=($m, mutex(L))), int(T),int(C),int(CC) |
+	  schej{$p,@p, time(T)},                    sleep{$s,@s, task{c(CC,CC), $t}}.
+  task_goto_slee2 @@ % タスク処理が終了したならば、mutexを確保しているならば、開放する
+    schej{$p,@p, time(T), mutex(M), task{c(C,CC), mutex(1), $t}}/, sleep{$s,@s} :- int(T),int(C),int(CC),M2=M+1 |
+	  schej{$p,@p, time(T), mutex(M2)},                              sleep{$s,@s, task{c(CC,CC), mutex(0), $t}}.
+  time_goto_ready @@ % 1単位時間処理を進めたならば、ready状態タスクのデッドラインを検査するために、timeをready膜へ移す。
+    schej{$s,@s, cime(T)}, ready{$r,@r} :- int(T) |
+    schej{$s,@s},          ready{$r,@r, time(T)}.
+
+				
+  % spawn膜は、生成されたタスクを持ち、release timeを迎えたタスクをready状態へ移行させる
+  spawn{
+    spawn @@ % タスクがrelease timeを迎えたならば、状態移動のフラグを立てる。(先頭1文字をrにするだけ)
+      time(T), task{r(R,RR),$t} :- int(RR),T>=R |
+      rime(T), rask{r(R,RR),$t}.
+  }.
+  task_goto_ready @@ % spawnの処理が終了したとき、フラグの立っているタスクをready状態(膜)へ移行する。
+    spawn{$s,@s, rime(T), rask{$t}}/, ready{$r,@r} :- int(T) |
+    spawn{$s,@s, time(T)},            ready{$r,@r, task{$t}}.
+  time_goto_out__ @@ % 全てのタスクのrelease timeに関する処理が終了したならば、実行フラグであるtimeを膜外へ吐き出す。 
+    spawn{$s,@s,  time(T)}/ :- int(T)	|
+    spawn{$s,@s}, time(T).
+
+  % ready膜は、実行可能状態のタスクを保持する。スケジューラは、この膜にあるタスクのうち、最高優先度のタスクを選択する
+  ready{
+    ready @@ % デッドライン越えしたタスクは死んでしまう。(nest: r_OUT)
+      time(T), task{d(D,DD),$t}	:- int(DD), D<T |
+      dime(T), dead{d(D,DD),$t}
+  }.
+  ready_is_dead__ @@ % 死んだタスクがいる場合、システムは死ぬ。
+    ready{$r,@r, dead{$t}}/ :-
+    death{$r,@r, dead{$t}}.
+  time_goto_sleep @@ % ready膜内のタスク検査が終了したら、次はsleep膜内のタスクの検査を行う
+    ready{$r,@r, time(T)}/, sleep{$s,@s} :- int(T)	|
+    ready{$r,@r},           sleep{$s,@s, time(T)}.
+  schej_get_task_ @@ % スケジューラは、ready状態のタスクをひとまず任意に選択する。(決定ではないのでタスクはwaitになる)
+    ready{$r,@r, task{$t}}, schej{@s, mutex(L), time(T)}	:- int(T),int(L)	|
+    ready{$r,@r},           schej{@s, mutex(L), time(T), wait{$t}}.
+  task_is_elected @@ % より優先度の高いタスクがある場合、入れ替える。(入れ替え終了の場合task_set_OKルールが適用可能となる)
+    ready{$r,@r, task{p(P),$t}},           schej{@s, mutex(L), time(T), wait{p(PP), c(C,CC),$w}} :- int(T),int(CC),P>PP,C>0,int(L) |
+    ready{$r,@r, task{p(PP), c(C,CC),$w}}, schej{@s, mutex(L), time(T), wait{p(P),$t}}.
+
+
+  % sleep膜は、処理が終了したタスクを持つ。実行周期を監視し、実行周期の訪れたタスクをspawn状態(膜)へ移行する
+  sleep{
+    sleep @@ % 実行周期が訪れたら、そのタスクにフラグを付ける
+      task{r(R,RR), t(T,TT), d(D,DD),$t}, time(P) :- int(R),int(D), P>=T, X=T+TT, Y=TT+RR, Z=T+DD |
+      wake{r(Y,RR), t(X,TT), d(Z,DD),$t}, wime(P).
+  }.
+  task_goto_spawn @@ % 目覚めたフラグの付いたタスクをspawn膜へ移す
+    sleep{$s,@s, wime(T), wake{$w}}/, spawn{$r,@r} :- int(T) |
+    sleep{$s,@s, time(T)}, spawn{$r,@r, task{$w}}.
+  time_goto_spawn @@ % sleep状態タスクの検査終了後は、spawn状態タスクの検査を行う
+    sleep{$s,@s, time(T)}/, spawn{$r,@r} :- int(T) |
+    sleep{$s,@s},           spawn{$r,@r, time(T)}.
+
+  % 膜外処理: spawn膜まで検査が終了したならば、タスクの総周期までのスケジュールが終了したかどうかを検査する。
+  schedule_is_end @@ % スケジューリング成功終了
+    lim(L), time(T) :- T=:=L |
+    end(T).
+  time_goto_sche0 @@ % まだ終了していないので、タスク処理に戻る(タスクが選択されていない場合)
+    lim(L), schej{@s, mutex(M)}, time(T) :- T<L,int(M) |
+    lim(L), schej{@s, mutex(M), time(T)}.
+  time_goto_sche1 @@ % まだ終了していないので、タスク処理に戻る(タスクが選択されている場合)。その後、優先度に基づきタスクを選び直す 
+    lim(L), schej{@s, mutex(M), task{$t}}, time(T) :- T<L,int(M) |
+    lim(L), schej{@s, mutex(M), wait{$t}, time(T)}.
+  no_task_ready__ @@ % 全てのタスクがready状態にない場合、単位時間を1つ進め、再び全てのタスクの検査を行う
+    schej{@s, mutex(M), time(T)}, ready{@r} :- X=T+1,int(M) |
+    schej{@s, mutex(M), cime(X)}, ready{@r}.
+}.
