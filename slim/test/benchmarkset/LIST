@@ -1,25 +1,24 @@
-model name   | parameter                           | # of properties
---------------------------------------------------------------------
-abp          | m10000 m20000 m40000 m80000 m100000 | 0 1
-bakery       | p3m4 p3m9 p4m5 p4m9 p4m12           | 0
-bubble       | n7 n8 n9 n10 n11                    | 0
-byzantine    | p4A p4B p4C p5A p5C                 | 0
-edfs         | t4 t5 t6 t7 t8                      | 0 1
-elevator     | f4p3 f5p3 f6p4 f7p6 f8p6            | 0 1
-firewire     | nw6 nw7 nw8 nw9 nw10                | 0 1
-jobshop      | s1 s2 s3 s4 s5                      | 0
-josephus     | n50 n100 n150 n200 n250             | 0
-knight       | n5 n6 n7 n8 n9                      | 0
-lambda       | 2^2 2^3 3^2 2^4 3^3                 |
-leader_bully | p4 p5 p6 p7 p8                      | 0
-leader_ring  | p4 p5 p6 p7 p8                      | 0
-mutex        | p13 p14 p15 p16 p17                 | 0 1 2
-peterson     | n4 n5 n6 n7 n8                      | 0 1
-phi          | p11 p12 p13 p14 p15                 | 0
-phi_Maude    | p7 p8 p9 p10 p11                    | 0
-queen        | n9 n10 n11 n12 n13                  | 0
-rabbits      | r8 r9 r10 r11 r12                   | 0
-rms          | t4 t5 t6 t7 t8                      | 0
-rrobin       | n7 n8 n9 n10 n11                    | 0 1 2
-swp          | ws6 ws7 ws8 ws9 ws10                | 0
-
+model name   | parameter                 | # of properties
+-------------------------------------------------------------------
+mutex        | p14                       | 0 1 2
+bakery       | p3m4 p3m9                 | 0
+peterson     | n3                        | 0 1
+phi          | p13                       | 0
+phi_Maude    | p7 p8                     | 0
+rrobin       | n7                        | 0 1 2
+rms          | t5                        | 0
+edfs         | t4                        | 0 1
+jobshop      | s2                        | 0
+knight       | n5                        | 0
+queen        | n12                       | 0
+rabbits      | r9                        | 0
+josephus     | n100                      | 0
+byzantine    | p4A p4B                   | 0
+abp          | m10000 m20000             | 0 1
+swp          | ws6 ws7                   | 0
+leader_bully | p4                        | 0
+leader_ring  | p4                        | 0
+firewire     | nw6 nw7                   | 0 1
+elevator     | f4p3                      | 0 1
+bubble       | n7                        | 0
+lambda       | 2^2                       |

@@ -1,3 +1,4 @@
+
 % knight.lmn
 %       2008.12.20  gocho
 %
@@ -13,7 +14,7 @@
 
 % board(N): board is initialized size N 
 init{
-  board(5).
+  board(4).
   k_position(null).
 
   ini0 @@ board(B) :- int(B) |
