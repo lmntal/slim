@@ -42,6 +42,10 @@
 
 #define REF_CAST(T,X) (*(T*)&(X))
 
+/* each element must be bigger than void*, so align everything in sizeof(void*) !! */
+/* after alignment, X byte object needs ALIGNED_SIZE(X) byte. */
+#define ALIGNED_SIZE(X) (((X+sizeof(void*)-1)/sizeof(void*))*sizeof(void*))
+
 struct memory_pool_
 {
   int sizeof_element;
@@ -53,8 +57,7 @@ memory_pool *memory_pool_new(int s)
 {
   memory_pool *res = malloc(sizeof(memory_pool));
 
-  /* align in long (but ok because sizeof(long)>sizeof(void*)) */
-  res->sizeof_element = ((s+sizeof(long)-1)/sizeof(long))*sizeof(long);
+  res->sizeof_element = ALIGNED_SIZE(s);
   res->block_head = 0;
   res->free_head = 0;
 
@@ -75,18 +78,17 @@ void *memory_pool_malloc(memory_pool *p)
     /* fprintf(stderr, "no more free space, so allocate new block\n"); */
 
     /* top of block is used as pointer to head of next block */
-    /* it uses sizeof(void*) and be alloced sizeof(long) */
-    rawblock = malloc(sizeof(long) + p->sizeof_element * blocksize);
+    rawblock = malloc(ALIGNED_SIZE(sizeof(void*)) + p->sizeof_element*blocksize);
     *(void**)rawblock = p->block_head;
     p->block_head = rawblock;
 
     /* rest is used as space for elements */
-    /* skip size is NOT sizeof(void*) but sizoef(long). see above */
-    rawblock = (char*)((long*)rawblock + 1);
+    /* skip top of block */
+    rawblock = rawblock + ALIGNED_SIZE(sizeof(void*));
     p->free_head = rawblock;
 
     for(i=0; i<blocksize-1; ++i){
-      /* top of each empty element are used as pointer to next empty element */
+      /* top of each empty elements is used as pointer to next empty element */
       REF_CAST(void*, rawblock[p->sizeof_element*i]) = &rawblock[p->sizeof_element*(i+1)];
     }
     REF_CAST(void*, rawblock[p->sizeof_element*(blocksize-1)]) = 0;

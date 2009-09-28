@@ -42,9 +42,13 @@
 struct memory_pool_;
 typedef struct memory_pool_ memory_pool;
 
+/* 要素サイズsのメモリプールを作成 */
 memory_pool *memory_pool_new(int s);
+/* メモリプールから1要素分メモリを取得 */
 void *memory_pool_malloc(memory_pool *p);
+/* メモリプールへメモリを返却 */
 void memory_pool_free(memory_pool *p, void *e);
+/* メモリプールを破棄 */
 void memory_pool_delete(memory_pool *p);
 
 #endif /* LMN_MEMORY_POOL_H */
