@@ -368,10 +368,10 @@ int main(int argc, char *argv[])
 
     if (lmn_env.translate) { /*変換をする場合*/
       if (!strcmp("-", argv[optid])) { /* argv[optid] is first input file name */
-        translate(NULL);
+        /* translate(NULL); */
       }
       else{
-        translate(argv[optid]);
+        /* translate(argv[optid]); */
       }
     }
     else{ /*実行をする場合*/
