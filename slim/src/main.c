@@ -293,6 +293,7 @@ static void init_internal(void)
   lmn_functor_tbl_init();
   init_rules();
 
+  init_so_handles();
   init_default_system_ruleset();
   task_init();
 /*   ext_init(); */
@@ -323,6 +324,8 @@ static void finalize(void)
 /*   ext_finalize(); */
   ccallback_finalize();
   sp_atom_finalize();
+  
+  finalize_so_handles();
 
 #ifdef PROFILE
   runtime_status_finalize();
@@ -340,60 +343,70 @@ int main(int argc, char *argv[])
   optid = parse_options(argc, argv);
 
   if (optid < argc) {
-    FILE *in;
-    char *f = argv[optid];
-    LmnRuleSet start_ruleset;
-
-    if (!strcmp("-", f)) {
-      in = stdin;
-      start_ruleset = load(stdin);
+    Vector *start_rulesets = vec_make(2);
+    
+    /* load inputfiles */
+    for(i=optid; i<argc; ++i){
+      FILE *in;
+      char *f = argv[i];
+      LmnRuleSet t;
+      
+      if (!strcmp("-", f)) {
+        in = stdin;
+        t = load(stdin);
+        vec_push(start_rulesets, (vec_data_t)t);
+      }
+      else{
+        t = load_file(f);
+        vec_push(start_rulesets, (vec_data_t)t);
+      }
     }
-    else start_ruleset = load_file(f);
-
-    /* load directories(system & load path) */
-    load_il_files(SLIM_LIB_DIR);
-    for (i = lmn_env.load_path_num-1; i >= 0; i--) {
-      load_il_files(lmn_env.load_path[i]);
-    }
-
+    
 #ifdef PROFILE
       status_start_running();
 #endif
 
-    if (lmn_env.ltl) {
-      Automata automata;
-      PVector prop_defs;
-      int r;
-
-      r = mc_load_property(&automata, &prop_defs);
-      if (!r) {
-        run_mc(start_ruleset, automata, prop_defs);
-      } else {
-        mc_explain_error(r);
-      }
-
-      automata_free(automata);
-      propsyms_free(prop_defs);
-    }
-    else if (lmn_env.translate) {
-      if (!strcmp("-", f)) {
-        in = stdin;
-        translate(NULL, stdin);
+    if (lmn_env.translate) { /*変換をする場合*/
+      if (!strcmp("-", argv[optid])) { /* argv[optid] is first input file name */
+        translate(NULL);
       }
       else{
-        FILE *fp = fopen_il_file(f);
-        translate(f, fp);
-        fclose(fp);
+        translate(argv[optid]);
       }
     }
-    else if (lmn_env.nd) {
-      run_nd(start_ruleset);
-    } else {
-      /* シミュレーション実行 */
-      lmn_run(start_ruleset);
+    else{ /*実行をする場合*/
+      /* load directories(system & load path) */
+      load_il_files(SLIM_LIB_DIR);
+      for (i = lmn_env.load_path_num-1; i >= 0; i--) {
+        load_il_files(lmn_env.load_path[i]);
+      }
+      
+      if (lmn_env.ltl) {
+        Automata automata;
+        PVector prop_defs;
+        int r;
+
+        r = mc_load_property(&automata, &prop_defs);
+        if (!r) {
+          run_mc(start_rulesets, automata, prop_defs);
+        } else {
+          mc_explain_error(r);
+        }
+        
+        automata_free(automata);
+        propsyms_free(prop_defs);
+      }
+      else if (lmn_env.nd) {
+        run_nd(start_rulesets);
+      } else {
+        /* シミュレーション実行 */
+        lmn_run(start_rulesets);
+      }
     }
+    
+    vec_free(start_rulesets);
   } else {
-    fprintf(stderr, "no input file\n");
+    fprintf(stderr, "no input file !\n");
     exit(1);
   }
 

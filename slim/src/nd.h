@@ -64,7 +64,7 @@ typedef struct StateSpace *StateSpace;
 #define state_mem_id(s)  ((s)->mem_id)
 
 Vector *nd_expand(const StateSpace states, State *state);
-void run_nd(LmnRuleSet start_ruleset);
+void run_nd(Vector *start_rulesets);
 StateSpace do_nd(LmnMembrane *world_mem);
 State *insert_state(StateSpace states, State *s);
 State *state_space_get(const StateSpace states, State *s);

@@ -356,6 +356,16 @@ static BOOL react_ruleset_atomic2(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rule
   return ok;
 }
 
+/* 膜memでrulesetsのルールの適用を行う。初期ルールにしか使わないつもりなので
+   適用の成否を無視する */
+void react_start_rulesets(struct ReactCxt *rc, LmnMembrane *mem, Vector *rulesets)
+{
+  int i;
+  for(i=0; i<vec_num(rulesets); ++i){
+    lmn_react_ruleset(rc, mem, (LmnRuleSet)vec_get(rulesets,i));
+  }
+}
+
 /* 膜memでrulesetのルールの適用を試みる。適用が起こった場合TRUEを返し、
    起こらなかった場合にはFALSEを返す。 */
 BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset)
@@ -447,7 +457,7 @@ static void mem_oriented_loop(struct ReactCxt *rc, LmnMembrane *mem)
 }
 
 /* 通常実行を行う */
-void lmn_run(LmnRuleSet start_ruleset)
+void lmn_run(Vector *start_rulesets)
 {
   LmnMembrane *mem;
   struct ReactCxt mrc;
@@ -462,7 +472,7 @@ void lmn_run(LmnRuleSet start_ruleset)
         fprintf(stdout, "  %6s|%6s|%6s|%6s\n", " Name", " Apply", " Trial", " BackTrack");
     }
     lmn_env.profile_level = 0;
-    lmn_react_ruleset(&mrc, mem, start_ruleset); /* TODO */
+    react_start_rulesets(&mrc, mem, start_rulesets);
     lmn_env.profile_level = temp_env_p;
   }
   /* for tracer */

@@ -559,7 +559,8 @@ static Vector *mc_expand(const StateSpace states,
 }
 
 /* モデル検査を行う。automataは性質のオートマトン、propsymsは性質のシンボル */
-void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
+//void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
+void run_mc(Vector *start_rulesets, Automata automata, Vector *propsyms)
 {
   LmnMembrane *mem;
   StateSpace states;
@@ -581,7 +582,7 @@ void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms)
     {
       int temp_env_p = lmn_env.profile_level;
       lmn_env.profile_level = 0;
-      lmn_react_ruleset(&init_rc, mem, start_ruleset);
+      react_start_rulesets(&init_rc, mem, start_rulesets);
       lmn_react_systemruleset(&init_rc, mem);
       lmn_env.profile_level = temp_env_p;
     }

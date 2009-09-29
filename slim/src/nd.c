@@ -233,7 +233,7 @@ static void nd_loop(StateSpace states, State *init_state) {
 }
 
 /* 非決定実行を行う */
-void run_nd(LmnRuleSet start_ruleset)
+void run_nd(Vector *start_rulesets)
 {
   LmnMembrane *mem;
   struct ReactCxt init_rc;
@@ -253,7 +253,7 @@ void run_nd(LmnRuleSet start_ruleset)
   {
     int temp_env_p = lmn_env.profile_level;
     lmn_env.profile_level = 0;
-    lmn_react_ruleset(&init_rc, mem, start_ruleset);
+    react_start_rulesets(&init_rc, mem, start_rulesets);
     lmn_react_systemruleset(&init_rc, mem);
     lmn_env.profile_level = temp_env_p;
   }
