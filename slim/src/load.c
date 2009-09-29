@@ -79,7 +79,7 @@ static void dump_functor(Functor f)
            );
     break;
   case INT_FUNC:
-    printf("%d", functor_get_int_value(f));
+    printf("%ld", functor_get_int_value(f));
     break;
   case FLOAT_FUNC:
     printf("%f", functor_get_float_value(f));
@@ -597,6 +597,12 @@ static LmnRuleSet load_il(IL il)
   return first_ruleset;
 }
 
+/* soハンドルから中間命令を読み出す load_extは開始ルールを認識しない */
+LmnRuleSet load_compiled_il(char *filename, void *sohandle)
+{
+  return 0;
+}
+
 /* ファイルから中間言語を読み込みランタイム中に配置する。
    最初のルールセットを返す */
 LmnRuleSet load(FILE *in)
@@ -614,30 +620,44 @@ LmnRuleSet load(FILE *in)
   return first_ruleset;
 }
 
+static Vector *opened_so_files;
+void init_so_handles()
+{
+  opened_so_files = vec_make(2);
+}
+
+void finalize_so_handles()
+{
+  int i;
+  for(i=0; i<vec_num(opened_so_files); ++i){
+    /* dlclose((void*)vec_get(opened_so_files, i)); */
+  }
+  vec_free(opened_so_files);
+}
+
 /* ファイルから中間言語を読み込みランタイム中に配置し、最初のルールセットを返す。
    ファイルの拡張子が lmn の場合、Javaによる処理系でファイルをコンパイルし、
-   中間言語を生成する。 */
+   中間言語を生成する。soの場合、dlopenしておきハンドラはopened_so_filesで管理。dlcloseはfinalize()でされる */
 LmnRuleSet load_file(char *file_name)
 {
   FILE *fp;
   int len;
   LmnRuleSet rs;
-  /*void *sohandle;*/
+  void *sohandle;
 
   len = strlen(file_name);
 
   /* 拡張子がsoならリンクする */
   if (!strcmp(file_name + len -3, ".so")) {
-    /*
-    sohandle = dlopen(file_name, RTLD_LAZY);
+    /* sohandle = dlopen(file_name, RTLD_LAZY); */
     if(! sohandle){
       fprintf(stderr, "Failed to open %s\n", file_name);
       rs = 0;
     }else{
       dlerror();
-      rs = so_load(file_name, sohandle);
+      vec_push(opened_so_files, (vec_data_t)sohandle);
+      rs = load_compiled_il(file_name, sohandle);
     }
-    */
     rs = NULL; /* ワーニングの抑制 */
   }else if ((fp = fopen(file_name, "r"))) {
     /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
@@ -675,7 +695,7 @@ static const char * const extension_table[] = {
   ""
   ,"lmn"
   ,"il"
-  /*,"so"*/
+  ,"so"
 };
 
 static int file_type(const char *extension)
@@ -703,7 +723,6 @@ int load_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path)
   LMN_FREE(buf);
   return ST_CONTINUE;
 }
-
 
 int free_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path)
 {

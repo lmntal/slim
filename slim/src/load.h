@@ -50,6 +50,8 @@ void load_il_files(char *path);
 int il_parse(FILE *in, IL *il);
 int il_parse_rule(FILE *in, Rule *rule);
 FILE *fopen_il_file(char *name);
+void init_so_handles();
+void finalize_so_handles();
 
 /* 最適化レベルの最大値 */
 #define OPTIMIZE_LEVEL_MAX 3
