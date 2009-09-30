@@ -66,6 +66,7 @@ typedef struct StateSpace *StateSpace;
 Vector *nd_expand(const StateSpace states, State *state);
 void run_nd(Vector *start_rulesets);
 StateSpace do_nd(LmnMembrane *world_mem);
+StateSpace do_nd_dump(LmnMembrane *world_mem_org);
 State *insert_state(StateSpace states, State *s);
 State *state_space_get(const StateSpace states, State *s);
 StateSpace state_space_make(void);

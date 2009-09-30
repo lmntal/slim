@@ -56,7 +56,8 @@ struct StateSpace {
 static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem);
 static BOOL react_all_rulesets(struct ReactCxt *rc,
                                LmnMembrane *cur_mem);
-static void nd_loop(StateSpace states, State *init_state);
+static void nd_loop(StateSpace states, State *init_state, BOOL dump);
+static StateSpace do_nd_sub(LmnMembrane *world_mem, BOOL dump);
 static int kill_States_chains(st_data_t _k,
                               st_data_t state_ptr,
                               st_data_t rm_tbl_ptr);
@@ -172,7 +173,7 @@ static BOOL expand_inner(struct ReactCxt *rc,
  * nondeterministic execution
  * 深さ優先で全実行経路を取得する
  */
-static void nd_loop(StateSpace states, State *init_state) {
+static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
   Vector *stack;
   unsigned long i;
 
@@ -209,7 +210,7 @@ static void nd_loop(StateSpace states, State *init_state) {
         vec_push(stack, (LmnWord)src_succ);
         /* set ss to open, i.e., on the search stack */
         set_open(src_succ);
-        dump_state_data(succ);
+        if (dump) dump_state_data(succ);
 
         if (lmn_env.mem_enc_optmem) {
           /* メモリ最適化のために、サクセッサの作成後に膜を解放する */
@@ -264,7 +265,7 @@ void run_nd(Vector *start_rulesets)
     fprintf(stdout, "States\n");
   }
 
-  states = do_nd(mem);
+  states = do_nd_dump(mem);
 #ifdef PROFILE
   calc_hash_conflict(states);
   calc_encode_info(states);
@@ -285,6 +286,16 @@ void run_nd(Vector *start_rulesets)
 
 StateSpace do_nd(LmnMembrane *world_mem_org)
 {
+  return do_nd_sub(world_mem_org, FALSE);
+}
+
+StateSpace do_nd_dump(LmnMembrane *world_mem_org)
+{
+  return do_nd_sub(world_mem_org, TRUE);
+}
+
+static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
+{
   State *initial_state;
   StateSpace states = state_space_make();
   LmnMembrane *world_mem = lmn_mem_copy(world_mem_org);
@@ -293,7 +304,7 @@ StateSpace do_nd(LmnMembrane *world_mem_org)
   initial_state = state_make_for_nd(world_mem, ANONYMOUS);
 /*   mc_flags.initial_state = initial_state; */
   state_space_set_init_state(states, initial_state);
-  dump_state_data(initial_state);
+  if (dump) dump_state_data(initial_state);
 
 /*   /\* --nd_dumpの実行 *\/ */
 /*   else if(lmn_env.nd_dump){ */
@@ -301,7 +312,7 @@ StateSpace do_nd(LmnMembrane *world_mem_org)
 /*   } */
   /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
 /*   else{ */
-  nd_loop(states, initial_state);
+  nd_loop(states, initial_state, dump);
 /*   } */
 
   return states;

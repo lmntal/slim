@@ -306,7 +306,10 @@ void set_all_ruleset_validation(LmnMembrane *mem, BOOL b)
 
 }
 
-static BOOL react_ruleset_atomic2(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ruleset)
+/* ルールセットのルールを可能な限り適用する。非決定実行時にはルールセッ
+   トのルールが適用できななる適用してできるすべての状態を状態空間に追加
+   する。*/
+static BOOL react_ruleset_atomic_nd(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ruleset)
 {
   int i, n;
   BOOL ok = FALSE;
@@ -385,7 +388,7 @@ BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset
       }
     }
   } else if (lmn_ruleset_atomic_type(ruleset) == ATOMIC_ND) {
-    result = react_ruleset_atomic2(rc, mem, ruleset);
+    result = react_ruleset_atomic_nd(rc, mem, ruleset);
   } else if (lmn_ruleset_atomic_type(ruleset) == ATOMIC_DET) {
     result = react_ruleset_atomic(rc, mem, ruleset);
   }
