@@ -55,6 +55,7 @@
 #include "il_lexer.h"
 #include "load.h"
 #include "file_util.h"
+#include "so.h"
 
 /* prototypes */
 
@@ -597,10 +598,82 @@ static LmnRuleSet load_il(IL il)
   return first_ruleset;
 }
 
+/* soから試しに呼び出す関数 */
+void helloworld(const char *s)
+{
+  fprintf(stdout, "hello %s world!\n", s);
+}
+
+LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
+{
+  int i;
+  struct trans_ruleset sys_ruleset;
+  
+  /* シンボルを読み込み+変換テーブルを設定 */
+  for(i=1; i<maindata->count_of_symbol; ++i){
+    lmn_interned_str gid = lmn_intern(maindata->symbol_table[i]);
+    maindata->symbol_exchange[i] = gid;
+  }
+  
+  /* ファンクタを読み込み+変換テーブルを設定 */
+  for(i=0; i<maindata->count_of_functor; ++i){
+    LmnFunctorEntry ent = maindata->functor_table[i];
+    /* スペシャルファンクタは登録できないが,functor.c内で登録される共通部分以外出現しようがないはずなので問題ない */
+    if(ent.special){
+      /* 登録しないで変換も必要無し */
+      maindata->functor_exchange[i] = i;
+    }else{
+      LmnFunctor gid = lmn_functor_intern(ent.module, ent.name, ent.arity);
+      maindata->functor_exchange[i] = gid;
+    }
+  }
+
+  /* ルールセット0番は数合わせ */
+  /* システムルールセット読み込み */
+  sys_ruleset = maindata->ruleset_table[1];
+  for(i=0; i<sys_ruleset.size; ++i){
+    /* lmn_add_system_ruleで何とか */
+  }
+  /* ルールセットを読み込み+変換テーブルを設定 */
+  for(i=2; i<maindata->count_of_ruleset; ++i){
+    /* lmn_ruleset_makeとかで何とか */
+    /* とりあえず2番を初期データ生成ルールと決め打ちしておく */
+  }
+
+  fprintf(stderr, "so loader is under construction. just skip.\n");
+  
+  return 0;
+}
+
 /* soハンドルから中間命令を読み出す load_extは開始ルールを認識しない */
+/* 複数ファイルを1つのsoにした場合、初期データ生成ルールが複数あるはずだがとりあえず無視 */
 LmnRuleSet load_compiled_il(char *filename, void *sohandle)
 {
-  return 0;
+  char *basename = create_basename(filename);
+  int buf_len = strlen(basename) + 50;  /* 適当に50文字余分にとったけどこれでいいのか */
+  char *buf = malloc(buf_len + 1); /* 必要ないけど一応最後に1byte余分をとっておく */
+  void (*init_f)();
+  struct trans_maindata *maindata;
+
+  /* 初期化関数を呼び出し */
+  snprintf(buf, buf_len, "init_%s", basename);
+  init_f = dlsym(sohandle, buf);
+  if(! init_f){
+    fprintf(stderr, "init function \"%s\" not found in %s.\n", buf, basename);
+    return 0;
+  }
+  (*init_f)();
+
+  /* データオブジェクトを取得 */
+  snprintf(buf, buf_len, "trans_%s_maindata", basename);
+  maindata = dlsym(sohandle, buf);
+  if(! maindata){
+    fprintf(stderr, "maindata \"%s\" not found in %s.\n", buf, basename);
+    return 0;
+  }
+
+  /* 読み込みと変換テーブルの設定 */
+  return load_and_setting_trans_maindata(maindata);
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置する。
@@ -630,7 +703,7 @@ void finalize_so_handles()
 {
   int i;
   for(i=0; i<vec_num(opened_so_files); ++i){
-    /* dlclose((void*)vec_get(opened_so_files, i)); */
+    dlclose((void*)vec_get(opened_so_files, i));
   }
   vec_free(opened_so_files);
 }
@@ -648,8 +721,9 @@ LmnRuleSet load_file(char *file_name)
   len = strlen(file_name);
 
   /* 拡張子がsoならリンクする */
+  /* dlopenは環境変数にLD_LIBRARY_PATH="."と設定しないとカレントディレクトリを検索してくれないので注意 */
   if (!strcmp(file_name + len -3, ".so")) {
-    /* sohandle = dlopen(file_name, RTLD_LAZY); */
+    sohandle = dlopen(file_name, RTLD_LAZY);
     if(! sohandle){
       fprintf(stderr, "Failed to open %s\n", file_name);
       rs = 0;
@@ -658,7 +732,6 @@ LmnRuleSet load_file(char *file_name)
       vec_push(opened_so_files, (vec_data_t)sohandle);
       rs = load_compiled_il(file_name, sohandle);
     }
-    rs = NULL; /* ワーニングの抑制 */
   }else if ((fp = fopen(file_name, "r"))) {
     /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
     if (!strcmp(&file_name[len-4], ".lmn")) {
@@ -676,6 +749,7 @@ LmnRuleSet load_file(char *file_name)
       }
       else {
         fprintf(stderr, "environment variable \"LMNTAL_HOME\" is not set");
+        exit(EXIT_FAILURE);
       }
     }
     else {
@@ -854,3 +928,24 @@ int il_parse_rule(FILE *in, Rule *rule)
 
   return r;
 }
+
+char *create_basename(const char *filepath)
+{
+  const char *begin = strrchr(filepath, DIR_SEPARATOR_CHAR); /* パス内最後の/を探す */
+  const char *end;
+  char *basename;
+  
+  if(begin != NULL){ /* もし/があればその次がファイル名の先頭 */
+    begin += 1;
+  }else{
+    begin = filepath; /* もし/がなければ全体の先頭がファイル名の先頭 */
+  }
+  
+  end = strchr(begin, '.'); /* ファイル名最初の.を探す */
+  basename = malloc(end-begin +1);
+  strncpy(basename, begin, end-begin);
+  basename[end-begin] = '\0';
+
+  return basename;
+}
+

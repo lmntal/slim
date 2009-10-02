@@ -104,3 +104,7 @@ const char *lmn_id_to_name(lmn_interned_str id)
   else return NULL;
 }
 
+int count_symbols()
+{
+  return st_num(sym_tbl);
+}

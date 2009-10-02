@@ -288,49 +288,52 @@ void sym_tbl_init();
 /* 処理系内部の初期化処理 */
 static void init_internal(void)
 {
-  init_env();
   sym_tbl_init();
   lmn_functor_tbl_init();
   init_rules();
 
-  init_so_handles();
-  init_default_system_ruleset();
-  task_init();
-/*   ext_init(); */
-  sp_atom_init();
-  ccallback_init();
-  init_builtin_extensions();
+  if(! lmn_env.translate){
+    init_so_handles();
+    init_default_system_ruleset();
+    task_init();
+    /*   ext_init(); */
+    sp_atom_init();
+    ccallback_init();
+    init_builtin_extensions();
 
-  dumper_init();
-  string_init();
-  port_init();
+    dumper_init();
+    string_init();
+    port_init();
 
 #ifdef PROFILE
-  runtime_status_init();
+    runtime_status_init();
 #endif
+  }
 }
 
 static void finalize(void)
 {
-  port_finalize();
-  string_finalize();
-  dumper_finalize();
+  if(! lmn_env.translate){
+    port_finalize();
+    string_finalize();
+    dumper_finalize();
 
-  sym_tbl_destroy();
-  lmn_functor_tbl_destroy();
-  destroy_rules();
-  task_finalize();
-  free_atom_memory_pools();
-/*   ext_finalize(); */
-  ccallback_finalize();
-  sp_atom_finalize();
+    task_finalize();
+    /*   ext_finalize(); */
+    ccallback_finalize();
+    sp_atom_finalize();
   
-  finalize_so_handles();
+    finalize_so_handles();
 
 #ifdef PROFILE
-  runtime_status_finalize();
+    runtime_status_finalize();
 #endif
-
+  }
+  
+  destroy_rules();
+  lmn_functor_tbl_destroy();
+  sym_tbl_destroy();
+  free_atom_memory_pools();
 }
 
 int main(int argc, char *argv[])
@@ -338,9 +341,9 @@ int main(int argc, char *argv[])
   int optid;
   int i;
 
-  init_internal();
-
+  init_env();
   optid = parse_options(argc, argv);
+  init_internal();
 
   if (optid < argc) {
     Vector *start_rulesets = vec_make(2);
@@ -358,8 +361,13 @@ int main(int argc, char *argv[])
       }
       else{
         t = load_file(f);
-        vec_push(start_rulesets, (vec_data_t)t);
+        if(t) vec_push(start_rulesets, (vec_data_t)t);
       }
+    }
+    /* まともな入力ファイルが無ければ抜ける(終了処理してないけど) */
+    if(vec_num(start_rulesets) == 0){
+      fprintf(stderr, "bad input file.\n");
+      exit(1);
     }
     
 #ifdef PROFILE
@@ -368,10 +376,10 @@ int main(int argc, char *argv[])
 
     if (lmn_env.translate) { /*変換をする場合*/
       if (!strcmp("-", argv[optid])) { /* argv[optid] is first input file name */
-        /* translate(NULL); */
+        translate(NULL);
       }
       else{
-        /* translate(argv[optid]); */
+        translate(argv[optid]);
       }
     }
     else{ /*実行をする場合*/
@@ -406,7 +414,7 @@ int main(int argc, char *argv[])
     
     vec_free(start_rulesets);
   } else {
-    fprintf(stderr, "no input file !\n");
+    fprintf(stderr, "no input file\n");
     exit(1);
   }
 

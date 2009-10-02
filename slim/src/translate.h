@@ -39,9 +39,8 @@
 #ifndef LMN_TRANSLATE_H
 #define LMN_TRANSLATE_H
 
-#include <stdio.h>
-
-void translate(char *filepath, FILE *fp);
+/* 現在ロードしている情報をfilepath.so の名前で使えるように出力する */
+void translate(char *filepath);
 
 #endif
 

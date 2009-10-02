@@ -52,6 +52,7 @@ int il_parse_rule(FILE *in, Rule *rule);
 FILE *fopen_il_file(char *name);
 void init_so_handles();
 void finalize_so_handles();
+char *create_basename(const char *path);
 
 /* 最適化レベルの最大値 */
 #define OPTIMIZE_LEVEL_MAX 3
