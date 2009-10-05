@@ -46,20 +46,77 @@
 #include "atom.h"
 #include "error.h"
 #include <stdio.h>
+#include "translate.h"
 
 /* just for debug ! */
 static FILE *OUT;
+
+/* TODO: コピペ task.cの中にある どこか外に出してしまいたい */
+#define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
+
+int vec_inserted_index(Vector *v, LmnWord w)
+{
+  int i;
+  for(i=0; i<vec_num(v); ++i){
+    if(vec_get(v, i) == w) return i;
+  }
+  vec_push(v, w);
+  return vec_num(v) - 1;
+}
+
+/* 常に失敗する translate_generatorまわりがおかしくなったらこれをコメントイン */
+/*
+const BYTE *translate_instruction_generated(const BYTE *p, Vector *jump_points, const char *header, const char *successcode, const char *failcode, int indent, int *finishflag)
+{
+  *finishflag = -1;
+  return p;
+}
+*/
+
+const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const char *header, const char *successcode, const char *failcode, int indent, int *finishflag)
+{
+  fprintf(OUT, "return 0;\n");
+  
+  *finishflag = 0; /* 常に成功,終了 */
+  return instr;
+}
 
 /*
   pの先頭から出力して行き,その階層のjump/proceedが出てくるまでを変換する
   jump先は中間命令ではアドレスになっているが,
   そのポインタ値が何個めのjump先として現れたか(index)を,その関数のシグネチャに使う
   物理的に次の読み込み場所を返す
+  (変換するスタート地点, 変換する必要のある部分の記録, ルールのシグネチャ:trans_**_**_**, 成功時コード, 失敗時コード, インデント)
 */
-static const BYTE *translate_instructions(const BYTE *p, Vector *jump_points, const char *header, const char *successcode, const char *failcode)
+static const BYTE *translate_instructions(const BYTE *p, Vector *jump_points, const char *header, const char *successcode, const char *failcode, int indent)
 {
-  fprintf(OUT, "  %s;\n", failcode);
-  return p; /* ルート以外でpを返すと無限ループ */
+  while(1){
+    /* 自動生成で変換可能な中間命令をトランスレートする */
+    /* 終了フラグ: 正のとき変換成功+次を変換, 0のとき変換成功+jump/proceed等なので終了, 負のとき変換失敗 */
+    int finishflag;
+    const BYTE *next = translate_instruction_generated(p, jump_points, header, successcode, failcode, indent, &finishflag);
+
+    if(finishflag > 0){
+      p = next;
+      continue;
+    }else if(finishflag == 0){
+      return next;
+    }else{
+      /* 自動生成で対処できない中間命令をトランスレートする */
+      next = translate_instruction(p, jump_points, header, successcode, failcode, indent, &finishflag);
+      if(finishflag > 0){
+        p = next;
+        continue;
+      }else if(finishflag == 0){
+        return next;
+      }else{
+        LmnInstrOp op;
+        READ_VAL(LmnInstrOp, p, op);
+        fprintf(stderr, "translator: unknown instruction: %d\n", op);
+        exit(1);
+      }
+    }
+  }
 }
 
 static void translate_rule(LmnRule rule, const char *header)
@@ -73,8 +130,8 @@ static void translate_rule(LmnRule rule, const char *header)
     BYTE *p = (BYTE*)vec_get(jump_points, i);
     fprintf(OUT, "BOOL %s_%d(struct ReactCxt* r, LmnMembrane* m)\n", header, i); /* TODO rとmじゃ気持ち悪い m=wt[0]なのでmは多分いらない */
     fprintf(OUT, "{\n");
-    /* (変換するスタート地点, 変換する必要のある部分の記録, ルールのシグネチャ:trans_**_**_**, 成功時コード, 失敗時コード) */
-    translate_instructions(p, jump_points, header, "return 1", "return 0");
+    /* (変換するスタート地点, 変換する必要のある部分の記録, ルールのシグネチャ:trans_**_**_**, 成功時コード, 失敗時コード, インデント) */
+    translate_instructions(p, jump_points, header, "return 1", "return 0", 1);
     fprintf(OUT, "}\n");
   }
 

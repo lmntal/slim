@@ -39,6 +39,29 @@
 #ifndef LMN_TRANSLATE_H
 #define LMN_TRANSLATE_H
 
+#include "lmntal.h"
+
+/* 自動生成される 1つ命令を変換して出力し,次変換する位置を返す */
+const BYTE *translate_instruction_generated(const BYTE *instr, /* 変換する場所 */
+                                            Vector *jump_points, /* 変換対象の場所 */
+                                            const char *header, /* その場所が属する */
+                                            const char *successcode, /* 成功時実行するコード */
+                                            const char *failcode, /* */
+                                            int indent, /* */
+                                            int *finishflag); /* 変換の結果(正なら成功+継続,0なら成功+終了,負なら失敗 */
+
+/* 手動生成 1つ命令を変換して出力し,次変換する位置を返す */
+const BYTE *translate_instruction(const BYTE *instr,
+                                            Vector *jump_points,
+                                            const char *header,
+                                            const char *successcode,
+                                            const char *failcode,
+                                            int indent,
+                                            int *finishflag);
+
+/* vにwが含まれる場合そのindexを返す. 含まれない場合wをvの最後に追加してそのindexを返す */
+int vec_inserted_index(Vector *v, LmnWord w);
+
 /* 現在ロードしている情報をfilepath.so の名前で使えるように出力する */
 void translate(char *filepath);
 

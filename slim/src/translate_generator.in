@@ -1,5 +1,5 @@
 /*
- * translator_generator.in - 
+ * translate_generator.in - 
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -33,7 +33,7 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: translator_genelrator.in,v 1.5 2008/09/19 05:18:17 taisuke Exp $
+ * $Id: translate_generator.in,v 1.5 2008/09/19 05:18:17 riki Exp $
  */
 
 #__echo
@@ -43,8 +43,15 @@
  #include "symbol.h"
  #include <stdio.h>
 
-void translate_instruction_generated(Instruction inst, ArgList al, char *header, int indent, char *successcode, char *failcode)
+const BYTE *translate_instruction_generated(const BYTE *instr,
+                                            Vector *jump_points,
+                                            const char *header,
+                                            const char *successcode,
+                                            const char *failcode,
+                                            int indent,
+                                            int *finishflag)
 {
-  fprintf(stdout, "other %d\n", inst_get_id(inst));
+  *finishflag = -1; /* always failure */
+  return instr;
 }
 
