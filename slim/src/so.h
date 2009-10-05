@@ -43,8 +43,7 @@
 struct trans_ruleset
 {
   int size;
-  int hoge;
-  /* rule *data; */
+  LmnTranslated *rules;
 };
 
 struct trans_maindata

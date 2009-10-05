@@ -50,53 +50,43 @@
 /* just for debug ! */
 static FILE *OUT;
 
-void translate_rule(LmnRule r, char *header)
+/*
+  pの先頭から出力して行き,その階層のjump/proceedが出てくるまでを変換する
+  jump先は中間命令ではアドレスになっているが,
+  そのポインタ値が何個めのjump先として現れたか(index)を,その関数のシグネチャに使う
+  物理的に次の読み込み場所を返す
+*/
+static const BYTE *translate_instructions(const BYTE *p, Vector *jump_points, const char *header, const char *successcode, const char *failcode)
 {
-  Vector *v = vec_make(4);
-  vec_push(v, (LmnWord)lmn_rule_get_inst_seq(r));
-  fprintf(OUT, "/*%s*/\n", lmn_id_to_name(lmn_rule_get_name(r)));
-  int i;
-  for(i=0; i<vec_num(v); ++i){
-    BYTE *p = (BYTE*)vec_get(v, i);
-    fprintf(OUT, "BOOL trans_%s_%d(LmnMembrane *mem)\n{\n", header, i);
-    //translate_instructions(p, v, header, "return 1", "return 0");
-    fprintf(OUT, "}\n");
-  }
+  fprintf(OUT, "  %s;\n", failcode);
+  return p; /* ルート以外でpを返すと無限ループ */
 }
 
-void translate_ruleset(LmnRuleSet rs, char *filename)
+static void translate_rule(LmnRule rule, const char *header)
 {
-  int rulesetid = lmn_ruleset_get_id(rs);
-  int num = lmn_ruleset_rule_num(rs);
+  Vector *jump_points = vec_make(4);
   int i;
 
-  //fprintf(OUT, "BOOL trans_%s_%d_is_system_ruleset = %d;\n", filename, rulesetid, ruleset_is_system_ruleset(rs));
-  fprintf(OUT, "int trans_%s_%d_num = %d;\n", filename, rulesetid, num);
-  fprintf(OUT, "trans_%s_%d_data[] = {\n", filename, rulesetid);
-  for(i=0; i<num; ++i){
-    fprintf(OUT, "  trnas_%s_%d_%d_0", filename, rulesetid, i);
-    if(i != num-1) fprintf(OUT, ",");
-    fprintf(OUT, "\n");
-  }
-  fprintf(OUT, "};\n");
-  fprintf(OUT, "\n");
+  vec_push(jump_points, (LmnWord)lmn_rule_get_inst_seq(rule));
 
-  for(i=0; i<num; ++i){
-    char header[500];
-    sprintf(header, "%s_%d_%d", filename, rulesetid, i);
-  
-    translate_rule(lmn_ruleset_get_rule(rs, i), header);
-
-    if(i != num-1) fprintf(OUT, "\n");
+  for(i=0; i<vec_num(jump_points) /*変換中にjump_pointsは増えていく*/; ++i){
+    BYTE *p = (BYTE*)vec_get(jump_points, i);
+    fprintf(OUT, "BOOL %s_%d(struct ReactCxt* r, LmnMembrane* m)\n", header, i); /* TODO rとmじゃ気持ち悪い m=wt[0]なのでmは多分いらない */
+    fprintf(OUT, "{\n");
+    /* (変換するスタート地点, 変換する必要のある部分の記録, ルールのシグネチャ:trans_**_**_**, 成功時コード, 失敗時コード) */
+    translate_instructions(p, jump_points, header, "return 1", "return 0");
+    fprintf(OUT, "}\n");
   }
+
+  /* 各関数の前方宣言をすることができないので,関数を呼ぶ時には自分で前方宣言をする */
+  /* trans_***(); ではなく { extern trans_***(); trans_***(); } と書くだけ */
 }
 
 static void print_trans_header()
 {
-  //出力されたファイル用のヘッダを用意して仮宣言
-  //それとは別にtrans_maindata等の構造をしまうヘッダを用意(so.h)
   fprintf(OUT, "#include \"so.h\"\n");
   fprintf(OUT, "#include \"load.h\"\n");
+  fprintf(OUT, "#include \"rule.h\"\n");
   fprintf(OUT, "\n");
 }
 
@@ -179,25 +169,67 @@ static void print_trans_functors(const char *filename)
   fprintf(OUT, "int trans_%s_maindata_functorexchange[%d];\n\n", filename, count);
 }
 
+static void print_trans_rules(const char *filename)
+{
+  int count = count_rulesets();
+  int i;
+  int buf_len = strlen(filename) + 50; /* 適当にこれだけあれば足りるはず */
+  char *buf = malloc(buf_len + 1);
+
+  /* システムルールセットの出力 */
+  for(i=0; i<lmn_ruleset_rule_num(system_ruleset); ++i){
+    /* システムルールの関数をここで出力 */
+    snprintf(buf, buf_len, "trans_%s_1_%d", filename, i); /* シグネチャ作成 */
+    translate_rule(lmn_ruleset_get_rule(system_ruleset, i), buf);
+  }
+  fprintf(OUT, "LmnTranslated trans_%s_1_rules[%d] = {", filename, lmn_ruleset_rule_num(system_ruleset));
+  for(i=0; i<lmn_ruleset_rule_num(system_ruleset); ++i){
+    if(i != 0) fprintf(OUT, ", ");
+    fprintf(OUT, "trans_%s_1_%d_0", filename, i); /* 各ルールの先頭関数を配列に */
+  }
+  fprintf(OUT, "};\n\n");
+
+  /* 通常ルールセットの出力 */
+  for(i=2; i<count; ++i){
+    int j;
+    LmnRuleSet rs = lmn_ruleset_from_id(i);
+    assert(rs != NULL); /* countで数えているからNULLにあたることはないはず */
+
+    for(j=0; j<lmn_ruleset_rule_num(rs); ++j){
+      /* ルールの関数をここで出力 */
+      snprintf(buf, buf_len, "trans_%s_%d_%d", filename, i, j);
+      translate_rule(lmn_ruleset_get_rule(rs, j), buf);
+    }
+
+    fprintf(OUT, "LmnTranslated trans_%s_%d_rules[%d] = {", filename, i, lmn_ruleset_rule_num(rs));
+    for(j=0; j<lmn_ruleset_rule_num(rs); ++j){
+      if(j != 0) fprintf(OUT, ", ");
+      fprintf(OUT, "trans_%s_%d_%d_0", filename, i, j); /* 各ルールの先頭関数を配列に */
+    }
+    fprintf(OUT, "};\n\n");
+  }
+}
+
 static void print_trans_rulesets(const char *filename)
 {
   int count = count_rulesets();
   int i;
+
+  /* ルールセットテーブルで各ルールセットのデータ名を参照するので、先に個々のデータを出力する */
+  print_trans_rules(filename);
 
   fprintf(OUT, "struct trans_ruleset trans_%s_maindata_rulesets[%d] = {\n", filename, count);
   /* ruleset id is 2,3,4,5... ? 1:systemrulesetただし登録はされていない */
   /* ruleset0番は存在しないが数合わせに出力 */
   fprintf(OUT, "  {0,0},\n");
   /* ruleset1番はtableに登録されていないがsystemrulesetなので出力 */
-  //fprintf(OUT, "  {%d,trans_%s_1},\n", lmn_ruleset_rule_num(system_ruleset), filename);
-  fprintf(OUT, "  {0,0},\n");
+  fprintf(OUT, "  {%d,trans_%s_1_rules},\n", lmn_ruleset_rule_num(system_ruleset), filename);
   /* 2番以降は普通のrulesetなので出力(どれが初期データルールかはload時に拾う) */
   for(i=2; i<count; ++i){
     LmnRuleSet rs = lmn_ruleset_from_id(i);
     assert(rs != NULL); /* countで数えているからNULLにあたることはないはず */
 
-    //fprintf(OUT, "  {%d,trans_%s_%d}", lmn_ruleset_rule_num(rs), filename, i);
-    fprintf(OUT, "  {0,0}");
+    fprintf(OUT, "  {%d,trans_%s_%d_rules}", lmn_ruleset_rule_num(rs), filename, i);
     if(i != count-1) fprintf(OUT, ",");
     fprintf(OUT, "\n");
   }

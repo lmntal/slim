@@ -608,6 +608,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
 {
   int i;
   struct trans_ruleset sys_ruleset;
+  LmnRuleSet ret = 0; /* ワーニング抑制 */
   
   /* シンボルを読み込み+変換テーブルを設定 */
   for(i=1; i<maindata->count_of_symbol; ++i){
@@ -632,21 +633,33 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   /* システムルールセット読み込み */
   sys_ruleset = maindata->ruleset_table[1];
   for(i=0; i<sys_ruleset.size; ++i){
-    /* lmn_add_system_ruleで何とか */
+    LmnRule r = lmn_rule_make_translated(sys_ruleset.rules[i], 0 /* TODO: RULENAME */);
+    lmn_add_system_rule(r);
   }
   /* ルールセットを読み込み+変換テーブルを設定 */
   for(i=2; i<maindata->count_of_ruleset; ++i){
-    /* lmn_ruleset_makeとかで何とか */
+    int j;
+    struct trans_ruleset tr = maindata->ruleset_table[i];
+    int gid = lmn_gen_ruleset_id();
+    LmnRuleSet rs = lmn_ruleset_make(gid, tr.size);
+    lmn_set_ruleset(rs, gid);
+
+    for(j=0; j<tr.size; ++j){
+      LmnRule r = lmn_rule_make_translated(tr.rules[j], 0 /* TODO: RULENAME */);
+      lmn_ruleset_put(rs, r);
+    }
+    
     /* とりあえず2番を初期データ生成ルールと決め打ちしておく */
+    if(i==2) ret = rs;
+    maindata->ruleset_exchange[i] = gid;
   }
 
-  fprintf(stderr, "so loader is under construction. just skip.\n");
-  
-  return 0;
+  return ret;
 }
 
 /* soハンドルから中間命令を読み出す load_extは開始ルールを認識しない */
 /* 複数ファイルを1つのsoにした場合、初期データ生成ルールが複数あるはずだがとりあえず無視 */
+/* TODO: 初期データ生成ルールセットのルールを1つのルールセットにまとめて出力すれば問題無し 1回適用成功したところで止めなければok) */
 LmnRuleSet load_compiled_il(char *filename, void *sohandle)
 {
   char *basename = create_basename(filename);
