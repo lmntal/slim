@@ -844,7 +844,7 @@ LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, SimpleHashtbl **ret_copymap
   unsigned int i;
   SimpleHashtbl *copymap;
   LmnMembrane *new_mem = lmn_mem_make();
-  
+
   copymap = lmn_mem_copy_cells(new_mem, src);
   for (i = 0; i < src->rulesets.num; i++) {
     vec_push(&new_mem->rulesets, vec_get(&src->rulesets, i));
@@ -934,7 +934,7 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
           newlink_symbol_and_something(newatom, i, newargatom, attr);
         } else if(hashtbl_contains(atoms, a)) {
           newlink_symbol_and_something(newatom, i, hashtbl_get(atoms, a), attr);
-        }  
+        }
       }
         }));
   }
@@ -1066,7 +1066,7 @@ BOOL ground_atoms(Vector *srcvec,
                   unsigned long *natoms)
 {
   HashSet *visited = hashset_make(16);
-  SimpleHashtbl *guard = NULL; 
+  SimpleHashtbl *guard = NULL;
   HashSet *root = hashset_make(16);
   Vector *stack = vec_make(16);
   unsigned int i;
@@ -1098,7 +1098,7 @@ BOOL ground_atoms(Vector *srcvec,
       n_reach_root++;
       continue;
     }
-    
+
     hashset_add(root, (HashKeyType)LMN_SATOM_GET_LINK(l->ap, l->pos));
     if (vec_num(stack) == 0) {
       vec_push(stack, l->ap);
@@ -1151,7 +1151,7 @@ BOOL ground_atoms(Vector *srcvec,
       ok = FALSE;
     }
   }
-  
+
   vec_free(stack);
   hashset_free(root);
   if (guard) hashtbl_free(guard);
@@ -1197,7 +1197,7 @@ void lmn_mem_free_ground(Vector *srcvec)
   HashSet *atoms;
   unsigned long i, t;
   HashSetIterator it;
-  
+
   ground_atoms(srcvec, NULL, &atoms, &t);
   for (it = hashset_iterator(atoms);
        !hashsetiter_isend(&it);
@@ -1438,6 +1438,15 @@ static BOOL lmn_mem_trace_links(LmnSAtom a1, LmnSAtom a2, Vector *v_log1, Vector
   /* a1、a2のファンクタが一致することを確認(不一致の場合は無条件に偽を返す) */
   if (LMN_SATOM_GET_FUNCTOR(a1) != LMN_SATOM_GET_FUNCTOR(a2)) {
     return FALSE;
+  }
+
+  /* 090808同型性判定バグ2対応
+   * 親膜内のプロセスのうち、$outにつながっているものについては調べる必要がある */
+  if (LMN_SATOM_GET_FUNCTOR(a1) == LMN_IN_PROXY_FUNCTOR && current_depth == CHECKED_MEM_DEPTH) {
+    attr1 = LMN_SATOM_GET_ATTR(LMN_SATOM(LMN_SATOM_GET_LINK(a1, 0U)), 1U);
+    attr2 = LMN_SATOM_GET_ATTR(LMN_SATOM(LMN_SATOM_GET_LINK(a2, 0U)), 1U);
+    if (attr1 != attr2)
+       return FALSE;
   }
 
   arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(a1));
@@ -1791,7 +1800,7 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
         }
       }
     }
-      
+
     /* mem1, mem2内の子孫膜を含むすべてのプロセスの同型性判定に成功 */
     if (has_atoms) {
       vec_free(v_log1); vec_free(v_log2);
