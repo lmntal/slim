@@ -36,12 +36,16 @@
  * $Id: translate_generator.in,v 1.5 2008/09/19 05:18:17 riki Exp $
  */
 
-#__echo
+#__echo_t
  #include "translate.h"
  #include "syntax.h"
  #include "arch.h"
  #include "symbol.h"
+ #include "error.h"
  #include <stdio.h>
+
+/* just for debug */
+static FILE *OUT = NULL;
 
 const BYTE *translate_instruction_generated(const BYTE *instr,
                                             Vector *jump_points,
@@ -51,7 +55,173 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
                                             int indent,
                                             int *finishflag)
 {
-  *finishflag = -1; /* always failure */
-  return instr;
+  LmnInstrOp op;
+  READ_VAL(LmnInstrOp, instr, op);
+  *finishflag = 1;
+
+  if(! OUT){
+    //OUT = stderr;
+    OUT = stdout;
+    //OUT = fopen("/dev/null", "w");
+  }
+
+  switch (op) {
+
+
+#spec LmnInstrVar LmnInstrVar
+  if($1 > wt_size){
+    wt_size = $1;
+    wt = LMN_REALLOC(LmnWord, wt, wt_size);
+    at = LMN_REALLOC(LmnLinkAttr, at, wt_size);
+  }
+
+#commit lmn_interned_str LmnLineNum
+  //commit($0, $1);
+
+#loadruleset LmnInstrVar LmnRulesetId
+  lmn_mem_add_ruleset((LmnMembrane*)wt[$0], lmn_ruleset_from_id(TR_GRID($1)));
+
+#newatom LmnInstrVar LmnInstrVar $functor
+% switch(targ2_attr){
+% case LMN_INT_ATTR:
+    wt[$0] = $2_long_data;
+%   break;
+% case LMN_DBL_ATTR:
+    wt[$0] = malloc(sizeof(double));
+    *(double*)wt[$0] = $2_double_data;
+%   break;
+% case LMN_STRING_ATTR:
+    wt[$0] = $2_string_data;
+%   break;
+% default:
+    wt[$0] = LMN_ATOM(lmn_new_atom(TR_GFID($2_functor_data)));
+%   break;
+% }
+    at[$0] = $2_attr;
+  lmn_mem_push_atom((LmnMembrane*)wt[$1], wt[$0], $2_attr);
+
+#alloclink LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_ALLOCLINK($0, $1, $2);
+
+#unifylinks LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_UNIFYLINKS($0, $1, $2);
+
+#enqueueatom LmnInstrVar LmnInstrVar LmnInstrVar
+
+#proceed
+  $s;
+% *finishflag = 0;
+
+#findatom LmnInstrVar LmnInstrVar $functor
+% if(LMN_ATTR_IS_DATA(targ2_attr)){
+%   fprintf(stderr, "I can not find data atoms.\n");
+%   assert(FALSE);
+% }else{
+    {
+      AtomListEntry *atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt[$1], TR_GFID($2_functor_data));
+      LmnSAtom atom;
+  
+      if (atomlist_ent) {
+        at[$0] = LMN_ATTR_MAKE_LINK(0);
+        /* EACH_ATOMを使うとループ内コード中でコンマが使えない場合が出てくる */
+        for(atom = atomlist_head(atomlist_ent);
+            atom != lmn_atomlist_end(atomlist_ent);
+            atom = LMN_SATOM_GET_NEXT_RAW(atom)){
+          if(LMN_SATOM_GET_FUNCTOR(atom) != LMN_RESUME_FUNCTOR){
+            wt[$0] = (LmnWord)atom;
+#__echo_t
+            instr = translate_instructions(instr, jump_points, header, successcode, "continue", indent+1);
+#__format
+          }
+        }
+      }
+    }
+    $f;
+% }
+% *finishflag = 0;
+
+#derefatom LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)LMN_SATOM(LMN_SATOM_GET_LINK(wt[$1], $2));
+  at[$0] = LMN_SATOM_GET_ATTR(wt[$1], $2);
+
+#isint LmnInstrVar
+  if(at[$0] != LMN_INT_ATTR) $f;
+
+#imod LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)((long)wt[$1] % (long)wt[$2]);
+  at[$0] = LMN_INT_ATTR;
+
+#allocatom LmnInstrVar $functor
+  at[$0] = $1_attr;
+% switch(targ1_attr){
+% case LMN_INT_ATTR:
+    wt[$0] = $1_long_data;
+%   break;    
+% case LMN_DBL_ATTR:
+    {
+      static const double d = $1_double_data;
+      wt[$0] = &d;
+    }
+%   break;
+% case LMN_STRING_ATTR:
+    wt[$0] = $1_string_data;
+    at[$0] = LMN_CONST_STR_ATTR;
+%   break;
+% default:
+%   lmn_fatal("Implementation error");
+% }
+
+#ieq LmnInstrVar LmnInstrVar
+  if((long)wt[$0] != (long)wt[$1]) $f;
+
+#dequeueatom LmnInstrVar
+
+#removeatom LmnInstrVar LmnInstrVar
+  lmn_mem_remove_atom((LmnMembrane*)wt[$1], wt[$0], at[$0]);
+
+#copyatom LmnInstrVar LmnInstrVar LmnInstrVar
+  at[$0] = at[$2];
+  wt[$0] = lmn_copy_atom(wt[$2], at[$2]);
+  lmn_mem_push_atom((LmnMembrane *)wt[$1], wt[$0], at[$0]);
+
+#relink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_RELINK($0, $1, $2, $3, $4);
+
+#freeatom LmnInstrVar
+  lmn_free_atom(wt[$0], at[$0]);
+
+#getfunc LmnInstrVar LmnInstrVar
+  if(LMN_ATTR_IS_DATA(at[$1])){
+    wt[$0] = wt[$1];
+  }else{
+    wt[$0] = (LmnWord)LMN_SATOM_GET_FUNCTOR(wt[$1]);
+  }
+  at[$0] = at[$1];
+
+#allocatomindirect LmnInstrVar LmnFunctor
+  if (LMN_ATTR_IS_DATA(at[$1])) {
+    wt[$0] = lmn_copy_data_atom(wt[$1], at[$1]);
+    at[$0] = at[$1];
+  } else { /* symbol atom */
+    fprintf(stderr, "symbol atom can't be created in GUARD\n");
+    exit(EXIT_FAILURE);
+  }
+
+#ine LmnInstrVar LmnInstrVar
+  if(!((long)wt[$0] != (long)wt[$1])) $f;
+
+#newlink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
+  lmn_mem_newlink((LmnMembrane *)wt[$4], wt[$0], at[$0], $1, wt[$2], at[$2], $3);
+
+
+#__end
+
+
+#__echo_t
+  default:
+    /* always failure */
+    *finishflag = -1;
+    return instr;
+  }
 }
 

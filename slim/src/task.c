@@ -573,6 +573,33 @@ void lmn_run(Vector *start_rulesets)
           }                                            \
           } while (0)
 
+#define SKIP_DATA_ATOM(attr) \
+       do {                                            \
+          switch(attr) {                               \
+          case LMN_INT_ATTR:                           \
+            {                                          \
+              long t;                                  \
+              READ_VAL(long, instr, t);                \
+              break;                                   \
+            }                                          \
+          case LMN_DBL_ATTR:                           \
+            {                                          \
+              double t;                                \
+              READ_VAL(double, instr, t);              \
+              break;                                   \
+            }                                          \
+          case LMN_STRING_ATTR:                        \
+            {                                          \
+              lmn_interned_str s;                      \
+              LmnString str1;                          \
+              READ_VAL(lmn_interned_str, instr, s);    \
+              break;                                   \
+            }                                          \
+          default:                                     \
+            lmn_fatal("Implementation error");         \
+          }                                            \
+          } while (0)
+
 /* DEBUG: */
 /* static void print_wt(void); */
 
@@ -1570,13 +1597,20 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             BOOL eq;
             READ_CMP_DATA_ATOM(attr, wt[atomi], eq);
             if (eq) return FALSE;
+          }else{
+            goto label_skip_data_atom;
           }
         }
         else { /* symbol atom */
           READ_VAL(LmnFunctor, instr, f);
           if (LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt[atomi])) == f) return FALSE;
         }
+      }else if(LMN_ATTR_IS_DATA(attr)){
+        goto label_skip_data_atom;
       }
+      break;
+    label_skip_data_atom:
+      SKIP_DATA_ATOM(attr);
       break;
     }
     case INSTR_ISGROUND:

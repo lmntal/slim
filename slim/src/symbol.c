@@ -106,5 +106,5 @@ const char *lmn_id_to_name(lmn_interned_str id)
 
 int count_symbols()
 {
-  return st_num(sym_tbl);
+  return st_num(sym_tbl) + 1; /* symbol 0 is out of table */
 }

@@ -36,30 +36,88 @@
  * $Id: so.h,v 1.00 2009/10/01 18:18:00 riki Exp $
  */
 
+/* このファイルはトランスレータから出力された.cファイルの中で必要なものをすべて含む */
+/* .cの中でのみ必要な情報はここに直接書く */
+
+#ifndef SO_H
+#define SO_H
+
 #include "lmntal.h"
 #include "rule.h"
 #include "functor.h"
+#include "translate.h"
+#include "load.h"
+#include "symbol.h"
 
-struct trans_ruleset
-{
-  int size;
-  LmnTranslated *rules;
-};
+/* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
+/* TR_GRID(x) translate global ruleset id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
+/* インタプリタ用の定義では変換は必要ないため TR_G*ID(x) = x となる */
 
-struct trans_maindata
-{
-  int count_of_symbol;
-  const char **symbol_table;
-  int count_of_functor;
-  LmnFunctorEntry *functor_table;
-  int count_of_ruleset;
-  struct trans_ruleset *ruleset_table;
-  int *symbol_exchange;
-  int *functor_exchange;
-  int *ruleset_exchange;
-};
+extern LmnWord *wt, *wt_t;
+extern LmnByte *at, *at_t;
+extern unsigned int wt_size;
 
-/* 今の瞬間の仕様：slimで扱うsoファイルは, hogehoge.soという名前のとき,
-   void init_hogehoge(void)を持ち、
-   struct trans_maindata trans_hogehoge_maindataを持つこと */
+#define TR_INSTR_ALLOCLINK(link, atom, n)       \
+  do{                                           \
+    if (LMN_ATTR_IS_DATA(at[atom])) {           \
+      wt[link] = wt[atom];                      \
+      at[link] = at[atom];                              \
+    } else { /* link to atom */                         \
+      wt[link] = (LmnWord)LMN_SATOM(wt[atom]);          \
+      at[link] = LMN_ATTR_MAKE_LINK(n);                 \
+    }                                                                   \
+  }while(0)
+
+#define LINKED_ATOM(x) wt[x]
+#define LINKED_ATTR(x) at[x]
+
+#define TR_INSTR_UNIFYLINKS(link1, link2, mem)  \
+  do{                                           \
+    if (LMN_ATTR_IS_DATA(LINKED_ATTR(link1))) {                         \
+      if (LMN_ATTR_IS_DATA(LINKED_ATTR(link2))) { /* 1, 2 are data */   \
+        lmn_mem_link_data_atoms((LmnMembrane *)wt[mem], wt[link1], at[link1], LINKED_ATOM(link2), LINKED_ATTR(link2)); \
+      }                                                                 \
+      else { /* 1 is data */                                            \
+        LMN_SATOM_SET_LINK(LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(LINKED_ATTR(link2)), LINKED_ATOM(link1)); \
+        LMN_SATOM_SET_ATTR(LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(LINKED_ATTR(link2)), LINKED_ATTR(link1)); \
+      }                                                                 \
+    }                                                                   \
+    else if (LMN_ATTR_IS_DATA(LINKED_ATTR(link2))) { /* 2 is data */    \
+      LMN_SATOM_SET_LINK(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(LINKED_ATTR(link1)), LINKED_ATOM(link2)); \
+      LMN_SATOM_SET_ATTR(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(LINKED_ATTR(link1)), LINKED_ATTR(link2)); \
+    }                                                                   \
+    else { /* 1, 2 are symbol atom */                                   \
+      LMN_SATOM_SET_LINK(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(LINKED_ATTR(link1)), LINKED_ATOM(link2)); \
+      LMN_SATOM_SET_LINK(LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(LINKED_ATTR(link2)), LINKED_ATOM(link1)); \
+      LMN_SATOM_SET_ATTR(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(LINKED_ATTR(link1)), LINKED_ATTR(link2)); \
+      LMN_SATOM_SET_ATTR(LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(LINKED_ATTR(link2)), LINKED_ATTR(link1)); \
+    }                                                                   \
+  }while(0)
+
+#define TR_INSTR_RELINK(atom1,pos1,atom2,pos2,memi)     \
+  do{                                                                   \
+    LmnSAtom ap = LMN_SATOM(LMN_SATOM_GET_LINK(wt[atom2], pos2));       \
+    LmnByte attr = LMN_SATOM_GET_ATTR(wt[atom2], pos2);                 \
+    if(LMN_ATTR_IS_DATA(at[atom1]) && LMN_ATTR_IS_DATA(attr)) {         \
+      fprintf(stderr, "Two data atoms are connected each other.\n");    \
+    }                                                                   \
+    else if (LMN_ATTR_IS_DATA(at[atom1])) {                             \
+      LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);                          \
+      LMN_SATOM_SET_ATTR(ap, attr, at[atom1]);                          \
+    }                                                                   \
+    else if (LMN_ATTR_IS_DATA(attr)) {                                  \
+      LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);               \
+      LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);             \
+    }                                                                   \
+    else {                                                              \
+      LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);                          \
+      LMN_SATOM_SET_ATTR(ap, attr, pos1);                               \
+      LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);               \
+      LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);             \
+    }                                                                   \
+  }while(0)
+
+extern BOOL tr_instr_jump(LmnTranslated, struct ReactCxt*, LmnMembrane*, int newid_num, const int *newid);
+
+#endif
 

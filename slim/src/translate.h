@@ -40,6 +40,52 @@
 #define LMN_TRANSLATE_H
 
 #include "lmntal.h"
+#include "atom.h"
+#include "membrane.h"
+#include "rule.h"
+#include "functor.h"
+
+/* この辺の読み込みマクロはインタプリタ出力時も使えるはず */
+/* translate.c内でも使えるはず */
+
+#define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
+
+#define READ_VAL_FUNC(I,X)                      \
+  do{                                           \
+    READ_VAL(LmnLinkAttr, I, X##_attr);         \
+    switch(X##_attr){                                           \
+    case LMN_INT_ATTR: READ_VAL(long, I, X.long_data); break;           \
+    case LMN_DBL_ATTR: READ_VAL(double, I, X.double_data); break;       \
+    case LMN_STRING_ATTR: READ_VAL(lmn_interned_str, I, X.string_data); break; \
+    default: READ_VAL(LmnFunctor, I, X.functor_data); break;            \
+    }                                                                   \
+  }while(0)
+
+#define READ_VAL_LIST(I,X)                      \
+  do{                                           \
+    READ_VAL(LmnInstrVar, I, X##_num);                                  \
+    X = malloc(sizeof(LmnInstrVar)*X##_num);                            \
+    { int i; for(i=0; i<X##_num; ++i){ READ_VAL(LmnInstrVar, I, X[i]); } }     \
+  }while(0)
+
+struct trans_ruleset
+{
+  int size;
+  LmnTranslated *rules;
+};
+
+struct trans_maindata
+{
+  int count_of_symbol;
+  const char **symbol_table;
+  int count_of_functor;
+  LmnFunctorEntry *functor_table;
+  int count_of_ruleset;
+  struct trans_ruleset *ruleset_table;
+  int *symbol_exchange;
+  int *functor_exchange;
+  int *ruleset_exchange;
+};
 
 /* 自動生成される 1つ命令を変換して出力し,次変換する位置を返す */
 const BYTE *translate_instruction_generated(const BYTE *instr, /* 変換する場所 */
@@ -59,8 +105,29 @@ const BYTE *translate_instruction(const BYTE *instr,
                                             int indent,
                                             int *finishflag);
 
+/* 1ブロック相当を変換して出力し,読み込み終わった次の位置を返す */
+/* findatomのような再帰的な変換が必要な場合に呼び出す */
+const BYTE *translate_instructions(const BYTE *p,
+                                   Vector *jump_points,
+                                   const char *header,
+                                   const char *successcode,
+                                   const char *failcode,
+                                   int indent);
+
 /* vにwが含まれる場合そのindexを返す. 含まれない場合wをvの最後に追加してそのindexを返す */
 int vec_inserted_index(Vector *v, LmnWord w);
+
+/* 単にn*2個空白を出力 */
+void print_indent(int n);
+
+/* ファンクタを中間バイト列から読み込む時に使用する構造体 */
+/* READ_DATA_ATOM等を吸収するために使いたい */
+union LmnFunctorLiteral{
+  long long_data;
+  double double_data;
+  lmn_interned_str string_data;
+  LmnFunctor functor_data;
+};
 
 /* 現在ロードしている情報をfilepath.so の名前で使えるように出力する */
 void translate(char *filepath);

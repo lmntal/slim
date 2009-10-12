@@ -47,12 +47,40 @@
 #include "error.h"
 #include <stdio.h>
 #include "translate.h"
+#include "so.h"
 
 /* just for debug ! */
 static FILE *OUT;
 
-/* TODO: コピペ task.cの中にある どこか外に出してしまいたい */
-#define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
+BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, int newid_num, const int *newid)
+{
+  LmnWord *wt_org = wt;
+  LmnByte *at_org = at;
+  LmnWord *wt2 = LMN_NALLOC(LmnWord, wt_size);
+  LmnByte *at2 = LMN_NALLOC(LmnByte, wt_size);
+  unsigned int wt_size_org = wt_size;
+  BOOL ret;
+  int i;
+
+  for(i=0; i<newid_num; ++i){
+    wt2[i] = wt[newid[i]];
+    at2[i] = at[newid[i]];
+  }
+
+  wt = wt2;
+  at = at2;
+  wt_size = wt_size_org;
+  
+  ret = (*f)(rc, thisisrootmembutnotused);
+
+  LMN_FREE(wt);
+  LMN_FREE(at);
+  wt = wt_org;
+  at = at_org;
+  wt_size = wt_size_org;
+
+  return ret;
+}
 
 int vec_inserted_index(Vector *v, LmnWord w)
 {
@@ -62,6 +90,14 @@ int vec_inserted_index(Vector *v, LmnWord w)
   }
   vec_push(v, w);
   return vec_num(v) - 1;
+}
+
+void print_indent(int n)
+{
+  int i;
+  for(i=0; i<n*2; ++i){
+    fprintf(OUT, " ");
+  }
 }
 
 /* 常に失敗する translate_generatorまわりがおかしくなったらこれをコメントイン */
@@ -75,10 +111,63 @@ const BYTE *translate_instruction_generated(const BYTE *p, Vector *jump_points, 
 
 const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const char *header, const char *successcode, const char *failcode, int indent, int *finishflag)
 {
-  fprintf(OUT, "return 0;\n");
-  
-  *finishflag = 0; /* 常に成功,終了 */
-  return instr;
+  LmnInstrOp op;
+  READ_VAL(LmnInstrOp, instr, op);
+
+  switch (op) {
+  case INSTR_JUMP:{
+    /* 残念ながら引数読み込み途中のinstrからオフセットジャンプするため */
+    /* 先に全部読み込んでしまうと場所を忘れてしまう */
+    LmnInstrVar num, i, n;
+    LmnJumpOffset offset;
+    LmnRuleInstr next;
+    int next_index;
+    
+    READ_VAL(LmnJumpOffset, instr, offset);
+    next = instr + offset;
+    next_index = vec_inserted_index(jump_points, (LmnWord)next);
+
+    print_indent(indent); fprintf(OUT, "{\n");
+    print_indent(indent); fprintf(OUT, "  static const int newid[] = {");
+
+    i = 0;
+    /* atom */
+    READ_VAL(LmnInstrVar, instr, num);
+    for (; num--; i++) {
+      READ_VAL(LmnInstrVar, instr, n);
+      if(i != 0) fprintf(OUT, ",");
+      fprintf(OUT, "%d", n);
+    }
+    /* mem */
+    READ_VAL(LmnInstrVar, instr, num);
+    for (; num--; i++) {
+      READ_VAL(LmnInstrVar, instr, n);
+      if(i != 0) fprintf(OUT, ",");
+      fprintf(OUT, "%d", n);
+    }
+    /* vars */
+    READ_VAL(LmnInstrVar, instr, num);
+    for (; num--; i++) {
+      READ_VAL(LmnInstrVar, instr, n);
+      if(i != 0) fprintf(OUT, ",");
+      fprintf(OUT, "%d", n);
+    }
+
+    fprintf(OUT, "};\n");
+    print_indent(indent); fprintf(OUT, "  extern BOOL %s_%d();\n", header, next_index);
+    print_indent(indent); fprintf(OUT, "  return tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, %d, newid);\n", header, next_index, i);
+    print_indent(indent); fprintf(OUT, "}\n");
+    
+    *finishflag = 0;
+    return instr;
+  }
+
+  default:
+    print_indent(indent);
+    fprintf(OUT, "return 0;\n");
+    *finishflag = -1; /* 常に失敗,終了 */
+    return instr;
+  }
 }
 
 /*
@@ -88,7 +177,7 @@ const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const 
   物理的に次の読み込み場所を返す
   (変換するスタート地点, 変換する必要のある部分の記録, ルールのシグネチャ:trans_**_**_**, 成功時コード, 失敗時コード, インデント)
 */
-static const BYTE *translate_instructions(const BYTE *p, Vector *jump_points, const char *header, const char *successcode, const char *failcode, int indent)
+const BYTE *translate_instructions(const BYTE *p, Vector *jump_points, const char *header, const char *successcode, const char *failcode, int indent)
 {
   while(1){
     /* 自動生成で変換可能な中間命令をトランスレートする */
@@ -128,10 +217,10 @@ static void translate_rule(LmnRule rule, const char *header)
 
   for(i=0; i<vec_num(jump_points) /*変換中にjump_pointsは増えていく*/; ++i){
     BYTE *p = (BYTE*)vec_get(jump_points, i);
-    fprintf(OUT, "BOOL %s_%d(struct ReactCxt* r, LmnMembrane* m)\n", header, i); /* TODO rとmじゃ気持ち悪い m=wt[0]なのでmは多分いらない */
+    fprintf(OUT, "BOOL %s_%d(struct ReactCxt* rc, LmnMembrane* thisisrootmembutnotused)\n", header, i); /* TODO rとmじゃ気持ち悪い m=wt[0]なのでmは多分いらない */
     fprintf(OUT, "{\n");
     /* (変換するスタート地点, 変換する必要のある部分の記録, ルールのシグネチャ:trans_**_**_**, 成功時コード, 失敗時コード, インデント) */
-    translate_instructions(p, jump_points, header, "return 1", "return 0", 1);
+    translate_instructions(p, jump_points, header, "return TRUE", "return FALSE", 1);
     fprintf(OUT, "}\n");
   }
 
@@ -139,12 +228,14 @@ static void translate_rule(LmnRule rule, const char *header)
   /* trans_***(); ではなく { extern trans_***(); trans_***(); } と書くだけ */
 }
 
-static void print_trans_header()
+static void print_trans_header(const char *filename)
 {
   fprintf(OUT, "#include \"so.h\"\n");
-  fprintf(OUT, "#include \"load.h\"\n");
-  fprintf(OUT, "#include \"rule.h\"\n");
   fprintf(OUT, "\n");
+  fprintf(OUT, "#define TR_GFID(x) (trans_%s_maindata.functor_exchange[x])\n", filename);
+  fprintf(OUT, "#define TR_GRID(x) (trans_%s_maindata.ruleset_exchange[x])\n", filename);
+  fprintf(OUT, "\n");
+  fprintf(OUT, "extern struct trans_maindata trans_%s_maindata;\n", filename);
 }
 
 /* ルールセットの総数を数える. ルールセット0番, 1番を数に含む (0番は使わない(番号合わせ),1番はsystem) */
@@ -162,9 +253,6 @@ static int count_rulesets()
 
 static void print_trans_maindata(const char *filename)
 {
-  int i;
-  int ruleset_count;
-
   fprintf(OUT, "struct trans_maindata trans_%s_maindata = {\n", filename);
 
   /* シンボルの個数(0番anonymousも数える) */
@@ -299,15 +387,14 @@ static void print_trans_initfunction(const char *filename)
 {
   fprintf(OUT, "void init_%s(void){\n", filename);
   
-  fprintf(OUT, "  extern void helloworld(const char*);\n");
-  fprintf(OUT, "  helloworld(\"%s\");\n", filename);
+  /* fprintf(OUT, "  extern void helloworld(const char*);\n"); */
+  /* fprintf(OUT, "  helloworld(\"%s\");\n", filename); */
   
   fprintf(OUT, "}\n\n");
 }
 
 void translate(char *filepath)
 {
-  IL il;
   char *filename;
 
   /* just for debug ! */
@@ -321,7 +408,7 @@ void translate(char *filepath)
     filename = create_basename(filepath);
   }
   
-  print_trans_header();
+  print_trans_header(filename);
   print_trans_symbols(filename);
   print_trans_functors(filename);
   print_trans_rulesets(filename);

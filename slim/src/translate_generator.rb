@@ -49,11 +49,14 @@
 #              トランスレータ生成時は書かれていることがトランスレート結果のCコードに出力され, マクロの置換はトランスレート実行時に行われる
 #  5: __format_i インタプリタ生成時は～
 #  6: __format_t トランスレータ生成時は～
+#  略記として,モードが__format_*の時,行の先頭が%である行は, __echo_*になる. (__formatの時は__echo, __format_iの時は__echo_i)
 
 # case
 #  行頭で#hogeのように上記のモードにないものを指定すると,中間命令INSTR_HOGE(すべて大文字に置換される)に対するコード生成を行う
 #  #hoge X Y Zのように引数を指定する
+#  caseを開くと__formatになる
 #  case開始から次のcaseまでがその中間命令を実行するためのコードである
+#  #__endによって次のcase抜きにcaseを閉じることもできる 特にテンプレートの最後には必ず書く __end後は__echoモードになる
 
 # argument
 #  引数が指定された場合,その引数を格納する変数と読み込むためのコードが生成される
@@ -79,6 +82,9 @@
 #  更にトランスレータ出力結果に  int arg0_num=定数;int arg0[] = {...};  が出力されるようなコード生成を行う.
 #  例外的にトランスレート出力結果においてもarg0の名前が残っているので注意
 
+# functor argument
+#  ファンクタも特別扱い データを最初にunionに読み込む これは出力ファイルには必要ない構造
+
 # global id
 #  トランスレート結果としてsoにコンパイルされる場合,ローカルなidからグローバルなidへの変換が必要になる
 #  トランスレータの出力コードにおいてのみ意味を持ち,それ以外では何もしないマクロを用意する
@@ -90,102 +96,255 @@
 
 # true:  generate translator
 # false: generate interpreter
-$translateor_generate = true
+$translator_generate = true
 
 def case_open(op, arg)
   # case文先頭のコード生成
   # 変数の宣言と中間命令からの読み込み
-  # load.c: load_argに相当する処理で読み込む
   print "case INSTR_", op.upcase, ":{\n"
   for i in 0..arg.size-1
-    if arg[i] != "$list"
-      print "  ", arg[i], " targ", i, ";\n"
+    if arg[i] == "$list"
+      #print "  LmnInstrVar *targ", i, ";\n"
+      #print "  int targ", i, "_num;\n"
+    elsif arg[i] == "$functor"
+      print "  LmnLinkAttr targ", i, "_attr;\n"
+      print "  union LmnFunctorLiteral targ", i, ";\n"
     else
-      print "  int *targ", i, ";\n"
-      print "  int targ", i, "_num;\n"
+      print "  ", arg[i], " targ", i, ";\n"
     end
   end
+
   for i in 0..arg.size-1
-    if arg[i] != "$list"
-      print "  READ_VAL(", arg[i], ", instr, targ", i, ");\n"
+    if arg[i] == "$list"
+      warn "$list argument not implemented.\n"
+      # これはマクロに追い出した方がいいかもしれない
+      #print "  READ_VAL(LmnInstrVar, instr, targ", i, "_num);\n"
+      #print "  targ", i, " = malloc(sizeof(LmnInstrVar)*targ", i, "_num);\n"
+      #print "  { int i; for(i=0; i<targ", i, "_num; ++i){ READ_VAL(LmnInstrVar, instr, targ", i, "[i]); } }\n"
+      
+      #if $translator_generate
+        # トランスレータの場合は出力にint targ1_num=5; int targ1[]={1,2,3,4,5}; を含める必要がある
+        # この出力は関数の途中でも出てくる+名前がかぶるので{}で囲う必要がある 幸い他の中間命令でこのデータが必要になることはないはず
+        # その処理をここでするか別のところでするかは考え物
+        # ここでブロックを開く出力をすると閉じる出力が必要か否かを覚えておく必要がある
+      #end
+    elsif arg[i] == "$functor"
+      # ここもマクロに追い出した方がいいかもしれない
+      #print "  READ_VAL(LmnLinkAttr, instr, targ", i, "_attr);\n"
+      #print "  switch(targ", i, "_attr){\n"
+      #print "    case LMN_INT_ATTR: READ_VAL(long, instr, targ", i, ".long_data); break;\n"
+      #print "    case LMN_DBL_ATTR: READ_VAL(double, instr, targ", i, ".double_data); break;\n"
+      #print "    case LMN_STRING_ATTR: READ_VAL(lmn_interned_str, instr, targ", i, ".string_data); break;\n"
+      #print "    default: READ_VAL(LmnFunctor, instr, targ", i, ".functor_data); break;\n"
+      #print "  }\n"
+      print "  READ_VAL_FUNC(instr, targ", i, ");\n"
+
+      # とりあえずはトランスレート後は全部埋め込む方針
+      #if $translator_generate
+        # トランスレータの場合は出力にint targ1_attr=5; union LmnFunctorLiteral targ1; targ1.functor_data=8;を入れる？
+        #print "printf(\"  int targ", i, "_attr="
+      #end
     else
-      print "  READ_VAL(LmnJumpOffset, instr, targ", i, "_num);\n"
-      print "  targ", i, " = malloc(sizeof(int)*targ", i, "_num);\n"
-      print "  { int i; for(i=0; i<targ", i, "_num; ++i){ READ_VAL(int, instr, targ", i, "[i]); } }\n"
+      print "  READ_VAL(", arg[i], ", instr, targ", i, ");\n"
     end
+  end
+
+  if $translator_generate
+    # トランスレート結果には変数を含む場合があるため, 毎回括弧を開いておく
+    # 変数を含む場合だけ($listの場合だけ)開くようにする
+    #print "  print_indent(indent); printf(\"{\\n\");\n"
   end
 end
 
-def format_print(line)
-  # \ -> \\
-  # " -> \"
-  # % -> %%
-  # $$ : $
+def case_close(arg)
+  # リストを読み込んでいたら開放する必要がある
+  for i in 0..arg.size-1
+    if arg[i] == "$list"
+      print "  free(targ", i, ");\n"
+    end
+  end
+  
+  if $translator_generate
+    # トランスレート時は出力内のカッコを閉じて次の読み込み位置をリターン
+    #print "  print_indent(indent); printf(\"}\\n\");\n"
+    # $listが引数にある場合だけ閉じる
+    print "  return instr;\n"
+  else
+    # インタプリタはデフォルトではswitchを抜けるだけ
+    print "  break;\n"
+  end
+
+  print "}\n"
+end
+
+# # トランスレータ生成時に処理文をprintfで出力するためのプログラムを出力する
+# # 上の引数のところで書いたように一部の種の変数は置換を行わないため, n番引数がそれか否かを知るためargを引数に取る
+
+def print_interp_format(line, arg)
+  print "IF:: ", line, "\n"
+end
+
+def print_trans_format(line, arg)
+  # \ -> \\ 文字列リテラルにおいて\を表したければ\\と書く
+  # " -> \" 文字列リテラルにおいて"を表したければ\"と書く
+  # % -> %% printfの文字列において%を表したければ%%と書く
+  # $$ : $  このツール入力において$$はただの$を意味し,$1は1番目の引数を表す
   # $X : X番の引数(Xは一文字ということにしておく)
-  line.gsub!("\\", "\\\\")
+  
+  # rubyの字句解析で\\が\になり,gsubのフォーマット解析で更に\\が\になる
+  line.gsub!("\\", "\\\\\\\\")
   line.gsub!("\"", "\\\"")
   line.gsub!("%", "%%")
   format_arg = []
   pos = 0
   while((pos=line.index("$", pos+1)) != nil)
     if line[pos+1] == "$"[0]
+      # "$$"なら1つ消して"$"にしてやる
       line[pos,1] = ""
     elsif line[pos+1]>="0"[0] && line[pos+1]<="9"[0]
-      format_arg << line[pos+1] - "0"[0]
-      line[pos,2] = "%d"
+      x = line[pos+1] - "0"[0]
+      if arg[x] == "$list"
+        # リスト引数なら, 変換後出力に含まれるtarg1をそのまま参照
+        line[pos,2] = "targ" + x
+      elsif arg[x] == "$functor"
+        # ファンクタの場合, formatの中で $1_long_data がある場合, これは即値_long_dataを意味するのではなく,
+        # $1_long_data全体で1つの即値になって欲しい ということで特別な扱いが必要
+        long_data_name = "_long_data"
+        double_data_name = "_double_data"
+        string_data_name = "_string_data"
+        functor_data_name = "_functor_data"
+        attr_name = "_attr"
+        if line[pos+2,long_data_name.size] == long_data_name
+          format_arg << "targ"+x.to_s+".long_data"
+          line[pos,long_data_name.size+2] = "%ld"
+        elsif line[pos+2,double_data_name.size] == double_data_name
+          format_arg << "targ"+x.to_s+".double_data"
+          line[pos,double_data_name.size+2] = "%lf"
+        elsif line[pos+2,string_data_name.size] == string_data_name
+          format_arg << "targ"+x.to_s+".string_data"
+          line[pos,string_data_name.size+2] = "%d"
+        elsif line[pos+2,functor_data_name.size] == functor_data_name
+          format_arg << "targ"+x.to_s+".functor_data"
+          line[pos,functor_data_name.size+2] = "%d"
+        elsif line[pos+2,attr_name.size] == attr_name
+          format_arg << "targ"+x.to_s+"_attr"
+          line[pos,attr_name.size+2] = "%d"
+        else
+          warn "unexpected functor type.\n"
+          warn line[pos+2,long_data_name.size]
+        end
+      else
+        # 普通の引数なら, 変換時に読み込んだ値を突っ込むために%dに置換
+        format_arg << "targ"+x.to_s
+        line[pos,2] = "%d"
+      end
+    elsif line[pos+1] == "s"[0]
+      # "$s"ならsuccesscode
+      format_arg << "successcode"
+      line[pos,2] = "%s"
+    elsif line[pos+1] == "f"[0]
+      # "$f"ならfailcode
+      format_arg << "failcode"
+      line[pos,2] = "%s"
     end
   end
-  print "\tindent();\n"
-  print "\tprintf(\"", line, "\\n\""
-  format_arg.each{|x| print ", arg", x}
+  # 最終的に表示するのはここ
+  print "  print_indent(indent); fprintf(OUT, \"", line, "\\n\""
+  format_arg.each{|x| print ", ", x}
   print ");\n"
 end
 
 # -iオプションがついていたらインタプリタ生成, ついていなければトランスレータ生成
 if ARGV == 1 && ARG[0] == "-i" then $translator_generate = false end
-first_of_case = true
-mode = 0
-argument = []
+is_case_opened = false # 今case文が開いているかどうか
+is_buffering_endl = false # 今空行の改行出力を留保しているかどうか 各case内の最後の改行は出力しない
+mode = 0 # 今の出力モード
 line = ""
+arg = [] # 今開いているcaseの引数
+
 while(line=gets())
   line.chop!
+
   if line == ""
-    # skip 
-  elsif line == "#__end"
-    if not first_of_case
-      first_of_case = true
-      print "}\n"
+    # 既に改行がバッファされていれば(=2行連続空行)改行 そうでなければ貯めておく
+    if is_buffering_endl
+      print "\n"
+    else
+      is_buffering_endl = true
     end
+  elsif line == "#__end" # __end命令
+    # 今ケースが開いていたら閉じる, 貯めてた改行はもう出力しない, その後__echoにする
+    if is_case_opened
+      is_case_opened = false
+      case_close(arg)
+    end
+    is_buffering_endl = false
     mode = 1
-  elsif line[0] == "#"[0]
+  elsif line[0] == "#"[0] # 何かのコマンド
     t = line[1,line.size-1].split(" ")
     a = ["__ignore", "__echo", "__echo_i", "__echo_t", "__format", "__format_i", "__format_t"].index(t[0])
-    if a == nil
-      if first_of_case
-        first_of_case = false
-      else
-        print "}\n"
+    
+    if a == nil # モード指定ではない場合=中間命令対応のcase文の開始
+      # 既にcase文が開いていたら閉じる, caseを開く直前の改行は捨てる
+      if is_case_opened
+        case_close(arg)
       end
-      case_open(t[0], t[1,t.size-1])
+      is_case_opened = true
+      is_buffering_endl = false
+      # ケースを開く, モードは__formatに
+      arg = t[1,t.size-1]
+      case_open(t[0], arg)
       mode = 4
-    else
+    else # モード指定だった場合
       mode = a
     end
-  else
-    case mode
-    when 0 #ignore
-    when 1 #echo
+  else # コマンドでもない場合
+    # 溜まっている空行があれば出力
+    if is_buffering_endl
+      print "\n"
+      is_buffering_endl = false
+    end
+
+    temp_mode = mode # 一時的なモード変数
+    if line[0]=="%"[0] and temp_mode>=4 and temp_mode<=6 # 行頭が%でmodeがformat_*なら略記なのでモードをずらす
+      line[0,1] = " "
+      temp_mode = temp_mode - 3
+    end
+    
+    case temp_mode
+    when 0 # ignore
+    when 1 # echo
       print line, "\n"
-    when 2 #echo_i
-    when 3 #echo_t
-    when 4 #format
-      format_print(line)
-    when 5 #format_i
-    when 6 #format_t
+    when 2 # echo_i
+      if not $translator_generate
+        print line, "\n"
+      end
+    when 3 # echo_t
+      if $translator_generate
+        print line, "\n"
+      end
+    when 4 # format
+      if $translator_generate
+        # トランスレータ用には$1や$f等を%dにしてprintfで包んで出力するイメージ
+        print_trans_format(line, arg)
+      else
+        # インタプリタ用には$1や$f等をtarg1やreturnに変換して出力する
+        print_interp_format(line, arg)
+      end
+    when 5 # format_i
+      if not $translator_generate
+        print_interp_format(line, arg)
+      end
+    when 6 # format_t
+      if $translator_generate
+        print_trans_format(line, arg)
+      end
     end
   end
 end
 
-if not first_of_case
-  print "}\n"
+# caseが開きっぱなしで終了した場合
+# 本当はちゃんと__endで閉じてその後の関数のカッコも閉じること
+if is_case_opened
+  case_close(arg)
 end
