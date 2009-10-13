@@ -331,11 +331,14 @@ static BOOL react_ruleset_atomic_nd(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ru
     lmn_ruleset_set_atomic(ruleset, TRUE);
 
     for (i = 0; i < vec_num(end_states); i++) {
+      LmnMembrane *m = state_copied_mem((State *)vec_get(end_states, i));
+      /* 生成された状態はすべての膜がstableになっているので、activateする */
+      activate_ancestors(m);
       nd_react_cxt_add_expanded(rc,
-                                state_mem((State *)vec_get(end_states, i)),
+                                m,
                                 dummy_rule());
       state_space_remove(states, (State *)vec_get(end_states, i));
-      state_free_without_mem((State *)vec_get(end_states, i));
+      state_free((State *)vec_get(end_states, i));
     }
 
     ok = end_states > 0;

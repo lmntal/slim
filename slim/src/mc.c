@@ -215,6 +215,16 @@ inline LmnMembrane *state_mem(State *state)
   return state->mem;
 }
 
+/* 状態の膜と等価な、新たに生成した膜を返す */
+inline LmnMembrane *state_copied_mem(State *state)
+{
+  if (state->mem) return lmn_mem_copy(state->mem);
+  else if (state->mem_id) return lmn_binstr_decode(state->mem_id);
+  else {
+    lmn_fatal("unexpected");
+  }
+}
+
 inline LmnRule state_rule(State *state)
 {
   return state->rule;

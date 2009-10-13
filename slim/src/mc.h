@@ -113,6 +113,7 @@ void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
 LMN_EXTERN State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule);
 State *state_make_for_nd(LmnMembrane *mem, LmnRule rule);
 LMN_EXTERN State *state_copy(State *s);
+LMN_EXTERN inline LmnMembrane *state_copied_mem(State *state);
 LMN_EXTERN inline void state_succ_init(State *s, int init_size);
 LMN_EXTERN void state_free(State *s);
 LMN_EXTERN void state_free_without_mem(State *s);
