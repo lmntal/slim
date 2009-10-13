@@ -48,7 +48,10 @@
 #include "translate.h"
 #include "load.h"
 #include "symbol.h"
+#include "react_context.h"
+#include "slim_header/memstack.h"
 
+/* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GRID(x) translate global ruleset id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* インタプリタ用の定義では変換は必要ないため TR_G*ID(x) = x となる */

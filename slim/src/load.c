@@ -625,7 +625,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
       maindata->functor_exchange[i] = i;
     }else{
       /* シンボルは変換を忘れないように */
-      LmnFunctor gid = lmn_functor_intern(ent.module, maindata->symbol_exchange[ent.name], ent.arity);
+      LmnFunctor gid = lmn_functor_intern(maindata->symbol_exchange[ent.module], maindata->symbol_exchange[ent.name], ent.arity);
       maindata->functor_exchange[i] = gid;
     }
   }

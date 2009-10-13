@@ -163,8 +163,6 @@ const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const 
   }
 
   default:
-    print_indent(indent);
-    fprintf(OUT, "return 0;\n");
     *finishflag = -1; /* 常に失敗,終了 */
     return instr;
   }
@@ -232,6 +230,7 @@ static void print_trans_header(const char *filename)
 {
   fprintf(OUT, "#include \"so.h\"\n");
   fprintf(OUT, "\n");
+  fprintf(OUT, "#define TR_GSID(x) (trans_%s_maindata.symbol_exchange[x])\n", filename);
   fprintf(OUT, "#define TR_GFID(x) (trans_%s_maindata.functor_exchange[x])\n", filename);
   fprintf(OUT, "#define TR_GRID(x) (trans_%s_maindata.ruleset_exchange[x])\n", filename);
   fprintf(OUT, "\n");
@@ -267,6 +266,8 @@ static void print_trans_maindata(const char *filename)
   fprintf(OUT, "  %d, /*count of ruleset*/\n", count_rulesets());
   /* ルールセットオブジェクトへのポインタの配列 */
   fprintf(OUT, "  trans_%s_maindata_rulesets, /*rulesettable*/\n", filename);
+  /* モジュールの個数 */
+  /* モジュールの配列 */
   /* シンボルid変換テーブル */
   fprintf(OUT, "  trans_%s_maindata_symbolexchange, /*symbol id exchange table*/\n", filename);
   /* ファンクタid変換テーブル */
@@ -393,6 +394,11 @@ static void print_trans_initfunction(const char *filename)
   fprintf(OUT, "}\n\n");
 }
 
+static void print_trans_modules(const char *filename)
+{
+
+}
+
 void translate(char *filepath)
 {
   char *filename;
@@ -412,6 +418,7 @@ void translate(char *filepath)
   print_trans_symbols(filename);
   print_trans_functors(filename);
   print_trans_rulesets(filename);
+  print_trans_modules(filename);
   print_trans_maindata(filename);
   print_trans_initfunction(filename);
 

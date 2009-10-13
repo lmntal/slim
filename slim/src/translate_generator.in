@@ -44,7 +44,7 @@
  #include "error.h"
  #include <stdio.h>
 
-/* just for debug */
+/* just for debug! */
 static FILE *OUT = NULL;
 
 const BYTE *translate_instruction_generated(const BYTE *instr,
@@ -59,10 +59,11 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
   READ_VAL(LmnInstrOp, instr, op);
   *finishflag = 1;
 
+  /* just for debug! */
   if(! OUT){
     //OUT = stderr;
-    OUT = stdout;
-    //OUT = fopen("/dev/null", "w");
+    //OUT = stdout;
+    OUT = fopen("/dev/null", "w");
   }
 
   switch (op) {
@@ -106,7 +107,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 #unifylinks LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_UNIFYLINKS($0, $1, $2);
 
-#enqueueatom LmnInstrVar LmnInstrVar LmnInstrVar
+#enqueueatom LmnInstrVar
 
 #proceed
   $s;
@@ -147,9 +148,63 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 #isint LmnInstrVar
   if(at[$0] != LMN_INT_ATTR) $f;
 
+#iadd LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)((long)wt[$1] + (long)wt[$2]);
+  at[$0] = LMN_INT_ATTR;
+
+#isub LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)((long)wt[$1] - (long)wt[$2]);
+  at[$0] = LMN_INT_ATTR;
+
+#imul LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)((long)wt[$1] * (long)wt[$2]);
+  at[$0] = LMN_INT_ATTR;
+
+#idiv LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)((long)wt[$1] / (long)wt[$2]);
+  at[$0] = LMN_INT_ATTR;
+
+#ineg LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)(-(long)wt[$1]);
+  at[$0] = LMN_INT_ATTR;
+
 #imod LmnInstrVar LmnInstrVar LmnInstrVar
   wt[$0] = (LmnWord)((long)wt[$1] % (long)wt[$2]);
   at[$0] = LMN_INT_ATTR;
+
+#inot LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)(~(long)wt[$1]);
+  at[$0] = LMN_INT_ATTR;
+
+#iand LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)((long)wt[$1] & (long)wt[$2]);
+  at[$0] = LMN_INT_ATTR;
+
+#ior LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)((long)wt[$1] | (long)wt[$2]);
+  at[$0] = LMN_INT_ATTR;
+
+#ixor LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)((long)wt[$1] ^ (long)wt[$2]);
+  at[$0] = LMN_INT_ATTR;
+
+#ilt LmnInstrVar LmnInstrVar
+  if(!((long)wt[$0] < (long)wt[$1])) $f;
+
+#ile LmnInstrVar LmnInstrVar
+  if(!((long)wt[$0] <= (long)wt[$1])) $f;
+
+#igt LmnInstrVar LmnInstrVar
+  if(!((long)wt[$0] > (long)wt[$1])) $f;
+
+#ige LmnInstrVar LmnInstrVar
+  if(!((long)wt[$0] >= (long)wt[$1])) $f;
+
+#ieq LmnInstrVar LmnInstrVar
+  if(!((long)wt[$0] == (long)wt[$1])) $f;
+
+#ine LmnInstrVar LmnInstrVar
+  if(!((long)wt[$0] != (long)wt[$1])) $f;
 
 #allocatom LmnInstrVar $functor
   at[$0] = $1_attr;
@@ -170,9 +225,6 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 % default:
 %   lmn_fatal("Implementation error");
 % }
-
-#ieq LmnInstrVar LmnInstrVar
-  if((long)wt[$0] != (long)wt[$1]) $f;
 
 #dequeueatom LmnInstrVar
 
@@ -207,12 +259,123 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
     exit(EXIT_FAILURE);
   }
 
-#ine LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] != (long)wt[$1])) $f;
-
 #newlink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   lmn_mem_newlink((LmnMembrane *)wt[$4], wt[$0], at[$0], $1, wt[$2], at[$2], $3);
 
+#newmem LmnInstrVar LmnInstrVar LmnInstrVar
+  {
+    LmnMembrane *mp = lmn_mem_make();
+    lmn_mem_add_child_mem((LmnMembrane*)wt[$1], mp);
+    wt[$0] = (LmnWord)mp;
+    lmn_mem_set_active(mp, TRUE);
+    if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+      lmn_memstack_push(RC_MEMSTACK(rc), mp);
+    }
+  }
+
+#deref LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
+  {
+    LmnByte attr = LMN_SATOM_GET_ATTR(wt[$1], $2);
+    if (LMN_ATTR_IS_DATA(attr)) {
+      if ($3 != 0) $f;
+    } else {
+      if (attr != $3) $f;
+    }
+    wt[$0] = LMN_SATOM_GET_LINK(wt[$1], $2);
+    at[$0] = attr;
+  }
+
+#func LmnInstrVar $functor
+% if(LMN_ATTR_IS_DATA(targ1_attr)){
+    if(LMN_ATTR_IS_DATA(at[$0]) && at[$0]==$1_attr){
+%     switch(targ1_attr){
+%     case LMN_INT_ATTR:
+        if(wt[$0] != $1_long_data) $f;
+%       break;
+%     case LMN_DBL_ATTR:
+        //if(*(double*)wt[$0] != $1_double_data) $f;
+%       fprintf(stderr, "double attr is not implemented.");
+%       break;
+%     case LMN_STRING_ATTR:
+%       fprintf(stderr, "string attr is not implemented.");
+%       break;
+%     default:
+%       lmn_fatal("implementation error");
+%     }
+    }else{
+      $f;
+    }
+% }else{
+    if(LMN_ATTR_IS_DATA(at[$0]) ||
+       LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt[$0])) != TR_GFID($1_functor_data)) $f;
+% }
+ 
+#unify LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
+  lmn_mem_unify_atom_args((LmnMembrane *)wt[$4], LMN_SATOM(wt[$0]), $1, LMN_SATOM(wt[$2]), $3);
+
+#loadmodule LmnInstrVar lmn_interned_str
+  {
+    LmnRuleSet ruleset;
+    if ((ruleset = lmn_get_module_ruleset(TR_GSID($1)))) {
+%     /* テーブル内にルールセットがある場合 */
+      lmn_mem_add_ruleset((LmnMembrane*)wt[$0], ruleset);
+    } else {
+%     /* テーブル内にルールセットがない場合 */
+      fprintf(stderr, "Undefined module %s\n", lmn_id_to_name(TR_GSID($1)));
+    }
+  }
+
+#getlink LmnInstrVar LmnInstrVar LmnInstrVar
+% /* リンク先の取得をせずにリンク元の情報を格納しておく。
+%    リンク元が格納されていることを示すため最下位のビットを立てる */
+  wt[$0] = LMN_SATOM_GET_LINK(wt[$1], $2);
+  at[$0] = LMN_SATOM_GET_ATTR(wt[$1], $2);
+
+#eqatom LmnInstrVar LmnInstrVar
+  if (LMN_ATTR_IS_DATA(at[$0]) ||
+      LMN_ATTR_IS_DATA(at[$1]) ||
+      LMN_SATOM(wt[$0]) != LMN_SATOM(wt[$1])) $f;
+
+#anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
+  {
+    LmnMembrane *mp = ((LmnMembrane*)wt[$1])->child_head;
+    for (; mp; mp=mp->next) {
+      wt[$0] = (LmnWord)mp;
+      if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+      if (mp->name == TR_GSID($2)){
+#__echo_t
+        instr = translate_instructions(instr, jump_points, header, successcode, "continue", indent+1);
+#__format
+      }
+    }
+    $f;
+  }
+% *finishflag = 0;
+
+#norules LmnInstrVar
+  if(((LmnMembrane *)wt[$0])->rulesets.num) $f;
+
+#removemem LmnInstrVar LmnInstrVar
+  lmn_mem_remove_mem((LmnMembrane *)wt[$1], (LmnMembrane *)wt[$0]);
+  
+#removeproxies LmnInstrVar
+  lmn_mem_remove_proxies((LmnMembrane *)wt[$0]);
+
+#insertproxies LmnInstrVar LmnInstrVar
+  lmn_mem_insert_proxies((LmnMembrane *)wt[$0], (LmnMembrane *)wt[$1]);
+
+#movecells LmnInstrVar LmnInstrVar
+  lmn_mem_move_cells((LmnMembrane *)wt[$0], (LmnMembrane *)wt[$1]);
+
+#freemem LmnInstrVar
+  lmn_mem_free((LmnMembrane*)wt[$0]);
+
+#samefunc LmnInstrVar LmnInstrVar
+  if (!lmn_eq_func(wt[$0], at[$0], wt[$1], at[$1])) $f;
+
+#lockmem LmnInstrVar LmnInstrVar lmn_interned_str
+  wt[$0] = (LmnWord)LMN_PROXY_GET_MEM(wt[$1]);
+  if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
 
 #__end
 
