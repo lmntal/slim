@@ -70,11 +70,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 
 
 #spec LmnInstrVar LmnInstrVar
-  if($1 > wt_size){
-    wt_size = $1;
-    wt = LMN_REALLOC(LmnWord, wt, wt_size);
-    at = LMN_REALLOC(LmnLinkAttr, at, wt_size);
-  }
+  TR_INSTR_SPEC($1);
 
 #commit lmn_interned_str LmnLineNum
   //commit($0, $1);
@@ -164,7 +160,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
   wt[$0] = (LmnWord)((long)wt[$1] / (long)wt[$2]);
   at[$0] = LMN_INT_ATTR;
 
-#ineg LmnInstrVar LmnInstrVar LmnInstrVar
+#ineg LmnInstrVar LmnInstrVar
   wt[$0] = (LmnWord)(-(long)wt[$1]);
   at[$0] = LMN_INT_ATTR;
 
@@ -336,6 +332,11 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
       LMN_ATTR_IS_DATA(at[$1]) ||
       LMN_SATOM(wt[$0]) != LMN_SATOM(wt[$1])) $f;
 
+#neqatom LmnInstrVar LmnInstrVar
+  if (!(LMN_ATTR_IS_DATA(at[$0]) ||
+        LMN_ATTR_IS_DATA(at[$1]) ||
+        LMN_SATOM(wt[$0]) != LMN_SATOM(wt[$1]))) $f;
+
 #anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
   {
     LmnMembrane *mp = ((LmnMembrane*)wt[$1])->child_head;
@@ -357,7 +358,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 
 #removemem LmnInstrVar LmnInstrVar
   lmn_mem_remove_mem((LmnMembrane *)wt[$1], (LmnMembrane *)wt[$0]);
-  
+
 #removeproxies LmnInstrVar
   lmn_mem_remove_proxies((LmnMembrane *)wt[$0]);
 
@@ -376,6 +377,60 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
   wt[$0] = (LmnWord)LMN_PROXY_GET_MEM(wt[$1]);
   if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+
+#isunary LmnInstrVar
+  if (LMN_ATTR_IS_DATA(at[$0])) {
+    switch (at[$0]) {
+    case LMN_SP_ATOM_ATTR:
+      /* スペシャルアトムはgroundの結果をunaryの結果とする */
+      if (!SP_ATOM_IS_GROUND(wt[$0])) $f;
+      break;
+    default:
+      break;
+    }
+  } else if (LMN_SATOM_GET_ARITY(wt[$0]) != 1){
+    $f;
+  }
+
+#nfreelinks LmnInstrVar LmnInstrVar
+  if (!lmn_mem_nfreelinks((LmnMembrane *)wt[$0], $1)) $f;
+
+#natoms LmnInstrVar LmnInstrVar
+  if(!lmn_mem_natoms((LmnMembrane*)wt[$0], $1)) $f;
+
+#nmems LmnInstrVar LmnInstrVar
+  if(!lmn_mem_nmems((LmnMembrane*)wt[$0], $1)) $f;
+
+#neqmem LmnInstrVar LmnInstrVar
+  if(wt[$0] == wt[$1]) $f;
+
+#removetoplevelproxies LmnInstrVar
+  lmn_mem_remove_toplevel_proxies((LmnMembrane *)wt[$0]);
+
+#removetemporaryproxies LmnInstrVar
+  lmn_mem_remove_temporary_proxies((LmnMembrane *)wt[$0]);
+
+#copyrules LmnInstrVar LmnInstrVar
+  TR_INSTR_COPYRULES($0, $1);
+
+#recursivelock LmnInstrVar
+
+#neqfunc LmnInstrVar LmnLinkAttr
+  if (at[$0] == at[$1]) {
+    switch (at[$0]) {
+    case LMN_INT_ATTR:
+      if ((long)wt[$0] == (long)wt[$1]) $f;
+      break;
+    case LMN_DBL_ATTR:
+      if (*(double*)(&wt[$0]) ==
+          *(double*)(&wt[$1])) $f;
+      break;
+    default:
+      if (wt[$0] == wt[$1]) $f;
+      break;
+    }
+  }
+
 
 #__end
 

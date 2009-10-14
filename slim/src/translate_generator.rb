@@ -118,8 +118,8 @@ def case_open(op, arg)
   print "case INSTR_", op.upcase, ":{\n"
   for i in 0..arg.size-1
     if arg[i] == "$list"
-      #print "  LmnInstrVar *targ", i, ";\n"
-      #print "  int targ", i, "_num;\n"
+      print "  LmnInstrVar *targ", i, ";\n"
+      print "  int targ", i, "_num;\n"
     elsif arg[i] == "$functor"
       print "  LmnLinkAttr targ", i, "_attr;\n"
       print "  union LmnFunctorLiteral targ", i, ";\n"
@@ -135,6 +135,7 @@ def case_open(op, arg)
       #print "  READ_VAL(LmnInstrVar, instr, targ", i, "_num);\n"
       #print "  targ", i, " = malloc(sizeof(LmnInstrVar)*targ", i, "_num);\n"
       #print "  { int i; for(i=0; i<targ", i, "_num; ++i){ READ_VAL(LmnInstrVar, instr, targ", i, "[i]); } }\n"
+      print "  READ_VAL_LIST()\n"
       
       #if $translator_generate
         # トランスレータの場合は出力にint targ1_num=5; int targ1[]={1,2,3,4,5}; を含める必要がある

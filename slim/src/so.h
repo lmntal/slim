@@ -50,6 +50,7 @@
 #include "symbol.h"
 #include "react_context.h"
 #include "slim_header/memstack.h"
+#include "special_atom.h"
 
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
@@ -73,6 +74,15 @@ extern unsigned int wt_size;
 
 #define LINKED_ATOM(x) wt[x]
 #define LINKED_ATTR(x) at[x]
+
+#define TR_INSTR_SPEC(size)                     \
+  do{                                           \
+    if(size > wt_size){                         \
+      wt_size = size;                           \
+      wt = LMN_REALLOC(LmnWord, wt, wt_size);   \
+      at = LMN_REALLOC(LmnLinkAttr, at, wt_size);       \
+    }\
+  }while(0)
 
 #define TR_INSTR_UNIFYLINKS(link1, link2, mem)  \
   do{                                           \
@@ -117,6 +127,20 @@ extern unsigned int wt_size;
       LMN_SATOM_SET_ATTR(ap, attr, pos1);                               \
       LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);               \
       LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);             \
+    }                                                                   \
+  }while(0)
+
+#define TR_INSTR_COPYRULES(destmemi, srcmemi)   \
+  do{                                           \
+    unsigned int i;                             \
+    struct Vector *v;                           \
+    v = &((LmnMembrane *)wt[srcmemi])->rulesets;        \
+    for (i = 0; i< v->num; i++) {                       \
+      if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {        \
+        lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], (LmnRuleSet)lmn_ruleset_copy((LmnRuleSet)vec_get(v, i))); \
+      }else{                                                            \
+        lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], (LmnRuleSet)vec_get(v, i)); \
+      }                                                                 \
     }                                                                   \
   }while(0)
 

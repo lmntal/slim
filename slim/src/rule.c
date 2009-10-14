@@ -106,8 +106,12 @@ LmnRule lmn_rule_copy(LmnRule rule)
 {
   BYTE *inst_seq;
 
-  inst_seq = LMN_NALLOC(BYTE, rule->inst_seq_len);
-  inst_seq = memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
+  if(rule->inst_seq){
+    inst_seq = LMN_NALLOC(BYTE, rule->inst_seq_len);
+    inst_seq = memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
+  }else{
+    inst_seq = NULL;
+  }
   LmnRule new_rule = make_rule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
   st_free_table(new_rule->history_tbl);
   new_rule->history_tbl = st_copy(rule->history_tbl);
