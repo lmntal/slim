@@ -461,7 +461,7 @@ static void binstr_dump(const BinStr bs)
       break;
     case TAG_RULESET1:
       {
-        int j, n, rs_id;
+        int rs_id;
 
         rs_id = binstr_get_ruleset(bs->v, pos);
         pos += BS_RULESET_SIZE;
@@ -489,7 +489,7 @@ static void binstr_dump(const BinStr bs)
   printf("\n");
 }
 
-static inline bsptr_init(struct BinStrPtr *p, struct BinStr *bs)
+static inline void bsptr_init(struct BinStrPtr *p, struct BinStr *bs)
 {
   p->binstr = bs;
   p->pos = 0;
@@ -892,8 +892,7 @@ void write_mols(Vector *atoms,
   int i, natom;
   struct VisitLog last_valid_visitlog;
   struct BinStrPtr last_valid_bsp;
-  int last_valid_i, first_func;
-  /*d*/ int init_pos = bsp->pos;
+  int last_valid_i, first_func=0;
 
   if (!bsptr_valid(bsp)) return;
 
@@ -956,7 +955,6 @@ void write_mems(LmnMembrane *mem,
                 VisitLog visited)
 {
   LmnMembrane *m;
-  int i;
   struct VisitLog last_valid_visitlog;
   struct BinStrPtr last_valid_bsp;
   BOOL last_valid;
