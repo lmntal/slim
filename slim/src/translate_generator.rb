@@ -72,9 +72,10 @@ $format_end_index = $modes.index("__format_t") # format系modeの最後のindex
 
 # macro
 #  上の引数アクセス以外に,__formatモードで使用できるマクロがある
-#  $s successcode.成功したとき実行すべきコード.proceedでしか使わないかも
-#  $f failcode.失敗したとき実行すべきコード.次のマッチングに行ったり,ルール自体が失敗したりする
+#  $s successcode.成功したとき実行すべきコード.proceedでしか使わないかも 変数名はsuccesscode
+#  $f failcode.失敗したとき実行すべきコード.次のマッチングに行ったり,ルール自体が失敗したりする 変数名はfailcode
 #( $r recursive.再帰呼び出し? まだ考えていない )
+#  $a address.今処理中の命令語があるアドレスの表現.一意なサフィックスが欲しいときにだけ使う 変数名はop_address
 #  また,マクロではなく単に$をコードに使う場合は$$と書く targ1=55のとき, ab$1cdは"ab55cd"となり, ab$$1cdは "ab$1cd"となる
 
 # list argument
@@ -85,6 +86,7 @@ $format_end_index = $modes.index("__format_t") # format系modeの最後のindex
 #  トランスレータに対しては,  int targ0_num=読み込み;int *targ0=malloc(targ0_num);for(...(全部読み込み))  を生成し,
 #  更にトランスレータ出力結果に  int targ0_num=定数;int targ0[] = {...};  が出力されるようなコード生成を行う.
 #  例外的にトランスレート出力結果においてもtarg0の名前が残っているので注意
+#  中間バイト列からの読込みはLmnInstrVar単位で行われ, LmnWordの配列に格納される(インタープリット時にvectorを使うため)
 
 # functor argument
 #  ファンクタは種類と各種に応じた即値のペアであるため#hogehoge $functorと書くことで特別扱いをする
@@ -118,7 +120,7 @@ def case_open(op, arg)
   print "case INSTR_", op.upcase, ":{\n"
   for i in 0..arg.size-1
     if arg[i] == "$list"
-      print "  LmnInstrVar *targ", i, ";\n"
+      print "  LmnWord *targ", i, ";\n"
       print "  int targ", i, "_num;\n"
     elsif arg[i] == "$functor"
       print "  LmnLinkAttr targ", i, "_attr;\n"
@@ -130,19 +132,8 @@ def case_open(op, arg)
 
   for i in 0..arg.size-1
     if arg[i] == "$list"
-      warn "$list argument not implemented.\n"
-      # これはマクロに追い出した方がいいかもしれない
-      #print "  READ_VAL(LmnInstrVar, instr, targ", i, "_num);\n"
-      #print "  targ", i, " = malloc(sizeof(LmnInstrVar)*targ", i, "_num);\n"
-      #print "  { int i; for(i=0; i<targ", i, "_num; ++i){ READ_VAL(LmnInstrVar, instr, targ", i, "[i]); } }\n"
-      print "  READ_VAL_LIST()\n"
-      
-      #if $translator_generate
-        # トランスレータの場合は出力にint targ1_num=5; int targ1[]={1,2,3,4,5}; を含める必要がある
-        # この出力は関数の途中でも出てくる+名前がかぶるので{}で囲う必要がある 幸い他の中間命令でこのデータが必要になることはないはず
-        # その処理をここでするか別のところでするかは考え物
-        # ここでブロックを開く出力をすると閉じる出力が必要か否かを覚えておく必要がある
-      #end
+      # 読込みを行うマクロを出力
+      print "  READ_VAL_LIST(instr, targ", i, ");\n"
     elsif arg[i] == "$functor"
       # 読込みを行うマクロを出力
       print "  READ_VAL_FUNC(instr, targ", i, ");\n"
@@ -153,23 +144,32 @@ def case_open(op, arg)
     end
   end
 
-  if $translator_generate
-    # 変数を含む場合だけ($listの場合だけ)括弧を開くようにする
-    #print "  print_indent(indent); printf(\"{\\n\");\n"
+  if $translator_generate and arg.include?("$list")
+    # トランスレータの場合は出力にint targ1_num=5; int targ1[]={1,2,3,4,5}; を含める必要がある
+    # この出力は関数の途中でも出てくる+名前がかぶるので{}で囲う必要がある 幸い他の中間命令でこのデータが必要になることはないはず
+    print "  print_indent(indent++); printf(\"{\\n\");\n"
+
+    for i in 0..arg.size-1
+      if arg[i] == "$list"
+        print "  tr_print_list(indent, ", i, ", targ", i, "_num, targ", i, ");\n"
+      end
+    end
   end
 end
 
 def case_close(arg)
   # リストを読み込んでいたら開放する必要がある
-  #for i in 0..arg.size-1
-  #  if arg[i] == "$list"
-  #    print "  free(targ", i, ");\n"
-  #  end
-  #end
+  for i in 0..arg.size-1
+    if arg[i] == "$list"
+      print "  free(targ", i, ");\n"
+    end
+  end
   
   if $translator_generate
     # case文が変数を含む場合だけ($listが引数にある場合だけ)閉じる
-    #print "  print_indent(indent); printf(\"}\\n\");\n"
+    if arg.include?("$list")
+      print "  print_indent(--indent); printf(\"}\\n\");\n"
+    end
     
     # トランスレート時は次の読み込み位置をリターン
     print "  return instr;\n"
@@ -210,7 +210,7 @@ def print_trans_format(line, arg)
       x = line[pos+1] - "0"[0]
       if arg[x] == "$list"
         # リスト引数なら, 変換後出力に含まれるtarg1をそのまま参照
-        #line[pos,2] = "targ" + x
+        line[pos,2] = "targ" + x.to_s
       elsif arg[x] == "$functor"
         # ファンクタの場合, formatの中で $1_long_data がある場合, これは即値_long_dataを意味するのではなく,
         # $1_long_data全体で1つの即値になって欲しい ということで特別な扱いが必要
@@ -251,6 +251,10 @@ def print_trans_format(line, arg)
       # "$f"ならfailcode
       format_arg << "failcode"
       line[pos,2] = "%s"
+    elsif line[pos+1] == "a"[0]
+      # "$a"ならその命令語インスタンスのあるアドレス
+      format_arg << "op_address"
+      line[pos,2] = "%p"
     end
   end
   # 最終的に表示するのはここ

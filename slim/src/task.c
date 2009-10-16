@@ -608,7 +608,7 @@ void lmn_run(Vector *start_rulesets)
 
 /* mem != NULL ならば memにUNIFYを追加、そうでなければ
    UNIFYは膜に所属しない */
-static HashSet *insertconnectors(LmnMembrane *mem, Vector *links)
+HashSet *insertconnectors(LmnMembrane *mem, const Vector *links)
 {
   unsigned int i, j;
   HashSet *retset = hashset_make(8);

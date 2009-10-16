@@ -51,6 +51,7 @@
 #include "react_context.h"
 #include "slim_header/memstack.h"
 #include "special_atom.h"
+#include "error.h"
 
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
@@ -60,6 +61,9 @@
 extern LmnWord *wt, *wt_t;
 extern LmnByte *at, *at_t;
 extern unsigned int wt_size;
+
+#define LINKED_ATOM(x) wt[x]
+#define LINKED_ATTR(x) at[x]
 
 #define TR_INSTR_ALLOCLINK(link, atom, n)       \
   do{                                           \
@@ -71,9 +75,6 @@ extern unsigned int wt_size;
       at[link] = LMN_ATTR_MAKE_LINK(n);                 \
     }                                                                   \
   }while(0)
-
-#define LINKED_ATOM(x) wt[x]
-#define LINKED_ATTR(x) at[x]
 
 #define TR_INSTR_SPEC(size)                     \
   do{                                           \
@@ -144,7 +145,41 @@ extern unsigned int wt_size;
     }                                                                   \
   }while(0)
 
+#define TR_INSTR_LOOKUPLINK(destlinki, tbli, srclinki)  \
+  do{                                                   \
+    at[destlinki] = LINKED_ATTR(srclinki);              \
+    if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {      \
+      wt[destlinki] = LINKED_ATOM(srclinki);            \
+    }                                                   \
+    else { /* symbol atom */                                    \
+      SimpleHashtbl *ht = (SimpleHashtbl *)wt[tbli];            \
+      wt[destlinki] = hashtbl_get(ht, LINKED_ATOM(srclinki));   \
+    }                                                           \
+  }while(0)
+
+#define TR_INSTR_DELETECONNECTORS(srcset, srcmap)       \
+  do{                                                   \
+    HashSet *delset;                                    \
+    SimpleHashtbl *delmap;                              \
+    HashSetIterator it;                                 \
+    delset = (HashSet *)wt[srcset];                     \
+    delmap = (SimpleHashtbl *)wt[srcmap];               \
+    for(it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) { \
+      LmnSAtom orig = LMN_SATOM(hashsetiter_entry(&it));                \
+      LmnSAtom copy = LMN_SATOM(hashtbl_get(delmap, (HashKeyType)orig)); \
+      lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);                 \
+      /* mem がないので仕方なく直接アトムリストをつなぎ変える*/         \
+      /* UNIFYアトムはnatomに含まれないので大丈夫 */                    \
+      LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy), LMN_SATOM_GET_PREV(copy)); \
+      LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy), LMN_SATOM_GET_NEXT_RAW(copy)); \
+      lmn_delete_atom(orig);                                            \
+    }                                                                   \
+    hashtbl_free(delmap);                                               \
+  }while(0)
+
+
 extern BOOL tr_instr_jump(LmnTranslated, struct ReactCxt*, LmnMembrane*, int newid_num, const int *newid);
+extern HashSet *insertconnectors(LmnMembrane *mem, const Vector *links);
 
 #endif
 

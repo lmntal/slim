@@ -44,6 +44,7 @@
 #include "membrane.h"
 #include "rule.h"
 #include "functor.h"
+#include <stdarg.h>
 
 /* この辺の読み込みマクロはインタプリタ出力時も使えるはず */
 /* translate.c内でも使えるはず */
@@ -62,10 +63,10 @@
   }while(0)
 
 #define READ_VAL_LIST(I,X)                      \
-  do{                                           \
+  do{                                                               \
     READ_VAL(LmnInstrVar, I, X##_num);                                  \
-    X = malloc(sizeof(LmnInstrVar)*X##_num);                            \
-    { int i; for(i=0; i<X##_num; ++i){ READ_VAL(LmnInstrVar, I, X[i]); } }     \
+    X = malloc(sizeof(LmnWord)*X##_num);                                \
+    { int i; for(i=0; i<X##_num; ++i){ READ_VAL(LmnInstrVar, I, X[i]); } } \
   }while(0)
 
 struct trans_ruleset
@@ -114,11 +115,21 @@ const BYTE *translate_instructions(const BYTE *p,
                                    const char *failcode,
                                    int indent);
 
+/* 出力ファイル内で一時的に使うconst vectorをconst LmnWord[]から作る vectorの中を触るので注意 */
+/* この戻り値の要素を書き換えるのも配列を拡張するのもvec_freeするのもダメ */
+Vector vec_const_temporary_from_array(int size, const LmnWord *w);
+
 /* vにwが含まれる場合そのindexを返す. 含まれない場合wをvの最後に追加してそのindexを返す */
 int vec_inserted_index(Vector *v, LmnWord w);
 
+/* トランスレート時に使う targX (X=argi)の名前でlistとlist_numを出力 */
+void tr_print_list(int indent, int argi, int list_num, const LmnWord *list);
+
 /* 単にn*2個空白を出力 */
 void print_indent(int n);
+
+/* 必要なサイズ分のバッファを勝手にmallocしてsprintf free必須 */
+char *automalloc_sprintf(const char *format, ...);
 
 /* ファンクタを中間バイト列から読み込む時に使用する構造体 */
 /* READ_DATA_ATOM等を吸収するために使いたい */

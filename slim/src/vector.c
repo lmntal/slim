@@ -105,7 +105,7 @@ LmnWord vec_pop_n(Vector *vec, unsigned int n) {
 }
 
 /* peek */
-inline LmnWord vec_peek(Vector *vec) {
+inline LmnWord vec_peek(const Vector *vec) {
   return vec_get(vec, vec->num-1);
 }
 
@@ -122,7 +122,7 @@ inline LmnWord vec_get(const Vector *vec, unsigned int index) {
 }
 
 /* contains */
-BOOL vec_contains(Vector *vec, LmnWord keyp) {
+BOOL vec_contains(const Vector *vec, LmnWord keyp) {
   unsigned int i = 0;
   while (i < vec_num(vec)) {
     if (vec_get(vec, i++) == (LmnWord)keyp) {

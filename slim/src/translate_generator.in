@@ -56,6 +56,8 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
                                             int *finishflag)
 {
   LmnInstrOp op;
+  const BYTE *op_address = instr;
+  
   READ_VAL(LmnInstrOp, instr, op);
   *finishflag = 1;
 
@@ -430,6 +432,68 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
       break;
     }
   }
+
+#insertconnectors LmnInstrVar $list LmnInstrVar
+  {
+    const Vector v = vec_const_temporary_from_array($1_num, $1);
+    wt[$0] = (LmnWord)insertconnectors((LmnMembrane *)wt[$2] , &v);
+    if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+#__echo_t
+    {
+      char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
+      char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_success, buf_fail, indent+1);
+      free(buf_success);
+      free(buf_fail);
+    }
+#__format
+  label_success_$a:
+    hashset_free((HashSet *)wt[$0]);
+    $s;
+    lmn_fatal("translate recursive error\n");
+  label_fail_$a:
+    hashset_free((HashSet *)wt[$0]);
+    $f;
+    lmn_fatal("translate recursive error\n");
+  }
+% *finishflag = 0;
+
+#insertconnectorsinnull LmnInstrVar $list
+  {
+    const Vector v = vec_const_temporary_from_array($1_num, $1);
+    wt[$0] = (LmnWord)insertconnectors(NULL, &v);
+    if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+#__echo_t
+    {
+      char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
+      char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_success, buf_fail, indent+1);
+      free(buf_success);
+      free(buf_fail);
+    }
+#__format
+  label_success_$a:
+    hashset_free((HashSet *)wt[$0]);
+    $s;
+    lmn_fatal("translate recursive error\n");
+  label_fail_$a:
+    hashset_free((HashSet *)wt[$0]);
+    $f;
+    lmn_fatal("translate recursive error\n");
+  }
+% *finishflag = 0;
+
+#copycells LmnInstrVar LmnInstrVar LmnInstrVar
+  wt[$0] = (LmnWord)lmn_mem_copy_cells((LmnMembrane *)wt[$1], (LmnMembrane *)wt[$2]);
+
+#lookuplink LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_LOOKUPLINK($0, $1, $2);
+
+#deleteconnectors LmnInstrVar LmnInstrVar
+  TR_INSTR_DELETECONNECTORS($0, $1);
+
+#dropmem LmnInstrVar
+  lmn_mem_drop((LmnMembrane *)wt[$0]);
 
 
 #__end
