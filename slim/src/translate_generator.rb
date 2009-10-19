@@ -235,7 +235,7 @@ def print_trans_format(line, arg)
           format_arg << "targ"+x.to_s+"_attr"
           line[pos,attr_name.size+2] = "%d"
         else
-          warn "unexpected functor type.\n"
+          warn "unexpected functor type at " + $linenum.to_s + ".\n"
           warn line[pos+2,long_data_name.size]
         end
       else
@@ -270,8 +270,10 @@ is_buffering_endl = false # 今空行の改行出力を留保しているかど�
 mode = "__ignore" # 今の出力モード
 line = ""
 arg = [] # 今開いているcaseの引数
+$linenum = 0 #今の行数
 
 while(line=gets())
+  $linenum = $linenum + 1
   line.chop!
 
   if line == ""

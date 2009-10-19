@@ -96,8 +96,8 @@ typedef void (* callback_4)(ReactCxt,
                             LmnAtom, LmnLinkAttr);
 
 
-inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *at);
-inline static void free_links(Vector *links);
+inline Vector *links_from_idxs(const Vector *link_idxs, LmnWord *wt, LmnByte *at);
+inline void free_links(Vector *links);
 
 #define SWAP(T,X,Y)       do { T t=(X); (X)=(Y); (Y)=t;} while(0)
 #define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
@@ -569,6 +569,7 @@ void lmn_run(Vector *start_rulesets)
               READ_VAL(lmn_interned_str, instr, s);    \
               str1 = lmn_string_make(lmn_id_to_name(s)); \
               (result) = lmn_string_eq(str1, (LmnString)(x));   \
+              lmn_string_free(str1);                   \
               break;                                   \
             }                                          \
           default:                                     \
@@ -1686,113 +1687,18 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_EQGROUND:
     case INSTR_NEQGROUND:
     {
-      unsigned int i, j;
-      BOOL ret_flag = TRUE;
       LmnInstrVar srci, dsti;
-      Vector *srcv, *dstv; /* 変数番号のリスト（比較元、比較先） */
-      Vector stack1, stack2;
-      SimpleHashtbl map; /* 比較元→比較先 */
-      LinkObj start1, start2;
+      Vector *srcvec, *dstvec;
+      BOOL ret_flag;
 
       READ_VAL(LmnInstrVar, instr, srci);
       READ_VAL(LmnInstrVar, instr, dsti);
 
-      srcv = (Vector *)wt[srci];
-      dstv = (Vector *)wt[dsti];
+      srcvec = links_from_idxs((Vector *)wt[srci], wt, at);
+      dstvec = links_from_idxs((Vector *)wt[dsti], wt, at);
 
-      hashtbl_init(&map, 256);
+      ret_flag = lmn_mem_cmp_ground(srcvec, dstvec);
 
-      vec_init(&stack1, 16);
-      vec_init(&stack2, 16);
-      start1 = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(srcv, 0)), LINKED_ATTR(vec_get(srcv, 0)));
-      start2 = LinkObj_make((LmnWord)LINKED_ATOM(vec_get(dstv, 0)), LINKED_ATTR(vec_get(dstv, 0)));
-      if (!LMN_ATTR_IS_DATA(start1->pos) && !LMN_ATTR_IS_DATA(start2->pos)) { /* ともにシンボルアトムの場合 */
-        vec_push(&stack1, (LmnWord)start1);
-        vec_push(&stack2, (LmnWord)start2);
-      }
-      else { /* data atom は積まない */
-        if(!lmn_data_atom_eq(start1->ap, start1->pos, start2->ap, start2->pos)) ret_flag = FALSE;
-        LMN_FREE(start1);
-        LMN_FREE(start2);
-      }
-
-      while(stack1.num != 0) { /* main loop: start */
-        LinkObj l1 = (LinkObj )vec_pop(&stack1);
-        LinkObj l2 = (LinkObj )vec_pop(&stack2);
-        BOOL contains1 = FALSE;
-        BOOL contains2 = FALSE;
-
-        for(i = 0; i < srcv->num; i++) {
-          unsigned int index = vec_get(srcv, i);
-          if (l1->ap == LMN_SATOM_GET_LINK(LINKED_ATOM(index), LINKED_ATTR(index))
-              && l1->pos == LMN_SATOM_GET_ATTR(LINKED_ATOM(index), LINKED_ATTR(index))) {
-            contains1 = TRUE;
-            break;
-          }
-        }
-        for(j = 0; j < dstv->num; j++) {
-          unsigned int index = vec_get(dstv, j);
-          if (l2->ap == LMN_SATOM_GET_LINK(LINKED_ATOM(index), LINKED_ATTR(index))
-              && l2->pos == LMN_SATOM_GET_ATTR(LINKED_ATOM(index), LINKED_ATTR(index))) {
-            contains2 = TRUE;
-            break;
-          }
-        }
-        if(i != j){ /* 根の位置が違う */
-          LMN_FREE(l1); LMN_FREE(l2);
-          ret_flag = FALSE;
-          break;
-        }
-        if(contains1) { /* 根に到達した場合 */
-          LMN_FREE(l1); LMN_FREE(l2);
-          continue;
-        }
-
-        if(l1->pos != l2->pos){ /* 引数検査 */
-          LMN_FREE(l1); LMN_FREE(l2);
-          ret_flag = FALSE;
-          break;
-        }
-
-        if(LMN_SATOM_GET_FUNCTOR(l1->ap) != LMN_SATOM_GET_FUNCTOR(l2->ap)){ /* ファンクタ検査 */
-          LMN_FREE(l1); LMN_FREE(l2);
-          ret_flag = FALSE;
-          break;
-        }
-
-        if(!hashtbl_contains(&map, l1->ap)) hashtbl_put(&map, l1->ap, l2->ap); /* 未出 */
-        else if(hashtbl_get(&map, l1->ap) != l2->ap) { /* 既出で不一致 */
-          LMN_FREE(l1); LMN_FREE(l2);
-          ret_flag = FALSE;
-          break;
-        }
-        else continue; /* 既出で一致 */
-
-        for(i = 0; i < LMN_SATOM_GET_ARITY(l1->ap); i++) {
-          LinkObj n1, n2;
-          if(i == l1->pos) continue;
-          if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(l1->ap, i)) && !LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(l1->ap, i))) {
-            n1 = LinkObj_make(LMN_SATOM_GET_LINK(l1->ap, i), LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(l1->ap, i)));
-            n2 = LinkObj_make(LMN_SATOM_GET_LINK(l2->ap, i), LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(l2->ap, i)));
-            vec_push(&stack1, (LmnWord)n1);
-            vec_push(&stack2, (LmnWord)n2);
-          }
-          else { /* data atom は積まない */
-            if(!lmn_data_atom_eq(LMN_SATOM_GET_LINK(l1->ap, i), LMN_SATOM_GET_ATTR(l1->ap, i),
-                                 LMN_SATOM_GET_LINK(l2->ap, i), LMN_SATOM_GET_ATTR(l2->ap, i))) {
-              LMN_FREE(l1); LMN_FREE(l2);
-              ret_flag = FALSE;
-              goto EQGROUND_NEQGROUND_BREAK;
-            }
-          }
-        }
-        LMN_FREE(l1); LMN_FREE(l2);
-      } /* main loop: end */
-
-EQGROUND_NEQGROUND_BREAK:
-      vec_destroy(&stack1);
-      vec_destroy(&stack2);
-      hashtbl_destroy(&map);
       if((!ret_flag && INSTR_EQGROUND == op) || (ret_flag && INSTR_NEQGROUND == op)) {
         return FALSE;
       }
@@ -1827,11 +1733,7 @@ EQGROUND_NEQGROUND_BREAK:
       /* 解放のための再帰。ベクタを解放するための中間ご命令がない */
       interpret(rc, rule, instr);
 
-      while(dstlovec->num) {
-        LMN_FREE(vec_get(dstlovec, dstlovec->num-1));
-        dstlovec->num--;
-      }
-      vec_free(dstlovec);
+      free_links(dstlovec);
       vec_free(retvec);
 
       return TRUE; /* COPYGROUNDはボディに出現する */
@@ -2560,7 +2462,7 @@ EQGROUND_NEQGROUND_BREAK:
     case INSTR_EQFUNC:
     {
       LmnInstrVar func0;
-      LmnLinkAttr func1;
+      LmnInstrVar func1;
 
       READ_VAL(LmnFunctor, instr, func0);
       READ_VAL(LmnFunctor, instr, func1);
@@ -2583,7 +2485,7 @@ EQGROUND_NEQGROUND_BREAK:
     case INSTR_NEQFUNC:
     {
       LmnInstrVar func0;
-      LmnLinkAttr func1;
+      LmnInstrVar func1;
 
       READ_VAL(LmnFunctor, instr, func0);
       READ_VAL(LmnFunctor, instr, func1);
@@ -2928,7 +2830,7 @@ EQGROUND_NEQGROUND_BREAK:
 /* } */
 
 
-inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *at)
+inline Vector *links_from_idxs(const Vector *link_idxs, LmnWord *wt, LmnByte *at)
 {
   unsigned long i;
   Vector *v = vec_make(16);
@@ -2942,7 +2844,7 @@ inline static Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *a
   return v;
 }
 
-inline static void free_links(Vector *links)
+inline void free_links(Vector *links)
 {
   unsigned long i;
 

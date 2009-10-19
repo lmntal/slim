@@ -170,6 +170,7 @@ LMN_EXTERN void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
 LMN_EXTERN void lmn_mem_remove_temporary_proxies(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem);
 
+BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec);
 BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);
 void lmn_mem_copy_ground(LmnMembrane *mem,
                          Vector *srcvec,

@@ -65,13 +65,11 @@ void tr_print_list(int indent, int argi, int list_num, const LmnWord *list)
   fprintf(OUT, "};\n");
 }
 
-BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, int newid_num, const int *newid)
+BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, int newid_num, const int *newid, LmnWord *wt_org, LmnByte *at_org, unsigned int *pwt_size)
 {
-  LmnWord *wt_org = wt;
-  LmnByte *at_org = at;
-  LmnWord *wt2 = LMN_NALLOC(LmnWord, wt_size);
-  LmnByte *at2 = LMN_NALLOC(LmnByte, wt_size);
-  unsigned int wt_size_org = wt_size;
+  unsigned int wt_size_org = *pwt_size;
+  LmnWord *wt2 = LMN_NALLOC(LmnWord, wt_size_org);
+  LmnByte *at2 = LMN_NALLOC(LmnByte, wt_size_org);
   BOOL ret;
   int i;
 
@@ -82,7 +80,6 @@ BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisroot
 
   wt = wt2;
   at = at2;
-  wt_size = wt_size_org;
   
   ret = (*f)(rc, thisisrootmembutnotused);
 
@@ -90,7 +87,7 @@ BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisroot
   LMN_FREE(at);
   wt = wt_org;
   at = at_org;
-  wt_size = wt_size_org;
+  *pwt_size = wt_size_org;
 
   return ret;
 }
@@ -195,7 +192,7 @@ const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const 
 
     fprintf(OUT, "};\n");
     print_indent(indent); fprintf(OUT, "  extern BOOL %s_%d();\n", header, next_index);
-    print_indent(indent); fprintf(OUT, "  if(tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, %d, newid))\n", header, next_index, i);
+    print_indent(indent); fprintf(OUT, "  if(tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, %d, newid, wt, at, &wt_size))\n", header, next_index, i);
     print_indent(indent); fprintf(OUT, "    %s;\n", successcode);
     print_indent(indent); fprintf(OUT, "  else\n");
     print_indent(indent); fprintf(OUT, "    %s;\n", failcode);
@@ -454,8 +451,8 @@ void translate(char *filepath)
 
   /* just for debug ! */
   //OUT = stderr;
-  //OUT = stdout;
-  OUT = fopen("/dev/null", "w");
+  OUT = stdout;
+  //OUT = fopen("/dev/null", "w");
 
   if(filepath == NULL){
     filename = strdup("anonymous");
@@ -472,5 +469,5 @@ void translate(char *filepath)
   print_trans_initfunction(filename);
 
   free(filename);
-  fprintf(stderr, "--translate is under construction\n");
+  if(OUT != stdout) fprintf(stderr, "--translate is under construction\n");
 }

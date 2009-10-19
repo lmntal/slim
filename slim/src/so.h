@@ -52,6 +52,7 @@
 #include "slim_header/memstack.h"
 #include "special_atom.h"
 #include "error.h"
+#include "task.h"
 
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
@@ -177,9 +178,23 @@ extern unsigned int wt_size;
     hashtbl_free(delmap);                                               \
   }while(0)
 
+#define TR_INSTR_DEREFFUNC(funci, atomi, pos)         \
+  do{                                           \
+    LmnLinkAttr attr = LMN_SATOM_GET_ATTR(LMN_SATOM(wt[atomi]), pos);   \
+    if (LMN_ATTR_IS_DATA(attr)) {                                       \
+      wt[funci] = LMN_SATOM_GET_LINK(LMN_SATOM(wt[atomi]), pos);        \
+    }                                                                   \
+    else { /* symbol atom */                                            \
+      wt[funci] = LMN_SATOM_GET_FUNCTOR(LMN_SATOM_GET_LINK(LMN_SATOM(wt[atomi]), pos)); \
+    }                                                                   \
+    at[funci] = attr;                                                   \
+  }while(0)
 
-extern BOOL tr_instr_jump(LmnTranslated, struct ReactCxt*, LmnMembrane*, int newid_num, const int *newid);
+extern BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, int newid_num, const int *newid, LmnWord *wt_org, LmnByte *at_org, unsigned int *pwt_size);
+/* insertconnectors touches wt and at */
 extern HashSet *insertconnectors(LmnMembrane *mem, const Vector *links);
+extern Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *at);
+extern void free_links(Vector *links);
 
 #endif
 

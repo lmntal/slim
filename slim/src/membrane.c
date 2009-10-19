@@ -1043,6 +1043,119 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
   *ret_atommap = atommap;
 }
 
+/* srcvec,dstvecは比較元,比較先grounの明示的自由リンクLinkObj
+   ground検査はすんでいるものとする
+   srcとdstが同じ形なら真を返す */
+BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec)
+{
+  unsigned int i, j;
+  BOOL ret_flag = TRUE;
+  Vector stack1, stack2;
+  SimpleHashtbl map; /* 比較元→比較先 */
+  LinkObj start1, start2;
+
+  hashtbl_init(&map, 256);
+
+  vec_init(&stack1, 16);
+  vec_init(&stack2, 16);
+
+  /* startはstackにつまれるので処理中に壊されるためコピー */
+  start1 = LinkObj_make(((LinkObj)vec_get(srcvec,0))->ap, ((LinkObj)vec_get(srcvec,0))->pos);
+  start2 = LinkObj_make(((LinkObj)vec_get(dstvec,0))->ap, ((LinkObj)vec_get(dstvec,0))->pos);
+
+  if (!LMN_ATTR_IS_DATA(start1->pos) && !LMN_ATTR_IS_DATA(start2->pos)) { /* ともにシンボルアトムの場合 */
+    vec_push(&stack1, (LmnWord)start1);
+    vec_push(&stack2, (LmnWord)start2);
+  }
+  else { /* data atom は積まない */
+    if(!lmn_data_atom_eq(start1->ap, start1->pos, start2->ap, start2->pos)) ret_flag = FALSE;
+    LMN_FREE(start1);
+    LMN_FREE(start2);
+  }
+
+  while(stack1.num != 0) { /* main loop: start */
+    LinkObj l1 = (LinkObj )vec_pop(&stack1);
+    LinkObj l2 = (LinkObj )vec_pop(&stack2);
+    BOOL contains1 = FALSE;
+    BOOL contains2 = FALSE;
+
+    for(i = 0; i < srcvec->num; i++) {
+      LinkObj lobj = (LinkObj)vec_get(srcvec, i);
+      if (l1->ap == LMN_SATOM_GET_LINK(lobj->ap, lobj->pos)
+          && l1->pos == LMN_SATOM_GET_ATTR(lobj->ap, lobj->pos)) {
+        contains1 = TRUE;
+        break;
+      }
+    }
+    for(j = 0; j < dstvec->num; j++) {
+      LinkObj lobj = (LinkObj)vec_get(dstvec, j);
+      if (l2->ap == LMN_SATOM_GET_LINK(lobj->ap, lobj->pos)
+          && l2->pos == LMN_SATOM_GET_ATTR(lobj->ap, lobj->pos)) {
+        contains2 = TRUE;
+        break;
+      }
+    }
+    if(i != j){ /* 根の位置が違う */
+      LMN_FREE(l1); LMN_FREE(l2);
+      ret_flag = FALSE;
+      break;
+    }
+    if(contains1) { /* 根に到達した場合 */
+      LMN_FREE(l1); LMN_FREE(l2);
+      continue;
+    }
+
+    if(l1->pos != l2->pos){ /* 引数検査 */
+      LMN_FREE(l1); LMN_FREE(l2);
+      ret_flag = FALSE;
+      break;
+    }
+
+    if(LMN_SATOM_GET_FUNCTOR(l1->ap) != LMN_SATOM_GET_FUNCTOR(l2->ap)){ /* ファンクタ検査 */
+      LMN_FREE(l1); LMN_FREE(l2);
+      ret_flag = FALSE;
+      break;
+    }
+
+    if(!hashtbl_contains(&map, l1->ap)) hashtbl_put(&map, l1->ap, l2->ap); /* 未出 */
+    else if(hashtbl_get(&map, l1->ap) != l2->ap) { /* 既出で不一致 */
+      LMN_FREE(l1); LMN_FREE(l2);
+      ret_flag = FALSE;
+      break;
+    }
+    else continue; /* 既出で一致 */
+
+    for(i = 0; i < LMN_SATOM_GET_ARITY(l1->ap); i++) {
+      LinkObj n1, n2;
+      if(i == l1->pos) continue;
+      if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(l1->ap, i)) && !LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(l1->ap, i))) {
+        n1 = LinkObj_make(LMN_SATOM_GET_LINK(l1->ap, i), LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(l1->ap, i)));
+        n2 = LinkObj_make(LMN_SATOM_GET_LINK(l2->ap, i), LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(l2->ap, i)));
+        vec_push(&stack1, (LmnWord)n1);
+        vec_push(&stack2, (LmnWord)n2);
+      }
+      else { /* data atom は積まない */
+        if(!lmn_data_atom_eq(LMN_SATOM_GET_LINK(l1->ap, i), LMN_SATOM_GET_ATTR(l1->ap, i),
+                             LMN_SATOM_GET_LINK(l2->ap, i), LMN_SATOM_GET_ATTR(l2->ap, i))) {
+          LMN_FREE(l1); LMN_FREE(l2);
+          ret_flag = FALSE;
+          goto CMPGROUND_BREAK;
+        }
+      }
+    }
+    LMN_FREE(l1); LMN_FREE(l2);
+  } /* main loop: end */
+
+CMPGROUND_BREAK:
+  for(i=0; i<vec_num(&stack1); ++i) LMN_FREE((LinkObj)vec_get(&stack1, i));
+  for(i=0; i<vec_num(&stack2); ++i) LMN_FREE((LinkObj)vec_get(&stack2, i));
+  vec_destroy(&stack1);
+  vec_destroy(&stack2);
+  hashtbl_destroy(&map);
+  
+  return ret_flag;
+}
+
 /* srcvecのリンクの列が基底項プロセスに到達(avovecのリンクに到達する場
    合は基底項プロセスではない)している場合、真を返し、natomsに基底項プ
    ロセスないのアトムの数を格納する。*/

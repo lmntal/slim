@@ -740,6 +740,7 @@ LmnRuleSet load_file(char *file_name)
     sohandle = dlopen(file_name, RTLD_LAZY);
     if(! sohandle){
       fprintf(stderr, "Failed to open %s\n", file_name);
+      fprintf(stderr, "dlopen: %s\n", dlerror());
       rs = 0;
     }else{
       dlerror();
