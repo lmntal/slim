@@ -125,7 +125,26 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 % *finishflag = 0;
 
 #commit lmn_interned_str LmnLineNum
-  //commit($0, $1);
+  {
+    LmnMembrane *ptmp_global_root;
+    LmnWord *pwt_temp;
+    LmnByte *pat_temp;
+    tr_instr_commit_ready(rc, NULL, $0, $1, &ptmp_global_root, &pwt_temp, &pat_temp);
+#__echo_t
+    {
+      char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
+      free(buf_always);
+    }
+#__format
+  label_always_$a:
+    if(tr_instr_commit_finish(rc, NULL, $0, $1, &ptmp_global_root, &pwt_temp, &pat_temp))
+      $s;
+    else
+      $f;
+    lmn_fatal("translate recursive error\n");
+  }
+% *finishflag = 0;
 
 #findatom LmnInstrVar LmnInstrVar $functor
 % if(LMN_ATTR_IS_DATA(targ2_attr)){
@@ -234,6 +253,20 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 #stop
   $f;
 % *finishflag = 0;
+
+#not LmnSubInstrSize
+  { /* not */
+#__echo_t
+    {
+      char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+      const BYTE *next = translate_instructions(instr, jump_points, header, failcode, buf_fail, indent+1);
+      assert(next == instr+targ0);
+      instr = next;
+    }
+#__format
+  label_fail_$a: /* not */
+    ;
+  }
 
 #enqueueatom LmnInstrVar
 

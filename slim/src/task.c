@@ -704,17 +704,6 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       }
-      /**
-       * MC -->
-       * 候補取得のためFALSEを返す
-       */
-      else if(RC_GET_MODE(rc, REACT_ND)) {
-        hashset_free((HashSet *)wt[seti]);
-        return FALSE;
-      }
-      /**
-       * <-- MC
-       */
       else assert(0);
       break;
     }
@@ -723,6 +712,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       LmnInstrVar seti, list_num, memi, enti;
       Vector links; /* src list */
       unsigned int i;
+      BOOL b;
 
       READ_VAL(LmnInstrVar, instr, seti);
       READ_VAL(LmnInstrVar, instr, list_num);
@@ -740,21 +730,10 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
-      if(interpret(rc, rule, instr)) {
+      if(interpret(rc, rule, instr)){
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
-      }
-      /**
-       * MC -->
-       * 候補取得のためFALSEを返す
-       */
-      else if (RC_GET_MODE(rc, REACT_ND)) {
-        hashset_free((HashSet *)wt[seti]);
-        return FALSE;
-      }
-      /**
-       * <-- MC
-       */
+      }else assert(0);
       break;
     }
     case INSTR_JUMP:
@@ -1343,19 +1322,6 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       break;
     }
     case INSTR_PROCEED:
-#ifdef OLD
-      /**
-       * MC -->
-       * mc_flags.system_rule_committedによって
-       * 左辺に出現するPROCEEDと右辺に出現するPROCEEDを区別する必要がある
-       */
-      if(RC_GET_MODE(rc, REACT_ND)) {
-        return FALSE; /* 次の候補を取得するために失敗する */
-      }
-      /**
-       * <-- MC
-       */
-#endif
       return TRUE;
     case INSTR_STOP:
       return FALSE;

@@ -663,7 +663,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
 /* TODO: 初期データ生成ルールセットのルールを1つのルールセットにまとめて出力すれば問題無し 1回適用成功したところで止めなければok) */
 LmnRuleSet load_compiled_il(char *filename, void *sohandle)
 {
-  char *basename = create_basename(filename);
+  char *basename = create_formatted_basename(filename);
   int buf_len = strlen(basename) + 50;  /* 適当に50文字余分にとったけどこれでいいのか */
   char *buf = malloc(buf_len + 1); /* 必要ないけど一応最後に1byte余分をとっておく */
   void (*init_f)();
@@ -944,11 +944,13 @@ int il_parse_rule(FILE *in, Rule *rule)
   return r;
 }
 
-char *create_basename(const char *filepath)
+char *create_formatted_basename(const char *filepath)
 {
   const char *begin = strrchr(filepath, DIR_SEPARATOR_CHAR); /* パス内最後の/を探す */
   const char *end;
   char *basename;
+  int i;
+  const char *p;
   
   if(begin != NULL){ /* もし/があればその次がファイル名の先頭 */
     begin += 1;
@@ -956,9 +958,14 @@ char *create_basename(const char *filepath)
     begin = filepath; /* もし/がなければ全体の先頭がファイル名の先頭 */
   }
   
-  end = strchr(begin, '.'); /* ファイル名最初の.を探す */
+  end = strchr(begin, '.'); /* ファイル名最初の.を探す ないと困る */
   basename = malloc(end-begin +1);
-  strncpy(basename, begin, end-begin);
+  for(i=0,p=begin; i<end-begin; ++i,++p){
+    if(isalpha(*p) || isdigit(*p))
+      basename[i] = *p;
+    else
+      basename[i] = 'O'; /* 記号は全部Oにする */
+  }
   basename[end-begin] = '\0';
 
   return basename;

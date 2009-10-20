@@ -190,7 +190,9 @@ extern unsigned int wt_size;
     at[funci] = attr;                                                   \
   }while(0)
 
-extern BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, int newid_num, const int *newid, LmnWord *wt_org, LmnByte *at_org, unsigned int *pwt_size);
+extern void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str rule_name, LmnLineNum line_num, LmnMembrane **ptmp_global_root, LmnWord **pwt_temp, LmnByte **pat_temp);
+extern BOOL tr_instr_commit_finish(struct ReactCxt *rc, LmnRule rule, lmn_interned_str rule_name, LmnLineNum line_num, LmnMembrane **ptmp_global_root, LmnWord **pwt_temp, LmnByte **pat_temp);
+extern BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, int newid_num, const int *newid, LmnWord **pwt, LmnByte **pat, unsigned int *pwt_size);
 /* insertconnectors touches wt and at */
 extern HashSet *insertconnectors(LmnMembrane *mem, const Vector *links);
 extern Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *at);

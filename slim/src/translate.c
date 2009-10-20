@@ -48,6 +48,7 @@
 #include <stdio.h>
 #include "translate.h"
 #include "so.h"
+#include "mc.h"
 
 /* just for debug ! */
 static FILE *OUT;
@@ -65,28 +66,119 @@ void tr_print_list(int indent, int argi, int list_num, const LmnWord *list)
   fprintf(OUT, "};\n");
 }
 
-BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, int newid_num, const int *newid, LmnWord *wt_org, LmnByte *at_org, unsigned int *pwt_size)
+void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str rule_name, LmnLineNum line_num, LmnMembrane **ptmp_global_root, LmnWord **pwt_temp, LmnByte **pat_temp)
 {
+  if(rule) lmn_rule_set_name(rule, rule_name); /* LmnTranslatedがruleを持っていないので実行できない */
+  
+  if (RC_GET_MODE(rc, REACT_ND)) {
+    unsigned int i;
+    /* グローバルルート膜のコピー */
+    SimpleHashtbl *copymap;
+    LmnMembrane *tmp_global_root;
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 1) {
+      status_start_commit();
+    }
+#endif
+    tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
+
+    /* 変数配列および属性配列のコピー */
+    LmnWord *wtcp = LMN_NALLOC(LmnWord, wt_size);
+    LmnByte *atcp = LMN_NALLOC(LmnByte, wt_size);
+    for(i = 0; i < wt_size; i++) {
+      wtcp[i] = atcp[i] = 0;
+    }
+
+    /* copymapの情報を基に変数配列を書換える */
+    /* TODO: wt_sizeまでループを回さずにすませられないか */
+    for (i = 0; i < wt_size; i++) {
+      atcp[i] = at[i];
+      if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
+        wtcp[i] = wt[i];
+      }
+      else if(hashtbl_contains(copymap, wt[i])) {
+        wtcp[i] = hashtbl_get_default(copymap, wt[i], 0);
+      }
+      else if(wt[i] == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
+        wtcp[i] = (LmnWord)tmp_global_root;
+      }
+      else if (at[i] == LMN_DBL_ATTR) {
+        LMN_COPY_DBL_ATOM(wtcp[i], wt[i]);
+      }
+    }
+    hashtbl_free(copymap);
+
+    /* 変数配列および属性配列をコピーと入れ換える */
+    SWAP(LmnWord *, wtcp, wt);
+    SWAP(LmnByte *, atcp, at);
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 1) {
+      status_finish_commit();
+    }
+#endif
+
+    /* 処理中の変数を外へ持ち出す */
+    *ptmp_global_root = tmp_global_root;
+    *pwt_temp = wtcp;
+    *pat_temp = atcp;
+  }
+}
+
+BOOL tr_instr_commit_finish(struct ReactCxt *rc, LmnRule rule, lmn_interned_str rule_name, LmnLineNum line_num, LmnMembrane **ptmp_global_root, LmnWord **pwt_temp, LmnByte **pat_temp)
+{
+  if(RC_GET_MODE(rc, REACT_ND)) {
+    /* 処理中の変数を外から持ち込む */
+    LmnMembrane *tmp_global_root = *ptmp_global_root;
+    LmnWord *wtcp = *pwt_temp;
+    LmnByte *atcp = *pat_temp;
+
+    lmn_react_systemruleset(rc, (LmnMembrane *)wt[0]);
+    nd_react_cxt_add_expanded(rc, tmp_global_root, rule); /* このruleはNULLではまずい気がする */
+
+    /* 変数配列および属性配列を元に戻す（いらないかも？） */
+    SWAP(LmnWord *, wtcp, wt);
+    SWAP(LmnByte *, atcp, at);
+
+    LMN_FREE(wtcp);
+    LMN_FREE(atcp);
+
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+
+BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, int newid_num, const int *newid, LmnWord **pwt, LmnByte **pat, unsigned int *pwt_size)
+{
+  LmnWord *wt_org = *pwt;
+  LmnByte *at_org = *pat;
   unsigned int wt_size_org = *pwt_size;
   LmnWord *wt2 = LMN_NALLOC(LmnWord, wt_size_org);
   LmnByte *at2 = LMN_NALLOC(LmnByte, wt_size_org);
   BOOL ret;
   int i;
 
-  for(i=0; i<newid_num; ++i){
-    wt2[i] = wt[newid[i]];
-    at2[i] = at[newid[i]];
+  /* MCだと配列の中身を値に応じてコピーするためあらかじめクリアする必要がある */
+  if (RC_GET_MODE(rc, REACT_ND)) {
+    for(i = 0; i < wt_size; i++) {
+      wt2[i] = at2[i] = 0;
+    }
   }
 
-  wt = wt2;
-  at = at2;
+  for(i=0; i<newid_num; ++i){
+    wt2[i] = wt_org[newid[i]];
+    at2[i] = at_org[newid[i]];
+  }
+
+  *pwt = wt2;
+  *pat = at2;
   
   ret = (*f)(rc, thisisrootmembutnotused);
 
   LMN_FREE(wt);
   LMN_FREE(at);
-  wt = wt_org;
-  at = at_org;
+  *pwt = wt_org;
+  *pat = at_org;
   *pwt_size = wt_size_org;
 
   return ret;
@@ -192,7 +284,7 @@ const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const 
 
     fprintf(OUT, "};\n");
     print_indent(indent); fprintf(OUT, "  extern BOOL %s_%d();\n", header, next_index);
-    print_indent(indent); fprintf(OUT, "  if(tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, %d, newid, wt, at, &wt_size))\n", header, next_index, i);
+    print_indent(indent); fprintf(OUT, "  if(tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, %d, newid, &wt, &at, &wt_size))\n", header, next_index, i);
     print_indent(indent); fprintf(OUT, "    %s;\n", successcode);
     print_indent(indent); fprintf(OUT, "  else\n");
     print_indent(indent); fprintf(OUT, "    %s;\n", failcode);
@@ -457,7 +549,7 @@ void translate(char *filepath)
   if(filepath == NULL){
     filename = strdup("anonymous");
   }else{
-    filename = create_basename(filepath);
+    filename = create_formatted_basename(filepath);
   }
   
   print_trans_header(filename);
