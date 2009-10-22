@@ -115,6 +115,7 @@ static inline void free_data_atom(LmnAtom atom, LmnLinkAttr attr)
     LMN_FREE((double*)atom);
     break;
   case LMN_CONST_STR_ATTR:
+  case LMN_CONST_DBL_ATTR:
     break;
   case LMN_SP_ATOM_ATTR:
     SP_ATOM_FREE(atom);

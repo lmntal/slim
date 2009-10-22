@@ -531,6 +531,7 @@ void lmn_run(Vector *start_rulesets)
      case LMN_DBL_ATTR:                         \
        (dest) = (LmnWord)instr;                 \
        instr += sizeof(double);                 \
+        (attr) = LMN_CONST_DBL_ATTR;            \
        break;                                   \
      case LMN_STRING_ATTR:                      \
      {                                          \
