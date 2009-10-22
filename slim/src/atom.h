@@ -185,8 +185,9 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_DBL_ATTR        (LMN_ATTR_FLAG | 1)
 #define LMN_SP_ATOM_ATTR    (LMN_ATTR_FLAG | 2)
 #define LMN_STRING_ATTR     LMN_SP_ATOM_ATTR
-/* 定数文字列アトム */
+/* 定数アトム */
 #define LMN_CONST_STR_ATTR  (LMN_ATTR_FLAG | 3)
+#define LMN_CONST_DBL_ATTR        (LMN_ATTR_FLAG | 4)
 
 /*----------------------------------------------------------------------
  * functions
