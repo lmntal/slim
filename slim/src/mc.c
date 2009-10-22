@@ -119,13 +119,22 @@ State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule) {
   memset(&new->successor, 0x00U, sizeof(Vector));
   /* ハッシュ値はあらかじめ計算しておく */
   new->rule = rule;
+  new->mem_id = NULL;
+  new->mem_id_hash = NULL;
+  new->mem_dump = NULL;
+  new->mem_eq_fail_count = 0;
+  new->hash = 0;
+  
   if (lmn_env.mem_enc) {
     new->mem_id = lmn_mem_encode(mem);
-    new->hash =   binstr_hash(new->mem_id);
+    new->mem_id_hash = binstr_hash(new->mem_id);
   } else {
-    new->mem_id = NULL;
     new->hash = mhash(new->mem);
   }
+
+#ifdef PROFILE
+  status_create_new_state();
+#endif
   return new;
 }
 
@@ -145,6 +154,41 @@ StateTransition *strans_make(State *s, unsigned long id, LmnRule rule) {
   strans->id = id;
   strans->rule = rule;
   return strans;
+}
+
+inline void state_calc_mem_dump(State *s)
+{
+  if (!s->mem_dump) s->mem_dump = lmn_mem_to_binstr(s->mem);
+}
+
+/* 状態が持つ膜のダンプを計算する。 */
+inline void state_free_mem_dump(State *s)
+{
+  if (s->mem_dump) {
+    lmn_binstr_free(s->mem_dump);
+    s->mem_dump = NULL;
+  }
+}
+
+/* 状態が持つ膜のエンコードを計算する。mem_dumpを持っている場合は、
+   mem_dumpを解放する */
+inline void state_calc_mem_encode(State *s)
+{
+  if (!s->mem_id) {
+    if (s->mem) s->mem_id = lmn_mem_encode(s->mem);
+    else if (s->mem_dump) {
+      LmnMembrane *m;
+
+      m = lmn_binstr_decode(s->mem_dump);
+      s->mem_id = lmn_mem_encode(m);
+      lmn_mem_drop(m);
+      lmn_mem_free(m);
+    } else {
+      lmn_fatal("implementation error");
+    }
+    s->mem_id_hash = binstr_hash(s->mem_id);
+    state_free_mem_dump(s);
+  }
 }
 
 /**
@@ -180,6 +224,7 @@ void state_free_without_mem(State *s)
     vec_destroy(&s->successor);
   }
   if (s->mem_id) lmn_binstr_free(s->mem_id);
+  if (s->mem_dump) lmn_binstr_free(s->mem_dump);
   LMN_FREE(s);
 }
 
@@ -197,7 +242,8 @@ void strans_free(StateTransition *strans) {
 }
 
 inline long state_hash(State *s) {
-  return s->hash;
+  if (lmn_env.mem_enc) return s->mem_id_hash;
+  else return s->hash;
 }
 
 BYTE state_property_state(State *state)
@@ -230,6 +276,21 @@ inline LmnRule state_rule(State *state)
   return state->rule;
 }
 
+inline LmnBinStr state_mem_binstr(State *state)
+{
+  return state->mem_id ? state->mem_id : state->mem_dump;
+}
+
+/* 同型性判定の失敗回数をインクリメントする。失敗回数が一定値を越えた場
+   合には、膜のエンコードを計算する */
+inline void state_incr_memeq_fail(State *state)
+{
+  state->mem_eq_fail_count++;
+  if (state->mem_eq_fail_count >= MEM_ENCODE_THRESHOLD) {
+    state_calc_mem_encode(state);
+  }
+}
+
 /**
  * 引数としてあたえられたStateが等しいかどうかを判定する
  * ハッシュ値が等しい場合は同型判定を行う
@@ -243,15 +304,31 @@ static int state_equals(HashKeyType k1, HashKeyType k2) {
   if (lmn_env.mem_enc) {
     t =
       s1->state_name == s2->state_name &&
-      state_hash(s1) == state_hash(s2) &&
+      s1->mem_id_hash == s2->mem_id_hash &&
       binstr_comp(s1->mem_id, s2->mem_id) == 0;
   }
   else {
-    t =
-      s1->state_name == s2->state_name &&
-      state_hash(s1) == state_hash(s2) &&
-      lmn_mem_equals(s1->mem, s2->mem);
-  }
+    if (s1->mem_id || s2->mem_id) {
+      /* どちらか一方 or 両方がエンコードを持つ場合、同型性判定ではなく
+         エンコードを使い比較する */
+      state_calc_mem_encode(s1);
+      state_calc_mem_encode(s2);
+
+      t =
+        s1->state_name == s2->state_name &&
+        s1->mem_id_hash == s2->mem_id_hash &&
+        binstr_comp(s1->mem_id, s2->mem_id) == 0;
+    } else {
+      t =
+        s1->state_name == s2->state_name &&
+        s1->hash == s2->hash &&
+        (s1->mem_id ? lmn_mem_equals_enc(s1->mem_dump, s2->mem) : lmn_mem_equals_enc(s2->mem_dump, s1->mem));
+    }
+    if (!t) {
+      state_incr_memeq_fail(s1);
+      state_incr_memeq_fail(s2);
+    }
+  } 
 
   return t;
 }

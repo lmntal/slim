@@ -124,7 +124,7 @@ static int parse_options(int argc, char *argv[])
     {"ltl_nd", 0, 0, 1014},
     {"por", 0, 0, 1015},
     {"mem-enc", 0, 0, 2000},
-    {"mem-enc-optmem", 0, 0, 2001},
+    {"compact-stack", 0, 0, 2001},
     {"no_dump", 0,0, 5000},
     {"sp_verbose", 0, 0, 5001},
     {0, 0, 0, 0}
@@ -214,8 +214,7 @@ static int parse_options(int argc, char *argv[])
       lmn_env.mem_enc = TRUE;
       break;
     case 2001:
-      lmn_env.mem_enc = TRUE;
-      lmn_env.mem_enc_optmem = TRUE;
+      lmn_env.compact_stack = TRUE;
       break;
     case 5000: /* 状態遷移グラフのdumpをしない */
       lmn_env.dump = FALSE;
@@ -274,7 +273,7 @@ static void init_env(void)
   lmn_env.propositional_symbol = NULL;
   lmn_env.ltl_exp = NULL;
   lmn_env.mem_enc = FALSE;
-  lmn_env.mem_enc_optmem = FALSE;
+  lmn_env.compact_stack = FALSE;
   lmn_env.dump = TRUE;
   lmn_env.sp_verbose = FALSE;
 }

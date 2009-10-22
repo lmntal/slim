@@ -124,6 +124,8 @@ void state_set_property_state(State *state, BYTE prop_state);
 LMN_EXTERN inline LmnMembrane *state_mem(State *state);
 LMN_EXTERN inline LmnRule state_rule(State *state);
 LMN_EXTERN StateTransition *strans_make(State *s, unsigned long id, LmnRule rule);
+inline void state_calc_mem_dump(State *s);
+inline LmnBinStr state_mem_binstr(State *state);
 
 /* flag of the first DFS (nested DFS, on-stack state) */
 #define FST_MASK                   (0x01U)

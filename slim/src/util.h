@@ -45,5 +45,6 @@
 char *int_to_str(long n);
 int comp_int_f(const void *a, const void *b);
 int comp_int_greater_f(const void *a_, const void *b_);
+inline unsigned long round2up(unsigned long n);
 
 #endif /* !LMN_UTIL_H */

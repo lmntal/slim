@@ -388,12 +388,27 @@ BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count)
   return mem->atom_num == count;
 }
 
+/* 膜内の（子膜以下は含まない）アトムの数を返す */
+int lmn_mem_atom_num(LmnMembrane *mem)
+{
+  return mem->atom_num;
+}
+
 BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count)
 {
   unsigned int i;
   LmnMembrane *mp = mem->child_head;
   for(i = 0; mp && i <= count; mp = mp->next, i++);
   return i == count;
+}
+
+/* 子膜の数を返す */
+int lmn_mem_child_mem_num(LmnMembrane *mem)
+{
+  unsigned int i;
+  LmnMembrane *mp = mem->child_head;
+  for(i = 0; mp; mp = mp->next, i++);
+  return i;
 }
 
 /* return TRUE if # of freelinks in mem is equal to count */

@@ -85,7 +85,7 @@ Vector *nd_expand(const StateSpace states, State *state)
 
     mem = state_mem(state);
     if (!mem) {
-      mem = lmn_binstr_decode(state_mem_id(state));
+      mem = lmn_binstr_decode(state_mem_binstr(state));
     }
     nd_react_cxt_init(&rc, DEFAULT_STATE_ID);
     RC_SET_GROOT_MEM(&rc, mem);
@@ -110,11 +110,9 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
   int i;
   Vector *expanded_roots;
   Vector *expanded;
-  st_table *s;
 
   expand_inner(rc, cur_mem);
   expanded_roots = RC_EXPANDED(rc);
-  s = st_init_table(&type_statehash);
   expanded = vec_make(32);
   for (i = 0; i < vec_num(expanded_roots); i++) {
     State *state;
@@ -123,15 +121,9 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
     state = state_make_for_nd((LmnMembrane *)vec_get(expanded_roots, i),
                               (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
 
-    if (st_lookup(s, (st_data_t)state, &t)) {
-      state_free(state);
-    } else {
-      st_insert(s, (st_data_t)state, (st_data_t)state);
-      vec_push(expanded, (LmnWord)state);
-    }
+    vec_push(expanded, (LmnWord)state);
   }
 
-  st_free_table(s);
   return expanded;
 }
 
@@ -185,6 +177,8 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
        スタックに積んでおく */
     State *s = (State *)vec_peek(stack);
     Vector *expanded;
+    Vector *successors;          /* サクセッサを追加していく */
+    st_table_t succ_tbl;         /* サクセッサのポインタの重複検査に使用 */
     unsigned long expanded_num;
 
     if (is_expanded(s)) {
@@ -201,33 +195,46 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
       state_space_add_end_state(states, s);
     }
 
-    state_succ_init(s, vec_num(expanded));
+    succ_tbl= st_init_ptrtable();
+    vec_init(&successors, 16);
     for (i = 0; i < expanded_num; i++) {
       State *src_succ = (State *)vec_get(expanded, i);
       State *succ = insert_state(states, src_succ);
 
       if (succ == src_succ) { /* succが状態空間に追加された */
-        vec_push(stack, (LmnWord)src_succ);
+        vec_push(stack, (vec_data_t)src_succ);
+        vec_push(&successors, (vec_data_t)src_succ);
         /* set ss to open, i.e., on the search stack */
         set_open(src_succ);
         if (dump) dump_state_data(succ);
 
-        if (lmn_env.mem_enc_optmem) {
+        if (lmn_env.compact_stack) {
           /* メモリ最適化のために、サクセッサの作成後に膜を解放する */
           state_free_mem(succ);
         }
       } else { /* src_succは追加されなかった（すでに同じ状態がある) */
         state_free(src_succ);
       }
-      vec_push(&s->successor, (LmnWord)succ);
+      /* expandedに同じ状態がなければ、サクセッサとして追加 */
+      if (st_insert(succ_tbl, (st_data_t)succ, 0) == 0) {
+        vec_push(&successors, (vec_data_t)succ);
+      }
     }
+
+    /* 状態にサクセッサを設定する */
+    state_succ_init(s, vec_num(&successors));
+    for (i = 0; i < vec_num(&successors); i++) {
+      vec_push(&s->successor, (LmnWord)vec_get(&successors, i));
+    }
+      
     vec_free(expanded);
+    st_free_table(succ_tbl);
+    vec_destroy(&successors);
+
     set_expanded(s); /* sに展開済みフラグを立てる */
 
-    /* 膜のエンコードを行っている場合は、展開済みになった状態の膜を解放する */
-    if (lmn_env.mem_enc) {
+    /* 展開済みになった状態の膜を解放する */
       state_free_mem(s);
-    }
   }
 
   vec_free(stack);
@@ -409,7 +416,7 @@ void state_space_free(StateSpace states)
 void state_space_set_init_state(StateSpace states, State* init_state)
 {
   states->init_state = init_state;
-  st_insert(states->tbl, (st_data_t)init_state, (st_data_t)init_state);
+  insert_state(states, init_state);
 }
 
 State *state_space_init_state(StateSpace states)
@@ -460,6 +467,12 @@ State *insert_state(StateSpace states, State *s)
     return t;
   } else {
     st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
+
+    if (!lmn_env.mem_enc) {
+      /* 状態の追加時に膜のダンプを計算する */
+      state_calc_mem_dump(s);
+    }
+
     return s;
   }
 }

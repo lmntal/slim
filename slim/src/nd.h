@@ -52,16 +52,18 @@ typedef struct State State;
 struct State {
   LmnMembrane *mem;     /* グローバルルート膜 */
   unsigned long hash; /* mhash(mem) */
+  BYTE state_name;
   BOOL flags;           /* nested DFSの際にDFS{1,2}いずれの走査を受けたかや，successorが展開済であるか否かを管理するフラグ */
   Vector successor;     /* 通常時: Vector of States，ample(s)計算中: Vector of StateTransitions */
   LmnRule rule;
-  BYTE state_name;
   LmnBinStr mem_id;
+  unsigned long mem_id_hash;
+  LmnBinStr mem_dump;
+  
+  long mem_eq_fail_count;
 };
 
 typedef struct StateSpace *StateSpace;
-
-#define state_mem_id(s)  ((s)->mem_id)
 
 Vector *nd_expand(const StateSpace states, State *state);
 void run_nd(Vector *start_rulesets);
@@ -81,5 +83,8 @@ st_table_t state_space_tbl(StateSpace states);
 void dump_all_state_mem(StateSpace states, FILE *file);
 void dump_state_transition_graph(StateSpace states, FILE *file);
 void dump_state_name(StateSpace states, FILE *file);
+
+/* 膜同型性判定にこの回数以上失敗すると膜のエンコードを行う */
+#define MEM_ENCODE_THRESHOLD 2
 
 #endif

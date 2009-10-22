@@ -97,6 +97,7 @@ LMN_EXTERN void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset);
 LMN_EXTERN inline int lmn_mem_ruleset_num(LmnMembrane *mem);
 LMN_EXTERN inline LmnRuleSet  lmn_mem_get_ruleset(LmnMembrane *mem, int i);
 LMN_EXTERN BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count);
+LMN_EXTERN int lmn_mem_atom_num(LmnMembrane *mem);
 LMN_EXTERN AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
 LMN_EXTERN LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid);
 LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
@@ -123,6 +124,7 @@ LMN_EXTERN BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
   } while (0)
 
 LMN_EXTERN BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count);
+LMN_EXTERN int lmn_mem_child_mem_num(LmnMembrane *mem);
 LMN_EXTERN BOOL lmn_mem_nfreelinks(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
 LMN_EXTERN void lmn_mem_newlink(LmnMembrane *mem,

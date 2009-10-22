@@ -51,4 +51,10 @@ int binstr_byte_size(LmnBinStr p);
 
 LmnMembrane *lmn_binstr_decode(const LmnBinStr bs);
 
+BOOL lmn_mem_equals_enc(LmnBinStr bs, LmnMembrane *mem);
+
+void lmn_binstr_dump(const LmnBinStr bs);
+
+LmnBinStr lmn_mem_to_binstr(LmnMembrane *mem);
+
 #endif /* LMN_MEMBRANE_H */

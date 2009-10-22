@@ -73,6 +73,10 @@ struct RuntimeStatus {
   unsigned long encode_space;           /* memory size by mem encode (Byte) */
   unsigned long encode_len_average;     /* average length of mem encode */
 
+  unsigned long mem_enc_eq_num;      /* # of mem_encode call */
+  double total_mem_enc_eq_time;      /* total time of mem encode */
+  clock_t tmp_mem_enc_eq_start;
+
   time_t time1, time2;               /* clock()のオーバーフロー時に使う */
   double total_expand_time;         /* 状態展開時間 */
   double total_commit_time;
@@ -86,6 +90,9 @@ struct RuntimeStatus {
   unsigned long total_rule_backtrack_num;
   unsigned long counter_example_num;
   unsigned long state_num;
+  unsigned long transition_num;
+  unsigned long created_state_num;
+  unsigned long created_transition_num;
 
 } runtime_status;
 
@@ -111,6 +118,8 @@ void runtime_status_init()
   runtime_status.mhash_call_num = 0;
   runtime_status.mem_equals_num = 0;
   runtime_status.total_mem_equals_time = 0.0;
+  runtime_status.mem_enc_eq_num = 0;
+  runtime_status.total_mem_enc_eq_time = 0.0;
   runtime_status.mem_encode_num = 0;
   runtime_status.total_mem_encode_time = 0.0;
 
@@ -124,6 +133,8 @@ void runtime_status_init()
   runtime_status.total_rule_backtrack_num = 0;
   runtime_status.counter_example_num      = 0;
   runtime_status.state_num                = 0;
+  runtime_status.created_state_num        = 0;
+  runtime_status.created_transition_num   = 0;
 }
 
 void runtime_status_finalize()
@@ -231,6 +242,18 @@ void status_finish_mem_equals_calc()
     (clock() - runtime_status.tmp_mem_equals_start)/(double)CLOCKS_PER_SEC;
 }
 
+void status_start_mem_enc_eq_calc()
+{
+  runtime_status.mem_enc_eq_num++;
+  runtime_status.tmp_mem_enc_eq_start =  clock();
+}
+
+void status_finish_mem_enc_eq_calc()
+{
+  runtime_status.total_mem_enc_eq_time +=
+    (clock() - runtime_status.tmp_mem_enc_eq_start)/(double)CLOCKS_PER_SEC;
+}
+
 void status_start_mem_encode_calc()
 {
   runtime_status.mem_encode_num++;
@@ -241,6 +264,11 @@ void status_finish_mem_encode_calc()
 {
   runtime_status.total_mem_encode_time +=
     (clock() - runtime_status.tmp_mem_encode_start)/(double)CLOCKS_PER_SEC;
+}
+
+void status_create_new_state()
+{
+  runtime_status.created_state_num++;
 }
 
 void output_runtime_status(FILE *f)
@@ -260,6 +288,7 @@ void output_runtime_status(FILE *f)
       if (lmn_env.ltl_all){
         fprintf(f, "%-30s: %10lu\n", "# of counter examples", runtime_status.counter_example_num);
       }
+      fprintf(f, "%-30s: %10lu\n", "# of created states", runtime_status.created_state_num);
     }
     fprintf(f, "%-30s: %10.2lf\n", "elapsed time (sec)", tmp_total_time);
     fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
@@ -287,6 +316,10 @@ void output_runtime_status(FILE *f)
               runtime_status.mem_equals_num);
       fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
               runtime_status.total_mem_equals_time);
+      fprintf(f, "%-30s: %10lu\n", "# of mem_enc_equals calls",
+              runtime_status.mem_enc_eq_num);
+      fprintf(f, "%-30s: %10.2lf\n", "total mem_enc_equals time (sec)",
+              runtime_status.total_mem_enc_eq_time);
       fprintf(f, "%-30s: %10lu\n", "# of mem_encode calls",
               runtime_status.mem_encode_num);
       fprintf(f, "%-30s: %10.2lf\n", "total mem_encode time (sec)",
@@ -358,10 +391,10 @@ static int dispersal_f(st_data_t key, st_data_t s_, st_data_t tbl_)
   State *s = (State*)s_;
 
   st_data_t n;
-  if (!st_lookup((st_table_t)tbl, (st_data_t)s->hash, &n)) {
+  if (!st_lookup((st_table_t)tbl, (st_data_t)state_hash(s), &n)) {
     n = 0;
   }
-  st_insert((st_table_t)tbl, (st_data_t)s->hash, (st_data_t)(n+1));
+  st_insert((st_table_t)tbl, (st_data_t)state_hash(s), (st_data_t)(n+1));
 /*   fprintf(stdout, "%d :: ", s->hash); */
 /*   lmn_dump_mem_stdout(s->mem); */
 
@@ -429,7 +462,7 @@ void output_hash_conflict(FILE *f)
 static int encode_info_f(st_data_t key, st_data_t s_, st_data_t t)
 {
   State *s = (State*)s_;
-  LmnBinStr bs = state_mem_id(s);
+  LmnBinStr bs = state_mem_binstr(s);
   if (bs) {
     int bs_size = binstr_byte_size(bs);
 

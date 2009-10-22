@@ -58,6 +58,7 @@ LMN_EXTERN LmnWord vec_pop_n(Vector *vec, unsigned int n);
 LMN_EXTERN LmnWord vec_peek(const Vector *vec);
 LMN_EXTERN inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp);
 LMN_EXTERN inline LmnWord vec_get(const Vector *vec, unsigned int index);
+LMN_EXTERN LmnWord vec_last(Vector *vec);
 LMN_EXTERN BOOL vec_contains(const Vector *vec, LmnWord keyp);
 LMN_EXTERN inline void vec_clear(Vector *vec);
 LMN_EXTERN inline void vec_destroy(Vector *vec);

@@ -121,6 +121,11 @@ inline LmnWord vec_get(const Vector *vec, unsigned int index) {
   return(vec->tbl[index]);
 }
 
+inline LmnWord vec_last(Vector *vec)
+{
+  return vec->tbl[vec->num-1];
+}
+
 /* contains */
 BOOL vec_contains(const Vector *vec, LmnWord keyp) {
   unsigned int i = 0;

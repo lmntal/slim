@@ -57,6 +57,8 @@ void status_start_state_hash_calc(void);
 void status_finish_state_hash_calc(void);
 void status_start_mem_equals_calc(void);
 void status_finish_mem_equals_calc(void);
+void status_start_mem_enc_eq_calc(void);
+void status_finish_mem_enc_eq_calc(void);
 void status_start_mem_encode_calc(void);
 void status_finish_mem_encode_calc(void);
 void calc_encode_info(StateSpace states);
@@ -75,5 +77,6 @@ void status_start_commit(void);
 void status_finish_commit(void);
 void status_count_counterexaple(void);
 void status_set_state_num(unsigned long n);
+void status_create_new_state(void);
 
 #endif

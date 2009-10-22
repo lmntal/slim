@@ -218,7 +218,7 @@ struct LmnEnv {
   char *propositional_symbol;
   char *ltl_exp;
   BOOL mem_enc;
-  BOOL mem_enc_optmem;
+  BOOL compact_stack;
   BOOL sp_verbose;
   BOOL dump;
 };
