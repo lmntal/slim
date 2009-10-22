@@ -183,7 +183,7 @@ static LmnFunctor functor_intern(BOOL special,
                                  lmn_interned_str name,
                                  int arity)
 {
-  int id;
+  st_data_t id;
   LmnFunctorEntry entry;
 
   entry.special = special;
@@ -192,7 +192,7 @@ static LmnFunctor functor_intern(BOOL special,
   entry.arity = arity;
 
   /* すでにテーブル内にあるならそれを返す */
-  if (st_lookup(functor_id_tbl, (st_data_t)&entry, (st_data_t *)&id)) return id;
+  if (st_lookup(functor_id_tbl, (st_data_t)&entry, &id)) return id;
   else {
     struct LmnFunctorEntry *new_entry;
 

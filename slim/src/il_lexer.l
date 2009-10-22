@@ -101,21 +101,21 @@ DIGIT    [0-9]
  /* ruleset id */
 @{DIGIT}+ {
   /* この時点でVM内で一位のルールセットIDに変換する */
-  int id_local = atoi(yytext+1);
-  int id_global;
+  st_data_t id_local = atoi(yytext+1);
+  st_data_t id_global;
   struct lexer_context *c;
 
   c = yyget_extra(yyscanner);
   /* テーブルにあればそれを使う */
   if (st_lookup(c->ruleset_id_tbl,
-                (st_data_t)id_local,
-                (st_data_t*)&id_global)) {
-    yylval->_int = id_global;
+                id_local,
+                &id_global)) {
+    yylval->_int = (int)id_global;
   } else {
     /* なければ新しく追加 */
     id_global = lmn_gen_ruleset_id();
-    st_insert(c->ruleset_id_tbl, (st_data_t)id_local, (st_data_t)id_global);
-    yylval->_int = id_global;
+    st_insert(c->ruleset_id_tbl, id_local, id_global);
+    yylval->_int = (int)id_global;
   }
   return RULESET_ID; }
 "null" { yylval->str = ANONYMOUS; /* 取り合えず空の文字列にしておく */

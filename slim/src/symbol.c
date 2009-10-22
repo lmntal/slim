@@ -81,11 +81,11 @@ lmn_interned_str create_new_id()
 
 lmn_interned_str lmn_intern(const char *name)
 {
-  lmn_interned_str new_id;
+  st_data_t new_id;
   char *name2;
 
   /* すでにnameに対応する値があるならそれを返す */
-  if (st_lookup(sym_tbl, (st_data_t)name, (st_data_t *)&new_id)) return new_id;
+  if (st_lookup(sym_tbl, (st_data_t)name, &new_id)) return new_id;
 
   /* 新しいIDを作る */
   new_id = create_new_id();

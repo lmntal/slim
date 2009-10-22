@@ -452,6 +452,7 @@ static void free_context(Context ctx)
 
 static int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash)
 {
+  /* hash_tとst_data_tは同サイズだからok */
   if (st_lookup(ctx->done_mem, (st_data_t)mem, (st_data_t*)hash)) return 1;
   else return 0;
 }

@@ -128,9 +128,9 @@ static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_)
 
 unsigned int automata_state_id(Automata a, char *state_name)
 {
-  unsigned int id;
+  st_data_t id;
 
-  if (st_lookup(a->state_name_to_id, (st_data_t)state_name, (st_data_t*)&id)) {
+  if (st_lookup(a->state_name_to_id, (st_data_t)state_name, &id)) {
     return id;
   } else {
     /* 0から順にIDを付ける */
@@ -182,9 +182,9 @@ void automata_set_init_state(Automata a, atmstate_id_t id)
 
 unsigned int automata_propsym_to_id(Automata a, char *prop_name)
 {
-  unsigned int id;
+  st_data_t id;
 
-  if (st_lookup(a->prop_to_id, (st_data_t)prop_name, (st_data_t*)&id)) {
+  if (st_lookup(a->prop_to_id, (st_data_t)prop_name, &id)) {
     return id;
   } else {
     /* 0から順にIDを付ける */

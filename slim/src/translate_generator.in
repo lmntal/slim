@@ -56,7 +56,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
                                             int *finishflag)
 {
   LmnInstrOp op;
-  const BYTE *op_address = instr;
+  const BYTE * const op_address = instr;
   
   READ_VAL(LmnInstrOp, instr, op);
   *finishflag = 1;
@@ -81,20 +81,14 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
     if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
 #__echo_t
     {
-      char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
-      char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
-      instr = translate_instructions(instr, jump_points, header, buf_success, buf_fail, indent+1);
-      free(buf_success);
-      free(buf_fail);
+      char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
+      free(buf_always);
     }
 #__format
-  label_success_$a:
+  label_always_$a:
     hashset_free((HashSet *)wt[$0]);
     $s;
-    lmn_fatal("translate recursive error\n");
-  label_fail_$a:
-    hashset_free((HashSet *)wt[$0]);
-    $f;
     lmn_fatal("translate recursive error\n");
   }
 % *finishflag = 0;
@@ -106,20 +100,14 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
     if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
 #__echo_t
     {
-      char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
-      char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
-      instr = translate_instructions(instr, jump_points, header, buf_success, buf_fail, indent+1);
-      free(buf_success);
-      free(buf_fail);
+      char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
+      free(buf_always);
     }
 #__format
-  label_success_$a:
+  label_always_$a:
     hashset_free((HashSet *)wt[$0]);
     $s;
-    lmn_fatal("translate recursive error\n");
-  label_fail_$a:
-    hashset_free((HashSet *)wt[$0]);
-    $f;
     lmn_fatal("translate recursive error\n");
   }
 % *finishflag = 0;
@@ -558,7 +546,6 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
     lmn_fatal("translate recursive error\n");
   }
 % *finishflag = 0;
-
 
 #removeground LmnInstrVar LmnInstrVar
   {

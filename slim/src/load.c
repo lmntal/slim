@@ -40,6 +40,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <limits.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -248,7 +249,7 @@ void dump_il(IL il)
  *  * argument
  *    * integer functor
  *        BYTE(LMN_INT_ATTR)
- *        int                   : integer value
+ *        long                  : integer value
  *    * float functor
  *        BYTE(LMN_FLOAT_ATTR)
  *        double                : double nvalue
