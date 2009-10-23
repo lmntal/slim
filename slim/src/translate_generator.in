@@ -36,7 +36,7 @@
  * $Id: translate_generator.in,v 1.5 2008/09/19 05:18:17 riki Exp $
  */
 
-#__echo_t
+#__echo
  #include "translate.h"
  #include "syntax.h"
  #include "arch.h"
@@ -44,9 +44,8 @@
  #include "error.h"
  #include <stdio.h>
 
-/* just for debug! */
-static FILE *OUT = NULL;
-
+#__echo_t
+# トランスレータ用の関数宣言
 const BYTE *translate_instruction_generated(const BYTE *instr,
                                             Vector *jump_points,
                                             const char *header,
@@ -61,14 +60,36 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
   READ_VAL(LmnInstrOp, instr, op);
   *finishflag = 1;
 
+  switch (op) {
+
+
+#__echo_i
+# インタプリタ用の関数宣言
+ #include "so.h"
+ #define TR_GFID(x) (x)
+ #define TR_GSID(x) (x)
+ #define TR_GRID(x) (x)
+
+/* just for debug! */
+static FILE *OUT = NULL;
+
+BOOL interpret_generated(struct ReactCxt *rc,
+                         LmnRule rule,
+                         LmnRuleInstr instr)
+{
+  LmnInstrOp op;
+
   /* just for debug! */
   if(! OUT){
-    //OUT = stderr;
+    //out = stderr;
     OUT = stdout;
     //OUT = fopen("/dev/null", "w");
   }
 
-  switch (op) {
+  while (TRUE) {
+  LOOP:;
+    READ_VAL(LmnInstrOp, instr, op);
+    switch (op) {
 
 
 #spec LmnInstrVar LmnInstrVar
@@ -85,13 +106,15 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
       instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
       free(buf_always);
     }
-#__format
+#__format_t
   label_always_$a:
     hashset_free((HashSet *)wt[$0]);
     $s;
     lmn_fatal("translate recursive error\n");
+#__format
   }
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #insertconnectors LmnInstrVar $list LmnInstrVar
   {
@@ -104,13 +127,15 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
       instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
       free(buf_always);
     }
-#__format
+#__format_t
   label_always_$a:
     hashset_free((HashSet *)wt[$0]);
     $s;
     lmn_fatal("translate recursive error\n");
+#__format
   }
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #commit lmn_interned_str LmnLineNum
   {
@@ -124,15 +149,17 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
       instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
       free(buf_always);
     }
-#__format
+#__format_t
   label_always_$a:
     if(tr_instr_commit_finish(rc, NULL, $0, $1, &ptmp_global_root, &pwt_temp, &pat_temp))
       $s;
     else
       $f;
     lmn_fatal("translate recursive error\n");
+#__format
   }
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #findatom LmnInstrVar LmnInstrVar $functor
 % if(LMN_ATTR_IS_DATA(targ2_attr)){
@@ -160,7 +187,8 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
     }
     $f;
 % }
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
   wt[$0] = (LmnWord)LMN_PROXY_GET_MEM(wt[$1]);
@@ -180,7 +208,8 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
     }
     $f;
   }
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #nmems LmnInstrVar LmnInstrVar
   if(!lmn_mem_nmems((LmnMembrane*)wt[$0], $1)) $f;
@@ -226,8 +255,8 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
   TR_INSTR_RELINK($0, $1, $2, $3, $4);
 
 #getlink LmnInstrVar LmnInstrVar LmnInstrVar
-% /* リンク先の取得をせずにリンク元の情報を格納しておく。
-%    リンク元が格納されていることを示すため最下位のビットを立てる */
+# /* リンク先の取得をせずにリンク元の情報を格納しておく。
+#    リンク元が格納されていることを示すため最下位のビットを立てる */
   wt[$0] = LMN_SATOM_GET_LINK(wt[$1], $2);
   at[$0] = LMN_SATOM_GET_ATTR(wt[$1], $2);
 
@@ -236,11 +265,13 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 
 #proceed
   $s;
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #stop
   $f;
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #not LmnSubInstrSize
   { /* not */
@@ -251,9 +282,10 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
       assert(next == instr+targ0);
       instr = next;
     }
-#__format
+#__format_t
   label_fail_$a: /* not */
     ;
+#__format
   }
 
 #enqueueatom LmnInstrVar
@@ -305,10 +337,10 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
   {
     LmnRuleSet ruleset;
     if ((ruleset = lmn_get_module_ruleset(TR_GSID($1)))) {
-%     /* テーブル内にルールセットがある場合 */
+#     /* テーブル内にルールセットがある場合 */
       lmn_mem_add_ruleset((LmnMembrane*)wt[$0], ruleset);
     } else {
-%     /* テーブル内にルールセットがない場合 */
+#     /* テーブル内にルールセットがない場合 */
       fprintf(stderr, "Undefined module %s\n", lmn_id_to_name(TR_GSID($1)));
     }
   }
@@ -343,10 +375,13 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 %     case LMN_DBL_ATTR:
         if(*(double*)wt[$0] != $1_double_data) $f;
 %       break;
-%     case LMN_STRING_ATTR:
-        if(! lmn_string_eq(lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data))), wt[$0])) $f;
+%     case LMN_STRING_ATTR: {
+        LmnString s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
+        if(! lmn_string_eq(s, (LmnString)wt[$0])) $f;
+        lmn_string_free(s);
 %       fprintf(stderr, "string attr is not implemented.");
 %       break;
+%     }
 %     default:
 %       lmn_fatal("implementation error");
 %     }
@@ -369,10 +404,13 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
         if(*(double*)wt[$0] == $1_double_data) $f;
 %       fprintf(stderr, "double attr is not implemented.");
 %       break;
-%     case LMN_STRING_ATTR:
-        if(lmn_string_eq(lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data))), wt[$0])) $f;
+%     case LMN_STRING_ATTR: {
+        LmnString s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
+        if(lmn_string_eq(s, (LmnString)wt[$0])) $f;
+        lmn_string_free(s);
 %       fprintf(stderr, "string attr is not implemented.");
 %       break;
+%     }
 %     default:
 %       lmn_fatal("implementation error");
 %     }
@@ -402,7 +440,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
   if (LMN_ATTR_IS_DATA(at[$0])) {
     switch (at[$0]) {
     case LMN_SP_ATOM_ATTR:
-      /* スペシャルアトムはgroundの結果をunaryの結果とする */
+#     /* スペシャルアトムはgroundの結果をunaryの結果とする */
       if (!SP_ATOM_IS_GROUND(wt[$0])) $f;
       break;
     default:
@@ -461,7 +499,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
       free(buf_success);
       free(buf_fail);
     }
-#__format
+#__format_t
   label_success_$a:
     vec_free(listvec);
     $s;
@@ -470,8 +508,10 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
     vec_free(listvec);
     $f;
     lmn_fatal("translate recursive error\n");
+#__format
   }
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #addtolist LmnInstrVar LmnInstrVar
   vec_push((Vector *)wt[$0], $1);
@@ -538,14 +578,16 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
       instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
       free(buf_always);
     }
-#__format
+#__format_t
   label_always_$a:
     free_links(dstlovec);
     vec_free(retvec);
     $s;
     lmn_fatal("translate recursive error\n");
+#__format
   }
-% *finishflag = 0;
+#__echo_t
+  *finishflag = 0;
 
 #removeground LmnInstrVar LmnInstrVar
   {
@@ -685,8 +727,12 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 %   break;    
 % case LMN_DBL_ATTR:
     {
+#__format_t
       static const double d = $1_double_data;
       wt[$0] = &d;
+#__format_i
+  /* 困った */
+#__format
     }
 %   break;
 % case LMN_STRING_ATTR:
@@ -747,8 +793,12 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 %     break;
 %   case LMN_DBL_ATTR:
       {
+#__format_t
         const static double x = $1_double_data;
         wt[$0] = &x;
+#__format_i
+  /* 困った */
+#__format
       }
 %     break;
 %   case LMN_STRING_ATTR:
@@ -845,10 +895,19 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 
 
 #__echo_t
+# トランスレータ用関数の最後
   default:
-    /* always failure */
     *finishflag = -1;
     return instr;
   }
 }
 
+
+#__echo_i
+# インタプリタ用関数の最後
+    default:
+      fprintf(stderr, "interpret_generated: Unknown operation %d\n", op);
+      exit(1);
+    }
+  }
+}

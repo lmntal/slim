@@ -41,6 +41,7 @@
 
 # mode
 #  行頭で#__echoのように指定すると,次のモード指定まではその出力方式になる
+#  行頭に# と#の後に空白を入れると,その行はコメントとみなされる
 $modes = [  # 実装注意: シンボル定義だと略記の処理であまり気持ちよくない  後の処理で使うのでechoの後にformatを順番どおり並べること
 "__ignore",   #  __ignore 無視する, 最初にモードが指定されるまでは__ignoreになっている
 "__echo",     #  __echo 書かれていることをそのままトランスレータ/インタプリタのコードに出力
@@ -57,6 +58,7 @@ $format_end_index = $modes.index("__format_t") # format系modeの最後のindex
 
 # case
 #  行頭で#hogeのように上記のモードにないものを指定すると,中間命令INSTR_HOGE(すべて大文字に置換される)に対するコード生成を行う
+#  #と命令名の間に空白を入れないようにすること
 #  #hoge X Y Zのように引数を指定する
 #  caseを開くと自動的に__formatモードになる
 #  case開始から次のcaseまでがその中間命令を実行するためのコードである
@@ -96,7 +98,7 @@ $format_end_index = $modes.index("__format_t") # format系modeの最後のindex
 #   -文字列ファンクタ:   $0_string_data
 #   -シンボルファンクタ: $0_functor_data
 #  と種類に応じて使うデータを変える必要がある (実際扱うコードもバラバラなため,冗長な訳ではない)
-#  インタプリタ二体しては,意味上では int targ0_attr=読み込み;struct union LmnFunctoLiteral targ0=読み込み;  を生成する.
+#  インタプリタに対しては,意味上では int targ0_attr=読み込み;struct union LmnFunctoLiteral targ0=読み込み;  を生成する.
 #  トランスレータに対しては, int targ0_attr=読み込み;struct union LmnFunctoLiteral targ0=読み込み;  を生成し,(targ0.long_data等でアクセスする)
 #  更にトランスレータ出力結果に  int targ0_attr=定数;何か targ0_何か=定数; が出力されるようなコード生成を行う.(もちろんattrに応じた種類のみを利用すること)
 #  実際には即値が埋め込まれる
@@ -181,6 +183,7 @@ def case_close(arg)
   print "}\n"
 end
 
+
 # トランスレータ生成時に処理文をprintfで出力するためのプログラムを出力する
 # 上の引数のところで書いたように一部の種の変数は置換を行わないため, n番引数がそれか否かを知るためargを引数に取る
 
@@ -191,7 +194,6 @@ def print_interp_format(line, arg)
   # $s : 成功確定なので return TRUE
   # $a : op_address 関数の最初で保存しておく ややこしいから使えなくする？
   # 引数がファンクタの場合のみ, $1_long_data を targ1_long_data ではなく targ1.long_dataに変換してやる
-  print "IF:: "
   
   pos = 0
   while (pos=line.index("$", pos+1)) != nil
@@ -313,7 +315,7 @@ def print_trans_format(line, arg)
     end
   end
   # 最終的に表示するのはここ
-  print "  print_indent(indent); fprintf(OUT, \"", line, "\\n\""
+  print "  print_indent(indent); printf(\"", line, "\\n\""
   format_arg.each{|x| print ", ", x}
   print ");\n"
 end
@@ -321,7 +323,6 @@ end
 # -iオプションがついていたらインタプリタ生成, ついていなければトランスレータ生成
 if ARGV.include?("-i") then $translator_generate = false end
 is_case_opened = false # 今case文が開いているかどうか
-is_buffering_endl = false # 今空行の改行出力を留保しているかどうか 各case内の最後の改行は出力しない
 mode = "__ignore" # 今の出力モード
 line = ""
 arg = [] # 今開いているcaseの引数
@@ -331,32 +332,26 @@ while(line=STDIN.gets)
   $linenum = $linenum + 1
   line.chop!
 
-  if line == ""
-    # 既に改行がバッファされていれば(=2行連続空行)改行 そうでなければ貯めておく
-    if is_buffering_endl
-      print "\n"
-    else
-      is_buffering_endl = true
-    end
+  if line[0]=="#"[0] and (line.length==1 or line[1]==" "[0] or line[1]=="\n"[0] or line[1]=="\t"[0])
+    # #だけの行 or #の直後に空白があればその行はコメント
+    next
   elsif line == "#__end" # __end命令
-    # 今ケースが開いていたら閉じる, 貯めていた改行はもう出力しない, その後__echoモードにする
+    # 今ケースが開いていたら閉じる, その後__echoモードにする
     if is_case_opened
       is_case_opened = false
       case_close(arg)
     end
-    is_buffering_endl = false
     mode = "__echo"
-  elsif line[0] == "#"[0] # 何かのコマンド
+  elsif line[0] == "#"[0] # 何かのコマンド?
     t = line[1,line.size-1].split(" ")
     a = $modes.index(t[0]) # モード名をindexに変換
     
     if a == nil # モード指定ではない場合=中間命令対応のcase文の開始
-      # 既にcase文が開いていたら閉じる, caseを開く直前の改行は捨てる
+      # 既にcase文が開いていたら閉じる
       if is_case_opened
         case_close(arg)
       end
       is_case_opened = true
-      is_buffering_endl = false
       # ケースを開く, モードは__formatに
       arg = t[1,t.size-1]
       case_open(t[0], arg)
@@ -365,10 +360,8 @@ while(line=STDIN.gets)
       mode = t[0]
     end
   else # コマンドでもない場合
-    # 溜まっている空行があれば出力
-    if is_buffering_endl
-      print "\n"
-      is_buffering_endl = false
+    if line == ""
+      next
     end
 
     temp_mode = mode # 一時的なモード変数
@@ -378,7 +371,7 @@ while(line=STDIN.gets)
       line[0,1] = " "
       temp_mode = $modes[temp_mode_index-($format_end_index-$format_first_index+1)]
     end
-    
+
     case temp_mode
     when "__ignore"
     when "__echo"

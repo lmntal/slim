@@ -53,6 +53,7 @@
 #include "special_atom.h"
 #include "error.h"
 #include "task.h"
+#include "mc.h"
 
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */

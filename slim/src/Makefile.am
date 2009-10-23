@@ -12,8 +12,8 @@ PARSER_HEADER := $(patsubst %, %.h, $(PARSERS))
 PARSER_SOURCE := $(patsubst %, %.c, $(PARSERS))
 
 # 事前に必要なファイル
-BUILT_SOURCES = arch.h $(PARSER_SOURCE) translate_generated.c
-CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c
+BUILT_SOURCES = arch.h $(PARSER_SOURCE) translate_generated.c interpret_generated.c
+CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c interpret_generated.c
 
 # .yファイルは .lより先に書く
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
@@ -23,6 +23,7 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_po
 	memory_pool.h rule.h system_ruleset.h task.h vector.h st.c symbol.h symbol.c functor.h functor.c \
 	syntax.h syntax.c il_parser.y il_lexer.l instruction.c load.h load.c st.h arch.h \
 	mc.h mc.c mhash.h mhash.c por.h por.c runtime_status.h runtime_status.c \
+	interpret_generated.c \
 	translate.c translate.h translate_generated.c translate_generator.rb translate_generator.in so.h \
 	nc_parser.y nc_lexer.l automata.h automata.c \
 	lmntal_system_adapter.h lmntal_system_adapter.c \
@@ -51,3 +52,6 @@ arch.h ../lib/config.lmn: genconfig
 
 translate_generated.c: translate_generator.in translate_generator.rb
 	ruby ./translate_generator.rb <$< >$@
+
+interpret_generated.c: translate_generator.in translate_generator.rb
+	ruby ./translate_generator.rb <$< >$@ -i
