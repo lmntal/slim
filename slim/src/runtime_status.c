@@ -394,7 +394,11 @@ static int dispersal_f(st_data_t key, st_data_t s_, st_data_t tbl_)
   if (!st_lookup((st_table_t)tbl, (st_data_t)state_hash(s), &n)) {
     n = 0;
   }
-  st_insert((st_table_t)tbl, (st_data_t)state_hash(s), (st_data_t)(n+1));
+  if (lmn_env.mem_enc) {
+    st_insert((st_table_t)tbl, (st_data_t)state_memid_hash(s), (st_data_t)(n+1));
+  } else {
+    st_insert((st_table_t)tbl, (st_data_t)state_hash(s), (st_data_t)(n+1));
+  }
 /*   fprintf(stdout, "%d :: ", s->hash); */
 /*   lmn_dump_mem_stdout(s->mem); */
 

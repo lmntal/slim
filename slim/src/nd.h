@@ -59,8 +59,6 @@ struct State {
   LmnBinStr mem_id;
   unsigned long mem_id_hash;
   LmnBinStr mem_dump;
-  
-  long mem_eq_fail_count;
 };
 
 typedef struct StateSpace *StateSpace;
@@ -84,7 +82,18 @@ void dump_all_state_mem(StateSpace states, FILE *file);
 void dump_state_transition_graph(StateSpace states, FILE *file);
 void dump_state_name(StateSpace states, FILE *file);
 
+inline BOOL state_space_calc_memid_hash(StateSpace states, unsigned long hash);
+inline void state_calc_mem_encode(State *s);
+inline void state_calc_mem_dump(State *s);
+
+extern struct st_hash_type type_statehash;
+extern struct st_hash_type type_memid_statehash;
+inline void state_calc_mem_dump(State *s);
+inline void state_free_mem_dump(State *s);
+inline int state_memid_cmp(st_data_t _s1, st_data_t _s2);
+inline long state_memid_hash(State *s);
+
 /* 膜同型性判定にこの回数以上失敗すると膜のエンコードを行う */
-#define MEM_ENCODE_THRESHOLD 2
+#define MEM_EQ_FAIL_THRESHOLD 2
 
 #endif

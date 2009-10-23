@@ -217,6 +217,19 @@ void st_free_table(st_table *table) {
     }\
 } while (0)
 
+#define FIND_ENTRY_WITH_COL(table, ptr, hash_val, bin_pos, collision) do {   \
+    bin_pos = hash_val%(table)->num_bins;\
+    ptr = (table)->bins[bin_pos];\
+    if (PTR_NOT_EQUAL(table, ptr, hash_val, key)) {\
+      if ((ptr) != 0 && (ptr->hash == (hash_val))) (collision)++;   \
+      while (PTR_NOT_EQUAL(table, ptr->next, hash_val, key)) {\
+          ptr = ptr->next;\
+          if ((ptr) != 0 && (ptr->hash == (hash_val))) (collision)++;   \
+      }\
+      ptr = ptr->next;\
+    }\
+} while (0)
+
 /* キーがkeyであるテーブルの値をvalueに設定する。
  キーが見つからなければ0を返し，見つかれば1を返す。*/
 int st_lookup(st_table *table, register st_data_t key, st_data_t *value) {
@@ -225,6 +238,26 @@ int st_lookup(st_table *table, register st_data_t key, st_data_t *value) {
 
   hash_val = do_hash(key, table);
   FIND_ENTRY(table, ptr, hash_val, bin_pos);
+
+  if (ptr == 0) {
+    return 0;
+  } else {
+    if (value != 0)
+      *value = ptr->record;
+    return 1;
+  }
+}
+
+
+/* キーがkeyであるテーブルの値をvalueに設定する。
+ キーが見つからなければ0を返し，見つかれば1を返す。*/
+int st_lookup_with_col(st_table *table, register st_data_t key, st_data_t *value, long *n_col) {
+  unsigned int hash_val, bin_pos;
+  register st_table_entry *ptr;
+
+  *n_col = 0;
+  hash_val = do_hash(key, table);
+  FIND_ENTRY_WITH_COL(table, ptr, hash_val, bin_pos, *n_col);
 
   if (ptr == 0) {
     return 0;
@@ -476,6 +509,52 @@ int st_foreach(st_table *table, int(*func)( ANYARGS), st_data_t arg) {
         free(tmp);
         table->num_entries--;
       }
+    }
+  }
+  return 0;
+}
+
+/* ハッシュ値に hash を持つ状態すべてに対して関数 func を適用する */
+int st_foreach_hash(st_table *table, st_data_t hash, int(*func)( ANYARGS), st_data_t arg) {
+  st_table_entry *ptr, *last, *tmp;
+  enum st_retval retval;
+  st_data_t hash_val = hash % table->num_bins;
+
+  last = 0;
+  for (ptr = table->bins[hash_val]; ptr != 0;) { /* エントリーの存在するチェインでのみfuncが呼ばれる */
+    if (ptr->hash != hash) {
+      ptr = ptr->next;
+      continue;
+    }
+    retval = (*func)(ptr->key, ptr->record, arg);
+    switch (retval) {
+    case ST_CHECK: /* check if hash is modified during iteration */
+      tmp = 0;
+      for (tmp = table->bins[hash_val]; tmp; tmp = tmp->next) {
+        if (tmp == ptr)
+          break;
+      }
+      if (!tmp) {
+        /* call func with error notice */
+        return 1;
+      }
+      /* fall through */
+    case ST_CONTINUE:
+      last = ptr;
+      ptr = ptr->next;
+      break;
+    case ST_STOP:
+      return 0;
+    case ST_DELETE:
+      tmp = ptr;
+      if (last == 0) {
+        table->bins[hash_val] = ptr->next;
+      } else {
+        last->next = ptr->next;
+      }
+      ptr = ptr->next;
+      free(tmp);
+      table->num_entries--;
     }
   }
   return 0;

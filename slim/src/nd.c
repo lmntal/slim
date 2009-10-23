@@ -51,6 +51,11 @@ struct StateSpace {
   State *init_state;
   Vector *end_states;
   st_table_t tbl;
+
+  /* ハッシュ値（mhash）が一定値（MEM_EQ_FAIL_THRESHOLD）以上衝突すると、
+     そのハッシュ値を持つ状態は、膜のIDを計算し、以降はIDで比較を行う */
+  st_table_t memid_tbl;        /* 膜のIDを計算した状態を格納（tblにも同じ状態がある） */
+  HashSet memid_hashes;   /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
 };
 
 static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem);
@@ -395,8 +400,11 @@ StateSpace state_space_make()
 {
   struct StateSpace *ss = LMN_MALLOC(struct StateSpace);
   ss->init_state = NULL;
-  ss->tbl = st_init_table(&type_statehash);
+  if (lmn_env.mem_enc) ss->tbl = st_init_table(&type_memid_statehash);
+  else ss->tbl = st_init_table(&type_statehash);
+  ss->memid_tbl = st_init_table(&type_memid_statehash);
   ss->end_states = vec_make(64);
+  hashset_init(&ss->memid_hashes, 128);
   return ss;
 }
 
@@ -408,7 +416,9 @@ void state_space_free(StateSpace states)
   st_foreach(states->tbl, kill_States_chains, (st_data_t)&rm_tbl);
   hashset_destroy(&rm_tbl);
   st_free_table(states->tbl);
+  st_free_table(states->memid_tbl);
   vec_free(states->end_states);
+  hashset_destroy(&states->memid_hashes);
   LMN_FREE(states);
 }
 
@@ -439,6 +449,28 @@ const Vector *state_space_end_states(StateSpace states)
   return states->end_states;
 }
 
+static int state_space_mem_encode_f(st_data_t _k, st_data_t _s, st_data_t _t)
+{
+  StateSpace states = (StateSpace)_t;
+  State *s = (State *)_s;
+
+  state_calc_mem_encode(s);
+  st_add_direct(states->memid_tbl, (st_data_t)s, (st_data_t)s);
+  return ST_CONTINUE;
+}
+
+/* 膜のエンコードを行うハッシュ値(mhash)を追加 */
+void state_space_add_memid_hash(StateSpace states, unsigned long hash)
+{
+  hashset_add(&states->memid_hashes, hash);
+  st_foreach_hash(states->tbl, hash, state_space_mem_encode_f, (st_data_t)states);
+}
+
+inline BOOL state_space_calc_memid_hash(StateSpace states, unsigned long hash)
+{
+  return hashset_contains(&states->memid_hashes, hash);
+}
+
 /**
  * 非決定実行 or LTLモデル検査終了後にStates内に存在するチェインをすべてfreeする
  * 高階関数st_foreach(c.f. st.c)に投げて使用
@@ -461,18 +493,40 @@ static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tb
 
 State *insert_state(StateSpace states, State *s)
 {
-  State *t;
-  if (st_lookup(states->tbl, (st_data_t)s, (st_data_t *)&t)) {
-    return t;
-  } else {
-    st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
+  long col;
+  BOOL has_mem_id;
+  st_data_t t;
 
-    if (!lmn_env.mem_enc) {
-      /* 状態の追加時に膜のダンプを計算する */
-      state_calc_mem_dump(s);
+  has_mem_id = state_space_calc_memid_hash(states, s->hash);
+  if (has_mem_id) {
+    state_calc_mem_encode(s);
+
+    if (st_lookup(states->memid_tbl, (st_data_t)s, (st_data_t *)&t)) {
+      /* すでに等価な状態が存在する */
+      return (State *)t;
+    } else {
+      /* 等価な状態はない */
+      st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s);
+      st_add_direct(states->memid_tbl, (st_data_t)s, (st_data_t)s);
+      return s;
     }
+  }
+  else {
+    if (st_lookup_with_col(states->tbl, (st_data_t)s, (st_data_t *)&t, &col)) {
+      /* すでに等価な状態が存在する */
+      return (State *)t;
+    } else {
+      /* 等価な状態はない */
+      st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
 
-    return s;
+      if (col >= MEM_EQ_FAIL_THRESHOLD && !has_mem_id) {
+        state_space_add_memid_hash(states, s->hash);
+      } else if (!lmn_env.mem_enc && !has_mem_id) {
+        /* 状態の追加時に膜のダンプを計算する */
+        state_calc_mem_dump(s);
+      }
+      return s;
+    }
   }
 }
 
@@ -518,6 +572,75 @@ void dump_state_transition_graph(StateSpace states, FILE *file)
 }
 
 
+/*----------------------------------------------------------------------
+ * State
+ */
+
+struct st_hash_type type_statehash = {
+  state_cmp,
+  state_hash
+};
+
+struct st_hash_type type_memid_statehash = {
+  state_memid_cmp,
+  state_memid_hash
+};
+
+/**
+ * 与えられた2つの状態が互いに異なっていれば真を、逆に等しい場合は偽を返す
+ */
+int state_memid_cmp(st_data_t _s1, st_data_t _s2) {
+  State *s1 = (State *)_s1;
+  State *s2 = (State *)_s2;
+
+  return !(
+    s1->state_name == s2->state_name &&
+    s1->mem_id_hash == s2->mem_id_hash &&
+    binstr_comp(s1->mem_id, s2->mem_id) == 0);
+
+}
+
+inline long state_memid_hash(State *s) {
+  return s->mem_id_hash;
+}
+
+/* 状態が持つ膜のダンプを計算する。 */
+inline void state_free_mem_dump(State *s)
+{
+  if (s->mem_dump) {
+    lmn_binstr_free(s->mem_dump);
+    s->mem_dump = NULL;
+  }
+}
+
+
+/* 状態が持つ膜のエンコードを計算する。mem_dumpを持っている場合は、
+   mem_dumpを解放する */
+inline void state_calc_mem_encode(State *s)
+{
+  if (!s->mem_id) {
+    if (s->mem) s->mem_id = lmn_mem_encode(s->mem);
+    else if (s->mem_dump) {
+      LmnMembrane *m;
+
+      m = lmn_binstr_decode(s->mem_dump);
+      s->mem_id = lmn_mem_encode(m);
+      lmn_mem_drop(m);
+      lmn_mem_free(m);
+    } else {
+      lmn_fatal("implementation error");
+    }
+    s->mem_id_hash = binstr_hash(s->mem_id);
+    state_free_mem_dump(s);
+  }
+}
+
+inline void state_calc_mem_dump(State *s)
+{
+  if (s->mem_id) lmn_fatal("implementation error");
+  if (!s->mem_dump) s->mem_dump = lmn_mem_to_binstr(s->mem);
+}
+
 /**
  * --ltl_nd時に使用．状態の名前（accept_s0など）を表示．
  * 高階関数st_foreach(c.f. st.c)に投げて使用．
@@ -529,4 +652,3 @@ void dump_state_name(StateSpace states, FILE *file)
   st_foreach(states->tbl, print_state_name, 0);
   fprintf(file, "\n");
 }
-

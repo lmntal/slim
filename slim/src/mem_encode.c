@@ -863,9 +863,6 @@ static inline void visitlog_commit(VisitLog visited)
 static BinStr encode_root_mem(LmnMembrane *mem);
 static Vector *mem_atoms(LmnMembrane *mem);
 static Vector *mem_functors(LmnMembrane *mem);
-static Vector *collect_smallest_mols(Vector *atoms,
-                                     BinStrPtr bsp,
-                                     VisitLog visited);
 static void write_mem_atoms(LmnMembrane *mem,
                             BinStrPtr bsp,
                             VisitLog visited);

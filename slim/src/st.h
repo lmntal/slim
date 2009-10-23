@@ -32,8 +32,8 @@ struct st_hash_type {
  */
 struct st_table {
   struct st_hash_type *type;
-  int num_bins; /* ハッシュ表のサイズ(スロット数) */
-  int num_entries; /* ハッシュ表に放り込まれた要素の個数
+  unsigned long num_bins; /* ハッシュ表のサイズ(スロット数) */
+  unsigned long num_entries; /* ハッシュ表に放り込まれた要素の個数
                       (各スロットは同一のハッシュ値を持つ要素を格納する(Linked)リスト構造(struct st_table_entry *)を持ち、
                        同じリスト内に放り込まれた各要素は別個にカウントする) */
   struct st_table_entry **bins; /* チェイン法に基づくハッシュ表本体 */
@@ -68,6 +68,7 @@ int st_delete(st_table *, st_data_t , st_data_t *);
 int st_delete_safe(st_table *, st_data_t *, st_data_t *, st_data_t);
 int st_insert(st_table *, st_data_t, st_data_t);
 int st_lookup(st_table *, st_data_t, st_data_t *);
+int st_lookup_with_col(st_table *, st_data_t , st_data_t *, long *n_col);
 int st_contains(st_table *, st_data_t);
 int st_foreach(st_table *, int(*)(ANYARGS), st_data_t);
 void st_add_direct(st_table *, st_data_t, st_data_t);
@@ -80,6 +81,7 @@ int st_equals(st_table *tbl1, st_table *tbl2);
 long st_strhash(const char *);
 int st_numcmp(long, long);
 long st_numhash(long);
+int st_foreach_hash(st_table *table, st_data_t hash, int(*func)( ANYARGS), st_data_t arg);
 
 /* tbl1にtbl2のすべてのエントリを追加する。tbl1とtbl2に同じキーを持つエ
    ントリが存在する場合の動作は（とりあえず）未定義。 */
