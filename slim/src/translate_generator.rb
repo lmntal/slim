@@ -75,7 +75,7 @@ $format_end_index = $modes.index("__format_t") # format系modeの最後のindex
 #  $s successcode.成功したとき実行すべきコード.proceedでしか使わないかも 変数名はsuccesscode
 #  $f failcode.失敗したとき実行すべきコード.次のマッチングに行ったり,ルール自体が失敗したりする 変数名はfailcode
 #( $r recursive.再帰呼び出し? まだ考えていない )
-#  $a address.今処理中の命令語があるアドレスの表現.一意なサフィックスが欲しいときにだけ使う 変数名はop_address
+#  $a address.今処理中の命令語があるアドレスの表現.トランスレータで一意なサフィックスが欲しいときにだけ使う 変数名はop_address
 #  また,マクロではなく単に$をコードに使う場合は$$と書く targ1=55のとき, ab$1cdは"ab55cd"となり, ab$$1cdは "ab$1cd"となる
 
 # list argument
@@ -181,12 +181,64 @@ def case_close(arg)
   print "}\n"
 end
 
-# # トランスレータ生成時に処理文をprintfで出力するためのプログラムを出力する
-# # 上の引数のところで書いたように一部の種の変数は置換を行わないため, n番引数がそれか否かを知るためargを引数に取る
+# トランスレータ生成時に処理文をprintfで出力するためのプログラムを出力する
+# 上の引数のところで書いたように一部の種の変数は置換を行わないため, n番引数がそれか否かを知るためargを引数に取る
 
 def print_interp_format(line, arg)
-  # 未実装
-  print "IF:: ", line, "\n"
+  # $$ : $
+  # $X : targX X番目の引数
+  # $f : 失敗確定なので return FALSE
+  # $s : 成功確定なので return TRUE
+  # $a : op_address 関数の最初で保存しておく ややこしいから使えなくする？
+  # 引数がファンクタの場合のみ, $1_long_data を targ1_long_data ではなく targ1.long_dataに変換してやる
+  print "IF:: "
+  
+  pos = 0
+  while (pos=line.index("$", pos+1)) != nil
+    if line[pos+1] == "$"[0]
+      # "$$"なら1つ消して"$"にしてやる
+      line[pos,1] = ""
+    elsif line[pos+1]>="0"[0] && line[pos+1]<="9"[0]
+      # 引数の場合
+      x = line[pos+1] - "0"[0]
+      if arg[x] == "$functor"
+        # ファンクタなら上記の変換
+        long_data_name = "_long_data"
+        double_data_name = "_double_data"
+        string_data_name = "_string_data"
+        functor_data_name = "_functor_data"
+        attr_name = "_attr"
+        if line[pos+2,long_data_name.size] == long_data_name
+          line[pos,long_data_name.size+2] = "targ"+x.to_s+".long_data"
+        elsif line[pos+2,double_data_name.size] == double_data_name
+          line[pos,double_data_name.size+2] = "targ"+x.to_s+".double_data"
+        elsif line[pos+2,string_data_name.size] == string_data_name
+          line[pos,string_data_name.size+2] = "targ"+x.to_s+".string_data"
+        elsif line[pos+2,functor_data_name.size] == functor_data_name
+          line[pos,functor_data_name.size+2] = "targ"+x.to_s+".functor_data"
+        elsif line[pos+2,attr_name.size] == attr_name
+          line[pos,attr_name.size+2] = "targ"+x.to_s+"_attr"
+        else
+          warn "unexpected functor type at " + $linenum.to_s + ".\n"
+          warn line[pos+2,long_data_name.size]
+        end
+      else
+        # ファンクタ以外なら単に置き換えるだけ
+        line[pos,2] = "targ" + x.to_s
+      end
+    elsif line[pos+1] == "f"[0]
+      # $fは失敗
+      line[pos,2] = "return FALSE"
+    elsif line[pos+1] == "s"[0]
+      # $sは成功
+      line[pos,2] = "return TRUE"
+    else
+      warn "unexpected macro at " + $linenum.to_s + ".\n"
+      warn line
+    end
+  end
+
+  puts line
 end
 
 def print_trans_format(line, arg)
@@ -255,6 +307,9 @@ def print_trans_format(line, arg)
       # "$a"ならその命令語インスタンスのあるアドレス
       format_arg << "op_address"
       line[pos,2] = "%p"
+    else
+      warn "unexpected macro at " + $linenum.to_s + ".\n"
+      warn line
     end
   end
   # 最終的に表示するのはここ
@@ -264,7 +319,7 @@ def print_trans_format(line, arg)
 end
 
 # -iオプションがついていたらインタプリタ生成, ついていなければトランスレータ生成
-if ARGV == 1 && ARG[0] == "-i" then $translator_generate = false end
+if ARGV.include?("-i") then $translator_generate = false end
 is_case_opened = false # 今case文が開いているかどうか
 is_buffering_endl = false # 今空行の改行出力を留保しているかどうか 各case内の最後の改行は出力しない
 mode = "__ignore" # 今の出力モード
@@ -272,7 +327,7 @@ line = ""
 arg = [] # 今開いているcaseの引数
 $linenum = 0 #今の行数
 
-while(line=gets())
+while(line=STDIN.gets)
   $linenum = $linenum + 1
   line.chop!
 
@@ -356,8 +411,3 @@ while(line=gets())
   end
 end
 
-# caseが開きっぱなしで終了した場合
-# 本当はちゃんと__endで閉じてその後の関数のカッコも閉じること
-if is_case_opened
-  case_close(arg)
-end

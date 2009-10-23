@@ -212,7 +212,11 @@ char *automalloc_sprintf(const char *format, ...)
 
   va_start(ap, format);
   buf_len = vsnprintf(trush, 2, format, ap);
+  va_end(ap);
+  
   buf = lmn_malloc(buf_len + 1);
+  
+  va_start(ap, format);
   vsnprintf(buf, buf_len+1, format, ap);
   va_end(ap);
 
