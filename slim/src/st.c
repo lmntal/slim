@@ -519,6 +519,57 @@ void st_print(st_table *st){
   }
 }
 
+/* 2つのst_tableが同じ要素を持つか判定　同じなら1を返す */
+int st_equals(st_table *tbl1, st_table *tbl2){
+  st_table *st1 = tbl1, *st2 = tbl2;
+  unsigned int n1 = st_num(st1), n2 = st_num(st2);
+  st_table_entry *entry;
+
+  if(n1==n2){
+    if (n1 == 0) return 1;
+    /* st1 --> st2 */
+    unsigned int nb = st1->num_bins, ne = st1->num_entries; // neいらないかも
+    //printf("nb1 = %d, ne1 = %d\n", nb, ne);
+    unsigned int i = 0;
+    int re;
+    for(; i<nb; i++){
+      entry = st1->bins[i];
+      if(entry!=NULL){
+        while(entry->next!=NULL){
+          re = st_is_member(st2, entry->key);
+
+          if(re==0) return 0;
+          entry = entry->next;
+        }
+        re = st_is_member(st2, entry->key);
+
+        if(re==0) return 0;
+      }
+    }
+
+    /* st2 --> st1 */
+    nb = st2->num_bins, ne = st2->num_entries; // neいらないかも
+    //printf("nb2 = %d, ne2 = %d\n", nb, ne);
+    i = 0;
+    for(; i<nb; i++){
+      entry = st2->bins[i];
+      if(entry!=NULL){
+        while(entry->next!=NULL){
+          re = st_is_member(st1, entry->key);
+
+          if(re==0) return 0;
+          entry = entry->next;
+        }
+        re = st_is_member(st1, entry->key);
+
+        if(re==0) return 0;
+      }
+    }
+    return 1;
+  }
+  return 0;
+}
+
 /*
  * hash_32 - 32 bit Fowler/Noll/Vo FNV-1a hash code
  *

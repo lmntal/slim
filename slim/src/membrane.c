@@ -66,8 +66,8 @@ struct st_hash_type type_memhash = {
   mhash
 };
 
-/* ルールセットを膜に追加する。ルールセットは、比較のためにポインタの値
-   の昇順に並べるようにする */
+/* ルールセットを膜に追加する。ルールセットは、比較のために
+   ruleset->idの値によって昇順に並べるようにする */
 void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
   Vector *v = &mem->rulesets;
@@ -75,13 +75,16 @@ void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 
   if (ruleset==NULL) LMN_ASSERT(FALSE);
 
+  /* uniq導入に伴い、膜へのrulesetの追加は全てアドレス渡しではなく複製 */
+  LmnRuleSet rset = lmn_ruleset_copy(ruleset);
   for (i = 0; i<n; i++) {
     LmnRuleSet r = (LmnRuleSet)vec_get(v, i);
-    if (r == ruleset) break;
-    else if (r < ruleset) continue;
-    else if (r > ruleset) {
+
+    // 同じidを持つruleset群の一番後ろに追加する
+    if (lmn_ruleset_get_id(r) <= lmn_ruleset_get_id(rset)) continue;
+    else if (lmn_ruleset_get_id(r) > lmn_ruleset_get_id(rset)) {
       int j;
-      LmnRuleSet pre = ruleset;
+      LmnRuleSet pre = rset;
       vec_push(v, 0);
       for (j = i; j<n+1; j++) {
         LmnRuleSet t = (LmnRuleSet)vec_get(v, j);
@@ -92,7 +95,7 @@ void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
     }
   }
   if (i == n) {
-    vec_push(v, (LmnWord)ruleset);
+    vec_push(v, (LmnWord)rset);
   }
 }
 
@@ -862,7 +865,8 @@ LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, SimpleHashtbl **ret_copymap
 
   copymap = lmn_mem_copy_cells(new_mem, src);
   for (i = 0; i < src->rulesets.num; i++) {
-    vec_push(&new_mem->rulesets, vec_get(&src->rulesets, i));
+    vec_push(&new_mem->rulesets,
+        (LmnWord)lmn_ruleset_copy((LmnRuleSet)vec_get(&src->rulesets, i)));
   }
   *ret_copymap = copymap;
   return new_mem;
@@ -902,7 +906,8 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
     new_mem->name = m->name;
     /* copy rulesets */
     for (i = 0; i < m->rulesets.num; i++) {
-      vec_push(&new_mem->rulesets, vec_get(&m->rulesets, i));
+      vec_push(&new_mem->rulesets,
+          (LmnWord)lmn_ruleset_copy((LmnRuleSet)vec_get(&m->rulesets, i)));
     }
   }
 
@@ -1167,7 +1172,7 @@ CMPGROUND_BREAK:
   vec_destroy(&stack1);
   vec_destroy(&stack2);
   hashtbl_destroy(&map);
-  
+
   return ret_flag;
 }
 
@@ -1702,9 +1707,25 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
     /* Step3.5. 両膜内に含まれるルールセットが等しいことを確認 */
     if (vec_num(&mem1->rulesets) != vec_num(&mem2->rulesets)) goto STEP_1_FALSE;
 
-    /* ルールセットはポインタの値で昇順にソートされている */
+    /* rulesetはidの値で昇順にソートされている */
     for (i = 0; i < vec_num(&mem1->rulesets); i++) {
-      if (vec_get(&mem1->rulesets, i) != vec_get(&mem2->rulesets, i)) goto STEP_1_FALSE;
+      if (lmn_ruleset_get_id((LmnRuleSet)vec_get(&mem1->rulesets, i))
+          != lmn_ruleset_get_id((LmnRuleSet)vec_get(&mem2->rulesets, i))) goto STEP_1_FALSE;
+    }
+
+    /* 各rulesetが持つruleまで等しいことを確認 */
+    // mem1 --> mem2
+    int n1 = vec_num(&mem1->rulesets);
+    int n2 = vec_num(&mem2->rulesets);
+
+    for (i = 0; i < n1; i++) {
+      if (!rulesets_contains(&mem2->rulesets, (LmnRuleSet)vec_get(&mem1->rulesets, i)))
+        goto STEP_1_FALSE;
+    }
+    // mem2 --> mem1
+    for (i = 0; i < n2; i++) {
+      if (!rulesets_contains(&mem1->rulesets, (LmnRuleSet)vec_get(&mem2->rulesets, i)))
+        goto STEP_1_FALSE;
     }
 
   }

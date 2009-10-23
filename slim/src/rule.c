@@ -39,7 +39,6 @@
 #include "lmntal.h"
 #include "rule.h"
 #include "system_ruleset.h"
-#include "st.h"
 
 /*----------------------------------------------------------------------
  * Rule
@@ -55,6 +54,7 @@ struct LmnRule {
   lmn_interned_str name;
   BOOL is_invisible;
   st_table *history_tbl;
+  st_data_t pre_id;
   LmnRuleStatus status;
 };
 
@@ -74,6 +74,7 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->name = name;                  /* ルール名 */
   rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
   rule->history_tbl = st_init_strtable();
+  rule->pre_id = 0;
   if(lmn_env.profile_level >= 2) {
     rule->status.trial_num = 0;
     rule->status.apply_num = 0;
@@ -115,6 +116,7 @@ LmnRule lmn_rule_copy(LmnRule rule)
   LmnRule new_rule = make_rule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
   st_free_table(new_rule->history_tbl);
   new_rule->history_tbl = st_copy(rule->history_tbl);
+  new_rule->pre_id = rule->pre_id;
   return new_rule;
 }
 
@@ -176,6 +178,14 @@ BOOL lmn_rule_his_check(LmnRule rule, char *id){
 
 struct st_table *lmn_rule_get_history(LmnRule rule){
   return rule->history_tbl;
+}
+
+st_data_t lmn_rule_get_pre_id(LmnRule rule){
+  return rule->pre_id;
+}
+
+void lmn_rule_set_pre_id(LmnRule rule, st_data_t t){
+  rule->pre_id = t;
 }
 
 /*----------------------------------------------------------------------
@@ -337,6 +347,38 @@ LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
 
   for(; i<ruleset->num; i++) lmn_ruleset_put(new_ruleset, lmn_rule_copy(ruleset->rules[i]));
   return new_ruleset;
+}
+
+/* 2つのrulesetが同じruleを持つか判定する(ruleの順序はソースコード依存) */
+BOOL ruleset_equals(LmnRuleSet set1, LmnRuleSet set2) {
+  int i;
+  BOOL result = FALSE;
+  for (i = 0; i < lmn_ruleset_rule_num(set1); i++) {
+    LmnRule rule1 = lmn_ruleset_get_rule(set1, i),
+            rule2 = lmn_ruleset_get_rule(set2, i);
+    if (rule1 != NULL && rule2 != NULL) {
+      if (!st_equals(lmn_rule_get_history(rule1), lmn_rule_get_history(rule2))){
+        break;
+      }
+    }
+    result = TRUE;
+  }
+  return result;
+}
+
+/* rulesetsにrulesetが含まれているか判定 */
+BOOL rulesets_contains(Vector *rulesets, LmnRuleSet set1) {
+  int i;
+  BOOL result = FALSE;
+  for (i = 0; i < vec_num(rulesets); i++) {
+    LmnRuleSet set2 = (LmnRuleSet)vec_get(rulesets, i);
+
+    if (ruleset_equals(set1, set2)) { //同じrulesetがあればループを抜ける
+      result = TRUE;
+      break;
+    }
+  }
+  return result;
 }
 
 /*----------------------------------------------------------------------

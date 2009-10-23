@@ -40,6 +40,7 @@
 #define LMN_RULE_H
 
 #include "vector.h"
+#include "st.h"
 
 /*----------------------------------------------------------------------
  * Rule
@@ -62,8 +63,10 @@ LMN_EXTERN lmn_interned_str lmn_rule_get_name(LmnRule rule);
 LMN_EXTERN void lmn_rule_set_name(LmnRule rule, lmn_interned_str rule_name);
 LMN_EXTERN BYTE *lmn_rule_get_inst_seq(LmnRule rule);
 LMN_EXTERN BOOL lmn_rule_is_invisible(LmnRule rule);
-LMN_EXTERN struct st_table *lmn_rule_get_histbl(LmnRule rule);
 LMN_EXTERN BOOL lmn_rule_his_check(LmnRule rule, char *id);
+LMN_EXTERN struct st_table *lmn_rule_get_history(LmnRule rule);
+LMN_EXTERN st_data_t lmn_rule_get_pre_id(LmnRule rule);
+LMN_EXTERN void lmn_rule_set_pre_id(LmnRule rule, st_data_t t);
 
 /*----------------------------------------------------------------------
  * Rule Set
@@ -87,6 +90,8 @@ LMN_EXTERN inline void lmn_ruleset_set_atomic(LmnRuleSet ruleset, AtomicType b);
 LMN_EXTERN inline void lmn_ruleset_set_valid(LmnRuleSet ruleset, BOOL b);
 LMN_EXTERN inline BOOL lmn_ruleset_is_valid(LmnRuleSet ruleset);
 LMN_EXTERN LmnRuleSet lmn_ruleset_copy(LmnRuleSet rulset);
+LMN_EXTERN BOOL ruleset_equals(LmnRuleSet set1, LmnRuleSet set2);
+LMN_EXTERN BOOL rulesets_contains(Vector *rulesets, LmnRuleSet set1);
 
 /*----------------------------------------------------------------------
  * System Rule Set

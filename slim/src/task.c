@@ -913,6 +913,11 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         lmn_react_systemruleset(rc, (LmnMembrane *)wt[0]);
         nd_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
+        if (!RC_GET_MODE(rc, REACT_MEM_ORIENTED) &&
+            lmn_rule_get_history(rule) != NULL   &&
+            lmn_rule_get_pre_id(rule) != 0)
+              st_delete(lmn_rule_get_history(rule), lmn_rule_get_pre_id(rule), 0);
+
         /* 変数配列および属性配列を元に戻す（いらないかも？） */
         SWAP(LmnWord *, wtcp, wt);
         SWAP(LmnByte *, atcp, at);
@@ -1611,10 +1616,6 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_UNIQ:
     {
-      if (!RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-        lmn_fatal(
-            "Instraction uniq can't be used with --nd or --ltl option.");
-      }
 
       LmnInstrVar llist, n;
       Vector *srcvec;
@@ -1646,7 +1647,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       id = malloc(lmn_string_len(port->data));
       strcpy(id, (char *)lmn_string_c_str(port->data));
       st_insert(
-          lmn_rule_get_histbl(rule), (st_data_t)id, (st_data_t)st_strhash(id));
+          lmn_rule_get_history(rule), (st_data_t)id, (st_data_t)st_strhash(id));
+      lmn_rule_set_pre_id(rule, (st_data_t)id);
+
       lmn_port_free(port);
 
       break;
@@ -2327,12 +2330,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = &((LmnMembrane *)wt[srcmemi])->rulesets;
       for (i = 0; i< v->num; i++) {
-        if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-          lmn_mem_add_ruleset(
-            (LmnMembrane *)wt[destmemi], (LmnRuleSet)lmn_ruleset_copy((LmnRuleSet)vec_get(v, i)));
-        }else{
           lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], (LmnRuleSet)vec_get(v, i));
-        }
       }
       break;
     }
