@@ -116,7 +116,6 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
   expanded = vec_make(32);
   for (i = 0; i < vec_num(expanded_roots); i++) {
     State *state;
-    st_data_t t;
 
     state = state_make_for_nd((LmnMembrane *)vec_get(expanded_roots, i),
                               (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
@@ -177,7 +176,7 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
        スタックに積んでおく */
     State *s = (State *)vec_peek(stack);
     Vector *expanded;
-    Vector *successors;          /* サクセッサを追加していく */
+    Vector successors;          /* サクセッサを追加していく */
     st_table_t succ_tbl;         /* サクセッサのポインタの重複検査に使用 */
     unsigned long expanded_num;
 
