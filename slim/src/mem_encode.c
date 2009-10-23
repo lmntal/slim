@@ -268,6 +268,11 @@ static inline uint16_t binstr_get_uint16(BYTE *bs, int pos)
     (uint16_t)((binstr_get_byte(bs, pos+2)) | ((binstr_get_byte(bs, pos))<<8));
 }
 
+static inline uint32_t binstr_get_uint32(BYTE *bs, int pos)
+{
+  return (uint32_t)(binstr_get_uint16(bs, pos+4) | (binstr_get_uint16(bs, pos)<<16));
+}
+
 static inline LmnFunctor binstr_get_functor(BYTE *bs, int pos)
 {
   if (sizeof(LmnFunctor) == 2) {
@@ -326,8 +331,8 @@ static inline double binstr_get_dbl(BYTE *bs, int pos)
 
 static inline lmn_interned_str binstr_get_mem_name(BYTE *bs, int pos)
 {
-  if (sizeof(lmn_interned_str) == SIZEOF_LONG) {
-    return binstr_get_int(bs, pos);
+  if (BS_MEM_NAME_SIZE == 8) {
+    return binstr_get_uint32(bs, pos);
   } else {
     lmn_fatal("unexpected");
   }
