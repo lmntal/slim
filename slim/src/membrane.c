@@ -70,23 +70,26 @@ struct st_hash_type type_memhash = {
    ruleset->idの値によって昇順に並べるようにする */
 void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
-  Vector *v = &mem->rulesets;
-  int i, n=vec_num(v);
+  LmnRuleSet rset;
+  Vector *v;
+  int i, n;
 
-  if (ruleset==NULL) LMN_ASSERT(FALSE);
+  LMN_ASSERT(ruleset);
+
+  v = &(mem->rulesets);
+  n = vec_num(v);
+  rset = lmn_ruleset_copy(ruleset);
 
   /* uniq導入に伴い、膜へのrulesetの追加は全てアドレス渡しではなく複製 */
-  LmnRuleSet rset = lmn_ruleset_copy(ruleset);
-  for (i = 0; i<n; i++) {
+  for (i = 0; i < n; i++) {
     LmnRuleSet r = (LmnRuleSet)vec_get(v, i);
 
     // 同じidを持つruleset群の一番後ろに追加する
-    if (lmn_ruleset_get_id(r) <= lmn_ruleset_get_id(rset)) continue;
-    else if (lmn_ruleset_get_id(r) > lmn_ruleset_get_id(rset)) {
+    if (lmn_ruleset_get_id(r) > lmn_ruleset_get_id(rset)) {
       int j;
       LmnRuleSet pre = rset;
       vec_push(v, 0);
-      for (j = i; j<n+1; j++) {
+      for (j = i; j < (n + 1); j++) {
         LmnRuleSet t = (LmnRuleSet)vec_get(v, j);
         vec_set(v, j, (LmnWord)pre);
         pre = t;
@@ -335,6 +338,7 @@ void lmn_mem_drop(LmnMembrane *mem)
 void lmn_mem_free(LmnMembrane *mem)
 {
   HashIterator iter;
+  unsigned int i, n;
 
   LMN_ASSERT(mem->atom_num == 0);
   /* free all atomlists  */
@@ -345,6 +349,11 @@ void lmn_mem_free(LmnMembrane *mem)
   }
 
   hashtbl_destroy(&mem->atomset);
+  n = mem->rulesets.num;
+  for (i = 0; i < n; i++) {
+    struct LmnRuleSet *rs = (LmnRuleSet)vec_get(&(mem->rulesets), i);
+    if (lmn_is_ruleset_copy(rs)) lmn_ruleset_free(rs);
+  }
   vec_destroy(&mem->rulesets);
 
   LMN_FREE(mem);

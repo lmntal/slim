@@ -199,6 +199,7 @@ struct LmnRuleSet {
   LmnRule *rules;       /* ルールのリスト */
   /* 非決定実行時にルールセットをatomicに実行するかのフラグ */
   int atomic;
+  BOOL iam_copy;
   BOOL valid;
 };
 
@@ -221,8 +222,14 @@ LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size)
   ruleset->cap = init_size;
   ruleset->atomic = FALSE;
   ruleset->valid = TRUE;
+  ruleset->iam_copy = FALSE;
 
   return ruleset;
+}
+
+BOOL lmn_is_ruleset_copy(LmnRuleSet rs)
+{
+  return rs->iam_copy;
 }
 
 /* Frees RuleSet and its elements */
@@ -344,6 +351,7 @@ LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
 {
   LmnRuleSet new_ruleset = lmn_ruleset_make(ruleset->id, 16);
   unsigned int i = 0;
+  new_ruleset->iam_copy = TRUE;
 
   for(; i<ruleset->num; i++) lmn_ruleset_put(new_ruleset, lmn_rule_copy(ruleset->rules[i]));
   return new_ruleset;

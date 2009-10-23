@@ -81,6 +81,7 @@ LMN_EXTERN LmnRuleSet lmn_ruleset_from_id(int id);
 LMN_EXTERN LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size);
 LMN_EXTERN void lmn_ruleset_free(LmnRuleSet ruleset);
 LMN_EXTERN void lmn_ruleset_put(LmnRuleSet ruleset, LmnRule rule);
+LMN_EXTERN BOOL lmn_is_ruleset_copy(LmnRuleSet rs);
 LMN_EXTERN inline int lmn_ruleset_get_id(LmnRuleSet ruleset);
 LMN_EXTERN inline void lmn_set_ruleset(LmnRuleSet ruleset, int id);
 LMN_EXTERN inline unsigned int lmn_ruleset_rule_num(LmnRuleSet ruleset);
