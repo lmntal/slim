@@ -238,7 +238,7 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
     set_expanded(s); /* sに展開済みフラグを立てる */
 
     /* 展開済みになった状態の膜を解放する */
-      state_free_mem(s);
+    state_free_mem(s);
   }
 
   vec_free(stack);

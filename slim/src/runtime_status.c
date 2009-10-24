@@ -77,6 +77,10 @@ struct RuntimeStatus {
   double total_mem_enc_eq_time;      /* total time of mem encode */
   clock_t tmp_mem_enc_eq_start;
 
+  unsigned long mem_dump_num;      /* # of mem_encode call */
+  double total_mem_dump_time;      /* total time of mem encode */
+  clock_t tmp_mem_dump_start;
+
   time_t time1, time2;               /* clock()のオーバーフロー時に使う */
   double total_expand_time;         /* 状態展開時間 */
   double total_commit_time;
@@ -120,6 +124,8 @@ void runtime_status_init()
   runtime_status.total_mem_equals_time = 0.0;
   runtime_status.mem_enc_eq_num = 0;
   runtime_status.total_mem_enc_eq_time = 0.0;
+  runtime_status.mem_dump_num = 0;
+  runtime_status.total_mem_dump_time = 0.0;
   runtime_status.mem_encode_num = 0;
   runtime_status.total_mem_encode_time = 0.0;
 
@@ -254,6 +260,18 @@ void status_finish_mem_enc_eq_calc()
     (clock() - runtime_status.tmp_mem_enc_eq_start)/(double)CLOCKS_PER_SEC;
 }
 
+void status_start_mem_dump_calc()
+{
+  runtime_status.mem_dump_num++;
+  runtime_status.tmp_mem_dump_start =  clock();
+}
+
+void status_finish_mem_dump_calc()
+{
+  runtime_status.total_mem_dump_time +=
+    (clock() - runtime_status.tmp_mem_dump_start)/(double)CLOCKS_PER_SEC;
+}
+
 void status_start_mem_encode_calc()
 {
   runtime_status.mem_encode_num++;
@@ -316,10 +334,14 @@ void output_runtime_status(FILE *f)
               runtime_status.mem_equals_num);
       fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
               runtime_status.total_mem_equals_time);
-      fprintf(f, "%-30s: %10lu\n", "# of mem_enc_equals calls",
+      fprintf(f, "%-30s: %10lu\n", "# of mem_enc_eq calls",
               runtime_status.mem_enc_eq_num);
-      fprintf(f, "%-30s: %10.2lf\n", "total mem_enc_equals time (sec)",
+      fprintf(f, "%-30s: %10.2lf\n", "total mem_enc_eq time (sec)",
               runtime_status.total_mem_enc_eq_time);
+      fprintf(f, "%-30s: %10lu\n", "# of mem_dump calls",
+              runtime_status.mem_dump_num);
+      fprintf(f, "%-30s: %10.2lf\n", "total mem_dum time (sec)",
+              runtime_status.total_mem_dump_time);
       fprintf(f, "%-30s: %10lu\n", "# of mem_encode calls",
               runtime_status.mem_encode_num);
       fprintf(f, "%-30s: %10.2lf\n", "total mem_encode time (sec)",

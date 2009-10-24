@@ -59,6 +59,8 @@ void status_start_mem_equals_calc(void);
 void status_finish_mem_equals_calc(void);
 void status_start_mem_enc_eq_calc(void);
 void status_finish_mem_enc_eq_calc(void);
+void status_start_mem_dump_calc(void);
+void status_finish_mem_dump_calc(void);
 void status_start_mem_encode_calc(void);
 void status_finish_mem_encode_calc(void);
 void calc_encode_info(StateSpace states);
