@@ -11,7 +11,7 @@
 typedef struct st_table_entry st_table_entry;
 
 struct st_table_entry {
-  unsigned int hash;
+  unsigned long hash;
   st_data_t key;
   st_data_t record;
   st_table_entry *next;
@@ -47,7 +47,7 @@ static void rehash(st_table *);
 
 #define EQUAL(table,x,y) ((x)==(y) || (*table->type->compare)((x),(y)) == 0)
 
-#define do_hash(key,table) (unsigned int)(*(table)->type->hash)((key))
+#define do_hash(key,table) (unsigned long)(*(table)->type->hash)((key))
 #define do_hash_bin(key,table) (do_hash(key, table)%(table)->num_bins)
 
 /*
@@ -233,7 +233,7 @@ void st_free_table(st_table *table) {
 /* キーがkeyであるテーブルの値をvalueに設定する。
  キーが見つからなければ0を返し，見つかれば1を返す。*/
 int st_lookup(st_table *table, register st_data_t key, st_data_t *value) {
-  unsigned int hash_val, bin_pos;
+  unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
   hash_val = do_hash(key, table);
@@ -252,7 +252,7 @@ int st_lookup(st_table *table, register st_data_t key, st_data_t *value) {
 /* キーがkeyであるテーブルの値をvalueに設定する。
  キーが見つからなければ0を返し，見つかれば1を返す。*/
 int st_lookup_with_col(st_table *table, register st_data_t key, st_data_t *value, long *n_col) {
-  unsigned int hash_val, bin_pos;
+  unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
   *n_col = 0;
@@ -294,7 +294,7 @@ do {\
 /* ハッシュ表に新たなエントリーを追加する。エントリが存在した場合はその
    エントリの値のみを更新し、キーは元々のものを更新しない。 */
 int st_insert(register st_table *table, register st_data_t key, st_data_t value) {
-  unsigned int hash_val, bin_pos;
+  unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
   hash_val = do_hash(key, table);
@@ -311,7 +311,7 @@ int st_insert(register st_table *table, register st_data_t key, st_data_t value)
 
 /* 値の重複をチェックせずにハッシュ表に新たなエントリーを追加する */
 void st_add_direct(st_table *table, st_data_t key, st_data_t value) {
-  unsigned int hash_val, bin_pos;
+  unsigned long hash_val, bin_pos;
 
   hash_val = do_hash(key, table);
   bin_pos = hash_val % table->num_bins;
@@ -321,7 +321,7 @@ void st_add_direct(st_table *table, st_data_t key, st_data_t value) {
 static void rehash(register st_table *table) {
   register st_table_entry *ptr, *next, **new_bins;
   int i, old_num_bins = table->num_bins, new_num_bins;
-  unsigned int hash_val;
+  unsigned long hash_val;
 
   new_num_bins = new_size(old_num_bins + 1);
   new_bins = (st_table_entry**) Calloc(new_num_bins, sizeof(st_table_entry*));
@@ -381,7 +381,7 @@ st_copy(st_table *old_table) {
 
 int st_delete(register st_table *table, register st_data_t key,
     st_data_t *value) {
-  unsigned int hash_val;
+  unsigned long hash_val;
   st_table_entry *tmp;
   register st_table_entry *ptr;
 
@@ -420,7 +420,7 @@ int st_delete(register st_table *table, register st_data_t key,
 
 int st_delete_safe(register st_table *table, register st_data_t *key,
     st_data_t *value, st_data_t never) {
-  unsigned int hash_val;
+  unsigned long hash_val;
   register st_table_entry *ptr;
 
   hash_val = do_hash_bin(*key, table);
@@ -587,8 +587,8 @@ void st_print(st_table *st){
     if(entry!=NULL){
       while(entry!=NULL){
         /* デフォルトでは要素をすべて数値で出力 */
-        printf("%d entry->key = %d, ->record = %d, ->hash = %d\n",
-            i, (int)entry->key, (int)entry->record, (int)entry->hash);
+        printf("%u entry->key = %ld, ->record = %lu, ->hash = %lu\n",
+            i, (long)entry->key, (long)entry->record, (unsigned long)entry->hash);
         entry = entry->next;
       }
     }else{
@@ -728,7 +728,7 @@ long st_strhash(register const char *string) {
    */
   while (*string) {
     /* xor the bottom with the current octet */
-    hval ^= (unsigned int) *string++;
+    hval ^= (unsigned long) *string++;
 
     /* multiply by the 32 bit FNV magic prime mod 2^32 */
     hval *= FNV_32_PRIME;
