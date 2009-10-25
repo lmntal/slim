@@ -319,14 +319,22 @@ static inline unsigned int binstr_get_arg_ref(BYTE *bs, int pos)
   }
 }
 
+static inline uint32_t binstr_get_uin32_t(BYTE *bs, int pos)
+{
+  return (uint32_t)binstr_get_uint16(bs, pos+4) | (uint32_t)(binstr_get_uint16(bs, pos)<<16);
+}
+
+static inline uint64_t binstr_get_uint64_t(BYTE *bs, int pos)
+{
+  return (uint64_t)binstr_get_uint32(bs, pos+8) | (uint64_t)binstr_get_uint32(bs, pos)<<32;
+}
+
 static inline long binstr_get_int(BYTE *bs, int pos)
 {
 #if SIZEOF_LONG == 4
-  return (long)(binstr_get_uint16(bs, pos+4) | (binstr_get_uint16(bs, pos)<<16));
+  return (long)binstr_get_uint32(bs, pos);
 #elif SIZEOF_LONG == 8
-  return (long)
-    (binstr_get_uint16(bs, pos+12)<<0 | binstr_get_uint16(bs, pos+8)<<16 |
-     binstr_get_uint16(bs, pos+4)<<32  | binstr_get_uint16(bs, pos)<<48);
+  return (long)binstr_get_uint64_t(bs, pos);
 #else
     #error "not supported"
 #endif

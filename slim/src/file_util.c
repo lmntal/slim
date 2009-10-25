@@ -41,6 +41,7 @@
 #include <string.h>
 #include "arch.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 char *build_path(const char *dir, const char *component)
 {

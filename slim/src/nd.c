@@ -519,9 +519,9 @@ State *insert_state(StateSpace states, State *s)
       /* 等価な状態はない */
       st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
 
-      if (col >= MEM_EQ_FAIL_THRESHOLD && !has_mem_id) {
+      if (col >= MEM_EQ_FAIL_THRESHOLD) {
         state_space_add_memid_hash(states, s->hash);
-      } else if (!lmn_env.mem_enc && !has_mem_id) {
+      } else if (!lmn_env.mem_enc) {
         /* 状態の追加時に膜のダンプを計算する */
         state_calc_mem_dump(s);
       }

@@ -60,6 +60,7 @@ BOOL ground_atoms(Vector *srcvec,
                   HashSet **atoms,
                   unsigned long *natoms);
 static int mem_cmp(LmnMembrane *mem1, LmnMembrane *mem2);
+static inline int mem_hash_f(st_data_t m);
 
 struct st_hash_type type_memhash = {
   mem_cmp,
@@ -1981,6 +1982,12 @@ int mem_cmp(LmnMembrane *mem1, LmnMembrane *mem2)
 {
   return !lmn_mem_equals(mem1, mem2);
 }
+
+static inline int mem_hash_f(st_data_t m)
+{
+  return mhash((LmnMembrane *)m);
+}
+
 
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
 {
