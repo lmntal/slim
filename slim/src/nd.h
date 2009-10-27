@@ -41,59 +41,32 @@
 #define LMN_ND_H
 
 #include "lmntal.h"
-#include "st.h"
-#include "membrane.h"
-#include "mem_encode.h"
+#include "state.h"
 #include "rule.h"
 #include "vector.h"
 
-typedef struct State State;
 
-struct State {
-  LmnMembrane *mem;     /* グローバルルート膜 */
-  unsigned long hash; /* mhash(mem) */
-  BYTE state_name;
-  BOOL flags;           /* nested DFSの際にDFS{1,2}いずれの走査を受けたかや，successorが展開済であるか否かを管理するフラグ */
-  Vector successor;     /* 通常時: Vector of States，ample(s)計算中: Vector of StateTransitions */
-  LmnRule rule;
-  LmnBinStr mem_id;
-  unsigned long mem_id_hash;
-  LmnBinStr mem_dump;
+struct NDReactCxtData {
+  Vector *roots;
+  Vector *rules;
+  BYTE property_state;
 };
 
-typedef struct StateSpace *StateSpace;
+#define RC_EXPANDED(rc) (((struct NDReactCxtData *)(rc)->v)->roots)
+#define RC_EXPANDED_RULES(rc) (((struct NDReactCxtData *)(rc)->v)->rules)
+#define RC_PROPERTY_STATE(rc) (((struct NDReactCxtData *)(rc)->v)->property_state)
 
-Vector *nd_expand(const StateSpace states, State *state);
+void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state_id);
+void nd_react_cxt_destroy(struct ReactCxt *cxt);
+
+void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
+                               LmnMembrane *mem,
+                               LmnRule rule);
+
+Vector *nd_expand(const StateSpace states, State *state, BYTE state_name);
+Vector *nd_gen_successors(State *state, BYTE state_name);
 void run_nd(Vector *start_rulesets);
 StateSpace do_nd(LmnMembrane *world_mem);
 StateSpace do_nd_dump(LmnMembrane *world_mem_org);
-State *insert_state(StateSpace states, State *s);
-State *state_space_get(const StateSpace states, State *s);
-StateSpace state_space_make(void);
-void state_space_free(StateSpace states);
-unsigned long state_space_num(StateSpace states);
-void state_space_set_init_state(StateSpace states, State* init_state);
-void state_space_add_end_state(StateSpace states, State *s);
-const Vector *state_space_end_states(StateSpace states);
-void state_space_remove(const StateSpace states, State *s);
-st_table_t state_space_tbl(StateSpace states);
-
-void dump_all_state_mem(StateSpace states, FILE *file);
-void dump_state_transition_graph(StateSpace states, FILE *file);
-void dump_state_name(StateSpace states, FILE *file);
-
-inline BOOL state_space_calc_memid_hash(StateSpace states, unsigned long hash);
-inline void state_calc_mem_encode(State *s);
-inline void state_calc_mem_dump(State *s);
-
-extern struct st_hash_type type_statehash;
-extern struct st_hash_type type_memid_statehash;
-inline void state_calc_mem_dump(State *s);
-inline void state_free_mem_dump(State *s);
-inline int state_memid_cmp(st_data_t _s1, st_data_t _s2);
-inline long state_memid_hash(State *s);
-
-/* 膜同型性判定にこの回数以上失敗すると膜のエンコードを行う */
-#define MEM_EQ_FAIL_THRESHOLD 2
 
 #endif

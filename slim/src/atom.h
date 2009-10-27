@@ -206,7 +206,7 @@ LMN_EXTERN inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
 
 #define LMN_COPY_DBL_ATOM(dest, src) \
   do { \
-    (dest) = LMN_ATOM(LMN_MALLOC(double));     \
+    (dest) = (double *)LMN_ATOM(LMN_MALLOC(double));    \
     *((double *)dest) = *(double*)(src);       \
   } while (0)
 

@@ -61,5 +61,6 @@ BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule);
 void react_start_rulesets(struct ReactCxt *rc, LmnMembrane *mem, Vector *rulesets);
 LMN_EXTERN BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset);
 LMN_EXTERN void lmn_react_systemruleset(struct ReactCxt *rc, LmnMembrane *mem);
+BOOL react_all_rulesets(struct ReactCxt *rc, LmnMembrane *cur_mem);
 
 #endif

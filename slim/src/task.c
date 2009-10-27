@@ -324,7 +324,7 @@ static BOOL react_ruleset_atomic_nd(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ru
     lmn_ruleset_set_valid(ruleset, TRUE);
     lmn_ruleset_set_atomic(ruleset, FALSE);
 
-    states = do_nd(mem);
+    states = do_nd(RC_GROOT_MEM(rc));
     end_states = state_space_end_states(states);
 
     set_all_ruleset_validation(RC_GROOT_MEM(rc), TRUE);
@@ -441,6 +441,29 @@ static int react_rulesets(struct ReactCxt *rc, LmnMembrane *mem)
     }
   }
   return flag;
+}
+
+/* cur_memと、その子孫膜に存在するルールすべてに対して適用を試みる */
+BOOL react_all_rulesets(struct ReactCxt *rc,
+                        LmnMembrane *cur_mem)
+{
+  unsigned int i;
+  struct Vector rulesets = cur_mem->rulesets; /* 本膜のルールセットの集合 */
+  BOOL ok = FALSE;
+
+  for (i = 0; i < vec_num(&rulesets); i++) {
+    ok = ok || lmn_react_ruleset(rc, cur_mem,
+                                 (LmnRuleSet)vec_get(&rulesets, i));
+  }
+#ifdef OLD
+  if (!ok) { /* 通常のルールセットが適用できなかった場合 */
+    /* システムルールセットの適用 */
+    if (lmn_react_ruleset(rc, cur_mem, system_ruleset)) {
+      ok = TRUE;
+    }
+  }
+#endif
+  return ok;
 }
 
 static void mem_oriented_loop(struct ReactCxt *rc, LmnMembrane *mem)
@@ -596,7 +619,6 @@ void lmn_run(Vector *start_rulesets)
           case LMN_STRING_ATTR:                        \
             {                                          \
               lmn_interned_str s;                      \
-              LmnString str1;                          \
               READ_VAL(lmn_interned_str, instr, s);    \
               break;                                   \
             }                                          \
@@ -713,7 +735,6 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       LmnInstrVar seti, list_num, memi, enti;
       Vector links; /* src list */
       unsigned int i;
-      BOOL b;
 
       READ_VAL(LmnInstrVar, instr, seti);
       READ_VAL(LmnInstrVar, instr, list_num);
@@ -896,7 +917,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             wtcp[i] = (LmnWord)tmp_global_root;
           }
           else if (at[i] == LMN_DBL_ATTR) {
-            LMN_COPY_DBL_ATOM(wtcp[i], wt[i]);
+            double *d = (double *)wtcp[i];
+            LMN_COPY_DBL_ATOM(d, wt[i]);
+            wtcp[i] = (LmnWord)d;
           }
         }
         hashtbl_free(copymap);

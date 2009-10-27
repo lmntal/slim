@@ -47,52 +47,52 @@ typedef struct Context {
   st_table_t done_mem; /* 計算済みの膜とハッシュ値 */
 } *Context;
 
-static Context init_context(void);
-static void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash);
-static void add_done_mol(Context ctx, void *p);
-static int is_done_mol(Context ctx, void *p);
-static void free_context(Context ctx);
-static int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash);
+static inline Context init_context(void);
+static inline void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash);
+static inline void add_done_mol(Context ctx, void *p);
+static inline int is_done_mol(Context ctx, void *p);
+static inline void free_context(Context ctx);
+static inline int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash);
 
-static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx);
-static hash_t molecule(LmnSAtom atom,
+static inline hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx);
+static inline hash_t molecule(LmnSAtom atom,
                        LmnMembrane *calc_mem,
                        Context ctx);
-static void do_molecule(LmnAtom atom,
+static inline void do_molecule(LmnAtom atom,
                         LmnLinkAttr attr,
                         LmnMembrane *calc_mem,
                         Context ctx,
                         int i_parent,
                         hash_t *sum,
                         hash_t *mul);
-static hash_t unit(LmnAtom atom,
+static inline hash_t unit(LmnAtom atom,
                    LmnLinkAttr attr,
                    LmnMembrane *calc_mem,
                    Context ctx,
                    int depth);
-static hash_t atomunit(LmnAtom atom,
+static inline hash_t atomunit(LmnAtom atom,
                        LmnLinkAttr attr,
                        LmnMembrane *calc_mem,
                        int depth,
                        Context ctx);
-static hash_t memunit(LmnMembrane *mem,
+static inline hash_t memunit(LmnMembrane *mem,
                       LmnSAtom from_in_proxy,
                       LmnMembrane *calc_mem,
                       Context ctx,
                       int depth);
-static hash_t mem_fromlink(LmnMembrane *mem,
+static inline hash_t mem_fromlink(LmnMembrane *mem,
                            LmnSAtom in_proxy,
                            LmnMembrane *calc_mem,
                            Context ctx);
-static hash_t link(LmnAtom atom,
+static inline hash_t link(LmnAtom atom,
                    LmnLinkAttr attr,
                    LmnMembrane *calc_mem,
                    Context ctx);
-static hash_t atomlink(LmnAtom atom, LmnLinkAttr attr);
-static hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context ctx);
-static hash_t atom_type(LmnAtom atom, LmnLinkAttr attr);
-static hash_t symbol_atom_type(LmnSAtom atom);
-static hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr);
+static inline hash_t atomlink(LmnAtom atom, LmnLinkAttr attr);
+static inline hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context ctx);
+static inline hash_t atom_type(LmnAtom atom, LmnLinkAttr attr);
+static inline hash_t symbol_atom_type(LmnSAtom atom);
+static inline hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr);
 
 hash_t mhash(LmnMembrane *mem)
 {
@@ -114,7 +114,7 @@ hash_t mhash(LmnMembrane *mem)
   return t;
 }
 
-static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
+static inline hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
 {
   hash_t hash_sum = MEM_ADD_0;
   hash_t hash_mul = MEM_MUL_0;
@@ -167,7 +167,7 @@ static hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
   return hash;
 }
 
-static hash_t molecule(LmnSAtom atom, LmnMembrane *calc_mem, Context ctx)
+static inline hash_t molecule(LmnSAtom atom, LmnMembrane *calc_mem, Context ctx)
 {
   hash_t sum = ADD_0, mul = MUL_0;
   
@@ -181,7 +181,7 @@ static hash_t molecule(LmnSAtom atom, LmnMembrane *calc_mem, Context ctx)
   return sum ^ mul;
 }
 
-static void do_molecule(LmnAtom atom,
+static inline void do_molecule(LmnAtom atom,
                         LmnLinkAttr attr,
                         LmnMembrane *calc_mem,
                         Context ctx,
@@ -294,7 +294,7 @@ static hash_t atomunit(LmnAtom atom,
   }
 }
 
-static hash_t memunit(LmnMembrane *mem,
+static inline hash_t memunit(LmnMembrane *mem,
                       LmnSAtom from_in_proxy,
                       LmnMembrane *calc_mem,
                       Context ctx,
@@ -328,7 +328,7 @@ static hash_t memunit(LmnMembrane *mem,
   }
 }
 
-static hash_t mem_fromlink(LmnMembrane *mem,
+static inline hash_t mem_fromlink(LmnMembrane *mem,
                            LmnSAtom in_proxy,
                            LmnMembrane *calc_mem,
                            Context ctx)
@@ -376,7 +376,7 @@ static hash_t link(LmnAtom atom,
   }
 }
 
-static hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context ctx)
+static inline hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context ctx)
 {
   LmnAtom atom;
   hash_t hash = 0;
@@ -398,13 +398,13 @@ static hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context ctx)
   return hash * atomlink(atom, attr);
 }
 
-static hash_t atomlink(LmnAtom atom, LmnLinkAttr attr)
+static inline hash_t atomlink(LmnAtom atom, LmnLinkAttr attr)
 {
   const int i_from = LMN_ATTR_IS_DATA(attr) ? 0 : LMN_ATTR_GET_VALUE(attr);
   return (i_from+1) * atom_type(atom, attr);
 }
 
-static hash_t atom_type(LmnAtom atom, LmnLinkAttr attr)
+static inline hash_t atom_type(LmnAtom atom, LmnLinkAttr attr)
 {
   if (LMN_ATTR_IS_DATA(attr)) {
     return data_atom_type(atom, attr);
@@ -419,7 +419,7 @@ static hash_t symbol_atom_type(LmnSAtom atom)
   return LMN_SATOM_GET_FUNCTOR(atom);
 }
 
-static hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
+static inline hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
   switch(attr) {
     case LMN_INT_ATTR:
       return atom;
@@ -435,7 +435,7 @@ static hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
   return -1;
 }
 
-static Context init_context(void)
+static inline Context init_context(void)
 {
   Context c = LMN_MALLOC(struct Context);
   c->done_mol = hashset_make(64);
@@ -443,31 +443,31 @@ static Context init_context(void)
   return c;
 }
 
-static void free_context(Context ctx)
+static inline void free_context(Context ctx)
 {
   hashset_free(ctx->done_mol);
   st_free_table(ctx->done_mem);
   LMN_FREE(ctx);
 }
 
-static int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash)
+static inline int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash)
 {
   /* hash_tとst_data_tは同サイズだからok */
   if (st_lookup(ctx->done_mem, (st_data_t)mem, (st_data_t*)hash)) return 1;
   else return 0;
 }
 
-static int is_done_mol(Context ctx, void *p)
+static inline int is_done_mol(Context ctx, void *p)
 {
   return hashset_contains(ctx->done_mol, (HashKeyType)p);
 }
 
-static void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash)
+static inline void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash)
 {
   st_insert(ctx->done_mem, (st_data_t)mem, (st_data_t)hash);
 }
 
-static void add_done_mol(Context ctx, void *p)
+static inline void add_done_mol(Context ctx, void *p)
 {
   hashset_add(ctx->done_mol, (HashKeyType)p);
 }

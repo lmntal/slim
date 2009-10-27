@@ -47,70 +47,100 @@
 #include "runtime_status.h"
 #endif
 
-struct StateSpace {
-  State *init_state;
-  Vector *end_states;
-  st_table_t tbl;
-
-  /* ハッシュ値（mhash）が一定値（MEM_EQ_FAIL_THRESHOLD）以上衝突すると、
-     そのハッシュ値を持つ状態は、膜のIDを計算し、以降はIDで比較を行う */
-  st_table_t memid_tbl;        /* 膜のIDを計算した状態を格納（tblにも同じ状態がある） */
-  HashSet memid_hashes;   /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
-};
-
-static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem);
-static BOOL react_all_rulesets(struct ReactCxt *rc,
-                               LmnMembrane *cur_mem);
+static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem, BYTE state_name);
 static void nd_loop(StateSpace states, State *init_state, BOOL dump);
 static StateSpace do_nd_sub(LmnMembrane *world_mem, BOOL dump);
-static int kill_States_chains(st_data_t _k,
-                              st_data_t state_ptr,
-                              st_data_t rm_tbl_ptr);
 static BOOL expand_inner(struct ReactCxt *rc,
                          LmnMembrane *cur_mem);
-static void dump_state_data(State *state);
 
-static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a);
-static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a);
-static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a);
-
-/* 状態stateから１ステップで遷移する状態のベクタを返す。
-   返される状態のベクタには、重複はない */
-Vector *nd_expand(const StateSpace states, State *state)
+/* 状態stateから１ステップで遷移する状態を展開、stateのサクセッサを設定、状態空間に追加する。
+   新たに生成された状態（サクセッサすべてではない）のベクタを返す */
+Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
 {
-  Vector *r;
+  Vector *expanded;
+  Vector successors, *new_states;
+  st_table_t succ_tbl;         /* サクセッサのポインタの重複検査に使用 */
+  unsigned long i, expanded_num;
+
 #ifdef PROFILE
   if (lmn_env.profile_level>0)  status_start_expand();
 #endif
 
-  if (lmn_env.por) { r = ample(states, state); }
-  else  {
-    struct ReactCxt rc;
-    LmnMembrane *mem;
+  if (lmn_env.por) expanded = ample(states, state); 
+ else expanded = nd_gen_successors(state, state_name);
 
-    mem = state_mem(state);
-    if (!mem) {
-      mem = lmn_binstr_decode(state_mem_binstr(state));
-    }
-    nd_react_cxt_init(&rc, DEFAULT_STATE_ID);
-    RC_SET_GROOT_MEM(&rc, mem);
-    r = expand_sub(&rc, mem);
-    nd_react_cxt_destroy(&rc);
+  /* 状態空間へのサクセッサの追加 */
 
-    if (!state_mem(state)) {
-      lmn_mem_drop(mem);
-      lmn_mem_free(mem);
-    }
+  expanded_num = vec_num(expanded);
+
+  if (expanded_num == 0) {
+    state_space_add_end_state(states, state);
   }
+
+  succ_tbl= st_init_ptrtable();
+  vec_init(&successors, 16);
+  new_states = vec_make(16);
+
+  for (i = 0; i < expanded_num; i++) {
+    State *src_succ;
+    State *succ;
+
+    src_succ = (State *)vec_get(expanded, i);
+    succ = insert_state(states, src_succ);
+
+    if (succ == src_succ) { /* succが状態空間に追加された */
+      vec_push(new_states, (vec_data_t)succ);
+    } else { /* src_succは追加されなかった（すでに同じ状態がある) */
+      state_free(src_succ);
+    }
+    /* expandedに同じ状態がなければ、サクセッサとして追加 */
+    if (st_insert(succ_tbl, (st_data_t)succ, 0) == 0) {
+      vec_push(&successors, (vec_data_t)succ);
+    } 
+  }
+
+  /* 状態にサクセッサを設定 */
+  for (i = 0; i < vec_num(&successors); i++) {
+    state_succ_add(state, (State *)vec_get(&successors, i));
+  }
+      
+  st_free_table(succ_tbl);
+  vec_free(expanded);
+  vec_destroy(&successors);
 
 #ifdef PROFILE
   if (lmn_env.profile_level>0) status_finish_expand();
 #endif
 
-  return r;
+  return new_states;
 }
 
-static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
+/* 状態stateから１ステップで遷移する状態を生成する。生成された状態は重複（多重辺）を含む */
+Vector *nd_gen_successors(State *state, BYTE state_name)
+{
+  Vector *expanded;
+  struct ReactCxt rc;
+  LmnMembrane *mem;
+
+
+  mem = state_mem(state);
+  if (!mem) {
+    mem = lmn_binstr_decode(state_mem_binstr(state));
+  }
+  nd_react_cxt_init(&rc, DEFAULT_STATE_ID);
+  RC_SET_GROOT_MEM(&rc, mem);
+  expanded = expand_sub(&rc, mem, state_name);
+  nd_react_cxt_destroy(&rc);
+
+  if (!state_mem(state)) {
+    lmn_mem_drop(mem);
+    lmn_mem_free(mem);
+  }
+
+  return expanded;
+}
+
+static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem, BYTE state_name)
 {
   int i;
   Vector *expanded_roots;
@@ -122,8 +152,9 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem)
   for (i = 0; i < vec_num(expanded_roots); i++) {
     State *state;
 
-    state = state_make_for_nd((LmnMembrane *)vec_get(expanded_roots, i),
-                              (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
+    state = state_make((LmnMembrane *)vec_get(expanded_roots, i),
+                       state_name,
+                       (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
 
     vec_push(expanded, (LmnWord)state);
   }
@@ -180,10 +211,7 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
     /* 展開元の状態。popはしないでsuccessorの展開が終わるまで
        スタックに積んでおく */
     State *s = (State *)vec_peek(stack);
-    Vector *expanded;
-    Vector successors;          /* サクセッサを追加していく */
-    st_table_t succ_tbl;         /* サクセッサのポインタの重複検査に使用 */
-    unsigned long expanded_num;
+    Vector *new_states;
 
     if (is_expanded(s)) {
       /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
@@ -191,49 +219,28 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
       unset_open(s);
       continue;
     }
+    set_expanded(s); /* sに展開済みフラグを立てる */
 
-    expanded = nd_expand(states, s); /* 展開先をexpandedに格納する */
-    expanded_num = vec_num(expanded);
+    state_restore_mem(s);
+    if (dump) dump_state_data(s);
 
-    if (expanded_num == 0) {
-      state_space_add_end_state(states, s);
-    }
+    new_states = nd_expand(states, s, DEFAULT_STATE_ID);
+    state_free_mem(s);
 
-    succ_tbl= st_init_ptrtable();
-    vec_init(&successors, 16);
-    for (i = 0; i < expanded_num; i++) {
-      State *src_succ = (State *)vec_get(expanded, i);
-      State *succ = insert_state(states, src_succ);
+    for (i = 0; i < state_succ_num(s); i++) {
+      State *succ = state_succ_get(s, i);
 
-      if (succ == src_succ) { /* succが状態空間に追加された */
-        vec_push(stack, (vec_data_t)src_succ);
-        vec_push(&successors, (vec_data_t)src_succ);
-        /* set ss to open, i.e., on the search stack */
-        set_open(src_succ);
-        if (dump) dump_state_data(succ);
+      vec_push(stack, (vec_data_t)succ);
+      /* set ss to open, i.e., on the search stack */
+      set_open(succ);
 
-        if (lmn_env.compact_stack) {
-          /* メモリ最適化のために、サクセッサの作成後に膜を解放する */
-          state_free_mem(succ);
-        }
-      } else { /* src_succは追加されなかった（すでに同じ状態がある) */
-        state_free(src_succ);
+      if (lmn_env.compact_stack) {
+        /* メモリ最適化のために、サクセッサの作成後に膜を解放する */
+        state_free_mem(succ);
       }
-      /* expandedに同じ状態がなければ、サクセッサとして追加 */
-      if (st_insert(succ_tbl, (st_data_t)succ, 0) == 0) {
-        vec_push(&successors, (vec_data_t)succ);
-      }
-    }
-
-    /* 状態にサクセッサを設定する */
-    state_succ_init(s, vec_num(&successors));
-    for (i = 0; i < vec_num(&successors); i++) {
-      vec_push(&s->successor, (LmnWord)vec_get(&successors, i));
     }
       
-    vec_free(expanded);
-    st_free_table(succ_tbl);
-    vec_destroy(&successors);
+    vec_free(new_states);
 
     set_expanded(s); /* sに展開済みフラグを立てる */
 
@@ -314,8 +321,8 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
   /* 初期プロセスから得られる初期状態を生成 */
   initial_state = state_make_for_nd(world_mem, ANONYMOUS);
 /*   mc_flags.initial_state = initial_state; */
-  state_space_set_init_state(states, initial_state);
   if (dump) dump_state_data(initial_state);
+  state_space_set_init_state(states, initial_state);
 
 /*   /\* --nd_dumpの実行 *\/ */
 /*   else if(lmn_env.nd_dump){ */
@@ -327,328 +334,4 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
 /*   } */
 
   return states;
-}
-
-static void dump_state_data(State *state)
-{
-  if (!lmn_env.dump) return;
-  fprintf(stdout, "%lu::", (long unsigned int)state); /* dump src state's ID */
-  if (!state->mem) lmn_fatal("unexpected");
-  lmn_dump_cell_stdout(state->mem); /* dump src state's global root membrane */
-}
-
-/**
- * --ltl_nd実行終了時に状態の内容を出力する．
- * 高階関数st_foreach(c.f. st.c)に投げて使用．
- */
-static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  State *tmp = (State *)state_ptr;
-  dump_state_data(tmp);
-  return ST_CONTINUE;
-}
-
-/**
- * 非決定(--nd または --nd_result)実行終了時に状態遷移グラフを出力する．
- * 高階関数st_foreach(c.f. st.c)に投げて使用．
- */
-static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  unsigned int j = 0;
-  State *tmp = (State *)state_ptr;
-
-  fprintf(stdout, "%lu::", (long unsigned int)tmp); /* dump src state's ID */
-  while (j < vec_num(&tmp->successor)) { /* dump dst state's IDs */
-    fprintf(stdout, "%lu", vec_get(&tmp->successor, j++));
-    if (j < vec_num(&tmp->successor)) {
-      fprintf(stdout,",");
-    }
-  }
-  fprintf(stdout, "\n");
-
-  return ST_CONTINUE;
-}
-
-static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  State *tmp = (State *)state_ptr;
-  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
-  return ST_CONTINUE;
-}
-
-/* cur_memと、その子孫膜に存在するルールすべてに対して適用を試みる */
-static BOOL react_all_rulesets(struct ReactCxt *rc,
-                               LmnMembrane *cur_mem)
-{
-  unsigned int i;
-  struct Vector rulesets = cur_mem->rulesets; /* 本膜のルールセットの集合 */
-  BOOL ok = FALSE;
-
-  for (i = 0; i < vec_num(&rulesets); i++) {
-    ok = ok || lmn_react_ruleset(rc, cur_mem,
-                                 (LmnRuleSet)vec_get(&rulesets, i));
-  }
-#ifdef OLD
-  if (!ok) { /* 通常のルールセットが適用できなかった場合 */
-    /* システムルールセットの適用 */
-    if (lmn_react_ruleset(rc, cur_mem, system_ruleset)) {
-      ok = TRUE;
-    }
-  }
-#endif
-  return ok;
-}
-
-StateSpace state_space_make()
-{
-  struct StateSpace *ss = LMN_MALLOC(struct StateSpace);
-  ss->init_state = NULL;
-  if (lmn_env.mem_enc) ss->tbl = st_init_table(&type_memid_statehash);
-  else ss->tbl = st_init_table(&type_statehash);
-  ss->memid_tbl = st_init_table(&type_memid_statehash);
-  ss->end_states = vec_make(64);
-  hashset_init(&ss->memid_hashes, 128);
-  return ss;
-}
-
-void state_space_free(StateSpace states)
-{
-  HashSet rm_tbl; /* LTLモデル検査モード時に二重解放を防止するため */
-
-  hashset_init(&rm_tbl, 16);
-  st_foreach(states->tbl, kill_States_chains, (st_data_t)&rm_tbl);
-  hashset_destroy(&rm_tbl);
-  st_free_table(states->tbl);
-  st_free_table(states->memid_tbl);
-  vec_free(states->end_states);
-  hashset_destroy(&states->memid_hashes);
-  LMN_FREE(states);
-}
-
-void state_space_set_init_state(StateSpace states, State* init_state)
-{
-  states->init_state = init_state;
-  insert_state(states, init_state);
-}
-
-State *state_space_init_state(StateSpace states)
-{
-  return states->init_state;
-}
-
-unsigned long state_space_num(StateSpace states)
-{
-  return st_num(states->tbl);
-}
-
-/* 状態空間にすでに含まれている状態sを最終状態として登録する */
-void state_space_add_end_state(StateSpace states, State *s)
-{
-  vec_push(states->end_states, (LmnWord)s);
-}
-
-const Vector *state_space_end_states(StateSpace states)
-{
-  return states->end_states;
-}
-
-static int state_space_mem_encode_f(st_data_t _k, st_data_t _s, st_data_t _t)
-{
-  StateSpace states = (StateSpace)_t;
-  State *s = (State *)_s;
-
-  state_calc_mem_encode(s);
-  st_add_direct(states->memid_tbl, (st_data_t)s, (st_data_t)s);
-  return ST_CONTINUE;
-}
-
-/* 膜のエンコードを行うハッシュ値(mhash)を追加 */
-void state_space_add_memid_hash(StateSpace states, unsigned long hash)
-{
-  hashset_add(&states->memid_hashes, hash);
-  st_foreach_hash(states->tbl, hash, state_space_mem_encode_f, (st_data_t)states);
-}
-
-inline BOOL state_space_calc_memid_hash(StateSpace states, unsigned long hash)
-{
-  return hashset_contains(&states->memid_hashes, hash);
-}
-
-/**
- * 非決定実行 or LTLモデル検査終了後にStates内に存在するチェインをすべてfreeする
- * 高階関数st_foreach(c.f. st.c)に投げて使用
- */
-static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tbl_ptr)
-{
-  State *tmp = (State *)state_ptr;
-  HashSet *rm_tbl = (HashSet *)rm_tbl_ptr;
-
-  if(tmp->mem && hashset_contains(rm_tbl, (HashKeyType)tmp->mem)) {
-    vec_destroy(&tmp->successor);
-    LMN_FREE(tmp);
-  }
-  else {
-    hashset_add(rm_tbl, (HashKeyType)tmp->mem);
-    state_free(tmp);
-  }
-  return ST_CONTINUE;
-}
-
-State *insert_state(StateSpace states, State *s)
-{
-  long col;
-  BOOL has_mem_id;
-  st_data_t t;
-
-  has_mem_id = state_space_calc_memid_hash(states, s->hash);
-  if (has_mem_id) {
-    state_calc_mem_encode(s);
-
-    if (st_lookup(states->memid_tbl, (st_data_t)s, (st_data_t *)&t)) {
-      /* すでに等価な状態が存在する */
-      return (State *)t;
-    } else {
-      /* 等価な状態はない */
-      st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s);
-      st_add_direct(states->memid_tbl, (st_data_t)s, (st_data_t)s);
-      return s;
-    }
-  }
-  else {
-    if (st_lookup_with_col(states->tbl, (st_data_t)s, (st_data_t *)&t, &col)) {
-      /* すでに等価な状態が存在する */
-      return (State *)t;
-    } else {
-      /* 等価な状態はない */
-      st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
-
-      if (col >= MEM_EQ_FAIL_THRESHOLD) {
-        state_space_add_memid_hash(states, s->hash);
-      } else if (!lmn_env.mem_enc) {
-        /* 状態の追加時に膜のダンプを計算する */
-        state_calc_mem_dump(s);
-      }
-      return s;
-    }
-  }
-}
-
-/* 状態空間内のsと等価な状態を返す。存在しない場合は、NULLを返す */
-State *state_space_get(const StateSpace states, State *s)
-{
-  st_data_t t;
-  if (st_lookup(states->tbl, (st_data_t)s, &t)) {
-    return (State *)t;
-  } else {
-    return NULL;
-  }
-}
-
-/* 状態空間から状態sを削除する。ただし、状態空間のサクセッサは更新され
-   ないので注意 */
-void state_space_remove(const StateSpace states, State *s)
-{
-  st_delete(states->tbl, (st_data_t)s, 0);
-}
-
-st_table_t state_space_tbl(StateSpace states)
-{
-  return states->tbl;
-}
-
-
-void dump_all_state_mem(StateSpace states, FILE *file)
-{
-  if (!lmn_env.dump) return;
-  fprintf(file, "States\n");
-  st_foreach(states->tbl, print_state_mem, 0);
-  fprintf(file, "\n");
-}
-
-void dump_state_transition_graph(StateSpace states, FILE *file)
-{
-  if (!lmn_env.dump) return;
-  fprintf(file, "Transitions\n");
-  fprintf(file, "init:%lu\n", (long unsigned int)state_space_init_state(states));
-  st_foreach(states->tbl, print_state_transition_graph, 0);
-  fprintf(file, "\n");
-}
-
-
-/*----------------------------------------------------------------------
- * State
- */
-
-struct st_hash_type type_statehash = {
-  state_cmp,
-  state_hash
-};
-
-struct st_hash_type type_memid_statehash = {
-  state_memid_cmp,
-  state_memid_hash
-};
-
-/**
- * 与えられた2つの状態が互いに異なっていれば真を、逆に等しい場合は偽を返す
- */
-int state_memid_cmp(st_data_t _s1, st_data_t _s2) {
-  State *s1 = (State *)_s1;
-  State *s2 = (State *)_s2;
-
-  return !(
-    s1->state_name == s2->state_name &&
-    s1->mem_id_hash == s2->mem_id_hash &&
-    binstr_comp(s1->mem_id, s2->mem_id) == 0);
-
-}
-
-inline long state_memid_hash(State *s) {
-  return s->mem_id_hash;
-}
-
-/* 状態が持つ膜のダンプを計算する。 */
-inline void state_free_mem_dump(State *s)
-{
-  if (s->mem_dump) {
-    lmn_binstr_free(s->mem_dump);
-    s->mem_dump = NULL;
-  }
-}
-
-
-/* 状態が持つ膜のエンコードを計算する。mem_dumpを持っている場合は、
-   mem_dumpを解放する */
-inline void state_calc_mem_encode(State *s)
-{
-  if (!s->mem_id) {
-    if (s->mem) s->mem_id = lmn_mem_encode(s->mem);
-    else if (s->mem_dump) {
-      LmnMembrane *m;
-
-      m = lmn_binstr_decode(s->mem_dump);
-      s->mem_id = lmn_mem_encode(m);
-      lmn_mem_drop(m);
-      lmn_mem_free(m);
-    } else {
-      lmn_fatal("implementation error");
-    }
-    s->mem_id_hash = binstr_hash(s->mem_id);
-    state_free_mem_dump(s);
-  }
-}
-
-inline void state_calc_mem_dump(State *s)
-{
-  if (s->mem_id) lmn_fatal("implementation error");
-  if (!s->mem_dump) s->mem_dump = lmn_mem_to_binstr(s->mem);
-}
-
-/**
- * --ltl_nd時に使用．状態の名前（accept_s0など）を表示．
- * 高階関数st_foreach(c.f. st.c)に投げて使用．
- */
-void dump_state_name(StateSpace states, FILE *file)
-{
-  if (!lmn_env.dump) return;
-  fprintf(file, "Labels\n");
-  st_foreach(states->tbl, print_state_name, 0);
-  fprintf(file, "\n");
 }

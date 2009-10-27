@@ -48,6 +48,7 @@
 #include "rule.h"
 #include "react_context.h"
 #include "nd.h"
+#include "state.h"
 
 typedef struct StateTransition StateTransition;
 
@@ -76,89 +77,11 @@ struct StateTransition {
  *   PORが有効かつample/1(c.f. por.c)実行中のみTRUE
  */
 
-struct NDReactCxtData {
-/*   State *initial_state; */
-/*   BOOL calculating_ample; */
-/*   unsigned long next_strans_id; */
-
-  Vector *roots;
-  Vector *rules;
-  BYTE property_state;
-
-/*   BOOL mc; */
-
-};
-
-#define RC_EXPANDED(rc) (((struct NDReactCxtData *)(rc)->v)->roots)
-#define RC_EXPANDED_RULES(rc) (((struct NDReactCxtData *)(rc)->v)->rules)
-#define RC_PROPERTY_STATE(rc) (((struct NDReactCxtData *)(rc)->v)->property_state)
-
 struct MCConst {
   Automata property_automata;
   Vector *propsyms;
 } mc_data;
 
-
-void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state_id);
-void nd_react_cxt_destroy(struct ReactCxt *cxt);
-
-void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
-                               LmnMembrane *mem,
-                               LmnRule rule);
-
-
-/* 状態IDが本来不必要な場合に使用する状態ID */
-#define DEFAULT_STATE_ID 0
-
-LMN_EXTERN State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule);
-State *state_make_for_nd(LmnMembrane *mem, LmnRule rule);
-LMN_EXTERN State *state_copy(State *s);
-LMN_EXTERN inline LmnMembrane *state_copied_mem(State *state);
-LMN_EXTERN inline void state_succ_init(State *s, int init_size);
-LMN_EXTERN void state_free(State *s);
-LMN_EXTERN void state_free_without_mem(State *s);
-LMN_EXTERN inline void state_free_mem(State *s);
-LMN_EXTERN void strans_free(StateTransition *strans);
-BYTE state_property_state(State *state);
-void state_set_property_state(State *state, BYTE prop_state);
-LMN_EXTERN inline LmnMembrane *state_mem(State *state);
-LMN_EXTERN inline LmnRule state_rule(State *state);
-LMN_EXTERN StateTransition *strans_make(State *s, unsigned long id, LmnRule rule);
-inline LmnBinStr state_mem_binstr(State *state);
-
-/* flag of the first DFS (nested DFS, on-stack state) */
-#define FST_MASK                   (0x01U)
-/* flag of the second DFS (nested DFS, visited state) */
-#define SND_MASK                   (0x01U << 1)
-/* flag to show that it is on the search stack */
-#define ON_STACK_MASK              (0x01U << 2)
-/* flag to show that all its successor states(and transitions) are expanded */
-#define EXPANDED_MASK              (0x01U << 3)
-/* flag to show that all the independency relations between transitions enabled on the state are checked */
-#define INDEPENDENCY_CHECKED_MASK  (0x01U << 4)
-/* flag to show that it was not reduced by the partial order reduction */
-#define REPRESENTATIVE_MASK        (0x01U << 5)
-/* macros for nested DFS */
-#define set_fst(S)                     ((S)->flags |= FST_MASK)
-#define unset_fst(S)                   ((S)->flags &= (~FST_MASK))
-#define is_fst(S)                      ((S)->flags & FST_MASK)
-#define set_snd(S)                     ((S)->flags |= SND_MASK)
-#define unset_snd(S)                   ((S)->flags &= (~SND_MASK))
-#define is_snd(S)                      ((S)->flags & SND_MASK)
-#define set_open(S)                    ((S)->flags |= ON_STACK_MASK)
-#define unset_open(S)                  ((S)->flags &= (~ON_STACK_MASK))
-#define is_open(S)                     ((S)->flags & ON_STACK_MASK)
-#define set_expanded(S)                ((S)->flags |= EXPANDED_MASK)
-#define unset_expanded(S)              ((S)->flags &= (~EXPANDED_MASK))
-#define is_expanded(S)                 ((S)->flags & EXPANDED_MASK)
-#define set_independency_checked(S)    ((S)->flags |= INDEPENDENCY_CHECKED_MASK)
-#define unset_independency_checked(S)  ((S)->flags &= (~INDEPENDENCY_CHECKED_MASK))
-#define is_independency_checked(S)     ((S)->flags & INDEPENDENCY_CHECKED_MASK)
-#define set_ample(S)                   ((S)->flags |= REPRESENTATIVE_MASK)
-#define is_ample(S)                    ((S)->flags & REPRESENTATIVE_MASK)
-
-LMN_EXTERN inline long state_hash(State *s);
-LMN_EXTERN inline int state_cmp(HashKeyType s1, HashKeyType s2);
 
 LMN_EXTERN inline void activate_ancestors(LmnMembrane *mem);
 
@@ -168,5 +91,8 @@ LMN_EXTERN char *mc_error_msg(int error_id);
 
 //void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms);
 void run_mc(Vector *start_rulesets, Automata automata, Vector *propsyms);
+
+StateTransition *strans_make(State *s, unsigned long id, LmnRule rule);
+void strans_free(StateTransition *strans);
 
 #endif

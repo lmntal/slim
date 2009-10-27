@@ -59,13 +59,7 @@ BOOL ground_atoms(Vector *srcvec,
                   Vector *avovec,
                   HashSet **atoms,
                   unsigned long *natoms);
-static int mem_cmp(LmnMembrane *mem1, LmnMembrane *mem2);
 static inline int mem_hash_f(st_data_t m);
-
-struct st_hash_type type_memhash = {
-  mem_cmp,
-  mhash
-};
 
 /* ルールセットを膜に追加する。ルールセットは、比較のために
    ruleset->idの値によって昇順に並べるようにする */
@@ -1976,11 +1970,6 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
   free_atomvec_data(atomvec_mem1);
   free_atomvec_data(atomvec_mem2);
   return FALSE;
-}
-
-int mem_cmp(LmnMembrane *mem1, LmnMembrane *mem2)
-{
-  return !lmn_mem_equals(mem1, mem2);
 }
 
 static inline int mem_hash_f(st_data_t m)

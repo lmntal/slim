@@ -281,7 +281,7 @@ static void gen_successors(const StateSpace states, State *s)
   
   succ_strans = vec_make(32);
 
-  expanded = nd_expand(states, s);
+  expanded = nd_gen_successors(s, DEFAULT_STATE_ID);
   expanded_num = vec_num(expanded);
   for (i = 0; i < expanded_num; i++) {
     vec_push(succ_strans,
@@ -294,9 +294,8 @@ static void gen_successors(const StateSpace states, State *s)
     expand_States_POR((State *)vec_get(expanded, i));
   }
   
-  state_succ_init(s, vec_num(succ_strans));
   while (!vec_is_empty(succ_strans)) {
-    vec_push(&s->successor, vec_pop(succ_strans));
+    state_succ_add(s, (State *)vec_pop(succ_strans));
   }
 
   set_expanded(s); /* 展開済フラグを立てる */

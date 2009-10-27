@@ -77,7 +77,7 @@ void status_start_expand(void);
 void status_finish_expand(void);
 void status_start_commit(void);
 void status_finish_commit(void);
-void status_count_counterexaple(void);
+void status_count_counterexample(void);
 void status_set_state_num(unsigned long n);
 void status_create_new_state(void);
 

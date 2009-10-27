@@ -47,6 +47,7 @@
 #include "error.h"
 #include "dumper.h"
 #include "mem_encode.h"
+#include "state.h"
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
@@ -69,18 +70,18 @@ static Vector *mc_expand(const StateSpace states,
                          BYTE prop_state);
 static void do_mc(StateSpace states, LmnMembrane *world_mem);
 static void ltl_search2(StateSpace states, Vector *stack, State *seed);
+static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a);
+static void dump_state_name(StateSpace states, FILE *file);
 
 void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
 {
-  RC_SET_MODE(cxt, REACT_ND);
   struct NDReactCxtData *v = LMN_MALLOC(struct NDReactCxtData);
+
+  RC_SET_MODE(cxt, REACT_ND);
   cxt->v = v;
-/*   v->initial_state = NULL; */
-/*   v->calculating_ample = FALSE; */
   v->roots = vec_make(64);
   v->rules = vec_make(64);
   v->property_state = prop_state;
-/*   v->mc = FALSE; */
 }
 
 void nd_react_cxt_destroy(struct ReactCxt *cxt)
@@ -98,46 +99,6 @@ void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
   vec_push(((struct NDReactCxtData *)cxt->v)->rules, (LmnWord)rule);
 }
 
-/*----------------------------------------------------------------------
- * State
- */
-
-/**
- * コンストラクタ
- */
-State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule) {
-  State *new = LMN_MALLOC(State);
-  new->mem = mem;
-  new->state_name = state_name;
-  new->flags = 0x00U;
-  /* successorの記憶域をゼロクリアする */
-  memset(&new->successor, 0x00U, sizeof(Vector));
-  new->rule = rule;
-  new->mem_id = NULL;
-  new->mem_dump = NULL;
-  new->hash = 0;
-  new->mem_id_hash = 0;
-  
-  if (lmn_env.mem_enc) {
-    new->mem_id = lmn_mem_encode(mem);
-    new->mem_id_hash = binstr_hash(new->mem_id);
-  } else {
-    new->hash = mhash(new->mem);
-  }
-
-#ifdef PROFILE
-  status_create_new_state();
-#endif
-  return new;
-}
-
-/**
- * コンストラクタ
- */
-State *state_make_for_nd(LmnMembrane *mem, LmnRule rule) {
-  return state_make(mem, DEFAULT_STATE_ID, rule);
-}
-
 /**
  * コンストラクタ
  */
@@ -149,135 +110,9 @@ StateTransition *strans_make(State *s, unsigned long id, LmnRule rule) {
   return strans;
 }
 
-/**
- * 記憶域sの最初のnバイトがゼロであることを確認する
- */
-static inline BOOL mem_is_zero(const void *s, size_t n) {
-  const unsigned char *p = (const unsigned char *)s;
-  while (n-- > 0 ) {
-    if(*p != 0x00U) return FALSE;
-    p++;
-  }
-  return TRUE;
-}
-
-inline void state_succ_init(State *s, int init_size) {
-  vec_init(&s->successor, init_size);
-}
-
-/**
- * デストラクタ
- */
-void state_free(State *s) {
-  if (s->mem) {
-    lmn_mem_drop(s->mem);
-    lmn_mem_free(s->mem);
-  }
-  state_free_without_mem(s);
-}
-
-void state_free_without_mem(State *s)
-{
-  if (!mem_is_zero(&s->successor, sizeof(Vector))) {
-    vec_destroy(&s->successor);
-  }
-  if (s->mem_id) lmn_binstr_free(s->mem_id);
-  if (s->mem_dump) lmn_binstr_free(s->mem_dump);
-  LMN_FREE(s);
-}
-
-inline void state_free_mem(State *s)
-{
-  if (s->mem) {
-    lmn_mem_drop(s->mem);
-    lmn_mem_free(s->mem);
-    s->mem = NULL;
-  }
-}
-
 void strans_free(StateTransition *strans) {
   LMN_FREE(strans);
 }
-
-inline long state_hash(State *s) {
-  return s->hash;
-}
-
-BYTE state_property_state(State *state)
-{
-  return state->state_name;
-}
-
-void state_set_property_state(State *state, BYTE prop_state)
-{
-  state->state_name = prop_state;
-}
-
-inline LmnMembrane *state_mem(State *state)
-{
-  return state->mem;
-}
-
-/* 状態の膜と等価な、新たに生成した膜を返す */
-inline LmnMembrane *state_copied_mem(State *state)
-{
-  if (state->mem) return lmn_mem_copy(state->mem);
-  else if (state->mem_id) return lmn_binstr_decode(state->mem_id);
-  else {
-    lmn_fatal("unexpected");
-  }
-}
-
-inline LmnRule state_rule(State *state)
-{
-  return state->rule;
-}
-
-inline LmnBinStr state_mem_binstr(State *state)
-{
-  return state->mem_id ? state->mem_id : state->mem_dump;
-}
-
-/**
- * 引数としてあたえられたStateが等しいかどうかを判定する
- * ハッシュ値が等しい場合は同型判定を行う
- */
-static int state_equals(HashKeyType k1, HashKeyType k2) {
-  State *s1 = (State *)k1;
-  State *s2 = (State *)k2;
-
-  int t;
-
-  if (lmn_env.mem_enc) {
-    t =
-      s1->state_name == s2->state_name &&
-      s1->mem_id_hash == s2->mem_id_hash &&
-      binstr_comp(s1->mem_id, s2->mem_id) == 0;
-  }
-  else if (s1->mem_id && s2->mem_id) {
-    t =
-      s1->state_name == s2->state_name &&
-      s1->mem_id_hash == s2->mem_id_hash &&
-      binstr_comp(s1->mem_id, s2->mem_id) == 0;
-  } else if (s1->mem_dump || s2->mem_dump) {
-      t =
-        s1->state_name == s2->state_name &&
-        s1->hash == s2->hash &&
-        (s1->mem_id ? lmn_mem_equals_enc(s1->mem_dump, s2->mem) : lmn_mem_equals_enc(s2->mem_dump, s1->mem));
-  } else {
-    lmn_fatal("implementation error");
-  }
-
-  return t;
-}
-
-/**
- * 与えられた2つの状態が互いに異なっていれば真を、逆に等しい場合は偽を返す
- */
-int state_cmp(HashKeyType s1, HashKeyType s2) {
-  return !state_equals(s1, s2);
-}
-
 /**
  * 膜スタックの代替品
  * 自身を含めた全ての先祖膜を起こす
@@ -370,14 +205,13 @@ char *mc_error_msg(int error_id)
  * LTL Model Checking
  */
 
+
 /* nested(またはdouble)DFSにおける1段階目の実行 */
 void ltl_search1(StateSpace states, Vector *stack)
 {
-  unsigned int j, i, i_trans;
+  unsigned int i, i_trans;
   State *s = (State *)vec_peek(stack);
   AutomataState property_automata_state = automata_get_state(mc_data.property_automata, s->state_name);
-  Vector *expanded_list = vec_make(32);
-  unsigned int succ_num = 0;
 
 /*   printf("ltl search1, state: %p\n", s); */
   if (atmstate_is_end(property_automata_state)) {
@@ -386,6 +220,14 @@ void ltl_search1(StateSpace states, Vector *stack)
     unset_fst((State *)vec_pop(stack));
     return;
   }
+
+    if (is_expanded(s)) {
+      /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
+      vec_pop(stack);
+      unset_open(s);
+      return;
+    }
+    set_expanded(s); /* sに展開済みフラグを立てる */
 
   /*
    * 状態展開
@@ -412,55 +254,47 @@ void ltl_search1(StateSpace states, Vector *stack)
        * が存在するものと考えてε遷移をさせ，受理頂点に次状態が存在しない場合でも受理サイクルを形成できるようにする．
        * (c.f. "The Spin Model Checker" pp.130-131)
        */
-      Vector *expanded = mc_expand(states, s, transition_next(transition));
+      Vector *new_states = mc_expand(states, s, transition_next(transition));
 
-      if (vec_num(expanded) == 0) { /* stutter extension */
-        /* グローバルルート膜のコピー */
-        State *newstate;
-        LmnMembrane *newmem = lmn_mem_copy(state_mem(s));
+      if (state_succ_num(s) == 0) { /* stutter extension */
+        State *new_s, *t;
 
         /* 性質ルールのみが適用されている。ルール名(遷移のラベル)はどうする？ */
-        newstate = state_make(newmem,
-                              transition_next(transition),
-                              dummy_rule());
-        vec_push(expanded, (LmnWord)newstate);
+        /* EFFICIENCY: 状態のコピーを（mem_idやmem_dumpを使い）効率的に行える */
+        new_s = state_make(lmn_mem_copy(state_mem(s)),
+                           transition_next(transition),
+                           dummy_rule());
+        t = insert_state(states, new_s);
+        if (t == new_s) {
+          /* 状態空間に追加された */
+          state_succ_add(s, new_s);
+          vec_push(new_states, (vec_data_t)new_s);
+        } else {
+          /* 状態空間に追加されなかった（等価な状態が既にあった） */
+          state_free(new_s);
+          state_succ_add(s, t);
+        }
       }
 
-      succ_num += vec_num(expanded);
-      vec_push(expanded_list, (LmnWord)expanded);
-    }
-  }
+      for (i = 0; i < state_succ_num(s); i++) {
+        State *succ = state_succ_get(s, i);
 
-  state_succ_init(s, succ_num);
-  for (i = 0; i < vec_num(expanded_list); i++) {
-    Vector *expanded = (Vector *)vec_get(expanded_list, i);
-      /* expandedの内容をState->succeccorに保存し、その後
-       * expanded内のエントリーをすべてfreeする */
-    for(j = 0; j < vec_num(expanded); j++) { /* for each (s,l,s') */
-      State *ss = (State *)vec_get(expanded, j);
-      State *succ = insert_state(states, ss);
-
-      if (succ == ss) {
         /* push とset を１つの関数にする */
-        vec_push(stack, (vec_data_t)ss);
-        set_open(ss); /* 状態ssがスタック上に存在する旨のフラグを立てる(POR用) */
-        set_fst(ss);
+        vec_push(stack, (vec_data_t)succ);
+        set_open(succ); /* 状態ssがスタック上に存在する旨のフラグを立てる(POR用) */
+        set_fst(succ);
         ltl_search1(states, stack);
       }
-      else { /* contains */
-        state_free(ss);
-      }
-      vec_push(&s->successor, (LmnWord)succ);
+
+      vec_free(new_states);
     }
-    vec_free(expanded);
   }
+
 
   /* entering second DFS */
   if (atmstate_is_accept(property_automata_state)) {
-    State *seed = s;
     set_snd(s);
-    ltl_search2(states, stack, seed);
-    seed = NULL;
+    ltl_search2(states, stack, s);
   }
 
 #ifdef DEBUG
@@ -469,7 +303,6 @@ void ltl_search1(StateSpace states, Vector *stack)
 
   unset_open((State *)vec_peek(stack)); /* スタックから取り除かれる旨のフラグをセット(POR用) */
   unset_fst((State *)vec_pop(stack));
-  vec_free(expanded_list);
 }
 
 /*
@@ -501,8 +334,8 @@ static void ltl_search2(StateSpace states, Vector *stack, State *seed)
 #endif
 
 
-  for(i = 0; i < vec_num(&s->successor); i++) { /* for each (s,l,s') */
-    State *ss = (State *)vec_get(&s->successor, i);
+  for(i = 0; i < state_succ_num(s); i++) { /* for each (s,l,s') */
+    State *ss = state_succ_get(s, i);
 
     /* successorがseedと同一の状態 or successorが探索スタック上の状態ならば反例を出力 */
     if(ss == seed || (is_fst(ss) && !is_snd(ss))) {
@@ -520,6 +353,7 @@ static void ltl_search2(StateSpace states, Vector *stack, State *seed)
 /*      set_open(ss); */
       vec_push(stack, (LmnWord)ss);
       ltl_search2(states, stack, seed);
+
 /*      unset_open((State *)vec_pop(stack)); */
       vec_pop(stack);
     }
@@ -570,16 +404,10 @@ static Vector *mc_expand(const StateSpace states,
                          BYTE prop_state)
 {
   Vector *r;
-  unsigned long i, n;
 
   if (lmn_env.por) r = ample(states, state);
-  else r = nd_expand(states, state);
+  else r = nd_expand(states, state, prop_state);
 
-  n = vec_num(r);
-  /* 性質の状態を設定 */
-  for (i = 0; i < n; i++) {
-    state_set_property_state((State *)vec_get(r, i), prop_state);
-  }
   return r;
 }
 
@@ -660,4 +488,23 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
 #endif
 
   vec_free(stack);
+}
+
+static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a)
+{
+  State *tmp = (State *)state_ptr;
+  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
+  return ST_CONTINUE;
+}
+
+/**
+ * --ltl_nd時に使用．状態の名前（accept_s0など）を表示．
+ * 高階関数st_foreach(c.f. st.c)に投げて使用．
+ */
+static void dump_state_name(StateSpace states, FILE *file)
+{
+  if (!lmn_env.dump) return;
+  fprintf(file, "Labels\n");
+  st_foreach(state_space_tbl(states), print_state_name, 0);
+  fprintf(file, "\n");
 }
