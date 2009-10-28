@@ -1,5 +1,5 @@
 /*
- * nd.c
+ * state.c
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
