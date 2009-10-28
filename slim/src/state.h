@@ -63,8 +63,8 @@ void state_space_add_end_state(StateSpace states, State *s);
 const Vector *state_space_end_states(StateSpace states);
 void state_space_remove(const StateSpace states, State *s);
 st_table_t state_space_tbl(StateSpace states);
-inline BOOL state_space_calc_memid_hash(StateSpace states, unsigned long hash);
-State *insert_state(StateSpace states, State *s);
+inline BOOL state_space_is_memid_hash(StateSpace states, unsigned long hash);
+State *state_space_insert(StateSpace states, State *s);
 
 void dump_all_state_mem(StateSpace states, FILE *file);
 void dump_state_transition_graph(StateSpace states, FILE *file);

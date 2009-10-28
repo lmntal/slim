@@ -73,32 +73,6 @@ static void ltl_search2(StateSpace states, Vector *stack, State *seed);
 static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a);
 static void dump_state_name(StateSpace states, FILE *file);
 
-void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
-{
-  struct NDReactCxtData *v = LMN_MALLOC(struct NDReactCxtData);
-
-  RC_SET_MODE(cxt, REACT_ND);
-  cxt->v = v;
-  v->roots = vec_make(64);
-  v->rules = vec_make(64);
-  v->property_state = prop_state;
-}
-
-void nd_react_cxt_destroy(struct ReactCxt *cxt)
-{
-  vec_free(((struct NDReactCxtData *)(cxt->v))->roots);
-  vec_free(((struct NDReactCxtData *)(cxt->v))->rules);
-  LMN_FREE(cxt->v);
-}
-
-void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
-                               LmnMembrane *mem,
-                               LmnRule rule)
-{
-  vec_push(((struct NDReactCxtData *)cxt->v)->roots, (LmnWord)mem);
-  vec_push(((struct NDReactCxtData *)cxt->v)->rules, (LmnWord)rule);
-}
-
 /**
  * コンストラクタ
  */
@@ -264,7 +238,7 @@ void ltl_search1(StateSpace states, Vector *stack)
         new_s = state_make(lmn_mem_copy(state_mem(s)),
                            transition_next(transition),
                            dummy_rule());
-        t = insert_state(states, new_s);
+        t = state_space_insert(states, new_s);
         if (t == new_s) {
           /* 状態空間に追加された */
           state_succ_add(s, new_s);

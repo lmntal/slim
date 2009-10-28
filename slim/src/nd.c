@@ -86,7 +86,7 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
     State *succ;
 
     src_succ = (State *)vec_get(expanded, i);
-    succ = insert_state(states, src_succ);
+    succ = state_space_insert(states, src_succ);
 
     if (succ == src_succ) { /* succが状態空間に追加された */
       vec_push(new_states, (vec_data_t)succ);
@@ -335,3 +335,34 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
 
   return states;
 }
+
+/*----------------------------------------------------------------------
+ * ND React Context
+ */
+
+void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
+{
+  struct NDReactCxtData *v = LMN_MALLOC(struct NDReactCxtData);
+
+  RC_SET_MODE(cxt, REACT_ND);
+  cxt->v = v;
+  v->roots = vec_make(64);
+  v->rules = vec_make(64);
+  v->property_state = prop_state;
+}
+
+void nd_react_cxt_destroy(struct ReactCxt *cxt)
+{
+  vec_free(((struct NDReactCxtData *)(cxt->v))->roots);
+  vec_free(((struct NDReactCxtData *)(cxt->v))->rules);
+  LMN_FREE(cxt->v);
+}
+
+void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
+                               LmnMembrane *mem,
+                               LmnRule rule)
+{
+  vec_push(((struct NDReactCxtData *)cxt->v)->roots, (LmnWord)mem);
+  vec_push(((struct NDReactCxtData *)cxt->v)->rules, (LmnWord)rule);
+}
+

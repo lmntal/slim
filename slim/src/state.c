@@ -118,12 +118,14 @@ void state_space_free(StateSpace states)
   LMN_FREE(states);
 }
 
+/* 初期状態を追加する */
 void state_space_set_init_state(StateSpace states, State* init_state)
 {
   states->init_state = init_state;
-  insert_state(states, init_state);
+  state_space_insert(states, init_state);
 }
 
+/* 状態空間に存在する状態の数を返す */
 State *state_space_init_state(StateSpace states)
 {
   return states->init_state;
@@ -134,12 +136,13 @@ unsigned long state_space_num(StateSpace states)
   return st_num(states->tbl);
 }
 
-/* 状態空間にすでに含まれている状態sを最終状態として登録する */
+/* 状態空間に**すでに含まれている**状態sを最終状態として登録する */
 void state_space_add_end_state(StateSpace states, State *s)
 {
   vec_push(states->end_states, (LmnWord)s);
 }
 
+/* 状態空間内に存在する、最終状態を返す */
 const Vector *state_space_end_states(StateSpace states)
 {
   return states->end_states;
@@ -155,14 +158,15 @@ static int state_space_mem_encode_f(st_data_t _k, st_data_t _s, st_data_t _t)
   return ST_CONTINUE;
 }
 
-/* 膜のエンコードを行うハッシュ値(mhash)を追加 */
+/* 膜のIDを計算するハッシュ値(mhash)を追加する */
 void state_space_add_memid_hash(StateSpace states, unsigned long hash)
 {
   hashset_add(&states->memid_hashes, hash);
   st_foreach_hash(states->tbl, hash, state_space_mem_encode_f, (st_data_t)states);
 }
 
-inline BOOL state_space_calc_memid_hash(StateSpace states, unsigned long hash)
+/* hashが膜のIDを計算しているハッシュならば真、そうでなければ偽を返す */
+inline BOOL state_space_is_memid_hash(StateSpace states, unsigned long hash)
 {
   return hashset_contains(&states->memid_hashes, hash);
 }
@@ -187,13 +191,15 @@ static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tb
   return ST_CONTINUE;
 }
 
-State *insert_state(StateSpace states, State *s)
+/* 状態空間に状態sを追加する。既に等価な状態tが状態空間に存在した場合は
+   追加せずにtを返し、追加し場合は、sを返す。*/
+State *state_space_insert(StateSpace states, State *s)
 {
   long col;
   BOOL has_mem_id;
   st_data_t t;
 
-  has_mem_id = state_space_calc_memid_hash(states, s->hash);
+  has_mem_id = state_space_is_memid_hash(states, s->hash);
   if (has_mem_id) {
     state_calc_mem_encode(s);
 
@@ -385,7 +391,6 @@ inline LmnBinStr state_mem_binstr(State *state)
 
 /**
  * 引数としてあたえられたStateが等しいかどうかを判定する
- * ハッシュ値が等しい場合は同型判定を行う
  */
 static int state_equals(HashKeyType k1, HashKeyType k2)
 {
@@ -401,11 +406,13 @@ static int state_equals(HashKeyType k1, HashKeyType k2)
       binstr_comp(s1->mem_id, s2->mem_id) == 0;
   }
   else if (s1->mem_id && s2->mem_id) {
+    /* 膜のIDで比較 */
     t =
       s1->state_name == s2->state_name &&
       s1->mem_id_hash == s2->mem_id_hash &&
       binstr_comp(s1->mem_id, s2->mem_id) == 0;
   } else if (s1->mem_dump || s2->mem_dump) {
+    /* 同型性判定 */
       t =
         s1->state_name == s2->state_name &&
         s1->hash == s2->hash &&
@@ -425,7 +432,8 @@ int state_cmp(HashKeyType s1, HashKeyType s2) {
 }
 
 /**
- * 与えられた2つの状態が互いに異なっていれば真を、逆に等しい場合は偽を返す
+ * 与えられた2つの状態を膜のIDを使い比較する。が互いに異なっていれば真
+ * を、逆に等しい場合は偽を返す
  */
 int state_memid_cmp(st_data_t _s1, st_data_t _s2) {
   State *s1 = (State *)_s1;
@@ -438,6 +446,8 @@ int state_memid_cmp(st_data_t _s1, st_data_t _s2) {
 
 }
 
+/* 状態が持つ膜のIDのハッシュ値を返す。膜のIDを持たない場合は有効な値を
+   返さない */
 inline long state_memid_hash(State *s) {
   return s->mem_id_hash;
 }
@@ -473,24 +483,29 @@ inline void state_calc_mem_encode(State *s)
   }
 }
 
+/* 状態の膜のダンプを計算する */
 inline void state_calc_mem_dump(State *s)
 {
   if (s->mem_id) lmn_fatal("implementation error");
   if (!s->mem_dump) s->mem_dump = lmn_mem_to_binstr(s->mem);
 }
 
+/* 状態にサクセッサを追加 */
 inline void state_succ_add(State *s, State *succ) {
   vec_push(&s->successor, (vec_data_t)succ);
 }
 
+/* 状態のサクセッサの数を返す */
 inline unsigned int state_succ_num(State *s) {
   return vec_num(&s->successor);
 }
 
+/* 状態のサクセッサを取得 */
 inline State *state_succ_get(State *s, unsigned int i) {
   return (State *)vec_get(&s->successor, i);
 }
 
+/* 状態の膜（LmnMembrane）を復元する。*/
 inline void state_restore_mem(State *s)
 {
   if (!s->mem) {
