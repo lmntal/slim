@@ -349,16 +349,12 @@ struct st_table *lmn_rule_get_histbl(LmnRule rule)
 /* rulesetをコピーして新しいルールセットを作成する */
 LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
 {
-  return ruleset;
-/*   LmnRuleSet new_ruleset = lmn_ruleset_make(ruleset->id, 16); */
-/*   unsigned int i = 0; */
-/*   new_ruleset->iam_copy = TRUE; */
+  LmnRuleSet new_ruleset = lmn_ruleset_make(ruleset->id, 16);
+  unsigned int i = 0;
+  new_ruleset->iam_copy = TRUE;
 
-/*   new_ruleset->atomic = ruleset->atomic; */
-/*   new_ruleset->valid = ruleset->valid; */
-
-/*   for(; i<ruleset->num; i++) lmn_ruleset_put(new_ruleset, lmn_rule_copy(ruleset->rules[i])); */
-/*   return new_ruleset; */
+  for(; i<ruleset->num; i++) lmn_ruleset_put(new_ruleset, lmn_rule_copy(ruleset->rules[i]));
+  return new_ruleset;
 }
 
 /* 2つのrulesetが同じruleを持つか判定する(ruleの順序はソースコード依存) */
