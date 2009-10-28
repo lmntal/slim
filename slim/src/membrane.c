@@ -1718,10 +1718,10 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
     }
 
     /* 各rulesetが持つruleまで等しいことを確認 */
-    // mem1 --> mem2
     int n1 = vec_num(&mem1->rulesets);
     int n2 = vec_num(&mem2->rulesets);
 
+    // mem1 --> mem2
     for (i = 0; i < n1; i++) {
       if (!rulesets_contains(&mem2->rulesets, (LmnRuleSet)vec_get(&mem1->rulesets, i)))
         goto STEP_1_FALSE;

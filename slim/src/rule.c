@@ -54,7 +54,7 @@ struct LmnRule {
   lmn_interned_str name;
   BOOL is_invisible;
   st_table *history_tbl;
-  st_data_t pre_id;
+  lmn_interned_str pre_id;
   LmnRuleStatus status;
 };
 
@@ -73,7 +73,7 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->translated = translated;
   rule->name = name;                  /* ルール名 */
   rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
-  rule->history_tbl = st_init_strtable();
+  rule->history_tbl = st_init_numtable();
   rule->pre_id = 0;
   if(lmn_env.profile_level >= 2) {
     rule->status.trial_num = 0;
@@ -171,20 +171,24 @@ LmnRule dummy_rule(void)
 }
 
 /* uniq履歴照合(TURE:含まれる、FALSE:含まれない) */
-BOOL lmn_rule_his_check(LmnRule rule, char *id){
+BOOL lmn_rule_his_check(LmnRule rule, char *id)
+{
   if(st_is_member(rule->history_tbl, (st_data_t)id))return TRUE;
   return FALSE;
 }
 
-struct st_table *lmn_rule_get_history(LmnRule rule){
+struct st_table *lmn_rule_get_history(LmnRule rule)
+{
   return rule->history_tbl;
 }
 
-st_data_t lmn_rule_get_pre_id(LmnRule rule){
+lmn_interned_str lmn_rule_get_pre_id(LmnRule rule)
+{
   return rule->pre_id;
 }
 
-void lmn_rule_set_pre_id(LmnRule rule, st_data_t t){
+void lmn_rule_set_pre_id(LmnRule rule, lmn_interned_str t)
+{
   rule->pre_id = t;
 }
 
@@ -358,7 +362,8 @@ LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
 }
 
 /* 2つのrulesetが同じruleを持つか判定する(ruleの順序はソースコード依存) */
-BOOL ruleset_equals(LmnRuleSet set1, LmnRuleSet set2) {
+BOOL ruleset_equals(LmnRuleSet set1, LmnRuleSet set2)
+{
   int i;
   BOOL result = FALSE;
   for (i = 0; i < lmn_ruleset_rule_num(set1); i++) {
@@ -375,7 +380,8 @@ BOOL ruleset_equals(LmnRuleSet set1, LmnRuleSet set2) {
 }
 
 /* rulesetsにrulesetが含まれているか判定 */
-BOOL rulesets_contains(Vector *rulesets, LmnRuleSet set1) {
+BOOL rulesets_contains(Vector *rulesets, LmnRuleSet set1)
+{
   int i;
   BOOL result = FALSE;
   for (i = 0; i < vec_num(rulesets); i++) {

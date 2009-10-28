@@ -41,6 +41,7 @@
 
 #include "vector.h"
 #include "st.h"
+#include "symbol.h"
 
 /*----------------------------------------------------------------------
  * Rule
@@ -65,8 +66,8 @@ LMN_EXTERN BYTE *lmn_rule_get_inst_seq(LmnRule rule);
 LMN_EXTERN BOOL lmn_rule_is_invisible(LmnRule rule);
 LMN_EXTERN BOOL lmn_rule_his_check(LmnRule rule, char *id);
 LMN_EXTERN struct st_table *lmn_rule_get_history(LmnRule rule);
-LMN_EXTERN st_data_t lmn_rule_get_pre_id(LmnRule rule);
-LMN_EXTERN void lmn_rule_set_pre_id(LmnRule rule, st_data_t t);
+LMN_EXTERN lmn_interned_str lmn_rule_get_pre_id(LmnRule rule);
+LMN_EXTERN void lmn_rule_set_pre_id(LmnRule rule, lmn_interned_str t);
 
 /*----------------------------------------------------------------------
  * Rule Set

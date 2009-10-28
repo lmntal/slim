@@ -1643,7 +1643,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       LmnInstrVar llist, n;
       Vector *srcvec;
       LmnPort port;
-      char *id;
+      lmn_interned_str id;
 
       port = (LmnPort)lmn_make_output_string_port();
       READ_VAL(LmnInstrVar, instr, llist);
@@ -1659,21 +1659,16 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         port_put_raw_s(port, ":");
       }
 
-
-      /* 履歴表と照合 */
-      if(lmn_rule_his_check(rule, (char *)lmn_string_c_str(port->data))){
-        lmn_port_free(port);
-        return FALSE;
-      }
-
-      /* 履歴に挿入 */
-      id = malloc(lmn_string_len(port->data));
-      strcpy(id, (char *)lmn_string_c_str(port->data));
-      st_insert(
-          lmn_rule_get_history(rule), (st_data_t)id, (st_data_t)st_strhash(id));
-      lmn_rule_set_pre_id(rule, (st_data_t)id);
+      id = lmn_intern((char *)lmn_string_c_str(port->data));
 
       lmn_port_free(port);
+
+      /* 履歴表と照合 */
+      if (st_is_member(lmn_rule_get_history(rule), (st_data_t)id)) return FALSE;
+
+      /* 履歴に挿入 */
+      st_insert(lmn_rule_get_history(rule), (st_data_t)id, 0);
+      lmn_rule_set_pre_id(rule, id);
 
       break;
     }
