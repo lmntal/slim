@@ -356,6 +356,8 @@ LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
   LmnRuleSet new_ruleset = lmn_ruleset_make(ruleset->id, 16);
   unsigned int i = 0;
   new_ruleset->iam_copy = TRUE;
+  new_ruleset->atomic = ruleset->atomic;
+  new_ruleset->valid = ruleset->valid;
 
   for(; i<ruleset->num; i++) lmn_ruleset_put(new_ruleset, lmn_rule_copy(ruleset->rules[i]));
   return new_ruleset;
@@ -416,6 +418,37 @@ static void destroy_system_ruleset()
 void lmn_add_system_rule(LmnRule rule)
 {
   lmn_ruleset_put(system_ruleset, rule);
+}
+
+/*----------------------------------------------------------------------
+ * Initial RuleSet
+ */
+
+LmnRuleSet initial_ruleset;
+LmnRuleSet initial_system_ruleset;
+
+static void init_initial_rulset()
+{
+  initial_ruleset = lmn_ruleset_make(lmn_gen_ruleset_id(), 10);
+  initial_system_ruleset = lmn_ruleset_make(lmn_gen_ruleset_id(), 10);
+}
+
+static void destroy_initial_ruleset()
+{
+  lmn_ruleset_free(initial_ruleset);
+  lmn_ruleset_free(initial_system_ruleset);
+}
+
+/* Adds rule to the system ruleset.
+   ruleの解放は呼び出され側が行う */
+void lmn_add_initial_rule(LmnRule rule)
+{
+  lmn_ruleset_put(initial_ruleset, rule);
+}
+
+void lmn_add_initial_system_rule(LmnRule rule)
+{
+  lmn_ruleset_put(initial_system_ruleset, rule);
 }
 
 /*----------------------------------------------------------------------
@@ -493,6 +526,7 @@ void init_rules()
   init_ruleset_table();
   init_module_table();
   init_system_rulset();
+  init_initial_rulset();
 }
 
 void destroy_rules()
@@ -500,6 +534,7 @@ void destroy_rules()
   destroy_ruleset_table();
   destroy_module_table();
   destroy_system_ruleset();
+  destroy_initial_ruleset();
  }
 
 

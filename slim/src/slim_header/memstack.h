@@ -60,5 +60,6 @@ inline void lmn_memstack_push(LmnMemStack memstack, LmnMembrane *mem);
 inline LmnMembrane *lmn_memstack_pop(LmnMemStack memstack);
 inline LmnMembrane *lmn_memstack_peek(LmnMemStack memstack);
 void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem);
+void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem);
 
 #endif

@@ -57,6 +57,7 @@
 #include "slim_header/string.h"
 #include "slim_header/port.h"
 #include "dumper.h"
+#include "mem_encode.h"
 /* #include "ext.h" */
 
 #ifdef PROFILE
@@ -295,6 +296,7 @@ static void init_internal(void)
     init_so_handles();
     init_default_system_ruleset();
     task_init();
+    mem_isom_init();
     /*   ext_init(); */
     sp_atom_init();
     ccallback_init();
@@ -318,6 +320,7 @@ static void finalize(void)
     dumper_finalize();
 
     task_finalize();
+    mem_isom_finalize();
     /*   ext_finalize(); */
     ccallback_finalize();
     sp_atom_finalize();

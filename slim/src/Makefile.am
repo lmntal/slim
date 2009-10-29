@@ -31,7 +31,8 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_po
 	propositional_symbol.h propositional_symbol.c ltl2ba_adapter.h ltl2ba_adapter.c \
 	util.h util.c process_util.h process_util.c  file_util.h file_util.c lmntal_ext.h \
 	ccallback.h ccallback.c env.c \
-	ext/init_exts.c ext/integer.c ext/atomic.c ext/nlmem.c ext/io.c \
+	ext/init_exts.c ext/integer.c ext/atomic.c ext/nlmem.c ext/io.c ext/initial_ruleset.c \
+	ext/nd_conf.c \
 	special_atom.h special_atom.c string.c slim_header/string.h port.c slim_header/port.h \
 	memstack.c slim_header/memstack.h \
 	react_context.c nd.c nd.h mem_encode.h mem_encode.c state.h state.c

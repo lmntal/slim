@@ -130,6 +130,8 @@ typedef struct BinStrPtr *BinStrPtr;
 typedef struct VisitLog *VisitLog;
 
 
+uint16_t functor_priority[FUNCTOR_MAX+1];
+
 /*----------------------------------------------------------------------
  * Prototypes
  */
@@ -146,6 +148,27 @@ static void dump_mols(Vector *atoms,
 static void dump_mems(LmnMembrane *mem,
                       BinStrPtr bsp,
                       VisitLog visited);
+
+static int comp_functor_greater_f(const void *a_, const void *b_);
+
+/*----------------------------------------------------------------------
+ * Initialization
+ */
+
+void mem_isom_init()
+{
+  memset(functor_priority, 0xff, sizeof(uint16_t) * FUNCTOR_MAX + 1);
+}
+
+void mem_isom_finalize()
+{
+}
+
+void set_functor_priority(LmnFunctor f, int priority)
+{
+  if (priority <= 0) lmn_fatal("implementation error");
+  functor_priority[f] = priority;
+}
 
 /*----------------------------------------------------------------------
  * Binary String
@@ -242,7 +265,7 @@ unsigned long binstr_hash(const LmnBinStr a)
 
 /* bsの位置posにbの下位4ビットを書き込む。書き込みに成功した場合は真を
    返し、失敗した場合は偽を返す。*/
-static int binstr_set(struct BinStr *bs, BYTE b, int pos)
+static inline int binstr_set(struct BinStr *bs, BYTE b, int pos)
 {
   if (bs->size <= pos) {
     bs->size *= 2;
@@ -272,6 +295,18 @@ static int binstr_set(struct BinStr *bs, BYTE b, int pos)
     lmn_fatal("unexpected");
     return 0;
   }
+}
+
+static inline int binstr_set_direct(struct BinStr *bs, BYTE b, int pos)
+{
+  if (bs->size <= pos) {
+    bs->size *= 2;
+    bs->v = LMN_REALLOC(BYTE, bs->v, bs->size / TAG_IN_BYTE);
+  }
+
+  BS_SET(bs->v, pos, b);
+  bs->cur = pos+1;
+  return 1;
 }
 
 /* bsの位置posから1バイト読み込み，返す */
@@ -565,6 +600,7 @@ struct BinStrPtr {
   struct BinStr *binstr;
   int pos; /* bit */
   BOOL valid;
+  BOOL direct;
 };
 
 static inline void bsptr_init(struct BinStrPtr *p, struct BinStr *bs)
@@ -573,6 +609,13 @@ static inline void bsptr_init(struct BinStrPtr *p, struct BinStr *bs)
   p->pos = 0;
   p->valid = TRUE;
   binstr_add_ptr(bs, p);
+  p->direct = FALSE;
+}
+                                    
+static inline void bsptr_init_direct(struct BinStrPtr *p, struct BinStr *bs)
+{
+  bsptr_init(p, bs);
+  p->direct = TRUE;
 }
                                     
 static inline int bsptr_pos(struct BinStrPtr *p)
@@ -585,8 +628,9 @@ static inline void bsptr_copy_to(const BinStrPtr from, BinStrPtr to)
   to->binstr = from->binstr;
   to->pos = from->pos;
   to->valid = from->valid;
+  to->direct = from->direct;
 }
-                                    
+
 static inline void bsptr_destroy(struct BinStrPtr *p)
 {
 }
@@ -604,18 +648,29 @@ static inline int bsptr_push(struct BinStrPtr *p, const BYTE *v, int size)
   int half_len = size>>1;
   if (!bsptr_valid(p)) return 0;
   
-  if (size & 1) {
-    if (binstr_set(p->binstr, v[size>>1] & 0x0f, p->pos)) p->pos++;
-    else { bsptr_invalidate(p); return 0;}
-  }    
+  if (p->direct) {
+    if (size & 1) {
+      binstr_set_direct(p->binstr, v[size>>1] & 0x0f, p->pos++);
+    }    
+    for (i = half_len-1; i >= 0; i--) {
+      binstr_set_direct(p->binstr, (v[i]>>TAG_BIT_SIZE & 0x0f), p->pos++);
+      binstr_set_direct(p->binstr, v[i] & 0x0f, p->pos++);
+    }
+    return 1;
+  } else {
+    if (size & 1) {
+      if (binstr_set(p->binstr, v[size>>1] & 0x0f, p->pos)) p->pos++;
+      else { bsptr_invalidate(p); return 0;}
+    }    
 
-  for (i = half_len-1; i >= 0; i--) {
-    if (binstr_set(p->binstr, (v[i]>>TAG_BIT_SIZE & 0x0f), p->pos)) {p->pos++;}
-    else { bsptr_invalidate(p); return 0;}
-    if (binstr_set(p->binstr, v[i] & 0x0f, p->pos)) p->pos++;
-    else { bsptr_invalidate(p); return 0;}
+    for (i = half_len-1; i >= 0; i--) {
+      if (binstr_set(p->binstr, (v[i]>>TAG_BIT_SIZE & 0x0f), p->pos)) {p->pos++;}
+      else { bsptr_invalidate(p); return 0;}
+      if (binstr_set(p->binstr, v[i] & 0x0f, p->pos)) p->pos++;
+      else { bsptr_invalidate(p); return 0;}
+    }
+    return 1;
   }
-  return 1;
 }
 
 static inline int bsptr_push1(struct BinStrPtr *p, const BYTE v)
@@ -928,7 +983,7 @@ LmnBinStr lmn_mem_encode(LmnMembrane *mem)
 #endif
 
   ret_bs = binstr_to_lmn_binstr(bs);
-
+  /* lmn_binstr_dump(ret_bs); */
   binstr_free(bs);
   return ret_bs;
 }
@@ -1241,9 +1296,22 @@ static Vector *mem_functors(LmnMembrane *mem)
     }
   }
 
-  vec_sort(v, comp_int_greater_f);
+  vec_sort(v, comp_functor_greater_f);
   return v;
 }
+
+static int comp_functor_greater_f(const void *a_, const void *b_)
+{
+  vec_data_t f0 = *(vec_data_t *)a_;
+  vec_data_t f1 = *(vec_data_t *)b_;
+
+  if (functor_priority[f0] == functor_priority[f1]) {
+    return f0 > f1 ? -1 : (f0 == f1 ? 0 : 1);
+  } else {
+    return (int)functor_priority[f0] - (int)functor_priority[f1];
+  }
+}
+
 
 static Vector *mem_atoms(LmnMembrane *mem)
 {
@@ -1576,10 +1644,9 @@ static BinStr dump_root_mem(LmnMembrane *mem)
   struct BinStrPtr bsp;
   struct VisitLog visitlog;
 
-  bsptr_init(&bsp, bs);
+  bsptr_init_direct(&bsp, bs);
   visitlog_init(&visitlog);
   
-
   dump_mem_atoms(mem, &bsp, &visitlog);
   dump_mems(mem, &bsp, &visitlog);
   write_rulesets(mem, &bsp);
@@ -1727,7 +1794,6 @@ BOOL lmn_mem_equals_enc(LmnBinStr bs, LmnMembrane *mem)
   status_finish_mem_enc_eq_calc();
 #endif
     
-  
   return t;
 }
 

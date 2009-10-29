@@ -43,6 +43,10 @@
 
 typedef struct LmnBinStr *LmnBinStr;
 
+void mem_isom_init(void);
+void mem_isom_finalize(void);
+void set_functor_priority(LmnFunctor f, int priority);
+
 LmnBinStr lmn_mem_encode(LmnMembrane *mem);
 void lmn_binstr_free(LmnBinStr p);
 int binstr_comp(const LmnBinStr a, const LmnBinStr b);

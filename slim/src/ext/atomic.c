@@ -17,7 +17,7 @@ void atomic_ruleset(ReactCxt rc,
     
     for (i = 0; i < n; i++) {
       lmn_ruleset_set_atomic(lmn_mem_get_ruleset(mem, i), atomic_type);
-      lmn_mem_add_ruleset(lmn_mem_parent(mem), lmn_mem_get_ruleset(mem, i));
+      lmn_mem_add_ruleset(lmn_mem_parent(mem), lmn_ruleset_copy(lmn_mem_get_ruleset(mem, i)));
     }
     lmn_mem_delete_atom(mem, a0, t0);
   }

@@ -373,6 +373,7 @@ inline LmnMembrane *state_copied_mem(State *state)
 {
   if (state->mem) return lmn_mem_copy(state->mem);
   else if (state->mem_id) return lmn_binstr_decode(state->mem_id);
+  else if (state->mem_dump) return lmn_binstr_decode(state->mem_dump);
   else {
     lmn_fatal("unexpected");
     return NULL;

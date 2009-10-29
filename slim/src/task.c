@@ -158,6 +158,7 @@ inline void free_links(Vector *links);
 #define LINKED_ATTR(LINKI) at[LINKI]
 
 static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
+static BOOL react_ruleset_in_all_mem(struct ReactCxt *rc, LmnRuleSet rs, LmnMembrane *mem);
 
 void task_init()
 {
@@ -362,14 +363,43 @@ static BOOL react_ruleset_atomic_nd(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ru
   return ok;
 }
 
-/* 膜memでrulesetsのルールの適用を行う。初期ルールにしか使わないつもりなので
-   適用の成否を無視する */
-void react_start_rulesets(struct ReactCxt *rc, LmnMembrane *mem, Vector *rulesets)
+static void react_initial_rulesets(struct ReactCxt *rc, LmnMembrane *mem)
 {
   int i;
+  BOOL reacted;
+
+  do {
+    
+    reacted = FALSE;
+    if (react_ruleset_in_all_mem(rc, initial_system_ruleset, mem)) {
+      reacted = TRUE;
+      continue;
+    }
+    for(i=0; i < lmn_ruleset_rule_num(initial_ruleset); i++){
+      if (react_rule(rc, mem, lmn_ruleset_get_rule(initial_ruleset, i))) {
+        reacted = TRUE;
+        break;
+      }
+    }
+  } while (reacted);
+}
+
+/* 膜memでrulesetsのルールの適用を行う。初期ルールにしか使わないつもりなので
+   適用の成否を無視する */
+void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
+{
+  struct ReactCxt rc;
+  int i;
+
+  stand_alone_react_cxt_init(&rc);
+  RC_SET_GROOT_MEM(&rc, mem);
+  
   for(i=0; i<vec_num(rulesets); ++i){
-    lmn_react_ruleset(rc, mem, (LmnRuleSet)vec_get(rulesets,i));
+    lmn_react_ruleset(&rc, mem, (LmnRuleSet)vec_get(rulesets,i));
   }
+  react_initial_rulesets(&rc, mem);
+  lmn_react_systemruleset(&rc, mem);
+
 }
 
 /* 膜memでrulesetのルールの適用を試みる。適用が起こった場合TRUEを返し、
@@ -466,6 +496,18 @@ BOOL react_all_rulesets(struct ReactCxt *rc,
   return ok;
 }
 
+/* ルールセットrsをmem以下のすべての膜内で適用する */
+static BOOL react_ruleset_in_all_mem(struct ReactCxt *rc, LmnRuleSet rs, LmnMembrane *mem)
+{
+  LmnMembrane *m;
+
+  for (m = mem->child_head; m; m = m->next) {
+    if (react_ruleset_in_all_mem(rc, rs, m)) return TRUE;
+  }
+  
+  return lmn_react_ruleset(rc, mem, rs);
+}
+
 static void mem_oriented_loop(struct ReactCxt *rc, LmnMembrane *mem)
 {
   LmnMemStack memstack = RC_MEMSTACK(rc);
@@ -501,9 +543,11 @@ void lmn_run(Vector *start_rulesets)
         fprintf(stdout, "  %6s|%6s|%6s|%6s\n", " Name", " Apply", " Trial", " BackTrack");
     }
     lmn_env.profile_level = 0;
-    react_start_rulesets(&mrc, mem, start_rulesets);
+    react_start_rulesets(mem, start_rulesets);
     lmn_env.profile_level = temp_env_p;
   }
+
+  lmn_memstack_reconstruct(RC_MEMSTACK(&mrc), mem);
   /* for tracer */
   mem_oriented_loop(&mrc, mem);
 

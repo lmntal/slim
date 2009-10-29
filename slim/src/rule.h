@@ -103,6 +103,15 @@ extern LmnRuleSet system_ruleset;
 void lmn_add_system_rule(LmnRule rule);
 
 /*----------------------------------------------------------------------
+ * Initial Rule Set
+ */
+
+extern LmnRuleSet initial_ruleset;
+extern LmnRuleSet initial_system_ruleset;
+void lmn_add_initial_rule(LmnRule rule);
+void lmn_add_initial_system_rule(LmnRule rule);
+
+/*----------------------------------------------------------------------
  * Rule Status
  */
 typedef struct LmnRuleStatus {

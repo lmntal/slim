@@ -41,6 +41,8 @@
 #include "membrane.h"
 #include "slim_header/memstack.h"
 
+static void memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem);
+
 inline LmnMemStack lmn_memstack_make()
 {
   return vec_make(64);
@@ -92,6 +94,22 @@ void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem)
     }
   }
   vec_pop(memstack);
+}
+
+void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem)
+{
+  while (lmn_memstack_isempty(memstack)) lmn_memstack_pop(memstack);
+  memstack_reconstruct(memstack, mem);
+}
+
+static void memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem)
+{
+  LmnMembrane *m;
+  
+  for (m = mem->child_head; m; m = m->next) {
+    memstack_reconstruct(memstack, m);
+  }
+  lmn_memstack_push(memstack, mem);
 }
 
 void mem_react_cxt_init(struct ReactCxt *cxt)
