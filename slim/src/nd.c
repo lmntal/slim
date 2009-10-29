@@ -255,7 +255,6 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
 void run_nd(Vector *start_rulesets)
 {
   LmnMembrane *mem;
-  struct ReactCxt init_rc;
   StateSpace states;
 
   /**
@@ -263,20 +262,15 @@ void run_nd(Vector *start_rulesets)
    */
   init_por_vars();
 
-  stand_alone_react_cxt_init(&init_rc);
-
   /* make global root membrane */
   mem = lmn_mem_make();
-  RC_SET_GROOT_MEM(&init_rc, mem);
 
   {
     int temp_env_p = lmn_env.profile_level;
     lmn_env.profile_level = 0;
-    react_start_rulesets(&init_rc, mem, start_rulesets);
-    lmn_react_systemruleset(&init_rc, mem);
+    react_start_rulesets(mem, start_rulesets);
     lmn_env.profile_level = temp_env_p;
   }
-  stand_alone_react_cxt_destroy(&init_rc);
   activate_ancestors(mem);
 
   if (lmn_env.dump) {
@@ -321,7 +315,7 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
   /* 初期プロセスから得られる初期状態を生成 */
   initial_state = state_make_for_nd(world_mem, ANONYMOUS);
 /*   mc_flags.initial_state = initial_state; */
-  //if (dump) dump_state_data(initial_state);
+
   state_space_set_init_state(states, initial_state);
 
 /*   /\* --nd_dumpの実行 *\/ */

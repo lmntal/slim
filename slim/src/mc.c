@@ -403,17 +403,12 @@ void run_mc(Vector *start_rulesets, Automata automata, Vector *propsyms)
   /* make global root membrane */
   mem = lmn_mem_make();
   { /* 初期構造の生成 */
-    struct ReactCxt init_rc;
-    stand_alone_react_cxt_init(&init_rc);
-    RC_SET_GROOT_MEM(&init_rc, mem);
     {
       int temp_env_p = lmn_env.profile_level;
       lmn_env.profile_level = 0;
-      react_start_rulesets(&init_rc, mem, start_rulesets);
-      lmn_react_systemruleset(&init_rc, mem);
+      react_start_rulesets(mem, start_rulesets);
       lmn_env.profile_level = temp_env_p;
     }
-    stand_alone_react_cxt_destroy(&init_rc);
   }
 
   activate_ancestors(mem);
