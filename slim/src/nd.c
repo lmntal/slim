@@ -66,7 +66,7 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
   if (lmn_env.profile_level>0)  status_start_expand();
 #endif
 
-  if (lmn_env.por) expanded = ample(states, state); 
+  if (lmn_env.por) expanded = ample(states, state);
  else expanded = nd_gen_successors(state, state_name);
 
   /* 状態空間へのサクセッサの追加 */
@@ -96,14 +96,14 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
     /* expandedに同じ状態がなければ、サクセッサとして追加 */
     if (st_insert(succ_tbl, (st_data_t)succ, 0) == 0) {
       vec_push(&successors, (vec_data_t)succ);
-    } 
+    }
   }
 
   /* 状態にサクセッサを設定 */
   for (i = 0; i < vec_num(&successors); i++) {
     state_succ_add(state, (State *)vec_get(&successors, i));
   }
-      
+
   st_free_table(succ_tbl);
   vec_free(expanded);
   vec_destroy(&successors);
@@ -239,7 +239,7 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
         state_free_mem(succ);
       }
     }
-      
+
     vec_free(new_states);
 
     set_expanded(s); /* sに展開済みフラグを立てる */
@@ -321,7 +321,7 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
   /* 初期プロセスから得られる初期状態を生成 */
   initial_state = state_make_for_nd(world_mem, ANONYMOUS);
 /*   mc_flags.initial_state = initial_state; */
-  if (dump) dump_state_data(initial_state);
+  //if (dump) dump_state_data(initial_state);
   state_space_set_init_state(states, initial_state);
 
 /*   /\* --nd_dumpの実行 *\/ */
