@@ -329,6 +329,11 @@ State *state_make_for_nd(LmnMembrane *mem, LmnRule rule) {
  * デストラクタ
  */
 void state_free(State *s) {
+
+#ifdef PROFILE
+  status_start_state_free();
+#endif
+
   if (s->mem) {
     lmn_mem_drop(s->mem);
     lmn_mem_free(s->mem);
@@ -337,6 +342,10 @@ void state_free(State *s) {
   if (s->mem_id) lmn_binstr_free(s->mem_id);
   if (s->mem_dump) lmn_binstr_free(s->mem_dump);
   LMN_FREE(s);
+
+#ifdef PROFILE
+  status_finish_state_free();
+#endif
 }
 
 inline void state_free_mem(State *s)

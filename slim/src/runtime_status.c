@@ -67,6 +67,15 @@ struct RuntimeStatus {
   double total_mem_equals_time;      /* total time of mem equals */
   clock_t tmp_mem_equals_start;
 
+  /* 初期化や最後の解放処理を除いた非決定実行の時間 */
+  clock_t nd_start_time, nd_end_time;
+  time_t nd_time1, nd_time2;               /* clock()のオーバーフロー時に使う */
+  BOOL run_nd;
+
+  unsigned long state_free_num; 
+  double total_state_free_time;     
+  clock_t tmp_state_free_start;
+
   unsigned long mem_encode_num;      /* # of mem_encode call */
   double total_mem_encode_time;      /* total time of mem encode */
   clock_t tmp_mem_encode_start;
@@ -83,9 +92,14 @@ struct RuntimeStatus {
 
   time_t time1, time2;               /* clock()のオーバーフロー時に使う */
   double total_expand_time;         /* 状態展開時間 */
+  unsigned long total_expand_num;
   double total_commit_time;
   clock_t tmp_expand_start;
   clock_t tmp_commit_start;
+
+  double total_react_rule_time; 
+  clock_t tmp_react_rule_start;
+
   unsigned long tmp_rule_trial_num;
   unsigned long tmp_rule_apply_num;
   unsigned long tmp_rule_backtrack_num;
@@ -126,11 +140,16 @@ void runtime_status_init()
   runtime_status.total_mem_enc_eq_time = 0.0;
   runtime_status.mem_dump_num = 0;
   runtime_status.total_mem_dump_time = 0.0;
+  runtime_status.state_free_num = 0;
+  runtime_status.total_state_free_time = 0.0;
   runtime_status.mem_encode_num = 0;
   runtime_status.total_mem_encode_time = 0.0;
 
+  runtime_status.run_nd                   = FALSE;
   runtime_status.total_expand_time        = 0.0;
+  runtime_status.total_expand_num         = 0;
   runtime_status.total_commit_time        = 0.0;
+  runtime_status.total_react_rule_time    = 0.0;
   runtime_status.tmp_rule_trial_num       = 0;
   runtime_status.tmp_rule_apply_num       = 0;
   runtime_status.tmp_rule_backtrack_num   = 0;
@@ -158,6 +177,20 @@ void status_finish_running()
 {
   runtime_status.end_time = clock();
   time(&(runtime_status.time2));
+}
+
+void status_nd_start_running()
+{
+  runtime_status.nd_start_time = clock();
+  time(&(runtime_status.nd_time1));
+  runtime_status.run_nd = TRUE;
+}
+
+void status_nd_finish_running()
+{
+  runtime_status.nd_end_time = clock();
+  time(&(runtime_status.nd_time2));
+  runtime_status.run_nd = FALSE;
 }
 
 void status_add_atom_space(unsigned long size)
@@ -222,6 +255,22 @@ static void runtime_status_update()
 
   if (runtime_status.total_state_space > runtime_status.peak_total_state_space)
     runtime_status.peak_total_state_space = runtime_status.total_state_space;
+}
+
+void status_start_state_free()
+{
+  if (runtime_status.run_nd) {
+    runtime_status.state_free_num++;
+    runtime_status.tmp_state_free_start =  clock();
+  }
+}
+
+void status_finish_state_free()
+{
+  if (runtime_status.run_nd) {
+    runtime_status.total_state_free_time +=
+      (clock() - runtime_status.tmp_state_free_start)/(double)CLOCKS_PER_SEC;
+  }
 }
 
 void status_start_state_hash_calc()
@@ -291,10 +340,18 @@ void status_create_new_state()
 
 void output_runtime_status(FILE *f)
 {
-  double tmp_total_time =
+  double tmp_total_time, tmp_nd_total_time;
+
+  tmp_total_time =
     (runtime_status.end_time - runtime_status.start_time)/(double)CLOCKS_PER_SEC;
   if(tmp_total_time < 0.0) {
     tmp_total_time = difftime(runtime_status.time2, runtime_status.time1);
+  }
+
+  tmp_nd_total_time =
+    (runtime_status.nd_end_time - runtime_status.nd_start_time)/(double)CLOCKS_PER_SEC;
+  if(tmp_total_time < 0.0) {
+    tmp_total_time = difftime(runtime_status.nd_time2, runtime_status.nd_time1);
   }
 
 
@@ -357,15 +414,45 @@ void output_runtime_status(FILE *f)
               runtime_status.total_rule_apply_num);
       fprintf(f, "%-30s: %10lu\n", "# of backtrack",
               runtime_status.total_rule_backtrack_num);
-      if (lmn_env.nd || lmn_env.ltl) {
-        fprintf(f, "%-30s: %10.2lf \n", "total state expand time (sec)",
-                runtime_status.total_expand_time);
-        fprintf(f, "%-30s: %10.2lf \n", " --part of mem-copy (sec)",
-                runtime_status.total_commit_time);
-        fprintf(f, "%-30s: %10.2lf \n", " --else (sec)",
-                runtime_status.total_expand_time - runtime_status.total_commit_time);
-      }
+
       fprintf(f,   "============================================================\n");
+
+      if (lmn_env.nd || lmn_env.ltl) {
+        struct {
+          char *name;
+          unsigned long calls;
+          double time;
+        } v[] = { {"rule trial", runtime_status.total_rule_trial_num,  runtime_status.total_react_rule_time
+                                                                       - runtime_status.total_commit_time},
+                  {"mem copy (in commit)", runtime_status.total_rule_apply_num, runtime_status.total_commit_time},
+                  {"mem equals",           runtime_status.mem_enc_eq_num, runtime_status.total_mem_enc_eq_time},
+                  {"mem id",               runtime_status.mem_encode_num, runtime_status.total_mem_encode_time},
+                  {"mem dump",             runtime_status.mem_dump_num, runtime_status.total_mem_dump_time},
+                  {"mem hash",             runtime_status.mhash_call_num, runtime_status.total_state_hash_time},
+                  {"state free",           runtime_status.state_free_num, runtime_status.total_state_free_time},
+        };
+        int i;
+        double total_time = 0.0;
+        
+        fprintf(f, "\n=== ND Profile of Time ============================\n");
+        fprintf(f, "%-24s:%10s%8s%8s\n", "Time (sec)", "calls", "total", "(%)");
+        printf("---------------------------------------------------\n"); 
+        for (i = 0; i < sizeof(v)/sizeof(v[0]); i++) {
+          total_time += v[i].time;
+          fprintf(f, "%-24s:%10lu%8.2lf%8.1lf\n",
+                  v[i].name,
+                  v[i].calls,
+                  v[i].time,
+                  100.0 * v[i].time / tmp_nd_total_time);
+        }
+        fprintf(f, "---------------------------------------------------\n"); 
+        fprintf(f, "%-24s:%10s%8.2lf%8.1lf\n", "TOTAL", "", total_time, 100*total_time / tmp_nd_total_time);
+        fprintf(f, "%-24s:%10s%8.2lf%8.1lf\n", "ND elapsed time (sec)", "", tmp_nd_total_time, 100.0);
+        fprintf(f, "===================================================\n");
+      }
+
+
+
       if (lmn_env.profile_level >= 2) {
         fprintf(f, "\n== Detail: Rule Status =====================================\n");
         lmn_rule_show_detail(f);
@@ -509,6 +596,7 @@ void status_start_rule()
   runtime_status.tmp_rule_trial_num     = 1;
   runtime_status.tmp_rule_apply_num     = 0;
   runtime_status.tmp_rule_backtrack_num = 0;
+  runtime_status.tmp_react_rule_start= clock();
 }
 
 void status_finish_rule(LmnRule rule, BOOL result)
@@ -523,6 +611,7 @@ void status_finish_rule(LmnRule rule, BOOL result)
   runtime_status.total_rule_apply_num     += tmp_ap;
   runtime_status.total_rule_trial_num     += tmp_tr;
   runtime_status.total_rule_backtrack_num += tmp_ba;
+  runtime_status.total_react_rule_time += (clock() - runtime_status.tmp_react_rule_start)/(double)CLOCKS_PER_SEC;
   if(lmn_env.profile_level >= 2) {
     lmn_rule_profile(rule, tmp_ap, tmp_tr, tmp_ba);
   }
@@ -560,6 +649,7 @@ void status_start_expand()
 
 void status_finish_expand()
 {
+  runtime_status.total_expand_num++;
   runtime_status.total_expand_time +=
     (clock() - runtime_status.tmp_expand_start) / (double)CLOCKS_PER_SEC;
 }

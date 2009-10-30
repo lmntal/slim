@@ -67,7 +67,7 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
 #endif
 
   if (lmn_env.por) expanded = ample(states, state);
- else expanded = nd_gen_successors(state, state_name);
+  else expanded = nd_gen_successors(state, state_name);
 
   /* 状態空間へのサクセッサの追加 */
 
@@ -225,7 +225,6 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
     if (dump) dump_state_data(s);
 
     new_states = nd_expand(states, s, DEFAULT_STATE_ID);
-    state_free_mem(s);
 
     for (i = 0; i < state_succ_num(s); i++) {
       State *succ = state_succ_get(s, i);
@@ -318,6 +317,10 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
 
   state_space_set_init_state(states, initial_state);
 
+#ifdef PROFILE
+  status_nd_start_running();
+#endif
+
 /*   /\* --nd_dumpの実行 *\/ */
 /*   else if(lmn_env.nd_dump){ */
 /*     nd_dump_exec(); */
@@ -326,6 +329,10 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
 /*   else{ */
   nd_loop(states, initial_state, dump);
 /*   } */
+
+#ifdef PROFILE
+  status_nd_finish_running();
+#endif
 
   return states;
 }
