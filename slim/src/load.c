@@ -608,7 +608,7 @@ void helloworld(const char *s)
 LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
 {
   int i;
-  struct trans_ruleset sys_ruleset;
+  struct trans_ruleset ruleset;
   LmnRuleSet ret = 0; /* ワーニング抑制 */
   
   /* シンボルを読み込み+変換テーブルを設定 */
@@ -633,13 +633,25 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
 
   /* ルールセット0番は数合わせ */
   /* システムルールセット読み込み */
-  sys_ruleset = maindata->ruleset_table[1];
-  for(i=0; i<sys_ruleset.size; ++i){
-    LmnRule r = lmn_rule_make_translated(sys_ruleset.rules[i], 0 /* TODO: RULENAME */);
+  ruleset = maindata->ruleset_table[1];
+  for(i=0; i<ruleset.size; ++i){
+    LmnRule r = lmn_rule_make_translated(ruleset.rules[i], 0 /* TODO: RULENAME */);
     lmn_add_system_rule(r);
   }
+  /* ルールセット2番はinitial ruleset */
+  ruleset = maindata->ruleset_table[2];
+  for(i=0; i<ruleset.size; ++i){
+    LmnRule r = lmn_rule_make_translated(ruleset.rules[i], 0 /* TODO: RULENAME */);
+    lmn_add_initial_rule(r);
+  }
+  /* ルールセット3番はinitial system ruleset */
+  ruleset = maindata->ruleset_table[3];
+  for(i=0; i<ruleset.size; ++i){
+    LmnRule r = lmn_rule_make_translated(ruleset.rules[i], 0 /* TODO: RULENAME */);
+    lmn_add_initial_system_rule(r);
+  }
   /* ルールセットを読み込み+変換テーブルを設定 */
-  for(i=2; i<maindata->count_of_ruleset; ++i){
+  for(i=FIRST_ID_OF_NORMAL_RULESET; i<maindata->count_of_ruleset; ++i){
     int j;
     struct trans_ruleset tr = maindata->ruleset_table[i];
     int gid = lmn_gen_ruleset_id();
@@ -651,8 +663,8 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
       lmn_ruleset_put(rs, r);
     }
     
-    /* とりあえず2番を初期データ生成ルールと決め打ちしておく */
-    if(i==2) ret = rs;
+    /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく */
+    if(i==FIRST_ID_OF_NORMAL_RULESET) ret = rs;
     maindata->ruleset_exchange[i] = gid;
   }
 

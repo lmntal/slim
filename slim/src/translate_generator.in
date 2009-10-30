@@ -81,13 +81,13 @@ BOOL interpret_generated(struct ReactCxt *rc,
 
   /* just for debug! */
   if(! OUT){
-    //out = stderr;
+    /* out = stderr; */
     OUT = stdout;
-    //OUT = fopen("/dev/null", "w");
+    /* OUT = fopen("/dev/null", "w"); */
   }
 
   while (TRUE) {
-  LOOP:;
+  /* LOOP:; */
     READ_VAL(LmnInstrOp, instr, op);
     switch (op) {
 
@@ -277,12 +277,15 @@ BOOL interpret_generated(struct ReactCxt *rc,
   { /* not */
 #__echo_t
     {
+      char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
       char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
-      const BYTE *next = translate_instructions(instr, jump_points, header, failcode, buf_fail, indent+1);
+      const BYTE *next = translate_instructions(instr, jump_points, header, buf_success, buf_fail, indent+1);
       assert(next == instr+targ0);
       instr = next;
     }
 #__format_t
+  label_success_$a: /* not */
+    $f;
   label_fail_$a: /* not */
     ;
 #__format

@@ -132,6 +132,9 @@ void print_indent(int n);
 /* 必要なサイズ分のバッファを勝手にmallocしてsprintf free必須 */
 char *automalloc_sprintf(const char *format, ...);
 
+/* 0番はなし,1番はsystemruleset,2番はinitialruleset,3番はinitialsystemruleset,普通のルールセットは4番から */
+#define FIRST_ID_OF_NORMAL_RULESET 4
+
 /* ファンクタを中間バイト列から読み込む時に使用する構造体 */
 /* READ_DATA_ATOM等を吸収するために使いたい */
 union LmnFunctorLiteral{
