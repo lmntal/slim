@@ -105,11 +105,12 @@ void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem)
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem)
 {
   LmnMembrane *m;
-  
+
+  /* 親膜を子膜よりも先に積む */
+  lmn_memstack_push(memstack, mem);
   for (m = mem->child_head; m; m = m->next) {
     memstack_reconstruct(memstack, m);
   }
-  lmn_memstack_push(memstack, mem);
 }
 
 void mem_react_cxt_init(struct ReactCxt *cxt)
