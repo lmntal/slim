@@ -119,6 +119,9 @@ typedef uint8_t LmnLinkAttr;
 #define LMN_SATOM_SET_NEXT(ATOM,X)         \
   (*LMN_SATOM_PNEXT(LMN_SATOM(ATOM))=LMN_ATOM((X)))
 /* get/set ATOM functor */
+
+#define LMN_SATOM_ID(ATOM)                 \
+  ((LmnWord)(ATOM))
 #define LMN_SATOM_GET_FUNCTOR(ATOM)        \
   LMN_FUNCTOR(*(((LmnWord*)LMN_SATOM(ATOM))+2))
 #define LMN_SATOM_SET_FUNCTOR(ATOM,X)      \
