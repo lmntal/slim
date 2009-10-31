@@ -181,7 +181,7 @@ void task_finalize()
   LMN_FREE(at_t);
 }
 
-BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
+inline BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 {
   LmnTranslated translated;
   BYTE *inst_seq;
@@ -1020,8 +1020,6 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         if (atomlist_ent) {
           at[atomi] = LMN_ATTR_MAKE_LINK(0);
           EACH_ATOM(atom, atomlist_ent, {
-            if(LMN_SATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
-              continue;
             wt[atomi] = (LmnWord)atom;
             if (interpret(rc, rule, instr)) {
               return TRUE;
