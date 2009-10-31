@@ -35,7 +35,8 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_po
 	ext/nd_conf.c \
 	special_atom.h special_atom.c string.c slim_header/string.h port.c slim_header/port.h \
 	memstack.c slim_header/memstack.h \
-	react_context.c nd.c nd.h mem_encode.h mem_encode.c state.h state.c
+	react_context.c nd.c nd.h mem_encode.h mem_encode.c state.h state.c \
+	visitlog.h visitlog.c
 #	ext.h ext.c 
 
 EXTRA_DIST := $(PARSER_SOURCE) $(PARSER_HEADER)

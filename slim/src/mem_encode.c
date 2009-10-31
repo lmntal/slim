@@ -35,8 +35,6 @@
  *
  */
 
-/* TODO: rule set */
-
 /* 膜を一意のバイト列に変換する */
 
 /* encode specification
@@ -84,6 +82,7 @@
 */
 
 #include "mem_encode.h"
+#include "visitlog.h"
 #include "error.h"
 #include "functor.h"
 #include "atom.h"
@@ -93,8 +92,6 @@
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
-
-#define VISITLOG_INIT_N       1
 
 #define TAG_BIT_SIZE 4
 #define TAG_DATA_TYPE_BIT 2
@@ -127,7 +124,6 @@
 
 typedef struct BinStr *BinStr;
 typedef struct BinStrPtr *BinStrPtr;
-typedef struct VisitLog *VisitLog;
 
 
 uint16_t functor_priority[FUNCTOR_MAX+1];
@@ -779,158 +775,6 @@ static inline int bsptr_push_ruleset(BinStrPtr p, LmnRuleSet rs)
 }
 
 /*----------------------------------------------------------------------
- * VisitLog: アトムや膜への訪問の記録
- */
-
-struct Checkpoint {
-  int n_data_atom;
-  Vector elements;
-};
-
-  
-/* VisitLogのログ変更の記録 */
-static inline struct Checkpoint *checkpoint_make()
-{
-  struct Checkpoint *p = LMN_MALLOC(struct Checkpoint);
-  
-  vec_init(&p->elements, 128);
-  p->n_data_atom = 0;
-  return p;
-}
-
-static inline void checkpoint_free(struct Checkpoint *cp)
-{
-  vec_destroy(&cp->elements);
-  LMN_FREE(cp);
-}
-
-/* 訪問済みのアトムや膜の記録 */
-struct VisitLog {
-  st_table_t visited;
-  int ref_n, element_num;
-  Vector checkpoints;
-};
-
-static inline void visitlog_init(struct VisitLog *p)
-{
-  p->visited = st_init_ptrtable(); 
-  p->ref_n = VISITLOG_INIT_N;
-  p->element_num = 0;
-  vec_init(&p->checkpoints, 128);
-}
-
-static inline void visitlog_destroy(struct VisitLog *p)
-{
-  int i;
-  
-  st_free_table(p->visited);
-
-  for (i = 0; i < vec_num(&p->checkpoints); i++) {
-    vec_free((Vector *)vec_get(&p->checkpoints, i));
-  }
-  vec_destroy(&p->checkpoints);
-}
-
-static inline int visitlog_element_num(VisitLog visited)
-{
-  return visited->element_num;
-}
-
-static inline void visitlog_put(VisitLog visited, LmnWord p)
-{
-  st_insert(visited->visited, (st_data_t)p, visited->ref_n++);
-  if (vec_num(&visited->checkpoints) > 0) {
-    struct Checkpoint *checkpoint = (struct Checkpoint *)vec_last(&visited->checkpoints);
-    vec_push(&checkpoint->elements, p);
-  }
-  visited->element_num++;
-}
-
-static inline void visitlog_put_data(VisitLog visited)
-{
-  if (vec_num(&visited->checkpoints) > 0) {
-    struct Checkpoint *checkpoint = (struct Checkpoint *)vec_last(&visited->checkpoints);
-    checkpoint->n_data_atom++;
-  }
-  visited->element_num++;
-}
-
-static inline int visitlog_get(VisitLog visited, LmnWord p)
-{
-  st_data_t t;
-  
-  if (st_lookup(visited->visited, (st_data_t)p, &t)) return t;
-  else return -1;
-}
-
-static inline BOOL visitlog_contains(VisitLog visited, LmnWord p)
-{
-  return visitlog_get(visited, p) >= VISITLOG_INIT_N;
-}
-
-/* チェックポイントを設定する。 */
-static inline void visitlog_set_checkpoint(VisitLog visited)
-{
-  vec_push(&visited->checkpoints, (vec_data_t)checkpoint_make());
-}
-
-/* もっとも最近のチェックポイントを返し、ログの状態をチェックポイントが設定された時点にもどす */
-static inline struct Checkpoint *visitlog_pop_checkpoint(VisitLog visited)
-{
-  int i;
-  struct Checkpoint *checkpoint;
-
-  checkpoint = (struct Checkpoint *)vec_pop(&visited->checkpoints);
-  for (i = 0; i < vec_num(&checkpoint->elements); i++) {
-    st_delete(visited->visited, (st_data_t)vec_get(&checkpoint->elements, i), NULL);
-    visited->element_num--;
-    visited->ref_n--;
-  }
-  visited->element_num -= checkpoint->n_data_atom;
-
-  return checkpoint;
-}
-
-
-/* もっとも最近のチェックポイントを消し、ログの状態をチェックポイントが設定された時点にもどす */
-static inline void visitlog_revert_checkpoint(VisitLog visited)
-{
-  checkpoint_free(visitlog_pop_checkpoint(visited));
-}
-
-/* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
-static inline void visitlog_commit_checkpoint(VisitLog visited)
-{
-  struct Checkpoint *last = (struct Checkpoint *)vec_pop(&visited->checkpoints);
-
-  if (vec_num(&visited->checkpoints) > 0) {
-    int i;
-    struct Checkpoint *new_last = (struct Checkpoint *)vec_last(&visited->checkpoints);
-
-    for (i = 0; i < vec_num(&last->elements); i++) {
-      vec_push(&new_last->elements, vec_get(&last->elements, i));
-    }
-    new_last->n_data_atom += last->n_data_atom;
-  }
-
-  checkpoint_free(last);
-}
-
-/* チェックポイントをログに追加する */
-static inline void visitlog_push_checkpoint(VisitLog visited, struct Checkpoint *cp)
-{
-  int i;
-  
-  vec_push(&visited->checkpoints, (vec_data_t)cp);
-  for (i = 0; i < vec_num(&cp->elements); i++) {
-    st_insert(visited->visited, (st_data_t)vec_get(&cp->elements, i), visited->ref_n++);
-    visited->element_num++;
-  }
-
-  visited->element_num += cp->n_data_atom;
-}
-
-/*----------------------------------------------------------------------
  * Membrane Encode
  */
 
@@ -1031,7 +875,7 @@ static void write_mem(LmnMembrane *mem,
     return;
   }
 
-  visitlog_put(visited, (LmnWord)mem);
+  visitlog_put(visited, lmn_mem_id(mem));
   
   bsptr_push_start_mem(bsp, LMN_MEM_NAME_ID(mem));
 
@@ -1087,11 +931,6 @@ static void write_mol(LmnAtom atom,
     return;
   }
 
-  if ((n_visited = visitlog_get(visited, (LmnWord)atom)) >= 0) {
-    bsptr_push_visited_atom(bsp, n_visited, from);
-    return;
-  }
-
   f = LMN_SATOM_GET_FUNCTOR(atom);
   
   if (f == LMN_OUT_PROXY_FUNCTOR) {
@@ -1121,10 +960,15 @@ static void write_mol(LmnAtom atom,
     return;
   }
 
+  if ((n_visited = visitlog_get(visited, (LmnWord)atom)) >= 0) {
+    bsptr_push_visited_atom(bsp, n_visited, from);
+    return;
+  }
+
   bsptr_push_atom(bsp, LMN_SATOM(atom));
   if (!bsptr_valid(bsp)) return;
 
-  visitlog_put(visited, atom);
+  visitlog_put(visited, LMN_SATOM_ID(atom));
 
   arity = LMN_FUNCTOR_GET_LINK_NUM(f);
   for (i_arg = 0; i_arg < arity; i_arg++) {
@@ -1151,7 +995,7 @@ static void write_mols(Vector *atoms,
   int i, natom;
   struct BinStrPtr last_valid_bsp;
   int last_valid_i, first_func=0;
-  struct Checkpoint *last_valid_checkpoint = NULL;
+  Checkpoint last_valid_checkpoint = NULL;
 
   if (!bsptr_valid(bsp)) return;
 
@@ -1165,7 +1009,7 @@ static void write_mols(Vector *atoms,
     /* 最適化、最小のファンク以外は試す必要なし */
     else if (last_valid_i>=0 && LMN_SATOM_GET_FUNCTOR(atom) != first_func)
       break;
-    else if (visitlog_contains(visited, (LmnWord)atom)) {
+    else if (visitlog_contains(visited, LMN_SATOM_ID(atom))) {
       continue;
     } else {
       struct BinStrPtr new_bsptr; 
@@ -1218,13 +1062,13 @@ static void write_mems(LmnMembrane *mem,
   LmnMembrane *m;
   struct BinStrPtr last_valid_bsp;
   BOOL last_valid;
-  struct Checkpoint *last_valid_checkpoint = NULL;
+  Checkpoint last_valid_checkpoint = NULL;
 
   if (!bsptr_valid(bsp)) return;
   
   last_valid = FALSE;
   for (m = mem->child_head; m; m = m->next) {
-    if (!visitlog_contains(visited, (LmnWord)m)) {
+    if (!visitlog_contains(visited, lmn_mem_id(m))) {
       struct BinStrPtr new_bsptr; 
 
       bsptr_copy_to(bsp, &new_bsptr);
@@ -1279,7 +1123,6 @@ static void write_rulesets(LmnMembrane *mem, BinStrPtr bsp)
   }
 }
 
-/* memから一意のバイナリストリングを計算する */
 /* 膜にあるアトムのファンクタを降順で返す */
 static Vector *mem_functors(LmnMembrane *mem)
 {
@@ -1681,7 +1524,7 @@ static void dump_mols(Vector *atoms,
   for (i = 0; i < natom; i++) {
     LmnSAtom atom = LMN_SATOM(vec_get(atoms, i));
 
-    if (visitlog_contains(visited, (LmnWord)atom)) {
+    if (visitlog_contains(visited, LMN_SATOM_ID(atom))) {
       continue;
     } else {
       write_mol((LmnAtom)atom, LMN_ATTR_MAKE_LINK(0), -1, bsp, visited, FALSE);
@@ -1696,7 +1539,7 @@ static void dump_mems(LmnMembrane *mem,
   LmnMembrane *m;
 
   for (m = mem->child_head; m; m = m->next) {
-    if (!visitlog_contains(visited, (LmnWord)m)) {
+    if (!visitlog_contains(visited, lmn_mem_id(m))) {
       write_mem(m, 0, -1, -1, bsp, visited, FALSE);
     }
   }
@@ -1821,7 +1664,7 @@ static int mem_eq_enc_mols(LmnBinStr bs, int *i_bs, LmnMembrane *mem, void **ref
         ent = lmn_mem_get_atomlist(mem, f);
         if (!ent) return FALSE;
         EACH_ATOM(atom, ent, {
-            if (!visitlog_contains(visitlog, (LmnWord)atom)) {
+            if (!visitlog_contains(visitlog, LMN_SATOM_ID(atom))) {
               tmp_i_bs = *i_bs;
               tmp_i_ref = *i_ref;
               
@@ -1857,7 +1700,7 @@ static int mem_eq_enc_mols(LmnBinStr bs, int *i_bs, LmnMembrane *mem, void **ref
         ok = FALSE;
         for (m = mem->child_head; m; m = m->next) {
           if (LMN_MEM_NAME_ID(m) == mem_name &&
-              !visitlog_contains(visitlog, (LmnWord)m)) {
+              !visitlog_contains(visitlog, lmn_mem_id(m))) {
             tmp_i_bs = *i_bs;
             tmp_i_ref = *i_ref;
 
@@ -1918,7 +1761,7 @@ static BOOL mem_eq_enc_atom(LmnBinStr bs,
 
   if (f != LMN_SATOM_GET_FUNCTOR(atom)) return FALSE;
 
-  visitlog_put(visitlog, (LmnWord)atom);
+  visitlog_put(visitlog, LMN_SATOM_ID(atom));
   ref_log[*i_ref] = LMN_SATOM(atom);
   (*i_ref)++;
   arity = LMN_FUNCTOR_ARITY(f);
@@ -1962,7 +1805,7 @@ static inline BOOL mem_eq_enc_traced_mem(BOOL is_named,
     if (mem_name != LMN_MEM_NAME_ID(LMN_PROXY_GET_MEM(in))) return FALSE;
   }
 
-  visitlog_put(visitlog, (LmnWord)LMN_PROXY_GET_MEM(in));
+  visitlog_put(visitlog, lmn_mem_id(LMN_PROXY_GET_MEM(in)));
   ref_log[*i_ref] = LMN_PROXY_GET_MEM(in);
   (*i_ref)++;
   
@@ -1988,7 +1831,7 @@ static inline BOOL mem_eq_enc_mem(LmnBinStr bs,
                                   int *i_ref,
                                   VisitLog visitlog)
 {
-  visitlog_put(visitlog, (LmnWord)mem);
+  visitlog_put(visitlog, lmn_mem_id(mem));
   ref_log[*i_ref] = mem;
   (*i_ref)++;
 
