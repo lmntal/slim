@@ -85,6 +85,8 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
                         strlen(lmntal_home) + strlen(LMNTAL_BIN_REL_PATH) + 1);
   sprintf(*program, "%s%s", lmntal_home, LMNTAL_BIN_REL_PATH);
 
+  add_arg(args, ""); /* 第0引数には何か適当に入れておく */
+
   if (getenv(ENV_CFLAGS)) {
     add_arg(args, getenv(ENV_CFLAGS));
   }
