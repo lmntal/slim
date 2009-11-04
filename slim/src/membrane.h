@@ -196,7 +196,4 @@ LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
 
 extern struct st_hash_type type_memhash;
 
-LmnMembrane *lmn_mem_copy_with_map2(LmnMembrane *src, SimpleHashtbl **ret_copymap);
-SimpleHashtbl *lmn_mem_copy_cells2(LmnMembrane *destmem, LmnMembrane *srcmem);
-
 #endif /* LMN_MEMBRANE_H */

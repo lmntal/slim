@@ -119,14 +119,14 @@ static inline void proc_tbl_unput_mem(ProcessTbl p, LmnMembrane *mem)
    get_by_memを使用する */
 static inline int proc_tbl_get(ProcessTbl p, LmnWord key, LmnWord *value)
 {
-  return st_lookup(p->tbl, key, (st_data_t *)value);
+  return st_lookup(p->tbl, key, value);
 }
 
 /* テーブルのアトムatomに対応する値をvalueに設定し、正の値を返す。テー
    ブルにatomが存在しない場合は0を返す */
 static inline int proc_tbl_get_by_atom(ProcessTbl p, LmnSAtom atom, LmnWord *value)
 {
-  return proc_tbl_get(p, LMN_SATOM_ID(atom), (st_data_t *)value); 
+  return proc_tbl_get(p, LMN_SATOM_ID(atom), value); 
 }
 
 /* テーブルの膜memに対応する値をvalueに設定し、正の値を返す。テーブルに
