@@ -166,9 +166,9 @@ LMN_EXTERN void lmn_mem_relink_atom_args(LmnMembrane *mem,
                                          LmnLinkAttr attr1,
                                          int pos1);
 LMN_EXTERN void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
-LMN_EXTERN LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *srcmem, SimpleHashtbl **copymap);
+LMN_EXTERN LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *srcmem, ProcessTbl *copymap);
 LMN_EXTERN LmnMembrane *lmn_mem_copy(LmnMembrane *srcmem);
-LMN_EXTERN SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *dest, LmnMembrane *srcmem);
+LMN_EXTERN ProcessTbl lmn_mem_copy_cells(LmnMembrane *dest, LmnMembrane *srcmem);
 LMN_EXTERN void lmn_mem_remove_proxies(LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem);
 LMN_EXTERN void lmn_mem_remove_temporary_proxies(LmnMembrane *mem);
@@ -179,7 +179,7 @@ BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);
 void lmn_mem_copy_ground(LmnMembrane *mem,
                          Vector *srcvec,
                          Vector **ret_dstlovec,
-                         SimpleHashtbl **ret_atommap);
+                         ProcessTbl *ret_atommap);
 void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec);
 void lmn_mem_free_ground(Vector *srcvec);
 void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec);
@@ -195,5 +195,8 @@ LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
 #define lmn_atomlist_end(p_atomset_entry) (LMN_SATOM(p_atomset_entry))
 
 extern struct st_hash_type type_memhash;
+
+LmnMembrane *lmn_mem_copy_with_map2(LmnMembrane *src, SimpleHashtbl **ret_copymap);
+SimpleHashtbl *lmn_mem_copy_cells2(LmnMembrane *destmem, LmnMembrane *srcmem);
 
 #endif /* LMN_MEMBRANE_H */

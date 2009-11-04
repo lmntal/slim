@@ -35,10 +35,6 @@
  *
  */
 
-/** VisitLog - 膜のコピーや、エンコード、ハッシュの計算などを行う際に、
- * アトムや膜の訪問履歴を記録するために使用する
- */
-
 #ifndef LMN_VISITLOG_H
 #define LMN_VISITLOG_H
 
@@ -46,8 +42,109 @@
 #include "st.h"
 #include "vector.h"
 #include "atom.h"
+#include "membrane.h"
+#include "error.h"
 
 #define VISITLOG_INIT_N       1
+
+/* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
+struct ProcessTbl {
+  st_table_t tbl;
+};
+
+static inline void proc_tbl_init(ProcessTbl p)
+{
+  p->tbl = st_init_ptrtable();
+}
+
+static inline ProcessTbl proc_tbl_make(void)
+{
+  ProcessTbl p = LMN_MALLOC(struct ProcessTbl);
+  proc_tbl_init(p);
+  return p;
+}
+
+static inline void proc_tbl_destroy(ProcessTbl p)
+{
+  st_free_table(p->tbl);
+}
+
+static inline void proc_tbl_free(ProcessTbl p)
+{
+  proc_tbl_destroy(p);
+  LMN_FREE(p);
+}
+
+
+/* テーブルにkeyを追加し、正の値を返す。すでにpが存在した場合は0を返す。
+   通常この関数ではなく、put_atom,put_memを使用する。 */
+static inline int proc_tbl_put(ProcessTbl p, LmnWord key, LmnWord value)
+{
+  return st_insert_safe(p->tbl, (st_data_t)key, value);
+}
+
+/* テーブルにアトムを追加し、正の値を返す。すでに同じアトムが存在した場合は0を返す */
+static inline int proc_tbl_put_atom(ProcessTbl p, LmnSAtom atom, LmnWord value)
+{
+  return proc_tbl_put(p, LMN_SATOM_ID(atom), value);
+}
+
+/* テーブルに膜を追加し、正の値を返す。すでに同じ膜が存在した場合は0を返す */
+static inline int proc_tbl_put_mem(ProcessTbl p, LmnMembrane *mem, LmnWord value)
+{
+  return proc_tbl_put(p, lmn_mem_id(mem), value);
+}
+
+/* テーブルからkeyとそれに対応した値を削除する。通常この間数ではなく、
+   unput_atom, unput_memを使用する */
+static inline void proc_tbl_unput(ProcessTbl p, LmnWord key)
+{
+  st_delete(p->tbl, (st_data_t)key, NULL);
+}
+
+/* テーブルからアトムとそれに対応した値を削除する */
+static inline void proc_tbl_unput_atom(ProcessTbl p, LmnSAtom atom)
+{
+  proc_tbl_unput(p, LMN_SATOM_ID(atom));
+}
+
+/* テーブルから膜とそれに対応した値を削除する */
+static inline void proc_tbl_unput_mem(ProcessTbl p, LmnMembrane *mem)
+{
+  proc_tbl_unput(p, lmn_mem_id(mem));
+}
+
+/* テーブルのkeyに対応した値をvalueに設定し、正の値を返す。keyがテー
+   ブルに存在しない場合は0を返す。通常この間数ではなく、get_by_atom,
+   get_by_memを使用する */
+static inline int proc_tbl_get(ProcessTbl p, LmnWord key, LmnWord *value)
+{
+  return st_lookup(p->tbl, key, (st_data_t *)value);
+}
+
+/* テーブルのアトムatomに対応する値をvalueに設定し、正の値を返す。テー
+   ブルにatomが存在しない場合は0を返す */
+static inline int proc_tbl_get_by_atom(ProcessTbl p, LmnSAtom atom, LmnWord *value)
+{
+  return proc_tbl_get(p, LMN_SATOM_ID(atom), (st_data_t *)value); 
+}
+
+/* テーブルの膜memに対応する値をvalueに設定し、正の値を返す。テーブルに
+   memが存在しない場合は0を返す */
+static inline int proc_tbl_get_by_mem(ProcessTbl p, LmnMembrane *mem, LmnWord *value)
+{
+  return proc_tbl_get(p, lmn_mem_id(mem), value);
+}
+
+/*----------------------------------------------------------------------
+ * Visit Log
+ */
+
+/* VisitLog - 同型性判定や、IDなどバックトラックをしながらグラフを探索
+ * する場合に用いる。アトムや膜のログへの追加時には追加順に自動的に番号
+ * を付加する。チェックポイントを使うことで、バックトラック時にログをバッ
+ * クトラック前の状態に元に戻すことができる
+ */
 
 /* VisitLogに記録された変更のスナップショット */
 struct Checkpoint {
@@ -55,9 +152,9 @@ struct Checkpoint {
   Vector elements;
 };
 
-/* 訪問済みのアトムや膜の記録 */
+/* 訪問済みのアトムや膜の記録。 */
 struct VisitLog {
-  st_table_t log;
+  struct ProcessTbl tbl;
   int ref_n, element_num;
   Vector checkpoints;
 };
@@ -75,16 +172,37 @@ void visitlog_revert_checkpoint(VisitLog visitlog);
 void visitlog_commit_checkpoint(VisitLog visitlog);
 void visitlog_push_checkpoint(VisitLog visitlog, Checkpoint cp);
 
-static inline void visitlog_put(VisitLog visitlog, LmnWord p)
+/* ログにpを追加し、正の値を返す。すでにpが存在した場合は0を返す。通常
+   この関数ではなく、put_atom, put_memを使用する。 */
+static inline int visitlog_put(VisitLog visitlog, LmnWord p)
 {
-  st_insert(visitlog->log, (st_data_t)p, visitlog->ref_n++);
-  if (vec_num(&visitlog->checkpoints) > 0) {
-    struct Checkpoint *checkpoint = (struct Checkpoint *)vec_last(&visitlog->checkpoints);
-    vec_push(&checkpoint->elements, p);
+  if (proc_tbl_put(&visitlog->tbl, p, visitlog->ref_n++)) {
+    if (vec_num(&visitlog->checkpoints) > 0) {
+      Checkpoint checkpoint =
+        (Checkpoint)vec_last(&visitlog->checkpoints);
+      vec_push(&checkpoint->elements, p);
+    }
+    visitlog->element_num++;
+    return 1;
+  } else {
+    return 0;
   }
-  visitlog->element_num++;
 }
 
+/* ログにアトムを追加し、正の値を返す。すでにアトムが存在した場合は0を返す */
+static inline int visitlog_put_atom(VisitLog visitlog, LmnSAtom atom)
+{
+  return visitlog_put(visitlog, LMN_SATOM_ID(atom));
+}
+
+/* ログに膜を追加し、正の値を返す。すでに膜が存在した場合は0を返す */
+static inline int visitlog_put_mem(VisitLog visitlog, LmnMembrane *mem)
+{
+  return visitlog_put(visitlog, lmn_mem_id(mem));
+}
+
+/* ログにデータアトム膜を追加する。（引数がログしか無いことから分かるよ
+   うに、単に訪問したアトムを数えるために使用する） */
 static inline void visitlog_put_data(VisitLog visitlog)
 {
   if (vec_num(&visitlog->checkpoints) > 0) {
@@ -94,17 +212,18 @@ static inline void visitlog_put_data(VisitLog visitlog)
   visitlog->element_num++;
 }
 
-static inline int visitlog_get(VisitLog visitlog, LmnWord p)
+/* ログに記録されたアトムatomに対応する値をvalueに設定し、正の値を返す。
+   ログにatomが存在しない場合は、0を返す */
+static inline int visitlog_get_atom(VisitLog visitlog, LmnSAtom atom, LmnWord *value)
 {
-  st_data_t t;
-  
-  if (st_lookup(visitlog->log, (st_data_t)p, &t)) return t;
-  else return -1;
+  return proc_tbl_get_by_atom(&visitlog->tbl, atom, value);
 }
 
-static inline BOOL visitlog_contains(VisitLog visitlog, LmnWord p)
+/* ログに記録された膜memに対応する値をvalueに設定し、正の値を返す。ログ
+   にmemが存在しない場合は、0を返す */
+static inline int visitlog_get_mem(VisitLog visitlog, LmnMembrane *mem, LmnWord *value)
 {
-  return visitlog_get(visitlog, p) >= VISITLOG_INIT_N;
+  return proc_tbl_get_by_mem(&visitlog->tbl, mem, value);
 }
 
 /* visitlogに記録した要素（膜、アトム）の数を返す */

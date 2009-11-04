@@ -62,6 +62,7 @@
 #include "slim_header/memstack.h"
 #include "slim_header/port.h"
 #include "react_context.h"
+#include "visitlog.h"
 #include <string.h>
 
 #ifdef PROFILE
@@ -236,20 +237,22 @@ static BOOL react_ruleset_atomic(ReactCxt rc, LmnMembrane *mem, LmnRuleSet rules
     struct ReactCxt stand_alone_rc;
 
     LmnMembrane *new_global_root, *new_mem;
-    SimpleHashtbl *copymap;
+    ProcessTbl copymap;
     BOOL reacted_once = FALSE;
+    LmnWord t;
 
     stand_alone_react_cxt_init(&stand_alone_rc);
     new_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
     RC_SET_GROOT_MEM(&stand_alone_rc, new_global_root);
 
     /* コピーされた膜を取得 */
-    new_mem = (LmnMembrane *)hashtbl_get_default(copymap, (HashKeyType)mem, 0);
+    proc_tbl_get_by_mem(copymap, mem, &t);
+    new_mem = (LmnMembrane *)t;
     if (!new_mem) {
       /* memは子膜ではなく、グローバルルート膜 */
       new_mem = new_global_root;
     }
-    hashtbl_free(copymap);
+    proc_tbl_free(copymap);
 
     while (TRUE) {
       BOOL reacted = FALSE;
@@ -931,8 +934,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       if (RC_GET_MODE(rc, REACT_ND)) {
         unsigned int i;
         /* グローバルルート膜のコピー */
-        SimpleHashtbl *copymap;
+        ProcessTbl copymap;
         LmnMembrane *tmp_global_root;
+        LmnWord t;
 #ifdef PROFILE
         if (lmn_env.profile_level >= 1) {
           status_start_commit();
@@ -954,8 +958,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
             wtcp[i] = wt[i];
           }
-          else if(hashtbl_contains(copymap, wt[i])) {
-            wtcp[i] = hashtbl_get_default(copymap, wt[i], 0);
+          else if(proc_tbl_get(copymap, wt[i], &t)) {
+            wtcp[i] = t;
           }
           else if(wt[i] == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
             wtcp[i] = (LmnWord)tmp_global_root;
@@ -966,8 +970,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             wtcp[i] = (LmnWord)d;
           }
         }
-        hashtbl_free(copymap);
-
+        proc_tbl_free(copymap);
         /* 変数配列および属性配列をコピーと入れ換える */
         SWAP(LmnWord *, wtcp, wt);
         SWAP(LmnByte *, atcp, at);
@@ -1738,7 +1741,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     {
       LmnInstrVar dstlist, srclist, memi;
       Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
-      SimpleHashtbl *atommap;
+      ProcessTbl atommap;
 
       READ_VAL(LmnInstrVar, instr, dstlist);
       READ_VAL(LmnInstrVar, instr, srclist);
@@ -2415,17 +2418,21 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     {
       LmnInstrVar srcset, srcmap;
       HashSet *delset;
-      SimpleHashtbl *delmap;
+      ProcessTbl delmap;
       HashSetIterator it;
       READ_VAL(LmnInstrVar, instr, srcset);
       READ_VAL(LmnInstrVar, instr, srcmap);
 
       delset = (HashSet *)wt[srcset];
-      delmap = (SimpleHashtbl *)wt[srcmap];
+      delmap = (ProcessTbl)wt[srcmap];
 
       for(it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         LmnSAtom orig = LMN_SATOM(hashsetiter_entry(&it));
-        LmnSAtom copy = LMN_SATOM(hashtbl_get(delmap, (HashKeyType)orig));
+        LmnSAtom copy;
+        LmnWord t;
+
+        proc_tbl_get_by_atom(delmap, orig, &t);
+        copy = LMN_SATOM(t);
         lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
         /* mem がないので仕方なく直接アトムリストをつなぎ変える
            UNIFYアトムはnatomに含まれないので大丈夫 */
@@ -2435,7 +2442,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         lmn_delete_atom(orig);
       }
 
-      hashtbl_free(delmap);
+      proc_tbl_free(delmap);
       break;
     }
     case INSTR_REMOVETOPLEVELPROXIES:
@@ -2592,8 +2599,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         wt[destlinki] = LINKED_ATOM(srclinki);
       }
       else { /* symbol atom */
-        SimpleHashtbl *ht = (SimpleHashtbl *)wt[tbli];
-        wt[destlinki] = hashtbl_get(ht, LINKED_ATOM(srclinki));
+        ProcessTbl ht = (ProcessTbl)wt[tbli];
+        proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt[destlinki]);
       }
       break;
     }

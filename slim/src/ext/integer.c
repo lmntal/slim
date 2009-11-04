@@ -7,6 +7,7 @@
 #include "../lmntal_ext.h"
 #include "../slim_header/string.h"
 #include "../special_atom.h"
+#include "../visitlog.h"
 
 void init_integer(void);
 
@@ -33,7 +34,7 @@ void integer_set(ReactCxt rc,
 
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector *dstlovec;
-    SimpleHashtbl *atommap;
+    ProcessTbl atommap;
 
     lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap);
     
@@ -43,7 +44,7 @@ void integer_set(ReactCxt rc,
                     
     for (j = 0; j < vec_num(dstlovec); j++) LMN_FREE(vec_get(dstlovec, j));
     vec_free(dstlovec);
-    hashtbl_free(atommap);
+    proc_tbl_free(atommap);
   }
 
   lmn_mem_delete_atom(mem, a0, t0);

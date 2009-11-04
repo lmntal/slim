@@ -129,6 +129,8 @@ typedef struct LmnMembrane LmnMembrane;
 #error Word size is not 2^N
 #endif
 
+typedef struct ProcessTbl *ProcessTbl;
+
 /*----------------------------------------------------------------------
  * Special Atom
  */

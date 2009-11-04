@@ -16,6 +16,7 @@
 #include "membrane.h"
 #include "functor.h"
 #include "st.h"
+#include "visitlog.h"
 /* #include "symbol.h" /\* TODO: for debug *\/ */
 #include <limits.h>
 
@@ -43,14 +44,13 @@
 typedef unsigned long hash_t;
 
 typedef struct Context {
-  HashSet *done_mol; /* 計算済みの分子 */
-  st_table_t done_mem; /* 計算済みの膜とハッシュ値 */
+  struct ProcessTbl tbl; /* 計算済みのアトム、膜とハッシュ値 */
 } *Context;
 
 static inline Context init_context(void);
 static inline void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash);
-static inline void add_done_mol(Context ctx, void *p);
-static inline int is_done_mol(Context ctx, void *p);
+static inline int add_done_mol(Context ctx, LmnSAtom atom);
+static inline int is_done_mol(Context ctx, LmnSAtom atom);
 static inline void free_context(Context ctx);
 static inline int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash);
 
@@ -198,8 +198,7 @@ static inline void do_molecule(LmnAtom atom,
   }
   else {
     if (!is_data) {
-      if (is_done_mol(ctx, LMN_SATOM(atom))) return;
-      add_done_mol(ctx, LMN_SATOM(atom));
+      if (add_done_mol(ctx, LMN_SATOM(atom)) == 0) return;
     }
 
     t = unit(atom, attr, calc_mem, ctx, 0);
@@ -438,37 +437,33 @@ static inline hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
 static inline Context init_context(void)
 {
   Context c = LMN_MALLOC(struct Context);
-  c->done_mol = hashset_make(64);
-  c->done_mem = st_init_ptrtable();
+  proc_tbl_init(&c->tbl);
   return c;
 }
 
 static inline void free_context(Context ctx)
 {
-  hashset_free(ctx->done_mol);
-  st_free_table(ctx->done_mem);
+  proc_tbl_destroy(&ctx->tbl);
   LMN_FREE(ctx);
 }
 
 static inline int calculated_mem_hash(Context ctx, LmnMembrane *mem, hash_t *hash)
 {
-  /* hash_tとst_data_tは同サイズだからok */
-  if (st_lookup(ctx->done_mem, (st_data_t)mem, (st_data_t*)hash)) return 1;
-  else return 0;
+  return proc_tbl_get_by_mem(&ctx->tbl, mem, hash);
 }
 
-static inline int is_done_mol(Context ctx, void *p)
+static inline int is_done_mol(Context ctx, LmnSAtom atom)
 {
-  return hashset_contains(ctx->done_mol, (HashKeyType)p);
+  return proc_tbl_get_by_atom(&ctx->tbl, atom, NULL);
 }
 
 static inline void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash)
 {
-  st_insert(ctx->done_mem, (st_data_t)mem, (st_data_t)hash);
+  proc_tbl_put_mem(&ctx->tbl, mem, hash);
 }
 
-static inline void add_done_mol(Context ctx, void *p)
+static inline int add_done_mol(Context ctx, LmnSAtom atom)
 {
-  hashset_add(ctx->done_mol, (HashKeyType)p);
+  return proc_tbl_put_atom(&ctx->tbl, atom, 1);
 }
 

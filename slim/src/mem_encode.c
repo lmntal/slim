@@ -861,11 +861,11 @@ static void write_mem(LmnMembrane *mem,
                       VisitLog visited,
                       BOOL is_id)
 {
-  int n_visited;
+  LmnWord n_visited;
   
   if (!bsptr_valid(bsp)) return;
 
-  if ((n_visited = visitlog_get(visited, (LmnWord)mem)) >= 0) {
+  if (visitlog_get_mem(visited, mem, &n_visited)) {
     bsptr_push_visited_mem(bsp, n_visited);
 
     if (from_atom) {
@@ -875,7 +875,7 @@ static void write_mem(LmnMembrane *mem,
     return;
   }
 
-  visitlog_put(visited, lmn_mem_id(mem));
+  visitlog_put_mem(visited, mem);
   
   bsptr_push_start_mem(bsp, LMN_MEM_NAME_ID(mem));
 
@@ -921,7 +921,7 @@ static void write_mol(LmnAtom atom,
 {
   int i_arg;
   int arity;
-  int n_visited;
+  LmnWord n_visited;
   LmnFunctor f;
   
   if (!bsptr_valid(bsp)) return;
@@ -960,7 +960,7 @@ static void write_mol(LmnAtom atom,
     return;
   }
 
-  if ((n_visited = visitlog_get(visited, (LmnWord)atom)) >= 0) {
+  if (visitlog_get_atom(visited, LMN_SATOM(atom), &n_visited)) {
     bsptr_push_visited_atom(bsp, n_visited, from);
     return;
   }
@@ -968,7 +968,7 @@ static void write_mol(LmnAtom atom,
   bsptr_push_atom(bsp, LMN_SATOM(atom));
   if (!bsptr_valid(bsp)) return;
 
-  visitlog_put(visited, LMN_SATOM_ID(atom));
+  visitlog_put_atom(visited, LMN_SATOM(atom));
 
   arity = LMN_FUNCTOR_GET_LINK_NUM(f);
   for (i_arg = 0; i_arg < arity; i_arg++) {
@@ -1009,7 +1009,7 @@ static void write_mols(Vector *atoms,
     /* 最適化、最小のファンク以外は試す必要なし */
     else if (last_valid_i>=0 && LMN_SATOM_GET_FUNCTOR(atom) != first_func)
       break;
-    else if (visitlog_contains(visited, LMN_SATOM_ID(atom))) {
+    else if (visitlog_get_atom(visited, atom, NULL)) {
       continue;
     } else {
       struct BinStrPtr new_bsptr; 
@@ -1068,7 +1068,7 @@ static void write_mems(LmnMembrane *mem,
   
   last_valid = FALSE;
   for (m = mem->child_head; m; m = m->next) {
-    if (!visitlog_contains(visited, lmn_mem_id(m))) {
+    if (!visitlog_get_mem(visited, m, NULL)) {
       struct BinStrPtr new_bsptr; 
 
       bsptr_copy_to(bsp, &new_bsptr);
@@ -1524,7 +1524,7 @@ static void dump_mols(Vector *atoms,
   for (i = 0; i < natom; i++) {
     LmnSAtom atom = LMN_SATOM(vec_get(atoms, i));
 
-    if (visitlog_contains(visited, LMN_SATOM_ID(atom))) {
+    if (visitlog_get_atom(visited, atom, NULL)) {
       continue;
     } else {
       write_mol((LmnAtom)atom, LMN_ATTR_MAKE_LINK(0), -1, bsp, visited, FALSE);
@@ -1539,7 +1539,7 @@ static void dump_mems(LmnMembrane *mem,
   LmnMembrane *m;
 
   for (m = mem->child_head; m; m = m->next) {
-    if (!visitlog_contains(visited, lmn_mem_id(m))) {
+    if (!visitlog_get_mem(visited, m, NULL)) {
       write_mem(m, 0, -1, -1, bsp, visited, FALSE);
     }
   }
@@ -1628,7 +1628,7 @@ BOOL lmn_mem_equals_enc(LmnBinStr bs, LmnMembrane *mem)
 /*   lmn_binstr_dump(bs); */
   
   t = mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, &visitlog)
-    /* memに未訪問たプロセスあるなら FALSE */
+    /* memに未訪問したプロセスあるなら FALSE */
     && visitlog_element_num(&visitlog) == process_num(mem);
   visitlog_destroy(&visitlog);
   LMN_FREE(ref_log);
@@ -1664,13 +1664,13 @@ static int mem_eq_enc_mols(LmnBinStr bs, int *i_bs, LmnMembrane *mem, void **ref
         ent = lmn_mem_get_atomlist(mem, f);
         if (!ent) return FALSE;
         EACH_ATOM(atom, ent, {
-            if (!visitlog_contains(visitlog, LMN_SATOM_ID(atom))) {
+            if (!visitlog_get_atom(visitlog, atom, NULL)) {
               tmp_i_bs = *i_bs;
               tmp_i_ref = *i_ref;
               
               visitlog_set_checkpoint(visitlog);
               if (mem_eq_enc_atom(bs, &tmp_i_bs, mem, LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), ref_log, &tmp_i_ref, visitlog)) {
-                *i_bs = tmp_i_bs;
+                *i_bs = tmp_i_bs; 
                 *i_ref = tmp_i_ref;
                 visitlog_commit_checkpoint(visitlog);
                 ok = TRUE;
@@ -1700,7 +1700,7 @@ static int mem_eq_enc_mols(LmnBinStr bs, int *i_bs, LmnMembrane *mem, void **ref
         ok = FALSE;
         for (m = mem->child_head; m; m = m->next) {
           if (LMN_MEM_NAME_ID(m) == mem_name &&
-              !visitlog_contains(visitlog, lmn_mem_id(m))) {
+              !visitlog_get_mem(visitlog, m, NULL)) {
             tmp_i_bs = *i_bs;
             tmp_i_ref = *i_ref;
 
@@ -1753,7 +1753,6 @@ static BOOL mem_eq_enc_atom(LmnBinStr bs,
   LmnFunctor f;
   int arity;
   int i;
-
   if (LMN_ATTR_IS_DATA(attr)) return FALSE;
   
   f = binstr_get_functor(bs->v, *i_bs);
@@ -1761,7 +1760,7 @@ static BOOL mem_eq_enc_atom(LmnBinStr bs,
 
   if (f != LMN_SATOM_GET_FUNCTOR(atom)) return FALSE;
 
-  visitlog_put(visitlog, LMN_SATOM_ID(atom));
+  if (!visitlog_put_atom(visitlog, LMN_SATOM(atom))) return FALSE;
   ref_log[*i_ref] = LMN_SATOM(atom);
   (*i_ref)++;
   arity = LMN_FUNCTOR_ARITY(f);
@@ -1805,7 +1804,7 @@ static inline BOOL mem_eq_enc_traced_mem(BOOL is_named,
     if (mem_name != LMN_MEM_NAME_ID(LMN_PROXY_GET_MEM(in))) return FALSE;
   }
 
-  visitlog_put(visitlog, lmn_mem_id(LMN_PROXY_GET_MEM(in)));
+  visitlog_put_mem(visitlog, LMN_PROXY_GET_MEM(in));
   ref_log[*i_ref] = LMN_PROXY_GET_MEM(in);
   (*i_ref)++;
   
@@ -1831,7 +1830,7 @@ static inline BOOL mem_eq_enc_mem(LmnBinStr bs,
                                   int *i_ref,
                                   VisitLog visitlog)
 {
-  visitlog_put(visitlog, lmn_mem_id(mem));
+  if (!visitlog_put_mem(visitlog, mem)) return FALSE;
   ref_log[*i_ref] = mem;
   (*i_ref)++;
 

@@ -13,7 +13,7 @@
 
 #include <stddef.h>
 
-typedef long st_data_t;
+typedef unsigned long st_data_t;
 typedef struct st_table st_table, *st_table_t;
 
 struct st_hash_type {
@@ -67,6 +67,7 @@ st_table *st_init_ptrtable_with_size(int);
 int st_delete(st_table *, st_data_t , st_data_t *);
 int st_delete_safe(st_table *, st_data_t *, st_data_t *, st_data_t);
 int st_insert(st_table *, st_data_t, st_data_t);
+int st_insert_safe(st_table *, st_data_t, st_data_t);
 int st_lookup(st_table *, st_data_t, st_data_t *);
 int st_lookup_with_col(st_table *, st_data_t , st_data_t *, long *n_col);
 int st_contains(st_table *, st_data_t);

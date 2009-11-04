@@ -45,6 +45,7 @@
 #include "mhash.h"
 #include "error.h"
 #include "util.h"
+#include "visitlog.h"
 #include <ctype.h>
 #include <limits.h>
 
@@ -60,6 +61,7 @@ BOOL ground_atoms(Vector *srcvec,
                   HashSet **atoms,
                   unsigned long *natoms);
 static inline int mem_hash_f(st_data_t m);
+static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, ProcessTbl atoms);
 
 /* ルールセットを膜に追加する。ルールセットは、比較のために
    ruleset->idの値によって昇順に並べるようにする */
@@ -861,10 +863,10 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
   vec_destroy(&remove_list);
 }
 
-LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, SimpleHashtbl **ret_copymap)
+LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, ProcessTbl *ret_copymap)
 {
   unsigned int i;
-  SimpleHashtbl *copymap;
+  ProcessTbl copymap;
   LmnMembrane *new_mem = lmn_mem_make();
 
   copymap = lmn_mem_copy_cells(new_mem, src);
@@ -878,34 +880,39 @@ LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, SimpleHashtbl **ret_copymap
 
 LmnMembrane *lmn_mem_copy(LmnMembrane *src)
 {
-  SimpleHashtbl *copymap;
+  ProcessTbl copymap;
   LmnMembrane *copied;
 
   copied = lmn_mem_copy_with_map(src, &copymap);
-  hashtbl_free(copymap);
+  proc_tbl_free(copymap);
   return copied;
 }
 
-SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
+ProcessTbl lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 {
-  SimpleHashtbl *atoms;
+  ProcessTbl atoms;
+
+  atoms = proc_tbl_make();
+
+  lmn_mem_copy_cells_sub(destmem, srcmem, atoms);
+  
+  return atoms;
+}
+
+static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, ProcessTbl atoms)
+{
   LmnMembrane *m;
   HashIterator iter;
   unsigned int i;
-
-  atoms = hashtbl_make(srcmem->atom_num * 2);
+  LmnWord t;
 
   /* copy child mems */
   for (m = srcmem->child_head; m; m = m->next) {
     LmnMembrane *new_mem = lmn_mem_make();
-    SimpleHashtbl *child_mem_atoms = lmn_mem_copy_cells(new_mem, m);
+    lmn_mem_copy_cells_sub(new_mem, m, atoms);
     lmn_mem_add_child_mem(destmem, new_mem);
 
-    hashtbl_put(atoms, (HashKeyType)m, (HashValueType)new_mem);
-    for (iter = hashtbl_iterator(child_mem_atoms); !hashtbliter_isend(&iter); hashtbliter_next(&iter)) {
-      hashtbl_put(atoms, hashtbliter_entry(&iter)->key, hashtbliter_entry(&iter)->data);
-    }
-    hashtbl_free(child_mem_atoms);
+    proc_tbl_put_mem(atoms, m, (LmnWord)new_mem);
     /* copy name */
     new_mem->name = m->name;
     /* copy rulesets */
@@ -929,10 +936,10 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
       LmnSAtom newatom;
       unsigned int start, end;
 
-      if (hashtbl_contains(atoms, (HashKeyType)srcatom)) continue;
+      if (proc_tbl_get_by_atom(atoms, srcatom, NULL)) continue;
       f = LMN_SATOM_GET_FUNCTOR(srcatom);
       newatom = lmn_mem_newatom(destmem, f);
-      hashtbl_put(atoms, (HashKeyType)srcatom, (HashValueType)newatom);
+      proc_tbl_put_atom(atoms, srcatom, (LmnWord)newatom);
       start = 0;
       end = LMN_SATOM_GET_ARITY(srcatom);
 
@@ -940,8 +947,13 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
         start = 1, end = 2;
         LMN_PROXY_SET_MEM(newatom, destmem);
         if (f == LMN_OUT_PROXY_FUNCTOR) {
-          LmnSAtom srcinside = LMN_SATOM(LMN_SATOM_GET_LINK(srcatom, 0));
-          LmnSAtom newinside = LMN_SATOM(hashtbl_get(atoms, (HashKeyType)srcinside));
+          LmnSAtom srcinside;
+          LmnSAtom newinside;
+
+          srcinside = LMN_SATOM(LMN_SATOM_GET_LINK(srcatom, 0));
+          proc_tbl_get_by_atom(atoms, srcinside, &t);
+          newinside = LMN_SATOM(t);
+          
           /* 必ず子膜につながっているはず */
           LMN_ASSERT(LMN_SATOM_GET_FUNCTOR(srcinside) == LMN_IN_PROXY_FUNCTOR &&
               LMN_PROXY_GET_MEM(srcinside)->parent == LMN_PROXY_GET_MEM(srcatom));
@@ -956,8 +968,9 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
         if (LMN_ATTR_IS_DATA(attr)) {
           LmnAtom newargatom = lmn_copy_data_atom(a, attr);
           newlink_symbol_and_something(newatom, i, newargatom, attr);
-        } else if(hashtbl_contains(atoms, a)) {
-          newlink_symbol_and_something(newatom, i, hashtbl_get(atoms, a), attr);
+        } else if(proc_tbl_get_by_atom(atoms, LMN_SATOM(a), NULL)) {
+          proc_tbl_get_by_atom(atoms, LMN_SATOM(a), &t);
+          newlink_symbol_and_something(newatom, i, t, attr);
         }
       }
         }));
@@ -966,8 +979,6 @@ SimpleHashtbl *lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 
   /* copy activated flag */
   destmem->is_activated = srcmem->is_activated; /* MC */
-
-  return atoms;
 }
 
 /* to get # of descendant membranes */
@@ -1006,11 +1017,13 @@ LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos) {
 void lmn_mem_copy_ground(LmnMembrane *mem,
                          Vector *srcvec,
                          Vector **ret_dstlovec,
-                         SimpleHashtbl **ret_atommap)
+                         ProcessTbl *ret_atommap)
 {
-  SimpleHashtbl *atommap = hashtbl_make(64);
+  ProcessTbl atommap = proc_tbl_make();
   Vector *stack = vec_make(16);
   unsigned int i;
+  LmnWord t;
+
   *ret_dstlovec = vec_make(16);
 
   /* 根をスタックに積む。スタックにはリンクオブジェクトではなくアトムを
@@ -1025,10 +1038,12 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
       lmn_mem_push_atom(mem, cpatom, l->pos);
     } else { /* symbol atom */
       /* コピー済みでなければコピーする */
-      if ((cpatom = hashtbl_get_default(atommap, l->ap, 0)) == 0) {
+      if (!proc_tbl_get(atommap, l->ap, &t)) {
         cpatom = LMN_ATOM(lmn_copy_satom_with_data(LMN_SATOM(l->ap)));
-        hashtbl_put(atommap, (HashKeyType)l->ap, (HashValueType)cpatom);
+        proc_tbl_put_atom(atommap, LMN_SATOM(l->ap), (LmnWord)cpatom);
         mem_push_symbol_atom(mem, LMN_SATOM(cpatom));
+      } else {
+        cpatom = LMN_ATOM(t);
       }
       /* 根のリンクのリンクポインタを0に設定する */
       LMN_SATOM_SET_LINK(cpatom, l->pos, 0);
@@ -1039,7 +1054,10 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
 
   while (vec_num(stack) > 0) {
     LmnSAtom src_atom = LMN_SATOM(vec_pop(stack));
-    LmnSAtom copied = LMN_SATOM(hashtbl_get(atommap, (HashKeyType)src_atom));
+    LmnSAtom copied;
+
+    proc_tbl_get_by_atom(atommap, src_atom, &t);
+    copied = LMN_SATOM(t);
 
     for (i = 0; i < LMN_SATOM_GET_ARITY(src_atom); i++) {
       LmnAtom next_src = LMN_SATOM_GET_LINK(src_atom, i);
@@ -1050,12 +1068,14 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
         lmn_mem_push_atom(mem, next_src, next_attr);
       }
       else if (LMN_SATOM_GET_LINK(copied, i) != 0) {
-        LmnAtom next_copied = hashtbl_get_default(atommap, next_src, 0);
-        if (next_copied == 0) { /* next_srcは未訪問 */
+        LmnAtom next_copied;
+        if (!proc_tbl_get_by_atom(atommap, LMN_SATOM(next_src), &t)) { /* next_srcは未訪問 */
           next_copied = LMN_ATOM(lmn_copy_satom_with_data(LMN_SATOM(next_src)));
           mem_push_symbol_atom(mem, LMN_SATOM(next_copied));
-          hashtbl_put(atommap, (HashKeyType)next_src, (HashValueType)next_copied);
+          proc_tbl_put_atom(atommap, LMN_SATOM(next_src), next_copied);
           vec_push(stack, next_src);
+        } else {
+          next_copied = LMN_ATOM(t);
         }
         LMN_SATOM_SET_LINK(copied, i, next_copied);
 

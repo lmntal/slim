@@ -309,6 +309,23 @@ int st_insert(register st_table *table, register st_data_t key, st_data_t value)
   }
 }
 
+/* ハッシュ表に新たなエントリーを追加し正の値を返す。エントリが存在した
+   場合は、テーブルを変更せずに、0を返す。*/
+int st_insert_safe(register st_table *table, register st_data_t key, st_data_t value) {
+  unsigned long hash_val, bin_pos;
+  register st_table_entry *ptr;
+
+  hash_val = do_hash(key, table);
+  FIND_ENTRY(table, ptr, hash_val, bin_pos);
+
+  if (ptr == 0) {
+    ADD_DIRECT(table, key, value, hash_val, bin_pos);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 /* 値の重複をチェックせずにハッシュ表に新たなエントリーを追加する */
 void st_add_direct(st_table *table, st_data_t key, st_data_t value) {
   unsigned long hash_val, bin_pos;

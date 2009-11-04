@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include "../lmntal_ext.h"
+#include "../visitlog.h"
 #include "../slim_header/memstack.h"
 
 LMN_EXTERN void init_nlmem(void);
@@ -16,7 +17,7 @@ void nlmem_copy(ReactCxt rc,
     LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(a1));
   LmnFunctor copy_tag_func = lmn_functor_intern(ANONYMOUS, copy_tag_name, 3);
   LmnMembrane *org_mem, *trg_mem;
-  SimpleHashtbl *atom_map;
+  ProcessTbl atom_map;
 
   org_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a0, 0));
   trg_mem = lmn_mem_make();
@@ -29,10 +30,12 @@ void nlmem_copy(ReactCxt rc,
     if (ent) {
       LmnSAtom org_in, org_out, trg_in, trg_out;
       LmnSAtom tag_atom;
+      LmnWord t;
 
       EACH_ATOM(org_in, ent, {
         /* タグアトムを作り、リンクの接続を行う */
-        trg_in = LMN_SATOM(hashtbl_get(atom_map, (HashKeyType)org_in));
+        proc_tbl_get_by_atom(atom_map, org_in, &t);
+        trg_in = LMN_SATOM(t);
         org_out = LMN_SATOM(LMN_SATOM_GET_LINK(org_in, 0));
         trg_out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
         lmn_newlink_in_symbols(trg_in, 0, trg_out, 0);
@@ -43,7 +46,7 @@ void nlmem_copy(ReactCxt rc,
       });
     }
 
-    hashtbl_free(atom_map);
+    proc_tbl_free(atom_map);
     lmn_mem_delete_atom(mem, a1, t1);
     /* 第一引数に接続されたタグアトムと第三引数を接続する */
     lmn_mem_newlink(mem,

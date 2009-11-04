@@ -59,7 +59,7 @@ void checkpoint_free(struct Checkpoint *cp)
 
 void visitlog_init(struct VisitLog *p)
 {
-  p->log = st_init_ptrtable(); 
+  proc_tbl_init(&p->tbl);
   p->ref_n = VISITLOG_INIT_N;
   p->element_num = 0;
   vec_init(&p->checkpoints, 128);
@@ -69,7 +69,7 @@ void visitlog_destroy(struct VisitLog *p)
 {
   int i;
   
-  st_free_table(p->log);
+  proc_tbl_destroy(&p->tbl);
 
   for (i = 0; i < vec_num(&p->checkpoints); i++) {
     vec_free((Vector *)vec_get(&p->checkpoints, i));
@@ -91,12 +91,11 @@ struct Checkpoint *visitlog_pop_checkpoint(VisitLog visitlog)
 
   checkpoint = (struct Checkpoint *)vec_pop(&visitlog->checkpoints);
   for (i = 0; i < vec_num(&checkpoint->elements); i++) {
-    st_delete(visitlog->log, (st_data_t)vec_get(&checkpoint->elements, i), NULL);
+    proc_tbl_unput(&visitlog->tbl, vec_get(&checkpoint->elements, i));
     visitlog->element_num--;
     visitlog->ref_n--;
   }
   visitlog->element_num -= checkpoint->n_data_atom;
-
   return checkpoint;
 }
 
@@ -132,7 +131,7 @@ void visitlog_push_checkpoint(VisitLog visitlog, struct Checkpoint *cp)
   
   vec_push(&visitlog->checkpoints, (vec_data_t)cp);
   for (i = 0; i < vec_num(&cp->elements); i++) {
-    st_insert(visitlog->log, (st_data_t)vec_get(&cp->elements, i), visitlog->ref_n++);
+    proc_tbl_put(&visitlog->tbl, vec_get(&cp->elements, i), visitlog->ref_n++);
     visitlog->element_num++;
   }
 
