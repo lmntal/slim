@@ -40,6 +40,10 @@
 #include "rule.h"
 #include "system_ruleset.h"
 
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
 /*----------------------------------------------------------------------
  * Rule
  */
@@ -56,6 +60,7 @@ struct LmnRule {
   st_table *history_tbl;
   lmn_interned_str pre_id;
   LmnRuleStatus status;
+  BOOL has_uniq;
 };
 
 /* prototypes */
@@ -75,6 +80,7 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
   rule->history_tbl = st_init_numtable();
   rule->pre_id = 0;
+  rule->has_uniq = FALSE;
   if(lmn_env.profile_level >= 2) {
     rule->status.trial_num = 0;
     rule->status.apply_num = 0;
@@ -122,6 +128,7 @@ LmnRule lmn_rule_copy(LmnRule rule)
   st_free_table(new_rule->history_tbl);
   new_rule->history_tbl = st_copy(rule->history_tbl);
   new_rule->pre_id = rule->pre_id;
+  new_rule->has_uniq = rule->has_uniq;
   return new_rule;
 }
 
@@ -200,6 +207,11 @@ lmn_interned_str lmn_rule_get_pre_id(LmnRule rule)
 void lmn_rule_set_pre_id(LmnRule rule, lmn_interned_str t)
 {
   rule->pre_id = t;
+}
+
+void lmn_rule_set_has_uniq(LmnRule rule, BOOL hasuniq)
+{
+  rule->has_uniq = hasuniq;
 }
 
 /*----------------------------------------------------------------------
@@ -353,11 +365,6 @@ LmnRuleSet lmn_ruleset_from_id(int id)
 {
   if (ruleset_table->size <= (unsigned int)id) return NULL;
   else return ruleset_table->entry[id];
-}
-
-struct st_table *lmn_rule_get_histbl(LmnRule rule)
-{
-  return rule->history_tbl;
 }
 
 /* rulesetをコピーして新しいルールセットを作成する */

@@ -84,7 +84,7 @@
 %token <_int> RULESET_ID
 %token COMMA PERIOD COLON UNDERBAR LBRACE RBRACE LBRACKET RBRACKET
 %token INSIDE_PROXY OUTSIDE_PROXY
-%token KW_COMPILED_RULESET KW_COMPILED_SYSTEM_RULESET KW_COMPILED_RULE KW_ATOMMATCH KW_MEMMATCH
+%token KW_COMPILED_RULESET KW_COMPILED_SYSTEM_RULESET KW_COMPILED_UNIQ_RULE KW_COMPILED_RULE KW_ATOMMATCH KW_MEMMATCH
 %token KW_GUARD KW_BODY KW_INLINE KW_MODULE
 
 %token <_int> INST_TK_LOOP
@@ -174,8 +174,11 @@ ruleList:
 ;
 
 rule:
-  KW_COMPILED_RULE atommatch memmatch guard body {
-    $$ = rule_make_anonymous($2, $3, $4, $5);
+  KW_COMPILED_UNIQ_RULE atommatch memmatch guard body {
+    $$ = rule_make_anonymous(TRUE, $2, $3, $4, $5);
+  }
+| KW_COMPILED_RULE atommatch memmatch guard body {
+    $$ = rule_make_anonymous(FALSE, $2, $3, $4, $5);
   }
 ;
 

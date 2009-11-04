@@ -135,6 +135,7 @@ L{DIGIT}+ { yylval->_int = atoi(yytext+1); return LABEL; }
 "$out_2"             { return OUTSIDE_PROXY; }
 "Compiled SystemRuleset"   { return KW_COMPILED_SYSTEM_RULESET; }
 "Compiled Ruleset"   { return KW_COMPILED_RULESET; }
+"Compiled Uniq Rule" { return KW_COMPILED_UNIQ_RULE; }
 "Compiled Rule"      { return KW_COMPILED_RULE; }
 "--atommatch"        { return KW_ATOMMATCH; }
 "--memmatch"         { return KW_MEMMATCH; }

@@ -539,6 +539,7 @@ LmnRule load_rule(Rule rule)
   st_free_table(c->loc_to_label_ref);
 
   runtime_rule = lmn_rule_make(c->byte_seq, c->cap, ANONYMOUS);
+  lmn_rule_set_has_uniq(runtime_rule, rule_get_hasuniq(rule));
   context_free(c);
   return runtime_rule;
 }
@@ -610,13 +611,13 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   int i;
   struct trans_ruleset ruleset;
   LmnRuleSet ret = 0; /* ワーニング抑制 */
-  
+
   /* シンボルを読み込み+変換テーブルを設定 */
   for(i=1; i<maindata->count_of_symbol; ++i){
     lmn_interned_str gid = lmn_intern(maindata->symbol_table[i]);
     maindata->symbol_exchange[i] = gid;
   }
-  
+
   /* ファンクタを読み込み+変換テーブルを設定 */
   for(i=0; i<maindata->count_of_functor; ++i){
     LmnFunctorEntry ent = maindata->functor_table[i];
@@ -662,7 +663,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
       LmnRule r = lmn_rule_make_translated(tr.rules[j], 0 /* TODO: RULENAME */);
       lmn_ruleset_put(rs, r);
     }
-    
+
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく */
     if(i==FIRST_ID_OF_NORMAL_RULESET) ret = rs;
     maindata->ruleset_exchange[i] = gid;
@@ -779,7 +780,7 @@ LmnRuleSet load_file(char *file_name)
     if (!strcmp(&file_name[len-4], ".lmn")) {
       if (getenv(ENV_LMNTAL_HOME)) {
         FILE *fp_compiled;
-        
+
         fp_compiled = lmntal_compile_file(file_name);
         if (!fp_compiled) {
           fprintf(stderr, "Failed to run lmntal compiler");
@@ -818,7 +819,7 @@ static int file_type(const char *extension)
 {
   int i = 0;
   int filetype = 0;
-  
+
   for(i=1; i<sizeof(extension_table)/sizeof(extension_table[0]); ++i){
     if(! strcmp(extension, extension_table[i])){
       filetype = i;
@@ -827,7 +828,7 @@ static int file_type(const char *extension)
   }
 
   return filetype;
-}  
+}
 
 int load_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path)
 {
@@ -853,12 +854,12 @@ void load_il_files(char *path)
   int path_len = strlen(path);
   char *buf = LMN_NALLOC(char, path_len + NAME_MAX + 2);
   DIR *dir = opendir(path);
-  
+
   if (dir) {
     st_table_t loading_files_type = st_init_strtable();
     struct stat st;
     struct dirent* dp;
-    
+
     /* 読み込むファイルをリストアップする */
     while ( (dp = readdir(dir)) != NULL ){
       sprintf(buf, "%s%s%s", path, DIR_SEPARATOR_STR, dp->d_name);
@@ -900,13 +901,13 @@ FILE *fopen_il_file(char *file_name)
 {
   FILE *fp;
   int len = strlen(file_name);
-  
+
   if ((fp = fopen(file_name, "r"))) {
     /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
     if (!strcmp(&file_name[len-4], ".lmn")) {
       if (getenv(ENV_LMNTAL_HOME)) {
         FILE *fp_compiled;
-        
+
         fp_compiled = lmntal_compile_file(file_name);
         if (!fp_compiled) {
           fprintf(stderr, "Failed to run lmntal compiler");
@@ -923,7 +924,7 @@ FILE *fopen_il_file(char *file_name)
       return fp;
     }
   }
-  
+
   return 0;
 }
 
@@ -978,13 +979,13 @@ char *create_formatted_basename(const char *filepath)
   char *basename;
   int i;
   const char *p;
-  
+
   if(begin != NULL){ /* もし/があればその次がファイル名の先頭 */
     begin += 1;
   }else{
     begin = filepath; /* もし/がなければ全体の先頭がファイル名の先頭 */
   }
-  
+
   end = strchr(begin, '.'); /* ファイル名最初の.を探す ないと困る */
   basename = lmn_malloc(end-begin +1);
   for(i=0,p=begin; i<end-begin; ++i,++p){

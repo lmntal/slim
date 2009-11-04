@@ -42,7 +42,7 @@
 
 
 struct InstrArg {
-  enum ArgType type; 
+  enum ArgType type;
   union {
     int int_value;
     int instr_var;
@@ -68,6 +68,7 @@ struct Instruction {
 };
 
 struct Rule {
+  BOOL hasuniq;
   lmn_interned_str name;
   InstBlock amatch;
   InstBlock mmatch;
@@ -486,10 +487,11 @@ BOOL inst_block_has_label(InstBlock ib)
 
 /* Rule */
 
-Rule rule_make_anonymous(InstBlock amatch, InstBlock mmatch, InstBlock guard, InstBlock body)
+Rule rule_make_anonymous(BOOL hasuniq, InstBlock amatch, InstBlock mmatch, InstBlock guard, InstBlock body)
 {
   Rule r = LMN_MALLOC(struct Rule);
 
+  r->hasuniq = hasuniq;
   r->name = ANONYMOUS;
   r->amatch = amatch;
   r->mmatch = mmatch;
@@ -530,6 +532,11 @@ InstBlock rule_get_guard(Rule rule)
 InstBlock rule_get_body(Rule rule)
 {
   return rule->body;
+}
+
+BOOL rule_get_hasuniq(Rule rule)
+{
+  return rule->hasuniq;
 }
 
 /* List of rules */

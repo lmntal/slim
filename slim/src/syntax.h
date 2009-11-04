@@ -135,13 +135,14 @@ BOOL inst_block_has_label(InstBlock ib);
 
 typedef struct Rule *Rule;
 
-Rule rule_make_anonymous(InstBlock amatch, InstBlock mmatch, InstBlock guard, InstBlock body);
+Rule rule_make_anonymous(BOOL hasuniq, InstBlock amatch, InstBlock mmatch, InstBlock guard, InstBlock body);
 lmn_interned_str rule_get_name(Rule rule);
 void stx_rule_free(Rule rule);
 InstBlock rule_get_amatch(Rule rule);
 InstBlock rule_get_mmatch(Rule rule);
 InstBlock rule_get_guard(Rule rule);
 InstBlock rule_get_body(Rule rule);
+BOOL rule_get_hasuniq(Rule rule);
 
 /* List of rules */
 

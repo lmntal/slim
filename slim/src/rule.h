@@ -68,6 +68,7 @@ LMN_EXTERN BOOL lmn_rule_his_check(LmnRule rule, char *id);
 LMN_EXTERN struct st_table *lmn_rule_get_history(LmnRule rule);
 LMN_EXTERN lmn_interned_str lmn_rule_get_pre_id(LmnRule rule);
 LMN_EXTERN void lmn_rule_set_pre_id(LmnRule rule, lmn_interned_str t);
+LMN_EXTERN void lmn_rule_set_has_uniq(LmnRule rule, BOOL hasuniq);
 
 /*----------------------------------------------------------------------
  * Rule Set
