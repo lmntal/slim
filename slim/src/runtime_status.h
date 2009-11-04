@@ -51,6 +51,8 @@ void status_add_atom_space(unsigned long size);
 void status_remove_atom_space(unsigned long size);
 void status_add_membrane_space(unsigned long size);
 void status_remove_membrane_space(unsigned long size);
+void status_add_rule_space(unsigned long size);
+void status_remove_rule_space(unsigned long size);
 void status_add_hashtbl_space(unsigned long size);
 void status_remove_hashtbl_space(unsigned long size);
 void status_start_state_hash_calc(void);

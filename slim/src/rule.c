@@ -80,6 +80,11 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
     rule->status.apply_num = 0;
     rule->status.backtrack_num = 0;
   }
+
+#ifdef PROFILE
+  status_add_rule_space(sizeof(LmnRule));
+#endif
+
   return rule;
 }
 
@@ -126,6 +131,11 @@ void lmn_rule_free(LmnRule rule)
   LMN_FREE(rule->inst_seq);
   st_free_table(rule->history_tbl);
   LMN_FREE(rule);
+
+#ifdef PROFILE
+  status_remove_rule_space(sizeof(LmnRule));
+#endif
+
 }
 
 /* ルールの処理を行う関数を返す。ルールが関数を持たなければNULLを返す */

@@ -47,12 +47,16 @@
 struct RuntimeStatus {
   unsigned long atom_num;             /* # of atoms */
   unsigned long membrane_num;         /* # of membranes */
+  unsigned long rule_num;             /* # of rules */
   unsigned long peak_atom_num;        /* peak # of atoms */
   unsigned long peak_membrane_num;    /* peak # of membranes */
+  unsigned long peak_rule_num;       /* peak # of rules */
   unsigned long atom_space;           /* memory size by atoms (Byte) */
   unsigned long peak_atom_space;      /* peak memory size by atoms (Byte) */
   unsigned long membrane_space;       /* memory size by membranes (Byte) */
   unsigned long peak_membrane_space;  /* peak memory size by membranes (Byte) */
+  unsigned long rule_space;       /* memory size by rules (Byte) */
+  unsigned long peak_rule_space;  /* peak memory size by rules (Byte) */
   unsigned long hashtbl_space;        /* internal hash table size (Byte) */
   unsigned long peak_hashtbl_space;   /* peak internal hash table size (Byte) */
   unsigned long total_state_space;          /* total state size */
@@ -72,8 +76,8 @@ struct RuntimeStatus {
   time_t nd_time1, nd_time2;               /* clock()のオーバーフロー時に使う */
   BOOL run_nd;
 
-  unsigned long state_free_num; 
-  double total_state_free_time;     
+  unsigned long state_free_num;
+  double total_state_free_time;
   clock_t tmp_state_free_start;
 
   unsigned long mem_encode_num;      /* # of mem_encode call */
@@ -97,7 +101,7 @@ struct RuntimeStatus {
   clock_t tmp_expand_start;
   clock_t tmp_commit_start;
 
-  double total_react_rule_time; 
+  double total_react_rule_time;
   clock_t tmp_react_rule_start;
 
   unsigned long tmp_rule_trial_num;
@@ -120,12 +124,16 @@ void runtime_status_init()
 {
   runtime_status.atom_num = 0;
   runtime_status.membrane_num = 0;
+  runtime_status.rule_num = 0;
   runtime_status.peak_atom_num = 0;
   runtime_status.peak_membrane_num = 0;
+  runtime_status.peak_rule_num = 0;
   runtime_status.atom_space = 0;
   runtime_status.peak_atom_space = 0;
   runtime_status.membrane_space = 0;
   runtime_status.peak_membrane_space = 0;
+  runtime_status.rule_space = 0;
+  runtime_status.peak_rule_space = 0;
   runtime_status.hashtbl_space = 0;
   runtime_status.peak_hashtbl_space = 0;
   runtime_status.total_state_space = 0;
@@ -230,6 +238,26 @@ void status_remove_membrane_space(unsigned long size)
 {
   runtime_status.membrane_num--;
   runtime_status.membrane_space -= size;
+}
+
+void status_add_rule_space(unsigned long size)
+{
+//  rule_spaceの出力はおあずけ
+//  runtime_status.rule_space += size;
+//  if (runtime_status.rule_space > runtime_status.peak_rule_space)
+//    runtime_status.peak_rule_space = runtime_status.rule_space;
+
+  runtime_status.rule_num++;
+  if (runtime_status.rule_num > runtime_status.peak_rule_num)
+    runtime_status.peak_rule_num = runtime_status.rule_num;
+
+//  runtime_status_update();
+}
+
+void status_remove_rule_space(unsigned long size)
+{
+//  runtime_status.rule_space -= size;
+  runtime_status.rule_num--;
 }
 
 void status_add_hashtbl_space(unsigned long size)
@@ -369,6 +397,7 @@ void output_runtime_status(FILE *f)
     fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
     fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
            runtime_status.peak_membrane_num);
+    fprintf(f, "%-30s: %10lu\n", "peak # of rules", runtime_status.peak_rule_num);
     fprintf(f, "%-30s: %10lu\n", "peak atom space (Bytes)",
            runtime_status.peak_atom_space);
     fprintf(f, "%-30s: %10lu\n", "peak membrane space (Bytes)",
@@ -433,10 +462,10 @@ void output_runtime_status(FILE *f)
         };
         int i;
         double total_time = 0.0;
-        
+
         fprintf(f, "\n=== ND Profile of Time ============================\n");
         fprintf(f, "%-24s:%10s%8s%8s\n", "Time (sec)", "calls", "total", "(%)");
-        printf("---------------------------------------------------\n"); 
+        printf("---------------------------------------------------\n");
         for (i = 0; i < sizeof(v)/sizeof(v[0]); i++) {
           total_time += v[i].time;
           fprintf(f, "%-24s:%10lu%8.2lf%8.1lf\n",
@@ -445,7 +474,7 @@ void output_runtime_status(FILE *f)
                   v[i].time,
                   100.0 * v[i].time / tmp_nd_total_time);
         }
-        fprintf(f, "---------------------------------------------------\n"); 
+        fprintf(f, "---------------------------------------------------\n");
         fprintf(f, "%-24s:%10s%8.2lf%8.1lf\n", "TOTAL", "", total_time, 100*total_time / tmp_nd_total_time);
         fprintf(f, "%-24s:%10s%8.2lf%8.1lf\n", "ND elapsed time (sec)", "", tmp_nd_total_time, 100.0);
         fprintf(f, "===================================================\n");
