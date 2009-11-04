@@ -73,8 +73,10 @@ void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str r
   if (RC_GET_MODE(rc, REACT_ND)) {
     unsigned int i;
     /* グローバルルート膜のコピー */
-    SimpleHashtbl *copymap;
+    ProcessTbl copymap;
     LmnMembrane *tmp_global_root;
+    LmnWord t;
+    
 #ifdef PROFILE
     if (lmn_env.profile_level >= 1) {
       status_start_commit();
@@ -96,8 +98,8 @@ void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str r
       if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
         wtcp[i] = wt[i];
       }
-      else if(hashtbl_contains(copymap, wt[i])) {
-        wtcp[i] = hashtbl_get_default(copymap, wt[i], 0);
+      else if(proc_tbl_get(copymap, wt[i], &t)) {
+        wtcp[i] = t;
       }
       else if(wt[i] == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
         wtcp[i] = (LmnWord)tmp_global_root;
@@ -108,7 +110,7 @@ void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str r
         wtcp[i] = (LmnWord)d;
       }
     }
-    hashtbl_free(copymap);
+    proc_tbl_free(copymap);
 
     /* 変数配列および属性配列をコピーと入れ換える */
     SWAP(LmnWord *, wtcp, wt);
@@ -415,6 +417,12 @@ static int count_rulesets()
   return i;
 }
 
+static int count_modules()
+{
+  extern st_table *module_table;
+  return st_num(module_table);
+}
+
 static void print_trans_maindata(const char *filename)
 {
   fprintf(OUT, "struct trans_maindata trans_%s_maindata = {\n", filename);
@@ -432,7 +440,9 @@ static void print_trans_maindata(const char *filename)
   /* ルールセットオブジェクトへのポインタの配列 */
   fprintf(OUT, "  trans_%s_maindata_rulesets, /*rulesettable*/\n", filename);
   /* モジュールの個数 */
+  fprintf(OUT, "  %d, /*count of module*/\n", count_modules());
   /* モジュールの配列 */
+  fprintf(OUT, "  trans_%s_maindata_modules, /*moduletable*/\n", filename);
   /* シンボルid変換テーブル */
   fprintf(OUT, "  trans_%s_maindata_symbolexchange, /*symbol id exchange table*/\n", filename);
   /* ファンクタid変換テーブル */
@@ -485,7 +495,7 @@ static void print_trans_rules(const char *filename)
   int count = count_rulesets();
   int i;
   int buf_len = strlen(filename) + 50; /* 適当にこれだけあれば足りるはず */
-  char *buf = malloc(buf_len + 1);
+  char *buf = lmn_malloc(buf_len + 1);
 
   /* システムルールセットの出力 */
   snprintf(buf, buf_len, "trans_%s_1", filename);
@@ -504,6 +514,8 @@ static void print_trans_rules(const char *filename)
     snprintf(buf, buf_len, "trans_%s_%d", filename, i);
     translate_ruleset(lmn_ruleset_from_id(i), buf);
   }
+
+  free(buf);
 }
 
 static void print_trans_rulesets(const char *filename)
@@ -537,6 +549,35 @@ static void print_trans_rulesets(const char *filename)
   fprintf(OUT, "int trans_%s_maindata_rulesetexchange[%d];\n\n", filename, count);
 }
 
+static int print_trans_module_f(st_data_t key, st_data_t value, st_data_t counter_p)
+{
+  lmn_interned_str m_key = (lmn_interned_str)key;
+  LmnRuleSet m_val = (LmnRuleSet)value;
+  int *m_counter = (int*)counter_p; /* これが0なら最初の引数 */
+
+  if(*m_counter != 0){
+    fprintf(OUT, "  ,");
+  }else{
+    fprintf(OUT, "   ");
+  }
+  
+  fprintf(OUT, "{ %d, %d }\n", m_key, lmn_ruleset_get_id(m_val));
+
+  ++*m_counter;
+  return ST_CONTINUE;
+}
+
+static void print_trans_modules(const char *filename)
+{
+  extern st_table *module_table;
+  int count = count_modules();
+  int counter = 0;
+
+  fprintf(OUT, "struct trans_module trans_%s_maindata_modules[%d] = {\n", filename, count);
+  st_foreach(module_table, print_trans_module_f, (st_data_t)&counter);
+  fprintf(OUT, "};\n\n");
+}
+
 static void print_trans_initfunction(const char *filename)
 {
   fprintf(OUT, "void init_%s(void){\n", filename);
@@ -545,11 +586,6 @@ static void print_trans_initfunction(const char *filename)
   /* fprintf(OUT, "  helloworld(\"%s\");\n", filename); */
   
   fprintf(OUT, "}\n\n");
-}
-
-static void print_trans_modules(const char *filename)
-{
-
 }
 
 void translate(char *filepath)

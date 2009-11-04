@@ -54,6 +54,7 @@
 #include "error.h"
 #include "task.h"
 #include "mc.h"
+#include "visitlog.h"
 
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
@@ -153,30 +154,33 @@ extern unsigned int wt_size;
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {      \
       wt[destlinki] = LINKED_ATOM(srclinki);            \
     }                                                   \
-    else { /* symbol atom */                                    \
-      SimpleHashtbl *ht = (SimpleHashtbl *)wt[tbli];            \
-      wt[destlinki] = hashtbl_get(ht, LINKED_ATOM(srclinki));   \
-    }                                                           \
+    else { /* symbol atom */                            \
+      ProcessTbl ht = (ProcessTbl)wt[tbli];             \
+      proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt[destlinki]); \
+    }                                                   \
   }while(0)
 
 #define TR_INSTR_DELETECONNECTORS(srcset, srcmap)       \
   do{                                                   \
     HashSet *delset;                                    \
-    SimpleHashtbl *delmap;                              \
+    ProcessTbl delmap;                                  \
     HashSetIterator it;                                 \
     delset = (HashSet *)wt[srcset];                     \
-    delmap = (SimpleHashtbl *)wt[srcmap];               \
+    delmap = (ProcessTbl)wt[srcmap];                                    \
     for(it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) { \
       LmnSAtom orig = LMN_SATOM(hashsetiter_entry(&it));                \
-      LmnSAtom copy = LMN_SATOM(hashtbl_get(delmap, (HashKeyType)orig)); \
+      LmnSAtom copy;                                                    \
+      LmnWord t;                                                        \
+      proc_tbl_get_by_atom(delmap, orig, &t);                           \
+      copy = LMN_SATOM(t);                                              \
       lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);                 \
-      /* mem がないので仕方なく直接アトムリストをつなぎ変える*/         \
-      /* UNIFYアトムはnatomに含まれないので大丈夫 */                    \
+      /* mem がないので仕方なく直接アトムリストをつなぎ変える           \
+         UNIFYアトムはnatomに含まれないので大丈夫 */                    \
       LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy), LMN_SATOM_GET_PREV(copy)); \
       LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy), LMN_SATOM_GET_NEXT_RAW(copy)); \
       lmn_delete_atom(orig);                                            \
     }                                                                   \
-    hashtbl_free(delmap);                                               \
+    proc_tbl_free(delmap);                                              \
   }while(0)
 
 #define TR_INSTR_DEREFFUNC(funci, atomi, pos)         \

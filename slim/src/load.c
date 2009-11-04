@@ -668,6 +668,12 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
     maindata->ruleset_exchange[i] = gid;
   }
 
+  /* モジュール読込み */
+  for(i=0; i<maindata->count_of_module; ++i){
+    struct trans_module mo = maindata->module_table[i];
+    lmn_set_module(maindata->symbol_exchange[mo.name], lmn_ruleset_from_id(maindata->ruleset_exchange[mo.ruleset]));
+  }
+
   return ret;
 }
 
@@ -678,16 +684,18 @@ LmnRuleSet load_compiled_il(char *filename, void *sohandle)
 {
   char *basename = create_formatted_basename(filename);
   int buf_len = strlen(basename) + 50;  /* 適当に50文字余分にとったけどこれでいいのか */
-  char *buf = malloc(buf_len + 1); /* 必要ないけど一応最後に1byte余分をとっておく */
+  char *buf = lmn_malloc(buf_len + 1); /* 必要ないけど一応最後に1byte余分をとっておく */
   void (*init_f)();
   struct trans_maindata *maindata;
+  LmnRuleSet ret = 0;
 
   /* 初期化関数を呼び出し */
   snprintf(buf, buf_len, "init_%s", basename);
   init_f = dlsym(sohandle, buf);
   if(! init_f){
-    fprintf(stderr, "init function \"%s\" not found in %s.\n", buf, basename);
-    return 0;
+    fprintf(stderr, "init function \"%s\" not found in %s.\n", buf, filename);
+    ret = 0;
+    goto returning;
   }
   (*init_f)();
 
@@ -696,11 +704,17 @@ LmnRuleSet load_compiled_il(char *filename, void *sohandle)
   maindata = dlsym(sohandle, buf);
   if(! maindata){
     fprintf(stderr, "maindata \"%s\" not found in %s.\n", buf, basename);
-    return 0;
+    ret = 0;
+    goto returning;
   }
 
   /* 読み込みと変換テーブルの設定 */
-  return load_and_setting_trans_maindata(maindata);
+  ret = load_and_setting_trans_maindata(maindata);
+
+ returning:
+  lmn_free(buf);
+  lmn_free(basename);
+  return ret;
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置する。
@@ -972,7 +986,7 @@ char *create_formatted_basename(const char *filepath)
   }
   
   end = strchr(begin, '.'); /* ファイル名最初の.を探す ないと困る */
-  basename = malloc(end-begin +1);
+  basename = lmn_malloc(end-begin +1);
   for(i=0,p=begin; i<end-begin; ++i,++p){
     if(isalpha(*p) || isdigit(*p))
       basename[i] = *p;

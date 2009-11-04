@@ -63,10 +63,10 @@
     }                                                                   \
   }while(0)
 
-#define READ_VAL_LIST(I,X)                      \
-  do{                                                               \
+#define READ_VAL_LIST(I,X)                                          \
+  do{                                                                   \
     READ_VAL(LmnInstrVar, I, X##_num);                                  \
-    X = malloc(sizeof(LmnWord)*X##_num);                                \
+    X = lmn_malloc(sizeof(LmnWord)*X##_num);                            \
     { int i; for(i=0; i<X##_num; ++i){ READ_VAL(LmnInstrVar, I, X[i]); } } \
   }while(0)
 
@@ -74,6 +74,12 @@ struct trans_ruleset
 {
   int size;
   LmnTranslated *rules;
+};
+
+struct trans_module
+{
+  lmn_interned_str name;
+  int ruleset; /* ruleset id */
 };
 
 struct trans_maindata
@@ -84,6 +90,8 @@ struct trans_maindata
   LmnFunctorEntry *functor_table;
   int count_of_ruleset;
   struct trans_ruleset *ruleset_table;
+  int count_of_module;
+  struct trans_module *module_table;
   int *symbol_exchange;
   int *functor_exchange;
   int *ruleset_exchange;

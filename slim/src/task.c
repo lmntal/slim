@@ -1732,6 +1732,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       ret_flag = lmn_mem_cmp_ground(srcvec, dstvec);
 
+      free_links(srcvec);
+      free_links(dstvec);
+
       if((!ret_flag && INSTR_EQGROUND == op) || (ret_flag && INSTR_NEQGROUND == op)) {
         return FALSE;
       }

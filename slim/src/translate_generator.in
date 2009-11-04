@@ -564,7 +564,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
   {
     Vector *srcvec = links_from_idxs((Vector*)wt[$1], wt, at);
     Vector *dstlovec, *retvec;
-    SimpleHashtbl *atommap;
+    ProcessTbl atommap;
     
     lmn_mem_copy_ground((LmnMembrane*)wt[$2], srcvec, &dstlovec, &atommap);
     free_links(srcvec);
