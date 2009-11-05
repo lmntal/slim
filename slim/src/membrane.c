@@ -977,9 +977,8 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, Pr
         if (LMN_ATTR_IS_DATA(attr)) {
           LmnAtom newargatom = lmn_copy_data_atom(a, attr);
           newlink_symbol_and_something(newatom, i, newargatom, attr);
-        } else if(proc_tbl_get_by_atom(atoms, LMN_SATOM(a), NULL)) {
-          proc_tbl_get_by_atom(atoms, LMN_SATOM(a), &t);
-          newlink_symbol_and_something(newatom, i, t, attr);
+        } else if(proc_tbl_get_by_atom(atoms, LMN_SATOM(a), &t)) {
+          newlink_symbol_and_something(newatom, i, LMN_ATOM(t), attr);
         }
       }
         }));
