@@ -67,7 +67,6 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, Pr
    ruleset->idの値によって昇順に並べるようにする */
 void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
-  LmnRuleSet rset;
   Vector *v;
   int i, n;
 
@@ -75,16 +74,14 @@ void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 
   v = &(mem->rulesets);
   n = vec_num(v);
-  rset = lmn_ruleset_copy(ruleset);
 
-  /* uniq導入に伴い、膜へのrulesetの追加は全てアドレス渡しではなく複製 */
   for (i = 0; i < n; i++) {
     LmnRuleSet r = (LmnRuleSet)vec_get(v, i);
 
     // 同じidを持つruleset群の一番後ろに追加する
-    if (lmn_ruleset_get_id(r) > lmn_ruleset_get_id(rset)) {
+    if (lmn_ruleset_get_id(r) > lmn_ruleset_get_id(ruleset)) {
       int j;
-      LmnRuleSet pre = rset;
+      LmnRuleSet pre = ruleset;
       vec_push(v, 0);
       for (j = i; j < (n + 1); j++) {
         LmnRuleSet t = (LmnRuleSet)vec_get(v, j);
@@ -95,7 +92,7 @@ void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
     }
   }
   if (i == n) {
-    vec_push(v, (LmnWord)rset);
+    vec_push(v, (LmnWord)ruleset);
   }
 }
 
@@ -335,7 +332,8 @@ void lmn_mem_drop(LmnMembrane *mem)
 void lmn_mem_free(LmnMembrane *mem)
 {
   HashIterator iter;
-  unsigned int i, n;
+  LmnRuleSet rs;
+  unsigned int i, j, n;
 
   LMN_ASSERT(mem->atom_num == 0);
   /* free all atomlists  */
@@ -346,10 +344,21 @@ void lmn_mem_free(LmnMembrane *mem)
   }
 
   hashtbl_destroy(&mem->atomset);
+
   n = mem->rulesets.num;
   for (i = 0; i < n; i++) {
-    struct LmnRuleSet *rs = (LmnRuleSet)vec_get(&(mem->rulesets), i);
-    if (lmn_is_ruleset_copy(rs)) lmn_ruleset_free(rs);
+    rs = (LmnRuleSet)vec_get(&(mem->rulesets), i);
+    /* free copied ruleset */
+    if (lmn_ruleset_is_copy(rs)) {
+      LmnRule r;
+      for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+        r = lmn_ruleset_get_rule(rs, j);
+        /* free copied uniq rule */
+        if (lmn_rule_has_uniq(r)) lmn_rule_free(r);
+      }
+      LMN_FREE(lmn_ruleset_get_rules(rs));
+      LMN_FREE(rs);
+    }
   }
   vec_destroy(&mem->rulesets);
 
@@ -895,7 +904,7 @@ ProcessTbl lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
   atoms = proc_tbl_make();
 
   lmn_mem_copy_cells_sub(destmem, srcmem, atoms);
-  
+
   return atoms;
 }
 
@@ -953,7 +962,7 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, Pr
           srcinside = LMN_SATOM(LMN_SATOM_GET_LINK(srcatom, 0));
           proc_tbl_get_by_atom(atoms, srcinside, &t);
           newinside = LMN_SATOM(t);
-          
+
           /* 必ず子膜につながっているはず */
           LMN_ASSERT(LMN_SATOM_GET_FUNCTOR(srcinside) == LMN_IN_PROXY_FUNCTOR &&
               LMN_PROXY_GET_MEM(srcinside)->parent == LMN_PROXY_GET_MEM(srcatom));

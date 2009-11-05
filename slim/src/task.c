@@ -372,7 +372,7 @@ static void react_initial_rulesets(struct ReactCxt *rc, LmnMembrane *mem)
   BOOL reacted;
 
   do {
-    
+
     reacted = FALSE;
     if (react_ruleset_in_all_mem(rc, initial_system_ruleset, mem)) {
       reacted = TRUE;
@@ -396,7 +396,7 @@ void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
 
   stand_alone_react_cxt_init(&rc);
   RC_SET_GROOT_MEM(&rc, mem);
-  
+
   for(i=0; i<vec_num(rulesets); ++i){
     lmn_react_ruleset(&rc, mem, (LmnRuleSet)vec_get(rulesets,i));
   }
@@ -507,7 +507,7 @@ static BOOL react_ruleset_in_all_mem(struct ReactCxt *rc, LmnRuleSet rs, LmnMemb
   for (m = mem->child_head; m; m = m->next) {
     if (react_ruleset_in_all_mem(rc, rs, m)) return TRUE;
   }
-  
+
   return lmn_react_ruleset(rc, mem, rs);
 }
 
@@ -2397,7 +2397,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = &((LmnMembrane *)wt[srcmemi])->rulesets;
       for (i = 0; i< v->num; i++) {
-          lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], (LmnRuleSet)vec_get(v, i));
+        lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], lmn_ruleset_copy((LmnRuleSet)vec_get(v, i)));
       }
       break;
     }

@@ -187,13 +187,6 @@ LmnRule dummy_rule(void)
   return &rule;
 }
 
-/* uniq履歴照合(TURE:含まれる、FALSE:含まれない) */
-BOOL lmn_rule_his_check(LmnRule rule, char *id)
-{
-  if(st_is_member(rule->history_tbl, (st_data_t)id))return TRUE;
-  return FALSE;
-}
-
 struct st_table *lmn_rule_get_history(LmnRule rule)
 {
   return rule->history_tbl;
@@ -207,6 +200,11 @@ lmn_interned_str lmn_rule_get_pre_id(LmnRule rule)
 void lmn_rule_set_pre_id(LmnRule rule, lmn_interned_str t)
 {
   rule->pre_id = t;
+}
+
+BOOL lmn_rule_has_uniq(LmnRule rule)
+{
+  return rule->has_uniq;
 }
 
 void lmn_rule_set_has_uniq(LmnRule rule, BOOL hasuniq)
@@ -227,6 +225,7 @@ struct LmnRuleSet {
   int atomic;
   BOOL iam_copy;
   BOOL valid;
+  BOOL has_uniqrule;
 };
 
 /* Generates and returns new RuleSet id */
@@ -249,13 +248,9 @@ LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size)
   ruleset->atomic = FALSE;
   ruleset->valid = TRUE;
   ruleset->iam_copy = FALSE;
+  ruleset->has_uniqrule = FALSE;
 
   return ruleset;
-}
-
-BOOL lmn_is_ruleset_copy(LmnRuleSet rs)
-{
-  return rs->iam_copy;
 }
 
 /* Frees RuleSet and its elements */
@@ -367,6 +362,21 @@ LmnRuleSet lmn_ruleset_from_id(int id)
   else return ruleset_table->entry[id];
 }
 
+BOOL lmn_ruleset_is_copy(LmnRuleSet ruleset)
+{
+  return ruleset->iam_copy;
+}
+
+BOOL lmn_ruleset_has_uniqrule(LmnRuleSet ruleset)
+{
+  return ruleset->has_uniqrule;
+}
+
+LmnRule *lmn_ruleset_get_rules(LmnRuleSet ruleset)
+{
+  return ruleset->rules;
+}
+
 /* rulesetをコピーして新しいルールセットを作成する */
 LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
 {
@@ -376,7 +386,13 @@ LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
   new_ruleset->atomic = ruleset->atomic;
   new_ruleset->valid = ruleset->valid;
 
-  for(; i<ruleset->num; i++) lmn_ruleset_put(new_ruleset, lmn_rule_copy(ruleset->rules[i]));
+  for (; i<ruleset->num; i++) {
+    if (!ruleset->rules[i]->has_uniq) {
+      lmn_ruleset_put(new_ruleset, ruleset->rules[i]);
+    } else {
+      lmn_ruleset_put(new_ruleset, lmn_rule_copy(ruleset->rules[i]));
+    }
+  }
   return new_ruleset;
 }
 
