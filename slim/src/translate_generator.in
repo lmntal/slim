@@ -193,6 +193,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
   wt[$0] = (LmnWord)LMN_PROXY_GET_MEM(wt[$1]);
   if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+  if(((LmnMembrane*)wt[$0])->name != $2) $f;
 
 #anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
   {

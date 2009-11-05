@@ -1140,6 +1140,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       LMN_ASSERT(LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt[atom]))));
       wt[mem] = (LmnWord)LMN_PROXY_GET_MEM(wt[atom]);
       if (RC_GET_MODE(rc, REACT_ND)) { at[mem] = 0; /* MC */ }
+      if(((LmnMembrane*)wt[mem])->name != memn) return FALSE;
       LMN_ASSERT(((LmnMembrane *)wt[mem])->parent);
       break;
     }
