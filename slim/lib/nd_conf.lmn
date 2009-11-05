@@ -6,5 +6,4 @@ module(nd_conf).
   nd_conf { atom_priority($n, ['/'($name, $arity)|T]), $p[T], @p} :- $arity >= 0, unary($name), $m = $n + 1 |
     '$callback'('set_functor_priority', $n, $name, $arity), nd_conf { atom_priority($m, T), $p[T], @p }.
   nd_conf{@p} :- .
-//  a :- b. b :- c.
 }.
