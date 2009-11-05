@@ -350,12 +350,15 @@ void lmn_mem_free(LmnMembrane *mem)
     rs = (LmnRuleSet)vec_get(&(mem->rulesets), i);
     /* free copied ruleset */
     if (lmn_ruleset_is_copy(rs)) {
-      LmnRule r;
-      for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
-        r = lmn_ruleset_get_rule(rs, j);
-        /* free copied uniq rule */
-        if (lmn_rule_has_uniq(r)) lmn_rule_free(r);
+      if (lmn_ruleset_has_uniqrule(rs)) {
+        LmnRule r;
+        for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+          r = lmn_ruleset_get_rule(rs, j);
+          /* free copied uniq rule */
+          if (lmn_rule_has_uniq(r)) lmn_rule_free(r);
+        }
       }
+
       LMN_FREE(lmn_ruleset_get_rules(rs));
       LMN_FREE(rs);
     }

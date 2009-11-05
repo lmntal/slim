@@ -270,6 +270,9 @@ void lmn_ruleset_put(LmnRuleSet ruleset, LmnRule rule)
     ruleset->rules = LMN_REALLOC(LmnRule, ruleset->rules, ruleset->cap);
   }
   ruleset->rules[ruleset->num++] = rule;
+
+  if (!ruleset->has_uniqrule && rule->has_uniq) ruleset->has_uniqrule = TRUE;
+
 }
 
 /* Returns the # of rules in ruleset */
