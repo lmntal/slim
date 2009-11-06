@@ -1221,14 +1221,118 @@ BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms)
 
   b = ground_atoms(srcvec, avovec, &atoms, natoms);
   if (b) { hashset_free(atoms); }
+
   return b;
 }
+
+/* xとyが1つのリンクの逆向き表現かどうか */
+#define IS_BUDDY(xap, xattr, yap, yattr) \
+  ( !LMN_ATTR_IS_DATA(xattr) && !LMN_ATTR_IS_DATA(yattr) && LMN_SATOM_GET_LINK(xap,xattr)==yap && LMN_SATOM_GET_ATTR(xap,xattr)==yattr )
 
 /* srcvecから出るリンクのリストが基底項プロセスに到達している場合、
    avovecに基底項プロセスに存在するシンボルアトム、natomsにアトムの数、戻り値に真を返す。
    リストが基底項プロセスに到達していない場合にはatomsはNULLとなり、偽
    を返す。ただし、リンクがavovecに到達している場合には、基底項プロセスとはならない。 */
 BOOL ground_atoms(Vector *srcvec,
+                  Vector *avovec,
+                  HashSet **atoms,
+                  unsigned long *natoms)
+{
+  Vector *unsearched_link_stack = vec_make(16); /* 探索待ちリンク */
+  int reached_root_count = 1; /* 到達した根の個数(1つは始点) */
+  HashSet *found_ground_symbol_atoms = hashset_make(16); /* ground内の発見済みのシンボルアトム */
+  BOOL result = TRUE;
+  unsigned long count_of_ground_atoms = 0; /* ground内のアトムの個数 */
+  int i;
+  
+  /* groundはつながったグラフなので1つの根からだけたどればよい */
+  {
+    LinkObj l = (LinkObj)vec_get(srcvec, 0);
+    vec_push(unsearched_link_stack, (LmnWord)LinkObj_make(l->ap, l->pos));
+  }
+
+  while(vec_num(unsearched_link_stack) > 0){
+    LinkObj l = (LinkObj)vec_pop(unsearched_link_stack);
+    LmnAtom l_ap = l->ap;
+    LmnLinkAttr l_pos = l->pos;
+    LMN_FREE(l);
+    
+    if(LMN_ATTR_IS_DATA(l_pos)){ /* lがデータなら行き止まり */
+      if(lmn_data_atom_is_ground(l_ap, l_pos)){
+        ++count_of_ground_atoms;
+        continue;
+      }else{
+        result = FALSE; /* groundでないデータが出現したら終了 */
+        goto returning;
+      }
+    }else{ /* lがシンボルアトムを指していれば */
+      /* lがavovecにつながっていれば */
+      for(i=0; avovec!=NULL && i<vec_num(avovec); ++i){
+        LinkObj a = (LinkObj)vec_get(avovec, i);
+        if(IS_BUDDY(l_ap, l_pos, a->ap, a->pos)){
+          result = FALSE;
+          goto returning;
+        }
+      }
+      /* lがsrcvecにつながっていれば */
+      {
+        BOOL continue_flag = FALSE; /* 2重continueに使うだけ */
+        for(i=0; i<vec_num(srcvec); ++i){
+          LinkObj a = (LinkObj)vec_get(srcvec, i);
+          if(IS_BUDDY(l_ap, l_pos, a->ap, a->pos)){
+            ++reached_root_count;
+            continue_flag = TRUE;
+            break;
+          }
+        }
+        if(continue_flag) continue;
+      }
+      /* lがプロキシを指していれば */
+      if(LMN_SATOM_IS_PROXY(l_ap)){
+        result = FALSE;
+        goto returning;
+      }
+      /* lの指すアトムが訪問済みなら */
+      if(hashset_contains(found_ground_symbol_atoms, l_ap)){
+        continue;
+      }
+      /* lはシンボルアトムで初出のアトムを指すため,その先を探索する必要がある */
+      {
+        hashset_add(found_ground_symbol_atoms, l_ap);
+        ++count_of_ground_atoms;
+
+        for(i=0; i<LMN_SATOM_GET_ARITY(l_ap); ++i){
+          if(i == l_pos) continue;
+          vec_push(unsearched_link_stack,
+                   (LmnWord)LinkObj_make(LMN_SATOM_GET_LINK(l_ap, i), LMN_SATOM_GET_ATTR(l_ap, i)));
+        }
+      }
+    }
+  }
+
+  /* もし未到達の根があれば結合グラフになっていないのでgroundでない */
+  result = (reached_root_count == vec_num(srcvec));
+
+ returning:
+  for(i=0; i<vec_num(unsearched_link_stack); ++i){
+    LMN_FREE(vec_get(unsearched_link_stack, i));
+  }
+  vec_free(unsearched_link_stack);
+
+  if(result){
+    *atoms = found_ground_symbol_atoms;
+    *natoms = count_of_ground_atoms;
+  }else{
+    hashset_free(found_ground_symbol_atoms);
+    *atoms = NULL;
+    *natoms = 0;
+  }
+  
+  return result;
+}
+
+/* 前の実装.しばらく残しておく */
+static BOOL ground_atoms_old(Vector *srcvec,
                   Vector *avovec,
                   HashSet **atoms,
                   unsigned long *natoms)
