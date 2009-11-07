@@ -293,8 +293,8 @@ def print_trans_format(line, arg)
           warn line[pos+2,long_data_name.size]
         end
       else
-        # 普通の引数なら, 変換時に読み込んだ値を突っ込むために%dに置換
-        format_arg << "targ"+x.to_s
+        # 普通の引数なら, 変換時に読み込んだ値を突っ込むために%ldに置換
+        format_arg << "(int)targ"+x.to_s
         line[pos,2] = "%d"
       end
     elsif line[pos+1] == "s"[0]

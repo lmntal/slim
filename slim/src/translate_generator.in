@@ -724,16 +724,17 @@ BOOL interpret_generated(struct ReactCxt *rc,
   if(!(*(double*)wt[$0] != *(double*)wt[$1])) $f;
 
 #allocatom LmnInstrVar $functor
-  at[$0] = $1_attr;
 % switch(targ1_attr){
 % case LMN_INT_ATTR:
     wt[$0] = $1_long_data;
+    at[$0] = LMN_INT_ATTR;
 %   break;    
 % case LMN_DBL_ATTR:
     {
 #__format_t
       static const double d = $1_double_data;
       wt[$0] = &d;
+      at[$0] = LMN_CONST_DBL_ATTR;
 #__format_i
   /* 困った */
 #__format
@@ -789,17 +790,18 @@ BOOL interpret_generated(struct ReactCxt *rc,
   TR_INSTR_DEREFFUNC($0, $1, $2);
 
 #loadfunc LmnInstrVar $functor
-  at[$0] = $1_attr;
 % if(LMN_ATTR_IS_DATA(targ1_attr)){
 %   switch(targ1_attr){
 %   case LMN_INT_ATTR:
       wt[$0] = $1_long_data;
+      at[$0] = LMN_INT_ATTR;
 %     break;
 %   case LMN_DBL_ATTR:
       {
 #__format_t
         const static double x = $1_double_data;
         wt[$0] = &x;
+        at[$0] = LMN_CONST_DBL_ATTR;
 #__format_i
   /* 困った */
 #__format
@@ -814,6 +816,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
 %   }
 % }else{
     wt[$0] = (LmnWord)$1_functor_data;
+    at[$0] = $1_attr;
 % }
 
 #eqfunc LmnInstrVar LmnInstrVar

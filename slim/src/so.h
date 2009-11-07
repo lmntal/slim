@@ -141,9 +141,7 @@ extern unsigned int wt_size;
     v = &((LmnMembrane *)wt[srcmemi])->rulesets;        \
     for (i = 0; i< v->num; i++) {                       \
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {        \
-        lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], (LmnRuleSet)lmn_ruleset_copy((LmnRuleSet)vec_get(v, i))); \
-      }else{                                                            \
-        lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], (LmnRuleSet)vec_get(v, i)); \
+        lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], lmn_ruleset_copy((LmnRuleSet)vec_get(v, i))); \
       }                                                                 \
     }                                                                   \
   }while(0)
