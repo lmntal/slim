@@ -302,13 +302,6 @@ static void runtime_status_update()
 
   if (runtime_status.total_state_space > runtime_status.peak_total_state_space) {
     runtime_status.peak_total_state_space = runtime_status.total_state_space;
-    printf("%lu %lu %lu %lu %lu\n"
-    ,runtime_status.atom_space
-    , runtime_status.membrane_space
-    , runtime_status.hashtbl_space
-    , runtime_status.tmp_state_num
-       , runtime_status.peak_encode_space);
-
   }
 }
 
