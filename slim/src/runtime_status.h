@@ -87,5 +87,7 @@ void calc_state_space_space(StateSpace states);
 void status_nd_push_stack(void);
 void status_nd_pop_stack(void);
 void status_state_space(StateSpace states);
+void status_binstr_make(LmnBinStr bs);
+void status_binstr_free(LmnBinStr bs);
 
 #endif
