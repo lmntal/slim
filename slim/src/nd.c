@@ -43,9 +43,7 @@
 #include "task.h"
 #include "dumper.h"
 #include "error.h"
-#ifdef PROFILE
 #include "runtime_status.h"
-#endif
 
 static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem, BYTE state_name);
 static void nd_loop(StateSpace states, State *init_state, BOOL dump);
@@ -217,6 +215,11 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
       /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
       vec_pop(stack);
       unset_open(s);
+
+#ifdef PROFILE
+      status_nd_pop_stack();
+#endif
+
       continue;
     }
     set_expanded(s); /* sに展開済みフラグを立てる */
@@ -232,6 +235,10 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
       vec_push(stack, (vec_data_t)succ);
       /* set ss to open, i.e., on the search stack */
       set_open(succ);
+
+#ifdef PROFILE
+      status_nd_push_stack();
+#endif
 
       if (lmn_env.compact_stack) {
         /* メモリ最適化のために、サクセッサの作成後に膜を解放する */
@@ -277,11 +284,11 @@ void run_nd(Vector *start_rulesets)
   }
 
   states = do_nd_dump(mem);
-#ifdef PROFILE
-  calc_hash_conflict(states);
-  calc_encode_info(states);
-  status_set_state_num(state_space_num(states));
-#endif
+
+  if (lmn_env.profile_level > 0) {
+    status_state_space(states);
+  }
+  
   fprintf(stdout, "\n");
 
   dump_state_transition_graph(states, stdout);
@@ -317,9 +324,9 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
 
   state_space_set_init_state(states, initial_state);
 
-#ifdef PROFILE
-  status_nd_start_running();
-#endif
+  if (lmn_env.profile_level > 0) {
+    status_nd_start_running();
+  }
 
 /*   /\* --nd_dumpの実行 *\/ */
 /*   else if(lmn_env.nd_dump){ */
@@ -330,10 +337,9 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
   nd_loop(states, initial_state, dump);
 /*   } */
 
-#ifdef PROFILE
-  status_nd_finish_running();
-#endif
-
+  if (lmn_env.profile_level > 0) {
+    status_nd_finish_running();
+  }
   return states;
 }
 

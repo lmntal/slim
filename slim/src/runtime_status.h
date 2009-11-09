@@ -67,10 +67,7 @@ void status_start_mem_dump_calc(void);
 void status_finish_mem_dump_calc(void);
 void status_start_mem_encode_calc(void);
 void status_finish_mem_encode_calc(void);
-void calc_encode_info(StateSpace states);
 void output_runtime_status(FILE *f);
-void calc_hash_conflict(StateSpace states);
-void output_hash_conflict(FILE *f);
 void status_start_running(void);
 void status_finish_running(void);
 void status_nd_start_running(void);
@@ -86,5 +83,9 @@ void status_finish_commit(void);
 void status_count_counterexample(void);
 void status_set_state_num(unsigned long n);
 void status_create_new_state(void);
+void calc_state_space_space(StateSpace states);
+void status_nd_push_stack(void);
+void status_nd_pop_stack(void);
+void status_state_space(StateSpace states);
 
 #endif

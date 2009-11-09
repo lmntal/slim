@@ -769,3 +769,11 @@ int st_ptrcmp(void *x, void *y) {
 long st_ptrhash(void *n) {
   return (long) n;
 }
+
+unsigned long st_table_space(st_table *table)
+{
+  return
+    sizeof(struct st_table) +
+    table->num_bins * sizeof(st_table_entry*) +
+    table->num_entries * sizeof(st_table_entry);
+}

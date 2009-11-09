@@ -81,7 +81,7 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->history_tbl = st_init_numtable();
   rule->pre_id = 0;
   rule->has_uniq = FALSE;
-  if(lmn_env.profile_level >= 2) {
+  if(lmn_env.profile_level >= 3) {
     rule->status.trial_num = 0;
     rule->status.apply_num = 0;
     rule->status.backtrack_num = 0;

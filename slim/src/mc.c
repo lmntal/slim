@@ -48,9 +48,7 @@
 #include "dumper.h"
 #include "mem_encode.h"
 #include "state.h"
-#ifdef PROFILE
 #include "runtime_status.h"
-#endif
 
 #include <string.h>
 
@@ -415,10 +413,6 @@ void run_mc(Vector *start_rulesets, Automata automata, Vector *propsyms)
 
   do_mc(states, mem);
 
-#ifdef PROFILE
-  calc_hash_conflict(states);
-#endif
-
   /* finalize */
   state_space_free(states);
   free_por_vars();
@@ -452,9 +446,9 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
   }
   fprintf(stdout, "# of States = %lu\n", state_space_num(states));
 
-#ifdef PROFILE
-  status_set_state_num(state_space_num(states));
-#endif
+  if (lmn_env.profile_level > 0) {
+    status_state_space(states);
+  }
 
   vec_free(stack);
 }

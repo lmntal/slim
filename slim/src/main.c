@@ -59,10 +59,7 @@
 #include "dumper.h"
 #include "mem_encode.h"
 /* #include "ext.h" */
-
-#ifdef PROFILE
 #include "runtime_status.h"
-#endif
 
 void install_builtin_extensions(void);
 void init_builtin_extensions(void); /* ext/init_exts.c */
@@ -144,23 +141,25 @@ static int parse_options(int argc, char *argv[])
       lmn_env.trace = TRUE;
       break;
     case 'p':
-#ifdef PROFILE
       if (optarg) {
         if (isdigit(optarg[0])) {
           int l = optarg[0] - '0';
-          lmn_env.profile_level = l <= 2 ? l : 2;
+          lmn_env.profile_level = l <= 3 ? l : 3;
         } else {
           fprintf(stderr, "invalid argument: -p %s\n", optarg);
           exit(EXIT_FAILURE);
         }
       } else {
-          lmn_env.profile_level = 1;
+          lmn_env.profile_level = 0;
       }
-      fprintf(stdout, "Profile Level %d\n", lmn_env.profile_level);
-      break;
-#else
-      usage(); break;
+
+#ifndef PROFILE
+      if (lmn_env.profile_level > 1) {
+        fprintf(stderr, "please configure with --enable-profile\n");
+        exit(EXIT_FAILURE);
+      }
 #endif
+      break;
     case 1000: version(); break;
     case 1001: /* help */ /*FALLTHROUGH*/
     case '?': usage(); break;
@@ -306,9 +305,9 @@ static void init_internal(void)
     string_init();
     port_init();
 
-#ifdef PROFILE
-    runtime_status_init();
-#endif
+    if (lmn_env.profile_level > 0) {
+      runtime_status_init();
+    }
   }
 }
 
@@ -327,9 +326,9 @@ static void finalize(void)
   
     finalize_so_handles();
 
-#ifdef PROFILE
-    runtime_status_finalize();
-#endif
+    if (lmn_env.profile_level > 0) {
+      runtime_status_finalize();
+    }
   }
   
   destroy_rules();
@@ -372,9 +371,9 @@ int main(int argc, char *argv[])
       exit(1);
     }
     
-#ifdef PROFILE
+    if (lmn_env.profile_level >= 1) {
       status_start_running();
-#endif
+    }
 
     if (lmn_env.translate) { /*変換をする場合*/
       if (!strcmp("-", argv[optid])) { /* argv[optid] is first input file name */
@@ -420,11 +419,10 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-#ifdef PROFILE
-  status_finish_running();
-  output_runtime_status(stderr);
-  output_hash_conflict(stderr);
-#endif
+  if (lmn_env.profile_level >= 1) {
+    status_finish_running();
+    output_runtime_status(stderr);
+  }
 
   finalize();
   return 0;

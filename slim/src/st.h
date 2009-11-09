@@ -88,4 +88,6 @@ int st_foreach_hash(st_table *table, st_data_t hash, int(*func)( ANYARGS), st_da
    ントリが存在する場合の動作は（とりあえず）未定義。 */
 void st_concat(st_table *tbl1, const st_table *tbl2);
 
+unsigned long st_table_space(st_table *table);
+
 #endif /* ST_INCLUDED */

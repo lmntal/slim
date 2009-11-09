@@ -77,12 +77,12 @@ struct StateSpace {
  * 高階関数st_foreach(c.f. st.c)に投げて使用．
  */
 static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  unsigned int j = 0;
+  unsigned int j;
   State *tmp = (State *)state_ptr;
 
   fprintf(stdout, "%lu::", (long unsigned int)tmp); /* dump src state's ID */
-  while (j < vec_num(&tmp->successor)) { /* dump dst state's IDs */
-    fprintf(stdout, "%lu", vec_get(&tmp->successor, j++));
+  for (j = 0; j < state_succ_num(tmp); j++) { /* dump dst state's IDs */
+    fprintf(stdout, "%lu", (LmnWord)state_succ_get(tmp, j));
     if (j < vec_num(&tmp->successor)) {
       fprintf(stdout,",");
     }
@@ -116,6 +116,7 @@ void state_space_free(StateSpace states)
   vec_free(states->end_states);
   hashset_destroy(&states->memid_hashes);
   LMN_FREE(states);
+
 }
 
 /* 初期状態を追加する */
@@ -313,8 +314,11 @@ State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule) {
   }
 
 #ifdef PROFILE
-  status_create_new_state();
+  if (lmn_env.profile_level > 0) {
+    status_create_new_state();
+  }
 #endif
+
   return new;
 }
 

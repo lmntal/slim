@@ -195,7 +195,7 @@ inline BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
      それがない場合命令列をinterpretで実行する */
   wt[0] = (LmnWord)mem;
 #ifdef PROFILE
-  if(lmn_env.profile_level >= 1) {
+  if(lmn_env.profile_level >= 2) {
     status_start_rule();
   }
 #endif
@@ -204,7 +204,7 @@ inline BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
     (inst_seq && interpret(rc, rule, inst_seq));
 
 #ifdef PROFILE
-  if(lmn_env.profile_level >= 1) {
+  if(lmn_env.profile_level >= 2) {
     status_finish_rule(rule, result);
     if(lmn_env.trace) {
       status_rule_output(rule);
@@ -542,7 +542,7 @@ void lmn_run(Vector *start_rulesets)
   lmn_memstack_push(RC_MEMSTACK(&mrc), mem);
   {
     int temp_env_p = lmn_env.profile_level;
-    if(lmn_env.trace && lmn_env.profile_level >= 1) {
+    if(lmn_env.trace && lmn_env.profile_level >= 2) {
         fprintf(stdout, "  %6s|%6s|%6s|%6s\n", " Name", " Apply", " Trial", " BackTrack");
     }
     lmn_env.profile_level = 0;
@@ -938,7 +938,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         LmnMembrane *tmp_global_root;
         LmnWord t;
 #ifdef PROFILE
-        if (lmn_env.profile_level >= 1) {
+        if (lmn_env.profile_level >= 2) {
           status_start_commit();
         }
 #endif
@@ -975,7 +975,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         SWAP(LmnWord *, wtcp, wt);
         SWAP(LmnByte *, atcp, at);
 #ifdef PROFILE
-        if (lmn_env.profile_level >= 1) {
+        if (lmn_env.profile_level >= 2) {
           status_finish_commit();
         }
 #endif
@@ -1028,7 +1028,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
               return TRUE;
             }
 #ifdef PROFILE
-            if (lmn_env.profile_level >= 1) {
+            if (lmn_env.profile_level >= 2) {
               status_backtrack_counter();
             }
 #endif
@@ -1101,7 +1101,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
               return TRUE;
             }
 #ifdef PROFILE
-            if (lmn_env.profile_level >= 1) {
+            if (lmn_env.profile_level >= 2) {
               status_backtrack_counter();
             }
 #endif
@@ -1118,7 +1118,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
                 return TRUE;
               }
 #ifdef PROFILE
-              if (lmn_env.profile_level >= 1) {
+              if (lmn_env.profile_level >= 2) {
                 status_backtrack_counter();
               }
 #endif
@@ -1163,7 +1163,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         }
         mp = mp->next;
 #ifdef PROFILE
-        if (lmn_env.profile_level >= 1) {
+        if (lmn_env.profile_level >= 2) {
           status_backtrack_counter();
         }
 #endif

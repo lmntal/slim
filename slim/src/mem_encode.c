@@ -178,8 +178,18 @@ struct LmnBinStr {
 
 inline void lmn_binstr_free(struct LmnBinStr *bs)
 {
+#ifdef PROFILE
+  status_binstr_free(bs);
+#endif
+
   LMN_FREE(bs->v);
   LMN_FREE(bs);
+
+}
+
+unsigned long lmn_binstr_space(struct LmnBinStr *bs)
+{
+  return sizeof(struct LmnBinStr) + sizeof(BYTE) * bs->len / TAG_IN_BYTE;
 }
 
 /* エンコード処理に用いるバイナリストリング */
@@ -462,6 +472,9 @@ static inline struct LmnBinStr *binstr_to_lmn_binstr(BinStr bs)
     ret_bs->v[ret_bs->len >> 1] = ret_bs->v[ret_bs->len >> 1] & 0x0f;
   }
 
+#ifdef PROFILE
+  status_binstr_make(ret_bs);
+#endif
   return ret_bs;
 }
 

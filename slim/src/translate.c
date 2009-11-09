@@ -78,7 +78,7 @@ void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str r
     LmnWord t;
     
 #ifdef PROFILE
-    if (lmn_env.profile_level >= 1) {
+    if (lmn_env.profile_level >= 2) {
       status_start_commit();
     }
 #endif
@@ -116,7 +116,7 @@ void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str r
     SWAP(LmnWord *, wtcp, wt);
     SWAP(LmnByte *, atcp, at);
 #ifdef PROFILE
-    if (lmn_env.profile_level >= 1) {
+    if (lmn_env.profile_level >= 2) {
       status_finish_commit();
     }
 #endif

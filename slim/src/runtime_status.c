@@ -43,6 +43,7 @@
 #include "nd.h"
 #include "st.h"
 #include "rule.h"
+#include "mem_encode.h"
 
 struct RuntimeStatus {
   unsigned long atom_num;             /* # of atoms */
@@ -83,7 +84,9 @@ struct RuntimeStatus {
   unsigned long mem_encode_num;      /* # of mem_encode call */
   double total_mem_encode_time;      /* total time of mem encode */
   clock_t tmp_mem_encode_start;
-  unsigned long encode_space;           /* memory size by mem encode (Byte) */
+  unsigned long final_encode_space;           /* memory size by mem encode (Byte) */
+  unsigned long encode_space;    
+  unsigned long peak_encode_space;    
   unsigned long encode_len_average;     /* average length of mem encode */
 
   unsigned long mem_enc_eq_num;      /* # of mem_encode call */
@@ -115,10 +118,17 @@ struct RuntimeStatus {
   unsigned long transition_num;
   unsigned long created_state_num;
   unsigned long created_transition_num;
+  unsigned long tmp_state_num;
 
+  unsigned long nd_stack_size, nd_max_stack_size;
+
+  unsigned long final_state_space_space;
 } runtime_status;
 
 static void runtime_status_update(void);
+static void output_hash_conflict(FILE *f);
+static void calc_hash_conflict(StateSpace states);
+static void calc_encode_info(StateSpace states);
 
 void runtime_status_init()
 {
@@ -168,6 +178,13 @@ void runtime_status_init()
   runtime_status.state_num                = 0;
   runtime_status.created_state_num        = 0;
   runtime_status.created_transition_num   = 0;
+  runtime_status.nd_stack_size            = 0;
+  runtime_status.nd_max_stack_size        = 0;
+  runtime_status.final_state_space_space  = 0;
+  runtime_status.tmp_state_num            = 0;
+  runtime_status.final_encode_space       = 0;
+  runtime_status.peak_encode_space        = 0;
+  runtime_status.encode_space        = 0;
 }
 
 void runtime_status_finalize()
@@ -279,10 +296,20 @@ static void runtime_status_update()
   runtime_status.total_state_space =
     runtime_status.atom_space
     + runtime_status.membrane_space
-    + runtime_status.hashtbl_space;
+    + runtime_status.hashtbl_space
+    + runtime_status.tmp_state_num * sizeof(struct State)
+    + runtime_status.peak_encode_space;
 
-  if (runtime_status.total_state_space > runtime_status.peak_total_state_space)
+  if (runtime_status.total_state_space > runtime_status.peak_total_state_space) {
     runtime_status.peak_total_state_space = runtime_status.total_state_space;
+    printf("%lu %lu %lu %lu %lu\n"
+    ,runtime_status.atom_space
+    , runtime_status.membrane_space
+    , runtime_status.hashtbl_space
+    , runtime_status.tmp_state_num
+       , runtime_status.peak_encode_space);
+
+  }
 }
 
 void status_start_state_free()
@@ -299,6 +326,8 @@ void status_finish_state_free()
     runtime_status.total_state_free_time +=
       (clock() - runtime_status.tmp_state_free_start)/(double)CLOCKS_PER_SEC;
   }
+
+  runtime_status.tmp_state_num--;
 }
 
 void status_start_state_hash_calc()
@@ -364,6 +393,33 @@ void status_finish_mem_encode_calc()
 void status_create_new_state()
 {
   runtime_status.created_state_num++;
+  runtime_status.tmp_state_num++;
+}
+
+void status_nd_push_stack()
+{
+  runtime_status.nd_stack_size++;
+  if (runtime_status.nd_stack_size > runtime_status.nd_max_stack_size) {
+    runtime_status.nd_max_stack_size = runtime_status.nd_stack_size;
+  }
+}
+  
+void status_nd_pop_stack()
+{
+  runtime_status.nd_stack_size--;
+}
+  
+void status_binstr_make(LmnBinStr bs)
+{
+  runtime_status.encode_space += lmn_binstr_space(bs);
+  if (runtime_status.encode_space >
+      runtime_status.peak_encode_space)
+    runtime_status.peak_encode_space = runtime_status.encode_space;
+}
+
+void status_binstr_free(LmnBinStr bs)
+{
+  runtime_status.encode_space -= lmn_binstr_space(bs);
 }
 
 void output_runtime_status(FILE *f)
@@ -387,55 +443,16 @@ void output_runtime_status(FILE *f)
 
     fprintf(f, "\n== Runtime Status ==========================================\n");
     if (lmn_env.nd || lmn_env.ltl) {
+    fprintf(f, "%-30s: %10.2lf\n", "elapsed time (sec)", tmp_total_time);
       fprintf(f, "%-30s: %10lu\n", "# of states", runtime_status.state_num);
+      fprintf(f, "%-30s: %10lu\n", "# of created states", runtime_status.created_state_num);
       if (lmn_env.ltl_all){
         fprintf(f, "%-30s: %10lu\n", "# of counter examples", runtime_status.counter_example_num);
       }
-      fprintf(f, "%-30s: %10lu\n", "# of created states", runtime_status.created_state_num);
-    }
-    fprintf(f, "%-30s: %10.2lf\n", "elapsed time (sec)", tmp_total_time);
-    fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
-    fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
-           runtime_status.peak_membrane_num);
-    fprintf(f, "%-30s: %10lu\n", "peak # of rules", runtime_status.peak_rule_num);
-    fprintf(f, "%-30s: %10lu\n", "peak atom space (Bytes)",
-           runtime_status.peak_atom_space);
-    fprintf(f, "%-30s: %10lu\n", "peak membrane space (Bytes)",
-           runtime_status.peak_membrane_space);
-    fprintf(f, "%-30s: %10lu\n", "peak hash table space (Bytes)",
-           runtime_status.peak_hashtbl_space);
-    fprintf(f, "%-30s: %10lu\n", "membrane encode space (Bytes)",
-           runtime_status.encode_space);
-    fprintf(f, "%-30s: %10lu\n", "avg. encode len (Bytes)",
-           runtime_status.encode_len_average);
-    fprintf(f, "%-30s: %10lu\n", "rough peak state space (Bytes)",
-           runtime_status.peak_total_state_space + runtime_status.encode_space);
-
-    if (lmn_env.nd || lmn_env.ltl) {
-      fprintf(f, "%-30s: %10lu\n", "# of mhash calls",
-              runtime_status.mhash_call_num);
-      fprintf(f, "%-30s: %10.2lf\n", "total hash time (sec)",
-              runtime_status.total_state_hash_time);
-      fprintf(f, "%-30s: %10lu\n", "# of mem_equals calls",
-              runtime_status.mem_equals_num);
-      fprintf(f, "%-30s: %10.2lf\n", "total mem_equals time (sec)",
-              runtime_status.total_mem_equals_time);
-      fprintf(f, "%-30s: %10lu\n", "# of mem_enc_eq calls",
-              runtime_status.mem_enc_eq_num);
-      fprintf(f, "%-30s: %10.2lf\n", "total mem_enc_eq time (sec)",
-              runtime_status.total_mem_enc_eq_time);
-      fprintf(f, "%-30s: %10lu\n", "# of mem_dump calls",
-              runtime_status.mem_dump_num);
-      fprintf(f, "%-30s: %10.2lf\n", "total mem_dum time (sec)",
-              runtime_status.total_mem_dump_time);
-      fprintf(f, "%-30s: %10lu\n", "# of mem_encode calls",
-              runtime_status.mem_encode_num);
-      fprintf(f, "%-30s: %10.2lf\n", "total mem_encode time (sec)",
-              runtime_status.total_mem_encode_time);
     }
     fprintf(f, "============================================================\n");
 
-    if (lmn_env.profile_level >= 1) {
+    if (lmn_env.profile_level >= 2) {
       fprintf(f, "\n== More Status =============================================\n");
       fprintf(f, "%-30s: %10lu\n", "# of rule trial",
               runtime_status.total_rule_trial_num + runtime_status.total_rule_backtrack_num);
@@ -444,7 +461,20 @@ void output_runtime_status(FILE *f)
       fprintf(f, "%-30s: %10lu\n", "# of backtrack",
               runtime_status.total_rule_backtrack_num);
 
+      fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
+      fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
+              runtime_status.peak_membrane_num);
+      fprintf(f, "%-30s: %10lu\n", "peak # of rules", runtime_status.peak_rule_num);
+      fprintf(f, "%-30s: %10lu\n", "peak atom space (Bytes)",
+              runtime_status.peak_atom_space);
+      fprintf(f, "%-30s: %10lu\n", "peak membrane space (Bytes)",
+              runtime_status.peak_membrane_space + runtime_status.peak_hashtbl_space);
+      fprintf(f, "%-30s: %10lu\n", "peak binstr space (Bytes)",
+              runtime_status.peak_encode_space);
       fprintf(f,   "============================================================\n");
+
+      
+      /* ND */
 
       if (lmn_env.nd || lmn_env.ltl) {
         struct {
@@ -463,39 +493,50 @@ void output_runtime_status(FILE *f)
         int i;
         double total_time = 0.0;
 
-        fprintf(f, "\n=== ND Profile of Time ============================\n");
-        fprintf(f, "%-24s:%10s%8s%8s\n", "Time (sec)", "calls", "total", "(%)");
-        printf("---------------------------------------------------\n");
+        fprintf(f, "\n=== ND Profile ====================================\n");
+
+/*         fprintf(f, "\n---------------------------------------------------\n"); */
+        fprintf(f, "\n-- Time (sec) ---------------------------------------\n");
+/*         fprintf(f, "%-24s:%10s%8s%8s\n", "Time (sec)", "calls", "total", "(%)"); */
+/*         fprintf(f, "%-24s:%10s%8s%8s\n", "", "calls", "total", "(%)"); */
+/*         fprintf(f, "---------------------------------------------------\n"); */
+        fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
         for (i = 0; i < sizeof(v)/sizeof(v[0]); i++) {
           total_time += v[i].time;
-          fprintf(f, "%-24s:%10lu%8.2lf%8.1lf\n",
+          fprintf(f, "%-24s:%10lu%10.2lf%8.1lf\n",
                   v[i].name,
                   v[i].calls,
                   v[i].time,
                   100.0 * v[i].time / tmp_nd_total_time);
         }
+        fprintf(f, "-----------------------------------------------------\n");
+       fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "TOTAL", "", total_time, 100*total_time / tmp_nd_total_time);
+        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "ND elapsed time (sec)", "", tmp_nd_total_time, 100.0);
+        fprintf(f, "-----------------------------------------------------\n");
+        fprintf(f, "\n");
+
+        fprintf(f, "-- Space ------------------------------------------\n");
+        fprintf(f, "%-24s:%10lu\n", "# of states", runtime_status.state_num);
+        fprintf(f, "%-24s:%10.2lf%4s\n", "rough peak state space",
+                (runtime_status.peak_total_state_space) / 1024.0 / 1024.0, "MB");
+        fprintf(f, "%-24s:%10.2lf%4s\n", "final state space", runtime_status.final_state_space_space / 1024.0 / 1024.0, "MB");
+        if (runtime_status.state_num > 0)
+          fprintf(f, "%-24s:%10.1lu%4s\n", "avg. space per state", runtime_status.final_state_space_space / runtime_status.state_num, "B");
+        fprintf(f, "%-24s:%10lu%4s\n", "avg. encode len",
+                runtime_status.encode_len_average, "B");
+        fprintf(f, "%-24s:%10lu\n", "max stack size", runtime_status.nd_max_stack_size);
         fprintf(f, "---------------------------------------------------\n");
-        fprintf(f, "%-24s:%10s%8.2lf%8.1lf\n", "TOTAL", "", total_time, 100*total_time / tmp_nd_total_time);
-        fprintf(f, "%-24s:%10s%8.2lf%8.1lf\n", "ND elapsed time (sec)", "", tmp_nd_total_time, 100.0);
+        fprintf(f, "\n");
+        output_hash_conflict(f);
+
         fprintf(f, "===================================================\n");
       }
 
 
 
-      if (lmn_env.profile_level >= 2) {
+      if (lmn_env.profile_level >= 3) {
         fprintf(f, "\n== Detail: Rule Status =====================================\n");
         lmn_rule_show_detail(f);
-      }
-      if(lmn_env.nd || lmn_env.ltl){
-        fprintf(f, "\n== Time Rate ===============================================\n");
-        fprintf(f, "%-30s: %10.2lf(100%%)\n", "elapse time (sec)", tmp_total_time);
-        fprintf(f, "%-30s: %10.1lf%%\n", "total hash time",
-                (runtime_status.total_state_hash_time / tmp_total_time)*100);
-        fprintf(f, "%-30s: %10.1lf%%\n", "total mem_equals time",
-                (runtime_status.total_mem_equals_time / tmp_total_time)*100);
-        fprintf(f, "%-30s: %10.1lf%%\n", "total expand time",
-                (runtime_status.total_expand_time     / tmp_total_time)*100);
-        fprintf(f, "============================================================\n");
       }
     }
 
@@ -508,9 +549,9 @@ void output_runtime_status(FILE *f)
     fprintf(f, "%lu, ", runtime_status.peak_atom_space);
     fprintf(f, "%lu, ", runtime_status.peak_membrane_space);
     fprintf(f, "%lu, ", runtime_status.peak_hashtbl_space);
-    fprintf(f, "%lu, ", runtime_status.encode_space);
+    fprintf(f, "%lu, ", runtime_status.final_encode_space);
     fprintf(f, "%lu, ", runtime_status.encode_len_average);
-    fprintf(f, "%lu, ", runtime_status.peak_total_state_space + runtime_status.encode_space);
+    fprintf(f, "%lu, ", runtime_status.peak_total_state_space + runtime_status.final_encode_space);
     fprintf(f, "%lu, ", runtime_status.mhash_call_num);
     fprintf(f, "%1.2lf, ", runtime_status.total_state_hash_time);
     fprintf(f, "%lu, ", runtime_status.mem_equals_num);
@@ -521,6 +562,14 @@ void output_runtime_status(FILE *f)
     fprintf(f, "%1.2lf, ", runtime_status.total_commit_time);
     fprintf(f, "%1.2lf, ", runtime_status.total_expand_time - runtime_status.total_commit_time);
   }
+}
+
+void status_state_space(StateSpace states)
+{
+  runtime_status.state_num = state_space_num(states);
+  calc_hash_conflict(states);
+  calc_encode_info(states);
+  calc_state_space_space(states);
 }
 
 static int dispersal_f(st_data_t key, st_data_t s_, st_data_t tbl_)
@@ -557,7 +606,7 @@ static int accum_f(st_data_t hash_value, st_data_t num, st_data_t tbl_)
   return ST_CONTINUE;
 }
 
-void calc_hash_conflict(StateSpace states)
+static void calc_hash_conflict(StateSpace states)
 {
   st_table_t hash_to_values;
 
@@ -577,24 +626,23 @@ static int dispersal_print_f(st_data_t hash_, st_data_t n_, st_data_t f_)
   int n = (int)n_;
   FILE *f = (FILE*)f_;
 
-  fprintf(f, "%9d %6d\n", hash, n);
+  fprintf(f, "%9d%9d\n", hash, n);
 
   return ST_CONTINUE;
 }
 
-void output_hash_conflict(FILE *f)
+static void output_hash_conflict(FILE *f)
 {
   if (!lmn_env.nd && !lmn_env.ltl) return;
 
   if (!lmn_env.sp_verbose) {
-    fprintf(f, "\n== hash conflict ===========================================\n");
-    fprintf(f, "# of hash values : %lu\n", runtime_status.hash_num);
-    fprintf(f, "----------------\n");
-    fprintf(f, "%9s %6s\n", "conflicts", "kinds");
+    fprintf(f, "-- Hash ------------------\n");
+    fprintf(f, "%-16s:%9lu\n", "# of hash values", runtime_status.hash_num);
+    fprintf(f, "------------------\n");
+    fprintf(f, "%9s%9s\n", "conflicts", "kinds");
     st_foreach(runtime_status.hash_conflict_tbl, dispersal_print_f, (st_data_t)f);
-    fprintf(f, "----------------\n");
-    fprintf(f, "============================================================\n");
-
+    fprintf(f, "------------------\n");
+    fprintf(f, "--------------------------\n");
   } else {
     fprintf(f, "%lu, ", runtime_status.hash_num);
     fprintf(f, "%lu\n", runtime_status.state_num - runtime_status.hash_num);
@@ -608,16 +656,27 @@ static int encode_info_f(st_data_t key, st_data_t s_, st_data_t t)
   if (bs) {
     int bs_size = binstr_byte_size(bs);
 
-    runtime_status.encode_space += bs_size;
+    runtime_status.final_encode_space += lmn_binstr_space(bs);
   }
   return ST_CONTINUE;
 }
 
-void calc_encode_info(StateSpace states)
+static void calc_encode_info(StateSpace states)
 {
-  runtime_status.encode_space = 0;
+  runtime_status.final_encode_space = 0;
   st_foreach(state_space_tbl(states), encode_info_f, (st_data_t)0);
-  runtime_status.encode_len_average = runtime_status.encode_space / state_space_num(states);
+  runtime_status.encode_len_average = runtime_status.final_encode_space / state_space_num(states);
+}
+
+void calc_state_space_space(StateSpace states)
+{
+  runtime_status.final_state_space_space =
+    runtime_status.atom_space +
+    runtime_status.membrane_space +
+    runtime_status.hashtbl_space +
+    runtime_status.final_encode_space +
+    st_table_space(state_space_tbl(states)) +
+    sizeof(struct State) * state_space_num(states);
 }
 
 void status_start_rule()
@@ -641,7 +700,7 @@ void status_finish_rule(LmnRule rule, BOOL result)
   runtime_status.total_rule_trial_num     += tmp_tr;
   runtime_status.total_rule_backtrack_num += tmp_ba;
   runtime_status.total_react_rule_time += (clock() - runtime_status.tmp_react_rule_start)/(double)CLOCKS_PER_SEC;
-  if(lmn_env.profile_level >= 2) {
+  if(lmn_env.profile_level >= 3) {
     lmn_rule_profile(rule, tmp_ap, tmp_tr, tmp_ba);
   }
 }
@@ -687,9 +746,3 @@ void status_count_counterexample()
 {
   runtime_status.counter_example_num++;
 }
-
-void status_set_state_num(unsigned long n)
-{
-  runtime_status.state_num = n;
-}
-

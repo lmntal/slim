@@ -48,7 +48,6 @@ void mem_isom_finalize(void);
 void set_functor_priority(LmnFunctor f, int priority);
 
 LmnBinStr lmn_mem_encode(LmnMembrane *mem);
-void lmn_binstr_free(LmnBinStr p);
 int binstr_comp(const LmnBinStr a, const LmnBinStr b);
 unsigned long binstr_hash(const LmnBinStr a);
 int binstr_byte_size(LmnBinStr p);
@@ -57,8 +56,9 @@ LmnMembrane *lmn_binstr_decode(const LmnBinStr bs);
 
 BOOL lmn_mem_equals_enc(LmnBinStr bs, LmnMembrane *mem);
 
+void lmn_binstr_free(LmnBinStr p);
 void lmn_binstr_dump(const LmnBinStr bs);
-
+unsigned long lmn_binstr_space(struct LmnBinStr *bs);
 LmnBinStr lmn_mem_to_binstr(LmnMembrane *mem);
 
 #endif /* LMN_MEMBRANE_H */
