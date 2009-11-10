@@ -1223,6 +1223,10 @@ LmnMembrane *lmn_binstr_decode(const LmnBinStr bs)
   void **log;
   int nvisit;
   
+#ifdef PROFILE
+  status_start_mem_decode_calc();
+#endif
+
   log = LMN_NALLOC(void *, bs->len * TAG_IN_BYTE);
 
   groot = lmn_mem_make();
@@ -1230,6 +1234,11 @@ LmnMembrane *lmn_binstr_decode(const LmnBinStr bs)
   nvisit = VISITLOG_INIT_N;
   binstr_decode_cell(bs, 0, log, &nvisit, groot, NULL, 0);
   LMN_FREE(log);
+
+  
+#ifdef PROFILE
+  status_finish_mem_decode_calc();
+#endif
 
   return groot;
 }

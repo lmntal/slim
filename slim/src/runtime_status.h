@@ -67,6 +67,8 @@ void status_start_mem_dump_calc(void);
 void status_finish_mem_dump_calc(void);
 void status_start_mem_encode_calc(void);
 void status_finish_mem_encode_calc(void);
+void status_start_mem_decode_calc(void);
+void status_finish_mem_decode_calc(void);
 void output_runtime_status(FILE *f);
 void status_start_running(void);
 void status_finish_running(void);

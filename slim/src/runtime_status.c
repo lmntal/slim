@@ -97,6 +97,10 @@ struct RuntimeStatus {
   double total_mem_dump_time;      /* total time of mem encode */
   clock_t tmp_mem_dump_start;
 
+  unsigned long mem_decode_num;      /* # of mem decode call */
+  double total_mem_decode_time;      /* total time of mem decode */
+  clock_t tmp_mem_decode_start;
+
   time_t time1, time2;               /* clock()のオーバーフロー時に使う */
   double total_expand_time;         /* 状態展開時間 */
   unsigned long total_expand_num;
@@ -162,6 +166,8 @@ void runtime_status_init()
   runtime_status.total_state_free_time = 0.0;
   runtime_status.mem_encode_num = 0;
   runtime_status.total_mem_encode_time = 0.0;
+  runtime_status.mem_decode_num = 0;
+  runtime_status.total_mem_decode_time = 0.0;
 
   runtime_status.run_nd                   = FALSE;
   runtime_status.total_expand_time        = 0.0;
@@ -383,6 +389,18 @@ void status_finish_mem_encode_calc()
     (clock() - runtime_status.tmp_mem_encode_start)/(double)CLOCKS_PER_SEC;
 }
 
+void status_start_mem_decode_calc()
+{
+  runtime_status.mem_decode_num++;
+  runtime_status.tmp_mem_decode_start =  clock();
+}
+
+void status_finish_mem_decode_calc()
+{
+  runtime_status.total_mem_decode_time +=
+    (clock() - runtime_status.tmp_mem_decode_start)/(double)CLOCKS_PER_SEC;
+}
+
 void status_create_new_state()
 {
   runtime_status.created_state_num++;
@@ -480,6 +498,7 @@ void output_runtime_status(FILE *f)
                   {"mem equals",           runtime_status.mem_enc_eq_num, runtime_status.total_mem_enc_eq_time},
                   {"mem id",               runtime_status.mem_encode_num, runtime_status.total_mem_encode_time},
                   {"mem dump",             runtime_status.mem_dump_num, runtime_status.total_mem_dump_time},
+                  {"mem decode",           runtime_status.mem_decode_num, runtime_status.total_mem_decode_time},
                   {"mem hash",             runtime_status.mhash_call_num, runtime_status.total_state_hash_time},
                   {"state free",           runtime_status.state_free_num, runtime_status.total_state_free_time},
         };
@@ -488,11 +507,7 @@ void output_runtime_status(FILE *f)
 
         fprintf(f, "\n=== ND Profile ====================================\n");
 
-/*         fprintf(f, "\n---------------------------------------------------\n"); */
         fprintf(f, "\n-- Time (sec) ---------------------------------------\n");
-/*         fprintf(f, "%-24s:%10s%8s%8s\n", "Time (sec)", "calls", "total", "(%)"); */
-/*         fprintf(f, "%-24s:%10s%8s%8s\n", "", "calls", "total", "(%)"); */
-/*         fprintf(f, "---------------------------------------------------\n"); */
         fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
         for (i = 0; i < sizeof(v)/sizeof(v[0]); i++) {
           total_time += v[i].time;
@@ -502,9 +517,10 @@ void output_runtime_status(FILE *f)
                   v[i].time,
                   100.0 * v[i].time / tmp_nd_total_time);
         }
+        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "other", "", tmp_nd_total_time - total_time,
+                (double)(tmp_nd_total_time - total_time)/ total_time * 100.0);
         fprintf(f, "-----------------------------------------------------\n");
-       fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "TOTAL", "", total_time, 100*total_time / tmp_nd_total_time);
-        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "ND elapsed time (sec)", "", tmp_nd_total_time, 100.0);
+        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "total nd time (sec)", "", tmp_nd_total_time, 100.0);
         fprintf(f, "-----------------------------------------------------\n");
         fprintf(f, "\n");
 
