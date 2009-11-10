@@ -56,6 +56,10 @@
 #include "mc.h"
 #include "visitlog.h"
 
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GRID(x) translate global ruleset id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
@@ -140,9 +144,7 @@ extern unsigned int wt_size;
     struct Vector *v;                           \
     v = &((LmnMembrane *)wt[srcmemi])->rulesets;        \
     for (i = 0; i< v->num; i++) {                       \
-      if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {        \
-        lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], lmn_ruleset_copy((LmnRuleSet)vec_get(v, i))); \
-      }                                                                 \
+      lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], lmn_ruleset_copy((LmnRuleSet)vec_get(v, i))); \
     }                                                                   \
   }while(0)
 

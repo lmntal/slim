@@ -50,8 +50,18 @@
 #include "so.h"
 #include "mc.h"
 
+#ifdef PROFILE
+#include "runtime_status.h"
+#endif
+
 /* just for debug ! */
 static FILE *OUT;
+
+static lmn_interned_str translating_rule_name = 0;
+void set_translating_rule_name(lmn_interned_str rule_name)
+{
+  translating_rule_name = rule_name;
+}
 
 void tr_print_list(int indent, int argi, int list_num, const LmnWord *list)
 {
@@ -371,18 +381,22 @@ static void translate_ruleset(LmnRuleSet ruleset, const char *header)
   int i;
   int buf_len = strlen(header) + 50; /* 適当にこれだけあれば足りるはず */
   char *buf = lmn_malloc(buf_len + 1);
+  int rules_count = lmn_ruleset_rule_num(ruleset);
+  lmn_interned_str *rule_names = LMN_CALLOC(lmn_interned_str, rules_count);
   
   for(i=0; i<lmn_ruleset_rule_num(ruleset); ++i){
     snprintf(buf, buf_len, "%s_%d", header, i); /* ルールのシグネチャ */
     translate_rule(lmn_ruleset_get_rule(ruleset, i), buf);
+    rule_names[i] = translating_rule_name;
   }
-  fprintf(OUT, "LmnTranslated %s_rules[%d] = {", header, lmn_ruleset_rule_num(ruleset));
+  fprintf(OUT, "struct trans_rule %s_rules[%d] = {", header, lmn_ruleset_rule_num(ruleset));
   for(i=0; i<lmn_ruleset_rule_num(ruleset); ++i){
     if(i != 0) fprintf(OUT, ", ");
-    fprintf(OUT, "%s_%d_0", header, i); /* 各ルールの先頭関数を配列に */
+    fprintf(OUT, "{%d, %s_%d_0}", rule_names[i], header, i); /* 各ルールの名前と先頭関数を配列に */
   }
   fprintf(OUT, "};\n\n");
 
+  LMN_FREE(rule_names);
   lmn_free(buf);
 }
 

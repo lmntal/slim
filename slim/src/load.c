@@ -636,19 +636,22 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   /* システムルールセット読み込み */
   ruleset = maindata->ruleset_table[1];
   for(i=0; i<ruleset.size; ++i){
-    LmnRule r = lmn_rule_make_translated(ruleset.rules[i], 0 /* TODO: RULENAME */);
+    LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
+                                         maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_system_rule(r);
   }
   /* ルールセット2番はinitial ruleset */
   ruleset = maindata->ruleset_table[2];
   for(i=0; i<ruleset.size; ++i){
-    LmnRule r = lmn_rule_make_translated(ruleset.rules[i], 0 /* TODO: RULENAME */);
+    LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
+                                         maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_initial_rule(r);
   }
   /* ルールセット3番はinitial system ruleset */
   ruleset = maindata->ruleset_table[3];
   for(i=0; i<ruleset.size; ++i){
-    LmnRule r = lmn_rule_make_translated(ruleset.rules[i], 0 /* TODO: RULENAME */);
+    LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
+                                         maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_initial_system_rule(r);
   }
   /* ルールセットを読み込み+変換テーブルを設定 */
@@ -660,7 +663,8 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
     lmn_set_ruleset(rs, gid);
 
     for(j=0; j<tr.size; ++j){
-      LmnRule r = lmn_rule_make_translated(tr.rules[j], 0 /* TODO: RULENAME */);
+      LmnRule r = lmn_rule_make_translated(tr.rules[j].function,
+                                           maindata->symbol_exchange[tr.rules[j].name]);
       lmn_ruleset_put(rs, r);
     }
 

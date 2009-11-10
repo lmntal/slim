@@ -70,10 +70,16 @@
     { int i; for(i=0; i<X##_num; ++i){ READ_VAL(LmnInstrVar, I, X[i]); } } \
   }while(0)
 
+struct trans_rule
+{
+  lmn_interned_str name;
+  LmnTranslated function;
+};
+
 struct trans_ruleset
 {
   int size;
-  LmnTranslated *rules;
+  struct trans_rule *rules;
 };
 
 struct trans_module
@@ -139,6 +145,9 @@ void print_indent(int n);
 
 /* 必要なサイズ分のバッファを勝手にmallocしてsprintf free必須 */
 char *automalloc_sprintf(const char *format, ...);
+
+/* 変換途中で見つけたcommitからルール名を拾う */
+void set_translating_rule_name(lmn_interned_str rule_name);
 
 /* 0番はなし,1番はsystemruleset,2番はinitialruleset,3番はinitialsystemruleset,普通のルールセットは4番から */
 #define FIRST_ID_OF_NORMAL_RULESET 4

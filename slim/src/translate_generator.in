@@ -148,6 +148,9 @@ BOOL interpret_generated(struct ReactCxt *rc,
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
       instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
       free(buf_always);
+
+      /* 変換中についでにルール名も設定 */
+      set_translating_rule_name(targ0);
     }
 #__format_t
   label_always_$a:
@@ -179,9 +182,21 @@ BOOL interpret_generated(struct ReactCxt *rc,
           if(LMN_SATOM_GET_FUNCTOR(atom) != LMN_RESUME_FUNCTOR){
             wt[$0] = (LmnWord)atom;
 #__echo_t
-            instr = translate_instructions(instr, jump_points, header, successcode, "continue", indent+1);
+            {
+              char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+              instr = translate_instructions(instr, jump_points, header, successcode, buf_fail, indent+1);
+              free(buf_fail);
+            }
 #__format
           }
+#__format_t
+        label_fail_$a:
+ #ifdef PROFILE
+          if (lmn_env.profile_level >= 2) {
+            status_backtrack_counter();
+          }
+ #endif
+#__format
         }
       }
     }
@@ -203,9 +218,21 @@ BOOL interpret_generated(struct ReactCxt *rc,
       if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
       if (mp->name == TR_GSID($3)){
 #__echo_t
-        instr = translate_instructions(instr, jump_points, header, successcode, "continue", indent+1);
+        {
+          char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+          instr = translate_instructions(instr, jump_points, header, successcode, buf_fail, indent+1);
+          free(buf_fail);
+        }
 #__format
       }
+#__format_t
+    label_fail_$a:
+ #ifdef PROFILE
+      if (lmn_env.profile_level >= 2) {
+        status_backtrack_counter();
+      }
+ #endif
+#__format
     }
     $f;
   }
