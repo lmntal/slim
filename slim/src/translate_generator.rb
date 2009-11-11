@@ -157,6 +157,11 @@ def case_open(op, arg)
       end
     end
   end
+  
+  # debug: 各中間命令名を実行時に出力
+  #if $translator_generate
+  #  print '  printf(" printf(\"start instr : ', op, '\\\\n\");\n");', "\n"
+  #end
 end
 
 def case_close(arg)

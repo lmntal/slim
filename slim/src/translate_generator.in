@@ -142,7 +142,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
     LmnMembrane *ptmp_global_root;
     LmnWord *pwt_temp;
     LmnByte *pat_temp;
-    tr_instr_commit_ready(rc, NULL, $0, $1, &ptmp_global_root, &pwt_temp, &pat_temp);
+    tr_instr_commit_ready(rc, NULL, TR_GSID($0), $1, &ptmp_global_root, &pwt_temp, &pat_temp);
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -154,7 +154,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
     }
 #__format_t
   label_always_$a:
-    if(tr_instr_commit_finish(rc, NULL, $0, $1, &ptmp_global_root, &pwt_temp, &pat_temp))
+    if(tr_instr_commit_finish(rc, NULL, TR_GSID($0), $1, &ptmp_global_root, &pwt_temp, &pat_temp))
       $s;
     else
       $f;
@@ -191,6 +191,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
           }
 #__format_t
         label_fail_$a:
+          ; /* PROFILEでない場合に必要 */
  #ifdef PROFILE
           if (lmn_env.profile_level >= 2) {
             status_backtrack_counter();
@@ -208,7 +209,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
   wt[$0] = (LmnWord)LMN_PROXY_GET_MEM(wt[$1]);
   if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
-  if(((LmnMembrane*)wt[$0])->name != $2) $f;
+  if(((LmnMembrane*)wt[$0])->name != TR_GSID($2)) $f;
 
 #anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
   {
@@ -227,6 +228,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
       }
 #__format_t
     label_fail_$a:
+      ; /* PROFILEでない場合に必要 */
  #ifdef PROFILE
       if (lmn_env.profile_level >= 2) {
         status_backtrack_counter();
