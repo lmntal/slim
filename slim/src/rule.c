@@ -78,7 +78,6 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->translated = translated;
   rule->name = name;                  /* ルール名 */
   rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
-  rule->history_tbl = st_init_numtable();
   rule->pre_id = 0;
   rule->has_uniq = FALSE;
   if(lmn_env.profile_level >= 3) {
@@ -125,10 +124,11 @@ LmnRule lmn_rule_copy(LmnRule rule)
     inst_seq = NULL;
   }
   LmnRule new_rule = make_rule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
-  st_free_table(new_rule->history_tbl);
-  new_rule->history_tbl = st_copy(rule->history_tbl);
-  new_rule->pre_id = rule->pre_id;
-  new_rule->has_uniq = rule->has_uniq;
+  if (rule->has_uniq) {
+    new_rule->history_tbl = st_copy(rule->history_tbl);
+    new_rule->pre_id = rule->pre_id;
+    new_rule->has_uniq = rule->has_uniq;
+  }
   return new_rule;
 }
 
@@ -136,7 +136,7 @@ LmnRule lmn_rule_copy(LmnRule rule)
 void lmn_rule_free(LmnRule rule)
 {
   LMN_FREE(rule->inst_seq);
-  st_free_table(rule->history_tbl);
+  if (rule->history_tbl) st_free_table(rule->history_tbl);
   LMN_FREE(rule);
 
 #ifdef PROFILE
@@ -187,7 +187,7 @@ LmnRule dummy_rule(void)
   return &rule;
 }
 
-struct st_table *lmn_rule_get_history(LmnRule rule)
+struct st_table *lmn_rule_get_history_tbl(LmnRule rule)
 {
   return rule->history_tbl;
 }
@@ -207,9 +207,10 @@ BOOL lmn_rule_has_uniq(LmnRule rule)
   return rule->has_uniq;
 }
 
-void lmn_rule_set_has_uniq(LmnRule rule, BOOL hasuniq)
+void lmn_rule_init_uniq_rule(LmnRule rule)
 {
-  rule->has_uniq = hasuniq;
+  rule->history_tbl = st_init_numtable();
+  rule->has_uniq = TRUE;
 }
 
 /*----------------------------------------------------------------------
@@ -223,7 +224,7 @@ struct LmnRuleSet {
   LmnRule *rules;       /* ルールのリスト */
   /* 非決定実行時にルールセットをatomicに実行するかのフラグ */
   int atomic;
-  BOOL iam_copy;
+  BOOL is_copy;
   BOOL valid;
   BOOL has_uniqrule;
 };
@@ -247,7 +248,7 @@ LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size)
   ruleset->cap = init_size;
   ruleset->atomic = FALSE;
   ruleset->valid = TRUE;
-  ruleset->iam_copy = FALSE;
+  ruleset->is_copy = FALSE;
   ruleset->has_uniqrule = FALSE;
 
   return ruleset;
@@ -367,7 +368,7 @@ LmnRuleSet lmn_ruleset_from_id(int id)
 
 BOOL lmn_ruleset_is_copy(LmnRuleSet ruleset)
 {
-  return ruleset->iam_copy;
+  return ruleset->is_copy;
 }
 
 BOOL lmn_ruleset_has_uniqrule(LmnRuleSet ruleset)
@@ -385,7 +386,7 @@ LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
 {
   LmnRuleSet new_ruleset = lmn_ruleset_make(ruleset->id, 16);
   unsigned int i = 0;
-  new_ruleset->iam_copy = TRUE;
+  new_ruleset->is_copy = TRUE;
   new_ruleset->atomic = ruleset->atomic;
   new_ruleset->valid = ruleset->valid;
 
@@ -408,7 +409,7 @@ BOOL ruleset_equals(LmnRuleSet set1, LmnRuleSet set2)
     LmnRule rule1 = lmn_ruleset_get_rule(set1, i),
             rule2 = lmn_ruleset_get_rule(set2, i);
     if (rule1 != NULL && rule2 != NULL) {
-      if (!st_equals(lmn_rule_get_history(rule1), lmn_rule_get_history(rule2))){
+      if (!st_equals(lmn_rule_get_history_tbl(rule1), lmn_rule_get_history_tbl(rule2))){
         break;
       }
     }

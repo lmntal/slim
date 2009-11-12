@@ -983,10 +983,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         lmn_react_systemruleset(rc, (LmnMembrane *)wt[0]);
         nd_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
-        if (!RC_GET_MODE(rc, REACT_MEM_ORIENTED) &&
-            lmn_rule_get_history(rule) != NULL   &&
-            lmn_rule_get_pre_id(rule) != 0)
-              st_delete(lmn_rule_get_history(rule), lmn_rule_get_pre_id(rule), 0);
+        if (lmn_rule_has_uniq(rule) && lmn_rule_get_pre_id(rule) != 0)
+              st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule), 0);
 
         /* 変数配列および属性配列を元に戻す（いらないかも？） */
         SWAP(LmnWord *, wtcp, wt);
@@ -1710,10 +1708,10 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       lmn_port_free(port);
 
       /* 履歴表と照合 */
-      if (st_is_member(lmn_rule_get_history(rule), (st_data_t)id)) return FALSE;
+      if (st_is_member(lmn_rule_get_history_tbl(rule), (st_data_t)id)) return FALSE;
 
       /* 履歴に挿入 */
-      st_insert(lmn_rule_get_history(rule), (st_data_t)id, 0);
+      st_insert(lmn_rule_get_history_tbl(rule), (st_data_t)id, 0);
       lmn_rule_set_pre_id(rule, id);
 
       break;
