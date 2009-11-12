@@ -129,7 +129,6 @@ struct RuntimeStatus {
   unsigned long final_state_space_space;
 } runtime_status;
 
-static void runtime_status_update(void);
 static void output_hash_conflict(FILE *f);
 static void calc_hash_conflict(StateSpace states);
 static void calc_encode_info(StateSpace states);
@@ -233,8 +232,6 @@ void status_add_atom_space(unsigned long size)
   runtime_status.atom_num++;
   if (runtime_status.atom_num > runtime_status.peak_atom_num)
     runtime_status.peak_atom_num = runtime_status.atom_num;
-
-  runtime_status_update();
 }
 
 void status_remove_atom_space(unsigned long size)
@@ -253,8 +250,6 @@ void status_add_membrane_space(unsigned long size)
   runtime_status.membrane_space += size;
   if (runtime_status.membrane_space > runtime_status.peak_membrane_space)
     runtime_status.peak_membrane_space = runtime_status.membrane_space;
-
-  runtime_status_update();
 }
 
 void status_remove_membrane_space(unsigned long size)
@@ -273,8 +268,6 @@ void status_add_rule_space(unsigned long size)
   runtime_status.rule_num++;
   if (runtime_status.rule_num > runtime_status.peak_rule_num)
     runtime_status.peak_rule_num = runtime_status.rule_num;
-
-//  runtime_status_update();
 }
 
 void status_remove_rule_space(unsigned long size)
@@ -288,8 +281,6 @@ void status_add_hashtbl_space(unsigned long size)
   runtime_status.hashtbl_space += size;
   if (runtime_status.hashtbl_space > runtime_status.peak_hashtbl_space)
     runtime_status.peak_hashtbl_space = runtime_status.hashtbl_space;
-
-  runtime_status_update();
 }
 
 void status_remove_hashtbl_space(unsigned long size)
@@ -297,12 +288,13 @@ void status_remove_hashtbl_space(unsigned long size)
   runtime_status.hashtbl_space -= size;
 }
 
-static void runtime_status_update()
+void runtime_status_update(StateSpace states)
 {
   runtime_status.total_state_space =
     runtime_status.atom_space
     + runtime_status.membrane_space
     + runtime_status.hashtbl_space
+    + st_table_space(state_space_tbl(states))
     + runtime_status.tmp_state_num * sizeof(struct State)
     + runtime_status.peak_encode_space;
 

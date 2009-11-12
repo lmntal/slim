@@ -108,6 +108,7 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
 
 #ifdef PROFILE
   if (lmn_env.profile_level>0) status_finish_expand();
+  runtime_status_update(states);
 #endif
 
   return new_states;
