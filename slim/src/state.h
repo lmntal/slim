@@ -138,10 +138,7 @@ static inline lmn_interned_str transition_rule(Transition t, int i)
 }
 static inline State *transition_next_state(Transition t) { return t->s; }
 static inline void transition_set_state(Transition t, State * s) { t->s = s; }
-static inline void transition_add_rule(Transition t, lmn_interned_str rule_name)
-{
-  vec_push(&t->rule_names, rule_name);
-}
+void transition_add_rule(Transition t, lmn_interned_str rule_name);
 
 /* flag of the first DFS (nested DFS, on-stack state) */
 #define FST_MASK                   (0x01U)

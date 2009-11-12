@@ -571,3 +571,14 @@ Transition transition_make(State *s, lmn_interned_str rule_name)
   vec_push(&t->rule_names, rule_name);
   return t;
 }
+
+void transition_add_rule(Transition t, lmn_interned_str rule_name)
+{
+  int i;
+
+  /* ルール名の重複検査 */
+  for (i = 0; i < vec_num(&t->rule_names); i++) {
+    if (vec_get(&t->rule_names, i) == rule_name) return;
+  }
+  vec_push(&t->rule_names, rule_name);
+}
