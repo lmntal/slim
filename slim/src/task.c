@@ -334,18 +334,20 @@ static BOOL react_ruleset_atomic_nd(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ru
     set_all_ruleset_validation(RC_GROOT_MEM(rc), TRUE);
     lmn_ruleset_set_atomic(ruleset, TRUE);
 
-    for (i = 0; i < vec_num(end_states); i++) {
-      LmnMembrane *m = state_copied_mem((State *)vec_get(end_states, i));
-      /* 生成された状態はすべての膜がstableになっているので、activateする */
-      activate_ancestors(m);
-      nd_react_cxt_add_expanded(rc,
-                                m,
-                                dummy_rule());
-      state_space_remove(states, (State *)vec_get(end_states, i));
-      state_free((State *)vec_get(end_states, i));
+    
+    if (state_space_num(states) > 1) { /* 状態が初期状態以外に展開されたら */
+      for (i = 0; i < vec_num(end_states); i++) {
+        LmnMembrane *m = state_copied_mem((State *)vec_get(end_states, i));
+        /* 生成された状態はすべての膜がstableになっているので、activateする */
+        activate_ancestors(m);
+        set_all_ruleset_validation(m, TRUE);
+        nd_react_cxt_add_expanded(rc, m, dummy_rule());
+        state_space_remove(states, (State *)vec_get(end_states, i));
+        state_free((State *)vec_get(end_states, i));
+      }
     }
 
-    ok = end_states > 0;
+    ok = state_space_num(states) > 1;
     state_space_free(states);
   } else { /* 通常実行時 */
     BOOL reacted_once = FALSE;
