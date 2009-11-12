@@ -284,18 +284,19 @@ static void gen_successors(const StateSpace states, State *s)
   expanded = nd_gen_successors(s, DEFAULT_STATE_ID);
   expanded_num = vec_num(expanded);
   for (i = 0; i < expanded_num; i++) {
+    Transition t = (Transition)vec_get(expanded, i);
     vec_push(succ_strans,
-             (LmnWord)strans_make((State *)vec_get(expanded, i),
+             (LmnWord)strans_make(transition_next_state(t),
                                   next_strans_id++,
-                                  state_rule((State *)vec_get(expanded, i))));
+                                  state_rule(transition_next_state(t))));
   }
 
   for (i = 0; i < expanded_num; i++) {
-    expand_States_POR((State *)vec_get(expanded, i));
+    expand_States_POR(transition_next_state((Transition)vec_get(expanded, i)));
   }
   
   while (!vec_is_empty(succ_strans)) {
-    state_succ_add(s, (State *)vec_pop(succ_strans));
+    state_succ_add(s, (Transition)vec_pop(succ_strans));
   }
 
   set_expanded(s); /* 展開済フラグを立てる */

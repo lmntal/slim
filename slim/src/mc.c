@@ -215,7 +215,7 @@ void ltl_search1(StateSpace states, Vector *stack)
      */
     if (eval_formula(state_mem(s),
                      mc_data.propsyms,
-                     transition_get_formula(transition))) {
+                     atm_transition_get_formula(transition))) {
       /**
        * global_rootに対してシステムルール適用検査を行う．
        * システムルール適用はglobal_rootのコピーに対して行い，
@@ -226,7 +226,7 @@ void ltl_search1(StateSpace states, Vector *stack)
        * が存在するものと考えてε遷移をさせ，受理頂点に次状態が存在しない場合でも受理サイクルを形成できるようにする．
        * (c.f. "The Spin Model Checker" pp.130-131)
        */
-      Vector *new_states = mc_expand(states, s, transition_next(transition));
+      Vector *new_states = mc_expand(states, s, atm_transition_next(transition));
 
       if (state_succ_num(s) == 0) { /* stutter extension */
         State *new_s, *t;
@@ -234,17 +234,17 @@ void ltl_search1(StateSpace states, Vector *stack)
         /* 性質ルールのみが適用されている。ルール名(遷移のラベル)はどうする？ */
         /* EFFICIENCY: 状態のコピーを（mem_idやmem_dumpを使い）効率的に行える */
         new_s = state_make(lmn_mem_copy(state_mem(s)),
-                           transition_next(transition),
+                           atm_transition_next(transition),
                            dummy_rule());
         t = state_space_insert(states, new_s);
         if (t == new_s) {
           /* 状態空間に追加された */
-          state_succ_add(s, new_s);
+          state_succ_add(s, transition_make(new_s, ANONYMOUS)); /* TODO: 性質ルール名 */
           vec_push(new_states, (vec_data_t)new_s);
         } else {
           /* 状態空間に追加されなかった（等価な状態が既にあった） */
           state_free(new_s);
-          state_succ_add(s, t);
+          state_succ_add(s, transition_make(t, ANONYMOUS)); /* TODO: stutter rule name */
         }
       }
 

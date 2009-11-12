@@ -80,26 +80,35 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
   new_states = vec_make(16);
 
   for (i = 0; i < expanded_num; i++) {
+    Transition t;
+    st_data_t tmp;
     State *src_succ;
     State *succ;
 
-    src_succ = (State *)vec_get(expanded, i);
+    t = (Transition)vec_get(expanded, i);
+    src_succ = transition_next_state(t);
     succ = state_space_insert(states, src_succ);
 
     if (succ == src_succ) { /* succが状態空間に追加された */
       vec_push(new_states, (vec_data_t)succ);
     } else { /* src_succは追加されなかった（すでに同じ状態がある) */
       state_free(src_succ);
+      transition_set_state(t, succ);
     }
+
     /* expandedに同じ状態がなければ、サクセッサとして追加 */
-    if (st_insert(succ_tbl, (st_data_t)succ, 0) == 0) {
-      vec_push(&successors, (vec_data_t)succ);
+    if (st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp) == 0) {
+      st_add_direct(succ_tbl, (st_data_t)succ, (st_data_t)t);
+      vec_push(&successors, (vec_data_t)t);
+    } else {
+      transition_add_rule((Transition)tmp, transition_rule(t, 0));
+      transition_free(t);
     }
   }
 
   /* 状態にサクセッサを設定 */
   for (i = 0; i < vec_num(&successors); i++) {
-    state_succ_add(state, (State *)vec_get(&successors, i));
+    state_succ_add(state, (Transition)vec_get(&successors, i));
   }
 
   st_free_table(succ_tbl);
@@ -150,12 +159,13 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem, BYTE state_
   expanded = vec_make(32);
   for (i = 0; i < vec_num(expanded_roots); i++) {
     State *state;
-
+    lmn_interned_str rule_name;
+    
     state = state_make((LmnMembrane *)vec_get(expanded_roots, i),
                        state_name,
                        (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
-
-    vec_push(expanded, (LmnWord)state);
+    rule_name = lmn_rule_get_name((LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
+    vec_push(expanded, (vec_data_t)transition_make(state, rule_name));
   }
 
   return expanded;

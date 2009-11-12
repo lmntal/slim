@@ -80,9 +80,9 @@ BOOL atmstate_is_end(AutomataState s);
 
 /* transition of automata */
 
-AutomataTransition transition_make(unsigned int next, PLFormula f);
-BYTE transition_next(AutomataTransition t);
-PLFormula transition_get_formula(AutomataTransition t);
+AutomataTransition atm_transition_make(unsigned int next, PLFormula f);
+BYTE atm_transition_next(AutomataTransition t);
+PLFormula atm_transition_get_formula(AutomataTransition t);
 
 /* propositional Logic Formula */
 

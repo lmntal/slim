@@ -77,15 +77,22 @@ struct StateSpace {
  * 高階関数st_foreach(c.f. st.c)に投げて使用．
  */
 static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  unsigned int j;
+  unsigned int j, k;
   State *tmp = (State *)state_ptr;
 
   fprintf(stdout, "%lu::", (long unsigned int)tmp); /* dump src state's ID */
   for (j = 0; j < state_succ_num(tmp); j++) { /* dump dst state's IDs */
-    fprintf(stdout, "%lu", (LmnWord)state_succ_get(tmp, j));
-    if (j < vec_num(&tmp->successor)) {
+    Transition t = transition(tmp, j);
+    if (j > 0) {
       fprintf(stdout,",");
     }
+    fprintf(stdout, "%lu", (LmnWord)state_succ_get(tmp, j));
+    fprintf(stdout, "(");
+    for (k = 0; k < transition_rule_num(t); k++) {
+      if (k > 0) fprintf(stdout, ",");
+      fprintf(stdout, "%s", lmn_id_to_name(transition_rule(t, k)));
+    }
+    fprintf(stdout, ")");
   }
   fprintf(stdout, "\n");
 
@@ -333,7 +340,8 @@ State *state_make_for_nd(LmnMembrane *mem, LmnRule rule) {
  * デストラクタ
  */
 void state_free(State *s) {
-
+  int i;
+  
 #ifdef PROFILE
   status_start_state_free();
 #endif
@@ -341,6 +349,9 @@ void state_free(State *s) {
   if (s->mem) {
     lmn_mem_drop(s->mem);
     lmn_mem_free(s->mem);
+  }
+  for (i = 0; i < vec_num(&s->successor); i++) {
+    transition_free((Transition)vec_get(&s->successor, i));
   }
   vec_destroy(&s->successor);
   if (s->mem_id) lmn_binstr_free(s->mem_id);
@@ -505,8 +516,8 @@ inline void state_calc_mem_dump(State *s)
 }
 
 /* 状態にサクセッサを追加 */
-inline void state_succ_add(State *s, State *succ) {
-  vec_push(&s->successor, (vec_data_t)succ);
+inline void state_succ_add(State *s, Transition t) {
+  vec_push(&s->successor, (vec_data_t)t);
 }
 
 /* 状態のサクセッサの数を返す */
@@ -516,7 +527,12 @@ inline unsigned int state_succ_num(State *s) {
 
 /* 状態のサクセッサを取得 */
 inline State *state_succ_get(State *s, unsigned int i) {
-  return (State *)vec_get(&s->successor, i);
+  return transition_next_state((Transition)vec_get(&s->successor, i));
+}
+
+Transition transition(State *s, unsigned int i)
+{
+  return (Transition)vec_get(&s->successor, i);
 }
 
 /* 状態の膜（LmnMembrane）を復元する。*/
@@ -544,4 +560,14 @@ void dump_state_data(State *state)
   if (!state->mem)
     lmn_fatal("unexpected");
   lmn_dump_cell_stdout(state->mem); /* dump src state's global root membrane */
+}
+
+Transition transition_make(State *s, lmn_interned_str rule_name)
+{
+  struct Transition *t = LMN_MALLOC(struct Transition);
+
+  t->s = s;
+  vec_init(&t->rule_names, 4);
+  vec_push(&t->rule_names, rule_name);
+  return t;
 }

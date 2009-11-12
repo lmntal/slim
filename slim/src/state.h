@@ -87,6 +87,13 @@ struct State {
   LmnBinStr mem_dump;
 };
 
+struct Transition {
+  State *s;                          /* 遷移先状態 */
+  Vector rule_names;    
+};
+
+typedef struct Transition *Transition;
+
 /* 膜同型性判定にこの回数以上失敗すると膜のエンコードを行う */
 #define MEM_EQ_FAIL_THRESHOLD 2
 
@@ -113,12 +120,28 @@ inline void state_calc_mem_dump(State *s);
 inline void state_free_mem_dump(State *s);
 inline int state_memid_cmp(st_data_t _s1, st_data_t _s2);
 inline long state_memid_hash(State *s);
-inline void state_succ_add(State *s, State *succ);
+inline void state_succ_add(State *s, Transition t);
 inline unsigned int state_succ_num(State *s);
 inline State *state_succ_get(State *s, unsigned int i);
+Transition transition(State *s, unsigned int i);
 inline void state_restore_mem(State *s);
 inline void state_calc_mem_encode(State *s);
 inline void state_calc_mem_dump(State *s);
+
+Transition transition_make(State *s, lmn_interned_str rule_name);
+static inline void transition_free(Transition t) { LMN_FREE(t); }
+
+static inline  unsigned int transition_rule_num(Transition t) { return vec_num(&t->rule_names); }
+static inline lmn_interned_str transition_rule(Transition t, int i)
+{
+  return (lmn_interned_str)vec_get(&t->rule_names, i);
+}
+static inline State *transition_next_state(Transition t) { return t->s; }
+static inline void transition_set_state(Transition t, State * s) { t->s = s; }
+static inline void transition_add_rule(Transition t, lmn_interned_str rule_name)
+{
+  vec_push(&t->rule_names, rule_name);
+}
 
 /* flag of the first DFS (nested DFS, on-stack state) */
 #define FST_MASK                   (0x01U)
