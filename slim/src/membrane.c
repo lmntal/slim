@@ -355,7 +355,7 @@ void lmn_mem_free(LmnMembrane *mem)
         for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
           r = lmn_ruleset_get_rule(rs, j);
           /* free copied uniq rule */
-          if (lmn_rule_has_uniq(r)) lmn_rule_free(r);
+          if (lmn_rule_get_history_tbl(r)) lmn_rule_free(r);
         }
       }
 
@@ -1244,7 +1244,7 @@ BOOL ground_atoms(Vector *srcvec,
   BOOL result = TRUE;
   unsigned long count_of_ground_atoms = 0; /* ground内のアトムの個数 */
   int i;
-  
+
   /* groundはつながったグラフなので1つの根からだけたどればよい */
   {
     LinkObj l = (LinkObj)vec_get(srcvec, 0);
@@ -1256,7 +1256,7 @@ BOOL ground_atoms(Vector *srcvec,
     LmnAtom l_ap = l->ap;
     LmnLinkAttr l_pos = l->pos;
     LMN_FREE(l);
-    
+
     if(LMN_ATTR_IS_DATA(l_pos)){ /* lがデータなら行き止まり */
       if(lmn_data_atom_is_ground(l_ap, l_pos)){
         ++count_of_ground_atoms;
@@ -1327,7 +1327,7 @@ BOOL ground_atoms(Vector *srcvec,
     *atoms = NULL;
     *natoms = 0;
   }
-  
+
   return result;
 }
 
@@ -1853,15 +1853,15 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
     }
 
     /* 各rulesetが持つruleまで等しいことを確認 */
-    int n1 = vec_num(&mem1->rulesets);
-    int n2 = vec_num(&mem2->rulesets);
+    int n1 = vec_num(&mem1->rulesets),
+        n2 = vec_num(&mem2->rulesets);
 
-    // mem1 --> mem2
+    /* mem1 --> mem2 */
     for (i = 0; i < n1; i++) {
       if (!rulesets_contains(&mem2->rulesets, (LmnRuleSet)vec_get(&mem1->rulesets, i)))
         goto STEP_1_FALSE;
     }
-    // mem2 --> mem1
+    /* mem2 --> mem1 */
     for (i = 0; i < n2; i++) {
       if (!rulesets_contains(&mem1->rulesets, (LmnRuleSet)vec_get(&mem2->rulesets, i)))
         goto STEP_1_FALSE;

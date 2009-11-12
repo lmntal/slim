@@ -334,7 +334,7 @@ static BOOL react_ruleset_atomic_nd(ReactCxt rc, LmnMembrane *mem, LmnRuleSet ru
     set_all_ruleset_validation(RC_GROOT_MEM(rc), TRUE);
     lmn_ruleset_set_atomic(ruleset, TRUE);
 
-    
+
     if (state_space_num(states) > 1) { /* 状態が初期状態以外に展開されたら */
       for (i = 0; i < vec_num(end_states); i++) {
         LmnMembrane *m = state_copied_mem((State *)vec_get(end_states, i));
@@ -985,7 +985,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         lmn_react_systemruleset(rc, (LmnMembrane *)wt[0]);
         nd_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
-        if (lmn_rule_has_uniq(rule) && lmn_rule_get_pre_id(rule) != 0)
+        if (lmn_rule_get_history_tbl(rule) && lmn_rule_get_pre_id(rule) != 0)
               st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule), 0);
 
         /* 変数配列および属性配列を元に戻す（いらないかも？） */
@@ -1699,7 +1699,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         READ_VAL(LmnInstrVar, instr, n);
         srcvec = (Vector*) wt[n];
 
-        /*グラフをstr_idに取得*/
+        /* 識別子の生成 */
         lmn_dump_atom(
             port, (LmnWord)wt[vec_get(srcvec, 0)], (LmnLinkAttr)at[vec_get(srcvec, 0)]);
         port_put_raw_s(port, ":");
