@@ -56,6 +56,9 @@ static int kill_States_chains(st_data_t _k,
 
 static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a);
 static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a);
+static int set_state_to_vec(st_data_t _s, st_data_t _t, st_data_t _v);
+static Vector *sort_states(StateSpace states);
+static void print_state_transition(State *s);
 
 /*----------------------------------------------------------------------
  * State Space
@@ -70,6 +73,7 @@ struct StateSpace {
      そのハッシュ値を持つ状態は、膜のIDを計算し、以降はIDで比較を行う */
   st_table_t memid_tbl;        /* 膜のIDを計算した状態を格納（tblにも同じ状態がある） */
   HashSet memid_hashes;   /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
+  unsigned long next_id; /* 状態IDカウンタ */
 };
 
 /**
@@ -80,13 +84,13 @@ static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_da
   unsigned int j, k;
   State *tmp = (State *)state_ptr;
 
-  fprintf(stdout, "%lu::", (long unsigned int)tmp); /* dump src state's ID */
+  fprintf(stdout, "%lu::", tmp->id); /* dump src state's ID */
   for (j = 0; j < state_succ_num(tmp); j++) { /* dump dst state's IDs */
     Transition t = transition(tmp, j);
     if (j > 0) {
       fprintf(stdout,",");
     }
-    fprintf(stdout, "%lu", (LmnWord)state_succ_get(tmp, j));
+    fprintf(stdout, "%lu", state_succ_get(tmp, j)->id);
     fprintf(stdout, "(");
     for (k = 0; k < transition_rule_num(t); k++) {
       if (k > 0) fprintf(stdout, ",");
@@ -108,6 +112,7 @@ StateSpace state_space_make()
   ss->memid_tbl = st_init_table(&type_memid_statehash);
   ss->end_states = vec_make(64);
   hashset_init(&ss->memid_hashes, 128);
+  ss->next_id = 0;
   return ss;
 }
 
@@ -218,6 +223,7 @@ State *state_space_insert(StateSpace states, State *s)
       /* 等価な状態はない */
       st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s);
       st_add_direct(states->memid_tbl, (st_data_t)s, (st_data_t)s);
+      s->id = states->next_id++;
       return s;
     }
   }
@@ -228,6 +234,7 @@ State *state_space_insert(StateSpace states, State *s)
     } else {
       /* 等価な状態はない */
       st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
+      s->id = states->next_id++;
 
       if (col >= MEM_EQ_FAIL_THRESHOLD) {
         state_space_add_memid_hash(states, s->hash);
@@ -275,11 +282,61 @@ void dump_all_state_mem(StateSpace states, FILE *file)
 
 void dump_state_transition_graph(StateSpace states, FILE *file)
 {
+  Vector *v;
+  unsigned int i;
+  
   if (!lmn_env.dump) return;
+
+  v = sort_states(states);
+  
   fprintf(file, "Transitions\n");
-  fprintf(file, "init:%lu\n", (long unsigned int)state_space_init_state(states));
-  st_foreach(states->tbl, print_state_transition_graph, 0);
+  fprintf(file, "init:%lu\n", state_space_init_state(states)->id);
+  for (i = 0; i < vec_num(v); i++) {
+    print_state_transition((State *)vec_get(v, i));
+    fprintf(stdout, "\n");
+  }
   fprintf(file, "\n");
+
+  vec_free(v);
+}
+
+static Vector *sort_states(StateSpace states)
+{
+  Vector *v;
+
+  v = vec_make(state_space_num(states));
+  vec_resize(v, state_space_num(states), 0);
+  st_foreach(states->tbl, set_state_to_vec, (st_data_t)v);
+  return v;
+}
+
+static int set_state_to_vec(st_data_t _s, st_data_t _t, st_data_t _v)
+{
+  State *s = (State *)_s;
+  Vector *v = (Vector *)_v;
+
+  vec_set(v, s->id, (vec_data_t)s);
+  return ST_CONTINUE;
+}
+
+static void print_state_transition(State *s)
+{
+  unsigned int i, j;
+
+  fprintf(stdout, "%lu::", s->id); /* dump src state's ID */
+  for (i = 0; i < state_succ_num(s); i++) { /* dump dst state's IDs */
+    Transition t = transition(s, i);
+    if (i > 0) {
+      fprintf(stdout,",");
+    }
+    fprintf(stdout, "%lu", state_succ_get(s, i)->id);
+    fprintf(stdout, "(");
+    for (j = 0; j < transition_rule_num(t); j++) {
+      if (j > 0) fprintf(stdout, ",");
+      fprintf(stdout, "%s", lmn_id_to_name(transition_rule(t, j)));
+    }
+    fprintf(stdout, ")");
+  }
 }
 
 
@@ -556,7 +613,7 @@ static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
 void dump_state_data(State *state)
 {
   if (!lmn_env.dump) return;
-  fprintf(stdout, "%lu::", (long unsigned int)state); /* dump src state's ID */
+  fprintf(stdout, "%lu::", state->id); /* dump src state's ID */
   if (!state->mem)
     lmn_fatal("unexpected");
   lmn_dump_cell_stdout(state->mem); /* dump src state's global root membrane */

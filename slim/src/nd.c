@@ -236,9 +236,14 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
     set_expanded(s); /* sに展開済みフラグを立てる */
 
     state_restore_mem(s);
-    if (dump) dump_state_data(s);
 
     new_states = nd_expand(states, s, DEFAULT_STATE_ID);
+
+    if (dump) {
+      for (i = 0; i < vec_num(new_states); i++) {
+        dump_state_data((State *)vec_get(new_states, i));
+      }
+    }
 
     for (i = 0; i < state_succ_num(s); i++) {
       State *succ = state_succ_get(s, i);
@@ -345,6 +350,7 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
 /*   } */
   /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
 /*   else{ */
+  dump_state_data(initial_state);
   nd_loop(states, initial_state, dump);
 /*   } */
 

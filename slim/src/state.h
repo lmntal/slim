@@ -76,6 +76,7 @@ void dump_state_data(State *state);
  */ 
 
 struct State {
+  unsigned long id;
   LmnMembrane *mem;     /* グローバルルート膜 */
   unsigned long hash; /* mhash(mem) */
   BYTE state_name;
