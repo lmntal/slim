@@ -445,8 +445,8 @@ void output_runtime_status(FILE *f)
   if (!lmn_env.sp_verbose) { /* 通常はこちら */
 
     fprintf(f, "\n== Runtime Status ==========================================\n");
-    if (lmn_env.nd || lmn_env.ltl) {
     fprintf(f, "%-30s: %10.2lf\n", "elapsed time (sec)", tmp_total_time);
+    if (lmn_env.nd || lmn_env.ltl) {
       fprintf(f, "%-30s: %10lu\n", "# of states", runtime_status.state_num);
       fprintf(f, "%-30s: %10lu\n", "# of created states", runtime_status.created_state_num);
       if (lmn_env.ltl_all){
