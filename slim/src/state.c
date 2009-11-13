@@ -431,7 +431,8 @@ inline void state_free_mem(State *s)
 
 
 inline long state_hash(State *s) {
-  return s->hash;
+  /* +1 は state_nameが0の場合があるため */
+  return s->hash * (s->state_name + 1);
 }
 
 BYTE state_property_state(State *state)
@@ -531,7 +532,8 @@ int state_memid_cmp(st_data_t _s1, st_data_t _s2) {
 /* 状態が持つ膜のIDのハッシュ値を返す。膜のIDを持たない場合は有効な値を
    返さない */
 inline long state_memid_hash(State *s) {
-  return s->mem_id_hash;
+  /* +1 は state_nameが0の場合があるため */
+  return s->mem_id_hash * (s->state_name + 1);
 }
 
 /* 状態が持つ膜のダンプを計算する。 */
