@@ -55,7 +55,6 @@ static int kill_States_chains(st_data_t _k,
                               st_data_t rm_tbl_ptr);
 
 static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a);
-static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a);
 static int set_state_to_vec(st_data_t _s, st_data_t _t, st_data_t _v);
 static Vector *sort_states(StateSpace states);
 static void print_state_transition(State *s);
@@ -75,33 +74,6 @@ struct StateSpace {
   HashSet memid_hashes;   /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
   unsigned long next_id; /* 状態IDカウンタ */
 };
-
-/**
- * 非決定(--nd または --nd_result)実行終了時に状態遷移グラフを出力する．
- * 高階関数st_foreach(c.f. st.c)に投げて使用．
- */
-static int print_state_transition_graph(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  unsigned int j, k;
-  State *tmp = (State *)state_ptr;
-
-  fprintf(stdout, "%lu::", tmp->id); /* dump src state's ID */
-  for (j = 0; j < state_succ_num(tmp); j++) { /* dump dst state's IDs */
-    Transition t = transition(tmp, j);
-    if (j > 0) {
-      fprintf(stdout,",");
-    }
-    fprintf(stdout, "%lu", state_succ_get(tmp, j)->id);
-    fprintf(stdout, "(");
-    for (k = 0; k < transition_rule_num(t); k++) {
-      if (k > 0) fprintf(stdout, ",");
-      fprintf(stdout, "%s", lmn_id_to_name(transition_rule(t, k)));
-    }
-    fprintf(stdout, ")");
-  }
-  fprintf(stdout, "\n");
-
-  return ST_CONTINUE;
-}
 
 StateSpace state_space_make()
 {
@@ -332,7 +304,7 @@ static void print_state_transition(State *s)
     fprintf(stdout, "%lu", state_succ_get(s, i)->id);
     fprintf(stdout, "(");
     for (j = 0; j < transition_rule_num(t); j++) {
-      if (j > 0) fprintf(stdout, ",");
+      if (j > 0) fprintf(stdout, " ");
       fprintf(stdout, "%s", lmn_id_to_name(transition_rule(t, j)));
     }
     fprintf(stdout, ")");
@@ -635,6 +607,7 @@ void transition_add_rule(Transition t, lmn_interned_str rule_name)
 {
   int i;
 
+  if (rule_name == ANONYMOUS) return;
   /* ルール名の重複検査 */
   for (i = 0; i < vec_num(&t->rule_names); i++) {
     if (vec_get(&t->rule_names, i) == rule_name) return;
