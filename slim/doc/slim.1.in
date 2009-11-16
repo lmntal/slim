@@ -47,6 +47,25 @@ extension .il) and LMNtal files(file extension .lmn). The length of the load pat
 .TP
 .BI -Olevel
 Optimization level. (-O=-O1)
+
+.TP
+.BI -p
+Same as -p1
+.TP
+.BI -p0
+no profile.
+.TP
+.BI -p1
+Show elapsed time, # of states (ND and LTL MC).
+
+.TP
+.BI -p2
+In addition to --p1, show detail time and memory information.
+
+.TP
+.BI -p3
+In addition to --p2, show rule information.
+
 .TP
 .BI -t
 Traces and prints the current state of execution.
@@ -61,17 +80,17 @@ Hide ruleset from result
 .BI --nd
 Nondeterministic execution mode, print all execution paths
 .TP
-.BI --nd_result
-Nondeterministic execution mode, print only deadlock paths
-.TP
-.BI --nd_dump
-Nondeterministic execution mode, print all state instantly
-.TP
 .BI --ltl
 Model checking mode
 .TP
 .BI --ltl_all
 LTL model checking mode, print all errors
+.TP
+.BI --mem-enc
+Use canonical membrane representation in ND and LTL MC.
+.TP
+.BI --compact-stack
+Compress states on stack in ND and LTL MC.
 .TP
 .BI --help
 Print (on the standard output) a description of the command line

@@ -73,16 +73,17 @@ static void usage(void)
           "  -I<path>        Adds <path> to the head of the load path list.\n"
           "  -O[<0-9>] (-O=-O1)  Optimization level.\n"
           "                  Intermediate instruction sequences are optimized.\n"
+          "  -p[<0-3>] (-p=-p1)  Profiling level.\n"
           "  -t              trace mode\n"
           "  --showproxy     Show proxy atoms\n"
           "  --hideruleset   Hide ruleset from result\n"
           "  --dot           Output result in dot language\n"
-          "  --nd            Nondeterministic execution mode, print all execution paths\n"
-          "  --nd_result     Nondeterministic execution mode, print only deadlock paths\n"
-          "  --nd_dump       Nondeterministic execution mode, print all state instantly\n"
+          "  --nd            Nondeterministic execution mode, print all execution paths.\n"
           "  --ltl           LTL model checking mode\n"
           "  --ltl_all       LTL model checking mode, print all errors\n"
           "  --ltl_nd        --ltl_all and print all seached states and paths\n"
+          "  --mem-enc       Use canonical membrane representation in ND and LTL MC.\n"
+          "  --compact-stack Compress states on stack in ND and LTL MC.\n"
           "  --por           Enable partial order reduction to build the state graph\n"
           "  --nc <file>     Never claim\n"
           "  --psym <file>   Propositional symbol definition file\n"
@@ -150,7 +151,7 @@ static int parse_options(int argc, char *argv[])
           exit(EXIT_FAILURE);
         }
       } else {
-          lmn_env.profile_level = 0;
+          lmn_env.profile_level = 1;
       }
 
 #ifndef PROFILE

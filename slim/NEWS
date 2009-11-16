@@ -1,3 +1,23 @@
+SLIM (1.0.0)
+  * LTL Model Checking
+    * support LTL formula
+    * support never claim
+  * Nondeterministic execution
+    * implement canonical membrane representation
+    * replace membrane isomorphism testing
+    * improve membrane hashing algorithm
+    * drastic memory reduction
+    * change output format
+  * support external interface to C
+  * support profiling for runtime
+  * add LMNtal libralies
+  * add -p option for profiling
+  * add --mem-enc option
+  * add --compact-stack option
+  * remove --nd_result option
+  * remove --nd_dump option
+  * many bug fixes
+
 SLIM (0.4.0)  -- 2008/11/7
   * The conv_il was integrated to SLIM.
   * Internal compilation
