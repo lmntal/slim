@@ -78,6 +78,7 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->name = name;                  /* ルール名 */
   rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
   rule->pre_id = 0;
+  rule->history_tbl = NULL;
   if(lmn_env.profile_level >= 3) {
     rule->status.trial_num = 0;
     rule->status.apply_num = 0;
