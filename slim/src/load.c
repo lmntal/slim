@@ -539,7 +539,7 @@ LmnRule load_rule(Rule rule)
   st_free_table(c->loc_to_label_ref);
 
   runtime_rule = lmn_rule_make(c->byte_seq, c->cap, ANONYMOUS);
-  lmn_rule_init_uniq_rule(runtime_rule);
+  if (rule_get_hasuniq(rule)) lmn_rule_init_uniq_rule(runtime_rule);
   context_free(c);
   return runtime_rule;
 }
