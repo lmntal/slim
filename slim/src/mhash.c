@@ -39,7 +39,7 @@
 #define MEM_ADD_0 3412
 #define MEM_MUL_0 3412
 #define CALUCULATING_MEM 1
-#define DEPTH 3
+#define DEPTH 2
 
 typedef unsigned long hash_t;
 
