@@ -1,4 +1,4 @@
-SLIM (1.0.0)
+SLIM (1.0.0)  -- 2009/11/
   * LTL Model Checking
     * support LTL formula
     * support never claim
@@ -10,6 +10,7 @@ SLIM (1.0.0)
     * change output format
   * support external interface to C
   * support profiling for runtime
+  * support new uniq constraint
   * add LMNtal libralies
   * add -p option for profiling
   * add --mem-enc option
