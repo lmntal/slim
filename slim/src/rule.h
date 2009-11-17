@@ -47,11 +47,11 @@
  * Rule
  */
 
+typedef struct LmnRule *LmnRule;
 /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
    生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
    た場合FALSEを返す */
-typedef BOOL (*LmnTranslated)(struct ReactCxt*, LmnMembrane *);
-typedef struct LmnRule *LmnRule;
+typedef BOOL (*LmnTranslated)(struct ReactCxt*, LmnMembrane *, LmnRule);
 
 LMN_EXTERN LmnRule lmn_rule_make(LmnRuleInstr instr, int instr_len, lmn_interned_str name);
 

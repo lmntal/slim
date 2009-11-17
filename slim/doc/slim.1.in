@@ -92,6 +92,10 @@ Use canonical membrane representation in ND and LTL MC.
 .BI --compact-stack
 Compress states on stack in ND and LTL MC.
 .TP
+.BI --translate
+Output C code translated from input file.
+To use, See head of output. (Can't use on Cygwin now.)
+.TP
 .BI --help
 Print (on the standard output) a description of the command line
 options understood by slim.

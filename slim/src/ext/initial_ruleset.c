@@ -15,11 +15,11 @@ void init_initial_ruleset(void);
 
 const char *initial_modules[] = {"nd_conf"};
 
-BOOL register_initial_rulesets(ReactCxt rc, LmnMembrane *mem)
+BOOL register_initial_rulesets(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
   LmnMembrane *m, *next;
   BOOL ok = FALSE;
-
+  
   for (m = mem->child_head; m; m = next) {
     next = m->next;
     if ((LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_RULESET_MEM_NAME) ||
@@ -53,7 +53,7 @@ BOOL register_initial_rulesets(ReactCxt rc, LmnMembrane *mem)
   return ok;
 }
 
-BOOL register_initial_module(ReactCxt rc, LmnMembrane *mem)
+BOOL register_initial_module(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
   static int done = 0;
   int i;

@@ -88,7 +88,7 @@ static void usage(void)
           "  --nc <file>     Never claim\n"
           "  --psym <file>   Propositional symbol definition file\n"
           "  --ltl_f <ltl>   LTL formula\n"
-          "  --translate     Output Translated C code -- under construction\n"
+          "  --translate     Output translated C code\n"
           "  --version       Prints version and exits.\n"
           "  --help          This Help.\n"
           );

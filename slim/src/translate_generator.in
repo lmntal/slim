@@ -142,7 +142,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
     LmnMembrane *ptmp_global_root;
     LmnWord *pwt_temp;
     LmnByte *pat_temp;
-    tr_instr_commit_ready(rc, NULL, TR_GSID($0), $1, &ptmp_global_root, &pwt_temp, &pat_temp);
+    tr_instr_commit_ready(rc, rule, TR_GSID($0), $1, &ptmp_global_root, &pwt_temp, &pat_temp);
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -154,7 +154,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
     }
 #__format_t
   label_always_$a:
-    if(tr_instr_commit_finish(rc, NULL, TR_GSID($0), $1, &ptmp_global_root, &pwt_temp, &pat_temp))
+    if(tr_instr_commit_finish(rc, rule, TR_GSID($0), $1, &ptmp_global_root, &pwt_temp, &pat_temp))
       $s;
     else
       $f;

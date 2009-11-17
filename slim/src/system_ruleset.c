@@ -48,7 +48,7 @@
 void init_default_system_ruleset(void);
 
 /* delete out proxies connected each other */
-static BOOL delete_redundant_outproxies(ReactCxt rc, LmnMembrane *mem)
+static BOOL delete_redundant_outproxies(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
                                                           LMN_OUT_PROXY_FUNCTOR,
@@ -89,7 +89,7 @@ static BOOL delete_redundant_outproxies(ReactCxt rc, LmnMembrane *mem)
 }
 
 /* delete in proxies connected each other */
-static BOOL delete_redundant_inproxies(ReactCxt rc, LmnMembrane *mem)
+static BOOL delete_redundant_inproxies(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
                                                           LMN_OUT_PROXY_FUNCTOR,
@@ -122,7 +122,7 @@ static BOOL delete_redundant_inproxies(ReactCxt rc, LmnMembrane *mem)
   return FALSE;
 }
 
-static BOOL mem_eq(ReactCxt rc, LmnMembrane *mem)
+static BOOL mem_eq(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
   AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_MEM_EQ_FUNCTOR, 0);
   LmnMembrane *mem0, *mem1;

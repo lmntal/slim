@@ -200,7 +200,7 @@ inline BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
   }
 #endif
   result =
-    (translated &&  translated(rc, mem)) ||
+    (translated &&  translated(rc, mem, rule)) ||
     (inst_seq && interpret(rc, rule, inst_seq));
 
 #ifdef PROFILE

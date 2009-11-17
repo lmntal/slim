@@ -11,6 +11,7 @@ SLIM (1.0.0)  -- 2009/11/
   * support external interface to C
   * support profiling for runtime
   * support new uniq constraint
+  * support translation LMNtal to C
   * add LMNtal libralies
   * add -p option for profiling
   * add --mem-enc option
