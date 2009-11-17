@@ -603,6 +603,12 @@ Transition transition_make(State *s, lmn_interned_str rule_name)
   return t;
 }
 
+void transition_free(Transition t)
+{
+  vec_destroy(&t->rule_names);
+  LMN_FREE(t);
+}
+
 void transition_add_rule(Transition t, lmn_interned_str rule_name)
 {
   int i;

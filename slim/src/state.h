@@ -130,7 +130,7 @@ inline void state_calc_mem_encode(State *s);
 inline void state_calc_mem_dump(State *s);
 
 Transition transition_make(State *s, lmn_interned_str rule_name);
-static inline void transition_free(Transition t) { LMN_FREE(t); }
+void transition_free(Transition t);
 
 static inline  unsigned int transition_rule_num(Transition t) { return vec_num(&t->rule_names); }
 static inline lmn_interned_str transition_rule(Transition t, int i)
