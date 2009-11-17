@@ -497,7 +497,7 @@ void output_runtime_status(FILE *f)
         int i;
         double total_time = 0.0;
 
-        fprintf(f, "\n=== ND Profile ====================================\n");
+        fprintf(f, "\n=== ND/MC Profile ====================================\n");
 
         fprintf(f, "\n-- Time (sec) ---------------------------------------\n");
         fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
@@ -512,7 +512,7 @@ void output_runtime_status(FILE *f)
         fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "other", "", tmp_nd_total_time - total_time,
                 (double)(tmp_nd_total_time - total_time)/ total_time * 100.0);
         fprintf(f, "-----------------------------------------------------\n");
-        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "total nd time (sec)", "", tmp_nd_total_time, 100.0);
+        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "total elapsed time (sec)", "", tmp_nd_total_time, 100.0);
         fprintf(f, "-----------------------------------------------------\n");
         fprintf(f, "\n");
 

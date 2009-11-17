@@ -432,6 +432,9 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
   stack = vec_make(1024);
   vec_push(stack, (LmnWord)initial_state);
 
+  if (lmn_env.profile_level > 0) {
+    status_nd_start_running();
+  }
 
   /* LTLモデル検査 */
   set_fst(initial_state);
@@ -447,6 +450,7 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
   fprintf(stdout, "# of States = %lu\n", state_space_num(states));
 
   if (lmn_env.profile_level > 0) {
+    status_nd_finish_running();
     status_state_space(states);
   }
 
