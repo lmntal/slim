@@ -615,6 +615,44 @@ void st_print(st_table *st){
   }
 }
 
+/*　st_tableが持つ要素をVectorに昇順に格納する　*/
+void st_get_entrys(st_table *st, Vector *vec){
+  st_table_entry *entry;
+  unsigned int nb = st->num_bins;
+  int i;
+  //long pre_id, cur_id;
+  //int i, j, k, n;
+  for (i = 0; i < nb; i++) {
+    entry = st->bins[i];
+
+    while (entry != NULL) {
+      /* とりあえずの実装 */
+      /*n = vec_num(vec);
+      for (j = 0; j < n; j++) {
+        if ((long)entry->key > (long)vec_get(vec, j)) {
+          pre_id = entry->key;
+          vec_push(vec, 0);
+          for (k = j; k < (n + 1); k++) {
+            cur_id = (long)vec_get(vec, k);
+            vec_set(vec, j, (LmnWord)pre_id);
+            pre_id = cur_id;
+          }
+          printf("push1\n");
+          break;
+        }
+        if (j == n) {
+          vec_push(vec, (LmnWord)entry->key);
+          printf("push2\n");
+        }
+      }*/
+      vec_push(vec, (LmnWord)entry->key);
+      entry = entry->next;
+    }
+
+
+  }
+}
+
 /* 2つのst_tableが同じ要素を持つか判定　同じなら1を返す */
 int st_equals(st_table *tbl1, st_table *tbl2){
   st_table *st1 = tbl1, *st2 = tbl2;

@@ -1843,29 +1843,46 @@ static BOOL lmn_mem_equals_rec(LmnMembrane *mem1, LmnMembrane *mem2, int current
       goto STEP_1_FALSE;
     }
 
-    /* Step3.5. 両膜内に含まれるルールセットが等しいことを確認 */
+    /* Step3.5. 両膜内に含まれるルールセット数が等しいことを確認 */
     if (vec_num(&mem1->rulesets) != vec_num(&mem2->rulesets)) goto STEP_1_FALSE;
 
     /* rulesetはidの値で昇順にソートされている */
+    int hu1 = 0, hu2 = 0;
+    LmnRuleSet rs1, rs2;
     for (i = 0; i < vec_num(&mem1->rulesets); i++) {
-      if (lmn_ruleset_get_id((LmnRuleSet)vec_get(&mem1->rulesets, i))
-          != lmn_ruleset_get_id((LmnRuleSet)vec_get(&mem2->rulesets, i))) goto STEP_1_FALSE;
+      rs1 = (LmnRuleSet)vec_get(&mem1->rulesets, i);
+      rs2 = (LmnRuleSet)vec_get(&mem2->rulesets, i);
+      if (lmn_ruleset_get_id(rs1) != lmn_ruleset_get_id(rs2)) goto STEP_1_FALSE;
+
+      /* uniq ruleを持つruleset数を数えておく */
+      if (lmn_ruleset_has_uniqrule(rs1)) hu1++;
+      if (lmn_ruleset_has_uniqrule(rs2)) hu2++;
     }
 
-    /* 各rulesetが持つruleまで等しいことを確認 */
-    int n1 = vec_num(&mem1->rulesets),
-        n2 = vec_num(&mem2->rulesets);
+    /* ---uniq制約がある場合の処理 ここから--- */
 
-    /* mem1 --> mem2 */
-    for (i = 0; i < n1; i++) {
-      if (!rulesets_contains(&mem2->rulesets, (LmnRuleSet)vec_get(&mem1->rulesets, i)))
-        goto STEP_1_FALSE;
+    /* uniq ruleを持つruleset数が等しいことを確認 */
+    if (hu1 != hu2) goto STEP_1_FALSE;
+
+    /* ここは hu1==hu2 かつ uniq ruleを持つrulesetがある(hu1>0) の場合に実行され、
+     * 各uniq ruleの履歴表までを同型性判定の範囲に含める */
+    if (hu1 > 0){
+      int n1 = vec_num(&mem1->rulesets),
+          n2 = vec_num(&mem2->rulesets);
+
+      /* 2つのrulesetsが等価な集合であることを確認する */
+      /* mem1 --> mem2 */
+      for (i = 0; i < n1; i++) {
+        if (!rulesets_contains(&mem2->rulesets, (LmnRuleSet)vec_get(&mem1->rulesets, i)))
+          goto STEP_1_FALSE;
+      }
+      /* mem2 --> mem1 */
+      for (i = 0; i < n2; i++) {
+        if (!rulesets_contains(&mem1->rulesets, (LmnRuleSet)vec_get(&mem2->rulesets, i)))
+          goto STEP_1_FALSE;
+      }
     }
-    /* mem2 --> mem1 */
-    for (i = 0; i < n2; i++) {
-      if (!rulesets_contains(&mem1->rulesets, (LmnRuleSet)vec_get(&mem2->rulesets, i)))
-        goto STEP_1_FALSE;
-    }
+    /* ---uniq制約がある場合の処理 ここまで--- */
 
   }
 

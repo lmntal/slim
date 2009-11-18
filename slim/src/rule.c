@@ -373,6 +373,22 @@ LmnRule *lmn_ruleset_get_rules(LmnRuleSet ruleset)
   return ruleset->rules;
 }
 
+/* rulesetに含まれるruleが持つ履歴の総数を返す */
+int lmn_ruleset_history_num(LmnRuleSet ruleset)
+{
+  int i, n, his_num = 0;
+
+  /* ruleが無い or uniq ruleを持たない場合は0を返す */
+  if (!(n = ruleset->num) || !ruleset->has_uniqrule) return his_num;
+
+  LmnRule rule;
+  for (i = 0; i < n; i++){
+    rule = lmn_ruleset_get_rule(ruleset, i);
+    if (rule->history_tbl) his_num += st_num(rule->history_tbl);
+  }
+  return his_num;
+}
+
 /* rulesetをコピーして新しいルールセットを作成する */
 LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
 {
