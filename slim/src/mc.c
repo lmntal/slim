@@ -193,13 +193,14 @@ void ltl_search1(StateSpace states, Vector *stack)
     return;
   }
 
-    if (is_expanded(s)) {
-      /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
-      vec_pop(stack);
-      unset_open(s);
-      return;
-    }
-    set_expanded(s); /* sに展開済みフラグを立てる */
+  if (is_expanded(s)) {
+    /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
+    vec_pop(stack);
+    unset_open(s);
+    unset_fst(s);
+    return;
+  }
+  set_expanded(s); /* sに展開済みフラグを立てる */
 
   /*
    * 状態展開
@@ -400,15 +401,8 @@ void run_mc(Vector *start_rulesets, Automata automata, Vector *propsyms)
 
   /* make global root membrane */
   mem = lmn_mem_make();
-  { /* 初期構造の生成 */
-    {
-      int temp_env_p = lmn_env.profile_level;
-      lmn_env.profile_level = 0;
-      react_start_rulesets(mem, start_rulesets);
-      lmn_env.profile_level = temp_env_p;
-    }
-  }
-
+  /* 初期構造の生成 */
+  react_start_rulesets(mem, start_rulesets);
   activate_ancestors(mem);
 
   do_mc(states, mem);

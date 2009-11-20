@@ -160,7 +160,7 @@ static Vector *expand_sub(struct ReactCxt *rc, LmnMembrane *cur_mem, BYTE state_
   for (i = 0; i < vec_num(expanded_roots); i++) {
     State *state;
     lmn_interned_str rule_name;
-    
+
     state = state_make((LmnMembrane *)vec_get(expanded_roots, i),
                        state_name,
                        (LmnRule)vec_get(RC_EXPANDED_RULES(rc), i));
@@ -286,13 +286,7 @@ void run_nd(Vector *start_rulesets)
 
   /* make global root membrane */
   mem = lmn_mem_make();
-
-  {
-    int temp_env_p = lmn_env.profile_level;
-    lmn_env.profile_level = 0;
-    react_start_rulesets(mem, start_rulesets);
-    lmn_env.profile_level = temp_env_p;
-  }
+  react_start_rulesets(mem, start_rulesets);
   activate_ancestors(mem);
 
   if (lmn_env.dump) {
@@ -304,7 +298,7 @@ void run_nd(Vector *start_rulesets)
   if (lmn_env.profile_level > 0) {
     status_state_space(states);
   }
-  
+
   fprintf(stdout, "\n");
 
   dump_state_transition_graph(states, stdout);

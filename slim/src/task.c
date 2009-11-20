@@ -395,6 +395,8 @@ void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
 {
   struct ReactCxt rc;
   int i;
+  int temp_env_p = lmn_env.profile_level;
+  lmn_env.profile_level = 0;
 
   stand_alone_react_cxt_init(&rc);
   RC_SET_GROOT_MEM(&rc, mem);
@@ -405,6 +407,7 @@ void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
   react_initial_rulesets(&rc, mem);
   lmn_react_systemruleset(&rc, mem);
 
+  lmn_env.profile_level = temp_env_p;
 }
 
 /* 膜memでrulesetのルールの適用を試みる。適用が起こった場合TRUEを返し、
@@ -542,15 +545,11 @@ void lmn_run(Vector *start_rulesets)
   mem = lmn_mem_make();
   RC_SET_GROOT_MEM(&mrc, mem);
   lmn_memstack_push(RC_MEMSTACK(&mrc), mem);
-  {
-    int temp_env_p = lmn_env.profile_level;
-    if(lmn_env.trace && lmn_env.profile_level >= 2) {
-        fprintf(stdout, "  %6s|%6s|%6s|%6s\n", " Name", " Apply", " Trial", " BackTrack");
-    }
-    lmn_env.profile_level = 0;
-    react_start_rulesets(mem, start_rulesets);
-    lmn_env.profile_level = temp_env_p;
+
+  if(lmn_env.trace && lmn_env.profile_level >= 2) {
+    fprintf(stdout, "  %6s|%6s|%6s|%6s\n", " Name", " Apply", " Trial", " BackTrack");
   }
+  react_start_rulesets(mem, start_rulesets);
 
   lmn_memstack_reconstruct(RC_MEMSTACK(&mrc), mem);
   /* for tracer */
