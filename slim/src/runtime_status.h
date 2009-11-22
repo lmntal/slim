@@ -78,11 +78,11 @@ void status_start_rule(void);
 void status_finish_rule(LmnRule rule, BOOL result);
 void status_rule_output(LmnRule rule);
 void status_backtrack_counter(void);
-void status_start_expand(void);
-void status_finish_expand(void);
 void status_start_commit(void);
 void status_finish_commit(void);
 void status_count_counterexample(void);
+void status_start_dfs2(void);
+void status_finish_dfs2(void);
 void status_set_state_num(unsigned long n);
 void status_create_new_state(void);
 void calc_state_space_space(StateSpace states);
@@ -92,5 +92,6 @@ void status_state_space(StateSpace states);
 void status_binstr_make(LmnBinStr bs);
 void status_binstr_free(LmnBinStr bs);
 void runtime_status_update(StateSpace states);
+inline double get_wall_time(void);
 
 #endif

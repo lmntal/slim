@@ -60,10 +60,6 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
   st_table_t succ_tbl;         /* サクセッサのポインタの重複検査に使用 */
   unsigned long i, expanded_num;
 
-#ifdef PROFILE
-  if (lmn_env.profile_level>0)  status_start_expand();
-#endif
-
   if (lmn_env.por) expanded = ample(states, state);
   else expanded = nd_gen_successors(state, state_name);
 
@@ -114,11 +110,6 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
   st_free_table(succ_tbl);
   vec_free(expanded);
   vec_destroy(&successors);
-
-#ifdef PROFILE
-  if (lmn_env.profile_level>0) status_finish_expand();
-  runtime_status_update(states);
-#endif
 
   return new_states;
 }

@@ -267,7 +267,9 @@ void ltl_search1(StateSpace states, Vector *stack)
   /* entering second DFS */
   if (atmstate_is_accept(property_automata_state)) {
     set_snd(s);
+    if (lmn_env.profile_level >= 2) status_start_dfs2();
     ltl_search2(states, stack, s);
+    if (lmn_env.profile_level >= 2) status_finish_dfs2();
   }
 
 #ifdef DEBUG
@@ -289,23 +291,6 @@ static void ltl_search2(StateSpace states, Vector *stack, State *seed)
 {
   unsigned int i;
   State *s = (State *)vec_peek(stack);
-
-#ifdef DEBUG
-  fprintf(stdout, "\n----- enter function: ltl_search2() -----\n");
-  fprintf(stdout, "seed=");
-  lmn_dump_mem_stdout(seed->mem);
-  fprintf(stdout, "\n");
-
-  fprintf(stdout, "stack:\n");
-  for(i = vec_num(stack) - 1; i >= 0; i--) {
-    State *tmp_s = (State *)vec_get(stack, i);
-    fprintf(stdout, "%d\n", is_snd(tmp_s));
-    fprintf(stdout, "%d: (fst=%d,snd=%d):\t", i, is_fst(tmp_s) ? 1 : 0, is_snd(tmp_s) ? 1 : 0);
-    lmn_dump_mem_stdout(tmp_s->mem);
-  }
-  fprintf(stdout, "\n");
-#endif
-
 
   for(i = 0; i < state_succ_num(s); i++) { /* for each (s,l,s') */
     State *ss = state_succ_get(s, i);
@@ -336,8 +321,8 @@ static void ltl_search2(StateSpace states, Vector *stack, State *seed)
 static void violate(Vector *stack)
 {
   unsigned int i;
-  fprintf(stdout, "cycle(or error) found:\n");
   if (lmn_env.dump) {
+    fprintf(stdout, "cycle(or error) found:\n");
     /* 結果出力 */
     for (i = 0; i < vec_num(stack); i++) {
       State *tmp_s = (State *)vec_get(stack, i);

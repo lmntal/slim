@@ -125,7 +125,7 @@ static int parse_options(int argc, char *argv[])
     {"mem-enc", 0, 0, 2000},
     {"compact-stack", 0, 0, 2001},
     {"no_dump", 0,0, 5000},
-    {"sp_verbose", 0, 0, 5001},
+    {"benchmark_dump", 0, 0, 5001},
     {0, 0, 0, 0}
   };
 
@@ -221,8 +221,8 @@ static int parse_options(int argc, char *argv[])
       lmn_env.dump = FALSE;
       break;
 #ifdef PROFILE
-    case 5001: /* runtime_statusの特殊出力用 */
-      lmn_env.sp_verbose = TRUE;
+    case 5001: /* 性能測定時のデータ収集用に仮設. 無視してください(gocho) */
+      lmn_env.benchmark = TRUE;
       break;
 #endif
     case 'I':
@@ -276,7 +276,7 @@ static void init_env(void)
   lmn_env.mem_enc = FALSE;
   lmn_env.compact_stack = FALSE;
   lmn_env.dump = TRUE;
-  lmn_env.sp_verbose = FALSE;
+  lmn_env.benchmark = FALSE;
 }
 
 void init_default_system_ruleset();
@@ -324,14 +324,14 @@ static void finalize(void)
     /*   ext_finalize(); */
     ccallback_finalize();
     sp_atom_finalize();
-  
+
     finalize_so_handles();
 
     if (lmn_env.profile_level > 0) {
       runtime_status_finalize();
     }
   }
-  
+
   destroy_rules();
   lmn_functor_tbl_destroy();
   sym_tbl_destroy();
@@ -349,13 +349,13 @@ int main(int argc, char *argv[])
 
   if (optid < argc) {
     Vector *start_rulesets = vec_make(2);
-    
+
     /* load inputfiles */
     for(i=optid; i<argc; ++i){
       FILE *in;
       char *f = argv[i];
       LmnRuleSet t;
-      
+
       if (!strcmp("-", f)) {
         in = stdin;
         t = load(stdin);
@@ -371,7 +371,7 @@ int main(int argc, char *argv[])
       fprintf(stderr, "bad input file.\n");
       exit(1);
     }
-    
+
     if (lmn_env.profile_level >= 1) {
       status_start_running();
     }
@@ -390,7 +390,7 @@ int main(int argc, char *argv[])
       for (i = lmn_env.load_path_num-1; i >= 0; i--) {
         load_il_files(lmn_env.load_path[i]);
       }
-      
+
       if (lmn_env.ltl) {
         Automata automata;
         PVector prop_defs;
@@ -402,7 +402,7 @@ int main(int argc, char *argv[])
         } else {
           mc_explain_error(r);
         }
-        
+
         automata_free(automata);
         propsyms_free(prop_defs);
       }
@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
         lmn_run(start_rulesets);
       }
     }
-    
+
     vec_free(start_rulesets);
   } else {
     fprintf(stderr, "no input file\n");
