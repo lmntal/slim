@@ -439,7 +439,7 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
 static int print_state_name(st_data_t _k, st_data_t state_ptr, st_data_t _a)
 {
   State *tmp = (State *)state_ptr;
-  fprintf(stdout, "%lu::%s\n", (long unsigned int)tmp, automata_state_name(mc_data.property_automata, tmp->state_name) );
+  fprintf(stdout, "%lu::%s\n", tmp->id, automata_state_name(mc_data.property_automata, tmp->state_name) );
   return ST_CONTINUE;
 }
 
