@@ -334,7 +334,7 @@ static void violate(Vector *stack)
              automata_state_name(mc_data.property_automata,
                                  state_property_state(tmp_s)));
       if (lmn_env.ltl_nd){
-    	  fprintf(stdout, "%lu\n", vec_get(stack, i));
+    	  fprintf(stdout, "%lu\n", ((State *)vec_get(stack, i))->id);
       }else{
     	  lmn_dump_mem_stdout(((State *)vec_get(stack, i))->mem);
       }
