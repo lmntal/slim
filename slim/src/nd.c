@@ -110,7 +110,9 @@ Vector *nd_expand(StateSpace states, State *state, BYTE state_name)
   st_free_table(succ_tbl);
   vec_free(expanded);
   vec_destroy(&successors);
-
+#ifdef PROFILE
+  runtime_status_update(states);
+#endif
   return new_states;
 }
 
