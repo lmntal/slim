@@ -212,27 +212,28 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
   while (vec_num(stack) != 0) {
     /* 展開元の状態。popはしないでsuccessorの展開が終わるまで
        スタックに積んでおく */
-    State *s = (State *)vec_peek(stack);
+    State *s = (State *)vec_pop(stack);
     Vector *new_states;
-
-    if (is_expanded(s)) {
-      /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
-      vec_pop(stack);
-      unset_open(s);
 
 #ifdef PROFILE
       status_nd_pop_stack();
 #endif
 
+    if (is_expanded(s)) {
+      /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
+      unset_open(s);
+
       continue;
     }
     set_expanded(s); /* sに展開済みフラグを立てる */
 
+    /* compact　stackにより膜が解放されている可能性があるので、復元する */
     state_restore_mem(s);
 
+    /* サクセッサを展開 */
     new_states = nd_expand(states, s, DEFAULT_STATE_ID);
 
-    if (dump) {
+    if (dump) { /* 状態の出力 */
       for (i = 0; i < vec_num(new_states); i++) {
         dump_state_data((State *)vec_get(new_states, i));
       }
@@ -256,8 +257,6 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
     }
 
     vec_free(new_states);
-
-    set_expanded(s); /* sに展開済みフラグを立てる */
 
     /* 展開済みになった状態の膜を解放する */
     state_free_mem(s);
