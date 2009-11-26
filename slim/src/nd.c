@@ -204,14 +204,13 @@ static BOOL expand_inner(struct ReactCxt *rc,
  */
 static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
   Vector *stack;
-  unsigned long i;
+  unsigned long i, n;
 
   stack = vec_make(2048);
   vec_push(stack, (LmnWord)init_state);
 
   while (vec_num(stack) != 0) {
-    /* 展開元の状態。popはしないでsuccessorの展開が終わるまで
-       スタックに積んでおく */
+    /* 展開元の状態をpop */
     State *s = (State *)vec_pop(stack);
     Vector *new_states;
 
@@ -227,31 +226,30 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
     }
     set_expanded(s); /* sに展開済みフラグを立てる */
 
-    /* compact　stackにより膜が解放されている可能性があるので、復元する */
-    state_restore_mem(s);
-
     /* サクセッサを展開 */
     new_states = nd_expand(states, s, DEFAULT_STATE_ID);
 
     if (dump) { /* 状態の出力 */
-      for (i = 0; i < vec_num(new_states); i++) {
+      n = vec_num(new_states);
+      for (i = 0; i < n; i++) {
         dump_state_data((State *)vec_get(new_states, i));
       }
     }
 
-    for (i = 0; i < state_succ_num(s); i++) {
+    n = state_succ_num(s);
+    for (i = 0; i < n; i++) {
       State *succ = state_succ_get(s, i);
 
       vec_push(stack, (vec_data_t)succ);
-      /* set ss to open, i.e., on the search stack */
-      set_open(succ);
+      set_open(succ); /* set ss to open, i.e., on the search stack */
 
 #ifdef PROFILE
       status_nd_push_stack();
 #endif
 
-      if (lmn_env.compact_stack) {
+      if (lmn_env.compact_stack && ((i + 1) < n)) {
         /* メモリ最適化のために、サクセッサの作成後に膜を解放する */
+        /* ただし, 最後にスタックに積まれた状態は直後にデコードされるため解放しない */
         state_free_mem(succ);
       }
     }
