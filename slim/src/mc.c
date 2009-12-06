@@ -224,6 +224,7 @@ void ltl_search1(StateSpace states, Vector *stack)
   }
 
   if (!is_expanded(s)) {
+    unsigned int prev_state_succ_num = 0;
     set_expanded(s);
 
     /** 状態展開:
@@ -237,7 +238,6 @@ void ltl_search1(StateSpace states, Vector *stack)
      */
     n_trans = atmstate_transition_num(prop_atm_s);
     for (i_trans = 0; i_trans < n_trans; i_trans++) {
-      unsigned int tmp_succ_num = 0;
       AutomataTransition prop_t = atmstate_get_transition(prop_atm_s, i_trans);
 
       /* EFFICIENCY: 状態のコピーを（mem_idやmem_dumpを使い）効率的に行える */
@@ -250,10 +250,10 @@ void ltl_search1(StateSpace states, Vector *stack)
         new_states = mc_expand(states, s, prop_next_label);
 
         n = state_succ_num(s);
-        if ((n - tmp_succ_num) == 0) {
+        if ((n - prev_state_succ_num) == 0) {
           stutter_extension(states, s, prop_next_label);
         }
-        tmp_succ_num += n;
+        prev_state_succ_num = state_succ_num(s);
         vec_free(new_states);
       }
     }
