@@ -63,6 +63,7 @@ enum MC_ERRORNO {
 
 static void violate(Vector *stack);
 static void exit_ltl_model_checking(void);
+static void stutter_extension(StateSpace states, State *s, BYTE next_label);
 static Vector *mc_expand(const StateSpace states,
                          State *state,
                          BYTE prop_state);
@@ -177,142 +178,145 @@ char *mc_error_msg(int error_id)
  * LTL Model Checking
  */
 
+/* 状態sからstutter extensionを行う */
+static void stutter_extension(StateSpace states, State *s, BYTE next_label)
+{
+  /* state_space_insertはコストが高いため, 先にラベル比較でself-loopを検出する */
+  if (state_property_state(s) == next_label) {
+    /** self-loop
+     */
+    state_succ_add(s, transition_make(s, ANONYMOUS));
+  }
+  else {
+    /** extension
+     */
+    State *new_s, *t;
+    new_s = state_make(lmn_mem_copy(state_mem(s)), next_label, dummy_rule());
+    t = state_space_insert(states, new_s);
+
+    /* TODO: stutter rule name */
+    if (t == new_s) {
+      state_succ_add(s, transition_make(new_s, ANONYMOUS));
+    }
+    else {
+      state_free(new_s);
+      state_succ_add(s, transition_make(t, ANONYMOUS));
+    }
+  }
+}
+
 
 /* nested(またはdouble)DFSにおける1段階目の実行 */
 void ltl_search1(StateSpace states, Vector *stack)
 {
-  unsigned int i, i_trans;
-  State *s = (State *)vec_peek(stack);
-  AutomataState property_automata_state = automata_get_state(mc_data.property_automata, s->state_name);
+  unsigned int i, i_trans, n, n_trans;
+  State *s;
+  AutomataState prop_atm_s;
 
-/*   printf("ltl search1, state: %p\n", s); */
-  if (atmstate_is_end(property_automata_state)) {
+  s = (State *)vec_peek(stack);
+  prop_atm_s = automata_get_state(mc_data.property_automata, state_property_state(s));
+
+  if (atmstate_is_end(prop_atm_s)) {
     violate(stack);
     unset_open((State *)vec_peek(stack));
     unset_fst((State *)vec_pop(stack));
     return;
   }
 
-  if (is_expanded(s)) {
-    /* 状態が展開済みである場合，スタック上から除去してフラグを解除する */
-    vec_pop(stack);
-    unset_open(s);
-    unset_fst(s);
-    return;
-  }
-  set_expanded(s); /* sに展開済みフラグを立てる */
+  if (!is_expanded(s)) {
+    set_expanded(s);
 
-  /*
-   * 状態展開
-   */
-  for (i_trans = 0;
-       i_trans < atmstate_transition_num(property_automata_state);
-       i_trans++) {
-    AutomataTransition transition = atmstate_get_transition(property_automata_state,
-                                                            i_trans);
-
-    /**
-     * 性質ルールの適用
+    /** 状態展開:
+     *   性質ルールが適用される場合, global_rootに対してシステムルール適用検査を行う.
+     *   システムルール適用はglobal_rootのコピーに対して行われる.
+     *   状態展開にexpandが使用された場合は, 現状態から遷移可能な全ての状態が生成されるのに対し，
+     *   ampleが使用された場合はPartial Order Reductionに基づき，本当に必要な次状態のみが生成される．
+     *   なお，適用可能なシステムルールが存在しない場合は，何も処理を行わない特殊なシステムルール(stutter extension rule)
+     *   が存在するものと考えてε遷移をさせ，受理頂点に次状態が存在しない場合でも受理サイクルを形成できるようにする．
+     *   (c.f. "The Spin Model Checker" pp.130-131)
      */
-    if (eval_formula(state_mem(s),
-                     mc_data.propsyms,
-                     atm_transition_get_formula(transition))) {
-      /**
-       * global_rootに対してシステムルール適用検査を行う．
-       * システムルール適用はglobal_rootのコピーに対して行い，
-       * 展開された"次の状態"はすべてexpandedに放り込まれる．
-       * 状態展開にexpandが使用された場合は現状態から遷移可能なすべての状態が生成されるのに対し，
-       * ampleが使用された場合はPartial Order Reductionに基づき，本当に必要な次状態のみが生成される．
-       * なお，適用可能なシステムルールが存在しない場合は，何も処理を行わない特殊なシステムルール(stutter extension rule)
-       * が存在するものと考えてε遷移をさせ，受理頂点に次状態が存在しない場合でも受理サイクルを形成できるようにする．
-       * (c.f. "The Spin Model Checker" pp.130-131)
-       */
-      Vector *new_states = mc_expand(states, s, atm_transition_next(transition));
+    n_trans = atmstate_transition_num(prop_atm_s);
+    for (i_trans = 0; i_trans < n_trans; i_trans++) {
+      unsigned int tmp_succ_num = 0;
+      AutomataTransition prop_t = atmstate_get_transition(prop_atm_s, i_trans);
 
-      if (state_succ_num(s) == 0) { /* stutter extension */
-        State *new_s, *t;
+      /* EFFICIENCY: 状態のコピーを（mem_idやmem_dumpを使い）効率的に行える */
+      if (eval_formula(state_mem(s), mc_data.propsyms, atm_transition_get_formula(prop_t))) {
+        BYTE prop_next_label;
+        Vector *new_states;
 
-        /* 性質ルールのみが適用されている。ルール名(遷移のラベル)はどうする？ */
-        /* EFFICIENCY: 状態のコピーを（mem_idやmem_dumpを使い）効率的に行える */
-        new_s = state_make(lmn_mem_copy(state_mem(s)),
-                           atm_transition_next(transition),
-                           dummy_rule());
-        t = state_space_insert(states, new_s);
-        if (t == new_s) {
-          /* 状態空間に追加された */
-          state_succ_add(s, transition_make(new_s, ANONYMOUS)); /* TODO: 性質ルール名 */
-          vec_push(new_states, (vec_data_t)new_s);
-        } else {
-          /* 状態空間に追加されなかった（等価な状態が既にあった） */
-          state_free(new_s);
-          state_succ_add(s, transition_make(t, ANONYMOUS)); /* TODO: stutter rule name */
+        /* TODO: mc_expandの仕様とstutter extensionに必要な仕様がミスマッチ */
+        prop_next_label = atm_transition_next(prop_t);
+        new_states = mc_expand(states, s, prop_next_label);
+
+        n = state_succ_num(s);
+        if ((n - tmp_succ_num) == 0) {
+          stutter_extension(states, s, prop_next_label);
         }
+        tmp_succ_num += n;
+        vec_free(new_states);
       }
+    }
 
-      for (i = 0; i < state_succ_num(s); i++) {
-        State *succ = state_succ_get(s, i);
-
-        /* push とset を１つの関数にする */
-        vec_push(stack, (vec_data_t)succ);
+    /** recursive: ltl_search1 */
+    /* TODO: recursiveからloopへ */
+    n = state_succ_num(s);
+    for (i = 0; i < n; i++) {
+      State *succ = state_succ_get(s, i);
+      if (!is_expanded(succ)) {
+        vec_push(stack, (LmnWord)succ);
         set_open(succ); /* 状態ssがスタック上に存在する旨のフラグを立てる(POR用) */
         set_fst(succ);
         ltl_search1(states, stack);
       }
-
-      vec_free(new_states);
     }
   }
 
-
-  /* entering second DFS */
-  if (atmstate_is_accept(property_automata_state)) {
+  /** entering second DFS
+   * (この時点で, sおよびsから到達可能な状態は全て展開済み) */
+  if (atmstate_is_accept(prop_atm_s) && !is_snd(s)) {
     set_snd(s);
     if (lmn_env.profile_level >= 2) status_start_dfs2();
     ltl_search2(states, stack, s);
     if (lmn_env.profile_level >= 2) status_finish_dfs2();
   }
 
-#ifdef DEBUG
-  fprintf(stdout, "+++++ return function: ltl_search1() +++++\n\n");
-#endif
-
   unset_open((State *)vec_peek(stack)); /* スタックから取り除かれる旨のフラグをセット(POR用) */
-  unset_fst((State *)vec_pop(stack));
+  unset_fst((State *)vec_peek(stack));
+  vec_pop(stack);
 }
 
-/*
- *  2段階目のDFS
- *  ltl_search1()で発見した受理頂点や、本メソッド実行中に新たに発見した受理頂点の集合へ
- *  ある適当な受理頂点から到達可能であるかどうかを判定する。
- *  すなわち受理頂点から受理頂点へ至る閉路(受理サイクル)の存在を確認することで、
- *  与えられたLTL式を満足する実行経路が存在するか否かを判定する。
+
+/**
+ * 2段階目のDFS:
+ *   1段階目のDFSで展開済みとなった受理頂点から, 自身に戻る閉路(受理サイクル)を探索する.
+ *   本DFS中に未展開の状態を訪問することは想定されていない.
  */
 static void ltl_search2(StateSpace states, Vector *stack, State *seed)
 {
-  unsigned int i;
+  unsigned int i, n;
   State *s = (State *)vec_peek(stack);
 
-  for(i = 0; i < state_succ_num(s); i++) { /* for each (s,l,s') */
+  n = state_succ_num(s);
+  for(i = 0; i < n; i++) { /* for each (s,l,s') */
     State *ss = state_succ_get(s, i);
 
-    /* successorがseedと同一の状態 or successorが探索スタック上の状態ならば反例を出力 */
-    if(ss == seed || (is_fst(ss) && !is_snd(ss))) {
+    /** 受理サイクルの条件:
+     * 1. successorがseedと同一の状態
+     * 2. successorが探索スタック上の状態
+     */
+    if((ss == seed) || (is_fst(ss) && !is_snd(ss))) {
       set_snd(ss);
       violate(stack);
-#ifdef DEBUG
-      fprintf(stdout, "+++++ return function: ltl_search2() +++++\n\n");
-#endif
       return;
     }
 
     /* second DFS で未訪問→再帰 */
+    /* TODO: recursiveからloopへ */
     if(!is_snd(ss)) {
       set_snd(ss);
-/*      set_open(ss); */
       vec_push(stack, (LmnWord)ss);
       ltl_search2(states, stack, seed);
-
-/*      unset_open((State *)vec_pop(stack)); */
       vec_pop(stack);
     }
   }
@@ -351,9 +355,6 @@ static void violate(Vector *stack)
 
 static void exit_ltl_model_checking()
 {
-/*   if (lmn_env.ltl_nd) { */
-/*     dump_state_transition_graph(init_state, stdout); */
-/*   } */
   exit(0);
 }
 
@@ -418,19 +419,22 @@ static void do_mc(StateSpace states, LmnMembrane *world_mem)
   /* LTLモデル検査 */
   set_fst(initial_state);
   ltl_search1(states, stack);
-  fprintf(stdout, "no cycles found\n");
-  fprintf(stdout, "\n");
-
-  if (lmn_env.ltl_nd){
-    dump_all_state_mem(states, stdout);
-    dump_state_transition_graph(states, stdout);
-    dump_state_name(states, stdout);
-  }
-  fprintf(stdout, "# of States = %lu\n", state_space_num(states));
 
   if (lmn_env.profile_level > 0) {
     status_nd_finish_running();
     status_state_space(states);
+  }
+
+  if (lmn_env.dump) {
+    fprintf(stdout, "no cycles found\n");
+    fprintf(stdout, "\n");
+
+    if (lmn_env.ltl_nd){
+      dump_all_state_mem(states, stdout);
+      dump_state_transition_graph(states, stdout);
+      dump_state_name(states, stdout);
+    }
+    fprintf(stdout, "# of States = %lu\n", state_space_num(states));
   }
 
   vec_free(stack);
