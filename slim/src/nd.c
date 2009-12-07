@@ -263,6 +263,83 @@ static void nd_loop(StateSpace states, State *init_state, BOOL dump) {
   vec_free(stack);
 }
 
+/*
+ * nondeterministic execution
+ * 幅優先で全実行経路を取得する
+ * [yueno] base r315
+ */
+static void nd_loop_bfs(StateSpace states, State *init_state, BOOL dump) {
+  Vector *primary, *secondary, *swap;
+  unsigned long i, n, depth;
+
+  primary = vec_make(2048);
+  secondary = vec_make(2048);
+  vec_push(primary, (LmnWord)init_state);
+  depth = 0;
+
+  while(TRUE) {
+    ++depth;
+    while (vec_num(primary) != 0) {
+      /* 展開元の状態をpop */
+      State *s = (State *)vec_pop(primary);
+      Vector *new_states;
+
+  #ifdef PROFILE
+        status_nd_pop_stack();
+  #endif
+
+      if (is_expanded(s)) {
+        /* 状態が展開済みである場合，展開しない */
+        continue;
+      }
+      set_expanded(s); /* sに展開済みフラグを立てる */
+
+      /* サクセッサを展開 */
+      new_states = nd_expand(states, s, DEFAULT_STATE_ID);
+
+      if (dump) { /* 状態の出力 */
+        n = vec_num(new_states);
+        for (i = 0; i < n; i++) {
+          dump_state_data((State *)vec_get(new_states, i));
+        }
+      }
+
+      n = state_succ_num(s);
+      for (i = 0; i < n; i++) {
+        State *succ = state_succ_get(s, i);
+
+        vec_push(secondary, (vec_data_t)succ);
+
+  #ifdef PROFILE
+        status_nd_push_stack();
+  #endif
+
+        if (lmn_env.compact_stack && ((i + 1) < n)) {
+          /* メモリ最適化のために、サクセッサの作成後に膜を解放する */
+          /* ただし, 最後にスタックに積まれた状態は直後にデコードされるため解放しない */
+          state_free_mem(succ);
+        }
+      }
+
+      vec_free(new_states);
+
+      /* 展開済みになった状態の膜を解放する */
+      state_free_mem(s);
+    }
+
+    if (lmn_env.bfs_depth == depth) break; /* BFS終了条件 */
+    if (vec_num(secondary) == 0) break;
+
+    /* swap states Vectors */
+    swap = primary;
+    primary = secondary;
+    secondary = swap;
+  }
+
+  vec_free(primary);
+  vec_free(secondary);
+}
+
 /* 非決定実行を行う */
 void run_nd(Vector *start_rulesets)
 {
@@ -335,7 +412,11 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
   /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
 /*   else{ */
   dump_state_data(initial_state);
-  nd_loop(states, initial_state, dump);
+  if (lmn_env.bfs) {
+    nd_loop_bfs(states, initial_state, dump);
+  } else {
+    nd_loop(states, initial_state, dump);
+  }
 /*   } */
 
   if (lmn_env.profile_level > 0) {

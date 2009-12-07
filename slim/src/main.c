@@ -122,6 +122,8 @@ static int parse_options(int argc, char *argv[])
     {"translate", 0, 0, 1013},
     {"ltl_nd", 0, 0, 1014},
     {"por", 0, 0, 1015},
+    {"bfs", 0, 0, 1500},
+    {"bfs_depth", 1, 0, 1501},
     {"mem-enc", 0, 0, 2000},
     {"compact-stack", 0, 0, 2001},
     {"no_dump", 0,0, 5000},
@@ -210,6 +212,12 @@ static int parse_options(int argc, char *argv[])
       break;
     case 1015:
       lmn_env.por = TRUE;
+    case 1500:
+      lmn_env.bfs = TRUE;
+      break;
+    case 1501:
+      lmn_env.bfs = TRUE;
+      lmn_env.bfs_depth = atoi(optarg);
       break;
     case 2000:
       lmn_env.mem_enc = TRUE;
@@ -273,6 +281,8 @@ static void init_env(void)
   lmn_env.automata_file = NULL;
   lmn_env.propositional_symbol = NULL;
   lmn_env.ltl_exp = NULL;
+  lmn_env.bfs = FALSE;
+  lmn_env.bfs_depth = 0;
   lmn_env.mem_enc = FALSE;
   lmn_env.compact_stack = FALSE;
   lmn_env.dump = TRUE;
