@@ -124,6 +124,7 @@ static int parse_options(int argc, char *argv[])
     {"por", 0, 0, 1015},
     {"bfs", 0, 0, 1500},
     {"bfs_depth", 1, 0, 1501},
+    {"bfs_final", 0, 0, 1502},
     {"mem-enc", 0, 0, 2000},
     {"compact-stack", 0, 0, 2001},
     {"no_dump", 0,0, 5000},
@@ -219,6 +220,10 @@ static int parse_options(int argc, char *argv[])
       lmn_env.bfs = TRUE;
       lmn_env.bfs_depth = atoi(optarg);
       break;
+    case 1502:
+      lmn_env.bfs = TRUE;
+      lmn_env.bfs_final = TRUE;
+      break;
     case 2000:
       lmn_env.mem_enc = TRUE;
       break;
@@ -283,6 +288,8 @@ static void init_env(void)
   lmn_env.ltl_exp = NULL;
   lmn_env.bfs = FALSE;
   lmn_env.bfs_depth = 0;
+  lmn_env.bfs_final = FALSE;
+  lmn_env.bfs_has_final = FALSE;
   lmn_env.mem_enc = FALSE;
   lmn_env.compact_stack = FALSE;
   lmn_env.dump = TRUE;

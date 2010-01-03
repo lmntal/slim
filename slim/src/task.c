@@ -504,6 +504,31 @@ BOOL react_all_rulesets(struct ReactCxt *rc,
   return ok;
 }
 
+/* cur_memと、その子孫膜に存在するルールすべてに対して、ルール適用されるかを判定する
+ * [yueno] for nd_loop_bfs()
+ */
+BOOL matching_all_rulesets(struct ReactCxt *rc,
+                        LmnMembrane *cur_mem)
+{
+  unsigned int i;
+  struct Vector rulesets = cur_mem->rulesets; /* 本膜のルールセットの集合 */
+
+  for (i = 0; i < vec_num(&rulesets); i++) {
+    if(lmn_react_ruleset(rc, cur_mem,
+                                 (LmnRuleSet)vec_get(&rulesets, i))) {
+      return TRUE;
+    }
+  }
+#ifdef OLD
+  /* 通常のルールセットが適用できなかった場合 */
+  /* システムルールセットの適用 */
+  if (lmn_react_ruleset(rc, cur_mem, system_ruleset)) {
+    return TRUE;
+  }
+#endif
+  return FALSE;
+}
+
 /* ルールセットrsをmem以下のすべての膜内で適用する */
 static BOOL react_ruleset_in_all_mem(struct ReactCxt *rc, LmnRuleSet rs, LmnMembrane *mem)
 {

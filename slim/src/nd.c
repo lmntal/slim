@@ -199,6 +199,37 @@ static BOOL expand_inner(struct ReactCxt *rc,
 }
 
 /*
+ * 最終状態判定のためのマッチングを行う
+ * 引数として与えられた膜と、その膜に所属する全てのアクティブ膜に対して
+ * ルール適用検査を行う
+ * 子膜からルール適用を行っていく
+ * [yueno] for nd_loop_bfs()
+ */
+static BOOL matching_inner(struct ReactCxt *rc,
+                         LmnMembrane *cur_mem)
+{
+  for (; cur_mem; cur_mem = cur_mem->next) {
+    unsigned long org_num = vec_num(RC_EXPANDED(rc));
+
+    /* 代表子膜に対して再帰する */
+    if (matching_inner(rc, cur_mem->child_head)) {
+      return TRUE;
+    }
+
+    if (lmn_mem_is_active(cur_mem) && matching_all_rulesets(rc, cur_mem)) {
+      return TRUE;
+    }
+
+    if (org_num == vec_num(RC_EXPANDED(rc))) {
+      /* 状態が一つも生成されなかった */
+      lmn_mem_set_active(cur_mem, FALSE);
+    }
+  }
+
+  return FALSE;
+}
+
+/*
  * nondeterministic execution
  * 深さ優先で全実行経路を取得する
  */
@@ -308,6 +339,34 @@ static void nd_loop_bfs(StateSpace states, State *init_state, BOOL dump) {
       for (i = 0; i < n; i++) {
         State *succ = state_succ_get(s, i);
 
+        if (lmn_env.bfs_final && !lmn_env.bfs_has_final) {
+          /* 最終状態判定のために次状態のマッチングを行う */
+          /* TODO: nd_expand内でTransition登録する前に行うべきか */
+
+          struct ReactCxt rc;
+          LmnMembrane *mem;
+          Vector *expanded_roots;
+
+          mem = state_mem(succ);
+          if (!mem) {
+            mem = lmn_binstr_decode(state_mem_binstr(succ));
+          }
+          nd_react_cxt_init(&rc, DEFAULT_STATE_ID);
+          RC_SET_GROOT_MEM(&rc, mem);
+          matching_inner(&rc, mem);
+          expanded_roots = RC_EXPANDED(&rc);
+          if (vec_num(expanded_roots) == 0) {
+            /* マッチングが行われなければ、最終状態 */
+            lmn_env.bfs_has_final = TRUE;
+          }
+          nd_react_cxt_destroy(&rc);
+
+          if (!state_mem(succ)) {
+            lmn_mem_drop(mem);
+            lmn_mem_free(mem);
+          }
+        }
+
         vec_push(secondary, (vec_data_t)succ);
 
   #ifdef PROFILE
@@ -327,8 +386,10 @@ static void nd_loop_bfs(StateSpace states, State *init_state, BOOL dump) {
       state_free_mem(s);
     }
 
-    if (lmn_env.bfs_depth == depth) break; /* BFS終了条件 */
-    if (vec_num(secondary) == 0) break;
+    /* BFS終了条件 */
+    if (lmn_env.bfs_final && lmn_env.bfs_has_final) break; /* 最終状態到達 */
+    if (lmn_env.bfs_depth == depth) break;    /* 指定の深さ到達 */
+    if (vec_num(secondary) == 0) break;       /* 展開状態がない */
 
     /* swap states Vectors */
     swap = primary;

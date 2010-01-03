@@ -221,6 +221,8 @@ struct LmnEnv {
   char *ltl_exp;
   BOOL bfs;
   int bfs_depth;
+  BOOL bfs_final;
+  BOOL bfs_has_final;
   BOOL mem_enc;
   BOOL compact_stack;
   BOOL dump;
