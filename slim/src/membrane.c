@@ -980,13 +980,13 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, Pr
         if (LMN_ATTR_IS_DATA(attr)) {
           LmnAtom newargatom = lmn_copy_data_atom(a, attr);
           newlink_symbol_and_something(newatom, i, newargatom, attr);
+          lmn_mem_push_atom(destmem, a, attr);
         } else if(proc_tbl_get_by_atom(atoms, LMN_SATOM(a), &t)) {
           newlink_symbol_and_something(newatom, i, LMN_ATOM(t), attr);
         }
       }
         }));
   }
-  destmem->atom_num = srcmem->atom_num;
 
   /* copy activated flag */
   destmem->is_activated = srcmem->is_activated; /* MC */
