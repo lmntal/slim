@@ -61,6 +61,10 @@
 /* #include "ext.h" */
 #include "runtime_status.h"
 
+#ifdef USE_JNI
+#include "jni_lmntal.h"
+#endif
+
 void install_builtin_extensions(void);
 void init_builtin_extensions(void); /* ext/init_exts.c */
 
@@ -122,6 +126,7 @@ static int parse_options(int argc, char *argv[])
     {"translate", 0, 0, 1013},
     {"ltl_nd", 0, 0, 1014},
     {"por", 0, 0, 1015},
+    {"interactive", 0, 0, 1400},
     {"bfs", 0, 0, 1500},
     {"bfs_depth", 1, 0, 1501},
     {"bfs_final", 0, 0, 1502},
@@ -213,6 +218,14 @@ static int parse_options(int argc, char *argv[])
       break;
     case 1015:
       lmn_env.por = TRUE;
+    case 1400: /* jni interactive mode */
+#ifdef USE_JNI
+      lmn_env.interactive = TRUE;
+#else
+      printf("Sorry, the interactive mode is disabled.\n");
+      printf("Check the --enable-jni option at configure.\n");
+#endif
+      break;
     case 1500:
       lmn_env.bfs = TRUE;
       break;
@@ -294,6 +307,16 @@ static void init_env(void)
   lmn_env.compact_stack = FALSE;
   lmn_env.dump = TRUE;
   lmn_env.benchmark = FALSE;
+#ifdef USE_JNI
+  /* only jni-interactive mode */
+  lmn_env.interactive = FALSE;
+  lmn_env.normal_remain = FALSE;
+  lmn_env.normal_remaining = FALSE;
+  lmn_env.normal_cleaning = FALSE;
+  lmn_env.nd_remain = FALSE;
+  lmn_env.nd_remaining = FALSE;
+  lmn_env.nd_cleaning = FALSE;
+#endif
 }
 
 void init_default_system_ruleset();
@@ -432,6 +455,11 @@ int main(int argc, char *argv[])
     }
 
     vec_free(start_rulesets);
+#ifdef USE_JNI
+  } else if (lmn_env.interactive) {
+  // no file, but requested interactive mode
+  run_jni_interactive();
+#endif
   } else {
     fprintf(stderr, "no input file\n");
     exit(1);

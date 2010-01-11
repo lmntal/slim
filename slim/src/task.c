@@ -588,6 +588,65 @@ void lmn_run(Vector *start_rulesets)
   mem_react_cxt_destroy(&mrc);
 }
 
+#ifdef USE_JNI
+/**
+ * インタラクティブ用処理を考慮したの通常実行を行う
+ * ※局所変数をstaticに変えただけなので、それがゆるされるならば通常実行に利用できる
+ * @see task.c : void lmn_run(Vector *start_rulesets)
+ *
+ * 処理フロー[yueno]
+ * 1. 後始末     normal_cleaningフラグがたっている時
+ * 2. 初期化     !(normal_remainモード時 && normal_remaining=ON) 時
+ * 3. 処理       常に行う
+ * 4. 後始末     通常モード時
+ * 5. 継続フラグ 通常モードならON、normal_remainモードならOFFにセットする
+ */
+void lmn_run_for_jni(Vector *start_rulesets)
+{
+  static LmnMembrane *mem;
+  static struct ReactCxt mrc;
+
+  /* normal_cleaningフラグがONの場合は後始末 */
+  if (lmn_env.normal_cleaning) {
+    lmn_mem_drop(mem);
+    lmn_mem_free(mem);
+    mem_react_cxt_destroy(&mrc);
+    lmn_env.normal_cleaning = FALSE;
+  }
+
+  /* (normal_remain時でnormal_remaining=ON)以外の場合は初期化 */
+  if (!(lmn_env.normal_remain && lmn_env.normal_remaining)) {
+    mem_react_cxt_init(&mrc);
+    mem = lmn_mem_make();
+    RC_SET_GROOT_MEM(&mrc, mem);
+  }
+
+  /* 処理は常に行う */
+  lmn_memstack_push(RC_MEMSTACK(&mrc), mem);
+
+  if(lmn_env.trace && lmn_env.profile_level >= 2) {
+    fprintf(stdout, "  %6s|%6s|%6s|%6s\n", " Name", " Apply", " Trial", " BackTrack");
+  }
+  react_start_rulesets(mem, start_rulesets);
+
+  lmn_memstack_reconstruct(RC_MEMSTACK(&mrc), mem);
+  /* for tracer */
+  mem_oriented_loop(&mrc, mem);
+
+  lmn_dump_cell_stdout(mem);
+
+  /* 後始末 */
+  if (!lmn_env.normal_remain) {
+    lmn_mem_drop(mem);
+    lmn_mem_free(mem);
+    mem_react_cxt_destroy(&mrc);
+    lmn_env.normal_remaining = FALSE;
+  } else {
+    lmn_env.normal_remaining = TRUE;
+  }
+}
+#endif /* END of USE_JNI */
+
 /* Utility for reading data */
 
 #define READ_DATA_ATOM(dest, attr)              \

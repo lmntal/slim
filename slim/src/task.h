@@ -64,4 +64,7 @@ LMN_EXTERN void lmn_react_systemruleset(struct ReactCxt *rc, LmnMembrane *mem);
 BOOL react_all_rulesets(struct ReactCxt *rc, LmnMembrane *cur_mem);
 BOOL matching_all_rulesets(struct ReactCxt *rc, LmnMembrane *cur_mem);
 
+#ifdef USE_JNI
+void lmn_run_for_jni(Vector *start_rulesets);
+#endif
 #endif

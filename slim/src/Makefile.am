@@ -39,6 +39,13 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_po
 	visitlog.h visitlog.c
 #	ext.h ext.c 
 
+if TEST_JNI
+slim_SOURCES += jni_lmntal.h jni_lmntal.c
+slim_LDADD += -ljvm
+slim_LDFLAGS += -L.
+slim_DEPENDENCIES = ../libjvm.a
+endif
+
 EXTRA_DIST := $(PARSER_SOURCE) $(PARSER_HEADER)
 DISTCLEANFILES := arch.h ../lib/config.lmn
 

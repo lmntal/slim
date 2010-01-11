@@ -12,7 +12,7 @@ AM_INIT_AUTOMAKE
 
 # ----------------------------------------------------------------------
 # Checks for programs.
-# 
+#
 
 AC_LANG(C)
 AC_PROG_CC_STDC
@@ -74,6 +74,17 @@ else
   AC_MSG_RESULT(enable profile: no)
 fi
 
+# jni interactive mode flag
+AC_ARG_ENABLE(jni,
+[  --enable-jni              turn on using jni interactive mode [[default no]]])
+
+if test "$enable_jni" = "yes"; then
+  AC_MSG_RESULT(enable jni: yes)
+  AC_DEFINE([USE_JNI],,[elable jni])
+else
+  AC_MSG_RESULT(enable jni: no)
+fi
+
 AM_WITH_DMALLOC
 
 # ----------------------------------------------------------------------
@@ -115,7 +126,7 @@ AC_CHECK_SIZEOF(void*)
 
 # ----------------------------------------------------------------------
 # for SLIM
-# 
+#
 
 SLIM_VERSION=$PACKAGE_VERSION
 AC_SUBST(SLIM_VERSION)
@@ -140,6 +151,21 @@ dnl AC_CHECK_HEADERS(pty.h util.h libutil.h sys/loadavg.h)
 
 # Checks for library functions.
 AC_CHECK_FUNC([strchr])
+
+# Checks for JNI interactive mode
+dnl Checks for type __int64
+dnl Defines HAVE___INT64 on success.
+AC_DEFUN([AC_TYPE___INT64],
+[AC_CACHE_CHECK([for type __int64], ac_cv_type___int64,
+                [AC_TRY_COMPILE([], [__int64 i;],
+                [ac_cv_type___int64=yes],
+                [ac_cv_type___int64=no])])
+if test $ac_cv_type___int64 = yes; then
+  AC_DEFINE([HAVE___INT64],[1],[Define to 1 if the system has the type `__int64'.])
+fi])
+AC_TYPE___INT64
+AM_CONDITIONAL(TEST_JNI, test "$enable_jni" = "yes")
+
 
 # ----------------------------------------------------------------------
 # Create output files

@@ -227,6 +227,16 @@ struct LmnEnv {
   BOOL compact_stack;
   BOOL dump;
   BOOL benchmark;
+#ifdef USE_JNI
+  /* only jni-interactive mode*/
+  BOOL interactive;
+  BOOL normal_remain;
+  BOOL normal_remaining;
+  BOOL normal_cleaning;
+  BOOL nd_remain;
+  BOOL nd_remaining;
+  BOOL nd_cleaning;
+#endif
 };
 
 extern struct LmnEnv  lmn_env;

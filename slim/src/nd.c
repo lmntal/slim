@@ -440,6 +440,69 @@ void run_nd(Vector *start_rulesets)
   free_por_vars();
 }
 
+
+#ifdef USE_JNI
+/**
+ * インタラクティブ用の処理が含まれる非決定実行を行う
+ * memをstaticにしただけなので、それが許されるならば通常使用に適用可能
+ * @see nd.c : void run_nd(Vector *start_rulesets)
+ */
+void run_nd_for_jni(Vector *start_rulesets)
+{
+  static LmnMembrane *mem;
+  StateSpace states;
+
+  /**
+   * initialize containers
+   */
+  init_por_vars();
+
+  /* nd_cleaning状態の場合は、グローバルルート膜の解放を行う */
+  if (lmn_env.nd_cleaning) {
+    lmn_mem_drop(mem);
+    lmn_mem_free(mem);
+    lmn_env.nd_cleaning = FALSE;
+  }
+
+  /* nd_remainモード時で、nd_remaining=ON時は実行しない */
+  if (!(lmn_env.nd_remain && lmn_env.nd_remaining)) {
+    /* make global root membrane */
+    mem = lmn_mem_make();
+  }
+
+  react_start_rulesets(mem, start_rulesets);
+  activate_ancestors(mem);
+
+  if (lmn_env.dump) {
+    fprintf(stdout, "States\n");
+  }
+
+  states = do_nd_dump(mem);
+
+  if (lmn_env.profile_level > 0) {
+    status_state_space(states);
+  }
+
+  fprintf(stdout, "\n");
+
+  dump_state_transition_graph(states, stdout);
+  fprintf(stdout, "# of States = %lu\n", state_space_num(states));
+
+  /* 後始末 */
+  if (!lmn_env.nd_remain) {
+    lmn_mem_drop(mem);
+    lmn_mem_free(mem);
+    lmn_env.nd_remaining = FALSE;
+  } else {
+    lmn_env.nd_remaining = TRUE;
+  }
+  state_space_free(states);
+
+  /* finalize */
+  free_por_vars();
+}
+#endif /* END of USE_JNI */
+
 StateSpace do_nd(LmnMembrane *world_mem_org)
 {
   return do_nd_sub(world_mem_org, FALSE);

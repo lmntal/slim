@@ -69,4 +69,8 @@ void run_nd(Vector *start_rulesets);
 StateSpace do_nd(LmnMembrane *world_mem);
 StateSpace do_nd_dump(LmnMembrane *world_mem_org);
 
+#ifdef USE_JNI
+void run_nd_for_jni(Vector *start_rulesets);
+#endif
+
 #endif
