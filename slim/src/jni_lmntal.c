@@ -17,6 +17,8 @@
 #define JNI_OPTION_JAVA_CLASS_PATH "-Djava.class.path="
 #define JNI_OPTION_LMNTAL_HOME     "-DLMNTAL_HOME="
 
+#define JNI_LMNTAL_COMPILATION_FAILED "Compilation Failed"
+
 static struct JniContextLmntal jc_lmntal;
 static JNIEnv *env;
 static JavaVM *jvm;
@@ -183,12 +185,7 @@ static BOOL jni_initialize_lmntal()
 	// TODO: cygwin以外での動作確認
 
 	/* -Djava.class.pathオプション */
-	arg = LMN_CALLOC(
-		char,
-		 + strlen(lmntal_home)
-		 + strlen(JNI_LMNTAL_JAR_REL_PATH)
-		 + 3
-	);
+	arg = LMN_CALLOC(char, strlen(lmntal_home)+strlen(JNI_LMNTAL_JAR_REL_PATH)+2+1);
 	sprintf(arg, "%s%s%s", lmntal_home, JNI_LMNTAL_JAR_REL_PATH, ":.");
 #ifdef __CYGWIN__
 	path = run_cygpath("-wp", arg);
@@ -275,30 +272,39 @@ static void jni_finalize_lmntal() {
 
 static BOOL jni_lmntal_compile(char **result, const char *code)
 {
-	/**
-	 * ■lmntal処理系を実行する
-	 */
-	jstring line = (*env)->NewStringUTF(env, code); // lmntalコードのString型
-	jobject stringReader = (*env)->NewObject(env, jc_lmntal.c_StringReader, jc_lmntal.m_StringReader_constructor, line); // String to StringReader
-	(*env)->CallStaticObjectMethod(env, jc_lmntal.c_FrontEnd, jc_lmntal.m_FrontEnd_run, stringReader); // run
+  /**
+   * ■lmntal処理系を実行する
+   */
+  jstring line = (*env)->NewStringUTF(env, code); // lmntalコードのString型
+  jobject stringReader = (*env)->NewObject(env, jc_lmntal.c_StringReader, jc_lmntal.m_StringReader_constructor, line); // String to StringReader
+  (*env)->CallStaticObjectMethod(env, jc_lmntal.c_FrontEnd, jc_lmntal.m_FrontEnd_run, stringReader); // run
 
-	jstring slimcode = (*env)->CallObjectMethod(env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_toString);
-	(*env)->CallObjectMethod(env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_reset);
-	const char *r = (*env)->GetStringUTFChars(env, slimcode, NULL);
-	*result = (char*)LMN_CALLOC(char, strlen(r)+1);
-	strcpy(*result, r);
-	//printf("\n--code--\n%s\n--code--\n",r);
-	(*env)->ReleaseStringUTFChars(env, slimcode, r);
+  /* get compiled slimcode from pseudo output */
+  jstring slimcode = (*env)->CallObjectMethod(env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_toString);
+  (*env)->CallObjectMethod(env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_reset);
+  const char *r = (*env)->GetStringUTFChars(env, slimcode, NULL);
+  *result = (char*)LMN_CALLOC(char, strlen(r)+1);
+  strcpy(*result, r);
+  (*env)->ReleaseStringUTFChars(env, slimcode, r);
 
-	return TRUE;
+  /* processing Compilation Errors [1] */
+  jint nErrors = (*env)->GetStaticIntField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_nErrors);
+  if (nErrors > 0) {
+    printf("Compilation Failed\n\n");
+    return FALSE;
+  }
+
+  /* processing Compilation Errors [2] */
+  if (strncmp(*result, JNI_LMNTAL_COMPILATION_FAILED, strlen(JNI_LMNTAL_COMPILATION_FAILED)) == 0) {
+    printf("Compilation Failed\n\n");
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 static void _run(FILE **fp)
 {
-
-	//jint nErrors = (*env)->GetStaticIntField(env, jni_env.c_Env, jni_env.f_Env_nErrors);
-	//printf("nErrors=%d\n", nErrors);
-
 	Vector *start_rulesets = vec_make(2);
 	LmnRuleSet t = load(*fp);
 
