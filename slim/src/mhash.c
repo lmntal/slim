@@ -38,7 +38,7 @@
 #define MUL_0 41
 #define MEM_ADD_0 3412
 #define MEM_MUL_0 3412
-#define CALUCULATING_MEM 1
+#define CALCULATING_MEM 1
 #define DEPTH 2
 
 typedef unsigned long hash_t;
@@ -124,7 +124,7 @@ static inline hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context c
   hash_t u;
   hash_t hash;
 
-  if (mem == calc_mem) return CALUCULATING_MEM;
+  if (mem == calc_mem) return CALCULATING_MEM;
   if (calculated_mem_hash(ctx, mem, &t)) return (hash_t)t;
 
 /*   printf("mem atom num = %d\n", mem->atom_num); */
