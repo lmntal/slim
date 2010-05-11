@@ -41,7 +41,7 @@
 #define LMN_MEMSTACK_H
 
 
-#include "vector.h"
+#include "../vector.h"
 #include "../react_context.h"
 
 struct MemReactCxtData {

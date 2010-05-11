@@ -46,7 +46,7 @@
 #define LMN_PORT_H
 
 #include "../lmntal.h"
-#include "../slim_header/string.h"
+#include "string.h"
 
 struct LmnPort {
   LMN_SP_ATOM_HEADER;
