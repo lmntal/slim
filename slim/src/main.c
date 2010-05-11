@@ -132,6 +132,7 @@ static int parse_options(int argc, char *argv[])
     {"bfs_final", 0, 0, 1502},
     {"mem-enc", 0, 0, 2000},
     {"compact-stack", 0, 0, 2001},
+    {"opt-hash", 0, 0, 2003},
     {"no_dump", 0,0, 5000},
     {"benchmark_dump", 0, 0, 5001},
     {0, 0, 0, 0}
@@ -243,6 +244,9 @@ static int parse_options(int argc, char *argv[])
     case 2001:
       lmn_env.compact_stack = TRUE;
       break;
+    case 2003:
+      lmn_env.optimize_hash_value = TRUE;
+      break;
     case 5000: /* 状態遷移グラフのdumpをしない */
       lmn_env.dump = FALSE;
       break;
@@ -305,6 +309,7 @@ static void init_env(void)
   lmn_env.bfs_has_final = FALSE;
   lmn_env.mem_enc = FALSE;
   lmn_env.compact_stack = FALSE;
+  lmn_env.optimize_hash_value = FALSE;
   lmn_env.dump = TRUE;
   lmn_env.benchmark = FALSE;
 #ifdef USE_JNI

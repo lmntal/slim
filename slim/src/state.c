@@ -208,7 +208,7 @@ State *state_space_insert(StateSpace states, State *s)
       st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
       s->id = states->next_id++;
 
-      if (col >= MEM_EQ_FAIL_THRESHOLD) {
+      if (lmn_env.optimize_hash_value && col >= MEM_EQ_FAIL_THRESHOLD) {
         state_space_add_memid_hash(states, s->hash);
       } else if (!lmn_env.mem_enc) {
         /* 状態の追加時に膜のダンプを計算する */
@@ -256,11 +256,11 @@ void dump_state_transition_graph(StateSpace states, FILE *file)
 {
   Vector *v;
   unsigned int i;
-  
+
   if (!lmn_env.dump) return;
 
   v = sort_states(states);
-  
+
   fprintf(file, "Transitions\n");
   fprintf(file, "init:%lu\n", state_space_init_state(states)->id);
   for (i = 0; i < vec_num(v); i++) {
@@ -341,7 +341,7 @@ State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule) {
   new->mem_dump = NULL;
   new->hash = 0;
   new->mem_id_hash = 0;
-  
+
   if (lmn_env.mem_enc) {
     new->mem_id = lmn_mem_encode(mem);
     new->mem_id_hash = binstr_hash(new->mem_id);
@@ -370,7 +370,7 @@ State *state_make_for_nd(LmnMembrane *mem, LmnRule rule) {
  */
 void state_free(State *s) {
   int i;
-  
+
 #ifdef PROFILE
   status_start_state_free();
 #endif

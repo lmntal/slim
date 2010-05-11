@@ -225,6 +225,7 @@ struct LmnEnv {
   BOOL bfs_has_final;
   BOOL mem_enc;
   BOOL compact_stack;
+  BOOL optimize_hash_value;
   BOOL dump;
   BOOL benchmark;
 #ifdef USE_JNI
