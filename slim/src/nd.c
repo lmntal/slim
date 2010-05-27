@@ -535,7 +535,9 @@ static StateSpace do_nd_sub(LmnMembrane *world_mem_org, BOOL dump)
 /*   } */
   /* --ndの実行（非決定実行後に状態遷移グラフを出力する） */
 /*   else{ */
-  dump_state_data(initial_state);
+  if (dump) {
+    dump_state_data(initial_state);
+  }
   if (lmn_env.bfs) {
     nd_loop_bfs(states, initial_state, dump);
   } else {
