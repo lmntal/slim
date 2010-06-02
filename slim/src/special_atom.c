@@ -78,7 +78,7 @@ int lmn_sp_atom_register(const char *name,
 
 struct SpecialAtomCallback *sp_atom_get_callback(int id)
 {
-  LMN_ASSERT(vec_num(sp_atom_get_callback) > id);
+  LMN_ASSERT(vec_num(sp_atom_callback_tbl) > id);
   return (struct SpecialAtomCallback *)vec_get(sp_atom_callback_tbl, id);
 }
 
