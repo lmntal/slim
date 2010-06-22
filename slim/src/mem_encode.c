@@ -75,6 +75,9 @@
  *   tag: 0101
  *   ruleset num: 2 byte
  *   ruleset ids
+ * rule sets (has uniq rule):
+ *   tap: 0110
+ *   rulesets vec pointer: 4 byte
  * int atom:
  *   tag: 1100
  * double atom:
@@ -108,6 +111,7 @@
 #define TAG_FROM             0x7
 #define TAG_RULESET1         0x8
 #define TAG_RULESET          0x9
+#define TAG_RULESETS_VEC     0xa
 #define TAG_INT_DATA         0xc
 #define TAG_DBL_DATA         0xd
 
@@ -120,6 +124,7 @@
 #define BS_MEM_NAME_SIZE (sizeof(lmn_interned_str) * 2)
 #define BS_RULESET_SIZE 4
 #define BS_RULESET_NUM_SIZE 4
+#define BS_RULESETS_VEC_SIZE 8
 #define BS_DBL_SIZE (sizeof(double) * 2)
 
 typedef struct BinStr *BinStr;
@@ -423,6 +428,15 @@ static inline long binstr_get_ruleset(BYTE *bs, int pos)
 #endif
 }
 
+static inline long binstr_get_rulesets_vec(BYTE *bs, int pos)
+{
+  if (BS_RULESETS_VEC_SIZE == 8) {
+    return binstr_get_uint32(bs, pos);
+  } else {
+    lmn_fatal("implementation error");
+  }
+}
+
 /* start以降を指すポインタをすべて無効にする */
 static void binstr_invalidate_ptrs(struct BinStr *p, int start)
 {
@@ -577,6 +591,19 @@ static void binstr_dump(BYTE *bs, int len)
         for (j = 0; j < n; j++) {
           rs_id = binstr_get_ruleset(bs, pos);
           pos += BS_RULESET_SIZE;
+          printf("@%d", rs_id);
+        }
+      }
+      break;
+    case TAG_RULESETS_VEC:
+      {
+        int j, n, rs_id;
+
+        Vector *rulesets = (Vector *)binstr_get_rulesets_vec(bs, pos);
+        pos += BS_RULESETS_VEC_SIZE;
+        n = vec_num(rulesets);
+        for (j = 0; j < n; j++) {
+          rs_id = lmn_ruleset_get_id((LmnRuleSet)vec_get(rulesets, j));
           printf("@%d", rs_id);
         }
       }
@@ -785,6 +812,16 @@ static inline int bsptr_push_ruleset(BinStrPtr p, LmnRuleSet rs)
 
   id = lmn_ruleset_get_id(rs);
   return bsptr_push(p, (BYTE*)&id, BS_RULESET_SIZE);
+}
+
+static inline int bsptr_push_rulesets_vec(BinStrPtr p, Vector *rulesets)
+{
+  return bsptr_push(p, (BYTE*)&rulesets, BS_RULESETS_VEC_SIZE);
+}
+
+static inline int bsptr_push_start_rulesets_vec(BinStrPtr p, int n)
+{
+  return bsptr_push1(p, TAG_RULESETS_VEC);
 }
 
 /*----------------------------------------------------------------------
@@ -1126,13 +1163,33 @@ static void write_rulesets(LmnMembrane *mem, BinStrPtr bsp)
   int i, n;
 
   /* ルールセットがルールセットIDでソートされていることに基づいたコード */
-  /* uniqルールがndで実装されると、ここは書き換えなければならない */
+
   n = lmn_mem_ruleset_num(mem);
   if (n == 0) return;
-  bsptr_push_start_rulesets(bsp, n);
 
+  BOOL u = FALSE;
   for (i = 0; i < n; i++) {
-    bsptr_push_ruleset(bsp, lmn_mem_get_ruleset(mem, i));
+    if (lmn_ruleset_has_uniqrule(lmn_mem_get_ruleset(mem, i)))
+      u = TRUE;
+    break;
+  }
+  if (!u) {
+    bsptr_push_start_rulesets(bsp, n);
+
+    for (i = 0; i < n; i++) {
+      bsptr_push_ruleset(bsp, lmn_mem_get_ruleset(mem, i));
+    }
+  } else {
+    bsptr_push_start_rulesets_vec(bsp, n);
+
+    Vector *rulesets = vec_make(1);
+    int vn = vec_num(lmn_mem_get_rulesets(mem));
+    for (i = 0; i < vn; i++) {
+      vec_push(rulesets,
+          (LmnWord)lmn_ruleset_copy(lmn_mem_get_ruleset(mem, i)));
+    }
+    bsptr_push_rulesets_vec(bsp, rulesets);
+
   }
 }
 
@@ -1280,7 +1337,15 @@ static int binstr_decode_cell(LmnBinStr bs,
         pos += BS_RULESET_SIZE;
         lmn_mem_add_ruleset(mem, lmn_ruleset_from_id(rs_id));
       }
-        
+    }
+    else if (tag == TAG_RULESETS_VEC) {
+      int j, n;
+      Vector *rulesets = lmn_mem_get_rulesets(mem),
+             *rss      = (Vector *)binstr_get_rulesets_vec(bs->v, pos);
+      n = vec_num(rss);
+      for (j = 0; j < n; j++) {
+        vec_push(rulesets, (LmnWord)lmn_ruleset_copy((LmnRuleSet)vec_get(rss, j)));
+      }
     }
     else {
       if (i == 0) {
@@ -1590,6 +1655,7 @@ static BOOL mem_eq_enc_atom(LmnBinStr bs,
                             VisitLog visitlog);
 static inline BOOL mem_eq_enc_rulesets(LmnBinStr bs, int *i_bs, LmnMembrane *mem);
 static inline BOOL mem_eq_enc_ruleset(LmnBinStr bs, int *i_bs, LmnRuleSet rs);
+static inline BOOL mem_eq_enc_rulesets_vec(LmnBinStr bs, int *i_bs, LmnMembrane *mem);
 static inline BOOL mem_eq_enc_atom_ref(LmnBinStr bs,
                                        int *i_bs,
                                        LmnAtom atom,
@@ -1753,6 +1819,11 @@ static int mem_eq_enc_mols(LmnBinStr bs, int *i_bs, LmnMembrane *mem, void **ref
     case TAG_RULESET:
       {
         if (!mem_eq_enc_rulesets(bs, i_bs, mem)) return FALSE;
+        break;
+      }
+    case TAG_RULESETS_VEC:
+      {
+        if (!mem_eq_enc_rulesets_vec(bs, i_bs, mem)) return FALSE;
         break;
       }
     default:
@@ -1960,6 +2031,17 @@ static inline BOOL mem_eq_enc_ruleset(LmnBinStr bs, int *i_bs, LmnRuleSet rs)
   id = binstr_get_ruleset(bs->v, *i_bs);
   if (id != lmn_ruleset_get_id(rs)) return FALSE;
   (*i_bs) += BS_RULESET_SIZE;
+  return TRUE;
+}
+
+static inline BOOL mem_eq_enc_rulesets_vec(LmnBinStr bs, int *i_bs, LmnMembrane *mem)
+{
+  if (!rulesets_equals((Vector *)binstr_get_rulesets_vec(bs->v, *i_bs),
+                        lmn_mem_get_rulesets(mem)))
+    return FALSE;
+
+  (*i_bs) += BS_RULESETS_VEC_SIZE;
+
   return TRUE;
 }
 

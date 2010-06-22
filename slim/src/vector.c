@@ -175,3 +175,17 @@ LMN_EXTERN void vec_sort(const Vector *vec,
 {
   qsort(vec->tbl, vec->num, sizeof(vec_data_t), compare);
 }
+
+Vector *vec_copy(Vector *vec)
+{
+  int i;
+  Vector *new_vec;
+
+  new_vec = vec_make(vec->num);
+
+  for (i = 0; i < vec_num(vec); i++) {
+    new_vec->tbl[i] = vec->tbl[i];
+  }
+  new_vec->num = vec->num;
+  return new_vec;
+}

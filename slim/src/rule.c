@@ -376,10 +376,13 @@ LmnRule *lmn_ruleset_get_rules(LmnRuleSet ruleset)
 /* rulesetに含まれるruleが持つ履歴の総数を返す */
 int lmn_ruleset_history_num(LmnRuleSet ruleset)
 {
-  int i, n, his_num = 0;
+  int i, n = 0, his_num = 0;
 
-  /* ruleが無い or uniq ruleを持たない場合は0を返す */
-  if (!(n = ruleset->num) || !ruleset->has_uniqrule) return his_num;
+  /* uniq ruleを持たない場合は-1を返す */
+  if (!(ruleset->has_uniqrule)) return -1;
+
+  /* uniq ruleを持つが履歴がまだ無い場合は0を返す */
+  //if (!(n = ruleset->num) || !ruleset->has_uniqrule) return his_num;
 
   LmnRule rule;
   for (i = 0; i < n; i++){
@@ -413,33 +416,111 @@ LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset)
 BOOL ruleset_equals(LmnRuleSet set1, LmnRuleSet set2)
 {
   int i;
-  BOOL result = FALSE;
+  int n1, n2;
+  BOOL t1, t2;
+
+  /* ruleの数が同じであることを確認 */
+  if ((n1 = lmn_ruleset_get_id(set1)) != (n2 = lmn_ruleset_get_id(set2)))
+    return FALSE;
+
+  t1 = lmn_ruleset_has_uniqrule(set1);
+  t2 = lmn_ruleset_has_uniqrule(set2);
+
+  /* 両rulesetが共にuniq ruleを含まない場合は即、等価であると判定 */
+  if (!t1 && !t2) return TRUE;
+
+  /* 片方のrulesetのみがuniq ruleを含む場合は即、等価でないと判定 */
+  if ((t1 && !t2) || (!t1 && t2)) return FALSE;
+
+  /*
+   * 両rulesetが共にuniq ruleを含むことが判明したため、
+   * ruleが持つ履歴表の内容を1対1で比較
+   */
   for (i = 0; i < lmn_ruleset_rule_num(set1); i++) {
     LmnRule rule1 = lmn_ruleset_get_rule(set1, i),
             rule2 = lmn_ruleset_get_rule(set2, i);
-    if (rule1 && rule2) {
-      if (!st_equals(lmn_rule_get_history_tbl(rule1), lmn_rule_get_history_tbl(rule2))){
-        break;
-      }
-    }
-    result = TRUE;
+    st_table *st1 = lmn_rule_get_history_tbl(rule1),
+             *st2 = lmn_rule_get_history_tbl(rule2);
+    if ((st1 && st2) && !st_equals(st1, st2))
+          return FALSE;
+
   }
-  return result;
+  return TRUE;
 }
 
 /* rulesetsにrulesetが含まれているか判定 */
 BOOL rulesets_contains(Vector *rulesets, LmnRuleSet set1)
 {
   int i;
+  int rs1_id = lmn_ruleset_get_id(set1);
   for (i = 0; i < vec_num(rulesets); i++) {
     LmnRuleSet set2 = (LmnRuleSet)vec_get(rulesets, i);
 
     /* 同じrulesetが見つかればTRUEを返す */
-    if (ruleset_equals(set1, set2)) return TRUE;
+    if (rs1_id == lmn_ruleset_get_id(set2))
+      if (ruleset_equals(set1, set2)) return TRUE;
 
   }
   /* 見つからなければFALSE */
   return FALSE;
+}
+
+/* 2つの(Vector *)rulesetsが等価であるか判定 */
+BOOL rulesets_equals(Vector* rulesets1, Vector* rulesets2)
+{
+  int i;
+  int n1, n2;
+  int un1 = 0, un2 = 0;
+  LmnRuleSet rs1, rs2;
+
+  /* rulesetsが持つrulesetの数を比較 */
+  if ((n1 = vec_num(rulesets1)) != (n2 = vec_num(rulesets2)))
+    return FALSE;
+
+  /*
+   * rulesetのidが全て等しいことを確認
+   * (rulesetはidにより昇順にソートされている)
+   */
+  for (i = 0; i < n1; i++) {
+    rs1 = (LmnRuleSet)vec_get(rulesets1, i);
+    rs2 = (LmnRuleSet)vec_get(rulesets2, i);
+
+    /* 異なるidであれば等価ではない */
+    if (lmn_ruleset_get_id(rs1) != lmn_ruleset_get_id(rs2))
+      return FALSE;
+
+    /* rulesetsがuniq ruleを含むrulesetを何個持っているか調べておく */
+    if (lmn_ruleset_has_uniqrule(rs1)) un1++;
+    if (lmn_ruleset_has_uniqrule(rs2)) un2++;
+
+  }
+
+  /* ---uniq制約がある場合の処理 ここから--- */
+
+  /* idが等しい事が判明しているので必要無いけど念のため */
+  if (un1 != un2) return FALSE;
+
+  /*
+   * ここは un1==un2 かつ uniq ruleを持つrulesetがある(hu1>0) の場合に実行され、
+   * 各uniq ruleの履歴表までを同型性判定の範囲に含める
+   */
+  if (un1 > 0) {
+    /* rulesets1 --> rulesets2 */
+    for (i = 0; i < n1; i++) {
+      if (!rulesets_contains(rulesets2, (LmnRuleSet)vec_get(rulesets1, i)))
+        return FALSE;
+    }
+    /* rulesets2 --> rulesets1 */
+    for (i = 0; i < n2; i++) {
+      if (!rulesets_contains(rulesets1, (LmnRuleSet)vec_get(rulesets2, i)))
+        return FALSE;
+    }
+
+  }
+
+  /* ---uniq制約がある場合の処理 ここまで--- */
+
+  return TRUE;
 }
 
 /*----------------------------------------------------------------------

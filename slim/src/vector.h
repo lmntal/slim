@@ -69,5 +69,5 @@ void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 
 LMN_EXTERN void vec_sort(const Vector *vec,
                          int (*compare)(const void*, const void*));
-
+LMN_EXTERN Vector *vec_copy(Vector *vec);
 #endif /* LMN_VECTOR_H */

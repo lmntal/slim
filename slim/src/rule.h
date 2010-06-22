@@ -94,9 +94,10 @@ LMN_EXTERN BOOL lmn_ruleset_is_copy(LmnRuleSet ruleset);
 LMN_EXTERN BOOL lmn_ruleset_has_uniqrule(LmnRuleSet ruleset);
 LMN_EXTERN LmnRule *lmn_ruleset_get_rules(LmnRuleSet ruleset);
 LMN_EXTERN int lmn_ruleset_history_num(LmnRuleSet ruleset);
-LMN_EXTERN LmnRuleSet lmn_ruleset_copy(LmnRuleSet rulset);
+LMN_EXTERN LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset);
 LMN_EXTERN BOOL ruleset_equals(LmnRuleSet set1, LmnRuleSet set2);
 LMN_EXTERN BOOL rulesets_contains(Vector *rulesets, LmnRuleSet set1);
+LMN_EXTERN BOOL rulesets_equals(Vector* rulesets1, Vector* rulesets2);
 
 /*----------------------------------------------------------------------
  * System Rule Set

@@ -127,7 +127,6 @@ inline State *state_succ_get(State *s, unsigned int i);
 Transition transition(State *s, unsigned int i);
 inline void state_restore_mem(State *s);
 inline void state_calc_mem_encode(State *s);
-inline void state_calc_mem_dump(State *s);
 
 Transition transition_make(State *s, lmn_interned_str rule_name);
 void transition_free(Transition t);
