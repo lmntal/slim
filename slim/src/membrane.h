@@ -102,7 +102,7 @@ LMN_EXTERN inline Vector *lmn_mem_get_rulesets(LmnMembrane *mem);
 LMN_EXTERN BOOL lmn_mem_natoms(LmnMembrane *mem, unsigned int count);
 LMN_EXTERN int lmn_mem_atom_num(LmnMembrane *mem);
 LMN_EXTERN AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
-LMN_EXTERN LmnSAtom atomlist_gelmn_mem_get_rulesett_record(AtomListEntry *atomlist, int findatomid);
+LMN_EXTERN LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid);
 LMN_EXTERN void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN inline void lmn_mem_remove_data_atom(LmnMembrane *mem,
                                                 LmnAtom atom,
