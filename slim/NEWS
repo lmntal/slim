@@ -1,3 +1,9 @@
+SLIM (1.1.0)  -- 2010/06/26
+  * Nondeterministic exection
+    * support combination of uniq constraint & canonical membrane representation
+    * support Depth Limited BFS strategy
+  * Bug fixes
+  
 SLIM (1.0.0)  -- 2009/11/18
   * LTL Model Checking
     * support LTL formula
