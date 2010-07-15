@@ -64,10 +64,7 @@
 #include "react_context.h"
 #include "visitlog.h"
 #include <string.h>
-
-#ifdef PROFILE
 #include "runtime_status.h"
-#endif
 
 LmnWord *wt, *wt_t; /* variable vector used in interpret */
 LmnByte *at, *at_t; /* attribute vector */
@@ -206,12 +203,12 @@ inline BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 #ifdef PROFILE
   if(lmn_env.profile_level >= 2) {
     status_finish_rule(rule, result);
-    if(lmn_env.trace) {
+    if(lmn_env.dump && lmn_env.trace) {
       status_rule_output(rule);
     }
   }
 #endif
-  if (lmn_env.trace && result) {
+  if (lmn_env.dump && lmn_env.trace && result) {
     if(trace_num != 0) {
       fprintf(stdout, "---->%s\n", lmn_id_to_name(lmn_rule_get_name(rule)));
     }
@@ -571,16 +568,25 @@ void lmn_run(Vector *start_rulesets)
   RC_SET_GROOT_MEM(&mrc, mem);
   lmn_memstack_push(RC_MEMSTACK(&mrc), mem);
 
-  if(lmn_env.trace && lmn_env.profile_level >= 2) {
+  if(lmn_env.dump && lmn_env.trace && lmn_env.profile_level >= 2) {
     fprintf(stdout, "  %6s|%6s|%6s|%6s\n", " Name", " Apply", " Trial", " BackTrack");
   }
   react_start_rulesets(mem, start_rulesets);
 
   lmn_memstack_reconstruct(RC_MEMSTACK(&mrc), mem);
   /* for tracer */
+  if (lmn_env.profile_level >= 1) {
+    status_simulation_start();
+  }
   mem_oriented_loop(&mrc, mem);
 
-  lmn_dump_cell_stdout(mem);
+  if (lmn_env.profile_level >= 1) {
+    status_simulation_finish();
+  }
+
+  if (lmn_env.dump) {
+    lmn_dump_cell_stdout(mem);
+  }
 
   /* 後始末 */
   lmn_mem_drop(mem);

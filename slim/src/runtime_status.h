@@ -47,6 +47,8 @@
 
 void runtime_status_init(void);
 void runtime_status_finalize(void);
+void status_simulation_start(void);
+void status_simulation_finish(void);
 void status_add_atom_space(unsigned long size);
 void status_remove_atom_space(unsigned long size);
 void status_add_membrane_space(unsigned long size);

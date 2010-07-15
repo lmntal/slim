@@ -125,6 +125,7 @@ struct RuntimeStatus {
   unsigned long total_dfs2_seed_num;
   unsigned long state_num;
   unsigned long transition_num;
+  unsigned long end_state_num;
   unsigned long created_state_num;
   unsigned long created_transition_num;
   unsigned long tmp_state_num;
@@ -184,17 +185,18 @@ void runtime_status_init()
   runtime_status.total_rule_apply_num     = 0;
   runtime_status.total_rule_backtrack_num = 0;
   runtime_status.counter_example_num      = 0;
-  runtime_status.total_dfs2_seed_num        = 0;
+  runtime_status.total_dfs2_seed_num      = 0;
   runtime_status.state_num                = 0;
   runtime_status.created_state_num        = 0;
   runtime_status.created_transition_num   = 0;
+  runtime_status.end_state_num            = 0;
   runtime_status.nd_stack_size            = 0;
   runtime_status.nd_max_stack_size        = 0;
   runtime_status.final_state_space_space  = 0;
   runtime_status.tmp_state_num            = 0;
   runtime_status.final_encode_space       = 0;
   runtime_status.peak_encode_space        = 0;
-  runtime_status.encode_space        = 0;
+  runtime_status.encode_space             = 0;
 }
 
 void runtime_status_finalize()
@@ -212,6 +214,18 @@ void status_finish_running()
 {
   runtime_status.end_cpu_time  = clock();
   runtime_status.end_wall_time = get_wall_time();
+}
+
+void status_simulation_start()
+{
+  runtime_status.nd_start_cpu_time  = clock();
+  runtime_status.nd_start_wall_time = get_wall_time();
+}
+
+void status_simulation_finish()
+{
+  runtime_status.nd_end_cpu_time  = clock();
+  runtime_status.nd_end_wall_time = get_wall_time();
 }
 
 void status_nd_start_running()
@@ -446,16 +460,20 @@ void output_runtime_status(FILE *f)
   if (!lmn_env.benchmark) {
 
     fprintf(f, "\n== Runtime Status ==========================================\n");
-    fprintf(f, "%-30s: %10.2lf\n", "elapsed cpu  time (sec)", tmp_total_cpu_time);
-    fprintf(f, "%-30s: %10.2lf\n", "elapsed wall time (sec)", tmp_total_wall_time);
+    fprintf(f, "%-30s: %10.2lf\n", "total cpu  time (sec)", tmp_total_cpu_time);
+    fprintf(f, "%-30s: %10.2lf\n", "total wall time (sec)", tmp_total_wall_time);
     if (lmn_env.nd || lmn_env.ltl) {
       fprintf(f, "%-30s: %10.2lf\n", "nd cpu time (sec)", tmp_nd_total_cpu_time);
       fprintf(f, "%-30s: %10.2lf\n", "nd wall time (sec)", tmp_nd_total_wall_time);
-      fprintf(f, "%-30s: %10lu\n", "# of states", runtime_status.state_num);
-      fprintf(f, "%-30s: %10lu\n", "# of created states", runtime_status.created_state_num - 1);
+      fprintf(f, "%-30s: %10lu\n", "# of states (stored)", runtime_status.state_num);
+      fprintf(f, "%-30s: %10lu\n", "# of states (created)", runtime_status.created_state_num);
+      fprintf(f, "%-30s: %10lu\n", "# of states (end)", runtime_status.end_state_num);
       if (lmn_env.ltl_all){
         fprintf(f, "%-30s: %10lu\n", "# of counter examples", runtime_status.counter_example_num);
       }
+    } else {
+      fprintf(f, "%-30s: %10.2lf\n", "simulation cpu  time (sec)", tmp_nd_total_cpu_time);
+      fprintf(f, "%-30s: %10.2lf\n", "simulation wall time (sec)", tmp_nd_total_wall_time);
     }
     fprintf(f, "============================================================\n");
 
@@ -632,6 +650,7 @@ void output_runtime_status(FILE *f)
 void status_state_space(StateSpace states)
 {
   runtime_status.state_num = state_space_num(states);
+  runtime_status.end_state_num = vec_num(state_space_end_states(states));
   calc_hash_conflict(states);
   calc_encode_info(states);
   calc_state_space_space(states);
