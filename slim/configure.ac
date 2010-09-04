@@ -6,6 +6,7 @@ AC_PREREQ(2.61)
 AC_INIT([SLIM], [1.1.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
+AC_CANONICAL_TARGET
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADER([src/config.h])
 AM_INIT_AUTOMAKE
@@ -23,7 +24,16 @@ AC_PROG_LEX
 AM_PROG_LEX
 
 AC_SUBST(CFLAGS)
-CFLAGS="-Wall -export-dynamic $CFLAGS"
+
+# -export-dynamicオプションがないOSX用に分岐
+case "$target_os" in
+  darwin*)
+    CFLAGS="-Wall $CFLAGS"
+    ;;
+  *)
+    CFLAGS="-Wall -export-dynamic $CFLAGS"
+    ;;
+esac
 
 
 # 開発時にはこのオプションを付けるようにする
