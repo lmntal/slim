@@ -123,6 +123,21 @@ static void atomrec_free(struct AtomRec *a)
   LMN_FREE(a);
 }
 
+/* atomrec用 hashtblの解放 */
+static void atomrec_tbl_destroy(SimpleHashtbl *ht)
+{
+  HashIterator iter;
+
+  /* 開放処理. 今のところdataに0以外が入っていた場合
+     struct AtomRecのポインタが格納されている */
+  for (iter = hashtbl_iterator(ht); !hashtbliter_isend(&iter); hashtbliter_next(&iter)) {
+    if (hashtbliter_entry(&iter)->data) {
+      atomrec_free((struct AtomRec *)hashtbliter_entry(&iter)->data);
+    }
+  }
+  hashtbl_destroy(ht);
+}
+
 static void dump_state_init(struct DumpState *s)
 {
   s->link_num = 0;
@@ -514,20 +529,68 @@ static BOOL dump_toplevel_atom(LmnPort port,
   }
 }
 
+static void dump_rule(LmnPort port, LmnRuleSet rs)//seiji
+{
+  unsigned int i, j, m, n = lmn_ruleset_rule_num(rs);
+  LmnRule r;
+  st_table *st;
+
+  port_put_raw_s(port, "/");
+
+  for (i = 0; i < n; i++) {
+    r = lmn_ruleset_get_rule(rs, i);
+    st = lmn_rule_get_history_tbl(r);
+
+    port_put_raw_s(port, "[");
+    port_put_raw_s(port, lmn_id_to_name(lmn_rule_get_name(r)));
+
+    if (st) {
+      m = st_num(st);
+      Vector *vec = vec_make(m);
+      st_get_entries(st, vec);
+
+      for (j = 0; j < m; j++) {
+        port_put_raw_s(port, "\"");
+        port_put_raw_s(port, lmn_id_to_name((lmn_interned_str)vec_get(vec, j)));
+        port_put_raw_s(port, "\"");
+      }
+
+      vec_free(vec);
+    }
+    port_put_raw_s(port, "]");
+  }
+
+}
+
+/* for debug */
+void lmn_dump_rule(LmnPort port, LmnRuleSet rs)//seiji
+{
+  dump_rule(port, rs);
+}
 
 static void dump_ruleset(LmnPort port, struct Vector *v)
 {
   unsigned int i;
+  LmnRuleSet rs;
 
   for (i = 0; i < v->num; i++) {
     if (i > 0) port_put_raw_s(port, ",");
     port_put_raw_s(port, "@");
+    rs = (LmnRuleSet)vec_get(v, i);
     {
-      char *s = int_to_str(lmn_ruleset_get_id((LmnRuleSet)vec_get(v, i)));
+      char *s = int_to_str(lmn_ruleset_get_id(rs));
       port_put_raw_s(port, s);
       LMN_FREE(s);
     }
+    if (lmn_env.show_rule) dump_rule(port, rs);
+
   }
+}
+
+/* for debug */
+void lmn_dump_ruleset(LmnPort port, struct Vector *v)//seiji
+{
+  dump_ruleset(port, v);
 }
 
 static BOOL lmn_dump_mem_internal(LmnPort port,
@@ -667,18 +730,7 @@ static void lmn_dump_cell_nonewline(LmnPort port, LmnMembrane *mem)
   hashtbl_init(&ht, 128);
   lmn_dump_cell_internal(port, mem, &ht, &s);
 
-  { /* hashtblの解放 */
-    HashIterator iter;
-
-    /* 開放処理. 今のところdataに0以外が入っていた場合
-       struct AtomRecのポインタが格納されている */
-    for (iter = hashtbl_iterator(&ht); !hashtbliter_isend(&iter); hashtbliter_next(&iter)) {
-      if (hashtbliter_entry(&iter)->data) {
-        atomrec_free((struct AtomRec *)hashtbliter_entry(&iter)->data);
-      }
-    }
-    hashtbl_destroy(&ht);
-  }
+  atomrec_tbl_destroy(&ht);
 }
 
 void lmn_dump_cell_stdout(LmnMembrane *mem)
@@ -919,18 +971,7 @@ void lmn_dump_dot(LmnMembrane *mem)
 
   fprintf(stdout, "}\n");
 
-  {
-    HashIterator iter;
-
-    /* 開放処理. 今のところdataに0以外が入っていた場合
-       struct AtomRecのポインタが格納されている */
-    for (iter = hashtbl_iterator(&ht); !hashtbliter_isend(&iter); hashtbliter_next(&iter)) {
-      if (hashtbliter_entry(&iter)->data) {
-        atomrec_free((struct AtomRec *)hashtbliter_entry(&iter)->data);
-      }
-    }
-    hashtbl_destroy(&ht);
-  }
+  atomrec_tbl_destroy(&ht);
 }
 
 
@@ -988,6 +1029,8 @@ void lmn_dump_atom(LmnPort port, LmnWord atom, LmnLinkAttr attr)
 
   dump_state_init(&s);
   hashtbl_init(&ht, 0);
+  
   dump_atom(port, atom, &ht, attr, &s, 0);
-  hashtbl_destroy(&ht);
+  
+  atomrec_tbl_destroy(&ht);
 }

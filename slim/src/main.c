@@ -80,6 +80,7 @@ static void usage(void)
           "  -p[<0-3>] (-p=-p1)  Profiling level.\n"
           "  -t              trace mode\n"
           "  --showproxy     Show proxy atoms\n"
+//          "  --showrule      Show details of ruleset (@RS_ID/[NAME1\"HIS1\"\"HIS2\"..][NAME2\"\"..]..)\n"
           "  --hideruleset   Hide ruleset from result\n"
           "  --dot           Output result in dot language\n"
           "  --nd            Nondeterministic execution mode, print all execution paths.\n"
@@ -114,6 +115,7 @@ static int parse_options(int argc, char *argv[])
     {"help",    0, 0, 1001},
     {"showproxy",  0, 0, 1002},
     {"hideruleset",  0, 0, 1003},
+    {"showrule", 0, 0, 1016},
     {"dot", 0, 0, 1004},
     {"nd", 0, 0, 1005},
     {"nd_result", 0, 0, 1006},
@@ -178,6 +180,9 @@ static int parse_options(int argc, char *argv[])
       break;
     case 1003:
       lmn_env.show_ruleset = FALSE;
+      break;
+    case 1016:
+      lmn_env.show_rule = TRUE;
       break;
     case 1004:
       lmn_env.output_format = DOT;
@@ -288,6 +293,7 @@ static void init_env(void)
   lmn_env.trace = FALSE;
   lmn_env.show_proxy = FALSE;
   lmn_env.show_ruleset = TRUE;
+  lmn_env.show_rule = FALSE;
   lmn_env.output_format = DEFAULT;
   lmn_env.nd = FALSE;
   lmn_env.nd_result = FALSE;

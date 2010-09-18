@@ -79,7 +79,7 @@ void st_free_table(st_table *);
 void st_cleanup_safe(st_table *, st_data_t);
 st_table *st_copy(st_table *);
 void st_print(st_table *st);
-void st_get_entrys(st_table *st, Vector *vec);
+void st_get_entries(st_table *st, Vector *vec);
 int st_equals(st_table *tbl1, st_table *tbl2);
 long st_strhash(const char *);
 int st_numcmp(long, long);

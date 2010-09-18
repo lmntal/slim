@@ -88,6 +88,7 @@ typedef struct AtomListEntry {
 LMN_EXTERN LmnMembrane *lmn_mem_make(void);
 LMN_EXTERN inline void lmn_mem_set_name(LmnMembrane *mem, lmn_interned_str name);
 LMN_EXTERN void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
+LMN_EXTERN void lmn_mem_rulesets_destroy(Vector *rulesets);
 LMN_EXTERN void lmn_mem_free(LmnMembrane *mem);
 LMN_EXTERN inline void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem);
 LMN_EXTERN void lmn_mem_drop(LmnMembrane *mem);
@@ -95,6 +96,7 @@ LMN_EXTERN void lmn_mem_add_child_mem(LmnMembrane *parentmem, LmnMembrane *newme
 LMN_EXTERN LmnSAtom lmn_mem_newatom(LmnMembrane *mem, LmnFunctor f);
 LMN_EXTERN void lmn_mem_push_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 LMN_EXTERN void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom);
+LMN_EXTERN void lmn_mem_add_ruleset_sort(Vector *rulesets, LmnRuleSet ruleset);
 LMN_EXTERN void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset);
 LMN_EXTERN inline int lmn_mem_ruleset_num(LmnMembrane *mem);
 LMN_EXTERN inline LmnRuleSet  lmn_mem_get_ruleset(LmnMembrane *mem, int i);

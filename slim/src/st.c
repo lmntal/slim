@@ -616,7 +616,7 @@ void st_print(st_table *st){
 }
 
 /*　st_tableが持つ要素をVectorに昇順に格納する　*/
-void st_get_entrys(st_table *st, Vector *vec){
+void st_get_entries(st_table *st, Vector *vec){
   st_table_entry *entry;
   unsigned int nb = st->num_bins;
   int i;

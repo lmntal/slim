@@ -41,6 +41,7 @@
 
 #include "lmntal.h"
 #include "slim_header/port.h"
+#include "rule.h"
 
 LMN_EXTERN void dumper_init(void);
 LMN_EXTERN void dumper_finalize(void);
@@ -50,6 +51,8 @@ LMN_EXTERN void lmn_dump_mem_dev(LmnMembrane *mem);
 LMN_EXTERN void lmn_dump_cell_stdout(LmnMembrane *mem);
 LMN_EXTERN void lmn_dump_cell(LmnMembrane *mem, LmnPort port);
 LMN_EXTERN void lmn_dump_dot(LmnMembrane *mem);
+LMN_EXTERN void lmn_dump_rule(LmnPort port, LmnRuleSet rs);
+LMN_EXTERN void lmn_dump_ruleset(LmnPort port, Vector *v);
 LMN_EXTERN void lmn_dump_atom(LmnPort port, LmnWord atom, LmnLinkAttr attr);
 
 void dump_escaped(LmnPort port, const char *s);

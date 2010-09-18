@@ -63,37 +63,39 @@ BOOL ground_atoms(Vector *srcvec,
 static inline int mem_hash_f(st_data_t m);
 static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, ProcessTbl atoms);
 
+/* rulesetをrulesetsにソートして追加する */
+void lmn_mem_add_ruleset_sort(Vector *rulesets, LmnRuleSet ruleset)
+{
+  int i, n = vec_num(rulesets);
+
+  for (i = 0; i < n; i++) {
+      LmnRuleSet r = (LmnRuleSet)vec_get(rulesets, i);
+
+      // 同じidを持つruleset群の一番後ろに追加する
+      if (lmn_ruleset_get_id(r) > lmn_ruleset_get_id(ruleset)) {
+        int j;
+        LmnRuleSet pre = ruleset;
+        vec_push(rulesets, 0);
+        for (j = i; j < (n + 1); j++) {
+          LmnRuleSet t = (LmnRuleSet)vec_get(rulesets, j);
+          vec_set(rulesets, j, (LmnWord)pre);
+          pre = t;
+        }
+        break;
+      }
+    }
+    if (i == n) {
+      vec_push(rulesets, (LmnWord)ruleset);
+    }
+}
+
 /* ルールセットを膜に追加する。ルールセットは、比較のために
    ruleset->idの値によって昇順に並べるようにする */
 void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset)
 {
-  Vector *v;
-  int i, n;
-
   LMN_ASSERT(ruleset);
 
-  v = &(mem->rulesets);
-  n = vec_num(v);
-
-  for (i = 0; i < n; i++) {
-    LmnRuleSet r = (LmnRuleSet)vec_get(v, i);
-
-    // 同じidを持つruleset群の一番後ろに追加する
-    if (lmn_ruleset_get_id(r) > lmn_ruleset_get_id(ruleset)) {
-      int j;
-      LmnRuleSet pre = ruleset;
-      vec_push(v, 0);
-      for (j = i; j < (n + 1); j++) {
-        LmnRuleSet t = (LmnRuleSet)vec_get(v, j);
-        vec_set(v, j, (LmnWord)pre);
-        pre = t;
-      }
-      break;
-    }
-  }
-  if (i == n) {
-    vec_push(v, (LmnWord)ruleset);
-  }
+  lmn_mem_add_ruleset_sort(&(mem->rulesets), ruleset);//seiji
 }
 
 inline int lmn_mem_ruleset_num(LmnMembrane *mem)
@@ -333,26 +335,14 @@ void lmn_mem_drop(LmnMembrane *mem)
   mem->atom_num = 0;
 }
 
-/* 膜memの解放を行う */
-void lmn_mem_free(LmnMembrane *mem)
+/* 膜memが持つrulesetsの解放処理 */
+void lmn_mem_rulesets_destroy(Vector *rulesets)//seiji
 {
-  HashIterator iter;
+  int i, j, n = vec_num(rulesets);
   LmnRuleSet rs;
-  unsigned int i, j, n;
 
-  LMN_ASSERT(mem->atom_num == 0);
-  /* free all atomlists  */
-  for (iter = hashtbl_iterator(&mem->atomset);
-       !hashtbliter_isend(&iter);
-       hashtbliter_next(&iter)) {
-    free_atomlist((AtomListEntry*)hashtbliter_entry(&iter)->data);
-  }
-
-  hashtbl_destroy(&mem->atomset);
-
-  n = mem->rulesets.num;
   for (i = 0; i < n; i++) {
-    rs = (LmnRuleSet)vec_get(&(mem->rulesets), i);
+    rs = (LmnRuleSet)vec_get(rulesets, i);
     /* free copied ruleset */
     if (lmn_ruleset_is_copy(rs)) {
       if (lmn_ruleset_has_uniqrule(rs)) {
@@ -368,7 +358,25 @@ void lmn_mem_free(LmnMembrane *mem)
       LMN_FREE(rs);
     }
   }
-  vec_destroy(&mem->rulesets);
+  vec_destroy(rulesets);
+
+}
+
+/* 膜memの解放を行う */
+void lmn_mem_free(LmnMembrane *mem)
+{
+  HashIterator iter;
+
+  LMN_ASSERT(mem->atom_num == 0);
+  /* free all atomlists  */
+  for (iter = hashtbl_iterator(&mem->atomset);
+       !hashtbliter_isend(&iter);
+       hashtbliter_next(&iter)) {
+    free_atomlist((AtomListEntry*)hashtbliter_entry(&iter)->data);
+  }
+
+  hashtbl_destroy(&mem->atomset);
+  lmn_mem_rulesets_destroy(&mem->rulesets);
 
   LMN_FREE(mem);
 

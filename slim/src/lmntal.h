@@ -202,6 +202,7 @@ struct LmnEnv {
   BOOL trace;
   BOOL show_proxy;
   BOOL show_ruleset;
+  BOOL show_rule;
   BOOL nd;
   BOOL nd_result;
   BOOL nd_dump;

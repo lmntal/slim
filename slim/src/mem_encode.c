@@ -76,8 +76,11 @@
  *   ruleset num: 2 byte
  *   ruleset ids
  * rule sets (has uniq rule):
- *   tap: 0110
- *   rulesets vec pointer: 4 byte
+ *   tag: 0110
+ *   ruleset num: 2 byte
+ *   ruleset ids
+ *     history num: 2 byte
+ *     history ids
  * int atom:
  *   tag: 1100
  * double atom:
@@ -92,6 +95,8 @@
 #include "st.h"
 #include "util.h"
 #include "st.h"
+#include "slim_header/port.h"
+#include "dumper.h"
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
@@ -111,7 +116,7 @@
 #define TAG_FROM             0x7
 #define TAG_RULESET1         0x8
 #define TAG_RULESET          0x9
-#define TAG_RULESETS_VEC     0xa
+#define TAG_RULESET_UNIQ     0xa
 #define TAG_INT_DATA         0xc
 #define TAG_DBL_DATA         0xd
 
@@ -124,7 +129,9 @@
 #define BS_MEM_NAME_SIZE (sizeof(lmn_interned_str) * 2)
 #define BS_RULESET_SIZE 4
 #define BS_RULESET_NUM_SIZE 4
-#define BS_RULESETS_VEC_SIZE 8
+#define BS_RULE_NUM_SIZE 4
+#define BS_HISTORY_NUM_SIZE 4
+#define BS_HISTORY_SIZE (sizeof(lmn_interned_str) * 2)
 #define BS_DBL_SIZE (sizeof(double) * 2)
 
 typedef struct BinStr *BinStr;
@@ -428,9 +435,18 @@ static inline long binstr_get_ruleset(BYTE *bs, int pos)
 #endif
 }
 
-static inline long binstr_get_rulesets_vec(BYTE *bs, int pos)
+static inline long binstr_get_history_num(BYTE *bs, int pos)
 {
-  if (BS_RULESETS_VEC_SIZE == 8) {
+#if BS_HISTORY_NUM_SIZE == 4
+  return binstr_get_uint16(bs, pos);
+#else
+  #error unexpected
+#endif
+}
+
+static inline lmn_interned_str binstr_get_history(BYTE *bs, int pos)
+{
+  if (BS_HISTORY_SIZE == 8) {
     return binstr_get_uint32(bs, pos);
   } else {
     lmn_fatal("implementation error");
@@ -595,16 +611,35 @@ static void binstr_dump(BYTE *bs, int len)
         }
       }
       break;
-    case TAG_RULESETS_VEC:
-      {
-        int j, n, rs_id;
+    case TAG_RULESET_UNIQ:
+      {        /* 履歴の内容まで出力 */
+        int j, k, l, n, rs_id, rule_num, his_num;
+        lmn_interned_str id;
+        LmnRuleSet rs;
 
-        Vector *rulesets = (Vector *)binstr_get_rulesets_vec(bs, pos);
-        pos += BS_RULESETS_VEC_SIZE;
-        n = vec_num(rulesets);
+        n = binstr_get_ruleset_num(bs, pos);
+        pos += BS_RULESET_NUM_SIZE;
         for (j = 0; j < n; j++) {
-          rs_id = lmn_ruleset_get_id((LmnRuleSet)vec_get(rulesets, j));
-          printf("@%d", rs_id);
+          rs_id = binstr_get_ruleset(bs, pos);
+          pos += BS_RULESET_SIZE;
+          printf("@%d/", rs_id);
+
+          rs = lmn_ruleset_from_id(rs_id);
+          rule_num = lmn_ruleset_rule_num(rs);
+
+          for (k = 0; k < rule_num; k++) {
+            printf("[%s", lmn_id_to_name(lmn_rule_get_name(lmn_ruleset_get_rule(rs, k))));
+
+            his_num = binstr_get_history_num(bs, pos);
+            pos += BS_HISTORY_NUM_SIZE;
+            for (l = 0; l < his_num; l++) {
+              id = binstr_get_history(bs, pos);
+              pos += BS_HISTORY_SIZE;
+              printf("\"%s\"", lmn_id_to_name(id));
+
+            }
+            printf("]");
+          }
         }
       }
       break;
@@ -814,14 +849,49 @@ static inline int bsptr_push_ruleset(BinStrPtr p, LmnRuleSet rs)
   return bsptr_push(p, (BYTE*)&id, BS_RULESET_SIZE);
 }
 
-static inline int bsptr_push_rulesets_vec(BinStrPtr p, Vector *rulesets)
+static inline void bsptr_push_ruleset_uniq(BinStrPtr bsp, LmnMembrane *mem, int n)
 {
-  return bsptr_push(p, (BYTE*)&rulesets, BS_RULESETS_VEC_SIZE);
-}
+  int i, j, k, rule_num, his_num;
+  LmnRule r = NULL;
+  LmnRuleSet rs;
+  Vector *his_ids;
+  st_table *his_tbl = NULL;
+  lmn_interned_str id;
 
-static inline int bsptr_push_start_rulesets_vec(BinStrPtr p, int n)
-{
-  return bsptr_push1(p, TAG_RULESETS_VEC);
+  bsptr_push1(bsp, TAG_RULESET_UNIQ);
+  bsptr_push(bsp, (BYTE*)&n, BS_RULESET_NUM_SIZE);//ruleset num
+
+  for (i = 0; i < n; i++) {
+    rs = lmn_mem_get_ruleset(mem, i);
+    rule_num = lmn_ruleset_rule_num(rs);
+    bsptr_push_ruleset(bsp, rs);//ruleset id
+
+    for (j = 0; j < rule_num; j++) {
+
+      r = lmn_ruleset_get_rule(rs, j);
+      his_tbl = lmn_rule_get_history_tbl(r);
+
+      if (his_tbl) {
+        his_num = st_num(his_tbl);
+        his_ids = vec_make(his_num);
+        st_get_entries(his_tbl, his_ids);
+
+        bsptr_push(bsp, (BYTE*)&his_num, BS_HISTORY_NUM_SIZE);//history num
+
+        for (k = 0; k < his_num; k++) {
+          id = (lmn_interned_str)vec_get(his_ids, k);
+
+          bsptr_push(bsp, (BYTE*)&id, BS_HISTORY_SIZE);//history id
+        }
+
+        vec_free(his_ids);
+      } else {
+        his_num = 0;
+
+        bsptr_push(bsp, (BYTE*)&his_num, BS_HISTORY_NUM_SIZE);//history num
+      }
+    }
+  }
 }
 
 /*----------------------------------------------------------------------
@@ -1180,16 +1250,7 @@ static void write_rulesets(LmnMembrane *mem, BinStrPtr bsp)
       bsptr_push_ruleset(bsp, lmn_mem_get_ruleset(mem, i));
     }
   } else {
-    bsptr_push_start_rulesets_vec(bsp, n);
-
-    Vector *rulesets = vec_make(1);
-    int vn = vec_num(lmn_mem_get_rulesets(mem));
-    for (i = 0; i < vn; i++) {
-      vec_push(rulesets,
-          (LmnWord)lmn_ruleset_copy(lmn_mem_get_ruleset(mem, i)));
-    }
-    bsptr_push_rulesets_vec(bsp, rulesets);
-
+    bsptr_push_ruleset_uniq(bsp, mem, n);
   }
 }
 
@@ -1272,6 +1333,10 @@ static int binstr_decode_atom(LmnBinStr bs,
                               LmnMembrane *mem,
                               LmnSAtom from_atom,
                               int from_arg);
+static void binstr_decode_rulesets(LmnBinStr bs,
+                                        int *i_bs,
+                                        Vector *rulesets,
+                                        int rs_num);
 
 /* エンコードされた膜をデコードし、構造を再構築する */
 LmnMembrane *lmn_binstr_decode(const LmnBinStr bs)
@@ -1298,6 +1363,52 @@ LmnMembrane *lmn_binstr_decode(const LmnBinStr bs)
 #endif
 
   return groot;
+}
+
+
+/*
+ * uniq ruleを服務rulesetsの再構築
+ * Vector *rulesetsは外部で解放処理が必要となる
+ */
+static inline void binstr_decode_rulesets(LmnBinStr bs,
+                                                int *i_bs,
+                                                Vector *rulesets,
+                                                int rs_num)
+{
+  int i, j, k, rs_id, rule_num, his_num;
+  LmnRuleSet rs;
+  LmnRule r;
+  st_table *st;
+  lmn_interned_str id;
+
+  for (i = 0; i < rs_num; i++) {
+    rs_id = binstr_get_ruleset(bs->v, *i_bs);
+    (*i_bs) += BS_RULESET_SIZE;
+    rs = lmn_ruleset_copy(lmn_ruleset_from_id(rs_id));
+
+    rule_num = lmn_ruleset_rule_num(rs);
+
+    for (j = 0; j < rule_num; j++) {
+      r = lmn_ruleset_get_rule(rs, j);
+
+      /* rs_idから復元したrulesetがすでに履歴を持っている可能性があるため、一旦解放する */
+      st = lmn_rule_get_history_tbl(r);
+
+      his_num = binstr_get_history_num(bs->v, *i_bs);
+      (*i_bs) += BS_HISTORY_NUM_SIZE;
+
+      if (his_num > 0) {
+
+        for (k = 0; k < his_num; k++) {
+          id = binstr_get_history(bs->v, *i_bs);
+          (*i_bs) += BS_HISTORY_SIZE;
+          st_insert(st, (st_data_t)id, 0);
+        }
+      }
+    }
+    lmn_mem_add_ruleset_sort(rulesets, rs);
+
+  }
 }
 
 static int binstr_decode_cell(LmnBinStr bs,
@@ -1338,14 +1449,14 @@ static int binstr_decode_cell(LmnBinStr bs,
         lmn_mem_add_ruleset(mem, lmn_ruleset_from_id(rs_id));
       }
     }
-    else if (tag == TAG_RULESETS_VEC) {
-      int j, n;
-      Vector *rulesets = lmn_mem_get_rulesets(mem),
-             *rss      = (Vector *)binstr_get_rulesets_vec(bs->v, pos);
-      n = vec_num(rss);
-      for (j = 0; j < n; j++) {
-        vec_push(rulesets, (LmnWord)lmn_ruleset_copy((LmnRuleSet)vec_get(rss, j)));
-      }
+    else if (tag == TAG_RULESET_UNIQ) {
+      int rs_num;
+
+      pos++;
+      rs_num = binstr_get_ruleset_num(bs->v, pos);
+      pos += BS_RULESET_NUM_SIZE;
+
+      binstr_decode_rulesets(bs, &pos, lmn_mem_get_rulesets(mem), rs_num);
     }
     else {
       if (i == 0) {
@@ -1655,7 +1766,7 @@ static BOOL mem_eq_enc_atom(LmnBinStr bs,
                             VisitLog visitlog);
 static inline BOOL mem_eq_enc_rulesets(LmnBinStr bs, int *i_bs, LmnMembrane *mem);
 static inline BOOL mem_eq_enc_ruleset(LmnBinStr bs, int *i_bs, LmnRuleSet rs);
-static inline BOOL mem_eq_enc_rulesets_vec(LmnBinStr bs, int *i_bs, LmnMembrane *mem);
+static inline BOOL mem_eq_enc_rulesets_uniq(LmnBinStr bs, int *i_bs, LmnMembrane *mem);//seiji
 static inline BOOL mem_eq_enc_atom_ref(LmnBinStr bs,
                                        int *i_bs,
                                        LmnAtom atom,
@@ -1821,9 +1932,9 @@ static int mem_eq_enc_mols(LmnBinStr bs, int *i_bs, LmnMembrane *mem, void **ref
         if (!mem_eq_enc_rulesets(bs, i_bs, mem)) return FALSE;
         break;
       }
-    case TAG_RULESETS_VEC:
+    case TAG_RULESET_UNIQ:
       {
-        if (!mem_eq_enc_rulesets_vec(bs, i_bs, mem)) return FALSE;
+        if (!mem_eq_enc_rulesets_uniq(bs, i_bs, mem)) return FALSE;
         break;
       }
     default:
@@ -2034,15 +2145,25 @@ static inline BOOL mem_eq_enc_ruleset(LmnBinStr bs, int *i_bs, LmnRuleSet rs)
   return TRUE;
 }
 
-static inline BOOL mem_eq_enc_rulesets_vec(LmnBinStr bs, int *i_bs, LmnMembrane *mem)
+static inline BOOL mem_eq_enc_rulesets_uniq(LmnBinStr bs, int *i_bs, LmnMembrane *mem)
 {
-  if (!rulesets_equals((Vector *)binstr_get_rulesets_vec(bs->v, *i_bs),
-                        lmn_mem_get_rulesets(mem)))
-    return FALSE;
+  int rs_num;
+  Vector *rulesets;
+  BOOL result;
 
-  (*i_bs) += BS_RULESETS_VEC_SIZE;
+  rs_num = binstr_get_ruleset_num(bs->v, *i_bs);
+  if (rs_num != lmn_mem_ruleset_num(mem)) return FALSE;
+  (*i_bs) += BS_RULESET_NUM_SIZE;
 
-  return TRUE;
+  rulesets = vec_make(rs_num);
+  binstr_decode_rulesets(bs, i_bs, rulesets, rs_num);
+
+  result = rulesets_equals(rulesets, lmn_mem_get_rulesets(mem));
+
+  lmn_mem_rulesets_destroy(rulesets);
+  LMN_FREE(rulesets);
+
+  return result;
 }
 
 static inline BOOL mem_eq_enc_atom_ref(LmnBinStr bs,
