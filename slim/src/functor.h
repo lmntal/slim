@@ -63,6 +63,12 @@ extern struct LmnFunctorTable lmn_functor_table;
 #define LMN_FUNCTOR_ARITY(F)    (lmn_functor_table.entry[(F)].arity)
 #define LMN_FUNCTOR_MODULE_ID(F)     (lmn_functor_table.entry[(F)].module)
 
+#ifdef DEBUG
+void lmn_functor_tbl_print(void);
+void lmn_functor_printer(LmnFunctor f);
+#endif
+
+void lmn_register_predefined_functor(void);
 void lmn_functor_tbl_init(void);
 void lmn_functor_tbl_destroy(void);
 LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, int arity);

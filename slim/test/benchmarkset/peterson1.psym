@@ -1,2 +1,0 @@
-p= p{id(1), state(wait), $p}
-q= p{id(1), state(cs),   $p}

@@ -112,8 +112,28 @@ static struct st_hash_type type_functorhash = {
   functor_hash
 };
 
-/* ファンクタ構造体からIDへの対応を要素に持つのテーブル */
-st_table *functor_id_tbl;
+st_table *functor_id_tbl; /* ファンクタ構造体からIDへの対応を要素に持つのテーブル */
+
+/* for debug */
+#ifdef DEBUG
+
+void lmn_functor_tbl_print()
+{
+  int i, n;
+  fprintf(stdout, "next_id==%u\n", lmn_functor_table.next_id);
+  n = lmn_functor_table.size;
+  for (i = 0; i < n; i++) {
+    fprintf(stdout, "entry[%2d]== %s_%d\n", i
+                                          , lmn_id_to_name(LMN_FUNCTOR_NAME_ID(i))
+                                          , LMN_FUNCTOR_ARITY(i));
+  }
+}
+
+void lmn_functor_printer(LmnFunctor f)
+{
+  fprintf(stdout, "fid=%d[ %s_%d ]\n", f, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)), LMN_FUNCTOR_ARITY(f));
+}
+#endif
 
 void lmn_functor_tbl_init()
 {
@@ -136,6 +156,7 @@ void lmn_functor_tbl_init()
                      f->arity);
   }
 }
+
 
 int functor_entry_free(LmnFunctorEntry *e)
 {

@@ -204,7 +204,8 @@ ModuleList il_get_module_list(IL il);
 InlineList il_get_inline_list(IL il);
 void il_free(IL il);
 
-/* 字句解析器で用いる情報。ここに便宜上ここに置いておくが、適切な場所ではないと思う */
+/* 字句解析器で用いる情報。
+ * TODO: ここに便宜上ここに置いておくが、適切な場所ではない */
 #include "st.h"
 struct lexer_context {
   /* 一つの中間言語ファイルにローカルなルールセットのIDとグローバルなIDの

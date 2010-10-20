@@ -2,11 +2,9 @@
 
 /* static char  sccsid[] = "@(#) st.c 5.1 89/12/14 Crucible"; */
 
-#include "config.h"
-#include "string.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include "st.h"
+#include "vector.h"
+#include "./slim_header/string.h"
 
 typedef struct st_table_entry st_table_entry;
 
@@ -34,6 +32,8 @@ static struct st_hash_type type_numhash = { st_numcmp, st_numhash, };
 
 /* extern int strcmp(const char *, const char *); */
 static struct st_hash_type type_strhash = { strcmp, st_strhash, };
+
+
 
 /* ST Objective-C additions */
 static int st_ptrcmp(void *, void *);
@@ -94,16 +94,17 @@ static int new_size(int size) {
   int i;
 
 #if 0
-  for (i=3; i<31; i++) {
-    if ((1<<i)> size) return 1<<i;
+  for (i = 3; i < 31; i++) {
+    if ((1 << i) > size) return 1<<i;
   }
   return -1;
 #else
   int newsize;
 
-  for (i = 0, newsize = MINSIZE; i < (int) (sizeof(primes) / sizeof(primes[0])); i++, newsize <<= 1) {
-    if (newsize > size)
-      return primes[i];
+  for (i = 0, newsize = MINSIZE;
+       i < ((int) (sizeof(primes) / sizeof(primes[0])));
+       i++, newsize <<= 1) {
+    if (newsize > size) return primes[i];
   }
   /* Ran out of polynomials */
   return -1; /* should raise exception */
@@ -130,7 +131,7 @@ st_init_table_with_size(struct st_hash_type *type, int size) {
 #ifdef HASH_LOG
   if (init_st == 0) {
     init_st = 1;
-    atexit(stat_col);
+  //  atexit(stat_col);
   }
 #endif
 
@@ -141,7 +142,6 @@ st_init_table_with_size(struct st_hash_type *type, int size) {
   tbl->num_entries = 0;
   tbl->num_bins = size;
   tbl->bins = (st_table_entry **) Calloc(size, sizeof(st_table_entry*));
-
   return tbl;
 }
 
@@ -196,38 +196,49 @@ void st_free_table(st_table *table) {
   free(table);
 }
 
+unsigned long st_table_space(st_table *tbl)
+{
+  unsigned long ret;
+  ret  = sizeof(struct st_table);
+  ret += sizeof(struct st_table_entry*) * tbl->num_bins;
+  ret += sizeof(struct st_table_entry)  * tbl->num_entries;
+  return ret;
+}
+
 #define PTR_NOT_EQUAL(table, ptr, hash_val, key) \
 ((ptr) != 0 && (ptr->hash != (hash_val) || !EQUAL((table), (key), (ptr)->key)))
 
 #ifdef HASH_LOG
-#define COLLISION collision++
+#  define COLLISION collision++
 #else
-#define COLLISION
+#  define COLLISION
 #endif
 
-#define FIND_ENTRY(table, ptr, hash_val, bin_pos) do {\
-    bin_pos = hash_val%(table)->num_bins;\
-    ptr = (table)->bins[bin_pos];\
-    if (PTR_NOT_EQUAL(table, ptr, hash_val, key)) {\
-      COLLISION;\
-      while (PTR_NOT_EQUAL(table, ptr->next, hash_val, key)) {\
-          ptr = ptr->next;\
-      }\
-      ptr = ptr->next;\
-    }\
+#define FIND_ENTRY(table, ptr, hash_val, bin_pos)                       \
+  do {                                                                  \
+    bin_pos = hash_val%(table)->num_bins;                               \
+    ptr = (table)->bins[bin_pos];                                       \
+    if (PTR_NOT_EQUAL(table, ptr, hash_val, key)) {                     \
+      COLLISION;                                                        \
+      while (PTR_NOT_EQUAL(table, ptr->next, hash_val, key)) {          \
+          ptr = ptr->next;                                              \
+      }                                                                 \
+      ptr = ptr->next;                                                  \
+    }                                                                   \
 } while (0)
 
-#define FIND_ENTRY_WITH_COL(table, ptr, hash_val, bin_pos, collision) do {   \
-    bin_pos = hash_val%(table)->num_bins;\
-    ptr = (table)->bins[bin_pos];\
-    if (PTR_NOT_EQUAL(table, ptr, hash_val, key)) {\
-      if ((ptr) != 0 && (ptr->hash == (hash_val))) (collision)++;   \
-      while (PTR_NOT_EQUAL(table, ptr->next, hash_val, key)) {\
-          ptr = ptr->next;\
+#define FIND_ENTRY_WITH_COL(table, ptr, hash_val, bin_pos, collision)   \
+  do {                                                                  \
+    bin_pos = hash_val%(table)->num_bins;                               \
+    ptr = (table)->bins[bin_pos];                                       \
+    if (PTR_NOT_EQUAL(table, ptr, hash_val, key)) {                     \
+      if ((ptr) != 0 && (ptr->hash == (hash_val))) (collision)++;       \
+      while (PTR_NOT_EQUAL(table, ptr->next, hash_val, key)) {          \
+          ptr = ptr->next;                                              \
           if ((ptr) != 0 && (ptr->hash == (hash_val))) (collision)++;   \
-      }\
-      ptr = ptr->next;\
-    }\
+      }                                                                 \
+      ptr = ptr->next;                                                  \
+    }                                                                   \
 } while (0)
 
 /* キーがkeyであるテーブルの値をvalueに設定する。
@@ -273,22 +284,22 @@ int st_contains(st_table *table, st_data_t key) {
   return st_lookup(table, key, &t);
 }
 
-#define ADD_DIRECT(table, key, value, hash_val, bin_pos)\
-do {\
-    st_table_entry *entry;\
-    if (table->num_entries/(table->num_bins) > ST_DEFAULT_MAX_DENSITY) {\
-        rehash(table);\
-        bin_pos = hash_val % table->num_bins;\
-    }\
-    \
-    entry = alloc(st_table_entry);\
-    \
-    entry->hash = hash_val;\
-    entry->key = key;\
-    entry->record = value;\
-    entry->next = table->bins[bin_pos];\
-    table->bins[bin_pos] = entry;\
-    table->num_entries++;\
+#define ADD_DIRECT(table, key, value, hash_val, bin_pos)                   \
+  do {                                                                     \
+    st_table_entry *entry;                                                 \
+    if (table->num_entries / (table->num_bins) > ST_DEFAULT_MAX_DENSITY) { \
+      rehash(table);                                                       \
+      bin_pos = hash_val % table->num_bins;                                \
+    }                                                                      \
+                                                                           \
+    entry = alloc(st_table_entry);                                         \
+                                                                           \
+    entry->hash = hash_val;                                                \
+    entry->key = key;                                                      \
+    entry->record = value;                                                 \
+    entry->next = table->bins[bin_pos];                                    \
+    table->bins[bin_pos] = entry;                                          \
+    table->num_entries++;                                                  \
 } while (0)
 
 /* ハッシュ表に新たなエントリーを追加する。エントリが存在した場合はその
@@ -476,6 +487,16 @@ void st_cleanup_safe(st_table *table, st_data_t never) {
   table->num_entries = num_entries;
 }
 
+static int clear_f(st_data_t some, st_data_t some2, st_data_t some3)
+{
+  return ST_DELETE;
+}
+
+void st_clear(st_table *table)
+{
+  st_foreach(table, clear_f, 0);
+}
+
 /* テーブルの各要素に対し，第一引数にキー，第二引数に値，
  * 第三引数にargでfuncを呼び出す．
  *
@@ -577,9 +598,6 @@ int st_foreach_hash(st_table *table, st_data_t hash, int(*func)( ANYARGS), st_da
   return 0;
 }
 
-unsigned int st_num(st_table *table) {
-  return table->num_entries;
-}
 
 static int insert_f(st_data_t key, st_data_t value, st_data_t tbl1)
 {
@@ -599,14 +617,16 @@ void st_print(st_table *st){
   unsigned int nb = st->num_bins, ne = st->num_entries;
   printf("st->num_bins = %d, st->num_entries = %d\n", nb, ne);
   unsigned int i = 0;
-  for(; i<nb; i++){
+  for(; i < nb; i++){
     entry = st->bins[i];
     if(entry!=NULL){
+	    printf("bucket[%u]\n", i);
       while(entry!=NULL){
         /* デフォルトでは要素をすべて数値で出力 */
-        printf("%u entry->key = %ld, ->record = %lu, ->hash = %lu\n",
-            i, (long)entry->key, (long)entry->record, (unsigned long)entry->hash);
+        printf("      entry->key = %ld, ->record = %lu, ->hash = %lu\n",
+              (long)entry->key, (long)entry->record, (unsigned long)entry->hash);
         entry = entry->next;
+        if (entry) printf("  next");
       }
     }else{
       /* このprintf文を消せばnull entryは表示されない */
@@ -615,42 +635,29 @@ void st_print(st_table *st){
   }
 }
 
+static int st_key_push_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg)
+{
+  Vector *v = (Vector *)_arg;
+  vec_push(v, (vec_data_t)_key);
+  return ST_CONTINUE;
+}
+
+static int st_value_push_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg)
+{
+  Vector *v = (Vector *)_arg;
+  vec_push(v, (vec_data_t)_v);
+  return ST_CONTINUE;
+}
+
 /*　st_tableが持つ要素をVectorに昇順に格納する　*/
-void st_get_entries(st_table *st, Vector *vec){
-  st_table_entry *entry;
-  unsigned int nb = st->num_bins;
-  int i;
-  //long pre_id, cur_id;
-  //int i, j, k, n;
-  for (i = 0; i < nb; i++) {
-    entry = st->bins[i];
+void st_get_entries_key(st_table *st, Vector *vec)
+{
+  st_foreach(st, st_key_push_vec_f, (st_data_t)vec);
+}
 
-    while (entry != NULL) {
-      /* とりあえずの実装 */
-      /*n = vec_num(vec);
-      for (j = 0; j < n; j++) {
-        if ((long)entry->key > (long)vec_get(vec, j)) {
-          pre_id = entry->key;
-          vec_push(vec, 0);
-          for (k = j; k < (n + 1); k++) {
-            cur_id = (long)vec_get(vec, k);
-            vec_set(vec, j, (LmnWord)pre_id);
-            pre_id = cur_id;
-          }
-          printf("push1\n");
-          break;
-        }
-        if (j == n) {
-          vec_push(vec, (LmnWord)entry->key);
-          printf("push2\n");
-        }
-      }*/
-      vec_push(vec, (LmnWord)entry->key);
-      entry = entry->next;
-    }
-
-
-  }
+void st_get_entries_value(st_table *st, Vector *vec)
+{
+  st_foreach(st, st_value_push_vec_f, (st_data_t)vec);
 }
 
 /* 2つのst_tableが同じ要素を持つか判定　同じなら1を返す */
@@ -808,10 +815,3 @@ long st_ptrhash(void *n) {
   return (long) n;
 }
 
-unsigned long st_table_space(st_table *table)
-{
-  return
-    sizeof(struct st_table) +
-    table->num_bins * sizeof(st_table_entry*) +
-    table->num_entries * sizeof(st_table_entry);
-}

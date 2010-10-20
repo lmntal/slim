@@ -39,584 +39,582 @@
 
 
 #include "state.h"
+#include "automata.h"
+#include "mc.h"
 #include "membrane.h"
 #include "mem_encode.h"
 #include "rule.h"
 #include "mhash.h"
+#include "parallel.h"
 #include "error.h"
 #include "dumper.h"
-#ifdef PROFILE
+#include "util.h"
+#include "task.h"
+#include "binstr_compress.h"
 #include "runtime_status.h"
-#endif
-
-
-static int kill_States_chains(st_data_t _k,
-                              st_data_t state_ptr,
-                              st_data_t rm_tbl_ptr);
-
-static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a);
-static int set_state_to_vec(st_data_t _s, st_data_t _t, st_data_t _v);
-static Vector *sort_states(StateSpace states);
-static void print_state_transition(State *s);
-
-/*----------------------------------------------------------------------
- * State Space
- */
-
-struct StateSpace {
-  State *init_state;
-  Vector *end_states;
-  st_table_t tbl;
-
-  /* ハッシュ値（mhash）が一定値（MEM_EQ_FAIL_THRESHOLD）以上衝突すると、
-     そのハッシュ値を持つ状態は、膜のIDを計算し、以降はIDで比較を行う */
-  st_table_t memid_tbl;        /* 膜のIDを計算した状態を格納（tblにも同じ状態がある） */
-  HashSet memid_hashes;   /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
-  unsigned long next_id; /* 状態IDカウンタ */
-};
-
-StateSpace state_space_make()
-{
-  struct StateSpace *ss = LMN_MALLOC(struct StateSpace);
-  ss->init_state = NULL;
-  if (lmn_env.mem_enc) ss->tbl = st_init_table(&type_memid_statehash);
-  else ss->tbl = st_init_table(&type_statehash);
-  ss->memid_tbl = st_init_table(&type_memid_statehash);
-  ss->end_states = vec_make(64);
-  hashset_init(&ss->memid_hashes, 128);
-  ss->next_id = 0;
-  return ss;
-}
-
-void state_space_free(StateSpace states)
-{
-  HashSet rm_tbl; /* LTLモデル検査モード時に二重解放を防止するため */
-
-  hashset_init(&rm_tbl, 16);
-  st_foreach(states->tbl, kill_States_chains, (st_data_t)&rm_tbl);
-  hashset_destroy(&rm_tbl);
-  st_free_table(states->tbl);
-  st_free_table(states->memid_tbl);
-  vec_free(states->end_states);
-  hashset_destroy(&states->memid_hashes);
-  LMN_FREE(states);
-
-}
-
-/* 初期状態を追加する */
-void state_space_set_init_state(StateSpace states, State* init_state)
-{
-  states->init_state = init_state;
-  state_space_insert(states, init_state);
-}
-
-/* 状態空間に存在する状態の数を返す */
-State *state_space_init_state(StateSpace states)
-{
-  return states->init_state;
-}
-
-unsigned long state_space_num(StateSpace states)
-{
-  return st_num(states->tbl);
-}
-
-/* 状態空間に**すでに含まれている**状態sを最終状態として登録する */
-void state_space_add_end_state(StateSpace states, State *s)
-{
-  vec_push(states->end_states, (LmnWord)s);
-}
-
-/* 状態空間内に存在する、最終状態を返す */
-const Vector *state_space_end_states(StateSpace states)
-{
-  return states->end_states;
-}
-
-static int state_space_mem_encode_f(st_data_t _k, st_data_t _s, st_data_t _t)
-{
-  StateSpace states = (StateSpace)_t;
-  State *s = (State *)_s;
-
-  state_calc_mem_encode(s);
-  st_add_direct(states->memid_tbl, (st_data_t)s, (st_data_t)s);
-  return ST_CONTINUE;
-}
-
-/* 膜のIDを計算するハッシュ値(mhash)を追加する */
-void state_space_add_memid_hash(StateSpace states, unsigned long hash)
-{
-  hashset_add(&states->memid_hashes, hash);
-  st_foreach_hash(states->tbl, hash, state_space_mem_encode_f, (st_data_t)states);
-}
-
-/* hashが膜のIDを計算しているハッシュならば真、そうでなければ偽を返す */
-inline BOOL state_space_is_memid_hash(StateSpace states, unsigned long hash)
-{
-  return hashset_contains(&states->memid_hashes, hash);
-}
-
-/**
- * 非決定実行 or LTLモデル検査終了後にStates内に存在するチェインをすべてfreeする
- * 高階関数st_foreach(c.f. st.c)に投げて使用
- */
-static int kill_States_chains(st_data_t _k, st_data_t state_ptr, st_data_t rm_tbl_ptr)
-{
-  State *tmp = (State *)state_ptr;
-  HashSet *rm_tbl = (HashSet *)rm_tbl_ptr;
-
-  if(tmp->mem && hashset_contains(rm_tbl, (HashKeyType)tmp->mem)) {
-    vec_destroy(&tmp->successor);
-    LMN_FREE(tmp);
-  }
-  else {
-    hashset_add(rm_tbl, (HashKeyType)tmp->mem);
-    state_free(tmp);
-  }
-  return ST_CONTINUE;
-}
-
-/* 状態空間に状態sを追加する。既に等価な状態tが状態空間に存在した場合は
-   追加せずにtを返し、追加し場合は、sを返す。*/
-State *state_space_insert(StateSpace states, State *s)
-{
-  long col;
-  BOOL has_mem_id;
-  st_data_t t;
-
-  has_mem_id = state_space_is_memid_hash(states, s->hash);
-  if (has_mem_id) {
-    state_calc_mem_encode(s);
-
-    if (st_lookup(states->memid_tbl, (st_data_t)s, (st_data_t *)&t)) {
-      /* すでに等価な状態が存在する */
-      return (State *)t;
-    } else {
-      /* 等価な状態はない */
-      st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s);
-      st_add_direct(states->memid_tbl, (st_data_t)s, (st_data_t)s);
-      s->id = states->next_id++;
-      return s;
-    }
-  }
-  else {
-    if (st_lookup_with_col(states->tbl, (st_data_t)s, (st_data_t *)&t, &col)) {
-      /* すでに等価な状態が存在する */
-      return (State *)t;
-    } else {
-      /* 等価な状態はない */
-      st_add_direct(states->tbl, (st_data_t)s, (st_data_t)s); /* 状態空間に追加 */
-      s->id = states->next_id++;
-
-      if (lmn_env.optimize_hash_value && col >= MEM_EQ_FAIL_THRESHOLD) {
-        state_space_add_memid_hash(states, s->hash);
-      } else if (!lmn_env.mem_enc) {
-        /* 状態の追加時に膜のダンプを計算する */
-        state_calc_mem_dump(s);
-      }
-      return s;
-    }
-  }
-}
-
-/* 状態空間内のsと等価な状態を返す。存在しない場合は、NULLを返す */
-State *state_space_get(const StateSpace states, State *s)
-{
-  st_data_t t;
-  if (st_lookup(states->tbl, (st_data_t)s, &t)) {
-    return (State *)t;
-  } else {
-    return NULL;
-  }
-}
-
-/* 状態空間から状態sを削除する。ただし、状態空間のサクセッサは更新され
-   ないので注意 */
-void state_space_remove(const StateSpace states, State *s)
-{
-  st_delete(states->tbl, (st_data_t)s, 0);
-}
-
-st_table_t state_space_tbl(StateSpace states)
-{
-  return states->tbl;
-}
-
-
-void dump_all_state_mem(StateSpace states, FILE *file)
-{
-  if (!lmn_env.dump) return;
-  fprintf(file, "States\n");
-  st_foreach(states->tbl, print_state_mem, 0);
-  fprintf(file, "\n");
-}
-
-
-void dump_state_transition_graph(StateSpace states, FILE *file)
-{
-  Vector *v;
-  unsigned int i;
-
-  if (!lmn_env.dump) return;
-
-  v = sort_states(states);
-
-  fprintf(file, "Transitions\n");
-  fprintf(file, "init:%lu\n", state_space_init_state(states)->id);
-  for (i = 0; i < vec_num(v); i++) {
-    print_state_transition((State *)vec_get(v, i));
-    fprintf(stdout, "\n");
-  }
-  fprintf(file, "\n");
-
-  vec_free(v);
-}
-
-static Vector *sort_states(StateSpace states)
-{
-  Vector *v;
-
-  v = vec_make(state_space_num(states));
-  vec_resize(v, state_space_num(states), 0);
-  st_foreach(states->tbl, set_state_to_vec, (st_data_t)v);
-  return v;
-}
-
-static int set_state_to_vec(st_data_t _s, st_data_t _t, st_data_t _v)
-{
-  State *s = (State *)_s;
-  Vector *v = (Vector *)_v;
-
-  vec_set(v, s->id, (vec_data_t)s);
-  return ST_CONTINUE;
-}
-
-static void print_state_transition(State *s)
-{
-  unsigned int i, j;
-
-  fprintf(stdout, "%lu::", s->id); /* dump src state's ID */
-  for (i = 0; i < state_succ_num(s); i++) { /* dump dst state's IDs */
-    Transition t = transition(s, i);
-    if (i > 0) {
-      fprintf(stdout,",");
-    }
-    fprintf(stdout, "%lu", state_succ_get(s, i)->id);
-    fprintf(stdout, "(");
-    for (j = 0; j < transition_rule_num(t); j++) {
-      if (j > 0) fprintf(stdout, " ");
-      fprintf(stdout, "%s", lmn_id_to_name(transition_rule(t, j)));
-    }
-    fprintf(stdout, ")");
-  }
-}
 
 
 /*----------------------------------------------------------------------
  * State
  */
 
-struct st_hash_type type_statehash = {
-  state_cmp,
-  state_hash
-};
+State *state_make(LmnMembrane *mem, BYTE property_label, BOOL encode)
+{
+  /* delta-mem時には呼ばない */
+  State *new = state_make_minimal();
 
-struct st_hash_type type_memid_statehash = {
-  state_memid_cmp,
-  state_memid_hash
-};
-
-/**
- * コンストラクタ
- */
-State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule) {
-  State *new = LMN_MALLOC(State);
   new->mem = mem;
-  new->state_name = state_name;
-  new->flags = 0x00U;
-  /* successorの記憶域をゼロクリアする */
-  vec_init(&new->successor, 4);
-  new->rule = rule;
-  new->mem_id = NULL;
-  new->mem_dump = NULL;
-  new->hash = 0;
-  new->mem_id_hash = 0;
-
-  if (lmn_env.mem_enc) {
-    new->mem_id = lmn_mem_encode(mem);
-    new->mem_id_hash = binstr_hash(new->mem_id);
-  } else {
-    new->hash = mhash(new->mem);
-  }
-
+  new->state_name = property_label;
+  state_calc_hash(new, mem, encode);
 #ifdef PROFILE
-  if (lmn_env.profile_level > 0) {
-    status_create_new_state();
+  if (lmn_env.profile_level >= 3) {
+    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
   }
 #endif
-
   return new;
 }
 
-/**
- * コンストラクタ
- */
-State *state_make_for_nd(LmnMembrane *mem, LmnRule rule) {
-  return state_make(mem, DEFAULT_STATE_ID, rule);
+/* まっさらなState構造体をmallocして返してもらう */
+inline State *state_make_minimal()
+{
+  State *new = LMN_MALLOC(State);
+  new->mem              = NULL;
+  new->state_name       = 0x00U;
+  new->flags            = 0x00U;
+  new->compress_mem     = NULL;
+  new->hash             = 0;
+  new->next             = NULL;
+  new->successors       = NULL;
+  new->successor_num    = 0;
+  new->predecessor_num  = 0;
+  new->predecessor      = NULL;
+  state_id_issue(new);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
+  }
+#endif
+  return new;
 }
+
+/* 状態のハッシュ値を計算する */
+inline void state_calc_hash(State *s, LmnMembrane *mem, BOOL encode) {
+  if (encode) {
+    s->compress_mem = lmn_mem_encode(mem);
+    s->hash         = binstr_hash(s->compress_mem);
+    set_encoded(s);
+  } else {
+    s->hash = mhash(mem);
+  }
+}
+
+/* 状態をコピーして返す. 膜やバイト列も, 実態をコピーする
+ * ただし, 状態フラグのコピーはencode関連のみ */
+State *state_copy(State *src)
+{
+  return state_copy_with_mem(src, state_mem(src));
+}
+
+inline
+State *state_copy_with_mem(State *src, LmnMembrane *mem)
+{
+  State *dst;
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+    profile_start_timer(PROFILE_TIME__STATE_COPY);
+  }
+#endif
+
+  dst = state_make_minimal();
+
+  dst->mem = mem ? lmn_mem_copy(mem) : NULL;
+  dst->hash = src->hash;
+
+  if (state_mem_binstr(src)) {
+    dst->compress_mem = lmn_binstr_copy(state_mem_binstr(src));
+    if (is_encoded(src)) {
+      set_encoded(dst);
+    }
+  }
+
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_finish_timer(PROFILE_TIME__STATE_COPY);
+  }
+#endif
+
+  return dst;
+}
+
 
 /**
  * デストラクタ
  */
-void state_free(State *s) {
-  int i;
+void state_free(State *s)
+{
+  state_free_mem(s);
 
+  if (s->successors) {
 #ifdef PROFILE
-  status_start_state_free();
+    if (lmn_env.profile_level >= 3) profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, sizeof(succ_data_t) * state_succ_num(s));
 #endif
 
-  if (s->mem) {
-    lmn_mem_drop(s->mem);
-    lmn_mem_free(s->mem);
+    if (lmn_env.show_transition) {
+      unsigned int i;
+      for (i = 0; i < state_succ_num(s); i++) {
+        transition_free(transition(s, i));
+      }
+    }
+    LMN_FREE(s->successors);
   }
-  for (i = 0; i < vec_num(&s->successor); i++) {
-    transition_free((Transition)vec_get(&s->successor, i));
-  }
-  vec_destroy(&s->successor);
-  if (s->mem_id) lmn_binstr_free(s->mem_id);
-  if (s->mem_dump) lmn_binstr_free(s->mem_dump);
+  state_free_compress_mem(s);
   LMN_FREE(s);
 
 #ifdef PROFILE
-  status_finish_state_free();
+  if (lmn_env.profile_level >= 3) {
+    profile_remove_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
+  }
 #endif
 }
 
 inline void state_free_mem(State *s)
 {
-  if (s->mem) {
-    lmn_mem_drop(s->mem);
-    lmn_mem_free(s->mem);
+  if (state_mem(s)) {
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_remove_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(state_mem(s)));
+    }
+#endif
+    lmn_mem_drop(state_mem(s));
+    lmn_mem_free(state_mem(s));
     s->mem = NULL;
   }
 }
 
-
-inline long state_hash(State *s) {
-  /* +1 は state_nameが0の場合があるため */
-  return s->hash * (s->state_name + 1);
-}
-
-BYTE state_property_state(State *state)
-{
-  return state->state_name;
-}
-
-void state_set_property_state(State *state, BYTE prop_state)
-{
-  state->state_name = prop_state;
-}
-
-inline LmnMembrane *state_mem(State *state)
-{
-  return state->mem;
-}
-
 /* 状態の膜と等価な、新たに生成した膜を返す */
-inline LmnMembrane *state_copied_mem(State *state)
+inline LmnMembrane *state_copied_mem(State *s)
 {
-  if (state->mem) return lmn_mem_copy(state->mem);
-  else if (state->mem_id) return lmn_binstr_decode(state->mem_id);
-  else if (state->mem_dump) return lmn_binstr_decode(state->mem_dump);
+  LmnMembrane *ret = NULL;
+  if (state_mem(s)) {
+    ret = lmn_mem_copy(state_mem(s));
+  }
+  else if (state_mem_binstr(s)) {
+    ret = lmn_binstr_decode(state_mem_binstr(s));
+  }
   else {
     lmn_fatal("unexpected");
-    return NULL;
   }
-}
-
-inline LmnRule state_rule(State *state)
-{
-  return state->rule;
-}
-
-inline LmnBinStr state_mem_binstr(State *state)
-{
-  return state->mem_id ? state->mem_id : state->mem_dump;
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(ret));
+  }
+#endif
+  return ret;
 }
 
 /**
  * 引数としてあたえられたStateが等しいかどうかを判定する
  */
-static int state_equals(HashKeyType k1, HashKeyType k2)
+static int state_equals_with_compress(State *check, State *stored)
 {
-  State *s1 = (State *)k1;
-  State *s2 = (State *)k2;
-
   int t;
 
-  if (lmn_env.mem_enc) {
-    t =
-      s1->state_name == s2->state_name &&
-      s1->mem_id_hash == s2->mem_id_hash &&
-      binstr_comp(s1->mem_id, s2->mem_id) == 0;
-  }
-  else if (s1->mem_id && s2->mem_id) {
+  if (is_encoded(check) && is_encoded(stored)) {
     /* 膜のIDで比較 */
     t =
-      s1->state_name == s2->state_name &&
-      s1->mem_id_hash == s2->mem_id_hash &&
-      binstr_comp(s1->mem_id, s2->mem_id) == 0;
-  } else if (s1->mem_dump || s2->mem_dump) {
+      check->state_name == stored->state_name &&
+      binstr_compare(state_mem_binstr(check),
+                     state_mem_binstr(stored)) == 0;
+  }
+  else if (state_mem_binstr(check) || state_mem_binstr(stored)) {
     /* 同型性判定 */
-      t =
-        s1->state_name == s2->state_name &&
-        s1->hash == s2->hash &&
-        (s1->mem_id ? lmn_mem_equals_enc(s1->mem_dump, s2->mem) : lmn_mem_equals_enc(s2->mem_dump, s1->mem));
-  } else {
+    LMN_ASSERT(state_mem(check) && state_mem_binstr(stored));
+    t =
+      check->state_name == stored->state_name &&
+      state_mem_binstr(stored) ? lmn_mem_equals_enc(state_mem_binstr(stored), state_mem(check))
+                                : lmn_mem_equals_enc(state_mem_binstr(check),  state_mem(stored));
+  }
+  else {
     lmn_fatal("implementation error");
   }
 
   return t;
 }
 
+static int state_equals(State *s1, State *s2)
+{
+  return
+    s1->state_name == s2->state_name &&
+    s1->hash       == s2->hash       &&
+    lmn_mem_equals(s1->mem, s2->mem);
+}
+
+
 /**
  * 与えられた2つの状態が互いに異なっていれば真を、逆に等しい場合は偽を返す
  */
-int state_cmp(HashKeyType s1, HashKeyType s2) {
+int state_cmp_with_compress(State *s1, State *s2)
+{
+  return !state_equals_with_compress(s1, s2);
+}
+
+int state_cmp(State *s1, State *s2)
+{
   return !state_equals(s1, s2);
 }
 
-/**
- * 与えられた2つの状態を膜のIDを使い比較する。が互いに異なっていれば真
- * を、逆に等しい場合は偽を返す
- */
-int state_memid_cmp(st_data_t _s1, st_data_t _s2) {
-  State *s1 = (State *)_s1;
-  State *s2 = (State *)_s2;
-
-  return !(
-    s1->state_name == s2->state_name &&
-    s1->mem_id_hash == s2->mem_id_hash &&
-    binstr_comp(s1->mem_id, s2->mem_id) == 0);
-
-}
-
-/* 状態が持つ膜のIDのハッシュ値を返す。膜のIDを持たない場合は有効な値を
-   返さない */
-inline long state_memid_hash(State *s) {
-  /* +1 は state_nameが0の場合があるため */
-  return s->mem_id_hash * (s->state_name + 1);
-}
-
-/* 状態が持つ膜のダンプを計算する。 */
-inline void state_free_mem_dump(State *s)
+inline void state_free_compress_mem(State *s)
 {
-  if (s->mem_dump) {
-    lmn_binstr_free(s->mem_dump);
-    s->mem_dump = NULL;
+  if (s->compress_mem) {
+    lmn_binstr_free(s->compress_mem);
+    s->compress_mem = NULL;
   }
 }
 
-
-/* 状態が持つ膜のエンコードを計算する。mem_dumpを持っている場合は、
-   mem_dumpを解放する */
+/* 膜のIDと膜のIDのハッシュ値へ計算し直す.
+ * mem_dumpを持っている場合は, mem_dumpを解放する.
+ * MT-UnSafe */
 inline void state_calc_mem_encode(State *s)
 {
-  if (!s->mem_id) {
-    if (s->mem) s->mem_id = lmn_mem_encode(s->mem);
-    else if (s->mem_dump) {
+  if (!is_encoded(s)) {
+    if (state_mem(s)) {
+      state_free_compress_mem(s);
+      state_set_compress_mem(s, lmn_mem_encode(state_mem(s)));
+    }
+    else if (state_mem_binstr(s)) {
       LmnMembrane *m;
 
-      m = lmn_binstr_decode(s->mem_dump);
-      s->mem_id = lmn_mem_encode(m);
+      m = lmn_binstr_decode(state_mem_binstr(s));
+      state_free_compress_mem(s);
+      state_set_compress_mem(s, lmn_mem_encode(m));
       lmn_mem_drop(m);
       lmn_mem_free(m);
     } else {
       lmn_fatal("implementation error");
     }
-    s->mem_id_hash = binstr_hash(s->mem_id);
-    state_free_mem_dump(s);
+
+    s->hash = binstr_hash(state_mem_binstr(s));
+    set_encoded(s);
+  }
+}
+
+inline LmnBinStr state_calc_mem_dump_with_z(State *s)
+{
+  if (!state_mem_binstr(s)) {
+    LmnBinStr bs, c;
+    LMN_ASSERT(state_mem(s));
+    bs  = lmn_mem_to_binstr(state_mem(s));
+    c = lmn_bscomp_z_encode(bs);
+    if (bs == c) { /* 圧縮失敗 */
+      lmn_binstr_free(c);
+      c = bs;
+    } else {       /* 圧縮成功 */
+      lmn_binstr_free(bs);
+    }
+    return c;
+  }
+  else {
+    /* TODO: 圧縮されてないときは圧縮する, というコードを書いてない */
+    return s->compress_mem;
   }
 }
 
 /* 状態の膜のダンプを計算する */
-inline void state_calc_mem_dump(State *s)
+inline LmnBinStr state_calc_mem_dump(State *s)
 {
-  if (s->mem_id) lmn_fatal("implementation error");
-  if (!s->mem_dump) s->mem_dump = lmn_mem_to_binstr(s->mem);
+  LMN_ASSERT(!is_encoded(s));
+  LMN_ASSERT(state_mem(s));
+  if (!s->compress_mem) {
+    return lmn_mem_to_binstr(state_mem(s));
+  } else {
+    return s->compress_mem;
+  }
 }
 
-/* 状態にサクセッサを追加 */
-inline void state_succ_add(State *s, Transition t) {
-  vec_push(&s->successor, (vec_data_t)t);
+inline LmnBinStr state_calc_mem_dummy(State *s)
+{
+  /* DUMMY: nothing to do */
+  return NULL;
 }
 
-/* 状態のサクセッサの数を返す */
-inline unsigned int state_succ_num(State *s) {
-  return vec_num(&s->successor);
-}
-
-/* 状態のサクセッサを取得 */
-inline State *state_succ_get(State *s, unsigned int i) {
-  return transition_next_state((Transition)vec_get(&s->successor, i));
+inline unsigned long transition_space(Transition t)
+{
+  unsigned long ret;
+  ret  = sizeof(struct Transition);
+  ret += vec_space_inner(&t->rule_names);
+  return ret;
 }
 
 Transition transition(State *s, unsigned int i)
 {
-  return (Transition)vec_get(&s->successor, i);
-}
-
-/* 状態の膜（LmnMembrane）を復元する。*/
-inline void state_restore_mem(State *s)
-{
-  if (!s->mem) {
-    s->mem = lmn_binstr_decode(state_mem_binstr(s));
-  }
-}
-
-/**
- * --ltl_nd実行終了時に状態の内容を出力する．
- * 高階関数st_foreach(c.f. st.c)に投げて使用．
- */
-static int print_state_mem(st_data_t _k, st_data_t state_ptr, st_data_t _a) {
-  State *tmp = (State *)state_ptr;
-  dump_state_data(tmp);
-  return ST_CONTINUE;
-}
-
-void dump_state_data(State *state)
-{
-  if (!lmn_env.dump) return;
-  fprintf(stdout, "%lu::", state->id); /* dump src state's ID */
-  if (!state->mem)
-    lmn_fatal("unexpected");
-  lmn_dump_cell_stdout(state->mem); /* dump src state's global root membrane */
+  return (Transition)(s->successors[i]);
 }
 
 Transition transition_make(State *s, lmn_interned_str rule_name)
 {
+  return transition_make_with_id(s, DEFAULT_TRANSITION_ID, rule_name);
+}
+
+Transition transition_make_with_id(State *s, unsigned long id, lmn_interned_str rule_name)
+{
   struct Transition *t = LMN_MALLOC(struct Transition);
 
-  t->s = s;
+  t->s  = s;
+  t->id = id;
   vec_init(&t->rule_names, 4);
   vec_push(&t->rule_names, rule_name);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_add_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
+  }
+#endif
   return t;
 }
 
 void transition_free(Transition t)
 {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
+  }
+#endif
   vec_destroy(&t->rule_names);
   LMN_FREE(t);
 }
 
 void transition_add_rule(Transition t, lmn_interned_str rule_name)
 {
-  int i;
+  if (rule_name != ANONYMOUS) {
+    int i;
+    /* ルール名の重複検査 */
+    for (i = 0; i < vec_num(&t->rule_names); i++) {
+      if (vec_get(&t->rule_names, i) == rule_name) return;
+    }
 
-  if (rule_name == ANONYMOUS) return;
-  /* ルール名の重複検査 */
-  for (i = 0; i < vec_num(&t->rule_names); i++) {
-    if (vec_get(&t->rule_names, i) == rule_name) return;
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
+#endif
+
+    vec_push(&t->rule_names, rule_name);
+
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) profile_add_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
+#endif
   }
-  vec_push(&t->rule_names, rule_name);
 }
+
+
+/** Printer */
+void state_set_id_for_dump(State *s, LmnWord _d)
+{
+  static unsigned long id = 1;
+  state_set_format_id(s, id++);
+}
+
+void dump_state_data(State *s, LmnWord _fp)
+{
+  FILE *f;
+  unsigned long dump_id;
+
+  if (is_dummy(s) && !is_encoded(s)) return; /* 状態データはdummy側に存在 */
+
+  f = (FILE *)_fp;
+  dump_id = state_format_id(s);
+
+  switch (lmn_env.mc_dump_format) {
+  case LaViT:
+    fprintf(f, "%lu::", dump_id);
+    state_print_mem(s, _fp);
+    break;
+  case FSM:
+    /* under constructions.. */
+    fprintf(f, "1\n");
+    break;
+  case Dir_DOT:
+    if (state_succ_num(s) == 0) {
+      fprintf(f, "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n",
+                  dump_id);
+    }
+    break;
+  case CUI:
+    fprintf(f, "%lu::%s"
+             , dump_id
+             , !mc_data.has_property ? ""
+                                     : automata_state_name(mc_data.property_automata,
+                                                           state_property_state(s)));
+    state_print_mem(s, _fp);
+    break;
+  default:
+    lmn_fatal("unexpected");
+    break;
+  }
+}
+
+void state_print_mem(State *s, LmnWord _fp)
+{
+  LmnMembrane *mem;
+
+  mem = state_mem(s);
+
+  if (!mem) {
+    unsigned int org_next_id = env_next_id();
+    mem = lmn_binstr_decode(state_mem_binstr(s));
+    env_set_next_id(org_next_id);
+  }
+
+  lmn_dump_mem_stdout(mem); /* TODO: グラフ構造の出力先をファイルポインタに */
+  if (!state_mem(s)) {
+    lmn_mem_drop(mem);
+    lmn_mem_free(mem);
+  }
+}
+
+/* あとで書き直す */
+void state_print_transition(State *s, LmnWord _fp)
+{
+  FILE *f;
+  unsigned int i;
+  BOOL need_id_foreach_trans;
+  char *state_separator,
+       *trans_separator,
+       *label_begin,
+       *label_end;
+
+  if (is_dummy(s) && is_encoded(s)) return;
+
+  f = (FILE *)_fp;
+  need_id_foreach_trans = TRUE;
+
+  switch (lmn_env.mc_dump_format) {
+  case DOT:
+    state_separator = " -> ";
+    trans_separator = NULL;
+    label_begin     = " [ label = \"";
+    label_end       = "\" ];";
+    break;
+  case FSM:
+    state_separator = " ";
+    trans_separator = NULL;
+    label_begin     = " \"";
+    label_end       = "\"";
+    break;
+  case LaViT: /* FALLTHROUGH CUIモードと共通 */
+  case CUI:
+    state_separator = "::"; /* spaceが混ざるとlavitは読み込むことができない */
+    trans_separator = ",";
+    label_begin     = "(";
+    label_end       = ")";
+    need_id_foreach_trans = FALSE;
+    break;
+  default:
+    lmn_fatal("unexpected");
+    break;
+  }
+
+  if (!need_id_foreach_trans) {
+    fprintf(f, "%lu%s", state_format_id(s), state_separator);
+  }
+
+  if (s->successors) {
+    for (i = 0; i < state_succ_num(s); i++) { /* dump dst state's IDs */
+      if (need_id_foreach_trans) {
+        fprintf(f, "%lu%s", state_format_id(s), state_separator);
+      } else if (i > 0) {
+        LMN_ASSERT(trans_separator);
+        fprintf(f, "%s", trans_separator);
+      }
+
+      fprintf(f, "%lu", state_format_id(state_succ_get(s, i)));
+
+      if (lmn_env.show_transition) {
+        Transition t;
+        unsigned int j;
+
+        fprintf(f, "%s", label_begin);
+        t = transition(s, i);
+        for (j = 0; j < transition_rule_num(t); j++) {
+          if (j > 0) fprintf(f, " "); /* ルール名の区切りは半角スペース1文字 */
+          fprintf(f, "%s", lmn_id_to_name(transition_rule(t, j)));
+        }
+        fprintf(f, "%s", label_end);
+      }
+
+      if (i + 1 < state_succ_num(s) && need_id_foreach_trans) {
+        fprintf(f,"\n");
+      }
+    }
+    fprintf(f, "\n");
+  } else if (!need_id_foreach_trans){
+    fprintf(f, "\n");
+  }
+}
+
+void state_print_label(State *s, LmnWord _fp)
+{
+  FILE *f;
+  if (!mc_data.has_property || (is_dummy(s) && is_encoded(s))) {
+    return;
+  }
+
+  f = (FILE *)_fp;
+  switch (lmn_env.mc_dump_format) {
+  case Dir_DOT:
+  {
+    AutomataState atm;
+    atm = automata_get_state(mc_data.property_automata,
+                             state_property_state(s));
+    if (atmstate_is_accept(atm) || atmstate_is_end(atm)) {
+      fprintf(f, "  %lu [peripheries = 2]\n", state_format_id(s));
+    }
+    break;
+  }
+  case LaViT:
+    fprintf(f, "%lu::", state_format_id(s));
+    fprintf(f, "%s\n", automata_state_name(mc_data.property_automata,
+                                           state_property_state(s)));
+  case FSM:
+  case CUI:  /* 状態のグローバルルート膜の膜名としてdump済 */
+    break;
+  default:
+    lmn_fatal("unexpected");
+    break;
+  }
+}
+
+void state_print_error_path(State *s, LmnWord _fp)
+{
+  FILE *f;
+  if ((is_dummy(s) && is_encoded(s)) || !is_on_cycle(s)) {
+    return;
+  }
+  f = (FILE *)_fp;
+
+  switch (lmn_env.mc_dump_format) {
+  case LaViT:
+    fprintf(f, "%lu::", state_format_id(s));
+    if (s->successors) {
+      unsigned int i;
+      BOOL dump_once = FALSE;
+      for (i = 0; i < state_succ_num(s); i++) {
+        State *succ = state_succ_get(s, i);
+        if (is_on_cycle(succ)) {
+          fprintf(f, "%s%lu", (dump_once ? ", " : ""), state_format_id(succ));
+          if (!dump_once) {
+            dump_once = TRUE;
+          }
+        }
+      }
+    }
+    fprintf(f, "\n");
+    break;
+  case Dir_DOT:  /* 実装予定 */
+  case FSM:      /* 未定 */
+  case CUI:      /* 別で出力 */
+    break;
+  default:
+    lmn_fatal("unexpected");
+    break;
+  }
+}
+

@@ -38,6 +38,48 @@
  */
 
 #ifndef LMN_UTIL_H
+#define LMN_UTIL_H
+
+#include "lmntal.h"
+#include "error.h"
+
+
+enum ESC_CODE {
+  CODE__HIGH_LIGHT           =  0x01,
+  CODE__UNDER_LINE           =  0x04,
+  CODE__DASH_LINE            =  0x05,
+  CODE__REVERSAL             =  0x07,
+  CODE__FORECOLOR_BLACK      =  0x1e,
+  CODE__FORECOLOR_RED        =  0x1f,
+  CODE__FORECOLOR_GREEN      =  0x20,
+  CODE__FORECOLOR_YELLOW     =  0x21,
+  CODE__FORECOLOR_DEEPBLUE   =  0x22,
+  CODE__FORECOLOR_PURPLE     =  0x23,
+  CODE__FORECOLOR_LIGHTBLUE  =  0x24,
+  CODE__FORECOLOR_WHITE      =  0x25,
+  CODE__BACKCOLOR_BLACK      =  0x28,
+  CODE__BACKCOLOR_RED        =  0x29,
+  CODE__BACKCOLOR_GREEN      =  0x2a,
+  CODE__BACKCOLOR_YELLOW     =  0x2b,
+  CODE__BACKCOLOR_DEEPBLUE   =  0x2c,
+  CODE__BACKCOLOR_PURPLE     =  0x2d,
+  CODE__BACKCOLOR_LIGHTBLUE  =  0x2e,
+  CODE__BACKCOLOR_GRAY       =  0x2f,
+};
+
+#define __ESC_START__  "\x1b["
+#define __ESC_END__    "m"
+
+static inline void esc_code_clear(){
+  printf("%s%s", __ESC_START__, __ESC_END__);
+  return;
+}
+
+static inline void esc_code_add(int code)
+{
+  printf("%s%d%s", __ESC_START__, code, __ESC_END__);
+}
+
 
 /* 配列の要素数 */
 #define ARY_SIZEOF(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -45,6 +87,19 @@
 char *int_to_str(long n);
 int comp_int_f(const void *a, const void *b);
 int comp_int_greater_f(const void *a_, const void *b_);
-inline unsigned long round2up(unsigned long n);
+
+/* n以上で最小の2の倍数を返す */
+static inline unsigned long round2up(unsigned long n)
+{
+  unsigned int v = 1;
+  while (v && v < n) {
+    v <<= 1;
+  }
+  if (v == 0) {
+    lmn_fatal("too large size");
+  }
+  return v;
+}
+
 
 #endif /* !LMN_UTIL_H */

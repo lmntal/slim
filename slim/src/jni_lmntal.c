@@ -1,16 +1,47 @@
-#include "config.h"
+/*
+ * jni_lmntal.c
+ *
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
+ */
 
-#ifdef USE_JNI
-
+#include "jni_lmntal.h"
 #include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include "load.h"
-#include "lmntal.h"
 #include "task.h"
 #include "nd.h"
-#include "jni_lmntal.h"
 
 #define JNI_CYGPATH                "/usr/bin/cygpath"
 #define JNI_LMNTAL_JAR_REL_PATH    "/bin/lmntal.jar"
@@ -19,17 +50,20 @@
 
 #define JNI_LMNTAL_COMPILATION_FAILED "Compilation Failed"
 
+#ifdef HAVE_JNI_H
 static struct JniContextLmntal jc_lmntal;
 static JNIEnv *env;
 static JavaVM *jvm;
+#endif
 
+#ifdef __CYGWIN__
 char* run_cygpath(const char* option, const char* arg)
 {
 	int size;
 	char *cmd, *result, buf[128];
 	FILE *fp;
 
-	cmd = LMN_CALLOC(char, strlen(JNI_CYGPATH)+strlen(option)+strlen(arg)+3);
+	cmd = LMN_CALLOC(char, strlen(JNI_CYGPATH) + strlen(option) + strlen(arg) + 3);
 	sprintf(cmd, "%s %s %s", JNI_CYGPATH, option, arg);
 	if ((fp = popen(cmd, "r")) == NULL) {
 		result = NULL;
@@ -40,18 +74,18 @@ char* run_cygpath(const char* option, const char* arg)
 			size+=128;
 			result = LMN_REALLOC(char, result, size);
 			strcat(result, buf);
-	    }
+		}
 	}
 
 	LMN_FREE(cmd);
 	return result;
 }
+#endif
 
-
+#ifdef HAVE_JNI_H
 static void jni_load_context_lmntal()
 {
 	// TODO: マクロ関数をいくつか用意してもっとスマートに記述できないだろうか
-
 	/**
 	 * 標準入出力操作系
 	 */
@@ -166,11 +200,14 @@ static void jni_load_context_lmntal()
 		return;
 	}
 }
+#endif
 
 static BOOL jni_initialize_lmntal()
 {
+#ifdef HAVE_JNI_H
 	JavaVMInitArgs vm_args;
 	JavaVMOption options[4];
+
 	char *arg, *path, *lmntal_home;
 
 	/* LMNTAL_HOME環境変数の取得 */
@@ -185,7 +222,7 @@ static BOOL jni_initialize_lmntal()
 	// TODO: cygwin以外での動作確認
 
 	/* -Djava.class.pathオプション */
-	arg = LMN_CALLOC(char, strlen(lmntal_home)+strlen(JNI_LMNTAL_JAR_REL_PATH)+2+1);
+	arg = LMN_CALLOC(char, strlen(lmntal_home) + strlen(JNI_LMNTAL_JAR_REL_PATH) + 2 + 1);
 	sprintf(arg, "%s%s%s", lmntal_home, JNI_LMNTAL_JAR_REL_PATH, ":.");
 #ifdef __CYGWIN__
 	path = run_cygpath("-wp", arg);
@@ -195,7 +232,7 @@ static BOOL jni_initialize_lmntal()
 #endif
 	LMN_FREE(arg);
 
-	options[0].optionString = LMN_CALLOC(char, strlen(JNI_OPTION_JAVA_CLASS_PATH)+strlen(path)+1);
+	options[0].optionString = LMN_CALLOC(char, strlen(JNI_OPTION_JAVA_CLASS_PATH) + strlen(path) + 1);
 	sprintf(options[0].optionString, "%s%s", JNI_OPTION_JAVA_CLASS_PATH, path);
 	LMN_FREE(path);
 
@@ -206,7 +243,7 @@ static BOOL jni_initialize_lmntal()
 	path = LMN_CALLOC(char, strlen(lmntal_home) + 1);
 	strcpy(path, lmntal_home);
 #endif
-	options[1].optionString = LMN_CALLOC(char, strlen(JNI_OPTION_LMNTAL_HOME)+strlen(path)+1);
+	options[1].optionString = LMN_CALLOC(char, strlen(JNI_OPTION_LMNTAL_HOME) + strlen(path) + 1);
 	sprintf(options[1].optionString, "%s%s", JNI_OPTION_LMNTAL_HOME, path);
 	LMN_FREE(path);
 
@@ -254,11 +291,13 @@ static BOOL jni_initialize_lmntal()
 	(*env)->SetStaticBooleanField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_fGUI, JNI_FALSE);
 	(*env)->SetStaticIntField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_shuffle, jc_lmntal.shuffle_level);
 
+#endif
 	return TRUE;
 }
 
-static void jni_finalize_lmntal() {
-
+static void jni_finalize_lmntal()
+{
+#ifdef USE_JNI
 	/**
 	 * JavaVMの標準入出力をもとに戻す
 	 */
@@ -268,10 +307,12 @@ static void jni_finalize_lmntal() {
 	 * JavaVMの解放
 	 */
 	(*jvm)->DestroyJavaVM(jvm);
+#endif
 }
 
 static BOOL jni_lmntal_compile(char **result, const char *code)
 {
+#ifdef USE_JNI
   /**
    * ■lmntal処理系を実行する
    */
@@ -299,7 +340,7 @@ static BOOL jni_lmntal_compile(char **result, const char *code)
     printf("Compilation Failed\n\n");
     return FALSE;
   }
-
+#endif
   return TRUE;
 }
 
@@ -308,7 +349,7 @@ static void _run(FILE **fp)
 	Vector *start_rulesets = vec_make(2);
 	LmnRuleSet t = load(*fp);
 
-    vec_push(start_rulesets, (vec_data_t)t);
+	vec_push(start_rulesets, (vec_data_t)t);
 
 	/* まともな入力ファイルが無ければ抜ける */
 	if(vec_num(start_rulesets) == 0){
@@ -317,9 +358,9 @@ static void _run(FILE **fp)
 	}
 
 	if (lmn_env.nd) {
-		run_nd_for_jni(start_rulesets);
+		run_nd(start_rulesets);
 	} else {
-	  lmn_run_for_jni(start_rulesets);
+	  lmn_run(start_rulesets);
 	}
 }
 
@@ -350,8 +391,7 @@ void run_jni_interactive()
 {
 	BOOL is_processing = TRUE;
 	char line[1024];
-	char *result;
-	FILE *tmpfp;
+	char *result = NULL;
 
 	show_help();
 
@@ -392,7 +432,7 @@ void run_jni_interactive()
 //				  lmn_env.optimization_level = l <= OPTIMIZE_LEVEL_MAX ? l : OPTIMIZE_LEVEL_MAX;
 //				  printf("set optimize level %d \n", lmn_env.optimization_level);
 //				}
-
+#ifdef HAVE_JNI_H
 			} else if (line[1] == 's' && strlen(line) == 3) {
 				/* シャッフルレベルの指定 */
 				if (isdigit(line[2])) {
@@ -482,34 +522,31 @@ void run_jni_interactive()
 					lmn_env.normal_cleaning = TRUE;
 					printf("remain mode off (normal)\n");
 				}
-
-
+#endif
 			} else if (strcmp(&line[1], "trace") == 0) {
 				/* traceモードON */
-			    lmn_env.trace = TRUE;
+			  lmn_env.trace = TRUE;
 				printf("trace mode on\n");
 
 			} else if (strcmp(&line[1], "notrace") == 0) {
 				/* traceモードOFF */
-			    lmn_env.trace = FALSE;
+			  lmn_env.trace = FALSE;
 				printf("trace mode off\n");
 
 			} else if (strcmp(&line[1], "showproxy") == 0) {
 				/* プロキシ表示ON */
-			    lmn_env.show_proxy = TRUE;
+			  lmn_env.show_proxy = TRUE;
 				printf("show_proxy mode on\n");
 
 			} else if (strcmp(&line[1], "hideproxy") == 0) {
 				/* プロキシ表示OFF */
-			    lmn_env.show_proxy = FALSE;
+			  lmn_env.show_proxy = FALSE;
 				printf("show_proxy mode off\n");
 			} else {
 				printf("unknown command: %s\n",line);
 			}
 		} else if (jni_lmntal_compile(&result, line)) {
-
-			/* il_parserはFILE*しか受け取らない(?)ので、一時ファイルで対応する */
-			tmpfp = tmpfile();
+		  FILE *tmpfp = tmpfile(); /* il_parserはFILE*しか受け取らない(?)ので、一時ファイルで対応する */
 			if (tmpfp == NULL) {
 				is_processing = FALSE; // 終了
 			} else {
@@ -525,5 +562,3 @@ void run_jni_interactive()
 	}
 	jni_finalize_lmntal();
 }
-
-#endif /* USE_JNI */

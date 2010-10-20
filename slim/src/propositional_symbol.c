@@ -68,8 +68,6 @@ static char *rule_str_for_compile(const char *head,
                                   const char *body);
 static int propsym_parse(FILE *in, Automata a, PVector *definitions);
 
-static inline void property_react_cxt_init(struct ReactCxt *cxt);
-static inline void property_react_cxt_destroy(struct ReactCxt *cxt);
 
 Proposition proposition_make(const char *head,
                              const char *guard,
@@ -79,7 +77,7 @@ Proposition proposition_make(const char *head,
   Rule rule;
   FILE *fp;
   char *rule_str;
-  
+
   p->head = strdup(head);
   p->guard = (guard == NULL ? strdup("") : strdup(guard));
   p->body = (body == NULL ? strdup("") : strdup(body));
@@ -87,7 +85,7 @@ Proposition proposition_make(const char *head,
   rule_str = rule_str_for_compile(head, guard, body);
   fp = lmntal_compile_rule_str(rule_str);
   LMN_FREE(rule_str);
-  
+
   if (!il_parse_rule(fp, &rule)) {
     p->rule = load_rule(rule);
     stx_rule_free(rule);
@@ -150,8 +148,10 @@ SymbolDefinition propsym_make(unsigned int sym_id, Proposition p)
 
 void propsym_free(SymbolDefinition s)
 {
-  proposition_free(s->prop);
-  LMN_FREE(s);
+  if (s) {
+    proposition_free(s->prop);
+    LMN_FREE(s);
+  }
 }
 
 unsigned int propsym_symbol_id(SymbolDefinition s)
@@ -165,7 +165,7 @@ int propsym_parse(FILE *in, Automata a, PVector *definitions)
 {
   int r;
   yyscan_t scanner;
-  
+
   propsymlex_init(&scanner);
   propsymset_extra(NULL, scanner);
   propsymset_in(in, scanner);
@@ -188,14 +188,16 @@ void propsym_dump(SymbolDefinition s)
 
 Proposition propsym_get_proposition(SymbolDefinition s)
 {
-  return s->prop;
+  return s ? s->prop : NULL;
 }
 
 BOOL proposition_eval(Proposition prop, LmnMembrane *mem)
 {
   struct ReactCxt rc;
   BOOL b;
-  
+
+  if (!prop) return FALSE;
+
   property_react_cxt_init(&rc);
   RC_SET_GROOT_MEM(&rc, mem);
   b = react_rule(&rc, mem, proposition_get_rule(prop));
@@ -203,14 +205,6 @@ BOOL proposition_eval(Proposition prop, LmnMembrane *mem)
   return b;
 }
 
-static inline void property_react_cxt_init(struct ReactCxt *cxt)
-{
-  RC_SET_MODE(cxt, REACT_PROPERTY);
-}
-
-static inline void property_react_cxt_destroy(struct ReactCxt *cxt)
-{
-}
 
 /*----------------------------------------------------------------------
  * propositional symbol definitions
@@ -234,7 +228,7 @@ SymbolDefinition propsyms_get(PropSyms props, unsigned int i)
 void propsyms_free(PropSyms props)
 {
   unsigned int i;
-  for (i=0; i<vec_num(props); i++) {
+  for (i = 0; i < vec_num(props); i++) {
     propsym_free((SymbolDefinition)vec_get(props, i));
   }
   vec_free(props);

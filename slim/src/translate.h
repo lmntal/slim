@@ -49,8 +49,13 @@
 /* この辺の読み込みマクロはインタプリタ出力時も使えるはず */
 /* translate.c内でも使えるはず */
 
-#define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
-#define SWAP(T,X,Y)       do { T t=(X); (X)=(Y); (Y)=t;} while(0)
+#define READ_VAL(T,I,X)      ((X)=*(T*)(I), (I) += sizeof(T))
+#define SWAP(T,X,Y)    \
+ do {                  \
+  T tmp = (X);         \
+  (X)  = (Y);          \
+  (Y)  = tmp;           \
+} while(0)
 
 #define READ_VAL_FUNC(I,X)                      \
   do{                                           \
@@ -63,10 +68,10 @@
     }                                                                   \
   }while(0)
 
-#define READ_VAL_LIST(I,X)                                          \
-  do{                                                                   \
+#define READ_VAL_LIST(I,X)                      \
+  do{                                                               \
     READ_VAL(LmnInstrVar, I, X##_num);                                  \
-    X = lmn_malloc(sizeof(LmnWord)*X##_num);                            \
+    X = malloc(sizeof(LmnWord)*X##_num);                                \
     { int i; for(i=0; i<X##_num; ++i){ READ_VAL(LmnInstrVar, I, X[i]); } } \
   }while(0)
 
@@ -165,4 +170,3 @@ union LmnFunctorLiteral{
 void translate(char *filepath);
 
 #endif
-

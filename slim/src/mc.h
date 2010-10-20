@@ -37,62 +37,50 @@
  * $Id$
  */
 
-#ifndef MC_H
-#define MC_H
+#ifndef LMN_MC_H
+#define LMN_MC_H
 
-#include "st.h"
-#include "internal_hash.h"
-#include "membrane.h"
-#include "vector.h"
+#include "lmntal.h"
+#include "lmntal_thread.h"
 #include "automata.h"
-#include "rule.h"
 #include "react_context.h"
 #include "nd.h"
 #include "state.h"
+#include "statespace.h"
 
-typedef struct StateTransition StateTransition;
-
-struct StateTransition {
-  State *succ_state;     /* 遷移先状態 */
-  unsigned long id;    /* State graph(=\= Automata)上の各遷移に付与されるグローバルなID．ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる． */
-  LmnRule rule;          /* 本遷移の際に適用されるシステムルール */
-};
-
-/**
- * task.cのinterpret()で用いられるフラグなど
- *
- * nd_exec: 非決定的実行フラグ
- *   初期化ルール適用以前：FALSE
- *   初期化ルール適用以降：TRUE
- * system_rule_committed: ボディ実行中フラグ
- *   ボディ実行中のみTRUE (i.e. ルールのボディ部冒頭のCOMMIT命令の処理開始時にTRUEとなり、PROCEED命令の処理終了時にFALSEになる)
- *   左辺に出現するPROCEED（GROUP終了を表す）と右辺に出現するPROCEEDを区別するために使用
- * system_rule_proceeded: システムルール適用成功フラグ
- *   システムルール適用成功時：TRUE
- *   システムルール実行時はinterpret()が常にFALSEを返す仕様となっているため、システムルール適用成功を表すフラグとして代わりにこれを用いる
- * property_rule: 性質ルール実行中フラグ
- *   性質ルール適用成功時にTRUEを返す目的で使用
- * initial_state: 非決定的実行時の初期状態
- * calculating_ample: ample(s)計算中フラグ
- *   PORが有効かつample/1(c.f. por.c)実行中のみTRUE
- */
-
-struct MCConst {
-  Automata property_automata;
-  Vector *propsyms;
+struct MCData {
+  BOOL has_property;
+  BOOL do_search;
+  BOOL do_exhaustive;
+  BOOL do_parallel;
+  BOOL mc_exit;
+  Automata  property_automata;
+  Vector   *propsyms;
+  Vector   *errors;          /* safety  : 反例を示す頂点の集合,
+                                liveness: 受理サイクル上に存在する頂点の集合 */
+  Vector   *cycles;
+  BOOL is_format_states;     /* 出力直前のformatを行っている場合は真 */
 } mc_data;
 
-
-LMN_EXTERN inline void activate_ancestors(LmnMembrane *mem);
-
 int mc_load_property(Automata *a, PVector *prop_defs);
-LMN_EXTERN void mc_explain_error(int error_id);
-LMN_EXTERN char *mc_error_msg(int error_id);
-
-//void run_mc(LmnRuleSet start_ruleset, Automata automata, Vector *propsyms);
-void run_mc(Vector *start_rulesets, Automata automata, Vector *propsyms);
-
-StateTransition *strans_make(State *s, unsigned long id, LmnRule rule);
-void strans_free(StateTransition *strans);
+void mc_explain_error(int error_id);
+char *mc_error_msg(int error_id);
+void mc_gen_successors(State            *s,
+                       LmnMembrane      *mem,
+                       AutomataState    prop_atm_s,
+                       struct ReactCxt  *rc,
+                       BOOL             flags);
+void mc_nested_dfs(StateSpace states,
+                   Vector     *list,
+                   Vector     *cycle,
+                   State      *seed,
+                   BOOL       flags);
+void mc_violate(StateSpace   states,
+                State        *seed,
+                const Vector *list,
+                BOOL         flags);
+void mc_violate_broadcast(void);
+void mc_dump_all_errors(StateSpace ss, FILE *f);
+unsigned long mc_get_error_num(void);
 
 #endif

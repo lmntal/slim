@@ -44,15 +44,6 @@
 #include "../vector.h"
 #include "../react_context.h"
 
-struct MemReactCxtData {
-  LmnMemStack memstack; /* 膜主導実行時に使用 */
-};
-
-#define RC_MEMSTACK(rc)  (((struct MemReactCxtData *)(rc)->v)->memstack)
-
-void mem_react_cxt_init(struct ReactCxt *cxt);
-void mem_react_cxt_destroy(struct ReactCxt *cxt);
-
 inline LmnMemStack lmn_memstack_make(void);
 inline void lmn_memstack_free(LmnMemStack memstack);
 inline BOOL lmn_memstack_isempty(LmnMemStack memstack);

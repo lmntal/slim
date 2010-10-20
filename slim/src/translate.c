@@ -36,22 +36,19 @@
  * $Id: translate.c,v 1.34 2008/10/16 18:12:27 sasaki Exp $
  */
 
-#include "load.h"
-#include "rule.h"
 #include "translate.h"
+#include "lmntal_thread.h"
+#include "delta_membrane.h"
+#include "load.h"
 #include "syntax.h"
 #include "arch.h"
 #include "symbol.h"
 #include "vector.h"
-#include "atom.h"
 #include "error.h"
-#include <stdio.h>
-#include "translate.h"
 #include "so.h"
-#include "mc.h"
 
 #ifdef PROFILE
-#include "runtime_status.h"
+#  include "runtime_status.h"
 #endif
 
 /* just for debug ! */
@@ -66,96 +63,157 @@ void set_translating_rule_name(lmn_interned_str rule_name)
 void tr_print_list(int indent, int argi, int list_num, const LmnWord *list)
 {
   int i;
-  
+
   print_indent(indent); fprintf(OUT, "int targ%d_num = %d;\n", argi, list_num);
   print_indent(indent); fprintf(OUT, "LmnWord targ%d[] = {", argi);
-  for(i=0; i<list_num; ++i){
+  for(i = 0; i < list_num; i++){
     if(i != 0) fprintf(OUT, ", ");
     fprintf(OUT, "%ld", list[i]);
   }
   fprintf(OUT, "};\n");
 }
 
-void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str rule_name, LmnLineNum line_num, LmnMembrane **ptmp_global_root, LmnWord **pwt_temp, LmnByte **pat_temp)
+void tr_instr_commit_ready(struct ReactCxt  *rc,
+                           LmnRule          rule,
+                           lmn_interned_str rule_name,
+                           LmnLineNum       line_num,
+                           LmnMembrane      **ptmp_global_root,
+                           LmnWord          **pwt_temp,
+                           LmnByte          **pat_temp,
+                           LmnByte          **ptt_temp,
+                           unsigned int     *org_next_id)
 {
-  assert(rule);
+  LMN_ASSERT(rule);
   lmn_rule_set_name(rule, rule_name);
-  
+
+  *org_next_id = env_next_id();
+
+  if (RC_GET_MODE(rc, REACT_PROPERTY)) {
+    return;
+  }
+
   if (RC_GET_MODE(rc, REACT_ND)) {
-    unsigned int i;
-    /* グローバルルート膜のコピー */
-    ProcessTbl copymap;
-    LmnMembrane *tmp_global_root;
-    LmnWord t;
-    
+    if (RC_ND_DELTA_ENABLE(rc)) {
+      /* dmemインタプリタ(body命令)を書かないとだめだ */
+      lmn_fatal("transalter mode, delta-membrane execution is not supported.");
+    } else {
+      //  unsigned int org_next_id = env_next_id();
+      LmnWord *wtcp;
+      LmnByte *atcp, *ttcp;
+      ProcessTbl copymap;
+      LmnMembrane *tmp_global_root;
+      LmnWord t;
+//        unsigned int wt_size_org, work_size_org;
+      unsigned int i, n;
+
 #ifdef PROFILE
-    if (lmn_env.profile_level >= 2) {
-      status_start_commit();
-    }
+      if (lmn_env.profile_level >= 3) {
+        profile_start_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
+      }
 #endif
-    tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
+      t = 0;
+      tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
 
-    /* 変数配列および属性配列のコピー */
-    LmnWord *wtcp = LMN_NALLOC(LmnWord, wt_size);
-    LmnByte *atcp = LMN_NALLOC(LmnByte, wt_size);
-    for(i = 0; i < wt_size; i++) {
-      wtcp[i] = atcp[i] = 0;
-    }
+      /** 変数配列および属性配列のコピー */
+      wtcp = LMN_NALLOC(LmnWord, wt_size);
+      atcp = LMN_NALLOC(LmnByte, wt_size);
+      ttcp = LMN_NALLOC(LmnByte, wt_size);
 
-    /* copymapの情報を基に変数配列を書換える */
-    /* TODO: wt_sizeまでループを回さずにすませられないか */
-    for (i = 0; i < wt_size; i++) {
-      atcp[i] = at[i];
-      if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
-        wtcp[i] = wt[i];
+      n = RC_WORK_VEC_SIZE(rc);
+      for(i = 0; i < n; i++) {
+        wtcp[i] = atcp[i] = ttcp[i] = 0;
       }
-      else if(proc_tbl_get(copymap, wt[i], &t)) {
-        wtcp[i] = t;
-      }
-      else if(wt[i] == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-        wtcp[i] = (LmnWord)tmp_global_root;
-      }
-      else if (at[i] == LMN_DBL_ATTR) {
-        double *d = (double *)wtcp[i];
-        LMN_COPY_DBL_ATOM(d, wt[i]);
-        wtcp[i] = (LmnWord)d;
-      }
-    }
-    proc_tbl_free(copymap);
 
-    /* 変数配列および属性配列をコピーと入れ換える */
-    SWAP(LmnWord *, wtcp, wt);
-    SWAP(LmnByte *, atcp, at);
+      /** copymapの情報を基に変数配列を書換える */
+      for (i = 0; i < n; i++) {
+        atcp[i] = at[i];
+        ttcp[i] = tt[i];
+        if (tt[i] == TT_ATOM) {
+          if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
+            wtcp[i] = wt[i];
+          } else if (at[i] == LMN_DBL_ATTR) {
+            double *d = (double *)wtcp[i];
+            LMN_COPY_DBL_ATOM(d, wt[i]);
+            wtcp[i] = (LmnWord)d;
+          } else { /* symbol atom */
+            if (proc_tbl_get_by_atom(copymap, LMN_SATOM(wt[i]), &t)) {
+              wtcp[i] = (LmnWord)t;
+            } else {
+              lmn_fatal("implementation error");
+            }
+          }
+        }
+        else if (tt[i] == TT_MEM) {
+          if(wt[i] == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
+            wtcp[i] = (LmnWord)tmp_global_root;
+          } else {
+            if (proc_tbl_get_by_mem(copymap, (LmnMembrane *)wt[i], &t)) {
+              wtcp[i] = (LmnWord)t;
+            }
+            else {
+              lmn_fatal("implementation error");
+            }
+          }
+        } else {
+          wtcp[i] = wt[i];
+        }
+      }
+      proc_tbl_free(copymap);
+
+      /** 変数配列および属性配列をコピーと入れ換え, コピー側を書き換える */
+      SWAP(LmnWord *, wtcp, wt);
+      SWAP(LmnByte *, atcp, at);
+      SWAP(LmnByte *, ttcp, tt);
 #ifdef PROFILE
-    if (lmn_env.profile_level >= 2) {
-      status_finish_commit();
-    }
+      if (lmn_env.profile_level >= 3) {
+        profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
+      }
 #endif
 
-    /* 処理中の変数を外へ持ち出す */
-    *ptmp_global_root = tmp_global_root;
-    *pwt_temp = wtcp;
-    *pat_temp = atcp;
+      /* 処理中の変数を外へ持ち出す */
+      *ptmp_global_root = tmp_global_root;
+      *pwt_temp = wtcp;
+      *pat_temp = atcp;
+      *ptt_temp = ttcp;
+    }
   }
 }
 
-BOOL tr_instr_commit_finish(struct ReactCxt *rc, LmnRule rule, lmn_interned_str rule_name, LmnLineNum line_num, LmnMembrane **ptmp_global_root, LmnWord **pwt_temp, LmnByte **pat_temp)
+BOOL tr_instr_commit_finish(struct ReactCxt  *rc,
+                            LmnRule          rule,
+                            lmn_interned_str rule_name,
+                            LmnLineNum       line_num,
+                            LmnMembrane      **ptmp_global_root,
+                            LmnWord          **pwt_temp,
+                            LmnByte          **pat_temp,
+                            LmnByte          **ptt_temp)
 {
   if(RC_GET_MODE(rc, REACT_ND)) {
     /* 処理中の変数を外から持ち込む */
-    LmnMembrane *tmp_global_root = *ptmp_global_root;
-    LmnWord *wtcp = *pwt_temp;
-    LmnByte *atcp = *pat_temp;
+    LmnMembrane *tmp_global_root;
+    LmnWord *wtcp;
+    LmnByte *atcp, *ttcp;
 
-    lmn_react_systemruleset(rc, (LmnMembrane *)wt[0]);
+
+    tmp_global_root = *ptmp_global_root;
+    wtcp = *pwt_temp;
+    atcp = *pat_temp;
+    ttcp = *ptt_temp;
+
     nd_react_cxt_add_expanded(rc, tmp_global_root, rule); /* このruleはNULLではまずい気がする */
+
+    if (lmn_rule_get_history_tbl(rule) && lmn_rule_get_pre_id(rule) != 0) {
+      st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule), 0);
+    }
 
     /* 変数配列および属性配列を元に戻す（いらないかも？） */
     SWAP(LmnWord *, wtcp, wt);
     SWAP(LmnByte *, atcp, at);
+    SWAP(LmnByte *, ttcp, tt);
 
     LMN_FREE(wtcp);
     LMN_FREE(atcp);
+    LMN_FREE(ttcp);
 
     return FALSE;
   } else {
@@ -163,38 +221,59 @@ BOOL tr_instr_commit_finish(struct ReactCxt *rc, LmnRule rule, lmn_interned_str 
   }
 }
 
-BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, LmnRule rule, int newid_num, const int *newid, LmnWord **pwt, LmnByte **pat, unsigned int *pwt_size)
+BOOL tr_instr_jump(LmnTranslated   f,
+                   struct ReactCxt *rc,
+                   LmnMembrane     *thisisrootmembutnotused,
+                   LmnRule         rule,
+                   int             newid_num,
+                   const int       *newid,
+                   LmnWord         **pwt,
+                   LmnByte         **pat,
+                   LmnByte         **ptt,
+                   unsigned int    *pwt_size)
 {
-  LmnWord *wt_org = *pwt;
-  LmnByte *at_org = *pat;
-  unsigned int wt_size_org = *pwt_size;
-  LmnWord *wt2 = LMN_NALLOC(LmnWord, wt_size_org);
-  LmnByte *at2 = LMN_NALLOC(LmnByte, wt_size_org);
+  LmnWord *wt_org, *wt2;
+  LmnByte *at_org, *tt_org, *at2, *tt2;
+  unsigned int wt_size_org, rc_work_size_org;
   BOOL ret;
   int i;
 
+  wt_org = *pwt;
+  at_org = *pat;
+  tt_org = *ptt;
+  wt_size_org = *pwt_size;
+  rc_work_size_org = RC_WORK_VEC_SIZE(rc);
+  wt2 = LMN_NALLOC(LmnWord, wt_size_org);
+  at2 = LMN_NALLOC(LmnByte, wt_size_org);
+  tt2 = LMN_NALLOC(LmnByte, wt_size_org);
+
   /* MCだと配列の中身を値に応じてコピーするためあらかじめクリアする必要がある */
   if (RC_GET_MODE(rc, REACT_ND)) {
-    for(i = 0; i < wt_size; i++) {
-      wt2[i] = at2[i] = 0;
+    for(i = 0; i < RC_WORK_VEC_SIZE(rc); i++) {
+      wt2[i] = at2[i] = tt2[i] = 0;
     }
   }
 
-  for(i=0; i<newid_num; ++i){
+  for (i = 0; i < newid_num; i++){
     wt2[i] = wt_org[newid[i]];
     at2[i] = at_org[newid[i]];
+    tt2[i] = tt_org[newid[i]];
   }
 
   *pwt = wt2;
   *pat = at2;
-  
+  *ptt = tt2;
+
   ret = (*f)(rc, thisisrootmembutnotused, rule);
 
   LMN_FREE(wt);
   LMN_FREE(at);
+  LMN_FREE(tt);
   *pwt = wt_org;
   *pat = at_org;
+  *ptt = tt_org;
   *pwt_size = wt_size_org;
+  RC_SET_WORK_VEC_SIZE(rc, rc_work_size_org);
 
   return ret;
 }
@@ -228,9 +307,9 @@ char *automalloc_sprintf(const char *format, ...)
   va_start(ap, format);
   buf_len = vsnprintf(trush, 2, format, ap);
   va_end(ap);
-  
+
   buf = lmn_malloc(buf_len + 1);
-  
+
   va_start(ap, format);
   vsnprintf(buf, buf_len+1, format, ap);
   va_end(ap);
@@ -255,24 +334,30 @@ const BYTE *translate_instruction_generated(const BYTE *p, Vector *jump_points, 
 }
 */
 
-const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const char *header, const char *successcode, const char *failcode, int indent, int *finishflag)
+const BYTE *translate_instruction(const BYTE *instr,
+                                  Vector     *jump_points,
+                                  const char *header,
+                                  const char *successcode,
+                                  const char *failcode,
+                                  int         indent,
+                                  int        *finishflag)
 {
   LmnInstrOp op;
   /* const BYTE *op_address = instr; */
-  
+
   READ_VAL(LmnInstrOp, instr, op);
 
   switch (op) {
   case INSTR_JUMP:{
     /* 残念ながら引数読み込み途中のinstrからオフセットジャンプするため */
     /* 先に全部読み込んでしまうと場所を忘れてしまう */
-    LmnInstrVar num, i, n;
+    LmnInstrVar   num, i, n;
     LmnJumpOffset offset;
-    LmnRuleInstr next;
-    int next_index;
-    
+    LmnRuleInstr  next;
+    int           next_index;
+
     READ_VAL(LmnJumpOffset, instr, offset);
-    next = (BYTE*)instr + offset; /*ワーニング抑制 */
+    next       = (BYTE*)instr + offset; /*ワーニング抑制 */
     next_index = vec_inserted_index(jump_points, (LmnWord)next);
 
     print_indent(indent); fprintf(OUT, "{\n");
@@ -286,6 +371,7 @@ const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const 
       if(i != 0) fprintf(OUT, ",");
       fprintf(OUT, "%d", n);
     }
+
     /* mem */
     READ_VAL(LmnInstrVar, instr, num);
     for (; num--; i++) {
@@ -293,6 +379,7 @@ const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const 
       if(i != 0) fprintf(OUT, ",");
       fprintf(OUT, "%d", n);
     }
+
     /* vars */
     READ_VAL(LmnInstrVar, instr, num);
     for (; num--; i++) {
@@ -303,12 +390,12 @@ const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, const 
 
     fprintf(OUT, "};\n");
     print_indent(indent); fprintf(OUT, "  extern BOOL %s_%d();\n", header, next_index);
-    print_indent(indent); fprintf(OUT, "  if(tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, rule, %d, newid, &wt, &at, &wt_size))\n", header, next_index, i);
+    print_indent(indent); fprintf(OUT, "  if(tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, rule, %d, newid, &wt, &at, &tt, &wt_size))\n", header, next_index, i);
     print_indent(indent); fprintf(OUT, "    %s;\n", successcode);
     print_indent(indent); fprintf(OUT, "  else\n");
     print_indent(indent); fprintf(OUT, "    %s;\n", failcode);
     print_indent(indent); fprintf(OUT, "}\n");
-    
+
     *finishflag = 0;
     return instr;
   }
@@ -331,23 +418,25 @@ const BYTE *translate_instructions(const BYTE *p, Vector *jump_points, const cha
   while(1){
     /* 自動生成で変換可能な中間命令をトランスレートする */
     /* 終了フラグ: 正のとき変換成功+次を変換, 0のとき変換成功+jump/proceed等なので終了, 負のとき変換失敗 */
+    const BYTE *next;
     int finishflag;
-    const BYTE *next = translate_instruction_generated(p, jump_points, header, successcode, failcode, indent, &finishflag);
 
-    if(finishflag > 0){
+    next = translate_instruction_generated(p, jump_points, header, successcode, failcode, indent, &finishflag);
+
+    if (finishflag > 0){
       p = next;
       continue;
-    }else if(finishflag == 0){
+    } else if(finishflag == 0) {
       return next;
-    }else{
+    } else {
       /* 自動生成で対処できない中間命令をトランスレートする */
       next = translate_instruction(p, jump_points, header, successcode, failcode, indent, &finishflag);
-      if(finishflag > 0){
+      if (finishflag > 0) {
         p = next;
         continue;
-      }else if(finishflag == 0){
+      } else if(finishflag == 0) {
         return next;
-      }else{
+      } else {
         LmnInstrOp op;
         READ_VAL(LmnInstrOp, p, op);
         fprintf(stderr, "translator: unknown instruction: %d\n", op);
@@ -364,7 +453,7 @@ static void translate_rule(LmnRule rule, const char *header)
 
   vec_push(jump_points, (LmnWord)lmn_rule_get_inst_seq(rule));
 
-  for(i=0; i<vec_num(jump_points) /*変換中にjump_pointsは増えていく*/; ++i){
+  for (i = 0; i < vec_num(jump_points) /*変換中にjump_pointsは増えていく*/; i++){
     BYTE *p = (BYTE*)vec_get(jump_points, i);
     fprintf(OUT, "BOOL %s_%d(struct ReactCxt* rc, LmnMembrane* thisisrootmembutnotused, LmnRule rule)\n", header, i); /* TODO m=wt[0]なのでmは多分いらない */
     fprintf(OUT, "{\n");
@@ -379,19 +468,27 @@ static void translate_rule(LmnRule rule, const char *header)
 
 static void translate_ruleset(LmnRuleSet ruleset, const char *header)
 {
-  int i;
-  int buf_len = strlen(header) + 50; /* 適当にこれだけあれば足りるはず */
-  char *buf = lmn_malloc(buf_len + 1);
-  int rules_count = lmn_ruleset_rule_num(ruleset);
-  lmn_interned_str *rule_names = LMN_CALLOC(lmn_interned_str, rules_count);
-  
-  for(i=0; i<lmn_ruleset_rule_num(ruleset); ++i){
+  char *buf;
+  lmn_interned_str *rule_names;
+  int i, buf_len, rules_count;
+
+  buf_len     = strlen(header) + 50; /* 適当. これだけあれば足りるはず */
+  buf         = lmn_malloc(buf_len + 1);
+  rules_count = lmn_ruleset_rule_num(ruleset);
+  if (rules_count > 0) {
+    rule_names = LMN_CALLOC(lmn_interned_str, rules_count);
+  } else {
+    rule_names = NULL;
+  }
+
+  for (i = 0; i < lmn_ruleset_rule_num(ruleset); i++) {
     snprintf(buf, buf_len, "%s_%d", header, i); /* ルールのシグネチャ */
     translate_rule(lmn_ruleset_get_rule(ruleset, i), buf);
     rule_names[i] = translating_rule_name;
   }
   fprintf(OUT, "struct trans_rule %s_rules[%d] = {", header, lmn_ruleset_rule_num(ruleset));
-  for(i=0; i<lmn_ruleset_rule_num(ruleset); ++i){
+
+  for(i = 0; i < lmn_ruleset_rule_num(ruleset); i++){
     if(i != 0) fprintf(OUT, ", ");
     fprintf(OUT, "{%d, %s_%d_0}", rule_names[i], header, i); /* 各ルールの名前と先頭関数を配列に */
   }
@@ -404,7 +501,7 @@ static void translate_ruleset(LmnRuleSet ruleset, const char *header)
 static void print_trans_header(const char *filename)
 {
   fprintf(OUT, "/* this .c source is generated by slim --translate */\n");
-  fprintf(OUT, "/* compile: gcc -shared -Wall -fPIC -I SlimSrcPath ---.c -o %s.so */\n", filename);
+  fprintf(OUT, "/* compile: gcc -o %s.so ---.c -shared -Wall -fPIC -I SlimSrcPath*/\n", filename);
   fprintf(OUT, "/* run    : LD_LIBRARY_PATH=\".\" slim ./%s.so */\n", filename);
   fprintf(OUT, "/* .so file name must be \"%s\". */\n", filename);
   fprintf(OUT, "\n");
@@ -423,10 +520,10 @@ static void print_trans_header(const char *filename)
 static int count_rulesets()
 {
   int i;
-  
-  for(i=FIRST_ID_OF_NORMAL_RULESET; ; ++i){
+
+  for(i = FIRST_ID_OF_NORMAL_RULESET; ; i++){
     LmnRuleSet rs = lmn_ruleset_from_id(i);
-    if(rs == NULL) break;
+    if(!rs) break;
   }
 
   return i;
@@ -471,7 +568,7 @@ static void print_trans_symbols(const char *filename)
 {
   int i;
   int count = count_symbols();
-  
+
   fprintf(OUT, "const char *trans_%s_maindata_symbols[%d] = {\n", filename, count);
   for(i=0; i<count; ++i){
     fprintf(OUT, "  \"%s\"", lmn_id_to_name(i));
@@ -488,7 +585,7 @@ static void print_trans_functors(const char *filename)
   int i;
   int count = lmn_functor_table.next_id;
   /* idは0から, next_idが1なら既に1個登録済み => count==next_id */
-  
+
   fprintf(OUT, "struct LmnFunctorEntry trans_%s_maindata_functors[%d] = {\n", filename, count);
   for(i=0; i<count; ++i){
     fprintf(OUT,
@@ -501,16 +598,18 @@ static void print_trans_functors(const char *filename)
     fprintf(OUT, "\n");
   }
   fprintf(OUT, "};\n");
-  
+
   fprintf(OUT, "int trans_%s_maindata_functorexchange[%d];\n\n", filename, count);
 }
 
 static void print_trans_rules(const char *filename)
 {
-  int count = count_rulesets();
-  int i;
-  int buf_len = strlen(filename) + 50; /* 適当にこれだけあれば足りるはず */
-  char *buf = lmn_malloc(buf_len + 1);
+  char *buf;
+  int count, i, buf_len;
+
+  count   = count_rulesets();
+  buf_len = strlen(filename) + 50; /* 適当にこれだけあれば足りるはず */
+  buf     = lmn_malloc(buf_len + 1);
 
   /* システムルールセットの出力 */
   snprintf(buf, buf_len, "trans_%s_1", filename);
@@ -535,8 +634,9 @@ static void print_trans_rules(const char *filename)
 
 static void print_trans_rulesets(const char *filename)
 {
-  int count = count_rulesets();
-  int i;
+  int count, i;
+
+  count = count_rulesets();
 
   /* ルールセットテーブルで各ルールセットのデータ名を参照するので、先に個々のデータを出力する */
   print_trans_rules(filename);
@@ -551,12 +651,14 @@ static void print_trans_rulesets(const char *filename)
   fprintf(OUT, "  {%d,trans_%s_2_rules},\n", lmn_ruleset_rule_num(initial_ruleset), filename);
   fprintf(OUT, "  {%d,trans_%s_3_rules},\n", lmn_ruleset_rule_num(initial_system_ruleset), filename);
   /* 以降は普通のrulesetなので出力(どれが初期データルールかはload時に拾う) */
-  for(i=FIRST_ID_OF_NORMAL_RULESET; i<count; ++i){
+  for (i = FIRST_ID_OF_NORMAL_RULESET; i < count; i++) {
     LmnRuleSet rs = lmn_ruleset_from_id(i);
-    assert(rs != NULL); /* countで数えているからNULLにあたることはないはず */
+    LMN_ASSERT(rs); /* countで数えているからNULLにあたることはないはず */
 
     fprintf(OUT, "  {%d,trans_%s_%d_rules}", lmn_ruleset_rule_num(rs), filename, i);
-    if(i != count-1) fprintf(OUT, ",");
+    if(i != count - 1) {
+      fprintf(OUT, ",");
+    }
     fprintf(OUT, "\n");
   }
   fprintf(OUT, "};\n");
@@ -566,16 +668,20 @@ static void print_trans_rulesets(const char *filename)
 
 static int print_trans_module_f(st_data_t key, st_data_t value, st_data_t counter_p)
 {
-  lmn_interned_str m_key = (lmn_interned_str)key;
-  LmnRuleSet m_val = (LmnRuleSet)value;
-  int *m_counter = (int*)counter_p; /* これが0なら最初の引数 */
+  lmn_interned_str m_key;
+  LmnRuleSet       m_val;
+  int             *m_counter;
 
-  if(*m_counter != 0){
+  m_key     = (lmn_interned_str)key;
+  m_val     = (LmnRuleSet)value;
+  m_counter = (int *)counter_p; /* これが0なら最初の引数 */
+
+  if (*m_counter > 0) {
     fprintf(OUT, "  ,");
-  }else{
+  } else {
     fprintf(OUT, "   ");
   }
-  
+
   fprintf(OUT, "{ %d, %d }\n", m_key, lmn_ruleset_get_id(m_val));
 
   ++*m_counter;
@@ -585,9 +691,10 @@ static int print_trans_module_f(st_data_t key, st_data_t value, st_data_t counte
 static void print_trans_modules(const char *filename)
 {
   extern st_table *module_table;
-  int count = count_modules();
-  int counter = 0;
+  int count, counter;
 
+  count   = count_modules();
+  counter = 0;
   fprintf(OUT, "struct trans_module trans_%s_maindata_modules[%d] = {\n", filename, count);
   st_foreach(module_table, print_trans_module_f, (st_data_t)&counter);
   fprintf(OUT, "};\n\n");
@@ -596,12 +703,13 @@ static void print_trans_modules(const char *filename)
 static void print_trans_initfunction(const char *filename)
 {
   fprintf(OUT, "void init_%s(void){\n", filename);
-  
+
   /* fprintf(OUT, "  extern void helloworld(const char*);\n"); */
   /* fprintf(OUT, "  helloworld(\"%s\");\n", filename); */
-  
+
   fprintf(OUT, "}\n\n");
 }
+
 
 void translate(char *filepath)
 {
@@ -612,12 +720,12 @@ void translate(char *filepath)
   OUT = stdout;
   /* OUT = fopen("/dev/null", "w"); */
 
-  if(filepath == NULL){
-    filename = strdup("anonymous");
-  }else{
+  if (filepath) {
     filename = create_formatted_basename(filepath);
+  } else {
+    filename = strdup("anonymous");
   }
-  
+
   print_trans_header(filename);
   print_trans_symbols(filename);
   print_trans_functors(filename);
@@ -627,5 +735,5 @@ void translate(char *filepath)
   print_trans_initfunction(filename);
 
   free(filename);
-  if(OUT != stdout) fprintf(stderr, "--translate is under construction\n");
+  if (OUT != stdout) fprintf(stderr, "--translate is under construction\n");
 }

@@ -37,62 +37,74 @@
  */
 
 #include "memory_pool.h"
+#include "vector.h"
 #include "lmntal.h"
 #include "atom.h"
 #include "functor.h"
-#include "runtime_status.h"
 #include "error.h"
-#include <stdlib.h>
-#include <math.h>
+#include "lmntal_thread.h"
+#include "util.h"
 
-#define ARYSIZE(ary)	(sizeof(ary)/sizeof((ary)[0]))
 
 /*----------------------------------------------------------------------
  * memory allocation for atom
  */
 
-static memory_pool *atom_memory_pools[128];
+static memory_pool **atom_memory_pools[128];
+
+void mpool_init()
+{
+  int i, core_num, arity_num;
+  arity_num = ARY_SIZEOF(atom_memory_pools);
+  core_num  = lmn_env.core_num;
+  for (i = 0; i < arity_num; i++) {
+    atom_memory_pools[i] = (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
+    memset(atom_memory_pools[i], 0, sizeof(memory_pool *) * core_num);
+  }
+}
 
 LmnSAtom lmn_new_atom(LmnFunctor f)
 {
   LmnSAtom ap;
-  int arity = LMN_FUNCTOR_ARITY(f);
-  
-  if (atom_memory_pools[arity] == 0) {
-    atom_memory_pools[arity] =
-      memory_pool_new(sizeof(LmnWord)*LMN_SATOM_WORDS(arity));
-  }
-  ap = LMN_SATOM(memory_pool_malloc(atom_memory_pools[arity]));
-  LMN_SATOM_SET_FUNCTOR(ap, f);
+  int arity, cid;
+  arity = LMN_FUNCTOR_ARITY(f);
+  cid   = lmn_thread_id;
 
-#ifdef PROFILE
-  status_add_atom_space(LMN_SATOM_WORDS(arity) * sizeof(LmnWord));
-#endif
+  if (atom_memory_pools[arity][cid] == 0) {
+    atom_memory_pools[arity][cid] =
+      memory_pool_new(sizeof(LmnWord) * LMN_SATOM_WORDS(arity));
+  }
+  ap = LMN_SATOM(memory_pool_malloc(atom_memory_pools[arity][cid]));
+  LMN_SATOM_SET_FUNCTOR(ap, f);
+  LMN_SATOM_SET_ID(ap, 0);
 
   return ap;
 }
 
 void lmn_delete_atom(LmnSAtom ap)
 {
-  memory_pool_free(atom_memory_pools[LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(ap))], ap);
-#ifdef PROFILE
-  {
-    int arity;
+	int arity, cid;
 
-    arity = LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(ap));
-    status_remove_atom_space(LMN_SATOM_WORDS(arity) * sizeof(LmnWord));
-  }
-#endif
+  env_return_id(LMN_SATOM_ID(ap));
+
+  arity = LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(ap));
+  cid = lmn_thread_id;
+  memory_pool_free(atom_memory_pools[arity][cid], ap);
 }
 
 void free_atom_memory_pools(void)
 {
-  unsigned int i;
-  
-  for (i = 0; i < ARYSIZE(atom_memory_pools); i++) {
-    if (atom_memory_pools[i]) {
-      memory_pool_delete(atom_memory_pools[i]);
+  unsigned int i, j, arity_num, core_num;
+
+  arity_num = ARY_SIZEOF(atom_memory_pools);
+  core_num  = lmn_env.core_num;
+  for (i = 0; i < arity_num; i++) {
+    for (j = 0; j < core_num; j++) {
+      if (atom_memory_pools[i][j]) {
+        memory_pool_delete(atom_memory_pools[i][j]);
+      }
     }
+    free(atom_memory_pools[i]);
   }
 }
 
@@ -107,16 +119,25 @@ void free_atom_memory_pools(void)
  * low level allocation
  */
 
+/* TODO:
+ *   headerに持っていってinline staticにした方が良い?
+ *   memory exhausted時にもprofile情報をdumpさせる */
+
 void *lmn_calloc(size_t num, size_t size)
 {
-#if HAVE_CALLOC
-  void *new = calloc (num, size);
-  if (!new) lmn_fatal("Memory exhausted");
+  void *new;
+#if HAVE_DECL_CALLOC
+  new = calloc (num, size);
+  if (!new) {
+    lmn_fatal("Memory exhausted");
+  }
 #else
-  void *new = lmn_malloc(num * size);
   unsigned int i;
-  char *new_as_string = (char*)new;
-  for(i=0; i<num*size; ++i){
+  char *new_as_string;
+
+  new = lmn_malloc(num * size);
+  new_as_string = (char *)new;
+  for (i = 0; i < num * size; i++) {
     new_as_string[i] = 0;
   }
 #endif
@@ -126,6 +147,8 @@ void *lmn_calloc(size_t num, size_t size)
 
 void *lmn_malloc(size_t num)
 {
+  LMN_ASSERT(num > 0);
+
   void *new = malloc(num);
   if (!new) lmn_fatal("Memory exhausted");
 

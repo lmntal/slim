@@ -39,7 +39,6 @@
 #ifndef LMN_LOAD_H
 #define LMN_LOAD_H
 
-#include <stdlib.h>
 #include "rule.h"
 #include "syntax.h"
 

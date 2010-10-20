@@ -17,11 +17,12 @@
 #include "functor.h"
 #include "st.h"
 #include "visitlog.h"
-/* #include "symbol.h" /\* TODO: for debug *\/ */
-#include <limits.h>
-
+#include "parallel.h"
+#ifdef DEBUG
+#  include "symbol.h" /* TODO: for debug */
+#endif
 #ifdef PROFILE
-#include "runtime_status.h"
+#  include "runtime_status.h"
 #endif
 
 /* 膜が自分に至るリンクを持つ場合に，膜のハッシュ値の計算が無限ループに
@@ -47,7 +48,7 @@ typedef struct Context {
   struct ProcessTbl tbl; /* 計算済みのアトム、膜とハッシュ値 */
 } *Context;
 
-static inline Context init_context(void);
+static inline Context init_context(unsigned long tbl_size);
 static inline void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash);
 static inline int add_done_mol(Context ctx, LmnSAtom atom);
 static inline int is_done_mol(Context ctx, LmnSAtom atom);
@@ -93,21 +94,31 @@ static inline hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context c
 static inline hash_t atom_type(LmnAtom atom, LmnLinkAttr attr);
 static inline hash_t symbol_atom_type(LmnSAtom atom);
 static inline hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr);
+static hash_t mhash_sub(LmnMembrane *mem, unsigned long tbl_size);
+
 
 hash_t mhash(LmnMembrane *mem)
 {
-  Context c = init_context();
+  return mhash_sub(mem, 1024);
+  //return 10;
+}
+
+static hash_t mhash_sub(LmnMembrane *mem, unsigned long tbl_size)
+{
+  Context c = init_context(tbl_size);
   hash_t t;
 
 #ifdef PROFILE
-  status_start_state_hash_calc();
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__STATE_HASH_MEM);
+  }
 #endif
 
-/*   printf("------- mhash(%s,%p) ------------\n", LMN_MEM_NAME(mem), mem); */
   t = membrane(mem, NULL, c);
 
 #ifdef PROFILE
-  status_finish_state_hash_calc();
+  if (lmn_env.profile_level >= 3)
+    profile_finish_timer(PROFILE_TIME__STATE_HASH_MEM);
 #endif
 
   free_context(c);
@@ -116,28 +127,28 @@ hash_t mhash(LmnMembrane *mem)
 
 static inline hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context ctx)
 {
-  hash_t hash_sum = MEM_ADD_0;
-  hash_t hash_mul = MEM_MUL_0;
-  HashIterator iter;
+  LmnMembrane *child_mem;
+  hash_t hash_sum;
+  hash_t hash_mul;
   LmnSAtom atom;
   hash_t t;
   hash_t u;
   hash_t hash;
+  AtomListEntry *ent;
+  LmnFunctor f;
 
   if (mem == calc_mem) return CALCULATING_MEM;
   if (calculated_mem_hash(ctx, mem, &t)) return (hash_t)t;
 
+  hash_sum = MEM_ADD_0;
+  hash_mul = MEM_MUL_0;
+
 /*   printf("mem atom num = %d\n", mem->atom_num); */
 /*   lmn_dump_mem(mem); */
   /* atoms */
-  for (iter = hashtbl_iterator(&mem->atomset);
-       !hashtbliter_isend(&iter);
-       hashtbliter_next(&iter)) {
-    AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
-
+  EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
     /* プロキシは除く */
-    if (LMN_IS_PROXY_FUNCTOR(hashtbliter_entry(&iter)->key)) continue;
-
+    if (LMN_IS_PROXY_FUNCTOR(f)) continue;
     EACH_ATOM(atom, ent, {
       if (!is_done_mol(ctx, atom)) {
         u = molecule(atom, mem, ctx);
@@ -145,20 +156,15 @@ static inline hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context c
         hash_mul *= u;
       }
     });
-  }
+  }));
 
   /* membranes */
-  {
-    LmnMembrane *child_mem;
-    
-    for(child_mem = mem->child_head; child_mem; child_mem = child_mem->next) {
-      hash_t u = memunit(child_mem, NULL, mem, ctx, 0);
- /*      hash_t u = membrane(child_mem, NULL, done); */
-      hash_sum += u;
-      hash_mul *= u;
-    }
+  for(child_mem = mem->child_head; child_mem; child_mem = child_mem->next) {
+    hash_t u = memunit(child_mem, NULL, mem, ctx, 0);
+ /*   hash_t u = membrane(child_mem, NULL, done); */
+    hash_sum += u;
+    hash_mul *= u;
   }
-
 
   hash = hash_sum ^ hash_mul;
   add_mem_hash(ctx, mem, hash);
@@ -170,7 +176,7 @@ static inline hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context c
 static inline hash_t molecule(LmnSAtom atom, LmnMembrane *calc_mem, Context ctx)
 {
   hash_t sum = ADD_0, mul = MUL_0;
-  
+
   do_molecule(LMN_ATOM(atom),
               LMN_ATTR_MAKE_LINK(0),
               calc_mem,
@@ -218,7 +224,7 @@ static inline void do_molecule(LmnAtom atom,
                       calc_mem,
                       ctx,
                       /* ↓ リンク先がシンボルアトムの場合にのみ意味のある値 */
-                      LMN_ATTR_GET_VALUE(to_attr), 
+                      LMN_ATTR_GET_VALUE(to_attr),
                       sum,
                       mul);
         }
@@ -283,7 +289,7 @@ static hash_t atomunit(LmnAtom atom,
         /* TODO: ここでtに定数を掛けたほうがいいかも再帰的にCを掛けてい
            るので、係数が重なる危険性がある */
         hash = C*hash+t*E;
-                       
+
       }
     }
 /*     printf("atomunit(%s,%p,r=%d): %lu\n", */
@@ -344,7 +350,7 @@ static inline hash_t mem_fromlink(LmnMembrane *mem,
     in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
     hash = B * hash + membrane(LMN_PROXY_GET_MEM(in_proxy), calc_mem, ctx);
   }
-          
+
 /*   printf("memlink(a_to:%s) = %lu\n", */
 /*          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom))), */
 /*          hash * (LMN_ATTR_GET_VALUE(attr) + 1) * atom_type(atom, attr)); */
@@ -390,7 +396,7 @@ static inline hash_t memlink(LmnSAtom in_proxy, LmnMembrane *calc_mem, Context c
         LMN_SATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) break;
     in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
   }
-          
+
 /*   printf("memlink(a_to:%s) = %lu\n", */
 /*          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom))), */
 /*          hash * (LMN_ATTR_GET_VALUE(attr) + 1) * atom_type(atom, attr)); */
@@ -434,10 +440,11 @@ static inline hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
   return -1;
 }
 
-static inline Context init_context(void)
+static inline Context init_context(unsigned long tbl_size)
 {
   Context c = LMN_MALLOC(struct Context);
-  proc_tbl_init(&c->tbl);
+  proc_tbl_init_with_size(&c->tbl, tbl_size);
+
   return c;
 }
 
@@ -464,6 +471,6 @@ static inline void add_mem_hash(Context ctx, LmnMembrane *mem, hash_t hash)
 
 static inline int add_done_mol(Context ctx, LmnSAtom atom)
 {
-  return proc_tbl_put_atom(&ctx->tbl, atom, 1);
+  return proc_tbl_put_new_atom(&ctx->tbl, atom, 1);
 }
 

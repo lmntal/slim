@@ -39,10 +39,13 @@
 #include "symbol.h"
 #include <stdarg.h>
 #include "st.h"
+#include "lmntal_thread.h"
 
-static struct st_table *sym_tbl;
-static struct st_table *sym_rev_tbl;
-static lmn_interned_str next_sym_id;
+static struct st_table  *sym_tbl;
+static struct st_table  *sym_rev_tbl;
+static lmn_interned_str *next_sym_id;
+static lmn_mutex_t      sym_mtx;
+
 
 /* prototypes */
 
@@ -53,9 +56,16 @@ lmn_interned_str create_new_id(void);
 
 void sym_tbl_init()
 {
+	int i, n;
   sym_tbl = st_init_strtable();
   sym_rev_tbl = st_init_numtable();
-  next_sym_id = 1; /* 0はIDに使わない */
+  n = lmn_env.core_num;
+  next_sym_id = LMN_NALLOC(lmn_interned_str, n);
+  for (i = 0; i < n; i++) {
+    next_sym_id[i] = i + 1; /* 0はIDに使わない */
+  }
+
+  if (lmn_env.core_num >= 2) lmn_mutex_init(&(sym_mtx));
 }
 
 int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i)
@@ -71,12 +81,18 @@ void sym_tbl_destroy()
 
   st_free_table(sym_tbl);
   st_free_table(sym_rev_tbl);
+  free(next_sym_id);
+
+	if (lmn_env.core_num >= 2) lmn_mutex_destroy(&(sym_mtx));
 }
 
 
 lmn_interned_str create_new_id()
 {
-  return next_sym_id++;
+  int cid = lmn_thread_id;
+  lmn_interned_str new_id = next_sym_id[cid];
+  next_sym_id[cid] += lmn_env.core_num;
+  return new_id;
 }
 
 lmn_interned_str lmn_intern(const char *name)
@@ -90,8 +106,10 @@ lmn_interned_str lmn_intern(const char *name)
   /* 新しいIDを作る */
   new_id = create_new_id();
   name2 = strdup(name);
+  if (lmn_env.core_num >= 2) lmn_mutex_lock(&(sym_mtx));
   st_add_direct(sym_tbl, (st_data_t)name2, (st_data_t)new_id);
   st_add_direct(sym_rev_tbl, (st_data_t)new_id, (st_data_t)name2);
+  if (lmn_env.core_num >= 2) lmn_mutex_unlock(&(sym_mtx));
   return new_id;
 }
 

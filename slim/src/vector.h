@@ -60,14 +60,26 @@ LMN_EXTERN inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp);
 LMN_EXTERN inline LmnWord vec_get(const Vector *vec, unsigned int index);
 LMN_EXTERN LmnWord vec_last(Vector *vec);
 LMN_EXTERN BOOL vec_contains(const Vector *vec, LmnWord keyp);
-LMN_EXTERN inline void vec_clear(Vector *vec);
-LMN_EXTERN inline void vec_destroy(Vector *vec);
-LMN_EXTERN inline void vec_free(Vector *vec);
+LMN_EXTERN void vec_clear(Vector *vec);
+LMN_EXTERN void vec_destroy(Vector *vec);
+LMN_EXTERN void vec_free(Vector *vec);
+LMN_EXTERN Vector *vec_copy(Vector *vec);
+void vec_reverse(Vector *vec);
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
-#define vec_num(V) ((V)->num)
+#define vec_cap(V)      ((V)->cap)
+#define vec_num(V)      ((V)->num)
 #define vec_is_empty(V) ((V)->num == 0)
-
 LMN_EXTERN void vec_sort(const Vector *vec,
                          int (*compare)(const void*, const void*));
-LMN_EXTERN Vector *vec_copy(Vector *vec);
+
+inline static unsigned long vec_space_inner(Vector *v)
+{
+  return vec_cap(v) * sizeof(vec_data_t);
+}
+
+inline static unsigned long vec_space(Vector *v)
+{
+  return sizeof(struct Vector) + vec_space_inner(v);
+}
+
 #endif /* LMN_VECTOR_H */

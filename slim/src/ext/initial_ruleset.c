@@ -1,5 +1,40 @@
 /*
- * initial_ruleset.c - 
+ * initial_ruleset.c - String API
+ *
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
  */
 
 #include <stdio.h>
@@ -7,6 +42,7 @@
 #include "../membrane.h"
 #include "../react_context.h"
 #include "../slim_header/memstack.h"
+#include "../util.h"
 
 void init_initial_ruleset(void);
 
@@ -19,7 +55,7 @@ BOOL register_initial_rulesets(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
   LmnMembrane *m, *next;
   BOOL ok = FALSE;
-  
+
   for (m = mem->child_head; m; m = next) {
     next = m->next;
     if ((LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_RULESET_MEM_NAME) ||
@@ -40,7 +76,7 @@ BOOL register_initial_rulesets(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
           }
         }
       }
-      
+
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
         lmn_memstack_delete(RC_MEMSTACK(rc), m);
       }
@@ -56,20 +92,17 @@ BOOL register_initial_rulesets(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 BOOL register_initial_module(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
   static int done = 0;
-  int i;
+  int i, j;
 
   if (done == 1) return FALSE;
   done = 1;
 
-  for (i = 0; i < sizeof(initial_modules)/sizeof(initial_modules[0]); i++) {
-    LmnRuleSet rs;
-    int j;
-
-    rs = lmn_get_module_ruleset(lmn_intern(initial_modules[i]));
-    if (!rs) continue;
-    
-    for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
-      lmn_add_initial_system_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
+  for (i = 0; i < ARY_SIZEOF(initial_modules); i++) {
+    LmnRuleSet rs = lmn_get_module_ruleset(lmn_intern(initial_modules[i]));
+    if (rs) {
+      for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+        lmn_add_initial_system_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
+      }
     }
   }
   return TRUE;

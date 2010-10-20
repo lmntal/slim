@@ -1,7 +1,0 @@
-p= leader(L)
-
-f1= node{phase(waitParent), $p}
-f2= node{phase(self), $p}
-
-f3= node{phase(contention), $p}
-f4= node{phase(ack), $p}

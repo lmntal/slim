@@ -79,16 +79,3 @@ int comp_int_greater_f(const void *a_, const void *b_)
   return a > b ? -1 : (a == b ? 0 : 1);
 }
 
-/* n以上で最小の2の倍数を返す */
-inline unsigned long round2up(unsigned long n)
-{
-  unsigned int v = 1;
-  while (v && v < n) {
-    v <<= 1;
-  }
-  if (v == 0) {
-    lmn_fatal("round2up: too big argument");
-  }
-  return v;
-}
-

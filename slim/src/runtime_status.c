@@ -36,797 +36,718 @@
  *
  * $Id$
  */
-
-#include <time.h>
-#include <sys/time.h>
 #include "runtime_status.h"
 #include "mc.h"
-#include "nd.h"
-#include "st.h"
-#include "rule.h"
+#include "state.h"
 #include "mem_encode.h"
+#include "util.h"
+#include "dumper.h"
 
-struct RuntimeStatus {
-  unsigned long atom_num;                 /* # of atoms */
-  unsigned long membrane_num;             /* # of membranes */
-  unsigned long rule_num;                 /* # of rules */
-  unsigned long peak_atom_num;            /* peak # of atoms */
-  unsigned long peak_membrane_num;        /* peak # of membranes */
-  unsigned long peak_rule_num;            /* peak # of rules */
+       static void mc_profiler_init(MCProfiler *p);
+       static void mc_profiler_destroy(MCProfiler *p);
+inline static void time_profiler_init(TimeProfiler *p);
+inline static void time_profiler_destroy(TimeProfiler *p);
+inline static void memory_profiler_init(MemoryProfiler *p);
+inline static void memory_profiler_destroy(MemoryProfiler *p);
+inline static void peak_counter_init(PeakCounter *p);
+inline static void peak_counter_destroy(PeakCounter *p);
+       static void profile_state_f(State *s);
+       static char *profile_space_id_to_name(int type);
+       static char *profile_counter_id_to_name(int type);
+       static char *profile_time_id_to_name(int type);
+       static void mc_profiler_make_up_report(MCProfiler *total);
 
-  unsigned long atom_space;               /* memory size by atoms (Byte) */
-  unsigned long peak_atom_space;          /* peak memory size by atoms (Byte) */
-  unsigned long membrane_space;           /* memory size by membranes (Byte) */
-  unsigned long peak_membrane_space;      /* peak memory size by membranes (Byte) */
-  unsigned long rule_space;               /* memory size by rules (Byte) */
-  unsigned long peak_rule_space;          /* peak memory size by rules (Byte) */
-  unsigned long hashtbl_space;            /* internal hash table size (Byte) */
-  unsigned long peak_hashtbl_space;       /* peak internal hash table size (Byte) */
-  unsigned long total_state_space;        /* total state size */
-  unsigned long peak_total_state_space;   /* peal total state size */
-
-  st_table_t hash_conflict_tbl;           /* key: # of conflicts, value: kinds */
-  unsigned long hash_num;                 /* # of hash value */
-
-  double start_wall_time, end_wall_time;  /* wall: elapsed start/end time */
-  clock_t start_cpu_time, end_cpu_time;   /* cpu:  elapsed start/end time */
-  clock_t tmp_state_hash_start;
-  double total_state_hash_time;           /* total time of state hashing */
-  unsigned long mhash_call_num;           /* # of mhash call */
-  unsigned long mem_equals_num;           /* # of mem_equals call */
-  double total_mem_equals_time;           /* total time of mem equals */
-  clock_t tmp_mem_equals_start;
-
-  /* 初期化や最後の解放処理を除いた非決定実行の時間 */
-  double  nd_start_wall_time, nd_end_wall_time; /* wall */
-  clock_t nd_start_cpu_time, nd_end_cpu_time;   /* cpu  */
-  BOOL run_nd;
-
-  unsigned long state_free_num;
-  double total_state_free_time;
-  clock_t tmp_state_free_start;
-
-  unsigned long mem_encode_num;      /* # of mem_encode call */
-  double total_mem_encode_time;      /* total time of mem encode */
-  clock_t tmp_mem_encode_start;
-  unsigned long final_encode_space;  /* memory size by mem encode (Byte) */
-  unsigned long encode_space;
-  unsigned long peak_encode_space;
-  unsigned long encode_len_average;  /* average length of mem encode */
-
-  unsigned long mem_enc_eq_num;      /* # of mem_encode call */
-  double total_mem_enc_eq_time;      /* total time of mem encode */
-  clock_t tmp_mem_enc_eq_start;
-
-  unsigned long mem_dump_num;        /* # of mem_encode call */
-  double total_mem_dump_time;        /* total time of mem encode */
-  clock_t tmp_mem_dump_start;
-
-  unsigned long mem_decode_num;      /* # of mem decode call */
-  double total_mem_decode_time;      /* total time of mem decode */
-  clock_t tmp_mem_decode_start;
-
-  double total_commit_time;
-  clock_t tmp_commit_start;
-
-  double total_react_rule_time;
-  clock_t tmp_react_rule_start;
-
-  double total_dfs2_time;
-  clock_t tmp_dfs2_start;
-
-  unsigned long tmp_rule_trial_num;
-  unsigned long tmp_rule_apply_num;
-  unsigned long tmp_rule_backtrack_num;
-  unsigned long total_rule_trial_num;
-  unsigned long total_rule_apply_num;
-  unsigned long total_rule_backtrack_num;
-  unsigned long counter_example_num;
-  unsigned long total_dfs2_seed_num;
-  unsigned long state_num;
-  unsigned long transition_num;
-  unsigned long end_state_num;
-  unsigned long created_state_num;
-  unsigned long created_transition_num;
-  unsigned long tmp_state_num;
-
-  unsigned long nd_stack_size, nd_max_stack_size;
-
-  unsigned long final_state_space_space;
-} runtime_status;
-
-static void output_hash_conflict(FILE *f);
-static void calc_hash_conflict(StateSpace states);
-static void calc_encode_info(StateSpace states);
-
-void runtime_status_init()
+/** ----------------------------
+ *  Rule Profiler
+ */
+RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRule src)
 {
-  runtime_status.atom_num = 0;
-  runtime_status.membrane_num = 0;
-  runtime_status.rule_num = 0;
-  runtime_status.peak_atom_num = 0;
-  runtime_status.peak_membrane_num = 0;
-  runtime_status.peak_rule_num = 0;
-  runtime_status.atom_space = 0;
-  runtime_status.peak_atom_space = 0;
-  runtime_status.membrane_space = 0;
-  runtime_status.peak_membrane_space = 0;
-  runtime_status.rule_space = 0;
-  runtime_status.peak_rule_space = 0;
-  runtime_status.hashtbl_space = 0;
-  runtime_status.peak_hashtbl_space = 0;
-  runtime_status.total_state_space = 0;
-  runtime_status.peak_total_state_space = 0;
-  runtime_status.hash_conflict_tbl = st_init_numtable();
-  runtime_status.hash_num = 0;
-  runtime_status.total_state_hash_time = 0.0;
-  runtime_status.mhash_call_num = 0;
-  runtime_status.mem_equals_num = 0;
-  runtime_status.total_mem_equals_time = 0.0;
-  runtime_status.mem_enc_eq_num = 0;
-  runtime_status.total_mem_enc_eq_time = 0.0;
-  runtime_status.mem_dump_num = 0;
-  runtime_status.total_mem_dump_time = 0.0;
-  runtime_status.state_free_num = 0;
-  runtime_status.total_state_free_time = 0.0;
-  runtime_status.mem_encode_num = 0;
-  runtime_status.total_mem_encode_time = 0.0;
-  runtime_status.mem_decode_num = 0;
-  runtime_status.total_mem_decode_time = 0.0;
+  RuleProfiler *p = LMN_MALLOC(RuleProfiler);
+  time_profiler_init(&p->trial);
+  p->src         = src;
+  p->backtrack   = 0;
+  p->apply       = 0;
+  p->ref_rs_id   = id;
 
-  runtime_status.run_nd                   = FALSE;
-  runtime_status.total_dfs2_time          = 0.0;
-  runtime_status.total_commit_time        = 0.0;
-  runtime_status.total_react_rule_time    = 0.0;
-  runtime_status.tmp_rule_trial_num       = 0;
-  runtime_status.tmp_rule_apply_num       = 0;
-  runtime_status.tmp_rule_backtrack_num   = 0;
-  runtime_status.total_rule_trial_num     = 0;
-  runtime_status.total_rule_apply_num     = 0;
-  runtime_status.total_rule_backtrack_num = 0;
-  runtime_status.counter_example_num      = 0;
-  runtime_status.total_dfs2_seed_num      = 0;
-  runtime_status.state_num                = 0;
-  runtime_status.created_state_num        = 0;
-  runtime_status.created_transition_num   = 0;
-  runtime_status.end_state_num            = 0;
-  runtime_status.nd_stack_size            = 0;
-  runtime_status.nd_max_stack_size        = 0;
-  runtime_status.final_state_space_space  = 0;
-  runtime_status.tmp_state_num            = 0;
-  runtime_status.final_encode_space       = 0;
-  runtime_status.peak_encode_space        = 0;
-  runtime_status.encode_space             = 0;
+  return p;
 }
 
-void runtime_status_finalize()
+void rule_profiler_free(RuleProfiler *p)
 {
-  st_free_table(runtime_status.hash_conflict_tbl);
+  time_profiler_destroy(&p->trial);
+  LMN_FREE(p);
 }
 
-void status_start_running()
+static int rule_profiler_free_f(st_data_t _key, st_data_t _v, st_data_t _arg)
 {
-  runtime_status.start_cpu_time  = clock();
-  runtime_status.start_wall_time = get_wall_time();
+  RuleProfiler *p = (RuleProfiler *)_v;
+  rule_profiler_free(p);
+  return ST_CONTINUE;
 }
 
-void status_finish_running()
+static int comp_prule_id_greater_f(const void *a_, const void *b_)
 {
-  runtime_status.end_cpu_time  = clock();
-  runtime_status.end_wall_time = get_wall_time();
+  RuleProfiler *p1, *p2;
+  p1 = *(RuleProfiler **)a_;
+  p2 = *(RuleProfiler **)b_;
+
+  return p1->ref_rs_id - p2 ->ref_rs_id;
 }
 
-void status_simulation_start()
+
+/** ----------------------------
+ *  MC Profiler
+ */
+static void mc_profiler_init(MCProfiler *p)
 {
-  runtime_status.nd_start_cpu_time  = clock();
-  runtime_status.nd_start_wall_time = get_wall_time();
-}
+  unsigned int i;
 
-void status_simulation_finish()
-{
-  runtime_status.nd_end_cpu_time  = clock();
-  runtime_status.nd_end_wall_time = get_wall_time();
-}
-
-void status_nd_start_running()
-{
-  runtime_status.nd_start_cpu_time  = clock();
-  runtime_status.nd_start_wall_time = get_wall_time();
-  runtime_status.run_nd = TRUE;
-}
-
-void status_nd_finish_running()
-{
-  runtime_status.nd_end_cpu_time  = clock();
-  runtime_status.nd_end_wall_time = get_wall_time();
-  runtime_status.run_nd = FALSE;
-}
-
-void status_add_atom_space(unsigned long size)
-{
-  runtime_status.atom_space += size;
-  if (runtime_status.atom_space > runtime_status.peak_atom_space)
-    runtime_status.peak_atom_space = runtime_status.atom_space;
-
-  runtime_status.atom_num++;
-  if (runtime_status.atom_num > runtime_status.peak_atom_num)
-    runtime_status.peak_atom_num = runtime_status.atom_num;
-}
-
-void status_remove_atom_space(unsigned long size)
-{
-  runtime_status.atom_space -= size;
-  runtime_status.atom_num--;
-}
-
-void status_add_membrane_space(unsigned long size)
-{
-  runtime_status.membrane_num++;
-  runtime_status.peak_membrane_num =
-    runtime_status.peak_membrane_num > runtime_status.membrane_num ?
-      runtime_status.peak_membrane_num : runtime_status.membrane_num;
-
-  runtime_status.membrane_space += size;
-  if (runtime_status.membrane_space > runtime_status.peak_membrane_space)
-    runtime_status.peak_membrane_space = runtime_status.membrane_space;
-}
-
-void status_remove_membrane_space(unsigned long size)
-{
-  runtime_status.membrane_num--;
-  runtime_status.membrane_space -= size;
-}
-
-void status_add_rule_space(unsigned long size)
-{
-//  rule_spaceの出力はおあずけ
-//  runtime_status.rule_space += size;
-//  if (runtime_status.rule_space > runtime_status.peak_rule_space)
-//    runtime_status.peak_rule_space = runtime_status.rule_space;
-
-  runtime_status.rule_num++;
-  if (runtime_status.rule_num > runtime_status.peak_rule_num)
-    runtime_status.peak_rule_num = runtime_status.rule_num;
-}
-
-void status_remove_rule_space(unsigned long size)
-{
-//  runtime_status.rule_space -= size;
-  runtime_status.rule_num--;
-}
-
-void status_add_hashtbl_space(unsigned long size)
-{
-  runtime_status.hashtbl_space += size;
-  if (runtime_status.hashtbl_space > runtime_status.peak_hashtbl_space)
-    runtime_status.peak_hashtbl_space = runtime_status.hashtbl_space;
-}
-
-void status_remove_hashtbl_space(unsigned long size)
-{
-  runtime_status.hashtbl_space -= size;
-}
-
-void runtime_status_update(StateSpace states)
-{
-  runtime_status.total_state_space =
-    runtime_status.atom_space
-    + runtime_status.membrane_space
-    + runtime_status.hashtbl_space
-    + st_table_space(state_space_tbl(states))
-    + runtime_status.tmp_state_num * sizeof(struct State)
-    + runtime_status.peak_encode_space;
-
-  if (runtime_status.total_state_space > runtime_status.peak_total_state_space) {
-    runtime_status.peak_total_state_space = runtime_status.total_state_space;
+  /* for spaces */
+  for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
+    memory_profiler_init(&p->spaces[i]);
+  }
+  /* for timers */
+  for (i = 0; i < ARY_SIZEOF(p->times); i++) {
+    time_profiler_init(&p->times[i]);
+  }
+  /* for counters */
+  for (i = 0; i < ARY_SIZEOF(p->counters); i++) {
+    p->counters[i] = 0;
   }
 }
 
-void status_start_state_free()
+static void mc_profiler_destroy(MCProfiler *p)
 {
-  if (runtime_status.run_nd) {
-    runtime_status.state_free_num++;
-    runtime_status.tmp_state_free_start =  clock();
+  unsigned int i;
+
+  for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
+    memory_profiler_destroy(&p->spaces[i]);
+  }
+  for (i = 0; i < ARY_SIZEOF(p->times); i++) {
+    time_profiler_destroy(&p->times[i]);
   }
 }
 
-void status_finish_state_free()
+inline static void time_profiler_init(TimeProfiler *p)
 {
-  if (runtime_status.run_nd) {
-    runtime_status.total_state_free_time +=
-      (clock() - runtime_status.tmp_state_free_start)/(double)CLOCKS_PER_SEC;
-  }
-
-  runtime_status.tmp_state_num--;
+  p->called_num = 0;
+  p->total_time = 0.0;
+  p->tmp_start  = 0;
 }
 
-void status_start_state_hash_calc()
+inline static void time_profiler_destroy(TimeProfiler *p)
 {
-  runtime_status.mhash_call_num++;
-  runtime_status.tmp_state_hash_start =  clock();
+
 }
 
-void status_finish_state_hash_calc()
+inline static void memory_profiler_init(MemoryProfiler *p)
 {
-  runtime_status.total_state_hash_time +=
-    (clock() - runtime_status.tmp_state_hash_start)/(double)CLOCKS_PER_SEC;
+  peak_counter_init(&p->num);
+  peak_counter_init(&p->space);
 }
 
-void status_start_mem_equals_calc()
+inline static void memory_profiler_destroy(MemoryProfiler *c)
 {
-  runtime_status.mem_equals_num++;
-  runtime_status.tmp_mem_equals_start =  clock();
+
 }
 
-void status_finish_mem_equals_calc()
+inline static void peak_counter_init(PeakCounter *p)
 {
-  runtime_status.total_mem_equals_time +=
-    (clock() - runtime_status.tmp_mem_equals_start)/(double)CLOCKS_PER_SEC;
+  p->cur  = 0;
+  p->peak = 0;
 }
 
-void status_start_mem_enc_eq_calc()
+inline static void peak_counter_destroy(PeakCounter *p)
 {
-  runtime_status.mem_enc_eq_num++;
-  runtime_status.tmp_mem_enc_eq_start =  clock();
+
 }
 
-void status_finish_mem_enc_eq_calc()
+
+void lmn_profiler_init()
 {
-  runtime_status.total_mem_enc_eq_time +=
-    (clock() - runtime_status.tmp_mem_enc_eq_start)/(double)CLOCKS_PER_SEC;
-}
+  unsigned int i, n;
+  n = lmn_env.core_num;
 
-void status_start_mem_dump_calc()
-{
-  runtime_status.mem_dump_num++;
-  runtime_status.tmp_mem_dump_start =  clock();
-}
+  lmn_prof.valid                 = FALSE;
+  lmn_prof.start_wall_time       = 0.0;
+  lmn_prof.end_wall_time         = 0.0;
+  lmn_prof.start_cpu_time        = 0.0;
+  lmn_prof.end_cpu_time          = 0.0;
+  lmn_prof.start_wall_time_main  = 0.0;
+  lmn_prof.end_wall_time_main    = 0.0;
+  lmn_prof.start_cpu_time_main   = LMN_NALLOC(double, n);
+  lmn_prof.end_cpu_time_main     = LMN_NALLOC(double, n);
+  lmn_prof.state_num_stored      = 0;
+  lmn_prof.state_num_end         = 0;
+  lmn_prof.error_num             = 0;
+  lmn_prof.accept_num            = 0;
+  lmn_prof.invalid_end_num       = 0;
+  lmn_prof.mhash_num             = 0;
+  lmn_prof.rehashed_num          = 0;
+  lmn_prof.midhash_num           = 0;
+  lmn_prof.transition_num        = 0;
+  lmn_prof.statespace_space      = 0;
+  lmn_prof.transition_space      = 0;
+  lmn_prof.state_space           = 0;
+  lmn_prof.binstr_space          = 0;
+  lmn_prof.membrane_space        = 0;
+  lmn_prof.on_the_fly            = NULL;
+  lmn_prof.prules                = NULL;
+  lmn_prof.cur                   = NULL;
 
-void status_finish_mem_dump_calc()
-{
-  runtime_status.total_mem_dump_time +=
-    (clock() - runtime_status.tmp_mem_dump_start)/(double)CLOCKS_PER_SEC;
-}
-
-void status_start_mem_encode_calc()
-{
-  runtime_status.mem_encode_num++;
-  runtime_status.tmp_mem_encode_start =  clock();
-}
-
-void status_finish_mem_encode_calc()
-{
-  runtime_status.total_mem_encode_time +=
-    (clock() - runtime_status.tmp_mem_encode_start)/(double)CLOCKS_PER_SEC;
-}
-
-void status_start_mem_decode_calc()
-{
-  runtime_status.mem_decode_num++;
-  runtime_status.tmp_mem_decode_start =  clock();
-}
-
-void status_finish_mem_decode_calc()
-{
-  runtime_status.total_mem_decode_time +=
-    (clock() - runtime_status.tmp_mem_decode_start)/(double)CLOCKS_PER_SEC;
-}
-
-void status_create_new_state()
-{
-  runtime_status.created_state_num++;
-  runtime_status.tmp_state_num++;
-}
-
-void status_nd_push_stack()
-{
-  runtime_status.nd_stack_size++;
-  if (runtime_status.nd_stack_size > runtime_status.nd_max_stack_size) {
-    runtime_status.nd_max_stack_size = runtime_status.nd_stack_size;
-  }
-}
-
-void status_nd_pop_stack()
-{
-  runtime_status.nd_stack_size--;
-}
-
-void status_binstr_make(LmnBinStr bs)
-{
-  runtime_status.encode_space += lmn_binstr_space(bs);
-  if (runtime_status.encode_space >
-      runtime_status.peak_encode_space)
-    runtime_status.peak_encode_space = runtime_status.encode_space;
-}
-
-void status_binstr_free(LmnBinStr bs)
-{
-  runtime_status.encode_space -= lmn_binstr_space(bs);
-}
-
-void output_runtime_status(FILE *f)
-{
-  double tmp_total_cpu_time,  tmp_nd_total_cpu_time;
-  double tmp_total_wall_time, tmp_nd_total_wall_time;
-
-  tmp_total_cpu_time =
-    (runtime_status.end_cpu_time - runtime_status.start_cpu_time)/(double)CLOCKS_PER_SEC;
-  tmp_total_wall_time = runtime_status.end_wall_time - runtime_status.start_wall_time;
-
-  tmp_nd_total_cpu_time =
-    (runtime_status.nd_end_cpu_time - runtime_status.nd_start_cpu_time)/(double)CLOCKS_PER_SEC;
-  tmp_nd_total_wall_time = runtime_status.nd_end_wall_time - runtime_status.nd_start_wall_time;
-
-  if (!lmn_env.benchmark) {
-
-    fprintf(f, "\n== Runtime Status ==========================================\n");
-    fprintf(f, "%-30s: %10.2lf\n", "total cpu  time (sec)", tmp_total_cpu_time);
-    fprintf(f, "%-30s: %10.2lf\n", "total wall time (sec)", tmp_total_wall_time);
-    if (lmn_env.nd || lmn_env.ltl) {
-      fprintf(f, "%-30s: %10.2lf\n", "nd cpu time (sec)", tmp_nd_total_cpu_time);
-      fprintf(f, "%-30s: %10.2lf\n", "nd wall time (sec)", tmp_nd_total_wall_time);
-      fprintf(f, "%-30s: %10lu\n", "# of states (stored)", runtime_status.state_num);
-      fprintf(f, "%-30s: %10lu\n", "# of states (created)", runtime_status.created_state_num);
-      fprintf(f, "%-30s: %10lu\n", "# of states (end)", runtime_status.end_state_num);
-      if (lmn_env.ltl_all){
-        fprintf(f, "%-30s: %10lu\n", "# of counter examples", runtime_status.counter_example_num);
-      }
-    } else {
-      fprintf(f, "%-30s: %10.2lf\n", "simulation cpu  time (sec)", tmp_nd_total_cpu_time);
-      fprintf(f, "%-30s: %10.2lf\n", "simulation wall time (sec)", tmp_nd_total_wall_time);
-    }
-    fprintf(f, "============================================================\n");
-
+  if (lmn_env.nd) {
     if (lmn_env.profile_level >= 2) {
-      fprintf(f, "\n== More Status =============================================\n");
-      fprintf(f, "%-30s: %10lu\n", "# of rule trials",
-              runtime_status.total_rule_trial_num + runtime_status.total_rule_backtrack_num);
-      fprintf(f, "%-30s: %10lu\n", "# of rule applies",
-              runtime_status.total_rule_apply_num);
-      fprintf(f, "%-30s: %10lu\n", "# of backtracks",
-              runtime_status.total_rule_backtrack_num);
+      hashset_init(&lmn_prof.hashes, 12);
+    }
 
-      fprintf(f, "%-30s: %10lu\n", "peak # of atoms", runtime_status.peak_atom_num);
-      fprintf(f, "%-30s: %10lu\n", "peak # of membranes",
-              runtime_status.peak_membrane_num);
-      fprintf(f, "%-30s: %10lu\n", "peak # of rules", runtime_status.peak_rule_num);
-      fprintf(f, "%-30s: %10lu\n", "peak atom space (Bytes)",
-              runtime_status.peak_atom_space);
-      fprintf(f, "%-30s: %10lu\n", "peak membrane space (Bytes)",
-              runtime_status.peak_membrane_space + runtime_status.peak_hashtbl_space);
-      fprintf(f, "%-30s: %10lu\n", "peak binstr space (Bytes)",
-              runtime_status.peak_encode_space);
-      fprintf(f,   "============================================================\n");
-
-      /* ND */
-      if (lmn_env.nd || lmn_env.ltl) {
-        struct {
-          char *name;
-          unsigned long calls;
-          double time;
-        } v[] = { {"DFS2 trial", runtime_status.total_dfs2_seed_num, runtime_status.total_dfs2_time},
-                  {"rule trial", runtime_status.total_rule_trial_num,  runtime_status.total_react_rule_time
-                                                                     - runtime_status.total_commit_time},
-                  {"mem copy (in commit)", runtime_status.total_rule_apply_num, runtime_status.total_commit_time},
-                  {"mem equals",           runtime_status.mem_enc_eq_num, runtime_status.total_mem_enc_eq_time},
-                  {"mem id",               runtime_status.mem_encode_num, runtime_status.total_mem_encode_time},
-                  {"mem dump",             runtime_status.mem_dump_num, runtime_status.total_mem_dump_time},
-                  {"mem decode",           runtime_status.mem_decode_num, runtime_status.total_mem_decode_time},
-                  {"mem hash",             runtime_status.mhash_call_num, runtime_status.total_state_hash_time},
-                  {"state free",           runtime_status.state_free_num, runtime_status.total_state_free_time},
-        };
-        int i;
-        double total_time = 0.0;
-
-        fprintf(f, "\n=== ND/MC Profile ====================================\n");
-
-        fprintf(f, "\n-- Time (sec) ---------------------------------------\n");
-        fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
-        for (i = 0; i < sizeof(v)/sizeof(v[0]); i++) {
-          if (!lmn_env.ltl && i == 0) continue;
-          total_time += v[i].time;
-          fprintf(f, "%-24s:%10lu%10.2lf%8.1lf\n",
-                  v[i].name,
-                  v[i].calls,
-                  v[i].time,
-                  100.0 * v[i].time / tmp_nd_total_cpu_time);
-        }
-        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "other", "", tmp_nd_total_cpu_time - total_time,
-                (double)(tmp_nd_total_cpu_time - total_time)/ total_time * 100.0);
-        fprintf(f, "-----------------------------------------------------\n");
-        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "total elapsed time (sec)", "", tmp_nd_total_cpu_time, 100.0);
-        fprintf(f, "-----------------------------------------------------\n");
-        fprintf(f, "\n");
-
-        fprintf(f, "-- Space ------------------------------------------\n");
-        fprintf(f, "%-24s:%10lu\n", "# of states", runtime_status.state_num);
-        fprintf(f, "%-24s:%10.2lf%4s\n", "rough peak state space",
-                (runtime_status.peak_total_state_space) / 1024.0 / 1024.0, "MB");
-        fprintf(f, "%-24s:%10.2lf%4s\n", "final state space", runtime_status.final_state_space_space / 1024.0 / 1024.0, "MB");
-        if (runtime_status.state_num > 0)
-          fprintf(f, "%-24s:%10.1lu%4s\n", "avg. space per state", runtime_status.final_state_space_space / runtime_status.state_num, "B");
-        fprintf(f, "%-24s:%10lu%4s\n", "avg. encode len",
-                runtime_status.encode_len_average, "B");
-        fprintf(f, "%-24s:%10lu\n", "max stack size", runtime_status.nd_max_stack_size);
-        fprintf(f, "---------------------------------------------------\n");
-        fprintf(f, "\n");
-        output_hash_conflict(f);
-
-        fprintf(f, "===================================================\n");
+    if (lmn_env.profile_level >= 3) {
+      lmn_prof.on_the_fly = LMN_NALLOC(MCProfiler, n);
+      for (i = 0; i < n; i++) {
+        mc_profiler_init(&lmn_prof.on_the_fly[i]);
       }
+    }
+  } else if (lmn_env.profile_level >= 2) {
+    lmn_prof.prules = st_init_ptrtable();
+  }
+}
+
+void lmn_profiler_finalize()
+{
+  LMN_FREE(lmn_prof.start_cpu_time_main);
+  LMN_FREE(lmn_prof.end_cpu_time_main);
+
+  if (lmn_env.nd) {
+    if (lmn_env.profile_level >= 2) {
+      hashset_destroy(&lmn_prof.hashes);
 
       if (lmn_env.profile_level >= 3) {
-        fprintf(f, "\n== Detail: Rule Status ===========================\n");
-        lmn_rule_show_detail(f);
+        unsigned int i;
+        for (i = 0; i < lmn_env.core_num; i++) {
+          mc_profiler_destroy(&lmn_prof.on_the_fly[i]);
+        }
+        LMN_FREE(lmn_prof.on_the_fly);
+      }
+    }
+  } else if (lmn_env.profile_level >= 2) {
+    st_foreach(lmn_prof.prules, rule_profiler_free_f, (st_data_t)0);
+    st_free_table(lmn_prof.prules);
+  }
+}
+
+
+void profile_start_slim()
+{
+  lmn_prof.start_wall_time = get_wall_time();
+  lmn_prof.start_cpu_time  = get_cpu_time();
+}
+
+void profile_finish_slim()
+{
+  lmn_prof.end_cpu_time  = get_cpu_time();
+  lmn_prof.end_wall_time = get_wall_time();
+}
+
+void profile_start_exec()
+{
+  lmn_prof.valid = TRUE;
+  lmn_prof.start_wall_time_main = get_wall_time();
+}
+
+void profile_start_exec_thread()
+{
+  lmn_prof.start_cpu_time_main[lmn_thread_id] = get_cpu_time();
+}
+
+void profile_finish_exec_thread()
+{
+  lmn_prof.end_cpu_time_main[lmn_thread_id] = get_cpu_time();
+}
+
+void profile_finish_exec()
+{
+  lmn_prof.valid = FALSE;
+  lmn_prof.end_wall_time_main = get_wall_time();
+}
+
+void profile_statespace(StateSpace states)
+{
+  lmn_prof.state_num_stored = state_space_num(states);
+  lmn_prof.state_num_end    = state_space_end_num(states);
+  if (mc_data.do_search) {
+    lmn_prof.error_num        = mc_get_error_num();
+  }
+  lmn_prof.statespace_space = state_space_space(states);
+  state_space_foreach(states, profile_state_f, DEFAULT_ARGS);
+}
+
+static void profile_state_f(State *s)
+{
+  unsigned int succ_num = state_succ_num(s);
+
+  /* メモリ */
+  lmn_prof.state_space += sizeof(State);
+  if (state_mem(s)) {
+    LmnMembrane *src, *dst;
+    src = state_mem(s);
+    lmn_prof.membrane_space += lmn_mem_space(src);
+    ALL_MEMS(src, dst, {
+      lmn_prof.membrane_space += lmn_mem_space(dst);
+    });
+  }
+  if (state_mem_binstr(s)) {
+    lmn_prof.binstr_space   += lmn_binstr_space(state_mem_binstr(s));
+  }
+
+  lmn_prof.transition_space += succ_num * sizeof(succ_data_t); /* # of pointer */
+  if (lmn_env.show_transition) {
+    unsigned int i;
+    for (i = 0; i < succ_num; i++) {
+      lmn_prof.transition_space += transition_space(transition(s, i));
+    }
+  }
+
+  /* 遷移数 */
+  lmn_prof.transition_num += succ_num;
+
+  if (!(is_encoded(s) && is_dummy(s))) {
+    if (mc_data.has_property) {
+      AutomataState atm = automata_get_state(mc_data.property_automata,
+                                             state_property_state(s));
+      if (atmstate_is_accept(atm)) {
+        lmn_prof.accept_num++;
+      }
+      if (atmstate_is_end(atm)) {
+        lmn_prof.invalid_end_num++;
       }
     }
   }
-  else { /* csv形式でデータを貰う. (仮設中) */
 
-    /* 1st line: item */
-    if (lmn_env.profile_level > 1) {
-      fprintf(f, "%s, %s, %s", "CPUtime", "WALLtime", "WALL_ND");
-      if (lmn_env.nd || lmn_env.ltl) {
-        fprintf(f, ", %s, %s, %s", "#state", "#trans", "#hash");
-        if (lmn_env.ltl_all || lmn_env.ltl_nd){
-          fprintf(f, ", %s", "#error");
-        }
+  /* ハッシュ値の種類数 */
+  if (!hashset_contains(&lmn_prof.hashes, state_hash(s))) {
+    hashset_add(&lmn_prof.hashes, state_hash(s));
+
+    if (is_encoded(s)) {
+      lmn_prof.midhash_num++;
+      if (is_dummy(s)) {
+        lmn_prof.rehashed_num++;
       }
-      /* ND */
-      if (lmn_env.nd || lmn_env.ltl) {
-        struct {
-          char *name;
-          unsigned long calls;
-          double time;
-        } v[] = { {"dfs2%",  runtime_status.total_dfs2_seed_num, runtime_status.total_dfs2_time},
-                  {"trial%", runtime_status.total_rule_trial_num,  runtime_status.total_react_rule_time
-                                                                     - runtime_status.total_commit_time},
-                  {"mcopy%", runtime_status.total_rule_apply_num, runtime_status.total_commit_time},
-                  {"meq%",           runtime_status.mem_enc_eq_num, runtime_status.total_mem_enc_eq_time},
-                  {"mid%",               runtime_status.mem_encode_num, runtime_status.total_mem_encode_time},
-                  {"mdump%",             runtime_status.mem_dump_num, runtime_status.total_mem_dump_time},
-                  {"mdecode%",           runtime_status.mem_decode_num, runtime_status.total_mem_decode_time},
-                  {"mhash%",             runtime_status.mhash_call_num, runtime_status.total_state_hash_time},
-                  {"stfree%",           runtime_status.state_free_num, runtime_status.total_state_free_time},
-        };
-        int i;
-        double total_time = 0.0;
-        for (i = 0; i < sizeof(v)/sizeof(v[0]); i++) {
-          if (!lmn_env.ltl && i == 0) continue;
-          total_time += v[i].time;
-          fprintf(f, ", %s", v[i].name);
-        }
-        fprintf(f, ", %s", "other");
-        fprintf(f, ", %s, %s", "MBspMax", "MBspFin");
-      }
-      fprintf(f, "\n");
+    } else {
+      lmn_prof.mhash_num++;
     }
+  }
 
-    /* 2nd line: data */
-    fprintf(f, "%1.2lf", tmp_total_cpu_time);
-    fprintf(f, "%1.2lf", tmp_total_wall_time);
-    fprintf(f, "%1.2lf", tmp_nd_total_wall_time);
-    if (lmn_env.profile_level >= 2) {
-      if (lmn_env.nd || lmn_env.ltl) {
-        fprintf(f, ", %lu", runtime_status.state_num);
-        fprintf(f, ", %lu", runtime_status.created_state_num - 1);
-        fprintf(f, ", %lu",     runtime_status.hash_num);
-        /* (# of create states) - (initial state) = # of transition */
-        if (lmn_env.ltl_all){
-          fprintf(f, ", %lu", runtime_status.counter_example_num);
-        }
-        struct {
-          char *name;
-          unsigned long calls;
-          double time;
-        } v[] = {   {"dfs2 trial", runtime_status.total_dfs2_seed_num, runtime_status.total_dfs2_time},
-                    {"rule trial", runtime_status.total_rule_trial_num,  runtime_status.total_react_rule_time
-                                                                       - runtime_status.total_commit_time},
-                    {"mem copy (in commit)", runtime_status.total_rule_apply_num, runtime_status.total_commit_time},
-                    {"mem equals",           runtime_status.mem_enc_eq_num, runtime_status.total_mem_enc_eq_time},
-                    {"mem id",               runtime_status.mem_encode_num, runtime_status.total_mem_encode_time},
-                    {"mem dump",             runtime_status.mem_dump_num, runtime_status.total_mem_dump_time},
-                    {"mem decode",           runtime_status.mem_decode_num, runtime_status.total_mem_decode_time},
-                    {"mem hash",             runtime_status.mhash_call_num, runtime_status.total_state_hash_time},
-                    {"state free",           runtime_status.state_free_num, runtime_status.total_state_free_time},
-        };
-        int i;
-        double total_time = 0.0;
+  if (!s->next) {
+    /* 同じハッシュ値は同じリストにのみ存在するので, リストが切り替わったらクリア */
+    hashset_clear(&lmn_prof.hashes);
+  }
+}
 
-        for (i = 0; i < sizeof(v)/sizeof(v[0]); i++) {
-          if (!lmn_env.ltl && i == 0) continue;
-          total_time += v[i].time;
-          fprintf(f, ", %1.2lf", 100.0 * v[i].time / tmp_nd_total_cpu_time);
-        }
-        fprintf(f, ", %1.2lf", (double)(tmp_nd_total_cpu_time - total_time)/ total_time * 100.0);
-        fprintf(f, ", %1.2lf", (runtime_status.peak_total_state_space)  / 1024.0 / 1024.0);
-        fprintf(f, ", %1.2lf", (runtime_status.final_state_space_space) / 1024.0 / 1024.0);
+void calc_statespace_space(MCProfiler *p, StateSpace states)
+{
+  unsigned int i;
+  for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
+    lmn_prof.statespace_space += (&p->spaces[i])->space.cur;
+  }
+}
+
+void dump_profile_data(FILE *f)
+{
+  double tmp_total_cpu_time,  tmp_total_cpu_time_main;
+  double tmp_total_wall_time, tmp_total_wall_time_main;
+  double tmp_total_mem;
+  unsigned long total_hash_num;
+  unsigned int i;
+
+  tmp_total_cpu_time_main  = 0.0;
+  for (i = 0; i < lmn_env.core_num; i++) {
+    tmp_total_cpu_time_main  += lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i];
+  }
+  tmp_total_cpu_time_main  = tmp_total_cpu_time_main / lmn_env.core_num;
+  tmp_total_cpu_time       = lmn_prof.end_cpu_time  - lmn_prof.start_cpu_time;
+  tmp_total_wall_time      = lmn_prof.end_wall_time - lmn_prof.start_wall_time;
+  tmp_total_wall_time_main = lmn_prof.end_wall_time_main - lmn_prof.start_wall_time_main;
+
+  tmp_total_mem            = (double)(lmn_prof.state_space
+                                    + lmn_prof.transition_space
+                                    + lmn_prof.binstr_space
+                                    + lmn_prof.membrane_space
+                                    + lmn_prof.statespace_space);
+
+  total_hash_num = lmn_prof.mhash_num + lmn_prof.midhash_num - lmn_prof.rehashed_num;
+
+  if (lmn_env.benchmark) { /* データ収集用 */
+    fprintf(f, "%lf, %lf, %lf, %lu, %lu, %lu, %lu, %lf, %lf, %lf, %lf, %lf\n",
+                            tmp_total_wall_time,
+                            tmp_total_wall_time_main,
+                            tmp_total_cpu_time_main,
+                            lmn_prof.state_num_stored,
+                            lmn_prof.transition_num,
+                            lmn_prof.state_num_end,
+                            total_hash_num,
+                            tmp_total_mem / 1024 / 1024,
+                            (double)lmn_prof.state_space / 1024 / 1024,
+                            lmn_env.enable_compress_mem ? (double)lmn_prof.binstr_space / 1024 / 1024
+                                                        : (double)lmn_prof.membrane_space / 1024 / 1024,
+                            (double)lmn_prof.transition_space / 1024 / 1024,
+                            (double)lmn_prof.statespace_space / 1024 / 1024
+                            );
+    return;
+  }
+
+  if (lmn_env.profile_level >= 1) {
+    fprintf(f, "\n== Static Profiler Report ==================================\n");
+    fprintf(f, "%-20s%8s  : %15.2lf\n", "Wall Time (sec)",        "Total", tmp_total_wall_time);
+    fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                      " Exec", tmp_total_wall_time_main);
+    fprintf(f,   "------------------------------------------------------------\n");
+
+    if (lmn_env.core_num == 1) {
+      fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)",      "Total", tmp_total_cpu_time);
+      fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                    " Exec", tmp_total_cpu_time_main);
+    } else {
+      fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg.", tmp_total_cpu_time_main);
+      fprintf(f, "%-18s%10s  : %15s\n",    " ",           "---------", "-------------------");
+      for (i = 0; i < lmn_env.core_num; i++) {
+        fprintf(f, "%-12s%14s%2u  : %15.2lf\n", " ", "Thread", i,
+                    lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i]);
       }
     }
-    fprintf(f, "\n");
+    if (!lmn_env.nd) {
+      fprintf(f,   "============================================================\n");
+      if (lmn_env.profile_level >= 2) {
+        RuleProfiler *r_total, *r_others;
+        struct Vector v;
+        unsigned int i;
+
+        r_total  = rule_profiler_make(ANONYMOUS, NULL);
+        r_others = rule_profiler_make(ANONYMOUS, NULL);
+
+        vec_init(&v, st_num(lmn_prof.prules));
+        st_get_entries_value(lmn_prof.prules, &v);
+        vec_sort(&v, comp_prule_id_greater_f);
+
+        fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
+        fprintf(f,   "%4s %8s : %9s %9s %9s %12s",
+            "[id]", "[name]", "[# Tr.]", "[# Ap.]", "[# BT.]", "[CPU U.(msec)]\n");
+
+        for (i = 0; i < vec_num(&v); i++) {
+          RuleProfiler *rp = (RuleProfiler *)vec_get(&v, i);
+          if (rp->trial.called_num > 0) {
+            if (lmn_rule_get_name(rp->src) == ANONYMOUS) {
+              /* 一度もマッチングに成功しなかったルールはまとめる */
+              r_others->trial.called_num += rp->trial.called_num;
+              r_others->trial.total_time += rp->trial.total_time;
+              r_others->backtrack += rp->backtrack;
+            } else {
+              /* 一応ナノセックまで取得できるが, 精度は環境依存 */
+              fprintf(f, "@%-3d %8s : %9lu %9lu %9lu %13.3lf\n",
+                         rp->ref_rs_id,
+                         lmn_id_to_name(lmn_rule_get_name(rp->src)),
+                         rp->trial.called_num,
+                         rp->apply,
+                         rp->backtrack,
+                         rp->trial.total_time / 1e-6);
+            }
+            r_total->apply            += rp->apply;
+            r_total->backtrack        += rp->backtrack;
+            r_total->trial.called_num += rp->trial.called_num;
+            r_total->trial.total_time += rp->trial.total_time;
+          }
+        }
+        fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.3lf\n",
+                   " - ",
+                   "OTHERS",
+                   r_others->trial.called_num,
+                   0UL,
+                   r_others->backtrack,
+                   r_others->trial.total_time / 1e-6);
+        fprintf(f,   "------------------------------------------------------------\n");
+        fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.3lf\n",
+                   " - ",
+                   "Total",
+                   r_total->trial.called_num,
+                   r_total->apply,
+                   r_total->backtrack,
+                   r_total->trial.total_time / 1e-6);
+
+        vec_destroy(&v);
+        rule_profiler_free(r_others);
+        fprintf(f,   "============================================================\n");
+      }
+    } else if (lmn_env.profile_level < 2) {
+      fprintf(f,   "============================================================\n");
+    } else {
+      fprintf(f,   "------------------------------------------------------------\n");
+      fprintf(f, "%-20s%8s  : %15lu\n",   "# of States",             "Stored", lmn_prof.state_num_stored);
+      fprintf(f, "%-18s%10s  : %15lu\n",   " ",                  "Successors", lmn_prof.transition_num);
+      fprintf(f, "%-18s%10s  : %15lu\n",   " ",                  "Terminates", lmn_prof.state_num_end);
+      if (mc_data.has_property) {
+        if (mc_data.do_search) {
+          fprintf(f, "%-10s%18s  : %15lu\n",   " ",             "Error / Cycle", lmn_prof.error_num);
+        }
+        fprintf(f, "%-10s%18s  : %15lu\n",   " ",                  "Accepted", lmn_prof.accept_num);
+        fprintf(f, "%-10s%18s  : %15lu\n",   " ",              "Invalid Ends", lmn_prof.invalid_end_num);
+      }
+      fprintf(f,   "------------------------------------------------------------\n");
+      fprintf(f, "%-20s%8s  : %15lu\n",   "# of Hash Values",         "Total", total_hash_num);
+      fprintf(f, "%-6s%22s  : %15lu\n",   " ",            "Default -  M_Hash", lmn_prof.mhash_num);
+      fprintf(f, "%-6s%22s  : %15lu\n",   " ",           "ReHashed -  M_Hash", lmn_prof.rehashed_num);
+      fprintf(f, "%-6s%22s  : %15lu\n",   " ",          "Optimized - BS_Hash", lmn_prof.midhash_num);
+      fprintf(f,   "------------------------------------------------------------\n");
+      fprintf(f, "%-16s%12s    %12s %12s\n", "Memory Usage ", "", "[Amount(MB)]", "[Per State(B)]");
+      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ",             "Total", tmp_total_mem / 1024 / 1024, tmp_total_mem / lmn_prof.state_num_stored);
+      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Descriptors", (double)lmn_prof.state_space / 1024 / 1024, (double)lmn_prof.state_space / lmn_prof.state_num_stored);
+      if (lmn_env.enable_compress_mem) {
+        fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ",  "Binary Strings", (double)lmn_prof.binstr_space / 1024 / 1024, (double)lmn_prof.binstr_space / lmn_prof.state_num_stored);
+      } else {
+        fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Membranes", (double)lmn_prof.membrane_space / 1024 / 1024, (double)lmn_prof.membrane_space / lmn_prof.state_num_stored);
+      }
+      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ",       "Transitions", (double)lmn_prof.transition_space / 1024 / 1024, (double)lmn_prof.transition_space / lmn_prof.state_num_stored);
+      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ",        "StateSpace", (double)lmn_prof.statespace_space / 1024 / 1024, (double)lmn_prof.statespace_space / lmn_prof.state_num_stored);
+#ifdef DEVEL
+      fprintf(f,   "------------------------------------------------------------\n");
+#ifdef DEBUG
+      fprintf(f, "%-8s%20s  : %15s\n",   "Option ",              "Debug Mode", "ON");
+#else
+      fprintf(f, "%-8s%20s  : %15s\n",   "Option ",              "Debug Mode", "OFF");
+#endif /* DEBUG */
+#ifdef PROFILE
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",                  "Profile Mode", "ON");
+#else
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",                  "Profile Mode", "OFF");
+#endif /* PROFILE */
+#ifdef TIME_OPT
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",                  "Time Opt. Mode", "ON");
+#else
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",                  "Time Opt. Mode", "OFF");
+#endif /* PROFILE */
+      fprintf(f, "%-8s%20s  : %15d\n",   " ",                 "# of  Threads", lmn_env.core_num);
+      fprintf(f, "%-4s%24s  : %15s\n",   " ",         "Dynamic Load Balancer", lmn_env.optimize_loadbalancing ? "YES" : "NO");
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",             "Property Automata", mc_data.has_property  ? "YES" : "NO");
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",            "LTL Model Checking", lmn_env.ltl           ? "YES" : "NO");
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",               "Search Strategy", lmn_env.bfs           ? "BFS" : "DFS");
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",              "Compact OpenNode", lmn_env.compact_stack ? "YES" : "NO");
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",                "Delta Membrane", lmn_env.delta_mem     ? "YES" : "NO");
+      fprintf(f, "%-4s%24s  : %15s\n",   " ",       "Partial Order Reduction", lmn_env.por           ? "YES" : "NO");
+      fprintf(f, "%-8s%20s  : %15s\n",   " ",            "Symmetry Reduction", "NO");
+#endif /* DEVEL */
+      fprintf(f,   "============================================================\n");
+
+      if (lmn_env.profile_level >= 3) {
+        MCProfiler total;
+        double total_time;
+
+        for (i = 0; i < lmn_env.core_num; i++) { /* 計測したactive時間をidle時間へ変換 */
+          lmn_prof.on_the_fly[i].times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF].total_time =
+            lmn_env.core_num == 1 ? 0 :
+               lmn_prof.end_cpu_time_main[i]
+             - lmn_prof.start_cpu_time_main[i]
+             - lmn_prof.on_the_fly[i].times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF].total_time;
+          /* startからfinishまで回したCPU時間から指定したactiveブロックに費やしたCPU時間を引けばidle時間になる.
+           * (一見冗長に見えるが, spin-waitが費やしたCPU時間を除くことができる.) */
+        }
+
+        mc_profiler_init(&total);
+        mc_profiler_make_up_report(&total);
+        total_time = 0.0;
+
+        total.times[PROFILE_TIME__TRANS_RULE].total_time -= total.times[PROFILE_TIME__STATE_COPY_IN_COMMIT].total_time;
+
+        fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
+        fprintf(f,   "-- Time Performance ----------------------------------------\n");
+        fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
+        for (i = 0; i < ARY_SIZEOF(total.times); i++) {
+          total_time += total.times[i].total_time;
+          fprintf(f, "%-24s:%10lu%10.2lf%8.1lf\n", profile_time_id_to_name(i),
+                                                   total.times[i].called_num,
+                                                   total.times[i].total_time,
+                                                   100.0 * total.times[i].total_time / tmp_total_cpu_time_main);
+        }
+        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "other", "", (tmp_total_cpu_time_main - total_time),
+                   (double)(tmp_total_cpu_time_main - total_time) / tmp_total_cpu_time_main * 100.0);
+        fprintf(f,   "------------------------------------------------------------\n");
+        fprintf(f,   "%-24s:%10s%10.2lf%8.1lf\n", lmn_env.core_num > 2 ? "CPU Usage AVG. (sec)"
+                                                                       : "CPU Usage (sec)", "", tmp_total_cpu_time_main, 100.0);
+        fprintf(f,   "------------------------------------------------------------\n");
+        fprintf(f, "\n");
+        fprintf(f,   "-- Memory Performance --------------------------------------\n");
+        if (lmn_env.core_num >= 2) {
+          fprintf(f, "How to show peak performance in parallization? under const.\n");
+        } else {
+          fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]", "[Peak Num]");
+          for (i = 0; i < ARY_SIZEOF(total.spaces); i++) {
+            fprintf(f, "%-24s: %10.2lf %10.2lf %10lu\n",
+                       profile_space_id_to_name(i),
+                       (double)total.spaces[i].space.cur / 1024 / 1024,
+                       (double)total.spaces[i].space.peak / 1024 / 1024,
+                       total.spaces[i].num.peak);
+          }
+        }
+        fprintf(f,   "------------------------------------------------------------\n");
+        fprintf(f, "\n");
+        fprintf(f,   "-- State Management System (Open Hashing) ------------------\n");
+        for (i = 0; i < ARY_SIZEOF(total.counters); i++) {
+          fprintf(f, "%-24s:%10lu\n", profile_counter_id_to_name(i), total.counters[i]);
+        }
+        fprintf(f,   "============================================================\n");
+      }
+    }
   }
 }
 
-void status_state_space(StateSpace states)
+static void mc_profiler_make_up_report(MCProfiler *total)
 {
-  runtime_status.state_num = state_space_num(states);
-  runtime_status.end_state_num = vec_num(state_space_end_states(states));
-  calc_hash_conflict(states);
-  calc_encode_info(states);
-  calc_state_space_space(states);
-}
+  unsigned int data_i, th_id;
 
-static int dispersal_f(st_data_t key, st_data_t s_, st_data_t tbl_)
-{
-  st_table_t tbl = (st_table_t)tbl_;
-  State *s = (State*)s_;
-
-  st_data_t n;
-  if (!st_lookup((st_table_t)tbl, (st_data_t)state_hash(s), &n)) {
-    n = 0;
+  for (data_i = 0; data_i < ARY_SIZEOF(total->times); data_i++) {
+    for (th_id = 0; th_id < lmn_env.core_num; th_id++) {
+      TimeProfiler *p = &(lmn_prof.on_the_fly[th_id].times[data_i]);
+      total->times[data_i].called_num += p->called_num;
+      total->times[data_i].total_time += p->total_time;
+    }
+    if (total->times[data_i].total_time > 0.0) {
+      total->times[data_i].total_time /= lmn_env.core_num;
+    }
   }
-  if (lmn_env.mem_enc) {
-    st_insert((st_table_t)tbl, (st_data_t)state_memid_hash(s), (st_data_t)(n+1));
-  } else {
-    st_insert((st_table_t)tbl, (st_data_t)state_hash(s), (st_data_t)(n+1));
+
+  for (data_i = 0; data_i < ARY_SIZEOF(total->counters); data_i++) {
+    for (th_id = 0; th_id < lmn_env.core_num; th_id++) {
+      total->counters[data_i] += lmn_prof.on_the_fly[th_id].counters[data_i];
+    }
   }
-/*   fprintf(stdout, "%d :: ", s->hash); */
-/*   lmn_dump_mem_stdout(s->mem); */
 
-  return ST_CONTINUE;
-}
-
-static int accum_f(st_data_t hash_value, st_data_t num, st_data_t tbl_)
-{
-  st_table_t hash_to_values = (st_table_t)tbl_;
-
-  st_data_t n;
-  if (!st_lookup((st_table_t)hash_to_values, (st_data_t)num, &n)) {
-    n = 0;
-  }
-  st_insert((st_table_t)hash_to_values, (st_data_t)num, (st_data_t)(n+1));
-  runtime_status.hash_num++;
-
-  return ST_CONTINUE;
-}
-
-static void calc_hash_conflict(StateSpace states)
-{
-  st_table_t hash_to_values;
-
-  hash_to_values = st_init_numtable();
-
-  /* hash_valueはハッシュ値とそのハッシュ値を持つ状態の数表を作る */
-  st_foreach(state_space_tbl(states), dispersal_f, (st_data_t)hash_to_values);
-  /* conflict数とconflictしているハッシュ値の種類を集計 */
-  st_foreach(hash_to_values, accum_f, (st_data_t)runtime_status.hash_conflict_tbl);
-
-  st_free_table(hash_to_values);
-}
-
-static int dispersal_print_f(st_data_t hash_, st_data_t n_, st_data_t f_)
-{
-  unsigned int hash = (unsigned int)hash_;
-  int n = (int)n_;
-  FILE *f = (FILE*)f_;
-
-  fprintf(f, "%9d%9d\n", hash, n);
-
-  return ST_CONTINUE;
-}
-
-static void output_hash_conflict(FILE *f)
-{
-  if (!lmn_env.nd && !lmn_env.ltl) return;
-
-  fprintf(f, "-- Hash ------------------\n");
-  fprintf(f, "%-16s:%9lu\n", "# of hash values", runtime_status.hash_num);
-  fprintf(f, "------------------\n");
-  fprintf(f, "%9s%9s\n", "conflicts", "kinds");
-  st_foreach(runtime_status.hash_conflict_tbl, dispersal_print_f, (st_data_t)f);
-  fprintf(f, "------------------\n");
-  fprintf(f, "--------------------------\n");
-}
-
-static int encode_info_f(st_data_t key, st_data_t s_, st_data_t t)
-{
-  State *s = (State*)s_;
-  LmnBinStr bs = state_mem_binstr(s);
-  if (bs) {
-    runtime_status.final_encode_space += lmn_binstr_space(bs);
-  }
-  return ST_CONTINUE;
-}
-
-static void calc_encode_info(StateSpace states)
-{
-  runtime_status.final_encode_space = 0;
-  st_foreach(state_space_tbl(states), encode_info_f, (st_data_t)0);
-  runtime_status.encode_len_average = runtime_status.final_encode_space / state_space_num(states);
-}
-
-void calc_state_space_space(StateSpace states)
-{
-  runtime_status.final_state_space_space =
-    runtime_status.atom_space +
-    runtime_status.membrane_space +
-    runtime_status.hashtbl_space +
-    runtime_status.final_encode_space +
-    st_table_space(state_space_tbl(states)) +
-    sizeof(struct State) * state_space_num(states);
-}
-
-void status_start_rule()
-{
-  runtime_status.tmp_rule_trial_num     = 1;
-  runtime_status.tmp_rule_apply_num     = 0;
-  runtime_status.tmp_rule_backtrack_num = 0;
-  runtime_status.tmp_react_rule_start= clock();
-}
-
-void status_finish_rule(LmnRule rule, BOOL result)
-{
-  unsigned long tmp_ap, tmp_tr, tmp_ba;
-  if(result && !(lmn_env.nd || lmn_env.ltl)) {
-    runtime_status.tmp_rule_apply_num = 1; /* for tracer only */
-  }
-  tmp_ap = runtime_status.tmp_rule_apply_num;
-  tmp_tr = runtime_status.tmp_rule_trial_num;
-  tmp_ba = runtime_status.tmp_rule_backtrack_num;
-  runtime_status.total_rule_apply_num     += tmp_ap;
-  runtime_status.total_rule_trial_num     += tmp_tr;
-  runtime_status.total_rule_backtrack_num += tmp_ba;
-  runtime_status.total_react_rule_time += (clock() - runtime_status.tmp_react_rule_start)/(double)CLOCKS_PER_SEC;
-  if(lmn_env.profile_level >= 3) {
-    lmn_rule_profile(rule, tmp_ap, tmp_tr, tmp_ba);
+  for (data_i = 0; data_i < ARY_SIZEOF(total->spaces); data_i++) {
+    for (th_id = 0; th_id < lmn_env.core_num; th_id++) {
+      MCProfiler *p = &lmn_prof.on_the_fly[th_id];
+      total->spaces[data_i].space.cur  += p->spaces[data_i].space.cur;
+      total->spaces[data_i].space.peak += p->spaces[data_i].space.peak;
+      total->spaces[data_i].num.cur    += p->spaces[data_i].space.cur;
+      total->spaces[data_i].num.peak   += p->spaces[data_i].num.peak;
+    }
+    total->spaces[data_i].space.cur  /= lmn_env.core_num;
+    total->spaces[data_i].space.peak /= lmn_env.core_num;
+    total->spaces[data_i].num.cur    /= lmn_env.core_num;
+    total->spaces[data_i].num.peak   /= lmn_env.core_num;
   }
 }
 
-/* for Tracer only */
-void status_rule_output(LmnRule rule) {
-  fprintf(stdout,  "   %5s %5lu %5lu %5lu\n", lmn_id_to_name(lmn_rule_get_name(rule)),
-      runtime_status.tmp_rule_apply_num,
-      runtime_status.tmp_rule_trial_num + runtime_status.tmp_rule_backtrack_num,
-      runtime_status.tmp_rule_backtrack_num);
+static char *profile_time_id_to_name(int type)
+{
+  char *ret;
+  switch (type) {
+  case PROFILE_TIME__ACTIVE_FOR_IDLE_PROF:
+    ret = "idle";
+    break;
+  case PROFILE_TIME__STATE_HASH_MEM:
+    ret = "state mhash";
+    break;
+  case PROFILE_TIME__STATE_HASH_MID:
+    ret = "state binstr hash";
+    break;
+  case PROFILE_TIME__STATE_COMPARE_MEQ:
+    ret = "state mem compare";
+    break;
+  case PROFILE_TIME__STATE_COMPARE_MID:
+    ret = "state binstr compare";
+    break;
+  case PROFILE_TIME__STATE_COPY:
+    ret = "state copy";
+    break;
+  case PROFILE_TIME__STATE_COPY_IN_COMMIT:
+    ret = "state copy  (in COMMIT)";
+    break;
+  case PROFILE_TIME__TRANS_RULE:
+    ret = "expand rule (ex COMMIT)";
+    break;
+  case PROFILE_TIME__MENC_DUMP:
+    ret = "menc dump";
+    break;
+  case PROFILE_TIME__MENC_RESTORE:
+    ret = "menc restore";
+    break;
+  case PROFILE_TIME__MENC_CANONICAL:
+    ret = "menc canonical";
+    break;
+  case PROFILE_TIME__DMEM_COMMIT:
+    ret = "dmem commit";
+    break;
+  case PROFILE_TIME__DMEM_REVERT:
+    ret = "dmem revert";
+    break;
+  case PROFILE_TIME__CYCLE_EXPLORE:
+    ret = "cycle explore";
+    break;
+  case PROFILE_TIME__Z_COMPRESS:
+    ret = "z compress";
+    break;
+  case PROFILE_TIME__Z_UNCOMPRESS:
+    ret = "z uncompress";
+    break;
+  default:
+    ret = "unknown";
+    break;
+  }
+  return ret;
 }
 
-void status_backtrack_counter()
+static char *profile_counter_id_to_name(int type)
 {
-  runtime_status.tmp_rule_backtrack_num++;
+  char *ret;
+  switch (type) {
+  case PROFILE_COUNT__HASH_CONFLICT_ENTRY:
+    ret = "conflict hash entry";
+    break;
+  case PROFILE_COUNT__HASH_CONFLICT_HASHV:
+    ret = "conflict hash value";
+    break;
+  case PROFILE_COUNT__HASH_RESIZE_TRIAL:
+    ret = "trial tbl resize";
+    break;
+  case PROFILE_COUNT__HASH_RESIZE_APPLY:
+    ret = "apply tbl resize";
+    break;
+  case PROFILE_COUNT__HASH_FAIL_TO_INSERT:
+    ret = "fail to insert tbl";
+    break;
+  default:
+    ret = "unknown";
+    break;
+  }
+  return ret;
 }
 
-void status_start_commit()
+static char *profile_space_id_to_name(int type)
 {
-  runtime_status.tmp_rule_apply_num++;
-  runtime_status.tmp_commit_start = clock();
+  char *ret;
+  switch (type) {
+  case PROFILE_SPACE__TOTAL:
+    ret = "total";
+    break;
+  case PROFILE_SPACE__STATE_BINSTR:
+    ret = "state binstr";
+    break;
+  case PROFILE_SPACE__STATE_OBJECT:
+    ret = "state object";
+    break;
+  case PROFILE_SPACE__TRANS_OBJECT:
+    ret = "trans object";
+    break;
+  case PROFILE_SPACE__STATE_MEMBRANE:
+    ret = "state membrane";
+    break;
+  case PROFILE_SPACE__OPEN_LIST:
+    ret = "open list";
+    break;
+  case PROFILE_SPACE__REDUCED_MEMSET:
+    ret = "reduced State Mem";
+    break;
+  case PROFILE_SPACE__REDUCED_BINSTR:
+    ret = "reduced State BinStr";
+    break;
+  default:
+    ret = "unknown";
+    break;
+  }
+  return ret;
 }
 
-void status_finish_commit()
-{
-  runtime_status.total_commit_time +=
-    (clock() - runtime_status.tmp_commit_start) / (double)CLOCKS_PER_SEC;
-}
 
-void status_count_counterexample()
-{
-  runtime_status.counter_example_num++;
-}
-
-void status_start_dfs2()
-{
-  runtime_status.total_dfs2_seed_num++;
-  runtime_status.tmp_dfs2_start = clock();
-}
-
-void status_finish_dfs2()
-{
-  runtime_status.total_dfs2_time +=
-    (clock() - runtime_status.tmp_dfs2_start) / (double)CLOCKS_PER_SEC;
-}
-
-inline double get_wall_time()
-{
-  struct timeval tmp;
-  gettimeofday(&tmp, NULL);
-  return tmp.tv_sec + (double)tmp.tv_usec * 1e-6;
-}

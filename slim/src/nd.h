@@ -42,35 +42,63 @@
 
 #include "lmntal.h"
 #include "state.h"
+#include "statespace.h"
 #include "rule.h"
 #include "vector.h"
+#include "st.h"
+#include "automata.h"
 
+/* prefixにndがつく関数に渡すフラグ */
+#define ND_FLAGS_DUMP           (0x01U)
+#define ND_FLAGS_POR            (0x01U << 1)
+#define ND_FLAGS_HAS_PROPERTY   (0x01U << 2)
+#define ND_FLAGS_USE_TRANSITION (0x01U << 3)
+#define ND_FLAGS_COMPRESS       (0x01U << 4)
+#define ND_FLAGS_COMPACT_STACK  (0x01U << 5)
+#define ND_FLAGS_DELTAMEM       (0x01U << 6)
 
-struct NDReactCxtData {
-  Vector *roots;
-  Vector *rules;
-  BYTE property_state;
-};
+#define is_dump(f)           ((f) & ND_FLAGS_DUMP)
+#define set_dump(f)          ((f) |= ND_FLAGS_DUMP)
+#define unset_dump(f)        ((f) &= (~ND_FLAGS_DUMP))
+#define enable_por(f)        ((f) & ND_FLAGS_POR)
+#define set_por(f)           ((f) |= ND_FLAGS_POR)
+#define unset_por(f)         ((f) &= (~ND_FLAGS_POR))
+#define has_property(f)      ((f) & ND_FLAGS_HAS_PROPERTY)
+#define set_property(f)      ((f) |= ND_FLAGS_HAS_PROPERTY)
+#define unset_property(f)    ((f) &= (~ND_FLAGS_HAS_PROPERTY))
+#define has_trans(f)         ((f) & ND_FLAGS_USE_TRANSITION)
+#define set_trans(f)         ((f) |= ND_FLAGS_USE_TRANSITION)
+#define unset_trans(f)       ((f) &= (~ND_FLAGS_USE_TRANSITION))
+#define use_delta(f)         ((f) & ND_FLAGS_DELTAMEM)
+#define set_delta(f)         ((f) |= ND_FLAGS_DELTAMEM)
+#define unset_delta(f)       ((f) &= (~ND_FLAGS_DELTAMEM))
+#define use_compress(f)      ((f) & ND_FLAGS_COMPRESS)
+#define set_compress(f)      ((f) |= ND_FLAGS_COMPRESS)
+#define unset_compress(f)    ((f) &= (~ND_FLAGS_COMPRESS))
+#define use_compact(f)       ((f) & ND_FLAGS_COMPACT_STACK)
+#define set_compact(f)       ((f) |= ND_FLAGS_COMPACT_STACK)
+#define unset_compact(f)     ((f) &= (~ND_FLAGS_COMPACT_STACK))
 
-#define RC_EXPANDED(rc) (((struct NDReactCxtData *)(rc)->v)->roots)
-#define RC_EXPANDED_RULES(rc) (((struct NDReactCxtData *)(rc)->v)->rules)
-#define RC_PROPERTY_STATE(rc) (((struct NDReactCxtData *)(rc)->v)->property_state)
-
-void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state_id);
-void nd_react_cxt_destroy(struct ReactCxt *cxt);
-
-void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
-                               LmnMembrane *mem,
-                               LmnRule rule);
-
-Vector *nd_expand(const StateSpace states, State *state, BYTE state_name);
-Vector *nd_gen_successors(State *state, BYTE state_name);
+void nd_loop_dfs(StateSpace      states,
+                 State           *init_state,
+                 struct ReactCxt *rc,
+                 BOOL            flags);
+void nd_loop_bfs(StateSpace      states,
+                 State           *init_state,
+                 struct ReactCxt *rc,
+                 BOOL            flags);
+void expand(const StateSpace states,
+            State            *state,
+            AutomataState    property_automata_state,
+            struct ReactCxt  *rc,
+            Vector           *new_s,
+            BOOL             flag);
+void nd_gen_successors(State           *src,
+                       LmnMembrane     *mem,
+                       BYTE            prop_labels,
+                       struct ReactCxt *rc,
+                       BOOL            flags);
 void run_nd(Vector *start_rulesets);
-StateSpace do_nd(LmnMembrane *world_mem);
-StateSpace do_nd_dump(LmnMembrane *world_mem_org);
-
-#ifdef USE_JNI
-void run_nd_for_jni(Vector *start_rulesets);
-#endif
+StateSpace do_nd(LmnMembrane *world_mem, BOOL flags);
 
 #endif

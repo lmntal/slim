@@ -1,7 +1,0 @@
-p= sender{exp(Msg,Bit), $s,@s} :- int(Msg), int(Bit) |
-q= sender{exp(Msg,Bit), ack(0,Ack), $s,@s} :- int(Msg), Bit=:=Ack |
-
-f1= daemon{msg(Msg,Bit), $d,@d} :- int(Msg), int(Bit) |
-f2= daemon{m2r(Msg,Bit), $d,@d} :- int(Msg), int(Bit) |
-f3= daemon{ack(0, Ack), $d.@d}  :- int(Ack) |
-f4= daemon{r2s(0, Ack), $d.@d}  :- int(Ack) |

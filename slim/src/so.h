@@ -57,7 +57,7 @@
 #include "visitlog.h"
 
 #ifdef PROFILE
-#include "runtime_status.h"
+#  include "runtime_status.h"
 #endif
 
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
@@ -65,35 +65,43 @@
 /* TR_GRID(x) translate global ruleset id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* インタプリタ用の定義では変換は必要ないため TR_G*ID(x) = x となる */
 
-extern LmnWord *wt, *wt_t;
-extern LmnByte *at, *at_t;
-extern unsigned int wt_size;
+extern LMN_TLS LmnWord *wt, *wt_t;
+extern LMN_TLS LmnByte *at, *at_t;
+extern LMN_TLS LmnByte *tt, *tt_t;
+extern LMN_TLS unsigned int wt_size;
 
 #define LINKED_ATOM(x) wt[x]
 #define LINKED_ATTR(x) at[x]
 
-#define TR_INSTR_ALLOCLINK(link, atom, n)       \
-  do{                                           \
-    if (LMN_ATTR_IS_DATA(at[atom])) {           \
-      wt[link] = wt[atom];                      \
-      at[link] = at[atom];                              \
-    } else { /* link to atom */                         \
-      wt[link] = (LmnWord)LMN_SATOM(wt[atom]);          \
-      at[link] = LMN_ATTR_MAKE_LINK(n);                 \
+#define TR_INSTR_ALLOCLINK(link, atom, n)                               \
+  do {                                                                  \
+    if (LMN_ATTR_IS_DATA(at[atom])) {                                   \
+      wt[link] = wt[atom];                                              \
+      at[link] = at[atom];                                              \
+    } else { /* link to atom */                                         \
+      wt[link] = (LmnWord)LMN_SATOM(wt[atom]);                          \
+      at[link] = LMN_ATTR_MAKE_LINK(n);                                 \
     }                                                                   \
-  }while(0)
+    tt[link] = TT_ATOM;                                                 \
+  } while(0)
 
-#define TR_INSTR_SPEC(size)                     \
-  do{                                           \
-    if(size > wt_size){                         \
-      wt_size = size;                           \
-      wt = LMN_REALLOC(LmnWord, wt, wt_size);   \
-      at = LMN_REALLOC(LmnLinkAttr, at, wt_size);       \
-    }\
-  }while(0)
+/* @see INSTR_SPEC in task.c */
+#define TR_INSTR_SPEC(size)                                             \
+  do {                                                                  \
+    if(size > wt_size){                                                 \
+      wt_size = size;                                                   \
+      wt = LMN_REALLOC(LmnWord, wt, wt_size);                           \
+      at = LMN_REALLOC(LmnLinkAttr, at, wt_size);                       \
+      tt = LMN_REALLOC(LmnLinkAttr, tt, wt_size);                       \
+    }                                                                   \
+    if (size > RC_WORK_VEC_SIZE(rc)) {                                  \
+      memset(tt + RC_WORK_VEC_SIZE(rc), 0, size - RC_WORK_VEC_SIZE(rc));\
+    }                                                                   \
+    RC_SET_WORK_VEC_SIZE(rc, size);                                     \
+  } while(0)
 
-#define TR_INSTR_UNIFYLINKS(link1, link2, mem)  \
-  do{                                           \
+#define TR_INSTR_UNIFYLINKS(link1, link2, mem)                          \
+  do{                                                                   \
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(link1))) {                         \
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(link2))) { /* 1, 2 are data */   \
         lmn_mem_link_data_atoms((LmnMembrane *)wt[mem], wt[link1], at[link1], LINKED_ATOM(link2), LINKED_ATTR(link2)); \
@@ -115,7 +123,7 @@ extern unsigned int wt_size;
     }                                                                   \
   }while(0)
 
-#define TR_INSTR_RELINK(atom1,pos1,atom2,pos2,memi)     \
+#define TR_INSTR_RELINK(atom1,pos1,atom2,pos2,memi)                     \
   do{                                                                   \
     LmnSAtom ap = LMN_SATOM(LMN_SATOM_GET_LINK(wt[atom2], pos2));       \
     LmnByte attr = LMN_SATOM_GET_ATTR(wt[atom2], pos2);                 \
@@ -136,55 +144,58 @@ extern unsigned int wt_size;
       LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);               \
       LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);             \
     }                                                                   \
-  }while(0)
+  } while(0)
 
-#define TR_INSTR_COPYRULES(destmemi, srcmemi)   \
-  do{                                           \
-    unsigned int i;                             \
-    struct Vector *v;                           \
-    v = &((LmnMembrane *)wt[srcmemi])->rulesets;        \
-    for (i = 0; i< v->num; i++) {                       \
+#define TR_INSTR_COPYRULES(destmemi, srcmemi)                           \
+  do {                                                                   \
+    unsigned int i;                                                     \
+    struct Vector *v;                                                   \
+    v = &((LmnMembrane *)wt[srcmemi])->rulesets;                        \
+    for (i = 0; i< v->num; i++) {                                       \
       lmn_mem_add_ruleset((LmnMembrane *)wt[destmemi], lmn_ruleset_copy((LmnRuleSet)vec_get(v, i))); \
     }                                                                   \
-  }while(0)
+  } while(0)
 
-#define TR_INSTR_LOOKUPLINK(destlinki, tbli, srclinki)  \
-  do{                                                   \
-    at[destlinki] = LINKED_ATTR(srclinki);              \
-    if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {      \
-      wt[destlinki] = LINKED_ATOM(srclinki);            \
-    }                                                   \
-    else { /* symbol atom */                            \
-      ProcessTbl ht = (ProcessTbl)wt[tbli];             \
+#define TR_INSTR_LOOKUPLINK(destlinki, tbli, srclinki)                  \
+  do {                                                                   \
+    at[destlinki] = LINKED_ATTR(srclinki);                              \
+    tt[destlinki] = TT_OTHER;                                           \
+    if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {                      \
+      wt[destlinki] = LINKED_ATOM(srclinki);                            \
+    }                                                                   \
+    else { /* symbol atom */                                            \
+      ProcessTbl ht = (ProcessTbl)wt[tbli];                             \
       proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt[destlinki]); \
-    }                                                   \
-  }while(0)
+    }                                                                   \
+  } while(0)
 
-#define TR_INSTR_DELETECONNECTORS(srcset, srcmap)       \
-  do{                                                   \
-    HashSet *delset;                                    \
-    ProcessTbl delmap;                                  \
-    HashSetIterator it;                                 \
-    delset = (HashSet *)wt[srcset];                     \
+#define TR_INSTR_DELETECONNECTORS(srcset, srcmap)                       \
+  do {                                                                  \
+    HashSet *delset;                                                    \
+    ProcessTbl delmap;                                                  \
+    HashSetIterator it;                                                 \
+    delset = (HashSet *)wt[srcset];                                     \
     delmap = (ProcessTbl)wt[srcmap];                                    \
-    for(it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) { \
+    for (it = hashset_iterator(delset);                                 \
+         !hashsetiter_isend(&it);                                       \
+         hashsetiter_next(&it)) {                                       \
       LmnSAtom orig = LMN_SATOM(hashsetiter_entry(&it));                \
       LmnSAtom copy;                                                    \
-      LmnWord t;                                                        \
+      LmnWord t = 0;                                                    \
       proc_tbl_get_by_atom(delmap, orig, &t);                           \
       copy = LMN_SATOM(t);                                              \
       lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);                 \
-      /* mem がないので仕方なく直接アトムリストをつなぎ変える           \
-         UNIFYアトムはnatomに含まれないので大丈夫 */                    \
+      /* memがないので仕方なく直接アトムリストを繋ぎ変える*/                \
+      /* UNIFYアトムはnatomに含まれないので大丈夫 */                       \
       LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy), LMN_SATOM_GET_PREV(copy)); \
       LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy), LMN_SATOM_GET_NEXT_RAW(copy)); \
       lmn_delete_atom(orig);                                            \
     }                                                                   \
     proc_tbl_free(delmap);                                              \
-  }while(0)
+  } while (0)
 
-#define TR_INSTR_DEREFFUNC(funci, atomi, pos)         \
-  do{                                           \
+#define TR_INSTR_DEREFFUNC(funci, atomi, pos)                           \
+  do {                                                                  \
     LmnLinkAttr attr = LMN_SATOM_GET_ATTR(LMN_SATOM(wt[atomi]), pos);   \
     if (LMN_ATTR_IS_DATA(attr)) {                                       \
       wt[funci] = LMN_SATOM_GET_LINK(LMN_SATOM(wt[atomi]), pos);        \
@@ -193,15 +204,40 @@ extern unsigned int wt_size;
       wt[funci] = LMN_SATOM_GET_FUNCTOR(LMN_SATOM_GET_LINK(LMN_SATOM(wt[atomi]), pos)); \
     }                                                                   \
     at[funci] = attr;                                                   \
-  }while(0)
+    tt[funci] = TT_OTHER;                                               \
+  } while(0)
 
-extern void tr_instr_commit_ready(struct ReactCxt *rc, LmnRule rule, lmn_interned_str rule_name, LmnLineNum line_num, LmnMembrane **ptmp_global_root, LmnWord **pwt_temp, LmnByte **pat_temp);
-extern BOOL tr_instr_commit_finish(struct ReactCxt *rc, LmnRule rule, lmn_interned_str rule_name, LmnLineNum line_num, LmnMembrane **ptmp_global_root, LmnWord **pwt_temp, LmnByte **pat_temp);
-extern BOOL tr_instr_jump(LmnTranslated f, struct ReactCxt *rc, LmnMembrane *thisisrootmembutnotused, LmnRule rule,int newid_num, const int *newid, LmnWord **pwt, LmnByte **pat, unsigned int *pwt_size);
+extern void tr_instr_commit_ready(struct ReactCxt   *rc,
+                                  LmnRule           rule,
+                                  lmn_interned_str  rule_name,
+                                  LmnLineNum        line_num,
+                                  LmnMembrane       **ptmp_global_root,
+                                  LmnWord           **pwt_temp,
+                                  LmnByte           **pat_temp,
+                                  LmnByte           **ptt_temp,
+                                  unsigned int      *org_next_id);
+extern BOOL tr_instr_commit_finish(struct ReactCxt  *rc,
+                                   LmnRule          rule,
+                                   lmn_interned_str rule_name,
+                                   LmnLineNum       line_num,
+                                   LmnMembrane      **ptmp_global_root,
+                                   LmnWord          **pwt_temp,
+                                   LmnByte          **pat_temp,
+                                   LmnByte          **ptt_temp);
+extern BOOL tr_instr_jump(LmnTranslated     f,
+                          struct ReactCxt   *rc,
+                          LmnMembrane       *thisisrootmembutnotused,
+                          LmnRule           rule,
+                          int               newid_num,
+                          const int         *newid,
+                          LmnWord           **pwt,
+                          LmnByte           **pat,
+                          LmnByte           **ptt,
+                          unsigned int      *pwt_size);
+
 /* insertconnectors touches wt and at */
 extern HashSet *insertconnectors(LmnMembrane *mem, const Vector *links);
 extern Vector *links_from_idxs(Vector *link_idxs, LmnWord *wt, LmnByte *at);
 extern void free_links(Vector *links);
 
 #endif
-

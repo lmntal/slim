@@ -43,18 +43,32 @@
 #include "mc.h"
 #include "vector.h"
 #include "st.h"
+#include "state.h"
+#include "statespace.h"
+#include "react_context.h"
+#include "automata.h"
 
-st_table *strans_independency; /* 独立性情報テーブル: 構造体StateTransitionのidをキーとし，bins[id]は高々1個のエントリーを持つ．
-                                *   エントリーの値はVectorであり，キーとなったidを持つ遷移と独立な関係にある遷移のidがpushされたものとなる．*/
-st_table *States_POR;    /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
-Vector *Stack_POR;       /* C1のチェックにあたってstate graphを展開するする際に使用 */
-Vector *succ_strans;     /* ある状態sから可能な遷移の集合を管理 */
-Vector *ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる */
+#define POR_TABLE_SIZE      (512)
+#define POR_ID_INITIALIZER  (1U)
 
-extern unsigned long next_strans_id;
 
-LMN_EXTERN Vector *ample(const StateSpace states, State *s);
+struct PartialOrderReductionData {
+  st_table *strans_independency; /* 独立性情報テーブル: 構造体StateTransitionのidをキーとし，bins[id]は高々1個のエントリーを持つ．
+                                  *   エントリーの値はVectorであり，キーとなったidを持つ遷移と独立な関係にある遷移のidがpushされたものとなる．*/
+  StateTable *States_POR;    /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
+  Vector *Stack_POR;       /* C1のチェックにあたってstate graphを展開するする際に使用 */
+  Vector *succ_strans;     /* ある状態sから可能な遷移の集合を管理 */
+  Vector *ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる */
 
+  unsigned long next_strans_id;
+} por_data;
+
+void por_ample(const StateSpace states,
+               State *state,
+               AutomataState property_automata_state,
+               struct ReactCxt *rc,
+               Vector *new_s,
+               BOOL flag);
 void init_por_vars(void);
 void free_por_vars(void);
 

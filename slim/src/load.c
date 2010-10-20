@@ -36,15 +36,6 @@
  * $Id: load.c,v 1.13 2008/10/17 08:40:50 sasaki Exp $
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-#include <limits.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dlfcn.h>
 #include "load.h"
 #include "lmntal.h"
 #include "symbol.h"
@@ -57,6 +48,13 @@
 #include "load.h"
 #include "file_util.h"
 #include "so.h"
+#include <dirent.h>
+#include <limits.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dlfcn.h>
 
 /* prototypes */
 
@@ -153,7 +151,7 @@ static void dump_arg(InstrArg arg)
     break;
   }
   default:
-    assert(FALSE);
+    LMN_ASSERT(FALSE);
     break;
   }
 }
@@ -381,7 +379,8 @@ static void load_arg(InstrArg arg, Context c)
     {
       VarList var_list = inst_arg_get_var_list(arg);
 
-      WRITE_MOVE(int16_t, var_list_num(var_list), c);
+//      WRITE_MOVE(int16_t, var_list_num(var_list), c);
+      WRITE_MOVE(LmnInstrVar, var_list_num(var_list), c);
       for (i = 0; i < var_list_num(var_list); i++) {
         WRITE_MOVE(LmnInstrVar, var_list_get(var_list, i), c);
       }
@@ -429,7 +428,7 @@ static void load_arg(InstrArg arg, Context c)
         WRITE_MOVE(LmnFunctor, LMN_UNIFY_FUNCTOR, c);
         break;
       default:
-        assert(FALSE);
+        LMN_ASSERT(FALSE);
         break;
       }
       break;
@@ -460,7 +459,7 @@ static void load_arg(InstrArg arg, Context c)
       break;
     }
   default:
-    assert(FALSE);
+    LMN_ASSERT(FALSE);
     break;
   }
 }

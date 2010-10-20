@@ -1,5 +1,40 @@
 /*
- * io.c - io関連のコールバック
+ * io.c - String API
+ *
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
  */
 
 #include <stdio.h>
@@ -19,7 +54,7 @@ void cb_print_newline_with_port(ReactCxt rc,
                                 LmnAtom a1, LmnLinkAttr t1)
 {
   port_put_raw_s(LMN_PORT(a0), "\n");
-  
+
   lmn_mem_newlink(mem,
                   a1, t1, LMN_ATTR_GET_VALUE(t1),
                   a0, t0, 0);
@@ -38,7 +73,7 @@ void cb_print_line_with_port(ReactCxt rc,
 {
   port_puts(LMN_PORT(a0), LMN_STRING(a1));
   port_put_raw_s(LMN_PORT(a0), "\n");
-  
+
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   a0, t0, 0);
@@ -76,7 +111,7 @@ void cb_input_line_with_oprt(ReactCxt rc,
     p += len;
     if (len < N-1) break;
   }
-  
+
   if (ferror(stdin)) {/* error */
     LmnSAtom atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
     lmn_mem_newlink(mem,
@@ -94,7 +129,7 @@ void cb_input_line_with_oprt(ReactCxt rc,
   }
   else {
     LmnString a;
-    
+
     if (*(p-2) == '\n' || *(p-2)=='\r') p -= 2;
     else if (*(p-1) == '\n' || *(p-1)=='\r') p -= 1;
     *p = '\0';

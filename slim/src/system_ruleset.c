@@ -50,25 +50,28 @@ void init_default_system_ruleset(void);
 /* delete out proxies connected each other */
 static BOOL delete_redundant_outproxies(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
-  AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
-                                                          LMN_OUT_PROXY_FUNCTOR,
-                                                          0);
+  AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_OUT_PROXY_FUNCTOR);
   LmnSAtom o0;
 
   if (!ent) return FALSE;
 
-  EACH_ATOM(o0, ent, {
+  EACH_ATOM(o0, ent, ({
     LmnSAtom o1;
 
-    if(LMN_SATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
+    if (LMN_SATOM_GET_FUNCTOR(o0) == LMN_RESUME_FUNCTOR) continue;
 
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(o0, 1))) return FALSE;
     o1 = LMN_SATOM(LMN_SATOM_GET_LINK(o0, 1));
     if (LMN_SATOM_GET_FUNCTOR(o1) == LMN_OUT_PROXY_FUNCTOR) {
-      LmnSAtom i0 = LMN_SATOM(LMN_SATOM_GET_LINK(o0, 0));
-      LmnSAtom i1 = LMN_SATOM(LMN_SATOM_GET_LINK(o1, 0));
-      LmnMembrane *m0 = LMN_PROXY_GET_MEM(i0);
-      LmnMembrane *m1 = LMN_PROXY_GET_MEM(i1);
+      LmnSAtom i0;
+      LmnSAtom i1;
+      LmnMembrane *m0;
+      LmnMembrane *m1;
+
+      i0 = LMN_SATOM(LMN_SATOM_GET_LINK(o0, 0));
+      i1 = LMN_SATOM(LMN_SATOM_GET_LINK(o1, 0));
+      m0 = LMN_PROXY_GET_MEM(i0);
+      m1 = LMN_PROXY_GET_MEM(i1);
 
       if (m0 == m1) {
         REMOVE_FROM_ATOMLIST(o0); /* for efficiency */
@@ -84,16 +87,15 @@ static BOOL delete_redundant_outproxies(ReactCxt rc, LmnMembrane *mem, LmnRule r
         return TRUE;
       }
     }
-  });
+  }));
   return FALSE;
 }
 
 /* delete in proxies connected each other */
 static BOOL delete_redundant_inproxies(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
-  AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset,
-                                                          LMN_OUT_PROXY_FUNCTOR,
-                                                          0);
+  AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_OUT_PROXY_FUNCTOR);
+
   LmnSAtom o0;
 
   if (!ent) return FALSE;
@@ -101,12 +103,12 @@ static BOOL delete_redundant_inproxies(ReactCxt rc, LmnMembrane *mem, LmnRule ru
   EACH_ATOM(o0, ent, ({
     LmnSAtom i0, i1;
 
-    if(LMN_SATOM_GET_FUNCTOR(o0)==LMN_RESUME_FUNCTOR) continue;
+    if (LMN_SATOM_GET_FUNCTOR(o0) == LMN_RESUME_FUNCTOR) continue;
 
     i0 = LMN_SATOM(LMN_SATOM_GET_LINK(o0, 0));
 
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(i0, 1))) return FALSE;
-    i1 =LMN_SATOM(LMN_SATOM_GET_LINK(i0, 1));
+    i1 = LMN_SATOM(LMN_SATOM_GET_LINK(i0, 1));
     if (LMN_SATOM_GET_FUNCTOR(i1) == LMN_IN_PROXY_FUNCTOR) {
       LmnSAtom o1 = LMN_SATOM(LMN_SATOM_GET_LINK(i1, 0));
       REMOVE_FROM_ATOMLIST(o0);
@@ -124,14 +126,14 @@ static BOOL delete_redundant_inproxies(ReactCxt rc, LmnMembrane *mem, LmnRule ru
 
 static BOOL mem_eq(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 {
-  AtomListEntry *ent = (AtomListEntry *)hashtbl_get_default(&mem->atomset, LMN_MEM_EQ_FUNCTOR, 0);
+  AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_MEM_EQ_FUNCTOR);
   LmnMembrane *mem0, *mem1;
   LmnSAtom op, ret, out0, out1, in0, in1, result_atom;
   LmnLinkAttr out_attr0, out_attr1, ret_attr;
   BOOL result;
   if (!ent) return FALSE;
 
-  EACH_ATOM(op, ent, {
+  EACH_ATOM(op, ent, ({
     out_attr0 = LMN_SATOM_GET_ATTR(op, 0);
     if (LMN_ATTR_IS_DATA(out_attr0)) return FALSE;
     out0 = LMN_SATOM(LMN_SATOM_GET_LINK(op, 0));
@@ -182,7 +184,7 @@ static BOOL mem_eq(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
 
     return TRUE;
 
-  });
+  }));
   return FALSE;
 }
 
@@ -192,6 +194,5 @@ void init_default_system_ruleset()
 {
   lmn_add_system_rule(lmn_rule_make_translated(delete_redundant_outproxies, ANONYMOUS));
   lmn_add_system_rule(lmn_rule_make_translated(delete_redundant_inproxies, ANONYMOUS));
-
   lmn_add_system_rule(lmn_rule_make_translated(mem_eq, ANONYMOUS));
 }

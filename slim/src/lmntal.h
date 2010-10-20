@@ -40,65 +40,77 @@
 #define LMNTAL_H
 
 #include "config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #ifdef WITH_DMALLOC
-#include <dmalloc.h>
+#  include <dmalloc.h>
 #endif
 
-#if defined(HAVE_INTTYPES_H)
-# include <inttypes.h>
+#ifdef HAVE_INTTYPES_H
+#  include <inttypes.h>
 #endif
 
 #define LMN_EXTERN extern
 
-/* Some useful macros */
+/*------------------------------------------------------------------------
+ *  Some useful macros
+ */
+
 #ifndef BOOL
-#define BOOL unsigned char
+#  define BOOL unsigned char
 #endif
 
 #ifndef FALSE
-#define FALSE 0
+#  define FALSE (0)
 #endif
 #ifndef TRUE
-#define TRUE (!FALSE)
+#  define TRUE (!FALSE)
 #endif
 
 /* This defines several auxiliary routines that are useful for debugging */
 #ifndef LMN_DEBUG_HELPER
-#define LMN_DEBUG_HELPER      TRUE
+#  define LMN_DEBUG_HELPER      TRUE
 #endif
 
 #ifndef LMN_DECL_BEGIN
-#ifdef __cplusplus
-# define LMN_DECL_BEGIN  extern "C" {
-# define LMN_DECL_END    }
-#else
-# define LMN_DECL_BEGIN
-# define LMN_DECL_END
-#endif
+#  ifdef __cplusplus
+#    define LMN_DECL_BEGIN  extern "C" {
+#    define LMN_DECL_END    }
+#  else
+#    define LMN_DECL_BEGIN
+#    define LMN_DECL_END
+#  endif
 #endif /*!defined(LMN_DECL_BEGIN)*/
 
 LMN_DECL_BEGIN
+
+
 
 /*----------------------------------------------------------------------
  * data types
  */
 
 #if SIZEOF_LONG < SIZEOF_VOIDP
-#error sizeof(long) < sizeof(void*)
+#  error sizeof(long) < sizeof(void*)
 #endif
 
+
 typedef unsigned long LmnWord;
-typedef unsigned char BYTE;
-typedef BYTE LmnByte;
+typedef unsigned char BYTE, LmnByte;
 
 #define LMN_WORD_BYTES  SIZEOF_LONG
-#define LMN_WORD_BITS   (SIZEOF_LONG*8)
+#define LMN_WORD_BITS   (SIZEOF_LONG * 8)
 #define LMN_WORD(X)     ((LmnWord)(X))
+
+
+typedef LmnWord  LmnAtom;
+typedef void    *LmnSAtom;
+typedef uint8_t  LmnLinkAttr;
+
+//typedef uint16_t ProcessID;
+typedef LmnWord  ProcessID;
 
 /* uint16_t is not defined if there is no 2Byte data type */
 typedef uint16_t LmnFunctor;
@@ -120,13 +132,21 @@ typedef int16_t LmnRulesetId;
 typedef uint32_t LmnSubInstrSize;
 
 typedef struct LmnMembrane LmnMembrane;
+typedef struct DeltaMembrane DeltaMembrane;
 
 #if LMN_WORD_BYTES == 4
-#define LMN_WORD_SHIFT 2
+#  define LMN_WORD_SHIFT 2
 #elif LMN_WORD_BYTES == 8
-#define LMN_WORD_SHIFT 3
+#  define LMN_WORD_SHIFT 3
 #else
-#error Word size is not 2^N
+#  error Word size is not 2^N
+#endif
+
+#ifndef HAVE___INT64
+#  ifdef HAVE_LONG_LONG_INT
+     typedef long long __int64;
+#    define HAVE___INT64
+#  endif
 #endif
 
 typedef struct ProcessTbl *ProcessTbl;
@@ -143,8 +163,7 @@ typedef struct LmnSPAtomHeader LmnSpAtom;
 
 /* スペシャルアトムは構造体の最初の要素としてに必ずこのヘッダを含めなけ
    ればならない */
-#define LMN_SP_ATOM_HEADER \
-  struct LmnSPAtomHeader hdr
+#define LMN_SP_ATOM_HEADER struct LmnSPAtomHeader hdr
 
 
 /*----------------------------------------------------------------------
@@ -158,9 +177,7 @@ typedef struct ReactCxt *ReactCxt;
  */
 
 struct Vector;
-
 typedef struct Vector Vector;
-
 typedef struct Vector *LmnMemStack;
 
 
@@ -183,53 +200,70 @@ LMN_EXTERN void lmn_free (void *p);
 #define LMN_FREE(P)                    (lmn_free((void*)(P)))
 
 /* Assertion */
-
-#include <assert.h>
 #ifdef DEBUG
-#define LMN_ASSERT(expr)   assert(expr)
+#  include <assert.h>
+#  define LMN_ASSERT(expr)   assert(expr)
 #else
-#define LMN_ASSERT(expr)   ((void)0)/* nothing */
+#  define LMN_ASSERT(expr)   ((void)0)/* nothing */
 #endif
+
 
 /*----------------------------------------------------------------------
  * Global data
  */
 
-/* dumpの形式 */
-enum OutputFormat { DEFAULT, DOT, DEV };
+/* 階層グラフ構造の出力形式 */
+enum OutputFormat { DEFAULT, DEV, DOT };
+enum MCdumpFormat { CUI, LaViT, Dir_DOT, FSM };
+enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX};
 
 struct LmnEnv {
   BOOL trace;
   BOOL show_proxy;
   BOOL show_ruleset;
-  BOOL show_rule;
+  BOOL show_chr;
   BOOL nd;
-  BOOL nd_result;
-  BOOL nd_dump;
   BOOL ltl;
   BOOL ltl_all;
-  BOOL ltl_nd;       /* dump state transition graph after LTL model checking */
   BOOL por;          /* to enable partial order reduction for nondeterministic execution or LTL model checking */
+  BOOL show_transition;
   BOOL translate;
   enum OutputFormat output_format;
-  int optimization_level;
-  int profile_level;
-  char *load_path[256];
+  enum MCdumpFormat mc_dump_format;
+  enum SPdumpFormat sp_dump_format;
+  BYTE optimization_level;
+  BYTE profile_level;
   int load_path_num;
-  char *automata_file; /* never claim file */
-  /* file for propositional symbol definitions */
-  char *propositional_symbol;
+  char *load_path[256];
+  char *automata_file;         /* never claim file */
+  char *propositional_symbol;  /* file for propositional symbol definitions */
   char *ltl_exp;
+
+  unsigned int depth_limits;
   BOOL bfs;
-  int bfs_depth;
-  BOOL bfs_final;
-  BOOL bfs_has_final;
+  BOOL nd_search_end;
   BOOL mem_enc;
   BOOL compact_stack;
-  BOOL optimize_hash_value;
+
+  BOOL enable_compress_mem;
+  BOOL delta_mem;
+  BOOL z_compress;
+  BOOL scc_analysis;
+  BOOL property_dump;
+  BOOL parallel_prof;
+  BOOL enable_parallel;
+  BOOL optimize_loadbalancing;
+
+  unsigned int core_num;
+  BOOL optimize_lock;
+  BOOL optimize_hash;
   BOOL dump;
+  BOOL end_dump;
   BOOL benchmark;
-#ifdef USE_JNI
+#ifdef PROFILE
+  BOOL optimize_hash_old;
+#endif
+
   /* only jni-interactive mode*/
   BOOL interactive;
   BOOL normal_remain;
@@ -238,15 +272,40 @@ struct LmnEnv {
   BOOL nd_remain;
   BOOL nd_remaining;
   BOOL nd_cleaning;
+
+#ifdef DEBUG
+  BOOL debug_memenc;
+  BOOL debug_delta;
+  BOOL debug_id;
+  BOOL debug_hash;
 #endif
 };
 
 extern struct LmnEnv  lmn_env;
-
+extern struct Vector *lmn_id_pool;
 
 /*----------------------------------------------------------------------
  * Others
  */
+
+#define env_get_state_id()     (lmn_state_id)
+#define env_gen_state_id()     (lmn_state_id++)
+
+#ifdef TIME_OPT
+#  define env_reset_proc_ids() (lmn_next_id = 1U)
+#  define env_set_next_id(N)   (lmn_next_id = (N))
+#  define env_gen_next_id()    ((lmn_id_pool && vec_num(lmn_id_pool) > 0) \
+                                 ? vec_pop(lmn_id_pool)                   \
+                                 : lmn_next_id++)
+#  define env_return_id(N)     if (lmn_id_pool) vec_push(lmn_id_pool, (vec_data_t)(N))
+#  define env_next_id()        (lmn_next_id)
+#else
+#  define env_reset_proc_ids()
+#  define env_set_next_id(N)
+#  define env_gen_next_id()    0
+#  define env_return_id(N)
+#  define env_next_id()        0
+#endif
 
 LMN_DECL_END
 

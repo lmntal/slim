@@ -39,8 +39,11 @@
 #ifndef LMN_MEMORY_POOL_H
 #define LMN_MEMORY_POOL_H
 
-struct memory_pool_;
-typedef struct memory_pool_ memory_pool;
+typedef struct memory_pool_ {
+  int   sizeof_element;
+  void *block_head;
+  void *free_head;
+} memory_pool;
 
 /* 要素サイズsのメモリプールを作成 */
 memory_pool *memory_pool_new(int s);

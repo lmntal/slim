@@ -1,5 +1,0 @@
-p = { error(false),$p,@p } :- |
-s = { C=data(DN,ID),$p,@p } :- int(DN), int(ID), ground(C) |
-a = { C=ack(ACK),$p,@p }  :- int(ACK), ground(C) |
-t = { timeout,$p,@p } :- |
-

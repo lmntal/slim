@@ -39,6 +39,7 @@
 
 #include "lmntal.h"
 #include "membrane.h"
+#include "task.h"
 #include "slim_header/memstack.h"
 
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem);
@@ -113,15 +114,3 @@ static void memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem)
   }
 }
 
-void mem_react_cxt_init(struct ReactCxt *cxt)
-{
-  RC_SET_MODE(cxt, REACT_MEM_ORIENTED);
-  cxt->v = LMN_MALLOC(struct MemReactCxtData);
-  ((struct MemReactCxtData *)cxt->v)->memstack = lmn_memstack_make();
-}
-
-void mem_react_cxt_destroy(struct ReactCxt *cxt)
-{
-  lmn_memstack_free(((struct MemReactCxtData *)cxt->v)->memstack);
-  LMN_FREE(cxt->v);
-}

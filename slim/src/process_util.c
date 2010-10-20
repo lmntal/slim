@@ -44,6 +44,7 @@
 #include <sys/wait.h>
 #include "process_util.h"
 
+
 /* program_pathにあるプログラムを引数argsで起動し、プログラムの出力の
    ストリームを返す。
 */
@@ -52,7 +53,7 @@ FILE *run_program(const char *program_path, char **args)
    pid_t pid;
    int pipes[2];
 
-   if(pipe(pipes)){
+   if (pipe(pipes)) { /* fail : -1 */
      perror("pipe failed");
      exit(EXIT_FAILURE);
    }
@@ -60,33 +61,35 @@ FILE *run_program(const char *program_path, char **args)
    pid = fork();
 
    switch (pid) {
-   case 0:
-     /* 子プロセス */
+   case 0: /* 子プロセス */
+   {
+     int old; /* 警告されるので */
      close(fileno(stdout));
-     dup(pipes[1]);
+     old = dup(pipes[1]);
      close(pipes[0]);
      close(pipes[1]);
-     
+
      if (execv(program_path, args) == -1) {
        perror("execv failed");
        exit(EXIT_FAILURE);
      }
+   }
    case -1: /* fork失敗 */
      perror("fork failed");
      exit(EXIT_FAILURE);
-   default:
-     /* 親プロセス */
-     {
-       int status;
+   default: /* 親プロセス */
+   {
+     int status;
 
-       close(pipes[1]);
-       /* パイプのバッファを越える出力が起きると読み込むまでブロックされるためデッドロック
-       if (waitpid(pid, &status, 0) == -1) {
-         perror("waitpid failed");
-         exit(EXIT_FAILURE);
-       }
-       */
-       return fdopen(pipes[0], "r");
+     close(pipes[1]);
+     /* パイプのバッファを越える出力が起きると読み込むまでブロックされるためデッドロック
+      */
+     if (waitpid(pid, &status, 0) == -1) {
+       perror("waitpid failed");
+       exit(EXIT_FAILURE);
      }
+
+     return fdopen(pipes[0], "r");
+   }
    }
 }

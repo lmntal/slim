@@ -41,134 +41,177 @@
 #define LMN_STATE_H
 
 #include "lmntal.h"
+#include "lmntal_thread.h"
 #include "mem_encode.h"
 #include "membrane.h"
 #include "rule.h"
 #include "vector.h"
 
 
-typedef struct State State;
+typedef struct State       State;
+typedef struct Transition *Transition;
 
-/* ----------------------------------------------------------------------
- * State Space
- */ 
+typedef void*    succ_data_t;
 
-typedef struct StateSpace *StateSpace;
-State *state_space_get(const StateSpace states, State *s);
-StateSpace state_space_make(void);
-void state_space_free(StateSpace states);
-unsigned long state_space_num(StateSpace states);
-void state_space_set_init_state(StateSpace states, State* init_state);
-void state_space_add_end_state(StateSpace states, State *s);
-const Vector *state_space_end_states(StateSpace states);
-void state_space_remove(const StateSpace states, State *s);
-st_table_t state_space_tbl(StateSpace states);
-inline BOOL state_space_is_memid_hash(StateSpace states, unsigned long hash);
-State *state_space_insert(StateSpace states, State *s);
-
-void dump_all_state_mem(StateSpace states, FILE *file);
-void dump_state_transition_graph(StateSpace states, FILE *file);
-void dump_state_data(State *state);
-
-
-/* ----------------------------------------------------------------------
- * State
- */ 
-
-struct State {
-  unsigned long id;
-  LmnMembrane *mem;     /* グローバルルート膜 */
-  unsigned long hash; /* mhash(mem) */
-  BYTE state_name;
-  BOOL flags;           /* nested DFSの際にDFS{1,2}いずれの走査を受けたかや，successorが展開済であるか否かを管理するフラグ */
-  Vector successor;     /* 通常時: Vector of States，ample(s)計算中: Vector of StateTransitions */
-  LmnRule rule;
-  LmnBinStr mem_id;
-  unsigned long mem_id_hash;
-  LmnBinStr mem_dump;
+struct State { /* 62(38)byte : 64(32)bit環境 */
+  BOOL               flags;           /*  1(1)byte: 各状態に対する操作を記録するビットフィールド */
+  BYTE               state_name;      /*  1(1)byte: 同期積オートマトンの性質ラベル */
+#if SIZEOF_VOIDP < 8
+  uint16_t           predecessor_num; /*  0(2)byte: プレデセッサの数. とりあえずアラインメントの隙間を利用しておくにとどめる */
+#endif
+  unsigned int       successor_num;   /*  4(4)byte: サクセッサの数 */
+#if SIZEOF_VOIDP == 8
+  uint16_t           predecessor_num; /*  0(2)byte: プレデセッサの数. とりあえずアラインメントの隙間を利用しておくにとどめる */
+#endif
+  succ_data_t       *successors;      /*  8(4)byte: サクセッサ列の先頭ポインタ */
+  unsigned long      hash;            /*  8(4)byte: 通常時: 膜memのハッシュ値, --mem-enc時: 膜の一意なバイト列のハッシュ値  */
+  LmnMembrane       *mem;             /*  8(4)byte: グローバルルート膜へのポインタ */
+  LmnBinStr          compress_mem;    /*  8(4)byte: 通常時: 膜のバイト列, --mem-enc時: 膜の一意なバイト列 */
+  State             *next;            /*  8(4)byte: 状態管理表に登録する際に必要なポインタ */
+  State             *predecessor;     /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
+  unsigned long      state_id;        /*  8(4)byte: 状態の整数ID */
 };
 
 struct Transition {
-  State *s;                          /* 遷移先状態 */
-  Vector rule_names;    
+  State *s;          /*  8byte: 遷移先状態 */
+  unsigned long id;  /*  8byte: State graph(=\= Automata)上の各遷移に付与されるグローバルなID．
+                                ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる． */
+  Vector rule_names; /* 24byte: ルール名 */
 };
 
-typedef struct Transition *Transition;
 
-/* 膜同型性判定にこの回数以上失敗すると膜のエンコードを行う */
-#define MEM_EQ_FAIL_THRESHOLD 2
+/** Flags (8bit)
+ *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
+ *  0000 0010  受理サイクル探索を行った頂点であることを示すフラグ(for nested DFS)
+ *  0000 0100  遷移先を計算済みであること(closed node)を示すフラグ.
+ *  0000 1000  受理サイクル上の状態であることを示すフラグ
+ *  0001 0000  flag to show that it was not reduced by the partial order reduction
+ *  0010 0000  flag to show that it was calculated mem-id (not mem-dump)
+ *  0100 0000  flag to show that the hash value might collide in this state with predecessor
+ *
+ */
 
-/* 状態IDが本来不必要な場合に使用する状態ID */
-#define DEFAULT_STATE_ID 0
+#define ON_STACK_MASK                  (0x01U)
+#define SND_MASK                       (0x01U << 1)
+#define EXPANDED_MASK                  (0x01U << 3)
+#define ON_CYCLE_MASK                  (0x01U << 4)
+#define REPRESENTATIVE_MASK            (0x01U << 5)
+#define MEM_ENCODED_MASK               (0x01U << 6)
+#define DUMMY_SYMBOL_MASK              (0x01U << 7)
 
-extern struct st_hash_type type_statehash;
-extern struct st_hash_type type_memid_statehash;
-
-State *state_make(LmnMembrane *mem, BYTE state_name, LmnRule rule);
-State *state_make_for_nd(LmnMembrane *mem, LmnRule rule);
-inline LmnMembrane *state_copied_mem(State *state);
-void state_free(State *s);
-inline void state_free_mem(State *s);
-BYTE state_property_state(State *state);
-void state_set_property_state(State *state, BYTE prop_state);
-inline LmnMembrane *state_mem(State *state);
-inline LmnRule state_rule(State *state);
-inline LmnBinStr state_mem_binstr(State *state);
-inline long state_hash(State *s);
-inline int state_cmp(HashKeyType s1, HashKeyType s2);
-
-inline void state_calc_mem_dump(State *s);
-inline void state_free_mem_dump(State *s);
-inline int state_memid_cmp(st_data_t _s1, st_data_t _s2);
-inline long state_memid_hash(State *s);
-inline void state_succ_add(State *s, Transition t);
-inline unsigned int state_succ_num(State *s);
-inline State *state_succ_get(State *s, unsigned int i);
-Transition transition(State *s, unsigned int i);
-inline void state_restore_mem(State *s);
-inline void state_calc_mem_encode(State *s);
-
-Transition transition_make(State *s, lmn_interned_str rule_name);
-void transition_free(Transition t);
-
-static inline  unsigned int transition_rule_num(Transition t) { return vec_num(&t->rule_names); }
-static inline lmn_interned_str transition_rule(Transition t, int i)
-{
-  return (lmn_interned_str)vec_get(&t->rule_names, i);
-}
-static inline State *transition_next_state(Transition t) { return t->s; }
-static inline void transition_set_state(Transition t, State * s) { t->s = s; }
-void transition_add_rule(Transition t, lmn_interned_str rule_name);
-
-/* flag of the first DFS (nested DFS, on-stack state) */
-#define FST_MASK                   (0x01U)
-/* flag of the second DFS (nested DFS, visited state) */
-#define SND_MASK                   (0x01U << 1)
-/* flag to show that it is on the search stack */
-#define ON_STACK_MASK              (0x01U << 2)
-/* flag to show that all its successor states(and transitions) are expanded */
-#define EXPANDED_MASK              (0x01U << 3)
-/* flag to show that all the independency relations between transitions enabled on the state are checked */
-#define INDEPENDENCY_CHECKED_MASK  (0x01U << 4)
-/* flag to show that it was not reduced by the partial order reduction */
-#define REPRESENTATIVE_MASK        (0x01U << 5)
-/* macros for nested DFS */
-#define set_fst(S)                     ((S)->flags |= FST_MASK)
-#define unset_fst(S)                   ((S)->flags &= (~FST_MASK))
-#define is_fst(S)                      ((S)->flags & FST_MASK)
+#define set_on_stack(S)                ((S)->flags |= ON_STACK_MASK)
+#define unset_on_stack(S)              ((S)->flags &= (~ON_STACK_MASK))
+#define is_on_stack(S)                 ((S)->flags & ON_STACK_MASK)
 #define set_snd(S)                     ((S)->flags |= SND_MASK)
 #define unset_snd(S)                   ((S)->flags &= (~SND_MASK))
 #define is_snd(S)                      ((S)->flags & SND_MASK)
-#define set_open(S)                    ((S)->flags |= ON_STACK_MASK)
-#define unset_open(S)                  ((S)->flags &= (~ON_STACK_MASK))
-#define is_open(S)                     ((S)->flags & ON_STACK_MASK)
 #define set_expanded(S)                ((S)->flags |= EXPANDED_MASK)
 #define unset_expanded(S)              ((S)->flags &= (~EXPANDED_MASK))
 #define is_expanded(S)                 ((S)->flags & EXPANDED_MASK)
-#define set_independency_checked(S)    ((S)->flags |= INDEPENDENCY_CHECKED_MASK)
-#define unset_independency_checked(S)  ((S)->flags &= (~INDEPENDENCY_CHECKED_MASK))
-#define is_independency_checked(S)     ((S)->flags & INDEPENDENCY_CHECKED_MASK)
+#define set_on_cycle(S)                ((S)->flags |= ON_CYCLE_MASK)
+#define unset_on_cycle(S)              ((S)->flags &= (~ON_CYCLE_MASK))
+#define is_on_cycle(S)                 ((S)->flags & ON_CYCLE_MASK)
 #define set_ample(S)                   ((S)->flags |= REPRESENTATIVE_MASK)
 #define is_ample(S)                    ((S)->flags & REPRESENTATIVE_MASK)
+#define set_encoded(S)                 ((S)->flags |= MEM_ENCODED_MASK)
+#define unset_encoded(S)               ((S)->flags &= (~MEM_ENCODED_MASK))
+#define is_encoded(S)                  ((S)->flags & MEM_ENCODED_MASK)
+#define set_dummy(S)                   ((S)->flags |= DUMMY_SYMBOL_MASK)
+#define unset_dummy(S)                 ((S)->flags &= (~DUMMY_SYMBOL_MASK))
+#define is_dummy(S)                    ((S)->flags & DUMMY_SYMBOL_MASK)
+
+/*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
+#define DEFAULT_STATE_ID       0
+#define DEFAULT_TRANSITION_ID  0
+#define DEFAULT_PROP_AUTOMATA  NULL
+
+extern struct st_hash_type type_statehash;
+
+#define state_id(S)                    ((S)->state_id)
+#define state_id_issue(S)              ((S)->state_id = ((env_gen_state_id() << 8) | lmn_thread_id))
+#define state_id_pp_id(S)              ((S)->state_id >> 8)
+#define state_id_pp_proc(S)            ((S)->state_id & 0xffU)
+#define state_set_format_id(S, V)      ((S)->hash = (V))
+#define state_format_id(S)             (mc_data.is_format_states ? (S)->hash \
+                                                                 : state_id(S))
+#define state_property_state(S)        ((S)->state_name)
+#define state_hash(S)                  ((S)->hash * (state_property_state(S) + 1)) /* +1 は state_nameが0の場合があるため */
+#define state_set_property_state(S, L) ((S)->state_name = (L))
+#define state_mem(S)                   ((S)->mem)
+#define state_set_mem(S, M)            ((S)->mem = (M))
+#define state_mem_binstr(S)            ((S)->compress_mem)
+#define state_set_compress_mem(S, BS)  ((S)->compress_mem = (BS))
+#define state_get_predecessor(S)       ((S)->predecessor)
+#define state_set_predecessor(S, P)    ((S)->predecessor = (P))
+#define state_inc_predecessor_num(S)   (ADD_AND_FETCH(state_get_predecessor(S), 1))
+#define state_dec_predecessor_num(S)   (SUB_AND_FETCH(state_get_predecessor(S), 1))
+#define state_succ_num(S)              ((S)->successor_num)
+#define state_succ_get(S, I)           (lmn_env.show_transition ? transition_next_state((Transition)((S)->successors[I])) \
+                                                                 : (State *)((S)->successors[I]))
+#define state_restore_mem(S)           (state_mem(S) ? state_mem(S) \
+                                                     : lmn_binstr_decode(state_mem_binstr(S)))
+#define state_succ_set_sub(S, SUCCS)                                \
+  do {                                                              \
+    state_succ_num(S) = vec_num(SUCCS);                             \
+    if (state_succ_num(S) > 0) {                                    \
+      unsigned int __i;                                             \
+      (S)->successors = LMN_NALLOC(succ_data_t, state_succ_num(S)); \
+      for (__i = 0; __i < state_succ_num(S); __i++) {               \
+        (S)->successors[__i] = (succ_data_t)vec_get(SUCCS, __i);    \
+      }                                                             \
+    }                                                               \
+  } while (0)
+#ifdef PROFILE
+#  define  state_succ_set(S, SUCCS)                                 \
+  do {                                                              \
+    if (lmn_env.profile_level >= 3) {                               \
+      profile_add_space(PROFILE_SPACE__TRANS_OBJECT,                \
+                        sizeof(succ_data_t) * vec_num(SUCCS));      \
+      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);         \
+    }                                                               \
+    state_succ_set_sub(S, SUCCS);                                   \
+  } while (0)
+#else
+#  define  state_succ_set(S, SUCCS) state_succ_set_sub(S, SUCCS)
+#endif
+
+
+State *state_make(LmnMembrane *mem, BYTE state_name, BOOL encode);
+inline State *state_make_minimal(void);
+State *state_copy(State *src);
+inline State *state_copy_with_mem(State *src, LmnMembrane *mem);
+void state_free(State *s);
+inline void state_free_mem(State *s);
+inline void state_calc_mem_encode(State *s);
+inline LmnBinStr state_calc_mem_dump(State *s);
+inline LmnBinStr state_calc_mem_dump_with_z(State *s);
+inline LmnBinStr state_calc_mem_dummy(State *s);
+inline void state_calc_hash(State *s, LmnMembrane *mem, BOOL encode);
+inline void state_free_compress_mem(State *s);
+inline LmnMembrane *state_copied_mem(State *state);
+int state_cmp(State *s1, State *s2);
+int state_cmp_with_compress(State *s1, State *s2);
+
+
+#define transition_id(T)             ((T)->id)
+#define transition_set_id(T, I)      ((T)->id = (I))
+#define transition_rule_num(T)       (vec_num(&((T)->rule_names)))
+#define transition_rule(T, Idx)      (vec_get(&((T)->rule_names), (Idx)))
+#define transition_next_state(T)     ((T)->s)
+#define transition_set_state(T, S)   ((T)->s = (S))
+
+Transition transition(State *s, unsigned int i);
+Transition transition_make(State *s, lmn_interned_str rule_name);
+Transition transition_make_with_id(State *s, unsigned long id, lmn_interned_str rule);
+inline unsigned long transition_space(Transition t);
+void transition_free(Transition t);
+void transition_add_rule(Transition t, lmn_interned_str rule_name);
+
+void state_set_id_for_dump(State *s, LmnWord _d);
+void dump_state_data(State *s, LmnWord _fp);
+void state_print_mem(State *s, LmnWord _fp);
+void state_print_transition(State *s, LmnWord _fp);
+void state_print_label(State *s, LmnWord _fp);
+void state_print_error_path(State *s, LmnWord _fp);
 
 #endif

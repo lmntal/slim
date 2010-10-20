@@ -1,4 +1,41 @@
-/* Nonlinear-Membrane */
+/*
+ * nlmem.c - Nonlinear-Membrane
+ *
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
+ */
 
 #include <stdio.h>
 #include "../lmntal_ext.h"
@@ -30,9 +67,9 @@ void nlmem_copy(ReactCxt rc,
     if (ent) {
       LmnSAtom org_in, org_out, trg_in, trg_out;
       LmnSAtom tag_atom;
-      LmnWord t;
+      LmnWord t = 0;
 
-      EACH_ATOM(org_in, ent, {
+      EACH_ATOM(org_in, ent, ({
         /* タグアトムを作り、リンクの接続を行う */
         proc_tbl_get_by_atom(atom_map, org_in, &t);
         trg_in = LMN_SATOM(t);
@@ -43,7 +80,7 @@ void nlmem_copy(ReactCxt rc,
         lmn_relink_symbols(tag_atom, 2, org_out, 1);
         lmn_newlink_in_symbols(tag_atom, 0, org_out, 1);
         lmn_newlink_in_symbols(tag_atom, 1, trg_out, 1);
-      });
+      }));
     }
 
     proc_tbl_free(atom_map);
@@ -90,7 +127,7 @@ void nlmem_kill(ReactCxt rc,
       });
     }
   }
-  
+
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     lmn_memstack_delete(RC_MEMSTACK(rc), org_mem);
   }

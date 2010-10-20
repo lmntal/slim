@@ -529,41 +529,50 @@ static BOOL dump_toplevel_atom(LmnPort port,
   }
 }
 
-static void dump_rule(LmnPort port, LmnRuleSet rs)//seiji
+static int dump_history_f(st_data_t _key, st_data_t _value, st_data_t _arg)
 {
-  unsigned int i, j, m, n = lmn_ruleset_rule_num(rs);
-  LmnRule r;
-  st_table *st;
+  LmnPort port = (LmnPort)_arg;
 
-  port_put_raw_s(port, "/");
+  port_put_raw_s(port, " ");
+  port_put_raw_s(port, lmn_id_to_name((lmn_interned_str)_key));
 
-  for (i = 0; i < n; i++) {
-    r = lmn_ruleset_get_rule(rs, i);
-    st = lmn_rule_get_history_tbl(r);
-
-    port_put_raw_s(port, "[");
-    port_put_raw_s(port, lmn_id_to_name(lmn_rule_get_name(r)));
-
-    if (st) {
-      m = st_num(st);
-      Vector *vec = vec_make(m);
-      st_get_entries(st, vec);
-
-      for (j = 0; j < m; j++) {
-        port_put_raw_s(port, "\"");
-        port_put_raw_s(port, lmn_id_to_name((lmn_interned_str)vec_get(vec, j)));
-        port_put_raw_s(port, "\"");
-      }
-
-      vec_free(vec);
-    }
-    port_put_raw_s(port, "]");
-  }
-
+  return ST_CONTINUE;
 }
 
-/* for debug */
-void lmn_dump_rule(LmnPort port, LmnRuleSet rs)//seiji
+static void dump_rule(LmnPort port, LmnRuleSet rs)
+{
+  unsigned int i, n;
+
+  if (!lmn_ruleset_has_uniqrule(rs)) return;
+
+  port_put_raw_s(port, "_CHR");
+
+  n = lmn_ruleset_rule_num(rs);
+  for (i = 0; i < n; i++) {
+    LmnRule r;
+    st_table_t   his_tbl;
+    unsigned int his_num;
+
+    r = lmn_ruleset_get_rule(rs, i);
+    /* TODO: uniqはコピー先のルールオブジェクトに名前を設定するため,
+     *        コピー元のルールオブジェクトの名前が空になってしまう */
+    // if (lmn_rule_get_name(r) == ANONYMOUS) continue;
+    his_tbl = lmn_rule_get_history_tbl(r);
+    his_num = his_tbl ? st_num(his_tbl) : 0;
+
+    /* 少なくともCOMMIT命令を1度以上処理したuniqルールを対象に, ルール名と履歴を出力する */
+    if (his_num > 0) {
+      port_put_raw_s(port, "[id:");
+      port_put_raw_s(port, lmn_id_to_name(lmn_rule_get_name(r))); /* ルール名 */
+      port_put_raw_s(port, "\"");
+      st_foreach(his_tbl, dump_history_f, (st_data_t)port);
+      port_put_raw_s(port, "\"]");
+    }
+  }
+}
+
+/* for debug @seiji */
+void lmn_dump_rule(LmnPort port, LmnRuleSet rs)
 {
   dump_rule(port, rs);
 }
@@ -571,24 +580,36 @@ void lmn_dump_rule(LmnPort port, LmnRuleSet rs)//seiji
 static void dump_ruleset(LmnPort port, struct Vector *v)
 {
   unsigned int i;
-  LmnRuleSet rs;
 
-  for (i = 0; i < v->num; i++) {
-    if (i > 0) port_put_raw_s(port, ",");
-    port_put_raw_s(port, "@");
+  for (i = 0; i < vec_num(v); i++) {
+    LmnRuleSet rs;
+    char *s;
+
     rs = (LmnRuleSet)vec_get(v, i);
-    {
-      char *s = int_to_str(lmn_ruleset_get_id(rs));
-      port_put_raw_s(port, s);
-      LMN_FREE(s);
+    s  = int_to_str(lmn_ruleset_get_id(rs));
+    if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+      if (i > 0) {
+        port_put_raw_s(port, ",");
+      }
+      port_put_raw_s(port, "'");
     }
-    if (lmn_env.show_rule) dump_rule(port, rs);
 
+    port_put_raw_s(port, "@");
+    port_put_raw_s(port, s);
+    if (lmn_env.show_chr) {
+      dump_rule(port, rs);
+    }
+
+    if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+      port_put_raw_s(port, "'");
+    }
+    port_put_raw_s(port, ". ");
+    LMN_FREE(s);
   }
 }
 
-/* for debug */
-void lmn_dump_ruleset(LmnPort port, struct Vector *v)//seiji
+/* for debug @seiji */
+void lmn_dump_ruleset(LmnPort port, struct Vector *v)
 {
   dump_ruleset(port, v);
 }
@@ -617,10 +638,11 @@ static void lmn_dump_cell_internal(LmnPort port,
                                    SimpleHashtbl *ht,
                                    struct DumpState *s)
 {
-  unsigned int i, j;
   enum {P0, P1, P2, P3, PROXY, PRI_NUM};
   Vector pred_atoms[PRI_NUM];
-  HashIterator iter;
+  AtomListEntry *ent;
+  unsigned int i, j;
+  LmnFunctor f;
   BOOL printed;
 
   if (!mem) return;
@@ -632,14 +654,8 @@ static void lmn_dump_cell_internal(LmnPort port,
   }
 
   /* 優先順位に応じて起点となるアトムを振り分ける */
-
-  for (iter = hashtbl_iterator(&mem->atomset);
-       !hashtbliter_isend(&iter);
-       hashtbliter_next(&iter)) {
-    AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
-    LmnFunctor f = hashtbliter_entry(&iter)->key;
+  EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
     LmnSAtom atom;
-    LMN_ASSERT(ent);
     EACH_ATOM(atom, ent, {
       int arity = LMN_SATOM_GET_ARITY(atom);
       if(LMN_SATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
@@ -671,7 +687,7 @@ static void lmn_dump_cell_internal(LmnPort port,
         vec_push(&pred_atoms[P3], (LmnWord)atom);
       }
     });
-  }
+  }));
 
   if (!lmn_env.show_proxy) {
     /* assign link to proxies */
@@ -754,7 +770,7 @@ void lmn_dump_cell(LmnMembrane *mem, LmnPort port)
     lmn_dump_mem_dev(mem);
     break;
   default:
-    assert(FALSE);
+    lmn_fatal("unexpected.");
     exit(EXIT_FAILURE);
   }
 }
@@ -783,7 +799,7 @@ void lmn_dump_mem(LmnMembrane *mem, LmnPort port)
     lmn_dump_mem_dev(mem);
     break;
   default:
-    assert(FALSE);
+    lmn_fatal("unexpected.");
     exit(EXIT_FAILURE);
   }
 }
@@ -839,22 +855,17 @@ static void dump_ruleset_dev(struct Vector *v)
 
 void lmn_dump_mem_dev(LmnMembrane *mem)
 {
-  HashIterator iter;
-
+  AtomListEntry *ent;
   if (!mem) return;
 
   fprintf(stdout, "{\n");
   fprintf(stdout, "Mem[%u], Addr[%p]\n", LMN_MEM_NAME_ID(mem), (void*)mem);
-  for (iter = hashtbl_iterator(&mem->atomset);
-       !hashtbliter_isend(&iter);
-       hashtbliter_next(&iter)) {
-    AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
+  EACH_ATOMLIST(mem, ent, ({
     LmnSAtom atom;
-
     EACH_ATOM(atom, ent, {
       dump_atom_dev(atom);
     });
-  }
+  }));
 
   dump_ruleset_dev(&mem->rulesets);
   lmn_dump_mem_dev(mem->child_head);
@@ -873,19 +884,19 @@ static void dump_dot_cell(LmnMembrane *mem,
                           int *data_id,
                           int *cluster_id)
 {
+  AtomListEntry *ent;
+  LmnMembrane *m;
+  LmnPort out;
   unsigned int i;
-  HashIterator iter;
-  LmnPort out = lmn_stdout_port();
+
   if (!mem) return;
 
+  out = lmn_stdout_port();
+
   /* dump node labels */
-  for (iter = hashtbl_iterator(&mem->atomset);
-       !hashtbliter_isend(&iter);
-       hashtbliter_next(&iter)) {
-    AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
+  EACH_ATOMLIST(mem, ent, ({
     LmnSAtom atom;
-    LMN_ASSERT(ent);
-    EACH_ATOM(atom, ent, {
+    EACH_ATOM(atom, ent, ({
       fprintf(stdout, "%lu [label = \"", (LmnWord)atom);
       dump_atomname(out, LMN_SATOM_GET_FUNCTOR(atom));
       fprintf(stdout, "\", shape = circle];\n");
@@ -897,21 +908,15 @@ static void dump_dot_cell(LmnMembrane *mem,
           fprintf(stdout, "\", shape = box];\n");
         }
       }
-    });
-  }
+    }));
+  }));
 
   /* dump connections */
-  for (iter = hashtbl_iterator(&mem->atomset);
-       !hashtbliter_isend(&iter);
-       hashtbliter_next(&iter)) {
-    AtomListEntry *ent = (AtomListEntry *)hashtbliter_entry(&iter)->data;
-/*     LmnFunctor f = hashtbliter_entry(&iter)->key; */
+  EACH_ATOMLIST(mem, ent, ({
     LmnSAtom atom;
-    LMN_ASSERT(ent);
-    EACH_ATOM(atom, ent, {
+    EACH_ATOM(atom, ent, ({
       struct AtomRec *ar = (struct AtomRec *)hashtbl_get_default(ht, (HashKeyType)atom, 0);
       unsigned int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
-
 
       for (i = 0; i < arity; i++) {
         LmnLinkAttr attr = LMN_SATOM_GET_ATTR(LMN_SATOM(atom), i);
@@ -926,7 +931,7 @@ static void dump_dot_cell(LmnMembrane *mem,
           struct AtomRec *ar;
           LmnAtom atom2 = LMN_SATOM_GET_LINK(atom, i);
           if (hashtbl_contains(ht, atom2)) {
-             ar = (struct AtomRec *)hashtbl_get(ht, atom2);
+            ar = (struct AtomRec *)hashtbl_get(ht, atom2);
           } else {
             ar = atomrec_make();
             hashtbl_put(ht, (HashKeyType)atom2, (HashValueType)ar);
@@ -936,18 +941,15 @@ static void dump_dot_cell(LmnMembrane *mem,
         }
         fprintf(stdout, "\n");
       }
-    });
-  }
+    }));
+  }));
 
-
-  { /* dump chidren */
-    LmnMembrane *m;
-    for (m = mem->child_head; m; m = m->next) {
-      fprintf(stdout, "subgraph cluster%d {\n", *cluster_id);
-      (*cluster_id)++;
-      dump_dot_cell(m, ht, data_id, cluster_id);
-      fprintf(stdout, "}\n");
-    }
+  /* dump chidren */
+  for (m = mem->child_head; m; m = m->next) {
+    fprintf(stdout, "subgraph cluster%d {\n", *cluster_id);
+    (*cluster_id)++;
+    dump_dot_cell(m, ht, data_id, cluster_id);
+    fprintf(stdout, "}\n");
   }
 }
 
@@ -1029,8 +1031,6 @@ void lmn_dump_atom(LmnPort port, LmnWord atom, LmnLinkAttr attr)
 
   dump_state_init(&s);
   hashtbl_init(&ht, 0);
-  
   dump_atom(port, atom, &ht, attr, &s, 0);
-  
   atomrec_tbl_destroy(&ht);
 }

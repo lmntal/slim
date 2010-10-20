@@ -36,26 +36,18 @@
  * $Id: memory_pool.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "lmntal.h"
 #include "memory_pool.h"
 
 #define REF_CAST(T,X) (*(T*)&(X))
 
 /* each element must be bigger than void*, so align everything in sizeof(void*) !! */
 /* after alignment, X byte object needs ALIGNED_SIZE(X) byte. */
-#define ALIGNED_SIZE(X) (((X+sizeof(void*)-1)/sizeof(void*))*sizeof(void*))
-
-struct memory_pool_
-{
-  int sizeof_element;
-  void *block_head;
-  void *free_head;
-};
+#define ALIGNED_SIZE(X) (((X + sizeof(void*) - 1) / sizeof(void*)) * sizeof(void*))
 
 memory_pool *memory_pool_new(int s)
 {
-  memory_pool *res = malloc(sizeof(memory_pool));
+  memory_pool *res = LMN_MALLOC(memory_pool);
 
   res->sizeof_element = ALIGNED_SIZE(s);
   res->block_head = 0;
@@ -66,19 +58,19 @@ memory_pool *memory_pool_new(int s)
   return res;
 }
 
+static const int blocksize = 8;
 void *memory_pool_malloc(memory_pool *p)
 {
   void *res;
-  
-  if(p->free_head == 0){
-    const int blocksize = 8;
+
+  if (p->free_head == 0) {
     char *rawblock;
     int i;
-    
+
     /* fprintf(stderr, "no more free space, so allocate new block\n"); */
 
     /* top of block is used as pointer to head of next block */
-    rawblock = malloc(ALIGNED_SIZE(sizeof(void*)) + p->sizeof_element*blocksize);
+    rawblock = lmn_malloc(ALIGNED_SIZE(sizeof(void*)) + p->sizeof_element * blocksize);
     *(void**)rawblock = p->block_head;
     p->block_head = rawblock;
 
@@ -87,29 +79,31 @@ void *memory_pool_malloc(memory_pool *p)
     rawblock = rawblock + ALIGNED_SIZE(sizeof(void*));
     p->free_head = rawblock;
 
-    for(i=0; i<blocksize-1; ++i){
+    for (i = 0; i < (blocksize - 1); i++) {
       /* top of each empty elements is used as pointer to next empty element */
-      REF_CAST(void*, rawblock[p->sizeof_element*i]) = &rawblock[p->sizeof_element*(i+1)];
+      REF_CAST(void*, rawblock[p->sizeof_element * i]) = &rawblock[p->sizeof_element * (i + 1)];
     }
-    REF_CAST(void*, rawblock[p->sizeof_element*(blocksize-1)]) = 0;
+    REF_CAST(void*, rawblock[p->sizeof_element * (blocksize - 1)]) = 0;
   }
 
   res = p->free_head;
   p->free_head = *(void**)p->free_head;
-  
+
   return res;
 }
 
 void memory_pool_free(memory_pool *p, void *e)
 {
-  *(void**)e = p->free_head;
-  p->free_head = e;
+  if (p) {
+    *(void**)e = p->free_head;
+    p->free_head = e;
+  }
 }
 
 void memory_pool_delete(memory_pool *p)
 {
   void *blockhead = p->block_head;
-  
+
   while(blockhead){
     void *next_blockhead = *(void**)blockhead;
     free(blockhead);

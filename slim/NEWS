@@ -1,5 +1,22 @@
+SLIM (2.0.7)  -- 2010/10/20 
+  * release Parallel LTL Model Checker with improvement performance
+    * implement Parallel State Space Search on shared-memory architecture
+      * support Stack-Slicing Algorithm with Dynamic Load-Balancer
+      * support Verification for LTL-Safety property
+      * support Reachability execution with property automata
+    * improve performace
+      * support Canonical Membrane representation for ltl model checking
+      * improve state generate procedure using Delta-Membrane technique
+      * implement Fast Graph Traversal with Process ID 
+      * implement new rehash technique
+  * add/remove options
+    * please see --help
+  * add tcmalloc as multi-threaded fast memory allocator
+  * support GraphViz (Dot Language Style) output format for State Transition Graph
+  * and many bug fixes..
+
 SLIM (1.1.0)  -- 2010/06/26
-  * Nondeterministic exection
+  * Nondeterministic execution
     * support combination of uniq constraint & canonical membrane representation
     * support Depth Limited BFS strategy
   * Bug fixes

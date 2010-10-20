@@ -79,7 +79,9 @@ static inline void vec_reduce(Vector *vec) {
 LmnWord vec_pop(Vector *vec) {
   LmnWord ret;
   LMN_ASSERT(vec->num > 0);
-  if(vec->num <= vec->cap/2) {
+  /* Stackとして利用する際に, 不必要にreallocが連発するため,
+   * >>とりあえず<< 小さくしすぎないようにしてみた(gocho) */
+  if (vec->num <= vec->cap/2 && vec->cap > 1024) {
     vec_reduce(vec);
   }
   ret = vec_get(vec, (vec->num-1));
@@ -92,13 +94,13 @@ LmnWord vec_pop_n(Vector *vec, unsigned int n) {
   unsigned int i;
   LmnWord ret;
   LMN_ASSERT(vec->num > 0);
-  assert(n >= 0 && n < vec->num);
+  LMN_ASSERT(n >= 0 && n < vec->num);
   if (vec->num <= vec->cap/2) {
     vec_reduce(vec);
   }
   ret = vec_get(vec, n);
   for (i = n; i < vec->num-1; ++i) {
-    vec_set(vec, i, vec_get(vec, i+1));      
+    vec_set(vec, i, vec_get(vec, i+1));
   }
   vec->num--;
   return ret;
@@ -111,7 +113,7 @@ inline LmnWord vec_peek(const Vector *vec) {
 
 /* set */
 inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp) {
-  assert(index < vec->num);
+  LMN_ASSERT(index < vec->cap);
   (vec->tbl)[index] = keyp;
 }
 
@@ -157,7 +159,7 @@ inline void vec_free(Vector *vec) {
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val)
 {
   unsigned int i, n;
-  
+
   while (size > vec->cap) {
     vec_extend(vec);
   }
@@ -176,12 +178,29 @@ LMN_EXTERN void vec_sort(const Vector *vec,
   qsort(vec->tbl, vec->num, sizeof(vec_data_t), compare);
 }
 
+/* Vectorに詰んだ要素を逆順に並べる */
+void vec_reverse(Vector *vec)
+{
+  unsigned int r, l;
+
+  r = 0;
+  l = vec_num(vec) - 1;
+
+  while (r < l) {
+    vec_data_t tmp = vec->tbl[r];
+    vec_set(vec, r, vec->tbl[l]);
+    vec_set(vec, l, tmp);
+    r++;
+    l--;
+  }
+}
+
 Vector *vec_copy(Vector *vec)
 {
   int i;
   Vector *new_vec;
 
-  new_vec = vec_make(vec->num);
+  new_vec = vec_make(vec->num > 0 ? vec->num : 1);
 
   for (i = 0; i < vec_num(vec); i++) {
     new_vec->tbl[i] = vec->tbl[i];

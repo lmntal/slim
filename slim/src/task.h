@@ -39,9 +39,10 @@
 #ifndef LMN_TASK_H
 #define LMN_TASK_H
 
+#include "lmntal.h"
 #include "membrane.h"
 #include "rule.h"
-#include "automata.h"
+#include "react_context.h"
 
 /* 中間命令で出現するデータ構造
  * LINK_LIST    リンクオブジェクトのリスト
@@ -52,19 +53,18 @@
 #define LIST_AND_MAP  2
 #define MAP           3
 
+/* 属性配列ttに使用するタグ */
+enum { TT_OTHER, TT_ATOM, TT_MEM };
+
 void task_init(void);
+void lmn_dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
+inline void task_allocate_workspace(struct ReactCxt *rc);
 void task_finalize(void);
 void memstack_push(LmnMembrane *mem);
 struct Vector user_system_rulesets; /* system ruleset defined by user */
-LMN_EXTERN void lmn_run(Vector *rulesets);
+void lmn_run(Vector *rulesets);
 BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule);
 void react_start_rulesets(LmnMembrane *mem, Vector *rulesets);
-LMN_EXTERN BOOL lmn_react_ruleset(struct ReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset);
-LMN_EXTERN void lmn_react_systemruleset(struct ReactCxt *rc, LmnMembrane *mem);
 BOOL react_all_rulesets(struct ReactCxt *rc, LmnMembrane *cur_mem);
-BOOL matching_all_rulesets(struct ReactCxt *rc, LmnMembrane *cur_mem);
 
-#ifdef USE_JNI
-void lmn_run_for_jni(Vector *start_rulesets);
-#endif
 #endif

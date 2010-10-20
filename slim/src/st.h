@@ -2,17 +2,16 @@
 
 /* @(#) st.h 5.1 89/12/14 */
 
-/* http://sobjc.googlecode.com/svn/trunk/runtime/st.c
- を元に変更した。
- st.h,st.cはパブリックドメインのハッシュテーブルライブラリで、
- rubyでも使われている。オリジナルのst.h,st.cってどこから入手
- できるのだろうか？ */
+/** http://sobjc.googlecode.com/svn/trunk/runtime/st.cを元に変更した。
+ *  st.h,st.cはパブリックドメインのハッシュテーブルライブラリで、rubyでも使われている。
+ *  オリジナルのst.h,st.cってどこから入手できるのだろうか？
+ */
 
 #ifndef ST_INCLUDED
 #define ST_INCLUDED
 
+#include "lmntal.h"
 #include <stddef.h>
-#include "vector.h"
 
 typedef unsigned long st_data_t;
 typedef struct st_table st_table, *st_table_t;
@@ -57,6 +56,14 @@ enum st_retval {
 # endif
 #endif
 
+inline static unsigned long st_num(st_table *table) {
+  return table->num_entries;
+}
+
+inline static unsigned long st_cap(st_table *table) {
+  return table->num_bins;
+}
+
 st_table *st_init_table(struct st_hash_type *);
 st_table *st_init_table_with_size(struct st_hash_type *, int);
 st_table *st_init_numtable(void);
@@ -74,12 +81,14 @@ int st_lookup_with_col(st_table *, st_data_t , st_data_t *, long *n_col);
 int st_contains(st_table *, st_data_t);
 int st_foreach(st_table *, int(*)(ANYARGS), st_data_t);
 void st_add_direct(st_table *, st_data_t, st_data_t);
-unsigned int st_num(st_table *);
+unsigned long st_table_space(st_table *st);
 void st_free_table(st_table *);
 void st_cleanup_safe(st_table *, st_data_t);
+void st_clear(st_table *);
 st_table *st_copy(st_table *);
 void st_print(st_table *st);
-void st_get_entries(st_table *st, Vector *vec);
+void st_get_entries_key(st_table *st, Vector *vec);
+void st_get_entries_value(st_table *st, Vector *vec);
 int st_equals(st_table *tbl1, st_table *tbl2);
 long st_strhash(const char *);
 int st_numcmp(long, long);

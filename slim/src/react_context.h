@@ -43,26 +43,110 @@
 #define LMN_REACT_CONTEXT_H
 
 #include "lmntal.h"
+#include "rule.h"
+#include "st.h"
+#include "delta_membrane.h"
+#include "state.h"
 
 struct ReactCxt {
-  LmnWord mode;
   LmnMembrane *global_root; /* グローバルルート膜 */
-  void *v;
+  unsigned int work_vec_size;
+  LmnRulesetId atomic_id;   /* atomic step中: atomic set id(signed int), default:-1 */
+  BYTE mode;
+  BOOL flag;
+  void *v;                  /* 各mode毎に固有の持ち物 */
 };
 
-#define RC_SET_MODE(rc, m) ((rc)->mode = (m))
-/* #define RC_UNSET_MODE(rc, m) ((rc)->mode = ~(m)) */
-#define RC_GET_MODE(rc, m) ((rc)->mode == (m))
+#define REACT_MEM_ORIENTED  (0x01U)       /* 膜主導テスト */
+#define REACT_ND            (0x01U << 1)  /* 非決定実行: 状態の展開 */
+#define REACT_STAND_ALONE   (0x01U << 2)  /* 非決定実行: 状態は展開しない */
+#define REACT_PROPERTY      (0x01U << 3)  /* LTLモデル検査: 性質ルールのマッチングのみ */
+#define REACT_ATOMIC        (0x01U << 4)  /* Atomic Step中: インタリーブの抑制 */
 
-#define RC_GROOT_MEM(rc)  ((rc)->global_root)
-#define RC_SET_GROOT_MEM(rc, mem)  ((rc)->global_root = (mem))
+#define RC_SET_MODE(rc, m)             ((rc)->mode |= (m))
+#define RC_UNSET_MODE(rc, m)           ((rc)->mode &= ~(m))
+#define RC_GET_MODE(rc, m)             ((rc)->mode & (m))
+#define RC_WORK_VEC_SIZE(rc)           ((rc)->work_vec_size)
+#define RC_SET_WORK_VEC_SIZE(rc, n)    ((rc)->work_vec_size = (n))
+#define RC_GROOT_MEM(rc)               ((rc)->global_root)
+#define RC_SET_GROOT_MEM(rc, mem)      ((rc)->global_root = (mem))
+#define RC_UNSET_GROOT_MEM(rc)         ((rc)->global_root = NULL)
+#define RC_START_ATOMIC_STEP(rc, id)   ((rc)->atomic_id  = (id))
+#define RC_IS_ATOMIC_STEP(rc)          ((rc)->atomic_id >= 0)
+#define RC_FINISH_ATOMIC_STEP(rc)      ((rc)->atomic_id = -1)
 
-#define  REACT_MEM_ORIENTED  1  /* 膜主導テスト */
-#define  REACT_STAND_ALONE   2  /* 特別な処理を行わない */
-#define  REACT_ND            4  /* 状態の展開(非決定実行) */
-#define  REACT_PROPERTY      8  /* モデル検査時における性質ルールの適用 */
+/*----------------------------------------------------------------------
+ * ND React Context
+ */
+struct NDReactCxtData {
+  Vector *roots; /* 通常時: LmnMembrane  差分時: MemDeltaRoot */
+  Vector *rules;
+  Vector *mem_deltas;
+  struct MemDeltaRoot *mem_delta_root; /* commit命令後(BODY命令で)作られる差分データをここに入れる */
+  BYTE property_state;
+  unsigned int next_id;
+};
 
+#define RC_ND_DATA(rc)                  ((struct NDReactCxtData *)(rc)->v)
+#define RC_EXPANDED(rc)                 ((RC_ND_DATA(rc))->roots)
+#define RC_EXPANDED_RULES(rc)           ((RC_ND_DATA(rc))->rules)
+#define RC_MEM_DELTAS(rc)               ((RC_ND_DATA(rc))->mem_deltas)
+#define RC_PROPERTY_STATE(rc)           ((RC_ND_DATA(rc))->property_state)
+#define RC_SET_PROPERTY(rc, prop)       ((RC_ND_DATA(rc))->property_state = (prop))
+#define RC_ND_SET_MEM_DELTA_ROOT(rc, d) ((RC_ND_DATA(rc))->mem_delta_root = (d))
+#define RC_ND_MEM_DELTA_ROOT(rc)        ((RC_ND_DATA(rc))->mem_delta_root)
+#define RC_ND_DELTA_ENABLE(rc)          RC_MEM_DELTAS(rc)
+#define RC_CLEAR_DATA(rc) do {                                                 \
+  RC_SET_GROOT_MEM(rc, NULL);                                                  \
+  vec_clear(RC_EXPANDED_RULES(rc));                                            \
+  vec_clear(RC_EXPANDED(rc));                                                  \
+  if (RC_MEM_DELTAS(rc)) {                                                     \
+    int _d_i;                                                                  \
+    for (_d_i = 0; _d_i < vec_num(RC_MEM_DELTAS(rc)); _d_i++) {                \
+      dmem_root_free((struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), _d_i)); \
+    }                                                                          \
+    vec_clear(RC_MEM_DELTAS(rc));                                              \
+  }                                                                            \
+  RC_SET_PROPERTY(rc, DEFAULT_STATE_ID);                                       \
+} while (0)
+
+
+/*----------------------------------------------------------------------
+ * Mem React Context
+ */
+struct MemReactCxtData {
+  LmnMemStack memstack; /* 膜主導実行時に使用 */
+};
+
+#define RC_MEMSTACK(rc)  (((struct MemReactCxtData *)(rc)->v)->memstack)
+
+
+inline void react_context_init(struct ReactCxt *rc, BYTE mode);
+inline void react_context_destroy(struct ReactCxt *rc);
 inline void stand_alone_react_cxt_init(struct ReactCxt *cxt);
 inline void stand_alone_react_cxt_destroy(struct ReactCxt *cxt);
+inline void property_react_cxt_init(struct ReactCxt *cxt);
+inline void property_react_cxt_destroy(struct ReactCxt *cxt);
+inline void mem_react_cxt_init(struct ReactCxt *cxt);
+inline void mem_react_cxt_destroy(struct ReactCxt *cxt);
+inline void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state_id);
+inline void nd_react_cxt_destroy(struct ReactCxt *cxt);
+inline void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
+                                      LmnMembrane *mem,
+                                      LmnRule rule);
+inline void nd_react_cxt_add_mem_delta(struct ReactCxt *cxt,
+                                       struct MemDeltaRoot *d,
+                                       LmnRule rule);
+
+static inline LmnWord nd_react_cxt_expanded_pop(struct ReactCxt *cxt) {
+  vec_pop(RC_EXPANDED_RULES(cxt));
+  return vec_pop(RC_ND_DELTA_ENABLE(cxt) ? RC_MEM_DELTAS(cxt)
+                                         : RC_EXPANDED(cxt));
+}
+
+static inline unsigned int nd_react_cxt_expanded_num(struct ReactCxt *cxt) {
+  return RC_ND_DELTA_ENABLE(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
+                                 : vec_num(RC_EXPANDED(cxt));
+}
 
 #endif

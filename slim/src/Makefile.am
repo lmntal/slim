@@ -18,13 +18,11 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c inte
 # .yファイルは .lより先に書く
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
 slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_pool.c internal_hash.c \
-	vector.c dumper.c system_ruleset.c atom.c \
+	vector.c dumper.c system_ruleset.c \
 	atom.h dumper.h instruction.h internal_hash.h lmntal.h membrane.h \
 	memory_pool.h rule.h system_ruleset.h task.h vector.h st.c symbol.h symbol.c functor.h functor.c \
 	syntax.h syntax.c il_parser.y il_lexer.l instruction.c load.h load.c st.h arch.h \
 	mc.h mc.c mhash.h mhash.c por.h por.c runtime_status.h runtime_status.c \
-	interpret_generated.c \
-	translate.c translate.h translate_generated.c translate_generator.rb translate_generator.in so.h \
 	nc_parser.y nc_lexer.l automata.h automata.c \
 	lmntal_system_adapter.h lmntal_system_adapter.c \
 	propsym_parser.y propsym_lexer.l \
@@ -35,15 +33,29 @@ slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_po
 	ext/nd_conf.c \
 	special_atom.h special_atom.c string.c slim_header/string.h port.c slim_header/port.h \
 	memstack.c slim_header/memstack.h \
-	react_context.h react_context.c nd.c nd.h mem_encode.h mem_encode.c state.h state.c \
-	visitlog.h visitlog.c
+	react_context.h react_context.c nd.c nd.h mem_encode.h mem_encode.c \
+	visitlog.h visitlog.c delta_membrane.h delta_membrane.c \
+	state.h state.c statespace.c statespace.h \
+	parallel.c parallel.h lmntal_thread.c lmntal_thread.h queue.c queue.h \
+	stack_slicing.c stack_slicing.h work_pool.c work_pool.h \
+	binstr_compress.c binstr_compress.h \
+	jni_lmntal.h jni_lmntal.c \
+	translate.c translate.h translate_generated.c translate_generator.rb translate_generator.in so.h \
+	interpret_generated.c
 #	ext.h ext.c 
 
-if TEST_JNI
-slim_SOURCES += jni_lmntal.h jni_lmntal.c
+if ENABLE_JNI
 slim_LDADD += -ljvm
 slim_LDFLAGS += -L.
 slim_DEPENDENCIES = ../libjvm.a
+endif
+
+slim_OBJS =
+
+if ENABLE_TCMALLOC
+slim_LDADD += -ltcmalloc_minimal_in_slim
+slim_LDFLAGS += -L../third_party/google-perftools-1.6/.libs -rpath $(prefix)/lib
+slim_DEPENDENCIES = ../third_party/google-perftools-1.6/libtcmalloc_minimal_in_slim.la
 endif
 
 EXTRA_DIST := $(PARSER_SOURCE) $(PARSER_HEADER)

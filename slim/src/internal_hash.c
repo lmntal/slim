@@ -38,14 +38,11 @@
 
 #include "internal_hash.h"
 #include "config.h"
+#include "util.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
-
-#ifdef PROFILE
-#include "runtime_status.h"
-#endif
 
 /* Hashtable
  *
@@ -67,18 +64,17 @@
    畳み込む必要がある */
 
 #if SIZEOF_LONG == 4
-# define EMPTY_KEY 0xffffffffUL
-# define DELETED_KEY 0xfffffffeUL
+#  define EMPTY_KEY   0xffffffffUL
+#  define DELETED_KEY 0xfffffffeUL
 #elif SIZEOF_LONG == 8
-# define EMPTY_KEY 0xffffffffffffffffUL
-# define DELETED_KEY 0xfffffffffffffffeUL
+#  define EMPTY_KEY   0xffffffffffffffffUL
+#  define DELETED_KEY 0xfffffffffffffffeUL
 #endif
 
-#define INT_HASH(val)  ((val)*K)
+#define INT_HASH(val)  ((val) * K)
 
 static void hashtbl_extend(SimpleHashtbl *ht);
 static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key);
-static HashKeyType round2up(unsigned int n);
 static inline HashKeyType* hashset_get_p(HashSet* set, HashKeyType key, unsigned long dummy_key);
 
 /* HashMap <HashKeyType, HashValueType> */
@@ -88,10 +84,6 @@ void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size)
   ht->cap = round2up(init_size);
   ht->tbl = (HashEntry *)malloc(sizeof(struct HashEntry) * ht->cap);
   memset(ht->tbl, 0xffU, sizeof(struct HashEntry) * ht->cap);
-
-#ifdef PROFILE
-  status_add_hashtbl_space(sizeof(struct HashEntry) * ht->cap);
-#endif
 }
 
 SimpleHashtbl *hashtbl_make(unsigned int init_size)
@@ -103,20 +95,13 @@ SimpleHashtbl *hashtbl_make(unsigned int init_size)
 
 void hashtbl_destroy(SimpleHashtbl *ht)
 {
-  free(ht->tbl);
-#ifdef PROFILE
-  status_remove_hashtbl_space(sizeof(struct HashEntry) * ht->cap);
-#endif
+  LMN_FREE(ht->tbl);
 }
 
 void hashtbl_free(SimpleHashtbl *ht)
 {
-#ifdef PROFILE
-  status_remove_hashtbl_space(sizeof(struct HashEntry) * ht->cap);
-#endif
-
-  free(ht->tbl);
-  free(ht);
+  hashtbl_destroy(ht);
+  LMN_FREE(ht);
 }
 
 HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key)
@@ -194,25 +179,7 @@ static void hashtbl_extend(SimpleHashtbl *ht)
       e->data = tbl[i].data;
     }
   }
-  free(tbl);
-
-#ifdef PROFILE
-  status_remove_hashtbl_space(sizeof(struct HashEntry) * cap);
-  status_add_hashtbl_space(sizeof(struct HashEntry) * ht->cap);
-#endif
-}
-
-static HashKeyType round2up(unsigned int n)
-{
-  unsigned int v = 1;
-  while (v && v < n) {
-    v <<= 1;
-  }
-  if (v == 0) {
-    fprintf(stderr, "hashtbl init size too large\n");
-    exit(1);
-  }
-  return v;
+  LMN_FREE(tbl);
 }
 
 HashIterator hashtbl_iterator(SimpleHashtbl *ht)
@@ -250,13 +217,13 @@ HashSet *hashset_make(unsigned int init_size)
 
 void hashset_destroy(HashSet *set)
 {
-  free(set->tbl);
+  LMN_FREE(set->tbl);
 }
 
 void hashset_free(HashSet *set)
 {
-  free(set->tbl);
-  free(set);
+  hashset_destroy(set);
+  LMN_FREE(set);
 }
 
 int hashset_contains(HashSet *set, HashKeyType key)
@@ -286,14 +253,13 @@ static void hashset_extend(HashSet *set)
       *entry = tbl[i];
     }
   }
-  free(tbl);
+  LMN_FREE(tbl);
 }
 
 void hashset_add(HashSet *set, HashKeyType key) {
   HashKeyType* entry;
-#ifdef DEBUG
-  assert(key < DELETED_KEY);
-#endif
+  LMN_ASSERT(key < DELETED_KEY);
+
   entry = hashset_get_p(set, key, DELETED_KEY);
   if(*entry == EMPTY_KEY || *entry == DELETED_KEY) {
     set->num++;
@@ -310,9 +276,8 @@ void hashset_clear(HashSet *set) {
 
 void hashset_delete(HashSet *set, HashKeyType key) {
   HashKeyType* entry;
-#ifdef DEBUG
-  assert(key < DELETED_KEY);
-#endif
+  LMN_ASSERT(key < DELETED_KEY);
+
   entry = hashset_get_p(set, key, EMPTY_KEY);
   if(*entry != EMPTY_KEY) {
     set->num--;

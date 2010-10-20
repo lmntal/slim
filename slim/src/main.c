@@ -36,11 +36,11 @@
  * $Id: main.c,v 1.17 2008/10/16 18:14:00 sasaki Exp $
  */
 
-#include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <getopt.h>
 #include "lmntal.h"
+#include "util.h"
 #include "task.h"
 #include "symbol.h"
 #include "functor.h"
@@ -50,20 +50,20 @@
 #include "automata.h"
 #include "lmntal_system_adapter.h"
 #include "propositional_symbol.h"
+#include "por.h"
 #include "mc.h"
 #include "nd.h"
+#include "parallel.h"
+#include "stack_slicing.h"
 #include "ccallback.h"
 #include "special_atom.h"
 #include "slim_header/string.h"
 #include "slim_header/port.h"
 #include "dumper.h"
 #include "mem_encode.h"
+#include "jni_lmntal.h"
 /* #include "ext.h" */
 #include "runtime_status.h"
-
-#ifdef USE_JNI
-#include "jni_lmntal.h"
-#endif
 
 void install_builtin_extensions(void);
 void init_builtin_extensions(void); /* ext/init_exts.c */
@@ -74,35 +74,58 @@ static void usage(void)
           "Usage: slim [OPTION]... FILE\n"
           "     When FILE is  -, read standard input.\n"
           "options:\n"
-          "  -I<path>        Adds <path> to the head of the load path list.\n"
-          "  -O[<0-9>] (-O=-O1)  Optimization level.\n"
-          "                  Intermediate instruction sequences are optimized.\n"
-          "  -p[<0-3>] (-p=-p1)  Profiling level.\n"
-          "  -t              trace mode\n"
-          "  --showproxy     Show proxy atoms\n"
-//          "  --showrule      Show details of ruleset (@RS_ID/[NAME1\"HIS1\"\"HIS2\"..][NAME2\"\"..]..)\n"
-          "  --hideruleset   Hide ruleset from result\n"
-          "  --dot           Output result in dot language\n"
-          "  --nd            Nondeterministic execution mode, print all execution paths.\n"
-          "  --ltl           LTL model checking mode\n"
-          "  --ltl_all       LTL model checking mode, print all errors\n"
-          "  --ltl_nd        --ltl_all and print all seached states and paths\n"
-          "  --mem-enc       Use canonical membrane representation in ND and LTL MC.\n"
-          "  --compact-stack Compress states on stack in ND and LTL MC.\n"
-          "  --por           Enable partial order reduction to build the state graph\n"
-          "  --nc <file>     Never claim\n"
-          "  --psym <file>   Propositional symbol definition file\n"
-          "  --ltl_f <ltl>   LTL formula\n"
-          "  --translate     Output translated C code\n"
-          "  --version       Prints version and exits.\n"
-          "  --help          This Help.\n"
+          "  -I<path>            Adds <path> to the head of the load path list.\n"
+          "  -O[<0-9>] (-O=-O1)  Optimization level. [DEFAULT:-O3]\n"
+          "                      Intermediate instruction sequences are optimized.\n"
+          "  -p[<0-3>] (-p=-p1)  Profiler level.\n"
+          "  --nd                Change the execution mode from RunTime(RT) to ModelChecker(MC)\n"
+          "  --translate         Change the execution mode to Output translated C from LMNtal\n"
+          "  -t                  (RT) Show the all graph on execution path\n"
+          "                      (MC) Show the state space\n"
+          "  --hide-ruleset      Hide ruleset from result\n"
+          "  --show-proxy        Show proxy atoms\n"
+          "  --show-chr          Show applied history in uniq rulesets (constraint handling rules)\n"
+          "  --show-transition   (MC) Show transition information in state transition graph\n"
+          "  --show-ends         (MC) Show all of terminate states\n"
+          "  --dump-dot          (RT) Output LMNtal graph in DOT format\n"
+	        "                      (MC) Output state space  in DOT format\n"
+          "  --dump-fsm          (MC) Output state space  in FSM format (partially under construction..)\n"
+          "  --dump-lavit        (MC) Output state space  in LaViT(LMNtal IDE) format\n"
+          "  --dump-inc          (MC) State Generation and Output of states at the same time\n"
+          "  --ltl               (MC) Search counter example against LTL property (--psym, --nc)\n"
+          "  --ltl-all           (MC) Generate full state space and exhaustive search\n"
+          "  --mem-enc           (MC) Use canonical membrane representation\n"
+          "  --nc <file>         (MC) Input <file> as a property automata (LTL2BA format)\n"
+          "  --psym <file>       (MC) Input <file> as propositional symbol definitions\n"
+          "  --bfs               (MC) Switch a search policy from DFS to BFS\n"
+          "  --use-Ncore=<N>     (MC) <N>threads execution, parallelized on shared-memory architecture\n"
+          "  --delta-mem         (MC) Optimized state generator using delta membrane technique\n"
+          "  --ltl-f <ltl>       (MC) Input <ltl> formula directly. (need LTL2BA path)\n"
+          "  --version           Prints version and exits.\n"
+          "  --help              This Help.\n"
           );
   exit(1);
 }
 
+
+void ver_print_with_esc_code(FILE *f, char *str, int color)
+{
+  esc_code_add(CODE__UNDER_LINE);
+  esc_code_add(color);
+  fprintf(f, "%s", str);
+  esc_code_clear();
+}
+
 static void version(void)
 {
-  printf("The Slim LMNtal Implementation, version %s\n", SLIM_VERSION);
+  FILE *f = stdout;
+  ver_print_with_esc_code(f, "S", CODE__FORECOLOR_LIGHTBLUE);
+  fprintf(f, "lim ");
+  ver_print_with_esc_code(f, "L", CODE__FORECOLOR_LIGHTBLUE);
+  fprintf(f, "mntal ");
+  ver_print_with_esc_code(f, "IM", CODE__FORECOLOR_LIGHTBLUE);
+  fprintf(f, "plementation ");
+  fprintf(f, "- version %s\n", SLIM_VERSION);
   exit(1);
 }
 
@@ -111,32 +134,49 @@ static int parse_options(int argc, char *argv[])
   int c, option_index;
 
   struct option long_options[] = {
-    {"version", 0, 0, 1000},
-    {"help",    0, 0, 1001},
-    {"showproxy",  0, 0, 1002},
-    {"hideruleset",  0, 0, 1003},
-    {"showrule", 0, 0, 1016},
-    {"dot", 0, 0, 1004},
-    {"nd", 0, 0, 1005},
-    {"nd_result", 0, 0, 1006},
-    {"nd_dump", 0, 0, 1007},
-    {"ltl", 0, 0, 1008},
-    {"ltl_all", 0, 0, 1009},
-    {"nc", 1, 0, 1010},
-    {"psym", 1, 0, 1011},
-    {"ltl_f", 1, 0, 1012},
-    {"translate", 0, 0, 1013},
-    {"ltl_nd", 0, 0, 1014},
-    {"por", 0, 0, 1015},
-    {"interactive", 0, 0, 1400},
-    {"bfs", 0, 0, 1500},
-    {"bfs_depth", 1, 0, 1501},
-    {"bfs_final", 0, 0, 1502},
-    {"mem-enc", 0, 0, 2000},
-    {"compact-stack", 0, 0, 2001},
-    {"opt-hash", 0, 0, 2003},
-    {"no_dump", 0,0, 5000},
-    {"benchmark_dump", 0, 0, 5001},
+    {"version"                , 0, 0, 1000},
+    {"help"                   , 0, 0, 1001},
+    {"show-proxy"             , 0, 0, 1002},
+    {"hide-ruleset"           , 0, 0, 1003},
+    {"show-chr"               , 0, 0, 1004},
+    {"show-transition"        , 0, 0, 1005},
+    {"show-ends"              , 0, 0, 1006},
+    {"dump-dot"               , 0, 0, 1100},
+    {"dump-fsm"               , 0, 0, 1101},
+    {"dump-lavit"             , 0, 0, 1102},
+    {"dump-inc"               , 0, 0, 1103},
+    {"dump-lmn"               , 0, 0, 1104},
+    {"interactive"            , 0, 0, 1200},
+    {"translate"              , 0, 0, 1300},
+    {"ltl-all"                , 0, 0, 1400},
+    {"ltl"                    , 0, 0, 1401},
+    {"nd"                     , 0, 0, 1402},
+    {"nc"                     , 1, 0, 1410},
+    {"psym"                   , 1, 0, 1411},
+    {"ltl-f"                  , 1, 0, 1412},
+    {"scc-analysis"           , 0, 0, 1413},
+    {"por"                    , 0, 0, 1420},
+    {"bfs"                    , 0, 0, 1421},
+    {"limited-step"           , 1, 0, 1422},
+    {"search-ends"            , 0, 0, 1423},
+    {"mem-enc"                , 0, 0, 2000},
+    {"disable-compress"       , 0, 0, 2003},
+    {"disable-compact"        , 0, 0, 2004},
+    {"delta-mem"              , 0, 0, 2005},
+    {"z-compress"             , 0, 0, 2007},
+    {"use-Ncore"              , 1, 0, 5000},
+    {"cutoff-depth"           , 1, 0, 5001},
+    {"disable-loadbalancer"   , 0, 0, 5015},
+    {"opt-lock"               , 0, 0, 5025},
+    {"disable-opt-hash"       , 0, 0, 5026},
+    {"opt-hash-old"           , 0, 0, 5027},
+    {"no-dump"                , 0, 0, 6000},
+    {"benchmark-dump"         , 0, 0, 6001},
+    {"property-dump"          , 0, 0, 6002},
+    {"debug-memenc"           , 0, 0, 6006},
+    {"debug-id"               , 0, 0, 6007},
+    {"debug-delta"            , 0, 0, 6008},
+    {"debug-hash"             , 0, 0, 6009},
     {0, 0, 0, 0}
   };
 
@@ -166,14 +206,14 @@ static int parse_options(int argc, char *argv[])
       }
 
 #ifndef PROFILE
-      if (lmn_env.profile_level > 1) {
+      if (lmn_env.profile_level > 2) {
         fprintf(stderr, "please configure with --enable-profile\n");
         exit(EXIT_FAILURE);
       }
 #endif
       break;
     case 1000: version(); break;
-    case 1001: /* help */ /*FALLTHROUGH*/
+    case 1001: /* help */     /* FALLTHROUGH */
     case '?': usage(); break;
     case 1002:
       lmn_env.show_proxy = TRUE;
@@ -181,83 +221,170 @@ static int parse_options(int argc, char *argv[])
     case 1003:
       lmn_env.show_ruleset = FALSE;
       break;
-    case 1016:
-      lmn_env.show_rule = TRUE;
-      break;
     case 1004:
-      lmn_env.output_format = DOT;
+      lmn_env.show_chr = TRUE;
       break;
     case 1005:
-      lmn_env.nd = TRUE;
+      lmn_env.show_transition = TRUE;
       break;
     case 1006:
-      lmn_env.nd = TRUE;
-      lmn_env.nd_result = TRUE;
+      lmn_env.end_dump = TRUE;
       break;
-    case 1007:
-      lmn_env.nd = TRUE;
-      lmn_env.nd_dump = TRUE;
+    case 1100:
+      lmn_env.output_format = DOT;
+      lmn_env.mc_dump_format = Dir_DOT;
       break;
-    case 1008:
-      lmn_env.ltl = TRUE;
+    case 1101:
+      lmn_env.mc_dump_format = FSM;
       break;
-    case 1009:
-      lmn_env.ltl = TRUE;
-      lmn_env.ltl_all = TRUE;
+    case 1102:
+      lmn_env.mc_dump_format = LaViT;
       break;
-    case 1010:
-      lmn_env.automata_file = optarg;
+    case 1103:
+      lmn_env.sp_dump_format = INCREMENTAL;
       break;
-    case 1011:
-      lmn_env.propositional_symbol = optarg;
+    case 1104:
+      lmn_env.sp_dump_format = LMN_SYNTAX;
       break;
-    case 1012:
-      lmn_env.ltl_exp = optarg;
-      break;
-    case 1013:
-      lmn_env.translate = TRUE;
-      break;
-    case 1014:
-      lmn_env.ltl = TRUE;
-      lmn_env.ltl_all = TRUE;
-      lmn_env.ltl_nd = TRUE;
-      break;
-    case 1015:
-      lmn_env.por = TRUE;
-    case 1400: /* jni interactive mode */
-#ifdef USE_JNI
+    case 1200: /* jni interactive mode */
+#ifdef HAVE_JNI_H
       lmn_env.interactive = TRUE;
 #else
-      printf("Sorry, the interactive mode is disabled.\n");
-      printf("Check the --enable-jni option at configure.\n");
+      fprintf(stderr, "Sorry, the interactive mode is disabled.\n");
+      fprintf(stderr, "please configure with --enable-jni\n");
+      exit(EXIT_FAILURE);
 #endif
       break;
-    case 1500:
+    case 1300:
+      lmn_env.translate = TRUE;
+      break;
+    case 1400:
+      lmn_env.ltl_all = TRUE; /* FALLTHROUGH */
+      mc_data.do_exhaustive = TRUE;
+    case 1401:
+      lmn_env.ltl = TRUE;     /* FALLTHROUGH */
+      mc_data.do_search = TRUE;
+    case 1402:
+      lmn_env.nd = TRUE;
+      break;
+    case 1410:
+      lmn_env.automata_file = optarg;
+      break;
+    case 1411:
+      lmn_env.propositional_symbol = optarg;
+      break;
+    case 1412:
+      lmn_env.ltl_exp = optarg;
+      break;
+    case 1413:
+      lmn_env.scc_analysis = TRUE;
+      break;
+    case 1420:
+      lmn_env.por = TRUE;
+      init_por_vars();
+      break;
+    case 1421:
       lmn_env.bfs = TRUE;
       break;
-    case 1501:
-      lmn_env.bfs = TRUE;
-      lmn_env.bfs_depth = atoi(optarg);
+    case 1422:
+      lmn_env.depth_limits = atoi(optarg);
       break;
-    case 1502:
-      lmn_env.bfs = TRUE;
-      lmn_env.bfs_final = TRUE;
+    case 1423:
+      lmn_env.nd_search_end = TRUE;
       break;
     case 2000:
       lmn_env.mem_enc = TRUE;
       break;
-    case 2001:
-      lmn_env.compact_stack = TRUE;
-      break;
     case 2003:
-      lmn_env.optimize_hash_value = TRUE;
+      lmn_env.enable_compress_mem = FALSE;
       break;
-    case 5000: /* 状態遷移グラフのdumpをしない */
+    case 2004:
+      lmn_env.compact_stack = FALSE;
+      break;
+    case 2005:
+    	lmn_env.delta_mem = TRUE;
+    	break;
+    case 2007:
+#ifdef HAVE_LIBZ
+      lmn_env.z_compress = TRUE;
+#else
+      fprintf(stderr, "Sorry, z library cannot be found on your environment\n");
+      fprintf(stderr, "if you installed z library, please re-configure & make slim\n");
+      exit(EXIT_FAILURE);
+#endif
+      break;
+#ifdef ENABLE_PARALLEL
+    case 5000: /* parallel */
+    {
+      int core = atoi(optarg);
+      if (core > 1) {
+        lmn_env.core_num = core;
+        mc_data.do_parallel = TRUE;
+      }
+      lmn_env.enable_parallel  = TRUE;
+      break;
+    }
+    case 5001:
+      ss_set_cutoff_depth((atoi(optarg) < 1) ? 1U
+                                             : atoi(optarg));
+      break;
+    case 5015: /* optimize Load Balancing */
+      lmn_env.optimize_loadbalancing = FALSE;
+      break;
+    case 5025: /* optimize lock under constructions.. */
+      lmn_env.optimize_lock      = TRUE;
+      break;
+#else
+    case 5000:
+    case 5001:
+    case 5015:
+    case 5025:
+      fprintf(stderr, "Sorry, parallel execution is not supported on your environment.\n");
+      fprintf(stderr, "Requirement: GCC keyword __thread, pthread library \n");
+      exit(EXIT_FAILURE);
+      break;
+#endif
+    case 5026:
+      lmn_env.optimize_hash = FALSE;
+      break;
+    case 5027:
+#ifdef PROFILE
+      lmn_env.optimize_hash = FALSE;
+      lmn_env.optimize_hash_old = TRUE;
+#else
+      usage();
+#endif
+      break;
+    case 6000:
       lmn_env.dump = FALSE;
       break;
-#ifdef PROFILE
-    case 5001: /* 性能測定時のデータ収集用に仮設. 無視してください(gocho) */
+    case 6001: /* 性能測定時のデータ収集用に仮設. 無視してください(gocho) */
       lmn_env.benchmark = TRUE;
+      lmn_env.dump      = FALSE;
+      lmn_env.end_dump  = FALSE;
+      break;
+    case 6002:
+      lmn_env.property_dump = TRUE;
+      break;
+#ifdef DEBUG
+    case 6006:
+      lmn_env.debug_memenc = TRUE;
+      break;
+    case 6007:
+      lmn_env.debug_id    = TRUE;
+      break;
+    case 6008:
+      lmn_env.debug_delta = TRUE;
+      break;
+    case 6009:
+      lmn_env.debug_hash = TRUE;
+      break;
+#else
+    case 6006:
+    case 6007:
+    case 6008:
+    case 6009:
+      usage();
       break;
 #endif
     case 'I':
@@ -290,44 +417,80 @@ static int parse_options(int argc, char *argv[])
 /* lmn_env構造体の初期化 */
 static void init_env(void)
 {
-  lmn_env.trace = FALSE;
-  lmn_env.show_proxy = FALSE;
-  lmn_env.show_ruleset = TRUE;
-  lmn_env.show_rule = FALSE;
-  lmn_env.output_format = DEFAULT;
-  lmn_env.nd = FALSE;
-  lmn_env.nd_result = FALSE;
-  lmn_env.nd_dump = FALSE;
-  lmn_env.ltl = FALSE;
-  lmn_env.ltl_all = FALSE;
-  lmn_env.ltl_nd = FALSE;
-  lmn_env.por = FALSE;
-  lmn_env.translate = FALSE;
-  lmn_env.optimization_level = 0;
-  lmn_env.profile_level = 0;
-  lmn_env.load_path_num = 0;
-  lmn_env.automata_file = NULL;
-  lmn_env.propositional_symbol = NULL;
-  lmn_env.ltl_exp = NULL;
-  lmn_env.bfs = FALSE;
-  lmn_env.bfs_depth = 0;
-  lmn_env.bfs_final = FALSE;
-  lmn_env.bfs_has_final = FALSE;
-  lmn_env.mem_enc = FALSE;
-  lmn_env.compact_stack = FALSE;
-  lmn_env.optimize_hash_value = FALSE;
-  lmn_env.dump = TRUE;
-  lmn_env.benchmark = FALSE;
-#ifdef USE_JNI
+  lmn_env.trace                  = FALSE;
+  lmn_env.show_proxy             = FALSE;
+  lmn_env.show_chr               = FALSE;
+  lmn_env.show_ruleset           = TRUE;
+  lmn_env.output_format          = DEFAULT;
+  lmn_env.mc_dump_format         = CUI;
+  lmn_env.sp_dump_format         = SP_NONE;
+  lmn_env.nd                     = FALSE;
+  lmn_env.ltl                    = FALSE;
+  lmn_env.ltl_all                = FALSE;
+  lmn_env.por                    = FALSE;
+  lmn_env.show_transition        = FALSE;
+  lmn_env.translate              = FALSE;
+  lmn_env.optimization_level     = 3;
+  lmn_env.profile_level          = 0;
+  lmn_env.load_path_num          = 0;
+  lmn_env.automata_file          = NULL;
+  lmn_env.propositional_symbol   = NULL;
+  lmn_env.ltl_exp                = NULL;
+  lmn_env.bfs                    = FALSE;
+  lmn_env.scc_analysis           = FALSE;
+  lmn_env.depth_limits           = UINT_MAX;
+  lmn_env.nd_search_end          = FALSE;
+  lmn_env.mem_enc                = FALSE;
+  lmn_env.compact_stack          = TRUE;
+  lmn_env.delta_mem              = FALSE;
+  lmn_env.dump                   = TRUE;
+  lmn_env.end_dump               = FALSE;
+  lmn_env.benchmark              = FALSE;
+  lmn_env.property_dump          = FALSE;
+  lmn_env.enable_compress_mem    = TRUE;
+  lmn_env.z_compress             = FALSE;
+  lmn_env.parallel_prof          = FALSE;
+  lmn_env.enable_parallel        = FALSE;
+  lmn_env.core_num               = 1;
+  lmn_env.optimize_lock          = FALSE;
+  lmn_env.optimize_hash          = TRUE;
+  lmn_env.optimize_loadbalancing = TRUE;
+
   /* only jni-interactive mode */
-  lmn_env.interactive = FALSE;
-  lmn_env.normal_remain = FALSE;
-  lmn_env.normal_remaining = FALSE;
-  lmn_env.normal_cleaning = FALSE;
-  lmn_env.nd_remain = FALSE;
-  lmn_env.nd_remaining = FALSE;
-  lmn_env.nd_cleaning = FALSE;
+  lmn_env.interactive            = FALSE;
+  lmn_env.normal_remain          = FALSE;
+  lmn_env.normal_remaining       = FALSE;
+  lmn_env.normal_cleaning        = FALSE;
+  lmn_env.nd_remain              = FALSE;
+  lmn_env.nd_remaining           = FALSE;
+  lmn_env.nd_cleaning            = FALSE;
+
+#ifdef DEBUG
+  lmn_env.debug_memenc           = FALSE;
+  lmn_env.debug_id               = FALSE;
+  lmn_env.debug_delta            = FALSE;
+  lmn_env.debug_hash             = FALSE;
 #endif
+
+
+  /* for MC */
+  mc_data.mc_exit                = FALSE;
+  mc_data.is_format_states       = FALSE;
+  mc_data.do_search              = FALSE;
+  mc_data.do_exhaustive          = FALSE;
+  mc_data.do_parallel            = FALSE;
+  mc_data.has_property           = FALSE;
+  mc_data.property_automata      = NULL;
+  mc_data.propsyms               = NULL;
+  mc_data.errors                 = NULL;
+  mc_data.cycles                 = NULL;
+
+  por_data.Stack_POR             = NULL;
+  por_data.States_POR            = NULL;
+  por_data.ample_candidate       = NULL;
+  por_data.next_strans_id        = 0;
+  por_data.strans_independency   = NULL;
+  por_data.succ_strans           = NULL;
 }
 
 void init_default_system_ruleset();
@@ -339,16 +502,18 @@ void sym_tbl_init();
 /* 処理系内部の初期化処理 */
 static void init_internal(void)
 {
+  lmn_profiler_init();
   sym_tbl_init();
   lmn_functor_tbl_init();
   init_rules();
 
-  if(! lmn_env.translate){
+  if(!lmn_env.translate){
     init_so_handles();
     init_default_system_ruleset();
+    mpool_init();
     task_init();
     mem_isom_init();
-    /*   ext_init(); */
+/*    ext_init(); */
     sp_atom_init();
     ccallback_init();
     init_builtin_extensions();
@@ -356,37 +521,30 @@ static void init_internal(void)
     dumper_init();
     string_init();
     port_init();
-
-    if (lmn_env.profile_level > 0) {
-      runtime_status_init();
-    }
   }
 }
 
 static void finalize(void)
 {
-  if(! lmn_env.translate){
+  if(!lmn_env.translate){
     port_finalize();
     string_finalize();
     dumper_finalize();
 
+    if (lmn_env.por) free_por_vars();
     task_finalize();
     mem_isom_finalize();
-    /*   ext_finalize(); */
+/*    ext_finalize(); */
     ccallback_finalize();
     sp_atom_finalize();
-
+    free_atom_memory_pools();
     finalize_so_handles();
-
-    if (lmn_env.profile_level > 0) {
-      runtime_status_finalize();
-    }
   }
 
+  lmn_profiler_finalize();
   destroy_rules();
   lmn_functor_tbl_destroy();
   sym_tbl_destroy();
-  free_atom_memory_pools();
 }
 
 int main(int argc, char *argv[])
@@ -398,87 +556,97 @@ int main(int argc, char *argv[])
   optid = parse_options(argc, argv);
   init_internal();
 
-  if (optid < argc) {
+  if (optid >= argc) {
+    /** no input file */
+    if (lmn_env.interactive) {
+      run_jni_interactive(); /* interactive execution */
+    } else {
+      fprintf(stderr, "no input file\n");
+    }
+  } else {
     Vector *start_rulesets = vec_make(2);
 
-    /* load inputfiles */
-    for(i=optid; i<argc; ++i){
+    /** load input files */
+    for(i = optid; i < argc; i++){
       FILE *in;
-      char *f = argv[i];
       LmnRuleSet t;
+      char *f = argv[i];
 
-      if (!strcmp("-", f)) {
+      if (!strcmp("-", f)) { /* 標準入力からの読込み */
         in = stdin;
         t = load(stdin);
         vec_push(start_rulesets, (vec_data_t)t);
-      }
-      else{
+      } else {
         t = load_file(f);
-        if(t) vec_push(start_rulesets, (vec_data_t)t);
+        if (t) vec_push(start_rulesets, (vec_data_t)t);
       }
     }
-    /* まともな入力ファイルが無ければ抜ける(終了処理してないけど) */
+
     if(vec_num(start_rulesets) == 0){
+      /** detected invalid file */
       fprintf(stderr, "bad input file.\n");
-      exit(1);
     }
-
-    if (lmn_env.profile_level >= 1) {
-      status_start_running();
-    }
-
-    if (lmn_env.translate) { /*変換をする場合*/
-      if (!strcmp("-", argv[optid])) { /* argv[optid] is first input file name */
-        translate(NULL);
-      }
-      else{
-        translate(argv[optid]);
-      }
-    }
-    else{ /*実行をする場合*/
-      /* load directories(system & load path) */
-      load_il_files(SLIM_LIB_DIR);
-      for (i = lmn_env.load_path_num-1; i >= 0; i--) {
-        load_il_files(lmn_env.load_path[i]);
-      }
-
-      if (lmn_env.ltl) {
-        Automata automata;
-        PVector prop_defs;
-        int r;
-
-        r = mc_load_property(&automata, &prop_defs);
-        if (!r) {
-          run_mc(start_rulesets, automata, prop_defs);
+    else {
+      if (lmn_env.translate) {
+        /** lmntalコードからCへの変換実行の場合 */
+        /* TODO: 複数ファイル入力への対応 */
+        if (!strcmp("-", argv[optid])) { /* argv[optid] is first input file name */
+          translate(NULL);
         } else {
-          mc_explain_error(r);
+          translate(argv[optid]);
+        }
+      } else {
+        /** Start Execution */
+        if (lmn_env.profile_level >= 1) profile_start_slim();
+
+        /** load directories(system & load path) */
+        load_il_files(SLIM_LIB_DIR);
+        for (i = lmn_env.load_path_num - 1; i >= 0; i--) {
+          load_il_files(lmn_env.load_path[i]);
         }
 
-        automata_free(automata);
-        propsyms_free(prop_defs);
+        if (!lmn_env.nd) {
+          /* execution as Runtime */
+          lmn_run(start_rulesets);
+        } else {
+          /* execution as ModelChecker */
+          Automata automata = NULL;
+          PVector prop_defs = NULL;
+          int ret = 1;
+
+          if ((lmn_env.automata_file || lmn_env.ltl_exp)
+              && lmn_env.propositional_symbol) {
+            /* load property automata, definition of atomic propositional symbol */
+            ret = mc_load_property(&automata, &prop_defs);
+            if (!ret) {
+              mc_data.has_property      = TRUE;
+              mc_data.property_automata = automata;
+              mc_data.propsyms          = prop_defs;
+              if (lmn_env.scc_analysis) {
+                automata_analysis(mc_data.property_automata);
+              }
+            } else {
+              mc_explain_error(ret);
+              exit(1);
+            }
+          }
+
+          run_nd(start_rulesets);
+
+          if (!ret) {
+            automata_free(automata);
+            propsyms_free(prop_defs);
+          }
+        }
+
+        /** Finish Execution */
+        if (lmn_env.profile_level >= 1) {
+          profile_finish_slim();
+          dump_profile_data(stderr);
+        }
       }
-      else if (lmn_env.nd) {
-        run_nd(start_rulesets);
-      } else {
-        /* シミュレーション実行 */
-        lmn_run(start_rulesets);
-      }
+      vec_free(start_rulesets);
     }
-
-    vec_free(start_rulesets);
-#ifdef USE_JNI
-  } else if (lmn_env.interactive) {
-  // no file, but requested interactive mode
-  run_jni_interactive();
-#endif
-  } else {
-    fprintf(stderr, "no input file\n");
-    exit(1);
-  }
-
-  if (lmn_env.profile_level >= 1) {
-    status_finish_running();
-    output_runtime_status(stderr);
   }
 
   finalize();

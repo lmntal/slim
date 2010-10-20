@@ -104,4 +104,14 @@ void hashsetiter_next(HashSetIterator *it);
 #define hashsetiter_entry(I) ((I)->set->tbl[(I)->i])
 #define hashsetiter_isend(I) ((I)->i >= (I)->set->cap)
 
+inline static unsigned long internal_hashtbl_space_inner(SimpleHashtbl *ht)
+{
+  return (sizeof(struct HashEntry) * ht->cap);
+}
+
+inline static unsigned long internal_hashtbl_space(SimpleHashtbl *ht)
+{
+  return sizeof(struct SimpleHashtbl) + internal_hashtbl_space_inner(ht);
+}
+
 #endif /*INTERNAL_HASH_H*/
