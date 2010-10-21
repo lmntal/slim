@@ -2034,6 +2034,7 @@ static int mem_eq_enc_mols(LmnBinStr  bs,
 {
   unsigned int tag;
   BOOL ok;
+  BOOL rule_flag = FALSE;   /* ruleset有無の確認用フラグ */
   int tmp_i_bs, tmp_i_ref;
 
   while (*i_bs < bs->len) {
@@ -2113,21 +2114,27 @@ static int mem_eq_enc_mols(LmnBinStr  bs,
         break;
       }
     case TAG_MEM_END:
-      return TRUE;
+      {
+        if (!rule_flag && lmn_mem_ruleset_num(mem) != 0) return FALSE;
+        return TRUE;
+      }
     case TAG_RULESET1:
       {
         if (lmn_mem_ruleset_num(mem) != 1) return FALSE;
         if (!mem_eq_enc_ruleset(bs, i_bs, lmn_mem_get_ruleset(mem, 0))) return FALSE;
+        rule_flag = TRUE;
         break;
       }
     case TAG_RULESET:
       {
         if (!mem_eq_enc_rulesets(bs, i_bs, mem)) return FALSE;
+        rule_flag = TRUE;
         break;
       }
     case TAG_RULESET_UNIQ:
       {
         if (!mem_eq_enc_rulesets_uniq(bs, i_bs, mem)) return FALSE;
+        rule_flag = TRUE;
         break;
       }
     default:
