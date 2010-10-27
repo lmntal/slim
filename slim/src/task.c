@@ -1170,12 +1170,17 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           wtcp = LMN_NALLOC(LmnWord, wt_size);
           atcp = LMN_NALLOC(LmnByte, wt_size);
           ttcp = LMN_NALLOC(LmnByte, wt_size);
+#ifdef TIME_OPT
           n = RC_WORK_VEC_SIZE(rc);
+#else
+          n = wt_size;
+#endif
           for(i = 0; i < n; i++) {
             wtcp[i] = atcp[i] = ttcp[i] = 0;
           }
 
           /** copymapの情報を基に変数配列を書換える */
+#ifdef TIME_OPT
           for (i = 0; i < n; i++) {
             atcp[i] = at[i];
             ttcp[i] = tt[i];
@@ -1209,6 +1214,25 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
               wtcp[i] = wt[i];
             }
           }
+#else
+          for (i = 0; i < n; i++) {
+            atcp[i] = at[i];
+            if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
+              wtcp[i] = wt[i];
+            }
+            else if(proc_tbl_get(copymap, wt[i], &t)) {
+              wtcp[i] = t;
+            }
+            else if(wt[i] == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
+              wtcp[i] = (LmnWord)tmp_global_root;
+            }
+            else if (at[i] == LMN_DBL_ATTR) {
+              double *d = (double *)wtcp[i];
+              LMN_COPY_DBL_ATOM(d, wt[i]);
+              wtcp[i] = (LmnWord)d;
+            }
+          }
+#endif
           proc_tbl_free(copymap);
 
           /** 変数配列および属性配列をコピーと入れ換え, コピー側を書き換える */
