@@ -2004,6 +2004,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       ret_flag = lmn_mem_cmp_ground(srcvec, dstvec);
 
+      free_links(srcvec);
+      free_links(dstvec);
+
       if((!ret_flag && INSTR_EQGROUND == op) || (ret_flag && INSTR_NEQGROUND == op)) {
         return FALSE;
       }
@@ -3664,7 +3667,7 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       }
 
       srcvec = links_from_idxs((Vector *)wt[listi], wt, at);
-      
+
       switch (op) {
        case INSTR_REMOVEGROUND:
          dmem_root_remove_ground(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembrane *)wt[memi], srcvec);
