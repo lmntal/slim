@@ -1527,12 +1527,15 @@ void lmn_mem_free_ground(Vector *srcvec)
   HashSet *atoms;
   unsigned long i, t;
   HashSetIterator it;
+  LmnSAtom atom;
 
   ground_atoms(srcvec, NULL, &atoms, &t);
-  for (it = hashset_iterator(atoms);
-       !hashsetiter_isend(&it);
-       hashsetiter_next(&it)) {
-    free_symbol_atom_with_buddy_data(LMN_SATOM(hashsetiter_entry(&it)));
+
+  it = hashset_iterator(atoms);
+  while (hashsetiter_isend(&it)) {
+    atom = LMN_SATOM(hashsetiter_entry(&it));
+    hashsetiter_next(&it);
+    free_symbol_atom_with_buddy_data(atom);
   }
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
