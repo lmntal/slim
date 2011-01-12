@@ -3,7 +3,7 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.0.7], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [2.1.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
@@ -305,9 +305,40 @@ AC_TRY_RUN([int main() {
             ac_cv_func_sub=yes,
             ac_cv_func_sub=no))
 AC_MSG_RESULT($ac_cv_func_sub)
-if test "$ac_cv_func_add" = "yes"; then
+if test "$ac_cv_func_sub" = "yes"; then
   AC_DEFINE(HAVE_ATOMIC_SUB, [1], [Define to 1 if the system has the function `sub_and_fetch'.])
 fi
+
+AC_MSG_CHECKING(for builtin atomic_logical_and)
+AC_CACHE_VAL(ac_cv_func_logical_and,
+AC_TRY_RUN([int main() {
+              int x = 2, y = 1;
+              __sync_and_and_fetch(&x, y);
+              return 0;
+            }],
+            ac_cv_func_logical_and=yes,
+            ac_cv_func_logical_and=no))
+AC_MSG_RESULT($ac_cv_func_logical_and)
+if test "$ac_cv_func_logical_and" = "yes"; then
+  AC_DEFINE(HAVE_ATOMIC_LOGICAL_AND, [1], [Define to 1 if the system has the function `and_and_fetch'.])
+fi
+
+AC_MSG_CHECKING(for builtin atomic_logical_or)
+AC_CACHE_VAL(ac_cv_func_logical_or,
+AC_TRY_RUN([int main() {
+              int x = 1, y = 0;
+              __sync_or_and_fetch(&x, y);
+              return 0;
+            }],
+            ac_cv_func_logical_or=yes,
+            ac_cv_func_logical_or=no))
+AC_MSG_RESULT($ac_cv_func_logical_or)
+if test "$ac_cv_func_logical_or" = "yes"; then
+  AC_DEFINE(HAVE_ATOMIC_LOGICAL_OR, [1], [Define to 1 if the system has the function `or_and_fetch'.])
+fi
+
+
+
 
 # ---------------------------------------------------------------------
 # Get Enable Number of Processor Core
@@ -673,6 +704,8 @@ echo $SLIM_VERSION > VERSION
 AC_OUTPUT(Makefile \
           src/Makefile \
           src/genconfig \
+          src/verifier/Makefile \
+	  src/utility/Makefile \
           lib/Makefile \
           ext/Makefile \
           test/Makefile \

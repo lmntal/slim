@@ -38,10 +38,10 @@
  */
 
 #include "jni_lmntal.h"
-#include <ctype.h>
 #include "load.h"
 #include "task.h"
-#include "nd.h"
+#include "mc.h"
+#include <ctype.h>
 
 #define JNI_CYGPATH                "/usr/bin/cygpath"
 #define JNI_LMNTAL_JAR_REL_PATH    "/bin/lmntal.jar"
@@ -358,7 +358,7 @@ static void _run(FILE **fp)
 	}
 
 	if (lmn_env.nd) {
-		run_nd(start_rulesets);
+		run_mc(start_rulesets);
 	} else {
 	  lmn_run(start_rulesets);
 	}

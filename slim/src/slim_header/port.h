@@ -45,7 +45,7 @@
 #ifndef LMN_PORT_H
 #define LMN_PORT_H
 
-#include "../lmntal.h"
+#include "lmntal.h"
 #include "string.h"
 
 struct LmnPort {

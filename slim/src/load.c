@@ -286,9 +286,9 @@ void dump_il(IL il)
    棄する。ラベルは各ルールにローカルなものとして処理している */
 typedef struct Context {
   /* ラベルのからラベルのある位置の対応*/
-  st_table *label_to_loc;
+  st_table_t label_to_loc;
   /* ラベルを参照している位置と参照しているラベルの対応 */
-  st_table *loc_to_label_ref;
+  st_table_t loc_to_label_ref;
 
   /* 書き込み位置とbyte_seqのキャパシティ */
   unsigned int loc, cap;

@@ -129,22 +129,22 @@ inline void property_react_cxt_init(struct ReactCxt *cxt);
 inline void property_react_cxt_destroy(struct ReactCxt *cxt);
 inline void mem_react_cxt_init(struct ReactCxt *cxt);
 inline void mem_react_cxt_destroy(struct ReactCxt *cxt);
-inline void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state_id);
-inline void nd_react_cxt_destroy(struct ReactCxt *cxt);
-inline void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
+inline void mc_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state_id);
+inline void mc_react_cxt_destroy(struct ReactCxt *cxt);
+inline void mc_react_cxt_add_expanded(struct ReactCxt *cxt,
                                       LmnMembrane *mem,
                                       LmnRule rule);
-inline void nd_react_cxt_add_mem_delta(struct ReactCxt *cxt,
+inline void mc_react_cxt_add_mem_delta(struct ReactCxt *cxt,
                                        struct MemDeltaRoot *d,
                                        LmnRule rule);
 
-static inline LmnWord nd_react_cxt_expanded_pop(struct ReactCxt *cxt) {
+static inline LmnWord mc_react_cxt_expanded_pop(struct ReactCxt *cxt) {
   vec_pop(RC_EXPANDED_RULES(cxt));
   return vec_pop(RC_ND_DELTA_ENABLE(cxt) ? RC_MEM_DELTAS(cxt)
                                          : RC_EXPANDED(cxt));
 }
 
-static inline unsigned int nd_react_cxt_expanded_num(struct ReactCxt *cxt) {
+static inline unsigned int mc_react_cxt_expanded_num(struct ReactCxt *cxt) {
   return RC_ND_DELTA_ENABLE(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
                                  : vec_num(RC_EXPANDED(cxt));
 }

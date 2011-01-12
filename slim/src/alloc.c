@@ -121,7 +121,7 @@ void free_atom_memory_pools(void)
 
 /* TODO:
  *   headerに持っていってinline staticにした方が良い?
- *   memory exhausted時にもprofile情報をdumpさせる */
+ *   memory exhausted時にもprofile情報をdumpさせたい */
 
 void *lmn_calloc(size_t num, size_t size)
 {

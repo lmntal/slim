@@ -38,9 +38,9 @@
  */
 
 #include <stdio.h>
-#include "../lmntal_ext.h"
-#include "../react_context.h"
-#include "../slim_header/memstack.h"
+#include "lmntal_ext.h"
+#include "react_context.h"
+#include "slim_header/memstack.h"
 
 LMN_EXTERN void init_nlmem(void);
 

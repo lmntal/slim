@@ -1,47 +1,78 @@
+SUBDIRS = utility verifier
+
 bin_PROGRAMS = slim
 
-slim_LDADD = -ldl # -lltdl
-slim_LDFLAGS = -rdynamic
+slim_LDADD =   -ldl                         \
+               ./verifier/liblmn_verifier.a \
+               ./utility/liblmn_utility.a  #		-lltdl
+
+slim_LDFLAGS = -rdynamic      \
+               -L./verifier   \
+               -L./utility
+
+slim_CFLAGS =  -I./verifier   \
+               -I./utility
+
+slim_DEPENDENCIES = ./verifier/liblmn_verifier.a \
+                    ./utility/liblmn_utility.a
 
 AM_LFLAGS=-P $(patsubst %_lexer.l,%,$<)  \
            --header-file=$(patsubst %.l,%.h,$<) -o $(patsubst %.l,%.c,$<)
 AM_YFLAGS=-d -p $(patsubst %_parser.y,%,$<) -o $(patsubst %.y,%.c,$<)
 
-PARSERS := il_parser il_lexer nc_parser nc_lexer propsym_parser propsym_lexer
+PARSERS := il_parser il_lexer
 PARSER_HEADER := $(patsubst %, %.h, $(PARSERS))
 PARSER_SOURCE := $(patsubst %, %.c, $(PARSERS))
 
 # 事前に必要なファイル
-BUILT_SOURCES = arch.h $(PARSER_SOURCE) translate_generated.c interpret_generated.c
+BUILT_SOURCES = arch.h                       \
+                $(PARSER_SOURCE)             \
+                translate_generated.c        \
+                interpret_generated.c
+                
 CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c interpret_generated.c
 
 # .yファイルは .lより先に書く
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
-slim_SOURCES = main.c membrane.c rule.c alloc.c error.h error.c task.c memory_pool.c internal_hash.c \
-	vector.c dumper.c system_ruleset.c \
-	atom.h dumper.h instruction.h internal_hash.h lmntal.h membrane.h \
-	memory_pool.h rule.h system_ruleset.h task.h vector.h st.c symbol.h symbol.c functor.h functor.c \
-	syntax.h syntax.c il_parser.y il_lexer.l instruction.c load.h load.c st.h arch.h \
-	mc.h mc.c mhash.h mhash.c por.h por.c runtime_status.h runtime_status.c \
-	nc_parser.y nc_lexer.l automata.h automata.c \
-	lmntal_system_adapter.h lmntal_system_adapter.c \
-	propsym_parser.y propsym_lexer.l \
-	propositional_symbol.h propositional_symbol.c ltl2ba_adapter.h ltl2ba_adapter.c \
-	util.h util.c process_util.h process_util.c  file_util.h file_util.c lmntal_ext.h \
-	ccallback.h ccallback.c env.c \
-	ext/init_exts.c ext/integer.c ext/atomic.c ext/nlmem.c ext/io.c ext/initial_ruleset.c \
-	ext/nd_conf.c \
-	special_atom.h special_atom.c string.c slim_header/string.h port.c slim_header/port.h \
-	memstack.c slim_header/memstack.h \
-	react_context.h react_context.c nd.c nd.h mem_encode.h mem_encode.c \
-	visitlog.h visitlog.c delta_membrane.h delta_membrane.c \
-	state.h state.c statespace.c statespace.h \
-	parallel.c parallel.h lmntal_thread.c lmntal_thread.h queue.c queue.h \
-	stack_slicing.c stack_slicing.h work_pool.c work_pool.h \
-	binstr_compress.c binstr_compress.h \
-	jni_lmntal.h jni_lmntal.c \
-	translate.c translate.h translate_generated.c translate_generator.rb translate_generator.in so.h \
-	interpret_generated.c
+slim_SOURCES =                                                     \
+	main.c                          lmntal.h                         \
+	alloc.c                         atom.h                           \
+	membrane.c                      membrane.h                       \
+	rule.c                          rule.h                           \
+	error.c                         error.h                          \
+	task.c                          task.h                           \
+	memory_pool.c                   memory_pool.h                    \
+	dumper.c                        dumper.h                         \
+	system_ruleset.c                system_ruleset.h                 \
+	instruction.c                   instruction.h                    \
+	symbol.c                        symbol.h                         \
+	functor.c                       functor.h                        \
+	syntax.c                        syntax.h                         \
+	react_context.c                 react_context.h                  \
+	il_parser.y                     il_lexer.l                       \
+	load.c                          load.h                           \
+	env.c                           arch.h                           \
+	runtime_status.c                runtime_status.h                 \
+	lmntal_system_adapter.c         lmntal_system_adapter.h          \
+	special_atom.c                  special_atom.h                   \
+	memstack.c                      slim_header/memstack.h           \
+	string.c                        slim_header/string.h             \
+	port.c                          slim_header/port.h               \
+	jni_lmntal.c                    jni_lmntal.h                     \
+	ccallback.c                     ccallback.h                      \
+	translate.c                     translate.h                      \
+	translate_generated.c           translate_generator.rb           \
+	translate_generator.in          so.h                             \
+	interpret_generated.c                                            \
+	\
+	lmntal_ext.h                                                     \
+	ext/init_exts.c                                                  \
+	ext/integer.c                                                    \
+	ext/atomic.c                                                     \
+	ext/nlmem.c                                                      \
+	ext/io.c                                                         \
+	ext/initial_ruleset.c                                            \
+	ext/nd_conf.c
 #	ext.h ext.c 
 
 if ENABLE_JNI
@@ -55,7 +86,7 @@ slim_OBJS =
 if ENABLE_TCMALLOC
 slim_LDADD += -ltcmalloc_minimal_in_slim
 slim_LDFLAGS += -L../third_party/google-perftools-1.6/.libs -rpath $(prefix)/lib
-slim_DEPENDENCIES = ../third_party/google-perftools-1.6/libtcmalloc_minimal_in_slim.la
+slim_DEPENDENCIES += ../third_party/google-perftools-1.6/libtcmalloc_minimal_in_slim.la
 endif
 
 EXTRA_DIST := $(PARSER_SOURCE) $(PARSER_HEADER)

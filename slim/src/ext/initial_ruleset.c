@@ -38,11 +38,11 @@
  */
 
 #include <stdio.h>
-#include "../rule.h"
-#include "../membrane.h"
-#include "../react_context.h"
-#include "../slim_header/memstack.h"
-#include "../util.h"
+#include "rule.h"
+#include "membrane.h"
+#include "react_context.h"
+#include "slim_header/memstack.h"
+#include "util.h"
 
 void init_initial_ruleset(void);
 

@@ -210,7 +210,7 @@ void il_free(IL il);
 struct lexer_context {
   /* 一つの中間言語ファイルにローカルなルールセットのIDとグローバルなIDの
      対応表 */
-  st_table *ruleset_id_tbl;
+  st_table_t ruleset_id_tbl;
 };
 
 #endif

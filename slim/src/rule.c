@@ -486,7 +486,7 @@ void lmn_add_initial_system_rule(LmnRule rule)
  * Module
  */
 
-st_table *module_table;
+st_table_t module_table;
 
 static void init_module_table()
 {

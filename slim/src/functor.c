@@ -112,7 +112,8 @@ static struct st_hash_type type_functorhash = {
   functor_hash
 };
 
-st_table *functor_id_tbl; /* ファンクタ構造体からIDへの対応を要素に持つのテーブル */
+
+st_table_t functor_id_tbl; /* ファンクタ構造体からIDへの対応を要素に持つのテーブル */
 
 /* for debug */
 #ifdef DEBUG

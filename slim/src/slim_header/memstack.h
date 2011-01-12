@@ -41,8 +41,8 @@
 #define LMN_MEMSTACK_H
 
 
-#include "../vector.h"
-#include "../react_context.h"
+#include "vector.h"
+#include "react_context.h"
 
 inline LmnMemStack lmn_memstack_make(void);
 inline void lmn_memstack_free(LmnMemStack memstack);

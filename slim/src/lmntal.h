@@ -193,11 +193,11 @@ LMN_EXTERN void *lmn_malloc(size_t num);
 LMN_EXTERN void *lmn_realloc(void *p, size_t num);
 LMN_EXTERN void lmn_free (void *p);
 
-#define LMN_NALLOC(TYPE, NUM)          ((TYPE *)lmn_malloc(sizeof(TYPE)*(NUM)))
+#define LMN_NALLOC(TYPE, NUM)          ((TYPE *)lmn_malloc(sizeof(TYPE) * (NUM)))
 #define LMN_CALLOC(TYPE, NUM)          ((TYPE *)lmn_calloc((NUM), sizeof(TYPE)))
 #define LMN_MALLOC(TYPE)               ((TYPE *)lmn_malloc(sizeof(TYPE)))
 #define LMN_REALLOC(TYPE, P, NUM)      ((TYPE *)lmn_realloc((P), (NUM) * sizeof(TYPE)))
-#define LMN_FREE(P)                    (lmn_free((void*)(P)))
+#define LMN_FREE(P)                    (lmn_free((void *)(P)))
 
 /* Assertion */
 #ifdef DEBUG
@@ -222,74 +222,91 @@ struct LmnEnv {
   BOOL show_proxy;
   BOOL show_ruleset;
   BOOL show_chr;
+
   BOOL nd;
   BOOL ltl;
   BOOL ltl_all;
-  BOOL por;          /* to enable partial order reduction for nondeterministic execution or LTL model checking */
+  BOOL enable_por;          /* to enable partial order reduction for nondeterministic execution or LTL model checking */
+
   BOOL show_transition;
   BOOL translate;
-  enum OutputFormat output_format;
-  enum MCdumpFormat mc_dump_format;
-  enum SPdumpFormat sp_dump_format;
   BYTE optimization_level;
   BYTE profile_level;
-  int load_path_num;
-  char *load_path[256];
-  char *automata_file;         /* never claim file */
-  char *propositional_symbol;  /* file for propositional symbol definitions */
-  char *ltl_exp;
 
-  unsigned int depth_limits;
   BOOL bfs;
   BOOL nd_search_end;
   BOOL mem_enc;
   BOOL compact_stack;
 
+  unsigned int depth_limits;
+  unsigned int core_num;
+
   BOOL enable_compress_mem;
   BOOL delta_mem;
   BOOL z_compress;
-  BOOL scc_analysis;
+  BOOL prop_scc_driven;
+
   BOOL property_dump;
-  BOOL parallel_prof;
   BOOL enable_parallel;
   BOOL optimize_loadbalancing;
-
-  unsigned int core_num;
   BOOL optimize_lock;
+
   BOOL optimize_hash;
   BOOL dump;
   BOOL end_dump;
   BOOL benchmark;
-#ifdef PROFILE
-  BOOL optimize_hash_old;
-#endif
+
+  /* LTL model checking algorithms */
+  BOOL enable_owcty;
+  BOOL enable_map;
+  BOOL enable_bledge;
+  BOOL bfs_layer_sync;
+  BOOL enable_map_heuristic;
 
   /* only jni-interactive mode*/
   BOOL interactive;
   BOOL normal_remain;
   BOOL normal_remaining;
   BOOL normal_cleaning;
+
   BOOL nd_remain;
   BOOL nd_remaining;
   BOOL nd_cleaning;
 
+#ifdef PROFILE
+  BOOL optimize_hash_old;
+  BOOL prof_no_memeq;
+#endif
+
 #ifdef DEBUG
+  BOOL debug_isomor;
   BOOL debug_memenc;
   BOOL debug_delta;
   BOOL debug_id;
   BOOL debug_hash;
+  BOOL debug_mc;
 #endif
+
+  enum OutputFormat output_format;
+  enum MCdumpFormat mc_dump_format;
+  enum SPdumpFormat sp_dump_format;
+  int load_path_num;
+  char *load_path[256];
+  char *automata_file;         /* never claim file */
+  char *propositional_symbol;  /* file for propositional symbol definitions */
+  char *ltl_exp;
 };
 
 extern struct LmnEnv  lmn_env;
 extern struct Vector *lmn_id_pool;
+extern unsigned int lmn_thread_num;
 
 /*----------------------------------------------------------------------
  * Others
  */
+void slim_version(FILE *f);
 
-#define env_get_state_id()     (lmn_state_id)
-#define env_gen_state_id()     (lmn_state_id++)
+#define env_gen_state_id()     (lmn_state_id += lmn_thread_num)
 
 #ifdef TIME_OPT
 #  define env_reset_proc_ids() (lmn_next_id = 1U)

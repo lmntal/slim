@@ -38,7 +38,7 @@
 
 #include "translate.h"
 #include "lmntal_thread.h"
-#include "delta_membrane.h"
+#include "verifier/delta_membrane.h"
 #include "load.h"
 #include "syntax.h"
 #include "arch.h"
@@ -200,7 +200,7 @@ BOOL tr_instr_commit_finish(struct ReactCxt  *rc,
     atcp = *pat_temp;
     ttcp = *ptt_temp;
 
-    nd_react_cxt_add_expanded(rc, tmp_global_root, rule); /* このruleはNULLではまずい気がする */
+    mc_react_cxt_add_expanded(rc, tmp_global_root, rule); /* このruleはNULLではまずい気がする */
 
     if (lmn_rule_get_history_tbl(rule) && lmn_rule_get_pre_id(rule) != 0) {
       st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule), 0);
@@ -531,7 +531,7 @@ static int count_rulesets()
 
 static int count_modules()
 {
-  extern st_table *module_table;
+  extern st_table_t module_table;
   return st_num(module_table);
 }
 
@@ -690,7 +690,7 @@ static int print_trans_module_f(st_data_t key, st_data_t value, st_data_t counte
 
 static void print_trans_modules(const char *filename)
 {
-  extern st_table *module_table;
+  extern st_table_t module_table;
   int count, counter;
 
   count   = count_modules();

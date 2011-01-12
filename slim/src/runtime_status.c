@@ -179,7 +179,6 @@ void lmn_profiler_init()
   lmn_prof.end_cpu_time_main     = LMN_NALLOC(double, n);
   lmn_prof.state_num_stored      = 0;
   lmn_prof.state_num_end         = 0;
-  lmn_prof.error_num             = 0;
   lmn_prof.accept_num            = 0;
   lmn_prof.invalid_end_num       = 0;
   lmn_prof.mhash_num             = 0;
@@ -273,11 +272,11 @@ void profile_statespace(StateSpace states)
 {
   lmn_prof.state_num_stored = state_space_num(states);
   lmn_prof.state_num_end    = state_space_end_num(states);
-  if (mc_data.do_search) {
-    lmn_prof.error_num        = mc_get_error_num();
+
+  if (lmn_env.profile_level >= 2) {
+    lmn_prof.statespace_space = state_space_space(states);
+    state_space_foreach(states, profile_state_f, DEFAULT_ARGS);
   }
-  lmn_prof.statespace_space = state_space_space(states);
-  state_space_foreach(states, profile_state_f, DEFAULT_ARGS);
 }
 
 static void profile_state_f(State *s)
@@ -287,12 +286,7 @@ static void profile_state_f(State *s)
   /* メモリ */
   lmn_prof.state_space += sizeof(State);
   if (state_mem(s)) {
-    LmnMembrane *src, *dst;
-    src = state_mem(s);
-    lmn_prof.membrane_space += lmn_mem_space(src);
-    ALL_MEMS(src, dst, {
-      lmn_prof.membrane_space += lmn_mem_space(dst);
-    });
+    lmn_prof.membrane_space += lmn_mem_root_space(state_mem(s));
   }
   if (state_mem_binstr(s)) {
     lmn_prof.binstr_space   += lmn_binstr_space(state_mem_binstr(s));
@@ -311,12 +305,10 @@ static void profile_state_f(State *s)
 
   if (!(is_encoded(s) && is_dummy(s))) {
     if (mc_data.has_property) {
-      AutomataState atm = automata_get_state(mc_data.property_automata,
-                                             state_property_state(s));
-      if (atmstate_is_accept(atm)) {
+      if (state_is_accept(s)) {
         lmn_prof.accept_num++;
       }
-      if (atmstate_is_end(atm)) {
+      if (state_is_end(s)) {
         lmn_prof.invalid_end_num++;
       }
     }
@@ -349,6 +341,107 @@ void calc_statespace_space(MCProfiler *p, StateSpace states)
     lmn_prof.statespace_space += (&p->spaces[i])->space.cur;
   }
 }
+
+
+static void dump_execution_stat(FILE *f)
+{
+  char *profile, *timeopt, *tcmalloc, *debug;
+
+#ifdef PROFILE
+  profile = "ON";
+#else
+  profile = "OFF";
+#endif
+#ifdef TIME_OPT
+  timeopt = "ON";
+#else
+  timeopt = "OFF";
+#endif
+#ifdef HAVE_TCMALLOC
+  tcmalloc = "ON";
+#else
+  tcmalloc = "OFF";
+#endif
+#ifdef DEBUG
+  debug    = "ON";
+#else
+  debug    = "OFF";
+#endif
+
+  fprintf(f, "\n== %-20s ====================================\n"
+           , lmn_env.nd ? "Verification Mode" : "Simulation Mode");
+  fprintf(f, "%-9s: ", "SYSTEM");
+  slim_version(f);
+  fprintf(f, "---------:--------------------------------------------------\n");
+  fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s  %-8s=%6s\n"
+           , "CONFIGURE"
+           , "profile"  , profile
+           , "timeopt"  , timeopt
+           , "tcmalloc" , tcmalloc);
+  fprintf(f, "%-9s: %-8s=%6s\n"
+           , ""
+           , "debug"    , debug);
+  if (lmn_env.nd) {
+    char *strategy, *expr, *heuristic;
+
+    if (lmn_env.bfs) {
+      strategy = lmn_env.bfs_layer_sync ? "LSync" : "BFS";
+    } else {
+      strategy = "DFS";
+    }
+
+    if (!lmn_env.ltl) {
+      expr = "NONE";
+      heuristic = "NONE";
+    }
+    else {
+      if (lmn_env.enable_map) {
+        expr = "MAP";
+      } else if (lmn_env.enable_owcty) {
+        expr = "OWCTY";
+      } else if (lmn_env.enable_bledge) {
+        expr = "BLE";
+      } else if (lmn_env.core_num == 1 && !lmn_env.enable_parallel) {
+        expr = "NDFS";
+      } else {
+        expr = "Unk.";
+      }
+
+      if (lmn_env.enable_map_heuristic) {
+        heuristic = "MAP";
+      } else {
+        heuristic = "NONE";
+      }
+    }
+
+    fprintf(f, "---------:--------------------------------------------------\n");
+    fprintf(f, "%-9s: %-8s=%6u  %-8s=%6s  %-8s=%6s\n"
+             , "PALLAREL"
+             , "workers"  , lmn_env.core_num
+             , "strategy" , strategy
+             , "loadBal." , lmn_env.optimize_loadbalancing && mc_data.do_parallel
+                           ? "OPT" : "ORG");
+    fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s  %-8s=%6s\n"
+             , "GENERATOR"
+             , "compress" , lmn_env.enable_compress_mem ? "ON" : "OFF"
+             , "compact"  , lmn_env.compact_stack ? "ON" : "OFF"
+             , "rehasher" , lmn_env.optimize_hash ? "ON" : "OFF");
+    fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s  %-8s=%6s\n"
+             , ""
+             , "mem_id"   , lmn_env.mem_enc       ? "ON" : "OFF"
+             , "delta"    , lmn_env.delta_mem     ? "ON" : "OFF"
+             , "p.o.r."   , lmn_env.enable_por    ? "ON" : "OFF");
+    fprintf(f, "%-9s: %-8s=%6s %-9s=%6s  %-8s=%6s\n"
+             , "EXPLORER"
+             , "strategy" , expr
+             , "heuristic", heuristic
+             , "prop_scc" , lmn_env.prop_scc_driven && mc_data.has_property
+                             ? "DRIVEN" : "NONE");
+  }
+  fprintf(f,   "============================================================\n");
+  fprintf(f,   "\n");
+}
+
 
 void dump_profile_data(FILE *f)
 {
@@ -395,6 +488,10 @@ void dump_profile_data(FILE *f)
   }
 
   if (lmn_env.profile_level >= 1) {
+    if (lmn_env.profile_level >= 2) {
+      dump_execution_stat(f);
+    }
+
     fprintf(f, "\n== Static Profiler Report ==================================\n");
     fprintf(f, "%-20s%8s  : %15.2lf\n", "Wall Time (sec)",        "Total", tmp_total_wall_time);
     fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                      " Exec", tmp_total_wall_time_main);
@@ -407,7 +504,7 @@ void dump_profile_data(FILE *f)
       fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg.", tmp_total_cpu_time_main);
       fprintf(f, "%-18s%10s  : %15s\n",    " ",           "---------", "-------------------");
       for (i = 0; i < lmn_env.core_num; i++) {
-        fprintf(f, "%-12s%14s%2u  : %15.2lf\n", " ", "Thread", i,
+        fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i,
                     lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i]);
       }
     }
@@ -427,7 +524,7 @@ void dump_profile_data(FILE *f)
 
         fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
         fprintf(f,   "%4s %8s : %9s %9s %9s %12s",
-            "[id]", "[name]", "[# Tr.]", "[# Ap.]", "[# BT.]", "[CPU U.(msec)]\n");
+            "[id]", "[name]", "[# Tr.]", "[# Ap.]", "[# Ba.]", "[CPU U.(msec)]\n");
 
         for (i = 0; i < vec_num(&v); i++) {
           RuleProfiler *rp = (RuleProfiler *)vec_get(&v, i);
@@ -439,7 +536,7 @@ void dump_profile_data(FILE *f)
               r_others->backtrack += rp->backtrack;
             } else {
               /* 一応ナノセックまで取得できるが, 精度は環境依存 */
-              fprintf(f, "@%-3d %8s : %9lu %9lu %9lu %13.3lf\n",
+              fprintf(f, "@%-3d %8.8s : %9lu %9lu %9lu %13.1lf\n",
                          rp->ref_rs_id,
                          lmn_id_to_name(lmn_rule_get_name(rp->src)),
                          rp->trial.called_num,
@@ -453,7 +550,7 @@ void dump_profile_data(FILE *f)
             r_total->trial.total_time += rp->trial.total_time;
           }
         }
-        fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.3lf\n",
+        fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.1lf\n",
                    " - ",
                    "OTHERS",
                    r_others->trial.called_num,
@@ -461,7 +558,7 @@ void dump_profile_data(FILE *f)
                    r_others->backtrack,
                    r_others->trial.total_time / 1e-6);
         fprintf(f,   "------------------------------------------------------------\n");
-        fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.3lf\n",
+        fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.1lf\n",
                    " - ",
                    "Total",
                    r_total->trial.called_num,
@@ -481,11 +578,9 @@ void dump_profile_data(FILE *f)
       fprintf(f, "%-18s%10s  : %15lu\n",   " ",                  "Successors", lmn_prof.transition_num);
       fprintf(f, "%-18s%10s  : %15lu\n",   " ",                  "Terminates", lmn_prof.state_num_end);
       if (mc_data.has_property) {
-        if (mc_data.do_search) {
-          fprintf(f, "%-10s%18s  : %15lu\n",   " ",             "Error / Cycle", lmn_prof.error_num);
-        }
         fprintf(f, "%-10s%18s  : %15lu\n",   " ",                  "Accepted", lmn_prof.accept_num);
         fprintf(f, "%-10s%18s  : %15lu\n",   " ",              "Invalid Ends", lmn_prof.invalid_end_num);
+        fprintf(f, "%-10s%18s  : %15s\n",    " ",           "Accepting Cycle", mc_data.error_exist ? "FOUND" : "NOT FOUND");
       }
       fprintf(f,   "------------------------------------------------------------\n");
       fprintf(f, "%-20s%8s  : %15lu\n",   "# of Hash Values",         "Total", total_hash_num);
@@ -503,33 +598,6 @@ void dump_profile_data(FILE *f)
       }
       fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ",       "Transitions", (double)lmn_prof.transition_space / 1024 / 1024, (double)lmn_prof.transition_space / lmn_prof.state_num_stored);
       fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ",        "StateSpace", (double)lmn_prof.statespace_space / 1024 / 1024, (double)lmn_prof.statespace_space / lmn_prof.state_num_stored);
-#ifdef DEVEL
-      fprintf(f,   "------------------------------------------------------------\n");
-#ifdef DEBUG
-      fprintf(f, "%-8s%20s  : %15s\n",   "Option ",              "Debug Mode", "ON");
-#else
-      fprintf(f, "%-8s%20s  : %15s\n",   "Option ",              "Debug Mode", "OFF");
-#endif /* DEBUG */
-#ifdef PROFILE
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",                  "Profile Mode", "ON");
-#else
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",                  "Profile Mode", "OFF");
-#endif /* PROFILE */
-#ifdef TIME_OPT
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",                  "Time Opt. Mode", "ON");
-#else
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",                  "Time Opt. Mode", "OFF");
-#endif /* PROFILE */
-      fprintf(f, "%-8s%20s  : %15d\n",   " ",                 "# of  Threads", lmn_env.core_num);
-      fprintf(f, "%-4s%24s  : %15s\n",   " ",         "Dynamic Load Balancer", lmn_env.optimize_loadbalancing ? "YES" : "NO");
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",             "Property Automata", mc_data.has_property  ? "YES" : "NO");
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",            "LTL Model Checking", lmn_env.ltl           ? "YES" : "NO");
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",               "Search Strategy", lmn_env.bfs           ? "BFS" : "DFS");
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",              "Compact OpenNode", lmn_env.compact_stack ? "YES" : "NO");
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",                "Delta Membrane", lmn_env.delta_mem     ? "YES" : "NO");
-      fprintf(f, "%-4s%24s  : %15s\n",   " ",       "Partial Order Reduction", lmn_env.por           ? "YES" : "NO");
-      fprintf(f, "%-8s%20s  : %15s\n",   " ",            "Symmetry Reduction", "NO");
-#endif /* DEVEL */
       fprintf(f,   "============================================================\n");
 
       if (lmn_env.profile_level >= 3) {
@@ -570,18 +638,20 @@ void dump_profile_data(FILE *f)
         fprintf(f,   "------------------------------------------------------------\n");
         fprintf(f, "\n");
         fprintf(f,   "-- Memory Performance --------------------------------------\n");
-        if (lmn_env.core_num >= 2) {
-          fprintf(f, "How to show peak performance in parallization? under const.\n");
-        } else {
-          fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]", "[Peak Num]");
-          for (i = 0; i < ARY_SIZEOF(total.spaces); i++) {
-            fprintf(f, "%-24s: %10.2lf %10.2lf %10lu\n",
-                       profile_space_id_to_name(i),
-                       (double)total.spaces[i].space.cur / 1024 / 1024,
-                       (double)total.spaces[i].space.peak / 1024 / 1024,
-                       total.spaces[i].num.peak);
-          }
-        }
+	fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]", "[Peak Num]");
+	for (i = 0; i < ARY_SIZEOF(total.spaces); i++) {
+          if (lmn_env.core_num >= 2) {
+	    fprintf(f, "%-24s: %10.2lf\n",
+                    profile_space_id_to_name(i),
+		    (double)total.spaces[i].space.cur / 1024 /1024);
+	  } else {
+	    fprintf(f, "%-24s: %10.2lf %10.2lf %10lu\n",
+		    profile_space_id_to_name(i),
+		    (double)total.spaces[i].space.cur / 1024 / 1024,
+		    (double)total.spaces[i].space.peak / 1024 / 1024,
+		    total.spaces[i].num.peak);
+	  }
+	}
         fprintf(f,   "------------------------------------------------------------\n");
         fprintf(f, "\n");
         fprintf(f,   "-- State Management System (Open Hashing) ------------------\n");
@@ -623,10 +693,10 @@ static void mc_profiler_make_up_report(MCProfiler *total)
       total->spaces[data_i].num.cur    += p->spaces[data_i].space.cur;
       total->spaces[data_i].num.peak   += p->spaces[data_i].num.peak;
     }
-    total->spaces[data_i].space.cur  /= lmn_env.core_num;
-    total->spaces[data_i].space.peak /= lmn_env.core_num;
-    total->spaces[data_i].num.cur    /= lmn_env.core_num;
-    total->spaces[data_i].num.peak   /= lmn_env.core_num;
+    //    total->spaces[data_i].space.cur  /= lmn_env.core_num;
+    //total->spaces[data_i].space.peak /= lmn_env.core_num;
+    //total->spaces[data_i].num.cur    /= lmn_env.core_num;
+    //total->spaces[data_i].num.peak   /= lmn_env.core_num;
   }
 }
 

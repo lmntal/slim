@@ -207,17 +207,6 @@ void free_atomlist(AtomListEntry *as);
     }));                                                                       \
   } while (0)
 
-#define ALL_MEMS(MEM, V, CODE)                                                 \
-  do {                                                                         \
-    LmnMembrane *__next;                                                       \
-    for ((V) = (MEM)->child_head; (V); (V) = __next) {                         \
-      __next = (V)->next;                                                      \
-      (CODE);                                                                  \
-    }                                                                          \
-  } while(0)
-
-
-
 
 #define LMN_MEM_NAME_ID(MP)   ((MP)->name)
 #define LMN_MEM_NAME(MP)      LMN_SYMBOL_STR(LMN_MEM_NAME_ID(MP))
@@ -252,6 +241,7 @@ LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid);
 void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr);
 void mem_remove_symbol_atom(LmnMembrane *mem, LmnSAtom atom);
 
+unsigned long lmn_mem_root_space(LmnMembrane *mem);
 unsigned long lmn_mem_space(LmnMembrane *mem);
 
 void lmn_mem_remove_data_atom(LmnMembrane *mem,

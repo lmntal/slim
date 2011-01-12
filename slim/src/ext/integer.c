@@ -43,10 +43,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>
-#include "../lmntal_ext.h"
-#include "../slim_header/string.h"
-#include "../special_atom.h"
-#include "../visitlog.h"
+#include "lmntal_ext.h"
+#include "slim_header/string.h"
+#include "special_atom.h"
+#include "visitlog.h"
 
 void init_integer(void);
 

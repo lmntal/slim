@@ -43,8 +43,8 @@
 #include "lmntal.h"
 #include "lmntal_thread.h"
 #include "st.h"
-#include "nd.h"
-#include "statespace.h"
+#include "verifier/mc.h"
+#include "verifier/statespace.h"
 #include "rule.h"
 #if defined (TIME_WITH_SYS_TIME)
 #  include <time.h>

@@ -422,7 +422,7 @@ unsigned long lmn_mem_space(LmnMembrane *mem)
     ret += sizeof(struct AtomListEntry);
     ret += internal_hashtbl_space_inner(&ent->record);
     EACH_ATOM(atom, ent, ({
-      ret += sizeof(LmnWord) * LMN_SATOM_WORDS(LMN_SATOM_GET_FUNCTOR(atom));
+      ret += sizeof(LmnWord) * LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(atom)));
     }));
   }));
 
@@ -433,6 +433,19 @@ unsigned long lmn_mem_space(LmnMembrane *mem)
     if (lmn_ruleset_is_copy(rs)) {
       ret += lmn_ruleset_space(rs);
     }
+  }
+
+  return ret;
+}
+
+unsigned long lmn_mem_root_space(LmnMembrane *src)
+{
+  unsigned long ret;
+  LmnMembrane *ptr;
+ 
+  ret = lmn_mem_space(src);
+  for (ptr = src->child_head; ptr != NULL; ptr = ptr->next) {
+    ret += lmn_mem_root_space(ptr);
   }
 
   return ret;
@@ -1527,16 +1540,16 @@ void lmn_mem_free_ground(Vector *srcvec)
   HashSet *atoms;
   unsigned long i, t;
   HashSetIterator it;
-  LmnSAtom atom;
 
   ground_atoms(srcvec, NULL, &atoms, &t);
 
   it = hashset_iterator(atoms);
   while (hashsetiter_isend(&it)) {
-    atom = LMN_SATOM(hashsetiter_entry(&it));
+    LmnSAtom atom = LMN_SATOM(hashsetiter_entry(&it));
     hashsetiter_next(&it);
     free_symbol_atom_with_buddy_data(atom);
   }
+
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続してい場合の処理をする */

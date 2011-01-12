@@ -53,8 +53,10 @@
 #include "slim_header/memstack.h"
 #include "slim_header/port.h"
 #include "visitlog.h"
-#include "delta_membrane.h"
 #include "lmntal_thread.h"
+#include "delta_membrane.h"
+#include "mc_worker.h"
+#include "mc_generator.h"
 
 #include "runtime_status.h"
 
@@ -482,6 +484,7 @@ BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
   return result;
 }
 
+
 /* ルールセットat_setの各ルールを可能な限り適用する.
  * 非決定実行時には状態遷移のサブグラフを構築し,
  * その停止状態をmemの遷移先として生成し, rcに登録する. */
@@ -490,6 +493,7 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
                                      LmnRuleSet      at_set)
 {
   BOOL ret = FALSE;
+  lmn_ruleset_validate_atomic(at_set);
 
   if (RC_GET_MODE(rc, REACT_ND)) {
     /* 概要:
@@ -499,22 +503,21 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
      *  展開した各状態を基点にsubgraphを構築する.　*/
     unsigned int start_succ_num, atomic_init_num;
 
-    if (RC_MEM_DELTAS(rc)) {
-      lmn_fatal("not implented atomic-state-generator using delta-membrane");
+    if (RC_ND_DELTA_ENABLE(rc)) {
+      lmn_fatal("unsupported delta-membrane, atomic step");
     }
 
     /* 準備:
      *   遷移元となる状態のatomic_setにatomicフラグを有効ににする
      *   1step展開した際のサクセッサはルールコピー時にフラグを引き継ぐ  */
-    lmn_ruleset_validate_atomic(at_set);
 
-    start_succ_num  = nd_react_cxt_expanded_num(rc);
+    start_succ_num  = mc_react_cxt_expanded_num(rc);
     react_ruleset_inner(rc, mem, at_set);
-    atomic_init_num = nd_react_cxt_expanded_num(rc) - start_succ_num;
+    atomic_init_num = mc_react_cxt_expanded_num(rc) - start_succ_num;
 
     /* 遷移先状態が1つ以上存在したならばsubgraphの構築を行う */
     if (atomic_init_num > 0) {
-      struct ReactCxt  sub_rc;
+      LmnWorker       *w;
       StateSpace       sub_states;
       const Vector    *sub_ends;
       unsigned int     i;
@@ -522,21 +525,27 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
 
       /* 1st: subgraph構築に必要なオプションを設定 */
       sub_flags = 0x00U;
-      set_compress(sub_flags);
-      set_compact(sub_flags);
+      mc_set_compress(sub_flags);
+      mc_set_compact(sub_flags);
 
       /* 2nd: subgraphの状態管理表と, ルール適用コンテキストを設定 */
       sub_states = state_space_make();
-      nd_react_cxt_init(&sub_rc, DEFAULT_STATE_ID);
-      RC_START_ATOMIC_STEP(&sub_rc, lmn_ruleset_get_id(at_set));
+      w = lmn_worker_make(sub_states, lmn_thread_id, sub_flags);
+      dfs_env_set(w);
+      WORKER_INIT(w);
+      mc_react_cxt_init(&WORKER_RC(w), DEFAULT_STATE_ID);
+
+      RC_START_ATOMIC_STEP(&WORKER_RC(w), lmn_ruleset_get_id(at_set));
+
+      /* 3rd: LmnWorkerの構築 */
       for (i = 0; i < atomic_init_num; i++) {
         State *sub_s, *sub_t;
         LmnMembrane *sub_m;
 
         /* TODO: mainルーチンがdelta-memの場合の処理をまだ書いていない */
-        sub_m = (LmnMembrane *)nd_react_cxt_expanded_pop(rc);
+        sub_m = (LmnMembrane *)mc_react_cxt_expanded_pop(rc);
         sub_s = state_make(sub_m, DEFAULT_STATE_ID,
-                           lmn_env.mem_enc && lmn_env.enable_compress_mem);
+                           state_space_use_memenc(sub_states));
         sub_t = state_space_insert(sub_states, sub_s);
 
         if (sub_s != sub_t) { /* duplicate detected! */
@@ -544,7 +553,7 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
           continue;
         } else {              /* new */
           sub_states->init_state = sub_s; /* たぶん不要 */
-          nd_loop_dfs(sub_states, sub_s, &sub_rc, sub_flags);
+          dfs_start(w);
         }
       }
       RC_FINISH_ATOMIC_STEP(rc);
@@ -558,14 +567,14 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
         end_s = (State *)vec_get(sub_ends, i);
         end_m = lmn_binstr_decode(state_mem_binstr(end_s));
         /* decode処理ではactivateフラグが立つ @see mem_encode.c */
-        nd_react_cxt_add_expanded(rc, end_m, dummy_rule());
+        mc_react_cxt_add_expanded(rc, end_m, dummy_rule());
       }
 
-      /* sub_graphの破棄 */
+      /* sub_graphたちを破棄 */
       state_space_free(sub_states);
-      nd_react_cxt_destroy(&sub_rc);
+      mc_react_cxt_destroy(&WORKER_RC(w));
+      lmn_worker_free(w);
     }
-    lmn_ruleset_invalidate_atomic(at_set);
   }
   else if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     unsigned int i;
@@ -588,8 +597,10 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
     lmn_fatal("unexpected.");
   }
 
+  lmn_ruleset_invalidate_atomic(at_set);
   return ret;
 }
+
 
 /* ルールセットat_setの各ルールを手続き型言語のstatement処理のように1stepずつ適用する.
  * 適用に失敗したルールはskipし, 次のルール適用を行う.
@@ -600,19 +611,21 @@ static BOOL react_ruleset_atomic_sync(struct ReactCxt *rc,
 {
   BOOL ret = FALSE;
 
+  lmn_ruleset_validate_atomic(at_set);
+
   if (RC_GET_MODE(rc, REACT_ND)) {
     unsigned int r_i, r_n, start_succ_num, atomic_init_num;
 
-    if (RC_MEM_DELTAS(rc)) {
-      lmn_fatal("not implented atomic-state-generator using delta-membrane");
+    if (RC_ND_DELTA_ENABLE(rc)) {
+      lmn_fatal("unsupported delta-membrane, atomic step");
     }
 
-    start_succ_num  = nd_react_cxt_expanded_num(rc);
+    start_succ_num  = mc_react_cxt_expanded_num(rc);
     r_n = lmn_ruleset_rule_num(at_set);
     atomic_init_num = 0;
     for (r_i = 0; (r_i < r_n) && (atomic_init_num == 0); r_i++) {
       react_rule(rc, mem, lmn_ruleset_get_rule(at_set, r_i));
-      atomic_init_num = nd_react_cxt_expanded_num(rc) - start_succ_num;
+      atomic_init_num = mc_react_cxt_expanded_num(rc) - start_succ_num;
     }
 
     if (atomic_init_num > 0) {
@@ -620,13 +633,13 @@ static BOOL react_ruleset_atomic_sync(struct ReactCxt *rc,
       Vector *primary, *secondary, *swap;
       unsigned int i;
 
-      nd_react_cxt_init(&sub_rc, DEFAULT_STATE_ID);
+      mc_react_cxt_init(&sub_rc, DEFAULT_STATE_ID);
       primary   = vec_make(32);
       secondary = vec_make(32);
 
       /* at_setで生成したmembraneを取り出す */
       for (i = 0; i < atomic_init_num; i++) {
-        LmnMembrane *sub_m = (LmnMembrane *)nd_react_cxt_expanded_pop(rc);
+        LmnMembrane *sub_m = (LmnMembrane *)mc_react_cxt_expanded_pop(rc);
         vec_push(primary, (vec_data_t)sub_m);
       }
 
@@ -636,11 +649,11 @@ static BOOL react_ruleset_atomic_sync(struct ReactCxt *rc,
           RC_SET_GROOT_MEM(&sub_rc, m);
           react_rule(&sub_rc, m, lmn_ruleset_get_rule(at_set, i));
 
-          if (nd_react_cxt_expanded_num(&sub_rc) == 0) {
+          if (mc_react_cxt_expanded_num(&sub_rc) == 0) {
             vec_push(secondary, (vec_data_t)m);
           } else {
-            while (nd_react_cxt_expanded_num(&sub_rc) > 0) {
-              vec_push(secondary, (vec_data_t)nd_react_cxt_expanded_pop(&sub_rc));
+            while (mc_react_cxt_expanded_num(&sub_rc) > 0) {
+              vec_push(secondary, (vec_data_t)mc_react_cxt_expanded_pop(&sub_rc));
             }
             lmn_mem_drop(m);
             lmn_mem_free(m);
@@ -653,12 +666,12 @@ static BOOL react_ruleset_atomic_sync(struct ReactCxt *rc,
       }
 
       while (vec_num(primary) > 0) {
-        nd_react_cxt_add_expanded(rc, (LmnMembrane *)vec_pop(primary), dummy_rule());
+        mc_react_cxt_add_expanded(rc, (LmnMembrane *)vec_pop(primary), dummy_rule());
       }
 
       vec_free(primary);
       vec_free(secondary);
-      nd_react_cxt_destroy(&sub_rc);
+      mc_react_cxt_destroy(&sub_rc);
     }
   }
   else if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
@@ -675,8 +688,10 @@ static BOOL react_ruleset_atomic_sync(struct ReactCxt *rc,
     lmn_fatal("unexpected.");
   }
 
+  lmn_ruleset_invalidate_atomic(at_set);
   return ret;
 }
+
 
 /* 膜memでrulesetsのルールの適用を行う.
  * 適用結果は無視する */
@@ -693,6 +708,7 @@ void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
   }
   react_initial_rulesets(&rc, mem);
 }
+
 
 inline static void react_initial_rulesets(struct ReactCxt *rc, LmnMembrane *mem)
 {
@@ -1140,7 +1156,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           RC_ND_SET_MEM_DELTA_ROOT(rc, d);
           dmem_interpret(rc, rule, instr);
           dmem_root_finish(d);
-          nd_react_cxt_add_mem_delta(rc, d, rule);
+          mc_react_cxt_add_mem_delta(rc, d, rule);
           RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
         }
         else {
@@ -1247,7 +1263,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
           /** コピーしたグローバルルート膜と作業配列を用いてBODY命令を適用  */
           interpret(rc, rule, instr);
-          nd_react_cxt_add_expanded(rc, tmp_global_root, rule);
+          mc_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
           if (lmn_rule_get_history_tbl(rule) && lmn_rule_get_pre_id(rule) != 0) {
             st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule), 0);
@@ -1583,9 +1599,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       attr = LMN_SATOM_GET_ATTR(wt[atom2], pos2);
 
       if(LMN_ATTR_IS_DATA(at[atom1]) && LMN_ATTR_IS_DATA(attr)) {
-        #ifdef DEBUG
+#ifdef DEBUG
         fprintf(stderr, "Two data atoms are connected each other.\n");
-        #endif
+#endif
       }
       else if (LMN_ATTR_IS_DATA(at[atom1])) {
         LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);
@@ -2004,6 +2020,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       ret_flag = lmn_mem_cmp_ground(srcvec, dstvec);
 
+      /* MEMO: time-optで消えていたので, なんか理由があるのかも. ないのかも.
+       * ないとメモリリークするから, ありにしたい. */
       free_links(srcvec);
       free_links(dstvec);
 
@@ -3667,7 +3685,7 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       }
 
       srcvec = links_from_idxs((Vector *)wt[listi], wt, at);
-
+      
       switch (op) {
        case INSTR_REMOVEGROUND:
          dmem_root_remove_ground(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembrane *)wt[memi], srcvec);

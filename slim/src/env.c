@@ -44,8 +44,9 @@
 struct LmnEnv         lmn_env;
 struct LmnProfiler    lmn_prof;
 #ifdef ENABLE_PARALLEL
-LMN_TLS unsigned long lmn_thread_id = 0U;   /* thread番号 */
+LMN_TLS unsigned long lmn_thread_id = 0UL;  /* thread番号 */
 #endif
-LMN_TLS unsigned long lmn_state_id  = 1U;   /* 状態番号 */
-LMN_TLS ProcessID     lmn_next_id   = 1U;   /* アトム・膜へのプロセスID */
+unsigned int          lmn_thread_num= 1U;
+LMN_TLS unsigned long lmn_state_id  = 0UL;  /* 状態番号 */
+LMN_TLS ProcessID     lmn_next_id   = 1UL;  /* アトム・膜へのプロセスID */
 struct Vector        *lmn_id_pool   = NULL; /* 不要になったIDを置く */

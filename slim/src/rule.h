@@ -62,7 +62,7 @@ struct LmnRule {
   LmnTranslated translated;
   lmn_interned_str name;
   BOOL is_invisible;
-  st_table *history_tbl;
+  st_table_t history_tbl;
   lmn_interned_str pre_id;
 };
 

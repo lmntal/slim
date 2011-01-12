@@ -105,7 +105,7 @@ inline void mem_react_cxt_destroy(struct ReactCxt *cxt)
  * ND React Context
  */
 
-inline static struct NDReactCxtData *nd_react_data_make(BYTE prop_state)
+inline static struct NDReactCxtData *mc_react_data_make(BYTE prop_state)
 {
   struct NDReactCxtData *v = LMN_MALLOC(struct NDReactCxtData);
   v->roots            = vec_make(32);
@@ -121,7 +121,7 @@ inline static struct NDReactCxtData *nd_react_data_make(BYTE prop_state)
   return v;
 }
 
-inline static void nd_react_data_free(struct NDReactCxtData *v)
+inline static void mc_react_data_free(struct NDReactCxtData *v)
 {
   vec_free(v->roots);
   vec_free(v->rules);
@@ -131,20 +131,20 @@ inline static void nd_react_data_free(struct NDReactCxtData *v)
   LMN_FREE(v);
 }
 
-inline void nd_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
+inline void mc_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
 {
-  struct NDReactCxtData *v = nd_react_data_make(prop_state);
+  struct NDReactCxtData *v = mc_react_data_make(prop_state);
   react_context_init(cxt, REACT_ND);
   cxt->v              = v;
   cxt->work_vec_size  = 0;
 }
 
-inline void nd_react_cxt_destroy(struct ReactCxt *cxt)
+inline void mc_react_cxt_destroy(struct ReactCxt *cxt)
 {
-  nd_react_data_free(RC_ND_DATA(cxt));
+  mc_react_data_free(RC_ND_DATA(cxt));
 }
 
-inline void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
+inline void mc_react_cxt_add_expanded(struct ReactCxt *cxt,
                                       LmnMembrane *mem,
                                       LmnRule rule)
 {
@@ -152,7 +152,7 @@ inline void nd_react_cxt_add_expanded(struct ReactCxt *cxt,
   vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
 }
 
-void nd_react_cxt_add_mem_delta(struct ReactCxt *cxt,
+void mc_react_cxt_add_mem_delta(struct ReactCxt *cxt,
                                 struct MemDeltaRoot *d,
                                 LmnRule rule)
 {
