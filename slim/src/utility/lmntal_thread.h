@@ -125,7 +125,16 @@
    typedef pthread_t         lmn_thread_t;
    typedef pthread_mutex_t   lmn_mutex_t;
    typedef pthread_once_t    lmn_once_t;
-   typedef pthread_barrier_t lmn_barrier_t;
+#  ifndef __CYGWIN__
+     typedef pthread_barrier_t lmn_barrier_t;
+#  else
+     typedef struct LmnBarrier {
+       unsigned int    thread_num;
+       unsigned int    reach_num;
+       pthread_mutex_t mutex;
+       pthread_cond_t  cond;
+     } lmn_barrier_t;
+#  endif /* __CYGWIN__ */
 #  define lmn_thread_create_with_attr(Pth, Pattr, Pfunc, Parg) \
                                                pthread_create(Pth, Pattr, (void *)Pfunc, (void *)Parg)
 #  define lmn_thread_create(Pth, Pfunc, Parg)  lmn_thread_create_with_attr(Pth, NULL, Pfunc, Parg)
@@ -142,14 +151,38 @@
 #  define lmn_mutex_unlock(Pm)                 pthread_mutex_unlock(Pm)
 #  define lmn_thread_once_init(Po)             (Po) = (pthread_once_t) PTHREAD_ONCE_INIT
 #  define lmn_thread_once(Po, Func)            pthread_once(Po, (void *)Func)
-#  define lmn_barrier_init_with_attr(Pm, At, Num) \
-                                               pthread_barrier_init(Pm, At, Num)
-#  define lmn_barrier_init(Pm, Num)            lmn_barrier_init_with_attr(Pm, NULL, Num)
-#  define lmn_barrier_destroy(Pm)              pthread_barrier_destroy(Pm)
-#  define lmn_barrier_wait(Pm)                 pthread_barrier_wait(Pm)
+#  ifndef __CYGWIN__
+#    define lmn_barrier_init_with_attr(Pm, At, Num) \
+                                                 pthread_barrier_init(Pm, At, Num)
+#    define lmn_barrier_init(Pm, Num)            lmn_barrier_init_with_attr(Pm, NULL, Num)
+#    define lmn_barrier_destroy(Pm)              pthread_barrier_destroy(Pm)
+#    define lmn_barrier_wait(Pm)                 pthread_barrier_wait(Pm)
+#  else
+     inline static void lmn_barrier_init(lmn_barrier_t *b, unsigned int num) {
+       b->thread_num = num;
+       b->reach_num = 0;
+       b->mutex = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+       b->cond  = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+     }
+     inline static void lmn_barrier_destroy(lmn_barrier_t *b) {
+       pthread_mutex_destroy(&b->mutex);
+       pthread_cond_destroy(&b->cond);
+     }
+     inline static void lmn_barrier_wait(lmn_barrier_t *b) {
+       pthread_mutex_lock(&b->mutex);
+       b->reach_num++;
+       if (b->reach_num != b->thread_num) {
+         pthread_cond_wait(&b->cond, &b->mutex);
+       } else { /* ok! */
+         b->reach_num = 0;
+         pthread_cond_broadcast(&b->cond);
+       }
+       pthread_mutex_unlock(&b->mutex);
+     }
+#  endif /* __CYGWIN__ */
 #else
 #  error "need pthread.h"
-#endif
+#endif /* HAVE_LIBPTHREAD */
 
 void thread_set_cpu_affinity(unsigned long id);
 #ifdef HAVE_SCHED_H
