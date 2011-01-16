@@ -273,6 +273,10 @@ struct LmnEnv {
   BOOL nd_remaining;
   BOOL nd_cleaning;
 
+	/* allow hyperlink system */
+  BOOL hyperlink;//seiji
+  BOOL show_hyperlink;//seiji
+  
 #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;

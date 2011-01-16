@@ -97,6 +97,7 @@ LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, in
 #define MEM_EQ_ATOM_NAME "mem_eq"
 #define TRUE_ATOM_NAME   "true"
 #define FALSE_ATOM_NAME  "false"
+#define EXCLAMATION_NAME "!"//seiji
 
 
 #define LMN_IN_PROXY_FUNCTOR   0
@@ -120,6 +121,7 @@ LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, in
 #define LMN_MEM_EQ_FUNCTOR 18
 #define LMN_TRUE_FUNCTOR 19
 #define LMN_FALSE_FUNCTOR 20
+#define LMN_EXCLAMATION_FUNCTOR 21//seiji
 
 #endif /* LMN_FUNCTOR_H */
 

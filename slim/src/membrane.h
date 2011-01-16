@@ -276,6 +276,12 @@ void lmn_newlink_in_symbols(LmnSAtom atom0,
                             int pos0,
                             LmnSAtom atom1,
                             int pos1);
+void lmn_newlink_with_ex(LmnSAtom atom0,//seiji
+                             LmnLinkAttr attr0,
+                             int pos0,
+                             LmnSAtom atom1,
+                             LmnLinkAttr attr1,
+                             int pos1);
 void lmn_mem_link_data_atoms(LmnMembrane *mem,
                              LmnAtom d1,
                              LmnLinkAttr attr1,

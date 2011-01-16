@@ -141,6 +141,8 @@ struct InstrSpec spec[] = {
     {"not", INSTR_NOT, {InstrList}},
     {"inline", INSTR_INLINE, {InstrVar, String, InstrVar}},
     {"callback", INSTR_CALLBACK, {InstrVar, InstrVar}},
+    {"unifyhlinks", INSTR_UNIFYHLINKS, {InstrVar, InstrVar}},
+    {"findproccxt", INSTR_FINDPROCCXT, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},    
 
     /* special */
     {"group", INSTR_GROUP, {InstrList}},
@@ -161,6 +163,12 @@ struct InstrSpec spec[] = {
     {"isstring", INSTR_ISSTRING, {InstrVar}},
 
     {"uniq", INSTR_UNIQ, {InstrVarList}},
+
+    /* guard: hyperlink */ //seiji
+    {"newhlink", INSTR_NEWHLINK, {InstrVar, InstrVar}},
+    {"makehlink", INSTR_MAKEHLINK, {InstrVar}},
+    {"ishlink", INSTR_ISHLINK, {InstrVar}},
+    {"getnum", INSTR_GETNUM, {InstrVar, InstrVar}},
 
     /* guard: float */
     {"fadd", INSTR_FADD, {InstrVar, InstrVar, InstrVar}},

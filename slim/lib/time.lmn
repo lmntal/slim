@@ -1,8 +1,7 @@
 /*
- * init_exts.c - String API
+ * boolean.lmn - boolean module
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -37,23 +36,27 @@
  * $Id$
  */
 
-#include "lmntal.h"
+/*
+NAME
+	Timer module
 
-void init_integer(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);//seiji
+SYNOPSIS  
+	
+AUTHOR
+	Seiji Ogawa
 
-void init_builtin_extensions(void)
+HISTORY
+    2011/01/11(Tue) 
+*/
+
 {
-  init_integer();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();//seiji
+module(timer).
+
+/*
+ * H = timer.gettime:
+ *
+ * H is bound to time elapsed since the program was launched.
+ */
+H = timer.gettime :- '$callback'('gettime', H).
+
 }

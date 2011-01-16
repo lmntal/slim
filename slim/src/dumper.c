@@ -266,6 +266,16 @@ static BOOL dump_data_atom(LmnPort port,
   case LMN_SP_ATOM_ATTR:
     SP_ATOM_DUMP(data, port);
     break;
+  case LMN_HL_ATTR://seiji
+    {
+      port_put_raw_s(port, EXCLAMATION_NAME);//seiji
+      char buf[16];//seiji
+      if (lmn_env.show_hyperlink) sprintf(buf, "%lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(LMN_SATOM(data))));
+      else {sprintf(buf, "%lx", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(LMN_SATOM(data))));
+      }
+      port_put_raw_s(port, buf);//seiji
+    }
+    break;
   default:
     lmn_fatal("unexpected attr");
   }
@@ -656,7 +666,8 @@ static void lmn_dump_cell_internal(LmnPort port,
   /* 優先順位に応じて起点となるアトムを振り分ける */
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
     LmnSAtom atom;
-    EACH_ATOM(atom, ent, {
+    if (LMN_IS_EX_FUNCTOR(f)) continue;//seiji
+    EACH_ATOM(atom, ent, ({
       int arity = LMN_SATOM_GET_ARITY(atom);
       if(LMN_SATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
         continue;
@@ -686,7 +697,7 @@ static void lmn_dump_cell_internal(LmnPort port,
       else {
         vec_push(&pred_atoms[P3], (LmnWord)atom);
       }
-    });
+    }));
   }));
 
   if (!lmn_env.show_proxy) {

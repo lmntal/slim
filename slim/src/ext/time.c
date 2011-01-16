@@ -1,5 +1,5 @@
 /*
- * init_exts.c - String API
+ * time.c - Timer API
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,23 +37,27 @@
  * $Id$
  */
 
-#include "lmntal.h"
+# include <time.h>
+# include "../lmntal_ext.h"
 
-void init_integer(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);//seiji
 
-void init_builtin_extensions(void)
+void gettime(ReactCxt rc,
+                  LmnMembrane *mem,
+                  LmnAtom a0, LmnLinkAttr t0)
 {
-  init_integer();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();//seiji
+  double *t = LMN_MALLOC(double);
+
+  *t = (double)clock() / CLOCKS_PER_SEC;
+
+  lmn_mem_newlink(mem,
+                  a0, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(t0),
+                  (LmnWord)t, LMN_DBL_ATTR, 0);
+
+  lmn_mem_push_atom(mem, (LmnWord)t, LMN_DBL_ATTR);
+
+}
+
+void init_time(void)
+{
+  lmn_register_c_fun("gettime", gettime, 1);
 }

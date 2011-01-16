@@ -60,6 +60,7 @@ slim_SOURCES =                                                     \
 	port.c                          slim_header/port.h               \
 	jni_lmntal.c                    jni_lmntal.h                     \
 	ccallback.c                     ccallback.h                      \
+	hyperlink.c                     hyperlink.h                      \
 	translate.c                     translate.h                      \
 	translate_generated.c           translate_generator.rb           \
 	translate_generator.in          so.h                             \
@@ -72,7 +73,8 @@ slim_SOURCES =                                                     \
 	ext/nlmem.c                                                      \
 	ext/io.c                                                         \
 	ext/initial_ruleset.c                                            \
-	ext/nd_conf.c
+	ext/nd_conf.c													 \
+	ext/time.c
 #	ext.h ext.c 
 
 if ENABLE_JNI
