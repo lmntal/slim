@@ -75,7 +75,7 @@ struct PredefinedFunctor predefined_functors[] = {
   {LMN_TRUE_FUNCTOR,            FALSE, TRUE_ATOM_NAME,   1},
   {LMN_FALSE_FUNCTOR,           FALSE, FALSE_ATOM_NAME,  1},
   /* hyperlinkは第二引数にHyperLink構造体へのポインタを埋め込むため二引数として登録する */
-  {LMN_EXCLAMATION_FUNCTOR,     FALSE, EXCLAMATION_NAME, 2},//seiji
+  {LMN_EXCLAMATION_FUNCTOR,     FALSE, EXCLAMATION_NAME, 2},
 };
 
 struct LmnFunctorTable lmn_functor_table;

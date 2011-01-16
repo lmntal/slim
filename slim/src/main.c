@@ -59,7 +59,7 @@
 #include "slim_header/port.h"
 #include "dumper.h"
 #include "jni_lmntal.h"
-#include "hyperlink.h"//seiji
+#include "hyperlink.h"
 /* #include "ext.h" */
 #include "runtime_status.h"
 
@@ -144,7 +144,7 @@ static int parse_options(int argc, char *argv[])
     {"show-chr"               , 0, 0, 1004},
     {"show-transition"        , 0, 0, 1005},
     {"show-ends"              , 0, 0, 1006},
-    {"show-hl"                , 0, 0, 1007},//seiji
+    {"show-hl"                , 0, 0, 1007},
     {"dump-dot"               , 0, 0, 1100},
     {"dump-fsm"               , 0, 0, 1101},
     {"dump-lavit"             , 0, 0, 1102},
@@ -152,7 +152,7 @@ static int parse_options(int argc, char *argv[])
     {"dump-lmn"               , 0, 0, 1104},
     {"interactive"            , 0, 0, 1200},
     {"translate"              , 0, 0, 1300},
-    {"hl"                     , 0, 0, 1350},//seiji
+    {"hl"                     , 0, 0, 1350},
     {"ltl-all"                , 0, 0, 1400},
     {"ltl"                    , 0, 0, 1401},
     {"nd"                     , 0, 0, 1402},
@@ -250,7 +250,7 @@ static int parse_options(int argc, char *argv[])
     case 1006:
       lmn_env.end_dump = TRUE;
       break;
-    case 1007://seiji
+    case 1007:
       lmn_env.show_hyperlink = TRUE;
       break;
     case 1100:
@@ -281,7 +281,7 @@ static int parse_options(int argc, char *argv[])
     case 1300:
       lmn_env.translate = TRUE;
       break;
-    case 1350://seiji
+    case 1350:
       lmn_env.hyperlink = TRUE;
       break;
     case 1400:
@@ -589,7 +589,7 @@ static void init_internal(void)
   init_rules();
 
   if(!lmn_env.translate){
-    if (lmn_env.hyperlink) hyperlink_init();//seiji
+    if (lmn_env.hyperlink) hyperlink_init();
     init_so_handles();
     init_default_system_ruleset();
     if (lmn_env.enable_por) init_por_vars();
@@ -610,7 +610,7 @@ static void init_internal(void)
 static void finalize(void)
 {
   if(!lmn_env.translate){
-    if (lmn_env.hyperlink) hyperlink_destroy();//seiji
+    if (lmn_env.hyperlink) hyperlink_destroy();
     port_finalize();
     string_finalize();
     dumper_finalize();

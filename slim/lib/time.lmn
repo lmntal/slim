@@ -1,5 +1,5 @@
 /*
- * boolean.lmn - boolean module
+ * time.lmn - time module
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -38,7 +38,7 @@
 
 /*
 NAME
-	Timer module
+	Time module
 
 SYNOPSIS  
 	
@@ -50,13 +50,13 @@ HISTORY
 */
 
 {
-module(timer).
+module(time).
 
 /*
- * H = timer.gettime:
+ * H = time.gettime:
  *
  * H is bound to time elapsed since the program was launched.
  */
-H = timer.gettime :- '$callback'('gettime', H).
+H = time.gettime :- '$callback'('gettime', H).
 
 }

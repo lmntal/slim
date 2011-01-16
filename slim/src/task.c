@@ -49,7 +49,7 @@
 #include "error.h"
 #include "ccallback.h"
 #include "special_atom.h"
-#include "hyperlink.h"//seiji
+#include "hyperlink.h"
 #include "slim_header/string.h"
 #include "slim_header/memstack.h"
 #include "slim_header/port.h"
@@ -311,7 +311,7 @@ void lmn_run(Vector *start_rulesets)
       lmn_dump_cell_stdout(mem);
     }
   }
-  if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);//seiji
+  if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
 
   /* 後始末 */
   if (lmn_env.normal_remain) {
@@ -479,11 +479,11 @@ BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
         }
         fprintf(stdout, "%d: ", trace_num++);
         lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
-        if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);//seiji
+        if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
       }
     }
   }
-  if (sameproccxt) lmn_sameproccxt_clear();//seiji //とりあえずここに配置
+  if (hl_sameproccxt) lmn_sameproccxt_clear(); //とりあえずここに配置
 
   return result;
 }
@@ -1313,7 +1313,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
         READ_VAL(LmnFunctor, instr, f);
 
-        if (!lmn_hyperlink_opt(atomi)) {//seiji
+        if (!lmn_hyperlink_opt(atomi)) {
           atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt[memi], f);
           if (atomlist_ent) {
             EACH_ATOM(atom, atomlist_ent, ({
@@ -1336,7 +1336,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           atom_arity = LMN_FUNCTOR_ARITY(f);
 
           /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
-          spc = (SameProcCxt *)hashtbl_get(sameproccxt, (HashKeyType)atomi);
+          spc = (SameProcCxt *)hashtbl_get(hl_sameproccxt, (HashKeyType)atomi); // hl_sameproccxtはグローバル変数, hyperlink.c参照
 
           if (lmn_sameproccxt_from_clone(spc, atom_arity)) { /** hyperlinkの接続関係からfindatom */
 
@@ -1603,14 +1603,14 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_UNIFYLINKS:
     {
       LmnInstrVar link1, link2, mem;
-      LmnLinkAttr attr1, attr2;//seiji
+      LmnLinkAttr attr1, attr2;
 
       READ_VAL(LmnInstrVar, instr, link1);
       READ_VAL(LmnInstrVar, instr, link2);
       READ_VAL(LmnInstrVar, instr, mem);
 
-      attr1 = LINKED_ATTR(link1);//seiji
-      attr2 = LINKED_ATTR(link2);//seiji
+      attr1 = LINKED_ATTR(link1);
+      attr2 = LINKED_ATTR(link2);
 
       if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) {
         if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 1, 2 are data */
@@ -1682,26 +1682,26 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       ap = LMN_SATOM(LMN_SATOM_GET_LINK(wt[atom2], pos2));
       attr = LMN_SATOM_GET_ATTR(wt[atom2], pos2);
 
-      if(LMN_ATTR_IS_DATA_WITHOUT_EX(at[atom1]) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {//seiji
+      if(LMN_ATTR_IS_DATA_WITHOUT_EX(at[atom1]) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
 #ifdef DEBUG
         fprintf(stderr, "Two data atoms are connected each other.\n");
 #endif
       }
-      else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at[atom1])) {//seiji
+      else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at[atom1])) {
         LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);
         LMN_SATOM_SET_ATTR(ap, attr, at[atom1]);
       }
-      else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {//seiji
+      else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
         LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);
         LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);
       }
       else {
-        if (!LMN_ATTR_IS_EX(at[atom1]) && !LMN_ATTR_IS_EX(attr)) {//seiji
+        if (!LMN_ATTR_IS_EX(at[atom1]) && !LMN_ATTR_IS_EX(attr)) {
           LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);
           LMN_SATOM_SET_ATTR(ap, attr, pos1);
           LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);
-        } else {//seiji
+        } else {
           lmn_newlink_with_ex(LMN_SATOM(wt[atom1]), at[atom1], pos1, ap, attr, 0);
         }
       }
@@ -1997,8 +1997,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             if (LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt[atomi])) != f) {
               return FALSE;
             }
-            if (lmn_hyperlink_opt(atomi) && //seiji
-                !lmn_sameproccxt_all_pc_check_original((SameProcCxt *)hashtbl_get(sameproccxt, (HashKeyType)atomi),
+            if (lmn_hyperlink_opt(atomi) &&
+                !lmn_sameproccxt_all_pc_check_original((SameProcCxt *)hashtbl_get(hl_sameproccxt, (HashKeyType)atomi),
                                                        LMN_SATOM(wt[atomi]),
                                                        LMN_FUNCTOR_ARITY(f)))
               return FALSE;
@@ -2233,22 +2233,22 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, arg2);
 
       if (lmn_env.hyperlink) {
-        if (!sameproccxt) lmn_sameproccxt_init();
+        if (!hl_sameproccxt) lmn_sameproccxt_init(); // hl_sameproccxtはグローバル変数, hyperlink.c参照
 
-        if (!hashtbl_contains(sameproccxt, (HashKeyType)atom1)) {
+        if (!hashtbl_contains(hl_sameproccxt, (HashKeyType)atom1)) {
           spc1 = lmn_sameproccxt_spc_make(atom1, length1);
-          hashtbl_put(sameproccxt, (HashKeyType)atom1, (HashValueType)spc1);
+          hashtbl_put(hl_sameproccxt, (HashKeyType)atom1, (HashValueType)spc1);
         } else {
-          spc1 = (SameProcCxt *)hashtbl_get(sameproccxt, (HashKeyType)atom1);
+          spc1 = (SameProcCxt *)hashtbl_get(hl_sameproccxt, (HashKeyType)atom1);
         }
         if (!LMN_SPC_PC(spc1, arg1))
           LMN_SPC_PC(spc1, arg1) = lmn_sameproccxt_pc_make(atom1, arg1, NULL);
 
-        if (!hashtbl_contains(sameproccxt, (HashKeyType)atom2)) {
+        if (!hashtbl_contains(hl_sameproccxt, (HashKeyType)atom2)) {
           spc2 = lmn_sameproccxt_spc_make(atom2, length2);
-          hashtbl_put(sameproccxt, (HashKeyType)atom2, (HashValueType)spc2);
+          hashtbl_put(hl_sameproccxt, (HashKeyType)atom2, (HashValueType)spc2);
         } else {
-          spc2 = (SameProcCxt *)hashtbl_get(sameproccxt, (HashKeyType)atom2);
+          spc2 = (SameProcCxt *)hashtbl_get(hl_sameproccxt, (HashKeyType)atom2);
         }
         if (!LMN_SPC_PC(spc2, arg2))
           LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, LMN_SPC_PC(spc1, arg1));
@@ -2892,7 +2892,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, funci);
 
       if (LMN_ATTR_IS_DATA(at[funci])) {
-        if (LMN_ATTR_IS_EX(at[funci])) wt[atomi] = wt[funci];//seiji
+        if (LMN_ATTR_IS_EX(at[funci])) wt[atomi] = wt[funci];
         else wt[atomi] = lmn_copy_data_atom(wt[funci], at[funci]);
         at[atomi] = at[funci];
         tt[atomi] = TT_ATOM;
@@ -3087,7 +3087,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         if (*(double*)(&wt[func0]) !=
             *(double*)(&wt[func1])) return FALSE;
         break;
-      case LMN_HL_ATTR://seiji
+      case LMN_HL_ATTR:
         if (!lmn_hyperlink_eq_hl(lmn_hyperlink_at_to_hl(LMN_SATOM(wt[func0])),
                                  lmn_hyperlink_at_to_hl(LMN_SATOM(wt[func1]))))
           return FALSE;
@@ -3115,7 +3115,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           if (*(double*)(&wt[func0]) ==
               *(double*)(&wt[func1])) return FALSE;
           break;
-        case LMN_HL_ATTR://seiji
+        case LMN_HL_ATTR:
           if (lmn_hyperlink_eq_hl(lmn_hyperlink_at_to_hl(LMN_SATOM(wt[func0])),
                                   lmn_hyperlink_at_to_hl(LMN_SATOM(wt[func1]))))
             return FALSE;
@@ -3308,7 +3308,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       LmnSubInstrSize subinstr_size;
       READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-      if (lmn_env.hyperlink && sameproccxt) lmn_sameproccxt_clear();//seiji /*branchとhyperlinkを同時起動するための急場しのぎ*/
+      if (lmn_env.hyperlink && hl_sameproccxt) lmn_sameproccxt_clear(); /*branchとhyperlinkを同時起動するための急場しのぎ*/
       if (interpret(rc, rule, instr)) return TRUE;
       instr += subinstr_size;
       break;

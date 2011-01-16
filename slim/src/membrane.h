@@ -276,7 +276,7 @@ void lmn_newlink_in_symbols(LmnSAtom atom0,
                             int pos0,
                             LmnSAtom atom1,
                             int pos1);
-void lmn_newlink_with_ex(LmnSAtom atom0,//seiji
+void lmn_newlink_with_ex(LmnSAtom atom0,
                              LmnLinkAttr attr0,
                              int pos0,
                              LmnSAtom atom1,

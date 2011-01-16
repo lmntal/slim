@@ -196,7 +196,7 @@ inline void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom)
   if (LMN_IS_PROXY_FUNCTOR(f)) {
     LMN_PROXY_SET_MEM(atom, mem);
   }
-  else if (LMN_FUNC_IS_HL(f)) {//seiji
+  else if (LMN_FUNC_IS_HL(f)) {
     LMN_HL_MEM(lmn_hyperlink_at_to_hl(atom)) = mem;
     mem->atom_num++;
   }
@@ -240,7 +240,7 @@ inline void mem_remove_symbol_atom_with_buddy_data(LmnMembrane *mem, LmnSAtom at
   unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
   /* free linked data atoms */
   for (i = 0; i < end; i++) {
-    if (LMN_ATTR_IS_DATA_WITHOUT_EX(LMN_SATOM_GET_ATTR(atom, i))) {//seiji
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(LMN_SATOM_GET_ATTR(atom, i))) {
       lmn_mem_remove_data_atom(mem, LMN_SATOM_GET_LINK(atom, i), LMN_SATOM_GET_ATTR(atom, i));
     }
   }
@@ -360,7 +360,7 @@ void lmn_mem_drop(LmnMembrane *mem)
     LmnSAtom a, b;
     a = atomlist_head(ent);
     b = a;
-    if (LMN_IS_HL(a)) continue; // hyperlinkはbuddy symbol atomと一緒に削除されるため//seiji
+    if (LMN_IS_HL(a)) continue; // hyperlinkはbuddy symbol atomと一緒に削除されるため
     while (a != lmn_atomlist_end(ent)) {
       b = a;
       a = LMN_SATOM_GET_NEXT_RAW(a);
@@ -612,7 +612,7 @@ void lmn_newlink_in_symbols(LmnSAtom atom0,
   LMN_SATOM_SET_ATTR(atom1, pos1, LMN_ATTR_MAKE_LINK(pos0));
 }
 
-void lmn_newlink_with_ex(LmnSAtom atom0,//seiji
+void lmn_newlink_with_ex(LmnSAtom atom0,
                              LmnLinkAttr attr0,
                              int pos0,
                              LmnSAtom atom1,
@@ -660,8 +660,8 @@ void lmn_mem_newlink(LmnMembrane *mem,
                      LmnLinkAttr attr1,
                      int pos1)
 {
-  if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr0)) {//seiji
-    if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) { /* both data *///seiji
+  if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr0)) {
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) { /* both data */
       lmn_mem_link_data_atoms(mem, atom0, attr0, atom1, attr1);
     }
     else { /* atom0 data, atom1 symbol */
@@ -669,15 +669,15 @@ void lmn_mem_newlink(LmnMembrane *mem,
       LMN_SATOM_SET_ATTR(LMN_SATOM(atom1), pos1, attr0);
     }
   }
-  else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) { /* atom0 symbol, atom1 data *///seiji
+  else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) { /* atom0 symbol, atom1 data */
     LMN_SATOM_SET_LINK(LMN_SATOM(atom0), pos0, atom1);
     LMN_SATOM_SET_ATTR(LMN_SATOM(atom0), pos0, attr1);
   }
   else { /* both symbol */
-    if (!LMN_ATTR_IS_EX(attr0) && !LMN_ATTR_IS_EX(attr1))//seiji
+    if (!LMN_ATTR_IS_EX(attr0) && !LMN_ATTR_IS_EX(attr1))
       lmn_newlink_in_symbols(LMN_SATOM(atom0), pos0, LMN_SATOM(atom1), pos1);
-    else//seiji
-      lmn_newlink_with_ex(LMN_SATOM(atom0), attr0, pos0, LMN_SATOM(atom1), attr1, pos1);//seiji
+    else
+      lmn_newlink_with_ex(LMN_SATOM(atom0), attr0, pos0, LMN_SATOM(atom1), attr1, pos1);
   }
 }
 
@@ -730,7 +730,7 @@ void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
         mem_push_symbol_atom(destmem, a);
         arity = LMN_SATOM_GET_LINK_NUM(a);
         for (i = 0; i < arity; i++) {
-          if (LMN_ATTR_IS_DATA_WITHOUT_EX(LMN_SATOM_GET_ATTR(a, i))) {//seiji
+          if (LMN_ATTR_IS_DATA_WITHOUT_EX(LMN_SATOM_GET_ATTR(a, i))) {
             lmn_mem_push_atom(destmem,
                               LMN_SATOM_GET_LINK(a, i),
                               LMN_SATOM_GET_ATTR(a, i));
@@ -1406,7 +1406,7 @@ BOOL ground_atoms(Vector *srcvec,
         ++count_of_ground_atoms;
 
         for(i=0; i<LMN_SATOM_GET_ARITY(l_ap); ++i){
-          if(i == l_pos || LMN_ATTR_IS_EX(l_pos)) continue;//seiji
+          if(i == l_pos || LMN_ATTR_IS_EX(l_pos)) continue;
           vec_push(unsearched_link_stack,
                    (LmnWord)LinkObj_make(LMN_SATOM_GET_LINK(l_ap, i), LMN_SATOM_GET_ATTR(l_ap, i)));
         }
@@ -1562,7 +1562,7 @@ void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
      アトムに接続してい場合の処理をする */
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObj l = (LinkObj)vec_get(srcvec, i);
-    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos))//seiji
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos))
       lmn_mem_remove_data_atom(mem, l->ap, l->pos);
   }
   hashset_free(atoms);

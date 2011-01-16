@@ -44,7 +44,7 @@
 #include "functor.h"
 #include "error.h"
 #include "symbol.h"
-#include "hyperlink.h"//seiji
+#include "hyperlink.h"
 
 /** Atom Structure
  *
@@ -156,10 +156,10 @@
 
 /* operations for extended atom */
 #define LMN_ATTR_IS_DATA_WITHOUT_EX(ATTR)  (LMN_ATTR_IS_DATA(ATTR) \
-                                              && !LMN_ATTR_IS_HL(ATTR) )//seiji
+                                              && !LMN_ATTR_IS_HL(ATTR) )
 #define LMN_ATTR_IS_EX(ATTR)               (LMN_ATTR_IS_DATA(ATTR) \
-                                              && LMN_ATTR_IS_HL(ATTR) )//seiji
-#define LMN_IS_EX_FUNCTOR(FUNC)            ((FUNC) == LMN_HL_FUNC )//seiji
+                                              && LMN_ATTR_IS_HL(ATTR) )
+#define LMN_IS_EX_FUNCTOR(FUNC)            ((FUNC) == LMN_HL_FUNC )
 
 /* link attribute of primitive data type */
 /* low 7 bits of link attribute */
@@ -172,7 +172,7 @@
 #define LMN_CONST_STR_ATTR              (LMN_ATTR_FLAG | 3)
 #define LMN_CONST_DBL_ATTR              (LMN_ATTR_FLAG | 4)
 /* 拡張アトム？(⊂ unary) */
-#define LMN_HL_ATTR                     (LMN_ATTR_FLAG | 10)//seiji
+#define LMN_HL_ATTR                     (LMN_ATTR_FLAG | 10)
 
 /*----------------------------------------------------------------------
  * allocation
@@ -242,7 +242,7 @@ inline static LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
     }
   case LMN_SP_ATOM_ATTR:
     return LMN_ATOM(SP_ATOM_COPY(atom));
-  case LMN_HL_ATTR://seiji
+  case LMN_HL_ATTR:
     {
       LmnSAtom copyatom;
       copyatom = lmn_copy_satom(LMN_SATOM(atom));
@@ -293,10 +293,10 @@ inline static void free_data_atom(LmnAtom atom, LmnLinkAttr attr) {
   case LMN_SP_ATOM_ATTR:
     SP_ATOM_FREE(atom);
     break;
-  case LMN_HL_ATTR://seiji
-    lmn_hyperlink_delete(LMN_SATOM(atom));//seiji
-    lmn_delete_atom(LMN_SATOM(atom));//seiji
-    break;//seiji
+  case LMN_HL_ATTR:
+    lmn_hyperlink_delete(LMN_SATOM(atom));
+    lmn_delete_atom(LMN_SATOM(atom));
+    break;
   default:
     LMN_ASSERT(FALSE);
     break;
@@ -326,7 +326,7 @@ inline static void free_symbol_atom_with_buddy_data(LmnSAtom atom)
   }
 
   if (LMN_FUNC_IS_HL(LMN_SATOM_GET_FUNCTOR(atom)))
-    lmn_hyperlink_delete(atom);//seiji
+    lmn_hyperlink_delete(atom);
 
   lmn_delete_atom(LMN_SATOM(atom));
 }
@@ -340,8 +340,8 @@ inline static BOOL lmn_eq_func(LmnAtom     atom0, LmnLinkAttr attr0,
     return atom0 == atom1;
   case LMN_DBL_ATTR:
     return *(double *)atom0 == *(double *)atom1;
-  case LMN_HL_ATTR://seiji
-    return lmn_hyperlink_eq(LMN_SATOM(atom0), attr0, LMN_SATOM(atom1), attr1);//seiji
+  case LMN_HL_ATTR:
+    return lmn_hyperlink_eq(LMN_SATOM(atom0), attr0, LMN_SATOM(atom1), attr1);
   default: /* symbol atom */
     return LMN_SATOM_GET_FUNCTOR(atom0) == LMN_SATOM_GET_FUNCTOR(atom1);
   }
@@ -369,8 +369,8 @@ inline static BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
     return *(double*)atom1 == *(double*)atom2;
   case LMN_SP_ATOM_ATTR:
     return SP_ATOM_EQ(atom1, atom2);
-  case LMN_HL_ATTR://seiji
-    return lmn_hyperlink_eq(LMN_SATOM(atom1), attr1, LMN_SATOM(atom2), attr2);//seiji
+  case LMN_HL_ATTR:
+    return lmn_hyperlink_eq(LMN_SATOM(atom1), attr1, LMN_SATOM(atom2), attr2);
   default:
     lmn_fatal("Implementation error");
   }

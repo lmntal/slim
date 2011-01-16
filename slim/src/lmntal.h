@@ -274,8 +274,8 @@ struct LmnEnv {
   BOOL nd_cleaning;
 
 	/* allow hyperlink system */
-  BOOL hyperlink;//seiji
-  BOOL show_hyperlink;//seiji
+  BOOL hyperlink;
+  BOOL show_hyperlink;
   
 #ifdef PROFILE
   BOOL optimize_hash_old;

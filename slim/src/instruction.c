@@ -164,7 +164,7 @@ struct InstrSpec spec[] = {
 
     {"uniq", INSTR_UNIQ, {InstrVarList}},
 
-    /* guard: hyperlink */ //seiji
+    /* guard: hyperlink */
     {"newhlink", INSTR_NEWHLINK, {InstrVar, InstrVar}},
     {"makehlink", INSTR_MAKEHLINK, {InstrVar}},
     {"ishlink", INSTR_ISHLINK, {InstrVar}},

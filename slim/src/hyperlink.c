@@ -60,7 +60,7 @@
  * 非決定実行への対応 :
  *   非決定実行に対応させる場合は並列化が必要
  *   - commit命令での作業配列のコピー操作に、newhlinkなどでのシンボルアトム生成を対応させる
- *   - グローバル変数sameproccxt は実行中のルールごとに必要
+ *   - グローバル変数hl_sameproccxt は実行中のルールごとに必要
  */
 
 /* prototype */
@@ -78,7 +78,7 @@ void hyperlink_init()
   }
 
   hyperlink_id = 0;
-  sameproccxt = NULL;
+  hl_sameproccxt = NULL;
 //  lmn_sameproccxt_init2();
 }
 
@@ -97,7 +97,7 @@ void hyperlink_destroy()
 ////    hashtbl_free(at_hl);
 ////  }
 
-  if (sameproccxt) sameproccxt_destroy();
+  if (hl_sameproccxt) sameproccxt_destroy();
 
 
 }
@@ -234,7 +234,6 @@ void lmn_hyperlink_delete(LmnSAtom at)
  */
 void lmn_hyperlink_delete_old(LmnSAtom at)
 {
-//  printf("hyperlink delete hl %p atom %p\n", lmn_hyperlink_at_to_hl(at), LMN_SATOM(at));//seiji
   HyperLink *hl, *parent, *tmp;
   HashSet *children;
   HashSetIterator it;
@@ -246,8 +245,6 @@ void lmn_hyperlink_delete_old(LmnSAtom at)
      *   子がいない -> そのまま削除
      */
     if ((parent = hl->parent) != hl) {
-//      printf("delete hl is %p atom %p rank %d parent->atom %p chlidren %p\n",  hl, (void*)hl->atom, hl->rank, (void*)hl->parent->atom, hl->children);
-//      hyperlink_print();
 
       hashset_delete(parent->children, (HashKeyType)hl);
 //      parent->rank--;
@@ -301,13 +298,9 @@ void lmn_hyperlink_delete_old(LmnSAtom at)
         }
       }
     }
-////    hashtbl_put(at_hl, (HashKeyType)at, EMPTY_KEY);
     if (hl->children) hashset_free(hl->children);
     LMN_FREE(hl);
-
-//    hyperlink_print();
   }
-//printf(">> end delete\n");hyperlink_print();
 }
 
 /* hyperlinkのコピー
@@ -334,7 +327,6 @@ void hyperlink_path_compression(HyperLink *root, Vector *children)
   HyperLink *hl, *old_parent;
   HashSet *old_parent_children;
   int i, j, n, sub_rank;
-//printf("before \n"); hyperlink_print();
   n = vec_num(children);
   for (i = 0; i < n; i++) {
     hl = (HyperLink *)vec_get(children, i);
@@ -342,12 +334,9 @@ void hyperlink_path_compression(HyperLink *root, Vector *children)
 
     old_parent = hl->parent;
     if (old_parent != root) {
-//      printf("hl %p, hl->parent %p\n", (void*)hl->atom, (void*)hl->parent->atom);
       /* 旧親に対する処理 */
       old_parent_children = old_parent->children;
-//      hs_print(old_parent_children);
       hashset_delete(old_parent_children, (HashKeyType)hl);
-//      hs_print(old_parent_children);
       sub_rank = hl->rank + 1;
       for (j = i + 1; j < n; j++) {
         ((HyperLink *)vec_get(children, j))->rank -= sub_rank;
@@ -364,7 +353,6 @@ void hyperlink_path_compression(HyperLink *root, Vector *children)
 
     }
   }
-//  printf("after \n");   hyperlink_print();
 }
 
 /* root を返す */
@@ -449,11 +437,6 @@ HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2)
 /* '!'アトムのポインタ --> 対応するHyperLink 構造体のポインタ */
 HyperLink *lmn_hyperlink_at_to_hl(LmnSAtom at)
 {
-////  printf("at_to_hl\n");//seiji
-//  if (hashtbl_contains(at_hl, at))
-//    return (HyperLink *)hashtbl_get(at_hl, at);
-//
-//  return NULL;
   return (HyperLink *)LMN_SATOM_GET_LINK(at, 1);
 }
 
@@ -717,7 +700,6 @@ void sht_print(SimpleHashtbl *sht)
     int i;
     printf(">>>> sht %p num %d cap %d\n", sht, n, sht->cap);
     for (i = 0; i < sht->cap; i++) {
-//      if (sht->tbl[i].key == EMPTY_KEY) printf("%3d: %s\n", i, "empty");
       if (sht->tbl[i].key == EMPTY_KEY) printf("%3d: key: %p data: %p\n", i, (void *)sht->tbl[i].key, (HyperLink *)sht->tbl[i].data);
       else {
         if (sht->tbl[i].data < DELETED_KEY){
@@ -758,7 +740,7 @@ void hs_print(HashSet *hs)
  *  hyperlink の接続関係を利用したルールマッチング最適化                   *
  * ----------------------------------------------------------------------- */
 
-SimpleHashtbl *sameproccxt;
+SimpleHashtbl *hl_sameproccxt;
 
 //FindProcCxt *findproccxt;
 //
@@ -771,7 +753,7 @@ SimpleHashtbl *sameproccxt;
 
 void lmn_sameproccxt_init()
 {
-  sameproccxt = hashtbl_make(2);
+  hl_sameproccxt = hashtbl_make(2);
 }
 
 void sameproccxt_destroy()
@@ -782,8 +764,8 @@ void sameproccxt_destroy()
   Vector *tree;
   int i;
 
-  if (sameproccxt) {
-    for (it = hashtbl_iterator(sameproccxt); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
+  if (hl_sameproccxt) {
+    for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
       if ((spc = (SameProcCxt *)hashtbliter_entry(&it)->data)) {
         if (spc->proccxts) {
           for (i = 0; i < spc->length; i++)
@@ -794,7 +776,7 @@ void sameproccxt_destroy()
         LMN_FREE(spc);
       }
     }
-    hashtbl_free(sameproccxt);
+    hashtbl_free(hl_sameproccxt);
   }
 
 }
@@ -802,7 +784,7 @@ void sameproccxt_destroy()
 void lmn_sameproccxt_clear()
 {
   sameproccxt_destroy();
-  sameproccxt = NULL;
+  hl_sameproccxt = NULL;
 }
 
 ProcCxt *lmn_sameproccxt_pc_make(int atomi, int arg, ProcCxt *original)
@@ -840,7 +822,6 @@ BOOL lmn_sameproccxt_from_clone(SameProcCxt *spc, int n)
   int i;
 
   for (i = 0; i < n; i++) {
-//printf("findproccxt %p, %d %d\n", pc, !LMN_PC_IS_ORI(pc) && (LMN_PC_ATOMI(LMN_PC_ORI(pc)) != LMN_PC_ATOMI(pc)));//seiji
     pc = LMN_SPC_PC(spc, i);
     if (pc
         && !LMN_PC_IS_ORI(pc)
@@ -989,14 +970,14 @@ BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int ato
 }
 
 /*    --hl オプション指定
- * && sameproccxtが初期化済み
+ * && hl_sameproccxtが初期化済み
  * && atomiが同名プロセス文脈を持つアトムである
  */
 BOOL lmn_hyperlink_opt(LmnInstrVar atomi)
 {
   return (lmn_env.hyperlink
-           && sameproccxt
-           && hashtbl_contains(sameproccxt, (HashKeyType)atomi));
+           && hl_sameproccxt
+           && hashtbl_contains(hl_sameproccxt, (HashKeyType)atomi));
 }
 
 /* rootの子を全てtreeに格納する(withoutは除く) */
