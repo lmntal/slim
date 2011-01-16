@@ -38,7 +38,7 @@
  */
 
 /** @author Masato Gocho
- *  utility for Paral*/
+ *  utility for parallel/concurrent execution */
 
 #include "mc.h"
 #include "mc_worker.h"

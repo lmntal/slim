@@ -46,6 +46,9 @@
 #include "propositional_symbol.h"
 #include "ltl2ba_adapter.h"
 #include "runtime_status.h"
+#ifdef DEBUG
+#  include "dumper.h"
+#endif
 
 
 /** =======================================
@@ -250,24 +253,14 @@ static void mc_status_finalize(StateSpace states)
  *  === Fundamental System for StateSpace Generation ====
  *  =====================================================
  */
-
-static void mc_gen_successors_with_property(State           *s,
-                                            LmnMembrane     *mem,
-                                            AutomataState   prop_atm_s,
-                                            struct ReactCxt *rc,
-                                            BOOL            flags);
 static void mc_gen_successors_inner(struct ReactCxt *rc, LmnMembrane *cur_mem);
 static BOOL mc_expand_inner(struct ReactCxt *rc, LmnMembrane *cur_mem);
-static void mc_store_successors(const StateSpace states,
-                                State            *state,
-                                struct ReactCxt  *rc,
-                                Vector           *new_s,
-                                BOOL             flag);
 inline static void stutter_extension(State           *s,
                                      LmnMembrane     *mem,
                                      BYTE            next_label,
                                      struct ReactCxt *rc,
                                      BOOL            flags);
+
 
 /* 状態sから1stepで遷移する状態を計算し, 遷移元状態と状態空間に登録を行う
  * 遷移先状態のうち新規状態がnew_statesに積まれる */
@@ -284,24 +277,26 @@ void mc_expand(const StateSpace ss,
   mem = state_restore_mem(s);
 
   /** expand  : 状態の展開 */
-  if (mc_enable_por(f)) {
-    por_ample(ss, s, p_s, rc, new_ss, f);
+  if (mc_has_property(f)) {
+    mc_gen_successors_with_property(s, mem, p_s, rc, f);
+  } else {
+    mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
-  else {
-    if (mc_has_property(f)) {
-      mc_gen_successors_with_property(s, mem, p_s, rc, f);
-    } else {
-      mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
-    }
 
-    if (mc_react_cxt_expanded_num(rc) > 0) {
+
+  if (mc_react_cxt_expanded_num(rc) == 0) {
+    state_space_add_end_state(ss, s);
+  } else {
+    if (!mc_enable_por(f)) {
       mc_store_successors(ss, s, rc, new_ss, f);
     } else {
-      state_space_add_end_state(ss, s);
+      /* POR使用時は, 遷移先状態集合:en(s)からample(s)を計算する
+       * サブルーチン側で, sに対するサクセッサの登録まで済ませる */
+      por_calc_ampleset(ss, s, rc, new_ss, f);
     }
   }
 
-  /** free   : 遷移先を求めたLMNtalプロセスは開放 */
+  /** free   : 遷移先を求めた状態sからLMNtalプロセスを開放 */
   if (mc_use_compress(f)) {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -328,6 +323,112 @@ void mc_expand(const StateSpace ss,
     profile_total_space_update(ss);
   }
 #endif
+}
+
+
+/** 生成した各Successor Stateが既出か否かを検査し, 遷移元の状態sのサクセッサに設定する.
+ *   + 多重辺を除去する.
+ *   + "新規"状態をnew_ssへ積む.　 */
+void mc_store_successors(const StateSpace ss,
+                         State            *s,
+                         struct ReactCxt  *rc,
+                         Vector           *new_ss,
+                         BOOL             f)
+{
+  st_table_t succ_tbl;         /* サクセッサのポインタの重複検査に使用 */
+  unsigned int i, succ_i;
+
+  succ_i       = 0;
+  succ_tbl     = RC_SUCC_TBL(rc);
+
+  /** 状態登録 */
+  for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+    Transition src_t;
+    st_data_t tmp;
+    State *src_succ, *succ;
+    struct MemDeltaRoot *d;
+
+    src_t     = !has_trans_obj(s) ? NULL
+                                  : (Transition)vec_get(RC_EXPANDED(rc), i);
+    src_succ  = !has_trans_obj(s) ? (State *)vec_get(RC_EXPANDED(rc), i)
+                                  : transition_next_state(src_t);
+    d    = RC_ND_DELTA_ENABLE(rc) ? (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i)
+                                  :  NULL;
+
+    /** ハッシュ表へ状態の追加を試みる */
+    succ = d ? state_space_insert_delta(ss, src_succ, d)
+             : state_space_insert(ss, src_succ);
+
+    if (succ == src_succ) { /** src_succが状態空間に追加された */
+      state_id_issue(succ); /* 状態番号を記録 */
+      if (mc_is_dump(f))  dump_state_data(succ, (LmnWord)stdout);
+      if (mc_use_compact(f)) state_free_mem(succ);
+      if (new_ss) {
+        vec_push(new_ss, (vec_data_t)succ);
+      }
+    }
+    else {                  /** src_succは追加されなかった（すでに同じ状態がある) */
+      state_free(src_succ);
+      if (has_trans_obj(s)) { /* ポインタを既存状態へセット */
+        transition_set_state(src_t, succ);
+      } else {
+        vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
+      }
+    }
+
+    /** 多重辺を除去しながら, 状態にサクセッサを設定 */
+    tmp = 0;
+    if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) { /* 多重辺ではない */
+      st_data_t ins = has_trans_obj(s) ? (st_data_t)src_t : (st_data_t)succ;
+      st_add_direct(succ_tbl, (st_data_t)succ, ins);
+      vec_set(RC_EXPANDED(rc), succ_i++, ins);
+    }
+    else { /* 多重辺は消す */
+      if (has_trans_obj(s)) {
+        /* src_tは状態生成時に張り付けたルール名なので, 0番にしか要素はないはず */
+        transition_add_rule((Transition)tmp, transition_rule(src_t, 0));
+        transition_free(src_t);
+      } /* else  "辺"という構造を持たない(直接pointerで表現している)ので何もしない */
+    }
+  }
+
+  RC_EXPANDED(rc)->num = succ_i;      /* 危険なコード. いつか直すかも. */
+  RC_EXPANDED_RULES(rc)->num = succ_i;
+  if (RC_ND_DELTA_ENABLE(rc)) {
+    RC_MEM_DELTAS(rc)->num = succ_i;
+  }
+  state_succ_set(s, RC_EXPANDED(rc)); /* successorを登録 */
+  st_clear(RC_SUCC_TBL(rc));
+}
+
+
+/*
+ * 状態を展開する
+ * 引数として与えられた膜と、その膜に所属する全てのアクティブ膜に対して
+ * ルール適用検査を行う
+ * 子膜からルール適用を行っていく
+ */
+static BOOL mc_expand_inner(struct ReactCxt *rc, LmnMembrane *cur_mem)
+{
+  BOOL ret_flag = FALSE;
+
+  for (; cur_mem; cur_mem = cur_mem->next) {
+    unsigned long org_num = mc_react_cxt_expanded_num(rc);
+
+    /* 代表子膜に対して再帰する */
+    if (mc_expand_inner(rc, cur_mem->child_head)) {
+      ret_flag = TRUE;
+    }
+    if (lmn_mem_is_active(cur_mem)) {
+      react_all_rulesets(rc, cur_mem);
+    }
+    /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
+    if (org_num == mc_react_cxt_expanded_num(rc)) {
+      lmn_mem_set_active(cur_mem, FALSE);
+    }
+  }
+
+  return ret_flag;
 }
 
 
@@ -387,118 +488,13 @@ void mc_gen_successors(State           *src,
 }
 
 
-/** 生成した各Successor Stateが既出か否かを検査し, 遷移元の状態sのサクセッサに設定する.
- *   + 多重辺を除去する.
- *   + "新規"状態をnew_ssへ積む.　 */
-static void mc_store_successors(const StateSpace ss,
-                                State            *s,
-                                struct ReactCxt  *rc,
-                                Vector           *new_ss,
-                                BOOL             f)
-{
-  st_table_t succ_tbl;         /* サクセッサのポインタの重複検査に使用 */
-  Vector *expand_res;
-  unsigned long i, expanded_num;
-  unsigned int succ_i;
-
-  succ_i       = 0;
-  expand_res   = RC_EXPANDED(rc);
-  expanded_num = mc_react_cxt_expanded_num(rc);
-  succ_tbl     = st_init_ptrtable(); /* TODO: 毎回mallocさせたくない, ReacCxtに入れておく? */
-
-  LMN_ASSERT(vec_num(expand_res) == expanded_num); /* こまる */
-
-  /** 状態登録 */
-  for (i = 0; i < expanded_num; i++) {
-    Transition src_t;
-    st_data_t tmp;
-    State *src_succ, *succ;
-
-    src_t     = !mc_has_trans(f) ? NULL
-                                 : (Transition)vec_get(expand_res, i);
-    src_succ  = !mc_has_trans(f) ? (State *)vec_get(expand_res, i)
-                                 : transition_next_state(src_t);
-
-    /** ハッシュ表へ状態の追加を試みる */
-    succ = mc_use_delta(f) ? state_space_insert_delta(ss, src_succ,
-                                                      (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i))
-                           : state_space_insert(ss, src_succ);
-
-    if (succ == src_succ) { /** src_succが状態空間に追加された */
-      state_id_issue(succ); /* 状態番号を記録 */
-      if (mc_is_dump(f))  dump_state_data(succ, (LmnWord)stdout);
-      if (mc_use_compact(f)) state_free_mem(succ);
-      if (new_ss) {
-        vec_push(new_ss, (vec_data_t)succ);
-      }
-    }
-    else {                  /** src_succは追加されなかった（すでに同じ状態がある) */
-      state_free(src_succ);
-      if (mc_has_trans(f)) { /* ポインタを既存状態へセット */
-        transition_set_state(src_t, succ);
-      } else {
-        vec_set(expand_res, i, (vec_data_t)succ);
-      }
-    }
-
-    /** 多重辺を除去しながら, 状態にサクセッサを設定 */
-    if (st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp) == 0) { /* 多重辺ではない */
-      st_data_t ins = mc_has_trans(f) ? (st_data_t)src_t : (st_data_t)succ;
-      st_add_direct(succ_tbl, (st_data_t)succ, ins);
-      vec_set(expand_res, succ_i++, ins);
-    }
-    else { /* 多重辺は消す */
-      if (mc_has_trans(f)) {
-        transition_add_rule((Transition)tmp, transition_rule(src_t, 0));
-        transition_free(src_t);
-      } /* else  "辺"という構造を持たない(直接pointerで表現している)ので何もしない */
-    }
-  }
-
-  expand_res->num = succ_i;
-  state_succ_set(s, expand_res); /* successorを登録 */
-
-  st_free_table(succ_tbl);
-}
-
-
-/*
- * 状態を展開する
- * 引数として与えられた膜と、その膜に所属する全てのアクティブ膜に対して
- * ルール適用検査を行う
- * 子膜からルール適用を行っていく
- */
-static BOOL mc_expand_inner(struct ReactCxt *rc, LmnMembrane *cur_mem)
-{
-  BOOL ret_flag = FALSE;
-
-  for (; cur_mem; cur_mem = cur_mem->next) {
-    unsigned long org_num = mc_react_cxt_expanded_num(rc);
-
-    /* 代表子膜に対して再帰する */
-    if (mc_expand_inner(rc, cur_mem->child_head)) {
-      ret_flag = TRUE;
-    }
-    if (lmn_mem_is_active(cur_mem)) {
-      react_all_rulesets(rc, cur_mem);
-    }
-    /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
-    if (org_num == mc_react_cxt_expanded_num(rc)) {
-      lmn_mem_set_active(cur_mem, FALSE);
-    }
-  }
-
-  return ret_flag;
-}
-
-
 
 /* 膜memから, 性質ルールとシステムルールの同期積によって遷移可能な全状態(or遷移)をベクタに載せて返す */
-static void mc_gen_successors_with_property(State           *s,
-                                            LmnMembrane     *mem,
-                                            AutomataState   p_s,
-                                            struct ReactCxt *rc,
-                                            BOOL            f)
+void mc_gen_successors_with_property(State           *s,
+                                     LmnMembrane     *mem,
+                                     AutomataState   p_s,
+                                     struct ReactCxt *rc,
+                                     BOOL            f)
 {
   Vector *expanded;
   unsigned int i, j, n;

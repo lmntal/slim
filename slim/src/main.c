@@ -189,6 +189,7 @@ static int parse_options(int argc, char *argv[])
     {"debug-hash"             , 0, 0, 6009},
     {"debug-isomor"           , 0, 0, 6010},
     {"debug-mc"               , 0, 0, 6011},
+    {"debug-por"              , 0, 0, 6012},
     {"prof-nomemeq"           , 0, 0, 6050},
     {0, 0, 0, 0}
   };
@@ -435,6 +436,9 @@ static int parse_options(int argc, char *argv[])
     case 6011:
       lmn_env.debug_mc = TRUE;
       break;
+    case 6012:
+      lmn_env.debug_por = TRUE;
+      break;
 #else
     case 6006:
     case 6007:
@@ -442,6 +446,7 @@ static int parse_options(int argc, char *argv[])
     case 6009:
     case 6010:
     case 6011:
+    case 6012:
       usage();
       break;
 #endif
@@ -550,6 +555,7 @@ static void init_env(void)
   lmn_env.debug_hash             = FALSE;
   lmn_env.debug_isomor           = FALSE;
   lmn_env.debug_mc               = FALSE;
+  lmn_env.debug_por              = FALSE;
 #endif
 
 
@@ -565,13 +571,6 @@ static void init_env(void)
   mc_data.propsyms               = NULL;
   mc_data.invalid_seeds          = NULL;
   mc_data.cycles                 = NULL;
-
-  por_data.Stack_POR             = NULL;
-  por_data.States_POR            = NULL;
-  por_data.ample_candidate       = NULL;
-  por_data.next_strans_id        = 0;
-  por_data.strans_independency   = NULL;
-  por_data.succ_strans           = NULL;
 }
 
 void init_default_system_ruleset();

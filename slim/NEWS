@@ -1,9 +1,18 @@
+SLIM (2.1.3)  -- 2011/01/17
+  * new features
+    * RunTime      :  support hyper graph representation (--hl)
+    * Modelchecker :  prototype for partial order reduction (--por)
+
+SLIM (2.1.1)  -- 2011/01/12
+  * bug fix
+    * implemented pthread_barrier for cygwin
+
 SLIM (2.1.0)  -- 2011/01/11
   * LTL model checker
-    * support OWCTY algorithm
-    * support MAP algorithm
-    * support OWCTY + MAP heuristics
-    * support BLEDGE algorithm
+    * support OWCTY algorithm (--use-owcty --disable-map-h)
+    * support MAP algorithm (--use-map)
+    * support OWCTY + MAP heuristics (DEFAULT:--use-owcty --use-map-h)
+    * support BLEDGE algorithm (--use-bledge)
   * many bug fixes
 
 SLIM (2.0.7)  -- 2010/10/20 

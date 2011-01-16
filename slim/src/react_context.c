@@ -108,6 +108,7 @@ inline void mem_react_cxt_destroy(struct ReactCxt *cxt)
 inline static struct NDReactCxtData *mc_react_data_make(BYTE prop_state)
 {
   struct NDReactCxtData *v = LMN_MALLOC(struct NDReactCxtData);
+  v->succ_tbl         = st_init_ptrtable();
   v->roots            = vec_make(32);
   v->rules            = vec_make(32);
   v->mem_deltas       = NULL;
@@ -123,6 +124,7 @@ inline static struct NDReactCxtData *mc_react_data_make(BYTE prop_state)
 
 inline static void mc_react_data_free(struct NDReactCxtData *v)
 {
+  st_free_table(v->succ_tbl);
   vec_free(v->roots);
   vec_free(v->rules);
   if (v->mem_deltas) {

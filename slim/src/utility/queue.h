@@ -71,15 +71,21 @@ struct Queue {
 /* multiple dequeue(reader), multiple enqueue(writer) */
 #define LMN_Q_MRMW 4
 
-inline static unsigned long queue_entry_num(Queue *q) {
-  return q->enq_num - q->deq_num;
-}
-
 Queue *new_queue(void);
 Queue *make_parallel_queue(BOOL lock_type);
 void q_free(Queue *q);
 inline BOOL is_empty_queue(Queue *q);
 inline void enqueue(Queue *q, LmnWord v);
 inline LmnWord dequeue(Queue *q);
+
+inline static unsigned long queue_entry_num(Queue *q) {
+  return q->enq_num - q->deq_num;
+}
+
+inline static void queue_clear(Queue *q) {
+  while (dequeue(q));
+}
+
+
 
 #endif

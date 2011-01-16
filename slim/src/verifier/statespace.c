@@ -40,7 +40,7 @@
 /** @author Masato Gocho
  *  Closed Address Hash Table / Parallel Hash Table for State Management Table
  */
-
+#include "por.h"
 #include "statespace.h"
 #include "state.h"
 #include "membrane.h"
@@ -65,6 +65,7 @@ void state_space_add_memid_hash(StateSpace states, unsigned long hash);
 #endif
 static StateTable *state_table_make(void);
 static StateTable *state_table_make_with_size(unsigned long size);
+inline static void state_table_clear(StateTable *st);
 static void state_table_free(StateTable *st);
 inline static unsigned long state_table_num(StateTable *st);
 inline static unsigned long state_table_num_by_me(StateTable *st);
@@ -328,6 +329,19 @@ StateSpace state_space_make_for_parallel()
   return ss;
 }
 
+void state_space_clear(StateSpace ss)
+{
+  unsigned int i;
+  for (i = 0; i < lmn_env.core_num; i++) {
+    vec_clear(&ss->end_states[i]);
+  }
+
+  ss->init_state = NULL;
+  state_table_clear(state_space_tbl(ss));
+  state_table_clear(state_space_memid_tbl(ss));
+  state_table_clear(state_space_accept_tbl(ss));
+  state_table_clear(state_space_accept_memid_tbl(ss));
+}
 
 void state_space_free(StateSpace ss)
 {
@@ -707,6 +721,23 @@ inline static void state_table_set_lock(StateTable *st, EWLock *lock)
 }
 
 
+inline static void state_table_clear(StateTable *st)
+{
+  if (st) {
+    unsigned long i;
+
+    for (i = 0; i < lmn_env.core_num; i++) {
+      st->num[i] = 0;
+      st->num_dummy[i] = 0;
+    }
+
+    for (i = 0; i < state_table_cap(st); i++) {
+      st->tbl[i] = NULL;
+    }
+  }
+}
+
+
 static void state_table_free(StateTable *st)
 {
   if (st) {
@@ -819,7 +850,7 @@ static State *state_table_insert(StateTable *st, State *ins)
     State *str;
     unsigned long bucket, hash;
 
-    compress  =  NULL;
+    compress  =  state_mem_binstr(ins);
     hash      =  state_hash(ins);
     bucket    =  hash % state_table_cap(st);
     str       =  st->tbl[bucket];
@@ -849,6 +880,7 @@ static State *state_table_insert(StateTable *st, State *ins)
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) profile_countup(PROFILE_COUNT__HASH_CONFLICT_ENTRY);
 #endif
+
       if (hash == state_hash(str)) {
         /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<
          *   膜のハッシュ関数(mhash)から膜のIDのハッシュ関数(memid_hash)へのrehash:
@@ -962,7 +994,7 @@ static void state_table_add_direct(StateTable *st, State *s)
     unsigned long bucket;
     BOOL inserted;
 
-    compress = NULL;
+    compress = state_mem_binstr(s);
     bucket   = state_hash(s) % state_table_cap(st);
     ptr      = st->tbl[bucket];
     inserted = FALSE;

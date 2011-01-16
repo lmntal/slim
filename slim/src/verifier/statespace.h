@@ -135,7 +135,7 @@ void state_space_foreach(StateSpace ss, void (*func) ( ), LmnWord _arg);
 void state_table_foreach(StateTable *st, void (*func) ( ), LmnWord _arg);
 void state_space_format_states(StateSpace ss);
 void state_table_format_states(StateTable *st);
-
+void state_space_clear(StateSpace ss);
 void state_space_ends_dumper(StateSpace ss, FILE *f);
 void state_space_dumper(StateSpace ss, FILE *f);
 

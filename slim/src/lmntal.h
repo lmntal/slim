@@ -289,6 +289,7 @@ struct LmnEnv {
   BOOL debug_id;
   BOOL debug_hash;
   BOOL debug_mc;
+  BOOL debug_por;
 #endif
 
   enum OutputFormat output_format;

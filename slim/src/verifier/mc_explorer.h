@@ -1,5 +1,5 @@
 /*
- * mc_generator.h
+ * mc_explorer.h
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>

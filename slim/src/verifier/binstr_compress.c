@@ -44,22 +44,10 @@
 #endif
 
 
-/** ----------------------------------------------------------------------
- *  Binary String Compression
- *    using Delta Encoding
- */
-LmnBinStr lmn_bscomp_delta_encode(LmnBinStr bs1, LmnBinStr bs2)
-{
-  return bs2;
-}
-LmnBinStr lmn_bscomp_delta_decode(LmnBinStr bs1, LmnBinStr bs2)
-{
-  return bs2;
-}
 
 
 /** -----------------------------------------------------------------
- *  Binary String Compression
+ *  Binary String Compressor
  *    using zlib("A Massively Spiffy Yet Delicately Unobtrusive Compression Library")
  *  @see http://www.zlib.net/
  */

@@ -52,10 +52,11 @@
 #ifdef PROFILE
 #  define pop_stack(List)                                                  \
       do {                                                                 \
+        State *pop = (State *)vec_pop(List);                               \
+        if (is_on_stack(pop)) unset_on_stack(pop);                         \
         if (lmn_env.profile_level >= 3) {                                  \
           profile_remove_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord)); \
         }                                                                  \
-        vec_pop(List);                                                     \
       } while (0)
 #  define put_stack(List, St)                                              \
       do {                                                                 \
@@ -81,7 +82,11 @@
 #  define EXECUTE_PROFILE_START()
 #  define EXECUTE_PROFILE_FINISH()
 #  define ADD_OPEN_PROFILE(M)
-#  define pop_stack(List)      vec_pop(List)
+#  define pop_stack(List)                                                  \
+   do {                                                                    \
+       State *pop = (State *)vec_pop(List);                                \
+       if (is_on_stack(pop)) unset_on_stack(pop);                          \
+     } while (0)
 #  define put_stack(List, St)  vec_push((List), (vec_data_t)(St))
 #endif
 
@@ -297,15 +302,14 @@ inline static void dfs_loop(LmnWorker *w,
     /** 展開元の状態の取得 */
     s   = (State *)vec_peek(stack);
     p_s = MC_GET_PROPERTY(w, s);
-    if (is_expanded(s)) { /* (sが受理頂点ならば, この時点でsのpostorderが決定) */
+    if (is_expanded(s)) {
       if (NDFS_COND(w, s, p_s)) {
         /** entering second DFS */
         ndfs_start(w, s);
       }
       pop_stack(stack);
       continue;
-    }
-    else if (!worker_ltl_none(w) && atmstate_is_end(p_s)) {
+    } else if (!worker_ltl_none(w) && atmstate_is_end(p_s)) {
       mc_found_invalid_state(s);
       pop_stack(stack);
       continue;
@@ -316,8 +320,8 @@ inline static void dfs_loop(LmnWorker *w,
 
     if (MAP_COND(w)) map_start(w, s);
 
-
     if (!worker_on_parallel(w)) { /* Nested-DFS: postorder順を求めるDFS(再度到達した未展開状態がStackに積み直される) */
+      set_on_stack(s);
       n = state_succ_num(s);
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);

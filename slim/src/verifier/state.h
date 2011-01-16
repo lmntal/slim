@@ -62,7 +62,7 @@ struct State {                 /* Total:72(40)byte */
   BYTE               state_name;      /*  1(1)byte: 同期積オートマトンの性質ラベル */
   BOOL               flags;           /*  1(1)byte: フラグのためのビットフィールド */
   BOOL               flags2;          /*  1(1)byte: 並列用 */
-                                      /*  1(1)byte: アラインメントの隙間 */
+  BOOL               flagsN;          /*  1(1)byte: アラインメントの隙間 */
   unsigned long      hash;            /*  8(4)byte: 通常時: 膜memのハッシュ値, --mem-enc時: 膜の一意なバイト列のハッシュ値  */
   succ_data_t       *successors;      /*  8(4)byte: サクセッサ列の先頭ポインタ */
   LmnMembrane       *mem;             /*  8(4)byte: グローバルルート膜へのポインタ */
@@ -89,7 +89,7 @@ struct Transition {
  *  0001 0000  flag to show that it was not reduced by the partial order reduction
  *  0010 0000  flag to show that it was calculated mem-id (not mem-dump)
  *  0100 0000  flag to show that the hash value might collide in this state with predecessor
- *
+ *  1000 0000  flag to show that it was reduced
  */
 
 #define ON_STACK_MASK                  (0x01U)
@@ -99,6 +99,7 @@ struct Transition {
 #define MEM_ENCODED_MASK               (0x01U << 4)
 #define DUMMY_SYMBOL_MASK              (0x01U << 5)
 #define TRANS_OBJ_MASK                 (0x01U << 6)
+#define REDUCED_MASK                   (0x01U << 7)
 
 #define set_on_stack(S)                ((S)->flags |= ON_STACK_MASK)
 #define unset_on_stack(S)              ((S)->flags &= (~ON_STACK_MASK))
@@ -121,6 +122,9 @@ struct Transition {
 #define set_trans_obj(S)               ((S)->flags |= TRANS_OBJ_MASK)
 #define unset_trans_obj(S)             ((S)->flags &= (~TRANS_OBJ_MASK))
 #define has_trans_obj(S)               ((S)->flags & TRANS_OBJ_MASK)
+#define s_set_reduced(S)               ((S)->flags |= REDUCED_MASK)
+#define s_unset_reduced(S)             ((S)->flags &= (~REDUCED_MASK))
+#define s_is_reduced(S)                ((S)->flags & REDUCED_MASK)
 
 
 /*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
@@ -135,8 +139,10 @@ struct Transition {
 #define transition_next_state(T)       ((T)->s)
 #define transition_set_state(T, S)     ((T)->s = (S))
 
+#define state_map(S)                   ((S)->map)
 #define state_id(S)                    ((S)->state_id)
-#define state_id_issue(S)              ((S)->state_id = env_gen_state_id())
+#define state_id_issue(S)              if ((S)->state_id == 0) {\
+                                         (S)->state_id = env_gen_state_id();}
 #define state_set_format_id(S, V)      ((S)->hash = (V))
 #define state_format_id(S)             (mc_data.is_format_states && lmn_env.sp_dump_format != INCREMENTAL \
                                               ? (S)->hash \
@@ -144,6 +150,8 @@ struct Transition {
 #define state_property_state(S)        ((S)->state_name)
 #define state_hash(S)                  ((S)->hash * (state_property_state(S) + 1)) /* +1 は state_nameが0の場合があるため */
 #define state_set_property_state(S, L) ((S)->state_name = (L))
+#define state_flags2(S)                ((S)->flags2)
+#define state_flagsN(S)                ((S)->flagsN)
 #define state_mem(S)                   ((S)->mem)
 #define state_set_mem(S, M)            ((S)->mem = (M))
 #define state_mem_binstr(S)            ((S)->compress_mem)
@@ -156,31 +164,6 @@ struct Transition {
 
 #define state_restore_mem(S)           (state_mem(S) ? state_mem(S) \
                                                      : lmn_binstr_decode(state_mem_binstr(S)))
-#define state_succ_set_sub(S, SUCCS)                                \
-  do {                                                              \
-    state_succ_num(S) = vec_num(SUCCS);                             \
-    if (state_succ_num(S) > 0) {                                    \
-      unsigned int __i;                                             \
-      (S)->successors = LMN_NALLOC(succ_data_t, state_succ_num(S)); \
-      for (__i = 0; __i < state_succ_num(S); __i++) {               \
-        (S)->successors[__i] = (succ_data_t)vec_get(SUCCS, __i);    \
-      }                                                             \
-    }                                                               \
-  } while (0)
-#ifdef PROFILE
-#  define  state_succ_set(S, SUCCS)                                 \
-  do {                                                              \
-    if (lmn_env.profile_level >= 3) {                               \
-      profile_add_space(PROFILE_SPACE__TRANS_OBJECT,                \
-                        sizeof(succ_data_t) * vec_num(SUCCS));      \
-      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);         \
-    }                                                               \
-    state_succ_set_sub(S, SUCCS);                                   \
-  } while (0)
-#else
-#  define  state_succ_set(S, SUCCS) state_succ_set_sub(S, SUCCS)
-#endif
-
 #define state_is_accept(S) atmstate_is_accept(\
                              automata_get_state(mc_data.property_automata,\
                                                 state_property_state(S)))
@@ -191,23 +174,14 @@ struct Transition {
                              automata_get_state(mc_data.property_automata,\
                                                 state_property_state(S)))
 
-#define state_map(S)         ((S)->map)
-
-inline static BOOL state_succ_contains(State *s, State *t) {
-  unsigned int i;
-  for (i = 0; i < state_succ_num(s); i++) {
-    State *succ = state_succ_state(s, i);
-    if (succ == t) return TRUE;
-  }
-  return FALSE;
-}
-
 
 State *state_make(LmnMembrane *mem, BYTE state_name, BOOL encode);
 inline State *state_make_minimal(void);
 State *state_copy(State *src);
 inline State *state_copy_with_mem(State *src, LmnMembrane *mem);
 void state_free(State *s);
+void state_succ_set(State *s, Vector *v);
+void state_succ_clear(State *s);
 inline void state_free_mem(State *s);
 inline void state_calc_mem_encode(State *s);
 inline LmnBinStr state_calc_mem_dump(State *s);
@@ -220,10 +194,6 @@ int state_cmp(State *s1, State *s2);
 int state_cmp_with_compress(State *s1, State *s2);
 
 
-inline static Transition transition(State *s, unsigned int i) {
-  return (Transition)(s->successors[i]);
-}
-
 Transition transition_make(State *s, lmn_interned_str rule_name);
 inline unsigned long transition_space(Transition t);
 void transition_free(Transition t);
@@ -234,5 +204,22 @@ void state_print_mem(State *s, LmnWord _fp);
 void state_print_transition(State *s, LmnWord _fp);
 void state_print_label(State *s, LmnWord _fp);
 void state_print_error_path(State *s, LmnWord _fp);
+
+
+inline static Transition transition(State *s, unsigned int i) {
+  return (Transition)(s->successors[i]);
+}
+
+
+/* O(state_succ_num(s)) */
+inline static BOOL state_succ_contains(State *s, State *t) {
+  unsigned int i;
+  for (i = 0; i < state_succ_num(s); i++) {
+    State *succ = state_succ_state(s, i);
+    if (succ == t) return TRUE;
+  }
+  return FALSE;
+}
+
 
 #endif

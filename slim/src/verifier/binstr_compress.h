@@ -47,17 +47,10 @@
 #endif
 
 #define BS_COMP_Z                 (0x01U)
-#define BS_COMP_DELTA             (0x01U << 1)
 
 #define is_comp_z(BS)             (((BS)->comp_type) & BS_COMP_Z)
 #define set_comp_z(BS)            (((BS)->comp_type) |= BS_COMP_Z)
-#define is_comp_delta(BS)         (((BS)->comp_type) & BS_COMP_DELTA)
-#define set_comp_delta(BS)        (((BS)->comp_type) |= BS_COMP_DELTA)
 
-#define DELTA_DEPTH_K 5
-
-LmnBinStr lmn_bscomp_delta_encode(LmnBinStr bs1, LmnBinStr bs2);
-LmnBinStr lmn_bscomp_delta_decode(LmnBinStr bs1, LmnBinStr bs2);
 LmnBinStr lmn_bscomp_z_encode(LmnBinStr bs);
 LmnBinStr lmn_bscomp_z_decode(LmnBinStr bs);
 

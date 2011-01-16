@@ -508,6 +508,7 @@ void dump_profile_data(FILE *f)
                     lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i]);
       }
     }
+
     if (!lmn_env.nd) {
       fprintf(f,   "============================================================\n");
       if (lmn_env.profile_level >= 2) {
@@ -571,6 +572,12 @@ void dump_profile_data(FILE *f)
         fprintf(f,   "============================================================\n");
       }
     } else if (lmn_env.profile_level < 2) {
+      fprintf(f,   "------------------------------------------------------------\n");
+      fprintf(f, "%-20s%8s  : %15lu\n",   "# of States",             "Stored", lmn_prof.state_num_stored);
+      fprintf(f, "%-18s%10s  : %15lu\n",   " ",                  "Terminates", lmn_prof.state_num_end);
+      if (mc_data.has_property) {
+        fprintf(f, "%-10s%18s  : %15s\n",    " ",   "Accepting Cycle / Error", mc_data.error_exist ? "FOUND" : "NOT FOUND");
+      }
       fprintf(f,   "============================================================\n");
     } else {
       fprintf(f,   "------------------------------------------------------------\n");

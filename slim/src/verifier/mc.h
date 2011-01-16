@@ -92,11 +92,21 @@ void mc_expand(const StateSpace states,
                struct ReactCxt  *rc,
                Vector           *new_s,
                BOOL             flag);
+void mc_gen_successors_with_property(State           *s,
+                                     LmnMembrane     *mem,
+                                     AutomataState   prop_atm_s,
+                                     struct ReactCxt *rc,
+                                     BOOL            flags);
 void mc_gen_successors(State           *src,
                        LmnMembrane     *mem,
                        BYTE            prop_labels,
                        struct ReactCxt *rc,
                        BOOL            flags);
+void mc_store_successors(const StateSpace ss,
+                         State            *s,
+                         struct ReactCxt  *rc,
+                         Vector           *new_ss,
+                         BOOL             f);
 void run_mc(Vector *start_rulesets);
 StateSpace do_mc(LmnMembrane *world_mem, BOOL flags);
 

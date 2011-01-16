@@ -79,15 +79,24 @@ struct ReactCxt {
  * ND React Context
  */
 struct NDReactCxtData {
-  Vector *roots; /* 通常時: LmnMembrane  差分時: MemDeltaRoot */
+  st_table_t succ_tbl;
+  Vector *roots;        /* 通常時: struct LmnMembrane  差分時: struct MemDeltaRoot */
   Vector *rules;
   Vector *mem_deltas;
-  struct MemDeltaRoot *mem_delta_root; /* commit命令後(BODY命令で)作られる差分データをここに入れる */
+  struct MemDeltaRoot *mem_delta_root; /* commit命令でmallocしたデータをここに置き,
+                                        * BODY命令をここに適用する.
+                                        * 適用を終えたMemDeltaRootオブジェクトは,
+                                        * Vector *mem_deltasにpushする.
+                                        * delta時には, Vector *rootsには,
+                                        * mallocされた空の状態データを積み,
+                                        * 状態管理表へ登録する際にデータを記録する */
   BYTE property_state;
   unsigned int next_id;
 };
 
+
 #define RC_ND_DATA(rc)                  ((struct NDReactCxtData *)(rc)->v)
+#define RC_SUCC_TBL(rc)                 ((RC_ND_DATA(rc))->succ_tbl)
 #define RC_EXPANDED(rc)                 ((RC_ND_DATA(rc))->roots)
 #define RC_EXPANDED_RULES(rc)           ((RC_ND_DATA(rc))->rules)
 #define RC_MEM_DELTAS(rc)               ((RC_ND_DATA(rc))->mem_deltas)
@@ -98,6 +107,7 @@ struct NDReactCxtData {
 #define RC_ND_DELTA_ENABLE(rc)          RC_MEM_DELTAS(rc)
 #define RC_CLEAR_DATA(rc) do {                                                 \
   RC_SET_GROOT_MEM(rc, NULL);                                                  \
+  st_clear(RC_SUCC_TBL(rc));                                                   \
   vec_clear(RC_EXPANDED_RULES(rc));                                            \
   vec_clear(RC_EXPANDED(rc));                                                  \
   if (RC_MEM_DELTAS(rc)) {                                                     \

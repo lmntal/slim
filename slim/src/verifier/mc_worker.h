@@ -1,5 +1,5 @@
 /*
- * parallel.h
+ * mc_worker.h
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                          <lmntal@ueda.info.waseda.ac.jp>
@@ -142,8 +142,10 @@ struct LmnWorker {
 
 #define mc_is_dump(F)                 ((F) &   WORKER_F0_MC_DUMP_MASK)
 #define mc_set_dump(F)                ((F) |=  WORKER_F0_MC_DUMP_MASK)
+#define mc_unset_dump(F)              ((F) &=(~WORKER_F0_MC_DUMP_MASK))
 #define mc_enable_por(F)              ((F) &   WORKER_F0_MC_POR_MASK)
 #define mc_set_por(F)                 ((F) |=  WORKER_F0_MC_POR_MASK)
+#define mc_unset_por(F)               ((F) &=(~WORKER_F0_MC_POR_MASK))
 #define mc_has_property(F)            ((F) &   WORKER_F0_MC_PROP_MASK)
 #define mc_set_property(F)            ((F) |=  WORKER_F0_MC_PROP_MASK)
 #define mc_has_trans(F)               ((F) &   WORKER_F0_MC_TRANS_MASK)
@@ -154,7 +156,7 @@ struct LmnWorker {
 #define mc_set_compress(F)            ((F) |=  WORKER_F0_MC_COMPRESS_MASK)
 #define mc_use_compact(F)             ((F) &   WORKER_F0_MC_COMPACT_MASK)
 #define mc_set_compact(F)             ((F) |=  WORKER_F0_MC_COMPACT_MASK)
-
+#define mc_unset_compact(F)           ((F) &=(~WORKER_F0_MC_COMPACT_MASK))
 
 #define WORKER_F1_PARALLEL_MASK       (0x01U)
 #define WORKER_F1_DYNAMIC_LB_MASK     (0x01U << 1)

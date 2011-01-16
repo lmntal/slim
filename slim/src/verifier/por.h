@@ -36,39 +36,38 @@
  * $Id$
  */
 
-#ifndef POR_H
-#define POR_H
+#ifndef LMN_MC_POR_H
+#define LMN_MC_POR_H
 
 #include "lmntal.h"
-#include "mc.h"
+#include "queue.h"
 #include "vector.h"
-#include "st.h"
 #include "state.h"
 #include "statespace.h"
 #include "react_context.h"
 #include "automata.h"
 
-#define POR_TABLE_SIZE      (512)
-#define POR_ID_INITIALIZER  (1U)
 
-
-struct PartialOrderReductionData {
-  st_table_t strans_independency; /* 独立性情報テーブル: 構造体StateTransitionのidをキーとし，bins[id]は高々1個のエントリーを持つ．
-                                  *   エントリーの値はVectorであり，キーとなったidを持つ遷移と独立な関係にある遷移のidがpushされたものとなる．*/
-  StateTable *States_POR;    /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
-  Vector *Stack_POR;       /* C1のチェックにあたってstate graphを展開するする際に使用 */
-  Vector *succ_strans;     /* ある状態sから可能な遷移の集合を管理 */
-  Vector *ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる */
-
+struct McPorData {
+  State      *root;
+  st_table_t strans_independency; /* 独立性情報テーブル:
+                                   *   構造体StateTransitionのidをキーとし
+                                   *   bins[id]は高々1個のエントリー(Vector)を持つ．
+                                   *   Vectorには, キーであるidの遷移と独立関係にある遷移idが積まれる. */
+  st_table_t states;              /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
+  Queue      *queue;              /* C1のチェックにあたってstate graphを展開するする際に使用 */
+  Vector     *ample_candidate;    /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる */
+  struct ReactCxt *rc;
   unsigned long next_strans_id;
-} por_data;
+  BOOL       flags;
+} mc_por;
 
-void por_ample(const StateSpace states,
-               State *state,
-               AutomataState property_automata_state,
-               struct ReactCxt *rc,
-               Vector *new_s,
-               BOOL flag);
+
+void por_calc_ampleset(StateSpace      ss,
+                       State           *s,
+                       struct ReactCxt *rc,
+                       Vector          *new_s,
+                       BOOL flag);
 void init_por_vars(void);
 void free_por_vars(void);
 
