@@ -57,6 +57,7 @@ const char* OPTIMIZE_FLAGS[] = {"-O0",
 #define OPT_SLIM_CODE "--slimcode"
 #define OPT_COMPILE_RULE "--compile-rule"
 #define OPT_EVAL "-e"
+const char* HYPERLINK_FLAG = "--hl";
 
 /* コンパイラフラグの最大長。バッファあふれの対策 */
 #define CFLAGS_MAX_SIZE 1024
@@ -89,6 +90,10 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
 
   if (getenv(ENV_CFLAGS)) {
     add_arg(args, getenv(ENV_CFLAGS));
+  }
+
+  if (lmn_env.hyperlink) {
+    add_arg(args, HYPERLINK_FLAG);
   }
 
   /* 最適化レベル */
