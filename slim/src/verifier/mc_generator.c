@@ -442,7 +442,7 @@ void bfs_start(LmnWorker *w) {
   unsigned long d, d_lim;
   Vector *new_ss;
 
-  d = 0;
+  d = 1;
   d_lim = lmn_env.depth_limits; /* ローカル変数に */
   new_ss = vec_make(32);
 
@@ -460,7 +460,7 @@ void bfs_start(LmnWorker *w) {
 
       if (BLEDGE_COND(w)) bledge_start(w);
 
-      if (d_lim < d++ || is_empty_queue(BFS_WORKER_Q_NXT(w))) {
+      if (d_lim < ++d || is_empty_queue(BFS_WORKER_Q_NXT(w))) {
         /* 次のLayerが空の場合は探索終了 */
         /* 指定した制限の深さに到達した場合も探索を打ち切る */
         break;
@@ -506,7 +506,7 @@ void bfs_start(LmnWorker *w) {
       BFS_WORKER_Q_SWAP(w);
       lmn_workers_synchronization(w, WORKER_PRIMARY_ID,
                                   (void *)lmn_workers_termination_detection_for_rings);
-      if (d_lim < d++ || mc_data.mc_exit || lmn_workers_termination_detection_for_rings(w)) {
+      if (d_lim < ++d || mc_data.mc_exit || lmn_workers_termination_detection_for_rings(w)) {
         break;
       }
     }
@@ -527,7 +527,7 @@ inline static void bfs_loop(LmnWorker *w, Vector *new_ss)
 
     s = (State *)dequeue(BFS_WORKER_Q_CUR(w));
 
-    if (!s) continue; /* dequeueはNULLを返すことがある */
+    if (!s) return; /* dequeueはNULLを返すことがある */
 
     p_s = MC_GET_PROPERTY(w, s);
     if (is_expanded(s)) {

@@ -40,7 +40,7 @@
 #ifndef LMN_MC_GEN_H
 #define LMN_MC_GEN_H
 
-#include "../lmntal.h"
+#include "lmntal.h"
 #include "mc_worker.h"
 
 
