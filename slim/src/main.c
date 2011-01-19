@@ -50,7 +50,7 @@
 #include "lmntal_system_adapter.h"
 #include "automata.h"
 #include "propositional_symbol.h"
-#include "por.h"
+#include "dpor.h"
 #include "mc.h"
 #include "mc_generator.h"
 #include "ccallback.h"
@@ -160,6 +160,7 @@ static int parse_options(int argc, char *argv[])
     {"psym"                   , 1, 0, 1411},
     {"ltl-f"                  , 1, 0, 1412},
     {"pscc-driven"            , 0, 0, 1413},
+    {"por-old"                , 0, 0, 1419},
     {"por"                    , 0, 0, 1420},
     {"bfs"                    , 0, 0, 1421},
     {"limited-step"           , 1, 0, 1422},
@@ -306,6 +307,9 @@ static int parse_options(int argc, char *argv[])
     case 1413:
       lmn_env.prop_scc_driven = TRUE;
       break;
+    case 1419:
+      lmn_env.enable_por_old = TRUE;
+      /* FALLTHROUGH */
     case 1420:
       lmn_env.enable_por = TRUE;
       break;
@@ -499,6 +503,7 @@ static void init_env(void)
   lmn_env.nd                     = FALSE;
   lmn_env.ltl                    = FALSE;
   lmn_env.ltl_all                = FALSE;
+  lmn_env.enable_por_old         = FALSE;
   lmn_env.enable_por             = FALSE;
   lmn_env.show_transition        = FALSE;
   lmn_env.translate              = FALSE;
@@ -591,7 +596,7 @@ static void init_internal(void)
     if (lmn_env.hyperlink) hyperlink_init();
     init_so_handles();
     init_default_system_ruleset();
-    if (lmn_env.enable_por) init_por_vars();
+    if (lmn_env.enable_por) dpor_env_init();
     mpool_init();
     task_init();
     mem_isom_init();
@@ -614,7 +619,7 @@ static void finalize(void)
     string_finalize();
     dumper_finalize();
 
-    if (lmn_env.enable_por) free_por_vars();
+    if (lmn_env.enable_por) dpor_env_destroy();
     task_finalize();
     mem_isom_finalize();
 /*    ext_finalize(); */

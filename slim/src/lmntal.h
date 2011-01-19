@@ -226,15 +226,15 @@ struct LmnEnv {
   BOOL nd;
   BOOL ltl;
   BOOL ltl_all;
-  BOOL enable_por;          /* to enable partial order reduction for nondeterministic execution or LTL model checking */
-
   BOOL show_transition;
-  BOOL translate;
+
+  BOOL enable_por;          /* to enable partial order reduction for nondeterministic execution or LTL model checking */
+  BOOL enable_por_old;
   BYTE optimization_level;
   BYTE profile_level;
 
+  BOOL translate;
   BOOL bfs;
-  BOOL nd_search_end;
   BOOL mem_enc;
   BOOL compact_stack;
 
@@ -272,6 +272,7 @@ struct LmnEnv {
   BOOL nd_remain;
   BOOL nd_remaining;
   BOOL nd_cleaning;
+  BOOL nd_search_end;
 
 	/* allow hyperlink system */
   BOOL hyperlink;

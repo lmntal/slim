@@ -854,6 +854,9 @@ static inline int bsptr_push_data_atom(BinStrPtr p, LmnAtom atom, LmnLinkAttr at
     return
       bsptr_push1(p, TAG_DBL_DATA) &&
       bsptr_push(p, (const BYTE*)(double*)atom, BS_DBL_SIZE);
+  case LMN_HL_ATTR:
+    lmn_fatal("under constructions: verification for hyper graph model");
+    break;
   case LMN_STRING_ATTR:
   default: /* Special Atomは未実装 */
     lmn_fatal("not implemented");

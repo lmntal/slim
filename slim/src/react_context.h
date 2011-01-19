@@ -75,36 +75,44 @@ struct ReactCxt {
 #define RC_IS_ATOMIC_STEP(rc)          ((rc)->atomic_id >= 0)
 #define RC_FINISH_ATOMIC_STEP(rc)      ((rc)->atomic_id = -1)
 
+
 /*----------------------------------------------------------------------
- * ND React Context
+ * MC React Context
  */
-struct NDReactCxtData {
-  st_table_t succ_tbl;
-  Vector *roots;        /* 通常時: struct LmnMembrane  差分時: struct MemDeltaRoot */
-  Vector *rules;
-  Vector *mem_deltas;
-  struct MemDeltaRoot *mem_delta_root; /* commit命令でmallocしたデータをここに置き,
-                                        * BODY命令をここに適用する.
-                                        * 適用を終えたMemDeltaRootオブジェクトは,
-                                        * Vector *mem_deltasにpushする.
-                                        * delta時には, Vector *rootsには,
-                                        * mallocされた空の状態データを積み,
-                                        * 状態管理表へ登録する際にデータを記録する */
-  BYTE property_state;
-  unsigned int next_id;
+struct McReactCxtData {
+  st_table_t   succ_tbl;       /* 多重辺除去用 */
+  Vector       *roots;         /* 通常時: struct LmnMembrane  差分時: 空 */
+  Vector       *rules;
+  Vector       *mem_deltas;    /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
+  MemDeltaRoot *mem_delta_tmp; /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
+                                * BODY命令はこのMemDeltaRootオブジェクトへ適用する. */
+  BYTE         opt_mode;       /* 最適化のモードを記録 */
 };
 
 
-#define RC_ND_DATA(rc)                  ((struct NDReactCxtData *)(rc)->v)
+#define RC_MC_DMEM_MASK                 (0x01U)
+#define RC_MC_DPOR_MASK                 (0x01U << 1)
+#define RC_MC_DPOR_NAIVE_MASK           (0x01U << 2)
+
+#define RC_MC_OPT_FLAG(rc)              ((RC_ND_DATA(rc))->opt_mode)
+#define RC_MC_USE_DMEM(rc)              (RC_MC_OPT_FLAG(rc) &   RC_MC_DMEM_MASK)
+#define RC_MC_SET_DMEM(rc)              (RC_MC_OPT_FLAG(rc) |=  RC_MC_DMEM_MASK)
+#define RC_MC_UNSET_DMEM(rc)            (RC_MC_OPT_FLAG(rc) &=(~RC_MC_DMEM_MASK))
+#define RC_MC_USE_DPOR(rc)              (RC_MC_OPT_FLAG(rc) &   RC_MC_DPOR_MASK)
+#define RC_MC_SET_DPOR(rc)              (RC_MC_OPT_FLAG(rc) |=  RC_MC_DPOR_MASK)
+#define RC_MC_UNSET_DPOR(rc)            (RC_MC_OPT_FLAG(rc) &=(~RC_MC_DPOR_MASK))
+#define RC_MC_USE_DPOR_NAIVE(rc)        (RC_MC_OPT_FLAG(rc) &   RC_MC_DPOR_NAIVE_MASK)
+#define RC_MC_SET_DPOR_NAIVE(rc)        (RC_MC_OPT_FLAG(rc) |=  RC_MC_DPOR_NAIVE_MASK)
+#define RC_MC_UNSET_DPOR_NAIVE(rc)      (RC_MC_OPT_FLAG(rc) &=(~RC_MC_DPOR_NAIVE_MASK))
+
+
+#define RC_ND_DATA(rc)                  ((struct McReactCxtData *)(rc)->v)
 #define RC_SUCC_TBL(rc)                 ((RC_ND_DATA(rc))->succ_tbl)
 #define RC_EXPANDED(rc)                 ((RC_ND_DATA(rc))->roots)
 #define RC_EXPANDED_RULES(rc)           ((RC_ND_DATA(rc))->rules)
 #define RC_MEM_DELTAS(rc)               ((RC_ND_DATA(rc))->mem_deltas)
-#define RC_PROPERTY_STATE(rc)           ((RC_ND_DATA(rc))->property_state)
-#define RC_SET_PROPERTY(rc, prop)       ((RC_ND_DATA(rc))->property_state = (prop))
-#define RC_ND_SET_MEM_DELTA_ROOT(rc, d) ((RC_ND_DATA(rc))->mem_delta_root = (d))
-#define RC_ND_MEM_DELTA_ROOT(rc)        ((RC_ND_DATA(rc))->mem_delta_root)
-#define RC_ND_DELTA_ENABLE(rc)          RC_MEM_DELTAS(rc)
+#define RC_ND_SET_MEM_DELTA_ROOT(rc, d) ((RC_ND_DATA(rc))->mem_delta_tmp = (d))
+#define RC_ND_MEM_DELTA_ROOT(rc)        ((RC_ND_DATA(rc))->mem_delta_tmp)
 #define RC_CLEAR_DATA(rc) do {                                                 \
   RC_SET_GROOT_MEM(rc, NULL);                                                  \
   st_clear(RC_SUCC_TBL(rc));                                                   \
@@ -113,11 +121,10 @@ struct NDReactCxtData {
   if (RC_MEM_DELTAS(rc)) {                                                     \
     int _d_i;                                                                  \
     for (_d_i = 0; _d_i < vec_num(RC_MEM_DELTAS(rc)); _d_i++) {                \
-      dmem_root_free((struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), _d_i)); \
+      dmem_root_free((MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), _d_i)); \
     }                                                                          \
     vec_clear(RC_MEM_DELTAS(rc));                                              \
   }                                                                            \
-  RC_SET_PROPERTY(rc, DEFAULT_STATE_ID);                                       \
 } while (0)
 
 
@@ -139,7 +146,7 @@ inline void property_react_cxt_init(struct ReactCxt *cxt);
 inline void property_react_cxt_destroy(struct ReactCxt *cxt);
 inline void mem_react_cxt_init(struct ReactCxt *cxt);
 inline void mem_react_cxt_destroy(struct ReactCxt *cxt);
-inline void mc_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state_id);
+inline void mc_react_cxt_init(struct ReactCxt *cxt);
 inline void mc_react_cxt_destroy(struct ReactCxt *cxt);
 inline void mc_react_cxt_add_expanded(struct ReactCxt *cxt,
                                       LmnMembrane *mem,
@@ -150,12 +157,12 @@ inline void mc_react_cxt_add_mem_delta(struct ReactCxt *cxt,
 
 static inline LmnWord mc_react_cxt_expanded_pop(struct ReactCxt *cxt) {
   vec_pop(RC_EXPANDED_RULES(cxt));
-  return vec_pop(RC_ND_DELTA_ENABLE(cxt) ? RC_MEM_DELTAS(cxt)
-                                         : RC_EXPANDED(cxt));
+  return vec_pop(RC_MC_USE_DMEM(cxt) ? RC_MEM_DELTAS(cxt)
+                                     : RC_EXPANDED(cxt));
 }
 
 static inline unsigned int mc_react_cxt_expanded_num(struct ReactCxt *cxt) {
-  return RC_ND_DELTA_ENABLE(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
+  return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
                                  : vec_num(RC_EXPANDED(cxt));
 }
 

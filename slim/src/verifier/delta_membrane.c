@@ -533,7 +533,7 @@ void dmem_root_copy_cells(struct MemDeltaRoot *d,
 
     ProcessTbl atoms;
 
-    atoms = proc_tbl_make();
+    atoms = proc_tbl_make_with_size(64);
 
 
     /* /\*d*\/ if (dmem_root_is_new_mem(d, srcmem)) lmn_fatal("unexpected"); */
@@ -691,7 +691,9 @@ static void modify_free_link_sub(struct MemDeltaRoot *d,
   }
 }
 
-inline void dmem_root_remove_symbol_atom_with_buddy_data(struct MemDeltaRoot *d, LmnMembrane *m, LmnSAtom atom)
+inline void dmem_root_remove_symbol_atom_with_buddy_data(struct MemDeltaRoot *d,
+                                                         LmnMembrane *m,
+                                                         LmnSAtom atom)
 {
   unsigned int i;
   unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
@@ -713,19 +715,79 @@ inline void dmem_root_remove_symbol_atom_with_buddy_data(struct MemDeltaRoot *d,
 
 }
 
-void dmem_root_remove_ground(struct MemDeltaRoot *root_d, LmnMembrane *mem, Vector *srcvec)
+
+int dmem_root_remove_symbol_atom_with_buddy_data_new_f(LmnWord _k,
+                                                       LmnWord _v,
+                                                       LmnWord _arg)
 {
-  HashSet *atoms;
+  LmnMembrane *m;
+  LmnSAtom atom;
+  unsigned int i;
+  unsigned int end;
+
+  m = (LmnMembrane *)_arg;
+  atom = (LmnSAtom)_v;
+
+  end = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
+  /* free linked data atoms */
+  for (i = 0; i < end; i++) {
+    if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) {
+      lmn_mem_remove_data_atom(m,
+                               LMN_SATOM_GET_LINK(atom, i),
+                               LMN_SATOM_GET_ATTR(atom, i));
+    }
+  }
+
+  mem_remove_symbol_atom(m, atom);
+  return 1;
+}
+
+
+int dmem_root_remove_symbol_atom_with_buddy_data_dmem_f(LmnWord _k,
+                                                        LmnWord _v,
+                                                        LmnWord _arg)
+{
+  struct MemDelta *d;
+  LmnSAtom atom;
+  unsigned int i;
+  unsigned int end;
+
+  d = (struct MemDelta *)_arg;
+  atom = (LmnSAtom)_v;
+
+  end = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
+  /* free linked data atoms */
+  for (i = 0; i < end; i++) {
+    if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) {
+      d->data_atom_diff--;
+    }
+  }
+
+//  dmem_remove_symbol_atom(d, m, atom);
+  vec_push(&d->del_atoms, (vec_data_t)atom);
+  proc_tbl_put_atom(&d->root_d->owner_tbl, atom, 0);
+  return 1;
+}
+
+
+void dmem_root_remove_ground(struct MemDeltaRoot *root_d,
+                             LmnMembrane *mem,
+                             Vector *srcvec)
+{
+  ProcessTbl atoms;
   unsigned long i, t;
-  HashSetIterator it;
 
   ground_atoms(srcvec, NULL, &atoms, &t);
 
-  for (it = hashset_iterator(atoms);
-       !hashsetiter_isend(&it);
-       hashsetiter_next(&it)) {
-    dmem_root_remove_symbol_atom_with_buddy_data(root_d, mem, LMN_SATOM(hashsetiter_entry(&it)));
-   }
+  if (dmem_root_is_new_mem(root_d, mem)) {
+    proc_tbl_foreach(atoms,
+                     dmem_root_remove_symbol_atom_with_buddy_data_new_f,
+                     (LmnWord)mem);
+  } else {
+    proc_tbl_foreach(atoms,
+                     dmem_root_remove_symbol_atom_with_buddy_data_dmem_f,
+                     (LmnWord)dmem_root_get_mem_delta(root_d, mem));
+  }
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続してい場合の処理をする */
@@ -738,25 +800,29 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d, LmnMembrane *mem, Vect
         dmem_root_get_mem_delta(root_d, mem)->data_atom_diff--;
     }
   }
-  hashset_free(atoms);
+
+  proc_tbl_free(atoms);
 }
+
+
+int dmem_root_free_satom_f(LmnWord _k, LmnWord _v, LmnWord _arg)
+{
+  dmem_root_free_satom((struct MemDeltaRoot *)_arg, (LmnSAtom)_v);
+  return 1;
+}
+
 
 void dmem_root_free_ground(struct MemDeltaRoot *root_d, Vector *srcvec)
 {
-  HashSet *atoms;
+  ProcessTbl atoms;
   unsigned long t;
-  HashSetIterator it;
 
   ground_atoms(srcvec, NULL, &atoms, &t);
 
-  for (it = hashset_iterator(atoms);
-       !hashsetiter_isend(&it);
-       hashsetiter_next(&it)) {
-    dmem_root_free_satom(root_d, LMN_SATOM(hashsetiter_entry(&it)));
-  }
-
-  hashset_free(atoms);
+  proc_tbl_foreach(atoms, dmem_root_free_satom_f, (LmnWord)root_d);
+  proc_tbl_free(atoms);
 }
+
 
 void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
                            LmnMembrane *mem,
@@ -764,7 +830,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
                            Vector **ret_dstlovec,
                            ProcessTbl *ret_atommap)
 {
-  ProcessTbl atommap = proc_tbl_make();
+  ProcessTbl atommap = proc_tbl_make_with_size(64);
   Vector *stack = vec_make(16);
   unsigned int i;
   LmnWord t;

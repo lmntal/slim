@@ -40,7 +40,7 @@
 #include "mc.h"
 #include "mc_worker.h"
 #include "task.h"
-#include "por.h"
+#include "dpor.h"
 #include "error.h"
 #include "delta_membrane.h"
 #include "propositional_symbol.h"
@@ -183,8 +183,9 @@ static BOOL mc_status_init()
     }
   }
 
-  if (lmn_env.enable_por)  mc_set_por(flags);
-
+  if (lmn_env.enable_por || lmn_env.enable_por_old) {
+    mc_set_por(flags);
+  }
 
   if (lmn_env.core_num >= 2) {
     if (lmn_env.sp_dump_format == INCREMENTAL) {
@@ -292,7 +293,7 @@ void mc_expand(const StateSpace ss,
     } else {
       /* POR使用時は, 遷移先状態集合:en(s)からample(s)を計算する
        * サブルーチン側で, sに対するサクセッサの登録まで済ませる */
-      por_calc_ampleset(ss, s, rc, new_ss, f);
+      dpor_start(ss, s, rc, new_ss, f);
     }
   }
 
@@ -346,14 +347,14 @@ void mc_store_successors(const StateSpace ss,
     Transition src_t;
     st_data_t tmp;
     State *src_succ, *succ;
-    struct MemDeltaRoot *d;
+    MemDeltaRoot *d;
 
     src_t     = !has_trans_obj(s) ? NULL
                                   : (Transition)vec_get(RC_EXPANDED(rc), i);
     src_succ  = !has_trans_obj(s) ? (State *)vec_get(RC_EXPANDED(rc), i)
                                   : transition_next_state(src_t);
-    d    = RC_ND_DELTA_ENABLE(rc) ? (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i)
-                                  :  NULL;
+    d = RC_MC_USE_DMEM(rc) ? (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i)
+                           :  NULL;
 
     /** ハッシュ表へ状態の追加を試みる */
     succ = d ? state_space_insert_delta(ss, src_succ, d)
@@ -394,7 +395,7 @@ void mc_store_successors(const StateSpace ss,
 
   RC_EXPANDED(rc)->num = succ_i;      /* 危険なコード. いつか直すかも. */
   RC_EXPANDED_RULES(rc)->num = succ_i;
-  if (RC_ND_DELTA_ENABLE(rc)) {
+  if (RC_MC_USE_DMEM(rc)) {
     RC_MEM_DELTAS(rc)->num = succ_i;
   }
   state_succ_set(s, RC_EXPANDED(rc)); /* successorを登録 */
@@ -445,7 +446,6 @@ void mc_gen_successors(State           *src,
   unsigned int i, n, old;
 
   RC_SET_GROOT_MEM(rc, mem);
-  RC_SET_PROPERTY(rc, state_name);
 
   old = mc_react_cxt_expanded_num(rc);
 

@@ -257,10 +257,12 @@ inline static LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
 
 inline static LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom)
 {
-  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
-  LmnSAtom newatom = lmn_new_atom(f);
+  LmnFunctor f;
+  LmnSAtom newatom;
   unsigned int i, arity = LMN_SATOM_GET_LINK_NUM(atom);
 
+  f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
+  newatom = lmn_new_atom(f);
   LMN_ASSERT(newatom != atom); /* たまに起こる未解決のバグ */
 
   memcpy((void *)newatom,

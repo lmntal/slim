@@ -93,7 +93,7 @@ void tr_instr_commit_ready(struct ReactCxt  *rc,
   }
 
   if (RC_GET_MODE(rc, REACT_ND)) {
-    if (RC_ND_DELTA_ENABLE(rc)) {
+    if (RC_MC_USE_DMEM(rc)) {
       /* dmemインタプリタ(body命令)を書かないとだめだ */
       lmn_fatal("transalter mode, delta-membrane execution is not supported.");
     } else {

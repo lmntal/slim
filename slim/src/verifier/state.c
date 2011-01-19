@@ -587,6 +587,7 @@ void state_print_mem(State *s, LmnWord _fp)
     env_set_next_id(org_next_id);
   }
 
+//  fprintf(stdout, "natoms=%lu :: hash=%16lu ::", lmn_mem_atom_num(mem), s->hash);
   if (lmn_env.mc_dump_format == LaViT) {
     lmn_dump_cell_stdout(mem);
   } else {

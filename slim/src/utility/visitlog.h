@@ -69,7 +69,9 @@ ProcessTbl proc_tbl_make(void);
 void proc_tbl_destroy(ProcessTbl p);
 void proc_tbl_free(ProcessTbl p);
 static inline unsigned long proc_tgl_num(ProcessTbl p) { return p->n; }
-int proc_tbl_foreach(ProcessTbl p, int(*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg);
+int proc_tbl_foreach(ProcessTbl p,
+                     int(*func)(LmnWord key, LmnWord val, LmnWord arg),
+                     LmnWord arg);
 #ifdef TIME_OPT
 void proc_tbl_expand_sub(ProcessTbl p, unsigned long n);
 #  define proc_tbl_expand(p, n) if ((p)->size <= (n)) proc_tbl_expand_sub(p, n)

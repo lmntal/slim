@@ -46,6 +46,7 @@
 #include "vector.h"
 #include "rule.h"
 
+typedef struct MemDeltaRoot MemDeltaRoot;
 struct MemDeltaRoot {
   LmnMembrane *root_mem;
 

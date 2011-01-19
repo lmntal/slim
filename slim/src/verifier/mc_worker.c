@@ -237,7 +237,7 @@ static void worker_start(void *arg)
   thread_set_cpu_affinity(id);    /* 2. ThreadをCPUに貼り付ける */
   w = workerpool_get_my_worker(); /* 3. 1で取得したIDから実行スレッド用のLmnWorkerオブジェクトへの参照を張る */
 
-  mc_react_cxt_init(&WORKER_RC(w), DEFAULT_STATE_ID);
+  mc_react_cxt_init(&WORKER_RC(w));
   if (lmn_env.profile_level >= 1) profile_start_exec_thread();
   WORKER_START(w);
 

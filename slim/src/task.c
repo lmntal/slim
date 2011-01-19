@@ -58,6 +58,7 @@
 #include "delta_membrane.h"
 #include "mc_worker.h"
 #include "mc_generator.h"
+#include "dpor.h"
 
 #include "runtime_status.h"
 
@@ -507,7 +508,7 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
      *  展開した各状態を基点にsubgraphを構築する.　*/
     unsigned int start_succ_num, atomic_init_num;
 
-    if (RC_ND_DELTA_ENABLE(rc)) {
+    if (RC_MC_USE_DMEM(rc)) {
       lmn_fatal("unsupported delta-membrane, atomic step");
     }
 
@@ -537,7 +538,7 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
       w = lmn_worker_make(sub_states, lmn_thread_id, sub_flags);
       dfs_env_set(w);
       WORKER_INIT(w);
-      mc_react_cxt_init(&WORKER_RC(w), DEFAULT_STATE_ID);
+      mc_react_cxt_init(&WORKER_RC(w));
 
       RC_START_ATOMIC_STEP(&WORKER_RC(w), lmn_ruleset_get_id(at_set));
 
@@ -580,6 +581,7 @@ static BOOL react_ruleset_atomic_all(struct ReactCxt *rc,
       lmn_worker_free(w);
     }
   }
+  /* 非決定実行じゃないとき */
   else if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     unsigned int i;
     BOOL reacted_once = FALSE;
@@ -620,7 +622,7 @@ static BOOL react_ruleset_atomic_sync(struct ReactCxt *rc,
   if (RC_GET_MODE(rc, REACT_ND)) {
     unsigned int r_i, r_n, start_succ_num, atomic_init_num;
 
-    if (RC_ND_DELTA_ENABLE(rc)) {
+    if (RC_MC_USE_DMEM(rc)) {
       lmn_fatal("unsupported delta-membrane, atomic step");
     }
 
@@ -637,7 +639,7 @@ static BOOL react_ruleset_atomic_sync(struct ReactCxt *rc,
       Vector *primary, *secondary, *swap;
       unsigned int i;
 
-      mc_react_cxt_init(&sub_rc, DEFAULT_STATE_ID);
+      mc_react_cxt_init(&sub_rc);
       primary   = vec_make(32);
       secondary = vec_make(32);
 
@@ -1152,16 +1154,26 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
        */
       if (RC_GET_MODE(rc, REACT_ND)) {
         unsigned int org_next_id = env_next_id();
-        if (RC_ND_DELTA_ENABLE(rc)) {
+
+        if (RC_MC_USE_DMEM(rc)) {
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
           /** >>>>>>>> enable delta-membrane <<<<<<< **/
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
           struct MemDeltaRoot *d = dmem_root_make(RC_GROOT_MEM(rc), rule, env_next_id());
+
+          if (RC_MC_USE_DPOR(rc)) { /* store dependency LHS processes */
+            dpor_LHS_procs_update(rc, wt, at, tt);
+          }
+
           RC_ND_SET_MEM_DELTA_ROOT(rc, d);
           dmem_interpret(rc, rule, instr);
           dmem_root_finish(d);
           mc_react_cxt_add_mem_delta(rc, d, rule);
           RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
+
+          if (RC_MC_USE_DPOR(rc)) { /* analyze dependency among others  */
+
+          }
         }
         else {
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
@@ -1211,6 +1223,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
                 double *d = (double *)wtcp[i];
                 LMN_COPY_DBL_ATOM(d, wt[i]);
                 wtcp[i] = (LmnWord)d;
+              } else if (at[i] == LMN_HL_ATTR) {
+                lmn_fatal("under constructions: verification for hyper graph model");
               } else { /* symbol atom */
                 if (proc_tbl_get_by_atom(copymap, LMN_SATOM(wt[i]), &t)) {
                   wtcp[i] = (LmnWord)t;
@@ -2054,15 +2068,45 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       srcvec = links_from_idxs((Vector *)wt[srclisti], wt, at);
       avovec = links_from_idxs((Vector *)wt[avolisti], wt, at);
 
-      b = lmn_mem_is_ground(srcvec, avovec, &natoms);
 
-      free_links(srcvec);
-      free_links(avovec);
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
+//      if (RC_GET_MODE(rc, REACT_ND)) {
+//@gocho
 
-      if (!b) return FALSE;
-      wt[funci] = (LmnWord)natoms;
-      at[funci] = LMN_INT_ATTR;
-      tt[funci] = TT_OTHER;
+        ProcessTbl atoms;
+        b = ground_atoms(srcvec, avovec, &atoms, &natoms);
+
+        free_links(srcvec);
+        free_links(avovec);
+
+        if (b) {
+          /* proc_tblを登録 */
+          dpor_add_ground_status(atoms);
+
+          wt[funci] = (LmnWord)natoms;
+          at[funci] = LMN_INT_ATTR;
+          tt[funci] = TT_OTHER;
+          interpret(rc, rule, instr);
+
+          /* proc_tblを取り除く */
+          dpor_remove_ground_status(atoms);
+          proc_tbl_free(atoms);
+        }
+
+        return FALSE; /* 全ての候補取得のためにNDの場合は常にFALSEを返す仕様 */
+
+      } else {
+        b = lmn_mem_is_ground(srcvec, avovec, &natoms);
+
+        free_links(srcvec);
+        free_links(avovec);
+
+        if (!b) return FALSE;
+        wt[funci] = (LmnWord)natoms;
+        at[funci] = LMN_INT_ATTR;
+        tt[funci] = TT_OTHER;
+      }
+
       break;
     }
     case INSTR_UNIQ:
@@ -2086,7 +2130,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       if (lmn_env.show_hyperlink) {
         sh = TRUE;
-        lmn_env.show_hyperlink = FALSE;
+        lmn_env.show_hyperlink = FALSE; /* MT-UNSAFE!! */
       }
 			else sh = FALSE;
 
@@ -2136,8 +2180,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_MAKEHLINK:
     {
       if (!lmn_env.hyperlink) {
-        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
-        exit(1);
+        lmn_fatal("Can't use hyperlink without option --hl.\n");
       }
       // 未実装
       break;
@@ -2145,8 +2188,8 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_ISHLINK:
     {
       if (!lmn_env.hyperlink) {
-        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
-        exit(1);
+
+        lmn_fatal("Can't use hyperlink without option --hl.\n");
       }
 
       LmnInstrVar atomi;
@@ -2272,8 +2315,6 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       ret_flag = lmn_mem_cmp_ground(srcvec, dstvec);
 
-      /* MEMO: time-optで消えていたので, なんか理由があるのかも. ないのかも.
-       * ないとメモリリークするから, ありにしたい. */
       free_links(srcvec);
       free_links(dstvec);
 
@@ -4290,6 +4331,7 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       READ_VAL(LmnInstrVar, instr, memi);
       dmem_root_clear_ruleset(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembrane *)wt[memi]);
       vec_clear(&((LmnMembrane *)wt[memi])->rulesets);
+
       break;
     }
     case INSTR_DROPMEM:

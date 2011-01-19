@@ -1,5 +1,5 @@
 /*
- * task.h
+ * dpor.h
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -33,41 +33,30 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: task.h,v 1.5 2008/10/16 18:14:32 sasaki Exp $
+ * $Id:
  */
-
-#ifndef LMN_TASK_H
-#define LMN_TASK_H
 
 #include "lmntal.h"
-#include "membrane.h"
-#include "rule.h"
+#include "statespace.h"
+#include "state.h"
 #include "react_context.h"
 
-/* 中間命令で出現するデータ構造
- * LINK_LIST    リンクオブジェクトのリスト
- * LIST_AND_MAP 第１要素がリンクオブジェクトのリストで第２要素がマップ
- * MAP          マップ
- */
-#define LINK_LIST     1
-#define LIST_AND_MAP  2
-#define MAP           3
 
-/* 属性配列ttに使用するタグ */
-enum { TT_OTHER,
-       TT_ATOM,            /* symbol atom  */
-       TT_MEM              /* membrane */
-};
+//#define DPOR_DEVEL
 
-void task_init(void);
-void lmn_dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
-inline void task_allocate_workspace(struct ReactCxt *rc);
-void task_finalize(void);
-void memstack_push(LmnMembrane *mem);
-struct Vector user_system_rulesets; /* system ruleset defined by user */
-void lmn_run(Vector *rulesets);
-BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule);
-void react_start_rulesets(LmnMembrane *mem, Vector *rulesets);
-BOOL react_all_rulesets(struct ReactCxt *rc, LmnMembrane *cur_mem);
+void dpor_start(StateSpace      ss,
+                State           *s,
+                struct ReactCxt *rc,
+                Vector          *new_s,
+                BOOL flag);
 
-#endif
+void dpor_env_init(void);
+void dpor_env_destroy(void);
+
+void dpor_add_ground_status(ProcessTbl atoms);
+void dpor_remove_ground_status(ProcessTbl atoms);
+
+void dpor_LHS_procs_update(struct ReactCxt *rc,
+                           LmnWord         *wt,
+                           LmnByte         *at,
+                           LmnByte         *tt);

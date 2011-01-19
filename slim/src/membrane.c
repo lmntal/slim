@@ -56,11 +56,9 @@
 
 
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
-BOOL ground_atoms(Vector *srcvec,
-                  Vector *avovec,
-                  HashSet **atoms,
-                  unsigned long *natoms);
-static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, ProcessTbl atoms);
+static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
+                                   LmnMembrane *srcmem,
+                                   ProcessTbl atoms);
 
 /* ルールセットadd_rsをルールセット配列src_vへ追加する.
  * グラフ同型性判定処理などのために整数IDの昇順を維持するよう追加する. */
@@ -1005,7 +1003,7 @@ ProcessTbl lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 {
   ProcessTbl atoms;
 
-  atoms = proc_tbl_make();
+  atoms = proc_tbl_make_with_size(64);
 
   lmn_mem_copy_cells_sub(destmem, srcmem, atoms);
 
@@ -1125,6 +1123,7 @@ LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos) {
   return ret;
 }
 
+
 /* 膜memのsrcvecを根に持つgroundプロセスを
    コピーする。srcvecはリンクオブジェクトのベクタ。
    ret_dstlovecはコピーされた根のリンクオブジェクトのベクタ。
@@ -1134,16 +1133,17 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
                          Vector **ret_dstlovec,
                          ProcessTbl *ret_atommap)
 {
-  ProcessTbl atommap = proc_tbl_make();
-  Vector *stack = vec_make(16);
+  ProcessTbl atommap;
+  Vector *stack;
   unsigned int i;
   LmnWord t = 0;
 
+  atommap = proc_tbl_make_with_size(64);
+  stack = vec_make(16);
   *ret_dstlovec = vec_make(16);
 
   /* 根をスタックに積む。スタックにはリンクオブジェクトではなくアトムを
-     積むため、ここで根の先のアトムをコピーしスタックに積むする必要があ
-     る */
+     積むため、ここで根の先のアトムをコピーしスタックに積むする必要がある */
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObj l = (LinkObj)vec_get(srcvec, i);
     LmnAtom cpatom;
@@ -1155,8 +1155,10 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
       /* コピー済みでなければコピーする */
       if (!proc_tbl_get_by_atom(atommap, LMN_SATOM(l->ap), &t)) {
         cpatom = LMN_ATOM(lmn_copy_satom_with_data(LMN_SATOM(l->ap)));
+
         mem_push_symbol_atom(mem, LMN_SATOM(cpatom));
         proc_tbl_put_atom(atommap, LMN_SATOM(l->ap), (LmnWord)cpatom);
+
       } else {
         cpatom = LMN_ATOM(t);
       }
@@ -1164,7 +1166,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
       LMN_SATOM_SET_LINK(cpatom, l->pos, 0);
       vec_push(stack, l->ap);
     }
-    vec_push(*ret_dstlovec, (LmnWord)LinkObj_make(cpatom, l->pos));
+    vec_push(*ret_dstlovec, (vec_data_t)LinkObj_make(cpatom, l->pos));
   }
 
   while (vec_num(stack) > 0) {
@@ -1193,7 +1195,6 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
           next_copied = LMN_ATOM(t);
         }
         LMN_SATOM_SET_LINK(copied, i, next_copied);
-
       }
     }
   }
@@ -1320,96 +1321,123 @@ CMPGROUND_BREAK:
    ロセスないのアトムの数を格納する。*/
 BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms)
 {
+  ProcessTbl atoms;
   BOOL b;
-  HashSet *atoms;
 
   b = ground_atoms(srcvec, avovec, &atoms, natoms);
-  if (b) { hashset_free(atoms); }
+  if (b) {
+    proc_tbl_free(atoms);
+  }
 
   return b;
 }
 
+
 /* xとyが1つのリンクの逆向き表現かどうか */
-#define IS_BUDDY(xap, xattr, yap, yattr) \
-  ( !LMN_ATTR_IS_DATA(xattr) && !LMN_ATTR_IS_DATA(yattr) && LMN_SATOM_GET_LINK(xap,xattr)==yap && LMN_SATOM_GET_ATTR(xap,xattr)==yattr )
+#define IS_BUDDY(xap, xattr, yap, yattr)             \
+      ( !LMN_ATTR_IS_DATA(xattr)                &&   \
+        !LMN_ATTR_IS_DATA(yattr)                &&   \
+        (LMN_SATOM_GET_LINK(xap, xattr) == yap) &&   \
+        (LMN_SATOM_GET_ATTR(xap, xattr) == yattr) )
+
 
 /* srcvecから出るリンクのリストが基底項プロセスに到達している場合、
-   avovecに基底項プロセスに存在するシンボルアトム、natomsにアトムの数、戻り値に真を返す。
-   リストが基底項プロセスに到達していない場合にはatomsはNULLとなり、偽
-   を返す。ただし、リンクがavovecに到達している場合には、基底項プロセスとはならない。 */
-BOOL ground_atoms(Vector *srcvec,
-                  Vector *avovec,
-                  HashSet **atoms,
+ * avovecに基底項プロセスに存在するシンボルアトム、natomsにアトムの数、戻り値に真を返す。
+ * リストが基底項プロセスに到達していない場合にはatomsはNULLとなり、偽を返す。
+ * ただし、リンクがavovecに到達している場合には、基底項プロセスとはならない。 */
+BOOL ground_atoms(Vector        *srcvec,
+                  Vector        *avovec,
+                  ProcessTbl    *atoms,
                   unsigned long *natoms)
 {
-  Vector *unsearched_link_stack = vec_make(16); /* 探索待ちリンク */
-  int reached_root_count = 1; /* 到達した根の個数(1つは始点) */
-  HashSet *found_ground_symbol_atoms = hashset_make(16); /* ground内の発見済みのシンボルアトム */
-  BOOL result = TRUE;
-  unsigned long count_of_ground_atoms = 0; /* ground内のアトムの個数 */
+  Vector *unsearched_link_stack;         /* 探索待ちリンク */
+  ProcessTbl found_ground_symbol_atoms;  /* ground内の発見済みのシンボルアトム */
+  unsigned long count_of_ground_atoms;   /* ground内のアトムの個数 */
   int i;
+  int reached_root_count; /* 到達した根の個数(1つは始点) */
+  BOOL result;
+
+  unsearched_link_stack = vec_make(16);
+  reached_root_count = 1;
+  found_ground_symbol_atoms = proc_tbl_make_with_size(64);
+  result = TRUE;
+  count_of_ground_atoms = 0;
 
   /* groundはつながったグラフなので1つの根からだけたどればよい */
   {
     LinkObj l = (LinkObj)vec_get(srcvec, 0);
-    vec_push(unsearched_link_stack, (LmnWord)LinkObj_make(l->ap, l->pos));
+    if (LMN_ATTR_IS_EX(l->pos)) {
+      proc_tbl_put_atom(found_ground_symbol_atoms, (LmnSAtom)l->ap, (LmnWord)l->ap);
+      count_of_ground_atoms++;
+    } else {
+      vec_push(unsearched_link_stack, (LmnWord)LinkObj_make(l->ap, l->pos));
+    }
   }
 
-  while(vec_num(unsearched_link_stack) > 0){
-    LinkObj l = (LinkObj)vec_pop(unsearched_link_stack);
-    LmnAtom l_ap = l->ap;
-    LmnLinkAttr l_pos = l->pos;
+  while (!vec_is_empty(unsearched_link_stack)) {
+    LinkObj l;
+    LmnAtom l_ap;
+    LmnLinkAttr l_pos;
+    
+    l = (LinkObj)vec_pop(unsearched_link_stack);
+    l_ap = l->ap;
+    l_pos = l->pos;
+    
     LMN_FREE(l);
 
-    if(LMN_ATTR_IS_DATA_WITHOUT_EX(l_pos)){ /* lがデータなら行き止まり */
-      if(lmn_data_atom_is_ground(l_ap, l_pos)){
-        ++count_of_ground_atoms;
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l_pos)) { /* lがデータなら行き止まり */
+      if (lmn_data_atom_is_ground(l_ap, l_pos)) {
+        count_of_ground_atoms++;
         continue;
-      }else{
+      } else {
         result = FALSE; /* groundでないデータが出現したら終了 */
         goto returning;
       }
-    }else{ /* lがシンボルアトムを指していれば */
+    } else { /* lがシンボルアトムを指していれば */
+
       /* lがavovecにつながっていれば */
-      for(i=0; avovec!=NULL && i<vec_num(avovec); ++i){
+      for (i = 0; avovec != NULL && i < vec_num(avovec); i++) {
         LinkObj a = (LinkObj)vec_get(avovec, i);
         if(IS_BUDDY(l_ap, l_pos, a->ap, a->pos)){
           result = FALSE;
           goto returning;
         }
+
       }
       /* lがsrcvecにつながっていれば */
       {
-        BOOL continue_flag = FALSE; /* 2重continueに使うだけ */
-        for(i=0; i<vec_num(srcvec); ++i){
+        BOOL continue_flag = FALSE;
+        for (i = 0; i < vec_num(srcvec); i++) {
           LinkObj a = (LinkObj)vec_get(srcvec, i);
-          if(IS_BUDDY(l_ap, l_pos, a->ap, a->pos)){
-            ++reached_root_count;
+          if (IS_BUDDY(l_ap, l_pos, a->ap, a->pos)) {
+            reached_root_count++;
             continue_flag = TRUE;
             break;
           }
         }
-        if(continue_flag) continue;
+        if (continue_flag) continue;
       }
+
       /* lがプロキシを指していれば */
-      if(LMN_SATOM_IS_PROXY(l_ap)){
+      if (LMN_SATOM_IS_PROXY(l_ap)) {
         result = FALSE;
         goto returning;
       }
+
       /* lの指すアトムが訪問済みなら */
-      if(hashset_contains(found_ground_symbol_atoms, l_ap)){
+      if (proc_tbl_get_by_atom(found_ground_symbol_atoms, (LmnSAtom)l_ap, NULL)) {
         continue;
       }
-      /* lはシンボルアトムで初出のアトムを指すため,その先を探索する必要がある */
-      {
-        hashset_add(found_ground_symbol_atoms, l_ap);
-        ++count_of_ground_atoms;
 
-        for(i=0; i<LMN_SATOM_GET_ARITY(l_ap); ++i){
-          if(i == l_pos || LMN_ATTR_IS_EX(l_pos)) continue;
-          vec_push(unsearched_link_stack,
-                   (LmnWord)LinkObj_make(LMN_SATOM_GET_LINK(l_ap, i), LMN_SATOM_GET_ATTR(l_ap, i)));
-        }
+      /* lはシンボルアトムで初出のアトムを指すため,その先を探索する必要がある */
+      proc_tbl_put_atom(found_ground_symbol_atoms, (LmnSAtom)l_ap, (LmnWord)l_ap);
+      count_of_ground_atoms++;
+
+      for(i = 0; i < LMN_SATOM_GET_ARITY(l_ap); i++) {
+        if (i == l_pos || LMN_ATTR_IS_EX(l_pos)) continue;
+        vec_push(unsearched_link_stack,
+                 (LmnWord)LinkObj_make(LMN_SATOM_GET_LINK(l_ap, i),
+                                       LMN_SATOM_GET_ATTR(l_ap, i)));
       }
     }
   }
@@ -1418,16 +1446,16 @@ BOOL ground_atoms(Vector *srcvec,
   result = (reached_root_count == vec_num(srcvec));
 
  returning:
-  for(i=0; i<vec_num(unsearched_link_stack); ++i){
+  for (i = 0; i < vec_num(unsearched_link_stack); i++) {
     LMN_FREE(vec_get(unsearched_link_stack, i));
   }
   vec_free(unsearched_link_stack);
 
-  if(result){
+  if (result) {
     *atoms = found_ground_symbol_atoms;
     *natoms = count_of_ground_atoms;
   }else{
-    hashset_free(found_ground_symbol_atoms);
+    proc_tbl_free(found_ground_symbol_atoms);
     *atoms = NULL;
     *natoms = 0;
   }
@@ -1544,70 +1572,73 @@ BOOL ground_atoms_old(Vector *srcvec,
   }
 }
 
+
+int mem_remove_symbol_atom_with_buddy_data_f(LmnWord _k,
+                                             LmnWord _v,
+                                             LmnWord _arg)
+{
+  mem_remove_symbol_atom_with_buddy_data((LmnMembrane *)_arg, (LmnSAtom)_v);
+  return 1;
+}
+
+
+
 void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
 {
-  HashSet *atoms;
+  ProcessTbl atoms;
   unsigned long i, t;
-  HashSetIterator it;
 
   ground_atoms(srcvec, NULL, &atoms, &t);
 
-  for (it = hashset_iterator(atoms);
-       !hashsetiter_isend(&it);
-       hashsetiter_next(&it)) {
-    mem_remove_symbol_atom_with_buddy_data(mem, LMN_SATOM(hashsetiter_entry(&it)));
-   }
+  proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)mem);
 
-  /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
-     アトムに接続してい場合の処理をする */
+  /* atomsはシンボルアトムしか含まないので、
+   * srcvecのリンクが直接データアトムに接続している場合の処理をする */
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObj l = (LinkObj)vec_get(srcvec, i);
-    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos))
+    if (LMN_ATTR_IS_DATA(l->pos))
       lmn_mem_remove_data_atom(mem, l->ap, l->pos);
   }
-  hashset_free(atoms);
+  proc_tbl_free(atoms);
 }
+
+
+int free_symbol_atom_with_buddy_data_f(LmnWord _k, LmnWord _v, LmnWord _arg)
+{
+  free_symbol_atom_with_buddy_data((LmnSAtom)_v);
+  return 1;
+}
+
 
 void lmn_mem_free_ground(Vector *srcvec)
 {
-  HashSet *atoms;
+  ProcessTbl atoms;
   unsigned long i, t;
-  HashSetIterator it;
 
-  ground_atoms(srcvec, NULL, &atoms, &t);
-
-  it = hashset_iterator(atoms);
-  while (hashsetiter_isend(&it)) {
-    LmnSAtom atom = LMN_SATOM(hashsetiter_entry(&it));
-    hashsetiter_next(&it);
-    free_symbol_atom_with_buddy_data(atom);
+  if (ground_atoms(srcvec, NULL, &atoms, &t)) {
+    proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+    proc_tbl_free(atoms);
   }
-
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続してい場合の処理をする */
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObj l = (LinkObj)vec_get(srcvec, i);
-    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos)) lmn_free_atom(l->ap, l->pos);
+    if (LMN_ATTR_IS_DATA(l->pos)) lmn_free_atom(l->ap, l->pos);
   }
-  hashset_free(atoms);
 }
 
 void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec)
 {
-  HashSet *atoms;
+  ProcessTbl atoms;
   unsigned long i, t;
-  HashSetIterator it;
 
   if (!ground_atoms(srcvec, NULL, &atoms, &t)) {
     fprintf(stderr, "remove ground false\n");
-  };
-  for (it = hashset_iterator(atoms);
-       !hashsetiter_isend(&it);
-       hashsetiter_next(&it)) {
-    mem_remove_symbol_atom_with_buddy_data(mem, LMN_SATOM(hashsetiter_entry(&it)));
-    free_symbol_atom_with_buddy_data(LMN_SATOM(hashsetiter_entry(&it)));
-   }
+  }
+
+  proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)mem);
+  proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続してい場合の処理をする */
@@ -1618,7 +1649,8 @@ void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec)
       lmn_free_atom(l->ap, l->pos);
     }
   }
-  hashset_free(atoms);
+
+  proc_tbl_free(atoms);
 }
 
 

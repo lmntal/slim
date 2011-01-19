@@ -39,16 +39,17 @@
 
 #include "react_context.h"
 #include "task.h"
+#include "dpor.h"
 #include "slim_header/memstack.h"
 
 inline void react_context_init(struct ReactCxt *rc, BYTE mode)
 {
-  rc->mode = mode;
-  rc->flag = 0x00U;
-  rc->global_root = NULL;
-  rc->v  = NULL;
+  rc->mode          = mode;
+  rc->flag          = 0x00U;
+  rc->global_root   = NULL;
+  rc->v             = NULL;
   rc->work_vec_size = 0;
-  rc->atomic_id = -1;
+  rc->atomic_id     = -1;
   task_allocate_workspace(rc);
 }
 
@@ -105,24 +106,25 @@ inline void mem_react_cxt_destroy(struct ReactCxt *cxt)
  * ND React Context
  */
 
-inline static struct NDReactCxtData *mc_react_data_make(BYTE prop_state)
+inline static struct McReactCxtData *mc_react_data_make()
 {
-  struct NDReactCxtData *v = LMN_MALLOC(struct NDReactCxtData);
-  v->succ_tbl         = st_init_ptrtable();
-  v->roots            = vec_make(32);
-  v->rules            = vec_make(32);
-  v->mem_deltas       = NULL;
-  v->mem_delta_root   = NULL;
-  v->property_state   = prop_state;
+  struct McReactCxtData *v = LMN_MALLOC(struct McReactCxtData);
+  v->succ_tbl       = st_init_ptrtable();
+  v->roots          = vec_make(32);
+  v->rules          = vec_make(32);
+  v->mem_deltas     = NULL;
+  v->mem_delta_tmp  = NULL;
+  v->opt_mode       = 0x00U;
 
-  if (lmn_env.delta_mem) { /* disable-compress時に落ちる原因. フラグを渡すようにしないと */
+  if (lmn_env.delta_mem) {
     v->mem_deltas = vec_make(32);
   }
 
   return v;
 }
 
-inline static void mc_react_data_free(struct NDReactCxtData *v)
+
+inline static void mc_react_data_free(struct McReactCxtData *v)
 {
   st_free_table(v->succ_tbl);
   vec_free(v->roots);
@@ -133,18 +135,32 @@ inline static void mc_react_data_free(struct NDReactCxtData *v)
   LMN_FREE(v);
 }
 
-inline void mc_react_cxt_init(struct ReactCxt *cxt, BYTE prop_state)
+inline void mc_react_cxt_init(struct ReactCxt *rc)
 {
-  struct NDReactCxtData *v = mc_react_data_make(prop_state);
-  react_context_init(cxt, REACT_ND);
-  cxt->v              = v;
-  cxt->work_vec_size  = 0;
+  struct McReactCxtData *v = mc_react_data_make();
+  react_context_init(rc, REACT_ND);
+  rc->v              = v;
+  rc->work_vec_size  = 0;
+
+  if (v->mem_deltas) {
+    RC_MC_SET_DMEM(rc);
+  }
+
+#ifdef DPOR_DEVEL
+  if (lmn_env.enable_por_old) {
+    RC_MC_SET_DPOR_NAIVE(rc);
+  } else if (lmn_env.enable_por) {
+    RC_MC_SET_DPOR(rc);
+  }
+#endif
 }
+
 
 inline void mc_react_cxt_destroy(struct ReactCxt *cxt)
 {
   mc_react_data_free(RC_ND_DATA(cxt));
 }
+
 
 inline void mc_react_cxt_add_expanded(struct ReactCxt *cxt,
                                       LmnMembrane *mem,
@@ -153,6 +169,7 @@ inline void mc_react_cxt_add_expanded(struct ReactCxt *cxt,
   vec_push(RC_EXPANDED(cxt), (vec_data_t)mem);
   vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
 }
+
 
 void mc_react_cxt_add_mem_delta(struct ReactCxt *cxt,
                                 struct MemDeltaRoot *d,

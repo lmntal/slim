@@ -277,11 +277,11 @@ void lmn_newlink_in_symbols(LmnSAtom atom0,
                             LmnSAtom atom1,
                             int pos1);
 void lmn_newlink_with_ex(LmnSAtom atom0,
-                             LmnLinkAttr attr0,
-                             int pos0,
-                             LmnSAtom atom1,
-                             LmnLinkAttr attr1,
-                             int pos1);
+                         LmnLinkAttr attr0,
+                         int pos0,
+                         LmnSAtom atom1,
+                         LmnLinkAttr attr1,
+                         int pos1);
 void lmn_mem_link_data_atoms(LmnMembrane *mem,
                              LmnAtom d1,
                              LmnLinkAttr attr1,
@@ -340,7 +340,7 @@ extern struct st_hash_type type_memhash;
 void lmn_mem_copy_rules(LmnMembrane *dest, LmnMembrane *src);
 BOOL ground_atoms(Vector *srcvec,
                   Vector *avovec,
-                  HashSet **atoms,
+                  ProcessTbl *atoms,
                   unsigned long *natoms);
 BOOL ground_atoms_old(Vector *srcvec,
                       Vector *avovec,

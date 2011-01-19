@@ -26,7 +26,8 @@ liblmn_verifier_a_SOURCES =                              \
 	mc_generator.c           mc_generator.h                \
 	mc_explorer.c            mc_explorer.h                 \
 	mhash.c                  mhash.h                       \
-	por.c                    por.h                         \
+	dpor.c                   dpor.h                        \
+	dpor_naive.c             dpor_naive.h                  \
 	state.c                  state.h                       \
 	statespace.c             statespace.h                  \
 	mem_encode.c             mem_encode.h                  \

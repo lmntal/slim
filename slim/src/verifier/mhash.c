@@ -432,6 +432,9 @@ static inline hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
       /* TODO: 未実装 */
       LMN_ASSERT(FALSE);
       break;
+    case LMN_HL_ATTR:
+      lmn_fatal("under constructions: verification for hyper graph model");
+      break;
     default:
       LMN_ASSERT(FALSE);
       break;

@@ -40,7 +40,7 @@
 /** @author Masato Gocho
  *  Closed Address Hash Table / Parallel Hash Table for State Management Table
  */
-#include "por.h"
+
 #include "statespace.h"
 #include "state.h"
 #include "membrane.h"
