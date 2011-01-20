@@ -481,7 +481,7 @@ BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLink
 /* hyperlink を1 つ出力
  *   hyperlink が1 つでも出力されるとTRUE を返す
  *  */
-BOOL hyperlink_print(LmnMembrane *mem, BOOL flag, int *group, int *element)
+BOOL hyperlink_print(LmnMembrane *mem, BOOL *flag, int *group, int *element)
 {
   AtomListEntry *atomlist;
   LmnMembrane *m;
@@ -489,16 +489,20 @@ BOOL hyperlink_print(LmnMembrane *mem, BOOL flag, int *group, int *element)
   LmnSAtom atom;
   HyperLink *hl, *parent;
   HashSet *children;
+  int WIDTH;
 
+  result = FALSE;
+  WIDTH = 22;
   if ((atomlist = lmn_mem_get_atomlist(mem, LMN_HL_FUNC))) {
-    result = TRUE;
 
-    if (!flag) {
-      printf("%9s %9s %13s %5s %5s\n", "[hl_ID]", "[parent]", "[linked with]", "[num]", "[direct children ( inside info )]");
-      flag = TRUE;
-    }
 
     EACH_ATOM(atom, atomlist, ({
+      result = TRUE;
+
+      if (!(*flag)) {
+        printf("%9s %9s %13s %5s %5s\n", "[hl_ID]", "[parent]", "[linked with]", "[num]", "[direct children ( inside info )]");
+        (*flag) = TRUE;
+      }
       hl = lmn_hyperlink_at_to_hl(atom);
 
       /* hl_ID */
@@ -528,19 +532,25 @@ BOOL hyperlink_print(LmnMembrane *mem, BOOL flag, int *group, int *element)
         HashSetIterator hsit;
         HyperLink *ch_hl;
         BOOL comma;
-        int i;
+        int i, n, width;
 
+        width = 0;
         comma = FALSE;
         i = 1;
         for (hsit = hashset_iterator(children); !hashsetiter_isend(&hsit); hashsetiter_next(&hsit)) {
           if ((HashKeyType)(ch_hl = (HyperLink *)hashsetiter_entry(&hsit)) < DELETED_KEY) {
             if (comma) {
-              if (i % 4 == 1) printf(",\n%41s", "");
+              if (width > WIDTH - 4) {
+                printf(",\n%41s", "");
+                width = 0;
+              }
+//              if (i % 4 == 1) printf(",\n%41s", "");
               else printf(",");
             }
             else comma = TRUE;
 //            printf("%lx", LMN_ATOM(ch_hl->atom));
-            printf("%lx", LMN_HL_ID(ch_hl));
+            printf("%lx%n", LMN_HL_ID(ch_hl), &n);
+            width += n;
             i++;
           }
         }
@@ -551,7 +561,7 @@ BOOL hyperlink_print(LmnMembrane *mem, BOOL flag, int *group, int *element)
       printf("\n");
     }));
   }
-  else result = FALSE;
+//  else result = FALSE;
 
   for (m = mem->child_head; m; m = m->next) {
     result = (hyperlink_print(m, flag, group, element) || result);
@@ -586,7 +596,7 @@ void lmn_hyperlink_print(LmnMembrane *gr)
   group = 0;
   flag = FALSE;
   printf("== HyperLink =============================================================%n\n", &WIDTH);
-  if (!hyperlink_print(gr, flag, &group, &element)) printf("There is no hyperlink.\n");
+  if (!hyperlink_print(gr, &flag, &group, &element)) printf("There is no hyperlink.\n");
 
   place_g = hyperlink_print_get_place(group);
   place_e = hyperlink_print_get_place(element);
