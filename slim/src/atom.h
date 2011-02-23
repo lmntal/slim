@@ -353,6 +353,7 @@ inline static BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr) {
   switch (attr) {
   case LMN_INT_ATTR:
   case LMN_DBL_ATTR:
+  case LMN_HL_ATTR:
     return TRUE;
   case LMN_SP_ATOM_ATTR:
     return SP_ATOM_IS_GROUND(atom);

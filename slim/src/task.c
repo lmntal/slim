@@ -2124,25 +2124,59 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       lmn_interned_str id;
       unsigned int i;
       BOOL sh;
+      LmnLinkAttr attr;
 
       port = (LmnPort)lmn_make_output_string_port();
       READ_VAL(LmnInstrVar, instr, llist);
 
       if (lmn_env.show_hyperlink) {
         sh = TRUE;
-        lmn_env.show_hyperlink = FALSE; /* MT-UNSAFE!! */
+        /* MT-UNSAFE!!
+         *  --show_hlオプションの有無でlmn_dump_atomから取得できる
+         *  バイト列が変わってしまうため、とりあえずの回避策 */
+        lmn_env.show_hyperlink = FALSE;
       }
 			else sh = FALSE;
 
       for (i = 0; i < (int)llist; i++) {
         READ_VAL(LmnInstrVar, instr, n);
         srcvec = (Vector*) wt[n];
+        attr = (LmnLinkAttr)at[vec_get(srcvec, 0)];
 
-        /* 識別子の生成 */
-        lmn_dump_atom(port, (LmnWord)wt[vec_get(srcvec, 0)], (LmnLinkAttr)at[vec_get(srcvec, 0)]);
+        /** 識別子の生成 **/
+        /* 引数に直接データアトムが接続されている場合 */
+        if (LMN_ATTR_IS_DATA(attr)) {
+          switch (attr) {
+          case LMN_INT_ATTR:
+            {
+              char *s = int_to_str(wt[vec_get(srcvec, 0)]);
+              port_put_raw_s(port, s);
+              break;
+            }
+          case LMN_DBL_ATTR:
+            {
+              char buf[64];
+              sprintf(buf, "%f", *(double*)wt[vec_get(srcvec, 0)]);
+              port_put_raw_s(port, buf);
+              break;
+            }
+          case LMN_HL_ATTR:
+            {
+              char buf[16];
+              port_put_raw_s(port, EXCLAMATION_NAME);
+              sprintf(buf, "%lx", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(LMN_SATOM(wt[vec_get(srcvec, 0)]))));
+              port_put_raw_s(port, buf);
+              break;
+            }
+          default: // int, double, hlink 以外はとりあえず今まで通り
+            lmn_dump_atom(port, (LmnWord)wt[vec_get(srcvec, 0)], (LmnLinkAttr)at[vec_get(srcvec, 0)]);
+          }
+        } else { /* symbol atom */
+          lmn_dump_atom(port, (LmnWord)wt[vec_get(srcvec, 0)], (LmnLinkAttr)at[vec_get(srcvec, 0)]);
+        }
         port_put_raw_s(port, ":");
       }
-      
+
       id = lmn_intern((char *)lmn_string_c_str(port->data));
       lmn_port_free(port);
 
@@ -2180,16 +2214,23 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_MAKEHLINK:
     {
       if (!lmn_env.hyperlink) {
-        lmn_fatal("Can't use hyperlink without option --hl.\n");
+        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
+        exit(1);
       }
-      // 未実装
+      /* // 未実装
+       *
+       * i(N) :- make(N, $x), N1 = N-1 | i(N1), hoge($x).
+       * のようにして、int(N)の値をIDとするhyperlinkを生成できるような機能があると
+       * 性能測定にとても便利かも
+       * (構文(記法？)はこれじゃないとしても、hyperlinkへの値の束縛に若干関係しそうなにほひ)
+       */
       break;
     }
     case INSTR_ISHLINK:
     {
       if (!lmn_env.hyperlink) {
-
-        lmn_fatal("Can't use hyperlink without option --hl.\n");
+        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
+        exit(1);
       }
 
       LmnInstrVar atomi;
