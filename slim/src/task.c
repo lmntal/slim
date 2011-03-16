@@ -2198,7 +2198,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
        */
 
       if (!lmn_env.hyperlink) {
-        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
+        fprintf(stderr, "Can't use hyperlink without option --hl.\n");
         exit(1);
       }
 
@@ -2214,7 +2214,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_MAKEHLINK:
     {
       if (!lmn_env.hyperlink) {
-        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
+        fprintf(stderr, "Can't use hyperlink without option --hl.\n");
         exit(1);
       }
       /* // 未実装
@@ -2229,7 +2229,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_ISHLINK:
     {
       if (!lmn_env.hyperlink) {
-        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
+        fprintf(stderr, "Can't use hyperlink without option --hl.\n");
         exit(1);
       }
 
@@ -2243,7 +2243,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_GETNUM:
     {
       if (!lmn_env.hyperlink) {
-        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
+        fprintf(stderr, "Can't use hyperlink without option --hl.\n");
         exit(1);
       }
 
@@ -2261,7 +2261,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_UNIFYHLINKS:
     {
       if (!lmn_env.hyperlink) {
-        fprintf(stdout, "Can't use hyperlink without option --hl.\n");
+        fprintf(stderr, "Can't use hyperlink without option --hl.\n");
         exit(1);
       }
 
