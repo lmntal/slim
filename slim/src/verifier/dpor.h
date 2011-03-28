@@ -152,6 +152,7 @@ inline static void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE uns
   if (proc_tbl_get(d->wt_flags, proc_id, &t)) { /* CONTAINS */
     flags = (BYTE)t;
   } else {                                      /* NEW */
+    flags = 0;
     LMN_ASSERT(0);
   }
 
