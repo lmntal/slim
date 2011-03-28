@@ -1364,6 +1364,7 @@ BOOL ground_atoms(Vector        *srcvec,
   count_of_ground_atoms = 0;
 
   /* groundはつながったグラフなので1つの根からだけたどればよい */
+
   {
     LinkObj l = (LinkObj)vec_get(srcvec, 0);
     vec_push(unsearched_link_stack, (LmnWord)LinkObj_make(l->ap, l->pos));
@@ -1380,7 +1381,7 @@ BOOL ground_atoms(Vector        *srcvec,
     
     LMN_FREE(l);
 
-    if (LMN_ATTR_IS_DATA(l_pos)) { /* lがデータなら行き止まり *///seiji
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l_pos)) { /* lがデータなら行き止まり */
       if (lmn_data_atom_is_ground(l_ap, l_pos)) {
         count_of_ground_atoms++;
         continue;
@@ -1429,7 +1430,7 @@ BOOL ground_atoms(Vector        *srcvec,
       count_of_ground_atoms++;
 
       for(i = 0; i < LMN_SATOM_GET_ARITY(l_ap); i++) {
-        if (i == l_pos) continue;
+        if (i == l_pos || LMN_ATTR_IS_EX(l_pos)) continue;
         vec_push(unsearched_link_stack,
                  (LmnWord)LinkObj_make(LMN_SATOM_GET_LINK(l_ap, i),
                                        LMN_SATOM_GET_ATTR(l_ap, i)));
@@ -1591,10 +1592,11 @@ void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
    * srcvecのリンクが直接データアトムに接続している場合の処理をする */
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObj l = (LinkObj)vec_get(srcvec, i);
-    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos))
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos)) {
       lmn_mem_remove_data_atom(mem, l->ap, l->pos);
-    else if (LMN_ATTR_IS_EX(l->pos))
+    } else if (LMN_ATTR_IS_EX(l->pos)) {
       mem_remove_symbol_atom(mem, LMN_SATOM(l->ap));
+    }
   }
   proc_tbl_free(atoms);
 }
@@ -1611,6 +1613,7 @@ void lmn_mem_free_ground(Vector *srcvec)
 {
   ProcessTbl atoms;
   unsigned long i, t;
+
 
   if (ground_atoms(srcvec, NULL, &atoms, &t)) {
     proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);

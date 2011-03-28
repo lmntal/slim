@@ -36,13 +36,75 @@
  * $Id:
  */
 
+#ifndef MC_DPOR_H
+#define MC_DPOR_H
+
 #include "lmntal.h"
+#include "delta_membrane.h"
 #include "statespace.h"
 #include "state.h"
-#include "react_context.h"
+#include "visitlog.h"
+#ifdef DEBUG
+#  include "dumper.h"
+#  include "error.h"
+#  define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
+#else
+#  define POR_DEBUG(V)
+#endif
+
+typedef struct McDporData  McDporData;
+typedef struct ContextC2 *ContextC2;
+typedef struct ContextC1 *ContextC1;
+
+struct McDporData {
+  unsigned int cur_depth;
+
+  ContextC1 tmp;  /* ちょっと退避する場所 */
+  ContextC2 c2;
+
+  Vector     *wt_gatoms;  /* マッチング中, ground命令によるProcessTblを集める作業場 */
+  ProcessTbl wt_flags;    /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
+
+  Vector *ample_cand;     /* ample setに含める予定のContextC1へのポインタを積む */
+  st_table_t delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
+  Vector *free_deltas;    /* ゴミ置き場 */
+  unsigned int nxt_tr_id; /* 遷移に割り当てる遷移番号 */
+};
+
+extern McDporData **dpor_data;
+
+#define DPOR_DATA()        (dpor_data[lmn_thread_id])
 
 
-//#define DPOR_DEVEL
+#define LHS_DEFAULT                (0x00U)
+#define LHS_MEM_GROOT              (0x01U)
+#define LHS_MEM_NATOMS             (0x01U << 1)
+#define LHS_MEM_NMEMS              (0x01U << 2)
+#define LHS_MEM_NFLINKS            (0x01U << 3)
+#define LHS_MEM_NORULES            (0x01U << 4)
+#define LHS_MEM_STABLE             (0x01U << 5)
+
+#define LHS_FL_SET(F, N)           ((F) |= (N))
+#define LHS_FL_UNSET(F, N)         ((F) &= ~(N))
+#define LHS_FL(F, S)               ((F) & (S))
+
+
+#define OP_NONE                  (0x00U)
+#define OP_DEP_EXISTS            (0x01U)
+#define OP_DEP_EXISTS_EX_GROOT   (0x01U << 1)
+#define OP_DEP_NATOMS            (0x01U << 2)
+#define OP_DEP_NMEMS             (0x01U << 3)
+#define OP_DEP_NFLINKS           (0x01U << 4)
+#define OP_DEP_NORULES           (0x01U << 5)
+#define OP_DEP_STABLE            (0x01U << 6)
+
+#define RHS_OP_SET(F, S)   ((F) |= (S))
+#define RHS_OP_UNSET(F, S) ((F) &= ~(S))
+#define RHS_OP(F, S)       ((F) & (S))
+
+
+void dpor_explore_redundunt_graph(StateSpace ss);
+
 
 void dpor_start(StateSpace      ss,
                 State           *s,
@@ -53,10 +115,74 @@ void dpor_start(StateSpace      ss,
 void dpor_env_init(void);
 void dpor_env_destroy(void);
 
-void dpor_add_ground_status(ProcessTbl atoms);
-void dpor_remove_ground_status(ProcessTbl atoms);
+void dpor_transition_gen_LHS(McDporData      *mc,
+                             MemDeltaRoot    *d,
+                             struct ReactCxt *rc,
+                             LmnWord         *wt,
+                             LmnByte         *at,
+                             LmnByte         *tt);
+BOOL dpor_transition_gen_RHS(McDporData      *mc,
+                             MemDeltaRoot    *d,
+                             struct ReactCxt *rc,
+                             LmnWord         *wt,
+                             LmnByte         *at,
+                             LmnByte         *tt);
 
-void dpor_LHS_procs_update(struct ReactCxt *rc,
-                           LmnWord         *wt,
-                           LmnByte         *at,
-                           LmnByte         *tt);
+
+inline static void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f) {
+  LmnWord t;
+  BYTE flags;
+
+  d = DPOR_DATA();
+  if (proc_tbl_get(d->wt_flags, proc_id, &t)) { /* CONTAINS */
+    flags = (BYTE)t;
+  } else {                                            /* NEW */
+    flags = LHS_DEFAULT;
+  }
+
+  LHS_FL_SET(flags, set_f);
+  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
+}
+
+inline static void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
+  LmnWord t;
+  BYTE flags;
+
+  d = DPOR_DATA();
+  if (proc_tbl_get(d->wt_flags, proc_id, &t)) { /* CONTAINS */
+    flags = (BYTE)t;
+  } else {                                      /* NEW */
+    LMN_ASSERT(0);
+  }
+
+  LHS_FL_UNSET(flags, unset_f);
+  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
+}
+
+inline static void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTbl atoms) {
+  vec_push(d->wt_gatoms, (vec_data_t)atoms);
+}
+
+inline static void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTbl atoms) {
+  if (vec_peek(d->wt_gatoms) == (vec_data_t)atoms) {
+    vec_pop(d->wt_gatoms);
+  } else {
+    /* pushした順にpopされるので, ここに来ることはまずないが念のため書いておく */
+    unsigned int i;
+    for (i = 0; i < vec_num(d->wt_gatoms); i++) {
+      vec_data_t t = vec_get(d->wt_gatoms, i);
+      if (t == (vec_data_t)atoms) {
+        vec_pop_n(d->wt_gatoms, i);
+      }
+    }
+  }
+}
+
+
+
+/* for debug only */
+void dpor_contextC1_dump_eachL(ContextC1 c);
+void dpor_contextC1_dump_eachR(ContextC1 c);
+void dpor_contextC1_dump(McDporData *d);
+int dpor_dependency_tbl_dump(McDporData *d);
+#endif

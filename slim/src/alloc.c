@@ -148,7 +148,7 @@ void *lmn_calloc(size_t num, size_t size)
 void *lmn_malloc(size_t num)
 {
   LMN_ASSERT(num > 0);
-
+//printf("%lu\n", num);
   void *new = malloc(num);
   if (!new) lmn_fatal("Memory exhausted");
 

@@ -107,6 +107,7 @@ void mc_store_successors(const StateSpace ss,
                          struct ReactCxt  *rc,
                          Vector           *new_ss,
                          BOOL             f);
+BOOL mc_expand_inner(struct ReactCxt *rc, LmnMembrane *cur_mem);
 void run_mc(Vector *start_rulesets);
 StateSpace do_mc(LmnMembrane *world_mem, BOOL flags);
 

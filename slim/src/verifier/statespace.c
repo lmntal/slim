@@ -259,13 +259,10 @@ inline static void state_space_make_table(StateSpace ss)
       ss->memid_tbl = state_table_make();
       state_table_set_rehash_tbl(state_space_tbl(ss),
                                  state_space_memid_tbl(ss));
-      state_table_use_rehasher(state_space_tbl(ss));
-
       if (state_space_accept_tbl(ss)) {
         ss->acc_memid_tbl = state_table_make();
         state_table_set_rehash_tbl(state_space_accept_tbl(ss),
                                    state_space_accept_memid_tbl(ss));
-        state_table_use_rehasher(state_space_accept_tbl(ss));
       }
     }
 
@@ -826,6 +823,7 @@ inline static void state_table_dummy_sub(StateTable *st, unsigned long n)
 static void state_table_set_rehash_tbl(StateTable *st, StateTable *rehash_tbl)
 {
   st->rehash_tbl = rehash_tbl;
+  state_table_set_rehasher(st);
 }
 
 

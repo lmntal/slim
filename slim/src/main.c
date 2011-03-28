@@ -191,6 +191,8 @@ static int parse_options(int argc, char *argv[])
     {"debug-isomor"           , 0, 0, 6010},
     {"debug-mc"               , 0, 0, 6011},
     {"debug-por"              , 0, 0, 6012},
+    {"show-rgraph"            , 0, 0, 6013},
+    {"debug-tr-dep"           , 0, 0, 6014},
     {"prof-nomemeq"           , 0, 0, 6050},
     {0, 0, 0, 0}
   };
@@ -309,8 +311,10 @@ static int parse_options(int argc, char *argv[])
       break;
     case 1419:
       lmn_env.enable_por_old = TRUE;
-      /* FALLTHROUGH */
+      lmn_env.enable_por = TRUE;
+      break;
     case 1420:
+      lmn_env.delta_mem = TRUE; /* 新PORはdelta-mem方式に依存 */
       lmn_env.enable_por = TRUE;
       break;
     case 1421:
@@ -443,6 +447,14 @@ static int parse_options(int argc, char *argv[])
     case 6012:
       lmn_env.debug_por = TRUE;
       break;
+    case 6013:
+      lmn_env.show_reduced_graph = TRUE;
+      lmn_env.show_transition = TRUE;
+      break;
+    case 6014:
+      lmn_env.debug_por_dep = TRUE;
+      lmn_env.enable_por = TRUE;
+      break;
 #else
     case 6006:
     case 6007:
@@ -451,9 +463,12 @@ static int parse_options(int argc, char *argv[])
     case 6010:
     case 6011:
     case 6012:
+    case 6013:
+    case 6014:
       usage();
       break;
 #endif
+
 #ifdef PROFILE
     case 6050:
       lmn_env.prof_no_memeq = TRUE;
@@ -548,12 +563,15 @@ static void init_env(void)
 
   lmn_env.enable_map_heuristic   = TRUE;
 
+  lmn_env.show_reduced_graph     = FALSE;
+
 #ifdef PROFILE
   lmn_env.optimize_hash_old      = FALSE;
   lmn_env.prof_no_memeq          = FALSE;
 #endif
 
 #ifdef DEBUG
+  lmn_env.debug_por_dep          = FALSE;
   lmn_env.debug_memenc           = FALSE;
   lmn_env.debug_id               = FALSE;
   lmn_env.debug_delta            = FALSE;

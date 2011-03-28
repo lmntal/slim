@@ -62,12 +62,15 @@ struct ProcessTbl {
 #endif
 };
 
+#define process_tbl_entry_num(P)  ((P)->n)
+
 void proc_tbl_init_with_size(ProcessTbl p, unsigned long size);
 void proc_tbl_init(ProcessTbl p);
 ProcessTbl proc_tbl_make_with_size(unsigned long size);
 ProcessTbl proc_tbl_make(void);
 void proc_tbl_destroy(ProcessTbl p);
 void proc_tbl_free(ProcessTbl p);
+void proc_tbl_clear(ProcessTbl p);
 static inline unsigned long proc_tgl_num(ProcessTbl p) { return p->n; }
 int proc_tbl_foreach(ProcessTbl p,
                      int(*func)(LmnWord key, LmnWord val, LmnWord arg),
@@ -76,6 +79,9 @@ int proc_tbl_foreach(ProcessTbl p,
 void proc_tbl_expand_sub(ProcessTbl p, unsigned long n);
 #  define proc_tbl_expand(p, n) if ((p)->size <= (n)) proc_tbl_expand_sub(p, n)
 #endif
+
+
+BOOL proc_tbl_eq(ProcessTbl a, ProcessTbl b);
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
 static inline void proc_tbl_put(ProcessTbl p, LmnWord key, LmnWord value)
@@ -240,6 +246,7 @@ static inline int proc_tbl_get_by_atom(ProcessTbl p, LmnSAtom atom, LmnWord *val
    memが存在しない場合は0を返す */
 static inline int proc_tbl_get_by_mem(ProcessTbl p, LmnMembrane *mem, LmnWord *value)
 {
+  if (!mem) lmn_fatal("oh no..");
   return proc_tbl_get(p, lmn_mem_id(mem), value);
 }
 

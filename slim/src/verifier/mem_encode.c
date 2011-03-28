@@ -1068,6 +1068,8 @@ static void write_mem(LmnMembrane *mem,
 {
   LmnWord n_visited;
 
+  if (!mem) return;
+
   if (!bsptr_valid(bsp)) return;
 
   /* 訪問済み */

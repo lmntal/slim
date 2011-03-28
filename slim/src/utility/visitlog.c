@@ -59,7 +59,7 @@ void proc_tbl_init_with_size(ProcessTbl p, unsigned long size)
 ProcessTbl proc_tbl_make(void)
 {
 //  return proc_tbl_make_with_size(env_max_id());
-  return proc_tbl_make_with_size(1024);
+  return proc_tbl_make_with_size(512);
 }
 
 ProcessTbl proc_tbl_make_with_size(unsigned long size)
@@ -78,11 +78,24 @@ void proc_tbl_destroy(ProcessTbl p)
 #endif
 }
 
+
 void proc_tbl_free(ProcessTbl p)
 {
   proc_tbl_destroy(p);
   LMN_FREE(p);
 }
+
+
+void proc_tbl_clear(ProcessTbl p)
+{
+  p->n = 0;
+#ifdef TIME_OPT
+  memset(p->tbl, 0xff, sizeof(LmnWord) * p->size);
+#else
+  st_clear(p->tbl);
+#endif
+}
+
 
 int proc_tbl_foreach(ProcessTbl p, int(*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg)
 {
@@ -97,6 +110,35 @@ int proc_tbl_foreach(ProcessTbl p, int(*func)(LmnWord key, LmnWord val, LmnWord 
   return st_foreach(p->tbl, func, arg);
 #endif
 }
+
+
+
+BOOL proc_tbl_eq(ProcessTbl a, ProcessTbl b)
+{
+#ifdef TIME_OPT
+  if (a->n != b->n) return FALSE;
+  else {
+    unsigned int i, a_checked;
+    a_checked = 0;
+    for (i = 0; i < a->size && a_checked < a->n; i++) {
+      if (a->tbl[i] != b->tbl[i]) {
+ //       printf("diff tbl[%lu]=, a=%lu, b=%lu\n", i, a->tbl[i], b->tbl[i]);
+        return FALSE;
+      }
+      else if (a->tbl[i] != ULONG_MAX) {
+        a_checked++;
+      }
+    }
+
+    return TRUE;
+  }
+
+
+#else
+  return (a->n == b->n) && st_equals(a->tbl, b->tbl)
+#endif
+}
+
 
 #ifdef TIME_OPT
 void proc_tbl_expand_sub(ProcessTbl p, unsigned long n)

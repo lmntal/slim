@@ -77,14 +77,21 @@ Proposition proposition_make(const char *head,
   Rule rule;
   FILE *fp;
   char *rule_str;
+  BYTE optimization_level_org;
+
+  optimization_level_org = lmn_env.optimization_level;
+  lmn_env.optimization_level = OPTIMIZE_LEVEL_MAX;
 
   p->head = strdup(head);
   p->guard = (guard == NULL ? strdup("") : strdup(guard));
   p->body = (body == NULL ? strdup("") : strdup(body));
 
   rule_str = rule_str_for_compile(head, guard, body);
+
   fp = lmntal_compile_rule_str(rule_str);
   LMN_FREE(rule_str);
+
+  lmn_env.optimization_level = optimization_level_org;
 
   if (!il_parse_rule(fp, &rule)) {
     p->rule = load_rule(rule);

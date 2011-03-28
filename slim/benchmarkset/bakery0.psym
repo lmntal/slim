@@ -1,0 +1,1 @@
+p= p{state=cs, $p}, p{state=cs, $q}

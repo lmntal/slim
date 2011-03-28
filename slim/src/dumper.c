@@ -825,7 +825,12 @@ static void dump_atom_dev(LmnSAtom atom)
 
   f = LMN_SATOM_GET_FUNCTOR(atom);
   arity = LMN_FUNCTOR_ARITY(f);
-  fprintf(stdout, "Func[%u], Name[%s], A[%u], Addr[%p], ", f, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)), arity, (void*)atom);
+  fprintf(stdout, "Func[%3u], Name[%5s], A[%2u], Addr[%lu], ID[%2lu], "
+                , f
+                , lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f))
+                , arity
+                , (LmnWord)atom
+                , LMN_SATOM_ID(atom));
 
   for (i = 0; i < arity; i++) {
     LmnLinkAttr attr;
@@ -836,7 +841,7 @@ static void dump_atom_dev(LmnSAtom atom)
       fprintf(stdout, "mem[%p], ", (void*)LMN_PROXY_GET_MEM(atom));
     }
     else if (!LMN_ATTR_IS_DATA(attr)) { /* symbol atom */
-      fprintf(stdout, "link[%d, %p], ", LMN_ATTR_GET_VALUE(attr), (void*)LMN_SATOM_GET_LINK(atom, i));
+      fprintf(stdout, "link[%d, %lu], ", LMN_ATTR_GET_VALUE(attr), (LmnWord)LMN_SATOM_GET_LINK(atom, i));
     } else {
       switch (attr) {
         case  LMN_INT_ATTR:
@@ -872,7 +877,10 @@ void lmn_dump_mem_dev(LmnMembrane *mem)
   if (!mem) return;
 
   fprintf(stdout, "{\n");
-  fprintf(stdout, "Mem[%u], Addr[%p]\n", LMN_MEM_NAME_ID(mem), (void*)mem);
+  fprintf(stdout, "Mem[%u], Addr[%lu], ID[%lu]\n"
+                , LMN_MEM_NAME_ID(mem)
+                , (LmnWord)mem
+                , lmn_mem_id(mem));
   EACH_ATOMLIST(mem, ent, ({
     LmnSAtom atom;
     EACH_ATOM(atom, ent, {

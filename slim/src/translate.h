@@ -49,13 +49,6 @@
 /* この辺の読み込みマクロはインタプリタ出力時も使えるはず */
 /* translate.c内でも使えるはず */
 
-#define READ_VAL(T,I,X)      ((X)=*(T*)(I), (I) += sizeof(T))
-#define SWAP(T,X,Y)    \
- do {                  \
-  T tmp = (X);         \
-  (X)  = (Y);          \
-  (Y)  = tmp;           \
-} while(0)
 
 #define READ_VAL_FUNC(I,X)                      \
   do{                                           \

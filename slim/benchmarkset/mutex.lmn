@@ -1,0 +1,30 @@
+/*
+ *  mutex.lmn -- Mutual Exclusion (Simple) Model
+ *
+ *  @author  Masato Gocho
+ *  @date    2009.05.26
+ */
+
+% property0: ??????????»ã??·ã??³ã?????»ã???ä»¥ä??¥ã?????????
+% property1: rqst???????? ??????????£ã????????§ã???????
+% property2: Strong Fairness -> property1
+
+
+proc_generator{
+  np(2).
+  init @@ np(N) :- N>0, M=N-1 | np(M), p(wait,N).
+}.
+init_end @@ proc_generator{np(0), $p,@p}/ :- $p.
+
+/*
+np(2).
+initial_ruleset{
+  init @@ np(N) :- N>0, M=N-1 | np(M), p(wait, N).
+  iend @@ np(0)  :- .
+}.
+*/
+
+mutex.
+request @@ X=wait :- X=rqst.
+get_mtx @@ X=rqst, mutex :- X=crit.
+release @@ X=crit :- X=wait, mutex .

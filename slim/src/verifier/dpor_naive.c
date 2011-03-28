@@ -36,6 +36,7 @@
  * $Id$
  */
 
+#include "dpor.h"
 #include "dpor_naive.h"
 #include "delta_membrane.h"
 #include "mc.h"
@@ -43,13 +44,6 @@
 #include "rule.h"
 #ifdef PROFILE
 #  include "runtime_status.h"
-#endif
-#ifdef DEBUG
-#  include "dumper.h"
-#  include "error.h"
-#  define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
-#else
-#  define POR_DEBUG(V)
 #endif
 
 
@@ -837,6 +831,8 @@ static BOOL check_C3(StateSpace      ss,
                      BOOL            f)
 {
   unsigned int i;
+
+  if (!mc_has_property(f)) return TRUE;
 
   for (i = 0; i < state_succ_num(s); i++) {
     Transition succ_t;

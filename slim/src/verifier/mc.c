@@ -124,6 +124,12 @@ StateSpace do_mc(LmnMembrane *world_mem_org, BOOL f)
   /** START */
   launch_lmn_workers();
 
+#ifdef DEBUG
+  if (lmn_env.show_reduced_graph && lmn_env.enable_por && !lmn_env.enable_por_old) {
+    dpor_explore_redundunt_graph(states);
+  }
+#endif
+
   /** FINALIZE */
   lmn_workers_env_finalize();
 
@@ -254,8 +260,8 @@ static void mc_status_finalize(StateSpace states)
  *  === Fundamental System for StateSpace Generation ====
  *  =====================================================
  */
+
 static void mc_gen_successors_inner(struct ReactCxt *rc, LmnMembrane *cur_mem);
-static BOOL mc_expand_inner(struct ReactCxt *rc, LmnMembrane *cur_mem);
 inline static void stutter_extension(State           *s,
                                      LmnMembrane     *mem,
                                      BYTE            next_label,
@@ -288,7 +294,11 @@ void mc_expand(const StateSpace ss,
   if (mc_react_cxt_expanded_num(rc) == 0) {
     state_space_add_end_state(ss, s);
   } else {
+#ifdef DEBUG
+    if (!mc_enable_por(f) || s_is_reduced(s)) {
+#else
     if (!mc_enable_por(f)) {
+#endif
       mc_store_successors(ss, s, rc, new_ss, f);
     } else {
       /* POR使用時は, 遷移先状態集合:en(s)からample(s)を計算する
@@ -409,7 +419,7 @@ void mc_store_successors(const StateSpace ss,
  * ルール適用検査を行う
  * 子膜からルール適用を行っていく
  */
-static BOOL mc_expand_inner(struct ReactCxt *rc, LmnMembrane *cur_mem)
+BOOL mc_expand_inner(struct ReactCxt *rc, LmnMembrane *cur_mem)
 {
   BOOL ret_flag = FALSE;
 
@@ -468,7 +478,7 @@ void mc_gen_successors(State           *src,
     else {
       new = state_make((LmnMembrane *)vec_get(expanded_roots, i),
                        state_name,
-                       is_encoded(src));
+                       lmn_env.mem_enc);
     }
 
     state_set_parent(new, src);
@@ -485,6 +495,7 @@ void mc_gen_successors(State           *src,
     mc_use_delta(f) ? vec_push(expanded_roots, data)
                     : vec_set(expanded_roots, i, data);
   }
+  RC_ND_SET_ORG_SUCC_NUM(rc, mc_react_cxt_expanded_num(rc));
 }
 
 
@@ -496,9 +507,7 @@ void mc_gen_successors_with_property(State           *s,
                                      struct ReactCxt *rc,
                                      BOOL            f)
 {
-  Vector *expanded;
-  unsigned int i, j, n;
-  int tmp_expand_num;
+  unsigned int i, j;
 
   /** 状態展開:
    *   性質ルールが適用される場合, global_rootに対してシステムルール適用検査を行う.
@@ -510,69 +519,54 @@ void mc_gen_successors_with_property(State           *s,
    *   (c.f. "The Spin Model Checker" pp.130-131)
    */
 
-  tmp_expand_num = -1; /* 初めて性質ルールにマッチングした際に展開したsuccessorの数を入れておくとこ */
-  expanded = RC_EXPANDED(rc); /* set pointer */
-  n = atmstate_transition_num(p_s);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < atmstate_transition_num(p_s); i++) {
     AutomataTransition p_t = atmstate_get_transition(p_s, i);
-
-    /* 性質ルールにマッチングした数だけシステムルールによる状態展開を行う */
     if (eval_formula(mem, mc_data.propsyms, atm_transition_get_formula(p_t))) {
       BYTE p_nxt_l = atm_transition_next(p_t);
+      vec_push(RC_EXPANDED_PROPS(rc), (vec_data_t)p_nxt_l);
+    }
+  }
 
-      /* TODO: MemDeltaRootの複製処理 */
-      if (mc_use_delta(f)) {
-        /** Delta-Membrane */
-        tmp_expand_num = vec_num(expanded);
-        mc_gen_successors(s, mem, p_nxt_l, rc, f);
-        if (vec_num(expanded) == tmp_expand_num) {
-          stutter_extension(s, mem, p_nxt_l, rc, f);
-        }
+  if (vec_num(RC_EXPANDED_PROPS(rc)) == 0) {
+    return;
+  } else {
+    BYTE first_prop = (BYTE)vec_get(RC_EXPANDED_PROPS(rc), 0);
+    mc_gen_successors(s, mem, first_prop, rc, f);
+    if (mc_react_cxt_expanded_num(rc) == 0) {
+      stutter_extension(s, mem, first_prop, rc, f);
+    }
+  }
+
+  /* 階層グラフ構造は等価だが性質ラベルの異なる状態を生成する.　*/
+  RC_ND_SET_ORG_SUCC_NUM(rc, mc_react_cxt_expanded_num(rc));
+  for (i = 1; i < vec_num(RC_EXPANDED_PROPS(rc)); i++) {
+    BYTE p_nxt_l = (BYTE)vec_get(RC_EXPANDED_PROPS(rc), i);
+    for (j = 0; j < RC_ND_ORG_SUCC_NUM(rc); j++) {
+      Transition src_succ_t;
+      State *src_succ_s, *new_s;
+      vec_data_t data;
+
+      if (mc_has_trans(f)) {
+        src_succ_t = (Transition)vec_get(RC_EXPANDED(rc), j);
+        src_succ_s = transition_next_state(src_succ_t);
+      } else {
+        src_succ_t = NULL;
+        src_succ_s = (State *)vec_get(RC_EXPANDED(rc), j);
       }
-      else {
-        /** Default */
-        if (tmp_expand_num < 0) {
-          /* 初めて性質ルールにマッチングした場合:
-           *  システムルールを適用し, サクセッサの階層グラフの集合を作る */
-          mc_gen_successors(s, mem, p_nxt_l, rc, f); /* システムルールを適用し, 状態を展開する */
-          tmp_expand_num = vec_num(expanded);
-          if (tmp_expand_num == 0) { /* stutter extensionルールによる状態展開 */
-            stutter_extension(s, mem, p_nxt_l, rc, f);
-          }
-        } else {
-          /* 2つ目以降の性質ルールがマッチングした場合:
-           *  システムルールの適用結果と生成される階層グラフの集合は1つ目と同様であるため,
-           *  集合を複製し, 性質ラベルの異なる新たな状態として生成する */
-          if (tmp_expand_num == 0) {
-            stutter_extension(s, mem, p_nxt_l, rc, f);
-          } else {
-            for (j = 0; j < tmp_expand_num; j++) {
-              Transition src_succ_t;
-              State *src_succ_s, *new_s;
-              vec_data_t data;
 
-              if (mc_has_trans(f)) {
-                src_succ_t = (Transition)vec_get(expanded, j);
-                src_succ_s = transition_next_state(src_succ_t);
-              } else {
-                src_succ_t = NULL;
-                src_succ_s = (State *)vec_get(expanded, j);
-              }
+      new_s = state_copy(src_succ_s);
+      state_set_parent(new_s, s);
+      state_set_property_state(new_s, p_nxt_l);
 
-              new_s = state_copy(src_succ_s);
-              state_set_parent(new_s, s);
-              state_set_property_state(new_s, p_nxt_l);
-
-              if (mc_has_trans(f)) {
-                data = (vec_data_t)transition_make(new_s, transition_rule(src_succ_t, 0));
-                set_trans_obj(s);
-              } else {
-                data = (vec_data_t)new_s;
-              }
-              vec_push(expanded, data);
-            }
-          }
-        }
+      if (mc_has_trans(f)) {
+        data = (vec_data_t)transition_make(new_s, transition_rule(src_succ_t, 0));
+        set_trans_obj(s);
+      } else {
+        data = (vec_data_t)new_s;
+      }
+      vec_push(RC_EXPANDED(rc), data);
+      if (RC_MC_USE_DMEM(rc)) {
+        vec_push(RC_MEM_DELTAS(rc), vec_get(RC_MEM_DELTAS(rc), j));
       }
     }
   }
@@ -624,6 +618,7 @@ inline static void mc_gen_successors_inner(struct ReactCxt *rc, LmnMembrane *cur
   }
 #endif
 }
+
 
 
 

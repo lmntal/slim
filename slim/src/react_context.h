@@ -47,6 +47,7 @@
 #include "st.h"
 #include "delta_membrane.h"
 #include "state.h"
+#include "dpor.h"
 
 struct ReactCxt {
   LmnMembrane *global_root; /* グローバルルート膜 */
@@ -83,10 +84,13 @@ struct McReactCxtData {
   st_table_t   succ_tbl;       /* 多重辺除去用 */
   Vector       *roots;         /* 通常時: struct LmnMembrane  差分時: 空 */
   Vector       *rules;
+  Vector       *props;
   Vector       *mem_deltas;    /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
   MemDeltaRoot *mem_delta_tmp; /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
                                 * BODY命令はこのMemDeltaRootオブジェクトへ適用する. */
   BYTE         opt_mode;       /* 最適化のモードを記録 */
+  unsigned int org_succ_num;
+  McDporData   *por;
 };
 
 
@@ -105,26 +109,31 @@ struct McReactCxtData {
 #define RC_MC_SET_DPOR_NAIVE(rc)        (RC_MC_OPT_FLAG(rc) |=  RC_MC_DPOR_NAIVE_MASK)
 #define RC_MC_UNSET_DPOR_NAIVE(rc)      (RC_MC_OPT_FLAG(rc) &=(~RC_MC_DPOR_NAIVE_MASK))
 
-
 #define RC_ND_DATA(rc)                  ((struct McReactCxtData *)(rc)->v)
 #define RC_SUCC_TBL(rc)                 ((RC_ND_DATA(rc))->succ_tbl)
 #define RC_EXPANDED(rc)                 ((RC_ND_DATA(rc))->roots)
 #define RC_EXPANDED_RULES(rc)           ((RC_ND_DATA(rc))->rules)
+#define RC_EXPANDED_PROPS(rc)           ((RC_ND_DATA(rc))->props)
 #define RC_MEM_DELTAS(rc)               ((RC_ND_DATA(rc))->mem_deltas)
 #define RC_ND_SET_MEM_DELTA_ROOT(rc, d) ((RC_ND_DATA(rc))->mem_delta_tmp = (d))
 #define RC_ND_MEM_DELTA_ROOT(rc)        ((RC_ND_DATA(rc))->mem_delta_tmp)
+#define RC_ND_ORG_SUCC_NUM(rc)          ((RC_ND_DATA(rc))->org_succ_num)
+#define RC_ND_SET_ORG_SUCC_NUM(rc, N)   ((RC_ND_DATA(rc))->org_succ_num = (N))
+#define RC_POR_DATA(rc)                 ((RC_ND_DATA(rc))->por)
 #define RC_CLEAR_DATA(rc) do {                                                 \
   RC_SET_GROOT_MEM(rc, NULL);                                                  \
   st_clear(RC_SUCC_TBL(rc));                                                   \
   vec_clear(RC_EXPANDED_RULES(rc));                                            \
   vec_clear(RC_EXPANDED(rc));                                                  \
+  vec_clear(RC_EXPANDED_PROPS(rc));                                            \
   if (RC_MEM_DELTAS(rc)) {                                                     \
-    int _d_i;                                                                  \
-    for (_d_i = 0; _d_i < vec_num(RC_MEM_DELTAS(rc)); _d_i++) {                \
-      dmem_root_free((MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), _d_i)); \
+    while (!vec_is_empty(RC_MEM_DELTAS(rc))) {                                 \
+      MemDeltaRoot *_d_ = (MemDeltaRoot *)vec_pop(RC_MEM_DELTAS(rc));          \
+      if (_d_) dmem_root_free(_d_);                                            \
     }                                                                          \
     vec_clear(RC_MEM_DELTAS(rc));                                              \
   }                                                                            \
+  RC_ND_SET_ORG_SUCC_NUM(rc, 0);                                               \
 } while (0)
 
 
@@ -161,9 +170,13 @@ static inline LmnWord mc_react_cxt_expanded_pop(struct ReactCxt *cxt) {
                                      : RC_EXPANDED(cxt));
 }
 
+static inline unsigned int mc_react_cxt_succ_num_org(struct ReactCxt *cxt) {
+  return RC_ND_ORG_SUCC_NUM(cxt);
+}
+
 static inline unsigned int mc_react_cxt_expanded_num(struct ReactCxt *cxt) {
   return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
-                                 : vec_num(RC_EXPANDED(cxt));
+                             : vec_num(RC_EXPANDED(cxt));
 }
 
 #endif

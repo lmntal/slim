@@ -76,30 +76,6 @@ static inline BOOL dmem_root_is_modified_atom(struct MemDeltaRoot *d, LmnSAtom a
 static inline LmnMembrane *dmem_root_atom_mem(struct MemDeltaRoot *d, LmnSAtom a);
 static inline struct MemDelta *dmem_root_get_mem_delta(struct MemDeltaRoot *d, LmnMembrane *m);
 
-struct MemDelta {
-  struct MemDeltaRoot *root_d;
-  LmnMembrane *mem;
-
-  Vector del_atoms;
-  Vector new_atoms;
-
-  Vector del_mems;
-  Vector new_mems;
-
-  Vector *new_rulesets;
-  BOOL ruleset_removed;
-  Vector *org_rulesets; /* commit, revertの作業用 */
-
-  Vector new_proxies;
-
-  LmnFunctor max_functor;
-
-  int data_atom_diff;
-
-  LmnMembrane *new_parent;
-  lmn_interned_str new_name, org_name;
-};
-
 static struct MemDelta *mem_delta_make(struct MemDeltaRoot *root_d, LmnMembrane *m, unsigned long next_id);
 static void mem_delta_free(struct MemDelta *p);
 
@@ -153,12 +129,6 @@ static void dmem_unify_atom_args(struct MemDelta *d,
                                  int pos1,
                                  LmnSAtom atom2,
                                  int pos2);
-
-struct NewMemInfo {
-  LmnMembrane *mem;
-  Vector new_child_mems;
-  Vector removed_child_mems;
-};
 
 static struct NewMemInfo *new_mem_info_make(LmnMembrane *mem)
 {
@@ -309,6 +279,7 @@ unsigned long dmem_root_get_next_id(struct MemDeltaRoot *d)
 {
   return d->next_id;
 }
+
 
 static inline struct MemDelta *dmem_root_get_mem_delta(struct MemDeltaRoot *d, LmnMembrane *m)
 {
@@ -1297,7 +1268,7 @@ void dmem_root_insert_proxies(struct MemDeltaRoot *root_d, LmnMembrane *mem, Lmn
         oldstar = dmem_root_alter_functor(root_d, mem, oldstar, LMN_OUT_PROXY_FUNCTOR);
         lmn_newlink_in_symbols(star, 0, oldstar, 0);
       } else { /* (3) */
-       LmnSAtom outside = dmem_root_new_atom(root_d, LMN_OUT_PROXY_FUNCTOR);
+        LmnSAtom outside = dmem_root_new_atom(root_d, LMN_OUT_PROXY_FUNCTOR);
         LmnSAtom newstar = dmem_root_new_atom(root_d, LMN_STAR_PROXY_FUNCTOR);
         dmem_root_push_atom(root_d, mem, LMN_ATOM(outside), LMN_ATTR_MAKE_LINK(0));
         dmem_root_push_atom(root_d, mem, LMN_ATOM(newstar), LMN_ATTR_MAKE_LINK(0));
@@ -1560,6 +1531,8 @@ inline LmnSAtom dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f)
 {
   LmnSAtom atom = lmn_new_atom(f);
 
+  if (LMN_SATOM_ID(atom) == 0) LMN_SATOM_SET_ID(atom, env_gen_next_id());
+
   proc_tbl_set_atom_flag(&d->flag_tbl, atom, TAG_NEW_ATOM);
   return atom;
 }
@@ -1569,6 +1542,9 @@ static inline LmnSAtom dmem_root_copy_satom(struct MemDeltaRoot *d, LmnSAtom ato
   LmnSAtom new_atom;
 
   new_atom = lmn_copy_satom(LMN_SATOM(atom));
+
+  if (LMN_SATOM_ID(atom) == 0) LMN_SATOM_SET_ID(new_atom, env_gen_next_id());
+
   proc_tbl_set_atom_flag(&d->flag_tbl, new_atom, TAG_NEW_ATOM);
 
   return new_atom;
@@ -1597,6 +1573,7 @@ LmnAtom dmem_root_copy_atom(struct MemDeltaRoot *d, LmnAtom atom, LmnLinkAttr at
     return lmn_copy_data_atom(atom, attr);
   } else { /* symbol atom */
     new_atom = LMN_ATOM(lmn_copy_satom(LMN_SATOM(atom)));
+    LMN_SATOM_SET_ID(LMN_SATOM(new_atom), env_gen_next_id());
     proc_tbl_set_atom_flag(&d->flag_tbl, LMN_SATOM(new_atom), TAG_NEW_ATOM);
     return new_atom;
   }
@@ -1900,12 +1877,13 @@ static void dmem_drop(struct MemDelta *d, LmnMembrane *mem)
   });
 }
 
+
 static inline void dmem_relink(struct MemDelta *d,
-                        LmnMembrane *m,
-                        LmnSAtom atom1,
-                        int pos1,
-                        LmnSAtom atom2,
-                        int pos2)
+                               LmnMembrane *m,
+                               LmnSAtom atom1,
+                               int pos1,
+                               LmnSAtom atom2,
+                               int pos2)
 {
   LmnAtom ap0;
   LmnLinkAttr attr;
@@ -1921,6 +1899,7 @@ static inline void dmem_relink(struct MemDelta *d,
   }
   else {
     LmnSAtom ap = LMN_SATOM(ap0);
+
     if (LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(ap)) &&
         LMN_PROXY_GET_MEM(ap) != m) {
       if (dmem_root_is_new_mem(d->root_d, m)) {

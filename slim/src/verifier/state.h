@@ -181,6 +181,7 @@ State *state_copy(State *src);
 inline State *state_copy_with_mem(State *src, LmnMembrane *mem);
 void state_free(State *s);
 void state_succ_set(State *s, Vector *v);
+void state_succ_add(State *s, succ_data_t succ);
 void state_succ_clear(State *s);
 inline void state_free_mem(State *s);
 inline void state_calc_mem_encode(State *s);

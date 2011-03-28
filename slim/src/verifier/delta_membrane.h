@@ -67,6 +67,39 @@ struct MemDeltaRoot {
   unsigned long new_proc_id_lower_limit;
 };
 
+
+struct MemDelta {
+  struct MemDeltaRoot *root_d;
+  LmnMembrane *mem;
+
+  Vector del_atoms;
+  Vector new_atoms;
+
+  Vector del_mems;
+  Vector new_mems;
+
+  Vector *new_rulesets;
+  BOOL ruleset_removed;
+  Vector *org_rulesets; /* commit, revertの作業用 */
+
+  Vector new_proxies;
+
+  LmnFunctor max_functor;
+
+  int data_atom_diff;
+
+  LmnMembrane *new_parent;
+  lmn_interned_str new_name, org_name;
+};
+
+
+struct NewMemInfo {
+  LmnMembrane *mem;
+  Vector new_child_mems;
+  Vector removed_child_mems;
+};
+
+
 /* static  inline LmnAtom datom_get_link(struct MemDelta *d, LmnSAtom atom, int i); */
 
 /* static inline LmnLinkAttr datom_get_attr(struct MemDelta *d, LmnSAtom atom, int i); */

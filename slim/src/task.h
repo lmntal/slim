@@ -53,6 +53,9 @@
 #define LIST_AND_MAP  2
 #define MAP           3
 
+#define SWAP(T,X,Y)       do { T t=(X); (X)=(Y); (Y)=t;} while(0)
+#define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
+
 /* 属性配列ttに使用するタグ */
 enum { TT_OTHER,
        TT_ATOM,            /* symbol atom  */

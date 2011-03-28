@@ -283,6 +283,7 @@ struct LmnEnv {
   BOOL prof_no_memeq;
 #endif
 
+  BOOL show_reduced_graph;
 #ifdef DEBUG
   BOOL debug_isomor;
   BOOL debug_memenc;
@@ -291,6 +292,7 @@ struct LmnEnv {
   BOOL debug_hash;
   BOOL debug_mc;
   BOOL debug_por;
+  BOOL debug_por_dep;
 #endif
 
   enum OutputFormat output_format;

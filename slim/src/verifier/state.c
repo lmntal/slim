@@ -220,6 +220,18 @@ void state_succ_set(State *s, Vector *v) {
 }
 
 
+void state_succ_add(State *s, succ_data_t succ)
+{
+  if (!s->successors) {
+    s->successors = LMN_NALLOC(succ_data_t, 1);
+  } else {
+    s->successors = LMN_REALLOC(succ_data_t, s->successors, s->successor_num + 1);
+  }
+  s->successors[s->successor_num] = succ;
+  s->successor_num++;
+}
+
+
 void state_succ_clear(State *s) {
   if (has_trans_obj(s)) {
     unsigned int i;

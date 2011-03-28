@@ -576,7 +576,7 @@ void dump_profile_data(FILE *f)
       fprintf(f, "%-20s%8s  : %15lu\n",   "# of States",             "Stored", lmn_prof.state_num_stored);
       fprintf(f, "%-18s%10s  : %15lu\n",   " ",                  "Terminates", lmn_prof.state_num_end);
       if (mc_data.has_property) {
-        fprintf(f, "%-10s%18s  : %15s\n",    " ",   "Accepting Cycle / Error", mc_data.error_exist ? "FOUND" : "NOT FOUND");
+        fprintf(f, "%-1s%27s  : %15s\n",    " ",   "Accepting Cycle / Error", mc_data.error_exist ? "FOUND" : "NOT FOUND");
       }
       fprintf(f,   "============================================================\n");
     } else {

@@ -110,7 +110,7 @@ LmnWord vec_pop_n(Vector *vec, unsigned int n) {
 
 /* peek */
 inline LmnWord vec_peek(const Vector *vec) {
-  return vec_get(vec, vec->num-1);
+  return vec_get(vec, vec->num - 1);
 }
 
 /* set */
@@ -160,14 +160,13 @@ inline void vec_free(Vector *vec) {
 /* ベクタのサイズを size に変更し、新規に追加された項目を val に設定する*/
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val)
 {
-  unsigned int i, n;
+  unsigned int i;
 
   while (size > vec->cap) {
     vec_extend(vec);
   }
 
   /* 追加された項目を val に設定 */
-  n = vec->num;
   for (i=vec->num; i<size; i++) {
     vec->tbl[i] = val;
   }

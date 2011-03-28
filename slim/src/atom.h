@@ -59,11 +59,17 @@
  *    (Nはリンクの数)
  *
  *  * Link Attribute
- *     リンク属性は, 先頭1ビットが立っている場合は, リンク番号を表現しており,
- *                  先頭1ビットが立っていない場合は, ProxyアトムやPrimitiveデータを表現する。
+ *     リンク属性は, 先頭1ビットが立っていない場合は, 下位7bitがリンク番号を記録しており,
+ *                  先頭1ビットが立っている場合は, Primitiveデータの種類を記録する。
  *     [Link Number]  0-------
  *     [int]          10000000
  *     [double]       10000001
+ *     [special]      10000011
+ *     [string]       10000011
+ *     [const string] 10000100
+ *     [const double] 10000101
+ *     [hyper link]   10001010
+ *
  *     We are going to support some primitive data types.
  *     (signed/unsigned) int, short int, long int, byte, long long int,
  *     float, double, long double,
@@ -73,6 +79,7 @@
  *     But, incompletely-specified.
  *
  */
+
 
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */
@@ -342,6 +349,8 @@ inline static BOOL lmn_eq_func(LmnAtom     atom0, LmnLinkAttr attr0,
     return atom0 == atom1;
   case LMN_DBL_ATTR:
     return *(double *)atom0 == *(double *)atom1;
+  case LMN_SP_ATOM_ATTR:
+    return SP_ATOM_EQ(atom0, atom1);
   case LMN_HL_ATTR:
     return lmn_hyperlink_eq(LMN_SATOM(atom0), attr0, LMN_SATOM(atom1), attr1);
   default: /* symbol atom */

@@ -1,0 +1,3 @@
+a= sumA(0),sumB(X) :- X > 0 |
+b= sumB(0),sumA(X) :- X > 0 |
+
