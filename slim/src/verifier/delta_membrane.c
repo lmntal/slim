@@ -887,7 +887,7 @@ void dmem_root_commit(struct MemDeltaRoot *d)
   if (lmn_env.debug_delta) {
     //printf("before commit : "); lmn_dump_mem_dev(d->root_mem);
   //  printf("before commit %s %p: ", lmn_id_to_name(lmn_rule_get_name(d->applied_rule)), d->root_mem); lmn_dump_cell_stdout(d->root_mem);
-    printf("befor commit : "); lmn_dump_cell_stdout(d->root_mem);
+    printf("before commit : "); lmn_dump_cell_stdout(d->root_mem);
   }
 #endif
 

@@ -135,7 +135,7 @@ BOOL proc_tbl_eq(ProcessTbl a, ProcessTbl b)
 
 
 #else
-  return (a->n == b->n) && st_equals(a->tbl, b->tbl)
+  return (a->n == b->n) && st_equals(a->tbl, b->tbl);
 #endif
 }
 

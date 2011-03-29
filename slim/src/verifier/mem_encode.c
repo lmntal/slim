@@ -329,22 +329,25 @@ unsigned long binstr_hash(const LmnBinStr a)
    返し、失敗した場合は偽を返す。*/
 static inline int binstr_set(struct BinStr *bs, BYTE b, int pos)
 {
+  /* 書き込む位置よりサイズが小さければストリングの長さを倍にする */
   if (bs->size <= pos) {
     bs->size *= 2;
     bs->v = LMN_REALLOC(BYTE, bs->v, bs->size / TAG_IN_BYTE);
   }
 
+  /* cur==posならば無条件で書き込み成功 */
   if (bs->cur == pos) {
     BS_SET(bs->v, pos, b);
     bs->cur++;
     return 1;
   }
   else if (bs->cur > pos) {
+    /* 下位4ビットの比較を行う */
     if (BS_GET(bs->v, pos) < b) return 0;
     else if (BS_GET(bs->v, pos) > b) {
       /* 現在、curが指す位置よりも前に書き込みを行ったため，
-         curよりも後の位置を指すポインタをすべて無効にする */
-      binstr_invalidate_ptrs(bs, pos + 1);
+         posよりも後の位置を指すポインタをすべて無効にする */
+      binstr_invalidate_ptrs(bs, pos + 1); /* curの位置をposまで戻す */
       bs->cur = pos + 1;
       BS_SET(bs->v, pos, b);
       return 1;

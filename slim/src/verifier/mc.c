@@ -261,7 +261,7 @@ static void mc_status_finalize(StateSpace states)
  *  =====================================================
  */
 
-static void mc_gen_successors_inner(struct ReactCxt *rc, LmnMembrane *cur_mem);
+inline static void mc_gen_successors_inner(struct ReactCxt *rc, LmnMembrane *cur_mem);
 inline static void stutter_extension(State           *s,
                                      LmnMembrane     *mem,
                                      BYTE            next_label,
