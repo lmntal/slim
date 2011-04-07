@@ -328,7 +328,8 @@ void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem)
   if (parent->child_head == mem) parent->child_head = mem->next;
   if (mem->prev) mem->prev->next = mem->next;
   if (mem->next) mem->next->prev = mem->prev;
-  mem->parent = NULL; /* removeproxies のために必要 */
+  //2011/01/23 removeproxiesでmem->parentを使うようになったのでコメントアウトしました。
+  //mem->parent = NULL; /* removeproxies のために必要 */
 }
 
 inline void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem)
@@ -763,69 +764,71 @@ void alter_functor(LmnMembrane *mem, LmnSAtom atom, LmnFunctor f)
  * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
  * HashSetを使うようにする
  */
+
 void lmn_mem_remove_proxies(LmnMembrane *mem)
 {
-  unsigned int i;
-  Vector remove_list, change_list;
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_OUT_PROXY_FUNCTOR);
+//2011/01/23  処理を変更 meguro
+	unsigned int i;
+	Vector remove_list_p , remove_list_m , change_list;
+	AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
 
-  vec_init(&remove_list, 16);
-  vec_init(&change_list, 16);
+	vec_init(&remove_list_p, 16);//parent用
+	vec_init(&remove_list_m, 16);//mem用
+	vec_init(&change_list, 16);
 
-  if (ent) {
-    LmnSAtom opxy;
+	if (ent) {
+		LmnSAtom ipxy;
 
-    EACH_ATOM(opxy, ent, {
-      LmnSAtom a0 = LMN_SATOM(LMN_SATOM_GET_LINK(opxy, 0));
-      if (LMN_PROXY_GET_MEM(a0)->parent != mem && /* opxyのリンク先が子膜でない場合 */
-          !LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(opxy, 1))) {
-        LmnSAtom a1 = LMN_SATOM(LMN_SATOM_GET_LINK(opxy, 1));
-        LmnFunctor f1 = LMN_SATOM_GET_FUNCTOR(a1);
-        if (f1 == LMN_IN_PROXY_FUNCTOR) { /* (1) */
-          lmn_mem_unify_atom_args(mem, opxy, 0, a1, 0);
-          vec_push(&remove_list, (LmnWord)opxy);
-          vec_push(&remove_list, (LmnWord)a1);
-        }
-        else {
-          if (f1 == LMN_OUT_PROXY_FUNCTOR &&
-              LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0))->parent != mem) { /* (3) */
-            if (!vec_contains(&remove_list, (LmnWord)opxy)) {
-              lmn_mem_unify_atom_args(mem, opxy, 0, a1, 0);
-              vec_push(&remove_list, (LmnWord)opxy);
-              vec_push(&remove_list, (LmnWord)a1);
-            }
-          } else { /* (2) */
-            vec_push(&change_list, (LmnWord)opxy);
-          }
-        }
-      }
-    });
-  }
+		EACH_ATOM(ipxy, ent, {
+			LmnSAtom a0 = LMN_SATOM(LMN_SATOM_GET_LINK(ipxy, 1));
+			LmnFunctor f0 = LMN_SATOM_GET_FUNCTOR(a0);
+			if(f0 == LMN_STAR_PROXY_FUNCTOR){//-$*-$in- → -----
+				lmn_mem_unify_atom_args(mem, a0, 0, ipxy, 0);
+				vec_push(&remove_list_m, (LmnWord)a0);
+				vec_push(&remove_list_m, (LmnWord)ipxy);
+			}else{//-$in- → -$*-
+				vec_push(&change_list, (LmnWord)ipxy);
+			}
+			
+			LmnSAtom a1 = LMN_SATOM(LMN_SATOM_GET_LINK(ipxy, 0));
+			LmnFunctor f1 = LMN_SATOM_GET_FUNCTOR(a1);
+			if (f1 == LMN_OUT_PROXY_FUNCTOR) {
+				if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(a1, 1))) {
 
-  for (i = 0; i < vec_num(&remove_list); i++) {
-    mem_remove_symbol_atom(mem, LMN_SATOM(vec_get(&remove_list, i)));
-    lmn_delete_atom(LMN_SATOM(vec_get(&remove_list, i)));
-  }
-  vec_destroy(&remove_list);
+					LmnSAtom a2 = LMN_SATOM(LMN_SATOM_GET_LINK(a1, 1));
+					LmnFunctor f2 = LMN_SATOM_GET_FUNCTOR(a2);
+					if(f2 == LMN_STAR_PROXY_FUNCTOR){
+						lmn_mem_unify_atom_args(mem->parent, a1, 0, a2, 0);
+						vec_push(&remove_list_p, (LmnWord)a1);
+						vec_push(&remove_list_p, (LmnWord)a2);
+					}else {
+						vec_push(&change_list, (LmnWord)a1);
+					}
+				}
+			}
+		});
+	}
 
+	for (i = 0; i < vec_num(&remove_list_p); i++) {
+		mem_remove_symbol_atom(mem->parent, LMN_SATOM(vec_get(&remove_list_p, i)));
+		lmn_delete_atom(LMN_SATOM(vec_get(&remove_list_p, i)));
+	}
+	vec_destroy(&remove_list_p);
+	
+	for (i = 0; i < vec_num(&remove_list_m); i++) {
+		mem_remove_symbol_atom(mem, LMN_SATOM(vec_get(&remove_list_m, i)));
+		lmn_delete_atom(LMN_SATOM(vec_get(&remove_list_m, i)));
+	}
+	vec_destroy(&remove_list_m);
 
-  /* add inside proxy to change list */
-  ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
-  if (ent) {
-    LmnSAtom a;
-    /* clear mem attribute */
-    EACH_ATOM(a, ent, {
-      vec_push(&change_list, (LmnWord)a);
-    });
-  }
-
-  { /* change to star proxy */
-    for (i = 0; i < change_list.num; i++) {
-      alter_functor(mem, LMN_SATOM(vec_get(&change_list, i)), LMN_STAR_PROXY_FUNCTOR);
-    }
-  }
-  vec_destroy(&change_list);
+	{ /* change to star proxy */
+		for (i = 0; i < change_list.num; i++) {
+			alter_functor(LMN_PROXY_GET_MEM(LMN_SATOM(vec_get(&change_list, i))), LMN_SATOM(vec_get(&change_list, i)), LMN_STAR_PROXY_FUNCTOR);
+		}
+	}
+	vec_destroy(&change_list);
 }
+
 
 /* cf. Java処理系 */
 /*
