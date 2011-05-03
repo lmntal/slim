@@ -290,21 +290,14 @@ void mc_expand(const StateSpace ss,
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
 
-
   if (mc_react_cxt_expanded_num(rc) == 0) {
     state_space_add_end_state(ss, s);
+  } else if (!mc_enable_por(f) || s_is_reduced(s)) {
+	mc_store_successors(ss, s, rc, new_ss, f);
   } else {
-#ifdef DEBUG
-    if (!mc_enable_por(f) || s_is_reduced(s)) {
-#else
-    if (!mc_enable_por(f)) {
-#endif
-      mc_store_successors(ss, s, rc, new_ss, f);
-    } else {
-      /* POR使用時は, 遷移先状態集合:en(s)からample(s)を計算する
-       * サブルーチン側で, sに対するサクセッサの登録まで済ませる */
-      dpor_start(ss, s, rc, new_ss, f);
-    }
+    /* POR使用時は, 遷移先状態集合:en(s)からample(s)を計算する
+     * サブルーチン側で, sに対するサクセッサの登録まで済ませる */
+    dpor_start(ss, s, rc, new_ss, f);
   }
 
   /** free   : 遷移先を求めた状態sからLMNtalプロセスを開放 */
@@ -565,6 +558,10 @@ void mc_gen_successors_with_property(State           *s,
         data = (vec_data_t)new_s;
       }
       vec_push(RC_EXPANDED(rc), data);
+
+      /* 差分オブジェクトは状態展開時のみの一時データなので,
+       * 効率化のためにポインタcopyのみにしている(deep copyしない)
+       * !! 開放処理は要注意 !! */
       if (RC_MC_USE_DMEM(rc)) {
         vec_push(RC_MEM_DELTAS(rc), vec_get(RC_MEM_DELTAS(rc), j));
       }

@@ -4,9 +4,9 @@ AM_LFLAGS=-P $(patsubst %_lexer.l,%,$<)  \
            --header-file=$(patsubst %.l,%.h,$<) -o $(patsubst %.l,%.c,$<)
 AM_YFLAGS=-d -p $(patsubst %_parser.y,%,$<) -o $(patsubst %.y,%.c,$<)
 
-PARSERS := nc_parser nc_lexer propsym_parser propsym_lexer
-PARSER_HEADER := $(patsubst %, %.h, $(PARSERS))
-PARSER_SOURCE := $(patsubst %, %.c, $(PARSERS))
+PARSERS = nc_parser nc_lexer propsym_parser propsym_lexer
+PARSER_HEADER = $(patsubst %, %.h, $(PARSERS))
+PARSER_SOURCE = $(patsubst %, %.c, $(PARSERS))
 
 BUILT_SOURCES = $(PARSER_SOURCE)
 CLEANFILES = $(PARSER_SOURCE) $(PARSER_HEADER)
@@ -35,7 +35,7 @@ liblmn_verifier_a_SOURCES =                              \
 	binstr_compress.c        binstr_compress.h
 
 
-EXTRA_DIST := $(PARSER_SOURCE) $(PARSER_HEADER)
+EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
 
 .l.c:
 	$(LEX) $(LFLAGS) $(AM_LFLAGS) $<

@@ -20,9 +20,9 @@ AM_LFLAGS=-P $(patsubst %_lexer.l,%,$<)  \
            --header-file=$(patsubst %.l,%.h,$<) -o $(patsubst %.l,%.c,$<)
 AM_YFLAGS=-d -p $(patsubst %_parser.y,%,$<) -o $(patsubst %.y,%.c,$<)
 
-PARSERS := il_parser il_lexer
-PARSER_HEADER := $(patsubst %, %.h, $(PARSERS))
-PARSER_SOURCE := $(patsubst %, %.c, $(PARSERS))
+PARSERS = il_parser il_lexer
+PARSER_HEADER = $(patsubst %, %.h, $(PARSERS))
+PARSER_SOURCE = $(patsubst %, %.c, $(PARSERS))
 
 # 事前に必要なファイル
 BUILT_SOURCES = arch.h                       \
@@ -80,7 +80,7 @@ slim_SOURCES =                                                     \
 if ENABLE_JNI
 slim_LDADD += -ljvm
 slim_LDFLAGS += -L.
-slim_DEPENDENCIES = ../libjvm.a
+slim_DEPENDENCIES += ../libjvm.a
 endif
 
 slim_OBJS =
@@ -91,8 +91,8 @@ slim_LDFLAGS += -L../third_party/google-perftools-1.6/.libs -rpath $(prefix)/lib
 slim_DEPENDENCIES += ../third_party/google-perftools-1.6/libtcmalloc_minimal_in_slim.la
 endif
 
-EXTRA_DIST := $(PARSER_SOURCE) $(PARSER_HEADER)
-DISTCLEANFILES := arch.h ../lib/config.lmn
+EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
+DISTCLEANFILES = arch.h ../lib/config.lmn
 
 # Automakeは同じディレクトリにある複数のパーサーをコンパイルするため
 # にylwrap を使おうとするが、必要ないので、ルールを上書きする

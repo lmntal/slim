@@ -1,15 +1,15 @@
 ## Makefile.am for lib
 ## $Id: Makefile.am,v 1.8 2008/10/17 13:30:48 taisuke Exp $
 
-LMN_CFLAGS := --slimcode -O3
-LMN_FILES := $(wildcard *.lmn)
-IL_FILES := $(patsubst %.lmn, %.il, $(wildcard *.lmn))
+LMN_CFLAGS = --slimcode -O3
+LMN_FILES = $(wildcard *.lmn)
+IL_FILES = $(patsubst %.lmn, %.il, $(wildcard *.lmn))
 
 pkgdatadir = $(datadir)/@PACKAGE@/lib
 
-EXTRA_DIST := $(LMN_FILES)
-pkgdata_DATA := $(IL_FILES)
-CLEANFILES := $(IL_FILES)
+EXTRA_DIST = $(LMN_FILES)
+pkgdata_DATA = $(IL_FILES)
+CLEANFILES = $(IL_FILES)
 
 SUFFIXES = .lmn .il
 

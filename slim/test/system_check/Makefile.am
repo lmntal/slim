@@ -1,3 +1,3 @@
 
-TESTS := check_all_unix.sh
+TESTS = check_all_unix.sh
 

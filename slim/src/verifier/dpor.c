@@ -851,6 +851,8 @@ static void dpor_ample_set_to_succ_tbl(StateSpace       ss,
     state_set_property_state(src_succ, DEFAULT_STATE_ID);
     if (has_trans_obj(s)) {
       src_t = transition_make(src_succ, lmn_intern("ample set"));
+    } else {
+      src_t = NULL;
     }
 
     succ = state_space_insert_delta(ss, src_succ, succ_d);
@@ -904,6 +906,8 @@ static void dpor_ample_set_to_succ_tbl(StateSpace       ss,
       state_set_property_state(src_succ, DEFAULT_STATE_ID);
       if (has_trans_obj(s)) {
         src_t = transition_make(src_succ, ANONYMOUS);
+      } else {
+    	src_t = NULL;
       }
 
       succ = state_space_insert_delta(ss, src_succ, succ_d);
