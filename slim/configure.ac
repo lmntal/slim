@@ -251,13 +251,20 @@ AC_CHECK_TYPES([__int64])
 #
 
 AC_MSG_CHECKING(for builtin __thread)
-AC_CACHE_VAL(ac_cv_c___thread,
-AC_TRY_RUN([__thread int x;
-            int main() {
-              return 0;
-            }],
-            ac_cv_c___thread=yes,
-            ac_cv_c___thread=no))
+AC_CACHE_VAL(
+  ac_cv_c___thread,
+  AC_TRY_RUN(
+    [
+      __thread int x;
+      int main(void)
+      {
+        return 0;
+      }
+    ],
+    ac_cv_c___thread=yes,
+    ac_cv_c___thread=no
+  )
+)
 AC_MSG_RESULT($ac_cv_c___thread)
 if test "$ac_cv_c___thread" = "yes"; then
   AC_DEFINE(HAVE___THREAD, [1], [Define to 1 if the system has the TLS keyword `__thread'.])
@@ -268,76 +275,130 @@ fi
 #
 
 AC_MSG_CHECKING(for builtin compare_and_swap)
-AC_CACHE_VAL(ac_cv_func_cas,
-AC_TRY_RUN([int main() {
-              int x = 0, y = 0, z = 0;
-              __sync_bool_compare_and_swap_4(&x, y, z);
-              return 0;
-            }],
-            ac_cv_func_cas=yes,
-            ac_cv_func_cas=no))
+AC_CACHE_VAL(
+  ac_cv_func_cas,
+  AC_TRY_RUN(
+    [
+      int main(void)
+      {
+        int x = 0, y = 0, z = 0;
+        __sync_bool_compare_and_swap_4(&x, y, z);
+        return 0;
+      }
+    ],
+    ac_cv_func_cas=yes,
+    ac_cv_func_cas=no
+  )
+)
 AC_MSG_RESULT($ac_cv_func_cas)
 if test "$ac_cv_func_cas" = "yes"; then
   AC_DEFINE(HAVE_ATOMIC_CAS, [1], [Define to 1 if the system has the function `compare_and_swap'.])
 fi
 
 AC_MSG_CHECKING(for builtin atomic_add)
-AC_CACHE_VAL(ac_cv_func_add,
-AC_TRY_RUN([int main() {
-              int x = 0, y = 0;
-              __sync_add_and_fetch(&x, y);
-              return 0;
-            }],
-            ac_cv_func_add=yes,
-            ac_cv_func_add=no))
+AC_CACHE_VAL(
+  ac_cv_func_add,
+  AC_TRY_RUN(
+    [
+      int main(void)
+      {
+        int x = 0, y = 0;
+        __sync_add_and_fetch(&x, y);
+        return 0;
+      }
+    ],
+    ac_cv_func_add=yes, 
+    ac_cv_func_add=no
+  )
+)
 AC_MSG_RESULT($ac_cv_func_add)
 if test "$ac_cv_func_add" = "yes"; then
   AC_DEFINE(HAVE_ATOMIC_ADD, [1], [Define to 1 if the system has the function `add_and_fetch'.])
 fi
 
 AC_MSG_CHECKING(for builtin atomic_sub)
-AC_CACHE_VAL(ac_cv_func_sub,
-AC_TRY_RUN([int main() {
-              int x = 0, y = 0;
-              __sync_sub_and_fetch(&x, y);
-              return 0;
-            }],
-            ac_cv_func_sub=yes,
-            ac_cv_func_sub=no))
+AC_CACHE_VAL(
+  ac_cv_func_sub,
+  AC_TRY_RUN(
+    [
+      int main(void)
+      {
+        int x = 0, y = 0;
+        __sync_sub_and_fetch(&x, y);
+        return 0;
+      }
+    ],
+    ac_cv_func_sub=yes,
+    ac_cv_func_sub=no
+  )
+)
 AC_MSG_RESULT($ac_cv_func_sub)
 if test "$ac_cv_func_sub" = "yes"; then
   AC_DEFINE(HAVE_ATOMIC_SUB, [1], [Define to 1 if the system has the function `sub_and_fetch'.])
 fi
 
 AC_MSG_CHECKING(for builtin atomic_logical_and)
-AC_CACHE_VAL(ac_cv_func_logical_and,
-AC_TRY_RUN([int main() {
-              int x = 2, y = 1;
-              __sync_and_and_fetch(&x, y);
-              return 0;
-            }],
-            ac_cv_func_logical_and=yes,
-            ac_cv_func_logical_and=no))
+AC_CACHE_VAL(
+  ac_cv_func_logical_and,
+  AC_TRY_RUN(
+    [
+       int main(void)
+       {
+          int x = 2, y = 1;
+          __sync_and_and_fetch(&x, y);
+          return 0;
+       }
+    ],
+    ac_cv_func_logical_and=yes,
+    ac_cv_func_logical_and=no
+  )
+)
 AC_MSG_RESULT($ac_cv_func_logical_and)
 if test "$ac_cv_func_logical_and" = "yes"; then
   AC_DEFINE(HAVE_ATOMIC_LOGICAL_AND, [1], [Define to 1 if the system has the function `and_and_fetch'.])
 fi
 
 AC_MSG_CHECKING(for builtin atomic_logical_or)
-AC_CACHE_VAL(ac_cv_func_logical_or,
-AC_TRY_RUN([int main() {
-              int x = 1, y = 0;
-              __sync_or_and_fetch(&x, y);
-              return 0;
-            }],
-            ac_cv_func_logical_or=yes,
-            ac_cv_func_logical_or=no))
+AC_CACHE_VAL(
+  ac_cv_func_logical_or,
+  AC_TRY_RUN(
+    [
+      int main(void)
+      {
+        int x = 1, y = 0;
+        __sync_or_and_fetch(&x, y);
+        return 0;
+      }
+    ],
+    ac_cv_func_logical_or=yes,
+    ac_cv_func_logical_or=no
+  )
+)
 AC_MSG_RESULT($ac_cv_func_logical_or)
 if test "$ac_cv_func_logical_or" = "yes"; then
   AC_DEFINE(HAVE_ATOMIC_LOGICAL_OR, [1], [Define to 1 if the system has the function `or_and_fetch'.])
 fi
 
-
+AC_MSG_CHECKING(for pthread_barrier)
+AC_CACHE_VAL(
+  ac_cv_func_pthread_barrier,
+  AC_TRY_RUN(
+    [
+      #include <pthread.h>
+      int main(void)
+      {
+        pthread_barrier_t t;
+        return 0;
+      }
+    ],
+    ac_cv_func_pthread_barrier=yes,
+    ac_cv_func_pthread_barrier=no
+  )
+)
+AC_MSG_RESULT($ac_cv_func_pthread_barrier)
+if test "$ac_cv_func_pthread_barrier" = "yes"; then
+  AC_DEFINE(HAVE_PTHREAD_BARRIER, [1], [Define to 1 if the system has `pthread_barrier'.])
+fi
 
 
 # ---------------------------------------------------------------------
@@ -345,11 +406,16 @@ fi
 #
 
 AC_MSG_CHECKING(number of processor cores)
-core_num=`cat /proc/cpuinfo | grep -c processor`
+core_num=0
+case "$host" in
+  *-darwin*) 
+    core_num=`hwprefs cpu_count`;;
+  *)
+    core_num=`cat /proc/cpuinfo | grep -c processor`;;
+esac
 if test ${core_num} -eq 0; then
   core_num=1
 fi
-
 AC_DEFINE_UNQUOTED(HAVE_PROCESSOR_CORES, $core_num,
                    [Define to Enable Processor Cores on your environment.])
 AC_MSG_RESULT(${core_num})

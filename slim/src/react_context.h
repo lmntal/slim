@@ -82,7 +82,9 @@ struct ReactCxt {
  */
 struct McReactCxtData {
   st_table_t   succ_tbl;       /* 多重辺除去用 */
-  Vector       *roots;         /* 通常時: struct LmnMembrane  差分時: 空 */
+  Vector       *roots;         /* 1. 遷移先計算中 (通常時: struct LmnMembrane  差分時: 空)
+                                * 2. 遷移先計算後 (通常時: struct LmnMembraneへの参照を設定したstruct State
+                                *               差分時: 初期化設定のみを行ったstruct State)　*/
   Vector       *rules;
   Vector       *props;
   Vector       *mem_deltas;    /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */

@@ -125,7 +125,7 @@
    typedef pthread_t         lmn_thread_t;
    typedef pthread_mutex_t   lmn_mutex_t;
    typedef pthread_once_t    lmn_once_t;
-#  if (!defined(__CYGWIN__) && !defined(__APPLE__))
+#  ifdef HAVE_PTHREAD_BARRIER
      typedef pthread_barrier_t lmn_barrier_t;
 #  else
      typedef struct LmnBarrier {
@@ -134,7 +134,7 @@
        pthread_mutex_t mutex;
        pthread_cond_t  cond;
      } lmn_barrier_t;
-#  endif /* __CYGWIN__ */
+#  endif /* HAVE_PTHREAD_BARRIER */
 #  define lmn_thread_create_with_attr(Pth, Pattr, Pfunc, Parg) \
                                                pthread_create(Pth, Pattr, (void *)Pfunc, (void *)Parg)
 #  define lmn_thread_create(Pth, Pfunc, Parg)  lmn_thread_create_with_attr(Pth, NULL, Pfunc, Parg)
@@ -151,7 +151,7 @@
 #  define lmn_mutex_unlock(Pm)                 pthread_mutex_unlock(Pm)
 #  define lmn_thread_once_init(Po)             (Po) = (pthread_once_t) PTHREAD_ONCE_INIT
 #  define lmn_thread_once(Po, Func)            pthread_once(Po, (void *)Func)
-#  if (!defined(__CYGWIN__) && !defined(__APPLE__))
+#  ifdef HAVE_PTHREAD_BARRIER
 #    define lmn_barrier_init_with_attr(Pm, At, Num) \
                                                  pthread_barrier_init(Pm, At, Num)
 #    define lmn_barrier_init(Pm, Num)            lmn_barrier_init_with_attr(Pm, NULL, Num)
@@ -179,7 +179,7 @@
        }
        pthread_mutex_unlock(&b->mutex);
      }
-#  endif /* __CYGWIN__ */
+#  endif /* HAVE_PTHREAD_BARRIER */
 #else
 #  error "need pthread.h"
 #endif /* HAVE_LIBPTHREAD */

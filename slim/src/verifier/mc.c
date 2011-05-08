@@ -398,9 +398,12 @@ void mc_store_successors(const StateSpace ss,
 
   RC_EXPANDED(rc)->num = succ_i;      /* 危険なコード. いつか直すかも. */
   RC_EXPANDED_RULES(rc)->num = succ_i;
-  if (RC_MC_USE_DMEM(rc)) {
-    RC_MEM_DELTAS(rc)->num = succ_i;
-  }
+/*  上記につられて以下のコードを記述すると実行時エラーになる. (r436でdebug)
+ *  RC_MEM_DELTASはmc_store_successors終了後に, struct MemDeltaRootの開放処理を行うため要素数に手を加えてはならない. */
+//  if (RC_MC_USE_DMEM(rc)) {
+//    RC_MEM_DELTAS(rc)->num = succ_i;
+//  }
+
   state_succ_set(s, RC_EXPANDED(rc)); /* successorを登録 */
   st_clear(RC_SUCC_TBL(rc));
 }
@@ -561,7 +564,7 @@ void mc_gen_successors_with_property(State           *s,
 
       /* 差分オブジェクトは状態展開時のみの一時データなので,
        * 効率化のためにポインタcopyのみにしている(deep copyしない)
-       * !! 開放処理は要注意 !! */
+       * !! 開放処理は要注意 (r435でdebug) !! */
       if (RC_MC_USE_DMEM(rc)) {
         vec_push(RC_MEM_DELTAS(rc), vec_get(RC_MEM_DELTAS(rc), j));
       }
@@ -581,9 +584,14 @@ inline static void stutter_extension(State           *s,
   State *new_s;
 
   if (mc_use_delta(f)) {
+	/* stutter extensionによる遷移はself-loopになるか性質ラベルの変化のみであるため,
+	 * struct LmnMembraneへの差分構造が存在しないstruct MemDeltaRootを登録する. */
     mc_react_cxt_add_mem_delta(rc, dmem_root_make(mem, NULL, 0), NULL);
     new_s = state_make_minimal();
   } else {
+	/* 遷移先のstruct LmnMembraneへの差分構造を計算しない場合は, 遷移元状態sを階層グラフ構造ごとdeep copyする.
+	 * ただし, struct Stateのメンバであるstruct Membraneはこの時点でNULLであるため, (NULLでない場合も任意のスレッドがNULLに書き換える可能性もある)
+	 * mc_expandの手続きを始める際にバイト列から復元したmem (struct LmnMembrane)を渡す. */
     new_s = state_copy_with_mem(s, mem);
   }
   state_set_property_state(new_s, next_label);
