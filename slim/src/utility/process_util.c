@@ -82,12 +82,11 @@ FILE *run_program(const char *program_path, char **args)
      int status;
 
      close(pipes[1]);
-     /* パイプのバッファを越える出力が起きると読み込むまでブロックされるためデッドロック
-      */
-     if (waitpid(pid, &status, 0) == -1) {
-       perror("waitpid failed");
-       exit(EXIT_FAILURE);
-     }
+     /* パイプのバッファを越える出力が起きると読み込むまでブロックされるためデッドロック */
+//     if (waitpid(pid, &status, 0) == -1) {
+//       perror("waitpid failed");
+//       exit(EXIT_FAILURE);
+//     }
 
      return fdopen(pipes[0], "r");
    }
