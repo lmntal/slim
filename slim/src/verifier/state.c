@@ -345,62 +345,61 @@ int state_cmp_with_compress(State *s1, State *s2)
   return !state_equals_with_compress(s1, s2);
 }
 #else
+
+#define CMP_STR(Str) ((Str) ? "equal" : "NOT equal")
+
 int state_cmp_with_compress(State *s1, State *s2)
 {
-  /* ignore checking for model checking using canonical membrane */
   if (lmn_env.debug_isomor && !(is_encoded(s1) && is_encoded(s2))) {
-    LmnMembrane *s2_m;
-    LmnBinStr s1_e, s2_e;
-    BOOL ret_check, ret_org;
+    LmnMembrane *s2_mem;
+    LmnBinStr s1_mid, s2_mid;
+    BOOL org_check, mid_check;
 
-    s2_m  = lmn_binstr_decode(state_mem_binstr(s2));
-    s1_e = lmn_mem_encode(state_mem(s1));
-    s2_e = lmn_mem_encode(s2_m);
-    ret_check = binstr_compare(s1_e, s2_e) == 0;
+    /* データ構造の構築 (手間をかけている！) */
+    s2_mem = lmn_binstr_decode(state_mem_binstr(s2));
+    s1_mid = lmn_mem_encode(state_mem(s1));
+    s2_mid = lmn_mem_encode(s2_mem);
 
-    ret_org   = state_equals_with_compress(s1, s2);
+    org_check = (state_equals_with_compress(s1, s2) != 0);  /* A. slim本来のグラフ同形成判定手続き */
+    mid_check = (binstr_compare(s1_mid, s2_mid) == 0);       /* B. 互いに一意エンコードしたグラフの比較手続き */
 
-    /* if both checking has been returned same result, then it's safe. */
-    if (!((ret_check && ret_org) || (!ret_check && !ret_org))) {
-      FILE *f = stdout;
-      fprintf(f, "found, isomorphism error.\n");
-      fprintf(f, "  *** state_eq succ_mem vs. stored binstr *** >> result=%s\n", ret_org ? "SAME" : "DIFFERENT");
-      fprintf(f, "  [checking_state, org_mem]\n");
-      fprintf(f, "    ");
-      lmn_dump_mem_stdout(state_mem(s1));
+    /* A, B両者が同じ判定結果を返す場合はokだが.. */
+    if (org_check != mid_check) {
+      FILE *f;
+      LmnBinStr s1_bs;
+      BOOL sp1_check, sp2_check, sp3_check, sp4_check;
 
-      fprintf(f, "  [stored_state, binstr_decode_mem]\n");
-      fprintf(f, "    ");
-      lmn_dump_mem_stdout(s2_m);
-      state_print_mem(s2, (LmnWord)stdout);
+      f = stdout;
+      s1_bs = lmn_mem_to_binstr(state_mem(s1));
 
-      fprintf(f, "\n");
-      fprintf(f, "  *** state_eq canonical binstr compare *** >> result=%s\n", ret_check ? "SAME" : "DIFFERENT");
-      fprintf(f, "  [checking state, org_mem--->**mem_id**--->restore_mem]\n");
-      fprintf(f, "    ");
-      lmn_dump_mem_stdout(lmn_binstr_decode(s1_e)); /* memory-leak, but ok */
-      fprintf(f, "  [stored state, binstr--->restore_mem--->**mem_id**-->restore_mem]\n");
-      fprintf(f, "    ");
-      lmn_dump_mem_stdout(lmn_binstr_decode(s2_e)); /* memory-leak, but ok */
+      sp1_check = (lmn_mem_equals(state_mem(s1), s2_mem) != 0);
+      sp2_check = (lmn_mem_equals_enc(s1_bs, s2_mem) != 0);
+      sp3_check = (lmn_mem_equals_enc(s1_mid, s2_mem) != 0);
+      sp4_check = (lmn_mem_equals_enc(s2_mid, state_mem(s1)) != 0);
+  //  fprintf(stderr, "visitlog_element_num =%lu¥n", visitlog_element_num(&visitlog));
+  //  fprintf(stderr, "process_num(mem)     =%lu¥n", process_num(mem));
+      fprintf(f, "fatal error: checking graphs isomorphism was invalid\n");
+      fprintf(f, "====================================================================================\n");
+      fprintf(f,  "%18s | %-18s | %-18s | %-18s\n",        " - ",      "s1.Mem (ORG)",     "s1.BS (calc)",    "s1.MID (calc)");
+      fprintf(f, "------------------------------------------------------------------------------------\n");
+      fprintf(f, "%-18s | %18s | %18s | %18s\n", "s2.Mem (calc)",  CMP_STR(sp1_check), CMP_STR(sp2_check), CMP_STR(sp3_check));
+      fprintf(f, "------------------------------------------------------------------------------------\n");
+      fprintf(f, "%-18s | %18s | %18s | %18s\n",   "s2.BS (ORG)",  CMP_STR(org_check),                "-",                "-");
+      fprintf(f, "------------------------------------------------------------------------------------\n");
+      fprintf(f, "%-18s | %18s | %18s | %18s\n", "s2.MID (calc)",  CMP_STR(sp4_check),                "-", CMP_STR(mid_check));
+      fprintf(f, "====================================================================================\n");
 
-      fprintf(f, "  [dump_binstr]\n");
-      lmn_binstr_dump(s1_e);
-      lmn_binstr_dump(s2_e);
-
-      /* TODO: 等価な状態をどの時点で異形と判定しているかの検査を
-       *        ここに書く or 書いたものをここで呼び出す */
-
+      lmn_binstr_free(s1_bs);
       lmn_fatal("invalid ends.");
     }
 
-   
-    lmn_mem_drop(s2_m);
-    lmn_mem_free(s2_m);
-    
-    lmn_binstr_free(s1_e);
-    lmn_binstr_free(s2_e);
+    lmn_mem_drop(s2_mem);
+    lmn_mem_free(s2_mem);
 
-    return !ret_org;
+    lmn_binstr_free(s1_mid);
+    lmn_binstr_free(s2_mid);
+
+    return !org_check;
   }
   else {
     return !state_equals_with_compress(s1, s2);
@@ -552,14 +551,20 @@ void transition_add_rule(Transition t, lmn_interned_str rule_name)
 void dump_state_data(State *s, LmnWord _fp)
 {
   FILE *f;
+  unsigned long print_id;
 
-  if (is_dummy(s) && !is_encoded(s)) return; /* 状態データはdummy側に存在 */
+  /* Rehashが発生している場合,
+   * dummyフラグが真かつエンコード済みフラグが偽のStateオブジェクトが存在する.
+   * このようなStateオブジェクトの状態データはRehashされた側のテーブルに存在している */
+  if (is_dummy(s) && !is_encoded(s)) return;
 
   f = (FILE *)_fp;
+  print_id = is_dummy(s) ? state_format_id(state_get_parent(s))
+                         : state_format_id(s);
 
   switch (lmn_env.mc_dump_format) {
   case LaViT:
-    fprintf(f, "%lu::", state_format_id(s));
+    fprintf(f, "%lu::", print_id);
     state_print_mem(s, _fp);
     break;
   case FSM:
@@ -569,12 +574,12 @@ void dump_state_data(State *s, LmnWord _fp)
   case Dir_DOT:
     if (state_succ_num(s) == 0) {
       fprintf(f, "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n",
-                  state_format_id(s));
+                  print_id);
     }
     break;
   case CUI:
     fprintf(f, "%lu::%s"
-             , state_format_id(s)
+             , print_id
              , !mc_data.has_property ? ""
                                      : automata_state_name(mc_data.property_automata,
                                                            state_property_state(s)));
@@ -624,6 +629,9 @@ void state_print_transition(State *s, LmnWord _fp)
        *label_begin,
        *label_end;
 
+  /* Rehashが発生している場合,
+   * サクセッサへの情報は, Rehashされた側の本来のStateオブジェクトが保持しているため,
+   * dummyフラグが真かつエンコード済みの状態には遷移情報は載っていない */
   if ((is_dummy(s) && is_encoded(s))) return;
 
   f = (FILE *)_fp;
