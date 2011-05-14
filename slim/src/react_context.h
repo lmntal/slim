@@ -129,8 +129,10 @@ struct McReactCxtData {
   vec_clear(RC_EXPANDED(rc));                                                  \
   vec_clear(RC_EXPANDED_PROPS(rc));                                            \
   if (RC_MC_USE_DMEM(rc)) {                                                    \
-    unsigned int _succ_;                                                       \
-    for (_succ_ = 0; _succ_ < RC_ND_ORG_SUCC_NUM(rc); _succ_++) {              \
+    unsigned int _fr_;                                                         \
+    for (_fr_ = 0;                                                             \
+         _fr_ < RC_ND_ORG_SUCC_NUM(rc) && _fr_ < vec_num(RC_MEM_DELTAS(rc));   \
+         _fr_++) {                                                             \
       MemDeltaRoot *_d_ = (MemDeltaRoot *)vec_pop(RC_MEM_DELTAS(rc));          \
       if (_d_) dmem_root_free(_d_);                                            \
     }                                                                          \
