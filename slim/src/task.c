@@ -296,6 +296,13 @@ void lmn_run(Vector *start_rulesets)
 
   react_start_rulesets(mem, start_rulesets);
   lmn_memstack_reconstruct(RC_MEMSTACK(&mrc), mem);
+
+  if (lmn_env.trace) {
+    fprintf(stdout, "%d: ", trace_num++);
+    lmn_dump_cell_stdout(mem);
+    if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
+  }
+
   mem_oriented_loop(&mrc, mem);
 
   /** PROFILE FINISH */
@@ -473,12 +480,10 @@ BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
         trace_num++;
       }
       else {
-        if (trace_num != 0) {
-          fprintf(stdout, "---->%s\n", lmn_id_to_name(lmn_rule_get_name(rule)));
-        }
+        fprintf(stdout, "---->%s\n", lmn_id_to_name(lmn_rule_get_name(rule)));
         fprintf(stdout, "%d: ", trace_num++);
         lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
-        if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
+        if (lmn_env.show_hyperlink) lmn_hyperlink_print(RC_GROOT_MEM(rc));
       }
     }
   }
@@ -2177,14 +2182,14 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         /* MT-UNSAFE!!
          *  --show_hlオプションの有無でlmn_dump_atomから取得できる
          *  バイト列が変わってしまうため、とりあえずの回避策
-         *  
-         *  TODO: 
+         *
+         *  TODO:
          *    実行時オプション用のフラグデータの書換えは,
          *    フラグをReactCxtオブジェクトに記録させることで,
          *    スレッドセーフにできる */
         lmn_env.show_hyperlink = FALSE;
       }
-			else sh = FALSE;
+      else sh = FALSE;
 
       for (i = 0; i < (int)llist; i++) {
         READ_VAL(LmnInstrVar, instr, n);
@@ -2224,7 +2229,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         }
         port_put_raw_s(port, ":");
       }
-      
+
       id = lmn_intern((char *)lmn_string_c_str(port->data));
       lmn_port_free(port);
 
@@ -4098,7 +4103,7 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       }
 
       srcvec = links_from_idxs((Vector *)wt[listi], wt, at);
-      
+
       switch (op) {
        case INSTR_REMOVEGROUND:
          dmem_root_remove_ground(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembrane *)wt[memi], srcvec);
