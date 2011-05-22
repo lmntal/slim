@@ -1694,14 +1694,17 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
         if (LMN_ATTR_IS_EX(attr1)) {
           if (LMN_ATTR_IS_EX(attr2)) { /* 1, 2 are ex */
-            lmn_newlink_with_ex(LMN_SATOM(LINKED_ATOM(link1)), attr1, 0, // ex atom ⊂ unary atom
+            lmn_newlink_with_ex((LmnMembrane *)wt[mem],
+                                LMN_SATOM(LINKED_ATOM(link1)), attr1, 0, // ex atom ⊂ unary atom
                                 LMN_SATOM(LINKED_ATOM(link2)), attr2, 0);
           } else { /* 1 is ex */
-            lmn_newlink_with_ex(LMN_SATOM(LINKED_ATOM(link1)), attr1, 0,
+            lmn_newlink_with_ex((LmnMembrane *)wt[mem],
+                                LMN_SATOM(LINKED_ATOM(link1)), attr1, 0,
                                 LMN_SATOM(LINKED_ATOM(link2)), attr2, attr2);
           }
         } else if (LMN_ATTR_IS_EX(attr2)) { /* 2 is ex */
-          lmn_newlink_with_ex(LMN_SATOM(LINKED_ATOM(link1)), attr1, attr1,
+          lmn_newlink_with_ex((LmnMembrane *)wt[mem],
+                              LMN_SATOM(LINKED_ATOM(link1)), attr1, attr1,
                               LMN_SATOM(LINKED_ATOM(link2)), attr2, 0);
         } else {
           LMN_SATOM_SET_LINK(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(attr1), LINKED_ATOM(link2));
@@ -1767,7 +1770,12 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);
         } else {
-          lmn_newlink_with_ex(LMN_SATOM(wt[atom1]), at[atom1], pos1, ap, attr, 0);
+          if (LMN_ATTR_IS_EX(at[atom1]))
+            lmn_newlink_with_ex((LmnMembrane *)wt[memi],
+                LMN_SATOM(wt[atom1]), at[atom1], pos1, ap, 0, attr);
+          else
+            lmn_newlink_with_ex((LmnMembrane *)wt[memi],
+                LMN_SATOM(wt[atom1]), at[atom1], pos1, ap, attr, 0);
         }
       }
       break;

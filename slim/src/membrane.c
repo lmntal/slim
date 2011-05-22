@@ -611,7 +611,8 @@ void lmn_newlink_in_symbols(LmnSAtom atom0,
   LMN_SATOM_SET_ATTR(atom1, pos1, LMN_ATTR_MAKE_LINK(pos0));
 }
 
-void lmn_newlink_with_ex(LmnSAtom atom0,
+void lmn_newlink_with_ex(LmnMembrane *mem,
+                             LmnSAtom atom0,
                              LmnLinkAttr attr0,
                              int pos0,
                              LmnSAtom atom1,
@@ -623,8 +624,11 @@ void lmn_newlink_with_ex(LmnSAtom atom0,
   LMN_SATOM_SET_LINK(atom1, pos1, atom0);
   if (LMN_ATTR_IS_EX(attr0)) {
     if (LMN_ATTR_IS_EX(attr1)) { /* 0, 1 are ex */
-      LMN_SATOM_SET_ATTR(atom0, pos0, attr1);
-      LMN_SATOM_SET_ATTR(atom1, pos1, attr0);
+//      LMN_SATOM_SET_ATTR(atom0, pos0, attr1);
+//      LMN_SATOM_SET_ATTR(atom1, pos1, attr0);
+      /* 現状では、hyperlinkアトム同士が接続されると消去される */
+      lmn_mem_delete_atom(mem, LMN_ATOM(atom0), attr0);
+      lmn_mem_delete_atom(mem, LMN_ATOM(atom1), attr1);
     } else { /* 0 is ex */
       LMN_SATOM_SET_ATTR(atom0, pos0, LMN_ATTR_MAKE_LINK(pos1));
       LMN_SATOM_SET_ATTR(atom1, pos1, attr0);
@@ -676,7 +680,7 @@ void lmn_mem_newlink(LmnMembrane *mem,
     if (!LMN_ATTR_IS_EX(attr0) && !LMN_ATTR_IS_EX(attr1))
       lmn_newlink_in_symbols(LMN_SATOM(atom0), pos0, LMN_SATOM(atom1), pos1);
     else
-      lmn_newlink_with_ex(LMN_SATOM(atom0), attr0, pos0, LMN_SATOM(atom1), attr1, pos1);
+      lmn_newlink_with_ex(mem, LMN_SATOM(atom0), attr0, pos0, LMN_SATOM(atom1), attr1, pos1);
   }
 }
 
