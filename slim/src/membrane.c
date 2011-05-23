@@ -1394,7 +1394,7 @@ BOOL ground_atoms(Vector        *srcvec,
     
     LMN_FREE(l);
 
-    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l_pos)) { /* lがデータなら行き止まり */
+    if (LMN_ATTR_IS_DATA(l_pos)) { /* lがデータなら行き止まり */
       if (lmn_data_atom_is_ground(l_ap, l_pos)) {
         count_of_ground_atoms++;
         continue;

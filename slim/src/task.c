@@ -2212,6 +2212,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             {
               char *s = int_to_str(wt[vec_get(srcvec, 0)]);
               port_put_raw_s(port, s);
+              LMN_FREE(s);
               break;
             }
           case LMN_DBL_ATTR:
