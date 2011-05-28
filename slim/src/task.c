@@ -935,11 +935,6 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, s1);
 
       /* extend vector if need */
-#ifdef DEBUG
-      if (s1 > (0x01U << (sizeof(LmnInstrOp) * 8))) {
-        lmn_fatal("The number of instructions exceeded the limit");
-      }
-#endif
       if (s1 > wt_size) {
       //  s1 = wt_size = round2up(s1)
         wt_size = s1;
@@ -1751,32 +1746,43 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       attr = LMN_SATOM_GET_ATTR(wt[atom2], pos2);
 
       if(LMN_ATTR_IS_DATA_WITHOUT_EX(at[atom1]) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
+        /* hlink属性ではない通常のデータアトム同士の接続 */
 #ifdef DEBUG
         fprintf(stderr, "Two data atoms are connected each other.\n");
 #endif
       }
       else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at[atom1])) {
+        /* hlink属性ではない通常のデータアトムatom1とシンボルアトムatom2の接続.  */
         LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);
         LMN_SATOM_SET_ATTR(ap, attr, at[atom1]);
       }
       else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
+        /* hlink属性ではない通常のデータアトムatom2とシンボルアトムatom1の接続 */
         LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);
         LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);
       }
-      else {
-        if (!LMN_ATTR_IS_EX(at[atom1]) && !LMN_ATTR_IS_EX(attr)) {
-          LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);
-          LMN_SATOM_SET_ATTR(ap, attr, pos1);
-          LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);
-        } else {
-          if (LMN_ATTR_IS_EX(at[atom1]))
-            lmn_newlink_with_ex((LmnMembrane *)wt[memi],
-                LMN_SATOM(wt[atom1]), at[atom1], pos1, ap, 0, attr);
-          else
-            lmn_newlink_with_ex((LmnMembrane *)wt[memi],
-                LMN_SATOM(wt[atom1]), at[atom1], pos1, ap, attr, 0);
-        }
+      else if (!LMN_ATTR_IS_EX(at[atom1]) && !LMN_ATTR_IS_EX(attr)) {
+        /* シンボルアトム同士の接続 */
+        LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);
+        LMN_SATOM_SET_ATTR(ap, attr, pos1);
+        LMN_SATOM_SET_LINK(LMN_SATOM(wt[atom1]), pos1, ap);
+        LMN_SATOM_SET_ATTR(LMN_SATOM(wt[atom1]), pos1, attr);
+      } else if (LMN_ATTR_IS_EX(at[atom1])) {
+        lmn_newlink_with_ex((LmnMembrane *)wt[memi],
+                            LMN_SATOM(wt[atom1]),
+                            at[atom1],
+                            pos1,
+                            ap,
+                            0,
+                            attr);
+      } else {
+        lmn_newlink_with_ex((LmnMembrane *)wt[memi],
+                            LMN_SATOM(wt[atom1]),
+                            at[atom1],
+                            pos1,
+                            ap,
+                            attr,
+                            0);
       }
       break;
     }
@@ -2565,7 +2571,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       at[atom1] = at[atom2];
       wt[atom1] = lmn_copy_atom(wt[atom2], at[atom2]);
-      tt[atom1] = TT_ATOM;
+//      tt[atom1] = TT_ATOM;
       lmn_mem_push_atom((LmnMembrane *)wt[memi], wt[atom1], at[atom1]);
       break;
     }
@@ -3045,10 +3051,13 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, funci);
 
       if (LMN_ATTR_IS_DATA(at[funci])) {
-        if (LMN_ATTR_IS_EX(at[funci])) wt[atomi] = wt[funci];
-        else wt[atomi] = lmn_copy_data_atom(wt[funci], at[funci]);
+        if (LMN_ATTR_IS_EX(at[funci])) {
+          wt[atomi] = wt[funci];
+        } else {
+          wt[atomi] = lmn_copy_data_atom(wt[funci], at[funci]);
+        }
         at[atomi] = at[funci];
-        tt[atomi] = TT_ATOM;
+//        tt[atomi] = TT_ATOM;
       } else { /* symbol atom */
         fprintf(stderr, "symbol atom can't be created in GUARD\n");
         exit(EXIT_FAILURE);

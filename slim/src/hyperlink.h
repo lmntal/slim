@@ -56,16 +56,16 @@
  *   idの値を見かけ上のIDとして利用している
  */
 typedef struct HyperLink{
-//  LmnAtom atom;   // hyperlink id, atomが開放されているときはNULL
-  LmnSAtom atom;    // 対応する'!'アトムのポインタ、atomが開放されているときはNULL
+//  LmnAtom atom;   /* hyperlink id, atomが開放されているときはNULL */
+  LmnSAtom atom;    /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
   int rank;
-  LmnMembrane *mem; // atom の所属膜（findatomで使用）
-  unsigned long id; // 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用)
-//  long usrid;        // ユーザがhyperlinkのidを決められるようにするための変数（未実装）
+  LmnMembrane *mem; /* atom の所属膜（findatomで使用）*/
+  unsigned long id; /* 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用) */
+//  long usrid;        /* ユーザがhyperlinkのidを決められるようにするための変数（未実装）*/
 
   /* 木構造による併合関係の表現 */
-  struct HyperLink *parent; // root の場合は自身のポインタ
-  struct HashSet *children; // 子表
+  struct HyperLink *parent; /* root の場合は自身のポインタ */
+  struct HashSet *children; /* 子表 */
 
 } HyperLink;
 
@@ -86,21 +86,21 @@ typedef struct HyperLink{
 #define LMN_ATTR_IS_HL(ATTR) ((ATTR) == LMN_HL_ATTR)
 
 
-LMN_EXTERN void hyperlink_init();
-LMN_EXTERN void hyperlink_destroy();
-LMN_EXTERN void lmn_hyperlink_make(LmnSAtom at);
-LMN_EXTERN LmnSAtom lmn_hyperlink_new();
-LMN_EXTERN void lmn_hyperlink_delete(LmnSAtom at);
-LMN_EXTERN void lmn_hyperlink_copy(LmnSAtom newatom, LmnSAtom oriatom);
-LMN_EXTERN HyperLink *lmn_hyperlink_at_to_hl(LmnSAtom at);
-LMN_EXTERN LmnSAtom   lmn_hyperlink_hl_to_at(HyperLink *hl);
-LMN_EXTERN HyperLink *lmn_hyperlink_get_root(HyperLink *hl);
-LMN_EXTERN HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2);
-LMN_EXTERN int lmn_hyperlink_rank(HyperLink *hl);
-LMN_EXTERN int lmn_hyperlink_element_num(HyperLink *hl);
-LMN_EXTERN BOOL lmn_hyperlink_eq_hl(HyperLink *hl1, HyperLink *hl2);
-LMN_EXTERN BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLinkAttr attr2);
-LMN_EXTERN void lmn_hyperlink_print(LmnMembrane *gr);
+void hyperlink_init();
+void hyperlink_destroy();
+void lmn_hyperlink_make(LmnSAtom at);
+LmnSAtom lmn_hyperlink_new();
+void lmn_hyperlink_delete(LmnSAtom at);
+void lmn_hyperlink_copy(LmnSAtom newatom, LmnSAtom oriatom);
+HyperLink *lmn_hyperlink_at_to_hl(LmnSAtom at);
+LmnSAtom   lmn_hyperlink_hl_to_at(HyperLink *hl);
+HyperLink *lmn_hyperlink_get_root(HyperLink *hl);
+HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2);
+int lmn_hyperlink_rank(HyperLink *hl);
+int lmn_hyperlink_element_num(HyperLink *hl);
+BOOL lmn_hyperlink_eq_hl(HyperLink *hl1, HyperLink *hl2);
+BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLinkAttr attr2);
+void lmn_hyperlink_print(LmnMembrane *gr);
 
 
 /* ----------------------------------------------------------------------- *
@@ -127,12 +127,12 @@ typedef struct ProcCxt
 
 /* 同名型付きプロセス文脈を持つアトムごとに生成される */
 typedef struct SameProcCxt {
-  int atomi;       // findatom の結果を格納するwt[atomi] のatomi
-  int length;      // wt[atomi] に格納するアトムのarity
-  void **proccxts; // 長さlength のProcCxt 配列
+  int atomi;       /* findatom の結果を格納するwt[atomi] のatomi */
+  int length;      /* wt[atomi] に格納するアトムのarity */
+  void **proccxts; /* 長さlength のProcCxt 配列 */
 
   /* findatom 内で使用される一時領域 */
-  Vector *tree; // HyperLink tree
+  Vector *tree; /* HyperLink tree */
   LmnLinkAttr start_attr;
 
 } SameProcCxt;
@@ -151,15 +151,15 @@ typedef struct SameProcCxt {
 //#define LMN_FPC_SPC(FPC)    ((FPC)->sameproccxt)
 //#define LMN_FPC_COMMIT(FPC) ((FPC)->commit)
 
-LMN_EXTERN void lmn_sameproccxt_init();
-LMN_EXTERN void lmn_sameproccxt_clear();
-LMN_EXTERN SameProcCxt *lmn_sameproccxt_spc_make(int atomi, int length);
-LMN_EXTERN ProcCxt *lmn_sameproccxt_pc_make(int atomi, int arg, ProcCxt *original);
-LMN_EXTERN BOOL lmn_sameproccxt_from_clone(SameProcCxt *spc, int n);
-LMN_EXTERN HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity);
-LMN_EXTERN BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int atom_arity);
-LMN_EXTERN BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int atom_arity);
-LMN_EXTERN BOOL lmn_hyperlink_opt(LmnInstrVar atomi);
-LMN_EXTERN void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl);
+void lmn_sameproccxt_init();
+void lmn_sameproccxt_clear();
+SameProcCxt *lmn_sameproccxt_spc_make(int atomi, int length);
+ProcCxt *lmn_sameproccxt_pc_make(int atomi, int arg, ProcCxt *original);
+BOOL lmn_sameproccxt_from_clone(SameProcCxt *spc, int n);
+HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity);
+BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int atom_arity);
+BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int atom_arity);
+BOOL lmn_hyperlink_opt(LmnInstrVar atomi);
+void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl);
 
 #endif /* LMN_HYPERLINK_H */

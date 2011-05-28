@@ -217,6 +217,13 @@ enum OutputFormat { DEFAULT, DEV, DOT };
 enum MCdumpFormat { CUI, LaViT, Dir_DOT, FSM };
 enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX};
 
+#ifdef DEBUG
+#  define ISM_DEBUG(Pr) if (lmn_env.debug_isomor2) { Pr; }
+#else
+#  define ISM_DEBUG(Pr)
+#endif
+
+
 struct LmnEnv {
   BOOL trace;
   BOOL show_proxy;
@@ -261,6 +268,7 @@ struct LmnEnv {
   BOOL enable_map;
   BOOL enable_bledge;
   BOOL bfs_layer_sync;
+
   BOOL enable_map_heuristic;
 
   /* only jni-interactive mode*/
@@ -274,10 +282,10 @@ struct LmnEnv {
   BOOL nd_cleaning;
   BOOL nd_search_end;
 
-	/* allow hyperlink system */
+  /* allow hyperlink system */
   BOOL hyperlink;
   BOOL show_hyperlink;
-  
+
 #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;
@@ -286,6 +294,7 @@ struct LmnEnv {
   BOOL show_reduced_graph;
 #ifdef DEBUG
   BOOL debug_isomor;
+  BOOL debug_isomor2;
   BOOL debug_memenc;
   BOOL debug_delta;
   BOOL debug_id;
@@ -313,6 +322,42 @@ extern unsigned int lmn_thread_num;
  * Others
  */
 void slim_version(FILE *f);
+
+
+/* check for thread library */
+#if defined (HAVE_LIBPTHREAD) || defined (HAVE_WINAPI)
+#  define HAVE_MT_LIBRARY  (1)
+#  ifdef HAVE_LIBPTHREAD
+#    include <pthread.h>
+#  else /* winapi */
+#    include <windows.h>
+#  endif
+#else
+#  undef  HAVE_MT_LIBRARY
+#endif /* HAVE_LIBPTHREAD or HAVE_WINAPI */
+
+/* check for thread local storage  */
+#if defined (HAVE___THREAD)
+#  define HAVE_TLS_KEYWORD  (1)
+#  define LMN_TLS           __thread
+#else
+#  define LMN_TLS
+#endif /* HAVE___THREAD */
+
+#if defined (HAVE_MT_LIBRARY) && defined (HAVE_TLS_KEYWORD)
+#  define ENABLE_PARALLEL
+#endif
+
+
+#ifdef ENABLE_PARALLEL
+extern LMN_TLS unsigned long lmn_thread_id;
+extern LMN_TLS unsigned long lmn_state_id;
+extern LMN_TLS ProcessID lmn_next_id;
+#else
+const static unsigned long lmn_thread_id = 0;
+extern unsigned long lmn_state_id;
+extern ProcessID lmn_next_id;
+#endif /* ENABLE_PARALLEL */
 
 #define env_gen_state_id()     (lmn_state_id += lmn_thread_num)
 

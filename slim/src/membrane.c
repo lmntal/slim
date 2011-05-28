@@ -446,7 +446,7 @@ unsigned long lmn_mem_root_space(LmnMembrane *src)
 {
   unsigned long ret;
   LmnMembrane *ptr;
- 
+
   ret = lmn_mem_space(src);
   for (ptr = src->child_head; ptr != NULL; ptr = ptr->next) {
     ret += lmn_mem_root_space(ptr);
@@ -612,12 +612,12 @@ void lmn_newlink_in_symbols(LmnSAtom atom0,
 }
 
 void lmn_newlink_with_ex(LmnMembrane *mem,
-                             LmnSAtom atom0,
-                             LmnLinkAttr attr0,
-                             int pos0,
-                             LmnSAtom atom1,
-                             LmnLinkAttr attr1,
-                             int pos1)
+                         LmnSAtom atom0,
+                         LmnLinkAttr attr0,
+                         int pos0,
+                         LmnSAtom atom1,
+                         LmnLinkAttr attr1,
+                         int pos1)
 {
   /* both symbol */
   LMN_SATOM_SET_LINK(atom0, pos0, atom1);
@@ -762,19 +762,20 @@ void alter_functor(LmnMembrane *mem, LmnSAtom atom, LmnFunctor f)
   mem_push_symbol_atom(mem, atom);
 }
 
-/* cf. Java処理系 */
-/*
+/* cf. Java処理系
  * TODO:
  * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
  * HashSetを使うようにする
+ *
+ * 2011/01/23  処理を変更 meguro
  */
-
 void lmn_mem_remove_proxies(LmnMembrane *mem)
 {
-  //2011/01/23  処理を変更 meguro
-  unsigned int i;
   Vector remove_list_p, remove_list_m, change_list;
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+  AtomListEntry *ent;
+  unsigned int i;
+
+  ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
 
   vec_init(&remove_list_p, 16);//parent用
   vec_init(&remove_list_m, 16);//mem用
@@ -783,26 +784,35 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
   if (ent) {
     LmnSAtom ipxy;
 
-    EACH_ATOM(ipxy, ent, {
-      LmnSAtom a0 = LMN_SATOM(LMN_SATOM_GET_LINK(ipxy, 1));
-      LmnFunctor f0 = LMN_SATOM_GET_FUNCTOR(a0);
+    EACH_ATOM(ipxy, ent, ({
+      LmnSAtom a0, a1;
+      LmnFunctor f0, f1;
 
-      if (f0 == LMN_STAR_PROXY_FUNCTOR) {//-$*-$in- → -----
+      a0 = LMN_SATOM(LMN_SATOM_GET_LINK(ipxy, 1));
+      f0 = LMN_SATOM_GET_FUNCTOR(a0);
+
+      if (f0 == LMN_STAR_PROXY_FUNCTOR) {
+        /* -$*-$in- → ----- */
         lmn_mem_unify_atom_args(mem, a0, 0, ipxy, 0);
         vec_push(&remove_list_m, (LmnWord)a0);
         vec_push(&remove_list_m, (LmnWord)ipxy);
       }
-      else {//-$in- → -$*-
+      else {
+        /* -$in- → -$*- */
         vec_push(&change_list, (LmnWord)ipxy);
       }
 
-      LmnSAtom a1 = LMN_SATOM(LMN_SATOM_GET_LINK(ipxy, 0));
-      LmnFunctor f1 = LMN_SATOM_GET_FUNCTOR(a1);
+      a1 = LMN_SATOM(LMN_SATOM_GET_LINK(ipxy, 0));
+      f1 = LMN_SATOM_GET_FUNCTOR(a1);
 
       if (f1 == LMN_OUT_PROXY_FUNCTOR) {
         if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(a1, 1))) {
-          LmnSAtom a2 = LMN_SATOM(LMN_SATOM_GET_LINK(a1, 1));
-          LmnFunctor f2 = LMN_SATOM_GET_FUNCTOR(a2);
+          LmnSAtom a2;
+          LmnFunctor f2;
+
+          a2 = LMN_SATOM(LMN_SATOM_GET_LINK(a1, 1));
+          f2 = LMN_SATOM_GET_FUNCTOR(a2);
+
           if(f2 == LMN_STAR_PROXY_FUNCTOR) {
             lmn_mem_unify_atom_args(mem->parent, a1, 0, a2, 0);
             vec_push(&remove_list_p, (LmnWord)a1);
@@ -813,7 +823,7 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
           }
         }
       }
-    });
+    }));
   }
 
   for (i = 0; i < vec_num(&remove_list_p); i++) {
@@ -828,11 +838,10 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
   }
   vec_destroy(&remove_list_m);
 
-  { /* change to star proxy */
-    for (i = 0; i < change_list.num; i++) {
-      alter_functor(LMN_PROXY_GET_MEM(LMN_SATOM(vec_get(&change_list, i))),
-          LMN_SATOM(vec_get(&change_list, i)), LMN_STAR_PROXY_FUNCTOR);
-    }
+  /* change to star proxy */
+  for (i = 0; i < change_list.num; i++) {
+    alter_functor(LMN_PROXY_GET_MEM(LMN_SATOM(vec_get(&change_list, i))),
+                  LMN_SATOM(vec_get(&change_list, i)), LMN_STAR_PROXY_FUNCTOR);
   }
   vec_destroy(&change_list);
 }
@@ -856,7 +865,7 @@ void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
   vec_init(&remove_list, 16);
   vec_init(&change_list, 16); /* inside proxy にするアトム */
 
-  EACH_ATOM(star, ent, {
+  EACH_ATOM(star, ent, ({
     oldstar = LMN_SATOM(LMN_SATOM_GET_LINK(star, 0));
     if (LMN_PROXY_GET_MEM(oldstar) == child_mem) { /* (1) */
       if (!vec_contains(&remove_list, (LmnWord)star)) {
@@ -885,12 +894,10 @@ void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
         lmn_newlink_in_symbols(star, 0, outside, 0);
       }
     }
-  });
+  }));
 
-  {
-    for (i = 0; i < vec_num(&change_list); i++) {
-      alter_functor(child_mem, LMN_SATOM(vec_get(&change_list, i)), LMN_IN_PROXY_FUNCTOR);
-    }
+  for (i = 0; i < vec_num(&change_list); i++) {
+    alter_functor(child_mem, LMN_SATOM(vec_get(&change_list, i)), LMN_IN_PROXY_FUNCTOR);
   }
   vec_destroy(&change_list);
 
@@ -918,14 +925,15 @@ void lmn_mem_remove_temporary_proxies(LmnMembrane *mem)
 
   vec_init(&remove_list, 16);
 
-  EACH_ATOM(star, ent, {
+  EACH_ATOM(star, ent, ({
     outside = LMN_SATOM(LMN_SATOM_GET_LINK(star, 0));
     if (!vec_contains(&remove_list, (LmnWord)star)) {
       lmn_mem_unify_atom_args(mem, star, 1, outside, 1);
       vec_push(&remove_list, (LmnWord)star);
       vec_push(&remove_list, (LmnWord)outside);
     }
-  });
+  }));
+
   for (i = 0; i < remove_list.num; i++) {
     mem_remove_symbol_atom(mem, LMN_SATOM(vec_get(&remove_list, i)));
     lmn_delete_atom(LMN_SATOM(vec_get(&remove_list, i)));
@@ -952,7 +960,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
 
   vec_init(&remove_list, 16);
 
-  EACH_ATOM(outside, ent, {
+  EACH_ATOM(outside, ent, ({
     LmnSAtom a0;
     a0 = LMN_SATOM(LMN_SATOM_GET_LINK(outside, 0));
     if (LMN_PROXY_GET_MEM(a0) &&
@@ -972,7 +980,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
         }
       }
     }
-  });
+  }));
 
   for (i = 0; i < remove_list.num; i++) {
     mem_remove_symbol_atom(mem, LMN_SATOM(vec_get(&remove_list, i)));
@@ -1387,11 +1395,11 @@ BOOL ground_atoms(Vector        *srcvec,
     LinkObj l;
     LmnAtom l_ap;
     LmnLinkAttr l_pos;
-    
+
     l = (LinkObj)vec_pop(unsearched_link_stack);
     l_ap = l->ap;
     l_pos = l->pos;
-    
+
     LMN_FREE(l);
 
     if (LMN_ATTR_IS_DATA(l_pos)) { /* lがデータなら行き止まり */

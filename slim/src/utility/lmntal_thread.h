@@ -47,39 +47,8 @@
 #include "lmntal.h"
 #include "atom.h"
 
-//////////////  configureで書くかlmntal.hに移動した方がよい記述ここから ///////////////
-/* check for thread library */
-#if defined (HAVE_LIBPTHREAD) || defined (HAVE_WINAPI)
-#  define HAVE_MT_LIBRARY  (1)
-#  ifdef HAVE_LIBPTHREAD
-#    include <pthread.h>
-#  else /* winapi */
-#    include <windows.h>
-#  endif
-#else
-#  undef  HAVE_MT_LIBRARY
-#endif
-
-/* check for thread local storage  */
-#if defined (HAVE___THREAD)
-#  define HAVE_TLS_KEYWORD  (1)
-#  define LMN_TLS           __thread
-#else
-#  define LMN_TLS
-#endif
-
-
-#if defined (HAVE_MT_LIBRARY) && defined (HAVE_TLS_KEYWORD)
-#  define ENABLE_PARALLEL
-#endif
-
 /* check for atomic operation */
 #ifdef ENABLE_PARALLEL
-
-   extern LMN_TLS unsigned long lmn_thread_id;
-   extern LMN_TLS unsigned long lmn_state_id;
-   extern LMN_TLS ProcessID lmn_next_id;
-
 #  ifdef HAVE_ATOMIC_CAS /* AとBが等しければAの実態をCに置き換え, 成功したら真を返す */
 #    define CAS(A, B, C)        __sync_bool_compare_and_swap(&(A), B, C)
 #  else
@@ -106,9 +75,6 @@
 #    define OR_AND_FETCH(A, B)  lmn_fatal("disable ATOMIC OPERATION, unexepcted.")
 #  endif
 #else /* disable parallel */
-   static unsigned long lmn_thread_id = 0;
-   extern unsigned long lmn_state_id;
-   extern ProcessID lmn_next_id;
 #  define CAS(A,B,C)           (A = C)
 #  define ADD_AND_FETCH(A, B)  (A += B)
 #  define SUB_AND_FETCH(A, B)  (A -= B)
@@ -116,8 +82,6 @@
 #  define OR_AND_FETCH(A, B)   (A |= B)
 #endif /* ENABLE_PARALLEL */
 
-
-//////////////  configureで書くかlmntal.hに移動した方がよい記述この辺まで ///////////////
 
 /* setting thread library */
 #ifdef HAVE_LIBPTHREAD

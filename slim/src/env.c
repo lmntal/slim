@@ -38,7 +38,6 @@
  */
 
 #include "lmntal.h"
-#include "lmntal_thread.h"
 #include "runtime_status.h"
 
 struct LmnEnv         lmn_env;

@@ -577,6 +577,7 @@ static void init_env(void)
   lmn_env.debug_delta            = FALSE;
   lmn_env.debug_hash             = FALSE;
   lmn_env.debug_isomor           = FALSE;
+  lmn_env.debug_isomor2          = FALSE;
   lmn_env.debug_mc               = FALSE;
   lmn_env.debug_por              = FALSE;
 #endif
