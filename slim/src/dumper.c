@@ -208,9 +208,9 @@ static void dump_arg(LmnPort port,
     dump_link(port, atom, i, ht, s);
   } else {
     dump_atom(port,
-              LMN_SATOM_GET_LINK(atom, i),
+              LMN_SATOM_GET_LINK(LMN_ATOM(atom), i),
               ht,
-              LMN_SATOM_GET_ATTR(atom, i),
+              LMN_SATOM_GET_ATTR(LMN_ATOM(atom), i),
               s,
               call_depth + 1);
   }
@@ -336,7 +336,10 @@ static BOOL dump_list(LmnPort port,
       break;
     } else { /* list ends with non nil data */
       port_put_raw_s(port, "|");
-      dump_atom(port, a, ht, attr, s, call_depth + 1);
+
+      /* 直前の.アトムを取得 */
+      LmnSAtom atom = LMN_SATOM(LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)));
+      dump_arg(port, atom, 1, ht, s, call_depth + 1);
       break;
     }
   }
@@ -508,11 +511,11 @@ static BOOL dump_atom(LmnPort port,
   }
   else {
     LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
-    LmnLinkAttr link_pos = LMN_ATTR_GET_VALUE(attr);
+    int link_pos = LMN_ATTR_GET_VALUE(attr);
     if (!lmn_env.show_proxy &&
         (f == LMN_IN_PROXY_FUNCTOR ||
          f == LMN_OUT_PROXY_FUNCTOR)) {
-      return dump_proxy(port, LMN_SATOM(atom), ht, attr, s, call_depth);
+      return dump_proxy(port, LMN_SATOM(atom), ht, link_pos, s, call_depth);
     }
     else if (f == LMN_LIST_FUNCTOR &&
              link_pos == 2) {
@@ -534,10 +537,10 @@ static BOOL dump_toplevel_atom(LmnPort port,
   if (!lmn_env.show_proxy &&
       (f == LMN_IN_PROXY_FUNCTOR ||
        f == LMN_OUT_PROXY_FUNCTOR)) {
-    return dump_proxy(port, atom, ht, LMN_ATTR_MAKE_LINK(0), s, 0);
+    return dump_proxy(port, atom, ht, 0, s, 0);
   }
   else {
-    return dump_symbol_atom(port, atom, ht, LMN_ATTR_MAKE_LINK(0), s, 0);
+    return dump_symbol_atom(port, atom, ht, 0, s, 0);
   }
 }
 
