@@ -111,7 +111,7 @@ inline void free_links(Vector *links);
   番号ではなくリンク元のアトムと引数番号を保持する。さらに、リンク元を
   保持している場合にはwt内の値の下位1ビットを1にし、リンク先を保持して
   いる場合と区別をしている。どちらの場合も同じマクロを使い同様のコード
-  でリンク先の取得が出きるようにしている。
+  でリンク先の取得ができるようにしている。
 
   1. リンクオブジェクトがある場合(Javaによる処理系)
 
@@ -464,7 +464,7 @@ BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule)
   profile_start_trial();
 
   /* まず、トランスレート済みの関数を実行する
-     それがない場合命令列をinterpretで実行する */
+   * それがない場合、命令列をinterpretで実行する */
   result = (translated && translated(rc, mem, rule)) ||
            (inst_seq   && interpret(rc, rule, inst_seq));
 
@@ -868,19 +868,18 @@ static BOOL react_ruleset_in_all_mem(struct ReactCxt *rc, LmnRuleSet rs, LmnMemb
 /* DEBUG: */
 /* static void print_wt(void); */
 
-/* mem != NULL ならば memにUNIFYを追加、そうでなければ
-   UNIFYは膜に所属しない */
+/* mem != NULL ならば memにUNIFYを追加、そうでなければUNIFYは膜に所属しない */
 inline HashSet *insertconnectors(LmnMembrane *mem, const Vector *links)
 {
   unsigned int i, j;
   HashSet *retset = hashset_make(8);
   /* EFFICIENCY: retsetがHash Setである意味は?　ベクタでいいのでは？
-     中間命令でセットを使うように書かれている */
+   * 中間命令でセットを使うように書かれている */
 
-  for(i = 0; i < links->num; i++) {
+  for (i = 0; i < links->num; i++) {
     LmnWord linkid1 = vec_get(links, i);
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid1))) continue;
-    for(j = i+1; j < links->num; j++) {
+    for (j = i+1; j < links->num; j++) {
       LmnWord linkid2 = vec_get(links, j);
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid2))) continue;
       /* is buddy? */
@@ -900,8 +899,8 @@ inline HashSet *insertconnectors(LmnMembrane *mem, const Vector *links)
           LMN_SATOM_SET_ID(eq, env_gen_next_id());
         }
 
-        /* リンクがリンクの元を持つ場合、あらかじめリンク先の取得をしていなければ
-           ならない。リンク元はnew_link時に書き換えられてしまう。*/
+        /* リンクがリンクの元を持つ場合、あらかじめリンク先の取得をしていなければならない。
+         * リンク元はnew_link時に書き換えられてしまう。*/
 
         a1 = LMN_SATOM(LINKED_ATOM(linkid1));
         a2 = LMN_SATOM(LINKED_ATOM(linkid2));
@@ -971,7 +970,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
-      if(interpret(rc, rule, instr)) {
+      if (interpret(rc, rule, instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       } else LMN_ASSERT(0);
@@ -3163,7 +3162,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       delset = (HashSet *)wt[srcset];
       delmap = (ProcessTbl)wt[srcmap];
 
-      for(it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
+      for (it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         LmnSAtom orig = LMN_SATOM(hashsetiter_entry(&it));
         LmnSAtom copy;
         LmnWord t = 0;
@@ -3173,11 +3172,11 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
         lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
         /* mem がないので仕方なく直接アトムリストをつなぎ変える
-           UNIFYアトムはnatomに含まれないので大丈夫 */
+         * UNIFYアトムはnatomに含まれないので大丈夫 */
         LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy), LMN_SATOM_GET_PREV(copy));
         LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy), LMN_SATOM_GET_NEXT_RAW(copy));
 
-        lmn_delete_atom(orig);
+        lmn_delete_atom(copy);
       }
 
       proc_tbl_free(delmap);
@@ -3708,7 +3707,7 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
-      if(dmem_interpret(rc, rule, instr)) {
+      if (dmem_interpret(rc, rule, instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
       }
@@ -3738,10 +3737,10 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
-      if(dmem_interpret(rc, rule, instr)){
+      if (dmem_interpret(rc, rule, instr)) {
         hashset_free((HashSet *)wt[seti]);
         return TRUE;
-      }else LMN_ASSERT(0);
+      } else LMN_ASSERT(0);
       break;
     }
     case INSTR_NEWATOM:
@@ -3812,22 +3811,15 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
 
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(link1))) {
         if (LMN_ATTR_IS_DATA(LINKED_ATTR(link2))) { /* 1, 2 are data */
-          lmn_mem_link_data_atoms((LmnMembrane *)wt[mem], wt[link1], at[link1], LINKED_ATOM(link2), LINKED_ATTR(link2));
+          dmem_root_link_data_atoms(RC_ND_MEM_DELTA_ROOT(rc),
+              (LmnMembrane *)wt[mem], LINKED_ATOM(link1), LINKED_ATTR(link1), LINKED_ATOM(link2), LINKED_ATTR(link2));
+        } else { /* 1 is data */
+          dmem_root_unify_links(RC_ND_MEM_DELTA_ROOT(rc),
+              (LmnMembrane *)wt[mem], LINKED_ATOM(link2), LINKED_ATTR(link2), LINKED_ATOM(link1), LINKED_ATTR(link1));
         }
-        else { /* 1 is data */
-          LMN_SATOM_SET_LINK(LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(LINKED_ATTR(link2)), LINKED_ATOM(link1));
-          LMN_SATOM_SET_ATTR(LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(LINKED_ATTR(link2)), LINKED_ATTR(link1));
-        }
-      }
-      else if (LMN_ATTR_IS_DATA(LINKED_ATTR(link2))) { /* 2 is data */
-        LMN_SATOM_SET_LINK(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(LINKED_ATTR(link1)), LINKED_ATOM(link2));
-        LMN_SATOM_SET_ATTR(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(LINKED_ATTR(link1)), LINKED_ATTR(link2));
-      }
-      else { /* 1, 2 are symbol atom */
-        LMN_SATOM_SET_LINK(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(LINKED_ATTR(link1)), LINKED_ATOM(link2));
-        LMN_SATOM_SET_LINK(LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(LINKED_ATTR(link2)), LINKED_ATOM(link1));
-        LMN_SATOM_SET_ATTR(LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(LINKED_ATTR(link1)), LINKED_ATTR(link2));
-        LMN_SATOM_SET_ATTR(LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(LINKED_ATTR(link2)), LINKED_ATTR(link1));
+      } else { /* 2 is data or 1, 2 are symbol atom */
+        dmem_root_unify_links(RC_ND_MEM_DELTA_ROOT(rc),
+            (LmnMembrane *)wt[mem], LINKED_ATOM(link1), LINKED_ATTR(link1), LINKED_ATOM(link2), LINKED_ATTR(link2));
       }
       break;
     }
@@ -4100,7 +4092,7 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       at[dstlist] = (LmnByte)LIST_AND_MAP;
       tt[dstlist] = TT_OTHER;
 
-      /* 解放のための再帰。ベクタを解放するための中間ご命令がない */
+      /* 解放のための再帰。ベクタを解放するための中間命令がない */
       dmem_interpret(rc, rule, instr);
 
       free_links(dstlovec);
@@ -4127,7 +4119,8 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
          dmem_root_remove_ground(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembrane *)wt[memi], srcvec);
          break;
        case INSTR_FREEGROUND:
-         dmem_root_free_ground(RC_ND_MEM_DELTA_ROOT(rc), srcvec);
+         /* memを使い回す関係上freeするとまずい */
+//         dmem_root_free_ground(RC_ND_MEM_DELTA_ROOT(rc), srcvec);
          break;
       }
 
@@ -4364,21 +4357,18 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       delset = (HashSet *)wt[srcset];
       delmap = (ProcessTbl)wt[srcmap];
 
-      for(it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
+      for (it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         LmnSAtom orig = LMN_SATOM(hashsetiter_entry(&it));
         LmnSAtom copy;
-        LmnWord t;
+        LmnWord t = 0; /* warningを黙らす */
 
-        t = 0; /* warningを黙らす */
         proc_tbl_get_by_atom(delmap, orig, &t);
         copy = LMN_SATOM(t);
+        lmn_mem_unify_symbol_atom_args(orig, 0, orig, 1);
         lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
-        /* mem がないので仕方なく直接アトムリストをつなぎ変える
-           UNIFYアトムはnatomに含まれないので大丈夫 */
-        LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy), LMN_SATOM_GET_PREV(copy));
-        LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy), LMN_SATOM_GET_NEXT_RAW(copy));
 
         lmn_delete_atom(orig);
+        lmn_delete_atom(copy);
       }
 
       if (delmap) proc_tbl_free(delmap);
