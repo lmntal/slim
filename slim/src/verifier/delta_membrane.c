@@ -875,7 +875,8 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
 
     if (LMN_ATTR_IS_DATA(l->pos)) {
       cpatom = lmn_copy_data_atom(l->ap, l->pos);
-      lmn_mem_push_atom(mem, cpatom, l->pos);
+      if (d) dmem_put_atom(d, mem, cpatom, l->pos);
+      else lmn_mem_push_atom(mem, cpatom, l->pos);
     } else { /* symbol atom */
       /* コピー済みでなければコピーする */
       if (!proc_tbl_get_by_atom(atommap, LMN_SATOM(l->ap), &t)) {
