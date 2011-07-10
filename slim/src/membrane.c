@@ -787,17 +787,22 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
     EACH_ATOM(ipxy, ent, ({
       LmnSAtom a0, a1;
       LmnFunctor f0, f1;
+      
+      if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(ipxy, 1))) {      
+        a0 = LMN_SATOM(LMN_SATOM_GET_LINK(ipxy, 1));
+        f0 = LMN_SATOM_GET_FUNCTOR(a0);
 
-      a0 = LMN_SATOM(LMN_SATOM_GET_LINK(ipxy, 1));
-      f0 = LMN_SATOM_GET_FUNCTOR(a0);
-
-      if (f0 == LMN_STAR_PROXY_FUNCTOR) {
-        /* -$*-$in- → ----- */
-        lmn_mem_unify_atom_args(mem, a0, 0, ipxy, 0);
-        vec_push(&remove_list_m, (LmnWord)a0);
-        vec_push(&remove_list_m, (LmnWord)ipxy);
-      }
-      else {
+        if (f0 == LMN_STAR_PROXY_FUNCTOR) {
+          /* -$*-$in- → ----- */
+          lmn_mem_unify_atom_args(mem, a0, 0, ipxy, 0);
+          vec_push(&remove_list_m, (LmnWord)a0);
+          vec_push(&remove_list_m, (LmnWord)ipxy);
+        }
+        else {
+          /* -$in- → -$*- */
+          vec_push(&change_list, (LmnWord)ipxy);
+        }
+      }else{
         /* -$in- → -$*- */
         vec_push(&change_list, (LmnWord)ipxy);
       }
