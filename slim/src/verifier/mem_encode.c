@@ -1822,6 +1822,7 @@ LmnBinStr lmn_mem_to_binstr(LmnMembrane *mem)
     profile_finish_timer(PROFILE_TIME__MENC_DUMP);
   }
 #endif
+  //lmn_binstr_dump(ret);
   return ret;
 }
 
@@ -2016,8 +2017,6 @@ static BOOL lmn_mem_equals_enc_sub(LmnBinStr bs, LmnMembrane *mem, unsigned long
   i_bs = 0;
   i_ref = VISITLOG_INIT_N;
 
-/*   lmn_binstr_dump(bs); */
-
   t = mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, &visitlog)
     /* memに未訪問したプロセスあるなら FALSE */
     && visitlog_element_num(&visitlog) == process_num(mem);
@@ -2061,7 +2060,8 @@ static int mem_eq_enc_mols(LmnBinStr  bs,
         ok = FALSE;
 
         ent = lmn_mem_get_atomlist(mem, f);
-        if (!ent) return FALSE;
+        if (!ent)return FALSE;
+         
         EACH_ATOM(atom, ent, ({
           if (!visitlog_get_atom(visitlog, atom, NULL)) {
             tmp_i_bs = *i_bs;
@@ -2071,20 +2071,24 @@ static int mem_eq_enc_mols(LmnBinStr  bs,
             if (mem_eq_enc_atom(bs, &tmp_i_bs, mem,
                                 LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0),
                                 ref_log, &tmp_i_ref, visitlog)) {
-              *i_bs = tmp_i_bs;
-              *i_ref = tmp_i_ref;
-              visitlog_commit_checkpoint(visitlog);
-              ok = TRUE;
-              break;
+              //この先の探索で失敗したらバックトラックするように修正
+              ok = mem_eq_enc_mols(bs, &tmp_i_bs, mem, ref_log, &tmp_i_ref, visitlog);
+
+              if(ok){//探索に成功
+                *i_bs = tmp_i_bs;
+                *i_ref = tmp_i_ref;
+                visitlog_commit_checkpoint(visitlog);
+                return TRUE;
+              }else{
+                visitlog_revert_checkpoint(visitlog);
+              }
             } else {
               visitlog_revert_checkpoint(visitlog);
             }
           }
         }));
 
-        if (!ok) {
-          return FALSE;
-        }
+        return FALSE;
         break;
       }
     case TAG_NAMED_MEM_START:
@@ -2099,6 +2103,8 @@ static int mem_eq_enc_mols(LmnBinStr  bs,
         }
 
         ok = FALSE;
+
+        
         for (m = mem->child_head; m; m = m->next) {
           if (LMN_MEM_NAME_ID(m) == mem_name &&
               !visitlog_get_mem(visitlog, m, NULL)) {
@@ -2106,19 +2112,25 @@ static int mem_eq_enc_mols(LmnBinStr  bs,
             tmp_i_ref = *i_ref;
 
             visitlog_set_checkpoint(visitlog);
+            
             if (mem_eq_enc_mem(bs, &tmp_i_bs, m, ref_log, &tmp_i_ref, visitlog)) {
-              *i_bs = tmp_i_bs;
-              *i_ref = tmp_i_ref;
-              visitlog_commit_checkpoint(visitlog);
-              ok = TRUE;
-              break;
+              //この先の探索に失敗したらバックトラックする
+              ok = mem_eq_enc_mols(bs, &tmp_i_bs, mem, ref_log, &tmp_i_ref, visitlog);
+
+              if(ok){
+                *i_bs = tmp_i_bs;
+                *i_ref = tmp_i_ref;
+                visitlog_commit_checkpoint(visitlog);
+                return TRUE;
+              }else{
+                visitlog_revert_checkpoint(visitlog);
+              }
             } else {
               visitlog_revert_checkpoint(visitlog);
             }
           }
         }
-
-        if (!ok) return FALSE;
+        return FALSE;
         break;
       }
     case TAG_MEM_END:
