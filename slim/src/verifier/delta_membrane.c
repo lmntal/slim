@@ -528,17 +528,20 @@ void dmem_root_relink(struct MemDeltaRoot *root_d,
 }
 
 
+/* destが移動先、srcが移動元 */
 void dmem_root_move_cells(struct MemDeltaRoot *d,
                           LmnMembrane *destmem,
                           LmnMembrane *srcmem)
 {
   if (dmem_root_is_new_mem(d, destmem) &&
       dmem_root_is_new_mem(d, srcmem)) {
+    /* 移動先・移動元ともに新規膜 */
     lmn_mem_move_cells(destmem, srcmem);
   } else {
     dmem_root_copy_cells(d, destmem, srcmem);
     if (dmem_root_is_new_mem(d, destmem) &&
         !dmem_root_is_new_mem(d, srcmem)) {
+      /* 移動先が新規膜 */
       modify_free_link(d, destmem);
       /* printf("move cells\n"); */
       /* printf("src mem :" ); lmn_dump_mem_dev(srcmem); */
@@ -547,6 +550,7 @@ void dmem_root_move_cells(struct MemDeltaRoot *d,
     }
     else if (!dmem_root_is_new_mem(d, destmem) &&
              !dmem_root_is_new_mem(d, srcmem)) {
+      /* 移動先・移動元ともに既存膜 */
       dmem_drop(dmem_root_get_mem_delta(d, srcmem), srcmem);
       modify_free_link(d, destmem);
     }
@@ -563,17 +567,16 @@ void dmem_root_copy_cells(struct MemDeltaRoot *d,
   if (dmem_root_is_new_mem(d, destmem) && dmem_root_is_new_mem(d, srcmem)) {
     lmn_mem_copy_cells(destmem, srcmem);
   } else {
-
     ProcessTbl atoms;
-
     atoms = proc_tbl_make_with_size(64);
-
 
     /* /\*d*\/ if (dmem_root_is_new_mem(d, srcmem)) lmn_fatal("unexpected"); */
 
     if (dmem_root_is_new_mem(d, destmem)) {
+      /* 移動先が新規膜 */
       dmem_copy_cells(d, NULL, destmem, dmem_root_get_mem_delta(d, srcmem), srcmem, atoms);
     } else if (dmem_root_is_new_mem(d, srcmem)) {
+      /* 移動元が新規膜 */
       dmem_copy_cells(d,
                       dmem_root_get_mem_delta(d, destmem),
                       destmem,
@@ -948,9 +951,9 @@ void dmem_root_commit(struct MemDeltaRoot *d)
 
 #ifdef DEBUG
   if (lmn_env.debug_delta) {
-//    printf("before commit : "); lmn_dump_mem_dev(d->root_mem);
+    printf("before commit : "); lmn_dump_mem_dev(d->root_mem);
 //    printf("before commit %s %p: ", lmn_id_to_name(lmn_rule_get_name(d->applied_rule)), d->root_mem); lmn_dump_cell_stdout(d->root_mem);
-    printf("before commit : "); lmn_dump_cell_stdout(d->root_mem);
+//    printf("before commit : "); lmn_dump_cell_stdout(d->root_mem);
   }
 #endif
 
@@ -967,11 +970,11 @@ void dmem_root_commit(struct MemDeltaRoot *d)
     if (proc_tbl_get_by_mem(&d->proc_tbl, mem, &t)) {
       new_mem_info = (struct NewMemInfo *)t;
 
-      for (j = 0; j < vec_num(&new_mem_info->new_child_mems); j++) {
-        lmn_mem_add_child_mem(mem, (LmnMembrane *)vec_get(&new_mem_info->new_child_mems, j));
-      }
       for (j = 0; j < vec_num(&new_mem_info->removed_child_mems); j++) {
         lmn_mem_remove_mem(mem, (LmnMembrane *)vec_get(&new_mem_info->removed_child_mems, j));
+      }
+      for (j = 0; j < vec_num(&new_mem_info->new_child_mems); j++) {
+        lmn_mem_add_child_mem(mem, (LmnMembrane *)vec_get(&new_mem_info->new_child_mems, j));
       }
     } else {
       lmn_fatal("unexpected");
@@ -991,9 +994,9 @@ void dmem_root_commit(struct MemDeltaRoot *d)
 
 #ifdef DEBUG
   if (lmn_env.debug_delta) {
-//    printf("after commit : "); lmn_dump_mem_dev(d->root_mem);
+    printf("after commit : "); lmn_dump_mem_dev(d->root_mem);
 //    printf("after commit %p : ", d->root_mem); lmn_dump_cell_stdout(d->root_mem);
-    printf("after commit : "); lmn_dump_cell_stdout(d->root_mem);
+//    printf("after commit : "); lmn_dump_cell_stdout(d->root_mem);
   }
 #endif
 #ifdef PROFILE
@@ -1043,11 +1046,7 @@ void dmem_root_revert(struct MemDeltaRoot *d)
     printf("before revert : "); lmn_dump_cell_stdout(d->root_mem);
   }
 #endif
-  for (i = 0; i < vec_num(&d->mem_deltas); i++) {
-    dmem_revert((struct MemDelta *)vec_get(&d->mem_deltas, i));
-  }
-
-  for (i = 0; i < vec_num(&d->new_mems); i++) {
+  for (i = vec_num(&d->new_mems)-1; i >= 0; i--) {
     LmnWord t;
     LmnMembrane *mem;
     struct NewMemInfo *new_mem_info;
@@ -1056,15 +1055,19 @@ void dmem_root_revert(struct MemDeltaRoot *d)
     if (proc_tbl_get_by_mem(&d->proc_tbl, mem, &t)) {
       new_mem_info = (struct NewMemInfo *)t;
 
-      for (j = 0; j < vec_num(&new_mem_info->new_child_mems); j++) {
+      for (j = vec_num(&new_mem_info->new_child_mems)-1; j >= 0; j--) {
         lmn_mem_remove_mem(mem, (LmnMembrane *)vec_get(&new_mem_info->new_child_mems, j));
       }
-      for (j = 0; j < vec_num(&new_mem_info->removed_child_mems); j++) {
+      for (j = vec_num(&new_mem_info->removed_child_mems)-1; j >= 0; j--) {
         lmn_mem_add_child_mem(mem, (LmnMembrane *)vec_get(&new_mem_info->removed_child_mems, j));
       }
     } else {
       lmn_fatal("unexpected");
     }
+  }
+
+  for (i = vec_num(&d->mem_deltas)-1; i >= 0; i--) {
+    dmem_revert((struct MemDelta *)vec_get(&d->mem_deltas, i));
   }
 
   for (i = vec_num(&d->modified_atoms)-1; i >= 0 ; i-=2) {
@@ -2085,7 +2088,7 @@ static void dmem_commit(struct MemDelta *d)
   for (i = 0; i < vec_num(&d->new_atoms); i++) {
     mem_push_symbol_atom(d->mem, LMN_SATOM(vec_get(&d->new_atoms, i)));
   }
-
+  
   for (i = 0; i < vec_num(&d->del_atoms); i++) {
     mem_remove_symbol_atom(d->mem, LMN_SATOM(vec_get(&d->del_atoms, i)));
   }
@@ -2134,19 +2137,18 @@ static void dmem_revert(struct MemDelta *d)
     mem_push_symbol_atom(d->mem, LMN_SATOM(vec_get(&d->del_atoms, i)));
   }
 
-
   for (i = 0; i < vec_num(&d->new_atoms); i++) {
     mem_remove_symbol_atom(d->mem, LMN_SATOM(vec_get(&d->new_atoms, i)));
   }
 
   /* Membrane */
 
-  for (i = 0; i < vec_num(&d->del_mems); i++) {
-    lmn_mem_add_child_mem(d->mem, (LmnMembrane *)vec_get(&d->del_mems, i));
-  }
-
   for (i = 0; i < vec_num(&d->new_mems); i++) {
     lmn_mem_remove_mem(d->mem, (LmnMembrane *)vec_get(&d->new_mems, i));
+  }
+
+  for (i = 0; i < vec_num(&d->del_mems); i++) {
+    lmn_mem_add_child_mem(d->mem, (LmnMembrane *)vec_get(&d->del_mems, i));
   }
 
   d->mem->atom_num -= d->data_atom_diff;
