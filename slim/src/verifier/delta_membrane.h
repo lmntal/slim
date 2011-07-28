@@ -172,9 +172,10 @@ void dmem_root_remove_mem(struct MemDeltaRoot *d,
 void dmem_root_move_cells(struct MemDeltaRoot *d,
                           LmnMembrane *destmem,
                           LmnMembrane *srcmem);
-void dmem_root_copy_cells(struct MemDeltaRoot *d,
+ProcessTbl dmem_root_copy_cells(struct MemDeltaRoot *d,
                           LmnMembrane *destmem,
-                          LmnMembrane *srcmem);
+                          LmnMembrane *srcmem,
+                          ProcessTbl atoms);
 void dmem_root_clear_ruleset(struct MemDeltaRoot *d, LmnMembrane *m);
 void dmem_root_copy_rules(struct MemDeltaRoot *root_d, LmnMembrane *dest, LmnMembrane *src);
 void dmem_root_drop(struct MemDeltaRoot *root_d, LmnMembrane *m);

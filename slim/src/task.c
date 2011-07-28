@@ -1478,10 +1478,9 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             profile_backtrack();
           }
 
-          /* 現在のfindatom2の実装にはバグがある（cf. 言語班Wiki
-             findatom2議論）。バグを回避するために、履歴アトムの後ろの
-             アトムすべてからのマッチングに失敗した場合、履歴アトムの前
-             のアトムに対してマッチングを試みる */
+          /* 現在のfindatom2の実装にはバグがある（cf. 言語班Wiki findatom2議論）。
+           * バグを回避するために、履歴アトムの後ろのアトムすべてからのマッチングに失敗した場合、
+           * 履歴アトムの前のアトムに対してマッチングを試みる */
           EACH_ATOM(atom, atomlist_ent, ({
             if (atom == start_atom) break;
             wt[atomi] = (LmnWord)atom;
@@ -1751,7 +1750,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 #endif
       }
       else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at[atom1])) {
-        /* hlink属性ではない通常のデータアトムatom1とシンボルアトムatom2の接続.  */
+        /* hlink属性ではない通常のデータアトムatom1とシンボルアトムatom2の接続 */
         LMN_SATOM_SET_LINK(ap, attr, wt[atom1]);
         LMN_SATOM_SET_ATTR(ap, attr, at[atom1]);
       }
@@ -1823,7 +1822,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, posi);
 
       /* リンク先の取得をせずにリンク元の情報を格納しておく。
-         リンク元が格納されていることを示すため最下位のビットを立てる */
+       * リンク元が格納されていることを示すため最下位のビットを立てる */
       wt[linki] = LMN_SATOM_GET_LINK(wt[atomi], posi);
       at[linki] = LMN_SATOM_GET_ATTR(wt[atomi], posi);
       tt[linki] = TT_ATOM;
@@ -1952,7 +1951,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, dstmem);
       READ_VAL(LmnInstrVar, instr, srcmem);
 
-      LMN_ASSERT(!((LmnMembrane *)wt[srcmem])->parent);
+//      LMN_ASSERT(!((LmnMembrane *)wt[srcmem])->parent);
 
       lmn_mem_add_child_mem((LmnMembrane *)wt[dstmem], (LmnMembrane *)wt[srcmem]);
       break;
@@ -2063,7 +2062,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnLinkAttr, instr, attr);
 
       if (LMN_ATTR_IS_DATA(at[atomi]) == LMN_ATTR_IS_DATA(attr)) {
-        if(LMN_ATTR_IS_DATA(at[atomi])) {
+        if (LMN_ATTR_IS_DATA(at[atomi])) {
           BOOL eq;
           if(at[atomi] != attr) return FALSE; /* comp attr */
           READ_CMP_DATA_ATOM(attr, wt[atomi], eq, tt[atomi]);
@@ -4422,7 +4421,8 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       READ_VAL(LmnInstrVar, instr, srcmemi);
       dmem_root_copy_cells(RC_ND_MEM_DELTA_ROOT(rc),
                            (LmnMembrane *)wt[destmemi],
-                           (LmnMembrane *)wt[srcmemi]);
+                           (LmnMembrane *)wt[srcmemi],
+                           NULL);
       tt[mapi] = TT_OTHER;
       break;
     }
