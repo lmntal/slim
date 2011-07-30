@@ -554,7 +554,7 @@ void dmem_root_move_cells(struct MemDeltaRoot *d,
     lmn_mem_move_cells(destmem, srcmem);
   } else {
     ProcessTbl atoms;
-    atoms = dmem_root_copy_cells(d, destmem, srcmem, atoms);
+    atoms = dmem_root_copy_cells(d, destmem, srcmem);
 
     if (dmem_root_is_new_mem(d, destmem) &&
         !dmem_root_is_new_mem(d, srcmem)) {
@@ -582,13 +582,12 @@ void dmem_root_move_cells(struct MemDeltaRoot *d,
 
 ProcessTbl dmem_root_copy_cells(struct MemDeltaRoot *d,
                           LmnMembrane *destmem,
-                          LmnMembrane *srcmem,
-                          ProcessTbl atoms)
+                          LmnMembrane *srcmem)
 {
   if (dmem_root_is_new_mem(d, destmem) && dmem_root_is_new_mem(d, srcmem)) {
     return lmn_mem_copy_cells(destmem, srcmem);
   } else {
-    atoms = proc_tbl_make_with_size(64);
+    ProcessTbl atoms = proc_tbl_make_with_size(64);
     /* /\*d*\/ if (dmem_root_is_new_mem(d, srcmem)) lmn_fatal("unexpected"); */
     if (dmem_root_is_new_mem(d, destmem)) {
       /* 移動先が新規膜 */

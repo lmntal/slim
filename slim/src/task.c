@@ -4421,8 +4421,7 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
       READ_VAL(LmnInstrVar, instr, srcmemi);
       dmem_root_copy_cells(RC_ND_MEM_DELTA_ROOT(rc),
                            (LmnMembrane *)wt[destmemi],
-                           (LmnMembrane *)wt[srcmemi],
-                           NULL);
+                           (LmnMembrane *)wt[srcmemi]);
       tt[mapi] = TT_OTHER;
       break;
     }
