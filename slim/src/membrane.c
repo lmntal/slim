@@ -153,8 +153,8 @@ AtomListEntry *make_atomlist()
 /* アトムリストの解放処理 */
 void free_atomlist(AtomListEntry *as)
 {
-  /* lmn_mem_move_cellsでアトムリストの再利用を行っていてポインタがNULL
-     になる場合があるので、検査を行う必要がある。*/
+  /* lmn_mem_move_cellsでアトムリストの再利用を行っていて
+   * ポインタがNULLになる場合があるので、検査を行う必要がある。*/
   if (as) {
     hashtbl_destroy(&as->record);
     LMN_FREE(as);
@@ -232,6 +232,7 @@ static inline void append_atomlist(AtomListEntry *e1, AtomListEntry *e2)
 }
 
 
+/* atomの消去を行う。atomにデータアトムがつながっていれば、そのデータアトムも消す。 */
 inline void mem_remove_symbol_atom_with_buddy_data(LmnMembrane *mem, LmnSAtom atom)
 {
   unsigned int i;
@@ -462,7 +463,7 @@ void lmn_mem_add_child_mem(LmnMembrane *parentmem, LmnMembrane *newmem)
   newmem->next = parentmem->child_head;
   newmem->parent = parentmem;
   LMN_ASSERT(parentmem);
-  if(parentmem->child_head) parentmem->child_head->prev = newmem;
+  if (parentmem->child_head) parentmem->child_head->prev = newmem;
   parentmem->child_head = newmem;
 }
 
@@ -640,8 +641,8 @@ void lmn_newlink_with_ex(LmnMembrane *mem,
 
 }
 
-/* シンボルアトムatom0と, シンボルorデータアトム atom1 の間にリンクを張る
-   このコードが重複して現れたので,関数に分割した */
+/* シンボルアトムatom0と、シンボルorデータアトムatom1の間にリンクを張る。
+ * このコードが重複して現れたので、関数に分割した */
 static inline void newlink_symbol_and_something(LmnSAtom atom0,
                                                 int pos,
                                                 LmnAtom atom1,
@@ -704,7 +705,7 @@ void lmn_mem_relink_atom_args(LmnMembrane *mem,
                               int pos1)
 {
   /* TODO: relinkではatom0,atom1がデータになることはないはず
-           このことを確認する */
+   *       このことを確認する */
   LMN_ASSERT(!LMN_ATTR_IS_DATA(attr0) &&
              !LMN_ATTR_IS_DATA(attr1));
 
@@ -802,7 +803,7 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
           /* -$in- → -$*- */
           vec_push(&change_list, (LmnWord)ipxy);
         }
-      }else{
+      } else {
         /* -$in- → -$*- */
         vec_push(&change_list, (LmnWord)ipxy);
       }
@@ -818,7 +819,7 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
           a2 = LMN_SATOM(LMN_SATOM_GET_LINK(a1, 1));
           f2 = LMN_SATOM_GET_FUNCTOR(a2);
 
-          if(f2 == LMN_STAR_PROXY_FUNCTOR) {
+          if (f2 == LMN_STAR_PROXY_FUNCTOR) {
             lmn_mem_unify_atom_args(mem->parent, a1, 0, a2, 0);
             vec_push(&remove_list_p, (LmnWord)a1);
             vec_push(&remove_list_p, (LmnWord)a2);
@@ -1148,10 +1149,10 @@ LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos) {
 }
 
 
-/* 膜memのsrcvecを根に持つgroundプロセスを
-   コピーする。srcvecはリンクオブジェクトのベクタ。
-   ret_dstlovecはコピーされた根のリンクオブジェクトのベクタ。
-   ret_atommapはコピー元とコピー先のアトムの対応 */
+/* 膜memのsrcvecを根に持つgroundプロセスをコピーする。
+ * srcvecはリンクオブジェクトのベクタ。
+ * ret_dstlovecはコピーされた根のリンクオブジェクトのベクタ。
+ * ret_atommapはコピー元とコピー先のアトムの対応 */
 void lmn_mem_copy_ground(LmnMembrane *mem,
                          Vector *srcvec,
                          Vector **ret_dstlovec,
@@ -1229,9 +1230,9 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
   *ret_atommap = atommap;
 }
 
-/* srcvec,dstvecは比較元,比較先grounの明示的自由リンクLinkObj
-   ground検査はすんでいるものとする
-   srcとdstが同じ形なら真を返す */
+/* srcvec,dstvecは比較元,比較先groundの明示的自由リンクLinkObj
+ * ground検査はすんでいるものとする
+ * srcとdstが同じ形なら真を返す */
 BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec)
 {
   unsigned int i, j;

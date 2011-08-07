@@ -112,7 +112,7 @@ static inline void proc_tbl_put_mem(ProcessTbl p, LmnMembrane *mem, LmnWord valu
 }
 
 /* テーブルにkeyを追加し、正の値を返す。すでにpが存在した場合は0を返す。
-   通常この関数ではなく、put_new_atom,put_new_memを使用する。 */
+ * 通常この関数ではなく、put_new_atom,put_new_memを使用する。 */
 static inline int proc_tbl_put_new(ProcessTbl p, LmnWord key, LmnWord value)
 {
   p->n++;
@@ -141,8 +141,8 @@ static inline int proc_tbl_put_new_mem(ProcessTbl p, LmnMembrane *mem, LmnWord v
   return proc_tbl_put_new(p, lmn_mem_id(mem), value);
 }
 
-/* テーブルからkeyとそれに対応した値を削除する。通常この間数ではなく、
-   unput_atom, unput_memを使用する */
+/* テーブルからkeyとそれに対応した値を削除する。
+ * 通常この関数ではなく、unput_atom, unput_memを使用する */
 static inline void proc_tbl_unput(ProcessTbl p, LmnWord key)
 {
   p->n--;
@@ -218,9 +218,9 @@ static inline void proc_tbl_unset_mem_flag(ProcessTbl p, LmnMembrane *key, LmnWo
   proc_tbl_unset_flag(p, lmn_mem_id(key), flag);
 }
 
-/* テーブルのkeyに対応した値をvalueに設定し、正の値を返す。keyがテー
-   ブルに存在しない場合は0を返す。通常この間数ではなく、get_by_atom,
-   get_by_memを使用する */
+/* テーブルのkeyに対応した値をvalueに設定し、正の値を返す。
+ * keyがテーブルに存在しない場合は0を返す。
+ * 通常この関数ではなく、get_by_atom, get_by_memを使用する */
 static inline int proc_tbl_get(ProcessTbl p, LmnWord key, LmnWord *value)
 {
 #ifdef TIME_OPT
@@ -235,15 +235,15 @@ static inline int proc_tbl_get(ProcessTbl p, LmnWord key, LmnWord *value)
 #endif
 }
 
-/* テーブルのアトムatomに対応する値をvalueに設定し、正の値を返す。テー
-   ブルにatomが存在しない場合は0を返す */
+/* テーブルのアトムatomに対応する値をvalueに設定し、正の値を返す。
+ * テーブルにatomが存在しない場合は0を返す */
 static inline int proc_tbl_get_by_atom(ProcessTbl p, LmnSAtom atom, LmnWord *value)
 {
   return proc_tbl_get(p, LMN_SATOM_ID(atom), value);
 }
 
-/* テーブルの膜memに対応する値をvalueに設定し、正の値を返す。テーブルに
-   memが存在しない場合は0を返す */
+/* テーブルの膜memに対応する値をvalueに設定し、正の値を返す。
+ * テーブルにmemが存在しない場合は0を返す */
 static inline int proc_tbl_get_by_mem(ProcessTbl p, LmnMembrane *mem, LmnWord *value)
 {
   if (!mem) lmn_fatal("oh no..");
@@ -282,15 +282,15 @@ static inline BOOL proc_tbl_contains(ProcessTbl p, LmnWord key)
 #endif
 }
 
-/* テーブルのアトムatomに対応する値をvalueに設定し、正の値を返す。テー
-   ブルにatomが存在しない場合は0を返す */
+/* テーブルのアトムatomに対応する値をvalueに設定し、正の値を返す。
+ * テーブルにatomが存在しない場合は0を返す。 */
 static inline BOOL proc_tbl_contains_atom(ProcessTbl p, LmnSAtom atom)
 {
   return proc_tbl_contains(p, LMN_SATOM_ID(atom));
 }
 
-/* テーブルの膜memに対応する値をvalueに設定し、正の値を返す。テーブルに
-   memが存在しない場合は0を返す */
+/* テーブルの膜memに対応する値をvalueに設定し、正の値を返す。
+ * テーブルにmemが存在しない場合は0を返す */
 static inline BOOL proc_tbl_contains_mem(ProcessTbl p, LmnMembrane *mem)
 {
   return proc_tbl_contains(p, lmn_mem_id(mem));
@@ -301,10 +301,9 @@ static inline BOOL proc_tbl_contains_mem(ProcessTbl p, LmnMembrane *mem)
  * Visit Log
  */
 
-/* VisitLog - 同型性判定や、IDなどバックトラックをしながらグラフを探索
- * する場合に用いる。アトムや膜のログへの追加時には追加順に自動的に番号
- * を付加する。チェックポイントを使うことで、バックトラック時にログをバッ
- * クトラック前の状態に元に戻すことができる
+/* VisitLog - 同型性判定や、IDなどバックトラックをしながらグラフを探索する場合に用いる。
+ * アトムや膜のログへの追加時には追加順に自動的に番号を付加する。
+ * チェックポイントを使うことで、バックトラック時にログをバックトラック前の状態に元に戻すことができる
  */
 
 /* VisitLogに記録された変更のスナップショット */
@@ -337,8 +336,8 @@ void visitlog_push_checkpoint(VisitLog visitlog, Checkpoint cp);
  * Visit Log
  */
 
-/* ログにpを追加し、正の値を返す。すでにpが存在した場合は0を返す。通常
-   この関数ではなく、put_atom, put_memを使用する。 */
+/* ログにpを追加し、正の値を返す。すでにpが存在した場合は0を返す。
+ * 通常この関数ではなく、put_atom, put_memを使用する */
 static inline int visitlog_put(VisitLog visitlog, LmnWord p)
 {
   if (proc_tbl_put_new(&visitlog->tbl, p, visitlog->ref_n++)) {
@@ -366,8 +365,8 @@ static inline int visitlog_put_mem(VisitLog visitlog, LmnMembrane *mem)
   return visitlog_put(visitlog, lmn_mem_id(mem));
 }
 
-/* ログにデータアトム膜を追加する。（引数がログしか無いことから分かるよ
-   うに、単に訪問したアトムを数えるために使用する） */
+/* ログにデータアトム膜を追加する。
+ * 引数がログしか無いことから分かるように、単に訪問したアトムを数えるために使用する */
 static inline void visitlog_put_data(VisitLog visitlog)
 {
   if (vec_num(&visitlog->checkpoints) > 0) {
@@ -378,14 +377,14 @@ static inline void visitlog_put_data(VisitLog visitlog)
 }
 
 /* ログに記録されたアトムatomに対応する値をvalueに設定し、正の値を返す。
-   ログにatomが存在しない場合は、0を返す */
+ * ログにatomが存在しない場合は、0を返す */
 static inline int visitlog_get_atom(VisitLog visitlog, LmnSAtom atom, LmnWord *value)
 {
   return proc_tbl_get_by_atom(&visitlog->tbl, atom, value);
 }
 
-/* ログに記録された膜memに対応する値をvalueに設定し、正の値を返す。ログ
-   にmemが存在しない場合は、0を返す */
+/* ログに記録された膜memに対応する値をvalueに設定し、正の値を返す。
+ * ログにmemが存在しない場合は、0を返す */
 static inline int visitlog_get_mem(VisitLog visitlog, LmnMembrane *mem, LmnWord *value)
 {
   return proc_tbl_get_by_mem(&visitlog->tbl, mem, value);

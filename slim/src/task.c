@@ -4004,18 +4004,17 @@ static BOOL dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr
     {
       LmnInstrVar memi;
       READ_VAL(LmnInstrVar, instr, memi);
-      if (RC_GET_MODE(rc, REACT_ND)) {
-        lmn_mem_activate_ancestors((LmnMembrane *)wt[memi]); /* MC */
-      } else if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-        lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembrane *)wt[memi]); /* 通常実行時 */
-      }
+//      if (RC_GET_MODE(rc, REACT_ND)) {
+//        lmn_mem_activate_ancestors((LmnMembrane *)wt[memi]); /* MC */
+//      } else if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+//        lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembrane *)wt[memi]); /* 通常実行時 */
+//      }
       break;
     }
     case INSTR_UNLOCKMEM:
     {
       LmnInstrVar memi;
       READ_VAL(LmnInstrVar, instr, memi);
-
       break;
     }
     case INSTR_LOADRULESET:

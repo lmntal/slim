@@ -4,6 +4,7 @@
  *  @author  Masato Gocho
  *  @date    2009.06.10
  *           2009.11.18  modified
+ */
 
 
 %  pthread_mutex方式

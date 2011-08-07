@@ -293,7 +293,7 @@ void mc_expand(const StateSpace ss,
   if (mc_react_cxt_expanded_num(rc) == 0) {
     state_space_add_end_state(ss, s);
   } else if (!mc_enable_por(f) || s_is_reduced(s)) {
-	mc_store_successors(ss, s, rc, new_ss, f);
+    mc_store_successors(ss, s, rc, new_ss, f);
   } else {
     /* POR使用時は, 遷移先状態集合:en(s)からample(s)を計算する
      * サブルーチン側で, sに対するサクセッサの登録まで済ませる */

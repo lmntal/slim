@@ -54,7 +54,7 @@ static void rehash(st_table_t tbl);
 #define MINSIZE 8
 
 /*
- Table of prime numbers 2^n+a, 2<=n<=30.
+ * Table of prime numbers 2^n+a, 2<=n<=30.
  */
 static long primes[] = {
   8 + 3,
@@ -239,7 +239,7 @@ unsigned long st_table_space(st_table_t tbl)
 } while (0)
 
 /* キーがkeyであるテーブルの値をvalueに設定する。
- キーが見つからなければ0を返し，見つかれば1を返す。*/
+ * キーが見つからなければ0を返し，見つかれば1を返す。*/
 int st_lookup(st_table_t table, register st_data_t key, st_data_t *value) {
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
@@ -258,7 +258,7 @@ int st_lookup(st_table_t table, register st_data_t key, st_data_t *value) {
 
 
 /* キーがkeyであるテーブルの値をvalueに設定する。
- キーが見つからなければ0を返し，見つかれば1を返す。*/
+ * キーが見つからなければ0を返し，見つかれば1を返す。*/
 int st_lookup_with_col(st_table_t table, register st_data_t key, st_data_t *value, long *n_col) {
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
@@ -299,8 +299,8 @@ int st_contains(st_table_t table, st_data_t key) {
     table->num_entries++;                                                  \
 } while (0)
 
-/* ハッシュ表に新たなエントリーを追加する。エントリが存在した場合はその
-   エントリの値のみを更新し、キーは元々のものを更新しない。 */
+/* ハッシュ表に新たなエントリーを追加する。
+ * エントリが存在した場合は、そのエントリの値のみを更新し、キーは元々のものを更新しない。 */
 int st_insert(register st_table_t table, register st_data_t key, st_data_t value) {
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
@@ -317,8 +317,8 @@ int st_insert(register st_table_t table, register st_data_t key, st_data_t value
   }
 }
 
-/* ハッシュ表に新たなエントリーを追加し正の値を返す。エントリが存在した
-   場合は、テーブルを変更せずに、0を返す。*/
+/* ハッシュ表に新たなエントリーを追加し正の値を返す。
+ * エントリが存在した場合は、テーブルを変更せずに、0を返す。*/
 int st_insert_safe(register st_table_t table, register st_data_t key, st_data_t value) {
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
@@ -608,24 +608,25 @@ void st_concat(st_table_t tbl1, const st_table_t tbl2)
 }
 
 /*　st_tableが持つ要素を表示する　*/
-void st_print(st_table_t st){
+void st_print(st_table_t st)
+{
   printf("st_pt = %p\n", st);
   st_table_entry *entry;
   unsigned int nb = st->num_bins, ne = st->num_entries;
   printf("st->num_bins = %d, st->num_entries = %d\n", nb, ne);
   unsigned int i = 0;
-  for(; i < nb; i++){
+  for (; i < nb; i++) {
     entry = st->bins[i];
-    if(entry!=NULL){
-	    printf("bucket[%u]\n", i);
-      while(entry!=NULL){
+    if (entry!=NULL) {
+      printf("bucket[%u]\n", i);
+      while (entry!=NULL) {
         /* デフォルトでは要素をすべて数値で出力 */
         printf("      entry->key = %ld, ->record = %lu, ->hash = %lu\n",
               (long)entry->key, (long)entry->record, (unsigned long)entry->hash);
         entry = entry->next;
         if (entry) printf("  next");
       }
-    }else{
+    } else {
       /* このprintf文を消せばnull entryは表示されない */
       //printf("%d null entry\n", i);
     }

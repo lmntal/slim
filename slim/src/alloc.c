@@ -83,7 +83,7 @@ LmnSAtom lmn_new_atom(LmnFunctor f)
 
 void lmn_delete_atom(LmnSAtom ap)
 {
-	int arity, cid;
+  int arity, cid;
 
   env_return_id(LMN_SATOM_ID(ap));
 

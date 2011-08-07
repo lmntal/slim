@@ -722,7 +722,7 @@ LmnRuleSet load_compiled_il(char *filename, void *sohandle)
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置する。
-   最初のルールセットを返す */
+ * 最初のルールセットを返す */
 LmnRuleSet load(FILE *in)
 {
   IL il;
@@ -754,8 +754,8 @@ void finalize_so_handles()
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置し、最初のルールセットを返す。
-   ファイルの拡張子が lmn の場合、Javaによる処理系でファイルをコンパイルし、
-   中間言語を生成する。soの場合、dlopenしておきハンドラはopened_so_filesで管理。dlcloseはfinalize()でされる */
+ * ファイルの拡張子が lmn の場合、Javaによる処理系でファイルをコンパイルし、
+ * 中間言語を生成する。soの場合、dlopenしておきハンドラはopened_so_filesで管理。dlcloseはfinalize()でされる */
 LmnRuleSet load_file(char *file_name)
 {
   FILE *fp;
@@ -991,8 +991,8 @@ char *create_formatted_basename(const char *filepath)
 
   end = strchr(begin, '.'); /* ファイル名最初の.を探す ないと困る */
   basename = lmn_malloc(end-begin +1);
-  for(i=0,p=begin; i<end-begin; ++i,++p){
-    if(isalpha(*p) || isdigit(*p))
+  for (i=0,p=begin; i<end-begin; ++i,++p) {
+    if (isalpha(*p) || isdigit(*p))
       basename[i] = *p;
     else
       basename[i] = 'O'; /* 記号は全部Oにする */

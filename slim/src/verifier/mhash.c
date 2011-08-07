@@ -438,7 +438,7 @@ static hash_t symbol_atom_type(LmnSAtom atom)
 }
 
 static inline hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
-  switch(attr) {
+  switch (attr) {
     case LMN_INT_ATTR:
       return (hash_t)atom + 1;
       break;
