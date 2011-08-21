@@ -1,3 +1,9 @@
+SLIM (2.1.7)  -- 2011/08/20
+  * new features
+    * add --show-hl option
+    * improve proxy management of "REMOVEPROXIES"
+  * and many bug fixes
+
 SLIM (2.1.3)  -- 2011/01/17
   * new features
     * RunTime      :  support hyper graph representation (--hl)
