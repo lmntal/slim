@@ -719,6 +719,10 @@ void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 {
   AtomListEntry *srcent;
   LmnMembrane *m, *next;
+  int destmem_atom_num,srcmem_atom_num;
+
+  destmem_atom_num=destmem->atom_num;
+  srcmem_atom_num=srcmem->atom_num;
 
   /* move atoms */
   EACH_ATOMLIST(srcmem, srcent, ({
@@ -749,6 +753,10 @@ void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
     next = m->next;
     lmn_mem_remove_mem(srcmem, m);
     lmn_mem_add_child_mem(destmem, m);
+  }
+  /* 追加処理 20111027 meguro */
+  if(srcmem_atom_num > destmem->atom_num - destmem_atom_num){
+    destmem->atom_num = destmem_atom_num + srcmem_atom_num;
   }
 }
 
