@@ -820,7 +820,7 @@ void lmn_dump_mem(LmnMembrane *mem, LmnPort port)
   }
 }
 
-static void dump_atom_dev(LmnSAtom atom)
+void dump_atom_dev(LmnSAtom atom)
 {
   LmnFunctor f;
   LmnArity arity;
@@ -893,9 +893,10 @@ void lmn_dump_mem_dev(LmnMembrane *mem)
 
   dump_ruleset_dev(&mem->rulesets);
   lmn_dump_mem_dev(mem->child_head);
-  lmn_dump_mem_dev(mem->next);
 
   fprintf(stdout, "}\n");
+
+  lmn_dump_mem_dev(mem->next);
 }
 
 
