@@ -737,7 +737,8 @@ static void lmn_dump_cell_internal(LmnPort port,
     for (m = mem->child_head; m; m = m->next) {
       if (lmn_dump_mem_internal(port, m, ht, s)) {
         dumped = TRUE;
-        if (m->next)
+        /* 次の膜が既に出力済みならスキップする */
+        if (m->next && !hashtbl_contains(ht, (HashKeyType)(m->next)))
           port_put_raw_s(port, ", ");
       }
     }
