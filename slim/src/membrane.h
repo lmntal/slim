@@ -311,7 +311,7 @@ void lmn_mem_relink_atom_args(LmnMembrane *mem,
 void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
 LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *srcmem, ProcessTbl *copymap);
 LmnMembrane *lmn_mem_copy(LmnMembrane *srcmem);
-ProcessTbl lmn_mem_copy_cells(LmnMembrane *dest, LmnMembrane *srcmem);
+ProcessTbl lmn_mem_copy_cells(LmnMembrane *dest, LmnMembrane *srcmem, int hl_new_copy);
 void lmn_mem_remove_proxies(LmnMembrane *mem);
 void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem);
 void lmn_mem_remove_temporary_proxies(LmnMembrane *mem);

@@ -136,6 +136,9 @@
 #define TAG_RULESET_UNIQ     0xb
 #define TAG_INT_DATA         0xc
 #define TAG_DBL_DATA         0xd
+#define TAG_HLINK            0xe
+#define TAG_HLINK_REF        0xf
+
 
 /* Binary Stringのpositionを進めるためのカウンタ群. */
 #define ATOM_REF_SIZE          (TAG_IN_BYTE * sizeof(uint32_t))         /* 訪問番号(4byteへ拡張したが, sizeof(ProcessID)とするのが好ましいはず) */
@@ -150,6 +153,8 @@
 #define BS_HISTORY_NUM_SIZE    (BS_RULE_NUM_SIZE)
 #define BS_HISTORY_SIZE        (TAG_IN_BYTE * sizeof(lmn_interned_str)) /* UNIQ制約が管理する履歴型のサイズ. lmn_histroy_tみたいな型にしたい */
 #define BS_DBL_SIZE            (TAG_IN_BYTE * sizeof(double))           /* 浮動小数点数 */
+#define HLINK_REF_SIZE         (TAG_IN_BYTE * sizeof(uint32_t))         /* ハイパーリンク訪 問番号 */
+
 
 typedef struct BinStr *BinStr;
 typedef struct BinStrPtr *BinStrPtr;
@@ -579,6 +584,11 @@ static void binstr_dump(BYTE *bs, int len)
         printf("}. ");
       }
       break;
+    case TAG_HLINK:
+      {
+        printf("~%d ", v_i++);
+      }
+      break;
     case TAG_NAMED_MEM_START:
       {
         lmn_interned_str name;
@@ -603,6 +613,14 @@ static void binstr_dump(BYTE *bs, int len)
         ref = binstr_get_ref_num(bs, pos);
         pos += MEM_REF_SIZE;
         printf("#%d ", ref);
+      }
+      break;
+    case TAG_HLINK_REF:
+      {
+        unsigned int ref;
+        ref = binstr_get_ref_num(bs, pos);
+        pos += HLINK_REF_SIZE;
+        printf("~$%d ",ref);
       }
       break;
     case TAG_ESCAPE_MEM:
@@ -845,9 +863,14 @@ static inline int bsptr_push_atom(BinStrPtr p, LmnSAtom a)
 }
 
 /* データアトムをバイト列へ書き込む. まずTAG_INT_DATA or TAG_DBL_DATAを書き込んでから,
- * 4bitずつ値を書き込んでいく */
-static inline int bsptr_push_data_atom(BinStrPtr p, LmnAtom atom, LmnLinkAttr attr)
+ * 4bitずつ値を書き込んでいく
+ * ハイパーリンクの処理を追加
+ */
+static inline int bsptr_push_data_atom(BinStrPtr p, LmnAtom atom, LmnLinkAttr attr, VisitLog visited)
 {
+  HyperLink *hl_root;
+  LmnWord n_visited;
+
   switch (attr) {
   case LMN_INT_ATTR:
     return
@@ -858,8 +881,15 @@ static inline int bsptr_push_data_atom(BinStrPtr p, LmnAtom atom, LmnLinkAttr at
       bsptr_push1(p, TAG_DBL_DATA) &&
       bsptr_push(p, (const BYTE*)(double*)atom, BS_DBL_SIZE);
   case LMN_HL_ATTR:
-    lmn_fatal("under constructions: verification for hyper graph model");
-    break;
+    hl_root = lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(LMN_SATOM(atom)));
+
+    if (visitlog_get_hyperlink(visited, hl_root, &n_visited)) {
+      return
+        bsptr_push1(p, TAG_HLINK_REF) &&
+        bsptr_push(p, (BYTE*)&n_visited, HLINK_REF_SIZE);//ちょっと心配
+    }
+    return visitlog_put_hyperlink(visited, hl_root) &&  /* 訪問済みにした */
+      bsptr_push1(p, TAG_HLINK);
   case LMN_STRING_ATTR:
   default: /* Special Atomは未実装 */
     lmn_fatal("not implemented");
@@ -1144,7 +1174,7 @@ static void write_mol(LmnAtom atom,
 
   /* データアトムの場合 */
   if (LMN_ATTR_IS_DATA(attr)) {
-    bsptr_push_data_atom(bsp, atom, attr);
+    bsptr_push_data_atom(bsp, atom, attr, visited);
     return;
   }
 
@@ -1240,7 +1270,7 @@ static void write_mols(Vector *atoms,
   for (i = 0; i < natom; i++) {
     LmnSAtom atom = LMN_SATOM(vec_get(atoms, i));
 
-    if (!atom) continue;
+    if (!atom || LMN_IS_HL(atom)) continue;
     /* 最適化、最小のファンク以外は試す必要なし */
     else if (last_valid_i>=0 && LMN_SATOM_GET_FUNCTOR(atom) != first_func)
       break;
@@ -1683,6 +1713,16 @@ static int binstr_decode_mol(LmnBinStr bs,
       }
     }
     break;
+  case TAG_HLINK:
+    {
+      LmnSAtom hl_atom;
+      hl_atom = lmn_hyperlink_new();
+      log[(*nvisit)++] = hl_atom;
+      lmn_mem_push_atom(mem, hl_atom, LMN_HL_ATTR);
+      lmn_mem_newlink(mem, from_atom, LMN_ATTR_GET_VALUE(LMN_ATOM(from_atom)), from_arg
+                      , hl_atom, LMN_HL_ATTR,0);
+    }
+    break;
   case TAG_ATOM_REF:
     {
       unsigned int ref, arg;
@@ -1718,6 +1758,20 @@ static int binstr_decode_mol(LmnBinStr bs,
         lmn_newlink_in_symbols(out, 1, from_atom, from_arg);
         pos = binstr_decode_mol(bs, pos, log, nvisit, ref_mem, in, 1);
       }
+    }
+    break;
+  case TAG_HLINK_REF:
+    {
+      LmnSAtom hl_atom,ref_hl_atom;
+      unsigned int ref;
+      ref = binstr_get_ref_num(bs->v, pos);
+      ref_hl_atom = LMN_SATOM(log[ref]);
+      hl_atom = lmn_copy_atom(ref_hl_atom, LMN_HL_ATTR);
+      pos += HLINK_REF_SIZE;
+      lmn_newlink_in_symbols(hl_atom, 0, from_atom, from_arg);
+      lmn_mem_push_atom(mem, hl_atom, LMN_HL_ATTR);
+      lmn_mem_newlink(mem,from_atom, LMN_ATTR_GET_VALUE(LMN_ATOM(from_atom)), from_arg
+                      , hl_atom, LMN_HL_ATTR, 0);
     }
     break;
   case TAG_INT_DATA:
@@ -1884,7 +1938,7 @@ static void dump_mols(Vector *atoms,
   for (i = 0; i < natom; i++) {
     LmnSAtom atom = LMN_SATOM(vec_get(atoms, i));
 
-    if (visitlog_get_atom(visited, atom, NULL)) {
+    if (visitlog_get_atom(visited, atom, NULL) || LMN_IS_HL(atom)) {
       continue;
     } else {
       write_mol((LmnAtom)atom, LMN_ATTR_MAKE_LINK(0), -1, bsp, visited, FALSE);
@@ -1951,6 +2005,21 @@ static inline BOOL mem_eq_enc_mem(LmnBinStr bs,
                                   void **ref_log,
                                   int *i_ref,
                                   VisitLog visitlog);
+static inline BOOL mem_eq_enc_hyperlink_ref(LmnBinStr bs,
+                                            int *i_bs,
+                                            LmnAtom atom,
+                                            LmnLinkAttr attr,
+                                            void **ref_log,
+                                            int *i_ref,
+                                            VisitLog visitlog);
+static inline BOOL mem_eq_enc_hyperlink(LmnBinStr bs,
+                                        int *i_bs,
+                                        LmnMembrane *mem,
+                                        LmnAtom atom,
+                                        LmnLinkAttr attr,
+                                        void **ref_log,
+                                        int *i_ref,
+                                        VisitLog visitlog);
 static inline BOOL mem_eq_enc_traced_mem(BOOL is_named,
                                          LmnBinStr bs,
                                          int *i_bs,
@@ -2305,6 +2374,10 @@ static inline BOOL mem_eq_enc_mol(LmnBinStr bs,
     return mem_eq_enc_atom_ref(bs, i_bs, atom, attr, ref_log, i_ref, visitlog);
   case TAG_MEM_REF:
     return mem_eq_enc_mem_ref(bs, i_bs, atom, attr, ref_log, i_ref, visitlog);
+  case TAG_HLINK:
+    return mem_eq_enc_hyperlink(bs, i_bs, mem, atom, attr, ref_log, i_ref, visitlog);
+  case TAG_HLINK_REF:
+    return mem_eq_enc_hyperlink_ref(bs, i_bs, atom, attr, ref_log, i_ref, visitlog);
   case TAG_ESCAPE_MEM:
     return mem_eq_enc_escape_mem(bs, i_bs, mem, atom, attr, ref_log, i_ref, visitlog);
   case TAG_FROM:
@@ -2436,6 +2509,48 @@ static inline BOOL mem_eq_enc_mem_ref(LmnBinStr bs,
                    i_ref,
                    visitlog);
 }
+
+static inline BOOL mem_eq_enc_hyperlink(LmnBinStr bs,
+                                        int *i_bs,
+                                        LmnMembrane *mem,
+                                        LmnAtom atom,
+                                        LmnLinkAttr attr,
+                                        void **ref_log,
+                                        int *i_ref,
+                                        VisitLog visitlog)
+{
+  HyperLink *hl_root;
+
+  if (attr!=LMN_HL_ATTR) return FALSE;//ハイパーリンクアトムじゃない場合は駄目
+  hl_root = lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(atom));
+
+  if (!visitlog_put_hyperlink(visitlog, hl_root))return FALSE;
+
+  ref_log[*i_ref] = hl_root;
+  (*i_ref)++;
+  return TRUE;
+}
+
+static inline BOOL mem_eq_enc_hyperlink_ref(LmnBinStr bs,
+                                            int *i_bs,
+                                            LmnAtom atom,
+                                            LmnLinkAttr attr,
+                                            void **ref_log,
+                                            int *i_ref,
+                                            VisitLog visitlog)
+{
+  unsigned int ref, arg;
+
+  HyperLink *hl_root;
+  if (attr!=LMN_HL_ATTR) return FALSE;//ハイパーリンクアトムじゃない場合は駄目
+  hl_root = lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(atom));
+
+  ref = binstr_get_ref_num(bs->v, *i_bs);
+  (*i_bs) += HLINK_REF_SIZE;
+  visitlog_put_data(visitlog);
+  return lmn_hyperlink_eq_hl((HyperLink *)ref_log[ref], hl_root);
+}
+
 
 static inline BOOL mem_eq_enc_escape_mem(LmnBinStr bs,
                                          int *i_bs,

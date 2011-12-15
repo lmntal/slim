@@ -253,7 +253,7 @@ inline static LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
     {
       LmnSAtom copyatom;
       copyatom = lmn_copy_satom(LMN_SATOM(atom));
-      LMN_SATOM_SET_ID(atom, env_gen_next_id());
+      LMN_SATOM_SET_ID(copyatom, 0);
 
       lmn_hyperlink_copy(copyatom, LMN_SATOM(atom));
       return LMN_ATOM(copyatom);

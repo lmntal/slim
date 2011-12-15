@@ -58,7 +58,8 @@
 BOOL mem_equals(LmnMembrane *mem1, LmnMembrane *mem2);
 static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
                                    LmnMembrane *srcmem,
-                                   ProcessTbl atoms);
+                                   ProcessTbl atoms,
+                                   int hl_new_copy);
 
 /* ルールセットadd_rsをルールセット配列src_vへ追加する.
  * グラフ同型性判定処理などのために整数IDの昇順を維持するよう追加する. */
@@ -1012,7 +1013,7 @@ LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, ProcessTbl *ret_copymap)
   env_reset_proc_ids();
 
   new_mem = lmn_mem_make();
-  copymap = lmn_mem_copy_cells(new_mem, src);
+  copymap = lmn_mem_copy_cells(new_mem, src, 1);
   for (i = 0; i < src->rulesets.num; i++) {
     vec_push(&new_mem->rulesets,
         (LmnWord)lmn_ruleset_copy((LmnRuleSet)vec_get(&src->rulesets, i)));
@@ -1032,19 +1033,20 @@ LmnMembrane *lmn_mem_copy(LmnMembrane *src)
   return copied;
 }
 
-ProcessTbl lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
+ProcessTbl lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem, int hl_new_copy)
 {
   ProcessTbl atoms;
 
   atoms = proc_tbl_make_with_size(64);
 
-  lmn_mem_copy_cells_sub(destmem, srcmem, atoms);
+  lmn_mem_copy_cells_sub(destmem, srcmem, atoms, hl_new_copy);
 
   return atoms;
 }
 
-/* srcmemの実データ構造をdestmemへコピー生成する. atomsは訪問済みの管理に用いる */
-static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, ProcessTbl atoms)
+/* srcmemの実データ構造をdestmemへコピー生成する. atomsは訪問済みの管理に用いる
+   hl_new_copy=1の場合はハイパーリンクアトムをコピーした後unifyしない グローバルルート膜の複製 で使用 */
+static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, ProcessTbl atoms, int hl_new_copy)
 {
   LmnMembrane *m;
   AtomListEntry *ent;
@@ -1053,7 +1055,7 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, Pr
   /* copy child mems */
   for (m = srcmem->child_head; m; m = m->next) {
     LmnMembrane *new_mem = lmn_mem_make();
-    lmn_mem_copy_cells_sub(new_mem, m, atoms);
+    lmn_mem_copy_cells_sub(new_mem, m, atoms, hl_new_copy);
     lmn_mem_add_child_mem(destmem, new_mem);
 
     proc_tbl_put_mem(atoms, m, (LmnWord)new_mem);
@@ -1078,7 +1080,7 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, Pr
 
       LMN_ASSERT(LMN_SATOM_ID(srcatom) > 0);
 
-      if (proc_tbl_get_by_atom(atoms, srcatom, NULL)) continue;
+      if (proc_tbl_get_by_atom(atoms, srcatom, NULL) || LMN_IS_HL(srcatom)) continue;
       f = LMN_SATOM_GET_FUNCTOR(srcatom);
       newatom = lmn_mem_newatom(destmem, f);
 
@@ -1111,8 +1113,43 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem, LmnMembrane *srcmem, Pr
         LmnLinkAttr attr = LMN_SATOM_GET_ATTR(srcatom, i);
         LmnAtom a = LMN_SATOM_GET_LINK(srcatom, i);
         if (LMN_ATTR_IS_DATA(attr)) {
-          LmnAtom newargatom = lmn_copy_data_atom(a, attr);
-          newlink_symbol_and_something(newatom, i, newargatom, attr);
+          LmnAtom newargatom;
+
+          if(LMN_ATTR_IS_HL(attr) && hl_new_copy){//unifyせずにコピーする
+            HyperLink *newhl,*orihl;
+            newargatom = lmn_hyperlink_new();
+            newhl = lmn_hyperlink_at_to_hl((LmnSAtom)newargatom);
+            orihl = lmn_hyperlink_at_to_hl((LmnSAtom)a);
+
+            //子への接続
+            HashSet *children;
+            HashSetIterator it;
+            HyperLink *hl;
+            children = orihl->children;
+            if(children){
+              for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
+                hl = (HyperLink *)hashsetiter_entry(&it);
+                if(proc_tbl_get_by_hyperlink(atoms, hl, &t)){
+                  hyperlink_unify(newhl,(HyperLink *)t);
+                }
+              }
+            }
+            //親への接続
+            if(orihl->parent && proc_tbl_get_by_hyperlink(atoms, orihl->parent, &t)){
+              hyperlink_unify((HyperLink *)t,newhl);
+            }
+            proc_tbl_put_new_hyperlink(atoms, orihl, (LmnWord)newhl);
+          }else{
+            newargatom = lmn_copy_data_atom(a, attr);
+          }
+
+          if(LMN_ATTR_IS_HL(attr)){
+            lmn_mem_newlink(destmem, newatom, LMN_ATTR_GET_VALUE(LMN_ATOM(newatom)), i
+                            , (LmnSAtom)newargatom, LMN_HL_ATTR, 0);
+          }else{
+            newlink_symbol_and_something(newatom, i, newargatom, attr);
+          }
+
           lmn_mem_push_atom(destmem, newargatom, attr);
         } else if (proc_tbl_get_by_atom(atoms, LMN_SATOM(a), &t)) {
           newlink_symbol_and_something(newatom, i, LMN_ATOM(t), attr);

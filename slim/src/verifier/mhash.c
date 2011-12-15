@@ -150,7 +150,7 @@ static inline hash_t membrane(LmnMembrane *mem, LmnMembrane *calc_mem, Context c
     /* プロキシは除く */
     if (LMN_IS_PROXY_FUNCTOR(f)) continue;
     EACH_ATOM(atom, ent, {
-      if (!is_done_mol(ctx, atom)) {
+      if (!is_done_mol(ctx, atom) && !LMN_IS_HL(atom)) {
         u = molecule(atom, mem, ctx);
         hash_sum += u;
         hash_mul *= u;
@@ -219,7 +219,8 @@ static inline void do_molecule(LmnAtom atom,
     (*mul) *= t;
 
     if (!is_data &&
-        LMN_IS_SYMBOL_FUNCTOR(LMN_SATOM_GET_FUNCTOR(atom))) {
+        LMN_IS_SYMBOL_FUNCTOR(LMN_SATOM_GET_FUNCTOR(atom))
+        && !LMN_IS_HL(atom)) {
       const int arity = LMN_SATOM_GET_ARITY(atom);
       int i_arg;
 
@@ -447,7 +448,7 @@ static inline hash_t data_atom_type(LmnAtom atom, LmnLinkAttr attr) {
       LMN_ASSERT(FALSE);
       break;
     case LMN_HL_ATTR:
-      lmn_fatal("under constructions: verification for hyper graph model");
+      return lmn_hyperlink_element_num(lmn_hyperlink_at_to_hl(LMN_SATOM(atom)));
       break;
     default:
       LMN_ASSERT(FALSE);

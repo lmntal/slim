@@ -721,6 +721,9 @@ int main(int argc, char *argv[])
           PVector prop_defs = NULL;
           int ret = 1;
 
+          if(lmn_env.hyperlink && (lmn_env.optimize_hash || lmn_env.mem_enc))
+            lmn_fatal("under constructions: mem_enq for hyper graph model");
+
           if ((lmn_env.automata_file || lmn_env.ltl_exp)
               && lmn_env.propositional_symbol) {
             /* load property automata, definition of atomic propositional symbol */

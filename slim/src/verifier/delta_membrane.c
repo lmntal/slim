@@ -578,7 +578,7 @@ ProcessTbl dmem_root_copy_cells(struct MemDeltaRoot *d,
                           LmnMembrane *srcmem)
 {
   if (dmem_root_is_new_mem(d, destmem) && dmem_root_is_new_mem(d, srcmem)) {
-    return lmn_mem_copy_cells(destmem, srcmem);
+    return lmn_mem_copy_cells(destmem, srcmem, 0);
   } else {
     ProcessTbl atoms = proc_tbl_make_with_size(64);
     /* /\*d*\/ if (dmem_root_is_new_mem(d, srcmem)) lmn_fatal("unexpected"); */

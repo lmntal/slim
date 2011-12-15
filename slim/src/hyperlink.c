@@ -103,7 +103,7 @@ void hyperlink_destroy()
 
 unsigned long hyperlink_new_id()
 {
-  return hyperlink_id++;
+  return env_gen_next_id();//nd実行のために変更
 }
 
 //HyperLink *lmn_hyperlink_make(LmnSAtom sa)

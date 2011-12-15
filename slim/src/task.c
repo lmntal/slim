@@ -1232,7 +1232,12 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
                 LMN_COPY_DBL_ATOM(d, wt[i]);
                 wtcp[i] = (LmnWord)d;
               } else if (at[i] == LMN_HL_ATTR) {
-                lmn_fatal("under constructions: verification for hyper graph model");
+                if (proc_tbl_get_by_hyperlink(copymap, lmn_hyperlink_at_to_hl((wt[i])), &t)) {
+                  wtcp[i] = (LmnWord)lmn_hyperlink_hl_to_at((HyperLink *)t);
+                } else {
+                  wtcp[i] = (LmnWord)wt[i];//new_hlink命令等の場合
+                  //lmn_fatal("implementation error");
+                }
               } else { /* symbol atom */
                 if (proc_tbl_get_by_atom(copymap, LMN_SATOM(wt[i]), &t)) {
                   wtcp[i] = (LmnWord)t;
@@ -3341,7 +3346,7 @@ static BOOL interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
       wt[mapi] = (LmnWord)lmn_mem_copy_cells((LmnMembrane *)wt[destmemi],
-                                             (LmnMembrane *)wt[srcmemi]);
+                                             (LmnMembrane *)wt[srcmemi],0);
       tt[mapi] = TT_OTHER;
       break;
     }

@@ -58,7 +58,7 @@ void nlmem_copy(ReactCxt rc,
 
   org_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a0, 0));
   trg_mem = lmn_mem_make();
-  atom_map = lmn_mem_copy_cells(trg_mem, org_mem);
+  atom_map = lmn_mem_copy_cells(trg_mem, org_mem, 0);
   lmn_mem_add_child_mem(mem, trg_mem);
 
   {

@@ -111,6 +111,12 @@ static inline void proc_tbl_put_mem(ProcessTbl p, LmnMembrane *mem, LmnWord valu
   proc_tbl_put(p, lmn_mem_id(mem), value);
 }
 
+/* テーブルにハイパーリンクを追加 */
+static inline int proc_tbl_put_new_hyperlink(ProcessTbl p, HyperLink *hl, LmnWord value)
+{
+  proc_tbl_put(p, LMN_HL_ID(hl), value);
+}
+
 /* テーブルにkeyを追加し、正の値を返す。すでにpが存在した場合は0を返す。
  * 通常この関数ではなく、put_new_atom,put_new_memを使用する。 */
 static inline int proc_tbl_put_new(ProcessTbl p, LmnWord key, LmnWord value)
@@ -250,6 +256,12 @@ static inline int proc_tbl_get_by_mem(ProcessTbl p, LmnMembrane *mem, LmnWord *v
   return proc_tbl_get(p, lmn_mem_id(mem), value);
 }
 
+static inline int proc_tbl_get_by_hyperlink(ProcessTbl p, HyperLink *hl, LmnWord *value)
+{
+  if (!hl) lmn_fatal("hyperlink is empty");
+  return proc_tbl_get(p,  LMN_HL_ID(hl), value);
+}
+
 static inline BOOL proc_tbl_get_flag(ProcessTbl p, LmnWord key, LmnWord flag)
 {
 #ifdef TIME_OPT
@@ -365,6 +377,12 @@ static inline int visitlog_put_mem(VisitLog visitlog, LmnMembrane *mem)
   return visitlog_put(visitlog, lmn_mem_id(mem));
 }
 
+/* ログにハイパーリンクを追加し、正の値を返す。すでに膜が存在した場合は0を返す */
+static inline int visitlog_put_hyperlink(VisitLog visitlog, HyperLink *hl)
+{
+  return visitlog_put(visitlog, LMN_HL_ID(hl));
+}
+
 /* ログにデータアトム膜を追加する。
  * 引数がログしか無いことから分かるように、単に訪問したアトムを数えるために使用する */
 static inline void visitlog_put_data(VisitLog visitlog)
@@ -388,6 +406,13 @@ static inline int visitlog_get_atom(VisitLog visitlog, LmnSAtom atom, LmnWord *v
 static inline int visitlog_get_mem(VisitLog visitlog, LmnMembrane *mem, LmnWord *value)
 {
   return proc_tbl_get_by_mem(&visitlog->tbl, mem, value);
+}
+
+/* ログに記録されたhlに対応する値をvalueに設定し、正の値を返す。ログ
+   にhlが存在しない場合は、0を返す */
+static inline int visitlog_get_hyperlink(VisitLog visitlog, HyperLink *hl, LmnWord *value)
+{
+  return proc_tbl_get_by_hyperlink(&visitlog->tbl, hl, value);
 }
 
 /* visitlogに記録した要素（膜、アトム）の数を返す */
