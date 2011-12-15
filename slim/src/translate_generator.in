@@ -940,7 +940,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
   if (!lmn_mem_nfreelinks((LmnMembrane *)wt[$0], $1)) $f;
 
 #copycells LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)lmn_mem_copy_cells((LmnMembrane *)wt[$1], (LmnMembrane *)wt[$2]);
+  wt[$0] = (LmnWord)lmn_mem_copy_cells((LmnMembrane *)wt[$1], (LmnMembrane *)wt[$2], 0);
   tt[$0] = TT_OTHER;
 
 #lookuplink LmnInstrVar LmnInstrVar LmnInstrVar
