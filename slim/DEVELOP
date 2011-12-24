@@ -4,7 +4,7 @@
 * コンパイル
 現在Autoconf, Automakeというツールを使っています。これらは,コンパイル
 時の環境を検査して,適切なMakefileとconfig.hの作成をします。
-autoconfはversion 2.61以上でないとコンパイルできません。
+autoconfはversion 2.62以上でないとコンパイルできません。
 また、コンパイルには以下の環境が必要です。
 - flex 2.5.35以上
 - bison 2.3以上

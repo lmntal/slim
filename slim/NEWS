@@ -1,3 +1,7 @@
+SLIM (2.2.0)  -- 2011/12/24
+  * new features
+    * Modelchecker : support Verification for hyper graph model
+
 SLIM (2.1.7)  -- 2011/08/20
   * new features
     * add --show-hl option

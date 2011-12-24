@@ -77,6 +77,14 @@ Show proxy atoms.
 Hide ruleset from result
 
 .TP
+.BI --hl
+Use syntax and operations for hyperlinks.
+.TP
+.BI --show-hl
+Show details of hyperlinks.
+
+
+.TP
 .BI --nd
 Nondeterministic execution mode, print all execution paths
 .TP
@@ -88,9 +96,6 @@ LTL model checking mode, print all errors
 .TP
 .BI --mem-enc
 Use canonical membrane representation in ND and LTL MC.
-.TP
-.BI --compact-stack
-Compress states on stack in ND and LTL MC.
 .TP
 .BI --translate
 Output C code translated from input file.
@@ -116,7 +121,25 @@ Path to the LMNtal system
 LMNtal compiler options
 
 .SH AUTHORS
-Taisuke Hori (taisuke @ ueda . info . waseda . ac . jp)
+Kei Murayama (kei@ueda.info.waseda.ac.jp)
+
+Ryo Okabe (okabe@ueda.info.waseda.ac.jp)
+
+Takayuki Sasaki (sasaki@ueda.info.waseda.ac.jp)  
+
+Riki Ishikawa (riki@ueda.info.waseda.ac.jp)
+
+Taisuke Hori (taisuke@ueda.info.waseda.ac.jp)
+
+Seiji Ogawa (seiji@ueda.info.waseda.ac.jp)
+
+Masato Gocho (gocho0928@ueda.info.waseda.ac.jp)
+
+Yusuke Ueno (yueno@ueda.info.waseda.ac.jp)
+
+Ryohei Nakagawa (nakagawa@ueda.info.waseda.ac.jp)
+
+Manabu Meguro (meguro@ueda.info.waseda.ac.jp)
 
 .SH SEE ALSO
 .PP
@@ -127,6 +150,10 @@ http://code.google.com/p/slim-runtime/
 LMNtal:
 .br
 http://www.ueda.info.waseda.ac.jp/lmntal
+.PP
+LaViT:
+.br
+http://www.ueda.info.waseda.ac.jp/lmntal/lavit
 .PP
 For the information about our researches, see
 http://www.ueda.info.waseda.ac.jp/
