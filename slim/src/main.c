@@ -721,8 +721,15 @@ int main(int argc, char *argv[])
           PVector prop_defs = NULL;
           int ret = 1;
 
-          if(lmn_env.hyperlink && (lmn_env.optimize_hash || lmn_env.mem_enc))
-            lmn_fatal("under constructions: mem_enq for hyper graph model");
+          if(lmn_env.hyperlink){
+            if(lmn_env.delta_mem){
+              lmn_fatal("under constructions: delta-mem for hyper graph model");
+            }else if(lmn_env.mem_enc){
+              lmn_fatal("under constructions: mem_enq for hyper graph model");
+            }else if(lmn_env.optimize_hash){
+              lmn_env.optimize_hash = FALSE;
+            }
+          }
 
           if ((lmn_env.automata_file || lmn_env.ltl_exp)
               && lmn_env.propositional_symbol) {
