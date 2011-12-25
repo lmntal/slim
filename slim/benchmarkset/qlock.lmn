@@ -6,7 +6,6 @@
  *           2009.11.18  modified
  */
 
-
 %  pthread_mutex方式
 
 % property0: クリティカルセクションに入れるプロセスは常に1つ(以下)である

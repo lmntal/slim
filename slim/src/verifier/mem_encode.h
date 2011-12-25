@@ -46,11 +46,21 @@ typedef struct LmnBinStr *LmnBinStr;
 
 /* 最終的なエンコード結果を表すバイナリストリング */
 struct LmnBinStr {
-  BOOL comp_type;     /* バイト列の圧縮情報を記録しておくためのbit field
+  BOOL type;          /* バイト列への記録方式を記録しておくためのbit field. 圧縮方式のメモ用に用いる.
                        * (64bit環境ではアラインメントの隙間に配置されるのでメモリ使用量は増えないはず) */
   unsigned int len;   /* 確保したbyte型の数(列の長さ) */
   BYTE *v;            /* 1byte(8bit)の可変列へのポインタ */
 };
+
+#define BS_COMP_Z                 (0x01U)
+#define BS_COMP_D                 (0x01U << 1)
+
+#define is_comp_z(BS)             (((BS)->type) & BS_COMP_Z)
+#define set_comp_z(BS)            (((BS)->type) |= BS_COMP_Z)
+#define unset_comp_z(BS)          (((BS)->type) &= ~(BS_COMP_Z))
+#define is_comp_d(BS)             (((BS)->type) & BS_COMP_D)
+#define set_comp_d(BS)            (((BS)->type) |= BS_COMP_D)
+#define unset_comp_d(BS)          (((BS)->type) &= ~(BS_COMP_D))
 
 #define TAG_BIT_SIZE      4
 #define TAG_DATA_TYPE_BIT 2
@@ -71,7 +81,7 @@ LmnMembrane *lmn_binstr_decode(const LmnBinStr bs);
 
 BOOL lmn_mem_equals_enc(LmnBinStr bs, LmnMembrane *mem);
 
-void lmn_binstr_free(LmnBinStr p);
+inline void lmn_binstr_free(LmnBinStr p);
 void lmn_binstr_dump(const LmnBinStr bs);
 unsigned long lmn_binstr_space(struct LmnBinStr *bs);
 LmnBinStr lmn_mem_to_binstr(LmnMembrane *mem);

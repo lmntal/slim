@@ -50,6 +50,10 @@
  *  hyperlink system                                                       *
  * ----------------------------------------------------------------------- */
 
+/* symbol atom'!'の第0引数目は接続元のシンボルアトム
+ *                 第1引数目はhlink属性としてHyperLink構造体
+ * が埋め込まれている */
+
 /* HyperLink 構造体
  *   '!'をファンクタに持つシンボルアトムごとに生成される
  *   '!'アトムのポインタをIDとして利用しているが、出力（とuniqの履歴生成）の際には
@@ -86,15 +90,14 @@ typedef struct HyperLink{
 #define LMN_ATTR_IS_HL(ATTR) ((ATTR) == LMN_HL_ATTR)
 
 
-void hyperlink_init();
-void hyperlink_destroy();
 void lmn_hyperlink_make(LmnSAtom at);
-LmnSAtom lmn_hyperlink_new();
+LmnSAtom lmn_hyperlink_new(void);
 void lmn_hyperlink_delete(LmnSAtom at);
 void lmn_hyperlink_copy(LmnSAtom newatom, LmnSAtom oriatom);
 HyperLink *lmn_hyperlink_at_to_hl(LmnSAtom at);
 LmnSAtom   lmn_hyperlink_hl_to_at(HyperLink *hl);
 HyperLink *lmn_hyperlink_get_root(HyperLink *hl);
+HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child);
 HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2);
 int lmn_hyperlink_rank(HyperLink *hl);
 int lmn_hyperlink_element_num(HyperLink *hl);
@@ -108,12 +111,8 @@ void lmn_hyperlink_print(LmnMembrane *gr);
  *  hyperlink の接続関係を利用したルールマッチング最適化                   *
  * ----------------------------------------------------------------------- */
 
-/* findatom 時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持 */
-extern SimpleHashtbl *hl_sameproccxt;
-
 /* 同名型付きプロセス文脈を持つ引数ごとに生成される */
-typedef struct ProcCxt
-{
+typedef struct ProcCxt {
   int atomi;
   int arg;
   HyperLink *start;
@@ -151,15 +150,14 @@ typedef struct SameProcCxt {
 //#define LMN_FPC_SPC(FPC)    ((FPC)->sameproccxt)
 //#define LMN_FPC_COMMIT(FPC) ((FPC)->commit)
 
-void lmn_sameproccxt_init();
-void lmn_sameproccxt_clear();
+void lmn_sameproccxt_init(LmnReactCxt *rc);
+void lmn_sameproccxt_clear(LmnReactCxt *rc);
 SameProcCxt *lmn_sameproccxt_spc_make(int atomi, int length);
 ProcCxt *lmn_sameproccxt_pc_make(int atomi, int arg, ProcCxt *original);
 BOOL lmn_sameproccxt_from_clone(SameProcCxt *spc, int n);
 HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity);
 BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int atom_arity);
 BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int atom_arity);
-BOOL lmn_hyperlink_opt(LmnInstrVar atomi);
 void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl);
 
 #endif /* LMN_HYPERLINK_H */

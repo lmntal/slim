@@ -44,6 +44,9 @@
 #include "error.h"
 
 
+/** ----------------------
+ *  ASCII code for printer
+ */
 enum ESC_CODE {
   CODE__HIGH_LIGHT           =  0x01,
   CODE__UNDER_LINE           =  0x04,
@@ -81,6 +84,58 @@ static inline void esc_code_add(int code)
 }
 
 
+
+/** ----------------------
+ *  byte operation
+ */
+
+/* See http://isthe.com/chongo/tech/comp/fnv/ */
+#if SIZEOF_LONG == 4
+#  define FNV_PRIME 16777619UL
+#  define FNV_BASIS 2166136261UL
+#elif SIZEOF_LONG == 8
+#  define FNV_PRIME  1099511628211UL
+#  define FNV_BASIS 14695981039346656037UL
+#else
+#  error "not supported"
+#endif
+
+static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
+  unsigned long hval;
+  /*
+   * FNV-1a hash each octet in the buffer
+   */
+  hval = FNV_BASIS;
+  while (--i >= 0) {
+    /* xor the bottom with the current octet */
+    hval ^= (unsigned int)str[i];
+    /* multiply by the FNV magic prime mod 2^32 or 2^64 */
+    hval *= FNV_PRIME;
+  }
+
+  return hval;
+}
+
+/* 正: a ＞ b
+ * ０: a = b
+ * 負: a ＜ b */
+static inline int lmn_byte_cmp(const unsigned char *a, long alen,
+                               const unsigned char *b, long blen)
+{
+  if (alen != blen) {
+    return alen - blen;
+  } else {
+    return memcmp(a, b, alen);
+  }
+}
+
+
+
+
+/** ----------------------
+ *  else
+ */
+
 /* 配列の要素数 */
 #define ARY_SIZEOF(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
@@ -89,8 +144,7 @@ int comp_int_f(const void *a, const void *b);
 int comp_int_greater_f(const void *a_, const void *b_);
 
 /* n以上で最小の2の倍数を返す */
-static inline unsigned long round2up(unsigned long n)
-{
+static inline unsigned long round2up(unsigned long n) {
   unsigned int v = 1;
   while (v && v < n) {
     v <<= 1;

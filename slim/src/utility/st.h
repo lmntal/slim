@@ -11,6 +11,7 @@
 #define ST_INCLUDED
 
 #include "lmntal.h"
+#include "lmntal_thread.h"
 #include <stddef.h>
 
 typedef unsigned long st_data_t;
@@ -56,11 +57,11 @@ enum st_retval {
 # endif
 #endif
 
-inline static unsigned long st_num(st_table_t table) {
+static inline unsigned long st_num(st_table_t table) {
   return table->num_entries;
 }
 
-inline static unsigned long st_cap(st_table_t table) {
+static inline unsigned long st_cap(st_table_t table) {
   return table->num_bins;
 }
 
@@ -103,5 +104,7 @@ int st_foreach_hash(st_table_t table, st_data_t hash, int(*func)( ANYARGS), st_d
 void st_concat(st_table_t tbl1, const st_table_t tbl2);
 
 unsigned long st_table_space(st_table_t table);
+
+
 
 #endif /* ST_INCLUDED */

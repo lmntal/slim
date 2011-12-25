@@ -39,54 +39,89 @@
 
 #include "react_context.h"
 #include "task.h"
+#include "util.h"
+#include "hyperlink.h"
+#include "dpor.h"
 #include "slim_header/memstack.h"
 
-inline void react_context_init(struct ReactCxt *rc, BYTE mode)
+
+LmnRegister *lmn_register_make(unsigned int size)
+{
+  LmnRegister *v = LMN_NALLOC(struct LmnRegister, round2up(size));
+  memset(v, 0, sizeof(struct LmnRegister) * size);
+  return v;
+}
+
+void lmn_register_free(LmnRegister *v)
+{
+  LMN_FREE(v);
+}
+
+void lmn_register_extend(LmnReactCxt *rc, unsigned int new_size)
+{
+  new_size = round2up(new_size);
+  rc->work_arry = LMN_REALLOC(struct LmnRegister, rc->work_arry, new_size);
+  memset(rc->work_arry + warry_size(rc),
+         0,
+         sizeof(struct LmnRegister) * (new_size - warry_size(rc)));
+  warry_size_set(rc, new_size);
+}
+
+inline void react_context_init(LmnReactCxt *rc, BYTE mode)
 {
   rc->mode          = mode;
   rc->flag          = 0x00U;
   rc->global_root   = NULL;
   rc->v             = NULL;
-  rc->work_vec_size = 0;
+  rc->work_arry     = lmn_register_make(WARRY_DEF_SIZE);
+  rc->warry_cur     = 0;
+  rc->warry_num     = 0;
+  rc->warry_cap     = WARRY_DEF_SIZE;
   rc->atomic_id     = -1;
-  task_allocate_workspace(rc);
+  rc->hl_sameproccxt = NULL;
 }
 
-inline void react_context_destroy(struct ReactCxt *rc)
+inline void react_context_destroy(LmnReactCxt *rc)
 {
+  if (RC_HLINK_SPC(rc)) {
+    lmn_sameproccxt_clear(rc);
+  }
 }
 
 /*----------------------------------------------------------------------
  * Stand Alone React Context
  */
 
-inline void stand_alone_react_cxt_init(struct ReactCxt *cxt)
+inline void stand_alone_react_cxt_init(LmnReactCxt *cxt)
 {
   react_context_init(cxt, REACT_STAND_ALONE);
 }
 
-inline void stand_alone_react_cxt_destroy(struct ReactCxt *cxt)
+inline void stand_alone_react_cxt_destroy(LmnReactCxt *cxt)
 {
+  react_context_destroy(cxt);
 }
 
 /*----------------------------------------------------------------------
  * Property React Context
  */
 
-inline void property_react_cxt_init(struct ReactCxt *cxt)
+inline void property_react_cxt_init(LmnReactCxt *cxt)
 {
   react_context_init(cxt, REACT_PROPERTY);
 }
 
-inline void property_react_cxt_destroy(struct ReactCxt *cxt)
+inline void property_react_cxt_destroy(LmnReactCxt *cxt)
 {
+  react_context_destroy(cxt);
 }
+
 
 /*----------------------------------------------------------------------
  * Mem React Context
  */
 
-inline void mem_react_cxt_init(struct ReactCxt *cxt)
+inline void mem_react_cxt_init(LmnReactCxt *cxt)
 {
   struct MemReactCxtData *v = LMN_MALLOC(struct MemReactCxtData);
   react_context_init(cxt, REACT_MEM_ORIENTED);
@@ -94,10 +129,11 @@ inline void mem_react_cxt_init(struct ReactCxt *cxt)
   RC_MEMSTACK(cxt) = lmn_memstack_make();
 }
 
-inline void mem_react_cxt_destroy(struct ReactCxt *cxt)
+inline void mem_react_cxt_destroy(LmnReactCxt *cxt)
 {
   lmn_memstack_free(RC_MEMSTACK(cxt));
   LMN_FREE(cxt->v);
+  react_context_destroy(cxt);
 }
 
 
@@ -116,6 +152,7 @@ inline static struct McReactCxtData *mc_react_data_make()
   v->mem_delta_tmp  = NULL;
   v->opt_mode       = 0x00U;
   v->org_succ_num   = 0;
+  v->d_cur          = 0;
 
   if (lmn_env.delta_mem) {
     v->mem_deltas = vec_make(32);
@@ -141,12 +178,11 @@ inline static void mc_react_data_free(struct McReactCxtData *v)
   LMN_FREE(v);
 }
 
-inline void mc_react_cxt_init(struct ReactCxt *rc)
+inline void mc_react_cxt_init(LmnReactCxt *rc)
 {
   struct McReactCxtData *v = mc_react_data_make();
   react_context_init(rc, REACT_ND);
-  rc->v              = v;
-  rc->work_vec_size  = 0;
+  rc->v = v;
 
   if (v->mem_deltas) {
     RC_MC_SET_DMEM(rc);
@@ -157,16 +193,21 @@ inline void mc_react_cxt_init(struct ReactCxt *rc)
   } else if (lmn_env.enable_por) {
     RC_MC_SET_DPOR(rc);
   }
+
+  if (lmn_env.d_compress) {
+    RC_MC_SET_D(rc);
+  }
 }
 
 
-inline void mc_react_cxt_destroy(struct ReactCxt *cxt)
+inline void mc_react_cxt_destroy(LmnReactCxt *cxt)
 {
   mc_react_data_free(RC_ND_DATA(cxt));
+  react_context_destroy(cxt);
 }
 
 
-inline void mc_react_cxt_add_expanded(struct ReactCxt *cxt,
+inline void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
                                       LmnMembrane *mem,
                                       LmnRule rule)
 {
@@ -175,7 +216,7 @@ inline void mc_react_cxt_add_expanded(struct ReactCxt *cxt,
 }
 
 
-void mc_react_cxt_add_mem_delta(struct ReactCxt *cxt,
+void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
                                 struct MemDeltaRoot *d,
                                 LmnRule rule)
 {

@@ -11,7 +11,7 @@
 
 
 proc_generator{
-  np(2).
+  np(4).
   init @@ np(N) :- N>0, M=N-1 | np(M), p(wait,N).
 }.
 init_end @@ proc_generator{np(0), $p,@p}/ :- $p.

@@ -57,20 +57,46 @@
 #define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
 
 /* 属性配列ttに使用するタグ */
-enum { TT_OTHER,
-       TT_ATOM,            /* symbol atom  */
-       TT_MEM              /* membrane */
+enum { TT_OTHER = 0,
+       TT_ATOM  = 1,          /* symbol atom  */
+       TT_MEM   = 2           /* membrane */
 };
 
 void task_init(void);
-void lmn_dmem_interpret(struct ReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
-inline void task_allocate_workspace(struct ReactCxt *rc);
 void task_finalize(void);
+void lmn_dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
+void lmn_run(Vector *rulesets);
+BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule);
+void react_start_rulesets(LmnMembrane *mem, Vector *rulesets);
+BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembrane *cur_mem);
 void memstack_push(LmnMembrane *mem);
 struct Vector user_system_rulesets; /* system ruleset defined by user */
-void lmn_run(Vector *rulesets);
-BOOL react_rule(struct ReactCxt *rc, LmnMembrane *mem, LmnRule rule);
-void react_start_rulesets(LmnMembrane *mem, Vector *rulesets);
-BOOL react_all_rulesets(struct ReactCxt *rc, LmnMembrane *cur_mem);
+static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegister *v);
+static inline void free_links(Vector *links);
+HashSet *insertconnectors(LmnReactCxt *rc, LmnMembrane *mem, const Vector *links);
+
+static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegister *v) {
+  unsigned long i;
+  Vector *vec = vec_make(16);
+
+  /* リンクオブジェクトのベクタを構築 */
+  for (i = 0; i < vec_num(link_idxs); i++) {
+    vec_data_t t;
+    LinkObj l;
+    t = vec_get(link_idxs, i);
+    l = LinkObj_make(v[t].wt, v[t].at);
+    vec_push(vec, (LmnWord)l);
+  }
+  return vec;
+}
+
+static inline void free_links(Vector *links) {
+  unsigned long i;
+
+  for (i = 0; i < vec_num(links); i++) {
+    LMN_FREE(vec_get(links, i));
+  }
+  vec_free(links);
+}
 
 #endif

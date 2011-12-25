@@ -45,9 +45,7 @@
 #include "process_util.h"
 
 
-/* program_pathにあるプログラムを引数argsで起動し、プログラムの出力の
-   ストリームを返す。
-*/
+/* program_pathにあるプログラムを引数argsで起動し、プログラムの出力のストリームを返す。*/
 FILE *run_program(const char *program_path, char **args)
 {
    pid_t pid;
@@ -63,7 +61,7 @@ FILE *run_program(const char *program_path, char **args)
    switch (pid) {
    case 0: /* 子プロセス */
    {
-     int old; /* 警告されるので */
+     int old;
      close(fileno(stdout));
      old = dup(pipes[1]);
      close(pipes[0]);
@@ -79,10 +77,11 @@ FILE *run_program(const char *program_path, char **args)
      exit(EXIT_FAILURE);
    default: /* 親プロセス */
    {
-     int status;
+//     int status;
 
      close(pipes[1]);
-     /* パイプのバッファを越える出力が起きると読み込むまでブロックされるためデッドロック */
+     /* TODO: パイプのバッファを越える出力を受けた場合,
+      *       読み込むまでブロックされるためデッドロックしてしまう */
 //     if (waitpid(pid, &status, 0) == -1) {
 //       perror("waitpid failed");
 //       exit(EXIT_FAILURE);

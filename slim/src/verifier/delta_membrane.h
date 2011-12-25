@@ -46,13 +46,12 @@
 #include "vector.h"
 #include "rule.h"
 
-typedef struct MemDeltaRoot MemDeltaRoot;
 struct MemDeltaRoot {
   LmnMembrane *root_mem;
 
-  struct ProcessTbl proc_tbl;
-  struct ProcessTbl flag_tbl;
-  struct ProcessTbl owner_tbl;
+  struct ProcessTbl    proc_tbl;
+  struct SimplyProcTbl flag_tbl;
+  struct ProcessTbl    owner_tbl;
 
   Vector modified_atoms;
 
@@ -64,6 +63,7 @@ struct MemDeltaRoot {
   BOOL committed;
 
   LmnRule applied_rule;
+  lmn_interned_str applied_history;
   unsigned long new_proc_id_lower_limit;
 };
 
@@ -128,40 +128,21 @@ void dmem_root_add_new_mem(struct MemDeltaRoot *d, LmnMembrane *m);
 void dmem_root_add_child_mem(struct MemDeltaRoot *d,
                              LmnMembrane *parent,
                              LmnMembrane *child);
-void dmem_root_newlink(struct MemDeltaRoot *d,
-                       LmnMembrane *m,
-                       LmnAtom atom0,
-                       LmnLinkAttr attr0,
-                       int pos0,
-                       LmnAtom atom1,
-                       LmnLinkAttr attr1,
-                       int pos1);
-void dmem_root_link_data_atoms(struct MemDeltaRoot *d,
-                               LmnMembrane *m,
-                               LmnAtom d1,
-                               LmnLinkAttr attr1,
-                               LmnAtom d2,
-                               LmnLinkAttr attr2);
-void dmem_root_unify_atom_args(struct MemDeltaRoot *d,
-                               LmnMembrane *m,
-                               LmnSAtom atom1,
-                               int pos1,
-                               LmnSAtom atom2,
-                               int pos2);
-void dmem_root_unify_links(struct MemDeltaRoot *d,
-                           LmnMembrane *m,
-                           LmnAtom atom1,
-                           LmnLinkAttr attr1,
-                           LmnAtom atom2,
-                           LmnLinkAttr attr2);
-void dmem_root_relink(struct MemDeltaRoot *d,
-                      LmnMembrane *m,
-                      LmnAtom atom1,
-                      LmnLinkAttr attr1,
-                      int pos1,
-                      LmnAtom atom2,
-                      LmnLinkAttr attr2,
-                      int pos2);
+void dmem_root_newlink(struct MemDeltaRoot *d, LmnMembrane *m,
+                       LmnAtom atom0, LmnLinkAttr attr0, int pos0,
+                       LmnAtom atom1, LmnLinkAttr attr1, int pos1);
+void dmem_root_link_data_atoms(struct MemDeltaRoot *d, LmnMembrane *m,
+                               LmnAtom d1, LmnLinkAttr attr1,
+                               LmnAtom d2,LmnLinkAttr attr2);
+void dmem_root_unify_atom_args(struct MemDeltaRoot *d, LmnMembrane *m,
+                               LmnSAtom atom1, int pos1,
+                               LmnSAtom atom2, int pos2);
+void dmem_root_unify_links(struct MemDeltaRoot *d, LmnMembrane *m,
+                           LmnAtom atom1, LmnLinkAttr attr1,
+                           LmnAtom atom2, LmnLinkAttr attr2);
+void dmem_root_relink(struct MemDeltaRoot *d, LmnMembrane *m,
+                      LmnAtom atom1, LmnLinkAttr attr1, int pos1,
+                      LmnAtom atom2, LmnLinkAttr attr2, int pos2);
 void dmem_root_remove_atom(struct MemDeltaRoot *d,
                            LmnMembrane *m,
                            LmnAtom atom,
@@ -173,8 +154,8 @@ void dmem_root_move_cells(struct MemDeltaRoot *d,
                           LmnMembrane *destmem,
                           LmnMembrane *srcmem);
 ProcessTbl dmem_root_copy_cells(struct MemDeltaRoot *d,
-                          LmnMembrane *destmem,
-                          LmnMembrane *srcmem);
+                                LmnMembrane *destmem,
+                                LmnMembrane *srcmem);
 void dmem_root_clear_ruleset(struct MemDeltaRoot *d, LmnMembrane *m);
 void dmem_root_copy_rules(struct MemDeltaRoot *root_d, LmnMembrane *dest, LmnMembrane *src);
 void dmem_root_drop(struct MemDeltaRoot *root_d, LmnMembrane *m);

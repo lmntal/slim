@@ -52,13 +52,13 @@
                                           && !is_on_cycle(SYST_S))
 
 #define OWCTY_COND(W)                   (worker_use_owcty(W)              \
-                                          && !mc_data.mc_exit)
+                                          && !w->group->mc_exit)
 
 #define MAP_COND(W)                     (worker_use_map(W)                \
-                                          && !mc_data.mc_exit)
+                                          && !w->group->mc_exit)
 
 #define BLEDGE_COND(W)                  (worker_use_ble(W)                \
-                                          && !mc_data.mc_exit)
+                                          && !w->group->mc_exit)
 
 #define MC_MAP_MASK                     (0x01U)
 #define MC_MAP2_MASK                    (0x01U << 1)
@@ -79,6 +79,9 @@
 
 /** prototypes
  */
+
+void backward_elimination(LmnWorker *w, State *s);
+
 void ndfs_env_set(LmnWorker *w);
 void ndfs_start(LmnWorker *w, State *seed);
 void ndfs_worker_init(LmnWorker *w);

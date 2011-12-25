@@ -1,5 +1,5 @@
 /*
- * io.c - String API
+ * io.c
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -48,7 +48,7 @@ void init_print(void);
  * +a0     : ポート
  * -a1     : 返すポート
  */
-void cb_print_newline_with_port(ReactCxt rc,
+void cb_print_newline_with_port(LmnReactCxt *rc,
                                 LmnMembrane *mem,
                                 LmnAtom a0, LmnLinkAttr t0,
                                 LmnAtom a1, LmnLinkAttr t1)
@@ -65,7 +65,7 @@ void cb_print_newline_with_port(ReactCxt rc,
  * +a1     : 文字列
  * -a2     : 返すポート
  */
-void cb_print_line_with_port(ReactCxt rc,
+void cb_print_line_with_port(LmnReactCxt *rc,
                              LmnMembrane *mem,
                              LmnAtom a0, LmnLinkAttr t0,
                              LmnAtom a1, LmnLinkAttr t1,
@@ -86,7 +86,7 @@ void cb_print_line_with_port(ReactCxt rc,
  * -a1     : 返すポート
  * -a2     : 読み込んだ文字列 | eof()
  */
-void cb_input_line_with_oprt(ReactCxt rc,
+void cb_input_line_with_oprt(LmnReactCxt *rc,
                              LmnMembrane *mem,
                              LmnAtom a0, LmnLinkAttr t0,
                              LmnAtom a1, LmnLinkAttr t1,

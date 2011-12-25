@@ -39,103 +39,287 @@
 
 #include "binstr_compress.h"
 #include "error.h"
+#include "zdlib.h"
+#ifdef HAVE_LIBZ
+# include <zlib.h>
+#endif
 #ifdef PROFILE
-#  include "runtime_status.h"
+# include "runtime_status.h"
 #endif
 
 
-
-
-/** -----------------------------------------------------------------
+/** ============================
  *  Binary String Compressor
- *    using zlib("A Massively Spiffy Yet Delicately Unobtrusive Compression Library")
- *  @see http://www.zlib.net/
+ *  ============================
+ *  AUTHOR: Masato Gocho
+ */
+
+/* ハーフバイトは1バイトの半分のサイズであるため, バイトサイズの2倍の長さとなる.
+ * ハーフバイトサイズhとバイトサイズbの変換では, 除算による1未満切り捨てを考慮する必要がある.
+ *
+ * ENCODE:
+ *   LmnBinStr org, cmp;
+ *   1. cmp = compress(org)
+ *   2. cmp.h <==  x2 <== cmp.b
+ *   3. free(src)
+ * DECODE:
+ *   LmnBinStr org, cmp;
+ *   1. cmp.h ==> 1/2 ===> cmp.b
+ *   2. org = uncompress(cmp);
+ *   3. org.h <==  x2 <== org.b
+ *
+ * bからhを求めると, 2倍しているため必ず偶数となり, DECODEした際に正確なhの値とならない.
+ * そこで, ENCODEの際に, orgのハーフバイトサイズが奇数ならば, cmpのハーフバイトサイズに1を加算する.
+ * 加算した1はDECODEの際に1/2するため切り捨てられる.
+ * 最終的に, DECODEしたハーフバイトサイズを計算したとき, cmpのハーフバイトサイズが奇数なら1を減算する.
+ *
+ * 例:
+ * ENCODE(org.h = 13)
+ *        org.b = (org.h + 1) / 2
+ *              = 7
+ *  ===>  cmp.b = 5
+ *  ===>  cmp.h = cmp.b * 2 + 1
+ *              = 11
+ * DECODE(cmp.h = 11)
+ *        cmp.b = org.h / 2
+ *              = 5
+ *  ===>  org.b = 7
+ *  ===>  org.h = org.b * 2 - 1
+ *              = 13
+ */
+
+
+/** --------------------------
+ *  Method1: zlib
+ *    "A Massively Spiffy Yet Delicately Unobtrusive Compression Library"
+ *    @see http://www.zlib.net/
  */
 LmnBinStr lmn_bscomp_z_encode(const LmnBinStr org)
 {
 #ifndef HAVE_LIBZ
   return org;
 #else
-  LmnBinStr new;
-  unsigned long org_8len, buf_len;
+  LmnBinStr cmp;
+  unsigned long org_8len, cmp_8len;
   int ret;
+
 #ifdef PROFILE
-  unsigned long old_space, new_space;
+  unsigned long old_space, cmp_space;
   if (lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__Z_COMPRESS);
   }
 #endif
 
-  buf_len = org->len << 2; /* 適当に確保 */
-  new = lmn_binstr_make(buf_len);
-  org_8len = (org->len + 1) / TAG_IN_BYTE; /* org->lenは4bit単位の要素数なので, 8bit単位の数値へ戻す */
+  LMN_ASSERT(!is_comp_z(org)); /* z圧縮の多重掛けは想定していない */
 
-  ret = compress(new->v, &buf_len, org->v, org_8len);
+  org_8len = (org->len + 1) / TAG_IN_BYTE;
+  cmp_8len = org_8len * 2;
+  cmp = lmn_binstr_make(cmp_8len);
+  cmp->type = org->type;
+  ret = compress(cmp->v, &cmp_8len, org->v, org_8len);
   if (ret != Z_OK) { /* zlib */
-    printf("%s\n", ret == Z_MEM_ERROR ? "Z_MEM_ERROR" : "Z_BUF_ERROR");
-    lmn_fatal("fail to compress");
-    /* 成功するまで繰り返せるけど, とりあえずfatalでいいや */
+    fprintf(stderr, "%s\n", ret == Z_MEM_ERROR ? "Z_MEM_ERROR" : "Z_BUF_ERROR");
+    lmn_fatal("fail to compress: zlib");
   }
 
-  new->len = buf_len * TAG_IN_BYTE + ((org->len & 0x1U) ? 1 : 0);
-  set_comp_z(new);
+  cmp->len = cmp_8len * TAG_IN_BYTE + ((org->len & 0x1U) ? 1 : 0);
+  set_comp_z(cmp);
 
 #ifdef PROFILE
   old_space = lmn_binstr_space(org);
-  new_space = lmn_binstr_space(new);
+  cmp_space = lmn_binstr_space(cmp);
   if (lmn_env.profile_level >= 3) {
-    profile_add_space(PROFILE_SPACE__STATE_BINSTR, new_space);
-    profile_add_space(PROFILE_SPACE__REDUCED_BINSTR, old_space - new_space);
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, cmp_space);
+    profile_add_space(PROFILE_SPACE__REDUCED_BINSTR, old_space - cmp_space);
     profile_finish_timer(PROFILE_TIME__Z_COMPRESS);
   }
 #endif
-  return new;
+  return cmp;
 #endif
 }
 
-LmnBinStr lmn_bscomp_z_decode(const LmnBinStr org)
+
+LmnBinStr lmn_bscomp_z_decode(const LmnBinStr cmp)
 {
 #ifndef HAVE_LIBZ
-  return org;
+  return cmp;
 #else
-  LmnBinStr new;
-  unsigned long org_8len, buf_len;
+  LmnBinStr org;
+  unsigned long cmp_8len, org_8len;
   int ret;
 
 #ifdef PROFILE
-  unsigned long org_space, new_space;
+  unsigned long org_space;
   if (lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__Z_UNCOMPRESS);
   }
 #endif
+  LMN_ASSERT(is_comp_z(cmp));
 
-
-  LMN_ASSERT(is_comp_z(org));
-
-  buf_len = org->len << 3; /* とりあえず適当 */
-  new = lmn_binstr_make(buf_len);
-  org_8len = (org->len + 1) / TAG_IN_BYTE; /* org->lenは4bit単位の要素数なので, 8bit単位の数値へ戻す */
-
-  ret = uncompress(new->v, &buf_len, org->v, org_8len);
+  cmp_8len = cmp->len / TAG_IN_BYTE;
+  org_8len = cmp_8len * 5;
+  org = lmn_binstr_make(org_8len);
+  ret = uncompress(org->v, &org_8len, cmp->v, cmp_8len);
   if (ret != Z_OK) { /* zlib */
-    printf("%s\n", ret == Z_MEM_ERROR ? "Z_MEM_ERROR" : "Z_BUF_ERROR");
-    lmn_fatal("fail to uncompress");
-    /* デコードの方はBUF_ERRORならバッファを大きくして成功するまで再試行すべき
-     * だけど, とりあえずfatalでいいや */
+    fprintf(stderr, "%s\n", ret == Z_MEM_ERROR ? "Z_MEM_ERROR" : "Z_BUF_ERROR");
+    lmn_fatal("fail to uncompress: zlib");
   }
 
-  new->len = buf_len * TAG_IN_BYTE - ((org->len & 0x1U) ? 1 : 0);
+  org->type = cmp->type;
+  org->len  = org_8len * TAG_IN_BYTE - ((cmp->len & 0x1U) ? 1 : 0);
+  unset_comp_z(org);
 
 #ifdef PROFILE
   org_space = lmn_binstr_space(org);
-  new_space = lmn_binstr_space(new);
   if (lmn_env.profile_level >= 3) {
-    profile_add_space(PROFILE_SPACE__STATE_BINSTR, new_space);
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, org_space);
     profile_finish_timer(PROFILE_TIME__Z_UNCOMPRESS);
   }
 #endif
 
-  return new;
+  return org;
 #endif
+}
+
+
+/** --------------------------
+ *  Method2: zdelta
+ *    "A General Purpose Lossless Delta Compression Library")
+ *    @see http://cis.poly.edu/zdelta/
+ */
+
+static inline const char *zd_ret_str(int n)
+{
+  switch (n) {
+  case ZD_BUF_ERROR:
+    return "Buffer Error";
+  case ZD_MEM_ERROR:
+    return "Memory Error";
+  case ZD_STREAM_ERROR:
+    return "Stream Error";
+  case ZD_DATA_ERROR:
+    return "Data Error";
+  case ZD_OK:
+    return "OK";
+  default:
+    return "Unknown Error";
+  }
+}
+
+static int zd_buf_n = 3;
+
+/* バイト列refからバイト列orgへの差分を求めて返す.
+ * org, ref共にRead Only */
+LmnBinStr lmn_bscomp_d_encode(const LmnBinStr org, const LmnBinStr ref)
+{
+  LmnBinStr dif;
+  unsigned long org_8len, ref_8len, dif_8len;
+  int ret, mul;
+
+#ifdef PROFILE
+  unsigned long old_space, dif_space;
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__D_COMPRESS);
+  }
+#endif
+
+  LMN_ASSERT(!is_comp_d(org)); /* diffからのdiff計算は禁止 */
+
+  org_8len = (org->len + 1) / TAG_IN_BYTE;
+  ref_8len = (ref->len + 1) / TAG_IN_BYTE;
+
+  mul = zd_buf_n;
+  dif = NULL;
+  dif_8len = org_8len;
+
+  while (1) {
+    if (dif) lmn_binstr_free(dif);
+    dif_8len *= mul;
+    dif = lmn_binstr_make(dif_8len);
+    ret = zd_compress(ref->v, ref_8len, org->v, org_8len, dif->v, &dif_8len);
+
+    if (ret == ZD_BUF_ERROR) {
+      zd_buf_n *= mul;
+    } else {
+      break;
+    }
+  }
+
+  if (ret != ZD_OK) {
+    fprintf(stderr, "%s\n", zd_ret_str(ret));
+    lmn_fatal("fail to compress");
+  }
+
+  dif->len  = dif_8len * TAG_IN_BYTE + ((org->len & 0x1U) ? 1 : 0);
+  dif->type = org->type;
+  set_comp_d(dif);
+
+#ifdef PROFILE
+  old_space = lmn_binstr_space(org);
+  dif_space = lmn_binstr_space(dif);
+  if (lmn_env.profile_level >= 3) {
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, dif_space);
+    profile_add_space(PROFILE_SPACE__REDUCED_BINSTR, old_space - dif_space);
+    profile_finish_timer(PROFILE_TIME__D_COMPRESS);
+  }
+#endif
+  return dif;
+}
+
+/* バイト列refに対して差分difを適用してorgを復元して返す.
+ * メモリは読み出し専用 */
+LmnBinStr lmn_bscomp_d_decode(const LmnBinStr ref, const LmnBinStr dif)
+{
+  LmnBinStr org;
+  unsigned long ref_8len, dif_8len, org_8len;
+  int ret, mul;
+
+#ifdef PROFILE
+  unsigned long org_space;
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__D_UNCOMPRESS);
+  }
+#endif
+  LMN_ASSERT(is_comp_d(dif));
+
+  ref_8len = (ref->len + 1) / TAG_IN_BYTE;
+  dif_8len = dif->len / TAG_IN_BYTE;
+
+  mul = zd_buf_n;
+  org = NULL;
+  org_8len = ref_8len + dif_8len;
+
+  while (1) {
+    if (org) lmn_binstr_free(org);
+    org_8len *= mul;
+    org = lmn_binstr_make(org_8len);
+
+    ret = zd_uncompress(ref->v, ref_8len, org->v, &org_8len, dif->v, dif_8len);
+
+    if (ret == ZD_BUF_ERROR) {
+      zd_buf_n *= mul;
+    } else {
+      break;
+    }
+  }
+
+  if (ret != ZD_OK) {
+    fprintf(stderr, "%s\n", zd_ret_str(ret));
+    lmn_fatal("fail to uncompress: zdlib");
+  }
+
+  org->len  = org_8len * TAG_IN_BYTE - ((dif->len & 0x1U) ? 1 : 0);
+  org->type = dif->type;
+  unset_comp_d(org);
+
+#ifdef PROFILE
+  org_space = lmn_binstr_space(org);
+  if (lmn_env.profile_level >= 3) {
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, org_space);
+    profile_finish_timer(PROFILE_TIME__D_UNCOMPRESS);
+  }
+#endif
+
+  return org;
 }
 

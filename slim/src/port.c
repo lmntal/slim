@@ -397,7 +397,7 @@ int port_puts(LmnPort port, LmnString str)
  * +a0: ポート
  * -a1: ポートを返す
  */
-void cb_port_close(ReactCxt rc,
+void cb_port_close(LmnReactCxt *rc,
                    LmnMembrane *mem,
                    LmnAtom a0, LmnLinkAttr t0,
                    LmnAtom a1, LmnLinkAttr t1)
@@ -415,7 +415,7 @@ void cb_port_close(ReactCxt rc,
  *
  * +a0: ポート
  */
-void cb_port_free(ReactCxt rc,
+void cb_port_free(LmnReactCxt *rc,
                   LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0)
 {
@@ -426,7 +426,7 @@ void cb_port_free(ReactCxt rc,
 /*
  * -a0: 標準入力ポートを返す
  */
-void cb_stdin_port(ReactCxt rc,
+void cb_stdin_port(LmnReactCxt *rc,
                    LmnMembrane *mem,
                    LmnAtom a0, LmnLinkAttr t0)
 {
@@ -442,7 +442,7 @@ void cb_stdin_port(ReactCxt rc,
 /*
  * -a0: 標準出力ポートを返す
  */
-void cb_stdout_port(ReactCxt rc,
+void cb_stdout_port(LmnReactCxt *rc,
                     LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
@@ -458,7 +458,7 @@ void cb_stdout_port(ReactCxt rc,
 /*
  * -a0: 標準エラーポートを返す
  */
-void cb_stderr_port(ReactCxt rc,
+void cb_stderr_port(LmnReactCxt *rc,
                     LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
@@ -476,7 +476,7 @@ void cb_stderr_port(ReactCxt rc,
  * -a1: ポートを返す
  * -a2: 文字
  */
-void cb_port_getc(ReactCxt rc,
+void cb_port_getc(LmnReactCxt *rc,
                   LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
@@ -506,7 +506,7 @@ void cb_port_getc(ReactCxt rc,
  * +a1: unaryアトム
  * -a2: ポートを返す
  */
-void cb_port_putc(ReactCxt rc,
+void cb_port_putc(LmnReactCxt *rc,
                   LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
@@ -526,7 +526,7 @@ void cb_port_putc(ReactCxt rc,
  * a1: 文字列
  * a2: ポートを返す
  */
-void cb_port_puts(ReactCxt rc,
+void cb_port_puts(LmnReactCxt *rc,
                   LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
@@ -546,7 +546,7 @@ void cb_port_puts(ReactCxt rc,
  * -a1: ポートを返す
  * -a2: 文字列
  */
-void cb_port_read_line(ReactCxt rc,
+void cb_port_read_line(LmnReactCxt *rc,
                        LmnMembrane *mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1,
@@ -577,7 +577,7 @@ void cb_port_read_line(ReactCxt rc,
  %
  * -a0: 出力文字列ポート
  */
-void cb_make_output_string(ReactCxt rc,
+void cb_make_output_string(LmnReactCxt *rc,
                            LmnMembrane *mem,
                            LmnAtom a0, LmnLinkAttr t0)
 {
@@ -594,7 +594,7 @@ void cb_make_output_string(ReactCxt rc,
  * +a0: 文字列
  * -a1: 入力文字列ポート
  */
-void cb_make_input_string(ReactCxt rc,
+void cb_make_input_string(LmnReactCxt *rc,
                           LmnMembrane *mem,
                           LmnAtom a0, LmnLinkAttr t0,
                           LmnAtom a1, LmnLinkAttr t1)
@@ -614,7 +614,7 @@ void cb_make_input_string(ReactCxt rc,
  * -a1: ポートを返す
  * -a2: 文字列
  */
-void cb_port_output_string(ReactCxt rc,
+void cb_port_output_string(LmnReactCxt *rc,
                            LmnMembrane *mem,
                            LmnAtom a0, LmnLinkAttr t0,
                            LmnAtom a1, LmnLinkAttr t1,

@@ -2,19 +2,34 @@ SUBDIRS = utility verifier
 
 bin_PROGRAMS = slim
 
-slim_LDADD =   -ldl                         \
-               ./verifier/liblmn_verifier.a \
-               ./utility/liblmn_utility.a  #		-lltdl
-
-slim_LDFLAGS = -rdynamic      \
-               -L./verifier   \
-               -L./utility
-
-slim_CFLAGS =  -I./verifier   \
+slim_LDADD =   -ldl                                    \
+               -llmn_verifier                          \
+               -llmn_utility                           \
+               -lzd_in_slim
+slim_LDFLAGS = -rdynamic                               \
+               -L./verifier                            \
+               -L./utility                             \
+               -L../third_party/zdelta-2.1
+slim_CFLAGS =  -I./verifier                            \
                -I./utility
-
-slim_DEPENDENCIES = ./verifier/liblmn_verifier.a \
+slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
                     ./utility/liblmn_utility.a
+
+if ENABLE_JNI
+slim_LDADD += -ljvm
+slim_LDFLAGS += -L../
+slim_DEPENDENCIES += ../libjvm.a
+endif
+
+if ENABLE_TCMALLOC
+slim_LDADD += -ltcmalloc_minimal_in_slim
+slim_LDFLAGS += -L../third_party/google-perftools-1.8.3/.libs
+slim_DEPENDENCIES += ../third_party/google-perftools-1.8.3/.libs/libtcmalloc_minimal_in_slim.a
+endif
+
+EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
+DISTCLEANFILES = arch.h ../lib/config.lmn
+
 
 AM_LFLAGS=-P $(patsubst %_lexer.l,%,$<)  \
            --header-file=$(patsubst %.l,%.h,$<) -o $(patsubst %.l,%.c,$<)
@@ -77,22 +92,7 @@ slim_SOURCES =                                                     \
 	ext/time.c
 #	ext.h ext.c 
 
-if ENABLE_JNI
-slim_LDADD += -ljvm
-slim_LDFLAGS += -L.
-slim_DEPENDENCIES += ../libjvm.a
-endif
-
 slim_OBJS =
-
-if ENABLE_TCMALLOC
-slim_LDADD += -ltcmalloc_minimal_in_slim
-slim_LDFLAGS += -L../third_party/google-perftools-1.6/.libs -rpath $(prefix)/lib
-slim_DEPENDENCIES += ../third_party/google-perftools-1.6/libtcmalloc_minimal_in_slim.la
-endif
-
-EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
-DISTCLEANFILES = arch.h ../lib/config.lmn
 
 # Automakeは同じディレクトリにある複数のパーサーをコンパイルするため
 # にylwrap を使おうとするが、必要ないので、ルールを上書きする

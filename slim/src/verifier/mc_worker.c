@@ -38,7 +38,7 @@
  */
 
 /** @author Masato Gocho
- *  utility for parallel/concurrent execution */
+ *  utilities for parallel/concurrent execution */
 
 #include "mc.h"
 #include "mc_worker.h"
@@ -49,133 +49,28 @@
 #include "error.h"
 #include "runtime_status.h"
 
-/** prototypes
+/** -------------------------------------
+ *  MC object
  */
-static void worker_start(void *arg);
-static void worker_set_tls_id(unsigned long id);
-static void worker_set_env(LmnWorker *w);
-static void workerpool_make(StateSpace states, BOOL flags);
-static void workerpool_free(void);
-static void workerpool_set_ring(void);
 
-
-/* TODO:
- *  struct LmnWorkerPoolみたいな構造を作って,
- *  それをいじくりまわしてあげるように変更した方がよいかも.. */
-static LmnWorker   **p_workers;
-static unsigned int  p_worker_num;
-static BOOL          p_terminated;
-static lmn_barrier_t p_barrier;
-
-/* parallel workersの初期設定 (MT-Unsafe) */
-void lmn_workers_env_init(StateSpace states, BOOL flags)
-{
-  /* worker pool の構築と初期設定 */
-  p_terminated = FALSE;
-  p_worker_num = lmn_env.core_num;
-  lmn_barrier_init(&p_barrier, p_worker_num);
-  workerpool_make(states, flags);
-  workerpool_set_ring();
-}
-
-
-/* 後始末 */
-void lmn_workers_env_finalize(void)
-{
-  lmn_barrier_destroy(&p_barrier);
-  workerpool_free();
-  worker_set_tls_id(0);  /* primary_threadのTLS IDを元に戻す */
-}
-
-
-/* スレッドの起動 (MT-unsafe) */
-void launch_lmn_workers()
-{
-  unsigned long i, core_num;
-
-  core_num = p_worker_num;
-  for (i = 1; i < core_num; i++) { /** start */
-    lmn_thread_create(&WORKER_PID(workerpool_get_worker(i)), worker_start, i);
-  }
-  if (lmn_env.profile_level >= 1) profile_start_exec();
-  worker_start((void *)0UL);
-  if (lmn_env.profile_level >= 1) profile_finish_exec();
-  for (i = 1; i < core_num; i++) {
-    lmn_thread_join(WORKER_PID(workerpool_get_worker(i)));
-  }
-}
-
-
-
-#define TERMINATION_CONDITION(W)  !WORKER_IS_ACTIVE(W) && \
-                                   WORKER_IS_WHITE(W)  && \
-                                   WORKER_CHECK(W)
-
-/* 全てのWorkerオブジェクトが実行を停止している場合に真を返す. */
-BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root)
-{
-  /** 概要:
-   *  LmnWorkerは論理的に輪を形成しており, フラグチェックを輪に沿って実施する.
-   *  is_activeかどうかをチェックする他にis_stealer, is_whiteもチェックする.
-   *    is_white  : 自idより小さいidのworkerに状態を送信した場合の不正終了を判定するフラグ
-   *                フラグチェック済みのworkerの仕事を投げた場合に不正終了するため
-   *                @see Dijkstra's Token Termination Detection (parallel computing)
-   *    is_steaker: 盗みを働いたことを示すフラグ.
-   *                フラグチェック済のworkerがフラグ未チェックworkerからWork Stealingした場合に不正終了するため
-   *
-   *  Dijkstraの手法を一部参考にしてはいるが, 実装はまったくDijkstraの手法ではないため注意.
-   *  (共有メモリなので, Tokenを輪の方向に回し, Tokenが戻ってきたら判定終了, という同期が必要な処理は必要ない)
-   *  Primary Worker(id==0)が判定した検知結果を他のWorkerは読み出す, という実装にしている.
-   */
-  if (WORKER_ID(root) == 0 && !p_terminated) {
-    int i, n;
-    BOOL ret;
-
-    ret = TRUE;
-    n   = p_worker_num;
-
-    for (i = 0; i < n; i++) {
-      LmnWorker *w = workerpool_get_worker(i);
-      ret = ret && TERMINATION_CONDITION(w);
-      WORKER_SET_WHITE(w); /* 検査したらwhiteに戻す */
-      if (!ret) return FALSE;
-    }
-
-    for (i = 0; i < n; i++) {
-      LmnWorker *w = workerpool_get_worker(i);
-      ret = ret && !WORKER_IS_STEALER(w);
-      WORKER_UNSET_STEALER(w);
-      if (!ret) return FALSE;
-    }
-
-    p_terminated = ret;
-  }
-
-  return p_terminated;
-}
-
-
-/* 全てのWorkerオブジェクトで同期を取り, id番のWorkerが関数funcを実行する.
- * 全てのWorkerが本関数に入った場合, 関数を抜ける.
- * 関数名がいまいち合ってない気がしてならない */
-void lmn_workers_synchronization(LmnWorker    *me,
-                                 unsigned int id,
-                                 void (*func)(LmnWorker *w))
-{
-  lmn_barrier_wait(&p_barrier);
-
-  if (func) {
-    if (WORKER_ID(me) == id) {
-      (*func)(me);
-    }
-    lmn_barrier_wait(&p_barrier);
-  }
+static inline void lmn_mc_obj_init(LmnMCObj *mc, LmnWorker *w) {
+  mc->type     = 0x00U;
+  mc->obj      = NULL;
+  mc->init     = NULL;
+  mc->finalize = NULL;
+  mc->owner    = w;
 }
 
 
 /** -------------------------------------
  *  LmnWorker
  */
+
+static void lmn_worker_start(void *arg);
+static void worker_TLS_init(unsigned int id);
+static void worker_TLS_finalize(void);
+static void worker_set_env(LmnWorker *w);
+
 
 /* まっさらなLmnWorkerオブジェクトをmallocして返す */
 inline LmnWorker *lmn_worker_make_minimal()
@@ -187,18 +82,16 @@ inline LmnWorker *lmn_worker_make_minimal()
   w->f_exec    = 0x00U;
   w->f_end     = FALSE;
   w->f_end2    = FALSE;
+  w->wait      = FALSE;
   w->states    = NULL;
   w->next      = NULL;
-  w->type      = 0x00U;
-  w->type2     = 0x00U;
-  w->obj       = NULL;
-  w->obj2      = NULL;
   w->start     = NULL;
   w->check     = NULL;
-  w->init      = NULL;
-  w->init2     = NULL;
-  w->finalize  = NULL;
-  w->finalize2 = NULL;
+  w->invalid_seeds = NULL;
+  w->cycles    = NULL;
+
+  lmn_mc_obj_init(&w->generator, w);
+  lmn_mc_obj_init(&w->explorer, w);
 
   return w;
 }
@@ -211,9 +104,9 @@ LmnWorker *lmn_worker_make(StateSpace     ss,
   LmnWorker *w = lmn_worker_make_minimal();
   w->states = ss;
   w->id     = id;
-  WORKER_SET_FLAGS(w, flags);
-  WORKER_SET_ACTIVE(w);
-  WORKER_SET_WHITE(w);
+  worker_flags_set(w, flags);
+  worker_set_active(w);
+  worker_set_white(w);
 
   return w;
 }
@@ -225,105 +118,406 @@ void lmn_worker_free(LmnWorker *w)
 }
 
 
-/* Start Verification:
- * >>>> ここから先の処理は全てMT-safeでなければならない <<<< */
-static void worker_start(void *arg)
+/* Verification start */
+static void lmn_worker_start(void *arg)
 {
+  LmnWorkerGroup *wp;
   LmnWorker *w;
   unsigned long id;
 
-  id = (unsigned long)arg;
-  worker_set_tls_id(id);          /* 1. Thread Local Storageの参照に用いるIDを設定 */
-  thread_set_cpu_affinity(id);    /* 2. ThreadをCPUに貼り付ける */
-  w = workerpool_get_my_worker(); /* 3. 1で取得したIDから実行スレッド用のLmnWorkerオブジェクトへの参照を張る */
+  w = (LmnWorker *)arg;
+  wp = worker_group(w);
+  id = worker_id(w);
+  worker_TLS_init(id);
 
-  mc_react_cxt_init(&WORKER_RC(w));
+  mc_react_cxt_init(&worker_rc(w));
+
+  if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
+    StateSpace ss = worker_states(w);
+    dump_state_data(statespace_init_state(ss), (LmnWord)ss->out, ss);
+  }
+
   if (lmn_env.profile_level >= 1) profile_start_exec_thread();
-  WORKER_START(w);
+  worker_start(w);
 
-  if (!mc_data.mc_exit && !mc_data.error_exist) {
+  if (!workers_are_exit(wp) && !workers_have_error(wp)) {
     if (worker_use_owcty(w)) {
       owcty_start(w);
     } else if (worker_use_map(w) && !worker_use_weak_map(w)) {
       map_iteration_start(w);
     }
+    /* else: ND-mode etc */
   }
 
   if (lmn_env.profile_level >= 1) profile_finish_exec_thread();
-  mc_react_cxt_destroy(&WORKER_RC(w));
+  mc_react_cxt_destroy(&worker_rc(w));
+  worker_TLS_finalize();
 }
 
 
-static void worker_set_tls_id(unsigned long id)
+static void worker_TLS_init(unsigned int inc_id)
 {
-#ifdef ENABLE_PARALLEL
-  lmn_thread_id = id;
-  env_reset_proc_ids();
-#endif
+  /* 各スレッド毎に, 自分のTLS idを設定する */
+  env_my_TLS_init(inc_id);
+  lmn_thread_set_CPU_affinity(inc_id);
+}
+
+
+static void worker_TLS_finalize()
+{
+  env_my_TLS_finalize();
 }
 
 
 /** -----------------------------------------------------------
- *  Worker Pool
+ *  Worker Group
  */
 
-/* 呼び出したスレッドのTLS IDに応じたLmnWorkerオブジェクトをWorkerPoolから返す */
-LmnWorker *workerpool_get_my_worker()
+static void workers_gen(LmnWorkerGroup *owner,
+                        unsigned int   w_num,
+                        Automata       a,
+                        Vector         *psyms,
+                        BOOL           flags);
+static void workers_free(LmnWorker **w, unsigned int w_num);
+static void workers_ring_alignment(LmnWorkerGroup *wp);
+
+
+
+/* 実行時オプションが増えたため,
+ * Worker起動以前のこの時点で,
+ * 組み合わせをサポートしていないオプションの整合性を取るなどを行う.
+ * 実際に使用するオプションフラグを, lmn_env構造体からworker構造体にコピーする. */
+static BOOL workers_flags_init(LmnWorkerGroup *wp, Automata property_a)
 {
-  /* >>>>>>>> worker_set_tls_idでTLS IDを割り当ててから使用すること <<<<<<< */
-  return workerpool_get_worker(lmn_thread_id);
+  BOOL flags = 0x00U;
+
+  /* === 1. 出力フォーマット === */
+
+  /* --- 1-1. GraphViz形式の使用 --- */
+  if (lmn_env.output_format == DOT) {
+    lmn_env.output_format = DEFAULT;
+  }
+
+  /* --- 1-2. インクリメンタルな状態の標準出力 --- */
+  if (lmn_env.sp_dump_format == INCREMENTAL) {
+    mc_set_dump(flags);
+    lmn_env.dump = TRUE;
+    if (lmn_env.mc_dump_format != CUI && lmn_env.mc_dump_format != LaViT) {
+      lmn_fatal("unsupported incremental output format");
+    }
+    fprintf(stdout, "States\n");
+  }
+
+  /* --- 1-3. 並列処理中のサポート外オプション --- */
+  if (lmn_env.core_num >= 2) {
+    if (lmn_env.sp_dump_format == INCREMENTAL) {
+#ifndef DEBUG
+      lmn_fatal("unsupported combination incremental state dumper & parallelization.");
+#endif
+    }
+#ifdef PROFILE
+    if (lmn_env.optimize_hash_old) {
+      lmn_fatal("unsupported combination optimized hash (old) & parallelization.");
+    }
+#endif
+  }
+
+
+  /* === 2. 状態空間構築オプション === */
+
+  /* --- 2-1. 遷移オブジェクトの使用 --- */
+  if (lmn_env.show_transition) {
+    mc_set_trans(flags);
+  }
+
+  /* --- 2-2. バイト列エンコードを使用しない場合 -----
+   * 対応していない全てのオプションフラグを下げる. */
+  if (lmn_env.enable_compress_mem) {
+    if (lmn_env.delta_mem) {
+      mc_set_delta(flags);
+    }
+    mc_set_compress(flags);
+  }
+  else {
+    lmn_env.delta_mem     = FALSE;
+    lmn_env.optimize_hash = FALSE;
+#ifdef PROFILE
+    lmn_env.optimize_hash_old = FALSE;
+#endif
+
+    if (lmn_env.hyperlink) {
+      lmn_fatal("no support: membrane isomorphis tester for hyper graph model");
+    }
+  }
+
+  /* --- 2-3. バイト列エンコードと階層グラフ構造の一対一対応 --- */
+  if (lmn_env.mem_enc) {
+    mc_set_canonical(flags);
+  }
+
+  /* --- 2-4. Partial Order Reduction --- */
+  if (lmn_env.enable_por || lmn_env.enable_por_old) {
+    mc_set_por(flags);
+  }
+
+  /* --- 2-5. binstr compressor --- */
+  if (lmn_env.z_compress) {
+    lmn_env.d_compress = FALSE;
+  }
+
+  /* === 3. 状態空間探索(LTLモデル検査)オプション === */
+  if (lmn_env.ltl) {
+    if (!property_a) {
+      lmn_env.ltl = FALSE;
+      lmn_env.ltl_all = FALSE;
+      wp->do_search = FALSE;
+      wp->do_exhaustive = FALSE;
+    } else {
+      if (lmn_env.ltl_all) {
+        wp->do_exhaustive = TRUE;
+      }
+      wp->do_search = TRUE;
+    }
+
+    if (lmn_env.enable_parallel) {
+      wp->do_para_algo = TRUE;
+    }
+  }
+
+  /* === 4. hypergraph ==== */
+  if (lmn_env.hyperlink) {
+    if (lmn_env.optimize_hash) {
+      lmn_env.optimize_hash = FALSE;
+    }
+
+    if (lmn_env.delta_mem || lmn_env.mem_enc || !lmn_env.enable_compress_mem) {
+      lmn_fatal("under constructions: delta/canonical membrane methods for hyper graph model");
+    }
+  }
+
+  return flags;
 }
 
+LmnWorkerGroup *lmn_workergroup_make(Automata a, Vector *psyms, int thread_num)
+{
+  LmnWorkerGroup *wp;
+  BOOL flags;
+
+  wp = LMN_MALLOC(LmnWorkerGroup);
+
+  /* worker pool の構築と初期設定 */
+  wp->terminated  = FALSE;
+  wp->worker_num  = thread_num;
+  wp->stop        = FALSE;
+
+  wp->do_search     = FALSE;
+  wp->do_exhaustive = FALSE;
+  wp->do_para_algo  = FALSE;
+  wp->mc_exit       = FALSE;
+  wp->error_exist   = FALSE;
+
+  flags = workers_flags_init(wp, a);
+#ifdef OPT_WORKERS_SYNC
+  wp->synchronizer  = thread_num;
+#else
+  lmn_barrier_init(&wp->synchronizer, workers_entried_num(wp));
+#endif
+  workers_gen(wp, workers_entried_num(wp), a, psyms, flags);
+  workers_ring_alignment(wp);
+
+  return wp;
+}
+
+
+/* 後始末 */
+void lmn_workergroup_free(LmnWorkerGroup *wp)
+{
+#ifndef OPT_WORKERS_SYNC
+  lmn_barrier_destroy(&workers_synchronizer(wp));
+#endif
+  workers_free(wp->workers, workers_entried_num(wp));
+}
+
+
+/* スレッドの起動 (MT-unsafe) */
+void launch_lmn_workers(LmnWorkerGroup *wp)
+{
+  unsigned long i, core_num;
+
+  core_num = workers_entried_num(wp);
+  for (i = 0; i < core_num; i++) { /** start */
+    if (i == LMN_PRIMARY_ID) continue;
+    lmn_thread_create(&worker_pid(workers_get_worker(wp, i)),
+                      lmn_worker_start,
+                      workers_get_worker(wp, i));
+  }
+  if (lmn_env.profile_level >= 1) profile_start_exec();
+
+  lmn_worker_start((void *)workers_get_worker(wp, LMN_PRIMARY_ID));
+
+  if (lmn_env.profile_level >= 1) profile_finish_exec();
+  for (i = 0; i < core_num; i++) {
+    if (i == LMN_PRIMARY_ID) continue;
+    lmn_thread_join(worker_pid(workers_get_worker(wp, i)));
+  }
+}
+
+
+#define TERMINATION_CONDITION(W) \
+ (worker_is_idle(W) && worker_is_white(W) && worker_check(w))
+
+
+/* 全てのWorkerオブジェクトが実行を停止している場合に真を返す. */
+BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root)
+{
+  LmnWorkerGroup *wp;
+  /** 概要:
+   *  LmnWorkerは論理的に輪を形成しており, フラグチェックを輪に沿って実施する.
+   *  is_activeかどうかをチェックする他にis_stealer, is_whiteもチェックする.
+   *    is_white  :
+   *       自idより小さいidのworkerにタスクを送信した場合の不正終了を判定するフラグ.
+   *       (チェック済みのworkerに対するタスク送信が発生することで不正終了する)
+   *       @see Dijkstra's Token Termination Detection (parallel computing)
+   *    is_steaker:
+   *       異なるWorkerからタスクを横取りしたこを示すフラグ.
+   *       (チェック済のworkerが未チェックのworkerからタスクを横取りした場合に不正終了する)
+   *
+   *  Dijkstraの手法を一部参考にしてはいるが, Dijkstraの手法ではないため注意.
+   */
+
+  /* Primary Worker(id==LMN_PRIMARY_ID)が判定した検知結果をグローバル変数に書込む.
+   * 他のWorkerはグローバル変数に書き込まれた終了フラグを読み出す. */
+  wp = worker_group(root);
+  if (worker_id(root) == LMN_PRIMARY_ID && !workers_are_terminated(wp)) {
+    int i, n;
+    BOOL ret;
+
+    ret = TRUE;
+    n   = workers_entried_num(wp);
+    for (i = 0; i < n; i++) {
+      LmnWorker *w = workers_get_worker(wp, i);
+      ret = ret && TERMINATION_CONDITION(w);
+      worker_set_white(w);
+      if (!ret) return FALSE;
+    }
+
+    for (i = 0; i < n; i++) {
+      LmnWorker *w = workers_get_worker(wp, i);
+      ret = ret && !worker_is_stealer(w);
+      worker_unset_stealer(w);
+      if (!ret) return FALSE;
+    }
+    workers_set_terminated(wp);
+  }
+
+  return workers_are_terminated(wp);
+}
+
+
+
+/* 全てのWorkerオブジェクトで同期を取り, Primary Workerが関数funcを実行する.
+ * 全てのWorkerがbarrierに到達したとき処理を再開する. */
+void lmn_workers_synchronization(LmnWorker *me, void (*func)(LmnWorker *w))
+{
+  LmnWorkerGroup *wp = worker_group(me);
+
+  lmn_barrier_wait(&workers_synchronizer(wp));
+  if (worker_id(me) == LMN_PRIMARY_ID && func) {
+    (*func)(me);
+  }
+  lmn_barrier_wait(&workers_synchronizer(wp));
+}
+
+
+/* 呼び出したスレッドのTLS IDに応じたLmnWorkerオブジェクトをWorkerPoolから返す */
+LmnWorker *workers_get_my_worker(LmnWorkerGroup *wp)
+{
+  /* >>>>>>>> worker_TLS_init以前に使用してはならない <<<<<<< */
+  return workers_get_worker(wp, env_my_thread_id());
+}
 
 /* WorkerPoolのid番目のLmnWorkerオブジェクトを返す */
-inline LmnWorker *workerpool_get_worker(unsigned long id)
+LmnWorker *workers_get_worker(LmnWorkerGroup *wp, unsigned long id)
 {
-  return (id >= p_worker_num) ? NULL : p_workers[id];
+  if (id >= workers_entried_num(wp)) {
+    return NULL;
+  } else {
+    return workers_get_entry(wp, id);
+  }
 }
 
 
-static void workerpool_make(StateSpace states, BOOL flags)
+static void workers_gen(LmnWorkerGroup *owner,
+                        unsigned int   worker_num,
+                        Automata       a,
+                        Vector         *psyms,
+                        BOOL           flags)
 {
-  unsigned int i, n;
-  n = p_worker_num;
-  p_workers = LMN_NALLOC(LmnWorker *, n);
+  unsigned int i;
+  owner->workers = LMN_NALLOC(LmnWorker *, worker_num);
+  for (i = 0; i < worker_num; i++) {
+    LmnWorker *w;
+    StateSpace states;
 
-  for (i = 0; i < n; i++) {
-    LmnWorker *w = lmn_worker_make(states, i, flags);
-    p_workers[i] = w;
+    if (i == 0) {
+      states = worker_num > 1 ? statespace_make_for_parallel(worker_num, a, psyms)
+                              : statespace_make(a, psyms);
+    } else {
+      states = worker_states(workers_get_worker(owner, 0));
+    }
+
+    w = lmn_worker_make(states, i, flags);
+    owner->workers[i] = w;
+    w->group = owner;
+
+    if (owner->do_search) {
+      w->invalid_seeds = vec_make(4);
+      w->cycles = vec_make(4);
+    }
 
     /* アルゴリズムの割り当てと初期化 */
     worker_set_env(w);
-    WORKER_INIT(w);
+    worker_init(w);
   }
 }
 
 
-static void workerpool_free()
+static void workers_free(LmnWorker **pool, unsigned int worker_num)
 {
-  unsigned int i, n;
-  n = p_worker_num;
-  for (i = 0; i < n; i++) {
-    LmnWorker *w = workerpool_get_worker(i);
-    WORKER_FINALIZE(w);
+  unsigned int i, j;
+  for (i = 0; i < worker_num; i++) {
+    LmnWorker *w = pool[i];
+    if (worker_group(w)->do_search) {
+      vec_free(w->invalid_seeds);
+
+      for (j = 0; j < vec_num(w->cycles); j++) {
+        vec_free((Vector *)vec_get(w->cycles, j));
+      }
+      vec_free(w->cycles);
+    }
+
+    if (i == 0) {
+      statespace_free(worker_states(w));
+    }
+
+    worker_finalize(w);
     lmn_worker_free(w);
   }
-  LMN_FREE(p_workers);
+  LMN_FREE(pool);
 }
 
 
-static void workerpool_set_ring()
+static void workers_ring_alignment(LmnWorkerGroup *wp)
 {
   unsigned int i, n;
-  n = p_worker_num;
+  n = workers_entried_num(wp);
   for (i = 0; i < n; i++) {
     LmnWorker *w, *next;
-    w    = workerpool_get_worker(i);
-    next = workerpool_get_worker((i + 1) % n);
+    w    = workers_get_worker(wp, i);
+    next = workers_get_worker(wp, (i + 1) % n);
     w->next = next;
   }
 }
-
 
 
 /* workerの実行アルゴリズムの割当を行う */

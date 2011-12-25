@@ -44,21 +44,22 @@
 
 LMN_EXTERN void init_nlmem(void);
 
-void nlmem_copy(ReactCxt rc,
+void nlmem_copy(LmnReactCxt *rc,
                 LmnMembrane *mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1,
                 LmnAtom a2, LmnLinkAttr t2)
 {
-  lmn_interned_str copy_tag_name =
-    LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(a1));
-  LmnFunctor copy_tag_func = lmn_functor_intern(ANONYMOUS, copy_tag_name, 3);
   LmnMembrane *org_mem, *trg_mem;
   ProcessTbl atom_map;
+  lmn_interned_str copy_tag_name;
+  LmnFunctor copy_tag_func;
 
+  copy_tag_name = LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(a1));
+  copy_tag_func = lmn_functor_intern(ANONYMOUS, copy_tag_name, 3);
   org_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a0, 0));
   trg_mem = lmn_mem_make();
-  atom_map = lmn_mem_copy_cells(trg_mem, org_mem, 0);
+  atom_map = lmn_mem_copy_cells(trg_mem, org_mem);
   lmn_mem_add_child_mem(mem, trg_mem);
 
   {
@@ -93,7 +94,7 @@ void nlmem_copy(ReactCxt rc,
   }
 }
 
-void nlmem_kill(ReactCxt rc,
+void nlmem_kill(LmnReactCxt *rc,
                 LmnMembrane *mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1)
@@ -117,14 +118,14 @@ void nlmem_kill(ReactCxt rc,
       LmnLinkAttr out_attr;
       LmnSAtom tag_atom;
 
-      EACH_ATOM(in, ent, {
+      EACH_ATOM(in, ent, ({
         if (in == org_in) continue;
         out = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
         out_attr = LMN_SATOM_GET_ATTR(in, 0);
         tag_atom = lmn_mem_newatom(mem, kill_tag_func);
         lmn_relink_symbols(tag_atom, 0, out, 1);
         lmn_mem_delete_atom(mem, LMN_ATOM(out), out_attr);
-      });
+      }));
     }
   }
 

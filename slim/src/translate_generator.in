@@ -1,5 +1,5 @@
 /*
- * translate_generator.in - 
+ * translate_generator.in -
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -59,7 +59,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 {
   LmnInstrOp op;
   const BYTE * const op_address = instr;
-  
+
   READ_VAL(LmnInstrOp, instr, op);
   *finishflag = 1;
 
@@ -76,7 +76,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 /* just for debug! */
 static FILE *OUT = NULL;
 
-BOOL interpret_generated(struct ReactCxt *rc,
+BOOL interpret_generated(LmnReactCxt *rc,
                          LmnRule rule,
                          LmnRuleInstr instr)
 {
@@ -96,14 +96,13 @@ BOOL interpret_generated(struct ReactCxt *rc,
 
 
 #spec LmnInstrVar LmnInstrVar
-  TR_INSTR_SPEC($1);
-  
+  TR_INSTR_SPEC(rc, $1);
+
 #insertconnectorsinnull LmnInstrVar $list
   {
     const Vector v = vec_const_temporary_from_array($1_num, $1);
-    wt[$0] = (LmnWord)insertconnectors(NULL, &v);
-    tt[$0] = TT_OTHER;
-    if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+    warry_set(rc, $0, insertconnectors(rc, NULL, &v), 0, TT_OTHER);
+
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -112,7 +111,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
     }
 #__format_t
   label_always_$a:
-    hashset_free((HashSet *)wt[$0]);
+    hashset_free((HashSet *)wt(rc, $0));
     $s;
     lmn_fatal("translate recursive error\n");
 #__format
@@ -123,9 +122,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
 #insertconnectors LmnInstrVar $list LmnInstrVar
   {
     const Vector v = vec_const_temporary_from_array($1_num, $1);
-    wt[$0] = (LmnWord)insertconnectors((LmnMembrane *)wt[$2] , &v);
-    tt[$0] = TT_OTHER;
-    if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+    warry_set(rc, $0, insertconnectors(rc, (LmnMembrane *)wt(rc, $2), &v), 0, TT_OTHER);
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -134,7 +131,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
     }
 #__format_t
   label_always_$a:
-    hashset_free((HashSet *)wt[$0]);
+    hashset_free((HashSet *)wt(rc, $0));
     $s;
     lmn_fatal("translate recursive error\n");
 #__format
@@ -145,11 +142,14 @@ BOOL interpret_generated(struct ReactCxt *rc,
 #commit lmn_interned_str LmnLineNum
   {
     LmnMembrane *ptmp_global_root;
-    LmnWord *pwt_temp;
-    LmnByte *pat_temp;
-    LmnByte *ptt_temp;
-    unsigned int org_next_id = 0;
-    tr_instr_commit_ready(rc, rule, TR_GSID($0), $1, &ptmp_global_root, &pwt_temp, &pat_temp, &ptt_temp, &org_next_id);
+    LmnRegister *v;
+    unsigned int org_next_id;
+    unsigned int warry_use_org, warry_size_org;
+
+    warry_use_org  = warry_use_size(rc);
+    warry_size_org = warry_size(rc);
+    org_next_id = 0;
+    tr_instr_commit_ready(rc, rule, TR_GSID($0), $1, &ptmp_global_root, &v, &org_next_id);
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -161,7 +161,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
     }
 #__format_t
   label_always_$a:
-    if(tr_instr_commit_finish(rc, rule, TR_GSID($0), $1, &ptmp_global_root, &pwt_temp, &pat_temp, &ptt_temp))
+    if(tr_instr_commit_finish(rc, rule, TR_GSID($0), $1, &ptmp_global_root, &v, warry_use_org, warry_size_org))
       $s;
     else
       env_set_next_id(org_next_id);
@@ -177,18 +177,18 @@ BOOL interpret_generated(struct ReactCxt *rc,
 %   lmn_fatal("I can not find data atoms.");
 % } else {
     {
-      AtomListEntry *atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt[$1], TR_GFID($2_functor_data));
+      AtomListEntry *atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt(rc, $1), TR_GFID($2_functor_data));
       LmnSAtom atom;
-  
+
       if (atomlist_ent) {
-        at[$0] = LMN_ATTR_MAKE_LINK(0);
+        at_set(rc, $0, LMN_ATTR_MAKE_LINK(0));
         /* EACH_ATOMを使うとループ内コード中でコンマが使えない場合が出てくる */
         for(atom = atomlist_head(atomlist_ent);
             atom != lmn_atomlist_end(atomlist_ent);
             atom = LMN_SATOM_GET_NEXT_RAW(atom)){
           if(LMN_SATOM_GET_FUNCTOR(atom) != LMN_RESUME_FUNCTOR){
-            wt[$0] = (LmnWord)atom;
-            tt[$0] = TT_ATOM;
+            wt_set(rc, $0, atom);
+            tt_set(rc, $0, TT_ATOM);
 #__echo_t
             {
               char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
@@ -202,7 +202,7 @@ BOOL interpret_generated(struct ReactCxt *rc,
           ; /* PROFILEでない場合に必要 */
  #ifdef PROFILE
           if (lmn_env.profile_level >= 2) {
-        
+
           }
  #endif
 #__format
@@ -215,18 +215,14 @@ BOOL interpret_generated(struct ReactCxt *rc,
   *finishflag = 0;
 
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
-  wt[$0] = (LmnWord)LMN_PROXY_GET_MEM(wt[$1]);
-  tt[$0] = TT_MEM;
-  if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
-  if(((LmnMembrane*)wt[$0])->name != TR_GSID($2)) $f;
+  warry_set(rc, $0, LMN_PROXY_GET_MEM(wt(rc, $1)), 0, TT_MEM);
+  if(((LmnMembrane*)wt(rc, $0))->name != TR_GSID($2)) $f;
 
 #anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
   {
-    LmnMembrane *mp = ((LmnMembrane*)wt[$1])->child_head;
+    LmnMembrane *mp = ((LmnMembrane*)wt(rc, $1))->child_head;
     for (; mp; mp=mp->next) {
-      wt[$0] = (LmnWord)mp;
-      tt[$0] = TT_MEM;
-      if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+      warry_set(rc, $0, mp, 0, TT_MEM);
       if (mp->name == TR_GSID($3)){
 #__echo_t
         {
@@ -252,58 +248,60 @@ BOOL interpret_generated(struct ReactCxt *rc,
   *finishflag = 0;
 
 #nmems LmnInstrVar LmnInstrVar
-  if (!lmn_mem_nmems((LmnMembrane*)wt[$0], $1)) $f;
+  if (!lmn_mem_nmems((LmnMembrane*)wt(rc, $0), $1)) $f;
 
 #norules LmnInstrVar
-  if (((LmnMembrane *)wt[$0])->rulesets.num) $f;
+  if (((LmnMembrane *)wt(rc, $0))->rulesets.num) $f;
 
 #newatom LmnInstrVar LmnInstrVar $functor
 % switch(targ2_attr){
 % case LMN_INT_ATTR:
-    wt[$0] = $2_long_data;
+    wt_set(rc, $0, $2_long_data);
 %   break;
 % case LMN_DBL_ATTR:
-    wt[$0] = (LmnWord)LMN_MALLOC(double);
-    *(double*)wt[$0] = $2_double_data;
+  {
+    double *d;
+    d = LMN_MALLOC(double);
+    *d = $2_double_data;
+    wt_set(rc, $0, d);
+   }
 %   break;
 % case LMN_STRING_ATTR:
-    wt[$0] = (LmnWord)lmn_string_make(lmn_id_to_name(TR_GSID($2_string_data)));
+    wt_set(rc, $0, lmn_string_make(lmn_id_to_name(TR_GSID($2_string_data))));
 %   break;
 % default:
-    wt[$0] = LMN_ATOM(lmn_new_atom(TR_GFID($2_functor_data)));
+    wt_set(rc, $0, LMN_ATOM(lmn_new_atom(TR_GFID($2_functor_data))));
 %   break;
 % }
-  at[$0] = $2_attr;
-  tt[$0] = TT_ATOM;
-  lmn_mem_push_atom((LmnMembrane*)wt[$1], wt[$0], $2_attr);
+  at_set(rc, $0, $2_attr);
+  tt_set(rc, $0, TT_ATOM);
+  lmn_mem_push_atom((LmnMembrane*)wt(rc, $1), wt(rc, $0), $2_attr);
 
 #natoms LmnInstrVar LmnInstrVar
-  if (!lmn_mem_natoms((LmnMembrane*)wt[$0], $1)) $f;
+  if (!lmn_mem_natoms((LmnMembrane*)wt(rc, $0), $1)) $f;
 
 #natomsindirect LmnInstrVar LmnInstrVar
-  if (!lmn_mem_natoms((LmnMembrane*)wt[$0], wt[$1])) $f;
+  if (!lmn_mem_natoms((LmnMembrane*)wt(rc, $0), wt(rc, $1))) $f;
 
 #alloclink LmnInstrVar LmnInstrVar LmnInstrVar
-  TR_INSTR_ALLOCLINK($0, $1, $2);
+  TR_INSTR_ALLOCLINK(rc, $0, $1, $2);
 
 #unifylinks LmnInstrVar LmnInstrVar LmnInstrVar
-  TR_INSTR_UNIFYLINKS($0, $1, $2);
+  TR_INSTR_UNIFYLINKS(rc, $0, $1, $2);
 
 #newlink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
-  lmn_mem_newlink((LmnMembrane *)wt[$4], wt[$0], at[$0], $1, wt[$2], at[$2], $3);
+  lmn_mem_newlink((LmnMembrane *)wt(rc, $4), wt(rc, $0), at(rc, $0), $1, wt(rc, $2), at(rc, $2), $3);
 
 #relink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
-  TR_INSTR_RELINK($0, $1, $2, $3, $4);
+  TR_INSTR_RELINK(rc, $0, $1, $2, $3, $4);
 
 #getlink LmnInstrVar LmnInstrVar LmnInstrVar
 # /* リンク先の取得をせずにリンク元の情報を格納しておく。
 #    リンク元が格納されていることを示すため最下位のビットを立てる */
-  wt[$0] = LMN_SATOM_GET_LINK(wt[$1], $2);
-  at[$0] = LMN_SATOM_GET_ATTR(wt[$1], $2);
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, LMN_SATOM_GET_LINK(wt(rc, $1), $2), LMN_SATOM_GET_ATTR(wt(rc, $1), $2), TT_ATOM);
 
 #unify LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
-  lmn_mem_unify_atom_args((LmnMembrane *)wt[$4], LMN_SATOM(wt[$0]), $1, LMN_SATOM(wt[$2]), $3);
+  lmn_mem_unify_atom_args((LmnMembrane *)wt(rc, $4), LMN_SATOM(wt(rc, $0)), $1, LMN_SATOM(wt(rc, $2)), $3);
 
 #proceed
   $s;
@@ -340,9 +338,9 @@ BOOL interpret_generated(struct ReactCxt *rc,
 #newmem LmnInstrVar LmnInstrVar LmnInstrVar
   {
     LmnMembrane *mp = lmn_mem_make();
-    lmn_mem_add_child_mem((LmnMembrane*)wt[$1], mp);
-    wt[$0] = (LmnWord)mp;
-    tt[$0] = TT_MEM;
+    lmn_mem_add_child_mem((LmnMembrane*)wt(rc, $1), mp);
+    wt_set(rc, $0, mp);
+    tt_set(rc, $0, TT_MEM);
     lmn_mem_set_active(mp, TRUE);
     if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
       lmn_memstack_push(RC_MEMSTACK(rc), mp);
@@ -350,42 +348,40 @@ BOOL interpret_generated(struct ReactCxt *rc,
   }
 
 #allocmem LmnInstrVar
-  wt[$0] = (LmnWord)lmn_mem_make();
-  tt[$0] = TT_MEM;
+  wt_set(rc, $0, lmn_mem_make());
+  tt_set(rc, $0, TT_MEM);
 
 #removeatom LmnInstrVar LmnInstrVar
-  lmn_mem_remove_atom((LmnMembrane*)wt[$1], wt[$0], at[$0]);
+  lmn_mem_remove_atom((LmnMembrane*)wt(rc, $1), wt(rc, $0), at(rc, $0));
 
 #freeatom LmnInstrVar
-  lmn_free_atom(wt[$0], at[$0]);
+  lmn_free_atom(wt(rc, $0), at(rc, $0));
 
 #removemem LmnInstrVar LmnInstrVar
-  lmn_mem_remove_mem((LmnMembrane *)wt[$1], (LmnMembrane *)wt[$0]);
+  lmn_mem_remove_mem((LmnMembrane *)wt(rc, $1), (LmnMembrane *)wt(rc, $0));
 
 #freemem LmnInstrVar
-  lmn_mem_free((LmnMembrane*)wt[$0]);
+  lmn_mem_free((LmnMembrane*)wt(rc, $0));
 
 #addmem LmnInstrVar LmnInstrVar
-  lmn_mem_add_child_mem((LmnMembrane *)wt[$0], (LmnMembrane *)wt[$1]);
+  lmn_mem_add_child_mem((LmnMembrane *)wt(rc, $0), (LmnMembrane *)wt(rc, $1));
 
 #enqueuemem LmnInstrVar
-  if (RC_GET_MODE(rc, REACT_ND)) {
-    lmn_mem_activate_ancestors((LmnMembrane *)wt[$0]); /* MC */
-  } else if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembrane *)wt[$0]); /* 通常実行時 */
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembrane *)wt(rc, $0)); /* 通常実行時 */
   }
 
 #unlockmem LmnInstrVar
 
 #loadruleset LmnInstrVar LmnRulesetId
-  lmn_mem_add_ruleset((LmnMembrane*)wt[$0], lmn_ruleset_from_id(TR_GRID($1)));
+  lmn_mem_add_ruleset((LmnMembrane*)wt(rc, $0), lmn_ruleset_from_id(TR_GRID($1)));
 
 #loadmodule LmnInstrVar lmn_interned_str
   {
     LmnRuleSet ruleset;
     if ((ruleset = lmn_get_module_ruleset(TR_GSID($1)))) {
 #     /* テーブル内にルールセットがある場合 */
-      lmn_mem_add_ruleset((LmnMembrane*)wt[$0], ruleset);
+      lmn_mem_add_ruleset((LmnMembrane*)wt(rc, $0), ruleset);
     } else {
 #     /* テーブル内にルールセットがない場合 */
       fprintf(stderr, "Undefined module %s\n", lmn_id_to_name(TR_GSID($1)));
@@ -397,37 +393,33 @@ BOOL interpret_generated(struct ReactCxt *rc,
 #recursiveunlock LmnInstrVar
 
 #derefatom LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)LMN_SATOM(LMN_SATOM_GET_LINK(wt[$1], $2));
-  at[$0] = LMN_SATOM_GET_ATTR(wt[$1], $2);
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, $1), $2)), LMN_SATOM_GET_ATTR(wt(rc, $1), $2), TT_ATOM);
 
 #deref LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   {
-    LmnByte attr = LMN_SATOM_GET_ATTR(wt[$1], $2);
+    LmnByte attr = LMN_SATOM_GET_ATTR(wt(rc, $1), $2);
     if (LMN_ATTR_IS_DATA(attr)) {
       if ($3 != 0) $f;
     } else {
       if (attr != $3) $f;
     }
-    wt[$0] = LMN_SATOM_GET_LINK(wt[$1], $2);
-    at[$0] = attr;
-    tt[$0] = TT_ATOM;
+    warry_set(rc, $0, LMN_SATOM_GET_LINK(wt(rc, $1), $2), attr, TT_ATOM);
   }
 
 #func LmnInstrVar $functor
 % if (LMN_ATTR_IS_DATA(targ1_attr)) {
-    if (LMN_ATTR_IS_DATA(at[$0]) && at[$0] == $1_attr) {
-      tt[$0] = TT_ATOM;
+    if (LMN_ATTR_IS_DATA(at(rc, $0)) && at(rc, $0) == $1_attr) {
+      tt_set(rc, $0, TT_ATOM);
 %     switch(targ1_attr) {
 %     case LMN_INT_ATTR:
-        if (wt[$0] != $1_long_data) $f;
+        if (wt(rc, $0) != $1_long_data) $f;
 %       break;
 %     case LMN_DBL_ATTR:
-        if (*(double*)wt[$0] != $1_double_data) $f;
+        if (*(double*)wt(rc, $0) != $1_double_data) $f;
 %       break;
 %     case LMN_STRING_ATTR: {
         LmnString s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
-        if(! lmn_string_eq(s, (LmnString)wt[$0])) $f;
+        if(! lmn_string_eq(s, (LmnString)wt(rc, $0))) $f;
         lmn_string_free(s);
 %       fprintf(stderr, "string attr is not implemented.");
 %       break;
@@ -439,25 +431,25 @@ BOOL interpret_generated(struct ReactCxt *rc,
       $f;
     }
 % } else {
-    if(LMN_ATTR_IS_DATA(at[$0]) ||
-       LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt[$0])) != TR_GFID($1_functor_data)) $f;
+    if(LMN_ATTR_IS_DATA(at(rc, $0)) ||
+       LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt(rc, $0))) != TR_GFID($1_functor_data)) $f;
 % }
 
 #notfunc LmnInstrVar $functor
-% if(LMN_ATTR_IS_DATA(targ1_attr)){
-    if(! (LMN_ATTR_IS_DATA(at[$0]) && at[$0]==$1_attr)){
-      tt[$0] = TT_ATOM;
+% if (LMN_ATTR_IS_DATA(targ1_attr)) {
+    if(! (LMN_ATTR_IS_DATA(at(rc, $0)) && at(rc, $0) == $1_attr)){
+      tt_set(rc, $0, TT_ATOM);
 %     switch(targ1_attr){
 %     case LMN_INT_ATTR:
-        if(wt[$0] == $1_long_data) $f;
+        if(wt(rc, $0) == $1_long_data) $f;
 %       break;
 %     case LMN_DBL_ATTR:
-        if(*(double*)wt[$0] == $1_double_data) $f;
+        if(*(double*)wt(rc, $0) == $1_double_data) $f;
 %       fprintf(stderr, "double attr is not implemented.");
 %       break;
 %     case LMN_STRING_ATTR: {
         LmnString s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
-        if(lmn_string_eq(s, (LmnString)wt[$0])) $f;
+        if(lmn_string_eq(s, (LmnString)wt(rc, $0))) $f;
         lmn_string_free(s);
 %       fprintf(stderr, "string attr is not implemented.");
 %       break;
@@ -466,9 +458,9 @@ BOOL interpret_generated(struct ReactCxt *rc,
 %       lmn_fatal("implementation error");
 %     }
     }
-% }else{
-    if(! (LMN_ATTR_IS_DATA(at[$0]) ||
-          LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt[$0])) != TR_GFID($1_functor_data))) $f;
+% } else {
+    if(! (LMN_ATTR_IS_DATA(at(rc, $0)) ||
+          LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt(rc, $0))) != TR_GFID($1_functor_data))) $f;
 % }
 
 #isground LmnInstrVar LmnInstrVar LmnInstrVar
@@ -477,79 +469,73 @@ BOOL interpret_generated(struct ReactCxt *rc,
     Vector *avovec;
     unsigned long natoms;
     BOOL b;
-    
-    avovec = links_from_idxs((Vector *)wt[$2], wt, at);
-    srcvec = links_from_idxs((Vector *)wt[$1], wt, at);
+
+    avovec = links_from_idxs((Vector *)wt(rc, $2), rc_warry(rc));
+    srcvec = links_from_idxs((Vector *)wt(rc, $1), rc_warry(rc));
     b = lmn_mem_is_ground(srcvec, avovec, &natoms);
-    
+
     free_links(srcvec);
     free_links(avovec);
 
     if(! b) $f;
-    wt[$0] = (LmnWord)natoms;
-    at[$0] = LMN_INT_ATTR;
-    tt[$0] = TT_OTHER;
+    warry_set(rc, $0, natoms, LMN_INT_ATTR, TT_OTHER);
   }
 
 #isunary LmnInstrVar
-  if (LMN_ATTR_IS_DATA(at[$0])) {
-    switch (at[$0]) {
+  if (LMN_ATTR_IS_DATA(at(rc, $0))) {
+    switch (at(rc, $0)) {
     case LMN_SP_ATOM_ATTR:
 #     /* スペシャルアトムはgroundの結果をunaryの結果とする */
-      if (!SP_ATOM_IS_GROUND(wt[$0])) $f;
+      if (!SP_ATOM_IS_GROUND(wt(rc, $0))) $f;
       break;
     default:
       break;
     }
-  } else if (LMN_SATOM_GET_ARITY(wt[$0]) != 1){
+  } else if (LMN_SATOM_GET_ARITY(wt(rc, $0)) != 1){
     $f;
   }
 
 
 
 #isint LmnInstrVar
-  if(at[$0] != LMN_INT_ATTR) $f;
+  if(at(rc, $0) != LMN_INT_ATTR) $f;
 
 #isfloat LmnInstrVar
-  if(at[$0] != LMN_DBL_ATTR) $f;
+  if(at(rc, $0) != LMN_DBL_ATTR) $f;
 
 #isstring  LmnInstrVar
-  if(! lmn_is_string(wt[$0], at[$0])) $f;
+  if(! lmn_is_string(wt(rc, $0), at(rc, $0))) $f;
 
 #isintfunc LmnInstrVar
-  if(at[$0] != LMN_INT_ATTR) $f;
+  if(at(rc, $0) != LMN_INT_ATTR) $f;
 
 #isfloatfunc LmnInstrVar
-  if(at[$0] != LMN_DBL_ATTR) $f;
+  if(at(rc, $0) != LMN_DBL_ATTR) $f;
 
 #copyatom LmnInstrVar LmnInstrVar LmnInstrVar
-  at[$0] = at[$2];
-  wt[$0] = lmn_copy_atom(wt[$2], at[$2]);
-  tt[$0] = TT_ATOM;
-  lmn_mem_push_atom((LmnMembrane *)wt[$1], wt[$0], at[$0]);
+  warry_set(rc, $0, lmn_copy_atom(wt(rc, $2), at(rc, $2)), at(rc, $2), TT_ATOM);
+  lmn_mem_push_atom((LmnMembrane *)wt(rc, $1), wt(rc, $0), at(rc, $0));
 
 #eqatom LmnInstrVar LmnInstrVar
-  if (LMN_ATTR_IS_DATA(at[$0]) ||
-      LMN_ATTR_IS_DATA(at[$1]) ||
-      LMN_SATOM(wt[$0]) != LMN_SATOM(wt[$1])) $f;
+  if (LMN_ATTR_IS_DATA(at(rc, $0)) ||
+      LMN_ATTR_IS_DATA(at(rc, $1)) ||
+      LMN_SATOM(wt(rc, $0)) != LMN_SATOM(wt(rc, $1))) $f;
 
 #neqatom LmnInstrVar LmnInstrVar
-  if (!(LMN_ATTR_IS_DATA(at[$0]) ||
-        LMN_ATTR_IS_DATA(at[$1]) ||
-        LMN_SATOM(wt[$0]) != LMN_SATOM(wt[$1]))) $f;
+  if (!(LMN_ATTR_IS_DATA(at(rc, $0)) ||
+        LMN_ATTR_IS_DATA(at(rc, $1)) ||
+        LMN_SATOM(wt(rc, $0)) != LMN_SATOM(wt(rc, $1)))) $f;
 
 #eqmem LmnInstrVar LmnInstrVar
-  if(wt[$0] != wt[$1]) $f;
+  if(wt(rc, $0) != wt(rc, $1)) $f;
 
 #neqmem LmnInstrVar LmnInstrVar
-  if(wt[$0] == wt[$1]) $f;
+  if(wt(rc, $0) == wt(rc, $1)) $f;
 
 #newlist LmnInstrVar
   {
     Vector *listvec = vec_make(16);
-    wt[$0] = (LmnWord)listvec;
-    tt[$0] = TT_OTHER;
-    if (RC_GET_MODE(rc, REACT_ND)) { at[$0] = 0; /* MC */ }
+    warry_set(rc, $0, listvec, 0, TT_OTHER);
 #__echo_t
     {
       char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
@@ -573,35 +559,33 @@ BOOL interpret_generated(struct ReactCxt *rc,
   *finishflag = 0;
 
 #addtolist LmnInstrVar LmnInstrVar
-  vec_push((Vector *)wt[$0], $1);
+  vec_push((Vector *)wt(rc, $0), $1);
 
 #getfromlist LmnInstrVar LmnInstrVar LmnInstrVar
-  switch (at[$1]) {
+  switch (at(rc, $1)) {
     case LIST_AND_MAP:
-      wt[$0] = vec_get((Vector *)wt[$1], (unsigned int)$2);
-      tt[$0] = TT_OTHER;
+      wt_set(rc, $0, vec_get((Vector *)wt(rc, $1), (unsigned int)$2));
+      tt_set(rc, $0, TT_OTHER);
       if ($2 == 0){
-        at[$0] = LINK_LIST;
+        at_set(rc, $0, LINK_LIST);
       }else if ($2 == 1){
-        at[$0] = MAP;
+        at_set(rc, $0, MAP);
       }else{
         lmn_fatal("unexpected attribute @instr_getfromlist");
       }
       break;
     case LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
-      LinkObj lo = (LinkObj)vec_get((Vector *)wt[$1], (unsigned int)$2);
-      wt[$0] = (LmnWord)lo->ap;
-      at[$0] = lo->pos;
-      tt[$0] = TT_ATOM;
+      LinkObj lo = (LinkObj)vec_get((Vector *)wt(rc, $1), (unsigned int)$2);
+      warry_set(rc, $0, lo->ap, lo->pos, TT_ATOM);
       break;
     }
   }
 
 #eqground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)wt[$0], wt, at);
-    Vector *dstvec = links_from_idxs((Vector*)wt[$1], wt, at);
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
+    Vector *dstvec = links_from_idxs((Vector*)wt(rc, $1), rc_warry(rc));
     BOOL same = lmn_mem_cmp_ground(srcvec, dstvec);
     free_links(srcvec);
     free_links(dstvec);
@@ -610,8 +594,8 @@ BOOL interpret_generated(struct ReactCxt *rc,
 
 #neqground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)wt[$0], wt, at);
-    Vector *dstvec = links_from_idxs((Vector*)wt[$1], wt, at);
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
+    Vector *dstvec = links_from_idxs((Vector*)wt(rc, $1), rc_warry(rc));
     BOOL same = lmn_mem_cmp_ground(srcvec, dstvec);
     free_links(srcvec);
     free_links(dstvec);
@@ -620,20 +604,18 @@ BOOL interpret_generated(struct ReactCxt *rc,
 
 #copyground LmnInstrVar LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)wt[$1], wt, at);
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $1), rc_warry(rc));
     Vector *dstlovec, *retvec;
     ProcessTbl atommap;
-    
-    lmn_mem_copy_ground((LmnMembrane*)wt[$2], srcvec, &dstlovec, &atommap);
+
+    lmn_mem_copy_ground((LmnMembrane*)wt(rc, $2), srcvec, &dstlovec, &atommap);
     free_links(srcvec);
-    
+
     /* 返り値の作成 */
     retvec = vec_make(2);
     vec_push(retvec, (LmnWord)dstlovec);
     vec_push(retvec, (LmnWord)atommap);
-    wt[$0] = (LmnWord)retvec;
-    at[$0] = (LmnByte)LIST_AND_MAP;
-    tt[$0] = TT_OTHER;
+    warry_set(rc, $0, retvec, LIST_AND_MAP, TT_OTHER);
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -653,332 +635,291 @@ BOOL interpret_generated(struct ReactCxt *rc,
 
 #removeground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)wt[$0], wt, at);
-    lmn_mem_remove_ground((LmnMembrane*)wt[$1], srcvec);
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
+    lmn_mem_remove_ground((LmnMembrane*)wt(rc, $1), srcvec);
     free_links(srcvec);
   }
 
 #freeground LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)wt[$0], wt, at);
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
     lmn_mem_free_ground(srcvec);
     free_links(srcvec);
   }
 
 #stable LmnInstrVar
-  if (lmn_mem_is_active((LmnMembrane *)wt[$0])) $f;
+  if (lmn_mem_is_active((LmnMembrane *)wt(rc, $0))) $f;
 
 #iadd LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)((long)wt[$1] + (long)wt[$2]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, (long)wt(rc, $1) + (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #isub LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)((long)wt[$1] - (long)wt[$2]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, (long)wt(rc, $1) - (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #imul LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)((long)wt[$1] * (long)wt[$2]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, (long)wt(rc, $1) * (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #idiv LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)((long)wt[$1] / (long)wt[$2]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, (long)wt(rc, $1) / (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #ineg LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)(-(long)wt[$1]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, -(long)wt(rc, $1), LMN_INT_ATTR, TT_ATOM);
 
 #imod LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)((long)wt[$1] % (long)wt[$2]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, (long)wt(rc, $1) % (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #inot LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)(~(long)wt[$1]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, ~(long)wt(rc, $1), LMN_INT_ATTR, TT_ATOM);
 
 #iand LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)((long)wt[$1] & (long)wt[$2]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, (long)wt(rc, $1) & (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #ior LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)((long)wt[$1] | (long)wt[$2]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, (long)wt(rc, $1) | (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #ixor LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)((long)wt[$1] ^ (long)wt[$2]);
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, (long)wt(rc, $1) ^ (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #ilt LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] < (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) < (long)wt(rc, $1))) $f;
 
 #ile LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] <= (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) <= (long)wt(rc, $1))) $f;
 
 #igt LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] > (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) > (long)wt(rc, $1))) $f;
 
 #ige LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] >= (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) >= (long)wt(rc, $1))) $f;
 
 #ieq LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] == (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) == (long)wt(rc, $1))) $f;
 
 #ine LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] != (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) != (long)wt(rc, $1))) $f;
 
 #iltfunc LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] < (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) < (long)wt(rc, $1))) $f;
 
 #ilefunc LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] <= (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) <= (long)wt(rc, $1))) $f;
 
 #igtfunc LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] > (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) > (long)wt(rc, $1))) $f;
 
 #igefunc LmnInstrVar LmnInstrVar
-  if(!((long)wt[$0] >= (long)wt[$1])) $f;
+  if(!((long)wt(rc, $0) >= (long)wt(rc, $1))) $f;
 
 #fadd LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)LMN_MALLOC(double);
-  *(double *)wt[$0] = *(double *)wt[$1] + *(double *)wt[$2];
-  at[$0] = LMN_DBL_ATTR;
-  tt[$0] = TT_ATOM;
+  double *d = LMN_MALLOC(double);
+  *d = *(double *)wt(rc, $1) + *(double *)wt(rc, $2);
+  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fsub LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)LMN_MALLOC(double);
-  *(double *)wt[$0] = *(double *)wt[$1] - *(double *)wt[$2];
-  at[$0] = LMN_DBL_ATTR;
-  tt[$0] = TT_ATOM;
+  double *d = LMN_MALLOC(double);
+  *d = *(double *)wt(rc, $1) - *(double *)wt(rc, $2);
+  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fmul LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)LMN_MALLOC(double);
-  *(double *)wt[$0] = *(double *)wt[$1] * *(double *)wt[$2];
-  at[$0] = LMN_DBL_ATTR;
-  tt[$0] = TT_ATOM;
+  double *d = LMN_MALLOC(double);
+  *d = *(double *)wt(rc, $1) * *(double *)wt(rc, $2);
+  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fdiv LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)LMN_MALLOC(double);
-  *(double *)wt[$0] = *(double *)wt[$1] / *(double *)wt[$2];
-  at[$0] = LMN_DBL_ATTR;
-  tt[$0] = TT_ATOM;
+  double *d = LMN_MALLOC(double);
+  *d = *(double *)wt(rc, $1) / *(double *)wt(rc, $2);
+  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fneg LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)LMN_MALLOC(double);
-  *(double *)wt[$0] = -*(double *)wt[$1];
-  at[$0] = LMN_DBL_ATTR;
-  tt[$0] = TT_ATOM;
+  double *d = LMN_MALLOC(double);
+  *d = -*(double *)wt(rc, $1);
+  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #flt LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt[$0] < *(double*)wt[$1])) $f;
+  if(!(*(double*)wt(rc, $0) < *(double*)wt(rc, $1))) $f;
 
 #fle LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt[$0] <= *(double*)wt[$1])) $f;
+  if(!(*(double*)wt(rc, $0) <= *(double*)wt(rc, $1))) $f;
 
 #fgt LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt[$0] > *(double*)wt[$1])) $f;
+  if(!(*(double*)wt(rc, $0) > *(double*)wt(rc, $1))) $f;
 
 #fge LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt[$0] >= *(double*)wt[$1])) $f;
+  if(!(*(double*)wt(rc, $0) >= *(double*)wt(rc, $1))) $f;
 
 #feq LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt[$0] == *(double*)wt[$1])) $f;
+  if(!(*(double*)wt(rc, $0) == *(double*)wt(rc, $1))) $f;
 
 #fne LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt[$0] != *(double*)wt[$1])) $f;
+  if(!(*(double*)wt(rc, $0) != *(double*)wt(rc, $1))) $f;
 
 #allocatom LmnInstrVar $functor
-  tt[$0] = TT_ATOM;
 % switch(targ1_attr){
 % case LMN_INT_ATTR:
-    wt[$0] = $1_long_data;
-    at[$0] = LMN_INT_ATTR;
-%   break;    
+    warry_set(rc, $0, $1_long_data, LMN_INT_ATTR, TT_ATOM);
+%   break;
 % case LMN_DBL_ATTR:
     {
 #__format_t
       static const double d = $1_double_data;
-      wt[$0] = &d;
-      at[$0] = LMN_CONST_DBL_ATTR;
+      warry_set(rc, $0, &d, LMN_CONST_DBL_ATTR, TT_ATOM);
 #__format_i
   /* 困った */
 #__format
     }
 %   break;
 % case LMN_STRING_ATTR:
-    wt[$0] = $1_string_data;
-    at[$0] = LMN_CONST_STR_ATTR;
+    warry_set(rc, $0, $1_string_data, LMN_CONST_STR_ATTR, TT_ATOM);
 %   break;
 % default:
 %   lmn_fatal("Implementation error");
 % }
 
 #allocatomindirect LmnInstrVar LmnFunctor
-  if (LMN_ATTR_IS_DATA(at[$1])) {
-    wt[$0] = lmn_copy_data_atom(wt[$1], at[$1]);
-    at[$0] = at[$1];
-    tt[$0] = TT_ATOM;
+  if (LMN_ATTR_IS_DATA(at(rc, $1))) {
+    warry_set(rc, $0, lmn_copy_data_atom(wt(rc, $1), at(rc, $1)), at(rc, $1), TT_ATOM);
   } else { /* symbol atom */
     fprintf(stderr, "symbol atom can't be created in GUARD\n");
     exit(EXIT_FAILURE);
   }
 
 #samefunc LmnInstrVar LmnInstrVar
-  if (!lmn_eq_func(wt[$0], at[$0], wt[$1], at[$1])) $f;
+  if (!lmn_eq_func(wt(rc, $0), at(rc, $0), wt(rc, $1), at(rc, $1))) $f;
 
 #getfunc LmnInstrVar LmnInstrVar
-  if(LMN_ATTR_IS_DATA(at[$1])){
-    wt[$0] = wt[$1];
+  if(LMN_ATTR_IS_DATA(at(rc, $1))){
+    wt_set(rc, $0, wt(rc, $1));
   }else{
-    wt[$0] = (LmnWord)LMN_SATOM_GET_FUNCTOR(wt[$1]);
+    wt_set(rc, $0, LMN_SATOM_GET_FUNCTOR(wt(rc, $1)));
   }
-  at[$0] = at[$1];
-  tt[$0] = TT_OTHER;
+  at_set(rc, $0, at(rc, $1));
+  tt_set(rc, $0, TT_OTHER);
 
 #setmemname LmnInstrVar lmn_interned_str
-  ((LmnMembrane *)wt[$0])->name = TR_GSID($1);
+  ((LmnMembrane *)wt(rc, $0))->name = TR_GSID($1);
 
 #copyrules LmnInstrVar LmnInstrVar
-  TR_INSTR_COPYRULES($0, $1);
+  TR_INSTR_COPYRULES(rc, $0, $1);
 
 #removeproxies LmnInstrVar
-  lmn_mem_remove_proxies((LmnMembrane *)wt[$0]);
+  lmn_mem_remove_proxies((LmnMembrane *)wt(rc, $0));
 
 #insertproxies LmnInstrVar LmnInstrVar
-  lmn_mem_insert_proxies((LmnMembrane *)wt[$0], (LmnMembrane *)wt[$1]);
+  lmn_mem_insert_proxies((LmnMembrane *)wt(rc, $0), (LmnMembrane *)wt(rc, $1));
 
 #deleteconnectors LmnInstrVar LmnInstrVar
   TR_INSTR_DELETECONNECTORS($0, $1);
 
 #removetoplevelproxies LmnInstrVar
-  lmn_mem_remove_toplevel_proxies((LmnMembrane *)wt[$0]);
+  lmn_mem_remove_toplevel_proxies((LmnMembrane *)wt(rc, $0));
 
 #dereffunc LmnInstrVar LmnInstrVar LmnInstrVar
-  TR_INSTR_DEREFFUNC($0, $1, $2);
+  TR_INSTR_DEREFFUNC(rc, $0, $1, $2);
 
 #loadfunc LmnInstrVar $functor
 % if(LMN_ATTR_IS_DATA(targ1_attr)){
 %   switch(targ1_attr){
 %   case LMN_INT_ATTR:
-      wt[$0] = $1_long_data;
-      at[$0] = LMN_INT_ATTR;
+      wt_set(rc, $0, $1_long_data);
+      at_set(rc, $0, LMN_INT_ATTR);
 %     break;
 %   case LMN_DBL_ATTR:
       {
 #__format_t
         const static double x = $1_double_data;
-        wt[$0] = &x;
-        at[$0] = LMN_CONST_DBL_ATTR;
+        wt_set(rc, $0, &x);
+        at_set(rc, $0, LMN_CONST_DBL_ATTR);
 #__format_i
   /* 困った */
 #__format
       }
 %     break;
 %   case LMN_STRING_ATTR:
-      wt[$0] = $1_string_data;
-      at[$0] = LMN_CONST_STR_ATTR;
+      wt_set(rc, $0, $1_string_data);
+      at_set(rc, $0, LMN_CONST_STR_ATTR);
 %     break;
 %   default:
 %     lmn_fatal("Implementation error");
 %   }
 % }else{
-    wt[$0] = (LmnWord)$1_functor_data;
-    at[$0] = $1_attr;
+    wt_set(rc, $0, $1_functor_data);
+    at_set(rc, $0, $1_attr);
 % }
-  tt[$0] = TT_OTHER;
+  tt_set(rc, $0, TT_OTHER);
 
 #eqfunc LmnInstrVar LmnInstrVar
-  if (at[$0] != at[$1]) $f;
-  switch (at[$0]) {
+  if (at(rc, $0) != at(rc, $1)) $f;
+  switch (at(rc, $0)) {
   case LMN_INT_ATTR:
-    if ((long)wt[$0] != (long)wt[$1]) $f;
+    if ((long)wt(rc, $0) != (long)wt(rc, $1)) $f;
     break;
   case LMN_DBL_ATTR:
-    if (*(double*)(&wt[$0]) !=
-        *(double*)(&wt[$1])) $f;
+    if (*(double*)(wt(rc, $0)) !=
+        *(double*)(wt(rc, $1))) $f;
     break;
   default:
-    if (wt[$0] != wt[$1]) $f;
+    if (wt(rc, $0) != wt(rc, $1)) $f;
     break;
   }
- 
+
 #neqfunc LmnInstrVar LmnInstrVar
-  if (at[$0] == at[$1]) {
-    switch (at[$0]) {
+  if (at(rc, $0) == at(rc, $1)) {
+    switch (at(rc, $0)) {
     case LMN_INT_ATTR:
-      if ((long)wt[$0] == (long)wt[$1]) $f;
+      if ((long)wt(rc, $0) == (long)wt(rc, $1)) $f;
       break;
     case LMN_DBL_ATTR:
-      if (*(double*)(&wt[$0]) ==
-          *(double*)(&wt[$1])) $f;
+      if (*(double*)(wt(rc, $0)) ==
+          *(double*)(wt(rc, $1))) $f;
       break;
     default:
-      if (wt[$0] == wt[$1]) $f;
+      if (wt(rc, $0) == wt(rc, $1)) $f;
       break;
     }
   }
 
 #addatom LmnInstrVar LmnInstrVar
-  lmn_mem_push_atom((LmnMembrane *)wt[$0], wt[$1], at[$1]);
+  lmn_mem_push_atom((LmnMembrane *)wt(rc, $0), wt(rc, $1), at(rc, $1));
 
 #movecells LmnInstrVar LmnInstrVar
-  lmn_mem_move_cells((LmnMembrane *)wt[$0], (LmnMembrane *)wt[$1]);
+  lmn_mem_move_cells((LmnMembrane *)wt(rc, $0), (LmnMembrane *)wt(rc, $1));
 
 #removetemporaryproxies LmnInstrVar
-  lmn_mem_remove_temporary_proxies((LmnMembrane *)wt[$0]);
+  lmn_mem_remove_temporary_proxies((LmnMembrane *)wt(rc, $0));
 
 #nfreelinks LmnInstrVar LmnInstrVar
-  if (!lmn_mem_nfreelinks((LmnMembrane *)wt[$0], $1)) $f;
+  if (!lmn_mem_nfreelinks((LmnMembrane *)wt(rc, $0), $1)) $f;
 
 #copycells LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = (LmnWord)lmn_mem_copy_cells((LmnMembrane *)wt[$1], (LmnMembrane *)wt[$2], 0);
-  tt[$0] = TT_OTHER;
+  wt_set(rc, $0, lmn_mem_copy_cells((LmnMembrane *)wt(rc, $1), (LmnMembrane *)wt(rc, $2)));
+  tt_set(rc, $0, TT_OTHER);
 
 #lookuplink LmnInstrVar LmnInstrVar LmnInstrVar
-  TR_INSTR_LOOKUPLINK($0, $1, $2);
+  TR_INSTR_LOOKUPLINK(rc, $0, $1, $2);
 
 #clearrules LmnInstrVar
-  vec_clear(&((LmnMembrane *)wt[$0])->rulesets);
+  vec_clear(&((LmnMembrane *)wt(rc, $0))->rulesets);
 
 #dropmem LmnInstrVar
-  lmn_mem_drop((LmnMembrane *)wt[$0]);
+  lmn_mem_drop((LmnMembrane *)wt(rc, $0));
 
 #testmem LmnInstrVar LmnInstrVar
-  if (LMN_PROXY_GET_MEM(wt[$1]) != (LmnMembrane *)wt[$0]) $f;
+  if (LMN_PROXY_GET_MEM(wt(rc, $1)) != (LmnMembrane *)wt(rc, $0)) $f;
 
 #iaddfunc LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = wt[$1] + wt[$2];
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, wt(rc, $1) + wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #isubfunc LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = wt[$1] - wt[$2];
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, wt(rc, $1) - wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #imulfunc LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = wt[$1] * wt[$2];
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, wt(rc, $1) * wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #idivfunc LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = wt[$1] / wt[$2];
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, wt(rc, $1) / wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #imodfunc LmnInstrVar LmnInstrVar LmnInstrVar
-  wt[$0] = wt[$1] % wt[$2];
-  at[$0] = LMN_INT_ATTR;
-  tt[$0] = TT_ATOM;
+  warry_set(rc, $0, wt(rc, $1) % wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 
 #__end

@@ -3,6 +3,6 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = @THIRDPARTY_DIR@ src lib ext doc test
+SUBDIRS = third_party src lib ext doc test
 DIST_SUBDIRS = $(SUBDIRS)
 DISTCLEANFILES = VERSION arch.h

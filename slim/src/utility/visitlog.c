@@ -38,10 +38,12 @@
 #include "visitlog.h"
 #include "membrane.h"
 
+#define PROC_TBL_DEFAULT_SIZE  1024U
+
 void proc_tbl_init(ProcessTbl p)
 {
 //  proc_tbl_init_with_size(p, env_max_id());
-  proc_tbl_init_with_size(p, 1024);
+  proc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
 }
 
 void proc_tbl_init_with_size(ProcessTbl p, unsigned long size)
@@ -50,7 +52,7 @@ void proc_tbl_init_with_size(ProcessTbl p, unsigned long size)
   p->size = size;
 #ifdef TIME_OPT
   p->tbl  = LMN_NALLOC(LmnWord, p->size);
-  memset(p->tbl, 0xff, sizeof(LmnWord) * p->size);
+  memset(p->tbl, 0xffU, sizeof(LmnWord) * p->size);
 #else
   p->tbl = st_init_ptrtable();
 #endif
@@ -100,10 +102,14 @@ void proc_tbl_clear(ProcessTbl p)
 int proc_tbl_foreach(ProcessTbl p, int(*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg)
 {
 #ifdef TIME_OPT
-  LmnWord i;
+  unsigned long i, n;
 
-  for (i = 0; i < p->size; i++) {
-    if (p->tbl[i] != ULONG_MAX) func(i, p->tbl[i], arg);
+  n = 0;
+  for (i = 0; i < p->size && n < process_tbl_entry_num(p); i++) {
+    if (p->tbl[i] != ULONG_MAX) {
+      func(i, p->tbl[i], arg);
+      n++;
+    }
   }
   return 0;
 #else
@@ -140,15 +146,123 @@ BOOL proc_tbl_eq(ProcessTbl a, ProcessTbl b)
 }
 
 
-#ifdef TIME_OPT
 void proc_tbl_expand_sub(ProcessTbl p, unsigned long n)
 {
   unsigned long org_size = p->size;
   while (p->size <= n) p->size *= 2;
   p->tbl = LMN_REALLOC(LmnWord, p->tbl, p->size);
-  memset(p->tbl + org_size, 0xff, sizeof(LmnWord) * (p->size - org_size));
+  memset(p->tbl + org_size, 0xffU, sizeof(LmnWord) * (p->size - org_size));
 }
+
+
+void sproc_tbl_init_with_size(SimplyProcTbl p, unsigned long size)
+{
+  p->n   = 0;
+  p->cap = size;
+#ifdef TIME_OPT
+  p->tbl = LMN_NALLOC(BYTE, p->cap);
+  memset(p->tbl, SPROC_TBL_INIT_V, sizeof(BYTE) * p->cap);
+#else
+  p->tbl = st_init_ptrtable();
 #endif
+}
+
+void sproc_tbl_init(SimplyProcTbl p)
+{
+  sproc_tbl_init_with_size(p, 256);
+}
+
+void sproc_tbl_destroy(SimplyProcTbl p)
+{
+#ifdef TIME_OPT
+  LMN_FREE(p->tbl);
+#else
+  st_free_table(p->tbl);
+#endif
+}
+
+
+/*------------
+ * TraceLog
+ */
+
+static inline void tracker_init(struct LogTracker *track);
+static inline void tracker_destroy(struct LogTracker *track);
+
+TraceLog tracelog_make(void)
+{
+  struct TraceLog *l = LMN_MALLOC(struct TraceLog);
+  tracelog_init(l);
+  return l;
+}
+
+
+inline void tracelog_init(TraceLog l)
+{
+  tracelog_init_with_size(l, 512);
+}
+
+
+inline void tracelog_init_with_size(TraceLog l, unsigned long size)
+{
+  l->cap = size;
+  l->num = 0;
+  l->tbl = LMN_NALLOC(struct TraceData, l->cap);
+  memset(l->tbl, 0U, sizeof(struct TraceData) * l->cap);
+  tracker_init(&l->tracker);
+}
+
+
+void tracelog_free(TraceLog l)
+{
+  tracelog_destroy(l);
+  LMN_FREE(l);
+}
+
+inline void tracelog_destroy(TraceLog l)
+{
+  LMN_FREE(l->tbl);
+  tracker_destroy(&l->tracker);
+}
+
+/*----------------
+ * Tracker
+ */
+
+static inline void tracker_init(struct LogTracker *track)
+{
+  vec_init(&track->traced_ids, 128);
+  vec_init(&track->btp_idx, 128);
+}
+
+static inline void tracker_destroy(struct LogTracker *track)
+{
+  vec_destroy(&track->traced_ids);
+  vec_destroy(&track->btp_idx);
+}
+
+
+/*------------
+ * SimplyTraceLog
+ */
+
+void simplylog_init(SimplyLog s)
+{
+  simplylog_init_with_size(s, 256);
+}
+
+inline void simplylog_init_with_size(SimplyLog s, unsigned long size)
+{
+  sproc_tbl_init_with_size(&s->tbl, size);
+  tracker_init(&s->tracker);
+}
+
+void simplylog_destroy(SimplyLog s)
+{
+  sproc_tbl_destroy(&s->tbl);
+  tracker_destroy(&s->tracker);
+}
+
 
 /*----------------------------------------------------------------------
  * VisitLog: アトムや膜への訪問の記録
@@ -172,8 +286,11 @@ void checkpoint_free(struct Checkpoint *cp)
 
 void visitlog_init_with_size(VisitLog p, unsigned long tbl_size)
 {
-  if (tbl_size != 0) proc_tbl_init_with_size(&p->tbl, tbl_size);
-  else proc_tbl_init(&p->tbl);
+  if (tbl_size != 0) {
+    proc_tbl_init_with_size(&p->tbl, tbl_size);
+  } else {
+    proc_tbl_init(&p->tbl);
+  }
 /*   printf("size = %lu\n", tbl_size); */
   p->ref_n = VISITLOG_INIT_N;
   p->element_num = 0;
@@ -182,10 +299,7 @@ void visitlog_init_with_size(VisitLog p, unsigned long tbl_size)
 
 void visitlog_init(struct VisitLog *p)
 {
-  proc_tbl_init(&p->tbl);
-  p->ref_n = VISITLOG_INIT_N;
-  p->element_num = 0;
-  vec_init(&p->checkpoints, 128);
+  visitlog_init_with_size(p, 0);
 }
 
 void visitlog_destroy(struct VisitLog *p)
@@ -257,7 +371,5 @@ void visitlog_push_checkpoint(VisitLog visitlog, struct Checkpoint *cp)
     proc_tbl_put(&visitlog->tbl, vec_get(&cp->elements, i), visitlog->ref_n++);
     visitlog->element_num++;
   }
-
   visitlog->element_num += cp->n_data_atom;
 }
-

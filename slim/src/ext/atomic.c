@@ -37,15 +37,19 @@
  * $Id$
  */
 
-#include <stdio.h>
+#include "lmntal.h"
 #include "lmntal_ext.h"
 #include "react_context.h"
 #include "slim_header/memstack.h"
+#include "rule.h"
+#include "task.h"
+#include "mc_worker.h"
+#include "mc_generator.h"
+#ifdef PROFILE
+# include "runtime_status.h"
+#endif
 
-LMN_EXTERN void init_nlmem(void);
-
-void atomic_ruleset(ReactCxt rc,
-                    LmnMembrane *mem,
+void atomic_ruleset(LmnReactCxt *rc, LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
   if (LMN_INT_ATTR == t0) {
@@ -53,11 +57,14 @@ void atomic_ruleset(ReactCxt rc,
     AtomicType atomic_type;
 
     switch ((int)a0) {
-    case  1 :
+    case  1:
       atomic_type = ATOMIC_ALL_EXHAUSTIVE;
       break;
-    case  2 :
-      atomic_type = ATOMIC_EACH_SYNC;
+    case  2:
+      atomic_type = ATOMIC_SIMULATION;
+      break;
+    case  3:
+      atomic_type = ATOMIC_SYNC_STEP;
       break;
     default :
       atomic_type = ATOMIC_NONE;
@@ -83,3 +90,261 @@ void init_atomic(void)
 {
   lmn_register_c_fun("atomic_ruleset", atomic_ruleset, 1);
 }
+
+
+
+/* this function applies rules in $rs to $mem  as much as possible  */
+static inline BOOL react_ruleset_AMAP(LmnReactCxt *rc,
+                                      LmnMembrane *mem,
+                                      LmnRuleSet rs)
+{
+  unsigned int i;
+  BOOL ret = FALSE;
+  for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
+    LmnRule r = lmn_ruleset_get_rule(rs, i);
+#ifdef PROFILE
+    if (!lmn_env.nd && lmn_env.profile_level >= 2) {
+      profile_rule_obj_set(rs, r);
+    }
+#endif
+    if (react_rule(rc, mem, r)) {
+      i = 0;
+      ret = TRUE;
+    }
+  }
+  return ret;
+}
+
+
+static inline LmnWorker *build_atomic_worker()
+{
+  LmnWorker *w;
+  StateSpace sub_states;
+  BYTE sub_flags = 0x00U;
+
+  mc_set_compress(sub_flags);
+  sub_states = statespace_make(NULL, NULL);
+  w = lmn_worker_make(sub_states, env_my_thread_id(), sub_flags);
+  dfs_env_set(w);
+  worker_init(w);
+  mc_react_cxt_init(&worker_rc(w));
+
+  /* TODO: ここで作ったLmnWorkerは所属groupがNULLのため,
+   *       atomic stepで更なる並列実行はできない */
+
+  return w;
+}
+
+static inline void abort_atomic_worker(LmnWorker *w)
+{
+  statespace_free(worker_states(w));
+  mc_react_cxt_destroy(&worker_rc(w));
+  lmn_worker_free(w);
+}
+
+/* ルールセットat_setの各ルールを可能な限り適用する.
+ * 非決定実行時には状態遷移のサブグラフを構築し, 停止状態をmemの遷移先として生成し, rcに登録する. */
+static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
+                                     LmnMembrane *mem,
+                                     LmnRuleSet  at_set)
+{
+  unsigned int i, n, succ_i_from;
+  lmn_ruleset_validate_atomic(at_set);
+
+  succ_i_from  = mc_react_cxt_expanded_num(rc);
+  for (i = 0; i < lmn_ruleset_rule_num(at_set); i++) {
+    react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i));
+  }
+
+  n = mc_react_cxt_expanded_num(rc) - succ_i_from;
+  if (n > 0) {
+    const Vector *ends;
+    LmnWorker *w = build_atomic_worker();
+    RC_START_ATOMIC_STEP(&worker_rc(w), lmn_ruleset_get_id(at_set));
+    for (i = 0; i < n; i++) {
+      State *sub_s = state_make((LmnMembrane *)mc_react_cxt_expanded_pop(rc),
+                                DEFAULT_STATE_ID,
+                                statespace_use_memenc(worker_states(w)));
+      if (sub_s != statespace_insert(worker_states(w), sub_s)) {
+        state_free(sub_s);
+      } else {
+        worker_states(w)->init_state = sub_s;
+        dfs_start(w);
+      }
+    }
+
+    /* サブルーチン側であるatomic workerの並列実行は想定していないので, 以下の記述でもok */
+    ends = statespace_end_states(worker_states(w));
+    for (i = 0; i < vec_num(ends); i++) {
+      LmnMembrane *end_m = lmn_binstr_decode(state_binstr((State *)vec_get(ends, i)));
+      mc_react_cxt_add_expanded(rc, end_m, dummy_rule());
+    }
+//    RC_FINISH_ATOMIC_STEP(&WORKER_RC(w)); /* どうせ破棄しちゃうから要らない */
+    abort_atomic_worker(w);
+  }
+
+  lmn_ruleset_invalidate_atomic(at_set);
+  return succ_i_from != mc_react_cxt_expanded_num(rc);
+}
+
+
+/* ルールセットat_setの各ルールを昇順にちょうど1stepずつ展開する.
+ * 適用のなかったルールはskip.
+ * ex)
+ * src.lmn
+ * ---------
+ *  a(0).
+ *  ruleA @@ a(X) :- X>0, Y=X+1 | a(Y).
+ *  ruleB @@ a(X) :- a(X), b.
+ *  ruleC @@ a(5) :- ok.
+ * ---------
+ * result: ok, b, b, b, b, b.
+ */
+static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
+                                      LmnMembrane *mem,
+                                      LmnRuleSet  at_set)
+{
+  BOOL ret;
+
+  if (!RC_GET_MODE(rc, REACT_ND)) {
+    unsigned int i;
+    ret = FALSE;
+    for (i = 0; i < lmn_ruleset_rule_num(at_set); i++) {
+      if (react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i))) {
+        ret = TRUE;
+      }
+    }
+  }
+  else {
+    unsigned int i, j, r_i, succ_i_from;
+    BYTE mode_org;
+
+    lmn_ruleset_validate_atomic(at_set);
+    succ_i_from = mc_react_cxt_expanded_num(rc);
+
+    /* 1step目: generate successor membrane */
+    for (r_i = 0; r_i < lmn_ruleset_rule_num(at_set); r_i++) {
+      react_rule(rc, mem, lmn_ruleset_get_rule(at_set, r_i));
+      if (mc_react_cxt_expanded_num(rc) > succ_i_from) {
+        r_i++;
+        break;
+      }
+    }
+
+
+    if (r_i < lmn_ruleset_rule_num(at_set)) {
+      lmn_ruleset_validate_atomic(at_set);
+      mode_org = RC_MODE(rc);
+      RC_SET_MODE(rc, REACT_STAND_ALONE);
+
+      /* 2〜r_n step目 */
+      for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
+        LmnMembrane *succ_m = (LmnMembrane *)mc_react_cxt_expanded_get(rc, i);
+        RC_SET_GROOT_MEM(rc, succ_m);
+        react_ruleset_AMAP(rc, succ_m, system_ruleset);
+        for (j = r_i; j < lmn_ruleset_rule_num(at_set); j++) {
+          if (react_rule(rc, succ_m, lmn_ruleset_get_rule(at_set, j))) {
+            react_ruleset_AMAP(rc, succ_m, system_ruleset);
+          }
+        }
+      }
+
+      RC_SET_GROOT_MEM(rc, mem);
+      RC_SET_MODE(rc, mode_org);
+      lmn_ruleset_invalidate_atomic(at_set);
+    }
+
+    ret = FALSE;
+  }
+
+  return ret;
+}
+
+
+static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
+                                                   LmnMembrane *mem,
+                                                   LmnRuleSet  at_set)
+{
+  BOOL ret;
+
+  if (!RC_GET_MODE(rc, REACT_ND)) {
+    ret = FALSE;
+    while (react_ruleset_AMAP(rc, mem, at_set) ||
+           react_ruleset_AMAP(rc, mem, system_ruleset)) {
+       ret = TRUE;
+    }
+  }
+  else {
+    unsigned int i, j, succ_i_from;
+    BYTE mode_org;
+
+    succ_i_from = mc_react_cxt_expanded_num(rc);
+    for (i = 0; i < lmn_ruleset_rule_num(at_set); i++) {
+      react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i));
+    }
+
+    lmn_ruleset_validate_atomic(at_set);
+    mode_org = RC_MODE(rc);
+    RC_SET_MODE(rc, REACT_STAND_ALONE);
+
+    for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
+      LmnMembrane *succ_m;
+      BOOL reacted;
+
+      succ_m  = (LmnMembrane *)mc_react_cxt_expanded_get(rc, i);
+      RC_SET_GROOT_MEM(rc, succ_m);
+      react_ruleset_AMAP(rc, succ_m, system_ruleset);
+      reacted = TRUE;
+      while (reacted) {
+        reacted = FALSE;
+        for (j = 0; j < lmn_ruleset_rule_num(at_set); j++) {
+          reacted = reacted ||
+                    react_rule(rc, succ_m, lmn_ruleset_get_rule(at_set, j));
+        }
+        if (reacted) {
+          react_ruleset_AMAP(rc, succ_m, system_ruleset);
+        }
+      }
+    }
+    RC_SET_GROOT_MEM(rc, mem);
+    RC_SET_MODE(rc, mode_org);
+    lmn_ruleset_invalidate_atomic(at_set);
+    ret = FALSE;
+  }
+
+  return ret;
+}
+
+
+BOOL react_ruleset_atomic(LmnReactCxt *rc,
+                          LmnMembrane *mem,
+                          LmnRuleSet  rs)
+{
+  BOOL result = FALSE;
+
+  if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DMEM(rc)) {
+    lmn_fatal("unsupported delta-membrane, atomic step");
+  }
+
+  RC_START_ATOMIC_STEP(rc, lmn_ruleset_get_id(rs));
+  switch (lmn_ruleset_atomic_type(rs)) {
+  case ATOMIC_SYNC_STEP:
+    result = react_ruleset_atomic_sync(rc, mem, rs);
+    break;
+  case ATOMIC_ALL_EXHAUSTIVE:
+    if (RC_GET_MODE(rc, REACT_ND)) {
+      result = react_ruleset_atomic_all(rc, mem, rs);
+    } /*
+    else  FALLTHROUTH */
+  case ATOMIC_SIMULATION:
+    result = react_ruleset_atomic_simulation(rc, mem, rs);
+    break;
+  default:
+    lmn_fatal("unexpected react testing");
+    break;
+  }
+  RC_FINISH_ATOMIC_STEP(rc);
+  return result;
+}
+
+

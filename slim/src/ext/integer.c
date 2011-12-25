@@ -58,26 +58,30 @@ void init_integer(void);
  *
  * Creates a (multi)set $g[$a], $g[$a+1], ..., $g[$b].
  */
-void integer_set(ReactCxt rc,
+void integer_set(LmnReactCxt *rc,
                  LmnMembrane *mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,
                  LmnAtom a2, LmnLinkAttr t2)
 {
+  Vector *srcvec;
   int i, j, n;
   int start = (int)a0;
   int end = (int)a1;
-  Vector *srcvec = vec_make(16);
 
+  start  = (int)a0;
+  end    = (int)a1;
+  srcvec = vec_make(16);
   vec_push(srcvec, (LmnWord)LinkObj_make(a2, t2));
 
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector *dstlovec;
     ProcessTbl atommap;
+    LinkObj l;
 
     lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap);
 
-    LinkObj l = (LinkObj)vec_get(dstlovec, 0);
+    l = (LinkObj)vec_get(dstlovec, 0);
     lmn_mem_newlink(mem, n, LMN_INT_ATTR, 0,
                     l->ap, t2, LMN_ATTR_GET_VALUE(l->pos));
 
@@ -101,7 +105,7 @@ void integer_set(ReactCxt rc,
  *
  * sets N as the seed for random numbers
  */
-void integer_srand(ReactCxt rc,
+void integer_srand(LmnReactCxt *rc,
                    LmnMembrane *mem,
                    LmnAtom a0, LmnLinkAttr t0)
 {
@@ -115,7 +119,7 @@ void integer_srand(ReactCxt rc,
  *
  * H is bound to a random number between 0 and N-1.
  */
-void integer_rand(ReactCxt rc,
+void integer_rand(LmnReactCxt *rc,
                   LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1)
@@ -135,7 +139,7 @@ void integer_rand(ReactCxt rc,
  *
  * H is bound to a random number between 0 and N-1.
  */
-void integer_of_string(ReactCxt rc,
+void integer_of_string(LmnReactCxt *rc,
                        LmnMembrane *mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1)

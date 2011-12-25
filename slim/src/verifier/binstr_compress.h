@@ -42,16 +42,12 @@
 
 #include "lmntal.h"
 #include "mem_encode.h"
-#ifdef HAVE_LIBZ
-#  include <zlib.h>
-#endif
 
-#define BS_COMP_Z                 (0x01U)
+LmnBinStr lmn_bscomp_z_encode(LmnBinStr org);
+LmnBinStr lmn_bscomp_z_decode(LmnBinStr org);
 
-#define is_comp_z(BS)             (((BS)->comp_type) & BS_COMP_Z)
-#define set_comp_z(BS)            (((BS)->comp_type) |= BS_COMP_Z)
 
-LmnBinStr lmn_bscomp_z_encode(LmnBinStr bs);
-LmnBinStr lmn_bscomp_z_decode(LmnBinStr bs);
+LmnBinStr lmn_bscomp_d_encode(LmnBinStr org, LmnBinStr ref);
+LmnBinStr lmn_bscomp_d_decode(LmnBinStr ref, LmnBinStr dif);
 
 #endif /* LMN_BS_COMP */

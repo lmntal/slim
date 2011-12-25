@@ -40,13 +40,13 @@
 
 /* Error */
 #ifdef DEBUG
-#  define lmn_fatal(Msg)                           \
+# define lmn_fatal(Msg)                            \
     do {                                           \
       do_lmn_fatal(__FILE__, __LINE__, Msg);       \
       assert(FALSE);                               \
     } while (0);
 #else
-#  define lmn_fatal(Msg)                           \
+# define lmn_fatal(Msg)                            \
     do {                                           \
       do_lmn_fatal(__FILE__, __LINE__, Msg);       \
       exit(EXIT_FAILURE);                          \

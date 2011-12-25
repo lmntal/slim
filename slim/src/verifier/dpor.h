@@ -42,17 +42,15 @@
 #include "lmntal.h"
 #include "delta_membrane.h"
 #include "statespace.h"
-#include "state.h"
 #include "visitlog.h"
 #ifdef DEBUG
-#  include "dumper.h"
-#  include "error.h"
-#  define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
+# include "dumper.h"
+# include "error.h"
+# define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
 #else
-#  define POR_DEBUG(V)
+# define POR_DEBUG(V)
 #endif
 
-typedef struct McDporData  McDporData;
 typedef struct ContextC2 *ContextC2;
 typedef struct ContextC1 *ContextC1;
 
@@ -73,7 +71,7 @@ struct McDporData {
 
 extern McDporData **dpor_data;
 
-#define DPOR_DATA()        (dpor_data[lmn_thread_id])
+#define DPOR_DATA()        (dpor_data[env_my_thread_id()])
 
 
 #define LHS_DEFAULT                (0x00U)
@@ -106,30 +104,26 @@ extern McDporData **dpor_data;
 void dpor_explore_redundunt_graph(StateSpace ss);
 
 
-void dpor_start(StateSpace      ss,
-                State           *s,
-                struct ReactCxt *rc,
-                Vector          *new_s,
+void dpor_start(StateSpace  ss,
+                State       *s,
+                LmnReactCxt *rc,
+                Vector      *new_s,
                 BOOL flag);
 
 void dpor_env_init(void);
 void dpor_env_destroy(void);
 
-void dpor_transition_gen_LHS(McDporData      *mc,
-                             MemDeltaRoot    *d,
-                             struct ReactCxt *rc,
-                             LmnWord         *wt,
-                             LmnByte         *at,
-                             LmnByte         *tt);
-BOOL dpor_transition_gen_RHS(McDporData      *mc,
-                             MemDeltaRoot    *d,
-                             struct ReactCxt *rc,
-                             LmnWord         *wt,
-                             LmnByte         *at,
-                             LmnByte         *tt);
+void dpor_transition_gen_LHS(McDporData   *mc,
+                             MemDeltaRoot *d,
+                             LmnReactCxt  *rc,
+                             LmnRegister  *v);
+BOOL dpor_transition_gen_RHS(McDporData   *mc,
+                             MemDeltaRoot *d,
+                             LmnReactCxt  *rc,
+                             LmnRegister  *v);
 
 
-inline static void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f) {
+static inline void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f) {
   LmnWord t;
   BYTE flags;
 
@@ -144,7 +138,7 @@ inline static void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f)
   proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
 }
 
-inline static void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
+static inline void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
   LmnWord t;
   BYTE flags;
 
@@ -160,11 +154,11 @@ inline static void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE uns
   proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
 }
 
-inline static void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTbl atoms) {
+static inline void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTbl atoms) {
   vec_push(d->wt_gatoms, (vec_data_t)atoms);
 }
 
-inline static void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTbl atoms) {
+static inline void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTbl atoms) {
   if (vec_peek(d->wt_gatoms) == (vec_data_t)atoms) {
     vec_pop(d->wt_gatoms);
   } else {
@@ -185,5 +179,5 @@ inline static void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTbl atoms)
 void dpor_contextC1_dump_eachL(ContextC1 c);
 void dpor_contextC1_dump_eachR(ContextC1 c);
 void dpor_contextC1_dump(McDporData *d);
-int dpor_dependency_tbl_dump(McDporData *d);
+int  dpor_dependency_tbl_dump(McDporData *d);
 #endif

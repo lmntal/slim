@@ -2,7 +2,8 @@ noinst_LIBRARIES = liblmn_utility.a
 
 liblmn_utility_a_CFLAGS = \
         -I../             \
-	-I../verifier
+        -I../verifier     \
+        $(CFLAGS)
 
 liblmn_utility_a_SOURCES =       \
 	vector.c        vector.h       \

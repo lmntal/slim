@@ -738,8 +738,9 @@ static void lmn_dump_cell_internal(LmnPort port,
       if (lmn_dump_mem_internal(port, m, ht, s)) {
         dumped = TRUE;
         /* 次の膜が既に出力済みならスキップする */
-        if (m->next && !hashtbl_contains(ht, (HashKeyType)(m->next)))
+        if (m->next && !hashtbl_contains(ht, (HashKeyType)(m->next))) {
           port_put_raw_s(port, ", ");
+        }
       }
     }
     if (dumped) {
@@ -829,24 +830,46 @@ void dump_atom_dev(LmnSAtom atom)
 
   f = LMN_SATOM_GET_FUNCTOR(atom);
   arity = LMN_FUNCTOR_ARITY(f);
-  fprintf(stdout, "Func[%3u], Name[%5s], A[%2u], Addr[%lu], ID[%2lu], "
+
+  esc_code_add(CODE__FORECOLOR_LIGHTBLUE);
+  fprintf(stdout, "Func[%3u], Name[%5s], A[%2u], Addr[%p], ID[%2lu], "
                 , f
                 , lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f))
                 , arity
-                , (LmnWord)atom
+                , atom
                 , LMN_SATOM_ID(atom));
+
+  if (LMN_FUNC_IS_HL(f)) {
+    fprintf(stdout, "HL_OBJ_ID[%2lu], ", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(atom)));
+  }
+  esc_code_clear();
+
+  fprintf(stdout, "\n");
 
   for (i = 0; i < arity; i++) {
     LmnLinkAttr attr;
 
-    fprintf(stdout, "%u: ", i);
+    fprintf(stdout, "   %2u: ", i);
     attr = LMN_SATOM_GET_ATTR(atom,i);
     if (i == 2 && LMN_IS_PROXY_FUNCTOR(f)) { /* membrane */
       fprintf(stdout, "mem[%p], ", (void*)LMN_PROXY_GET_MEM(atom));
     }
+    else if (i == 1 && LMN_FUNC_IS_HL(f)) {
+      HyperLink *h = (HyperLink *)LMN_SATOM_GET_LINK(atom, i);
+      fprintf(stdout, " link[HLobj, Addr:%p, HL_ID:%2lu, ROOT_HL_ID:%2lu, Owner!Addr:%p, Owner'!'ID:%2lu], "
+                    , h
+                    , LMN_HL_ID(h)
+                    , LMN_HL_ID(lmn_hyperlink_get_root(h))
+                    , lmn_hyperlink_hl_to_at(h)
+                    , LMN_SATOM_ID(lmn_hyperlink_hl_to_at(h)));
+    }
     else if (!LMN_ATTR_IS_DATA(attr)) { /* symbol atom */
-      fprintf(stdout, "link[%d, %lu], ", LMN_ATTR_GET_VALUE(attr), (LmnWord)LMN_SATOM_GET_LINK(atom, i));
-    } else {
+      fprintf(stdout, " link[%5d, Addr:%p,    ID:%2lu], "
+                    , LMN_ATTR_GET_VALUE(attr)
+                    , LMN_SATOM(LMN_SATOM_GET_LINK(atom, i))
+                    , LMN_SATOM_ID(LMN_SATOM_GET_LINK(atom, i)));
+    }
+    else {
       switch (attr) {
         case  LMN_INT_ATTR:
           fprintf(stdout, "int[%lu], ", LMN_SATOM_GET_LINK(atom,i));
@@ -854,14 +877,20 @@ void dump_atom_dev(LmnSAtom atom)
         case  LMN_DBL_ATTR:
           fprintf(stdout, "double[%f], ", *(double*)LMN_SATOM_GET_LINK(atom,i));
           break;
+        case  LMN_HL_ATTR:
+          fprintf(stdout, "hlink[ !, Addr:%lu, ID:%lu], "
+                        , LMN_SATOM_GET_LINK(atom, i)
+                        , LMN_SATOM_ID(LMN_SATOM_GET_LINK(atom, i)));
+          break;
         default:
           fprintf(stdout, "unknown data type[%d], ", attr);
           break;
       }
     }
+    fprintf(stdout, "\n");
   }
 
-  fprintf(stdout, "\n");
+  if (arity == 0) fprintf(stdout, "\n");
 }
 
 static void dump_ruleset_dev(struct Vector *v)
@@ -881,22 +910,20 @@ void lmn_dump_mem_dev(LmnMembrane *mem)
   if (!mem) return;
 
   fprintf(stdout, "{\n");
-  fprintf(stdout, "Mem[%u], Addr[%lu], ID[%lu]\n"
+  fprintf(stdout, "Mem[%u], Addr[%p], ID[%lu]\n"
                 , LMN_MEM_NAME_ID(mem)
-                , (LmnWord)mem
+                , mem
                 , lmn_mem_id(mem));
   EACH_ATOMLIST(mem, ent, ({
     LmnSAtom atom;
-    EACH_ATOM(atom, ent, {
+    EACH_ATOM(atom, ent, ({
       dump_atom_dev(atom);
-    });
+    }));
   }));
 
   dump_ruleset_dev(&mem->rulesets);
   lmn_dump_mem_dev(mem->child_head);
-
   fprintf(stdout, "}\n");
-
   lmn_dump_mem_dev(mem->next);
 }
 
@@ -1003,7 +1030,7 @@ void lmn_dump_dot(LmnMembrane *mem)
 }
 
 
-void cb_dump_mem(ReactCxt rc,
+void cb_dump_mem(LmnReactCxt *rc,
                  LmnMembrane *mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,

@@ -66,7 +66,7 @@ char *basename_ext(const char *path)
   char *buf = strdup(path);
   int len = strlen(buf);
   int i;
-  
+
   for (i = len-1; i >= 0; i--) {
     if (buf[i] == '.') {
       buf[i] = '\0';
@@ -82,7 +82,7 @@ char *extension(const char *path)
   int len = strlen(path);
   int i;
   char *ext;
-  
+
   for (i = len-1; i >= 0; i--) {
     if (path[i] == '.') {
       break;

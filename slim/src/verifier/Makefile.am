@@ -11,9 +11,13 @@ PARSER_SOURCE = $(patsubst %, %.c, $(PARSERS))
 BUILT_SOURCES = $(PARSER_SOURCE)
 CLEANFILES = $(PARSER_SOURCE) $(PARSER_HEADER)
 
-liblmn_verifier_a_CFLAGS =            \
-        -I../                         \
-	-I../utility
+liblmn_verifier_a_DEPENDENCIES =                         \
+        ../../third_party/zdelta-2.1/libzd_in_slim.a
+liblmn_verifier_a_CFLAGS =                               \
+        -I../                                            \
+        -I../utility                                     \
+        -I../../third_party/zdelta-2.1                   \
+        $(CFLAGS)
 
 liblmn_verifier_a_SOURCES =                              \
 	nc_parser.y	             nc_lexer.l                    \
@@ -32,7 +36,8 @@ liblmn_verifier_a_SOURCES =                              \
 	statespace.c             statespace.h                  \
 	mem_encode.c             mem_encode.h                  \
 	delta_membrane.c         delta_membrane.h              \
-	binstr_compress.c        binstr_compress.h
+	binstr_compress.c        binstr_compress.h 
+
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)

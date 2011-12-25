@@ -2,42 +2,47 @@
 #+STARTUP: showall
 
 * コンパイル
-現在Autoconf, Automakeというツールを使っています。これらは,コンパイル
-時の環境を検査して,適切なMakefileとconfig.hの作成をします。
-autoconfはversion 2.62以上でないとコンパイルできません。
-また、コンパイルには以下の環境が必要です。
+現在Autoconf, Automakeというツールを使っている.
+これらは,コンパイル時の環境を検査し, 適切なMakefileやconfig.hを作成をする.
+autoconfはversion 2.61以上でないとコンパイルできない.
+また, コンパイルには以下の環境が必要.
 - flex 2.5.35以上
 - bison 2.3以上
-- libtool
+- libtool http://www.gnu.org/software/libtool/
 
 ** configureを作る
-configureはGNU系のプログラムでよく使われる環境の違いを吸収してくれるス
-クリプトです。configure.acのあるディレクトリでコマンドを以下を実行する
-事で作成できます。
+configureはGNU系のプログラムでよく使われる環境の違いを吸収するためのスクリプト.
+configure.acのあるディレクトリで以下のコマンドを実行して作成する.
 
+  $ aclocal
+  $ automake --add-missing
   $ autoreconf
+or
+  $ ./autogen.sh
 
-このconfigureはシステムを検査して，適切なMakefileとconfig.hを作成します。
+このconfigureはシステムを検査し，適切なMakefileとconfig.hを作成する.
 configureを新しく作る場合やconfigure.ac, Makefile.am src/Makefile.amを
-変更した場合は上記のの操作を行いconfigureを作ります。
+変更した場合は上記の操作を行いconfigureを作成する.
+
 
 ** 環境変数を設定する
 
-コンパイルを行う為には環境変数 LMNTAL_HOME をJavaによる処理系のパスに設定する必要が
-ある。ライブラリのコンパイルにJavaによる処理系のコンパイラ使用するので
-これが必要になる。
+コンパイルを行う為には環境変数 LMNTAL_HOME を
+Javaによる処理系（LMNtalコンパイラ）にパスを設定する必要がある.
+（ライブラリのコンパイルにJavaによる処理系のコンパイラ使用しているため）
 
-例: 
+
+例:
  # 最後にスラッシュは付けない
  # $LMNTAL_HOME/binに実行ファイル lmntal があるようにする
- export LMNTAL_HOME=/home/taisuke/workspace/devel  
+ export LMNTAL_HOME=/home/taisuke/workspace/devel
 
 ** .h, .cファイルをsrcディレクトリに追加した場合
-src/Makefile.am に追加したファイルを書き加える。
+src/Makefile.am に追加したファイルを書き加える.
 
 ** configureのオプション
 ./configure 時にオプションが付けられる
-- --enable-debug 
+- --enable-debug
 -- DEBUG用のコード(assert文など)を含める
 - --enable-devel
 -- 開発用のコンパイルオプションを設定
@@ -49,9 +54,9 @@ src/Makefile.am に追加したファイルを書き加える。
 - ただし、autoconfによりinlineキーワードやint32_t型などが使用できる
 - 一般的なUnix/Linux環境で動作させる
 - 32/64bitで動作させる
-- SLIMから外部に公開する関数、型，マクロなどにはlmnで始まるプレフィックスを付ける
+- SLIMから外部に公開する関数, 型，マクロなどにはlmnで始まるプレフィックスを付ける
 - コンパイル時のワーニングはエラーと同等に扱う
-- 開発時は--enable-develオプションを使う
+- 開発時は--enable-debugオプションを使う
 - テストは頻繁に実施する
 - テストは常に更新する
 - ドキュメントとコードに不整合を起こさない
@@ -61,11 +66,12 @@ src/Makefile.am に追加したファイルを書き加える。
 
 * テスト
 
-slimディレクトリ以下で 
+slimディレクトリ以下で
 
- make check 
+ $ make check
 
-を実行。
+を実行
+
 
 * デバッグ
 ** dmalloc (http://dmalloc.com/)
@@ -73,16 +79,16 @@ slimディレクトリ以下で
 
 *** 使いかた
 http://dmalloc.com/docs/latest/online/dmalloc_4.html#SEC4
-にチュートリアルがある。
+にチュートリアルがある.
 
-automakeでdmallocようの機能があったのでそれを使ったときの手順。
+automakeでdmallocようの機能があったのでそれを使ったときの手順.
 $ が付いている行はシェルコマンド
 
 1. $ function dmalloc { eval `command dmalloc -b $*`; }
 
 2. ./configureに --with-dmalloc を付けて実行
 
-3. $ dmalloc -l dmalloc_log -i 100 low 
+3. $ dmalloc -l dmalloc_log -i 100 low
       * -l dmaloc_log : ログファイルの名前
       * -i 100 : チェックする頻度。数字が小さい方がプログラムは遅くなる
       * low    : チェックする機能の数。 runtime < low < medium < high
@@ -101,7 +107,7 @@ $ が付いている行はシェルコマンド
 - ChangeLog
 -- バージョンアップによる変更点
 
-- doc/slim.1.in 
+- doc/slim.1.in
 --  manページ
 
 - AUTHORS

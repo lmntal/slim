@@ -1,74 +1,119 @@
+SLIM (2.2.1)  -- 2011/12/25
+  * updates for parallel LTL model checker
+  ** new features / support
+    + parallel execution on OSX Lion, Snow Leopard
+    + uniq constraint rules for the delta-membrane method
+    + new builtin foreign language interfaces for atomic operations
+    + state compression using ZDelta Library (--d-compress)
+    + programs using strings, floating point numbers
+
+  ** reduce some redundant memory usages
+    - atom management in membranes
+    - state size
+
+  ** improvement some time performances
+    + graph isomorphism tester
+    + Lv.2 profiler (calculate a Heap memory, hash conflictions, etc)
+    ++ parallelization using openMP
+    ++ replacement by faster hash table
+    + a computational complexity of Nfreelinks procedure: O(N)-->O(1)
+    + modified the mhash (a function of membranes) calculation
+    ++ CHR (Uniq Constrait Rule) histories
+    ++ floating point numbers using FNV-hash
+    ++ membrane names
+
+  ** buf fixes
+    + graph isomorphism tester
+    + builtin foreign language interfaces for atomic operations
+    + memory leaks if race condition occurs in state-space
+    + and minor bug fixes
+
+  ** others
+    + update the version of builtin-tcmalloc (1.6-->1.8.3)
+    + fix some codes for hypergraph as MT-safe
+    - remove the execution with builtin-rulesets in default
+      (slim don't use builtin-rulesets/libraries in a default.
+       if you want to use it, add option "--use-builtin-rule")
+    - remove a option "--disable-compact"
+    + and many codes refactored
+
 SLIM (2.2.0)  -- 2011/12/24
-  * new features
-    * Modelchecker : support Verification for hyper graph model
+  * new features / support
+    + support Verification for hyper graph model
 
 SLIM (2.1.7)  -- 2011/08/20
-  * new features
-    * add --show-hl option
-    * improve proxy management of "REMOVEPROXIES"
-  * and many bug fixes
+  * new features / support
+    + add --show-hl option
+    + improve the "REMOVEPROXIES" (membrane manager) performance
+  * minor bug fixes
 
 SLIM (2.1.3)  -- 2011/01/17
-  * new features
-    * RunTime      :  support hyper graph representation (--hl)
-    * Modelchecker :  prototype for partial order reduction (--por)
+  * RunTime
+    + support hyper graph representation (--hl)
+  * Non-Deterministic Execution
+    + update for partial order reduction (--por)
 
 SLIM (2.1.1)  -- 2011/01/12
   * bug fix
-    * implemented pthread_barrier for cygwin
+    + fix a implementation of pthread_barrier for cygwin
 
 SLIM (2.1.0)  -- 2011/01/11
   * LTL model checker
-    * support OWCTY algorithm (--use-owcty --disable-map-h)
-    * support MAP algorithm (--use-map)
-    * support OWCTY + MAP heuristics (DEFAULT:--use-owcty --use-map-h)
-    * support BLEDGE algorithm (--use-bledge)
-  * many bug fixes
+    + support OWCTY algorithm (--use-owcty --disable-map-h)
+    + support MAP algorithm (--use-map)
+    + support OWCTY + MAP heuristics (DEFAULT:--use-owcty --use-map-h)
+    + support BLEDGE algorithm (--use-bledge)
+  * minor bug fixes
 
-SLIM (2.0.7)  -- 2010/10/20 
-  * release Parallel LTL Model Checker with improvement performance
-    * implement Parallel State Space Search on shared-memory architecture
-      * support Stack-Slicing Algorithm with Dynamic Load-Balancer
-      * support Verification for LTL-Safety property
-      * support Reachability execution with property automata
-    * improve performace
-      * support Canonical Membrane representation for ltl model checking
-      * improve state generate procedure using Delta-Membrane technique
-      * implement Fast Graph Traversal with Process ID 
-      * implement new rehash technique
-  * add/remove options
-    * please see --help
-  * add tcmalloc as multi-threaded fast memory allocator
-  * support GraphViz (Dot Language Style) output format for State Transition Graph
-  * and many bug fixes..
+SLIM (2.0.7)  -- 2010/10/20
+  * LTL Model Checker
+  ** parallelization for State Space Search on shared-memory architecture
+    + support Stack-Slicing Algorithm with Dynamic Load-Balancer
+    + support Verification for LTL-Safety property
+    + support Reachability execution with property automata
+    + add tcmalloc as multi-threaded fast memory allocator
+    + implement concurrent faster hash-table
+
+  ** improve performace
+    + support Canonical Membrane representation for ltl model checking
+    + improve state generate procedure using Delta-Membrane technique
+    + implement Fast Graph Traversal with Process ID
+    + implement new rehash technique
+
+  ** others
+    + add options    (please see --help)
+    - remove options (please see --help)
+    + support GraphViz (Dot Language Style) output format for State Transition Graph
+    + and many bug fixes
 
 SLIM (1.1.0)  -- 2010/06/26
   * Nondeterministic execution
-    * support combination of uniq constraint & canonical membrane representation
-    * support Depth Limited BFS strategy
+    + support combination of uniq constraint & canonical membrane representation
+    + support Depth Limited BFS strategy
   * Bug fixes
-  
+
 SLIM (1.0.0)  -- 2009/11/18
   * LTL Model Checking
-    * support LTL formula
-    * support never claim
+    + support LTL formula
+    + support never claim
   * Nondeterministic execution
-    * implement canonical membrane representation
-    * replace membrane isomorphism testing
-    * improve membrane hashing algorithm
-    * drastic memory reduction
-    * change output format
-  * support external interface to C
-  * support profiling for runtime
-  * support new uniq constraint
-  * support translation LMNtal to C
-  * add LMNtal libralies
-  * add -p option for profiling
-  * add --mem-enc option
-  * add --compact-stack option
-  * remove --nd_result option
-  * remove --nd_dump option
-  * many bug fixes
+    + implement canonical membrane representation
+    + replace membrane isomorphism testing
+    + improve membrane hashing algorithm
+    + drastic memory reduction
+    + change output format
+  * Others
+    + support external interface to C
+    + support profiling for runtime
+    + support new uniq constraint
+    + support translation LMNtal to C
+    + add LMNtal libralies
+    + add -p option for profiling
+    + add --mem-enc option
+    + add --compact-stack option
+    - remove --nd_result option
+    -remove --nd_dump option
+    + and many bug fixes
 
 SLIM (0.4.0)  -- 2008/11/7
   * The conv_il was integrated to SLIM.

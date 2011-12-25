@@ -40,6 +40,7 @@
 #include "hyperlink.h"
 #include "atom.h"
 #include "membrane.h"
+#include "react_context.h"
 
 #if SIZEOF_LONG == 4
 #  define EMPTY_KEY   0xffffffffUL
@@ -63,48 +64,16 @@
  */
 
 /* prototype */
-void sht_print();
-void hs_print();
-void sameproccxt_destroy();
+void sht_print(SimpleHashtbl *sht);
+void hs_print(HashSet *hs);
+static inline void sameproccxt_destroy(SimpleHashtbl *sht);
 
-static unsigned long hyperlink_id;
 
-void hyperlink_init()
+static inline unsigned long hyperlink_new_id()
 {
-  if (!lmn_env.hyperlink) {
-    fprintf(stdout, "Can't use hyperlink with option --nd..\n");
-    exit(1);
-  }
-
-  hyperlink_id = 0;
-  hl_sameproccxt = NULL;
-//  lmn_sameproccxt_init2();
+  return env_gen_next_id(); /* nd実行のために変更 */
 }
 
-void hyperlink_destroy()
-{
-////  HashIterator it;
-////  HyperLink *hl;
-////
-////  if (at_hl) {
-////    for (it = hashtbl_iterator(at_hl); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
-////      if ((HashValueType)(hl = (HyperLink *)(hashtbliter_entry(&it)->data)) < DELETED_KEY) {
-////        if (hl->children) hashset_free(hl->children);
-////        LMN_FREE(hl);
-////      }
-////    }
-////    hashtbl_free(at_hl);
-////  }
-
-  if (hl_sameproccxt) sameproccxt_destroy();
-
-
-}
-
-unsigned long hyperlink_new_id()
-{
-  return env_gen_next_id();//nd実行のために変更
-}
 
 //HyperLink *lmn_hyperlink_make(LmnSAtom sa)
 void lmn_hyperlink_make(LmnSAtom at)
@@ -112,12 +81,12 @@ void lmn_hyperlink_make(LmnSAtom at)
   HyperLink *hl;
 
   hl = LMN_MALLOC(HyperLink);
-  hl->atom = at;
-  hl->rank = 0;
-  hl->mem  = NULL;
-  hl->id   = hyperlink_new_id();
-//  hl->usrid = 0; // id
-  hl->parent = hl;
+  hl->atom     = at;
+  hl->rank     = 0;
+  hl->mem      = NULL;
+  hl->id       = hyperlink_new_id();
+//  hl->usrid = 0;
+  hl->parent   = hl;
   hl->children = NULL;
 
   LMN_SATOM_SET_LINK(LMN_SATOM(at), 1, (LmnWord)hl);
@@ -127,17 +96,19 @@ void lmn_hyperlink_make(LmnSAtom at)
 //  printf("lmn_hyperlink_make %p -> %p\n", hl, LMN_SATOM(hl->atom));
 }
 
+
 /* 新しいhyperlinkの生成 */
 LmnSAtom lmn_hyperlink_new()
 {
   LmnSAtom atom;
 
   atom = lmn_new_atom(LMN_HL_FUNC);
-  LMN_SATOM_SET_ID(atom, env_gen_next_id());
+  LMN_SATOM_SET_ID(atom, hyperlink_new_id());
   lmn_hyperlink_make(atom);
 
   return atom;
 }
+
 
 /* rootまでの全ての親のrankにdの値を加算する */
 void hyperlink_rank_calc(HyperLink *hl, int d)
@@ -145,16 +116,16 @@ void hyperlink_rank_calc(HyperLink *hl, int d)
   HyperLink *parent, *current;
 
   hl->rank += d;
-  current = hl;
-  parent = hl->parent;
+  current   = hl;
+  parent    = hl->parent;
   while (parent != current) {
 //    pro1++;
     parent->rank += d;
     current = parent;
     parent = parent->parent;
   }
-
 }
+
 
 /* HyperLinkのatom, memのみを交換する */
 void hyperlink_swap_atom(HyperLink *hl1, HyperLink *hl2)
@@ -162,41 +133,43 @@ void hyperlink_swap_atom(HyperLink *hl1, HyperLink *hl2)
   LmnSAtom t_atom;
   LmnMembrane *t_mem;
 
-  t_atom = hl1->atom;
+  t_atom    = hl1->atom;
   hl1->atom = hl2->atom;
   hl2->atom = t_atom;
 
   LMN_SATOM_SET_LINK(hl1->atom, 1, (LmnWord)hl1);
   LMN_SATOM_SET_LINK(hl2->atom, 1, (LmnWord)hl2);
 
-  t_mem = hl1->mem;
-  hl1->mem = hl2->mem;
-  hl2->mem = t_mem;
+  t_mem     = hl1->mem;
+  hl1->mem  = hl2->mem;
+  hl2->mem  = t_mem;
 
 }
+
 
 /* 子表に格納されている子のうち先頭のものを返す、子表が無ければNULLを返す */
 HyperLink *hyperlink_head_child(HyperLink *hl)
 {
-  HyperLink *child;
-  HashSet *children;
-  HashSetIterator it;
+  HashSet *children = hl->children;
+  if (children) {
+    HashSetIterator it;
 
-  if ((children = hl->children)) {
-    for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it))
-      if ((HashKeyType)(child = (HyperLink *)hashsetiter_entry(&it)) < DELETED_KEY)
+    for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
+      HyperLink *child = (HyperLink *)hashsetiter_entry(&it);
+      if ((HashKeyType)child < DELETED_KEY) {
         return child;
+      }
+    }
   }
 
   return NULL;
-
 }
+
 
 /*
  * atom の削除に呼応してHyperLink 構造体を削除する（最適化 ver.）
  *
- * 子をたくさん持つHyperLink を削除してしまうと, 削除後の木構造の再構築に
- * 時間がかかる（全ての子に対して親の更新を行なうなど）ため、
+ * 子をたくさん持つHyperLink を削除してしまうと, 削除後の木構造の再構築に時間がかかる（全ての子に対して親の更新を行なうなど）ため、
  * 削除するHyperLink は木構造の葉であることが望ましい
  *
  * HyperLink 木は変更せずに、HyperLink に対応しているatom を親子間での交換を繰り返して
@@ -204,16 +177,19 @@ HyperLink *hyperlink_head_child(HyperLink *hl)
  */
 void lmn_hyperlink_delete(LmnSAtom at)
 {
-  HyperLink *hl, *parent, *child;
+  HyperLink *hl = lmn_hyperlink_at_to_hl(at);
 
-  if ((hl = lmn_hyperlink_at_to_hl(at))) {
+  if (hl) {
+    HyperLink *parent;
+
     while (hl->children) {
-      child = hyperlink_head_child(hl);
+      HyperLink *child = hyperlink_head_child(hl);
       hyperlink_swap_atom(hl, child);
       hl = child;
     }
 
-    if ((parent = hl->parent) != hl) {
+    parent = hl->parent;
+    if (parent != hl) {
       hashset_delete(parent->children, (HashKeyType)hl);
       hyperlink_rank_calc(parent, -1);
       if (parent->rank == 0) {
@@ -223,9 +199,9 @@ void lmn_hyperlink_delete(LmnSAtom at)
     }
 
     LMN_FREE(hl);
-
   }
 }
+
 
 /* atom の削除に呼応してHyperLink 構造体を削除する
  *
@@ -234,74 +210,97 @@ void lmn_hyperlink_delete(LmnSAtom at)
  */
 void lmn_hyperlink_delete_old(LmnSAtom at)
 {
-  HyperLink *hl, *parent, *tmp;
+  HyperLink *hl, *parent;
   HashSet *children;
-  HashSetIterator it;
 
-  if ((hl = lmn_hyperlink_at_to_hl(at))) {
+  hl = lmn_hyperlink_at_to_hl(at);
+  if (!hl) return;
+
+  parent   = hl->parent;
+  children = hl->children;
+
+  if (parent != hl) {
     /* root でない場合：
      * 親の子表から自身を削除し, 親のrankを-1した後,
      *   子がいる   -> 親の子表に自身の子を移す
      *   子がいない -> そのまま削除
      */
-    if ((parent = hl->parent) != hl) {
 
-      hashset_delete(parent->children, (HashKeyType)hl);
-//      parent->rank--;
-      hyperlink_rank_calc(parent, -1);
-      if (parent->rank == 0) {
-        hashset_free(parent->children);
-        parent->children = NULL;
-      }
-      if ((children = hl->children)) { // 子表があるとき
-        for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
-          if ((HashKeyType)(tmp = (HyperLink *)hashsetiter_entry(&it)) < DELETED_KEY) {
-            hashset_add(parent->children, (HashKeyType)tmp);
-            hashset_delete(children, (HashKeyType)tmp);
-            tmp->parent = parent;
-          }
+    hashset_delete(parent->children, (HashKeyType)hl);
+//    parent->rank--;
+    hyperlink_rank_calc(parent, -1);
+    if (parent->rank == 0) {
+      hashset_free(parent->children);
+      parent->children = NULL;
+    }
+
+    if (children) { // 子表があるとき
+      HashSetIterator it;
+      for (it = hashset_iterator(children);
+           !hashsetiter_isend(&it);
+           hashsetiter_next(&it)) {
+        HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
+        if ((HashKeyType)tmp < DELETED_KEY) {
+          hashset_add(parent->children, (HashKeyType)tmp);
+          hashset_delete(children, (HashKeyType)tmp);
+          tmp->parent = parent;
         }
-
       }
+    }
+  }
+  else {
     /* root である場合：
      *   子がいる   -> rankが最大の子を新rootにする
      *   子がいない -> そのまま削除
      */
-    } else { /* rootである場合： */
+    if (children) { /* 子表があるとき */
       HyperLink *newroot;
+      HashSetIterator it;
 
       newroot = NULL;
-      if ((children = hl->children)) { // 子表があるとき
-        for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
-          if ((HashKeyType)(newroot = (HyperLink *)hashsetiter_entry(&it)) < DELETED_KEY)
-            break; // 現状では先頭の子を新しい親にしている
-        }
-
-        /* 新rootが決定 */
-        hashset_delete(children, (HashKeyType)newroot); // rootの子表から新rootを除去
-        newroot->parent = newroot;
-
-        if (!newroot->children)
-          newroot->children = hashset_make(hashset_num(children));
-
-        for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
-          if ((HashKeyType)(tmp = (HyperLink *)hashsetiter_entry(&it)) < DELETED_KEY) {
-            hashset_add(newroot->children, (HashKeyType)tmp);
-            hashset_delete(children, (HashKeyType)tmp);
-            tmp->parent = newroot;
-          }
-        }
-        newroot->rank = parent->rank - 1;
-        if (newroot->rank == 0) {
-          hashset_free(newroot->children);
-          newroot->children = NULL;
+      for (it = hashset_iterator(children);
+           !hashsetiter_isend(&it);
+           hashsetiter_next(&it)) {
+        newroot = (HyperLink *)hashsetiter_entry(&it);
+        if ((HashKeyType)newroot < DELETED_KEY) {
+          break; /* 現状では先頭の子を新しい親にしている */
         }
       }
+
+      /* 新rootが決定 */
+      hashset_delete(children, (HashKeyType)newroot); /* rootの子表から新rootを除去 */
+      newroot->parent = newroot;
+
+      if (!newroot->children) {
+        newroot->children = hashset_make(hashset_num(children));
+      }
+
+      for (it = hashset_iterator(children);
+           !hashsetiter_isend(&it);
+           hashsetiter_next(&it)) {
+        HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
+        if ((HashKeyType)tmp < DELETED_KEY) {
+          hashset_add(newroot->children, (HashKeyType)tmp);
+          hashset_delete(children, (HashKeyType)tmp);
+          tmp->parent = newroot;
+        }
+      }
+
+      newroot->rank = parent->rank - 1;
+      if (newroot->rank == 0) {
+        hashset_free(newroot->children);
+        newroot->children = NULL;
+      }
     }
-    if (hl->children) hashset_free(hl->children);
-    LMN_FREE(hl);
   }
+
+  if (children) {
+    hashset_free(children);
+  }
+  LMN_FREE(hl);
 }
+
+
 
 /* hyperlinkのコピー
  * <=> 新しいHyperLink 構造体を生成し、newatomに対応づけた後、oriatomと併合する
@@ -361,7 +360,6 @@ void hyperlink_path_compression(HyperLink *root, Vector *children)
 /* root を返す */
 HyperLink *lmn_hyperlink_get_root(HyperLink *hl)
 {
-
   HyperLink *parent_hl, *current_hl;
 
   if (hl->parent == hl) return hl;
@@ -398,6 +396,7 @@ HyperLink *lmn_hyperlink_get_root(HyperLink *hl)
   return parent_hl;
 }
 
+
 /* child をparent の子として併合する（parent, childは共にroot）*/
 HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child)
 {
@@ -411,6 +410,7 @@ HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child)
   return parent;
 
 }
+
 
 /* 2 つのhyperlink を併合し、親となった方を返す
  *   rank のより大きい(子を多く持つ)方を親とする
@@ -445,6 +445,7 @@ HyperLink *lmn_hyperlink_at_to_hl(LmnSAtom at)
   return (HyperLink *)LMN_SATOM_GET_LINK(at, 1);
 }
 
+
 /* HyperLink 構造体のポインタ --> 対応する'!'アトムのポインタ */
 LmnSAtom lmn_hyperlink_hl_to_at(HyperLink *hl)
 {
@@ -453,11 +454,13 @@ LmnSAtom lmn_hyperlink_hl_to_at(HyperLink *hl)
   return hl->atom;
 }
 
+
 /* rank を返す */
 int lmn_hyperlink_rank(HyperLink *hl)
 {
   return LMN_HL_RANK(lmn_hyperlink_get_root(hl));
 }
+
 
 /* hyperlink の要素数(rank + 1)を返す */
 int lmn_hyperlink_element_num(HyperLink *hl)
@@ -465,27 +468,27 @@ int lmn_hyperlink_element_num(HyperLink *hl)
   return (lmn_hyperlink_rank(hl) + 1);
 }
 
+
 /* hyperlink 同士の比較 */
 BOOL lmn_hyperlink_eq_hl(HyperLink *hl1, HyperLink *hl2)
 {
-  return
-    (lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(hl1))
-     ==  lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(hl2)));
+  return lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(hl1)) ==
+           lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(hl2));
 }
+
 
 /* hyperlink 同士の比較（'!'アトムポインタから直接） */
 BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLinkAttr attr2)
 {
-  if (!LMN_ATTR_IS_HL(attr1) || !LMN_ATTR_IS_HL(attr2))
-    return FALSE;
-
-  //return (LMN_HL_ATOM_ROOT_ATOM(atom1) == LMN_HL_ATOM_ROOT_ATOM(atom2));
-  return lmn_hyperlink_eq_hl(lmn_hyperlink_at_to_hl(atom1), lmn_hyperlink_at_to_hl(atom2));
+  return LMN_ATTR_IS_HL(attr1) &&
+         LMN_ATTR_IS_HL(attr2) &&
+         lmn_hyperlink_eq_hl(lmn_hyperlink_at_to_hl(atom1),
+                             lmn_hyperlink_at_to_hl(atom2));
 }
 
+
 /* hyperlink を1 つ出力
- *   hyperlink が1 つでも出力されるとTRUE を返す
- *  */
+ *   hyperlink が1 つでも出力されるとTRUE を返す */
 BOOL hyperlink_print(LmnMembrane *mem, BOOL *flag, int *group, int *element)
 {
   AtomListEntry *atomlist;
@@ -580,6 +583,7 @@ BOOL hyperlink_print(LmnMembrane *mem, BOOL *flag, int *group, int *element)
 }
 
 
+
 /* num >= 0 */
 int hyperlink_print_get_place(int num) {
   int place, tmp;
@@ -593,6 +597,7 @@ int hyperlink_print_get_place(int num) {
 
   return place;
 }
+
 
 /* グローバルルート膜から順に辿って、存在する全てのhyperlink を出力する */
 void lmn_hyperlink_print(LmnMembrane *gr)
@@ -627,6 +632,7 @@ void lmn_hyperlink_print(LmnMembrane *gr)
 //  fprintf(f, "\n");
 
 }
+
 
 /* 旧式
  * [hl_ID]  [parent] [linked with] [num] [direct children (inside info)]
@@ -711,6 +717,7 @@ void lmn_hyperlink_print_old()
   hyperlink_print_old();
 }
 
+
 /* for debug @seiji */
 void sht_print(SimpleHashtbl *sht)
 {
@@ -757,12 +764,11 @@ void hs_print(HashSet *hs)
   }
 }
 
+
 /* ----------------------------------------------------------------------- *
  *  same proccess context (同名型付きプロセス文脈)                         *
  *  hyperlink の接続関係を利用したルールマッチング最適化                   *
  * ----------------------------------------------------------------------- */
-
-SimpleHashtbl *hl_sameproccxt;
 
 //FindProcCxt *findproccxt;
 //
@@ -773,41 +779,55 @@ SimpleHashtbl *hl_sameproccxt;
 //  commit      = FALSE;
 //}
 
-void lmn_sameproccxt_init()
+void lmn_sameproccxt_init(LmnReactCxt *rc)
 {
-  hl_sameproccxt = hashtbl_make(2);
+  RC_SET_HLINK_SPC(rc, hashtbl_make(2));
 }
 
-void sameproccxt_destroy()
+
+static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt)
 {
   HashIterator it;
-  SameProcCxt *spc;
-  ProcCxt *pc;
-  Vector *tree;
-  int i;
 
-  if (hl_sameproccxt) {
-    for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
-      if ((spc = (SameProcCxt *)hashtbliter_entry(&it)->data)) {
-        if (spc->proccxts) {
-          for (i = 0; i < spc->length; i++)
-            if ((pc = LMN_SPC_PC(spc, i))) LMN_FREE(pc);
-          if ((tree = LMN_SPC_TREE(spc))) vec_free(tree);
-          LMN_FREE(spc->proccxts);
-        }
-        LMN_FREE(spc);
-      }
+  if (!hl_sameproccxt) return;
+
+  for (it = hashtbl_iterator(hl_sameproccxt);
+       !hashtbliter_isend(&it);
+       hashtbliter_next(&it)) {
+    SameProcCxt *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
+
+    if (!spc) {
+      continue;
     }
-    hashtbl_free(hl_sameproccxt);
+    else if (spc->proccxts) {
+      Vector *tree;
+      unsigned int i;
+
+      for (i = 0; i < spc->length; i++) {
+        ProcCxt *pc = LMN_SPC_PC(spc, i);
+        if (pc) LMN_FREE(pc);
+      }
+
+      tree = LMN_SPC_TREE(spc);
+      if (tree) vec_free(tree);
+
+      LMN_FREE(spc->proccxts);
+    }
+
+    LMN_FREE(spc);
   }
 
+  hashtbl_free(hl_sameproccxt);
 }
 
-void lmn_sameproccxt_clear()
+
+
+void lmn_sameproccxt_clear(LmnReactCxt *rc)
 {
-  sameproccxt_destroy();
-  hl_sameproccxt = NULL;
+  sameproccxt_destroy(RC_HLINK_SPC(rc));
+  RC_SET_HLINK_SPC(rc, NULL);
 }
+
 
 ProcCxt *lmn_sameproccxt_pc_make(int atomi, int arg, ProcCxt *original)
 {
@@ -860,11 +880,9 @@ BOOL lmn_sameproccxt_from_clone(SameProcCxt *spc, int n)
  */
 HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity)
 {
-  HyperLink *hl, *start_hl;
-  ProcCxt *pc;
-  int i, element_num, tmp_num, start_arity;
+  HyperLink *start_hl;
+  int i, element_num, start_arity;
 
-  hl = NULL;
   start_hl = NULL;
   element_num = -1;
   start_arity = 0;
@@ -876,19 +894,20 @@ HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity)
   }
 
   for (i = 0; i < atom_arity; i++) {
-    pc = LMN_SPC_PC(spc, i);
+    ProcCxt *pc = LMN_SPC_PC(spc, i);
     if (pc && !LMN_PC_IS_ORI(pc)) {
+      HyperLink *hl;
+      int tmp_num;
+
       hl = LMN_PC_START(LMN_PC_ORI(pc));
       LMN_PC_START(pc) = hl;
 //      /* オリジナル側で探索始点のハイパーリンクが指定されていない
 //       * または探索始点のハイパーリンクの要素数が0（どちらも起こり得ないはず）*/
 //      if (!hl) return FALSE;
 //      if (!(element_num = lmn_hyperlink_element_num(hl))) return FALSE;
-      if (element_num < 0) { /* 1引数目 */
-        element_num = lmn_hyperlink_element_num(hl);
-        start_hl = hl;
-        start_arity = i;
-      } else if (element_num > (tmp_num = lmn_hyperlink_element_num(hl))) { /* 2引数目以降 */
+
+      tmp_num = lmn_hyperlink_element_num(hl);
+      if (element_num < 0 || element_num > tmp_num) {
         element_num = tmp_num;
         start_hl = hl;
         start_arity = i;
@@ -896,7 +915,7 @@ HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity)
     }
   }
 
-  LMN_SPC_TREE(spc) = vec_make(element_num);
+  LMN_SPC_TREE(spc) = vec_make(element_num <= 0 ? 1 : element_num);
   LMN_SPC_SATTR(spc) = start_arity;
   return start_hl;
 }
@@ -909,42 +928,44 @@ HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity)
  */
 BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int atom_arity)
 {
-  BOOL all_pc_check;
-  ProcCxt *pc;
-  LmnSAtom linked_atom;
-  LmnLinkAttr linked_attr;
-  HyperLink *hl;
   int i;
-
+  BOOL all_pc_check;
 
   all_pc_check = TRUE;
-
   for (i = 0; i < atom_arity; i++) {
-    if (!(pc = LMN_SPC_PC(spc, i))) continue; // atom(spc)の第i引数が同名プロセス文脈
+    ProcCxt *pc;
+    LmnSAtom linked_atom;
+    LmnLinkAttr linked_attr;
+
+    pc = LMN_SPC_PC(spc, i);
+    if (!pc) continue; /* atom(spc)の第i引数が同名プロセス文脈 */
 
     linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(atom, i));
     linked_attr = LMN_SATOM_GET_ATTR(atom, i);
-    if (LMN_ATTR_IS_HL(linked_attr)) { // atomの第i引数がハイパーリンク
-      if (!LMN_PC_IS_ORI(pc)) {
-        if (!lmn_hyperlink_eq_hl(LMN_PC_START(LMN_PC_ORI(pc)), lmn_hyperlink_at_to_hl(linked_atom))) {
-          all_pc_check = FALSE;
-          break;
-        }
-      } else {
-        if (lmn_hyperlink_element_num((hl = lmn_hyperlink_at_to_hl(linked_atom))) <= 1) {
-          all_pc_check = FALSE;
-          break;
-        }
-        LMN_PC_START(pc) = lmn_hyperlink_at_to_hl(linked_atom);
-      }
-    } else {
+
+    if (!LMN_ATTR_IS_HL(linked_attr)) {
       all_pc_check = FALSE;
-      break;
     }
+    else if (!LMN_PC_IS_ORI(pc) &&
+             !lmn_hyperlink_eq_hl(LMN_PC_START(LMN_PC_ORI(pc)),
+                                  lmn_hyperlink_at_to_hl(linked_atom))) {
+      /* atomの第i引数がハイパーリンク */
+      all_pc_check = FALSE;
+    }
+    else {
+      HyperLink *hl = lmn_hyperlink_at_to_hl(linked_atom);
+      if (lmn_hyperlink_element_num(hl) <= 1) {
+        all_pc_check = FALSE;
+      }
+      LMN_PC_START(pc) = lmn_hyperlink_at_to_hl(linked_atom);
+    }
+    if (!all_pc_check) break;
   }
+
 
   return all_pc_check;
 }
+
 
 /* clone側のatomが持つ全ての引数に対して以下の処理を行なう
  * a. 通常の引数
@@ -957,62 +978,49 @@ BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int 
  */
 BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int atom_arity)
 {
-  BOOL all_pc_check;
-  ProcCxt *pc;
-  LmnSAtom linked_atom;
-  LmnLinkAttr linked_attr;
-  HyperLink *linked_hl;
   int i;
+  BOOL all_pc_check;
 
   all_pc_check = TRUE;
-
   for (i = 0; i < atom_arity; i++) {
-    if (!(pc = LMN_SPC_PC(spc, i))) continue;
+    ProcCxt *pc;
+    LmnSAtom linked_atom;
+    LmnLinkAttr linked_attr;
+
+    pc = LMN_SPC_PC(spc, i);
+    if (!pc) continue;
 
     linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(atom, i));
     linked_attr = LMN_SATOM_GET_ATTR(atom, i);
-    if (!LMN_ATTR_IS_HL(linked_attr)) { // atomの第i引数がハイパーリンク
+
+    if (!LMN_ATTR_IS_HL(linked_attr)) { /* atomの第i引数がハイパーリンク */
       all_pc_check = FALSE;
-      break;
     }
-    linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
-    if (!LMN_PC_IS_ORI(pc)) { // 第i引数がクローンであれば、それの成否を確かめる
-      if (!lmn_hyperlink_eq_hl(linked_hl, LMN_PC_START(pc))) {
+    else {
+      HyperLink *linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
+
+      if (LMN_PC_IS_ORI(pc)) { /* 第i引数がオリジナルであれば、クローン側での探索の始点を保持 */
+        LMN_PC_START(pc) = linked_hl;
+      } else if (!lmn_hyperlink_eq_hl(linked_hl, LMN_PC_START(pc))) { /* 第i引数がクローンであれば、それの成否を確かめる */
         all_pc_check = FALSE;
-        break;
       }
-    } else { // 第i引数がオリジナルであれば、クローン側での探索の始点を保持
-      LMN_PC_START(pc) = lmn_hyperlink_at_to_hl(linked_atom);
     }
+
+    if (!all_pc_check) break;
   }
 
   return all_pc_check;
-}
-
-/*    --hl オプション指定
- * && hl_sameproccxtが初期化済み
- * && atomiが同名プロセス文脈を持つアトムである
- */
-BOOL lmn_hyperlink_opt(LmnInstrVar atomi)
-{
-  return (lmn_env.hyperlink
-           && hl_sameproccxt
-           && hashtbl_contains(hl_sameproccxt, (HashKeyType)atomi));
 }
 
 
 /* rootの子を全てtreeに格納する(withoutは除く) */
 void hyperlink_get_children_without(Vector *tree, HyperLink *root, HyperLink *without)
 {
-  HyperLink *hl;
-  HashSet *children;
   HashSetIterator it;
-
-  children = root->children;
-  for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
+  for (it = hashset_iterator(root->children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
 //    printf("%p\n", (void *)((HyperLink *)hashsetiter_entry(&it))->atom);
 //    pro1++;
-    hl = (HyperLink *)hashsetiter_entry(&it);
+    HyperLink *hl = (HyperLink *)hashsetiter_entry(&it);
     if (hl->children && hl->rank > 0) { /* hlが子を持つならば */
       hyperlink_get_children_without(tree, hl, without);
     }
@@ -1023,17 +1031,14 @@ void hyperlink_get_children_without(Vector *tree, HyperLink *root, HyperLink *wi
   }
 }
 
-/* start_hlと同じ集合に属するhyperlinkを全てVectorに格納して返す
- * fidnproccxtで使用する関係上、start_hlは探索対象外のHyperLinkであるため、treeの最後に追加する
- */
+
+/* start_hlと同じ集合に属するhyperlinkを全てVectorに格納して返す.
+ * fidnproccxtで使用する関係上,
+ * start_hlは探索対象外のHyperLinkであるため, treeの最後に追加する  */
 void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl)
 {
-  HyperLink *root;
-
-  root = lmn_hyperlink_get_root(start_hl);
-
+  HyperLink *root = lmn_hyperlink_get_root(start_hl);
   if (root->rank > 0)   hyperlink_get_children_without(tree, root, start_hl);
   if (root != start_hl) vec_push(tree, (LmnWord)root);
   vec_push(tree, (LmnWord)start_hl);
-
 }

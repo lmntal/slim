@@ -48,7 +48,6 @@
  */
 void dfs_env_set(LmnWorker *w);
 void dfs_start(LmnWorker *w);
-void dfs_set_cutoff_depth(unsigned int d);
 void dfs_worker_init(LmnWorker *w);
 void dfs_worker_finalize(LmnWorker *w);
 BOOL dfs_worker_check(LmnWorker *w);

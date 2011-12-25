@@ -27,4 +27,4 @@ sync{
   b_com @@ b(B), b_next(N)    :- int(B) | b(N).
 }.
 
-initial_ruleset{ sync{@p.} :- {'$callback'('atomic_ruleset', 2), @p}.}.
+initial_ruleset{ sync{@p.} :- {'$callback'('atomic_ruleset', 3), @p}.}.

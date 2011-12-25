@@ -54,21 +54,21 @@
  *      3rd Word      : アトムと膜に割り当てる一意な整数ID
  *      aligned Word  : 以下のByte要素の合計をWordサイズへアラインメント
  *        next 2 Bytes: アトムの種類(アトム名とリンク数の組)を表すfunctorに対応した整数ID
- *        N Bytes     : リンク属性
- *      N Words       : リンクデータ
+ *        N Bytes     : リンク属性   (1 Byte * N本)
+ *      N Words       : リンクデータ (1 Word * N本)
  *    (Nはリンクの数)
  *
  *  * Link Attribute
- *     リンク属性は, 先頭1ビットが立っていない場合は, 下位7bitがリンク番号を記録しており,
- *                  先頭1ビットが立っている場合は, Primitiveデータの種類を記録する。
+ *     リンク属性は, 先頭1ビットが立っていない場合は, 下位7bitが接続先リンクの番号を記録しており,
+ *                先頭1ビットが立っている場合は, Primitiveデータの種類を記録する。
  *     [Link Number]  0-------
- *     [int]          10000000
- *     [double]       10000001
- *     [special]      10000011
- *     [string]       10000011
- *     [const string] 10000100
- *     [const double] 10000101
- *     [hyper link]   10001010
+ *     [int]          1000 0000
+ *     [double]       1000 0001
+ *     [special]      1000 0011
+ *     [string]       1000 0011
+ *     [const string] 1000 0100
+ *     [const double] 1000 0101
+ *     [hyper link]   1000 1010
  *
  *     We are going to support some primitive data types.
  *     (signed/unsigned) int, short int, long int, byte, long long int,
@@ -92,7 +92,8 @@
 #define LMN_ATOM(X)                     ((LmnAtom)(X))
 #define LMN_SATOM(X)                    ((LmnSAtom)(X))
 
-/* アトムリストからATOMのprev/nextアトムを取得/設定する. RAWはアトムリストから履歴アトムを読み飛ばさない */
+/* アトムリストからATOMのprev/nextアトムを取得/設定する.
+ * アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする */
 #define LMN_SATOM_PPREV(ATOM)           (((LmnWord *)(ATOM)))
 #define LMN_SATOM_PNEXT(ATOM)           (((LmnWord *)(ATOM)) + 1)
 #define LMN_SATOM_GET_PREV(ATOM)        (LMN_SATOM(*LMN_SATOM_PPREV(LMN_SATOM(ATOM))))
@@ -171,15 +172,15 @@
 /* link attribute of primitive data type */
 /* low 7 bits of link attribute */
 
-#define LMN_INT_ATTR                    (LMN_ATTR_FLAG | 0)
-#define LMN_DBL_ATTR                    (LMN_ATTR_FLAG | 1)
-#define LMN_SP_ATOM_ATTR                (LMN_ATTR_FLAG | 2)
+#define LMN_INT_ATTR                    (LMN_ATTR_FLAG | 0x00U)
+#define LMN_DBL_ATTR                    (LMN_ATTR_FLAG | 0x01U)
+#define LMN_SP_ATOM_ATTR                (LMN_ATTR_FLAG | 0x03U)
 #define LMN_STRING_ATTR                 LMN_SP_ATOM_ATTR
 /* 定数アトム */
-#define LMN_CONST_STR_ATTR              (LMN_ATTR_FLAG | 3)
-#define LMN_CONST_DBL_ATTR              (LMN_ATTR_FLAG | 4)
+#define LMN_CONST_STR_ATTR              (LMN_ATTR_FLAG | 0x04U)
+#define LMN_CONST_DBL_ATTR              (LMN_ATTR_FLAG | 0x05U)
 /* 拡張アトム？(⊂ unary) */
-#define LMN_HL_ATTR                     (LMN_ATTR_FLAG | 10)
+#define LMN_HL_ATTR                     (LMN_ATTR_FLAG | 0x0aU)
 
 /*----------------------------------------------------------------------
  * allocation
@@ -195,28 +196,28 @@ void free_atom_memory_pools(void);
  * functions
  */
 void mpool_init(void);
-inline static LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr);
-inline static LmnSAtom lmn_copy_satom(LmnSAtom atom);
-inline static LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr);
-inline static LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom);
-inline static void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr);
-inline static void free_symbol_atom_with_buddy_data(LmnSAtom atom);
-inline static BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0,
+static inline LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr);
+static inline LmnSAtom lmn_copy_satom(LmnSAtom atom);
+static inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr);
+static inline LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom);
+static inline void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr);
+static inline void free_symbol_atom_with_buddy_data(LmnSAtom atom);
+static inline BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0,
                                LmnAtom atom1,LmnLinkAttr attr1);
-inline static BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr);
-inline static BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
+static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr);
+static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
                                     LmnAtom atom2, LmnLinkAttr attr2);
 
-#define LMN_COPY_DBL_ATOM(dest, src) \
-  do { \
-    (dest) = (double *)LMN_ATOM(LMN_MALLOC(double));    \
-    *((double *)dest) = *(double*)(src);       \
+#define LMN_COPY_DBL_ATOM(Dst, Src)                                            \
+  do {                                                                         \
+    (Dst) = (double *)LMN_ATOM(LMN_MALLOC(double));                            \
+    *((double *)Dst) = *(double*)(Src);                                        \
   } while (0)
 
 
 /* アトムをコピーして返す。
  * atomがシンボルアトムの場合、リンク先のデータアトムもコピーする */
-inline static LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr) {
+static inline LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr) {
   if (LMN_ATTR_IS_DATA(attr)) {
     return lmn_copy_data_atom(atom, attr);
   } else { /* symbol atom */
@@ -224,32 +225,35 @@ inline static LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr) {
   }
 }
 
-inline static LmnSAtom lmn_copy_satom(LmnSAtom atom) {
-  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
-  LmnSAtom newatom = lmn_new_atom(f);
+static inline LmnSAtom lmn_copy_satom(LmnSAtom atom) {
+  LmnSAtom newatom;
+  LmnFunctor f;
+
+  f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
+  newatom = lmn_new_atom(f);
 
   memcpy((void *)newatom,
          (void *)atom,
-         LMN_WORD_BYTES*LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(f)));
+         LMN_WORD_BYTES * LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(f)));
 
   LMN_SATOM_SET_ID(newatom, 0);
   return newatom;
 }
 
-inline static LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
+static inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
   switch (attr) {
-  case LMN_INT_ATTR:
-    return atom;
-  case LMN_DBL_ATTR:
+    case LMN_INT_ATTR:
+      return atom;
+    case LMN_DBL_ATTR:
     {
       double *d;
       LMN_COPY_DBL_ATOM(d, atom);
       *d = *(double*)atom;
       return LMN_ATOM(d);
     }
-  case LMN_SP_ATOM_ATTR:
-    return LMN_ATOM(SP_ATOM_COPY(atom));
-  case LMN_HL_ATTR:
+    case LMN_SP_ATOM_ATTR:
+      return LMN_ATOM(SP_ATOM_COPY(atom));
+    case LMN_HL_ATTR:
     {
       LmnSAtom copyatom;
       copyatom = lmn_copy_satom(LMN_SATOM(atom));
@@ -258,13 +262,13 @@ inline static LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
       lmn_hyperlink_copy(copyatom, LMN_SATOM(atom));
       return LMN_ATOM(copyatom);
     }
-  default:
-    LMN_ASSERT(FALSE);
-    return -1;
+    default:
+      LMN_ASSERT(FALSE);
+      return -1;
   }
 }
 
-inline static LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom)
+static inline LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom)
 {
   LmnFunctor f;
   LmnSAtom newatom;
@@ -272,7 +276,8 @@ inline static LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom)
 
   f = LMN_SATOM_GET_FUNCTOR(LMN_SATOM(atom));
   newatom = lmn_new_atom(f);
-  LMN_ASSERT(newatom != atom); /* たまに起こる未解決のバグ */
+
+  LMN_ASSERT(newatom != atom);
 
   memcpy((void *)newatom,
          (void *)atom,
@@ -291,32 +296,31 @@ inline static LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom)
   return newatom;
 }
 
-inline static void free_data_atom(LmnAtom atom, LmnLinkAttr attr) {
+static inline void free_data_atom(LmnAtom atom, LmnLinkAttr attr) {
   switch (attr) {
-  case LMN_INT_ATTR:
-    break;
-  case LMN_DBL_ATTR:
-    LMN_FREE((double*)atom);
-    break;
-  case LMN_CONST_STR_ATTR:
-  case LMN_CONST_DBL_ATTR:
-    break;
-  case LMN_SP_ATOM_ATTR:
-    SP_ATOM_FREE(atom);
-    break;
-  case LMN_HL_ATTR:
-    lmn_hyperlink_delete(LMN_SATOM(atom));
-    lmn_delete_atom(LMN_SATOM(atom));
-    break;
-  default:
-    LMN_ASSERT(FALSE);
-    break;
+    case LMN_INT_ATTR:
+      break;
+    case LMN_DBL_ATTR:
+      LMN_FREE((double*)atom);
+      break;
+    case LMN_CONST_STR_ATTR: /* FALLTHROUGH */
+    case LMN_CONST_DBL_ATTR:
+      break;
+    case LMN_SP_ATOM_ATTR:
+      SP_ATOM_FREE(atom);
+      break;
+    case LMN_HL_ATTR:
+      lmn_hyperlink_delete(LMN_SATOM(atom));
+      lmn_delete_atom(LMN_SATOM(atom));
+      break;
+    default:
+      LMN_ASSERT(FALSE);
+      break;
   }
-  return;
 }
 
 /* O(ARITY) */
-inline static void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr) {
+static inline void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr) {
   if (LMN_ATTR_IS_DATA(attr)) {
     free_data_atom(atom, attr);
   } else { /* symbol atom */
@@ -325,7 +329,7 @@ inline static void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr) {
 }
 
 /* シンボルアトムとリンクで接続しているデータアトムを解放する */
-inline static void free_symbol_atom_with_buddy_data(LmnSAtom atom)
+static inline void free_symbol_atom_with_buddy_data(LmnSAtom atom)
 {
   unsigned int i;
   unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
@@ -342,7 +346,7 @@ inline static void free_symbol_atom_with_buddy_data(LmnSAtom atom)
   lmn_delete_atom(LMN_SATOM(atom));
 }
 
-inline static BOOL lmn_eq_func(LmnAtom     atom0, LmnLinkAttr attr0,
+static inline BOOL lmn_eq_func(LmnAtom     atom0, LmnLinkAttr attr0,
                                LmnAtom     atom1, LmnLinkAttr attr1) {
   /* TODO: TOFIX シンボルアトムのattrがすべて等しい値であることを確認する */
   if (attr0 != attr1) return FALSE;
@@ -360,7 +364,7 @@ inline static BOOL lmn_eq_func(LmnAtom     atom0, LmnLinkAttr attr0,
   }
 }
 
-inline static BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr) {
+static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr) {
   switch (attr) {
   case LMN_INT_ATTR:
   case LMN_DBL_ATTR:
@@ -373,20 +377,25 @@ inline static BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr) {
   }
 }
 
-inline static BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
+static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
                                     LmnAtom atom2, LmnLinkAttr attr2) {
-  if (attr1 != attr2) return FALSE;
-  switch (attr1) {
-  case LMN_INT_ATTR:
-    return atom1 == atom2;
-  case LMN_DBL_ATTR:
-    return *(double*)atom1 == *(double*)atom2;
-  case LMN_SP_ATOM_ATTR:
-    return SP_ATOM_EQ(atom1, atom2);
-  case LMN_HL_ATTR:
-    return lmn_hyperlink_eq(LMN_SATOM(atom1), attr1, LMN_SATOM(atom2), attr2);
-  default:
-    lmn_fatal("Implementation error");
+  if (attr1 != attr2) {
+    return FALSE;
+  }
+  else {
+    switch (attr1) {
+    case LMN_INT_ATTR:
+      return atom1 == atom2;
+    case LMN_DBL_ATTR:
+      return *(double*)atom1 == *(double*)atom2;
+    case LMN_SP_ATOM_ATTR:
+      return SP_ATOM_EQ(atom1, atom2);
+    case LMN_HL_ATTR:
+      return lmn_hyperlink_eq(LMN_SATOM(atom1), attr1, LMN_SATOM(atom2), attr2);
+    default:
+      lmn_fatal("Implementation error");
+      return FALSE;
+    }
   }
 }
 

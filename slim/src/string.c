@@ -62,12 +62,14 @@ struct LmnString {
 #define LMN_STRING_BUF(obj) (LMN_STRING(obj)->buf)
 #define LMN_STRING_BUF_SIZE(obj) (LMN_STRING(obj)->buf_size)
 
+#define LINK_STR(MEM, TO_ATOM, TO_ATTR, STR_ATOM)                        \
+        lmn_mem_newlink((MEM),                                           \
+                        (TO_ATOM),                                       \
+                        (TO_ATTR),                                       \
+                        LMN_ATTR_GET_VALUE((TO_ATTR)),                   \
+                        LMN_ATOM((STR_ATOM)),                            \
+                        LMN_SP_ATOM_ATTR, 0)
 
-#define LINK_STR(MEM, TO_ATOM, TO_ATTR, STR_ATOM)    \
-  lmn_mem_newlink((MEM),                                         \
-                    (TO_ATOM), (TO_ATTR), LMN_ATTR_GET_VALUE((TO_ATTR)), \
-                    LMN_ATOM((STR_ATOM)), LMN_SP_ATOM_ATTR, 0)
-  
 static int string_atom_type;
 
 BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr)
@@ -75,6 +77,10 @@ BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr)
   return
     attr == LMN_SP_ATOM_ATTR &&
     LMN_SP_ATOM_TYPE(atom) == string_atom_type;
+}
+
+unsigned long lmn_string_hash(LmnString atom) {
+  return lmn_byte_hash((unsigned char *)LMN_STRING_BUF(atom), (long)LMN_STRING_LEN(atom));
 }
 
 /* 文字列をCの文字列の形式で返す */
@@ -121,14 +127,16 @@ LmnString lmn_string_copy(LmnString s)
 
 void lmn_string_free(LmnString s)
 {
-  LMN_FREE(s->buf);
-  LMN_FREE(s);
+  if (s) {
+    if (s->buf) LMN_FREE(s->buf);
+    LMN_FREE(s);
+  }
 }
 
 BOOL lmn_string_eq(LmnString s1, LmnString s2)
 {
   return LMN_STRING_LEN(s1) == LMN_STRING_LEN(s2) &&
-    !strcmp(LMN_STRING_BUF(s1), LMN_STRING_BUF(s2));
+         !strcmp(LMN_STRING_BUF(s1), LMN_STRING_BUF(s2));
 }
 
 inline static void string_expand_buf(LmnString s, unsigned long size)
@@ -141,7 +149,7 @@ void lmn_string_push_raw_c(LmnString s, int c)
 {
   if (s->len+1 == s->buf_size) {
     /* バッファのサイズをどれくらい増加すべきか */
-    string_expand_buf(s, s->buf_size+1); 
+    string_expand_buf(s, s->buf_size+1);
   }
   s->len++;
   s->buf[s->len-1] = c;
@@ -160,7 +168,7 @@ void lmn_string_push_raw_s(LmnString dst, const char *src)
   const unsigned long len = dst->len + strlen(src);
   if (len >= dst->buf_size) {
     /* バッファのサイズをどれくらい増加すべきか */
-    string_expand_buf(dst, len + 1); 
+    string_expand_buf(dst, len + 1);
   }
   dst->len = len;
   strcat(dst->buf, src);
@@ -196,14 +204,14 @@ inline unsigned long lmn_string_len(LmnString s)
  * Callbacks
  */
 
-void cb_string_make(ReactCxt rc,
+void cb_string_make(LmnReactCxt *rc,
                     LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0,
                     LmnAtom a1, LmnLinkAttr t1)
 {
   const char *s;
   BOOL to_be_freed = FALSE;
-  
+
   if (LMN_ATTR_IS_DATA(t0)) {
     switch (t0) {
     case LMN_INT_ATTR:
@@ -224,11 +232,11 @@ void cb_string_make(ReactCxt rc,
   }
 
   LINK_STR(mem, a1, t1, lmn_string_make(s));
-  if (to_be_freed) LMN_FREE(s); 
+  if (to_be_freed) LMN_FREE(s);
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void cb_string_concat(ReactCxt rc,
+void cb_string_concat(LmnReactCxt *rc,
                       LmnMembrane *mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       LmnAtom a1, LmnLinkAttr t1,
@@ -241,7 +249,7 @@ void cb_string_concat(ReactCxt rc,
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
-void cb_string_length(ReactCxt rc,
+void cb_string_length(LmnReactCxt *rc,
                       LmnMembrane *mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       LmnAtom a1, LmnLinkAttr t1)
@@ -254,25 +262,25 @@ void cb_string_length(ReactCxt rc,
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void cb_string_reverse(ReactCxt rc,
+void cb_string_reverse(LmnReactCxt *rc,
                        LmnMembrane *mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1)
 {
   int i, j;
   char *s = LMN_STRING_BUF(a0);
-  
+
   for (i = 0, j = strlen(s)-1; i < j; i++, j--) {
     char t = s[i];
     s[i] = s[j];
     s[j] = t;
   }
-  
+
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1),
                   a0, t0, 0);
 }
 
-void cb_string_substr(ReactCxt rc,
+void cb_string_substr(LmnReactCxt *rc,
                       LmnMembrane *mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       long begin, LmnLinkAttr t1,
@@ -303,7 +311,7 @@ void cb_string_substr(ReactCxt rc,
   lmn_mem_delete_atom(mem, end, t2);
 }
 
-void cb_string_substr_right(ReactCxt rc,
+void cb_string_substr_right(LmnReactCxt *rc,
                             LmnMembrane *mem,
                             LmnAtom a0, LmnLinkAttr t0,
                             long begin, LmnLinkAttr t1,
@@ -331,7 +339,7 @@ void cb_string_substr_right(ReactCxt rc,
 
 void *sp_cb_string_copy(void *s)
 {
-  
+
   return lmn_string_copy(s);
 }
 

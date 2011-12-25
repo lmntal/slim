@@ -68,7 +68,7 @@ LmnSAtom lmn_new_atom(LmnFunctor f)
   LmnSAtom ap;
   int arity, cid;
   arity = LMN_FUNCTOR_ARITY(f);
-  cid   = lmn_thread_id;
+  cid   = env_my_thread_id();
 
   if (atom_memory_pools[arity][cid] == 0) {
     atom_memory_pools[arity][cid] =
@@ -88,7 +88,7 @@ void lmn_delete_atom(LmnSAtom ap)
   env_return_id(LMN_SATOM_ID(ap));
 
   arity = LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(ap));
-  cid = lmn_thread_id;
+  cid = env_my_thread_id();
   memory_pool_free(atom_memory_pools[arity][cid], ap);
 }
 
@@ -120,7 +120,7 @@ void free_atom_memory_pools(void)
  */
 
 /* TODO:
- *   headerに持っていってinline staticにした方が良い?
+ *   headerに持っていってstatic inlineにした方が良い?
  *   memory exhausted時にもprofile情報をdumpさせたい */
 
 void *lmn_calloc(size_t num, size_t size)

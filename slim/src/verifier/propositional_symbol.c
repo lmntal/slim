@@ -200,7 +200,7 @@ Proposition propsym_get_proposition(SymbolDefinition s)
 
 BOOL proposition_eval(Proposition prop, LmnMembrane *mem)
 {
-  struct ReactCxt rc;
+  LmnReactCxt rc;
   BOOL b;
 
   if (!prop) return FALSE;

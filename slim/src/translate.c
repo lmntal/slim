@@ -73,14 +73,12 @@ void tr_print_list(int indent, int argi, int list_num, const LmnWord *list)
   fprintf(OUT, "};\n");
 }
 
-void tr_instr_commit_ready(struct ReactCxt  *rc,
+void tr_instr_commit_ready(LmnReactCxt      *rc,
                            LmnRule          rule,
                            lmn_interned_str rule_name,
                            LmnLineNum       line_num,
                            LmnMembrane      **ptmp_global_root,
-                           LmnWord          **pwt_temp,
-                           LmnByte          **pat_temp,
-                           LmnByte          **ptt_temp,
+                           LmnRegister      **p_v_tmp,
                            unsigned int     *org_next_id)
 {
   LMN_ASSERT(rule);
@@ -97,73 +95,73 @@ void tr_instr_commit_ready(struct ReactCxt  *rc,
       /* dmemインタプリタ(body命令)を書かないとだめだ */
       lmn_fatal("transalter mode, delta-membrane execution is not supported.");
     } else {
-      //  unsigned int org_next_id = env_next_id();
-      LmnWord *wtcp;
-      LmnByte *atcp, *ttcp;
+      LmnRegister *v, *tmp;
       ProcessTbl copymap;
       LmnMembrane *tmp_global_root;
-      LmnWord t;
-//        unsigned int wt_size_org, work_size_org;
-      unsigned int i, n;
+      unsigned int i, warry_size_org, warry_use_org;
 
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_start_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
       }
 #endif
-      t = 0;
+
+      warry_size_org  = warry_size(rc);
+      warry_use_org   = warry_use_size(rc);
       tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
 
       /** 変数配列および属性配列のコピー */
-      wtcp = LMN_NALLOC(LmnWord, wt_size);
-      atcp = LMN_NALLOC(LmnByte, wt_size);
-      ttcp = LMN_NALLOC(LmnByte, wt_size);
-
-      n = RC_WORK_VEC_SIZE(rc);
-      for(i = 0; i < n; i++) {
-        wtcp[i] = atcp[i] = ttcp[i] = 0;
-      }
+      v = lmn_register_make(warry_size_org);
 
       /** copymapの情報を基に変数配列を書換える */
-      for (i = 0; i < n; i++) {
-        atcp[i] = at[i];
-        ttcp[i] = tt[i];
-        if (tt[i] == TT_ATOM) {
-          if(LMN_INT_ATTR == at[i]) { /* intのみポインタでないため */
-            wtcp[i] = wt[i];
-          } else if (at[i] == LMN_DBL_ATTR) {
-            double *d = (double *)wtcp[i];
-            LMN_COPY_DBL_ATOM(d, wt[i]);
-            wtcp[i] = (LmnWord)d;
-          } else { /* symbol atom */
-            if (proc_tbl_get_by_atom(copymap, LMN_SATOM(wt[i]), &t)) {
-              wtcp[i] = (LmnWord)t;
-            } else {
-              lmn_fatal("implementation error");
-            }
+#ifdef TIME_OPT
+      for (i = 0; i < warry_use_org; i++) {
+        LmnWord t;
+        v[i].at = at(rc, i);
+        v[i].tt = tt(rc, i);
+        if (v[i].tt == TT_ATOM) {
+          if (LMN_ATTR_IS_DATA(v[i].at)) {
+            v[i].wt = (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), (LmnLinkAttr)v[i].at);
+          } else if (proc_tbl_get_by_atom(copymap, LMN_SATOM(wt(rc, i)), &t)) {
+            v[i].wt = (LmnWord)t;
+          } else {
+            t = 0;
+            lmn_fatal("implementation error");
           }
         }
-        else if (tt[i] == TT_MEM) {
-          if(wt[i] == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-            wtcp[i] = (LmnWord)tmp_global_root;
+        else if (v[i].tt == TT_MEM) {
+          if (wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
+            v[i].wt = (LmnWord)tmp_global_root;
+          } else if (proc_tbl_get_by_mem(copymap, (LmnMembrane *)wt(rc, i), &t)) {
+            v[i].wt = (LmnWord)t;
           } else {
-            if (proc_tbl_get_by_mem(copymap, (LmnMembrane *)wt[i], &t)) {
-              wtcp[i] = (LmnWord)t;
-            }
-            else {
-              lmn_fatal("implementation error");
-            }
+            t = 0;
+            lmn_fatal("implementation error");
           }
-        } else {
-          wtcp[i] = wt[i];
+        }
+        else { /* TT_OTHER */
+          v[i].wt = wt(rc, i);
         }
       }
+#else
+      for (i = 0; i < warry_size_org; i++) {
+        v[i].at = at(rc, i);
+        if (LMN_ATTR_IS_DATA(v[i].at)) {
+          v[i].wt = (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), (LmnLinkAttr)v[i].at);
+        }
+        else if (proc_tbl_get(copymap, wt(rc, i), &t)) {
+          v[i].wt = t;
+        }
+        else if(wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
+          v[i].wt = (LmnWord)tmp_global_root;
+        }
+      }
+#endif
       proc_tbl_free(copymap);
 
-      /** 変数配列および属性配列をコピーと入れ換え, コピー側を書き換える */
-      SWAP(LmnWord *, wtcp, wt);
-      SWAP(LmnByte *, atcp, at);
-      SWAP(LmnByte *, ttcp, tt);
+      /** SWAP */
+      tmp = rc_warry(rc);
+      rc_warry_set(rc, v);
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
@@ -172,33 +170,28 @@ void tr_instr_commit_ready(struct ReactCxt  *rc,
 
       /* 処理中の変数を外へ持ち出す */
       *ptmp_global_root = tmp_global_root;
-      *pwt_temp = wtcp;
-      *pat_temp = atcp;
-      *ptt_temp = ttcp;
+      *p_v_tmp = tmp;
     }
   }
 }
 
-BOOL tr_instr_commit_finish(struct ReactCxt  *rc,
+BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
                             LmnRule          rule,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
                             LmnMembrane      **ptmp_global_root,
-                            LmnWord          **pwt_temp,
-                            LmnByte          **pat_temp,
-                            LmnByte          **ptt_temp)
+                            LmnRegister      **p_v_tmp,
+                            unsigned int     warry_use_org,
+                            unsigned int     warry_size_org)
 {
   if(RC_GET_MODE(rc, REACT_ND)) {
     /* 処理中の変数を外から持ち込む */
     LmnMembrane *tmp_global_root;
-    LmnWord *wtcp;
-    LmnByte *atcp, *ttcp;
+    LmnRegister *v;
 
 
     tmp_global_root = *ptmp_global_root;
-    wtcp = *pwt_temp;
-    atcp = *pat_temp;
-    ttcp = *ptt_temp;
+    v = *p_v_tmp;
 
     mc_react_cxt_add_expanded(rc, tmp_global_root, rule); /* このruleはNULLではまずい気がする */
 
@@ -206,14 +199,12 @@ BOOL tr_instr_commit_finish(struct ReactCxt  *rc,
       st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule), 0);
     }
 
-    /* 変数配列および属性配列を元に戻す（いらないかも？） */
-    SWAP(LmnWord *, wtcp, wt);
-    SWAP(LmnByte *, atcp, at);
-    SWAP(LmnByte *, ttcp, tt);
+    /* 変数配列および属性配列を元に戻す */
 
-    LMN_FREE(wtcp);
-    LMN_FREE(atcp);
-    LMN_FREE(ttcp);
+    lmn_register_free(rc_warry(rc));
+    rc_warry_set(rc, v);
+    warry_size_set(rc, warry_size_org);
+    warry_use_size_set(rc, warry_use_org);
 
     return FALSE;
   } else {
@@ -222,58 +213,35 @@ BOOL tr_instr_commit_finish(struct ReactCxt  *rc,
 }
 
 BOOL tr_instr_jump(LmnTranslated   f,
-                   struct ReactCxt *rc,
+                   LmnReactCxt     *rc,
                    LmnMembrane     *thisisrootmembutnotused,
                    LmnRule         rule,
                    int             newid_num,
-                   const int       *newid,
-                   LmnWord         **pwt,
-                   LmnByte         **pat,
-                   LmnByte         **ptt,
-                   unsigned int    *pwt_size)
+                   const int       *newid)
 {
-  LmnWord *wt_org, *wt2;
-  LmnByte *at_org, *tt_org, *at2, *tt2;
-  unsigned int wt_size_org, rc_work_size_org;
+  LmnRegister *v, *tmp;
+  unsigned int org_use, org_size;
   BOOL ret;
   int i;
 
-  wt_org = *pwt;
-  at_org = *pat;
-  tt_org = *ptt;
-  wt_size_org = *pwt_size;
-  rc_work_size_org = RC_WORK_VEC_SIZE(rc);
-  wt2 = LMN_NALLOC(LmnWord, wt_size_org);
-  at2 = LMN_NALLOC(LmnByte, wt_size_org);
-  tt2 = LMN_NALLOC(LmnByte, wt_size_org);
-
-  /* MCだと配列の中身を値に応じてコピーするためあらかじめクリアする必要がある */
-  if (RC_GET_MODE(rc, REACT_ND)) {
-    for(i = 0; i < RC_WORK_VEC_SIZE(rc); i++) {
-      wt2[i] = at2[i] = tt2[i] = 0;
-    }
-  }
-
+  org_use  = warry_use_size(rc);
+  org_size = warry_size(rc);
+  v = lmn_register_make(org_size);
   for (i = 0; i < newid_num; i++){
-    wt2[i] = wt_org[newid[i]];
-    at2[i] = at_org[newid[i]];
-    tt2[i] = tt_org[newid[i]];
+    v[i].wt = wt(rc, newid[i]);
+    v[i].at = at(rc, newid[i]);
+    v[i].tt = tt(rc, newid[i]);
   }
 
-  *pwt = wt2;
-  *pat = at2;
-  *ptt = tt2;
+  tmp = rc_warry(rc);
+  rc_warry_set(rc, v);
 
   ret = (*f)(rc, thisisrootmembutnotused, rule);
 
-  LMN_FREE(wt);
-  LMN_FREE(at);
-  LMN_FREE(tt);
-  *pwt = wt_org;
-  *pat = at_org;
-  *ptt = tt_org;
-  *pwt_size = wt_size_org;
-  RC_SET_WORK_VEC_SIZE(rc, rc_work_size_org);
+  lmn_register_free(rc_warry(rc));
+  rc_warry_set(rc, tmp);
+  warry_size_set(rc, org_size);
+  warry_use_size_set(rc, org_use);
 
   return ret;
 }
@@ -290,8 +258,8 @@ Vector vec_const_temporary_from_array(int size, const LmnWord *w)
 int vec_inserted_index(Vector *v, LmnWord w)
 {
   int i;
-  for(i=0; i<vec_num(v); ++i){
-    if(vec_get(v, i) == w) return i;
+  for (i = 0; i < vec_num(v); i++){
+    if (vec_get(v, i) == w) return i;
   }
   vec_push(v, w);
   return vec_num(v) - 1;
@@ -390,7 +358,8 @@ const BYTE *translate_instruction(const BYTE *instr,
 
     fprintf(OUT, "};\n");
     print_indent(indent); fprintf(OUT, "  extern BOOL %s_%d();\n", header, next_index);
-    print_indent(indent); fprintf(OUT, "  if(tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, rule, %d, newid, &wt, &at, &tt, &wt_size))\n", header, next_index, i);
+    print_indent(indent); fprintf(OUT, "  if (tr_instr_jump(%s_%d, rc, thisisrootmembutnotused, rule, %d, newid))\n"
+        , header, next_index, i);
     print_indent(indent); fprintf(OUT, "    %s;\n", successcode);
     print_indent(indent); fprintf(OUT, "  else\n");
     print_indent(indent); fprintf(OUT, "    %s;\n", failcode);
@@ -455,7 +424,7 @@ static void translate_rule(LmnRule rule, const char *header)
 
   for (i = 0; i < vec_num(jump_points) /*変換中にjump_pointsは増えていく*/; i++){
     BYTE *p = (BYTE*)vec_get(jump_points, i);
-    fprintf(OUT, "BOOL %s_%d(struct ReactCxt* rc, LmnMembrane* thisisrootmembutnotused, LmnRule rule)\n", header, i); /* TODO m=wt[0]なのでmは多分いらない */
+    fprintf(OUT, "BOOL %s_%d(LmnReactCxt* rc, LmnMembrane* thisisrootmembutnotused, LmnRule rule)\n", header, i); /* TODO m=wt[0]なのでmは多分いらない */
     fprintf(OUT, "{\n");
     /* (変換するスタート地点, 変換する必要のある部分の記録, ルールのシグネチャ:trans_**_**_**, 成功時コード, 失敗時コード, インデント) */
     translate_instructions(p, jump_points, header, "return TRUE", "return FALSE", 1);

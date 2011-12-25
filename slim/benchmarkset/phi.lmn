@@ -4,7 +4,7 @@
 
 {
   proc_generator{
-    p(8).
+    p(7).
     
     init1 @@ p(N) :- N>0, M=N-1 |
              m(M), c{o(L1), left}, p(L1, L2), c{o(L2), right}.

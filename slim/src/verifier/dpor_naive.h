@@ -44,16 +44,14 @@
 #include "vector.h"
 #include "state.h"
 #include "statespace.h"
-#include "react_context.h"
-#include "automata.h"
 
 
 
-void por_calc_ampleset(StateSpace      ss,
-                       State           *s,
-                       struct ReactCxt *rc,
-                       Vector          *new_s,
-                       BOOL            flag);
+void por_calc_ampleset(StateSpace  ss,
+                       State       *s,
+                       LmnReactCxt *rc,
+                       Vector      *new_s,
+                       BOOL        flag);
 void init_por_vars(void);
 void free_por_vars(void);
 

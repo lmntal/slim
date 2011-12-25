@@ -37,17 +37,17 @@
  * $Id$
  */
 
-# include <time.h>
-# include "../lmntal_ext.h"
+#include <../runtime_status.h>
+#include "../lmntal_ext.h"
 
 
-void gettime(ReactCxt rc,
-                  LmnMembrane *mem,
-                  LmnAtom a0, LmnLinkAttr t0)
+void gettime(LmnReactCxt *rc,
+             LmnMembrane *mem,
+             LmnAtom a0, LmnLinkAttr t0)
 {
   double *t = LMN_MALLOC(double);
 
-  *t = (double)clock() / CLOCKS_PER_SEC;
+  *t = get_cpu_time();
 
   lmn_mem_newlink(mem,
                   a0, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(t0),

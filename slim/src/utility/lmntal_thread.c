@@ -43,21 +43,22 @@
 
 #define _GNU_SOURCE
 #include "lmntal_thread.h"
+#include "util.h"
 #include "error.h"
 #if defined (HAVE_SCHED_H) && defined (HAVE_SYSCALL_H)
-#  include <sched.h>
-#  include <syscall.h>
-#  include <unistd.h>
-#  include <sys/types.h>
-#  define ENABLE_CPU_AFFINITY
+# include <sched.h>
+# include <syscall.h>
+# include <unistd.h>
+# include <sys/types.h>
+# define ENABLE_CPU_AFFINITY
 #endif
 
 /* 呼び出したスレッドとn番のCPUを貼り付ける */
-void thread_set_cpu_affinity(unsigned long n)
+void lmn_thread_set_CPU_affinity(unsigned long n)
 {
   /* TODO: マニュアルによればpthread_npライブラリを使った方がよい  */
 #ifdef ENABLE_CPU_AFFINITY
-  if (lmn_env.core_num <= HAVE_PROCESSOR_CORES) {
+  if (lmn_env.core_num <= HAVE_PROCESSOR_ELEMENTS) {
     pid_t      my_pid;
     cpu_set_t  my_mask;
     my_pid = syscall(SYS_gettid);
@@ -68,7 +69,7 @@ void thread_set_cpu_affinity(unsigned long n)
 }
 
 #ifdef HAVE_SCHED_H
-void thread_yield_cpu()
+void thread_yield_CPU()
 {
   sched_yield();
 }
@@ -80,12 +81,11 @@ void thread_yield_cpu()
  */
 
 /* TODO: stripeの粒度を呼出側で指定できた方が汎用的だと思う */
-EWLock *ewlock_make()
+EWLock *ewlock_make(unsigned int e_num, unsigned int w_num)
 {
   EWLock *lock;
-  unsigned long i, e_num, w_num;
-  e_num = lmn_env.core_num;
-  w_num = STRIPE_GRANULARITY;
+  unsigned int i;
+  w_num = round2up(w_num);
 
   lock = LMN_MALLOC(EWLock);
   lock->elock_used   = NULL;
@@ -129,13 +129,13 @@ void ewlock_free(EWLock *lock)
 
 void ewlock_acquire_write(EWLock *lock, mtx_data_t id)
 {
-  unsigned long idx = id & (STRIPE_GRANULARITY - 1);
+  unsigned long idx = id & (lock->wlock_num - 1);
   lmn_mutex_lock(&(lock->wlock[idx]));
 }
 
 void ewlock_release_write(EWLock *lock, mtx_data_t id)
 {
-  unsigned long idx = id & (STRIPE_GRANULARITY - 1);
+  unsigned long idx = id & (lock->wlock_num - 1);
   lmn_mutex_unlock(&(lock->wlock[idx]));
 }
 

@@ -43,7 +43,7 @@
 #include "mc_worker.h"
 #include "rule.h"
 #ifdef PROFILE
-#  include "runtime_status.h"
+# include "runtime_status.h"
 #endif
 
 
@@ -70,7 +70,7 @@ struct McPorData {
   st_table_t states;              /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
   Queue      *queue;              /* C1のチェックにあたってstate graphを展開するする際に使用 */
   Vector     *ample_candidate;    /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる */
-  struct ReactCxt *rc;
+  LmnReactCxt *rc;
   unsigned long next_strans_id;
   BOOL       flags;
 } mc_por;
@@ -89,58 +89,58 @@ struct McPorData {
 #define POR_INSERTED_MASK          (0x01U << 3)
 #define POR_OUTSIDE_MASK           (0x01U << 4)
 
-#define set_independency_checked(S)    (state_flagsN(S) |=   INDEPENDENCY_CHECKED_MASK)
-#define unset_independency_checked(S)  (state_flagsN(S) &= (~INDEPENDENCY_CHECKED_MASK))
-#define is_independency_checked(S)     (state_flagsN(S) &    INDEPENDENCY_CHECKED_MASK)
-#define set_ample(S)                   (state_flagsN(S) |=   REPRESENTATIVE_MASK)
-#define unset_ample(S)                 (state_flagsN(S) &= (~REPRESENTATIVE_MASK))
-#define is_ample(S)                    (state_flagsN(S) &    REPRESENTATIVE_MASK)
-#define set_por_expanded(S)            (state_flagsN(S) |=   POR_EXPANDED_MASK)
-#define unset_por_expanded(S)          (state_flagsN(S) &= (~POR_EXPANDED_MASK))
-#define is_por_expanded(S)             (state_flagsN(S) &    POR_EXPANDED_MASK)
-#define set_inserted(S)                (state_flagsN(S) |=   POR_INSERTED_MASK)
-#define unset_inserted(S)              (state_flagsN(S) &= (~POR_INSERTED_MASK))
-#define is_inserted(S)                 (state_flagsN(S) &    POR_INSERTED_MASK)
-#define set_outside_exist(S)           (state_flagsN(S) |=   POR_OUTSIDE_MASK)
-#define unset_outside_exist(S)         (state_flagsN(S) &= (~POR_OUTSIDE_MASK))
-#define is_outside_exist(S)            (state_flagsN(S) &    POR_OUTSIDE_MASK)
+#define set_independency_checked(S)    (state_flags3(S) |=   INDEPENDENCY_CHECKED_MASK)
+#define unset_independency_checked(S)  (state_flags3(S) &= (~INDEPENDENCY_CHECKED_MASK))
+#define is_independency_checked(S)     (state_flags3(S) &    INDEPENDENCY_CHECKED_MASK)
+#define set_ample(S)                   (state_flags3(S) |=   REPRESENTATIVE_MASK)
+#define unset_ample(S)                 (state_flags3(S) &= (~REPRESENTATIVE_MASK))
+#define is_ample(S)                    (state_flags3(S) &    REPRESENTATIVE_MASK)
+#define set_por_expanded(S)            (state_flags3(S) |=   POR_EXPANDED_MASK)
+#define unset_por_expanded(S)          (state_flags3(S) &= (~POR_EXPANDED_MASK))
+#define is_por_expanded(S)             (state_flags3(S) &    POR_EXPANDED_MASK)
+#define set_inserted(S)                (state_flags3(S) |=   POR_INSERTED_MASK)
+#define unset_inserted(S)              (state_flags3(S) &= (~POR_INSERTED_MASK))
+#define is_inserted(S)                 (state_flags3(S) &    POR_INSERTED_MASK)
+#define set_outside_exist(S)           (state_flags3(S) |=   POR_OUTSIDE_MASK)
+#define unset_outside_exist(S)         (state_flags3(S) &= (~POR_OUTSIDE_MASK))
+#define is_outside_exist(S)            (state_flags3(S) &    POR_OUTSIDE_MASK)
 
 
 /** ProtoTypes
  */
 static int destroy_tmp_state_graph(State *s, LmnWord _d);
 static void finalize_ample(BOOL org_f);
-static BOOL ample(StateSpace      ss,
-                  State           *s,
-                  struct ReactCxt *rc,
-                  Vector          *new_s,
-                  BOOL            org_f);
-static void por_gen_successors(State *s, struct ReactCxt *rc);
-static void por_store_successors(State *s, struct ReactCxt  *rc, BOOL is_store);
+static BOOL ample(StateSpace  ss,
+                  State       *s,
+                  LmnReactCxt *rc,
+                  Vector      *new_s,
+                  BOOL        org_f);
+static void por_gen_successors(State *s, LmnReactCxt *rc, Automata a, Vector *psyms);
+static void por_store_successors(State *s, LmnReactCxt *rc, BOOL is_store);
 static int  independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);
-static BOOL independency_check(State *s);
-static BOOL check_C1(State *s);
+static BOOL independency_check(State *s, Automata a, Vector *psyms);
+static BOOL check_C1(State *s, Automata a, Vector *psyms);
 static BOOL check_C2(State *s);
-static BOOL check_C3(StateSpace      ss,
-                     State           *s,
-                     struct ReactCxt *rc,
-                     Vector          *new_ss,
-                     BOOL            f);
+static BOOL check_C3(StateSpace  ss,
+                     State       *s,
+                     LmnReactCxt *rc,
+                     Vector      *new_ss,
+                     BOOL        f);
 static BOOL is_independent_of_ample(Transition strans);
 static BOOL push_independent_strans_to_table(unsigned long i1, unsigned long i2);
 static int build_ample_satisfying_lemma(st_data_t key,
                                         st_data_t val,
                                         st_data_t current_state);
-static void push_ample_to_expanded(StateSpace      ss,
-                                   State           *s,
-                                   struct ReactCxt *rc,
-                                   Vector          *new_ss,
-                                   BOOL            f);
-static BOOL push_succstates_to_expanded(StateSpace      ss,
-                                        State           *s,
-                                        struct ReactCxt *rc,
-                                        Vector          *new_ss,
-                                        BOOL            f);
+static void push_ample_to_expanded(StateSpace  ss,
+                                   State       *s,
+                                   LmnReactCxt *rc,
+                                   Vector      *new_ss,
+                                   BOOL        f);
+static BOOL push_succstates_to_expanded(StateSpace  ss,
+                                        State       *s,
+                                        LmnReactCxt *rc,
+                                        Vector      *new_ss,
+                                        BOOL        f);
 /* FOR DEBUG ONLY */
 int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a);
 void dump__ample_candidate(void);
@@ -172,14 +172,14 @@ void free_por_vars() {
 }
 
 
-void por_calc_ampleset(StateSpace      ss,
-                       State           *s,
-                       struct ReactCxt *rc,
-                       Vector          *new_s,
-                       BOOL            f)
+void por_calc_ampleset(StateSpace  ss,
+                       State       *s,
+                       LmnReactCxt *rc,
+                       Vector      *new_s,
+                       BOOL        f)
 {
   if (!mc_por.rc) {
-    mc_por.rc = LMN_MALLOC(struct ReactCxt);
+    mc_por.rc = LMN_MALLOC(struct LmnReactCxt);
     mc_react_cxt_init(mc_por.rc);
     mc_por.flags = f;
     mc_unset_por(mc_por.flags);
@@ -221,7 +221,7 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a)
     if (is_outside_exist(s)) {
       /* 展開元の状態から1stepで遷移可能な頂点(rootのサクセサ)が状態空間に追加されている場合 */
       state_succ_clear(s);
-      s->flagsN = 0x00U;
+      s->flags3 = 0x00U;
     } else {
       /* それ以外は, rootでなければ開放 */
       state_free(s);
@@ -261,11 +261,11 @@ static void finalize_ample(BOOL org_f)
 /* 状態sとsから遷移可能な状態集合をrcとして入力し,
  * reduced state graphに必要なサクセッサを状態空間ssとsに登録する.
  * ample(s)=en(s)の場合にFALSEを返す. */
-static BOOL ample(StateSpace      ss,
-                  State           *s,
-                  struct ReactCxt *rc,
-                  Vector          *new_s,
-                  BOOL            org_f)
+static BOOL ample(StateSpace  ss,
+                  State       *s,
+                  LmnReactCxt *rc,
+                  Vector      *new_s,
+                  BOOL        org_f)
 {
   set_ample(s);
   set_por_expanded(s);
@@ -274,7 +274,7 @@ static BOOL ample(StateSpace      ss,
   por_store_successors(s, rc, TRUE);
 
   /* sから2stepの状態空間を立ち上げ, 遷移間の独立性情報テーブルを展開 */
-  if (!independency_check(s)) {
+  if (!independency_check(s, statespace_automata(ss), statespace_propsyms(ss))) {
     return FALSE;
   }
 
@@ -293,7 +293,7 @@ static BOOL ample(StateSpace      ss,
       set_ample(transition_next_state(t));
       vec_push(mc_por.ample_candidate, (vec_data_t)transition_id(t));
 //      if (check_C2(s) && check_C3(ss, s, rc, new_s, org_f)) {
-      if (check_C1(s) && check_C2(s)) {
+      if (check_C1(s, statespace_automata(ss), statespace_propsyms(ss)) && check_C2(s)) {
         break;
       } else {
         /* 選択した遷移はC2もしくはC3のいずれかに反したため，次の候補を検査する */
@@ -321,7 +321,7 @@ static BOOL ample(StateSpace      ss,
 //    if (vec_num(mc_por.ample_candidate) == state_succ_num(s) ||
 //        !check_C2(s) || !check_C3(ss, s, rc, new_s, org_f)) {
     if (vec_num(mc_por.ample_candidate) == state_succ_num(s) ||
-        !check_C1(s) || !check_C2(s)) {
+        !check_C1(s, statespace_automata(ss), statespace_propsyms(ss)) || !check_C2(s)) {
       return FALSE;
     }
   }
@@ -332,7 +332,7 @@ static BOOL ample(StateSpace      ss,
    * ここからは，sから始まるfull-stateグラフを対象にこれがC1を
    * 満足しているか否かチェックしていく．
    ******************************************************************/
- // if (!check_C1(s)) {
+ // if (!check_C1(s, statespace_automata(ss), statespace_propsyms(ss))) {
   if (!check_C3(ss, s, rc, new_s, org_f)) {
     /* C1〜C3をすべて満足するample(s)が決定不能のため，C0に従いen(s)を返して終了する */
     return FALSE;
@@ -348,14 +348,13 @@ static BOOL ample(StateSpace      ss,
 }
 
 
-static void por_gen_successors(State *s, struct ReactCxt *rc)
+static void por_gen_successors(State *s, LmnReactCxt *rc, Automata a, Vector *psyms)
 {
   LmnMembrane *mem;
   mem = state_restore_mem(s);
-  if (mc_has_property(mc_por.flags)) {
-    AutomataState p_s = automata_get_state(mc_data.property_automata,
-                                           state_property_state(s));
-    mc_gen_successors_with_property(s, mem, p_s, rc, mc_por.flags);
+  if (a) {
+    AutomataState p_s = MC_GET_PROPERTY(s, a);
+    mc_gen_successors_with_property(s, mem, p_s, rc, psyms, mc_por.flags);
   } else {
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, mc_por.flags);
   }
@@ -371,15 +370,19 @@ static void por_gen_successors(State *s, struct ReactCxt *rc)
 }
 
 
-inline static State *por_state_insert(State *succ, struct MemDeltaRoot *d)
+static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d)
 {
   State *ret;
   st_data_t t;
+  LmnMembrane *tmp_m;
 
   if (d) {
     dmem_root_commit(d);
-    state_calc_hash(succ, DMEM_ROOT_MEM(d), lmn_env.mem_enc);
     state_set_mem(succ, DMEM_ROOT_MEM(d));
+    state_calc_hash(succ, state_mem(succ), lmn_env.mem_enc);
+    tmp_m = NULL;
+  } else {
+    tmp_m = state_mem(succ);
   }
 
   t = 0;
@@ -388,24 +391,25 @@ inline static State *por_state_insert(State *succ, struct MemDeltaRoot *d)
   } else {
     LmnBinStr bs;
     st_add_direct(mc_por.states, (st_data_t)succ, (st_data_t)succ);
-    bs = state_calc_mem_dump(succ);
-    state_set_compress_mem(succ, bs);
+    if (!is_encoded(succ)) {
+      bs = state_calc_mem_dump(succ);
+      state_set_binstr(succ, bs);
+    }
     ret = succ;
     POR_DEBUG({state_id_issue(succ);});
   }
 
   if (d) {
-    state_set_mem(succ, NULL);
     dmem_root_revert(d);
-  } else if (ret == succ && mc_use_compact(mc_por.flags)) {
-    state_free_mem(succ);
+  } else if (ret == succ && tmp_m) {
+    lmn_mem_free_rec(tmp_m);
   }
 
   return ret;
 }
 
 
-inline static State *por_state_insert_statespace(StateSpace ss,
+static inline State *por_state_insert_statespace(StateSpace ss,
                                                  Transition succ_t,
                                                  State      *succ_s,
                                                  Vector     *new_ss,
@@ -414,16 +418,15 @@ inline static State *por_state_insert_statespace(StateSpace ss,
   State *t;
   LmnMembrane *succ_m;
 
-  succ_m = state_restore_mem(succ_s);
-  succ_s->mem = succ_m;
-  t = state_space_insert(ss, succ_s);
+  succ_m = state_mem(succ_s);
+  t = statespace_insert(ss, succ_s);
 
   set_inserted(t);
   if (t == succ_s) {
     set_outside_exist(t);
     state_id_issue(succ_s);
-    if (mc_is_dump(org_f)) dump_state_data(succ_s, (LmnWord)stdout);
-    if (mc_use_compact(org_f)) state_free_mem(succ_s);
+    if (mc_is_dump(org_f)) dump_state_data(succ_s, (LmnWord)stdout, ss);
+    if (succ_m) lmn_mem_free_rec(succ_m);
     if (new_ss) vec_push(new_ss, (vec_data_t)succ_s);
   }
   else {
@@ -434,7 +437,7 @@ inline static State *por_state_insert_statespace(StateSpace ss,
 }
 
 
-inline static void por_store_successors_inner(State *s, struct ReactCxt *rc)
+static inline void por_store_successors_inner(State *s, LmnReactCxt *rc)
 {
   st_table_t succ_tbl;
   unsigned int i, succ_i;
@@ -492,7 +495,7 @@ inline static void por_store_successors_inner(State *s, struct ReactCxt *rc)
 
   if (s->successors) {
     printf("unexpected.\n");
-    dump_state_data((State *)(s->successors[0]), (LmnWord)stdout);
+    dump_state_data((State *)(s->successors[0]), (LmnWord)stdout, NULL);
   }
 
   state_succ_set(s, RC_EXPANDED(rc));
@@ -504,7 +507,7 @@ inline static void por_store_successors_inner(State *s, struct ReactCxt *rc)
  * 同時に, 遷移オブジェクトに対して, 仮IDを発行する.
  * なお, サクセッサに対する遷移オブジェクトが存在しない場合はこの時点でmallocを行う.
  * 入力したis_storeが真である場合は, IDの発行と同時に独立性情報テーブルの拡張を行う */
-static void por_store_successors(State *s, struct ReactCxt  *rc, BOOL is_store)
+static void por_store_successors(State *s, LmnReactCxt  *rc, BOOL is_store)
 {
   unsigned int i;
 
@@ -565,14 +568,14 @@ static void por_store_successors(State *s, struct ReactCxt  *rc, BOOL is_store)
  *   独立性情報テーブル（independency_table）内に情報がPUSHし,
  *   正常に独立性情報テーブルの拡張できたならばTRUEを返す．
  */
-static BOOL independency_check(State *s)
+static BOOL independency_check(State *s, Automata a, Vector *psyms)
 {
 
   unsigned int i, j;
 
   /* >>>>>>>>>>>>>>>>>>>> Step 1. <<<<<<<<<<<<<<<<<<<< */
   if (!is_por_expanded(s)) {
-    por_gen_successors(s, mc_por.rc);
+    por_gen_successors(s, mc_por.rc, a, psyms);
     por_store_successors(s, mc_por.rc, TRUE);
 
     RC_CLEAR_DATA(mc_por.rc);
@@ -599,7 +602,7 @@ static BOOL independency_check(State *s)
     if (!is_por_expanded(succ_s)) {
       /* ssから可能な遷移および遷移先状態をすべて求める．
        * ただしこの段階では，ssからの各遷移に付与されたIDは仮のものである． */
-      por_gen_successors(succ_s, mc_por.rc);
+      por_gen_successors(succ_s, mc_por.rc, a, psyms);
       por_store_successors(succ_s, mc_por.rc, FALSE); /* 2step目の遷移のIDはテーブルに登録しない */
       RC_CLEAR_DATA(mc_por.rc);
       set_por_expanded(succ_s);
@@ -609,7 +612,7 @@ static BOOL independency_check(State *s)
 
   POR_DEBUG({
     printf("\nbefore\n");
-    st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)stdout);
+    st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)FALSE);
     printf("\n");
   });
 
@@ -648,14 +651,16 @@ static BOOL independency_check(State *s)
           ss2_j2 = transition(ss2, j2);
           t2 = transition_next_state(ss2_j2);
 
-          if (t1 == t2
-              && ss1_i2 != ss2_j2 /* ss1=ss2となった際に，同一の遷移同士で独立性を定義しないようにする */
+          if (t1 == t2 &&
+              ss1_i2 != ss2_j2 /* ss1=ss2となった際に，同一の遷移同士で独立性を定義しないようにする */
               ) {
             /* 遷移s_iと遷移s_jが独立であるため，IDを書換えた上で独立性情報テーブルを更新する */
             unsigned long alpha, beta;
 
-            alpha = transition_id(ss2_j2) = transition_id(s_i);
-            beta  = transition_id(ss1_i2) = transition_id(s_j);
+            alpha = transition_id(s_i);
+            beta  = transition_id(s_j);
+            transition_set_id(ss2_j2, alpha);
+            transition_set_id(ss1_i2, beta);
             push_independent_strans_to_table(alpha, beta);
           }
         }
@@ -667,7 +672,7 @@ static BOOL independency_check(State *s)
 
   POR_DEBUG({
     printf("after\n");
-    st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)stdout);
+    st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)FALSE);
     printf("\n");
   });
 
@@ -715,7 +720,7 @@ static BOOL independency_check(State *s)
  *
  * このC1の検査は，sを起点とするstate graph(の中で必要な部分)をBFSで構築しながら進めていく．
  */
-static BOOL check_C1(State *s)
+static BOOL check_C1(State *s, Automata a, Vector *psyms)
 {
   unsigned int i;
 
@@ -735,7 +740,7 @@ static BOOL check_C1(State *s)
          printf("   λ.. C1 violate_id::%lu\n", transition_id(succ_t));
          st_foreach(mc_por.strans_independency, dump__strans_independency, (st_data_t)0);
          dump__ample_candidate();
-         st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)stdout);
+         st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)FALSE);
          printf("\n");
        });
       return FALSE;
@@ -743,7 +748,7 @@ static BOOL check_C1(State *s)
       State *succ_s = transition_next_state(succ_t);
 //      if (!is_independency_checked(succ_s) && !is_expanded(succ_s)) {
       if (!is_independency_checked(succ_s)) {
-        independency_check(succ_s);
+        independency_check(succ_s, a, psyms);
         for (i = 0; i < state_succ_num(succ_s); i++) {
           Transition succ_succ_t = transition(succ_s, i);
           if (!vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(succ_succ_t))) {
@@ -789,7 +794,7 @@ static BOOL check_C2(State *s)
 /* 状態空間に対して登録をしかけた頂点succと,
  * 状態空間が返した頂点t(登録に成功していた場合はsucc, 等価状態がいた場合はその状態)を
  * 入力として受け, Cycle Ignoring Problemのための検査結果を返す. */
-inline static BOOL C3_cycle_proviso_satisfied(State *succ, State *t)
+static inline BOOL C3_cycle_proviso_satisfied(State *succ, State *t)
 {
   if (succ == t) {
     /* General Visited Proviso:
@@ -824,11 +829,11 @@ inline static BOOL C3_cycle_proviso_satisfied(State *succ, State *t)
  * sで可能な遷移の内，ample_candidate内に含まれるIDを持つものによって
  * 行き着くStateがStack上に乗っているならば偽を返す(不完全な閉路形成の禁止)
  */
-static BOOL check_C3(StateSpace      ss,
-                     State           *s,
-                     struct ReactCxt *rc,
-                     Vector          *new_ss,
-                     BOOL            f)
+static BOOL check_C3(StateSpace  ss,
+                     State       *s,
+                     LmnReactCxt *rc,
+                     Vector      *new_ss,
+                     BOOL        f)
 {
   unsigned int i;
 
@@ -1043,11 +1048,11 @@ static int build_ample_satisfying_lemma(st_data_t key,
 }
 
 
-static void push_ample_to_expanded(StateSpace      ss,
-                                   State           *s,
-                                   struct ReactCxt *rc,
-                                   Vector          *new_ss,
-                                   BOOL            f)
+static void push_ample_to_expanded(StateSpace  ss,
+                                   State       *s,
+                                   LmnReactCxt *rc,
+                                   Vector      *new_ss,
+                                   BOOL        f)
 {
   if (state_succ_num(s) > 0) {
     struct Vector tmp;
@@ -1079,7 +1084,7 @@ static void push_ample_to_expanded(StateSpace      ss,
 
     LMN_FREE(s->successors);
     s->successors = NULL;
-    state_succ_num(s) = 0;
+    s->successor_num = 0;
     state_succ_set(s, &tmp);
     vec_destroy(&tmp);
   }
@@ -1092,11 +1097,11 @@ static void push_ample_to_expanded(StateSpace      ss,
  * expanded内にpushする際，ample(s)内に含まれることを表すフラグを立てる．
  * ただし，sが未展開の場合やsから直接遷移可能な状態が存在しない場合は偽を返す．
  */
-static BOOL push_succstates_to_expanded(StateSpace      ss,
-                                        State           *s,
-                                        struct ReactCxt *rc,
-                                        Vector          *new_ss,
-                                        BOOL            f)
+static BOOL push_succstates_to_expanded(StateSpace  ss,
+                                        State       *s,
+                                        LmnReactCxt *rc,
+                                        Vector      *new_ss,
+                                        BOOL        f)
 {
   BOOL ret = FALSE;
   if (is_por_expanded(s) && state_succ_num(s) > 0) {
@@ -1156,16 +1161,19 @@ int dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a)
   FILE *f;
   State *s;
   unsigned int i;
+  BOOL is_formated;
 
   s = (State *)_v;
-  f = (FILE *)_a;
-  fprintf(f, "%lu::", state_format_id(s));
+  f = stdout;
+  is_formated = (BOOL)_a;
+
+  fprintf(f, "%lu::", state_format_id(s, is_formated));
   if (s->successors) {
     for (i = 0; i < state_succ_num(s); i++) {
 
       if (i > 0) fprintf(f, ",");
 
-      fprintf(f, "%lu", state_format_id(state_succ_state(s, i)));
+      fprintf(f, "%lu", state_format_id(state_succ_state(s, i), is_formated));
 
       if (has_trans_obj(s)) {
         Transition t;

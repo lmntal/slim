@@ -1,5 +1,5 @@
 /*
- * initial_ruleset.c - String API
+ * initial_ruleset.c
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -51,7 +51,7 @@ void init_initial_ruleset(void);
 
 const char *initial_modules[] = {"nd_conf"};
 
-BOOL register_initial_rulesets(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
+BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 {
   LmnMembrane *m, *next;
   BOOL ok = FALSE;
@@ -89,7 +89,7 @@ BOOL register_initial_rulesets(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
   return ok;
 }
 
-BOOL register_initial_module(ReactCxt rc, LmnMembrane *mem, LmnRule rule)
+BOOL register_initial_module(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 {
   static int done = 0;
   int i, j;

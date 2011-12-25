@@ -45,11 +45,11 @@
 #include <string.h>
 
 #ifdef WITH_DMALLOC
-#  include <dmalloc.h>
+# include <dmalloc.h>
 #endif
 
 #ifdef HAVE_INTTYPES_H
-#  include <inttypes.h>
+# include <inttypes.h>
 #endif
 
 #define LMN_EXTERN extern
@@ -59,30 +59,30 @@
  */
 
 #ifndef BOOL
-#  define BOOL unsigned char
+# define BOOL unsigned char
 #endif
 
 #ifndef FALSE
-#  define FALSE (0)
+# define FALSE (0)
 #endif
 #ifndef TRUE
-#  define TRUE (!FALSE)
+# define TRUE (!FALSE)
 #endif
 
 /* This defines several auxiliary routines that are useful for debugging */
 #ifndef LMN_DEBUG_HELPER
-#  define LMN_DEBUG_HELPER      TRUE
+# define LMN_DEBUG_HELPER      TRUE
 #endif
 
 #ifndef LMN_DECL_BEGIN
-#  ifdef __cplusplus
-#    define LMN_DECL_BEGIN  extern "C" {
-#    define LMN_DECL_END    }
-#  else
-#    define LMN_DECL_BEGIN
-#    define LMN_DECL_END
-#  endif
-#endif /*!defined(LMN_DECL_BEGIN)*/
+# ifdef __cplusplus
+#  define LMN_DECL_BEGIN  extern "C" {
+#  define LMN_DECL_END    }
+# else
+#  define LMN_DECL_BEGIN
+#  define LMN_DECL_END
+# endif /* __cplusplus */
+#endif /* LMN_DECL_BEGIN */
 
 LMN_DECL_BEGIN
 
@@ -93,7 +93,7 @@ LMN_DECL_BEGIN
  */
 
 #if SIZEOF_LONG < SIZEOF_VOIDP
-#  error sizeof(long) < sizeof(void*)
+# error sizeof(long) < sizeof(void*)
 #endif
 
 
@@ -135,21 +135,22 @@ typedef struct LmnMembrane LmnMembrane;
 typedef struct DeltaMembrane DeltaMembrane;
 
 #if LMN_WORD_BYTES == 4
-#  define LMN_WORD_SHIFT 2
+# define LMN_WORD_SHIFT 2
 #elif LMN_WORD_BYTES == 8
-#  define LMN_WORD_SHIFT 3
+# define LMN_WORD_SHIFT 3
 #else
-#  error Word size is not 2^N
+# error Word size is not 2^N
 #endif
 
 #ifndef HAVE___INT64
-#  ifdef HAVE_LONG_LONG_INT
-     typedef long long __int64;
-#    define HAVE___INT64
-#  endif
+# ifdef HAVE_LONG_LONG_INT
+   typedef long long __int64;
+#  define HAVE___INT64
+# endif
 #endif
 
-typedef struct ProcessTbl *ProcessTbl;
+typedef struct ProcessTbl    *ProcessTbl;
+typedef struct SimplyProcTbl *SimplyProcTbl;
 
 /*----------------------------------------------------------------------
  * Special Atom
@@ -170,7 +171,9 @@ typedef struct LmnSPAtomHeader LmnSpAtom;
  * React Context
  */
 
-typedef struct ReactCxt *ReactCxt;
+typedef struct LmnReactCxt  LmnReactCxt;
+typedef struct LmnRegister LmnRegister;
+
 
 /*----------------------------------------------------------------------
  * Mem Stack
@@ -181,6 +184,16 @@ typedef struct Vector Vector;
 typedef struct Vector *LmnMemStack;
 
 
+/* ---------------------------------------------------------------------
+ * for Model Checking
+ */
+
+typedef struct StateSpace *StateSpace;
+typedef struct StateTable StateTable;
+typedef struct State       State;
+typedef struct Transition *Transition;
+typedef struct McDporData  McDporData;
+typedef struct MemDeltaRoot MemDeltaRoot;
 
 /*----------------------------------------------------------------------
  * Utility
@@ -201,10 +214,10 @@ LMN_EXTERN void lmn_free (void *p);
 
 /* Assertion */
 #ifdef DEBUG
-#  include <assert.h>
-#  define LMN_ASSERT(expr)   assert(expr)
+# include <assert.h>
+# define LMN_ASSERT(expr)   assert(expr)
 #else
-#  define LMN_ASSERT(expr)   ((void)0)/* nothing */
+# define LMN_ASSERT(expr)   ((void)0)/* nothing */
 #endif
 
 
@@ -216,13 +229,6 @@ LMN_EXTERN void lmn_free (void *p);
 enum OutputFormat { DEFAULT, DEV, DOT };
 enum MCdumpFormat { CUI, LaViT, Dir_DOT, FSM };
 enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX};
-
-#ifdef DEBUG
-#  define ISM_DEBUG(Pr) if (lmn_env.debug_isomor2) { Pr; }
-#else
-#  define ISM_DEBUG(Pr)
-#endif
-
 
 struct LmnEnv {
   BOOL trace;
@@ -243,46 +249,44 @@ struct LmnEnv {
   BOOL translate;
   BOOL bfs;
   BOOL mem_enc;
-  BOOL compact_stack;
+  BOOL enable_compress_mem;
 
   unsigned int depth_limits;
   unsigned int core_num;
+  unsigned int cutoff_depth;
 
-  BOOL enable_compress_mem;
   BOOL delta_mem;
   BOOL z_compress;
-  BOOL prop_scc_driven;
+  BOOL d_compress;
+  BOOL benchmark;
 
+  BOOL prop_scc_driven;
   BOOL property_dump;
   BOOL enable_parallel;
   BOOL optimize_loadbalancing;
-  BOOL optimize_lock;
 
+  BOOL optimize_lock;
   BOOL optimize_hash;
   BOOL dump;
   BOOL end_dump;
-  BOOL benchmark;
 
-  /* LTL model checking algorithms */
   BOOL enable_owcty;
   BOOL enable_map;
-  BOOL enable_bledge;
-  BOOL bfs_layer_sync;
-
   BOOL enable_map_heuristic;
+  BOOL enable_bledge;
 
-  /* only jni-interactive mode*/
+  BOOL show_reduced_graph;
+  BOOL bfs_layer_sync;
   BOOL interactive;
   BOOL normal_remain;
+
   BOOL normal_remaining;
   BOOL normal_cleaning;
-
   BOOL nd_remain;
   BOOL nd_remaining;
+
   BOOL nd_cleaning;
   BOOL nd_search_end;
-
-  /* allow hyperlink system */
   BOOL hyperlink;
   BOOL show_hyperlink;
 
@@ -291,11 +295,8 @@ struct LmnEnv {
   BOOL prof_no_memeq;
 #endif
 
-  BOOL show_reduced_graph;
 #ifdef DEBUG
   BOOL debug_isomor;
-  BOOL debug_isomor2;
-  BOOL debug_memenc;
   BOOL debug_delta;
   BOOL debug_id;
   BOOL debug_hash;
@@ -314,9 +315,6 @@ struct LmnEnv {
   char *ltl_exp;
 };
 
-extern struct LmnEnv  lmn_env;
-extern struct Vector *lmn_id_pool;
-extern unsigned int lmn_thread_num;
 
 /*----------------------------------------------------------------------
  * Others
@@ -325,56 +323,227 @@ void slim_version(FILE *f);
 
 
 /* check for thread library */
-#if defined (HAVE_LIBPTHREAD) || defined (HAVE_WINAPI)
-#  define HAVE_MT_LIBRARY  (1)
-#  ifdef HAVE_LIBPTHREAD
-#    include <pthread.h>
-#  else /* winapi */
-#    include <windows.h>
-#  endif
+
+#if defined (HAVE_OMP_H) && !defined (__APPLE__)
+# include <omp.h>
+# define ENABLE_OMP
+# define lmn_OMP_set_thread_num(N) omp_set_num_threads(N)
+# define lmn_OMP_get_my_id()       omp_get_thread_num()
 #else
-#  undef  HAVE_MT_LIBRARY
+# define lmn_OMP_set_thread_num(N)
+# define lmn_OMP_get_my_id()       (0U)
+#endif
+
+#if defined (HAVE_LIBPTHREAD) || defined (HAVE_WINAPI)
+# define HAVE_MT_LIBRARY  (1)
+#
+# ifdef HAVE_LIBPTHREAD
+#  include <pthread.h>
+# else  /* HAVE_LIBPTHREAD */
+#  include <windows.h>
+# endif /* HAVE_LIBPTHREAD */
+#
+#else  /* HAVE_LIBPTHREAD or HAVE_WINAPI */
+# undef  HAVE_MT_LIBRARY
 #endif /* HAVE_LIBPTHREAD or HAVE_WINAPI */
 
-/* check for thread local storage  */
-#if defined (HAVE___THREAD)
-#  define HAVE_TLS_KEYWORD  (1)
-#  define LMN_TLS           __thread
-#else
-#  define LMN_TLS
-#endif /* HAVE___THREAD */
 
-#if defined (HAVE_MT_LIBRARY) && defined (HAVE_TLS_KEYWORD)
-#  define ENABLE_PARALLEL
+/* setting thread library for slim */
+#ifndef HAVE_LIBPTHREAD
+# error "sorry, need pthread.h or implementation for other thread library "
+#
+#else /* defined (HAVE_LIBPTHREAD) */
+#
+  typedef pthread_t         lmn_thread_t;
+  typedef pthread_mutex_t   lmn_mutex_t;
+  typedef pthread_key_t     lmn_key_t;
+#
+# ifdef HAVE_PTHREAD_BARRIER
+   typedef pthread_barrier_t lmn_barrier_t;
+# else /* !defined (HAVE_PTHREAD_BARRIER) */
+#
+   typedef struct LmnBarrier lmn_barrier_t;
+   struct LmnBarrier {
+     unsigned int    thread_num;
+     unsigned int    reach_num;
+     pthread_mutex_t mutex;
+     pthread_cond_t  cond;
+   };
+#
+# endif /* HAVE_PTHREAD_BARRIER */
+# define lmn_thread_create(Pth, Pfunc, Parg)  pthread_create(Pth, NULL, (void *)Pfunc, (void *)Parg)
+# define lmn_thread_join(Th)                  pthread_join(Th, NULL)
+# define lmn_mutex_init(Pm)                   pthread_mutex_init(Pm, NULL)
+# define lmn_mutex_init_onthefly(Pm)          (Pm) = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER
+# define lmn_mutex_destroy(Pm)                pthread_mutex_destroy(Pm)
+# define lmn_mutex_lock(Pm)                   pthread_mutex_lock(Pm)
+# define lmn_mutex_unlock(Pm)                 pthread_mutex_unlock(Pm)
+# define lmn_TLS_key_init(Pk)                 pthread_key_create(Pk, NULL)
+# define lmn_TLS_key_destroy(K)               pthread_key_delete(K)
+# define lmn_TLS_set_value(K, Pval)           pthread_setspecific(K, Pval)
+# define lmn_TLS_get_value(K)                 pthread_getspecific(K)
+#
+# ifdef HAVE_PTHREAD_BARRIER
+#  define lmn_barrier_init(Pm, Num)            pthread_barrier_init(Pm, NULL, Num)
+#  define lmn_barrier_destroy(Pm)              pthread_barrier_destroy(Pm)
+#  define lmn_barrier_wait(Pm)                 pthread_barrier_wait(Pm)
+# else
+   static inline void lmn_barrier_init(lmn_barrier_t *b, unsigned int num) {
+     b->thread_num = num;
+     b->reach_num = 0;
+     b->mutex = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+     b->cond  = (pthread_cond_t)  PTHREAD_COND_INITIALIZER;
+   }
+#
+   static inline void lmn_barrier_destroy(lmn_barrier_t *b) {
+     pthread_mutex_destroy(&b->mutex);
+     pthread_cond_destroy(&b->cond);
+   }
+#
+   static inline void lmn_barrier_wait(lmn_barrier_t *b) {
+     pthread_mutex_lock(&b->mutex);
+     b->reach_num++;
+     if (b->reach_num != b->thread_num) {
+       pthread_cond_wait(&b->cond, &b->mutex);
+     } else { /* ok! */
+       b->reach_num = 0;
+       pthread_cond_broadcast(&b->cond);
+     }
+     pthread_mutex_unlock(&b->mutex);
+   }
+#
+#
+# endif /* HAVE_PTHREAD_BARRIER */
+#endif /* HAVE_LIBPTHREAD */
+
+
+/* mac osXのxcode gccではthread local storageを容易に実現する__threadは実装予定がない.
+ * (osXの都合で実装が難しいらしい?)
+ * 代わりにpthread keyによるthread local storageの実装が優れているらしいの使ってみた */
+
+#if defined (HAVE_MT_LIBRARY) && defined (HAVE___THREAD)
+# define USE_TLS_KEYWORD
+# define LMN_TLS_TYPE(T)       __thread T
+# define ENABLE_PARALLEL
+#
+#elif defined (HAVE_LIBPTHREAD) && defined (__APPLE__)
+# define USE_TLS_PTHREAD_KEY
+# define LMN_TLS_TYPE(T)       lmn_key_t
+# define ENABLE_PARALLEL
+#
+#else /* disable prallel */
+# define LMN_TLS_TYPE(T)  T
 #endif
 
 
-#ifdef ENABLE_PARALLEL
-extern LMN_TLS unsigned long lmn_thread_id;
-extern LMN_TLS unsigned long lmn_state_id;
-extern LMN_TLS ProcessID lmn_next_id;
-#else
-const static unsigned long lmn_thread_id = 0;
-extern unsigned long lmn_state_id;
-extern ProcessID lmn_next_id;
-#endif /* ENABLE_PARALLEL */
+typedef struct LmnTLS LmnTLS;
+struct LmnTLS {
+  unsigned int   thread_num;
+  unsigned int   thread_id;
+  unsigned long  state_id;
+  ProcessID      proc_next_id;
+};
 
-#define env_gen_state_id()     (lmn_state_id += lmn_thread_num)
+extern struct Vector *lmn_id_pool;
+extern struct LmnEnv  lmn_env;
+extern LMN_TLS_TYPE(LmnTLS) lmn_tls;
 
+void env_my_TLS_init(unsigned int th_id);
+void env_my_TLS_finalize(void);
+void lmn_stream_init(void);
+void lmn_stream_destroy(void);
+
+
+#define LMN_PRIMARY_ID             (0U)
+
+#define env_proc_id_pool()       (lmn_id_pool)
+#define env_set_proc_id_pool(V)  (lmn_id_pool = (V))
 #ifdef TIME_OPT
-#  define env_reset_proc_ids() (lmn_next_id = 1U)
-#  define env_set_next_id(N)   (lmn_next_id = (N))
-#  define env_gen_next_id()    ((lmn_id_pool && vec_num(lmn_id_pool) > 0) \
-                                 ? vec_pop(lmn_id_pool)                   \
-                                 : lmn_next_id++)
-#  define env_return_id(N)     if (lmn_id_pool) vec_push(lmn_id_pool, (vec_data_t)(N))
-#  define env_next_id()        (lmn_next_id)
+# define env_return_id(N)   if (lmn_id_pool) vec_push(lmn_id_pool, (vec_data_t)(N))
 #else
+# define env_return_id(N)
+#endif
+
+#if/**/ !defined (ENABLE_PARALLEL) || defined (USE_TLS_KEYWORD)
+# define env_gen_state_id()       (lmn_tls.state_id += lmn_tls.thread_num)
+# define env_my_thread_id()       (lmn_tls.thread_id)
+# define env_set_my_thread_id(N)  (lmn_tls.thread_id = (N))
+# define env_threads_num()        (lmn_tls.thread_num)
+# define env_set_threads_num(N)   (lmn_tls.thread_num = (N))
+#
+# ifdef TIME_OPT
+#  define env_reset_proc_ids()    (lmn_tls.proc_next_id = 1U)
+#  define env_set_next_id(N)      (lmn_tls.proc_next_id = (N))
+#  define env_gen_next_id()       ((lmn_id_pool && vec_num(lmn_id_pool) > 0)   \
+                                   ? vec_pop(lmn_id_pool)                      \
+                                   : lmn_tls.proc_next_id++)
+#  define env_next_id()           (lmn_tls.proc_next_id)
+# else /* !defined (TIME_OPT) */
 #  define env_reset_proc_ids()
 #  define env_set_next_id(N)
 #  define env_gen_next_id()    0
-#  define env_return_id(N)
 #  define env_next_id()        0
+# endif /* TIME_OPT */
+#
+#elif/**/ defined (USE_TLS_PTHREAD_KEY)
+ static inline unsigned long env_gen_state_id() {
+   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+   p->state_id += p->thread_num;
+   return p->state_id;
+ }
+#
+ static inline unsigned int env_my_thread_id() {
+   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+   return p->thread_id;
+ }
+#
+ static inline void env_set_my_thread_id(unsigned int n) {
+   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+   p->thread_id = n;
+ }
+#
+ static inline unsigned int env_threads_num() {
+   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+   return p->thread_num;
+ }
+#
+ static inline void env_set_threads_num(unsigned int n) {
+   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+   p->thread_num = n;
+ }
+#
+ static inline void env_reset_proc_ids() {
+ #ifdef TIME_OPT
+   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+   p->proc_next_id = 1UL;
+ #endif
+ }
+#
+ static inline void env_set_next_id(unsigned long n) {
+# ifdef TIME_OPT
+   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+   p->proc_next_id = n;
+# endif
+ }
+#
+# ifdef TIME_OPT
+#  define env_gen_next_id()                                                    \
+ ((lmn_id_pool && vec_num(lmn_id_pool) > 0)                                    \
+               ? vec_pop(lmn_id_pool)                                          \
+               : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
+# else
+#  define env_gen_next_id() 0
+# endif
+
+ static inline unsigned long env_next_id() {
+# ifdef TIME_OPT
+   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+   return p->proc_next_id;
+# else
+   return 0;
+# endif
+ }
+
 #endif
 
 LMN_DECL_END

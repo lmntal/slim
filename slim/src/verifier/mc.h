@@ -46,34 +46,18 @@
 #include "react_context.h"
 #include "state.h"
 #include "statespace.h"
-
-
-/* TODO: 整理 */
-struct MCData {
-  BOOL has_property;            /* 性質オートマトンを持つ場合に真 */
-  BOOL do_search;               /* 探索を行う場合に真 */
-  BOOL do_exhaustive;           /* 全ての反例を探索する場合に真 */
-  BOOL do_parallel;             /* 並列アルゴリズムを使用する場合に真 */
-  BOOL mc_exit;                 /* 反例の発見により探索を打ち切る場合に真 */
-  BOOL error_exist;             /* 反例が存在する場合に真 */
-  BOOL is_format_states;        /* 出力直前の状態番号のformatを行った場合に真 */
-
-  Automata  property_automata;  /* Never Clainのストラクチャ */
-  Vector   *propsyms;           /* 命題記号定義 */
-
-  Vector   **invalid_seeds;
-  Vector   **cycles;
-} mc_data;
+#include "mc_worker.h"
 
 
 #ifdef DEBUG
-#  define MC_DEBUG(Pr) if (lmn_env.debug_mc) { Pr; }
+# define MC_DEBUG(Pr) if (lmn_env.debug_mc) { Pr; }
 #else
-#  define MC_DEBUG(Pr)
+# define MC_DEBUG(Pr)
 #endif
 
+#define MC_GET_PROPERTY(S, A)  ((A) ? automata_get_state(A, state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
 
-inline static BOOL mc_vec_states_valid(Vector *v) {
+static inline BOOL mc_vec_states_valid(Vector *v) {
   unsigned int i, j;
   for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
     State *s, *t;
@@ -85,40 +69,43 @@ inline static BOOL mc_vec_states_valid(Vector *v) {
   return TRUE;
 }
 
-void mc_print_vec_states(FILE *f, Vector *v, State *seed);
+void mc_print_vec_states(StateSpace ss,
+                         Vector     *v,
+                         State      *seed);
 void mc_expand(const StateSpace states,
                State            *state,
                AutomataState    property_automata_state,
-               struct ReactCxt  *rc,
+               LmnReactCxt      *rc,
                Vector           *new_s,
+               Vector           *psyms,
                BOOL             flag);
-void mc_gen_successors_with_property(State           *s,
-                                     LmnMembrane     *mem,
-                                     AutomataState   prop_atm_s,
-                                     struct ReactCxt *rc,
-                                     BOOL            flags);
-void mc_gen_successors(State           *src,
-                       LmnMembrane     *mem,
-                       BYTE            prop_labels,
-                       struct ReactCxt *rc,
-                       BOOL            flags);
+void mc_gen_successors_with_property(State         *s,
+                                     LmnMembrane   *mem,
+                                     AutomataState prop_atm_s,
+                                     LmnReactCxt   *rc,
+                                     Vector        *psyms,
+                                     BOOL          flags);
+void mc_gen_successors(State       *src,
+                       LmnMembrane *mem,
+                       BYTE        prop_labels,
+                       LmnReactCxt *rc,
+                       BOOL        flags);
 void mc_store_successors(const StateSpace ss,
                          State            *s,
-                         struct ReactCxt  *rc,
+                         LmnReactCxt      *rc,
                          Vector           *new_ss,
                          BOOL             f);
-BOOL mc_expand_inner(struct ReactCxt *rc, LmnMembrane *cur_mem);
-void run_mc(Vector *start_rulesets);
-StateSpace do_mc(LmnMembrane *world_mem, BOOL flags);
+BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembrane *cur_mem);
 
+void run_mc(Vector *start_rulesets, Automata a, Vector *psyms);
 
 int mc_load_property(Automata *a, PVector *prop_defs);
 void mc_explain_error(int error_id);
 char *mc_error_msg(int error_id);
 
-void mc_found_invalid_state(State *seed);
-void mc_found_invalid_path(Vector *path);
-unsigned long mc_invalids_get_num(void);
-void mc_dump_all_errors(StateSpace ss, FILE *f);
+void mc_found_invalid_state(LmnWorkerGroup *wp, State *seed);
+void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *path);
+unsigned long mc_invalids_get_num(LmnWorkerGroup *wp);
+void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f);
 
 #endif

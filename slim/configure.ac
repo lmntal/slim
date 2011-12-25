@@ -3,7 +3,7 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.2.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [2.2.1], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
@@ -12,19 +12,29 @@ AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 
+TCMALLOC_SO_VERSION=2:2:2
+PROFILER_SO_VERSION=1:1:1
+
+AC_SUBST(TCMALLOC_SO_VERSION)
+AC_SUBST(PROFILER_SO_VERSION)
+
 
 # ----------------------------------------------------------------------
 # Checks for programs.
 #
+
+CFLAGS="-O3 $CFLAGS"
+
 AC_LANG(C)
+AC_PROG_CXX
 AC_PROG_CC
-AC_PROG_CC_STDC
+AM_PROG_CC_C_O
 AC_PROG_CC_C89
 AC_PROG_CPP
-AC_PROG_CXX
 AC_PROG_YACC
 AC_PROG_LEX
 AM_PROG_LEX
+AC_PROG_RANLIB
 
 AC_SUBST(CFLAGS)
 AM_CONDITIONAL(GCC, test "$GCC" = "yes")   # let the Makefile know if we're gcc
@@ -35,6 +45,9 @@ case "$target_os" in
     ;;
   *)
     CFLAGS="-Wall -export-dynamic $CFLAGS"
+    if test "$GCC" = yes; then
+      CFLAGS="$CFLAGS -fopenmp"
+    fi
     ;;
 esac
 
@@ -99,17 +112,16 @@ AC_ARG_ENABLE([tcmalloc],
               [enable_tcmalloc="$default_enable_tcmalloc"])
 
 
-if test "$GCC" = "yes" && test "$enable_devel" = "yes"; then
-  CFLAGS=$CFLAGS "-ggdb -Wchar-subscripts -Wmissing-declarations -Wredundant-decls -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wcast-align -Wsign-compare -Winline"
-# 現状コンパイルできないのでコメントアウト
-#  CFLAGS="-std=c89 -pedantic $CFLAGS"
-fi
-
 # devel
 if test "$enable_devel" = "yes"; then
   AC_MSG_RESULT([enable devel: yes])
   AC_DEFINE([DEVEL], 1,
             [enable devel])
+  if test "$GCC" = "yes"; then
+    CFLAGS=$CFLAGS "-ggdb -Wchar-subscripts -Wmissing-declarations -Wredundant-decls -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wcast-align -Wsign-compare -Winline"
+# 現状コンパイルできないのでコメントアウト
+#  CFLAGS="-std=c89 -pedantic $CFLAGS"
+  fi
 else
   AC_MSG_RESULT([enable devel: no])
 fi
@@ -119,6 +131,7 @@ if test "$enable_debug" = "yes"; then
   AC_MSG_RESULT([enable debug: yes])
   AC_DEFINE([DEBUG], 1,
             [enable debug])
+  CFLAGS="$CFLAGS -g"
 else
   AC_MSG_RESULT([enable debug: no])
 fi
@@ -134,8 +147,7 @@ fi
 # profile
 if test "$enable_profile" = "yes"; then
   AC_MSG_RESULT([enable profile: yes])
-  AC_DEFINE([PROFILE], 1,
-            [enable profile])
+  AC_DEFINE([PROFILE], 1, [enable profile])
 else
   AC_MSG_RESULT([enable profile: no])
 fi
@@ -145,15 +157,13 @@ if test "$enable_time_opt" = "no"; then
   AC_MSG_RESULT([enable time-opt: no])
 else
   AC_MSG_RESULT([enable time-opt: yes])
-	AC_DEFINE([TIME_OPT], 1,
-	          [enable timeopt])
+  AC_DEFINE([TIME_OPT], 1, [enable timeopt])
 fi
 
 # jni
 if test "$enable_jni" = "yes"; then
   AC_MSG_RESULT([enable jni: yes])
-  AC_DEFINE([USE_JNI], 1,
-            [enable jni])
+  AC_DEFINE([USE_JNI], 1, [enable jni])
 else
   AC_MSG_RESULT([enable jni: no])
 fi
@@ -163,10 +173,7 @@ if test "$enable_tcmalloc" = "no"; then
   AC_MSG_RESULT([enable tcmalloc: no])
 else
   AC_MSG_RESULT([enable tcmalloc: yes])
-	AC_DEFINE([HAVE_TCMALLOC], 1,
-	          [enable tcmalloc])
-	THIRDPARTY_DIR="third_party"
-	AC_SUBST(THIRDPARTY_DIR)
+  AC_DEFINE([HAVE_TCMALLOC], 1, [enable tcmalloc])
 fi
 
 AM_CONDITIONAL(ENABLE_JNI,      test "$enable_jni" = "yes")
@@ -177,7 +184,6 @@ AM_WITH_DMALLOC
 # Checks for typedefs, structures, and compiler characteristics.
 #
 
-AC_PROG_CC
 AC_C_INLINE
 AC_C_CONST
 AC_C_VOLATILE
@@ -187,23 +193,23 @@ AC_C_CHAR_UNSIGNED
 #AC_C_TYPEOF
 # AC_C_STRINGIZE
 
-AC_TYPE_INT8_T
-AC_TYPE_INT16_T
-AC_TYPE_INT32_T
-AC_TYPE_INT64_T
-AC_TYPE_INTMAX_T
-AC_TYPE_INTPTR_T
+#AC_TYPE_INT8_T
+#AC_TYPE_INT16_T
+#AC_TYPE_INT32_T
+#AC_TYPE_INT64_T
+#AC_TYPE_INTMAX_T
+#AC_TYPE_INTPTR_T
 AC_TYPE_LONG_DOUBLE
 # AC_TYPE_LONG_DOUBLE_WIDER
 # AC_TYPE_LONG_LONG_INT
 # AC_TYPE_MBSTATE_T
 # AC_TYPE_SIZE_T
 # AC_TYPE_SSIZE_T
-AC_TYPE_UINT8_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
+#AC_TYPE_UINT8_T
+#AC_TYPE_UINT16_T
+#AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
-AC_TYPE_UINTMAX_T
+#AC_TYPE_UINTMAX_T
 # AC_TYPE_UINTPTR_T
 # AC_TYPE_UNSIGNED_LONG_LONG_INT
 
@@ -229,6 +235,7 @@ AC_DEFINE_UNQUOTED(LIB_DIR, "${pkgdatadir}/liba", [library directory])
 AC_CHECK_LIB(pthread, main)
 AC_CHECK_LIB(z, main)
 AC_CHECK_LIB(rt, main)
+AC_CHECK_LIB(gomp, main)
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -238,6 +245,7 @@ AC_HEADER_TIME
 # AC_CHECK_HEADERS(syslog.h crypt.h)
 # AC_CHECK_HEADERS(pty.h util.h libutil.h sys/loadavg.h)
 AC_CHECK_HEADERS(sched.h syscall.h)
+AC_CHECK_HEADERS(omp.h)
 
 # Checks for library functions.
 AC_CHECK_FUNC([strchr])
@@ -307,7 +315,7 @@ AC_CACHE_VAL(
         return 0;
       }
     ],
-    ac_cv_func_add=yes, 
+    ac_cv_func_add=yes,
     ac_cv_func_add=no
   )
 )
@@ -379,6 +387,29 @@ if test "$ac_cv_func_logical_or" = "yes"; then
   AC_DEFINE(HAVE_ATOMIC_LOGICAL_OR, [1], [Define to 1 if the system has the function `or_and_fetch'.])
 fi
 
+AC_MSG_CHECKING(for builtin memory barrier)
+AC_CACHE_VAL(
+  ac_cv_func_synchronize,
+  AC_TRY_RUN(
+    [
+      int main(void)
+      {
+        int x, y;
+        x = 1;
+        __sync_synchronize();
+        y = 1;
+        return 0;
+      }
+    ],
+    ac_cv_func_synchronize=yes,
+    ac_cv_func_synchronize=no
+  )
+)
+AC_MSG_RESULT($ac_cv_func_synchronize)
+if test "$ac_cv_func_synchronize" = "yes"; then
+  AC_DEFINE(HAVE_BUILTIN_MBARRIER, [1], [Define to 1 if the system has the function `__sync_synchronize'.])
+fi
+
 AC_MSG_CHECKING(for pthread_barrier)
 AC_CACHE_VAL(
   ac_cv_func_pthread_barrier,
@@ -402,23 +433,24 @@ fi
 
 
 # ---------------------------------------------------------------------
-# Get Enable Number of Processor Core
+# Get Enable Number of Processor Elements
 #
 
-AC_MSG_CHECKING(number of processor cores)
-core_num=0
+AC_MSG_CHECKING(number of processor elements)
+pe_num=0
 case "$host" in
-  *-darwin*) 
-    core_num=`hwprefs cpu_count`;;
+  *-darwin*)
+#    pe_num=`hwprefs cpu_count`;;
+    pe_num=`sysctl -n hw.ncpu`;;
   *)
-    core_num=`cat /proc/cpuinfo | grep -c processor`;;
+    pe_num=`cat /proc/cpuinfo | grep -c processor`;;
 esac
-if test ${core_num} -eq 0; then
-  core_num=1
+if test ${pe_num} -eq 0; then
+  pe_num=1
 fi
-AC_DEFINE_UNQUOTED(HAVE_PROCESSOR_CORES, $core_num,
-                   [Define to Enable Processor Cores on your environment.])
-AC_MSG_RESULT(${core_num})
+AC_DEFINE_UNQUOTED(HAVE_PROCESSOR_ELEMENTS, ${pe_num},
+                   [Define to Enable Processor Elements on your environment.])
+AC_MSG_RESULT(${pe_num})
 
 # ---------------------------------------------------------------------
 # for tcmalloc
@@ -426,8 +458,8 @@ AC_MSG_RESULT(${core_num})
 
 # Export the version information (for tc_version and friends)
 TC_VERSION_MAJOR=`expr "$PACKAGE_VERSION" : '\([[0-9]]*\)'`
-TC_VERSION_MINOR=`expr "$PACKAGE_VERSION" : '[[^.]]*\.\([[0-9]]*\)'`
-TC_VERSION_PATCH=`expr "$PACKAGE_VERSION" : '[[^.0-9]]*\([[^0-9]]*\)$'`
+TC_VERSION_MINOR=`expr "$PACKAGE_VERSION" : '[[0-9]]*\.\([[0-9]]*\)'`
+TC_VERSION_PATCH=`expr "$PACKAGE_VERSION" : '[[0-9]]*\.[[0-9]]*\(.*\)$'`
 AC_SUBST(TC_VERSION_MAJOR)
 AC_SUBST(TC_VERSION_MINOR)
 AC_SUBST(TC_VERSION_PATCH)
@@ -485,16 +517,16 @@ esac
 enable_debugalloc=no
 
 
-# Checks for programs.
-AC_PROG_CC
-AC_PROG_CPP
-AC_PROG_CXX
-AM_CONDITIONAL(GCC, test "$GCC" = yes)   # let the Makefile know if we're gcc
-AM_PROG_CC_C_O      # shrug: autogen.sh suddenly needs this for some reason
-
 # Check if we have an objcopy installed that supports -W
 AC_CHECK_TOOL([OBJCOPY], [objcopy], [])
-AM_CONDITIONAL(HAVE_OBJCOPY_WEAKEN, ["$OBJCOPY" -W malloc /bin/ls /dev/null])
+AS_IF([test -n "$OBJCOPY"], [dnl
+  AC_CACHE_CHECK([if $OBJCOPY supports -W], gpt_cv_objcopy_weaken, [dnl
+    AC_LINK_IFELSE([void foo() {} int main() {return 0;}], [dnl
+      AS_IF(["$OBJCOPY" -W foo conftest$ac_exeext /dev/null],
+            [gpt_cv_objcopy_weaken=yes], [gpt_cv_objcopy_weaken=no])],
+    [gpt_cv_objcopy_weaken=no])])],
+  [gpt_cv_objcopy_weaken=no])
+AM_CONDITIONAL(HAVE_OBJCOPY_WEAKEN, test $gpt_cv_objcopy_weaken = yes)
 
 case $host_os in
   *mingw*)
@@ -513,14 +545,10 @@ AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 AM_CONDITIONAL(USE_LIBTOOL, test "x$LIBTOOL" != "x")
 
-AC_C_INLINE
 AX_C___ATTRIBUTE__
 
-# Check whether some low-level functions/files are available
-AC_HEADER_STDC
 
 # TODO(csilvers): we could remove a lot when WITH_CPU_PROFILER etc is "no".
-AC_CHECK_TYPES([__int64])       # defined in some windows platforms
 AC_CHECK_TYPES([struct mallinfo],,, [#include <malloc.h>])
 AC_CHECK_TYPES([Elf32_Versym],,, [#include <elf.h>])   # for vdso_support.h
 AC_CHECK_FUNCS(sbrk)            # for tcmalloc to get memory
@@ -544,6 +572,8 @@ AC_CHECK_HEADERS(grp.h)         # for heapchecker_unittest
 AC_CHECK_HEADERS(pwd.h)         # for heapchecker_unittest
 AC_CHECK_HEADERS(sys/resource.h)         # for memalign_unittest.cc
 AC_CHECK_HEADERS(valgrind.h)    # we have a local copy if this isn't found
+AC_CHECK_HEADERS(sys/cdefs.h)   # Where glibc defines __THROW
+AC_CHECK_HEADERS(features.h)    # Where __GLIBC__ is defined
 # We also need <ucontext.h>/<sys/ucontext.h>, but we get those from
 # AC_PC_FROM_UCONTEXT, below.
 
@@ -570,7 +600,8 @@ fi
 # This workaround comes from
 #    http://cygwin.com/ml/cygwin/2004-11/msg00138.html
 case "$host" in
-  *-*-cygwin*) ac_cv_func_mmap_fixed_mapped=yes
+  *-*-cygwin*)
+           ac_cv_func_mmap_fixed_mapped=yes
                AC_DEFINE(HAVE_MMAP, 1,
                          [Define to 1 if you have a working `mmap' system call.])
                ;;
@@ -582,7 +613,7 @@ esac
 # atomicops functions.  If they're the same, we want to define only one.
 AC_MSG_CHECKING([if int32_t is the same type as intptr_t])
 AC_TRY_COMPILE([#include <stdint.h>],
-	       [int32_t v1 = 0; intptr_t v2 = 0; return (&v1 - &v2)],
+         [int32_t v1 = 0; intptr_t v2 = 0; return (&v1 - &v2)],
                [AC_DEFINE(INT32_EQUALS_INTPTR, 1,
                           Define to 1 if int32_t is equivalent to intptr_t)
                 AC_MSG_RESULT([yes])],
@@ -611,7 +642,7 @@ AC_SUBST(UNWIND_LIBS)
 AC_ARG_ENABLE(frame_pointers,
               AS_HELP_STRING([--enable-frame-pointers],
                              [On x86_64 systems, compile with -fno-omit-frame-pointer (see INSTALL)]),
-	      , enable_frame_pointers=no)
+        , enable_frame_pointers=no)
 AM_CONDITIONAL(ENABLE_FRAME_POINTERS, test "$enable_frame_pointers" = yes)
 
 # Some x86_64 systems do not insert frame pointers by default (all
@@ -630,6 +661,24 @@ AM_CONDITIONAL(X86_64_AND_NO_FP_BY_DEFAULT,
 rm fp.s
 CFLAGS="$OLD_CFLAGS"
 
+# See if the compiler supports -Wno-unused-result.
+# Newer ubuntu's turn on -D_FORTIFY_SOURCE=2, enabling
+# __attribute__((warn_unused_result)) for things like write(),
+# which we don't care about.
+AC_CACHE_CHECK([if the compiler supports -Wno-unused-result],
+               perftools_cv_w_no_unused_result,
+         [OLD_CFLAGS="$CFLAGS"
+          CFLAGS="$CFLAGS -Wno-error -Wno-unused-result"
+    # gcc doesn't warn about unknown flags unless it's
+    # also warning for some other purpose, hence the
+    # divide-by-0.  (We use -Wno-error to make sure the
+    # divide-by-0 doesn't cause this test to fail!)
+          AC_COMPILE_IFELSE([AC_LANG_PROGRAM(, return 1/0)],
+                            perftools_cv_w_no_unused_result=yes,
+                                  perftools_cv_w_no_unused_result=no)
+          CFLAGS="$OLD_CFLAGS"])
+AM_CONDITIONAL(HAVE_W_NO_UNUSED_RESULT,
+         test "$perftools_cv_w_no_unused_result" = yes)
 
 # Defines PRIuS
 AC_COMPILER_CHARACTERISTICS
@@ -668,9 +717,23 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([#if defined(__GNUC__) && (defined(__i386__) || 
 #error gcc has this bug: http://gcc.gnu.org/ml/gcc-bugs/2006-09/msg02275.html
 #endif], [static __thread int p = 0])],
                [AC_DEFINE(HAVE_TLS, 1,
-                      Define to 1 if compiler supports __thread)
+                          Define to 1 if compiler supports __thread)
                 AC_MSG_RESULT([yes])],
                [AC_MSG_RESULT([no])])
+
+
+# glibc's __malloc_hook/etc were declared volatile starting in glibc 2.14
+AC_MSG_CHECKING([if __malloc_hook is declared volatile])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+                        #include <malloc.h>
+                        void* (* volatile __malloc_hook)(size_t, const void*) = 0;
+                  ],)],
+                  [AC_DEFINE(MALLOC_HOOK_MAYBE_VOLATILE, volatile,
+                             Define to 'volatile' if __malloc_hook is declared volatile)
+                   AC_MSG_RESULT([yes])],
+                  [AC_DEFINE(MALLOC_HOOK_MAYBE_VOLATILE, )
+                   AC_MSG_RESULT([no])])
+
 
 # Nanosleep requires extra libraries on some architectures (solaris).
 # This sets NANOSLEEP_LIBS.  nanosleep doesn't exist on mingw, which
@@ -709,10 +772,10 @@ AC_INSTALL_PREFIX
 AC_DEFINE(PERFTOOLS_DLL_DECL,,
           [Always the empty-string on non-windows systems.
            On windows, should be "__declspec(dllexport)".
-	   This way, when we compile the dll, we export our functions/classes.
-	   It's safe to define this here because config.h is only used
-	   internally, to compile the DLL, and every DLL source file
-	   #includes "config.h" before anything else.])
+     This way, when we compile the dll, we export our functions/classes.
+     It's safe to define this here because config.h is only used
+     internally, to compile the DLL, and every DLL source file
+     #includes "config.h" before anything else.])
 
 # In theory, config.h files shouldn't need a header guard, but we do,
 # because we (maybe) #include windows/mingw.h from within config.h,
@@ -730,6 +793,9 @@ AH_TOP([
 # (since it doesn't have its own support for, say, pthreads).
 # This requires us to #include a special header file, and also to
 # link in some windows versions of .o's instead of the unix versions.
+#
+# Also, manually mark systems where we have to be careful how early
+# we run pthreads.  TODO(csilvers): turn this into an autoconf check.
 AH_BOTTOM([
 #ifdef __MINGW32__
 #include "windows/mingw.h"
@@ -738,6 +804,8 @@ AH_BOTTOM([
 #endif  /* #ifndef GOOGLE_PERFTOOLS_CONFIG_H_ */
 ])
 AM_CONDITIONAL(MINGW, expr $host : '.*-mingw' >/dev/null 2>&1)
+AM_CONDITIONAL(OSX, expr $host : '.*-apple-darwin.*' >/dev/null 2>&1)
+
 
 # Redhat 7 (and below?) has sys/ucontext.h, but if you try to #include
 # it directly, the compiler gets upset.  So we pretend we don't have
@@ -771,13 +839,15 @@ AC_OUTPUT(Makefile \
           src/Makefile \
           src/genconfig \
           src/verifier/Makefile \
-	  src/utility/Makefile \
+          src/utility/Makefile \
           lib/Makefile \
           ext/Makefile \
           test/Makefile \
           test/system_check/Makefile \
           third_party/Makefile \
-          third_party/google-perftools-1.6/Makefile \
-          third_party/google-perftools-1.6/src/google/tcmalloc.h \
+          third_party/zdelta-2.1/Makefile \
+          third_party/google-perftools-1.8.3/Makefile \
+          third_party/google-perftools-1.8.3/src/google/tcmalloc.h \
+          third_party/google-perftools-1.8.3/src/windows/google/tcmalloc.h \
           doc/Makefile \
           doc/slim.1)

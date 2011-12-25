@@ -36,6 +36,15 @@
  * $Id: internal_hash.c,v 1.7 2008/10/16 18:06:26 sasaki Exp $
  */
 
+
+
+/** CAUTION:
+ *
+ *    このhashset, hashttblは, ProcessTblやst_tableに比べて性能が非常に悪い.
+ *    使用する際には性能面で十分な注意が必要
+ *
+ */
+
 #include "internal_hash.h"
 #include "config.h"
 #include "util.h"

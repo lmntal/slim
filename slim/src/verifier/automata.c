@@ -51,9 +51,9 @@ static void atmstate_free(AutomataState s);
 static void atm_transition_free(AutomataTransition t);
 static void automata_analysis_dfs1(Automata a, BYTE *on_stack_list, AutomataState s);
 static void automata_analysis_dfs2(Automata a, AutomataState s);
-inline static unsigned int atmscc_id(AutomataSCC *s);
-inline static BYTE atmscc_type(AutomataSCC *s);
-inline static void atmscc_set_type(AutomataSCC *s, BYTE type);
+static inline unsigned int atmscc_id(AutomataSCC *s);
+static inline BYTE atmscc_type(AutomataSCC *s);
+static inline void atmscc_set_type(AutomataSCC *s, BYTE type);
 
 struct Automata {
 /*   atmstate_id_t init_state; */
@@ -324,8 +324,6 @@ void automata_analysis(Automata a)
   on_stack_list[(unsigned int)atmstate_id(init_s)] = 0xffU;
 
   automata_analysis_dfs1(a, on_stack_list, init_s);
-  //print_property_automata(a);
-
   LMN_FREE(on_stack_list);
 }
 
@@ -371,23 +369,23 @@ void atmscc_free(AutomataSCC *m)
 
 
 /** CAUTION: MT-Unsafe */
-inline static void atmscc_issue_id(AutomataSCC *s)
+static inline void atmscc_issue_id(AutomataSCC *s)
 {
   static unsigned int unsafe_id_counter = 0;
   s->id = unsafe_id_counter++;
 }
 
-inline static unsigned int atmscc_id(AutomataSCC *s)
+static inline unsigned int atmscc_id(AutomataSCC *s)
 {
   return s->id;
 }
 
-inline static BYTE atmscc_type(AutomataSCC *s)
+static inline BYTE atmscc_type(AutomataSCC *s)
 {
   return s->type;
 }
 
-inline static void atmscc_set_type(AutomataSCC *s, BYTE type)
+static inline void atmscc_set_type(AutomataSCC *s, BYTE type)
 {
   s->type = type;
 }

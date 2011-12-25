@@ -54,6 +54,7 @@ void lmn_string_free(LmnString s);
 BOOL lmn_string_eq(LmnString s1, LmnString s2);
 LmnString lmn_string_copy(LmnString s);
 BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr);
+unsigned long lmn_string_hash(LmnString atom);
 const char *lmn_string_c_str(LmnString atom);
 void lmn_string_push(LmnString dst, const LmnString src);
 void lmn_string_push_raw_c(LmnString s, int c);

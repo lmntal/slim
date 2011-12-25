@@ -39,9 +39,6 @@ static struct st_hash_type type_statehash = {state_cmp_with_compress, st_stateha
 
 static void rehash(st_table_t tbl);
 
-#define alloc(Type)     LMN_MALLOC(Type)
-#define Calloc(N, Type) LMN_CALLOC(Type, N)
-
 #define EQUAL(table,x,y) ((x)==(y) || (*table->type->compare)((x),(y)) == 0)
 
 #define do_hash(key,table) (unsigned long)(*(table)->type->hash)((key))
@@ -53,9 +50,7 @@ static void rehash(st_table_t tbl);
 
 #define MINSIZE 8
 
-/*
- * Table of prime numbers 2^n+a, 2<=n<=30.
- */
+/* Table of prime numbers 2^n+a, 2<=n<=30. */
 static long primes[] = {
   8 + 3,
   16 + 3,
@@ -133,11 +128,11 @@ st_table_t st_init_table_with_size(struct st_hash_type *type, int size) {
 
   size = new_size(size); /* round up to prime number */
 
-  tbl = alloc(struct st_table);
+  tbl = LMN_MALLOC(struct st_table);
   tbl->type = type;
   tbl->num_entries = 0;
   tbl->num_bins = size;
-  tbl->bins = Calloc(size, st_table_entry *);
+  tbl->bins = LMN_CALLOC(st_table_entry *, size);
   return tbl;
 }
 
@@ -185,12 +180,12 @@ void st_free_table(st_table_t table) {
     ptr = table->bins[i];
     while (ptr != 0) {
       next = ptr->next;
-      free(ptr);
+      LMN_FREE(ptr);
       ptr = next;
     }
   }
-  free(table->bins);
-  free(table);
+  LMN_FREE(table->bins);
+  LMN_FREE(table);
 }
 
 unsigned long st_table_space(st_table_t tbl)
@@ -240,7 +235,8 @@ unsigned long st_table_space(st_table_t tbl)
 
 /* キーがkeyであるテーブルの値をvalueに設定する。
  * キーが見つからなければ0を返し，見つかれば1を返す。*/
-int st_lookup(st_table_t table, register st_data_t key, st_data_t *value) {
+int st_lookup(st_table_t table, register st_data_t key, st_data_t *value)
+{
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
@@ -259,7 +255,8 @@ int st_lookup(st_table_t table, register st_data_t key, st_data_t *value) {
 
 /* キーがkeyであるテーブルの値をvalueに設定する。
  * キーが見つからなければ0を返し，見つかれば1を返す。*/
-int st_lookup_with_col(st_table_t table, register st_data_t key, st_data_t *value, long *n_col) {
+int st_lookup_with_col(st_table_t table, register st_data_t key, st_data_t *value, long *n_col)
+{
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
@@ -276,21 +273,15 @@ int st_lookup_with_col(st_table_t table, register st_data_t key, st_data_t *valu
   }
 }
 
-int st_contains(st_table_t table, st_data_t key) {
+int st_contains(st_table_t table, st_data_t key)
+{
   st_data_t t;
   return st_lookup(table, key, &t);
 }
 
 #define ADD_DIRECT(table, key, value, hash_val, bin_pos)                   \
   do {                                                                     \
-    st_table_entry *entry;                                                 \
-    if (table->num_entries / (table->num_bins) > ST_DEFAULT_MAX_DENSITY) { \
-      rehash(table);                                                       \
-      bin_pos = hash_val % table->num_bins;                                \
-    }                                                                      \
-                                                                           \
-    entry = alloc(st_table_entry);                                         \
-                                                                           \
+    st_table_entry *entry = LMN_MALLOC(st_table_entry);                    \
     entry->hash = hash_val;                                                \
     entry->key = key;                                                      \
     entry->record = value;                                                 \
@@ -299,9 +290,9 @@ int st_contains(st_table_t table, st_data_t key) {
     table->num_entries++;                                                  \
 } while (0)
 
-/* ハッシュ表に新たなエントリーを追加する。
- * エントリが存在した場合は、そのエントリの値のみを更新し、キーは元々のものを更新しない。 */
-int st_insert(register st_table_t table, register st_data_t key, st_data_t value) {
+
+static inline int st_insert_inner(register st_table_t table, register st_data_t key, st_data_t value)
+{
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
@@ -317,9 +308,20 @@ int st_insert(register st_table_t table, register st_data_t key, st_data_t value
   }
 }
 
-/* ハッシュ表に新たなエントリーを追加し正の値を返す。
- * エントリが存在した場合は、テーブルを変更せずに、0を返す。*/
-int st_insert_safe(register st_table_t table, register st_data_t key, st_data_t value) {
+/* ハッシュ表に新たなエントリーを追加する.
+ * エントリが存在した場合は, エントリの値のみを更新し, キーは元々のものを更新しない.
+ * エントリが存在しなかった場合に0, エントリが存在した場合には1以上の整数を返す. */
+int st_insert(register st_table_t table, register st_data_t key, st_data_t value)
+{
+  int ret = st_insert_inner(table, key, value);
+  if (!ret && (table->num_entries / table->num_bins) > ST_DEFAULT_MAX_DENSITY) {
+    rehash(table);
+  }
+  return ret;
+}
+
+static inline int st_insert_safe_inner(register st_table_t table, register st_data_t key, st_data_t value)
+{
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
@@ -334,8 +336,22 @@ int st_insert_safe(register st_table_t table, register st_data_t key, st_data_t 
   }
 }
 
+/* ハッシュ表に新たなエントリーを追加し正の値を返す.
+ * エントリが存在した場合は, テーブルを変更せずに、0を返す. */
+int st_insert_safe(register st_table_t table, register st_data_t key, st_data_t value)
+{
+  int ret = st_insert_safe_inner(table, key, value);
+  if (ret && (table->num_entries / table->num_bins) > ST_DEFAULT_MAX_DENSITY) {
+    rehash(table);
+  }
+  return ret;
+}
+
+
+
 /* 値の重複をチェックせずにハッシュ表に新たなエントリーを追加する */
-void st_add_direct(st_table_t table, st_data_t key, st_data_t value) {
+static inline void st_add_direct_inner(st_table_t table, st_data_t key, st_data_t value)
+{
   unsigned long hash_val, bin_pos;
 
   hash_val = do_hash(key, table);
@@ -343,13 +359,22 @@ void st_add_direct(st_table_t table, st_data_t key, st_data_t value) {
   ADD_DIRECT(table, key, value, hash_val, bin_pos);
 }
 
-static void rehash(register st_table_t table) {
+void st_add_direct(st_table_t table, st_data_t key, st_data_t value)
+{
+  st_add_direct_inner(table, key, value);
+  if ((table->num_entries / table->num_bins) > ST_DEFAULT_MAX_DENSITY) {
+    rehash(table);
+  }
+}
+
+static void rehash(register st_table_t table)
+{
   register st_table_entry *ptr, *next, **new_bins;
   int i, old_num_bins = table->num_bins, new_num_bins;
   unsigned long hash_val;
 
   new_num_bins = new_size(old_num_bins + 1);
-  new_bins = Calloc(new_num_bins, st_table_entry *);
+  new_bins = LMN_CALLOC(st_table_entry *, new_num_bins);
 
   for (i = 0; i < old_num_bins; i++) {
     ptr = table->bins[i];
@@ -361,7 +386,7 @@ static void rehash(register st_table_t table) {
       ptr = next;
     }
   }
-  free(table->bins);
+  LMN_FREE(table->bins);
   table->num_bins = new_num_bins;
   table->bins = new_bins;
 }
@@ -374,13 +399,13 @@ st_table_t st_copy(st_table_t old_table) {
 
   num_bins = st_cap(old_table);
 
-  new_table = alloc(struct st_table);
+  new_table = LMN_MALLOC(struct st_table);
 
   *new_table = *old_table;
-  new_table->bins = Calloc(num_bins, st_table_entry *);
+  new_table->bins = LMN_CALLOC(st_table_entry *, num_bins);
 
   if (new_table->bins == 0) {
-    free(new_table);
+    LMN_FREE(new_table);
     return 0;
   }
 
@@ -388,10 +413,10 @@ st_table_t st_copy(st_table_t old_table) {
     new_table->bins[i] = 0;
     ptr = old_table->bins[i];
     while (ptr != 0) {
-      entry = alloc(st_table_entry);
+      entry = LMN_MALLOC(st_table_entry);
       if (entry == 0) {
-        free(new_table->bins);
-        free(new_table);
+        LMN_FREE(new_table->bins);
+        LMN_FREE(new_table);
         return 0;
       }
       *entry = *ptr;
@@ -403,7 +428,9 @@ st_table_t st_copy(st_table_t old_table) {
   return new_table;
 }
 
-
+/* ハッシュ表tableのキーkeyのデータを削除する.
+ * keyに対応するデータが存在しなかった場合は0を返し,
+ * keyに対応するデータが存在する場合は, valueに値をセットした後, 正数を返す. */
 int st_delete(register st_table_t table, register st_data_t key, st_data_t *value)
 {
   unsigned long hash_val;
@@ -414,29 +441,26 @@ int st_delete(register st_table_t table, register st_data_t key, st_data_t *valu
   ptr = table->bins[hash_val];
 
   if (ptr == 0) {
-    if (value != 0)
-      *value = 0;
+    if (value) *value = 0;
     return 0;
   }
-
-  if (EQUAL(table, key, ptr->key)) {
+  else if (EQUAL(table, key, ptr->key)) {
     table->bins[hash_val] = ptr->next;
     table->num_entries--;
-    if (value != 0)
-      *value = ptr->record;
-    free(ptr);
+    if (value) *value = ptr->record;
+    LMN_FREE(ptr);
     return 1;
   }
-
-  for (; ptr->next != 0; ptr = ptr->next) {
-    if (EQUAL(table, ptr->next->key, key)) {
-      tmp = ptr->next;
-      ptr->next = ptr->next->next;
-      table->num_entries--;
-      if (value != 0)
-        *value = tmp->record;
-      free(tmp);
-      return 1;
+  else {
+    for (; ptr->next != 0; ptr = ptr->next) {
+      if (EQUAL(table, ptr->next->key, key)) {
+        tmp = ptr->next;
+        ptr->next = ptr->next->next;
+        table->num_entries--;
+        if (value) *value = tmp->record;
+        LMN_FREE(tmp);
+        return 1;
+      }
     }
   }
 
@@ -541,7 +565,7 @@ int st_foreach(st_table_t table, int(*func)( ANYARGS), st_data_t arg) {
           last->next = ptr->next;
         }
         ptr = ptr->next;
-        free(tmp);
+        LMN_FREE(tmp);
         table->num_entries--;
       }
     }
@@ -588,7 +612,7 @@ int st_foreach_hash(st_table_t table, st_data_t hash, int(*func)( ANYARGS), st_d
         last->next = ptr->next;
       }
       ptr = ptr->next;
-      free(tmp);
+      LMN_FREE(tmp);
       table->num_entries--;
     }
   }
@@ -617,12 +641,14 @@ void st_print(st_table_t st)
   unsigned int i = 0;
   for (; i < nb; i++) {
     entry = st->bins[i];
-    if (entry!=NULL) {
+    if (entry) {
       printf("bucket[%u]\n", i);
-      while (entry!=NULL) {
+      while (entry) {
         /* デフォルトでは要素をすべて数値で出力 */
         printf("      entry->key = %ld, ->record = %lu, ->hash = %lu\n",
-              (long)entry->key, (long)entry->record, (unsigned long)entry->hash);
+              (long)entry->key,
+              (long)entry->record,
+              (unsigned long)entry->hash);
         entry = entry->next;
         if (entry) printf("  next");
       }
@@ -659,7 +685,7 @@ void st_get_entries_value(st_table_t st, Vector *vec)
 }
 
 
-inline static BOOL st_equals_inner(st_table_t cmp_dst, st_table_t cmp_src)
+static inline BOOL st_equals_inner(st_table_t cmp_dst, st_table_t cmp_src)
 {
   unsigned long i, dst_cap;
 
@@ -707,6 +733,7 @@ int st_equals(st_table_t st1, st_table_t st2){
     return 1;
   }
 }
+
 
 /*
  * hash_32 - 32 bit Fowler/Noll/Vo FNV-1a hash code
