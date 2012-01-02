@@ -39,10 +39,7 @@
 
 /* 整数関連のコールバック */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <errno.h>
+#include "lmntal.h"
 #include "lmntal_ext.h"
 #include "slim_header/string.h"
 #include "special_atom.h"
@@ -66,8 +63,7 @@ void integer_set(LmnReactCxt *rc,
 {
   Vector *srcvec;
   int i, j, n;
-  int start = (int)a0;
-  int end = (int)a1;
+  int start, end;
 
   start  = (int)a0;
   end    = (int)a1;
@@ -144,10 +140,10 @@ void integer_of_string(LmnReactCxt *rc,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1)
 {
-  const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
-  char *t = NULL;
   long n;
-
+  char *t;
+  const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
+  t = NULL;
   n = strtol(s, &t, 10);
   if (t == NULL || s == t) {
     LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,

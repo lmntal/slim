@@ -132,9 +132,9 @@ void slim_version(FILE *f)
   fprintf(f, "- version %s\n", SLIM_VERSION);
 }
 
-static int parse_options(int *optid, int argc, char *argv[])
+static void parse_options(int *optid, int argc, char *argv[])
 {
-  int c, option_index, ret;
+  int c, option_index;
 
   struct option long_options[] = {
     {"version"                , 0, 0, 1000},
@@ -197,7 +197,6 @@ static int parse_options(int *optid, int argc, char *argv[])
     {0, 0, 0, 0}
   };
 
-  ret = 0;
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
@@ -259,7 +258,7 @@ static int parse_options(int *optid, int argc, char *argv[])
       lmn_env.show_hyperlink = TRUE;
       break;
     case 1008:
-      ret = 1;
+      lmn_env.load_path[lmn_env.load_path_num++] = SLIM_LIB_DIR;
       break;
     case 1100:
       lmn_env.output_format = DOT;
@@ -500,8 +499,6 @@ static int parse_options(int *optid, int argc, char *argv[])
   }
 
   (*optid) = optind;
-
-  return ret;
 }
 
 void init_default_system_ruleset();
@@ -518,7 +515,7 @@ static void init_internal(void)
   lmn_functor_tbl_init();
   init_rules();
 
-  if(!lmn_env.translate){
+  if (!lmn_env.translate) {
     init_so_handles();
     init_default_system_ruleset();
     if (lmn_env.enable_por) dpor_env_init();
@@ -537,18 +534,15 @@ static void init_internal(void)
 
 static inline void slim_init(int *optid, int argc, char **argv)
 {
-  int use_lib;
+  int i;
+
   lmn_stream_init();
-  use_lib = parse_options(optid, argc, argv);
+  parse_options(optid, argc, argv);
   init_internal();
 
   /** load directories(system & load path) */
-  if (use_lib) {
-    int i;
-    load_il_files(SLIM_LIB_DIR);
-    for (i = lmn_env.load_path_num - 1; i >= 0; i--) {
-      load_il_files(lmn_env.load_path[i]);
-    }
+  for (i = lmn_env.load_path_num - 1; i >= 0; i--) {
+    load_il_files(lmn_env.load_path[i]);
   }
 }
 
@@ -581,7 +575,7 @@ static inline int load_input_files(Vector *start_rulesets, int optid, int argc, 
   int i;
 
   /** load input files */
-  for(i = optid; i < argc; i++){
+  for (i = optid; i < argc; i++) {
     FILE *in;
     LmnRuleSet t;
     char *f = argv[i];
@@ -596,7 +590,7 @@ static inline int load_input_files(Vector *start_rulesets, int optid, int argc, 
     }
   }
 
-  if(vec_num(start_rulesets) == 0){
+  if (vec_is_empty(start_rulesets)) {
     /** detected invalid file */
     fprintf(stderr, "bad input file.\n");
     return 0;

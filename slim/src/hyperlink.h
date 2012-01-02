@@ -60,7 +60,6 @@
  *   idの値を見かけ上のIDとして利用している
  */
 typedef struct HyperLink{
-//  LmnAtom atom;   /* hyperlink id, atomが開放されているときはNULL */
   LmnSAtom atom;    /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
   int rank;
   LmnMembrane *mem; /* atom の所属膜（findatomで使用）*/
@@ -78,9 +77,7 @@ typedef struct HyperLink{
 #define LMN_HL_RANK(HL)     ((HL)->rank)
 #define LMN_HL_MEM(HL)      ((HL)->mem)
 #define LMN_HL_ID(HL)       ((HL)->id)
-//#define LMN_HL_CHILDREN(HL) ((HL)->children)
 
-//#define LMN_HL_ROOT_ATOM(HL) (lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(HL)))
 #define LMN_HL_ATOM_ROOT_HL(ATOM)   lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(ATOM))
 #define LMN_HL_ATOM_ROOT_ATOM(ATOM) lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(ATOM)))
 
@@ -99,8 +96,8 @@ LmnSAtom   lmn_hyperlink_hl_to_at(HyperLink *hl);
 HyperLink *lmn_hyperlink_get_root(HyperLink *hl);
 HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child);
 HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2);
-int lmn_hyperlink_rank(HyperLink *hl);
-int lmn_hyperlink_element_num(HyperLink *hl);
+int  lmn_hyperlink_rank(HyperLink *hl);
+int  lmn_hyperlink_element_num(HyperLink *hl);
 BOOL lmn_hyperlink_eq_hl(HyperLink *hl1, HyperLink *hl2);
 BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLinkAttr attr2);
 void lmn_hyperlink_print(LmnMembrane *gr);
@@ -140,15 +137,6 @@ typedef struct SameProcCxt {
 #define LMN_SPC_SATTR(SPC) ((SPC)->start_attr)
 #define LMN_SPC_PC(SPC, I) ((SPC)->proccxts[(I)])
 
-//typedef struct FindProcCxt {
-//  SimpleHashtbl sameproccxt;
-//  BOOL commit;
-//} FindProcCxt;
-//
-//extern FindProcCxt findproccxt;
-//
-//#define LMN_FPC_SPC(FPC)    ((FPC)->sameproccxt)
-//#define LMN_FPC_COMMIT(FPC) ((FPC)->commit)
 
 void lmn_sameproccxt_init(LmnReactCxt *rc);
 void lmn_sameproccxt_clear(LmnReactCxt *rc);
@@ -159,5 +147,10 @@ HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity);
 BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int atom_arity);
 BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int atom_arity);
 void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl);
+
+/* ハイパーリンクhlのハッシュ値を返す. */
+static inline unsigned long lmn_hyperlink_hash(HyperLink *hl) {
+  return lmn_hyperlink_element_num(hl);
+}
 
 #endif /* LMN_HYPERLINK_H */

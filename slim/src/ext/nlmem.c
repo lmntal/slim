@@ -37,12 +37,12 @@
  * $Id$
  */
 
-#include <stdio.h>
+#include "lmntal.h"
 #include "lmntal_ext.h"
 #include "visitlog.h"
 #include "slim_header/memstack.h"
 
-LMN_EXTERN void init_nlmem(void);
+void init_nlmem(void);
 
 void nlmem_copy(LmnReactCxt *rc,
                 LmnMembrane *mem,

@@ -50,9 +50,10 @@ void init_default_system_ruleset(void);
 /* delete out proxies connected each other */
 static BOOL delete_redundant_outproxies(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 {
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_OUT_PROXY_FUNCTOR);
+  AtomListEntry *ent;
   LmnSAtom o0;
 
+  ent = lmn_mem_get_atomlist(mem, LMN_OUT_PROXY_FUNCTOR);
   if (!ent) return FALSE;
 
   EACH_ATOM(o0, ent, ({

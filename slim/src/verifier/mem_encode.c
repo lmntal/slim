@@ -1123,7 +1123,8 @@ LmnBinStr lmn_mem_encode(LmnMembrane *mem)
   }
 #endif
 
-  ret = lmn_mem_encode_sub(mem, 1024);
+  //ret = lmn_mem_encode_sub(mem, 1024);
+  ret = lmn_mem_encode_sub(mem, round2up(env_next_id()));
 
 
 #ifdef PROFILE

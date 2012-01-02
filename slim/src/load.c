@@ -94,8 +94,8 @@ static void dump_functor(Functor f)
     printf("=");
     break;
   default:
-    fprintf(stderr, "unexpected functor type %d", functor_get_type(f));
-    exit(EXIT_FAILURE);
+    fprintf(stderr, "functor type %d", functor_get_type(f));
+    lmn_fatal("unexpected");
   }
 }
 
@@ -163,7 +163,7 @@ static void dump_instr(Instruction inst)
 
   printf("     %d arg= [", inst_get_id(inst));
   l = inst_get_args(inst);
- for (i = 0; i < arg_list_num(l); i++) {
+  for (i = 0; i < arg_list_num(l); i++) {
     if (i > 0) printf(", ");
     dump_arg(arg_list_get(l, i));
   }
@@ -285,15 +285,10 @@ void dump_il(IL il)
 /* 構文木の読み込み時に使うデータ。各ルールの解析じに作成し，解析後に破
    棄する。ラベルは各ルールにローカルなものとして処理している */
 typedef struct Context {
-  /* ラベルのからラベルのある位置の対応*/
-  st_table_t label_to_loc;
-  /* ラベルを参照している位置と参照しているラベルの対応 */
-  st_table_t loc_to_label_ref;
-
-  /* 書き込み位置とbyte_seqのキャパシティ */
-  unsigned int loc, cap;
-  /* ルールの命令列を書き込む領域 */
-  BYTE *byte_seq;
+  st_table_t   label_to_loc;     /* ラベルのからラベルのある位置の対応*/
+  st_table_t   loc_to_label_ref; /* ラベルを参照している位置と参照しているラベルの対応 */
+  unsigned int loc, cap;         /* 書き込み位置とbyte_seqのキャパシティ */
+  BYTE         *byte_seq;        /* ルールの命令列を書き込む領域 */
 } *Context;
 
 
@@ -355,7 +350,7 @@ void expand_byte_sec(Context c)
 #define WRITE_HERE(TYPE, VALUE, CONTEXT, LOC)                    \
   do {                                                           \
     do {                                                         \
-      while ((LOC) + sizeof(TYPE) >= (CONTEXT)->cap) {  \
+      while ((LOC) + sizeof(TYPE) >= (CONTEXT)->cap) {           \
         expand_byte_sec(CONTEXT);                                \
       }                                                          \
       *(TYPE*)((CONTEXT)->byte_seq + (LOC)) = (VALUE);           \
@@ -410,10 +405,8 @@ static void load_arg(InstrArg arg, Context c)
         WRITE_MOVE(double, functor_get_float_value(functor), c);
         break;
       case STRING_FUNC:
-        {
-          WRITE_MOVE(LmnLinkAttr, LMN_STRING_ATTR, c);
-          WRITE_MOVE(lmn_interned_str, functor_get_string_value(functor), c);
-        }
+        WRITE_MOVE(LmnLinkAttr, LMN_STRING_ATTR, c);
+        WRITE_MOVE(lmn_interned_str, functor_get_string_value(functor), c);
         break;
       case STX_IN_PROXY:
         WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
@@ -452,7 +445,7 @@ static void load_arg(InstrArg arg, Context c)
       }
 
       /* startの位置に現在の位置との差を書き込む */
-      t = c->loc;
+      t      = c->loc;
       c->loc = start;
       WRITE(LmnSubInstrSize, t - (start + sizeof(LmnSubInstrSize)), c);
       c->loc = t;
@@ -477,10 +470,10 @@ static void load_instruction(Instruction inst, Context c)
 
   /* REMOVEATOMは引数の数が2と3の場合がある。第三引数の
      ファンクタは無視する */
-  if (inst_get_id(inst) == INSTR_REMOVEATOM &&
-      arg_num == 3) {
+  if (inst_get_id(inst) == INSTR_REMOVEATOM && arg_num == 3) {
     arg_num = 2;
   }
+
   for (i = 0; i < arg_num; i++) {
     load_arg(arg_list_get(args, i), c);
   }
@@ -508,10 +501,13 @@ static int fill_label_ref(st_data_t loc, st_data_t label, void *c_)
   st_data_t target_loc;
 
   if (st_lookup(c->label_to_loc, label, &target_loc)) {
-    WRITE_HERE(LmnJumpOffset, (int)target_loc - (int)loc - sizeof(LmnJumpOffset), c, (int)loc);
+    WRITE_HERE(LmnJumpOffset,
+               (int)target_loc - (int)loc - sizeof(LmnJumpOffset),
+               c,
+               (int)loc);
   } else {
-    fprintf(stderr, "implementation error: label not found L%d\n", (int)label);
-    exit(EXIT_FAILURE);
+    fprintf(stderr, "label not found L%d\n", (int)label);
+    lmn_fatal("implementation error");
   }
 
   return ST_CONTINUE;
@@ -572,28 +568,29 @@ static LmnRuleSet load_ruleset(RuleSet rs)
 /* 最初のルールセットを返す */
 static LmnRuleSet load_il(IL il)
 {
-  LmnRuleSet t, first_ruleset = NULL;
+  LmnRuleSet t, first_ruleset;
   RuleSets rulesets;
   ModuleList module_list;
   int i;
-  rulesets = il_get_rulesets(il);
 
   /* load rules */
+  rulesets     = il_get_rulesets(il);
+  first_ruleset = NULL;
   for (i = 0; i < rulesets_num(rulesets); i++) {
     t = load_ruleset(rulesets_get(rulesets, i));
     if (i == 0) first_ruleset = t;
   }
+
+  if (!first_ruleset) {
+    lmn_fatal("implementation error: no ruleset in il");
+  }
+
 
   /* load module list */
   module_list = il_get_module_list(il);
   for (i = 0; i < module_list_num(module_list); i++) {
     Module m = module_list_get(module_list, i);
     lmn_set_module(module_get_name(m), lmn_ruleset_from_id(module_get_ruleset(m)));
-  }
-
-  if (first_ruleset == NULL) {
-    fprintf(stderr, "implementation error: no ruleset in il\n");
-    exit(EXIT_FAILURE);
   }
 
   return first_ruleset;
@@ -612,21 +609,24 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   LmnRuleSet ret = 0; /* ワーニング抑制 */
 
   /* シンボルを読み込み+変換テーブルを設定 */
-  for(i=1; i<maindata->count_of_symbol; ++i){
+  for (i = 1; i < maindata->count_of_symbol; i++) {
     lmn_interned_str gid = lmn_intern(maindata->symbol_table[i]);
     maindata->symbol_exchange[i] = gid;
   }
 
   /* ファンクタを読み込み+変換テーブルを設定 */
-  for(i=0; i<maindata->count_of_functor; ++i){
+  for (i = 0; i < maindata->count_of_functor; i++) {
     LmnFunctorEntry ent = maindata->functor_table[i];
-    /* スペシャルファンクタは登録できないが,functor.c内で登録される共通部分以外出現しようがないはずなので問題ない */
-    if(ent.special){
+    /* スペシャルファンクタは登録できないが,
+     * functor.c内で登録される共通部分以外出現しようがないはずなので問題ない */
+    if (ent.special) {
       /* 登録しないで変換も必要無し */
       maindata->functor_exchange[i] = i;
-    }else{
+    } else {
       /* シンボルは変換を忘れないように */
-      LmnFunctor gid = lmn_functor_intern(maindata->symbol_exchange[ent.module], maindata->symbol_exchange[ent.name], ent.arity);
+      LmnFunctor gid = lmn_functor_intern(maindata->symbol_exchange[ent.module],
+                                          maindata->symbol_exchange[ent.name],
+                                          ent.arity);
       maindata->functor_exchange[i] = gid;
     }
   }
@@ -634,91 +634,125 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   /* ルールセット0番は数合わせ */
   /* システムルールセット読み込み */
   ruleset = maindata->ruleset_table[1];
-  for(i=0; i<ruleset.size; ++i){
+  for (i = 0; i < ruleset.size; i++) {
     LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
                                          maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_system_rule(r);
   }
+
   /* ルールセット2番はinitial ruleset */
   ruleset = maindata->ruleset_table[2];
-  for(i=0; i<ruleset.size; ++i){
+  for (i = 0; i < ruleset.size; i++) {
     LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
                                          maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_initial_rule(r);
   }
+
   /* ルールセット3番はinitial system ruleset */
   ruleset = maindata->ruleset_table[3];
-  for(i=0; i<ruleset.size; ++i){
+  for(i = 0; i < ruleset.size; i++) {
     LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
                                          maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_initial_system_rule(r);
   }
+
   /* ルールセットを読み込み+変換テーブルを設定 */
-  for(i=FIRST_ID_OF_NORMAL_RULESET; i<maindata->count_of_ruleset; ++i){
-    int j;
-    struct trans_ruleset tr = maindata->ruleset_table[i];
-    int gid = lmn_gen_ruleset_id();
-    LmnRuleSet rs = lmn_ruleset_make(gid, tr.size);
+  for (i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset; i++) {
+    int j, gid;
+    LmnRuleSet rs;
+    struct trans_ruleset tr;
+
+    tr  = maindata->ruleset_table[i];
+    gid = lmn_gen_ruleset_id();
+    rs  = lmn_ruleset_make(gid, tr.size);
     lmn_set_ruleset(rs, gid);
 
-    for(j=0; j<tr.size; ++j){
+    for (j = 0; j < tr.size; j++) {
       LmnRule r = lmn_rule_make_translated(tr.rules[j].function,
                                            maindata->symbol_exchange[tr.rules[j].name]);
       lmn_ruleset_put(rs, r);
     }
 
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく */
-    if(i==FIRST_ID_OF_NORMAL_RULESET) ret = rs;
+    if (i == FIRST_ID_OF_NORMAL_RULESET) {
+      ret = rs;
+    }
     maindata->ruleset_exchange[i] = gid;
   }
 
   /* モジュール読込み */
-  for(i=0; i<maindata->count_of_module; ++i){
+  for (i = 0; i < maindata->count_of_module; i++) {
     struct trans_module mo = maindata->module_table[i];
-    lmn_set_module(maindata->symbol_exchange[mo.name], lmn_ruleset_from_id(maindata->ruleset_exchange[mo.ruleset]));
+    lmn_set_module(maindata->symbol_exchange[mo.name],
+                   lmn_ruleset_from_id(maindata->ruleset_exchange[mo.ruleset]));
   }
 
   return ret;
 }
 
-/* soハンドルから中間命令を読み出す load_extは開始ルールを認識しない */
-/* 複数ファイルを1つのsoにした場合、初期データ生成ルールが複数あるはずだがとりあえず無視 */
-/* TODO: 初期データ生成ルールセットのルールを1つのルールセットにまとめて出力すれば問題無し 1回適用成功したところで止めなければok) */
+
+
+static inline LmnRuleSet load_compiled_il_inner(char *basename,
+                                                char *buf, int buf_len,
+                                                void *sohandle,
+                                                char *filename);
+
+/* soハンドルから中間命令を読み出す. load_extは開始ルールを認識しない.
+ * 複数ファイルを1つのsoにした場合, 初期データ生成ルールが複数あるはずだがとりあえず無視.
+ * TODO:
+ *   初期データ生成ルールセットのルールを1つのルールセットにまとめて出力すれば問題無し.
+ *   1回適用成功したところで止めなければok     */
 LmnRuleSet load_compiled_il(char *filename, void *sohandle)
 {
-  char *basename = create_formatted_basename(filename);
-  int buf_len = strlen(basename) + 50;  /* 適当に50文字余分にとったけどこれでいいのか */
-  char *buf = lmn_malloc(buf_len + 1); /* 必要ないけど一応最後に1byte余分をとっておく */
-  void (*init_f)();
-  struct trans_maindata *maindata;
-  LmnRuleSet ret = 0;
+  char *basename, *buf;
+  int buf_len;
+  LmnRuleSet ret;
 
-  /* 初期化関数を呼び出し */
-  snprintf(buf, buf_len, "init_%s", basename);
-  init_f = dlsym(sohandle, buf);
-  if(! init_f){
-    fprintf(stderr, "init function \"%s\" not found in %s.\n", buf, filename);
-    ret = 0;
-    goto returning;
-  }
-  (*init_f)();
+  basename = create_formatted_basename(filename);
+  buf_len  = strlen(basename) + 50;   /* 適当に50文字余分にとったけどこれでいいのか  */
+  buf      = lmn_malloc(buf_len + 1); /* 必要ないけど一応最後に1byte余分をとっておく */
 
-  /* データオブジェクトを取得 */
-  snprintf(buf, buf_len, "trans_%s_maindata", basename);
-  maindata = dlsym(sohandle, buf);
-  if(! maindata){
-    fprintf(stderr, "maindata \"%s\" not found in %s.\n", buf, basename);
-    ret = 0;
-    goto returning;
-  }
+  ret      = load_compiled_il_inner(basename, buf, buf_len, sohandle, filename);
 
-  /* 読み込みと変換テーブルの設定 */
-  ret = load_and_setting_trans_maindata(maindata);
-
- returning:
   lmn_free(buf);
   lmn_free(basename);
+
   return ret;
+}
+
+static inline LmnRuleSet load_compiled_il_inner(char *basename,
+                                                char *buf, int buf_len,
+                                                void *sohandle,
+                                                char *filename)
+{
+  void (*init_f)();
+
+  snprintf(buf, buf_len, "init_%s", basename);
+  init_f = dlsym(sohandle, buf);
+
+  if (!init_f) {
+    fprintf(stderr, "init function \"%s\" not found in %s.\n", buf, filename);
+    return NULL;
+  }
+  else {
+    struct trans_maindata *maindata;
+
+    /* 初期化関数を呼び出し */
+    (*init_f)();
+
+    /* データオブジェクトを取得 */
+    snprintf(buf, buf_len, "trans_%s_maindata", basename);
+    maindata = dlsym(sohandle, buf);
+
+    if (!maindata) {
+      fprintf(stderr, "maindata \"%s\" not found in %s.\n", buf, basename);
+      return NULL;
+    }
+    else {
+      /* 読み込みと変換テーブルの設定 */
+      return load_and_setting_trans_maindata(maindata);
+    }
+  }
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置する。
@@ -747,7 +781,7 @@ void init_so_handles()
 void finalize_so_handles()
 {
   int i;
-  for(i=0; i<vec_num(opened_so_files); ++i){
+  for (i = 0; i<vec_num(opened_so_files); i++) {
     dlclose((void*)vec_get(opened_so_files, i));
   }
   vec_free(opened_so_files);
@@ -770,16 +804,16 @@ LmnRuleSet load_file(char *file_name)
   /* dlopenは環境変数にLD_LIBRARY_PATH="."と設定しないとカレントディレクトリを検索してくれないので注意 */
   if (!strcmp(file_name + len -3, ".so")) {
     sohandle = dlopen(file_name, RTLD_LAZY);
-    if(! sohandle){
+    if (!sohandle) {
       fprintf(stderr, "Failed to open %s\n", file_name);
       fprintf(stderr, "dlopen: %s\n", dlerror());
       rs = 0;
-    }else{
+    } else {
       dlerror();
       vec_push(opened_so_files, (vec_data_t)sohandle);
       rs = load_compiled_il(file_name, sohandle);
     }
-  }else if ((fp = fopen(file_name, "r"))) {
+  } else if ((fp = fopen(file_name, "r"))) {
     /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
     if (!strcmp(&file_name[len-4], ".lmn")) {
       if (getenv(ENV_LMNTAL_HOME)) {
@@ -836,11 +870,16 @@ static int file_type(const char *extension)
 
 int load_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path)
 {
-  const char *extension = extension_table[filetype];
-  char *buf = LMN_NALLOC(char, strlen((char *)path) + NAME_MAX + 2);
+  const char *extension;
+  char *buf;
 
-  sprintf(buf, "%s%s%s.%s", (char *)path, DIR_SEPARATOR_STR, (char *)basename, extension);
+  extension = extension_table[filetype];
+  buf       = LMN_NALLOC(char, strlen((char *)path) + NAME_MAX + 2);
+
+  sprintf(buf, "%s%s%s.%s", (char *)path, DIR_SEPARATOR_STR,
+                            (char *)basename, extension);
   load_file(buf);
+
   LMN_FREE(buf);
   return ST_CONTINUE;
 }
@@ -851,32 +890,43 @@ int free_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path)
   return ST_CONTINUE;
 }
 
-/* pathのディレクトリ内のファイルを中間コードとしてロードする */
-/* 拡張子を除いた名前がおなじファイルがある場合extension_tableで指定した優先順で1種類のみ読み込む */
+/* pathのディレクトリ内のファイルを中間コードとしてロードする.
+ * 拡張子を除いてファイル名が同一な場合はextension_tableで指定した優先順で1種類のみ読み込む */
 void load_il_files(char *path)
 {
-  int path_len = strlen(path);
-  char *buf = LMN_NALLOC(char, path_len + NAME_MAX + 2);
-  DIR *dir = opendir(path);
+  int path_len;
+  char *buf;
+  DIR *dir;
+
+  path_len = strlen(path);
+  buf      = LMN_NALLOC(char, path_len + NAME_MAX + 2);
+  dir      = opendir(path);
 
   if (dir) {
-    st_table_t loading_files_type = st_init_strtable();
+    st_table_t loading_files_type;
     struct stat st;
     struct dirent* dp;
 
+    loading_files_type = st_init_strtable();
+
     /* 読み込むファイルをリストアップする */
-    while ( (dp = readdir(dir)) != NULL ){
+    while ((dp = readdir(dir))) {
       sprintf(buf, "%s%s%s", path, DIR_SEPARATOR_STR, dp->d_name);
       stat(buf, &st);
       if (S_ISREG(st.st_mode)) {
-        char *ext = extension(dp->d_name);
-        int filetype = file_type(ext);
+        char *ext;
+        int filetype;
 
-        if(filetype > 0){ /* 読み込むべき拡張子なら追加 */
-          char *basename = basename_ext(dp->d_name);
+        ext = extension(dp->d_name);
+        filetype = file_type(ext);
+
+        if (filetype > 0) { /* 読み込むべき拡張子なら追加 */
+          char *basename;
           st_data_t old_filetype;
+
+          basename = basename_ext(dp->d_name);
           if (st_lookup(loading_files_type, (st_data_t)basename, &old_filetype)) {
-            if(filetype > old_filetype) {
+            if (filetype > old_filetype) {
               st_insert(loading_files_type, (st_data_t)basename, filetype);
             }
             LMN_FREE(basename);
@@ -894,13 +944,14 @@ void load_il_files(char *path)
     st_foreach(loading_files_type, free_loading_tbl_entry, (st_data_t)path);
     st_free_table(loading_files_type);
   }
+
   closedir(dir);
   LMN_FREE(buf);
 }
 
-/* ファイルが*.lmnならコンパイル結果のFILE*を返し、
-   ファイルが*.ilならfopen結果のFILE*を返し、
-   それ以外の拡張子だったり存在しないファイルだったらNULLを返す */
+/* ファイルが*.lmnならコンパイル結果のFILE*を返す.
+ * ファイルが*.ilならfopen結果のFILE*を返す.
+ * それ以外の拡張子だったり存在しないファイルだったらNULLを返す.   */
 FILE *fopen_il_file(char *file_name)
 {
   FILE *fp;
@@ -978,27 +1029,28 @@ int il_parse_rule(FILE *in, Rule *rule)
 
 char *create_formatted_basename(const char *filepath)
 {
-  const char *begin = strrchr(filepath, DIR_SEPARATOR_CHAR); /* パス内最後の/を探す */
-  const char *end;
-  char *basename;
+  char *begin, *end, *basename, *p;
   int i;
-  const char *p;
 
-  if(begin != NULL){ /* もし/があればその次がファイル名の先頭 */
+  begin = strrchr(filepath, DIR_SEPARATOR_CHAR); /* パス内最後の/を探す */
+
+  if (!begin) { /* もし/があればその次がファイル名の先頭 */
     begin += 1;
-  }else{
-    begin = filepath; /* もし/がなければ全体の先頭がファイル名の先頭 */
+  } else {
+    begin = (char *)filepath; /* もし/がなければ全体の先頭がファイル名の先頭 */
   }
 
   end = strchr(begin, '.'); /* ファイル名最初の.を探す ないと困る */
-  basename = lmn_malloc(end-begin +1);
-  for (i = 0,p = begin; i < end-begin; i++, p++){
-    if (isalpha(*p) || isdigit(*p))
+  basename = lmn_malloc(end - begin + 1);
+  for (i = 0, p = begin; i < end - begin; i++, p++){
+    if (isalpha(*p) || isdigit(*p)) {
       basename[i] = *p;
-    else
+    } else {
       basename[i] = 'O'; /* 記号は全部Oにする */
+    }
   }
-  basename[end-begin] = '\0';
+
+  basename[end - begin] = '\0';
 
   return basename;
 }
