@@ -124,60 +124,68 @@ static inline mhash_t mhash_membrane(LmnMembrane *mem,
     return MHASH_CALCULATING_MEM;
   }
   else if (proc_tbl_get_by_mem(ctx, mem, &t)) {
+    /* memのハッシュ値を計算済みなら, それを返す */
     return (mhash_t)t;
   }
   else {
-    LmnMembrane   *child_mem;
-    AtomListEntry *ent;
-    mhash_t  hash_sum, hash_mul;
-    LmnSAtom atom;
-    mhash_t  hash, u;
-    LmnFunctor f;
+    mhash_t ret, hash_sum, hash_mul;
 
+    /* initialize */
     hash_sum = MHASH_MEM_ADD_0;
     hash_mul = MHASH_MEM_MUL_0;
 
-    /** 1. atoms
-     */
-    EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
-      /* プロキシは除く */
-      if (LMN_IS_PROXY_FUNCTOR(f)) continue;
-      EACH_ATOM(atom, ent, ({
-        /* 各連結分子のハッシュ値の値を求める. */
-        if (!proc_tbl_get_by_atom(ctx, (LmnSAtom)atom, NULL) &&
-            !LMN_IS_HL(atom)) {
-          u = molecule(atom, mem, ctx);
-          hash_sum += u;
-          hash_mul *= u;
-        }
-      }));
-    }));
+    { /** 1. atoms */
+      AtomListEntry *ent;
+      LmnFunctor    f;
 
-    /** 2. membranes
-     */
-    for (child_mem = mem->child_head; child_mem; child_mem = child_mem->next) {
-      mhash_t u = memunit(child_mem, NULL, mem, ctx, 0);
-      hash_sum += u;
-      hash_mul *= u;
+      EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
+        LmnSAtom atom;
+        /* プロキシは除く */
+        if (LMN_IS_PROXY_FUNCTOR(f) || LMN_IS_EX_FUNCTOR(f)) continue;
+        EACH_ATOM(atom, ent, ({
+          /* 各連結分子のハッシュ値の値を求める. */
+          if (!proc_tbl_get_by_atom(ctx, atom, NULL)) {
+            mhash_t tmp = molecule(atom, mem, ctx);
+            hash_sum += tmp;
+            hash_mul *= tmp;
+          }
+        }));
+      }));
     }
 
-    /* 膜名の情報. TODO: とりあえず. こんなんで大丈夫かな. */
-    hash_sum += (mem->name + 1);
-    hash_mul *= (mem->name + 1);
+    { /** 2. membranes */
+      LmnMembrane *child_mem;
+      for (child_mem = lmn_mem_child_head(mem);
+           child_mem;
+           child_mem = lmn_mem_next(child_mem)) {
+        mhash_t tmp = mhash_membrane(child_mem, NULL, ctx);
+        hash_sum += tmp;
+        hash_mul *= tmp;
+      }
 
+      /* hiroto論文にない膜名の情報を追加. TODO: こんなんで大丈夫かな. */
+      hash_sum += (mem->name + 1);
+      hash_mul *= (mem->name + 1);
+    }
 
-    /** 3. rulesets
-     * TODO:
-     *  ルールセットの個数/種類が異なるだけの同型な膜に対してハッシュ値が散らばるようになったが,
-     *  例えばbenchmarksetの問題ではそんな構造があまりないので少し遅くなった
-     */
-    t = mhash_rulesets(lmn_mem_get_rulesets(mem));
-    hash_sum += t;
-    hash_mul *= t;
+    { /** 3. rulesets */
+      mhash_t tmp;
 
-    hash = hash_sum ^ hash_mul;
-    proc_tbl_put_mem(ctx, mem, hash);
-    return hash;
+      /* hiroto論文にないルールセット情報の加算処理.
+       * ルールセットの個数/種類が異なるだけの同型な膜に対してハッシュ値が散らばるようになった.
+       * TODO:
+       *  例えばbenchmarksetの問題ではそんな構造があまりないので少し遅くなったが,
+       *  ルールセットの束のハッシュ値は, 状態間で変化がほとんどない. 使い回しできれば速くなる.*/
+
+      tmp = mhash_rulesets(lmn_mem_get_rulesets(mem));
+      hash_sum += tmp;
+      hash_mul *= tmp;
+    }
+
+    /* finalzie */
+    ret = hash_sum ^ hash_mul;
+    proc_tbl_put_mem(ctx, mem, ret);
+    return ret;
   }
 }
 
@@ -200,24 +208,19 @@ static inline mhash_t molecule(LmnSAtom    atom,
 
   sum = MHASH_ADD_0;
   mul = MHASH_MUL_0;
-  do_molecule(LMN_ATOM(atom),
-              LMN_ATTR_MAKE_LINK(0),
-              calc_mem,
-              ctx,
-              -1,
-              &sum,
-              &mul);
+  do_molecule(LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), calc_mem, ctx, -1,
+              &sum, &mul);
 
   return sum ^ mul;
 }
 
 
-static inline unsigned long mhash_unit(LmnAtom     atom,
-                                       LmnLinkAttr attr,
-                                       LmnMembrane *calc_mem,
-                                       ProcessTbl  ctx,
-                                       int         depth);
-static inline unsigned long mhash_data(LmnAtom atom, LmnLinkAttr attr);
+static inline mhash_t mhash_unit(LmnAtom     atom,
+                                 LmnLinkAttr attr,
+                                 LmnMembrane *calc_mem,
+                                 ProcessTbl  ctx,
+                                 int         depth);
+static inline mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr);
 
 /* アトムatomのハッシュ値を求め, 連結分子のハッシュ値sum, mulに掛け合わせる.
  * atomのリンク先アトムに対して再帰する. */
@@ -232,7 +235,7 @@ static inline void do_molecule(LmnAtom     atom,
   mhash_t t;
 
   if (LMN_ATTR_IS_DATA(attr)) {
-    /* データアトムの場合 */
+    /* データアトム(+ ハイパーリンク)の場合 */
     t = mhash_data(atom, attr);
     (*sum) += t;
     (*mul) *= t;
@@ -246,23 +249,22 @@ static inline void do_molecule(LmnAtom     atom,
     (*sum) += t;
     (*mul) *= t;
 
-    if (LMN_IS_SYMBOL_FUNCTOR(LMN_SATOM_GET_FUNCTOR(atom)) &&
-        !LMN_IS_HL(atom)) {
+    if (LMN_IS_SYMBOL_FUNCTOR(LMN_SATOM_GET_FUNCTOR(atom))) {
       const int arity = LMN_SATOM_GET_ARITY(atom);
       int i_arg;
 
       for (i_arg = 0; i_arg < arity; i_arg++) {
-        if (i_arg != i_parent) {
-          LmnLinkAttr to_attr = LMN_SATOM_GET_ATTR(atom, i_arg);
-          do_molecule(LMN_SATOM_GET_LINK(atom, i_arg),
-                      to_attr,
-                      calc_mem,
-                      ctx,
-                      /* ↓ リンク先がシンボルアトムの場合にのみ意味のある値 */
-                      LMN_ATTR_GET_VALUE(to_attr),
-                      sum,
-                      mul);
-        }
+        LmnLinkAttr to_attr;
+        if (i_arg == i_parent) continue;
+
+        to_attr = LMN_SATOM_GET_ATTR(atom, i_arg);
+        do_molecule(LMN_SATOM_GET_LINK(atom, i_arg),
+                    to_attr,
+                    calc_mem,
+                    ctx,
+                    LMN_ATTR_GET_VALUE(to_attr),
+                    sum,
+                    mul);
       }
     }
   }
@@ -284,7 +286,7 @@ static inline mhash_t memlink(LmnSAtom    in_proxy,
  * とする.
  * 2のように所属膜calc_memの親膜へリンクが抜ける場合や,
  * 3のようにデータアトムを訪問した場合は, 深さDに到達していなくともatomを枝としたトレースを打ち切る.
- * 4のように子膜を頂点とする場合は, 子膜のハッシュ値を掛け合わせた後にトレースを打ち切る */
+ * 4のように子膜を頂点とする場合は, 子膜のInSideProxyアトムをトレースする.  */
 static mhash_t mhash_unit(LmnAtom     atom,
                           LmnLinkAttr attr,
                           LmnMembrane *calc_mem,
@@ -299,21 +301,17 @@ static mhash_t mhash_unit(LmnAtom     atom,
   }
   else if (LMN_SATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR) {
     /* 4. OutSideProxyアトムの(子膜に入る)場合 */
-    LmnSAtom in_proxy;
+    LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0));
     if (depth == MHASH_TREE_D) {
       /* 深さDに到達した場合
-       *  子膜のハッシュ値とリンク接続値を掛け合わせた値を計算してトレースを打ち切る  */
-      return memlink(LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0)),
-                     calc_mem,
-                     ctx);
-    } else {
+       *   子膜のハッシュ値とリンク接続値を掛け合わせた値を計算してトレースを打ち切る. */
+      return memlink(in_proxy, calc_mem, ctx);
+    }
+    else {
       /* 深さDに到達していない場合:
        *   子膜全体のハッシュ値を返す. */
-      in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
       return memunit(LMN_PROXY_GET_MEM(in_proxy),
-                     LMN_SATOM(in_proxy),
-                     calc_mem,
-                     ctx,
+                     in_proxy, calc_mem, ctx,
                      depth);
     }
   }
@@ -341,11 +339,12 @@ static mhash_t mhash_unit(LmnAtom     atom,
 
       /* TODO: ここでtに定数を掛けたほうがいいかも
        *       再帰的にCを掛けているので、係数が重なる危険性がある */
-      hash = MHASH_C * hash + MHASH_E * mhash_unit(LMN_SATOM_GET_LINK(atom, i_arg),
-                                                   LMN_SATOM_GET_ATTR(atom, i_arg),
-                                                   calc_mem,
-                                                   ctx,
-                                                   depth + 1);
+      hash = MHASH_C * hash +
+             MHASH_E * mhash_unit(LMN_SATOM_GET_LINK(atom, i_arg),
+                                  LMN_SATOM_GET_ATTR(atom, i_arg),
+                                  calc_mem,
+                                  ctx,
+                                  depth + 1);
     }
 
     return hash;
@@ -353,49 +352,70 @@ static mhash_t mhash_unit(LmnAtom     atom,
 }
 
 
-/* アトムfrom_in_proxyを経て訪問した子膜memのハッシュ値を返す.
- * from_in_proxyはNULLでも構わない */
-static inline mhash_t memunit(LmnMembrane *mem,
-                             LmnSAtom     from_in_proxy,
-                             LmnMembrane  *calc_mem,
-                             ProcessTbl   ctx,
-                             int          depth)
+/* mhash_unit計算中に, アトムfrom_in_proxyを経て訪問した子膜child_memのハッシュ値を返す.
+ * 子膜全体を1つの頂点として計算するため, 深さDに至るまでのトレースをInSide Proxyアトムから行う.
+ * ----------------------------------- $calc_mem --------------+
+ * ------ $child_mem -----------+                              |
+ * ?--0--1-[$from_in_proxy]-0---|---0-[from_out_proxy]-1--...  |
+ * -----------------------------+                              |
+ * ------------------------------------------------------------+  */
+static inline mhash_t memunit(LmnMembrane *child_mem,
+                              LmnSAtom    from_in_proxy,
+                              LmnMembrane *calc_mem,
+                              ProcessTbl  ctx,
+                              int         depth)
 {
-  mhash_t hash;
+  mhash_t hash, child_h;
   AtomListEntry *insides;
+  LmnSAtom in_proxy, out_proxy;
 
   hash    = 0;
-  insides = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+  insides = lmn_mem_get_atomlist(child_mem, LMN_IN_PROXY_FUNCTOR);
+  child_h = mhash_membrane(child_mem, calc_mem, ctx);
 
-  if (insides) {
-    LmnSAtom in, out;
-    EACH_ATOM(in, insides, ({
-      mhash_t u;
-      if (in == from_in_proxy) continue;
+  LMN_ASSERT(insides);
 
-      out   = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
-      u     = mhash_unit(LMN_SATOM_GET_LINK(out, 1),
-                         LMN_SATOM_GET_ATTR(out, 1),
-                         calc_mem,
-                         ctx,
-                         depth + 1);
-      u    *= mhash_membrane(mem, calc_mem, ctx) ^ memlink(in, calc_mem, ctx);
-      hash += u;
-    }));
-  }
+  EACH_ATOM(in_proxy, insides, ({
+    mhash_t tmp;
+    if (in_proxy == from_in_proxy) continue;
 
-  /* hiroto論文にないmhash_membrane(mem)の加算処理を追加 @taisuke */
-  return hash + mhash_membrane(mem, calc_mem, ctx);
+    /* ------------------------------------ $calc_mem -------------------+
+     * ------------- $child_mem ----------+                              |
+     * skip:: ?--0--1-[$from_in_proxy]-0--|--0-[from_out_proxy]-1--...   |
+     * loop:: ?--0--1-[in_proxy]--0-------|--0-[out_proxy]-1---!trace    |
+     * -----------------------------------+                              |
+     * ------------------------------------------------------------------+  */
+
+    out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
+    tmp       = mhash_unit(LMN_SATOM_GET_LINK(out_proxy, 1),
+                           LMN_SATOM_GET_ATTR(out_proxy, 1),
+                           calc_mem,
+                           ctx,
+                           depth + 1);
+    tmp      *= child_h ^ memlink(in_proxy, calc_mem, ctx);
+    hash     += tmp;
+  }));
+
+  /* hiroto論文にないmhash_membrane(child_mem)の加算処理を追加 @taisuke */
+  return hash + child_h;
 }
 
 
-/* アトムin_proxyをトレースした際のハッシュ値を返す. */
+/* アトムin_proxyをトレースした際のハッシュ値を返す.
+ * 非プロキシアトムに遭遇するまで, 子膜をトレースしてゆき,
+ * トレースした全ての子膜のハッシュ値を掛け合わせる.
+ * 最終的に到達した非プロキシアトムのハッシュ値を掛け合わせた値を返す.
+ * ------------------------- $calc_mem ------------------------+
+ * ----------------child_mem----+                              |
+ * atom--?---1--[$in_proxy]-0---|---0-[from_out_proxy]-1--...  |
+ * -----------------------------+                              |
+ * ------------------------------------------------------------+  */
 static inline mhash_t memlink(LmnSAtom    in_proxy,
                               LmnMembrane *calc_mem,
                               ProcessTbl  ctx)
 {
   LmnAtom atom;
-  mhash_t hash = 0;
+  mhash_t hash;
   LmnLinkAttr attr;
 
   while (1) {
@@ -429,17 +449,23 @@ static inline mhash_t mhash_symbol(LmnSAtom atom)
 static inline mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr) {
   switch (attr) {
     case LMN_INT_ATTR:
-//      return (mhash_t)lmn_byte_hash((unsigned char *)(&atom), sizeof(long) / sizeof(unsigned char)); /* こっちのがいいんだけど〜遅いの */
+      /* こっちの方が本当は好ましいけど遅いから, しょうがない. */
+//      return (mhash_t)lmn_byte_hash((unsigned char *)(&atom),
+//                                    sizeof(long) / sizeof(unsigned char));
+      /* ここで値0が返るとハッシュ値の衝突数が爆発するため, 1を加算しておく.
+       * TODO: 値がオーバーフローするとゼロになってしまう. */
       return ((mhash_t)atom) + 1;
     case LMN_DBL_ATTR:
+      /* double型8バイトをバイト列にキャストしてFNVハッシュ関数にかける. */
       return (mhash_t)lmn_byte_hash((unsigned char *)atom,
                                     sizeof(double) / sizeof(unsigned char));
     case LMN_SP_ATOM_ATTR:
+      /* TODO: スペシャルアトムを定義する際にハッシュ値計算用関数も定義させる */
       if (lmn_is_string(atom, attr)) {
         return (mhash_t)lmn_string_hash(LMN_STRING(atom));
       } else {
-        lmn_fatal("not implemented");
-        return 0;
+        LMN_ASSERT(FALSE); /* under constructions */
+        return 1;
       }
     case LMN_HL_ATTR:
       return (mhash_t)lmn_hyperlink_hash(lmn_hyperlink_at_to_hl((LmnSAtom)atom));
@@ -467,15 +493,17 @@ static mhash_t mhash_rulesets(Vector *rulesets)
   hash = 1;
   for (i = 0; i < vec_num(rulesets); i++) {
     LmnRuleSet rs = (LmnRuleSet)vec_get(rulesets, i);
-    if (!lmn_ruleset_has_uniqrule(rs)) continue;
-
-    for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
-      st_table_t his_tbl = lmn_rule_get_history_tbl(lmn_ruleset_get_rule(rs, j));
-      if (!his_tbl || st_num(his_tbl) == 0) continue;
-      st_foreach(his_tbl, mhash_multiply_rhistories_f, (st_data_t)&hash);
-    }
-
     hash *= lmn_ruleset_get_id(rs);
+
+    if (lmn_ruleset_has_uniqrule(rs)) {
+      /* 履歴テーブルを持つ場合は, 履歴の整数IDも掛け合わせる.
+       * この計算方法で十分かどうかはちゃんと考えていない. */
+      for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+        st_table_t his_tbl = lmn_rule_get_history_tbl(lmn_ruleset_get_rule(rs, j));
+        if (!his_tbl || st_num(his_tbl) == 0) continue;
+        st_foreach(his_tbl, mhash_multiply_rhistories_f, (st_data_t)&hash);
+      }
+    }
   }
 
   return hash;

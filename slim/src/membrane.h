@@ -237,7 +237,8 @@ struct LmnMembrane {
 #define lmn_mem_data_atom_dec(M)     (lmn_mem_data_atom_sub(M, 1))
 
 #define lmn_mem_child_head(M)        ((M)->child_head)
-#define lmn_mem_child_next(M)        ((M)->next)
+#define lmn_mem_next(M)              ((M)->next)
+#define lmn_mem_prev(M)              ((M)->prev)
 #ifdef TIME_OPT
 # define lmn_mem_id(M)               ((M)->id)
 # define lmn_mem_set_id(M, n)        ((M)->id = (n))
@@ -317,11 +318,12 @@ static inline void lmn_mem_clearrules(LmnMembrane *src);
  * memのメモリ管理は呼び出し側で行う. */
 static inline void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem) {
   LMN_ASSERT(parent);
-  if (parent->child_head == mem) parent->child_head = mem->next;
-  if (mem->prev) mem->prev->next = mem->next;
-  if (mem->next) mem->next->prev = mem->prev;
+  if (lmn_mem_child_head(parent) == mem) parent->child_head = lmn_mem_next(mem);
+  if (lmn_mem_prev(mem)) mem->prev->next = lmn_mem_next(mem);
+  if (lmn_mem_next(mem)) mem->next->prev = lmn_mem_prev(mem);
 //  mem->parent = NULL; /* removeproxies のために必要. */
-  /* --> removeproxiesでmem->parentを使うようになったためコメントアウト(2011/01/23 meguro) */
+  /* --> removeproxiesでmem->parentを使うようになったためコメントアウト
+   * (2011/01/23 meguro) */
 }
 
 /* 膜mem以下全ての階層のメモリを破棄する */
@@ -351,15 +353,15 @@ static inline AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f
 /* 自身を含めた全ての先祖膜を起こす */
 static inline void lmn_mem_activate_ancestors(LmnMembrane *mem) {
   LmnMembrane *cur;
-  for (cur = mem; cur; cur = cur->parent) {
+  for (cur = mem; cur; cur = lmn_mem_parent(cur)) {
     lmn_mem_set_active(mem, TRUE);
   }
 }
 
 static inline BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count) {
   unsigned int i;
-  LmnMembrane *mp = mem->child_head;
-  for(i = 0; mp && i <= count; mp = mp->next, i++);
+  LmnMembrane *mp = lmn_mem_child_head(mem);
+  for(i = 0; mp && i <= count; mp = lmn_mem_next(mp), i++);
   return i == count;
 }
 
@@ -367,18 +369,21 @@ static inline BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count) {
 /* 子膜の数を返す */
 static inline int lmn_mem_child_mem_num(LmnMembrane *mem) {
   unsigned int i;
-  LmnMembrane *mp = mem->child_head;
-  for(i = 0; mp; mp = mp->next, i++);
+  LmnMembrane *mp = lmn_mem_child_head(mem);
+  for(i = 0; mp; mp = lmn_mem_next(mp), i++);
   return i;
 }
 
 /* add newmem to parent child membranes */
-static inline void lmn_mem_add_child_mem(LmnMembrane *parentmem, LmnMembrane *newmem) {
-  newmem->prev = NULL;
-  newmem->next = parentmem->child_head;
+static inline void lmn_mem_add_child_mem(LmnMembrane *parentmem,
+                                         LmnMembrane *newmem) {
+  newmem->prev   = NULL;
+  newmem->next   = lmn_mem_child_head(parentmem);
   newmem->parent = parentmem;
   LMN_ASSERT(parentmem);
-  if(parentmem->child_head) parentmem->child_head->prev = newmem;
+  if (lmn_mem_child_head(parentmem)) {
+    parentmem->child_head->prev = newmem;
+  }
   parentmem->child_head = newmem;
 }
 
@@ -394,7 +399,7 @@ static inline LmnSAtom lmn_mem_newatom(LmnMembrane *mem, LmnFunctor f) {
 static inline unsigned int lmn_mem_count_children(LmnMembrane *mem) {
   LmnMembrane *c;
   unsigned int n = 0;
-  for (c = mem->child_head; c; c = c->next) n++;
+  for (c = lmn_mem_child_head(mem); c; c = lmn_mem_next(c)) n++;
   return n;
 }
 
@@ -403,7 +408,7 @@ static inline unsigned int lmn_mem_count_descendants(LmnMembrane *mem) {
   LmnMembrane *c;
   unsigned int n = 0;
 
-  for (c = mem->child_head; c; c = c->next) {
+  for (c = lmn_mem_child_head(mem); c; c = lmn_mem_next(c)) {
     n += 1 + lmn_mem_count_descendants(c);
   }
   return n;

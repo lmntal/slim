@@ -457,7 +457,7 @@ static inline LmnWord binstr_get_word(BYTE *bs, int pos)
 #elif SIZEOF_LONG == 8
   return (LmnWord)binstr_get_uint64(bs, pos);
 #else
-#  error "not supported"
+# error "not supported"
 #endif
 }
 
@@ -975,7 +975,7 @@ static inline int bsptr_push_data_atom(BinStrPtr p,
     else
       FALLTHROUGH  */
   default:
-    lmn_fatal("not implemented");
+    lmn_fatal("no implementations");
     break;
   }
   return 0;
@@ -1078,10 +1078,9 @@ static inline void bsptr_push_ruleset_uniq(BinStrPtr bsp, LmnMembrane *mem, int 
 
 /*----------------------------------------------------------------------
  * Membrane Encode
+ * 膜を一意なバイナリストリングにエンコードする
  */
 
-/*
- * 膜を一意なバイナリストリングにエンコードする */
 
 /* prototypes */
 
@@ -1621,8 +1620,8 @@ static inline LmnMembrane *lmn_binstr_decode_sub(const LmnBinStr bs)
 
   groot  = lmn_mem_make();
   lmn_mem_set_active(groot, TRUE); /* globalだから恒真 */
-  nvisit = VISITLOG_INIT_N;        /* カウンタ(== 1): 順序付けを記録しながらデコードする. (0はグローバルルート膜なので1から) */
-
+  nvisit = VISITLOG_INIT_N;        /* カウンタ(== 1): 順序付けを記録しながらデコードする.
+                                    * (0はグローバルルート膜なので1から) */
   binstr_decode_cell(bs, 0, log, &nvisit, groot, NULL, 0);
   LMN_FREE(log);
 
@@ -2055,7 +2054,8 @@ LmnBinStr lmn_mem_to_binstr(LmnMembrane *mem)
     profile_start_timer(PROFILE_TIME__MENC_DUMP);
   }
 #endif
-  ret = lmn_mem_to_binstr_sub(mem, 1024);
+  //ret = lmn_mem_to_binstr_sub(mem, 128);
+  ret = lmn_mem_to_binstr_sub(mem, round2up(env_next_id()));
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -2237,11 +2237,11 @@ inline BOOL lmn_mem_equals_enc(LmnBinStr bs, LmnMembrane *mem)
 
   if (is_comp_z(bs)) {
     LmnBinStr target = lmn_bscomp_z_decode(bs);
-    ret = mem_equals_enc_sub(target, mem, 512);
+    ret = mem_equals_enc_sub(target, mem, round2up(env_next_id()));
     lmn_binstr_free(target);
   }
   else {
-    ret = mem_equals_enc_sub(bs, mem, 512);
+    ret = mem_equals_enc_sub(bs, mem, round2up(env_next_id()));
   }
 
   return ret;

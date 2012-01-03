@@ -1857,7 +1857,7 @@ static inline LmnMembrane *memIsomorIter_child_traversed(MemIsomorIter *iter)
     if (!iter->child) {
       iter->child = lmn_mem_child_head(iter->mem);
     } else {
-      iter->child = lmn_mem_child_next(iter->child);
+      iter->child = lmn_mem_next(iter->child);
     }
 
     if (!iter->child) {
@@ -1991,7 +1991,7 @@ static inline BOOL mem_isomor_mol_mems(LmnMembrane *mem1, TraceLog  log1,
                                        MemIsomorIter *iter, LmnMembrane *root1)
 {
   LmnMembrane *root2;
-  for (root2 = lmn_mem_child_head(mem2); root2; root2 = lmn_mem_child_next(root2)) {
+  for (root2 = lmn_mem_child_head(mem2); root2; root2 = lmn_mem_next(root2)) {
     if (simplylog_contains_mem(log2, root2)) continue;
     else {
       tracelog_set_btpoint(log1);

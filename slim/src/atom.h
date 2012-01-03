@@ -167,7 +167,7 @@
                                               && !LMN_ATTR_IS_HL(ATTR) )
 #define LMN_ATTR_IS_EX(ATTR)               (LMN_ATTR_IS_DATA(ATTR) \
                                               && LMN_ATTR_IS_HL(ATTR) )
-#define LMN_IS_EX_FUNCTOR(FUNC)            ((FUNC) == LMN_HL_FUNC )
+#define LMN_IS_EX_FUNCTOR(FUNC)            ((FUNC) == LMN_HL_FUNC)
 
 /* link attribute of primitive data type */
 /* low 7 bits of link attribute */
@@ -340,8 +340,9 @@ static inline void free_symbol_atom_with_buddy_data(LmnSAtom atom)
     }
   }
 
-  if (LMN_FUNC_IS_HL(LMN_SATOM_GET_FUNCTOR(atom)))
+  if (LMN_FUNC_IS_HL(LMN_SATOM_GET_FUNCTOR(atom))) {
     lmn_hyperlink_delete(atom);
+  }
 
   lmn_delete_atom(LMN_SATOM(atom));
 }
