@@ -653,9 +653,10 @@ void transition_add_rule(Transition t, lmn_interned_str rule_name)
 
 /** Printer
  * ownerはNULLでもok */
-void dump_state_data(State *s, LmnWord _fp, StateSpace owner)
+void dump_state_data(State *s, LmnWord _fp, LmnWord _owner)
 {
   FILE *f;
+  StateSpace owner;
   unsigned long print_id;
 
   /* Rehashが発生している場合,
@@ -664,7 +665,8 @@ void dump_state_data(State *s, LmnWord _fp, StateSpace owner)
    * Rehashされた側のテーブルに存在するStateオブジェクトに登録されているためcontinueする. */
   if (is_dummy(s) && !is_encoded(s)) return;
 
-  f = (FILE *)_fp;
+  f     = (FILE *)_fp;
+  owner = (StateSpace)_owner;
   {
     /* この時点で状態は, ノーマル || (dummyフラグが立っている && エンコード済)である.
      * dummyならば, バイナリストリング以外のデータはオリジナル側(parent)に記録している. */
@@ -732,9 +734,10 @@ void state_print_mem(State *s, LmnWord _fp)
 
 
 /* TODO: 美しさ */
-void state_print_transition(State *s, LmnWord _fp, StateSpace owner)
+void state_print_transition(State *s, LmnWord _fp, LmnWord _owner)
 {
   FILE *f;
+  StateSpace owner;
   unsigned int i;
 
   BOOL need_id_foreach_trans;
@@ -750,7 +753,8 @@ void state_print_transition(State *s, LmnWord _fp, StateSpace owner)
    * (エンコード済のバイナリストリングしか載っていない) */
   if ((is_dummy(s) && is_encoded(s))) return;
 
-  f = (FILE *)_fp;
+  f     = (FILE *)_fp;
+  owner = (StateSpace)_owner;
 
   need_id_foreach_trans = TRUE;
   switch (lmn_env.mc_dump_format) {
@@ -822,16 +826,20 @@ void state_print_transition(State *s, LmnWord _fp, StateSpace owner)
 }
 
 
-void state_print_label(State *s, LmnWord _fp, StateSpace owner)
+void state_print_label(State *s, LmnWord _fp, LmnWord _owner)
 {
   Automata a;
   FILE *f;
+  StateSpace owner;
+
   if (!statespace_has_property(owner) || (is_dummy(s) && is_encoded(s))) {
     return;
   }
 
-  a = statespace_automata(owner);
-  f = (FILE *)_fp;
+  a     = statespace_automata(owner);
+  f     = (FILE *)_fp;
+  owner = (StateSpace)_owner;
+
   switch (lmn_env.mc_dump_format) {
   case Dir_DOT:
   {

@@ -244,10 +244,10 @@ static inline Transition       transition(State *s, unsigned int i);
  *  Printer
  */
 
-void dump_state_data(State *s, LmnWord _fp, StateSpace owner);
+void dump_state_data(State *s, LmnWord _fp, LmnWord _owner);
 void state_print_mem(State *s, LmnWord _fp);
-void state_print_transition(State *s, LmnWord _fp, StateSpace owner);
-void state_print_label(State *s, LmnWord _fp, StateSpace owner);
+void state_print_transition(State *s, LmnWord _fp, LmnWord _owner);
+void state_print_label(State *s, LmnWord _fp, LmnWord _owner);
 void state_print_error_path(State *s, LmnWord _fp);
 
 

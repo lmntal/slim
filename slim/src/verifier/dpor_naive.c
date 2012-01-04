@@ -425,7 +425,7 @@ static inline State *por_state_insert_statespace(StateSpace ss,
   if (t == succ_s) {
     set_outside_exist(t);
     state_id_issue(succ_s);
-    if (mc_is_dump(org_f)) dump_state_data(succ_s, (LmnWord)stdout, ss);
+    if (mc_is_dump(org_f)) dump_state_data(succ_s, (LmnWord)stdout, (LmnWord)NULL);
     if (succ_m) lmn_mem_free_rec(succ_m);
     if (new_ss) vec_push(new_ss, (vec_data_t)succ_s);
   }
@@ -495,7 +495,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxt *rc)
 
   if (s->successors) {
     printf("unexpected.\n");
-    dump_state_data((State *)(s->successors[0]), (LmnWord)stdout, NULL);
+    dump_state_data((State *)(s->successors[0]), (LmnWord)stdout, (LmnWord)NULL);
   }
 
   state_succ_set(s, RC_EXPANDED(rc));

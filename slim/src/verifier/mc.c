@@ -297,7 +297,7 @@ void mc_store_successors(const StateSpace ss,
         lmn_mem_free_rec(src_succ_m);
       }
       if (new_ss)        vec_push(new_ss, (vec_data_t)succ);
-      if (mc_is_dump(f)) dump_state_data(succ, (LmnWord)stdout, ss);
+      if (mc_is_dump(f)) dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
     }
     else {
       /* contains */

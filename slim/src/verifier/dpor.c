@@ -852,7 +852,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpace   ss,
     succ = statespace_insert_delta(ss, src_succ, succ_d);
     if (succ == src_succ) {
       state_id_issue(succ);
-      if (mc_is_dump(f))  dump_state_data(succ, (LmnWord)stdout, ss);
+      if (mc_is_dump(f))  dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
       if (new_ss) {
         vec_push(new_ss, (vec_data_t)succ);
       }
@@ -907,7 +907,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpace   ss,
       succ = statespace_insert_delta(ss, src_succ, succ_d);
       if (succ == src_succ) {
         state_id_issue(succ);
-        if (mc_is_dump(f))  dump_state_data(succ, (LmnWord)stdout, ss);
+        if (mc_is_dump(f))  dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
         if (new_ss) {
           vec_push(new_ss, (vec_data_t)succ);
         }
