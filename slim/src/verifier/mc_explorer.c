@@ -294,11 +294,15 @@ void owcty_worker_init(LmnWorker *w)
   /* 全ワーカでオブジェクトを共有 */
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    mc->accepts1 = lmn_env.core_num > 1 ? make_parallel_queue(LMN_Q_MRMW)
-                                        : new_queue();
-    mc->accepts2 = lmn_env.core_num > 1 ? make_parallel_queue(LMN_Q_MRMW)
-                                        : new_queue();
-  } else {
+    if (workers_entried_num(worker_group(w)) > 1) {
+      mc->accepts1 = make_parallel_queue(LMN_Q_MRMW);
+      mc->accepts2 = make_parallel_queue(LMN_Q_MRMW);
+    } else {
+      mc->accepts1 = new_queue();
+      mc->accepts2 = new_queue();
+    }
+  }
+  else {
     LmnWorker *primary = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
     mc->accepts1 = OWCTY_WORKER_AQ1(primary);
     mc->accepts2 = OWCTY_WORKER_AQ2(primary);
@@ -349,7 +353,7 @@ static inline void statetable_enqueue_f(State *s, LmnWord _q)
 
 void statetable_to_state_queue(StateTable *st, Queue *q)
 {
-  statetable_foreach(st, statetable_enqueue_f, (LmnWord)q, NULL);
+  statetable_foreach(st, statetable_enqueue_f, (LmnWord)q, DEFAULT_ARGS);
 }
 
 static void owcty_env_init(LmnWorker *w)
@@ -359,8 +363,8 @@ static void owcty_env_init(LmnWorker *w)
   statetable_to_state_queue(statespace_accept_memid_tbl(worker_states(w)),
                             OWCTY_WORKER_AQ2(w));
 
-  MC_DEBUG(printf("acceptance queue init, num=%lu\n"
-                            , queue_entry_num(OWCTY_WORKER_AQ1(w))));
+  MC_DEBUG(printf("acceptance queue init, num=%lu\n",
+                  queue_entry_num(OWCTY_WORKER_AQ1(w))));
 }
 
 
@@ -619,11 +623,15 @@ void map_worker_init(LmnWorker *w)
   McSearchMAP *mc = LMN_MALLOC(McSearchMAP);
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    mc->propagate   = lmn_env.core_num > 1 ? make_parallel_queue(LMN_Q_MRMW)
-                                           : new_queue();
-    mc->waitingSeed = lmn_env.core_num > 1 ? make_parallel_queue(LMN_Q_MRMW)
-                                           : new_queue();
-  } else {
+    if (workers_entried_num(worker_group(w)) > 1) {
+      mc->propagate   = make_parallel_queue(LMN_Q_MRMW);
+      mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
+    } else {
+      mc->propagate   = new_queue();
+      mc->waitingSeed = new_queue();
+    }
+  }
+  else {
     LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
     mc->propagate   = MAP_WORKER_PROPAG_G(prim);
     mc->waitingSeed = MAP_WORKER_DEL_G(prim);
@@ -938,9 +946,13 @@ void bledge_worker_init(LmnWorker *w)
 {
   McSearchBLE *mc = LMN_MALLOC(McSearchBLE);
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    mc->layer = lmn_env.core_num ? make_parallel_queue(LMN_Q_MRMW)
-                                 : new_queue();
-  } else {
+    if (workers_entried_num(worker_group(w)) > 1) {
+      mc->layer = make_parallel_queue(LMN_Q_MRMW);
+    } else {
+      mc->layer = new_queue();
+    }
+  }
+  else {
     mc->layer = BLE_WORKER_LAYER_Q(workers_get_worker(worker_group(w), LMN_PRIMARY_ID));
   }
 

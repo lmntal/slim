@@ -121,10 +121,10 @@ struct StateTable {
  *  StateTable
  */
 
-inline void statetable_foreach(StateTable *st, void (*func) ( ), LmnWord _arg, StateSpace ss);
-void statetable_foreach_parallel(StateTable *st,
-                                 void (*mt_safe_func) ( ), LmnWord _arg,
-                                 int nthreads);
+inline void statetable_foreach(StateTable *st, void (*func) ( ),
+                               LmnWord _arg1, LmnWord _arg2);
+void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) ( ),
+                                 LmnWord _arg1, LmnWord _arg2, int nthreads);
 void statetable_format_states(StateTable *st);
 
 static inline void          statetable_set_lock(StateTable *st, EWLock *lock);
@@ -226,9 +226,10 @@ void       statespace_free(StateSpace ss);
 void       statespace_add_direct(StateSpace ss, State *s);
 State     *statespace_insert(StateSpace ss, State *s);
 State     *statespace_insert_delta(StateSpace ss, State *s, struct MemDeltaRoot *d);
-void       statespace_foreach(StateSpace ss,  void (*func) ( ), LmnWord _arg);
-void       statespace_foreach_parallel(StateSpace ss,
-                                       void (*func) ( ), LmnWord _arg, int nPE);
+void       statespace_foreach(StateSpace ss, void (*func) ( ),
+                              LmnWord _arg1, LmnWord _arg2);
+void       statespace_foreach_parallel(StateSpace ss, void (*func) ( ),
+                              LmnWord _arg1, LmnWord _arg2, int nPE);
 void       statespace_format_states(StateSpace ss);
 void       statespace_clear(StateSpace ss);
 void       statespace_ends_dumper(StateSpace ss);
