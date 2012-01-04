@@ -121,7 +121,7 @@ struct StateTable {
  *  StateTable
  */
 
-inline void statetable_foreach(StateTable *st, void (*func) ( ), LmnWord _arg);
+inline void statetable_foreach(StateTable *st, void (*func) ( ), LmnWord _arg, StateSpace ss);
 void statetable_foreach_parallel(StateTable *st,
                                  void (*mt_safe_func) ( ), LmnWord _arg,
                                  int nthreads);

@@ -576,10 +576,10 @@ void statespace_add_direct(StateSpace ss, State *s)
 /* 高階関数 */
 void statespace_foreach(StateSpace ss, void (*func) ( ), LmnWord _arg)
 {
-  statetable_foreach(statespace_tbl(ss),              func, _arg);
-  statetable_foreach(statespace_memid_tbl(ss),        func, _arg);
-  statetable_foreach(statespace_accept_tbl(ss),       func, _arg);
-  statetable_foreach(statespace_accept_memid_tbl(ss), func, _arg);
+  statetable_foreach(statespace_tbl(ss),              func, _arg, NULL);
+  statetable_foreach(statespace_memid_tbl(ss),        func, _arg, NULL);
+  statetable_foreach(statespace_accept_tbl(ss),       func, _arg, NULL);
+  statetable_foreach(statespace_accept_memid_tbl(ss), func, _arg, NULL);
 }
 
 void statespace_foreach_parallel(StateSpace ss,
@@ -994,7 +994,7 @@ static void statetable_add_direct(StateTable *st, State *s)
 }
 
 /* 高階関数  */
-inline void statetable_foreach(StateTable *st, void (*func) ( ), LmnWord _arg)
+inline void statetable_foreach(StateTable *st, void (*func) ( ), LmnWord _arg, StateSpace ss)
 {
   if (st) {
     unsigned long i, size;
@@ -1005,7 +1005,9 @@ inline void statetable_foreach(StateTable *st, void (*func) ( ), LmnWord _arg)
       ptr = st->tbl[i];
       while (ptr) {
         next = ptr->next;
-        if (_arg) {
+        if (ss) {
+          func(ptr, _arg, ss);
+        } else if (_arg) {
           func(ptr, _arg);
         } else {
           func(ptr);
@@ -1022,14 +1024,14 @@ void statetable_foreach_parallel(StateTable *st,
 {
   if (st) {
     if (nthreads == 1) {
-      statetable_foreach(st, mt_safe_func, _arg);
+      statetable_foreach(st, mt_safe_func, _arg, NULL);
     }
     else {
       lmn_OMP_set_thread_num(nthreads);
 #ifdef ENABLE_OMP
 # pragma omp parallel
 #endif
-      statetable_foreach(st, mt_safe_func, _arg);
+      statetable_foreach(st, mt_safe_func, _arg, NULL);
     }
   }
 }
@@ -1126,28 +1128,28 @@ void statespace_dumper(StateSpace ss)
 
 static void statespace_dump_all_states(StateSpace ss)
 {
-  statetable_foreach(statespace_tbl(ss),        dump_state_data, (LmnWord)ss->out);
-  statetable_foreach(statespace_memid_tbl(ss),  dump_state_data, (LmnWord)ss->out);
-  statetable_foreach(statespace_accept_tbl(ss), dump_state_data, (LmnWord)ss->out);
-  statetable_foreach(statespace_accept_memid_tbl(ss), dump_state_data, (LmnWord)ss->out);
+  statetable_foreach(statespace_tbl(ss),        dump_state_data, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_memid_tbl(ss),  dump_state_data, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_accept_tbl(ss), dump_state_data, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_accept_memid_tbl(ss), dump_state_data, (LmnWord)ss->out, ss);
 }
 
 
 static void statespace_dump_all_transitions(StateSpace ss)
 {
-  statetable_foreach(statespace_tbl(ss),        state_print_transition, (LmnWord)ss->out);
-  statetable_foreach(statespace_memid_tbl(ss),  state_print_transition, (LmnWord)ss->out);
-  statetable_foreach(statespace_accept_tbl(ss), state_print_transition, (LmnWord)ss->out);
-  statetable_foreach(statespace_accept_memid_tbl(ss), state_print_transition, (LmnWord)ss->out);
+  statetable_foreach(statespace_tbl(ss),        state_print_transition, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_memid_tbl(ss),  state_print_transition, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_accept_tbl(ss), state_print_transition, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_accept_memid_tbl(ss), state_print_transition, (LmnWord)ss->out, ss);
 }
 
 
 static void statespace_dump_all_labels(StateSpace ss)
 {
-  statetable_foreach(statespace_tbl(ss),        state_print_label, (LmnWord)ss->out);
-  statetable_foreach(statespace_memid_tbl(ss),  state_print_label, (LmnWord)ss->out);
-  statetable_foreach(statespace_accept_tbl(ss), state_print_label, (LmnWord)ss->out);
-  statetable_foreach(statespace_accept_memid_tbl(ss), state_print_label, (LmnWord)ss->out);
+  statetable_foreach(statespace_tbl(ss),        state_print_label, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_memid_tbl(ss),  state_print_label, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_accept_tbl(ss), state_print_label, (LmnWord)ss->out, ss);
+  statetable_foreach(statespace_accept_memid_tbl(ss), state_print_label, (LmnWord)ss->out, ss);
 }
 
 
@@ -1201,7 +1203,7 @@ void statetable_format_states(StateTable *st)
 {
   if (st) {
     qsort(st->tbl, st->cap, sizeof(struct State *), statetable_cmp_state_id_gr_f);
-    statetable_foreach(st, statetable_issue_state_id_f, 0);
+    statetable_foreach(st, statetable_issue_state_id_f, 0, NULL);
   }
 }
 
