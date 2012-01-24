@@ -38,7 +38,7 @@
 #include "visitlog.h"
 #include "membrane.h"
 
-#define PROC_TBL_DEFAULT_SIZE  1024U
+#define PROC_TBL_DEFAULT_SIZE  128U
 
 void proc_tbl_init(ProcessTbl p)
 {
@@ -61,7 +61,7 @@ void proc_tbl_init_with_size(ProcessTbl p, unsigned long size)
 ProcessTbl proc_tbl_make(void)
 {
 //  return proc_tbl_make_with_size(env_max_id());
-  return proc_tbl_make_with_size(512);
+  return proc_tbl_make_with_size(PROC_TBL_DEFAULT_SIZE);
 }
 
 ProcessTbl proc_tbl_make_with_size(unsigned long size)

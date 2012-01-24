@@ -704,7 +704,7 @@ static inline void tracelog_unput(TraceLog l, LmnWord key) {
 }
 
 static inline BOOL tracelog_contains(TraceLog l, LmnWord key) {
-  return (l->cap >= key) && TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]));
+  return (l->cap > key) && TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]));
 }
 
 static inline BOOL tracelog_contains_atom(TraceLog l, LmnSAtom atom) {

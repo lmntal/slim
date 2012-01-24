@@ -1123,7 +1123,7 @@ LmnBinStr lmn_mem_encode(LmnMembrane *mem)
 #endif
 
   //ret = lmn_mem_encode_sub(mem, 1024);
-  ret = lmn_mem_encode_sub(mem, round2up(env_next_id()));
+  ret = lmn_mem_encode_sub(mem, round2up(env_next_id() + 1));
 
 
 #ifdef PROFILE
@@ -2055,7 +2055,7 @@ LmnBinStr lmn_mem_to_binstr(LmnMembrane *mem)
   }
 #endif
   //ret = lmn_mem_to_binstr_sub(mem, 128);
-  ret = lmn_mem_to_binstr_sub(mem, round2up(env_next_id()));
+  ret = lmn_mem_to_binstr_sub(mem, round2up(env_next_id() + 1));
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -2237,11 +2237,12 @@ inline BOOL lmn_mem_equals_enc(LmnBinStr bs, LmnMembrane *mem)
 
   if (is_comp_z(bs)) {
     LmnBinStr target = lmn_bscomp_z_decode(bs);
-    ret = mem_equals_enc_sub(target, mem, round2up(env_next_id()));
+    ret = mem_equals_enc_sub(target, mem, round2up(env_next_id() + 1));
     lmn_binstr_free(target);
   }
   else {
-    ret = mem_equals_enc_sub(bs, mem, round2up(env_next_id()));
+    ret = mem_equals_enc_sub(bs, mem, round2up(env_next_id() + 1));
+    //ret = mem_equals_enc_sub(bs, mem, 128);
   }
 
   return ret;
