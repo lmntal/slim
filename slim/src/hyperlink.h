@@ -61,7 +61,7 @@
  */
 typedef struct HyperLink{
   LmnSAtom atom;    /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
-  int rank;
+  LmnHlinkRank rank;
   LmnMembrane *mem; /* atom の所属膜（findatomで使用）*/
   unsigned long id; /* 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用) */
 //  long usrid;        /* ユーザがhyperlinkのidを決められるようにするための変数（未実装）*/
