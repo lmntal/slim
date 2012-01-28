@@ -166,6 +166,11 @@ typedef struct LmnSPAtomHeader LmnSpAtom;
    ればならない */
 #define LMN_SP_ATOM_HEADER struct LmnSPAtomHeader hdr
 
+/*----------------------------------------------------------------------
+ * Hyperlink
+ */
+
+typedef uint32_t LmnHlinkRank;
 
 /*----------------------------------------------------------------------
  * React Context
