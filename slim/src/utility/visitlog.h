@@ -260,7 +260,7 @@ struct SimplyProcTbl {
 #endif
 };
 
-#define SPROC_TBL_INIT_V        (0xffU)
+#define SPROC_TBL_INIT_V        (0xfU)
 #define sproc_tbl_entry_num(P)  ((P)->n)
 
 /**
@@ -901,7 +901,7 @@ static inline int visitlog_put_mem(VisitLog visitlog, LmnMembrane *mem) {
   return visitlog_put(visitlog, lmn_mem_id(mem));
 }
 
-/* ログにハイパーリンクを追加し, 正の値を返す. すでに膜が存在した場合は0を返す */
+/* ログにハイパーリンクを追加し, 正の値を返す. すでにハイパーリンクが存在した場合は0を返す */
 static inline int visitlog_put_hlink(VisitLog visitlog, HyperLink *hl)
 {
   return visitlog_put(visitlog, LMN_HL_ID(hl));

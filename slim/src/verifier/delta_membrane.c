@@ -224,25 +224,34 @@ struct MemDeltaRoot *dmem_root_make(LmnMembrane *root_mem,
                                     LmnRule rule,
                                     unsigned long next_id)
 {
-  struct MemDeltaRoot *p = LMN_MALLOC(struct MemDeltaRoot);
-  int size = round2up(next_id + 10); /* TODO: 引数に渡す適当なサイズは？ */
-//  env_set_next_id(next_id);
-  p->next_id = next_id;
-  p->root_mem = root_mem;
-  proc_tbl_init_with_size(&p->proc_tbl, size);
-  vec_init(&p->new_mems, 16);
-  vec_init(&p->mem_deltas, 16);
-  vec_init(&p->modified_atoms, 32);
-  sproc_tbl_init_with_size(&p->flag_tbl, size);
-  proc_tbl_init_with_size(&p->owner_tbl, size);
-  p->committed = FALSE;
+  struct MemDeltaRoot *p;
+  int size;
+
+  p = LMN_MALLOC(struct MemDeltaRoot);
+  size            = round2up(next_id + 10); /* TODO: 引数に渡す適当なサイズは？ */
+
+  p->next_id      = next_id;
+  p->root_mem     = root_mem;
+  p->committed    = FALSE;
   p->applied_rule = rule;
-  if (lmn_rule_get_history_tbl(rule) && lmn_rule_get_pre_id(rule) != 0) {
+  proc_tbl_init_with_size(&p->proc_tbl, size);
+  vec_init(&p->new_mems,       16);
+  vec_init(&p->mem_deltas,     16);
+  vec_init(&p->modified_atoms, 32);
+  proc_tbl_init_with_size(&p->owner_tbl, size);
+  sproc_tbl_init_with_size(&p->flag_tbl, size);
+
+  /* add an appried history for constraint handling rules */
+  if (rule                           &&
+      lmn_rule_get_history_tbl(rule) &&
+      lmn_rule_get_pre_id(rule) != 0) {
     p->applied_history = lmn_rule_get_pre_id(rule);
   } else {
     p->applied_history = ANONYMOUS;
   }
-  p->new_proc_id_lower_limit = next_id; /* この時点で最大のIDを記録しておくことで, 以降に生成されたIDが新規か否かを判定する */
+
+  /* この時点で最大のIDを記録しておくことで, 以降に生成されたIDが新規か否かを判定する */
+  p->new_proc_id_lower_limit = next_id;
   return p;
 }
 

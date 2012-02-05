@@ -42,7 +42,6 @@
 
 void proc_tbl_init(ProcessTbl p)
 {
-//  proc_tbl_init_with_size(p, env_max_id());
   proc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
 }
 
@@ -60,7 +59,6 @@ void proc_tbl_init_with_size(ProcessTbl p, unsigned long size)
 
 ProcessTbl proc_tbl_make(void)
 {
-//  return proc_tbl_make_with_size(env_max_id());
   return proc_tbl_make_with_size(PROC_TBL_DEFAULT_SIZE);
 }
 
@@ -169,7 +167,7 @@ void sproc_tbl_init_with_size(SimplyProcTbl p, unsigned long size)
 
 void sproc_tbl_init(SimplyProcTbl p)
 {
-  sproc_tbl_init_with_size(p, 256);
+  sproc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
 }
 
 void sproc_tbl_destroy(SimplyProcTbl p)
@@ -199,7 +197,7 @@ TraceLog tracelog_make(void)
 
 inline void tracelog_init(TraceLog l)
 {
-  tracelog_init_with_size(l, 512);
+  tracelog_init_with_size(l, PROC_TBL_DEFAULT_SIZE);
 }
 
 
@@ -231,8 +229,8 @@ inline void tracelog_destroy(TraceLog l)
 
 static inline void tracker_init(struct LogTracker *track)
 {
-  vec_init(&track->traced_ids, 128);
-  vec_init(&track->btp_idx, 128);
+  vec_init(&track->traced_ids, PROC_TBL_DEFAULT_SIZE);
+  vec_init(&track->btp_idx, PROC_TBL_DEFAULT_SIZE);
 }
 
 static inline void tracker_destroy(struct LogTracker *track)
@@ -248,7 +246,7 @@ static inline void tracker_destroy(struct LogTracker *track)
 
 void simplylog_init(SimplyLog s)
 {
-  simplylog_init_with_size(s, 256);
+  simplylog_init_with_size(s, PROC_TBL_DEFAULT_SIZE);
 }
 
 inline void simplylog_init_with_size(SimplyLog s, unsigned long size)
@@ -273,7 +271,7 @@ static inline struct Checkpoint *checkpoint_make()
 {
   struct Checkpoint *p = LMN_MALLOC(struct Checkpoint);
 
-  vec_init(&p->elements, 128);
+  vec_init(&p->elements, PROC_TBL_DEFAULT_SIZE);
   p->n_data_atom = 0;
   return p;
 }
@@ -294,7 +292,7 @@ void visitlog_init_with_size(VisitLog p, unsigned long tbl_size)
 /*   printf("size = %lu\n", tbl_size); */
   p->ref_n = VISITLOG_INIT_N;
   p->element_num = 0;
-  vec_init(&p->checkpoints, 128);
+  vec_init(&p->checkpoints, PROC_TBL_DEFAULT_SIZE);
 }
 
 void visitlog_init(struct VisitLog *p)
@@ -350,7 +348,8 @@ void visitlog_revert_checkpoint(VisitLog visitlog)
 
   if (vec_num(&visitlog->checkpoints) > 0) {
     int i;
-    struct Checkpoint *new_last = (struct Checkpoint *)vec_last(&visitlog->checkpoints);
+    struct Checkpoint *new_last =
+        (struct Checkpoint *)vec_last(&visitlog->checkpoints);
 
     for (i = 0; i < vec_num(&last->elements); i++) {
       vec_push(&new_last->elements, vec_get(&last->elements, i));

@@ -102,10 +102,13 @@ static void statetable_memid_rehash(State *pred, StateTable *ss);
                                           && ((Tbl)->type->compare)(Check, Stored))
 
 /* 状態管理表stに登録されているcompress関数を用いて, 状態sのバイナリストリングbsを計算して返す.
- * (ちなみに--disable-compressの場合はdummy関数がNULLを返す.)
+ * (--disable-compressの場合はdummy関数がNULLを返す.)
  * bsが計算済みの場合(NULLでない場合)は, 何もしない */
 static inline LmnBinStr statetable_compress_state(StateTable *st, State *s, LmnBinStr bs) {
-  if (!is_encoded(s) && !bs) {
+  if (!bs) {
+    /* canonical idにエンコードを行った場合, bsは状態生成時に計算済みになっているため,
+     * このブロックを実行することはない. */
+    LMN_ASSERT(!is_encoded(s));
     bs = (*((st)->type->compress))(s);
   }
   return bs;
@@ -463,7 +466,8 @@ State *statespace_insert(StateSpace ss, State *s)
   hashv = state_hash(s);
 #endif
 
-  is_accept = statespace_has_property(ss) && state_is_accept(statespace_automata(ss), s);
+  is_accept = statespace_has_property(ss) &&
+              state_is_accept(statespace_automata(ss), s);
 
   if (is_encoded(s)) {
     /* already calculated canonical binary strings */
@@ -517,8 +521,8 @@ State *statespace_insert(StateSpace ss, State *s)
 }
 
 
-/** 差分オブジェクトdを用いて状態sの状態データを構築してからstatespace_insertを行う.
- * delta-membraneのためのwrapper関数.
+/* 差分オブジェクトdを用いて状態sの状態データを構築してからstatespace_insertを行う.
+ * statespace_insertに必要な条件を揃えるために行うdelta-membrane用wrapper関数.
  *
  * スレッドセーフ条件:
  *
@@ -527,7 +531,7 @@ State *statespace_insert(StateSpace ss, State *s)
  *     +->mem   +----+
  *
  *   状態sの生成元状態parentのグラフ構造memを, 差分オブジェクトdが刺しており(d->mem),
- *   d->memをTLSとして扱っている前提が守られていれば, d->memに対する操作は全てMT-safe
+ *   d->memをTLSとして扱う前提が守られていれば, d->memに対する操作は全てMT-safe
  */
 State *statespace_insert_delta(StateSpace ss, State *s, struct MemDeltaRoot *d)
 {
@@ -539,6 +543,12 @@ State *statespace_insert_delta(StateSpace ss, State *s, struct MemDeltaRoot *d)
 
   /* Xを基に, ハッシュ値/mem_idなどの状態データを計算する */
   state_calc_hash(s, state_mem(s), statespace_use_memenc(ss));
+
+  /* 既にバイナリストリング計算済みとなるcanonical membrane使用時は,
+   * この時点でdelta-stringを計算する */
+  if (is_encoded(s) && s_is_d(s)) {
+    state_calc_binstr_delta(s);
+  }
 
   ret = statespace_insert(ss, s);
 

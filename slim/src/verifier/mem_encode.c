@@ -671,16 +671,16 @@ static void binstr_dump(BYTE *bs, int len)
     case TAG_HLINK:
       {
         LmnHlinkRank hl_num;
-        
+
         hl_num = binstr_get_ref_num(bs, pos);
-        pos += BS_HLINK_NUM_SIZE;
+        pos   += BS_HLINK_NUM_SIZE;
 
         log[v_i].v    = 0; /* とりあえずゼロクリア */
         log[v_i].type = BS_LOG_TYPE_HLINK;
         printf("~%d_%d ", hl_num, v_i++);
       }
       break;
-    case TAG_VISITED_ATOMHLINK:
+    case TAG_VISITED_ATOMHLINK: /* FALL THROUGH */
     case TAG_VISITED_MEM:
       {
         unsigned int ref;
@@ -946,14 +946,14 @@ static inline int bsptr_push_hlink(BinStrPtr p, LmnAtom atom, VisitLog log)
 
   /* hyperlink構造を圧縮する際は, rootオブジェクトをバイト列に記録する. */
   hl_root = lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(LMN_SATOM(atom)));
-  hl_num = lmn_hyperlink_element_num(hl_root);
+  hl_num  = lmn_hyperlink_element_num(hl_root);
   if (visitlog_get_hlink(log, hl_root, &ref)) {
     return bsptr_push1(p, TAG_VISITED_ATOMHLINK) &&
            bsptr_push(p, (BYTE*)&ref, BS_PROC_REF_SIZE);
   }
   else {
     return visitlog_put_hlink(log, hl_root) &&  /* 訪問済みにした */
-           bsptr_push1(p, TAG_HLINK) &&
+           bsptr_push1(p, TAG_HLINK)        &&
            bsptr_push(p, (const BYTE*)&hl_num, BS_HLINK_NUM_SIZE);
   }
 }
@@ -3053,42 +3053,33 @@ static inline BOOL mem_eq_enc_hlink(LmnBinStr   bs,
                                     int         *i_ref,
                                     LmnMeqLog   log)
 {
-  if (attr != LMN_HL_ATTR) {
-    return FALSE; /* 比較先属性がハイパーリンクアトムでなければ偽 */
-  }
-  else {
-    HyperLink *hl_root = lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSAtom)atom));
+  if (attr == LMN_HL_ATTR) { /* 比較先属性がハイパーリンクアトムかチェック */
+    HyperLink *hl_root;
+    LmnHlinkRank bs_hl_num;
 
-    LmnHlinkRank hl_num = lmn_hyperlink_element_num(hl_root);
-    LmnHlinkRank bs_hl_num = binstr_get_ref_num(bs->v, *i_bs);
-    (*i_bs) += BS_HLINK_NUM_SIZE;
-    if(hl_num!=bs_hl_num){
-      return FALSE;
-    }
-    else{
+    hl_root   = lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSAtom)atom));
+    bs_hl_num = binstr_get_ref_num(bs->v, *i_bs);
+    (*i_bs)  += BS_HLINK_NUM_SIZE;
+
+    if (lmn_hyperlink_element_num(hl_root) == bs_hl_num) {
 
 #ifndef BS_MEMEQ_OLD
-      if (tracelog_contains_hlink(log, hl_root)) {
-        return FALSE;
-      }
-      else {
+      if (!tracelog_contains_hlink(log, hl_root)) {
         tracelog_put_hlink(log, hl_root, *i_ref);
         (*i_ref)++;
         return TRUE;
       }
 #else
-     if (!visitlog_put_hlink(log, hl_root)) {
-        return FALSE;
-     }
-     else {
-       ref_log[*i_ref].v    = (LmnWord)hl_root;
+      if (visitlog_put_hlink(log, hl_root)) {
+        ref_log[*i_ref].v    = (LmnWord)hl_root;
         ref_log[*i_ref].type = BS_LOG_TYPE_HLINK;
-       (*i_ref)++;
-       return TRUE;
+        (*i_ref)++;
+        return TRUE;
       }
 #endif
     }
   }
+
   return FALSE;
 }
 

@@ -184,6 +184,7 @@ int          state_cmp(State *s1, State *s2);
 int          state_cmp_with_compress(State *s1, State *s2);
 void         state_binstr_d_compress(State *s);
 LmnBinStr    state_binstr_reconstructor(State *s);
+void         state_calc_binstr_delta(State *s);
 
 static inline LmnMembrane   *state_restore_mem(State *s);
 static inline LmnMembrane   *state_restore_mem_inner(State *s, BOOL flag);
@@ -196,8 +197,10 @@ static inline void           state_set_property_state(State *s, BYTE label);
 static inline unsigned long  state_hash(State *s);
 static inline LmnMembrane   *state_mem(State *s);
 static inline void           state_set_mem(State *s, LmnMembrane *mem);
+static inline void           state_unset_mem(State *s);
 static inline LmnBinStr      state_binstr(State *s);
 static inline void           state_set_binstr(State *s, LmnBinStr bs);
+static inline void           state_unset_binstr(State *s);
 static inline State         *state_get_parent(State *s);
 static inline void           state_set_parent(State *s, State *parent);
 static inline unsigned int   state_succ_num(State *s);
@@ -256,30 +259,29 @@ void state_print_error_path(State *s, LmnWord _fp);
  *  inline functions
  */
 
-/** 状態sに対応する階層グラフ構造memへのアドレスを返す.
+/* 状態sに対応する階層グラフ構造memへのアドレスを返す.
  * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
  * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
 static inline LmnMembrane *state_restore_mem(State *s) {
   return state_restore_mem_inner(s, TRUE);
 }
 
+/* delta-compression用のinner関数.
+ * flagが真の場合, デコード済みのバイナリストリングをキャッシュから取得する.
+ * キャッシュにバイナリストリングを置かないケースで使用する場合は,
+ * inner関数を直接呼び出し, flagに偽を渡しておけばよい. */
 static inline LmnMembrane *state_restore_mem_inner(State *s, BOOL flag) {
   if (state_mem(s)) {
     return state_mem(s);
   }
   else if (s_is_d(s)) {
     LmnBinStr b;
-    LmnMembrane *ret;
-
     if (flag) {
       b = state_D_fetch(s);
     } else {
-      b = NULL;
+      b = state_binstr_reconstructor(s);
     }
-
-    if (!b) b = state_binstr_reconstructor(s);
-    ret = lmn_binstr_decode(b);
-    return ret;
+    return lmn_binstr_decode(b);
   }
   else {
     LMN_ASSERT(state_binstr(s));
@@ -356,6 +358,14 @@ static inline void state_set_mem(State *s, LmnMembrane *mem) {
   s->data = (state_data_t)mem;
 }
 
+/* 状態sが参照する階層グラフ構造用の領域をクリアする.
+ * 階層グラフ構造の参照を持たない場合は, なにもしない. */
+static inline void state_unset_mem(State *s) {
+  if (!is_binstr_user(s)) {
+    state_set_mem(s, NULL);
+  }
+}
+
 /* 状態sに割り当てたバイナリストリングを返す. */
 static inline LmnBinStr state_binstr(State *s) {
   if (is_binstr_user(s)) {
@@ -369,6 +379,15 @@ static inline LmnBinStr state_binstr(State *s) {
 static inline void state_set_binstr(State *s, LmnBinStr bs) {
   s->data = (state_data_t)bs;
   set_binstr_user(s);
+}
+
+/* 状態sが参照するバイナリストリング用の領域をクリアする.
+ * バイナリストリングに対する参照を持たない場合は, なにもしない. */
+static inline void state_unset_binstr(State *s) {
+  if (is_binstr_user(s)) {
+    s->data = (state_data_t)NULL;
+    unset_binstr_user(s);
+  }
 }
 
 /* 状態sを生成した状態(親ノード)へのアドレスを返す. */
@@ -439,16 +458,20 @@ static inline BYTE state_scc_id(Automata a, State *s) {
   }
 }
 
+/* 状態sとの差分計算の対象とする状態に対する参照を返す. */
 static inline State *state_D_ref(State *s) {
+  /* とりあえず親ノードにした */
   return state_get_parent(s);
 }
 
+/* 状態sに対応する非圧縮バイナリストリングdをキャッシングする. */
 static inline void state_D_cache(State *s, LmnBinStr d) {
   LMN_ASSERT(!state_D_fetch(s));
   /* メモリ節約の結果, 保守性ないコード. 注意 */
   s->successors = (succ_data_t)d;
 }
 
+/* キャッシングしておいた状態sに対応する非圧縮バイナリストリングに対する参照を返す. */
 static inline LmnBinStr state_D_fetch(State *s) {
   if (s_is_d(s)) {
     return (LmnBinStr)s->successors;
@@ -457,6 +480,7 @@ static inline LmnBinStr state_D_fetch(State *s) {
   }
 }
 
+/* 状態sに対応する非圧縮バイナリストリングのキャッシュをクリアする. */
 void state_D_flush(State *s) {
   LmnBinStr cached = state_D_fetch(s);
   if (cached) {
@@ -465,6 +489,7 @@ void state_D_flush(State *s) {
   s->successors = NULL;
 }
 
+/* 差分圧縮バイト列に基づく状態生成処理のfinalizeを行う. */
 static inline void state_D_progress(State *s, LmnReactCxt *rc) {
   RC_D_PROGRESS(rc);
   state_D_flush(s);

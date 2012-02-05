@@ -245,6 +245,17 @@ static inline BOOL worker_check(LmnWorker *w) {
 
 
 /** Macros for f_exec
+ *
+ * ---- ---1  incremental state dumper
+ * ---- --1-  partial order statespace generator
+ * ---- -1--  asynchronous with property automata
+ * ---- 1---  use Transition Object
+ * ---1 ----  use membrane2binaryString compresser
+ * --1- ----  use delta-membrane generator
+ * -1-- ----  use membrane2canonical ID generator
+ * 1--- ----  EMPTY
+ *
+ * 必要ならば, ビットフィールドを8bitからuint16_tに拡張するか, もう1枚変数を用意する.
  */
 #define WORKER_F0_MC_DUMP_MASK        (0x01U)
 #define WORKER_F0_MC_POR_MASK         (0x01U << 1)

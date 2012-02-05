@@ -53,6 +53,8 @@
 #include "runtime_status.h"
 
 
+static inline LmnBinStr state_binstr_D_compress(LmnBinStr org, State *ref_s);
+
 /*----------------------------------------------------------------------
  * State
  */
@@ -327,14 +329,19 @@ static int state_equals_with_compress(State *check, State *stored)
 
 #ifdef PROFILE
   if (lmn_env.prof_no_memeq) {
-    /* ハッシュコンフリクトによって完全性を損なうが, ハッシュ値と状態ラベルだけで等価性を判定して高速化する.
-     * ハッシュ値が完全に散らばることが分かっていて, でもメモリあたりのプロファイルとるの忘れた,
-     * そんなとき, ささっとデータを取るために使う */
+    /* 本フラグが真の場合はグラフ同形成判定を行わず, ハッシュ値の一致不一致で状態の等価性を判定する.
+     * ハッシュコンフリクトで完全性が損なわれるが, .
+     * ハッシュ値が完全に散らばることが既知の問題に対し, メモリ使用量等のプロファイルを取る際など,
+     * プロファイル収集を円滑に行うべく使用する. グラフ同型成判定の時間分だけ高速化できる */
     return (state_hash(check) == state_hash(stored));
   }
 #endif
 
-  bs1 = state_binstr(check);
+  if (s_is_d(check)) {
+    bs1 = state_D_fetch(check);
+  } else {
+    bs1 = state_binstr(check);
+  }
 
   if (s_is_d(stored)) {
     bs2 = state_binstr_reconstructor(stored);
@@ -355,7 +362,8 @@ static int state_equals_with_compress(State *check, State *stored)
       lmn_mem_equals_enc(bs2, state_mem(check));
   }
   else if (bs1 && bs2) {
-    /* このブロックは基本的には例外処理なので注意. (PORやコピー状態挿入の際に呼ばれることもある) */
+    /* このブロックは基本的には例外処理なので注意.
+     * PORなどでコピー状態を挿入する際に呼ばれることがある. */
     LmnMembrane *mem = lmn_binstr_decode(bs1);
     t =
       check->state_name == stored->state_name &&
@@ -406,6 +414,8 @@ int state_cmp_with_compress(State *s1, State *s2)
     LmnBinStr s1_mid, s2_mid;
     BOOL org_check, mid_check, meq_check;
 
+    /* TODO: --disable-compress時にもチェックできるよう修正して構造化する. */
+
     /* s1がcheckなのでmem, s2がstored(ハッシュ表に記録済み)なのでbinstrを保持 */
 
     /* データ構造の構築 */
@@ -432,8 +442,6 @@ int state_cmp_with_compress(State *s1, State *s2)
       sp2_check = (lmn_mem_equals_enc(s1_bs, s2_mem) != 0);
       sp3_check = (lmn_mem_equals_enc(s1_mid, s2_mem) != 0);
       sp4_check = (lmn_mem_equals_enc(s2_mid, state_mem(s1)) != 0);
-  //  fprintf(stderr, "visitlog_element_num =%lu¥n", visitlog_element_num(&visitlog));
-  //  fprintf(stderr, "process_num(mem)     =%lu¥n", process_num(mem));
       fprintf(f, "fatal error: checking graphs isomorphism was invalid\n");
       fprintf(f, "====================================================================================\n");
       fprintf(f,  "%18s | %-18s | %-18s | %-18s\n",        " - ",      "s1.Mem (ORG)",     "s1.BS (calc)",    "s1.MID (calc)");
@@ -449,7 +457,7 @@ int state_cmp_with_compress(State *s1, State *s2)
       lmn_dump_mem_stdout(state_mem(s1));
 
       lmn_binstr_free(s1_bs);
-      lmn_fatal("invalid ends.");
+      lmn_fatal("graph isomorphism procedure has invalid implementations");
     }
 
     lmn_mem_free_rec(s2_mem);
@@ -487,7 +495,8 @@ void state_free_binstr(State *s)
  * sに対応する階層グラフ構造Xへのメモリ参照が消えるため, 呼び出し側でメモリ管理を行う.
  * sが既にバイナリストリングを保持している場合は, そのバイナリストリングは破棄する.
  * (ただし, sが既に一意なIDとなるバイナリストリングへエンコード済みの場合は何もしない.)
- * 既に割当済みのバイナリストリングを破棄するため, sのハッシュ表登録後はMT-unsafe, 使用不可. */
+ * 既に割当済みのバイナリストリングを破棄するため,
+ * sをハッシュ表に登録した後の操作はMT-unsafeとなる. 要注意. */
 void state_calc_mem_encode(State *s)
 {
   if (!is_encoded(s)) {
@@ -497,7 +506,9 @@ void state_calc_mem_encode(State *s)
       mid = lmn_mem_encode(state_mem(s));
     }
     else if (state_binstr(s)) {
-      LmnMembrane *m = lmn_binstr_decode(state_binstr(s));
+      LmnMembrane *m;
+
+      m   = lmn_binstr_decode(state_binstr(s));
       mid = lmn_mem_encode(m);
       state_free_binstr(s);
       lmn_mem_free_rec(m);
@@ -512,7 +523,24 @@ void state_calc_mem_encode(State *s)
   }
 }
 
+/**/
+void state_calc_binstr_delta(State *s)
+{
+  LmnBinStr org = state_binstr(s);
+  if (org && state_D_ref(s)) {
+    LmnBinStr dif;
+    dif = state_binstr_D_compress(org, state_D_ref(s));
+    state_D_cache(s, org);
+    state_set_binstr(s, dif);
+  }
+  else {
+    s_unset_d(s);
+  }
+}
 
+
+/* バイナリストリングorgと状態ref_sのバイナリストリングとの差分バイナリストリングを返す.
+ * orgのメモリ管理は呼出し側で行う. */
 static inline LmnBinStr state_binstr_D_compress(LmnBinStr org, State *ref_s)
 {
   LmnBinStr ref, dif;
@@ -531,6 +559,7 @@ static inline LmnBinStr state_binstr_D_compress(LmnBinStr org, State *ref_s)
 
   return dif;
 }
+
 
 /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
  * 状態sはread only */
@@ -571,7 +600,7 @@ LmnBinStr state_calc_mem_dump(State *s)
     if (s_is_d(s) && state_D_ref(s)) {
       LmnBinStr dif;
       dif = state_binstr_D_compress(ret, state_D_ref(s));
-      /* 元のバイト列はキャッシュしておく */
+      /* 元のバイト列は直ちに破棄せず, 一時的にキャッシュしておく. */
       state_D_cache(s, ret);
       ret = dif;
     } else {

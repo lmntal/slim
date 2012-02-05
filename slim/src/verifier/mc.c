@@ -272,21 +272,23 @@ void mc_store_successors(const StateSpace ss,
     }
 
     if (RC_MC_USE_D(rc) && RC_D_COND(rc)) {
+      /* delta-stringフラグをこの時点で初めて立てる */
       s_set_d(src_succ);
     }
 
     /* 状態空間に状態src_succを記録 */
-    if (RC_MC_USE_DMEM(rc)) {    /* --delta-mem */
+    if (RC_MC_USE_DMEM(rc)) {           /* --delta-mem */
       MemDeltaRoot *d = (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);
       succ       = statespace_insert_delta(ss, src_succ, d);
       src_succ_m = NULL;
     }
-    else if (is_encoded(src_succ)) { /* !--delta-mem && --mem-enc */
+    else if (is_encoded(src_succ)) {    /* !--delta-mem && --mem-enc */
+      if (s_is_d(src_succ)) state_calc_binstr_delta(src_succ);
       succ       = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
     }
     else { /* default */
-      src_succ_m = state_mem(src_succ);
+      src_succ_m = state_mem(src_succ); /* for free mem pointed by src_succ */
       succ       = statespace_insert(ss, src_succ);
     }
 
@@ -393,6 +395,8 @@ void mc_gen_successors(State       *src,
 
   RC_SET_GROOT_MEM(rc, mem);
 
+  /* 性質遷移数だけ本関数を呼び出している.
+   * 一つ前までの展開遷移数をメモしておくことで, 今回の展開遷移数を計算する */
   old = mc_react_cxt_expanded_num(rc);
 
   /** Generate Successor Membrane (or DeltaMemrane) */
@@ -404,32 +408,37 @@ void mc_gen_successors(State       *src,
   n = mc_react_cxt_expanded_num(rc);
 
   for (i = old; i < n; i++) {
-    State *new;
+    State *news;
     vec_data_t data;
 
     /* DeltaMembrane時はこの時点でSuccessor Membraneがない */
     if (mc_use_delta(f)) {
-      new = state_make_minimal();
+      news = state_make_minimal();
     } else {
-      new = state_make((LmnMembrane *)vec_get(expanded_roots, i),
-                       state_name,
-                       mc_use_canonical(f));
+      news = state_make((LmnMembrane *)vec_get(expanded_roots, i),
+                        state_name,
+                        mc_use_canonical(f));
     }
 
-    state_set_property_state(new, state_name);
-    state_set_parent(new, src);
+    state_set_property_state(news, state_name);
+    state_set_parent(news, src);
     if (mc_has_trans(f)) {
-      data = (vec_data_t)transition_make(new, lmn_rule_get_name((LmnRule)vec_get(expanded_rules, i)));
+      lmn_interned_str nid;
+      nid  =  lmn_rule_get_name((LmnRule)vec_get(expanded_rules, i));
+      data = (vec_data_t)transition_make(news, nid);
       set_trans_obj(src);
     } else {
-      data = (vec_data_t)new;
+      data = (vec_data_t)news;
     }
 
     /* DeltaMembrane時は, expanded_rootsが空であるため, 生成した空の状態を積む
      * 通常時は, expanded_rootsのi番目のデータを
      *           Successor MembraneからSuccessor Stateへ設定し直す */
-    mc_use_delta(f) ? vec_push(expanded_roots, data)
-                    : vec_set(expanded_roots, i, data);
+    if (mc_use_delta(f)) {
+      vec_push(expanded_roots, data);
+    } else {
+      vec_set(expanded_roots, i, data);
+    }
   }
 
   RC_ND_SET_ORG_SUCC_NUM(rc, (n - old));
@@ -437,7 +446,7 @@ void mc_gen_successors(State       *src,
 
 
 
-/* 膜memから, 性質ルールとシステムルールの同期積によって遷移可能な全状態(or遷移)をベクタに載せて返す */
+/* 膜memから, 性質ルールとシステムルールの同期積によって遷移可能な全状態(or遷移)をベクタに積む */
 void mc_gen_successors_with_property(State         *s,
                                      LmnMembrane   *mem,
                                      AutomataState p_s,
@@ -451,9 +460,11 @@ void mc_gen_successors_with_property(State         *s,
    *   性質ルールが適用される場合, global_rootに対してシステムルール適用検査を行う.
    *   システムルール適用はglobal_rootのコピーに対して行われる.
    *   状態展開にexpandが使用された場合は, 現状態から遷移可能な全ての状態が生成されるのに対し，
-   *   ampleが使用された場合はPartial Order Reductionに基づき，本当に必要な次状態のみが生成される．
-   *   なお，適用可能なシステムルールが存在しない場合は，何も処理を行わない特殊なシステムルール(stutter extension rule)
-   *   が存在するものと考えてε遷移をさせ，受理頂点に次状態が存在しない場合でも受理サイクルを形成できるようにする．
+   *   ampleが使用された場合はPartial Order Reductionに基づき，次状態の代表のみ生成される．
+   *   なお，適用可能なシステムルールが存在しない場合は，
+   *   何も処理を行わない特殊なシステムルール(stutter extension rule)によるε遷移を行う.
+   *   これにより, 受理頂点に次状態が存在しない場合でも受理サイクルを形成できるため,
+   *   満たすべき仕様に対する反例を漏れなく検出できるようになる．
    *   (c.f. "The Spin Model Checker" pp.130-131)
    */
 
@@ -465,7 +476,7 @@ void mc_gen_successors_with_property(State         *s,
     }
   }
 
-  if (vec_num(RC_EXPANDED_PROPS(rc)) == 0) {
+  if (vec_is_empty(RC_EXPANDED_PROPS(rc))) {
     return;
   } else {
     BYTE first_prop = (BYTE)vec_get(RC_EXPANDED_PROPS(rc), 0);
@@ -536,7 +547,8 @@ static inline void stutter_extension(State       *s,
    * Stutter Extensionは性質オートマトン上のみの遷移となるため,
    * 同期積オートマトングラフ上では
    *   1. self-loopとなる(遷移の前後で性質ラベルが変化しない)か
-   *   2. 性質ラベルの変化のみ (状態データには変化がないため, どもっている(Stuttering)と表現しているみたい)
+   *   2. 性質ラベルの変化のみ
+   *      (状態データには変化がないため, どもっている(Stuttering)と表現するらしい)
    * となる.
    */
 
@@ -717,7 +729,8 @@ static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg)
   for (i = 0; i < vec_num(succs); i++) {
     State *succ = (State *)vec_get(succs, i);
     if (succ) {
-      fprintf(ss->out, "%s%lu", (i > 0) ? ", " : "", state_format_id(succ, ss->is_formated));
+      fprintf(ss->out, "%s%lu",
+              (i > 0) ? ", " : "", state_format_id(succ, ss->is_formated));
     }
   }
   fprintf(ss->out, "\n");
@@ -748,20 +761,23 @@ void mc_print_vec_states(StateSpace ss, Vector *v, State *seed)
       fprintf(ss->out, "%s%2lu::%s"
                      , m
                      , state_format_id(s, ss->is_formated)
-                     , automata_state_name(statespace_automata(ss), state_property_state(s)));
+                     , automata_state_name(statespace_automata(ss),
+                                           state_property_state(s)));
       state_print_mem(s, (LmnWord)ss->out);
     }
     else {
       s = (State *)vec_get(v, i);
       fprintf(ss->out, "path%lu_%s"
                      , state_format_id(s, ss->is_formated)
-                     , automata_state_name(statespace_automata(ss), state_property_state(s)));
+                     , automata_state_name(statespace_automata(ss),
+                                           state_property_state(s)));
       state_print_mem(s, (LmnWord)ss->out);
       fprintf(ss->out, ".\n");
 
       fprintf(ss->out, "path%lu_%s"
                      , state_format_id(s, ss->is_formated)
-                     , automata_state_name(statespace_automata(ss), state_property_state(s)));
+                     , automata_state_name(statespace_automata(ss),
+                                           state_property_state(s)));
       state_print_mem(s, (LmnWord)ss->out);
       fprintf(ss->out, ":- ");
     }
@@ -865,8 +881,8 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f)
       break;
     }
 
-    case Dir_DOT: /* 反例パスをサブグラフとして指定させたい */
-    case FSM: /* 未定. ltsviewはdotも読み出せるので廃止しても良いかも */
+    case Dir_DOT: /* TODO: 反例パスをサブグラフとして指定させたら分かりやすくなりそう */
+    case FSM:     /* TODO: 未定. ltsviewはdotファイルを読み出せるので廃止しても良い */
       fprintf(f, "under constructions..\n");
       break;
     default:
@@ -893,7 +909,8 @@ enum MC_ERRORNO {
 };
 
 
-/* 性質を表すBuchiオートマトン, 命題記号定義(ルール左辺)の集合を, それぞれa, prop_defsに読み込む.
+/* 性質を表すBuchiオートマトン, 命題記号定義(ルール左辺)の集合を,
+ * それぞれa, prop_defsに読み込む.
  * 成功ならば0, そうでないならば0以外を返す */
 int mc_load_property(Automata *a, PVector *prop_defs)
 {
