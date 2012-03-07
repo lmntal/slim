@@ -53,10 +53,10 @@
 # define ENABLE_CPU_AFFINITY
 #endif
 
-/* �ƤӽФ�������åɤ�n�֤�CPU��Ž���դ��� */
+/* 呼び出したスレッドとn番のCPUを貼り付ける */
 void lmn_thread_set_CPU_affinity(unsigned long n)
 {
-  /* TODO: �ޥ˥奢��ˤ���pthread_np�饤�֥���Ȥä������褤  */
+  /* TODO: マニュアルによればpthread_npライブラリを使った方がよい  */
 #ifdef ENABLE_CPU_AFFINITY
   if (lmn_env.core_num <= HAVE_PROCESSOR_ELEMENTS) {
     pid_t      my_pid;
@@ -80,7 +80,7 @@ void thread_yield_CPU()
  *  Double Lock
  */
 
-/* TODO: stripe��γ�٤�ƽ�¦�ǻ���Ǥ�����������Ū���Ȼפ� */
+/* TODO: stripeの粒度を呼出側で指定できた方が汎用的だと思う */
 EWLock *ewlock_make(unsigned int e_num, unsigned int w_num)
 {
   EWLock *lock;
@@ -153,8 +153,8 @@ void ewlock_release_enter(EWLock *lock, mtx_data_t id)
   lmn_mutex_unlock(&(lock->elock[id]));
 }
 
-/* lock������elock�򾺽�˳��ݤ��Ƥ���.
- * �ƤӤ�������åɤ�elock����˳��ݤ��Ƥ������ν�����̤��� (ñ��skip��������Ǥ�褤�褦��) */
+/* lockが持つelockを昇順に確保していく.
+ * 呼びたしスレッドがelockを既に確保していた場合の処理は未定義 (単にskipするだけでもよいような) */
 void ewlock_reject_enter(EWLock *lock, mtx_data_t my_id)
 {
   unsigned long i, n = lock->elock_num;

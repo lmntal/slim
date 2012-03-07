@@ -78,8 +78,8 @@ Queue *make_parallel_queue(BOOL lock_type)
 }
 
 /*  {head, tail}
- *       ¢­
- *       ¡û ¢ª NULL
+ *       â†“
+ *       â—‹ â†’ NULL
  *    sentinel
  */
 Queue *new_queue(void)
@@ -120,8 +120,8 @@ void q_free(Queue *q)
 }
 
 /*{tail, last}
- *     ¢­
- *   ..¡û¢ªNULL
+ *     â†“
+ *   ..â—‹â†’NULL
  */
 
 void enqueue(Queue *q, LmnWord v)
@@ -137,8 +137,8 @@ void enqueue(Queue *q, LmnWord v)
   if (q->lock) q_unlock(q, Q_ENQ);
 }
 
-/* Queue¤«¤éÍ×ÁÇ¤òdequeue¤¹¤ë.
- * Queue¤¬¶õ¤Î¾ì¹ç, 0¤òÊÖ¤¹ */
+/* Queueã‹ã‚‰è¦ç´ ã‚’dequeueã™ã‚‹.
+ * QueueãŒç©ºã®å ´åˆ, 0ã‚’è¿”ã™ */
 LmnWord dequeue(Queue *q)
 {
   LmnWord ret = 0;
@@ -159,7 +159,7 @@ LmnWord dequeue(Queue *q)
   return ret;
 }
 
-/* ¥­¥å¡¼q¤¬¶õ¤Ê¤é¿¿¤òÊÖ¤¹.*/
+/* ã‚­ãƒ¥ãƒ¼qãŒç©ºãªã‚‰çœŸã‚’è¿”ã™.*/
 inline BOOL is_empty_queue(Queue *q)
 {
   return (q->head == q->tail) && (q->enq_num == q->deq_num);

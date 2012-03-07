@@ -52,7 +52,7 @@
 
 #define VISITLOG_INIT_N       (1)
 
-/* LMNtal¤Î¥×¥í¥»¥¹¡Ê¥¢¥È¥à¡¢Ëì¡Ë¤ò¥­¡¼¤Ë¤â¤Á¤¤¤ë¥Æ¡¼¥Ö¥ë */
+/* LMNtalã®ãƒ—ãƒ­ã‚»ã‚¹ï¼ˆã‚¢ãƒˆãƒ ã€è†œï¼‰ã‚’ã‚­ãƒ¼ã«ã‚‚ã¡ã„ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ« */
 struct ProcessTbl {
   unsigned long n;
   unsigned long size;
@@ -114,7 +114,7 @@ static inline BOOL proc_tbl_contains_mem(ProcessTbl p, LmnMembrane *mem);
  */
 
 
-/* ¥Æ¡¼¥Ö¥ë¤Ëkey¤òÄÉ²Ã¡£put_atom,put_mem¤ò»ÈÍÑ¤¹¤ë¡£ */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«keyã‚’è¿½åŠ ã€‚put_atom,put_memã‚’ä½¿ç”¨ã™ã‚‹ã€‚ */
 static inline void proc_tbl_put(ProcessTbl p, LmnWord key, LmnWord value) {
   p->n++;
 #ifdef TIME_OPT
@@ -128,24 +128,24 @@ static inline void proc_tbl_put(ProcessTbl p, LmnWord key, LmnWord value) {
 #endif
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Ë¥¢¥È¥à¤òÄÉ²Ã */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«ã‚¢ãƒˆãƒ ã‚’è¿½åŠ  */
 static inline void proc_tbl_put_atom(ProcessTbl p, LmnSAtom atom, LmnWord value) {
   proc_tbl_put(p, LMN_SATOM_ID(atom), value);
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤ËËì¤òÄÉ²Ã */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«è†œã‚’è¿½åŠ  */
 static inline void proc_tbl_put_mem(ProcessTbl p, LmnMembrane *mem, LmnWord value) {
   proc_tbl_put(p, lmn_mem_id(mem), value);
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Ë¥Ï¥¤¥Ñ¡¼¥ê¥ó¥¯¤òÄÉ²Ã */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«ãƒã‚¤ãƒ‘ãƒ¼ãƒªãƒ³ã‚¯ã‚’è¿½åŠ  */
 static inline void proc_tbl_put_new_hlink(ProcessTbl p, HyperLink *hl, LmnWord value)
 {
   proc_tbl_put(p, LMN_HL_ID(hl), value);
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Ëkey¤òÄÉ²Ã¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹. ¤¹¤Ç¤Ëp¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï0¤òÊÖ¤¹.
- * ÄÌ¾ï¤³¤Î´Ø¿ô¤Ç¤Ï¤Ê¤¯put_new_atom, put_new_mem¤ò»ÈÍÑ¤¹¤ë. */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«keyã‚’è¿½åŠ ã—, æ­£ã®å€¤ã‚’è¿”ã™. ã™ã§ã«pãŒå­˜åœ¨ã—ãŸå ´åˆã¯0ã‚’è¿”ã™.
+ * é€šå¸¸ã“ã®é–¢æ•°ã§ã¯ãªãput_new_atom, put_new_memã‚’ä½¿ç”¨ã™ã‚‹. */
 static inline int proc_tbl_put_new(ProcessTbl p, LmnWord key, LmnWord value) {
   p->n++;
 #ifndef TIME_OPT
@@ -161,18 +161,18 @@ static inline int proc_tbl_put_new(ProcessTbl p, LmnWord key, LmnWord value) {
 #endif
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Ë¥¢¥È¥à¤òÄÉ²Ã¤·¡¢Àµ¤ÎÃÍ¤òÊÖ¤¹¡£¤¹¤Ç¤ËÆ±¤¸¥¢¥È¥à¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï0¤òÊÖ¤¹ */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«ã‚¢ãƒˆãƒ ã‚’è¿½åŠ ã—ã€æ­£ã®å€¤ã‚’è¿”ã™ã€‚ã™ã§ã«åŒã˜ã‚¢ãƒˆãƒ ãŒå­˜åœ¨ã—ãŸå ´åˆã¯0ã‚’è¿”ã™ */
 static inline int proc_tbl_put_new_atom(ProcessTbl p, LmnSAtom atom, LmnWord value) {
   return proc_tbl_put_new(p, LMN_SATOM_ID(atom), value);
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤ËËì¤òÄÉ²Ã¤·¡¢Àµ¤ÎÃÍ¤òÊÖ¤¹¡£¤¹¤Ç¤ËÆ±¤¸Ëì¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï0¤òÊÖ¤¹ */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«è†œã‚’è¿½åŠ ã—ã€æ­£ã®å€¤ã‚’è¿”ã™ã€‚ã™ã§ã«åŒã˜è†œãŒå­˜åœ¨ã—ãŸå ´åˆã¯0ã‚’è¿”ã™ */
 static inline int proc_tbl_put_new_mem(ProcessTbl p, LmnMembrane *mem, LmnWord value) {
   return proc_tbl_put_new(p, lmn_mem_id(mem), value);
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤«¤ékey¤È¤½¤ì¤ËÂÐ±þ¤·¤¿ÃÍ¤òºï½ü¤¹¤ë.
- * ÄÌ¾ï¤³¤Î´Ö¿ô¤Ç¤Ï¤Ê¤¯unput_atom, unput_mem¤ò»ÈÍÑ¤¹¤ë. */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰keyã¨ãã‚Œã«å¯¾å¿œã—ãŸå€¤ã‚’å‰Šé™¤ã™ã‚‹.
+ * é€šå¸¸ã“ã®é–“æ•°ã§ã¯ãªãunput_atom, unput_memã‚’ä½¿ç”¨ã™ã‚‹. */
 static inline void proc_tbl_unput(ProcessTbl p, LmnWord key) {
   p->n--;
 #ifdef TIME_OPT
@@ -183,18 +183,18 @@ static inline void proc_tbl_unput(ProcessTbl p, LmnWord key) {
 #endif
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤«¤é¥¢¥È¥à¤È¤½¤ì¤ËÂÐ±þ¤·¤¿ÃÍ¤òºï½ü¤¹¤ë */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰ã‚¢ãƒˆãƒ ã¨ãã‚Œã«å¯¾å¿œã—ãŸå€¤ã‚’å‰Šé™¤ã™ã‚‹ */
 static inline void proc_tbl_unput_atom(ProcessTbl p, LmnSAtom atom) {
   proc_tbl_unput(p, LMN_SATOM_ID(atom));
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤«¤éËì¤È¤½¤ì¤ËÂÐ±þ¤·¤¿ÃÍ¤òºï½ü¤¹¤ë */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰è†œã¨ãã‚Œã«å¯¾å¿œã—ãŸå€¤ã‚’å‰Šé™¤ã™ã‚‹ */
 static inline void proc_tbl_unput_mem(ProcessTbl p, LmnMembrane *mem) {
   proc_tbl_unput(p, lmn_mem_id(mem));
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Îkey¤ËÂÐ±þ¤·¤¿ÃÍ¤òvalue¤ËÀßÄê¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹. key¤¬¥Æ¡¼¥Ö¥ë¤ËÂ¸ºß¤·¤Ê¤¤¾ì¹ç¤Ï0¤òÊÖ¤¹.
- * ÄÌ¾ï¤³¤Î´Ö¿ô¤Ç¤Ï¤Ê¤¯get_by_atom, get_by_mem¤ò»ÈÍÑ¤¹¤ë./ */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã®keyã«å¯¾å¿œã—ãŸå€¤ã‚’valueã«è¨­å®šã—, æ­£ã®å€¤ã‚’è¿”ã™. keyãŒãƒ†ãƒ¼ãƒ–ãƒ«ã«å­˜åœ¨ã—ãªã„å ´åˆã¯0ã‚’è¿”ã™.
+ * é€šå¸¸ã“ã®é–“æ•°ã§ã¯ãªãget_by_atom, get_by_memã‚’ä½¿ç”¨ã™ã‚‹./ */
 static inline int proc_tbl_get(ProcessTbl p, LmnWord key, LmnWord *value) {
 #ifdef TIME_OPT
   if (p->size > key && p->tbl[key] != ULONG_MAX) {
@@ -208,20 +208,20 @@ static inline int proc_tbl_get(ProcessTbl p, LmnWord key, LmnWord *value) {
 #endif
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Î¥¢¥È¥àatom¤ËÂÐ±þ¤¹¤ëÃÍ¤òvalue¤ËÀßÄê¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹.
- * ¥Æ¡¼¥Ö¥ë¤Ëatom¤¬Â¸ºß¤·¤Ê¤¤¾ì¹ç¤Ï0¤òÊÖ¤¹ */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚¢ãƒˆãƒ atomã«å¯¾å¿œã™ã‚‹å€¤ã‚’valueã«è¨­å®šã—, æ­£ã®å€¤ã‚’è¿”ã™.
+ * ãƒ†ãƒ¼ãƒ–ãƒ«ã«atomãŒå­˜åœ¨ã—ãªã„å ´åˆã¯0ã‚’è¿”ã™ */
 static inline int proc_tbl_get_by_atom(ProcessTbl p, LmnSAtom atom, LmnWord *value) {
   return proc_tbl_get(p, LMN_SATOM_ID(atom), value);
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤ÎËìmem¤ËÂÐ±þ¤¹¤ëÃÍ¤òvalue¤ËÀßÄê¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹.
- * ¥Æ¡¼¥Ö¥ë¤Ëmem¤¬Â¸ºß¤·¤Ê¤¤¾ì¹ç¤Ï0¤òÊÖ¤¹ */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã®è†œmemã«å¯¾å¿œã™ã‚‹å€¤ã‚’valueã«è¨­å®šã—, æ­£ã®å€¤ã‚’è¿”ã™.
+ * ãƒ†ãƒ¼ãƒ–ãƒ«ã«memãŒå­˜åœ¨ã—ãªã„å ´åˆã¯0ã‚’è¿”ã™ */
 static inline int proc_tbl_get_by_mem(ProcessTbl p, LmnMembrane *mem, LmnWord *value) {
   return proc_tbl_get(p, lmn_mem_id(mem), value);
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Î¥Ï¥¤¥Ñ¡¼¥ê¥ó¥¯hl¤ËÂÐ±þ¤¹¤ëÃÍ¤òvalue¤ËÀßÄê¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹.
- * ¥Æ¡¼¥Ö¥ë¤Ëhl¤¬Â¸ºß¤·¤Ê¤¤¾ì¹ç¤Ï0¤òÊÖ¤¹ */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã®ãƒã‚¤ãƒ‘ãƒ¼ãƒªãƒ³ã‚¯hlã«å¯¾å¿œã™ã‚‹å€¤ã‚’valueã«è¨­å®šã—, æ­£ã®å€¤ã‚’è¿”ã™.
+ * ãƒ†ãƒ¼ãƒ–ãƒ«ã«hlãŒå­˜åœ¨ã—ãªã„å ´åˆã¯0ã‚’è¿”ã™ */
 static inline int proc_tbl_get_by_hlink(ProcessTbl p, HyperLink *hl, LmnWord *value)
 {
   return proc_tbl_get(p, LMN_HL_ID(hl), value);
@@ -236,12 +236,12 @@ static inline BOOL proc_tbl_contains(ProcessTbl p, LmnWord key) {
 #endif
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Ë¥¢¥È¥àatom¤ËÂÐ±þ¤¹¤ëÃÍ¤¬ÀßÄê¤µ¤ì¤Æ¤¤¤ë¾ì¹ç, Àµ¤ÎÃÍ¤òÊÖ¤¹. */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«ã‚¢ãƒˆãƒ atomã«å¯¾å¿œã™ã‚‹å€¤ãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆ, æ­£ã®å€¤ã‚’è¿”ã™. */
 static inline BOOL proc_tbl_contains_atom(ProcessTbl p, LmnSAtom atom) {
   return proc_tbl_contains(p, LMN_SATOM_ID(atom));
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤ÎËìmem¤ËÂÐ±þ¤¹¤ëÃÍ¤¬ÀßÄê¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¡¢Àµ¤ÎÃÍ¤òÊÖ¤¹. */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã®è†œmemã«å¯¾å¿œã™ã‚‹å€¤ãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã€æ­£ã®å€¤ã‚’è¿”ã™. */
 static inline BOOL proc_tbl_contains_mem(ProcessTbl p, LmnMembrane *mem) {
   return proc_tbl_contains(p, lmn_mem_id(mem));
 }
@@ -249,7 +249,7 @@ static inline BOOL proc_tbl_contains_mem(ProcessTbl p, LmnMembrane *mem) {
 
 /* --------------
  *  SimplyProcTbl
- *  ¥×¥í¥»¥¹ID¤òkey¤Ë¤·¤¿BYTE¥µ¥¤¥º¥Æ¡¼¥Ö¥ë
+ *  ãƒ—ãƒ­ã‚»ã‚¹IDã‚’keyã«ã—ãŸBYTEã‚µã‚¤ã‚ºãƒ†ãƒ¼ãƒ–ãƒ«
  */
 struct SimplyProcTbl {
   unsigned long n, cap;
@@ -309,7 +309,7 @@ static inline void sproc_tbl_expand(SimplyProcTbl p, unsigned long n) {
          sizeof(BYTE) * (p->cap - org_size));
 }
 
-/* ¥Æ¡¼¥Ö¥ë¤Ëkey¤òÄÉ²Ã¡£put_atom,put_mem¤ò»ÈÍÑ¤¹¤ë¡£ */
+/* ãƒ†ãƒ¼ãƒ–ãƒ«ã«keyã‚’è¿½åŠ ã€‚put_atom,put_memã‚’ä½¿ç”¨ã™ã‚‹ã€‚ */
 static inline void sproc_tbl_put(SimplyProcTbl p, LmnWord key, BYTE value) {
 #ifdef TIME_OPT
 #ifdef DEBUG
@@ -476,65 +476,65 @@ static inline void sproc_tbl_unset_mem_flag(SimplyProcTbl p, LmnMembrane *key, L
  * - struct TraceLog
  * - struct SimpleTraceLog
  *
- * VisitLog¤Î²þÎÉÈÇ.
- * ¥Ç¡¼¥¿¹½Â¤¤ò¥°¥é¥ÕÆ±·ÁÀ®È½Äê¤ËÆÃ²½¤µ¤»¤¿¤¿¤á, VisitLog¤ÈÈæ³Ó¤¹¤ë¤ÈÈÆÍÑÀ­¤ÏÄã¤á.
+ * VisitLogã®æ”¹è‰¯ç‰ˆ.
+ * ãƒ‡ãƒ¼ã‚¿æ§‹é€ ã‚’ã‚°ãƒ©ãƒ•åŒå½¢æˆåˆ¤å®šã«ç‰¹åŒ–ã•ã›ãŸãŸã‚, VisitLogã¨æ¯”è¼ƒã™ã‚‹ã¨æ±Žç”¨æ€§ã¯ä½Žã‚.
  */
 
 
 /* ---
- * Tracker¼þ¤ê
- * Ë¬ÌäºÑ¤ß¥Æ¡¼¥Ö¥ë¤Î¾õÂÖ¤ò¥Ð¥Ã¥¯¥È¥é¥Ã¥¯¤µ¤»¤ë¤¿¤á¤Î¥Ç¡¼¥¿¹½Â¤
+ * Trackerå‘¨ã‚Š
+ * è¨ªå•æ¸ˆã¿ãƒ†ãƒ¼ãƒ–ãƒ«ã®çŠ¶æ…‹ã‚’ãƒãƒƒã‚¯ãƒˆãƒ©ãƒƒã‚¯ã•ã›ã‚‹ãŸã‚ã®ãƒ‡ãƒ¼ã‚¿æ§‹é€ 
  */
 
 struct LogTracker {
   struct Vector traced_ids, btp_idx;
 };
 
-/* Á°²ó¤Î¥È¥ì¡¼¥¹¥×¥í¥»¥¹¿ô¤ò´ð¤Ë, ¥í¥°¤ò´¬¤­Ìá¤¹. */
+/* å‰å›žã®ãƒˆãƒ¬ãƒ¼ã‚¹ãƒ—ãƒ­ã‚»ã‚¹æ•°ã‚’åŸºã«, ãƒ­ã‚°ã‚’å·»ãæˆ»ã™. */
 #define LogTracker_REVERT(Tracker, UnputFunc, Tbl)                             \
   do {                                                                         \
     unsigned long __bt_idx;                                                    \
     LMN_ASSERT(!vec_is_empty(&((Tracker)->btp_idx)));                          \
                                                                                \
-    /* Á°²ó¥»¥Ã¥È¤·¤¿¥È¥ì¡¼¥¹¿ô¤Î¥á¥â¤ò¼è¤ê½Ð¤¹ */                                     \
+    /* å‰å›žã‚»ãƒƒãƒˆã—ãŸãƒˆãƒ¬ãƒ¼ã‚¹æ•°ã®ãƒ¡ãƒ¢ã‚’å–ã‚Šå‡ºã™ */                                     \
     __bt_idx = vec_pop(&((Tracker)->btp_idx));                                 \
-    /* bt_idx¤è¤ê¾å¤Îidx¤ËÀÑ¤Þ¤ì¤¿¥Ç¡¼¥¿¤ò¥í¥°¾å¤«¤éunput¤·¤Æ¤¤¤¯ */                    \
+    /* bt_idxã‚ˆã‚Šä¸Šã®idxã«ç©ã¾ã‚ŒãŸãƒ‡ãƒ¼ã‚¿ã‚’ãƒ­ã‚°ä¸Šã‹ã‚‰unputã—ã¦ã„ã */                    \
     while (vec_num(&((Tracker)->traced_ids)) > __bt_idx) {                     \
       LmnWord __key = vec_pop(&((Tracker)->traced_ids));                       \
       UnputFunc(Tbl, __key);                                                   \
     }                                                                          \
   } while (0)
 
-/* ¸½ºß¤Î¥È¥ì¡¼¥¹¥×¥í¥»¥¹¿ô¤ò¥í¥°l¤Ë¥á¥â¤·¤Æ¤ª¤¯ */
+/* ç¾åœ¨ã®ãƒˆãƒ¬ãƒ¼ã‚¹ãƒ—ãƒ­ã‚»ã‚¹æ•°ã‚’ãƒ­ã‚°lã«ãƒ¡ãƒ¢ã—ã¦ãŠã */
 #define LogTracker_PUSH(TR) (vec_push(&(TR)->btp_idx, vec_num(&(TR)->traced_ids)))
-/* ºÇ¤âºÇ¶á¤Ë¥á¥â¤·¤¿¥È¥ì¡¼¥¹¥×¥í¥»¥¹¿ô¤Îµ­Ï¿¤òºï½ü¤¹¤ë */
+/* æœ€ã‚‚æœ€è¿‘ã«ãƒ¡ãƒ¢ã—ãŸãƒˆãƒ¬ãƒ¼ã‚¹ãƒ—ãƒ­ã‚»ã‚¹æ•°ã®è¨˜éŒ²ã‚’å‰Šé™¤ã™ã‚‹ */
 #define LogTracker_POP(TR)  (vec_pop(&(TR)->btp_idx))
-/* ¥×¥í¥»¥¹ID½¸¹ç¤ËID¤òÄÉ²Ã¤¹¤ë */
+/* ãƒ—ãƒ­ã‚»ã‚¹IDé›†åˆã«IDã‚’è¿½åŠ ã™ã‚‹ */
 #define LogTracker_TRACE(TR, ID) (vec_push(&(TR)->traced_ids, (ID)))
 
 /* ----
  * TraceLog
- * ¥°¥é¥ÕÆ±·ÁÀ®È½ÄêÍÑ¥Ç¡¼¥¿¹½Â¤ËÜÂÎ
+ * ã‚°ãƒ©ãƒ•åŒå½¢æˆåˆ¤å®šç”¨ãƒ‡ãƒ¼ã‚¿æ§‹é€ æœ¬ä½“
  */
 
 /** MEMO:
- *  ÈóTIME-OPTÈÇ¤ò¼ÂÁõ¤·¤Æ¤¤¤Ê¤¤
+ *  éžTIME-OPTç‰ˆã‚’å®Ÿè£…ã—ã¦ã„ãªã„
  */
 
-/* ³Æ{¥·¥ó¥Ü¥ë¥¢¥È¥à, inside proxy¥¢¥È¥à, Ëì}¤ËÂÐ¤·¤Æ1¤Ä¤º¤ÄÂÐ±þ¤µ¤»¤ë¥Ç¡¼¥¿¹½Â¤
- * outside proxy¥¢¥È¥à¤Ï´Þ¤á¤Ê¤¤ */
+/* å„{ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ , inside proxyã‚¢ãƒˆãƒ , è†œ}ã«å¯¾ã—ã¦1ã¤ãšã¤å¯¾å¿œã•ã›ã‚‹ãƒ‡ãƒ¼ã‚¿æ§‹é€ 
+ * outside proxyã‚¢ãƒˆãƒ ã¯å«ã‚ãªã„ */
 struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
-  BYTE flag;                   /* ÂÐ±þ¤µ¤»¤Æ¤¤¤ë¥Ç¡¼¥¿¤Î¼ïÎà¤ò¼¨¤¹¥Õ¥é¥° */
-  unsigned int traversed_proc; /* Ëì¤ËÂÐ±þ¤µ¤»¤Æ¤¤¤ë¾ì¹ç¤Ï, ¤½¤ÎËìÆâ¤ÇË¬Ìä¤·¤¿
-                                   {¥·¥ó¥Ü¥ë¥¢¥È¥à, inside proxy¥¢¥È¥à, »ÒËì}¤ÎÁí¿ô
-                                  ¤òµ­Ï¿¤·¤Æ¤¤¤ë.
-                                  Â¾¤Î¥Ç¡¼¥¿¤ËÂÐ±þ¤µ¤»¤Æ¤¤¤ë¾ì¹ç¤Ï0¤Î¤Þ¤Þ */
-  ProcessID owner_id;          /* ÂÐ±þ¤µ¤»¤Æ¤¤¤ë¥Ç¡¼¥¿¹½Â¤¤Î½êÂ°Ëì¤ÎID.
-                                * ¥×¥í¥»¥¹ID¤Ï1¤«¤é»Ï¤Þ¤ë¤¿¤á,
-                                * ½êÂ°Ëì¤¬¤Ê¤¤(Îã¤¨¤Ð¥°¥í¡¼¥Ð¥ë¥ë¡¼¥ÈËì¤Î)¾ì¹ç¤Ï, 0 */
-  ProcessID matched;           /* ÂÐ±þ¤µ¤»¤Æ¤¤¤ë¥×¥í¥»¥¹¤È¥Þ¥Ã¥Á¤µ¤»¤¿¥×¥í¥»¥¹¤ÎID.
-                                * in-proxy¥¢¥È¥à¤ÏBS encode»þ¤ÎË¬Ìä½ç½ø¤Ë¿ô¤¨¤Ê¤¤¤¿¤á,
-                                * in-proxy¥¢¥È¥à¤Ø¤ÎÂÐ±þ¤È¤·¤Æ¤Ï0¤ò¥»¥Ã¥È */
+  BYTE flag;                   /* å¯¾å¿œã•ã›ã¦ã„ã‚‹ãƒ‡ãƒ¼ã‚¿ã®ç¨®é¡žã‚’ç¤ºã™ãƒ•ãƒ©ã‚° */
+  unsigned int traversed_proc; /* è†œã«å¯¾å¿œã•ã›ã¦ã„ã‚‹å ´åˆã¯, ãã®è†œå†…ã§è¨ªå•ã—ãŸ
+                                   {ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ , inside proxyã‚¢ãƒˆãƒ , å­è†œ}ã®ç·æ•°
+                                  ã‚’è¨˜éŒ²ã—ã¦ã„ã‚‹.
+                                  ä»–ã®ãƒ‡ãƒ¼ã‚¿ã«å¯¾å¿œã•ã›ã¦ã„ã‚‹å ´åˆã¯0ã®ã¾ã¾ */
+  ProcessID owner_id;          /* å¯¾å¿œã•ã›ã¦ã„ã‚‹ãƒ‡ãƒ¼ã‚¿æ§‹é€ ã®æ‰€å±žè†œã®ID.
+                                * ãƒ—ãƒ­ã‚»ã‚¹IDã¯1ã‹ã‚‰å§‹ã¾ã‚‹ãŸã‚,
+                                * æ‰€å±žè†œãŒãªã„(ä¾‹ãˆã°ã‚°ãƒ­ãƒ¼ãƒãƒ«ãƒ«ãƒ¼ãƒˆè†œã®)å ´åˆã¯, 0 */
+  ProcessID matched;           /* å¯¾å¿œã•ã›ã¦ã„ã‚‹ãƒ—ãƒ­ã‚»ã‚¹ã¨ãƒžãƒƒãƒã•ã›ãŸãƒ—ãƒ­ã‚»ã‚¹ã®ID.
+                                * in-proxyã‚¢ãƒˆãƒ ã¯BS encodeæ™‚ã®è¨ªå•é †åºã«æ•°ãˆãªã„ãŸã‚,
+                                * in-proxyã‚¢ãƒˆãƒ ã¸ã®å¯¾å¿œã¨ã—ã¦ã¯0ã‚’ã‚»ãƒƒãƒˆ */
 };
 
 struct TraceLog {
@@ -616,8 +616,8 @@ static inline BYTE tracelog_get_matchedFlag(TraceLog l, LmnWord key);
  * Inline Functions
  */
 
-/* Ëìowner¤òÂÐ¾Ý¤È¤·¤ÆË¬ÌäºÑ¤ß¤Ë¤·¤¿¥×¥í¥»¥¹ (¥·¥ó¥Ü¥ë¥¢¥È¥à + »ÒËì + inside proxies) ¤Î¿ô¤¬
- * Ëìowner¤Î¤½¤ì¤È°ìÃ×¤·¤Æ¤¤¤ë¤«ÈÝ¤«¤òÊÖ¤¹ */
+/* è†œownerã‚’å¯¾è±¡ã¨ã—ã¦è¨ªå•æ¸ˆã¿ã«ã—ãŸãƒ—ãƒ­ã‚»ã‚¹ (ã‚·ãƒ³ãƒœãƒ«ã‚¢ãƒˆãƒ  + å­è†œ + inside proxies) ã®æ•°ãŒ
+ * è†œownerã®ãã‚Œã¨ä¸€è‡´ã—ã¦ã„ã‚‹ã‹å¦ã‹ã‚’è¿”ã™ */
 static inline BOOL tracelog_eq_traversed_proc_num(TraceLog      l,
                                                   LmnMembrane   *owner,
                                                   AtomListEntry *in_ent,
@@ -631,7 +631,7 @@ static inline BOOL tracelog_eq_traversed_proc_num(TraceLog      l,
               - atomlist_get_entries_num(avoid));
 }
 
-/* ¥È¥ì¡¼¥¹¥í¥°l¤Î¥Æ¡¼¥Ö¥ë¥µ¥¤¥º¤ònew_size°Ê¾å¤ÎÂç¤­¤µ¤Ë³ÈÄ¥¤¹¤ë. */
+/* ãƒˆãƒ¬ãƒ¼ã‚¹ãƒ­ã‚°lã®ãƒ†ãƒ¼ãƒ–ãƒ«ã‚µã‚¤ã‚ºã‚’new_sizeä»¥ä¸Šã®å¤§ãã•ã«æ‹¡å¼µã™ã‚‹. */
 static inline void tracelog_tbl_expand(TraceLog l, unsigned long new_size)
 {
   unsigned long org_size = l->cap;
@@ -640,11 +640,11 @@ static inline void tracelog_tbl_expand(TraceLog l, unsigned long new_size)
   memset(l->tbl + org_size, TLOG_INIT_DATA, sizeof(struct TraceData) * (l->cap - org_size));
 }
 
-/* ¥í¥°l¾å¤Î¥­¡¼key°ÌÃÖ¤Ë¤¢¤ëTraceLog¤ËÂÐ¤·¤Æ, Ë¬Ìä¤òµ­Ï¿¤¹¤ë.
- * matched_id¤Ï¥Þ¥Ã¥Á¤·¤¿¥×¥í¥»¥¹¤ÎID, owner¤Ï½êÂ°Ëì.
- * ½êÂ°Ëì¤¬NULL¤Ç¤Ê¤¤¾ì¹ç¤Ï, ½êÂ°Ëì¤Î¾ðÊó¤òµ­Ï¿¤·, ½êÂ°ËìÂ¦¤Î¥×¥í¥»¥¹Ë¬Ìä¥«¥¦¥ó¥¿¤ò²ó¤¹.
- * tracelog_put_atom, tracelog_put_mem¤«¤é¸Æ¤Ó½Ð¤¹´Ø¿ô¤Ç¤¢¤ê, Ä¾ÀÜcall¤·¤Ê¤¤¤³¤È.
- * (¸Æ½Ð¤·¥³¥¹¥Èºï¸º¤Î¤¿¤á¤Ë¸ø³«´Ø¿ô¤È¤·¤Æ¤¤¤ë¤À¤±) */
+/* ãƒ­ã‚°lä¸Šã®ã‚­ãƒ¼keyä½ç½®ã«ã‚ã‚‹TraceLogã«å¯¾ã—ã¦, è¨ªå•ã‚’è¨˜éŒ²ã™ã‚‹.
+ * matched_idã¯ãƒžãƒƒãƒã—ãŸãƒ—ãƒ­ã‚»ã‚¹ã®ID, ownerã¯æ‰€å±žè†œ.
+ * æ‰€å±žè†œãŒNULLã§ãªã„å ´åˆã¯, æ‰€å±žè†œã®æƒ…å ±ã‚’è¨˜éŒ²ã—, æ‰€å±žè†œå´ã®ãƒ—ãƒ­ã‚»ã‚¹è¨ªå•ã‚«ã‚¦ãƒ³ã‚¿ã‚’å›žã™.
+ * tracelog_put_atom, tracelog_put_memã‹ã‚‰å‘¼ã³å‡ºã™é–¢æ•°ã§ã‚ã‚Š, ç›´æŽ¥callã—ãªã„ã“ã¨.
+ * (å‘¼å‡ºã—ã‚³ã‚¹ãƒˆå‰Šæ¸›ã®ãŸã‚ã«å…¬é–‹é–¢æ•°ã¨ã—ã¦ã„ã‚‹ã ã‘) */
 static inline int tracelog_put(TraceLog l, LmnWord key, LmnWord matched_id,
                                LmnMembrane *owner) {
   if (l->cap <= key) {
@@ -667,8 +667,8 @@ static inline int tracelog_put(TraceLog l, LmnWord key, LmnWord matched_id,
   return 1;
 }
 
-/* ¥í¥°l¤Ë, ½êÂ°Ëìowner1¤Î¥¢¥È¥àatom1¤Ø¤ÎË¬Ìä¤òµ­Ï¿¤¹¤ë.
- * atom1¤Ë¥Þ¥Ã¥Á¤·¤¿¥¢¥È¥à¤Î¥×¥í¥»¥¹ID¤â¤·¤¯¤ÏË¬ÌäÈÖ¹æatom2_id¤òÊ»¤»¤Æµ­Ï¿¤¹¤ë. */
+/* ãƒ­ã‚°lã«, æ‰€å±žè†œowner1ã®ã‚¢ãƒˆãƒ atom1ã¸ã®è¨ªå•ã‚’è¨˜éŒ²ã™ã‚‹.
+ * atom1ã«ãƒžãƒƒãƒã—ãŸã‚¢ãƒˆãƒ ã®ãƒ—ãƒ­ã‚»ã‚¹IDã‚‚ã—ãã¯è¨ªå•ç•ªå·atom2_idã‚’ä½µã›ã¦è¨˜éŒ²ã™ã‚‹. */
 static inline int tracelog_put_atom(TraceLog l, LmnSAtom atom1, LmnWord  atom2_id,
                                     LmnMembrane *owner1) {
   int ret = tracelog_put(l, LMN_SATOM_ID(atom1), atom2_id, owner1);
@@ -676,18 +676,18 @@ static inline int tracelog_put_atom(TraceLog l, LmnSAtom atom1, LmnWord  atom2_i
   return ret;
 }
 
-/* ¥í¥°l¤Ë, Ëìmem1¤Ø¤ÎË¬Ìä¤òµ­Ï¿¤¹¤ë. (½êÂ°Ëì¤Ïmem1¤Î¥á¥ó¥Ð¤«¤é»²¾È¤¹¤ë¤¿¤áÉÔÍ×)
- * mem1¤Ë¥Þ¥Ã¥Á¤·¤¿Ëì¤Î¥×¥í¥»¥¹ID¤â¤·¤¯¤ÏË¬ÌäÈÖ¹æmem2_id¤òÊ»¤»¤Æµ­Ï¿¤¹¤ë */
+/* ãƒ­ã‚°lã«, è†œmem1ã¸ã®è¨ªå•ã‚’è¨˜éŒ²ã™ã‚‹. (æ‰€å±žè†œã¯mem1ã®ãƒ¡ãƒ³ãƒã‹ã‚‰å‚ç…§ã™ã‚‹ãŸã‚ä¸è¦)
+ * mem1ã«ãƒžãƒƒãƒã—ãŸè†œã®ãƒ—ãƒ­ã‚»ã‚¹IDã‚‚ã—ãã¯è¨ªå•ç•ªå·mem2_idã‚’ä½µã›ã¦è¨˜éŒ²ã™ã‚‹ */
 static inline int tracelog_put_mem(TraceLog l, LmnMembrane *mem1, LmnWord mem2_id) {
   int ret = tracelog_put(l, lmn_mem_id(mem1), mem2_id, lmn_mem_parent(mem1));
   TLOG_SET_TRV_MEM(TLOG_FLAG(l->tbl[lmn_mem_id(mem1)]));
   return ret;
 }
 
-/* ¥í¥°l¤Ë, ¥Ï¥¤¥Ñ¡¼¥°¥é¥Õ¤Î¥ë¡¼¥È¥ª¥Ö¥¸¥§¥¯¥Èhl1¤Ø¤ÎË¬Ìä¤òµ­Ï¿¤¹¤ë.
- * (¥Ï¥¤¥Ñ¡¼¥°¥é¥Õ¹½Â¤¤Ë¤Ï½êÂ°Ëì¤Î³µÇ°¤¬¤Ê¤¯, Ëì¥ª¥Ö¥¸¥§¥¯¥È¤«¤é¤Î»²¾È¤â¤Ç¤­¤Ê¤¤¤¿¤á,
- *  ½êÂ°Ëì¤ËÂÐ¤¹¤ë°ìÀÚ¤ÎÁàºî¤ÏÉÔÍ×)
- * hl1¤Ë¥Þ¥Ã¥Á¤·¤¿¥Ï¥¤¥Ñ¥ê¥ó¥¯¥ª¥Ö¥¸¥§¥¯¥ÈID¤â¤·¤¯¤ÏË¬ÌäÈÖ¹æhl2_id¤òÊ»¤»¤Æµ­Ï¿¤¹¤ë */
+/* ãƒ­ã‚°lã«, ãƒã‚¤ãƒ‘ãƒ¼ã‚°ãƒ©ãƒ•ã®ãƒ«ãƒ¼ãƒˆã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆhl1ã¸ã®è¨ªå•ã‚’è¨˜éŒ²ã™ã‚‹.
+ * (ãƒã‚¤ãƒ‘ãƒ¼ã‚°ãƒ©ãƒ•æ§‹é€ ã«ã¯æ‰€å±žè†œã®æ¦‚å¿µãŒãªã, è†œã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‹ã‚‰ã®å‚ç…§ã‚‚ã§ããªã„ãŸã‚,
+ *  æ‰€å±žè†œã«å¯¾ã™ã‚‹ä¸€åˆ‡ã®æ“ä½œã¯ä¸è¦)
+ * hl1ã«ãƒžãƒƒãƒã—ãŸãƒã‚¤ãƒ‘ãƒªãƒ³ã‚¯ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆIDã‚‚ã—ãã¯è¨ªå•ç•ªå·hl2_idã‚’ä½µã›ã¦è¨˜éŒ²ã™ã‚‹ */
 static inline int tracelog_put_hlink(TraceLog l, HyperLink *hl1, LmnWord hl2_id) {
   int ret = tracelog_put(l, LMN_HL_ID(hl1), hl2_id, NULL);
   TLOG_SET_TRV_HLINK(TLOG_FLAG(l->tbl[LMN_HL_ID(hl1)]));
@@ -695,7 +695,7 @@ static inline int tracelog_put_hlink(TraceLog l, HyperLink *hl1, LmnWord hl2_id)
 }
 
 static inline void tracelog_unput(TraceLog l, LmnWord key) {
-  LMN_ASSERT (TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]))); /* Ë¬ÌäºÑ¤ß¤Ç¤â¤Ê¤¤¤Ê¤¤¤Î¤Ëunput¤¹¤ë¤Ènum¤ÎÃÍ¤¬ÉÔÀµ¤Ë¤Ê¤êÆÀ¤ë */
+  LMN_ASSERT (TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]))); /* è¨ªå•æ¸ˆã¿ã§ã‚‚ãªã„ãªã„ã®ã«unputã™ã‚‹ã¨numã®å€¤ãŒä¸æ­£ã«ãªã‚Šå¾—ã‚‹ */
   if (l->cap > key) {
     l->num--;
     TLOG_TRV_DEC(l->tbl[TLOG_OWNER(l->tbl[key])]);
@@ -757,7 +757,7 @@ static inline void tracelog_continue_trace(TraceLog l) {
  */
 
 struct SimplyTraceLog {
-  struct SimplyProcTbl tbl; /* Process ID¤òkey, Ë¬ÌäºÑ¤ß¤«ÈÝ¤«¤Î¿¿µ¶ÃÍ¤òvalue¤È¤·¤¿¥Æ¡¼¥Ö¥ë */
+  struct SimplyProcTbl tbl; /* Process IDã‚’key, è¨ªå•æ¸ˆã¿ã‹å¦ã‹ã®çœŸå½å€¤ã‚’valueã¨ã—ãŸãƒ†ãƒ¼ãƒ–ãƒ« */
   struct LogTracker tracker;
 };
 
@@ -824,23 +824,23 @@ static inline void simplylog_continue_trace(SimplyLog l) {
  * Visit Log
  */
 
-/* VisitLog - Æ±·¿À­È½Äê¤ä¡¢ID¤Ê¤É¥Ð¥Ã¥¯¥È¥é¥Ã¥¯¤ò¤·¤Ê¤¬¤é¥°¥é¥Õ¤òÃµº÷¤¹¤ë¾ì¹ç¤ËÍÑ¤¤¤ë.
- * ¥¢¥È¥à¤äËì¤Î¥í¥°¤Ø¤ÎÄÉ²Ã»þ¤Ë¤ÏÄÉ²Ã½ç¤Ë¼«Æ°Åª¤ËÈÖ¹æ¤òÉÕ²Ã¤¹¤ë.
- * ¥Á¥§¥Ã¥¯¥Ý¥¤¥ó¥È¤ò»È¤¦¤³¤È¤Ç, ¥Ð¥Ã¥¯¥È¥é¥Ã¥¯»þ¤Ë¥í¥°¤ò¥Ð¥Ã¥¯¥È¥é¥Ã¥¯Á°¤Î¾õÂÖ¤Ë¸µ¤ËÌá¤¹¤³¤È¤¬¤Ç¤­¤ë.
+/* VisitLog - åŒåž‹æ€§åˆ¤å®šã‚„ã€IDãªã©ãƒãƒƒã‚¯ãƒˆãƒ©ãƒƒã‚¯ã‚’ã—ãªãŒã‚‰ã‚°ãƒ©ãƒ•ã‚’æŽ¢ç´¢ã™ã‚‹å ´åˆã«ç”¨ã„ã‚‹.
+ * ã‚¢ãƒˆãƒ ã‚„è†œã®ãƒ­ã‚°ã¸ã®è¿½åŠ æ™‚ã«ã¯è¿½åŠ é †ã«è‡ªå‹•çš„ã«ç•ªå·ã‚’ä»˜åŠ ã™ã‚‹.
+ * ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆã‚’ä½¿ã†ã“ã¨ã§, ãƒãƒƒã‚¯ãƒˆãƒ©ãƒƒã‚¯æ™‚ã«ãƒ­ã‚°ã‚’ãƒãƒƒã‚¯ãƒˆãƒ©ãƒƒã‚¯å‰ã®çŠ¶æ…‹ã«å…ƒã«æˆ»ã™ã“ã¨ãŒã§ãã‚‹.
  */
 
-/* VisitLog¤Ëµ­Ï¿¤µ¤ì¤¿ÊÑ¹¹¤Î¥¹¥Ê¥Ã¥×¥·¥ç¥Ã¥È */
+/* VisitLogã«è¨˜éŒ²ã•ã‚ŒãŸå¤‰æ›´ã®ã‚¹ãƒŠãƒƒãƒ—ã‚·ãƒ§ãƒƒãƒˆ */
 struct Checkpoint {
   int n_data_atom;
   Vector elements;
 };
 
-/* Ë¬ÌäºÑ¤ß¤Î¥¢¥È¥à¤äËì¤Îµ­Ï¿ */
+/* è¨ªå•æ¸ˆã¿ã®ã‚¢ãƒˆãƒ ã‚„è†œã®è¨˜éŒ² */
 struct VisitLog {
-  struct ProcessTbl tbl;         /* ¥×¥í¥»¥¹ID¤òkey¤Ë¤·¤¿Ë¬ÌäÉ½ */
-  int               ref_n,       /* ¥Ð¥¤¥ÈÎó¤«¤éÆÉ¤ß½Ð¤·¤¿¥×¥í¥»¥¹¤ËºÆË¬Ìä¤¬È¯À¸¤·¤¿¾ì¹ç¤Î¤¿¤á¤Î»²¾ÈÈÖ¹æ³äÅö¥«¥¦¥ó¥¿ */
-                    element_num; /* Ë¬Ìä¤·¤¿¥×¥í¥»¥¹¿ô¤Î¥«¥¦¥ó¥¿ */
-  Vector            checkpoints; /* Checkpoint¥ª¥Ö¥¸¥§¥¯¥È¤ÎÇÛÎó */
+  struct ProcessTbl tbl;         /* ãƒ—ãƒ­ã‚»ã‚¹IDã‚’keyã«ã—ãŸè¨ªå•è¡¨ */
+  int               ref_n,       /* ãƒã‚¤ãƒˆåˆ—ã‹ã‚‰èª­ã¿å‡ºã—ãŸãƒ—ãƒ­ã‚»ã‚¹ã«å†è¨ªå•ãŒç™ºç”Ÿã—ãŸå ´åˆã®ãŸã‚ã®å‚ç…§ç•ªå·å‰²å½“ã‚«ã‚¦ãƒ³ã‚¿ */
+                    element_num; /* è¨ªå•ã—ãŸãƒ—ãƒ­ã‚»ã‚¹æ•°ã®ã‚«ã‚¦ãƒ³ã‚¿ */
+  Vector            checkpoints; /* Checkpointã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®é…åˆ— */
 };
 
 typedef struct VisitLog    *VisitLog;
@@ -876,8 +876,8 @@ static inline int  visitlog_element_num(VisitLog visitlog);
  * Inline Functions
  */
 
-/* ¥í¥°¤Ëp¤òÄÉ²Ã¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹. ¤¹¤Ç¤Ëp¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï0¤òÊÖ¤¹.
- * ÄÌ¾ï¤³¤Î´Ø¿ô¤Ç¤Ï¤Ê¤¯put_atom, put_mem¤ò»ÈÍÑ¤¹¤ë. */
+/* ãƒ­ã‚°ã«pã‚’è¿½åŠ ã—, æ­£ã®å€¤ã‚’è¿”ã™. ã™ã§ã«pãŒå­˜åœ¨ã—ãŸå ´åˆã¯0ã‚’è¿”ã™.
+ * é€šå¸¸ã“ã®é–¢æ•°ã§ã¯ãªãput_atom, put_memã‚’ä½¿ç”¨ã™ã‚‹. */
 static inline int visitlog_put(VisitLog visitlog, LmnWord p) {
   if (proc_tbl_put_new(&visitlog->tbl, p, visitlog->ref_n++)) {
     if (vec_num(&visitlog->checkpoints) > 0) {
@@ -891,24 +891,24 @@ static inline int visitlog_put(VisitLog visitlog, LmnWord p) {
   }
 }
 
-/* ¥í¥°¤Ë¥¢¥È¥à¤òÄÉ²Ã¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹. ¤¹¤Ç¤Ë¥¢¥È¥à¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï0¤òÊÖ¤¹ */
+/* ãƒ­ã‚°ã«ã‚¢ãƒˆãƒ ã‚’è¿½åŠ ã—, æ­£ã®å€¤ã‚’è¿”ã™. ã™ã§ã«ã‚¢ãƒˆãƒ ãŒå­˜åœ¨ã—ãŸå ´åˆã¯0ã‚’è¿”ã™ */
 static inline int visitlog_put_atom(VisitLog visitlog, LmnSAtom atom) {
   return visitlog_put(visitlog, LMN_SATOM_ID(atom));
 }
 
-/* ¥í¥°¤ËËì¤òÄÉ²Ã¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹. ¤¹¤Ç¤ËËì¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï0¤òÊÖ¤¹ */
+/* ãƒ­ã‚°ã«è†œã‚’è¿½åŠ ã—, æ­£ã®å€¤ã‚’è¿”ã™. ã™ã§ã«è†œãŒå­˜åœ¨ã—ãŸå ´åˆã¯0ã‚’è¿”ã™ */
 static inline int visitlog_put_mem(VisitLog visitlog, LmnMembrane *mem) {
   return visitlog_put(visitlog, lmn_mem_id(mem));
 }
 
-/* ¥í¥°¤Ë¥Ï¥¤¥Ñ¡¼¥ê¥ó¥¯¤òÄÉ²Ã¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹. ¤¹¤Ç¤Ë¥Ï¥¤¥Ñ¡¼¥ê¥ó¥¯¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï0¤òÊÖ¤¹ */
+/* ãƒ­ã‚°ã«ãƒã‚¤ãƒ‘ãƒ¼ãƒªãƒ³ã‚¯ã‚’è¿½åŠ ã—, æ­£ã®å€¤ã‚’è¿”ã™. ã™ã§ã«ãƒã‚¤ãƒ‘ãƒ¼ãƒªãƒ³ã‚¯ãŒå­˜åœ¨ã—ãŸå ´åˆã¯0ã‚’è¿”ã™ */
 static inline int visitlog_put_hlink(VisitLog visitlog, HyperLink *hl)
 {
   return visitlog_put(visitlog, LMN_HL_ID(hl));
 }
 
-/* ¥í¥°¤Ë¥Ç¡¼¥¿¥¢¥È¥à¤òÄÉ²Ã¤¹¤ë.
- * ¡Ê°ú¿ô¤¬¥í¥°¤·¤«Ìµ¤¤¤³¤È¤«¤éÊ¬¤«¤ë¤è¤¦¤Ë, Ã±¤ËË¬Ìä¤·¤¿¥¢¥È¥à¤ò¿ô¤¨¤ë¤¿¤á¤Ë»ÈÍÑ¤¹¤ë¡Ë */
+/* ãƒ­ã‚°ã«ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒˆãƒ ã‚’è¿½åŠ ã™ã‚‹.
+ * ï¼ˆå¼•æ•°ãŒãƒ­ã‚°ã—ã‹ç„¡ã„ã“ã¨ã‹ã‚‰åˆ†ã‹ã‚‹ã‚ˆã†ã«, å˜ã«è¨ªå•ã—ãŸã‚¢ãƒˆãƒ ã‚’æ•°ãˆã‚‹ãŸã‚ã«ä½¿ç”¨ã™ã‚‹ï¼‰ */
 static inline void visitlog_put_data(VisitLog visitlog) {
   if (vec_num(&visitlog->checkpoints) > 0) {
     struct Checkpoint *checkpoint = (struct Checkpoint *)vec_last(&visitlog->checkpoints);
@@ -917,26 +917,26 @@ static inline void visitlog_put_data(VisitLog visitlog) {
   visitlog->element_num++;
 }
 
-/* ¥í¥°¤Ëµ­Ï¿¤µ¤ì¤¿¥¢¥È¥àatom¤ËÂÐ±þ¤¹¤ëÃÍ¤òvalue¤ËÀßÄê¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹.
- * ¥í¥°¤Ëatom¤¬Â¸ºß¤·¤Ê¤¤¾ì¹ç¤Ï, 0¤òÊÖ¤¹. */
+/* ãƒ­ã‚°ã«è¨˜éŒ²ã•ã‚ŒãŸã‚¢ãƒˆãƒ atomã«å¯¾å¿œã™ã‚‹å€¤ã‚’valueã«è¨­å®šã—, æ­£ã®å€¤ã‚’è¿”ã™.
+ * ãƒ­ã‚°ã«atomãŒå­˜åœ¨ã—ãªã„å ´åˆã¯, 0ã‚’è¿”ã™. */
 static inline int visitlog_get_atom(VisitLog visitlog, LmnSAtom atom, LmnWord *value) {
   return proc_tbl_get_by_atom(&visitlog->tbl, atom, value);
 }
 
-/* ¥í¥°¤Ëµ­Ï¿¤µ¤ì¤¿Ëìmem¤ËÂÐ±þ¤¹¤ëÃÍ¤òvalue¤ËÀßÄê, Àµ¤ÎÃÍ¤òÊÖ¤¹.
- * ¥í¥°¤Ëmem¤¬Â¸ºß¤·¤Ê¤¤¾ì¹ç¤Ï, 0¤òÊÖ¤¹. */
+/* ãƒ­ã‚°ã«è¨˜éŒ²ã•ã‚ŒãŸè†œmemã«å¯¾å¿œã™ã‚‹å€¤ã‚’valueã«è¨­å®š, æ­£ã®å€¤ã‚’è¿”ã™.
+ * ãƒ­ã‚°ã«memãŒå­˜åœ¨ã—ãªã„å ´åˆã¯, 0ã‚’è¿”ã™. */
 static inline int visitlog_get_mem(VisitLog visitlog, LmnMembrane *mem, LmnWord *value) {
   return proc_tbl_get_by_mem(&visitlog->tbl, mem, value);
 }
 
-/* ¥í¥°¤Ëµ­Ï¿¤µ¤ì¤¿hl¤ËÂÐ±þ¤¹¤ëÃÍ¤òvalue¤ËÀßÄê¤·, Àµ¤ÎÃÍ¤òÊÖ¤¹.
- * ¥í¥°¤Ëhl¤¬Â¸ºß¤·¤Ê¤¤¾ì¹ç¤Ï, 0¤òÊÖ¤¹. */
+/* ãƒ­ã‚°ã«è¨˜éŒ²ã•ã‚ŒãŸhlã«å¯¾å¿œã™ã‚‹å€¤ã‚’valueã«è¨­å®šã—, æ­£ã®å€¤ã‚’è¿”ã™.
+ * ãƒ­ã‚°ã«hlãŒå­˜åœ¨ã—ãªã„å ´åˆã¯, 0ã‚’è¿”ã™. */
 static inline int visitlog_get_hlink(VisitLog visitlog, HyperLink *hl, LmnWord *value)
 {
   return proc_tbl_get_by_hlink(&visitlog->tbl, hl, value);
 }
 
-/* visitlog¤Ëµ­Ï¿¤·¤¿Í×ÁÇ¡ÊËì¡¢¥¢¥È¥à¡Ë¤Î¿ô¤òÊÖ¤¹ */
+/* visitlogã«è¨˜éŒ²ã—ãŸè¦ç´ ï¼ˆè†œã€ã‚¢ãƒˆãƒ ï¼‰ã®æ•°ã‚’è¿”ã™ */
 static inline int visitlog_element_num(VisitLog visitlog) {
   return visitlog->element_num;
 }

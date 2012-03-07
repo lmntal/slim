@@ -68,7 +68,7 @@ BOOL vec_contains(const Vector *vec, LmnWord keyp) {
   return FALSE;
 }
 
-/* ¥Ù¥¯¥¿¤Î¥µ¥¤¥º¤ò size ¤ËÊÑ¹¹¤·¡¢¿·µ¬¤ËÄÉ²Ã¤µ¤ì¤¿¹àÌÜ¤ò val ¤ËÀßÄê¤¹¤ë*/
+/* ãƒ™ã‚¯ã‚¿ã®ã‚µã‚¤ã‚ºã‚’ size ã«å¤‰æ›´ã—ã€æ–°è¦ã«è¿½åŠ ã•ã‚ŒãŸé …ç›®ã‚’ val ã«è¨­å®šã™ã‚‹*/
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val)
 {
   unsigned int i;
@@ -77,7 +77,7 @@ void vec_resize(Vector *vec, unsigned int size, vec_data_t val)
     vec_extend(vec);
   }
 
-  /* ÄÉ²Ã¤µ¤ì¤¿¹àÌÜ¤ò val ¤ËÀßÄê */
+  /* è¿½åŠ ã•ã‚ŒãŸé …ç›®ã‚’ val ã«è¨­å®š */
   for (i=vec->num; i<size; i++) {
     vec->tbl[i] = val;
   }
@@ -90,7 +90,7 @@ void vec_sort(const Vector *vec,
   qsort(vec->tbl, vec->num, sizeof(vec_data_t), compare);
 }
 
-/* Vector¤ËµÍ¤ó¤ÀÍ×ÁÇ¤òµÕ½ç¤ËÊÂ¤ÙÄ¾¤¹ */
+/* Vectorã«è©°ã‚“ã è¦ç´ ã‚’é€†é †ã«ä¸¦ã¹ç›´ã™ */
 void vec_reverse(Vector *vec)
 {
   unsigned int r, l;

@@ -63,7 +63,7 @@ char *int_to_str(long n)
   return s;
 }
 
-/* ¥½¡¼¥ÈÍÑ¡£int¤Î¾º½çÈæ³Ó¤ò¹Ô¤¦¡£*/
+/* ã‚½ãƒ¼ãƒˆç”¨ã€‚intã®æ˜‡é †æ¯”è¼ƒã‚’è¡Œã†ã€‚*/
 int comp_int_f(const void *a_, const void *b_)
 {
   int a = *(int *)a_;
@@ -71,7 +71,7 @@ int comp_int_f(const void *a_, const void *b_)
   return a > b ? 1 : (a == b ? 0 : -1);
 }
 
-/* ¥½¡¼¥ÈÍÑ¡£int¤Î¾º½çÈæ³Ó¤ò¹Ô¤¦¡£*/
+/* ã‚½ãƒ¼ãƒˆç”¨ã€‚intã®æ˜‡é †æ¯”è¼ƒã‚’è¡Œã†ã€‚*/
 int comp_int_greater_f(const void *a_, const void *b_)
 {
   int a = *(int *)a_;

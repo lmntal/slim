@@ -40,8 +40,8 @@
 
 /** CAUTION:
  *
- *    ¤³¤Îhashset, hashttbl¤Ï, ProcessTbl¤äst_table¤ËÈæ¤Ù¤ÆÀ­Ç½¤¬Èó¾ï¤Ë°­¤¤.
- *    »ÈÍÑ¤¹¤ëºİ¤Ë¤ÏÀ­Ç½ÌÌ¤Ç½½Ê¬¤ÊÃí°Õ¤¬É¬Í×
+ *    ã“ã®hashset, hashttblã¯, ProcessTblã‚„st_tableã«æ¯”ã¹ã¦æ€§èƒ½ãŒéå¸¸ã«æ‚ªã„.
+ *    ä½¿ç”¨ã™ã‚‹éš›ã«ã¯æ€§èƒ½é¢ã§ååˆ†ãªæ³¨æ„ãŒå¿…è¦
  *
  */
 
@@ -68,9 +68,9 @@
 #define K 2654435761UL
 /* maximum capacity */
 #define MAX_CAP 0x80000000UL
-/* ÊÌ¤ËºÇÂçÍÆÎÌ¤òÀ©¸Â¤¹¤ëÉ¬Í×¤Ï¤Ê¤¤¤¬¡¢À©¸Â¤ò¤·¤Ê¤¤¾ì¹ç¤Ï,
-   K¤¬Äê¿ô¤Ê¤Î¤Ç¥¤¥ó¥Ç¥Ã¥¯¥¹¤Î·×»»¤Î»ş¤Ë¡¢hash_val¤ò32bit¤Ë
-   ¾ö¤ß¹ş¤àÉ¬Í×¤¬¤¢¤ë */
+/* åˆ¥ã«æœ€å¤§å®¹é‡ã‚’åˆ¶é™ã™ã‚‹å¿…è¦ã¯ãªã„ãŒã€åˆ¶é™ã‚’ã—ãªã„å ´åˆã¯,
+   KãŒå®šæ•°ãªã®ã§ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®è¨ˆç®—ã®æ™‚ã«ã€hash_valã‚’32bitã«
+   ç•³ã¿è¾¼ã‚€å¿…è¦ãŒã‚ã‚‹ */
 
 #if SIZEOF_LONG == 4
 #  define EMPTY_KEY   0xffffffffUL
@@ -258,7 +258,7 @@ static void hashset_extend(HashSet *set)
 
   for(i = 0; i < cap; i++) {
     if(tbl[i] != EMPTY_KEY) {
-      entry = hashset_get_p(set, tbl[i], DELETED_KEY); /* ¿·¤·¤¤index */
+      entry = hashset_get_p(set, tbl[i], DELETED_KEY); /* æ–°ã—ã„index */
       *entry = tbl[i];
     }
   }
@@ -292,7 +292,7 @@ void hashset_delete(HashSet *set, HashKeyType key) {
     set->num--;
     *entry = DELETED_KEY;
   }
-  /* EFFICIENCY: hashset_reduce() ¤¬É¬Í× */
+  /* EFFICIENCY: hashset_reduce() ãŒå¿…è¦ */
 }
 
 HashSetIterator hashset_iterator(HashSet *set) {

@@ -37,7 +37,7 @@
  * $Id$
  */
 
-/* ³°Éô¥×¥í¥°¥é¥à¤Îµ¯Æ°¤Ê¤É¡¢¥×¥í¥»¥¹´ØÏ¢¤ÎÊØÍø´Ø¿ô¤ÎÄêµÁ */
+/* å¤–éƒ¨ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã®èµ·å‹•ãªã©ã€ãƒ—ãƒ­ã‚»ã‚¹é–¢é€£ã®ä¾¿åˆ©é–¢æ•°ã®å®šç¾© */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +45,7 @@
 #include "process_util.h"
 
 
-/* program_path¤Ë¤¢¤ë¥×¥í¥°¥é¥à¤ò°ú¿ôargs¤Çµ¯Æ°¤·¡¢¥×¥í¥°¥é¥à¤Î½ĞÎÏ¤Î¥¹¥È¥ê¡¼¥à¤òÊÖ¤¹¡£*/
+/* program_pathã«ã‚ã‚‹ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‚’å¼•æ•°argsã§èµ·å‹•ã—ã€ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã®å‡ºåŠ›ã®ã‚¹ãƒˆãƒªãƒ¼ãƒ ã‚’è¿”ã™ã€‚*/
 FILE *run_program(const char *program_path, char **args)
 {
    pid_t pid;
@@ -59,7 +59,7 @@ FILE *run_program(const char *program_path, char **args)
    pid = fork();
 
    switch (pid) {
-   case 0: /* »Ò¥×¥í¥»¥¹ */
+   case 0: /* å­ãƒ—ãƒ­ã‚»ã‚¹ */
    {
      int old;
      close(fileno(stdout));
@@ -72,16 +72,16 @@ FILE *run_program(const char *program_path, char **args)
        exit(EXIT_FAILURE);
      }
    }
-   case -1: /* fork¼ºÇÔ */
+   case -1: /* forkå¤±æ•— */
      perror("fork failed");
      exit(EXIT_FAILURE);
-   default: /* ¿Æ¥×¥í¥»¥¹ */
+   default: /* è¦ªãƒ—ãƒ­ã‚»ã‚¹ */
    {
 //     int status;
 
      close(pipes[1]);
-     /* TODO: ¥Ñ¥¤¥×¤Î¥Ğ¥Ã¥Õ¥¡¤ò±Û¤¨¤ë½ĞÎÏ¤ò¼õ¤±¤¿¾ì¹ç,
-      *       ÆÉ¤ß¹ş¤à¤Ş¤Ç¥Ö¥í¥Ã¥¯¤µ¤ì¤ë¤¿¤á¥Ç¥Ã¥É¥í¥Ã¥¯¤·¤Æ¤·¤Ş¤¦ */
+     /* TODO: ãƒ‘ã‚¤ãƒ—ã®ãƒãƒƒãƒ•ã‚¡ã‚’è¶Šãˆã‚‹å‡ºåŠ›ã‚’å—ã‘ãŸå ´åˆ,
+      *       èª­ã¿è¾¼ã‚€ã¾ã§ãƒ–ãƒ­ãƒƒã‚¯ã•ã‚Œã‚‹ãŸã‚ãƒ‡ãƒƒãƒ‰ãƒ­ãƒƒã‚¯ã—ã¦ã—ã¾ã† */
 //     if (waitpid(pid, &status, 0) == -1) {
 //       perror("waitpid failed");
 //       exit(EXIT_FAILURE);
