@@ -116,9 +116,9 @@ static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
   return hval;
 }
 
-/* æ­£: a ï¼ b
- * ï¼: a = b
- * è² : a ï¼œ b */
+/* Àµ: a ¡ä b
+ * £°: a = b
+ * Éé: a ¡ã b */
 static inline int lmn_byte_cmp(const unsigned char *a, long alen,
                                const unsigned char *b, long blen)
 {
@@ -136,14 +136,14 @@ static inline int lmn_byte_cmp(const unsigned char *a, long alen,
  *  else
  */
 
-/* é…åˆ—ã®è¦ç´ æ•° */
+/* ÇÛÎó¤ÎÍ×ÁÇ¿ô */
 #define ARY_SIZEOF(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
 char *int_to_str(long n);
 int comp_int_f(const void *a, const void *b);
 int comp_int_greater_f(const void *a_, const void *b_);
 
-/* nä»¥ä¸Šã§æœ€å°ã®2ã®å€æ•°ã‚’è¿”ã™ */
+/* n°Ê¾å¤ÇºÇ¾®¤Î2¤ÎÇÜ¿ô¤òÊÖ¤¹ */
 static inline unsigned long round2up(unsigned long n) {
   unsigned int v = 1;
   while (v && v < n) {

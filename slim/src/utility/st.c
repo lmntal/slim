@@ -233,8 +233,8 @@ unsigned long st_table_space(st_table_t tbl)
     }                                                                   \
 } while (0)
 
-/* ã‚­ãƒ¼ãŒkeyã§ã‚ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«ã®å€¤ã‚’valueã«è¨­å®šã™ã‚‹ã€‚
- * ã‚­ãƒ¼ãŒè¦‹ã¤ã‹ã‚‰ãªã‘ã‚Œã°0ã‚’è¿”ã—ï¼Œè¦‹ã¤ã‹ã‚Œã°1ã‚’è¿”ã™ã€‚*/
+/* ¥­¡¼¤¬key¤Ç¤¢¤ë¥Æ¡¼¥Ö¥ë¤ÎÃÍ¤òvalue¤ËÀßÄê¤¹¤ë¡£
+ * ¥­¡¼¤¬¸«¤Ä¤«¤é¤Ê¤±¤ì¤Ğ0¤òÊÖ¤·¡¤¸«¤Ä¤«¤ì¤Ğ1¤òÊÖ¤¹¡£*/
 int st_lookup(st_table_t table, register st_data_t key, st_data_t *value)
 {
   unsigned long hash_val, bin_pos;
@@ -253,8 +253,8 @@ int st_lookup(st_table_t table, register st_data_t key, st_data_t *value)
 }
 
 
-/* ã‚­ãƒ¼ãŒkeyã§ã‚ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«ã®å€¤ã‚’valueã«è¨­å®šã™ã‚‹ã€‚
- * ã‚­ãƒ¼ãŒè¦‹ã¤ã‹ã‚‰ãªã‘ã‚Œã°0ã‚’è¿”ã—ï¼Œè¦‹ã¤ã‹ã‚Œã°1ã‚’è¿”ã™ã€‚*/
+/* ¥­¡¼¤¬key¤Ç¤¢¤ë¥Æ¡¼¥Ö¥ë¤ÎÃÍ¤òvalue¤ËÀßÄê¤¹¤ë¡£
+ * ¥­¡¼¤¬¸«¤Ä¤«¤é¤Ê¤±¤ì¤Ğ0¤òÊÖ¤·¡¤¸«¤Ä¤«¤ì¤Ğ1¤òÊÖ¤¹¡£*/
 int st_lookup_with_col(st_table_t table, register st_data_t key, st_data_t *value, long *n_col)
 {
   unsigned long hash_val, bin_pos;
@@ -308,9 +308,9 @@ static inline int st_insert_inner(register st_table_t table, register st_data_t 
   }
 }
 
-/* ãƒãƒƒã‚·ãƒ¥è¡¨ã«æ–°ãŸãªã‚¨ãƒ³ãƒˆãƒªãƒ¼ã‚’è¿½åŠ ã™ã‚‹.
- * ã‚¨ãƒ³ãƒˆãƒªãŒå­˜åœ¨ã—ãŸå ´åˆã¯, ã‚¨ãƒ³ãƒˆãƒªã®å€¤ã®ã¿ã‚’æ›´æ–°ã—, ã‚­ãƒ¼ã¯å…ƒã€…ã®ã‚‚ã®ã‚’æ›´æ–°ã—ãªã„.
- * ã‚¨ãƒ³ãƒˆãƒªãŒå­˜åœ¨ã—ãªã‹ã£ãŸå ´åˆã«0, ã‚¨ãƒ³ãƒˆãƒªãŒå­˜åœ¨ã—ãŸå ´åˆã«ã¯1ä»¥ä¸Šã®æ•´æ•°ã‚’è¿”ã™. */
+/* ¥Ï¥Ã¥·¥åÉ½¤Ë¿·¤¿¤Ê¥¨¥ó¥È¥ê¡¼¤òÄÉ²Ã¤¹¤ë.
+ * ¥¨¥ó¥È¥ê¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï, ¥¨¥ó¥È¥ê¤ÎÃÍ¤Î¤ß¤ò¹¹¿·¤·, ¥­¡¼¤Ï¸µ¡¹¤Î¤â¤Î¤ò¹¹¿·¤·¤Ê¤¤.
+ * ¥¨¥ó¥È¥ê¤¬Â¸ºß¤·¤Ê¤«¤Ã¤¿¾ì¹ç¤Ë0, ¥¨¥ó¥È¥ê¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ë¤Ï1°Ê¾å¤ÎÀ°¿ô¤òÊÖ¤¹. */
 int st_insert(register st_table_t table, register st_data_t key, st_data_t value)
 {
   int ret = st_insert_inner(table, key, value);
@@ -336,8 +336,8 @@ static inline int st_insert_safe_inner(register st_table_t table, register st_da
   }
 }
 
-/* ãƒãƒƒã‚·ãƒ¥è¡¨ã«æ–°ãŸãªã‚¨ãƒ³ãƒˆãƒªãƒ¼ã‚’è¿½åŠ ã—æ­£ã®å€¤ã‚’è¿”ã™.
- * ã‚¨ãƒ³ãƒˆãƒªãŒå­˜åœ¨ã—ãŸå ´åˆã¯, ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’å¤‰æ›´ã›ãšã«ã€0ã‚’è¿”ã™. */
+/* ¥Ï¥Ã¥·¥åÉ½¤Ë¿·¤¿¤Ê¥¨¥ó¥È¥ê¡¼¤òÄÉ²Ã¤·Àµ¤ÎÃÍ¤òÊÖ¤¹.
+ * ¥¨¥ó¥È¥ê¤¬Â¸ºß¤·¤¿¾ì¹ç¤Ï, ¥Æ¡¼¥Ö¥ë¤òÊÑ¹¹¤»¤º¤Ë¡¢0¤òÊÖ¤¹. */
 int st_insert_safe(register st_table_t table, register st_data_t key, st_data_t value)
 {
   int ret = st_insert_safe_inner(table, key, value);
@@ -349,7 +349,7 @@ int st_insert_safe(register st_table_t table, register st_data_t key, st_data_t 
 
 
 
-/* å€¤ã®é‡è¤‡ã‚’ãƒã‚§ãƒƒã‚¯ã›ãšã«ãƒãƒƒã‚·ãƒ¥è¡¨ã«æ–°ãŸãªã‚¨ãƒ³ãƒˆãƒªãƒ¼ã‚’è¿½åŠ ã™ã‚‹ */
+/* ÃÍ¤Î½ÅÊ£¤ò¥Á¥§¥Ã¥¯¤»¤º¤Ë¥Ï¥Ã¥·¥åÉ½¤Ë¿·¤¿¤Ê¥¨¥ó¥È¥ê¡¼¤òÄÉ²Ã¤¹¤ë */
 static inline void st_add_direct_inner(st_table_t table, st_data_t key, st_data_t value)
 {
   unsigned long hash_val, bin_pos;
@@ -428,9 +428,9 @@ st_table_t st_copy(st_table_t old_table) {
   return new_table;
 }
 
-/* ãƒãƒƒã‚·ãƒ¥è¡¨tableã®ã‚­ãƒ¼keyã®ãƒ‡ãƒ¼ã‚¿ã‚’å‰Šé™¤ã™ã‚‹.
- * keyã«å¯¾å¿œã™ã‚‹ãƒ‡ãƒ¼ã‚¿ãŒå­˜åœ¨ã—ãªã‹ã£ãŸå ´åˆã¯0ã‚’è¿”ã—,
- * keyã«å¯¾å¿œã™ã‚‹ãƒ‡ãƒ¼ã‚¿ãŒå­˜åœ¨ã™ã‚‹å ´åˆã¯, valueã«å€¤ã‚’ã‚»ãƒƒãƒˆã—ãŸå¾Œ, æ­£æ•°ã‚’è¿”ã™. */
+/* ¥Ï¥Ã¥·¥åÉ½table¤Î¥­¡¼key¤Î¥Ç¡¼¥¿¤òºï½ü¤¹¤ë.
+ * key¤ËÂĞ±ş¤¹¤ë¥Ç¡¼¥¿¤¬Â¸ºß¤·¤Ê¤«¤Ã¤¿¾ì¹ç¤Ï0¤òÊÖ¤·,
+ * key¤ËÂĞ±ş¤¹¤ë¥Ç¡¼¥¿¤¬Â¸ºß¤¹¤ë¾ì¹ç¤Ï, value¤ËÃÍ¤ò¥»¥Ã¥È¤·¤¿¸å, Àµ¿ô¤òÊÖ¤¹. */
 int st_delete(register st_table_t table, register st_data_t key, st_data_t *value)
 {
   unsigned long hash_val;
@@ -518,15 +518,15 @@ void st_clear(st_table_t table)
   st_foreach(table, clear_f, 0);
 }
 
-/* ãƒ†ãƒ¼ãƒ–ãƒ«ã®å„è¦ç´ ã«å¯¾ã—ï¼Œç¬¬ä¸€å¼•æ•°ã«ã‚­ãƒ¼ï¼Œç¬¬äºŒå¼•æ•°ã«å€¤ï¼Œ
- * ç¬¬ä¸‰å¼•æ•°ã«argã§funcã‚’å‘¼ã³å‡ºã™ï¼
+/* ¥Æ¡¼¥Ö¥ë¤Î³ÆÍ×ÁÇ¤ËÂĞ¤·¡¤Âè°ì°ú¿ô¤Ë¥­¡¼¡¤ÂèÆó°ú¿ô¤ËÃÍ¡¤
+ * Âè»°°ú¿ô¤Ëarg¤Çfunc¤ò¸Æ¤Ó½Ğ¤¹¡¥
  *
- * funcã®æˆ»ã‚Šå€¤ã«ST_CHECKï¼ŒST_CONTINUEï¼ŒST_STOPï¼ŒST_DELETE
- * ã®ã„ãšã‚Œã‚’æŒ‡å®šã™ã‚‹ã‹ã§ï¼Œãƒ†ãƒ¼ãƒ–ãƒ«ã®è¦ç´ ã‚’å¯¾è±¡ã«ä»»æ„ã®å‡¦ç†ã‚’å®Ÿè¡Œã™ã‚‹ã“ã¨ãŒã§ãã‚‹ï¼
- * ä¾‹ãˆã°ST_DELETEã‚’æˆ»ã‚Šå€¤ã«æŒ‡å®šã—ãŸå ´åˆã¯ï¼Œãƒ†ãƒ¼ãƒ–ãƒ«å†…ã®ã™ã¹ã¦ã®ã‚¨ãƒ³ãƒˆãƒªãƒ¼ã‚’åˆ©ç”¨ã—ã¦
- * ä»»æ„ã®å‡¦ç†ã‚’å®Ÿè¡Œã—ãŸå¾Œï¼Œãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ç©ºã«ã™ã‚‹ã“ã¨ãŒã§ãã‚‹ï¼
+ * func¤ÎÌá¤êÃÍ¤ËST_CHECK¡¤ST_CONTINUE¡¤ST_STOP¡¤ST_DELETE
+ * ¤Î¤¤¤º¤ì¤ò»ØÄê¤¹¤ë¤«¤Ç¡¤¥Æ¡¼¥Ö¥ë¤ÎÍ×ÁÇ¤òÂĞ¾İ¤ËÇ¤°Õ¤Î½èÍı¤ò¼Â¹Ô¤¹¤ë¤³¤È¤¬¤Ç¤­¤ë¡¥
+ * Îã¤¨¤ĞST_DELETE¤òÌá¤êÃÍ¤Ë»ØÄê¤·¤¿¾ì¹ç¤Ï¡¤¥Æ¡¼¥Ö¥ëÆâ¤Î¤¹¤Ù¤Æ¤Î¥¨¥ó¥È¥ê¡¼¤òÍøÍÑ¤·¤Æ
+ * Ç¤°Õ¤Î½èÍı¤ò¼Â¹Ô¤·¤¿¸å¡¤¥Æ¡¼¥Ö¥ë¤ò¶õ¤Ë¤¹¤ë¤³¤È¤¬¤Ç¤­¤ë¡¥
  *
- * ãªãŠï¼Œç¬¬ä¸‰å¼•æ•°argã¯ï¼Œfuncã®å‡¦ç†ã«ãƒ†ãƒ¼ãƒ–ãƒ«å†…ã®è¦ç´ ä»¥å¤–ã®ãƒ‡ãƒ¼ã‚¿ãŒå¿…è¦ãªå ´åˆã«åˆ©ç”¨ã™ã‚‹ï¼
+ * ¤Ê¤ª¡¤Âè»°°ú¿ôarg¤Ï¡¤func¤Î½èÍı¤Ë¥Æ¡¼¥Ö¥ëÆâ¤ÎÍ×ÁÇ°Ê³°¤Î¥Ç¡¼¥¿¤¬É¬Í×¤Ê¾ì¹ç¤ËÍøÍÑ¤¹¤ë¡¥
  */
 int st_foreach(st_table_t table, int(*func)( ANYARGS), st_data_t arg) {
   st_table_entry *ptr, *last, *tmp;
@@ -535,7 +535,7 @@ int st_foreach(st_table_t table, int(*func)( ANYARGS), st_data_t arg) {
 
   for (i = 0; i < table->num_bins; i++) {
     last = 0;
-    for (ptr = table->bins[i]; ptr != 0;) { /* ã‚¨ãƒ³ãƒˆãƒªãƒ¼ã®å­˜åœ¨ã™ã‚‹ãƒã‚§ã‚¤ãƒ³ã§ã®ã¿funcãŒå‘¼ã°ã‚Œã‚‹ */
+    for (ptr = table->bins[i]; ptr != 0;) { /* ¥¨¥ó¥È¥ê¡¼¤ÎÂ¸ºß¤¹¤ë¥Á¥§¥¤¥ó¤Ç¤Î¤ßfunc¤¬¸Æ¤Ğ¤ì¤ë */
       retval = (*func)(ptr->key, ptr->record, arg);
       switch (retval) {
       case ST_CHECK: /* check if hash is modified during iteration */
@@ -573,14 +573,14 @@ int st_foreach(st_table_t table, int(*func)( ANYARGS), st_data_t arg) {
   return 0;
 }
 
-/* ãƒãƒƒã‚·ãƒ¥å€¤ã« hash ã‚’æŒã¤çŠ¶æ…‹ã™ã¹ã¦ã«å¯¾ã—ã¦é–¢æ•° func ã‚’é©ç”¨ã™ã‚‹ */
+/* ¥Ï¥Ã¥·¥åÃÍ¤Ë hash ¤ò»ı¤Ä¾õÂÖ¤¹¤Ù¤Æ¤ËÂĞ¤·¤Æ´Ø¿ô func ¤òÅ¬ÍÑ¤¹¤ë */
 int st_foreach_hash(st_table_t table, st_data_t hash, int(*func)( ANYARGS), st_data_t arg) {
   st_table_entry *ptr, *last, *tmp;
   enum st_retval retval;
   st_data_t hash_val = hash % table->num_bins;
 
   last = 0;
-  for (ptr = table->bins[hash_val]; ptr != 0;) { /* ã‚¨ãƒ³ãƒˆãƒªãƒ¼ã®å­˜åœ¨ã™ã‚‹ãƒã‚§ã‚¤ãƒ³ã§ã®ã¿funcãŒå‘¼ã°ã‚Œã‚‹ */
+  for (ptr = table->bins[hash_val]; ptr != 0;) { /* ¥¨¥ó¥È¥ê¡¼¤ÎÂ¸ºß¤¹¤ë¥Á¥§¥¤¥ó¤Ç¤Î¤ßfunc¤¬¸Æ¤Ğ¤ì¤ë */
     if (ptr->hash != hash) {
       ptr = ptr->next;
       continue;
@@ -631,7 +631,7 @@ void st_concat(st_table_t tbl1, const st_table_t tbl2)
   st_foreach((st_table_t)tbl2, insert_f, (st_data_t)tbl1);
 }
 
-/*ã€€st_tableãŒæŒã¤è¦ç´ ã‚’è¡¨ç¤ºã™ã‚‹ã€€*/
+/*¡¡st_table¤¬»ı¤ÄÍ×ÁÇ¤òÉ½¼¨¤¹¤ë¡¡*/
 void st_print(st_table_t st)
 {
   printf("st_pt = %p\n", st);
@@ -644,7 +644,7 @@ void st_print(st_table_t st)
     if (entry) {
       printf("bucket[%u]\n", i);
       while (entry) {
-        /* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã§ã¯è¦ç´ ã‚’ã™ã¹ã¦æ•°å€¤ã§å‡ºåŠ› */
+        /* ¥Ç¥Õ¥©¥ë¥È¤Ç¤ÏÍ×ÁÇ¤ò¤¹¤Ù¤Æ¿ôÃÍ¤Ç½ĞÎÏ */
         printf("      entry->key = %ld, ->record = %lu, ->hash = %lu\n",
               (long)entry->key,
               (long)entry->record,
@@ -653,7 +653,7 @@ void st_print(st_table_t st)
         if (entry) printf("  next");
       }
     } else {
-      /* ã“ã®printfæ–‡ã‚’æ¶ˆã›ã°null entryã¯è¡¨ç¤ºã•ã‚Œãªã„ */
+      /* ¤³¤ÎprintfÊ¸¤ò¾Ã¤»¤Ğnull entry¤ÏÉ½¼¨¤µ¤ì¤Ê¤¤ */
       //printf("%d null entry\n", i);
     }
   }
@@ -673,7 +673,7 @@ static int st_value_push_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg)
   return ST_CONTINUE;
 }
 
-/*ã€€st_tableãŒæŒã¤è¦ç´ ã‚’Vectorã«æ˜‡é †ã«æ ¼ç´ã™ã‚‹ã€€*/
+/*¡¡st_table¤¬»ı¤ÄÍ×ÁÇ¤òVector¤Ë¾º½ç¤Ë³ÊÇ¼¤¹¤ë¡¡*/
 void st_get_entries_key(st_table_t st, Vector *vec)
 {
   st_foreach(st, st_key_push_vec_f, (st_data_t)vec);
@@ -689,7 +689,7 @@ static inline BOOL st_equals_inner(st_table_t cmp_dst, st_table_t cmp_src)
 {
   unsigned long i, dst_cap;
 
-  /* TODO: st_foearchã§æ›¸ã‘ã‚‹ */
+  /* TODO: st_foearch¤Ç½ñ¤±¤ë */
   dst_cap = st_cap(cmp_dst);
   for (i = 0; i < dst_cap; i++) {
     st_table_entry *entry = cmp_dst->bins[i];
@@ -707,8 +707,8 @@ static inline BOOL st_equals_inner(st_table_t cmp_dst, st_table_t cmp_src)
 }
 
 
-/* 2ã¤ã®st_tableãŒåŒã˜è¦ç´ ã‚’æŒã¤ã¨ã„ã†ç‚¹ã§ç­‰ä¾¡ã‹å¦ã‹ã‚’åˆ¤å®šã™ã‚‹.
- * ç­‰ä¾¡ãªã‚‰1ã‚’, ç­‰ä¾¡ã§ãªã„ãªã‚‰ã°0ã‚’è¿”ã™ */
+/* 2¤Ä¤Îst_table¤¬Æ±¤¸Í×ÁÇ¤ò»ı¤Ä¤È¤¤¤¦ÅÀ¤ÇÅù²Á¤«Èİ¤«¤òÈ½Äê¤¹¤ë.
+ * Åù²Á¤Ê¤é1¤ò, Åù²Á¤Ç¤Ê¤¤¤Ê¤é¤Ğ0¤òÊÖ¤¹ */
 int st_equals(st_table_t st1, st_table_t st2){
   unsigned long n1, n2;
 
@@ -716,17 +716,17 @@ int st_equals(st_table_t st1, st_table_t st2){
   n2  = st_num(st2);
 
   if (n1 != n2) {
-    /* ã‚¨ãƒ³ãƒˆãƒªæ•°ãŒç•°ãªã‚‹å ´åˆã¯, ç­‰ä¾¡ã§ã¯ãªã„ */
+    /* ¥¨¥ó¥È¥ê¿ô¤¬°Û¤Ê¤ë¾ì¹ç¤Ï, Åù²Á¤Ç¤Ï¤Ê¤¤ */
     return 0;
   }
   else if (n1 == 0) {
-    /* ã‚¨ãƒ³ãƒˆãƒªæ•°ãŒç­‰ã—ã„ãŒ, ã‚¨ãƒ³ãƒˆãƒªã‚’æŒãŸãªã„å ´åˆã¯,  */
+    /* ¥¨¥ó¥È¥ê¿ô¤¬Åù¤·¤¤¤¬, ¥¨¥ó¥È¥ê¤ò»ı¤¿¤Ê¤¤¾ì¹ç¤Ï,  */
     return 1;
   }
   else if (!st_equals_inner(st1, st2) ||
              !st_equals_inner(st2, st1)) { /* st1 --> st2 */
-    /* st1ã«å«ã¾ã‚Œã‚‹å…¨ã‚¨ãƒ³ãƒˆãƒªãŒst2ã«å«ã¾ã‚Œã¦ã„ã‚‹ãªã‚‰ã°,
-     * st2-->st1ã®å‡¦ç†ãŒå†—é•·ã§ã¯ãªã„ã ã‚ã†ã‹ï¼Ÿ */
+    /* st1¤Ë´Ş¤Ş¤ì¤ëÁ´¥¨¥ó¥È¥ê¤¬st2¤Ë´Ş¤Ş¤ì¤Æ¤¤¤ë¤Ê¤é¤Ğ,
+     * st2-->st1¤Î½èÍı¤¬¾éÄ¹¤Ç¤Ï¤Ê¤¤¤À¤í¤¦¤«¡© */
     return 0;
   }
   else {

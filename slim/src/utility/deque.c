@@ -1,5 +1,5 @@
 /*
- * vector.c
+ * deque.c
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -33,91 +33,50 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: vector.c,v 1.8 2008/09/19 05:18:17 taisuke Exp $
+ * $Id: deque.c,v 1.8 2012/01/19 05:18:17 kawabata Exp $
  */
 
-#include "vector.h"
-
-/* pop Nth element */
-LmnWord vec_pop_n(Vector *vec, unsigned int n) {
-  unsigned int i;
-  LmnWord ret;
-
-  LMN_ASSERT(vec->num > 0 && n >= 0 && n < vec->num);
-
-  if (vec->num <= vec->cap/2) {
-    vec_reduce(vec);
-  }
-  ret = vec_get(vec, n);
-  for (i = n; i < vec->num-1; ++i) {
-    vec_set(vec, i, vec_get(vec, i+1));
-  }
-  vec->num--;
-  return ret;
-}
-
+#include "deque.h"
 
 /* contains */
-BOOL vec_contains(const Vector *vec, LmnWord keyp) {
-  unsigned int i = 0;
-  while (i < vec_num(vec)) {
-    if (vec_get(vec, i++) == (LmnWord)keyp) {
+BOOL deq_contains(const Deque *deq, LmnWord keyp) {
+  unsigned int i = deq->tail;
+  while (i != deq->head) {
+		DEQ_DEC(i, deq->cap);
+    if (deq_get(deq, i) == (LmnWord)keyp) {
       return TRUE;
     }
   }
   return FALSE;
 }
 
-/* ベクタのサイズを size に変更し、新規に追加された項目を val に設定する*/
-void vec_resize(Vector *vec, unsigned int size, vec_data_t val)
-{
-  unsigned int i;
-
-  while (size > vec->cap) {
-    vec_extend(vec);
-  }
-
-  /* 追加された項目を val に設定 */
-  for (i=vec->num; i<size; i++) {
-    vec->tbl[i] = val;
-  }
-  vec->num = size;
-}
-
-void vec_sort(const Vector *vec,
+/* 未実装 */
+void deq_sort(const Deque *deq,
               int (*compare)(const void*, const void*))
 {
-  qsort(vec->tbl, vec->num, sizeof(vec_data_t), compare);
+  //qsort(deq->tbl, deq->num, sizeof(deq_data_t), compare);
 }
 
-/* Vectorに詰んだ要素を逆順に並べ直す */
-void vec_reverse(Vector *vec)
+/* Dequeに詰んだ要素を逆順に並べ直す 未実装 */
+//void deq_reverse(Deque *deq) {
+//}
+
+
+
+Deque *deq_copy(Deque *deq)
 {
-  unsigned int r, l;
+  unsigned int i = deq->tail;
+  Deque *new_deq;
 
-  r = 0;
-  l = vec_num(vec) - 1;
+  new_deq = deq_make(deq_num(deq) > 0 ? deq_num(deq) : 1);
 
-  while (r < l) {
-    vec_data_t tmp = vec->tbl[r];
-    vec_set(vec, r, vec->tbl[l]);
-    vec_set(vec, l, tmp);
-    r++;
-    l--;
+  while (i != deq->head) {
+		DEQ_DEC(i, deq->cap);
+    new_deq->tbl[i] = deq_get(deq, i);
   }
-}
 
-Vector *vec_copy(Vector *vec)
-{
-  int i;
-  Vector *new_vec;
-
-  new_vec = vec_make(vec->num > 0 ? vec->num : 1);
-
-  for (i = 0; i < vec_num(vec); i++) {
-    new_vec->tbl[i] = vec->tbl[i];
-  }
-  new_vec->num = vec->num;
-  return new_vec;
+  new_deq->head = deq->head;
+  new_deq->head = deq->tail;
+  return new_deq;
 }
 

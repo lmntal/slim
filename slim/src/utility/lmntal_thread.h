@@ -50,13 +50,13 @@
 /* check for atomic operation */
 #ifdef ENABLE_PARALLEL
 #
-# ifdef HAVE_ATOMIC_CAS /* AとBが等しければAの実態をCに置き換え, 成功したら真を返す */
+# ifdef HAVE_ATOMIC_CAS /* A��B�����������A�μ��֤�C���֤�����, ���������鿿���֤� */
 #  define CAS(A, B, C)        __sync_bool_compare_and_swap(&(A), B, C)
 # else
 #  define CAS(A, B, C)        lmn_fatal("disable ATOMIC OPERATION, unexpected.");
 # endif /* HAVE_ATOMIC_CAS */
 #
-# ifdef HAVE_ATOMIC_ADD /* AにBを加算し, 加算後のAの値を返す */
+# ifdef HAVE_ATOMIC_ADD /* A��B��û���, �û����A���ͤ��֤� */
 #  define ADD_AND_FETCH(A, B) __sync_add_and_fetch(&(A), B)
 # else
 #  define ADD_AND_FETCH(A, B) lmn_fatal("disable ATOMIC OPERATION, unexpected.");
@@ -111,8 +111,8 @@ void lmn_thread_set_CPU_affinity(unsigned long id);
 typedef struct EWLock EWLock;
 typedef unsigned long mtx_data_t;
 
-/* 2のべき乗を使うと, &演算で剰余を求めることができる.
- * というわけで, wlockの数は2のべき乗でないと, 困る */
+/* 2�Τ٤����Ȥ���, &�黻�Ǿ�;����뤳�Ȥ��Ǥ���.
+ * �Ȥ����櫓��, wlock�ο���2�Τ٤���Ǥʤ���, ���� */
 #define DEFAULT_WLOCK_NUM     (16384U)
 #define READABLE              (TRUE)
 #define DISREADABLE           (FALSE)
@@ -132,14 +132,14 @@ struct EWLock {
             + ((L)->elock_num * sizeof(lmn_mutex_t))                           \
             + ((L)->wlock_num * sizeof(lmn_mutex_t))) ))
 
-/* TODO: ##は文字列の連結. 移植性はある？ */
-/** ENTER__CRITICAL_SECTIONとEXIT___CRITICAL_SECTIONは必ずペアで使用する.
- * CsName              : 1つのクリティカルセクションに対してプログラマがつけるユニークな名前.
- * LockPtr             : 排他制御を行うためのロックオブジェクトのアドレス
- * LockFunc/UnLockFunc : LockPtrおよびFuncArgを引数にした排他制御関数Lock/UnLockを呼ぶ.
- * Fetch_v, Fetch_ptr  : Fecth_ptrのアドレスが指す値とFecth_vの値が異なる場合,
- *                       クリティカルセクション内部の処理をスキップし,
- *                       組にしたEXIT___CRITICAL_SECTIONへjumpする.
+/* TODO: ##��ʸ�����Ϣ��. �ܿ����Ϥ��롩 */
+/** ENTER__CRITICAL_SECTION��EXIT___CRITICAL_SECTION��ɬ���ڥ��ǻ��Ѥ���.
+ * CsName              : 1�ĤΥ���ƥ����륻���������Ф��ƥץ�����ޤ��Ĥ����ˡ�����̾��.
+ * LockPtr             : ��¾�����Ԥ�����Υ��å����֥������ȤΥ��ɥ쥹
+ * LockFunc/UnLockFunc : LockPtr�����FuncArg������ˤ�����¾����ؿ�Lock/UnLock��Ƥ�.
+ * Fetch_v, Fetch_ptr  : Fecth_ptr�Υ��ɥ쥹���ؤ��ͤ�Fecth_v���ͤ��ۤʤ���,
+ *                       ����ƥ����륻������������ν����򥹥��åפ�,
+ *                       �Ȥˤ���EXIT___CRITICAL_SECTION��jump����.
  */
 #define ENTER__CRITICAL_SECTION(CsName,  LockPtr, LockFunc,                    \
                                 FuncArg, Fetch_v, Fetch_ptr)                   \

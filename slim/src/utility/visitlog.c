@@ -263,10 +263,10 @@ void simplylog_destroy(SimplyLog s)
 
 
 /*----------------------------------------------------------------------
- * VisitLog: ã‚¢ãƒˆãƒ ã‚„è†œã¸ã®è¨ªå•ã®è¨˜éŒ²
+ * VisitLog: ¥¢¥È¥à¤äËì¤Ø¤ÎË¬Ìä¤Îµ­Ï¿
  */
 
-/* VisitLogã®ãƒ­ã‚°å¤‰æ›´ã®è¨˜éŒ² */
+/* VisitLog¤Î¥í¥°ÊÑ¹¹¤Îµ­Ï¿ */
 static inline struct Checkpoint *checkpoint_make()
 {
   struct Checkpoint *p = LMN_MALLOC(struct Checkpoint);
@@ -312,13 +312,13 @@ void visitlog_destroy(struct VisitLog *p)
   vec_destroy(&p->checkpoints);
 }
 
-/* ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆã‚’è¨­å®šã™ã‚‹ã€‚ */
+/* ¥Á¥§¥Ã¥¯¥İ¥¤¥ó¥È¤òÀßÄê¤¹¤ë¡£ */
 void visitlog_set_checkpoint(VisitLog visitlog)
 {
   vec_push(&visitlog->checkpoints, (vec_data_t)checkpoint_make());
 }
 
-/* ã‚‚ã£ã¨ã‚‚æœ€è¿‘ã®ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆã‚’è¿”ã—ã€ãƒ­ã‚°ã®çŠ¶æ…‹ã‚’ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆãŒè¨­å®šã•ã‚ŒãŸæ™‚ç‚¹ã«ã‚‚ã©ã™ */
+/* ¤â¤Ã¤È¤âºÇ¶á¤Î¥Á¥§¥Ã¥¯¥İ¥¤¥ó¥È¤òÊÖ¤·¡¢¥í¥°¤Î¾õÂÖ¤ò¥Á¥§¥Ã¥¯¥İ¥¤¥ó¥È¤¬ÀßÄê¤µ¤ì¤¿»şÅÀ¤Ë¤â¤É¤¹ */
 struct Checkpoint *visitlog_pop_checkpoint(VisitLog visitlog)
 {
   int i;
@@ -335,13 +335,13 @@ struct Checkpoint *visitlog_pop_checkpoint(VisitLog visitlog)
 }
 
 
-/* ã‚‚ã£ã¨ã‚‚æœ€è¿‘ã®ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆã‚’æ¶ˆã—ã€ãƒ­ã‚°ã®çŠ¶æ…‹ã‚’ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆãŒè¨­å®šã•ã‚ŒãŸæ™‚ç‚¹ã«ã‚‚ã©ã™ */
+/* ¤â¤Ã¤È¤âºÇ¶á¤Î¥Á¥§¥Ã¥¯¥İ¥¤¥ó¥È¤ò¾Ã¤·¡¢¥í¥°¤Î¾õÂÖ¤ò¥Á¥§¥Ã¥¯¥İ¥¤¥ó¥È¤¬ÀßÄê¤µ¤ì¤¿»şÅÀ¤Ë¤â¤É¤¹ */
 void visitlog_revert_checkpoint(VisitLog visitlog)
 {
   checkpoint_free(visitlog_pop_checkpoint(visitlog));
 }
 
-/* ãƒ­ã‚°ã®çŠ¶æ…‹ã¯ãã®ã¾ã¾ã«ã€ã‚‚ã£ã¨ã‚‚æœ€è¿‘ã«è¨­å®šã—ãŸãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆã‚’æ¶ˆã™ */
+/* ¥í¥°¤Î¾õÂÖ¤Ï¤½¤Î¤Ş¤Ş¤Ë¡¢¤â¤Ã¤È¤âºÇ¶á¤ËÀßÄê¤·¤¿¥Á¥§¥Ã¥¯¥İ¥¤¥ó¥È¤ò¾Ã¤¹ */
  void visitlog_commit_checkpoint(VisitLog visitlog)
 {
   struct Checkpoint *last = (struct Checkpoint *)vec_pop(&visitlog->checkpoints);
@@ -360,7 +360,7 @@ void visitlog_revert_checkpoint(VisitLog visitlog)
   checkpoint_free(last);
 }
 
-/* ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆã‚’ãƒ­ã‚°ã«è¿½åŠ ã™ã‚‹ */
+/* ¥Á¥§¥Ã¥¯¥İ¥¤¥ó¥È¤ò¥í¥°¤ËÄÉ²Ã¤¹¤ë */
 void visitlog_push_checkpoint(VisitLog visitlog, struct Checkpoint *cp)
 {
   int i;
