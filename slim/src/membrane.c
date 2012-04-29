@@ -790,6 +790,16 @@ LmnMembrane *lmn_mem_copy(LmnMembrane *src)
   return copied;
 }
 
+LmnMembrane *lmn_mem_copy_ex(LmnMembrane *src)
+{
+  ProcessTbl copymap;
+  LmnMembrane *copied;
+
+  copied = lmn_mem_copy_with_map_ex(src, &copymap);
+  proc_tbl_free(copymap);
+  return copied;
+}
+
 static inline
 LmnMembrane *lmn_mem_copy_with_map_inner(LmnMembrane *src,
                                          ProcessTbl  *ret_copymap,

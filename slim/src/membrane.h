@@ -262,6 +262,7 @@ void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem);
 LmnMembrane *lmn_mem_copy_with_map_ex(LmnMembrane *srcmem, ProcessTbl  *copymap);
 LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *srcmem, ProcessTbl *copymap);
 LmnMembrane *lmn_mem_copy(LmnMembrane *srcmem);
+LmnMembrane *lmn_mem_copy_ex(LmnMembrane *src);
 inline
 ProcessTbl lmn_mem_copy_cells_ex(LmnMembrane *dest,
                                  LmnMembrane *src,

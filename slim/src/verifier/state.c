@@ -138,14 +138,12 @@ State *state_copy(State *src, LmnMembrane *mem)
 
   State *dst = state_make_minimal();
 
-  if (!mem && state_mem(src))
-
   if (!is_binstr_user(src) && !mem) {
     mem = state_mem(src);
   }
 
   if (mem) {
-    dst->data = (state_data_t)lmn_mem_copy(mem);
+    state_set_mem(dst, lmn_mem_copy_ex(mem));
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
@@ -153,7 +151,7 @@ State *state_copy(State *src, LmnMembrane *mem)
 #endif
   }
   else if (state_binstr(src)) {
-    dst->data = (state_data_t)lmn_binstr_copy(state_binstr(src));
+    state_set_binstr(dst, lmn_binstr_copy(state_binstr(src)));
     if (is_encoded(src)) {
       set_encoded(dst);
     }
