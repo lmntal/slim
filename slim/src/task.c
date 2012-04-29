@@ -744,8 +744,9 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       instr = next;
 
-      tmp = rc_warry(rc);
+      tmp   = rc_warry(rc);
       rc_warry_set(rc, v);
+
       ret = interpret(rc, rule, instr);
 
       lmn_register_free(rc_warry(rc));
@@ -753,6 +754,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       warry_size_set(rc, warry_size_org);
       warry_use_size_set(rc, warry_use_org);
       warry_cur_size_set(rc, warry_cur_org);
+
       return ret;
     }
     case INSTR_RESETVARS:
@@ -871,7 +873,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           ProcessTbl copymap;
           LmnMembrane *tmp_global_root;
           unsigned int warry_size_org, warry_use_org, warry_cur_org;
-          unsigned int i;
+          unsigned int i, n;
 
 #ifdef PROFILE
           if (lmn_env.profile_level >= 3) {
@@ -887,9 +889,21 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           /** 変数配列および属性配列のコピー */
           v = lmn_register_make(warry_size_org);
 
+          if (warry_cur_org > 0) {
+            /* -O3は, JUMP命令削除により, レジスタサイズはBODY命令込みの値になっているため,
+             * 複数回のマッチングバックトラックが発生する場合に備え, COMMIT命令到達時点での
+             * レジスタ使用サイズを使って, 作業配列をコピーするようにする. */
+            n = warry_cur_org;
+          } else {
+            /* JUMP命令を使用する場合は, SPEC命令が複数呼び出される.
+             * このため, O3用の変数cur_sizeはこの時点で0である.
+             * SPECが指定したサイズで作業配列をコピーする. */
+            n = warry_use_org;
+          }
+
           /** copymapの情報を基に変数配列を書換える */
 #ifdef TIME_OPT
-          for (i = 0; i < warry_cur_org; i++) {
+          for (i = 0; i < n; i++) {
             LmnWord t;
             v[i].at = at(rc, i);
             v[i].tt = tt(rc, i);
