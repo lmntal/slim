@@ -49,6 +49,8 @@
 #include "error.h"
 #include "runtime_status.h"
 
+#include <limits.h>
+
 /** -------------------------------------
  *  MC object
  */
@@ -316,6 +318,15 @@ LmnWorkerGroup *lmn_workergroup_make(Automata a, Vector *psyms, int thread_num)
   wp->mc_exit       = FALSE;
   wp->error_exist   = FALSE;
 
+  wp->opt_end_state = NULL;
+
+#ifdef KWBT_OPT
+  if (thread_num >= 2 && lmn_env.opt_mode != OPT_NONE) {
+    wp->ewlock = ewlock_make(1U, DEFAULT_WLOCK_NUM);
+  } else
+#endif
+    wp->ewlock = NULL;
+
   flags = workers_flags_init(wp, a);
 #ifdef OPT_WORKERS_SYNC
   wp->synchronizer  = thread_num;
@@ -336,6 +347,10 @@ void lmn_workergroup_free(LmnWorkerGroup *wp)
   lmn_barrier_destroy(&workers_synchronizer(wp));
 #endif
   workers_free(wp->workers, workers_entried_num(wp));
+
+  if (wp->ewlock) {
+    ewlock_free(wp->ewlock);
+  }
 }
 
 
@@ -568,4 +583,29 @@ static void worker_set_env(LmnWorker *w)
   }
 }
 
+
+LmnCost workers_opt_cost(LmnWorkerGroup *wp)
+{
+  LmnCost cost;
+  State *opt = workers_opt_end_state(wp);
+  if (!opt) {
+    cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
+  } else {
+    cost = state_cost(opt);
+  }
+  return cost;
+}
+
+/* 最適コストを可能ならば更新する
+ * f==true: minimize
+ * f==false: maximize */
+void lmn_update_opt_cost(LmnWorkerGroup *wp, State *new_s, BOOL f)
+{
+  if (env_threads_num() >= 2) workers_opt_end_lock(wp);
+  if ((f && workers_opt_cost(wp) > state_cost(new_s)) ||
+      (!f && workers_opt_cost(wp) < state_cost(new_s))) {
+    workers_opt_end_state(wp) = new_s;
+  }
+  if (env_threads_num() >= 2) workers_opt_end_unlock(wp);
+}
 

@@ -52,6 +52,9 @@
 #include "binstr_compress.h"
 #include "runtime_status.h"
 
+#ifdef KWBT_OPT
+# include <limits.h>
+#endif
 
 static inline LmnBinStr state_binstr_D_compress(LmnBinStr org, State *ref_s);
 
@@ -85,26 +88,32 @@ State *state_make(LmnMembrane *mem, BYTE property_label, BOOL do_encode)
 /* まっさらなState構造体をmallocして返してもらう */
 State *state_make_minimal()
 {
-  State *new = LMN_MALLOC(State);
-  new->data             = NULL;
-  new->state_name       = 0x00U;
-  new->flags            = 0x00U;
-  new->flags2           = 0x00U;
-  new->flags3           = 0x00U;
-  new->hash             = 0;
-  new->next             = NULL;
-  new->successors       = NULL;
-  new->successor_num    = 0;
-  new->parent           = NULL;
-  new->state_id         = 0;
-  new->map              = NULL;
+  State *new_s = LMN_MALLOC(State);
+  new_s->data             = NULL;
+  new_s->state_name       = 0x00U;
+  new_s->flags            = 0x00U;
+  new_s->flags2           = 0x00U;
+  new_s->flags3           = 0x00U;
+  new_s->hash             = 0;
+  new_s->next             = NULL;
+  new_s->successors       = NULL;
+  new_s->successor_num    = 0;
+  new_s->parent           = NULL;
+  new_s->state_id         = 0;
+  new_s->map              = NULL;
+
+#ifdef KWBT_OPT
+  if (lmn_env.opt_mode != OPT_NONE) {
+    new_s->cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
+  }
+#endif
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
   }
 #endif
-  return new;
+  return new_s;
 }
 
 
@@ -221,7 +230,7 @@ void state_free_mem(State *s)
 
 void state_succ_set(State *s, Vector *v)
 {
-  if (!vec_is_empty(v)) {
+  if (!vec_is_empty(v) && !s->successors) {
     unsigned int i;
     s->successor_num = vec_num(v);
     s->successors    = LMN_NALLOC(succ_data_t, state_succ_num(s));
@@ -633,8 +642,9 @@ Transition transition_make(State *s, lmn_interned_str rule_name)
 {
   struct Transition *t = LMN_MALLOC(struct Transition);
 
-  t->s  = s;
-  t->id = 0;
+  t->s    = s;
+  t->id   = 0;
+  t->cost = 0;
   vec_init(&t->rule_names, 4);
   vec_push(&t->rule_names, rule_name);
 #ifdef PROFILE
@@ -658,7 +668,9 @@ void transition_free(Transition t)
 }
 
 
-void transition_add_rule(Transition t, lmn_interned_str rule_name)
+void transition_add_rule(Transition t,
+                         lmn_interned_str rule_name,
+                         LmnCost cost)
 {
   if (rule_name != ANONYMOUS || !vec_contains(&t->rule_names, rule_name)) {
 #ifdef PROFILE
@@ -668,6 +680,13 @@ void transition_add_rule(Transition t, lmn_interned_str rule_name)
 #endif
 
     vec_push(&t->rule_names, rule_name);
+
+#ifdef KWBT_OPT
+    if (((lmn_env.opt_mode == OPT_MINIMIZE) && t->cost > cost) ||
+        ((lmn_env.opt_mode == OPT_MAXIMIZE) && t->cost < cost)) {
+      t->cost = cost;
+    }
+#endif
 
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -685,6 +704,9 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner)
   FILE *f;
   StateSpace owner;
   unsigned long print_id;
+#ifdef KWBT_OPT
+  LmnCost cost = lmn_env.opt_mode != OPT_NONE ? state_cost(s) : 0UL;
+#endif
 
   /* Rehashが発生している場合,
    * dummyフラグが真かつエンコード済みフラグが偽のStateオブジェクトが存在する.
@@ -723,11 +745,19 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner)
   case CUI:
   {
     BOOL has_property = owner && statespace_has_property(owner);
+#ifdef KWBT_OPT
+    fprintf(f, "%lu::%lu::%s"
+            , print_id, cost
+             , has_property ? automata_state_name(statespace_automata(owner),
+                                                  state_property_state(s))
+                            : "");
+#else
     fprintf(f, "%lu::%s"
              , print_id
              , has_property ? automata_state_name(statespace_automata(owner),
                                                   state_property_state(s))
                             : "");
+#endif
     state_print_mem(s, _fp);
     break;
   }
@@ -886,5 +916,3 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner)
     break;
   }
 }
-
-

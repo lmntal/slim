@@ -48,7 +48,7 @@
 #include "so.h"
 
 #ifdef PROFILE
-#  include "runtime_status.h"
+# include "runtime_status.h"
 #endif
 
 /* just for debug ! */
@@ -85,6 +85,12 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
   lmn_rule_set_name(rule, rule_name);
 
   *org_next_id = env_next_id();
+
+#ifdef KWBT_OPT
+  if (lmn_env.opt_mode != OPT_NONE) {
+    lmn_fatal("translter mode, optimize mode is not supported");
+  }
+#endif
 
   if (RC_GET_MODE(rc, REACT_PROPERTY)) {
     return;

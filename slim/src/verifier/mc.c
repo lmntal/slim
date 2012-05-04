@@ -111,6 +111,9 @@ static inline void do_mc(LmnMembrane *world_mem_org,
                        p_label,
                        statespace_use_memenc(states));
   state_id_issue(init_s); /* 状態に整数IDを発行 */
+#ifdef KWBT_OPT
+  if (lmn_env.opt_mode != OPT_NONE) state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
+#endif
   statespace_set_init_state(states, init_s, lmn_env.enable_compress_mem);
 
   /** START
@@ -159,6 +162,15 @@ static void mc_dump(LmnWorkerGroup *wp)
       if (wp->do_search) {
         fprintf(ss->out, "\'# of States\'(invalid)  = %lu.\n", mc_invalids_get_num(wp));
       }
+#ifdef KWBT_OPT
+      if (lmn_env.opt_mode != OPT_NONE) {
+        if (!workers_opt_end_state(wp)) {
+          fprintf(ss->out, "\'# can't solve the problem\'.\n");
+        } else {
+          fprintf(ss->out, "\'# optimized cost\'      = %lu.\n", workers_opt_cost(wp));
+        }
+      }
+#endif
     }
   }
 
@@ -237,6 +249,36 @@ void mc_expand(const StateSpace ss,
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_total_space_update(ss);
+  }
+#endif
+}
+
+
+/* 状態sの全ての遷移先状態のコストを可能ならば更新し、updateフラグを立てる.
+ * TODO: 排他制御が適当です by kawabata */
+void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock)
+{
+  unsigned int i, n;
+  BOOL f;
+  State *succ;
+
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__COST_UPDATE);
+  }
+#endif
+
+  s_unset_update(s);
+  n = state_succ_num(s);
+  f = (lmn_env.opt_mode == OPT_MINIMIZE);
+  for (i = 0; i < n; i++) {
+    succ = state_succ_state(s, i);
+    state_update_cost(succ, transition(s, i), s, new_ss, f, ewlock);
+  }
+
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_finish_timer(PROFILE_TIME__COST_UPDATE);
   }
 #endif
 }
@@ -328,7 +370,9 @@ void mc_store_successors(const StateSpace ss,
     else if (has_trans_obj(s)) {
       /* succへの遷移が多重辺かつTransitionオブジェクトを利用する場合 */
       /* src_tは状態生成時に張り付けたルール名なので, 0番にしか要素はないはず */
-      transition_add_rule((Transition)tmp, transition_rule(src_t, 0));
+      transition_add_rule((Transition)tmp,
+                          transition_rule(src_t, 0),
+                          transition_cost(src_t));
       transition_free(src_t);
     } /*
     else succへの遷移が多重辺かつTransitionオブジェクトを利用しない場合
@@ -509,6 +553,9 @@ void mc_gen_successors_with_property(State         *s,
 
       if (mc_has_trans(f)) {
         data = (vec_data_t)transition_make(new_s, transition_rule(src_succ_t, 0));
+#ifdef KWBT_OPT
+        transition_set_cost((Transition)data, transition_cost(src_succ_t));
+#endif
         set_trans_obj(s);
       } else {
         data = (vec_data_t)new_s;

@@ -3,7 +3,7 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.2.1], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [2.2.2], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
@@ -62,6 +62,7 @@ default_enable_profile=no
 default_enable_timeopt=yes
 default_enable_jni=no
 default_enable_tcmalloc=yes
+default_enable_minmax=no
 case "$host" in
    *-mingw*) default_enable_tcmalloc=no;;
    *-cygwin*) default_enable_tcmalloc=no;;
@@ -111,6 +112,11 @@ AC_ARG_ENABLE([tcmalloc],
               [],
               [enable_tcmalloc="$default_enable_tcmalloc"])
 
+AC_ARG_ENABLE([opt_minmax],
+              [AS_HELP_STRING([--enable-opt-minmax],
+                              [turn on minmax optimization mode])],
+              [],
+              [enable_opt_minmax="$default_enable_minmax"])
 
 # devel
 if test "$enable_devel" = "yes"; then
@@ -174,6 +180,14 @@ if test "$enable_tcmalloc" = "no"; then
 else
   AC_MSG_RESULT([enable tcmalloc: yes])
   AC_DEFINE([HAVE_TCMALLOC], 1, [enable tcmalloc])
+fi
+
+# opt minmax mode by kawabata master thesis
+if test "$enable_opt_minmax" = "yes"; then
+  AC_MSG_RESULT([enable opt-minmax: yes])
+  AC_DEFINE([KWBT_OPT], 1, [enable opt minmax])
+else
+  AC_MSG_RESULT([enable opt-minmax: no])
 fi
 
 AM_CONDITIONAL(ENABLE_JNI,      test "$enable_jni" = "yes")

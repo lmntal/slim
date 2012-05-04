@@ -60,6 +60,7 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
   rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく */
   rule->pre_id = ANONYMOUS;
   rule->history_tbl = NULL;
+  //rule->cost = 0U;
 
   return rule;
 }

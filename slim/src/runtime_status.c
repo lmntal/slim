@@ -853,6 +853,9 @@ static char *profile_time_id_to_name(int type)
   case PROFILE_TIME__D_UNCOMPRESS:
     ret = "d uncompress";
     break;
+  case PROFILE_TIME__COST_UPDATE:
+    ret = "cost update";
+    break;
   default:
     ret = "unknown";
     break;

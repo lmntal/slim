@@ -82,7 +82,10 @@ struct State {                 /* Total:64(36)byte */
   State             *next;            /*  8(4)byte: 状態管理表に登録する際に必要なポインタ */
   State             *parent;          /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
   unsigned long      state_id;        /*  8(4)byte: 生成順に割り当てる状態の整数ID */
-  State             *map;             /*  8(4)byte: MAP値 */
+  State             *map;             /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
+#ifdef KWBT_OPT
+  LmnCost            cost;            /*  8(4)byte: cost */
+#endif
 };
 
 #define state_flags(S)                 ((S)->flags)
@@ -150,6 +153,7 @@ struct State {                 /* Total:64(36)byte */
 
 #define STATE_REDUCED_MASK             (0x01U)
 #define STATE_DELTA_MASK               (0x01U << 1)
+#define STATE_UPDATE_MASK              (0x01U << 2)
 
 /* manipulation for flags2 */
 #define s_set_d(S)                     ((S)->flags2 |=   STATE_DELTA_MASK)
@@ -158,6 +162,10 @@ struct State {                 /* Total:64(36)byte */
 #define s_set_reduced(S)               ((S)->flags2 |=   STATE_REDUCED_MASK)
 #define s_unset_reduced(S)             ((S)->flags2 &= (~STATE_REDUCED_MASK))
 #define s_is_reduced(S)                ((S)->flags2 &    STATE_REDUCED_MASK)
+#define s_set_update(S)                ((S)->flags2 |=   STATE_UPDATE_MASK)
+#define s_unset_update(S)              ((S)->flags2 &= (~STATE_UPDATE_MASK))
+#define s_is_update(S)                 ((S)->flags2 &    STATE_UPDATE_MASK)
+
 
 /*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
 #define DEFAULT_STATE_ID       0
@@ -214,8 +222,24 @@ static inline void           state_D_cache(State *s, LmnBinStr dec);
 static inline LmnBinStr      state_D_fetch(State *s);
 static inline void           state_D_flush(State *s);
 static inline void           state_D_progress(State *s, LmnReactCxt *rc);
+static inline void           state_update_cost(State *s,
+                                               Transition t,
+                                               State *pre,
+                                               Vector *new_ss,
+                                               BOOL f,
+                                               EWLock *ewlock);
+static inline void           state_set_cost(State *s, LmnCost cost, State * pre);
 
 #define state_map(S)         ((S)->map)
+
+#ifdef KWBT_OPT
+# define state_cost(S)        ((S)->cost)
+#else
+# define state_cost(S)        0U
+#endif
+#define state_cost_lock(EWLOCK, ID)   (ewlock_acquire_write(EWLOCK, ID))
+#define state_cost_unlock(EWLOCK, ID) (ewlock_release_write(EWLOCK, ID))
+
 
 
 
@@ -227,13 +251,16 @@ struct Transition {
   State *s;          /*  8byte: 遷移先状態 */
   unsigned long id;  /*  8byte: State graph(=\= Automata)上の各遷移に付与されるグローバルなID．
                                 ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる． */
-  Vector rule_names; /* 24byte: ルール名 */
+  Vector rule_names; /* 24byte: ルール名 複数あるのは多重辺(porなしの場合)*/
+  LmnCost cost;      /*  8byte: 同一ルールでもコストが異なるモデルを想定し、ルール名と独立に保存 */
 };
 
 Transition    transition_make(State *s, lmn_interned_str rule_name);
 unsigned long transition_space(Transition t);
 void          transition_free(Transition t);
-void          transition_add_rule(Transition t, lmn_interned_str rule_name);
+void          transition_add_rule(Transition t,
+                                  lmn_interned_str rule_name,
+                                  LmnCost cost);
 
 static inline unsigned long    transition_id(Transition t);
 static inline void             transition_set_id(Transition t, unsigned long x);
@@ -242,6 +269,8 @@ static inline lmn_interned_str transition_rule(Transition t, int idx);
 static inline State           *transition_next_state(Transition t);
 static inline void             transition_set_state(Transition t, State *s);
 static inline Transition       transition(State *s, unsigned int i);
+static inline LmnCost          transition_cost(Transition t);
+static inline void             transition_set_cost(Transition t, LmnCost cost);
 
 /** ------------
  *  Printer
@@ -495,6 +524,35 @@ static inline void state_D_progress(State *s, LmnReactCxt *rc) {
   state_D_flush(s);
 }
 
+/* MT-unsafe */
+static inline void state_set_cost(State *s, LmnCost cost, State * pre) {
+#ifdef KWBT_OPT
+  s->cost = cost;
+#endif
+  s->map  = pre;
+}
+
+/* 状態sのcostが最適ならば更新し、状態sを遷移先更新状態にする
+ * f==true: minimize
+ * f==false: maximize */
+static inline void state_update_cost(State *s,
+                                     Transition t,
+                                     State *pre,
+                                     Vector *new_ss,
+                                     BOOL f,
+                                     EWLock *ewlock)
+{
+  LmnCost cost;
+  cost = transition_cost(t) + state_cost(pre);
+  if (env_threads_num() >= 2) state_cost_lock(ewlock, state_hash(s));
+  if ((f && state_cost(s) > cost) || (!f && state_cost(s) < cost)) {
+    state_set_cost(s, cost, pre);
+    if (is_expanded(s) && new_ss) vec_push(new_ss, (vec_data_t)s);
+    s_set_update(s);
+  }
+  if (env_threads_num() >= 2) state_cost_unlock(ewlock, state_hash(s));
+}
+
 /* 遷移tに割り当てたidを返す. */
 static inline unsigned long transition_id(Transition t) {
   return t->id;
@@ -525,5 +583,12 @@ static inline Transition transition(State *s, unsigned int i) {
   return (Transition)(s->successors[i]);
 }
 
+static inline LmnCost transition_cost(Transition t) {
+  return t->cost;
+}
+
+static inline void transition_set_cost(Transition t, LmnCost cost) {
+  t->cost = cost;
+}
 
 #endif

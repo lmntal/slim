@@ -173,12 +173,15 @@ void env_init()
   lmn_env.enable_compress_mem    = TRUE;
   lmn_env.z_compress             = FALSE;
   lmn_env.d_compress             = FALSE;
+  lmn_env.r_compress             = FALSE;
   lmn_env.enable_parallel        = FALSE;
   lmn_env.core_num               = 1;
   lmn_env.cutoff_depth           = 7;
   lmn_env.optimize_lock          = FALSE;
   lmn_env.optimize_hash          = TRUE;
   lmn_env.optimize_loadbalancing = TRUE;
+
+  lmn_env.opt_mode               = OPT_NONE;
 
   /* only jni-interactive mode */
   lmn_env.interactive            = FALSE;

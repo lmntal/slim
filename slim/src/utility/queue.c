@@ -170,7 +170,7 @@ inline BOOL is_empty_queue(Queue *q)
  *  static functions
  */
 
-inline static Node *node_make(LmnWord v)
+static inline Node *node_make(LmnWord v)
 {
   Node *n = LMN_MALLOC(Node);
   n->v = v;
@@ -178,12 +178,12 @@ inline static Node *node_make(LmnWord v)
   return n;
 }
 
-inline static void node_free(Node *node)
+static inline void node_free(Node *node)
 {
   LMN_FREE(node);
 }
 
-inline static void q_lock(Queue *q, BOOL is_enq)
+static inline void q_lock(Queue *q, BOOL is_enq)
 {
   if (is_enq) { /* for enqueue */
     switch(q->lock) {
@@ -207,7 +207,7 @@ inline static void q_lock(Queue *q, BOOL is_enq)
   }
 }
 
-inline static void q_unlock(Queue *q, BOOL is_enq)
+static inline void q_unlock(Queue *q, BOOL is_enq)
 {
   if (is_enq) { /* for enqueue */
     switch(q->lock) {
@@ -230,3 +230,42 @@ inline static void q_unlock(Queue *q, BOOL is_enq)
     }
   }
 }
+
+
+/**=====================
+ *  DeQue
+ */
+
+/* contains */
+BOOL deq_contains(const Deque *deq, LmnWord keyp)
+{
+  unsigned int i = deq->tail;
+  while (i != deq->head) {
+    DEQ_DEC(i, deq->cap);
+    if (deq_get(deq, i) == (LmnWord)keyp) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+
+
+Deque *deq_copy(Deque *deq)
+{
+  unsigned int i;
+  Deque *new_deq;
+
+  i       = deq->tail;
+  new_deq = deq_make(deq_num(deq) > 0 ? deq_num(deq) : 1);
+
+  while (i != deq->head) {
+                DEQ_DEC(i, deq->cap);
+    new_deq->tbl[i] = deq_get(deq, i);
+  }
+
+  new_deq->head = deq->head;
+  new_deq->head = deq->tail;
+  return new_deq;
+}
+

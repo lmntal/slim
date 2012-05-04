@@ -72,10 +72,12 @@
  *   Delta-Membraneの使用が標準になっていくことを前提に, DPORアルゴリズムの実装を進める.
  */
 
+/* スレッド毎に独立してデータを持たせる */
+McDporData **dpor_data;
 
-McDporData **dpor_data; /* スレッド毎に独立してデータを持たせる */
-
-Vector *reduced_stack = NULL; /* 削減したグラフを表示するために最後に状態展開を行うためのStack */
+/* for DEBUG (MT-Unsafe):
+ * 削減したグラフを表示するために最後に状態展開を行うためのStack */
+Vector *reduced_stack = NULL;
 
 struct ContextC1 {
   BOOL         is_ample_cand;
@@ -1124,7 +1126,7 @@ void dpor_explore_redundunt_graph(StateSpace ss)
       for (i = 0; i < state_succ_num(s); i++) {
         Transition succ_t = transition(s, i);
         vec_clear(&succ_t->rule_names);
-        transition_add_rule(succ_t, lmn_intern("reduced"));
+        transition_add_rule(succ_t, lmn_intern("reduced"), 0U);
       }
 
       for (i = 0; i < vec_num(new_ss); i++) {

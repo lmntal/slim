@@ -477,7 +477,9 @@ static inline void por_store_successors_inner(State *s, LmnReactCxt *rc)
       }
       succ_i++;
     } else {
-      transition_add_rule((Transition)tmp, transition_rule(src_t, 0));
+      transition_add_rule((Transition)tmp,
+                          transition_rule(src_t, 0),
+                          transition_cost(src_t));
       transition_free(src_t);
     }
   }

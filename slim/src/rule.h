@@ -57,13 +57,16 @@ typedef BOOL (*LmnTranslated)(LmnReactCxt*, LmnMembrane *, LmnRule);
    現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
    により、ルールを変換して生成された関数を想定している。*/
 struct LmnRule {
-  BYTE *inst_seq;
-  int inst_seq_len;
-  LmnTranslated translated;
+  BYTE             *inst_seq;
+  int              inst_seq_len;
+  LmnTranslated    translated;
   lmn_interned_str name;
-  BOOL is_invisible;
-  st_table_t history_tbl;
+  BOOL             is_invisible;
+  st_table_t       history_tbl;
   lmn_interned_str pre_id;
+
+  /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or costの計算式を入れる */
+  LmnCost          cost;
 };
 
 LmnRule lmn_rule_make(LmnRuleInstr instr, int instr_len, lmn_interned_str name);
@@ -103,6 +106,14 @@ static inline lmn_interned_str lmn_rule_get_name(LmnRule rule) {
 /* ルール名のセット */
 static inline void lmn_rule_set_name(LmnRule rule, lmn_interned_str rule_name) {
   rule->name = rule_name;
+}
+
+static inline LmnCost lmn_rule_get_cost(LmnRule rule) {
+  return rule->cost;
+}
+
+static inline void lmn_rule_set_cost(LmnRule rule, LmnCost rule_cost) {
+ rule->cost = rule_cost;
 }
 
 static inline BOOL lmn_rule_is_invisible(LmnRule rule) {

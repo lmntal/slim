@@ -79,6 +79,7 @@ void mc_expand(const StateSpace states,
                Vector           *new_s,
                Vector           *psyms,
                BOOL             flag);
+void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock);
 void mc_gen_successors_with_property(State         *s,
                                      LmnMembrane   *mem,
                                      AutomataState prop_atm_s,

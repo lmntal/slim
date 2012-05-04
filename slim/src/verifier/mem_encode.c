@@ -1387,7 +1387,7 @@ static void write_mols(Vector *atoms,
 
     if (!atom || LMN_IS_HL(atom)) continue;
     /* 最適化: 最小のファンクタ以外は試す必要なし */
-    else if (last_valid_i>=0 && LMN_SATOM_GET_FUNCTOR(atom) != first_func)
+    else if (last_valid_i >= 0 && LMN_SATOM_GET_FUNCTOR(atom) != first_func)
       break;
     else if (visitlog_get_atom(visited, atom, NULL)) {
       continue;
@@ -1400,7 +1400,9 @@ static void write_mols(Vector *atoms,
       write_mol((LmnAtom)atom, LMN_ATTR_MAKE_LINK(0), -1, &new_bsptr, visited, TRUE);
       if (bsptr_valid(&new_bsptr)) {
         /* atomからたどった分子が書き込みに成功したので、last_validに記憶する */
-        if (last_valid_i < 0) { first_func = LMN_SATOM_GET_FUNCTOR(atom); }
+        if (last_valid_i < 0) {
+          first_func = LMN_SATOM_GET_FUNCTOR(atom);
+        }
         if (last_valid_i >= 0) {
           bsptr_destroy(&last_valid_bsp);
           checkpoint_free(last_valid_checkpoint);

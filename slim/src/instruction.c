@@ -129,7 +129,11 @@ struct InstrSpec spec[] = {
 
     {"react", INSTR_REACT, {InstrVar, InstrVarList, InstrVarList, InstrVarList}},
     {"jump", INSTR_JUMP, {Label, InstrVarList, InstrVarList, InstrVarList}},
+#ifdef KWBT_OPT
+    {"commit", INSTR_COMMIT, {String, LineNum, InstrVar}},
+#else
     {"commit", INSTR_COMMIT, {String, LineNum}},
+#endif
     {"resetvars", INSTR_RESETVARS, {InstrVarList, InstrVarList, InstrVarList,}},
     {"changevars", INSTR_CHANGEVARS, {InstrVarList, InstrVarList, InstrVarList,}},
     {"spec", INSTR_SPEC, {InstrVar, InstrVar}},
@@ -142,7 +146,7 @@ struct InstrSpec spec[] = {
     {"inline", INSTR_INLINE, {InstrVar, String, InstrVar}},
     {"callback", INSTR_CALLBACK, {InstrVar, InstrVar}},
     {"unifyhlinks", INSTR_UNIFYHLINKS, {InstrVar, InstrVar}},
-    {"findproccxt", INSTR_FINDPROCCXT, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},    
+    {"findproccxt", INSTR_FINDPROCCXT, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
 
     /* special */
     {"group", INSTR_GROUP, {InstrList}},

@@ -89,8 +89,9 @@ enum PROFILE_TIME {
   PROFILE_TIME__CYCLE_EXPLORE,                /* 受理サイクル探索 */
   PROFILE_TIME__Z_COMPRESS,                   /* compression using z library */
   PROFILE_TIME__Z_UNCOMPRESS,                 /* uncompression using z library */
-  PROFILE_TIME__D_COMPRESS,
-  PROFILE_TIME__D_UNCOMPRESS,
+  PROFILE_TIME__D_COMPRESS,                   /* compression using zdelta lib */
+  PROFILE_TIME__D_UNCOMPRESS,                 /* uncompression using zdelta lib */
+  PROFILE_TIME__COST_UPDATE,                  /* 最適化実行 */
   PTIME_TAIL,                         /* dummy */
 };
 

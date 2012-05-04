@@ -157,6 +157,8 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"ltl-all"                , 0, 0, 1400},
     {"ltl"                    , 0, 0, 1401},
     {"nd"                     , 0, 0, 1402},
+    {"opt-min"                , 0, 0, 1403},
+    {"opt-max"                , 0, 0, 1404},
     {"nc"                     , 1, 0, 1410},
     {"psym"                   , 1, 0, 1411},
     {"ltl-f"                  , 1, 0, 1412},
@@ -171,6 +173,7 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"delta-mem"              , 0, 0, 2005},
     {"z-compress"             , 0, 0, 2007},
     {"d-compress"             , 0, 0, 2008},
+    {"r-compress"             , 0, 0, 2009},
     {"use-owcty"              , 0, 0, 3000},
     {"use-map"                , 0, 0, 3001},
     {"use-bledge"             , 0, 0, 3002},
@@ -292,11 +295,21 @@ static void parse_options(int *optid, int argc, char *argv[])
       lmn_env.hyperlink = TRUE;
       break;
     case 1400:
-      lmn_env.ltl_all = TRUE; /* FALLTHROUGH */
+      lmn_env.ltl_all   = TRUE; /* FALLTHROUGH */
     case 1401:
-      lmn_env.ltl = TRUE;     /* FALLTHROUGH */
+      lmn_env.ltl       = TRUE; /* FALLTHROUGH */
     case 1402:
-      lmn_env.nd = TRUE;
+      lmn_env.nd        = TRUE;
+      break;
+    case 1403:
+      lmn_env.nd        = TRUE;
+      lmn_env.opt_mode  = OPT_MINIMIZE;
+      lmn_env.show_transition = TRUE;
+      break;
+    case 1404:
+      lmn_env.nd        = TRUE;
+      lmn_env.opt_mode  = OPT_MAXIMIZE;
+      lmn_env.show_transition = TRUE;
       break;
     case 1410:
       lmn_env.automata_file = optarg;
@@ -348,6 +361,9 @@ static void parse_options(int *optid, int argc, char *argv[])
       break;
     case 2008:
       lmn_env.d_compress = TRUE;
+      break;
+    case 2009:
+      lmn_env.r_compress = TRUE;
       break;
     case 3000:
       lmn_env.enable_parallel = TRUE;

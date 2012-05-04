@@ -112,6 +112,8 @@ typedef uint8_t  LmnLinkAttr;
 //typedef uint16_t ProcessID;
 typedef LmnWord  ProcessID;
 
+typedef LmnWord  LmnCost;
+
 /* uint16_t is not defined if there is no 2Byte data type */
 typedef uint16_t LmnFunctor;
 #define LMN_FUNCTOR_BYTES (sizeof(LmnFunctor))
@@ -123,13 +125,13 @@ typedef uint8_t LmnArity;
 
 typedef unsigned int lmn_interned_str;
 
-typedef BYTE* LmnRuleInstr;
-typedef uint16_t LmnInstrOp;
-typedef uint16_t LmnInstrVar;
-typedef uint16_t LmnJumpOffset;
-typedef uint32_t LmnLineNum;
-typedef int16_t LmnRulesetId;
-typedef uint32_t LmnSubInstrSize;
+typedef BYTE*     LmnRuleInstr;
+typedef uint16_t  LmnInstrOp;
+typedef uint16_t  LmnInstrVar;
+typedef uint16_t  LmnJumpOffset;
+typedef uint32_t  LmnLineNum;
+typedef int16_t   LmnRulesetId;
+typedef uint32_t  LmnSubInstrSize;
 
 typedef struct LmnMembrane LmnMembrane;
 typedef struct DeltaMembrane DeltaMembrane;
@@ -177,7 +179,7 @@ typedef uint32_t LmnHlinkRank;
  */
 
 typedef struct LmnReactCxt  LmnReactCxt;
-typedef struct LmnRegister LmnRegister;
+typedef struct LmnRegister  LmnRegister;
 
 
 /*----------------------------------------------------------------------
@@ -235,6 +237,9 @@ enum OutputFormat { DEFAULT, DEV, DOT };
 enum MCdumpFormat { CUI, LaViT, Dir_DOT, FSM };
 enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX};
 
+/* 最適化実行 */
+enum OptimizeMode { OPT_NONE, OPT_MINIMIZE, OPT_MAXIMIZE};
+
 struct LmnEnv {
   BOOL trace;
   BOOL show_proxy;
@@ -263,7 +268,7 @@ struct LmnEnv {
   BOOL delta_mem;
   BOOL z_compress;
   BOOL d_compress;
-  BOOL benchmark;
+  BOOL r_compress;
 
   BOOL prop_scc_driven;
   BOOL property_dump;
@@ -295,6 +300,8 @@ struct LmnEnv {
   BOOL hyperlink;
   BOOL show_hyperlink;
 
+  BOOL benchmark;
+
 #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;
@@ -313,7 +320,9 @@ struct LmnEnv {
   enum OutputFormat output_format;
   enum MCdumpFormat mc_dump_format;
   enum SPdumpFormat sp_dump_format;
-  int load_path_num;
+  enum OptimizeMode opt_mode;
+
+  int  load_path_num;
   char *load_path[256];
   char *automata_file;         /* never claim file */
   char *propositional_symbol;  /* file for propositional symbol definitions */

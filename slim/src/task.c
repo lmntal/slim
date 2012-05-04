@@ -802,10 +802,18 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_COMMIT:
     {
       lmn_interned_str rule_name;
-      LmnLineNum line_num;
+      LmnLineNum       line_num;
 
       READ_VAL(lmn_interned_str, instr, rule_name);
-      READ_VAL(LmnLineNum, instr, line_num);
+      READ_VAL(LmnLineNum,       instr, line_num);
+
+#ifdef KWBT_OPT
+      {
+        LmnInstrVar      cost;
+        READ_VAL(LmnInstrVar,      instr, cost);
+        lmn_rule_set_cost(rule, cost);
+      }
+#endif
 
       lmn_rule_set_name(rule, rule_name);
 
