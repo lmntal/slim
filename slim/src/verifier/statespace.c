@@ -389,23 +389,23 @@ void statespace_free(StateSpace ss)
  * ここで新たに生成する状態は, sに対応する階層グラフ構造対して一意なバイナリストリングを持つ. */
 static void statetable_memid_rehash(State *s, StateTable *st)
 {
-  StateTable *rehash_tbl;
-  State *new;
+  StateTable  *rehash_tbl;
+  State       *new_s;
   LmnMembrane *m;
 
-  new = state_make_minimal();
-  m = lmn_binstr_decode(state_binstr(s));
-  state_set_binstr(new, lmn_mem_encode(m));
-  new->state_name =  s->state_name;
-  new->hash = binstr_hash(state_binstr(new));
+  new_s             = state_make_minimal();
+  m                 = lmn_binstr_decode(state_binstr(s));
+  new_s->state_name = s->state_name;
+  state_set_binstr(new_s, lmn_mem_encode(m));
+  new_s->hash       = binstr_hash(state_binstr(new_s));
 
-  set_encoded(new);
-  set_expanded(new);
-  set_dummy(new);
+  set_encoded(new_s);
+  set_expanded(new_s);
+  set_dummy(new_s);
 
-  rehash_tbl = statetable_rehash_tbl(st);
-  statetable_add_direct(rehash_tbl, new); /* dummy stateのparentをoriginalとして扱う */
-  state_set_parent(new, s);
+  rehash_tbl      = statetable_rehash_tbl(st);
+  statetable_add_direct(rehash_tbl, new_s); /* dummy stateのparentをoriginalとして扱う */
+  state_set_parent(new_s, s);
   statetable_dummy_add(rehash_tbl, 1);
 
   lmn_mem_free_rec(m);
@@ -622,6 +622,7 @@ static StateTable *statetable_make_with_size(unsigned long size, int thread_num)
   unsigned long i;
   StateTable *st = LMN_MALLOC(StateTable);
   st->thread_num = thread_num;
+
   if (lmn_env.enable_compress_mem) {
     if (lmn_env.z_compress) {
       st->type = &type_state_compress_z;
@@ -631,22 +632,23 @@ static StateTable *statetable_make_with_size(unsigned long size, int thread_num)
   } else {
     st->type = &type_state_default;
   }
+
   st->use_rehasher = FALSE;
-  size = table_new_size(size);
-  st->tbl = LMN_NALLOC(State *, size);
-  st->cap = size;
-  st->cap_density = size / thread_num;
-  st->num  = LMN_NALLOC(unsigned long, thread_num);
-  st->num_dummy = LMN_NALLOC(unsigned long, thread_num);
-  st->lock = NULL;
-  st->rehash_tbl = NULL;
+  size             = table_new_size(size);
+  st->tbl          = LMN_NALLOC(State *, size);
+  st->cap          = size;
+  st->cap_density  = size / thread_num;
+  st->num          = LMN_NALLOC(unsigned long, thread_num);
+  st->num_dummy    = LMN_NALLOC(unsigned long, thread_num);
+  st->lock         = NULL;
+  st->rehash_tbl   = NULL;
 
   for (i = 0; i < size; i++) {
     st->tbl[i] = NULL;
   }
 
   for (i = 0; i < thread_num; i++) {
-    st->num[i] = 0UL;
+    st->num[i]       = 0UL;
     st->num_dummy[i] = 0UL;
   }
 
@@ -660,7 +662,7 @@ static inline void statetable_clear(StateTable *st)
     unsigned long i;
 
     for (i = 0; i < st->thread_num; i++) {
-      st->num[i] = 0;
+      st->num[i]       = 0;
       st->num_dummy[i] = 0;
     }
 
@@ -834,7 +836,6 @@ static State *statetable_insert(StateTable *st, State *ins)
           }
           s_unset_d(ins);
           state_calc_mem_encode(ins);
-
           /*compress = NULL;*/
 
 #ifndef PROFILE
@@ -848,7 +849,8 @@ static State *statetable_insert(StateTable *st, State *ins)
           /** B. memidテーブルへのlookupの場合,
            *     もしくはオリジナルテーブルへのlookupで非dummy状態と等価な場合 */
           if (is_dummy(str) && is_encoded(str)) {
-            ret = state_get_parent(ins);
+            /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す) */
+            ret = state_get_parent(str);
           } else {
             ret = str;
           }
@@ -871,14 +873,14 @@ static State *statetable_insert(StateTable *st, State *ins)
 #endif
           if (statetable_use_rehasher(st)) {
             if (state_get_parent(ins) == str) {
-              /* 遷移元状態と1step先の状態でハッシュ値が衝突した場合:
-               * 衝突元だけでなく衝突先もrehashする.
-               * ただし, スレッド間インタリーブでdummyフラグを見逃した可能性あるため,
-               * 元のバイト列は破棄せず, 直接encodeした状態をmemidテーブルへ突っ込む */
+              /* 1step遷移した状態insの親状態とでハッシュ値が衝突している場合:
+               *  + 状態insだけでなくその親状態もrehashする.
+               *  + ただし, encodeした親状態をmemidテーブルへ突っ込んだ後,
+               *    親状態の従来のバイト列の破棄は実施しない.
+               *    これは, 他のスレッドによる状態比較処理が本スレッドの処理と競合した際に,
+               *    本スレッドが立てるdummyフラグを他のスレッドが見逃す恐れがあるため  */
               statetable_memid_rehash(str, st);
               set_dummy(str);
-              /* CAUTION: dummyフラグは見逃される可能性があるため,
-               *          直ちに古いバイト列を破棄することはできない */
             }
 
             /* 比較元をencode */
