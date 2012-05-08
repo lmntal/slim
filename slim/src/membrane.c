@@ -56,7 +56,7 @@
 static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
                                    LmnMembrane *srcmem,
                                    ProcessTbl  atoms,
-                                   BOOL        hl_new_copy);
+                                   BOOL        hl_nd);
 
 /* ルールセットadd_rsをルールセット配列src_vへ追加する.
  * グラフ同型性判定処理などのために整数IDの昇順を維持するよう追加する. */
@@ -803,7 +803,7 @@ LmnMembrane *lmn_mem_copy_ex(LmnMembrane *src)
 static inline
 LmnMembrane *lmn_mem_copy_with_map_inner(LmnMembrane *src,
                                          ProcessTbl  *ret_copymap,
-                                         BOOL        hl_new_copy)
+                                         BOOL        hl_nd)
 {
   unsigned int i;
   ProcessTbl copymap;
@@ -813,7 +813,7 @@ LmnMembrane *lmn_mem_copy_with_map_inner(LmnMembrane *src,
 
   new_mem = lmn_mem_make();
 
-  if (hl_new_copy) {
+  if (hl_nd) {
     copymap = lmn_mem_copy_cells_ex(new_mem, src, TRUE);
   } else {
     copymap = lmn_mem_copy_cells(new_mem, src);
@@ -841,10 +841,10 @@ LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, ProcessTbl *ret_copymap)
 
 inline ProcessTbl lmn_mem_copy_cells_ex(LmnMembrane *dst,
                                         LmnMembrane *src,
-                                        BOOL        hl_new_copy)
+                                        BOOL        hl_nd)
 {
   ProcessTbl atoms = proc_tbl_make_with_size(64);
-  lmn_mem_copy_cells_sub(dst, src, atoms, hl_new_copy);
+  lmn_mem_copy_cells_sub(dst, src, atoms, hl_nd);
   return atoms;
 }
 
@@ -854,11 +854,11 @@ ProcessTbl lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
 }
 
 /* srcmemの実データ構造をdestmemへコピー生成する. atomsは訪問済みの管理に用いる.
- * hl_new_copyフラグが真の場合, ハイパーリンクアトムをコピーした後unifyしない. */
+ * hl_ndフラグが真の場合, コピー前とコピー後のハイパーリンクのunifyをしない.  */
 static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
                                   LmnMembrane  *srcmem,
                                   ProcessTbl   atoms,
-                                  BOOL         hl_new_copy)
+                                  BOOL         hl_nd)
 {
   unsigned int i;
   LmnMembrane *m;
@@ -867,7 +867,7 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
   /* copy child mems */
   for (m = srcmem->child_head; m; m = m->next) {
     LmnMembrane *new_mem = lmn_mem_make();
-    lmn_mem_copy_cells_sub(new_mem, m, atoms, hl_new_copy);
+    lmn_mem_copy_cells_sub(new_mem, m, atoms, hl_nd);
     lmn_mem_add_child_mem(destmem, new_mem);
 
     proc_tbl_put_mem(atoms, m, (LmnWord)new_mem);
@@ -930,7 +930,7 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
         if (LMN_ATTR_IS_DATA(attr)) {
           LmnAtom newargatom;
 
-          if (LMN_ATTR_IS_HL(attr) && hl_new_copy) {
+          if (LMN_ATTR_IS_HL(attr) && hl_nd) {
             /* unifyせずにコピーする */
             HyperLink *newhl, *orihl;
 
