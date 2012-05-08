@@ -266,7 +266,7 @@ LmnMembrane *lmn_mem_copy_ex(LmnMembrane *src);
 inline
 ProcessTbl lmn_mem_copy_cells_ex(LmnMembrane *dest,
                                  LmnMembrane *src,
-                                 BOOL        hl_new_copy);
+                                 BOOL        hl_nd);
 ProcessTbl lmn_mem_copy_cells(LmnMembrane *dest, LmnMembrane *srcmem);
 void lmn_mem_remove_proxies(LmnMembrane *mem);
 void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem);
