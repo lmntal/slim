@@ -1,3 +1,20 @@
+SLIM (2.2.2) -- 2012/05/12
+  * new features / support
+    + extended state-space for optimization problems
+    ++ add configure option --enable-opt-minmax
+    ++ add --opt-min -opt-max option 
+
+  * improve performances
+    + modified the state compression for hyperlinks
+
+  * bug fixes
+    + transition bug for switching hash function
+    + --delta-mem (function "dmem_root_make") problem
+    + --d-compress --mem-enc problem
+    + and minor bug fixes
+
+  * and many codes refactored
+
 SLIM (2.2.1)  -- 2011/12/25
   * updates for parallel LTL model checker
   ** new features / support
@@ -22,7 +39,7 @@ SLIM (2.2.1)  -- 2011/12/25
     ++ floating point numbers using FNV-hash
     ++ membrane names
 
-  ** buf fixes
+  ** bug fixes
     + graph isomorphism tester
     + builtin foreign language interfaces for atomic operations
     + memory leaks if race condition occurs in state-space
