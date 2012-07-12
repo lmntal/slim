@@ -271,9 +271,9 @@ static BOOL dump_data_atom(LmnPort port,
       char buf[16];
       port_put_raw_s(port, EXCLAMATION_NAME);
       if (lmn_env.show_hyperlink) {
-        sprintf(buf, "%lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(LMN_SATOM(data))));
+        sprintf(buf, "H%lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(LMN_SATOM(data))));
       } else {
-        sprintf(buf, "%lx", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(LMN_SATOM(data))));
+        sprintf(buf, "H%lx", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(LMN_SATOM(data))));
       }
       port_put_raw_s(port, buf);
     }
