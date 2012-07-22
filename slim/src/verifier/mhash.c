@@ -415,7 +415,7 @@ static inline mhash_t memlink(LmnSAtom    in_proxy,
                               ProcessTbl  ctx)
 {
   LmnAtom atom;
-  mhash_t hash;
+  mhash_t hash = 0;
   LmnLinkAttr attr;
 
   while (1) {
