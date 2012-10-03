@@ -943,9 +943,10 @@ void load_il_files(char *path)
     /* 開放 */
     st_foreach(loading_files_type, free_loading_tbl_entry, (st_data_t)path);
     st_free_table(loading_files_type);
+
+    closedir(dir);
   }
 
-  closedir(dir);
   LMN_FREE(buf);
 }
 

@@ -889,13 +889,13 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner)
   FILE *f;
   StateSpace owner;
 
+  owner = (StateSpace)_owner;
   if (!statespace_has_property(owner) || (is_dummy(s) && is_encoded(s))) {
     return;
   }
 
   a     = statespace_automata(owner);
   f     = (FILE *)_fp;
-  owner = (StateSpace)_owner;
 
   switch (lmn_env.mc_dump_format) {
   case Dir_DOT:
