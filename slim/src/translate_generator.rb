@@ -207,7 +207,7 @@ def print_interp_format(line, arg)
       line[pos,1] = ""
     elsif line[pos+1]>="0"[0] && line[pos+1]<="9"[0]
       # 引数の場合
-      x = line[pos+1] - "0"[0]
+      x = line[pos+1].to_i - "0"[0].to_i
       if arg[x] == "$functor"
         # ファンクタなら上記の変換
         long_data_name = "_long_data"
@@ -266,7 +266,7 @@ def print_trans_format(line, arg)
       # "$$"なら1つ消して"$"にしてやる
       line[pos,1] = ""
     elsif line[pos+1]>="0"[0] && line[pos+1]<="9"[0]
-      x = line[pos+1] - "0"[0]
+      x = line[pos+1].to_i - "0"[0].to_i
       if arg[x] == "$list"
         # リスト引数なら, 変換後出力に含まれるtarg1をそのまま参照
         line[pos,2] = "targ" + x.to_s
