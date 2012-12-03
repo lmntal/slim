@@ -677,7 +677,36 @@ static void binstr_dump(BYTE *bs, int len)
 
         log[v_i].v    = 0; /* とりあえずゼロクリア */
         log[v_i].type = BS_LOG_TYPE_HLINK;
-        printf("~%d_%d ", hl_num, v_i++);
+        printf("HL/%d_%d ", hl_num, v_i++);
+
+        tag = BS_GET(bs, pos);
+        pos++;
+        switch (tag) {
+          case TAG_FROM:
+            {
+              printf("_F_ ");
+            }
+            break;
+          case TAG_ATOM_START:
+            {
+              LmnFunctor f;
+              f    = binstr_get_functor(bs, pos);
+              pos += BS_FUNCTOR_SIZE;
+              printf("%s/%d ", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)),
+                  LMN_FUNCTOR_ARITY(f));
+            }
+            break;
+          case TAG_INT_DATA:
+          case TAG_DBL_DATA:
+          case TAG_STR_DATA:
+            {
+              binstr_dump_data_atom(bs, &pos, tag);
+            }
+            break; 
+          default:
+            lmn_fatal("unexpected");
+            break;
+        }
       }
       break;
     case TAG_VISITED_ATOMHLINK: /* FALL THROUGH */
@@ -697,7 +726,7 @@ static void binstr_dump(BYTE *bs, int len)
           printf("#%d ", ref);
           break;
         case BS_LOG_TYPE_HLINK:
-          printf("~$%d ",ref);
+          printf("$HL%d ",ref);
           break;
         default:
           lmn_fatal("unexpected reference");
@@ -938,6 +967,8 @@ static inline int bsptr_push_atom(BinStrPtr p, LmnSAtom a)
     bsptr_push(p, (const BYTE*)&f, BS_FUNCTOR_SIZE);
 }
 
+static inline int bsptr_push_data_atom(BinStrPtr p, LmnAtom atom, LmnLinkAttr attr, VisitLog log);
+static inline int bsptr_push_from(BinStrPtr p);
 static inline int bsptr_push_hlink(BinStrPtr p, LmnAtom atom, VisitLog log)
 {
   HyperLink *hl_root;
@@ -952,9 +983,29 @@ static inline int bsptr_push_hlink(BinStrPtr p, LmnAtom atom, VisitLog log)
            bsptr_push(p, (BYTE*)&ref, BS_PROC_REF_SIZE);
   }
   else {
-    return visitlog_put_hlink(log, hl_root) &&  /* 訪問済みにした */
-           bsptr_push1(p, TAG_HLINK)        &&
-           bsptr_push(p, (const BYTE*)&hl_num, BS_HLINK_NUM_SIZE);
+    visitlog_put_hlink(log, hl_root);   /* 訪問済みにした */
+    bsptr_push1(p, TAG_HLINK);
+    bsptr_push(p, (const BYTE*)&hl_num, BS_HLINK_NUM_SIZE);
+
+    if (LMN_HL_HAS_ATTR(hl_root)) {
+      LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl_root);
+      LmnAtom attrAtom = LMN_HL_ATTRATOM(hl_root);
+
+      /* データアトムの場合 */
+      if (LMN_ATTR_IS_DATA(attr)) {
+        return bsptr_push_data_atom(p, attrAtom, attr, log);
+      } else {
+        return bsptr_push_atom(p, LMN_SATOM(attrAtom));
+      }
+    } else {
+      bsptr_push_from(p);
+    }
+
+    if (!bsptr_valid(p)) {
+      return 0;
+    } else {
+      return 1;
+    }
   }
 }
 
@@ -1655,9 +1706,7 @@ LmnMembrane *lmn_binstr_decode(const LmnBinStr bs)
     profile_start_timer(PROFILE_TIME__MENC_RESTORE);
   }
 #endif
-
   ret = lmn_binstr_decode_sub(target);
-
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_finish_timer(PROFILE_TIME__MENC_RESTORE);
@@ -1895,6 +1944,64 @@ static int binstr_decode_mol(LmnBinStr   bs,
       lmn_mem_newlink(mem, LMN_ATOM(from_atom), LMN_ATTR_GET_VALUE(LMN_ATOM(from_atom)),
                       from_arg, LMN_ATOM(hl_atom), LMN_HL_ATTR, 0);
       pos += BS_HLINK_NUM_SIZE;
+
+      tag = BS_GET(bs->v, pos);
+      pos++;
+      switch (tag) {
+        case TAG_FROM:
+          break;
+        case TAG_ATOM_START:
+          {
+            LmnFunctor f;
+            LmnSAtom atom;
+
+            f = binstr_get_functor(bs->v, pos); /* functorを持ってくる */
+            pos  += BS_FUNCTOR_SIZE;
+            atom  = lmn_new_atom(f);        /* アトムを生成する */
+            lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom),
+                LMN_ATOM(atom),
+                0);
+          }
+          break;
+        case TAG_INT_DATA:
+          {
+            long n;
+            n = binstr_get_int(bs->v, pos);
+            pos += BS_INT_SIZE;
+            lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom),
+                                   LMN_ATOM(n),
+                                   LMN_INT_ATTR);
+          }
+          break;
+        case TAG_DBL_DATA:
+          {
+            double *n = LMN_MALLOC(double);
+
+            *n = binstr_get_dbl(bs->v, pos);
+            pos += BS_DBL_SIZE;
+            lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom),
+                                   LMN_ATOM(n),
+                                   LMN_DBL_ATTR);
+          }
+          break;
+        case TAG_STR_DATA:
+          {
+            LmnString str;
+            lmn_interned_str n;
+
+            n    = binstr_get_strid(bs->v, pos);
+            pos += BS_STR_ID_SIZE;
+            str  = lmn_string_make(lmn_id_to_name(n));
+            lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom),
+                                   (LmnAtom)str,
+                                   LMN_SP_ATOM_ATTR);
+          }
+         break; 
+        default:
+         printf("tag = %d\n", tag);
+         lmn_fatal("binstr decode, unexpected");
+         break;
+      }
     }
     break;
   case TAG_VISITED_ATOMHLINK:
@@ -3067,6 +3174,73 @@ static inline BOOL mem_eq_enc_hlink(LmnBinStr   bs,
 
 #ifndef BS_MEMEQ_OLD
       if (!tracelog_contains_hlink(log, hl_root)) {
+        unsigned int tag;
+        tag = BS_GET(bs->v, *i_bs);
+        (*i_bs)++;
+
+        switch (tag) {
+          case TAG_FROM:
+            {
+              if (LMN_HL_HAS_ATTR(hl_root)) {
+                return FALSE;
+              }
+            } 
+            break;
+          case TAG_ATOM_START:
+            {
+              LmnFunctor f;
+
+              f = binstr_get_functor(bs->v, *i_bs); /* functorを持ってくる */
+              *i_bs  += BS_FUNCTOR_SIZE;
+              if (LMN_ATTR_IS_DATA(LMN_HL_ATTRATOM_ATTR(hl_root)) ||
+                  f!=LMN_SATOM_GET_FUNCTOR(LMN_HL_ATTRATOM(hl_root))) {
+                return FALSE;
+              }
+            }
+            break;
+          case TAG_INT_DATA:
+            {
+              long n;
+              n = binstr_get_int(bs->v, *i_bs);
+              *i_bs += BS_INT_SIZE;
+              if (LMN_HL_ATTRATOM_ATTR(hl_root) != LMN_INT_ATTR ||
+                  n!=LMN_HL_ATTRATOM(hl_root)) {
+                return FALSE;
+              }
+            }
+            break;
+          case TAG_DBL_DATA:
+            {
+              double *n = LMN_MALLOC(double);
+
+              *n = binstr_get_dbl(bs->v, *i_bs);
+              *i_bs += BS_DBL_SIZE;
+              if (LMN_HL_ATTRATOM_ATTR(hl_root) != LMN_DBL_ATTR ||
+                  *n!=*(double*)LMN_HL_ATTRATOM(hl_root)) {
+                return FALSE;
+              }
+            }
+            break;
+          case TAG_STR_DATA:
+            {
+              LmnString str;
+              lmn_interned_str n;
+
+              n    = binstr_get_strid(bs->v, *i_bs);
+              str  = lmn_string_make(lmn_id_to_name(n));
+              *i_bs += BS_STR_ID_SIZE;
+              if (LMN_HL_ATTRATOM_ATTR(hl_root) != LMN_STRING_ATTR ||
+                  !lmn_string_eq(str, (LmnString)LMN_HL_ATTRATOM(hl_root))) {
+                return FALSE;
+              }
+            }
+            break; 
+          default:
+            printf("tag = %d\n", tag);
+            lmn_fatal("binstr decode, unexpected");
+            break;
+        }
+
         tracelog_put_hlink(log, hl_root, *i_ref);
         (*i_ref)++;
         return TRUE;

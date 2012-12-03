@@ -65,18 +65,24 @@ typedef struct HyperLink{
   LmnMembrane *mem; /* atom の所属膜（findatomで使用）*/
   unsigned long id; /* 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用) */
 //  long usrid;        /* ユーザがhyperlinkのidを決められるようにするための変数（未実装）*/
-
+  LmnAtom attrAtom;/* ハイパーリンクの属性として扱うアトム rootにのみ持たせる */
+  LmnLinkAttr attr; /* 属性アトムの属性(0なら属性はなし) rootにのみ持たせる */  
   /* 木構造による併合関係の表現 */
   struct HyperLink *parent; /* root の場合は自身のポインタ */
   struct HashSet *children; /* 子表 */
 
 } HyperLink;
 
+#define LMN_HL_EMPTY_ATTR (0)
+
 #define LMN_HL_FUNC LMN_EXCLAMATION_FUNCTOR
 
 #define LMN_HL_RANK(HL)     ((HL)->rank)
 #define LMN_HL_MEM(HL)      ((HL)->mem)
 #define LMN_HL_ID(HL)       ((HL)->id)
+#define LMN_HL_ATTRATOM(HL)     ((lmn_hyperlink_get_root(HL))->attrAtom)
+#define LMN_HL_ATTRATOM_ATTR(HL) ((lmn_hyperlink_get_root(HL))->attr)
+#define LMN_HL_HAS_ATTR(HL)     (LMN_HL_ATTRATOM_ATTR(lmn_hyperlink_get_root(HL)) || LMN_HL_ATTRATOM(lmn_hyperlink_get_root(HL)))
 
 #define LMN_HL_ATOM_ROOT_HL(ATOM)   lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(ATOM))
 #define LMN_HL_ATOM_ROOT_ATOM(ATOM) lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(ATOM)))
@@ -88,14 +94,17 @@ typedef struct HyperLink{
 
 
 void lmn_hyperlink_make(LmnSAtom at);
-LmnSAtom lmn_hyperlink_new(void);
+void lmn_hyperlink_put_attr(HyperLink *hl, LmnAtom attrAtom, LmnLinkAttr attr);
+void lmn_hyperlink_make_with_attr(LmnSAtom at, LmnAtom attrAtom, LmnLinkAttr attr);
+LmnSAtom lmn_hyperlink_new();
+LmnSAtom lmn_hyperlink_new_with_attr(LmnAtom attrAtom, LmnLinkAttr attr);
 void lmn_hyperlink_delete(LmnSAtom at);
 void lmn_hyperlink_copy(LmnSAtom newatom, LmnSAtom oriatom);
 HyperLink *lmn_hyperlink_at_to_hl(LmnSAtom at);
 LmnSAtom   lmn_hyperlink_hl_to_at(HyperLink *hl);
 HyperLink *lmn_hyperlink_get_root(HyperLink *hl);
-HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child);
-HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2);
+HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child, LmnAtom, LmnLinkAttr);
+HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2, LmnAtom, LmnLinkAttr);
 int  lmn_hyperlink_rank(HyperLink *hl);
 int  lmn_hyperlink_element_num(HyperLink *hl);
 BOOL lmn_hyperlink_eq_hl(HyperLink *hl1, HyperLink *hl2);

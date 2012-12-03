@@ -127,7 +127,7 @@ static void var_list_free(VarList l)
   vec_free(l);
 }
 
-void var_list_push(VarList l, int n)
+void var_list_push(VarList l, InstrArg n)
 {
   vec_push(l, n);
 }
@@ -137,7 +137,7 @@ unsigned int var_list_num(VarList l)
   return vec_num(l);
 }
 
-int var_list_get(VarList l, int i)
+InstrArg var_list_get(VarList l, int i)
 {
   return vec_get(l, i);
 }

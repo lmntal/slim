@@ -247,12 +247,14 @@ LBRACKET var_list RBRACKET { $$ = var_list_arg_make($2); }
 
 var_list:
 /*empty*/  { $$ = var_list_make(); }
-| var_list_ INT { var_list_push($1, $2); $$ = $1; }
+| var_list_ INT { var_list_push($1, instr_var_arg_make($2)); $$ = $1; }
+| var_list_ functor { var_list_push($1, functor_arg_make($2)); $$ = $1; }
 ;
 
 var_list_:
 /*empty*/ { $$ = var_list_make(); }
-| var_list_ INT COMMA { var_list_push($1, $2); $$ = $1; }
+| var_list_ INT COMMA { var_list_push($1, instr_var_arg_make($2)); $$ = $1; }
+| var_list_ functor COMMA { var_list_push($1, functor_arg_make($2)); $$ = $1; }
 ;
 
 inst_list_arg:

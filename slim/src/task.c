@@ -1529,6 +1529,44 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       break;
     }
+    case INSTR_HYPERGETLINK:
+    //head部用命令
+    //hyperlinkにつながるリンク先だけレジスタに格納かつ以降の命令の実行を行う
+    {
+      LmnInstrVar linki, atomi, posi;
+      READ_VAL(LmnInstrVar, instr, linki);
+      READ_VAL(LmnInstrVar, instr, atomi);
+      READ_VAL(LmnInstrVar, instr, posi);
+
+      LmnAtom hlAtom = LMN_SATOM_GET_LINK(wt(rc, atomi), posi);
+      LmnLinkAttr attr = LMN_SATOM_GET_ATTR(wt(rc, atomi), posi);
+      if (attr != LMN_HL_ATTR) {
+        return FALSE;
+      } else {
+        HyperLink *hl = lmn_hyperlink_at_to_hl(LMN_SATOM(hlAtom));
+        Vector hl_childs;
+        vec_init(&hl_childs, 16);
+        int element_num, i;
+        lmn_hyperlink_get_elements(&hl_childs, hl);
+        element_num = vec_num(&hl_childs) - 1;
+        for (i = 0; i < element_num; i++) {
+          LmnSAtom child_hlAtom = ((HyperLink *)vec_get(&hl_childs, i))->atom;
+          LmnAtom linked_atom = LMN_SATOM_GET_LINK(child_hlAtom, 0);
+
+          warry_set(rc, linki,
+              linked_atom,
+              LMN_SATOM_GET_ATTR(child_hlAtom, 0),
+              TT_ATOM);
+
+          if(interpret(rc, rule, instr)) {
+            return TRUE;
+          }
+          profile_backtrack();
+        }
+        vec_destroy(&hl_childs);
+      }
+      break;
+    }
     case INSTR_UNIFY:
     {
       LmnInstrVar atom1, pos1, atom2, pos2, memi;
@@ -1540,8 +1578,8 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, memi);
 
       lmn_mem_unify_atom_args((LmnMembrane *)wt(rc, memi),
-                              LMN_SATOM(wt(rc, atom1)), pos1,
-                              LMN_SATOM(wt(rc, atom2)), pos2);
+          LMN_SATOM(wt(rc, atom1)), pos1,
+          LMN_SATOM(wt(rc, atom2)), pos2);
       break;
     }
     case INSTR_PROCEED:
@@ -1819,6 +1857,7 @@ label_skip_data_atom:
       break;
     }
     case INSTR_ISGROUND:
+    case INSTR_ISHLGROUND:
     {
       LmnInstrVar funci, srclisti, avolisti;
       Vector *srcvec, *avovec;
@@ -1833,11 +1872,55 @@ label_skip_data_atom:
       srcvec = links_from_idxs((Vector *)wt(rc, srclisti), rc_warry(rc));
       avovec = links_from_idxs((Vector *)wt(rc, avolisti), rc_warry(rc));
 
-
       if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
         ProcessTbl atoms;
-        b = ground_atoms(srcvec, avovec, &atoms, &natoms);
-
+        ProcessTbl hlinks;
+        hlinks = NULL;
+        switch (op) {
+        case INSTR_ISHLGROUND:
+          {
+              ProcessTbl attr_functors;
+              Vector attr_dataAtoms;
+              Vector attr_dataAtom_attrs;
+              vec_init(&attr_dataAtoms, 16);
+              vec_init(&attr_dataAtom_attrs, 16);
+              attr_functors = proc_tbl_make_with_size(16);
+              LmnInstrVar i, n;
+              
+              READ_VAL(LmnInstrVar, instr, n);
+              for (; n--; i++) {
+                LmnLinkAttr attr;
+                READ_VAL(LmnLinkAttr, instr, attr);
+                if (LMN_ATTR_IS_DATA(attr)) {
+                  LmnAtom at;
+                  vec_push(&attr_dataAtom_attrs, attr);
+                  READ_DATA_ATOM(at, attr);
+                  vec_push(&attr_dataAtoms, at);
+                } else {
+                  LmnFunctor f;
+                  READ_VAL(LmnFunctor, instr, f);
+                  proc_tbl_put(attr_functors, f, f);
+                }
+              }
+             b = ground_atoms(srcvec,
+                              avovec,
+                              &atoms,
+                              &natoms,
+                              &hlinks,
+                              &attr_functors,
+                              &attr_dataAtoms,
+                              &attr_dataAtom_attrs);
+            proc_tbl_free(attr_functors);
+            vec_destroy(&attr_dataAtoms);
+            vec_destroy(&attr_dataAtom_attrs);
+            break;
+          }
+        case INSTR_ISGROUND:
+          {
+            b = ground_atoms(srcvec, avovec, &atoms, &natoms, NULL, NULL, NULL, NULL);
+            break;
+          }
+        }
         free_links(srcvec);
         free_links(avovec);
 
@@ -1851,12 +1934,65 @@ label_skip_data_atom:
           /* proc_tblを取り除く */
           dpor_LHS_remove_ground_atoms(RC_POR_DATA(rc), atoms);
           proc_tbl_free(atoms);
+          proc_tbl_free(hlinks);
         }
 
         return FALSE; /* 全ての候補取得のためにNDは常にFALSEを返す仕様 */
       }
       else {
-        b = lmn_mem_is_ground(srcvec, avovec, &natoms);
+          switch (op) {
+          case INSTR_ISHLGROUND:
+            {
+              ProcessTbl attr_functors;
+              Vector attr_dataAtoms;
+              Vector attr_dataAtom_attrs;
+              vec_init(&attr_dataAtoms, 16);
+              vec_init(&attr_dataAtom_attrs, 16);
+              attr_functors = proc_tbl_make_with_size(16);
+              LmnInstrVar i, n;
+              
+              READ_VAL(LmnInstrVar, instr, n);
+              for (; n--; i++) {
+                LmnLinkAttr attr;
+                READ_VAL(LmnLinkAttr, instr, attr);
+                if (LMN_ATTR_IS_DATA(attr)) {
+                  LmnAtom at;
+                  vec_push(&attr_dataAtom_attrs, attr);
+                  READ_DATA_ATOM(at, attr);
+                  vec_push(&attr_dataAtoms, at);
+                } else {
+                  LmnFunctor f;
+                  READ_VAL(LmnFunctor, instr, f);
+                  proc_tbl_put(attr_functors, f, f);
+                }
+              }
+              /*for (i = 0; i < attr_functors->size ; i++) {
+                     if (attr_functors->tbl[i]!=-1) {
+                       printf("%d->%d\n", i, attr_functors->tbl[i]);
+                     }
+              }*/
+
+              b = lmn_mem_is_hlground(srcvec,
+                                      avovec,
+                                      &natoms,
+                                      &attr_functors,
+                                      &attr_dataAtoms,
+                                      &attr_dataAtom_attrs);
+              /*for (i=0; i<vec_num(&attr_dataAtoms);i++) {
+                     printf("%d\n", vec_get(&attr_dataAtoms, i));
+                     printf("%d\n", vec_get(&attr_dataAtom_attrs, i));
+              }*/
+              proc_tbl_free(attr_functors);
+              vec_destroy(&attr_dataAtoms);
+              vec_destroy(&attr_dataAtom_attrs);
+              break;
+            }
+          case INSTR_ISGROUND:
+            {
+              b = lmn_mem_is_ground(srcvec, avovec, &natoms);
+              break;
+            }
+          }
 
         free_links(srcvec);
         free_links(avovec);
@@ -1964,6 +2100,7 @@ label_skip_data_atom:
 
       break;
     }
+    case INSTR_NEWHLINKWITHATTR:
     case INSTR_NEWHLINK:
     {
       /* 全ての失敗しうるガード制約よりも後で実行されるように、
@@ -1971,10 +2108,32 @@ label_skip_data_atom:
        */
 
       LmnInstrVar atomi;
-
       READ_VAL(LmnInstrVar, instr, atomi);
-      warry_set(rc, atomi, lmn_hyperlink_new(), LMN_HL_ATTR, TT_ATOM);
-
+      
+      switch (op) {
+        case INSTR_NEWHLINKWITHATTR:
+          {
+            LmnAtom ap;
+            LmnLinkAttr attr;
+            READ_VAL(LmnLinkAttr, instr, attr);
+            if (LMN_ATTR_IS_DATA(attr)) {
+              READ_DATA_ATOM(ap, attr);
+            } else {
+              LmnFunctor f;
+              READ_VAL(LmnFunctor, instr, f);
+              ap = LMN_ATOM(lmn_new_atom(f));
+              attr = 0;//シンボルアトムということを表す。値に意味はない。
+              if (LMN_SATOM_GET_ARITY(LMN_SATOM(ap))>1) {
+                lmn_fatal("hyperlink's attribute takes only an unary atom");
+              }
+            }
+            warry_set(rc, atomi, lmn_hyperlink_new_with_attr(ap, attr), LMN_HL_ATTR, TT_ATOM);
+            break;
+          }
+        case INSTR_NEWHLINK:
+          warry_set(rc, atomi, lmn_hyperlink_new(), LMN_HL_ATTR, TT_ATOM);      
+          break;
+      }
       break;
     }
     case INSTR_MAKEHLINK:
@@ -1995,6 +2154,18 @@ label_skip_data_atom:
 
       if (!LMN_ATTR_IS_HL(at(rc, atomi))) return FALSE;
 
+      break;
+    }
+    case INSTR_GETATTRATOM:
+    {
+      LmnInstrVar dstatomi, atomi;
+      READ_VAL(LmnInstrVar, instr, dstatomi);
+      READ_VAL(LmnInstrVar, instr, atomi);
+      
+      warry_set(rc, dstatomi,
+                LMN_HL_ATTRATOM(lmn_hyperlink_at_to_hl(LMN_SATOM(wt(rc, atomi)))),
+                LMN_HL_ATTRATOM_ATTR(lmn_hyperlink_at_to_hl(LMN_SATOM(wt(rc, atomi)))),
+                TT_OTHER);
       break;
     }
     case INSTR_GETNUM:
@@ -2029,12 +2200,24 @@ label_skip_data_atom:
       if (LMN_ATTR_IS_HL(attr1) && LMN_ATTR_IS_HL(attr2)) {
         LmnMembrane *m;
         LmnSAtom atom1, atom2;
+        HyperLink *hl1, *hl2;
 
         m = (LmnMembrane *)wt(rc, memi);
         atom1 = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
         atom2 = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 1));
 
-        lmn_hyperlink_unify(lmn_hyperlink_at_to_hl(atom1), lmn_hyperlink_at_to_hl(atom2));
+        hl1 = lmn_hyperlink_at_to_hl(atom1);
+        hl2 = lmn_hyperlink_at_to_hl(atom2);
+
+        if (LMN_SATOM_GET_ARITY(atom)==2) {//二引数の場合は一つ目のハイパーリンクの属性を継承する
+          lmn_hyperlink_unify(hl1, hl2, LMN_HL_ATTRATOM(hl1), LMN_HL_ATTRATOM_ATTR(hl1));
+        } else if (LMN_SATOM_GET_ARITY(atom)==3) {//三引数の場合は三引数目を併合後の属性とする
+          LmnAtom attrAtom;
+          attrAtom  = LMN_ATOM(LMN_SATOM_GET_LINK(atom, 2));
+          lmn_hyperlink_unify(hl1, hl2, attrAtom, LMN_SATOM_GET_ATTR(atom, 2)); 
+        } else {
+          lmn_fatal("too many arguments to >< atom");
+        }
 
         lmn_mem_delete_atom(m, wt(rc, atomi), at(rc, atomi));
         lmn_mem_delete_atom(m, (LmnWord)atom1, (LmnWord)attr1);
@@ -2121,11 +2304,13 @@ label_skip_data_atom:
       }
       break;
     }
+    case INSTR_COPYHLGROUND:
     case INSTR_COPYGROUND:
     {
       LmnInstrVar dstlist, srclist, memi;
       Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
       ProcessTbl atommap;
+      ProcessTbl hlinkmap;
 
       READ_VAL(LmnInstrVar, instr, dstlist);
       READ_VAL(LmnInstrVar, instr, srclist);
@@ -2133,10 +2318,48 @@ label_skip_data_atom:
 
       /* リンクオブジェクトのベクタを構築 */
       srcvec = links_from_idxs((Vector *)wt(rc, srclist), rc_warry(rc));
-      lmn_mem_copy_ground((LmnMembrane *)wt(rc, memi),
-                          srcvec,
-                          &dstlovec,
-                          &atommap);
+      ProcessTbl attr_functors;
+      Vector attr_dataAtoms;
+      Vector attr_dataAtom_attrs;
+      vec_init(&attr_dataAtoms, 16);
+      vec_init(&attr_dataAtom_attrs, 16);
+      attr_functors = proc_tbl_make_with_size(16);
+      LmnInstrVar i, n;
+
+      READ_VAL(LmnInstrVar, instr, n);
+      for (; n--; i++) {
+        LmnLinkAttr attr;
+        READ_VAL(LmnLinkAttr, instr, attr);
+        if (LMN_ATTR_IS_DATA(attr)) {
+          LmnAtom at;
+          vec_push(&attr_dataAtom_attrs, attr);
+          READ_DATA_ATOM(at, attr);
+          vec_push(&attr_dataAtoms, at);
+        } else {
+          LmnFunctor f;
+          READ_VAL(LmnFunctor, instr, f);
+          proc_tbl_put(attr_functors, f, f);
+        }
+      }
+
+      switch (op) {
+        case INSTR_COPYHLGROUND:
+          lmn_mem_copy_hlground((LmnMembrane *)wt(rc, memi),
+                              srcvec,
+                             &dstlovec,
+                             &atommap,
+                             &hlinkmap,
+                             &attr_functors,
+                             &attr_dataAtoms,
+                             &attr_dataAtom_attrs);
+          break;
+        case INSTR_COPYGROUND:
+          lmn_mem_copy_ground((LmnMembrane *)wt(rc, memi),
+                              srcvec,
+                             &dstlovec,
+                             &atommap);
+          break;
+      }
       free_links(srcvec);
 
       /* 返り値の作成 */
@@ -2153,6 +2376,8 @@ label_skip_data_atom:
 
       return TRUE; /* COPYGROUNDはボディに出現する */
     }
+    case INSTR_REMOVEHLGROUND:
+    case INSTR_FREEHLGROUND:
     case INSTR_REMOVEGROUND:
     case INSTR_FREEGROUND:
     {
@@ -2160,15 +2385,60 @@ label_skip_data_atom:
       Vector *srcvec; /* 変数番号のリスト */
 
       READ_VAL(LmnInstrVar, instr, listi);
-      if (INSTR_REMOVEGROUND == op) {
+      if (INSTR_REMOVEGROUND == op || INSTR_REMOVEHLGROUND == op) {
         READ_VAL(LmnInstrVar, instr, memi);
       } else {
         memi = 0;
       }
-
       srcvec = links_from_idxs((Vector *)wt(rc, listi), rc_warry(rc));
 
       switch (op) {
+        case INSTR_REMOVEHLGROUND:
+        case INSTR_FREEHLGROUND:
+          { 
+            ProcessTbl attr_functors;
+            Vector attr_dataAtoms;
+            Vector attr_dataAtom_attrs;
+            vec_init(&attr_dataAtoms, 16);
+            vec_init(&attr_dataAtom_attrs, 16);
+            attr_functors = proc_tbl_make_with_size(16);
+            LmnInstrVar i, n;
+
+            READ_VAL(LmnInstrVar, instr, n);
+            for (; n--; i++) {
+              LmnLinkAttr attr;
+              READ_VAL(LmnLinkAttr, instr, attr);
+              if (LMN_ATTR_IS_DATA(attr)) {
+                LmnAtom at;
+                vec_push(&attr_dataAtom_attrs, attr);
+                READ_DATA_ATOM(at, attr);
+                vec_push(&attr_dataAtoms, at);
+              } else {
+                LmnFunctor f;
+                READ_VAL(LmnFunctor, instr, f);
+                proc_tbl_put(attr_functors, f, f);
+              }
+            }
+            switch (op) {
+              case INSTR_REMOVEHLGROUND:
+                lmn_mem_remove_hlground((LmnMembrane *)wt(rc, memi),
+                    srcvec,
+                    &attr_functors,
+                    &attr_dataAtoms,
+                    &attr_dataAtom_attrs);
+                break;
+              case INSTR_FREEGROUND:
+                lmn_mem_free_hlground(srcvec,
+                    &attr_functors,
+                    &attr_dataAtoms,
+                    &attr_dataAtom_attrs);
+                break;
+            }
+            proc_tbl_free(attr_functors);
+            vec_destroy(&attr_dataAtoms);
+            vec_destroy(&attr_dataAtom_attrs);
+            break;
+          }
       case INSTR_REMOVEGROUND:
         lmn_mem_remove_ground((LmnMembrane *)wt(rc, memi), srcvec);
         break;
@@ -2249,7 +2519,7 @@ label_skip_data_atom:
       break;
     }
     case INSTR_COPYATOM:
-    {
+      {
       LmnInstrVar atom1, memi, atom2;
 
       READ_VAL(LmnInstrVar, instr, atom1);
@@ -3293,6 +3563,13 @@ label_skip_data_atom:
 
       /* サブやスーパークラスなどの階層の概念がないので単純比較を行う */
       if (wt(rc, subi) != wt(rc, superi)) return FALSE;
+      break;
+    }
+    case INSTR_CELLDUMP:
+    {
+      printf("CELL DUMP:\n");
+      lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
+      lmn_hyperlink_print(RC_GROOT_MEM(rc));
       break;
     }
     default:

@@ -47,13 +47,14 @@
 /* 型名の解決の為に上に持ってきた */
 typedef Vector *InstList;
 
-/* List of instrction variables */
+typedef struct InstrArg *InstrArg;
 
+/* List of instrction variables */
 typedef Vector *VarList;
 VarList var_list_make(void);
-void var_list_push(VarList l, int n);
+void var_list_push(VarList l, InstrArg n);
 unsigned int var_list_num(VarList l);
-int var_list_get(VarList l, int i);
+InstrArg var_list_get(VarList l, int i);
 
 /* Functor */
 
@@ -76,8 +77,6 @@ lmn_interned_str functor_get_string_value(Functor f);
 int functor_get_id(Functor f);
 
 /* Instruction Argument */
-
-typedef struct InstrArg *InstrArg;
 
 InstrArg inst_arg_make(enum ArgType type);
 enum ArgType inst_arg_get_type(InstrArg arg);

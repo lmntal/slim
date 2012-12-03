@@ -186,6 +186,15 @@ static inline LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatom
   }
 }
 
+/** -----
+ *  リンクオブジェクトの代替
+ */
+typedef struct LinkObj {
+  LmnAtom ap;
+  LmnLinkAttr pos;
+} *LinkObj;
+
+LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
 
 /** -----
  *  膜
@@ -275,17 +284,44 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem);
 
 BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec);
 BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);
+BOOL lmn_mem_is_hlground(Vector *srcvec,
+                         Vector *avovec,
+                         unsigned long *natoms,
+                         ProcessTbl *attr_functors,
+                         Vector *attr_dataAtoms,
+                         Vector *attr_dataAtom_attrs);
 void lmn_mem_copy_ground(LmnMembrane *mem,
                          Vector *srcvec,
                          Vector **ret_dstlovec,
                          ProcessTbl *ret_atommap);
+void lmn_mem_copy_hlground(LmnMembrane *mem,
+                         Vector *srcvec,
+                         Vector **ret_dstlovec,
+                         ProcessTbl *ret_atommap,
+                         ProcessTbl *ret_hlinkmap,
+                         ProcessTbl *attr_functors,
+                         Vector *attr_dataAtoms,
+                         Vector *attr_dataAtom_attrs);
 void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec);
+void lmn_mem_remove_hlground(LmnMembrane *mem,
+                             Vector *srcvec,
+                             ProcessTbl *attr_sym,
+                             Vector *attr_data,
+                             Vector *attr_data_at);
 void lmn_mem_free_ground(Vector *srcvec);
+void lmn_mem_free_hlground(Vector *srcvec,
+                           ProcessTbl *attr_sym,
+                           Vector *attr_data,
+                           Vector *attr_data_at);
 void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec);
 BOOL ground_atoms(Vector *srcvec,
                   Vector *avovec,
                   ProcessTbl *atoms,
-                  unsigned long *natoms);
+                  unsigned long *natoms,
+                  ProcessTbl *hlinks,
+                  ProcessTbl *attr_functors,
+                  Vector *attr_dataAtoms,
+                  Vector *attr_dataAtom_attrs);
 BOOL ground_atoms_old(Vector *srcvec,
                       Vector *avovec,
                       HashSet **atoms,
@@ -633,13 +669,6 @@ typedef HashIterator AtomListIter;
   } while (0)
 
 
-/* リンクオブジェクトの代替 */
-typedef struct LinkObj {
-  LmnAtom ap;
-  LmnLinkAttr pos;
-} *LinkObj;
-
-LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
 /* LmnSAtom* lmn_atomlist_end(AtomSetEntry * ent); */
 
 

@@ -100,6 +100,7 @@ struct InstrSpec spec[] = {
     {"setmemname", INSTR_SETMEMNAME, {InstrVar, String}},
 
     {"getlink", INSTR_GETLINK, {InstrVar, InstrVar, InstrVar}},
+    {"hypergetlink", INSTR_HYPERGETLINK, {InstrVar, InstrVar, InstrVar}},
     {"alloclink", INSTR_ALLOCLINK, {InstrVar, InstrVar, InstrVar}},
 
     {"newlink", INSTR_NEWLINK, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
@@ -155,10 +156,14 @@ struct InstrSpec spec[] = {
     /* guard */
     {"eqground", INSTR_EQGROUND, {InstrVar, InstrVar}},
     {"neqground", INSTR_NEQGROUND, {InstrVar, InstrVar}},
+    {"copyhlground", INSTR_COPYHLGROUND, {InstrVar, InstrVar, InstrVar, InstrVarList}},
     {"copyground", INSTR_COPYGROUND, {InstrVar, InstrVar, InstrVar}},
     {"removeground", INSTR_REMOVEGROUND, {InstrVar, InstrVar}},
+    {"removehlground", INSTR_REMOVEHLGROUND, {InstrVar, InstrVar, InstrVarList}},
     {"freeground", INSTR_FREEGROUND, {InstrVar}},
+    {"freehlground", INSTR_FREEHLGROUND, {InstrVar, InstrVarList}},
     {"isground", INSTR_ISGROUND, {InstrVar, InstrVar, InstrVar}},
+    {"ishlground", INSTR_ISHLGROUND, {InstrVar, InstrVar, InstrVar, InstrVarList}},
     {"isunary", INSTR_ISUNARY, {InstrVar}},
     {"isint", INSTR_ISINT, {InstrVar}},
     {"isintfunc", INSTR_ISINTFUNC, {InstrVar}},
@@ -169,9 +174,11 @@ struct InstrSpec spec[] = {
     {"uniq", INSTR_UNIQ, {InstrVarList}},
 
     /* guard: hyperlink */
-    {"newhlink", INSTR_NEWHLINK, {InstrVar, InstrVar}},
+    {"newhlink", INSTR_NEWHLINK, {InstrVar}},
+    {"newhlinkwithattr", INSTR_NEWHLINKWITHATTR, {InstrVar, InstrVar}},
     {"makehlink", INSTR_MAKEHLINK, {InstrVar}},
     {"ishlink", INSTR_ISHLINK, {InstrVar}},
+    {"getattratom", INSTR_GETATTRATOM, {InstrVar, InstrVar}},
     {"getnum", INSTR_GETNUM, {InstrVar, InstrVar}},
 
     /* guard: float */
@@ -218,5 +225,9 @@ struct InstrSpec spec[] = {
 
     {"getclass", INSTR_GETCLASS, {InstrVar, InstrVar}},
     {"subclass", INSTR_SUBCLASS, {InstrVar, InstrVar}},
+
+    /* etc */
+    {"celldump", INSTR_CELLDUMP, {}},
+
     {0}
   };
