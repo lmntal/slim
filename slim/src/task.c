@@ -2318,32 +2318,33 @@ label_skip_data_atom:
 
       /* リンクオブジェクトのベクタを構築 */
       srcvec = links_from_idxs((Vector *)wt(rc, srclist), rc_warry(rc));
-      ProcessTbl attr_functors;
-      Vector attr_dataAtoms;
-      Vector attr_dataAtom_attrs;
-      vec_init(&attr_dataAtoms, 16);
-      vec_init(&attr_dataAtom_attrs, 16);
-      attr_functors = proc_tbl_make_with_size(16);
-      LmnInstrVar i, n;
-
-      READ_VAL(LmnInstrVar, instr, n);
-      for (; n--; i++) {
-        LmnLinkAttr attr;
-        READ_VAL(LmnLinkAttr, instr, attr);
-        if (LMN_ATTR_IS_DATA(attr)) {
-          LmnAtom at;
-          vec_push(&attr_dataAtom_attrs, attr);
-          READ_DATA_ATOM(at, attr);
-          vec_push(&attr_dataAtoms, at);
-        } else {
-          LmnFunctor f;
-          READ_VAL(LmnFunctor, instr, f);
-          proc_tbl_put(attr_functors, f, f);
-        }
-      }
-
+      
       switch (op) {
         case INSTR_COPYHLGROUND:
+        {
+          ProcessTbl attr_functors;
+          Vector attr_dataAtoms;
+          Vector attr_dataAtom_attrs;
+          vec_init(&attr_dataAtoms, 16);
+          vec_init(&attr_dataAtom_attrs, 16);
+          attr_functors = proc_tbl_make_with_size(16);
+          LmnInstrVar i, n;
+
+          READ_VAL(LmnInstrVar, instr, n);
+          for (; n--; i++) {
+            LmnLinkAttr attr;
+            READ_VAL(LmnLinkAttr, instr, attr);
+            if (LMN_ATTR_IS_DATA(attr)) {
+              LmnAtom at;
+              vec_push(&attr_dataAtom_attrs, attr);
+              READ_DATA_ATOM(at, attr);
+              vec_push(&attr_dataAtoms, at);
+            } else {
+              LmnFunctor f;
+              READ_VAL(LmnFunctor, instr, f);
+              proc_tbl_put(attr_functors, f, f);
+            }
+          }
           lmn_mem_copy_hlground((LmnMembrane *)wt(rc, memi),
                               srcvec,
                              &dstlovec,
@@ -2352,6 +2353,7 @@ label_skip_data_atom:
                              &attr_functors,
                              &attr_dataAtoms,
                              &attr_dataAtom_attrs);
+        }
           break;
         case INSTR_COPYGROUND:
           lmn_mem_copy_ground((LmnMembrane *)wt(rc, memi),
