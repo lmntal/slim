@@ -143,8 +143,8 @@ struct State {                 /* Total:64(36)byte */
 /** Flags2 (8bit)
  *  0000 0001  Partial Order ReductionによるReductionマーキング(debug/demo用機能)
  *  0000 0010  D compression stateか否かを示すフラグ
- *  0000 0100
- *  0000 1000
+ *  0000 0100  (MC_NDFS)blue flag
+ *  0000 1000  (MC_NDFS)red flag
  *  0001 0000
  *  0010 0000
  *  0100 0000
@@ -154,6 +154,8 @@ struct State {                 /* Total:64(36)byte */
 #define STATE_REDUCED_MASK             (0x01U)
 #define STATE_DELTA_MASK               (0x01U << 1)
 #define STATE_UPDATE_MASK              (0x01U << 2)
+#define BLUE_MASK                      (0x01U << 3)
+#define RED_MASK                       (0x01U << 4)
 
 /* manipulation for flags2 */
 #define s_set_d(S)                     ((S)->flags2 |=   STATE_DELTA_MASK)
@@ -165,6 +167,14 @@ struct State {                 /* Total:64(36)byte */
 #define s_set_update(S)                ((S)->flags2 |=   STATE_UPDATE_MASK)
 #define s_unset_update(S)              ((S)->flags2 &= (~STATE_UPDATE_MASK))
 #define s_is_update(S)                 ((S)->flags2 &    STATE_UPDATE_MASK)
+#define s_set_blue(S)                  ((S)->flags2 |=   BLUE_MASK)
+#define s_unset_blue(S)                ((S)->flags2 &= (~BLUE_MASK))
+#define s_is_blue(S)                   ((S)->flags2 &    BLUE_MASK)
+#define s_set_red(S)                   ((S)->flags2 |=   RED_MASK)
+#define s_unset_red(S)                 ((S)->flags2 &= (~RED_MASK))
+#define s_is_red(S)                    ((S)->flags2 &    RED_MASK)
+#define s_set_white(S)                 (s_unset_blue(S); s_unset_red(S))
+#define s_is_white(S)                  (!s_is_blue(S) && !s_is_red(S))
 
 
 /*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
@@ -495,7 +505,7 @@ static inline State *state_D_ref(State *s) {
 
 /* 状態sに対応する非圧縮バイナリストリングdをキャッシングする. */
 static inline void state_D_cache(State *s, LmnBinStr d) {
-  LMN_ASSERT(!state_D_fetch(s));
+  LMN_ASSERT(!state_D_fetch(s));  
   /* メモリ節約の結果, 保守性ないコード. 注意 */
   s->successors = (succ_data_t)d;
 }

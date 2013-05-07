@@ -158,6 +158,7 @@ struct LmnWorker {
 
   LmnMCObj        generator;
   LmnMCObj        explorer;
+  BOOL            is_explorer;
 
   void            (*start)( );   /* 実行関数 */
   BOOL            (*check)( );   /* 終了検知関数 */
@@ -169,6 +170,9 @@ struct LmnWorker {
 
   Vector         *invalid_seeds;
   Vector         *cycles;
+
+    int expand; // for debug
+    int red;
 };
 
 /**
@@ -197,6 +201,10 @@ struct LmnWorker {
 #define worker_is_WAIT(W)               ((W)->wait)
 #define worker_invalid_seeds(W)         ((W)->invalid_seeds)
 #define worker_cycles(W)                ((W)->cycles)
+#define worker_is_explorer(W)           ((W)->is_explorer)
+#define worker_explorer_set(W)          ((W)->is_explorer=TRUE)
+#define worker_is_generator(W)          (!worker_is_explorer(W))
+#define worker_generator_set(W)         ((W)->is_explorer=FALSE)
 
 #define worker_init(W)                                                         \
   do {                                                                         \
@@ -372,6 +380,10 @@ static inline BOOL worker_check(LmnWorker *w) {
 #define worker_use_mcndfs_weak(W)     (mc_use_mcndfs_weak(worker_explorer_type(W)))
 #define worker_set_mcndfs_weak(W)     (mc_set_mcndfs_weak(worker_explorer_type(W)))
 
+/** Macros for MCNDFS
+ */
+/*#define worker_is_generator(W)        (worker_id(W) > 0)
+#define worker_is_explorer(W)         (woeker_id(W) == 0)*/
 
 /** ProtoTypes
  */
@@ -391,5 +403,7 @@ LmnWorker *workers_get_my_worker(LmnWorkerGroup *wp);
 
 LmnCost workers_opt_cost(LmnWorkerGroup *wp);
 void lmn_update_opt_cost(LmnWorkerGroup *wp, State *new_s, BOOL f);
+
+LmnWorker *worker_next_generator(LmnWorker* w);
 
 #endif

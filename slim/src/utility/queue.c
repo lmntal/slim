@@ -43,6 +43,8 @@
 
 #include "queue.h"
 #include "error.h"
+#include <pthread.h>
+#include <errno.h>
 
 #define Q_DEQ 0
 #define Q_ENQ 1
@@ -127,14 +129,40 @@ void q_free(Queue *q)
 void enqueue(Queue *q, LmnWord v)
 {
   Node *last, *new;
-  if (q->lock) q_lock(q, Q_ENQ);
+  if (q->lock) {
+      q_lock(q, Q_ENQ);
+      /*q_lock(q, Q_DEQ);*/
+  }
   last = q->tail;
   new = node_make(v);
   last->next = new;
   q->tail = new;
   q->enq_num++;
 
-  if (q->lock) q_unlock(q, Q_ENQ);
+  if (q->lock) {
+      /*q_unlock(q, Q_DEQ);*/
+      q_unlock(q, Q_ENQ);
+  }
+}
+
+void enqueue_push_head(Queue *q, LmnWord v)
+{
+  Node *head, *new;
+ if (q->lock) {
+      q_lock(q, Q_ENQ);
+      q_lock(q, Q_DEQ);
+  }
+  head = q->head;
+  new = node_make(v);
+  new->next = head->next;
+  head->next = new;
+  //q->tail = new;
+  q->enq_num++;
+
+  if (q->lock) {
+      q_unlock(q, Q_DEQ);
+      q_unlock(q, Q_ENQ);
+  }
 }
 
 /* Queueから要素をdequeueする.
@@ -142,20 +170,26 @@ void enqueue(Queue *q, LmnWord v)
 LmnWord dequeue(Queue *q)
 {
   LmnWord ret = 0;
-  if (q->lock) q_lock(q, Q_DEQ);
+  if (q->lock) {
+      q_lock(q, Q_DEQ);
+      /*q_lock(q,Q_ENQ);*/
+  }
   if (!is_empty_queue(q)) {
     Node *sentinel, *next;
     sentinel = q->head;
-    next = sentinel->next;
+    next = sentinel->next;     
     if (next) {
       ret  = next->v;
       next->v = 0;
       q->head = next;
       free(sentinel);
       q->deq_num++;
-    }
+    }    
   }
-  if (q->lock) q_unlock(q, Q_DEQ);
+  if (q->lock) {
+      /*q_unlock(q, Q_ENQ);*/
+      q_unlock(q, Q_DEQ);      
+  }
   return ret;
 }
 

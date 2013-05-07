@@ -91,6 +91,8 @@ inline LmnWorker *lmn_worker_make_minimal()
   w->check     = NULL;
   w->invalid_seeds = NULL;
   w->cycles    = NULL;
+  w->expand = 0;
+  w->red =0;
 
   lmn_mc_obj_init(&w->generator, w);
   lmn_mc_obj_init(&w->explorer, w);
@@ -156,6 +158,13 @@ static void lmn_worker_start(void *arg)
   worker_TLS_finalize();
 }
 
+LmnWorker* worker_next_generator(LmnWorker* w)
+{
+  LmnWorker* next = worker_next(w);
+
+  while(!worker_is_generator(next)) next = worker_next(next);
+  return next; 
+}
 
 static void worker_TLS_init(unsigned int inc_id)
 {
@@ -556,6 +565,8 @@ static void worker_set_env(LmnWorker *w)
       owcty_env_set(w);
     } else if (lmn_env.enable_map) {
       map_env_set(w);
+    } else if(lmn_env.enable_mcndfs) {
+      mcndfs_env_set(w);
     } else if (lmn_env.enable_bledge || worker_use_lsync(w) || worker_on_mc_bfs(w)) {
       bledge_env_set(w);
     }
