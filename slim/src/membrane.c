@@ -1199,7 +1199,12 @@ static inline void mem_copy_ground_sub(LmnMembrane *mem,
                         attr_dataAtoms,
                         attr_dataAtom_attrs);
         } else {
-          lmn_mem_push_atom(mem, next_src, next_attr);
+          if (next_attr == LMN_HL_ATTR) {
+			LmnAtom next_src_copied = LMN_ATOM(LMN_SATOM_GET_LINK(copied, i));
+			lmn_mem_push_atom(mem, next_src_copied, next_attr);
+		  } else {
+            lmn_mem_push_atom(mem, next_src, next_attr);
+		  }
         }
       }
       else if (LMN_SATOM_GET_LINK(copied, i) != 0) {
