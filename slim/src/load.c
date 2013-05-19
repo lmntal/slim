@@ -36,6 +36,10 @@
  * $Id: load.c,v 1.13 2008/10/17 08:40:50 sasaki Exp $
  */
 
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
 #include "load.h"
 #include "lmntal.h"
 #include "symbol.h"
