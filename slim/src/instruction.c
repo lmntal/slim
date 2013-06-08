@@ -104,6 +104,7 @@ struct InstrSpec spec[] = {
 
     {"newlink", INSTR_NEWLINK, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
     {"relink", INSTR_RELINK, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"swaplink", INSTR_SWAPLINK, {InstrVar, InstrVar, InstrVar, InstrVar}},
     {"unify", INSTR_UNIFY, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
     {"inheritlink", INSTR_INHERITLINK, {InstrVar, InstrVar, InstrVar, InstrVar}},
     {"unifylinks", INSTR_UNIFYLINKS, {InstrVar, InstrVar, InstrVar}},
