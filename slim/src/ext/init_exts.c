@@ -46,6 +46,7 @@ void init_io(void);
 void init_initial_ruleset(void);
 void init_nd_conf(void);
 void init_time(void);
+void init_makedata(void);
 
 void init_builtin_extensions(void)
 {
@@ -56,4 +57,5 @@ void init_builtin_extensions(void)
   init_initial_ruleset();
   init_nd_conf();
   init_time();
+  init_makedata();
 }

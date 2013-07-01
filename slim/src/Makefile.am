@@ -86,7 +86,8 @@ slim_SOURCES =                                                     \
 	ext/integer.c                                                    \
 	ext/atomic.c                                                     \
 	ext/nlmem.c                                                      \
-	ext/io.c                                                         \
+	ext/io.c  							 \
+	ext/makedata.c                                                       \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c													 \
 	ext/time.c
