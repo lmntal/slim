@@ -1659,6 +1659,25 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, atom);
       break;
     }
+    case INSTR_TAILATOM:
+      {
+	LmnInstrVar atomi, memi;
+
+	READ_VAL(LmnInstrVar, instr, atomi);
+	READ_VAL(LmnInstrVar, instr, memi);
+	move_atom_to_atomlist_tail(wt(rc,atomi),(LmnMembrane *)wt(rc,memi));
+	break;
+      }
+
+    case INSTR_HEADATOM:
+      {
+	LmnInstrVar atomi, memi;
+
+	READ_VAL(LmnInstrVar, instr, atomi);
+	READ_VAL(LmnInstrVar, instr, memi);
+	move_atom_to_atomlist_head(wt(rc,atomi),(LmnMembrane *)wt(rc,memi));
+	break;
+      }
     case INSTR_NEWMEM:
     {
       LmnInstrVar newmemi, parentmemi, memf;

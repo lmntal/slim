@@ -482,7 +482,14 @@ static inline void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAt
     mem_remove_symbol_atom(mem, LMN_SATOM(atom));
   }
 }
-
+static inline void move_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
+  //move_symbol_atom_to_atomlist_tail(LMN_SATOM(a), mem);
+  mem_remove_symbol_atom(mem,a);
+  mem_push_symbol_atom(mem,LMN_SATOM(a));
+}
+static inline void move_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
+  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem);
+  }
 static inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
   lmn_mem_remove_atom(mem, atom, attr);
   lmn_free_atom(atom, attr);
