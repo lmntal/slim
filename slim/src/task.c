@@ -1487,7 +1487,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     {
       LmnInstrVar atom1, atom2, pos1, pos2;
       LmnSAtom ap1,ap2;
-      LmnByte attr1, attr2;
+      LmnLinkAttr attr1, attr2;
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, pos1);
       READ_VAL(LmnInstrVar, instr, atom2);
@@ -1546,10 +1546,17 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(at(rc, atom2))
 	       && !LMN_ATTR_IS_EX(attr1) && !LMN_ATTR_IS_EX(attr2)){
     	/* シンボルアトムatom2とシンボルアトムap1 */
-        LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
-        LMN_SATOM_SET_ATTR(ap1, attr1, at(rc, atom2));
-        LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
-        LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1);
+
+        if(ap1){
+	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
+	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1);
+	  LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
+	  LMN_SATOM_SET_ATTR(ap1, attr1, pos2);
+	}else{
+	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, 0);
+	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, 0);
+	  }
+	if(ap2){
 	if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
 	  /* データアトムatom1とシンボルアトムap2 */
 	  LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
@@ -1558,13 +1565,18 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	  /* データアトムap2とシンボルアトムatom1 */
 	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
 	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-	}else {
+	}else{
 	  /* シンボルアトムatom1とシンボルアトムap2 */
 	  LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-	  LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
+	  LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
 	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
 	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
 	}
+	}else{
+	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,0);
+	  }
+
       }
       break;
     }
