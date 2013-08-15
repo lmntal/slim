@@ -506,6 +506,8 @@ static inline void mem_remove_symbol_atom_with_buddy_data(LmnMembrane *mem, LmnS
   for (i = 0; i < end; i++) {
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(LMN_SATOM_GET_ATTR(atom, i))) {
       lmn_mem_remove_data_atom(mem, LMN_SATOM_GET_LINK(atom, i), LMN_SATOM_GET_ATTR(atom, i));
+    } else if (LMN_ATTR_IS_HL(LMN_SATOM_GET_ATTR(atom, i))) {
+      mem_remove_symbol_atom(mem, LMN_SATOM_GET_LINK(atom, i));
     }
   }
   mem_remove_symbol_atom(mem, atom);
