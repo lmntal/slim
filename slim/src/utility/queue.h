@@ -76,6 +76,7 @@ Queue *make_parallel_queue(BOOL lock_type);
 void q_free(Queue *q);
 inline BOOL is_empty_queue(Queue *q);
 inline void enqueue(Queue *q, LmnWord v);
+inline void enqueue_push_head(Queue *q, LmnWord v);
 inline LmnWord dequeue(Queue *q);
 
 static inline unsigned long queue_entry_num(Queue *q) {

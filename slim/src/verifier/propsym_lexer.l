@@ -45,6 +45,7 @@
 #include <math.h>
 #include <memory.h>
 #include <string.h>
+#include "automata.h"
 #include "propsym_parser.h"
 
 #define _POSIX_SOURCE 1

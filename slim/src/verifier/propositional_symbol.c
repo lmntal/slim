@@ -37,6 +37,10 @@
  * $Id$
  */
 
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
 #include "propositional_symbol.h"
 #include "lmntal.h"
 #include "vector.h"
