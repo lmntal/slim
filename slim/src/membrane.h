@@ -327,6 +327,8 @@ BOOL ground_atoms_old(Vector *srcvec,
                       HashSet **atoms,
                       unsigned long *natoms);
 
+void move_symbol_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem);
+
 static inline void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
 static inline void lmn_mem_free_rec(LmnMembrane *mem);
 static inline void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem);
@@ -349,7 +351,6 @@ static inline void alter_functor(LmnMembrane *mem, LmnSAtom atom, LmnFunctor f);
 static inline void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset);
 static inline void lmn_mem_copy_rules(LmnMembrane *dest, LmnMembrane *src);
 static inline void lmn_mem_clearrules(LmnMembrane *src);
-
 
 /* 膜parentから膜memを取り除く.
  * memのメモリ管理は呼び出し側で行う. */
@@ -507,7 +508,7 @@ static inline void mem_remove_symbol_atom_with_buddy_data(LmnMembrane *mem, LmnS
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(LMN_SATOM_GET_ATTR(atom, i))) {
       lmn_mem_remove_data_atom(mem, LMN_SATOM_GET_LINK(atom, i), LMN_SATOM_GET_ATTR(atom, i));
     } else if (LMN_ATTR_IS_HL(LMN_SATOM_GET_ATTR(atom, i))) {
-      mem_remove_symbol_atom(mem, LMN_SATOM_GET_LINK(atom, i));
+      mem_remove_symbol_atom(mem, LMN_SATOM(LMN_SATOM_GET_LINK(atom, i)));
     }
   }
   mem_remove_symbol_atom(mem, atom);
@@ -520,6 +521,17 @@ static inline void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAt
     mem_remove_symbol_atom(mem, LMN_SATOM(atom));
   }
 }
+
+static inline void move_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
+  //move_symbol_atom_to_atomlist_tail(LMN_SATOM(a), mem);
+  mem_remove_symbol_atom(mem,LMN_SATOM(a));
+  mem_push_symbol_atom(mem,LMN_SATOM(a));
+}
+
+static inline void move_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
+  //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda
+  move_symbol_atom_to_atomlist_head(a, mem);
+  }
 
 static inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
   lmn_mem_remove_atom(mem, atom, attr);

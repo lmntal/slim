@@ -229,6 +229,33 @@ void lmn_mem_rulesets_destroy(Vector *rulesets)
   vec_destroy(rulesets);
 }
 
+void move_symbol_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
+  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
+  AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+
+  LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
+  LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a),     LMN_SATOM_GET_NEXT_RAW(a));
+
+  LMN_SATOM_SET_NEXT(a, ent);
+  LMN_SATOM_SET_PREV(a, ent->tail);
+  LMN_SATOM_SET_NEXT(ent->tail, a);
+  ent->tail = (LmnWord)a;
+}
+
+void move_symbol_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
+  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
+  AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+
+  LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
+  LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a),     LMN_SATOM_GET_NEXT_RAW(a));
+
+
+  LMN_SATOM_SET_NEXT(a, ent->head);
+  LMN_SATOM_SET_PREV(a, ent);
+  LMN_SATOM_SET_PREV(ent->head, a);
+  ent->head = (LmnWord)a;
+}
+
 void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom)
 {
   AtomListEntry *as;
@@ -1398,11 +1425,9 @@ CMPGROUND_BREAK:
   return ret_flag;
 }
 
-
 /* srcvecのリンクの列が基底項プロセスに到達(avovecのリンクに到達する場
    合は基底項プロセスではない)している場合、真を返し、natomsに基底項プ
-   ロセスないのアトムの数を格納する。
-  */
+   ロセスないのアトムの数を格納する。*/
 BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms)
 {
   ProcessTbl atoms;
@@ -1561,8 +1586,9 @@ BOOL ground_atoms(
               mem = hl->mem;
               for (i = 0; i < element_num; i++) {
                 if (mem!=((HyperLink *)vec_get(hl_childs, i))->mem) {//別の膜に移動したらFALSE
-                  result = FALSE;
-                  goto returning;
+                  // result = FALSE;
+                  // goto returning;
+                  continue;
                 }
                 LmnSAtom hlAtom = ((HyperLink *)vec_get(hl_childs, i))->atom;
                 LmnAtom linked_hlAtom = LMN_SATOM_GET_LINK(hlAtom, 0);
@@ -1802,7 +1828,7 @@ void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
 {
   ProcessTbl atoms;
   unsigned long i, t;
-  
+
   ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
   proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)mem);
 

@@ -82,6 +82,9 @@ struct InstrSpec spec[] = {
     {"freeatom", INSTR_FREEATOM, {InstrVar}},
     {"alterfunc", INSTR_ALTERFUNC, {InstrVar, ArgFunctor}},
 
+    {"tailatom", INSTR_TAILATOM, {InstrVar, InstrVar}},
+    {"headatom", INSTR_HEADATOM, {InstrVar, InstrVar}},
+
     {"allocatom", INSTR_ALLOCATOM, {InstrVar, ArgFunctor}},
     {"allocatomindirect", INSTR_ALLOCATOMINDIRECT, {InstrVar, InstrVar}},
     {"copyatom", INSTR_COPYATOM, {InstrVar, InstrVar, InstrVar}},
@@ -105,6 +108,7 @@ struct InstrSpec spec[] = {
 
     {"newlink", INSTR_NEWLINK, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
     {"relink", INSTR_RELINK, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"swaplink", INSTR_SWAPLINK, {InstrVar, InstrVar, InstrVar, InstrVar}},
     {"unify", INSTR_UNIFY, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
     {"inheritlink", INSTR_INHERITLINK, {InstrVar, InstrVar, InstrVar, InstrVar}},
     {"unifylinks", INSTR_UNIFYLINKS, {InstrVar, InstrVar, InstrVar}},
@@ -157,13 +161,17 @@ struct InstrSpec spec[] = {
     {"eqground", INSTR_EQGROUND, {InstrVar, InstrVar}},
     {"neqground", INSTR_NEQGROUND, {InstrVar, InstrVar}},
     {"copyhlground", INSTR_COPYHLGROUND, {InstrVar, InstrVar, InstrVar, InstrVarList}},
+    {"copyhlgroundindirect", INSTR_COPYHLGROUNDINDIRECT, {InstrVar, InstrVar, InstrVar, InstrVarList}},
     {"copyground", INSTR_COPYGROUND, {InstrVar, InstrVar, InstrVar}},
     {"removeground", INSTR_REMOVEGROUND, {InstrVar, InstrVar}},
     {"removehlground", INSTR_REMOVEHLGROUND, {InstrVar, InstrVar, InstrVarList}},
+    {"removehlgroundindirect", INSTR_REMOVEHLGROUNDINDIRECT, {InstrVar, InstrVar, InstrVarList}},
     {"freeground", INSTR_FREEGROUND, {InstrVar}},
     {"freehlground", INSTR_FREEHLGROUND, {InstrVar, InstrVarList}},
+    {"freehlgroundindirect", INSTR_FREEHLGROUNDINDIRECT, {InstrVar, InstrVarList}},
     {"isground", INSTR_ISGROUND, {InstrVar, InstrVar, InstrVar}},
     {"ishlground", INSTR_ISHLGROUND, {InstrVar, InstrVar, InstrVar, InstrVarList}},
+    {"ishlgroundindirect", INSTR_ISHLGROUNDINDIRECT, {InstrVar, InstrVar, InstrVar, InstrVarList}},
     {"isunary", INSTR_ISUNARY, {InstrVar}},
     {"isint", INSTR_ISINT, {InstrVar}},
     {"isintfunc", INSTR_ISINTFUNC, {InstrVar}},
@@ -176,6 +184,7 @@ struct InstrSpec spec[] = {
     /* guard: hyperlink */
     {"newhlink", INSTR_NEWHLINK, {InstrVar}},
     {"newhlinkwithattr", INSTR_NEWHLINKWITHATTR, {InstrVar, InstrVar}},
+    {"newhlinkwithattrindirect", INSTR_NEWHLINKWITHATTRINDIRECT, {InstrVar, InstrVar}},
     {"makehlink", INSTR_MAKEHLINK, {InstrVar}},
     {"ishlink", INSTR_ISHLINK, {InstrVar}},
     {"getattratom", INSTR_GETATTRATOM, {InstrVar, InstrVar}},

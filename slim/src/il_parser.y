@@ -237,7 +237,8 @@ arg:
 
 args:
 /*empty*/ { $$ = arg_list_make(); }
-| args_ arg { arg_list_push($1, $2); $$ = $$ = $1; }
+// | args_ arg { arg_list_push($1, $2); $$ = $$ = $1; }
+| args_ arg { arg_list_push($1, $2); $$ = $1; }
 ;
 
 args_:

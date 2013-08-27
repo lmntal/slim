@@ -164,7 +164,7 @@
                                    ||  (s_is_red(s) && worker_is_generator(w)) ) 
 
 /* 初期状態を割り当てるワーカーの条件 */
-#define WORKER_FOR_INIT_STATE(w, s) ( (worker_use_mcndfs(w)  && worker_is_explorer(w) ) \ 
+#define WORKER_FOR_INIT_STATE(w, s) ( (worker_use_mcndfs(w)  && worker_is_explorer(w) ) \
                                    || (!worker_use_mcndfs(w) &&  worker_id(w) == 0)     \
                                    || !worker_on_parallel(w) )
 
@@ -424,7 +424,7 @@ void dfs_start(LmnWorker *w)
         }
       } else {
         worker_set_active(w);
-        if(!is_empty_queue(DFS_WORKER_QUEUE(w)) &&  !((Queue*)DFS_WORKER_QUEUE(w))->head->next) printf("%d : queue is not empty? %d\n", worker_id(w), queue_entry_num(DFS_WORKER_QUEUE(w)));
+        if(!is_empty_queue(DFS_WORKER_QUEUE(w)) &&  !((Queue*)DFS_WORKER_QUEUE(w))->head->next) printf("%u : queue is not empty? %lu\n", worker_id(w), queue_entry_num(DFS_WORKER_QUEUE(w)));
         if (s || (s = (State *)dequeue(DFS_WORKER_QUEUE(w)))) {
           EXECUTE_PROFILE_START();
 #ifdef KWBT_OPT

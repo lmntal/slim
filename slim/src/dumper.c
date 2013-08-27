@@ -153,9 +153,9 @@ static BOOL is_direct_printable(LmnFunctor f)
       f == LMN_NIL_FUNCTOR) return TRUE;
 
   s = LMN_FUNCTOR_STR(f);
-  if (!(isalpha(*s) && islower(*s))) return FALSE;
+  if (!(isalpha((unsigned char) *s) && islower((unsigned char)*s))) return FALSE;
   while (*(++s)) {
-    if (!(isalpha(*s) || isdigit(*s) || *s=='_')) return FALSE;
+    if (!(isalpha((unsigned char)*s) || isdigit((unsigned char)*s) || *s=='_')) return FALSE;
   }
   return TRUE;
 }
