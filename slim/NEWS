@@ -1,3 +1,8 @@
+SLIM (2.2.3) -- 2012/10/17
+  * bug fixes
+    + --delta-mem+relink problem
+    + ltl stateviewer problem
+
 SLIM (2.2.2) -- 2012/05/12
   * new features / support
     + extended state-space for optimization problems
