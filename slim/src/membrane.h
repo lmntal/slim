@@ -186,6 +186,15 @@ static inline LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatom
   }
 }
 
+/** -----
+ *  リンクオブジェクトの代替
+ */
+typedef struct LinkObj {
+  LmnAtom ap;
+  LmnLinkAttr pos;
+} *LinkObj;
+
+LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
 
 /** -----
  *  膜
@@ -291,6 +300,8 @@ BOOL ground_atoms_old(Vector *srcvec,
                       HashSet **atoms,
                       unsigned long *natoms);
 
+void move_symbol_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem);
+
 static inline void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
 static inline void lmn_mem_free_rec(LmnMembrane *mem);
 static inline void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem);
@@ -313,7 +324,6 @@ static inline void alter_functor(LmnMembrane *mem, LmnSAtom atom, LmnFunctor f);
 static inline void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset);
 static inline void lmn_mem_copy_rules(LmnMembrane *dest, LmnMembrane *src);
 static inline void lmn_mem_clearrules(LmnMembrane *src);
-
 
 /* 膜parentから膜memを取り除く.
  * memのメモリ管理は呼び出し側で行う. */
@@ -482,14 +492,17 @@ static inline void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAt
     mem_remove_symbol_atom(mem, LMN_SATOM(atom));
   }
 }
+
 static inline void move_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
   //move_symbol_atom_to_atomlist_tail(LMN_SATOM(a), mem);
-  mem_remove_symbol_atom(mem,a);
+  mem_remove_symbol_atom(mem,LMN_SATOM(a));
   mem_push_symbol_atom(mem,LMN_SATOM(a));
 }
+
 static inline void move_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
-  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem);
-  }
+  move_symbol_atom_to_atomlist_head(a, mem);
+}
+
 static inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
   lmn_mem_remove_atom(mem, atom, attr);
   lmn_free_atom(atom, attr);
@@ -638,16 +651,6 @@ typedef HashIterator AtomListIter;
       }                                                                        \
     }));                                                                       \
   } while (0)
-
-
-/* リンクオブジェクトの代替 */
-typedef struct LinkObj {
-  LmnAtom ap;
-  LmnLinkAttr pos;
-} *LinkObj;
-
-LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
-/* LmnSAtom* lmn_atomlist_end(AtomSetEntry * ent); */
 
 
 #endif /* LMN_MEMBRANE_H */

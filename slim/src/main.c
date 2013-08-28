@@ -216,7 +216,7 @@ static void parse_options(int *optid, int argc, char *argv[])
       break;
     case 'p':
       if (optarg) {
-        if (isdigit(optarg[0])) {
+        if (isdigit((unsigned char)optarg[0])) {
           int l = optarg[0] - '0';
           lmn_env.profile_level = l <= 3 ? l : 3;
         } else {
@@ -503,7 +503,7 @@ static void parse_options(int *optid, int argc, char *argv[])
     case 'O':
       /* -Oに引数が付かない場合 optargは 0 に設定される */
       if (optarg) {
-        if (isdigit(optarg[0])) {
+        if (isdigit((unsigned char)optarg[0])) {
           int l = optarg[0] - '0';
           lmn_env.optimization_level = l <= OPTIMIZE_LEVEL_MAX ? l : OPTIMIZE_LEVEL_MAX;
         } else {

@@ -228,6 +228,7 @@ void lmn_mem_rulesets_destroy(Vector *rulesets)
   }
   vec_destroy(rulesets);
 }
+
 void move_symbol_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
@@ -240,6 +241,7 @@ void move_symbol_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
   LMN_SATOM_SET_NEXT(ent->tail, a);
   ent->tail = (LmnWord)a;
 }
+
 void move_symbol_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
@@ -253,6 +255,7 @@ void move_symbol_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
   LMN_SATOM_SET_PREV(ent->head, a);
   ent->head = (LmnWord)a;
 }
+
 void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom)
 {
   AtomListEntry *as;

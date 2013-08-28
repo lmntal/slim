@@ -505,7 +505,7 @@ static inline State *state_D_ref(State *s) {
 
 /* 状態sに対応する非圧縮バイナリストリングdをキャッシングする. */
 static inline void state_D_cache(State *s, LmnBinStr d) {
-  LMN_ASSERT(!state_D_fetch(s));  
+  LMN_ASSERT(!state_D_fetch(s));
   /* メモリ節約の結果, 保守性ないコード. 注意 */
   s->successors = (succ_data_t)d;
 }

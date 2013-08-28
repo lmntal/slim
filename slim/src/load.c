@@ -135,7 +135,7 @@ static void dump_arg(InstrArg arg)
     printf("[");
     for (i = 0; i < var_list_num(l); i++) {
       if (i > 0) printf(", ");
-      printf("%d", var_list_get(l, i));
+      printf("%d", (int)var_list_get(l, i));
     }
     printf("]");
     break;
@@ -1048,7 +1048,7 @@ char *create_formatted_basename(const char *filepath)
   end = strchr(begin, '.'); /* ファイル名最初の.を探す ないと困る */
   basename = lmn_malloc(end - begin + 1);
   for (i = 0, p = begin; i < end - begin; i++, p++){
-    if (isalpha(*p) || isdigit(*p)) {
+    if (isalpha((unsigned char)*p) || isdigit((unsigned char)*p)) {
       basename[i] = *p;
     } else {
       basename[i] = 'O'; /* 記号は全部Oにする */
