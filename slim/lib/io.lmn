@@ -45,6 +45,9 @@ module(io).
 H = io.read_line(Port, RetPort) :- class(Port, "port") |
     '$callback'('cb_port_read_line', Port, RetPort, H).
 
+H = io.read_token(Port, RetPort) :- class(Port, "port") |
+    '$callback'('cb_port_read_token', Port, RetPort, H).
+
 H = io.read_char(Port, RetPort) :- class(Port, "port") |
     '$callback'('cb_port_getc', Port, RetPort, H).
 

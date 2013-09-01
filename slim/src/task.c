@@ -1291,6 +1291,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnLinkAttr, instr, attr);
+
       if (LMN_ATTR_IS_DATA(attr)) {
         READ_DATA_ATOM(ap, attr);
       } else { /* symbol atom */
@@ -1722,6 +1723,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
+
       lmn_mem_remove_atom((LmnMembrane *)wt(rc, memi),
                           wt(rc, atomi),
                           at(rc, atomi));
@@ -1733,6 +1735,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       LmnInstrVar atomi;
 
       READ_VAL(LmnInstrVar, instr, atomi);
+
       lmn_free_atom(wt(rc, atomi), at(rc, atomi));
       break;
     }
@@ -3541,6 +3544,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnLinkAttr, instr, attr);
+
       if (LMN_ATTR_IS_DATA(attr)) {
         READ_DATA_ATOM(ap, attr);
       } else { /* symbol atom */

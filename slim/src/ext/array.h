@@ -1,5 +1,5 @@
 /*
- * init_exts.c - String API
+ * port.h - Port API
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,29 +37,24 @@
  * $Id$
  */
 
+#ifndef LMN_ARRAY_H
+#define LMN_ARRAY_H
+
 #include "lmntal.h"
 
-void init_integer(void);
-void init_float(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_makedata(void);
-void init_array(void);
 
-void init_builtin_extensions(void)
-{
-  init_integer();
-  init_float();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();
-  init_makedata();
-  init_array();
-}
+struct LmnArray {
+  LMN_SP_ATOM_HEADER;
+
+  uint32_t size;     /* array size */ 
+  LmnLinkAttr type;  /* element type, currently either
+                        LMN_INT_ATTR | LMN_DBL_ATTR | LMN_STRING_ATTR */
+  BOOL    owner;     /* am I the owner of array data? */
+  LmnWord *data;     /* array data */
+};
+
+typedef struct LmnArray *LmnArray;
+
+#define LMN_ARRAY(obj) ((LmnArray)(obj))
+
+#endif

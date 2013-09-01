@@ -373,6 +373,7 @@ void string_init()
                                           sp_cb_string_eq,
                                           sp_cb_string_dump,
                                           sp_cb_string_is_ground);
+
   lmn_register_c_fun("string_make", cb_string_make, 2);
   lmn_register_c_fun("string_concat", cb_string_concat, 3);
   lmn_register_c_fun("string_length", cb_string_length, 2);

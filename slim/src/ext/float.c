@@ -1,5 +1,5 @@
 /*
- * init_exts.c - String API
+ * float.c
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,29 +37,49 @@
  * $Id$
  */
 
+/* 浮動小数点数関連のコールバック */
+
 #include "lmntal.h"
+#include "lmntal_ext.h"
+#include "slim_header/string.h"
+#include "special_atom.h"
+#include "visitlog.h"
 
-void init_integer(void);
 void init_float(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_makedata(void);
-void init_array(void);
 
-void init_builtin_extensions(void)
+/*
+ * (S, N):
+ *
+ * N is bound to a floating-point number with the string representation S.
+ */
+void float_of_string(LmnReactCxt *rc,
+                     LmnMembrane *mem,
+                     LmnAtom a0, LmnLinkAttr t0,
+                     LmnAtom a1, LmnLinkAttr t1)
 {
-  init_integer();
-  init_float();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();
-  init_makedata();
-  init_array();
+  char *t;
+  double *d = LMN_MALLOC(double);
+  const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
+  t = NULL;
+  *d = strtod(s, &t);
+  if (t == NULL || s == t) {
+    LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
+                                                         lmn_intern("fail"),
+                                                         1));
+    lmn_mem_newlink(mem,
+                    a1, t1, LMN_ATTR_GET_VALUE(t1),
+                    LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
+  } else { /* 変換できた */
+    lmn_mem_newlink(mem,
+                    a1, t1, LMN_ATTR_GET_VALUE(t1),
+                    (LmnWord)d, LMN_DBL_ATTR, 0);
+    lmn_mem_push_atom(mem, (LmnWord)d, LMN_DBL_ATTR);
+  }
+
+  lmn_mem_delete_atom(mem, a0, t0);
+}
+
+void init_float(void)
+{
+  lmn_register_c_fun("float_of_string", float_of_string, 2);
 }

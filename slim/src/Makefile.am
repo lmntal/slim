@@ -84,12 +84,14 @@ slim_SOURCES =                                                     \
 	lmntal_ext.h                                                     \
 	ext/init_exts.c                                                  \
 	ext/integer.c                                                    \
+	ext/float.c                                                      \
 	ext/atomic.c                                                     \
 	ext/nlmem.c                                                      \
 	ext/io.c  							 \
-	ext/makedata.c                                                       \
+	ext/makedata.c                                                   \
+	ext/array.c			ext/array.h                      \
 	ext/initial_ruleset.c                                            \
-	ext/nd_conf.c													 \
+	ext/nd_conf.c							 \
 	ext/time.c
 #	ext.h ext.c 
 

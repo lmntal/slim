@@ -259,7 +259,7 @@ static BOOL dump_data_atom(LmnPort port,
   case  LMN_DBL_ATTR:
     {
       char buf[64];
-      sprintf(buf, "%f", *(double*)data);
+      sprintf(buf, "%#g", *(double*)data);
       port_put_raw_s(port, buf);
     }
     break;
