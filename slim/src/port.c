@@ -326,7 +326,8 @@ LmnString port_read_line(LmnPort port)
   return s;
 }
 
-/* ポートから一行読み込み、読み込んだ文字列を返す。ファイルの終わりに達
+/* ポートから空白または改行で区切られたトークンを読み込み、
+   読み込んだ文字列を返す。ファイルの終わりに達
    していたり，エラーが起きた場合はNULLを返す */
 LmnString port_read_token(LmnPort port)
 {

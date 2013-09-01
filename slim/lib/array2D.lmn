@@ -1,5 +1,5 @@
 /*
- * array.lmn - Array module
+ * array2D.lmn - Array module
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -61,30 +61,23 @@ COMMENTS
 */
 
 {
-  module(array).
+  module(array2D).
 
-  Res = array.new(Length, InitVal) :- int(Length) |
-    '$callback'('cb_array_new', Length, InitVal, Res).
+  Res = array2D.new(M,N, InitVal) :- MN = M*N |
+    Res = array2D(M, N, '$callback'('cb_array_new', MN, InitVal)).
 
-  /* creating an array from a nonempty list */
-  Res = array.new([H|T]) :- unary(H) |
-    list.length([H|T], N, L),
-    Res = array.fill(array.new(N, H), L, 0).
-
-  /* filling an array with a list */
-  Res = array.fill(A, [], $i) :- int($i) | Res = A.  
-  Res = array.fill(A, [H|T], $i) :- $i1 = $i+1 | 
-        Res = array.fill(array.put(A, $i, H), T, $i1). 
-
-  array.free(A) :- class(A, "array") |
+  array2D.free(array2D(M, N, A)) :- class(A, "array"), int(M), int(N) |
     '$callback'('cb_array_free', A).
 
-  array.size(A, S, Anew) :- class(A, "array") |
-    '$callback'('cb_array_size', A, S, Anew).
+  array2D.size(array2D(M, N, A), S, Anew) :-
+    class(A, "array"), int(M), int(N) |
+    S = (M, N), Anew = array2D(M, N, A). 
 
-  array.get(A, I, Ai, Anew) :- class(A, "array"), int(I) |
-    '$callback'('cb_array_get', A, I, Ai, Anew).
+  array2D.get(array2D(M, N, A), I, J, Ai, Anew) :-
+    class(A, "array"), Index = N*I+J, int(M) |
+    Anew = array2D(M, N, '$callback'('cb_array_get', A, Index, Ai)).
 
-  array.put(A, I, Ai, Anew) :- class(A, "array"), int(I) |
-    '$callback'('cb_array_put', A, I, Ai, Anew).
+  array2D.put(array2D(M, N, A), I, J, Ai, Anew) :-
+    class(A, "array"), Index = N*I+J, int(M) |
+    Anew = array2D(M, N, '$callback'('cb_array_put', A, Index, Ai)).
 }.

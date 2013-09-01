@@ -237,7 +237,7 @@ void cb_array_get(LmnReactCxt *rc,
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
 		    ai, LMN_ARRAY_TYPE(a0), 0);
-    lmn_mem_push_atom(mem, ai, LMN_INT_ATTR);
+    lmn_mem_push_atom(mem, ai, LMN_ARRAY_TYPE(a0));
     lmn_mem_newlink(mem,
 		    a0, t0, LMN_ATTR_GET_VALUE(t0),
 		    a3, t3, LMN_ATTR_GET_VALUE(t3));

@@ -210,6 +210,7 @@ void cb_string_make(LmnReactCxt *rc,
                     LmnAtom a1, LmnLinkAttr t1)
 {
   const char *s;
+  char buf[64];
   BOOL to_be_freed = FALSE;
 
   if (LMN_ATTR_IS_DATA(t0)) {
@@ -219,8 +220,11 @@ void cb_string_make(LmnReactCxt *rc,
       to_be_freed = TRUE;
       break;
     case LMN_DBL_ATTR:
-/*       s = double_to_str(a0); */
-      s = "not implemented";
+      sprintf(buf, "%#g", *(double*)a0);
+      s = buf;
+      break;
+    case LMN_STRING_ATTR:
+      s = LMN_STRING_BUF(a0);
       break;
     default:
       fprintf(stderr, "STRING.C: unexpected argument");
