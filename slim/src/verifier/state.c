@@ -782,6 +782,7 @@ void state_print_mem(State *s, LmnWord _fp)
     lmn_dump_cell_stdout(mem);
   } else {
     lmn_dump_mem_stdout(mem); /* TODO: グラフ構造の出力先をファイルポインタに */
+    if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
   }
 
   if (is_binstr_user(s)) {
