@@ -846,7 +846,14 @@ LmnMembrane *lmn_mem_copy_with_map_inner(LmnMembrane *src,
   ProcessTbl copymap;
   LmnMembrane *new_mem;
 
-  env_reset_proc_ids();
+  /* (ueda, 2013-09-21) コミット前に newhlink で作られたハイパーリンク
+   * のIDとの衝突を避けるために，グローバルルート膜のコピー時にIDのリセ
+   * ットをしないで新たな膜やアトムやハイパーリンクを作ってゆく．
+   * 本来は，ハイパーリンクの作成 (new) をルールのガードで行うのでなく，
+   * コミット直後に作成するほうが論理的に望ましく，こうすればID衝突問題
+   * は起きないが，コンパイラ改訂までは次の１行をコメントアウトすること
+   * で対処．*/
+  //  env_reset_proc_ids();  
 
   new_mem = lmn_mem_make();
 
