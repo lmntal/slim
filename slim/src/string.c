@@ -210,6 +210,7 @@ void cb_string_make(LmnReactCxt *rc,
                     LmnAtom a1, LmnLinkAttr t1)
 {
   const char *s;
+  char buf[64];
   BOOL to_be_freed = FALSE;
 
   if (LMN_ATTR_IS_DATA(t0)) {
@@ -219,8 +220,11 @@ void cb_string_make(LmnReactCxt *rc,
       to_be_freed = TRUE;
       break;
     case LMN_DBL_ATTR:
-/*       s = double_to_str(a0); */
-      s = "not implemented";
+      sprintf(buf, "%#g", *(double*)a0);
+      s = buf;
+      break;
+    case LMN_STRING_ATTR:
+      s = LMN_STRING_BUF(a0);
       break;
     default:
       fprintf(stderr, "STRING.C: unexpected argument");
@@ -373,6 +377,7 @@ void string_init()
                                           sp_cb_string_eq,
                                           sp_cb_string_dump,
                                           sp_cb_string_is_ground);
+
   lmn_register_c_fun("string_make", cb_string_make, 2);
   lmn_register_c_fun("string_concat", cb_string_concat, 3);
   lmn_register_c_fun("string_length", cb_string_length, 2);

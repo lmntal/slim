@@ -80,73 +80,72 @@ void cb_print_line_with_port(LmnReactCxt *rc,
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
-
+/* Use cb_port_read_line instead. */
 /* ポートa0から一行読み込む
  * +a0     : ポート
  * -a1     : 返すポート
  * -a2     : 読み込んだ文字列 | eof()
  */
-void cb_input_line_with_oprt(LmnReactCxt *rc,
-                             LmnMembrane *mem,
-                             LmnAtom a0, LmnLinkAttr t0,
-                             LmnAtom a1, LmnLinkAttr t1,
-                             LmnAtom a2, LmnLinkAttr t2)
-{
-  const int N = 256;
-  char buf[N], *s=NULL, *p; /* sは行の文字列の先頭、pは作業用 */
-  int size;
-
-  size =  0;
-  p = s;
-  while (fgets(buf, N, stdin)) {
-    int len = strlen(buf);
-    if (s == NULL) {
-      s = p = LMN_NALLOC(char, len+1);
-      s[0] = '\0';
-      size = len + 1;
-    } else {
-      s = LMN_REALLOC(char, s, size += len + 1);
-    }
-    strcat(p, buf);
-    p += len;
-    if (len < N-1) break;
-  }
-
-  if (ferror(stdin)) {/* error */
-    LmnSAtom atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
-    lmn_mem_newlink(mem,
-                    a0, t0, LMN_ATTR_GET_VALUE(t0),
-                    LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), 0);
-    mem_push_symbol_atom(mem, atom);
-    if (s) LMN_FREE(s);
-  }
-  else if (feof(stdin) && s == NULL) { /* eof */
-    LmnSAtom atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("eof"), 1));
-    lmn_mem_newlink(mem,
-                    a0, t0, LMN_ATTR_GET_VALUE(t0),
-                    LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), 0);
-    mem_push_symbol_atom(mem, atom);
-  }
-  else {
-    LmnString a;
-
-    if (*(p-2) == '\n' || *(p-2)=='\r') p -= 2;
-    else if (*(p-1) == '\n' || *(p-1)=='\r') p -= 1;
-    *p = '\0';
-
-    a = lmn_string_make(s);
-    LMN_FREE(s);
-    lmn_mem_push_atom(mem, LMN_ATOM(a), LMN_STRING_ATTR);
-
-    lmn_mem_newlink(mem,
-                    a0, t0, LMN_ATTR_GET_VALUE(t0),
-                    LMN_ATOM(a), LMN_STRING_ATTR, 0);
-  }
-}
+// void cb_input_line_with_port(LmnReactCxt *rc,
+//                              LmnMembrane *mem,
+//                              LmnAtom a0, LmnLinkAttr t0,
+//                              LmnAtom a1, LmnLinkAttr t1,
+//                              LmnAtom a2, LmnLinkAttr t2)
+// {
+//   const int N = 256;
+//   char buf[N], *s=NULL, *p; /* sは行の文字列の先頭、pは作業用 */
+//   int size;
+// 
+//   size =  0;
+//   p = s;
+//   while (fgets(buf, N, stdin)) {
+//     int len = strlen(buf);
+//     if (s == NULL) {
+//       s = p = LMN_NALLOC(char, len+1);
+//       s[0] = '\0';
+//       size = len + 1;
+//     } else {
+//       s = LMN_REALLOC(char, s, size += len + 1);
+//     }
+//     strcat(p, buf);
+//     p += len;
+//     if (len < N-1) break;
+//   }
+// 
+//   if (ferror(stdin)) {/* error */
+//    LmnSAtom atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
+//     lmn_mem_newlink(mem,
+//                     a0, t0, LMN_ATTR_GET_VALUE(t0),
+//                     LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), 0);
+//     mem_push_symbol_atom(mem, atom);
+//     if (s) LMN_FREE(s);
+//   }
+//   else if (feof(stdin) && s == NULL) { /* eof */
+//     LmnSAtom atom = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern("eof"), 1));
+//     lmn_mem_newlink(mem,
+//                     a0, t0, LMN_ATTR_GET_VALUE(t0),
+//                     LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), 0);
+//     mem_push_symbol_atom(mem, atom);
+//   }
+//   else {
+//     LmnString a;
+// 
+//     if (*(p-2) == '\n' || *(p-2)=='\r') p -= 2;
+//     else if (*(p-1) == '\n' || *(p-1)=='\r') p -= 1;
+//     *p = '\0';
+// 
+//     a = lmn_string_make(s);
+//     LMN_FREE(s);
+//     lmn_mem_push_atom(mem, LMN_ATOM(a), LMN_STRING_ATTR);
+// 
+//     lmn_mem_newlink(mem,
+//                     a0, t0, LMN_ATTR_GET_VALUE(t0),
+//                     LMN_ATOM(a), LMN_STRING_ATTR, 0);
+//   }
+// }
 
 void init_io(void)
 {
   lmn_register_c_fun("cb_print_newline_with_port", cb_print_newline_with_port, 2);
   lmn_register_c_fun("cb_print_line_with_port", cb_print_line_with_port, 3);
-  lmn_register_c_fun("cb_read_line", cb_input_line_with_oprt, 3);
 }

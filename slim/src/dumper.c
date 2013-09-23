@@ -110,6 +110,7 @@ static void dump_link_name(LmnPort port, int link_num);
 static BOOL dump_hl_attratom(LmnPort port,
                            LmnAtom atom,
                              LmnLinkAttr attr);
+
 static struct AtomRec *atomrec_make()
 {
   struct AtomRec *a = LMN_MALLOC(struct AtomRec);
@@ -261,7 +262,7 @@ static BOOL dump_data_atom(LmnPort port,
   case  LMN_DBL_ATTR:
     {
       char buf[64];
-      sprintf(buf, "%f", *(double*)data);
+      sprintf(buf, "%#g", *(double*)data);
       port_put_raw_s(port, buf);
     }
     break;
@@ -319,6 +320,7 @@ static BOOL dump_list(LmnPort port,
   BOOL first = TRUE;
   LmnLinkAttr attr;
   LmnAtom a = LMN_ATOM(atom);
+  LmnAtom prev_a;
 
   if (get_atomrec(ht, atom)->done) {
     dump_link(port, atom, 2, ht, s);
@@ -352,6 +354,8 @@ static BOOL dump_list(LmnPort port,
       dump_arg(port, LMN_SATOM(a), 0, ht, s, call_depth + 1);
 
       attr = LMN_SATOM_GET_ATTR(a, 1);
+
+      prev_a = a;
       a = LMN_SATOM_GET_LINK(a, 1);
     }
     else if (LMN_HAS_FUNCTOR(a, attr, LMN_NIL_FUNCTOR)) {
@@ -363,9 +367,9 @@ static BOOL dump_list(LmnPort port,
     } else { /* list ends with non nil data */
       port_put_raw_s(port, "|");
 
-      /* 直前の.アトムを取得 */
-      LmnSAtom atom = LMN_SATOM(LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)));
-      dump_arg(port, atom, 1, ht, s, call_depth + 1);
+      //      /* 直前の.アトムを取得 */
+      //            LmnSAtom atom = LMN_SATOM(LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)));
+      dump_arg(port, prev_a, 1, ht, s, call_depth + 1);
       break;
     }
   }

@@ -1,8 +1,7 @@
 /*
- * init_exts.c - String API
+ * array.lmn - Array module
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,30 +33,58 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#include "lmntal.h"
+/*
+NAME
+	Array module
 
-void init_integer(void);
-void init_float(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_array(void);
+SYNOPSIS
 
-void init_builtin_extensions(void)
+	array.new(Size,Array)
+	array.put(Array,Index,NewInt,NewArray)
+	array.get(Array,Index,OldInt,NewArray)
+
+AUTHOR
+
+	Koji Hara and Kazunori Ueda
+	and Atsushi Nakano
+
+HISTORY
+
+	2005/06/24 original
+	2005/11/05 representation changed and array.update added
+        2013/08/28 Javaのインラインを使用している部分を削除
+
+COMMENTS
+  
+*/
+
 {
-  init_integer();
-  init_float();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();
-  init_array();
-}
+  module(array).
+
+  Res = array.new(Length, InitVal) :- int(Length) |
+    '$callback'('cb_array_new', Length, InitVal, Res).
+
+  /* creating an array from a nonempty list */
+  Res = array.new([H|T]) :- unary(H) |
+    list.length([H|T], N, L),
+    Res = array.fill(array.new(N, H), L, 0).
+
+  /* filling an array with a list */
+  Res = array.fill(A, [], $i) :- int($i) | Res = A.  
+  Res = array.fill(A, [H|T], $i) :- $i1 = $i+1 | 
+        Res = array.fill(array.put(A, $i, H), T, $i1). 
+
+  array.free(A) :- class(A, "array") |
+    '$callback'('cb_array_free', A).
+
+  array.size(A, S, Anew) :- // class(A, "array") |
+      '$callback'('cb_array_size', A, S, Anew).
+
+  array.get(A, I, Ai, Anew) :- class(A, "array"), int(I) |
+    '$callback'('cb_array_get', A, I, Ai, Anew).
+
+  array.put(A, I, Ai, Anew) :- class(A, "array"), int(I) |
+    '$callback'('cb_array_put', A, I, Ai, Anew).
+}.

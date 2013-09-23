@@ -58,7 +58,6 @@ static LmnFunctor eof_functor;
 #define LMN_PORT_OWNER(obj) (LMN_PORT(obj)->owner)
 #define LMN_PORT_DIR(obj) (LMN_PORT(obj)->direction)
 
-
 #define FILE_PORT_FP(obj) ((FILE *)LMN_PORT_DATA(obj))
 
 static LmnPort port_copy_sub(LmnPort port);
@@ -327,6 +326,49 @@ LmnString port_read_line(LmnPort port)
   return s;
 }
 
+/* ポートから空白または改行で区切られたトークンを読み込み、
+   読み込んだ文字列を返す。ファイルの終わりに達
+   していたり，エラーが起きた場合はNULLを返す */
+LmnString port_read_token(LmnPort port)
+{
+  int c0, c1;
+  LmnString s;
+
+  if (lmn_port_closed(port)) return NULL;
+  if (LMN_PORT_DIR(port) != LMN_PORT_INPUT) return NULL;
+
+  c0 = port_get_raw_c(port);
+  for (;;) {
+    if (c0 == EOF) break;
+    if (c0 == ' ' || c0 == '\n') {
+      c0 = port_get_raw_c(port);
+    } else if (c0 == '\r') {
+      c1 = port_get_raw_c(port);
+      if (c1 == EOF) break;
+      if (c1 == '\n') {
+	c0 = port_get_raw_c(port);
+      } else {
+	port_unget_raw_c(port, c1);
+      }
+    } else break;
+  }
+  if (c0 == EOF) return NULL;
+  s  = lmn_string_make_empty();
+  for (;;) {
+    if (c0 == EOF) return s;
+    if (c0 == ' ' || c0 == '\n') break;
+    if (c0 == '\r') {
+      c1 = port_get_raw_c(port);
+      if (c1 == EOF || c1 == '\n') break;
+      port_unget_raw_c(port, c1);
+      break;
+    }
+    lmn_string_push_raw_c(s, c0);
+    c0 = port_get_raw_c(port);
+  }
+  return s;
+}
+
 /* 文字はunaryアトムで表現している */
 int port_putc(LmnPort port, LmnSAtom unary_atom)
 {
@@ -568,7 +610,38 @@ void cb_port_read_line(LmnReactCxt *rc,
   }
 
   lmn_mem_newlink(mem,
-                  a1, t1, LMN_ATTR_GET_VALUE(t2),
+                  a1, t1, LMN_ATTR_GET_VALUE(t1),
+                  a0, t0, 0);
+}
+
+/*
+ * +a0: ポート
+ * -a1: ポートを返す
+ * -a2: 文字列
+ */
+void cb_port_read_token(LmnReactCxt *rc,
+                       LmnMembrane *mem,
+                       LmnAtom a0, LmnLinkAttr t0,
+                       LmnAtom a1, LmnLinkAttr t1,
+                       LmnAtom a2, LmnLinkAttr t2)
+{
+  LmnString s = port_read_token(LMN_PORT(a0));
+
+  if (s != NULL) {
+    lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_SP_ATOM_ATTR);
+    lmn_mem_newlink(mem,
+                    a2, t2, LMN_ATTR_GET_VALUE(t2),
+                    LMN_ATOM(s), LMN_SP_ATOM_ATTR, 0);
+  } else {
+    LmnSAtom eof = lmn_new_atom(eof_functor);
+    mem_push_symbol_atom(mem, LMN_SATOM(eof));
+    lmn_mem_newlink(mem,
+                    a2, t2, LMN_ATTR_GET_VALUE(t2),
+                    LMN_ATOM(eof), LMN_ATTR_MAKE_LINK(0), 0);
+  }
+
+  lmn_mem_newlink(mem,
+                  a1, t1, LMN_ATTR_GET_VALUE(t1),
                   a0, t0, 0);
 }
 
@@ -693,6 +766,7 @@ void port_init()
   lmn_register_c_fun("cb_port_putc", cb_port_putc, 3);
   lmn_register_c_fun("cb_port_puts", cb_port_puts, 3);
   lmn_register_c_fun("cb_port_read_line", cb_port_read_line, 3);
+  lmn_register_c_fun("cb_port_read_token", cb_port_read_token, 3);
   lmn_register_c_fun("cb_make_output_string", cb_make_output_string, 1);
   lmn_register_c_fun("cb_make_input_string", cb_make_input_string, 2);
   lmn_register_c_fun("cb_port_output_string", cb_port_output_string, 3);

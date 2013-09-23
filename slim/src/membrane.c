@@ -1268,9 +1268,9 @@ static inline void mem_copy_ground_sub(LmnMembrane *mem,
 }
 
 void lmn_mem_copy_ground(LmnMembrane *mem,
-                             Vector *srcvec,
-                             Vector **ret_dstlovec,
-                             ProcessTbl *ret_atommap)
+			 Vector *srcvec,
+			 Vector **ret_dstlovec,
+			 ProcessTbl *ret_atommap)
 {
   mem_copy_ground_sub(mem, srcvec, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
 }
@@ -1445,7 +1445,7 @@ BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms)
   if (b) {
     proc_tbl_free(atoms);
   }
-  
+
   return b;
 }
 
@@ -1484,8 +1484,7 @@ BOOL lmn_mem_is_hlground(Vector *srcvec,
  * ただし、リンクがavovecに到達している場合には、基底項プロセスとはならない。
  * hlinksがNULLでなければhlgroundとして探索 
  * attr_functors, attr_dataAtoms, attr_dataAtoms_attrはhlgroundの属性 */
-BOOL ground_atoms(
-                  Vector        *srcvec,
+BOOL ground_atoms(Vector        *srcvec,
                   Vector        *avovec,
                   ProcessTbl    *atoms,/* ground内の発見済みのシンボルアトム */
                   unsigned long *natoms,/* ground内のアトムの個数 */

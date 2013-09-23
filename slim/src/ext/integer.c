@@ -80,6 +80,7 @@ void integer_set(LmnReactCxt *rc,
     l = (LinkObj)vec_get(dstlovec, 0);
     lmn_mem_newlink(mem, n, LMN_INT_ATTR, 0,
                     l->ap, t2, LMN_ATTR_GET_VALUE(l->pos));
+    lmn_mem_push_atom(mem, n, LMN_INT_ATTR);
 
     for (j = 0; j < vec_num(dstlovec); j++) LMN_FREE(vec_get(dstlovec, j));
     vec_free(dstlovec);
@@ -131,9 +132,9 @@ void integer_rand(LmnReactCxt *rc,
 }
 
 /*
- * (N, H):
+ * (S, N):
  *
- * H is bound to a random number between 0 and N-1.
+ * N is bound to a number with the string representation S.
  */
 void integer_of_string(LmnReactCxt *rc,
                        LmnMembrane *mem,

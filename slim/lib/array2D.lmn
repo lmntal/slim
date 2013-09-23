@@ -1,8 +1,7 @@
 /*
- * init_exts.c - String API
+ * array2D.lmn - Array module
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,30 +33,48 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#include "lmntal.h"
+/*
+NAME
+	Array module
 
-void init_integer(void);
-void init_float(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_array(void);
+SYNOPSIS
 
-void init_builtin_extensions(void)
+	array.new(Size,Array)
+	array.put(Array,Index,NewInt,NewArray)
+	array.get(Array,Index,OldInt,NewArray)
+
+AUTHOR
+
+	Kazunori Ueda
+
+HISTORY
+
+	2013/09/02 original
+
+COMMENTS
+  
+*/
+
 {
-  init_integer();
-  init_float();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();
-  init_array();
-}
+  module(array2D).
+
+  Res = array2D.new(M,N, InitVal) :- MN = M*N |
+    Res = array2D(M, N, '$callback'('cb_array_new', MN, InitVal)).
+
+  array2D.free(array2D(M, N, A)) :- class(A, "array"), int(M), int(N) |
+    '$callback'('cb_array_free', A).
+
+  array2D.size(array2D(M, N, A), S, Anew) :-
+    class(A, "array"), int(M), int(N) |
+    S = (M, N), Anew = array2D(M, N, A). 
+
+  array2D.get(array2D(M, N, A), I, J, Ai, Anew) :-
+    class(A, "array"), Index = N*I+J, int(M) |
+    Anew = array2D(M, N, '$callback'('cb_array_get', A, Index, Ai)).
+
+  array2D.put(array2D(M, N, A), I, J, Ai, Anew) :-
+    class(A, "array"), Index = N*I+J, int(M) |
+    Anew = array2D(M, N, '$callback'('cb_array_put', A, Index, Ai)).
+}.

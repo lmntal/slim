@@ -38,6 +38,7 @@
 
 #ifndef LMN_ATOM_H
 #define LMN_ATOM_H
+
 #include "lmntal.h"
 #include "special_atom.h"
 #include "functor.h"

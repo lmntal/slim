@@ -327,9 +327,11 @@ void lmn_hyperlink_delete_old(LmnSAtom at)
 void lmn_hyperlink_copy(LmnSAtom newatom, LmnSAtom oriatom)
 {
   HyperLink *newhl, *orihl;
+
   orihl = lmn_hyperlink_at_to_hl(oriatom);
   lmn_hyperlink_make(newatom);
   newhl = lmn_hyperlink_at_to_hl(newatom);
+
   lmn_hyperlink_unify(lmn_hyperlink_get_root(orihl), newhl, LMN_HL_ATTRATOM(orihl), LMN_HL_ATTRATOM_ATTR(orihl));
 }
 
