@@ -1109,15 +1109,21 @@ static inline void mem_map_hlink(LmnMembrane *mem,
         } else {
           LmnSAtom linked_hlAtom = LMN_SATOM(LMN_SATOM_GET_LINK(hlAtom, 0));
           if (!proc_tbl_get_by_atom(atommap, linked_hlAtom, &t)) {//ハイパーリンクアトム及びそれにつながるシンボルアトムをコピー
+	    // まずシンボルアトムをコピー
             LmnSAtom copied_linked_hlAtom = lmn_copy_satom_with_data(linked_hlAtom, TRUE);
             LmnSAtom copied_hlAtom = LMN_SATOM(LMN_SATOM_GET_LINK(copied_linked_hlAtom, LMN_SATOM_GET_ATTR(hlAtom, 0)));
+	    // ここではハイパーリンク構造体は未作成、lmn_hyperlink_copyで作成
             lmn_hyperlink_copy(copied_hlAtom, LMN_SATOM(copied_root_hlAtom));
-            lmn_mem_push_atom(mem, LMN_ATOM(copied_hlAtom), LMN_HL_ATTR); 
+	    // ここで作られた copied_hlAtom はあとでシンボルアトム側から逆アクセスされるはずなので
+	    // ここでは push しなくてよい（はず）
+	    //            lmn_mem_push_atom(mem, LMN_ATOM(copied_hlAtom), LMN_HL_ATTR);
             mem_push_symbol_atom(mem, LMN_SATOM(copied_linked_hlAtom));
             proc_tbl_put_atom(atommap, linked_hlAtom, LMN_ATOM(copied_linked_hlAtom));
             vec_push(stack, (LmnWord)linked_hlAtom);
           } else {//つまり既にスタックに積まれている場合
             //ハイパーリンクへの接続は、スタックに積まれているアトム側からの探索時に行う。
+	    // そのとき、アトム側からたどったハイパーリンクはまだ atomlist に登録されて
+	    // いないはず。新たに atomlist に登録する必要がある。
           }
         }
       }

@@ -369,7 +369,7 @@ static BOOL dump_list(LmnPort port,
 
       //      /* 直前の.アトムを取得 */
       //            LmnSAtom atom = LMN_SATOM(LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)));
-      dump_arg(port, prev_a, 1, ht, s, call_depth + 1);
+      dump_arg(port, LMN_SATOM(prev_a), 1, ht, s, call_depth + 1);
       break;
     }
   }

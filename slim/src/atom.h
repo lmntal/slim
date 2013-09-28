@@ -293,7 +293,9 @@ static inline LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom, BOOL is_new_hl)
         HyperLink *hl = lmn_hyperlink_at_to_hl(hlAtom);
         LmnSAtom new_hlAtom = lmn_hyperlink_new_with_attr(LMN_HL_ATTRATOM(hl), LMN_HL_ATTRATOM_ATTR(hl));
         LMN_SATOM_SET_LINK(newatom, i, new_hlAtom);
-        LMN_HLATOM_SET_LINK(new_hlAtom, newatom); 
+        LMN_SATOM_SET_ATTR(newatom, i, LMN_HL_ATTR);
+        LMN_SATOM_SET_LINK(new_hlAtom, 0, newatom); 
+        LMN_SATOM_SET_ATTR(new_hlAtom, 0, LMN_ATTR_MAKE_LINK(i));
       } else {
         LmnAtom dt = lmn_copy_data_atom(LMN_SATOM_GET_LINK(atom, i), LMN_SATOM_GET_ATTR(atom, i));
         LMN_SATOM_SET_LINK(newatom, i, dt);

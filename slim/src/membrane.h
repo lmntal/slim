@@ -176,7 +176,7 @@ static inline void atomlist_append(AtomListEntry *e1, AtomListEntry *e2)
   atomlist_set_empty(e2);
 }
 
-/* return NULL when atomlist don't exists. */
+/* return NULL when atomlist doesn't exist. */
 static inline LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid) {
   if (atomlist->record) {
     return (LmnSAtom)hashtbl_get_default(atomlist->record, findatomid, 0);
