@@ -442,8 +442,9 @@ void lmn_newlink_with_ex(LmnMembrane *mem,
 //      LMN_SATOM_SET_ATTR(atom0, pos0, attr1);
 //      LMN_SATOM_SET_ATTR(atom1, pos1, attr0);
       /* 現状では、hyperlinkアトム同士が接続されると消去される */
-      lmn_mem_delete_atom(mem, LMN_ATOM(atom0), attr0);
-      lmn_mem_delete_atom(mem, LMN_ATOM(atom1), attr1);
+      //      lmn_mem_delete_atom(mem, LMN_ATOM(atom0), attr0);
+      //      lmn_mem_delete_atom(mem, LMN_ATOM(atom1), attr1);
+      lmn_fatal("Two hyperlinks cannot be connected using = .");
     } else { /* 0 is ex */
       LMN_SATOM_SET_ATTR(atom0, pos0, LMN_ATTR_MAKE_LINK(pos1));
       LMN_SATOM_SET_ATTR(atom1, pos1, attr0);

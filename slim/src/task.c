@@ -1470,7 +1470,9 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
                             at(rc, atom1),
                             pos1,
                             ap,
-                            0,
+			    // 0,
+			    attr, /* this arg should be attr because  
+				     atom2 may be a hyperlink. */ 
                             attr);
       } else {
         lmn_newlink_with_ex((LmnMembrane *)wt(rc, memi),
