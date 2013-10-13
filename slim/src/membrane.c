@@ -1099,7 +1099,7 @@ static inline void mem_map_hlink(LmnMembrane *mem,
       lmn_hyperlink_get_elements(hl_childs, hl);
       element_num = vec_num(hl_childs) - 1;
       for (j = 0; j < element_num; j++) {//ハイパーリンクにつながるすべての接続先を探索
-        if (mem!=((HyperLink *)vec_get(hl_childs, j))->mem) {//別の膜内はコピーしない
+        if (hl->mem!=((HyperLink *)vec_get(hl_childs, j))->mem) {//root_hlAtomの所属膜と異なる膜内はコピーしない
           continue;
         }
         LmnSAtom hlAtom = ((HyperLink *)vec_get(hl_childs, j))->atom;
@@ -1598,7 +1598,8 @@ BOOL ground_atoms(Vector        *srcvec,
               element_num = vec_num(hl_childs) - 1;
               mem = hl->mem;
               for (i = 0; i < element_num; i++) {
-                if (mem!=((HyperLink *)vec_get(hl_childs, i))->mem) {//別の膜に移動したらFALSE
+                if (mem!=((HyperLink *)vec_get(hl_childs, i))->mem) {//別の膜に移動したらFALSEに
+                  // 当初していたが，ハイパーリンク接続の場合は同一膜内の構造とマッチするように変更
                   // result = FALSE;
                   // goto returning;
                   continue;
