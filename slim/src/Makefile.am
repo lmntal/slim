@@ -87,8 +87,7 @@ slim_SOURCES =                                                     \
 	ext/float.c                                                      \
 	ext/atomic.c                                                     \
 	ext/nlmem.c                                                      \
-	ext/io.c  							 \
-	ext/makedata.c                                                   \
+	ext/io.c                                                         \
 	ext/array.c			ext/array.h                      \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \

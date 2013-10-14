@@ -124,17 +124,16 @@ LmnArray lmn_array_copy(LmnArray array)
   if (!LMN_ARRAY_OWNER(array)) lmn_fatal("attempt to copy old array");
 
   LmnArray a = LMN_MALLOC(struct LmnArray);
-
+  memcpy(a, array, sizeof(struct LmnArray));
+  /*
+  LMN_SP_ATOM_SET_TYPE(a, array_atom_type);
   LMN_ARRAY_SIZE(a) = LMN_ARRAY_SIZE(array);
   LMN_ARRAY_TYPE(a) = LMN_ARRAY_TYPE(array);
   LMN_ARRAY_OWNER(a) = LMN_ARRAY_OWNER(array);
-  LMN_ARRAY_OWNER(array) = FALSE;
-  /*
-  LMN_ARRAY_DATA(a) = LMN_NALLOC(LmnWord, LMN_ARRAY_SIZE(a));
-  memcpy(LMN_ARRAY_DATA(a), LMN_ARRAY_DATA(array),
-         LMN_WORD_BYTES * LMN_ARRAY_SIZE(a));
-  */
   LMN_ARRAY_DATA(a) = LMN_ARRAY_DATA(array);
+  */
+  LMN_ARRAY_OWNER(array) = FALSE;
+
   return a;
 }
 

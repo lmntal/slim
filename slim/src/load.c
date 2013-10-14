@@ -381,7 +381,8 @@ static void load_arg(InstrArg arg, Context c)
 //      WRITE_MOVE(int16_t, var_list_num(var_list), c);
       WRITE_MOVE(LmnInstrVar, var_list_num(var_list), c);
       for (i = 0; i < var_list_num(var_list); i++) {
-        WRITE_MOVE(LmnInstrVar, var_list_get(var_list, i), c);
+       // WRITE_MOVE(LmnInstrVar, var_list_get(var_list, i), c);
+       load_arg(var_list_get(var_list, i), c);
       }
     }
     break;

@@ -88,6 +88,8 @@ void lmn_hyperlink_make(LmnSAtom at)
 //  hl->usrid = 0;
   hl->parent   = hl;
   hl->children = NULL;
+  hl->attrAtom = 0;
+  hl->attr     = 0;
 
   LMN_SATOM_SET_LINK(LMN_SATOM(at), 1, (LmnWord)hl);
   LMN_SATOM_SET_ATTR(LMN_SATOM(at), 1, 0);
@@ -96,6 +98,17 @@ void lmn_hyperlink_make(LmnSAtom at)
 //  printf("lmn_hyperlink_make %p -> %p\n", hl, LMN_SATOM(hl->atom));
 }
 
+void lmn_hyperlink_put_attr(HyperLink *hl, LmnAtom attrAtom, LmnLinkAttr attr)
+{
+  hl->attrAtom = attrAtom;
+  hl->attr = attr;
+}
+
+void lmn_hyperlink_make_with_attr(LmnSAtom at, LmnAtom attrAtom, LmnLinkAttr attr)
+{
+  lmn_hyperlink_make(at);
+  lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(at), attrAtom, attr);
+}
 
 /* 新しいhyperlinkの生成 */
 LmnSAtom lmn_hyperlink_new()
@@ -109,6 +122,13 @@ LmnSAtom lmn_hyperlink_new()
   return atom;
 }
 
+LmnSAtom lmn_hyperlink_new_with_attr(LmnAtom attrAtom, LmnLinkAttr attr)
+{
+  LmnSAtom atom;
+  atom = lmn_hyperlink_new();
+  lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(atom), attrAtom, attr);
+  return atom;
+}
 
 /* rootまでの全ての親のrankにdの値を加算する */
 void hyperlink_rank_calc(HyperLink *hl, int d)
@@ -127,7 +147,7 @@ void hyperlink_rank_calc(HyperLink *hl, int d)
 }
 
 
-/* HyperLinkのatom, memのみを交換する */
+/* HyperLinkのatom, mem, attrAtom, attrのみを交換する */
 void hyperlink_swap_atom(HyperLink *hl1, HyperLink *hl2)
 {
   LmnSAtom t_atom;
@@ -143,7 +163,6 @@ void hyperlink_swap_atom(HyperLink *hl1, HyperLink *hl2)
   t_mem     = hl1->mem;
   hl1->mem  = hl2->mem;
   hl2->mem  = t_mem;
-
 }
 
 
@@ -309,12 +328,11 @@ void lmn_hyperlink_copy(LmnSAtom newatom, LmnSAtom oriatom)
 {
   HyperLink *newhl, *orihl;
 
+  orihl = lmn_hyperlink_at_to_hl(oriatom);
   lmn_hyperlink_make(newatom);
   newhl = lmn_hyperlink_at_to_hl(newatom);
-  orihl = lmn_hyperlink_at_to_hl(oriatom);
 
-  lmn_hyperlink_unify(newhl, lmn_hyperlink_get_root(orihl));
-
+  lmn_hyperlink_unify(lmn_hyperlink_get_root(orihl), newhl, LMN_HL_ATTRATOM(orihl), LMN_HL_ATTRATOM_ATTR(orihl));
 }
 
 /* Union-Find algorithm の最適化 (Path Compression)
@@ -361,9 +379,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children)
 HyperLink *lmn_hyperlink_get_root(HyperLink *hl)
 {
   HyperLink *parent_hl, *current_hl;
-
   if (hl->parent == hl) return hl;
-
   current_hl = hl;
   parent_hl  = hl->parent;
 
@@ -398,7 +414,7 @@ HyperLink *lmn_hyperlink_get_root(HyperLink *hl)
 
 
 /* child をparent の子として併合する（parent, childは共にroot）*/
-HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child)
+HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child, LmnAtom attrAtom, LmnLinkAttr attr)
 {
   child->parent = parent;
   if (!parent->children) {
@@ -406,17 +422,21 @@ HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child)
   }
   hashset_add(parent->children, (HashKeyType)child);
   parent->rank = parent->rank + child->rank + 1;
+  parent->attrAtom = attrAtom;
+  parent->attr = attr;
+  child->attrAtom = 0;
+  child->attr = 0;
 
   return parent;
-
 }
 
 
 /* 2 つのhyperlink を併合し、親となった方を返す
  *   rank のより大きい(子を多く持つ)方を親とする
  *   rankが等しい場合はhl1をhl2の親とする
+ *   attrで指定された属性を併合後のハイパーリンクの属性とする。
  * */
-HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2)
+HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2, LmnAtom attrAtom,  LmnLinkAttr attr)
 {
   HyperLink *root1, *root2, *result;
   int rank1, rank2;
@@ -430,9 +450,9 @@ HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2)
   rank2 = hl2->rank;
 //  printf("rank %p %d %p %d\n", hl1, rank1, hl2, rank2);
   if (rank1 >= rank2) {
-    result = hyperlink_unify(root1, root2);
+    result = hyperlink_unify(root1, root2, attrAtom, attr);
   } else {
-    result = hyperlink_unify(root2, root1);
+    result = hyperlink_unify(root2, root1, attrAtom, attr);
   }
 
   return result;

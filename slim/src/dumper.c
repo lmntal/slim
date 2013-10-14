@@ -107,6 +107,9 @@ static BOOL dump_atom_args(LmnPort port,
                            struct DumpState *s,
                            int call_depth);
 static void dump_link_name(LmnPort port, int link_num);
+static BOOL dump_hl_attratom(LmnPort port,
+                           LmnAtom atom,
+                             LmnLinkAttr attr);
 
 static struct AtomRec *atomrec_make()
 {
@@ -268,18 +271,42 @@ static BOOL dump_data_atom(LmnPort port,
     break;
   case LMN_HL_ATTR:
     {
-      char buf[16];
+      char buf[18];
       port_put_raw_s(port, EXCLAMATION_NAME);
       if (lmn_env.show_hyperlink) {
         sprintf(buf, "H%lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(LMN_SATOM(data))));
       } else {
         sprintf(buf, "H%lx", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(LMN_SATOM(data))));
       }
-      port_put_raw_s(port, buf);
+      if (LMN_HL_HAS_ATTR(lmn_hyperlink_at_to_hl(LMN_SATOM(data)))) {
+        port_put_raw_s(port, buf);
+        sprintf(buf, ":");
+        port_put_raw_s(port, buf);
+        dump_hl_attratom(port,
+                         LMN_HL_ATTRATOM(lmn_hyperlink_at_to_hl(LMN_SATOM(data))),
+                         LMN_HL_ATTRATOM_ATTR(lmn_hyperlink_at_to_hl(LMN_SATOM(data)))); 
+      } else {
+        port_put_raw_s(port, buf);
+      }
     }
     break;
   default:
     lmn_fatal("unexpected attr");
+  }
+  return TRUE;
+}
+
+static BOOL dump_hl_attratom(LmnPort port,
+                           LmnAtom atom,
+                           LmnLinkAttr attr)
+{
+  if (LMN_ATTR_IS_DATA(attr)) {
+    dump_data_atom(port, atom, attr);
+  } else {//unary型atomに対する処理
+    LmnFunctor f;
+    f = LMN_SATOM_GET_FUNCTOR(atom);
+
+    dump_atomname(port, f);
   }
   return TRUE;
 }
@@ -293,6 +320,7 @@ static BOOL dump_list(LmnPort port,
   BOOL first = TRUE;
   LmnLinkAttr attr;
   LmnAtom a = LMN_ATOM(atom);
+  LmnAtom prev_a;
 
   if (get_atomrec(ht, atom)->done) {
     dump_link(port, atom, 2, ht, s);
@@ -326,6 +354,8 @@ static BOOL dump_list(LmnPort port,
       dump_arg(port, LMN_SATOM(a), 0, ht, s, call_depth + 1);
 
       attr = LMN_SATOM_GET_ATTR(a, 1);
+
+      prev_a = a;
       a = LMN_SATOM_GET_LINK(a, 1);
     }
     else if (LMN_HAS_FUNCTOR(a, attr, LMN_NIL_FUNCTOR)) {
@@ -337,9 +367,9 @@ static BOOL dump_list(LmnPort port,
     } else { /* list ends with non nil data */
       port_put_raw_s(port, "|");
 
-      /* 直前の.アトムを取得 */
-      LmnSAtom atom = LMN_SATOM(LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)));
-      dump_arg(port, atom, 1, ht, s, call_depth + 1);
+      //      /* 直前の.アトムを取得 */
+      //            LmnSAtom atom = LMN_SATOM(LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)));
+      dump_arg(port, LMN_SATOM(prev_a), 1, ht, s, call_depth + 1);
       break;
     }
   }

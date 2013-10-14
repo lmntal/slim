@@ -1,5 +1,5 @@
 /*
- * port.h - Port API
+ * array.h - Port API
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>

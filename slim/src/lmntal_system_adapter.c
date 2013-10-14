@@ -57,7 +57,7 @@ const char* OPTIMIZE_FLAGS[] = {"-O0",
 #define OPT_SLIM_CODE "--slimcode"
 #define OPT_COMPILE_RULE "--compile-rule"
 #define OPT_EVAL "-e"
-const char* HYPERLINK_FLAG = "--hl";
+const char* HYPERLINK_FLAG = "--hl-opt";
 
 /* コンパイラフラグの最大長。バッファあふれの対策 */
 #define CFLAGS_MAX_SIZE 1024

@@ -132,6 +132,7 @@
 #define LMN_SATOM_SET_ATTR(ATOM, N, X)  ((*LMN_SATOM_PATTR(LMN_SATOM(ATOM), N)) = (X))
 #define LMN_SATOM_GET_LINK(ATOM, N)     (LMN_ATOM(*LMN_SATOM_PLINK(LMN_SATOM(ATOM), N)))
 #define LMN_SATOM_SET_LINK(ATOM, N, X)  (*LMN_SATOM_PLINK(LMN_SATOM(ATOM), N) = (LmnWord)(X))
+#define LMN_HLATOM_SET_LINK(ATOM, X)    (LMN_SATOM_SET_LINK(ATOM, 0, X))
 
 /* word size of atom の加算は prev, next, id, functorのワード */
 #define LMN_SATOM_WORDS(ARITY)          (LMN_LINK_SHIFT + LMN_ATTR_WORDS(ARITY) + (ARITY))
@@ -179,7 +180,8 @@
 /* 定数アトム */
 #define LMN_CONST_STR_ATTR              (LMN_ATTR_FLAG | 0x04U)
 #define LMN_CONST_DBL_ATTR              (LMN_ATTR_FLAG | 0x05U)
-/* 拡張アトム？(⊂ unary) */
+/* ハイパーリンクアトム (⊂ extended atom ⊂ data atom ⊂ unary) 
+ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意 */
 #define LMN_HL_ATTR                     (LMN_ATTR_FLAG | 0x0aU)
 
 /*----------------------------------------------------------------------
@@ -199,12 +201,13 @@ void mpool_init(void);
 static inline LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr);
 static inline LmnSAtom lmn_copy_satom(LmnSAtom atom);
 static inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr);
-static inline LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom);
+static inline LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom, BOOL is_new_hl);
 static inline void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr);
 static inline void free_symbol_atom_with_buddy_data(LmnSAtom atom);
 static inline BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0,
                                LmnAtom atom1,LmnLinkAttr attr1);
-static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr);
+static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr,
+                                           ProcessTbl *hlinks);
 static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
                                     LmnAtom atom2, LmnLinkAttr attr2);
 
@@ -267,8 +270,8 @@ static inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
       return -1;
   }
 }
-
-static inline LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom)
+//is_new_hl = TRUEで新しく生成したハイパーリンクは元のハイパーリンクと接続しない
+static inline LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom, BOOL is_new_hl)
 {
   LmnFunctor f;
   LmnSAtom newatom;
@@ -285,9 +288,21 @@ static inline LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom)
   /* リンク先のデータアトムをコピーする */
   for (i = 0; i < arity; i++) {
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) {
-      LMN_SATOM_SET_LINK(newatom, i,
-                         lmn_copy_data_atom(LMN_SATOM_GET_LINK(atom, i),
-                                            LMN_SATOM_GET_ATTR(atom, i)));
+      if (is_new_hl && LMN_SATOM_GET_ATTR(atom, i) == LMN_HL_ATTR) { 
+        LmnSAtom hlAtom = LMN_SATOM(LMN_SATOM_GET_LINK(atom, i));
+        HyperLink *hl = lmn_hyperlink_at_to_hl(hlAtom);
+        LmnSAtom new_hlAtom = lmn_hyperlink_new_with_attr(LMN_HL_ATTRATOM(hl), LMN_HL_ATTRATOM_ATTR(hl));
+        LMN_SATOM_SET_LINK(newatom, i, new_hlAtom);
+        LMN_SATOM_SET_ATTR(newatom, i, LMN_HL_ATTR);
+        LMN_SATOM_SET_LINK(new_hlAtom, 0, newatom); 
+        LMN_SATOM_SET_ATTR(new_hlAtom, 0, LMN_ATTR_MAKE_LINK(i));
+      } else {
+        LmnAtom dt = lmn_copy_data_atom(LMN_SATOM_GET_LINK(atom, i), LMN_SATOM_GET_ATTR(atom, i));
+        LMN_SATOM_SET_LINK(newatom, i, dt);
+        if (LMN_SATOM_GET_ATTR(atom, i) == LMN_HL_ATTR) {
+          LMN_HLATOM_SET_LINK(LMN_SATOM(dt), newatom); 
+        }
+      }
     }
   }
 
@@ -365,7 +380,7 @@ static inline BOOL lmn_eq_func(LmnAtom     atom0, LmnLinkAttr attr0,
   }
 }
 
-static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr) {
+static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr, ProcessTbl *hlinks) {
   switch (attr) {
   case LMN_INT_ATTR:
   case LMN_DBL_ATTR:

@@ -176,7 +176,7 @@ static inline void atomlist_append(AtomListEntry *e1, AtomListEntry *e2)
   atomlist_set_empty(e2);
 }
 
-/* return NULL when atomlist don't exists. */
+/* return NULL when atomlist doesn't exist. */
 static inline LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid) {
   if (atomlist->record) {
     return (LmnSAtom)hashtbl_get_default(atomlist->record, findatomid, 0);
@@ -284,17 +284,44 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem);
 
 BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec);
 BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);
+BOOL lmn_mem_is_hlground(Vector *srcvec,
+                         Vector *avovec,
+                         unsigned long *natoms,
+                         ProcessTbl *attr_functors,
+                         Vector *attr_dataAtoms,
+                         Vector *attr_dataAtom_attrs);
 void lmn_mem_copy_ground(LmnMembrane *mem,
                          Vector *srcvec,
                          Vector **ret_dstlovec,
                          ProcessTbl *ret_atommap);
+void lmn_mem_copy_hlground(LmnMembrane *mem,
+                         Vector *srcvec,
+                         Vector **ret_dstlovec,
+                         ProcessTbl *ret_atommap,
+                         ProcessTbl *ret_hlinkmap,
+                         ProcessTbl *attr_functors,
+                         Vector *attr_dataAtoms,
+                         Vector *attr_dataAtom_attrs);
 void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec);
+void lmn_mem_remove_hlground(LmnMembrane *mem,
+                             Vector *srcvec,
+                             ProcessTbl *attr_sym,
+                             Vector *attr_data,
+                             Vector *attr_data_at);
 void lmn_mem_free_ground(Vector *srcvec);
+void lmn_mem_free_hlground(Vector *srcvec,
+                           ProcessTbl *attr_sym,
+                           Vector *attr_data,
+                           Vector *attr_data_at);
 void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec);
 BOOL ground_atoms(Vector *srcvec,
                   Vector *avovec,
                   ProcessTbl *atoms,
-                  unsigned long *natoms);
+                  unsigned long *natoms,
+                  ProcessTbl *hlinks,
+                  ProcessTbl *attr_functors,
+                  Vector *attr_dataAtoms,
+                  Vector *attr_dataAtom_attrs);
 BOOL ground_atoms_old(Vector *srcvec,
                       Vector *avovec,
                       HashSet **atoms,
@@ -480,6 +507,8 @@ static inline void mem_remove_symbol_atom_with_buddy_data(LmnMembrane *mem, LmnS
   for (i = 0; i < end; i++) {
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(LMN_SATOM_GET_ATTR(atom, i))) {
       lmn_mem_remove_data_atom(mem, LMN_SATOM_GET_LINK(atom, i), LMN_SATOM_GET_ATTR(atom, i));
+    } else if (LMN_ATTR_IS_HL(LMN_SATOM_GET_ATTR(atom, i))) {
+      mem_remove_symbol_atom(mem, LMN_SATOM(LMN_SATOM_GET_LINK(atom, i)));
     }
   }
   mem_remove_symbol_atom(mem, atom);
@@ -500,8 +529,9 @@ static inline void move_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
 }
 
 static inline void move_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
+  //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda
   move_symbol_atom_to_atomlist_head(a, mem);
-}
+  }
 
 static inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
   lmn_mem_remove_atom(mem, atom, attr);
@@ -651,6 +681,9 @@ typedef HashIterator AtomListIter;
       }                                                                        \
     }));                                                                       \
   } while (0)
+
+
+/* LmnSAtom* lmn_atomlist_end(AtomSetEntry * ent); */
 
 
 #endif /* LMN_MEMBRANE_H */

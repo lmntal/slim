@@ -841,7 +841,7 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d,
   ProcessTbl atoms;
   unsigned long i, t;
 
-  ground_atoms(srcvec, NULL, &atoms, &t);
+  ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
 
   /* memは既存膜のはず */
   proc_tbl_foreach(atoms,
@@ -876,7 +876,7 @@ void dmem_root_free_ground(struct MemDeltaRoot *root_d, Vector *srcvec)
   ProcessTbl atoms;
   unsigned long t;
 
-  ground_atoms(srcvec, NULL, &atoms, &t);
+  ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
 
   proc_tbl_foreach(atoms, dmem_root_free_satom_f, (LmnWord)root_d);
   proc_tbl_free(atoms);

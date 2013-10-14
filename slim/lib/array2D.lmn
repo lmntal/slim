@@ -47,14 +47,11 @@ SYNOPSIS
 
 AUTHOR
 
-	Koji Hara and Kazunori Ueda
-	and Atsushi Nakano
+	Kazunori Ueda
 
 HISTORY
 
-	2005/06/24 original
-	2005/11/05 representation changed and array.update added
-        2013/08/28 Javaのインラインを使用している部分を削除
+	2013/09/02 original
 
 COMMENTS
   

@@ -79,8 +79,8 @@ COMMENTS
   array.free(A) :- class(A, "array") |
     '$callback'('cb_array_free', A).
 
-  array.size(A, S, Anew) :- class(A, "array") |
-    '$callback'('cb_array_size', A, S, Anew).
+  array.size(A, S, Anew) :- // class(A, "array") |
+      '$callback'('cb_array_size', A, S, Anew).
 
   array.get(A, I, Ai, Anew) :- class(A, "array"), int(I) |
     '$callback'('cb_array_get', A, I, Ai, Anew).

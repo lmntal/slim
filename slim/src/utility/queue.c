@@ -177,14 +177,14 @@ LmnWord dequeue(Queue *q)
   if (!is_empty_queue(q)) {
     Node *sentinel, *next;
     sentinel = q->head;
-    next = sentinel->next;     
+    next = sentinel->next;
     if (next) {
       ret  = next->v;
       next->v = 0;
       q->head = next;
       free(sentinel);
       q->deq_num++;
-    }    
+    }
   }
   if (q->lock) {
       /*q_unlock(q, Q_ENQ);*/
