@@ -204,7 +204,7 @@ void lmn_run(Vector *start_rulesets)
   lmn_memstack_reconstruct(RC_MEMSTACK(&mrc), mem);
 
   if (lmn_env.trace) {
-    fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(&mrc));
+    if (lmn_env.output_format != JSON) fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(&mrc));
     lmn_dump_cell_stdout(mem);
     if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
   }
@@ -376,8 +376,9 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
         lmn_dump_mem_stdout(RC_GROOT_MEM(rc));
         fprintf(stdout, ":- ");
         RC_TRACE_NUM_INC(rc);
-      }
-      else {
+      } else if (lmn_env.output_format == JSON) {
+        lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
+      } else {
         fprintf(stdout, "---->%s\n", lmn_id_to_name(lmn_rule_get_name(rule)));
         fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(rc));
         lmn_dump_cell_stdout(RC_GROOT_MEM(rc));

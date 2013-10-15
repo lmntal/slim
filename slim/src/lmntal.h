@@ -233,7 +233,7 @@ LMN_EXTERN void lmn_free (void *p);
  */
 
 /* 階層グラフ構造の出力形式 */
-enum OutputFormat { DEFAULT, DEV, DOT };
+enum OutputFormat { DEFAULT, DEV, DOT, JSON };
 enum MCdumpFormat { CUI, LaViT, Dir_DOT, FSM };
 enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX};
 

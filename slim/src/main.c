@@ -91,6 +91,7 @@ static void usage(void)
           "                      (MC) Print format: DOT language (State Transition graph) \n"
           "  --dump-lavit        (MC) Print format: LaViT - LMNtal IDE (State Transition Graph)\n"
           "  --dump-inc          (MC) State Generation and Output of states at the same time\n"
+          "  --dump-json         Print format: JSON\n"
           "  --nc <file>         (MC) Input <file> as a property automata (LTL2BA format)\n"
           "  --psym <file>       (MC) Input <file> as propositional symbol definitions\n"
           "  --ltl               (MC) Do LTL model checking (need --psym, --nc)\n"
@@ -152,6 +153,7 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"dump-lavit"             , 0, 0, 1102},
     {"dump-inc"               , 0, 0, 1103},
     {"dump-lmn"               , 0, 0, 1104},
+    {"dump-json"              , 0, 0, 1105},
     {"interactive"            , 0, 0, 1200},
     {"translate"              , 0, 0, 1300},
     {"hl"                     , 0, 0, 1350},
@@ -280,6 +282,9 @@ static void parse_options(int *optid, int argc, char *argv[])
       break;
     case 1104:
       lmn_env.sp_dump_format = LMN_SYNTAX;
+      break;
+    case 1105:
+      lmn_env.output_format = JSON;
       break;
     case 1200: /* jni interactive mode */
 #ifdef HAVE_JNI_H

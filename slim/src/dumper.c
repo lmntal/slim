@@ -51,6 +51,7 @@
 #include "ccallback.h"
 #include "slim_header/memstack.h"
 #include "slim_header/port.h"
+#include "string.h"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -110,6 +111,10 @@ static void dump_link_name(LmnPort port, int link_num);
 static BOOL dump_hl_attratom(LmnPort port,
                            LmnAtom atom,
                              LmnLinkAttr attr);
+
+static void lmn_dump_atom_json(LmnSAtom atom);
+static void lmn_dump_link_json(LmnSAtom atom, int index);
+static void lmn_dump_mem_json(LmnMembrane *mem);
 
 static struct AtomRec *atomrec_make()
 {
@@ -817,6 +822,9 @@ void lmn_dump_cell(LmnMembrane *mem, LmnPort port)
   case DEV:
     lmn_dump_mem_dev(mem);
     break;
+  case JSON:
+    lmn_dump_mem_json(mem);
+    break;
   default:
     lmn_fatal("unexpected.");
     exit(EXIT_FAILURE);
@@ -845,6 +853,9 @@ void lmn_dump_mem(LmnMembrane *mem, LmnPort port)
     break;
   case DEV:
     lmn_dump_mem_dev(mem);
+    break;
+  case JSON:
+    lmn_dump_mem_json(mem);
     break;
   default:
     lmn_fatal("unexpected.");
@@ -1059,6 +1070,109 @@ void lmn_dump_dot(LmnMembrane *mem)
   atomrec_tbl_destroy(&ht);
 }
 
+static void lmn_dump_link_json(LmnSAtom atom, int index)
+{
+  LmnLinkAttr attr;
+  void *data;
+
+  attr = LMN_SATOM_GET_ATTR(atom, index);
+  data = (void *)LMN_SATOM_GET_LINK(atom, index);
+
+  fprintf(stdout, "{");
+  fprintf(stdout, "\"attr\":%d,", (int)attr);
+
+  if (LMN_ATTR_IS_DATA(attr)) {
+    switch(attr){
+      case LMN_INT_ATTR:
+        fprintf(stdout, "\"data\":%d", (int)((LmnWord)data));
+        break;
+      case LMN_DBL_ATTR:
+      case LMN_CONST_DBL_ATTR:
+        fprintf(stdout, "\"data\":%f", (*(double *)data));
+        break;
+      case LMN_SP_ATOM_ATTR:
+      case LMN_CONST_STR_ATTR:
+        fprintf(stdout, "\"data\":%s", lmn_string_c_str(data));
+        break;
+      case LMN_HL_ATTR:
+        {
+          LmnSAtom a = LMN_SATOM(data);
+          HyperLink *root = LMN_HL_ATOM_ROOT_HL(a);
+          fprintf(stdout, "\"data\":%d", (int)root->id);
+        }
+        break;
+      default:
+        break;
+    }
+  } else {
+    LmnSAtom a = LMN_SATOM(data);
+    if (a != NULL) {
+      fprintf(stdout, "\"data\":%d", (int)LMN_SATOM_ID(a));
+    }
+  }
+  fprintf(stdout, "}");
+}
+
+static void lmn_dump_atom_json(LmnSAtom atom)
+{
+  int i;
+  int arity;
+  fprintf(stdout, "{");
+  fprintf(stdout, "\"id\":%d,", (int)LMN_SATOM_ID(atom));
+  fprintf(stdout, "\"name\":\"%s\",", LMN_SATOM_STR(atom));
+  fprintf(stdout, "\"links\":[");
+  {
+    BOOL needs_comma = FALSE;
+    for(i = 0, arity = LMN_SATOM_GET_ARITY(atom); i < arity; i++) {
+      if (needs_comma) fprintf(stdout, ",");
+      needs_comma = TRUE;
+      lmn_dump_link_json(atom, i);
+    }
+  }
+  fprintf(stdout, "]");
+  fprintf(stdout, "}");
+}
+
+static void lmn_dump_mem_json(LmnMembrane *mem)
+{
+  if (!mem) return;
+
+  fprintf(stdout, "{");
+
+  fprintf(stdout, "\"id\":%d,", (int)lmn_mem_id(mem));
+  fprintf(stdout, "\"name\":\"%s\",", LMN_MEM_NAME(mem));
+  fprintf(stdout, "\"atoms\":[");
+  {
+    AtomListEntry *ent;
+    LmnFunctor f;
+    BOOL needs_comma = FALSE;
+    EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
+      LmnSAtom atom;
+      if (LMN_IS_EX_FUNCTOR(f)) {
+        continue;
+      }
+      EACH_ATOM(atom, ent, ({
+        if (needs_comma) fprintf(stdout, ",");
+        needs_comma = TRUE;
+        lmn_dump_atom_json(atom);
+      }));
+    }));
+  }
+  fprintf(stdout, "],");
+  fprintf(stdout, "\"membranes\":[");
+  {
+    LmnMembrane *m;
+    BOOL needs_comma = FALSE;
+    for (m = mem->child_head; m; m = m->next) {
+      if (needs_comma) fprintf(stdout, ",");
+      needs_comma = TRUE;
+      lmn_dump_mem_json(m);
+    }
+  }
+  fprintf(stdout, "]");
+
+  fprintf(stdout, "}");
+}
 
 void cb_dump_mem(LmnReactCxt *rc,
                  LmnMembrane *mem,
