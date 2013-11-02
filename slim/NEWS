@@ -1,3 +1,13 @@
+SLIM (2.2.4) -- 2013/11/3
+  * new features / support
+    + add hlground type
+    + add swaplink instructions
+    
+  * bug fixes
+    + removeground bug with hyperlink
+    + fix hlground problems
+    + and minor bug fixes
+
 SLIM (2.2.3) -- 2012/10/17
   * bug fixes
     + --delta-mem+relink problem
