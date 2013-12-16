@@ -252,7 +252,7 @@ LmnBinStr lmn_binstr_copy(struct LmnBinStr *src_bs)
 }
 
 
-inline void lmn_binstr_free(struct LmnBinStr *bs)
+void lmn_binstr_free(struct LmnBinStr *bs)
 {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {

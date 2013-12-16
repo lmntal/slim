@@ -212,7 +212,7 @@ static void destroy_ruleset_table()
 }
 
 /* Associates id with ruleset */
-inline void lmn_set_ruleset(LmnRuleSet ruleset, int id)
+void lmn_set_ruleset(LmnRuleSet ruleset, int id)
 {
   /* 必要ならば容量を拡張 */
   while (ruleset_table->size < (unsigned int)id) {

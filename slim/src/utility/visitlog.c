@@ -195,13 +195,13 @@ TraceLog tracelog_make(void)
 }
 
 
-inline void tracelog_init(TraceLog l)
+void tracelog_init(TraceLog l)
 {
   tracelog_init_with_size(l, PROC_TBL_DEFAULT_SIZE);
 }
 
 
-inline void tracelog_init_with_size(TraceLog l, unsigned long size)
+void tracelog_init_with_size(TraceLog l, unsigned long size)
 {
   l->cap = size;
   l->num = 0;
@@ -217,7 +217,7 @@ void tracelog_free(TraceLog l)
   LMN_FREE(l);
 }
 
-inline void tracelog_destroy(TraceLog l)
+void tracelog_destroy(TraceLog l)
 {
   LMN_FREE(l->tbl);
   tracker_destroy(&l->tracker);

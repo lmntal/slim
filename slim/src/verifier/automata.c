@@ -298,17 +298,17 @@ BOOL atmstate_is_end(AutomataState s)
   return s->is_end;
 }
 
-inline void atmstate_set_scc(AutomataState s, AutomataSCC *scc)
+void atmstate_set_scc(AutomataState s, AutomataSCC *scc)
 {
   s->scc = scc;
 }
 
-inline BYTE atmstate_scc_type(AutomataState s)
+BYTE atmstate_scc_type(AutomataState s)
 {
   return atmscc_type(atmstate_scc(s));
 }
 
-inline AutomataSCC *atmstate_scc(AutomataState s)
+AutomataSCC *atmstate_scc(AutomataState s)
 {
   return s->scc;
 }

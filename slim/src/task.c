@@ -2005,7 +2005,8 @@ label_skip_data_atom:
             vec_init(&attr_dataAtoms, 16);
             vec_init(&attr_dataAtom_attrs, 16);
             attr_functors = proc_tbl_make_with_size(16);
-            LmnInstrVar i, n;
+            LmnInstrVar i = 0, n;
+
             READ_VAL(LmnInstrVar, instr, n);
             switch (op) {
             case INSTR_ISHLGROUNDINDIRECT:
@@ -2091,7 +2092,8 @@ label_skip_data_atom:
             vec_init(&attr_dataAtoms, 16);
             vec_init(&attr_dataAtom_attrs, 16);
             attr_functors = proc_tbl_make_with_size(16);
-            LmnInstrVar i, n;
+            LmnInstrVar i = 0, n;
+
             READ_VAL(LmnInstrVar, instr, n);
              
             switch (op) {
@@ -2510,7 +2512,7 @@ label_skip_data_atom:
           vec_init(&attr_dataAtoms, 16);
           vec_init(&attr_dataAtom_attrs, 16);
           attr_functors = proc_tbl_make_with_size(16);
-          LmnInstrVar i, n;
+          LmnInstrVar i = 0, n;
 
           READ_VAL(LmnInstrVar, instr, n);
              
@@ -2615,7 +2617,7 @@ label_skip_data_atom:
           vec_init(&attr_dataAtoms, 16);
           vec_init(&attr_dataAtom_attrs, 16);
           attr_functors = proc_tbl_make_with_size(16);
-          LmnInstrVar i, n;
+          LmnInstrVar i = 0, n;
 
           READ_VAL(LmnInstrVar, instr, n);
              

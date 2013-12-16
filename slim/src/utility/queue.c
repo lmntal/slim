@@ -194,7 +194,7 @@ LmnWord dequeue(Queue *q)
 }
 
 /* キューqが空なら真を返す.*/
-inline BOOL is_empty_queue(Queue *q)
+BOOL is_empty_queue(Queue *q)
 {
   return (q->head == q->tail) && (q->enq_num == q->deq_num);
 }

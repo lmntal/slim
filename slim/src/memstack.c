@@ -44,35 +44,35 @@
 
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem);
 
-inline LmnMemStack lmn_memstack_make()
+LmnMemStack lmn_memstack_make()
 {
   return vec_make(64);
 }
 
-inline void lmn_memstack_free(LmnMemStack memstack)
+void lmn_memstack_free(LmnMemStack memstack)
 {
   vec_free(memstack);
 }
 
-inline BOOL lmn_memstack_isempty(LmnMemStack memstack)
+BOOL lmn_memstack_isempty(LmnMemStack memstack)
 {
   return vec_num(memstack) == 0;
 }
 
-inline void lmn_memstack_push(LmnMemStack memstack, LmnMembrane *mem)
+void lmn_memstack_push(LmnMemStack memstack, LmnMembrane *mem)
 {
   vec_push(memstack, (LmnWord)mem);
   lmn_mem_set_active(mem, TRUE);
 }
 
-inline LmnMembrane *lmn_memstack_pop(LmnMemStack memstack)
+LmnMembrane *lmn_memstack_pop(LmnMemStack memstack)
 {
   LmnMembrane *m = (LmnMembrane *)vec_pop(memstack);
   lmn_mem_set_active(m, FALSE);
   return m;
 }
 
-inline LmnMembrane *lmn_memstack_peek(LmnMemStack memstack)
+LmnMembrane *lmn_memstack_peek(LmnMemStack memstack)
 {
   return (LmnMembrane *)vec_get(memstack, vec_num(memstack)-1);
 }
@@ -83,7 +83,7 @@ inline LmnMembrane *lmn_memstack_peek(LmnMemStack memstack)
    はこの手続きは必要ない*/
 void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem)
 {
-  unsigned long i, j, n = vec_num(memstack);
+  long i, j, n = (long)vec_num(memstack);
 
   for (i = n-1; i >= 0; i--) {
     if ((LmnMembrane *)vec_get(memstack, i) == mem) {

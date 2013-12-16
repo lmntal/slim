@@ -1561,7 +1561,7 @@ static LmnSAtom dmem_root_alter_functor(struct MemDeltaRoot *root_d,
   }
 }
 
-inline LmnAtom dmem_root_get_link(struct MemDeltaRoot *d,
+LmnAtom dmem_root_get_link(struct MemDeltaRoot *d,
                                   LmnSAtom atom,
                                   int i)
 {
@@ -1666,7 +1666,7 @@ void dmem_root_copy_rules(struct MemDeltaRoot *root_d, LmnMembrane *dest, LmnMem
   }
 }
 
-inline LmnSAtom dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f)
+LmnSAtom dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f)
 {
   LmnSAtom atom = lmn_new_atom(f);
 

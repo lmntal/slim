@@ -1011,7 +1011,7 @@ static void statetable_add_direct(StateTable *st, State *s)
 }
 
 /* 高階関数  */
-inline void statetable_foreach(StateTable *st, void (*func) ( ),
+void statetable_foreach(StateTable *st, void (*func) ( ),
                                LmnWord _arg1, LmnWord _arg2)
 {
   if (st) {
