@@ -43,6 +43,7 @@
 #include "utility/util.h"
 #include "slim_header/string.h"
 #include "dumper.h"
+#include "atom.h"
 
 static int array_atom_type; /* special atom type */
 
@@ -54,7 +55,7 @@ static int array_atom_type; /* special atom type */
 /*
  * Internal Constructor
  */
-static LmnArray make_array(LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
+static LmnArray make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
   unsigned long i;
   double *v;
@@ -83,20 +84,28 @@ static LmnArray make_array(LmnAtom size, LmnAtom init_value, LmnLinkAttr init_ty
                                                      // copied, could be shared
     }
     break;
+  case LMN_HL_ATTR:
+    LMN_ARRAY_DATA(a)[0]=init_value;
+    for (i = 1; i < size; i++) {
+      LMN_ARRAY_DATA(a)[i] = lmn_copy_atom(init_value, init_type);
+      lmn_mem_push_atom(mem, LMN_ARRAY_DATA(a)[i], init_type);
+    }
+    break;
+
   default: lmn_fatal("array of this element type not implemented");
   }
   return a;
 }
 
-LmnArray lmn_make_array(LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
+LmnArray lmn_make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
-  return make_array(size, init_value, init_type);
+  return make_array(mem, size, init_value, init_type);
 }
 
-void lmn_array_free(LmnArray array)
+void lmn_array_free(LmnArray array, LmnMembrane *mem)
 {
   unsigned long i;
-
+  
   if (LMN_ARRAY_OWNER(array)) {
     switch (LMN_ARRAY_TYPE(array)) {
     case LMN_DBL_ATTR:
@@ -107,6 +116,11 @@ void lmn_array_free(LmnArray array)
     case LMN_STRING_ATTR:
       for (i = 0; i < LMN_ARRAY_SIZE(array); i++) {
 	lmn_string_free(LMN_STRING(LMN_ARRAY_DATA(array)[i]));
+      }
+      break;
+    case LMN_HL_ATTR:
+      for (i = 0; i < LMN_ARRAY_SIZE(array); i++) {
+	lmn_free_atom((LmnAtom)LMN_ARRAY_DATA(array)[i],LMN_HL_ATTR);
       }
       break;
     }
@@ -155,10 +169,17 @@ void cb_array_new(LmnReactCxt *rc,
 		  LmnAtom a2, LmnLinkAttr t2)
 {
   /* a0 is assumed to be an integer data atom */
-  LmnArray atom = lmn_make_array(a0, a1, t1);
+  LmnArray atom = lmn_make_array(mem, a0, a1, t1);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
-
   lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+  if(t1==LMN_HL_ATTR){
+    unsigned long i;
+    for(i = 0 ; i < a0 ; i++){
+      lmn_mem_newlink(mem,
+                  a2, t2, LMN_ATTR_GET_VALUE(t2),
+                  LMN_ARRAY_DATA(atom)[i], t1, 0);
+      }
+  }
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   LMN_ATOM(atom), attr, 0);
@@ -173,7 +194,7 @@ void cb_array_free(LmnReactCxt *rc,
                   LmnMembrane *mem,
                   LmnAtom a0, LmnLinkAttr t0)
 {
-  lmn_array_free(LMN_ARRAY(a0));
+  lmn_array_free(LMN_ARRAY(a0), mem);
   lmn_mem_remove_data_atom(mem, a0, t0);
 }
 
@@ -228,6 +249,9 @@ void cb_array_get(LmnReactCxt *rc,
       LMN_COPY_DBL_ATOM(v, LMN_ARRAY_DATA(a0)[a1]);
       ai = LMN_ATOM(v);
       break;
+    case LMN_HL_ATTR:
+      ai = lmn_copy_atom(LMN_ARRAY_DATA(a0)[a1], LMN_HL_ATTR);
+    break;
     default: /* must be LMN_STRINGL_ATTR) */
       ai = LMN_ATOM(lmn_string_copy(LMN_STRING(LMN_ARRAY_DATA(a0)[a1])));
       break;
@@ -273,16 +297,29 @@ void cb_array_put(LmnReactCxt *rc,
       case LMN_STRING_ATTR:
 	lmn_string_free(LMN_STRING(LMN_ARRAY_DATA(a0)[a1]));
 	break;
+      case LMN_HL_ATTR:
+	lmn_mem_remove_atom(mem, (LmnAtom)LMN_ARRAY_DATA(a0)[a1], LMN_HL_ATTR);
+	lmn_free_atom((LmnAtom)LMN_ARRAY_DATA(a0)[a1],LMN_HL_ATTR);
+	
+	break;
       }
     } else lmn_fatal("array.put type mismatch");
 
     LMN_ARRAY_DATA(a0)[a1] = a2;
 
+    if(LMN_ARRAY_TYPE(a0)==LMN_HL_ATTR){
+      unsigned long i;
+      for(i = 0 ; i < LMN_ARRAY_SIZE(a0) ; i++){
+	lmn_mem_newlink(mem,
+                  a3, t3, LMN_ATTR_GET_VALUE(t3),
+                  LMN_ARRAY_DATA(a0)[i], LMN_HL_ATTR, 0);
+      }
+    }
     lmn_mem_newlink(mem,
 		    a0, t0, LMN_ATTR_GET_VALUE(t0),
 		    a3, t3, LMN_ATTR_GET_VALUE(t3));
     lmn_mem_remove_data_atom(mem, a1, t1);
-    lmn_mem_remove_data_atom(mem, a2, t2);
+    if(!LMN_ARRAY_TYPE(a0)==LMN_HL_ATTR)lmn_mem_remove_data_atom(mem, a2, t2);
   }
   else lmn_fatal("array.put out of bound");  
 }
@@ -299,7 +336,7 @@ void *sp_cb_array_copy(void *data)
 
 void sp_cb_array_free(void *data)
 {
-  lmn_array_free(LMN_ARRAY(data));
+  lmn_array_free(LMN_ARRAY(data),NULL);
 }
 
 /* てきとーに定義した */
@@ -325,7 +362,9 @@ void sp_cb_array_dump(void *array, LmnPort port)
     } else if (type == LMN_DBL_ATTR) {
       sprintf(buf, "%#g", *(double *)data[0]);
       port_put_raw_s(port, buf);
-    } else {
+    } else if (type == LMN_HL_ATTR) {
+      lmn_dump_atom(port, data[0], type);
+    }else {
       sp_cb_string_dump(data[0], port);
     }
     for (i = 1; i < size ; i++) {
@@ -335,6 +374,8 @@ void sp_cb_array_dump(void *array, LmnPort port)
       } else if (type == LMN_DBL_ATTR) {
 	sprintf(buf, "%#g", *(double *)data[i]);
 	port_put_raw_s(port, buf);
+      } else if (type == LMN_HL_ATTR) {
+	lmn_dump_atom(port, data[i], type);
       } else {
       sp_cb_string_dump(data[i], port);
       }
