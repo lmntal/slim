@@ -132,14 +132,8 @@ void *lmn_calloc(size_t num, size_t size)
     lmn_fatal("Memory exhausted");
   }
 #else
-  unsigned int i;
-  char *new_as_string;
-
   new = lmn_malloc(num * size);
-  new_as_string = (char *)new;
-  for (i = 0; i < num * size; i++) {
-    new_as_string[i] = 0;
-  }
+  memset(new, 0x00, num * size);
 #endif
 
   return new;
