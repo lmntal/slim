@@ -50,8 +50,8 @@
 // Define the version number so folks can check against it
 #define TC_VERSION_MAJOR  2
 #define TC_VERSION_MINOR  2
-#define TC_VERSION_PATCH  ".2"
-#define TC_VERSION_STRING "google-perftools 2.2.2"
+#define TC_VERSION_PATCH  ".4"
+#define TC_VERSION_STRING "google-perftools 2.2.4"
 
 #include <stdlib.h>   // for struct mallinfo, if it's defined
 
@@ -92,7 +92,7 @@ extern "C" {
 
   PERFTOOLS_DLL_DECL void tc_malloc_stats(void) __THROW;
   PERFTOOLS_DLL_DECL int tc_mallopt(int cmd, int value) __THROW;
-#if 1
+#if 0
   PERFTOOLS_DLL_DECL struct mallinfo tc_mallinfo(void) __THROW;
 #endif
 

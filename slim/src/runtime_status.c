@@ -495,7 +495,9 @@ static void dump_execution_stat(FILE *f)
         expr = "OWCTY";
       } else if (lmn_env.enable_bledge) {
         expr = "BLE";
-      } else if (lmn_env.enable_mcndfs) {
+      } else if(lmn_env.enable_mapndfs) {
+        expr = "MAPNDFS";
+      } else if(lmn_env.enable_mcndfs) {
         expr = "MCNDFS";
       } else if (lmn_prof.thread_num == 1 && !lmn_env.enable_parallel) {
         expr = "NDFS";
@@ -533,7 +535,7 @@ static void dump_execution_stat(FILE *f)
     fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s\n"
              , "EXPLORER"
              , "strtgy"  , expr
-             , "heurstc" , heuristic);
+	     , "heurstc" , heuristic);
   }
   fprintf(f,  "============================================================\n");
   fprintf(f,  "\n");
@@ -857,6 +859,12 @@ static char *profile_time_id_to_name(int type)
     break;
   case PROFILE_TIME__COST_UPDATE:
     ret = "cost update";
+    break;
+  case PROFILE_TIME__LOCK:
+    ret = "lock";
+    break;
+  case PROFILE_TIME__REPAIR:
+    ret = "repair phase";
     break;
   default:
     ret = "unknown";

@@ -92,6 +92,8 @@ enum PROFILE_TIME {
   PROFILE_TIME__D_COMPRESS,                   /* compression using zdelta lib */
   PROFILE_TIME__D_UNCOMPRESS,                 /* uncompression using zdelta lib */
   PROFILE_TIME__COST_UPDATE,                  /* 最適化実行 */
+  PROFILE_TIME__LOCK,                         /* ロックされている時間 */
+  PROFILE_TIME__REPAIR,                       /* (MCNDFS)Red DFSのRepair Phaseの時間 */
   PTIME_TAIL,                         /* dummy */
 };
 

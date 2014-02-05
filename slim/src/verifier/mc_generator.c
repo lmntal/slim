@@ -47,90 +47,40 @@
 #include "error.h"
 #include "lmntal_thread.h"
 #include "runtime_status.h"
+#include <unistd.h>
+
+#include "mc_visualizer.h"
 
 /* TODO: C++ template関数で書き直した方がよい */
 
 /* 邪魔なので上に持ってきた */
 #ifdef PROFILE
-# define pop_stack(List)                                                       \
-  do {                                                                         \
-    State *pop = (State *)vec_pop(List);                                       \
-    if (is_on_stack(pop)) unset_on_stack(pop);                                 \
-    if (lmn_env.profile_level >= 3) {                                          \
-      profile_remove_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));         \
-    }                                                                          \
-  } while (0)
-# define put_stack(List, St)                                                   \
-  do {                                                                         \
-    if (lmn_env.profile_level >= 3) {                                          \
-      profile_add_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));            \
-    }                                                                          \
-    vec_push((List), (vec_data_t)(St));                                        \
-  } while (0)
-# define pop_deq(Deq, Dir)                                                     \
-  do {                                                                         \
-    if (Dir) {                                                                  \
-      deq_pop_tail(Deq);                                                       \
-    } else {                                                                   \
-      deq_pop_head(Deq);                                                       \
-    }                                                                          \
-    if (lmn_env.profile_level >= 3) {                                          \
-      profile_remove_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));         \
-    }                                                                          \
-  } while (0)
-# define push_deq(List, St, Dir)                                               \
-  do {                                                                         \
-    if (lmn_env.profile_level >= 3) {                                          \
-      profile_add_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));            \
-    }                                                                          \
-    if (Dir) {                                                                 \
-      deq_push_tail((List), (vec_data_t)(St));                                 \
-    } else {                                                                   \
-      deq_push_head((List), (vec_data_t)(St));                                 \
-    }                                                                          \
-} while (0)
-# define EXECUTE_PROFILE_START()                                               \
-  if (lmn_env.profile_level >= 3) {                                            \
-    profile_remove_space(PROFILE_SPACE__OPEN_LIST, sizeof(Node));              \
-    profile_start_timer(PROFILE_TIME__ACTIVE_FOR_IDLE_PROF);                   \
-  }
-# define EXECUTE_PROFILE_FINISH()                                              \
-  if (lmn_env.profile_level >= 3) {                                            \
-    profile_finish_timer(PROFILE_TIME__ACTIVE_FOR_IDLE_PROF);                  \
-  }
-# define ADD_OPEN_PROFILE(M)                                                   \
-  if (lmn_env.profile_level >= 3) {                                            \
-    profile_add_space(PROFILE_SPACE__OPEN_LIST, M);                            \
-  }
+#  include "runtime_status.h"
+
+#  define START_LOCK()                                             \
+    if (lmn_env.profile_level >= 3) {                                      \
+      profile_start_timer(PROFILE_TIME__LOCK);                    \
+    }
+#  define FINISH_LOCK()                                            \
+    if (lmn_env.profile_level >= 3) {                                      \
+      profile_finish_timer(PROFILE_TIME__LOCK);                   \
+    }
+
+#  define START_REPAIR_PHASE()                                             \
+    if (lmn_env.profile_level >= 3) {                                      \
+      profile_start_timer(PROFILE_TIME__REPAIR);                    \
+    }
+#  define FINISH_REPAIR_PHASE()                                            \
+    if (lmn_env.profile_level >= 3) {                                      \
+      profile_finish_timer(PROFILE_TIME__REPAIR);                   \
+    }
+
 #else
-# define EXECUTE_PROFILE_START()
-# define EXECUTE_PROFILE_FINISH()
-# define ADD_OPEN_PROFILE(M)
-# define pop_stack(List)                                                       \
-  do {                                                                         \
-    State *pop = (State *)vec_pop(List);                                       \
-    if (is_on_stack(pop)) unset_on_stack(pop);                                 \
-  } while (0)
-# define put_stack(List, St)  vec_push((List), (vec_data_t)(St))
-# define pop_deq(Deq, Dir)                                                     \
-  do {                                                                         \
-    if (Dir) {                                                                 \
-      deq_pop_tail(Deq);                                                       \
-    } else {                                                                   \
-      (State *)deq_pop_head(Deq);                                              \
-    }                                                                          \
-  } while (0)
-# define push_deq(List, St, Dir)                                               \
-  do {                                                                         \
-    if (Dir) {                                                                 \
-      deq_push_tail((List), (vec_data_t)(St));                                 \
-    } else {                                                                   \
-      deq_push_head((List), (vec_data_t)(St));                                 \
-    }                                                                          \
-} while (0)
-
+#  define START_LOCK()
+#  define FINISH_LOCK()
+#  define START_REPAIR_PHASE()
+#  define FINISH_REPAIR_PHASE()
 #endif
-
 
 
 /** ------------------------------------------------------------------
@@ -160,15 +110,20 @@
   (DFS_HANDOFF_COND_STATIC_DEQ(W, Deq) || DFS_HANDOFF_COND_DYNAMIC(I, N, W))
 
 /* 既に到達した状態であるかを判定するための条件 */
-#define MCNDFS_ALREADY_VISITED(w, s) ( (s_is_blue(s) && worker_is_explorer(w)) \
-                                   ||  (s_is_red(s) && worker_is_generator(w)) ) 
+#define MAPNDFS_ALREADY_VISITED(w, s) ( (s_is_visited_by_explorer(s) && worker_is_explorer(w)) \
+                                   ||  (s_is_visited_by_generator(s) && worker_is_generator(w)) ) 
 
 /* 初期状態を割り当てるワーカーの条件 */
-#define WORKER_FOR_INIT_STATE(w, s) ( (worker_use_mcndfs(w)  && worker_is_explorer(w) ) \
-                                   || (!worker_use_mcndfs(w) &&  worker_id(w) == 0)     \
+#define WORKER_FOR_INIT_STATE(w, s) ( (worker_use_mapndfs(w)  && worker_is_explorer(w) ) \
+                                   || (!worker_use_mapndfs(w) &&  worker_id(w) == 0)     \
                                    || !worker_on_parallel(w) )
 
 static inline void    dfs_loop(LmnWorker *w,
+                               Vector    *stack,
+                               Vector    *new_states,
+                               Automata  a,
+                               Vector    *psyms);
+static inline void    mapdfs_loop(LmnWorker *w,
                                Vector    *stack,
                                Vector    *new_states,
                                Automata  a,
@@ -178,6 +133,7 @@ static inline void    mcdfs_loop(LmnWorker *w,
                                Vector    *new_states,
                                Automata  a,
                                Vector    *psyms);
+
 void    costed_dfs_loop(LmnWorker *w,
                         Deque    *deq,
                         Vector    *new_states,
@@ -220,7 +176,7 @@ void dfs_worker_init(LmnWorker *w)
     if (lmn_env.core_num == 1) {
       mc->q = new_queue();
     } else if (worker_on_dynamic_lb(w)) {
-      if(worker_use_mcndfs(w)) mc->q = make_parallel_queue(LMN_Q_MRMW);
+      if(worker_use_mapndfs(w)) mc->q = make_parallel_queue(LMN_Q_MRMW);
       else mc->q = make_parallel_queue(LMN_Q_MRSW);
     } else {
       mc->q = make_parallel_queue(LMN_Q_SRSW);
@@ -320,7 +276,7 @@ static inline void dfs_handoff_task(LmnWorker *me, LmnWord task)
 /* ワーカーwが輪の方向に沿って, 他のワーカーから未展開状態を奪いに巡回する.
  * 未展開状態を発見した場合, そのワーカーのキューからdequeueして返す.
  * 発見できなかった場合, NULLを返す */
-static inline LmnWord mcdfs_work_stealing(LmnWorker *w)
+static inline LmnWord mapdfs_work_stealing(LmnWorker *w)
 {
   LmnWorker *dst;
 
@@ -342,7 +298,7 @@ static inline LmnWord mcdfs_work_stealing(LmnWorker *w)
 
 
 /* ベクタexpandsに積まれたタスクをワーカーmeの隣接ワーカーに全てハンドオフする */
-static inline void mcdfs_handoff_all_task(LmnWorker *me, Vector *expands)
+static inline void mapdfs_handoff_all_task(LmnWorker *me, Vector *expands)
 {
   unsigned long i, n;
   LmnWorker *rn = worker_next_generator(me);
@@ -375,9 +331,78 @@ static inline void mcdfs_handoff_task(LmnWorker *me, LmnWord task)
   ADD_OPEN_PROFILE(sizeof(Node));
 }
 
+void mcdfs_start(LmnWorker *w)
+{
+  LmnWorkerGroup *wp;
+  struct Vector new_ss;
+  State  *s;
+  StateSpace ss;
+  
+  ss = worker_states(w);
+  wp = worker_group(w);
+  vec_init(&new_ss, 32);
+
+  /*
+  if(WORKER_FOR_INIT_STATE(w, s)) {
+    s = statespace_init_state(ss);
+  } else {
+    s = NULL;
+  }
+  */
+  s = statespace_init_state(ss);
+
+  if (!worker_on_parallel(w)) { /* DFS */
+    {
+      put_stack(&DFS_WORKER_STACK(w), s);
+      dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, statespace_automata(ss), statespace_propsyms(ss));
+    }
+  }
+  else {
+    while (!wp->mc_exit) {
+      if (!s && is_empty_queue(DFS_WORKER_QUEUE(w))) {
+	break;
+	/*
+        if (lmn_workers_termination_detection_for_rings(w)) {
+          break;
+        } 
+	*/
+      } else {
+        //worker_set_active(w);
+        if (s || (s = (State *)dequeue(DFS_WORKER_QUEUE(w)))) {
+          EXECUTE_PROFILE_START();
+          {
+            put_stack(&DFS_WORKER_STACK(w), s);
+            mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, statespace_automata(ss), statespace_propsyms(ss));
+            s = NULL;
+            vec_clear(&DFS_WORKER_STACK(w));
+          }
+          vec_clear(&new_ss);
+
+          EXECUTE_PROFILE_FINISH();
+        }
+      }
+    }
+  }
+
+
+  fprintf(stderr, "%d : exit (total expand=%d)\n", worker_id(w), w->expand);
+  //fflush(stdout);
+  if (lmn_env.enable_visualize) {
+      if (worker_id(w) == 0) {
+	  dump_dot(ss, wp->worker_num);
+      }
+  }
+
+  vec_destroy(&new_ss);
+}
+
 
 void dfs_start(LmnWorker *w)
 {
+  if (worker_use_mcndfs(w)) {
+      return mcdfs_start(w);
+  }
+
   LmnWorkerGroup *wp;
   struct Vector new_ss;
   State  *s;
@@ -412,10 +437,10 @@ void dfs_start(LmnWorker *w)
         if (lmn_workers_termination_detection_for_rings(w)) {
           /* termination is detected! */
           break;
-        } else if (worker_on_dynamic_lb(w) ){
+        } else if (worker_on_dynamic_lb(w)){
           /* 職探しの旅 */
-          if(!worker_use_mcndfs(w)) s = (State *)dfs_work_stealing(w);
-          else if(worker_is_generator(w)) s = (State *)mcdfs_work_stealing(w);
+          if(!worker_use_mapndfs(w)) s = (State *)dfs_work_stealing(w);
+          else if(worker_is_generator(w)) s = (State *)mapdfs_work_stealing(w);
           else {
               // explorerの仕事無くなったら終了
               printf("\n\n\nexplorer have no work\n\n\n");
@@ -424,7 +449,7 @@ void dfs_start(LmnWorker *w)
         }
       } else {
         worker_set_active(w);
-        if(!is_empty_queue(DFS_WORKER_QUEUE(w)) &&  !((Queue*)DFS_WORKER_QUEUE(w))->head->next) printf("%u : queue is not empty? %lu\n", worker_id(w), queue_entry_num(DFS_WORKER_QUEUE(w)));
+        if(!is_empty_queue(DFS_WORKER_QUEUE(w)) &&  !((Queue*)DFS_WORKER_QUEUE(w))->head->next) printf("%d : queue is not empty? %d\n", worker_id(w), queue_entry_num(DFS_WORKER_QUEUE(w)));
         if (s || (s = (State *)dequeue(DFS_WORKER_QUEUE(w)))) {
           EXECUTE_PROFILE_START();
 #ifdef KWBT_OPT
@@ -437,7 +462,7 @@ void dfs_start(LmnWorker *w)
 #endif
           {
             put_stack(&DFS_WORKER_STACK(w), s);
-            if(worker_use_mcndfs(w)) mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, statespace_automata(ss), statespace_propsyms(ss));
+            if(worker_use_mapndfs(w)) mapdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, statespace_automata(ss), statespace_propsyms(ss));
             else dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, statespace_automata(ss), statespace_propsyms(ss));
             s = NULL;
             vec_clear(&DFS_WORKER_STACK(w));
@@ -452,9 +477,12 @@ void dfs_start(LmnWorker *w)
   }
 
 
-  printf("%d : exit (total expand=%d)\n", worker_id(w), w->expand);
-  if(worker_is_explorer(w) || worker_use_ndfs(w)) printf("red dfs count : %d\n", w->red);
-
+  fprintf(stderr, "%d : exit (total expand=%d)\n", worker_id(w), w->expand);
+  if (lmn_env.enable_visualize) {
+      if (worker_id(w) == 0) {
+	  dump_dot(ss, wp->worker_num);
+      }
+  }
 
   vec_destroy(&new_ss);
 }
@@ -481,8 +509,8 @@ static inline void dfs_loop(LmnWorker *w,
           w->red++;
         ndfs_start(w, s);
       }
-      else if (MCNDFS_COND(w, s, p_s)) {
-        mcndfs_start(w,s);
+      else if (MAPNDFS_COND(w, s, p_s)) {
+        mapndfs_start(w,s);
       }
       pop_stack(stack);
       continue;
@@ -494,6 +522,7 @@ static inline void dfs_loop(LmnWorker *w,
 
     /* サクセッサを展開 */
     mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+    s->expander_id = worker_id(w);
 
     if (MAP_COND(w)) map_start(w, s);
 
@@ -529,8 +558,8 @@ static inline void dfs_loop(LmnWorker *w,
   }
 }
 
-/* MC-NDFS : 基本的にndfs_loopと同じ。安定したら合併させます。 */
-static inline void mcdfs_loop(LmnWorker *w,
+/* MAP+NDFS : 基本的にndfs_loopと同じ。安定したら合併させます。 */
+static inline void mapdfs_loop(LmnWorker *w,
                             Vector    *stack,
                             Vector    *new_ss,
                             Automata  a,
@@ -547,12 +576,12 @@ static inline void mcdfs_loop(LmnWorker *w,
     s   = (State *)vec_peek(stack);
     p_s = MC_GET_PROPERTY(s, a);
     if (is_expanded(s)) {
-      if (MCNDFS_COND(w, s, p_s)) {
+      if (MAPNDFS_COND(w, s, p_s)) {
          /** entering red DFS **/
          w->red++;
-         mcndfs_start(w,s);
+         mapndfs_start(w,s);
       }          
-      if(MCNDFS_ALREADY_VISITED(w, s)) {
+      if(MAPNDFS_ALREADY_VISITED(w, s)) {
         pop_stack(stack);
         continue;
       }
@@ -566,14 +595,15 @@ static inline void mcdfs_loop(LmnWorker *w,
     if(!is_expanded(s)) {
         w->expand++;
         mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+        s->expander_id = worker_id(w);
     }
     
     if (MAP_COND(w)) map_start(w, s);
 
     /* explorerが到達した状態はblueに着色 */
-    if(worker_is_explorer(w)) s_set_blue(s);
+    if(worker_is_explorer(w)) s_set_visited_by_explorer(s);
     // generatorが到達した状態はredに着色
-    else if(worker_is_generator(w)) s_set_red(s);
+    else if(worker_is_generator(w)) s_set_visited_by_generator(s);
 
 
    /* Nested-DFS: postorder順を求めるDFS(explorerから未到達の状態がStackに積み直される) */
@@ -582,15 +612,15 @@ static inline void mcdfs_loop(LmnWorker *w,
       n = state_succ_num(s);
       for (i = 0; i < n; i++) {
         State* succ = state_succ_state(s, i);
-        if (!s_is_blue(succ) ) {
+        if (!s_is_visited_by_explorer(succ) ) {
           put_stack(stack, succ);
         }
       }
     }
-    /* 並列アルゴリズム使用時 MCNDFS使ってる時点で並列前提だけど一応 */
+    /* 並列アルゴリズム使用時 MAPNDFS使ってる時点で並列前提だけど一応 */
     if(worker_on_parallel(w)) {
       if (DFS_HANDOFF_COND_STATIC(w, stack) /*|| worker_is_explorer(w)*/) {
-        mcdfs_handoff_all_task(w, new_ss);
+        mapdfs_handoff_all_task(w, new_ss);
       } else {
         n = vec_num(new_ss);
         for (i = 0; i < n; i++) {
@@ -608,6 +638,136 @@ static inline void mcdfs_loop(LmnWorker *w,
     vec_clear(new_ss);
   }
 }
+
+static inline void mcdfs_loop(LmnWorker *w,
+                            Vector    *stack,
+                            Vector    *new_ss,
+                            Automata  a,
+                            Vector    *psyms)
+{
+  while (!vec_is_empty(stack)) {
+    State *s;
+    AutomataState p_s;
+    unsigned int i, n, start;
+    BOOL repaired;
+
+    if (workers_are_exit(worker_group(w))) break;
+    
+    /** 展開元の状態の取得 */
+    s   = (State *)vec_peek(stack);
+    p_s = MC_GET_PROPERTY(s, a);
+
+    // backtrack
+    if (s_is_cyan(s, worker_id(w))) {
+      if (state_is_accept(a, s)) {
+          Vector red_states;
+          vec_init(&red_states, 8192);
+
+          // launch red dfs
+          mcndfs_start(w, s, &red_states);
+
+          // repair phase
+	  START_REPAIR_PHASE();
+          do {
+            repaired = TRUE;
+            n = vec_num(&red_states);
+            for (i=0; i<n; i++) {
+                State *r = (State*)vec_get(&red_states, i);
+
+                if (state_id(r) != state_id(s) && state_is_accept(a, r)) {
+          	  if (!s_is_red(r)) {
+          	      repaired = FALSE;
+          	      usleep(1);
+          	      break;
+          	  }
+                }
+            }
+          } while(!repaired);
+	  FINISH_REPAIR_PHASE();
+
+          // set red
+          n = vec_num(&red_states);
+          for (i=0; i<n; i++) {
+              State *r = (State*)vec_get(&red_states, i);
+              s_set_red(r);
+          }
+      }
+
+      s_set_blue(s);
+      s_unset_cyan(s, worker_id(w));
+
+      pop_stack(stack);
+      continue;
+    }
+
+    // cyan flag用の領域を確保
+    if (!s->local_flags) {
+        n = workers_entried_num((worker_group(w)));
+	s->local_flags = LMN_NALLOC(BYTE, n);
+	memset(s->local_flags, 0, sizeof(BYTE) * n);
+    }
+
+    // cyanに着色
+    s_set_cyan(s, worker_id(w));
+
+    // 同時に状態を展開すると問題が起こるのでロック
+    START_LOCK();
+    state_expand_lock(s);
+    FINISH_LOCK();
+    if (!is_expanded(s)) {
+        mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+        w->expand++;
+	s->expander_id = worker_id(w);
+    }
+    state_expand_unlock(s);
+
+#if 0
+    // workerごとにsuccessorをずらして積む
+    n = state_succ_num(s);
+
+    if (n > 0) {
+      start = worker_id(w) % n;
+      for (i = 0; i < n; i++) {
+        State *succ = state_succ_state(s, (start + i) % n);
+
+        if (!s_is_blue(succ) && !s_is_cyan(succ, worker_id(w))) {
+          put_stack(stack, succ);
+        }
+      }
+    }
+#else
+    // fresh successor heuristics
+    n = state_succ_num(s);
+    Vector* fresh = NULL;
+
+    if (n > 0) {
+      fresh = vec_make(n);
+      start = worker_id(w) % n;
+      for (i = 0; i < n; i++) {
+        State *succ = state_succ_state(s, (start + i) % n);
+
+        if (!s_is_blue(succ) && !s_is_cyan(succ, worker_id(w))) {
+	  if (!is_expanded(succ) && s_is_fresh(succ)) put_stack(fresh, succ);
+	  else put_stack(stack, succ);
+        }
+      }
+    }
+
+    // freshな状態をスタックの上位に持ってくる
+    if (fresh) {
+      n = vec_num(fresh);
+      if (n > 0) {
+        for (i = 0; i < n; i++) {
+	  State *fs = vec_get(fresh, i);
+	  s_unset_fresh(fs);
+          put_stack(stack, fs);
+        }
+      }
+    }
+#endif
+  }
+}
+
 
 /* TODO: DequeとStackが異なるだけでdfs_loopと同じ.
  *   C++ template関数として記述するなど, 保守性向上のための修正が必要 */

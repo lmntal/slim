@@ -42,6 +42,7 @@
 
 #include "state.h"
 #include "mc_worker.h"
+#include "stack_macro.h"
 
 
 /* Nested-DFSが起動するための条件 */
@@ -51,13 +52,15 @@
                                           && !is_snd(SYST_S)              \
                                           && !is_on_cycle(SYST_S))
 
-#define MCNDFS_COND(W, SYST_S, PROP_S)    (worker_on_parallel(W)          \
-                                          && worker_use_mcndfs(W)         \
-                                          && atmstate_is_accept(PROP_S)   \
+#define MAPNDFS_COND(W, SYST_S, PROP_S)    (worker_on_parallel(W)          \
+                                          && worker_use_mapndfs(W)         \
+                                          &&atmstate_is_accept(PROP_S)    \
                                           && !is_snd(SYST_S)              \
                                           && !is_on_cycle(SYST_S)         \
-                                          && s_is_blue(SYST_S)            \
-                                          && worker_is_explorer(W))
+                                           && s_is_visited_by_explorer(SYST_S)           \
+                                           && worker_is_explorer(W))
+
+#define MCNDFS_COND(W, SYST_S, PROP_S)    (atmstate_is_accept(PROP_S))
 
 #define OWCTY_COND(W)                   (worker_use_owcty(W)              \
                                           && !w->group->mc_exit)
@@ -113,8 +116,14 @@ void bledge_store_layer(LmnWorker *w, State *s);
 void bledge_worker_finalize(LmnWorker *w);
 void bledge_worker_init(LmnWorker *w);
 
+void mapndfs_env_set(LmnWorker *w);
+void mapndfs_start(LmnWorker *w, State *seed);
+void mapndfs_worker_init(LmnWorker *w);
+void mapndfs_worker_finalize(LmnWorker *w);
+void mapndfs_worker_start(LmnWorker *w);
+
 void mcndfs_env_set(LmnWorker *w);
-void mcndfs_start(LmnWorker *w, State *seed);
+void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states);
 void mcndfs_worker_init(LmnWorker *w);
 void mcndfs_worker_finalize(LmnWorker *w);
 void mcndfs_worker_start(LmnWorker *w);

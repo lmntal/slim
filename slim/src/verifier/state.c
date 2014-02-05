@@ -94,6 +94,7 @@ State *state_make_minimal()
   new_s->flags            = 0x00U;
   new_s->flags2           = 0x00U;
   new_s->flags3           = 0x00U;
+  new_s->local_flags      = 0x00U;
   new_s->hash             = 0;
   new_s->next             = NULL;
   new_s->successors       = NULL;
@@ -101,6 +102,10 @@ State *state_make_minimal()
   new_s->parent           = NULL;
   new_s->state_id         = 0;
   new_s->map              = NULL;
+  new_s->expander_id      = LONG_MAX;
+
+  state_expand_lock_init(new_s);
+  s_set_fresh(new_s);
 
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE) {
@@ -202,6 +207,12 @@ void state_free(State *s)
     }
     LMN_FREE(s->successors);
   }
+
+  if (s->local_flags) {
+      LMN_FREE(s->local_flags);
+  }
+
+  state_expand_lock_destroy(s);
 
   state_free_mem(s);
   state_free_binstr(s);

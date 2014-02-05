@@ -36,7 +36,8 @@ liblmn_verifier_a_SOURCES =                              \
 	statespace.c             statespace.h                  \
 	mem_encode.c             mem_encode.h                  \
 	delta_membrane.c         delta_membrane.h              \
-	binstr_compress.c        binstr_compress.h 
+	binstr_compress.c        binstr_compress.h             \
+        mc_visualizer.c          mc_visualizer.h
 
 
 

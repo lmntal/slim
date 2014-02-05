@@ -83,6 +83,10 @@ struct State {                 /* Total:64(36)byte */
   State             *parent;          /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
   unsigned long      state_id;        /*  8(4)byte: 生成順に割り当てる状態の整数ID */
   State             *map;             /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
+  BYTE              *local_flags;     /*  8(4)byte: 並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等) */
+  pthread_mutex_t    expand_lock;
+
+  unsigned long      expander_id;
 #ifdef KWBT_OPT
   LmnCost            cost;            /*  8(4)byte: cost */
 #endif
@@ -91,6 +95,12 @@ struct State {                 /* Total:64(36)byte */
 #define state_flags(S)                 ((S)->flags)
 #define state_flags2(S)                ((S)->flags2)
 #define state_flags3(S)                ((S)->flags3)
+#define state_loflags(S)               ((S)->local_flags)
+
+#define state_expand_lock_init(S)             (lmn_mutex_init(&((S)->expand_lock)))
+#define state_expand_lock_destroy(S)          (lmn_mutex_destroy(&((S)->expand_lock)))
+#define state_expand_lock(S)                  (lmn_mutex_lock(&((S)->expand_lock)))
+#define state_expand_unlock(S)                (lmn_mutex_unlock(&((S)->expand_lock)))
 
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
@@ -143,19 +153,22 @@ struct State {                 /* Total:64(36)byte */
 /** Flags2 (8bit)
  *  0000 0001  Partial Order ReductionによるReductionマーキング(debug/demo用機能)
  *  0000 0010  D compression stateか否かを示すフラグ
- *  0000 0100  (MC_NDFS)blue flag
- *  0000 1000  (MC_NDFS)red flag
- *  0001 0000
- *  0010 0000
- *  0100 0000
+ *  0000 0100  (MAPNDFS)explorer visit flag
+ *  0000 1000  (MAPNDFS)generator visit flag
+ *  0001 0000  (MCNDFS)blue flag
+ *  0010 0000  (MCNDFS)red flag
+ *  0100 0000  (Visualize)visited
  *  1000 0000
  */
 
 #define STATE_REDUCED_MASK             (0x01U)
 #define STATE_DELTA_MASK               (0x01U << 1)
 #define STATE_UPDATE_MASK              (0x01U << 2)
-#define BLUE_MASK                      (0x01U << 3)
-#define RED_MASK                       (0x01U << 4)
+#define EXPLORER_VISIT_MASK            (0x01U << 3)
+#define GENERATOR_VISIT_MASK           (0x01U << 4)
+#define STATE_BLUE_MASK                (0x01U << 5)
+#define STATE_RED_MASK                 (0x01U << 6)
+#define STATE_VIS_VISITED_MASK         (0x01U << 7)
 
 /* manipulation for flags2 */
 #define s_set_d(S)                     ((S)->flags2 |=   STATE_DELTA_MASK)
@@ -167,14 +180,64 @@ struct State {                 /* Total:64(36)byte */
 #define s_set_update(S)                ((S)->flags2 |=   STATE_UPDATE_MASK)
 #define s_unset_update(S)              ((S)->flags2 &= (~STATE_UPDATE_MASK))
 #define s_is_update(S)                 ((S)->flags2 &    STATE_UPDATE_MASK)
-#define s_set_blue(S)                  ((S)->flags2 |=   BLUE_MASK)
-#define s_unset_blue(S)                ((S)->flags2 &= (~BLUE_MASK))
-#define s_is_blue(S)                   ((S)->flags2 &    BLUE_MASK)
-#define s_set_red(S)                   ((S)->flags2 |=   RED_MASK)
-#define s_unset_red(S)                 ((S)->flags2 &= (~RED_MASK))
-#define s_is_red(S)                    ((S)->flags2 &    RED_MASK)
-#define s_set_white(S)                 (s_unset_blue(S); s_unset_red(S))
-#define s_is_white(S)                  (!s_is_blue(S) && !s_is_red(S))
+
+#define s_set_visited_by_explorer(S)                  ((S)->flags2 |=   EXPLORER_VISIT_MASK)
+#define s_unset_visited_by_explorer(S)                ((S)->flags2 &= (~EXPLORER_VISIT_MASK))
+#define s_is_visited_by_explorer(S)                   ((S)->flags2 &    EXPLORER_VISIT_MASK)
+#define s_set_visited_by_generator(S)                 ((S)->flags2 |=   GENERATOR_VISIT_MASK)
+#define s_unset_visited_by_generator(S)               ((S)->flags2 &= (~GENERATOR_VISIT_MASK))
+#define s_is_visited_by_generator(S)                  ((S)->flags2 &    GENERATOR_VISIT_MASK)
+#define s_set_unvisited(S)                 (s_unset_visited_by_explorer(S); s_unset_visited_by_generator(S))
+#define s_is_unvisited(S)                  (!s_is_visited_by_explorer(S) && !s_is_visited_by_generator(S))
+
+#define s_set_blue(S)                ((S)->flags2 |=   STATE_BLUE_MASK)
+#define s_unset_blue(S)              ((S)->flags2 &= (~STATE_BLUE_MASK))
+#define s_is_blue(S)                 ((S)->flags2 &    STATE_BLUE_MASK)
+
+#define s_set_red(S)                ((S)->flags2 |=   STATE_RED_MASK)
+#define s_unset_red(S)              ((S)->flags2 &= (~STATE_RED_MASK))
+#define s_is_red(S)                 ((S)->flags2 &    STATE_RED_MASK)
+
+#define s_set_visited_by_visualizer(S)                ((S)->flags2 |=   STATE_VIS_VISITED_MASK)
+#define s_unset_visited_by_visualizer(S)              ((S)->flags2 &= (~STATE_VIS_VISITED_MASK))
+#define s_is_visited_by_visualizer(S)                 ((S)->flags2 &    STATE_VIS_VISITED_MASK)
+
+/** Flags3 (8bit)
+ *  0000 0001 freshな状態(展開されておらず、または展開用スタックにも積まれていない状態)。fresh successor heuristcs用。
+ *  0000 0010  
+ *  0000 0100  
+ *  0000 1000  
+ *  0001 0000  
+ *  0010 0000  
+ *  0100 0000  
+ *  1000 0000
+ */
+
+
+#define STATE_FRESH_MASK             (0x01U)
+
+/* manipulation for flags2 */
+#define s_set_fresh(S)                     ((S)->flags3 |=   STATE_FRESH_MASK)
+#define s_unset_fresh(S)                   ((S)->flags3 &= (~STATE_FRESH_MASK))
+#define s_is_fresh(S)                      ((S)->flags3 &    STATE_FRESH_MASK)
+
+
+/** local flags (8bit)
+ *  0000 0001  (MCNDFS)cyan flag
+ *  0000 0010  
+ *  0000 0100  
+ *  0000 1000  
+ *  0001 0000  
+ *  0010 0000  
+ *  0100 0000
+ *  1000 0000
+ */
+#define STATE_CYAN_MASK             (0x01U)
+
+/* manipulation for local flags */
+#define s_set_cyan(S, i)                     ((((S)->local_flags)[i]) |=   STATE_CYAN_MASK)
+#define s_unset_cyan(S, i)                   ((((S)->local_flags)[i]) &= (~STATE_CYAN_MASK))
+#define s_is_cyan(S, i)                      (((S)->local_flags) && ((((S)->local_flags)[i]) &    STATE_CYAN_MASK))
 
 
 /*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
@@ -505,7 +568,7 @@ static inline State *state_D_ref(State *s) {
 
 /* 状態sに対応する非圧縮バイナリストリングdをキャッシングする. */
 static inline void state_D_cache(State *s, LmnBinStr d) {
-  LMN_ASSERT(!state_D_fetch(s));
+  LMN_ASSERT(!state_D_fetch(s));  
   /* メモリ節約の結果, 保守性ないコード. 注意 */
   s->successors = (succ_data_t)d;
 }

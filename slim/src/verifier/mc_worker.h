@@ -171,8 +171,8 @@ struct LmnWorker {
   Vector         *invalid_seeds;
   Vector         *cycles;
 
-    int expand; // for debug
-    int red;
+  int expand; // for debug
+  int red;
 };
 
 /**
@@ -340,13 +340,14 @@ static inline BOOL worker_check(LmnWorker *w) {
 #define worker_set_opt_scc(W)         (mc_set_opt_scc(worker_generator_type(W)))
 
 
-#define WORKER_F2_MC_NDFS_MASK        (0x01U)
-#define WORKER_F2_MC_OWCTY_MASK       (0x01U << 1)
-#define WORKER_F2_MC_MAP_MASK         (0x01U << 2)
-#define WORKER_F2_MC_MAP_WEAK_MASK    (0x01U << 3)
-#define WORKER_F2_MC_BLE_MASK         (0x01U << 4)
-#define WORKER_F2_MC_MCNDFS_MASK      (0x01U << 5)
-#define WORKER_F2_MC_MCNDFS_WEAK_MASK (0x01U << 6)
+#define WORKER_F2_MC_NDFS_MASK         (0x01U)
+#define WORKER_F2_MC_OWCTY_MASK        (0x01U << 1)
+#define WORKER_F2_MC_MAP_MASK          (0x01U << 2)
+#define WORKER_F2_MC_MAP_WEAK_MASK     (0x01U << 3)
+#define WORKER_F2_MC_BLE_MASK          (0x01U << 4)
+#define WORKER_F2_MC_MAPNDFS_MASK      (0x01U << 5)
+#define WORKER_F2_MC_MAPNDFS_WEAK_MASK (0x01U << 6)
+#define WORKER_F2_MC_MCNDFS_MASK  (0x01U << 7)
 
 #define mc_ltl_none(F)                (F == 0x00U)
 #define mc_use_ndfs(F)                ((F) &  WORKER_F2_MC_NDFS_MASK)
@@ -359,10 +360,12 @@ static inline BOOL worker_check(LmnWorker *w) {
 #define mc_set_weak_map(F)            ((F) |= WORKER_F2_MC_MAP_WEAK_MASK)
 #define mc_use_ble(F)                 ((F) &  WORKER_F2_MC_BLE_MASK)
 #define mc_set_ble(F)                 ((F) |= WORKER_F2_MC_BLE_MASK)
+#define mc_use_mapndfs(F)              ((F) &  WORKER_F2_MC_MAPNDFS_MASK)
+#define mc_set_mapndfs(F)              ((F) |= WORKER_F2_MC_MAPNDFS_MASK)
+#define mc_use_mapndfs_weak(F)         ((F) &  WORKER_F2_MC_MAPNDFS_WEAK_MASK)
+#define mc_set_mapndfs_weak(F)         ((F) |= WORKER_F2_MC_MAPNDFS_WEAK_MASK)
 #define mc_use_mcndfs(F)              ((F) &  WORKER_F2_MC_MCNDFS_MASK)
 #define mc_set_mcndfs(F)              ((F) |= WORKER_F2_MC_MCNDFS_MASK)
-#define mc_use_mcndfs_weak(F)         ((F) &  WORKER_F2_MC_MCNDFS_WEAK_MASK)
-#define mc_set_mcndfs_weak(F)         ((F) |= WORKER_F2_MC_MCNDFS_WEAK_MASK)
 
 #define worker_ltl_none(W)            (mc_ltl_none(worker_explorer_type(W)))
 #define worker_use_ndfs(W)            (mc_use_ndfs(worker_explorer_type(W)))
@@ -375,12 +378,15 @@ static inline BOOL worker_check(LmnWorker *w) {
 #define worker_set_weak_map(W)        (mc_set_weak_map(worker_explorer_type(W)))
 #define worker_use_ble(W)             (mc_use_ble(worker_explorer_type(W)))
 #define worker_set_ble(W)             (mc_set_ble(worker_explorer_type(W)))
+#define worker_use_mapndfs(W)          (mc_use_mapndfs(worker_explorer_type(W)))
+#define worker_set_mapndfs(W)          (mc_set_mapndfs(worker_explorer_type(W)))
+#define worker_use_mapndfs_weak(W)     (mc_use_mapndfs_weak(worker_explorer_type(W)))
+#define worker_set_mapndfs_weak(W)     (mc_set_mapndfs_weak(worker_explorer_type(W)))
 #define worker_use_mcndfs(W)          (mc_use_mcndfs(worker_explorer_type(W)))
 #define worker_set_mcndfs(W)          (mc_set_mcndfs(worker_explorer_type(W)))
-#define worker_use_mcndfs_weak(W)     (mc_use_mcndfs_weak(worker_explorer_type(W)))
-#define worker_set_mcndfs_weak(W)     (mc_set_mcndfs_weak(worker_explorer_type(W)))
 
-/** Macros for MCNDFS
+
+/** Macros for MAPNDFS
  */
 /*#define worker_is_generator(W)        (worker_id(W) > 0)
 #define worker_is_explorer(W)         (woeker_id(W) == 0)*/
