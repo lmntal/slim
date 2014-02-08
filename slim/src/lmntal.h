@@ -306,6 +306,8 @@ struct LmnEnv {
 
   BOOL benchmark;
 
+  BOOL hash_compaction;
+
 #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;

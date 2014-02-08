@@ -442,14 +442,20 @@ void dfs_start(LmnWorker *w)
           if(!worker_use_mapndfs(w)) s = (State *)dfs_work_stealing(w);
           else if(worker_is_generator(w)) s = (State *)mapdfs_work_stealing(w);
           else {
+#ifdef DEBUG
               // explorerの仕事無くなったら終了
               printf("\n\n\nexplorer have no work\n\n\n");
+#endif
               wp->mc_exit=TRUE;
           } 
         }
       } else {
         worker_set_active(w);
-        if(!is_empty_queue(DFS_WORKER_QUEUE(w)) &&  !((Queue*)DFS_WORKER_QUEUE(w))->head->next) printf("%d : queue is not empty? %d\n", worker_id(w), queue_entry_num(DFS_WORKER_QUEUE(w)));
+#ifdef DEBUG
+        if(!is_empty_queue(DFS_WORKER_QUEUE(w)) &&  !((Queue*)DFS_WORKER_QUEUE(w))->head->next) {
+          printf("%d : queue is not empty? %d\n", worker_id(w), queue_entry_num(DFS_WORKER_QUEUE(w)));
+        }
+#endif
         if (s || (s = (State *)dequeue(DFS_WORKER_QUEUE(w)))) {
           EXECUTE_PROFILE_START();
 #ifdef KWBT_OPT
@@ -476,12 +482,13 @@ void dfs_start(LmnWorker *w)
 
   }
 
-
+#ifdef DEBUG
   fprintf(stderr, "%d : exit (total expand=%d)\n", worker_id(w), w->expand);
+#endif
   if (lmn_env.enable_visualize) {
-      if (worker_id(w) == 0) {
-	  dump_dot(ss, wp->worker_num);
-      }
+    if (worker_id(w) == 0) {
+      dump_dot(ss, wp->worker_num);
+    }
   }
 
   vec_destroy(&new_ss);

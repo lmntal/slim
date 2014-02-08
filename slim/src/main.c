@@ -107,6 +107,7 @@ static void usage(void)
           "  --pscc-driven       (MC) Use SCC analysis of property automata (LTL model checking)\n"
           "  --use-Ncore=<N>     (MC) Use <N>threads\n"
           "  --delta-mem         (MC) Use delta membrane generator\n"
+          "  --hash-compaction   (MC) Use Hash Compaction\n"
           "  --mem-enc           (MC) Use canonical membrane representation\n"
           "  --ltl-f <ltl>       (MC) Input <ltl> formula directly. (need LTL2BA env)\n"
           "  --visualize         (MC) Output information for visualize\n"
@@ -205,6 +206,7 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"debug-tr-dep"           , 0, 0, 6014},
     {"prof-nomemeq"           , 0, 0, 6050},
     {"visualize"              , 0, 0, 6100},
+    {"hash-compaction"        , 0, 0, 6060},
     {0, 0, 0, 0}
   };
 
@@ -513,6 +515,9 @@ static void parse_options(int *optid, int argc, char *argv[])
 #endif
     case 6100:
       lmn_env.enable_visualize = TRUE;
+      break;
+    case 6060:
+      lmn_env.hash_compaction = TRUE;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;

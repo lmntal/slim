@@ -389,7 +389,7 @@ static void profile_state_f(State *s, LmnWord arg)
   if (!is_binstr_user(s) && state_mem(s)) {
     p->membrane_space += lmn_mem_root_space(state_mem(s));
   }
-  else if (is_binstr_user(s) && state_binstr(s)) {
+  else if (is_binstr_user(s) && state_binstr(s)  && !is_on_hash_compaction(s)) {
     p->binstr_space   += lmn_binstr_space(state_binstr(s));
   }
 

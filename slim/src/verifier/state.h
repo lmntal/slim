@@ -97,6 +97,11 @@ struct State {                 /* Total:64(36)byte */
 #define state_flags3(S)                ((S)->flags3)
 #define state_loflags(S)               ((S)->local_flags)
 
+#define HASH_COMPACTION_MASK           (0x01U << 5)
+#define set_on_hash_compaction(S)      (state_flags3(S) |= HASH_COMPACTION_MASK)
+#define unset_on_hash_compaction(S)    (state_flags3(S) &= HASH_COMPACTION_MASK)
+#define is_on_hash_compaction(S)       (state_flags3(S) &  HASH_COMPACTION_MASK)
+
 #define state_expand_lock_init(S)             (lmn_mutex_init(&((S)->expand_lock)))
 #define state_expand_lock_destroy(S)          (lmn_mutex_destroy(&((S)->expand_lock)))
 #define state_expand_lock(S)                  (lmn_mutex_lock(&((S)->expand_lock)))

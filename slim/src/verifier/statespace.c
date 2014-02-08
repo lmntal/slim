@@ -93,7 +93,7 @@ static void statetable_memid_rehash(State *pred, StateTable *ss);
 
 /** Macros
  */
-#define TABLE_DEFAULT_INIT_SIZE     (8192U)  /* TODO: テーブルの初期サイズはいくつが適当か. (固定サイズにしているモデル検査器は多い) */
+#define TABLE_DEFAULT_INIT_SIZE     (1U << 15)  /* TODO: テーブルの初期サイズはいくつが適当か. (固定サイズにしているモデル検査器は多い) */
 #define TABLE_DEFAULT_MAX_DENSITY      (5U)  /* 1バケットあたりの平均長がこの値を越えた場合にresizeする */
 #define MEM_EQ_FAIL_THRESHOLD          (2U)  /* 膜の同型性判定にこの回数以上失敗すると膜のエンコードを行う */
 
@@ -643,9 +643,7 @@ static StateTable *statetable_make_with_size(unsigned long size, int thread_num)
   st->lock         = NULL;
   st->rehash_tbl   = NULL;
 
-  for (i = 0; i < size; i++) {
-    st->tbl[i] = NULL;
-  }
+  memset(st->tbl, 0x00, size * (sizeof(State*)));
 
   for (i = 0; i < thread_num; i++) {
     st->num[i]       = 0UL;
@@ -666,9 +664,7 @@ static inline void statetable_clear(StateTable *st)
       st->num_dummy[i] = 0;
     }
 
-    for (i = 0; i < statetable_cap(st); i++) {
-      st->tbl[i] = NULL;
-    }
+    memset(st->tbl, 0x00, statetable_cap(st) * (sizeof(State*)));
   }
 }
 
@@ -822,6 +818,15 @@ static State *statetable_insert(StateTable *st, State *ins)
 
       if (hash == state_hash(str)) {
         /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
+        if (lmn_env.hash_compaction) {
+          if (is_dummy(str) && is_encoded(str)) {
+            /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す) */
+            ret = state_get_parent(str);
+          } else {
+            ret = str;
+          }
+          break;
+        }
 
         if (statetable_use_rehasher(st) && is_dummy(str) && !is_encoded(str)) {
           /* A. オリジナルテーブルにおいて, dummy状態が比較対象
@@ -870,6 +875,9 @@ static State *statetable_insert(StateTable *st, State *ins)
           LMN_ASSERT(!is_encoded(str));
 #ifdef PROFILE
           (*col)++;
+          if (lmn_env.profile_level >= 3) {
+            profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
+          }
 #endif
           if (statetable_use_rehasher(st)) {
             if (state_get_parent(ins) == str) {

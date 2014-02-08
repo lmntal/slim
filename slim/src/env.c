@@ -201,6 +201,7 @@ void env_init()
 
   lmn_env.show_reduced_graph     = FALSE;
 
+  lmn_env.hash_compaction        = FALSE;
 #ifdef PROFILE
   lmn_env.optimize_hash_old      = FALSE;
   lmn_env.prof_no_memeq          = FALSE;
