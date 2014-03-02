@@ -84,6 +84,8 @@ struct InstrSpec spec[] = {
 
     {"tailatom", INSTR_TAILATOM, {InstrVar, InstrVar}},
     {"headatom", INSTR_HEADATOM, {InstrVar, InstrVar}},
+    {"tailatomlist", INSTR_TAILATOMLIST, {InstrVar, InstrVar}},
+    {"atomtailatom", INSTR_ATOMTAILATOM, {InstrVar,InstrVar, InstrVar}},
 
     {"allocatom", INSTR_ALLOCATOM, {InstrVar, ArgFunctor}},
     {"allocatomindirect", INSTR_ALLOCATOMINDIRECT, {InstrVar, InstrVar}},

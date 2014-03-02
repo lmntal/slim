@@ -229,7 +229,7 @@ void lmn_mem_rulesets_destroy(Vector *rulesets)
   vec_destroy(rulesets);
 }
 
-void move_symbol_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
+void move_symbol_atom_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
 
@@ -242,7 +242,7 @@ void move_symbol_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
   ent->tail = (LmnWord)a;
 }
 
-void move_symbol_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
+void move_symbol_atom_to_atomlist_head(LmnSAtom a, LmnMembrane *mem){
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
 
@@ -254,6 +254,37 @@ void move_symbol_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
   LMN_SATOM_SET_PREV(a, ent);
   LMN_SATOM_SET_PREV(ent->head, a);
   ent->head = (LmnWord)a;
+}
+void move_symbol_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
+  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
+  AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+  
+  if(!((LmnWord)a == ent->head)){
+    LMN_SATOM_SET_NEXT(ent->tail, ent->head);
+    LMN_SATOM_SET_PREV(ent->head, ent->tail);
+    ent->tail = (LmnWord)LMN_SATOM_GET_PREV(a);
+    LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), ent);
+    LMN_SATOM_SET_PREV(a,ent);
+    ent->head = (LmnWord)a;
+    }
+}
+void move_symbol_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem){
+  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
+  AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+  
+  if(ent->tail == (LmnWord)a1)ent->tail = (LmnWord)LMN_SATOM_GET_PREV(a1);
+  else if(ent->head == (LmnWord)a1)ent->head = (LmnWord)LMN_SATOM_GET_NEXT_RAW(a1);
+
+  LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a1), LMN_SATOM_GET_PREV(a1));
+  LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a1),     LMN_SATOM_GET_NEXT_RAW(a1));
+
+  if(ent->tail == (LmnWord)LMN_SATOM_GET_NEXT_RAW(a))ent->tail=(LmnWord)a1;
+
+  LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), a1);
+  LMN_SATOM_SET_NEXT(a1, LMN_SATOM_GET_NEXT_RAW(a));
+  LMN_SATOM_SET_PREV(a1, a);
+  LMN_SATOM_SET_NEXT(a, a1);
+  
 }
 
 void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom)

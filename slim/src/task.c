@@ -1505,25 +1505,36 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 #ifdef DEBUG
         fprintf(stderr, "Two data atoms are connected each other.\n");
 #endif
-      }
-      else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){
+      }else if(LMN_SATOM(wt(rc,atom1)) == ap2 && LMN_SATOM(wt(rc,atom2)) == ap1 && attr1 == pos2 && attr2 ==pos1){
+      }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){
         /* データアトムatom2とシンボルアトムap1 */
         LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
-        LMN_SATOM_SET_ATTR(ap1, attr1, at(rc, atom2));
+        LMN_SATOM_SET_ATTR(ap1, attr1, pos2);
         if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
           /* データアトムatom1とシンボルアトムap2 */
           LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
+          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
           /* データアトムap2とシンボルアトムatom1 */
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
         }else {
           /* シンボルアトムatom1とシンボルアトムap2 */
-          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	//////
+	        if(ap2){
+			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
+	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+	        }else{
+	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	        }
+	//////
+          /*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
           LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);*/
         }
       }
       else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)){
@@ -1533,17 +1544,28 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
           /* データアトムatom1とシンボルアトムap2 */
           LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
+          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
           /* データアトムap2とシンボルアトムatom1 */
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
         }else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(attr2)){
           /* シンボルアトムatom1とシンボルアトムap2 */
-          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	//////
+	        if(ap2){
+			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
+	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+	        }else{
+	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	        }
+	//////
+          /*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
           LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);*/
         }
       }
       else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(at(rc, atom2))
@@ -1552,33 +1574,56 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
         if(ap1){
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1);
+          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, LMN_ATTR_GET_VALUE(attr1));
           LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
           LMN_SATOM_SET_ATTR(ap1, attr1, pos2);
         }else{
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, 0);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, 0);
         }
-        if(ap2){
-        if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
+	if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
           /* データアトムatom1とシンボルアトムap2 */
           LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
-        }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
+          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
+        }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
           /* データアトムap2とシンボルアトムatom1 */
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-        }else{
+          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2));
+        }else {
           /* シンボルアトムatom1とシンボルアトムap2 */
-          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-        }
+	//////
+	        if(ap2){
+			LMN_SATOM_SET_LINK(ap2, LMN_ATTR_GET_VALUE(attr2), wt(rc, atom1));
+	          	LMN_SATOM_SET_ATTR(ap2, LMN_ATTR_GET_VALUE(attr2), pos1);
+	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2));
+	        }else{
+	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	        }
+	//////
+	/*
+        if(ap2){
+	        if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
+	          // データアトムatom1とシンボルアトムap2 
+	          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
+	        }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
+	          // データアトムap2とシンボルアトムatom1 
+	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+	        }else{
+	          // シンボルアトムatom1とシンボルアトムap2 
+	          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
+	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+	        }
         }else{
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,0);
-          }
+        }*/
+      }
       }
       break;
     }
@@ -1717,7 +1762,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
         READ_VAL(LmnInstrVar, instr, atomi);
         READ_VAL(LmnInstrVar, instr, memi);
-        move_atom_to_atomlist_tail(wt(rc,atomi),(LmnMembrane *)wt(rc,memi));
+        move_atom_to_atomlist_tail((LmnSAtom)wt(rc,atomi),(LmnMembrane *)wt(rc,memi));
         break;
       }
 
@@ -1727,7 +1772,26 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
         READ_VAL(LmnInstrVar, instr, atomi);
         READ_VAL(LmnInstrVar, instr, memi);
-        move_atom_to_atomlist_head(wt(rc,atomi),(LmnMembrane *)wt(rc,memi));
+        move_atom_to_atomlist_head((LmnSAtom)wt(rc,atomi),(LmnMembrane *)wt(rc,memi));
+        break;
+      }
+    case INSTR_TAILATOMLIST:
+      {
+        LmnInstrVar atomi, memi;
+
+        READ_VAL(LmnInstrVar, instr, atomi);
+        READ_VAL(LmnInstrVar, instr, memi);
+        move_atomlist_to_atomlist_tail((LmnSAtom)wt(rc,atomi),(LmnMembrane *)wt(rc,memi));
+        break;
+      }
+    case INSTR_ATOMTAILATOM:
+      {
+        LmnInstrVar atomi, atomi2, memi;
+
+        READ_VAL(LmnInstrVar, instr, atomi);
+	READ_VAL(LmnInstrVar, instr, atomi2);
+        READ_VAL(LmnInstrVar, instr, memi);
+        move_atom_to_atom_tail((LmnSAtom)wt(rc,atomi),(LmnSAtom)wt(rc,atomi2),(LmnMembrane *)wt(rc,memi));
         break;
       }
     case INSTR_NEWMEM:

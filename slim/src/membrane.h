@@ -327,7 +327,9 @@ BOOL ground_atoms_old(Vector *srcvec,
                       HashSet **atoms,
                       unsigned long *natoms);
 
-void move_symbol_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem);
+void move_symbol_atom_to_atomlist_head(LmnSAtom a, LmnMembrane *mem);
+void move_symbol_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembrane * mem);
+void move_symbol_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem);
 
 static inline void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
 static inline void lmn_mem_free_rec(LmnMembrane *mem);
@@ -522,15 +524,23 @@ static inline void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAt
   }
 }
 
-static inline void move_atom_to_atomlist_tail(LmnAtom a, LmnMembrane *mem){
+static inline void move_atom_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
   //move_symbol_atom_to_atomlist_tail(LMN_SATOM(a), mem);
   mem_remove_symbol_atom(mem,LMN_SATOM(a));
   mem_push_symbol_atom(mem,LMN_SATOM(a));
 }
 
-static inline void move_atom_to_atomlist_head(LmnAtom a, LmnMembrane *mem){
+static inline void move_atom_to_atomlist_head(LmnSAtom a, LmnMembrane *mem){
   //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda
   move_symbol_atom_to_atomlist_head(a, mem);
+  }
+
+static inline void move_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
+  move_symbol_atomlist_to_atomlist_tail(a, mem);
+}
+
+static inline void move_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem){
+  move_symbol_atom_to_atom_tail(a, a1, mem);
   }
 
 static inline void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
