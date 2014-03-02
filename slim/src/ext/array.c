@@ -176,7 +176,7 @@ void cb_array_new(LmnReactCxt *rc,
     unsigned long i;
     for(i = 0 ; i < a0 ; i++){
       lmn_mem_newlink(mem,
-                  a2, t2, LMN_ATTR_GET_VALUE(t2),
+                  LMN_ATOM(atom), attr, 0,
                   LMN_ARRAY_DATA(atom)[i], t1, 0);
       }
   }
@@ -308,12 +308,11 @@ void cb_array_put(LmnReactCxt *rc,
     LMN_ARRAY_DATA(a0)[a1] = a2;
 
     if(LMN_ARRAY_TYPE(a0)==LMN_HL_ATTR){
-      unsigned long i;
-      for(i = 0 ; i < LMN_ARRAY_SIZE(a0) ; i++){
+
 	lmn_mem_newlink(mem,
-                  a3, t3, LMN_ATTR_GET_VALUE(t3),
-                  LMN_ARRAY_DATA(a0)[i], LMN_HL_ATTR, 0);
-      }
+	                  a0, t0, LMN_ATTR_GET_VALUE(t0),
+	                  LMN_ARRAY_DATA(a0)[a1], LMN_HL_ATTR, 0);
+      
     }
     lmn_mem_newlink(mem,
 		    a0, t0, LMN_ATTR_GET_VALUE(t0),
