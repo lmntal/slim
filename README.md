@@ -1,4 +1,5 @@
 SLIM - slim LMNtal imprementation
+===============================
 
 バグ報告は lmntal@ueda.info.waseda.ac.jp までお願いします。
 
@@ -6,23 +7,27 @@ SLIM - slim LMNtal imprementation
 
 インストール方法は INSTALL に記述されています。
 
-最新の開発情報は http://code.google.com/p/slim-runtime/ に記載されています。
-
-
 ---
-SLIM is available here:
-http://code.google.com/p/slim-runtime/
 
 The way to compile this package is:
-> tar xvzf slim-x.y.z.tar.gz
-> cd slim-x.y.z
-> ./configure
-> make
+
+```
+tar xvzf slim-x.y.z.tar.gz
+cd slim-x.y.z
+./configure
+make
+```
 
 Among generated files, src/slim is the LMNtal interpreter.
 So you can run SLIM as follows:
-> lmntal --slimcode source.lmn > source.il
-> ./slim source.il
+
+```
+lmntal --slimcode source.lmn > source.il
+./slim source.il
+```
 
 You can see what options are available with SLIM as follows:
-> ./slim --help
+
+```
+./slim --help
+```
