@@ -9,7 +9,21 @@ SLIM - slim LMNtal imprementation
 
 ---
 
+
+### Getting started
+
 The way to compile this package is:
+
+```
+export LMNTAL_HOME=/path/to/devel # set path of compiler
+cd slim
+aclocal
+automake --add-missing
+autoreconf
+./configure
+make
+```
+or
 
 ```
 tar xvzf slim-x.y.z.tar.gz
