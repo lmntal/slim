@@ -34,6 +34,7 @@ configure
 doc/slim.1
 libtool
 **/.deps/
+**/.libs/
 config.h
 config.h.in~
 genconfig
@@ -45,6 +46,8 @@ aclocal.m4
 lib/config.lmn
 lib/__error_temp.txt
 *.il
+*.lo
+*.la
 src/arch.h
 src/il_lexer.*
 src/il_parser.*
