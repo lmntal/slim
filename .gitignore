@@ -1,0 +1,47 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+Makefile
+Makefile.in
+autom4te.cache/
+compile
+config.guess
+config.log
+config.status
+config.sub
+configure
+doc/slim.1
+libtool
+**/.deps/
+config.h
+config.h.in~
+genconfig
+stamp-h1
+test-driver
+ylwrap
+
+
+config.h.in
+
+aclocal.m4
