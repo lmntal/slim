@@ -251,7 +251,7 @@ AC_CHECK_LIB(pthread, main)
 AC_CHECK_LIB(z, main)
 AC_CHECK_LIB(rt, main)
 AC_CHECK_LIB(gomp, main)
-
+AC_CHECK_LIB(m, main)
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_TIME
