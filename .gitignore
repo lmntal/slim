@@ -22,6 +22,22 @@
 *.x86_64
 *.hex
 
+# misc
+GPATH
+GRTAGS
+GTAGS
+TAGS
+gtags.conf
+*~
+\#*\#
+
+#mac 
+.DS_Store
+
+#win
+Thumbs.db
+
+# files
 Makefile
 Makefile.in
 autom4te.cache/
@@ -59,3 +75,7 @@ src/verifier/nc_parser.*
 src/verifier/nc_parser.h
 src/verifier/propsym_lexer.*
 src/verifier/propsym_parser.*
+src/utility/.deps
+src/verifier/.deps
+third_party/google-perftools-1.8.3/.deps
+third_party/zdelta-2.1/.deps
