@@ -1123,7 +1123,7 @@ static void lmn_dump_atom_json(LmnSAtom atom)
   fprintf(stdout, "\"links\":[");
   {
     BOOL needs_comma = FALSE;
-    for(i = 0, arity = LMN_SATOM_GET_ARITY(atom); i < arity; i++) {
+    for(i = 0, arity = LMN_SATOM_GET_LINK_NUM(atom); i < arity; i++) {
       if (needs_comma) fprintf(stdout, ",");
       needs_comma = TRUE;
       lmn_dump_link_json(atom, i);
@@ -1138,7 +1138,6 @@ static void lmn_dump_mem_json(LmnMembrane *mem)
   if (!mem) return;
 
   fprintf(stdout, "{");
-
   fprintf(stdout, "\"id\":%d,", (int)lmn_mem_id(mem));
   fprintf(stdout, "\"name\":\"%s\",", LMN_MEM_NAME(mem));
   fprintf(stdout, "\"atoms\":[");
