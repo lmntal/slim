@@ -945,6 +945,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
                 v[i].wt = (LmnWord)t;
               } else {
                 t = 0;
+//              v[i].wt = wt(rc, i); // allocmem命令の場合はTT_OTHERになっている(2014-05-08 ueda)
                 //lmn_fatal("implementation error");
               }
             }
@@ -1818,6 +1819,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       LmnInstrVar dstmemi;
       READ_VAL(LmnInstrVar, instr, dstmemi);
       wt_set(rc, dstmemi, lmn_mem_make());
+      tt_set(rc, dstmemi, TT_OTHER); /* 2014-05-08, ueda */
       break;
     }
     case INSTR_REMOVEATOM:
