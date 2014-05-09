@@ -1522,7 +1522,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         }else {
           /* シンボルアトムatom1とシンボルアトムap2 */
 	//////
-	        if(ap2){
+	        if(ap2 != NULL){
 			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
 	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
@@ -1553,7 +1553,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         }else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(attr2)){
           /* シンボルアトムatom1とシンボルアトムap2 */
 	//////
-	        if(ap2){
+	        if(ap2 != NULL){
 			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
 	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
@@ -1573,7 +1573,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
                && !LMN_ATTR_IS_EX(attr1) && !LMN_ATTR_IS_EX(attr2)){
         /* シンボルアトムatom2とシンボルアトムap1 */
 
-        if(ap1){
+        if(ap1 != NULL){
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, LMN_ATTR_GET_VALUE(attr1));
           LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
@@ -1593,7 +1593,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         }else {
           /* シンボルアトムatom1とシンボルアトムap2 */
 	//////
-	        if(ap2){
+	        if(ap2 != NULL){
 			LMN_SATOM_SET_LINK(ap2, LMN_ATTR_GET_VALUE(attr2), wt(rc, atom1));
 	          	LMN_SATOM_SET_ATTR(ap2, LMN_ATTR_GET_VALUE(attr2), pos1);
 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
@@ -1794,6 +1794,18 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         READ_VAL(LmnInstrVar, instr, memi);
         move_atom_to_atom_tail((LmnSAtom)wt(rc,atomi),(LmnSAtom)wt(rc,atomi2),(LmnMembrane *)wt(rc,memi));
         break;
+      }
+    case INSTR_MEMSETLINK:
+      {
+	LmnInstrVar atomi, link;
+	
+	READ_VAL(LmnInstrVar, instr, atomi);
+	READ_VAL(LmnInstrVar, instr, link);
+	
+	
+	LMN_SATOM_SET_LINK(wt(rc,atomi), link, NULL);
+	
+	break;
       }
     case INSTR_NEWMEM:
     {
