@@ -1795,7 +1795,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         move_atom_to_atom_tail((LmnSAtom)wt(rc,atomi),(LmnSAtom)wt(rc,atomi2),(LmnMembrane *)wt(rc,memi));
         break;
       }
-    case INSTR_MEMSETLINK:
+    case INSTR_CLEARLINK:
       {
 	LmnInstrVar atomi, link;
 	
