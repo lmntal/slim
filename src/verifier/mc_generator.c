@@ -504,7 +504,8 @@ static inline void dfs_loop(LmnWorker *w,
     State *s;
     AutomataState p_s;
     unsigned int i, n;
-
+	
+	if(!(worker_group(w))) break;
     if (workers_are_exit(worker_group(w))) break;
 
     /** 展開元の状態の取得 */
