@@ -61,7 +61,7 @@ config.h.in
 aclocal.m4
 lib/config.lmn
 lib/__error_temp.txt
-*.il
+lib/*.il
 *.lo
 *.la
 src/arch.h
