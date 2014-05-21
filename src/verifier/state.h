@@ -68,6 +68,7 @@ typedef void*  state_data_t;
 //  LmnBinStr          compress_mem;    /*  8(4)byte: 膜memをエンコードしたバイナリストリング */
 //};
 
+#define MCNDFS 1
 
 /* Descriptor */
 struct State {                 /* Total:64(36)byte */
@@ -83,10 +84,11 @@ struct State {                 /* Total:64(36)byte */
   State             *parent;          /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
   unsigned long      state_id;        /*  8(4)byte: 生成順に割り当てる状態の整数ID */
   State             *map;             /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
+#if MCNDFS 
   BYTE              *local_flags;     /*  8(4)byte: 並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等) */
   pthread_mutex_t    expand_lock;
-
   unsigned long      expander_id;
+#endif
 #ifdef KWBT_OPT
   LmnCost            cost;            /*  8(4)byte: cost */
 #endif
@@ -95,17 +97,30 @@ struct State {                 /* Total:64(36)byte */
 #define state_flags(S)                 ((S)->flags)
 #define state_flags2(S)                ((S)->flags2)
 #define state_flags3(S)                ((S)->flags3)
+#if MCNDFS
 #define state_loflags(S)               ((S)->local_flags)
+#endif
 
 #define HASH_COMPACTION_MASK           (0x01U << 5)
 #define set_on_hash_compaction(S)      (state_flags3(S) |= HASH_COMPACTION_MASK)
 #define unset_on_hash_compaction(S)    (state_flags3(S) &= HASH_COMPACTION_MASK)
 #define is_on_hash_compaction(S)       (state_flags3(S) &  HASH_COMPACTION_MASK)
 
+#if MCNDFS
+#define state_set_expander_id(S, ID)          ((S)->expander_id = (ID))
+#define state_expander_id(S)                  ((S)->expander_id)
 #define state_expand_lock_init(S)             (lmn_mutex_init(&((S)->expand_lock)))
 #define state_expand_lock_destroy(S)          (lmn_mutex_destroy(&((S)->expand_lock)))
 #define state_expand_lock(S)                  (lmn_mutex_lock(&((S)->expand_lock)))
 #define state_expand_unlock(S)                (lmn_mutex_unlock(&((S)->expand_lock)))
+#else
+#define state_set_expander_id(S, ID)          (NULL)
+#define state_expander_id(S)                  (0)
+#define state_expand_lock_init(S)             (NULL)
+#define state_expand_lock_destroy(S)          (NULL)
+#define state_expand_lock(S)                  (NULL)
+#define state_expand_unlock(S)                (NULL)
+#endif
 
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
@@ -330,7 +345,7 @@ struct Transition {
   unsigned long id;  /*  8byte: State graph(=\= Automata)上の各遷移に付与されるグローバルなID．
                                 ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる． */
   Vector rule_names; /* 24byte: ルール名 複数あるのは多重辺(porなしの場合)*/
-  LmnCost cost;      /*  8byte: 同一ルールでもコストが異なるモデルを想定し、ルール名と独立に保存 */
+  LmnCost cost;            /*  8(4)byte: cost */
 };
 
 Transition    transition_make(State *s, lmn_interned_str rule_name);

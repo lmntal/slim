@@ -360,6 +360,7 @@ void lmn_workergroup_free(LmnWorkerGroup *wp)
   if (wp->ewlock) {
     ewlock_free(wp->ewlock);
   }
+  LMN_FREE(wp);
 }
 
 

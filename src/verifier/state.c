@@ -102,7 +102,7 @@ State *state_make_minimal()
   new_s->parent           = NULL;
   new_s->state_id         = 0;
   new_s->map              = NULL;
-  new_s->expander_id      = LONG_MAX;
+  state_set_expander_id(new_s, LONG_MAX);
 
   state_expand_lock_init(new_s);
   s_set_fresh(new_s);

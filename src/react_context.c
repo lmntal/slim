@@ -86,6 +86,9 @@ void react_context_destroy(LmnReactCxt *rc)
   if (RC_HLINK_SPC(rc)) {
     lmn_sameproccxt_clear(rc);
   }
+  if (rc->work_arry) {
+    lmn_register_free(rc->work_arry);
+  }
 }
 
 /*----------------------------------------------------------------------
