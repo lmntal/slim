@@ -285,7 +285,9 @@ struct LmnEnv {
   BOOL enable_map_heuristic;
   BOOL enable_bledge;
   BOOL enable_mapndfs;
+#ifndef MINIMAL_STATE
   BOOL enable_mcndfs;
+#endif
 
   BOOL enable_visualize;
 

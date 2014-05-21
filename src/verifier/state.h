@@ -68,8 +68,6 @@ typedef void*  state_data_t;
 //  LmnBinStr          compress_mem;    /*  8(4)byte: 膜memをエンコードしたバイナリストリング */
 //};
 
-#define MCNDFS 1
-
 /* Descriptor */
 struct State {                 /* Total:64(36)byte */
   unsigned int       successor_num;   /*  4(4)byte: サクセッサの数 */
@@ -84,7 +82,7 @@ struct State {                 /* Total:64(36)byte */
   State             *parent;          /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
   unsigned long      state_id;        /*  8(4)byte: 生成順に割り当てる状態の整数ID */
   State             *map;             /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
-#if MCNDFS 
+#ifndef MINIMAL_STATE 
   BYTE              *local_flags;     /*  8(4)byte: 並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等) */
   pthread_mutex_t    expand_lock;
   unsigned long      expander_id;
@@ -97,7 +95,7 @@ struct State {                 /* Total:64(36)byte */
 #define state_flags(S)                 ((S)->flags)
 #define state_flags2(S)                ((S)->flags2)
 #define state_flags3(S)                ((S)->flags3)
-#if MCNDFS
+#ifndef MINIMAL_STATE
 #define state_loflags(S)               ((S)->local_flags)
 #endif
 
@@ -106,7 +104,7 @@ struct State {                 /* Total:64(36)byte */
 #define unset_on_hash_compaction(S)    (state_flags3(S) &= HASH_COMPACTION_MASK)
 #define is_on_hash_compaction(S)       (state_flags3(S) &  HASH_COMPACTION_MASK)
 
-#if MCNDFS
+#ifndef MINIMAL_STATE
 #define state_set_expander_id(S, ID)          ((S)->expander_id = (ID))
 #define state_expander_id(S)                  ((S)->expander_id)
 #define state_expand_lock_init(S)             (lmn_mutex_init(&((S)->expand_lock)))

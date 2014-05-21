@@ -1262,6 +1262,7 @@ static BOOL mapndfs_loop(State  *seed,
   return FALSE;
 }
 
+#ifndef MINIMAL_STATE
 /** ==================================
  *  === Multicore Nested-DFS ========
  *  ==================================
@@ -1413,22 +1414,22 @@ static BOOL mcndfs_loop(LmnWorker *w,
 
     n = state_succ_num(s);
     for (i = 0; i < n; i++) {
-	succ = state_succ_state(s, i);
-	if (s_is_cyan(succ, worker_id(w))) {
-	    return TRUE;
-	}
-	else if (!s_is_red(succ)) {
-	    m = vec_num(red_states);
-	    contained = FALSE;
-	    for (j = 0; j < m; j++) {
-		t = vec_get(red_states, j);
-		if (state_id(t) == state_id(succ)) {
-		    contained = TRUE;
-		    break;
-		}
-	    }
-	    if (!contained) put_stack(search, succ);
-	}
+      succ = state_succ_state(s, i);
+      if (s_is_cyan(succ, worker_id(w))) {
+        return TRUE;
+      }
+      else if (!s_is_red(succ)) {
+        m = vec_num(red_states);
+        contained = FALSE;
+        for (j = 0; j < m; j++) {
+          t = vec_get(red_states, j);
+          if (state_id(t) == state_id(succ)) {
+            contained = TRUE;
+            break;
+          }
+        }
+        if (!contained) put_stack(search, succ);
+      }
     }
 
 #if 0
@@ -1462,3 +1463,4 @@ static BOOL mcndfs_loop(LmnWorker *w,
 
   return FALSE;
 }
+#endif

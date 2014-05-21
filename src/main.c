@@ -101,7 +101,9 @@ static void usage(void)
           "  --use-owcty         (MC) Use OWCTY algorithm  (LTL model checking)\n"
           "  --use-map           (MC) Use MAP algorithm    (LTL model checking)\n"
           "  --use-mapndfs       (MC) Use Map+NDFS algorithm (LTL model checking)\n"
+#ifndef MINIMAL_STATE
           "  --use-mcndfs        (MC) Use Multicore NDFS algorithm (LTL model checking)\n"
+#endif
           "  --use-bledge        (MC) Use BLEDGE algorithm (LTL model checking)\n"
           "  --disable-map-h     (MC) No use MAP heuristics(LTL model checking)\n"
           "  --pscc-driven       (MC) Use SCC analysis of property automata (LTL model checking)\n"
@@ -185,7 +187,9 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"use-bledge"             , 0, 0, 3002},
     {"bfs-lsync"              , 0, 0, 3003},
     {"use-mapndfs"            , 0, 0, 3004},
+#ifndef MINIMAL_STATE
     {"use-mcndfs"             , 0, 0, 3005},
+#endif
     {"disable-map-h"          , 0, 0, 3100},
     {"use-Ncore"              , 1, 0, 5000},
     {"cutoff-depth"           , 1, 0, 5001},
@@ -399,11 +403,13 @@ static void parse_options(int *optid, int argc, char *argv[])
       lmn_env.enable_mapndfs = TRUE;
       //lmn_env.enable_map_heuristic = FALSE;
       break;
+#ifndef MINIMAL_STATE
     case 3005:
       lmn_env.enable_parallel = TRUE;
       lmn_env.enable_mcndfs = TRUE;
       //lmn_env.enable_map_heuristic = FALSE;
       break;
+#endif
     case 3100:
       lmn_env.enable_map_heuristic = FALSE;
       break;

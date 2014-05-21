@@ -49,7 +49,9 @@
 #include "runtime_status.h"
 #include <unistd.h>
 
+#ifndef MINIMAL_STATE 
 #include "mc_visualizer.h"
+#endif
 
 /* TODO: C++ template関数で書き直した方がよい */
 
@@ -331,6 +333,7 @@ static inline void mcdfs_handoff_task(LmnWorker *me, LmnWord task)
   ADD_OPEN_PROFILE(sizeof(Node));
 }
 
+#ifndef MINIMAL_STATE
 void mcdfs_start(LmnWorker *w)
 {
   LmnWorkerGroup *wp;
@@ -395,13 +398,15 @@ void mcdfs_start(LmnWorker *w)
 
   vec_destroy(&new_ss);
 }
-
+#endif
 
 void dfs_start(LmnWorker *w)
 {
+#ifndef MINIMAL_STATE
   if (worker_use_mcndfs(w)) {
       return mcdfs_start(w);
   }
+#endif
 
   LmnWorkerGroup *wp;
   struct Vector new_ss;
@@ -485,11 +490,13 @@ void dfs_start(LmnWorker *w)
 #ifdef DEBUG
   fprintf(stderr, "%d : exit (total expand=%d)\n", worker_id(w), w->expand);
 #endif
+#ifndef MINIMAL_STATE 
   if (lmn_env.enable_visualize) {
     if (worker_id(w) == 0) {
       dump_dot(ss, wp->worker_num);
     }
   }
+#endif
 
   vec_destroy(&new_ss);
 }
@@ -530,7 +537,9 @@ static inline void dfs_loop(LmnWorker *w,
 
     /* サクセッサを展開 */
     mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+#ifndef MINIMAL_STATE 
     state_set_expander_id(s, worker_id(w));
+#endif
 
     if (MAP_COND(w)) map_start(w, s);
 
@@ -603,7 +612,9 @@ static inline void mapdfs_loop(LmnWorker *w,
     if(!is_expanded(s)) {
         w->expand++;
         mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+#ifndef MINIMAL_STATE 
         state_set_expander_id(s, worker_id(w));
+#endif
     }
     
     if (MAP_COND(w)) map_start(w, s);
@@ -647,13 +658,13 @@ static inline void mapdfs_loop(LmnWorker *w,
   }
 }
 
+#ifndef MINIMAL_STATE
 static inline void mcdfs_loop(LmnWorker *w,
                             Vector    *stack,
                             Vector    *new_ss,
                             Automata  a,
                             Vector    *psyms)
 {
-#if MAPNDFS
   while (!vec_is_empty(stack)) {
     State *s;
     AutomataState p_s;
@@ -775,8 +786,8 @@ static inline void mcdfs_loop(LmnWorker *w,
     }
 #endif
   }
-#endif
 }
+#endif
 
 
 /* TODO: DequeとStackが異なるだけでdfs_loopと同じ.
