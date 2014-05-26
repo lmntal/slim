@@ -191,12 +191,13 @@ static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
 /* ルールセットat_setの各ルールを昇順にちょうど1stepずつ展開する.
  * 適用のなかったルールはskip.
  * ex)
- * src.lmn
  * ---------
  *  a(0).
- *  ruleA @@ a(X) :- X>0, Y=X+1 | a(Y).
- *  ruleB @@ a(X) :- a(X), b.
- *  ruleC @@ a(5) :- ok.
+ *  { '$callback'(atomic_ruleset, 3).
+ *    ruleA @@ a(X) :- X>0, Y=X+1 | a(Y).
+ *    ruleB @@ a(X) :- a(X), b.
+ *    ruleC @@ a(5) :- ok.
+ *  }
  * ---------
  * result: ok, b, b, b, b, b.
  */
@@ -283,6 +284,10 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
 }
 
 
+/* ルールセットat_setのルールを書換えが停止するまで繰返し適用する．
+ * ルールセットの停止性と合流性を仮定している．非決定モードでも
+ * 複数の書換え経路の探索は行わない．
+ */
 static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
                                                    LmnMembrane *mem,
                                                    LmnRuleSet  at_set)
@@ -314,7 +319,6 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
     env_set_next_id(RC_PROC_NEXT_ID(rc));
 
     if (i < lmn_ruleset_rule_num(at_set)) {
-      printf("****2b %p %d %d %d\n", rc, i, succ_i_from, mc_react_cxt_expanded_num(rc));
       lmn_ruleset_validate_atomic(at_set);
       mode_org = RC_MODE(rc);
       groot_m = RC_GROOT_MEM(rc);
