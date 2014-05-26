@@ -61,6 +61,9 @@ struct LmnReactCxt {
   unsigned int warry_cap;   /* work_arryのキャパシティ */
   unsigned int trace_num;   /* ルール適用回数 (通常実行用トレース実行で使用)  */
   LmnRulesetId atomic_id;   /* atomic step中: atomic set id(signed int), default:-1 */
+  ProcessID proc_org_id;    /* atomic step終了時に Process ID をこの値に復帰 */
+  ProcessID proc_next_id;   /* atomic step継続時に Process ID をこの値に設定 */
+  LmnMembrane *cur_mem;     /* atomic step継続時に現在膜をこの値に設定 */
   BYTE mode;
   BOOL flag;                /* mode以外に指定するフラグ */
   void *v;                  /* 各mode毎に固有の持ち物 */
@@ -128,6 +131,12 @@ struct LmnReactCxt {
 #define RC_START_ATOMIC_STEP(RC, ID)   ((RC)->atomic_id  = (ID))
 #define RC_IS_ATOMIC_STEP(RC)          ((RC)->atomic_id >= 0)
 #define RC_FINISH_ATOMIC_STEP(RC)      ((RC)->atomic_id = -1)
+#define RC_PROC_ORG_ID(RC)             ((RC)->proc_org_id)
+#define RC_SET_PROC_ORG_ID(RC, ID)     ((RC)->proc_org_id = (ID)) 
+#define RC_PROC_NEXT_ID(RC)            ((RC)->proc_next_id)
+#define RC_SET_PROC_NEXT_ID(RC, ID)    ((RC)->proc_next_id = (ID)) 
+#define RC_CUR_MEM(RC)                 ((RC)->cur_mem)
+#define RC_SET_CUR_MEM(RC, MEM)        ((RC)->cur_mem = (MEM))
 
 #define RC_SET_HLINK_SPC(RC, SPC)      ((RC)->hl_sameproccxt = (SPC))
 #define RC_HLINK_SPC(RC)               ((RC)->hl_sameproccxt)

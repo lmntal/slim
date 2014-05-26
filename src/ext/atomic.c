@@ -216,10 +216,11 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
     }
   }
   else {
-    unsigned int i, j, r_i, succ_i_from;
+    unsigned int j, r_i, succ_i_from;
     BYTE mode_org;
+    LmnMembrane *groot_m;
 
-    lmn_ruleset_validate_atomic(at_set);
+    //    lmn_ruleset_validate_atomic(at_set);
     succ_i_from = mc_react_cxt_expanded_num(rc);
 
     /* 1step目: generate successor membrane */
@@ -231,29 +232,50 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
       }
     }
 
+    /* ND モードでの Process ID のリセットをオーバーライド */
+    env_set_next_id(RC_PROC_NEXT_ID(rc));
 
     if (r_i < lmn_ruleset_rule_num(at_set)) {
       lmn_ruleset_validate_atomic(at_set);
       mode_org = RC_MODE(rc);
+      groot_m = RC_GROOT_MEM(rc);
       RC_SET_MODE(rc, REACT_STAND_ALONE);
 
+      /* ignore all but the last reaction */
+      LmnMembrane *succ_m;
+
+      LmnRule succ_r = (LmnRule)vec_pop(RC_EXPANDED_RULES(rc));
+      if (RC_MC_USE_DMEM(rc)) {
+        succ_m = (LmnMembrane *)vec_pop(RC_MEM_DELTAS(rc));
+      } else {
+        succ_m = (LmnMembrane *)vec_pop(RC_EXPANDED(rc));
+      }
+      while (succ_i_from < mc_react_cxt_expanded_num(rc)) {
+        mc_react_cxt_expanded_pop(rc);
+      }
+      mc_react_cxt_add_expanded(rc, succ_m, succ_r);
+
       /* 2〜r_n step目 */
-      for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
-        LmnMembrane *succ_m = (LmnMembrane *)mc_react_cxt_expanded_get(rc, i);
+      //      for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
+
+        // restore the current membrane of the last reaction
+        LmnMembrane *cur_mem = RC_CUR_MEM(rc);  
+
         RC_SET_GROOT_MEM(rc, succ_m);
-        react_ruleset_AMAP(rc, succ_m, system_ruleset);
+        react_ruleset_AMAP(rc, cur_mem, system_ruleset);
         for (j = r_i; j < lmn_ruleset_rule_num(at_set); j++) {
-          if (react_rule(rc, succ_m, lmn_ruleset_get_rule(at_set, j))) {
-            react_ruleset_AMAP(rc, succ_m, system_ruleset);
+          if (react_rule(rc, cur_mem, lmn_ruleset_get_rule(at_set, j))) {
+            react_ruleset_AMAP(rc, cur_mem, system_ruleset);
           }
         }
-      }
+	//      }
 
-      RC_SET_GROOT_MEM(rc, mem);
+      RC_SET_GROOT_MEM(rc, groot_m);
       RC_SET_MODE(rc, mode_org);
       lmn_ruleset_invalidate_atomic(at_set);
     }
 
+    env_set_next_id(RC_PROC_ORG_ID(rc));
     ret = FALSE;
   }
 
@@ -277,38 +299,68 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
   else {
     unsigned int i, j, succ_i_from;
     BYTE mode_org;
+    LmnMembrane *groot_m;
 
     succ_i_from = mc_react_cxt_expanded_num(rc);
+    /* 1step目: generate successor membrane */
     for (i = 0; i < lmn_ruleset_rule_num(at_set); i++) {
       react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i));
-    }
-
-    lmn_ruleset_validate_atomic(at_set);
-    mode_org = RC_MODE(rc);
-    RC_SET_MODE(rc, REACT_STAND_ALONE);
-
-    for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
-      LmnMembrane *succ_m;
-      BOOL reacted;
-
-      succ_m  = (LmnMembrane *)mc_react_cxt_expanded_get(rc, i);
-      RC_SET_GROOT_MEM(rc, succ_m);
-      react_ruleset_AMAP(rc, succ_m, system_ruleset);
-      reacted = TRUE;
-      while (reacted) {
-        reacted = FALSE;
-        for (j = 0; j < lmn_ruleset_rule_num(at_set); j++) {
-          reacted = reacted ||
-                    react_rule(rc, succ_m, lmn_ruleset_get_rule(at_set, j));
-        }
-        if (reacted) {
-          react_ruleset_AMAP(rc, succ_m, system_ruleset);
-        }
+      if (mc_react_cxt_expanded_num(rc) > succ_i_from) {
+        break;
       }
     }
-    RC_SET_GROOT_MEM(rc, mem);
-    RC_SET_MODE(rc, mode_org);
-    lmn_ruleset_invalidate_atomic(at_set);
+
+    /* ND モードでの Process ID のリセットをオーバーライド */
+    env_set_next_id(RC_PROC_NEXT_ID(rc));
+
+    if (i < lmn_ruleset_rule_num(at_set)) {
+      printf("****2b %p %d %d %d\n", rc, i, succ_i_from, mc_react_cxt_expanded_num(rc));
+      lmn_ruleset_validate_atomic(at_set);
+      mode_org = RC_MODE(rc);
+      groot_m = RC_GROOT_MEM(rc);
+      RC_SET_MODE(rc, REACT_STAND_ALONE);
+
+      /* ignore all but the last reaction */
+      LmnMembrane *succ_m;
+
+      LmnRule succ_r = (LmnRule)vec_pop(RC_EXPANDED_RULES(rc));
+      if (RC_MC_USE_DMEM(rc)) {
+        succ_m = (LmnMembrane *)vec_pop(RC_MEM_DELTAS(rc));
+      } else {
+        succ_m = (LmnMembrane *)vec_pop(RC_EXPANDED(rc));
+      }
+      while (succ_i_from < mc_react_cxt_expanded_num(rc)) {
+        mc_react_cxt_expanded_pop(rc);
+      }
+      mc_react_cxt_add_expanded(rc, succ_m, succ_r);
+
+      /* 2〜r_n step目 */
+      //    for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
+
+        // restore the current membrane of the last reaction
+        LmnMembrane *cur_mem = RC_CUR_MEM(rc);
+        BOOL reacted;
+
+        RC_SET_GROOT_MEM(rc, succ_m);
+        react_ruleset_AMAP(rc, cur_mem, system_ruleset);
+        reacted = TRUE;
+        while (reacted) {
+          reacted = FALSE;
+          for (j = 0; j < lmn_ruleset_rule_num(at_set); j++) {
+            reacted = reacted ||
+                      react_rule(rc, cur_mem, lmn_ruleset_get_rule(at_set, j));
+          }
+          if (reacted) {
+            react_ruleset_AMAP(rc, cur_mem, system_ruleset);
+          }
+        }
+        //    }
+      RC_SET_GROOT_MEM(rc, groot_m);
+      RC_SET_MODE(rc, mode_org);
+      lmn_ruleset_invalidate_atomic(at_set);
+    }
+
+    env_set_next_id(RC_PROC_ORG_ID(rc));
     ret = FALSE;
   }
 
