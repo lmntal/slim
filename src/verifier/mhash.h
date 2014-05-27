@@ -42,5 +42,6 @@
 #include "membrane.h"
 
 unsigned long mhash(LmnMembrane *mem);
+void mhash_set_depth(int depth);
 
 #endif

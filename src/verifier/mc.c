@@ -39,6 +39,7 @@
 
 #include "mc.h"
 #include "mc_worker.h"
+#include "mhash.h"
 #include "task.h"
 #include "dpor.h"
 #include "error.h"
@@ -104,6 +105,7 @@ static inline void do_mc(LmnMembrane *world_mem_org,
 
   /** INITIALIZE
    */
+  mhash_set_depth(lmn_env.hash_depth);
   wp = lmn_workergroup_make(a, psyms, thread_num);
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   p_label = a ? automata_get_init_state(a)

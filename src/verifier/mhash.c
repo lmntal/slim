@@ -72,6 +72,13 @@ static inline mhash_t mhash_membrane(LmnMembrane *mem,
                                      LmnMembrane *calc_mem,
                                      ProcessTbl  ctx);
 
+static int mhash_depth = MHASH_TREE_D;
+
+void mhash_set_depth(int depth)
+{
+  if (depth > 0 && depth < 5) mhash_depth = depth;
+}
+
 mhash_t mhash(LmnMembrane *mem)
 {
   return mhash_sub(mem, round2up(env_next_id()));
@@ -302,7 +309,7 @@ static mhash_t mhash_unit(LmnAtom     atom,
   else if (LMN_SATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR) {
     /* 4. OutSideProxyアトムの(子膜に入る)場合 */
     LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0));
-    if (depth == MHASH_TREE_D) {
+    if (depth == mhash_depth) {
       /* 深さDに到達した場合
        *   子膜のハッシュ値とリンク接続値を掛け合わせた値を計算してトレースを打ち切る. */
       return memlink(in_proxy, calc_mem, ctx);
@@ -320,7 +327,7 @@ static mhash_t mhash_unit(LmnAtom     atom,
      *   プロキシアトムのハッシュ値を返してトレースを打ち切る. */
     return mhash_symbol(LMN_SATOM(atom));
   }
-  else if (depth == MHASH_TREE_D) {
+  else if (depth == mhash_depth) {
     /* 1. シンボルアトムの場合 (深さDに到達)
      *   シンボルアトムのハッシュ値に, 接続先リンク番号を掛け合わせた値をハッシュ値として返す. */
     return mhash_symbol((LmnSAtom)atom) * (LMN_ATTR_GET_VALUE(attr) + 1);

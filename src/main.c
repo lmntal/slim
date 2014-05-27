@@ -110,6 +110,7 @@ static void usage(void)
           "  --use-Ncore=<N>     (MC) Use <N>threads\n"
           "  --delta-mem         (MC) Use delta membrane generator\n"
           "  --hash-compaction   (MC) Use Hash Compaction\n"
+          "  --hash-depth=<N>    (MC) Set <N> Depth of Hash Function\n"
           "  --mem-enc           (MC) Use canonical membrane representation\n"
           "  --ltl-f <ltl>       (MC) Input <ltl> formula directly. (need LTL2BA env)\n"
           "  --visualize         (MC) Output information for visualize\n"
@@ -211,6 +212,7 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"prof-nomemeq"           , 0, 0, 6050},
     {"visualize"              , 0, 0, 6100},
     {"hash-compaction"        , 0, 0, 6060},
+    {"hash-depth"             , 1, 0, 6061},
     {0, 0, 0, 0}
   };
 
@@ -525,6 +527,14 @@ static void parse_options(int *optid, int argc, char *argv[])
     case 6060:
       lmn_env.hash_compaction = TRUE;
       break;
+    case 6061:
+    {
+      int depth = atoi(optarg);
+      if (depth > 0) {
+        lmn_env.hash_depth = depth;
+      }
+      break;
+    }
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;

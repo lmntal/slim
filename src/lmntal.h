@@ -309,6 +309,7 @@ struct LmnEnv {
   BOOL benchmark;
 
   BOOL hash_compaction;
+  int  hash_depth;
 
 #ifdef PROFILE
   BOOL optimize_hash_old;
