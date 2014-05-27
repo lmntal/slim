@@ -409,6 +409,7 @@ void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
     react_ruleset(&rc, mem, (LmnRuleSet)vec_get(rulesets, i));
   }
   react_initial_rulesets(&rc, mem);
+  stand_alone_react_cxt_destroy(&rc);
 }
 
 

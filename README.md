@@ -45,3 +45,12 @@ You can see what options are available with SLIM as follows:
 ```
 ./slim --help
 ```
+
+### Model Checking
+
+```
+lmntal --slimcode source.lmn > source.il
+./slim --nd source.il # single core
+./slim --nd --use-Ncore=12 source.il # multi-core
+./slim --nd --use-Ncore=12 --delta-mem source.il # multi-core optimization
+```

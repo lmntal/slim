@@ -94,7 +94,6 @@ State *state_make_minimal()
   new_s->flags            = 0x00U;
   new_s->flags2           = 0x00U;
   new_s->flags3           = 0x00U;
-  new_s->local_flags      = 0x00U;
   new_s->hash             = 0;
   new_s->next             = NULL;
   new_s->successors       = NULL;
@@ -102,9 +101,12 @@ State *state_make_minimal()
   new_s->parent           = NULL;
   new_s->state_id         = 0;
   new_s->map              = NULL;
-  new_s->expander_id      = LONG_MAX;
 
+#ifndef MINIMAL_STATE
+  state_set_expander_id(new_s, LONG_MAX);
+  new_s->local_flags      = 0x00U;
   state_expand_lock_init(new_s);
+#endif
   s_set_fresh(new_s);
 
 #ifdef KWBT_OPT
@@ -208,9 +210,11 @@ void state_free(State *s)
     LMN_FREE(s->successors);
   }
 
+#ifndef MINIMAL_STATE
   if (s->local_flags) {
       LMN_FREE(s->local_flags);
   }
+#endif
 
   state_expand_lock_destroy(s);
 

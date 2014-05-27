@@ -64,6 +64,7 @@ default_enable_timeopt=yes
 default_enable_jni=no
 default_enable_tcmalloc=yes
 default_enable_minmax=no
+default_minimal_state=no
 case "$host" in
    *-mingw*) default_enable_tcmalloc=no;;
    *-cygwin*) default_enable_tcmalloc=no;;
@@ -118,6 +119,12 @@ AC_ARG_ENABLE([opt_minmax],
                               [turn on minmax optimization mode])],
               [],
               [enable_opt_minmax="$default_enable_minmax"])
+
+AC_ARG_ENABLE([minimal_state],
+              [AS_HELP_STRING([--enable-minimal-state],
+                              [minimize the state instead of being unable to use the MCNDFS])],
+              [],
+              [enable_minimal_state="$default_minimal_state"])
 
 # devel
 if test "$enable_devel" = "yes"; then
@@ -190,6 +197,14 @@ if test "$enable_opt_minmax" = "yes"; then
 else
   AC_MSG_RESULT([enable opt-minmax: no])
 fi
+
+if test "$enable_minimal_state" = "yes"; then
+  AC_MSG_RESULT([enable minimal-state: yes])
+  AC_DEFINE([MINIMAL_STATE], 1, [enable minimal state])
+else
+  AC_MSG_RESULT([enable minimal-state: no])
+fi
+
 
 AM_CONDITIONAL(ENABLE_JNI,      test "$enable_jni" = "yes")
 AM_CONDITIONAL(ENABLE_TCMALLOC, test "$enable_tcmalloc" = "yes")

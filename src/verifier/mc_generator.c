@@ -49,7 +49,9 @@
 #include "runtime_status.h"
 #include <unistd.h>
 
+#ifndef MINIMAL_STATE 
 #include "mc_visualizer.h"
+#endif
 
 /* TODO: C++ template関数で書き直した方がよい */
 
@@ -331,6 +333,7 @@ static inline void mcdfs_handoff_task(LmnWorker *me, LmnWord task)
   ADD_OPEN_PROFILE(sizeof(Node));
 }
 
+#ifndef MINIMAL_STATE
 void mcdfs_start(LmnWorker *w)
 {
   LmnWorkerGroup *wp;
@@ -395,13 +398,15 @@ void mcdfs_start(LmnWorker *w)
 
   vec_destroy(&new_ss);
 }
-
+#endif
 
 void dfs_start(LmnWorker *w)
 {
+#ifndef MINIMAL_STATE
   if (worker_use_mcndfs(w)) {
       return mcdfs_start(w);
   }
+#endif
 
   LmnWorkerGroup *wp;
   struct Vector new_ss;
@@ -485,11 +490,13 @@ void dfs_start(LmnWorker *w)
 #ifdef DEBUG
   fprintf(stderr, "%d : exit (total expand=%d)\n", worker_id(w), w->expand);
 #endif
+#ifndef MINIMAL_STATE 
   if (lmn_env.enable_visualize) {
     if (worker_id(w) == 0) {
       dump_dot(ss, wp->worker_num);
     }
   }
+#endif
 
   vec_destroy(&new_ss);
 }
@@ -530,7 +537,9 @@ static inline void dfs_loop(LmnWorker *w,
 
     /* サクセッサを展開 */
     mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
-    s->expander_id = worker_id(w);
+#ifndef MINIMAL_STATE 
+    state_set_expander_id(s, worker_id(w));
+#endif
 
     if (MAP_COND(w)) map_start(w, s);
 
@@ -603,7 +612,9 @@ static inline void mapdfs_loop(LmnWorker *w,
     if(!is_expanded(s)) {
         w->expand++;
         mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
-        s->expander_id = worker_id(w);
+#ifndef MINIMAL_STATE 
+        state_set_expander_id(s, worker_id(w));
+#endif
     }
     
     if (MAP_COND(w)) map_start(w, s);
@@ -647,6 +658,7 @@ static inline void mapdfs_loop(LmnWorker *w,
   }
 }
 
+#ifndef MINIMAL_STATE
 static inline void mcdfs_loop(LmnWorker *w,
                             Vector    *stack,
                             Vector    *new_ss,
@@ -660,7 +672,7 @@ static inline void mcdfs_loop(LmnWorker *w,
     BOOL repaired;
 
     if (workers_are_exit(worker_group(w))) break;
-    
+
     /** 展開元の状態の取得 */
     s   = (State *)vec_peek(stack);
     p_s = MC_GET_PROPERTY(s, a);
@@ -668,37 +680,37 @@ static inline void mcdfs_loop(LmnWorker *w,
     // backtrack
     if (s_is_cyan(s, worker_id(w))) {
       if (state_is_accept(a, s)) {
-          Vector red_states;
-          vec_init(&red_states, 8192);
+        Vector red_states;
+        vec_init(&red_states, 8192);
 
-          // launch red dfs
-          mcndfs_start(w, s, &red_states);
+        // launch red dfs
+        mcndfs_start(w, s, &red_states);
 
-          // repair phase
-	  START_REPAIR_PHASE();
-          do {
-            repaired = TRUE;
-            n = vec_num(&red_states);
-            for (i=0; i<n; i++) {
-                State *r = (State*)vec_get(&red_states, i);
-
-                if (state_id(r) != state_id(s) && state_is_accept(a, r)) {
-          	  if (!s_is_red(r)) {
-          	      repaired = FALSE;
-          	      usleep(1);
-          	      break;
-          	  }
-                }
-            }
-          } while(!repaired);
-	  FINISH_REPAIR_PHASE();
-
-          // set red
+        // repair phase
+        START_REPAIR_PHASE();
+        do {
+          repaired = TRUE;
           n = vec_num(&red_states);
           for (i=0; i<n; i++) {
-              State *r = (State*)vec_get(&red_states, i);
-              s_set_red(r);
+            State *r = (State*)vec_get(&red_states, i);
+
+            if (state_id(r) != state_id(s) && state_is_accept(a, r)) {
+              if (!s_is_red(r)) {
+                repaired = FALSE;
+                usleep(1);
+                break;
+              }
+            }
           }
+        } while(!repaired);
+        FINISH_REPAIR_PHASE();
+
+        // set red
+        n = vec_num(&red_states);
+        for (i=0; i<n; i++) {
+          State *r = (State*)vec_get(&red_states, i);
+          s_set_red(r);
+        }
       }
 
       s_set_blue(s);
@@ -710,9 +722,9 @@ static inline void mcdfs_loop(LmnWorker *w,
 
     // cyan flag用の領域を確保
     if (!s->local_flags) {
-        n = workers_entried_num((worker_group(w)));
-	s->local_flags = LMN_NALLOC(BYTE, n);
-	memset(s->local_flags, 0, sizeof(BYTE) * n);
+      n = workers_entried_num((worker_group(w)));
+      s->local_flags = LMN_NALLOC(BYTE, n);
+      memset(s->local_flags, 0, sizeof(BYTE) * n);
     }
 
     // cyanに着色
@@ -723,9 +735,9 @@ static inline void mcdfs_loop(LmnWorker *w,
     state_expand_lock(s);
     FINISH_LOCK();
     if (!is_expanded(s)) {
-        mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
-        w->expand++;
-	s->expander_id = worker_id(w);
+      mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+      w->expand++;
+      state_set_expander_id(s, worker_id(w));
     }
     state_expand_unlock(s);
 
@@ -755,8 +767,8 @@ static inline void mcdfs_loop(LmnWorker *w,
         State *succ = state_succ_state(s, (start + i) % n);
 
         if (!s_is_blue(succ) && !s_is_cyan(succ, worker_id(w))) {
-	  if (!is_expanded(succ) && s_is_fresh(succ)) put_stack(fresh, succ);
-	  else put_stack(stack, succ);
+          if (!is_expanded(succ) && s_is_fresh(succ)) put_stack(fresh, succ);
+          else put_stack(stack, succ);
         }
       }
     }
@@ -766,8 +778,8 @@ static inline void mcdfs_loop(LmnWorker *w,
       n = vec_num(fresh);
       if (n > 0) {
         for (i = 0; i < n; i++) {
-	  State *fs = vec_get(fresh, i);
-	  s_unset_fresh(fs);
+          State *fs = vec_get(fresh, i);
+          s_unset_fresh(fs);
           put_stack(stack, fs);
         }
       }
@@ -775,6 +787,7 @@ static inline void mcdfs_loop(LmnWorker *w,
 #endif
   }
 }
+#endif
 
 
 /* TODO: DequeとStackが異なるだけでdfs_loopと同じ.

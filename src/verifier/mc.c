@@ -98,6 +98,7 @@ static inline void do_mc(LmnMembrane *world_mem_org,
 {
   LmnWorkerGroup *wp;
   StateSpace states;
+  LmnMembrane *mem;
   State *init_s;
   BYTE p_label;
 
@@ -107,7 +108,8 @@ static inline void do_mc(LmnMembrane *world_mem_org,
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   p_label = a ? automata_get_init_state(a)
               : DEFAULT_STATE_ID;
-  init_s  = state_make(lmn_mem_copy(world_mem_org),
+  mem     = lmn_mem_copy(world_mem_org);
+  init_s  = state_make(mem,
                        p_label,
                        statespace_use_memenc(states));
   state_id_issue(init_s); /* 状態に整数IDを発行 */
@@ -126,6 +128,7 @@ static inline void do_mc(LmnMembrane *world_mem_org,
   }
 #endif
 
+  lmn_mem_free_rec(mem);
   /** FINALIZE
    */
   profile_statespace(wp);
