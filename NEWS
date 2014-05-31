@@ -1,3 +1,16 @@
+SLIM (2.2.5) -- 2014/05/31
+  * new features / support
+    + add hash compaction
+    + add hash depth
+    + clearlink instruction (used with swaplink)
+    + atomlist manipulation instructions
+  * bug fixes
+    + atomic_ruleset 
+    + memory leak
+    + and many minor bug fixes
+  * others
+    + directory structure update
+
 SLIM (2.2.4) -- 2013/11/3
   * new features / support
     + add hlground type
