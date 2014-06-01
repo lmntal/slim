@@ -37,8 +37,8 @@ liblmn_verifier_a_SOURCES =                              \
 	mem_encode.c             mem_encode.h                  \
 	delta_membrane.c         delta_membrane.h              \
 	binstr_compress.c        binstr_compress.h             \
-        mc_visualizer.c          mc_visualizer.h
-
+        mc_visualizer.c          mc_visualizer.h               \
+                                 stack_macro.h
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
