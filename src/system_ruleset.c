@@ -136,6 +136,7 @@ static BOOL mem_eq(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
   EACH_ATOM(op, ent, ({
     LmnMembrane *mem0, *mem1;
     LmnSAtom out0, in0, out1, in1, ret, result_atom;
+    LmnSAtom temp0, temp1;
     LmnLinkAttr out_attr0, out_attr1, ret_attr;
 
     out_attr0 = LMN_SATOM_GET_ATTR(op, 0);
@@ -161,13 +162,33 @@ static BOOL mem_eq(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 
     mem0 = LMN_PROXY_GET_MEM(in0);
     mem1 = LMN_PROXY_GET_MEM(in1);
+
+    /* roots of mem0 and mem1, connected to their outside proxies, 
+       are temporarily set to unary atoms with the same functor */
+    temp0 = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
+    ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 0));
+    ret_attr = LMN_SATOM_GET_ATTR(op, 0);
+    LMN_SATOM_SET_LINK(temp0, 0, ret);
+    LMN_SATOM_SET_ATTR(temp0, 0, ret_attr);
+    LMN_SATOM_SET_LINK(ret, LMN_ATTR_GET_VALUE(ret_attr), temp0);
+    LMN_SATOM_SET_ATTR(ret, LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
+
+    temp1 = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
+    ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 1));
+    ret_attr = LMN_SATOM_GET_ATTR(op, 1);
+    LMN_SATOM_SET_LINK(temp1, 0, ret);
+    LMN_SATOM_SET_ATTR(temp1, 0, ret_attr);
+    LMN_SATOM_SET_LINK(ret, LMN_ATTR_GET_VALUE(ret_attr), temp1);
+    LMN_SATOM_SET_ATTR(ret, LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
+
     if (lmn_mem_equals(mem0, mem1)) {
       result_atom = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
     } else {
       result_atom = lmn_mem_newatom(mem, LMN_FALSE_FUNCTOR);
     }
-    lmn_mem_unify_atom_args(mem, op, 0, op, 2);
-    lmn_mem_unify_atom_args(mem, op, 1, op, 3);
+
+    lmn_mem_unify_atom_args(mem, temp0, 0, op, 2);
+    lmn_mem_unify_atom_args(mem, temp1, 0, op, 3);
 
     ret = LMN_SATOM(LMN_SATOM_GET_LINK(op, 4));
     ret_attr = LMN_SATOM_GET_ATTR(op, 4);
@@ -181,9 +202,9 @@ static BOOL mem_eq(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
       LMN_SATOM_SET_ATTR(ret, LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
     }
 
-    lmn_mem_symb_atom_dec(mem);
-    remove_from_atomlist(op, ent);
-    lmn_delete_atom(op);
+    lmn_mem_delete_atom(mem, op, LMN_ATTR_MAKE_LINK(0));
+    lmn_mem_delete_atom(mem, temp0, LMN_ATTR_MAKE_LINK(0));
+    lmn_mem_delete_atom(mem, temp1, LMN_ATTR_MAKE_LINK(0));
 
     return TRUE;
 
