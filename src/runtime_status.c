@@ -389,7 +389,7 @@ static void profile_state_f(State *s, LmnWord arg)
   if (!is_binstr_user(s) && state_mem(s)) {
     p->membrane_space += lmn_mem_root_space(state_mem(s));
   }
-  else if (is_binstr_user(s) && state_binstr(s)  && !is_on_hash_compaction(s)) {
+  else if (is_binstr_user(s) && state_binstr(s)  && !lmn_env.hash_compaction) {
     p->binstr_space   += lmn_binstr_space(state_binstr(s));
   }
 
@@ -577,22 +577,42 @@ void dump_profile_data(FILE *f)
   }
 
   if (lmn_env.benchmark) { /* データ収集用 */
-    fprintf(f, "%lf, %lf, %lf, %lu, %lu, %lu, %lu, %lf, %lf, %lf, %lf, %lf\n"
-             , tmp_total_wall_time
-             , tmp_total_wall_time_main
-             , tmp_total_cpu_time_main
-             , lmn_prof.state_num_stored
-             , lmn_prof.lv2->transition_num
-             , lmn_prof.state_num_end
-             , total_hash_num
-             , tmp_total_mem / 1024 / 1024
-             , (double)lmn_prof.lv2->state_space / 1024 / 1024
-             , lmn_env.enable_compress_mem
-               ? (double)lmn_prof.lv2->binstr_space   / 1024 / 1024
-               : (double)lmn_prof.lv2->membrane_space / 1024 / 1024
-             , (double)lmn_prof.lv2->transition_space / 1024 / 1024
-             , (double)lmn_prof.lv2->statespace_space / 1024 / 1024
-    );
+    if (lmn_env.ltl) {
+      fprintf(f, "%lf, %lf, %lf, %lu, %lu, %lu, %lu, %lf, %lf, %lf, %lf, %lf, %s\n"
+          , tmp_total_wall_time
+          , tmp_total_wall_time_main
+          , tmp_total_cpu_time_main
+          , lmn_prof.state_num_stored
+          , lmn_prof.lv2->transition_num
+          , lmn_prof.state_num_end
+          , total_hash_num
+          , tmp_total_mem / 1024 / 1024
+          , (double)lmn_prof.lv2->state_space / 1024 / 1024
+          , lmn_env.enable_compress_mem
+          ? (double)lmn_prof.lv2->binstr_space   / 1024 / 1024
+          : (double)lmn_prof.lv2->membrane_space / 1024 / 1024
+          , (double)lmn_prof.lv2->transition_space / 1024 / 1024
+          , (double)lmn_prof.lv2->statespace_space / 1024 / 1024
+          , lmn_prof.found_err ? "FOUND" : "NOT FOUND"
+          );
+    } else {
+      fprintf(f, "%lf, %lf, %lf, %lu, %lu, %lu, %lu, %lf, %lf, %lf, %lf, %lf\n"
+          , tmp_total_wall_time
+          , tmp_total_wall_time_main
+          , tmp_total_cpu_time_main
+          , lmn_prof.state_num_stored
+          , lmn_prof.lv2->transition_num
+          , lmn_prof.state_num_end
+          , total_hash_num
+          , tmp_total_mem / 1024 / 1024
+          , (double)lmn_prof.lv2->state_space / 1024 / 1024
+          , lmn_env.enable_compress_mem
+          ? (double)lmn_prof.lv2->binstr_space   / 1024 / 1024
+          : (double)lmn_prof.lv2->membrane_space / 1024 / 1024
+          , (double)lmn_prof.lv2->transition_space / 1024 / 1024
+          , (double)lmn_prof.lv2->statespace_space / 1024 / 1024
+          );
+    }
     return;
   }
 
