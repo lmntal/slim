@@ -210,8 +210,6 @@ void mc_expand(const StateSpace ss,
 {
   LmnMembrane *mem;
 
-  if (lmn_env.hash_compaction) set_on_hash_compaction(s);
-
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
 
@@ -244,7 +242,7 @@ void mc_expand(const StateSpace ss,
     }
 #endif
     lmn_mem_free_rec(mem);
-    if (is_binstr_user(s) && is_on_hash_compaction(s)) {
+    if (is_binstr_user(s) && lmn_env.hash_compaction) {
       state_free_binstr(s);
     }
   }

@@ -181,7 +181,7 @@ State *state_copy(State *src, LmnMembrane *mem)
   dst->hash = src->hash;
 
 #ifdef PROFILE
-  if (lmn_env.profile_level >= 3) {
+  if (lmn_env.profile_level >= 3 && mem) {
     profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
     profile_finish_timer(PROFILE_TIME__STATE_COPY);
   }
