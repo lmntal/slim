@@ -130,7 +130,8 @@ static inline void do_mc(LmnMembrane *world_mem_org,
   }
 #endif
 
-  lmn_mem_free_rec(mem);
+  if (lmn_env.mem_enc == FALSE)
+    lmn_mem_free_rec(mem);
   /** FINALIZE
    */
   profile_statespace(wp);
