@@ -217,5 +217,8 @@ void env_init()
   lmn_env.debug_mc               = FALSE;
   lmn_env.debug_por              = FALSE;
 #endif
+
+  lmn_env.findatom_parallel_mode = FALSE;
+  lmn_env.find_atom_parallel     = FALSE;
 }
 

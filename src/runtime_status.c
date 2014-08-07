@@ -265,6 +265,10 @@ void lmn_profiler_init(unsigned int nthreads)
   lmn_prof.end_wall_time_main    = 0.0;
   lmn_prof.start_cpu_time_main   = LMN_NALLOC(double, nthreads);
   lmn_prof.end_cpu_time_main     = LMN_NALLOC(double, nthreads);
+  lmn_prof.thread_cpu_time_main  = LMN_NALLOC(double, nthreads);
+  for(i = 0; i < nthreads; i++){
+    lmn_prof.thread_cpu_time_main[i]=0.0;
+  }
   lmn_prof.state_num_stored      = 0;
   lmn_prof.state_num_end         = 0;
   lmn_prof.lv2                   = NULL;
@@ -289,6 +293,7 @@ void lmn_profiler_finalize()
 {
   LMN_FREE(lmn_prof.start_cpu_time_main);
   LMN_FREE(lmn_prof.end_cpu_time_main);
+  LMN_FREE(lmn_prof.thread_cpu_time_main);
 
   if (lmn_prof.lv2) {
     mc_profiler2_destroy(lmn_prof.lv2);
@@ -555,7 +560,8 @@ void dump_profile_data(FILE *f)
   tmp_total_cpu_time_main  = 0.0;
   for (i = 0; i < lmn_prof.thread_num; i++) {
     tmp_total_cpu_time_main  += lmn_prof.end_cpu_time_main[i]
-                              - lmn_prof.start_cpu_time_main[i];
+                              - lmn_prof.start_cpu_time_main[i]
+                              + lmn_prof.thread_cpu_time_main[i];
   }
   tmp_total_cpu_time_main  = tmp_total_cpu_time_main / lmn_prof.thread_num;
   tmp_total_cpu_time       = lmn_prof.end_cpu_time  - lmn_prof.start_cpu_time;
@@ -615,7 +621,7 @@ void dump_profile_data(FILE *f)
       fprintf(f, "%-18s%10s  : %15s\n",    " ",           "---------", "-------------------");
       for (i = 0; i < lmn_prof.thread_num; i++) {
         fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i
-                 , lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i]);
+                 , lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i] + lmn_prof.thread_cpu_time_main[i]);
       }
 #else
       fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg."

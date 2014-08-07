@@ -89,6 +89,9 @@ struct InstrSpec spec[] = {
 
     {"clearlink", INSTR_CLEARLINK, {InstrVar, InstrVar}},
 
+    {"findatomp", INSTR_FINDATOMP, {InstrVar, InstrVar, ArgFunctor}},
+    {"sync", INSTR_SYNC, {}},
+
     {"allocatom", INSTR_ALLOCATOM, {InstrVar, ArgFunctor}},
     {"allocatomindirect", INSTR_ALLOCATOMINDIRECT, {InstrVar, InstrVar}},
     {"copyatom", INSTR_COPYATOM, {InstrVar, InstrVar, InstrVar}},

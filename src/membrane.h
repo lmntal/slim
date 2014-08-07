@@ -664,6 +664,21 @@ typedef HashIterator AtomListIter;
     }                                                                          \
   }
 
+#define EACH_ATOM_THREAD(V, ENT, ID, CODE)				       \
+    int id = (ID);							       \
+  if ((ENT)) {                                                                 \
+    for ((V)  = atomlist_head((ENT));                                          \
+         (V) != lmn_atomlist_end((ENT));                                       \
+         (V)  = LMN_SATOM_GET_NEXT_RAW((V))) {                                 \
+      if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR && id == 0) {     \
+        (CODE);								       \
+        id=lmn_env.core_num; 				                       \
+      }                                                                        \
+      id--;								       \ 
+    }                                                                          \
+  }
+
+
 #define EACH_FUNC_ATOM(MEM, F, V, CODE)                                        \
   do {                                                                         \
     AtomListEntry *__ent  = lmn_mem_get_atomlist((MEM), (F));                  \

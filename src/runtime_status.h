@@ -162,6 +162,7 @@ struct LmnProfiler {
   double         start_cpu_time,       end_cpu_time;
   double         start_wall_time_main, end_wall_time_main;
   double         *start_cpu_time_main, *end_cpu_time_main;
+  double         *thread_cpu_time_main;
 
   /* TODO: 以下のデータ群はMCProfilerの中に移し,
            実行時間, RTPProfiler, MCProfilerをメンバとした方が分かりやすい  */

@@ -52,6 +52,11 @@ LmnRegister *lmn_register_make(unsigned int size)
   return v;
 }
 
+void lmn_register_copy(LmnRegister *to, LmnRegister *from, unsigned int size)
+{
+  memcpy(to, from, sizeof(struct LmnRegister) * size);
+}
+
 void lmn_register_free(LmnRegister *v)
 {
   LMN_FREE(v);
@@ -79,6 +84,18 @@ void react_context_init(LmnReactCxt *rc, BYTE mode)
   rc->warry_cap     = WARRY_DEF_SIZE;
   rc->atomic_id     = -1;
   rc->hl_sameproccxt = NULL;
+}
+
+void react_context_copy(LmnReactCxt *to, LmnReactCxt *from)
+{
+  to->mode          = from->mode;
+  to->flag          = from->flag;
+  to->global_root   = from->global_root;
+  to->v             = from->v;
+  to->warry_cur     = from->warry_cur;
+  to->warry_num     = from->warry_num;
+  to->warry_cap     = from->warry_cap;
+  to->atomic_id     = from->atomic_id;
 }
 
 void react_context_destroy(LmnReactCxt *rc)

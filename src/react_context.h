@@ -149,8 +149,10 @@ static inline BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxt *rc) {
 
 
 LmnRegister *lmn_register_make(unsigned int size);
+void lmn_register_copy(LmnRegister *to, LmnRegister *from, unsigned int size);
 void lmn_register_free(LmnRegister *v);
 void lmn_register_extend(LmnReactCxt *rc, unsigned int new_size);
+void react_context_copy(LmnReactCxt *to, LmnReactCxt *from);
 
 /*----------------------------------------------------------------------
  * MC React Context

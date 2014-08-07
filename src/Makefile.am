@@ -55,6 +55,7 @@ slim_SOURCES =                                                     \
 	membrane.c                      membrane.h                       \
 	rule.c                          rule.h                           \
 	error.c                         error.h                          \
+	normal_thread.c			normal_thread.h			 \
 	task.c                          task.h                           \
 	memory_pool.c                   memory_pool.h                    \
 	dumper.c                        dumper.h                         \
