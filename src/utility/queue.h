@@ -74,10 +74,10 @@ struct Queue {
 Queue *new_queue(void);
 Queue *make_parallel_queue(BOOL lock_type);
 void q_free(Queue *q);
-inline BOOL is_empty_queue(Queue *q);
-inline void enqueue(Queue *q, LmnWord v);
-inline void enqueue_push_head(Queue *q, LmnWord v);
-inline LmnWord dequeue(Queue *q);
+BOOL is_empty_queue(Queue *q);
+void enqueue(Queue *q, LmnWord v);
+void enqueue_push_head(Queue *q, LmnWord v);
+LmnWord dequeue(Queue *q);
 
 static inline unsigned long queue_entry_num(Queue *q) {
   return q->enq_num - q->deq_num;
