@@ -28,7 +28,8 @@ slim_DEPENDENCIES += ../third_party/google-perftools-1.8.3/.libs/libtcmalloc_min
 endif
 
 if ENABLE_CUNIT
-slim_LDFLAGS += -L/usr/local/lib -lcunit
+slim_CFLAGS += -I$(CUNIT_HOME)/include
+slim_LDFLAGS += -L$(CUNIT_HOME)/lib -lcunit
 endif
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)

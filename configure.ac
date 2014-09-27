@@ -66,6 +66,8 @@ default_enable_tcmalloc=yes
 default_enable_minmax=no
 default_enable_cunit=no
 default_minimal_state=no
+default_cunit_home="/usr/local"
+
 case "$host" in
    *-mingw*) default_enable_tcmalloc=no;;
    *-cygwin*) default_enable_tcmalloc=no;;
@@ -211,6 +213,10 @@ if test "$enable_cunit" = "no"; then
 else
   AC_MSG_RESULT([enable cunit: yes])
   AC_DEFINE([USE_CUNIT], 1, [enable cunit])
+
+  if test "$CUNIT_HOME" = ""; then
+    AC_SUBST(CUNIT_HOME, "$default_cunit_home")
+  fi
 fi
 
 if test "$enable_minimal_state" = "yes"; then
@@ -219,7 +225,6 @@ if test "$enable_minimal_state" = "yes"; then
 else
   AC_MSG_RESULT([enable minimal-state: no])
 fi
-
 
 AM_CONDITIONAL(ENABLE_JNI,      test "$enable_jni" = "yes")
 AM_CONDITIONAL(ENABLE_TCMALLOC, test "$enable_tcmalloc" = "yes")
