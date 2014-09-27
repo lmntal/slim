@@ -643,7 +643,7 @@ static inline int load_input_files(Vector *start_rulesets, int optid, int argc, 
 
     if (!strcmp("-", f)) { /* 標準入力からの読込み */
       in = stdin;
-      t = load(stdin);
+      t = load(in);
       vec_push(start_rulesets, (vec_data_t)t);
     } else {
       t = load_file(f);

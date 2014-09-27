@@ -693,7 +693,6 @@ static void lmn_dump_cell_internal(LmnPort port,
   AtomListEntry *ent;
   unsigned int i, j;
   LmnFunctor f;
-  BOOL printed;
 
   if (!mem) return;
 
@@ -747,7 +746,6 @@ static void lmn_dump_cell_internal(LmnPort port,
     }
   }
 
-  printed = FALSE;
   { /* dump atoms */
     for (i = 0; i < PRI_NUM; i++) {
       for (j = 0; j < pred_atoms[i].num; j++) {
@@ -756,8 +754,6 @@ static void lmn_dump_cell_internal(LmnPort port,
           /* TODO アトムの出力の後には常に ". "が入ってしまう.
              アトムの間に ", "を挟んだ方が見栄えが良い */
           port_put_raw_s(port, ". ");
-
-          printed = TRUE;
         }
       }
     }
