@@ -1,19 +1,23 @@
-SUBDIRS = utility verifier
+SUBDIRS = utility verifier test
 
 bin_PROGRAMS = slim
 
 slim_LDADD =   -ldl                                    \
                -llmn_verifier                          \
                -llmn_utility                           \
+               -lunit_test                           \
                -lzd_in_slim
 slim_LDFLAGS = -rdynamic                               \
                -L./verifier                            \
                -L./utility                             \
+               -L./test                                \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I./verifier                            \
-               -I./utility
+               -I./utility                             \
+               -I./test
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
-                    ./utility/liblmn_utility.a
+                    ./utility/liblmn_utility.a         \
+                    ./test/libunit_test.a
 
 if ENABLE_JNI
 slim_LDADD += -ljvm
@@ -25,6 +29,11 @@ if ENABLE_TCMALLOC
 slim_LDADD += -ltcmalloc_minimal_in_slim
 slim_LDFLAGS += -L../third_party/google-perftools-1.8.3/.libs
 slim_DEPENDENCIES += ../third_party/google-perftools-1.8.3/.libs/libtcmalloc_minimal_in_slim.a
+endif
+
+if ENABLE_CUNIT
+slim_CFLAGS += -I$(CUNIT_HOME)/include
+slim_LDFLAGS += -L$(CUNIT_HOME)/lib -lcunit
 endif
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
@@ -91,7 +100,8 @@ slim_SOURCES =                                                     \
 	ext/array.c			ext/array.h                      \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
-	ext/time.c
+	ext/time.c \
+	#test/unit_test.c           test/unit_test.h
 #	ext.h ext.c 
 
 slim_OBJS =

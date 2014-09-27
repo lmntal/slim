@@ -326,6 +326,8 @@ struct LmnEnv {
   BOOL debug_por_dep;
 #endif
 
+  BOOL run_test;
+
   enum OutputFormat output_format;
   enum MCdumpFormat mc_dump_format;
   enum SPdumpFormat sp_dump_format;
