@@ -891,6 +891,7 @@ AC_OUTPUT(Makefile \
           src/genconfig \
           src/verifier/Makefile \
           src/utility/Makefile \
+          src/test/Makefile \
           lib/Makefile \
           ext/Makefile \
           test/Makefile \
