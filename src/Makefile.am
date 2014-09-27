@@ -27,6 +27,10 @@ slim_LDFLAGS += -L../third_party/google-perftools-1.8.3/.libs
 slim_DEPENDENCIES += ../third_party/google-perftools-1.8.3/.libs/libtcmalloc_minimal_in_slim.a
 endif
 
+if ENABLE_CUNIT
+slim_LDFLAGS += -L/usr/local/lib -lcunit
+endif
+
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
 DISTCLEANFILES = arch.h ../lib/config.lmn
 
@@ -91,7 +95,8 @@ slim_SOURCES =                                                     \
 	ext/array.c			ext/array.h                      \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
-	ext/time.c
+	ext/time.c \
+	test/unit_test.c           test/unit_test.h
 #	ext.h ext.c 
 
 slim_OBJS =
