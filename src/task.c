@@ -1501,7 +1501,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     {
       LmnInstrVar atom1, atom2, pos1, pos2;
       LmnSAtom ap1,ap2;
-      LmnLinkAttr attr1, attr2;
+      LmnByte attr1, attr2;
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, pos1);
       READ_VAL(LmnInstrVar, instr, atom2);
@@ -1516,14 +1516,14 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	ap2 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom2), pos2));
 	attr2 = LMN_SATOM_GET_ATTR(wt(rc, atom2), pos2);
 	LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-	LMN_SATOM_SET_ATTR(ap2, attr2, LMN_ATTR_MAKE_DATA(pos1));
+	LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
 	break;
       }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){
 	//(S,D)
 	ap1 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom1), pos1));
 	attr1 = LMN_SATOM_GET_ATTR(wt(rc, atom1), pos1);
 	LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
-	LMN_SATOM_SET_ATTR(ap1, attr1, LMN_ATTR_MAKE_DATA(pos2));
+	LMN_SATOM_SET_ATTR(ap1, attr1, at(rc, atom2));
 	break;
       }
       //(S,S)
