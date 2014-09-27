@@ -820,13 +820,18 @@ LmnRuleSet load_file(char *file_name)
     }
   } else if ((fp = fopen(file_name, "r"))) {
     /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
+    const char *lmntal_home = getenv(ENV_LMNTAL_HOME);
     if (!strcmp(&file_name[len-4], ".lmn")) {
-      if (getenv(ENV_LMNTAL_HOME)) {
+      if (&lmntal_home) {
         FILE *fp_compiled;
+        struct stat st;
 
-        fp_compiled = lmntal_compile_file(file_name);
-        if (!fp_compiled) {
-          fprintf(stderr, "Failed to run lmntal compiler");
+        if (stat(lmntal_home, &st) == 0) {
+          fp_compiled = lmntal_compile_file(file_name);
+        }
+        else {
+          fprintf(stderr, "Failed to run lmntal compiler\n");
+          fprintf(stderr, "lmntal don't exist at %s\n", lmntal_home);
           exit(EXIT_FAILURE);
         }
 
