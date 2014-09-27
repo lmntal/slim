@@ -583,9 +583,9 @@ typedef struct TraceLog *TraceLog;
 
 TraceLog tracelog_make(void);
 void tracelog_free(TraceLog trc);
-inline void tracelog_init(TraceLog trc);
-inline void tracelog_init_with_size(TraceLog trc, unsigned long size);
-inline void tracelog_destroy(TraceLog trc);
+void tracelog_init(TraceLog trc);
+void tracelog_init_with_size(TraceLog trc, unsigned long size);
+void tracelog_destroy(TraceLog trc);
 
 static inline BOOL tracelog_eq_traversed_proc_num(TraceLog      l,
                                                   LmnMembrane   *owner,

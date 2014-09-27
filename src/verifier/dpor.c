@@ -1251,10 +1251,7 @@ static inline void dpor_RHS_flags_dump(BYTE f)
 
 int dpor_dependency_tbl_dump(McDporData *d)
 {
-  Vector *p;
   unsigned int i, n;
-
-  p = d->ample_cand;
 
   n = vec_num(d->ample_cand);
   if (n == 0) {
