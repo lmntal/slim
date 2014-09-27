@@ -1506,83 +1506,75 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, pos1);
       READ_VAL(LmnInstrVar, instr, atom2);
       READ_VAL(LmnInstrVar, instr, pos2);
+      if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1)) && LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){
+	//(D,D)
+#ifdef DEBUG
+        fprintf(stderr, "Two data atoms are specified in the arg of the swaplink instruction.\n");
+#endif
+      }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
+	//(D,S)
+	ap2 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom2), pos2));
+	attr2 = LMN_SATOM_GET_ATTR(wt(rc, atom2), pos2);
+	LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	LMN_SATOM_SET_ATTR(ap2, attr2, LMN_ATTR_MAKE_DATA(pos1));
+	break;
+      }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){
+	//(S,D)
+	ap1 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom1), pos1));
+	attr1 = LMN_SATOM_GET_ATTR(wt(rc, atom1), pos1);
+	LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
+	LMN_SATOM_SET_ATTR(ap1, attr1, LMN_ATTR_MAKE_DATA(pos2));
+	break;
+      }
+      //(S,S)
       ap1 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom1), pos1));
       ap2 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom2), pos2));
       attr1 = LMN_SATOM_GET_ATTR(wt(rc, atom1), pos1);
       attr2 = LMN_SATOM_GET_ATTR(wt(rc, atom2), pos2);
-      if ((LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1)) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr2))
-          || (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2)) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr1))) {
-        /* atom1とap2が共にデータアトム or atom2とap1が共にデータアトム */
-#ifdef DEBUG
-        fprintf(stderr, "Two data atoms are connected each other.\n");
-#endif
-      }else if(LMN_SATOM(wt(rc,atom1)) == ap2 && LMN_SATOM(wt(rc,atom2)) == ap1 && attr1 == pos2 && attr2 ==pos1){
-      }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){
-        /* データアトムatom2とシンボルアトムap1 */
-        LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
-        LMN_SATOM_SET_ATTR(ap1, attr1, pos2);
-        if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
-          /* データアトムatom1とシンボルアトムap2 */
-          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-        }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
-          /* データアトムap2とシンボルアトムatom1 */
-          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-        }else {
-          /* シンボルアトムatom1とシンボルアトムap2 */
-	//////
-	        if(ap2 != NULL){
-			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-	        }else{
-	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
-	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
-	        }
-	//////
-          /*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
-          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);*/
-        }
-      }
-      else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)){
-        /* データアトムap1とシンボルアトムatom2 */
+      
+      if(LMN_SATOM(wt(rc,atom1)) == ap2 && LMN_SATOM(wt(rc,atom2)) == ap1 
+	  && attr1 == pos2 && attr2 ==pos1){
+	//use same link
+	
+      }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr1) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
+	//(-D,-D)
+
+	/* データアトムap2とシンボルアトムatom1 */
+	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2));
+
+	/* データアトムap1とシンボルアトムatom2 */
         LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
         LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1);
-        if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
-          /* データアトムatom1とシンボルアトムap2 */
-          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-        }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
-          /* データアトムap2とシンボルアトムatom1 */
-          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-        }else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(attr2)){
-          /* シンボルアトムatom1とシンボルアトムap2 */
-	//////
-	        if(ap2 != NULL){
-			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-	        }else{
-	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
-	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
-	        }
-	//////
-          /*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
-          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);*/
-        }
-      }
-      else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(at(rc, atom2))
-               && !LMN_ATTR_IS_EX(attr1) && !LMN_ATTR_IS_EX(attr2)){
-        /* シンボルアトムatom2とシンボルアトムap1 */
 
+	
+      }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)){
+	//(-D,-S)
+
+	/* データアトムap1とシンボルアトムatom2 */
+        LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
+        LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1);
+
+	/* シンボルアトムatom1とシンボルアトムap2 */
+	if(ap2 != NULL){
+	  LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	  LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
+	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+        }else{
+	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+        }
+
+	
+      }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
+	//(-S,-D)
+
+	/* データアトムap2とシンボルアトムatom1 */
+	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+
+        /* シンボルアトムatom2とシンボルアトムap1 */
         if(ap1 != NULL){
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, LMN_ATTR_GET_VALUE(attr1));
@@ -1592,52 +1584,181 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, 0);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, 0);
         }
-	if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
-          /* データアトムatom1とシンボルアトムap2 */
-          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-        }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
-          /* データアトムap2とシンボルアトムatom1 */
-          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2));
-        }else {
-          /* シンボルアトムatom1とシンボルアトムap2 */
-	//////
-	        if(ap2 != NULL){
-			LMN_SATOM_SET_LINK(ap2, LMN_ATTR_GET_VALUE(attr2), wt(rc, atom1));
-	          	LMN_SATOM_SET_ATTR(ap2, LMN_ATTR_GET_VALUE(attr2), pos1);
-	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2));
-	        }else{
-	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
-	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
-	        }
-	//////
-	/*
-        if(ap2){
-	        if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
-	          // データアトムatom1とシンボルアトムap2 
-	          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-	          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
-	        }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
-	          // データアトムap2とシンボルアトムatom1 
-	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-	        }else{
-	          // シンボルアトムatom1とシンボルアトムap2 
-	          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
-	          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
-	        }
+	
+      }else{
+	//(-S,-S)
+
+        /* シンボルアトムatom2とシンボルアトムap1 */
+        if(ap1 != NULL){
+          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
+          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, LMN_ATTR_GET_VALUE(attr1));
+          LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2));
+          LMN_SATOM_SET_ATTR(ap1, attr1, pos2);
         }else{
-          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
-          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,0);
-        }*/
+          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, 0);
+          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, 0);
+        }
+
+	/* シンボルアトムatom1とシンボルアトムap2 */
+	if(ap2 != NULL){
+	  LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1));
+	  LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
+	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+        }else{
+	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+        }
       }
-      }
+
       break;
     }
+
+/*     case INSTR_SWAPLINK: */
+/*     { */
+/*       LmnInstrVar atom1, atom2, pos1, pos2; */
+/*       LmnSAtom ap1,ap2; */
+/*       LmnLinkAttr attr1, attr2; */
+/*       READ_VAL(LmnInstrVar, instr, atom1); */
+/*       READ_VAL(LmnInstrVar, instr, pos1); */
+/*       READ_VAL(LmnInstrVar, instr, atom2); */
+/*       READ_VAL(LmnInstrVar, instr, pos2); */
+/*       ap1 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom1), pos1)); */
+/*       ap2 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom2), pos2)); */
+/*       attr1 = LMN_SATOM_GET_ATTR(wt(rc, atom1), pos1); */
+/*       attr2 = LMN_SATOM_GET_ATTR(wt(rc, atom2), pos2); */
+/*       if ((LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1)) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) */
+/*           || (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2)) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr1))) { */
+/*         /\* atom1とap2が共にデータアトム or atom2とap1が共にデータアトム *\/ */
+/* #ifdef DEBUG */
+/*         fprintf(stderr, "Two data atoms are connected each other.\n"); */
+/* #endif */
+/*       }else if(LMN_SATOM(wt(rc,atom1)) == ap2 && LMN_SATOM(wt(rc,atom2)) == ap1 && attr1 == pos2 && attr2 ==pos1){ */
+/*       }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){ */
+/*         /\* データアトムatom2とシンボルアトムap1 *\/ */
+/* 	if(ap1 != NULL){ */
+/* 	  LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2)); */
+/* 	  LMN_SATOM_SET_ATTR(ap1, attr1, pos2); */
+/* 	} */
+/*         if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
+/*           /\* データアトムatom1とシンボルアトムap2 *\/ */
+/* 	  if(ap2 != NULL){ */
+/* 	    LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/* 	    LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/* 	  } */
+/*         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
+/*           /\* データアトムap2とシンボルアトムatom1 *\/ */
+/*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/*         }else { */
+/*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
+/* 	////// */
+/* 	        if(ap2 != NULL){ */
+/* 			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/* 	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/* 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/* 	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/* 	        }else{ */
+/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/* 	        } */
+/* 	////// */
+/*           /\*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*           LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1)); */
+/*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);*\/ */
+/*         } */
+/*       } */
+/*       else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)){ */
+/*         /\* データアトムap1とシンボルアトムatom2 *\/ */
+/*         LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1); */
+/*         LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1); */
+/*         if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
+/*           /\* データアトムatom1とシンボルアトムap2 *\/ */
+/*           LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*           LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/*         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
+/*           /\* データアトムap2とシンボルアトムatom1 *\/ */
+/*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/*         }else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(attr2)){ */
+/*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
+/* 	////// */
+/* 	        if(ap2 != NULL){ */
+/* 			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/* 	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/* 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/* 	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/* 	        }else{ */
+/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/* 	        } */
+/* 	////// */
+/*           /\*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*           LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1)); */
+/*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);*\/ */
+/*         } */
+/*       } */
+/*       else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(at(rc, atom2)) */
+/*                && !LMN_ATTR_IS_EX(attr1) && !LMN_ATTR_IS_EX(attr2)){ */
+/*         /\* シンボルアトムatom2とシンボルアトムap1 *\/ */
+
+/*         if(ap1 != NULL){ */
+/*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1); */
+/*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, LMN_ATTR_GET_VALUE(attr1)); */
+/*           LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2)); */
+/*           LMN_SATOM_SET_ATTR(ap1, attr1, pos2); */
+/*         }else{ */
+/*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, 0); */
+/*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, 0); */
+/*         } */
+/* 	if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
+/*           /\* データアトムatom1とシンボルアトムap2 *\/ */
+/*           LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*           LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/*         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
+/*           /\* データアトムap2とシンボルアトムatom1 *\/ */
+/*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2)); */
+/*         }else { */
+/*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
+/* 	////// */
+/* 	        if(ap2 != NULL){ */
+/* 			LMN_SATOM_SET_LINK(ap2, LMN_ATTR_GET_VALUE(attr2), wt(rc, atom1)); */
+/* 	          	LMN_SATOM_SET_ATTR(ap2, LMN_ATTR_GET_VALUE(attr2), pos1); */
+/* 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/* 	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2)); */
+/* 	        }else{ */
+/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/* 	        } */
+/* 	////// */
+/* 	/\* */
+/*         if(ap2){ */
+/* 	        if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
+/* 	          // データアトムatom1とシンボルアトムap2  */
+/* 	          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/* 	          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1)); */
+/* 	        }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
+/* 	          // データアトムap2とシンボルアトムatom1  */
+/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/* 	        }else{ */
+/* 	          // シンボルアトムatom1とシンボルアトムap2  */
+/* 	          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/* 	          LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/* 	        } */
+/*         }else{ */
+/*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,0); */
+/*         }*\/ */
+/*       } */
+/*       } */
+/*       break; */
+/*     } */
     case INSTR_INHERITLINK:
     {
       LmnInstrVar atomi, posi, linki, memi;
@@ -1812,8 +1933,9 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	READ_VAL(LmnInstrVar, instr, atomi);
 	READ_VAL(LmnInstrVar, instr, link);
 	
-	
-	LMN_SATOM_SET_LINK(wt(rc,atomi), link, NULL);
+	if(!LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atomi))){
+	  LMN_SATOM_SET_LINK(wt(rc,atomi), link, NULL);
+	}
 	
 	break;
       }
