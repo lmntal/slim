@@ -1,23 +1,19 @@
-SUBDIRS = utility verifier test
+SUBDIRS = utility verifier
 
 bin_PROGRAMS = slim
 
 slim_LDADD =   -ldl                                    \
                -llmn_verifier                          \
                -llmn_utility                           \
-               -lunit_test                           \
                -lzd_in_slim
 slim_LDFLAGS = -rdynamic                               \
                -L./verifier                            \
                -L./utility                             \
-               -L./test                                \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I./verifier                            \
-               -I./utility                             \
-               -I./test
+               -I./utility
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
-                    ./utility/liblmn_utility.a         \
-                    ./test/libunit_test.a
+                    ./utility/liblmn_utility.a
 
 if ENABLE_JNI
 slim_LDADD += -ljvm
@@ -34,6 +30,11 @@ endif
 if ENABLE_CUNIT
 slim_CFLAGS += -I$(CUNIT_HOME)/include
 slim_LDFLAGS += -L$(CUNIT_HOME)/lib -lcunit
+SUBDIRS += test
+slim_LDADD += -lunit_test
+slim_LDFLAGS += -L./test
+slim_CFLAGS += -I./test
+slim_DEPENDENCIES += ./test/libunit_test.a
 endif
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
@@ -100,8 +101,7 @@ slim_SOURCES =                                                     \
 	ext/array.c			ext/array.h                      \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
-	ext/time.c \
-	#test/unit_test.c           test/unit_test.h
+	ext/time.c
 #	ext.h ext.c 
 
 slim_OBJS =
