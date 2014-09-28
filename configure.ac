@@ -69,6 +69,7 @@ default_minimal_state=no
 default_cunit_home="/usr/local"
 
 case "$host" in
+   *-*-darwin* | *-*-ios*) default_enable_tcmalloc=no;;
    *-mingw*) default_enable_tcmalloc=no;;
    *-cygwin*) default_enable_tcmalloc=no;;
 esac
