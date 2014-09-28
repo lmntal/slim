@@ -1395,7 +1395,7 @@ static BOOL mcndfs_loop(LmnWorker *w,
 		      Vector *red_states)
 {
   unsigned int i, j, n, m;
-  State *s, *t, *succ;
+  State *t, *succ;
   BOOL contained;
 
   while(vec_num(search) > 0) {
@@ -1422,7 +1422,7 @@ static BOOL mcndfs_loop(LmnWorker *w,
         m = vec_num(red_states);
         contained = FALSE;
         for (j = 0; j < m; j++) {
-          t = vec_get(red_states, j);
+          t = (State *)vec_get(red_states, j);
           if (state_id(t) == state_id(succ)) {
             contained = TRUE;
             break;

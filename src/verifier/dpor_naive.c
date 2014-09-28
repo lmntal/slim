@@ -1024,7 +1024,7 @@ static int build_ample_satisfying_lemma(st_data_t key,
       is_dependent = TRUE;
 
       for (k = 0; k < vec_num(ids_independent_of_id_key); k++) {
-        if (transition_id(check) == (unsigned long)vec_get(ids_independent_of_id_key, k)) {
+        if (checked_id == (unsigned long)vec_get(ids_independent_of_id_key, k)) {
           is_dependent = FALSE;
           break;
         }
@@ -1032,8 +1032,8 @@ static int build_ample_satisfying_lemma(st_data_t key,
 
       if (is_dependent) {
         need_to_push_id_key = TRUE;
-        if (!vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(check))) {
-          vec_push(mc_por.ample_candidate, (vec_data_t)transition_id(check));
+        if (!vec_contains(mc_por.ample_candidate, (vec_data_t)checked_id)) {
+          vec_push(mc_por.ample_candidate, (vec_data_t)checked_id);
           set_ample(transition_next_state(check));
         }
       }

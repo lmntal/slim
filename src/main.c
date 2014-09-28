@@ -62,6 +62,10 @@
 /* #include "ext.h" */
 #include "runtime_status.h"
 
+#ifdef USE_CUNIT
+#include "test/unit_test.h"
+#endif
+
 void install_builtin_extensions(void);
 void init_builtin_extensions(void); /* ext/init_exts.c */
 
@@ -114,6 +118,7 @@ static void usage(void)
           "  --mem-enc           (MC) Use canonical membrane representation\n"
           "  --ltl-f <ltl>       (MC) Input <ltl> formula directly. (need LTL2BA env)\n"
           "  --visualize         (MC) Output information for visualize\n"
+          "  --run-test          (MC) Run CUnit\n"
           "  --version           Prints version and exits.\n"
           "  --help              This Help.\n"
           );
@@ -213,6 +218,7 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"visualize"              , 0, 0, 6100},
     {"hash-compaction"        , 0, 0, 6060},
     {"hash-depth"             , 1, 0, 6061},
+    {"run-test"               , 1, 0, 6070},
     {0, 0, 0, 0}
   };
 
@@ -535,6 +541,8 @@ static void parse_options(int *optid, int argc, char *argv[])
       }
       break;
     }
+    case 6070:
+      lmn_env.run_test = TRUE;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;
@@ -643,7 +651,7 @@ static inline int load_input_files(Vector *start_rulesets, int optid, int argc, 
 
     if (!strcmp("-", f)) { /* 標準入力からの読込み */
       in = stdin;
-      t = load(stdin);
+      t = load(in);
       vec_push(start_rulesets, (vec_data_t)t);
     } else {
       t = load_file(f);
@@ -707,6 +715,15 @@ int main(int argc, char *argv[])
 {
   int optid;
   slim_init(&optid, argc, argv);
+
+  if (lmn_env.run_test) {
+#ifdef USE_CUNIT
+    test_main();
+#else
+    fprintf(stderr, "CUnit is disabled. Please configure with --enable-cunit option.\n");
+#endif
+    return 0;
+  }
 
   if (optid >= argc) {
     /** no input file */

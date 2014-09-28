@@ -44,12 +44,12 @@
 #include "vector.h"
 #include "react_context.h"
 
-inline LmnMemStack lmn_memstack_make(void);
-inline void lmn_memstack_free(LmnMemStack memstack);
-inline BOOL lmn_memstack_isempty(LmnMemStack memstack);
-inline void lmn_memstack_push(LmnMemStack memstack, LmnMembrane *mem);
-inline LmnMembrane *lmn_memstack_pop(LmnMemStack memstack);
-inline LmnMembrane *lmn_memstack_peek(LmnMemStack memstack);
+LmnMemStack lmn_memstack_make(void);
+void lmn_memstack_free(LmnMemStack memstack);
+BOOL lmn_memstack_isempty(LmnMemStack memstack);
+void lmn_memstack_push(LmnMemStack memstack, LmnMembrane *mem);
+LmnMembrane *lmn_memstack_pop(LmnMemStack memstack);
+LmnMembrane *lmn_memstack_peek(LmnMemStack memstack);
 void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem);
 void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem);
 

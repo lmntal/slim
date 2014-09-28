@@ -37,6 +37,7 @@ int hsv2rgb(int h, int s, int v) {
     case 4: return make_rgb((int)k, (int)m, (int)v);
     case 5: return make_rgb((int)v, (int)m, (int)n);
   }
+  return 0;
 }
 
 void calc_colors(int worker_num, int** colors) {

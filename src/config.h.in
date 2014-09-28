@@ -95,6 +95,9 @@
 /* Define to 1 if you have the `gomp' library (-lgomp). */
 #undef HAVE_LIBGOMP
 
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
 
@@ -249,8 +252,8 @@
 /* Define to 'volatile' if __malloc_hook is declared volatile */
 #undef MALLOC_HOOK_MAYBE_VOLATILE
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
+/* enable minimal state */
+#undef MINIMAL_STATE
 
 /* Name of package */
 #undef PACKAGE
@@ -322,6 +325,9 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
+
+/* enable cunit */
+#undef USE_CUNIT
 
 /* enable jni */
 #undef USE_JNI

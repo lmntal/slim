@@ -692,10 +692,9 @@ void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v)
 unsigned long mc_invalids_get_num(LmnWorkerGroup *wp)
 {
   unsigned long ret;
-  unsigned int i, n;
+  unsigned int i;
 
   ret = 0;
-  n = lmn_env.core_num;
   for (i = 0; i < wp->worker_num; i++) {
     ret += vec_num(worker_invalid_seeds(workers_get_worker(wp, i)));
   }

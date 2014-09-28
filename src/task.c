@@ -538,20 +538,17 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane
     switch(attr) {                                            \
     case LMN_INT_ATTR:                                        \
     {                                                         \
-      long t;                                                 \
-      READ_VAL(long, instr, t);                               \
+      SKIP_VAL(long, instr);                                  \
       break;                                                  \
     }                                                         \
     case LMN_DBL_ATTR:                                        \
     {                                                         \
-      double t;                                               \
-      READ_VAL(double, instr, t);                             \
+      SKIP_VAL(double, instr);                                \
       break;                                                  \
     }                                                         \
     case LMN_STRING_ATTR:                                     \
     {                                                         \
-      lmn_interned_str s;                                     \
-      READ_VAL(lmn_interned_str, instr, s);                   \
+      SKIP_VAL(lmn_interned_str, instr);                      \
       break;                                                  \
     }                                                         \
     default:                                                  \
@@ -623,15 +620,15 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     switch (op) {
     case INSTR_SPEC:
     {
-      LmnInstrVar s0, s1;
+      LmnInstrVar s0;
 
+      SKIP_VAL(LmnInstrVar, instr);
       READ_VAL(LmnInstrVar, instr, s0);
-      READ_VAL(LmnInstrVar, instr, s1);
 
-      if (s1 > warry_size(rc)) {
-        lmn_register_extend(rc, s1);
+      if (s0 > warry_size(rc)) {
+        lmn_register_extend(rc, s0);
       }
-      warry_use_size_set(rc, s1);
+      warry_use_size_set(rc, s0);
       warry_cur_size_set(rc, 0);
       break;
     }
@@ -804,10 +801,9 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_COMMIT:
     {
       lmn_interned_str rule_name;
-      LmnLineNum       line_num;
 
       READ_VAL(lmn_interned_str, instr, rule_name);
-      READ_VAL(LmnLineNum,       instr, line_num);
+      SKIP_VAL(LmnLineNum,       instr);
 
 #ifdef KWBT_OPT
       {
@@ -832,7 +828,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
        */
       if (RC_GET_MODE(rc, REACT_ND)) {
         ProcessID org_next_id = env_next_id();
-        LmnMembrane *cur_mem;
+        LmnMembrane *cur_mem = NULL;
 
         if (RC_MC_USE_DMEM(rc)) {
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
@@ -999,7 +995,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             lmn_rule_set_pre_id(rule, ANONYMOUS);
           }
 
-          cur_mem = wt(rc, 0);
+          cur_mem = (LmnMembrane *)wt(rc, 0);
           /* 変数配列および属性配列を元に戻す */
           lmn_register_free(rc_warry(rc));
           rc_warry_set(rc, tmp);
@@ -1234,12 +1230,12 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_ANYMEM:
     {
-      LmnInstrVar mem1, mem2, memt, memn; /* dst, parent, type, name */
+      LmnInstrVar mem1, mem2, memn; /* dst, parent, type, name */
       LmnMembrane* mp;
 
       READ_VAL(LmnInstrVar, instr, mem1);
       READ_VAL(LmnInstrVar, instr, mem2);
-      READ_VAL(LmnInstrVar, instr, memt);
+      SKIP_VAL(LmnInstrVar, instr);
       READ_VAL(lmn_interned_str, instr, memn);
 
       tt_set(rc, mem1, TT_MEM);
@@ -1761,11 +1757,11 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 /*     } */
     case INSTR_INHERITLINK:
     {
-      LmnInstrVar atomi, posi, linki, memi;
+      LmnInstrVar atomi, posi, linki;
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, posi);
       READ_VAL(LmnInstrVar, instr, linki);
-      READ_VAL(LmnInstrVar, instr, memi);
+      SKIP_VAL(LmnInstrVar, instr);
 
       if (LMN_ATTR_IS_DATA(at(rc, atomi)) && LMN_ATTR_IS_DATA(LINKED_ATTR(linki))) {
 #ifdef DEBUG
@@ -1875,17 +1871,13 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_ENQUEUEATOM:
     {
-      LmnInstrVar atom;
-
-      READ_VAL(LmnInstrVar, instr, atom);
+      SKIP_VAL(LmnInstrVar, instr);
       /* do nothing */
       break;
     }
     case INSTR_DEQUEUEATOM:
     {
-      LmnInstrVar atom;
-
-      READ_VAL(LmnInstrVar, instr, atom);
+      SKIP_VAL(LmnInstrVar, instr);
       break;
     }
     case INSTR_TAILATOM:
@@ -1941,12 +1933,12 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       }
     case INSTR_NEWMEM:
     {
-      LmnInstrVar newmemi, parentmemi, memf;
+      LmnInstrVar newmemi, parentmemi;
       LmnMembrane *mp;
 
       READ_VAL(LmnInstrVar, instr, newmemi);
       READ_VAL(LmnInstrVar, instr, parentmemi);
-      READ_VAL(LmnInstrVar, instr, memf);
+      SKIP_VAL(LmnInstrVar, instr);
 
       mp = lmn_mem_make(); /*lmn_new_mem(memf);*/
       lmn_mem_add_child_mem((LmnMembrane*)wt(rc, parentmemi), mp);
@@ -2035,9 +2027,8 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       break;
     }
     case INSTR_UNLOCKMEM:
-    { /* 何もしない */
-      LmnInstrVar memi;
-      READ_VAL(LmnInstrVar, instr, memi);
+    { /* do nothing */
+      SKIP_VAL(LmnInstrVar, instr);
       break;
     }
     case INSTR_LOADRULESET:
@@ -2071,17 +2062,13 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_RECURSIVELOCK:
     {
-      LmnInstrVar memi;
-
-      READ_VAL(LmnInstrVar, instr, memi);
+      SKIP_VAL(LmnInstrVar, instr);
       /* do notiong */
       break;
     }
     case INSTR_RECURSIVEUNLOCK:
     {
-      LmnInstrVar memi;
-
-      READ_VAL(LmnInstrVar, instr, memi);
+      SKIP_VAL(LmnInstrVar, instr);
       /* do notiong */
       break;
     }
@@ -4072,15 +4059,15 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     switch (op) {
     case INSTR_SPEC:
     {
-      LmnInstrVar s0, s1;
+      LmnInstrVar s0;
 
+      SKIP_VAL(LmnInstrVar, instr);
       READ_VAL(LmnInstrVar, instr, s0);
-      READ_VAL(LmnInstrVar, instr, s1);
 
-      if (s1 > warry_size(rc)) {
-        lmn_register_extend(rc, s1);
+      if (s0 > warry_size(rc)) {
+        lmn_register_extend(rc, s0);
       }
-      warry_use_size_set(rc, s1);
+      warry_use_size_set(rc, s0);
       warry_cur_size_set(rc, 0);
       break;
     }
@@ -4297,27 +4284,24 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       return FALSE;
     case INSTR_ENQUEUEATOM:
     {
-      LmnInstrVar atom;
-
-      READ_VAL(LmnInstrVar, instr, atom);
+      SKIP_VAL(LmnInstrVar, instr);
       /* do nothing */
       break;
     }
     case INSTR_DEQUEUEATOM:
     {
-      LmnInstrVar atom;
-
-      READ_VAL(LmnInstrVar, instr, atom);
+      SKIP_VAL(LmnInstrVar, instr);
+      /* do nothing */
       break;
     }
     case INSTR_NEWMEM:
     {
-      LmnInstrVar newmemi, parentmemi, memf;
+      LmnInstrVar newmemi, parentmemi;
       LmnMembrane *mp;
 
       READ_VAL(LmnInstrVar, instr, newmemi);
       READ_VAL(LmnInstrVar, instr, parentmemi);
-      READ_VAL(LmnInstrVar, instr, memf);
+      SKIP_VAL(LmnInstrVar, instr);
 
       mp = dmem_root_new_mem(RC_ND_MEM_DELTA_ROOT(rc)); /*lmn_new_mem(memf);*/
       dmem_root_add_child_mem(RC_ND_MEM_DELTA_ROOT(rc),
@@ -4375,7 +4359,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_FREEMEM:
     {
       LmnInstrVar memi;
-      LmnMembrane *mp;
+      LmnMembrane *mp __attribute__ ((unused));
 
       READ_VAL(LmnInstrVar, instr, memi);
 
@@ -4402,8 +4386,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_ENQUEUEMEM:
     {
-      LmnInstrVar memi;
-      READ_VAL(LmnInstrVar, instr, memi);
+      SKIP_VAL(LmnInstrVar, instr);
 //      if (RC_GET_MODE(rc, REACT_ND)) {
 //        lmn_mem_activate_ancestors((LmnMembrane *)wt(rc, memi)); /* MC */
 //      }
@@ -4416,9 +4399,8 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_UNLOCKMEM:
     {
-      LmnInstrVar memi;
-      READ_VAL(LmnInstrVar, instr, memi);
-
+      SKIP_VAL(LmnInstrVar, instr);
+      /* do nothing */
       break;
     }
     case INSTR_LOADRULESET:
@@ -4452,18 +4434,14 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     }
     case INSTR_RECURSIVELOCK:
     {
-      LmnInstrVar memi;
-
-      READ_VAL(LmnInstrVar, instr, memi);
-      /* do notiong */
+      SKIP_VAL(LmnInstrVar, instr);
+      /* do nothing */
       break;
     }
     case INSTR_RECURSIVEUNLOCK:
     {
-      LmnInstrVar memi;
-
-      READ_VAL(LmnInstrVar, instr, memi);
-      /* do notiong */
+      SKIP_VAL(LmnInstrVar, instr);
+      /* do nothing */
       break;
     }
     case INSTR_COPYGROUND:

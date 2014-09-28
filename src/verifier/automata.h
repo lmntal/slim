@@ -85,9 +85,9 @@ unsigned int       atmstate_transition_num(AutomataState s);
 AutomataTransition atmstate_get_transition(AutomataState s, unsigned int index);
 BOOL               atmstate_is_accept(AutomataState s);
 BOOL               atmstate_is_end(AutomataState s);
-inline void        atmstate_set_scc(AutomataState s, AutomataSCC *scc);
-inline BYTE        atmstate_scc_type(AutomataState s);
-inline AutomataSCC *atmstate_scc(AutomataState s);
+void        atmstate_set_scc(AutomataState s, AutomataSCC *scc);
+BYTE        atmstate_scc_type(AutomataState s);
+AutomataSCC *atmstate_scc(AutomataState s);
 
 
 /* transition of automata */
