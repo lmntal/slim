@@ -1,0 +1,214 @@
+/*
+ * functional.lmn - Module with higher order functions for list processing
+ *
+ *   Copyright (c) 2014, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/**
+ * Functional module
+ * Author: Yusuke Yoshimoto
+ */
+
+{
+module(functional).
+
+// 'if' module is not well-maintenanced, so defined here
+H=if(true,  T, F), {$t[T]}, {$f[F]} :- $t[H].
+H=if(false, T, F), {$t[T]}, {$f[F]} :- $f[H].
+H='?'(true,  Te, Fe) :- ground(Fe) | H=Te.
+H='?'(false, Te, Fe) :- ground(Te) | H=Fe.
+
+/**
+ * RET = apply(LAMBDA, ARG):
+ *
+ * Applies the argument ARG to the lambda expression LAMBDA.
+ * LAMBDA is an atom lambda(X, F, PARENT),
+ * whose X is the arguments and F is the function body.
+ * F must contain exactly one link X.
+ *
+ * @example ret = apply(lambda(X, [X]), 0) ==> ret = [0]
+ */
+RET = apply(lambda(X,F), ARG) :- RET = F, X = ARG.
+// Offers 2-ary lambda/apply for convenience.
+// 2-ary lambda expression 'RET = lambda(X,Y, F)' gets curried to
+// 'RET = lambda(X, lambda(Y,F))' automatically.
+RET = lambda(X,Y,F) :- RET = lambda(X, lambda(Y, F)).
+RET = apply(lambda(X,F), ARG1, ARG2) :-
+  RET = apply(apply(lambda(X,F), ARG1), ARG2).
+
+/**
+ * copyarg(ARG, LIST):
+ *
+ * Copies the ground process ARG and attaches processes to the links in LIST.
+ * This is useful when a lambda expression uses its argument several times
+ * or ignores its argument.
+ *
+ * @example ret = apply(lambda(X, X0+X1), 3), copyarg(X, [X0,X1]) ==> ret = 6
+ * @example ret = apply(lambda(X, 0), 3), copyarg(X, []) ==> ret = 0
+ */
+copyarg(ARG, []) :- ground(ARG) | .
+copyarg(ARG, [HD|TL]) :- ground(ARG) | HD = ARG, copyarg(ARG, TL).
+
+/**
+ * RET = map(LAMBDA, LIST):
+ *
+ * Applies all elements of LIST to the 1-ary lambda expression LAMBDA,
+ * and returns the consequent list.
+ *
+ * @example ret = map(lambda(X, X+1), [0,1,2]) ==> ret = [1,2,3]
+ */
+RET = map(LAMBDA, []) :- ground(LAMBDA) | RET = [].
+RET = map(LAMBDA, [HD|TL]) :-
+  ground(LAMBDA) | RET = [apply(LAMBDA, HD) | map(LAMBDA,TL)].
+
+/**
+ * RET = fold_left(LAMBDA, INIT, LIST):
+ *
+ * Applies INIT and the head of LIST
+ * to the 2-ary lambda expression LAMBDA.
+ * Repeats that iteratively, and returns the consequent value.
+ *
+ * @example ret = fold_left(lambda(X,Y, X-Y), 100, [1,2,3,4,5]) ==> ret = 85
+ */
+RET = fold_left(LAMBDA, INIT, []) :- ground(LAMBDA) | RET = INIT.
+RET = fold_left(LAMBDA, INIT, [HD|TL]) :-
+  ground(LAMBDA) | RET = fold_left(LAMBDA, apply(LAMBDA, INIT, HD), TL).
+
+/**
+ * RET = fold_right(LAMBDA, LIST, INIT):
+ *
+ * Folds with right associativity.
+ *
+ * @example ret = fold_right(lambda(X,Y, [X|Y]), [1,2,3], [4,5,6]) ==> ret = [1,2,3,4,5,6]
+ */
+RET = fold_right(LAMBDA, [], INIT) :- ground(LAMBDA) | RET = INIT.
+RET = fold_right(LAMBDA, [HD|TL], INIT) :-
+  ground(LAMBDA) | RET = apply(LAMBDA, HD, fold_right(LAMBDA, TL, INIT)).
+
+/**
+ * RET = filter(LAMBDA, LIST):
+ *
+ * From LIST, extracts all elements which satisfy
+ * the predicate LAMBDA (1-ary lambda expression.)
+ *
+ * @example ret = filter(lambda(X, X>0), [-1,1,-2,2]) ==> ret = [1,2]
+ */
+RET = filter(LAMBDA, []) :- ground(LAMBDA) | RET = [].
+RET = filter(LAMBDA, [HD|TL]) :-
+  ground(LAMBDA), ground(HD), ground(TL) |
+  RET = if(apply(LAMBDA, HD), THEN, ELSE),
+  {THEN = [HD | filter(LAMBDA, TL)]}, {ELSE = filter(LAMBDA, TL)}.
+
+/**
+ * RET = exists(LAMBDA, LIST)
+ *
+ * Returns true if LIST contains at least one element
+ * which satisfies the predicate LAMBDA (1-ary lambda expression.)
+ * Otherwise, returns false.
+ *
+ * @example ret = exists(lambda(X, X>2), [1,2,3,4]) ==> ret = true.
+ * @example ret = exists(lambda(X, X>2), [1,2]) ==> ret = false.
+ * @example ret = exists(lambda(X, X>2), []) ==> ret = false.
+ */
+RET = exists(LAMBDA, []) :- ground(LAMBDA) | RET = false.
+RET = exists(LAMBDA, [HD|TL]) :-
+  // Without the guard ground(TL), if expression wouldn't be rewritten.
+  ground(LAMBDA), ground(TL) |
+  RET = if(apply(LAMBDA, HD), THEN, ELSE),
+  {THEN = true}, {ELSE = exists(LAMBDA, TL)}.
+
+/**
+ * RET = for_all(LAMBDA, LIST)
+ *
+ * Returns true if all elements of LIST satisfy
+ * the predicate LAMBDA (1-ary lambda expression.)
+ * Otherwise, returns false.
+ *
+ * @example ret = for_all(lambda(X, X>2), [3,4]) ==> ret = true.
+ * @example ret = for_all(lambda(X, X>2), [1,2,3,4]) ==> ret = false.
+ * @example ret = for_all(lambda(X, X>2), []) ==> ret = true.
+ */
+RET = for_all(LAMBDA, []) :- ground(LAMBDA) | RET = true.
+RET = for_all(LAMBDA, [HD|TL]) :-
+  ground(LAMBDA), ground(TL) |
+  RET = if(apply(LAMBDA, HD), THEN, ELSE),
+  {THEN = for_all(LAMBDA, TL)}, {ELSE = false}.
+
+/**
+ * RET = count(LAMBDA, LIST):
+ *
+ * Returns how many elements of LIST satisfy the predicate LAMBDA.
+ *
+ * @example ret = count(lambda(X, X>2), [1,2,3,4,5]) ==> ret = 3
+ */
+RET = count(LAMBDA, []) :- ground(LAMBDA) | RET = 0.
+RET = count(LAMBDA, [HD|TL]) :-
+  ground(LAMBDA) |
+  RET = '+'('?'(apply(LAMBDA, HD), 1, 0), count(LAMBDA, TL)).
+
+/**
+ * RET = find(LAMBDA, LIST):
+ *
+ * Returns 'some' wrapping the element which satisfies
+ * the predicate LAMBDA for the first time.
+ * If no element satisfies LAMBDA, returns 'none'.
+ *
+ * @example ret = find(lambda(X, X>5), [1,2,10,3,20]) ==> ret = some(10)
+ * @example ret = find(lambda(X, X>5), [1,2,3,4,5]) ==> ret = none
+ */
+RET = find(LAMBDA, []) :- ground(LAMBDA) | RET = none.
+RET = find(LAMBDA, [HD|TL]) :-
+  ground(LAMBDA), ground(HD), ground(TL) |
+  RET = if(apply(LAMBDA, HD), THEN, ELSE),
+  {THEN = some(HD)}, {ELSE = find(LAMBDA, TL)}.
+
+/**
+ * RET = partition(LAMBDA, LIST):
+ *
+ * Decompose LIST into two lists.
+ * The first list LT consists of all elements in LIST
+ * which satisfy the predicate LAMBDA.
+ * The second list LF is the rest.
+ * Finally, returns tuple(LT,LF).
+ *
+ * @example ret = partition(lambda(X, X>0), [1,2,-1,3,-2]) ==> ret = tuple([1,2,3], [-1,-2])
+ */
+RET = partition(LAMBDA, []) :- ground(LAMBDA) | RET = tuple([], []).
+RET = partition(LAMBDA, [HD|TL]) :-
+  ground(LAMBDA) | RET = partition_cons(LAMBDA, HD, partition(LAMBDA, TL)).
+RET = partition_cons(LAMBDA, HD, tuple(LT,LF)) :-
+  ground(HD), ground(LT), ground(LF) |
+  RET = if(apply(LAMBDA, HD), THEN, ELSE),
+  {THEN = tuple([HD|LT], LF)}, {ELSE = tuple(LT, [HD|LF])}.
+}.
