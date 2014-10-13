@@ -99,7 +99,7 @@ void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem)
 
 void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem)
 {
-  while (lmn_memstack_isempty(memstack)) lmn_memstack_pop(memstack);
+  while (!lmn_memstack_isempty(memstack)) lmn_memstack_pop(memstack);
   memstack_reconstruct(memstack, mem);
 }
 
