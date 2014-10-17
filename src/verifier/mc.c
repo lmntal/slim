@@ -130,7 +130,8 @@ static inline void do_mc(LmnMembrane *world_mem_org,
   }
 #endif
 
-  lmn_mem_free_rec(mem);
+  if (lmn_env.mem_enc == FALSE)
+    lmn_mem_free_rec(mem);
   /** FINALIZE
    */
   profile_statespace(wp);
@@ -210,8 +211,6 @@ void mc_expand(const StateSpace ss,
 {
   LmnMembrane *mem;
 
-  if (lmn_env.hash_compaction) set_on_hash_compaction(s);
-
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
 
@@ -244,7 +243,7 @@ void mc_expand(const StateSpace ss,
     }
 #endif
     lmn_mem_free_rec(mem);
-    if (is_binstr_user(s) && is_on_hash_compaction(s)) {
+    if (is_binstr_user(s) && lmn_env.hash_compaction) {
       state_free_binstr(s);
     }
   }
@@ -693,10 +692,9 @@ void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v)
 unsigned long mc_invalids_get_num(LmnWorkerGroup *wp)
 {
   unsigned long ret;
-  unsigned int i, n;
+  unsigned int i;
 
   ret = 0;
-  n = lmn_env.core_num;
   for (i = 0; i < wp->worker_num; i++) {
     ret += vec_num(worker_invalid_seeds(workers_get_worker(wp, i)));
   }

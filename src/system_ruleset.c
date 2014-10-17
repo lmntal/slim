@@ -202,9 +202,9 @@ static BOOL mem_eq(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
       LMN_SATOM_SET_ATTR(ret, LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
     }
 
-    lmn_mem_delete_atom(mem, op, LMN_ATTR_MAKE_LINK(0));
-    lmn_mem_delete_atom(mem, temp0, LMN_ATTR_MAKE_LINK(0));
-    lmn_mem_delete_atom(mem, temp1, LMN_ATTR_MAKE_LINK(0));
+    lmn_mem_delete_atom(mem, LMN_ATOM(op), LMN_ATTR_MAKE_LINK(0));
+    lmn_mem_delete_atom(mem, LMN_ATOM(temp0), LMN_ATTR_MAKE_LINK(0));
+    lmn_mem_delete_atom(mem, LMN_ATOM(temp1), LMN_ATTR_MAKE_LINK(0));
 
     return TRUE;
 

@@ -958,7 +958,7 @@ static State *statetable_insert(StateTable *st, State *ins)
     if (is_binstr_user(ins)) {
       state_free_binstr(ins);
     } else if (compress) {
-      lmn_binstr_free(compress);
+      //lmn_binstr_free(compress);
     }
   }
 
