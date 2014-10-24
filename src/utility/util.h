@@ -83,6 +83,16 @@ static inline void esc_code_add(int code)
   printf("%s%d%s", __ESC_START__, code, __ESC_END__);
 }
 
+static inline void esc_code_clear_f(FILE *f){
+  fprintf(f,"%s%s", __ESC_START__, __ESC_END__);
+  return;
+}
+
+static inline void esc_code_add_f(FILE *f,int code)
+{
+  fprintf(f,"%s%d%s", __ESC_START__, code, __ESC_END__);
+}
+
 
 
 /** ----------------------

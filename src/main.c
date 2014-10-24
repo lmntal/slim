@@ -128,10 +128,10 @@ static void usage(void)
 
 void ver_print_with_esc_code(FILE *f, char *str, int color)
 {
-  esc_code_add(CODE__UNDER_LINE);
-  esc_code_add(color);
+  esc_code_add_f(f,CODE__UNDER_LINE);
+  esc_code_add_f(f,color);
   fprintf(f, "%s", str);
-  esc_code_clear();
+  esc_code_clear_f(f);
 }
 
 void slim_version(FILE *f)
