@@ -635,6 +635,9 @@ void dump_profile_data(FILE *f)
     if (lmn_prof.thread_num == 1) {
       fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)",      "Total", tmp_total_cpu_time);
       fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                    " Exec", tmp_total_cpu_time_main);
+      if(!lmn_env.nd && !lmn_prof.thread_cpu_time_main[0]==0){
+	fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                    "Thread", lmn_prof.thread_cpu_time_main[0]);
+	}
     } else {
 #ifdef HAVE_LIBRT
       fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg.", tmp_total_cpu_time_main);
