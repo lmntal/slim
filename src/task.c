@@ -636,6 +636,8 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
   LOOP:;
     READ_VAL(LmnInstrOp, instr, op);
 
+    if(lmn_env.find_atom_parallel) return FALSE;
+
     switch (op) {
     case INSTR_SPEC:
     {
@@ -1283,8 +1285,14 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	  LmnInstrVar i;
 	  BOOL judge;
 
+	  if(atomlist_ent_num(atomlist_ent) < lmn_env.core_num){
+	    active_thread = atomlist_ent_num(atomlist_ent);
+	  }else{
+	    active_thread = lmn_env.core_num;
+	  }
+
 	  lmn_env.findatom_parallel_mode=TRUE;
-	  for(ip=0;ip<lmn_env.core_num;ip++){
+	  for(ip=0;ip<active_thread;ip++){
 	    //pthread create
 	    if(lmn_env.find_atom_parallel)break;
 	    threadinfo_init(ip, atomi, rule, rc, instr, atomlist_ent, atom_arity);

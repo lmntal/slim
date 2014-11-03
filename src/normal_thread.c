@@ -56,7 +56,7 @@ void* normal_thread(void* arg){
 
     if(lmn_env.profile_level >= 1)start_time = get_cpu_time();
 
-    EACH_ATOM_THREAD(atom, thread_data->atomlist_ent, thread_data->id, ({
+    EACH_ATOM_THREAD(atom, thread_data->atomlist_ent, thread_data->id, active_thread, ({
 	  warry_set(thread_data->rc, thread_data->atomi, atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
 	  if(rc_hlink_opt(thread_data->atomi, thread_data->rc)){
 	    SameProcCxt *spc;

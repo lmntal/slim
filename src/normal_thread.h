@@ -61,6 +61,7 @@ struct arginfo{
 };
 pthread_t *findthread;
 arginfo **thread_info;
+int active_thread;
 
 static LmnRuleInstr instr_parallel;
 

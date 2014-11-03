@@ -664,7 +664,7 @@ typedef HashIterator AtomListIter;
     }                                                                          \
   }
 
-#define EACH_ATOM_THREAD(V, ENT, ID, CODE)				       \
+#define EACH_ATOM_THREAD(V, ENT, ID, NUM, CODE)				\
     int id = (ID);							       \
   if ((ENT)) {                                                                 \
     for ((V)  = atomlist_head((ENT));                                          \
@@ -672,7 +672,7 @@ typedef HashIterator AtomListIter;
          (V)  = LMN_SATOM_GET_NEXT_RAW((V))) {                                 \
       if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR && id == 0) {     \
         (CODE);								       \
-        id=lmn_env.core_num; 				                       \
+        id=(NUM);							\
       }                                                                        \
       id--;								       \ 
     }                                                                          \
