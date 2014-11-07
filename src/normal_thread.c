@@ -118,6 +118,7 @@ void normal_parallel_free(void){
     lmn_free(thread_info[i]->rc);
     lmn_free(thread_info[i]);
   }
+  lmn_env.enable_parallel = TRUE;
   lmn_free(thread_info);
   lmn_free(findthread);
 }

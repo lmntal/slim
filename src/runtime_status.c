@@ -632,19 +632,35 @@ void dump_profile_data(FILE *f)
     fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                      " Exec", tmp_total_wall_time_main);
     fprintf(f,   "------------------------------------------------------------\n");
 
-    if (lmn_prof.thread_num == 1) {
+    if(!lmn_env.nd && lmn_env.enable_parallel){
+      fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)",      "Main", tmp_total_cpu_time);
+      if (lmn_prof.thread_num == 1) {
+	//child_thread == 1
+	fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                    "Sub", lmn_prof.thread_cpu_time_main[0]);
+      }else{
+	//child_thread > 1
+#ifdef HAVE_LIBRT
+	//fprintf(f, "%-18s%10s  : %15.2lf\n", " ", "Exec Avg.", tmp_total_cpu_time_main);
+      fprintf(f, "%-18s%10s  : %15s\n",    " ",           "---------", "--------------------------");
+      for (i = 0; i < lmn_prof.thread_num; i++) {
+        fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i
+                 , lmn_prof.thread_cpu_time_main[i]);
+      }
+#else
+      //fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg."
+      //         , tmp_total_cpu_time_main / lmn_prof.thread_num);
+#endif
+      }
+    }else if (lmn_prof.thread_num == 1) {
       fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)",      "Total", tmp_total_cpu_time);
       fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                    " Exec", tmp_total_cpu_time_main);
-      if(!lmn_env.nd && !lmn_prof.thread_cpu_time_main[0]==0){
-	fprintf(f, "%-20s%8s  : %15.2lf\n", " ",                    "Thread", lmn_prof.thread_cpu_time_main[0]);
-	}
     } else {
 #ifdef HAVE_LIBRT
       fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg.", tmp_total_cpu_time_main);
       fprintf(f, "%-18s%10s  : %15s\n",    " ",           "---------", "-------------------");
       for (i = 0; i < lmn_prof.thread_num; i++) {
         fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i
-                 , lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i] + lmn_prof.thread_cpu_time_main[i]);
+		, lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i]);
       }
 #else
       fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg."
