@@ -41,7 +41,7 @@
 #define LMN_PROP_DEFINITION_H
 
 #include "stdio.h"
-#include "vector.h"
+#include "utility/vector.h"
 #include "automata.h"
 #include "rule.h"
 

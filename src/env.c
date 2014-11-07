@@ -140,82 +140,84 @@ void lmn_stream_destroy()
 /* lmn_env構造体の初期化 */
 void env_init()
 {
-  lmn_env.trace                  = FALSE;
-  lmn_env.show_proxy             = FALSE;
-  lmn_env.show_chr               = FALSE;
-  lmn_env.show_ruleset           = TRUE;
-  lmn_env.output_format          = DEFAULT;
-  lmn_env.mc_dump_format         = CUI;
-  lmn_env.sp_dump_format         = SP_NONE;
-  lmn_env.nd                     = FALSE;
-  lmn_env.ltl                    = FALSE;
-  lmn_env.ltl_all                = FALSE;
-  lmn_env.enable_por_old         = FALSE;
-  lmn_env.enable_por             = FALSE;
-  lmn_env.show_transition        = FALSE;
-  lmn_env.translate              = FALSE;
-  lmn_env.optimization_level     = 3;
-  lmn_env.profile_level          = 0;
-  lmn_env.load_path_num          = 0;
-  lmn_env.automata_file          = NULL;
-  lmn_env.propositional_symbol   = NULL;
-  lmn_env.ltl_exp                = NULL;
-  lmn_env.bfs                    = FALSE;
-  lmn_env.prop_scc_driven        = FALSE;
-  lmn_env.depth_limits           = UINT_MAX;
-  lmn_env.nd_search_end          = FALSE;
-  lmn_env.mem_enc                = FALSE;
-  lmn_env.delta_mem              = FALSE;
-  lmn_env.dump                   = TRUE;
-  lmn_env.end_dump               = FALSE;
-  lmn_env.benchmark              = FALSE;
-  lmn_env.property_dump          = FALSE;
-  lmn_env.enable_compress_mem    = TRUE;
-  lmn_env.z_compress             = FALSE;
-  lmn_env.d_compress             = FALSE;
-  lmn_env.r_compress             = FALSE;
-  lmn_env.enable_parallel        = FALSE;
-  lmn_env.core_num               = 1;
-  lmn_env.cutoff_depth           = 7;
-  lmn_env.optimize_lock          = FALSE;
-  lmn_env.optimize_hash          = TRUE;
-  lmn_env.optimize_loadbalancing = TRUE;
+  lmn_env.trace                    = FALSE;
+  lmn_env.show_proxy               = FALSE;
+  lmn_env.show_chr                 = FALSE;
+  lmn_env.show_ruleset             = TRUE;
+  lmn_env.output_format            = DEFAULT;
+  lmn_env.mc_dump_format           = CUI;
+  lmn_env.sp_dump_format           = SP_NONE;
+  lmn_env.nd                       = FALSE;
+  lmn_env.ltl                      = FALSE;
+  lmn_env.ltl_all                  = FALSE;
+  lmn_env.enable_por_old           = FALSE;
+  lmn_env.enable_por               = FALSE;
+  lmn_env.show_transition          = FALSE;
+  lmn_env.translate                = FALSE;
+  lmn_env.optimization_level       = 3;
+  lmn_env.profile_level            = 0;
+  lmn_env.load_path_num            = 0;
+  lmn_env.automata_file            = NULL;
+  lmn_env.propositional_symbol     = NULL;
+  lmn_env.ltl_exp                  = NULL;
+  lmn_env.bfs                      = FALSE;
+  lmn_env.prop_scc_driven          = FALSE;
+  lmn_env.depth_limits             = UINT_MAX;
+  lmn_env.nd_search_end            = FALSE;
+  lmn_env.mem_enc                  = FALSE;
+  lmn_env.delta_mem                = FALSE;
+  lmn_env.dump                     = TRUE;
+  lmn_env.end_dump                 = FALSE;
+  lmn_env.benchmark                = FALSE;
+  lmn_env.property_dump            = FALSE;
+  lmn_env.enable_compress_mem      = TRUE;
+  lmn_env.z_compress               = FALSE;
+  lmn_env.d_compress               = FALSE;
+  lmn_env.r_compress               = FALSE;
+  lmn_env.enable_parallel          = FALSE;
+  lmn_env.core_num                 = 1;
+  lmn_env.cutoff_depth             = 7;
+  lmn_env.optimize_lock            = FALSE;
+  lmn_env.optimize_hash            = TRUE;
+  lmn_env.optimize_loadbalancing   = TRUE;
 
-  lmn_env.opt_mode               = OPT_NONE;
+  lmn_env.opt_mode                 = OPT_NONE;
 
   /* only jni-interactive mode */
-  lmn_env.interactive            = FALSE;
-  lmn_env.normal_remain          = FALSE;
-  lmn_env.normal_remaining       = FALSE;
-  lmn_env.normal_cleaning        = FALSE;
-  lmn_env.nd_remain              = FALSE;
-  lmn_env.nd_remaining           = FALSE;
-  lmn_env.nd_cleaning            = FALSE;
+  lmn_env.interactive              = FALSE;
+  lmn_env.normal_remain            = FALSE;
+  lmn_env.normal_remaining         = FALSE;
+  lmn_env.normal_cleaning          = FALSE;
+  lmn_env.nd_remain                = FALSE;
+  lmn_env.nd_remaining             = FALSE;
+  lmn_env.nd_cleaning              = FALSE;
 
-  lmn_env.enable_owcty           = FALSE;
-  lmn_env.enable_map             = FALSE;
-  lmn_env.enable_bledge          = FALSE;
-  lmn_env.bfs_layer_sync         = FALSE;
+  lmn_env.enable_owcty             = FALSE;
+  lmn_env.enable_map               = FALSE;
+  lmn_env.enable_bledge            = FALSE;
+  lmn_env.bfs_layer_sync           = FALSE;
 
-  lmn_env.enable_map_heuristic   = TRUE;
+  lmn_env.enable_map_heuristic     = TRUE;
 
-  lmn_env.show_reduced_graph     = FALSE;
+  lmn_env.show_reduced_graph       = FALSE;
 
-  lmn_env.hash_compaction        = FALSE;
-  lmn_env.hash_depth             = 2;
+  lmn_env.hash_compaction          = FALSE;
+  lmn_env.tree_compress            = FALSE;
+  lmn_env.hash_depth               = 2;
+  lmn_env.tree_compress_table_size = 20;
 #ifdef PROFILE
-  lmn_env.optimize_hash_old      = FALSE;
-  lmn_env.prof_no_memeq          = FALSE;
+  lmn_env.optimize_hash_old        = FALSE;
+  lmn_env.prof_no_memeq            = FALSE;
 #endif
 
 #ifdef DEBUG
-  lmn_env.debug_por_dep          = FALSE;
-  lmn_env.debug_id               = FALSE;
-  lmn_env.debug_delta            = FALSE;
-  lmn_env.debug_hash             = FALSE;
-  lmn_env.debug_isomor           = FALSE;
-  lmn_env.debug_mc               = FALSE;
-  lmn_env.debug_por              = FALSE;
+  lmn_env.debug_por_dep            = FALSE;
+  lmn_env.debug_id                 = FALSE;
+  lmn_env.debug_delta              = FALSE;
+  lmn_env.debug_hash               = FALSE;
+  lmn_env.debug_isomor             = FALSE;
+  lmn_env.debug_mc                 = FALSE;
+  lmn_env.debug_por                = FALSE;
 #endif
 }
 

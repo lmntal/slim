@@ -1,7 +1,8 @@
 /*
- * dpor_naive.h
+ * tree_compress_test.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -36,23 +37,15 @@
  * $Id$
  */
 
-#ifndef LMN_MC_POR_H
-#define LMN_MC_POR_H
+#ifndef TREE_COMPRESS_TEST_H
+#  define TREE_COMPRESS_TEST_H
 
-#include "lmntal.h"
-#include "queue.h"
-#include "utility/vector.h"
-#include "state.h"
-#include "statespace.h"
+#include <CUnit/CUnit.h>
 
+int  test_tree_init();
+int  test_tree_clean();
+void test_tree_001();
+void test_tree_002();
+void test_tree_003();
 
-
-void por_calc_ampleset(StateSpace  ss,
-                       State       *s,
-                       LmnReactCxt *rc,
-                       Vector      *new_s,
-                       BOOL        flag);
-void init_por_vars(void);
-void free_por_vars(void);
-
-#endif
+#endif /* ifndef TREE_COMPRESS_TEST_H */

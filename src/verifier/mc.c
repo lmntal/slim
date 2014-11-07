@@ -44,6 +44,7 @@
 #include "dpor.h"
 #include "error.h"
 #include "delta_membrane.h"
+#include "binstr_compress.h"
 #include "propositional_symbol.h"
 #include "ltl2ba_adapter.h"
 #include "runtime_status.h"
@@ -106,6 +107,9 @@ static inline void do_mc(LmnMembrane *world_mem_org,
   /** INITIALIZE
    */
   mhash_set_depth(lmn_env.hash_depth);
+  if (lmn_env.tree_compress) {
+    lmn_bscomp_tree_init();
+  }
   wp = lmn_workergroup_make(a, psyms, thread_num);
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   p_label = a ? automata_get_init_state(a)
@@ -137,6 +141,9 @@ static inline void do_mc(LmnMembrane *world_mem_org,
   profile_statespace(wp);
   mc_dump(wp);
   lmn_workergroup_free(wp);
+  if (lmn_env.tree_compress) {
+    lmn_bscomp_tree_clean();
+  }
 }
 
 
@@ -243,7 +250,7 @@ void mc_expand(const StateSpace ss,
     }
 #endif
     lmn_mem_free_rec(mem);
-    if (is_binstr_user(s) && lmn_env.hash_compaction) {
+    if (is_binstr_user(s) && (lmn_env.hash_compaction || lmn_env.tree_compress)) {
       state_free_binstr(s);
     }
   }

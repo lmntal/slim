@@ -41,7 +41,7 @@
 #include "atom.h"
 #include "dumper.h"
 #include "instruction.h"
-#include "vector.h"
+#include "utility/vector.h"
 #include "symbol.h"
 #include "functor.h"
 #include "st.h"

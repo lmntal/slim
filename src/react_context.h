@@ -45,7 +45,7 @@
 #include "lmntal.h"
 #include "rule.h"
 #include "st.h"
-#include "internal_hash.h"
+#include "utility/internal_hash.h"
 
 struct LmnRegister {
   LmnWord wt;

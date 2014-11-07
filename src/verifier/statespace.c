@@ -129,10 +129,14 @@ struct statespace_type type_state_compress_z = {
   state_calc_mem_dump_with_z
 };
 
-
 struct statespace_type type_state_compress = {
   state_cmp_with_compress,
   state_calc_mem_dump
+};
+
+struct statespace_type type_state_tree_compress = {
+  state_cmp_with_tree,
+  state_calc_mem_dump_with_tree
 };
 
 struct statespace_type type_state_default = {
@@ -626,6 +630,8 @@ static StateTable *statetable_make_with_size(unsigned long size, int thread_num)
   if (lmn_env.enable_compress_mem) {
     if (lmn_env.z_compress) {
       st->type = &type_state_compress_z;
+    } else if (lmn_env.tree_compress) {
+      st->type = &type_state_tree_compress;
     } else {
       st->type = &type_state_compress;
     }
@@ -789,6 +795,12 @@ static State *statetable_insert(StateTable *st, State *ins)
       {
         state_set_compress_for_table(ins, compress);
         statetable_num_add(st, 1);
+        if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
+          TreeNodeRef ref;
+          tcd_set_byte_length(&ins->tcd, state_binstr(ins)->len);
+          ref = lmn_bscomp_tree_encode(state_binstr(ins));
+          tcd_set_root_ref(&ins->tcd, ref);
+        }
         st->tbl[bucket] = ins;
         ret = ins;
       }
@@ -935,6 +947,12 @@ static State *statetable_insert(StateTable *st, State *ins)
         {
           statetable_num_add(st, 1);
           state_set_compress_for_table(ins, compress);
+          if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
+            TreeNodeRef ref;
+            tcd_set_byte_length(&ins->tcd, state_binstr(ins)->len);
+            ref = lmn_bscomp_tree_encode(state_binstr(ins));
+            tcd_set_root_ref(&ins->tcd, ref);
+          }
           str->next = ins;
           ret = ins;
         }
@@ -993,6 +1011,12 @@ static void statetable_add_direct(StateTable *st, State *s)
       {
         state_set_compress_for_table(s, compress);
         statetable_num_add(st, 1);
+        if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
+          TreeNodeRef ref;
+          tcd_set_byte_length(&s->tcd, state_binstr(s)->len);
+          ref = lmn_bscomp_tree_encode(state_binstr(s));
+          tcd_set_root_ref(&s->tcd, ref);
+        }
         st->tbl[bucket] = s;
         inserted = TRUE;
       }

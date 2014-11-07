@@ -47,7 +47,7 @@
 #include "instruction.h"
 #include "lmntal.h"
 #include "atom.h"
-#include "vector.h"
+#include "utility/vector.h"
 
 /**
  * Dynamic Partial Order Reduction

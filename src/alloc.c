@@ -37,7 +37,7 @@
  */
 
 #include "memory_pool.h"
-#include "vector.h"
+#include "utility/vector.h"
 #include "lmntal.h"
 #include "atom.h"
 #include "functor.h"
