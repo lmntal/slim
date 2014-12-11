@@ -1302,6 +1302,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	  for(ip2=0;ip2<ip;ip2++){
 	    //lmn_thread_join(findthread[ip2]);
 	    op_lock(ip2, 0);
+	    profile_backtrack_add(thread_info[ip2]->backtrack);
 	  }
 	  lmn_env.findatom_parallel_mode=FALSE;
 

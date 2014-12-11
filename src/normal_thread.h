@@ -58,6 +58,7 @@ struct arginfo{
   int atom_arity;
   pthread_mutex_t *exec;
   volatile int exec_flag;
+  int backtrack;
 };
 pthread_t *findthread;
 arginfo **thread_info;

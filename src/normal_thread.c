@@ -73,7 +73,7 @@ void* normal_thread(void* arg){
 	    }
 	  }
 	  if(lmn_env.find_atom_parallel)break;
-	  profile_backtrack();
+	  thread_data->backtrack++;
 	}));
 
     if(lmn_env.profile_level >= 1){
@@ -128,6 +128,7 @@ void threadinfo_init(int id, LmnInstrVar atomi, LmnRule rule, LmnReactCxt *rc, L
   thread_info[id]->judge=FALSE;
   thread_info[id]->atomi=atomi;
   thread_info[id]->rule=rule;
+  thread_info[id]->backtrack=0;
   react_context_copy(thread_info[id]->rc, rc);
   if(thread_info[id]->register_size < rc->warry_num){
     lmn_register_extend(thread_info[id]->rc, rc->warry_num);

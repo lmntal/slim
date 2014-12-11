@@ -317,12 +317,14 @@ static inline void profile_rule_obj_set(LmnRuleSet src, LmnRule r)
 }
 
 #ifdef PROFILE
-#  define profile_backtrack()    if (lmn_prof.cur) ((lmn_prof.cur)->backtrack++)
+#  define profile_backtrack()    if (lmn_prof.cur && !lmn_env.findatom_parallel_mode) ((lmn_prof.cur)->backtrack++)
+#  define profile_backtrack_add(NUM) if (lmn_prof.cur) ((lmn_prof.cur)->backtrack+=NUM)
 #  define profile_start_trial()  if (lmn_prof.cur) time_profiler_start(&(lmn_prof.cur)->trial)
 #  define profile_finish_trial() if (lmn_prof.cur) time_profiler_finish(&(lmn_prof.cur)->trial)
 #  define profile_apply()        if (lmn_prof.cur) ((lmn_prof.cur)->apply++)
 #else
 #  define profile_backtrack()
+#  define profile_backtrack_add(NUM)
 #  define profile_start_trial()
 #  define profile_finish_trial()
 #  define profile_apply()
