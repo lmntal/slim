@@ -223,11 +223,6 @@ void lmn_run(Vector *start_rulesets)
     profile_finish_exec();
   }
 
-  //normal parallel mode free
-  if(lmn_env.enable_parallel && !lmn_env.nd){
-    normal_parallel_free();
-  }
-
   if (lmn_env.dump) { /* lmntalではioモジュールがあるけど必ず実行結果を出力するプログラミング言語, で良い?? */
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       fprintf(stdout, "finish.\n");
@@ -236,6 +231,12 @@ void lmn_run(Vector *start_rulesets)
     }
   }
   if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
+
+  //normal parallel mode free
+  if(lmn_env.enable_parallel && !lmn_env.nd){
+    if(lmn_env.profile_level == 3)normal_parallel_prof_dump(stderr);
+    normal_parallel_free();
+  }
 
   /* 後始末 */
   if (lmn_env.normal_remain) {
@@ -1303,6 +1304,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	    //lmn_thread_join(findthread[ip2]);
 	    op_lock(ip2, 0);
 	    profile_backtrack_add(thread_info[ip2]->backtrack);
+	    thread_info[ip2]->profile->backtrack_num += thread_info[ip2]->backtrack;
 	  }
 	  lmn_env.findatom_parallel_mode=FALSE;
 

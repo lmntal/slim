@@ -44,8 +44,15 @@
 #include "react_context.h"
 #include "runtime_status.h"
 
-typedef struct arginfo arginfo;
 
+typedef struct normal_prof normal_prof;
+
+struct normal_prof{
+  unsigned long backtrack_num;
+
+};
+
+typedef struct arginfo arginfo;
 struct arginfo{
   int id;//thread id
   BOOL judge;//whether react atom or not
@@ -58,7 +65,9 @@ struct arginfo{
   int atom_arity;
   pthread_mutex_t *exec;
   volatile int exec_flag;
-  int backtrack;
+  unsigned long backtrack;
+
+  normal_prof *profile;
 };
 pthread_t *findthread;
 arginfo **thread_info;
@@ -73,3 +82,5 @@ void normal_parallel_free(void);
 void threadinfo_init(int id, LmnInstrVar atomi, LmnRule rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity);
 
 void lock(int id, int flag);
+
+void normal_parallel_prof_dump(FILE *f);

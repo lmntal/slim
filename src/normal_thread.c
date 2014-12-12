@@ -85,6 +85,11 @@ void* normal_thread(void* arg){
   return NULL;
 }
 
+void normal_profile_init(normal_prof *profile){
+  profile->backtrack_num=0;
+  return;
+}
+
 void normal_parallel_init(void){
   int i;
   findthread=LMN_NALLOC(pthread_t, lmn_env.core_num);
@@ -100,6 +105,8 @@ void normal_parallel_init(void){
     thread_info[i]->exec=LMN_MALLOC(pthread_mutex_t);
     pthread_mutex_init(thread_info[i]->exec, NULL);
     pthread_mutex_lock(thread_info[i]->exec);
+    thread_info[i]->profile=LMN_MALLOC(normal_prof);
+    normal_profile_init(thread_info[i]->profile);
   }
   for(i=0;i<lmn_env.core_num;i++){
     lmn_thread_create(&findthread[i],normal_thread,&(thread_info[i]->id));
@@ -116,6 +123,7 @@ void normal_parallel_free(void){
     lmn_free(thread_info[i]->exec);
     lmn_register_free(thread_info[i]->rc->work_arry);
     lmn_free(thread_info[i]->rc);
+    lmn_free(thread_info[i]->profile);
     lmn_free(thread_info[i]);
   }
   lmn_env.enable_parallel = TRUE;
@@ -124,7 +132,7 @@ void normal_parallel_free(void){
 }
 
 void threadinfo_init(int id, LmnInstrVar atomi, LmnRule rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity){
-  // 
+  //
   thread_info[id]->judge=FALSE;
   thread_info[id]->atomi=atomi;
   thread_info[id]->rule=rule;
@@ -143,5 +151,16 @@ void op_lock(int id, int flag){
   while(thread_info[id]->exec_flag!=flag);
   pthread_mutex_lock(thread_info[id]->exec);
   thread_info[id]->exec_flag=1-thread_info[id]->exec_flag;
+  return;
+}
+
+void normal_parallel_prof_dump(FILE *f){
+  //parallel pattern matching profile 
+  int i;
+  fprintf(f,   "\n===Parallel Pattern Matching Profile========================\n");
+  for(i=0;i<lmn_prof.thread_num;i++){
+    fprintf(f, "thread%d:backtrack %9lu\n",i,thread_info[i]->profile->backtrack_num);
+  }
+  fprintf(f,   "============================================================\n");
   return;
 }
