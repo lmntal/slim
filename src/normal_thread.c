@@ -53,7 +53,7 @@ void* normal_thread(void* arg){
     op_lock(thread_data->id, 1);
     if(!lmn_env.enable_parallel)break;
     thread_instr=thread_data->instr;
-
+    thread_data->profile->wakeup++;
     if(lmn_env.profile_level >= 1)start_time = get_cpu_time();
 
     EACH_ATOM_THREAD(atom, thread_data->atomlist_ent, thread_data->id, active_thread, ({
@@ -64,11 +64,13 @@ void* normal_thread(void* arg){
 	    if (lmn_sameproccxt_all_pc_check_clone(spc, LMN_SATOM(wt(thread_data->rc, thread_data->atomi)), thread_data->atom_arity) && 
 		interpret(thread_data->rc, thread_data->rule, thread_instr)) {
 	      thread_data->judge=TRUE;
+	      thread_data->profile->findatom_num++;
 	      break;
 	    }
 	  }else{
 	    if (interpret(thread_data->rc, thread_data->rule, thread_instr)) {
 	      thread_data->judge=TRUE;
+	      thread_data->profile->findatom_num++;
 	      break;
 	    }
 	  }
@@ -86,7 +88,9 @@ void* normal_thread(void* arg){
 }
 
 void normal_profile_init(normal_prof *profile){
+  profile->wakeup=0;
   profile->backtrack_num=0;
+  profile->findatom_num=0;
   return;
 }
 
@@ -157,10 +161,17 @@ void op_lock(int id, int flag){
 void normal_parallel_prof_dump(FILE *f){
   //parallel pattern matching profile 
   int i;
-  fprintf(f,   "\n===Parallel Pattern Matching Profile========================\n");
+  unsigned long findatom_num;
+  findatom_num=0;
+  fprintf(f, "\n===Parallel Pattern Matching Profile========================\n");
+  fprintf(f,   "[id]: [wakeup] [backtrack] [findatom]\n");
   for(i=0;i<lmn_prof.thread_num;i++){
-    fprintf(f, "thread%d:backtrack %9lu\n",i,thread_info[i]->profile->backtrack_num);
+    fprintf(f, "%3d : %8lu %11lu %10lu \n",i,thread_info[i]->profile->wakeup,
+	                                     thread_info[i]->profile->backtrack_num,
+	                                     thread_info[i]->profile->findatom_num);
+    findatom_num+=thread_info[i]->profile->findatom_num;
   }
+  fprintf(f, "\nfindatom num:%9lu \n",findatom_num);
   fprintf(f,   "============================================================\n");
   return;
 }

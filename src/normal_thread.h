@@ -48,8 +48,9 @@
 typedef struct normal_prof normal_prof;
 
 struct normal_prof{
+  unsigned long wakeup;
   unsigned long backtrack_num;
-
+  unsigned long findatom_num;
 };
 
 typedef struct arginfo arginfo;
