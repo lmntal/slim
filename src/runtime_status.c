@@ -659,7 +659,7 @@ void dump_profile_data(FILE *f)
 
         fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
         fprintf(f,   "%4s %8s : %9s %9s %9s %12s"
-                 , "[id]", "[name]", "[# Tr.]", "[# Ap.]", "[# Ba.]", "[CPU U.(msec)]\n");
+                 , "[id]", "[name]", "[# Tr.]", "[# Ap.]", "[# Ba.]", "[CPU U.(usec)]\n");
 
         for (i = 0; i < vec_num(&v); i++) {
           RuleProfiler *rp = (RuleProfiler *)vec_get(&v, i);
