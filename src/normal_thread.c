@@ -115,6 +115,7 @@ void normal_parallel_init(void){
   for(i=0;i<lmn_env.core_num;i++){
     lmn_thread_create(&findthread[i],normal_thread,&(thread_info[i]->id));
   }
+  temp=deq_make(1);
 }
 
 void normal_parallel_free(void){
@@ -133,6 +134,7 @@ void normal_parallel_free(void){
   lmn_env.enable_parallel = TRUE;
   lmn_free(thread_info);
   lmn_free(findthread);
+  deq_free(temp);
 }
 
 void threadinfo_init(int id, LmnInstrVar atomi, LmnRule rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity){
@@ -174,4 +176,12 @@ void normal_parallel_prof_dump(FILE *f){
   fprintf(f, "\nfindatom num:%9lu \n",findatom_num);
   fprintf(f,   "============================================================\n");
   return;
+}
+
+
+BOOL check_exist(LmnSAtom atom, LmnFunctor f){
+  if(!atom)return FALSE;
+  if(LMN_SATOM_GET_FUNCTOR(atom)!=f)return FALSE;
+  return TRUE;
+
 }

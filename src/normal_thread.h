@@ -45,6 +45,7 @@
 #include "runtime_status.h"
 
 
+
 typedef struct normal_prof normal_prof;
 
 struct normal_prof{
@@ -73,6 +74,7 @@ struct arginfo{
 pthread_t *findthread;
 arginfo **thread_info;
 int active_thread;
+Deque *temp;
 
 static LmnRuleInstr instr_parallel;
 
@@ -82,6 +84,9 @@ void normal_parallel_init(void);
 void normal_parallel_free(void);
 void threadinfo_init(int id, LmnInstrVar atomi, LmnRule rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity);
 
-void lock(int id, int flag);
+void op_lock(int id, int flag);
 
 void normal_parallel_prof_dump(FILE *f);
+
+
+BOOL check_exist(LmnSAtom atom, LmnFunctor f);

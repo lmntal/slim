@@ -1285,6 +1285,26 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	  int ip, ip2;
 	  LmnInstrVar i;
 	  BOOL judge;
+	  LmnSAtom atom;
+
+	  while(!deq_is_empty(temp)){
+	    ip=(int)deq_pop_head(temp);
+	    atom= wt(thread_info[ip]->rc, atomi);
+	    if(check_exist(atom, f)){
+	      warry_set(rc, atomi, atom, LMN_ATTR_MAKE_LINK(0),TT_ATOM);
+	      if(rc_hlink_opt(atomi, rc)){
+		SameProcCxt *spc;
+		spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+		if (lmn_sameproccxt_all_pc_check_clone(spc, LMN_SATOM(wt(rc, atomi)), atom_arity) && 
+		    interpret(rc, rule, instr)) {
+		  return TRUE;
+		}
+	      }else{
+		if (interpret(rc, rule, instr)) return TRUE;
+	      }
+	    }
+	  }
+
 
 	  if(atomlist_ent_num(atomlist_ent) < lmn_env.core_num){
 	    active_thread = atomlist_ent_num(atomlist_ent);
@@ -1320,6 +1340,10 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	      if(lmn_env.trace)fprintf(stdout,"( Thread id : %d )",thread_info[ip2]->id);
 	      instr=instr_parallel;
 	      judge=FALSE;
+	      continue;
+	    }
+	    if(thread_info[ip2]->judge){
+	      deq_push_head(temp,ip2);
 	    }
 	  }
 	    
