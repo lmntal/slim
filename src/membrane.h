@@ -674,7 +674,7 @@ typedef HashIterator AtomListIter;
         (CODE);								       \
         id=(NUM);							\
       }                                                                        \
-      id--;								       \ 
+      id--;								       \
     }                                                                          \
   }
 
