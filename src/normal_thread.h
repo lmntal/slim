@@ -68,6 +68,7 @@ struct arginfo{
   pthread_mutex_t *exec;
   volatile int exec_flag;
   unsigned long backtrack;
+  LmnSAtom next_atom;
 
   normal_prof *profile;
 };

@@ -45,6 +45,7 @@ void* normal_thread(void* arg){
   LmnSAtom atom;
   double start_time, stop_time;
   int * idp;
+  SameProcCxt *spc;
   idp= (int *)arg;
 
   thread_data=thread_info[*idp];
@@ -56,10 +57,9 @@ void* normal_thread(void* arg){
     thread_data->profile->wakeup++;
     if(lmn_env.profile_level >= 1)start_time = get_cpu_time();
 
-    EACH_ATOM_THREAD(atom, thread_data->atomlist_ent, thread_data->id, active_thread, ({
+    EACH_ATOM_THREAD_OPT(atom, thread_data->atomlist_ent, thread_data->id, active_thread, thread_data->next_atom, ({
 	  warry_set(thread_data->rc, thread_data->atomi, atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
 	  if(rc_hlink_opt(thread_data->atomi, thread_data->rc)){
-	    SameProcCxt *spc;
 	    spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_data->rc), (HashKeyType)thread_data->atomi);
 	    if (lmn_sameproccxt_all_pc_check_clone(spc, LMN_SATOM(wt(thread_data->rc, thread_data->atomi)), thread_data->atom_arity) && 
 		interpret(thread_data->rc, thread_data->rule, thread_instr)) {
@@ -77,7 +77,7 @@ void* normal_thread(void* arg){
 	  if(lmn_env.find_atom_parallel)break;
 	  thread_data->backtrack++;
 	}));
-
+    thread_data->next_atom=atom;
     if(lmn_env.profile_level >= 1){
       stop_time = get_cpu_time();
       lmn_prof.thread_cpu_time_main[thread_data->id] += stop_time - start_time;
@@ -105,6 +105,7 @@ void normal_parallel_init(void){
     thread_info[i]->rc->hl_sameproccxt=NULL;
     thread_info[i]->register_size=WARRY_DEF_SIZE;
     thread_info[i]->id=i;
+    thread_info[i]->next_atom=NULL;
     thread_info[i]->exec_flag=1;
     thread_info[i]->exec=LMN_MALLOC(pthread_mutex_t);
     pthread_mutex_init(thread_info[i]->exec, NULL);

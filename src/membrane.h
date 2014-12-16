@@ -665,18 +665,44 @@ typedef HashIterator AtomListIter;
   }
 
 #define EACH_ATOM_THREAD(V, ENT, ID, NUM, CODE)				\
-    int id = (ID);							       \
-  if ((ENT)) {                                                                 \
-    for ((V)  = atomlist_head((ENT));                                          \
-         (V) != lmn_atomlist_end((ENT));                                       \
-         (V)  = LMN_SATOM_GET_NEXT_RAW((V))) {                                 \
-      if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR && id == 0) {     \
-        (CODE);								       \
-        id=(NUM);							\
-      }                                                                        \
-      id--;								       \
-    }                                                                          \
-  }
+    int id = (ID);							\
+    if ((ENT)) {							\
+      for ((V)  = atomlist_head((ENT));					\
+	   (V) != lmn_atomlist_end((ENT));				\
+	   (V)  = LMN_SATOM_GET_NEXT_RAW((V))) {			\
+	if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR && id == 0) { \
+	  (CODE);							\
+	  id=(NUM);							\
+	}								\
+	id--;								\
+      }									\
+    }
+
+#define EACH_ATOM_THREAD_OPT(V, ENT, ID, NUM, START, CODE)	\
+    int id = (ID);						\
+    int flag = 1;						\
+    if ((ENT)) {						\
+      if ((START) == NULL ) {					\
+	(V)  = atomlist_head((ENT));				\
+      }else{							\
+	(V)  = (START);						\
+      }								\
+      for (;							\
+	   (V) != lmn_atomlist_end((ENT)) || flag ;		\
+	   (V)  = LMN_SATOM_GET_NEXT_RAW((V))) {		\
+	if((V) == lmn_atomlist_end((ENT))){			\
+	  (V)  = atomlist_head((ENT));				\
+	  id = (ID);						\
+	  flag--;						\
+	}							\
+	if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR	\
+	    && id == 0) {					\
+	  (CODE);						\
+	  id=(NUM);						\
+	}							\
+	id--;							\
+      }								\
+    }
 
 
 #define EACH_FUNC_ATOM(MEM, F, V, CODE)                                        \
