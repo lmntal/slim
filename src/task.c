@@ -374,10 +374,14 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 
   profile_start_trial();
 
+  if(lmn_env.enable_parallel && !lmn_env.nd)rule_wall_time_start();
+
   /* まず、トランスレート済みの関数を実行する
    * それがない場合、命令列をinterpretで実行する */
   result = (translated && translated(rc, mem, rule)) ||
            (inst_seq   && interpret(rc, rule, inst_seq));
+
+  if(lmn_env.enable_parallel && !lmn_env.nd && normal_parallel_flag)rule_wall_time_finish();
 
   profile_finish_trial();
 
@@ -1286,6 +1290,8 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	  LmnInstrVar i;
 	  BOOL judge;
 	  LmnSAtom atom;
+
+	  normal_parallel_flag=TRUE;
 
 	  while(!deq_is_empty(temp)){
 	    ip=(int)deq_pop_head(temp);

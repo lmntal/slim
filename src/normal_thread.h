@@ -76,6 +76,9 @@ pthread_t *findthread;
 arginfo **thread_info;
 int active_thread;
 Deque *temp;
+double walltime;//rule walltime
+double walltime_temp;
+BOOL normal_parallel_flag;
 
 static LmnRuleInstr instr_parallel;
 
@@ -91,3 +94,6 @@ void normal_parallel_prof_dump(FILE *f);
 
 
 BOOL check_exist(LmnSAtom atom, LmnFunctor f);
+
+void rule_wall_time_start(void);
+void rule_wall_time_finish(void);

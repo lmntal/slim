@@ -117,6 +117,7 @@ void normal_parallel_init(void){
     lmn_thread_create(&findthread[i],normal_thread,&(thread_info[i]->id));
   }
   temp=deq_make(1);
+  walltime=0;
 }
 
 void normal_parallel_free(void){
@@ -174,7 +175,8 @@ void normal_parallel_prof_dump(FILE *f){
 	                                     thread_info[i]->profile->findatom_num);
     findatom_num+=thread_info[i]->profile->findatom_num;
   }
-  fprintf(f, "\nfindatom num:%9lu \n",findatom_num);
+  fprintf(f, "\nfindatom num:%15lu \n",findatom_num);
+  fprintf(f, "Main Rule Wall Time:%9.2lf\n", walltime);
   fprintf(f,   "============================================================\n");
   return;
 }
@@ -185,4 +187,17 @@ BOOL check_exist(LmnSAtom atom, LmnFunctor f){
   if(LMN_SATOM_GET_FUNCTOR(atom)!=f)return FALSE;
   return TRUE;
 
+}
+
+void rule_wall_time_start(void){
+  normal_parallel_flag=FALSE;
+  walltime_temp=get_wall_time();
+  return;
+}
+
+void rule_wall_time_finish(void){
+  double finish;
+  finish=get_wall_time();
+  walltime+=finish-walltime_temp;
+  return;
 }
