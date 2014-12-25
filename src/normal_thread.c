@@ -118,6 +118,8 @@ void normal_parallel_init(void){
   }
   temp=deq_make(1);
   walltime=0;
+  success_temp_check=0;
+  fail_temp_check=0;
 }
 
 void normal_parallel_free(void){
@@ -175,7 +177,9 @@ void normal_parallel_prof_dump(FILE *f){
 	                                     thread_info[i]->profile->findatom_num);
     findatom_num+=thread_info[i]->profile->findatom_num;
   }
-  fprintf(f, "\nfindatom num:%15lu \n",findatom_num);
+  fprintf(f, "\nfindatom num:%16lu \n",findatom_num);
+  fprintf(f, "Success Check:%15lu \n",success_temp_check);
+  fprintf(f, "Fail Check:%18lu \n",fail_temp_check);
   fprintf(f, "Main Rule Wall Time:%9.2lf\n", walltime);
   fprintf(f,   "============================================================\n");
   return;

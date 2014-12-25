@@ -79,6 +79,8 @@ Deque *temp;
 double walltime;//rule walltime
 double walltime_temp;
 BOOL normal_parallel_flag;
+unsigned long success_temp_check;
+unsigned long fail_temp_check;
 
 static LmnRuleInstr instr_parallel;
 

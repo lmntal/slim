@@ -1303,12 +1303,17 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 		spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
 		if (lmn_sameproccxt_all_pc_check_clone(spc, LMN_SATOM(wt(rc, atomi)), atom_arity) && 
 		    interpret(rc, rule, instr)) {
+		  success_temp_check++;
 		  return TRUE;
 		}
 	      }else{
-		if (interpret(rc, rule, instr)) return TRUE;
+		if (interpret(rc, rule, instr)){
+		  success_temp_check++;
+		  return TRUE;
+		}
 	      }
 	    }
+	    fail_temp_check++;
 	  }
 
 
