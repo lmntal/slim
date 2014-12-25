@@ -1261,7 +1261,6 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       else { /* symbol atom */
         LmnFunctor f;
         AtomListEntry *atomlist_ent;
-        LmnSAtom atom;
 	int atom_arity;
 
         READ_VAL(LmnFunctor, instr, f);
@@ -1270,7 +1269,6 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
         if (rc_hlink_opt(atomi, rc)) {
 	  SameProcCxt *spc;
-          int atom_arity;
 
           if (!RC_HLINK_SPC(rc)) {
             lmn_sameproccxt_init(rc);
@@ -1295,7 +1293,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
 	  while(!deq_is_empty(temp)){
 	    ip=(int)deq_pop_head(temp);
-	    atom= wt(thread_info[ip]->rc, atomi);
+	    atom= (LmnSAtom)wt(thread_info[ip]->rc, atomi);
 	    if(check_exist(atom, f)){
 	      warry_set(rc, atomi, atom, LMN_ATTR_MAKE_LINK(0),TT_ATOM);
 	      if(rc_hlink_opt(atomi, rc)){
