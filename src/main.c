@@ -136,12 +136,12 @@ void ver_print_with_esc_code(FILE *f, char *str, int color)
 
 void slim_version(FILE *f)
 {
-  ver_print_with_esc_code(f, "S", CODE__FORECOLOR_LIGHTBLUE);
-  fprintf(f, "lim ");
-  ver_print_with_esc_code(f, "L", CODE__FORECOLOR_LIGHTBLUE);
-  fprintf(f, "mntal ");
-  ver_print_with_esc_code(f, "IM", CODE__FORECOLOR_LIGHTBLUE);
-  fprintf(f, "plementation ");
+  //ver_print_with_esc_code(f, "S", CODE__FORECOLOR_LIGHTBLUE);
+  //fprintf(f, "lim ");
+  //ver_print_with_esc_code(f, "L", CODE__FORECOLOR_LIGHTBLUE);
+  //fprintf(f, "mntal ");
+  //ver_print_with_esc_code(f, "IM", CODE__FORECOLOR_LIGHTBLUE);
+  fprintf(f, "Slim Lmntal IMplementation ");
   fprintf(f, "- version %s\n", SLIM_VERSION);
 }
 
