@@ -328,6 +328,8 @@ struct LmnEnv {
 
   BOOL findatom_parallel_mode;
   BOOL find_atom_parallel;
+  BOOL findatom_parallel_inde;
+
   BOOL run_test;
 
   enum OutputFormat output_format;

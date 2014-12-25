@@ -220,5 +220,6 @@ void env_init()
 
   lmn_env.findatom_parallel_mode = FALSE;
   lmn_env.find_atom_parallel     = FALSE;
+  lmn_env.findatom_parallel_inde = FALSE;
 }
 

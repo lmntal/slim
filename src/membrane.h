@@ -684,6 +684,7 @@ typedef HashIterator AtomListIter;
     if ((ENT)) {						\
       if ((START) == NULL ) {					\
 	(V)  = atomlist_head((ENT));				\
+	flag--;							\
       }else{							\
 	(V)  = (START);						\
       }								\

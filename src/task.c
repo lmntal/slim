@@ -1322,7 +1322,8 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	  for(ip=0;ip<active_thread;ip++){
 	    //pthread create
 	    if(lmn_env.find_atom_parallel)break;
-	    if(!check_exist(thread_info[ip]->next_atom,f))thread_info[ip]->next_atom=NULL;
+	    if(!check_exist(thread_info[ip]->next_atom,f)||lmn_env.findatom_parallel_inde)
+	      thread_info[ip]->next_atom=NULL;
 	    threadinfo_init(ip, atomi, rule, rc, instr, atomlist_ent, atom_arity);
 	    //
 	    pthread_mutex_unlock(thread_info[ip]->exec);
