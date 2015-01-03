@@ -1703,7 +1703,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
 	/* データアトムap2とシンボルアトムatom1 */
 	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2));
+	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
 
 	/* データアトムap1とシンボルアトムatom2 */
         LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
