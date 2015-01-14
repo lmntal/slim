@@ -488,7 +488,7 @@ State *statespace_insert(StateSpace ss, State *s)
       insert_dst = statespace_tbl(ss);
     }
 #ifdef PROFILE
-    if (lmn_env.optimize_hash_old && statespace_is_memid_hash(ss, hashv)) {
+    if (lmn_env.optimize_hash_old && statespace_is_memid_hash(ss, hashv) && lmn_env.tree_compress == FALSE) {
       state_calc_mem_encode(s);
       insert_dst = is_accept ? statespace_accept_memid_tbl(ss)
                              : statespace_memid_tbl(ss);
@@ -500,7 +500,7 @@ State *statespace_insert(StateSpace ss, State *s)
   ret = statetable_insert(insert_dst, s);
 #else
   ret = statetable_insert(insert_dst, s, &col);
-  if (lmn_env.optimize_hash_old && col >= MEM_EQ_FAIL_THRESHOLD) {
+  if (lmn_env.optimize_hash_old && col >= MEM_EQ_FAIL_THRESHOLD && lmn_env.tree_compress == FALSE) {
     statespace_add_memid_hash(ss, hashv);
   }
 #endif
@@ -840,7 +840,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           break;
         }
 
-        if (statetable_use_rehasher(st) && is_dummy(str) && !is_encoded(str)) {
+        if (statetable_use_rehasher(st) && is_dummy(str) && !is_encoded(str) && lmn_env.tree_compress == FALSE) {
           /* A. オリジナルテーブルにおいて, dummy状態が比較対象
            * 　 --> memidテーブル側の探索へ切り替える.
            *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
@@ -891,7 +891,7 @@ static State *statetable_insert(StateTable *st, State *ins)
             profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
           }
 #endif
-          if (statetable_use_rehasher(st)) {
+          if (statetable_use_rehasher(st) && lmn_env.tree_compress == FALSE) {
             if (state_get_parent(ins) == str) {
               /* 1step遷移した状態insの親状態とでハッシュ値が衝突している場合:
                *  + 状態insだけでなくその親状態もrehashする.
