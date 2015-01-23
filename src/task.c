@@ -1322,10 +1322,14 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	  }
 
 	  lmn_env.findatom_parallel_mode=TRUE;
-	  for(ip=0;ip<active_thread;ip++){
+	  for(ip=0, atom=atomlist_head(atomlist_ent);
+	      ip<active_thread;
+	      atom=LMN_SATOM_GET_NEXT_RAW(atom),ip++){
 	    //pthread create
 	    if(lmn_env.find_atom_parallel)break;
-	    if(!check_exist(thread_info[ip]->next_atom,f)||lmn_env.findatom_parallel_inde)
+	    if(!check_exist(thread_info[ip]->next_atom,f)||
+	       atom == thread_info[ip]->next_atom||
+	       lmn_env.findatom_parallel_inde)
 	      thread_info[ip]->next_atom=NULL;
 	    threadinfo_init(ip, atomi, rule, rc, instr, atomlist_ent, atom_arity);
 	    //
