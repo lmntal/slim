@@ -76,7 +76,7 @@ static int mhash_depth = MHASH_TREE_D;
 
 void mhash_set_depth(int depth)
 {
-  if (depth > 0 && depth < 5) mhash_depth = depth;
+  if (depth > 0) mhash_depth = depth;
 }
 
 mhash_t mhash(LmnMembrane *mem)

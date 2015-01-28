@@ -43,7 +43,7 @@
 #include "syntax.h"
 #include "arch.h"
 #include "symbol.h"
-#include "vector.h"
+#include "utility/vector.h"
 #include "error.h"
 #include "so.h"
 

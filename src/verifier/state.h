@@ -45,7 +45,9 @@
 #include "mem_encode.h"
 #include "membrane.h"
 #include "rule.h"
-#include "vector.h"
+#include "utility/vector.h"
+#include "binstr_compress.h"
+#include "tree_compress.h"
 #include "automata.h"
 #include "react_context.h"
 
@@ -66,18 +68,46 @@ typedef void*  state_data_t;
 //union state_data_t { /* 8(4)Byte */
 //  LmnMembrane       *mem;             /*  8(4)byte: LMNtalプログラムの状態であるグローバルルート膜へのポインタ */
 //  LmnBinStr          compress_mem;    /*  8(4)byte: 膜memをエンコードしたバイナリストリング */
-//};
+//}
+
+typedef BYTE TreeRootRef[6];
+
+typedef struct TreeCompressData {
+  TreeRootRef root_ref;
+  unsigned short byte_length;
+} TreeCompressData;
+
+static inline void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref)
+{
+  memcpy(&tcd->root_ref, &ref, sizeof(TreeRootRef));
+}
+
+static inline void tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref)
+{
+  memcpy(ref, &tcd->root_ref, sizeof(TreeRootRef));
+}
+
+static inline unsigned short tcd_get_byte_length(TreeCompressData *data)
+{
+  return data->byte_length;
+}
+
+static inline void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length)
+{
+  data->byte_length = byte_length;
+}
 
 /* Descriptor */
-struct State {                 /* Total:64(36)byte */
+struct State {                 /* Total:72(36)byte */
   unsigned int       successor_num;   /*  4(4)byte: サクセッサの数 */
   BYTE               state_name;      /*  1(1)byte: 同期積オートマトンの性質ラベル */
   BYTE               flags;           /*  1(1)byte: フラグ管理用ビットフィールド */
   BYTE               flags2;          /*  1(1)byte: フラグ管理用ビットフィールド2 */
   BYTE               flags3;          /*  1(1)byte: アラインメントの隙間(一時的にdpor_naiveで使用中) */
   unsigned long      hash;            /*  8(4)byte: 通常時: 膜memのハッシュ値, --mem-enc時: 膜の一意なバイト列のハッシュ値  */
-  succ_data_t       *successors;      /*  8(4)byte: サクセッサポインタの配列 */
   state_data_t       data;            /*  8(4)byte: 膜, バイナリストリングのどちらか */
+  TreeCompressData   tcd;             /*  8(8)byte: Tree Compression 用のデータ無理やり8 Byteにしている */
+  succ_data_t       *successors;      /*  8(4)byte: サクセッサポインタの配列 */
   State             *next;            /*  8(4)byte: 状態管理表に登録する際に必要なポインタ */
   State             *parent;          /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
   unsigned long      state_id;        /*  8(4)byte: 生成順に割り当てる状態の整数ID */
@@ -275,12 +305,14 @@ void         state_free_binstr(State *s);
 void         state_calc_mem_encode(State *s);
 LmnBinStr    state_calc_mem_dump(State *s);
 LmnBinStr    state_calc_mem_dump_with_z(State *s);
+LmnBinStr    state_calc_mem_dump_with_tree(State *s);
 LmnBinStr    state_calc_mem_dummy(State *s);
 void         state_calc_hash(State *s, LmnMembrane *mem, BOOL encode);
 void         state_free_compress_mem(State *s);
 LmnMembrane *state_mem_copy(State *state);
 int          state_cmp(State *s1, State *s2);
 int          state_cmp_with_compress(State *s1, State *s2);
+int          state_cmp_with_tree(State *s1, State *s2);
 void         state_binstr_d_compress(State *s);
 LmnBinStr    state_binstr_reconstructor(State *s);
 void         state_calc_binstr_delta(State *s);
@@ -343,7 +375,9 @@ struct Transition {
   unsigned long id;  /*  8byte: State graph(=\= Automata)上の各遷移に付与されるグローバルなID．
                                 ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる． */
   Vector rule_names; /* 24byte: ルール名 複数あるのは多重辺(porなしの場合)*/
+#ifdef KWBT_OPT
   LmnCost cost;            /*  8(4)byte: cost */
+#endif
 };
 
 Transition    transition_make(State *s, lmn_interned_str rule_name);
@@ -404,8 +438,16 @@ static inline LmnMembrane *state_restore_mem_inner(State *s, BOOL flag) {
     return lmn_binstr_decode(b);
   }
   else {
-    LMN_ASSERT(state_binstr(s));
-    return lmn_binstr_decode(state_binstr(s));
+    LmnBinStr b = state_binstr(s);
+    if (lmn_env.tree_compress && b == NULL) {
+      TreeNodeRef ref;
+      tcd_get_root_ref(&s->tcd, &ref);
+      LMN_ASSERT(ref);
+      LMN_ASSERT(tcd_get_byte_length(&s->tcd) != 0);
+      b = lmn_bscomp_tree_decode((TreeNodeRef)ref, tcd_get_byte_length(&s->tcd));
+    }
+    LMN_ASSERT(b);
+    return lmn_binstr_decode(b);
   }
 }
 
@@ -675,11 +717,17 @@ static inline Transition transition(State *s, unsigned int i) {
 }
 
 static inline LmnCost transition_cost(Transition t) {
+#ifdef KWBT_OPT
   return t->cost;
+#else
+  return 0;
+#endif
 }
 
 static inline void transition_set_cost(Transition t, LmnCost cost) {
+#ifdef KWBT_OPT
   t->cost = cost;
+#endif
 }
 
 #endif

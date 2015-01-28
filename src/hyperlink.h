@@ -43,8 +43,8 @@
 
 #include "lmntal.h"
 #include "functor.h"
-#include "internal_hash.h"
-#include "vector.h"
+#include "utility/internal_hash.h"
+#include "utility/vector.h"
 
 /* ----------------------------------------------------------------------- *
  *  hyperlink system                                                       *

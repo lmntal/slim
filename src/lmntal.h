@@ -311,6 +311,9 @@ struct LmnEnv {
   BOOL hash_compaction;
   int  hash_depth;
 
+  BOOL tree_compress;
+  unsigned int tree_compress_table_size;
+
 #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;

@@ -41,8 +41,8 @@
 
 #include "lmntal.h"
 #include "atom.h"
-#include "internal_hash.h"
-#include "vector.h"
+#include "utility/internal_hash.h"
+#include "utility/vector.h"
 #include "rule.h"
 #include "slim_header/port.h"
 #include "error.h"

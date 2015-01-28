@@ -42,8 +42,8 @@
 
 #include "lmntal.h"
 #include "atom.h"
-#include "visitlog.h"
-#include "vector.h"
+#include "utility/visitlog.h"
+#include "utility/vector.h"
 #include "rule.h"
 
 struct MemDeltaRoot {

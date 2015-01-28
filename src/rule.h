@@ -40,8 +40,8 @@
 #define LMN_RULE_H
 
 #include "lmntal.h"
-#include "vector.h"
-#include "st.h"
+#include "utility/vector.h"
+#include "utility/st.h"
 #include "symbol.h"
 
 /*----------------------------------------------------------------------

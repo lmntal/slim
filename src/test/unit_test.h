@@ -3,6 +3,7 @@
 
 // add your test header here
 #include "sample_test.h"
+#include "tree_compress_test.h"
 
 void test_main();
 
