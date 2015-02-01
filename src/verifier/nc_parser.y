@@ -40,9 +40,9 @@
 %{
 #include <math.h>
 #include <stdio.h>
-#include "st.h"
+#include "utility/st.h"
 #include "automata.h"
-#include "vector.h"
+#include "utility/vector.h"
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;

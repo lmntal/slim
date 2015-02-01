@@ -42,6 +42,7 @@
 #include "mem_encode.h"
 #include "util.h"
 #include "dumper.h"
+#include "verifier/binstr_compress.h"
 
 static void mc_profiler2_init(MCProfiler2 *p);
 static void mc_profiler2_destroy(MCProfiler2 *p);
@@ -354,6 +355,11 @@ void profile_statespace(LmnWorkerGroup *wp)
   lmn_prof.state_num_stored = statespace_num(worker_states(w));
   lmn_prof.state_num_end    = statespace_end_num(worker_states(w));
 
+  if (lmn_env.profile_level >= 3 && lmn_env.tree_compress) {
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, (2 << lmn_env.tree_compress_table_size) * sizeof(TreeNode));
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, sizeof(struct TreeDatabase));
+    profile_total_space_update(worker_states(w));
+  }
   if (lmn_env.profile_level >= 2) {
     MCProfiler2 *total;
     unsigned int i;
@@ -368,6 +374,10 @@ void profile_statespace(LmnWorkerGroup *wp)
     statespace_foreach(worker_states(w), profile_state_f,
                        (LmnWord)worker_states(w), DEFAULT_ARGS);
 
+    if (lmn_env.tree_compress) {
+      MCProfiler2 *p = &lmn_prof.lv2[lmn_OMP_get_my_id()];
+      p->binstr_space += lmn_bscomp_tree_space();
+    }
     mc_profiler2_makeup_report(total);
     for (i = 0; i < lmn_prof.thread_num; i++) {
       mc_profiler2_destroy(&lmn_prof.lv2[i]);
@@ -394,7 +404,7 @@ static void profile_state_f(State *s, LmnWord arg)
   if (!is_binstr_user(s) && state_mem(s)) {
     p->membrane_space += lmn_mem_root_space(state_mem(s));
   }
-  else if (is_binstr_user(s) && state_binstr(s)  && !lmn_env.hash_compaction) {
+  else if (is_binstr_user(s) && state_binstr(s)) {
     p->binstr_space   += lmn_binstr_space(state_binstr(s));
   }
 
@@ -520,26 +530,30 @@ static void dump_execution_stat(FILE *f)
     }
 
     fprintf(f,"---------:--------------------------------------------------\n");
-    fprintf(f, "%-9s: %-8s=%6u  %-8s=%6s  %-8s=%6s\n"
+    fprintf(f, "%-9s: %-9s=%5u  %-8s=%6s  %-8s=%6s\n"
              , "PALLAREL"
              , "workers"  , lmn_prof.thread_num
              , "strtgy"   , strategy
              , "loadBal." , lmn_env.optimize_loadbalancing ? "OPT" : "ORG");
-    fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s  %-8s=%6s\n"
+    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%6s\n"
              , "GENERATOR"
              , "mem2bs"   , lmn_env.enable_compress_mem ? "ON" : "OFF"
              , "compact"  , lmn_env.enable_compress_mem ? "AUTO" : "OFF"
              , "rehashr"  , lmn_env.optimize_hash ? "ON" : "OFF");
-    fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s  %-8s=%6s\n"
+    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%6s\n"
              , ""
              , "mem2id"   , lmn_env.mem_enc       ? "ON" : "OFF"
              , "mdelta"   , lmn_env.delta_mem     ? "ON" : "OFF"
              , "p.o.r."   , lmn_env.enable_por    ? "ON" : "OFF");
-    fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s\n"
+    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%5s\n"
              , ""
-             , "bsZcomp.", lmn_env.z_compress    ? "ON" : "OFF"
-             , "bsDcomp.", lmn_env.d_compress    ? "ON" : "OFF");
-    fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s\n"
+             , "bsZcomp.", lmn_env.z_compress        ? "ON" : "OFF"
+             , "bsDcomp.", lmn_env.d_compress        ? "ON" : "OFF"
+             , "hashcomp.", lmn_env.hash_compaction ? "ON" : "OFF");
+    fprintf(f, "%-9s: %-8s=%5s\n"
+             , ""
+             , "treecomp.", lmn_env.tree_compress   ? "ON" : "OFF");
+    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s\n"
              , "EXPLORER"
              , "strtgy"  , expr
 	     , "heurstc" , heuristic);
@@ -584,7 +598,7 @@ void dump_profile_data(FILE *f)
 
   if (lmn_env.benchmark) { /* データ収集用 */
     if (lmn_env.ltl) {
-      fprintf(f, "%lf, %lf, %lf, %lu, %lu, %lu, %lu, %lf, %lf, %lf, %lf, %lf, %s\n"
+      fprintf(f, "%lf\t%lf\t%lf\t%lu\t%lu\t%lu\t%lu\t%lf\t%lf\t%lf\t%lf\t%lf\t%s\n"
           , tmp_total_wall_time
           , tmp_total_wall_time_main
           , tmp_total_cpu_time_main
@@ -602,7 +616,7 @@ void dump_profile_data(FILE *f)
           , lmn_prof.found_err ? "FOUND" : "NOT FOUND"
           );
     } else {
-      fprintf(f, "%lf, %lf, %lf, %lu, %lu, %lu, %lu, %lf, %lf, %lf, %lf, %lf\n"
+      fprintf(f, "%lf\t%lf\t%lf\t%lu\t%lu\t%lu\t%lu\t%lf\t%lf\t%lf\t%lf\t%lf\n"
           , tmp_total_wall_time
           , tmp_total_wall_time_main
           , tmp_total_cpu_time_main
@@ -819,22 +833,28 @@ void dump_profile_data(FILE *f)
         fprintf(f,   "------------------------------------------------------------\n");
         fprintf(f, "\n");
         fprintf(f,   "-- Memory Performance --------------------------------------\n");
-  fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]", "[Peak Num]");
-  for (i = 0; i < ARY_SIZEOF(total.spaces); i++) {
-    if (lmn_prof.thread_num >= 2) {
-      fprintf(f, "%-24s: %10.2lf\n"
-               , profile_space_id_to_name(i)
-               , (double)total.spaces[i].space.cur / 1024 /1024);
-    } else {
-      fprintf(f, "%-24s: %10.2lf %10.2lf %10lu\n"
-               , profile_space_id_to_name(i)
-               , (double)total.spaces[i].space.cur  / 1024 / 1024
-               , (double)total.spaces[i].space.peak / 1024 / 1024
-               , total.spaces[i].num.peak);
-    }
-  }
+        fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]", "[Peak Num]");
+        for (i = 0; i < ARY_SIZEOF(total.spaces); i++) {
+          if (lmn_prof.thread_num >= 2) {
+            fprintf(f, "%-24s: %10.2lf\n"
+                , profile_space_id_to_name(i)
+                , (double)total.spaces[i].space.cur / 1024 /1024);
+          } else {
+            fprintf(f, "%-24s: %10.2lf %10.2lf %10lu\n"
+                , profile_space_id_to_name(i)
+                , (double)total.spaces[i].space.cur  / 1024 / 1024
+                , (double)total.spaces[i].space.peak / 1024 / 1024
+                , total.spaces[i].num.peak);
+          }
+        }
         fprintf(f,   "------------------------------------------------------------\n");
         fprintf(f, "\n");
+        if (lmn_env.tree_compress) {
+          fprintf(f,  "-- Tree Compressin Info ------------------------------------\n");
+          lmn_bscomp_tree_profile(f);
+          fprintf(f,   "------------------------------------------------------------\n");
+          fprintf(f, "\n");
+        }
         fprintf(f,   "-- State Management System (Open Hashing) ------------------\n");
         for (i = 0; i < ARY_SIZEOF(total.counters); i++) {
           fprintf(f, "%-24s:%10lu\n", profile_counter_id_to_name(i), total.counters[i]);
@@ -903,6 +923,12 @@ static char *profile_time_id_to_name(int type)
     break;
   case PROFILE_TIME__D_UNCOMPRESS:
     ret = "d uncompress";
+    break;
+  case PROFILE_TIME__TREE_COMPRESS:
+    ret = "tree compress";
+    break;
+  case PROFILE_TIME__TREE_UNCOMPRESS:
+    ret = "tree uncompress";
     break;
   case PROFILE_TIME__COST_UPDATE:
     ret = "cost update";

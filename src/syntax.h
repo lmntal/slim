@@ -41,7 +41,7 @@
 
 #include "lmntal.h"
 #include "instruction.h"
-#include "vector.h"
+#include "utility/vector.h"
 #include "functor.h"
 
 /* 型名の解決の為に上に持ってきた */

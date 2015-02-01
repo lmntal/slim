@@ -75,52 +75,53 @@ static void usage(void)
           "Usage: slim [OPTION]... FILE\n"
           "     When FILE is  -, read standard input.\n"
           "options:\n"
-          "  -I<path>            Adds <path> to the head of the load path list.\n"
-          "  -O[<0-9>] (-O=-O3)  Optimization level. [DEFAULT:-O3]\n"
-          "                      Intermediate instruction sequences are optimized.\n"
-          "  -p[<0-3>] (-p=-p1)  Profiler level.\n"
-          "  --use-builtin-rule  Load the rules builtin this application for arithmetic, nlmem, etc\n"
-          "  --nd                Change the execution mode from RunTime(RT) to ModelChecker(MC)\n"
-          "  --translate         Change the execution mode to Output translated C from LMNtal\n"
-          "  -t                  (RT) Show execution path\n"
-          "                      (MC) Show state space\n"
-          "  --hide-ruleset      Hide ruleset from result\n"
-          "  --hl                (RT) Allow using hyperlink system\n"
-          "  --show-proxy        Show proxy atoms\n"
-          "  --show-chr          Show applied history in uniq rulesets (constraint handling rules)\n"
-          "  --show-transition   (MC) Show transition information in state transition graph\n"
-          "  --show-ends         (MC) Show all of terminated states\n"
-          "  --show-hl           (RT) Show all hyperlinks details\n"
-          "  --dump-dot          (RT) Print format: DOT language (LMNtal hierarchical graph)\n"
-          "                      (MC) Print format: DOT language (State Transition graph) \n"
-          "  --dump-lavit        (MC) Print format: LaViT - LMNtal IDE (State Transition Graph)\n"
-          "  --dump-inc          (MC) State Generation and Output of states at the same time\n"
-          "  --dump-json         Print format: JSON\n"
-          "  --nc <file>         (MC) Input <file> as a property automata (LTL2BA format)\n"
-          "  --psym <file>       (MC) Input <file> as propositional symbol definitions\n"
-          "  --ltl               (MC) Do LTL model checking (need --psym, --nc)\n"
-          "  --ltl-all           (MC) Generate full state space and exhaustive search\n"
-          "  --bfs               (MC) Use BFS strategy\n"
-          "  --bfs-lsync         (MC) Use Layer Synchronized BFS strategy\n"
-          "  --use-owcty         (MC) Use OWCTY algorithm  (LTL model checking)\n"
-          "  --use-map           (MC) Use MAP algorithm    (LTL model checking)\n"
-          "  --use-mapndfs       (MC) Use Map+NDFS algorithm (LTL model checking)\n"
+          "  -I<path>             Adds <path> to the head of the load path list.\n"
+          "  -O[<0-9>] (-O=-O3)   Optimization level. [DEFAULT:-O3]\n"
+          "                       Intermediate instruction sequences are optimized.\n"
+          "  -p[<0-3>] (-p=-p1)   Profiler level.\n"
+          "  --use-builtin-rule   Load the rules builtin this application for arithmetic, nlmem, etc\n"
+          "  --nd                 Change the execution mode from RunTime(RT) to ModelChecker(MC)\n"
+          "  --translate          Change the execution mode to Output translated C from LMNtal\n"
+          "  -t                   (RT) Show execution path\n"
+          "                       (MC) Show state space\n"
+          "  --hide-ruleset       Hide ruleset from result\n"
+          "  --hl                 (RT) Allow using hyperlink system\n"
+          "  --show-proxy         Show proxy atoms\n"
+          "  --show-chr           Show applied history in uniq rulesets (constraint handling rules)\n"
+          "  --show-transition    (MC) Show transition information in state transition graph\n"
+          "  --show-ends          (MC) Show all of terminated states\n"
+          "  --show-hl            (RT) Show all hyperlinks details\n"
+          "  --dump-dot           (RT) Print format: DOT language (LMNtal hierarchical graph)\n"
+          "                       (MC) Print format: DOT language (State Transition graph) \n"
+          "  --dump-lavit         (MC) Print format: LaViT - LMNtal IDE (State Transition Graph)\n"
+          "  --dump-inc           (MC) State Generation and Output of states at the same time\n"
+          "  --dump-json          Print format: JSON\n"
+          "  --nc <file>          (MC) Input <file> as a property automata (LTL2BA format)\n"
+          "  --psym <file>        (MC) Input <file> as propositional symbol definitions\n"
+          "  --ltl                (MC) Do LTL model checking (need --psym, --nc)\n"
+          "  --ltl-all            (MC) Generate full state space and exhaustive search\n"
+          "  --bfs                (MC) Use BFS strategy\n"
+          "  --bfs-lsync          (MC) Use Layer Synchronized BFS strategy\n"
+          "  --use-owcty          (MC) Use OWCTY algorithm  (LTL model checking)\n"
+          "  --use-map            (MC) Use MAP algorithm    (LTL model checking)\n"
+          "  --use-mapndfs        (MC) Use Map+NDFS algorithm (LTL model checking)\n"
 #ifndef MINIMAL_STATE
-          "  --use-mcndfs        (MC) Use Multicore NDFS algorithm (LTL model checking)\n"
+          "  --use-mcndfs         (MC) Use Multicore NDFS algorithm (LTL model checking)\n"
 #endif
-          "  --use-bledge        (MC) Use BLEDGE algorithm (LTL model checking)\n"
-          "  --disable-map-h     (MC) No use MAP heuristics(LTL model checking)\n"
-          "  --pscc-driven       (MC) Use SCC analysis of property automata (LTL model checking)\n"
-          "  --use-Ncore=<N>     (MC) Use <N>threads\n"
-          "  --delta-mem         (MC) Use delta membrane generator\n"
-          "  --hash-compaction   (MC) Use Hash Compaction\n"
-          "  --hash-depth=<N>    (MC) Set <N> Depth of Hash Function\n"
-          "  --mem-enc           (MC) Use canonical membrane representation\n"
-          "  --ltl-f <ltl>       (MC) Input <ltl> formula directly. (need LTL2BA env)\n"
-          "  --visualize         (MC) Output information for visualize\n"
-          "  --run-test          (MC) Run CUnit\n"
-          "  --version           Prints version and exits.\n"
-          "  --help              This Help.\n"
+          "  --use-bledge         (MC) Use BLEDGE algorithm (LTL model checking)\n"
+          "  --disable-map-h      (MC) No use MAP heuristics(LTL model checking)\n"
+          "  --pscc-driven        (MC) Use SCC analysis of property automata (LTL model checking)\n"
+          "  --use-Ncore=<N>      (MC) Use <N>threads\n"
+          "  --delta-mem          (MC) Use delta membrane generator\n"
+          "  --tree-compress=<N>  (MC) Use Tree Compression with 2^N table size default(N=20)\n"
+          "  --hash-compaction    (MC) Use Hash Compaction\n"
+          "  --hash-depth=<N>     (MC) Set <N> Depth of Hash Function\n"
+          "  --mem-enc            (MC) Use canonical membrane representation\n"
+          "  --ltl-f <ltl>        (MC) Input <ltl> formula directly. (need LTL2BA env)\n"
+          "  --visualize          (MC) Output information for visualize\n"
+          "  --run-test           Run CUnit\n"
+          "  --version            Prints version and exits.\n"
+          "  --help               This Help.\n"
           );
   exit(1);
 }
@@ -219,7 +220,8 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"visualize"              , 0, 0, 6100},
     {"hash-compaction"        , 0, 0, 6060},
     {"hash-depth"             , 1, 0, 6061},
-    {"run-test"               , 1, 0, 6070},
+    {"tree-compress"          , 1, 0, 6062},
+    {"run-test"               , 0, 0, 6070},
     {0, 0, 0, 0}
   };
 
@@ -545,8 +547,21 @@ static void parse_options(int *optid, int argc, char *argv[])
       }
       break;
     }
+    case 6062:
+    {
+      lmn_env.hash_compaction = FALSE;
+      lmn_env.tree_compress = TRUE;
+      int size = atoi(optarg);
+      if (size >= 15) {
+        lmn_env.tree_compress_table_size = size;
+      } else {
+        lmn_env.tree_compress_table_size = 15;
+      }
+      break;
+    }
     case 6070:
       lmn_env.run_test = TRUE;
+      break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;

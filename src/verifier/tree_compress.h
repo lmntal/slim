@@ -1,7 +1,8 @@
 /*
- * dpor_naive.h
+ * tree_compress.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -36,23 +37,43 @@
  * $Id$
  */
 
-#ifndef LMN_MC_POR_H
-#define LMN_MC_POR_H
+/** @author Taketo Yoshida
+ *  Parallel Recursive State Compression for Free
+ */
 
-#include "lmntal.h"
-#include "queue.h"
-#include "utility/vector.h"
-#include "state.h"
-#include "statespace.h"
+#ifndef TREE_COMPRESS_H
+#  define TREE_COMPRESS_H
 
+#include "mem_encode.h"
 
+#define TREE_DB_DEFAULT_SIZE (1024 * 1024 * 128)
 
-void por_calc_ampleset(StateSpace  ss,
-                       State       *s,
-                       LmnReactCxt *rc,
-                       Vector      *new_s,
-                       BOOL        flag);
-void init_por_vars(void);
-void free_por_vars(void);
+typedef uint64_t TreeNodeElement;
+typedef TreeNodeElement TreeNodeRef;
+typedef TreeNodeElement TreeNodeUnit;
 
-#endif
+typedef struct TreeDatabase *TreeDatabase;
+typedef struct TreeNode *TreeNode;
+
+struct TreeDatabase {
+  TreeNode    *nodes;
+  uint64_t    node_count;
+  size_t      mask;
+};
+
+struct TreeNode {
+  TreeNodeElement left;
+  TreeNodeElement right;
+};
+
+TreeDatabase   tree_make(size_t size);
+void           tree_free(TreeDatabase treedb);
+void           tree_clear(TreeDatabase treedb);
+LmnBinStr      tree_get(TreeDatabase treedb, TreeNodeRef ref, int len);
+TreeNodeRef    tree_find_or_put(TreeDatabase treedb, LmnBinStr bs, BOOL *found);
+uint64_t       tree_space(TreeDatabase treedb);
+
+#define tree_db_node_count(db) (db->node_count)
+#define tree_db_string_count(db) (db->string_count)
+
+#endif /* ifndef TREE_COMPRESS_H */

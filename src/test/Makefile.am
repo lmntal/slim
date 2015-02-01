@@ -5,5 +5,6 @@ libunit_test_a_CFLAGS = \
         $(CFLAGS)
 
 libunit_test_a_SOURCES =       \
-    unit_test.c        unit_test.h       \
-    sample_test.c      sample_test.h
+    unit_test.c        					unit_test.h       				\
+    tree_compress_test.c        tree_compress_test.h      \
+    sample_test.c      					sample_test.h

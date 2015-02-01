@@ -101,6 +101,7 @@ State *state_make_minimal()
   new_s->parent           = NULL;
   new_s->state_id         = 0;
   new_s->map              = NULL;
+  memset(&new_s->tcd, 0x00, sizeof(TreeCompressData));
 
 #ifndef MINIMAL_STATE
   state_set_expander_id(new_s, LONG_MAX);
@@ -495,6 +496,55 @@ int state_cmp_with_compress(State *s1, State *s2)
 }
 #endif
 
+/**
+ * 引数としてあたえられたStateが等しいかどうかを判定する
+ */
+static int state_equals_with_tree(State *check, State *stored)
+{
+  LmnBinStr bs1, bs2;
+  TreeNodeRef ref;
+  int t;
+
+  bs1 = state_binstr(check);
+
+  tcd_get_root_ref(&stored->tcd, &ref);
+  LMN_ASSERT(ref != 0);
+  LMN_ASSERT(tcd_get_byte_length(&stored->tcd) != 0);
+  bs2 = lmn_bscomp_tree_decode((TreeNodeRef)ref, tcd_get_byte_length(&stored->tcd));
+
+  if (is_encoded(check) && is_encoded(stored)) {
+    /* 膜のIDで比較 */
+    t =
+      check->state_name == stored->state_name &&
+      binstr_compare(bs1, bs2) == 0;
+  }
+  else if (state_mem(check) && bs2) {
+    /* 同型性判定 */
+    t =
+      check->state_name == stored->state_name &&
+      lmn_mem_equals_enc(bs2, state_mem(check));
+  }
+  else if (bs1 && bs2) {
+    /* このブロックは基本的には例外処理なので注意.
+     * PORなどでコピー状態を挿入する際に呼ばれることがある. */
+    LmnMembrane *mem = lmn_binstr_decode(bs1);
+    t =
+      check->state_name == stored->state_name &&
+      lmn_mem_equals_enc(bs2, mem);
+    lmn_mem_free_rec(mem);
+  }
+  else {
+    lmn_fatal("implementation error");
+  }
+
+  lmn_binstr_free(bs2);
+  return t;
+}
+
+int state_cmp_with_tree(State *s1, State *s2)
+{
+  return !state_equals_with_tree(s1, s2);
+}
 
 int state_cmp(State *s1, State *s2)
 {
@@ -638,6 +688,28 @@ LmnBinStr state_calc_mem_dump(State *s)
 }
 
 
+/* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
+ * sのフラグを操作する. */
+LmnBinStr state_calc_mem_dump_with_tree(State *s)
+{
+  LmnBinStr ret;
+
+  if (state_binstr(s)) {
+    /* 既にエンコード済みの場合は何もしない. */
+    ret = state_binstr(s);
+  }
+  else if (state_mem(s)) {
+    ret = lmn_mem_to_binstr(state_mem(s));
+  }
+  else {
+    lmn_fatal("unexpected.");
+    ret = NULL;
+  }
+
+  return ret;
+}
+
+
 LmnBinStr state_calc_mem_dummy(State *s)
 {
   /* DUMMY: nothing to do */
@@ -659,7 +731,7 @@ Transition transition_make(State *s, lmn_interned_str rule_name)
 
   t->s    = s;
   t->id   = 0;
-  t->cost = 0;
+  transition_set_cost(t, 0);
   vec_init(&t->rule_names, 4);
   vec_push(&t->rule_names, rule_name);
 #ifdef PROFILE

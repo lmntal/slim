@@ -66,6 +66,8 @@ struct LmnBinStr {
 #define TAG_DATA_TYPE_BIT 2
 #define TAG_IN_BYTE       2
 
+#define lmn_binstr_byte_size(bs)         ((bs->len + 1)/ TAG_IN_BYTE)
+
 void mem_isom_init(void);
 void mem_isom_finalize(void);
 void set_functor_priority(LmnFunctor f, int priority);
