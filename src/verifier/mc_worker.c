@@ -291,7 +291,9 @@ static BOOL workers_flags_init(LmnWorkerGroup *wp, Automata property_a)
     lmn_env.d_compress      = FALSE;
     lmn_env.hash_compaction = FALSE;
     lmn_env.mem_enc         = FALSE;
+#ifdef PROFILE
     lmn_env.optimize_hash_old = FALSE;
+#endif
   }
 
   /* === 3. 状態空間探索(LTLモデル検査)オプション === */
