@@ -72,6 +72,19 @@ io.print_newline(Port, RetPort) :- class(Port, "port") |
 io.print_line(Port, S, RetPort) :- string(S), class(Port, "port") |
     '$callback'('cb_print_line_with_port', Port, S, RetPort).
 
+io.print_newline(Port, [], RetPort):-class(Port, "port") |
+    '$callback'('cb_print_newline_with_port', Port, RetPort).
+
+io.print_newline(Port,[H|T],RetPort):- unary(H),class(Port, "port")|
+'$callback'('cb_port_putc', Port, H, X), io.print_newline(X,T,RetPort).
+
+io.print_line(Port, [], RetPort):-class(Port, "port") |
+    Port=RetPort.
+
+io.print_line(Port,[H|T],RetPort):- unary(H),class(Port, "port")|
+'$callback'('cb_port_putc', Port, H, X), io.print_line(X,T,RetPort).
+
+
 io.print_mem(Port, {$p[], @p}, RetPort) :- class(Port, "port") |
     '$callback'('cb_dump_mem', Port, {$p[], @p}, RetPort).
 
