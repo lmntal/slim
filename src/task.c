@@ -58,6 +58,7 @@
 #include "mc_worker.h"
 #include "mc_generator.h"
 #include "dpor.h"
+#include "normal_thread.h"
 
 #include "runtime_status.h"
 
@@ -143,7 +144,7 @@ static inline BOOL react_ruleset(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleSet r
 static inline BOOL react_ruleset_inner(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleSet rs);
 static inline void react_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem);
 static inline BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane *mem);
-static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
+//static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
 static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
 
 
@@ -194,6 +195,11 @@ void lmn_run(Vector *start_rulesets)
   }
   lmn_memstack_push(RC_MEMSTACK(&mrc), mem);
 
+  //normal parallel mode init
+  if(lmn_env.enable_parallel && !lmn_env.nd){
+    normal_parallel_init();
+  }
+
   /** PROFILE START */
   if (lmn_env.profile_level >= 1) {
     profile_start_exec();
@@ -216,6 +222,7 @@ void lmn_run(Vector *start_rulesets)
     profile_finish_exec_thread();
     profile_finish_exec();
   }
+
   if (lmn_env.dump) { /* lmntalではioモジュールがあるけど必ず実行結果を出力するプログラミング言語, で良い?? */
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       fprintf(stdout, "finish.\n");
@@ -224,6 +231,12 @@ void lmn_run(Vector *start_rulesets)
     }
   }
   if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
+
+  //normal parallel mode free
+  if(lmn_env.enable_parallel && !lmn_env.nd){
+    if(lmn_env.profile_level == 3)normal_parallel_prof_dump(stderr);
+    normal_parallel_free();
+  }
 
   /* 後始末 */
   if (lmn_env.normal_remain) {
@@ -361,10 +374,14 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 
   profile_start_trial();
 
+  if(lmn_env.enable_parallel && !lmn_env.nd)rule_wall_time_start();
+
   /* まず、トランスレート済みの関数を実行する
    * それがない場合、命令列をinterpretで実行する */
   result = (translated && translated(rc, mem, rule)) ||
            (inst_seq   && interpret(rc, rule, inst_seq));
+
+  if(lmn_env.enable_parallel && !lmn_env.nd && normal_parallel_flag)rule_wall_time_finish();
 
   profile_finish_trial();
 
@@ -389,6 +406,13 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
 
   if (RC_HLINK_SPC(rc)) {
     lmn_sameproccxt_clear(rc); /* とりあえずここに配置 */
+    // normal parallel destroy
+    if(lmn_env.enable_parallel && !lmn_env.nd){
+      int i;
+      for(i=0;i<lmn_env.core_num;i++){
+	lmn_sameproccxt_clear(thread_info[i]->rc);
+      }
+    }
   }
 
   return result;
@@ -609,13 +633,15 @@ HashSet *insertconnectors(LmnReactCxt *rc, LmnMembrane *mem, const Vector *links
   return retset;
 }
 
-static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
+BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 {
   LmnInstrOp op;
 
   while (TRUE) {
   LOOP:;
     READ_VAL(LmnInstrOp, instr, op);
+
+    if(lmn_env.find_atom_parallel) return FALSE;
 
     switch (op) {
     case INSTR_SPEC:
@@ -804,6 +830,10 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
       READ_VAL(lmn_interned_str, instr, rule_name);
       SKIP_VAL(LmnLineNum,       instr);
+
+      if(lmn_env.findatom_parallel_mode){
+	lmn_fatal("Couldn't find sync instruction!!");
+      }
 
 #ifdef KWBT_OPT
       {
@@ -1043,6 +1073,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt(rc, memi), f);
           if (atomlist_ent) {
             EACH_ATOM(atom, atomlist_ent, ({
+	      if(lmn_env.find_atom_parallel)return FALSE;
               warry_set(rc, atomi, atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
               if (interpret(rc, rule, instr)) {
                 return TRUE;
@@ -1112,6 +1143,7 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt(rc, memi), f);
             if (atomlist_ent) {
               EACH_ATOM(atom, atomlist_ent, ({
+		    if(lmn_env.find_atom_parallel)return FALSE;
                 warry_set(rc, atomi, atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
 
                 if (lmn_sameproccxt_all_pc_check_original(spc, atom, atom_arity) &&
@@ -1210,6 +1242,144 @@ static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       }
       break;
     }
+    case INSTR_FINDATOMP:
+    {
+      if(!lmn_env.enable_parallel||lmn_env.nd){
+	REWRITE_VAL(LmnInstrOp, instr, INSTR_FINDATOM);
+	break;
+      }
+      LmnInstrVar atomi, memi;
+      LmnLinkAttr attr;
+
+      READ_VAL(LmnInstrVar, instr, atomi);
+      READ_VAL(LmnInstrVar, instr, memi);
+      READ_VAL(LmnLinkAttr, instr, attr);
+
+      if (LMN_ATTR_IS_DATA(attr)) {
+        lmn_fatal("I can not find data atoms.\n");
+      }
+      else { /* symbol atom */
+        LmnFunctor f;
+        AtomListEntry *atomlist_ent;
+	int atom_arity;
+
+        READ_VAL(LmnFunctor, instr, f);
+
+	atom_arity = LMN_FUNCTOR_ARITY(f);
+
+        if (rc_hlink_opt(atomi, rc)) {
+	  SameProcCxt *spc;
+
+          if (!RC_HLINK_SPC(rc)) {
+            lmn_sameproccxt_init(rc);
+          }
+
+
+          /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
+          spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+          if (lmn_sameproccxt_from_clone(spc, atom_arity)) {
+	    lmn_fatal("Can't use hyperlink searching in parallel-runtime mode.\n");
+	  }
+	}
+	atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt(rc, memi), f);
+	if (atomlist_ent) {
+	  ///
+	  int ip, ip2;
+	  LmnInstrVar i;
+	  BOOL judge;
+	  LmnSAtom atom;
+
+	  normal_parallel_flag=TRUE;
+
+	  while(!deq_is_empty(temp)){
+	    ip=(int)deq_pop_head(temp);
+	    atom= (LmnSAtom)wt(thread_info[ip]->rc, atomi);
+	    if(check_exist(atom, f)){
+	      warry_set(rc, atomi, atom, LMN_ATTR_MAKE_LINK(0),TT_ATOM);
+	      if(rc_hlink_opt(atomi, rc)){
+		SameProcCxt *spc;
+		spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+		if (lmn_sameproccxt_all_pc_check_clone(spc, LMN_SATOM(wt(rc, atomi)), atom_arity) && 
+		    interpret(rc, rule, instr)) {
+		  success_temp_check++;
+		  return TRUE;
+		}
+	      }else{
+		if (interpret(rc, rule, instr)){
+		  success_temp_check++;
+		  return TRUE;
+		}
+	      }
+	    }
+	    fail_temp_check++;
+	  }
+
+
+	  if(atomlist_ent_num(atomlist_ent) < lmn_env.core_num){
+	    active_thread = atomlist_ent_num(atomlist_ent);
+	  }else{
+	    active_thread = lmn_env.core_num;
+	  }
+
+	  lmn_env.findatom_parallel_mode=TRUE;
+	  for(ip=0, atom=atomlist_head(atomlist_ent);
+	      ip<active_thread;
+	      atom=LMN_SATOM_GET_NEXT_RAW(atom),ip++){
+	    //pthread create
+	    if(lmn_env.find_atom_parallel)break;
+	    if(!check_exist(thread_info[ip]->next_atom,f)||
+	       atom == thread_info[ip]->next_atom||
+	       lmn_env.findatom_parallel_inde)
+	      thread_info[ip]->next_atom=NULL;
+	    threadinfo_init(ip, atomi, rule, rc, instr, atomlist_ent, atom_arity);
+	    //
+	    pthread_mutex_unlock(thread_info[ip]->exec);
+	  }
+	  for(ip2=0;ip2<ip;ip2++){
+	    //lmn_thread_join(findthread[ip2]);
+	    op_lock(ip2, 0);
+	    profile_backtrack_add(thread_info[ip2]->backtrack);
+	    thread_info[ip2]->profile->backtrack_num += thread_info[ip2]->backtrack;
+	  }
+	  lmn_env.findatom_parallel_mode=FALSE;
+
+	  //copy register
+	  judge=TRUE;
+	  for(ip2=0;ip2<ip;ip2++){
+	    if(thread_info[ip2]->judge && judge){
+	      for(i=0;i<warry_use_size(rc);i++){
+		wt(rc, i)=wt(thread_info[ip2]->rc, i);
+		at(rc, i)=at(thread_info[ip2]->rc, i);
+		tt(rc, i)=tt(thread_info[ip2]->rc, i);
+	      }
+	      if(lmn_env.trace)fprintf(stdout,"( Thread id : %d )",thread_info[ip2]->id);
+	      instr=instr_parallel;
+	      judge=FALSE;
+	      continue;
+	    }
+	    if(thread_info[ip2]->judge){
+	      deq_push_head(temp,ip2);
+	    }
+	  }
+	    
+	  if(!lmn_env.find_atom_parallel)return FALSE;//Can't find atom
+	  lmn_env.find_atom_parallel=FALSE;
+	  break;//Find atom!!
+	}	
+        return FALSE;
+      }
+      break;
+    }
+    case INSTR_SYNC:
+    {
+      if(lmn_env.findatom_parallel_mode){
+	lmn_env.find_atom_parallel=TRUE;
+	instr_parallel=instr;
+	return TRUE;
+      }
+	break;
+    }
+
     case INSTR_LOCKMEM:
     {
       LmnInstrVar memi, atomi, memn;
@@ -2621,6 +2791,7 @@ label_skip_data_atom:
        */
       LmnInstrVar atom1, length1, arg1, atom2, length2, arg2;
       SameProcCxt *spc1, *spc2;
+      int i;
 
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, length1);
@@ -2657,6 +2828,38 @@ label_skip_data_atom:
         LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, LMN_SPC_PC(spc1, arg1));
       }
 
+      ////normal parallel init
+      if(lmn_env.enable_parallel && !lmn_env.nd){
+	for(i=0;i<lmn_env.core_num;i++){
+	  if (!RC_HLINK_SPC(thread_info[i]->rc)) {
+	    lmn_sameproccxt_init(thread_info[i]->rc);
+	  }
+
+	  if (!hashtbl_contains(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1)) {
+	    spc1 = lmn_sameproccxt_spc_make(atom1, length1);
+	    hashtbl_put(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1, (HashValueType)spc1);
+	  }
+	  else {
+	    spc1 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1);
+	  }
+
+	  if (!LMN_SPC_PC(spc1, arg1)) {
+	    LMN_SPC_PC(spc1, arg1) = lmn_sameproccxt_pc_make(atom1, arg1, NULL);
+	  }
+
+	  if (!hashtbl_contains(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2)) {
+	    spc2 = lmn_sameproccxt_spc_make(atom2, length2);
+	    hashtbl_put(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2, (HashValueType)spc2);
+	  }
+	  else {
+	    spc2 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2);
+	  }
+
+	  if (!LMN_SPC_PC(spc2, arg2)) {
+	    LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, LMN_SPC_PC(spc1, arg1));
+	  }
+	}
+      }
       break;
     }
     case INSTR_EQGROUND:

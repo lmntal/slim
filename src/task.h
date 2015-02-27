@@ -55,6 +55,7 @@
 
 #define SWAP(T,X,Y)       do { T t=(X); (X)=(Y); (Y)=t;} while(0)
 #define READ_VAL(T,I,X)      ((X)=*(T*)(I), I+=sizeof(T))
+#define REWRITE_VAL(T,I,X)   (I-=sizeof(T), *(T*)(I)=(X))
 #define SKIP_VAL(T,I)      I+=sizeof(T)
 
 /* 属性配列ttに使用するタグ */
@@ -71,6 +72,7 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule);
 void react_start_rulesets(LmnMembrane *mem, Vector *rulesets);
 BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembrane *cur_mem);
 void memstack_push(LmnMembrane *mem);
+BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
 struct Vector user_system_rulesets; /* system ruleset defined by user */
 static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegister *v);
 static inline void free_links(Vector *links);

@@ -200,6 +200,7 @@ static void parse_options(int *optid, int argc, char *argv[])
     {"disable-map-h"          , 0, 0, 3100},
     {"use-Ncore"              , 1, 0, 5000},
     {"cutoff-depth"           , 1, 0, 5001},
+    {"independent"            , 0, 0, 5002},
     {"disable-loadbalancer"   , 0, 0, 5015},
     {"opt-lock"               , 0, 0, 5025},
     {"disable-opt-hash"       , 0, 0, 5026},
@@ -431,7 +432,7 @@ static void parse_options(int *optid, int argc, char *argv[])
         lmn_env.core_num = core;
         env_set_threads_num(core);
       }
-      lmn_env.enable_parallel  = TRUE;
+      if(core != 0)lmn_env.enable_parallel  = TRUE;
       break;
     }
     case 5001:
@@ -442,6 +443,9 @@ static void parse_options(int *optid, int argc, char *argv[])
       }
       break;
     }
+    case 5002:
+      lmn_env.findatom_parallel_inde = TRUE;
+      break;
     case 5015: /* optimize Load Balancing */
       lmn_env.optimize_loadbalancing = FALSE;
       break;
