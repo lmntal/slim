@@ -77,6 +77,18 @@ copyarg(ARG, []) :- ground(ARG) | .
 copyarg(ARG, [HD|TL]) :- ground(ARG) | HD = ARG, copyarg(ARG, TL).
 
 /**
+ * RET = let(VAR, ARG, EXPR):
+ *
+ * Binds the variable VAR to the argument ARG,
+ * then returns EXPR which may contains VAR as a free variable.
+ * You can use copyarg to use VAR multiple times in EXPR.
+ *
+ * @example ret = let(X, 1, X+1) ==> ret = 2
+ * @example ret = let(X, 1, X1+X2), copyarg(X, [X1,X2]) ==> ret = 2
+ */
+RET = let(VAR, ARG, EXPR) :- RET = apply(lambda(VAR, EXPR), ARG).
+
+/**
  * RET = map(LAMBDA, LIST):
  *
  * Applies all elements of LIST to the 1-ary lambda expression LAMBDA,
