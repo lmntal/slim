@@ -43,11 +43,7 @@
 {
 module(functional).
 
-// 'if' module is not well-maintenanced, so defined here
-H=if(true,  T, F), {$t[T]}, {$f[F]} :- $t[H].
-H=if(false, T, F), {$t[T]}, {$f[F]} :- $f[H].
-H='?'(true,  Te, Fe) :- ground(Fe) | H=Te.
-H='?'(false, Te, Fe) :- ground(Te) | H=Fe.
+if.use.
 
 /**
  * RET = apply(LAMBDA, ARG):
