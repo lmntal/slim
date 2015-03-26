@@ -323,3 +323,105 @@ LmnBinStr lmn_bscomp_d_decode(const LmnBinStr ref, const LmnBinStr dif)
   return org;
 }
 
+
+TreeDatabase treedb;
+#ifdef PROFILE
+uint64_t     node_count;
+uint64_t     table_size;
+double       load_factor;
+uint64_t     memory;
+#endif
+
+void lmn_bscomp_tree_profile(FILE *f)
+{
+#ifdef PROFILE
+  fprintf(f, "node count              : %10lu\n", node_count);
+  fprintf(f, "table size              : %10lu\n", table_size);
+  fprintf(f, "load factor             : %10.3lf\n", load_factor);
+  fprintf(f, "memory                  : %7lu MB\n", memory);
+#else
+  fprintf(f, "have to enable profile option\n");
+#endif
+}
+
+BOOL lmn_bscomp_tree_init()
+{
+  if (treedb == NULL) {
+    treedb = tree_make(2ULL << lmn_env.tree_compress_table_size);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+BOOL lmn_bscomp_tree_clean()
+{
+  if (treedb != NULL) {
+#ifdef PROFILE
+    node_count  = tree_db_node_count(treedb);
+    table_size  = treedb->mask + 1;
+    load_factor = (double)node_count / (treedb->mask + 1);
+    memory      = (uint64_t)tree_space(treedb) / 1024 / 1024;
+#endif
+    tree_free(treedb);
+    treedb = NULL;
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+unsigned long lmn_bscomp_tree_space()
+{
+  return tree_space(treedb);
+}
+
+
+TreeNodeRef lmn_bscomp_tree_encode(LmnBinStr str)
+{
+  BOOL found;
+  TreeNodeRef ref;
+#ifdef PROFILE
+  int pre_node_count = tree_db_node_count(treedb);
+  int post_node_count = 0;
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__TREE_COMPRESS);
+  }
+#endif
+  LMN_ASSERT(treedb);
+  LMN_ASSERT(str);
+  ref = tree_find_or_put(treedb, str, &found);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    unsigned long old_space, dif_space;
+    post_node_count = tree_db_node_count(treedb);
+    dif_space = (post_node_count - pre_node_count) * sizeof(struct TreeNode);
+    old_space = lmn_binstr_space(str);
+
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, dif_space);
+    profile_add_space(PROFILE_SPACE__REDUCED_BINSTR, old_space - dif_space);
+    profile_finish_timer(PROFILE_TIME__TREE_COMPRESS);
+  }
+#endif
+  return ref;
+}
+
+
+LmnBinStr lmn_bscomp_tree_decode(TreeNodeRef ref, int len)
+{
+  LmnBinStr bs;
+  LMN_ASSERT(treedb);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__TREE_UNCOMPRESS);
+  }
+#endif
+  bs = tree_get(treedb, ref, len);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, lmn_binstr_space(bs));
+    profile_finish_timer(PROFILE_TIME__TREE_UNCOMPRESS);
+  }
+#endif
+  return bs;
+}

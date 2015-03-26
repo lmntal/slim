@@ -44,8 +44,8 @@ typedef void* yyscan_t;
 #include "automata.h"
 #include "nc_parser.h"
 #include "nc_lexer.h"
-#include "vector.h"
-#include "st.h"
+#include "utility/vector.h"
+#include "utility/st.h"
 #include "propositional_symbol.h"
 #include "error.h"
 
@@ -298,17 +298,17 @@ BOOL atmstate_is_end(AutomataState s)
   return s->is_end;
 }
 
-void atmstate_set_scc(AutomataState s, AutomataSCC *scc)
+void inline atmstate_set_scc(AutomataState s, AutomataSCC *scc)
 {
   s->scc = scc;
 }
 
-BYTE atmstate_scc_type(AutomataState s)
+BYTE inline atmstate_scc_type(AutomataState s)
 {
   return atmscc_type(atmstate_scc(s));
 }
 
-AutomataSCC *atmstate_scc(AutomataState s)
+AutomataSCC inline *atmstate_scc(AutomataState s)
 {
   return s->scc;
 }

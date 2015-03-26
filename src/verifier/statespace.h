@@ -45,8 +45,8 @@
 #define LMN_STATESPACE_H
 
 #include "lmntal.h"
-#include "st.h"
-#include "vector.h"
+#include "utility/st.h"
+#include "utility/vector.h"
 #include "queue.h"
 #include "automata.h"
 #include "state.h"
@@ -54,6 +54,7 @@
 #include "lmntal_thread.h"
 #include "delta_membrane.h"
 #include "mem_encode.h"
+#include "tree_compress.h"
 
 struct statespace_type {
   int(*compare) ( );               /* 状態の等価性判定を行う関数 */
@@ -121,7 +122,7 @@ struct StateTable {
  *  StateTable
  */
 
-inline void statetable_foreach(StateTable *st, void (*func) ( ),
+void statetable_foreach(StateTable *st, void (*func) ( ),
                                LmnWord _arg1, LmnWord _arg2);
 void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) ( ),
                                  LmnWord _arg1, LmnWord _arg2, int nthreads);

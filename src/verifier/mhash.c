@@ -76,7 +76,7 @@ static int mhash_depth = MHASH_TREE_D;
 
 void mhash_set_depth(int depth)
 {
-  if (depth > 0 && depth < 5) mhash_depth = depth;
+  if (depth > 0) mhash_depth = depth;
 }
 
 mhash_t mhash(LmnMembrane *mem)
@@ -457,11 +457,11 @@ static inline mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr) {
   switch (attr) {
     case LMN_INT_ATTR:
       /* こっちの方が本当は好ましいけど遅いから, しょうがない. */
-//      return (mhash_t)lmn_byte_hash((unsigned char *)(&atom),
-//                                    sizeof(long) / sizeof(unsigned char));
+      return (mhash_t)lmn_byte_hash((unsigned char *)(&atom),
+                                    sizeof(long) / sizeof(unsigned char));
       /* ここで値0が返るとハッシュ値の衝突数が爆発するため, 1を加算しておく.
        * TODO: 値がオーバーフローするとゼロになってしまう. */
-      return ((mhash_t)atom) + 1;
+      //return ((mhash_t)atom) + 1;
     case LMN_DBL_ATTR:
       /* double型8バイトをバイト列にキャストしてFNVハッシュ関数にかける. */
       return (mhash_t)lmn_byte_hash((unsigned char *)atom,

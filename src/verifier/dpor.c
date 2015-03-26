@@ -47,7 +47,7 @@
 #include "instruction.h"
 #include "lmntal.h"
 #include "atom.h"
-#include "vector.h"
+#include "utility/vector.h"
 
 /**
  * Dynamic Partial Order Reduction
@@ -1251,10 +1251,7 @@ static inline void dpor_RHS_flags_dump(BYTE f)
 
 int dpor_dependency_tbl_dump(McDporData *d)
 {
-  Vector *p;
   unsigned int i, n;
-
-  p = d->ample_cand;
 
   n = vec_num(d->ample_cand);
   if (n == 0) {

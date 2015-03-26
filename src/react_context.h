@@ -45,7 +45,7 @@
 #include "lmntal.h"
 #include "rule.h"
 #include "st.h"
-#include "internal_hash.h"
+#include "utility/internal_hash.h"
 
 struct LmnRegister {
   LmnWord wt;
@@ -149,8 +149,10 @@ static inline BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxt *rc) {
 
 
 LmnRegister *lmn_register_make(unsigned int size);
+void lmn_register_copy(LmnRegister *to, LmnRegister *from, unsigned int size);
 void lmn_register_free(LmnRegister *v);
 void lmn_register_extend(LmnReactCxt *rc, unsigned int new_size);
+void react_context_copy(LmnReactCxt *to, LmnReactCxt *from);
 
 /*----------------------------------------------------------------------
  * MC React Context
@@ -244,20 +246,20 @@ struct MemReactCxtData {
 #define RC_MEMSTACK(RC)  (((struct MemReactCxtData *)(RC)->v)->memstack)
 
 
-inline void react_context_init(LmnReactCxt *rc, BYTE mode);
-inline void react_context_destroy(LmnReactCxt *rc);
-inline void stand_alone_react_cxt_init(LmnReactCxt *cxt);
-inline void stand_alone_react_cxt_destroy(LmnReactCxt *cxt);
-inline void property_react_cxt_init(LmnReactCxt *cxt);
-inline void property_react_cxt_destroy(LmnReactCxt *cxt);
-inline void mem_react_cxt_init(LmnReactCxt *cxt);
-inline void mem_react_cxt_destroy(LmnReactCxt *cxt);
-inline void mc_react_cxt_init(LmnReactCxt *cxt);
-inline void mc_react_cxt_destroy(LmnReactCxt *cxt);
-inline void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
-                                      LmnMembrane *mem,
-                                      LmnRule rule);
-inline void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
+void react_context_init(LmnReactCxt *rc, BYTE mode);
+void react_context_destroy(LmnReactCxt *rc);
+void stand_alone_react_cxt_init(LmnReactCxt *cxt);
+void stand_alone_react_cxt_destroy(LmnReactCxt *cxt);
+void property_react_cxt_init(LmnReactCxt *cxt);
+void property_react_cxt_destroy(LmnReactCxt *cxt);
+void mem_react_cxt_init(LmnReactCxt *cxt);
+void mem_react_cxt_destroy(LmnReactCxt *cxt);
+void mc_react_cxt_init(LmnReactCxt *cxt);
+void mc_react_cxt_destroy(LmnReactCxt *cxt);
+void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
+                               LmnMembrane *mem,
+                               LmnRule rule);
+void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
                                        struct MemDeltaRoot *d,
                                        LmnRule rule);
 

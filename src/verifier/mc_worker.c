@@ -273,7 +273,27 @@ static BOOL workers_flags_init(LmnWorkerGroup *wp, Automata property_a)
 
   /* --- 2-5. binstr compressor --- */
   if (lmn_env.z_compress) {
-    lmn_env.d_compress = FALSE;
+    lmn_env.d_compress      = FALSE;
+    lmn_env.tree_compress   = FALSE;
+    lmn_env.hash_compaction = FALSE;
+  }
+
+  /* --- 2-6. hash compaction --- */
+  if (lmn_env.hash_compaction) {
+    lmn_env.z_compress    = FALSE;
+    lmn_env.d_compress    = FALSE;
+    lmn_env.tree_compress = FALSE;
+  }
+
+  /* --- 2-7. tree compression --- */
+  if (lmn_env.tree_compress) {
+    lmn_env.z_compress      = FALSE;
+    lmn_env.d_compress      = FALSE;
+    lmn_env.hash_compaction = FALSE;
+    lmn_env.mem_enc         = FALSE;
+#ifdef PROFILE
+    lmn_env.optimize_hash_old = FALSE;
+#endif
   }
 
   /* === 3. 状態空間探索(LTLモデル検査)オプション === */

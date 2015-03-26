@@ -27,6 +27,16 @@ slim_LDFLAGS += -L../third_party/google-perftools-1.8.3/.libs
 slim_DEPENDENCIES += ../third_party/google-perftools-1.8.3/.libs/libtcmalloc_minimal_in_slim.a
 endif
 
+if ENABLE_CUNIT
+slim_CFLAGS += -I$(CUNIT_HOME)/include
+slim_LDFLAGS += -L$(CUNIT_HOME)/lib -lcunit
+SUBDIRS += test
+slim_LDADD += -lunit_test
+slim_LDFLAGS += -L./test
+slim_CFLAGS += -I./test
+slim_DEPENDENCIES += ./test/libunit_test.a
+endif
+
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
 DISTCLEANFILES = arch.h ../lib/config.lmn
 
@@ -55,6 +65,7 @@ slim_SOURCES =                                                     \
 	membrane.c                      membrane.h                       \
 	rule.c                          rule.h                           \
 	error.c                         error.h                          \
+	normal_thread.c			normal_thread.h			 \
 	task.c                          task.h                           \
 	memory_pool.c                   memory_pool.h                    \
 	dumper.c                        dumper.h                         \

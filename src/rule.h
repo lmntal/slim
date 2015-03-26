@@ -40,8 +40,8 @@
 #define LMN_RULE_H
 
 #include "lmntal.h"
-#include "vector.h"
-#include "st.h"
+#include "utility/vector.h"
+#include "utility/st.h"
 #include "symbol.h"
 
 /*----------------------------------------------------------------------
@@ -160,8 +160,8 @@ int lmn_gen_ruleset_id(void);
 LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size);
 void lmn_ruleset_free(LmnRuleSet ruleset);
 void lmn_ruleset_put(LmnRuleSet ruleset, LmnRule rule);
-inline void lmn_set_ruleset(LmnRuleSet ruleset, int id);
-inline long lmn_ruleset_history_num(LmnRuleSet ruleset);
+void lmn_set_ruleset(LmnRuleSet ruleset, int id);
+long lmn_ruleset_history_num(LmnRuleSet ruleset);
 LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset);
 void lmn_ruleset_copied_free(LmnRuleSet rs);
 BOOL lmn_ruleset_equals(LmnRuleSet set1, LmnRuleSet set2);

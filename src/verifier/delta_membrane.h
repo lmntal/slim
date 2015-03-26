@@ -42,8 +42,8 @@
 
 #include "lmntal.h"
 #include "atom.h"
-#include "visitlog.h"
-#include "vector.h"
+#include "utility/visitlog.h"
+#include "utility/vector.h"
 #include "rule.h"
 
 struct MemDeltaRoot {
@@ -116,7 +116,7 @@ void dmem_root_finish(struct MemDeltaRoot *d);
 void dmem_root_free(struct MemDeltaRoot *p);
 LmnMembrane *dmem_root_get_root_mem(struct MemDeltaRoot *d);
 unsigned long dmem_root_get_next_id(struct MemDeltaRoot *d);
-inline LmnSAtom dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f);
+LmnSAtom dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f);
 void dmem_root_free_atom(struct MemDeltaRoot *d, LmnAtom atom, LmnLinkAttr attr);
 LmnAtom dmem_root_copy_atom(struct MemDeltaRoot *d, LmnAtom atom, LmnLinkAttr attr);
 LmnMembrane *dmem_root_new_mem(struct MemDeltaRoot *d);
@@ -180,7 +180,7 @@ void dmem_root_revert(struct MemDeltaRoot *d);
 
 void dmem_root_dump(struct MemDeltaRoot *d);
 
-inline LmnAtom dmem_root_get_link(struct MemDeltaRoot *d,
+LmnAtom dmem_root_get_link(struct MemDeltaRoot *d,
                                   LmnSAtom atom,
                                   int i);
 

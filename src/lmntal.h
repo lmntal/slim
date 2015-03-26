@@ -311,6 +311,9 @@ struct LmnEnv {
   BOOL hash_compaction;
   int  hash_depth;
 
+  BOOL tree_compress;
+  unsigned int tree_compress_table_size;
+
 #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;
@@ -325,6 +328,12 @@ struct LmnEnv {
   BOOL debug_por;
   BOOL debug_por_dep;
 #endif
+
+  BOOL findatom_parallel_mode;
+  BOOL find_atom_parallel;
+  BOOL findatom_parallel_inde;
+
+  BOOL run_test;
 
   enum OutputFormat output_format;
   enum MCdumpFormat mc_dump_format;

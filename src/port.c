@@ -44,6 +44,7 @@
 #include "functor.h"
 #include "error.h"
 #include "special_atom.h"
+#include "util.h"
 #include "symbol.h"
 #include "task.h"
 #include "slim_header/string.h"
@@ -554,7 +555,38 @@ void cb_port_putc(LmnReactCxt *rc,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
 {
-  port_puts(LMN_PORT(a0), LMN_STRING(a1));
+  if (LMN_ATTR_IS_DATA_WITHOUT_EX(t1)) {
+    switch (t1) {
+    case  LMN_INT_ATTR:
+	{
+	  char *s = int_to_str((long)a1);
+	  port_put_raw_s(LMN_PORT(a0), s);	
+	}
+	break;
+    
+    case  LMN_DBL_ATTR:
+    {
+      char buf[64];
+      sprintf(buf, "%#g", *(double*)a1);
+      port_put_raw_s(LMN_PORT(a0), buf);
+    }
+    break;
+    
+    case LMN_SP_ATOM_ATTR:
+     port_puts(LMN_PORT(a0), LMN_STRING(a1)); 
+   break;
+    
+    case LMN_HL_ATTR:
+      port_putc(LMN_PORT(a0), LMN_STRING(a1));
+    break;
+    
+    default:
+      lmn_fatal("unexpected attr");
+    }
+  } else { /* symbol atom */
+    port_putc(LMN_PORT(a0), LMN_STRING(a1));
+
+  }
 
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,

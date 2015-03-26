@@ -1,7 +1,8 @@
 /*
- * dpor_naive.h
+ * normal_thread.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -36,23 +37,65 @@
  * $Id$
  */
 
-#ifndef LMN_MC_POR_H
-#define LMN_MC_POR_H
-
 #include "lmntal.h"
-#include "queue.h"
-#include "utility/vector.h"
-#include "state.h"
-#include "statespace.h"
+#include "atom.h"
+#include "task.h"
+#include "membrane.h"
+#include "react_context.h"
+#include "runtime_status.h"
 
 
 
-void por_calc_ampleset(StateSpace  ss,
-                       State       *s,
-                       LmnReactCxt *rc,
-                       Vector      *new_s,
-                       BOOL        flag);
-void init_por_vars(void);
-void free_por_vars(void);
+typedef struct normal_prof normal_prof;
 
-#endif
+struct normal_prof{
+  unsigned long wakeup;
+  unsigned long backtrack_num;
+  unsigned long findatom_num;
+};
+
+typedef struct arginfo arginfo;
+struct arginfo{
+  int id;//thread id
+  BOOL judge;//whether react atom or not
+  LmnInstrVar atomi;
+  LmnReactCxt *rc;
+  LmnRule rule;
+  LmnRuleInstr instr;
+  AtomListEntry *atomlist_ent;
+  unsigned int register_size;
+  int atom_arity;
+  pthread_mutex_t *exec;
+  volatile int exec_flag;
+  unsigned long backtrack;
+  LmnSAtom next_atom;
+
+  normal_prof *profile;
+};
+pthread_t *findthread;
+arginfo **thread_info;
+int active_thread;
+Deque *temp;
+double walltime;//rule walltime
+double walltime_temp;
+BOOL normal_parallel_flag;
+unsigned long success_temp_check;
+unsigned long fail_temp_check;
+
+static LmnRuleInstr instr_parallel;
+
+void* normal_thread(void* arg);
+
+void normal_parallel_init(void);
+void normal_parallel_free(void);
+void threadinfo_init(int id, LmnInstrVar atomi, LmnRule rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity);
+
+void op_lock(int id, int flag);
+
+void normal_parallel_prof_dump(FILE *f);
+
+
+BOOL check_exist(LmnSAtom atom, LmnFunctor f);
+
+void rule_wall_time_start(void);
+void rule_wall_time_finish(void);
