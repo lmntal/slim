@@ -1,3 +1,14 @@
+SLIM (2.2.6) -- 2014/03/26
+  * new features / support
+    + tree compression
+    + parallel pattern matching
+    + cunit
+    + functional module
+  * bug fixes
+    + swap link
+  * others
+    + refactoring
+
 SLIM (2.2.5) -- 2014/05/31
   * new features / support
     + add hash compaction
@@ -5,7 +16,7 @@ SLIM (2.2.5) -- 2014/05/31
     + clearlink instruction (used with swaplink)
     + atomlist manipulation instructions
   * bug fixes
-    + atomic_ruleset 
+    + atomic_ruleset
     + memory leak
     + and many minor bug fixes
   * others
@@ -15,7 +26,7 @@ SLIM (2.2.4) -- 2013/11/3
   * new features / support
     + add hlground type
     + add swaplink instructions
-    
+
   * bug fixes
     + removeground bug with hyperlink
     + fix hlground problems
@@ -30,7 +41,7 @@ SLIM (2.2.2) -- 2012/05/12
   * new features / support
     + extended state-space for optimization problems
     ++ add configure option --enable-opt-minmax
-    ++ add --opt-min -opt-max option 
+    ++ add --opt-min -opt-max option
 
   * improve performances
     + modified the state compression for hyperlinks
