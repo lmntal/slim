@@ -6,8 +6,7 @@ slim_LDADD =   -ldl                                    \
                -llmn_verifier                          \
                -llmn_utility                           \
                -lzd_in_slim
-slim_LDFLAGS = -rdynamic                               \
-               -L./verifier                            \
+slim_LDFLAGS = -L./verifier                            \
                -L./utility                             \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I./verifier                            \
@@ -54,7 +53,7 @@ BUILT_SOURCES = arch.h                       \
                 $(PARSER_SOURCE)             \
                 translate_generated.c        \
                 interpret_generated.c
-                
+
 CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c interpret_generated.c
 
 # .yファイルは .lより先に書く
@@ -103,7 +102,7 @@ slim_SOURCES =                                                     \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
 	ext/time.c
-#	ext.h ext.c 
+#	ext.h ext.c
 
 slim_OBJS =
 
@@ -118,7 +117,7 @@ arch.h ../lib/config.lmn: genconfig
 	$(SHELL) ./genconfig
 
 translate_generated.c: translate_generator.in translate_generator.rb
-	ruby ./translate_generator.rb <$< >$@
+	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@
 
 interpret_generated.c: translate_generator.in translate_generator.rb
-	ruby ./translate_generator.rb <$< >$@ -i
+	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@ -i
