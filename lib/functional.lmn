@@ -60,9 +60,9 @@ RET = apply(lambda(X,F), ARG) :- RET = F, X = ARG.
 // Offers 2-ary lambda/apply for convenience.
 // 2-ary lambda expression 'RET = lambda(X,Y, F)' gets curried to
 // 'RET = lambda(X, lambda(Y,F))' automatically.
-LambdaCarry @@
+LambdaCurry @@
 RET = lambda(X,Y,F) :- RET = lambda(X, lambda(Y, F)).
-ApplyCarry @@
+ApplyCurry @@
 RET = apply(lambda(X,F), ARG1, ARG2) :-
   RET = apply(apply(lambda(X,F), ARG1), ARG2).
 
