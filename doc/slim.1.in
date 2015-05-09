@@ -2,7 +2,7 @@
 .\" $Id: slim.1.in,v 1.3 2008/09/19 05:18:17 taisuke Exp $ -*-nroff-*-
 .TH SLIM 1 "$Date: 2008/09/19 05:18:17 $" "SLIM @SLIM_VERSION@" "LMNtal Runtime"
 .SH NAME
-slim \- a LMNtal runtime
+slim \- an LMNtal runtime
 .SH SYNOPSIS
 .B slim
 [-t]
@@ -10,38 +10,32 @@ slim \- a LMNtal runtime
 [--showproxy]
 [--hideruleset]
 [--help]
-[-I
-.I path
-]
-[-O[<0-9>] ]
+[-I \fIpath\fR]
+[-O[<0-9>]]
 [--]
-[
-.I program argument ...
-]
+[\fIprogram argument ...\fR]
 
 .SH DESCRIPTION
 .I SLIM
-is a LMNtal runtime.
+is an LMNtal runtime.
 
 When
 .I LMNtal intermediate code
-is given, slim loads the code, evaluating code.
+(.il file) is given, slim executes the code.
 
-If a file whose extension is .lmn is given, slim compiles the file
-to a intermediate code with LMNtal system(see ENVIRONMENT), and execute the code.
+When
+.I LMNtal source code
+(.lmn file) is given, slim compiles the file to an intermediate code with LMNtal system (see ENVIRONMENT), and executes the compiled code.
 
 .SH OPTIONS
-Here is a summary of all the options.
-
 .TP 5
 .BI --version
-Prints slim version and exits.
+Print slim version and exit.
 .TP
 .BI -I path
-Adds
+Add
 .I path
-to the head of the load path list. SLIM loads IL files(file
-extension .il) and LMNtal files(file extension .lmn). The length of the load path list must be smaller than 256.
+to the head of the load path list. SLIM loads .il and .lmn files under the load paths. The length of the load path list must be smaller than 256.
 .TP
 .BI -O
 .TP
@@ -50,17 +44,17 @@ Optimization level. (-O=-O1)
 
 .TP
 .BI -p
-Same as -p1
+Same as -p1.
 .TP
 .BI -p0
-no profile.
+No profile.
 .TP
 .BI -p1
 Show elapsed time, # of states (ND and LTL MC).
 
 .TP
 .BI -p2
-In addition to --p1, show detail time and memory information.
+In addition to --p1, show detailed time and memory information.
 
 .TP
 .BI -p3
@@ -68,13 +62,13 @@ In addition to --p2, show rule information.
 
 .TP
 .BI -t
-Traces and prints the current state of execution.
+Trace and print the current state of execution.
 .TP
 .BI --showproxy
 Show proxy atoms.
 .TP
 .BI --hideruleset
-Hide ruleset from result
+Hide ruleset from the result.
 
 .TP
 .BI --hl
@@ -86,13 +80,13 @@ Show details of hyperlinks.
 
 .TP
 .BI --nd
-Nondeterministic execution mode, print all execution paths
+Nondeterministic execution mode: print all execution paths
 .TP
 .BI --ltl
 Model checking mode
 .TP
 .BI --ltl_all
-LTL model checking mode, print all errors
+LTL model checking mode: print all errors
 .TP
 .BI --mem-enc
 Use canonical membrane representation in ND and LTL MC.
@@ -106,7 +100,7 @@ Print (on the standard output) a description of the command line
 options understood by slim.
 .TP
 .BI --
-Specifies that there are no more options.  If there are more
+Specify that there are no more options. If there are more
 arguments after this, they are taken as script file name and
 its arguments.
 
@@ -125,7 +119,7 @@ Kei Murayama (kei@ueda.info.waseda.ac.jp)
 
 Ryo Okabe (okabe@ueda.info.waseda.ac.jp)
 
-Takayuki Sasaki (sasaki@ueda.info.waseda.ac.jp)  
+Takayuki Sasaki (sasaki@ueda.info.waseda.ac.jp)
 
 Riki Ishikawa (riki@ueda.info.waseda.ac.jp)
 
@@ -147,7 +141,7 @@ Manabu Meguro (meguro@ueda.info.waseda.ac.jp)
 .PP
 SLIM:
 .br
-http://code.google.com/p/slim-runtime/
+https://github.com/lmntal/slim
 .PP
 LMNtal:
 .br
