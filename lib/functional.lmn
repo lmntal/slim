@@ -43,7 +43,7 @@
 {
 module(functional).
 
-if.use.
+functional.use :- if.use.
 
 /**
  * RET = apply(LAMBDA, ARG):
