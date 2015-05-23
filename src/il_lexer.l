@@ -92,9 +92,12 @@ DIGIT    [0-9]
     書くことはできない */
  /* Rules must NOT be indented. Others (comments and actions) must be indented. */
 
-"/*"[^*/]*"*/" /* eat comment */
-"//".*         /* eat one line comment */
-[ \t\n\r]+     /* eat blanks */
+ /* This can handle illmatic cases such as
+    'slash star star star slash' or 'slash star slash star slash'.
+    c.f. コンパイラの構成と最適化 第2版, pp.65-66, 中田育男, 朝倉書店, 1999 */
+"/*"([^*]|"*""*"*[^*/])*"*""*"*"/" /* eat comment */
+"//".*                             /* eat one line comment */
+[ \t\n\r]+                         /* eat blanks */
  /* float */
 -?{DIGIT}+"."{DIGIT}+ { yylval->_float = atof(yytext); return FLOAT; }
  /* integer */
