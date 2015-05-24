@@ -117,8 +117,7 @@ DIGIT    [0-9]
   }
   yylval->_int = (int)id_global;
   return RULESET_ID; }
-"null" { /* 取り合えず空の文字列にしておく */
-         /* Workaround: ANONYMOUS is null pointer */
+"null" { /* name of anonymous membrane */
          yylval->str = ANONYMOUS;
          return DQUOTED_STRING; }
 
