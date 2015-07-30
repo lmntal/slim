@@ -376,7 +376,7 @@ int port_putc(LmnPort port, LmnSAtom unary_atom)
   return port_put_raw_s(port, LMN_SATOM_STR(unary_atom));
 }
 
-/* Cの文字列をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
+/* Cの文字をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
    処理された場合は負でない数を返す*/
 int port_put_raw_c(LmnPort port, int c)
 {
@@ -546,6 +546,47 @@ void cb_port_getc(LmnReactCxt *rc,
 
 /*
  * +a0: ポート
+ * -a1: ポートを返す
+ * -a2: バイト（文字コード）
+ */
+void cb_port_get_byte(LmnReactCxt *rc,
+                  LmnMembrane *mem,
+                  LmnAtom a0, LmnLinkAttr t0,
+                  LmnAtom a1, LmnLinkAttr t1,
+                  LmnAtom a2, LmnLinkAttr t2)
+{
+  int c = port_get_raw_c(LMN_PORT(a0));
+
+  lmn_mem_push_atom(mem, c, LMN_INT_ATTR);
+  lmn_mem_newlink(mem,
+                  a2, t2, LMN_ATTR_GET_VALUE(t2),
+                  LMN_ATOM(c), LMN_INT_ATTR, 0);
+  lmn_mem_newlink(mem,
+                  a1, t1, LMN_ATTR_GET_VALUE(t1),
+                  a0, t0, 0);
+}
+
+/*
+ * +a0: ポート
+ * -a1: ポートを返す
+ * +a2: バイト（文字コード）
+ */
+void cb_port_unget_byte(LmnReactCxt *rc,
+                  LmnMembrane *mem,
+                  LmnAtom a0, LmnLinkAttr t0,
+                  LmnAtom a1, LmnLinkAttr t1,
+                  LmnAtom a2, LmnLinkAttr t2)
+{
+  port_unget_raw_c(LMN_PORT(a0), a1);
+
+  lmn_mem_delete_atom(mem, a1, t1);
+  lmn_mem_newlink(mem,
+                  a2, t2, LMN_ATTR_GET_VALUE(t2),
+                  a0, t0, 0);
+}
+
+/*
+ * +a0: ポート
  * +a1: unaryアトム
  * -a2: ポートを返す
  */
@@ -587,6 +628,26 @@ void cb_port_putc(LmnReactCxt *rc,
     port_putc(LMN_PORT(a0), LMN_STRING(a1));
 
   }
+
+  lmn_mem_delete_atom(mem, a1, t1);
+  lmn_mem_newlink(mem,
+                  a2, t2, LMN_ATTR_GET_VALUE(t2),
+                  a0, t0, 0);
+
+}
+
+/*
+ * a0: ポート
+ * a1: バイト（文字コード）
+ * a2: ポートを返す
+ */
+void cb_port_put_byte(LmnReactCxt *rc,
+                  LmnMembrane *mem,
+                  LmnAtom a0, LmnLinkAttr t0,
+                  LmnAtom a1, LmnLinkAttr t1,
+                  LmnAtom a2, LmnLinkAttr t2)
+{
+  port_put_raw_c(LMN_PORT(a0), a1);
 
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
@@ -740,7 +801,7 @@ void cb_port_output_string(LmnReactCxt *rc,
                     LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
   }
   lmn_mem_newlink(mem,
-                  a1, t1, LMN_ATTR_GET_VALUE(t2),
+                  a1, t1, LMN_ATTR_GET_VALUE(t1), /* debugged */
                   a0, t0, 0);
 }
 
@@ -795,7 +856,10 @@ void port_init()
   lmn_register_c_fun("cb_port_stdout", cb_stdout_port, 1);
   lmn_register_c_fun("cb_port_stderr", cb_stderr_port, 1);
   lmn_register_c_fun("cb_port_getc", cb_port_getc, 3);
+  lmn_register_c_fun("cb_port_get_byte", cb_port_get_byte, 3);
+  lmn_register_c_fun("cb_port_unget_byte", cb_port_unget_byte, 3);
   lmn_register_c_fun("cb_port_putc", cb_port_putc, 3);
+  lmn_register_c_fun("cb_port_put_byte", cb_port_put_byte, 3);
   lmn_register_c_fun("cb_port_puts", cb_port_puts, 3);
   lmn_register_c_fun("cb_port_read_line", cb_port_read_line, 3);
   lmn_register_c_fun("cb_port_read_token", cb_port_read_token, 3);

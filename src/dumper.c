@@ -882,6 +882,7 @@ void dump_atom_dev(LmnSAtom atom)
   esc_code_clear();
 
   fprintf(stdout, "\n");
+  fflush(stdout);
 
   for (i = 0; i < arity; i++) {
     LmnLinkAttr attr;
@@ -925,9 +926,11 @@ void dump_atom_dev(LmnSAtom atom)
       }
     }
     fprintf(stdout, "\n");
+    fflush(stdout);
   }
 
   if (arity == 0) fprintf(stdout, "\n");
+  fflush(stdout);
 }
 
 static void dump_ruleset_dev(struct Vector *v)

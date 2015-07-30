@@ -84,6 +84,13 @@ typedef void (* callback_4)(LmnReactCxt *,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr);
 
+typedef void (* callback_5)(LmnReactCxt *,
+                            LmnMembrane *,
+                            LmnAtom, LmnLinkAttr,
+                            LmnAtom, LmnLinkAttr,
+                            LmnAtom, LmnLinkAttr,
+                            LmnAtom, LmnLinkAttr,
+                            LmnAtom, LmnLinkAttr);
 
 /**
   Javaによる処理系ではリンクはリンクオブジェクトで表現するが、SLIMでは
@@ -4125,10 +4132,13 @@ label_skip_data_atom:
           break;
         }
 
+	/* (2015-07-30) moved to the end so that lmn_dump_mem can safely
+           be called in callback functions
         lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), wt(rc, atomi), at(rc, atomi));
         lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi),
                             LMN_SATOM_GET_LINK(atom, 0),
                             LMN_SATOM_GET_ATTR(atom, 0));
+	*/
 
         switch (arity) {
         case 1:
@@ -4160,10 +4170,25 @@ label_skip_data_atom:
                              LMN_SATOM_GET_LINK(atom, 3), LMN_SATOM_GET_ATTR(atom, 3),
                              LMN_SATOM_GET_LINK(atom, 4), LMN_SATOM_GET_ATTR(atom, 4));
           break;
+        case 6:
+          ((callback_5)c->f)(rc,
+                             (LmnMembrane *)wt(rc, memi),
+                             LMN_SATOM_GET_LINK(atom, 1), LMN_SATOM_GET_ATTR(atom, 1),
+                             LMN_SATOM_GET_LINK(atom, 2), LMN_SATOM_GET_ATTR(atom, 2),
+                             LMN_SATOM_GET_LINK(atom, 3), LMN_SATOM_GET_ATTR(atom, 3),
+                             LMN_SATOM_GET_LINK(atom, 4), LMN_SATOM_GET_ATTR(atom, 4),
+                             LMN_SATOM_GET_LINK(atom, 5), LMN_SATOM_GET_ATTR(atom, 5));
+          break;
         default:
           printf("EXTERNAL FUNCTION: too many arguments\n");
           break;
         }
+
+        lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), wt(rc, atomi), at(rc, atomi));
+        lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi),
+                            LMN_SATOM_GET_LINK(atom, 0),
+                            LMN_SATOM_GET_ATTR(atom, 0));
+
       }
 
       break;
