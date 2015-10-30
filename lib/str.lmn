@@ -48,7 +48,9 @@ H=str.from(X) :- unary(X) | '$callback'('string_make', X, H).
  * @param -Ret 結果(文字列)
  * @example r=str.times("ab", 5)  ==>  r="ababababab"
  */
-Ret = str.times(String, Times) :- Ret = str.times_sub(String, Times, "").
+Ret = str.times($string, $times) :-
+    string($string), $times > 0 |
+    Ret = str.times_sub($string, $times, "").
 
 Ret = str.times_sub($string, $times, $gen_string) :-
     string($string), string($gen_string), $times > 0, $next_times = $times - 1 |
