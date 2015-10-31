@@ -43,7 +43,7 @@
 {
 module(functional).
 
-if.use.
+functional.use :- if.use.
 
 /**
  * RET = apply(LAMBDA, ARG):
@@ -55,11 +55,14 @@ if.use.
  *
  * @example ret = apply(lambda(X, [X]), 0) ==> ret = [0]
  */
+Apply @@
 RET = apply(lambda(X,F), ARG) :- RET = F, X = ARG.
 // Offers 2-ary lambda/apply for convenience.
 // 2-ary lambda expression 'RET = lambda(X,Y, F)' gets curried to
 // 'RET = lambda(X, lambda(Y,F))' automatically.
+LambdaCurry @@
 RET = lambda(X,Y,F) :- RET = lambda(X, lambda(Y, F)).
+ApplyCurry @@
 RET = apply(lambda(X,F), ARG1, ARG2) :-
   RET = apply(apply(lambda(X,F), ARG1), ARG2).
 
@@ -73,7 +76,9 @@ RET = apply(lambda(X,F), ARG1, ARG2) :-
  * @example ret = apply(lambda(X, X0+X1), 3), copyarg(X, [X0,X1]) ==> ret = 6
  * @example ret = apply(lambda(X, 0), 3), copyarg(X, []) ==> ret = 0
  */
+CopyargNil @@
 copyarg(ARG, []) :- ground(ARG) | .
+CopyargCons @@
 copyarg(ARG, [HD|TL]) :- ground(ARG) | HD = ARG, copyarg(ARG, TL).
 
 /**
@@ -81,11 +86,12 @@ copyarg(ARG, [HD|TL]) :- ground(ARG) | HD = ARG, copyarg(ARG, TL).
  *
  * Binds the variable VAR to the argument ARG,
  * then returns EXPR which may contains VAR as a free variable.
- * You can use copyarg to use VAR multiple times in EXPR.
+ * You can use copyarg so that EXPR refers to VAR multiple times.
  *
  * @example ret = let(X, 1, X+1) ==> ret = 2
  * @example ret = let(X, 1, X1+X2), copyarg(X, [X1,X2]) ==> ret = 2
  */
+Let @@
 RET = let(VAR, ARG, EXPR) :- RET = apply(lambda(VAR, EXPR), ARG).
 
 /**
@@ -96,7 +102,9 @@ RET = let(VAR, ARG, EXPR) :- RET = apply(lambda(VAR, EXPR), ARG).
  *
  * @example ret = map(lambda(X, X+1), [0,1,2]) ==> ret = [1,2,3]
  */
+MapNil @@
 RET = map(LAMBDA, []) :- ground(LAMBDA) | RET = [].
+MapCons @@
 RET = map(LAMBDA, [HD|TL]) :-
   ground(LAMBDA) | RET = [apply(LAMBDA, HD) | map(LAMBDA,TL)].
 
@@ -109,7 +117,9 @@ RET = map(LAMBDA, [HD|TL]) :-
  *
  * @example ret = fold_left(lambda(X,Y, X-Y), 100, [1,2,3,4,5]) ==> ret = 85
  */
+FoldLeftNil @@
 RET = fold_left(LAMBDA, INIT, []) :- ground(LAMBDA) | RET = INIT.
+FoldLeftCons @@
 RET = fold_left(LAMBDA, INIT, [HD|TL]) :-
   ground(LAMBDA) | RET = fold_left(LAMBDA, apply(LAMBDA, INIT, HD), TL).
 
@@ -120,7 +130,9 @@ RET = fold_left(LAMBDA, INIT, [HD|TL]) :-
  *
  * @example ret = fold_right(lambda(X,Y, [X|Y]), [1,2,3], [4,5,6]) ==> ret = [1,2,3,4,5,6]
  */
+FoldRightNil @@
 RET = fold_right(LAMBDA, [], INIT) :- ground(LAMBDA) | RET = INIT.
+FoldRightCons @@
 RET = fold_right(LAMBDA, [HD|TL], INIT) :-
   ground(LAMBDA) | RET = apply(LAMBDA, HD, fold_right(LAMBDA, TL, INIT)).
 
@@ -132,7 +144,9 @@ RET = fold_right(LAMBDA, [HD|TL], INIT) :-
  *
  * @example ret = filter(lambda(X, X>0), [-1,1,-2,2]) ==> ret = [1,2]
  */
+FilterNil @@
 RET = filter(LAMBDA, []) :- ground(LAMBDA) | RET = [].
+FilterCons @@
 RET = filter(LAMBDA, [HD|TL]) :-
   ground(LAMBDA), ground(HD), ground(TL) |
   RET = if(apply(LAMBDA, HD), THEN, ELSE),
@@ -149,7 +163,9 @@ RET = filter(LAMBDA, [HD|TL]) :-
  * @example ret = exists(lambda(X, X>2), [1,2]) ==> ret = false.
  * @example ret = exists(lambda(X, X>2), []) ==> ret = false.
  */
+ExistsNil @@
 RET = exists(LAMBDA, []) :- ground(LAMBDA) | RET = false.
+ExistsCons @@
 RET = exists(LAMBDA, [HD|TL]) :-
   // Without the guard ground(TL), if expression wouldn't be rewritten.
   ground(LAMBDA), ground(TL) |
@@ -167,7 +183,9 @@ RET = exists(LAMBDA, [HD|TL]) :-
  * @example ret = for_all(lambda(X, X>2), [1,2,3,4]) ==> ret = false.
  * @example ret = for_all(lambda(X, X>2), []) ==> ret = true.
  */
+ForAllNil @@
 RET = for_all(LAMBDA, []) :- ground(LAMBDA) | RET = true.
+ForAllCons @@
 RET = for_all(LAMBDA, [HD|TL]) :-
   ground(LAMBDA), ground(TL) |
   RET = if(apply(LAMBDA, HD), THEN, ELSE),
@@ -180,7 +198,9 @@ RET = for_all(LAMBDA, [HD|TL]) :-
  *
  * @example ret = count(lambda(X, X>2), [1,2,3,4,5]) ==> ret = 3
  */
+CountNil @@
 RET = count(LAMBDA, []) :- ground(LAMBDA) | RET = 0.
+CountCons @@
 RET = count(LAMBDA, [HD|TL]) :-
   ground(LAMBDA) |
   RET = '+'('?'(apply(LAMBDA, HD), 1, 0), count(LAMBDA, TL)).
@@ -195,7 +215,9 @@ RET = count(LAMBDA, [HD|TL]) :-
  * @example ret = find(lambda(X, X>5), [1,2,10,3,20]) ==> ret = some(10)
  * @example ret = find(lambda(X, X>5), [1,2,3,4,5]) ==> ret = none
  */
+FindNil @@
 RET = find(LAMBDA, []) :- ground(LAMBDA) | RET = none.
+FindCons @@
 RET = find(LAMBDA, [HD|TL]) :-
   ground(LAMBDA), ground(HD), ground(TL) |
   RET = if(apply(LAMBDA, HD), THEN, ELSE),
@@ -212,7 +234,9 @@ RET = find(LAMBDA, [HD|TL]) :-
  *
  * @example ret = partition(lambda(X, X>0), [1,2,-1,3,-2]) ==> ret = tuple([1,2,3], [-1,-2])
  */
+PartitionNil @@
 RET = partition(LAMBDA, []) :- ground(LAMBDA) | RET = tuple([], []).
+PartitionCons @@
 RET = partition(LAMBDA, [HD|TL]) :-
   ground(LAMBDA) | RET = partition_cons(LAMBDA, HD, partition(LAMBDA, TL)).
 RET = partition_cons(LAMBDA, HD, tuple(LT,LF)) :-

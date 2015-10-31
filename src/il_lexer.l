@@ -79,7 +79,7 @@ static char escape_char_map[] =
    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
-  
+
 char *unescape_c_str(const char *s);
 
 %}
@@ -87,10 +87,12 @@ char *unescape_c_str(const char *s);
 DIGIT    [0-9]
 
 %%
+
  /* ルールは行の先頭から書く。ルール以外（コメントやアクション）を先頭から
     書くことはできない */
+ /* Rules must NOT be indented. Others (comments and actions) must be indented. */
 
-"/*"[^*/]*"*/" /* eat coment */
+"/*"[^*/]*"*/" /* eat comment */
 "//".*         /* eat one line comment */
 [ \t\n\r]+     /* eat blanks */
  /* float */
@@ -100,25 +102,23 @@ DIGIT    [0-9]
 
  /* ruleset id */
 @{DIGIT}+ {
-  /* この時点でVM内で一位のルールセットIDに変換する */
+  /* この時点でVM内で一意のルールセットIDに変換する */
+  /* Convert input text into ruleset ID unique in the VM */
   st_data_t id_local = atoi(yytext+1);
   st_data_t id_global;
   struct lexer_context *c;
 
   c = yyget_extra(yyscanner);
-  /* テーブルにあればそれを使う */
-  if (st_lookup(c->ruleset_id_tbl,
-                id_local,
-                &id_global)) {
-    yylval->_int = (int)id_global;
-  } else {
-    /* なければ新しく追加 */
+  if (!st_lookup(c->ruleset_id_tbl, id_local, &id_global)) {
+    /* テーブルになければ新しく追加 */
+    /* Update ruleset ID table */
     id_global = lmn_gen_ruleset_id();
     st_insert(c->ruleset_id_tbl, id_local, id_global);
-    yylval->_int = (int)id_global;
   }
+  yylval->_int = (int)id_global;
   return RULESET_ID; }
-"null" { yylval->str = ANONYMOUS; /* 取り合えず空の文字列にしておく */
+"null" { /* name of anonymous membrane */
+         yylval->str = ANONYMOUS;
          return DQUOTED_STRING; }
 
  /* label */
@@ -147,14 +147,17 @@ L{DIGIT}+ { yylval->_int = atoi(yytext+1); return LABEL; }
  /* instruction name */
 [a-z2]+ {
   yylval->_int = get_instr_id(yytext);
- /* 変数のリストと命令のリスとを構文解析で判別が不可能なので
-　　命令のリストを持つ中間語命令を特悦に扱う */
+  /* 変数のリストと命令のリストは構文解析では判別不可能なので
+　 　命令のリストを持つ中間語命令を特別に扱う */
+  /* Lists of variables and lists of instructions cannot be
+     parsed distinguishedly, so treat instructions accompanied by
+     a list of instructions as special cases. */
   if (yylval->_int == INSTR_LOOP) { return INST_TK_LOOP; }
   if (yylval->_int == INSTR_RUN) { return INST_TK_RUN; }
   if (yylval->_int == INSTR_NOT) { return INST_TK_NOT; }
   if (yylval->_int == INSTR_GROUP) { return INST_TK_GROUP; }
   if (yylval->_int == INSTR_BRANCH) { return INST_TK_BRANCH; }
-  
+
   if (yylval->_int < 0) {
     fprintf(stderr, "unknown instruction name %s\n", yytext);
     exit(EXIT_FAILURE);
@@ -188,6 +191,7 @@ L{DIGIT}+ { yylval->_int = atoi(yytext+1); return LABEL; }
 %%
 
 /* 命令の名前からIDを得る */
+/* gets instruction ID from instruction name */
 int get_instr_id(char *name)
 {
   int i;
@@ -199,6 +203,7 @@ int get_instr_id(char *name)
 
 /* エスケープシーケンスを含むCの文字列を、エスケープキャラクタを実際の
    文字に変換した、新しい文字列を返す */
+/* returns newly allocated string which is unescaped form of src */
 char *unescape_c_str(const char *src)
 {
   int len = strlen(src);
@@ -218,4 +223,3 @@ char *unescape_c_str(const char *src)
   s[j] = '\0';
   return s;
 }
-

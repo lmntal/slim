@@ -38,36 +38,27 @@ module(str).
 
 H=str.from(X) :- unary(X) | '$callback'('string_make', X, H).
 
-//H=str.t(Str, Times) :- unary(Str), int(Times) |
-//	t_s0(Str, Times, 1, "").
-//H=t_s0(Str, Times, I, Result) :- int(Times), I0=I*2 |
-//	t_s1(str.t(Str, 2), Times, I0, Result).
-//H=t_s1(Str, Times, I, Result) :- int(Times), I0=I*2 |
-//	t_s1(str.t(Str, 2), Times, I0, Result).
+/**
+ * str.times(+Str, +Times, -Ret)
+ *
+ * 与えられた文字列を指定回数繰り返し連結した文字列を返します。
+ *
+ * @param +Str 繰り返す文字列
+ * @param +Times 繰り返す回数
+ * @param -Ret 結果(文字列)
+ * @example r=str.times("ab", 5)  ==>  r="ababababab"
+ */
+Ret = str.times($string, $times) :-
+    string($string), $times >= 0 |
+    Ret = str.times_sub($string, $times, "").
 
-// /**
-//  * str.times(+Str, +Times, -Res)
-//  *
-//  * 与えられた文字列を指定回数繰り返し連結した文字列を返します。
-//  * @param +Str 繰り返す文字列
-//  * @param +Times 繰り返す回数
-//  * @param -Res 結果(文字列)
-//  * @example r=str.times("ab", 5)  ==>  r="ababababab"
-//  */
-// H=str.times(Str, Times) :-
-// 	str(Str), int(Times) | H=[:/*inline*/
-// 	StrBuffer b = new StrBuffer(((StrFunctor)me.nthAtom(0).getFunctor()).strValue());
-// 	StrBuffer r = new StrBuffer("");
-// 	int times = ((IntegerFunctor)me.nthAtom(1).getFunctor()).intValue();
-// 	for(int i=1;i<=times;i<<=1, b.append(b)) {
-// 		if((i&times)>0) r.append(b);
-// 	}
-// 	Atom result = mem.newAtom(new StrFunctor(r.toStr()));
-// 	mem.relink(result, 0, me, 2);
-// 	me.nthAtom(0).remove();
-// 	me.nthAtom(1).remove();
-// 	me.remove();
-// 	:](Str, Times).
+Ret = str.times_sub($string, $times, $gen_string) :-
+    string($string), string($gen_string), $times > 0, $next_times = $times - 1 |
+    Ret = str.times_sub($string, $next_times, X), X = str.concat($string, $gen_string).
+
+Ret = str.times_sub($string, $times, $gen_string) :-
+    string($string), string($gen_string), $times == 0 |
+    Ret = $gen_string.
 
 // /**
 //  * str.replace(+Str, +Regexp, +Replacement, -Res):
