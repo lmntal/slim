@@ -49,7 +49,7 @@ H=str.from(X) :- unary(X) | '$callback'('string_make', X, H).
  * @example r=str.times("ab", 5)  ==>  r="ababababab"
  */
 Ret = str.times($string, $times) :-
-    string($string), $times > 0 |
+    string($string), $times >= 0 |
     Ret = str.times_sub($string, $times, "").
 
 Ret = str.times_sub($string, $times, $gen_string) :-
