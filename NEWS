@@ -1,4 +1,9 @@
-SLIM (2.2.6) -- 2014/03/26
+SLIM (2.2.7) -- 2015/10/31
+  * new feature
+    + library function str.times
+  * refactoring
+
+SLIM (2.2.6) -- 2015/03/26
   * new features / support
     + tree compression
     + parallel pattern matching
