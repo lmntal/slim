@@ -42,7 +42,10 @@
 #include "slim_header/port.h"
 #include "slim_header/string.h"
 
-void init_dynamic(void);
+void init_dynamic(void)
+{
+  lmn_register_c_fun("str_to_graph", str_to_graph, 0);
+}
 
 void str_to_graph(LmnReactCxt *rc,
 		LmnMembrane *mem,
@@ -51,5 +54,9 @@ void str_to_graph(LmnReactCxt *rc,
   cons char *s = (cons char *)lmn_string_c_str(LMN_STRING(a0));
   FILE *fp_compiled = lmntal_compile_str(s);
   int c;
-
+  while((c = fgetc(fp_compiled)) != EOF)
+    {
+      fputc(c, stdout);
+    }
 }
+
