@@ -63,6 +63,33 @@
 #include "runtime_status.h"
 
 
+
+#include <string.h>
+#include <ctype.h>
+#include "dumper.h"
+#include "utility/internal_hash.h"
+#include "utility/vector.h"
+#include "rule.h"
+#include "membrane.h"
+#include "atom.h"
+#include "symbol.h"
+#include "functor.h"
+#include "special_atom.h"
+#include "util.h"
+#include "error.h"
+#include "ccallback.h"
+#include "slim_header/memstack.h"
+#include "slim_header/port.h"
+#include "string.h"
+#include "lmntal_system_adapter.h"
+
+#define MAX_DEPTH 1000
+#define LINK_PREFIX "L"
+
+
+
+
+
 typedef void (* callback_0)(LmnReactCxt *,
                             LmnMembrane *);
 typedef void (* callback_1)(LmnReactCxt *,
@@ -163,6 +190,7 @@ void lmn_dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 }
 
 
+
 /** 通常実行時の入口.
  *  インタタラクティブ実行時の処理フローは以下の通り[yueno]
  *    1. 後始末     normal_cleaningフラグがたっている時
@@ -176,18 +204,22 @@ void lmn_run(Vector *start_rulesets)
   static LmnMembrane *mem;
   static LmnReactCxt mrc;
 
+  printf("-------------START LMN_RUN-------------\n");
+
 #ifdef TIME_OPT
   /* 通常実行では非決定実行とは異なりProcess IDを
    * 1から再割り当てする機会(状態圧縮と復元)が存在しない.
    * 破棄したProcessのIDを使い回す必要がある.
    * もし通常実行の並列化を考えるならばIDを再利用するためのMT-Safeな機構が必要 */
   if (!env_proc_id_pool()) {
+    printf("[BRANCH]-->(!env_proc_id_pool())\n");
     env_set_proc_id_pool(vec_make(64));
   }
 #endif
 
   /* interactive: normal_cleaningフラグがONの場合は後始末 */
   if (lmn_env.normal_cleaning) {
+    printf("[BRANCH]-->(lmn_env.normal_cleaning)\n");
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
     mem_react_cxt_destroy(&mrc);
@@ -196,59 +228,109 @@ void lmn_run(Vector *start_rulesets)
 
   /* interactive : (normal_remain時でnormal_remaining=ON)以外の場合は初期化 */
   if (!lmn_env.normal_remain && !lmn_env.normal_remaining) {
+    printf("[BRANCH]-->(!lmn_env.normal_remain && !lmn_env.normal_remaining)\n");
     mem_react_cxt_init(&mrc);
     mem = lmn_mem_make();
     RC_SET_GROOT_MEM(&mrc, mem);
   }
+
+
+  printf("------------------------------START (LMN_MEMSTACK_PUSH)------------------------------\n");  
   lmn_memstack_push(RC_MEMSTACK(&mrc), mem);
+  printf("[RESULT]: ");
+  lmn_dump_cell_stdout(mem);
+  printf("------------------------------FINISH (LMN_MEMSTACK_PUSH)------------------------------\n");  
+
 
   //normal parallel mode init
   if(lmn_env.enable_parallel && !lmn_env.nd){
+    printf("[BRANCH]-->(lmn_env.enable_parallel && !lmn_env.nd)\n");
     normal_parallel_init();
   }
 
   /** PROFILE START */
   if (lmn_env.profile_level >= 1) {
+    printf("[BRANCH]-->(lmn_env.profile_level >= 1)\n");
     profile_start_exec();
     profile_start_exec_thread();
   }
 
+
+  printf("------------------------------START (REACT_START_RULESETS)------------------------------\n");
   react_start_rulesets(mem, start_rulesets);
+  printf("[RESULT]: ");
+  lmn_dump_cell_stdout(mem);
+  printf("------------------------------FINISH (REACT_START_RULESETS)------------------------------\n");
+
+  
+  printf("------------------------------START (LMN_MEMSTACK_RECONSTRUCT)------------------------------\n");
   lmn_memstack_reconstruct(RC_MEMSTACK(&mrc), mem);
+  printf("[RESULT]: ");
+  lmn_dump_cell_stdout(mem);  
+  printf("------------------------------FINISH (LMN_MEMSTACK_RECONSTRUCT)------------------------------\n");
+
+  
+  
 
   if (lmn_env.trace) {
-    if (lmn_env.output_format != JSON) fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(&mrc));
+    printf("[BRANCH]-->(LMN_ENV.TRACE)\n");
+    if (lmn_env.output_format != JSON){ 
+      printf("[BRANCH]-->(LMN_ENV.OUTPUT_FORMAT != JSON)\n");
+      fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(&mrc));
+    }
+    printf("[ELSE-BRANCH]-->(LMN_ENV.OUTPUT_FORMAT != JSON)\n");
     lmn_dump_cell_stdout(mem);
-    if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
+    if (lmn_env.show_hyperlink) { 
+      printf("[BRANCH]-->(lmn_env.show_hyperlink)\n");
+      lmn_hyperlink_print(mem);
+    }
   }
 
+
+  printf("------------------------------START (MEM_ORIENTED_LOOP)------------------------------\n");
   mem_oriented_loop(&mrc, mem);
+  printf("[RESULT MEM_ORIENTED_LOOP]: ");
+  lmn_dump_cell_stdout(mem);  
+  printf("------------------------------FINISH (MEM_ORIENTED_LOOP)------------------------------\n");
 
   /** PROFILE FINISH */
   if (lmn_env.profile_level >= 1) {
+    printf("[BRANCH]-->(lmn_env.profile_level >= 1)\n");
     profile_finish_exec_thread();
     profile_finish_exec();
   }
 
   if (lmn_env.dump) { /* lmntalではioモジュールがあるけど必ず実行結果を出力するプログラミング言語, で良い?? */
+    printf("[BRANCH]-->(lmn_env.dump)\n");
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+      printf("[BRANCH]-->(lmn_env.sp_dump_format == LMN_SYNTAX)\n");
       fprintf(stdout, "finish.\n");
     } else {
+      printf("[BRANCH]-->ELSE(lmn_env.sp_dump_format == LMN_SYNTAX)\n");
       lmn_dump_cell_stdout(mem);
     }
   }
-  if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
+  if (lmn_env.show_hyperlink) {
+    printf("[BRANCH]-->(lmn_env.show_hyperlink)\n");
+    lmn_hyperlink_print(mem);
+  }
 
   //normal parallel mode free
   if(lmn_env.enable_parallel && !lmn_env.nd){
-    if(lmn_env.profile_level == 3)normal_parallel_prof_dump(stderr);
+    printf("[BRANCH]-->(lmn_env.enable_parallel && !lmn_env.nd)\n");
+    if(lmn_env.profile_level == 3){
+      printf("[BRANCH]-->(lmn_env.profile_level == 3)\n");
+      normal_parallel_prof_dump(stderr);
+      }
     normal_parallel_free();
   }
 
   /* 後始末 */
   if (lmn_env.normal_remain) {
+    printf("[BRANCH]-->(lmn_env.normal_remain)\n");
     lmn_env.normal_remaining = TRUE;
   } else {
+    printf("[BRANCH]-->ELSE(lmn_env.normal_remain)\n");
     lmn_env.normal_remaining = FALSE;
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
@@ -260,8 +342,208 @@ void lmn_run(Vector *start_rulesets)
   }
 #endif
 
+  printf("-------------FINISH LMN_RUN-------------\n");
+
 }
 
+
+char* format_txt(char *input_str)
+{
+  int i, j = 0, k = 0, pp = 0, not_comma = 0;
+  char buf[1024], formatted_txt[1024];
+  char process[256][1024];
+
+  printf("[START FORMAT]--> %s\n", input_str);
+
+  for(i = 0; input_str[i] != '\0'; i++)
+    {
+      if(input_str[i] == ' ')
+	{
+	  continue;
+	}
+      else if(input_str[i] == '.')
+	{
+	  buf[j++] = ',';
+	  buf[j] = '\0';
+	  strcpy(process[++pp], buf);
+	  j = 0;
+	}
+      else if(input_str[i] == ':')
+	{
+	  if(input_str[i + 1] == '-')
+	    {
+	      i++;
+	      process[++pp][0] = ':';
+	      process[pp][1] = '-';
+	      process[pp][2] = '\0';
+	    }
+	}
+      else if(input_str[i] == '|')
+	{
+	  process[++pp][0] = '|';
+	  process[pp][1] = '\0';
+	}
+      else
+	{
+	  buf[j] = input_str[i];
+	  j++;
+	}
+    }
+  /* printf("%s\n", formatted_txt); */
+  for(i = 1; i <= pp; i++)
+    {
+      if(process[i][0] != '+')
+	{
+	  for(j = 0; process[i][j] != '\0'; j++)
+	    {
+	      formatted_txt[k++] = process[i][j];
+	    }
+	}
+    }
+  formatted_txt[k] = '\0';
+  printf("[FINISH FORMAT]--> %s\n", formatted_txt);
+  return formatted_txt;
+}
+
+
+
+
+int is_including_colon_minus_atom(LmnMembrane *mem)
+{
+  SimpleHashtbl *ht;
+  SimpleHashtbl htt;
+  enum {P0, P1, P2, P3, PROXY, PRI_NUM};
+  Vector pred_atoms[PRI_NUM];
+  AtomListEntry *ent;
+  unsigned int i, j;
+  LmnFunctor f;
+
+  hashtbl_init(&htt, 128);
+  ht = &htt;
+
+
+  for (i = 0; i < PRI_NUM; i++) {
+    vec_init(&pred_atoms[i], 16);
+  }
+
+
+  /* 優先順位に応じて起点となるアトムを振り分ける */
+  EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
+	LmnSAtom atom;
+	if (LMN_IS_EX_FUNCTOR(f)) continue;
+	EACH_ATOM(atom, ent, ({
+	      int arity = LMN_SATOM_GET_ARITY(atom);
+	      if(LMN_SATOM_GET_FUNCTOR(atom)==LMN_RESUME_FUNCTOR)
+		continue;
+	      if (f == LMN_IN_PROXY_FUNCTOR ||
+		  f == LMN_OUT_PROXY_FUNCTOR) {
+		/* printf("----------------------[START VEC_PUSH]----------------------\n"); */
+		vec_push(&pred_atoms[PROXY], (LmnWord)atom);
+		/* printf("----------------------[FINISH VEC_PUSH]----------------------\n"); */
+	      }
+	      /* 0 argument atom */
+	      else if (arity == 0) {
+
+
+		vec_push(&pred_atoms[P0], (LmnWord)atom);
+
+	      }
+	      /* 1 argument, link to the last argument */
+	      else if (arity == 1 &&
+		       f != LMN_NIL_FUNCTOR &&
+		       (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0)) ||
+			(int)LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(atom, 0)) ==
+			LMN_SATOM_GET_ARITY(LMN_SATOM_GET_LINK(atom, 0)) - 1)) {
+		vec_push(&pred_atoms[P1], (LmnWord)atom);
+	      }
+	      /* link to the last argument */
+	      else if (arity > 1 &&
+		       (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, arity-1)) ||
+			(int)LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(atom, arity-1)) ==
+			LMN_SATOM_GET_ARITY(LMN_SATOM_GET_LINK(atom, arity-1)) - 1)) {
+		vec_push(&pred_atoms[P2], (LmnWord)atom);
+	      }
+	      else {
+		vec_push(&pred_atoms[P3], (LmnWord)atom);
+	      }
+	    }));
+      }));
+
+  /* if (!lmn_env.show_proxy) { */
+  /*   /\* assign link to proxies *\/ */
+  /*   for (i = 0; i < pred_atoms[PROXY].num; i++) { */
+  /*     assign_link_to_proxy(LMN_SATOM(vec_get(&pred_atoms[PROXY], i)), ht, s); */
+  /*   } */
+  /* } */
+  char str[5] = ":-";
+  int cmp;
+  LmnSAtom satom;
+  char *atom_name;
+  for (i = 0; i < PRI_NUM; i++) {
+    for (j = 0; j < pred_atoms[i].num; j++) {
+      satom = LMN_SATOM(vec_get(&pred_atoms[i], j));
+      f = LMN_SATOM_GET_FUNCTOR(satom);
+      atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
+      cmp = strcmp(atom_name, str);
+      if(cmp == 0)
+	{
+	  int limit = LMN_SATOM_GET_LINK_NUM(satom);
+	  int link_pos;
+	  FILE *output0_fp = fopen("rough_rule.txt", "w");
+	  /* FILE *output1_fp = fopen("formatted_rule.lmn", "w"); */
+	  LmnAtom atom;
+	  LmnSAtom ssatom;
+	  LmnLinkAttr attr;
+	  LmnMembrane *mem;
+	  LmnPort port = lmn_make_file_port(output0_fp, "rough_rule.txt", LMN_PORT_OUTPUT,TRUE);
+	  for(i = 0; i < limit; i++)
+	    {
+	      atom = LMN_SATOM_GET_LINK(LMN_ATOM(satom), i);
+	      attr = LMN_SATOM_GET_ATTR(LMN_ATOM(satom), i);
+	      link_pos = LMN_ATTR_GET_VALUE(attr);
+	      ssatom = LMN_SATOM(atom);
+	      mem = LMN_PROXY_GET_MEM(LMN_SATOM(LMN_SATOM_GET_LINK(ssatom, 0)));
+	      if(i == 0)
+	      	{
+		  lmn_dump_cell(mem, port);
+		  fprintf(output0_fp, ":-");
+		}
+	      else if(i == 1)
+	      	{
+		  lmn_dump_cell(mem, port);
+		  fprintf(output0_fp, "|");
+	      	}
+	      else
+	      	{
+		  lmn_dump_cell(mem, port);
+	      	}
+	    }
+	  fclose(output0_fp);
+	  FILE *input0_fp = fopen("rough_rule.txt", "r");
+	  char buf[1024];
+	  int p;
+
+	  fgets(buf, 1024, input0_fp);
+	  /* fputs(format_txt(buf), output1_fp); */
+	  fclose(input0_fp);
+	  
+	  FILE *compiled_fp = lmntal_compile_rule_str(format_txt(buf));
+	  /* file *compiled_fp = lmntal_compile_file(output1_fp); */
+	  int c;
+	  while((c = fgetc(compiled_fp)) != EOF)
+	    {
+	      fputc(c, stdout);
+	    }
+	  return 1;
+	}
+      else
+	{
+	  printf("PEKE\n");
+	}
+    }
+  }
+  return 0;
+}
 
 /** 膜スタックに基づいた通常実行 */
 static void mem_oriented_loop(LmnReactCxt *rc, LmnMembrane *mem)
@@ -270,8 +552,19 @@ static void mem_oriented_loop(LmnReactCxt *rc, LmnMembrane *mem)
 
   while(!lmn_memstack_isempty(memstack)){
     LmnMembrane *mem = lmn_memstack_peek(memstack);
+    if(is_including_colon_minus_atom(mem))
+      {
+	printf(":-!!!!!!!!!!!!\n");
+      }
+    else
+      {
+	printf("NOT :-!!!!!!!!!\n");
+      }
+    printf("[RESULT LMN_MEMSTACK_PEEK]: ");
+    lmn_dump_cell_stdout(mem);
     if (!react_all_rulesets(rc, mem)) {
       /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+      printf("[BRANCH]-->(!reack_all_rulesets(rc, mem))\n");
       lmn_memstack_pop(memstack);
     }
   }
@@ -323,15 +616,20 @@ static inline BOOL react_ruleset(LmnReactCxt *rc,
     /* atomic_step時: atomic stepが複数ある場合,
      *               atomic適用中のrulesetとそうでないものを区別する必要がある */
     if (lmn_ruleset_is_valid_atomic(rs)) {
+      /* printf("[BRANCH-->(lmn_ruleset_is_valid_atomic(rs))]\n"); */
       result = react_ruleset_inner(rc, mem, rs);
     } else {
       result = FALSE;
     }
   }
   else if (lmn_ruleset_atomic_type(rs) == ATOMIC_NONE) {
+    /* printf("[BRANCH-->(lmn_ruleset_atomic_type(rs) == ATOMIC_NONE)]\n"); */
+    /* オプション無しで実行したらここに入ったからたぶんだいたいここ
+     たぶんアトミックルールセット使うとここはいるんじゃないかな*/
     result = react_ruleset_inner(rc, mem, rs);
   }
   else {
+    /* printf("[ELSE BRANCH-->(lmn_ruleset_atomic_type(rs) == ATOMIC_NONE)]\n"); */
     result = react_ruleset_atomic(rc, mem, rs);
   }
 
@@ -348,6 +646,7 @@ static inline BOOL react_ruleset_inner(LmnReactCxt *rc,
   BOOL ret = FALSE;
   for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
     LmnRule r = lmn_ruleset_get_rule(rs, i);
+    /* ルールセットのなかからルールをとりだして適用する */
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2) {
       profile_rule_obj_set(rs, r);
@@ -430,7 +729,9 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
  * 適用結果は無視する */
 void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
 {
-  LmnReactCxt rc;
+  LmnReactCxt rc;		/* ルール適用時のレジスタの状態など
+				 実効時の内部状態のためのオブジェクト
+				<react_context.h>*/
   int i;
 
   stand_alone_react_cxt_init(&rc);
@@ -438,6 +739,8 @@ void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
 
   for (i = 0; i < vec_num(rulesets); i++) {
     react_ruleset(&rc, mem, (LmnRuleSet)vec_get(rulesets, i));
+    /* ルールセットの集合から一つづつ取り出して反応させる
+     rcもmemもポインタなので内部状態と膜がどんどん更新されていくイメージ*/
   }
   react_initial_rulesets(&rc, mem);
   stand_alone_react_cxt_destroy(&rc);
@@ -4282,8 +4585,8 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 
   while (TRUE) {
     READ_VAL(LmnInstrOp, instr, op);
-/*     fprintf(stdout, "op: %d %d\n", op, (instr - start)); */
-/*     lmn_dump_mem((LmnMembrane*)wt(rc, 0)); */
+    /* fprintf(stdout, "op: %d %d\n", op, (instr - start)); */
+    /*     lmn_dump_mem((LmnMembrane*)wt(rc, 0)); */
     switch (op) {
     case INSTR_SPEC:
     {
