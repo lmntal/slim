@@ -39,9 +39,6 @@
 {
 module(io).
 
-// io.println(X) :- unary(X) |
-//     '$callback'('print_line', X). 
-
 H = io.read_line(Port, RetPort) :- class(Port, "port") |
     '$callback'('cb_port_read_line', Port, RetPort, H).
 
@@ -50,6 +47,12 @@ H = io.read_token(Port, RetPort) :- class(Port, "port") |
 
 H = io.read_char(Port, RetPort) :- class(Port, "port") |
     '$callback'('cb_port_getc', Port, RetPort, H).
+
+H = io.read_byte(Port, RetPort) :- class(Port, "port") |
+    '$callback'('cb_port_get_byte', Port, RetPort, H).
+
+io.unread_byte(Port, C, RetPort) :- int(C), class(Port, "port") |
+    '$callback'('cb_port_unget_byte', Port, C, RetPort).
 
 H=io.stdin :- '$callback'('cb_port_stdin', H).
 H=io.stdout :- '$callback'('cb_port_stdout', H).
@@ -62,6 +65,9 @@ io.free_port(Port) :- class(Port, "port") |
 
 io.print_char(Port, C, RetPort) :- unary(C), class(Port, "port") |
     '$callback'('cb_port_putc', Port, C, RetPort).
+
+io.print_byte(Port, C, RetPort) :- int(C), class(Port, "port") |
+    '$callback'('cb_port_put_byte', Port, C, RetPort).
 
 io.print(Port, S, RetPort) :- string(S), class(Port, "port") |
     '$callback'('cb_port_puts', Port, S, RetPort).
