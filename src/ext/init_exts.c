@@ -48,6 +48,7 @@ void init_initial_ruleset(void);
 void init_nd_conf(void);
 void init_time(void);
 void init_array(void);
+void init_atom(void);
 
 void init_builtin_extensions(void)
 {
@@ -60,4 +61,5 @@ void init_builtin_extensions(void)
   init_nd_conf();
   init_time();
   init_array();
+  init_atom();
 }

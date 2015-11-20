@@ -42,7 +42,7 @@
 #include "slim_header/port.h"
 #include "slim_header/string.h"
 
-void init_print(void);
+// void init_print(void);
 
 /* 改行を出力する
  * +a0     : ポート

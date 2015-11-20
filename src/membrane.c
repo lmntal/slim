@@ -490,7 +490,7 @@ void lmn_newlink_with_ex(LmnMembrane *mem,
 
 /* シンボルアトムatom0と、シンボルorデータアトムatom1の間にリンクを張る。
  * このコードが重複して現れたので、関数に分割した */
-static inline void newlink_symbol_and_something(LmnSAtom atom0,
+/* static inline void newlink_symbol_and_something(LmnSAtom atom0,
                                                 int pos,
                                                 LmnAtom atom1,
                                                 LmnLinkAttr attr)
@@ -501,7 +501,7 @@ static inline void newlink_symbol_and_something(LmnSAtom atom0,
     LMN_SATOM_SET_LINK(LMN_SATOM(atom1), LMN_ATTR_GET_VALUE(attr), atom0);
     LMN_SATOM_SET_ATTR(LMN_SATOM(atom1), LMN_ATTR_GET_VALUE(attr), LMN_ATTR_MAKE_LINK(pos));
   }
-}
+} */
 
 /* シンボルアトムatomと、ハイパーリンクアトムhlAtomの間にリンクを張る。
  * ハイパーリンクは接続の引数が0だったりと特殊なので関数も用意した。*/

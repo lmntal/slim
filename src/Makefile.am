@@ -99,6 +99,7 @@ slim_SOURCES =                                                     \
 	ext/nlmem.c                                                      \
 	ext/io.c                                                         \
 	ext/array.c			ext/array.h                      \
+	ext/atom.c                                                       \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
 	ext/time.c

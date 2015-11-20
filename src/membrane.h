@@ -353,6 +353,7 @@ static inline void alter_functor(LmnMembrane *mem, LmnSAtom atom, LmnFunctor f);
 static inline void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSet ruleset);
 static inline void lmn_mem_copy_rules(LmnMembrane *dest, LmnMembrane *src);
 static inline void lmn_mem_clearrules(LmnMembrane *src);
+static inline void newlink_symbol_and_something(LmnSAtom atom0, int pos, LmnAtom atom1, LmnLinkAttr attr);
 
 /* 膜parentから膜memを取り除く.
  * memのメモリ管理は呼び出し側で行う. */
@@ -584,6 +585,19 @@ static inline void lmn_mem_clearrules(LmnMembrane *src) {
     }
   }
   vec_clear(&src->rulesets);
+}
+
+/* シンボルアトムatom0と、シンボルorデータアトムatom1の間にリンクを張る。*/
+static inline void newlink_symbol_and_something(LmnSAtom atom0,
+                                                int pos,
+                                                LmnAtom atom1,
+                                                LmnLinkAttr attr) {
+  LMN_SATOM_SET_LINK(atom0, pos, atom1);
+  LMN_SATOM_SET_ATTR(atom0, pos, attr);
+  if (!LMN_ATTR_IS_DATA(attr)) {
+    LMN_SATOM_SET_LINK(LMN_SATOM(atom1), LMN_ATTR_GET_VALUE(attr), atom0);
+    LMN_SATOM_SET_ATTR(LMN_SATOM(atom1), LMN_ATTR_GET_VALUE(attr), LMN_ATTR_MAKE_LINK(pos));
+  }
 }
 
 
