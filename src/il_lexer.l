@@ -94,8 +94,8 @@ DIGIT    [0-9]
 
  /* This can handle illmatic cases such as
     'slash star star star slash' or 'slash star slash star slash'.
-    c.f. コンパイラの構成と最適化 第2版, pp.65-66, 中田育男, 朝倉書店, 1999 */
-"/*"([^*]|"*""*"*[^*/])*"*""*"*"/" /* eat comment */
+    cf. コンパイラの構成と最適化 第2版, pp.65-66, 中田育男, 朝倉書店, 1999 */
+"/*"[^*/]*"*/" /* eat comment */
 "//".*                             /* eat one line comment */
 [ \t\n\r]+                         /* eat blanks */
  /* float */

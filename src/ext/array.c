@@ -219,7 +219,7 @@ void cb_array_size(LmnReactCxt *rc,
   lmn_mem_newlink(mem,
       a0, t0, LMN_ATTR_GET_VALUE(t0),
       a2, t2, LMN_ATTR_GET_VALUE(t2));
-  lmn_mem_push_atom(mem, s, LMN_INT_ATTR);
+  lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_INT_ATTR);
 }
 
 /*
