@@ -163,12 +163,25 @@ void integer_of_string(LmnReactCxt *rc,
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
+void integer_twice(LmnReactCxt *rc,
+		   LmnMembrane *mem,
+		   LmnAtom a0, LmnLinkAttr t0,
+		   LmnAtom a1, LmnLinkAttr t1)
+{
+  LmnWord n = a0 * 2;
+  lmn_mem_newlink(mem,
+		  a1, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(t1),
+		  n,  LMN_INT_ATTR, 0);
+  lmn_mem_push_atom(mem, n, LMN_INT_ATTR);
+  lmn_mem_delete_atom(mem, a0, t0);
+}
+
 void init_integer(void)
 {
   lmn_register_c_fun("integer_set", integer_set, 3);
   lmn_register_c_fun("integer_srand", integer_srand, 1);
   lmn_register_c_fun("integer_rand", integer_rand, 2);
   lmn_register_c_fun("integer_of_string", integer_of_string, 2);
-
+  lmn_register_c_fun("integer_twice", integer_twice, 2);
   srand((unsigned)time(NULL));
 }

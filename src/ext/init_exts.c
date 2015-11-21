@@ -60,4 +60,7 @@ void init_builtin_extensions(void)
   init_nd_conf();
   init_time();
   init_array();
+  init_yueno();
+  init_hoge();
+  init_react_rule();
 }

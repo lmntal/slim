@@ -1,4 +1,4 @@
-/*
+\/*
  * main.c - main
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>

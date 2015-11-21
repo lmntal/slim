@@ -92,6 +92,7 @@
 #define LMN_ATOM(X)                     ((LmnAtom)(X))
 #define LMN_SATOM(X)                    ((LmnSAtom)(X))
 
+
 /* アトムリストからATOMのprev/nextアトムを取得/設定する.
  * アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする */
 #define LMN_SATOM_PPREV(ATOM)           (((LmnWord *)(ATOM)))
