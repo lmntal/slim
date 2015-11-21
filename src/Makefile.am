@@ -101,7 +101,8 @@ slim_SOURCES =                                                     \
 	ext/array.c			ext/array.h                      \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
-	ext/time.c
+	ext/time.c							\
+	ext/react_rule.c
 #	ext.h ext.c
 
 slim_OBJS =
