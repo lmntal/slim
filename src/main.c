@@ -1,4 +1,4 @@
-\/*
+/*
  * main.c - main
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
@@ -667,7 +667,7 @@ static inline int load_input_files(Vector *start_rulesets, int optid, int argc, 
     FILE *in;
     LmnRuleSet t;
     char *f = argv[i];
-
+    
     if (!strcmp("-", f)) { /* 標準入力からの読込み */
       in = stdin;
       t = load(in);

@@ -45,12 +45,14 @@
 LmnRuleSet load(FILE *in);
 LmnRule load_rule(Rule rule);
 LmnRuleSet load_file(char *file_name);
+LmnRuleSet my_load_ruleset(IL il, int n);
 void load_il_files(char *path);
 int il_parse(FILE *in, IL *il);
 int il_parse_rule(FILE *in, Rule *rule);
 FILE *fopen_il_file(char *name);
 void init_so_handles();
 void finalize_so_handles();
+
 /* pathにsoがある場合の,関数名の元となれるファイル名を返す */
 /* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
 char *create_formatted_basename(const char *path);

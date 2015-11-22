@@ -570,6 +570,37 @@ static LmnRuleSet load_ruleset(RuleSet rs)
   return runtime_ruleset;
 }
 
+LmnRuleSet my_load_ruleset(IL il, int n)
+{
+  LmnRuleSet t, first_ruleset;
+  RuleSets rulesets;
+  ModuleList module_list;
+  int i;
+
+  /* load rules */
+  rulesets     = il_get_rulesets(il);
+  first_ruleset = NULL;
+  printf("[MY_LOAD_RULESET]: RULESETS_NUM = %d\n", rulesets_num(rulesets));
+  for (i = 0; i < rulesets_num(rulesets); i++) {
+    t = load_ruleset(rulesets_get(rulesets, i));
+    if (i == n) first_ruleset = t;
+  }
+
+  if (!first_ruleset) {
+    lmn_fatal("implementation error: no ruleset in il");
+  }
+
+
+  /* load module list */
+  module_list = il_get_module_list(il);
+  for (i = 0; i < module_list_num(module_list); i++) {
+    Module m = module_list_get(module_list, i);
+    lmn_set_module(module_get_name(m), lmn_ruleset_from_id(module_get_ruleset(m)));
+  }
+
+  return first_ruleset;  
+}
+
 /* 最初のルールセットを返す */
 static LmnRuleSet load_il(IL il)
 {
@@ -581,6 +612,7 @@ static LmnRuleSet load_il(IL il)
   /* load rules */
   rulesets     = il_get_rulesets(il);
   first_ruleset = NULL;
+  printf("[IN-LOAD_IL]RULESETS_NUM = %d\n", rulesets_num(rulesets));
   for (i = 0; i < rulesets_num(rulesets); i++) {
     t = load_ruleset(rulesets_get(rulesets, i));
     if (i == 0) first_ruleset = t;
@@ -834,7 +866,6 @@ LmnRuleSet load_file(char *file_name)
           fprintf(stderr, "lmntal don't exist at %s\n", lmntal_home);
           exit(EXIT_FAILURE);
         }
-
         rs = load(fp_compiled);
         fclose(fp_compiled);
       }

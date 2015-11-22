@@ -82,6 +82,7 @@
 #include "slim_header/port.h"
 #include "string.h"
 #include "lmntal_system_adapter.h"
+#include "load.h"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -494,7 +495,7 @@ int is_including_colon_minus_atom(LmnMembrane *mem)
 	  LmnAtom atom;
 	  LmnSAtom ssatom;
 	  LmnLinkAttr attr;
-	  LmnMembrane *mem;
+	  LmnMembrane *new_mem;
 	  LmnPort port = lmn_make_file_port(output0_fp, "rough_rule.txt", LMN_PORT_OUTPUT,TRUE);
 	  for(i = 0; i < limit; i++)
 	    {
@@ -502,38 +503,69 @@ int is_including_colon_minus_atom(LmnMembrane *mem)
 	      attr = LMN_SATOM_GET_ATTR(LMN_ATOM(satom), i);
 	      link_pos = LMN_ATTR_GET_VALUE(attr);
 	      ssatom = LMN_SATOM(atom);
-	      mem = LMN_PROXY_GET_MEM(LMN_SATOM(LMN_SATOM_GET_LINK(ssatom, 0)));
+	      new_mem = LMN_PROXY_GET_MEM(LMN_SATOM(LMN_SATOM_GET_LINK(ssatom, 0)));
 	      if(i == 0)
 	      	{
-		  lmn_dump_cell(mem, port);
+		  lmn_dump_cell(new_mem, port);
 		  fprintf(output0_fp, ":-");
 		}
 	      else if(i == 1)
 	      	{
-		  lmn_dump_cell(mem, port);
+		  lmn_dump_cell(new_mem, port);
 		  fprintf(output0_fp, "|");
 	      	}
 	      else
 	      	{
-		  lmn_dump_cell(mem, port);
+		  lmn_dump_cell(new_mem, port);
 	      	}
 	    }
 	  fclose(output0_fp);
 	  FILE *input0_fp = fopen("rough_rule.txt", "r");
+	  FILE *output1_fp = fopen("tmp.lmn", "w");
 	  char buf[1024];
 	  int p;
-
-	  fgets(buf, 1024, input0_fp);
-	  /* fputs(format_txt(buf), output1_fp); */
-	  fclose(input0_fp);
-	  
-	  FILE *compiled_fp = lmntal_compile_rule_str(format_txt(buf));
-	  /* file *compiled_fp = lmntal_compile_file(output1_fp); */
 	  int c;
-	  while((c = fgetc(compiled_fp)) != EOF)
+	  fgets(buf, 1024, input0_fp);
+	  fclose(input0_fp);
+	  fputs(format_txt(buf), output1_fp);
+	  fclose(output1_fp);
+	  /* FILE *input1_fp = fopen("tmp.lmn", "r"); */
+	  /* fclose(input1_fp); */
+	  /* FILE *compiled_rule = lmntal_compile_rule_str(format_txt(buf)); */
+	  FILE *compiled_rulesets = lmntal_compile_file("tmp.lmn");
+	  /* LmnRuleSet compiled_rs = load_file("tmp.lmn"); */
+	  /* LmnRuleSet compiled_rs = load(compiled_fp0); */
+	  IL il;
+	  if(il_parse(compiled_rulesets, &il))
 	    {
-	      fputc(c, stdout);
+	      printf("[FAIL]IL_PARSE\n");
 	    }
+	  else
+	    {
+	      printf("[SUCCESS]IL_PARSE\n");
+	      LmnRuleSet target_ruleset = my_load_ruleset(il, 1);
+	      printf("[SUCCESS]LOAD_2ndRULESET\n");
+	      lmn_mem_add_ruleset(mem, target_ruleset);
+	      /* RuleSets rulesets = il_get_rulesets(il); */
+	      /* LmnRuleSet target_ruleset = load_ruleset(rulesets_get(rulesets, 1)); */
+	    }
+	  
+	  /* printf("VVVVVVVVV[COMPILED_RULE]VVVVVVV\n"); */
+	  /* while((c = fgetc(compiled_rule)) != EOF) */
+	  /*   { */
+	  /*     fputc(c, stdout); */
+	  /*   } */
+	  /* printf("VVVVVVVVV[COMPILED_RULE_SET]VVVVVV\n"); */
+	  /* while((c = fgetc(compiled_rulesets)) != EOF) */
+	  /*   { */
+	  /*     fputc(c, stdout); */
+	  /*   } */
+	  /* fclose(compiled_rulesets); */
+	  /* while((c = fgetc(compiled_fp1)) != EOF) */
+	  /*   { */
+	  /*     fputc(c, stdout); */
+	  /*   } */
+	  /* fclose(compiled_rule); */
 	  return 1;
 	}
       else
