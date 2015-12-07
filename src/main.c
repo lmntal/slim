@@ -102,6 +102,7 @@ static void usage(void)
           "  --ltl-all            (MC) Generate full state space and exhaustive search\n"
           "  --bfs                (MC) Use BFS strategy\n"
           "  --bfs-lsync          (MC) Use Layer Synchronized BFS strategy\n"
+          "  --limited-step=<N>   (MC) Run only first <N> steps (BFS)\n"
           "  --use-owcty          (MC) Use OWCTY algorithm  (LTL model checking)\n"
           "  --use-map            (MC) Use MAP algorithm    (LTL model checking)\n"
           "  --use-mapndfs        (MC) Use Map+NDFS algorithm (LTL model checking)\n"
