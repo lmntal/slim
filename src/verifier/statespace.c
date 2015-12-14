@@ -460,6 +460,9 @@ inline BOOL statespace_is_memid_hash(StateSpace states, unsigned long hash)
  * バイナリストリングへのエンコード処理はskipするため, s_memはNULLで構わない. */
 State *statespace_insert(StateSpace ss, State *s)
 {
+  printf("[START]: statespace_insert ");
+  lmn_dump_cell_stdout(state_restore_mem(s));
+
   StateTable *insert_dst;
   State *ret;
   BOOL is_accept;

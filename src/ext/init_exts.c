@@ -48,6 +48,7 @@ void init_initial_ruleset(void);
 void init_nd_conf(void);
 void init_time(void);
 void init_array(void);
+void init_yueno(void);
 
 void init_builtin_extensions(void)
 {

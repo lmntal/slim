@@ -69,10 +69,10 @@ void lmn_mem_add_ruleset_sort(Vector *src_v, LmnRuleSet add_rs)
   for (i = 0; i < n; i++) {
     LmnRuleSet rs_i;
     LmnRulesetId dst_id;
-
+    
     rs_i   = (LmnRuleSet)vec_get(src_v, i);
     dst_id = lmn_ruleset_get_id(rs_i);
-
+    
     if (dst_id == add_id && !lmn_ruleset_has_uniqrule(add_rs)) {
       /* 同じ階層にuniqでない同一のルールセットが既に存在するならば追加する必要はない */
       break;

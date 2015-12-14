@@ -128,7 +128,7 @@ static void lmn_worker_start(void *arg)
   LmnWorkerGroup *wp;
   LmnWorker *w;
   unsigned long id;
-
+  printf("[START]: LMN_WORKER_START\n");
   w = (LmnWorker *)arg;
   wp = worker_group(w);
   id = worker_id(w);
@@ -156,6 +156,7 @@ static void lmn_worker_start(void *arg)
   if (lmn_env.profile_level >= 1) profile_finish_exec_thread();
   mc_react_cxt_destroy(&worker_rc(w));
   worker_TLS_finalize();
+  printf("[FINISH]: LMN_WORKER_START\n");
 }
 
 LmnWorker* worker_next_generator(LmnWorker* w)
@@ -388,7 +389,7 @@ void lmn_workergroup_free(LmnWorkerGroup *wp)
 void launch_lmn_workers(LmnWorkerGroup *wp)
 {
   unsigned long i, core_num;
-
+  printf("[START]: LAUNCH_LMN_WORKERS\n");
   core_num = workers_entried_num(wp);
   for (i = 0; i < core_num; i++) { /** start */
     if (i == LMN_PRIMARY_ID) continue;
@@ -405,6 +406,7 @@ void launch_lmn_workers(LmnWorkerGroup *wp)
     if (i == LMN_PRIMARY_ID) continue;
     lmn_thread_join(worker_pid(workers_get_worker(wp, i)));
   }
+  printf("[FINISH]: LAUNCH_LMN_WORKERS\n");
 }
 
 

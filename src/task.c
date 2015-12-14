@@ -83,6 +83,7 @@
 #include "string.h"
 #include "lmntal_system_adapter.h"
 #include "load.h"
+#include "vector.h"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -408,9 +409,129 @@ char* format_txt(char *input_str)
 
 
 
+/* #define RULE_GRAPH_MAX 100; */
+/* #define MEM_RULE_GRAPH_MAX 100; */
+
+/* struct RuleGraph */
+/* { */
+/*   unsigned long address; */
+/*   LmnRulesetId rs_id; */
+/* }; */
+
+/* struct MemRuleGraph */
+/* { */
+/*   unsigned long mem_add; */
+/*   int rulegraphs_num; */
+/*   struct RuleGraph rulegraphs[RULE_GRAPH_MAX]; */
+/* }; */
+
+/* struct MemRuleGraph mems[MEM_RULE_GRAPH_MAX]; */
+
+
+
+/* void add_dynamic_rule_node(LmnRulesetId dynamic_rs_id, LmnMembrane *mem) */
+/* { */
+/*   struct DynamicRuleNode *new_node = malloc(sizeof(struct DynamicRuleNode*)); */
+
+/*   new_node->rs_id = dynamic_rs_id; */
+/*   printf("hoge!\n"); */
+/*   fflush(stdout); */
+/*   new_node->next = mem->next_dynamic_rule; */
+
+/*   mem->next_dynamic_rule = new_node; */
+/* } */
+
+#define DYNAMIC_RULESET_MAX 100
+#define DYNAMIC_MEM_MAX 10000
+
+struct DynamicRulesetMem
+{
+  unsigned long mem_add;
+  LmnRulesetId rs_ids[DYNAMIC_RULESET_MAX];
+  int rs_n;
+};
+
+struct DynamicRulesetMem dynamic_rulesets[DYNAMIC_MEM_MAX];
+int dynamic_rulesets_num = 0;
+
+void add_dynamic_rulesetid(LmnRulesetId rs_id, LmnMembrane *mem)
+{
+  int i, j;
+
+  for(i = 0; i < dynamic_rulesets_num; i++)
+    {
+      if(dynamic_rulesets[i].mem_add == (unsigned long)mem)
+  	{
+	  /* printf("[IN-ADD_DYNAMIC_RULESETID]: FI/\* ND MEM!! dynamic_rulesets_num = %d\n", dynamic_rulesets_num);  */
+  	  dynamic_rulesets[i].rs_ids[dynamic_rulesets[i].rs_n] = rs_id;
+	  dynamic_rulesets[i].rs_n++;
+  	  return ;
+  	}
+    }
+  /* printf("[IN-ADD_DYNAMIC_RULESETID]: CREATE NEW NODE dynamic_rulesets_num = %d\n", dynamic_rulesets_num); */
+  
+  int rs_num = dynamic_rulesets[dynamic_rulesets_num].rs_n;
+  dynamic_rulesets[dynamic_rulesets_num].mem_add = (unsigned long)mem;
+  dynamic_rulesets[dynamic_rulesets_num].rs_ids[rs_num] = rs_id;
+  dynamic_rulesets[dynamic_rulesets_num].rs_n++;
+  dynamic_rulesets_num++;
+  return ;
+}
+
+void delete_dynamic_ruleset(Vector *src_v, LmnRulesetId del_id)
+{
+  int i, j, n;
+  n = vec_num(src_v);
+  for(i = 0; i < n; i++)
+    {
+      LmnRuleSet rs_i;
+      LmnRulesetId dst_id;
+      rs_i = (LmnRuleSet)vec_get(src_v, i);
+      dst_id = lmn_ruleset_get_id(rs_i);
+      if(dst_id == del_id)
+	{
+	  for(j = i; j < n - 1; j++)
+	    {
+	      LmnRuleSet next = (LmnRuleSet)vec_get(src_v, j + 1);
+	      vec_set(src_v, j, next);
+	    }
+	  src_v->num--;
+	  return ;
+	}
+    }
+}
+
+void delete_dynamic_rulesets(LmnMembrane *mem)
+{
+  int i, j;
+
+  for(i = 0; i < dynamic_rulesets_num; i++)
+    {
+      if(dynamic_rulesets[i].mem_add == (unsigned long)mem)
+  	{
+  	  for(j = 0; j < dynamic_rulesets[i].rs_n; j++)
+  	    {
+  	      delete_dynamic_ruleset(&(mem->rulesets), dynamic_rulesets[i].rs_ids[j]);
+  	    }
+  	  dynamic_rulesets[i].rs_n = 0;
+  	  return ;
+  	}
+    }
+  return ;
+}
 
 int is_including_colon_minus_atom(LmnMembrane *mem)
 {
+  /*
+   * 1. 膜内に存在する:-アトムから生成されたルールセットを全て消去 
+   * 2. :-アトムを発見すると、そこからルールセットを生成
+   * 3. 動的に生成されたルールセットを登録
+   */
+  /* printf("mem add = %x\n", mem); */
+  /* delete_dynamic_rules(mem); */
+
+  delete_dynamic_rulesets(mem);
+
   SimpleHashtbl *ht;
   SimpleHashtbl htt;
   enum {P0, P1, P2, P3, PROXY, PRI_NUM};
@@ -419,14 +540,13 @@ int is_including_colon_minus_atom(LmnMembrane *mem)
   unsigned int i, j;
   LmnFunctor f;
 
+
   hashtbl_init(&htt, 128);
   ht = &htt;
-
 
   for (i = 0; i < PRI_NUM; i++) {
     vec_init(&pred_atoms[i], 16);
   }
-
 
   /* 優先順位に応じて起点となるアトムを振り分ける */
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
@@ -444,10 +564,7 @@ int is_including_colon_minus_atom(LmnMembrane *mem)
 	      }
 	      /* 0 argument atom */
 	      else if (arity == 0) {
-
-
 		vec_push(&pred_atoms[P0], (LmnWord)atom);
-
 	      }
 	      /* 1 argument, link to the last argument */
 	      else if (arity == 1 &&
@@ -470,28 +587,33 @@ int is_including_colon_minus_atom(LmnMembrane *mem)
 	    }));
       }));
 
-  /* if (!lmn_env.show_proxy) { */
-  /*   /\* assign link to proxies *\/ */
-  /*   for (i = 0; i < pred_atoms[PROXY].num; i++) { */
-  /*     assign_link_to_proxy(LMN_SATOM(vec_get(&pred_atoms[PROXY], i)), ht, s); */
-  /*   } */
-  /* } */
   char str[5] = ":-";
   int cmp;
   LmnSAtom satom;
+  /* void* LmnSAtom*/
   char *atom_name;
   for (i = 0; i < PRI_NUM; i++) {
     for (j = 0; j < pred_atoms[i].num; j++) {
       satom = LMN_SATOM(vec_get(&pred_atoms[i], j));
+      /* printf("%x\n", satom); */
       f = LMN_SATOM_GET_FUNCTOR(satom);
       atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
+
+      /* printf("%s: i=%d, j=%d, functor = %d\n", atom_name, i, j, f); */
+      /* printf("id = %d\n", mem->name); */
+
       cmp = strcmp(atom_name, str);
-      if(cmp == 0)
+
+      if(cmp == 0 && LMN_SATOM_GET_LINK_NUM(satom) == 3)
 	{
+	  /* :-アトム発見 */
+	  /* ------------------------------------------------------------------------------------------------------------ */
+	  /* ------------------------------------------------------------------------------------------------------------ */
+	  /* mem->rule_graphs[0].address = (unsigned long)satom; */
+	  /* printf(":-atom adress = (16)%x\n", hoge.address); */
 	  int limit = LMN_SATOM_GET_LINK_NUM(satom);
 	  int link_pos;
 	  FILE *output0_fp = fopen("rough_rule.txt", "w");
-	  /* FILE *output1_fp = fopen("formatted_rule.lmn", "w"); */
 	  LmnAtom atom;
 	  LmnSAtom ssatom;
 	  LmnLinkAttr attr;
@@ -527,78 +649,83 @@ int is_including_colon_minus_atom(LmnMembrane *mem)
 	  int c;
 	  fgets(buf, 1024, input0_fp);
 	  fclose(input0_fp);
+	  /* 整形する========================================= */
+	  /* =============================================================================================================== */
 	  fputs(format_txt(buf), output1_fp);
+	  /* =============================================================================================================== */
 	  fclose(output1_fp);
-	  /* FILE *input1_fp = fopen("tmp.lmn", "r"); */
-	  /* fclose(input1_fp); */
-	  /* FILE *compiled_rule = lmntal_compile_rule_str(format_txt(buf)); */
 	  FILE *compiled_rulesets = lmntal_compile_file("tmp.lmn");
-	  /* LmnRuleSet compiled_rs = load_file("tmp.lmn"); */
-	  /* LmnRuleSet compiled_rs = load(compiled_fp0); */
 	  IL il;
-	  if(il_parse(compiled_rulesets, &il))
-	    {
-	      printf("[FAIL]IL_PARSE\n");
-	    }
-	  else
-	    {
-	      printf("[SUCCESS]IL_PARSE\n");
-	      LmnRuleSet target_ruleset = my_load_ruleset(il, 1);
-	      printf("[SUCCESS]LOAD_2ndRULESET\n");
-	      lmn_mem_add_ruleset(mem, target_ruleset);
-	      /* RuleSets rulesets = il_get_rulesets(il); */
-	      /* LmnRuleSet target_ruleset = load_ruleset(rulesets_get(rulesets, 1)); */
-	    }
-	  
-	  /* printf("VVVVVVVVV[COMPILED_RULE]VVVVVVV\n"); */
-	  /* while((c = fgetc(compiled_rule)) != EOF) */
-	  /*   { */
-	  /*     fputc(c, stdout); */
-	  /*   } */
-	  /* printf("VVVVVVVVV[COMPILED_RULE_SET]VVVVVV\n"); */
-	  /* while((c = fgetc(compiled_rulesets)) != EOF) */
-	  /*   { */
-	  /*     fputc(c, stdout); */
-	  /*   } */
-	  /* fclose(compiled_rulesets); */
-	  /* while((c = fgetc(compiled_fp1)) != EOF) */
-	  /*   { */
-	  /*     fputc(c, stdout); */
-	  /*   } */
-	  /* fclose(compiled_rule); */
-	  return 1;
+	  il_parse(compiled_rulesets, &il);
+	  printf("[SUCCESS]IL_PARSE\n");
+	  LmnRuleSet target_ruleset = my_load_ruleset(il, 1);
+	  /* mem->rule_graphs[0].rs_id = lmn_ruleset_get_id(target_ruleset); */
+	  /* printf(":-atom address = %x\ncompiled ruleset id = %d\n", mem->rule_graphs[0].address, mem->rule_graphs[0].rs_id); */
+	  printf("[SUCCESS]LOAD_2ndRULESET\n");
+	  /* add_dynamic_rule_node(lmn_ruleset_get_id(target_ruleset), mem); */
+	  LmnRulesetId r_i = lmn_ruleset_get_id(target_ruleset);
+	  printf("rs_i = %d, mem_add = %d\n", r_i, mem);
+	  add_dynamic_rulesetid(r_i, mem);
+	  lmn_mem_add_ruleset(mem, target_ruleset);
+	  /* ------------------------------------------------------------------------------------------------------------ */
+	  /* ------------------------------------------------------------------------------------------------------------ */
 	}
       else
 	{
-	  printf("PEKE\n");
+
 	}
     }
   }
   return 0;
 }
 
+
+
 /** 膜スタックに基づいた通常実行 */
 static void mem_oriented_loop(LmnReactCxt *rc, LmnMembrane *mem)
 {
+  int i;
   LmnMemStack memstack = RC_MEMSTACK(rc);
+
+  for(i = 0; i < DYNAMIC_MEM_MAX ; i++)
+    {
+      dynamic_rulesets[i].rs_n = 0;
+    }
 
   while(!lmn_memstack_isempty(memstack)){
     LmnMembrane *mem = lmn_memstack_peek(memstack);
     if(is_including_colon_minus_atom(mem))
       {
-	printf(":-!!!!!!!!!!!!\n");
+	
       }
     else
       {
-	printf("NOT :-!!!!!!!!!\n");
+	
       }
-    printf("[RESULT LMN_MEMSTACK_PEEK]: ");
+    int j;
+    printf("----------------------------------------\n");
+    for(i = 0; i < dynamic_rulesets_num; i++)
+      {
+    	struct DynamicRulesetMem tmp = dynamic_rulesets[i];
+    	printf("mem_add = %d\n", tmp.mem_add);
+    	for(j = 0; j < tmp.rs_n; j++)
+    	  {
+    	    printf("rs_id = %d\n", tmp.rs_ids[j]);
+    	  }
+      }
+    printf("----------------------------------------\n");
+    printf("[LMN_MEMSTACK_PEEK]: ");
     lmn_dump_cell_stdout(mem);
     if (!react_all_rulesets(rc, mem)) {
       /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
-      printf("[BRANCH]-->(!reack_all_rulesets(rc, mem))\n");
+      printf("[NOT REACT IN THIS MEM]\n");
       lmn_memstack_pop(memstack);
     }
+    else
+      {
+	printf("[RESULT REACT]: ");
+	lmn_dump_cell_stdout(mem);
+      }
   }
 }
 
@@ -702,6 +829,7 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
+  
 
   translated = lmn_rule_get_translated(rule);
   inst_seq = lmn_rule_get_inst_seq(rule);
@@ -1169,7 +1297,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     case INSTR_COMMIT:
     {
       lmn_interned_str rule_name;
-
+      
       READ_VAL(lmn_interned_str, instr, rule_name);
       SKIP_VAL(LmnLineNum,       instr);
 
@@ -1201,6 +1329,8 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
       if (RC_GET_MODE(rc, REACT_ND)) {
         ProcessID org_next_id = env_next_id();
         LmnMembrane *cur_mem = NULL;
+
+	printf("ND-COMMIT!!!!!!!!!!!!!!!!!!!!!\n");
 
         if (RC_MC_USE_DMEM(rc)) {
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
@@ -1248,6 +1378,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
           /** >>>>>>> disable delta-membrane <<<<<<< **/
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
+	  printf("[DISABLE DELTA-MEMBRANE]\n");
           LmnRegister *v, *tmp;
           ProcessTbl copymap;
           LmnMembrane *tmp_global_root;
@@ -1266,6 +1397,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           tmp_global_root = lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
 
           /** 変数配列および属性配列のコピー */
+	  printf("register!\n");
           v = lmn_register_make(warry_size_org);
 
           if (warry_cur_org > 0) {
@@ -1356,9 +1488,13 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
             profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
           }
 #endif
-
+	  printf("[BEFORE INTERPRET]\n");
           /** コピーしたグローバルルート膜と作業配列を用いてBODY命令を適用  */
           interpret(rc, rule, instr);
+
+	  printf("[IN COMMIT INST]tmp_global_root:");
+	  lmn_dump_cell_stdout(tmp_global_root);
+
           mc_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
           if (lmn_rule_get_pre_id(rule) != ANONYMOUS) {
@@ -4498,7 +4634,7 @@ label_skip_data_atom:
                              LMN_SATOM_GET_LINK(atom, 3), LMN_SATOM_GET_ATTR(atom, 3));
           break;
         case 5:
-          ((callback_4)c->f)(rc,
+           ((callback_4)c->f)(rc,
                              (LmnMembrane *)wt(rc, memi),
                              LMN_SATOM_GET_LINK(atom, 1), LMN_SATOM_GET_ATTR(atom, 1),
                              LMN_SATOM_GET_LINK(atom, 2), LMN_SATOM_GET_ATTR(atom, 2),

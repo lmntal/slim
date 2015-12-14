@@ -200,6 +200,15 @@ LinkObj LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
  *  膜
  */
 
+/* struct DynamicRuleNode */
+/* { */
+/*   LmnRulesetId rs_id; */
+/*   struct DynamicRuleNode *next; */
+/* }; */
+
+/* #define RULE_GRAPH_MAX 100 */
+
+
 extern struct st_hash_type type_memhash;
 
 struct LmnMembrane {

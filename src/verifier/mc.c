@@ -48,6 +48,7 @@
 #include "propositional_symbol.h"
 #include "ltl2ba_adapter.h"
 #include "runtime_status.h"
+#include "../dumper.h"
 #ifdef DEBUG
 #  include "dumper.h"
 #endif
@@ -66,6 +67,7 @@ static void mc_dump(LmnWorkerGroup *wp);
 /* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
 void run_mc(Vector *start_rulesets, Automata a, Vector *psyms)
 {
+  printf("[START]: RUN_MC\n");
   static LmnMembrane *mem;
 
   if (lmn_env.nd_cleaning) {
@@ -90,6 +92,7 @@ void run_mc(Vector *start_rulesets, Automata a, Vector *psyms)
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
   }
+  printf("[FINISH]: RUN_MC\n");
 }
 
 
@@ -98,6 +101,7 @@ static inline void do_mc(LmnMembrane *world_mem_org,
                          Vector      *psyms,
                          int         thread_num)
 {
+  printf("[START]: DO_MC\n");
   LmnWorkerGroup *wp;
   StateSpace states;
   LmnMembrane *mem;
@@ -119,6 +123,8 @@ static inline void do_mc(LmnMembrane *world_mem_org,
                        p_label,
                        statespace_use_memenc(states));
   state_id_issue(init_s); /* 状態に整数IDを発行 */
+  printf("init_s = ");
+  lmn_dump_cell_stdout(mem);
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE) state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
 #endif
@@ -144,12 +150,14 @@ static inline void do_mc(LmnMembrane *world_mem_org,
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_clean();
   }
+  printf("[FINISH]: DO_MC\n");
 }
 
 
 /* 後始末と出力周りを担当 */
 static void mc_dump(LmnWorkerGroup *wp)
 {
+  printf("[START]: MC_DUMP\n");
   StateSpace ss = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   if (lmn_env.dump) {
     statespace_format_states(ss);
@@ -189,6 +197,7 @@ static void mc_dump(LmnWorkerGroup *wp)
 
   if (statespace_has_property(ss)) lmn_prof.has_property = TRUE;
   if (workers_have_error(wp))      lmn_prof.found_err = TRUE;
+  printf("[FINISH]: MC_DUMP\n");
 }
 
 
@@ -216,29 +225,37 @@ void mc_expand(const StateSpace ss,
                Vector           *psyms,
                BOOL             f)
 {
+  printf("[START]: MC_EXPAND\n");
   LmnMembrane *mem;
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
-
+  printf("[STATE_RESTORE_MEM(s) In MC_EXPAND]:");
+  lmn_dump_cell_stdout(mem);
   /** expand  : 状態の展開 */
   if (p_s) {
     mc_gen_successors_with_property(s, mem, p_s, rc, psyms, f);
   } else {
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
-
+  
+  printf("[In MC_EXPAND]:FINISH(generate states)andSTART(stor states)\n");
+  printf("[MC_REACT_CXT_EXPANDED_NUM = %d]\n", mc_react_cxt_expanded_num(rc));
+  
   if (mc_react_cxt_expanded_num(rc) == 0) {
     /* sを最終状態集合として記録 */
+    printf("[START]: STATESPACE_ADD_END_STATE\n");
     statespace_add_end_state(ss, s);
   }
   else if (mc_enable_por(f) && !s_is_reduced(s)) {
     /* POR: 遷移先状態集合:en(s)からample(s)を計算する.
      * 呼び出し先で, mc_store_successorsに相当する処理を済ませる */
+    printf("[START]: DPOR_START\n");
     dpor_start(ss, s, rc, new_ss, f);
   }
   else {
     /* sのサクセッサを状態空間ssに記録 */
+    printf("[START]: MC_STORE_SUCCESSORS\n");
     mc_store_successors(ss, s, rc, new_ss, f);
   }
 
@@ -267,6 +284,7 @@ void mc_expand(const StateSpace ss,
     profile_total_space_update(ss);
   }
 #endif
+  printf("[FINISH]: MC_EXPAND\n");
 }
 
 
@@ -277,6 +295,8 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock)
   unsigned int i, n;
   BOOL f;
   State *succ;
+
+  printf("[START]: MC_UPDATE_COST\n");
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -297,6 +317,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock)
     profile_finish_timer(PROFILE_TIME__COST_UPDATE);
   }
 #endif
+  printf("[FINISH]: MC_UPDATE_COST\n");
 }
 
 
@@ -311,6 +332,8 @@ void mc_store_successors(const StateSpace ss,
 {
   unsigned int i, succ_i;
 
+  printf("[START]: MC_STORE_SUCCESSORS\n");
+  lmn_dump_cell_stdout(state_restore_mem(s));
   /** 状態登録 */
   succ_i = 0;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
@@ -408,6 +431,7 @@ void mc_store_successors(const StateSpace ss,
 
   state_D_progress(s, rc);
   state_succ_set(s, RC_EXPANDED(rc)); /* successorを登録 */
+  printf("[FINISH]:  MC_STORE_SUCCESSORS\n");
 }
 
 
@@ -419,6 +443,7 @@ void mc_store_successors(const StateSpace ss,
  */
 BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembrane *cur_mem)
 {
+  printf("[START]: MC_EXPAND_INNER\n");
   BOOL ret_flag = FALSE;
 
   for (; cur_mem; cur_mem = cur_mem->next) {
@@ -429,14 +454,16 @@ BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembrane *cur_mem)
       ret_flag = TRUE;
     }
     if (lmn_mem_is_active(cur_mem)) {
+      printf("[IN MC_EXPAND_INNER]start[react_all_rulesets]\n");
       react_all_rulesets(rc, cur_mem);
+      printf("FINISH [react_all_rulesets]\n");
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
     if (org_num == mc_react_cxt_expanded_num(rc)) {
       lmn_mem_set_active(cur_mem, FALSE);
     }
   }
-
+  printf("[FINISH]: MC_EXPAND_INNER\n");
   return ret_flag;
 }
 
@@ -452,7 +479,7 @@ void mc_gen_successors(State       *src,
 {
   Vector *expanded_roots, *expanded_rules;
   unsigned int i, n, old;
-
+  printf("[START]: MC_GEN_SUCCESSORS\n");
   RC_SET_GROOT_MEM(rc, mem);
 
   /* 性質遷移数だけ本関数を呼び出している.
@@ -502,6 +529,7 @@ void mc_gen_successors(State       *src,
   }
 
   RC_ND_SET_ORG_SUCC_NUM(rc, (n - old));
+  printf("[FINISH]: MC_GEN_SUCCESSORS\n");
 }
 
 
@@ -515,7 +543,7 @@ void mc_gen_successors_with_property(State         *s,
                                      BOOL          f)
 {
   unsigned int i, j;
-
+  printf("[START]: MC_GEN_SUCCESSORS_WITH_PROPERTY\n");
   /** 状態展開:
    *   性質ルールが適用される場合, global_rootに対してシステムルール適用検査を行う.
    *   システムルール適用はglobal_rootのコピーに対して行われる.
@@ -586,6 +614,7 @@ void mc_gen_successors_with_property(State         *s,
       }
     }
   }
+  printf("[FINISH]: MC_GEN_SUCCESSORS_WITH_PROPERTY\n");
 }
 
 
@@ -600,7 +629,7 @@ static inline void stutter_extension(State       *s,
 {
   vec_data_t data;
   State *new_s;
-
+  printf("[START]: STUTTER_EXTENSION\n");
   /* Stutter Extension Rule:
    *
    * 性質ルールで可能な遷移が存在するにも拘らず, システムルールで可能な遷移が存在しない場合,
@@ -635,11 +664,13 @@ static inline void stutter_extension(State       *s,
     data = (vec_data_t)new_s;
   }
   vec_push(RC_EXPANDED(rc), data);
+  printf("[FINISH]: STUTTER_EXTENSION\n");
 }
 
 
 static inline void mc_gen_successors_inner(LmnReactCxt *rc, LmnMembrane *cur_mem)
 {
+  printf("[START]: MC_GEN_SUCCESSORS_INNER\n");
 #ifdef PROFILE
   if(lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__TRANS_RULE);
@@ -653,6 +684,7 @@ static inline void mc_gen_successors_inner(LmnReactCxt *rc, LmnMembrane *cur_mem
     profile_finish_timer(PROFILE_TIME__TRANS_RULE);
   }
 #endif
+  printf("[FINISH]: MC_GEN_SUCCESSORS_INNER\n");
 }
 
 

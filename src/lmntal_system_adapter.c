@@ -152,7 +152,7 @@ FILE *run_lmntal_system(int dummy, ... )
   va_start(argp, dummy);
   lmntal_build_cmd(&program_name, &args, argp);
   ret = run_program(program_name, args);
-
+  
   /* 解放処理 */
   for (i = 0; args[i]; i++) LMN_FREE(args[i]);
   LMN_FREE(args);
