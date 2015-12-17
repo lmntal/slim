@@ -694,6 +694,8 @@ static void lmn_dump_cell_internal(LmnPort port,
   unsigned int i, j;
   LmnFunctor f;
 
+  printf("[START]>>>>>>>>>>>>>>lmn_dump_cell_internal\n");
+
   if (!mem) return;
 
 /*   if (hashtbl_contains(ht, (HashKeyType)mem)) return; */
@@ -783,6 +785,8 @@ static void lmn_dump_cell_internal(LmnPort port,
   if (lmn_env.show_ruleset) {
     dump_ruleset(port, &mem->rulesets);
   }
+
+  printf("[FINISH]>>>>>>>>>>>>>>lmn_dump_cell_internal\n");
 }
 
 static void lmn_dump_cell_nonewline(LmnPort port, LmnMembrane *mem)

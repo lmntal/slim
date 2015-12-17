@@ -493,7 +493,89 @@ void delete_dynamic_rulesets(LmnMembrane *mem)
   return ;
 }
 
-void find_dynamic_rule(LmnMembrane *mem)
+void my_mem_test(LmnMembrane *mem)
+{
+  AtomListEntry *ent;
+  LmnFunctor f;
+  char *atom_name;
+
+  EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
+  	LmnSAtom satom;
+  	if(LMN_IS_EX_FUNCTOR(f)) continue;
+  	EACH_ATOM(satom, ent, ({
+  	      printf("atom name is %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom))));
+  	    }));
+      }));
+}
+
+
+
+LmnMembrane* get_mem_from_atom(LmnSAtom target_atom, int link_n)
+{
+  LmnAtom atom = LMN_SATOM_GET_LINK(LMN_ATOM(target_atom), link_n);
+  LmnLinkAttr attr = LMN_SATOM_GET_ATTR(LMN_ATOM(target_atom), link_n);
+  return LMN_PROXY_GET_MEM(LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0)));
+}
+
+FILE* compile_dynamic_rule(LmnSAtom colon_minus_atom)
+{
+  int i;
+  int limit = LMN_SATOM_GET_LINK_NUM(colon_minus_atom);
+  FILE *output0_fp = fopen("rough_rule.txt", "w");
+  LmnAtom atom;
+  LmnSAtom ssatom;
+  LmnLinkAttr attr;
+  LmnMembrane *new_mem;
+  LmnPort port = lmn_make_file_port(output0_fp, "rough_rule.txt", LMN_PORT_OUTPUT,TRUE);
+  
+  /* -------------------------------------------------------- */
+
+  lmn_dump_cell(get_mem_from_atom(colon_minus_atom, 0), port);
+  fprintf(output0_fp, ":-");
+
+  lmn_dump_cell(get_mem_from_atom(colon_minus_atom, 1), port);
+  fprintf(output0_fp, "|");
+
+  lmn_dump_cell(get_mem_from_atom(colon_minus_atom, 2), port);
+  
+  /* -------------------------------------------------------- */
+
+  fclose(output0_fp);
+  FILE *input0_fp = fopen("rough_rule.txt", "r");
+  FILE *output1_fp = fopen("tmp.lmn", "w");
+  char buf[1024];
+  int p;
+  int c;
+  fgets(buf, 1024, input0_fp);
+  fclose(input0_fp);
+  /* 整形する========================================= */
+  /* =============================================================================================================== */
+  fputs(format_txt(buf), output1_fp);
+  /* =============================================================================================================== */
+  fclose(output1_fp);
+  return lmntal_compile_file("tmp.lmn");
+}
+
+void compile_dynamic_rule_ver2(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem)
+{
+  printf(">>>>>HEAD-MEM\n");
+  printf("USE lmn_dump_cell_stdout\n");
+  lmn_dump_cell_stdout(h_mem);
+  printf("USE my_mem_test\n");
+  my_mem_test(h_mem);
+  printf(">>>>>GUARD-MEM\n");
+  printf("USE lmn_dump_cell_stdout\n");
+  lmn_dump_cell_stdout(g_mem);
+  printf("USE my_mem_test\n");
+  my_mem_test(g_mem);
+  printf(">>>>>BODY-MEM\n");
+  printf("USE lmn_dump_cell_stdout\n");
+  lmn_dump_cell_stdout(b_mem);
+  printf("USE my_mem_test\n");
+  my_mem_test(b_mem);
+}
+
+void find_and_compile_dynamic_rule(LmnMembrane *mem)
 {
   AtomListEntry *ent;
   LmnFunctor f;
@@ -501,79 +583,31 @@ void find_dynamic_rule(LmnMembrane *mem)
   char str[5] = ":-";
   int cmp;
 
-  /* delete_dynamic_rulesets(mem); */
-
+ 
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
   	LmnSAtom satom;
   	if(LMN_IS_EX_FUNCTOR(f)) continue;
   	EACH_ATOM(satom, ent, ({
 	      atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
 	      cmp = strcmp(atom_name, str);
-	      if(cmp == 0 && LMN_SATOM_GET_LINK_NUM(satom) == 3)
+
+	      if(cmp == 0 && LMN_SATOM_GET_LINK_NUM(satom) == 3)		  /* :-アトム発見*/
 		{
-		  /* :-アトム発見 */
-		  /* ------------------------------------------------------------------------------------------------------------ */
-		  /* ------------------------------------------------------------------------------------------------------------ */
-		  int i;
-		  int limit = LMN_SATOM_GET_LINK_NUM(satom);
-		  int link_pos;
-		  FILE *output0_fp = fopen("rough_rule.txt", "w");
-		  LmnAtom atom;
-		  LmnSAtom ssatom;
-		  LmnLinkAttr attr;
-		  LmnMembrane *new_mem;
-		  LmnPort port = lmn_make_file_port(output0_fp, "rough_rule.txt", LMN_PORT_OUTPUT,TRUE);
-		  for(i = 0; i < limit; i++)
-		    {
-		      atom = LMN_SATOM_GET_LINK(LMN_ATOM(satom), i);
-		      attr = LMN_SATOM_GET_ATTR(LMN_ATOM(satom), i);
-		      link_pos = LMN_ATTR_GET_VALUE(attr);
-		      ssatom = LMN_SATOM(atom);
-		      new_mem = LMN_PROXY_GET_MEM(LMN_SATOM(LMN_SATOM_GET_LINK(ssatom, 0)));
-		      if(i == 0)
-		  	{
-		  	  lmn_dump_cell(new_mem, port);
-		  	  fprintf(output0_fp, ":-");
-		  	}
-		      else if(i == 1)
-		  	{
-		  	  lmn_dump_cell(new_mem, port);
-		  	  fprintf(output0_fp, "|");
-		  	}
-		      else
-		  	{
-		  	  lmn_dump_cell(new_mem, port);
-		  	}
-		    }
-		  fclose(output0_fp);
-		  FILE *input0_fp = fopen("rough_rule.txt", "r");
-		  FILE *output1_fp = fopen("tmp.lmn", "w");
-		  char buf[1024];
-		  int p;
-		  int c;
-		  fgets(buf, 1024, input0_fp);
-		  fclose(input0_fp);
-		  /* 整形する========================================= */
-		  /* =============================================================================================================== */
-		  fputs(format_txt(buf), output1_fp);
-		  /* =============================================================================================================== */
-		  fclose(output1_fp);
-		  FILE *compiled_rulesets = lmntal_compile_file("tmp.lmn");
+		  /* compile_dynamic_rule_ver2(get_mem_from_atom(satom, 0), get_mem_from_atom(satom, 1), get_mem_from_atom(satom, 2)); */
+
+		  /* コンパイル */
+		  FILE *compiled_rulesets = compile_dynamic_rule(satom);
 		  IL il;
+		  /* ILをパース */
 		  il_parse(compiled_rulesets, &il);
-		  printf("[SUCCESS]IL_PARSE\n");
+		  /* パースしたILをロード */
 		  LmnRuleSet target_ruleset = my_load_ruleset(il, 1);
-		  /* mem->rule_graphs[0].rs_id = lmn_ruleset_get_id(target_ruleset); */
-		  /* printf(":-atom address = %x\ncompiled ruleset id = %d\n", mem->rule_graphs[0].address, mem->rule_graphs[0].rs_id); */
-		  printf("[SUCCESS]LOAD_2ndRULESET\n");
-		  /* add_dynamic_rule_node(lmn_ruleset_get_id(target_ruleset), mem); */
 		  LmnRulesetId r_i = lmn_ruleset_get_id(target_ruleset);
-		  printf("rs_i = %d, mem_add = %d\n", r_i, mem);
+		  /* 動的に生成されたルールとしてテーブルに登録 */
 		  add_dynamic_rulesetid(r_i, mem);
+		  /* 膜のルールセットの配列に追加 */
 		  lmn_mem_add_ruleset(mem, target_ruleset);
-		  printf("FIND :-!!!!!\n");
 		}
-  	      /* printf("atom name is %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom)))); */
   	    }));
       }));
 }
@@ -595,7 +629,8 @@ static void mem_oriented_loop(LmnReactCxt *rc, LmnMembrane *mem)
     LmnMembrane *mem = lmn_memstack_peek(memstack);
 
     delete_dynamic_rulesets(mem);
-    find_dynamic_rule(mem);
+
+    find_and_compile_dynamic_rule(mem);
 
     printf("[LMN_MEMSTACK_PEEK]: ");
     lmn_dump_cell_stdout(mem);
