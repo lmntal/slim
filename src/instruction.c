@@ -227,6 +227,9 @@ struct InstrSpec spec[] = {
     {"ige", INSTR_IGE, {InstrVar, InstrVar}},
     {"ieq", INSTR_IEQ, {InstrVar, InstrVar}},
     {"ine", INSTR_INE, {InstrVar, InstrVar}},
+    {"iand", INSTR_IAND, {InstrVar, InstrVar, InstrVar}},
+    {"ior", INSTR_IOR, {InstrVar, InstrVar, InstrVar}},
+    {"ixor", INSTR_IXOR, {InstrVar, InstrVar, InstrVar}},
 
     {"iltfunc", INSTR_ILTFUNC, {InstrVar, InstrVar}},
     {"ilefunc", INSTR_ILEFUNC, {InstrVar, InstrVar}},
