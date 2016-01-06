@@ -100,6 +100,7 @@ slim_SOURCES =                                                     \
 	ext/io.c                                                         \
 	ext/array.c			ext/array.h                      \
 	ext/atom.c                                                       \
+	ext/react_rule.c                                                 \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
 	ext/time.c
