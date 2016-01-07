@@ -83,16 +83,15 @@ void prototype_react_rule(LmnReactCxt *rc,
   struct Vector rulesets = rule_mem->rulesets;
   LmnRuleSet rs = (LmnRuleSet)vec_get(&rulesets, 0);
   LmnRule r = lmn_ruleset_get_rule(rs, 0);
-  /* struct McReactCxtData *v = mc_react_data_make(); */
-  /* react_context_init(rc, REACT_ND); */
-  /* rc->v = v; */
 
-  /* mc_react_cxt_init(rc); */
-
-  if(react_rule(rc, graph_mem, r))
+  /* LmnInstrVar memi, atomi; */
+  LmnReactCxt tmp_rc = *rc;
+  
+  if(react_rule(&tmp_rc, graph_mem, r))
     {
-      printf("success!!\n");
-      lmn_dump_cell_stdout(graph_mem);
+      /* printf("success!!\n"); */
+      /* my_dumper_atom_in_the_mem(graph_mem); */
+      /* lmn_dump_cell_stdout(graph_mem); */
       LmnSAtom success = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("success"), 2));
       lmn_mem_newlink(mem,
 		      LMN_ATOM(success), LMN_ATTR_MAKE_LINK(0), 0,
@@ -103,8 +102,9 @@ void prototype_react_rule(LmnReactCxt *rc,
     }
   else
     {
-      printf("fail!!!\n");
-      lmn_dump_cell_stdout(graph_mem);
+      /* printf("fail!!!\n"); */
+      /* my_dumper_atom_in_the_mem(graph_mem); */
+      /* lmn_dump_cell_stdout(graph_mem); */
       LmnSAtom fail = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("fail"), 2));
       lmn_mem_newlink(mem,
 		      LMN_ATOM(fail), LMN_ATTR_MAKE_LINK(0), 0,
@@ -118,6 +118,15 @@ void prototype_react_rule(LmnReactCxt *rc,
 		  return_rule_mem_proxy, return_rule_mem_proxy_link_attr, LMN_ATTR_GET_VALUE(return_rule_mem_proxy_link_attr),
 		  rule_mem_proxy, rule_mem_proxy_link_attr, LMN_ATTR_GET_VALUE(rule_mem_proxy_link_attr));
 
+ 
+  /* printf("[ORIGINAL_RC: 1stDELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)wt(rc, atomi))))); */
+  /* printf("[TMP_RC: 1stDELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)wt(&tmp_rc, atomi))))); */
+
+
+ /* my_dumper_atom_in_the_mem(graph_mem); */
+
+  /* lmn_dump_cell_stdout(graph_mem); */
+  
   /* lmn_mem_delete_atom(mem, rule_mem_proxy, rule_mem_proxy_link_attr); */
   /* lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr); */
 }

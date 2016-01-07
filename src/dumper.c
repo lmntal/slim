@@ -179,6 +179,17 @@ static struct AtomRec *get_atomrec(SimpleHashtbl *ht, LmnSAtom atom)
   }
 }
 
+void my_dumper_link_with_atom(LmnSAtom satom)
+{
+  SimpleHashtbl ht;
+  struct AtomRec *t;
+  hashtbl_init(&ht, 128);
+
+  t = get_atomrec(&ht, satom);
+
+
+}
+
 static void dump_atomname(LmnPort port, LmnFunctor f)
 {
   /* dump module name */
@@ -694,7 +705,7 @@ static void lmn_dump_cell_internal(LmnPort port,
   unsigned int i, j;
   LmnFunctor f;
 
-  printf("[START]>>>>>>>>>>>>>>lmn_dump_cell_internal\n");
+  /* printf("[START]>>>>>>>>>>>>>>lmn_dump_cell_internal\n"); */
 
   if (!mem) return;
 
@@ -786,7 +797,7 @@ static void lmn_dump_cell_internal(LmnPort port,
     dump_ruleset(port, &mem->rulesets);
   }
 
-  printf("[FINISH]>>>>>>>>>>>>>>lmn_dump_cell_internal\n");
+  /* printf("[FINISH]>>>>>>>>>>>>>>lmn_dump_cell_internal\n"); */
 }
 
 static void lmn_dump_cell_nonewline(LmnPort port, LmnMembrane *mem)

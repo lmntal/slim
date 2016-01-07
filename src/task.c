@@ -84,6 +84,8 @@
 #include "lmntal_system_adapter.h"
 #include "load.h"
 #include "vector.h"
+#include "utility/internal_hash.h"
+
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -493,21 +495,60 @@ void delete_dynamic_rulesets(LmnMembrane *mem)
   return ;
 }
 
-void my_mem_test(LmnMembrane *mem)
+
+
+void my_dumper_atom_in_the_mem(LmnMembrane *mem)
 {
   AtomListEntry *ent;
   LmnFunctor f;
   char *atom_name;
+  int linked_num;
+  int cmp;
+  LmnMembrane *m;
+
 
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
   	LmnSAtom satom;
   	if(LMN_IS_EX_FUNCTOR(f)) continue;
   	EACH_ATOM(satom, ent, ({
-  	      printf("atom name is %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom))));
+	      linked_num = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
+	      atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+	      cmp = strcmp(atom_name, "+");
+	      if(cmp == 0)
+		{
+		  printf("PLUS ATOM!!\n");
+		  /* LmnSAtom in_satom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0)); */
+		  /* LmnSAtom out_satom = LMN_SATOM(LMN_SATOM_GET_LINK(in_satom, 0)); */
+		  /* linked_num = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(out_satom)); */
+		  /* atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(out_satom))); */
+		  /* satom = out_satom; */
+		}
+	      else
+		{
+		  printf("atom name = %s: link_num = %d\n",atom_name,linked_num);
+		  my_dumper_linked_atom(satom, linked_num);
+		}
   	    }));
       }));
+
+  for(m = mem->child_head; m; m = m->next)
+    {
+      printf("--dump childe membrane\n");
+      my_dumper_atom_in_the_mem(m);
+    }
+
 }
 
+void my_dumper_linked_atom(LmnSAtom satom, int link_num)
+{
+  int i;
+  LmnSAtom linked_satom;
+  for(i = 0; i < link_num; i++)
+    {
+      linked_satom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, i));
+      printf("--linked atom = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(linked_satom))));
+    }
+}
 
 
 LmnMembrane* get_mem_from_atom(LmnSAtom target_atom, int link_n)
@@ -556,23 +597,23 @@ FILE* compile_dynamic_rule(LmnSAtom colon_minus_atom)
   return lmntal_compile_file("tmp.lmn");
 }
 
-void compile_dynamic_rule_ver2(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem)
+void my_trace_mem(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem)
 {
   printf(">>>>>HEAD-MEM\n");
   printf("USE lmn_dump_cell_stdout\n");
   lmn_dump_cell_stdout(h_mem);
   printf("USE my_mem_test\n");
-  my_mem_test(h_mem);
+  my_dumper_atom_in_the_mem(h_mem);
   printf(">>>>>GUARD-MEM\n");
   printf("USE lmn_dump_cell_stdout\n");
   lmn_dump_cell_stdout(g_mem);
   printf("USE my_mem_test\n");
-  my_mem_test(g_mem);
+  my_dumper_atom_in_the_mem(g_mem);
   printf(">>>>>BODY-MEM\n");
   printf("USE lmn_dump_cell_stdout\n");
   lmn_dump_cell_stdout(b_mem);
   printf("USE my_mem_test\n");
-  my_mem_test(b_mem);
+  my_dumper_atom_in_the_mem(b_mem);
 }
 
 void find_and_compile_dynamic_rule(LmnMembrane *mem)
@@ -583,7 +624,7 @@ void find_and_compile_dynamic_rule(LmnMembrane *mem)
   char str[5] = ":-";
   int cmp;
 
- 
+  
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
   	LmnSAtom satom;
   	if(LMN_IS_EX_FUNCTOR(f)) continue;
@@ -593,8 +634,7 @@ void find_and_compile_dynamic_rule(LmnMembrane *mem)
 
 	      if(cmp == 0 && LMN_SATOM_GET_LINK_NUM(satom) == 3)		  /* :-アトム発見*/
 		{
-		  /* compile_dynamic_rule_ver2(get_mem_from_atom(satom, 0), get_mem_from_atom(satom, 1), get_mem_from_atom(satom, 2)); */
-
+		  /* my_trace_mem(get_mem_from_atom(satom, 0), get_mem_from_atom(satom, 1), get_mem_from_atom(satom, 2)); */
 		  /* コンパイル */
 		  FILE *compiled_rulesets = compile_dynamic_rule(satom);
 		  IL il;
@@ -4505,8 +4545,19 @@ label_skip_data_atom:
 
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
-
+      
       atom = LMN_SATOM(wt(rc, atomi));
+      /* printf("callback_atom = %s\ncallback_name_atom = %s\n",  */
+      /* 	     lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom))), */
+      /* 	     lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)LMN_SATOM_GET_LINK(atom, 0))))); */
+      
+      /* LmnAtom callback_atom = wt(rc, atomi); */
+      /* LmnAtom callback_name_atom = LMN_ATOM(LMN_SATOM_GET_LINK(atom, 0)); */
+      LmnLinkAttr callback_atom_attr = at(rc, atomi);
+      /* LmnLinkAttr callback_name_atom_attr = LMN_SATOM_GET_ATTR(atom, 0); */
+
+      /* printf("[START CALLBACK INSTRACTION]callback_atom = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)callback_atom))));       */
+      /* printf("[START CALLBACK INSTRACTION]callback_name_atom = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)callback_name_atom)))); */
 
       if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0))) {
         LmnSAtom f_name = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
@@ -4528,7 +4579,7 @@ label_skip_data_atom:
                             LMN_SATOM_GET_LINK(atom, 0),
                             LMN_SATOM_GET_ATTR(atom, 0));
 	*/
-
+	
         switch (arity) {
         case 1:
           ((callback_0)c->f)(rc, (LmnMembrane *)wt(rc, memi));
@@ -4552,7 +4603,13 @@ label_skip_data_atom:
                              LMN_SATOM_GET_LINK(atom, 3), LMN_SATOM_GET_ATTR(atom, 3));
           break;
         case 5:
-           ((callback_4)c->f)(rc,
+	  printf("[IN CALLBACK INSTRACTION!!!, arity = 5]\n");
+
+	  /* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(wt(rc, atomi))))); */
+	  /* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM_GET_LINK(atom, 0))))); */
+
+
+	  ((callback_4)c->f)(rc,
                              (LmnMembrane *)wt(rc, memi),
                              LMN_SATOM_GET_LINK(atom, 1), LMN_SATOM_GET_ATTR(atom, 1),
                              LMN_SATOM_GET_LINK(atom, 2), LMN_SATOM_GET_ATTR(atom, 2),
@@ -4573,10 +4630,57 @@ label_skip_data_atom:
           break;
         }
 
+
+	/* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)(LMN_SATOM_GET_LINK(atom, 0)))))); */
+        /* lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), */
+        /*                     LMN_SATOM_GET_LINK(atom, 0), */
+        /*                     LMN_SATOM_GET_ATTR(atom, 0)); */
+
+	/* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom)))); */
+	/* lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), (LmnAtom)atom, callback_atom_attr); */
+
+
+
+	/* ----------------------------------------------------------------オリジナル----------------------------------------------------------- */
+	printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)wt(rc, atomi)))));
         lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), wt(rc, atomi), at(rc, atomi));
+	
+	printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)(LMN_SATOM_GET_LINK(atom, 0))))));
         lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi),
-                            LMN_SATOM_GET_LINK(atom, 0),
-                            LMN_SATOM_GET_ATTR(atom, 0));
+			    LMN_SATOM_GET_LINK(atom, 0),
+			    LMN_SATOM_GET_ATTR(atom, 0));
+	/* --------------------------------------------------------------------------------------------------------------------------- */
+
+	/* ----------------------------------------------------------------その１------------------------------------------------------------ */
+	/* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(atom)))); */
+        /* lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), (LmnAtom)atom, callback_atom_attr); */
+	
+	/* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)(LMN_SATOM_GET_LINK(atom, 0)))))); */
+        /* lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), */
+	/* 		    LMN_SATOM_GET_LINK(atom, 0), */
+	/* 		    LMN_SATOM_GET_ATTR(atom, 0)); */
+
+	/* --------------------------------------------------------------------------------------------------------------------------- */
+
+	/* lmn_dump_cell_stdout((LmnMembrane *)wt(rc, memi)); */
+	/* LmnSAtom satom = (LmnSAtom)callback_atom; */
+	/* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)callback_name_atom)))); */
+	/* lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), */
+	/* 		    , */
+        /*                     callback_name_atom_attr); */
+	
+
+	/* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSAtom)callback_atom)))); */
+	/* printf("[NEXT DELETE ATOM = %s]\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(wt(rc, atomi))))); */
+
+	/* lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), callback_atom, callback_atom_attr); */
+
+        /* lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), wt(rc, atomi), at(rc, atomi)); */
+	/* lmn_mem_delete_atom((LmnMembrane *)wt(rc, memi), callback_atom, at(rc, atomi)); */
+
+
+
+	printf("[FINISH CALLBACK INSTRACTION]\n");
 
       }
 
