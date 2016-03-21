@@ -743,6 +743,14 @@ void my_dumper_atom_in_the_mem(LmnMembrane *mem)
 		      push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, 0)));
 		    }
 		}
+	      else if(atom_name[0] == '=' && atom_name[1] == '=')
+	      	{
+	      	  push_rule_str(LINK_PREFIX);
+	      	  push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, 0)));
+	      	  push_rule_str("=");
+	      	  push_rule_str(LINK_PREFIX);
+	      	  push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, 1)));
+	      	}
 	      else if(atom_name[0] == '@')
 		{
 		  push_rule_str(atom_name);
@@ -776,6 +784,24 @@ void my_dumper_atom_in_the_mem(LmnMembrane *mem)
 		      push_rule_str(atom_name);
 		      push_rule_str("'");
 		    }
+		  else if(atom_name[0] == '.')
+		    {
+		      push_rule_str("'");
+		      push_rule_str(atom_name);
+		      push_rule_str("'");
+		    }
+		  else if(atom_name[0] == '[' && atom_name[1] == ']')
+		    {
+		      push_rule_str("'");
+		      push_rule_str(atom_name);
+		      push_rule_str("'");
+		    }
+		  /* else if(atom_name[0] == '=') */
+		  /*   { */
+		  /*     push_rule_str("'"); */
+		  /*     push_rule_str(atom_name); */
+		  /*     push_rule_str("'"); */
+		  /*   } */
 		  else
 		    push_rule_str(atom_name);
 		  if(arity > 0)
