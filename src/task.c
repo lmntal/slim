@@ -380,72 +380,6 @@ void lmn_run(Vector *start_rulesets)
 }
 
 
-/* char* format_rule(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem) */
-/* { */
-  
-/* } */
-
-char* format_txt(char *input_str)
-{
-  /* printf("FORMAT!!\"%s\"\n", input_str); */
-
-  int i, j = 0, k = 0, pp = 0, not_comma = 0;
-  char buf[1024], formatted_txt[1024];
-  char process[256][1024];
-
-  /* printf("[START FORMAT]--> %s\n", input_str); */
-
-  for(i = 0; input_str[i] != '\0'; i++)
-    {
-      if(input_str[i] == ' ')
-	{
-	  continue;
-	}
-      else if(input_str[i] == '.')
-	{
-	  buf[j++] = ',';
-	  buf[j] = '\0';
-	  strcpy(process[++pp], buf);
-	  j = 0;
-	}
-      else if(input_str[i] == ':')
-	{
-	  if(input_str[i + 1] == '-')
-	    {
-	      i++;
-	      process[++pp][0] = ':';
-	      process[pp][1] = '-';
-	      process[pp][2] = '\0';
-	    }
-	}
-      else if(input_str[i] == '|')
-	{
-	  process[++pp][0] = '|';
-	  process[pp][1] = '\0';
-	}
-      else
-	{
-	  buf[j] = input_str[i];
-	  j++;
-	}
-    }
-  /* printf("%s\n", formatted_txt); */
-  for(i = 1; i <= pp; i++)
-    {
-      if(process[i][0] != '+')
-	{
-	  for(j = 0; process[i][j] != '\0'; j++)
-	    {
-	      formatted_txt[k++] = process[i][j];
-	    }
-	}
-    }
-  formatted_txt[k] = '\0';
-  printf("[FINISH FORMAT]--> %s\n", formatted_txt);
-  return formatted_txt;
-}
-
-
 
 #define DYNAMIC_RULESET_MAX 10000
 #define DYNAMIC_MEM_MAX 10000
@@ -537,19 +471,6 @@ void push_rule_str(char* c)
     {
       rule_str[rule_str_itr++] = c[i];
     }
-  /* rule_str[rule_str_itr++] = ','; */
-
-
-
-  /* if(rule_str_itr < MAX_RULE_STR - 1) */
-  /*   { */
-  /*     rule_str[rule_str_itr++] = c; */
-  /*   } */
-  /* else */
-  /*   { */
-  /*     printf("RULE_STR_IS_OVER_FLOW!!!!\n"); */
-  /*   } */
-
   return ;
 }
 
@@ -575,13 +496,6 @@ int link_name_max = 0;
 
 struct LinkConnection link_connection_array[LINKCONNECTION_MAX];
 
-/* LmnSAtom linked_through_proxy(LmnSAtom src_atom, int link_pos) */
-/* { */
-/*   return       dst_atom = LMN_SATOM_GET_LINK(LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(LMN_SATOM_GET_LINK(st_atom, 0)) */
-/*   								 , 0)) */
-/*   				    , 1); */
-/* } */
-
 int store_link_connection(LmnSAtom satom, int link_p, HyperLink *hl)
 {
   link_connection_array[link_connection_max].atom = satom;
@@ -592,14 +506,12 @@ int store_link_connection(LmnSAtom satom, int link_p, HyperLink *hl)
   return link_name_max++;
 }
 
-int my_atom_arg_dumper(LmnSAtom satom, int link_p)
+int generate_linkname(LmnSAtom satom, int link_p)
 {
   int i;
-  /* printf("satom = %s, link_p = %d\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom))), link_p); */
 
   if(LMN_IS_HL(LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p))))
     {
-
       HyperLink *hll = lmn_hyperlink_at_to_hl(LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p)));
       HyperLink *p_hl = hll->parent;
 
@@ -609,19 +521,11 @@ int my_atom_arg_dumper(LmnSAtom satom, int link_p)
 	    {
 	      if(lmn_hyperlink_eq_hl(p_hl, link_connection_array[i].hl) == TRUE)
 		{
-		  /* printf("HIT HYPER!!\n"); */
 		  return link_connection_array[i].link_name;
 		}
 	    }
 	}
       return store_link_connection(NULL, -1, p_hl);
-      /* link_connection_array[link_connection_max].atom = NULL; */
-      /* link_connection_array[link_connection_max].hl = p_hl; */
-      /* link_connection_array[link_connection_max].link_pos = -1; */
-      /* link_connection_array[link_connection_max].link_name = link_name_max; */
-      /* link_connection_max++; */
-      /* printf("UNHIT HYPER!!\n"); */
-      /* return link_name_max++; */
     }
 
   for(i = 0; i < link_connection_max; i++)
@@ -630,27 +534,16 @@ int my_atom_arg_dumper(LmnSAtom satom, int link_p)
 	{
 	  if((unsigned long)satom == (unsigned long)link_connection_array[i].atom && link_connection_array[i].link_pos == link_p)
 	    {
-	      /* printf("HIT!!\n"); */
 	      return link_connection_array[i].link_name;
 	    }
 	}
-
     }
 
   LmnSAtom dst_atom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p));
   char* dst_atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(dst_atom)));
-  /* printf("dst_atom_name = %s\n", dst_atom_name); */
-  /* if(LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_IN_PROXY_FUNCTOR || */
-  /*    LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_OUT_PROXY_FUNCTOR) */
-  /*   { */
-  /*     dst_atom = LMN_SATOM_GET_LINK(LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, 0)) */
-  /* 								 , 0)) */
-  /* 				    , 1); */
-  /*   } */
 
   if(LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_IN_PROXY_FUNCTOR)
     {
-      /* satom = + */
       LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, 0));
       dst_atom = LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1));
       char* dst_atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(dst_atom)));
@@ -676,15 +569,6 @@ int my_atom_arg_dumper(LmnSAtom satom, int link_p)
       char* dst_atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(dst_atom)));
       return store_link_connection(dst_atom, 0, NULL);
     }
-  /* if(LMN_IS_HL(dst_atom)) */
-  /*   { */
-  /*     printf("HL!!!\n"); */
-  /*     HyperLink *hl = lmn_hyperlink_at_to_hl(dst_atom); */
-  /*     /\* HyperLink hl = (HyperLink)dst_atom; *\/ */
-  /*     printf("HL with linked to = %s\n", LMN_SATOM_STR(LMN_SATOM_GET_LINK(dst_atom, 0))); */
-  /*     printf("HL id = %lx\n", LMN_HL_ID(hl)); */
-  /*   } */
-  /* printf("hl id = %lx\n", LMN_HL_ID(dst_atom)); */
   int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(dst_atom));
 
 
@@ -693,29 +577,19 @@ int my_atom_arg_dumper(LmnSAtom satom, int link_p)
       if((unsigned long)satom == (unsigned long)LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, i)))
 	{
 	  return store_link_connection(dst_atom, i, NULL);
-	  /* link_connection_array[link_connection_max].atom = dst_atom; */
-	  /* link_connection_array[link_connection_max].hl = NULL; */
-	  /* link_connection_array[link_connection_max].link_pos = i; */
-	  /* link_connection_array[link_connection_max].link_name = link_name_max; */
-	  /* link_connection_max++; */
-	  /* printf("UNHIT!!\n"); */
-	  /* return link_name_max++; */
 	}
     }
 }
 
 LmnSAtom cm_atom;
 
-
-
-void my_dumper_atom_in_the_mem(LmnMembrane *mem)
+void generate_string_of_head_and_body_mem(LmnMembrane *mem)
 {
   AtomListEntry *ent;
   LmnFunctor f;
   char *atom_name;
   int arity, i;
   LmnMembrane *m;
-  /* char parentheses[4] = {'(', ')', '[', ']'}; */
 
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
 	LmnSAtom satom;
@@ -728,28 +602,24 @@ void my_dumper_atom_in_the_mem(LmnMembrane *mem)
 		{
 		  LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
 		  LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
-		  /* printf("in_proxy = %s, out_proxy = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(in_proxy))), lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(out_proxy)))); */
-
-		  /* printf("link to PLUS atom = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1)))))); */
 		  if((unsigned long)cm_atom == (unsigned long)LMN_SATOM_GET_LINK(out_proxy, 1))
 		    {
-		      /* printf("FINDDDDDDDDDDDDD!!!\n"); */
 		      continue ;
 		    }
 		  else
 		    {
 		      push_rule_str(atom_name);
 		      push_rule_str(LINK_PREFIX);
-		      push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, 0)));
+		      push_rule_str(int_to_str((long)generate_linkname(satom, 0)));
 		    }
 		}
 	      else if(atom_name[0] == '=' && atom_name[1] == '=')
 	      	{
 	      	  push_rule_str(LINK_PREFIX);
-	      	  push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, 0)));
+	      	  push_rule_str(int_to_str((long)generate_linkname(satom, 0)));
 	      	  push_rule_str("=");
 	      	  push_rule_str(LINK_PREFIX);
-	      	  push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, 1)));
+	      	  push_rule_str(int_to_str((long)generate_linkname(satom, 1)));
 	      	}
 	      else if(atom_name[0] == '@')
 		{
@@ -757,7 +627,6 @@ void my_dumper_atom_in_the_mem(LmnMembrane *mem)
 		}
 	      else if(atom_name[0] == '$')
 		{
-		  /* printf("PROCESS!!!!\n"); */
 		  push_rule_str(atom_name);
 		  if(arity == 0)
 		    {
@@ -770,14 +639,13 @@ void my_dumper_atom_in_the_mem(LmnMembrane *mem)
 			{
 			  if(i > 0)push_rule_str(",");
 			  push_rule_str(LINK_PREFIX);
-			  push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, i)));
+			  push_rule_str(int_to_str((long)generate_linkname(satom, i)));
 			}
 		      push_rule_str("]");
 		    }
 		}
 	      else
 		{
-		  /* printf("atom name = %s: link_num = %d, satom = %lx\n",atom_name, arity, satom); */
 		  if(strcmp(atom_name, ":-") == 0)
 		    {
 		      push_rule_str("'");
@@ -796,12 +664,6 @@ void my_dumper_atom_in_the_mem(LmnMembrane *mem)
 		      push_rule_str(atom_name);
 		      push_rule_str("'");
 		    }
-		  /* else if(atom_name[0] == '=') */
-		  /*   { */
-		  /*     push_rule_str("'"); */
-		  /*     push_rule_str(atom_name); */
-		  /*     push_rule_str("'"); */
-		  /*   } */
 		  else
 		    push_rule_str(atom_name);
 		  if(arity > 0)
@@ -811,82 +673,50 @@ void my_dumper_atom_in_the_mem(LmnMembrane *mem)
 			{
 			  if(i > 0) push_rule_str(",");
 			  push_rule_str(LINK_PREFIX);
-			  push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, i)));
-			  /* push_rule_str(int_to_str((long)link_names[i])); */
+			  push_rule_str(int_to_str((long)generate_linkname(satom, i)));
 			}
 		      push_rule_str(")");
 		    }
 		}
 	      push_rule_str(",");		
-	      /* cmp = strcmp(atom_name, "+"); */
-	      /* if(cmp == 0) */
-	      /* 	{ */
-	      /* 	  printf("PLUS ATOM!!\n"); */
-	      /* 	  LmnSAtom in_satom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0)); */
-	      /* 	  LmnSAtom out_satom = LMN_SATOM(LMN_SATOM_GET_LINK(in_satom, 0)); */
-	      /* 	  linked_num = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(out_satom)); */
-	      /* 	  atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(out_satom))); */
-	      /* 	  satom = out_satom; */
-	      /* 	} */
-	      /* else */
-	      /* 	{ */
-	      /* 	  my_dumper_linked_atom(satom, linked_num); */
-	      /* 	} */
 	    }));
       }));
   
 
-  /* printf("LAST C = %c\n", rule_str[rule_str_itr - 1]); */
   for(m = mem->child_head; m; m = m->next)
     {
-      /* printf("--dump childe membrane\n"); */
       push_rule_str("{");
-      my_dumper_atom_in_the_mem(m);
+      generate_string_of_head_and_body_mem(m);
       if(eq_rule_str(','))
 	unget_rule_str();
       push_rule_str("},");
     }
 }
 
-void my_dumper_linked_atom(LmnSAtom satom, int link_num)
-{
-  int i;
-  LmnSAtom linked_satom;
-  for(i = 0; i < link_num; i++)
-    {
-      linked_satom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, i));
-      /* printf("--linked atom = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(linked_satom)))); */
-    }
-}
 
-void my_dumper_binary_op(LmnSAtom satom)
-{
-  int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
-  char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
-  LmnSAtom left, right;
-  printf("[IN MY_DUMPER_BINARY_OP]atom_name = %s, arity = %d\n", atom_name, arity);
-  if(arity == 1)
-    {
-      push_rule_str(atom_name);
-      return ;
-    }
-  if(arity == 2 || arity == 3)
-    {
-      left = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
-      right = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 1));
-      my_dumper_binary_op(left);
-      push_rule_str(atom_name);
-      my_dumper_binary_op(right);
-      return ;      
-    }
-  else
-    {
-      printf("[IN MY_DUMPER_BINARY_OP]::arity == %d\n", arity);
-    }
-}
+/* void my_dumper_binary_op(LmnSAtom satom) */
+/* { */
+/*   int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom)); */
+/*   char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom))); */
+/*   LmnSAtom left, right; */
+/*   if(arity == 1) */
+/*     { */
+/*       push_rule_str(atom_name); */
+/*       return ; */
+/*     } */
+/*   if(arity == 2 || arity == 3) */
+/*     { */
+/*       left = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0)); */
+/*       right = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 1)); */
+/*       my_dumper_binary_op(left); */
+/*       push_rule_str(atom_name); */
+/*       my_dumper_binary_op(right); */
+/*       return ;       */
+/*     } */
+/* } */
 
 
-void my_dumper_guard_mem(LmnMembrane *mem)
+void generate_string_of_guard_mem(LmnMembrane *mem)
 {
   AtomListEntry *ent;
   LmnFunctor f;
@@ -906,12 +736,8 @@ void my_dumper_guard_mem(LmnMembrane *mem)
 		{
 		  LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
 		  LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
-		  /* printf("in_proxy = %s, out_proxy = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(in_proxy))), lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(out_proxy)))); */
-
-		  /* printf("link to PLUS atom = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1)))))); */
 		  if((unsigned long)cm_atom == (unsigned long)LMN_SATOM_GET_LINK(out_proxy, 1))
 		    {
-		      /* printf("FINDDDDDDDDDDDDD!!!\n"); */
 		      continue ;
 		    }
 		}
@@ -919,66 +745,14 @@ void my_dumper_guard_mem(LmnMembrane *mem)
 		{
 		  if(strcmp(constraint_name[i], atom_name) == 0)
 		    {
-		      /* printf("GUARD!!!\n"); */
 		      push_rule_str(atom_name);
 		      push_rule_str("(");
 		      push_rule_str(lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0))))));
 		      push_rule_str("),");
-		      /* push_rule_str(","); */
 		      continue;
 		    }
 		  continue;
 		}
-	      for(i = 0; i < 10; i++)
-		{
-		  if(strcmp(binary_op[i], atom_name) == 0)
-		    {
-
-		      printf("DUMP BINARY: atom_name = %s,  arity = %d\n", atom_name, arity);
-		      /* if(arity == 2) */
-		      /* 	my_dumper_binary_op(satom); */
-		      /* else */
-		      /* 	continue; */
-		    }
-		}
-	      /* if(atom_name[0] == '$') */
-	      /* 	{ */
-	      /* 	  printf("PROCESS!!!!\n"); */
-	      /* 	  push_rule_str(atom_name); */
-	      /* 	  if(arity == 0) */
-	      /* 	    { */
-	      /* 	      push_rule_str("[]"); */
-	      /* 	    } */
-	      /* 	  else */
-	      /* 	    { */
-	      /* 	      push_rule_str("["); */
-	      /* 	      for(i = 0; i < arity; i++) */
-	      /* 		{ */
-	      /* 		  if(i > 0)push_rule_str(","); */
-	      /* 		  push_rule_str(LINK_PREFIX); */
-	      /* 		  push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, i))); */
-	      /* 		} */
-	      /* 	      push_rule_str("]"); */
-	      /* 	    } */
-	      /* 	} */
-	      /* else */
-	      /* 	{ */
-	      /* 	  printf("atom name = %s: link_num = %d, satom = %lx\n",atom_name, arity, satom); */
-	      /* 	  push_rule_str(atom_name); */
-	      /* 	  if(arity > 0) */
-	      /* 	    { */
-	      /* 	      push_rule_str("("); */
-	      /* 	      for(i = 0; i < arity; i++) */
-	      /* 		{ */
-	      /* 		  if(i > 0) push_rule_str(","); */
-	      /* 		  push_rule_str(LINK_PREFIX); */
-	      /* 		  push_rule_str(int_to_str((long)my_atom_arg_dumper(satom, i))); */
-	      /* 		  /\* push_rule_str(int_to_str((long)link_names[i])); *\/ */
-	      /* 		} */
-	      /* 	      push_rule_str(")"); */
-	      /* 	    } */
-	      /* 	} */
-
 	    }));
       }));
 }
@@ -988,91 +762,37 @@ void push_rule_char(char c)
   rule_str[rule_str_itr++] = c;
 }
 
-void my_trace_mem(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem, LmnSAtom colon_minus_atom)
+void generate_string_of_first_class_rule(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem, LmnSAtom colon_minus_atom)
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
   link_name_max = 0;
   link_connection_max = 0;
 
-  /* printf("[In 'my_trace_mem']\n"); */
   cm_atom = colon_minus_atom;
 
-  /* printf(">>>>>HEAD-MEM\n"); */
-  /* printf("USE lmn_dump_cell_stdout\n"); */
-  /* lmn_dump_cell_stdout(h_mem); */
-  /* printf("USE my_mem_test\n"); */
-  my_dumper_atom_in_the_mem(h_mem);
+  generate_string_of_head_and_body_mem(h_mem);
 
   push_rule_str(":-");
 
-  /* printf(">>>>>GUARD-MEM\n"); */
-  /* printf("USE lmn_dump_cell_stdout\n"); */
-  /* lmn_dump_cell_stdout(g_mem); */
-  /* printf("USE my_mem_test\n"); */
-  my_dumper_guard_mem(g_mem);
-  /* my_dumper_atom_in_the_mem(g_mem); */
+  generate_string_of_guard_mem(g_mem);
 
   push_rule_str("|");
 
-  /* printf(">>>>>BODY-MEM\n"); */
-  /* printf("USE lmn_dump_cell_stdout\n"); */
-  /* lmn_dump_cell_stdout(b_mem); */
-  /* printf("USE my_mem_test\n"); */
-  my_dumper_atom_in_the_mem(b_mem);
+  generate_string_of_head_and_body_mem(b_mem);
 
   push_rule_str(".");
   push_rule_char('\0');
   rule_str_itr = 0;
-  /* printf("RULE_STR = %s\n", rule_str); */
 }
 
 
 
-LmnMembrane* get_mem_from_atom(LmnSAtom target_atom, int link_n)
+LmnMembrane* get_mem_linked_atom(LmnSAtom target_atom, int link_n)
 {
   LmnAtom atom = LMN_SATOM_GET_LINK(LMN_ATOM(target_atom), link_n);
   LmnLinkAttr attr = LMN_SATOM_GET_ATTR(LMN_ATOM(target_atom), link_n);
   return LMN_PROXY_GET_MEM(LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0)));
-}
-
-FILE* compile_dynamic_rule(LmnSAtom colon_minus_atom)
-{
-  int i;
-  int limit = LMN_SATOM_GET_LINK_NUM(colon_minus_atom);
-  FILE *output0_fp = fopen("rough_rule.txt", "w");
-  LmnAtom atom;
-  LmnSAtom ssatom;
-  LmnLinkAttr attr;
-  LmnMembrane *new_mem;
-  LmnPort port = lmn_make_file_port(output0_fp, "rough_rule.txt", LMN_PORT_OUTPUT,TRUE);
-  
-  /* -------------------------------------------------------- */
-
-  lmn_dump_cell(get_mem_from_atom(colon_minus_atom, 0), port);
-  fprintf(output0_fp, ":-");
-
-  lmn_dump_cell(get_mem_from_atom(colon_minus_atom, 1), port);
-  fprintf(output0_fp, "|");
-
-  lmn_dump_cell(get_mem_from_atom(colon_minus_atom, 2), port);
-  
-  /* -------------------------------------------------------- */
-
-  fclose(output0_fp);
-  FILE *input0_fp = fopen("rough_rule.txt", "r");
-  FILE *output1_fp = fopen("tmp.lmn", "w");
-  char buf[1024];
-  int p;
-  int c;
-  fgets(buf, 1024, input0_fp);
-  fclose(input0_fp);
-  /* 整形する========================================= */
-  /* =============================================================================================================== */
-  fputs(format_txt(buf), output1_fp);
-  /* =============================================================================================================== */
-  fclose(output1_fp);
-  return lmntal_compile_file("tmp.lmn");
 }
 
 
@@ -1100,7 +820,6 @@ void find_and_compile_dynamic_rule(LmnMembrane *mem)
 		    /* ':-'アトムの３つの接続先すべてがproxyかどうか(膜につながってるかどうか) */
 		    {
 		      LmnAtom atom = LMN_SATOM_GET_LINK(LMN_ATOM(satom), link_itr);
-		      /* printf("PROXY!!\n"); */
 		      if(!LMN_SATOM_IS_PROXY(atom))
 			{
 			  proxy_f = 0;
@@ -1110,25 +829,23 @@ void find_and_compile_dynamic_rule(LmnMembrane *mem)
 		  if(proxy_f)
 		    {
 		      /* グラフをトラバースしながらルールの文字列表現を生成 */
-		      my_trace_mem(get_mem_from_atom(satom, 0), get_mem_from_atom(satom, 1), get_mem_from_atom(satom, 2), satom);
+		      generate_string_of_first_class_rule(get_mem_linked_atom(satom, 0), get_mem_linked_atom(satom, 1), get_mem_linked_atom(satom, 2), satom);
 
 		      FILE *output_fp = fopen("tmp.lmn", "w");
 		      fputs(rule_str, output_fp);
 		      fclose(output_fp);
-		      /* FILE *compiled_rulesets = compile_dynamic_rule(satom); */
 		      FILE *compiled_rulesets = lmntal_compile_file("tmp.lmn");
 		      IL il;
 
 		      /* ILをパース */
 		      il_parse(compiled_rulesets, &il);
 		      /* パースしたILをロード */
-		      LmnRuleSet target_ruleset = my_load_ruleset(il, 1);
+		      LmnRuleSet target_ruleset = load_ruleset_with_num(il, 1);
 		      LmnRulesetId r_i = lmn_ruleset_get_id(target_ruleset);
-		      /* 動的に生成されたルールとしてテーブルに登録 */
+		      /* 第一級書き換え規則の中間命令列としてテーブルに登録 */
 		      add_dynamic_rulesetid(r_i, mem);
 		      /* 膜のルールセットの配列に追加 */
 		      lmn_mem_add_ruleset(mem, target_ruleset);
-
 		    }
 		}
 	    }));
@@ -1151,24 +868,15 @@ static void mem_oriented_loop(LmnReactCxt *rc, LmnMembrane *mem)
 
   while(!lmn_memstack_isempty(memstack)){
     LmnMembrane *mem = lmn_memstack_peek(memstack);
-
+    /*膜内の第一級書き換え規則に対応する中間命令列を全て消去*/
     delete_dynamic_rulesets(mem);
-
+    /* 膜内の第一級書き換え規則を探索 & コンパイル & 中間命令列のIDを登録 */
     find_and_compile_dynamic_rule(mem);
 
-    /* printf("[LMN_MEMSTACK_PEEK]: "); */
-    /* lmn_dump_cell_stdout(mem); */
     if (!react_all_rulesets(rc, mem)) {
       /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
-      /* printf("[NOT REACT IN THIS MEM]\n"); */
-
       lmn_memstack_pop(memstack);
     }
-    else
-      {
-	/* printf("[RESULT REACT]: "); */
-	/* lmn_dump_cell_stdout(mem); */
-      }
   }
 }
 

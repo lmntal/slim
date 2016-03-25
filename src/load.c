@@ -570,7 +570,7 @@ static LmnRuleSet load_ruleset(RuleSet rs)
   return runtime_ruleset;
 }
 
-LmnRuleSet my_load_ruleset(IL il, int n)
+LmnRuleSet load_ruleset_with_number(IL il, int n)
 {
   LmnRuleSet t, first_ruleset;
   RuleSets rulesets;
@@ -580,7 +580,6 @@ LmnRuleSet my_load_ruleset(IL il, int n)
   /* load rules */
   rulesets     = il_get_rulesets(il);
   first_ruleset = NULL;
-  /* printf("[MY_LOAD_RULESET]: RULESETS_NUM = %d\n", rulesets_num(rulesets)); */
   for (i = 0; i < rulesets_num(rulesets); i++) {
     t = load_ruleset(rulesets_get(rulesets, i));
     if (i == n) first_ruleset = t;
