@@ -58,10 +58,10 @@ void float_of_string(LmnReactCxt *rc,
                      LmnAtom a1, LmnLinkAttr t1)
 {
   char *t;
-  double *d = LMN_MALLOC(double);
+  LmnAtom d;
   const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
   t = NULL;
-  *d = strtod(s, &t);
+  d = lmn_create_double_atom(strtod(s, &t));
   if (t == NULL || s == t) {
     LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
                                                          lmn_intern("fail"),

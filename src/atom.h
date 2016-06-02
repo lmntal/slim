@@ -211,11 +211,13 @@ static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr,
 static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
                                     LmnAtom atom2, LmnLinkAttr attr2);
 static inline double lmn_get_double(LmnAtom atom);
+static inline LmnAtom lmn_create_double_atom(double d);
+static inline void lmn_destroy_double_atom(LmnAtom atom);
 
+#define LMN_GETREF_DOUBLE(Atom) ((double *)Atom)
 #define LMN_COPY_DBL_ATOM(Dst, Src)                                            \
   do {                                                                         \
-    (Dst) = (double *)LMN_ATOM(LMN_MALLOC(double));                            \
-    *((double *)Dst) = lmn_get_double(Src);                                        \
+    (Dst) = (LmnWord)lmn_create_double_atom(lmn_get_double(Src));              \
   } while (0)
 
 
@@ -250,10 +252,9 @@ static inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
       return atom;
     case LMN_DBL_ATTR:
     {
-      double *d;
+      LmnAtom d;
       LMN_COPY_DBL_ATOM(d, atom);
-      *d = lmn_get_double(atom);
-      return LMN_ATOM(d);
+      return d;
     }
     case LMN_SP_ATOM_ATTR:
       return LMN_ATOM(SP_ATOM_COPY(atom));
@@ -317,7 +318,7 @@ static inline void free_data_atom(LmnAtom atom, LmnLinkAttr attr) {
     case LMN_INT_ATTR:
       break;
     case LMN_DBL_ATTR:
-      LMN_FREE((double*)atom);
+      lmn_destroy_double_atom(atom);
       break;
     case LMN_CONST_STR_ATTR: /* FALLTHROUGH */
     case LMN_CONST_DBL_ATTR:
@@ -419,6 +420,18 @@ static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
 /* caller must ensure |atom| has LMN_DBL_ATTR */
 static inline double lmn_get_double(LmnAtom atom) {
   return *(double *)atom;
+}
+
+/* Create atom represents double data. Return value must be freed by |lmn_destroy_double_atom| */
+static inline LmnAtom lmn_create_double_atom(double d) {
+  double *result = (double *)LMN_MALLOC(double);
+  *result = d;
+  return LMN_ATOM(result);
+}
+
+/* User don't call this function directly. Use |lmn_free_atom| instead. */
+static inline void lmn_destroy_double_atom(LmnAtom atom) {
+  LMN_FREE((double *)atom);
 }
 
 #endif /* LMN_ATOM_H */

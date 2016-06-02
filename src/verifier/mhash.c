@@ -464,7 +464,7 @@ static inline mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr) {
       //return ((mhash_t)atom) + 1;
     case LMN_DBL_ATTR:
       /* double型8バイトをバイト列にキャストしてFNVハッシュ関数にかける. */
-      return (mhash_t)lmn_byte_hash((unsigned char *)atom,
+      return (mhash_t)lmn_byte_hash((unsigned char *)LMN_GETREF_DOUBLE(atom),
                                     sizeof(double) / sizeof(unsigned char));
     case LMN_SP_ATOM_ATTR:
       /* TODO: スペシャルアトムを定義する際にハッシュ値計算用関数も定義させる */

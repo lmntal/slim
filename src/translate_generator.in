@@ -260,9 +260,8 @@ BOOL interpret_generated(LmnReactCxt *rc,
 %   break;
 % case LMN_DBL_ATTR:
   {
-    double *d;
-    d = LMN_MALLOC(double);
-    *d = $2_double_data;
+    LmnAtom d;
+    d = lmn_create_double_atom($2_double_data);
     wt_set(rc, $0, d);
    }
 %   break;
@@ -711,28 +710,23 @@ BOOL interpret_generated(LmnReactCxt *rc,
   if(!((long)wt(rc, $0) >= (long)wt(rc, $1))) $f;
 
 #fadd LmnInstrVar LmnInstrVar LmnInstrVar
-  double *d = LMN_MALLOC(double);
-  *d = lmn_get_double(wt(rc, $1)) + lmn_get_double(wt(rc, $2));
+  LmnAtom d = lmn_create_double_atom(lmn_get_double(wt(rc, $1)) + lmn_get_double(wt(rc, $2)));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fsub LmnInstrVar LmnInstrVar LmnInstrVar
-  double *d = LMN_MALLOC(double);
-  *d = lmn_get_double(wt(rc, $1)) - lmn_get_double(wt(rc, $2));
+  LmnAtom d = lmn_create_double_atom(lmn_get_double(wt(rc, $1)) - lmn_get_double(wt(rc, $2)));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fmul LmnInstrVar LmnInstrVar LmnInstrVar
-  double *d = LMN_MALLOC(double);
-  *d = lmn_get_double(wt(rc, $1)) * lmn_get_double(wt(rc, $2));
+  LmnAtom d = lmn_create_double_atom(lmn_get_double(wt(rc, $1)) * lmn_get_double(wt(rc, $2)));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fdiv LmnInstrVar LmnInstrVar LmnInstrVar
-  double *d = LMN_MALLOC(double);
-  *d = lmn_get_double(wt(rc, $1)) / lmn_get_double(wt(rc, $2));
+  LmnAtom d = lmn_create_double_atom(lmn_get_double(wt(rc, $1)) / lmn_get_double(wt(rc, $2)));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fneg LmnInstrVar LmnInstrVar
-  double *d = LMN_MALLOC(double);
-  *d = -lmn_get_double(wt(rc, $1));
+  LmnAtom d = lmn_create_double_atom(-lmn_get_double(wt(rc, $1)));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #flt LmnInstrVar LmnInstrVar

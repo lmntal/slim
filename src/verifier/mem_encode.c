@@ -1022,7 +1022,7 @@ static inline int bsptr_push_data_atom(BinStrPtr p,
            bsptr_push(p, (const BYTE*)&atom, BS_INT_SIZE);
   case LMN_DBL_ATTR:
     return bsptr_push1(p, TAG_DBL_DATA) &&
-           bsptr_push(p, (const BYTE*)(double*)atom, BS_DBL_SIZE);
+           bsptr_push(p, (const BYTE*)LMN_GETREF_DOUBLE(atom), BS_DBL_SIZE);
   case LMN_HL_ATTR:
     return bsptr_push_hlink(p, atom, log);
   case LMN_SP_ATOM_ATTR:
@@ -1975,12 +1975,12 @@ static int binstr_decode_mol(LmnBinStr   bs,
           break;
         case TAG_DBL_DATA:
           {
-            double *n = LMN_MALLOC(double);
+            LmnAtom n;
 
-            *n = binstr_get_dbl(bs->v, pos);
+            n = lmn_create_double_atom(binstr_get_dbl(bs->v, pos));
             pos += BS_DBL_SIZE;
             lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom),
-                                   LMN_ATOM(n),
+                                   n,
                                    LMN_DBL_ATTR);
           }
           break;
@@ -2075,9 +2075,9 @@ static int binstr_decode_mol(LmnBinStr   bs,
     break;
   case TAG_DBL_DATA:
     {
-      double *n = LMN_MALLOC(double);
+      LmnAtom n;
 
-      *n = binstr_get_dbl(bs->v, pos);
+      n = lmn_create_double_atom(binstr_get_dbl(bs->v, pos));
       pos += BS_DBL_SIZE;
       LMN_SATOM_SET_LINK(from_atom, from_arg, n);
       LMN_SATOM_SET_ATTR(from_atom, from_arg, LMN_DBL_ATTR);

@@ -486,10 +486,9 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane
       break;                                                  \
     case LMN_DBL_ATTR:                                        \
     {                                                         \
-      double *x;                                              \
-      x = LMN_MALLOC(double);                                 \
-      READ_VAL(double, instr, *x);                            \
-      (dest) = (LmnWord)x;                                    \
+      double x;                                               \
+      READ_VAL(double, instr, x);                             \
+      (dest) = (LmnWord)lmn_create_double_atom(x);            \
       break;                                                  \
     }                                                         \
     case LMN_STRING_ATTR:                                     \
@@ -500,7 +499,7 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane
       break;                                                  \
     }                                                         \
     default:                                                  \
-      lmn_fatal("Implementation error 1");                      \
+      lmn_fatal("Implementation error 1");                    \
     }                                                         \
   } while (0)
 
@@ -510,25 +509,27 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane
   do {                                                        \
     switch (attr) {                                           \
     case LMN_INT_ATTR:                                        \
-       READ_VAL(long, instr, (dest));                         \
+      READ_VAL(long, instr, (dest));                          \
+      break;                                                  \
+    case LMN_DBL_ATTR:                                        \
+    {                                                         \
+      double x;                                               \
+      READ_VAL(double, instr, x);                             \
+      (dest) = (LmnWord)lmn_create_double_atom(x);            \
+      break;                                                  \
+    }                                                         \
+    case LMN_STRING_ATTR:                                     \
+    {                                                         \
+       lmn_interned_str s;                                    \
+       READ_VAL(lmn_interned_str, instr, s);                  \
+       (dest) = s;                                            \
+       (attr) = LMN_CONST_STR_ATTR;                           \
        break;                                                 \
-     case LMN_DBL_ATTR:                                       \
-       (dest) = (LmnWord)instr;                               \
-       instr += sizeof(double);                               \
-       (attr) = LMN_CONST_DBL_ATTR;                           \
-       break;                                                 \
-     case LMN_STRING_ATTR:                                    \
-     {                                                        \
-        lmn_interned_str s;                                   \
-        READ_VAL(lmn_interned_str, instr, s);                 \
-        (dest) = s;                                           \
-        (attr) = LMN_CONST_STR_ATTR;                          \
-        break;                                                \
-     }                                                        \
-     default:                                                 \
-        lmn_fatal("Implementation error 2");                    \
-     }                                                        \
-     (type) = TT_OTHER;                                       \
+    }                                                         \
+    default:                                                  \
+       lmn_fatal("Implementation error 2");                   \
+    }                                                         \
+    (type) = TT_OTHER;                                        \
    } while (0)
 
 #define READ_CMP_DATA_ATOM(attr, x, result, type)             \
@@ -3522,66 +3523,61 @@ label_skip_data_atom:
     case  INSTR_FADD:
     {
       LmnInstrVar dstatom, atom1, atom2;
-      double *d;
+      LmnAtom d;
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      d = LMN_MALLOC(double);
-      *d = lmn_get_double(wt(rc, atom1)) + lmn_get_double(wt(rc, atom2));
+      d = lmn_create_double_atom(lmn_get_double(wt(rc, atom1)) + lmn_get_double(wt(rc, atom2)));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case  INSTR_FSUB:
     {
       LmnInstrVar dstatom, atom1, atom2;
-      double *d;
+      LmnAtom d;
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      d = LMN_MALLOC(double);
-      *d = lmn_get_double(wt(rc, atom1)) - lmn_get_double(wt(rc, atom2));
+      d = lmn_create_double_atom(lmn_get_double(wt(rc, atom1)) - lmn_get_double(wt(rc, atom2)));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case  INSTR_FMUL:
     {
       LmnInstrVar dstatom, atom1, atom2;
-      double *d;
+      LmnAtom d;
 
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      d = LMN_MALLOC(double);
-      *d = lmn_get_double(wt(rc, atom1)) * lmn_get_double(wt(rc, atom2));
+      d = lmn_create_double_atom(lmn_get_double(wt(rc, atom1)) * lmn_get_double(wt(rc, atom2)));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case  INSTR_FDIV:
     {
       LmnInstrVar dstatom, atom1, atom2;
-      double *d;
+      LmnAtom d;
 
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      d = LMN_MALLOC(double);
-      *d = lmn_get_double(wt(rc, atom1)) / lmn_get_double(wt(rc, atom2));
+      d = lmn_create_double_atom(lmn_get_double(wt(rc, atom1)) / lmn_get_double(wt(rc, atom2)));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case  INSTR_FNEG:
     {
       LmnInstrVar dstatom, atomi;
-      double *d;
+      LmnAtom d;
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atomi);
 
-      d = LMN_MALLOC(double);
-      *d = -lmn_get_double(wt(rc, atomi));
+      d = lmn_create_double_atom(-lmn_get_double(wt(rc, atomi)));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }

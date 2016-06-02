@@ -45,9 +45,9 @@ void gettime(LmnReactCxt *rc,
              LmnMembrane *mem,
              LmnAtom a0, LmnLinkAttr t0)
 {
-  double *t = LMN_MALLOC(double);
+  LmnAtom t;
 
-  *t = get_cpu_time();
+  t = lmn_create_double_atom(get_cpu_time());
 
   lmn_mem_newlink(mem,
                   a0, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(t0),

@@ -58,7 +58,7 @@ static int array_atom_type; /* special atom type */
 static LmnArray make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
   unsigned long i;
-  double *v;
+  LmnAtom v;
 
   LmnArray a = LMN_MALLOC(struct LmnArray);
   LMN_SP_ATOM_SET_TYPE(a, array_atom_type);
@@ -110,7 +110,7 @@ void lmn_array_free(LmnArray array, LmnMembrane *mem)
     switch (LMN_ARRAY_TYPE(array)) {
       case LMN_DBL_ATTR:
         for (i = 0; i < LMN_ARRAY_SIZE(array); i++) {
-          LMN_FREE((double*)LMN_ARRAY_DATA(array)[i]);
+          lmn_free_atom(LMN_ARRAY_DATA(array)[i], LMN_DBL_ATTR);
         }
         break;
       case LMN_STRING_ATTR:
@@ -238,7 +238,7 @@ void cb_array_get(LmnReactCxt *rc,
     LmnAtom a3, LmnLinkAttr t3)
 {
   LmnAtom ai;
-  double *v;
+  LmnAtom v;
 
   if (a1 < LMN_ARRAY_SIZE(a0)) {   /* a1 is unsigned and hence nonnegative */
     switch (LMN_ARRAY_TYPE(a0)) {
@@ -247,7 +247,7 @@ void cb_array_get(LmnReactCxt *rc,
         break;
       case LMN_DBL_ATTR:
         LMN_COPY_DBL_ATOM(v, LMN_ARRAY_DATA(a0)[a1]);
-        ai = LMN_ATOM(v);
+        ai = v;
         break;
       case LMN_HL_ATTR:
         ai = lmn_copy_atom(LMN_ARRAY_DATA(a0)[a1], LMN_HL_ATTR);
@@ -291,7 +291,7 @@ void cb_array_put(LmnReactCxt *rc,
         case LMN_INT_ATTR:
           break;
         case LMN_DBL_ATTR:
-          LMN_FREE((double*)LMN_ARRAY_DATA(a0)[a1]);
+          lmn_free_atom(LMN_ARRAY_DATA(a0)[a1], LMN_DBL_ATTR);
           break;
         case LMN_STRING_ATTR:
           lmn_string_free(LMN_STRING(LMN_ARRAY_DATA(a0)[a1]));
