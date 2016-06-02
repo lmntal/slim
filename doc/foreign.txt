@@ -63,7 +63,7 @@ LMNtalプログラムの実行中に、SLIMから呼び出されるコールバ�
        printf("%d\n", (int)a0);
        break;
      case LMN_DBL_ATTR:
-       printf("%f\n", *((double *)a0));
+       printf("%f\n", lmn_get_double(a0));
        break;
      default:
        fprintf(stderr, "PRINT.C: uhknown data type\n");

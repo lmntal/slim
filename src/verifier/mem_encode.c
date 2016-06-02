@@ -2844,7 +2844,7 @@ static inline BOOL mem_eq_enc_data_atom(unsigned int tag,
     double n = binstr_get_dbl(bs->v, *i_bs);
     (*i_bs) += BS_DBL_SIZE;
 
-    if ((attr == LMN_DBL_ATTR) && (n == *(double*)atom)) {
+    if ((attr == LMN_DBL_ATTR) && (n == lmn_get_double(atom))) {
 #ifdef BS_MEMEQ_OLD
       visitlog_put_data(log);
 #endif
@@ -3216,7 +3216,7 @@ static inline BOOL mem_eq_enc_hlink(LmnBinStr   bs,
               *n = binstr_get_dbl(bs->v, *i_bs);
               *i_bs += BS_DBL_SIZE;
               if (LMN_HL_ATTRATOM_ATTR(hl_root) != LMN_DBL_ATTR ||
-                  *n!=*(double*)LMN_HL_ATTRATOM(hl_root)) {
+                  *n!=lmn_get_double(LMN_HL_ATTRATOM(hl_root))) {
                 return FALSE;
               }
             }

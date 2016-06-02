@@ -267,7 +267,7 @@ static BOOL dump_data_atom(LmnPort port,
   case  LMN_DBL_ATTR:
     {
       char buf[64];
-      sprintf(buf, "%#g", *(double*)data);
+      sprintf(buf, "%#g", lmn_get_double(data));
       port_put_raw_s(port, buf);
     }
     break;
@@ -913,7 +913,7 @@ void dump_atom_dev(LmnSAtom atom)
           fprintf(stdout, "int[%lu], ", LMN_SATOM_GET_LINK(atom,i));
           break;
         case  LMN_DBL_ATTR:
-          fprintf(stdout, "double[%f], ", *(double*)LMN_SATOM_GET_LINK(atom,i));
+          fprintf(stdout, "double[%f], ", lmn_get_double(LMN_SATOM_GET_LINK(atom,i)));
           break;
         case  LMN_HL_ATTR:
           fprintf(stdout, "hlink[ !, Addr:%lu, ID:%lu], "
@@ -1087,7 +1087,7 @@ static void lmn_dump_link_json(LmnSAtom atom, int index)
         break;
       case LMN_DBL_ATTR:
       case LMN_CONST_DBL_ATTR:
-        fprintf(stdout, "\"data\":%f", (*(double *)data));
+        fprintf(stdout, "\"data\":%f", lmn_get_double(data));
         break;
       case LMN_SP_ATOM_ATTR:
       case LMN_CONST_STR_ATTR:

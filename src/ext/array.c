@@ -292,7 +292,6 @@ void cb_array_put(LmnReactCxt *rc,
           break;
         case LMN_DBL_ATTR:
           LMN_FREE((double*)LMN_ARRAY_DATA(a0)[a1]);
-          /* *(double *)(LMN_ARRAY_DATA(a0))[a1] = *(double *)a2; */
           break;
         case LMN_STRING_ATTR:
           lmn_string_free(LMN_STRING(LMN_ARRAY_DATA(a0)[a1]));
@@ -359,7 +358,7 @@ void sp_cb_array_dump(void *array, LmnPort port)
     if (type == LMN_INT_ATTR) {
       port_put_raw_s(port, int_to_str(data[0]));
     } else if (type == LMN_DBL_ATTR) {
-      sprintf(buf, "%#g", *(double *)data[0]);
+      sprintf(buf, "%#g", lmn_get_double(data[0]));
       port_put_raw_s(port, buf);
     } else if (type == LMN_HL_ATTR) {
       lmn_dump_atom(port, data[0], type);
@@ -371,7 +370,7 @@ void sp_cb_array_dump(void *array, LmnPort port)
       if (type == LMN_INT_ATTR) {
         port_put_raw_s(port, int_to_str(data[i]));
       } else if (type == LMN_DBL_ATTR) {
-        sprintf(buf, "%#g", *(double *)data[i]);
+        sprintf(buf, "%#g", lmn_get_double(data[i]));
         port_put_raw_s(port, buf);
       } else if (type == LMN_HL_ATTR) {
         lmn_dump_atom(port, data[i], type);

@@ -220,7 +220,7 @@ void cb_string_make(LmnReactCxt *rc,
       to_be_freed = TRUE;
       break;
     case LMN_DBL_ATTR:
-      sprintf(buf, "%#g", *(double*)a0);
+      sprintf(buf, "%#g", lmn_get_double(a0));
       s = buf;
       break;
     case LMN_STRING_ATTR:

@@ -415,7 +415,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
         if (wt(rc, $0) != $1_long_data) $f;
 %       break;
 %     case LMN_DBL_ATTR:
-        if (*(double*)wt(rc, $0) != $1_double_data) $f;
+        if (lmn_get_double(wt(rc, $0)) != $1_double_data) $f;
 %       break;
 %     case LMN_STRING_ATTR: {
         LmnString s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
@@ -444,7 +444,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
         if(wt(rc, $0) == $1_long_data) $f;
 %       break;
 %     case LMN_DBL_ATTR:
-        if(*(double*)wt(rc, $0) == $1_double_data) $f;
+        if(lmn_get_double(wt(rc, $0)) == $1_double_data) $f;
 %       fprintf(stderr, "double attr is not implemented.");
 %       break;
 %     case LMN_STRING_ATTR: {
@@ -712,46 +712,46 @@ BOOL interpret_generated(LmnReactCxt *rc,
 
 #fadd LmnInstrVar LmnInstrVar LmnInstrVar
   double *d = LMN_MALLOC(double);
-  *d = *(double *)wt(rc, $1) + *(double *)wt(rc, $2);
+  *d = lmn_get_double(wt(rc, $1)) + lmn_get_double(wt(rc, $2));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fsub LmnInstrVar LmnInstrVar LmnInstrVar
   double *d = LMN_MALLOC(double);
-  *d = *(double *)wt(rc, $1) - *(double *)wt(rc, $2);
+  *d = lmn_get_double(wt(rc, $1)) - lmn_get_double(wt(rc, $2));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fmul LmnInstrVar LmnInstrVar LmnInstrVar
   double *d = LMN_MALLOC(double);
-  *d = *(double *)wt(rc, $1) * *(double *)wt(rc, $2);
+  *d = lmn_get_double(wt(rc, $1)) * lmn_get_double(wt(rc, $2));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fdiv LmnInstrVar LmnInstrVar LmnInstrVar
   double *d = LMN_MALLOC(double);
-  *d = *(double *)wt(rc, $1) / *(double *)wt(rc, $2);
+  *d = lmn_get_double(wt(rc, $1)) / lmn_get_double(wt(rc, $2));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #fneg LmnInstrVar LmnInstrVar
   double *d = LMN_MALLOC(double);
-  *d = -*(double *)wt(rc, $1);
+  *d = -lmn_get_double(wt(rc, $1));
   warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
 
 #flt LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt(rc, $0) < *(double*)wt(rc, $1))) $f;
+  if(!(lmn_get_double(wt(rc, $0)) < lmn_get_double(wt(rc, $1)))) $f;
 
 #fle LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt(rc, $0) <= *(double*)wt(rc, $1))) $f;
+  if(!(lmn_get_double(wt(rc, $0)) <= lmn_get_double(wt(rc, $1)))) $f;
 
 #fgt LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt(rc, $0) > *(double*)wt(rc, $1))) $f;
+  if(!(lmn_get_double(wt(rc, $0)) > lmn_get_double(wt(rc, $1)))) $f;
 
 #fge LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt(rc, $0) >= *(double*)wt(rc, $1))) $f;
+  if(!(lmn_get_double(wt(rc, $0)) >= lmn_get_double(wt(rc, $1)))) $f;
 
 #feq LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt(rc, $0) == *(double*)wt(rc, $1))) $f;
+  if(!(lmn_get_double(wt(rc, $0)) == lmn_get_double(wt(rc, $1)))) $f;
 
 #fne LmnInstrVar LmnInstrVar
-  if(!(*(double*)wt(rc, $0) != *(double*)wt(rc, $1))) $f;
+  if(!(lmn_get_double(wt(rc, $0)) != lmn_get_double(wt(rc, $1)))) $f;
 
 #allocatom LmnInstrVar $functor
 % switch(targ1_attr){
@@ -854,8 +854,8 @@ BOOL interpret_generated(LmnReactCxt *rc,
     if ((long)wt(rc, $0) != (long)wt(rc, $1)) $f;
     break;
   case LMN_DBL_ATTR:
-    if (*(double*)(wt(rc, $0)) !=
-        *(double*)(wt(rc, $1))) $f;
+    if (lmn_get_double(wt(rc, $0)) !=
+        lmn_get_double(wt(rc, $1))) $f;
     break;
   default:
     if (wt(rc, $0) != wt(rc, $1)) $f;
@@ -869,8 +869,8 @@ BOOL interpret_generated(LmnReactCxt *rc,
       if ((long)wt(rc, $0) == (long)wt(rc, $1)) $f;
       break;
     case LMN_DBL_ATTR:
-      if (*(double*)(wt(rc, $0)) ==
-          *(double*)(wt(rc, $1))) $f;
+      if (lmn_get_double(wt(rc, $0)) ==
+          lmn_get_double(wt(rc, $1))) $f;
       break;
     default:
       if (wt(rc, $0) == wt(rc, $1)) $f;

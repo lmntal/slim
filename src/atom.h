@@ -210,11 +210,12 @@ static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr,
                                            ProcessTbl *hlinks);
 static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
                                     LmnAtom atom2, LmnLinkAttr attr2);
+static inline double lmn_get_double(LmnAtom atom);
 
 #define LMN_COPY_DBL_ATOM(Dst, Src)                                            \
   do {                                                                         \
     (Dst) = (double *)LMN_ATOM(LMN_MALLOC(double));                            \
-    *((double *)Dst) = *(double*)(Src);                                        \
+    *((double *)Dst) = lmn_get_double(Src);                                        \
   } while (0)
 
 
@@ -251,7 +252,7 @@ static inline LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr) {
     {
       double *d;
       LMN_COPY_DBL_ATOM(d, atom);
-      *d = *(double*)atom;
+      *d = lmn_get_double(atom);
       return LMN_ATOM(d);
     }
     case LMN_SP_ATOM_ATTR:
@@ -370,7 +371,7 @@ static inline BOOL lmn_eq_func(LmnAtom     atom0, LmnLinkAttr attr0,
   case LMN_INT_ATTR:
     return atom0 == atom1;
   case LMN_DBL_ATTR:
-    return *(double *)atom0 == *(double *)atom1;
+    return lmn_get_double(atom0) == lmn_get_double(atom1);
   case LMN_SP_ATOM_ATTR:
     return SP_ATOM_EQ(atom0, atom1);
   case LMN_HL_ATTR:
@@ -403,7 +404,7 @@ static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
     case LMN_INT_ATTR:
       return atom1 == atom2;
     case LMN_DBL_ATTR:
-      return *(double*)atom1 == *(double*)atom2;
+      return lmn_get_double(atom1) == lmn_get_double(atom2);
     case LMN_SP_ATOM_ATTR:
       return SP_ATOM_EQ(atom1, atom2);
     case LMN_HL_ATTR:
@@ -413,6 +414,11 @@ static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
       return FALSE;
     }
   }
+}
+
+/* caller must ensure |atom| has LMN_DBL_ATTR */
+static inline double lmn_get_double(LmnAtom atom) {
+  return *(double *)atom;
 }
 
 #endif /* LMN_ATOM_H */

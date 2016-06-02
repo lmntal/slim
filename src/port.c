@@ -608,7 +608,7 @@ void cb_port_putc(LmnReactCxt *rc,
     case  LMN_DBL_ATTR:
     {
       char buf[64];
-      sprintf(buf, "%#g", *(double*)a1);
+      sprintf(buf, "%#g", lmn_get_double(a1));
       port_put_raw_s(LMN_PORT(a0), buf);
     }
     break;

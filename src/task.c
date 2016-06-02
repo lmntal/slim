@@ -545,7 +545,7 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane
     {                                                         \
       double t;                                               \
       READ_VAL(double, instr, t);                             \
-      (result) = (*(double*)(x) == t);                        \
+      (result) = (lmn_get_double(x) == t);                    \
       break;                                                  \
     }                                                         \
     case LMN_STRING_ATTR:                                     \
@@ -2599,7 +2599,7 @@ label_skip_data_atom:
           case LMN_DBL_ATTR:
             {
               char buf[64];
-              sprintf(buf, "%f", *(double*)wt(rc, vec_get(srcvec, 0)));
+              sprintf(buf, "%f", lmn_get_double(wt(rc, vec_get(srcvec, 0))));
               port_put_raw_s(port, buf);
               break;
             }
@@ -3528,7 +3528,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom2);
 
       d = LMN_MALLOC(double);
-      *d = *(double *)wt(rc, atom1) + *(double *)wt(rc, atom2);
+      *d = lmn_get_double(wt(rc, atom1)) + lmn_get_double(wt(rc, atom2));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
@@ -3541,7 +3541,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom2);
 
       d = LMN_MALLOC(double);
-      *d = *(double *)wt(rc, atom1) - *(double *)wt(rc, atom2);
+      *d = lmn_get_double(wt(rc, atom1)) - lmn_get_double(wt(rc, atom2));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
@@ -3555,7 +3555,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom2);
 
       d = LMN_MALLOC(double);
-      *d = *(double *)wt(rc, atom1) * *(double *)wt(rc, atom2);
+      *d = lmn_get_double(wt(rc, atom1)) * lmn_get_double(wt(rc, atom2));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
@@ -3569,7 +3569,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom2);
 
       d = LMN_MALLOC(double);
-      *d = *(double *)wt(rc, atom1) / *(double *)wt(rc, atom2);
+      *d = lmn_get_double(wt(rc, atom1)) / lmn_get_double(wt(rc, atom2));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
@@ -3581,7 +3581,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atomi);
 
       d = LMN_MALLOC(double);
-      *d = -*(double *)wt(rc, atomi);
+      *d = -lmn_get_double(wt(rc, atomi));
       warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
@@ -3591,7 +3591,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if (!(*(double*)wt(rc, atom1) < *(double*)wt(rc, atom2))) return FALSE;
+      if (!(lmn_get_double(wt(rc, atom1)) < lmn_get_double(wt(rc, atom2)))) return FALSE;
       break;
     }
     case INSTR_FLE:
@@ -3600,7 +3600,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if (!(*(double*)wt(rc, atom1) <= *(double*)wt(rc, atom2))) return FALSE;
+      if (!(lmn_get_double(wt(rc, atom1)) <= lmn_get_double(wt(rc, atom2)))) return FALSE;
       break;
     }
     case INSTR_FGT:
@@ -3609,7 +3609,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!(*(double*)wt(rc, atom1) > *(double*)wt(rc, atom2))) return FALSE;
+      if(!(lmn_get_double(wt(rc, atom1)) > lmn_get_double(wt(rc, atom2)))) return FALSE;
       break;
     }
     case INSTR_FGE:
@@ -3618,7 +3618,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!(*(double*)wt(rc, atom1) >= *(double*)wt(rc, atom2))) return FALSE;
+      if(!(lmn_get_double(wt(rc, atom1)) >= lmn_get_double(wt(rc, atom2)))) return FALSE;
       break;
     }
     case INSTR_FEQ:
@@ -3627,7 +3627,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!(*(double*)wt(rc, atom1) == *(double*)wt(rc, atom2))) return FALSE;
+      if(!(lmn_get_double(wt(rc, atom1)) == lmn_get_double(wt(rc, atom2)))) return FALSE;
       break;
     }
     case INSTR_FNE:
@@ -3636,7 +3636,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      if(!(*(double*)wt(rc, atom1) != *(double*)wt(rc, atom2))) return FALSE;
+      if(!(lmn_get_double(wt(rc, atom1)) != lmn_get_double(wt(rc, atom2)))) return FALSE;
       break;
     }
     case INSTR_ALLOCATOM:
@@ -3869,8 +3869,8 @@ label_skip_data_atom:
         if ((long)wt(rc, func0) != (long)wt(rc, func1)) return FALSE;
         break;
       case LMN_DBL_ATTR:
-        if (*(double *)(wt(rc, func0)) !=
-            *(double *)(wt(rc, func1))) return FALSE;
+        if (lmn_get_double(wt(rc, func0)) !=
+            lmn_get_double(wt(rc, func1))) return FALSE;
         break;
       case LMN_HL_ATTR:
         if (!lmn_hyperlink_eq_hl(lmn_hyperlink_at_to_hl(LMN_SATOM(wt(rc, func0))),
@@ -3897,8 +3897,8 @@ label_skip_data_atom:
           if ((long)wt(rc, func0) == (long)wt(rc, func1)) return FALSE;
           break;
         case LMN_DBL_ATTR:
-          if (*(double *)(wt(rc, func0)) ==
-              *(double *)(wt(rc, func1))) return FALSE;
+          if (lmn_get_double(wt(rc, func0)) ==
+              lmn_get_double(wt(rc, func1))) return FALSE;
           break;
         case LMN_HL_ATTR:
           if (lmn_hyperlink_eq_hl(lmn_hyperlink_at_to_hl(LMN_SATOM(wt(rc, func0))),
