@@ -214,7 +214,12 @@ static inline double lmn_get_double(LmnAtom atom);
 static inline LmnAtom lmn_create_double_atom(double d);
 static inline void lmn_destroy_double_atom(LmnAtom atom);
 
-#define LMN_GETREF_DOUBLE(Atom) ((double *)Atom)
+#ifdef LMN_DOUBLE_IS_IMMEDIATE
+# define LMN_GETREF_DOUBLE(Atom) ((double *)&Atom)
+#else
+# define LMN_GETREF_DOUBLE(Atom) ((double *)Atom)
+#endif
+
 #define LMN_COPY_DBL_ATOM(Dst, Src)                                            \
   do {                                                                         \
     (Dst) = (LmnWord)lmn_create_double_atom(lmn_get_double(Src));              \
@@ -419,19 +424,29 @@ static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
 
 /* caller must ensure |atom| has LMN_DBL_ATTR */
 static inline double lmn_get_double(LmnAtom atom) {
+#ifdef LMN_DOUBLE_IS_IMMEDIATE
+  return *(double *)&atom; // forward bit pattern
+#else
   return *(double *)atom;
+#endif
 }
 
 /* Create atom represents double data. Return value must be freed by |lmn_destroy_double_atom| */
 static inline LmnAtom lmn_create_double_atom(double d) {
+#ifdef LMN_DOUBLE_IS_IMMEDIATE
+  return *(LmnAtom *)&d; // forward bit pattern
+#else
   double *result = (double *)LMN_MALLOC(double);
   *result = d;
   return LMN_ATOM(result);
+#endif
 }
 
 /* User don't call this function directly. Use |lmn_free_atom| instead. */
 static inline void lmn_destroy_double_atom(LmnAtom atom) {
+#ifndef LMN_DOUBLE_IS_IMMEDIATE
   LMN_FREE((double *)atom);
+#endif
 }
 
 #endif /* LMN_ATOM_H */

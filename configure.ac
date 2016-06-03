@@ -267,6 +267,7 @@ AC_TYPE_UINT64_T
 
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(void*)
+AC_CHECK_SIZEOF(double)
 
 
 # ----------------------------------------------------------------------

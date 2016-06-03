@@ -74,6 +74,10 @@
 # define LMN_DEBUG_HELPER      TRUE
 #endif
 
+#if SIZEOF_DOUBLE <= SIZEOF_LONG
+# define LMN_DOUBLE_IS_IMMEDIATE 1
+#endif
+
 #ifndef LMN_DECL_BEGIN
 # ifdef __cplusplus
 #  define LMN_DECL_BEGIN  extern "C" {
@@ -95,7 +99,6 @@ LMN_DECL_BEGIN
 #if SIZEOF_LONG < SIZEOF_VOIDP
 # error sizeof(long) < sizeof(void*)
 #endif
-
 
 typedef unsigned long LmnWord;
 typedef unsigned char BYTE, LmnByte;
