@@ -72,12 +72,12 @@ void integer_set(LmnReactCxt *rc,
 
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector *dstlovec;
-    ProcessTbl atommap;
-    LinkObj l;
+    ProcessTableRef atommap;
+    LinkObjRef l;
 
     lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap);
 
-    l = (LinkObj)vec_get(dstlovec, 0);
+    l = (LinkObjRef)vec_get(dstlovec, 0);
     lmn_mem_newlink(mem, n, LMN_INT_ATTR, 0,
                     l->ap, t2, LMN_ATTR_GET_VALUE(l->pos));
     lmn_mem_push_atom(mem, n, LMN_INT_ATTR);

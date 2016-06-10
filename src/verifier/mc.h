@@ -69,12 +69,12 @@ static inline BOOL mc_vec_states_valid(Vector *v) {
   return TRUE;
 }
 
-void mc_print_vec_states(StateSpace ss,
+void mc_print_vec_states(StateSpaceRef ss,
                          Vector     *v,
                          State      *seed);
-void mc_expand(const StateSpace states,
+void mc_expand(const StateSpaceRef states,
                State            *state,
-               AutomataState    property_automata_state,
+               AutomataStateRef    property_automata_state,
                LmnReactCxt      *rc,
                Vector           *new_s,
                Vector           *psyms,
@@ -82,7 +82,7 @@ void mc_expand(const StateSpace states,
 void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock);
 void mc_gen_successors_with_property(State         *s,
                                      LmnMembrane   *mem,
-                                     AutomataState prop_atm_s,
+                                     AutomataStateRef prop_atm_s,
                                      LmnReactCxt   *rc,
                                      Vector        *psyms,
                                      BOOL          flags);
@@ -91,16 +91,16 @@ void mc_gen_successors(State       *src,
                        BYTE        prop_labels,
                        LmnReactCxt *rc,
                        BOOL        flags);
-void mc_store_successors(const StateSpace ss,
+void mc_store_successors(const StateSpaceRef ss,
                          State            *s,
                          LmnReactCxt      *rc,
                          Vector           *new_ss,
                          BOOL             f);
 BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembrane *cur_mem);
 
-void run_mc(Vector *start_rulesets, Automata a, Vector *psyms);
+void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms);
 
-int mc_load_property(Automata *a, PVector *prop_defs);
+int mc_load_property(AutomataRef *a, PVector *prop_defs);
 void mc_explain_error(int error_id);
 char *mc_error_msg(int error_id);
 

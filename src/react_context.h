@@ -258,10 +258,10 @@ void mc_react_cxt_init(LmnReactCxt *cxt);
 void mc_react_cxt_destroy(LmnReactCxt *cxt);
 void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
                                LmnMembrane *mem,
-                               LmnRule rule);
+                               LmnRuleRef rule);
 void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
                                        struct MemDeltaRoot *d,
-                                       LmnRule rule);
+                                       LmnRuleRef rule);
 
 static inline LmnWord mc_react_cxt_expanded_pop(LmnReactCxt *cxt) {
   vec_pop(RC_EXPANDED_RULES(cxt));

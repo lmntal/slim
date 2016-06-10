@@ -42,12 +42,12 @@
 #include "rule.h"
 #include "syntax.h"
 
-LmnRuleSet load(FILE *in);
-LmnRule load_rule(Rule rule);
-LmnRuleSet load_file(char *file_name);
+LmnRuleSetRef load(FILE *in);
+LmnRuleRef load_rule(RuleRef rule);
+LmnRuleSetRef load_file(char *file_name);
 void load_il_files(char *path);
-int il_parse(FILE *in, IL *il);
-int il_parse_rule(FILE *in, Rule *rule);
+int il_parse(FILE *in, ILRef *il);
+int il_parse_rule(FILE *in, RuleRef *rule);
 FILE *fopen_il_file(char *name);
 void init_so_handles();
 void finalize_so_handles();

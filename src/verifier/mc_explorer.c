@@ -284,7 +284,7 @@ static inline BOOL owcty_traversed_owner_is_me(State *succ,
                                                BOOL  is_up);
 static inline void owcty_report_midterm(LmnWorker *w);
 static inline void owcty_termination_detection(LmnWorker *w);
-static void owcty_found_accepting_cycle(LmnWorker *w, Automata a);
+static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a);
 
 
 void owcty_worker_init(LmnWorker *w)
@@ -466,7 +466,7 @@ static inline void owcty_reachability(LmnWorker *w,
                                       BOOL  set_flag,
                                       BOOL  is_up)
 {
-  StateSpace ss = worker_states(w);
+  StateSpaceRef ss = worker_states(w);
   while (!is_empty_queue(primary)) {
     State *s;
     unsigned int i, cnt;
@@ -541,7 +541,7 @@ static inline BOOL owcty_traversed_owner_is_me(State *succ,
 
 /* 受理サイクルを発見した場合に呼び出す.
  * 反例出力が必要な場合は, 不動点の状態集合からサイクルパスを求めて登録する. */
-static void owcty_found_accepting_cycle(LmnWorker *w, Automata a)
+static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a)
 {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     LmnWorkerGroup *wp = worker_group(w);
@@ -610,12 +610,12 @@ struct McSearchMAP {
 #define MAP_WORKER_DEL_G(W)         (MAP_WORKER_OBJ(W)->waitingSeed)
 #define MAP_WORKER_HASHSET(W)       (MAP_WORKER_OBJ(W)->traversed)
 
-State *map_ordering_states(Automata a, unsigned int num, ...);
-static inline State *map_ordering(State *s1, State *s2, Automata a);
-static inline BOOL map_entry_state(State *t, State *propag, Automata a);
+State *map_ordering_states(AutomataRef a, unsigned int num, ...);
+static inline State *map_ordering(State *s1, State *s2, AutomataRef a);
+static inline BOOL map_entry_state(State *t, State *propag, AutomataRef a);
 static void map_found_accepting_cycle(LmnWorker *w, State *s);
-static void map_propagate(LmnWorker *w, State *s, State *t, State *propag, Automata a);
-static State *map_ordering_propagate_state(LmnWorker *w, State *u, Automata a);
+static void map_propagate(LmnWorker *w, State *s, State *t, State *propag, AutomataRef a);
+static State *map_ordering_propagate_state(LmnWorker *w, State *u, AutomataRef a);
 
 
 void map_worker_init(LmnWorker *w)
@@ -671,7 +671,7 @@ void map_env_set(LmnWorker *w)
  * MAPを更新できる限り, MAPの再伝搬を行う */
 void map_start(LmnWorker *w, State *u)
 {
-  Automata a;
+  AutomataRef a;
 
   START_CYCLE_SEARCH();
 
@@ -721,7 +721,7 @@ void map_iteration_start(LmnWorker *w)
 
 /* 状態uからサクセサへ伝搬するMAP値を決定し, 返す.
  * MAP値は, 伝搬元となる状態uと, uに伝搬されて設定されているMAP値が指す状態とで決定する */
-static State *map_ordering_propagate_state(LmnWorker *w, State *u, Automata a)
+static State *map_ordering_propagate_state(LmnWorker *w, State *u, AutomataRef a)
 {
   State *propag;
 
@@ -746,7 +746,7 @@ static State *map_ordering_propagate_state(LmnWorker *w, State *u, Automata a)
 }
 
 
-static void map_propagate(LmnWorker *w, State *s, State *t, State *propag, Automata a)
+static void map_propagate(LmnWorker *w, State *s, State *t, State *propag, AutomataRef a)
 {
   if (TRANS_BETWEEN_DIFF_SCCs(w, s, t, a)) return;
 
@@ -763,7 +763,7 @@ static void map_propagate(LmnWorker *w, State *s, State *t, State *propag, Autom
 
 /* 状態tのMAP値に, propagが優先するMAP値なら伝搬する.
  * 伝搬に成功した場合, 真を返す. */
-static inline BOOL map_entry_state(State *t, State *propag, Automata a)
+static inline BOOL map_entry_state(State *t, State *propag, AutomataRef a)
 {
   BOOL ret = FALSE;
 
@@ -785,7 +785,7 @@ static inline BOOL map_entry_state(State *t, State *propag, Automata a)
 }
 
 
-static inline State *map_ordering(State *s1, State *s2, Automata a)
+static inline State *map_ordering(State *s1, State *s2, AutomataRef a)
 {
   BOOL s1_valid, s2_valid;
 
@@ -809,7 +809,7 @@ static inline State *map_ordering(State *s1, State *s2, Automata a)
 
 /* N個の状態を入力として受け, MAP順序が最も高い状態を返す.
  * なんとなく書いてみたけど, 使わなかった */
-State *map_ordering_states(Automata a, unsigned int num, ...)
+State *map_ordering_states(AutomataRef a, unsigned int num, ...)
 {
   State *ptr, *ret;
   va_list states;
@@ -977,7 +977,7 @@ void bledge_worker_finalize(LmnWorker *w)
 
 
 /* State Vectorの各状態に受理頂点が含まれていたら真を返す */
-static BOOL bledge_path_accepting(Vector *v, Automata a)
+static BOOL bledge_path_accepting(Vector *v, AutomataRef a)
 {
   unsigned int i;
 
@@ -992,7 +992,7 @@ static BOOL bledge_path_accepting(Vector *v, Automata a)
 
 static BOOL bledge_explorer_accepting_cycle(LmnWorker *w, State *u, State *v)
 {
-  Automata a = statespace_automata(worker_states(w));
+  AutomataRef a = statespace_automata(worker_states(w));
   return state_to_state_path(v, u,
                              BLE_WORKER_SEARCH_VEC(w),
                              BLE_WORKER_PATH_VEC(w),

@@ -4,5 +4,5 @@
 #include "utility/vector.h"
 #include "state.h"
 
-void dump_dot(StateSpace ss, int worker_num);
+void dump_dot(StateSpaceRef ss, int worker_num);
 #endif

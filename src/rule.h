@@ -50,8 +50,8 @@
 /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
    生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
    た場合FALSEを返す */
-typedef struct LmnRule *LmnRule;
-typedef BOOL (*LmnTranslated)(LmnReactCxt*, LmnMembrane *, LmnRule);
+typedef struct LmnRule *LmnRuleRef;
+typedef BOOL (*LmnTranslated)(LmnReactCxt*, LmnMembrane *, LmnRuleRef);
 
 /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
    現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
@@ -69,58 +69,58 @@ struct LmnRule {
   LmnCost          cost;
 };
 
-LmnRule lmn_rule_make(LmnRuleInstr instr, int instr_len, lmn_interned_str name);
-LmnRule dummy_rule(void);
-LmnRule lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name);
-LmnRule lmn_rule_copy(LmnRule rule);
-void lmn_rule_free(LmnRule rule);
+LmnRuleRef lmn_rule_make(LmnRuleInstr instr, int instr_len, lmn_interned_str name);
+LmnRuleRef dummy_rule(void);
+LmnRuleRef lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name);
+LmnRuleRef lmn_rule_copy(LmnRuleRef rule);
+void lmn_rule_free(LmnRuleRef rule);
 
-static inline st_table_t lmn_rule_get_history_tbl(LmnRule rule) {
+static inline st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule) {
   return rule->history_tbl;
 }
 
-static inline lmn_interned_str lmn_rule_get_pre_id(LmnRule rule) {
+static inline lmn_interned_str lmn_rule_get_pre_id(LmnRuleRef rule) {
   return rule->pre_id;
 }
 
-static inline void lmn_rule_set_pre_id(LmnRule rule, lmn_interned_str t) {
+static inline void lmn_rule_set_pre_id(LmnRuleRef rule, lmn_interned_str t) {
   rule->pre_id = t;
 }
 
 /* ルールの処理を行う関数を返す。ルールが関数を持たなければNULLを返す */
-static inline LmnTranslated lmn_rule_get_translated(LmnRule rule) {
+static inline LmnTranslated lmn_rule_get_translated(LmnRuleRef rule) {
   return rule->translated;
 }
 
 /* ルールの処理を行う中間語命令列を変換したバイト列を返す。ルールが列を
    持たなければNULLを返す。*/
-static inline BYTE *lmn_rule_get_inst_seq(LmnRule rule) {
+static inline BYTE *lmn_rule_get_inst_seq(LmnRuleRef rule) {
   return rule->inst_seq;
 }
 
 /* ルールの名前を返す */
-static inline lmn_interned_str lmn_rule_get_name(LmnRule rule) {
+static inline lmn_interned_str lmn_rule_get_name(LmnRuleRef rule) {
   return rule->name;
 }
 
 /* ルール名のセット */
-static inline void lmn_rule_set_name(LmnRule rule, lmn_interned_str rule_name) {
+static inline void lmn_rule_set_name(LmnRuleRef rule, lmn_interned_str rule_name) {
   rule->name = rule_name;
 }
 
-static inline LmnCost lmn_rule_get_cost(LmnRule rule) {
+static inline LmnCost lmn_rule_get_cost(LmnRuleRef rule) {
   return rule->cost;
 }
 
-static inline void lmn_rule_set_cost(LmnRule rule, LmnCost rule_cost) {
+static inline void lmn_rule_set_cost(LmnRuleRef rule, LmnCost rule_cost) {
  rule->cost = rule_cost;
 }
 
-static inline BOOL lmn_rule_is_invisible(LmnRule rule) {
+static inline BOOL lmn_rule_is_invisible(LmnRuleRef rule) {
   return rule->is_invisible == TRUE;
 }
 
-static inline void lmn_rule_init_uniq_rule(LmnRule rule) {
+static inline void lmn_rule_init_uniq_rule(LmnRuleRef rule) {
   rule->history_tbl = st_init_numtable();
 }
 
@@ -129,7 +129,7 @@ static inline void lmn_rule_init_uniq_rule(LmnRule rule) {
  * Rule Set
  */
 
-typedef struct LmnRuleSet *LmnRuleSet;
+typedef struct LmnRuleSet *LmnRuleSetRef;
 typedef enum AtomicType{
   ATOMIC_NONE = 0,
   ATOMIC_ALL_EXHAUSTIVE,
@@ -139,7 +139,7 @@ typedef enum AtomicType{
 
 /* structure of RuleSet */
 struct LmnRuleSet {
-  LmnRule *rules;         /* ルールのリスト */
+  LmnRuleRef *rules;         /* ルールのリスト */
   int num, cap;           /* # of rules, and # of capacity */
   LmnRulesetId id;        /* RuleSet ID */
   AtomicType atomic;      /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
@@ -151,74 +151,74 @@ struct LmnRuleSet {
 /* table, mapping RuleSet ID to RuleSet */
 struct LmnRuleSetTable {
   unsigned int size;
-  LmnRuleSet *entry;
+  LmnRuleSetRef *entry;
 };
 
 extern struct LmnRuleSetTable *ruleset_table;
 
 int lmn_gen_ruleset_id(void);
-LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size);
-void lmn_ruleset_free(LmnRuleSet ruleset);
-void lmn_ruleset_put(LmnRuleSet ruleset, LmnRule rule);
-void lmn_set_ruleset(LmnRuleSet ruleset, int id);
-long lmn_ruleset_history_num(LmnRuleSet ruleset);
-LmnRuleSet lmn_ruleset_copy(LmnRuleSet ruleset);
-void lmn_ruleset_copied_free(LmnRuleSet rs);
-BOOL lmn_ruleset_equals(LmnRuleSet set1, LmnRuleSet set2);
-BOOL lmn_rulesets_contains(Vector *rulesets, LmnRuleSet set1);
+LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size);
+void lmn_ruleset_free(LmnRuleSetRef ruleset);
+void lmn_ruleset_put(LmnRuleSetRef ruleset, LmnRuleRef rule);
+void lmn_set_ruleset(LmnRuleSetRef ruleset, int id);
+long lmn_ruleset_history_num(LmnRuleSetRef ruleset);
+LmnRuleSetRef lmn_ruleset_copy(LmnRuleSetRef ruleset);
+void lmn_ruleset_copied_free(LmnRuleSetRef rs);
+BOOL lmn_ruleset_equals(LmnRuleSetRef set1, LmnRuleSetRef set2);
+BOOL lmn_rulesets_contains(Vector *rulesets, LmnRuleSetRef set1);
 BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
-unsigned long lmn_ruleset_space(LmnRuleSet rs);
+unsigned long lmn_ruleset_space(LmnRuleSetRef rs);
 
-static inline void lmn_ruleset_validate_atomic(LmnRuleSet rs) {
+static inline void lmn_ruleset_validate_atomic(LmnRuleSetRef rs) {
   rs->is_atomic_valid = TRUE;
 }
 
-static inline void lmn_ruleset_invalidate_atomic(LmnRuleSet rs) {
+static inline void lmn_ruleset_invalidate_atomic(LmnRuleSetRef rs) {
   rs->is_atomic_valid = FALSE;
 }
 
-static inline BOOL lmn_ruleset_is_valid_atomic(LmnRuleSet rs) {
+static inline BOOL lmn_ruleset_is_valid_atomic(LmnRuleSetRef rs) {
   return rs->is_atomic_valid;
 }
 
 /* Returns the # of rules in ruleset */
-static inline unsigned int lmn_ruleset_rule_num(LmnRuleSet ruleset) {
+static inline unsigned int lmn_ruleset_rule_num(LmnRuleSetRef ruleset) {
   return ruleset->num;
 }
 
 /* Returns the ith rule in ruleset */
-static inline LmnRule lmn_ruleset_get_rule(LmnRuleSet ruleset, int i) {
+static inline LmnRuleRef lmn_ruleset_get_rule(LmnRuleSetRef ruleset, int i) {
   return ruleset->rules[i];
 }
 
 /* Returns id of ruleset */
-static inline int lmn_ruleset_get_id(LmnRuleSet ruleset) {
+static inline int lmn_ruleset_get_id(LmnRuleSetRef ruleset) {
   return ruleset->id;
 }
 
-static inline AtomicType lmn_ruleset_atomic_type(LmnRuleSet ruleset) {
+static inline AtomicType lmn_ruleset_atomic_type(LmnRuleSetRef ruleset) {
   return ruleset->atomic;
 }
 
-static inline void lmn_ruleset_set_atomic(LmnRuleSet ruleset, AtomicType t) {
+static inline void lmn_ruleset_set_atomic(LmnRuleSetRef ruleset, AtomicType t) {
   ruleset->atomic = t;
 }
 
 /* Returns RuleSet associated with id. If nothing is, returns NULL */
-static inline LmnRuleSet lmn_ruleset_from_id(int id) {
+static inline LmnRuleSetRef lmn_ruleset_from_id(int id) {
   if (ruleset_table->size <= (unsigned int)id) return NULL;
   else return ruleset_table->entry[id];
 }
 
-static inline BOOL lmn_ruleset_is_copy(LmnRuleSet ruleset) {
+static inline BOOL lmn_ruleset_is_copy(LmnRuleSetRef ruleset) {
   return ruleset->is_copy;
 }
 
-static inline BOOL lmn_ruleset_has_uniqrule(LmnRuleSet ruleset) {
+static inline BOOL lmn_ruleset_has_uniqrule(LmnRuleSetRef ruleset) {
   return ruleset->has_uniqrule;
 }
 
-static inline LmnRule *lmn_ruleset_get_rules(LmnRuleSet ruleset) {
+static inline LmnRuleRef *lmn_ruleset_get_rules(LmnRuleSetRef ruleset) {
   return ruleset->rules;
 }
 
@@ -228,23 +228,23 @@ static inline LmnRule *lmn_ruleset_get_rules(LmnRuleSet ruleset) {
  * System Rule Set
  */
 
-extern LmnRuleSet system_ruleset;
-void lmn_add_system_rule(LmnRule rule);
+extern LmnRuleSetRef system_ruleset;
+void lmn_add_system_rule(LmnRuleRef rule);
 
 /*----------------------------------------------------------------------
  * Initial Rule Set
  */
 
-extern LmnRuleSet initial_ruleset;
-extern LmnRuleSet initial_system_ruleset;
-void lmn_add_initial_rule(LmnRule rule);
-void lmn_add_initial_system_rule(LmnRule rule);
+extern LmnRuleSetRef initial_ruleset;
+extern LmnRuleSetRef initial_system_ruleset;
+void lmn_add_initial_rule(LmnRuleRef rule);
+void lmn_add_initial_system_rule(LmnRuleRef rule);
 
 /*----------------------------------------------------------------------
  * Module
  */
 
-LMN_EXTERN void lmn_set_module(lmn_interned_str module_name, LmnRuleSet ruleset);
-LMN_EXTERN LmnRuleSet lmn_get_module_ruleset(lmn_interned_str module_name);
+LMN_EXTERN void lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset);
+LMN_EXTERN LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name);
 
 #endif /* LMN_RULE_H */

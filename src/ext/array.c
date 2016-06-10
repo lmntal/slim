@@ -55,12 +55,12 @@ static int array_atom_type; /* special atom type */
 /*
  * Internal Constructor
  */
-static LmnArray make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
+static LmnArrayRef make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
   unsigned long i;
   LmnAtom v;
 
-  LmnArray a = LMN_MALLOC(struct LmnArray);
+  LmnArrayRef a = LMN_MALLOC(struct LmnArray);
   LMN_SP_ATOM_SET_TYPE(a, array_atom_type);
   LMN_ARRAY_SIZE(a) = size;
   LMN_ARRAY_TYPE(a) = init_type;
@@ -97,12 +97,12 @@ static LmnArray make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, L
   return a;
 }
 
-LmnArray lmn_make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
+LmnArrayRef lmn_make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
   return make_array(mem, size, init_value, init_type);
 }
 
-void lmn_array_free(LmnArray array, LmnMembrane *mem)
+void lmn_array_free(LmnArrayRef array, LmnMembrane *mem)
 {
   unsigned long i;
 
@@ -129,7 +129,7 @@ void lmn_array_free(LmnArray array, LmnMembrane *mem)
   LMN_FREE(array);
 }
 
-LmnArray lmn_array_copy(LmnArray array)
+LmnArrayRef lmn_array_copy(LmnArrayRef array)
 {
   /* copy the descriptor and share data */
   /* ownership is tranferred to the new copy and the old copy */
@@ -137,7 +137,7 @@ LmnArray lmn_array_copy(LmnArray array)
 
   if (!LMN_ARRAY_OWNER(array)) lmn_fatal("attempt to copy old array");
 
-  LmnArray a = LMN_MALLOC(struct LmnArray);
+  LmnArrayRef a = LMN_MALLOC(struct LmnArray);
   memcpy(a, array, sizeof(struct LmnArray));
   /*
      LMN_SP_ATOM_SET_TYPE(a, array_atom_type);
@@ -169,7 +169,7 @@ void cb_array_new(LmnReactCxt *rc,
     LmnAtom a2, LmnLinkAttr t2)
 {
   /* a0 is assumed to be an integer data atom */
-  LmnArray atom = lmn_make_array(mem, a0, a1, t1);
+  LmnArrayRef atom = lmn_make_array(mem, a0, a1, t1);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
   if(t1==LMN_HL_ATTR){
@@ -343,7 +343,7 @@ BOOL sp_cb_array_eq(void *_p1, void *_p2)
   return FALSE;
 }
 
-void sp_cb_array_dump(void *array, LmnPort port)
+void sp_cb_array_dump(void *array, LmnPortRef port)
 {
   unsigned long i, size;
   LmnLinkAttr type;

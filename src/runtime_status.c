@@ -64,7 +64,7 @@ static char *profile_time_id_to_name(int type);
 /** ----------------------------
  *  Rule Profiler
  */
-RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRule src)
+RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRuleRef src)
 {
   RuleProfiler *p = LMN_MALLOC(RuleProfiler);
   time_profiler_init(&p->trial);
@@ -356,7 +356,7 @@ void profile_statespace(LmnWorkerGroup *wp)
   lmn_prof.state_num_end    = statespace_end_num(worker_states(w));
 
   if (lmn_env.profile_level >= 3 && lmn_env.tree_compress) {
-    profile_add_space(PROFILE_SPACE__STATE_BINSTR, (2 << lmn_env.tree_compress_table_size) * sizeof(TreeNode));
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, (2 << lmn_env.tree_compress_table_size) * sizeof(TreeNodeRef));
     profile_add_space(PROFILE_SPACE__STATE_BINSTR, sizeof(struct TreeDatabase));
     profile_total_space_update(worker_states(w));
   }
@@ -392,11 +392,11 @@ void profile_statespace(LmnWorkerGroup *wp)
 static void profile_state_f(State *s, LmnWord arg)
 {
   MCProfiler2 *p;
-  StateSpace ss;
+  StateSpaceRef ss;
   unsigned int succ_num;
 
   p  = &lmn_prof.lv2[lmn_OMP_get_my_id()];
-  ss = (StateSpace)arg;
+  ss = (StateSpaceRef)arg;
   succ_num = state_succ_num(s);
 
   /* メモリ */
@@ -421,7 +421,7 @@ static void profile_state_f(State *s, LmnWord arg)
 
   if (!(is_encoded(s) && is_dummy(s))) {
     if (statespace_has_property(ss)) {
-      Automata a = statespace_automata(ss);
+      AutomataRef a = statespace_automata(ss);
       if (state_is_accept(a, s)) {
         p->accept_num++;
       }

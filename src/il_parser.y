@@ -52,8 +52,8 @@ typedef void* yyscan_t;
 %pure-parser
 %locations
 %parse-param {yyscan_t scanner}
-%parse-param {IL* ret_il}
-%parse-param {Rule* ret_rule}
+%parse-param {ILRef* ret_il}
+%parse-param {RuleRef* ret_rule}
 /* ローカルのルールセットIDからグローバルなIDへのテーブル */
 %lex-param {yyscan_t scanner}
 
@@ -62,17 +62,17 @@ typedef void* yyscan_t;
   int _int;
   lmn_interned_str id;
   lmn_interned_str str;
-  RuleSet ruleset;
-  IL il;
+  RuleSetRef ruleset;
+  ILRef il;
   RuleSets rulesets;
   RuleList rules;
-  Rule rule;
-  InstBlock inst_block;
+  RuleRef rule;
+  InstBlockRef inst_block;
   InstList instructions;
-  Instruction instruction;
-  InstrArg arg;
+  InstructionRef instruction;
+  InstrArgRef arg;
   VarList inst_vars;
-  Functor functor;
+  FunctorRef functor;
   ModuleList module_list;
   ArgList args;
   InlineList inline_list;
@@ -126,7 +126,7 @@ typedef void* yyscan_t;
 
 %{
 #include "il_lexer.h"
-void ilerror (YYLTYPE*, yyscan_t, IL *, Rule *, char *);
+void ilerror (YYLTYPE*, yyscan_t, ILRef *, RuleRef *, char *);
 
 %}
 
@@ -292,7 +292,7 @@ functor:
 #include "st.h"
 
 /* Called by yyparse on error.  */
-void ilerror (YYLTYPE *loc, yyscan_t scanner, IL *il, Rule *rule, char *s)
+void ilerror (YYLTYPE *loc, yyscan_t scanner, ILRef *il, RuleRef *rule, char *s)
 {
   fprintf (stderr, "il parser: error %s line: %d\n", s, ilget_lineno(scanner));
   exit(1);

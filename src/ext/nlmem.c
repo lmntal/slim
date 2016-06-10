@@ -51,7 +51,7 @@ void nlmem_copy(LmnReactCxt *rc,
                 LmnAtom a2, LmnLinkAttr t2)
 {
   LmnMembrane *org_mem, *trg_mem;
-  ProcessTbl atom_map;
+  ProcessTableRef atom_map;
   lmn_interned_str copy_tag_name;
   LmnFunctor copy_tag_func;
 

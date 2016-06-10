@@ -163,7 +163,7 @@ struct LmnWorker {
   void            (*start)( );   /* 実行関数 */
   BOOL            (*check)( );   /* 終了検知関数 */
 
-  StateSpace      states;        /* Pointer to StateSpace */
+  StateSpaceRef   states;        /* Pointer to StateSpace */
   LmnReactCxt     cxt;           /* ReactContext Object */
   LmnWorker       *next;         /* Pointer to Neighbor Worker */
   LmnWorkerGroup  *group;
@@ -393,13 +393,13 @@ static inline BOOL worker_check(LmnWorker *w) {
 
 /** ProtoTypes
  */
-LmnWorkerGroup *lmn_workergroup_make(Automata a, Vector *psyms, int thread_num);
+LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms, int thread_num);
 void lmn_workergroup_free(LmnWorkerGroup *wg);
 void launch_lmn_workers(LmnWorkerGroup *wg);
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root);
 void lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
 inline LmnWorker *lmn_worker_make_minimal(void);
-LmnWorker *lmn_worker_make(StateSpace     ss,
+LmnWorker *lmn_worker_make(StateSpaceRef  ss,
                            unsigned long  id,
                            BOOL           flags);
 void lmn_worker_free(LmnWorker *w);

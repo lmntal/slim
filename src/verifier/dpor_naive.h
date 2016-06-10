@@ -47,7 +47,7 @@
 
 
 
-void por_calc_ampleset(StateSpace  ss,
+void por_calc_ampleset(StateSpaceRef  ss,
                        State       *s,
                        LmnReactCxt *rc,
                        Vector      *new_s,

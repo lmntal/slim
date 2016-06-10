@@ -11,8 +11,8 @@ void cb_react_rule(LmnReactCxt *rc,
 {
   LmnMembrane *rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
   LmnMembrane *graph_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(graph_mem_proxy, 0));
-  LmnRuleSet rs = (LmnRuleSet)vec_get(&(rule_mem->rulesets), 0);
-  LmnRule r = lmn_ruleset_get_rule(rs, 0);
+  LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&(rule_mem->rulesets), 0);
+  LmnRuleRef r = lmn_ruleset_get_rule(rs, 0);
   LmnSAtom result;
   LmnReactCxt tmp_rc;
   //    tmp_rc = *rc;
@@ -57,8 +57,8 @@ void cb_react_rule_nd(LmnReactCxt *rc,
   lmn_mem_delete_atom(graph_mem, LMN_SATOM_GET_LINK(in_mem, 1), LMN_SATOM_GET_ATTR(in_mem, 1));
   lmn_mem_delete_atom(graph_mem, in_mem, LMN_SATOM_GET_ATTR(LMN_SATOM(graph_mem_proxy), 0));
 
-  LmnRuleSet rs = (LmnRuleSet)vec_get(&(rule_mem->rulesets), 0);
-  LmnRule r = lmn_ruleset_get_rule(rs, 0);
+  LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&(rule_mem->rulesets), 0);
+  LmnRuleRef r = lmn_ruleset_get_rule(rs, 0);
   LmnReactCxt tmp_rc;
   mc_react_cxt_init(&tmp_rc);
   RC_SET_GROOT_MEM(&tmp_rc, graph_mem);

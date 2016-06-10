@@ -61,7 +61,7 @@
 typedef void *(*f_copy)(void*);
 typedef BOOL (*f_eq)(void*, void*);
 typedef void (*f_free)(void*);
-typedef void (*f_dump)(void *, LmnPort);
+typedef void (*f_dump)(void *, LmnPortRef);
 typedef BOOL (*f_is_ground)(void*);
 
 struct SpecialAtomCallback {

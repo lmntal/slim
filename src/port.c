@@ -61,12 +61,12 @@ static LmnFunctor eof_functor;
 
 #define FILE_PORT_FP(obj) ((FILE *)LMN_PORT_DATA(obj))
 
-static LmnPort port_copy_sub(LmnPort port);
+static LmnPortRef port_copy_sub(LmnPortRef port);
 
 /*
  * Internal Constructor.
  */
-static LmnPort make_port(LmnPortDirection dir, LmnPortType type, const char *name)
+static LmnPortRef make_port(LmnPortDirection dir, LmnPortType type, const char *name)
 {
   struct LmnPort *port = LMN_MALLOC(struct LmnPort);
   LMN_SP_ATOM_SET_TYPE(port, port_atom_type);
@@ -80,11 +80,11 @@ static LmnPort make_port(LmnPortDirection dir, LmnPortType type, const char *nam
   return port;
 }
 
-LmnPort lmn_make_port(LmnPortDirection dir, LmnPortType type, const char *name){
+LmnPortRef lmn_make_port(LmnPortDirection dir, LmnPortType type, const char *name){
   return make_port(dir, type, name);
 }
 
-void lmn_port_free(LmnPort port)
+void lmn_port_free(LmnPortRef port)
 {
   if (port->owner) {
     switch (LMN_PORT_TYPE(port)) {
@@ -105,9 +105,9 @@ void lmn_port_free(LmnPort port)
 
 /* ownerが真の場合、生成したポートがオーナーとなる。ただし、portがオー
    ナーでなかった場合はオーナーにはならない*/
-LmnPort lmn_port_copy(LmnPort port, BOOL owner)
+LmnPortRef lmn_port_copy(LmnPortRef port, BOOL owner)
 {
-  LmnPort new_port = port_copy_sub(port);
+  LmnPortRef new_port = port_copy_sub(port);
   new_port->owner = owner && LMN_PORT_OWNER(port);
 
   switch (LMN_PORT_TYPE(port)) {
@@ -125,38 +125,38 @@ LmnPort lmn_port_copy(LmnPort port, BOOL owner)
   return new_port;
 }
 
-static LmnPort port_copy_sub(LmnPort port)
+static LmnPortRef port_copy_sub(LmnPortRef port)
 {
-  LmnPort new = LMN_MALLOC(struct LmnPort);
+  LmnPortRef new = LMN_MALLOC(struct LmnPort);
   memcpy(new, port, sizeof(struct LmnPort));
   return new;
 }
 
-static LmnPort lmn_stdin;
-static LmnPort lmn_stdout;
-static LmnPort lmn_stderr;
+static LmnPortRef lmn_stdin;
+static LmnPortRef lmn_stdout;
+static LmnPortRef lmn_stderr;
 
-LmnPort lmn_stdin_port()
+LmnPortRef lmn_stdin_port()
 {
   return lmn_port_copy(lmn_stdin, FALSE);
 }
 
-LmnPort lmn_stdout_port()
+LmnPortRef lmn_stdout_port()
 {
   return lmn_port_copy(lmn_stdout, FALSE);
 }
 
-LmnPort lmn_stderr_port()
+LmnPortRef lmn_stderr_port()
 {
   return lmn_port_copy(lmn_stderr, FALSE);
 }
 
-LmnPort lmn_make_file_port(FILE *file,
+LmnPortRef lmn_make_file_port(FILE *file,
                            const char *name,
                            LmnPortDirection dir,
                            BOOL owner)
 {
-  LmnPort port = make_port(dir, LMN_PORT_FILE, name);
+  LmnPortRef port = make_port(dir, LMN_PORT_FILE, name);
 
   port->data = file;
   port->owner = owner;
@@ -165,9 +165,9 @@ LmnPort lmn_make_file_port(FILE *file,
 }
 
 /* 入力文字列ポートを作成する。引数sの解放の責任は個の関数が持つ */
-LmnPort lmn_make_input_string_port(LmnString s)
+LmnPortRef lmn_make_input_string_port(LmnStringRef s)
 {
-  LmnPort port = make_port(LMN_PORT_INPUT, LMN_PORT_ISTR, "input string port");
+  LmnPortRef port = make_port(LMN_PORT_INPUT, LMN_PORT_ISTR, "input string port");
   struct IStrPortData *d = LMN_MALLOC(struct IStrPortData);
 
   d->s = s;
@@ -178,16 +178,16 @@ LmnPort lmn_make_input_string_port(LmnString s)
   return port;
 }
 
-LmnPort lmn_make_output_string_port()
+LmnPortRef lmn_make_output_string_port()
 {
-  LmnPort port = make_port(LMN_PORT_OUTPUT, LMN_PORT_OSTR, "output string port");
+  LmnPortRef port = make_port(LMN_PORT_OUTPUT, LMN_PORT_OSTR, "output string port");
 
   port->data = lmn_string_make_empty();
   port->owner = TRUE;
   return port;
 }
 
-void lmn_port_close(LmnPort port)
+void lmn_port_close(LmnPortRef port)
 {
   if (lmn_port_closed(port)) return;
 
@@ -209,28 +209,28 @@ void lmn_port_close(LmnPort port)
   port->closed = TRUE;
 }
 
-BOOL lmn_port_closed(LmnPort port_atom)
+BOOL lmn_port_closed(LmnPortRef port_atom)
 {
   return LMN_PORT(port_atom)->closed;
 }
 
-BOOL lmn_port_error_occurred(LmnPort port_atom)
+BOOL lmn_port_error_occurred(LmnPortRef port_atom)
 {
   return LMN_PORT(port_atom)->error;
 }
 
-LmnPortDirection lmn_port_dir(LmnPort port_atom)
+LmnPortDirection lmn_port_dir(LmnPortRef port_atom)
 {
   return LMN_PORT(port_atom)->direction;
 }
 
-lmn_interned_str lmn_port_name(LmnPort port_atom)
+lmn_interned_str lmn_port_name(LmnPortRef port_atom)
 {
   return LMN_PORT(port_atom)->name;
 }
 
 /* 出力文字列ポートに書き込まれた文字列のコピー返す。 */
-LmnString lmn_port_output_string(LmnPort ostr_port)
+LmnStringRef lmn_port_output_string(LmnPortRef ostr_port)
 {
   return lmn_string_copy(LMN_STRING(LMN_PORT_DATA(ostr_port)));
 }
@@ -241,7 +241,7 @@ LmnString lmn_port_output_string(LmnPort ostr_port)
 
 /* ポートから一文字読み込み返す。もしくは、ポートの終わりに達するか、エ
    ラーが起きた場合には、EOFを返す */
-int port_get_raw_c(LmnPort port)
+int port_get_raw_c(LmnPortRef port)
 {
   if (lmn_port_closed(port)) return EOF;
   if (LMN_PORT_DIR(port) != LMN_PORT_INPUT) return EOF;
@@ -270,7 +270,7 @@ int port_get_raw_c(LmnPort port)
 /* ポートに一文字を戻す。戻した文字は次に読み込む際に読み込まれる。戻す
    文字は一文字だけしか保証されない。正常に実行された場合にはcを返し，
    エラーが起きた場合にはEOFを返す */
-int port_unget_raw_c(LmnPort port, int c)
+int port_unget_raw_c(LmnPortRef port, int c)
 {
   if (lmn_port_closed(port)) return EOF;
   if (LMN_PORT_DIR(port) != LMN_PORT_INPUT) return EOF;
@@ -301,10 +301,10 @@ int port_unget_raw_c(LmnPort port, int c)
 
 /* ポートから一行読み込み、読み込んだ文字列を返す。ファイルの終わりに達
    していたり，エラーが起きた場合はNULLを返す */
-LmnString port_read_line(LmnPort port)
+LmnStringRef port_read_line(LmnPortRef port)
 {
   int c0, c1;
-  LmnString s;
+  LmnStringRef s;
 
   if (lmn_port_closed(port)) return NULL;
   if (LMN_PORT_DIR(port) != LMN_PORT_INPUT) return NULL;
@@ -330,10 +330,10 @@ LmnString port_read_line(LmnPort port)
 /* ポートから空白または改行で区切られたトークンを読み込み、
    読み込んだ文字列を返す。ファイルの終わりに達
    していたり，エラーが起きた場合はNULLを返す */
-LmnString port_read_token(LmnPort port)
+LmnStringRef port_read_token(LmnPortRef port)
 {
   int c0, c1;
-  LmnString s;
+  LmnStringRef s;
 
   if (lmn_port_closed(port)) return NULL;
   if (LMN_PORT_DIR(port) != LMN_PORT_INPUT) return NULL;
@@ -371,14 +371,14 @@ LmnString port_read_token(LmnPort port)
 }
 
 /* 文字はunaryアトムで表現している */
-int port_putc(LmnPort port, LmnSAtom unary_atom)
+int port_putc(LmnPortRef port, LmnSAtom unary_atom)
 {
   return port_put_raw_s(port, LMN_SATOM_STR(unary_atom));
 }
 
 /* Cの文字をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
    処理された場合は負でない数を返す*/
-int port_put_raw_c(LmnPort port, int c)
+int port_put_raw_c(LmnPortRef port, int c)
 {
   if (lmn_port_closed(port)) return EOF;
   if (LMN_PORT_DIR(port) != LMN_PORT_OUTPUT) return EOF;
@@ -391,7 +391,7 @@ int port_put_raw_c(LmnPort port, int c)
     }
     break;
   case LMN_PORT_OSTR:
-    lmn_string_push_raw_c((LmnString)LMN_PORT_DATA(port), c);
+    lmn_string_push_raw_c((LmnStringRef)LMN_PORT_DATA(port), c);
     return 1;
   default:
     lmn_fatal("unexpected port type");
@@ -401,7 +401,7 @@ int port_put_raw_c(LmnPort port, int c)
 
 /* Cの文字列をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
    処理された場合は負でない数を返す*/
-int port_put_raw_s(LmnPort port, const char *str)
+int port_put_raw_s(LmnPortRef port, const char *str)
 {
   if (lmn_port_closed(port)) return EOF;
   if (LMN_PORT_DIR(port) != LMN_PORT_OUTPUT) return EOF;
@@ -415,7 +415,7 @@ int port_put_raw_s(LmnPort port, const char *str)
     }
     break;
   case LMN_PORT_OSTR:
-    lmn_string_push_raw_s((LmnString)LMN_PORT_DATA(port), str);
+    lmn_string_push_raw_s((LmnStringRef)LMN_PORT_DATA(port), str);
     return 1;
   default:
     lmn_fatal("unexpected port type");
@@ -425,7 +425,7 @@ int port_put_raw_s(LmnPort port, const char *str)
 
 /* 文字列をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
    処理された場合は負でない数を返す*/
-int port_puts(LmnPort port, LmnString str)
+int port_puts(LmnPortRef port, LmnStringRef str)
 {
   return port_put_raw_s(port, lmn_string_c_str(str));
 }
@@ -445,7 +445,7 @@ void cb_port_close(LmnReactCxt *rc,
                    LmnAtom a0, LmnLinkAttr t0,
                    LmnAtom a1, LmnLinkAttr t1)
 {
-  LmnPort port = LMN_PORT(a0);
+  LmnPortRef port = LMN_PORT(a0);
 
   lmn_port_close(port);
   lmn_mem_newlink(mem,
@@ -473,7 +473,7 @@ void cb_stdin_port(LmnReactCxt *rc,
                    LmnMembrane *mem,
                    LmnAtom a0, LmnLinkAttr t0)
 {
-  LmnPort atom = lmn_stdin_port();
+  LmnPortRef atom = lmn_stdin_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
   lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
@@ -489,7 +489,7 @@ void cb_stdout_port(LmnReactCxt *rc,
                     LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
-  LmnPort atom = lmn_stdout_port();
+  LmnPortRef atom = lmn_stdout_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
   lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
@@ -505,7 +505,7 @@ void cb_stderr_port(LmnReactCxt *rc,
                     LmnMembrane *mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
-  LmnPort atom = lmn_stderr_port();
+  LmnPortRef atom = lmn_stderr_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
   lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
@@ -687,7 +687,7 @@ void cb_port_read_line(LmnReactCxt *rc,
                        LmnAtom a1, LmnLinkAttr t1,
                        LmnAtom a2, LmnLinkAttr t2)
 {
-  LmnString s = port_read_line(LMN_PORT(a0));
+  LmnStringRef s = port_read_line(LMN_PORT(a0));
 
   if (s != NULL) {
     lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_SP_ATOM_ATTR);
@@ -718,7 +718,7 @@ void cb_port_read_token(LmnReactCxt *rc,
                        LmnAtom a1, LmnLinkAttr t1,
                        LmnAtom a2, LmnLinkAttr t2)
 {
-  LmnString s = port_read_token(LMN_PORT(a0));
+  LmnStringRef s = port_read_token(LMN_PORT(a0));
 
   if (s != NULL) {
     lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_SP_ATOM_ATTR);
@@ -747,7 +747,7 @@ void cb_make_output_string(LmnReactCxt *rc,
                            LmnMembrane *mem,
                            LmnAtom a0, LmnLinkAttr t0)
 {
-  LmnPort port = lmn_make_output_string_port();
+  LmnPortRef port = lmn_make_output_string_port();
   lmn_mem_push_atom(mem, LMN_ATOM(port), LMN_SP_ATOM_ATTR);
   lmn_mem_newlink(mem,
                   LMN_ATOM(port), LMN_SP_ATOM_ATTR, 0,
@@ -765,7 +765,7 @@ void cb_make_input_string(LmnReactCxt *rc,
                           LmnAtom a0, LmnLinkAttr t0,
                           LmnAtom a1, LmnLinkAttr t1)
 {
-  LmnPort port = lmn_make_input_string_port(LMN_STRING(a0));
+  LmnPortRef port = lmn_make_input_string_port(LMN_STRING(a0));
 
   lmn_mem_push_atom(mem, LMN_ATOM(port), LMN_SP_ATOM_ATTR);
   lmn_mem_newlink(mem,
@@ -786,10 +786,10 @@ void cb_port_output_string(LmnReactCxt *rc,
                            LmnAtom a1, LmnLinkAttr t1,
                            LmnAtom a2, LmnLinkAttr t2)
 {
-  LmnPort port = LMN_PORT(a0);
+  LmnPortRef port = LMN_PORT(a0);
 
   if (LMN_PORT_TYPE(port) == LMN_PORT_OSTR) {
-    LmnString s = lmn_port_output_string(port);
+    LmnStringRef s = lmn_port_output_string(port);
     lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_STRING_ATTR);
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
@@ -825,7 +825,7 @@ BOOL sp_cb_port_eq(void *_p1, void *_p2)
   return FALSE;
 }
 
-void sp_cb_port_dump(void *data, LmnPort port)
+void sp_cb_port_dump(void *data, LmnPortRef port)
 {
   port_put_raw_s(port, "<");
   port_put_raw_s(port, LMN_SYMBOL_STR(LMN_PORT(data)->name));

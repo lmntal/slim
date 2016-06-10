@@ -147,17 +147,17 @@ typedef void (* callback_5)(LmnReactCxt *,
 /* リンク先のアトムの引数のattributeを得る */
 #define LINKED_ATTR(LINKI) at(rc, LINKI)
 
-static inline BOOL react_ruleset(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleSet ruleset);
-static inline BOOL react_ruleset_inner(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleSet rs);
+static inline BOOL react_ruleset(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleSetRef ruleset);
+static inline BOOL react_ruleset_inner(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleSetRef rs);
 static inline void react_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem);
-static inline BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane *mem);
+static inline BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSetRef rs, LmnMembrane *mem);
 //static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
-static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
+static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr);
 
 
 static void mem_oriented_loop(LmnReactCxt *rc, LmnMembrane *mem);
 
-void lmn_dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
+void lmn_dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 {
   dmem_interpret(rc, rule, instr);
 }
@@ -289,7 +289,7 @@ BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembrane *cur_mem)
 
   /* ルールセットの適用 */
   for (i = 0; i < vec_num(&rulesets); i++) {
-    if (react_ruleset(rc, cur_mem, (LmnRuleSet)vec_get(&rulesets, i))) {
+    if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)vec_get(&rulesets, i))) {
       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる */
       ok = TRUE;
       break;
@@ -307,7 +307,7 @@ BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembrane *cur_mem)
 /* an extenstion rule applier, @see ext/atomic.c */
 extern BOOL react_ruleset_atomic(LmnReactCxt *rc,
                                  LmnMembrane *mem,
-                                 LmnRuleSet  rs);
+                                 LmnRuleSetRef  rs);
 
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
  *  戻り値:
@@ -315,7 +315,7 @@ extern BOOL react_ruleset_atomic(LmnReactCxt *rc,
  *   非決定実行では常にFALSEを返す(マッチングに失敗するまでバックトラックする仕様). */
 static inline BOOL react_ruleset(LmnReactCxt *rc,
                                  LmnMembrane *mem,
-                                 LmnRuleSet rs)
+                                 LmnRuleSetRef rs)
 {
   BOOL result;
 
@@ -342,12 +342,12 @@ static inline BOOL react_ruleset(LmnReactCxt *rc,
 /**  @see react_ruleset (task.c)  */
 static inline BOOL react_ruleset_inner(LmnReactCxt *rc,
                                        LmnMembrane *mem,
-                                       LmnRuleSet  rs)
+                                       LmnRuleSetRef  rs)
 {
   unsigned int i;
   BOOL ret = FALSE;
   for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
-    LmnRule r = lmn_ruleset_get_rule(rs, i);
+    LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2) {
       profile_rule_obj_set(rs, r);
@@ -366,7 +366,7 @@ static inline BOOL react_ruleset_inner(LmnReactCxt *rc,
  *  戻り値:
  *   通常実行では, 書換えに成功した場合にTRUE, マッチングしなかった場合にFALSEを返す.
  *   非決定実行では, マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
-BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
+BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
 {
   LmnTranslated translated;
   BYTE *inst_seq;
@@ -437,7 +437,7 @@ void react_start_rulesets(LmnMembrane *mem, Vector *rulesets)
   RC_SET_GROOT_MEM(&rc, mem);
 
   for (i = 0; i < vec_num(rulesets); i++) {
-    react_ruleset(&rc, mem, (LmnRuleSet)vec_get(rulesets, i));
+    react_ruleset(&rc, mem, (LmnRuleSetRef)vec_get(rulesets, i));
   }
   react_initial_rulesets(&rc, mem);
   stand_alone_react_cxt_destroy(&rc);
@@ -465,7 +465,7 @@ inline static void react_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem)
 }
 
 /* ルールセットrsをmem以下のすべての膜内で適用する */
-static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane *mem)
+static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSetRef rs, LmnMembrane *mem)
 {
   LmnMembrane *m;
 
@@ -552,10 +552,10 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSet rs, LmnMembrane
     case LMN_STRING_ATTR:                                     \
     {                                                         \
       lmn_interned_str s;                                     \
-      LmnString str1;                                         \
+      LmnStringRef str1;                                         \
       READ_VAL(lmn_interned_str, instr, s);                   \
       str1 = lmn_string_make(lmn_id_to_name(s));              \
-      (result) = lmn_string_eq(str1, (LmnString)(x));         \
+      (result) = lmn_string_eq(str1, (LmnStringRef)(x));         \
       lmn_string_free(str1);                                  \
       break;                                                  \
     }                                                         \
@@ -641,7 +641,7 @@ HashSet *insertconnectors(LmnReactCxt *rc, LmnMembrane *mem, const Vector *links
   return retset;
 }
 
-BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
+BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 {
   LmnInstrOp op;
 
@@ -915,7 +915,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           /** >>>>>>> disable delta-membrane <<<<<<< **/
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
           LmnRegister *v, *tmp;
-          ProcessTbl copymap;
+          ProcessTableRef copymap;
           LmnMembrane *tmp_global_root;
           unsigned int warry_size_org, warry_use_org, warry_cur_org;
           unsigned int i, n;
@@ -2223,7 +2223,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     {
       LmnInstrVar memi;
       lmn_interned_str module_name_id;
-      LmnRuleSet ruleset;
+      LmnRuleSetRef ruleset;
 
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(lmn_interned_str, instr, module_name_id);
@@ -2367,14 +2367,14 @@ label_skip_data_atom:
       avovec = links_from_idxs((Vector *)wt(rc, avolisti), rc_warry(rc));
 
       if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
-        ProcessTbl atoms;
-        ProcessTbl hlinks;
+        ProcessTableRef atoms;
+        ProcessTableRef hlinks;
         hlinks = NULL;
         switch (op) {
         case INSTR_ISHLGROUND:
         case INSTR_ISHLGROUNDINDIRECT:
         {
-          ProcessTbl attr_functors;
+          ProcessTableRef attr_functors;
           Vector attr_dataAtoms;
           Vector attr_dataAtom_attrs;
             vec_init(&attr_dataAtoms, 16);
@@ -2461,7 +2461,7 @@ label_skip_data_atom:
           case INSTR_ISHLGROUND:
           case INSTR_ISHLGROUNDINDIRECT:
           {
-            ProcessTbl attr_functors;
+            ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
             Vector attr_dataAtom_attrs;
             vec_init(&attr_dataAtoms, 16);
@@ -2554,13 +2554,13 @@ label_skip_data_atom:
        */
 
       LmnInstrVar llist, n;
-      LmnPort port;
+      LmnPortRef port;
       lmn_interned_str id;
       unsigned int i;
       BOOL sh;
       LmnLinkAttr attr;
 
-      port = (LmnPort)lmn_make_output_string_port();
+      port = (LmnPortRef)lmn_make_output_string_port();
       READ_VAL(LmnInstrVar, instr, llist);
 
       if (lmn_env.show_hyperlink) {
@@ -2900,8 +2900,8 @@ label_skip_data_atom:
     {
       LmnInstrVar dstlist, srclist, memi;
       Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
-      ProcessTbl atommap;
-      ProcessTbl hlinkmap;
+      ProcessTableRef atommap;
+      ProcessTableRef hlinkmap;
 
       READ_VAL(LmnInstrVar, instr, dstlist);
       READ_VAL(LmnInstrVar, instr, srclist);
@@ -2914,7 +2914,7 @@ label_skip_data_atom:
         case INSTR_COPYHLGROUND:
         case INSTR_COPYHLGROUNDINDIRECT:
         {
-          ProcessTbl attr_functors;
+          ProcessTableRef attr_functors;
           Vector attr_dataAtoms;
           Vector attr_dataAtom_attrs;
           vec_init(&attr_dataAtoms, 16);
@@ -3019,7 +3019,7 @@ label_skip_data_atom:
         case INSTR_FREEHLGROUND:
         case INSTR_FREEHLGROUNDINDIRECT:
         { 
-          ProcessTbl attr_functors;
+          ProcessTableRef attr_functors;
           Vector attr_dataAtoms;
           Vector attr_dataAtom_attrs;
           vec_init(&attr_dataAtoms, 16);
@@ -3296,7 +3296,7 @@ label_skip_data_atom:
           break;
         case LINK_LIST: /* LinkObjをfreeするのはここ？ */
         {
-          LinkObj lo = (LinkObj)vec_get((Vector *)wt(rc, listi), (unsigned int)posi);
+          LinkObjRef lo = (LinkObjRef)vec_get((Vector *)wt(rc, listi), (unsigned int)posi);
           warry_set(rc, dsti, lo->ap, lo->pos, TT_ATOM);
           break;
         }
@@ -3739,7 +3739,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = &((LmnMembrane *)wt(rc, srcmemi))->rulesets;
       for (i = 0; i< v->num; i++) {
-        LmnRuleSet cp = lmn_ruleset_copy((LmnRuleSet)vec_get(v, i));
+        LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));
         lmn_mem_add_ruleset((LmnMembrane *)wt(rc, destmemi), cp);
         if (RC_GET_MODE(rc, REACT_ATOMIC)) {
           /* atomic step中にatomic setをコピーした場合のため */
@@ -3770,13 +3770,13 @@ label_skip_data_atom:
     {
       LmnInstrVar srcset, srcmap;
       HashSet *delset;
-      ProcessTbl delmap;
+      ProcessTableRef delmap;
       HashSetIterator it;
       READ_VAL(LmnInstrVar, instr, srcset);
       READ_VAL(LmnInstrVar, instr, srcmap);
 
       delset = (HashSet *)wt(rc, srcset);
-      delmap = (ProcessTbl)wt(rc, srcmap);
+      delmap = (ProcessTableRef)wt(rc, srcmap);
 
       for(it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         LmnSAtom orig, copy;
@@ -3981,7 +3981,7 @@ label_skip_data_atom:
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {
         wt_set(rc, destlinki, LINKED_ATOM(srclinki));
       } else { /* symbol atom */
-        ProcessTbl ht = (ProcessTbl)wt(rc, tbli);
+        ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);
         proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt(rc, destlinki));
       }
       break;
@@ -4271,7 +4271,7 @@ label_skip_data_atom:
 /* } */
 
 
-static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
+static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 {
 /*   LmnRuleInstr start = instr; */
   LmnInstrOp op;
@@ -4641,7 +4641,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     {
       LmnInstrVar memi;
       lmn_interned_str module_name_id;
-      LmnRuleSet ruleset;
+      LmnRuleSetRef ruleset;
 
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(lmn_interned_str, instr, module_name_id);
@@ -4672,7 +4672,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     {
       LmnInstrVar dstlist, srclist, memi;
       Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
-      ProcessTbl atommap;
+      ProcessTableRef atommap;
 
       READ_VAL(LmnInstrVar, instr, dstlist);
       READ_VAL(LmnInstrVar, instr, srclist);
@@ -4781,7 +4781,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
           break;
         case LINK_LIST: /* LinkObjをfreeするのはここ？ */
         {
-          LinkObj lo = (LinkObj)vec_get((Vector *)wt(rc, listi), (unsigned int)posi);
+          LinkObjRef lo = (LinkObjRef)vec_get((Vector *)wt(rc, listi), (unsigned int)posi);
           wt_set(rc, dsti, lo->ap);
           at_set(rc, dsti, lo->pos);
           break;
@@ -4898,13 +4898,13 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
     {
       LmnInstrVar srcset, srcmap;
       HashSet *delset;
-      ProcessTbl delmap;
+      ProcessTableRef delmap;
       HashSetIterator it;
       READ_VAL(LmnInstrVar, instr, srcset);
       READ_VAL(LmnInstrVar, instr, srcmap);
 
       delset = (HashSet *)wt(rc, srcset);
-      delmap = (ProcessTbl)wt(rc, srcmap);
+      delmap = (ProcessTableRef)wt(rc, srcmap);
 
       for (it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         LmnSAtom orig, copy;
@@ -4990,7 +4990,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
         wt_set(rc, destlinki, LINKED_ATOM(srclinki));
       }
       else { /* symbol atom */
-        ProcessTbl ht = (ProcessTbl)wt(rc, tbli);
+        ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);
         proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt(rc, destlinki));
       }
       break;

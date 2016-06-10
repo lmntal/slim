@@ -40,19 +40,19 @@
 #ifndef LMN_PROP_AUTOMATA
 #define LMN_PROP_AUTOMATA
 
-#include "lmntal.h"
+#include "../lmntal.h"
 #include "vector.h"
 #include "st.h"
 
-typedef struct Automata            *Automata;
-typedef struct AutomataState       *AutomataState;
-typedef struct AutomataTransition  *AutomataTransition;
+typedef struct Automata            *AutomataRef;
+typedef struct AutomataState       *AutomataStateRef;
+typedef struct AutomataTransition  *AutomataTransitionRef;
 typedef struct AutomataSCC         AutomataSCC;
 
 typedef BYTE atmstate_id_t; /* 性質ラベル(状態)数は256個まで */
 
 /* Propositional Logic Formula */
-typedef struct PLFormula *PLFormula;
+typedef struct PLFormula *PLFormulaRef;
 
 enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_UNKNOWN     = 0U,
@@ -63,57 +63,57 @@ enum SCC_ACCEPTING_TYPE {
 
 
 /* automata */
-Automata           automata_make(void);
-void               automata_free(Automata a);
-atmstate_id_t      automata_state_id(Automata a, char *state_name);
-const char        *automata_state_name(Automata a, atmstate_id_t id);
-atmstate_id_t      automata_state_scc_id(Automata a, atmstate_id_t id);
-const char        *automata_state_scc_name(Automata a, atmstate_id_t id);
-AutomataState      automata_get_state(Automata a, BYTE state_id);
-void               automata_set_init_state(Automata a, atmstate_id_t id);
-atmstate_id_t      automata_get_init_state(Automata a);
-unsigned int       automata_propsym_to_id(Automata a, char *prop_name);
-AutomataState      atmstate_make(unsigned int id,
+AutomataRef           automata_make(void);
+void               automata_free(AutomataRef a);
+atmstate_id_t      automata_state_id(AutomataRef a, char *state_name);
+const char        *automata_state_name(AutomataRef a, atmstate_id_t id);
+atmstate_id_t      automata_state_scc_id(AutomataRef a, atmstate_id_t id);
+const char        *automata_state_scc_name(AutomataRef a, atmstate_id_t id);
+AutomataStateRef      automata_get_state(AutomataRef a, BYTE state_id);
+void               automata_set_init_state(AutomataRef a, atmstate_id_t id);
+atmstate_id_t      automata_get_init_state(AutomataRef a);
+unsigned int       automata_propsym_to_id(AutomataRef a, char *prop_name);
+AutomataStateRef      atmstate_make(unsigned int id,
                                  BOOL is_accept_state,
                                  BOOL is_end_state);
 
 /* state of automata */
-void               atmstate_add_transition(AutomataState s, AutomataTransition t);
-void               automata_add_state(Automata a, AutomataState s);
-atmstate_id_t      atmstate_id(AutomataState s);
-unsigned int       atmstate_transition_num(AutomataState s);
-AutomataTransition atmstate_get_transition(AutomataState s, unsigned int index);
-BOOL               atmstate_is_accept(AutomataState s);
-BOOL               atmstate_is_end(AutomataState s);
-void        atmstate_set_scc(AutomataState s, AutomataSCC *scc);
-BYTE        atmstate_scc_type(AutomataState s);
-AutomataSCC *atmstate_scc(AutomataState s);
+void               atmstate_add_transition(AutomataStateRef s, AutomataTransitionRef t);
+void               automata_add_state(AutomataRef a, AutomataStateRef s);
+atmstate_id_t      atmstate_id(AutomataStateRef s);
+unsigned int       atmstate_transition_num(AutomataStateRef s);
+AutomataTransitionRef atmstate_get_transition(AutomataStateRef s, unsigned int index);
+BOOL               atmstate_is_accept(AutomataStateRef s);
+BOOL               atmstate_is_end(AutomataStateRef s);
+void        atmstate_set_scc(AutomataStateRef s, AutomataSCC *scc);
+BYTE        atmstate_scc_type(AutomataStateRef s);
+AutomataSCC *atmstate_scc(AutomataStateRef s);
 
 
 /* transition of automata */
 
-AutomataTransition atm_transition_make(unsigned int next, PLFormula f);
-BYTE               atm_transition_next(AutomataTransition t);
-PLFormula          atm_transition_get_formula(AutomataTransition t);
+AutomataTransitionRef atm_transition_make(unsigned int next, PLFormulaRef f);
+BYTE               atm_transition_next(AutomataTransitionRef t);
+PLFormulaRef          atm_transition_get_formula(AutomataTransitionRef t);
 
 /* SCC analysis of automata */
-void               automata_analysis(Automata a);
+void               automata_analysis(AutomataRef a);
 AutomataSCC       *atmscc_make(void);
 void               atmscc_free(AutomataSCC *s);
 char              *atmscc_name(AutomataSCC *s);
-void               print_property_automata(Automata a);
+void               print_property_automata(AutomataRef a);
 
 /* propositional Logic Formula */
-PLFormula          true_node_make(void);
-PLFormula          false_node_make(void);
-PLFormula          sym_node_make(int sym_id);
-PLFormula          negation_node_make(PLFormula f0);
-PLFormula          and_node_make(PLFormula f0, PLFormula f1);
-PLFormula          or_node_make(PLFormula f0, PLFormula f1);
-void               free_formula(PLFormula f);
-BOOL               eval_formula(LmnMembrane *mem, Vector *prop_defs, PLFormula f);
+PLFormulaRef          true_node_make(void);
+PLFormulaRef          false_node_make(void);
+PLFormulaRef          sym_node_make(int sym_id);
+PLFormulaRef          negation_node_make(PLFormulaRef f0);
+PLFormulaRef          and_node_make(PLFormulaRef f0, PLFormulaRef f1);
+PLFormulaRef          or_node_make(PLFormulaRef f0, PLFormulaRef f1);
+void               free_formula(PLFormulaRef f);
+BOOL               eval_formula(LmnMembrane *mem, Vector *prop_defs, PLFormulaRef f);
 
 /* never claim */
-int                never_claim_load(FILE *f, Automata *a);
+int                never_claim_load(FILE *f, AutomataRef *a);
 
 #endif /* LMN_PROP_AUTOMATA */

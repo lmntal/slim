@@ -45,36 +45,36 @@
 #include "automata.h"
 #include "rule.h"
 
-typedef struct SymbolDefinition *SymbolDefinition;
-typedef struct Proposition *Proposition;
+typedef struct SymbolDefinition *SymbolDefinitionRef;
+typedef struct Proposition *PropositionRef;
 typedef Vector *PropSyms;
 
 /* propositional symbol definition */
  
-SymbolDefinition propsym_make(unsigned int sym_id, Proposition p);
-void propsym_free(SymbolDefinition s);
-unsigned int propsym_symbol_id(SymbolDefinition s);
-int propsym_load_file(FILE *in, Automata a, PropSyms *propsyms);
-void propsym_dump(SymbolDefinition s);
-Proposition propsym_get_proposition(SymbolDefinition s);
+SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p);
+void propsym_free(SymbolDefinitionRef s);
+unsigned int propsym_symbol_id(SymbolDefinitionRef s);
+int propsym_load_file(FILE *in, AutomataRef a, PropSyms *propsyms);
+void propsym_dump(SymbolDefinitionRef s);
+PropositionRef propsym_get_proposition(SymbolDefinitionRef s);
 
 /* proposition */
 
-Proposition proposition_make(const char *head,
+PropositionRef proposition_make(const char *head,
                              const char *guard,
                              const char *body);
-void proposition_free(Proposition p);
-LmnRule proposition_get_rule(Proposition p);
-BOOL proposition_eval(Proposition prop, LmnMembrane *mem);
+void proposition_free(PropositionRef p);
+LmnRuleRef proposition_get_rule(PropositionRef p);
+BOOL proposition_eval(PropositionRef prop, LmnMembrane *mem);
   
 /* propositional symbol definitions */
 
 PropSyms propsyms_make(void);
 void propsyms_set(PropSyms props,
                       unsigned int id,
-                      SymbolDefinition symdef);
+                      SymbolDefinitionRef symdef);
 unsigned int propsyms_num(PropSyms props);
-SymbolDefinition propsyms_get(PropSyms props, unsigned int i);
+SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i);
 void propsyms_free(PropSyms props);
 
 #endif

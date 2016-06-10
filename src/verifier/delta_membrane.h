@@ -62,7 +62,7 @@ struct MemDeltaRoot {
 
   BOOL committed;
 
-  LmnRule applied_rule;
+  LmnRuleRef applied_rule;
   lmn_interned_str applied_history;
   unsigned long new_proc_id_lower_limit;
 };
@@ -111,7 +111,7 @@ struct NewMemInfo {
  * dmem
  */
 
-struct MemDeltaRoot *dmem_root_make(LmnMembrane *root_mem, LmnRule rule, unsigned long next_id);
+struct MemDeltaRoot *dmem_root_make(LmnMembrane *root_mem, LmnRuleRef rule, unsigned long next_id);
 void dmem_root_finish(struct MemDeltaRoot *d);
 void dmem_root_free(struct MemDeltaRoot *p);
 LmnMembrane *dmem_root_get_root_mem(struct MemDeltaRoot *d);
@@ -153,7 +153,7 @@ void dmem_root_remove_mem(struct MemDeltaRoot *d,
 void dmem_root_move_cells(struct MemDeltaRoot *d,
                           LmnMembrane *destmem,
                           LmnMembrane *srcmem);
-ProcessTbl dmem_root_copy_cells(struct MemDeltaRoot *d,
+ProcessTableRef dmem_root_copy_cells(struct MemDeltaRoot *d,
                                 LmnMembrane *destmem,
                                 LmnMembrane *srcmem);
 void dmem_root_clear_ruleset(struct MemDeltaRoot *d, LmnMembrane *m);
@@ -169,7 +169,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
                            LmnMembrane *mem,
                            Vector *srcvec,
                            Vector **ret_dstlovec,
-                           ProcessTbl *ret_atommap);
+                           ProcessTableRef *ret_atommap);
 void dmem_root_free_ground(struct MemDeltaRoot *root_d, Vector *srcvec);
 void dmem_root_remove_ground(struct MemDeltaRoot *root_d, LmnMembrane *mem, Vector *srcvec);
 

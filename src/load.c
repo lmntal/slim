@@ -62,8 +62,8 @@ typedef void* yyscan_t;
 
 /* prototypes */
 
-void dump_module(Module m);
-void dump_il(IL il);
+void dump_module(ModuleRef m);
+void dump_il(ILRef il);
 void build_cmd(char *buf, char *file_name);
 FILE *compile(char *filename);
 
@@ -71,7 +71,7 @@ FILE *compile(char *filename);
  * Dump(デバッグ用)。最初使用しただけなので dump_*は消してOK
  */
 
-static void dump_functor(Functor f)
+static void dump_functor(FunctorRef f)
 {
   switch (functor_get_type(f)) {
   case STX_SYMBOL:
@@ -103,9 +103,9 @@ static void dump_functor(Functor f)
   }
 }
 
-static void dump_instr(Instruction inst);
+static void dump_instr(InstructionRef inst);
 
-static void dump_arg(InstrArg arg)
+static void dump_arg(InstrArgRef arg)
 {
   switch (inst_arg_get_type(arg)) {
   case InstrVar:
@@ -160,7 +160,7 @@ static void dump_arg(InstrArg arg)
   }
 }
 
-static void dump_instr(Instruction inst)
+static void dump_instr(InstructionRef inst)
 {
   unsigned int i;
   ArgList l;
@@ -174,7 +174,7 @@ static void dump_instr(Instruction inst)
   printf("]\n");
 }
 
-static void dump_instblock(InstBlock ib)
+static void dump_instblock(InstBlockRef ib)
 {
   unsigned int i;
   InstList l;
@@ -186,7 +186,7 @@ static void dump_instblock(InstBlock ib)
   }
 }
 
-static void dump_rule(Rule rule)
+static void dump_rule(RuleRef rule)
 {
   printf("Rule NAME=%s \n", lmn_id_to_name(rule_get_name(rule)));
   printf("  amatch \n");
@@ -199,7 +199,7 @@ static void dump_rule(Rule rule)
   dump_instblock(rule_get_body(rule));
 }
 
-static void dump_ruleset(RuleSet rs)
+static void dump_ruleset(RuleSetRef rs)
 {
   unsigned int i;
   RuleList rl;
@@ -213,14 +213,14 @@ static void dump_ruleset(RuleSet rs)
   }
 }
 
-void dump_module(Module m)
+void dump_module(ModuleRef m)
 {
   printf("module %s, %d\n",
          lmn_id_to_name(module_get_name(m)),
          module_get_ruleset(m));
 }
 
-void dump_il(IL il)
+void dump_il(ILRef il)
 {
   int i;
   RuleSets rss;
@@ -288,21 +288,22 @@ void dump_il(IL il)
 
 /* 構文木の読み込み時に使うデータ。各ルールの解析じに作成し，解析後に破
    棄する。ラベルは各ルールにローカルなものとして処理している */
-typedef struct Context {
+struct Context {
   st_table_t   label_to_loc;     /* ラベルのからラベルのある位置の対応*/
   st_table_t   loc_to_label_ref; /* ラベルを参照している位置と参照しているラベルの対応 */
   unsigned int loc, cap;         /* 書き込み位置とbyte_seqのキャパシティ */
   BYTE         *byte_seq;        /* ルールの命令列を書き込む領域 */
-} *Context;
+};
+typedef struct Context *ContextRef;
 
 
-void expand_byte_sec(Context c);
-static void load_instruction(Instruction inst, Context c);
+void expand_byte_sec(ContextRef c);
+static void load_instruction(InstructionRef inst, ContextRef c);
 
 /* Contextを作成する */
-static Context context_make()
+static ContextRef context_make()
 {
-  Context c = LMN_MALLOC(struct Context);
+  ContextRef c = LMN_MALLOC(struct Context);
 
   c->loc = 0;
   c->cap = 256;
@@ -312,13 +313,13 @@ static Context context_make()
 }
 
 /* Contextの解放 */
-static void context_free(Context c)
+static void context_free(ContextRef c)
 {
   LMN_FREE(c);
 }
 
 /* 命令列を書き込む領域を広げる */
-void expand_byte_sec(Context c)
+void expand_byte_sec(ContextRef c)
 {
   c->cap *= 2;
   c->byte_seq = LMN_REALLOC(BYTE, c->byte_seq, c->cap);
@@ -362,7 +363,7 @@ void expand_byte_sec(Context c)
   } while (0)
 
 
-static void load_arg(InstrArg arg, Context c)
+static void load_arg(InstrArgRef arg, ContextRef c)
 {
   unsigned int i;
 
@@ -394,7 +395,7 @@ static void load_arg(InstrArg arg, Context c)
     break;
   case ArgFunctor:
     {
-      Functor functor = inst_arg_get_functor(arg);
+      FunctorRef functor = inst_arg_get_functor(arg);
 
       switch (functor_get_type(functor)) {
       case STX_SYMBOL:
@@ -462,7 +463,7 @@ static void load_arg(InstrArg arg, Context c)
   }
 }
 
-static void load_instruction(Instruction inst, Context c)
+static void load_instruction(InstructionRef inst, ContextRef c)
 {
   ArgList args;
   int i;
@@ -484,7 +485,7 @@ static void load_instruction(Instruction inst, Context c)
   }
 }
 
-static void load_inst_block(InstBlock ib, Context c)
+static void load_inst_block(InstBlockRef ib, ContextRef c)
 {
   InstList inst_list;
   unsigned int i;
@@ -502,7 +503,7 @@ static void load_inst_block(InstBlock ib, Context c)
 
 static int fill_label_ref(st_data_t loc, st_data_t label, void *c_)
 {
-  Context  c = (Context)c_;
+  ContextRef  c = (ContextRef)c_;
   st_data_t target_loc;
 
   if (st_lookup(c->label_to_loc, label, &target_loc)) {
@@ -518,10 +519,10 @@ static int fill_label_ref(st_data_t loc, st_data_t label, void *c_)
   return ST_CONTINUE;
 }
 
-LmnRule load_rule(Rule rule)
+LmnRuleRef load_rule(RuleRef rule)
 {
-  LmnRule runtime_rule;
-  Context c;
+  LmnRuleRef runtime_rule;
+  ContextRef c;
 
   c = context_make();
   c->label_to_loc = st_init_numtable();
@@ -544,10 +545,10 @@ LmnRule load_rule(Rule rule)
   return runtime_rule;
 }
 
-static LmnRuleSet load_ruleset(RuleSet rs)
+static LmnRuleSetRef load_ruleset(RuleSetRef rs)
 {
   RuleList rl;
-  LmnRuleSet runtime_ruleset;
+  LmnRuleSetRef runtime_ruleset;
   unsigned int i;
 
   runtime_ruleset = lmn_ruleset_make(ruleset_get_id(rs), 10);
@@ -562,7 +563,7 @@ static LmnRuleSet load_ruleset(RuleSet rs)
   if (ruleset_is_system_ruleset(rs)) {
     /* 各ルールをシステムルールセットに追加する */
     for (i = 0; i < lmn_ruleset_rule_num(runtime_ruleset); i++) {
-      LmnRule rule2 = lmn_rule_copy(lmn_ruleset_get_rule(runtime_ruleset, i));
+      LmnRuleRef rule2 = lmn_rule_copy(lmn_ruleset_get_rule(runtime_ruleset, i));
       lmn_add_system_rule(rule2);
     }
   }
@@ -571,9 +572,9 @@ static LmnRuleSet load_ruleset(RuleSet rs)
 }
 
 /* 最初のルールセットを返す */
-static LmnRuleSet load_il(IL il)
+static LmnRuleSetRef load_il(ILRef il)
 {
-  LmnRuleSet t, first_ruleset;
+  LmnRuleSetRef t, first_ruleset;
   RuleSets rulesets;
   ModuleList module_list;
   int i;
@@ -594,7 +595,7 @@ static LmnRuleSet load_il(IL il)
   /* load module list */
   module_list = il_get_module_list(il);
   for (i = 0; i < module_list_num(module_list); i++) {
-    Module m = module_list_get(module_list, i);
+    ModuleRef m = module_list_get(module_list, i);
     lmn_set_module(module_get_name(m), lmn_ruleset_from_id(module_get_ruleset(m)));
   }
 
@@ -607,11 +608,11 @@ void helloworld(const char *s)
   fprintf(stdout, "hello %s world!\n", s);
 }
 
-LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
+LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata)
 {
   int i;
   struct trans_ruleset ruleset;
-  LmnRuleSet ret = 0; /* ワーニング抑制 */
+  LmnRuleSetRef ret = 0; /* ワーニング抑制 */
 
   /* シンボルを読み込み+変換テーブルを設定 */
   for (i = 1; i < maindata->count_of_symbol; i++) {
@@ -640,7 +641,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   /* システムルールセット読み込み */
   ruleset = maindata->ruleset_table[1];
   for (i = 0; i < ruleset.size; i++) {
-    LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
+    LmnRuleRef r = lmn_rule_make_translated(ruleset.rules[i].function,
                                          maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_system_rule(r);
   }
@@ -648,7 +649,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   /* ルールセット2番はinitial ruleset */
   ruleset = maindata->ruleset_table[2];
   for (i = 0; i < ruleset.size; i++) {
-    LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
+    LmnRuleRef r = lmn_rule_make_translated(ruleset.rules[i].function,
                                          maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_initial_rule(r);
   }
@@ -656,7 +657,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   /* ルールセット3番はinitial system ruleset */
   ruleset = maindata->ruleset_table[3];
   for(i = 0; i < ruleset.size; i++) {
-    LmnRule r = lmn_rule_make_translated(ruleset.rules[i].function,
+    LmnRuleRef r = lmn_rule_make_translated(ruleset.rules[i].function,
                                          maindata->symbol_exchange[ruleset.rules[i].name]);
     lmn_add_initial_system_rule(r);
   }
@@ -664,7 +665,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
   /* ルールセットを読み込み+変換テーブルを設定 */
   for (i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset; i++) {
     int j, gid;
-    LmnRuleSet rs;
+    LmnRuleSetRef rs;
     struct trans_ruleset tr;
 
     tr  = maindata->ruleset_table[i];
@@ -673,7 +674,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
     lmn_set_ruleset(rs, gid);
 
     for (j = 0; j < tr.size; j++) {
-      LmnRule r = lmn_rule_make_translated(tr.rules[j].function,
+      LmnRuleRef r = lmn_rule_make_translated(tr.rules[j].function,
                                            maindata->symbol_exchange[tr.rules[j].name]);
       lmn_ruleset_put(rs, r);
     }
@@ -697,7 +698,7 @@ LmnRuleSet load_and_setting_trans_maindata(struct trans_maindata *maindata)
 
 
 
-static inline LmnRuleSet load_compiled_il_inner(char *basename,
+static inline LmnRuleSetRef load_compiled_il_inner(char *basename,
                                                 char *buf, int buf_len,
                                                 void *sohandle,
                                                 char *filename);
@@ -707,11 +708,11 @@ static inline LmnRuleSet load_compiled_il_inner(char *basename,
  * TODO:
  *   初期データ生成ルールセットのルールを1つのルールセットにまとめて出力すれば問題無し.
  *   1回適用成功したところで止めなければok     */
-LmnRuleSet load_compiled_il(char *filename, void *sohandle)
+LmnRuleSetRef load_compiled_il(char *filename, void *sohandle)
 {
   char *basename, *buf;
   int buf_len;
-  LmnRuleSet ret;
+  LmnRuleSetRef ret;
 
   basename = create_formatted_basename(filename);
   buf_len  = strlen(basename) + 50;   /* 適当に50文字余分にとったけどこれでいいのか  */
@@ -725,7 +726,7 @@ LmnRuleSet load_compiled_il(char *filename, void *sohandle)
   return ret;
 }
 
-static inline LmnRuleSet load_compiled_il_inner(char *basename,
+static inline LmnRuleSetRef load_compiled_il_inner(char *basename,
                                                 char *buf, int buf_len,
                                                 void *sohandle,
                                                 char *filename)
@@ -762,10 +763,10 @@ static inline LmnRuleSet load_compiled_il_inner(char *basename,
 
 /* ファイルから中間言語を読み込みランタイム中に配置する。
  * 最初のルールセットを返す */
-LmnRuleSet load(FILE *in)
+LmnRuleSetRef load(FILE *in)
 {
-  IL il;
-  LmnRuleSet first_ruleset;
+  ILRef il;
+  LmnRuleSetRef first_ruleset;
 
   if (il_parse(in, &il)) {
     /* 構文解析に失敗 */
@@ -796,11 +797,11 @@ void finalize_so_handles()
  * ファイルの拡張子が lmn の場合、Javaによる処理系でファイルをコンパイルし、
  * 中間言語を生成する。soの場合、dlopenしておきハンドラはopened_so_filesで管理。
  * dlcloseはfinalize()でされる */
-LmnRuleSet load_file(char *file_name)
+LmnRuleSetRef load_file(char *file_name)
 {
   FILE *fp;
   int len;
-  LmnRuleSet rs;
+  LmnRuleSetRef rs;
   void *sohandle;
 
   len = strlen(file_name);
@@ -994,11 +995,11 @@ FILE *fopen_il_file(char *file_name)
   return 0;
 }
 
-int ilparse(yyscan_t scanner, IL *il, Rule *rule);
+int ilparse(yyscan_t scanner, ILRef *il, RuleRef *rule);
 
 /* inから中間言語を読み込み、構文木を作る。構文木はilに設定される。
    正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
-int il_parse(FILE *in, IL *il)
+int il_parse(FILE *in, ILRef *il)
 {
   int r;
   yyscan_t scanner;
@@ -1018,7 +1019,7 @@ int il_parse(FILE *in, IL *il)
   return r;
 }
 
-int il_parse_rule(FILE *in, Rule *rule)
+int il_parse_rule(FILE *in, RuleRef *rule)
 {
   int r;
   yyscan_t scanner;

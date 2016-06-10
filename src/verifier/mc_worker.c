@@ -101,7 +101,7 @@ inline LmnWorker *lmn_worker_make_minimal()
 }
 
 /* LmnWorkerオブジェクトを初期化生成して返す */
-LmnWorker *lmn_worker_make(StateSpace     ss,
+LmnWorker *lmn_worker_make(StateSpaceRef     ss,
                            unsigned long  id,
                            BOOL           flags)
 {
@@ -137,7 +137,7 @@ static void lmn_worker_start(void *arg)
   mc_react_cxt_init(&worker_rc(w));
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
-    StateSpace ss = worker_states(w);
+    StateSpaceRef ss = worker_states(w);
     dump_state_data(statespace_init_state(ss), (LmnWord)ss->out, (LmnWord)NULL);
   }
 
@@ -186,7 +186,7 @@ static void worker_TLS_finalize()
 
 static void workers_gen(LmnWorkerGroup *owner,
                         unsigned int   w_num,
-                        Automata       a,
+                        AutomataRef       a,
                         Vector         *psyms,
                         BOOL           flags);
 static void workers_free(LmnWorker **w, unsigned int w_num);
@@ -198,7 +198,7 @@ static void workers_ring_alignment(LmnWorkerGroup *wp);
  * Worker起動以前のこの時点で,
  * 組み合わせをサポートしていないオプションの整合性を取るなどを行う.
  * 実際に使用するオプションフラグを, lmn_env構造体からworker構造体にコピーする. */
-static BOOL workers_flags_init(LmnWorkerGroup *wp, Automata property_a)
+static BOOL workers_flags_init(LmnWorkerGroup *wp, AutomataRef property_a)
 {
   BOOL flags = 0x00U;
 
@@ -329,7 +329,7 @@ static BOOL workers_flags_init(LmnWorkerGroup *wp, Automata property_a)
   return flags;
 }
 
-LmnWorkerGroup *lmn_workergroup_make(Automata a, Vector *psyms, int thread_num)
+LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms, int thread_num)
 {
   LmnWorkerGroup *wp;
   BOOL flags;
@@ -494,7 +494,7 @@ LmnWorker *workers_get_worker(LmnWorkerGroup *wp, unsigned long id)
 
 static void workers_gen(LmnWorkerGroup *owner,
                         unsigned int   worker_num,
-                        Automata       a,
+                        AutomataRef       a,
                         Vector         *psyms,
                         BOOL           flags)
 {
@@ -502,7 +502,7 @@ static void workers_gen(LmnWorkerGroup *owner,
   owner->workers = LMN_NALLOC(LmnWorker *, worker_num);
   for (i = 0; i < worker_num; i++) {
     LmnWorker *w;
-    StateSpace states;
+    StateSpaceRef states;
 
     if (i == 0) {
       states = worker_num > 1 ? statespace_make_for_parallel(worker_num, a, psyms)

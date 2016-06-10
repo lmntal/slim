@@ -303,10 +303,10 @@ void         state_succ_clear(State *s);
 void         state_free_mem(State *s);
 void         state_free_binstr(State *s);
 void         state_calc_mem_encode(State *s);
-LmnBinStr    state_calc_mem_dump(State *s);
-LmnBinStr    state_calc_mem_dump_with_z(State *s);
-LmnBinStr    state_calc_mem_dump_with_tree(State *s);
-LmnBinStr    state_calc_mem_dummy(State *s);
+LmnBinStrRef    state_calc_mem_dump(State *s);
+LmnBinStrRef    state_calc_mem_dump_with_z(State *s);
+LmnBinStrRef    state_calc_mem_dump_with_tree(State *s);
+LmnBinStrRef    state_calc_mem_dummy(State *s);
 void         state_calc_hash(State *s, LmnMembrane *mem, BOOL encode);
 void         state_free_compress_mem(State *s);
 LmnMembrane *state_mem_copy(State *state);
@@ -314,7 +314,7 @@ int          state_cmp(State *s1, State *s2);
 int          state_cmp_with_compress(State *s1, State *s2);
 int          state_cmp_with_tree(State *s1, State *s2);
 void         state_binstr_d_compress(State *s);
-LmnBinStr    state_binstr_reconstructor(State *s);
+LmnBinStrRef    state_binstr_reconstructor(State *s);
 void         state_calc_binstr_delta(State *s);
 
 static inline LmnMembrane   *state_restore_mem(State *s);
@@ -329,24 +329,24 @@ static inline unsigned long  state_hash(State *s);
 static inline LmnMembrane   *state_mem(State *s);
 static inline void           state_set_mem(State *s, LmnMembrane *mem);
 static inline void           state_unset_mem(State *s);
-static inline LmnBinStr      state_binstr(State *s);
-static inline void           state_set_binstr(State *s, LmnBinStr bs);
+static inline LmnBinStrRef      state_binstr(State *s);
+static inline void           state_set_binstr(State *s, LmnBinStrRef bs);
 static inline void           state_unset_binstr(State *s);
 static inline State         *state_get_parent(State *s);
 static inline void           state_set_parent(State *s, State *parent);
 static inline unsigned int   state_succ_num(State *s);
 static inline State         *state_succ_state(State *s, int idx);
 static inline BOOL           state_succ_contains(State *s, State *t);
-static inline BOOL           state_is_accept(Automata a, State *s);
-static inline BOOL           state_is_end(Automata a, State *s);
-static inline BYTE           state_scc_id(Automata a, State *s);
+static inline BOOL           state_is_accept(AutomataRef a, State *s);
+static inline BOOL           state_is_end(AutomataRef a, State *s);
+static inline BYTE           state_scc_id(AutomataRef a, State *s);
 static inline State         *state_D_ref(State *s);
-static inline void           state_D_cache(State *s, LmnBinStr dec);
-static inline LmnBinStr      state_D_fetch(State *s);
+static inline void           state_D_cache(State *s, LmnBinStrRef dec);
+static inline LmnBinStrRef      state_D_fetch(State *s);
 static inline void           state_D_flush(State *s);
 static inline void           state_D_progress(State *s, LmnReactCxt *rc);
 static inline void           state_update_cost(State *s,
-                                               Transition t,
+                                               TransitionRef t,
                                                State *pre,
                                                Vector *new_ss,
                                                BOOL f,
@@ -380,22 +380,22 @@ struct Transition {
 #endif
 };
 
-Transition    transition_make(State *s, lmn_interned_str rule_name);
-unsigned long transition_space(Transition t);
-void          transition_free(Transition t);
-void          transition_add_rule(Transition t,
+TransitionRef    transition_make(State *s, lmn_interned_str rule_name);
+unsigned long transition_space(TransitionRef t);
+void          transition_free(TransitionRef t);
+void          transition_add_rule(TransitionRef t,
                                   lmn_interned_str rule_name,
                                   LmnCost cost);
 
-static inline unsigned long    transition_id(Transition t);
-static inline void             transition_set_id(Transition t, unsigned long x);
-static inline int              transition_rule_num(Transition t);
-static inline lmn_interned_str transition_rule(Transition t, int idx);
-static inline State           *transition_next_state(Transition t);
-static inline void             transition_set_state(Transition t, State *s);
-static inline Transition       transition(State *s, unsigned int i);
-static inline LmnCost          transition_cost(Transition t);
-static inline void             transition_set_cost(Transition t, LmnCost cost);
+static inline unsigned long    transition_id(TransitionRef t);
+static inline void             transition_set_id(TransitionRef t, unsigned long x);
+static inline int              transition_rule_num(TransitionRef t);
+static inline lmn_interned_str transition_rule(TransitionRef t, int idx);
+static inline State           *transition_next_state(TransitionRef t);
+static inline void             transition_set_state(TransitionRef t, State *s);
+static inline TransitionRef       transition(State *s, unsigned int i);
+static inline LmnCost          transition_cost(TransitionRef t);
+static inline void             transition_set_cost(TransitionRef t, LmnCost cost);
 
 /** ------------
  *  Printer
@@ -429,7 +429,7 @@ static inline LmnMembrane *state_restore_mem_inner(State *s, BOOL flag) {
     return state_mem(s);
   }
   else if (s_is_d(s)) {
-    LmnBinStr b;
+    LmnBinStrRef b;
     if (flag) {
       b = state_D_fetch(s);
     } else {
@@ -438,13 +438,13 @@ static inline LmnMembrane *state_restore_mem_inner(State *s, BOOL flag) {
     return lmn_binstr_decode(b);
   }
   else {
-    LmnBinStr b = state_binstr(s);
+    LmnBinStrRef b = state_binstr(s);
     if (lmn_env.tree_compress && b == NULL) {
-      TreeNodeRef ref;
+      TreeNodeID ref;
       tcd_get_root_ref(&s->tcd, &ref);
       LMN_ASSERT(ref);
       LMN_ASSERT(tcd_get_byte_length(&s->tcd) != 0);
-      b = lmn_bscomp_tree_decode((TreeNodeRef)ref, tcd_get_byte_length(&s->tcd));
+      b = lmn_bscomp_tree_decode((TreeNodeID)ref, tcd_get_byte_length(&s->tcd));
     }
     LMN_ASSERT(b);
     return lmn_binstr_decode(b);
@@ -529,16 +529,16 @@ static inline void state_unset_mem(State *s) {
 }
 
 /* 状態sに割り当てたバイナリストリングを返す. */
-static inline LmnBinStr state_binstr(State *s) {
+static inline LmnBinStrRef state_binstr(State *s) {
   if (is_binstr_user(s)) {
-    return (LmnBinStr)s->data;
+    return (LmnBinStrRef)s->data;
   } else {
     return NULL;
   }
 }
 
 /* 状態sに対応する階層グラフ構造からエンコードしたバイナリストリングbsを, sに割り当てる　*/
-static inline void state_set_binstr(State *s, LmnBinStr bs) {
+static inline void state_set_binstr(State *s, LmnBinStrRef bs) {
   s->data = (state_data_t)bs;
   set_binstr_user(s);
 }
@@ -571,7 +571,7 @@ static inline unsigned int state_succ_num(State *s) {
 static inline State *state_succ_state(State *s, int idx) {
   /* successorデータはTransitionがある場合とそうでない場合とで処理が異なる */
   if (has_trans_obj(s)) {
-    return transition_next_state((Transition)s->successors[idx]);
+    return transition_next_state((TransitionRef)s->successors[idx]);
   } else {
     return (State *)s->successors[idx];
   }
@@ -590,7 +590,7 @@ static inline BOOL state_succ_contains(State *s, State *t) {
 
 /* 状態sが, 性質オートマトンa上のaccept状態に対応している(受理状態)ならば真を返す.
  * 性質オートマトンaが存在しない場合は直ちに偽を返す. */
-static inline BOOL state_is_accept(Automata a, State *s) {
+static inline BOOL state_is_accept(AutomataRef a, State *s) {
   if (a) {
     return atmstate_is_accept(automata_get_state(a, state_property_state(s)));
   } else {
@@ -601,7 +601,7 @@ static inline BOOL state_is_accept(Automata a, State *s) {
 /* 状態sが, 性質オートマトンa上のend状態に対応している(invalid end state)ならば真を返す.
  * 性質オートマトンaが存在しない場合は直ちに偽を返す.
  * TOFIX: rename (end --> invalid end) */
-static inline BOOL state_is_end(Automata a, State *s) {
+static inline BOOL state_is_end(AutomataRef a, State *s) {
   if (a) {
     return atmstate_is_end(automata_get_state(a, state_property_state(s)));
   } else {
@@ -612,7 +612,7 @@ static inline BOOL state_is_end(Automata a, State *s) {
 /* 状態sに対応する性質オートマトンa上の状態が, 属している強連結成分(scc)のグループIDを返す.
  * 性質オートマトンaが存在しない場合は直ちに偽を返す.
  * 性質オートマトンaに対して強連結成分分解を行っていない場合の戻り値は, 未定義. */
-static inline BYTE state_scc_id(Automata a, State *s) {
+static inline BYTE state_scc_id(AutomataRef a, State *s) {
   if (a) {
     return atmstate_scc_type(automata_get_state(a, state_property_state(s)));
   } else {
@@ -627,16 +627,16 @@ static inline State *state_D_ref(State *s) {
 }
 
 /* 状態sに対応する非圧縮バイナリストリングdをキャッシングする. */
-static inline void state_D_cache(State *s, LmnBinStr d) {
+static inline void state_D_cache(State *s, LmnBinStrRef d) {
   LMN_ASSERT(!state_D_fetch(s));  
   /* メモリ節約の結果, 保守性ないコード. 注意 */
   s->successors = (succ_data_t)d;
 }
 
 /* キャッシングしておいた状態sに対応する非圧縮バイナリストリングに対する参照を返す. */
-static inline LmnBinStr state_D_fetch(State *s) {
+static inline LmnBinStrRef state_D_fetch(State *s) {
   if (s_is_d(s)) {
-    return (LmnBinStr)s->successors;
+    return (LmnBinStrRef)s->successors;
   } else {
     return NULL;
   }
@@ -644,7 +644,7 @@ static inline LmnBinStr state_D_fetch(State *s) {
 
 /* 状態sに対応する非圧縮バイナリストリングのキャッシュをクリアする. */
 void state_D_flush(State *s) {
-  LmnBinStr cached = state_D_fetch(s);
+  LmnBinStrRef cached = state_D_fetch(s);
   if (cached) {
     lmn_binstr_free(cached);
   }
@@ -669,7 +669,7 @@ static inline void state_set_cost(State *s, LmnCost cost, State * pre) {
  * f==true: minimize
  * f==false: maximize */
 static inline void state_update_cost(State *s,
-                                     Transition t,
+                                     TransitionRef t,
                                      State *pre,
                                      Vector *new_ss,
                                      BOOL f,
@@ -687,36 +687,36 @@ static inline void state_update_cost(State *s,
 }
 
 /* 遷移tに割り当てたidを返す. */
-static inline unsigned long transition_id(Transition t) {
+static inline unsigned long transition_id(TransitionRef t) {
   return t->id;
 }
 
 /* 遷移tに整数ID idを割り当てる. */
-static inline void transition_set_id(Transition t, unsigned long id) {
+static inline void transition_set_id(TransitionRef t, unsigned long id) {
   t->id = id;
 }
 
-static inline int transition_rule_num(Transition t) {
+static inline int transition_rule_num(TransitionRef t) {
   return vec_num(&t->rule_names);
 }
 
-static inline lmn_interned_str transition_rule(Transition t, int idx) {
+static inline lmn_interned_str transition_rule(TransitionRef t, int idx) {
   return vec_get(&t->rule_names, idx);
 }
 
-static inline State *transition_next_state(Transition t) {
+static inline State *transition_next_state(TransitionRef t) {
   return t->s;
 }
 
-static inline void transition_set_state(Transition t, State *s) {
+static inline void transition_set_state(TransitionRef t, State *s) {
   t->s = s;
 }
 
-static inline Transition transition(State *s, unsigned int i) {
-  return (Transition)(s->successors[i]);
+static inline TransitionRef transition(State *s, unsigned int i) {
+  return (TransitionRef)(s->successors[i]);
 }
 
-static inline LmnCost transition_cost(Transition t) {
+static inline LmnCost transition_cost(TransitionRef t) {
 #ifdef KWBT_OPT
   return t->cost;
 #else
@@ -724,7 +724,7 @@ static inline LmnCost transition_cost(Transition t) {
 #endif
 }
 
-static inline void transition_set_cost(Transition t, LmnCost cost) {
+static inline void transition_set_cost(TransitionRef t, LmnCost cost) {
 #ifdef KWBT_OPT
   t->cost = cost;
 #endif

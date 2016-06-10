@@ -154,8 +154,8 @@ typedef struct DeltaMembrane DeltaMembrane;
 # endif
 #endif
 
-typedef struct ProcessTbl    *ProcessTbl;
-typedef struct SimplyProcTbl *SimplyProcTbl;
+typedef struct ProcessTbl    *ProcessTableRef;
+typedef struct SimplyProcTbl *SimplyProcessTableRef;
 
 /*----------------------------------------------------------------------
  * Special Atom
@@ -198,10 +198,10 @@ typedef struct Vector *LmnMemStack;
  * for Model Checking
  */
 
-typedef struct StateSpace *StateSpace;
+typedef struct StateSpace *StateSpaceRef;
 typedef struct StateTable StateTable;
 typedef struct State       State;
-typedef struct Transition *Transition;
+typedef struct Transition *TransitionRef;
 typedef struct McDporData  McDporData;
 typedef struct MemDeltaRoot MemDeltaRoot;
 

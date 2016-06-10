@@ -150,7 +150,7 @@ struct RuleProfiler {
   unsigned long  apply;
   unsigned long  backtrack;
   TimeProfiler   trial;
-  LmnRule        src;
+  LmnRuleRef        src;
 };
 
 struct LmnProfiler {
@@ -202,7 +202,7 @@ void profile_start_exec_thread(void);
 void profile_finish_exec_thread(void);
 void dump_profile_data(FILE *f);
 void profile_statespace(LmnWorkerGroup *wp);
-RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRule r);
+RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRuleRef r);
 void rule_profiler_free(RuleProfiler *p);
 
 static inline double get_cpu_time(void);
@@ -232,7 +232,7 @@ static inline void profile_peakcounter_set_v(PeakCounter *p, unsigned long size)
 }
 
 
-static inline void profile_total_space_update(StateSpace ss)
+static inline void profile_total_space_update(StateSpaceRef ss)
 {
   unsigned long sum;
   MCProfiler3 *p;
@@ -306,7 +306,7 @@ static inline void profile_count_add(int type, unsigned long num)
   lmn_prof.lv3[env_my_thread_id()].counters[type] += num;
 }
 
-static inline void profile_rule_obj_set(LmnRuleSet src, LmnRule r)
+static inline void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r)
 {
   st_data_t t = 0;
   if (st_lookup(lmn_prof.prules, (st_data_t)r, &t)) {

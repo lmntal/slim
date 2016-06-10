@@ -58,7 +58,7 @@ void dump_dot_state_edges(State* s) {
   }
 }
 
-void dump_dot_state_attr(State* s, Automata* a, int* colors) {
+void dump_dot_state_attr(State* s, AutomataRef* a, int* colors) {
   int color = is_expanded(s) ? colors[state_expander_id(s)] : 0x999999;
   printf("  %lu [label=\"", state_hash(s));
   if (is_expanded(s)) printf("%lu", state_expander_id(s));
@@ -73,7 +73,7 @@ void dump_dot_header_comment(State* s) {
   printf("/* id: %lu   hash: %lu */\n", state_id(s), state_hash(s));
 }
 
-void dump_dot_loop(State* s, Automata* a, int* colors, int depth) {
+void dump_dot_loop(State* s, AutomataRef* a, int* colors, int depth) {
   int i, n;
 
   s_set_visited_by_visualizer(s);
@@ -90,10 +90,10 @@ void dump_dot_loop(State* s, Automata* a, int* colors, int depth) {
   }
 }
 
-void dump_dot(StateSpace ss, int worker_num) {
+void dump_dot(StateSpaceRef ss, int worker_num) {
   int* colors;
   State* root = statespace_init_state(ss);
-  Automata a = statespace_automata(ss);
+  AutomataRef a = statespace_automata(ss);
 
   colors = (int*)malloc(sizeof(int) * worker_num);
   calc_colors(worker_num, &colors);

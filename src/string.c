@@ -49,7 +49,7 @@
 #include "dumper.h"
 #include <stdio.h>
 
-inline static void string_expand_buf(LmnString s, unsigned long size);
+inline static void string_expand_buf(LmnStringRef s, unsigned long size);
 
 struct LmnString {
   LMN_SP_ATOM_HEADER;
@@ -79,17 +79,17 @@ BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr)
     LMN_SP_ATOM_TYPE(atom) == string_atom_type;
 }
 
-unsigned long lmn_string_hash(LmnString atom) {
+unsigned long lmn_string_hash(LmnStringRef atom) {
   return lmn_byte_hash((unsigned char *)LMN_STRING_BUF(atom), (long)LMN_STRING_LEN(atom));
 }
 
 /* 文字列をCの文字列の形式で返す */
-const char* lmn_string_c_str(LmnString atom)
+const char* lmn_string_c_str(LmnStringRef atom)
 {
   return (const char *)LMN_STRING_BUF(atom);
 }
 
-LmnString lmn_string_make(const char *s)
+LmnStringRef lmn_string_make(const char *s)
 {
   struct LmnString *p = LMN_MALLOC(struct LmnString);
   LMN_SP_ATOM_SET_TYPE(p, string_atom_type);
@@ -100,7 +100,7 @@ LmnString lmn_string_make(const char *s)
   return p;
 }
 
-LmnString string_make_empty_with_size(unsigned long buf_size)
+LmnStringRef string_make_empty_with_size(unsigned long buf_size)
 {
   struct LmnString *p = LMN_MALLOC(struct LmnString);
   LMN_SP_ATOM_SET_TYPE(p, string_atom_type);
@@ -111,12 +111,12 @@ LmnString string_make_empty_with_size(unsigned long buf_size)
   return p;
 }
 
-LmnString lmn_string_make_empty()
+LmnStringRef lmn_string_make_empty()
 {
   return string_make_empty_with_size(1);
 }
 
-LmnString lmn_string_copy(LmnString s)
+LmnStringRef lmn_string_copy(LmnStringRef s)
 {
   struct LmnString *p = LMN_MALLOC(struct LmnString);
   *p = *s;
@@ -125,7 +125,7 @@ LmnString lmn_string_copy(LmnString s)
   return p;
 }
 
-void lmn_string_free(LmnString s)
+void lmn_string_free(LmnStringRef s)
 {
   if (s) {
     if (s->buf) LMN_FREE(s->buf);
@@ -133,19 +133,19 @@ void lmn_string_free(LmnString s)
   }
 }
 
-BOOL lmn_string_eq(LmnString s1, LmnString s2)
+BOOL lmn_string_eq(LmnStringRef s1, LmnStringRef s2)
 {
   return LMN_STRING_LEN(s1) == LMN_STRING_LEN(s2) &&
          !strcmp(LMN_STRING_BUF(s1), LMN_STRING_BUF(s2));
 }
 
-inline static void string_expand_buf(LmnString s, unsigned long size)
+inline static void string_expand_buf(LmnStringRef s, unsigned long size)
 {
   s->buf_size = size;
   s->buf = LMN_REALLOC(char, s->buf, size);
 }
 
-void lmn_string_push_raw_c(LmnString s, int c)
+void lmn_string_push_raw_c(LmnStringRef s, int c)
 {
   if (s->len+1 == s->buf_size) {
     /* バッファのサイズをどれくらい増加すべきか */
@@ -157,13 +157,13 @@ void lmn_string_push_raw_c(LmnString s, int c)
 }
 
 /* srcの文字列をdstの末尾に追加する。srcの内容は変わらない */
-void lmn_string_push(LmnString dst, const LmnString src)
+void lmn_string_push(LmnStringRef dst, const LmnStringRef src)
 {
   lmn_string_push_raw_s(dst, src->buf);
 }
 
 /* Cの文字列srcをdstの末尾に追加する。*/
-void lmn_string_push_raw_s(LmnString dst, const char *src)
+void lmn_string_push_raw_s(LmnStringRef dst, const char *src)
 {
   const unsigned long len = dst->len + strlen(src);
   if (len >= dst->buf_size) {
@@ -174,9 +174,9 @@ void lmn_string_push_raw_s(LmnString dst, const char *src)
   strcat(dst->buf, src);
 }
 
-LmnString lmn_string_concat(LmnString s0, LmnString s1)
+LmnStringRef lmn_string_concat(LmnStringRef s0, LmnStringRef s1)
 {
-  LmnString ret_atom = string_make_empty_with_size(s0->len + s1->len + 1);
+  LmnStringRef ret_atom = string_make_empty_with_size(s0->len + s1->len + 1);
 
   lmn_string_push(ret_atom, s0);
   lmn_string_push(ret_atom, s1);
@@ -184,18 +184,18 @@ LmnString lmn_string_concat(LmnString s0, LmnString s1)
   return ret_atom;
 }
 
-int lmn_string_get(LmnString s, int i)
+int lmn_string_get(LmnStringRef s, int i)
 {
   if (i < 0 || i >= LMN_STRING_LEN(s)) return EOF;
   else return s->buf[i];
 }
 
-void lmn_string_set_raw_c(LmnString s, int c, int i)
+void lmn_string_set_raw_c(LmnStringRef s, int c, int i)
 {
   s->buf[i] = c;
 }
 
-unsigned long lmn_string_len(LmnString s)
+unsigned long lmn_string_len(LmnStringRef s)
 {
   return LMN_STRING_LEN(s);
 }
@@ -246,7 +246,7 @@ void cb_string_concat(LmnReactCxt *rc,
                       LmnAtom a1, LmnLinkAttr t1,
                       LmnAtom a2, LmnLinkAttr t2)
 {
-  LmnString s = lmn_string_concat(LMN_STRING(a0), LMN_STRING(a1));
+  LmnStringRef s = lmn_string_concat(LMN_STRING(a0), LMN_STRING(a1));
   LINK_STR(mem, a2, t2, s);
 
   lmn_mem_delete_atom(mem, a0, t0);
@@ -293,7 +293,7 @@ void cb_string_substr(LmnReactCxt *rc,
 {
   const char *src = (const char *)LMN_STRING_BUF(a0);
   char *s;
-  LmnString ret;
+  LmnStringRef ret;
 
   if (begin <= end) {
     int len = strlen(src);
@@ -324,7 +324,7 @@ void cb_string_substr_right(LmnReactCxt *rc,
   const char *src = LMN_STRING_BUF(a0);
   char *s;
   int len = strlen(src);
-  LmnString ret;
+  LmnStringRef ret;
 
   if (begin < 0) { begin = 0;}
   if (begin > len) begin = len;
@@ -352,7 +352,7 @@ void sp_cb_string_free(void *s)
   lmn_string_free(s);
 }
 
-void sp_cb_string_dump(void *s, LmnPort port)
+void sp_cb_string_dump(void *s, LmnPortRef port)
 {
   port_put_raw_c(port, '"');
   dump_escaped(port, LMN_STRING_BUF(s));
@@ -366,7 +366,7 @@ BOOL sp_cb_string_is_ground(void *data)
 
 BOOL sp_cb_string_eq(void *s1, void *s2)
 {
-  return lmn_string_eq((LmnString)s1, (LmnString)s2);
+  return lmn_string_eq((LmnStringRef)s1, (LmnStringRef)s2);
 }
 
 void string_init()

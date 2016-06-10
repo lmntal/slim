@@ -666,7 +666,7 @@ static inline int load_input_files(Vector *start_rulesets, int optid, int argc, 
   /** load input files */
   for (i = optid; i < argc; i++) {
     FILE *in;
-    LmnRuleSet t;
+    LmnRuleSetRef t;
     char *f = argv[i];
 
     if (!strcmp("-", f)) { /* 標準入力からの読込み */
@@ -697,7 +697,7 @@ static inline void slim_exec(Vector *start_rulesets)
   }
   else {
     /* プログラム検証 */
-    Automata automata;
+    AutomataRef automata;
     PVector prop_defs;
     int ret;
 

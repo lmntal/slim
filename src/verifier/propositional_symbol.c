@@ -57,28 +57,28 @@ typedef void* yyscan_t;
 
 struct SymbolDefinition {
   unsigned int sym_id;
-  Proposition prop;
+  PropositionRef prop;
 };
 
 struct Proposition {
   char *head;
   char *guard;
   char *body;
-  LmnRule rule;
+  LmnRuleRef rule;
 };
 
 static char *rule_str_for_compile(const char *head,
                                   const char *guard,
                                   const char *body);
-static int propsym_parse(FILE *in, Automata a, PVector *definitions);
+static int propsym_parse(FILE *in, AutomataRef a, PVector *definitions);
 
 
-Proposition proposition_make(const char *head,
+PropositionRef proposition_make(const char *head,
                              const char *guard,
                              const char *body)
 {
-  Proposition p = LMN_MALLOC(struct Proposition);
-  Rule rule;
+  PropositionRef p = LMN_MALLOC(struct Proposition);
+  RuleRef rule;
   FILE *fp;
   char *rule_str;
   BYTE optimization_level_org;
@@ -107,7 +107,7 @@ Proposition proposition_make(const char *head,
   return p;
 }
 
-void proposition_free(Proposition p)
+void proposition_free(PropositionRef p)
 {
   LMN_FREE(p->head);
   LMN_FREE(p->guard);
@@ -116,7 +116,7 @@ void proposition_free(Proposition p)
   LMN_FREE(p);
 }
 
-LmnRule proposition_get_rule(Proposition p)
+LmnRuleRef proposition_get_rule(PropositionRef p)
 {
   return p->rule;
 }
@@ -148,16 +148,16 @@ static char *rule_str_for_compile(const char *head,
  * propositional symbol definition
  */
 
-SymbolDefinition propsym_make(unsigned int sym_id, Proposition p)
+SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p)
 {
-  SymbolDefinition s = LMN_MALLOC(struct SymbolDefinition);
+  SymbolDefinitionRef s = LMN_MALLOC(struct SymbolDefinition);
 
   s->sym_id = sym_id;
   s->prop = p;
   return s;
 }
 
-void propsym_free(SymbolDefinition s)
+void propsym_free(SymbolDefinitionRef s)
 {
   if (s) {
     proposition_free(s->prop);
@@ -165,14 +165,14 @@ void propsym_free(SymbolDefinition s)
   }
 }
 
-unsigned int propsym_symbol_id(SymbolDefinition s)
+unsigned int propsym_symbol_id(SymbolDefinitionRef s)
 {
   return s->sym_id;
 }
 
-int propsymparse(yyscan_t, Automata, Vector**);
+int propsymparse(yyscan_t, AutomataRef, Vector**);
 
-int propsym_parse(FILE *in, Automata a, PVector *definitions)
+int propsym_parse(FILE *in, AutomataRef a, PVector *definitions)
 {
   int r;
   yyscan_t scanner;
@@ -187,22 +187,22 @@ int propsym_parse(FILE *in, Automata a, PVector *definitions)
 }
 
 /* 正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
-int propsym_load_file(FILE *in, Automata a, Vector **definitions)
+int propsym_load_file(FILE *in, AutomataRef a, Vector **definitions)
 {
   return propsym_parse(in, a, definitions);
 }
 
-void propsym_dump(SymbolDefinition s)
+void propsym_dump(SymbolDefinitionRef s)
 {
   fprintf(stdout, "%d := %s | %s. \n", s->sym_id, s->prop->head, s->prop->guard);
 }
 
-Proposition propsym_get_proposition(SymbolDefinition s)
+PropositionRef propsym_get_proposition(SymbolDefinitionRef s)
 {
   return s ? s->prop : NULL;
 }
 
-BOOL proposition_eval(Proposition prop, LmnMembrane *mem)
+BOOL proposition_eval(PropositionRef prop, LmnMembrane *mem)
 {
   LmnReactCxt rc;
   BOOL b;
@@ -231,23 +231,23 @@ unsigned int propsyms_num(PropSyms props)
   return vec_num(props);
 }
 
-SymbolDefinition propsyms_get(PropSyms props, unsigned int i)
+SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i)
 {
-  return (SymbolDefinition)vec_get(props, i);
+  return (SymbolDefinitionRef)vec_get(props, i);
 }
 
 void propsyms_free(PropSyms props)
 {
   unsigned int i;
   for (i = 0; i < vec_num(props); i++) {
-    propsym_free((SymbolDefinition)vec_get(props, i));
+    propsym_free((SymbolDefinitionRef)vec_get(props, i));
   }
   vec_free(props);
 }
 
 void propsyms_set(PropSyms props,
                       unsigned int id,
-                      SymbolDefinition symdef)
+                      SymbolDefinitionRef symdef)
 {
   if (vec_num(props) <= id) {
     vec_resize(props, id+1, (vec_data_t)NULL);

@@ -180,7 +180,7 @@
     struct Vector *v;                                                      \
     v = &((LmnMembrane *)wt(rc, srcmemi))->rulesets;                       \
     for (i = 0; i< v->num; i++) {                                          \
-      LmnRuleSet cp = lmn_ruleset_copy((LmnRuleSet)vec_get(v, i));         \
+      LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));         \
       lmn_mem_add_ruleset((LmnMembrane *)wt(rc, destmemi), cp);            \
       if (RC_GET_MODE(rc, REACT_ATOMIC)) {                                 \
         lmn_ruleset_invalidate_atomic(cp);                                 \
@@ -195,7 +195,7 @@
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {                         \
       wt_set(rc, destlinki, LINKED_ATOM(srclinki));                        \
     } else { /* symbol atom */                                             \
-      ProcessTbl ht = (ProcessTbl)wt(rc, tbli);                            \
+      ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);                  \
       proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt(rc, destlinki));\
     }                                                                      \
   } while(0)
@@ -203,10 +203,10 @@
 #define TR_INSTR_DELETECONNECTORS(srcset, srcmap)                          \
   do {                                                                     \
     HashSet *delset;                                                       \
-    ProcessTbl delmap;                                                     \
+    ProcessTableRef delmap;                                                \
     HashSetIterator it;                                                    \
     delset = (HashSet *)wt(rc, srcset);                                    \
-    delmap = (ProcessTbl)wt(rc, srcmap);                                   \
+    delmap = (ProcessTableRef)wt(rc, srcmap);                              \
                                                                            \
     for (it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {\
       LmnSAtom orig, copy;                                                 \
@@ -244,14 +244,14 @@
   } while(0)
 
 void tr_instr_commit_ready(LmnReactCxt       *rc,
-                           LmnRule           rule,
+                           LmnRuleRef           rule,
                            lmn_interned_str  rule_name,
                            LmnLineNum        line_num,
                            LmnMembrane       **ptmp_global_root,
                            LmnRegister       **V,
                            unsigned int      *org_next_id);
 BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
-                            LmnRule          rule,
+                            LmnRuleRef          rule,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
                             LmnMembrane      **ptmp_global_root,
@@ -261,7 +261,7 @@ BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
 BOOL tr_instr_jump(LmnTranslated   f,
                    LmnReactCxt     *rc,
                    LmnMembrane     *thisisrootmembutnotused,
-                   LmnRule         rule,
+                   LmnRuleRef         rule,
                    int             newid_num,
                    const int       *newid);
 #endif

@@ -74,7 +74,7 @@ void tr_print_list(int indent, int argi, int list_num, const LmnWord *list)
 }
 
 void tr_instr_commit_ready(LmnReactCxt      *rc,
-                           LmnRule          rule,
+                           LmnRuleRef          rule,
                            lmn_interned_str rule_name,
                            LmnLineNum       line_num,
                            LmnMembrane      **ptmp_global_root,
@@ -102,7 +102,7 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
       lmn_fatal("transalter mode, delta-membrane execution is not supported.");
     } else {
       LmnRegister *v, *tmp;
-      ProcessTbl copymap;
+      ProcessTableRef copymap;
       LmnMembrane *tmp_global_root;
       unsigned int i, warry_size_org, warry_use_org;
 
@@ -182,7 +182,7 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
 }
 
 BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
-                            LmnRule          rule,
+                            LmnRuleRef          rule,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
                             LmnMembrane      **ptmp_global_root,
@@ -221,7 +221,7 @@ BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
 BOOL tr_instr_jump(LmnTranslated   f,
                    LmnReactCxt     *rc,
                    LmnMembrane     *thisisrootmembutnotused,
-                   LmnRule         rule,
+                   LmnRuleRef         rule,
                    int             newid_num,
                    const int       *newid)
 {
@@ -421,7 +421,7 @@ const BYTE *translate_instructions(const BYTE *p, Vector *jump_points, const cha
   }
 }
 
-static void translate_rule(LmnRule rule, const char *header)
+static void translate_rule(LmnRuleRef rule, const char *header)
 {
   Vector *jump_points = vec_make(4);
   int i;
@@ -441,7 +441,7 @@ static void translate_rule(LmnRule rule, const char *header)
   /* trans_***(); ではなく { extern trans_***(); trans_***(); } と書くだけ */
 }
 
-static void translate_ruleset(LmnRuleSet ruleset, const char *header)
+static void translate_ruleset(LmnRuleSetRef ruleset, const char *header)
 {
   char *buf;
   lmn_interned_str *rule_names;
@@ -497,7 +497,7 @@ static int count_rulesets()
   int i;
 
   for(i = FIRST_ID_OF_NORMAL_RULESET; ; i++){
-    LmnRuleSet rs = lmn_ruleset_from_id(i);
+    LmnRuleSetRef rs = lmn_ruleset_from_id(i);
     if(!rs) break;
   }
 
@@ -627,7 +627,7 @@ static void print_trans_rulesets(const char *filename)
   fprintf(OUT, "  {%d,trans_%s_3_rules},\n", lmn_ruleset_rule_num(initial_system_ruleset), filename);
   /* 以降は普通のrulesetなので出力(どれが初期データルールかはload時に拾う) */
   for (i = FIRST_ID_OF_NORMAL_RULESET; i < count; i++) {
-    LmnRuleSet rs = lmn_ruleset_from_id(i);
+    LmnRuleSetRef rs = lmn_ruleset_from_id(i);
     LMN_ASSERT(rs); /* countで数えているからNULLにあたることはないはず */
 
     fprintf(OUT, "  {%d,trans_%s_%d_rules}", lmn_ruleset_rule_num(rs), filename, i);
@@ -644,11 +644,11 @@ static void print_trans_rulesets(const char *filename)
 static int print_trans_module_f(st_data_t key, st_data_t value, st_data_t counter_p)
 {
   lmn_interned_str m_key;
-  LmnRuleSet       m_val;
+  LmnRuleSetRef       m_val;
   int             *m_counter;
 
   m_key     = (lmn_interned_str)key;
-  m_val     = (LmnRuleSet)value;
+  m_val     = (LmnRuleSetRef)value;
   m_counter = (int *)counter_p; /* これが0なら最初の引数 */
 
   if (*m_counter > 0) {

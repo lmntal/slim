@@ -66,13 +66,13 @@ enum { TT_OTHER = 0,
 
 void task_init(void);
 void task_finalize(void);
-void lmn_dmem_interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
+void lmn_dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr);
 void lmn_run(Vector *rulesets);
-BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule);
+BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule);
 void react_start_rulesets(LmnMembrane *mem, Vector *rulesets);
 BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembrane *cur_mem);
 void memstack_push(LmnMembrane *mem);
-BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
+BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr);
 struct Vector user_system_rulesets; /* system ruleset defined by user */
 static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegister *v);
 static inline void free_links(Vector *links);
@@ -85,7 +85,7 @@ static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegister *v) {
   /* リンクオブジェクトのベクタを構築 */
   for (i = 0; i < vec_num(link_idxs); i++) {
     vec_data_t t;
-    LinkObj l;
+    LinkObjRef l;
     t = vec_get(link_idxs, i);
     l = LinkObj_make(v[t].wt, v[t].at);
     vec_push(vec, (LmnWord)l);

@@ -51,7 +51,7 @@ void init_initial_ruleset(void);
 
 const char *initial_modules[] = {"nd_conf"};
 
-BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
+BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
 {
   LmnMembrane *m, *next;
   BOOL ok = FALSE;
@@ -66,7 +66,7 @@ BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
       int i, j;
 
       for (i = 0; i < lmn_mem_ruleset_num(m); i++) {
-        LmnRuleSet rs = lmn_mem_get_ruleset(m, i);
+        LmnRuleSetRef rs = lmn_mem_get_ruleset(m, i);
 
         for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
           if (LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_RULESET_MEM_NAME)) {
@@ -89,7 +89,7 @@ BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
   return ok;
 }
 
-BOOL register_initial_module(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
+BOOL register_initial_module(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
 {
   static int done = 0;
   int i, j;
@@ -98,7 +98,7 @@ BOOL register_initial_module(LmnReactCxt *rc, LmnMembrane *mem, LmnRule rule)
   done = 1;
 
   for (i = 0; i < ARY_SIZEOF(initial_modules); i++) {
-    LmnRuleSet rs = lmn_get_module_ruleset(lmn_intern(initial_modules[i]));
+    LmnRuleSetRef rs = lmn_get_module_ruleset(lmn_intern(initial_modules[i]));
     if (rs) {
       for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
         lmn_add_initial_system_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
