@@ -6,3 +6,6 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = third_party src lib ext doc test
 DIST_SUBDIRS = $(SUBDIRS)
 DISTCLEANFILES = VERSION arch.h
+
+cldoc:
+	$(MAKE) cldoc -C src

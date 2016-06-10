@@ -123,3 +123,6 @@ translate_generated.c: translate_generator.in translate_generator.rb
 
 interpret_generated.c: translate_generator.in translate_generator.rb
 	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@ -i
+
+cldoc:
+	cldoc generate $(slim_CFLAGS) -- --report --output ../html $(wildcard ./*/*.h) $(wildcard ./*.h) $(wildcard ./*/*.c) $(wildcard ./*.c)
