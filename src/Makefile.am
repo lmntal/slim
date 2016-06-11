@@ -10,7 +10,8 @@ slim_LDFLAGS = -L./verifier                            \
                -L./utility                             \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I./verifier                            \
-               -I./utility
+               -I./utility                             \
+               -I../third_party/zdelta-2.1
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
                     ./utility/liblmn_utility.a
 
@@ -124,5 +125,15 @@ translate_generated.c: translate_generator.in translate_generator.rb
 interpret_generated.c: translate_generator.in translate_generator.rb
 	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@ -i
 
+ALL_HEADER_FILES := $(wildcard ./*/*.h) $(wildcard ./*.h)
+ALL_SOURCE_FILES := $(wildcard ./*/*.c) $(wildcard ./*.c)
+ALL_PARSER_FILES := $(wildcard ./*/*_parser.c) $(wildcard ./*_parser.c) $(wildcard ./*/*_parser.h) $(wildcard ./*_parser.h)
+ALL_LEXER_FILES := $(wildcard ./*/*_lexer.c) $(wildcard ./*_lexer.c) $(wildcard ./*/*_lexer.h) $(wildcard ./*_lexer.h)
+EXCLUDE_FILES := translate_generated.c interpret_generated.c
+ALL_FILES := $(ALL_HEADER_FILES) $(ALL_SOURCE_FILES)
+DOC_FILES := $(filter-out $(ALL_PARSER_FILES) $(ALL_LEXER_FILES) $(EXCLUDE_FILES), $(ALL_FILES))
+
 cldoc:
-	cldoc generate $(slim_CFLAGS) -- --report --output ../html $(wildcard ./*/*.h) $(wildcard ./*.h) $(wildcard ./*/*.c) $(wildcard ./*.c)
+	cldoc generate $(slim_CFLAGS) -- --report --output ../html $(DOC_FILES)
+cldoc-static:
+	cldoc generate $(slim_CFLAGS) -- --static --report --output ../html $(DOC_FILES)

@@ -9,3 +9,6 @@ DISTCLEANFILES = VERSION arch.h
 
 cldoc:
 	$(MAKE) cldoc -C src
+
+cldoc-static:
+	$(MAKE) cldoc-static -C src
