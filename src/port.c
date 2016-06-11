@@ -127,9 +127,9 @@ LmnPortRef lmn_port_copy(LmnPortRef port, BOOL owner)
 
 static LmnPortRef port_copy_sub(LmnPortRef port)
 {
-  LmnPortRef new = LMN_MALLOC(struct LmnPort);
-  memcpy(new, port, sizeof(struct LmnPort));
-  return new;
+  LmnPortRef result = LMN_MALLOC(struct LmnPort);
+  memcpy(result, port, sizeof(struct LmnPort));
+  return result;
 }
 
 static LmnPortRef lmn_stdin;

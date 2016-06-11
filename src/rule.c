@@ -264,21 +264,21 @@ void lmn_ruleset_copied_free(LmnRuleSetRef rs)
 
 static inline LmnRuleSetRef lmn_ruleset_copy_object(LmnRuleSetRef src)
 {
-  LmnRuleSetRef new;
+  LmnRuleSetRef result;
   unsigned int i, r_n;
 
   r_n = lmn_ruleset_rule_num(src);
-  new = lmn_ruleset_make(lmn_ruleset_get_id(src), r_n);
-  new->is_copy = TRUE;
-  new->atomic = src->atomic;
-  new->is_atomic_valid = src->is_atomic_valid;
+  result = lmn_ruleset_make(lmn_ruleset_get_id(src), r_n);
+  result->is_copy = TRUE;
+  result->atomic = src->atomic;
+  result->is_atomic_valid = src->is_atomic_valid;
 
   /* ルール単位のオブジェクト複製 */
   for (i = 0; i < r_n; i++) {
     LmnRuleRef r = lmn_ruleset_get_rule(src, i);
-    lmn_ruleset_put(new, lmn_rule_copy(r));
+    lmn_ruleset_put(result, lmn_rule_copy(r));
   }
-  return new;
+  return result;
 }
 
 static inline BOOL ruleset_cp_is_need_object(LmnRuleSetRef src)

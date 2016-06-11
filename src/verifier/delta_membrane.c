@@ -67,8 +67,8 @@ static LmnMembrane *dmem_root_get_parent(struct MemDeltaRoot* root_d, LmnMembran
 static inline LmnSAtom dmem_root_copy_satom_with_data(struct MemDeltaRoot *d, LmnSAtom atom);
 static inline LmnSAtom dmem_root_copy_satom(struct MemDeltaRoot *d, LmnSAtom atom);
 static inline LmnSAtom dmem_root_copy_eqatom_with_data(LmnSAtom atom);
-static inline void dmem_root_commit_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom new);
-static inline void dmem_root_revert_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom new);
+static inline void dmem_root_commit_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom atom);
+static inline void dmem_root_revert_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom atom);
 static inline BOOL dmem_root_is_freed_atom(struct MemDeltaRoot *d, LmnSAtom a);
 static inline LmnSAtom dmem_root_modified_atom(struct MemDeltaRoot* d, LmnSAtom a);
 static inline void dmem_root_free_satom(struct MemDeltaRoot *d, LmnSAtom atom);
@@ -1034,10 +1034,10 @@ void dmem_root_commit(struct MemDeltaRoot *d)
 
   for (i = 0; i < vec_num(&d->modified_atoms); i+=2) {
     LmnSAtom src = LMN_SATOM(vec_get(&d->modified_atoms, i));
-    LmnSAtom new = LMN_SATOM(vec_get(&d->modified_atoms, i+1));
+    LmnSAtom atm = LMN_SATOM(vec_get(&d->modified_atoms, i+1));
 
-    if (!dmem_root_is_freed_atom(d, new)) {
-      dmem_root_commit_atom(d, src, new);
+    if (!dmem_root_is_freed_atom(d, atm)) {
+      dmem_root_commit_atom(d, src, atm);
     }
   }
 
@@ -1062,25 +1062,25 @@ void dmem_root_commit(struct MemDeltaRoot *d)
 #endif
 }
 
-static inline void dmem_root_commit_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom new)
+static inline void dmem_root_commit_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom atm)
 {
   int i;
   int arity = LMN_SATOM_GET_LINK_NUM(src);
 
-  /* printf("commit atom %s %p -> %p\n", LMN_SATOM_STR(src), src, new); */
-  /* printf("%s(", LMN_SATOM_STR(new)); */
+  /* printf("commit atom %s %p -> %p\n", LMN_SATOM_STR(src), src, atm); */
+  /* printf("%s(", LMN_SATOM_STR(atm)); */
   /* for (i = 0; i < arity; i++) { */
   /*   if (i>0) printf(","); */
-  /*   printf("%p", LMN_SATOM(LMN_SATOM_GET_LINK(new, i))); */
+  /*   printf("%p", LMN_SATOM(LMN_SATOM_GET_LINK(atm, i))); */
   /* } */
   /* printf(")\n"); */
   for (i = 0; i < arity; i++) {
-    LmnLinkAttr attr = LMN_SATOM_GET_ATTR(new, i);
+    LmnLinkAttr attr = LMN_SATOM_GET_ATTR(atm, i);
     if (!LMN_ATTR_IS_DATA(attr)) {
-      LmnSAtom a = dmem_root_modified_atom(d, LMN_SATOM(LMN_SATOM_GET_LINK(new, i)));
-      if (LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)) != LMN_ATOM(new)) {
-        /* printf("  modify link %p %d -> %p\n", a, LMN_ATTR_GET_VALUE(attr), new); */
-        LMN_SATOM_SET_LINK(a, LMN_ATTR_GET_VALUE(attr), new);
+      LmnSAtom a = dmem_root_modified_atom(d, LMN_SATOM(LMN_SATOM_GET_LINK(atm, i)));
+      if (LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)) != LMN_ATOM(atm)) {
+        /* printf("  modify link %p %d -> %p\n", a, LMN_ATTR_GET_VALUE(attr), atm); */
+        LMN_SATOM_SET_LINK(a, LMN_ATTR_GET_VALUE(attr), atm);
       }
     }
   }
@@ -1132,10 +1132,10 @@ void dmem_root_revert(struct MemDeltaRoot *d)
 
   for (i = vec_num(&d->modified_atoms)-1; i >= 0 ; i-=2) {
     LmnSAtom src = LMN_SATOM(vec_get(&d->modified_atoms, i-1));
-    LmnSAtom new = LMN_SATOM(vec_get(&d->modified_atoms, i));
+    LmnSAtom atm = LMN_SATOM(vec_get(&d->modified_atoms, i));
 
-    if (!dmem_root_is_freed_atom(d, new)) {
-      dmem_root_revert_atom(d, src, new);
+    if (!dmem_root_is_freed_atom(d, atm)) {
+      dmem_root_revert_atom(d, src, atm);
     }
   }
 
@@ -1161,12 +1161,12 @@ void dmem_root_revert(struct MemDeltaRoot *d)
 #endif
 }
 
-static inline void dmem_root_revert_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom new)
+static inline void dmem_root_revert_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom atom)
 {
   int i;
   int arity = LMN_SATOM_GET_LINK_NUM(src);
 
-  /* printf("revert atom: %s %p -> %p\n", LMN_SATOM_STR(src), new, src); */
+  /* printf("revert atom: %s %p -> %p\n", LMN_SATOM_STR(src), atom, src); */
 
   for (i = 0; i < arity; i++) {
     LmnLinkAttr attr = LMN_SATOM_GET_ATTR(src, i);

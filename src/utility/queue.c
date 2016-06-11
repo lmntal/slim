@@ -128,15 +128,15 @@ void q_free(Queue *q)
 
 void enqueue(Queue *q, LmnWord v)
 {
-  Node *last, *new;
+  Node *last, *node;
   if (q->lock) {
       q_lock(q, Q_ENQ);
       /*q_lock(q, Q_DEQ);*/
   }
   last = q->tail;
-  new = node_make(v);
-  last->next = new;
-  q->tail = new;
+  node = node_make(v);
+  last->next = node;
+  q->tail = node;
   q->enq_num++;
 
   if (q->lock) {
@@ -147,16 +147,16 @@ void enqueue(Queue *q, LmnWord v)
 
 void enqueue_push_head(Queue *q, LmnWord v)
 {
-  Node *head, *new;
+  Node *head, *node;
  if (q->lock) {
       q_lock(q, Q_ENQ);
       q_lock(q, Q_DEQ);
   }
   head = q->head;
-  new = node_make(v);
-  new->next = head->next;
-  head->next = new;
-  //q->tail = new;
+  node = node_make(v);
+  node->next = head->next;
+  head->next = node;
+  //q->tail = node;
   q->enq_num++;
 
   if (q->lock) {
