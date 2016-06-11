@@ -102,7 +102,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms);
 
 int mc_load_property(AutomataRef *a, PVector *prop_defs);
 void mc_explain_error(int error_id);
-char *mc_error_msg(int error_id);
+const char *mc_error_msg(int error_id);
 
 void mc_found_invalid_state(LmnWorkerGroup *wp, State *seed);
 void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *path);

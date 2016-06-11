@@ -57,9 +57,9 @@ static inline void memory_profiler_destroy(MemoryProfiler *p);
 static inline void peak_counter_init(PeakCounter *p);
 static inline void peak_counter_destroy(PeakCounter *p);
 static void profile_state_f(State *s, LmnWord arg);
-static char *profile_space_id_to_name(int type);
-static char *profile_counter_id_to_name(int type);
-static char *profile_time_id_to_name(int type);
+static const char *profile_space_id_to_name(int type);
+static const char *profile_counter_id_to_name(int type);
+static const char *profile_time_id_to_name(int type);
 
 /** ----------------------------
  *  Rule Profiler
@@ -454,7 +454,7 @@ static void profile_state_f(State *s, LmnWord arg)
 
 static void dump_execution_stat(FILE *f)
 {
-  char *profile, *timeopt, *tcmalloc, *debug;
+  const char *profile, *timeopt, *tcmalloc, *debug;
 
 #ifdef PROFILE
   profile = "ON";
@@ -491,7 +491,7 @@ static void dump_execution_stat(FILE *f)
            , ""
            , "debug"    , debug);
   if (lmn_env.nd) {
-    char *strategy, *expr, *heuristic;
+    const char *strategy, *expr, *heuristic;
 
     if (lmn_env.bfs) {
       strategy = lmn_env.bfs_layer_sync ? "LSync" : "BFS";
@@ -866,9 +866,9 @@ void dump_profile_data(FILE *f)
 }
 
 
-static char *profile_time_id_to_name(int type)
+static const char *profile_time_id_to_name(int type)
 {
-  char *ret;
+  const char *ret;
   switch (type) {
   case PROFILE_TIME__ACTIVE_FOR_IDLE_PROF:
     ret = "idle";
@@ -946,9 +946,9 @@ static char *profile_time_id_to_name(int type)
   return ret;
 }
 
-static char *profile_counter_id_to_name(int type)
+static const char *profile_counter_id_to_name(int type)
 {
-  char *ret;
+  const char *ret;
   switch (type) {
   case PROFILE_COUNT__HASH_CONFLICT_ENTRY:
     ret = "conflict hash entry";
@@ -972,9 +972,9 @@ static char *profile_counter_id_to_name(int type)
   return ret;
 }
 
-static char *profile_space_id_to_name(int type)
+static const char *profile_space_id_to_name(int type)
 {
-  char *ret;
+  const char *ret;
   switch (type) {
   case PROFILE_SPACE__TOTAL:
     ret = "total";

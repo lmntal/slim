@@ -100,7 +100,7 @@ PLFormulaRef          atm_transition_get_formula(AutomataTransitionRef t);
 void               automata_analysis(AutomataRef a);
 AutomataSCC       *atmscc_make(void);
 void               atmscc_free(AutomataSCC *s);
-char              *atmscc_name(AutomataSCC *s);
+const char        *atmscc_name(AutomataSCC *s);
 void               print_property_automata(AutomataRef a);
 
 /* propositional Logic Formula */

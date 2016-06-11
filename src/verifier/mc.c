@@ -817,7 +817,7 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed)
     State *s;
 
     if (lmn_env.sp_dump_format != LMN_SYNTAX) {
-      char *m;
+      const char *m;
       s = (State *)vec_get(v, i);
       m = (s == seed) ? "*" : " ";
       fprintf(ss->out, "%s%2lu::%s"
@@ -1029,7 +1029,7 @@ void mc_explain_error(int error_id)
   lmn_report(mc_error_msg(error_id));
 }
 
-char *mc_error_msg(int error_id)
+const char *mc_error_msg(int error_id)
 {
   switch (error_id) {
   case MC_ERR_NC_ENV:

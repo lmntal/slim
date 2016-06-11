@@ -273,7 +273,7 @@ enum ArgType {
 };
 
 struct InstrSpec {
-  char *op_str;
+  const char *op_str;
   LmnInstrOp op;
   enum ArgType args[128];
 };

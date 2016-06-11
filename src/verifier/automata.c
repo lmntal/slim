@@ -333,9 +333,9 @@ void automata_analysis(AutomataRef a)
 
 
 /* for debug */
-char *atmscc_name(AutomataSCC *s)
+const char *atmscc_name(AutomataSCC *s)
 {
-  char *ret = NULL;
+  const char *ret = NULL;
   switch (atmscc_type(s)) {
   case SCC_TYPE_UNKNOWN:
     ret = "Still_UnKnown.";

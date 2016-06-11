@@ -46,7 +46,7 @@
 struct PredefinedFunctor {
   LmnFunctor id;
   BOOL special;
-  char  *name;
+  const char *name;
   LmnArity arity;
 };
 

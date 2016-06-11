@@ -886,10 +886,10 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner)
   unsigned int i;
 
   BOOL need_id_foreach_trans;
-  char *state_separator,
-       *trans_separator,
-       *label_begin,
-       *label_end;
+  const char *state_separator,
+             *trans_separator,
+             *label_begin,
+             *label_end;
   BOOL formated;
 
   /* Rehashが発生している場合,
