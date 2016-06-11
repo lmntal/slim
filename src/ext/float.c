@@ -81,5 +81,5 @@ void float_of_string(LmnReactCxt *rc,
 
 void init_float(void)
 {
-  lmn_register_c_fun("float_of_string", float_of_string, 2);
+  lmn_register_c_fun("float_of_string", (void *)float_of_string, 2);
 }

@@ -406,7 +406,7 @@ void slim_version(FILE *f);
    };
 #
 # endif /* HAVE_PTHREAD_BARRIER */
-# define lmn_thread_create(Pth, Pfunc, Parg)  pthread_create(Pth, NULL, (void *)Pfunc, (void *)Parg)
+# define lmn_thread_create(Pth, Pfunc, Parg)  pthread_create(Pth, NULL, (void * (*)(void *))Pfunc, (void *)Parg)
 # define lmn_thread_join(Th)                  pthread_join(Th, NULL)
 # define lmn_mutex_init(Pm)                   pthread_mutex_init(Pm, NULL)
 # define lmn_mutex_init_onthefly(Pm)          (Pm) = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER

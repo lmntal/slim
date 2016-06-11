@@ -57,8 +57,8 @@
 #include "tree_compress.h"
 
 struct statespace_type {
-  int(*compare) ( );               /* 状態の等価性判定を行う関数 */
-  LmnBinStrRef(*compress) ( ); /* 状態sの圧縮バイト列を計算して返す関数 */
+  int(*compare) (State *, State *);               /* 状態の等価性判定を行う関数 */
+  LmnBinStrRef(*compress) (State *); /* 状態sの圧縮バイト列を計算して返す関数 */
 };
 
 

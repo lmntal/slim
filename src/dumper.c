@@ -615,7 +615,7 @@ static void dump_rule(LmnPortRef port, LmnRuleSetRef rs)
       port_put_raw_s(port, "[id:");
       port_put_raw_s(port, lmn_id_to_name(lmn_rule_get_name(r))); /* ルール名 */
       port_put_raw_s(port, "\"");
-      st_foreach(his_tbl, dump_history_f, (st_data_t)port);
+      st_foreach(his_tbl, (st_iter_func)dump_history_f, (st_data_t)port);
       port_put_raw_s(port, "\"]");
     }
   }
@@ -1087,11 +1087,11 @@ static void lmn_dump_link_json(LmnSAtom atom, int index)
         break;
       case LMN_DBL_ATTR:
       case LMN_CONST_DBL_ATTR:
-        fprintf(stdout, "\"data\":%f", lmn_get_double(data));
+        fprintf(stdout, "\"data\":%f", lmn_get_double((LmnAtom)data));
         break;
       case LMN_SP_ATOM_ATTR:
       case LMN_CONST_STR_ATTR:
-        fprintf(stdout, "\"data\":%s", lmn_string_c_str(data));
+        fprintf(stdout, "\"data\":%s", lmn_string_c_str((LmnStringRef)data));
         break;
       case LMN_HL_ATTR:
         {
@@ -1199,7 +1199,7 @@ void cb_dump_mem(LmnReactCxt *rc,
 
 void dumper_init()
 {
-  lmn_register_c_fun("cb_dump_mem", cb_dump_mem, 3);
+  lmn_register_c_fun("cb_dump_mem", (void *)cb_dump_mem, 3);
 }
 
 void dumper_finalize()

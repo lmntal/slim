@@ -33,13 +33,13 @@ struct st_table_entry {
 static int st_ptrcmp(void *p1, void *p2);
 static long st_ptrhash(void *p);
 static struct st_hash_type type_ptrhash   = {st_ptrcmp, st_ptrhash };
-static struct st_hash_type type_numhash   = {st_numcmp, st_numhash};
-static struct st_hash_type type_strhash   = {strcmp, st_strhash};
-static struct st_hash_type type_statehash = {state_cmp_with_compress, st_statehash};
+static struct st_hash_type type_numhash   = {(st_cmp_func)st_numcmp, (st_hash_func)st_numhash};
+static struct st_hash_type type_strhash   = {(st_cmp_func)strcmp, (st_hash_func)st_strhash};
+static struct st_hash_type type_statehash = {(st_cmp_func)state_cmp_with_compress, (st_hash_func)st_statehash};
 
 static void rehash(st_table_t tbl);
 
-#define EQUAL(table,x,y) ((x)==(y) || (*table->type->compare)((x),(y)) == 0)
+#define EQUAL(table,x,y) ((x)==(y) || (*table->type->compare)((void *)(x),(void *)(y)) == 0)
 
 #define do_hash(key,table) (unsigned long)(*(table)->type->hash)((key))
 #define do_hash_bin(key,table) (do_hash(key, table)%(table)->num_bins)
@@ -240,7 +240,7 @@ int st_lookup(st_table_t table, register st_data_t key, st_data_t *value)
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
-  hash_val = do_hash(key, table);
+  hash_val = do_hash((void *)key, table);
   FIND_ENTRY(table, ptr, hash_val, bin_pos);
 
   if (ptr == 0) {
@@ -261,7 +261,7 @@ int st_lookup_with_col(st_table_t table, register st_data_t key, st_data_t *valu
   register st_table_entry *ptr;
 
   *n_col = 0;
-  hash_val = do_hash(key, table);
+  hash_val = do_hash((void *)key, table);
   FIND_ENTRY_WITH_COL(table, ptr, hash_val, bin_pos, *n_col);
 
   if (ptr == 0) {
@@ -296,7 +296,7 @@ static inline int st_insert_inner(register st_table_t table, register st_data_t 
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
-  hash_val = do_hash(key, table);
+  hash_val = do_hash((void *)key, table);
   FIND_ENTRY(table, ptr, hash_val, bin_pos);
 
   if (ptr == 0) {
@@ -325,7 +325,7 @@ static inline int st_insert_safe_inner(register st_table_t table, register st_da
   unsigned long hash_val, bin_pos;
   register st_table_entry *ptr;
 
-  hash_val = do_hash(key, table);
+  hash_val = do_hash((void *)key, table);
   FIND_ENTRY(table, ptr, hash_val, bin_pos);
 
   if (ptr == 0) {
@@ -354,7 +354,7 @@ static inline void st_add_direct_inner(st_table_t table, st_data_t key, st_data_
 {
   unsigned long hash_val, bin_pos;
 
-  hash_val = do_hash(key, table);
+  hash_val = do_hash((void *)key, table);
   bin_pos = hash_val % table->num_bins;
   ADD_DIRECT(table, key, value, hash_val, bin_pos);
 }
@@ -437,7 +437,7 @@ int st_delete(register st_table_t table, register st_data_t key, st_data_t *valu
   st_table_entry *tmp;
   register st_table_entry *ptr;
 
-  hash_val = do_hash_bin(key, table);
+  hash_val = do_hash_bin((void *)key, table);
   ptr = table->bins[hash_val];
 
   if (ptr == 0) {
@@ -472,7 +472,7 @@ int st_delete_safe(register st_table_t table, register st_data_t *key, st_data_t
   unsigned long hash_val;
   register st_table_entry *ptr;
 
-  hash_val = do_hash_bin(*key, table);
+  hash_val = do_hash_bin((void *)*key, table);
   ptr = table->bins[hash_val];
 
   if (ptr == 0) {
@@ -504,7 +504,7 @@ static int delete_never(st_data_t key __attribute__((unused)), st_data_t value, 
 void st_cleanup_safe(st_table_t table, st_data_t never) {
   int num_entries = table->num_entries;
 
-  st_foreach(table, delete_never, never);
+  st_foreach(table, (st_iter_func)delete_never, never);
   table->num_entries = num_entries;
 }
 
@@ -515,7 +515,7 @@ static int clear_f(st_data_t some, st_data_t some2, st_data_t some3)
 
 void st_clear(st_table_t table)
 {
-  st_foreach(table, clear_f, 0);
+  st_foreach(table, (st_iter_func)clear_f, 0);
 }
 
 /* テーブルの各要素に対し，第一引数にキー，第二引数に値，
@@ -536,7 +536,7 @@ int st_foreach(st_table_t table, int(*func)( ANYARGS), st_data_t arg) {
   for (i = 0; i < table->num_bins; i++) {
     last = 0;
     for (ptr = table->bins[i]; ptr != 0;) { /* エントリーの存在するチェインでのみfuncが呼ばれる */
-      retval = (*func)(ptr->key, ptr->record, arg);
+      retval = (enum st_retval)(*func)(ptr->key, ptr->record, arg);
       switch (retval) {
       case ST_CHECK: /* check if hash is modified during iteration */
         tmp = 0;
@@ -585,7 +585,7 @@ int st_foreach_hash(st_table_t table, st_data_t hash, int(*func)( ANYARGS), st_d
       ptr = ptr->next;
       continue;
     }
-    retval = (*func)(ptr->key, ptr->record, arg);
+    retval = (enum st_retval)(*func)(ptr->key, ptr->record, arg);
     switch (retval) {
     case ST_CHECK: /* check if hash is modified during iteration */
       tmp = 0;
@@ -628,7 +628,7 @@ static int insert_f(st_data_t key, st_data_t value, st_data_t tbl1)
 
 void st_concat(st_table_t tbl1, const st_table_t tbl2)
 {
-  st_foreach((st_table_t)tbl2, insert_f, (st_data_t)tbl1);
+  st_foreach((st_table_t)tbl2, (st_iter_func)insert_f, (st_data_t)tbl1);
 }
 
 /*　st_tableが持つ要素を表示する　*/
@@ -676,12 +676,12 @@ static int st_value_push_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg)
 /*　st_tableが持つ要素をVectorに昇順に格納する　*/
 void st_get_entries_key(st_table_t st, Vector *vec)
 {
-  st_foreach(st, st_key_push_vec_f, (st_data_t)vec);
+  st_foreach(st, (st_iter_func)st_key_push_vec_f, (st_data_t)vec);
 }
 
 void st_get_entries_value(st_table_t st, Vector *vec)
 {
-  st_foreach(st, st_value_push_vec_f, (st_data_t)vec);
+  st_foreach(st, (st_iter_func)st_value_push_vec_f, (st_data_t)vec);
 }
 
 

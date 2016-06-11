@@ -64,7 +64,7 @@
 #define READ_VAL_LIST(I,X)                      \
   do{                                                               \
     READ_VAL(LmnInstrVar, I, X##_num);                                  \
-    X = malloc(sizeof(LmnWord)*X##_num);                                \
+    X = (LmnWord *)malloc(sizeof(LmnWord)*X##_num);                                \
     { int i; for(i=0; i<X##_num; ++i){ READ_VAL(LmnInstrVar, I, X[i]); } } \
   }while(0)
 

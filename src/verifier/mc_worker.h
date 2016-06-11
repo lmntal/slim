@@ -120,8 +120,8 @@ struct LmnMCObj {
   LmnWorker *owner;
   BYTE type;
   void *obj;           /* 任意のデータ */
-  void (*init)( );     /* objの初期化関数 */
-  void (*finalize)( ); /* objの後始末関数 */
+  void (*init)(LmnWorker *);     /* objの初期化関数 */
+  void (*finalize)(LmnWorker *); /* objの後始末関数 */
 };
 
 #define mc_obj(MC)                ((MC)->obj)
@@ -160,8 +160,8 @@ struct LmnWorker {
   LmnMCObj        explorer;
   BOOL            is_explorer;
 
-  void            (*start)( );   /* 実行関数 */
-  BOOL            (*check)( );   /* 終了検知関数 */
+  void            (*start)(struct LmnWorker *);   /* 実行関数 */
+  BOOL            (*check)(struct LmnWorker *);   /* 終了検知関数 */
 
   StateSpaceRef   states;        /* Pointer to StateSpace */
   LmnReactCxt     cxt;           /* ReactContext Object */

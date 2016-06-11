@@ -630,7 +630,7 @@ static inline State *state_D_ref(State *s) {
 static inline void state_D_cache(State *s, LmnBinStrRef d) {
   LMN_ASSERT(!state_D_fetch(s));  
   /* メモリ節約の結果, 保守性ないコード. 注意 */
-  s->successors = (succ_data_t)d;
+  s->successors = (succ_data_t *)d;
 }
 
 /* キャッシングしておいた状態sに対応する非圧縮バイナリストリングに対する参照を返す. */

@@ -2627,7 +2627,7 @@ label_skip_data_atom:
         port_put_raw_s(port, ":");
       }
 
-      id = lmn_intern((char *)lmn_string_c_str(port->data));
+      id = lmn_intern((char *)lmn_string_c_str((LmnStringRef)port->data));
       lmn_port_free(port);
 
       if (sh) lmn_env.show_hyperlink = TRUE;
@@ -2833,7 +2833,7 @@ label_skip_data_atom:
       }
 
       if (!LMN_SPC_PC(spc2, arg2)) {
-        LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, LMN_SPC_PC(spc1, arg1));
+        LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, (ProcCxt *)LMN_SPC_PC(spc1, arg1));
       }
 
       ////normal parallel init
@@ -2864,7 +2864,7 @@ label_skip_data_atom:
 	  }
 
 	  if (!LMN_SPC_PC(spc2, arg2)) {
-	    LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, LMN_SPC_PC(spc1, arg1));
+	    LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, (ProcCxt *)LMN_SPC_PC(spc1, arg1));
 	  }
 	}
       }

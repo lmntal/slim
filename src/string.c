@@ -344,12 +344,12 @@ void cb_string_substr_right(LmnReactCxt *rc,
 void *sp_cb_string_copy(void *s)
 {
 
-  return lmn_string_copy(s);
+  return lmn_string_copy((LmnStringRef)s);
 }
 
 void sp_cb_string_free(void *s)
 {
-  lmn_string_free(s);
+  lmn_string_free((LmnStringRef)s);
 }
 
 void sp_cb_string_dump(void *s, LmnPortRef port)
@@ -378,12 +378,12 @@ void string_init()
                                           sp_cb_string_dump,
                                           sp_cb_string_is_ground);
 
-  lmn_register_c_fun("string_make", cb_string_make, 2);
-  lmn_register_c_fun("string_concat", cb_string_concat, 3);
-  lmn_register_c_fun("string_length", cb_string_length, 2);
-  lmn_register_c_fun("string_reverse", cb_string_reverse, 2);
-  lmn_register_c_fun("string_substr", cb_string_substr, 4);
-  lmn_register_c_fun("string_substr_right", cb_string_substr_right, 3);
+  lmn_register_c_fun("string_make", (void *)cb_string_make, 2);
+  lmn_register_c_fun("string_concat", (void *)cb_string_concat, 3);
+  lmn_register_c_fun("string_length", (void *)cb_string_length, 2);
+  lmn_register_c_fun("string_reverse", (void *)cb_string_reverse, 2);
+  lmn_register_c_fun("string_substr", (void *)cb_string_substr, 4);
+  lmn_register_c_fun("string_substr_right", (void *)cb_string_substr_right, 3);
 }
 
 void string_finalize()

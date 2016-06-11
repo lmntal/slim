@@ -91,7 +91,7 @@ void lmn_port_free(LmnPortRef port)
     case LMN_PORT_FILE:
       break;
     case LMN_PORT_OSTR:
-      lmn_string_free(LMN_PORT_DATA(port));
+      lmn_string_free((LmnStringRef)LMN_PORT_DATA(port));
       break;
     case LMN_PORT_ISTR:
       lmn_port_close(port);
@@ -221,7 +221,7 @@ BOOL lmn_port_error_occurred(LmnPortRef port_atom)
 
 LmnPortDirection lmn_port_dir(LmnPortRef port_atom)
 {
-  return LMN_PORT(port_atom)->direction;
+  return (LmnPortDirection)LMN_PORT(port_atom)->direction;
 }
 
 lmn_interned_str lmn_port_name(LmnPortRef port_atom)
@@ -852,22 +852,22 @@ void port_init()
   lmn_stdout = lmn_make_file_port(stdout, "stdout", LMN_PORT_OUTPUT, TRUE);
   lmn_stderr = lmn_make_file_port(stderr, "stderr", LMN_PORT_OUTPUT, TRUE);
 
-  lmn_register_c_fun("cb_port_stdin", cb_stdin_port, 1);
-  lmn_register_c_fun("cb_port_stdout", cb_stdout_port, 1);
-  lmn_register_c_fun("cb_port_stderr", cb_stderr_port, 1);
-  lmn_register_c_fun("cb_port_getc", cb_port_getc, 3);
-  lmn_register_c_fun("cb_port_get_byte", cb_port_get_byte, 3);
-  lmn_register_c_fun("cb_port_unget_byte", cb_port_unget_byte, 3);
-  lmn_register_c_fun("cb_port_putc", cb_port_putc, 3);
-  lmn_register_c_fun("cb_port_put_byte", cb_port_put_byte, 3);
-  lmn_register_c_fun("cb_port_puts", cb_port_puts, 3);
-  lmn_register_c_fun("cb_port_read_line", cb_port_read_line, 3);
-  lmn_register_c_fun("cb_port_read_token", cb_port_read_token, 3);
-  lmn_register_c_fun("cb_make_output_string", cb_make_output_string, 1);
-  lmn_register_c_fun("cb_make_input_string", cb_make_input_string, 2);
-  lmn_register_c_fun("cb_port_output_string", cb_port_output_string, 3);
-  lmn_register_c_fun("cb_port_close", cb_port_close, 2);
-  lmn_register_c_fun("cb_port_free", cb_port_free, 1);
+  lmn_register_c_fun("cb_port_stdin", (void *)cb_stdin_port, 1);
+  lmn_register_c_fun("cb_port_stdout", (void *)cb_stdout_port, 1);
+  lmn_register_c_fun("cb_port_stderr", (void *)cb_stderr_port, 1);
+  lmn_register_c_fun("cb_port_getc", (void *)cb_port_getc, 3);
+  lmn_register_c_fun("cb_port_get_byte", (void *)cb_port_get_byte, 3);
+  lmn_register_c_fun("cb_port_unget_byte", (void *)cb_port_unget_byte, 3);
+  lmn_register_c_fun("cb_port_putc", (void *)cb_port_putc, 3);
+  lmn_register_c_fun("cb_port_put_byte", (void *)cb_port_put_byte, 3);
+  lmn_register_c_fun("cb_port_puts", (void *)cb_port_puts, 3);
+  lmn_register_c_fun("cb_port_read_line", (void *)cb_port_read_line, 3);
+  lmn_register_c_fun("cb_port_read_token", (void *)cb_port_read_token, 3);
+  lmn_register_c_fun("cb_make_output_string", (void *)cb_make_output_string, 1);
+  lmn_register_c_fun("cb_make_input_string", (void *)cb_make_input_string, 2);
+  lmn_register_c_fun("cb_port_output_string", (void *)cb_port_output_string, 3);
+  lmn_register_c_fun("cb_port_close", (void *)cb_port_close, 2);
+  lmn_register_c_fun("cb_port_free", (void *)cb_port_free, 1);
 }
 
 void port_finalize()

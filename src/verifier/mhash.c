@@ -508,7 +508,7 @@ static mhash_t mhash_rulesets(Vector *rulesets)
       for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
         st_table_t his_tbl = lmn_rule_get_history_tbl(lmn_ruleset_get_rule(rs, j));
         if (!his_tbl || st_num(his_tbl) == 0) continue;
-        st_foreach(his_tbl, mhash_multiply_rhistories_f, (st_data_t)&hash);
+        st_foreach(his_tbl, (st_iter_func)mhash_multiply_rhistories_f, (st_data_t)&hash);
       }
     }
   }

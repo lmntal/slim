@@ -194,7 +194,7 @@ void cb_atom_swap(LmnReactCxt *rc,
 
 void init_atom()
 {
-  lmn_register_c_fun("cb_atom_new", cb_atom_new, 3);
-  lmn_register_c_fun("cb_atom_functor", cb_atom_functor, 4);
-  lmn_register_c_fun("cb_atom_swap", cb_atom_swap, 5);
+  lmn_register_c_fun("cb_atom_new", (void *)cb_atom_new, 3);
+  lmn_register_c_fun("cb_atom_functor", (void *)cb_atom_functor, 4);
+  lmn_register_c_fun("cb_atom_swap", (void *)cb_atom_swap, 5);
 }

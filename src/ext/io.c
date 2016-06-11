@@ -146,6 +146,6 @@ void cb_print_line_with_port(LmnReactCxt *rc,
 
 void init_io(void)
 {
-  lmn_register_c_fun("cb_print_newline_with_port", cb_print_newline_with_port, 2);
-  lmn_register_c_fun("cb_print_line_with_port", cb_print_line_with_port, 3);
+  lmn_register_c_fun("cb_print_newline_with_port", (void *)cb_print_newline_with_port, 2);
+  lmn_register_c_fun("cb_print_line_with_port", (void *)cb_print_line_with_port, 3);
 }

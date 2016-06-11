@@ -88,7 +88,7 @@ void atomic_ruleset(LmnReactCxt *rc, LmnMembrane *mem,
 
 void init_atomic(void)
 {
-  lmn_register_c_fun("atomic_ruleset", atomic_ruleset, 1);
+  lmn_register_c_fun("atomic_ruleset", (void *)atomic_ruleset, 1);
 }
 
 

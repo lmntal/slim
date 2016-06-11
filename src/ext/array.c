@@ -343,6 +343,9 @@ BOOL sp_cb_array_eq(void *_p1, void *_p2)
   return FALSE;
 }
 
+/* defined in string.c */
+void sp_cb_string_dump(void *s, LmnPortRef port);
+
 void sp_cb_array_dump(void *array, LmnPortRef port)
 {
   unsigned long i, size;
@@ -363,7 +366,7 @@ void sp_cb_array_dump(void *array, LmnPortRef port)
     } else if (type == LMN_HL_ATTR) {
       lmn_dump_atom(port, data[0], type);
     }else {
-      sp_cb_string_dump(data[0], port);
+      sp_cb_string_dump((void *)data[0], port);
     }
     for (i = 1; i < size ; i++) {
       port_put_raw_s(port, ",");
@@ -375,7 +378,7 @@ void sp_cb_array_dump(void *array, LmnPortRef port)
       } else if (type == LMN_HL_ATTR) {
         lmn_dump_atom(port, data[i], type);
       } else {
-        sp_cb_string_dump(data[i], port);
+        sp_cb_string_dump((void *)data[i], port);
       }
     }
   }
@@ -396,11 +399,11 @@ void init_array()
       sp_cb_array_dump,
       sp_cp_array_is_ground);
 
-  lmn_register_c_fun("cb_array_free", cb_array_free, 1);
-  lmn_register_c_fun("cb_array_new", cb_array_new, 3);
-  lmn_register_c_fun("cb_array_size", cb_array_size, 3);
-  lmn_register_c_fun("cb_array_get", cb_array_get, 4);
-  lmn_register_c_fun("cb_array_put", cb_array_put, 4);
+  lmn_register_c_fun("cb_array_free", (void *)cb_array_free, 1);
+  lmn_register_c_fun("cb_array_new", (void *)cb_array_new, 3);
+  lmn_register_c_fun("cb_array_size", (void *)cb_array_size, 3);
+  lmn_register_c_fun("cb_array_get", (void *)cb_array_get, 4);
+  lmn_register_c_fun("cb_array_put", (void *)cb_array_put, 4);
 }
 
 /*

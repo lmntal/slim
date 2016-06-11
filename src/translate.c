@@ -282,7 +282,7 @@ char *automalloc_sprintf(const char *format, ...)
   buf_len = vsnprintf(trush, 2, format, ap);
   va_end(ap);
 
-  buf = lmn_malloc(buf_len + 1);
+  buf = (char *)lmn_malloc(buf_len + 1);
 
   va_start(ap, format);
   vsnprintf(buf, buf_len+1, format, ap);
@@ -448,7 +448,7 @@ static void translate_ruleset(LmnRuleSetRef ruleset, const char *header)
   int i, buf_len, rules_count;
 
   buf_len     = strlen(header) + 50; /* 適当. これだけあれば足りるはず */
-  buf         = lmn_malloc(buf_len + 1);
+  buf         = (char *)lmn_malloc(buf_len + 1);
   rules_count = lmn_ruleset_rule_num(ruleset);
   if (rules_count > 0) {
     rule_names = LMN_CALLOC(lmn_interned_str, rules_count);
@@ -584,7 +584,7 @@ static void print_trans_rules(const char *filename)
 
   count   = count_rulesets();
   buf_len = strlen(filename) + 50; /* 適当にこれだけあれば足りるはず */
-  buf     = lmn_malloc(buf_len + 1);
+  buf     = (char *)lmn_malloc(buf_len + 1);
 
   /* システムルールセットの出力 */
   snprintf(buf, buf_len, "trans_%s_1", filename);
@@ -671,7 +671,7 @@ static void print_trans_modules(const char *filename)
   count   = count_modules();
   counter = 0;
   fprintf(OUT, "struct trans_module trans_%s_maindata_modules[%d] = {\n", filename, count);
-  st_foreach(module_table, print_trans_module_f, (st_data_t)&counter);
+  st_foreach(module_table, (st_iter_func)print_trans_module_f, (st_data_t)&counter);
   fprintf(OUT, "};\n\n");
 }
 

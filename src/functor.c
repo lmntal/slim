@@ -110,8 +110,8 @@ static long functor_hash(LmnFunctorEntry *x)
 }
 
 static struct st_hash_type type_functorhash = {
-  functor_cmp,
-  functor_hash
+  (st_cmp_func)functor_cmp,
+  (st_hash_func)functor_hash
 };
 
 
@@ -169,7 +169,7 @@ int functor_entry_free(LmnFunctorEntry *e)
 
 void lmn_functor_tbl_destroy()
 {
-  st_foreach(functor_id_tbl, functor_entry_free, 0);
+  st_foreach(functor_id_tbl, (st_iter_func)functor_entry_free, 0);
   st_free_table(functor_id_tbl);
   LMN_FREE(lmn_functor_table.entry);
 }

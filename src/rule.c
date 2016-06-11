@@ -92,7 +92,7 @@ LmnRuleRef lmn_rule_copy(LmnRuleRef rule)
 
   if (lmn_rule_get_inst_seq(rule)) {
     inst_seq = LMN_NALLOC(BYTE, rule->inst_seq_len);
-    inst_seq = memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
+    inst_seq = (BYTE *)memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
   } else {
     inst_seq = NULL;
   }
@@ -551,7 +551,7 @@ LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name)
 {
   LmnRuleSetRef ruleset;
 
-  if (st_lookup(module_table, (st_data_t)module_name, (void *)&ruleset)) return ruleset;
+  if (st_lookup(module_table, (st_data_t)module_name, (st_data_t *)&ruleset)) return ruleset;
   return NULL;
 }
 

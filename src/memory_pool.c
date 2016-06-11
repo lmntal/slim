@@ -70,7 +70,7 @@ void *memory_pool_malloc(memory_pool *p)
     /* fprintf(stderr, "no more free space, so allocate new block\n"); */
 
     /* top of block is used as pointer to head of next block */
-    rawblock = lmn_malloc(ALIGNED_SIZE(sizeof(void*)) + p->sizeof_element * blocksize);
+    rawblock = (char *)lmn_malloc(ALIGNED_SIZE(sizeof(void*)) + p->sizeof_element * blocksize);
     *(void**)rawblock = p->block_head;
     p->block_head = rawblock;
 

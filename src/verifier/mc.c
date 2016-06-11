@@ -935,8 +935,8 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f)
 
       if (!cui_dump) {
         StateSpaceRef represent = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
-        st_foreach(invalids_graph, mc_dump_invalids_f, (st_data_t)represent);
-        st_foreach(invalids_graph, mc_free_succ_vec_f, (st_data_t)0);
+        st_foreach(invalids_graph, (st_iter_func)mc_dump_invalids_f, (st_data_t)represent);
+        st_foreach(invalids_graph, (st_iter_func)mc_free_succ_vec_f, (st_data_t)0);
         st_free_table(invalids_graph);
       }
 

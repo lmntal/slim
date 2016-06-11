@@ -679,7 +679,7 @@ static void statetable_free(StateTable *st, int nPEs)
 {
   if (st) {
 
-    statetable_foreach_parallel(st, state_free, DEFAULT_ARGS, DEFAULT_ARGS, nPEs);
+    statetable_foreach_parallel(st, (void (*)())state_free, DEFAULT_ARGS, DEFAULT_ARGS, nPEs);
 
     if (st->lock) {
       ewlock_free(st->lock);
@@ -1043,7 +1043,7 @@ static void statetable_add_direct(StateTable *st, State *s)
 }
 
 /* 高階関数  */
-void statetable_foreach(StateTable *st, void (*func) ( ),
+void statetable_foreach(StateTable *st, void (*func) (ANYARGS),
                                LmnWord _arg1, LmnWord _arg2)
 {
   if (st) {
@@ -1068,7 +1068,7 @@ void statetable_foreach(StateTable *st, void (*func) ( ),
   }
 }
 
-void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) ( ),
+void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) (ANYARGS ),
                                  LmnWord _arg1, LmnWord _arg2, int nthreads)
 {
   if (st) {
@@ -1179,39 +1179,39 @@ void statespace_dumper(StateSpaceRef ss)
 static void statespace_dump_all_states(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
 static void statespace_dump_all_transitions(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
 static void statespace_dump_all_labels(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
@@ -1265,7 +1265,7 @@ void statetable_format_states(StateTable *st)
 {
   if (st) {
     qsort(st->tbl, st->cap, sizeof(struct State *), statetable_cmp_state_id_gr_f);
-    statetable_foreach(st, statetable_issue_state_id_f,
+    statetable_foreach(st, (void (*)())statetable_issue_state_id_f,
                        DEFAULT_ARGS, DEFAULT_ARGS);
   }
 }

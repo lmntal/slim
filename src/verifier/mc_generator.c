@@ -1021,7 +1021,7 @@ void bfs_start(LmnWorker *w) {
       if (BLEDGE_COND(w)) bledge_start(w);
 
       BFS_WORKER_Q_SWAP(w);
-      lmn_workers_synchronization(w, (void *)lmn_workers_termination_detection_for_rings);
+      lmn_workers_synchronization(w, (void (*)(LmnWorker *))lmn_workers_termination_detection_for_rings);
       if (d_lim < ++d || wp->mc_exit || lmn_workers_termination_detection_for_rings(w)) {
         break;
       }

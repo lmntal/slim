@@ -309,7 +309,7 @@ void lmn_profiler_finalize()
   }
 
   if (lmn_prof.prules) {
-    st_foreach(lmn_prof.prules, rule_profiler_free_f, (st_data_t)0);
+    st_foreach(lmn_prof.prules, (st_iter_func)rule_profiler_free_f, (st_data_t)0);
     st_free_table(lmn_prof.prules);
   }
 }
@@ -371,7 +371,7 @@ void profile_statespace(LmnWorkerGroup *wp)
     for (i = 0; i < lmn_prof.thread_num; i++) {
       mc_profiler2_init(&lmn_prof.lv2[i]);
     }
-    statespace_foreach(worker_states(w), profile_state_f,
+    statespace_foreach(worker_states(w), (void (*)())profile_state_f,
                        (LmnWord)worker_states(w), DEFAULT_ARGS);
 
     if (lmn_env.tree_compress) {

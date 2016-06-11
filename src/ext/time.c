@@ -59,5 +59,5 @@ void gettime(LmnReactCxt *rc,
 
 void init_time(void)
 {
-  lmn_register_c_fun("gettime", gettime, 1);
+  lmn_register_c_fun("gettime", (void *)gettime, 1);
 }

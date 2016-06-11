@@ -123,6 +123,6 @@ void cb_react_rule_nd(LmnReactCxt *rc,
 
 void init_react_rule(void)
 {
-  lmn_register_c_fun("cb_react_rule", cb_react_rule, 4);
-  lmn_register_c_fun("cb_react_rule_nd", cb_react_rule_nd, 4);
+  lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
+  lmn_register_c_fun("cb_react_rule_nd", (void *)cb_react_rule_nd, 4);
 }

@@ -248,8 +248,8 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a)
 static void finalize_ample(BOOL org_f)
 {
   mc_por.next_strans_id = POR_ID_INITIALIZER;
-  st_foreach(mc_por.strans_independency, independency_vec_free, (st_data_t)0);
-  st_foreach(mc_por.states, destroy_tmp_state_graph, (LmnWord)org_f);
+  st_foreach(mc_por.strans_independency, (st_iter_func)independency_vec_free, (st_data_t)0);
+  st_foreach(mc_por.states, (st_iter_func)destroy_tmp_state_graph, (LmnWord)org_f);
   queue_clear(mc_por.queue);
   vec_clear(mc_por.ample_candidate);
   RC_CLEAR_DATA(mc_por.rc);
@@ -282,7 +282,7 @@ static BOOL ample(StateSpaceRef  ss,
    * -- C1から導かれるLemmaを満たすような，sで可能な遷移の集合を求める．
    * -- この処理では，sにおいてC1を満足するためには絶対にample(s)内に
    *    含めておかなくてはならない遷移の集合をample_candidate内にPUSHする. */
-  st_foreach(mc_por.strans_independency, build_ample_satisfying_lemma, (st_data_t)s);
+  st_foreach(mc_por.strans_independency, (st_iter_func)build_ample_satisfying_lemma, (st_data_t)s);
 
   /* ここでample_candidateが空の場合は，sで可能なすべての遷移が互いに独立であることになるので，
    * その中でC2，C3を共に満足する1本をample_candidateの要素とする */

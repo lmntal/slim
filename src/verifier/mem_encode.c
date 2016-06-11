@@ -1113,7 +1113,7 @@ static inline void bsptr_push_rule_histories(BinStrPtrRef bsp, LmnRuleRef r)
   bsptr_push(bsp, (BYTE*)&his_num, BS_HISTORY_NUM_SIZE); /* write history num */
 
   if (his_num > 0) { /* write each id of histories */
-    st_foreach(his_tbl, bsptr_push_history_f, (st_data_t)bsp);
+    st_foreach(his_tbl, (st_iter_func)bsptr_push_history_f, (st_data_t)bsp);
   }
 }
 

@@ -165,10 +165,10 @@ void integer_of_string(LmnReactCxt *rc,
 
 void init_integer(void)
 {
-  lmn_register_c_fun("integer_set", integer_set, 3);
-  lmn_register_c_fun("integer_srand", integer_srand, 1);
-  lmn_register_c_fun("integer_rand", integer_rand, 2);
-  lmn_register_c_fun("integer_of_string", integer_of_string, 2);
+  lmn_register_c_fun("integer_set", (void *)integer_set, 3);
+  lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
+  lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
+  lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
 
   srand((unsigned)time(NULL));
 }

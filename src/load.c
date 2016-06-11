@@ -534,7 +534,7 @@ LmnRuleRef load_rule(RuleRef rule)
   load_inst_block(rule_get_body(rule), c);
 
   /* ラベルを参照している位置に、実際のラベルの位置を書き込む */
-  st_foreach(c->loc_to_label_ref, fill_label_ref, (st_data_t)c);
+  st_foreach(c->loc_to_label_ref, (st_iter_func)fill_label_ref, (st_data_t)c);
 
   st_free_table(c->label_to_loc);
   st_free_table(c->loc_to_label_ref);
@@ -716,7 +716,7 @@ LmnRuleSetRef load_compiled_il(char *filename, void *sohandle)
 
   basename = create_formatted_basename(filename);
   buf_len  = strlen(basename) + 50;   /* 適当に50文字余分にとったけどこれでいいのか  */
-  buf      = lmn_malloc(buf_len + 1); /* 必要ないけど一応最後に1byte余分をとっておく */
+  buf      = (char *)lmn_malloc(buf_len + 1); /* 必要ないけど一応最後に1byte余分をとっておく */
 
   ret      = load_compiled_il_inner(basename, buf, buf_len, sohandle, filename);
 
@@ -734,7 +734,7 @@ static inline LmnRuleSetRef load_compiled_il_inner(char *basename,
   void (*init_f)();
 
   snprintf(buf, buf_len, "init_%s", basename);
-  init_f = dlsym(sohandle, buf);
+  init_f = (void (*)())dlsym(sohandle, buf);
 
   if (!init_f) {
     fprintf(stderr, "init function \"%s\" not found in %s.\n", buf, filename);
@@ -748,7 +748,7 @@ static inline LmnRuleSetRef load_compiled_il_inner(char *basename,
 
     /* データオブジェクトを取得 */
     snprintf(buf, buf_len, "trans_%s_maindata", basename);
-    maindata = dlsym(sohandle, buf);
+    maindata = (struct trans_maindata *)dlsym(sohandle, buf);
 
     if (!maindata) {
       fprintf(stderr, "maindata \"%s\" not found in %s.\n", buf, basename);
@@ -950,9 +950,9 @@ void load_il_files(char *path)
     }
 
     /* 読み込む */
-    st_foreach(loading_files_type, load_loading_tbl_entry, (st_data_t)path);
+    st_foreach(loading_files_type, (st_iter_func)load_loading_tbl_entry, (st_data_t)path);
     /* 開放 */
-    st_foreach(loading_files_type, free_loading_tbl_entry, (st_data_t)path);
+    st_foreach(loading_files_type, (st_iter_func)free_loading_tbl_entry, (st_data_t)path);
     st_free_table(loading_files_type);
 
     closedir(dir);
@@ -1053,7 +1053,7 @@ char *create_formatted_basename(const char *filepath)
   }
 
   end = strchr(begin, '.'); /* ファイル名最初の.を探す ないと困る */
-  basename = lmn_malloc(end - begin + 1);
+  basename = (char *)lmn_malloc(end - begin + 1);
   for (i = 0, p = begin; i < end - begin; i++, p++){
     if (isalpha((unsigned char)*p) || isdigit((unsigned char)*p)) {
       basename[i] = *p;
