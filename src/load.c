@@ -903,7 +903,7 @@ int free_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path)
 
 /* pathのディレクトリ内のファイルを中間コードとしてロードする.
  * 拡張子を除いてファイル名が同一な場合はextension_tableで指定した優先順で1種類のみ読み込む */
-void load_il_files(char *path)
+void load_il_files(const char *path)
 {
   int path_len;
   char *buf;

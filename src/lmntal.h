@@ -344,7 +344,7 @@ struct LmnEnv {
   enum OptimizeMode opt_mode;
 
   int  load_path_num;
-  char *load_path[256];
+  const char *load_path[256];
   char *automata_file;         /* never claim file */
   char *propositional_symbol;  /* file for propositional symbol definitions */
   char *ltl_exp;
