@@ -2031,7 +2031,7 @@ static int binstr_decode_mol(LmnBinStrRef   bs,
             pos = binstr_decode_mol(bs, pos, log, nvisit, ref_mem, NULL, from_arg);
           }
           else {
-            LmnMembrane *in, *out;
+            LmnSAtom in, out;
 
             in  = lmn_mem_newatom(ref_mem, LMN_IN_PROXY_FUNCTOR);
             out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
