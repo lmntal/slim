@@ -135,7 +135,7 @@ static void dump_arg(InstrArgRef arg)
     printf("[");
     for (i = 0; i < var_list_num(l); i++) {
       if (i > 0) printf(", ");
-      printf("%d", (int)var_list_get(l, i));
+      printf("%ld", (long)var_list_get(l, i));
     }
     printf("]");
     break;
