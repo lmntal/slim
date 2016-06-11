@@ -41,16 +41,16 @@
 #include "state.h"
 #include "automata.h"
 #include "mc.h"
-#include "membrane.h"
+#include "../membrane.h"
 #include "mem_encode.h"
-#include "rule.h"
+#include "../rule.h"
 #include "mhash.h"
-#include "error.h"
-#include "dumper.h"
+#include "../error.h"
+#include "../dumper.h"
 #include "util.h"
-#include "task.h"
+#include "../task.h"
 #include "binstr_compress.h"
-#include "runtime_status.h"
+#include "../runtime_status.h"
 
 #ifdef KWBT_OPT
 # include <limits.h>

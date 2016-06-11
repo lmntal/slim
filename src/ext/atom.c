@@ -37,11 +37,11 @@
  * $Id$
  */
 
-#include "lmntal_ext.h"
-#include "utility/util.h"
-#include "slim_header/string.h"
-#include "dumper.h"
-#include "atom.h"
+#include "../lmntal_ext.h"
+#include <util.h>
+#include "../slim_header/string.h"
+#include "../dumper.h"
+#include "../atom.h"
 
 /*
  * Internal Constructor

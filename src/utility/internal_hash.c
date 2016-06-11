@@ -46,7 +46,7 @@
  */
 
 #include "internal_hash.h"
-#include "config.h"
+#include "../config.h"
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>

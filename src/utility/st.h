@@ -10,7 +10,7 @@
 #ifndef ST_INCLUDED
 #define ST_INCLUDED
 
-#include "lmntal.h"
+#include "../lmntal.h"
 #include "lmntal_thread.h"
 #include <stddef.h>
 

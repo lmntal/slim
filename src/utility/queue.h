@@ -44,7 +44,7 @@
 #ifndef LMN_QUEUE_H
 #define LMN_QUEUE_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 #include "lmntal_thread.h"
 
 typedef struct Node  Node;

@@ -39,7 +39,7 @@
 
 #include "file_util.h"
 #include <string.h>
-#include "arch.h"
+#include "../arch.h"
 #include <stdio.h>
 #include <stdlib.h>
 

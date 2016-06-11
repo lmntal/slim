@@ -38,12 +38,12 @@
  */
 
 #include <stdio.h>
-#include "rule.h"
-#include "functor.h"
-#include "ccallback.h"
-#include "membrane.h"
+#include "../rule.h"
+#include "../functor.h"
+#include "../ccallback.h"
+#include "../membrane.h"
 #include "mem_encode.h"
-#include "react_context.h"
+#include "../react_context.h"
 
 /* ポートa0から一行読み込む
  * +a0     : 優先度を表す整数

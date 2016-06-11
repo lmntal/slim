@@ -44,13 +44,13 @@
 #ifndef LMN_STATESPACE_H
 #define LMN_STATESPACE_H
 
-#include "lmntal.h"
-#include "utility/st.h"
-#include "utility/vector.h"
+#include "../lmntal.h"
+#include <st.h>
+#include <vector.h>
 #include "queue.h"
 #include "automata.h"
 #include "state.h"
-#include "slim_header/port.h"
+#include "../slim_header/port.h"
 #include "lmntal_thread.h"
 #include "delta_membrane.h"
 #include "mem_encode.h"

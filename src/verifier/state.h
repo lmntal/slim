@@ -40,16 +40,16 @@
 #ifndef LMN_STATE_H
 #define LMN_STATE_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 #include "lmntal_thread.h"
 #include "mem_encode.h"
-#include "membrane.h"
-#include "rule.h"
-#include "utility/vector.h"
+#include "../membrane.h"
+#include "../rule.h"
+#include <vector.h>
 #include "binstr_compress.h"
 #include "tree_compress.h"
 #include "automata.h"
-#include "react_context.h"
+#include "../react_context.h"
 
 /** ------------
  *  State

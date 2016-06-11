@@ -38,8 +38,8 @@
 #ifndef MHASH_H
 #define MHASH_H
 
-#include "lmntal.h"
-#include "membrane.h"
+#include "../lmntal.h"
+#include "../membrane.h"
 
 unsigned long mhash(LmnMembrane *mem);
 void mhash_set_depth(int depth);

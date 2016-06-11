@@ -40,7 +40,7 @@
 #ifndef LMN_MC_WORKER_H
 #define LMN_MC_WORKER_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 #include "statespace.h"
 #include "state.h"
 #include "queue.h"

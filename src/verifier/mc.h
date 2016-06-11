@@ -40,10 +40,10 @@
 #ifndef LMN_MC_H
 #define LMN_MC_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 #include "lmntal_thread.h"
 #include "automata.h"
-#include "react_context.h"
+#include "../react_context.h"
 #include "state.h"
 #include "statespace.h"
 #include "mc_worker.h"

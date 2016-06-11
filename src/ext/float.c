@@ -39,10 +39,10 @@
 
 /* 浮動小数点数関連のコールバック */
 
-#include "lmntal.h"
-#include "lmntal_ext.h"
-#include "slim_header/string.h"
-#include "special_atom.h"
+#include "../lmntal.h"
+#include "../lmntal_ext.h"
+#include "../slim_header/string.h"
+#include "../special_atom.h"
 #include "visitlog.h"
 
 void init_float(void);

@@ -38,8 +38,8 @@
  */
 
 #include "binstr_compress.h"
-#include "error.h"
-#include "zdlib.h"
+#include "../error.h"
+#include <zdlib.h>
 #ifdef HAVE_LIBZ
 # include <zlib.h>
 #endif

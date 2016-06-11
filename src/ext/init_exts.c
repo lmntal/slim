@@ -37,7 +37,7 @@
  * $Id$
  */
 
-#include "lmntal.h"
+#include "../lmntal.h"
 
 void init_integer(void);
 void init_float(void);

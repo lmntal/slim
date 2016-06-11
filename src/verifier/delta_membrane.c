@@ -38,11 +38,11 @@
  */
 
 #include "delta_membrane.h"
-#include "membrane.h"
+#include "../membrane.h"
 #include "lmntal_thread.h"
-#include "atom.h"
+#include "../atom.h"
 #include "visitlog.h"
-#include "dumper.h"
+#include "../dumper.h"
 #ifdef PROFILE
 #  include "runtime_status.h"
 #endif

@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "tree_compress_test.h"
-#include "verifier/tree_compress.h"
+#include <tree_compress.h>
 
 TreeDatabase treedb = NULL;
 

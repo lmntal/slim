@@ -44,8 +44,8 @@
 #ifndef LMN_THREAD_H
 #define LMN_THREAD_H
 
-#include "lmntal.h"
-#include "atom.h"
+#include "../lmntal.h"
+#include "../atom.h"
 
 /* check for atomic operation */
 #ifdef ENABLE_PARALLEL

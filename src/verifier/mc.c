@@ -40,14 +40,14 @@
 #include "mc.h"
 #include "mc_worker.h"
 #include "mhash.h"
-#include "task.h"
+#include "../task.h"
 #include "dpor.h"
-#include "error.h"
+#include "../error.h"
 #include "delta_membrane.h"
 #include "binstr_compress.h"
 #include "propositional_symbol.h"
 #include "ltl2ba_adapter.h"
-#include "runtime_status.h"
+#include "../runtime_status.h"
 #ifdef DEBUG
 #  include "dumper.h"
 #endif

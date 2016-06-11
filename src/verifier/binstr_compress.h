@@ -40,7 +40,7 @@
 #ifndef LMN_BS_COMP_H
 #define LMN_BS_COMP_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 #include "mem_encode.h"
 #include "tree_compress.h"
 

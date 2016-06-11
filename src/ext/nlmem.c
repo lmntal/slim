@@ -37,10 +37,10 @@
  * $Id$
  */
 
-#include "lmntal.h"
-#include "lmntal_ext.h"
+#include "../lmntal.h"
+#include "../lmntal_ext.h"
 #include "visitlog.h"
-#include "slim_header/memstack.h"
+#include "../slim_header/memstack.h"
 
 void init_nlmem(void);
 

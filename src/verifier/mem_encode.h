@@ -38,8 +38,8 @@
 #ifndef LMN_MEM_ENCODE_H
 #define LMN_MEM_ENCODE_H
 
-#include "lmntal.h"
-#include "membrane.h"
+#include "../lmntal.h"
+#include "../membrane.h"
 #include "delta_membrane.h"
 
 typedef struct LmnBinStr *LmnBinStrRef;

@@ -40,11 +40,11 @@
 #ifndef LMN_DELTA_MEMBRANE_H
 #define LMN_DELTA_MEMBRANE_H
 
-#include "lmntal.h"
-#include "atom.h"
-#include "utility/visitlog.h"
-#include "utility/vector.h"
-#include "rule.h"
+#include "../lmntal.h"
+#include "../atom.h"
+#include <visitlog.h>
+#include <vector.h>
+#include "../rule.h"
 
 struct MemDeltaRoot {
   LmnMembrane *root_mem;

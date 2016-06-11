@@ -40,7 +40,7 @@
 #ifndef LMN_STRING_H
 #define LMN_STRING_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 typedef struct LmnString *LmnStringRef;
 
 #define LMN_STRING(obj) ((struct LmnString *)(obj))

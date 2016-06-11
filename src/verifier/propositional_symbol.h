@@ -40,10 +40,10 @@
 #ifndef LMN_PROP_DEFINITION_H
 #define LMN_PROP_DEFINITION_H
 
-#include "stdio.h"
-#include "utility/vector.h"
+#include <stdio.h>
+#include <vector.h>
 #include "automata.h"
-#include "rule.h"
+#include "../rule.h"
 
 typedef struct SymbolDefinition *SymbolDefinitionRef;
 typedef struct Proposition *PropositionRef;

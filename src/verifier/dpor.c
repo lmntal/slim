@@ -38,16 +38,16 @@
 
 #include "dpor.h"
 #include "dpor_naive.h"
-#include "task.h"
-#include "react_context.h"
+#include "../task.h"
+#include "../react_context.h"
 #include "delta_membrane.h"
 #include "state.h"
 #include "mc.h"
 #include "mc_worker.h"
-#include "instruction.h"
-#include "lmntal.h"
-#include "atom.h"
-#include "utility/vector.h"
+#include "../instruction.h"
+#include "../lmntal.h"
+#include "../atom.h"
+#include <vector.h>
 
 /**
  * Dynamic Partial Order Reduction

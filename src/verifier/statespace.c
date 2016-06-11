@@ -43,19 +43,19 @@
 
 #include "statespace.h"
 #include "state.h"
-#include "membrane.h"
+#include "../membrane.h"
 #include "mem_encode.h"
 #include "automata.h"
-#include "rule.h"
-#include "error.h"
-#include "dumper.h"
-#include "runtime_status.h"
+#include "../rule.h"
+#include "../error.h"
+#include "../dumper.h"
+#include "../runtime_status.h"
 #include "mc.h"
 #include "lmntal_thread.h"
 #include "delta_membrane.h"
 #include "vector.h"
 #include "queue.h"
-#include "lmntal.h"
+#include "../lmntal.h"
 
 /** ProtoTypes
  */

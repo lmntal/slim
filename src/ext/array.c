@@ -38,12 +38,12 @@
  */
 
 #include "array.h"
-#include "lmntal_ext.h"
-#include "special_atom.h"
-#include "utility/util.h"
-#include "slim_header/string.h"
-#include "dumper.h"
-#include "atom.h"
+#include "../lmntal_ext.h"
+#include "../special_atom.h"
+#include <util.h>
+#include "../slim_header/string.h"
+#include "../dumper.h"
+#include "../atom.h"
 
 static int array_atom_type; /* special atom type */
 

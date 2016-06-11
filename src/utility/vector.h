@@ -39,7 +39,7 @@
 #ifndef LMN_VECTOR_H
 #define LMN_VECTOR_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 
 struct Vector {
   LmnWord* tbl;

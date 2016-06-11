@@ -40,7 +40,7 @@
 #ifndef LMN_ARRAY_H
 #define LMN_ARRAY_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 
 
 struct LmnArray {

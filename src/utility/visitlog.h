@@ -38,11 +38,11 @@
 #ifndef LMN_VISITLOG_H
 #define LMN_VISITLOG_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 #include "vector.h"
-#include "atom.h"
-#include "membrane.h"
-#include "error.h"
+#include "../atom.h"
+#include "../membrane.h"
+#include "../error.h"
 #include "util.h"
 #ifndef TIME_OPT
 # include "st.h"

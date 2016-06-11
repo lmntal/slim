@@ -42,18 +42,18 @@
 typedef void* yyscan_t;
 #endif
 #include "propositional_symbol.h"
-#include "lmntal.h"
-#include "utility/vector.h"
+#include "../lmntal.h"
+#include <vector.h>
 #include "propsym_parser.h"
 #include "propsym_lexer.h"
-#include "lmntal_system_adapter.h"
-#include "rule.h"
-#include "syntax.h"
-#include "load.h"
-#include "symbol.h"
-#include "task.h"
-#include "error.h"
-#include "react_context.h"
+#include "../lmntal_system_adapter.h"
+#include "../rule.h"
+#include "../syntax.h"
+#include "../load.h"
+#include "../symbol.h"
+#include "../task.h"
+#include "../error.h"
+#include "../react_context.h"
 
 struct SymbolDefinition {
   unsigned int sym_id;

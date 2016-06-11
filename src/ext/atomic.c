@@ -37,12 +37,12 @@
  * $Id$
  */
 
-#include "lmntal.h"
-#include "lmntal_ext.h"
-#include "react_context.h"
-#include "slim_header/memstack.h"
-#include "rule.h"
-#include "task.h"
+#include "../lmntal.h"
+#include "../lmntal_ext.h"
+#include "../react_context.h"
+#include "../slim_header/memstack.h"
+#include "../rule.h"
+#include "../task.h"
 #include "mc_worker.h"
 #include "mc_generator.h"
 #ifdef PROFILE
