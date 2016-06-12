@@ -38,6 +38,8 @@
 #ifndef LMN_MEM_ENCODE_H
 #define LMN_MEM_ENCODE_H
 
+/* cldoc:begin-category(Verifier::MembraneEncoder) */
+
 #include "../lmntal.h"
 #include "../membrane.h"
 #include "delta_membrane.h"
@@ -88,5 +90,7 @@ void lmn_binstr_dump(const LmnBinStrRef bs);
 unsigned long lmn_binstr_space(struct LmnBinStr *bs);
 LmnBinStrRef lmn_mem_to_binstr(LmnMembrane *mem);
 LmnBinStrRef lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);
+
+/* cldoc:end-category() */
 
 #endif /* LMN_MEM_ENCODE_H */

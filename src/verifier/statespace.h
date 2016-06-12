@@ -44,6 +44,8 @@
 #ifndef LMN_STATESPACE_H
 #define LMN_STATESPACE_H
 
+/* cldoc:begin-category(Verifier::StateSpace) */
+
 #include "../lmntal.h"
 #include <st.h>
 #include <vector.h>
@@ -375,5 +377,7 @@ static inline unsigned long statespace_space(StateSpaceRef ss) {
   }
   return ret;
 }
+
+/* cldoc:end-category() */
 
 #endif

@@ -39,6 +39,8 @@
 #ifndef LMN_SYMBOL_H
 #define LMN_SYMBOL_H
 
+/* cldoc:begin-category(Lmntal::Symbol) */
+
 #include "lmntal.h"
 
 #define ANONYMOUS 0
@@ -51,5 +53,6 @@ int count_symbols();
 
 #define LMN_SYMBOL_STR(ID)       (lmn_id_to_name(ID))
 
-#endif
+/* cldoc:end-category() */
 
+#endif

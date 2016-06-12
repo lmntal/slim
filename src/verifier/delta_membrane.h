@@ -40,6 +40,8 @@
 #ifndef LMN_DELTA_MEMBRANE_H
 #define LMN_DELTA_MEMBRANE_H
 
+/* cldoc:begin-category(Verifier::DeltaMembrane) */
+
 #include "../lmntal.h"
 #include "../atom.h"
 #include <visitlog.h>
@@ -183,5 +185,7 @@ void dmem_root_dump(struct MemDeltaRoot *d);
 LmnAtom dmem_root_get_link(struct MemDeltaRoot *d,
                                   LmnSAtom atom,
                                   int i);
+
+/* cldoc:end-category() */
 
 #endif

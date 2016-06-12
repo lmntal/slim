@@ -40,6 +40,8 @@
 #ifndef INTERNAL_HASH_H
 #define INTERNAL_HASH_H
 
+/* cldoc:begin-category(Hashtable) */
+
 /* HashMap */
 typedef unsigned long HashKeyType;
 typedef unsigned long HashValueType;
@@ -113,5 +115,7 @@ inline static unsigned long internal_hashtbl_space(SimpleHashtbl *ht)
 {
   return sizeof(struct SimpleHashtbl) + internal_hashtbl_space_inner(ht);
 }
+
+/* cldoc:end-category() */
 
 #endif /*INTERNAL_HASH_H*/

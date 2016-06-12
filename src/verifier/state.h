@@ -40,6 +40,8 @@
 #ifndef LMN_STATE_H
 #define LMN_STATE_H
 
+/* cldoc:begin-category(Verifier::State) */
+
 #include "../lmntal.h"
 #include "lmntal_thread.h"
 #include "mem_encode.h"
@@ -729,5 +731,7 @@ static inline void transition_set_cost(TransitionRef t, LmnCost cost) {
   t->cost = cost;
 #endif
 }
+
+/* cldoc:end-category() */
 
 #endif

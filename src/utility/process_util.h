@@ -39,8 +39,12 @@
 
 #ifndef LMN_PROCESS_UTIL
 
+/* cldoc:begin-category(ProcessUtil) */
+
 #include <unistd.h>
 
 FILE *run_program(const char *program_name, char **args);
+
+/* cldoc:end-category() */
 
 #endif /* !LMN_PROCESS_UTIL */

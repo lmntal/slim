@@ -39,6 +39,8 @@
 #ifndef LMN_DUMPER_H
 #define LMN_DUMPER_H
 
+/* cldoc:begin-category(Lmntal::Dumper) */
+
 #include "lmntal.h"
 #include "slim_header/port.h"
 #include "rule.h"
@@ -58,5 +60,7 @@ LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnWord atom, LmnLinkAttr attr);
 void dump_escaped(LmnPortRef port, const char *s);
 
 extern char char_to_escape_char[];
+
+/* cldoc:end-category() */
 
 #endif /* LMN_DUMPER_H */

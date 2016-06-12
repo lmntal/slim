@@ -40,6 +40,8 @@
 #ifndef LMN_STRING_H
 #define LMN_STRING_H
 
+/* cldoc:begin-category(Lmntal::String) */
+
 #include "../lmntal.h"
 typedef struct LmnString *LmnStringRef;
 
@@ -62,5 +64,7 @@ void lmn_string_push_raw_s(LmnStringRef dst, const char *src);
 int lmn_string_get(LmnStringRef s, int i);
 void lmn_string_set_raw_c(LmnStringRef s, int c, int i);
 unsigned long lmn_string_len(LmnStringRef s);
+
+/* cldoc:end-category() */
 
 #endif

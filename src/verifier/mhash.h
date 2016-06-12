@@ -38,10 +38,14 @@
 #ifndef MHASH_H
 #define MHASH_H
 
+/* cldoc:begin-category(Verifier::MembraneHash) */
+
 #include "../lmntal.h"
 #include "../membrane.h"
 
 unsigned long mhash(LmnMembrane *mem);
 void mhash_set_depth(int depth);
+
+/* cldoc:end-category() */
 
 #endif

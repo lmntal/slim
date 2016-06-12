@@ -39,6 +39,8 @@
 #ifndef LMN_MC_POR_H
 #define LMN_MC_POR_H
 
+/* cldoc:begin-category(Verifier::Dpor) */
+
 #include "../lmntal.h"
 #include "queue.h"
 #include <vector.h>
@@ -54,5 +56,7 @@ void por_calc_ampleset(StateSpaceRef  ss,
                        BOOL        flag);
 void init_por_vars(void);
 void free_por_vars(void);
+
+/* cldoc:end-category() */
 
 #endif

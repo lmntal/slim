@@ -39,6 +39,8 @@
 #ifndef LMN_MEMORY_POOL_H
 #define LMN_MEMORY_POOL_H
 
+/* cldoc:begin-category(MemoryPool) */
+
 typedef struct memory_pool_ {
   int   sizeof_element;
   void *block_head;
@@ -54,5 +56,6 @@ void memory_pool_free(memory_pool *p, void *e);
 /* メモリプールを破棄 */
 void memory_pool_delete(memory_pool *p);
 
-#endif /* LMN_MEMORY_POOL_H */
+/* cldoc:end-category() */
 
+#endif /* LMN_MEMORY_POOL_H */

@@ -40,6 +40,7 @@
 #ifndef LMN_MEMSTACK_H
 #define LMN_MEMSTACK_H
 
+/* cldoc:begin-category(Lmntal::MembraneStack) */
 
 #include <vector.h>
 #include "../react_context.h"
@@ -52,5 +53,7 @@ LmnMembrane *lmn_memstack_pop(LmnMemStack memstack);
 LmnMembrane *lmn_memstack_peek(LmnMemStack memstack);
 void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem);
 void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem);
+
+/* cldoc:end-category() */
 
 #endif

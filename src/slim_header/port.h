@@ -45,6 +45,8 @@
 #ifndef LMN_PORT_H
 #define LMN_PORT_H
 
+/* cldoc:begin-category(Lmntal::Port) */
+
 #include "../lmntal.h"
 #include "string.h"
 
@@ -109,5 +111,7 @@ int port_putc(LmnPortRef port_atom, LmnSAtom unary_atom);
 int port_puts(LmnPortRef port_atom, LmnStringRef str);
 int port_put_raw_c(LmnPortRef port_atom, int c);
 int port_put_raw_s(LmnPortRef port_atom, const char *str);
+
+/* cldoc:end-category() */
 
 #endif

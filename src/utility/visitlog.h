@@ -38,6 +38,8 @@
 #ifndef LMN_VISITLOG_H
 #define LMN_VISITLOG_H
 
+/* cldoc:begin-category(VisitLog) */
+
 #include "../lmntal.h"
 #include "vector.h"
 #include "../atom.h"
@@ -941,5 +943,6 @@ static inline int visitlog_element_num(VisitLogRef visitlog) {
   return visitlog->element_num;
 }
 
+/* cldoc:end-category() */
 
 #endif

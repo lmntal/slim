@@ -39,6 +39,8 @@
 #ifndef LMNTAL_H
 #define LMNTAL_H
 
+/* cldoc:begin-category(Lmntal) */
+
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -582,5 +584,7 @@ void lmn_stream_destroy(void);
 #endif
 
 LMN_DECL_END
+
+/* cldoc:end-category() */
 
 #endif /* LMNTAL_H */

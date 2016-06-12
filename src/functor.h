@@ -39,6 +39,8 @@
 #ifndef LMN_FUNCTOR_H
 #define LMN_FUNCTOR_H
 
+/* cldoc:begin-category(Lmntal::Functor) */
+
 /* Functor Information */
 
 typedef struct LmnFunctorTable {
@@ -123,5 +125,6 @@ LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, in
 #define LMN_FALSE_FUNCTOR 20
 #define LMN_EXCLAMATION_FUNCTOR 21
 
-#endif /* LMN_FUNCTOR_H */
+/* cldoc:end-category() */
 
+#endif /* LMN_FUNCTOR_H */

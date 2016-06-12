@@ -44,6 +44,8 @@
 #ifndef TREE_COMPRESS_H
 #  define TREE_COMPRESS_H
 
+/* cldoc:begin-category(Verifier::TreeCompress) */
+
 #include "mem_encode.h"
 
 #define TREE_DB_DEFAULT_SIZE (1024 * 1024 * 128)
@@ -75,5 +77,7 @@ uint64_t       tree_space(TreeDatabaseRef treedb);
 
 #define tree_db_node_count(db) (db->node_count)
 #define tree_db_string_count(db) (db->string_count)
+
+/* cldoc:end-category() */
 
 #endif /* ifndef TREE_COMPRESS_H */

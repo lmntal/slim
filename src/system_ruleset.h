@@ -39,9 +39,13 @@
 #ifndef LMN_SYSTEM_RULESET_H
 #define LMN_SYSTEM_RULESET_H
 
+/* cldoc:begin-category(Lmntal::SystemRuleset) */
+
 #include "membrane.h"
 
 BOOL delete_redundant_outproxies(LmnMembrane *mem);
 BOOL delete_redundant_inproxies(LmnMembrane *mem);
+
+/* cldoc:end-category() */
 
 #endif

@@ -39,6 +39,8 @@
 #ifndef LMN_RULE_H
 #define LMN_RULE_H
 
+/* cldoc:begin-category(Lmntal::Rule) */
+
 #include "lmntal.h"
 #include "utility/vector.h"
 #include "utility/st.h"
@@ -246,5 +248,7 @@ void lmn_add_initial_system_rule(LmnRuleRef rule);
 
 LMN_EXTERN void lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset);
 LMN_EXTERN LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name);
+
+/* cldoc:end-category() */
 
 #endif /* LMN_RULE_H */

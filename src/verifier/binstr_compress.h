@@ -40,6 +40,8 @@
 #ifndef LMN_BS_COMP_H
 #define LMN_BS_COMP_H
 
+ /* cldoc:begin-category(Verifier::BinaryString) */
+
 #include "../lmntal.h"
 #include "mem_encode.h"
 #include "tree_compress.h"
@@ -58,5 +60,7 @@ void          lmn_bscomp_tree_profile(FILE *f);
 unsigned long lmn_bscomp_tree_space();
 TreeNodeID   lmn_bscomp_tree_encode(LmnBinStrRef str);
 LmnBinStrRef     lmn_bscomp_tree_decode(TreeNodeID ref, int len);
+
+/* cldoc:end-category() */
 
 #endif /* LMN_BS_COMP */

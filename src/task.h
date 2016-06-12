@@ -39,6 +39,8 @@
 #ifndef LMN_TASK_H
 #define LMN_TASK_H
 
+/* cldoc:begin-category(Lmntal::Task) */
+
 #include "lmntal.h"
 #include "membrane.h"
 #include "rule.h"
@@ -101,5 +103,7 @@ static inline void free_links(Vector *links) {
   }
   vec_free(links);
 }
+
+/* cldoc:end-category() */
 
 #endif

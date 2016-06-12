@@ -44,6 +44,8 @@
 #include "utility/vector.h"
 #include "functor.h"
 
+/* cldoc:begin-category(IL) */
+
 /* 型名の解決の為に上に持ってきた */
 typedef Vector *InstList;
 
@@ -211,5 +213,7 @@ struct lexer_context {
      対応表 */
   st_table_t ruleset_id_tbl;
 };
+
+/* cldoc:end-category() */
 
 #endif

@@ -39,6 +39,8 @@
 #ifndef LMN_MEMBRANE_H
 #define LMN_MEMBRANE_H
 
+/* cldoc:begin-category(Lmntal::Membrane) */
+
 #include "lmntal.h"
 #include "atom.h"
 #include "utility/internal_hash.h"
@@ -752,5 +754,6 @@ typedef HashIterator AtomListIter;
 
 /* LmnSAtom* lmn_atomlist_end(AtomSetEntry * ent); */
 
+/* cldoc:end-category() */
 
 #endif /* LMN_MEMBRANE_H */

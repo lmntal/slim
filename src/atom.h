@@ -39,6 +39,8 @@
 #ifndef LMN_ATOM_H
 #define LMN_ATOM_H
 
+/* cldoc:begin-category(Lmntal::Atom) */
+
 #include "lmntal.h"
 #include "special_atom.h"
 #include "functor.h"
@@ -448,6 +450,8 @@ static inline void lmn_destroy_double_atom(LmnAtom atom) {
   LMN_FREE((double *)atom);
 #endif
 }
+
+/* cldoc:end-category() */
 
 #endif /* LMN_ATOM_H */
 

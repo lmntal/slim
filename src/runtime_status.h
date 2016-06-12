@@ -40,6 +40,8 @@
 #ifndef RUNTIME_STATUS_H
 #define RUNTIME_STATUS_H
 
+/* cldoc:begin-category(Lmntal::Runtime) */
+
 #include "lmntal.h"
 #include "lmntal_thread.h"
 #include "st.h"
@@ -375,4 +377,7 @@ static inline double get_wall_time()
   fprintf(stderr, "not support the time profiler on this environment.");
 #endif
 }
+
+/* cldoc:end-category() */
+
 #endif

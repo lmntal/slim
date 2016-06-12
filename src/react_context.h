@@ -42,6 +42,8 @@
 #ifndef LMN_REACT_CONTEXT_H
 #define LMN_REACT_CONTEXT_H
 
+/* cldoc:begin-category(Lmntal::ReactContext) */
+
 #include "lmntal.h"
 #include "rule.h"
 #include "st.h"
@@ -288,5 +290,7 @@ static inline unsigned int mc_react_cxt_expanded_num(LmnReactCxt *cxt) {
   return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
                              : vec_num(RC_EXPANDED(cxt));
 }
+
+/* cldoc:end-category() */
 
 #endif

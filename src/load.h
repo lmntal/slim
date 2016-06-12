@@ -39,6 +39,8 @@
 #ifndef LMN_LOAD_H
 #define LMN_LOAD_H
 
+/* cldoc:begin-category(IL) */
+
 #include "rule.h"
 #include "syntax.h"
 
@@ -54,6 +56,8 @@ void finalize_so_handles();
 /* pathにsoがある場合の,関数名の元となれるファイル名を返す */
 /* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
 char *create_formatted_basename(const char *path);
+
+/* cldoc:end-category() */
 
 /* 最適化レベルの最大値 */
 #define OPTIMIZE_LEVEL_MAX 3

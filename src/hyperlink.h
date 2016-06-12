@@ -41,6 +41,8 @@
 #ifndef LMN_HYPERLINK_H
 #define LMN_HYPERLINK_H
 
+/* cldoc:begin-category(Lmntal::Hyperlink) */
+
 #include "lmntal.h"
 #include "functor.h"
 #include "utility/internal_hash.h"
@@ -161,5 +163,7 @@ void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl);
 static inline unsigned long lmn_hyperlink_hash(HyperLink *hl) {
   return lmn_hyperlink_element_num(hl);
 }
+
+/* cldoc:end-category() */
 
 #endif /* LMN_HYPERLINK_H */
