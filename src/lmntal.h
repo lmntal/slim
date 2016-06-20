@@ -39,6 +39,8 @@
 #ifndef LMNTAL_H
 #define LMNTAL_H
 
+/* cldoc:begin-category(Lmntal) */
+
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -154,8 +156,8 @@ typedef struct DeltaMembrane DeltaMembrane;
 # endif
 #endif
 
-typedef struct ProcessTbl    *ProcessTbl;
-typedef struct SimplyProcTbl *SimplyProcTbl;
+typedef struct ProcessTbl    *ProcessTableRef;
+typedef struct SimplyProcTbl *SimplyProcessTableRef;
 
 /*----------------------------------------------------------------------
  * Special Atom
@@ -198,10 +200,10 @@ typedef struct Vector *LmnMemStack;
  * for Model Checking
  */
 
-typedef struct StateSpace *StateSpace;
+typedef struct StateSpace *StateSpaceRef;
 typedef struct StateTable StateTable;
 typedef struct State       State;
-typedef struct Transition *Transition;
+typedef struct Transition *TransitionRef;
 typedef struct McDporData  McDporData;
 typedef struct MemDeltaRoot MemDeltaRoot;
 
@@ -344,7 +346,7 @@ struct LmnEnv {
   enum OptimizeMode opt_mode;
 
   int  load_path_num;
-  char *load_path[256];
+  const char *load_path[256];
   char *automata_file;         /* never claim file */
   char *propositional_symbol;  /* file for propositional symbol definitions */
   char *ltl_exp;
@@ -406,7 +408,7 @@ void slim_version(FILE *f);
    };
 #
 # endif /* HAVE_PTHREAD_BARRIER */
-# define lmn_thread_create(Pth, Pfunc, Parg)  pthread_create(Pth, NULL, (void *)Pfunc, (void *)Parg)
+# define lmn_thread_create(Pth, Pfunc, Parg)  pthread_create(Pth, NULL, (void * (*)(void *))Pfunc, (void *)Parg)
 # define lmn_thread_join(Th)                  pthread_join(Th, NULL)
 # define lmn_mutex_init(Pm)                   pthread_mutex_init(Pm, NULL)
 # define lmn_mutex_init_onthefly(Pm)          (Pm) = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER
@@ -582,5 +584,7 @@ void lmn_stream_destroy(void);
 #endif
 
 LMN_DECL_END
+
+/* cldoc:end-category() */
 
 #endif /* LMNTAL_H */

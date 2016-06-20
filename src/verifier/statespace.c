@@ -43,25 +43,25 @@
 
 #include "statespace.h"
 #include "state.h"
-#include "membrane.h"
+#include "../membrane.h"
 #include "mem_encode.h"
 #include "automata.h"
-#include "rule.h"
-#include "error.h"
-#include "dumper.h"
-#include "runtime_status.h"
+#include "../rule.h"
+#include "../error.h"
+#include "../dumper.h"
+#include "../runtime_status.h"
 #include "mc.h"
 #include "lmntal_thread.h"
 #include "delta_membrane.h"
 #include "vector.h"
 #include "queue.h"
-#include "lmntal.h"
+#include "../lmntal.h"
 
 /** ProtoTypes
  */
 #ifdef PROFILE
-static inline BOOL statespace_is_memid_hash(StateSpace states, unsigned long hash);
-void statespace_add_memid_hash(StateSpace states, unsigned long hash);
+static inline BOOL statespace_is_memid_hash(StateSpaceRef states, unsigned long hash);
+void statespace_add_memid_hash(StateSpaceRef states, unsigned long hash);
 #endif
 static StateTable *statetable_make(int thread_num);
 static StateTable *statetable_make_with_size(unsigned long size, int thread_num);
@@ -104,7 +104,7 @@ static void statetable_memid_rehash(State *pred, StateTable *ss);
 /* 状態管理表stに登録されているcompress関数を用いて, 状態sのバイナリストリングbsを計算して返す.
  * (--disable-compressの場合はdummy関数がNULLを返す.)
  * bsが計算済みの場合(NULLでない場合)は, 何もしない */
-static inline LmnBinStr statetable_compress_state(StateTable *st, State *s, LmnBinStr bs) {
+static inline LmnBinStrRef statetable_compress_state(StateTable *st, State *s, LmnBinStrRef bs) {
   if (!bs) {
     /* canonical idにエンコードを行った場合, bsは状態生成時に計算済みになっているため,
      * このブロックを実行することはない. */
@@ -116,7 +116,7 @@ static inline LmnBinStr statetable_compress_state(StateTable *st, State *s, LmnB
 
 /* 既に計算済のバイナリストリングbsを状態sに登録する.
  * statetable_{insert/add_direct}内の排他制御ブロック内で呼び出す. */
-static inline void state_set_compress_for_table(State *s, LmnBinStr bs) {
+static inline void state_set_compress_for_table(State *s, LmnBinStrRef bs) {
   if (!is_encoded(s) && bs) {
     state_set_binstr(s, bs);
   }
@@ -231,7 +231,7 @@ static void statetable_resize(StateTable *st, unsigned long old_cap)
 
 /** StateSpace
  */
-static inline StateSpace statespace_make_minimal()
+static inline StateSpaceRef statespace_make_minimal()
 {
   struct StateSpace *ss = LMN_MALLOC(struct StateSpace);
   ss->tbl_type          = 0x00U;
@@ -250,7 +250,7 @@ static inline StateSpace statespace_make_minimal()
 }
 
 
-static inline void statespace_make_table(StateSpace ss)
+static inline void statespace_make_table(StateSpaceRef ss)
 {
   if (lmn_env.mem_enc) {
     statespace_set_memenc(ss);
@@ -313,7 +313,7 @@ static inline void statespace_make_table(StateSpace ss)
 }
 
 
-StateSpace statespace_make(Automata a, Vector *psyms)
+StateSpaceRef statespace_make(AutomataRef a, Vector *psyms)
 {
   struct StateSpace *ss;
   ss = statespace_make_minimal();
@@ -326,7 +326,7 @@ StateSpace statespace_make(Automata a, Vector *psyms)
 
 
 /* for parallel model checker mode */
-StateSpace statespace_make_for_parallel(int thread_num, Automata a, Vector *psyms)
+StateSpaceRef statespace_make_for_parallel(int thread_num, AutomataRef a, Vector *psyms)
 {
   unsigned int i;
   struct StateSpace *ss;
@@ -344,7 +344,7 @@ StateSpace statespace_make_for_parallel(int thread_num, Automata a, Vector *psym
   return ss;
 }
 
-void statespace_clear(StateSpace ss)
+void statespace_clear(StateSpaceRef ss)
 {
   unsigned int i;
   for (i = 0; i < ss->thread_num; i++) {
@@ -358,7 +358,7 @@ void statespace_clear(StateSpace ss)
   statetable_clear(statespace_accept_memid_tbl(ss));
 }
 
-void statespace_free(StateSpace ss)
+void statespace_free(StateSpaceRef ss)
 {
   /* MEMO: openmpで並列freeすると, tcmallocがsegmentation faultする. */
   //int nPEs = ss->thread_num;
@@ -419,7 +419,7 @@ static void statetable_memid_rehash(State *s, StateTable *st)
 #ifdef PROFILE
 
 /* 膜のIDを計算するハッシュ値(mhash)を追加する */
-void statespace_add_memid_hash(StateSpace states, unsigned long hash)
+void statespace_add_memid_hash(StateSpaceRef states, unsigned long hash)
 {
   State *ptr, *prev;
   StateTable *org;
@@ -444,7 +444,7 @@ void statespace_add_memid_hash(StateSpace states, unsigned long hash)
 
 
 /* hashが膜のIDを計算しているハッシュならば真、そうでなければ偽を返す */
-inline BOOL statespace_is_memid_hash(StateSpace states, unsigned long hash)
+inline BOOL statespace_is_memid_hash(StateSpaceRef states, unsigned long hash)
 {
   return hashset_contains(&states->memid_hashes, hash);
 }
@@ -458,7 +458,7 @@ inline BOOL statespace_is_memid_hash(StateSpace states, unsigned long hash)
  * 本関数の呼び出し側でs_memのメモリ管理を行う必要がある.
  * なお, 既にsのバイナリストリングを計算済みの場合,
  * バイナリストリングへのエンコード処理はskipするため, s_memはNULLで構わない. */
-State *statespace_insert(StateSpace ss, State *s)
+State *statespace_insert(StateSpaceRef ss, State *s)
 {
   StateTable *insert_dst;
   State *ret;
@@ -537,7 +537,7 @@ State *statespace_insert(StateSpace ss, State *s)
  *   状態sの生成元状態parentのグラフ構造memを, 差分オブジェクトdが刺しており(d->mem),
  *   d->memをTLSとして扱う前提が守られていれば, d->memに対する操作は全てMT-safe
  */
-State *statespace_insert_delta(StateSpace ss, State *s, struct MemDeltaRoot *d)
+State *statespace_insert_delta(StateSpaceRef ss, State *s, struct MemDeltaRoot *d)
 {
   State *ret;
 
@@ -569,7 +569,7 @@ State *statespace_insert_delta(StateSpace ss, State *s, struct MemDeltaRoot *d)
 
 
 /* 重複検査や排他制御なしに状態sを状態表ssに登録する */
-void statespace_add_direct(StateSpace ss, State *s)
+void statespace_add_direct(StateSpaceRef ss, State *s)
 {
   StateTable *add_dst;
 
@@ -588,7 +588,7 @@ void statespace_add_direct(StateSpace ss, State *s)
 
 
 /* 高階関数 */
-void statespace_foreach(StateSpace ss, void (*func) ( ),
+void statespace_foreach(StateSpaceRef ss, void (*func) ( ),
                         LmnWord _arg1, LmnWord _arg2)
 {
   statetable_foreach(statespace_tbl(ss),              func, _arg1, _arg2);
@@ -597,7 +597,7 @@ void statespace_foreach(StateSpace ss, void (*func) ( ),
   statetable_foreach(statespace_accept_memid_tbl(ss), func, _arg1, _arg2);
 }
 
-void statespace_foreach_parallel(StateSpace ss, void (*func) ( ),
+void statespace_foreach_parallel(StateSpaceRef ss, void (*func) ( ),
                                  LmnWord _arg1, LmnWord _arg2, int nPE)
 {
   statetable_foreach_parallel(statespace_tbl(ss),
@@ -679,7 +679,7 @@ static void statetable_free(StateTable *st, int nPEs)
 {
   if (st) {
 
-    statetable_foreach_parallel(st, state_free, DEFAULT_ARGS, DEFAULT_ARGS, nPEs);
+    statetable_foreach_parallel(st, (void (*)())state_free, DEFAULT_ARGS, DEFAULT_ARGS, nPEs);
 
     if (st->lock) {
       ewlock_free(st->lock);
@@ -766,7 +766,7 @@ static State *statetable_insert(StateTable *st, State *ins)
 #endif
 {
   State *ret;
-  LmnBinStr compress;
+  LmnBinStrRef compress;
 
   if (is_binstr_user(ins)) {
     /* 既に状態insがバイナリストリングを保持している場合 */
@@ -796,7 +796,7 @@ static State *statetable_insert(StateTable *st, State *ins)
         state_set_compress_for_table(ins, compress);
         statetable_num_add(st, 1);
         if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
-          TreeNodeRef ref;
+          TreeNodeID ref;
           tcd_set_byte_length(&ins->tcd, state_binstr(ins)->len);
           ref = lmn_bscomp_tree_encode(state_binstr(ins));
           tcd_set_root_ref(&ins->tcd, ref);
@@ -948,7 +948,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           statetable_num_add(st, 1);
           state_set_compress_for_table(ins, compress);
           if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
-            TreeNodeRef ref;
+            TreeNodeID ref;
             tcd_set_byte_length(&ins->tcd, state_binstr(ins)->len);
             ref = lmn_bscomp_tree_encode(state_binstr(ins));
             tcd_set_root_ref(&ins->tcd, ref);
@@ -989,7 +989,7 @@ static void statetable_add_direct(StateTable *st, State *s)
 {
   START__CRITICAL_SECTION(st->lock, ewlock_acquire_enter, env_my_thread_id());
   {
-    LmnBinStr compress;
+    LmnBinStrRef compress;
     State *ptr;
     unsigned long bucket;
     BOOL inserted;
@@ -1012,7 +1012,7 @@ static void statetable_add_direct(StateTable *st, State *s)
         state_set_compress_for_table(s, compress);
         statetable_num_add(st, 1);
         if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
-          TreeNodeRef ref;
+          TreeNodeID ref;
           tcd_set_byte_length(&s->tcd, state_binstr(s)->len);
           ref = lmn_bscomp_tree_encode(state_binstr(s));
           tcd_set_root_ref(&s->tcd, ref);
@@ -1043,7 +1043,7 @@ static void statetable_add_direct(StateTable *st, State *s)
 }
 
 /* 高階関数  */
-void statetable_foreach(StateTable *st, void (*func) ( ),
+void statetable_foreach(StateTable *st, void (*func) (ANYARGS),
                                LmnWord _arg1, LmnWord _arg2)
 {
   if (st) {
@@ -1068,7 +1068,7 @@ void statetable_foreach(StateTable *st, void (*func) ( ),
   }
 }
 
-void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) ( ),
+void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) (ANYARGS ),
                                  LmnWord _arg1, LmnWord _arg2, int nthreads)
 {
   if (st) {
@@ -1090,12 +1090,12 @@ void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) ( ),
 /** Printer et al
  */
 
-static void statespace_dump_all_transitions(StateSpace ss);
-static void statespace_dump_all_labels(StateSpace ss);
-static void statespace_dump_all_states(StateSpace ss);
+static void statespace_dump_all_transitions(StateSpaceRef ss);
+static void statespace_dump_all_labels(StateSpaceRef ss);
+static void statespace_dump_all_states(StateSpaceRef ss);
 
 
-void statespace_ends_dumper(StateSpace ss)
+void statespace_ends_dumper(StateSpaceRef ss)
 {
   const Vector *ends;
   unsigned int i;
@@ -1124,7 +1124,7 @@ void statespace_ends_dumper(StateSpace ss)
 }
 
 
-void statespace_dumper(StateSpace ss)
+void statespace_dumper(StateSpaceRef ss)
 {
   State *init = statespace_init_state(ss);
   switch (lmn_env.mc_dump_format) {
@@ -1176,42 +1176,42 @@ void statespace_dumper(StateSpace ss)
 }
 
 
-static void statespace_dump_all_states(StateSpace ss)
+static void statespace_dump_all_states(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
-static void statespace_dump_all_transitions(StateSpace ss)
+static void statespace_dump_all_transitions(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
-static void statespace_dump_all_labels(StateSpace ss)
+static void statespace_dump_all_labels(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
@@ -1221,7 +1221,7 @@ static void statespace_dump_all_labels(StateSpace ss)
  *     (修正前の処理は, 状態数分の配列をmallocしてから処理するものであったが,
  *      これによるlarge mallocがメモリswapを発生させていた.
  *     この方式は, メモリswapをさせない, かつ, ある程度の整列結果を得ることを目的としている) */
-void statespace_format_states(StateSpace ss)
+void statespace_format_states(StateSpaceRef ss)
 {
 #ifndef __CYGWIN__
   /* cygwinテスト時に, ボトルネックになっていた */
@@ -1265,7 +1265,7 @@ void statetable_format_states(StateTable *st)
 {
   if (st) {
     qsort(st->tbl, st->cap, sizeof(struct State *), statetable_cmp_state_id_gr_f);
-    statetable_foreach(st, statetable_issue_state_id_f,
+    statetable_foreach(st, (void (*)())statetable_issue_state_id_f,
                        DEFAULT_ARGS, DEFAULT_ARGS);
   }
 }

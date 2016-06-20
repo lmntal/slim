@@ -36,16 +36,16 @@
  */
 
 #include "visitlog.h"
-#include "membrane.h"
+#include "../membrane.h"
 
 #define PROC_TBL_DEFAULT_SIZE  128U
 
-void proc_tbl_init(ProcessTbl p)
+void proc_tbl_init(ProcessTableRef p)
 {
   proc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
 }
 
-void proc_tbl_init_with_size(ProcessTbl p, unsigned long size)
+void proc_tbl_init_with_size(ProcessTableRef p, unsigned long size)
 {
   p->n    = 0;
   p->size = size;
@@ -57,19 +57,19 @@ void proc_tbl_init_with_size(ProcessTbl p, unsigned long size)
 #endif
 }
 
-ProcessTbl proc_tbl_make(void)
+ProcessTableRef proc_tbl_make(void)
 {
   return proc_tbl_make_with_size(PROC_TBL_DEFAULT_SIZE);
 }
 
-ProcessTbl proc_tbl_make_with_size(unsigned long size)
+ProcessTableRef proc_tbl_make_with_size(unsigned long size)
 {
-  ProcessTbl p = LMN_MALLOC(struct ProcessTbl);
+  ProcessTableRef p = LMN_MALLOC(struct ProcessTbl);
   proc_tbl_init_with_size(p, size);
   return p;
 }
 
-void proc_tbl_destroy(ProcessTbl p)
+void proc_tbl_destroy(ProcessTableRef p)
 {
 #ifdef TIME_OPT
   LMN_FREE(p->tbl);
@@ -79,14 +79,14 @@ void proc_tbl_destroy(ProcessTbl p)
 }
 
 
-void proc_tbl_free(ProcessTbl p)
+void proc_tbl_free(ProcessTableRef p)
 {
   proc_tbl_destroy(p);
   LMN_FREE(p);
 }
 
 
-void proc_tbl_clear(ProcessTbl p)
+void proc_tbl_clear(ProcessTableRef p)
 {
   p->n = 0;
 #ifdef TIME_OPT
@@ -97,7 +97,7 @@ void proc_tbl_clear(ProcessTbl p)
 }
 
 
-int proc_tbl_foreach(ProcessTbl p, int(*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg)
+int proc_tbl_foreach(ProcessTableRef p, int(*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg)
 {
 #ifdef TIME_OPT
   unsigned long i, n;
@@ -117,7 +117,7 @@ int proc_tbl_foreach(ProcessTbl p, int(*func)(LmnWord key, LmnWord val, LmnWord 
 
 
 
-BOOL proc_tbl_eq(ProcessTbl a, ProcessTbl b)
+BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b)
 {
 #ifdef TIME_OPT
   if (a->n != b->n) return FALSE;
@@ -144,7 +144,7 @@ BOOL proc_tbl_eq(ProcessTbl a, ProcessTbl b)
 }
 
 
-void proc_tbl_expand_sub(ProcessTbl p, unsigned long n)
+void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n)
 {
   unsigned long org_size = p->size;
   while (p->size <= n) p->size *= 2;
@@ -153,7 +153,7 @@ void proc_tbl_expand_sub(ProcessTbl p, unsigned long n)
 }
 
 
-void sproc_tbl_init_with_size(SimplyProcTbl p, unsigned long size)
+void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
 {
   p->n   = 0;
   p->cap = size;
@@ -165,12 +165,12 @@ void sproc_tbl_init_with_size(SimplyProcTbl p, unsigned long size)
 #endif
 }
 
-void sproc_tbl_init(SimplyProcTbl p)
+void sproc_tbl_init(SimplyProcessTableRef p)
 {
   sproc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
 }
 
-void sproc_tbl_destroy(SimplyProcTbl p)
+void sproc_tbl_destroy(SimplyProcessTableRef p)
 {
 #ifdef TIME_OPT
   LMN_FREE(p->tbl);
@@ -187,7 +187,7 @@ void sproc_tbl_destroy(SimplyProcTbl p)
 static inline void tracker_init(struct LogTracker *track);
 static inline void tracker_destroy(struct LogTracker *track);
 
-TraceLog tracelog_make(void)
+TraceLogRef tracelog_make(void)
 {
   struct TraceLog *l = LMN_MALLOC(struct TraceLog);
   tracelog_init(l);
@@ -195,13 +195,13 @@ TraceLog tracelog_make(void)
 }
 
 
-void tracelog_init(TraceLog l)
+void tracelog_init(TraceLogRef l)
 {
   tracelog_init_with_size(l, PROC_TBL_DEFAULT_SIZE);
 }
 
 
-void tracelog_init_with_size(TraceLog l, unsigned long size)
+void tracelog_init_with_size(TraceLogRef l, unsigned long size)
 {
   l->cap = size;
   l->num = 0;
@@ -211,13 +211,13 @@ void tracelog_init_with_size(TraceLog l, unsigned long size)
 }
 
 
-void tracelog_free(TraceLog l)
+void tracelog_free(TraceLogRef l)
 {
   tracelog_destroy(l);
   LMN_FREE(l);
 }
 
-void tracelog_destroy(TraceLog l)
+void tracelog_destroy(TraceLogRef l)
 {
   LMN_FREE(l->tbl);
   tracker_destroy(&l->tracker);
@@ -282,7 +282,7 @@ void checkpoint_free(struct Checkpoint *cp)
   LMN_FREE(cp);
 }
 
-void visitlog_init_with_size(VisitLog p, unsigned long tbl_size)
+void visitlog_init_with_size(VisitLogRef p, unsigned long tbl_size)
 {
   if (tbl_size != 0) {
     proc_tbl_init_with_size(&p->tbl, tbl_size);
@@ -313,13 +313,13 @@ void visitlog_destroy(struct VisitLog *p)
 }
 
 /* チェックポイントを設定する。 */
-void visitlog_set_checkpoint(VisitLog visitlog)
+void visitlog_set_checkpoint(VisitLogRef visitlog)
 {
   vec_push(&visitlog->checkpoints, (vec_data_t)checkpoint_make());
 }
 
 /* もっとも最近のチェックポイントを返し、ログの状態をチェックポイントが設定された時点にもどす */
-struct Checkpoint *visitlog_pop_checkpoint(VisitLog visitlog)
+struct Checkpoint *visitlog_pop_checkpoint(VisitLogRef visitlog)
 {
   int i;
   struct Checkpoint *checkpoint;
@@ -336,13 +336,13 @@ struct Checkpoint *visitlog_pop_checkpoint(VisitLog visitlog)
 
 
 /* もっとも最近のチェックポイントを消し、ログの状態をチェックポイントが設定された時点にもどす */
-void visitlog_revert_checkpoint(VisitLog visitlog)
+void visitlog_revert_checkpoint(VisitLogRef visitlog)
 {
   checkpoint_free(visitlog_pop_checkpoint(visitlog));
 }
 
 /* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
- void visitlog_commit_checkpoint(VisitLog visitlog)
+ void visitlog_commit_checkpoint(VisitLogRef visitlog)
 {
   struct Checkpoint *last = (struct Checkpoint *)vec_pop(&visitlog->checkpoints);
 
@@ -361,7 +361,7 @@ void visitlog_revert_checkpoint(VisitLog visitlog)
 }
 
 /* チェックポイントをログに追加する */
-void visitlog_push_checkpoint(VisitLog visitlog, struct Checkpoint *cp)
+void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp)
 {
   int i;
 

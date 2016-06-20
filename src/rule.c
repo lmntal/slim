@@ -44,14 +44,14 @@
  */
 
 /* prototypes */
-LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name);
+LmnRuleRef make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name);
 void init_rules(void);
 void destroy_rules(void);
 
 /* create new rule */
-LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name)
+LmnRuleRef make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name)
 {
-  LmnRule rule = LMN_MALLOC(struct LmnRule);
+  LmnRuleRef rule = LMN_MALLOC(struct LmnRule);
 
   rule->inst_seq = inst_seq;
   rule->inst_seq_len = inst_seq_len;  /* inst_seqの長さ */
@@ -67,32 +67,32 @@ LmnRule make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated transla
 
 /* create new rule with byte sequence of instructions.
    inst_seq_sizeはinst_seqの長さ(バイト単位)を表す */
-LmnRule lmn_rule_make(BYTE *inst_seq, int inst_seq_len, lmn_interned_str name)
+LmnRuleRef lmn_rule_make(BYTE *inst_seq, int inst_seq_len, lmn_interned_str name)
 {
   return make_rule(inst_seq, inst_seq_len, NULL, name);
 }
 
 /* 中身のない、名前だけを持つルールを生成する */
-LmnRule lmn_rule_make_dummy(lmn_interned_str name)
+LmnRuleRef lmn_rule_make_dummy(lmn_interned_str name)
 {
   return make_rule(NULL, -1, NULL, name);
 }
 
 /* create new rule with a translated function */
-LmnRule lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name)
+LmnRuleRef lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name)
 {
   return make_rule(NULL, 0, translated, name);
 }
 
 /* ruleをコピーして新しいルールを作成する */
-LmnRule lmn_rule_copy(LmnRule rule)
+LmnRuleRef lmn_rule_copy(LmnRuleRef rule)
 {
-  LmnRule new_rule;
+  LmnRuleRef new_rule;
   BYTE *inst_seq;
 
   if (lmn_rule_get_inst_seq(rule)) {
     inst_seq = LMN_NALLOC(BYTE, rule->inst_seq_len);
-    inst_seq = memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
+    inst_seq = (BYTE *)memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
   } else {
     inst_seq = NULL;
   }
@@ -106,7 +106,7 @@ LmnRule lmn_rule_copy(LmnRule rule)
 }
 
 /* ruleとruleの要素を解放する */
-void lmn_rule_free(LmnRule rule)
+void lmn_rule_free(LmnRuleRef rule)
 {
   LMN_FREE(rule->inst_seq);
   if (lmn_rule_get_history_tbl(rule)) {
@@ -115,7 +115,7 @@ void lmn_rule_free(LmnRule rule)
   LMN_FREE(rule);
 }
 
-LmnRule dummy_rule(void)
+LmnRuleRef dummy_rule(void)
 {
   static struct LmnRule rule;
   static BOOL first = TRUE;
@@ -142,12 +142,12 @@ int lmn_gen_ruleset_id()
 }
 
 /* Generates a new RuleSet */
-LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size)
+LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size)
 {
-  LmnRuleSet ruleset = LMN_MALLOC(struct LmnRuleSet);
+  LmnRuleSetRef ruleset = LMN_MALLOC(struct LmnRuleSet);
 
   ruleset->id = id;
-  ruleset->rules = LMN_CALLOC(LmnRule, init_size);
+  ruleset->rules = LMN_CALLOC(LmnRuleRef, init_size);
   ruleset->num = 0;
   ruleset->cap = init_size;
   ruleset->atomic = ATOMIC_NONE;
@@ -159,7 +159,7 @@ LmnRuleSet lmn_ruleset_make(LmnRulesetId id, int init_size)
 }
 
 /* Frees RuleSet and its elements */
-void lmn_ruleset_free(LmnRuleSet ruleset)
+void lmn_ruleset_free(LmnRuleSetRef ruleset)
 {
   int i;
 
@@ -171,11 +171,11 @@ void lmn_ruleset_free(LmnRuleSet ruleset)
 }
 
 /* Adds rule into ruleset */
-inline void lmn_ruleset_put(LmnRuleSet ruleset, LmnRule rule)
+inline void lmn_ruleset_put(LmnRuleSetRef ruleset, LmnRuleRef rule)
 {
   if (ruleset->num == ruleset->cap) {
     ruleset->cap = (ruleset->cap * 2);
-    ruleset->rules = LMN_REALLOC(LmnRule, ruleset->rules, ruleset->cap);
+    ruleset->rules = LMN_REALLOC(LmnRuleRef, ruleset->rules, ruleset->cap);
   }
   ruleset->rules[ruleset->num++] = rule;
 
@@ -192,7 +192,7 @@ static void init_ruleset_table()
 {
   ruleset_table = LMN_MALLOC(struct LmnRuleSetTable);
   ruleset_table->size = 64;
-  ruleset_table->entry = LMN_NALLOC(LmnRuleSet, ruleset_table->size);
+  ruleset_table->entry = LMN_NALLOC(LmnRuleSetRef, ruleset_table->size);
   /* 安全なメモリ解放の為ゼロクリア */
   memset(ruleset_table->entry, 0, ruleset_table->size * sizeof(ruleset_table->entry[0]));
 }
@@ -212,15 +212,15 @@ static void destroy_ruleset_table()
 }
 
 /* Associates id with ruleset */
-void lmn_set_ruleset(LmnRuleSet ruleset, int id)
+void lmn_set_ruleset(LmnRuleSetRef ruleset, int id)
 {
   /* 必要ならば容量を拡張 */
   while (ruleset_table->size < (unsigned int)id) {
     int old_size = ruleset_table->size;
     ruleset_table->size *= 2;
-    ruleset_table->entry = LMN_REALLOC(LmnRuleSet, ruleset_table->entry, ruleset_table->size);
+    ruleset_table->entry = LMN_REALLOC(LmnRuleSetRef, ruleset_table->entry, ruleset_table->size);
     /* 安全なメモリ解放の為ゼロクリア */
-    memset(ruleset_table->entry + old_size, 0, (ruleset_table->size - old_size) * sizeof(LmnRuleSet));
+    memset(ruleset_table->entry + old_size, 0, (ruleset_table->size - old_size) * sizeof(LmnRuleSetRef));
   }
 
   ruleset_table->entry[id] = ruleset;
@@ -229,7 +229,7 @@ void lmn_set_ruleset(LmnRuleSet ruleset, int id)
 /* uniq rulesetに存在する各ruleの履歴の総数を返す.
  * uniq rulesetではない場合, -1を返す.
  */
-long lmn_ruleset_history_num(LmnRuleSet rs)
+long lmn_ruleset_history_num(LmnRuleSetRef rs)
 {
   if (lmn_ruleset_has_uniqrule(rs)) {
     return -1;
@@ -239,7 +239,7 @@ long lmn_ruleset_history_num(LmnRuleSet rs)
     n = 0;
     his_num = 0;
     for (i = 0; i < n; i++){
-      LmnRule r = lmn_ruleset_get_rule(rs, i);
+      LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
       if (lmn_rule_get_history_tbl(r)) {
         his_num += st_num(lmn_rule_get_history_tbl(r));
       }
@@ -249,11 +249,11 @@ long lmn_ruleset_history_num(LmnRuleSet rs)
 }
 
 /* 実態をコピーしたルールセットを開放する */
-void lmn_ruleset_copied_free(LmnRuleSet rs)
+void lmn_ruleset_copied_free(LmnRuleSetRef rs)
 {
   unsigned int i;
   for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
-    LmnRule r = lmn_ruleset_get_rule(rs, i);
+    LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
     lmn_rule_free(r); /* free copied rule object */
   }
 
@@ -262,26 +262,26 @@ void lmn_ruleset_copied_free(LmnRuleSet rs)
   LMN_FREE(rs);
 }
 
-static inline LmnRuleSet lmn_ruleset_copy_object(LmnRuleSet src)
+static inline LmnRuleSetRef lmn_ruleset_copy_object(LmnRuleSetRef src)
 {
-  LmnRuleSet new;
+  LmnRuleSetRef result;
   unsigned int i, r_n;
 
   r_n = lmn_ruleset_rule_num(src);
-  new = lmn_ruleset_make(lmn_ruleset_get_id(src), r_n);
-  new->is_copy = TRUE;
-  new->atomic = src->atomic;
-  new->is_atomic_valid = src->is_atomic_valid;
+  result = lmn_ruleset_make(lmn_ruleset_get_id(src), r_n);
+  result->is_copy = TRUE;
+  result->atomic = src->atomic;
+  result->is_atomic_valid = src->is_atomic_valid;
 
   /* ルール単位のオブジェクト複製 */
   for (i = 0; i < r_n; i++) {
-    LmnRule r = lmn_ruleset_get_rule(src, i);
-    lmn_ruleset_put(new, lmn_rule_copy(r));
+    LmnRuleRef r = lmn_ruleset_get_rule(src, i);
+    lmn_ruleset_put(result, lmn_rule_copy(r));
   }
-  return new;
+  return result;
 }
 
-static inline BOOL ruleset_cp_is_need_object(LmnRuleSet src)
+static inline BOOL ruleset_cp_is_need_object(LmnRuleSetRef src)
 {
   return lmn_ruleset_has_uniqrule(src) ||
          (lmn_ruleset_atomic_type(src) != ATOMIC_NONE);
@@ -292,7 +292,7 @@ static inline BOOL ruleset_cp_is_need_object(LmnRuleSet src)
  * ただし, uniqルールセットである場合(現在はuniq使用時のみ),
  * ルールセットオブジェクトを独立に扱うため新たにmallocして複製したオブジェクトを返す.
  * uniqルールの場合, ルール単位でobjectを複製する */
-LmnRuleSet lmn_ruleset_copy(LmnRuleSet src)
+LmnRuleSetRef lmn_ruleset_copy(LmnRuleSetRef src)
 {
   if (ruleset_cp_is_need_object(src)) {
     return lmn_ruleset_copy_object(src);
@@ -301,7 +301,7 @@ LmnRuleSet lmn_ruleset_copy(LmnRuleSet src)
   }
 }
 
-unsigned long lmn_ruleset_space(LmnRuleSet rs)
+unsigned long lmn_ruleset_space(LmnRuleSetRef rs)
 {
   unsigned long ret = 0;
   if (lmn_ruleset_has_uniqrule(rs) || lmn_ruleset_is_copy(rs)) {
@@ -311,7 +311,7 @@ unsigned long lmn_ruleset_space(LmnRuleSet rs)
     ret += sizeof(struct LmnRuleSet);
     ret += sizeof(struct LmnRule*) * n;
     for (i = 0; i < n; i++) {
-      LmnRule r = lmn_ruleset_get_rule(rs, i);
+      LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
       if (lmn_rule_get_history_tbl(r)) { /* 履歴表を持っている場合  */
         st_table_space(lmn_rule_get_history_tbl(r));
       }
@@ -322,7 +322,7 @@ unsigned long lmn_ruleset_space(LmnRuleSet rs)
 
 /* 2つのrulesetが同じruleを持つか判定する.
  * (ruleの順序はソースコード依存) */
-BOOL lmn_ruleset_equals(LmnRuleSet set1, LmnRuleSet set2)
+BOOL lmn_ruleset_equals(LmnRuleSetRef set1, LmnRuleSetRef set2)
 {
   /* rulesetの種類をチェック */
   if (lmn_ruleset_get_id(set1) != lmn_ruleset_get_id(set2))  {
@@ -351,7 +351,7 @@ BOOL lmn_ruleset_equals(LmnRuleSet set1, LmnRuleSet set2)
         return FALSE;
       }
       for (i = 0; i < n; i++) {
-        LmnRule rule1, rule2;
+        LmnRuleRef rule1, rule2;
         st_table_t hist1, hist2;
 
         rule1 = lmn_ruleset_get_rule(set1, i);
@@ -373,13 +373,13 @@ BOOL lmn_ruleset_equals(LmnRuleSet set1, LmnRuleSet set2)
 }
 
 /* rulesetsにrulesetが含まれているか判定 */
-BOOL lmn_rulesets_contains(Vector *rs_vec, LmnRuleSet set1)
+BOOL lmn_rulesets_contains(Vector *rs_vec, LmnRuleSetRef set1)
 {
   unsigned int i, rs1_id;
 
   rs1_id = lmn_ruleset_get_id(set1);
   for (i = 0; i < vec_num(rs_vec); i++) {
-    LmnRuleSet set2 = (LmnRuleSet)vec_get(rs_vec, i);
+    LmnRuleSetRef set2 = (LmnRuleSetRef)vec_get(rs_vec, i);
 
     /* 同じrulesetが見つかればTRUEを返す */
     if (rs1_id == lmn_ruleset_get_id(set2) &&
@@ -408,9 +408,9 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2)
     un1 = 0;
     un2 = 0;
     for (i = 0; i < n; i++) {
-      LmnRuleSet rs1, rs2;
-      rs1 = (LmnRuleSet)vec_get(rs_v1, i);
-      rs2 = (LmnRuleSet)vec_get(rs_v2, i);
+      LmnRuleSetRef rs1, rs2;
+      rs1 = (LmnRuleSetRef)vec_get(rs_v1, i);
+      rs2 = (LmnRuleSetRef)vec_get(rs_v2, i);
 
       /* 異なるidであれば等価ではない */
       if (lmn_ruleset_get_id(rs1) != lmn_ruleset_get_id(rs2)) {
@@ -437,13 +437,13 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2)
       memset(rs2v_matched, 0U, sizeof(BOOL) * n);
 
       for (i = 0; i < n; i++) {
-        LmnRuleSet rs1;
+        LmnRuleSetRef rs1;
         unsigned int j;
 
         is_ok  = FALSE;
-        rs1 = (LmnRuleSet)vec_get(rs_v1, i);
+        rs1 = (LmnRuleSetRef)vec_get(rs_v1, i);
         for (j = 0; j < n; j++) {
-          LmnRuleSet rs2 = (LmnRuleSet)vec_get(rs_v2, i);
+          LmnRuleSetRef rs2 = (LmnRuleSetRef)vec_get(rs_v2, i);
           if (lmn_ruleset_get_id(rs1) < lmn_ruleset_get_id(rs2)) {
             /* 比較打ち切り */
             break; /* INNER LOOP */
@@ -474,7 +474,7 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2)
  * System RuleSet
  */
 
-LmnRuleSet system_ruleset;
+LmnRuleSetRef system_ruleset;
 
 static void init_system_rulset()
 {
@@ -488,7 +488,7 @@ static void destroy_system_ruleset()
 
 /* Adds rule to the system ruleset.
    ruleの解放は呼び出され側が行う */
-void lmn_add_system_rule(LmnRule rule)
+void lmn_add_system_rule(LmnRuleRef rule)
 {
   lmn_ruleset_put(system_ruleset, rule);
 }
@@ -497,8 +497,8 @@ void lmn_add_system_rule(LmnRule rule)
  * Initial RuleSet
  */
 
-LmnRuleSet initial_ruleset;
-LmnRuleSet initial_system_ruleset;
+LmnRuleSetRef initial_ruleset;
+LmnRuleSetRef initial_system_ruleset;
 
 static void init_initial_rulset()
 {
@@ -514,12 +514,12 @@ static void destroy_initial_ruleset()
 
 /* Adds rule to the system ruleset.
    ruleの解放は呼び出され側が行う */
-void lmn_add_initial_rule(LmnRule rule)
+void lmn_add_initial_rule(LmnRuleRef rule)
 {
   lmn_ruleset_put(initial_ruleset, rule);
 }
 
-void lmn_add_initial_system_rule(LmnRule rule)
+void lmn_add_initial_system_rule(LmnRuleRef rule)
 {
   lmn_ruleset_put(initial_system_ruleset, rule);
 }
@@ -541,17 +541,17 @@ static void destroy_module_table()
 }
 
 /* Associates module_name with ruleset */
-void lmn_set_module(lmn_interned_str module_name, LmnRuleSet ruleset)
+void lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset)
 {
   st_insert(module_table, (st_data_t)module_name, (st_data_t)ruleset);
 }
 
 /* Returns RuleSet associated with module_name. If nothing is, returns NULL. */
-LmnRuleSet lmn_get_module_ruleset(lmn_interned_str module_name)
+LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name)
 {
-  LmnRuleSet ruleset;
+  LmnRuleSetRef ruleset;
 
-  if (st_lookup(module_table, (st_data_t)module_name, (void *)&ruleset)) return ruleset;
+  if (st_lookup(module_table, (st_data_t)module_name, (st_data_t *)&ruleset)) return ruleset;
   return NULL;
 }
 

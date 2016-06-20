@@ -37,12 +37,12 @@
  * $Id$
  */
 
-#include "lmntal.h"
-#include "lmntal_ext.h"
-#include "react_context.h"
-#include "slim_header/memstack.h"
-#include "rule.h"
-#include "task.h"
+#include "../lmntal.h"
+#include "../lmntal_ext.h"
+#include "../react_context.h"
+#include "../slim_header/memstack.h"
+#include "../rule.h"
+#include "../task.h"
 #include "mc_worker.h"
 #include "mc_generator.h"
 #ifdef PROFILE
@@ -88,7 +88,7 @@ void atomic_ruleset(LmnReactCxt *rc, LmnMembrane *mem,
 
 void init_atomic(void)
 {
-  lmn_register_c_fun("atomic_ruleset", atomic_ruleset, 1);
+  lmn_register_c_fun("atomic_ruleset", (void *)atomic_ruleset, 1);
 }
 
 
@@ -96,12 +96,12 @@ void init_atomic(void)
 /* this function applies rules in $rs to $mem  as much as possible  */
 static inline BOOL react_ruleset_AMAP(LmnReactCxt *rc,
                                       LmnMembrane *mem,
-                                      LmnRuleSet rs)
+                                      LmnRuleSetRef rs)
 {
   unsigned int i;
   BOOL ret = FALSE;
   for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
-    LmnRule r = lmn_ruleset_get_rule(rs, i);
+    LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2) {
       profile_rule_obj_set(rs, r);
@@ -119,7 +119,7 @@ static inline BOOL react_ruleset_AMAP(LmnReactCxt *rc,
 static inline LmnWorker *build_atomic_worker()
 {
   LmnWorker *w;
-  StateSpace sub_states;
+  StateSpaceRef sub_states;
   BYTE sub_flags = 0x00U;
 
   mc_set_compress(sub_flags);
@@ -146,7 +146,7 @@ static inline void abort_atomic_worker(LmnWorker *w)
  * 非決定実行時には状態遷移のサブグラフを構築し, 停止状態をmemの遷移先として生成し, rcに登録する. */
 static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
                                      LmnMembrane *mem,
-                                     LmnRuleSet  at_set)
+                                     LmnRuleSetRef  at_set)
 {
   unsigned int i, n, succ_i_from;
   lmn_ruleset_validate_atomic(at_set);
@@ -203,7 +203,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
  */
 static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
                                       LmnMembrane *mem,
-                                      LmnRuleSet  at_set)
+                                      LmnRuleSetRef  at_set)
 {
   BOOL ret;
 
@@ -245,7 +245,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
       /* ignore all but the last reaction */
       LmnMembrane *succ_m;
 
-      LmnRule succ_r = (LmnRule)vec_pop(RC_EXPANDED_RULES(rc));
+      LmnRuleRef succ_r = (LmnRuleRef)vec_pop(RC_EXPANDED_RULES(rc));
       if (RC_MC_USE_DMEM(rc)) {
         succ_m = (LmnMembrane *)vec_pop(RC_MEM_DELTAS(rc));
       } else {
@@ -290,7 +290,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
  */
 static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
                                                    LmnMembrane *mem,
-                                                   LmnRuleSet  at_set)
+                                                   LmnRuleSetRef  at_set)
 {
   BOOL ret;
 
@@ -327,7 +327,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
       /* ignore all but the last reaction */
       LmnMembrane *succ_m;
 
-      LmnRule succ_r = (LmnRule)vec_pop(RC_EXPANDED_RULES(rc));
+      LmnRuleRef succ_r = (LmnRuleRef)vec_pop(RC_EXPANDED_RULES(rc));
       if (RC_MC_USE_DMEM(rc)) {
         succ_m = (LmnMembrane *)vec_pop(RC_MEM_DELTAS(rc));
       } else {
@@ -374,7 +374,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
 
 BOOL react_ruleset_atomic(LmnReactCxt *rc,
                           LmnMembrane *mem,
-                          LmnRuleSet  rs)
+                          LmnRuleSetRef  rs)
 {
   BOOL result = FALSE;
 

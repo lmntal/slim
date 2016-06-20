@@ -10,16 +10,34 @@
 #ifndef ST_INCLUDED
 #define ST_INCLUDED
 
-#include "lmntal.h"
+/* cldoc:begin-category(ST) */
+
+#include "../lmntal.h"
 #include "lmntal_thread.h"
 #include <stddef.h>
+
+ 
+#ifndef _
+# define _(args) args
+#endif
+#ifndef ANYARGS
+# ifdef __cplusplus
+#   define ANYARGS ...
+# else
+#   define ANYARGS
+# endif
+#endif
 
 typedef unsigned long st_data_t;
 typedef struct st_table *st_table_t;
 
+typedef int (*st_cmp_func)(void *, void *);
+typedef long (*st_hash_func)(void *);
+typedef int (*st_iter_func)(ANYARGS);
+
 struct st_hash_type {
-  int (*compare)(); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数 */
-  long (*hash)();    /* ハッシュ関数 */
+  int (*compare)(void *, void*); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数 */
+  long (*hash)(void *);    /* ハッシュ関数 */
 };
 
 /* num_bins = 5, num_entries = 3 なる struct st_table_entry **bins の例
@@ -46,16 +64,6 @@ enum st_retval {
   ST_CONTINUE, ST_STOP, ST_DELETE, ST_CHECK
 };
 
-#ifndef _
-# define _(args) args
-#endif
-#ifndef ANYARGS
-# ifdef __cplusplus
-#   define ANYARGS ...
-# else
-#   define ANYARGS
-# endif
-#endif
 
 static inline unsigned long st_num(st_table_t table) {
   return table->num_entries;
@@ -82,7 +90,7 @@ int st_insert_safe(st_table_t tbl, st_data_t key, st_data_t value);
 int st_lookup(st_table_t tbl, st_data_t key, st_data_t *value);
 int st_lookup_with_col(st_table_t tbl, st_data_t key, st_data_t *value, long *n_col);
 int st_contains(st_table_t tbl, st_data_t key);
-int st_foreach(st_table_t tbl, int(*func)( ANYARGS), st_data_t arg);
+int st_foreach(st_table_t tbl, st_iter_func f, st_data_t arg);
 void st_add_direct(st_table_t tbl, st_data_t key, st_data_t value);
 unsigned long st_table_space(st_table_t tbl);
 void st_free_table(st_table_t tbl);
@@ -105,6 +113,6 @@ void st_concat(st_table_t tbl1, const st_table_t tbl2);
 
 unsigned long st_table_space(st_table_t table);
 
-
+/* cldoc:end-category() */
 
 #endif /* ST_INCLUDED */

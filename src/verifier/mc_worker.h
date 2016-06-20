@@ -40,7 +40,9 @@
 #ifndef LMN_MC_WORKER_H
 #define LMN_MC_WORKER_H
 
-#include "lmntal.h"
+/* cldoc:begin-category(Verifier::Worker) */
+
+#include "../lmntal.h"
 #include "statespace.h"
 #include "state.h"
 #include "queue.h"
@@ -120,8 +122,8 @@ struct LmnMCObj {
   LmnWorker *owner;
   BYTE type;
   void *obj;           /* 任意のデータ */
-  void (*init)( );     /* objの初期化関数 */
-  void (*finalize)( ); /* objの後始末関数 */
+  void (*init)(LmnWorker *);     /* objの初期化関数 */
+  void (*finalize)(LmnWorker *); /* objの後始末関数 */
 };
 
 #define mc_obj(MC)                ((MC)->obj)
@@ -160,10 +162,10 @@ struct LmnWorker {
   LmnMCObj        explorer;
   BOOL            is_explorer;
 
-  void            (*start)( );   /* 実行関数 */
-  BOOL            (*check)( );   /* 終了検知関数 */
+  void            (*start)(struct LmnWorker *);   /* 実行関数 */
+  BOOL            (*check)(struct LmnWorker *);   /* 終了検知関数 */
 
-  StateSpace      states;        /* Pointer to StateSpace */
+  StateSpaceRef   states;        /* Pointer to StateSpace */
   LmnReactCxt     cxt;           /* ReactContext Object */
   LmnWorker       *next;         /* Pointer to Neighbor Worker */
   LmnWorkerGroup  *group;
@@ -393,13 +395,13 @@ static inline BOOL worker_check(LmnWorker *w) {
 
 /** ProtoTypes
  */
-LmnWorkerGroup *lmn_workergroup_make(Automata a, Vector *psyms, int thread_num);
+LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms, int thread_num);
 void lmn_workergroup_free(LmnWorkerGroup *wg);
 void launch_lmn_workers(LmnWorkerGroup *wg);
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root);
 void lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
 inline LmnWorker *lmn_worker_make_minimal(void);
-LmnWorker *lmn_worker_make(StateSpace     ss,
+LmnWorker *lmn_worker_make(StateSpaceRef  ss,
                            unsigned long  id,
                            BOOL           flags);
 void lmn_worker_free(LmnWorker *w);
@@ -411,5 +413,7 @@ LmnCost workers_opt_cost(LmnWorkerGroup *wp);
 void lmn_update_opt_cost(LmnWorkerGroup *wp, State *new_s, BOOL f);
 
 LmnWorker *worker_next_generator(LmnWorker* w);
+
+/* cldoc:end-category() */
 
 #endif

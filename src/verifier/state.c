@@ -41,22 +41,22 @@
 #include "state.h"
 #include "automata.h"
 #include "mc.h"
-#include "membrane.h"
+#include "../membrane.h"
 #include "mem_encode.h"
-#include "rule.h"
+#include "../rule.h"
 #include "mhash.h"
-#include "error.h"
-#include "dumper.h"
+#include "../error.h"
+#include "../dumper.h"
 #include "util.h"
-#include "task.h"
+#include "../task.h"
 #include "binstr_compress.h"
-#include "runtime_status.h"
+#include "../runtime_status.h"
 
 #ifdef KWBT_OPT
 # include <limits.h>
 #endif
 
-static inline LmnBinStr state_binstr_D_compress(LmnBinStr org, State *ref_s);
+static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org, State *ref_s);
 
 /*----------------------------------------------------------------------
  * State
@@ -280,7 +280,7 @@ void state_succ_clear(State *s) {
   if (has_trans_obj(s)) {
     unsigned int i;
     for (i = 0; i < state_succ_num(s); i++) {
-      Transition t = transition(s, i);
+      TransitionRef t = transition(s, i);
       transition_free(t);
     }
   }
@@ -323,14 +323,14 @@ LmnMembrane *state_mem_copy(State *s)
 
 
 /* 状態sに対応するバイナリストリングを, sがrefする状態を基に再構築して返す. */
-LmnBinStr state_binstr_reconstructor(State *s)
+LmnBinStrRef state_binstr_reconstructor(State *s)
 {
-  LmnBinStr ret;
+  LmnBinStrRef ret;
   if (!s_is_d(s)) {
     ret = state_binstr(s);
   }
   else {
-    LmnBinStr ref;
+    LmnBinStrRef ref;
     LMN_ASSERT(state_D_ref(s));
     ref = state_binstr_reconstructor(state_D_ref(s));
     ret = lmn_bscomp_d_decode(ref, state_binstr(s));
@@ -347,7 +347,7 @@ LmnBinStr state_binstr_reconstructor(State *s)
  */
 static int state_equals_with_compress(State *check, State *stored)
 {
-  LmnBinStr bs1, bs2;
+  LmnBinStrRef bs1, bs2;
   int t;
 
 #ifdef PROFILE
@@ -434,7 +434,7 @@ int state_cmp_with_compress(State *s1, State *s2)
 {
   if (lmn_env.debug_isomor && !(is_encoded(s1) && is_encoded(s2))) {
     LmnMembrane *s2_mem;
-    LmnBinStr s1_mid, s2_mid;
+    LmnBinStrRef s1_mid, s2_mid;
     BOOL org_check, mid_check, meq_check;
 
     /* TODO: --disable-compress時にもチェックできるよう修正して構造化する. */
@@ -455,7 +455,7 @@ int state_cmp_with_compress(State *s1, State *s2)
         org_check != meq_check ||
         mid_check != meq_check) {
       FILE *f;
-      LmnBinStr s1_bs;
+      LmnBinStrRef s1_bs;
       BOOL sp1_check, sp2_check, sp3_check, sp4_check;
 
       f = stdout;
@@ -501,8 +501,8 @@ int state_cmp_with_compress(State *s1, State *s2)
  */
 static int state_equals_with_tree(State *check, State *stored)
 {
-  LmnBinStr bs1, bs2;
-  TreeNodeRef ref;
+  LmnBinStrRef bs1, bs2;
+  TreeNodeID ref;
   int t;
 
   bs1 = state_binstr(check);
@@ -510,7 +510,7 @@ static int state_equals_with_tree(State *check, State *stored)
   tcd_get_root_ref(&stored->tcd, &ref);
   LMN_ASSERT(ref != 0);
   LMN_ASSERT(tcd_get_byte_length(&stored->tcd) != 0);
-  bs2 = lmn_bscomp_tree_decode((TreeNodeRef)ref, tcd_get_byte_length(&stored->tcd));
+  bs2 = lmn_bscomp_tree_decode((TreeNodeID)ref, tcd_get_byte_length(&stored->tcd));
 
   if (is_encoded(check) && is_encoded(stored)) {
     /* 膜のIDで比較 */
@@ -572,7 +572,7 @@ void state_free_binstr(State *s)
 void state_calc_mem_encode(State *s)
 {
   if (!is_encoded(s)) {
-    LmnBinStr mid;
+    LmnBinStrRef mid;
 
     if (state_mem(s)) {
       mid = lmn_mem_encode(state_mem(s));
@@ -598,9 +598,9 @@ void state_calc_mem_encode(State *s)
 /**/
 void state_calc_binstr_delta(State *s)
 {
-  LmnBinStr org = state_binstr(s);
+  LmnBinStrRef org = state_binstr(s);
   if (org && state_D_ref(s)) {
-    LmnBinStr dif;
+    LmnBinStrRef dif;
     dif = state_binstr_D_compress(org, state_D_ref(s));
     state_D_cache(s, org);
     state_set_binstr(s, dif);
@@ -613,9 +613,9 @@ void state_calc_binstr_delta(State *s)
 
 /* バイナリストリングorgと状態ref_sのバイナリストリングとの差分バイナリストリングを返す.
  * orgのメモリ管理は呼出し側で行う. */
-static inline LmnBinStr state_binstr_D_compress(LmnBinStr org, State *ref_s)
+static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org, State *ref_s)
 {
-  LmnBinStr ref, dif;
+  LmnBinStrRef ref, dif;
 
   ref = state_D_fetch(ref_s);
   if (ref) {
@@ -635,15 +635,15 @@ static inline LmnBinStr state_binstr_D_compress(LmnBinStr org, State *ref_s)
 
 /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
  * 状態sはread only */
-LmnBinStr state_calc_mem_dump_with_z(State *s)
+LmnBinStrRef state_calc_mem_dump_with_z(State *s)
 {
-  LmnBinStr ret;
+  LmnBinStrRef ret;
   if (is_binstr_user(s)) {
     /* 既にバイナリストリングを保持している場合は, なにもしない. */
     ret = state_binstr(s);
   }
   else if (state_mem(s)) {
-    LmnBinStr bs = lmn_mem_to_binstr(state_mem(s));
+    LmnBinStrRef bs = lmn_mem_to_binstr(state_mem(s));
     /* TODO: --d-compressとの組合わせ */
     ret = lmn_bscomp_z_encode(bs);
     if (ret != bs) { /* 圧縮成功 */
@@ -659,9 +659,9 @@ LmnBinStr state_calc_mem_dump_with_z(State *s)
 
 /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
  * sのフラグを操作する. */
-LmnBinStr state_calc_mem_dump(State *s)
+LmnBinStrRef state_calc_mem_dump(State *s)
 {
-  LmnBinStr ret;
+  LmnBinStrRef ret;
 
   if (state_binstr(s)) {
     /* 既にエンコード済みの場合は何もしない. */
@@ -670,7 +670,7 @@ LmnBinStr state_calc_mem_dump(State *s)
   else if (state_mem(s)) {
     ret = lmn_mem_to_binstr(state_mem(s));
     if (s_is_d(s) && state_D_ref(s)) {
-      LmnBinStr dif;
+      LmnBinStrRef dif;
       dif = state_binstr_D_compress(ret, state_D_ref(s));
       /* 元のバイト列は直ちに破棄せず, 一時的にキャッシュしておく. */
       state_D_cache(s, ret);
@@ -690,9 +690,9 @@ LmnBinStr state_calc_mem_dump(State *s)
 
 /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
  * sのフラグを操作する. */
-LmnBinStr state_calc_mem_dump_with_tree(State *s)
+LmnBinStrRef state_calc_mem_dump_with_tree(State *s)
 {
-  LmnBinStr ret;
+  LmnBinStrRef ret;
 
   if (state_binstr(s)) {
     /* 既にエンコード済みの場合は何もしない. */
@@ -710,13 +710,13 @@ LmnBinStr state_calc_mem_dump_with_tree(State *s)
 }
 
 
-LmnBinStr state_calc_mem_dummy(State *s)
+LmnBinStrRef state_calc_mem_dummy(State *s)
 {
   /* DUMMY: nothing to do */
   return NULL;
 }
 
-unsigned long transition_space(Transition t)
+unsigned long transition_space(TransitionRef t)
 {
   unsigned long ret;
   ret  = sizeof(struct Transition);
@@ -725,7 +725,7 @@ unsigned long transition_space(Transition t)
 }
 
 
-Transition transition_make(State *s, lmn_interned_str rule_name)
+TransitionRef transition_make(State *s, lmn_interned_str rule_name)
 {
   struct Transition *t = LMN_MALLOC(struct Transition);
 
@@ -743,7 +743,7 @@ Transition transition_make(State *s, lmn_interned_str rule_name)
 }
 
 
-void transition_free(Transition t)
+void transition_free(TransitionRef t)
 {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -755,7 +755,7 @@ void transition_free(Transition t)
 }
 
 
-void transition_add_rule(Transition t,
+void transition_add_rule(TransitionRef t,
                          lmn_interned_str rule_name,
                          LmnCost cost)
 {
@@ -789,7 +789,7 @@ void transition_add_rule(Transition t,
 void dump_state_data(State *s, LmnWord _fp, LmnWord _owner)
 {
   FILE *f;
-  StateSpace owner;
+  StateSpaceRef owner;
   unsigned long print_id;
 #ifdef KWBT_OPT
   LmnCost cost = lmn_env.opt_mode != OPT_NONE ? state_cost(s) : 0UL;
@@ -802,7 +802,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner)
   if (is_dummy(s) && !is_encoded(s)) return;
 
   f     = (FILE *)_fp;
-  owner = (StateSpace)_owner;
+  owner = (StateSpaceRef)_owner;
   {
     /* この時点で状態は, ノーマル || (dummyフラグが立っている && エンコード済)である.
      * dummyならば, バイナリストリング以外のデータはオリジナル側(parent)に記録している. */
@@ -882,14 +882,14 @@ void state_print_mem(State *s, LmnWord _fp)
 void state_print_transition(State *s, LmnWord _fp, LmnWord _owner)
 {
   FILE *f;
-  StateSpace owner;
+  StateSpaceRef owner;
   unsigned int i;
 
   BOOL need_id_foreach_trans;
-  char *state_separator,
-       *trans_separator,
-       *label_begin,
-       *label_end;
+  const char *state_separator,
+             *trans_separator,
+             *label_begin,
+             *label_end;
   BOOL formated;
 
   /* Rehashが発生している場合,
@@ -899,7 +899,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner)
   if ((is_dummy(s) && is_encoded(s))) return;
 
   f     = (FILE *)_fp;
-  owner = (StateSpace)_owner;
+  owner = (StateSpaceRef)_owner;
 
   need_id_foreach_trans = TRUE;
   switch (lmn_env.mc_dump_format) {
@@ -947,7 +947,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner)
       fprintf(f, "%lu", state_format_id(state_succ_state(s, i), formated));
 
       if (has_trans_obj(s)) {
-        Transition t;
+        TransitionRef t;
         unsigned int j;
 
         fprintf(f, "%s", label_begin);
@@ -973,11 +973,11 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner)
 
 void state_print_label(State *s, LmnWord _fp, LmnWord _owner)
 {
-  Automata a;
+  AutomataRef a;
   FILE *f;
-  StateSpace owner;
+  StateSpaceRef owner;
 
-  owner = (StateSpace)_owner;
+  owner = (StateSpaceRef)_owner;
   if (!statespace_has_property(owner) || (is_dummy(s) && is_encoded(s))) {
     return;
   }

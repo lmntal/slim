@@ -40,8 +40,8 @@
 #ifndef LMN_UTIL_H
 #define LMN_UTIL_H
 
-#include "lmntal.h"
-#include "error.h"
+#include "../lmntal.h"
+#include "../error.h"
 
 
 /** ----------------------

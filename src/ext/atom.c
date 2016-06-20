@@ -37,11 +37,11 @@
  * $Id$
  */
 
-#include "lmntal_ext.h"
-#include "utility/util.h"
-#include "slim_header/string.h"
-#include "dumper.h"
-#include "atom.h"
+#include "../lmntal_ext.h"
+#include <util.h>
+#include "../slim_header/string.h"
+#include "../dumper.h"
+#include "../atom.h"
 
 /*
  * Internal Constructor
@@ -126,7 +126,7 @@ void cb_atom_functor(LmnReactCxt *rc,
   if (LMN_ATTR_IS_DATA(t0)) 
     lmn_fatal("atom.functor cannot be applied to non-symbol atoms\
  (numbers, strings, ...).");
-  LmnString s = lmn_string_make(LMN_SATOM_STR(a0));
+  LmnStringRef s = lmn_string_make(LMN_SATOM_STR(a0));
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  LMN_ATOM(s), LMN_SP_ATOM_ATTR, 0);
 
@@ -194,7 +194,7 @@ void cb_atom_swap(LmnReactCxt *rc,
 
 void init_atom()
 {
-  lmn_register_c_fun("cb_atom_new", cb_atom_new, 3);
-  lmn_register_c_fun("cb_atom_functor", cb_atom_functor, 4);
-  lmn_register_c_fun("cb_atom_swap", cb_atom_swap, 5);
+  lmn_register_c_fun("cb_atom_new", (void *)cb_atom_new, 3);
+  lmn_register_c_fun("cb_atom_functor", (void *)cb_atom_functor, 4);
+  lmn_register_c_fun("cb_atom_swap", (void *)cb_atom_swap, 5);
 }

@@ -40,8 +40,12 @@
 #ifndef LMN_FILE_UTIL_H
 #define LMN_FILE_UTIL_H
 
+/* cldoc:begin-category(FilePath) */
+
 char *build_path(const char *dir, const char *component);
 char *basename_ext(const char *path);
 char *extension(const char *path);
+
+/* cldoc:end-category() */
 
 #endif /* !LMN_UTIL_H */

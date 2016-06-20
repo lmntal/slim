@@ -40,27 +40,31 @@
 #ifndef LMN_STRING_H
 #define LMN_STRING_H
 
-#include "lmntal.h"
-typedef struct LmnString *LmnString;
+/* cldoc:begin-category(Lmntal::String) */
+
+#include "../lmntal.h"
+typedef struct LmnString *LmnStringRef;
 
 #define LMN_STRING(obj) ((struct LmnString *)(obj))
 
 void string_init(void);
 void string_finalize(void);
 
-LmnString lmn_string_make(const char *s);
-LmnString lmn_string_make_empty(void);
-void lmn_string_free(LmnString s);
-BOOL lmn_string_eq(LmnString s1, LmnString s2);
-LmnString lmn_string_copy(LmnString s);
+LmnStringRef lmn_string_make(const char *s);
+LmnStringRef lmn_string_make_empty(void);
+void lmn_string_free(LmnStringRef s);
+BOOL lmn_string_eq(LmnStringRef s1, LmnStringRef s2);
+LmnStringRef lmn_string_copy(LmnStringRef s);
 BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr);
-unsigned long lmn_string_hash(LmnString atom);
-const char *lmn_string_c_str(LmnString atom);
-void lmn_string_push(LmnString dst, const LmnString src);
-void lmn_string_push_raw_c(LmnString s, int c);
-void lmn_string_push_raw_s(LmnString dst, const char *src);
-int lmn_string_get(LmnString s, int i);
-void lmn_string_set_raw_c(LmnString s, int c, int i);
-unsigned long lmn_string_len(LmnString s);
+unsigned long lmn_string_hash(LmnStringRef atom);
+const char *lmn_string_c_str(LmnStringRef atom);
+void lmn_string_push(LmnStringRef dst, const LmnStringRef src);
+void lmn_string_push_raw_c(LmnStringRef s, int c);
+void lmn_string_push_raw_s(LmnStringRef dst, const char *src);
+int lmn_string_get(LmnStringRef s, int i);
+void lmn_string_set_raw_c(LmnStringRef s, int c, int i);
+unsigned long lmn_string_len(LmnStringRef s);
+
+/* cldoc:end-category() */
 
 #endif

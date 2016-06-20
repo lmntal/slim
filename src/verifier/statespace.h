@@ -44,21 +44,23 @@
 #ifndef LMN_STATESPACE_H
 #define LMN_STATESPACE_H
 
-#include "lmntal.h"
-#include "utility/st.h"
-#include "utility/vector.h"
+/* cldoc:begin-category(Verifier::StateSpace) */
+
+#include "../lmntal.h"
+#include <st.h>
+#include <vector.h>
 #include "queue.h"
 #include "automata.h"
 #include "state.h"
-#include "slim_header/port.h"
+#include "../slim_header/port.h"
 #include "lmntal_thread.h"
 #include "delta_membrane.h"
 #include "mem_encode.h"
 #include "tree_compress.h"
 
 struct statespace_type {
-  int(*compare) ( );               /* 状態の等価性判定を行う関数 */
-  LmnBinStr(*compress) ( ); /* 状態sの圧縮バイト列を計算して返す関数 */
+  int(*compare) (State *, State *);               /* 状態の等価性判定を行う関数 */
+  LmnBinStrRef(*compress) (State *); /* 状態sの圧縮バイト列を計算して返す関数 */
 };
 
 
@@ -76,7 +78,7 @@ struct StateSpace {
   StateTable      *acc_tbl;
   StateTable      *acc_memid_tbl;
 
-  Automata       property_automata;  /* Never Clainへのポインタ */
+  AutomataRef       property_automata;  /* Never Clainへのポインタ */
   Vector         *propsyms;          /* 命題記号定義へのポインタ */
 
 #ifdef PROFILE
@@ -221,39 +223,39 @@ static inline unsigned long statetable_space(StateTable *tbl) {
  *  StateSpace
  */
 
-StateSpace statespace_make(Automata a, Vector *psyms);
-StateSpace statespace_make_for_parallel(int thread_num, Automata a, Vector *psyms);
-void       statespace_free(StateSpace ss);
-void       statespace_add_direct(StateSpace ss, State *s);
-State     *statespace_insert(StateSpace ss, State *s);
-State     *statespace_insert_delta(StateSpace ss, State *s, struct MemDeltaRoot *d);
-void       statespace_foreach(StateSpace ss, void (*func) ( ),
+StateSpaceRef statespace_make(AutomataRef a, Vector *psyms);
+StateSpaceRef statespace_make_for_parallel(int thread_num, AutomataRef a, Vector *psyms);
+void       statespace_free(StateSpaceRef ss);
+void       statespace_add_direct(StateSpaceRef ss, State *s);
+State     *statespace_insert(StateSpaceRef ss, State *s);
+State     *statespace_insert_delta(StateSpaceRef ss, State *s, struct MemDeltaRoot *d);
+void       statespace_foreach(StateSpaceRef ss, void (*func) ( ),
                               LmnWord _arg1, LmnWord _arg2);
-void       statespace_foreach_parallel(StateSpace ss, void (*func) ( ),
+void       statespace_foreach_parallel(StateSpaceRef ss, void (*func) ( ),
                               LmnWord _arg1, LmnWord _arg2, int nPE);
-void       statespace_format_states(StateSpace ss);
-void       statespace_clear(StateSpace ss);
-void       statespace_ends_dumper(StateSpace ss);
-void       statespace_dumper(StateSpace ss);
+void       statespace_format_states(StateSpaceRef ss);
+void       statespace_clear(StateSpaceRef ss);
+void       statespace_ends_dumper(StateSpaceRef ss);
+void       statespace_dumper(StateSpaceRef ss);
 
-static inline unsigned long statespace_num_raw(StateSpace ss);
-static inline unsigned long statespace_num(StateSpace ss);
-static inline unsigned long statespace_dummy_num(StateSpace ss);
-static inline unsigned long statespace_end_num(StateSpace ss);
-static inline State        *statespace_init_state(StateSpace ss);
-static inline void          statespace_set_init_state(StateSpace ss,
+static inline unsigned long statespace_num_raw(StateSpaceRef ss);
+static inline unsigned long statespace_num(StateSpaceRef ss);
+static inline unsigned long statespace_dummy_num(StateSpaceRef ss);
+static inline unsigned long statespace_end_num(StateSpaceRef ss);
+static inline State        *statespace_init_state(StateSpaceRef ss);
+static inline void          statespace_set_init_state(StateSpaceRef ss,
                                                       State *init_state,
                                                       BOOL enable_compact);
-static inline void          statespace_add_end_state(StateSpace ss, State *s);
-static inline const Vector *statespace_end_states(StateSpace ss);
-static inline StateTable   *statespace_tbl(StateSpace ss);
-static inline StateTable   *statespace_memid_tbl(StateSpace ss);
-static inline StateTable   *statespace_accept_tbl(StateSpace ss);
-static inline StateTable   *statespace_accept_memid_tbl(StateSpace ss);
-static inline unsigned long statespace_space(StateSpace ss);
+static inline void          statespace_add_end_state(StateSpaceRef ss, State *s);
+static inline const Vector *statespace_end_states(StateSpaceRef ss);
+static inline StateTable   *statespace_tbl(StateSpaceRef ss);
+static inline StateTable   *statespace_memid_tbl(StateSpaceRef ss);
+static inline StateTable   *statespace_accept_tbl(StateSpaceRef ss);
+static inline StateTable   *statespace_accept_memid_tbl(StateSpaceRef ss);
+static inline unsigned long statespace_space(StateSpaceRef ss);
 
 /* 初期状態を追加する MT-UNSAFE */
-static inline void statespace_set_init_state(StateSpace ss, State* init_state,
+static inline void statespace_set_init_state(StateSpaceRef ss, State* init_state,
                                              BOOL enable_binstr)
 {
   ss->init_state = init_state;
@@ -264,17 +266,17 @@ static inline void statespace_set_init_state(StateSpace ss, State* init_state,
 }
 
 /* 初期状態を返す */
-static inline State *statespace_init_state(StateSpace ss) {
+static inline State *statespace_init_state(StateSpaceRef ss) {
   return ss->init_state;
 }
 
 /* 状態数を返す */
-static inline unsigned long statespace_num(StateSpace ss) {
+static inline unsigned long statespace_num(StateSpaceRef ss) {
   return (statespace_num_raw(ss) - statespace_dummy_num(ss));
 }
 
 /* dummyの状態数を含む, 管理している状態数を返す */
-static inline unsigned long statespace_num_raw(StateSpace ss) {
+static inline unsigned long statespace_num_raw(StateSpaceRef ss) {
   return statetable_num(statespace_tbl(ss))
        + statetable_num(statespace_memid_tbl(ss))
        + statetable_num(statespace_accept_tbl(ss))
@@ -282,7 +284,7 @@ static inline unsigned long statespace_num_raw(StateSpace ss) {
 }
 
 /* memidテーブルに追加されているdummy状態数を返す */
-static inline unsigned long statespace_dummy_num(StateSpace ss) {
+static inline unsigned long statespace_dummy_num(StateSpaceRef ss) {
   StateTable *tbl;
   unsigned long ret;
   unsigned int i;
@@ -306,7 +308,7 @@ static inline unsigned long statespace_dummy_num(StateSpace ss) {
 
 
 /* 最終状態数を返す */
-static inline unsigned long statespace_end_num(StateSpace ss) {
+static inline unsigned long statespace_end_num(StateSpaceRef ss) {
   if (ss->thread_num > 1) {
     unsigned long sum = 0;
     unsigned int i;
@@ -322,7 +324,7 @@ static inline unsigned long statespace_end_num(StateSpace ss) {
 
 
 /* 状態空間に**すでに含まれている**状態sを最終状態として登録する */
-static inline void statespace_add_end_state(StateSpace ss, State *s) {
+static inline void statespace_add_end_state(StateSpaceRef ss, State *s) {
   LMN_ASSERT(env_my_thread_id() < env_threads_num());
   if (ss->thread_num > 1)
     vec_push(&ss->end_states[env_my_thread_id()], (vec_data_t)s);
@@ -332,28 +334,28 @@ static inline void statespace_add_end_state(StateSpace ss, State *s) {
 
 
 /* 最終状態のベクタを返す */
-static inline const Vector *statespace_end_states(StateSpace ss)
+static inline const Vector *statespace_end_states(StateSpaceRef ss)
 {
   return ss->end_states;
 }
 
-static inline StateTable *statespace_tbl(StateSpace ss) {
+static inline StateTable *statespace_tbl(StateSpaceRef ss) {
   return ss->tbl;
 }
 
-static inline StateTable *statespace_memid_tbl(StateSpace ss) {
+static inline StateTable *statespace_memid_tbl(StateSpaceRef ss) {
   return ss->memid_tbl;
 }
 
-static inline StateTable *statespace_accept_tbl(StateSpace ss) {
+static inline StateTable *statespace_accept_tbl(StateSpaceRef ss) {
   return ss->acc_tbl;
 }
 
-static inline StateTable *statespace_accept_memid_tbl(StateSpace ss) {
+static inline StateTable *statespace_accept_memid_tbl(StateSpaceRef ss) {
   return ss->acc_memid_tbl;
 }
 
-static inline unsigned long statespace_space(StateSpace ss) {
+static inline unsigned long statespace_space(StateSpaceRef ss) {
   unsigned long ret = sizeof(struct StateSpace);
   if (statespace_tbl(ss)) {
     ret += statetable_space(statespace_tbl(ss));
@@ -375,5 +377,7 @@ static inline unsigned long statespace_space(StateSpace ss) {
   }
   return ret;
 }
+
+/* cldoc:end-category() */
 
 #endif

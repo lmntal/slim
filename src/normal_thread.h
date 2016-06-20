@@ -60,7 +60,7 @@ struct arginfo{
   BOOL judge;//whether react atom or not
   LmnInstrVar atomi;
   LmnReactCxt *rc;
-  LmnRule rule;
+  LmnRuleRef rule;
   LmnRuleInstr instr;
   AtomListEntry *atomlist_ent;
   unsigned int register_size;
@@ -88,7 +88,7 @@ void* normal_thread(void* arg);
 
 void normal_parallel_init(void);
 void normal_parallel_free(void);
-void threadinfo_init(int id, LmnInstrVar atomi, LmnRule rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity);
+void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity);
 
 void op_lock(int id, int flag);
 

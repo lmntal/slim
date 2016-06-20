@@ -39,7 +39,9 @@
 #ifndef MC_DPOR_H
 #define MC_DPOR_H
 
-#include "lmntal.h"
+/* cldoc:begin-category(Verifier::Dpor) */
+
+#include "../lmntal.h"
 #include "delta_membrane.h"
 #include "statespace.h"
 #include "visitlog.h"
@@ -51,17 +53,17 @@
 # define POR_DEBUG(V)
 #endif
 
-typedef struct ContextC2 *ContextC2;
-typedef struct ContextC1 *ContextC1;
+typedef struct ContextC2 *ContextC2Ref;
+typedef struct ContextC1 *ContextC1Ref;
 
 struct McDporData {
   unsigned int cur_depth;
 
-  ContextC1 tmp;  /* ちょっと退避する場所 */
-  ContextC2 c2;
+  ContextC1Ref tmp;  /* ちょっと退避する場所 */
+  ContextC2Ref c2;
 
   Vector     *wt_gatoms;  /* マッチング中, ground命令によるProcessTblを集める作業場 */
-  ProcessTbl wt_flags;    /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
+  ProcessTableRef wt_flags;    /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
 
   Vector *ample_cand;     /* ample setに含める予定のContextC1へのポインタを積む */
   st_table_t delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
@@ -101,10 +103,10 @@ extern McDporData **dpor_data;
 #define RHS_OP(F, S)       ((F) & (S))
 
 
-void dpor_explore_redundunt_graph(StateSpace ss);
+void dpor_explore_redundunt_graph(StateSpaceRef ss);
 
 
-void dpor_start(StateSpace  ss,
+void dpor_start(StateSpaceRef  ss,
                 State       *s,
                 LmnReactCxt *rc,
                 Vector      *new_s,
@@ -154,11 +156,11 @@ static inline void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE uns
   proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
 }
 
-static inline void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTbl atoms) {
+static inline void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms) {
   vec_push(d->wt_gatoms, (vec_data_t)atoms);
 }
 
-static inline void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTbl atoms) {
+static inline void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms) {
   if (vec_peek(d->wt_gatoms) == (vec_data_t)atoms) {
     vec_pop(d->wt_gatoms);
   } else {
@@ -176,8 +178,11 @@ static inline void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTbl atoms)
 
 
 /* for debug only */
-void dpor_contextC1_dump_eachL(ContextC1 c);
-void dpor_contextC1_dump_eachR(ContextC1 c);
+void dpor_contextC1_dump_eachL(ContextC1Ref c);
+void dpor_contextC1_dump_eachR(ContextC1Ref c);
 void dpor_contextC1_dump(McDporData *d);
 int  dpor_dependency_tbl_dump(McDporData *d);
+
+/* cldoc:end-category() */
+
 #endif

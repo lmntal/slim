@@ -125,39 +125,39 @@ void free_atom_memory_pools(void)
 
 void *lmn_calloc(size_t num, size_t size)
 {
-  void *new;
+  void *result;
 #if HAVE_DECL_CALLOC
-  new = calloc (num, size);
-  if (!new) {
+  result = calloc (num, size);
+  if (!result) {
     lmn_fatal("Memory exhausted");
   }
 #else
-  new = lmn_malloc(num * size);
-  memset(new, 0x00, num * size);
+  result = lmn_malloc(num * size);
+  memset(result, 0x00, num * size);
 #endif
 
-  return new;
+  return result;
 }
 
 void *lmn_malloc(size_t num)
 {
   LMN_ASSERT(num > 0);
 //printf("%lu\n", num);
-  void *new = malloc(num);
-  if (!new) lmn_fatal("Memory exhausted");
+  void *result = malloc(num);
+  if (!result) lmn_fatal("Memory exhausted");
 
-  return new;
+  return result;
 }
 
 void *lmn_realloc(void *p, size_t num)
 {
-  void *new;
+  void *result;
 
   if (!p) return lmn_malloc (num);
-  new = realloc (p, num);
-  if (!new) lmn_fatal("Memory exhausted");
+  result = realloc (p, num);
+  if (!result) lmn_fatal("Memory exhausted");
 
-  return new;
+  return result;
 }
 
 void lmn_free(void *p)

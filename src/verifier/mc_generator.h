@@ -40,7 +40,9 @@
 #ifndef LMN_MC_GEN_H
 #define LMN_MC_GEN_H
 
-#include "lmntal.h"
+/* cldoc:begin-category(Verifier::Generator) */
+
+#include "../lmntal.h"
 #include "mc_worker.h"
 #include "stack_macro.h"
 
@@ -59,5 +61,7 @@ void bfs_start(LmnWorker *w);
 void bfs_worker_init(LmnWorker *w);
 void bfs_worker_finalize(LmnWorker *w);
 BOOL bfs_worker_check(LmnWorker *w);
+
+/* cldoc:end-category() */
 
 #endif

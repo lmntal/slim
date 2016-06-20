@@ -44,7 +44,9 @@
 #ifndef LMN_QUEUE_H
 #define LMN_QUEUE_H
 
-#include "lmntal.h"
+/* cldoc:begin-category(Queue) */
+
+#include "../lmntal.h"
 #include "lmntal_thread.h"
 
 typedef struct Node  Node;
@@ -248,5 +250,7 @@ static inline void deq_print(Deque *deq) {
   for (i = 0; i < deq->cap; i++) fprintf(f, "%lu, ", deq->tbl[i]);
   fprintf(f, "]\n");
 }
+
+/* cldoc:end-category() */
 
 #endif

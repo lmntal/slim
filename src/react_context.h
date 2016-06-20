@@ -42,6 +42,8 @@
 #ifndef LMN_REACT_CONTEXT_H
 #define LMN_REACT_CONTEXT_H
 
+/* cldoc:begin-category(Lmntal::ReactContext) */
+
 #include "lmntal.h"
 #include "rule.h"
 #include "st.h"
@@ -258,10 +260,10 @@ void mc_react_cxt_init(LmnReactCxt *cxt);
 void mc_react_cxt_destroy(LmnReactCxt *cxt);
 void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
                                LmnMembrane *mem,
-                               LmnRule rule);
+                               LmnRuleRef rule);
 void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
                                        struct MemDeltaRoot *d,
-                                       LmnRule rule);
+                                       LmnRuleRef rule);
 
 static inline LmnWord mc_react_cxt_expanded_pop(LmnReactCxt *cxt) {
   vec_pop(RC_EXPANDED_RULES(cxt));
@@ -288,5 +290,7 @@ static inline unsigned int mc_react_cxt_expanded_num(LmnReactCxt *cxt) {
   return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
                              : vec_num(RC_EXPANDED(cxt));
 }
+
+/* cldoc:end-category() */
 
 #endif

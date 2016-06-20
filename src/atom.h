@@ -39,6 +39,8 @@
 #ifndef LMN_ATOM_H
 #define LMN_ATOM_H
 
+/* cldoc:begin-category(Lmntal::Atom) */
+
 #include "lmntal.h"
 #include "special_atom.h"
 #include "functor.h"
@@ -207,7 +209,7 @@ static inline void free_symbol_atom_with_buddy_data(LmnSAtom atom);
 static inline BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0,
                                LmnAtom atom1,LmnLinkAttr attr1);
 static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr,
-                                           ProcessTbl *hlinks);
+                                           ProcessTableRef *hlinks);
 static inline BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
                                     LmnAtom atom2, LmnLinkAttr attr2);
 static inline double lmn_get_double(LmnAtom atom);
@@ -387,7 +389,7 @@ static inline BOOL lmn_eq_func(LmnAtom     atom0, LmnLinkAttr attr0,
   }
 }
 
-static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr, ProcessTbl *hlinks) {
+static inline BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr, ProcessTableRef *hlinks) {
   switch (attr) {
   case LMN_INT_ATTR:
   case LMN_DBL_ATTR:
@@ -448,6 +450,8 @@ static inline void lmn_destroy_double_atom(LmnAtom atom) {
   LMN_FREE((double *)atom);
 #endif
 }
+
+/* cldoc:end-category() */
 
 #endif /* LMN_ATOM_H */
 

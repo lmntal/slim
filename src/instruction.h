@@ -39,6 +39,8 @@
 #ifndef LMN_INSTRUCTION_H
 #define LMN_INSTRUCTION_H
 
+/* cldoc:begin-category(Lmntal::Instruction) */
+
 #include "lmntal.h"
 
 enum LmnInstruction {
@@ -273,11 +275,13 @@ enum ArgType {
 };
 
 struct InstrSpec {
-  char *op_str;
+  const char *op_str;
   LmnInstrOp op;
   enum ArgType args[128];
 };
 
 extern struct InstrSpec spec[];
+
+/* cldoc:end-category() */
 
 #endif

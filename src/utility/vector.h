@@ -39,7 +39,9 @@
 #ifndef LMN_VECTOR_H
 #define LMN_VECTOR_H
 
-#include "lmntal.h"
+/* cldoc:begin-category(Vector) */
+
+#include "../lmntal.h"
 
 struct Vector {
   LmnWord* tbl;
@@ -173,5 +175,7 @@ static inline unsigned long vec_space_inner(Vector *v) {
 static inline unsigned long vec_space(Vector *v) {
   return sizeof(struct Vector) + vec_space_inner(v);
 }
+
+/* cldoc:end-category() */
 
 #endif /* LMN_VECTOR_H */

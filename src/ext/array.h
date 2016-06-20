@@ -40,7 +40,7 @@
 #ifndef LMN_ARRAY_H
 #define LMN_ARRAY_H
 
-#include "lmntal.h"
+#include "../lmntal.h"
 
 
 struct LmnArray {
@@ -53,8 +53,8 @@ struct LmnArray {
   LmnWord *data;     /* array data */
 };
 
-typedef struct LmnArray *LmnArray;
+typedef struct LmnArray *LmnArrayRef;
 
-#define LMN_ARRAY(obj) ((LmnArray)(obj))
+#define LMN_ARRAY(obj) ((LmnArrayRef)(obj))
 
 #endif

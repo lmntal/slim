@@ -42,11 +42,11 @@
 #include "mc_generator.h"
 #include "mc_explorer.h"
 #include "state.h"
-#include "utility/vector.h"
+#include <vector.h>
 #include "queue.h"
-#include "error.h"
+#include "../error.h"
 #include "lmntal_thread.h"
-#include "runtime_status.h"
+#include "../runtime_status.h"
 #include <unistd.h>
 
 #ifndef MINIMAL_STATE 
@@ -123,23 +123,23 @@
 static inline void    dfs_loop(LmnWorker *w,
                                Vector    *stack,
                                Vector    *new_states,
-                               Automata  a,
+                               AutomataRef  a,
                                Vector    *psyms);
 static inline void    mapdfs_loop(LmnWorker *w,
                                Vector    *stack,
                                Vector    *new_states,
-                               Automata  a,
+                               AutomataRef  a,
                                Vector    *psyms);
 static inline void    mcdfs_loop(LmnWorker *w,
                                Vector    *stack,
                                Vector    *new_states,
-                               Automata  a,
+                               AutomataRef  a,
                                Vector    *psyms);
 
 void    costed_dfs_loop(LmnWorker *w,
                         Deque    *deq,
                         Vector    *new_states,
-                        Automata  a,
+                        AutomataRef  a,
                         Vector    *psyms);
 static inline LmnWord dfs_work_stealing(LmnWorker *w);
 static inline void    dfs_handoff_all_task(LmnWorker *me, Vector *tasks);
@@ -339,7 +339,7 @@ void mcdfs_start(LmnWorker *w)
   LmnWorkerGroup *wp;
   struct Vector new_ss;
   State  *s;
-  StateSpace ss;
+  StateSpaceRef ss;
   
   ss = worker_states(w);
   wp = worker_group(w);
@@ -411,7 +411,7 @@ void dfs_start(LmnWorker *w)
   LmnWorkerGroup *wp;
   struct Vector new_ss;
   State  *s;
-  StateSpace ss;
+  StateSpaceRef ss;
   
   ss = worker_states(w);
   wp = worker_group(w);
@@ -504,12 +504,12 @@ void dfs_start(LmnWorker *w)
 static inline void dfs_loop(LmnWorker *w,
                             Vector    *stack,
                             Vector    *new_ss,
-                            Automata  a,
+                            AutomataRef  a,
                             Vector    *psyms)
 {
   while (!vec_is_empty(stack)) {
     State *s;
-    AutomataState p_s;
+    AutomataStateRef p_s;
     unsigned int i, n;
 	
 	if(!(worker_group(w))) break;
@@ -579,12 +579,12 @@ static inline void dfs_loop(LmnWorker *w,
 static inline void mapdfs_loop(LmnWorker *w,
                             Vector    *stack,
                             Vector    *new_ss,
-                            Automata  a,
+                            AutomataRef  a,
                             Vector    *psyms)
 {
   while (!vec_is_empty(stack)) {
     State *s;
-    AutomataState p_s;
+    AutomataStateRef p_s;
     unsigned int i, n;
     
     if (workers_are_exit(worker_group(w))) break;    
@@ -662,12 +662,12 @@ static inline void mapdfs_loop(LmnWorker *w,
 static inline void mcdfs_loop(LmnWorker *w,
                             Vector    *stack,
                             Vector    *new_ss,
-                            Automata  a,
+                            AutomataRef  a,
                             Vector    *psyms)
 {
   while (!vec_is_empty(stack)) {
     State *s;
-    AutomataState p_s;
+    AutomataStateRef p_s;
     unsigned int i, n, start;
     BOOL repaired;
 
@@ -795,12 +795,12 @@ static inline void mcdfs_loop(LmnWorker *w,
 void costed_dfs_loop(LmnWorker *w,
                      Deque     *deq,
                      Vector    *new_ss,
-                     Automata  a,
+                     AutomataRef  a,
                      Vector    *psyms)
 {
   while (!deq_is_empty(deq)) {
     State *s;
-    AutomataState p_s;
+    AutomataStateRef p_s;
     unsigned int i, n;
 
     if (workers_are_exit(worker_group(w))) break;
@@ -886,7 +886,7 @@ typedef struct McExpandBFS {
   BFS_WORKER_Q_CUR(W) = _swap;                \
 } while (0) /* ポインタの付け替えはatomicに処理されないので並列処理の際には注意 */
 
-static inline void bfs_loop(LmnWorker *w, Vector *new_states, Automata a, Vector *psyms);
+static inline void bfs_loop(LmnWorker *w, Vector *new_states, AutomataRef a, Vector *psyms);
 
 
 /* LmnWorker wにBFSのためのデータを割り当てる */
@@ -955,7 +955,7 @@ void bfs_start(LmnWorker *w) {
   LmnWorkerGroup *wp;
   unsigned long d, d_lim;
   Vector *new_ss;
-  StateSpace ss;
+  StateSpaceRef ss;
 
   ss = worker_states(w);
   wp = worker_group(w);
@@ -1021,7 +1021,7 @@ void bfs_start(LmnWorker *w) {
       if (BLEDGE_COND(w)) bledge_start(w);
 
       BFS_WORKER_Q_SWAP(w);
-      lmn_workers_synchronization(w, (void *)lmn_workers_termination_detection_for_rings);
+      lmn_workers_synchronization(w, (void (*)(LmnWorker *))lmn_workers_termination_detection_for_rings);
       if (d_lim < ++d || wp->mc_exit || lmn_workers_termination_detection_for_rings(w)) {
         break;
       }
@@ -1032,12 +1032,12 @@ void bfs_start(LmnWorker *w) {
 }
 
 
-static inline void bfs_loop(LmnWorker *w, Vector *new_ss, Automata a, Vector *psyms)
+static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a, Vector *psyms)
 {
   LmnWorkerGroup *wp = worker_group(w);
   while (!is_empty_queue(BFS_WORKER_Q_CUR(w))) { /* # of states@current layer > 0 */
     State *s;
-    AutomataState p_s;
+    AutomataStateRef p_s;
     unsigned int i;
 
     if (workers_are_exit(wp)) return;

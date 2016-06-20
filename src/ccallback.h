@@ -40,6 +40,8 @@
 #ifndef LMN_CCALLBACK
 #define LMN_CCALLBACK
 
+/* cldoc:begin-category(Lmntal::CCallback) */
+
 #include "lmntal.h"
 
 /* LMNtalから呼ばれるCのコールバック */
@@ -52,5 +54,7 @@ void ccallback_init(void);
 void ccallback_finalize(void);
 void lmn_register_c_fun(const char *name, void *f, int arity);
 const struct CCallback *get_ccallback(lmn_interned_str name);
+
+/* cldoc:end-category() */
 
 #endif

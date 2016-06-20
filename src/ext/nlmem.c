@@ -37,10 +37,10 @@
  * $Id$
  */
 
-#include "lmntal.h"
-#include "lmntal_ext.h"
+#include "../lmntal.h"
+#include "../lmntal_ext.h"
 #include "visitlog.h"
-#include "slim_header/memstack.h"
+#include "../slim_header/memstack.h"
 
 void init_nlmem(void);
 
@@ -51,7 +51,7 @@ void nlmem_copy(LmnReactCxt *rc,
                 LmnAtom a2, LmnLinkAttr t2)
 {
   LmnMembrane *org_mem, *trg_mem;
-  ProcessTbl atom_map;
+  ProcessTableRef atom_map;
   lmn_interned_str copy_tag_name;
   LmnFunctor copy_tag_func;
 
@@ -139,6 +139,6 @@ void nlmem_kill(LmnReactCxt *rc,
 
 void init_nlmem(void)
 {
-  lmn_register_c_fun("nlmem_copy", nlmem_copy, 3);
-  lmn_register_c_fun("nlmem_kill", nlmem_kill, 2);
+  lmn_register_c_fun("nlmem_copy", (void *)nlmem_copy, 3);
+  lmn_register_c_fun("nlmem_kill", (void *)nlmem_kill, 2);
 }

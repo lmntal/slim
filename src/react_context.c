@@ -229,7 +229,7 @@ void mc_react_cxt_destroy(LmnReactCxt *cxt)
 
 void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
                                       LmnMembrane *mem,
-                                      LmnRule rule)
+                                      LmnRuleRef rule)
 {
   vec_push(RC_EXPANDED(cxt), (vec_data_t)mem);
   vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
@@ -238,7 +238,7 @@ void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
 
 void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
                                 struct MemDeltaRoot *d,
-                                LmnRule rule)
+                                LmnRuleRef rule)
 {
   vec_push(RC_MEM_DELTAS(cxt), (vec_data_t)d);
   vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);

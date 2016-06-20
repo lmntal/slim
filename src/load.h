@@ -39,21 +39,25 @@
 #ifndef LMN_LOAD_H
 #define LMN_LOAD_H
 
+/* cldoc:begin-category(IL) */
+
 #include "rule.h"
 #include "syntax.h"
 
-LmnRuleSet load(FILE *in);
-LmnRule load_rule(Rule rule);
-LmnRuleSet load_file(char *file_name);
-void load_il_files(char *path);
-int il_parse(FILE *in, IL *il);
-int il_parse_rule(FILE *in, Rule *rule);
+LmnRuleSetRef load(FILE *in);
+LmnRuleRef load_rule(RuleRef rule);
+LmnRuleSetRef load_file(char *file_name);
+void load_il_files(const char *path);
+int il_parse(FILE *in, ILRef *il);
+int il_parse_rule(FILE *in, RuleRef *rule);
 FILE *fopen_il_file(char *name);
 void init_so_handles();
 void finalize_so_handles();
 /* pathにsoがある場合の,関数名の元となれるファイル名を返す */
 /* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
 char *create_formatted_basename(const char *path);
+
+/* cldoc:end-category() */
 
 /* 最適化レベルの最大値 */
 #define OPTIMIZE_LEVEL_MAX 3

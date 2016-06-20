@@ -44,6 +44,8 @@
 #ifndef LMNTAL_JNI_H
 #define LMNTAL_JNI_H
 
+/* cldoc:begin-category(Lmntal::Jni) */
+
 #include "lmntal.h"
 
 /** TODO: configure時にjni.hの場所を探させたりして使用可能にしてあげたい */
@@ -95,6 +97,7 @@ char* run_cygpath(const char* option, const char* arg);
 #endif
 void run_jni_interactive();
 
+/* cldoc:end-category() */
 
 #endif /* LMNTAL_JNI_H */
 

@@ -40,11 +40,13 @@
 #ifndef LMN_DELTA_MEMBRANE_H
 #define LMN_DELTA_MEMBRANE_H
 
-#include "lmntal.h"
-#include "atom.h"
-#include "utility/visitlog.h"
-#include "utility/vector.h"
-#include "rule.h"
+/* cldoc:begin-category(Verifier::DeltaMembrane) */
+
+#include "../lmntal.h"
+#include "../atom.h"
+#include <visitlog.h>
+#include <vector.h>
+#include "../rule.h"
 
 struct MemDeltaRoot {
   LmnMembrane *root_mem;
@@ -62,7 +64,7 @@ struct MemDeltaRoot {
 
   BOOL committed;
 
-  LmnRule applied_rule;
+  LmnRuleRef applied_rule;
   lmn_interned_str applied_history;
   unsigned long new_proc_id_lower_limit;
 };
@@ -111,7 +113,7 @@ struct NewMemInfo {
  * dmem
  */
 
-struct MemDeltaRoot *dmem_root_make(LmnMembrane *root_mem, LmnRule rule, unsigned long next_id);
+struct MemDeltaRoot *dmem_root_make(LmnMembrane *root_mem, LmnRuleRef rule, unsigned long next_id);
 void dmem_root_finish(struct MemDeltaRoot *d);
 void dmem_root_free(struct MemDeltaRoot *p);
 LmnMembrane *dmem_root_get_root_mem(struct MemDeltaRoot *d);
@@ -153,7 +155,7 @@ void dmem_root_remove_mem(struct MemDeltaRoot *d,
 void dmem_root_move_cells(struct MemDeltaRoot *d,
                           LmnMembrane *destmem,
                           LmnMembrane *srcmem);
-ProcessTbl dmem_root_copy_cells(struct MemDeltaRoot *d,
+ProcessTableRef dmem_root_copy_cells(struct MemDeltaRoot *d,
                                 LmnMembrane *destmem,
                                 LmnMembrane *srcmem);
 void dmem_root_clear_ruleset(struct MemDeltaRoot *d, LmnMembrane *m);
@@ -169,7 +171,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
                            LmnMembrane *mem,
                            Vector *srcvec,
                            Vector **ret_dstlovec,
-                           ProcessTbl *ret_atommap);
+                           ProcessTableRef *ret_atommap);
 void dmem_root_free_ground(struct MemDeltaRoot *root_d, Vector *srcvec);
 void dmem_root_remove_ground(struct MemDeltaRoot *root_d, LmnMembrane *mem, Vector *srcvec);
 
@@ -183,5 +185,7 @@ void dmem_root_dump(struct MemDeltaRoot *d);
 LmnAtom dmem_root_get_link(struct MemDeltaRoot *d,
                                   LmnSAtom atom,
                                   int i);
+
+/* cldoc:end-category() */
 
 #endif

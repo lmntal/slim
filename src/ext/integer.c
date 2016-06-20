@@ -39,10 +39,10 @@
 
 /* 整数関連のコールバック */
 
-#include "lmntal.h"
-#include "lmntal_ext.h"
-#include "slim_header/string.h"
-#include "special_atom.h"
+#include "../lmntal.h"
+#include "../lmntal_ext.h"
+#include "../slim_header/string.h"
+#include "../special_atom.h"
 #include "visitlog.h"
 
 void init_integer(void);
@@ -72,12 +72,12 @@ void integer_set(LmnReactCxt *rc,
 
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector *dstlovec;
-    ProcessTbl atommap;
-    LinkObj l;
+    ProcessTableRef atommap;
+    LinkObjRef l;
 
     lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap);
 
-    l = (LinkObj)vec_get(dstlovec, 0);
+    l = (LinkObjRef)vec_get(dstlovec, 0);
     lmn_mem_newlink(mem, n, LMN_INT_ATTR, 0,
                     l->ap, t2, LMN_ATTR_GET_VALUE(l->pos));
     lmn_mem_push_atom(mem, n, LMN_INT_ATTR);
@@ -165,10 +165,10 @@ void integer_of_string(LmnReactCxt *rc,
 
 void init_integer(void)
 {
-  lmn_register_c_fun("integer_set", integer_set, 3);
-  lmn_register_c_fun("integer_srand", integer_srand, 1);
-  lmn_register_c_fun("integer_rand", integer_rand, 2);
-  lmn_register_c_fun("integer_of_string", integer_of_string, 2);
+  lmn_register_c_fun("integer_set", (void *)integer_set, 3);
+  lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
+  lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
+  lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
 
   srand((unsigned)time(NULL));
 }

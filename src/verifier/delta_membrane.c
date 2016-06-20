@@ -38,11 +38,11 @@
  */
 
 #include "delta_membrane.h"
-#include "membrane.h"
+#include "../membrane.h"
 #include "lmntal_thread.h"
-#include "atom.h"
+#include "../atom.h"
 #include "visitlog.h"
-#include "dumper.h"
+#include "../dumper.h"
 #ifdef PROFILE
 #  include "runtime_status.h"
 #endif
@@ -67,8 +67,8 @@ static LmnMembrane *dmem_root_get_parent(struct MemDeltaRoot* root_d, LmnMembran
 static inline LmnSAtom dmem_root_copy_satom_with_data(struct MemDeltaRoot *d, LmnSAtom atom);
 static inline LmnSAtom dmem_root_copy_satom(struct MemDeltaRoot *d, LmnSAtom atom);
 static inline LmnSAtom dmem_root_copy_eqatom_with_data(LmnSAtom atom);
-static inline void dmem_root_commit_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom new);
-static inline void dmem_root_revert_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom new);
+static inline void dmem_root_commit_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom atom);
+static inline void dmem_root_revert_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom atom);
 static inline BOOL dmem_root_is_freed_atom(struct MemDeltaRoot *d, LmnSAtom a);
 static inline LmnSAtom dmem_root_modified_atom(struct MemDeltaRoot* d, LmnSAtom a);
 static inline void dmem_root_free_satom(struct MemDeltaRoot *d, LmnSAtom atom);
@@ -100,10 +100,10 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d,
                             LmnMembrane *destmem,
                             struct MemDelta *d2,
                             LmnMembrane *srcmem,
-                            ProcessTbl atoms);
+                            ProcessTableRef atoms);
 static void dmem_add_ruleset(struct MemDelta *d,
                              LmnMembrane *m,
-                             LmnRuleSet ruleset);
+                             LmnRuleSetRef ruleset);
 static inline void dmem_clear_ruleset(struct MemDelta *d, LmnMembrane *m);
 static void dmem_add_child_mem(struct MemDelta *d,
                                LmnMembrane *parent,
@@ -221,7 +221,7 @@ static void new_mem_info_free(struct NewMemInfo *p)
 
 
 struct MemDeltaRoot *dmem_root_make(LmnMembrane *root_mem,
-                                    LmnRule rule,
+                                    LmnRuleRef rule,
                                     unsigned long next_id)
 {
   struct MemDeltaRoot *p;
@@ -569,7 +569,7 @@ void dmem_root_move_cells(struct MemDeltaRoot *d,
     /* 移動先・移動元ともに新規膜 */
     lmn_mem_move_cells(destmem, srcmem);
   } else {
-    ProcessTbl atoms = dmem_root_copy_cells(d, destmem, srcmem);
+    ProcessTableRef atoms = dmem_root_copy_cells(d, destmem, srcmem);
     if (!dmem_root_is_new_mem(d, srcmem)) {
       /* 移動先が既存膜 */
       /* printf("move cells\n"); */
@@ -586,14 +586,14 @@ void dmem_root_move_cells(struct MemDeltaRoot *d,
   }
 }
 
-ProcessTbl dmem_root_copy_cells(struct MemDeltaRoot *d,
+ProcessTableRef dmem_root_copy_cells(struct MemDeltaRoot *d,
                                 LmnMembrane *destmem,
                                 LmnMembrane *srcmem)
 {
   if (dmem_root_is_new_mem(d, destmem) && dmem_root_is_new_mem(d, srcmem)) {
     return lmn_mem_copy_cells(destmem, srcmem);
   } else {
-    ProcessTbl atoms = proc_tbl_make_with_size(64);
+    ProcessTableRef atoms = proc_tbl_make_with_size(64);
     /* /\*d*\/ if (dmem_root_is_new_mem(d, srcmem)) lmn_fatal("unexpected"); */
     if (dmem_root_is_new_mem(d, destmem)) {
       /* 移動先が新規膜 */
@@ -623,7 +623,7 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d,
                             LmnMembrane *destmem,
                             struct MemDelta *d2,
                             LmnMembrane *srcmem,
-                            ProcessTbl atoms)
+                            ProcessTableRef atoms)
 {
   LmnMembrane *m;
   unsigned int i;
@@ -652,8 +652,8 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d,
     new_mem->name = m->name;
     /* copy rulesets */
     for (i = 0; i < m->rulesets.num; i++) {
-      if (d) dmem_add_ruleset(d, new_mem, (LmnRuleSet)vec_get(&m->rulesets, i));
-      else lmn_mem_add_ruleset(new_mem, (LmnRuleSet)vec_get(&m->rulesets, i));
+      if (d) dmem_add_ruleset(d, new_mem, (LmnRuleSetRef)vec_get(&m->rulesets, i));
+      else lmn_mem_add_ruleset(new_mem, (LmnRuleSetRef)vec_get(&m->rulesets, i));
     }
   });
 
@@ -838,7 +838,7 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d,
                              LmnMembrane *mem,
                              Vector *srcvec)
 {
-  ProcessTbl atoms;
+  ProcessTableRef atoms;
   unsigned long i, t;
 
   ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
@@ -851,7 +851,7 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d,
   /* atomsはシンボルアトムしか含まないので、
    * srcvecのリンクが直接データアトムに接続している場合の処理をする */
   for (i = 0; i < vec_num(srcvec); i++) {
-    LinkObj l = (LinkObj)vec_get(srcvec, i);
+    LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
     if (LMN_ATTR_IS_DATA(l->pos)) {
       if (dmem_root_is_new_mem(root_d, mem))
         lmn_mem_remove_data_atom(mem, l->ap, l->pos);
@@ -873,7 +873,7 @@ int dmem_root_free_satom_f(LmnWord _k, LmnWord _v, LmnWord _arg)
 
 void dmem_root_free_ground(struct MemDeltaRoot *root_d, Vector *srcvec)
 {
-  ProcessTbl atoms;
+  ProcessTableRef atoms;
   unsigned long t;
 
   ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
@@ -887,9 +887,9 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
                            LmnMembrane *mem,
                            Vector *srcvec,
                            Vector **ret_dstlovec,
-                           ProcessTbl *ret_atommap)
+                           ProcessTableRef *ret_atommap)
 {
-  ProcessTbl atommap;
+  ProcessTableRef atommap;
   Vector stack;
   LmnWord t;
   struct MemDelta *d;
@@ -905,7 +905,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
   /* 根をスタックに積む。スタックにはリンクオブジェクトではなくアトムを積むため、
    * ここで根の先のアトムをコピーしスタックに積む必要がある */
   for (i = 0; i < vec_num(srcvec); i++) {
-    LinkObj l = (LinkObj)vec_get(srcvec, i);
+    LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
     LmnAtom cpatom;
 
     if (LMN_ATTR_IS_DATA(l->pos)) {
@@ -1034,10 +1034,10 @@ void dmem_root_commit(struct MemDeltaRoot *d)
 
   for (i = 0; i < vec_num(&d->modified_atoms); i+=2) {
     LmnSAtom src = LMN_SATOM(vec_get(&d->modified_atoms, i));
-    LmnSAtom new = LMN_SATOM(vec_get(&d->modified_atoms, i+1));
+    LmnSAtom atm = LMN_SATOM(vec_get(&d->modified_atoms, i+1));
 
-    if (!dmem_root_is_freed_atom(d, new)) {
-      dmem_root_commit_atom(d, src, new);
+    if (!dmem_root_is_freed_atom(d, atm)) {
+      dmem_root_commit_atom(d, src, atm);
     }
   }
 
@@ -1062,25 +1062,25 @@ void dmem_root_commit(struct MemDeltaRoot *d)
 #endif
 }
 
-static inline void dmem_root_commit_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom new)
+static inline void dmem_root_commit_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom atm)
 {
   int i;
   int arity = LMN_SATOM_GET_LINK_NUM(src);
 
-  /* printf("commit atom %s %p -> %p\n", LMN_SATOM_STR(src), src, new); */
-  /* printf("%s(", LMN_SATOM_STR(new)); */
+  /* printf("commit atom %s %p -> %p\n", LMN_SATOM_STR(src), src, atm); */
+  /* printf("%s(", LMN_SATOM_STR(atm)); */
   /* for (i = 0; i < arity; i++) { */
   /*   if (i>0) printf(","); */
-  /*   printf("%p", LMN_SATOM(LMN_SATOM_GET_LINK(new, i))); */
+  /*   printf("%p", LMN_SATOM(LMN_SATOM_GET_LINK(atm, i))); */
   /* } */
   /* printf(")\n"); */
   for (i = 0; i < arity; i++) {
-    LmnLinkAttr attr = LMN_SATOM_GET_ATTR(new, i);
+    LmnLinkAttr attr = LMN_SATOM_GET_ATTR(atm, i);
     if (!LMN_ATTR_IS_DATA(attr)) {
-      LmnSAtom a = dmem_root_modified_atom(d, LMN_SATOM(LMN_SATOM_GET_LINK(new, i)));
-      if (LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)) != LMN_ATOM(new)) {
-        /* printf("  modify link %p %d -> %p\n", a, LMN_ATTR_GET_VALUE(attr), new); */
-        LMN_SATOM_SET_LINK(a, LMN_ATTR_GET_VALUE(attr), new);
+      LmnSAtom a = dmem_root_modified_atom(d, LMN_SATOM(LMN_SATOM_GET_LINK(atm, i)));
+      if (LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)) != LMN_ATOM(atm)) {
+        /* printf("  modify link %p %d -> %p\n", a, LMN_ATTR_GET_VALUE(attr), atm); */
+        LMN_SATOM_SET_LINK(a, LMN_ATTR_GET_VALUE(attr), atm);
       }
     }
   }
@@ -1132,10 +1132,10 @@ void dmem_root_revert(struct MemDeltaRoot *d)
 
   for (i = vec_num(&d->modified_atoms)-1; i >= 0 ; i-=2) {
     LmnSAtom src = LMN_SATOM(vec_get(&d->modified_atoms, i-1));
-    LmnSAtom new = LMN_SATOM(vec_get(&d->modified_atoms, i));
+    LmnSAtom atm = LMN_SATOM(vec_get(&d->modified_atoms, i));
 
-    if (!dmem_root_is_freed_atom(d, new)) {
-      dmem_root_revert_atom(d, src, new);
+    if (!dmem_root_is_freed_atom(d, atm)) {
+      dmem_root_revert_atom(d, src, atm);
     }
   }
 
@@ -1161,12 +1161,12 @@ void dmem_root_revert(struct MemDeltaRoot *d)
 #endif
 }
 
-static inline void dmem_root_revert_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom new)
+static inline void dmem_root_revert_atom(struct MemDeltaRoot *d, LmnSAtom src, LmnSAtom atom)
 {
   int i;
   int arity = LMN_SATOM_GET_LINK_NUM(src);
 
-  /* printf("revert atom: %s %p -> %p\n", LMN_SATOM_STR(src), new, src); */
+  /* printf("revert atom: %s %p -> %p\n", LMN_SATOM_STR(src), atom, src); */
 
   for (i = 0; i < arity; i++) {
     LmnLinkAttr attr = LMN_SATOM_GET_ATTR(src, i);
@@ -1991,7 +1991,7 @@ static void dmem_add_child_mem(struct MemDelta *d,
 
 static void dmem_add_ruleset(struct MemDelta *d,
                              LmnMembrane *m,
-                             LmnRuleSet ruleset)
+                             LmnRuleSetRef ruleset)
 {
   if (!d->new_rulesets) {
     d->new_rulesets = vec_make(16);
@@ -2194,7 +2194,7 @@ static void dmem_commit(struct MemDelta *d)
 
     if (d->new_rulesets) {
       for (i = 0; i < vec_num(d->new_rulesets); i++) {
-        lmn_mem_add_ruleset(d->mem, (LmnRuleSet)vec_get(d->new_rulesets, i));
+        lmn_mem_add_ruleset(d->mem, (LmnRuleSetRef)vec_get(d->new_rulesets, i));
       }
     }
   }
@@ -2238,7 +2238,7 @@ static void dmem_revert(struct MemDelta *d)
   if (d->ruleset_removed || d->new_rulesets) {
     vec_clear(&d->mem->rulesets);
     for (i = 0; i < vec_num(d->org_rulesets); i++) {
-      lmn_mem_add_ruleset(d->mem, (LmnRuleSet)vec_get(d->org_rulesets, i));
+      lmn_mem_add_ruleset(d->mem, (LmnRuleSetRef)vec_get(d->org_rulesets, i));
     }
 
     vec_free(d->org_rulesets);

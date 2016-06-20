@@ -347,7 +347,7 @@ static BOOL jni_lmntal_compile(char **result, const char *code)
 static void _run(FILE **fp)
 {
   Vector *start_rulesets;
-  LmnRuleSet t;
+  LmnRuleSetRef t;
 
   t = load(*fp);
   start_rulesets = vec_make(2);

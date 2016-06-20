@@ -77,7 +77,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 static FILE *OUT = NULL;
 
 BOOL interpret_generated(LmnReactCxt *rc,
-                         LmnRule rule,
+                         LmnRuleRef rule,
                          LmnRuleInstr instr)
 {
   LmnInstrOp op;
@@ -377,7 +377,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 
 #loadmodule LmnInstrVar lmn_interned_str
   {
-    LmnRuleSet ruleset;
+    LmnRuleSetRef ruleset;
     if ((ruleset = lmn_get_module_ruleset(TR_GSID($1)))) {
 #     /* テーブル内にルールセットがある場合 */
       lmn_mem_add_ruleset((LmnMembrane*)wt(rc, $0), ruleset);
@@ -417,8 +417,8 @@ BOOL interpret_generated(LmnReactCxt *rc,
         if (lmn_get_double(wt(rc, $0)) != $1_double_data) $f;
 %       break;
 %     case LMN_STRING_ATTR: {
-        LmnString s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
-        if(! lmn_string_eq(s, (LmnString)wt(rc, $0))) $f;
+        LmnStringRef s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
+        if(! lmn_string_eq(s, (LmnStringRef)wt(rc, $0))) $f;
         lmn_string_free(s);
 %       fprintf(stderr, "string attr is not implemented.");
 %       break;
@@ -447,8 +447,8 @@ BOOL interpret_generated(LmnReactCxt *rc,
 %       fprintf(stderr, "double attr is not implemented.");
 %       break;
 %     case LMN_STRING_ATTR: {
-        LmnString s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
-        if(lmn_string_eq(s, (LmnString)wt(rc, $0))) $f;
+        LmnStringRef s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
+        if(lmn_string_eq(s, (LmnStringRef)wt(rc, $0))) $f;
         lmn_string_free(s);
 %       fprintf(stderr, "string attr is not implemented.");
 %       break;
@@ -575,7 +575,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
       break;
     case LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
-      LinkObj lo = (LinkObj)vec_get((Vector *)wt(rc, $1), (unsigned int)$2);
+      LinkObjRef lo = (LinkObjRef)vec_get((Vector *)wt(rc, $1), (unsigned int)$2);
       warry_set(rc, $0, lo->ap, lo->pos, TT_ATOM);
       break;
     }
@@ -605,7 +605,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
   {
     Vector *srcvec = links_from_idxs((Vector*)wt(rc, $1), rc_warry(rc));
     Vector *dstlovec, *retvec;
-    ProcessTbl atommap;
+    ProcessTableRef atommap;
 
     lmn_mem_copy_ground((LmnMembrane*)wt(rc, $2), srcvec, &dstlovec, &atommap);
     free_links(srcvec);

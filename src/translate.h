@@ -39,6 +39,8 @@
 #ifndef LMN_TRANSLATE_H
 #define LMN_TRANSLATE_H
 
+/* cldoc:begin-category(Translate) */
+
 #include "lmntal.h"
 #include "atom.h"
 #include "membrane.h"
@@ -64,7 +66,7 @@
 #define READ_VAL_LIST(I,X)                      \
   do{                                                               \
     READ_VAL(LmnInstrVar, I, X##_num);                                  \
-    X = malloc(sizeof(LmnWord)*X##_num);                                \
+    X = (LmnWord *)malloc(sizeof(LmnWord)*X##_num);                                \
     { int i; for(i=0; i<X##_num; ++i){ READ_VAL(LmnInstrVar, I, X[i]); } } \
   }while(0)
 
@@ -161,5 +163,7 @@ union LmnFunctorLiteral{
 
 /* 現在ロードしている情報をfilepath.so の名前で使えるように出力する */
 void translate(char *filepath);
+
+/* cldoc:end-category() */
 
 #endif

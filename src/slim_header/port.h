@@ -45,7 +45,9 @@
 #ifndef LMN_PORT_H
 #define LMN_PORT_H
 
-#include "lmntal.h"
+/* cldoc:begin-category(Lmntal::Port) */
+
+#include "../lmntal.h"
 #include "string.h"
 
 struct LmnPort {
@@ -63,14 +65,14 @@ struct LmnPort {
 };
 
 struct IStrPortData {
-  LmnString s;
+  LmnStringRef s;
   int i;
 };
 
 
-typedef struct LmnPort *LmnPort;
+typedef struct LmnPort *LmnPortRef;
 
-#define LMN_PORT(obj) ((LmnPort)(obj))
+#define LMN_PORT(obj) ((LmnPortRef)(obj))
 
 typedef enum LmnPortDirection {
   LMN_PORT_INPUT, /* 入力ポート */
@@ -88,26 +90,28 @@ typedef enum LmnPortType {
 void port_init(void);
 void port_finalize(void);
 
-LmnPort lmn_stdin_port(void);
-LmnPort lmn_stdout_port(void);
-LmnPort lmn_stderr_port(void);
+LmnPortRef lmn_stdin_port(void);
+LmnPortRef lmn_stdout_port(void);
+LmnPortRef lmn_stderr_port(void);
 
-LmnPort lmn_make_input_string_port(LmnString s);
-LmnPort lmn_make_output_string_port();
+LmnPortRef lmn_make_input_string_port(LmnStringRef s);
+LmnPortRef lmn_make_output_string_port();
 
-LmnPort lmn_make_port(LmnPortDirection dir, LmnPortType type, const char *name);
-void lmn_port_free(LmnPort port);
-void lmn_port_close(LmnPort port);
-BOOL lmn_port_closed(LmnPort port_atom);
-BOOL lmn_port_error_occurred(LmnPort port_atom);
-lmn_interned_str lmn_port_name(LmnPort port_atom);
+LmnPortRef lmn_make_port(LmnPortDirection dir, LmnPortType type, const char *name);
+void lmn_port_free(LmnPortRef port);
+void lmn_port_close(LmnPortRef port);
+BOOL lmn_port_closed(LmnPortRef port_atom);
+BOOL lmn_port_error_occurred(LmnPortRef port_atom);
+lmn_interned_str lmn_port_name(LmnPortRef port_atom);
 
 
-int port_get_raw_c(LmnPort port_atom);
-int port_unget_raw_c(LmnPort port_atom, int c);
-int port_putc(LmnPort port_atom, LmnSAtom unary_atom);
-int port_puts(LmnPort port_atom, LmnString str);
-int port_put_raw_c(LmnPort port_atom, int c);
-int port_put_raw_s(LmnPort port_atom, const char *str);
+int port_get_raw_c(LmnPortRef port_atom);
+int port_unget_raw_c(LmnPortRef port_atom, int c);
+int port_putc(LmnPortRef port_atom, LmnSAtom unary_atom);
+int port_puts(LmnPortRef port_atom, LmnStringRef str);
+int port_put_raw_c(LmnPortRef port_atom, int c);
+int port_put_raw_s(LmnPortRef port_atom, const char *str);
+
+/* cldoc:end-category() */
 
 #endif

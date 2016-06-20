@@ -57,14 +57,14 @@ static inline void memory_profiler_destroy(MemoryProfiler *p);
 static inline void peak_counter_init(PeakCounter *p);
 static inline void peak_counter_destroy(PeakCounter *p);
 static void profile_state_f(State *s, LmnWord arg);
-static char *profile_space_id_to_name(int type);
-static char *profile_counter_id_to_name(int type);
-static char *profile_time_id_to_name(int type);
+static const char *profile_space_id_to_name(int type);
+static const char *profile_counter_id_to_name(int type);
+static const char *profile_time_id_to_name(int type);
 
 /** ----------------------------
  *  Rule Profiler
  */
-RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRule src)
+RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRuleRef src)
 {
   RuleProfiler *p = LMN_MALLOC(RuleProfiler);
   time_profiler_init(&p->trial);
@@ -309,7 +309,7 @@ void lmn_profiler_finalize()
   }
 
   if (lmn_prof.prules) {
-    st_foreach(lmn_prof.prules, rule_profiler_free_f, (st_data_t)0);
+    st_foreach(lmn_prof.prules, (st_iter_func)rule_profiler_free_f, (st_data_t)0);
     st_free_table(lmn_prof.prules);
   }
 }
@@ -356,7 +356,7 @@ void profile_statespace(LmnWorkerGroup *wp)
   lmn_prof.state_num_end    = statespace_end_num(worker_states(w));
 
   if (lmn_env.profile_level >= 3 && lmn_env.tree_compress) {
-    profile_add_space(PROFILE_SPACE__STATE_BINSTR, (2 << lmn_env.tree_compress_table_size) * sizeof(TreeNode));
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, (2 << lmn_env.tree_compress_table_size) * sizeof(TreeNodeRef));
     profile_add_space(PROFILE_SPACE__STATE_BINSTR, sizeof(struct TreeDatabase));
     profile_total_space_update(worker_states(w));
   }
@@ -371,7 +371,7 @@ void profile_statespace(LmnWorkerGroup *wp)
     for (i = 0; i < lmn_prof.thread_num; i++) {
       mc_profiler2_init(&lmn_prof.lv2[i]);
     }
-    statespace_foreach(worker_states(w), profile_state_f,
+    statespace_foreach(worker_states(w), (void (*)())profile_state_f,
                        (LmnWord)worker_states(w), DEFAULT_ARGS);
 
     if (lmn_env.tree_compress) {
@@ -392,11 +392,11 @@ void profile_statespace(LmnWorkerGroup *wp)
 static void profile_state_f(State *s, LmnWord arg)
 {
   MCProfiler2 *p;
-  StateSpace ss;
+  StateSpaceRef ss;
   unsigned int succ_num;
 
   p  = &lmn_prof.lv2[lmn_OMP_get_my_id()];
-  ss = (StateSpace)arg;
+  ss = (StateSpaceRef)arg;
   succ_num = state_succ_num(s);
 
   /* メモリ */
@@ -421,7 +421,7 @@ static void profile_state_f(State *s, LmnWord arg)
 
   if (!(is_encoded(s) && is_dummy(s))) {
     if (statespace_has_property(ss)) {
-      Automata a = statespace_automata(ss);
+      AutomataRef a = statespace_automata(ss);
       if (state_is_accept(a, s)) {
         p->accept_num++;
       }
@@ -454,7 +454,7 @@ static void profile_state_f(State *s, LmnWord arg)
 
 static void dump_execution_stat(FILE *f)
 {
-  char *profile, *timeopt, *tcmalloc, *debug;
+  const char *profile, *timeopt, *tcmalloc, *debug;
 
 #ifdef PROFILE
   profile = "ON";
@@ -491,7 +491,7 @@ static void dump_execution_stat(FILE *f)
            , ""
            , "debug"    , debug);
   if (lmn_env.nd) {
-    char *strategy, *expr, *heuristic;
+    const char *strategy, *expr, *heuristic;
 
     if (lmn_env.bfs) {
       strategy = lmn_env.bfs_layer_sync ? "LSync" : "BFS";
@@ -866,9 +866,9 @@ void dump_profile_data(FILE *f)
 }
 
 
-static char *profile_time_id_to_name(int type)
+static const char *profile_time_id_to_name(int type)
 {
-  char *ret;
+  const char *ret;
   switch (type) {
   case PROFILE_TIME__ACTIVE_FOR_IDLE_PROF:
     ret = "idle";
@@ -946,9 +946,9 @@ static char *profile_time_id_to_name(int type)
   return ret;
 }
 
-static char *profile_counter_id_to_name(int type)
+static const char *profile_counter_id_to_name(int type)
 {
-  char *ret;
+  const char *ret;
   switch (type) {
   case PROFILE_COUNT__HASH_CONFLICT_ENTRY:
     ret = "conflict hash entry";
@@ -972,9 +972,9 @@ static char *profile_counter_id_to_name(int type)
   return ret;
 }
 
-static char *profile_space_id_to_name(int type)
+static const char *profile_space_id_to_name(int type)
 {
-  char *ret;
+  const char *ret;
   switch (type) {
   case PROFILE_SPACE__TOTAL:
     ret = "total";

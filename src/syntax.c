@@ -49,7 +49,7 @@ struct InstrArg {
     int label;
     int str_id;
     int line_num;
-    Functor functor;
+    FunctorRef functor;
     int ruleset;
     VarList var_list;
     InstList inst_list;
@@ -70,10 +70,10 @@ struct Instruction {
 struct Rule {
   BOOL hasuniq;
   lmn_interned_str name;
-  InstBlock amatch;
-  InstBlock mmatch;
-  InstBlock guard;
-  InstBlock body;
+  InstBlockRef amatch;
+  InstBlockRef mmatch;
+  InstBlockRef guard;
+  InstBlockRef body;
 };
 
 struct RuleSet {
@@ -106,13 +106,13 @@ struct Functor {
 /* prototypes */
 
 static void rulelist_free(RuleList l);
-static void inst_block_free(InstBlock ib);
+static void inst_block_free(InstBlockRef ib);
 static void rulesets_free(RuleSets rulesets);
 static void module_list_free(ModuleList l);
 static void inst_list_free(InstList l);
 static void arg_list_free(ArgList args);
-static void inst_arg_free(InstrArg arg);
-static void functor_free(Functor f);
+static void inst_arg_free(InstrArgRef arg);
+static void functor_free(FunctorRef f);
 static void inline_list_free(InlineList l);
 
 /* List of instrction variables */
@@ -127,7 +127,7 @@ static void var_list_free(VarList l)
   vec_free(l);
 }
 
-void var_list_push(VarList l, InstrArg n)
+void var_list_push(VarList l, InstrArgRef n)
 {
   vec_push(l, (vec_data_t)n);
 }
@@ -137,87 +137,87 @@ unsigned int var_list_num(VarList l)
   return vec_num(l);
 }
 
-InstrArg var_list_get(VarList l, int i)
+InstrArgRef var_list_get(VarList l, int i)
 {
-  return (InstrArg)vec_get(l, i);
+  return (InstrArgRef)vec_get(l, i);
 }
 
 /* Functor */
 
-Functor functor_make(enum FunctorType type)
+FunctorRef functor_make(enum FunctorType type)
 {
-  Functor f = LMN_MALLOC(struct Functor);
+  FunctorRef f = LMN_MALLOC(struct Functor);
 
   f->type = type;
   return f;
 }
 
-static void functor_free(Functor f)
+static void functor_free(FunctorRef f)
 {
   LMN_FREE(f);
 }
 
-Functor int_functor_make(long v)
+FunctorRef int_functor_make(long v)
 {
-  Functor f = functor_make(INT_FUNC);
+  FunctorRef f = functor_make(INT_FUNC);
 
   f->v.int_value = v;
   return f;
 }
 
-Functor float_functor_make(double v)
+FunctorRef float_functor_make(double v)
 {
-  Functor f = functor_make(FLOAT_FUNC);
+  FunctorRef f = functor_make(FLOAT_FUNC);
 
   f->v.float_value = v;
   return f;
 }
 
-Functor string_functor_make(lmn_interned_str name)
+FunctorRef string_functor_make(lmn_interned_str name)
 {
-  Functor f = functor_make(STRING_FUNC);
+  FunctorRef f = functor_make(STRING_FUNC);
 
   f->v.str = name;
   return f;
 }
 
-Functor symbol_functor_make(lmn_interned_str name, int arity)
+FunctorRef symbol_functor_make(lmn_interned_str name, int arity)
 {
   return module_symbol_functor_make(ANONYMOUS, name, arity);
 }
 
-Functor module_symbol_functor_make(lmn_interned_str module,
+FunctorRef module_symbol_functor_make(lmn_interned_str module,
                                    lmn_interned_str name,
                                    int arity)
 {
-  Functor f = functor_make(STX_SYMBOL);
+  FunctorRef f = functor_make(STX_SYMBOL);
 
   f->v.functor_id = lmn_functor_intern(module, name, arity);
   return f;
 }
 
-enum FunctorType functor_get_type(Functor f)
+enum FunctorType functor_get_type(FunctorRef f)
 {
   return f->type;
 }
 
-long functor_get_int_value(Functor f)
+long functor_get_int_value(FunctorRef f)
 {
   return f->v.int_value;
 }
 
-double functor_get_float_value(Functor f)
+double functor_get_float_value(FunctorRef f)
 {
   return f->v.float_value;
 }
 
-lmn_interned_str functor_get_string_value(Functor f)
+lmn_interned_str functor_get_string_value(FunctorRef f)
 {
   return f->v.str;
 }
 
 /* シンボルアトムのファンクタのIDを取得 */
-int functor_get_id(Functor f)
+int functor_get_id(FunctorRef f)
 {
   return f->v.functor_id;
 }
@@ -225,14 +225,14 @@ int functor_get_id(Functor f)
 
 /* Instruction Argument */
 
-InstrArg inst_arg_make(enum ArgType type)
+InstrArgRef inst_arg_make(enum ArgType type)
 {
-  InstrArg arg = LMN_MALLOC(struct InstrArg);
+  InstrArgRef arg = LMN_MALLOC(struct InstrArg);
   arg->type = type;
   return arg;
 }
 
-static void inst_arg_free(InstrArg arg) {
+static void inst_arg_free(InstrArgRef arg) {
   switch (inst_arg_get_type(arg)) {
   case ArgFunctor:
     functor_free(inst_arg_get_functor(arg));
@@ -248,103 +248,103 @@ static void inst_arg_free(InstrArg arg) {
   LMN_FREE(arg);
 }
 
-enum ArgType inst_arg_get_type(InstrArg arg)
+enum ArgType inst_arg_get_type(InstrArgRef arg)
 {
   return arg->type;
 }
 
-int inst_arg_get_var(InstrArg arg)
+int inst_arg_get_var(InstrArgRef arg)
 {
   return arg->v.instr_var;
 }
 
-int inst_arg_get_label(InstrArg arg)
+int inst_arg_get_label(InstrArgRef arg)
 {
   return arg->v.label;
 }
 
-lmn_interned_str inst_arg_get_str_id(InstrArg arg)
+lmn_interned_str inst_arg_get_str_id(InstrArgRef arg)
 {
   return arg->v.str_id;
 }
 
-int inst_arg_get_linenum(InstrArg arg)
+int inst_arg_get_linenum(InstrArgRef arg)
 {
   return arg->v.line_num;
 }
 
-Functor inst_arg_get_functor(InstrArg arg)
+FunctorRef inst_arg_get_functor(InstrArgRef arg)
 {
   return arg->v.functor;
 }
 
-int inst_arg_get_ruleset_id(InstrArg arg)
+int inst_arg_get_ruleset_id(InstrArgRef arg)
 {
   return arg->v.ruleset;
 }
 
-VarList inst_arg_get_var_list(InstrArg arg)
+VarList inst_arg_get_var_list(InstrArgRef arg)
 {
   return arg->v.var_list;
 }
 
-InstList inst_arg_get_inst_list(InstrArg arg)
+InstList inst_arg_get_inst_list(InstrArgRef arg)
 {
   return arg->v.inst_list;
 }
 
-InstrArg instr_var_arg_make(int var)
+InstrArgRef instr_var_arg_make(int var)
 {
-  InstrArg arg = inst_arg_make(InstrVar);
+  InstrArgRef arg = inst_arg_make(InstrVar);
 
   arg->v.instr_var = var;
   return arg;
 }
 
-InstrArg ruleset_arg_make(int ruleset_id)
+InstrArgRef ruleset_arg_make(int ruleset_id)
 {
-  InstrArg arg = inst_arg_make(ArgRuleset);
+  InstrArgRef arg = inst_arg_make(ArgRuleset);
 
   arg->v.ruleset = ruleset_id;
   return arg;
 }
 
-InstrArg var_list_arg_make(VarList var_list)
+InstrArgRef var_list_arg_make(VarList var_list)
 {
-  InstrArg arg = inst_arg_make(InstrVarList);
+  InstrArgRef arg = inst_arg_make(InstrVarList);
 
   arg->v.var_list = var_list;
   return arg;
 }
 
-InstrArg functor_arg_make(Functor functor)
+InstrArgRef functor_arg_make(FunctorRef functor)
 {
-  InstrArg arg = inst_arg_make(ArgFunctor);
+  InstrArgRef arg = inst_arg_make(ArgFunctor);
 
   arg->v.functor = functor;
   return arg;
 }
 
 
-InstrArg label_arg_make(int label)
+InstrArgRef label_arg_make(int label)
 {
-  InstrArg arg = inst_arg_make(Label);
+  InstrArgRef arg = inst_arg_make(Label);
 
   arg->v.label = label;
   return arg;
 }
 
-InstrArg string_arg_make(int str_id)
+InstrArgRef string_arg_make(int str_id)
 {
-  InstrArg arg = inst_arg_make(String);
+  InstrArgRef arg = inst_arg_make(String);
 
   arg->v.str_id = str_id;
   return arg;
 }
 
-InstrArg inst_list_arg_make(InstList inst_list)
+InstrArgRef inst_list_arg_make(InstList inst_list)
 {
-  InstrArg arg = inst_arg_make(InstrList);
+  InstrArgRef arg = inst_arg_make(InstrList);
 
   arg->v.inst_list = inst_list;
   return arg;
@@ -367,7 +367,7 @@ static void arg_list_free(ArgList args)
   vec_free(args);
 }
 
-void arg_list_push(ArgList l, InstrArg arg)
+void arg_list_push(ArgList l, InstrArgRef arg)
 {
   vec_push(l, (vec_data_t)arg);
 }
@@ -377,16 +377,16 @@ unsigned int arg_list_num(ArgList l)
   return vec_num(l);
 }
 
-InstrArg arg_list_get(ArgList l, int index)
+InstrArgRef arg_list_get(ArgList l, int index)
 {
-  return (InstrArg)vec_get(l, index);
+  return (InstrArgRef)vec_get(l, index);
 }
 
 /* Instruction */
 
-Instruction inst_make(enum LmnInstruction id, ArgList args)
+InstructionRef inst_make(enum LmnInstruction id, ArgList args)
 {
-  Instruction i;
+  InstructionRef i;
 
   i = LMN_MALLOC(struct Instruction);
   i->id = id;
@@ -394,7 +394,7 @@ Instruction inst_make(enum LmnInstruction id, ArgList args)
 
   /* COMMITの第二引数を変数番号ではなく行番号とする */
   if (id == INSTR_COMMIT) {
-    InstrArg line_num_arg = arg_list_get(args, 1);
+    InstrArgRef line_num_arg = arg_list_get(args, 1);
     line_num_arg->type = LineNum;
     line_num_arg->v.line_num = line_num_arg->v.instr_var;
   }
@@ -402,18 +402,18 @@ Instruction inst_make(enum LmnInstruction id, ArgList args)
   return i;
 }
 
-static void inst_free(Instruction inst)
+static void inst_free(InstructionRef inst)
 {
   arg_list_free(inst_get_args(inst));
   LMN_FREE(inst);
 }
 
-int inst_get_id(Instruction inst)
+int inst_get_id(InstructionRef inst)
 {
   return inst->id;
 }
 
-ArgList inst_get_args(Instruction inst)
+ArgList inst_get_args(InstructionRef inst)
 {
   return inst->args;
 }
@@ -433,7 +433,7 @@ static void inst_list_free(InstList l)
   vec_free(l);
 }
 
-void inst_list_push(InstList l, Instruction inst)
+void inst_list_push(InstList l, InstructionRef inst)
 {
   vec_push(l, (vec_data_t)inst);
 }
@@ -443,53 +443,53 @@ unsigned int inst_list_num(InstList l)
   return vec_num(l);
 }
 
-Instruction inst_list_get(InstList l, int index)
+InstructionRef inst_list_get(InstList l, int index)
 {
-  return (Instruction)vec_get(l, index);
+  return (InstructionRef)vec_get(l, index);
 }
 
 /* amatch, memmatchなど、命令をまとめたもの */
 
-InstBlock inst_block_make(int label, InstList instrs )
+InstBlockRef inst_block_make(int label, InstList instrs )
 {
-  InstBlock i = LMN_MALLOC(struct InstBlock);
+  InstBlockRef i = LMN_MALLOC(struct InstBlock);
 
   i->label = label;
   i->instrs = instrs;
   return i;
 }
 
-InstBlock inst_block_make_without_label(InstList instrs)
+InstBlockRef inst_block_make_without_label(InstList instrs)
 {
   return inst_block_make(0, instrs);
 }
 
-static void inst_block_free(InstBlock ib)
+static void inst_block_free(InstBlockRef ib)
 {
   inst_list_free(inst_block_get_instructions(ib));
   LMN_FREE(ib);
 }
 
-int inst_block_get_label(InstBlock ib)
+int inst_block_get_label(InstBlockRef ib)
 {
   return ib->label;
 }
 
-InstList inst_block_get_instructions(InstBlock ib)
+InstList inst_block_get_instructions(InstBlockRef ib)
 {
   return ib->instrs;
 }
 
-BOOL inst_block_has_label(InstBlock ib)
+BOOL inst_block_has_label(InstBlockRef ib)
 {
   return ib->label != 0;
 }
 
 /* Rule */
 
-Rule rule_make_anonymous(BOOL hasuniq, InstBlock amatch, InstBlock mmatch, InstBlock guard, InstBlock body)
+RuleRef rule_make_anonymous(BOOL hasuniq, InstBlockRef amatch, InstBlockRef mmatch, InstBlockRef guard, InstBlockRef body)
 {
-  Rule r = LMN_MALLOC(struct Rule);
+  RuleRef r = LMN_MALLOC(struct Rule);
 
   r->hasuniq = hasuniq;
   r->name = ANONYMOUS;
@@ -500,7 +500,7 @@ Rule rule_make_anonymous(BOOL hasuniq, InstBlock amatch, InstBlock mmatch, InstB
   return r;
 }
 
-void stx_rule_free(Rule rule)
+void stx_rule_free(RuleRef rule)
 {
   inst_block_free(rule->amatch);
   inst_block_free(rule->mmatch);
@@ -509,32 +509,32 @@ void stx_rule_free(Rule rule)
   LMN_FREE(rule);
 }
 
-lmn_interned_str rule_get_name(Rule rule)
+lmn_interned_str rule_get_name(RuleRef rule)
 {
   return rule->name;
 }
 
-InstBlock rule_get_amatch(Rule rule)
+InstBlockRef rule_get_amatch(RuleRef rule)
 {
   return rule->amatch;
 }
 
-InstBlock rule_get_mmatch(Rule rule)
+InstBlockRef rule_get_mmatch(RuleRef rule)
 {
   return rule->mmatch;
 }
 
-InstBlock rule_get_guard(Rule rule)
+InstBlockRef rule_get_guard(RuleRef rule)
 {
   return rule->guard;
 }
 
-InstBlock rule_get_body(Rule rule)
+InstBlockRef rule_get_body(RuleRef rule)
 {
   return rule->body;
 }
 
-BOOL rule_get_hasuniq(Rule rule)
+BOOL rule_get_hasuniq(RuleRef rule)
 {
   return rule->hasuniq;
 }
@@ -553,14 +553,14 @@ static void rulelist_free(RuleList l) {
   vec_free(l);
 }
 
-void rulelist_push(RuleList l, Rule r)
+void rulelist_push(RuleList l, RuleRef r)
 {
   vec_push(l, (vec_data_t)r);
 }
 
-Rule rulelist_get(RuleList l, int index)
+RuleRef rulelist_get(RuleList l, int index)
 {
-  return (Rule)vec_get(l, index);
+  return (RuleRef)vec_get(l, index);
 }
 
 unsigned int rulelist_num(RuleList l)
@@ -570,9 +570,9 @@ unsigned int rulelist_num(RuleList l)
 
 /* Rule set */
 
-RuleSet ruleset_make(int id, RuleList rules, BOOL is_system_ruleset)
+RuleSetRef ruleset_make(int id, RuleList rules, BOOL is_system_ruleset)
 {
-  RuleSet r = LMN_MALLOC(struct RuleSet);
+  RuleSetRef r = LMN_MALLOC(struct RuleSet);
 
   r->id = id;
   r->rules = rules;
@@ -580,24 +580,24 @@ RuleSet ruleset_make(int id, RuleList rules, BOOL is_system_ruleset)
   return r;
 }
 
-static void ruleset_free(RuleSet rs)
+static void ruleset_free(RuleSetRef rs)
 {
   rulelist_free(ruleset_get_rulelist(rs));
 
   LMN_FREE(rs);
 }
 
-BOOL ruleset_is_system_ruleset(RuleSet rs)
+BOOL ruleset_is_system_ruleset(RuleSetRef rs)
 {
   return rs->is_system_ruleset;
 }
 
-int ruleset_get_id(RuleSet rs)
+int ruleset_get_id(RuleSetRef rs)
 {
   return rs->id;
 }
 
-RuleList ruleset_get_rulelist(RuleSet rs)
+RuleList ruleset_get_rulelist(RuleSetRef rs)
 {
   return rs->rules;
 }
@@ -616,7 +616,7 @@ static void rulesets_free(RuleSets rulesets)
   vec_free(rulesets);
 }
 
-void rulesets_push(RuleSets rulesets, RuleSet rs)
+void rulesets_push(RuleSets rulesets, RuleSetRef rs)
 {
   vec_push(rulesets, (vec_data_t)rs);
 }
@@ -626,16 +626,16 @@ int rulesets_num(RuleSets rulesets)
   return vec_num(rulesets);
 }
 
-RuleSet rulesets_get(RuleSets rulesets, int i)
+RuleSetRef rulesets_get(RuleSets rulesets, int i)
 {
-  return (RuleSet)vec_get(rulesets, i);
+  return (RuleSetRef)vec_get(rulesets, i);
 }
 
 /* Module, モジュール名とルールセットの対応 */
 
-Module module_make(lmn_interned_str name_id, int ruleset_id)
+ModuleRef module_make(lmn_interned_str name_id, int ruleset_id)
 {
-  Module m = LMN_MALLOC(struct Module);
+  ModuleRef m = LMN_MALLOC(struct Module);
 
   m->name_id = name_id;
   m->ruleset_id = ruleset_id;
@@ -643,17 +643,17 @@ Module module_make(lmn_interned_str name_id, int ruleset_id)
   return m;
 }
 
-static void module_free(Module m)
+static void module_free(ModuleRef m)
 {
   LMN_FREE(m);
 }
 
-lmn_interned_str module_get_name(Module m)
+lmn_interned_str module_get_name(ModuleRef m)
 {
   return m->name_id;
 }
 
-int module_get_ruleset(Module m)
+int module_get_ruleset(ModuleRef m)
 {
   return m->ruleset_id;
 }
@@ -673,7 +673,7 @@ static void module_list_free(ModuleList l)
   vec_free(l);
 }
 
-void module_list_push(ModuleList l, Module m)
+void module_list_push(ModuleList l, ModuleRef m)
 {
   vec_push(l, (vec_data_t)m);
 }
@@ -683,9 +683,9 @@ int module_list_num(ModuleList l)
   return vec_num(l);
 }
 
-Module module_list_get(ModuleList l, int i)
+ModuleRef module_list_get(ModuleList l, int i)
 {
-  return (Module)vec_get(l, i);
+  return (ModuleRef)vec_get(l, i);
 }
 
 /* Inline */
@@ -707,9 +707,9 @@ void inline_list_push(InlineList l, lmn_interned_str file_name)
 
 /* Root of the IL syntax tree */
 
-IL il_make(RuleSets rulesets, ModuleList module_list, InlineList inline_list)
+ILRef il_make(RuleSets rulesets, ModuleList module_list, InlineList inline_list)
 {
-  IL il = LMN_MALLOC(struct IL);
+  ILRef il = LMN_MALLOC(struct IL);
 
   il->rulesets = rulesets;
   il->modules = module_list;
@@ -718,7 +718,7 @@ IL il_make(RuleSets rulesets, ModuleList module_list, InlineList inline_list)
   return il;
 }
 
-void il_free(IL il)
+void il_free(ILRef il)
 {
   rulesets_free(il_get_rulesets(il));
   module_list_free(il_get_module_list(il));
@@ -726,17 +726,17 @@ void il_free(IL il)
   LMN_FREE(il);
 }
 
-RuleSets il_get_rulesets(IL il)
+RuleSets il_get_rulesets(ILRef il)
 {
   return il->rulesets;
 }
 
-ModuleList il_get_module_list(IL il)
+ModuleList il_get_module_list(ILRef il)
 {
   return il->modules;
 }
 
-ModuleList il_get_inline_list(IL il)
+ModuleList il_get_inline_list(ILRef il)
 {
   return il->inlines;
 }

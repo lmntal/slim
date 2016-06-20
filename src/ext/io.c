@@ -38,9 +38,9 @@
  */
 
 #include <stdio.h>
-#include "lmntal_ext.h"
-#include "slim_header/port.h"
-#include "slim_header/string.h"
+#include "../lmntal_ext.h"
+#include "../slim_header/port.h"
+#include "../slim_header/string.h"
 
 // void init_print(void);
 
@@ -146,6 +146,6 @@ void cb_print_line_with_port(LmnReactCxt *rc,
 
 void init_io(void)
 {
-  lmn_register_c_fun("cb_print_newline_with_port", cb_print_newline_with_port, 2);
-  lmn_register_c_fun("cb_print_line_with_port", cb_print_line_with_port, 3);
+  lmn_register_c_fun("cb_print_newline_with_port", (void *)cb_print_newline_with_port, 2);
+  lmn_register_c_fun("cb_print_line_with_port", (void *)cb_print_line_with_port, 3);
 }

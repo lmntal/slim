@@ -824,7 +824,7 @@ static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt)
       unsigned int i;
 
       for (i = 0; i < spc->length; i++) {
-        ProcCxt *pc = LMN_SPC_PC(spc, i);
+        ProcCxt *pc = (ProcCxt *)LMN_SPC_PC(spc, i);
         if (pc) LMN_FREE(pc);
       }
 
@@ -884,7 +884,7 @@ BOOL lmn_sameproccxt_from_clone(SameProcCxt *spc, int n)
   int i;
 
   for (i = 0; i < n; i++) {
-    pc = LMN_SPC_PC(spc, i);
+    pc = (ProcCxt *)LMN_SPC_PC(spc, i);
     if (pc
         && !LMN_PC_IS_ORI(pc)
         && (LMN_PC_ATOMI(LMN_PC_ORI(pc)) != LMN_PC_ATOMI(pc))) { /* clone proccxtを持つ */
@@ -914,7 +914,7 @@ HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity)
   }
 
   for (i = 0; i < atom_arity; i++) {
-    ProcCxt *pc = LMN_SPC_PC(spc, i);
+    ProcCxt *pc = (ProcCxt *)LMN_SPC_PC(spc, i);
     if (pc && !LMN_PC_IS_ORI(pc)) {
       HyperLink *hl;
       int tmp_num;
@@ -957,7 +957,7 @@ BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int 
     LmnSAtom linked_atom;
     LmnLinkAttr linked_attr;
 
-    pc = LMN_SPC_PC(spc, i);
+    pc = (ProcCxt *)LMN_SPC_PC(spc, i);
     if (!pc) continue; /* atom(spc)の第i引数が同名プロセス文脈 */
 
     linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(atom, i));
@@ -1007,7 +1007,7 @@ BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int ato
     LmnSAtom linked_atom;
     LmnLinkAttr linked_attr;
 
-    pc = LMN_SPC_PC(spc, i);
+    pc = (ProcCxt *)LMN_SPC_PC(spc, i);
     if (!pc) continue;
 
     linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(atom, i));

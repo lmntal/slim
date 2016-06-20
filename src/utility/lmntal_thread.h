@@ -44,8 +44,10 @@
 #ifndef LMN_THREAD_H
 #define LMN_THREAD_H
 
-#include "lmntal.h"
-#include "atom.h"
+/* cldoc:begin-category(Thread) */
+
+#include "../lmntal.h"
+#include "../atom.h"
 
 /* check for atomic operation */
 #ifdef ENABLE_PARALLEL
@@ -187,5 +189,6 @@ void    ewlock_release_enter(EWLock *lock, unsigned long something);
 void    ewlock_reject_enter(EWLock *lock, unsigned long something);
 void    ewlock_permit_enter(EWLock *lock, unsigned long something);
 
+/* cldoc:end-category() */
 
 #endif

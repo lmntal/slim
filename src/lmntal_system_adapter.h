@@ -40,10 +40,14 @@
 #ifndef LMNTAL_SYSTEM_ADAPTER
 #define LMNTAL_SYSTEM_ADAPTER
 
+/* cldoc:begin-category(Lmntal) */
+
 #define ENV_LMNTAL_HOME  "LMNTAL_HOME"
 #define ENV_CFLAGS       "SLIM_CFLAGS"
 
 FILE *lmntal_compile_file(char *filename);
 FILE *lmntal_compile_rule_str(char *rule_str);
+
+/* cldoc:end-category() */
 
 #endif

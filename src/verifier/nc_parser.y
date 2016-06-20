@@ -52,7 +52,7 @@ typedef void* yyscan_t;
 %pure-parser
 %locations
 %parse-param {yyscan_t scanner}
-%parse-param {Automata automata}
+%parse-param {AutomataRef automata}
 %lex-param {yyscan_t scanner}
 
 %union {
@@ -85,7 +85,7 @@ typedef void* yyscan_t;
 
 %{
 #include "nc_lexer.h"
-static void ncerror (YYLTYPE*, yyscan_t, Automata, char *);
+static void ncerror (YYLTYPE*, yyscan_t, AutomataRef, char *);
 %}
 
 %% /* Grammar rules and actions follow.  */
@@ -94,12 +94,12 @@ never_claim:
   SYMBOL LBRACE states RBRACE _EOF {
     unsigned int i;
     Vector *states = $3;
-    AutomataState s;
+    AutomataStateRef s;
 
-    s = (AutomataState)vec_get(states, 0);
+    s = (AutomataStateRef)vec_get(states, 0);
     automata_set_init_state(automata, atmstate_id(s));
     for (i = 0; i < vec_num(states); i++) {
-      automata_add_state(automata, (AutomataState)vec_get(states, i));
+      automata_add_state(automata, (AutomataStateRef)vec_get(states, i));
     }
     free($1);
     vec_free(states);
@@ -114,14 +114,14 @@ states:
 state:
   SYMBOL COLON KW_IF transitions KW_FI SEMI_COLON {
     unsigned int i, cur;
-    AutomataState s;
+    AutomataStateRef s;
     BOOL is_accept_state = FALSE;
 
     if (strstr($1, "accept") != NULL) is_accept_state = TRUE;
     cur = automata_state_id(automata, $1);
     s = atmstate_make(cur, is_accept_state, 0);
     for (i = 0; i < vec_num($4); i++) {
-      atmstate_add_transition(s, (AutomataTransition)vec_get($4, i));
+      atmstate_add_transition(s, (AutomataTransitionRef)vec_get($4, i));
     }
     $$ = s;
 
@@ -129,7 +129,7 @@ state:
     vec_free($4);
   }
 | SYMBOL COLON KW_SKIP {
-    AutomataState s;
+    AutomataStateRef s;
     unsigned int cur;
     BOOL is_accept_state = FALSE;
 
@@ -183,7 +183,7 @@ propositional_factor:
 #include "st.h"
 
 /* Called by yyparse on error.  */
-void ncerror (YYLTYPE *loc, yyscan_t scanner, Automata a, char *s)
+void ncerror (YYLTYPE *loc, yyscan_t scanner, AutomataRef a, char *s)
 {
   fprintf(stderr, "never claim parser: error %s line: %d\n", s, ncget_lineno(scanner));
   exit(EXIT_FAILURE);

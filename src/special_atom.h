@@ -49,6 +49,8 @@
 #ifndef LMN_SPECIAL_ATOM_H
 #define LMN_SPECIAL_ATOM_H
 
+/* cldoc:begin-category(Lmntal::SpecialAtom) */
+
 #include "lmntal.h"
 #include "slim_header/port.h"
 
@@ -61,7 +63,7 @@
 typedef void *(*f_copy)(void*);
 typedef BOOL (*f_eq)(void*, void*);
 typedef void (*f_free)(void*);
-typedef void (*f_dump)(void *, LmnPort);
+typedef void (*f_dump)(void *, LmnPortRef);
 typedef BOOL (*f_is_ground)(void*);
 
 struct SpecialAtomCallback {
@@ -101,5 +103,6 @@ struct SpecialAtomCallback * sp_atom_get_callback(int id);
   (LMN_SP_ATOM_TYPE(ATOM1) == LMN_SP_ATOM_TYPE(ATOM2) && \
    sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM1))->eq((void *)(ATOM1), (void *)(ATOM2)))
 
-#endif /* LMN_SPECIALATOM_H */
+/* cldoc:end-category() */
 
+#endif /* LMN_SPECIALATOM_H */

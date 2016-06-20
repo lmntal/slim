@@ -39,20 +39,24 @@
 #ifndef LMN_MC_POR_H
 #define LMN_MC_POR_H
 
-#include "lmntal.h"
+/* cldoc:begin-category(Verifier::Dpor) */
+
+#include "../lmntal.h"
 #include "queue.h"
-#include "utility/vector.h"
+#include <vector.h>
 #include "state.h"
 #include "statespace.h"
 
 
 
-void por_calc_ampleset(StateSpace  ss,
+void por_calc_ampleset(StateSpaceRef  ss,
                        State       *s,
                        LmnReactCxt *rc,
                        Vector      *new_s,
                        BOOL        flag);
 void init_por_vars(void);
 void free_por_vars(void);
+
+/* cldoc:end-category() */
 
 #endif

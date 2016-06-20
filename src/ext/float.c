@@ -39,10 +39,10 @@
 
 /* 浮動小数点数関連のコールバック */
 
-#include "lmntal.h"
-#include "lmntal_ext.h"
-#include "slim_header/string.h"
-#include "special_atom.h"
+#include "../lmntal.h"
+#include "../lmntal_ext.h"
+#include "../slim_header/string.h"
+#include "../special_atom.h"
 #include "visitlog.h"
 
 void init_float(void);
@@ -81,5 +81,5 @@ void float_of_string(LmnReactCxt *rc,
 
 void init_float(void)
 {
-  lmn_register_c_fun("float_of_string", float_of_string, 2);
+  lmn_register_c_fun("float_of_string", (void *)float_of_string, 2);
 }

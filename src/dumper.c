@@ -85,30 +85,30 @@ char char_to_escape_char[] =
    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
 
-static BOOL dump_atom(LmnPort port,
+static BOOL dump_atom(LmnPortRef port,
                       LmnAtom atom,
                       SimpleHashtbl *ht,
                       LmnLinkAttr attr,
                       struct DumpState *s,
                       int call_depth);
-static void lmn_dump_cell_internal(LmnPort port,
+static void lmn_dump_cell_internal(LmnPortRef port,
                                    LmnMembrane *mem,
                                    SimpleHashtbl *ht,
                                    struct DumpState *s);
 
-static void dump_link(LmnPort port, LmnSAtom atom, int i, SimpleHashtbl *ht, struct DumpState *s);
-static BOOL lmn_dump_mem_internal(LmnPort port,
+static void dump_link(LmnPortRef port, LmnSAtom atom, int i, SimpleHashtbl *ht, struct DumpState *s);
+static BOOL lmn_dump_mem_internal(LmnPortRef port,
                                   LmnMembrane *mem,
                                   SimpleHashtbl *ht,
                                   struct DumpState *s);
 
-static BOOL dump_atom_args(LmnPort port,
+static BOOL dump_atom_args(LmnPortRef port,
                            LmnSAtom atom,
                            SimpleHashtbl *ht,
                            struct DumpState *s,
                            int call_depth);
-static void dump_link_name(LmnPort port, int link_num);
-static BOOL dump_hl_attratom(LmnPort port,
+static void dump_link_name(LmnPortRef port, int link_num);
+static BOOL dump_hl_attratom(LmnPortRef port,
                            LmnAtom atom,
                              LmnLinkAttr attr);
 
@@ -179,7 +179,7 @@ static struct AtomRec *get_atomrec(SimpleHashtbl *ht, LmnSAtom atom)
   }
 }
 
-static void dump_atomname(LmnPort port, LmnFunctor f)
+static void dump_atomname(LmnPortRef port, LmnFunctor f)
 {
   /* dump module name */
   if (LMN_FUNCTOR_MODULE_ID(f) != ANONYMOUS) {
@@ -201,7 +201,7 @@ static void dump_atomname(LmnPort port, LmnFunctor f)
   }
 }
 
-static void dump_arg(LmnPort port,
+static void dump_arg(LmnPortRef port,
                      LmnSAtom atom,
                      int i,
                      SimpleHashtbl *ht,
@@ -224,7 +224,7 @@ static void dump_arg(LmnPort port,
   }
 }
 
-static void dump_link(LmnPort port, LmnSAtom atom, int i, SimpleHashtbl *ht, struct DumpState *s)
+static void dump_link(LmnPortRef port, LmnSAtom atom, int i, SimpleHashtbl *ht, struct DumpState *s)
 {
   int link;
   struct AtomRec *t;
@@ -241,7 +241,7 @@ static void dump_link(LmnPort port, LmnSAtom atom, int i, SimpleHashtbl *ht, str
   dump_link_name(port, link);
 }
 
-static void dump_link_name(LmnPort port, int link_num)
+static void dump_link_name(LmnPortRef port, int link_num)
 {
   port_put_raw_s(port, LINK_PREFIX);
   {
@@ -251,7 +251,7 @@ static void dump_link_name(LmnPort port, int link_num)
   }
 }
 
-static BOOL dump_data_atom(LmnPort port,
+static BOOL dump_data_atom(LmnPortRef port,
                            LmnAtom data,
                            LmnLinkAttr attr)
 {
@@ -301,7 +301,7 @@ static BOOL dump_data_atom(LmnPort port,
   return TRUE;
 }
 
-static BOOL dump_hl_attratom(LmnPort port,
+static BOOL dump_hl_attratom(LmnPortRef port,
                            LmnAtom atom,
                            LmnLinkAttr attr)
 {
@@ -316,7 +316,7 @@ static BOOL dump_hl_attratom(LmnPort port,
   return TRUE;
 }
 
-static BOOL dump_list(LmnPort port,
+static BOOL dump_list(LmnPortRef port,
                       LmnSAtom atom,
                       SimpleHashtbl *ht,
                       struct DumpState *s ,
@@ -418,7 +418,7 @@ static void assign_link_to_proxy(LmnSAtom atom, SimpleHashtbl *ht, struct DumpSt
   }
 }
 
-static BOOL dump_proxy(LmnPort port,
+static BOOL dump_proxy(LmnPortRef port,
                        LmnSAtom atom,
                        SimpleHashtbl *ht,
                        int link_pos,
@@ -464,7 +464,7 @@ static BOOL dump_proxy(LmnPort port,
   return TRUE;
 }
 
-static BOOL dump_symbol_atom(LmnPort port,
+static BOOL dump_symbol_atom(LmnPortRef port,
                              LmnSAtom atom,
                              SimpleHashtbl *ht,
                              int link_pos,
@@ -509,7 +509,7 @@ static BOOL dump_symbol_atom(LmnPort port,
 }
 
 
-static BOOL dump_atom_args(LmnPort port,
+static BOOL dump_atom_args(LmnPortRef port,
                            LmnSAtom atom,
                            SimpleHashtbl *ht,
                            struct DumpState *s,
@@ -534,7 +534,7 @@ static BOOL dump_atom_args(LmnPort port,
   return TRUE;
 }
 
-static BOOL dump_atom(LmnPort port,
+static BOOL dump_atom(LmnPortRef port,
                       LmnAtom atom,
                       SimpleHashtbl *ht,
                       LmnLinkAttr attr,
@@ -563,7 +563,7 @@ static BOOL dump_atom(LmnPort port,
 }
 
 /* atom must be a symbol atom */
-static BOOL dump_toplevel_atom(LmnPort port,
+static BOOL dump_toplevel_atom(LmnPortRef port,
                                LmnSAtom atom,
                                SimpleHashtbl *ht,
                                struct DumpState *s)
@@ -581,7 +581,7 @@ static BOOL dump_toplevel_atom(LmnPort port,
 
 static int dump_history_f(st_data_t _key, st_data_t _value, st_data_t _arg)
 {
-  LmnPort port = (LmnPort)_arg;
+  LmnPortRef port = (LmnPortRef)_arg;
 
   port_put_raw_s(port, " ");
   port_put_raw_s(port, lmn_id_to_name((lmn_interned_str)_key));
@@ -589,7 +589,7 @@ static int dump_history_f(st_data_t _key, st_data_t _value, st_data_t _arg)
   return ST_CONTINUE;
 }
 
-static void dump_rule(LmnPort port, LmnRuleSet rs)
+static void dump_rule(LmnPortRef port, LmnRuleSetRef rs)
 {
   unsigned int i, n;
 
@@ -599,7 +599,7 @@ static void dump_rule(LmnPort port, LmnRuleSet rs)
 
   n = lmn_ruleset_rule_num(rs);
   for (i = 0; i < n; i++) {
-    LmnRule r;
+    LmnRuleRef r;
     st_table_t   his_tbl;
     unsigned int his_num;
 
@@ -615,27 +615,27 @@ static void dump_rule(LmnPort port, LmnRuleSet rs)
       port_put_raw_s(port, "[id:");
       port_put_raw_s(port, lmn_id_to_name(lmn_rule_get_name(r))); /* ルール名 */
       port_put_raw_s(port, "\"");
-      st_foreach(his_tbl, dump_history_f, (st_data_t)port);
+      st_foreach(his_tbl, (st_iter_func)dump_history_f, (st_data_t)port);
       port_put_raw_s(port, "\"]");
     }
   }
 }
 
 /* for debug @seiji */
-void lmn_dump_rule(LmnPort port, LmnRuleSet rs)
+void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs)
 {
   dump_rule(port, rs);
 }
 
-static void dump_ruleset(LmnPort port, struct Vector *v)
+static void dump_ruleset(LmnPortRef port, struct Vector *v)
 {
   unsigned int i;
 
   for (i = 0; i < vec_num(v); i++) {
-    LmnRuleSet rs;
+    LmnRuleSetRef rs;
     char *s;
 
-    rs = (LmnRuleSet)vec_get(v, i);
+    rs = (LmnRuleSetRef)vec_get(v, i);
     s  = int_to_str(lmn_ruleset_get_id(rs));
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       if (i > 0) {
@@ -659,12 +659,12 @@ static void dump_ruleset(LmnPort port, struct Vector *v)
 }
 
 /* for debug @seiji */
-void lmn_dump_ruleset(LmnPort port, struct Vector *v)
+void lmn_dump_ruleset(LmnPortRef port, struct Vector *v)
 {
   dump_ruleset(port, v);
 }
 
-static BOOL lmn_dump_mem_internal(LmnPort port,
+static BOOL lmn_dump_mem_internal(LmnPortRef port,
                                   LmnMembrane *mem,
                                   SimpleHashtbl *ht,
                                   struct DumpState *s)
@@ -683,7 +683,7 @@ static BOOL lmn_dump_mem_internal(LmnPort port,
   return TRUE;
 }
 
-static void lmn_dump_cell_internal(LmnPort port,
+static void lmn_dump_cell_internal(LmnPortRef port,
                                    LmnMembrane *mem,
                                    SimpleHashtbl *ht,
                                    struct DumpState *s)
@@ -785,7 +785,7 @@ static void lmn_dump_cell_internal(LmnPort port,
   }
 }
 
-static void lmn_dump_cell_nonewline(LmnPort port, LmnMembrane *mem)
+static void lmn_dump_cell_nonewline(LmnPortRef port, LmnMembrane *mem)
 {
   SimpleHashtbl ht;
   struct DumpState s;
@@ -800,13 +800,13 @@ static void lmn_dump_cell_nonewline(LmnPort port, LmnMembrane *mem)
 
 void lmn_dump_cell_stdout(LmnMembrane *mem)
 {
-  LmnPort port = lmn_stdout_port();
+  LmnPortRef port = lmn_stdout_port();
   lmn_dump_cell(mem, port);
   port_put_raw_s(port, "\n");
   lmn_port_free(port);
 }
 
-void lmn_dump_cell(LmnMembrane *mem, LmnPort port)
+void lmn_dump_cell(LmnMembrane *mem, LmnPortRef port)
 {
   switch (lmn_env.output_format) {
   case DEFAULT:
@@ -829,14 +829,14 @@ void lmn_dump_cell(LmnMembrane *mem, LmnPort port)
 
 void lmn_dump_mem_stdout(LmnMembrane *mem)
 {
-  LmnPort port = lmn_stdout_port();
+  LmnPortRef port = lmn_stdout_port();
   lmn_dump_mem(mem, port);
   port_put_raw_s(port, "\n");
   lmn_port_free(port);
 }
 
 /* print membrane structure */
-void lmn_dump_mem(LmnMembrane *mem, LmnPort port)
+void lmn_dump_mem(LmnMembrane *mem, LmnPortRef port)
 {
   switch (lmn_env.output_format) {
   case DEFAULT:
@@ -938,7 +938,7 @@ static void dump_ruleset_dev(struct Vector *v)
   unsigned int i;
   fprintf(stdout, "ruleset[");
   for (i = 0;i < v->num; i++) {
-     fprintf(stdout, "%d ", lmn_ruleset_get_id((LmnRuleSet)vec_get(v, i)));
+     fprintf(stdout, "%d ", lmn_ruleset_get_id((LmnRuleSetRef)vec_get(v, i)));
   }
   fprintf(stdout, "]\n");
 }
@@ -979,7 +979,7 @@ static void dump_dot_cell(LmnMembrane *mem,
 {
   AtomListEntry *ent;
   LmnMembrane *m;
-  LmnPort out;
+  LmnPortRef out;
   unsigned int i;
 
   if (!mem) return;
@@ -1087,11 +1087,11 @@ static void lmn_dump_link_json(LmnSAtom atom, int index)
         break;
       case LMN_DBL_ATTR:
       case LMN_CONST_DBL_ATTR:
-        fprintf(stdout, "\"data\":%f", lmn_get_double(data));
+        fprintf(stdout, "\"data\":%f", lmn_get_double((LmnAtom)data));
         break;
       case LMN_SP_ATOM_ATTR:
       case LMN_CONST_STR_ATTR:
-        fprintf(stdout, "\"data\":%s", lmn_string_c_str(data));
+        fprintf(stdout, "\"data\":%s", lmn_string_c_str((LmnStringRef)data));
         break;
       case LMN_HL_ATTR:
         {
@@ -1199,14 +1199,14 @@ void cb_dump_mem(LmnReactCxt *rc,
 
 void dumper_init()
 {
-  lmn_register_c_fun("cb_dump_mem", cb_dump_mem, 3);
+  lmn_register_c_fun("cb_dump_mem", (void *)cb_dump_mem, 3);
 }
 
 void dumper_finalize()
 {
 }
 
-void dump_escaped(LmnPort port, const char *s)
+void dump_escaped(LmnPortRef port, const char *s)
 {
   while (*s) {
     if (char_to_escape_char[(int)*s]) {
@@ -1219,7 +1219,7 @@ void dump_escaped(LmnPort port, const char *s)
   }
 }
 
-void lmn_dump_atom(LmnPort port, LmnWord atom, LmnLinkAttr attr)
+void lmn_dump_atom(LmnPortRef port, LmnWord atom, LmnLinkAttr attr)
 {
   struct DumpState s;
   SimpleHashtbl ht;
