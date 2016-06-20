@@ -693,28 +693,6 @@ void generate_string_of_head_and_body_mem(LmnMembrane *mem)
 }
 
 
-/* void my_dumper_binary_op(LmnSAtom satom) */
-/* { */
-/*   int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom)); */
-/*   char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom))); */
-/*   LmnSAtom left, right; */
-/*   if(arity == 1) */
-/*     { */
-/*       push_rule_str(atom_name); */
-/*       return ; */
-/*     } */
-/*   if(arity == 2 || arity == 3) */
-/*     { */
-/*       left = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0)); */
-/*       right = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 1)); */
-/*       my_dumper_binary_op(left); */
-/*       push_rule_str(atom_name); */
-/*       my_dumper_binary_op(right); */
-/*       return ;       */
-/*     } */
-/* } */
-
-
 void generate_string_of_guard_mem(LmnMembrane *mem)
 {
   AtomListEntry *ent;
@@ -866,10 +844,14 @@ static void mem_oriented_loop(LmnReactCxt *rc, LmnMembrane *mem)
     }
 
   while(!lmn_memstack_isempty(memstack)){
+    /* printf("---------\n"); */
+    /* printf("dynamic_rulesets_num = %d\n", dynamic_rulesets_num); */
+    /* printf("----------\n"); */
     LmnMembrane *mem = lmn_memstack_peek(memstack);
     /*膜内の第一級書き換え規則に対応する中間命令列を全て消去*/
     delete_dynamic_rulesets(mem);
     /* 膜内の第一級書き換え規則を探索 & コンパイル & 中間命令列のIDを登録 */
+
     find_and_compile_dynamic_rule(mem);
 
     if (!react_all_rulesets(rc, mem)) {
