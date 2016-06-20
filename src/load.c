@@ -570,7 +570,7 @@ static LmnRuleSet load_ruleset(RuleSet rs)
   return runtime_ruleset;
 }
 
-LmnRuleSet load_ruleset_with_number(IL il, int n)
+LmnRuleSet load_ruleset_with_num(IL il, int n)
 {
   LmnRuleSet t, first_ruleset;
   RuleSets rulesets;

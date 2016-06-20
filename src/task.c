@@ -381,8 +381,8 @@ void lmn_run(Vector *start_rulesets)
 
 
 
-#define DYNAMIC_RULESET_MAX 10000
-#define DYNAMIC_MEM_MAX 10000
+#define DYNAMIC_RULESET_MAX 1000000
+#define DYNAMIC_MEM_MAX 1000000
 #define MAX_RULE_STR 10000
 #define LINKCONNECTION_MAX 100000
 struct DynamicRulesetMem
@@ -403,7 +403,6 @@ void add_dynamic_rulesetid(LmnRulesetId rs_id, LmnMembrane *mem)
     {
       if(dynamic_rulesets[i].mem_add == (unsigned long)mem)
   	{
-
   	  dynamic_rulesets[i].rs_ids[dynamic_rulesets[i].rs_n] = rs_id;
 	  dynamic_rulesets[i].rs_n++;
   	  return ;
@@ -1481,7 +1480,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	  ProcessID org_next_id = env_next_id();
 	  LmnMembrane *cur_mem = NULL;
 
-	  printf("ND-COMMIT!!!!!!!!!!!!!!!!!!!!!\n");
+	  //	  printf("ND-COMMIT!!!!!!!!!!!!!!!!!!!!!\n");
 
 	  if (RC_MC_USE_DMEM(rc)) {
 	    /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
@@ -1529,7 +1528,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	    /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
 	    /** >>>>>>> disable delta-membrane <<<<<<< **/
 	    /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
-	    printf("[DISABLE DELTA-MEMBRANE]\n");
+	    //	    printf("[DISABLE DELTA-MEMBRANE]\n");
 	    LmnRegister *v, *tmp;
 	    ProcessTbl copymap;
 	    LmnMembrane *tmp_global_root;
@@ -1548,7 +1547,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	    tmp_global_root = lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
 
 	    /** 変数配列および属性配列のコピー */
-	    printf("register!\n");
+	    //	    printf("register!\n");
 	    v = lmn_register_make(warry_size_org);
 
 	    if (warry_cur_org > 0) {
@@ -1639,12 +1638,12 @@ BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr)
 	      profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
 	    }
 #endif
-	    printf("[BEFORE INTERPRET]\n");
+	    //	    printf("[BEFORE INTERPRET]\n");
 	    /** コピーしたグローバルルート膜と作業配列を用いてBODY命令を適用  */
 	    interpret(rc, rule, instr);
 
-	    printf("[IN COMMIT INST]tmp_global_root:");
-	    lmn_dump_cell_stdout(tmp_global_root);
+	    //	    printf("[IN COMMIT INST]tmp_global_root:");
+	    //	    lmn_dump_cell_stdout(tmp_global_root);
 
 	    mc_react_cxt_add_expanded(rc, tmp_global_root, rule);
 

@@ -1,3 +1,4 @@
+
 /*
  * dumper.c - dump membrane
  *
@@ -179,8 +180,6 @@ static struct AtomRec *get_atomrec(SimpleHashtbl *ht, LmnSAtom atom)
   }
 }
 
-
-
 static void dump_atomname(LmnPort port, LmnFunctor f)
 {
   /* dump module name */
@@ -230,11 +229,10 @@ static void dump_link(LmnPort port, LmnSAtom atom, int i, SimpleHashtbl *ht, str
 {
   int link;
   struct AtomRec *t;
-  /* printf("START_DUMP_LINK!!\n"); */
+
   t = get_atomrec(ht, atom);
   if (hashtbl_contains(&t->args, i)) {
     /* リンク名が決まっている */
-    dump_atomname(port, LMN_SATOM_GET_FUNCTOR(atom));
     link = hashtbl_get(&t->args, i);
   } else {
     /* リンク名が決まっていないので新たに作る */
@@ -243,42 +241,6 @@ static void dump_link(LmnPort port, LmnSAtom atom, int i, SimpleHashtbl *ht, str
   }
   dump_link_name(port, link);
 }
-
-void dump_hashtbl(SimpleHashtbl *ht)
-{
-  unsigned int i;
-  for(i = 0; i < ht->num; i++)
-    {
-      printf("key = %lx, value = %lx\n", ht->tbl[i].key, ht->tbl[i].data);
-    }
-  return ;
-}
-
-/* void my_atom_args_dumper(LmnSAtom satom, int arity, SimpleHashtbl *ht, struct DumpState *s, int *ret_link_names) */
-/* { */
-/*   struct AtomRec *t; */
-/*   int i, link; */
-
-/*   printf("IN MY_ATOM_ARGS_DUMPER::atom name = %s\n", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)))); */
-/*   dump_hashtbl(ht); */
-
-/*   t = get_atomrec(ht, satom); */
-
-/*   for(i = 0; i < arity; i++) */
-/*     { */
-/*       if(hashtbl_contains(&t->args, i)) */
-/* 	{ */
-/* 	  link = hashtbl_get(&t->args, i); */
-/* 	} */
-/*       else */
-/* 	{ */
-/* 	  link = s->link_num++; */
-/* 	  hashtbl_put(&t->args, i, link); */
-/* 	} */
-/*       ret_link_names[i] = link; */
-/*     } */
-/*   return ; */
-/* } */
 
 static void dump_link_name(LmnPort port, int link_num)
 {
@@ -510,8 +472,6 @@ static BOOL dump_symbol_atom(LmnPort port,
                              struct DumpState *s,
                              int call_depth)
 {
-  /* printf("START_DUMP_SYMBOL!!\n"); */
-
   LmnFunctor f;
   LmnArity arity;
   struct AtomRec *t;
@@ -525,7 +485,6 @@ static BOOL dump_symbol_atom(LmnPort port,
   if ((call_depth > 0 && link_pos != arity - 1) || /* not last link */
       (call_depth > 0 && t->done)               || /* already printed */
       call_depth > MAX_DEPTH) {                    /* limit overflow */
-    dump_atomname(port, f);
     dump_link(port, atom, link_pos, ht, s);
     return TRUE;
   }
@@ -549,7 +508,7 @@ static BOOL dump_symbol_atom(LmnPort port,
   dump_atom_args(port, atom, ht, s, call_depth);
   return TRUE;
 }
- 
+
 
 static BOOL dump_atom_args(LmnPort port,
                            LmnSAtom atom,
@@ -583,8 +542,6 @@ static BOOL dump_atom(LmnPort port,
                       struct DumpState *s,
                       int call_depth)
 {
-  /* printf("START_DUMP_ATOM!!!\n"); */
-
   if (LMN_ATTR_IS_DATA(attr)) {
     return dump_data_atom(port, atom, attr);
   }
@@ -738,8 +695,6 @@ static void lmn_dump_cell_internal(LmnPort port,
   unsigned int i, j;
   LmnFunctor f;
 
-  /* printf("[START]>>>>>>>>>>>>>>lmn_dump_cell_internal\n"); */
-
   if (!mem) return;
 
 /*   if (hashtbl_contains(ht, (HashKeyType)mem)) return; */
@@ -829,8 +784,6 @@ static void lmn_dump_cell_internal(LmnPort port,
   if (lmn_env.show_ruleset) {
     dump_ruleset(port, &mem->rulesets);
   }
-
-  /* printf("[FINISH]>>>>>>>>>>>>>>lmn_dump_cell_internal\n"); */
 }
 
 static void lmn_dump_cell_nonewline(LmnPort port, LmnMembrane *mem)
