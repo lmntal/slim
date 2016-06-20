@@ -381,8 +381,8 @@ void lmn_run(Vector *start_rulesets)
 
 
 
-#define DYNAMIC_RULESET_MAX 1000000
-#define DYNAMIC_MEM_MAX 1000000
+#define DYNAMIC_RULESET_MAX 10000
+#define DYNAMIC_MEM_MAX 10000
 #define MAX_RULE_STR 10000
 #define LINKCONNECTION_MAX 100000
 struct DynamicRulesetMem
