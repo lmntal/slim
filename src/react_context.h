@@ -70,6 +70,7 @@ struct LmnReactCxt {
   BOOL flag;                /* mode以外に指定するフラグ */
   void *v;                  /* 各mode毎に固有の持ち物 */
   SimpleHashtbl *hl_sameproccxt; /* findatom 時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持 */
+  Vector *first_rulesets;
 };
 
 #define REACT_MEM_ORIENTED  (0x01U)       /* 膜主導テスト */

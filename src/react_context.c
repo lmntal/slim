@@ -84,6 +84,7 @@ void react_context_init(LmnReactCxt *rc, BYTE mode)
   rc->warry_cap     = WARRY_DEF_SIZE;
   rc->atomic_id     = -1;
   rc->hl_sameproccxt = NULL;
+  rc->first_rulesets = vec_make(4);
 }
 
 void react_context_copy(LmnReactCxt *to, LmnReactCxt *from)
@@ -96,6 +97,7 @@ void react_context_copy(LmnReactCxt *to, LmnReactCxt *from)
   to->warry_num     = from->warry_num;
   to->warry_cap     = from->warry_cap;
   to->atomic_id     = from->atomic_id;
+  to->first_rulesets = vec_copy(from->first_rulesets);
 }
 
 void react_context_destroy(LmnReactCxt *rc)
@@ -106,6 +108,7 @@ void react_context_destroy(LmnReactCxt *rc)
   if (rc->work_arry) {
     lmn_register_free(rc->work_arry);
   }
+  vec_destroy(rc->first_rulesets);
 }
 
 /*----------------------------------------------------------------------
