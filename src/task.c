@@ -64,30 +64,6 @@ h *
 #include "utility/st.h"
 #include "rule.h"
 #include "load.h"
-/* #include "membrane.h" */
-
-/* #include <string.h> */
-/* #include <ctype.h> */
-/* #include "dumper.h" */
-/* #include "utility/internal_hash.h" */
-/* #include "utility/vector.h" */
-/* #include "rule.h" */
-/* #include "membrane.h" */
-/* #include "atom.h" */
-/* #include "symbol.h" */
-/* #include "functor.h" */
-/* #include "special_atom.h" */
-/* #include "util.h" */
-/* #include "error.h" */
-/* #include "ccallback.h" */
-/* #include "slim_header/memstack.h" */
-/* #include "slim_header/port.h" */
-/* #include "string.h" */
-/* #include "lmntal_system_adapter.h" */
-/* #include "load.h" */
-/* #include "vector.h" */
-/* #include "utility/internal_hash.h" */
-
 
 #define LINK_PREFIX "L"
 #define LINKCONNECTION_MAX 100000
@@ -220,6 +196,14 @@ static struct st_hash_type type_colon_minushash =
 void first_class_rule_tbl_init()
 {
   first_class_rule_tbl = st_init_table(&type_colon_minushash);
+}
+
+LmnRulesetId imply_to_rulesetid(LmnSAtom imply)
+{
+  LmnRulesetId *entry;
+  if(st_lookup(first_class_rule_tbl, (st_data_t)imply, (st_data_t *)&entry))
+    return *entry;
+  return NULL;
 }
 
 static void register_first_class_rule(LmnSAtom colon_minus,
@@ -683,6 +667,30 @@ void generate_string_of_first_class_rule(LmnMembrane *h_mem, LmnMembrane *g_mem,
   push_rule_str(".");
   push_rule_char('\0');
   rule_str_itr = 0;
+}
+
+void delete_ruleset(LmnMembrane *mem, LmnRulesetId del_id)
+{
+  int i, j, n;
+  Vector *src_v = &(mem->rulesets);
+  n = vec_num(src_v);
+  for(i = 0; i < n; i++)
+    {
+      LmnRuleSetRef rs_i;
+      LmnRulesetId dst_id;
+      rs_i = (LmnRuleSetRef)vec_get(src_v, i);
+      dst_id = lmn_ruleset_get_id(rs_i);
+      if(dst_id == del_id)
+	{
+	  for(j = i; j < n - 1; j++)
+	    {
+	      LmnRuleSetRef next = (LmnRuleSetRef)vec_get(src_v, j + 1);
+	      vec_set(src_v, j, next);
+	    }
+	  src_v->num--;
+	  return ;
+	}
+    }
 }
 
 /* an extenstion rule applier, @see ext/atomic.c */
@@ -2569,8 +2577,10 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       if (LMN_HAS_FUNCTOR(wt(rc, atomi), attr, imply)) {
         LmnSAtom atom = wt(rc, atomi);
         LmnMembrane *membrane = wt(rc, memi);
-        LmnRulesetId id = 0; /* fetch id from atom address */
+        LmnRulesetId id = imply_to_rulesetid(atom); /* fetch id from atom address */
         /* delete ruleset from membrane */
+	delete_ruleset(membrane, id);
+	delete_first_class_rule(atom);
       }
 
       lmn_mem_remove_atom((LmnMembrane *)wt(rc, memi),
