@@ -571,6 +571,37 @@ static LmnRuleSetRef load_ruleset(RuleSetRef rs)
   return runtime_ruleset;
 }
 
+
+LmnRuleSetRef load_ruleset_with_num(ILRef il, int n)
+{
+  LmnRuleSetRef t, first_ruleset;
+  RuleSets rulesets;
+  ModuleList module_list;
+  int i;
+
+  /* load rules */
+  rulesets     = il_get_rulesets(il);
+  first_ruleset = NULL;
+  for (i = 0; i < rulesets_num(rulesets); i++) {
+    t = load_ruleset(rulesets_get(rulesets, i));
+    if (i == n) first_ruleset = t;
+  }
+
+  if (!first_ruleset) {
+    lmn_fatal("implementation error: no ruleset in il");
+  }
+
+
+  /* load module list */
+  module_list = il_get_module_list(il);
+  for (i = 0; i < module_list_num(module_list); i++) {
+    ModuleRef m = module_list_get(module_list, i);
+    lmn_set_module(module_get_name(m), lmn_ruleset_from_id(module_get_ruleset(m)));
+  }
+
+  return first_ruleset;  
+}
+
 /* 最初のルールセットを返す */
 static LmnRuleSetRef load_il(ILRef il)
 {

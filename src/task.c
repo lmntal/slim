@@ -62,6 +62,31 @@ h *
 
 #include "runtime_status.h"
 #include "utility/st.h"
+#include "rule.h"
+#include "load.h"
+/* #include "membrane.h" */
+
+/* #include <string.h> */
+/* #include <ctype.h> */
+/* #include "dumper.h" */
+/* #include "utility/internal_hash.h" */
+/* #include "utility/vector.h" */
+/* #include "rule.h" */
+/* #include "membrane.h" */
+/* #include "atom.h" */
+/* #include "symbol.h" */
+/* #include "functor.h" */
+/* #include "special_atom.h" */
+/* #include "util.h" */
+/* #include "error.h" */
+/* #include "ccallback.h" */
+/* #include "slim_header/memstack.h" */
+/* #include "slim_header/port.h" */
+/* #include "string.h" */
+/* #include "lmntal_system_adapter.h" */
+/* #include "load.h" */
+/* #include "vector.h" */
+/* #include "utility/internal_hash.h" */
 
 
 #define LINK_PREFIX "L"
@@ -356,6 +381,13 @@ BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembrane *cur_mem)
 
 char rule_str[MAX_RULE_STR];
 int rule_str_itr;
+
+LmnMembrane* get_mem_linked_atom(LmnSAtom target_atom, int link_n)
+{
+  LmnAtom atom = LMN_SATOM_GET_LINK(LMN_ATOM(target_atom), link_n);
+  LmnLinkAttr attr = LMN_SATOM_GET_ATTR(LMN_ATOM(target_atom), link_n);
+  return LMN_PROXY_GET_MEM(LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0)));
+}
 
 void push_rule_str(char* c)
 {
@@ -694,6 +726,22 @@ static inline BOOL react_ruleset(LmnReactCxt *rc,
       if(!LMN_SATOM_IS_PROXY(pa))
 	break;
     }
+    generate_string_of_first_class_rule(get_mem_linked_atom(imply, 0), get_mem_linked_atom(imply, 1), get_mem_linked_atom(imply, 2), imply);
+
+    FILE *output_fp = fopen("tmp.lmn", "w");
+    fputs(rule_str, output_fp);
+    fclose(output_fp);
+    FILE *compiled_rulesets = lmntal_compile_file("tmp.lmn");
+    ILRef il;
+    /* ILをパース */
+    il_parse(compiled_rulesets, &il);
+    /* パースしたILをロード */
+    LmnRuleSetRef dynamic_ruleset = load_ruleset_with_num(il, 1);
+    LmnRulesetId r_i = lmn_ruleset_get_id(dynamic_ruleset);
+    /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加 */
+    register_first_class_rule(imply, r_i);
+    /* 膜のルールセットにコンパイルされたルールセットを追加 */
+    lmn_mem_add_ruleset(mem, dynamic_ruleset);
 
     LMN_FREE(insertion);
   }
