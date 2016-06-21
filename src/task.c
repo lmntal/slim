@@ -64,6 +64,10 @@ h *
 #include "utility/st.h"
 
 
+#define LINK_PREFIX "L"
+#define LINKCONNECTION_MAX 100000
+#define MAX_RULE_STR 10000
+
 typedef void (* callback_0)(LmnReactCxt *,
                             LmnMembrane *);
 typedef void (* callback_1)(LmnReactCxt *,
@@ -94,7 +98,7 @@ typedef void (* callback_5)(LmnReactCxt *,
                             LmnAtom, LmnLinkAttr);
 
 struct LmnFirstRulesetInsertion {
-  LmnRulesetId id;
+  LmnSAtom imply;
   LmnMembrane *membrane;
 };
 
@@ -219,6 +223,8 @@ void lmn_run(Vector *start_rulesets)
 {
   static LmnMembrane *mem;
   static LmnReactCxt mrc;
+
+  first_class_rule_tbl_init();
 
 #ifdef TIME_OPT
   /* 通常実行では非決定実行とは異なりProcess IDを
@@ -348,6 +354,305 @@ BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembrane *cur_mem)
 }
 
 
+char rule_str[MAX_RULE_STR];
+int rule_str_itr;
+
+void push_rule_str(char* c)
+{
+  int i;
+  for(i = 0; c[i] != '\0'; i++)
+    {
+      rule_str[rule_str_itr++] = c[i];
+    }
+  return ;
+}
+
+int eq_rule_str(char c)
+{
+  return rule_str[rule_str_itr - 1] == c;
+}
+
+void unget_rule_str(void)
+{
+  rule_str_itr--;
+}
+
+static struct LinkConnection
+{
+  LmnSAtom atom;
+  HyperLink *hl;
+  int link_pos, link_name;
+};
+
+int link_connection_max = 0;
+int link_name_max = 0;
+
+struct LinkConnection link_connection_array[LINKCONNECTION_MAX];
+
+int store_link_connection(LmnSAtom satom, int link_p, HyperLink *hl)
+{
+  link_connection_array[link_connection_max].atom = satom;
+  link_connection_array[link_connection_max].hl = hl;
+  link_connection_array[link_connection_max].link_pos = link_p;
+  link_connection_array[link_connection_max].link_name = link_name_max;
+  link_connection_max++;
+  return link_name_max++;
+}
+
+int generate_linkname(LmnSAtom satom, int link_p)
+{
+  int i;
+
+  if(LMN_IS_HL(LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p))))
+    {
+      HyperLink *hll = lmn_hyperlink_at_to_hl(LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p)));
+      HyperLink *p_hl = hll->parent;
+
+      for(i = 0; i < link_connection_max; i++)
+	{
+	  if(link_connection_array[i].hl != NULL)
+	    {
+	      if(lmn_hyperlink_eq_hl(p_hl, link_connection_array[i].hl) == TRUE)
+		{
+		  return link_connection_array[i].link_name;
+		}
+	    }
+	}
+      return store_link_connection(NULL, -1, p_hl);
+    }
+
+  for(i = 0; i < link_connection_max; i++)
+    {
+      if(link_connection_array[i].atom != NULL)
+	{
+	  if((unsigned long)satom == (unsigned long)link_connection_array[i].atom && link_connection_array[i].link_pos == link_p)
+	    {
+	      return link_connection_array[i].link_name;
+	    }
+	}
+    }
+
+  LmnSAtom dst_atom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p));
+  char* dst_atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(dst_atom)));
+
+  if(LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_IN_PROXY_FUNCTOR)
+    {
+      LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, 0));
+      dst_atom = LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1));
+      char* dst_atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(dst_atom)));
+      int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(dst_atom));
+      for(i = 0; i < arity; i++)
+	{
+	  LmnSAtom linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, i));
+	  if(LMN_SATOM_GET_FUNCTOR(linked_atom) == LMN_OUT_PROXY_FUNCTOR)
+	    {
+	      LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(linked_atom, 0));
+	      if((unsigned long)satom == LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 1)))
+		{
+		  return store_link_connection(dst_atom, i, NULL);
+		}
+	    }
+	}
+    }
+  else if(LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_OUT_PROXY_FUNCTOR)
+    {
+      /* satom = ... */
+      LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, 0));
+      dst_atom = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 1));
+      char* dst_atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(dst_atom)));
+      return store_link_connection(dst_atom, 0, NULL);
+    }
+  int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(dst_atom));
+
+
+  for(i = 0; i < arity; i++)
+    {
+      if((unsigned long)satom == (unsigned long)LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, i)))
+	{
+	  return store_link_connection(dst_atom, i, NULL);
+	}
+    }
+}
+
+void generate_string_of_head_and_body_mem(LmnMembrane *mem, LmnSAtom cm_atom)
+{
+  AtomListEntry *ent;
+  LmnFunctor f;
+  char *atom_name;
+  int arity, i;
+  LmnMembrane *m;
+
+  EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
+	LmnSAtom satom;
+	if(LMN_IS_EX_FUNCTOR(f)) continue;
+	EACH_ATOM(satom, ent, ({
+	      arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
+	      atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+	      if(LMN_IS_PROXY_FUNCTOR(f)) continue;
+	      else if(f == LMN_UNARY_PLUS_FUNCTOR)
+		{
+		  LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
+		  LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
+		  if((unsigned long)cm_atom == (unsigned long)LMN_SATOM_GET_LINK(out_proxy, 1))
+		    {
+		      continue ;
+		    }
+		  else
+		    {
+		      push_rule_str(atom_name);
+		      push_rule_str(LINK_PREFIX);
+		      push_rule_str(int_to_str((long)generate_linkname(satom, 0)));
+		    }
+		}
+	      else if(atom_name[0] == '=' && atom_name[1] == '=')
+	      	{
+	      	  push_rule_str(LINK_PREFIX);
+	      	  push_rule_str(int_to_str((long)generate_linkname(satom, 0)));
+	      	  push_rule_str("=");
+	      	  push_rule_str(LINK_PREFIX);
+	      	  push_rule_str(int_to_str((long)generate_linkname(satom, 1)));
+	      	}
+	      else if(atom_name[0] == '@')
+		{
+		  push_rule_str(atom_name);
+		}
+	      else if(atom_name[0] == '$')
+		{
+		  push_rule_str(atom_name);
+		  if(arity == 0)
+		    {
+		      push_rule_str("[]");
+		    }
+		  else
+		    {
+		      push_rule_str("[");
+		      for(i = 0; i < arity; i++)
+			{
+			  if(i > 0)push_rule_str(",");
+			  push_rule_str(LINK_PREFIX);
+			  push_rule_str(int_to_str((long)generate_linkname(satom, i)));
+			}
+		      push_rule_str("]");
+		    }
+		}
+	      else
+		{
+		  if(strcmp(atom_name, ":-") == 0)
+		    {
+		      push_rule_str("'");
+		      push_rule_str(atom_name);
+		      push_rule_str("'");
+		    }
+		  else if(atom_name[0] == '.')
+		    {
+		      push_rule_str("'");
+		      push_rule_str(atom_name);
+		      push_rule_str("'");
+		    }
+		  else if(atom_name[0] == '[' && atom_name[1] == ']')
+		    {
+		      push_rule_str("'");
+		      push_rule_str(atom_name);
+		      push_rule_str("'");
+		    }
+		  else
+		    push_rule_str(atom_name);
+		  if(arity > 0)
+		    {
+		      push_rule_str("(");
+		      for(i = 0; i < arity; i++)
+			{
+			  if(i > 0) push_rule_str(",");
+			  push_rule_str(LINK_PREFIX);
+			  push_rule_str(int_to_str((long)generate_linkname(satom, i)));
+			}
+		      push_rule_str(")");
+		    }
+		}
+	      push_rule_str(",");		
+	    }));
+      }));
+  
+
+  for(m = mem->child_head; m; m = m->next)
+    {
+      push_rule_str("{");
+      generate_string_of_head_and_body_mem(m, cm_atom);
+      if(eq_rule_str(','))
+	unget_rule_str();
+      push_rule_str("},");
+    }
+}
+
+
+void generate_string_of_guard_mem(LmnMembrane *mem, LmnSAtom cm_atom)
+{
+  AtomListEntry *ent;
+  LmnFunctor f;
+  char *atom_name;
+  int arity, i;
+  LmnMembrane *m;
+  char* constraint_name[3] = {"int", "float", "ground"};
+  char* binary_op[10] = {"+", "-", "*", "/", "=", "=\=", "<", ">", "=<", ">="};
+  EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
+	LmnSAtom satom;
+	if(LMN_IS_EX_FUNCTOR(f)) continue;
+	EACH_ATOM(satom, ent, ({
+	      arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
+	      atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+	      if(LMN_IS_PROXY_FUNCTOR(f)) continue;
+	      if(f == LMN_UNARY_PLUS_FUNCTOR)
+		{
+		  LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
+		  LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
+		  if((unsigned long)cm_atom == (unsigned long)LMN_SATOM_GET_LINK(out_proxy, 1))
+		    {
+		      continue ;
+		    }
+		}
+	      for(i = 0; i < 3; i++)
+		{
+		  if(strcmp(constraint_name[i], atom_name) == 0)
+		    {
+		      push_rule_str(atom_name);
+		      push_rule_str("(");
+		      push_rule_str(lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0))))));
+		      push_rule_str("),");
+		      continue;
+		    }
+		  continue;
+		}
+	    }));
+      }));
+}
+
+void push_rule_char(char c)
+{
+  rule_str[rule_str_itr++] = c;
+}
+
+void generate_string_of_first_class_rule(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem, LmnSAtom imply)
+/* 3引数の':-' のアトムで接続先が全て膜．
+   引数は第一引数から順につながってる膜 */
+{
+  link_name_max = 0;
+  link_connection_max = 0;
+
+  generate_string_of_head_and_body_mem(h_mem, imply);
+
+  push_rule_str(":-");
+
+  generate_string_of_guard_mem(g_mem, imply);
+
+  push_rule_str("|");
+
+  generate_string_of_head_and_body_mem(b_mem, imply);
+
+  push_rule_str(".");
+  push_rule_char('\0');
+  rule_str_itr = 0;
+}
+
 /* an extenstion rule applier, @see ext/atomic.c */
 extern BOOL react_ruleset_atomic(LmnReactCxt *rc,
                                  LmnMembrane *mem,
@@ -382,6 +687,14 @@ static inline BOOL react_ruleset(LmnReactCxt *rc,
   for (int i = 0; i < vec_num(rc->first_rulesets); i++) {
     struct LmnFirstRulesetInsertion *insertion = (struct LmnFirstRulesetInsertion *)vec_get(rc->first_rulesets, i);
     /* insert ruleset to membrane */
+    LmnSAtom imply = insertion->imply;
+    LmnMembrane *mem = insertion->membrane;
+    for(int j = 0; j < 3; j++){
+      LmnAtom pa = LMN_SATOM_GET_LINK(LMN_ATOM(imply), j);
+      if(!LMN_SATOM_IS_PROXY(pa))
+	break;
+    }
+
     LMN_FREE(insertion);
   }
   vec_clear(rc->first_rulesets);
@@ -1539,7 +1852,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         LmnFunctor imply = lmn_functor_intern(ANONYMOUS, lmn_intern(":-"), 3);
         if (f == imply) {
           struct LmnFirstRulesetInsertion *insertion = LMN_MALLOC(struct LmnFirstRulesetInsertion);
-          insertion->id = vec_num(rc->first_rulesets); /* TODO: getid */
+          insertion->imply = (LmnSAtom)ap; /* TODO: getid */
           insertion->membrane = (LmnMembrane *)wt(rc, memi);
           vec_push(rc->first_rulesets, (vec_data_t)insertion);
         }
