@@ -93,6 +93,11 @@ typedef void (* callback_5)(LmnReactCxt *,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr);
 
+struct LmnFirstRulesetInsertion {
+  LmnRulesetId id;
+  LmnMembrane *membrane;
+};
+
 /**
   Javaによる処理系ではリンクはリンクオブジェクトで表現するが、SLIMでは
   リンクオブジェクトはなく直接リンク先のアトムと引数番号でリンクを表す。
@@ -373,6 +378,13 @@ static inline BOOL react_ruleset(LmnReactCxt *rc,
   else {
     result = react_ruleset_atomic(rc, mem, rs);
   }
+
+  for (int i = 0; i < vec_num(rc->first_rulesets); i++) {
+    struct LmnFirstRulesetInsertion *insertion = (struct LmnFirstRulesetInsertion *)vec_get(rc->first_rulesets, i);
+    /* insert ruleset to membrane */
+    LMN_FREE(insertion);
+  }
+  vec_clear(rc->first_rulesets);
 
   return result;
 }
@@ -1523,6 +1535,14 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 
         READ_VAL(LmnFunctor, instr, f);
         ap = LMN_ATOM(lmn_new_atom(f));
+
+        LmnFunctor imply = lmn_functor_intern(ANONYMOUS, lmn_intern(":-"), 3);
+        if (f == imply) {
+          struct LmnFirstRulesetInsertion *insertion = LMN_MALLOC(struct LmnFirstRulesetInsertion);
+          insertion->id = vec_num(rc->first_rulesets); /* TODO: getid */
+          insertion->membrane = (LmnMembrane *)wt(rc, memi);
+          vec_push(rc->first_rulesets, (vec_data_t)insertion);
+        }
       }
       lmn_mem_push_atom((LmnMembrane *)wt(rc, memi), ap, attr);
       warry_set(rc, atomi, ap, attr, TT_ATOM);
@@ -2178,9 +2198,20 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
     case INSTR_REMOVEATOM:
     {
       LmnInstrVar atomi, memi;
+      LmnLinkAttr attr;
 
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
+
+      LmnFunctor imply = lmn_functor_intern(ANONYMOUS, lmn_intern(":-"), 3);
+      attr = at(rc, atomi);
+      if (LMN_HAS_FUNCTOR(wt(rc, atomi), attr, imply)) {
+        LmnSAtom atom = wt(rc, atomi);
+        LmnMembrane *membrane = wt(rc, memi);
+        LmnRulesetId id = 0; /* fetch id from atom address */
+        /* delete ruleset from membrane */
+      }
+
       lmn_mem_remove_atom((LmnMembrane *)wt(rc, memi),
                           wt(rc, atomi),
                           at(rc, atomi));
