@@ -11,7 +11,8 @@ slim_LDFLAGS = -L./verifier                            \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I./verifier                            \
                -I./utility                             \
-               -I../third_party/zdelta-2.1
+               -I../third_party/zdelta-2.1             \
+               -std=gnu99
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
                     ./utility/liblmn_utility.a
 
