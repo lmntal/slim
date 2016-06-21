@@ -10,7 +10,7 @@
  *
  *    1. Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *
+h *
  *    2. Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
@@ -61,6 +61,7 @@
 #include "normal_thread.h"
 
 #include "runtime_status.h"
+#include "utility/st.h"
 
 
 typedef void (* callback_0)(LmnReactCxt *,
@@ -160,6 +161,44 @@ static void mem_oriented_loop(LmnReactCxt *rc, LmnMembrane *mem);
 void lmn_dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 {
   dmem_interpret(rc, rule, instr);
+}
+
+st_table_t first_class_rule_tbl;
+
+static int colon_minus_cmp(LmnSAtom x, LmnSAtom y)
+{
+  return !((unsigned long)x == (unsigned long)y);
+}
+
+static long colon_minus_hash(LmnSAtom x)
+{
+  return (long)x;
+}
+
+static struct st_hash_type type_colon_minushash =
+  {
+    (st_cmp_func)colon_minus_cmp,
+    (st_hash_func)colon_minus_hash
+  };
+  
+
+
+void first_class_rule_tbl_init()
+{
+  first_class_rule_tbl = st_init_table(&type_colon_minushash);
+}
+
+static void register_first_class_rule(LmnSAtom colon_minus,
+				      LmnRulesetId rs_id)
+{
+  unsigned long colon_minus_add = colon_minus;
+  st_insert(first_class_rule_tbl, (st_data_t)colon_minus_add, (st_data_t)rs_id);
+}
+
+static void delete_first_class_rule(LmnSAtom colon_minus)
+{
+  unsigned long colon_minus_add = colon_minus;
+  st_delete(first_class_rule_tbl, (st_data_t)colon_minus_add, 0);
 }
 
 
