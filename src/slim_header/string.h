@@ -58,6 +58,8 @@ LmnStringRef lmn_string_copy(LmnStringRef s);
 BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr);
 unsigned long lmn_string_hash(LmnStringRef atom);
 const char *lmn_string_c_str(LmnStringRef atom);
+/* delete last character in <s> */
+void lmn_string_pop(LmnStringRef s);
 void lmn_string_push(LmnStringRef dst, const LmnStringRef src);
 void lmn_string_push_raw_c(LmnStringRef s, int c);
 void lmn_string_push_raw_s(LmnStringRef dst, const char *src);

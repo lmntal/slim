@@ -156,6 +156,11 @@ void lmn_string_push_raw_c(LmnStringRef s, int c)
   s->buf[s->len] = '\0';
 }
 
+void lmn_string_pop(LmnStringRef s) {
+  s->len--;
+  s->buf[s->len] = '\0';
+}
+
 /* srcの文字列をdstの末尾に追加する。srcの内容は変わらない */
 void lmn_string_push(LmnStringRef dst, const LmnStringRef src)
 {
