@@ -200,10 +200,11 @@ void first_class_rule_tbl_init()
 
 LmnRulesetId imply_to_rulesetid(LmnSAtom imply)
 {
-  LmnRulesetId *entry;
-  if(st_lookup(first_class_rule_tbl, (st_data_t)imply, (st_data_t *)&entry))
-    return *entry;
-  return NULL;
+  LmnRulesetId entry;
+  if(st_lookup(first_class_rule_tbl, (st_data_t)imply, (st_data_t *)&entry)){
+    return entry;
+  }
+  return -1;
 }
 
 static void register_first_class_rule(LmnSAtom colon_minus,
@@ -2578,9 +2579,14 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         LmnSAtom atom = wt(rc, atomi);
         LmnMembrane *membrane = wt(rc, memi);
         LmnRulesetId id = imply_to_rulesetid(atom); /* fetch id from atom address */
-        /* delete ruleset from membrane */
-	delete_ruleset(membrane, id);
-	delete_first_class_rule(atom);
+
+	if(id > 0)
+	  {
+	    /* delete ruleset from membrane */
+	    delete_ruleset(membrane, id);
+	    /* delete entry from hash table */
+	    delete_first_class_rule(atom);
+	  }
       }
 
       lmn_mem_remove_atom((LmnMembrane *)wt(rc, memi),
