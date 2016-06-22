@@ -195,6 +195,10 @@ int lmn_string_get(LmnStringRef s, int i)
   else return s->buf[i];
 }
 
+int lmn_string_last(LmnStringRef s) {
+  return (s->len == 0) ? EOF : s->buf[s->len - 1];
+}
+
 void lmn_string_set_raw_c(LmnStringRef s, int c, int i)
 {
   s->buf[i] = c;

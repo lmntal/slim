@@ -466,179 +466,156 @@ int generate_linkname(LmnSAtom satom, int link_p)
     return -1;
 }
 
-void generate_string_of_head_and_body_mem(LmnStringRef rule_str_builder, LmnMembrane *mem, LmnSAtom cm_atom)
+LmnStringRef string_of_template_membrane(LmnMembrane *mem, LmnSAtom cm_atom)
 {
+  LmnStringRef result = lmn_string_make_empty();
   AtomListEntry *ent;
   LmnFunctor f;
-  const char *atom_name;
-  int arity, i;
-  LmnMembrane *m;
+  char istr[(int)(8 * sizeof(int) * 0.3010) + 2]; /* int型の桁数 + 1より長い */
 
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
-        LmnSAtom satom;
-        if(LMN_IS_EX_FUNCTOR(f)) continue;
-        EACH_ATOM(satom, ent, ({
-              arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
-              atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
-              if(LMN_IS_PROXY_FUNCTOR(f)) continue;
-              else if(f == LMN_UNARY_PLUS_FUNCTOR)
-                {
-                  LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
-                  LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
-                  if((unsigned long)cm_atom == (unsigned long)LMN_SATOM_GET_LINK(out_proxy, 1))
-                    {
-                      continue ;
-                    }
-                  else
-                    {
-                      lmn_string_push_raw_s(rule_str_builder, atom_name);
-                      lmn_string_push_raw_s(rule_str_builder, LINK_PREFIX);
-                      lmn_string_push_raw_s(rule_str_builder, int_to_str((long)generate_linkname(satom, 0)));
-                    }
-                }
-              else if(atom_name[0] == '=' && atom_name[1] == '=')
-                {
-                  lmn_string_push_raw_s(rule_str_builder, LINK_PREFIX);
-                  lmn_string_push_raw_s(rule_str_builder, int_to_str((long)generate_linkname(satom, 0)));
-                  lmn_string_push_raw_s(rule_str_builder, "=");
-                  lmn_string_push_raw_s(rule_str_builder, LINK_PREFIX);
-                  lmn_string_push_raw_s(rule_str_builder, int_to_str((long)generate_linkname(satom, 1)));
-                }
-              else if(atom_name[0] == '@')
-                {
-                  lmn_string_push_raw_s(rule_str_builder, atom_name);
-                }
-              else if(atom_name[0] == '$')
-                {
-                  lmn_string_push_raw_s(rule_str_builder, atom_name);
-                  if(arity == 0)
-                    {
-                      lmn_string_push_raw_s(rule_str_builder, "[]");
-                    }
-                  else
-                    {
-                      lmn_string_push_raw_s(rule_str_builder, "[");
-                      for(i = 0; i < arity; i++)
-                        {
-                          if(i > 0)lmn_string_push_raw_s(rule_str_builder, ",");
-                          lmn_string_push_raw_s(rule_str_builder, LINK_PREFIX);
-                          lmn_string_push_raw_s(rule_str_builder, int_to_str((long)generate_linkname(satom, i)));
-                        }
-                      lmn_string_push_raw_s(rule_str_builder, "]");
-                    }
-                }
-              else
-                {
-                  if(strcmp(atom_name, ":-") == 0)
-                    {
-                      lmn_string_push_raw_s(rule_str_builder, "'");
-                      lmn_string_push_raw_s(rule_str_builder, atom_name);
-                      lmn_string_push_raw_s(rule_str_builder, "'");
-                    }
-                  else if(atom_name[0] == '.')
-                    {
-                      lmn_string_push_raw_s(rule_str_builder, "'");
-                      lmn_string_push_raw_s(rule_str_builder, atom_name);
-                      lmn_string_push_raw_s(rule_str_builder, "'");
-                    }
-                  else if(atom_name[0] == '[' && atom_name[1] == ']')
-                    {
-                      lmn_string_push_raw_s(rule_str_builder, "'");
-                      lmn_string_push_raw_s(rule_str_builder, atom_name);
-                      lmn_string_push_raw_s(rule_str_builder, "'");
-                    }
-                  else
-                    lmn_string_push_raw_s(rule_str_builder, atom_name);
-                  if(arity > 0)
-                    {
-                      lmn_string_push_raw_s(rule_str_builder, "(");
-                      for(i = 0; i < arity; i++)
-                        {
-                          if(i > 0) lmn_string_push_raw_s(rule_str_builder, ",");
-                          lmn_string_push_raw_s(rule_str_builder, LINK_PREFIX);
-                          lmn_string_push_raw_s(rule_str_builder, int_to_str((long)generate_linkname(satom, i)));
-                        }
-                      lmn_string_push_raw_s(rule_str_builder, ")");
-                    }
-                }
-              lmn_string_push_raw_s(rule_str_builder, ",");               
-            }));
-      }));
-  
+    LmnSAtom satom;
+    if(LMN_IS_EX_FUNCTOR(f)) continue;
+    if(LMN_IS_PROXY_FUNCTOR(f)) continue;
 
-  for(m = mem->child_head; m; m = m->next)
-    {
-      lmn_string_push_raw_s(rule_str_builder, "{");
-      generate_string_of_head_and_body_mem(rule_str_builder, m, cm_atom);
-      if(lmn_string_get(rule_str_builder, lmn_string_len(rule_str_builder) - 1) == ',')
-        lmn_string_pop(rule_str_builder);
-      lmn_string_push_raw_s(rule_str_builder, "},");
-    }
+    EACH_ATOM(satom, ent, ({
+      int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
+      const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+      
+      if (f == LMN_UNARY_PLUS_FUNCTOR) {
+        LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
+        LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
+        if(cm_atom == LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1))) continue ;
+        
+        sprintf(istr, "%d", generate_linkname(satom, 0));
+        lmn_string_push_raw_s(result, atom_name);
+        lmn_string_push_raw_s(result, LINK_PREFIX);
+        lmn_string_push_raw_s(result, istr);
+      }
+      else if(strcmp(atom_name, "==") == 0) {
+        lmn_string_push_raw_s(result, LINK_PREFIX);
+        sprintf(istr, "%d", generate_linkname(satom, 0));
+        lmn_string_push_raw_s(result, istr);
+        lmn_string_push_raw_s(result, "==");
+        lmn_string_push_raw_s(result, LINK_PREFIX);
+        sprintf(istr, "%d", generate_linkname(satom, 1));
+        lmn_string_push_raw_s(result, istr);
+      }
+      else if(atom_name[0] == '@') {
+        lmn_string_push_raw_s(result, atom_name);
+      }
+      else if(atom_name[0] == '$') {
+        lmn_string_push_raw_s(result, atom_name);
+        lmn_string_push_raw_c(result, '[');
+        
+        for(int i = 0; i < arity; i++) {
+          if(i > 0) lmn_string_push_raw_s(result, ",");
+          lmn_string_push_raw_s(result, LINK_PREFIX);
+          sprintf(istr, "%d", generate_linkname(satom, i));
+          lmn_string_push_raw_s(result, istr);
+        }
+
+        lmn_string_push_raw_c(result, ']');
+      }
+      else {
+        if(strcmp(atom_name, ":-") == 0) {
+          lmn_string_push_raw_s(result, "':-'");
+        } else if(strcmp(atom_name, ".") == 0) {
+          lmn_string_push_raw_s(result, "'.'");
+        } else if(strcmp(atom_name, "[]") == 0) {
+          lmn_string_push_raw_s(result, "'[]'");
+        } else {
+          lmn_string_push_raw_s(result, atom_name);
+        }
+
+        if(arity > 0) {
+          lmn_string_push_raw_s(result, "(");
+          for(int i = 0; i < arity; i++) {
+            if(i > 0) lmn_string_push_raw_s(result, ",");
+            lmn_string_push_raw_s(result, LINK_PREFIX);
+            sprintf(istr, "%d", generate_linkname(satom, i));
+            lmn_string_push_raw_s(result, istr);
+          }
+          lmn_string_push_raw_s(result, ")");
+        }
+      }
+      lmn_string_push_raw_s(result, ",");               
+    }));
+  }));
+  
+  for(LmnMembrane *m = mem->child_head; m; m = m->next) {
+    LmnStringRef s = string_of_template_membrane(m, cm_atom);
+    if(lmn_string_last(s) == ',') lmn_string_pop(s);
+
+    lmn_string_push_raw_s(result, "{");
+    lmn_string_push(result, s);
+    lmn_string_push_raw_s(result, "},");
+
+    lmn_string_free(s);
+  }
+
+  return result;
 }
 
 
-void generate_string_of_guard_mem(LmnStringRef rule_str_builder, LmnMembrane *mem, LmnSAtom cm_atom)
+LmnStringRef string_of_guard_mem(LmnMembrane *mem, LmnSAtom cm_atom)
 {
+  LmnStringRef result;
   AtomListEntry *ent;
   LmnFunctor f;
-  const char *atom_name;
-  int arity, i;
   const char* constraint_name[3] = {"int", "float", "ground"};
+
+  result = lmn_string_make_empty();
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
-        LmnSAtom satom;
-        if(LMN_IS_EX_FUNCTOR(f)) continue;
-        EACH_ATOM(satom, ent, ({
-              arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
-              atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
-              if(LMN_IS_PROXY_FUNCTOR(f)) continue;
-              if(f == LMN_UNARY_PLUS_FUNCTOR)
-                {
-                  LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
-                  LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
-                  if((unsigned long)cm_atom == (unsigned long)LMN_SATOM_GET_LINK(out_proxy, 1))
-                    {
-                      continue ;
-                    }
-                }
-              for(i = 0; i < 3; i++)
-                {
-                  if(strcmp(constraint_name[i], atom_name) == 0)
-                    {
-                      lmn_string_push_raw_s(rule_str_builder, atom_name);
-                      lmn_string_push_raw_s(rule_str_builder, "(");
-                      lmn_string_push_raw_s(rule_str_builder, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0))))));
-                      lmn_string_push_raw_s(rule_str_builder, "),");
-                      continue;
-                    }
-                  continue;
-                }
-            }));
-      }));
+    if(LMN_IS_EX_FUNCTOR(f) || LMN_IS_PROXY_FUNCTOR(f)) continue;
+
+    LmnSAtom satom;
+    EACH_ATOM(satom, ent, ({
+      const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+      LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
+      LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
+
+      if(f == LMN_UNARY_PLUS_FUNCTOR && cm_atom == LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1))) continue;
+
+      for(int i = 0; i < 3; i++) {
+        if(strcmp(constraint_name[i], atom_name) != 0) continue;
+
+        const char *in_proxy_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(in_proxy)));
+        lmn_string_push_raw_s(result, constraint_name[i]);
+        lmn_string_push_raw_s(result, "(");
+        lmn_string_push_raw_s(result, in_proxy_name);
+        lmn_string_push_raw_s(result, "),");
+      }
+    }));
+  }));
+
+  return result;
 }
 
 LmnStringRef generate_string_of_first_class_rule(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem, LmnSAtom imply)
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
-  LmnStringRef rule_str_builder;
   link_name_max = 0;
   link_connection_max = 0;
 
-  rule_str_builder = lmn_string_make_empty();
-  generate_string_of_head_and_body_mem(rule_str_builder, h_mem, imply);
+  LmnStringRef head = string_of_template_membrane(h_mem, imply);
+  LmnStringRef guard = string_of_guard_mem(g_mem, imply);
+  LmnStringRef body = string_of_template_membrane(b_mem, imply);
 
-  lmn_string_push_raw_s(rule_str_builder, ":-");
+  LmnStringRef result = lmn_string_make_empty();
+  lmn_string_push(result, head);
+  lmn_string_push_raw_s(result, ":-");
+  lmn_string_push(result, guard);
+  lmn_string_push_raw_s(result, "|");
+  lmn_string_push(result, body);
+  lmn_string_push_raw_s(result, ".");
 
-  generate_string_of_guard_mem(rule_str_builder, g_mem, imply);
+  lmn_string_free(head);
+  lmn_string_free(guard);
+  lmn_string_free(body);
 
-  lmn_string_push_raw_s(rule_str_builder, "|");
-
-  generate_string_of_head_and_body_mem(rule_str_builder, b_mem, imply);
-
-  lmn_string_push_raw_s(rule_str_builder, ".");
-  lmn_string_push_raw_c(rule_str_builder, '\0');
-
-  return rule_str_builder;
+  return result;
 }
 
 void delete_ruleset(LmnMembrane *mem, LmnRulesetId del_id)
