@@ -47,6 +47,7 @@
 LmnRuleSetRef load(FILE *in);
 LmnRuleRef load_rule(RuleRef rule);
 LmnRuleSetRef load_file(char *file_name);
+Vector *load_rulesets_with_il(ILRef il);
 void load_il_files(const char *path);
 int il_parse(FILE *in, ILRef *il);
 int il_parse_rule(FILE *in, RuleRef *rule);

@@ -745,13 +745,15 @@ static inline BOOL react_ruleset(LmnReactCxt *rc,
     /* ILをパース */
     il_parse(compiled_rulesets, &il);
     /* パースしたILをロード */
-    LmnRuleSetRef dynamic_ruleset = load_ruleset_with_num(il, 1);
+    Vector *rulesets = load_rulesets_with_il(il);
+    LmnRuleSetRef dynamic_ruleset = (LmnRuleSetRef)vec_get(rulesets, 1);
     LmnRulesetId r_i = lmn_ruleset_get_id(dynamic_ruleset);
     /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加 */
     register_first_class_rule(imply, r_i);
     /* 膜のルールセットにコンパイルされたルールセットを追加 */
     lmn_mem_add_ruleset(mem, dynamic_ruleset);
 
+    vec_free(rulesets);
     LMN_FREE(insertion);
   }
   vec_clear(rc->first_rulesets);
