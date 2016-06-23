@@ -215,7 +215,7 @@ static void destroy_ruleset_table()
 void lmn_set_ruleset(LmnRuleSetRef ruleset, int id)
 {
   /* 必要ならば容量を拡張 */
-  while (ruleset_table->size < (unsigned int)id) {
+  while (ruleset_table->size <= (unsigned int)id) {
     int old_size = ruleset_table->size;
     ruleset_table->size *= 2;
     ruleset_table->entry = LMN_REALLOC(LmnRuleSetRef, ruleset_table->entry, ruleset_table->size);
