@@ -85,6 +85,7 @@ slim_SOURCES =                                                     \
 	memstack.c                      slim_header/memstack.h           \
 	string.c                        slim_header/string.h             \
 	port.c                          slim_header/port.h               \
+	firstclass_rule.c               firstclass_rule.h                \
 	jni_lmntal.c                    jni_lmntal.h                     \
 	ccallback.c                     ccallback.h                      \
 	hyperlink.c                     hyperlink.h                      \
