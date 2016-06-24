@@ -126,7 +126,7 @@ FILE *lmntal_compile_file(char *filename)
 }
 
 /* LMNtalのルールを中間言語にコンパイルし結果のストリームを返す*/
-FILE *lmntal_compile_rule_str(char *rule_str)
+FILE *lmntal_compile_rule_str(const char *rule_str)
 {
   return run_lmntal_system(0, /*dummy*/
                            OPT_SLIM_CODE,

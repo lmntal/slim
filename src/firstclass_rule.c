@@ -271,7 +271,7 @@ LmnStringRef string_of_guard_mem(LmnMembrane *mem, LmnSAtom cm_atom)
   return result;
 }
 
-LmnStringRef generate_string_of_first_class_rule(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem, LmnSAtom imply)
+LmnStringRef string_of_firstclass_rule(LmnMembrane *h_mem, LmnMembrane *g_mem, LmnMembrane *b_mem, LmnSAtom imply)
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
@@ -348,16 +348,6 @@ void first_class_rule_tbl_init()
   first_class_rule_tbl = st_init_table(&type_colon_minushash);
 }
 
-void register_first_class_rule(LmnSAtom colon_minus, LmnRulesetId rs_id)
-{
-  st_insert(first_class_rule_tbl, (st_data_t)colon_minus, (st_data_t)rs_id);
-}
-
-void delete_first_class_rule(LmnSAtom colon_minus)
-{
-  st_delete(first_class_rule_tbl, (st_data_t)colon_minus, 0);
-}
-
 
 LmnRulesetId imply_to_rulesetid(LmnSAtom imply)
 {
@@ -369,33 +359,30 @@ LmnRulesetId imply_to_rulesetid(LmnSAtom imply)
 }
 
 void firstclass_ruleset_register(LmnSAtom imply, LmnMembrane *membrane) {
-  /* insert ruleset to membrane */
+  /* ':-'_3アトムがプロキシにつながっていなければ中止 */
   for(int j = 0; j < 3; j++){
     LmnAtom pa = LMN_SATOM_GET_LINK(LMN_ATOM(imply), j);
-    if(!LMN_SATOM_IS_PROXY(pa))
-      break;
+    if(!LMN_SATOM_IS_PROXY(pa)) return;
   }
   
-  LmnStringRef rule_str = generate_string_of_first_class_rule(get_mem_linked_atom(imply, 0), get_mem_linked_atom(imply, 1), get_mem_linked_atom(imply, 2), imply);
-
-  FILE *output_fp = fopen("tmp.lmn", "w");
-  fputs(lmn_string_c_str(rule_str), output_fp);
+  /* ':-'_3(head, guard, body)からルール文字列を生成してコンパイル */
+  LmnMembrane *head = get_mem_linked_atom(imply, 0);
+  LmnMembrane *guard = get_mem_linked_atom(imply, 1);
+  LmnMembrane *body = get_mem_linked_atom(imply, 2);
+  LmnStringRef rule_str = string_of_firstclass_rule(head, guard, body, imply);
+  FILE *compiled_rulesets = lmntal_compile_rule_str(lmn_string_c_str(rule_str));
   lmn_string_free(rule_str);
-  fclose(output_fp);
-  FILE *compiled_rulesets = lmntal_compile_file("tmp.lmn");
-  ILRef il;
-  /* ILをパース */
-  il_parse(compiled_rulesets, &il);
-  /* パースしたILをロード */
-  Vector *rulesets = load_rulesets_with_il(il);
-  LmnRuleSetRef dynamic_ruleset = (LmnRuleSetRef)vec_get(rulesets, 1);
-  LmnRulesetId r_i = lmn_ruleset_get_id(dynamic_ruleset);
-  /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加 */
-  register_first_class_rule(imply, r_i);
-  /* 膜のルールセットにコンパイルされたルールセットを追加 */
-  lmn_mem_add_ruleset(membrane, dynamic_ruleset);
 
-  vec_free(rulesets);
+  /* コンパイルされたルールからルールセットを生成 */
+  RuleRef ruleAST;
+  il_parse_rule(compiled_rulesets, &ruleAST);
+  LmnRulesetId id = lmn_gen_ruleset_id();
+  LmnRuleSetRef ruleset = lmn_ruleset_make(id, 1);
+  lmn_ruleset_put(ruleset, load_rule(ruleAST));
+
+  /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加 */
+  st_insert(first_class_rule_tbl, (st_data_t)imply, (st_data_t)id);
+  lmn_mem_add_ruleset(membrane, ruleset);
 }
 
 
@@ -404,7 +391,7 @@ void firstclass_ruleset_delete(LmnSAtom imply, LmnMembrane *membrane) {
 
   if(id > 0) {
     delete_ruleset(membrane, id);
-    delete_first_class_rule(imply);
+    st_delete(first_class_rule_tbl, (st_data_t)imply, NULL);
   }
 }
 
