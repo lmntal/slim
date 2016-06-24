@@ -201,9 +201,9 @@ void first_class_rule_tbl_init()
 
 LmnRulesetId imply_to_rulesetid(LmnSAtom imply)
 {
-  LmnRulesetId entry;
-  if(st_lookup(first_class_rule_tbl, (st_data_t)imply, (st_data_t *)&entry)){
-    return entry;
+  st_data_t entry;
+  if(st_lookup(first_class_rule_tbl, (st_data_t)imply, &entry)){
+    return (LmnRulesetId)entry;
   }
   return -1;
 }
