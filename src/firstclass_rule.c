@@ -48,104 +48,81 @@
 #define MAX_RULE_STR 10000
 
 
-struct LinkConnection
-{
+ struct LinkConnection
+ {
   LmnSAtom atom;
   HyperLink *hl;
   int link_pos, link_name;
 };
 
-static int link_connection_max = 0;
-static int link_name_max = 0;
-
-static struct LinkConnection link_connection_array[LINKCONNECTION_MAX];
-
-int store_link_connection(LmnSAtom satom, int link_p, HyperLink *hl)
+int linkconnection_push(Vector *link_connections, LmnSAtom satom, int link_p, HyperLink *hl)
 {
-  link_connection_array[link_connection_max].atom = satom;
-  link_connection_array[link_connection_max].hl = hl;
-  link_connection_array[link_connection_max].link_pos = link_p;
-  link_connection_array[link_connection_max].link_name = link_name_max;
-  link_connection_max++;
-  return link_name_max++;
+  int link_name = vec_num(link_connections);
+  struct LinkConnection *c = LMN_MALLOC(struct LinkConnection);
+  c->atom = satom;
+  c->hl = hl;
+  c->link_pos = link_p;
+  c->link_name = link_name;
+  vec_push(link_connections, (vec_data_t)c);
+  return link_name;
 }
 
-int generate_linkname(LmnSAtom satom, int link_p)
+int linkconnection_make_linkno(Vector *link_connections, LmnSAtom satom, int link_p)
 {
-  int i;
+  if(LMN_IS_HL(LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p)))) {
+    HyperLink *hll = lmn_hyperlink_at_to_hl(LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p)));
+    HyperLink *p_hl = hll->parent;
 
-  if(LMN_IS_HL(LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p))))
-    {
-      HyperLink *hll = lmn_hyperlink_at_to_hl(LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p)));
-      HyperLink *p_hl = hll->parent;
-
-      for(i = 0; i < link_connection_max; i++)
-        {
-          if(link_connection_array[i].hl != NULL)
-            {
-              if(lmn_hyperlink_eq_hl(p_hl, link_connection_array[i].hl) == TRUE)
-                {
-                  return link_connection_array[i].link_name;
-                }
-            }
-        }
-      return store_link_connection(NULL, -1, p_hl);
+    for(int i = 0; i < vec_num(link_connections); i++) {
+      struct LinkConnection *c = (struct LinkConnection *)vec_get(link_connections, i);
+      if(c->hl && lmn_hyperlink_eq_hl(p_hl, c->hl)) {
+        return c->link_name;
+      }
     }
+    return linkconnection_push(link_connections, NULL, -1, p_hl);
+  }
 
-  for(i = 0; i < link_connection_max; i++)
-    {
-      if(link_connection_array[i].atom != NULL)
-        {
-          if((unsigned long)satom == (unsigned long)link_connection_array[i].atom && link_connection_array[i].link_pos == link_p)
-            {
-              return link_connection_array[i].link_name;
-            }
-        }
+  for(int i = 0; i < vec_num(link_connections); i++) {
+    struct LinkConnection *c = (struct LinkConnection *)vec_get(link_connections, i);
+    if(c->atom == satom && c->link_pos == link_p) {
+      return c->link_name;
     }
+  }
 
   LmnSAtom dst_atom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, link_p));
 
-  if(LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_IN_PROXY_FUNCTOR)
-    {
-      LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, 0));
-      dst_atom = LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1));
-      int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(dst_atom));
-      for(i = 0; i < arity; i++)
-        {
-          LmnSAtom linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, i));
-          if(LMN_SATOM_GET_FUNCTOR(linked_atom) == LMN_OUT_PROXY_FUNCTOR)
-            {
-              LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(linked_atom, 0));
-              if(satom == LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 1)))
-                {
-                  return store_link_connection(dst_atom, i, NULL);
-                }
-            }
+  if(LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_IN_PROXY_FUNCTOR) {
+    LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, 0));
+    LmnSAtom atom = LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1));
+    int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
+    for(int i = 0; i < arity; i++) {
+      LmnSAtom linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(atom, i));
+      if(LMN_SATOM_GET_FUNCTOR(linked_atom) == LMN_OUT_PROXY_FUNCTOR) {
+        LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(linked_atom, 0));
+        if(satom == LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 1))) {
+          return linkconnection_push(link_connections, atom, i, NULL);
         }
+      }
     }
-  else if(LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_OUT_PROXY_FUNCTOR)
-    {
-      /* satom = ... */
-      LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, 0));
-      dst_atom = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 1));
-      return store_link_connection(dst_atom, 0, NULL);
-    }
+  }
+  else if(LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_OUT_PROXY_FUNCTOR) {
+    LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, 0));
+    LmnSAtom atom = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 1));
+    return linkconnection_push(link_connections, atom, 0, NULL);
+  }
+
   int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(dst_atom));
-
-
-  for(i = 0; i < arity; i++)
-    {
-      if((unsigned long)satom == (unsigned long)LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, i)))
-        {
-          return store_link_connection(dst_atom, i, NULL);
-        }
+  for(int i = 0; i < arity; i++) {
+    if(satom == LMN_SATOM(LMN_SATOM_GET_LINK(dst_atom, i))) {
+      return linkconnection_push(link_connections, dst_atom, i, NULL);
     }
+  }
 
-    LMN_ASSERT(false);
-    return -1;
+  LMN_ASSERT(false);
+  return -1;
 }
 
-LmnStringRef string_of_template_membrane(LmnMembrane *mem, LmnSAtom cm_atom)
+LmnStringRef string_of_template_membrane(Vector *link_connections, LmnMembrane *mem, LmnSAtom cm_atom)
 {
   LmnStringRef result = lmn_string_make_empty();
   AtomListEntry *ent;
@@ -166,18 +143,18 @@ LmnStringRef string_of_template_membrane(LmnMembrane *mem, LmnSAtom cm_atom)
         LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
         if(cm_atom == LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1))) continue ;
         
-        sprintf(istr, "%d", generate_linkname(satom, 0));
+        sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, 0));
         lmn_string_push_raw_s(result, atom_name);
         lmn_string_push_raw_s(result, LINK_PREFIX);
         lmn_string_push_raw_s(result, istr);
       }
       else if(strcmp(atom_name, "==") == 0) {
         lmn_string_push_raw_s(result, LINK_PREFIX);
-        sprintf(istr, "%d", generate_linkname(satom, 0));
+        sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, 0));
         lmn_string_push_raw_s(result, istr);
-        lmn_string_push_raw_s(result, "==");
+        lmn_string_push_raw_s(result, "=");
         lmn_string_push_raw_s(result, LINK_PREFIX);
-        sprintf(istr, "%d", generate_linkname(satom, 1));
+        sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, 1));
         lmn_string_push_raw_s(result, istr);
       }
       else if(atom_name[0] == '@') {
@@ -190,7 +167,7 @@ LmnStringRef string_of_template_membrane(LmnMembrane *mem, LmnSAtom cm_atom)
         for(int i = 0; i < arity; i++) {
           if(i > 0) lmn_string_push_raw_s(result, ",");
           lmn_string_push_raw_s(result, LINK_PREFIX);
-          sprintf(istr, "%d", generate_linkname(satom, i));
+          sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, i));
           lmn_string_push_raw_s(result, istr);
         }
 
@@ -212,7 +189,7 @@ LmnStringRef string_of_template_membrane(LmnMembrane *mem, LmnSAtom cm_atom)
           for(int i = 0; i < arity; i++) {
             if(i > 0) lmn_string_push_raw_s(result, ",");
             lmn_string_push_raw_s(result, LINK_PREFIX);
-            sprintf(istr, "%d", generate_linkname(satom, i));
+            sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, i));
             lmn_string_push_raw_s(result, istr);
           }
           lmn_string_push_raw_s(result, ")");
@@ -223,7 +200,7 @@ LmnStringRef string_of_template_membrane(LmnMembrane *mem, LmnSAtom cm_atom)
   }));
   
   for(LmnMembrane *m = mem->child_head; m; m = m->next) {
-    LmnStringRef s = string_of_template_membrane(m, cm_atom);
+    LmnStringRef s = string_of_template_membrane(link_connections, m, cm_atom);
     if(lmn_string_last(s) == ',') lmn_string_pop(s);
 
     lmn_string_push_raw_s(result, "{");
@@ -275,12 +252,11 @@ LmnStringRef string_of_firstclass_rule(LmnMembrane *h_mem, LmnMembrane *g_mem, L
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
-  link_name_max = 0;
-  link_connection_max = 0;
+  Vector *link_connections = vec_make(10);
 
-  LmnStringRef head = string_of_template_membrane(h_mem, imply);
+  LmnStringRef head = string_of_template_membrane(link_connections, h_mem, imply);
   LmnStringRef guard = string_of_guard_mem(g_mem, imply);
-  LmnStringRef body = string_of_template_membrane(b_mem, imply);
+  LmnStringRef body = string_of_template_membrane(link_connections, b_mem, imply);
 
   LmnStringRef result = lmn_string_make_empty();
   lmn_string_push(result, head);
@@ -294,6 +270,9 @@ LmnStringRef string_of_firstclass_rule(LmnMembrane *h_mem, LmnMembrane *g_mem, L
   lmn_string_free(guard);
   lmn_string_free(body);
 
+  for (int i = 0; i < vec_num(link_connections); i++) LMN_FREE(vec_get(link_connections, i));
+  vec_free(link_connections);
+
   return result;
 }
 
@@ -306,19 +285,19 @@ LmnMembrane* get_mem_linked_atom(LmnSAtom target_atom, int link_n)
 
 void delete_ruleset(LmnMembrane *mem, LmnRulesetId del_id)
 {
-  Vector *src_v = &(mem->rulesets);
+  Vector *mem_rulesets = &(mem->rulesets);
 
-  for(int i = 0; i < vec_num(src_v); i++) {
-    LmnRuleSetRef rs_i = (LmnRuleSetRef)vec_get(src_v, i);
-    if (lmn_ruleset_get_id(rs_i) != del_id) continue;
+  for(int i = 0; i < vec_num(mem_rulesets); i++) {
+    LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem_rulesets, i);
+    if (lmn_ruleset_get_id(rs) != del_id) continue;
     
     /* move successors forward */
-    for(int j = i; j < vec_num(src_v) - 1; j++) {
-      LmnRuleSetRef next = (LmnRuleSetRef)vec_get(src_v, j + 1);
-      vec_set(src_v, j, (vec_data_t)next);
+    for(int j = i; j < vec_num(mem_rulesets) - 1; j++) {
+      LmnRuleSetRef next = (LmnRuleSetRef)vec_get(mem_rulesets, j + 1);
+      vec_set(mem_rulesets, j, (vec_data_t)next);
     }
 
-    src_v->num--;
+    mem_rulesets->num--;
     break;
   }
 }
@@ -327,7 +306,7 @@ st_table_t first_class_rule_tbl;
 
 static int colon_minus_cmp(LmnSAtom x, LmnSAtom y)
 {
-  return !((unsigned long)x == (unsigned long)y);
+  return x != y;
 }
 
 static long colon_minus_hash(LmnSAtom x)
@@ -336,11 +315,11 @@ static long colon_minus_hash(LmnSAtom x)
 }
 
 static struct st_hash_type type_colon_minushash =
-  {
-    (st_cmp_func)colon_minus_cmp,
-    (st_hash_func)colon_minus_hash
-  };
-  
+{
+  (st_cmp_func)colon_minus_cmp,
+  (st_hash_func)colon_minus_hash
+};
+
 
 
 void first_class_rule_tbl_init()
@@ -352,7 +331,7 @@ void first_class_rule_tbl_init()
 LmnRulesetId imply_to_rulesetid(LmnSAtom imply)
 {
   st_data_t entry;
-  if(st_lookup(first_class_rule_tbl, (st_data_t)imply, (st_data_t *)&entry)){
+  if(st_lookup(first_class_rule_tbl, (st_data_t)imply, &entry)){
     return (LmnRulesetId)entry;
   }
   return -1;
