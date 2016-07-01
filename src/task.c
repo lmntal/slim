@@ -1060,7 +1060,8 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
            現在の Process ID と戻すべき Process ID を記録しておく */
         RC_SET_PROC_NEXT_ID(rc, env_next_id()); 
         RC_SET_PROC_ORG_ID(rc, org_next_id);
-        env_set_next_id(org_next_id);
+
+        if (!RC_GET_MODE(rc, REACT_ND_MERGE_STS)) env_set_next_id(org_next_id);
         /* 反応中の膜も記録しておく */
         RC_SET_CUR_MEM(rc, cur_mem);
 
