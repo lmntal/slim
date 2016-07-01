@@ -62,25 +62,14 @@ void cb_react_rule_nd(LmnReactCxt *rc,
   LmnReactCxt tmp_rc;
   mc_react_cxt_init(&tmp_rc);
   RC_SET_GROOT_MEM(&tmp_rc, graph_mem);
-
-  //  tmp_rc = *rc;
-  //  tmp_rc.work_arry = lmn_register_make(rc->warry_cap);
-  //  printf("warry made=%d\n", tmp_rc.work_arry); // ueda
-  //  tmp_rc.mode = REACT_ND;
-  //  tmp_rc.v = v;
-  //  lmn_register_copy(tmp_rc.work_arry, rc->work_arry, rc->warry_num);
+  RC_ADD_MODE(&tmp_rc, REACT_ND_MERGE_STS);
 
   react_rule(&tmp_rc, graph_mem, r);
   lmn_mem_remove_mem(mem, graph_mem);
 
-  LmnSAtom cons, prev_cons, nil, in, out, plus;
-  LmnMembrane *m;
+  LmnSAtom prev_cons;
   int n_of_results = vec_num(RC_EXPANDED(&tmp_rc));
-  //  int i;
-  //  for (int i = 0; i < n_of_results; i++) {
-  //    lmn_dump_cell_stdout((LmnMembrane *)vec_get(RC_EXPANDED(&tmp_rc), i));
-  //  }
-  nil = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  LmnSAtom nil = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
 
   if (n_of_results == 0) {
     lmn_mem_newlink(mem, LMN_ATOM(nil), LMN_ATTR_MAKE_LINK(0), 0,
@@ -88,20 +77,22 @@ void cb_react_rule_nd(LmnReactCxt *rc,
 		    LMN_ATTR_GET_VALUE(react_judge_link_attr));
   } else {
     int n1 = n_of_results - 1;
+
     for (int i = n1; i >= 0; i--) {
-      cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
-      m = (LmnMembrane *)vec_get(RC_EXPANDED(&tmp_rc), i);
+      LmnSAtom cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+      LmnMembrane *m = (LmnMembrane *)vec_get(RC_EXPANDED(&tmp_rc), i);
+      LmnSAtom in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
+      LmnSAtom out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+      LmnSAtom plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
+
       lmn_mem_add_child_mem(mem, m);
-      in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
-      out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
-      plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
       lmn_newlink_in_symbols(in, 0, out, 0);
       lmn_newlink_in_symbols(in, 1, plus, 0);
       lmn_newlink_in_symbols(out, 1, cons, 0);
       if (i == n1) {
-	lmn_newlink_in_symbols(cons, 1, nil, 0);
+        lmn_newlink_in_symbols(cons, 1, nil, 0);
       } else {
-	lmn_newlink_in_symbols(cons, 1, prev_cons, 2);
+        lmn_newlink_in_symbols(cons, 1, prev_cons, 2);
       }
       prev_cons = cons;
     }
