@@ -359,6 +359,8 @@ void firstclass_ruleset_register(LmnSAtom imply, LmnMembrane *membrane) {
   LmnRuleSetRef ruleset = lmn_ruleset_make(id, 1);
   lmn_ruleset_put(ruleset, load_rule(ruleAST));
 
+  fclose(compiled_rulesets);
+
   /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加 */
   st_insert(first_class_rule_tbl, (st_data_t)imply, (st_data_t)id);
   lmn_mem_add_ruleset(membrane, ruleset);
