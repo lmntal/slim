@@ -77,12 +77,13 @@ struct LmnReactCxt {
 #define REACT_STAND_ALONE   (0x01U << 2)  /* 非決定実行: 状態は展開しない */
 #define REACT_PROPERTY      (0x01U << 3)  /* LTLモデル検査: 性質ルールのマッチングのみ */
 #define REACT_ATOMIC        (0x01U << 4)  /* Atomic Step中: インタリーブの抑制 */
+#define REACT_ND_MERGE_STS  (0x01U << 5 | REACT_ND)  /* 非決定実行: 別々の状態のグローバルルート膜がマージされ得る（react_rule_nd用） */
 
 #define RC_MODE(RC)                    ((RC)->mode)
 #define RC_SET_MODE(RC, M)             ((RC)->mode = (M))
 #define RC_ADD_MODE(RC, M)             ((RC)->mode |= (M))
 #define RC_UNPUT_MODE(RC, M)           ((RC)->mode &= ~(M))
-#define RC_GET_MODE(RC, M)             ((RC)->mode & (M))
+#define RC_GET_MODE(RC, M)             (((RC)->mode & (M)) == (M))
 
 
 #define warry_size(RC)                 ((RC)->warry_cap)
