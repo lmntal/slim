@@ -79,6 +79,7 @@ src/verifier/propsym_lexer.*
 src/verifier/propsym_parser.*
 src/utility/.deps
 src/verifier/.deps
+src/config.h.in
 third_party/google-perftools-1.8.3/.deps
 third_party/zdelta-2.1/.deps
 html/*

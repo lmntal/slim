@@ -112,8 +112,33 @@ void cb_react_rule_nd(LmnReactCxt *rc,
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr); 
 }
 
+void cb_mhash(LmnReactCxt *rc,
+	      LmnMembrane *mem,
+	      LmnAtom mem_proxy, LmnLinkAttr mem_proxy_link_attr,
+	      LmnAtom ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
+	      LmnAtom ret_hash_atom, LmnLinkAttr ret_hash_atom_link_attr)
+{
+  LmnMembrane *m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem_proxy, 0));
+
+  unsigned long h = mhash(m);
+
+  lmn_mem_newlink(mem,
+		  ret_hash_atom, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(ret_hash_atom_link_attr),
+		  h, LMN_INT_ATTR, 0);
+
+  lmn_mem_push_atom(mem, h, LMN_INT_ATTR);
+  
+  lmn_mem_newlink(mem,
+		  ret_mem_proxy, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(ret_mem_proxy_link_attr),
+		  mem_proxy, mem_proxy_link_attr, LMN_ATTR_GET_VALUE(mem_proxy_link_attr));
+  
+
+  
+}
+
 void init_react_rule(void)
 {
   lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
   lmn_register_c_fun("cb_react_rule_nd", (void *)cb_react_rule_nd, 4);
+  lmn_register_c_fun("cb_mhash", (void *)cb_mhash, 3);
 }
