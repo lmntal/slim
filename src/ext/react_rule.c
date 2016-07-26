@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "../lmntal_ext.h"
 #include "../dumper.h"
+#include "../verifier/mem_encode.h"
 
 void cb_react_rule(LmnReactCxt *rc,
 			  LmnMembrane *mem,
@@ -136,9 +137,53 @@ void cb_mhash(LmnReactCxt *rc,
   
 }
 
+
+void cb_mem_equals(LmnReactCxt *rc,
+		   LmnMembrane *mem,
+		   LmnAtom mem0_proxy, LmnLinkAttr mem0_proxy_link_attr,
+		   LmnAtom mem1_proxy, LmnLinkAttr mem1_proxy_link_attr,
+		   LmnAtom ret_mem0_link, LmnLinkAttr ret_mem0_link_attr,
+		   LmnAtom ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
+		   LmnAtom res_link, LmnLinkAttr res_link_attr)
+{
+  LmnMembrane *m0 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem0_proxy, 0));
+  LmnMembrane *m1 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem1_proxy, 0));
+
+  LmnBinStrRef s0 = lmn_mem_encode(m0);
+  LmnBinStrRef s1 = lmn_mem_encode(m1);
+  int judge = binstr_compare(s0, s1);
+  LmnSAtom result;
+  lmn_binstr_free(s0), lmn_binstr_free(s1);
+  
+  if(judge)
+    {
+      result = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
+    }
+  else
+    {
+      result = lmn_mem_newatom(mem, LMN_FALSE_FUNCTOR);
+    }
+
+  lmn_mem_newlink(mem,
+		  LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
+		  res_link, res_link_attr,
+		  LMN_ATTR_GET_VALUE(res_link_attr));
+
+  lmn_mem_newlink(mem,
+		  mem0_proxy, mem0_proxy_link_attr, LMN_ATTR_GET_VALUE(mem0_proxy_link_attr),
+		  ret_mem0_link, LMN_ATTR_MAKE_LINK(0),
+		  LMN_ATTR_GET_VALUE(ret_mem0_link_attr));
+
+  lmn_mem_newlink(mem,
+		  mem1_proxy, mem1_proxy_link_attr, LMN_ATTR_GET_VALUE(mem1_proxy_link_attr),
+		  ret_mem1_link, LMN_ATTR_MAKE_LINK(0),
+		  LMN_ATTR_GET_VALUE(ret_mem1_link_attr));
+  
+}
 void init_react_rule(void)
 {
   lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
   lmn_register_c_fun("cb_react_rule_nd", (void *)cb_react_rule_nd, 4);
   lmn_register_c_fun("cb_mhash", (void *)cb_mhash, 3);
+  lmn_register_c_fun("cb_mem_equals", (void *)cb_mem_equals, 5);
 }
