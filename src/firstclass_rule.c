@@ -187,10 +187,31 @@ LmnStringRef string_of_template_membrane(Vector *link_connections, LmnMembrane *
         if(arity > 0) {
           lmn_string_push_raw_s(result, "(");
           for(int i = 0; i < arity; i++) {
+	    LmnLinkAttr attr = LMN_SATOM_GET_ATTR(satom, i);
             if(i > 0) lmn_string_push_raw_s(result, ",");
-            lmn_string_push_raw_s(result, LINK_PREFIX);
-            sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, i));
-            lmn_string_push_raw_s(result, istr);
+
+	    if(LMN_ATTR_IS_DATA(attr) && LMN_HL_ATTR == attr)
+	      {
+		lmn_string_push_raw_s(result, LINK_PREFIX);
+		sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, i));
+		lmn_string_push_raw_s(result, istr);
+	      }
+	    else if(LMN_ATTR_IS_DATA(attr) && LMN_INT_ATTR == attr){
+	      LmnAtom data = LMN_SATOM_GET_LINK(satom, i);
+	      char *s = int_to_str((long)data);
+	      lmn_string_push_raw_s(result, s);
+	    }
+	    else if(LMN_ATTR_IS_DATA(attr) && LMN_DBL_ATTR == attr){
+	      LmnAtom data = LMN_SATOM_GET_LINK(satom, i);
+	      char buf[64];
+	      sprintf(buf, "%#g", lmn_get_double(data));
+	      lmn_string_push_raw_s(result, buf);
+	    }
+	    else{
+	      lmn_string_push_raw_s(result, LINK_PREFIX);
+	      sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, i));
+	      lmn_string_push_raw_s(result, istr);
+	    }
           }
           lmn_string_push_raw_s(result, ")");
         }
