@@ -240,7 +240,7 @@ LmnStringRef string_of_guard_mem(LmnMembrane *mem, LmnSAtom cm_atom)
   LmnStringRef result;
   AtomListEntry *ent;
   LmnFunctor f;
-  const char* constraint_name[3] = {"int", "float", "ground"};
+  const char* constraint_name[4] = {"int", "float", "ground", "unary"};
 
   result = lmn_string_make_empty();
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
@@ -254,7 +254,7 @@ LmnStringRef string_of_guard_mem(LmnMembrane *mem, LmnSAtom cm_atom)
 
       if(f == LMN_UNARY_PLUS_FUNCTOR && cm_atom == LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1))) continue;
 
-      for(int i = 0; i < 3; i++) {
+      for(int i = 0; i < 4; i++) {
         if(strcmp(constraint_name[i], atom_name) != 0) continue;
 
         const char *in_proxy_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(in_proxy)));
