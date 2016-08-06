@@ -122,6 +122,23 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSAtom satom, int lin
   return -1;
 }
 
+LmnStringRef string_of_data_atom(LmnAtom data, LmnLinkAttr attr)
+{
+  LmnStringRef result = lmn_string_make_empty();
+  if(attr == LMN_INT_ATTR){
+    char *s = int_to_str((long)data);
+    lmn_string_push_raw_s(result, s);
+  }
+  else if(attr = LMN_DBL_ATTR){
+    char buf[64];
+    sprintf(buf, "%#g", lmn_get_double(data));
+    lmn_string_push_raw_s(result, buf);
+  }
+
+  return result;
+}
+
+
 LmnStringRef string_of_template_membrane(Vector *link_connections, LmnMembrane *mem, LmnSAtom cm_atom)
 {
   LmnStringRef result = lmn_string_make_empty();
@@ -235,33 +252,72 @@ LmnStringRef string_of_template_membrane(Vector *link_connections, LmnMembrane *
 }
 
 
+LmnStringRef string_of_guard_op(LmnSAtom satom)
+{
+  LmnStringRef result = lmn_string_make_empty();
+  const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+  int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
+  LmnLinkAttr attr;
+  if(arity == 1)
+    lmn_string_push_raw_s(result, atom_name);
+  else{
+    attr = LMN_SATOM_GET_ATTR(satom, 0);
+    if(LMN_ATTR_IS_DATA(attr))
+      lmn_string_push(result, string_of_data_atom(LMN_SATOM_GET_LINK(satom, 0), attr));
+    else
+      lmn_string_push(result, string_of_guard_op(LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0))));
+
+    if(strcmp(":=", atom_name) == 0)
+      lmn_string_push_raw_s(result, "=");
+    else
+      lmn_string_push_raw_s(result, atom_name);
+
+
+    attr = LMN_SATOM_GET_ATTR(satom, 1);
+    if(LMN_ATTR_IS_DATA(attr))
+      lmn_string_push(result, string_of_data_atom(LMN_SATOM_GET_LINK(satom, 1), attr));
+    else
+      lmn_string_push(result, string_of_guard_op(LMN_SATOM(LMN_SATOM_GET_LINK(satom, 1))));
+  }
+
+  return result;
+}
+
+
 LmnStringRef string_of_guard_mem(LmnMembrane *mem, LmnSAtom cm_atom)
 {
   LmnStringRef result;
   AtomListEntry *ent;
   LmnFunctor f;
   const char* constraint_name[4] = {"int", "float", "ground", "unary"};
-
+  const char* op_name[5] = {"=:=", "=\=", ">", "<", ":="};
   result = lmn_string_make_empty();
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
     if(LMN_IS_EX_FUNCTOR(f) || LMN_IS_PROXY_FUNCTOR(f)) continue;
-
     LmnSAtom satom;
     EACH_ATOM(satom, ent, ({
       const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
-      LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
-      LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
 
-      if(f == LMN_UNARY_PLUS_FUNCTOR && cm_atom == LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1))) continue;
-
-      for(int i = 0; i < 4; i++) {
-        if(strcmp(constraint_name[i], atom_name) != 0) continue;
-
-        const char *in_proxy_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(in_proxy)));
-        lmn_string_push_raw_s(result, constraint_name[i]);
-        lmn_string_push_raw_s(result, "(");
-        lmn_string_push_raw_s(result, in_proxy_name);
-        lmn_string_push_raw_s(result, "),");
+      if(f == LMN_UNARY_PLUS_FUNCTOR){
+	LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
+	LmnSAtom out_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(in_proxy, 0));
+	if(cm_atom == LMN_SATOM(LMN_SATOM_GET_LINK(out_proxy, 1))) continue;
+      }
+      else{
+	for(int i = 0; i < 4; i++) {
+	  if(strcmp(constraint_name[i], atom_name) != 0) continue;
+	  LmnSAtom typed_pc_atom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
+	  const char *typed_pc_atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(typed_pc_atom)));
+	  lmn_string_push_raw_s(result, constraint_name[i]);
+	  lmn_string_push_raw_s(result, "(");
+	  lmn_string_push_raw_s(result, typed_pc_atom_name);
+	  lmn_string_push_raw_s(result, "),");
+	}
+	for(int i = 0; i < 5; i++){
+	  if(strcmp(op_name[i], atom_name) != 0) continue;
+	  lmn_string_push(result, string_of_guard_op(satom));
+	  lmn_string_push_raw_s(result, ",");
+	}
       }
     }));
   }));
