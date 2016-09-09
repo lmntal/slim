@@ -145,11 +145,7 @@ LmnMembrane *lmn_mem_make(void)
   mem->atom_data_num =  0U;
   mem->name          =  ANONYMOUS;
   mem->id            =  0UL;
-#ifdef TIME_OPT
   mem->atomset       =  LMN_CALLOC(struct AtomListEntry *, mem->atomset_size);
-#else
-  hashtbl_init(&mem->atomset, mem->atomset_size);
-#endif
   vec_init(&mem->rulesets, 1);
   lmn_mem_set_id(mem, env_gen_next_id());
 
@@ -169,12 +165,8 @@ void lmn_mem_free(LmnMembrane *mem)
   }));
 
   lmn_mem_rulesets_destroy(&mem->rulesets);
-#ifdef TIME_OPT
   env_return_id(lmn_mem_id(mem));
   LMN_FREE(mem->atomset);
-#else
-  hashtbl_destroy(&mem->atomset);
-#endif
   LMN_FREE(mem);
 }
 
@@ -298,7 +290,6 @@ void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom)
 
   as = lmn_mem_get_atomlist(mem, f);
   if (!as) { /* 本膜内に初めてアトムatomがPUSHされた場合 */
-#ifdef TIME_OPT
     LMN_ASSERT(mem->atomset); /* interpreter側で値がオーバーフローすると発生するので, ここで止める */
     if (mem->max_functor < f + 1) {
       mem->max_functor = f + 1;
@@ -311,10 +302,6 @@ void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom)
       }
     }
     as = mem->atomset[f] = make_atomlist();
-#else
-    as = make_atomlist();
-    hashtbl_put(&mem->atomset, (HashKeyType)f, (HashValueType)as);
-#endif
   }
 
   if (LMN_IS_PROXY_FUNCTOR(f)) {
@@ -341,11 +328,7 @@ unsigned long lmn_mem_space(LmnMembrane *mem)
 
   ret = 0;
   ret += sizeof(struct LmnMembrane);
-#ifdef TIME_OPT
   ret += sizeof(struct AtomListEntry*) * mem->atomset_size;
-#else
-  ret += internal_hashtbl_space_inner(&mem->atomset);
-#endif
   /* atomset */
   EACH_ATOMLIST(mem, ent, ({
     LmnSAtom atom;
@@ -1995,14 +1978,6 @@ void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec)
  *  modified by Masato Gocho
  *  ---------------------------
  */
-#ifndef TIME_OPT
-/* 非TIME-OPTではTraceLogのストラクチャでトレースすることができない（実装してない）ので,
- * バグのある旧同形成判定コードで動作させる.
- * TODO:
- *   非TIME-OPTコードは今後保守していく必要があるか？
- */
-# define LMN_MEMEQ_OLD
-#endif
 
 #define CHECKED_MEM_DEPTH (0)
 static BOOL mem_equals_rec(LmnMembrane *mem1, TraceLogRef  log1,
@@ -2021,9 +1996,7 @@ BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
   }
 #endif
 
-#ifdef LMN_MEMEQ_OLD
-  t = mem_equals_rec(mem1, NULL,  mem2, NULL, CHECKED_MEM_DEPTH);
-#else
+  // 非TIME-OPTではTraceLogのストラクチャでトレースすることができない（実装してない）
   struct TraceLog log1;
   struct SimplyTraceLog log2;
 
@@ -2034,7 +2007,6 @@ BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
 
   simplylog_destroy(&log2);
   tracelog_destroy(&log1);
-#endif
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {

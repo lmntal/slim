@@ -322,11 +322,7 @@ static inline BOOL dmem_root_is_delta_mem(struct MemDeltaRoot *d, LmnMembrane *m
 
 static inline BOOL dmem_root_is_new_mem(struct MemDeltaRoot *d, LmnMembrane *m)
 {
-#ifndef TIME_OPT
-  return sproc_tbl_get_flag_by_mem(&d->flag_tbl, m, TAG_NEW_MEM);
-#else
   return lmn_mem_id(m) >= d->new_proc_id_lower_limit;
-#endif
 }
 
 /* 膜mにアトムatomを追加 */
@@ -1769,11 +1765,7 @@ static inline LmnSAtom dmem_root_modified_atom(struct MemDeltaRoot* d, LmnSAtom 
 
 static inline BOOL dmem_root_is_new_atom(struct MemDeltaRoot *d, LmnSAtom a)
 {
-#ifdef TIME_OPT
   return LMN_SATOM_ID(a) >= d->new_proc_id_lower_limit;
-#else
-  return sproc_tbl_get_flag_by_atom(&d->flag_tbl, a, TAG_NEW_ATOM);
-#endif
 }
 
 static inline BOOL dmem_root_is_modified_atom(struct MemDeltaRoot *d, LmnSAtom a)

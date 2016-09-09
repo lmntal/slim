@@ -46,9 +46,6 @@
 #include "../membrane.h"
 #include "../error.h"
 #include "util.h"
-#ifndef TIME_OPT
-# include "st.h"
-#endif
 #include <limits.h>
 
 
@@ -58,21 +55,15 @@
 struct ProcessTbl {
   unsigned long n;
   unsigned long size;
-#ifdef TIME_OPT
   LmnWord *tbl;
-#else
-  st_table_t tbl;
-#endif
 };
 
 #define process_tbl_entry_num(P)  ((P)->n)
-#ifdef TIME_OPT
 void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n);
 #define proc_tbl_expand(p, n)                                                  \
   if ((p)->size <= (n)) {                                                      \
     proc_tbl_expand_sub(p, n);                                                 \
   }
-#endif
 
 
 /**
@@ -119,15 +110,11 @@ static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembrane *mem);
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
 static inline void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value) {
   p->n++;
-#ifdef TIME_OPT
 # ifdef DEBUG
   if (value == ULONG_MAX) lmn_fatal("cannot put ULONG_MAX");
 # endif
   proc_tbl_expand(p, key);
   p->tbl[key] = value;
-#else
-  st_insert(p->tbl, (st_data_t)key, value);
-#endif
 }
 
 /* テーブルにアトムを追加 */
@@ -150,9 +137,6 @@ static inline void proc_tbl_put_new_hlink(ProcessTableRef p, HyperLink *hl, LmnW
  * 通常この関数ではなくput_new_atom, put_new_memを使用する. */
 static inline int proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value) {
   p->n++;
-#ifndef TIME_OPT
-  return st_insert_safe(p->tbl, (st_data_t)key, value);
-#else
 #ifdef DEBUG
   if (value == ULONG_MAX) lmn_fatal("cannot put ULONG_MAX");
 #endif
@@ -160,7 +144,6 @@ static inline int proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value
   if (p->tbl[key] != ULONG_MAX) return 0;
   p->tbl[key] = value;
   return 1;
-#endif
 }
 
 /* テーブルにアトムを追加し、正の値を返す。すでに同じアトムが存在した場合は0を返す */
@@ -177,12 +160,8 @@ static inline int proc_tbl_put_new_mem(ProcessTableRef p, LmnMembrane *mem, LmnW
  * 通常この間数ではなくunput_atom, unput_memを使用する. */
 static inline void proc_tbl_unput(ProcessTableRef p, LmnWord key) {
   p->n--;
-#ifdef TIME_OPT
   proc_tbl_expand(p, key);
   p->tbl[key] = ULONG_MAX;
-#else
-  st_delete(p->tbl, (st_data_t)key, NULL);
-#endif
 }
 
 /* テーブルからアトムとそれに対応した値を削除する */
@@ -198,16 +177,12 @@ static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembrane *mem) {
 /* テーブルのkeyに対応した値をvalueに設定し, 正の値を返す. keyがテーブルに存在しない場合は0を返す.
  * 通常この間数ではなくget_by_atom, get_by_memを使用する./ */
 static inline int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value) {
-#ifdef TIME_OPT
   if (p->size > key && p->tbl[key] != ULONG_MAX) {
     if (value) *value = p->tbl[key];
     return 1;
   } else {
     return 0;
   }
-#else
-  return st_lookup(p->tbl, key, (st_data_t *)value);
-#endif
 }
 
 /* テーブルのアトムatomに対応する値をvalueに設定し, 正の値を返す.
@@ -230,12 +205,7 @@ static inline int proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWor
 }
 
 static inline BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key) {
-#ifdef TIME_OPT
   return key < p->size && p->tbl[key] != ULONG_MAX;
-#else
-  LmnWord t;
-  return proc_tbl_get(p, key, &t);
-#endif
 }
 
 /* テーブルにアトムatomに対応する値が設定されている場合, 正の値を返す. */
@@ -255,11 +225,7 @@ static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembrane *mem) {
  */
 struct SimplyProcTbl {
   unsigned long n, cap;
-#ifdef TIME_OPT
   BYTE *tbl;
-#else
-  st_table_t tbl;
-#endif
 };
 
 #define SPROC_TBL_INIT_V        (0xfU)
@@ -313,7 +279,6 @@ static inline void sproc_tbl_expand(SimplyProcessTableRef p, unsigned long n) {
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
 static inline void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value) {
-#ifdef TIME_OPT
 #ifdef DEBUG
   if (value == SPROC_TBL_INIT_V) lmn_fatal("i can't put this value");
 #endif
@@ -326,9 +291,6 @@ static inline void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE valu
   }
 
   p->tbl[key] = value;
-#else
-  st_insert(p->tbl, (st_data_t)key, value);
-#endif
 }
 
 static inline void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSAtom atom, BYTE value) {
@@ -340,13 +302,9 @@ static inline void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembrane *mem, 
 }
 
 static inline void sproc_tbl_unput(SimplyProcessTableRef p, LmnWord key) {
-#ifdef TIME_OPT
   if (p->cap < key || p->tbl[key] == SPROC_TBL_INIT_V) return;
   p->n--;
   p->tbl[key] = SPROC_TBL_INIT_V;
-#else
-  st_delete(p->tbl, (st_data_t)key, NULL);
-#endif
 }
 
 static inline void sproc_tbl_unput_atom(SimplyProcessTableRef p, LmnSAtom atom) {
@@ -358,16 +316,12 @@ static inline void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembrane *mem
 }
 
 static inline int sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value) {
-#ifdef TIME_OPT
   if (p->cap > key && p->tbl[key] != SPROC_TBL_INIT_V) {
     if (value) *value = p->tbl[key];
     return 1;
   } else {
     return 0;
   }
-#else
-  return st_lookup(p->tbl, key, (st_data_t *)value);
-#endif
 }
 
 static inline int sproc_tbl_get_by_atom(SimplyProcessTableRef p, LmnSAtom atom, BYTE *value) {
@@ -379,12 +333,7 @@ static inline int sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembrane *mem
 }
 
 static inline BOOL sproc_tbl_contains(SimplyProcessTableRef p, LmnWord key) {
-#ifdef TIME_OPT
   return key < p->cap && p->tbl[key] != SPROC_TBL_INIT_V;
-#else
-  LmnWord t;
-  return sproc_tbl_get(p, key, &t);
-#endif
 }
 
 static inline BOOL sproc_tbl_contains_atom(SimplyProcessTableRef p, LmnSAtom atom) {
@@ -396,13 +345,8 @@ static inline BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembrane *
 }
 
 static inline BOOL sproc_tbl_get_flag(SimplyProcessTableRef p, LmnWord key, BYTE flag) {
-#ifdef TIME_OPT
   if (p->cap > key && p->tbl[key] != SPROC_TBL_INIT_V) return p->tbl[key] & flag;
   else return 0;
-#else
-  LmnWord t;
-  return st_lookup(p->tbl, key, &t) && (t & flag);
-#endif
 }
 
 static inline BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSAtom key, LmnWord flag) {
@@ -414,7 +358,6 @@ static inline BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembran
 }
 
 static inline void sproc_tbl_unset_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag) {
-#ifdef TIME_OPT
   if (p->cap <= key) {
     sproc_tbl_expand(p, key);
   }
@@ -424,18 +367,9 @@ static inline void sproc_tbl_unset_flag(SimplyProcessTableRef p, LmnWord key, Lm
     p->n++;
     p->tbl[key] = 0;
   }
-#else
-  st_data_t t;
-  if (st_lookup(p->tbl, (st_data_t)key, &t)) {
-    st_insert(p->tbl, (st_data_t)key, ((LmnWord)t) | flag);
-  } else {
-    st_insert(p->tbl, (st_data_t)key, flag);
-  }
-#endif
 }
 
 static inline void sproc_tbl_set_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag) {
-#ifdef TIME_OPT
   if (p->cap <= key) {
     sproc_tbl_expand(p, key);
   }
@@ -445,14 +379,6 @@ static inline void sproc_tbl_set_flag(SimplyProcessTableRef p, LmnWord key, LmnW
     p->n++;
     p->tbl[key] = flag;
   }
-#else
-  st_data_t t;
-  if (st_lookup(p->tbl, (st_data_t)key, &t)) {
-    st_insert(p->tbl, (st_data_t)key, ((LmnWord)t) | flag);
-  } else {
-    st_insert(p->tbl, (st_data_t)key, flag);
-  }
-#endif
 }
 
 static inline void sproc_tbl_set_atom_flag(SimplyProcessTableRef p, LmnSAtom key, LmnWord flag) {

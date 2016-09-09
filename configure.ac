@@ -60,7 +60,6 @@ default_enable_devel=no
 default_enable_debug=no
 default_enable_gprof=no
 default_enable_profile=no
-default_enable_timeopt=yes
 default_enable_jni=no
 default_enable_tcmalloc=yes
 default_enable_minmax=no
@@ -99,12 +98,6 @@ AC_ARG_ENABLE([profile],
                               [turn on runtime profiler (default no)])],
               [],
               [enable_profile="$default_enable_profile"])
-
-AC_ARG_ENABLE([time_opt],
-              [AS_HELP_STRING([--enable-time-opt],
-                              [turn on optimization for runtime performance (default yes)])],
-              [],
-              [enable_time_opt="$default_enable_timeopt"])
 
 AC_ARG_ENABLE([jni],
               [AS_HELP_STRING([--enable-jni],
@@ -174,14 +167,6 @@ if test "$enable_profile" = "yes"; then
   AC_DEFINE([PROFILE], 1, [enable profile])
 else
   AC_MSG_RESULT([enable profile: no])
-fi
-
-# optimization for runtime performance
-if test "$enable_time_opt" = "no"; then
-  AC_MSG_RESULT([enable time-opt: no])
-else
-  AC_MSG_RESULT([enable time-opt: yes])
-  AC_DEFINE([TIME_OPT], 1, [enable timeopt])
 fi
 
 # jni

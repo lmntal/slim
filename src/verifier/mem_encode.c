@@ -1575,22 +1575,12 @@ static void write_rulesets(LmnMembrane *mem, BinStrPtrRef bsp)
 static Vector *mem_functors(LmnMembrane *mem)
 {
   Vector *v = vec_make(16);
-#ifdef TIME_OPT
   int i_atomlist;
   for (i_atomlist = mem->max_functor-1; i_atomlist >=0; i_atomlist--) {
     if (mem->atomset[i_atomlist] && !LMN_IS_PROXY_FUNCTOR(i_atomlist)) {
       vec_push(v, i_atomlist);
     }
   }
-#else
-  AtomListEntry *ent;
-  LmnFunctor f;
-  EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
-    if (!LMN_IS_PROXY_FUNCTOR(f)) {
-      vec_push(v, f);
-    }
-  }));
-#endif
   vec_sort(v, comp_functor_greater_f);
   return v;
 }
@@ -2278,9 +2268,7 @@ static void dump_mems(LmnMembrane *mem,
 
 
 
-#ifndef TIME_OPT
-# define BS_MEMEQ_OLD
-#endif
+// BS_MEMEQ_OLD is never defined
 #ifdef BS_MEMEQ_OLD
 # define LmnMeqLog struct VisitLog
 #else

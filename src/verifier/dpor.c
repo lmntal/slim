@@ -482,7 +482,6 @@ static BOOL contextC1s_are_depend(ContextC1Ref src, ContextC1Ref dst)
   rhs_tbl = src->RHS_procs;
   lhs_tbl = dst->LHS_procs;
 
-#ifdef TIME_OPT
   for (i = 0; i < rhs_tbl->size; i++) {
     if (rhs_tbl->tbl[i] != ULONG_MAX) {
       LmnWord t;
@@ -493,10 +492,6 @@ static BOOL contextC1s_are_depend(ContextC1Ref src, ContextC1Ref dst)
       }
     }
   }
-
-#else
-  lmn_fatal("unsupported");
-#endif
 
   return FALSE;
 }

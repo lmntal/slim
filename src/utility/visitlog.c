@@ -49,12 +49,8 @@ void proc_tbl_init_with_size(ProcessTableRef p, unsigned long size)
 {
   p->n    = 0;
   p->size = size;
-#ifdef TIME_OPT
   p->tbl  = LMN_NALLOC(LmnWord, p->size);
   memset(p->tbl, 0xffU, sizeof(LmnWord) * p->size);
-#else
-  p->tbl = st_init_ptrtable();
-#endif
 }
 
 ProcessTableRef proc_tbl_make(void)
@@ -71,11 +67,7 @@ ProcessTableRef proc_tbl_make_with_size(unsigned long size)
 
 void proc_tbl_destroy(ProcessTableRef p)
 {
-#ifdef TIME_OPT
   LMN_FREE(p->tbl);
-#else
-  st_free_table(p->tbl);
-#endif
 }
 
 
@@ -89,17 +81,12 @@ void proc_tbl_free(ProcessTableRef p)
 void proc_tbl_clear(ProcessTableRef p)
 {
   p->n = 0;
-#ifdef TIME_OPT
   memset(p->tbl, 0xff, sizeof(LmnWord) * p->size);
-#else
-  st_clear(p->tbl);
-#endif
 }
 
 
 int proc_tbl_foreach(ProcessTableRef p, int(*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg)
 {
-#ifdef TIME_OPT
   unsigned long i, n;
 
   n = 0;
@@ -110,16 +97,12 @@ int proc_tbl_foreach(ProcessTableRef p, int(*func)(LmnWord key, LmnWord val, Lmn
     }
   }
   return 0;
-#else
-  return st_foreach(p->tbl, func, arg);
-#endif
 }
 
 
 
 BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b)
 {
-#ifdef TIME_OPT
   if (a->n != b->n) return FALSE;
   else {
     unsigned int i, a_checked;
@@ -136,11 +119,6 @@ BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b)
 
     return TRUE;
   }
-
-
-#else
-  return (a->n == b->n) && st_equals(a->tbl, b->tbl);
-#endif
 }
 
 
@@ -157,12 +135,8 @@ void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
 {
   p->n   = 0;
   p->cap = size;
-#ifdef TIME_OPT
   p->tbl = LMN_NALLOC(BYTE, p->cap);
   memset(p->tbl, SPROC_TBL_INIT_V, sizeof(BYTE) * p->cap);
-#else
-  p->tbl = st_init_ptrtable();
-#endif
 }
 
 void sproc_tbl_init(SimplyProcessTableRef p)
@@ -172,11 +146,7 @@ void sproc_tbl_init(SimplyProcessTableRef p)
 
 void sproc_tbl_destroy(SimplyProcessTableRef p)
 {
-#ifdef TIME_OPT
   LMN_FREE(p->tbl);
-#else
-  st_free_table(p->tbl);
-#endif
 }
 
 

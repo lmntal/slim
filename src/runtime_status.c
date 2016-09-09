@@ -461,11 +461,7 @@ static void dump_execution_stat(FILE *f)
 #else
   profile = "OFF";
 #endif
-#ifdef TIME_OPT
   timeopt = "ON";
-#else
-  timeopt = "OFF";
-#endif
 #ifdef HAVE_TCMALLOC
   tcmalloc = "ON";
 #else

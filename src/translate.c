@@ -120,7 +120,6 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
       v = lmn_register_make(warry_size_org);
 
       /** copymapの情報を基に変数配列を書換える */
-#ifdef TIME_OPT
       for (i = 0; i < warry_use_org; i++) {
         LmnWord t;
         v[i].at = at(rc, i);
@@ -149,20 +148,6 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
           v[i].wt = wt(rc, i);
         }
       }
-#else
-      for (i = 0; i < warry_size_org; i++) {
-        v[i].at = at(rc, i);
-        if (LMN_ATTR_IS_DATA(v[i].at)) {
-          v[i].wt = (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), (LmnLinkAttr)v[i].at);
-        }
-        else if (proc_tbl_get(copymap, wt(rc, i), &t)) {
-          v[i].wt = t;
-        }
-        else if(wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-          v[i].wt = (LmnWord)tmp_global_root;
-        }
-      }
-#endif
       proc_tbl_free(copymap);
 
       /** SWAP */

@@ -109,17 +109,10 @@
 /* ファンクタIDの取得/設定, ファンクタIDからリンク数の取得のユーティリティ（プロキシはリンク1本分余分にデータ領域があるので分岐する） */
 
 /* アトムATOMのプロセスIDを取得/設定 */
-#ifdef TIME_OPT
-#  define LMN_SATOM_ID(ATOM)              (*(((LmnWord *)(ATOM)) + 2))
-#  define LMN_SATOM_SET_ID(ATOM, ID)      (LMN_SATOM_ID(ATOM) = (ID))
-#  define LMN_FUNCTOR_SHIFT               (3)
-#  define LMN_LINK_SHIFT                  (4)
-#else
-#  define LMN_SATOM_ID(ATOM)              ((LmnWord)(ATOM))
-#  define LMN_SATOM_SET_ID(ATOM, ID)
-#  define LMN_FUNCTOR_SHIFT               (2)
-#  define LMN_LINK_SHIFT                  (3)
-#endif
+#define LMN_SATOM_ID(ATOM)              (*(((LmnWord *)(ATOM)) + 2))
+#define LMN_SATOM_SET_ID(ATOM, ID)      (LMN_SATOM_ID(ATOM) = (ID))
+#define LMN_FUNCTOR_SHIFT               (3)
+#define LMN_LINK_SHIFT                  (4)
 
 #define LMN_SATOM_GET_FUNCTOR(ATOM)     LMN_FUNCTOR(*(((LmnWord *)LMN_SATOM(ATOM)) + LMN_FUNCTOR_SHIFT))
 #define LMN_SATOM_SET_FUNCTOR(ATOM, X)  (*(LmnFunctor*)((LmnWord*)(ATOM) + LMN_FUNCTOR_SHIFT) = (X))

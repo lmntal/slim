@@ -50,11 +50,7 @@
 #include "error.h"
 #include "functor.h"
 
-#ifdef TIME_OPT
 typedef struct AtomListEntry **AtomSet;
-#else
-typedef struct SimpleHashtbl AtomSet;
-#endif
 
 #define NEW_ATOMLIST
 
@@ -251,13 +247,8 @@ struct LmnMembrane {
 #define lmn_mem_child_head(M)        ((M)->child_head)
 #define lmn_mem_next(M)              ((M)->next)
 #define lmn_mem_prev(M)              ((M)->prev)
-#ifdef TIME_OPT
-# define lmn_mem_id(M)               ((M)->id)
-# define lmn_mem_set_id(M, n)        ((M)->id = (n))
-#else
-# define lmn_mem_id(M)               ((LmnWord)(M))
-# define lmn_mem_set_id(M, n)
-#endif
+#define lmn_mem_id(M)               ((M)->id)
+#define lmn_mem_set_id(M, n)        ((M)->id = (n))
 
 LmnMembrane *lmn_mem_make(void);
 void lmn_mem_free(LmnMembrane *mem);
@@ -383,15 +374,11 @@ static inline void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem) {
 }
 
 static inline AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f) {
-#ifdef TIME_OPT
   if ((f < mem->atomset_size) && mem->atomset[f]) {
     return mem->atomset[f];
   } else {
     return NULL;
   }
-#else
-  return (AtomListEntry *)hashtbl_get_default(&mem->atomset, f, 0);
-#endif
 }
 
 /* 自身を含めた全ての先祖膜を起こす */
@@ -626,21 +613,12 @@ void lmn_mem_relink_atom_args(LmnMembrane *mem,
                               LmnAtom atom0, LmnLinkAttr attr0, int pos0,
                               LmnAtom atom1, LmnLinkAttr attr1, int pos1);
 
-#ifdef TIME_OPT
 typedef int AtomListIter;
 #define atomlist_iter_initializer(AS)      (0)
 #define atomlist_iter_condition(Mem, Iter) ((Iter) < lmn_mem_max_functor(Mem))
 #define atomlist_iter_next(Iter)           ((Iter)++)
 #define atomlist_iter_get_entry(Mem, Iter) lmn_mem_get_atomlist(Mem, Iter)
 #define atomlist_iter_get_functor(Iter)    (Iter)
-#else
-typedef HashIterator AtomListIter;
-#define atomlist_iter_initalizer(AS)       hashtbl_iterator(&(AS))
-#define atomlist_iter_condition(Mem, Iter) (!hashtbliter_isend(&Iter))
-#define atomlist_iter_next(Iter)           hashtbliter_next(&Iter)
-#define atomlist_iter_get_entry(Mem, Iter) ((AtomListEntry *)hashtbliter_entry(&(Iter))->data)
-#define atomlist_iter_get_functor(Iter)    ((LmnFunctor)hashtbliter_entry(&(Iter))->key)
-#endif
 
 
 #define EACH_ATOMLIST_WITH_FUNC(MEM, ENT, F, CODE)                             \

@@ -176,7 +176,6 @@ void lmn_run(Vector *start_rulesets)
   static LmnMembrane *mem;
   static LmnReactCxt mrc;
 
-#ifdef TIME_OPT
   /* 通常実行では非決定実行とは異なりProcess IDを
    * 1から再割り当てする機会(状態圧縮と復元)が存在しない.
    * 破棄したProcessのIDを使い回す必要がある.
@@ -184,7 +183,6 @@ void lmn_run(Vector *start_rulesets)
   if (!env_proc_id_pool()) {
     env_set_proc_id_pool(vec_make(64));
   }
-#endif
 
   /* interactive: normal_cleaningフラグがONの場合は後始末 */
   if (lmn_env.normal_cleaning) {
@@ -254,11 +252,9 @@ void lmn_run(Vector *start_rulesets)
     lmn_mem_free(mem);
     mem_react_cxt_destroy(&mrc);
   }
-#ifdef TIME_OPT
   if (env_proc_id_pool()) {
     vec_free(env_proc_id_pool());
   }
-#endif
 
 }
 
@@ -947,7 +943,6 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
           }
 
           /** copymapの情報を基に変数配列を書換える */
-#ifdef TIME_OPT
           for (i = 0; i < n; i++) {
             LmnWord t;
             v[i].at = at(rc, i);
@@ -989,28 +984,6 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
               v[i].wt = wt(rc, i);
             }
           }
-#else
-          for (i = 0; i < warry_size_org; i++) {
-            v[i].at = at(rc, i);
-            if (LMN_ATTR_IS_DATA(v[i].at)) {
-              if (v[i].at == LMN_HL_ATTR) {
-                if (proc_tbl_get_by_hlink(copymap, lmn_hyperlink_at_to_hl(LMN_SATOM(wt(rc, i))), &t)) {
-                  v[i].wt = (LmnWord)lmn_hyperlink_hl_to_at((HyperLink *)t);
-                } else {
-                  v[i].wt = (LmnWord)wt(rc, i);//new_hlink命令等の場合
-                  //lmn_fatal("implementation error");
-                }
-              }
-              v[i].wt = (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), (LmnLinkAttr)v[i].at);
-            }
-            else if (proc_tbl_get(copymap, wt(rc, i), &t)) {
-              v[i].wt = t;
-            }
-            else if(wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-              v[i].wt = (LmnWord)tmp_global_root;
-            }
-          }
-#endif
           proc_tbl_free(copymap);
 
           /** 変数配列および属性配列をコピーと入れ換え, コピー側を書き換える */
