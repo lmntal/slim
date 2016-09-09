@@ -537,7 +537,7 @@ static inline void move_atom_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
 static inline void move_atom_to_atomlist_head(LmnSAtom a, LmnMembrane *mem){
   //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda
   move_symbol_atom_to_atomlist_head(a, mem);
-  }
+}
 
 static inline void move_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
   move_symbol_atomlist_to_atomlist_tail(a, mem);
