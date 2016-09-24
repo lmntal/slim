@@ -773,6 +773,18 @@ static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v)
 }
 
 
+BOOL mc_vec_states_valid(Vector *v) {
+  unsigned int i, j;
+  for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
+    State *s, *t;
+    s = (State *)vec_get(v, i);
+    t = (State *)vec_get(v, j);
+    if (!state_succ_contains(s, t)) return FALSE;
+  }
+
+  return TRUE;
+}
+
 static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg)
 {
   StateSpaceRef ss;

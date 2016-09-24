@@ -453,7 +453,7 @@ static inline mhash_t mhash_symbol(LmnSAtom atom)
 
 
 /* データアトムatomのハッシュ値を返す. */
-static inline mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr) {
+mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr) {
   switch (attr) {
     case LMN_INT_ATTR:
       /* こっちの方が本当は好ましいけど遅いから, しょうがない. */

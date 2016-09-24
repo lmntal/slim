@@ -59,17 +59,7 @@
 
 #define MC_GET_PROPERTY(S, A)  ((A) ? automata_get_state(A, state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
 
-static inline BOOL mc_vec_states_valid(Vector *v) {
-  unsigned int i, j;
-  for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
-    State *s, *t;
-    s = (State *)vec_get(v, i);
-    t = (State *)vec_get(v, j);
-    if (!state_succ_contains(s, t)) return FALSE;
-  }
-
-  return TRUE;
-}
+BOOL mc_vec_states_valid(Vector *v);
 
 void mc_print_vec_states(StateSpaceRef ss,
                          Vector     *v,

@@ -160,9 +160,7 @@ BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int ato
 void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl);
 
 /* ハイパーリンクhlのハッシュ値を返す. */
-static inline unsigned long lmn_hyperlink_hash(HyperLink *hl) {
-  return lmn_hyperlink_element_num(hl);
-}
+unsigned long lmn_hyperlink_hash(HyperLink *hl);
 
 /* cldoc:end-category() */
 

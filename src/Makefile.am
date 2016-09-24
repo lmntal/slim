@@ -63,6 +63,7 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c inte
 slim_SOURCES =                                                     \
 	main.c                          lmntal.h                         \
 	alloc.c                         atom.h                           \
+	atom.c                                                           \
 	membrane.c                      membrane.h                       \
 	rule.c                          rule.h                           \
 	error.c                         error.h                          \

@@ -115,6 +115,56 @@ void lmn_rule_free(LmnRuleRef rule)
   LMN_FREE(rule);
 }
 
+
+st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule) {
+  return rule->history_tbl;
+}
+
+lmn_interned_str lmn_rule_get_pre_id(LmnRuleRef rule) {
+  return rule->pre_id;
+}
+
+void lmn_rule_set_pre_id(LmnRuleRef rule, lmn_interned_str t) {
+  rule->pre_id = t;
+}
+
+/* ルールの処理を行う関数を返す。ルールが関数を持たなければNULLを返す */
+LmnTranslated lmn_rule_get_translated(LmnRuleRef rule) {
+  return rule->translated;
+}
+
+/* ルールの処理を行う中間語命令列を変換したバイト列を返す。ルールが列を
+   持たなければNULLを返す。*/
+BYTE *lmn_rule_get_inst_seq(LmnRuleRef rule) {
+  return rule->inst_seq;
+}
+
+/* ルールの名前を返す */
+lmn_interned_str lmn_rule_get_name(LmnRuleRef rule) {
+  return rule->name;
+}
+
+/* ルール名のセット */
+void lmn_rule_set_name(LmnRuleRef rule, lmn_interned_str rule_name) {
+  rule->name = rule_name;
+}
+
+LmnCost lmn_rule_get_cost(LmnRuleRef rule) {
+  return rule->cost;
+}
+
+void lmn_rule_set_cost(LmnRuleRef rule, LmnCost rule_cost) {
+ rule->cost = rule_cost;
+}
+
+BOOL lmn_rule_is_invisible(LmnRuleRef rule) {
+  return rule->is_invisible == TRUE;
+}
+
+void lmn_rule_init_uniq_rule(LmnRuleRef rule) {
+  rule->history_tbl = st_init_numtable();
+}
+
 LmnRuleRef dummy_rule(void)
 {
   static struct LmnRule rule;
@@ -319,6 +369,61 @@ unsigned long lmn_ruleset_space(LmnRuleSetRef rs)
   }
   return ret;
 }
+
+
+void lmn_ruleset_validate_atomic(LmnRuleSetRef rs) {
+  rs->is_atomic_valid = TRUE;
+}
+
+void lmn_ruleset_invalidate_atomic(LmnRuleSetRef rs) {
+  rs->is_atomic_valid = FALSE;
+}
+
+BOOL lmn_ruleset_is_valid_atomic(LmnRuleSetRef rs) {
+  return rs->is_atomic_valid;
+}
+
+/* Returns the # of rules in ruleset */
+unsigned int lmn_ruleset_rule_num(LmnRuleSetRef ruleset) {
+  return ruleset->num;
+}
+
+/* Returns the ith rule in ruleset */
+LmnRuleRef lmn_ruleset_get_rule(LmnRuleSetRef ruleset, int i) {
+  return ruleset->rules[i];
+}
+
+/* Returns id of ruleset */
+int lmn_ruleset_get_id(LmnRuleSetRef ruleset) {
+  return ruleset->id;
+}
+
+AtomicType lmn_ruleset_atomic_type(LmnRuleSetRef ruleset) {
+  return ruleset->atomic;
+}
+
+void lmn_ruleset_set_atomic(LmnRuleSetRef ruleset, AtomicType t) {
+  ruleset->atomic = t;
+}
+
+/* Returns RuleSet associated with id. If nothing is, returns NULL */
+LmnRuleSetRef lmn_ruleset_from_id(int id) {
+  if (ruleset_table->size <= (unsigned int)id) return NULL;
+  else return ruleset_table->entry[id];
+}
+
+BOOL lmn_ruleset_is_copy(LmnRuleSetRef ruleset) {
+  return ruleset->is_copy;
+}
+
+BOOL lmn_ruleset_has_uniqrule(LmnRuleSetRef ruleset) {
+  return ruleset->has_uniqrule;
+}
+
+LmnRuleRef *lmn_ruleset_get_rules(LmnRuleSetRef ruleset) {
+  return ruleset->rules;
+}
+
 
 /* 2つのrulesetが同じruleを持つか判定する.
  * (ruleの順序はソースコード依存) */

@@ -1062,3 +1062,8 @@ void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl)
   if (root != start_hl) vec_push(tree, (LmnWord)root);
   vec_push(tree, (LmnWord)start_hl);
 }
+
+/* ハイパーリンクhlのハッシュ値を返す. */
+unsigned long lmn_hyperlink_hash(HyperLink *hl) {
+  return lmn_hyperlink_element_num(hl);
+}

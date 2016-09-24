@@ -79,25 +79,10 @@ typedef struct TreeCompressData {
   unsigned short byte_length;
 } TreeCompressData;
 
-static inline void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref)
-{
-  memcpy(&tcd->root_ref, &ref, sizeof(TreeRootRef));
-}
-
-static inline void tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref)
-{
-  memcpy(ref, &tcd->root_ref, sizeof(TreeRootRef));
-}
-
-static inline unsigned short tcd_get_byte_length(TreeCompressData *data)
-{
-  return data->byte_length;
-}
-
-static inline void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length)
-{
-  data->byte_length = byte_length;
-}
+void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref);
+void tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref);
+unsigned short tcd_get_byte_length(TreeCompressData *data);
+void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 
 /* Descriptor */
 struct State {                 /* Total:72(36)byte */

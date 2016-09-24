@@ -58,6 +58,27 @@
 
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org, State *ref_s);
 
+void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref)
+{
+  memcpy(&tcd->root_ref, &ref, sizeof(TreeRootRef));
+}
+
+void tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref)
+{
+  memcpy(ref, &tcd->root_ref, sizeof(TreeRootRef));
+}
+
+unsigned short tcd_get_byte_length(TreeCompressData *data)
+{
+  return data->byte_length;
+}
+
+void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length)
+{
+  data->byte_length = byte_length;
+}
+
+
 /*----------------------------------------------------------------------
  * State
  */

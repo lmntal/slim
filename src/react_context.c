@@ -245,3 +245,29 @@ void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
 }
 
 
+LmnWord mc_react_cxt_expanded_pop(LmnReactCxt *cxt) {
+  vec_pop(RC_EXPANDED_RULES(cxt));
+  if (RC_MC_USE_DMEM(cxt)) {
+    return vec_pop(RC_MEM_DELTAS(cxt));
+  } else {
+    return vec_pop(RC_EXPANDED(cxt));
+  }
+}
+
+LmnWord mc_react_cxt_expanded_get(LmnReactCxt *cxt, unsigned int i) {
+  if (RC_MC_USE_DMEM(cxt)) {
+    return vec_get(RC_MEM_DELTAS(cxt), i);
+  } else {
+    return vec_get(RC_EXPANDED(cxt), i);
+  }
+}
+
+unsigned int mc_react_cxt_succ_num_org(LmnReactCxt *cxt) {
+  return RC_ND_ORG_SUCC_NUM(cxt);
+}
+
+unsigned int mc_react_cxt_expanded_num(LmnReactCxt *cxt) {
+  return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
+                             : vec_num(RC_EXPANDED(cxt));
+}
+

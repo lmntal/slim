@@ -207,118 +207,16 @@ void profile_statespace(LmnWorkerGroup *wp);
 RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRuleRef r);
 void rule_profiler_free(RuleProfiler *p);
 
-static inline double get_cpu_time(void);
-static inline double get_wall_time(void);
-static inline void profile_finish_timer(int type);
-static inline void profile_start_timer(int type);
-static inline void profile_remove_space(int type, unsigned long size);
-static inline void profile_add_space(int type, unsigned long size);
-static inline void profile_countup(int type);
-static inline void profile_peakcounter_pop(PeakCounter *p, unsigned long size);
+double get_cpu_time(void);
+double get_wall_time(void);
+void profile_finish_timer(int type);
+void profile_start_timer(int type);
+void profile_remove_space(int type, unsigned long size);
+void profile_add_space(int type, unsigned long size);
+void profile_countup(int type);
+void profile_peakcounter_pop(PeakCounter *p, unsigned long size);
 
 
-static inline void profile_peakcounter_add(PeakCounter *p, unsigned long size)
-{
-  p->cur += size;
-  if (p->cur > p->peak) {
-    p->peak = p->cur;
-  }
-}
-
-static inline void profile_peakcounter_set_v(PeakCounter *p, unsigned long size)
-{
-  p->cur = size;
-  if (p->cur > p->peak) {
-    p->peak = p->cur;
-  }
-}
-
-
-static inline void profile_total_space_update(StateSpaceRef ss)
-{
-  unsigned long sum;
-  MCProfiler3 *p;
-  unsigned int i;
-
-  p = &(lmn_prof.lv3[env_my_thread_id()]);
-  sum = 0;
-  for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
-    if (i == PROFILE_SPACE__TOTAL ||
-        i == PROFILE_SPACE__REDUCED_MEMSET ||
-        i == PROFILE_SPACE__REDUCED_BINSTR) continue;
-    else sum += p->spaces[i].space.cur;
-  }
-
-  sum += statespace_space(ss);
-  profile_peakcounter_set_v(&(p->spaces[PROFILE_SPACE__TOTAL].space), sum);
-}
-
-static inline void profile_peakcounter_pop(PeakCounter *p, unsigned long size)
-{
-  p->cur -= size;
-}
-
-static inline void profile_add_space(int type, unsigned long size)
-{
-  MemoryProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].spaces[type]);
-  profile_peakcounter_add(&p->num, 1);
-  profile_peakcounter_add(&p->space, size);
-}
-
-static inline void profile_remove_space(int type, unsigned long size)
-{
-  if (lmn_prof.valid) { /* finalize処理で現在のメモリ使用量が不明になってしまうので.. */
-    MemoryProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].spaces[type]);
-    profile_peakcounter_pop(&p->num, 1);
-    profile_peakcounter_pop(&p->space, size);
-  }
-}
-
-static inline void time_profiler_start(TimeProfiler *p)
-{
-  p->called_num++;
-  p->tmp_start = get_cpu_time();
-}
-
-static inline void time_profiler_finish(TimeProfiler *p)
-{
-  p->total_time += get_cpu_time() - p->tmp_start;
-}
-
-static inline void profile_start_timer(int type)
-{
-  TimeProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].times[type]);
-  time_profiler_start(p);
-}
-
-static inline void profile_finish_timer(int type)
-{
-  TimeProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].times[type]);
-  time_profiler_finish(p);
-}
-
-static inline void profile_countup(int type)
-{
-  MCProfiler3 *p = &lmn_prof.lv3[env_my_thread_id()];
-  p->counters[type]++;
-}
-
-static inline void profile_count_add(int type, unsigned long num)
-{
-  lmn_prof.lv3[env_my_thread_id()].counters[type] += num;
-}
-
-static inline void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r)
-{
-  st_data_t t = 0;
-  if (st_lookup(lmn_prof.prules, (st_data_t)r, &t)) {
-    lmn_prof.cur = (RuleProfiler *)t;
-  } else {
-    RuleProfiler *p = rule_profiler_make(lmn_ruleset_get_id(src), r);
-    lmn_prof.cur = p;
-    st_add_direct(lmn_prof.prules, (st_data_t)r, (st_data_t)p);
-  }
-}
 
 #ifdef PROFILE
 #  define profile_backtrack()    if (lmn_prof.cur && !lmn_env.findatom_parallel_mode) ((lmn_prof.cur)->backtrack++)
@@ -333,50 +231,6 @@ static inline void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r)
 #  define profile_finish_trial()
 #  define profile_apply()
 #endif
-
-
-/* ------------------------------------------------------------------------
- * CPU時間・実経過時間を返す.
- * 取得可能な時間がナノ秒ではあるが精度もその通りであるとは限らないため注意
- */
-
-/* スレッド単位で計測したCPU時間は,
- * プロセッサ間でスレッドがスイッチした場合に誤差がでるので結果は鵜呑みせずあくまで目安とする */
-static inline double get_cpu_time()
-{
-#ifdef ENABLE_TIME_PROFILE
-# if defined(HAVE_LIBRT) && defined(CLOCK_THREAD_CPUTIME_ID)
-  /* 環境によってはCLOCK_THREAD_CPUTIME_IDが定義されていない. */
-  struct timespec ts;
-  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
-  return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
-# else
-  /* この場合, CPU Usageはプロセス単位(全スレッド共有)になってしまう */
-  return clock() / (double)CLOCKS_PER_SEC;
-# endif
-#
-#else
-  fprintf(stderr, "not support the time profiler on this environment.");
-#endif
-}
-
-static inline double get_wall_time()
-{
-#ifdef ENABLE_TIME_PROFILE
-# ifdef HAVE_LIBRT
-  struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9; /* ナノ秒 */
-# else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return tv.tv_sec + (double)tv.tv_usec * 1e-6; /* マイクロ秒 */
-# endif
-#
-#else
-  fprintf(stderr, "not support the time profiler on this environment.");
-#endif
-}
 
 /* cldoc:end-category() */
 

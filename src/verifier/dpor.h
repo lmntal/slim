@@ -125,55 +125,13 @@ BOOL dpor_transition_gen_RHS(McDporData   *mc,
                              LmnRegister  *v);
 
 
-static inline void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f) {
-  LmnWord t;
-  BYTE flags;
+void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f);
 
-  d = DPOR_DATA();
-  if (proc_tbl_get(d->wt_flags, proc_id, &t)) { /* CONTAINS */
-    flags = (BYTE)t;
-  } else {                                            /* NEW */
-    flags = LHS_DEFAULT;
-  }
+void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f);
 
-  LHS_FL_SET(flags, set_f);
-  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
-}
+void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms);
 
-static inline void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
-  LmnWord t;
-  BYTE flags;
-
-  d = DPOR_DATA();
-  if (proc_tbl_get(d->wt_flags, proc_id, &t)) { /* CONTAINS */
-    flags = (BYTE)t;
-  } else {                                      /* NEW */
-    flags = 0;
-    LMN_ASSERT(0);
-  }
-
-  LHS_FL_UNSET(flags, unset_f);
-  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
-}
-
-static inline void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms) {
-  vec_push(d->wt_gatoms, (vec_data_t)atoms);
-}
-
-static inline void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms) {
-  if (vec_peek(d->wt_gatoms) == (vec_data_t)atoms) {
-    vec_pop(d->wt_gatoms);
-  } else {
-    /* pushした順にpopされるので, ここに来ることはまずないが念のため書いておく */
-    unsigned int i;
-    for (i = 0; i < vec_num(d->wt_gatoms); i++) {
-      vec_data_t t = vec_get(d->wt_gatoms, i);
-      if (t == (vec_data_t)atoms) {
-        vec_pop_n(d->wt_gatoms, i);
-      }
-    }
-  }
-}
+void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms);
 
 
 
