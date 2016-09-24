@@ -62,7 +62,7 @@ struct TreeNodeStr {
   int extra;
 };
 
-inline uint64_t murmurhash64(const void * key, int len, unsigned int seed)
+uint64_t murmurhash64(const void * key, int len, unsigned int seed)
 {
   const uint64_t m = 0xc6a4a7935bd1e995;
   const int r = 47;
@@ -105,7 +105,7 @@ inline uint64_t murmurhash64(const void * key, int len, unsigned int seed)
   return h;
 }
 
-inline uint64_t mix64(uint64_t key)
+uint64_t mix64(uint64_t key)
 {
   key = (~key) + (key << 21); // key = (key << 21) - key - 1;
   key = key ^ (((int64_t)key) >> 24);
@@ -118,14 +118,14 @@ inline uint64_t mix64(uint64_t key)
 }
 
 
-inline int tree_get_split_position(int start, int end)
+int tree_get_split_position(int start, int end)
 {
   int size = end - start;
   return (int)(size / 2.0);
 }
 
 
-inline TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end)
+TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end)
 {
   unsigned long long ret;
   int copy_len = TREE_UNIT_SIZE;
@@ -140,26 +140,26 @@ inline TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end)
 }
 
 
-inline uint64_t hash_node(TreeNodeElement left, TreeNodeElement right)
+uint64_t hash_node(TreeNodeElement left, TreeNodeElement right)
 {
   struct TreeNode node = { .left=left, .right=right };
   return murmurhash64(&node, 16, 0x5bd1e995);
 }
 
 
-inline BOOL is_compress_node(TreeNodeElement left, TreeNodeElement right)
+BOOL is_compress_node(TreeNodeElement left, TreeNodeElement right)
 {
   return ((left & 0x00000000FFFFFFFF) == left && (right & 0x00000000FFFFFFFF) == right);
 }
 
 
-inline BOOL tree_node_equal(TreeNodeRef node1, TreeNodeElement left, TreeNodeElement right)
+BOOL tree_node_equal(TreeNodeRef node1, TreeNodeElement left, TreeNodeElement right)
 {
   return node1->left == left && node1->right == right;
 }
 
 
-inline LmnBinStrRef binstr_make(unsigned int len)
+LmnBinStrRef binstr_make(unsigned int len)
 {
   int real_len  = ((len + 1)/ TAG_IN_BYTE);
   LmnBinStrRef bs = LMN_MALLOC(struct LmnBinStr);
@@ -171,7 +171,7 @@ inline LmnBinStrRef binstr_make(unsigned int len)
 }
 
 
-inline TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right)
+TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right)
 {
   TreeNodeRef node = LMN_MALLOC(struct TreeNode);
   node->left = left;

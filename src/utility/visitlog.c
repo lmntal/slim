@@ -219,7 +219,7 @@ void simplylog_init(SimplyLog s)
   simplylog_init_with_size(s, PROC_TBL_DEFAULT_SIZE);
 }
 
-inline void simplylog_init_with_size(SimplyLog s, unsigned long size)
+void simplylog_init_with_size(SimplyLog s, unsigned long size)
 {
   sproc_tbl_init_with_size(&s->tbl, size);
   tracker_init(&s->tracker);

@@ -898,7 +898,7 @@ LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, ProcessTableRef *ret_copyma
 }
 
 
-inline ProcessTableRef lmn_mem_copy_cells_ex(LmnMembrane *dst,
+ProcessTableRef lmn_mem_copy_cells_ex(LmnMembrane *dst,
                                         LmnMembrane *src,
                                         BOOL        hl_nd)
 {

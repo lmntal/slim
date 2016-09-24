@@ -23,7 +23,7 @@ AC_SUBST(PROFILER_SO_VERSION)
 # Checks for programs.
 #
 
-CFLAGS="-O3 $CFLAGS"
+CFLAGS="-flto $CFLAGS"
 CXXFLAGS="-g -O2 -mmmx -msse $CXXFLAGS"
 
 AC_LANG(C)

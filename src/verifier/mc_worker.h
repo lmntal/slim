@@ -400,7 +400,7 @@ void lmn_workergroup_free(LmnWorkerGroup *wg);
 void launch_lmn_workers(LmnWorkerGroup *wg);
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root);
 void lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
-inline LmnWorker *lmn_worker_make_minimal(void);
+LmnWorker *lmn_worker_make_minimal(void);
 LmnWorker *lmn_worker_make(StateSpaceRef  ss,
                            unsigned long  id,
                            BOOL           flags);
