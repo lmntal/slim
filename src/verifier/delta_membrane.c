@@ -848,9 +848,9 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d,
    * srcvecのリンクが直接データアトムに接続している場合の処理をする */
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
-    if (LMN_ATTR_IS_DATA(l->pos)) {
+    if (LMN_ATTR_IS_DATA(LinkObjGetPos(l))) {
       if (dmem_root_is_new_mem(root_d, mem))
-        lmn_mem_remove_data_atom(mem, l->ap, l->pos);
+        lmn_mem_remove_data_atom(mem, LinkObjGetAtom(l), LinkObjGetPos(l));
       else
         dmem_root_get_mem_delta(root_d, mem)->data_atom_diff--;
     }
@@ -904,22 +904,22 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
     LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
     LmnAtom cpatom;
 
-    if (LMN_ATTR_IS_DATA(l->pos)) {
-      cpatom = lmn_copy_data_atom(l->ap, l->pos);
+    if (LMN_ATTR_IS_DATA(LinkObjGetPos(l))) {
+      cpatom = lmn_copy_data_atom(LinkObjGetAtom(l), LinkObjGetPos(l));
       if (d) {
-        dmem_put_atom(d, mem, cpatom, l->pos);
+        dmem_put_atom(d, mem, cpatom, LinkObjGetPos(l));
       } else {
-        lmn_mem_push_atom(mem, cpatom, l->pos);
+        lmn_mem_push_atom(mem, cpatom, LinkObjGetPos(l));
       }
     }
-    else if (!proc_tbl_get_by_atom(atommap, LMN_SATOM(l->ap), &t)) {
+    else if (!proc_tbl_get_by_atom(atommap, LMN_SATOM(LinkObjGetAtom(l)), &t)) {
       /* symbol atom: コピー済みでなければコピーする */
-      if (LMN_SATOM_GET_FUNCTOR(LMN_SATOM(l->ap)) == LMN_UNIFY_FUNCTOR) {
+      if (LMN_SATOM_GET_FUNCTOR(LMN_SATOM(LinkObjGetAtom(l))) == LMN_UNIFY_FUNCTOR) {
         /* insertconnectorsinnullされた'='アトムは膜に所属しない */
-        cpatom = LMN_ATOM(dmem_root_copy_eqatom_with_data(LMN_SATOM(l->ap)));
+        cpatom = LMN_ATOM(dmem_root_copy_eqatom_with_data(LMN_SATOM(LinkObjGetAtom(l))));
       }
       else {
-        cpatom = LMN_ATOM(dmem_root_copy_satom_with_data(root_d, LMN_SATOM(l->ap)));
+        cpatom = LMN_ATOM(dmem_root_copy_satom_with_data(root_d, LMN_SATOM(LinkObjGetAtom(l))));
         if (d) {
           dmem_put_symbol_atom(d, mem, LMN_SATOM(cpatom));
         } else {
@@ -927,16 +927,16 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d,
         }
       }
 
-      proc_tbl_put_atom(atommap, LMN_SATOM(l->ap), (LmnWord)cpatom);
+      proc_tbl_put_atom(atommap, LMN_SATOM(LinkObjGetAtom(l)), (LmnWord)cpatom);
       /* 根のリンクのリンクポインタを0に設定する */
-      LMN_SATOM_SET_LINK(cpatom, l->pos, 0);
-      vec_push(&stack, l->ap);
+      LMN_SATOM_SET_LINK(cpatom, LinkObjGetPos(l), 0);
+      vec_push(&stack, LinkObjGetAtom(l));
     } else {
       /* コピー済みの場合はスタックには追加しない */
       cpatom = LMN_ATOM(t);
-      LMN_SATOM_SET_LINK(cpatom, l->pos, 0);
+      LMN_SATOM_SET_LINK(cpatom, LinkObjGetPos(l), 0);
     }
-    vec_push(*ret_dstlovec, (LmnWord)LinkObj_make(cpatom, l->pos));
+    vec_push(*ret_dstlovec, (LmnWord)LinkObj_make(cpatom, LinkObjGetPos(l)));
   }
 
   while (vec_num(&stack) > 0) {

@@ -1199,7 +1199,17 @@ static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
   destmem->is_activated = TRUE;
 }
 
+struct LinkObj {
+  LmnAtom ap;
+  LmnLinkAttr pos;
+};
 
+LmnAtom LinkObjGetAtom(LinkObjRef o) {
+  return o->ap;
+}
+LmnLinkAttr LinkObjGetPos(LinkObjRef o) {
+  return o->pos;
+}
 LinkObjRef LinkObj_make(LmnAtom ap, LmnLinkAttr pos)
 {
   LinkObjRef ret = LMN_MALLOC(struct LinkObj);

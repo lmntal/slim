@@ -3271,7 +3271,7 @@ label_skip_data_atom:
         case LINK_LIST: /* LinkObjをfreeするのはここ？ */
         {
           LinkObjRef lo = (LinkObjRef)vec_get((Vector *)wt(rc, listi), (unsigned int)posi);
-          warry_set(rc, dsti, lo->ap, lo->pos, TT_ATOM);
+          warry_set(rc, dsti, LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM);
           break;
         }
       }
@@ -4756,8 +4756,8 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         case LINK_LIST: /* LinkObjをfreeするのはここ？ */
         {
           LinkObjRef lo = (LinkObjRef)vec_get((Vector *)wt(rc, listi), (unsigned int)posi);
-          wt_set(rc, dsti, lo->ap);
-          at_set(rc, dsti, lo->pos);
+          wt_set(rc, dsti, LinkObjGetAtom(lo));
+          at_set(rc, dsti, LinkObjGetPos(lo));
           break;
         }
         default:

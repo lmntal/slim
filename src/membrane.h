@@ -98,12 +98,10 @@ void move_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem);
 /** -----
  *  リンクオブジェクトの代替
  */
-struct LinkObj {
-  LmnAtom ap;
-  LmnLinkAttr pos;
-};
 typedef struct LinkObj *LinkObjRef;
 
+LmnAtom LinkObjGetAtom(LinkObjRef o);
+LmnLinkAttr LinkObjGetPos(LinkObjRef o);
 LinkObjRef LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
 
 /** -----

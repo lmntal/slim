@@ -79,7 +79,7 @@ void integer_set(LmnReactCxt *rc,
 
     l = (LinkObjRef)vec_get(dstlovec, 0);
     lmn_mem_newlink(mem, n, LMN_INT_ATTR, 0,
-                    l->ap, t2, LMN_ATTR_GET_VALUE(l->pos));
+                    LinkObjGetAtom(l), t2, LMN_ATTR_GET_VALUE(LinkObjGetPos(l)));
     lmn_mem_push_atom(mem, n, LMN_INT_ATTR);
 
     for (j = 0; j < vec_num(dstlovec); j++) LMN_FREE(vec_get(dstlovec, j));

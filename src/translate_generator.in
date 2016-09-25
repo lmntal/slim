@@ -576,7 +576,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
     case LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
       LinkObjRef lo = (LinkObjRef)vec_get((Vector *)wt(rc, $1), (unsigned int)$2);
-      warry_set(rc, $0, lo->ap, lo->pos, TT_ATOM);
+      warry_set(rc, $0, LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM);
       break;
     }
   }
