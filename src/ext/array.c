@@ -55,7 +55,7 @@ static int array_atom_type; /* special atom type */
 /*
  * Internal Constructor
  */
-static LmnArrayRef make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
+static LmnArrayRef make_array(LmnMembraneRef mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
   unsigned long i;
   LmnAtom v;
@@ -97,12 +97,12 @@ static LmnArrayRef make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value
   return a;
 }
 
-LmnArrayRef lmn_make_array(LmnMembrane *mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
+LmnArrayRef lmn_make_array(LmnMembraneRef mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
   return make_array(mem, size, init_value, init_type);
 }
 
-void lmn_array_free(LmnArrayRef array, LmnMembrane *mem)
+void lmn_array_free(LmnArrayRef array, LmnMembraneRef mem)
 {
   unsigned long i;
 
@@ -163,7 +163,7 @@ LmnArrayRef lmn_array_copy(LmnArrayRef array)
  * -a2: 配列
  */
 void cb_array_new(LmnReactCxt *rc,
-    LmnMembrane *mem,
+    LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
     LmnAtom a2, LmnLinkAttr t2)
@@ -191,7 +191,7 @@ void cb_array_new(LmnReactCxt *rc,
  * +a0: 配列
  */
 void cb_array_free(LmnReactCxt *rc,
-    LmnMembrane *mem,
+    LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0)
 {
   lmn_array_free(LMN_ARRAY(a0), mem);
@@ -206,7 +206,7 @@ void cb_array_free(LmnReactCxt *rc,
  * -a2: 新配列
  */
 void cb_array_size(LmnReactCxt *rc,
-    LmnMembrane *mem,
+    LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
     LmnAtom a2, LmnLinkAttr t2)
@@ -231,7 +231,7 @@ void cb_array_size(LmnReactCxt *rc,
  * -a3: 新配列
  */
 void cb_array_get(LmnReactCxt *rc,
-    LmnMembrane *mem,
+    LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
     LmnAtom a2, LmnLinkAttr t2,
@@ -279,7 +279,7 @@ void cb_array_get(LmnReactCxt *rc,
  * -a3: 新配列
  */
 void cb_array_put(LmnReactCxt *rc,
-    LmnMembrane *mem,
+    LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
     LmnAtom a2, LmnLinkAttr t2,

@@ -59,14 +59,14 @@
  */
 
 
-static inline void do_mc(LmnMembrane *world_mem, AutomataRef a, Vector *psyms, int thread_num);
+static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms, int thread_num);
 static void mc_dump(LmnWorkerGroup *wp);
 
 
 /* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
 void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms)
 {
-  static LmnMembrane *mem;
+  static LmnMembraneRef mem;
 
   if (lmn_env.nd_cleaning) {
     /* nd_cleaning状態の場合は、グローバルルート膜の解放を行う */
@@ -93,14 +93,14 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms)
 }
 
 
-static inline void do_mc(LmnMembrane *world_mem_org,
+static inline void do_mc(LmnMembraneRef world_mem_org,
                          AutomataRef    a,
                          Vector      *psyms,
                          int         thread_num)
 {
   LmnWorkerGroup *wp;
   StateSpaceRef states;
-  LmnMembrane *mem;
+  LmnMembraneRef mem;
   State *init_s;
   BYTE p_label;
 
@@ -198,9 +198,9 @@ static void mc_dump(LmnWorkerGroup *wp)
  *  =====================================================
  */
 
-static inline void mc_gen_successors_inner(LmnReactCxt *rc, LmnMembrane *cur_mem);
+static inline void mc_gen_successors_inner(LmnReactCxt *rc, LmnMembraneRef cur_mem);
 static inline void stutter_extension(State       *s,
-                                     LmnMembrane *mem,
+                                     LmnMembraneRef mem,
                                      BYTE        next_label,
                                      LmnReactCxt *rc,
                                      BOOL        flags);
@@ -216,7 +216,7 @@ void mc_expand(const StateSpaceRef ss,
                Vector           *psyms,
                BOOL             f)
 {
-  LmnMembrane *mem;
+  LmnMembraneRef mem;
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
@@ -317,7 +317,7 @@ void mc_store_successors(const StateSpaceRef ss,
     TransitionRef src_t;
     st_data_t tmp;
     State *src_succ, *succ;
-    LmnMembrane *src_succ_m;
+    LmnMembraneRef src_succ_m;
 
     /* 状態sのi番目の遷移src_tと遷移先状態src_succを取得 */
     if (!has_trans_obj(s)) {
@@ -417,15 +417,15 @@ void mc_store_successors(const StateSpaceRef ss,
  * ルール適用検査を行う
  * 子膜からルール適用を行っていく
  */
-BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembrane *cur_mem)
+BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembraneRef cur_mem)
 {
   BOOL ret_flag = FALSE;
 
-  for (; cur_mem; cur_mem = cur_mem->next) {
+  for (; cur_mem; cur_mem = lmn_mem_next(cur_mem)) {
     unsigned long org_num = mc_react_cxt_expanded_num(rc);
 
     /* 代表子膜に対して再帰する */
-    if (mc_expand_inner(rc, cur_mem->child_head)) {
+    if (mc_expand_inner(rc, lmn_mem_child_head(cur_mem))) {
       ret_flag = TRUE;
     }
     if (lmn_mem_is_active(cur_mem)) {
@@ -445,7 +445,7 @@ BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembrane *cur_mem)
  *  TransitionをRC_EXPANDEDへセットする.
  *  生成された状態は重複（多重辺）を含む */
 void mc_gen_successors(State       *src,
-                       LmnMembrane *mem,
+                       LmnMembraneRef mem,
                        BYTE        state_name,
                        LmnReactCxt *rc,
                        BOOL        f)
@@ -475,7 +475,7 @@ void mc_gen_successors(State       *src,
     if (mc_use_delta(f)) {
       news = state_make_minimal();
     } else {
-      news = state_make((LmnMembrane *)vec_get(expanded_roots, i),
+      news = state_make((LmnMembraneRef)vec_get(expanded_roots, i),
                         state_name,
                         mc_use_canonical(f));
     }
@@ -508,7 +508,7 @@ void mc_gen_successors(State       *src,
 
 /* 膜memから, 性質ルールとシステムルールの同期積によって遷移可能な全状態(or遷移)をベクタに積む */
 void mc_gen_successors_with_property(State         *s,
-                                     LmnMembrane   *mem,
+                                     LmnMembraneRef   mem,
                                      AutomataStateRef p_s,
                                      LmnReactCxt   *rc,
                                      Vector        *propsyms,
@@ -593,7 +593,7 @@ void mc_gen_successors_with_property(State         *s,
  * 膜memとmemに対応する状態sをコピーし, 性質ラベルnext_labelを持った状態として,
  * サクセッサ展開の一時領域(in ReactCxt)に追加する */
 static inline void stutter_extension(State       *s,
-                                     LmnMembrane *mem,
+                                     LmnMembraneRef mem,
                                      BYTE        next_label,
                                      LmnReactCxt *rc,
                                      BOOL        f)
@@ -638,7 +638,7 @@ static inline void stutter_extension(State       *s,
 }
 
 
-static inline void mc_gen_successors_inner(LmnReactCxt *rc, LmnMembrane *cur_mem)
+static inline void mc_gen_successors_inner(LmnReactCxt *rc, LmnMembraneRef cur_mem)
 {
 #ifdef PROFILE
   if(lmn_env.profile_level >= 3) {

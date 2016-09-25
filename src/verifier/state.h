@@ -68,7 +68,7 @@ typedef void*  state_data_t;
 //};
 //typedef union state_data_t state_data_t;
 //union state_data_t { /* 8(4)Byte */
-//  LmnMembrane       *mem;             /*  8(4)byte: LMNtalプログラムの状態であるグローバルルート膜へのポインタ */
+//  LmnMembraneRef       mem;             /*  8(4)byte: LMNtalプログラムの状態であるグローバルルート膜へのポインタ */
 //  LmnBinStr          compress_mem;    /*  8(4)byte: 膜memをエンコードしたバイナリストリング */
 //}
 
@@ -280,9 +280,9 @@ struct State {                 /* Total:72(36)byte */
 #define DEFAULT_TRANSITION_ID  0
 #define DEFAULT_PROP_AUTOMATA  NULL
 
-State       *state_make(LmnMembrane *mem, BYTE state_name, BOOL encode);
+State       *state_make(LmnMembraneRef mem, BYTE state_name, BOOL encode);
 State       *state_make_minimal(void);
-State       *state_copy(State *src, LmnMembrane *src_mem);
+State       *state_copy(State *src, LmnMembraneRef src_mem);
 void         state_free(State *s);
 void         state_succ_set(State *s, Vector *v);
 void         state_succ_add(State *s, succ_data_t succ);
@@ -294,9 +294,9 @@ LmnBinStrRef    state_calc_mem_dump(State *s);
 LmnBinStrRef    state_calc_mem_dump_with_z(State *s);
 LmnBinStrRef    state_calc_mem_dump_with_tree(State *s);
 LmnBinStrRef    state_calc_mem_dummy(State *s);
-void         state_calc_hash(State *s, LmnMembrane *mem, BOOL encode);
+void         state_calc_hash(State *s, LmnMembraneRef mem, BOOL encode);
 void         state_free_compress_mem(State *s);
-LmnMembrane *state_mem_copy(State *state);
+LmnMembraneRef state_mem_copy(State *state);
 int          state_cmp(State *s1, State *s2);
 int          state_cmp_with_compress(State *s1, State *s2);
 int          state_cmp_with_tree(State *s1, State *s2);
@@ -304,8 +304,8 @@ void         state_binstr_d_compress(State *s);
 LmnBinStrRef    state_binstr_reconstructor(State *s);
 void         state_calc_binstr_delta(State *s);
 
-static inline LmnMembrane   *state_restore_mem(State *s);
-static inline LmnMembrane   *state_restore_mem_inner(State *s, BOOL flag);
+static inline LmnMembraneRef   state_restore_mem(State *s);
+static inline LmnMembraneRef   state_restore_mem_inner(State *s, BOOL flag);
 static inline unsigned long  state_id(State *s);
 static inline void           state_id_issue(State *s);
 static inline void           state_set_format_id(State *s, unsigned long v);
@@ -313,8 +313,8 @@ static inline unsigned long  state_format_id(State *s, BOOL is_formated);
 static inline BYTE           state_property_state(State *s);
 static inline void           state_set_property_state(State *s, BYTE label);
 static inline unsigned long  state_hash(State *s);
-static inline LmnMembrane   *state_mem(State *s);
-static inline void           state_set_mem(State *s, LmnMembrane *mem);
+static inline LmnMembraneRef   state_mem(State *s);
+static inline void           state_set_mem(State *s, LmnMembraneRef mem);
 static inline void           state_unset_mem(State *s);
 static inline LmnBinStrRef      state_binstr(State *s);
 static inline void           state_set_binstr(State *s, LmnBinStrRef bs);
@@ -403,7 +403,7 @@ void state_print_error_path(State *s, LmnWord _fp);
 /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
  * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
  * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
-static inline LmnMembrane *state_restore_mem(State *s) {
+static inline LmnMembraneRef state_restore_mem(State *s) {
   return state_restore_mem_inner(s, TRUE);
 }
 
@@ -411,7 +411,7 @@ static inline LmnMembrane *state_restore_mem(State *s) {
  * flagが真の場合, デコード済みのバイナリストリングをキャッシュから取得する.
  * キャッシュにバイナリストリングを置かないケースで使用する場合は,
  * inner関数を直接呼び出し, flagに偽を渡しておけばよい. */
-static inline LmnMembrane *state_restore_mem_inner(State *s, BOOL flag) {
+static inline LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag) {
   if (state_mem(s)) {
     return state_mem(s);
   }
@@ -492,17 +492,17 @@ static inline unsigned long state_hash(State *s) {
 
 /* 状態sに対応する階層グラフ構造を返す.
  * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
-static inline LmnMembrane *state_mem(State *s) {
+static inline LmnMembraneRef state_mem(State *s) {
   if (is_binstr_user(s)) {
     return NULL;
   } else {
-    return (LmnMembrane *)s->data;
+    return (LmnMembraneRef)s->data;
   }
 }
 
 /* 状態sに階層グラフ構造memを割り当てる.
  * sに対してバイナリストリングBを割り当てている場合は, Bのメモリ管理は呼出し側で行う*/
-static inline void state_set_mem(State *s, LmnMembrane *mem) {
+static inline void state_set_mem(State *s, LmnMembraneRef mem) {
   unset_binstr_user(s);
   s->data = (state_data_t)mem;
 }

@@ -199,7 +199,7 @@ static void contextC1_expand_LHS(McDporData      *d,
     if (v[i].tt == TT_ATOM && !LMN_ATTR_IS_DATA(v[i].at)) {
       key = LMN_SATOM_ID((LmnSAtom)v[i].wt);
     } else if (v[i].tt == TT_MEM) {
-      key = lmn_mem_id((LmnMembrane *)v[i].wt);
+      key = lmn_mem_id((LmnMembraneRef)v[i].wt);
       if (i == 0) {
         dpor_LHS_flag_add(d, key, LHS_MEM_GROOT);
       }
@@ -255,7 +255,7 @@ static inline void contextC1_RHS_tbl_unput(ProcessTableRef p, LmnWord key, BYTE 
 /* プロセスIDをkeyに, オペレーションフラグをvalueにしたテーブルを展開する */
 static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d)
 {
-  LmnMembrane *mem;
+  LmnMembraneRef mem;
   unsigned int i;
   BOOL need_act_check;
   BOOL need_flink_check;
@@ -317,7 +317,7 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d)
 
   /* 子膜が削除されるなら, その膜が左辺に出現した遷移に依存する */
   for (i = 0; i < vec_num(&d->del_mems); i++) {
-    LmnMembrane *m = (LmnMembrane *)vec_get(&d->del_mems, i);
+    LmnMembraneRef m = (LmnMembraneRef*)vec_get(&d->del_mems, i);
     contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(m), OP_DEP_EXISTS);
   }
 
@@ -331,7 +331,7 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d)
   if (need_act_check) {
     while (mem) {
       contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_STABLE);
-      mem = mem->parent;
+      mem = lmn_mem_parent(mem);
     }
   }
 }
@@ -593,7 +593,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc,
                                   ContextC1Ref  c,
                                   Vector     *cur_checked_ids)
 {
-  LmnMembrane *cur;
+  LmnMembraneRef cur;
   LmnReactCxt rc;
   Vector nxt_checked_ids;
   unsigned int i;
@@ -1086,7 +1086,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss)
     while (!vec_is_empty(reduced_stack)) {
       State *s, *parent, *ret, tmp_s;
       TransitionRef t;
-      LmnMembrane *s_mem;
+      LmnMembraneRef s_mem;
 
       t = (TransitionRef)vec_pop(reduced_stack);
       s = transition_next_state(t);

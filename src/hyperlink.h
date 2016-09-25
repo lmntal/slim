@@ -45,6 +45,7 @@
 
 #include "lmntal.h"
 #include "functor.h"
+#include "membrane.h"
 #include "utility/internal_hash.h"
 #include "utility/vector.h"
 
@@ -64,7 +65,7 @@
 typedef struct HyperLink{
   LmnSAtom atom;    /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
   LmnHlinkRank rank;
-  LmnMembrane *mem; /* atom の所属膜（findatomで使用）*/
+  LmnMembraneRef mem; /* atom の所属膜（findatomで使用）*/
   unsigned long id; /* 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用) */
 //  long usrid;        /* ユーザがhyperlinkのidを決められるようにするための変数（未実装）*/
   LmnAtom attrAtom;/* ハイパーリンクの属性として扱うアトム rootにのみ持たせる */
@@ -111,7 +112,7 @@ int  lmn_hyperlink_rank(HyperLink *hl);
 int  lmn_hyperlink_element_num(HyperLink *hl);
 BOOL lmn_hyperlink_eq_hl(HyperLink *hl1, HyperLink *hl2);
 BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLinkAttr attr2);
-void lmn_hyperlink_print(LmnMembrane *gr);
+void lmn_hyperlink_print(LmnMembraneRef gr);
 
 
 /* ----------------------------------------------------------------------- *

@@ -205,7 +205,7 @@ unsigned long lmn_string_len(LmnStringRef s)
  */
 
 void cb_string_make(LmnReactCxt *rc,
-                    LmnMembrane *mem,
+                    LmnMembraneRef mem,
                     LmnAtom a0, LmnLinkAttr t0,
                     LmnAtom a1, LmnLinkAttr t1)
 {
@@ -241,7 +241,7 @@ void cb_string_make(LmnReactCxt *rc,
 }
 
 void cb_string_concat(LmnReactCxt *rc,
-                      LmnMembrane *mem,
+                      LmnMembraneRef mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       LmnAtom a1, LmnLinkAttr t1,
                       LmnAtom a2, LmnLinkAttr t2)
@@ -254,7 +254,7 @@ void cb_string_concat(LmnReactCxt *rc,
 }
 
 void cb_string_length(LmnReactCxt *rc,
-                      LmnMembrane *mem,
+                      LmnMembraneRef mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       LmnAtom a1, LmnLinkAttr t1)
 {
@@ -267,7 +267,7 @@ void cb_string_length(LmnReactCxt *rc,
 }
 
 void cb_string_reverse(LmnReactCxt *rc,
-                       LmnMembrane *mem,
+                       LmnMembraneRef mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1)
 {
@@ -285,7 +285,7 @@ void cb_string_reverse(LmnReactCxt *rc,
 }
 
 void cb_string_substr(LmnReactCxt *rc,
-                      LmnMembrane *mem,
+                      LmnMembraneRef mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       long begin, LmnLinkAttr t1,
                       long end, LmnLinkAttr t2,
@@ -316,7 +316,7 @@ void cb_string_substr(LmnReactCxt *rc,
 }
 
 void cb_string_substr_right(LmnReactCxt *rc,
-                            LmnMembrane *mem,
+                            LmnMembraneRef mem,
                             LmnAtom a0, LmnLinkAttr t0,
                             long begin, LmnLinkAttr t1,
                             LmnAtom a2, LmnLinkAttr t2)

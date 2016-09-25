@@ -53,7 +53,7 @@ void init_float(void);
  * N is bound to a floating-point number with the string representation S.
  */
 void float_of_string(LmnReactCxt *rc,
-                     LmnMembrane *mem,
+                     LmnMembraneRef mem,
                      LmnAtom a0, LmnLinkAttr t0,
                      LmnAtom a1, LmnLinkAttr t1)
 {

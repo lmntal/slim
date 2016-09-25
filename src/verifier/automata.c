@@ -643,7 +643,7 @@ PLFormulaRef or_node_make(PLFormulaRef f0, PLFormulaRef f1)
 }
 
 /* 式fとシンボル定義prop_defsを膜memで評価する */
-BOOL eval_formula(LmnMembrane *mem, Vector *prop_defs, PLFormulaRef f)
+BOOL eval_formula(LmnMembraneRef mem, Vector *prop_defs, PLFormulaRef f)
 {
   switch (f->node_type) {
   case N_NEGATION:

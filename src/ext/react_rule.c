@@ -3,15 +3,15 @@
 #include "../dumper.h"
 
 void cb_react_rule(LmnReactCxt *rc,
-			  LmnMembrane *mem,
+			  LmnMembraneRef mem,
 			  LmnAtom rule_mem_proxy, LmnLinkAttr rule_mem_proxy_link_attr,
 			  LmnAtom graph_mem_proxy, LmnLinkAttr graph_mem_proxy_link_attr,
 			  LmnAtom return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
 			  LmnAtom react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
-  LmnMembrane *rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
-  LmnMembrane *graph_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(graph_mem_proxy, 0));
-  LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&(rule_mem->rulesets), 0);
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
+  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(graph_mem_proxy, 0));
+  LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(lmn_mem_get_rulesets(rule_mem), 0);
   LmnRuleRef r = lmn_ruleset_get_rule(rs, 0);
   LmnSAtom result;
   LmnReactCxt tmp_rc;
@@ -44,20 +44,20 @@ void cb_react_rule(LmnReactCxt *rc,
 }
 
 void cb_react_rule_nd(LmnReactCxt *rc,
-			     LmnMembrane *mem,
+			     LmnMembraneRef mem,
 			     LmnAtom rule_mem_proxy, LmnLinkAttr rule_mem_proxy_link_attr,
 			     LmnAtom graph_mem_proxy, LmnLinkAttr graph_mem_proxy_link_attr,
 			     LmnAtom return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
 			     LmnAtom react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
-  LmnMembrane *rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
   LmnAtom in_mem = LMN_SATOM_GET_LINK(graph_mem_proxy, 0);
-  LmnMembrane *graph_mem = LMN_PROXY_GET_MEM(in_mem);
+  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM(in_mem);
 
   lmn_mem_delete_atom(graph_mem, LMN_SATOM_GET_LINK(in_mem, 1), LMN_SATOM_GET_ATTR(in_mem, 1));
   lmn_mem_delete_atom(graph_mem, in_mem, LMN_SATOM_GET_ATTR(LMN_SATOM(graph_mem_proxy), 0));
 
-  LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&(rule_mem->rulesets), 0);
+  LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(lmn_mem_get_rulesets(rule_mem), 0);
   LmnRuleRef r = lmn_ruleset_get_rule(rs, 0);
   LmnReactCxt tmp_rc;
   mc_react_cxt_init(&tmp_rc);
@@ -80,7 +80,7 @@ void cb_react_rule_nd(LmnReactCxt *rc,
 
     for (int i = n1; i >= 0; i--) {
       LmnSAtom cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
-      LmnMembrane *m = (LmnMembrane *)vec_get(RC_EXPANDED(&tmp_rc), i);
+      LmnMembraneRef m = (LmnMembraneRef)vec_get(RC_EXPANDED(&tmp_rc), i);
       LmnSAtom in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
       LmnSAtom out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
       LmnSAtom plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);

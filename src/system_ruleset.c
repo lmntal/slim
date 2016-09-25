@@ -48,7 +48,7 @@
 void init_default_system_ruleset(void);
 
 /* delete out proxies connected each other */
-static BOOL delete_redundant_outproxies(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
+static BOOL delete_redundant_outproxies(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   AtomListEntryRef ent;
   LmnSAtom o0;
@@ -66,8 +66,8 @@ static BOOL delete_redundant_outproxies(LmnReactCxt *rc, LmnMembrane *mem, LmnRu
     if (LMN_SATOM_GET_FUNCTOR(o1) == LMN_OUT_PROXY_FUNCTOR) {
       LmnSAtom i0;
       LmnSAtom i1;
-      LmnMembrane *m0;
-      LmnMembrane *m1;
+      LmnMembraneRef m0;
+      LmnMembraneRef m1;
 
       i0 = LMN_SATOM(LMN_SATOM_GET_LINK(o0, 0));
       i1 = LMN_SATOM(LMN_SATOM_GET_LINK(o1, 0));
@@ -93,7 +93,7 @@ static BOOL delete_redundant_outproxies(LmnReactCxt *rc, LmnMembrane *mem, LmnRu
 }
 
 /* delete in proxies connected each other */
-static BOOL delete_redundant_inproxies(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
+static BOOL delete_redundant_inproxies(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   AtomListEntryRef ent;
   LmnSAtom o0;
@@ -125,7 +125,7 @@ static BOOL delete_redundant_inproxies(LmnReactCxt *rc, LmnMembrane *mem, LmnRul
   return FALSE;
 }
 
-static BOOL mem_eq(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
+static BOOL mem_eq(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   AtomListEntryRef ent;
   LmnSAtom op;
@@ -134,7 +134,7 @@ static BOOL mem_eq(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
   if (!ent) return FALSE;
 
   EACH_ATOM(op, ent, ({
-    LmnMembrane *mem0, *mem1;
+    LmnMembraneRef mem0, mem1;
     LmnSAtom out0, in0, out1, in1, ret, result_atom;
     LmnSAtom temp0, temp1;
     LmnLinkAttr out_attr0, out_attr1, ret_attr;

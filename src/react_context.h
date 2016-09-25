@@ -56,7 +56,7 @@ struct LmnRegister {
 };
 
 struct LmnReactCxt {
-  LmnMembrane *global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
+  LmnMembraneRef global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
   LmnRegister *work_arry;   /* ルール適用レジスタ */
   unsigned int warry_cur;   /* work_arryの現在の使用サイズ */
   unsigned int warry_num;   /* work_arryの最大使用サイズ(SPEC命令指定) */
@@ -65,7 +65,7 @@ struct LmnReactCxt {
   LmnRulesetId atomic_id;   /* atomic step中: atomic set id(signed int), default:-1 */
   ProcessID proc_org_id;    /* atomic step終了時に Process ID をこの値に復帰 */
   ProcessID proc_next_id;   /* atomic step継続時に Process ID をこの値に設定 */
-  LmnMembrane *cur_mem;     /* atomic step継続時に現在膜をこの値に設定 */
+  LmnMembraneRef cur_mem;     /* atomic step継続時に現在膜をこの値に設定 */
   BYTE mode;
   BOOL flag;                /* mode以外に指定するフラグ */
   void *v;                  /* 各mode毎に固有の持ち物 */
@@ -260,7 +260,7 @@ void mem_react_cxt_destroy(LmnReactCxt *cxt);
 void mc_react_cxt_init(LmnReactCxt *cxt);
 void mc_react_cxt_destroy(LmnReactCxt *cxt);
 void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
-                               LmnMembrane *mem,
+                               LmnMembraneRef mem,
                                LmnRuleRef rule);
 void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
                                        struct MemDeltaRoot *d,

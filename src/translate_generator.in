@@ -122,7 +122,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 #insertconnectors LmnInstrVar $list LmnInstrVar
   {
     const Vector v = vec_const_temporary_from_array($1_num, $1);
-    warry_set(rc, $0, insertconnectors(rc, (LmnMembrane *)wt(rc, $2), &v), 0, TT_OTHER);
+    warry_set(rc, $0, insertconnectors(rc, (LmnMembraneRef)wt(rc, $2), &v), 0, TT_OTHER);
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -141,7 +141,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 
 #commit lmn_interned_str LmnLineNum
   {
-    LmnMembrane *ptmp_global_root;
+    LmnMembraneRef ptmp_global_root;
     LmnRegister *v;
     unsigned int org_next_id;
     unsigned int warry_use_org, warry_size_org;
@@ -177,7 +177,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 %   lmn_fatal("I can not find data atoms.");
 % } else {
     {
-      AtomListEntryRef atomlist_ent = lmn_mem_get_atomlist((LmnMembrane*)wt(rc, $1), TR_GFID($2_functor_data));
+      AtomListEntryRef atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)wt(rc, $1), TR_GFID($2_functor_data));
       LmnSAtom atom;
 
       if (atomlist_ent) {
@@ -216,14 +216,14 @@ BOOL interpret_generated(LmnReactCxt *rc,
 
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
   warry_set(rc, $0, LMN_PROXY_GET_MEM(wt(rc, $1)), 0, TT_MEM);
-  if(((LmnMembrane*)wt(rc, $0))->name != TR_GSID($2)) $f;
+  if(LMN_MEM_NAME_ID((LmnMembraneRef)wt(rc, $0)) != TR_GSID($2)) $f;
 
 #anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
   {
-    LmnMembrane *mp = ((LmnMembrane*)wt(rc, $1))->child_head;
-    for (; mp; mp=mp->next) {
+    LmnMembraneRef mp = lmn_mem_child_head((LmnMembraneRef)wt(rc, $1));
+    for (; mp; mp=lmn_mem_next(mp)) {
       warry_set(rc, $0, mp, 0, TT_MEM);
-      if (mp->name == TR_GSID($3)){
+      if (LMN_MEM_NAME_ID(mp) == TR_GSID($3)){
 #__echo_t
         {
           char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
@@ -248,10 +248,10 @@ BOOL interpret_generated(LmnReactCxt *rc,
   *finishflag = 0;
 
 #nmems LmnInstrVar LmnInstrVar
-  if (!lmn_mem_nmems((LmnMembrane*)wt(rc, $0), $1)) $f;
+  if (!lmn_mem_nmems((LmnMembraneRef)wt(rc, $0), $1)) $f;
 
 #norules LmnInstrVar
-  if (((LmnMembrane *)wt(rc, $0))->rulesets.num) $f;
+  if (vec_num(lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, $0)))) $f;
 
 #newatom LmnInstrVar LmnInstrVar $functor
 % switch(targ2_attr){
@@ -274,13 +274,13 @@ BOOL interpret_generated(LmnReactCxt *rc,
 % }
   at_set(rc, $0, $2_attr);
   tt_set(rc, $0, TT_ATOM);
-  lmn_mem_push_atom((LmnMembrane*)wt(rc, $1), wt(rc, $0), $2_attr);
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $1), wt(rc, $0), $2_attr);
 
 #natoms LmnInstrVar LmnInstrVar
-  if (!lmn_mem_natoms((LmnMembrane*)wt(rc, $0), $1)) $f;
+  if (!lmn_mem_natoms((LmnMembraneRef)wt(rc, $0), $1)) $f;
 
 #natomsindirect LmnInstrVar LmnInstrVar
-  if (!lmn_mem_natoms((LmnMembrane*)wt(rc, $0), wt(rc, $1))) $f;
+  if (!lmn_mem_natoms((LmnMembraneRef)wt(rc, $0), wt(rc, $1))) $f;
 
 #alloclink LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_ALLOCLINK(rc, $0, $1, $2);
@@ -289,7 +289,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
   TR_INSTR_UNIFYLINKS(rc, $0, $1, $2);
 
 #newlink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
-  lmn_mem_newlink((LmnMembrane *)wt(rc, $4), wt(rc, $0), at(rc, $0), $1, wt(rc, $2), at(rc, $2), $3);
+  lmn_mem_newlink((LmnMembraneRef)wt(rc, $4), wt(rc, $0), at(rc, $0), $1, wt(rc, $2), at(rc, $2), $3);
 
 #relink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_RELINK(rc, $0, $1, $2, $3, $4);
@@ -300,7 +300,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
   warry_set(rc, $0, LMN_SATOM_GET_LINK(wt(rc, $1), $2), LMN_SATOM_GET_ATTR(wt(rc, $1), $2), TT_ATOM);
 
 #unify LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
-  lmn_mem_unify_atom_args((LmnMembrane *)wt(rc, $4), LMN_SATOM(wt(rc, $0)), $1, LMN_SATOM(wt(rc, $2)), $3);
+  lmn_mem_unify_atom_args((LmnMembraneRef)wt(rc, $4), LMN_SATOM(wt(rc, $0)), $1, LMN_SATOM(wt(rc, $2)), $3);
 
 #proceed
   $s;
@@ -336,8 +336,8 @@ BOOL interpret_generated(LmnReactCxt *rc,
 
 #newmem LmnInstrVar LmnInstrVar LmnInstrVar
   {
-    LmnMembrane *mp = lmn_mem_make();
-    lmn_mem_add_child_mem((LmnMembrane*)wt(rc, $1), mp);
+    LmnMembraneRef mp = lmn_mem_make();
+    lmn_mem_add_child_mem((LmnMembraneRef)wt(rc, $1), mp);
     wt_set(rc, $0, mp);
     tt_set(rc, $0, TT_MEM);
     lmn_mem_set_active(mp, TRUE);
@@ -351,36 +351,36 @@ BOOL interpret_generated(LmnReactCxt *rc,
   tt_set(rc, $0, TT_MEM);
 
 #removeatom LmnInstrVar LmnInstrVar
-  lmn_mem_remove_atom((LmnMembrane*)wt(rc, $1), wt(rc, $0), at(rc, $0));
+  lmn_mem_remove_atom((LmnMembraneRef)wt(rc, $1), wt(rc, $0), at(rc, $0));
 
 #freeatom LmnInstrVar
   lmn_free_atom(wt(rc, $0), at(rc, $0));
 
 #removemem LmnInstrVar LmnInstrVar
-  lmn_mem_remove_mem((LmnMembrane *)wt(rc, $1), (LmnMembrane *)wt(rc, $0));
+  lmn_mem_remove_mem((LmnMembraneRef)wt(rc, $1), (LmnMembraneRef)wt(rc, $0));
 
 #freemem LmnInstrVar
-  lmn_mem_free((LmnMembrane*)wt(rc, $0));
+  lmn_mem_free((LmnMembraneRef)wt(rc, $0));
 
 #addmem LmnInstrVar LmnInstrVar
-  lmn_mem_add_child_mem((LmnMembrane *)wt(rc, $0), (LmnMembrane *)wt(rc, $1));
+  lmn_mem_add_child_mem((LmnMembraneRef)wt(rc, $0), (LmnMembraneRef)wt(rc, $1));
 
 #enqueuemem LmnInstrVar
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembrane *)wt(rc, $0)); /* 通常実行時 */
+    lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembraneRef)wt(rc, $0)); /* 通常実行時 */
   }
 
 #unlockmem LmnInstrVar
 
 #loadruleset LmnInstrVar LmnRulesetId
-  lmn_mem_add_ruleset((LmnMembrane*)wt(rc, $0), lmn_ruleset_from_id(TR_GRID($1)));
+  lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, $0), lmn_ruleset_from_id(TR_GRID($1)));
 
 #loadmodule LmnInstrVar lmn_interned_str
   {
     LmnRuleSetRef ruleset;
     if ((ruleset = lmn_get_module_ruleset(TR_GSID($1)))) {
 #     /* テーブル内にルールセットがある場合 */
-      lmn_mem_add_ruleset((LmnMembrane*)wt(rc, $0), ruleset);
+      lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, $0), ruleset);
     } else {
 #     /* テーブル内にルールセットがない場合 */
       fprintf(stderr, "Undefined module %s\n", lmn_id_to_name(TR_GSID($1)));
@@ -513,7 +513,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 
 #copyatom LmnInstrVar LmnInstrVar LmnInstrVar
   warry_set(rc, $0, lmn_copy_atom(wt(rc, $2), at(rc, $2)), at(rc, $2), TT_ATOM);
-  lmn_mem_push_atom((LmnMembrane *)wt(rc, $1), wt(rc, $0), at(rc, $0));
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $1), wt(rc, $0), at(rc, $0));
 
 #eqatom LmnInstrVar LmnInstrVar
   if (LMN_ATTR_IS_DATA(at(rc, $0)) ||
@@ -607,7 +607,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
     Vector *dstlovec, *retvec;
     ProcessTableRef atommap;
 
-    lmn_mem_copy_ground((LmnMembrane*)wt(rc, $2), srcvec, &dstlovec, &atommap);
+    lmn_mem_copy_ground((LmnMembraneRef)wt(rc, $2), srcvec, &dstlovec, &atommap);
     free_links(srcvec);
 
     /* 返り値の作成 */
@@ -635,7 +635,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 #removeground LmnInstrVar LmnInstrVar
   {
     Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
-    lmn_mem_remove_ground((LmnMembrane*)wt(rc, $1), srcvec);
+    lmn_mem_remove_ground((LmnMembraneRef)wt(rc, $1), srcvec);
     free_links(srcvec);
   }
 
@@ -647,7 +647,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
   }
 
 #stable LmnInstrVar
-  if (lmn_mem_is_active((LmnMembrane *)wt(rc, $0))) $f;
+  if (lmn_mem_is_active((LmnMembraneRef)wt(rc, $0))) $f;
 
 #iadd LmnInstrVar LmnInstrVar LmnInstrVar
   warry_set(rc, $0, (long)wt(rc, $1) + (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
@@ -790,22 +790,22 @@ BOOL interpret_generated(LmnReactCxt *rc,
   tt_set(rc, $0, TT_OTHER);
 
 #setmemname LmnInstrVar lmn_interned_str
-  ((LmnMembrane *)wt(rc, $0))->name = TR_GSID($1);
+  lmn_mem_set_name((LmnMembraneRef)wt(rc, $0), TR_GSID($1));
 
 #copyrules LmnInstrVar LmnInstrVar
   TR_INSTR_COPYRULES(rc, $0, $1);
 
 #removeproxies LmnInstrVar
-  lmn_mem_remove_proxies((LmnMembrane *)wt(rc, $0));
+  lmn_mem_remove_proxies((LmnMembraneRef)wt(rc, $0));
 
 #insertproxies LmnInstrVar LmnInstrVar
-  lmn_mem_insert_proxies((LmnMembrane *)wt(rc, $0), (LmnMembrane *)wt(rc, $1));
+  lmn_mem_insert_proxies((LmnMembraneRef)wt(rc, $0), (LmnMembraneRef)wt(rc, $1));
 
 #deleteconnectors LmnInstrVar LmnInstrVar
   TR_INSTR_DELETECONNECTORS($0, $1);
 
 #removetoplevelproxies LmnInstrVar
-  lmn_mem_remove_toplevel_proxies((LmnMembrane *)wt(rc, $0));
+  lmn_mem_remove_toplevel_proxies((LmnMembraneRef)wt(rc, $0));
 
 #dereffunc LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_DEREFFUNC(rc, $0, $1, $2);
@@ -873,32 +873,32 @@ BOOL interpret_generated(LmnReactCxt *rc,
   }
 
 #addatom LmnInstrVar LmnInstrVar
-  lmn_mem_push_atom((LmnMembrane *)wt(rc, $0), wt(rc, $1), at(rc, $1));
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $0), wt(rc, $1), at(rc, $1));
 
 #movecells LmnInstrVar LmnInstrVar
-  lmn_mem_move_cells((LmnMembrane *)wt(rc, $0), (LmnMembrane *)wt(rc, $1));
+  lmn_mem_move_cells((LmnMembraneRef)wt(rc, $0), (LmnMembraneRef)wt(rc, $1));
 
 #removetemporaryproxies LmnInstrVar
-  lmn_mem_remove_temporary_proxies((LmnMembrane *)wt(rc, $0));
+  lmn_mem_remove_temporary_proxies((LmnMembraneRef)wt(rc, $0));
 
 #nfreelinks LmnInstrVar LmnInstrVar
-  if (!lmn_mem_nfreelinks((LmnMembrane *)wt(rc, $0), $1)) $f;
+  if (!lmn_mem_nfreelinks((LmnMembraneRef)wt(rc, $0), $1)) $f;
 
 #copycells LmnInstrVar LmnInstrVar LmnInstrVar
-  wt_set(rc, $0, lmn_mem_copy_cells((LmnMembrane *)wt(rc, $1), (LmnMembrane *)wt(rc, $2)));
+  wt_set(rc, $0, lmn_mem_copy_cells((LmnMembraneRef)wt(rc, $1), (LmnMembraneRef)wt(rc, $2)));
   tt_set(rc, $0, TT_OTHER);
 
 #lookuplink LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_LOOKUPLINK(rc, $0, $1, $2);
 
 #clearrules LmnInstrVar
-  vec_clear(&((LmnMembrane *)wt(rc, $0))->rulesets);
+  vec_clear(lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, $0)));
 
 #dropmem LmnInstrVar
-  lmn_mem_drop((LmnMembrane *)wt(rc, $0));
+  lmn_mem_drop((LmnMembraneRef)wt(rc, $0));
 
 #testmem LmnInstrVar LmnInstrVar
-  if (LMN_PROXY_GET_MEM(wt(rc, $1)) != (LmnMembrane *)wt(rc, $0)) $f;
+  if (LMN_PROXY_GET_MEM(wt(rc, $1)) != (LmnMembraneRef)wt(rc, $0)) $f;
 
 #iaddfunc LmnInstrVar LmnInstrVar LmnInstrVar
   warry_set(rc, $0, wt(rc, $1) + wt(rc, $2), LMN_INT_ATTR, TT_ATOM);

@@ -92,13 +92,13 @@ static BOOL dump_atom(LmnPortRef port,
                       struct DumpState *s,
                       int call_depth);
 static void lmn_dump_cell_internal(LmnPortRef port,
-                                   LmnMembrane *mem,
+                                   LmnMembraneRef mem,
                                    SimpleHashtbl *ht,
                                    struct DumpState *s);
 
 static void dump_link(LmnPortRef port, LmnSAtom atom, int i, SimpleHashtbl *ht, struct DumpState *s);
 static BOOL lmn_dump_mem_internal(LmnPortRef port,
-                                  LmnMembrane *mem,
+                                  LmnMembraneRef mem,
                                   SimpleHashtbl *ht,
                                   struct DumpState *s);
 
@@ -114,7 +114,7 @@ static BOOL dump_hl_attratom(LmnPortRef port,
 
 static void lmn_dump_atom_json(LmnSAtom atom);
 static void lmn_dump_link_json(LmnSAtom atom, int index);
-static void lmn_dump_mem_json(LmnMembrane *mem);
+static void lmn_dump_mem_json(LmnMembraneRef mem);
 
 static struct AtomRec *atomrec_make()
 {
@@ -449,7 +449,7 @@ static BOOL dump_proxy(LmnPortRef port,
       const LmnSAtom in = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
       if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(in, 1)) &&
           LMN_SATOM_GET_FUNCTOR(LMN_SATOM_GET_LINK(in, 1)) == LMN_UNARY_PLUS_FUNCTOR) {
-        LmnMembrane *mem = LMN_PROXY_GET_MEM(in);
+        LmnMembraneRef mem = LMN_PROXY_GET_MEM(in);
         if (lmn_mem_nfreelinks(mem, 1)) {
           get_atomrec(ht, LMN_SATOM(LMN_SATOM_GET_LINK(in, 1)))->done = TRUE;
           lmn_dump_mem_internal(port, mem, ht, s);
@@ -665,7 +665,7 @@ void lmn_dump_ruleset(LmnPortRef port, struct Vector *v)
 }
 
 static BOOL lmn_dump_mem_internal(LmnPortRef port,
-                                  LmnMembrane *mem,
+                                  LmnMembraneRef mem,
                                   SimpleHashtbl *ht,
                                   struct DumpState *s)
 {
@@ -673,8 +673,8 @@ static BOOL lmn_dump_mem_internal(LmnPortRef port,
 
   hashtbl_put(ht, (HashKeyType)mem, (HashValueType)0);
 
-  if (mem->name != ANONYMOUS) {
-    port_put_raw_s(port, lmn_id_to_name(mem->name));
+  if (LMN_MEM_NAME_ID(mem) != ANONYMOUS) {
+    port_put_raw_s(port, lmn_id_to_name(LMN_MEM_NAME_ID(mem)));
   }
   port_put_raw_s(port, "{");
   lmn_dump_cell_internal(port, mem, ht, s);
@@ -684,7 +684,7 @@ static BOOL lmn_dump_mem_internal(LmnPortRef port,
 }
 
 static void lmn_dump_cell_internal(LmnPortRef port,
-                                   LmnMembrane *mem,
+                                   LmnMembraneRef mem,
                                    SimpleHashtbl *ht,
                                    struct DumpState *s)
 {
@@ -763,13 +763,13 @@ static void lmn_dump_cell_internal(LmnPortRef port,
   }
 
   { /* dump chidren */
-    LmnMembrane *m;
+    LmnMembraneRef m;
     BOOL dumped = FALSE;
-    for (m = mem->child_head; m; m = m->next) {
+    for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
       if (lmn_dump_mem_internal(port, m, ht, s)) {
         dumped = TRUE;
         /* 次の膜が既に出力済みならスキップする */
-        if (m->next && !hashtbl_contains(ht, (HashKeyType)(m->next))) {
+        if (lmn_mem_next(m) && !hashtbl_contains(ht, (HashKeyType)(lmn_mem_next(m)))) {
           port_put_raw_s(port, ", ");
         }
       }
@@ -781,11 +781,11 @@ static void lmn_dump_cell_internal(LmnPortRef port,
   }
 
   if (lmn_env.show_ruleset) {
-    dump_ruleset(port, &mem->rulesets);
+    dump_ruleset(port, lmn_mem_get_rulesets(mem));
   }
 }
 
-static void lmn_dump_cell_nonewline(LmnPortRef port, LmnMembrane *mem)
+static void lmn_dump_cell_nonewline(LmnPortRef port, LmnMembraneRef mem)
 {
   SimpleHashtbl ht;
   struct DumpState s;
@@ -798,7 +798,7 @@ static void lmn_dump_cell_nonewline(LmnPortRef port, LmnMembrane *mem)
   atomrec_tbl_destroy(&ht);
 }
 
-void lmn_dump_cell_stdout(LmnMembrane *mem)
+void lmn_dump_cell_stdout(LmnMembraneRef mem)
 {
   LmnPortRef port = lmn_stdout_port();
   lmn_dump_cell(mem, port);
@@ -806,7 +806,7 @@ void lmn_dump_cell_stdout(LmnMembrane *mem)
   lmn_port_free(port);
 }
 
-void lmn_dump_cell(LmnMembrane *mem, LmnPortRef port)
+void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port)
 {
   switch (lmn_env.output_format) {
   case DEFAULT:
@@ -827,7 +827,7 @@ void lmn_dump_cell(LmnMembrane *mem, LmnPortRef port)
   }
 }
 
-void lmn_dump_mem_stdout(LmnMembrane *mem)
+void lmn_dump_mem_stdout(LmnMembraneRef mem)
 {
   LmnPortRef port = lmn_stdout_port();
   lmn_dump_mem(mem, port);
@@ -836,7 +836,7 @@ void lmn_dump_mem_stdout(LmnMembrane *mem)
 }
 
 /* print membrane structure */
-void lmn_dump_mem(LmnMembrane *mem, LmnPortRef port)
+void lmn_dump_mem(LmnMembraneRef mem, LmnPortRef port)
 {
   switch (lmn_env.output_format) {
   case DEFAULT:
@@ -944,7 +944,7 @@ static void dump_ruleset_dev(struct Vector *v)
 }
 
 
-void lmn_dump_mem_dev(LmnMembrane *mem)
+void lmn_dump_mem_dev(LmnMembraneRef mem)
 {
   AtomListEntryRef ent;
   if (!mem) return;
@@ -961,10 +961,10 @@ void lmn_dump_mem_dev(LmnMembrane *mem)
     }));
   }));
 
-  dump_ruleset_dev(&mem->rulesets);
-  lmn_dump_mem_dev(mem->child_head);
+  dump_ruleset_dev(lmn_mem_get_rulesets(mem));
+  lmn_dump_mem_dev(lmn_mem_child_head(mem));
   fprintf(stdout, "}\n");
-  lmn_dump_mem_dev(mem->next);
+  lmn_dump_mem_dev(lmn_mem_next(mem));
 }
 
 
@@ -972,13 +972,13 @@ void lmn_dump_mem_dev(LmnMembrane *mem)
  * dump dot
  */
 
-static void dump_dot_cell(LmnMembrane *mem,
+static void dump_dot_cell(LmnMembraneRef mem,
                           SimpleHashtbl *ht,
                           int *data_id,
                           int *cluster_id)
 {
   AtomListEntryRef ent;
-  LmnMembrane *m;
+  LmnMembraneRef m;
   LmnPortRef out;
   unsigned int i;
 
@@ -1038,7 +1038,7 @@ static void dump_dot_cell(LmnMembrane *mem,
   }));
 
   /* dump chidren */
-  for (m = mem->child_head; m; m = m->next) {
+  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
     fprintf(stdout, "subgraph cluster%d {\n", *cluster_id);
     (*cluster_id)++;
     dump_dot_cell(m, ht, data_id, cluster_id);
@@ -1046,7 +1046,7 @@ static void dump_dot_cell(LmnMembrane *mem,
   }
 }
 
-void lmn_dump_dot(LmnMembrane *mem)
+void lmn_dump_dot(LmnMembraneRef mem)
 {
   int cluster_id = 0, data_id = 0;
   struct DumpState s;
@@ -1132,7 +1132,7 @@ static void lmn_dump_atom_json(LmnSAtom atom)
   fprintf(stdout, "}");
 }
 
-static void lmn_dump_mem_json(LmnMembrane *mem)
+static void lmn_dump_mem_json(LmnMembraneRef mem)
 {
   if (!mem) return;
 
@@ -1159,9 +1159,9 @@ static void lmn_dump_mem_json(LmnMembrane *mem)
   fprintf(stdout, "],");
   fprintf(stdout, "\"membranes\":[");
   {
-    LmnMembrane *m;
+    LmnMembraneRef m;
     BOOL needs_comma = FALSE;
-    for (m = mem->child_head; m; m = m->next) {
+    for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
       if (needs_comma) fprintf(stdout, ",");
       needs_comma = TRUE;
       lmn_dump_mem_json(m);
@@ -1173,13 +1173,13 @@ static void lmn_dump_mem_json(LmnMembrane *mem)
 }
 
 void cb_dump_mem(LmnReactCxt *rc,
-                 LmnMembrane *mem,
+                 LmnMembraneRef mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,
                  LmnAtom a2, LmnLinkAttr t2)
 {
   LmnAtom in = LMN_SATOM_GET_LINK(a1, 0);
-  LmnMembrane *m = LMN_PROXY_GET_MEM(in);
+  LmnMembraneRef m = LMN_PROXY_GET_MEM(in);
 
   lmn_mem_delete_atom(m, LMN_SATOM_GET_LINK(in, 1), LMN_SATOM_GET_ATTR(in, 1));
   lmn_mem_delete_atom(m, in, LMN_SATOM_GET_ATTR(a1, 0));
@@ -1194,7 +1194,7 @@ void cb_dump_mem(LmnReactCxt *rc,
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     lmn_memstack_delete(RC_MEMSTACK(rc), m);
   }
-  lmn_mem_delete_mem(m->parent, m);
+  lmn_mem_delete_mem(lmn_mem_parent(m), m);
 }
 
 void dumper_init()

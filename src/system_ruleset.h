@@ -43,8 +43,8 @@
 
 #include "membrane.h"
 
-BOOL delete_redundant_outproxies(LmnMembrane *mem);
-BOOL delete_redundant_inproxies(LmnMembrane *mem);
+BOOL delete_redundant_outproxies(LmnMembraneRef mem);
+BOOL delete_redundant_inproxies(LmnMembraneRef mem);
 
 /* cldoc:end-category() */
 

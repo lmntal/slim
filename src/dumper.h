@@ -47,12 +47,12 @@
 
 LMN_EXTERN void dumper_init(void);
 LMN_EXTERN void dumper_finalize(void);
-LMN_EXTERN void lmn_dump_mem_stdout(LmnMembrane *mem);
-LMN_EXTERN void lmn_dump_mem(LmnMembrane *mem, LmnPortRef port);
-LMN_EXTERN void lmn_dump_mem_dev(LmnMembrane *mem);
-LMN_EXTERN void lmn_dump_cell_stdout(LmnMembrane *mem);
-LMN_EXTERN void lmn_dump_cell(LmnMembrane *mem, LmnPortRef port);
-LMN_EXTERN void lmn_dump_dot(LmnMembrane *mem);
+LMN_EXTERN void lmn_dump_mem_stdout(LmnMembraneRef mem);
+LMN_EXTERN void lmn_dump_mem(LmnMembraneRef mem, LmnPortRef port);
+LMN_EXTERN void lmn_dump_mem_dev(LmnMembraneRef mem);
+LMN_EXTERN void lmn_dump_cell_stdout(LmnMembraneRef mem);
+LMN_EXTERN void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port);
+LMN_EXTERN void lmn_dump_dot(LmnMembraneRef mem);
 LMN_EXTERN void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs);
 LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, Vector *v);
 LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnWord atom, LmnLinkAttr attr);

@@ -77,7 +77,7 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
                            LmnRuleRef          rule,
                            lmn_interned_str rule_name,
                            LmnLineNum       line_num,
-                           LmnMembrane      **ptmp_global_root,
+                           LmnMembraneRef      *ptmp_global_root,
                            LmnRegister      **p_v_tmp,
                            unsigned int     *org_next_id)
 {
@@ -103,7 +103,7 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
     } else {
       LmnRegister *v, *tmp;
       ProcessTableRef copymap;
-      LmnMembrane *tmp_global_root;
+      LmnMembraneRef tmp_global_root;
       unsigned int i, warry_size_org, warry_use_org;
 
 #ifdef PROFILE
@@ -137,7 +137,7 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
         else if (v[i].tt == TT_MEM) {
           if (wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
             v[i].wt = (LmnWord)tmp_global_root;
-          } else if (proc_tbl_get_by_mem(copymap, (LmnMembrane *)wt(rc, i), &t)) {
+          } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)wt(rc, i), &t)) {
             v[i].wt = (LmnWord)t;
           } else {
             t = 0;
@@ -170,14 +170,14 @@ BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
                             LmnRuleRef          rule,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
-                            LmnMembrane      **ptmp_global_root,
+                            LmnMembraneRef      *ptmp_global_root,
                             LmnRegister      **p_v_tmp,
                             unsigned int     warry_use_org,
                             unsigned int     warry_size_org)
 {
   if(RC_GET_MODE(rc, REACT_ND)) {
     /* 処理中の変数を外から持ち込む */
-    LmnMembrane *tmp_global_root;
+    LmnMembraneRef tmp_global_root;
     LmnRegister *v;
 
 
@@ -205,7 +205,7 @@ BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
 
 BOOL tr_instr_jump(LmnTranslated   f,
                    LmnReactCxt     *rc,
-                   LmnMembrane     *thisisrootmembutnotused,
+                   LmnMembraneRef     thisisrootmembutnotused,
                    LmnRuleRef         rule,
                    int             newid_num,
                    const int       *newid)
@@ -415,7 +415,7 @@ static void translate_rule(LmnRuleRef rule, const char *header)
 
   for (i = 0; i < vec_num(jump_points) /*変換中にjump_pointsは増えていく*/; i++){
     BYTE *p = (BYTE*)vec_get(jump_points, i);
-    fprintf(OUT, "BOOL %s_%d(LmnReactCxt* rc, LmnMembrane* thisisrootmembutnotused, LmnRule rule)\n", header, i); /* TODO m=wt[0]なのでmは多分いらない */
+    fprintf(OUT, "BOOL %s_%d(LmnReactCxt* rc, LmnMembraneRef thisisrootmembutnotused, LmnRule rule)\n", header, i); /* TODO m=wt[0]なのでmは多分いらない */
     fprintf(OUT, "{\n");
     /* (変換するスタート地点, 変換する必要のある部分の記録, ルールのシグネチャ:trans_**_**_**, 成功時コード, 失敗時コード, インデント) */
     translate_instructions(p, jump_points, header, "return TRUE", "return FALSE", 1);

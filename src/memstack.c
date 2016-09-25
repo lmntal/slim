@@ -42,7 +42,7 @@
 #include "task.h"
 #include "slim_header/memstack.h"
 
-static void memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem);
+static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
 
 LmnMemStack lmn_memstack_make()
 {
@@ -59,34 +59,34 @@ BOOL lmn_memstack_isempty(LmnMemStack memstack)
   return vec_num(memstack) == 0;
 }
 
-void lmn_memstack_push(LmnMemStack memstack, LmnMembrane *mem)
+void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem)
 {
   vec_push(memstack, (LmnWord)mem);
   lmn_mem_set_active(mem, TRUE);
 }
 
-LmnMembrane *lmn_memstack_pop(LmnMemStack memstack)
+LmnMembraneRef lmn_memstack_pop(LmnMemStack memstack)
 {
-  LmnMembrane *m = (LmnMembrane *)vec_pop(memstack);
+  LmnMembraneRef m = (LmnMembraneRef)vec_pop(memstack);
   lmn_mem_set_active(m, FALSE);
   return m;
 }
 
-LmnMembrane *lmn_memstack_peek(LmnMemStack memstack)
+LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack)
 {
-  return (LmnMembrane *)vec_get(memstack, vec_num(memstack)-1);
+  return (LmnMembraneRef)vec_get(memstack, vec_num(memstack)-1);
 }
 
 /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
    に、その膜がスタックに積まれている事がある。そのため、安全な削除を行
    うために、この手続きが必要になる。外部の機能を使わない通常の実行時に
    はこの手続きは必要ない*/
-void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem)
+void lmn_memstack_delete(LmnMemStack memstack, LmnMembraneRef mem)
 {
   long i, j, n = (long)vec_num(memstack);
 
   for (i = n-1; i >= 0; i--) {
-    if ((LmnMembrane *)vec_get(memstack, i) == mem) {
+    if ((LmnMembraneRef)vec_get(memstack, i) == mem) {
       /* 空いた分後ろの要素を前にを詰める */
       for (j = i+1; j < n; j++) {
         vec_set(memstack, j-1, vec_get(memstack, j));
@@ -97,19 +97,19 @@ void lmn_memstack_delete(LmnMemStack memstack, LmnMembrane *mem)
   vec_pop(memstack);
 }
 
-void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem)
+void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem)
 {
   while (!lmn_memstack_isempty(memstack)) lmn_memstack_pop(memstack);
   memstack_reconstruct(memstack, mem);
 }
 
-static void memstack_reconstruct(LmnMemStack memstack, LmnMembrane *mem)
+static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem)
 {
-  LmnMembrane *m;
+  LmnMembraneRef m;
 
   /* 親膜を子膜よりも先に積む */
   lmn_memstack_push(memstack, mem);
-  for (m = mem->child_head; m; m = m->next) {
+  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
     memstack_reconstruct(memstack, m);
   }
 }

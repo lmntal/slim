@@ -465,7 +465,7 @@ static void statetable_memid_rehash(State *s, StateTable *st)
 {
   StateTable  *rehash_tbl;
   State       *new_s;
-  LmnMembrane *m;
+  LmnMembraneRef m;
 
   new_s             = state_make_minimal();
   m                 = lmn_binstr_decode(state_binstr(s));

@@ -202,7 +202,7 @@ PropositionRef propsym_get_proposition(SymbolDefinitionRef s)
   return s ? s->prop : NULL;
 }
 
-BOOL proposition_eval(PropositionRef prop, LmnMembrane *mem)
+BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem)
 {
   LmnReactCxt rc;
   BOOL b;

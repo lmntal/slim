@@ -49,7 +49,7 @@
 # include "runtime_status.h"
 #endif
 
-void atomic_ruleset(LmnReactCxt *rc, LmnMembrane *mem,
+void atomic_ruleset(LmnReactCxt *rc, LmnMembraneRef mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
   if (LMN_INT_ATTR == t0) {
@@ -82,7 +82,7 @@ void atomic_ruleset(LmnReactCxt *rc, LmnMembrane *mem,
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     lmn_memstack_delete(RC_MEMSTACK(rc), mem);
   }
-  lmn_mem_delete_mem(mem->parent, mem);
+  lmn_mem_delete_mem(lmn_mem_parent(mem), mem);
 }
 
 
@@ -95,7 +95,7 @@ void init_atomic(void)
 
 /* this function applies rules in $rs to $mem  as much as possible  */
 static inline BOOL react_ruleset_AMAP(LmnReactCxt *rc,
-                                      LmnMembrane *mem,
+                                      LmnMembraneRef mem,
                                       LmnRuleSetRef rs)
 {
   unsigned int i;
@@ -145,7 +145,7 @@ static inline void abort_atomic_worker(LmnWorker *w)
 /* ルールセットat_setの各ルールを可能な限り適用する.
  * 非決定実行時には状態遷移のサブグラフを構築し, 停止状態をmemの遷移先として生成し, rcに登録する. */
 static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
-                                     LmnMembrane *mem,
+                                     LmnMembraneRef mem,
                                      LmnRuleSetRef  at_set)
 {
   unsigned int i, n, succ_i_from;
@@ -162,7 +162,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
     LmnWorker *w = build_atomic_worker();
     RC_START_ATOMIC_STEP(&worker_rc(w), lmn_ruleset_get_id(at_set));
     for (i = 0; i < n; i++) {
-      State *sub_s = state_make((LmnMembrane *)mc_react_cxt_expanded_pop(rc),
+      State *sub_s = state_make((LmnMembraneRef)mc_react_cxt_expanded_pop(rc),
                                 DEFAULT_STATE_ID,
                                 statespace_use_memenc(worker_states(w)));
       if (sub_s != statespace_insert(worker_states(w), sub_s)) {
@@ -176,7 +176,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
     /* サブルーチン側であるatomic workerの並列実行は想定していないので, 以下の記述でもok */
     ends = statespace_end_states(worker_states(w));
     for (i = 0; i < vec_num(ends); i++) {
-      LmnMembrane *end_m = lmn_binstr_decode(state_binstr((State *)vec_get(ends, i)));
+      LmnMembraneRef end_m = lmn_binstr_decode(state_binstr((State *)vec_get(ends, i)));
       mc_react_cxt_add_expanded(rc, end_m, dummy_rule());
     }
 //    RC_FINISH_ATOMIC_STEP(&WORKER_RC(w)); /* どうせ破棄しちゃうから要らない */
@@ -202,7 +202,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
  * result: ok, b, b, b, b, b.
  */
 static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
-                                      LmnMembrane *mem,
+                                      LmnMembraneRef mem,
                                       LmnRuleSetRef  at_set)
 {
   BOOL ret;
@@ -219,7 +219,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
   else {
     unsigned int j, r_i, succ_i_from;
     BYTE mode_org;
-    LmnMembrane *groot_m;
+    LmnMembraneRef groot_m;
 
     //    lmn_ruleset_validate_atomic(at_set);
     succ_i_from = mc_react_cxt_expanded_num(rc);
@@ -243,13 +243,13 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
       RC_SET_MODE(rc, REACT_STAND_ALONE);
 
       /* ignore all but the last reaction */
-      LmnMembrane *succ_m;
+      LmnMembraneRef succ_m;
 
       LmnRuleRef succ_r = (LmnRuleRef)vec_pop(RC_EXPANDED_RULES(rc));
       if (RC_MC_USE_DMEM(rc)) {
-        succ_m = (LmnMembrane *)vec_pop(RC_MEM_DELTAS(rc));
+        succ_m = (LmnMembraneRef)vec_pop(RC_MEM_DELTAS(rc));
       } else {
-        succ_m = (LmnMembrane *)vec_pop(RC_EXPANDED(rc));
+        succ_m = (LmnMembraneRef)vec_pop(RC_EXPANDED(rc));
       }
       while (succ_i_from < mc_react_cxt_expanded_num(rc)) {
         mc_react_cxt_expanded_pop(rc);
@@ -260,7 +260,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
       //      for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
 
         // restore the current membrane of the last reaction
-        LmnMembrane *cur_mem = RC_CUR_MEM(rc);  
+        LmnMembraneRef cur_mem = RC_CUR_MEM(rc);  
 
         RC_SET_GROOT_MEM(rc, succ_m);
         react_ruleset_AMAP(rc, cur_mem, system_ruleset);
@@ -289,7 +289,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
  * 複数の書換え経路の探索は行わない．
  */
 static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
-                                                   LmnMembrane *mem,
+                                                   LmnMembraneRef mem,
                                                    LmnRuleSetRef  at_set)
 {
   BOOL ret;
@@ -304,7 +304,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
   else {
     unsigned int i, j, succ_i_from;
     BYTE mode_org;
-    LmnMembrane *groot_m;
+    LmnMembraneRef groot_m;
 
     succ_i_from = mc_react_cxt_expanded_num(rc);
     /* 1step目: generate successor membrane */
@@ -325,13 +325,13 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
       RC_SET_MODE(rc, REACT_STAND_ALONE);
 
       /* ignore all but the last reaction */
-      LmnMembrane *succ_m;
+      LmnMembraneRef succ_m;
 
       LmnRuleRef succ_r = (LmnRuleRef)vec_pop(RC_EXPANDED_RULES(rc));
       if (RC_MC_USE_DMEM(rc)) {
-        succ_m = (LmnMembrane *)vec_pop(RC_MEM_DELTAS(rc));
+        succ_m = (LmnMembraneRef)vec_pop(RC_MEM_DELTAS(rc));
       } else {
-        succ_m = (LmnMembrane *)vec_pop(RC_EXPANDED(rc));
+        succ_m = (LmnMembraneRef)vec_pop(RC_EXPANDED(rc));
       }
       while (succ_i_from < mc_react_cxt_expanded_num(rc)) {
         mc_react_cxt_expanded_pop(rc);
@@ -342,7 +342,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
       //    for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
 
         // restore the current membrane of the last reaction
-        LmnMembrane *cur_mem = RC_CUR_MEM(rc);
+        LmnMembraneRef cur_mem = RC_CUR_MEM(rc);
         BOOL reacted;
 
         RC_SET_GROOT_MEM(rc, succ_m);
@@ -373,7 +373,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
 
 
 BOOL react_ruleset_atomic(LmnReactCxt *rc,
-                          LmnMembrane *mem,
+                          LmnMembraneRef mem,
                           LmnRuleSetRef  rs)
 {
   BOOL result = FALSE;

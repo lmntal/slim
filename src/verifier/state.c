@@ -85,7 +85,7 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length)
 
 /* delta-membrane使用時には呼ばない.
  * memに対して一意なIDとなるバイナリストリングを計算した場合は, memを破棄する. */
-State *state_make(LmnMembrane *mem, BYTE property_label, BOOL do_encode)
+State *state_make(LmnMembraneRef mem, BYTE property_label, BOOL do_encode)
 {
   State *new_s = state_make_minimal();
 
@@ -148,7 +148,7 @@ State *state_make_minimal()
 
 /* 膜memを用いて状態sのハッシュ値を計算する.
  * canonicalをTRUEで入力した場合, バイナリストリングの設定まで行う */
-void state_calc_hash(State *s, LmnMembrane *mem, BOOL canonical)
+void state_calc_hash(State *s, LmnMembraneRef mem, BOOL canonical)
 {
   if (canonical) {
     state_set_binstr(s, lmn_mem_encode(mem));
@@ -166,7 +166,7 @@ void state_calc_hash(State *s, LmnMembrane *mem, BOOL canonical)
  * 複製(即ち, deep copy)する.
  * また, これに伴うencode関連の状態フラグもコピーするが, 状態空間構築のためのフラグはコピーしない.
  * なお, 引数memがNULLではない場合は, これをsrcに対応する階層グラフ構造として扱う.　*/
-State *state_copy(State *src, LmnMembrane *mem)
+State *state_copy(State *src, LmnMembraneRef mem)
 {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3 && mem) {
@@ -323,9 +323,9 @@ void state_succ_clear(State *s) {
 
 /* 状態sに対応する階層グラフ構造と等価な階層グラフ構造を新たに構築して返す.
  * 構築できなかった場合は偽を返す. */
-LmnMembrane *state_mem_copy(State *s)
+LmnMembraneRef state_mem_copy(State *s)
 {
-  LmnMembrane *ret = NULL;
+  LmnMembraneRef ret = NULL;
   if (!is_binstr_user(s) && state_mem(s)) {
     ret = lmn_mem_copy(state_mem(s));
   }
@@ -408,7 +408,7 @@ static int state_equals_with_compress(State *check, State *stored)
   else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
-    LmnMembrane *mem = lmn_binstr_decode(bs1);
+    LmnMembraneRef mem = lmn_binstr_decode(bs1);
     t =
       check->state_name == stored->state_name &&
       lmn_mem_equals_enc(bs2, mem);
@@ -454,7 +454,7 @@ int state_cmp_with_compress(State *s1, State *s2)
 int state_cmp_with_compress(State *s1, State *s2)
 {
   if (lmn_env.debug_isomor && !(is_encoded(s1) && is_encoded(s2))) {
-    LmnMembrane *s2_mem;
+    LmnMembraneRef s2_mem;
     LmnBinStrRef s1_mid, s2_mid;
     BOOL org_check, mid_check, meq_check;
 
@@ -548,7 +548,7 @@ static int state_equals_with_tree(State *check, State *stored)
   else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
-    LmnMembrane *mem = lmn_binstr_decode(bs1);
+    LmnMembraneRef mem = lmn_binstr_decode(bs1);
     t =
       check->state_name == stored->state_name &&
       lmn_mem_equals_enc(bs2, mem);
@@ -599,7 +599,7 @@ void state_calc_mem_encode(State *s)
       mid = lmn_mem_encode(state_mem(s));
     }
     else if (state_binstr(s)) {
-      LmnMembrane *m;
+      LmnMembraneRef m;
 
       m   = lmn_binstr_decode(state_binstr(s));
       mid = lmn_mem_encode(m);
@@ -878,7 +878,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner)
 
 void state_print_mem(State *s, LmnWord _fp)
 {
-  LmnMembrane *mem;
+  LmnMembraneRef mem;
   ProcessID org_next_id;
 
   org_next_id = env_next_id();

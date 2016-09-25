@@ -45,12 +45,12 @@
 void init_nlmem(void);
 
 void nlmem_copy(LmnReactCxt *rc,
-                LmnMembrane *mem,
+                LmnMembraneRef mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1,
                 LmnAtom a2, LmnLinkAttr t2)
 {
-  LmnMembrane *org_mem, *trg_mem;
+  LmnMembraneRef org_mem, trg_mem;
   ProcessTableRef atom_map;
   lmn_interned_str copy_tag_name;
   LmnFunctor copy_tag_func;
@@ -95,13 +95,13 @@ void nlmem_copy(LmnReactCxt *rc,
 }
 
 void nlmem_kill(LmnReactCxt *rc,
-                LmnMembrane *mem,
+                LmnMembraneRef mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1)
 {
   LmnFunctor kill_tag_func = LMN_SATOM_GET_FUNCTOR(a1);
   LmnSAtom org_in;
-  LmnMembrane *org_mem;
+  LmnMembraneRef org_mem;
 
   if (LMN_SATOM_GET_FUNCTOR(a0) != LMN_OUT_PROXY_FUNCTOR) {
     fprintf(stderr, "NLMEM.C, nlmem_kill: first argument must be a membrane");

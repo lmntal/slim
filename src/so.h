@@ -93,7 +93,7 @@
                                                                         \
       if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) {                         \
         if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 1, 2 are data */   \
-          lmn_mem_link_data_atoms((LmnMembrane *)wt(rc, mem),           \
+          lmn_mem_link_data_atoms((LmnMembraneRef)wt(rc, mem),           \
                                   wt(rc, link1), at(rc, link1), LINKED_ATOM(link2), attr2);\
         }                                                               \
         else { /* 1 is data */                                          \
@@ -109,16 +109,16 @@
                                                                         \
         if (LMN_ATTR_IS_EX(attr1)) {                                    \
           if (LMN_ATTR_IS_EX(attr2)) { /* 1, 2 are ex */                \
-            lmn_newlink_with_ex((LmnMembrane *)wt(rc, mem),             \
+            lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),             \
                                 LMN_SATOM(LINKED_ATOM(link1)), attr1, 0, \
                                 LMN_SATOM(LINKED_ATOM(link2)), attr2, 0);\
           } else { /* 1 is ex */                                         \
-            lmn_newlink_with_ex((LmnMembrane *)wt(rc, mem),              \
+            lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),              \
                                 LMN_SATOM(LINKED_ATOM(link1)), attr1, 0, \
                                 LMN_SATOM(LINKED_ATOM(link2)), attr2, attr2);\
           }                                                                   \
         } else if (LMN_ATTR_IS_EX(attr2)) { /* 2 is ex */                     \
-          lmn_newlink_with_ex((LmnMembrane *)wt(rc, mem),                     \
+          lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),                     \
                               LMN_SATOM(LINKED_ATOM(link1)), attr1, attr1,    \
                               LMN_SATOM(LINKED_ATOM(link2)), attr2, 0);       \
         } else {                                                              \
@@ -155,7 +155,7 @@
       LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap);               \
       LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr);             \
     } else if (LMN_ATTR_IS_EX(at(rc, atom1))) {                             \
-      lmn_newlink_with_ex((LmnMembrane *)wt(rc, memi),                      \
+      lmn_newlink_with_ex((LmnMembraneRef)wt(rc, memi),                      \
                           LMN_SATOM(wt(rc, atom1)),                         \
                           at(rc, atom1),                                    \
                           pos1,                                             \
@@ -163,7 +163,7 @@
                           0,                                                \
                           attr);                                            \
     } else {                                                                \
-      lmn_newlink_with_ex((LmnMembrane *)wt(rc, memi),                      \
+      lmn_newlink_with_ex((LmnMembraneRef)wt(rc, memi),                      \
                           LMN_SATOM(wt(rc, atom1)),                         \
                           at(rc, atom1),                                    \
                           pos1,                                             \
@@ -178,10 +178,10 @@
   do {                                                                     \
     unsigned int i;                                                        \
     struct Vector *v;                                                      \
-    v = &((LmnMembrane *)wt(rc, srcmemi))->rulesets;                       \
+    v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));                       \
     for (i = 0; i< v->num; i++) {                                          \
       LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));         \
-      lmn_mem_add_ruleset((LmnMembrane *)wt(rc, destmemi), cp);            \
+      lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);            \
       if (RC_GET_MODE(rc, REACT_ATOMIC)) {                                 \
         lmn_ruleset_invalidate_atomic(cp);                                 \
       }                                                                    \
@@ -247,20 +247,20 @@ void tr_instr_commit_ready(LmnReactCxt       *rc,
                            LmnRuleRef           rule,
                            lmn_interned_str  rule_name,
                            LmnLineNum        line_num,
-                           LmnMembrane       **ptmp_global_root,
+                           LmnMembraneRef       *ptmp_global_root,
                            LmnRegister       **V,
                            unsigned int      *org_next_id);
 BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
                             LmnRuleRef          rule,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
-                            LmnMembrane      **ptmp_global_root,
+                            LmnMembraneRef      *ptmp_global_root,
                             LmnRegister      **p_v_tmp,
                             unsigned int     warry_use_org,
                             unsigned int     warry_size_org);
 BOOL tr_instr_jump(LmnTranslated   f,
                    LmnReactCxt     *rc,
-                   LmnMembrane     *thisisrootmembutnotused,
+                   LmnMembraneRef     thisisrootmembutnotused,
                    LmnRuleRef         rule,
                    int             newid_num,
                    const int       *newid);

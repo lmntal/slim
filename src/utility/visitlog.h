@@ -84,21 +84,21 @@ BOOL       proc_tbl_eq(ProcessTableRef a, ProcessTableRef b);
 
 static inline void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value);
 static inline void proc_tbl_put_atom(ProcessTableRef p, LmnSAtom atom, LmnWord value);
-static inline void proc_tbl_put_mem(ProcessTableRef p, LmnMembrane *mem, LmnWord value);
+static inline void proc_tbl_put_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
 static inline int  proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value);
 static inline int  proc_tbl_put_new_atom(ProcessTableRef p, LmnSAtom atom, LmnWord value);
-static inline int  proc_tbl_put_new_mem(ProcessTableRef p, LmnMembrane *mem, LmnWord value);
+static inline int  proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
 static inline void proc_tbl_put_new_hlink(ProcessTableRef p, HyperLink *hl, LmnWord value);
 static inline void proc_tbl_unput(ProcessTableRef p, LmnWord key);
 static inline void proc_tbl_unput_atom(ProcessTableRef p, LmnSAtom atom);
-static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembrane *mem);
+static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem);
 static inline int  proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value);
 static inline int  proc_tbl_get_by_atom(ProcessTableRef p, LmnSAtom atom, LmnWord *value);
-static inline int  proc_tbl_get_by_mem(ProcessTableRef p, LmnMembrane *mem, LmnWord *value);
+static inline int  proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value);
 static inline int  proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWord *value);
 static inline BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key);
 static inline BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSAtom atom);
-static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembrane *mem);
+static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
 
 
 
@@ -123,7 +123,7 @@ static inline void proc_tbl_put_atom(ProcessTableRef p, LmnSAtom atom, LmnWord v
 }
 
 /* テーブルに膜を追加 */
-static inline void proc_tbl_put_mem(ProcessTableRef p, LmnMembrane *mem, LmnWord value) {
+static inline void proc_tbl_put_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value) {
   proc_tbl_put(p, lmn_mem_id(mem), value);
 }
 
@@ -152,7 +152,7 @@ static inline int proc_tbl_put_new_atom(ProcessTableRef p, LmnSAtom atom, LmnWor
 }
 
 /* テーブルに膜を追加し、正の値を返す。すでに同じ膜が存在した場合は0を返す */
-static inline int proc_tbl_put_new_mem(ProcessTableRef p, LmnMembrane *mem, LmnWord value) {
+static inline int proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value) {
   return proc_tbl_put_new(p, lmn_mem_id(mem), value);
 }
 
@@ -170,7 +170,7 @@ static inline void proc_tbl_unput_atom(ProcessTableRef p, LmnSAtom atom) {
 }
 
 /* テーブルから膜とそれに対応した値を削除する */
-static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembrane *mem) {
+static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem) {
   proc_tbl_unput(p, lmn_mem_id(mem));
 }
 
@@ -193,7 +193,7 @@ static inline int proc_tbl_get_by_atom(ProcessTableRef p, LmnSAtom atom, LmnWord
 
 /* テーブルの膜memに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにmemが存在しない場合は0を返す */
-static inline int proc_tbl_get_by_mem(ProcessTableRef p, LmnMembrane *mem, LmnWord *value) {
+static inline int proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value) {
   return proc_tbl_get(p, lmn_mem_id(mem), value);
 }
 
@@ -214,7 +214,7 @@ static inline BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSAtom atom) {
 }
 
 /* テーブルの膜memに対応する値が設定されている場合、正の値を返す. */
-static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembrane *mem) {
+static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem) {
   return proc_tbl_contains(p, lmn_mem_id(mem));
 }
 
@@ -243,25 +243,25 @@ void sproc_tbl_destroy(SimplyProcessTableRef p);
 static inline void sproc_tbl_expand(SimplyProcessTableRef p, unsigned long n);
 static inline void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value);
 static inline void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSAtom atom, BYTE value);
-static inline void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembrane *mem, BYTE value);
+static inline void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembraneRef mem, BYTE value);
 static inline void sproc_tbl_unput(SimplyProcessTableRef p, LmnWord key);
 static inline void sproc_tbl_unput_atom(SimplyProcessTableRef p, LmnSAtom atom);
-static inline void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembrane *mem);
+static inline void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembraneRef mem);
 static inline int  sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value);
 static inline int  sproc_tbl_get_by_atom(SimplyProcessTableRef p, LmnSAtom atom, BYTE *value);
-static inline int  sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembrane *mem, BYTE *value);
+static inline int  sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembraneRef mem, BYTE *value);
 static inline BOOL sproc_tbl_contains(SimplyProcessTableRef p, LmnWord key);
 static inline BOOL sproc_tbl_contains_atom(SimplyProcessTableRef p, LmnSAtom atom);
-static inline BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembrane *mem);
+static inline BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembraneRef mem);
 static inline BOOL sproc_tbl_get_flag(SimplyProcessTableRef p, LmnWord key, BYTE flag);
 static inline BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSAtom key, LmnWord flag);
-static inline BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembrane *key, LmnWord flag);
+static inline BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag);
 static inline void sproc_tbl_unset_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag);
 static inline void sproc_tbl_set_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag);
 static inline void sproc_tbl_set_atom_flag(SimplyProcessTableRef p, LmnSAtom key, LmnWord flag);
-static inline void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembrane *key, LmnWord flag);
+static inline void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag);
 static inline void sproc_tbl_unset_atom_flag(SimplyProcessTableRef p, LmnSAtom key, LmnWord flag);
-static inline void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembrane *key, LmnWord flag);
+static inline void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag);
 
 
 /**
@@ -297,7 +297,7 @@ static inline void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSAtom atom, BY
   sproc_tbl_put(p, LMN_SATOM_ID(atom), value);
 }
 
-static inline void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembrane *mem, BYTE value) {
+static inline void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembraneRef mem, BYTE value) {
   sproc_tbl_put(p, lmn_mem_id(mem), value);
 }
 
@@ -311,7 +311,7 @@ static inline void sproc_tbl_unput_atom(SimplyProcessTableRef p, LmnSAtom atom) 
   sproc_tbl_unput(p, LMN_SATOM_ID(atom));
 }
 
-static inline void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembrane *mem) {
+static inline void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembraneRef mem) {
   sproc_tbl_unput(p, lmn_mem_id(mem));
 }
 
@@ -328,7 +328,7 @@ static inline int sproc_tbl_get_by_atom(SimplyProcessTableRef p, LmnSAtom atom, 
   return sproc_tbl_get(p, LMN_SATOM_ID(atom), value);
 }
 
-static inline int sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembrane *mem, BYTE *value) {
+static inline int sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembraneRef mem, BYTE *value) {
   return sproc_tbl_get(p, lmn_mem_id(mem), value);
 }
 
@@ -340,7 +340,7 @@ static inline BOOL sproc_tbl_contains_atom(SimplyProcessTableRef p, LmnSAtom ato
   return sproc_tbl_contains(p, LMN_SATOM_ID(atom));
 }
 
-static inline BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembrane *mem) {
+static inline BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembraneRef mem) {
   return sproc_tbl_contains(p, lmn_mem_id(mem));
 }
 
@@ -353,7 +353,7 @@ static inline BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSAtom 
   return sproc_tbl_get_flag(p, LMN_SATOM_ID(key), flag);
 }
 
-static inline BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembrane *key, LmnWord flag) {
+static inline BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag) {
   return sproc_tbl_get_flag(p, lmn_mem_id(key), flag);
 }
 
@@ -385,7 +385,7 @@ static inline void sproc_tbl_set_atom_flag(SimplyProcessTableRef p, LmnSAtom key
   sproc_tbl_set_flag(p, LMN_SATOM_ID(key), flag);
 }
 
-static inline void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembrane *key, LmnWord flag) {
+static inline void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag) {
   sproc_tbl_set_flag(p, lmn_mem_id(key), flag);
 }
 
@@ -393,7 +393,7 @@ static inline void sproc_tbl_unset_atom_flag(SimplyProcessTableRef p, LmnSAtom k
   sproc_tbl_unset_flag(p, LMN_SATOM_ID(key), flag);
 }
 
-static inline void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembrane *key, LmnWord flag) {
+static inline void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag) {
   sproc_tbl_unset_flag(p, lmn_mem_id(key), flag);
 }
 
@@ -516,24 +516,24 @@ void tracelog_init_with_size(TraceLogRef trc, unsigned long size);
 void tracelog_destroy(TraceLogRef trc);
 
 static inline BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
-                                                  LmnMembrane   *owner,
+                                                  LmnMembraneRef   owner,
                                                   AtomListEntryRef in_ent,
                                                   AtomListEntryRef avoid);
 static inline void tracelog_tbl_expand(TraceLogRef l, unsigned long new_size);
 static inline int  tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
-                                LmnMembrane *owner);
+                                LmnMembraneRef owner);
 static inline int  tracelog_put_atom(TraceLogRef l, LmnSAtom atom1, LmnWord atom2_id,
-                                     LmnMembrane *owner1);
-static inline int  tracelog_put_mem(TraceLogRef l, LmnMembrane *mem1, LmnWord mem2_id);
+                                     LmnMembraneRef owner1);
+static inline int  tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id);
 static inline int  tracelog_put_hlink(TraceLogRef l, HyperLink *hl1, LmnWord hl2_id);
 static inline void tracelog_unput(TraceLogRef l, LmnWord key);
 static inline BOOL tracelog_contains(TraceLogRef l, LmnWord key);
 static inline BOOL tracelog_contains_atom(TraceLogRef l, LmnSAtom atom);
-static inline BOOL tracelog_contains_mem(TraceLogRef l, LmnMembrane *mem);
+static inline BOOL tracelog_contains_mem(TraceLogRef l, LmnMembraneRef mem);
 static inline BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) ;
 static inline LmnWord tracelog_get_matched(TraceLogRef l, LmnWord key);
 static inline LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSAtom atom);
-static inline LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembrane *mem);
+static inline LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembraneRef mem);
 static inline LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl);
 static inline void tracelog_backtrack(TraceLogRef l);
 static inline void tracelog_set_btpoint(TraceLogRef l);
@@ -547,7 +547,7 @@ static inline BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
 /* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside proxies) の数が
  * 膜ownerのそれと一致しているか否かを返す */
 static inline BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
-                                                  LmnMembrane   *owner,
+                                                  LmnMembraneRef   owner,
                                                   AtomListEntryRef in_ent,
                                                   AtomListEntryRef avoid)
 {
@@ -574,7 +574,7 @@ static inline void tracelog_tbl_expand(TraceLogRef l, unsigned long new_size)
  * tracelog_put_atom, tracelog_put_memから呼び出す関数であり, 直接callしないこと.
  * (呼出しコスト削減のために公開関数としているだけ) */
 static inline int tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
-                               LmnMembrane *owner) {
+                               LmnMembraneRef owner) {
   if (l->cap <= key) {
     tracelog_tbl_expand(l, key);
   } else if (TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]))) {
@@ -598,7 +598,7 @@ static inline int tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
 /* ログlに, 所属膜owner1のアトムatom1への訪問を記録する.
  * atom1にマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する. */
 static inline int tracelog_put_atom(TraceLogRef l, LmnSAtom atom1, LmnWord  atom2_id,
-                                    LmnMembrane *owner1) {
+                                    LmnMembraneRef owner1) {
   int ret = tracelog_put(l, LMN_SATOM_ID(atom1), atom2_id, owner1);
   TLOG_SET_TRV_ATOM(TLOG_FLAG(l->tbl[LMN_SATOM_ID(atom1)]));
   return ret;
@@ -606,7 +606,7 @@ static inline int tracelog_put_atom(TraceLogRef l, LmnSAtom atom1, LmnWord  atom
 
 /* ログlに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
  * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
-static inline int tracelog_put_mem(TraceLogRef l, LmnMembrane *mem1, LmnWord mem2_id) {
+static inline int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id) {
   int ret = tracelog_put(l, lmn_mem_id(mem1), mem2_id, lmn_mem_parent(mem1));
   TLOG_SET_TRV_MEM(TLOG_FLAG(l->tbl[lmn_mem_id(mem1)]));
   return ret;
@@ -639,7 +639,7 @@ static inline BOOL tracelog_contains_atom(TraceLogRef l, LmnSAtom atom) {
   return tracelog_contains(l, LMN_SATOM_ID(atom));
 }
 
-static inline BOOL tracelog_contains_mem(TraceLogRef l, LmnMembrane *mem) {
+static inline BOOL tracelog_contains_mem(TraceLogRef l, LmnMembraneRef mem) {
   return tracelog_contains(l, lmn_mem_id(mem));
 }
 
@@ -655,7 +655,7 @@ static inline LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSAtom atom) {
   return tracelog_get_matched(l, LMN_SATOM_ID(atom));
 }
 
-static inline LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembrane *mem) {
+static inline LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembraneRef mem) {
   return tracelog_get_matched(l, lmn_mem_id(mem));
 }
 
@@ -703,9 +703,9 @@ void simplylog_destroy(SimplyLog trc);
 
 static inline void simplylog_put(SimplyLog l, LmnWord key);
 static inline void simplylog_put_atom(SimplyLog l, LmnSAtom atom);
-static inline void simplylog_put_mem(SimplyLog l, LmnMembrane *mem);
+static inline void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem);
 static inline BOOL simplylog_contains_atom(SimplyLog l, LmnSAtom atom);
-static inline BOOL simplylog_contains_mem(SimplyLog l, LmnMembrane *mem);
+static inline BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem);
 static inline void simplylog_backtrack(SimplyLog l);
 static inline void simplylog_set_btpoint(SimplyLog l);
 static inline void simplylog_continue_trace(SimplyLog l);
@@ -723,7 +723,7 @@ static inline void simplylog_put_atom(SimplyLog l, LmnSAtom atom) {
   simplylog_put(l, LMN_SATOM_ID(atom));
 }
 
-static inline void simplylog_put_mem(SimplyLog l, LmnMembrane *mem) {
+static inline void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) {
   simplylog_put(l, lmn_mem_id(mem));
 }
 
@@ -731,7 +731,7 @@ static inline BOOL simplylog_contains_atom(SimplyLog l, LmnSAtom atom) {
   return sproc_tbl_contains_atom(&l->tbl, atom);
 }
 
-static inline BOOL simplylog_contains_mem(SimplyLog l, LmnMembrane *mem) {
+static inline BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem) {
   return sproc_tbl_contains_mem(&l->tbl, mem);
 }
 
@@ -791,11 +791,11 @@ void visitlog_push_checkpoint(VisitLogRef visitlog, CheckpointRef cp);
 
 static inline int  visitlog_put(VisitLogRef visitlog, LmnWord p);
 static inline int  visitlog_put_atom(VisitLogRef visitlog, LmnSAtom atom);
-static inline int  visitlog_put_mem(VisitLogRef visitlog, LmnMembrane *mem);
+static inline int  visitlog_put_mem(VisitLogRef visitlog, LmnMembraneRef mem);
 static inline int  visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl);
 static inline void visitlog_put_data(VisitLogRef visitlog);
 static inline int  visitlog_get_atom(VisitLogRef visitlog, LmnSAtom atom, LmnWord *value);
-static inline int  visitlog_get_mem(VisitLogRef visitlog, LmnMembrane *mem, LmnWord *value);
+static inline int  visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value);
 static inline int  visitlog_get_hlink(VisitLogRef visitlog, HyperLink *hl, LmnWord *value);
 static inline int  visitlog_element_num(VisitLogRef visitlog);
 
@@ -825,7 +825,7 @@ static inline int visitlog_put_atom(VisitLogRef visitlog, LmnSAtom atom) {
 }
 
 /* ログに膜を追加し, 正の値を返す. すでに膜が存在した場合は0を返す */
-static inline int visitlog_put_mem(VisitLogRef visitlog, LmnMembrane *mem) {
+static inline int visitlog_put_mem(VisitLogRef visitlog, LmnMembraneRef mem) {
   return visitlog_put(visitlog, lmn_mem_id(mem));
 }
 
@@ -853,7 +853,7 @@ static inline int visitlog_get_atom(VisitLogRef visitlog, LmnSAtom atom, LmnWord
 
 /* ログに記録された膜memに対応する値をvalueに設定, 正の値を返す.
  * ログにmemが存在しない場合は, 0を返す. */
-static inline int visitlog_get_mem(VisitLogRef visitlog, LmnMembrane *mem, LmnWord *value) {
+static inline int visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value) {
   return proc_tbl_get_by_mem(&visitlog->tbl, mem, value);
 }
 

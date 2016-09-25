@@ -67,7 +67,7 @@ PropositionRef proposition_make(const char *head,
                              const char *body);
 void proposition_free(PropositionRef p);
 LmnRuleRef proposition_get_rule(PropositionRef p);
-BOOL proposition_eval(PropositionRef prop, LmnMembrane *mem);
+BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem);
   
 /* propositional symbol definitions */
 

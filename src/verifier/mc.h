@@ -73,13 +73,13 @@ void mc_expand(const StateSpaceRef states,
                BOOL             flag);
 void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock);
 void mc_gen_successors_with_property(State         *s,
-                                     LmnMembrane   *mem,
+                                     LmnMembraneRef   mem,
                                      AutomataStateRef prop_atm_s,
                                      LmnReactCxt   *rc,
                                      Vector        *psyms,
                                      BOOL          flags);
 void mc_gen_successors(State       *src,
-                       LmnMembrane *mem,
+                       LmnMembraneRef mem,
                        BYTE        prop_labels,
                        LmnReactCxt *rc,
                        BOOL        flags);
@@ -88,7 +88,7 @@ void mc_store_successors(const StateSpaceRef ss,
                          LmnReactCxt      *rc,
                          Vector           *new_ss,
                          BOOL             f);
-BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembrane *cur_mem);
+BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembraneRef cur_mem);
 
 void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms);
 

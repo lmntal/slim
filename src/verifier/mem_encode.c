@@ -192,13 +192,13 @@ uint16_t functor_priority[FUNCTOR_MAX+1];
 
 /* Dump Membrane to Binary String */
 
-static void dump_mem_atoms(LmnMembrane *mem,
+static void dump_mem_atoms(LmnMembraneRef mem,
                            BinStrPtrRef bsp,
                            VisitLogRef visited);
 static void dump_mols(Vector *atoms,
                       BinStrPtrRef bsp,
                       VisitLogRef visited);
-static void dump_mems(LmnMembrane *mem,
+static void dump_mems(LmnMembraneRef mem,
                       BinStrPtrRef bsp,
                       VisitLogRef visited);
 
@@ -1117,7 +1117,7 @@ static inline void bsptr_push_rule_histories(BinStrPtrRef bsp, LmnRuleRef r)
   }
 }
 
-static inline void bsptr_push_ruleset_uniq(BinStrPtrRef bsp, LmnMembrane *mem, int n)
+static inline void bsptr_push_ruleset_uniq(BinStrPtrRef bsp, LmnMembraneRef mem, int n)
 {
   unsigned int i, j;
 
@@ -1143,23 +1143,23 @@ static inline void bsptr_push_ruleset_uniq(BinStrPtrRef bsp, LmnMembrane *mem, i
 
 /* prototypes */
 
-static void encode_root_mem(LmnMembrane *mem, BinStrPtrRef bsp, VisitLogRef visited);
-static Vector *mem_atoms(LmnMembrane *mem);
-static Vector *mem_functors(LmnMembrane *mem);
-static void write_mem_atoms(LmnMembrane *mem,
+static void encode_root_mem(LmnMembraneRef mem, BinStrPtrRef bsp, VisitLogRef visited);
+static Vector *mem_atoms(LmnMembraneRef mem);
+static Vector *mem_functors(LmnMembraneRef mem);
+static void write_mem_atoms(LmnMembraneRef mem,
                             BinStrPtrRef bsp,
                             VisitLogRef visited);
 static void write_mols(Vector *atoms,
                        BinStrPtrRef bsp,
                        VisitLogRef visited);
-static void write_mem(LmnMembrane *mem,
+static void write_mem(LmnMembraneRef mem,
                       LmnAtom from_atom,
                       LmnLinkAttr attr,
                       int from,
                       BinStrPtrRef bsp,
                       VisitLogRef visited,
                       BOOL is_id);
-static void write_mems(LmnMembrane *mem,
+static void write_mems(LmnMembraneRef mem,
                        BinStrPtrRef bsp,
                        VisitLogRef visited);
 static void write_mol(LmnAtom atom,
@@ -1168,11 +1168,11 @@ static void write_mol(LmnAtom atom,
                       BinStrPtrRef bsp,
                       VisitLogRef visited,
                       BOOL is_id);
-static void write_rulesets(LmnMembrane *mem, BinStrPtrRef bsp);
-static LmnBinStrRef lmn_mem_encode_sub(LmnMembrane *mem, unsigned long tbl_size);
+static void write_rulesets(LmnMembraneRef mem, BinStrPtrRef bsp);
+static LmnBinStrRef lmn_mem_encode_sub(LmnMembraneRef mem, unsigned long tbl_size);
 
 /* memを一意なバイナリストリングに変換する */
-LmnBinStrRef lmn_mem_encode(LmnMembrane *mem)
+LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem)
 {
   LmnBinStrRef ret;
 #ifdef PROFILE
@@ -1207,7 +1207,7 @@ LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d)
 }
 
 /* memを一意なバイナリストリングに変換する */
-static LmnBinStrRef lmn_mem_encode_sub(LmnMembrane *mem, unsigned long tbl_size)
+static LmnBinStrRef lmn_mem_encode_sub(LmnMembraneRef mem, unsigned long tbl_size)
 {
   struct BinStrPtr bsp;
   struct VisitLog visited;
@@ -1231,7 +1231,7 @@ static LmnBinStrRef lmn_mem_encode_sub(LmnMembrane *mem, unsigned long tbl_size)
   return ret_bs;
 }
 
-static void encode_root_mem(LmnMembrane *mem, BinStrPtrRef bsp, VisitLogRef visited)
+static void encode_root_mem(LmnMembraneRef mem, BinStrPtrRef bsp, VisitLogRef visited)
 {
   write_mem_atoms(mem, bsp, visited);
   write_mems(mem, bsp, visited);
@@ -1240,7 +1240,7 @@ static void encode_root_mem(LmnMembrane *mem, BinStrPtrRef bsp, VisitLogRef visi
 
 /* 膜memの全てのアトムのバイナリストリングを書き込む.
  * 辿ってきたアトムfrom_atomとそのアトムの属性attrとこちらからのリンク番号fromを受け取る. */
-static void write_mem(LmnMembrane *mem,
+static void write_mem(LmnMembraneRef mem,
                       LmnAtom from_atom,
                       LmnLinkAttr attr,
                       int from,
@@ -1319,7 +1319,7 @@ static void write_mem(LmnMembrane *mem,
   bsptr_push_end_mem(bsp);
 }
 
-static void write_mem_atoms(LmnMembrane *mem,
+static void write_mem_atoms(LmnMembraneRef mem,
                             BinStrPtrRef bsp,
                             VisitLogRef visited)
 {
@@ -1359,7 +1359,7 @@ static void write_mol(LmnAtom atom, LmnLinkAttr attr, int from,
   if (f == LMN_OUT_PROXY_FUNCTOR) {
     /* outside proxyの場合, inside proxy側の膜をwrite_memで書き込む */
     LmnSAtom in;
-    LmnMembrane *in_mem;
+    LmnMembraneRef in_mem;
 
     in = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
     in_mem = LMN_PROXY_GET_MEM(in);
@@ -1488,11 +1488,11 @@ static void write_mols(Vector *atoms,
 
 /* write_atomsの膜バージョン.
  * ここで書き込む計算する分子には膜のみが含まれている */
-static void write_mems(LmnMembrane *mem,
+static void write_mems(LmnMembraneRef mem,
                        BinStrPtrRef bsp,
                        VisitLogRef visited)
 {
-  LmnMembrane *m;
+  LmnMembraneRef m;
   struct BinStrPtr last_valid_bsp;
   BOOL last_valid;
   CheckpointRef last_valid_checkpoint = NULL;
@@ -1500,7 +1500,7 @@ static void write_mems(LmnMembrane *mem,
   if (!bsptr_valid(bsp)) return;
 
   last_valid = FALSE;
-  for (m = mem->child_head; m; m = m->next) {
+  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
     if (!visitlog_get_mem(visited, m, NULL)) {
       struct BinStrPtr new_bsptr;
 
@@ -1542,7 +1542,7 @@ static void write_mems(LmnMembrane *mem,
 }
 
 
-static void write_rulesets(LmnMembrane *mem, BinStrPtrRef bsp)
+static void write_rulesets(LmnMembraneRef mem, BinStrPtrRef bsp)
 {
   unsigned int i, n;
   /* ルールセットがルールセットIDでソートされていることに基づいたコード */
@@ -1572,12 +1572,12 @@ static void write_rulesets(LmnMembrane *mem, BinStrPtrRef bsp)
 }
 
 /* 膜にあるアトムのファンクタを降順で返す */
-static Vector *mem_functors(LmnMembrane *mem)
+static Vector *mem_functors(LmnMembraneRef mem)
 {
   Vector *v = vec_make(16);
   int i_atomlist;
-  for (i_atomlist = mem->max_functor-1; i_atomlist >=0; i_atomlist--) {
-    if (mem->atomset[i_atomlist] && !LMN_IS_PROXY_FUNCTOR(i_atomlist)) {
+  for (i_atomlist = lmn_mem_max_functor(mem)-1; i_atomlist >=0; i_atomlist--) {
+    if (lmn_mem_get_atomlist(mem, i_atomlist) && !LMN_IS_PROXY_FUNCTOR(i_atomlist)) {
       vec_push(v, i_atomlist);
     }
   }
@@ -1601,7 +1601,7 @@ static int comp_functor_greater_f(const void *a_, const void *b_)
 
 /* 膜memに存在する全てのアトムへのポインタをVectorに積めて返す.
  * アトムはfunctor_idの降順 */
-static Vector *mem_atoms(LmnMembrane *mem)
+static Vector *mem_atoms(LmnMembraneRef mem)
 {
   Vector *functors;
   Vector *atoms;
@@ -1631,34 +1631,34 @@ static int binstr_decode_cell(LmnBinStrRef bs,
                               int pos,
                               BsDecodeLog *log,
                               int *nvisit,
-                              LmnMembrane *mem,
+                              LmnMembraneRef mem,
                               LmnSAtom from_atom,
                               int from_arg);
 static int binstr_decode_mol(LmnBinStrRef bs,
                              int pos,
                              BsDecodeLog *log,
                              int *nvisit,
-                             LmnMembrane *mem,
+                             LmnMembraneRef mem,
                              LmnSAtom from_atom,
                              int from_arg);
 static int binstr_decode_atom(LmnBinStrRef bs,
                               int pos,
                               BsDecodeLog *log,
                               int *nvisit,
-                              LmnMembrane *mem,
+                              LmnMembraneRef mem,
                               LmnSAtom from_atom,
                               int from_arg);
 static void binstr_decode_rulesets(LmnBinStrRef bs,
                                    int *i_bs,
                                    Vector *rulesets,
                                    int rs_num);
-static void dump_root_mem(LmnMembrane *mem, BinStrPtrRef bsp, VisitLogRef visitlog);
-static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembrane *mem, unsigned long tbl_size);
+static void dump_root_mem(LmnMembraneRef mem, BinStrPtrRef bsp, VisitLogRef visitlog);
+static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembraneRef mem, unsigned long tbl_size);
 
 /* エンコードされた膜をデコードし、構造を再構築する */
-static inline LmnMembrane *lmn_binstr_decode_sub(const LmnBinStrRef bs)
+static inline LmnMembraneRef lmn_binstr_decode_sub(const LmnBinStrRef bs)
 {
-  LmnMembrane *groot;
+  LmnMembraneRef groot;
   BsDecodeLog *log;
   int nvisit;
 
@@ -1680,9 +1680,9 @@ static inline LmnMembrane *lmn_binstr_decode_sub(const LmnBinStrRef bs)
 }
 
 
-LmnMembrane *lmn_binstr_decode(const LmnBinStrRef bs)
+LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs)
 {
-  LmnMembrane *ret;
+  LmnMembraneRef ret;
   LmnBinStrRef target;
 
   if (is_comp_z(bs)) {
@@ -1714,7 +1714,7 @@ static int binstr_decode_cell(LmnBinStrRef   bs,
                               int         pos,
                               BsDecodeLog *log,
                               int         *nvisit,
-                              LmnMembrane *mem,
+                              LmnMembraneRef mem,
                               LmnSAtom    from_atom,
                               int         from_arg)
 {
@@ -1815,7 +1815,7 @@ static int binstr_decode_mol(LmnBinStrRef   bs,
                              int         pos,
                              BsDecodeLog *log,
                              int         *nvisit,
-                             LmnMembrane *mem,
+                             LmnMembraneRef mem,
                              LmnSAtom    from_atom,
                              int         from_arg)
 {
@@ -1838,7 +1838,7 @@ static int binstr_decode_mol(LmnBinStrRef   bs,
     /* FALL THROUGH */
   case TAG_MEM_START:
     {
-      LmnMembrane *new_mem;
+      LmnMembraneRef new_mem;
       new_mem = lmn_mem_make();
       lmn_mem_set_name(new_mem, mem_name);
       lmn_mem_set_active(new_mem, TRUE);
@@ -1908,7 +1908,7 @@ static int binstr_decode_mol(LmnBinStrRef   bs,
     break;
   case TAG_ESCAPE_MEM:
     {
-      LmnMembrane *parent = lmn_mem_parent(mem);
+      LmnMembraneRef parent = lmn_mem_parent(mem);
       if (from_atom) {
         LmnSAtom in, out;
 
@@ -2016,7 +2016,7 @@ static int binstr_decode_mol(LmnBinStrRef   bs,
         break;
       case BS_LOG_TYPE_MEM:
         {
-          LmnMembrane *ref_mem = (LmnMembrane *)log[ref].v;
+          LmnMembraneRef ref_mem = (LmnMembraneRef)log[ref].v;
           if (!from_atom) {
             pos = binstr_decode_mol(bs, pos, log, nvisit, ref_mem, NULL, from_arg);
           }
@@ -2104,7 +2104,7 @@ static int binstr_decode_atom(LmnBinStrRef   bs,
                               int         pos,
                               BsDecodeLog *log,
                               int         *nvisit,
-                              LmnMembrane *mem,
+                              LmnMembraneRef mem,
                               LmnSAtom    from_atom,
                               int         from_arg)
 {
@@ -2154,7 +2154,7 @@ static int binstr_decode_atom(LmnBinStrRef   bs,
  * Dump Membrane to Binary String
  */
 
-LmnBinStrRef lmn_mem_to_binstr(LmnMembrane *mem)
+LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem)
 {
   LmnBinStrRef ret;
 #ifdef PROFILE
@@ -2176,7 +2176,7 @@ LmnBinStrRef lmn_mem_to_binstr(LmnMembrane *mem)
 
 
 /* 膜のdumpを計算する. dump_root_memとかから名称変更したみたい */
-static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembrane *mem, unsigned long tbl_size)
+static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembraneRef mem, unsigned long tbl_size)
 {
   LmnBinStrRef ret_bs;
   BinStr bs;
@@ -2201,7 +2201,7 @@ static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembrane *mem, unsigned long tbl_si
 }
 
 
-static void dump_root_mem(LmnMembrane *mem, BinStrPtrRef bsp, VisitLogRef visitlog)
+static void dump_root_mem(LmnMembraneRef mem, BinStrPtrRef bsp, VisitLogRef visitlog)
 {
   dump_mem_atoms(mem, bsp, visitlog); /* 1. アトムから */
   dump_mems(mem, bsp, visitlog);      /* 2. 子膜から */
@@ -2210,7 +2210,7 @@ static void dump_root_mem(LmnMembrane *mem, BinStrPtrRef bsp, VisitLogRef visitl
 
 
 /* 膜memに存在する全てのアトムをファンクタIDの降順の列で求め, 求めた列をdump_molsする */
-static void dump_mem_atoms(LmnMembrane *mem,
+static void dump_mem_atoms(LmnMembraneRef mem,
                            BinStrPtrRef bsp,
                            VisitLogRef visited)
 {
@@ -2247,13 +2247,13 @@ static void dump_mols(Vector *atoms,
 
 /* 膜中心の計算単位. 未訪問の子膜Xに対して, 子膜の分子を書き込み, dump_memsへ再起する
  * 兄弟膜は子膜内のプロセスを全て書き込んでから訪問される */
-static void dump_mems(LmnMembrane *mem,
+static void dump_mems(LmnMembraneRef mem,
                       BinStrPtrRef bsp,
                       VisitLogRef visited)
 {
-  LmnMembrane *m;
+  LmnMembraneRef m;
 
-  for (m = mem->child_head; m; m = m->next) {
+  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
     if (!visitlog_get_mem(visited, m, NULL)) {
       write_mem(m, 0, -1, -1, bsp, visited, FALSE);
     }
@@ -2276,34 +2276,34 @@ static void dump_mems(LmnMembrane *mem,
 #endif
 
 static
-int  mem_eq_enc_mols(LmnBinStrRef   bs,       int *i_bs,  LmnMembrane *mem,
+int  mem_eq_enc_mols(LmnBinStrRef   bs,       int *i_bs,  LmnMembraneRef mem,
                      BsDecodeLog *ref_log, int *i_ref, LmnMeqLog   *log);
 static inline
 BOOL mem_eq_enc_mol(LmnBinStrRef   bs,       int      *i_bs,
-                    LmnMembrane *mem,     LmnAtom   atom, LmnLinkAttr attr,
+                    LmnMembraneRef mem,     LmnAtom   atom, LmnLinkAttr attr,
                     BsDecodeLog *ref_log, int     *i_ref, LmnMeqLog   *log);
 static inline
-BOOL mem_eq_enc_end(LmnMembrane *mem, BOOL rule_flag, LmnMeqLog *log);
+BOOL mem_eq_enc_end(LmnMembraneRef mem, BOOL rule_flag, LmnMeqLog *log);
 static
 BOOL mem_eq_enc_atom(LmnBinStrRef   bs,       int     *i_bs,
-                     LmnMembrane *mem,     LmnAtom atom,   LmnLinkAttr attr,
+                     LmnMembraneRef mem,     LmnAtom atom,   LmnLinkAttr attr,
                      BsDecodeLog *ref_log, int     *i_ref, LmnMeqLog   *log);
 static inline
 BOOL mem_eq_enc_data_atom(unsigned int tag,  LmnBinStrRef   bs,   int       *i_bs,
                           LmnAtom      atom, LmnLinkAttr attr, LmnMeqLog *log);
-static inline BOOL mem_eq_enc_rulesets(LmnBinStrRef bs, int *i_bs, LmnMembrane *mem);
+static inline BOOL mem_eq_enc_rulesets(LmnBinStrRef bs, int *i_bs, LmnMembraneRef mem);
 static inline BOOL mem_eq_enc_ruleset(LmnBinStrRef bs, int *i_bs, LmnRuleSetRef rs);
-static inline BOOL mem_eq_enc_rulesets_uniq(LmnBinStrRef bs, int *i_bs, LmnMembrane *mem);
+static inline BOOL mem_eq_enc_rulesets_uniq(LmnBinStrRef bs, int *i_bs, LmnMembraneRef mem);
 static inline BOOL mem_eq_enc_mem(LmnBinStrRef   bs,
                                   int         *i_bs,
-                                  LmnMembrane *mem,
+                                  LmnMembraneRef mem,
                                   BsDecodeLog *ref_log,
                                   int         *i_ref,
                                   LmnMeqLog   *log);
 static inline BOOL mem_eq_enc_traced_mem(BOOL        is_named,
                                          LmnBinStrRef   bs,
                                          int         *i_bs,
-                                         LmnMembrane *mem,
+                                         LmnMembraneRef mem,
                                          LmnAtom     atom,
                                          LmnLinkAttr attr,
                                          BsDecodeLog *ref_log,
@@ -2311,7 +2311,7 @@ static inline BOOL mem_eq_enc_traced_mem(BOOL        is_named,
                                          LmnMeqLog   *log);
 static inline BOOL mem_eq_enc_escape_mem(LmnBinStrRef   bs,
                                          int         *i_bs,
-                                         LmnMembrane *mem,
+                                         LmnMembraneRef mem,
                                          LmnAtom     atom,
                                          LmnLinkAttr attr,
                                          BsDecodeLog *ref_log,
@@ -2324,20 +2324,20 @@ static inline BOOL mem_eq_enc_visited(unsigned int tag,
                                       LmnMeqLog    *log);
 static inline BOOL mem_eq_enc_hlink(LmnBinStrRef   bs,
                                     int         *i_bs,
-                                    LmnMembrane *mem,
+                                    LmnMembraneRef mem,
                                     LmnAtom     atom,
                                     LmnLinkAttr attr,
                                     BsDecodeLog *ref_log,
                                     int         *i_ref,
                                     LmnMeqLog   *visitlog);
 
-static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembrane *mem, unsigned long tbl_size);
+static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem, unsigned long tbl_size);
 #ifdef BS_MEMEQ_OLD
-static long process_num(LmnMembrane *mem);
+static long process_num(LmnMembraneRef mem);
 #endif
 
 /* 膜のダンプ or エンコードと、膜の同型性判定を行う */
-inline BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembrane *mem)
+inline BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem)
 {
   BOOL ret;
 
@@ -2366,7 +2366,7 @@ BOOL lmn_mem_equals_enc_delta(LmnBinStrRef bs, struct MemDeltaRoot *d)
   return t;
 }
 
-static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembrane *mem, unsigned long tbl_size)
+static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem, unsigned long tbl_size)
 {
   LmnMeqLog log;
   BsDecodeLog *ref_log;
@@ -2415,7 +2415,7 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembrane *mem, unsigned long 
 /* 膜memに対するトレースを初めて行う際に呼び出す. */
 static int mem_eq_enc_mols(LmnBinStrRef   bs,
                            int         *i_bs,
-                           LmnMembrane *mem,
+                           LmnMembraneRef mem,
                            BsDecodeLog *ref_log,
                            int         *i_ref,
                            LmnMeqLog   *log)
@@ -2497,7 +2497,7 @@ static int mem_eq_enc_mols(LmnBinStrRef   bs,
     case TAG_NAMED_MEM_START:
     case TAG_MEM_START:
       {
-        LmnMembrane *m;
+        LmnMembraneRef m;
         lmn_interned_str mem_name = ANONYMOUS;
 
         if (tag == TAG_NAMED_MEM_START) {
@@ -2506,7 +2506,7 @@ static int mem_eq_enc_mols(LmnBinStrRef   bs,
         }
 
         ok = FALSE;
-        for (m = mem->child_head; m; m = m->next) {
+        for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
           /* 1. 未チェックの子膜を選択する. 同時に膜名チェックを行う */
 #ifdef BS_MEMEQ_OLD
           if (LMN_MEM_NAME_ID(m) != mem_name ||
@@ -2645,7 +2645,7 @@ static int mem_eq_enc_mols(LmnBinStrRef   bs,
 
 /* TAG_MEM_ENDが出たときに, 対象の膜に対して訪問したプロセス数が等しい場合に真を返す.
  * 訪問プロセスは, シンボルアトム(except proxies), 子膜, inside proxies */
-static inline BOOL mem_eq_enc_end(LmnMembrane *mem, BOOL rule_flag, LmnMeqLog *log)
+static inline BOOL mem_eq_enc_end(LmnMembraneRef mem, BOOL rule_flag, LmnMeqLog *log)
 {
   if (!rule_flag && lmn_mem_ruleset_num(mem) != 0) {
     return FALSE;
@@ -2667,7 +2667,7 @@ static inline BOOL mem_eq_enc_end(LmnMembrane *mem, BOOL rule_flag, LmnMeqLog *l
  * 引き続きバイト列を読み出し, アトムatomを起点にしたプロセスと等価な構造をトレースできた場合に
  * 真を返し, 等価な構造をトレースできない場合は偽を返す  */
 static BOOL mem_eq_enc_atom(LmnBinStrRef   bs,       int     *i_bs,
-                            LmnMembrane *mem,     LmnAtom atom,   LmnLinkAttr attr,
+                            LmnMembraneRef mem,     LmnAtom atom,   LmnLinkAttr attr,
                             BsDecodeLog *ref_log, int     *i_ref, LmnMeqLog   *log)
 {
   LmnFunctor f;
@@ -2719,10 +2719,10 @@ static BOOL mem_eq_enc_atom(LmnBinStrRef   bs,       int     *i_bs,
 static inline
 BOOL mem_eq_enc_traced_mem(BOOL is_named,
                            LmnBinStrRef   bs,       int     *i_bs,
-                           LmnMembrane *mem,     LmnAtom atom,   LmnLinkAttr attr,
+                           LmnMembraneRef mem,     LmnAtom atom,   LmnLinkAttr attr,
                            BsDecodeLog *ref_log, int     *i_ref, LmnMeqLog   *log)
 {
-  LmnMembrane *in_mem;
+  LmnMembraneRef in_mem;
   LmnAtom in;
 
   if (LMN_ATTR_IS_DATA(attr) ||
@@ -2778,7 +2778,7 @@ BOOL mem_eq_enc_traced_mem(BOOL is_named,
 
 static inline BOOL mem_eq_enc_mem(LmnBinStrRef   bs,
                                   int         *i_bs,
-                                  LmnMembrane *mem,
+                                  LmnMembraneRef mem,
                                   BsDecodeLog *ref_log,
                                   int         *i_ref,
                                   LmnMeqLog   *log)
@@ -2816,7 +2816,7 @@ static inline BOOL mem_eq_enc_data_atom(unsigned int tag,
    * つまり, 最終的にトレースokなシンボルアトムの数さえ一致してさえいれば,
    * そこに埋め込まれたデータアトムの比較結果も全て真である.
    *
-   * @see struct LmnMembrane: アトムの記録方式を変更 */
+   * @see struct LmnMembraneRef: アトムの記録方式を変更 */
   if (tag == TAG_INT_DATA) {
     long n = binstr_get_int(bs->v, *i_bs);
     (*i_bs) += BS_INT_SIZE;
@@ -2864,7 +2864,7 @@ static inline BOOL mem_eq_enc_data_atom(unsigned int tag,
  * 膜memのアトムatomを起点に等価な構造をトレースできた場合に真を返す. */
 static inline BOOL mem_eq_enc_mol(LmnBinStrRef   bs,
                                   int         *i_bs,
-                                  LmnMembrane *mem,
+                                  LmnMembraneRef mem,
                                   LmnAtom     atom,
                                   LmnLinkAttr attr,
                                   BsDecodeLog *ref_log,
@@ -2918,7 +2918,7 @@ static inline BOOL mem_eq_enc_ruleset(LmnBinStrRef bs, int *i_bs, LmnRuleSetRef 
 }
 
 /* TAG_RULESETS */
-static inline BOOL mem_eq_enc_rulesets(LmnBinStrRef bs, int *i_bs, LmnMembrane *mem)
+static inline BOOL mem_eq_enc_rulesets(LmnBinStrRef bs, int *i_bs, LmnMembraneRef mem)
 {
   long n;
   int i;
@@ -2934,7 +2934,7 @@ static inline BOOL mem_eq_enc_rulesets(LmnBinStrRef bs, int *i_bs, LmnMembrane *
 }
 
 
-static inline BOOL mem_eq_enc_rulesets_uniq(LmnBinStrRef bs, int *i_bs, LmnMembrane *mem)
+static inline BOOL mem_eq_enc_rulesets_uniq(LmnBinStrRef bs, int *i_bs, LmnMembraneRef mem)
 {
   int rs_num;
   Vector *rulesets;
@@ -3055,7 +3055,7 @@ static inline BOOL mem_eq_enc_mem_ref(LmnBinStrRef    bs,       int          *i_
     return FALSE;
   }
   else {
-    LmnMembrane *in_mem;
+    LmnMembraneRef in_mem;
     LmnAtom in;
 
     in       = LMN_SATOM_GET_LINK(atom, 0);
@@ -3114,7 +3114,7 @@ static inline BOOL mem_eq_enc_hlink_ref(LmnBinStrRef    bs,       int          *
  */
 static inline BOOL mem_eq_enc_escape_mem(LmnBinStrRef   bs,
                                          int         *i_bs,
-                                         LmnMembrane *mem,
+                                         LmnMembraneRef mem,
                                          LmnAtom     atom,
                                          LmnLinkAttr attr,
                                          BsDecodeLog *ref_log,
@@ -3143,7 +3143,7 @@ static inline BOOL mem_eq_enc_escape_mem(LmnBinStrRef   bs,
 
 static inline BOOL mem_eq_enc_hlink(LmnBinStrRef   bs,
                                     int         *i_bs,
-                                    LmnMembrane *mem,
+                                    LmnMembraneRef mem,
                                     LmnAtom     atom,
                                     LmnLinkAttr attr,
                                     BsDecodeLog *ref_log,

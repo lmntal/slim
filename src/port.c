@@ -441,7 +441,7 @@ int port_puts(LmnPortRef port, LmnStringRef str)
  * -a1: ポートを返す
  */
 void cb_port_close(LmnReactCxt *rc,
-                   LmnMembrane *mem,
+                   LmnMembraneRef mem,
                    LmnAtom a0, LmnLinkAttr t0,
                    LmnAtom a1, LmnLinkAttr t1)
 {
@@ -459,7 +459,7 @@ void cb_port_close(LmnReactCxt *rc,
  * +a0: ポート
  */
 void cb_port_free(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0)
 {
   lmn_port_free(LMN_PORT(a0));
@@ -470,7 +470,7 @@ void cb_port_free(LmnReactCxt *rc,
  * -a0: 標準入力ポートを返す
  */
 void cb_stdin_port(LmnReactCxt *rc,
-                   LmnMembrane *mem,
+                   LmnMembraneRef mem,
                    LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPortRef atom = lmn_stdin_port();
@@ -486,7 +486,7 @@ void cb_stdin_port(LmnReactCxt *rc,
  * -a0: 標準出力ポートを返す
  */
 void cb_stdout_port(LmnReactCxt *rc,
-                    LmnMembrane *mem,
+                    LmnMembraneRef mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPortRef atom = lmn_stdout_port();
@@ -502,7 +502,7 @@ void cb_stdout_port(LmnReactCxt *rc,
  * -a0: 標準エラーポートを返す
  */
 void cb_stderr_port(LmnReactCxt *rc,
-                    LmnMembrane *mem,
+                    LmnMembraneRef mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPortRef atom = lmn_stderr_port();
@@ -520,7 +520,7 @@ void cb_stderr_port(LmnReactCxt *rc,
  * -a2: 文字
  */
 void cb_port_getc(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -550,7 +550,7 @@ void cb_port_getc(LmnReactCxt *rc,
  * -a2: バイト（文字コード）
  */
 void cb_port_get_byte(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -572,7 +572,7 @@ void cb_port_get_byte(LmnReactCxt *rc,
  * +a2: バイト（文字コード）
  */
 void cb_port_unget_byte(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -591,7 +591,7 @@ void cb_port_unget_byte(LmnReactCxt *rc,
  * -a2: ポートを返す
  */
 void cb_port_putc(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -642,7 +642,7 @@ void cb_port_putc(LmnReactCxt *rc,
  * a2: ポートを返す
  */
 void cb_port_put_byte(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -662,7 +662,7 @@ void cb_port_put_byte(LmnReactCxt *rc,
  * a2: ポートを返す
  */
 void cb_port_puts(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1,
                   LmnAtom a2, LmnLinkAttr t2)
@@ -682,7 +682,7 @@ void cb_port_puts(LmnReactCxt *rc,
  * -a2: 文字列
  */
 void cb_port_read_line(LmnReactCxt *rc,
-                       LmnMembrane *mem,
+                       LmnMembraneRef mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1,
                        LmnAtom a2, LmnLinkAttr t2)
@@ -713,7 +713,7 @@ void cb_port_read_line(LmnReactCxt *rc,
  * -a2: 文字列
  */
 void cb_port_read_token(LmnReactCxt *rc,
-                       LmnMembrane *mem,
+                       LmnMembraneRef mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1,
                        LmnAtom a2, LmnLinkAttr t2)
@@ -744,7 +744,7 @@ void cb_port_read_token(LmnReactCxt *rc,
  * -a0: 出力文字列ポート
  */
 void cb_make_output_string(LmnReactCxt *rc,
-                           LmnMembrane *mem,
+                           LmnMembraneRef mem,
                            LmnAtom a0, LmnLinkAttr t0)
 {
   LmnPortRef port = lmn_make_output_string_port();
@@ -761,7 +761,7 @@ void cb_make_output_string(LmnReactCxt *rc,
  * -a1: 入力文字列ポート
  */
 void cb_make_input_string(LmnReactCxt *rc,
-                          LmnMembrane *mem,
+                          LmnMembraneRef mem,
                           LmnAtom a0, LmnLinkAttr t0,
                           LmnAtom a1, LmnLinkAttr t1)
 {
@@ -781,7 +781,7 @@ void cb_make_input_string(LmnReactCxt *rc,
  * -a2: 文字列
  */
 void cb_port_output_string(LmnReactCxt *rc,
-                           LmnMembrane *mem,
+                           LmnMembraneRef mem,
                            LmnAtom a0, LmnLinkAttr t0,
                            LmnAtom a1, LmnLinkAttr t1,
                            LmnAtom a2, LmnLinkAttr t2)

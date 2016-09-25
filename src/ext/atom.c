@@ -46,7 +46,7 @@
 /*
  * Internal Constructor
  */
-static LmnSAtom lmn_make_atom(LmnMembrane *mem, LmnAtom s, LmnAtom size)
+static LmnSAtom lmn_make_atom(LmnMembraneRef mem, LmnAtom s, LmnAtom size)
 {
   LmnSAtom a;
   int k;
@@ -76,7 +76,7 @@ static LmnSAtom lmn_make_atom(LmnMembrane *mem, LmnAtom s, LmnAtom size)
  * -a2: アトム
  */
 void cb_atom_new(LmnReactCxt *rc,
-    LmnMembrane *mem,
+    LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
     LmnAtom a2, LmnLinkAttr t2)
@@ -117,7 +117,7 @@ void cb_atom_new(LmnReactCxt *rc,
  * -a3: 新アトム
  */
 void cb_atom_functor(LmnReactCxt *rc,
-    LmnMembrane *mem,
+    LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
     LmnAtom a2, LmnLinkAttr t2,
@@ -153,7 +153,7 @@ void cb_atom_functor(LmnReactCxt *rc,
  */
 
 void cb_atom_swap(LmnReactCxt *rc,
-    LmnMembrane *mem,
+    LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
     LmnAtom a2, LmnLinkAttr t2,

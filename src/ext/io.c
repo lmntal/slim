@@ -49,7 +49,7 @@
  * -a1     : 返すポート
  */
 void cb_print_newline_with_port(LmnReactCxt *rc,
-                                LmnMembrane *mem,
+                                LmnMembraneRef mem,
                                 LmnAtom a0, LmnLinkAttr t0,
                                 LmnAtom a1, LmnLinkAttr t1)
 {
@@ -66,7 +66,7 @@ void cb_print_newline_with_port(LmnReactCxt *rc,
  * -a2     : 返すポート
  */
 void cb_print_line_with_port(LmnReactCxt *rc,
-                             LmnMembrane *mem,
+                             LmnMembraneRef mem,
                              LmnAtom a0, LmnLinkAttr t0,
                              LmnAtom a1, LmnLinkAttr t1,
                              LmnAtom a2, LmnLinkAttr t2)
@@ -87,7 +87,7 @@ void cb_print_line_with_port(LmnReactCxt *rc,
  * -a2     : 読み込んだ文字列 | eof()
  */
 // void cb_input_line_with_port(LmnReactCxt *rc,
-//                              LmnMembrane *mem,
+//                              LmnMembraneRef mem,
 //                              LmnAtom a0, LmnLinkAttr t0,
 //                              LmnAtom a1, LmnLinkAttr t1,
 //                              LmnAtom a2, LmnLinkAttr t2)

@@ -12,8 +12,6 @@
 
 /* cldoc:begin-category(ST) */
 
-#include "../lmntal.h"
-#include "lmntal_thread.h"
 #include <stddef.h>
 
  
@@ -63,6 +61,9 @@ struct st_table {
 enum st_retval {
   ST_CONTINUE, ST_STOP, ST_DELETE, ST_CHECK
 };
+
+#include "../lmntal.h"
+#include "lmntal_thread.h"
 
 
 static inline unsigned long st_num(st_table_t table) {

@@ -51,13 +51,13 @@ void init_initial_ruleset(void);
 
 const char *initial_modules[] = {"nd_conf"};
 
-BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
+BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
-  LmnMembrane *m, *next;
+  LmnMembraneRef m, next;
   BOOL ok = FALSE;
 
-  for (m = mem->child_head; m; m = next) {
-    next = m->next;
+  for (m = lmn_mem_child_head(mem); m; m = next) {
+    next = lmn_mem_next(m);
     if ((LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_RULESET_MEM_NAME) ||
          LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) &&
         lmn_mem_nfreelinks(m, 0) &&
@@ -89,7 +89,7 @@ BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rul
   return ok;
 }
 
-BOOL register_initial_module(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
+BOOL register_initial_module(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   static int done = 0;
   int i, j;

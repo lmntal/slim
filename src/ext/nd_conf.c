@@ -51,7 +51,7 @@
  * +a2     : アリティの整数
  */
 void cb_set_functor_priority(LmnReactCxt *rc,
-                             LmnMembrane *mem,
+                             LmnMembraneRef mem,
                              LmnAtom a0, LmnLinkAttr t0,
                              LmnAtom a1, LmnLinkAttr t1,
                              LmnAtom a2, LmnLinkAttr t2)

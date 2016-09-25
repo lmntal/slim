@@ -42,7 +42,7 @@
 
 
 void gettime(LmnReactCxt *rc,
-             LmnMembrane *mem,
+             LmnMembraneRef mem,
              LmnAtom a0, LmnLinkAttr t0)
 {
   LmnAtom t;

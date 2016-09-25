@@ -113,7 +113,7 @@ PLFormulaRef          negation_node_make(PLFormulaRef f0);
 PLFormulaRef          and_node_make(PLFormulaRef f0, PLFormulaRef f1);
 PLFormulaRef          or_node_make(PLFormulaRef f0, PLFormulaRef f1);
 void               free_formula(PLFormulaRef f);
-BOOL               eval_formula(LmnMembrane *mem, Vector *prop_defs, PLFormulaRef f);
+BOOL               eval_formula(LmnMembraneRef mem, Vector *prop_defs, PLFormulaRef f);
 
 /* never claim */
 int                never_claim_load(FILE *f, AutomataRef *a);

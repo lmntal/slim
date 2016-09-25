@@ -43,7 +43,7 @@
 #include "../lmntal.h"
 #include "../membrane.h"
 
-unsigned long mhash(LmnMembrane *mem);
+unsigned long mhash(LmnMembraneRef mem);
 void mhash_set_depth(int depth);
 
 /* cldoc:end-category() */

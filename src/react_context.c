@@ -228,7 +228,7 @@ void mc_react_cxt_destroy(LmnReactCxt *cxt)
 
 
 void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
-                                      LmnMembrane *mem,
+                                      LmnMembraneRef mem,
                                       LmnRuleRef rule)
 {
   vec_push(RC_EXPANDED(cxt), (vec_data_t)mem);

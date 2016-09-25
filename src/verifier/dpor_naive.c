@@ -350,7 +350,7 @@ static BOOL ample(StateSpaceRef  ss,
 
 static void por_gen_successors(State *s, LmnReactCxt *rc, AutomataRef a, Vector *psyms)
 {
-  LmnMembrane *mem;
+  LmnMembraneRef mem;
   mem = state_restore_mem(s);
   if (a) {
     AutomataStateRef p_s = MC_GET_PROPERTY(s, a);
@@ -374,7 +374,7 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d)
 {
   State *ret;
   st_data_t t;
-  LmnMembrane *tmp_m;
+  LmnMembraneRef tmp_m;
 
   if (d) {
     dmem_root_commit(d);
@@ -416,7 +416,7 @@ static inline State *por_state_insert_statespace(StateSpaceRef ss,
                                                  BOOL       org_f)
 {
   State *t;
-  LmnMembrane *succ_m;
+  LmnMembraneRef succ_m;
 
   succ_m = state_mem(succ_s);
   t = statespace_insert(ss, succ_s);

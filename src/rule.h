@@ -41,10 +41,18 @@
 
 /* cldoc:begin-category(Lmntal::Rule) */
 
+typedef struct LmnRule *LmnRuleRef;
+
+typedef struct LmnRuleSet *LmnRuleSetRef;
+
 #include "lmntal.h"
 #include "utility/vector.h"
 #include "utility/st.h"
 #include "symbol.h"
+#include "membrane.h"
+
+typedef BOOL (*LmnTranslated)(LmnReactCxt*, LmnMembraneRef, LmnRuleRef);
+
 
 /*----------------------------------------------------------------------
  * Rule
@@ -52,8 +60,6 @@
 /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
    生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
    た場合FALSEを返す */
-typedef struct LmnRule *LmnRuleRef;
-typedef BOOL (*LmnTranslated)(LmnReactCxt*, LmnMembrane *, LmnRuleRef);
 
 /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
    現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
@@ -107,7 +113,6 @@ void lmn_rule_init_uniq_rule(LmnRuleRef rule);
  * Rule Set
  */
 
-typedef struct LmnRuleSet *LmnRuleSetRef;
 typedef enum AtomicType{
   ATOMIC_NONE = 0,
   ATOMIC_ALL_EXHAUSTIVE,

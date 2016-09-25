@@ -151,7 +151,7 @@ void hyperlink_rank_calc(HyperLink *hl, int d)
 void hyperlink_swap_atom(HyperLink *hl1, HyperLink *hl2)
 {
   LmnSAtom t_atom;
-  LmnMembrane *t_mem;
+  LmnMembraneRef t_mem;
 
   t_atom    = hl1->atom;
   hl1->atom = hl2->atom;
@@ -509,10 +509,10 @@ BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLink
 
 /* hyperlink を1 つ出力
  *   hyperlink が1 つでも出力されるとTRUE を返す */
-BOOL hyperlink_print(LmnMembrane *mem, BOOL *flag, int *group, int *element)
+BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element)
 {
   AtomListEntryRef atomlist;
-  LmnMembrane *m;
+  LmnMembraneRef m;
   LmnSAtom atom;
   HyperLink *hl, *parent;
   HashSet *children;
@@ -595,7 +595,7 @@ BOOL hyperlink_print(LmnMembrane *mem, BOOL *flag, int *group, int *element)
   }
 //  else result = FALSE;
 
-  for (m = mem->child_head; m; m = m->next) {
+  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
     result = (hyperlink_print(m, flag, group, element) || result);
   }
 
@@ -620,7 +620,7 @@ int hyperlink_print_get_place(int num) {
 
 
 /* グローバルルート膜から順に辿って、存在する全てのhyperlink を出力する */
-void lmn_hyperlink_print(LmnMembrane *gr)
+void lmn_hyperlink_print(LmnMembraneRef gr)
 {
   FILE *f;
   int WIDTH, group, element, place_g, place_e;

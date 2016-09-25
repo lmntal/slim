@@ -204,8 +204,8 @@ void atomlist_put_record(AtomListEntryRef lst, int id, LmnAtom record) {
 }
 
 
-static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
-                                   LmnMembrane *srcmem,
+static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
+                                   LmnMembraneRef srcmem,
                                    ProcessTableRef  atoms,
                                    BOOL        hl_nd);
 
@@ -280,11 +280,26 @@ static inline void free_atomlist(AtomListEntry *as)
  * Membrane
  */
 
-LmnMembrane *lmn_mem_make(void)
-{
-  LmnMembrane *mem;
+struct LmnMembrane {
+  AtomSet              atomset;
+  ProcessID            id;
+  unsigned int         max_functor;
+  unsigned int         atomset_size;
+  unsigned int         atom_symb_num;  /* # of symbol atom except proxy */
+  unsigned int         atom_data_num;
+  lmn_interned_str     name;
+  BOOL                 is_activated;
+  LmnMembraneRef          parent;
+  LmnMembraneRef          child_head;
+  LmnMembraneRef          prev, next;
+  struct Vector        rulesets;
+};
 
-  mem = LMN_MALLOC(LmnMembrane);
+LmnMembraneRef lmn_mem_make(void)
+{
+  LmnMembraneRef mem;
+
+  mem = LMN_MALLOC(struct LmnMembrane);
   mem->parent        =  NULL;
   mem->child_head    =  NULL;
   mem->prev          =  NULL;
@@ -303,10 +318,106 @@ LmnMembrane *lmn_mem_make(void)
   return mem;
 }
 
+lmn_interned_str LMN_MEM_NAME_ID(LmnMembraneRef m) {
+  return m->name;
+}
+const char *LMN_MEM_NAME(LmnMembraneRef m) {
+  return LMN_SYMBOL_STR(LMN_MEM_NAME_ID(m));
+}
+LmnMembraneRef lmn_mem_parent(LmnMembraneRef m) {
+  return m->parent;
+}
+void lmn_mem_set_parent(LmnMembraneRef m, LmnMembraneRef parent) {
+  m->parent = parent;
+}
+
+BOOL lmn_mem_is_active(LmnMembraneRef m) {
+  return m->is_activated;
+}
+unsigned int lmn_mem_max_functor(LmnMembraneRef m) {
+  return m->max_functor;
+}
+void lmn_mem_set_name(LmnMembraneRef m, lmn_interned_str name) {
+  m->name = name;
+}
+void lmn_mem_set_active(LmnMembraneRef m, BOOL is_activated) {
+  m->is_activated = is_activated;
+}
+struct Vector * lmn_mem_get_rulesets(LmnMembraneRef m) {
+  return &(m->rulesets);
+}
+int lmn_mem_ruleset_num(LmnMembraneRef m) {
+  return vec_num(lmn_mem_get_rulesets(m));
+}
+LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i) {
+  return (LmnRuleSetRef)vec_get(lmn_mem_get_rulesets(m), i);
+}
+unsigned int lmn_mem_symb_atom_num(LmnMembraneRef m) {
+  return m->atom_symb_num;
+}
+void lmn_mem_symb_atom_set(LmnMembraneRef m, unsigned int n) {
+  m->atom_symb_num = n;
+}
+unsigned int lmn_mem_data_atom_num(LmnMembraneRef m) {
+  return m->atom_data_num;
+}
+void lmn_mem_data_atom_set(LmnMembraneRef m, unsigned int n) {
+  m->atom_data_num = n;
+}
+unsigned int lmn_mem_atom_num(LmnMembraneRef m) {
+  return lmn_mem_symb_atom_num(m) + lmn_mem_data_atom_num(m);
+}
+BOOL lmn_mem_natoms(LmnMembraneRef m, unsigned int n) {
+  return lmn_mem_atom_num(m) == n;
+}
+void lmn_mem_natoms_copy(LmnMembraneRef m, LmnMembraneRef n) {
+  lmn_mem_symb_atom_set(m, lmn_mem_symb_atom_num(n));
+  lmn_mem_data_atom_set(m, lmn_mem_data_atom_num(n));
+}
+void lmn_mem_symb_atom_add(LmnMembraneRef m, int n) {
+  m->atom_symb_num += n;
+}
+void lmn_mem_symb_atom_sub(LmnMembraneRef m, int n) {
+  m->atom_symb_num -= n;
+}
+void lmn_mem_symb_atom_inc(LmnMembraneRef m) {
+  m->atom_symb_num++;
+}
+void lmn_mem_symb_atom_dec(LmnMembraneRef m) {
+  m->atom_symb_num--;
+}
+void lmn_mem_data_atom_add(LmnMembraneRef m, int n) {
+  m->atom_data_num += n;
+}
+void lmn_mem_data_atom_sub(LmnMembraneRef m, int n) {
+  m->atom_data_num -= n;
+}
+void lmn_mem_data_atom_inc(LmnMembraneRef m) {
+  m->atom_data_num++;
+}
+void lmn_mem_data_atom_dec(LmnMembraneRef m) {
+  m->atom_data_num--;
+}
+
+LmnMembraneRef lmn_mem_child_head(LmnMembraneRef m) {
+  return m->child_head;
+}
+LmnMembraneRef lmn_mem_next(LmnMembraneRef m) {
+  return m->next;
+}
+LmnMembraneRef lmn_mem_prev(LmnMembraneRef m) {
+  return m->prev;
+}
+ProcessID lmn_mem_id(LmnMembraneRef m) {
+  return m->id;
+}
+void lmn_mem_set_id(LmnMembraneRef m, ProcessID n) {
+  m->id = n;
+}
 
 /* 膜memの解放を行う.
  * 膜memに所属する子膜とアトムのメモリ管理は呼び出し側で行う. */
-void lmn_mem_free(LmnMembrane *mem)
+void lmn_mem_free(LmnMembraneRef mem)
 {
   AtomListEntry *ent;
 
@@ -324,10 +435,10 @@ void lmn_mem_free(LmnMembrane *mem)
 
 /* 膜mem内のアトム, 子膜, ルールセットのメモリを解放する.
  * 子膜が存在する場合は, その子膜に再帰する. */
-void lmn_mem_drop(LmnMembrane *mem)
+void lmn_mem_drop(LmnMembraneRef mem)
 {
   AtomListEntry *ent;
-  LmnMembrane *m, *n;
+  LmnMembraneRef m, n;
 
   /* drop and free child mems */
   m = mem->child_head;
@@ -372,7 +483,7 @@ void lmn_mem_rulesets_destroy(Vector *rulesets)
   vec_destroy(rulesets);
 }
 
-void move_symbol_atom_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
+void move_symbol_atom_to_atomlist_tail(LmnSAtom a, LmnMembraneRef mem){
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
 
@@ -385,7 +496,7 @@ void move_symbol_atom_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
   ent->tail = (LmnWord)a;
 }
 
-void move_symbol_atom_to_atomlist_head(LmnSAtom a, LmnMembrane *mem){
+void move_symbol_atom_to_atomlist_head(LmnSAtom a, LmnMembraneRef mem){
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
 
@@ -398,7 +509,7 @@ void move_symbol_atom_to_atomlist_head(LmnSAtom a, LmnMembrane *mem){
   LMN_SATOM_SET_PREV(ent->head, a);
   ent->head = (LmnWord)a;
 }
-void move_symbol_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
+void move_symbol_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembraneRef mem){
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
   
@@ -411,7 +522,7 @@ void move_symbol_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
     ent->head = (LmnWord)a;
     }
 }
-void move_symbol_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem){
+void move_symbol_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembraneRef mem){
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
   
@@ -430,7 +541,7 @@ void move_symbol_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem){
   
 }
 
-void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom)
+void mem_push_symbol_atom(LmnMembraneRef mem, LmnSAtom atom)
 {
   AtomListEntry *as;
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
@@ -471,7 +582,7 @@ void mem_push_symbol_atom(LmnMembrane *mem, LmnSAtom atom)
 }
 
 
-unsigned long lmn_mem_space(LmnMembrane *mem)
+unsigned long lmn_mem_space(LmnMembraneRef mem)
 {
   AtomListEntry *ent;
   unsigned long ret;
@@ -504,10 +615,10 @@ unsigned long lmn_mem_space(LmnMembrane *mem)
   return ret;
 }
 
-unsigned long lmn_mem_root_space(LmnMembrane *src)
+unsigned long lmn_mem_root_space(LmnMembraneRef src)
 {
   unsigned long ret;
-  LmnMembrane *ptr;
+  LmnMembraneRef ptr;
 
   ret = lmn_mem_space(src);
   for (ptr = src->child_head; ptr != NULL; ptr = ptr->next) {
@@ -518,7 +629,7 @@ unsigned long lmn_mem_root_space(LmnMembrane *src)
 }
 
 
-void lmn_mem_link_data_atoms(LmnMembrane *mem,
+void lmn_mem_link_data_atoms(LmnMembraneRef mem,
                              LmnAtom d0,
                              LmnLinkAttr attr0,
                              LmnAtom d1,
@@ -552,7 +663,7 @@ void lmn_mem_unify_symbol_atom_args(LmnSAtom atom1, int pos1,
 }
 
 /* atom1, atom2はシンボルアトムのはず */
-void lmn_mem_unify_atom_args(LmnMembrane *mem,
+void lmn_mem_unify_atom_args(LmnMembraneRef mem,
                              LmnSAtom atom1, int pos1,
                              LmnSAtom atom2, int pos2)
 {
@@ -594,7 +705,7 @@ void lmn_newlink_in_symbols(LmnSAtom atom0, int pos0,
 }
 
 
-void lmn_newlink_with_ex(LmnMembrane *mem,
+void lmn_newlink_with_ex(LmnMembraneRef mem,
                          LmnSAtom atom0, LmnLinkAttr attr0, int pos0,
                          LmnSAtom atom1, LmnLinkAttr attr1, int pos1)
 {
@@ -648,7 +759,7 @@ static inline void newlink_symbol_and_hlink(LmnSAtom atom,
 }
 
 
-void lmn_mem_newlink(LmnMembrane *mem,
+void lmn_mem_newlink(LmnMembraneRef mem,
                      LmnAtom atom0, LmnLinkAttr attr0, int pos0,
                      LmnAtom atom1, LmnLinkAttr attr1, int pos1)
 {
@@ -684,7 +795,7 @@ void lmn_relink_symbols(LmnSAtom atom0, int pos0,
 }
 
 
-void lmn_mem_relink_atom_args(LmnMembrane *mem,
+void lmn_mem_relink_atom_args(LmnMembraneRef mem,
                               LmnAtom atom0, LmnLinkAttr attr0, int pos0,
                               LmnAtom atom1, LmnLinkAttr attr1, int pos1)
 {
@@ -699,10 +810,10 @@ void lmn_mem_relink_atom_args(LmnMembrane *mem,
                                LMN_SATOM_GET_ATTR(LMN_SATOM(atom1), pos1));
 }
 
-void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
+void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem)
 {
   AtomListEntry *srcent;
-  LmnMembrane *m, *next;
+  LmnMembraneRef m, next;
   int dst_data_atom_n, src_data_atom_n;
 
   dst_data_atom_n = lmn_mem_data_atom_num(destmem);
@@ -756,7 +867,7 @@ void lmn_mem_move_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
  *
  * 2011/01/23  処理を変更 meguro
  */
-void lmn_mem_remove_proxies(LmnMembrane *mem)
+void lmn_mem_remove_proxies(LmnMembraneRef mem)
 {
   struct Vector remove_list_p, remove_list_m, change_list;
   AtomListEntry *ent;
@@ -846,7 +957,7 @@ void lmn_mem_remove_proxies(LmnMembrane *mem)
  * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
  * HashSetを使うようにする
  */
-void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
+void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem)
 {
   unsigned int i;
   Vector remove_list, change_list;
@@ -907,7 +1018,7 @@ void lmn_mem_insert_proxies(LmnMembrane *mem, LmnMembrane *child_mem)
  * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
  * HashSetを使うようにする
  */
-void lmn_mem_remove_temporary_proxies(LmnMembrane *mem)
+void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem)
 {
   unsigned int i;
   Vector remove_list;
@@ -941,7 +1052,7 @@ void lmn_mem_remove_temporary_proxies(LmnMembrane *mem)
  * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
  * HashSetを使うようにする
  */
-void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
+void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem)
 {
   Vector remove_list;
   AtomListEntry *ent;
@@ -983,20 +1094,20 @@ void lmn_mem_remove_toplevel_proxies(LmnMembrane *mem)
 }
 
 
-LmnMembrane *lmn_mem_copy(LmnMembrane *src)
+LmnMembraneRef lmn_mem_copy(LmnMembraneRef src)
 {
   ProcessTableRef copymap;
-  LmnMembrane *copied;
+  LmnMembraneRef copied;
 
   copied = lmn_mem_copy_with_map(src, &copymap);
   proc_tbl_free(copymap);
   return copied;
 }
 
-LmnMembrane *lmn_mem_copy_ex(LmnMembrane *src)
+LmnMembraneRef lmn_mem_copy_ex(LmnMembraneRef src)
 {
   ProcessTableRef copymap;
-  LmnMembrane *copied;
+  LmnMembraneRef copied;
 
   copied = lmn_mem_copy_with_map_ex(src, &copymap);
   proc_tbl_free(copymap);
@@ -1004,13 +1115,13 @@ LmnMembrane *lmn_mem_copy_ex(LmnMembrane *src)
 }
 
 static inline
-LmnMembrane *lmn_mem_copy_with_map_inner(LmnMembrane *src,
+LmnMembraneRef lmn_mem_copy_with_map_inner(LmnMembraneRef src,
                                          ProcessTableRef  *ret_copymap,
                                          BOOL        hl_nd)
 {
   unsigned int i;
   ProcessTableRef copymap;
-  LmnMembrane *new_mem;
+  LmnMembraneRef new_mem;
 
   /* (ueda, 2013-09-21) コミット前に newhlink で作られたハイパーリンク
    * のIDとの衝突を避けるために，グローバルルート膜のコピー時にIDのリセ
@@ -1038,19 +1149,19 @@ LmnMembrane *lmn_mem_copy_with_map_inner(LmnMembrane *src,
   return new_mem;
 }
 
-LmnMembrane *lmn_mem_copy_with_map_ex(LmnMembrane *src, ProcessTableRef *ret_copymap)
+LmnMembraneRef lmn_mem_copy_with_map_ex(LmnMembraneRef src, ProcessTableRef *ret_copymap)
 {
   return lmn_mem_copy_with_map_inner(src, ret_copymap, TRUE);
 }
 
-LmnMembrane *lmn_mem_copy_with_map(LmnMembrane *src, ProcessTableRef *ret_copymap)
+LmnMembraneRef lmn_mem_copy_with_map(LmnMembraneRef src, ProcessTableRef *ret_copymap)
 {
   return lmn_mem_copy_with_map_inner(src, ret_copymap, FALSE);
 }
 
 
-ProcessTableRef lmn_mem_copy_cells_ex(LmnMembrane *dst,
-                                        LmnMembrane *src,
+ProcessTableRef lmn_mem_copy_cells_ex(LmnMembraneRef dst,
+                                        LmnMembraneRef src,
                                         BOOL        hl_nd)
 {
   ProcessTableRef atoms = proc_tbl_make_with_size(64);
@@ -1058,25 +1169,25 @@ ProcessTableRef lmn_mem_copy_cells_ex(LmnMembrane *dst,
   return atoms;
 }
 
-ProcessTableRef lmn_mem_copy_cells(LmnMembrane *destmem, LmnMembrane *srcmem)
+ProcessTableRef lmn_mem_copy_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem)
 {
   return lmn_mem_copy_cells_ex(destmem, srcmem, FALSE);
 }
 
 /* srcmemの実データ構造をdestmemへコピー生成する. atomsは訪問済みの管理に用いる.
  * hl_ndフラグが真の場合, コピー前とコピー後のハイパーリンクのunifyをしない.  */
-static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,
-                                  LmnMembrane  *srcmem,
+static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
+                                  LmnMembraneRef  srcmem,
                                   ProcessTableRef   atoms,
                                   BOOL         hl_nd)
 {
   unsigned int i;
-  LmnMembrane *m;
+  LmnMembraneRef m;
   AtomListEntry *ent;
 
   /* copy child mems */
   for (m = srcmem->child_head; m; m = m->next) {
-    LmnMembrane *new_mem = lmn_mem_make();
+    LmnMembraneRef new_mem = lmn_mem_make();
     lmn_mem_copy_cells_sub(new_mem, m, atoms, hl_nd);
     lmn_mem_add_child_mem(destmem, new_mem);
 
@@ -1230,7 +1341,7 @@ LinkObjRef LinkObj_make(LmnAtom ap, LmnLinkAttr pos)
  * attr_dataAtomsはハイパーリンクの属性（データアトム）
  * attr_dataAtom_attrsはハイパーリンクの属性（データアトムの属性) 
  */ 
-static inline void mem_map_hlink(LmnMembrane *mem,
+static inline void mem_map_hlink(LmnMembraneRef mem,
                              LmnSAtom root_hlAtom,
                              LmnSAtom copied_root_hlAtom,
                              Vector *stack,
@@ -1323,7 +1434,7 @@ static inline void mem_map_hlink(LmnMembrane *mem,
  * ret_atommapはコピー元とコピー先のアトムの対応
  * ret_hlinkmapはハイパーリンクのコピー元と先であり
  * hlgroundのフラグも兼ねている */
-static inline void mem_copy_ground_sub(LmnMembrane *mem,
+static inline void mem_copy_ground_sub(LmnMembraneRef mem,
                              Vector *srcvec,
                              Vector **ret_dstlovec,
                              ProcessTableRef *ret_atommap,
@@ -1449,7 +1560,7 @@ static inline void mem_copy_ground_sub(LmnMembrane *mem,
   }
 }
 
-void lmn_mem_copy_ground(LmnMembrane *mem,
+void lmn_mem_copy_ground(LmnMembraneRef mem,
 			 Vector *srcvec,
 			 Vector **ret_dstlovec,
 			 ProcessTableRef *ret_atommap)
@@ -1457,7 +1568,7 @@ void lmn_mem_copy_ground(LmnMembrane *mem,
   mem_copy_ground_sub(mem, srcvec, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
 }
 
-void lmn_mem_copy_hlground(LmnMembrane *mem,
+void lmn_mem_copy_hlground(LmnMembraneRef mem,
                              Vector *srcvec,
                              Vector **ret_dstlovec,
                              ProcessTableRef *ret_atommap,
@@ -1683,7 +1794,7 @@ BOOL ground_atoms(Vector        *srcvec,
   int reached_root_count; /* 到達した根の個数(1つは始点) */
   BOOL result;
   HyperLink *hl;
-  LmnMembrane *mem;
+  LmnMembraneRef mem;
   Vector *hl_childs;
   int element_num;
 
@@ -2009,11 +2120,11 @@ int mem_remove_symbol_atom_with_buddy_data_f(LmnWord _k,
                                              LmnWord _v,
                                              LmnWord _arg)
 {
-  mem_remove_symbol_atom_with_buddy_data((LmnMembrane *)_arg, (LmnSAtom)_v);
+  mem_remove_symbol_atom_with_buddy_data((LmnMembraneRef)_arg, (LmnSAtom)_v);
   return 1;
 }
 
-void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
+void lmn_mem_remove_ground(LmnMembraneRef mem, Vector *srcvec)
 {
   ProcessTableRef atoms;
   unsigned long i, t;
@@ -2034,7 +2145,7 @@ void lmn_mem_remove_ground(LmnMembrane *mem, Vector *srcvec)
   proc_tbl_free(atoms);
 }
 
-void lmn_mem_remove_hlground(LmnMembrane *mem,
+void lmn_mem_remove_hlground(LmnMembraneRef mem,
                              Vector *srcvec,
                              ProcessTableRef *attr_sym,
                              Vector *attr_data,
@@ -2107,7 +2218,7 @@ void lmn_mem_free_hlground(Vector *srcvec,
   }
 }
 
-void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec)
+void lmn_mem_delete_ground(LmnMembraneRef mem, Vector *srcvec)
 {
   ProcessTableRef atoms;
   unsigned long i, t;
@@ -2141,13 +2252,13 @@ void lmn_mem_delete_ground(LmnMembrane *mem, Vector *srcvec)
  */
 
 #define CHECKED_MEM_DEPTH (0)
-static BOOL mem_equals_rec(LmnMembrane *mem1, TraceLogRef  log1,
-                           LmnMembrane *mem2, SimplyLog log2,
+static BOOL mem_equals_rec(LmnMembraneRef mem1, TraceLogRef  log1,
+                           LmnMembraneRef mem2, SimplyLog log2,
                            int current_depth);
 
 
 /* 階層グラフ構造mem1, mem2が同型ならば真を返す. */
-BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
+BOOL lmn_mem_equals(LmnMembraneRef mem1, LmnMembraneRef mem2)
 {
   BOOL t;
 
@@ -2179,16 +2290,16 @@ BOOL lmn_mem_equals(LmnMembrane *mem1, LmnMembrane *mem2)
 }
 
 
-static BOOL mem_equals_atomlists(LmnMembrane *mem1, LmnMembrane *mem2);
-static BOOL mem_equals_isomorphism(LmnMembrane *mem1, TraceLogRef log1,
-                                   LmnMembrane *mem2, SimplyLog log2,
+static BOOL mem_equals_atomlists(LmnMembraneRef mem1, LmnMembraneRef mem2);
+static BOOL mem_equals_isomorphism(LmnMembraneRef mem1, TraceLogRef log1,
+                                   LmnMembraneRef mem2, SimplyLog log2,
                                    int current_depth);
 
 /* 膜mem1から到達可能な全プロセスと
  * 膜mem2から到達可能な全プロセスが
  * 互いに過不足なくマッチングする(同型の階層グラフ構造)ならば真を返す. */
-static BOOL mem_equals_rec(LmnMembrane *mem1, TraceLogRef  log1,
-                           LmnMembrane *mem2, SimplyLog log2,
+static BOOL mem_equals_rec(LmnMembraneRef mem1, TraceLogRef  log1,
+                           LmnMembraneRef mem2, SimplyLog log2,
                            int current_depth)
 {
 #ifndef LMN_MEMEQ_OLD
@@ -2251,7 +2362,7 @@ static BOOL mem_equals_rec(LmnMembrane *mem1, TraceLogRef  log1,
 
 
 /* 膜mem1, mem2直下のアトムリストを比較(アトムの種類毎にアトム数を比較)した結果の真偽値を返す */
-static BOOL mem_equals_atomlists(LmnMembrane *mem1, LmnMembrane *mem2)
+static BOOL mem_equals_atomlists(LmnMembraneRef mem1, LmnMembraneRef mem2)
 {
   AtomListEntry *ent1;
   LmnFunctor f;
@@ -2280,27 +2391,27 @@ typedef struct MemIsomorIter MemIsomorIter;
 struct MemIsomorIter {
   BYTE          phase;
   AtomListIter  pos;
-  LmnMembrane   *mem;
+  LmnMembraneRef   mem;
   LmnSAtom      atom;
-  LmnMembrane   *child;
+  LmnMembraneRef   child;
 };
 
 
-static inline BOOL mem_equals_molecules(LmnMembrane *mem1, LmnMembrane *mem2, int current_depth);
-static inline BOOL mem_equals_children(LmnMembrane *mem1, LmnMembrane *mem2, int current_depth);
+static inline BOOL mem_equals_molecules(LmnMembraneRef mem1, LmnMembraneRef mem2, int current_depth);
+static inline BOOL mem_equals_children(LmnMembraneRef mem1, LmnMembraneRef mem2, int current_depth);
 
-static inline void memIsomorIter_init(MemIsomorIter *ma_iter, LmnMembrane *mem);
+static inline void memIsomorIter_init(MemIsomorIter *ma_iter, LmnMembraneRef mem);
 static inline void memIsomorIter_destroy(MemIsomorIter *iter);
 static inline LmnSAtom     memIsomorIter_atom_traversed(MemIsomorIter *iter);
-static inline LmnMembrane *memIsomorIter_child_traversed(MemIsomorIter *iter);
-static BOOL mem_isomor_mols(LmnMembrane *mem1, TraceLogRef  log1,
-                            LmnMembrane *mem2, SimplyLog log2,
+static inline LmnMembraneRef memIsomorIter_child_traversed(MemIsomorIter *iter);
+static BOOL mem_isomor_mols(LmnMembraneRef mem1, TraceLogRef  log1,
+                            LmnMembraneRef mem2, SimplyLog log2,
                             MemIsomorIter *iter);
 
 /* 未訪問の膜mem1および膜mem2を対象に, アトム起点および子膜起点でグラフ構造をトレースする.
  * 膜mem1とmem2以下の階層グラフが同型と判定されたなれば真を返し, 異形なばら偽を返す. */
-static BOOL mem_equals_isomorphism(LmnMembrane *mem1, TraceLogRef  log1,
-                                   LmnMembrane *mem2, SimplyLog log2,
+static BOOL mem_equals_isomorphism(LmnMembraneRef mem1, TraceLogRef  log1,
+                                   LmnMembraneRef mem2, SimplyLog log2,
                                    int current_depth)
 {
   BOOL ret;
@@ -2321,7 +2432,7 @@ static BOOL mem_equals_isomorphism(LmnMembrane *mem1, TraceLogRef  log1,
   return ret;
 }
 
-static inline void memIsomorIter_init(MemIsomorIter *ma_iter, LmnMembrane *mem)
+static inline void memIsomorIter_init(MemIsomorIter *ma_iter, LmnMembraneRef mem)
 {
   ma_iter->pos   = atomlist_iter_initializer(mem->atomset);
   ma_iter->phase = ISOMOR_PHASE_ATOM;
@@ -2426,7 +2537,7 @@ static inline LmnSAtom memIsomorIter_atom_traversed(MemIsomorIter *iter)
 }
 
 
-static inline LmnMembrane *memIsomorIter_child_traversed(MemIsomorIter *iter)
+static inline LmnMembraneRef memIsomorIter_child_traversed(MemIsomorIter *iter)
 {
   if (iter->phase != ISOMOR_PHASE_CHILD) {
     return NULL;
@@ -2452,18 +2563,18 @@ static inline LmnMembrane *memIsomorIter_child_traversed(MemIsomorIter *iter)
 #define MEM_ISOMOR_MATCH_WITHIN_MEM     (2U)
 
 
-static inline BOOL mem_isomor_mol_atoms(LmnMembrane *mem1, TraceLogRef  log1,
-                                        LmnMembrane *mem2, SimplyLog log2,
+static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef  log1,
+                                        LmnMembraneRef mem2, SimplyLog log2,
                                         MemIsomorIter *iter, LmnSAtom root1);
-static inline BOOL mem_isomor_mol_mems(LmnMembrane *mem1, TraceLogRef  log1,
-                                       LmnMembrane *mem2, SimplyLog log2,
-                                       MemIsomorIter *iter, LmnMembrane *root1);
+static inline BOOL mem_isomor_mol_mems(LmnMembraneRef mem1, TraceLogRef  log1,
+                                       LmnMembraneRef mem2, SimplyLog log2,
+                                       MemIsomorIter *iter, LmnMembraneRef root1);
 
 
 /* mem1およびmem2直下から等価な分子構造を再帰DFSで探索する.
  * 全ての分子が過不足なく1対1にした場合, 真を返す. */
-static BOOL mem_isomor_mols(LmnMembrane *mem1, TraceLogRef  log1,
-                            LmnMembrane *mem2, SimplyLog log2,
+static BOOL mem_isomor_mols(LmnMembraneRef mem1, TraceLogRef  log1,
+                            LmnMembraneRef mem2, SimplyLog log2,
                             MemIsomorIter *iter)
 {
   LmnSAtom root1;
@@ -2480,7 +2591,7 @@ static BOOL mem_isomor_mols(LmnMembrane *mem1, TraceLogRef  log1,
                                 mem2, log2, iter, root1);
   }
   else {
-    LmnMembrane *child;
+    LmnMembraneRef child;
     do {
       child = memIsomorIter_child_traversed(iter);
     } while (child && tracelog_contains_mem(log1, child));
@@ -2505,12 +2616,12 @@ static BOOL mem_isomor_mols(LmnMembrane *mem1, TraceLogRef  log1,
 }
 
 
-static inline int mem_isomor_trace(LmnAtom cur1, LmnMembrane *mem1, TraceLogRef log1,
+static inline int mem_isomor_trace(LmnAtom cur1, LmnMembraneRef mem1, TraceLogRef log1,
                                    LmnFunctor f,  int from_i,
-                                   LmnAtom cur2, LmnMembrane *mem2, SimplyLog log2);
+                                   LmnAtom cur2, LmnMembraneRef mem2, SimplyLog log2);
 
-static inline BOOL mem_isomor_mol_atoms(LmnMembrane *mem1, TraceLogRef  log1,
-                                        LmnMembrane *mem2, SimplyLog log2,
+static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef  log1,
+                                        LmnMembraneRef mem2, SimplyLog log2,
                                         MemIsomorIter *iter, LmnSAtom root1)
 {
   MemIsomorIter current; /* for keeping current state (snap shot) */
@@ -2564,11 +2675,11 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembrane *mem1, TraceLogRef  log1,
 }
 
 
-static inline BOOL mem_isomor_mol_mems(LmnMembrane *mem1, TraceLogRef  log1,
-                                       LmnMembrane *mem2, SimplyLog log2,
-                                       MemIsomorIter *iter, LmnMembrane *root1)
+static inline BOOL mem_isomor_mol_mems(LmnMembraneRef mem1, TraceLogRef  log1,
+                                       LmnMembraneRef mem2, SimplyLog log2,
+                                       MemIsomorIter *iter, LmnMembraneRef root1)
 {
-  LmnMembrane *root2;
+  LmnMembraneRef root2;
   for (root2 = lmn_mem_child_head(mem2); root2; root2 = lmn_mem_next(root2)) {
     if (simplylog_contains_mem(log2, root2)) continue;
     else {
@@ -2592,19 +2703,19 @@ static inline BOOL mem_isomor_mol_mems(LmnMembrane *mem1, TraceLogRef  log1,
 
 
 
-static inline BOOL mem_isomor_trace_proxies(LmnAtom cur1, LmnMembrane *mem1, TraceLogRef log1,
+static inline BOOL mem_isomor_trace_proxies(LmnAtom cur1, LmnMembraneRef mem1, TraceLogRef log1,
                                             LmnFunctor f,
-                                            LmnAtom cur2, LmnMembrane *mem2, SimplyLog log2);
-static inline int mem_isomor_trace_symbols(LmnAtom cur1, LmnMembrane *mem1, TraceLogRef log1,
+                                            LmnAtom cur2, LmnMembraneRef mem2, SimplyLog log2);
+static inline int mem_isomor_trace_symbols(LmnAtom cur1, LmnMembraneRef mem1, TraceLogRef log1,
                                            LmnFunctor f, int from_i,
-                                           LmnAtom cur2, LmnMembrane *mem2, SimplyLog log2);
+                                           LmnAtom cur2, LmnMembraneRef mem2, SimplyLog log2);
 
 
 /* from link番号だけは受け取る.
  * 等価なアトムcur1, cur2から1step先の構造を比較して再帰する. */
-static inline int mem_isomor_trace(LmnAtom cur1, LmnMembrane *mem1, TraceLogRef log1,
+static inline int mem_isomor_trace(LmnAtom cur1, LmnMembraneRef mem1, TraceLogRef log1,
                                    LmnFunctor f,  int from_i,
-                                   LmnAtom cur2, LmnMembrane *mem2, SimplyLog log2)
+                                   LmnAtom cur2, LmnMembraneRef mem2, SimplyLog log2)
 {
   if (LMN_IS_PROXY_FUNCTOR(f)) {
     /* proxy atomの場合 */
@@ -2622,13 +2733,13 @@ static inline int mem_isomor_trace(LmnAtom cur1, LmnMembrane *mem1, TraceLogRef 
   }
 }
 
-static inline BOOL mem_isomor_trace_proxies(LmnAtom cur1, LmnMembrane *mem1, TraceLogRef log1,
+static inline BOOL mem_isomor_trace_proxies(LmnAtom cur1, LmnMembraneRef mem1, TraceLogRef log1,
                                             LmnFunctor f,
-                                            LmnAtom cur2, LmnMembrane *mem2, SimplyLog log2)
+                                            LmnAtom cur2, LmnMembraneRef mem2, SimplyLog log2)
 {
   LmnAtom pair1, pair2, atom1, atom2;
   LmnLinkAttr attr1, attr2;
-  LmnMembrane *nxtM1, *nxtM2;
+  LmnMembraneRef nxtM1, nxtM2;
 
   /* proxy atomの場合
    * -----------------+
@@ -2733,9 +2844,9 @@ static inline BOOL mem_isomor_trace_proxies(LmnAtom cur1, LmnMembrane *mem1, Tra
 }
 
 
-static inline int mem_isomor_trace_symbols(LmnAtom cur1, LmnMembrane *mem1, TraceLogRef log1,
+static inline int mem_isomor_trace_symbols(LmnAtom cur1, LmnMembraneRef mem1, TraceLogRef log1,
                                            LmnFunctor f, int from_i,
-                                           LmnAtom cur2, LmnMembrane *mem2, SimplyLog log2)
+                                           LmnAtom cur2, LmnMembraneRef mem2, SimplyLog log2)
 {
   int to_i, global_ret;
 
@@ -2829,7 +2940,7 @@ static inline BOOL mem_equals_children_inner(Vector *v_mems_children1,
  * ここからは, 両膜内に存在するすべての子膜について, その構造が一致するかどうかについて調べていく.
  * 以降、mem1内の子膜を1つ固定し、mem2直下の子膜から対応するものを特定する作業に移っていくが,
  * 結果が偽となるケースにおける処理速度を向上させるため, 子孫膜数が少ない子膜から優先的に固定する */
-static inline BOOL mem_equals_children(LmnMembrane *mem1, LmnMembrane *mem2, int current_depth)
+static inline BOOL mem_equals_children(LmnMembraneRef mem1, LmnMembraneRef mem2, int current_depth)
 {
   int child_n;
 
@@ -2853,7 +2964,7 @@ static inline BOOL mem_equals_children(LmnMembrane *mem1, LmnMembrane *mem2, int
 
     /* mem1, mem2直下の子膜を取得し、その個数が等しいことを確認 */
     {
-      LmnMembrane *m;
+      LmnMembraneRef m;
       for (m = mem1->child_head; m; m = m->next) vec_push(v_mems_children1, (LmnWord)m);
       for (m = mem2->child_head; m; m = m->next) vec_push(v_mems_children2, (LmnWord)m);
 
@@ -2892,14 +3003,14 @@ static inline BOOL mem_equals_children_inner(Vector *v_mems_children1,
   /* 子膜を起点とする走査 */
   matched = TRUE;
   while (matched && !vec_is_empty(v_mems_children1)) {
-    LmnMembrane *cm1 = (LmnMembrane *)vec_pop(v_mems_children1);
+    LmnMembraneRef cm1 = (LmnMembraneRef)vec_pop(v_mems_children1);
 
     /* fprintf(stderr, "\t-- start to test a descendant membrane --\n\t\t# of descendants of mem(%u): %u\n"
      *               , (unsigned int)cm1
      *               , lmn_mem_count_descendants(cm1)); */
 
     for (i = vec_num(v_mems_children2); i > 0; i--) {
-      LmnMembrane *cm2 = (LmnMembrane *)vec_get(v_mems_children2, i-1);
+      LmnMembraneRef cm2 = (LmnMembraneRef)vec_get(v_mems_children2, i-1);
 
       matched = mem_equals_rec(cm1, NULL, cm2, NULL, current_depth + 1);
       if (!matched) {
@@ -2909,7 +3020,7 @@ static inline BOOL mem_equals_children_inner(Vector *v_mems_children1,
         /* cm1と同型の膜(=cm2)がv_mems_children2内に見つかった場合にここに入る。
          * v_mems_children2からcm2を取り除く。 */
         for (j = 0; j < vec_num(v_mems_children2); j++) {
-          if (cm2 == (LmnMembrane *)vec_get(v_mems_children2, j)) {
+          if (cm2 == (LmnMembraneRef)vec_get(v_mems_children2, j)) {
             vec_pop_n(v_mems_children2, j);
             break; /* INNER2 LOOP */
           }
@@ -2935,7 +3046,7 @@ static void mem_mk_sorted_children(Vector *vec)
 
   num_descendants_max = 0;
   for (i = 0; i < vec_num(vec); i++) {
-    n = lmn_mem_count_descendants((LmnMembrane *)vec_get(vec, i));
+    n = lmn_mem_count_descendants((LmnMembraneRef)vec_get(vec, i));
     if (n > num_descendants_max) {
       num_descendants_max = n;
     }
@@ -2943,7 +3054,7 @@ static void mem_mk_sorted_children(Vector *vec)
   v_mems_tmp = vec_make(vec_num(vec));
   for (n = 0; n <= num_descendants_max; n++) {
     for (i = 0; i < vec_num(vec); i++) {
-      if (n == lmn_mem_count_descendants((LmnMembrane *)vec_get(vec, i))) {
+      if (n == lmn_mem_count_descendants((LmnMembraneRef)vec_get(vec, i))) {
         vec_push(v_mems_tmp, vec_get(vec, i));
       }
     }
@@ -2968,7 +3079,7 @@ typedef struct AtomVecData {
 } atomvec_data;
 
 
-static Vector *mem_mk_matching_vec(LmnMembrane *mem);
+static Vector *mem_mk_matching_vec(LmnMembraneRef mem);
 static void free_atomvec_data(Vector *vec);
 static inline BOOL mem_equals_molecules_inner(Vector *v_log1, Vector *v_atoms_not_checked1,
                                               Vector *v_log2, Vector *v_atoms_not_checked2,
@@ -2978,7 +3089,7 @@ static inline BOOL mem_equals_molecules_inner(Vector *v_log1, Vector *v_atoms_no
  * およびその個数が完全に一致することが確認されている。
  * (i.e. 結果が「同型でない(偽)」になるならば、本膜におけるリンクの接続関係 or 子孫膜が異なっていることを意味する)
  * 以降、少数派のアトムから順に根に定めていき、アトムを起点とする走査の実行に移っていく。 */
-static inline BOOL mem_equals_molecules(LmnMembrane *mem1, LmnMembrane *mem2, int current_depth)
+static inline BOOL mem_equals_molecules(LmnMembraneRef mem1, LmnMembraneRef mem2, int current_depth)
 {
   unsigned int atom_n = lmn_mem_atom_num(mem1);
   LMN_ASSERT(atom_n == lmn_mem_atom_num(mem2));
@@ -3165,7 +3276,7 @@ static BOOL mem_trace_links(LmnSAtom a1,
   /* 本メソッドを再帰的に呼び出していく過程で，a1(,a2)へのリンクを辿ることが親膜から子膜への遷移を意味する場合，
    * a1, a2の所属膜を対象とした同型性判定を行う必要がある */
   if (need_to_check_this_membrane_processes) {
-    LmnMembrane *mem1, *mem2;
+    LmnMembraneRef mem1, mem2;
 
     /* ここの処理をする際，a1およびa2は共にプロキシアトムのはず */
     LMN_ASSERT(LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(a1)) &&
@@ -3308,7 +3419,7 @@ static BOOL mem_trace_links(LmnSAtom a1,
  * 目標としているため、先程構造体を整理したベクターについて、構造体内のアトム数が「多い順」にソートしてやる必要がある。
  * ここで「多い順」とした理由は、後のステップで本ベクターを(結果的に)POPしながらアトムのアドレス情報を取り出すことに
  * なるためである。(少数派のアトムから取り出されることになることに注意せよ) */
-static Vector *mem_mk_matching_vec(LmnMembrane *mem)
+static Vector *mem_mk_matching_vec(LmnMembraneRef mem)
 {
   Vector *vec, *v_tmp;
   LmnFunctor f;
@@ -3403,7 +3514,7 @@ BOOL mem_is_the_same_matching_vec(Vector *vec1, Vector *vec2)
 
 /* 膜parentから膜memを取り除く.
  * memのメモリ管理は呼び出し側で行う. */
-void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem) {
+void lmn_mem_remove_mem(LmnMembraneRef parent, LmnMembraneRef mem) {
   LMN_ASSERT(parent);
   if (lmn_mem_child_head(parent) == mem) parent->child_head = lmn_mem_next(mem);
   if (lmn_mem_prev(mem)) mem->prev->next = lmn_mem_next(mem);
@@ -3414,18 +3525,18 @@ void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem) {
 }
 
 /* 膜mem以下全ての階層のメモリを破棄する */
-void lmn_mem_free_rec(LmnMembrane *mem) {
+void lmn_mem_free_rec(LmnMembraneRef mem) {
   lmn_mem_drop(mem);
   lmn_mem_free(mem);
 }
 
 /* 膜parentから膜memを取り除き, mem以下の階層全てを解放する. */
-void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem) {
+void lmn_mem_delete_mem(LmnMembraneRef parent, LmnMembraneRef mem) {
   lmn_mem_remove_mem(parent, mem);
   lmn_mem_free_rec(mem);
 }
 
-AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f) {
+AtomListEntry* lmn_mem_get_atomlist(LmnMembraneRef mem, LmnFunctor f) {
   if ((f < mem->atomset_size) && mem->atomset[f]) {
     return mem->atomset[f];
   } else {
@@ -3434,32 +3545,32 @@ AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f) {
 }
 
 /* 自身を含めた全ての先祖膜を起こす */
-void lmn_mem_activate_ancestors(LmnMembrane *mem) {
-  LmnMembrane *cur;
+void lmn_mem_activate_ancestors(LmnMembraneRef mem) {
+  LmnMembraneRef cur;
   for (cur = mem; cur; cur = lmn_mem_parent(cur)) {
     lmn_mem_set_active(mem, TRUE);
   }
 }
 
-BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count) {
+BOOL lmn_mem_nmems(LmnMembraneRef mem, unsigned int count) {
   unsigned int i;
-  LmnMembrane *mp = lmn_mem_child_head(mem);
+  LmnMembraneRef mp = lmn_mem_child_head(mem);
   for(i = 0; mp && i <= count; mp = lmn_mem_next(mp), i++);
   return i == count;
 }
 
 
 /* 子膜の数を返す */
-int lmn_mem_child_mem_num(LmnMembrane *mem) {
+int lmn_mem_child_mem_num(LmnMembraneRef mem) {
   unsigned int i;
-  LmnMembrane *mp = lmn_mem_child_head(mem);
+  LmnMembraneRef mp = lmn_mem_child_head(mem);
   for(i = 0; mp; mp = lmn_mem_next(mp), i++);
   return i;
 }
 
 /* add newmem to parent child membranes */
-void lmn_mem_add_child_mem(LmnMembrane *parentmem,
-                                         LmnMembrane *newmem) {
+void lmn_mem_add_child_mem(LmnMembraneRef parentmem,
+                                         LmnMembraneRef newmem) {
   newmem->prev   = NULL;
   newmem->next   = lmn_mem_child_head(parentmem);
   newmem->parent = parentmem;
@@ -3472,23 +3583,23 @@ void lmn_mem_add_child_mem(LmnMembrane *parentmem,
 
 
 /* make atom which functor is f, and push atom into mem */
-LmnSAtom lmn_mem_newatom(LmnMembrane *mem, LmnFunctor f) {
+LmnSAtom lmn_mem_newatom(LmnMembraneRef mem, LmnFunctor f) {
   LmnSAtom atom = lmn_new_atom(f);
   mem_push_symbol_atom(mem, atom);
   return atom;
 }
 
 /* return # of child membranes */
-unsigned int lmn_mem_count_children(LmnMembrane *mem) {
-  LmnMembrane *c;
+unsigned int lmn_mem_count_children(LmnMembraneRef mem) {
+  LmnMembraneRef c;
   unsigned int n = 0;
   for (c = lmn_mem_child_head(mem); c; c = lmn_mem_next(c)) n++;
   return n;
 }
 
 /* return # of descendant membranes */
-unsigned int lmn_mem_count_descendants(LmnMembrane *mem) {
-  LmnMembrane *c;
+unsigned int lmn_mem_count_descendants(LmnMembraneRef mem) {
+  LmnMembraneRef c;
   unsigned int n = 0;
 
   for (c = lmn_mem_child_head(mem); c; c = lmn_mem_next(c)) {
@@ -3499,7 +3610,7 @@ unsigned int lmn_mem_count_descendants(LmnMembrane *mem) {
 
 
 /* return TRUE if # of freelinks in mem is equal to count */
-BOOL lmn_mem_nfreelinks(LmnMembrane *mem, unsigned int count) {
+BOOL lmn_mem_nfreelinks(LmnMembraneRef mem, unsigned int count) {
   AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
   if (!ent) {
     return count == 0;
@@ -3520,11 +3631,11 @@ BOOL lmn_mem_nfreelinks(LmnMembrane *mem, unsigned int count) {
   }
 }
 
-void lmn_mem_remove_data_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
+void lmn_mem_remove_data_atom(LmnMembraneRef mem, LmnAtom atom, LmnLinkAttr attr) {
   lmn_mem_data_atom_dec(mem);
 }
 
-void mem_remove_symbol_atom(LmnMembrane *mem, LmnSAtom atom) {
+void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSAtom atom) {
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
 #ifdef NEW_ATOMLIST
   {
@@ -3545,7 +3656,7 @@ void mem_remove_symbol_atom(LmnMembrane *mem, LmnSAtom atom) {
 /* 膜memからアトムatomを取り除く.
  * atomの接続先データアトムが存在するならば, そのデータアトムも取り除く.
  * atom自体のメモリ管理は呼び出し側が行う. */
-void mem_remove_symbol_atom_with_buddy_data(LmnMembrane *mem, LmnSAtom atom) {
+void mem_remove_symbol_atom_with_buddy_data(LmnMembraneRef mem, LmnSAtom atom) {
   unsigned int i;
   unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
   /* free linked data atoms */
@@ -3559,7 +3670,7 @@ void mem_remove_symbol_atom_with_buddy_data(LmnMembrane *mem, LmnSAtom atom) {
   mem_remove_symbol_atom(mem, atom);
 }
 
-void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
+void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtom atom, LmnLinkAttr attr) {
   if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
     lmn_mem_remove_data_atom(mem, atom, attr);
   } else {
@@ -3567,31 +3678,31 @@ void lmn_mem_remove_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
   }
 }
 
-void move_atom_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
+void move_atom_to_atomlist_tail(LmnSAtom a, LmnMembraneRef mem){
   //move_symbol_atom_to_atomlist_tail(LMN_SATOM(a), mem);
   mem_remove_symbol_atom(mem,LMN_SATOM(a));
   mem_push_symbol_atom(mem,LMN_SATOM(a));
 }
 
-void move_atom_to_atomlist_head(LmnSAtom a, LmnMembrane *mem){
+void move_atom_to_atomlist_head(LmnSAtom a, LmnMembraneRef mem){
   //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda
   move_symbol_atom_to_atomlist_head(a, mem);
   }
 
-void move_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem){
+void move_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembraneRef mem){
   move_symbol_atomlist_to_atomlist_tail(a, mem);
 }
 
-void move_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem){
+void move_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembraneRef mem){
   move_symbol_atom_to_atom_tail(a, a1, mem);
   }
 
-void lmn_mem_delete_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
+void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtom atom, LmnLinkAttr attr) {
   lmn_mem_remove_atom(mem, atom, attr);
   lmn_free_atom(atom, attr);
 }
 
-void lmn_mem_push_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
+void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtom atom, LmnLinkAttr attr) {
   if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
     lmn_mem_data_atom_inc(mem);
   } else { /* symbol atom */
@@ -3599,26 +3710,26 @@ void lmn_mem_push_atom(LmnMembrane *mem, LmnAtom atom, LmnLinkAttr attr) {
   }
 }
 
-void alter_functor(LmnMembrane *mem, LmnSAtom atom, LmnFunctor f) {
+void alter_functor(LmnMembraneRef mem, LmnSAtom atom, LmnFunctor f) {
   mem_remove_symbol_atom(mem, atom);
   LMN_SATOM_SET_FUNCTOR(atom, f);
   mem_push_symbol_atom(mem, atom);
 }
 
 /* ルールセットnewを膜memに追加する */
-void lmn_mem_add_ruleset(LmnMembrane *mem, LmnRuleSetRef ruleset) {
+void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset) {
   LMN_ASSERT(ruleset);
   lmn_mem_add_ruleset_sort(&(mem->rulesets), ruleset);
 }
 
-void lmn_mem_copy_rules(LmnMembrane *dest, LmnMembrane *src) {
+void lmn_mem_copy_rules(LmnMembraneRef dest, LmnMembraneRef src) {
   int i;
   for (i = 0; i< lmn_mem_ruleset_num(src); i++) {
     lmn_mem_add_ruleset(dest, lmn_ruleset_copy(lmn_mem_get_ruleset(src, i)));
   }
 }
 
-void lmn_mem_clearrules(LmnMembrane *src) {
+void lmn_mem_clearrules(LmnMembraneRef src) {
   unsigned int i;
   for (i = 0; i < vec_num(&src->rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&src->rulesets, i);
