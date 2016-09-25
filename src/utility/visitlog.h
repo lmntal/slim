@@ -517,8 +517,8 @@ void tracelog_destroy(TraceLogRef trc);
 
 static inline BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
                                                   LmnMembrane   *owner,
-                                                  AtomListEntry *in_ent,
-                                                  AtomListEntry *avoid);
+                                                  AtomListEntryRef in_ent,
+                                                  AtomListEntryRef avoid);
 static inline void tracelog_tbl_expand(TraceLogRef l, unsigned long new_size);
 static inline int  tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
                                 LmnMembrane *owner);
@@ -548,8 +548,8 @@ static inline BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
  * 膜ownerのそれと一致しているか否かを返す */
 static inline BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
                                                   LmnMembrane   *owner,
-                                                  AtomListEntry *in_ent,
-                                                  AtomListEntry *avoid)
+                                                  AtomListEntryRef in_ent,
+                                                  AtomListEntryRef avoid)
 {
   return
       TLOG_NUM(l->tbl[lmn_mem_id(owner)]) ==

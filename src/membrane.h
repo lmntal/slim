@@ -50,62 +50,50 @@
 #include "error.h"
 #include "functor.h"
 
+typedef struct AtomListEntry *AtomListEntryRef;
 typedef struct AtomListEntry **AtomSet;
 
 #define NEW_ATOMLIST
 
-/** ----
- *  AtomListEntry.
- *  同一ファンクタのアトムをリスト単位でまとめておくための機構
- */
+LmnSAtom atomlist_head(AtomListEntryRef lst);
+LmnSAtom lmn_atomlist_end(AtomListEntryRef lst);
+//#define atomlist_head(L)                    (LMN_SATOM((L)->head))
+//#define lmn_atomlist_end(p_atomset_entry)   (LMN_SATOM(p_atomset_entry))
+int atomlist_ent_num(AtomListEntryRef lst);
+void atomlist_set_num(AtomListEntryRef lst, int n);
+void atomlist_add_num(AtomListEntryRef lst, int n);
 
-/* この構造体をAtomとして扱うことで,この構造体自身が
-   HeadとTailの両方の役目を果たしている */
-typedef struct AtomListEntry {
-  LmnWord tail, head;
-#ifdef NEW_ATOMLIST
-  int n;
-#endif
-  struct SimpleHashtbl *record;
-} AtomListEntry;
-
-
-#define atomlist_head(L)                    (LMN_SATOM((L)->head))
-#define lmn_atomlist_end(p_atomset_entry)   (LMN_SATOM(p_atomset_entry))
-#ifdef NEW_ATOMLIST
-# define atomlist_ent_num(L)                 ((L)->n)
-# define atomlist_set_num(L, N)              ((L)->n = (N))
-# define atomlist_add_num(L, N)              ((L)->n += (N))
-#else
-# define atomlist_ent_num(L)
-# define atomlist_set_num(L, N)
-# define atomlist_add_num(L, N)
-#endif
-
-void atomlist_modify_num(AtomListEntry *ent, int n);
-BOOL atomlist_is_empty(AtomListEntry *ent);
+void atomlist_modify_num(AtomListEntryRef ent, int n);
+BOOL atomlist_is_empty(AtomListEntryRef ent);
 
 /* アトムリストasを空にする. */
-void atomlist_set_empty(AtomListEntry *ent);
+void atomlist_set_empty(AtomListEntryRef ent);
 
 /* アトムリストALからアトムAを削除する.
  * ただし, リストのつなぎ変えだけを行い, 膜からのアトムAのdeleteやatomのfreeはしない */
-void remove_from_atomlist(LmnSAtom a, AtomListEntry *ent);
+void remove_from_atomlist(LmnSAtom a, AtomListEntryRef ent);
 
 /* アトムリストentにおいて, アトムprvとアトムnxtの間にアトムinsを挿入する.
  * ただし, prvにNULLを渡した場合はnxtのprevポイント先をprvとして扱う. */
 void insert_to_atomlist(LmnSAtom prv, LmnSAtom ins, LmnSAtom nxt,
-                                      AtomListEntry *ent);
+                                      AtomListEntryRef ent);
 /* アトムリストALの末尾にアトムAを追加する. */
-void push_to_atomlist(LmnSAtom a, AtomListEntry *ent);
+void push_to_atomlist(LmnSAtom a, AtomListEntryRef ent);
 
-int atomlist_get_entries_num(AtomListEntry *ent);
+int atomlist_get_entries_num(AtomListEntryRef ent);
 
 /* append e2 to e1 */
-void atomlist_append(AtomListEntry *e1, AtomListEntry *e2);
+void atomlist_append(AtomListEntryRef e1, AtomListEntryRef e2);
 
 /* return NULL when atomlist doesn't exist. */
-LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid);
+LmnSAtom atomlist_get_record(AtomListEntryRef atomlist, int findatomid);
+
+void atomlist_put_record(AtomListEntryRef lst, int id, LmnAtom record);
+
+void move_atom_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem);
+void move_atom_to_atomlist_head(LmnSAtom a, LmnMembrane *mem);
+void move_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembrane *mem);
+void move_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem);
 
 /** -----
  *  リンクオブジェクトの代替
@@ -251,7 +239,7 @@ void move_symbol_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembrane *mem);
 void lmn_mem_remove_mem(LmnMembrane *parent, LmnMembrane *mem);
 void lmn_mem_free_rec(LmnMembrane *mem);
 void lmn_mem_delete_mem(LmnMembrane *parent, LmnMembrane *mem);
-AtomListEntry* lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
+AtomListEntryRef lmn_mem_get_atomlist(LmnMembrane *mem, LmnFunctor f);
 void lmn_mem_activate_ancestors(LmnMembrane *mem);
 BOOL lmn_mem_nmems(LmnMembrane *mem, unsigned int count);
 int  lmn_mem_child_mem_num(LmnMembrane *mem);
@@ -400,7 +388,7 @@ typedef int AtomListIter;
 
 #define ALL_ATOMS(MEM, V, CODE)                                                \
   do {                                                                         \
-    AtomListEntry *__ent;                                                      \
+    AtomListEntryRef __ent;                                                      \
     EACH_ATOMLIST((MEM), __ent, ({                                             \
       for ((V)  = atomlist_head(__ent);                                        \
            (V) != lmn_atomlist_end(__ent);                                     \

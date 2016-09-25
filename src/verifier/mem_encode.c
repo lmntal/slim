@@ -1285,7 +1285,7 @@ static void write_mem(LmnMembrane *mem,
 #ifdef NEW_ATOMLIST
     /* 膜memに存在するデータアトムを起点にしたinside proxyアトムをちゃんと書き込んでおく */
     {
-      AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+      AtomListEntryRef ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
       if (ent) {
         LmnSAtom in, out;
         EACH_ATOM(in, ent, ({
@@ -1606,7 +1606,7 @@ static Vector *mem_atoms(LmnMembrane *mem)
   Vector *functors;
   Vector *atoms;
   int i;
-  AtomListEntry *ent;
+  AtomListEntryRef ent;
   LmnSAtom a;
 
   functors = mem_functors(mem);
@@ -2434,7 +2434,7 @@ static int mem_eq_enc_mols(LmnBinStrRef   bs,
       {
         LmnFunctor f;
         LmnSAtom atom;
-        AtomListEntry *ent;
+        AtomListEntryRef ent;
 
         f = binstr_get_functor(bs->v, *i_bs);
         ok = FALSE;
@@ -2551,7 +2551,7 @@ static int mem_eq_enc_mols(LmnBinStrRef   bs,
     case TAG_ESCAPE_MEM_DATA:
       {
 
-        AtomListEntry *ent;
+        AtomListEntryRef ent;
         LmnSAtom in;
         unsigned int sub_tag;
 

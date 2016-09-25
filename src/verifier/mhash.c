@@ -142,7 +142,7 @@ static inline mhash_t mhash_membrane(LmnMembrane *mem,
     hash_mul = MHASH_MEM_MUL_0;
 
     { /** 1. atoms */
-      AtomListEntry *ent;
+      AtomListEntryRef ent;
       LmnFunctor    f;
 
       EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
@@ -373,7 +373,7 @@ static inline mhash_t memunit(LmnMembrane *child_mem,
                               int         depth)
 {
   mhash_t hash, child_h;
-  AtomListEntry *insides;
+  AtomListEntryRef insides;
   LmnSAtom in_proxy, out_proxy;
 
   hash    = 0;

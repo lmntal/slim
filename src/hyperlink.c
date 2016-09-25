@@ -511,7 +511,7 @@ BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLink
  *   hyperlink が1 つでも出力されるとTRUE を返す */
 BOOL hyperlink_print(LmnMembrane *mem, BOOL *flag, int *group, int *element)
 {
-  AtomListEntry *atomlist;
+  AtomListEntryRef atomlist;
   LmnMembrane *m;
   LmnSAtom atom;
   HyperLink *hl, *parent;

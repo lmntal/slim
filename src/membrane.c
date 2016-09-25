@@ -53,6 +53,49 @@
 #  include "runtime_status.h"
 #endif
 
+/** ----
+ *  AtomListEntry.
+ *  同一ファンクタのアトムをリスト単位でまとめておくための機構
+ */
+
+/* この構造体をAtomとして扱うことで,この構造体自身が
+   HeadとTailの両方の役目を果たしている */
+typedef struct AtomListEntry {
+  LmnWord tail, head;
+#ifdef NEW_ATOMLIST
+  int n;
+#endif
+  struct SimpleHashtbl *record;
+} AtomListEntry;
+
+LmnSAtom atomlist_head(AtomListEntryRef lst) {
+  return LMN_SATOM(lst->head);
+}
+LmnSAtom lmn_atomlist_end(AtomListEntryRef lst) {
+  return LMN_SATOM(lst);
+}
+
+#ifdef NEW_ATOMLIST
+int atomlist_ent_num(AtomListEntryRef lst) {
+  return lst->n;
+}
+void atomlist_set_num(AtomListEntryRef lst, int n) {
+  lst->n = n;
+}
+void atomlist_add_num(AtomListEntryRef lst, int n) {
+  lst->n += n;
+}
+#else
+int atomlist_ent_num(AtomListEntryRef lst) {
+  return -1;
+}
+void atomlist_set_num(AtomListEntryRef lst, int n) {
+  
+}
+void atomlist_add_num(AtomListEntryRef lst, int n) {
+  
+}
+#endif
 
 void atomlist_modify_num(AtomListEntry *ent, int n) {
   atomlist_add_num(ent, n);
@@ -156,6 +199,9 @@ LmnSAtom atomlist_get_record(AtomListEntry *atomlist, int findatomid) {
   }
 }
 
+void atomlist_put_record(AtomListEntryRef lst, int id, LmnAtom record) {
+  hashtbl_put(lst->record, id, (HashKeyType)record);
+}
 
 
 static void lmn_mem_copy_cells_sub(LmnMembrane *destmem,

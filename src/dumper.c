@@ -690,7 +690,7 @@ static void lmn_dump_cell_internal(LmnPortRef port,
 {
   enum {P0, P1, P2, P3, PROXY, PRI_NUM};
   Vector pred_atoms[PRI_NUM];
-  AtomListEntry *ent;
+  AtomListEntryRef ent;
   unsigned int i, j;
   LmnFunctor f;
 
@@ -946,7 +946,7 @@ static void dump_ruleset_dev(struct Vector *v)
 
 void lmn_dump_mem_dev(LmnMembrane *mem)
 {
-  AtomListEntry *ent;
+  AtomListEntryRef ent;
   if (!mem) return;
 
   fprintf(stdout, "{\n");
@@ -977,7 +977,7 @@ static void dump_dot_cell(LmnMembrane *mem,
                           int *data_id,
                           int *cluster_id)
 {
-  AtomListEntry *ent;
+  AtomListEntryRef ent;
   LmnMembrane *m;
   LmnPortRef out;
   unsigned int i;
@@ -1141,7 +1141,7 @@ static void lmn_dump_mem_json(LmnMembrane *mem)
   fprintf(stdout, "\"name\":\"%s\",", LMN_MEM_NAME(mem));
   fprintf(stdout, "\"atoms\":[");
   {
-    AtomListEntry *ent;
+    AtomListEntryRef ent;
     LmnFunctor f;
     BOOL needs_comma = FALSE;
     EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({

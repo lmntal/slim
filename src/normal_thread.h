@@ -62,7 +62,7 @@ struct arginfo{
   LmnReactCxt *rc;
   LmnRuleRef rule;
   LmnRuleInstr instr;
-  AtomListEntry *atomlist_ent;
+  AtomListEntryRef atomlist_ent;
   unsigned int register_size;
   int atom_arity;
   pthread_mutex_t *exec;
@@ -88,7 +88,7 @@ void* normal_thread(void* arg);
 
 void normal_parallel_init(void);
 void normal_parallel_free(void);
-void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity);
+void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntryRef atomlist_ent, int atom_arity);
 
 void op_lock(int id, int flag);
 

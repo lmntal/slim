@@ -141,7 +141,7 @@ void normal_parallel_free(void){
   deq_free(temp);
 }
 
-void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntry *atomlist_ent, int atom_arity){
+void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxt *rc, LmnRuleInstr instr, AtomListEntryRef atomlist_ent, int atom_arity){
   //
   thread_info[id]->judge=FALSE;
   thread_info[id]->atomi=atomi;

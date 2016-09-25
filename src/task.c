@@ -1046,7 +1046,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       }
       else { /* symbol atom */
         LmnFunctor f;
-        AtomListEntry *atomlist_ent;
+        AtomListEntryRef atomlist_ent;
         LmnSAtom atom;
 
         READ_VAL(LmnFunctor, instr, f);
@@ -1158,7 +1158,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         lmn_fatal("I can not find data atoms.\n");
       } else { /* symbol atom */
         LmnFunctor f;
-        AtomListEntry *atomlist_ent;
+        AtomListEntryRef atomlist_ent;
         LmnSAtom start_atom, atom, record;
 
         READ_VAL(LmnFunctor, instr, f);
@@ -1171,7 +1171,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
           if (!record) {
             start_atom = atomlist_head(atomlist_ent);
             record = lmn_new_atom(LMN_RESUME_FUNCTOR);
-            hashtbl_put(atomlist_ent->record, findatomid, (HashKeyType)record);
+            atomlist_put_record(atomlist_ent, findatomid, record);
             /* 履歴アトムを挿入する */
             LMN_SATOM_SET_NEXT(atomlist_ent, record);
             LMN_SATOM_SET_PREV(record, atomlist_ent);
@@ -1242,7 +1242,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       }
       else { /* symbol atom */
         LmnFunctor f;
-        AtomListEntry *atomlist_ent;
+        AtomListEntryRef atomlist_ent;
 	int atom_arity;
 
         READ_VAL(LmnFunctor, instr, f);

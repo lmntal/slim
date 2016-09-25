@@ -63,7 +63,7 @@ void nlmem_copy(LmnReactCxt *rc,
   lmn_mem_add_child_mem(mem, trg_mem);
 
   {
-    AtomListEntry *ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
+    AtomListEntryRef ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
 
     if (ent) {
       LmnSAtom org_in, org_out, trg_in, trg_out;
@@ -111,7 +111,7 @@ void nlmem_kill(LmnReactCxt *rc,
   org_in = LMN_SATOM(LMN_SATOM_GET_LINK(a0, 0));
   org_mem = LMN_PROXY_GET_MEM(org_in);
   {
-    AtomListEntry *ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
+    AtomListEntryRef ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
 
     if (ent) {
       LmnSAtom in, out;
