@@ -184,7 +184,6 @@ typedef uint32_t LmnHlinkRank;
  */
 
 typedef struct LmnReactCxt  LmnReactCxt;
-typedef struct LmnRegister  LmnRegister;
 
 
 /*----------------------------------------------------------------------

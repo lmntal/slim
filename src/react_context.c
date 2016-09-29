@@ -44,20 +44,48 @@
 #include "dpor.h"
 #include "slim_header/memstack.h"
 
+struct LmnRegister {
+  LmnWord wt;
+  LmnByte at;
+  LmnByte tt;
+};
 
-LmnRegister *lmn_register_make(unsigned int size)
+LmnWord lmn_register_wt(LmnRegisterRef r) {
+  return r->wt;
+}
+LmnByte lmn_register_at(LmnRegisterRef r) {
+  return r->at;
+}
+LmnByte lmn_register_tt(LmnRegisterRef r) {
+  return r->tt;
+}
+void lmn_register_set_wt(LmnRegisterRef r, LmnWord wt) {
+  r->wt = wt;
+}
+void lmn_register_set_at(LmnRegisterRef r, LmnByte at) {
+  r->at = at;
+}
+void lmn_register_set_tt(LmnRegisterRef r, LmnByte tt) {
+  r->tt = tt;
+}
+
+LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx) {
+  return (LmnRegisterRef)array + idx;
+}
+
+LmnRegisterArray lmn_register_make(unsigned int size)
 {
-  LmnRegister *v = LMN_NALLOC(struct LmnRegister, round2up(size));
+  LmnRegisterArray v = (LmnRegisterArray)LMN_NALLOC(struct LmnRegister, round2up(size));
   memset(v, 0, sizeof(struct LmnRegister) * size);
   return v;
 }
 
-void lmn_register_copy(LmnRegister *to, LmnRegister *from, unsigned int size)
+void lmn_register_copy(LmnRegisterArray to, LmnRegisterArray from, unsigned int size)
 {
   memcpy(to, from, sizeof(struct LmnRegister) * size);
 }
 
-void lmn_register_free(LmnRegister *v)
+void lmn_register_free(LmnRegisterArray v)
 {
   LMN_FREE(v);
 }
@@ -65,8 +93,8 @@ void lmn_register_free(LmnRegister *v)
 void lmn_register_extend(LmnReactCxt *rc, unsigned int new_size)
 {
   new_size = round2up(new_size);
-  rc->work_arry = LMN_REALLOC(struct LmnRegister, rc->work_arry, new_size);
-  memset(rc->work_arry + warry_size(rc),
+  rc->work_arry = (LmnRegisterArray)LMN_REALLOC(struct LmnRegister, rc->work_arry, new_size);
+  memset((LmnRegisterRef)rc->work_arry + warry_size(rc),
          0,
          sizeof(struct LmnRegister) * (new_size - warry_size(rc)));
   warry_size_set(rc, new_size);

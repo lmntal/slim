@@ -78,7 +78,7 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
                            lmn_interned_str rule_name,
                            LmnLineNum       line_num,
                            LmnMembraneRef      *ptmp_global_root,
-                           LmnRegister      **p_v_tmp,
+                           LmnRegisterArray      *p_v_tmp,
                            unsigned int     *org_next_id)
 {
   LMN_ASSERT(rule);
@@ -99,9 +99,9 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
   if (RC_GET_MODE(rc, REACT_ND)) {
     if (RC_MC_USE_DMEM(rc)) {
       /* dmemインタプリタ(body命令)を書かないとだめだ */
-      lmn_fatal("transalter mode, delta-membrane execution is not supported.");
+      lmn_fatal("translater mode, delta-membrane execution is not supported.");
     } else {
-      LmnRegister *v, *tmp;
+      LmnRegisterArray v, tmp;
       ProcessTableRef copymap;
       LmnMembraneRef tmp_global_root;
       unsigned int i, warry_size_org, warry_use_org;
@@ -122,30 +122,31 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
       /** copymapの情報を基に変数配列を書換える */
       for (i = 0; i < warry_use_org; i++) {
         LmnWord t;
-        v[i].at = at(rc, i);
-        v[i].tt = tt(rc, i);
-        if (v[i].tt == TT_ATOM) {
-          if (LMN_ATTR_IS_DATA(v[i].at)) {
-            v[i].wt = (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), (LmnLinkAttr)v[i].at);
+        LmnRegisterRef r = lmn_register_array_get(v, i);
+        lmn_register_set_at(r, at(rc, i));
+        lmn_register_set_tt(r, tt(rc, i));
+        if (lmn_register_tt(r) == TT_ATOM) {
+          if (LMN_ATTR_IS_DATA(lmn_register_at(r))) {
+            lmn_register_set_wt(r, (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), (LmnLinkAttr)lmn_register_at(r)));
           } else if (proc_tbl_get_by_atom(copymap, LMN_SATOM(wt(rc, i)), &t)) {
-            v[i].wt = (LmnWord)t;
+            lmn_register_set_wt(r, (LmnWord)t);
           } else {
             t = 0;
             lmn_fatal("implementation error");
           }
         }
-        else if (v[i].tt == TT_MEM) {
+        else if (lmn_register_tt(r) == TT_MEM) {
           if (wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-            v[i].wt = (LmnWord)tmp_global_root;
+            lmn_register_set_wt(r, (LmnWord)tmp_global_root);
           } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)wt(rc, i), &t)) {
-            v[i].wt = (LmnWord)t;
+            lmn_register_set_wt(r, (LmnWord)t);
           } else {
             t = 0;
             lmn_fatal("implementation error");
           }
         }
         else { /* TT_OTHER */
-          v[i].wt = wt(rc, i);
+          lmn_register_set_wt(r, wt(rc, i));
         }
       }
       proc_tbl_free(copymap);
@@ -171,14 +172,14 @@ BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
                             LmnMembraneRef      *ptmp_global_root,
-                            LmnRegister      **p_v_tmp,
+                            LmnRegisterArray      *p_v_tmp,
                             unsigned int     warry_use_org,
                             unsigned int     warry_size_org)
 {
   if(RC_GET_MODE(rc, REACT_ND)) {
     /* 処理中の変数を外から持ち込む */
     LmnMembraneRef tmp_global_root;
-    LmnRegister *v;
+    LmnRegisterArray v;
 
 
     tmp_global_root = *ptmp_global_root;
@@ -210,7 +211,7 @@ BOOL tr_instr_jump(LmnTranslated   f,
                    int             newid_num,
                    const int       *newid)
 {
-  LmnRegister *v, *tmp;
+  LmnRegisterArray v, tmp;
   unsigned int org_use, org_size;
   BOOL ret;
   int i;
@@ -219,9 +220,10 @@ BOOL tr_instr_jump(LmnTranslated   f,
   org_size = warry_size(rc);
   v = lmn_register_make(org_size);
   for (i = 0; i < newid_num; i++){
-    v[i].wt = wt(rc, newid[i]);
-    v[i].at = at(rc, newid[i]);
-    v[i].tt = tt(rc, newid[i]);
+    LmnRegisterRef r = lmn_register_array_get(v, i);
+    lmn_register_set_wt(r, wt(rc, newid[i]));
+    lmn_register_set_at(r, at(rc, newid[i]));
+    lmn_register_set_tt(r, tt(rc, newid[i]));
   }
 
   tmp = rc_warry(rc);

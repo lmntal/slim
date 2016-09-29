@@ -188,18 +188,19 @@ static int contextC1_expand_gatoms_LHS_f(LmnWord _k, LmnWord _v, LmnWord _arg)
 static void contextC1_expand_LHS(McDporData      *d,
                                  ContextC1Ref       c,
                                  LmnReactCxt     *rc,
-                                 LmnRegister     *v)
+                                 LmnRegisterArray     v)
 {
   unsigned int i;
 
   for (i = 0; i < warry_use_size(rc); i++) {
     LmnWord key, t;
     BYTE flag;
+    LmnRegisterRef r = lmn_register_array_get(v, i);
 
-    if (v[i].tt == TT_ATOM && !LMN_ATTR_IS_DATA(v[i].at)) {
-      key = LMN_SATOM_ID((LmnSAtom)v[i].wt);
-    } else if (v[i].tt == TT_MEM) {
-      key = lmn_mem_id((LmnMembraneRef)v[i].wt);
+    if (lmn_register_tt(r) == TT_ATOM && !LMN_ATTR_IS_DATA(lmn_register_at(r))) {
+      key = LMN_SATOM_ID((LmnSAtom)lmn_register_wt(r));
+    } else if (lmn_register_tt(r) == TT_MEM) {
+      key = lmn_mem_id((LmnMembraneRef)lmn_register_wt(r));
       if (i == 0) {
         dpor_LHS_flag_add(d, key, LHS_MEM_GROOT);
       }
@@ -317,7 +318,7 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d)
 
   /* 子膜が削除されるなら, その膜が左辺に出現した遷移に依存する */
   for (i = 0; i < vec_num(&d->del_mems); i++) {
-    LmnMembraneRef m = (LmnMembraneRef*)vec_get(&d->del_mems, i);
+    LmnMembraneRef m = (LmnMembraneRef)vec_get(&d->del_mems, i);
     contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(m), OP_DEP_EXISTS);
   }
 
@@ -707,7 +708,7 @@ static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxt *rc, Vector *working_se
 void dpor_transition_gen_LHS(McDporData   *mc,
                              MemDeltaRoot *d,
                              LmnReactCxt  *rc,
-                             LmnRegister  *v)
+                             LmnRegisterArray  v)
 {
   ContextC1Ref c;
 
@@ -720,7 +721,7 @@ void dpor_transition_gen_LHS(McDporData   *mc,
 BOOL dpor_transition_gen_RHS(McDporData   *mc,
                              MemDeltaRoot *d,
                              LmnReactCxt  *rc,
-                             LmnRegister  *v)
+                             LmnRegisterArray  v)
 {
   ContextC1Ref c, ret;
 

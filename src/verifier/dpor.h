@@ -118,11 +118,11 @@ void dpor_env_destroy(void);
 void dpor_transition_gen_LHS(McDporData   *mc,
                              MemDeltaRoot *d,
                              LmnReactCxt  *rc,
-                             LmnRegister  *v);
+                             LmnRegisterArray v);
 BOOL dpor_transition_gen_RHS(McDporData   *mc,
                              MemDeltaRoot *d,
                              LmnReactCxt  *rc,
-                             LmnRegister  *v);
+                             LmnRegisterArray  v);
 
 
 void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f);

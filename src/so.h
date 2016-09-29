@@ -196,7 +196,9 @@
       wt_set(rc, destlinki, LINKED_ATOM(srclinki));                        \
     } else { /* symbol atom */                                             \
       ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);                  \
-      proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt(rc, destlinki));\
+      LmnWord w = wt(rc, destlinki);                                       \
+      proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &w);      \
+      wt_set(rc, destlinki, w);                                            \
     }                                                                      \
   } while(0)
 
@@ -248,14 +250,14 @@ void tr_instr_commit_ready(LmnReactCxt       *rc,
                            lmn_interned_str  rule_name,
                            LmnLineNum        line_num,
                            LmnMembraneRef       *ptmp_global_root,
-                           LmnRegister       **V,
+                           LmnRegisterArray       *V,
                            unsigned int      *org_next_id);
 BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
                             LmnRuleRef          rule,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
                             LmnMembraneRef      *ptmp_global_root,
-                            LmnRegister      **p_v_tmp,
+                            LmnRegisterArray      *p_v_tmp,
                             unsigned int     warry_use_org,
                             unsigned int     warry_size_org);
 BOOL tr_instr_jump(LmnTranslated   f,

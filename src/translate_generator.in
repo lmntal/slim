@@ -142,7 +142,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 #commit lmn_interned_str LmnLineNum
   {
     LmnMembraneRef ptmp_global_root;
-    LmnRegister *v;
+    LmnRegisterRef v;
     unsigned int org_next_id;
     unsigned int warry_use_org, warry_size_org;
 

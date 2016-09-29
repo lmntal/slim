@@ -730,7 +730,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       /* EFFICIENCY: 新たに作業配列をmallocしているので非常に遅い
                      -O3 で生成される中間命令にJUMPが含まれないため
                      これでもよい */
-      LmnRegister *v, *tmp;
+      LmnRegisterArray v, tmp;
       LmnRuleInstr next;
       LmnInstrVar num, i, n;
       LmnJumpOffset offset;
@@ -750,25 +750,28 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, num);
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
-        v[i].wt = wt(rc, n);
-        v[i].at = at(rc, n);
-        v[i].tt = tt(rc, n);
+        LmnRegisterRef r = lmn_register_array_get(v, i);
+        lmn_register_set_wt(r, wt(rc, n));
+        lmn_register_set_at(r, at(rc, n));
+        lmn_register_set_tt(r, tt(rc, n));
       }
       /* mem */
       READ_VAL(LmnInstrVar, instr, num);
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
-        v[i].wt = wt(rc, n);
-        v[i].at = at(rc, n);
-        v[i].tt = tt(rc, n);
+        LmnRegisterRef r = lmn_register_array_get(v, i);
+        lmn_register_set_wt(r, wt(rc, n));
+        lmn_register_set_at(r, at(rc, n));
+        lmn_register_set_tt(r, tt(rc, n));
       }
       /* vars */
       READ_VAL(LmnInstrVar, instr, num);
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
-        v[i].wt = wt(rc, n);
-        v[i].at = at(rc, n);
-        v[i].tt = tt(rc, n);
+        LmnRegisterRef r = lmn_register_array_get(v, i);
+        lmn_register_set_wt(r, wt(rc, n));
+        lmn_register_set_at(r, at(rc, n));
+        lmn_register_set_tt(r, tt(rc, n));
       }
 
       instr = next;
@@ -788,7 +791,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
     }
     case INSTR_RESETVARS:
     {
-      LmnRegister *v;
+      LmnRegisterArray v;
       LmnInstrVar num, i, n, t;
 
       v = lmn_register_make(warry_use_size(rc));
@@ -798,31 +801,35 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, num);
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
-        v[i].wt = wt(rc, n);
-        v[i].at = at(rc, n);
-        v[i].tt = tt(rc, n);
+        LmnRegisterRef r = lmn_register_array_get(v, i);
+        lmn_register_set_wt(r, wt(rc, n));
+        lmn_register_set_at(r, at(rc, n));
+        lmn_register_set_tt(r, tt(rc, n));
       }
 
       /* mem */
       READ_VAL(LmnInstrVar, instr, num);
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
-        v[i].wt = wt(rc, n);
-        v[i].at = at(rc, n);
-        v[i].tt = tt(rc, n);
+        LmnRegisterRef r = lmn_register_array_get(v, i);
+        lmn_register_set_wt(r, wt(rc, n));
+        lmn_register_set_at(r, at(rc, n));
+        lmn_register_set_tt(r, tt(rc, n));
       }
 
       /* vars */
       READ_VAL(LmnInstrVar, instr, num);
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
-        v[i].wt = wt(rc, n);
-        v[i].at = at(rc, n);
-        v[i].tt = tt(rc, n);
+        LmnRegisterRef r = lmn_register_array_get(v, i);
+        lmn_register_set_wt(r, wt(rc, n));
+        lmn_register_set_at(r, at(rc, n));
+        lmn_register_set_tt(r, tt(rc, n));
       }
 
       for (t = 0; t <= i; t++) {
-        warry_set(rc, t, v[t].wt, v[t].at, v[t].tt);
+        LmnRegisterRef r0 = lmn_register_array_get(v, t);
+        warry_set(rc, t, lmn_register_wt(r0), lmn_register_at(r0), lmn_register_tt(r0));
       }
 
       lmn_register_free(v);
@@ -910,7 +917,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
           /** >>>>>>> disable delta-membrane <<<<<<< **/
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
-          LmnRegister *v, *tmp;
+          LmnRegisterArray v, tmp;
           ProcessTableRef copymap;
           LmnMembraneRef tmp_global_root;
           unsigned int warry_size_org, warry_use_org, warry_cur_org;
@@ -945,43 +952,41 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
           /** copymapの情報を基に変数配列を書換える */
           for (i = 0; i < n; i++) {
             LmnWord t;
-            v[i].at = at(rc, i);
-            v[i].tt = tt(rc, i);
+            LmnRegisterRef r = lmn_register_array_get(v, i);
+            lmn_register_set_at(r, at(rc, i));
+            lmn_register_set_tt(r, tt(rc, i));
 
-            if (v[i].tt == TT_ATOM) {
-              if (LMN_ATTR_IS_DATA(v[i].at)) {
+            if (lmn_register_tt(r) == TT_ATOM) {
+              if (LMN_ATTR_IS_DATA(lmn_register_at(r))) {
                 /* data-atom */
-                if (v[i].at == LMN_HL_ATTR) {
+                if (lmn_register_at(r) == LMN_HL_ATTR) {
                   if (proc_tbl_get_by_hlink(copymap, lmn_hyperlink_at_to_hl((LmnSAtom)wt(rc, i)), &t)) {
-                    v[i].wt = (LmnWord)lmn_hyperlink_hl_to_at((HyperLink *)t);
+                    lmn_register_set_wt(r, (LmnWord)lmn_hyperlink_hl_to_at((HyperLink *)t));
                   } else {
-                    v[i].wt = (LmnWord)wt(rc, i);/* new_hlink命令等の場合 */
-                    //lmn_fatal("implementation error");
+                    lmn_register_set_wt(r, (LmnWord)wt(rc, i)); /* new_hlink命令等の場合 */
                   }
                 } else {
-                  v[i].wt = (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), (LmnLinkAttr)v[i].at);
+                  lmn_register_set_wt(r, (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), lmn_register_at(r)));
                 }
               } else if (proc_tbl_get_by_atom(copymap, LMN_SATOM(wt(rc, i)), &t)) {
                 /* symbol-atom */
-                v[i].wt = (LmnWord)t;
+                lmn_register_set_wt(r, (LmnWord)t);
               } else {
                 t = 0;
-                //lmn_fatal("implementation error");
               }
             }
-            else if (v[i].tt == TT_MEM) {
+            else if (lmn_register_tt(r) == TT_MEM) {
               if (wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-                v[i].wt = (LmnWord)tmp_global_root;
+                lmn_register_set_wt(r, (LmnWord)tmp_global_root);
               } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)wt(rc, i), &t)) {
-                v[i].wt = (LmnWord)t;
+                lmn_register_set_wt(r, (LmnWord)t);
               } else {
                 t = 0;
 //              v[i].wt = wt(rc, i); // allocmem命令の場合はTT_OTHERになっている(2014-05-08 ueda)
-                //lmn_fatal("implementation error");
               }
             }
             else { /* TT_OTHER */
-              v[i].wt = wt(rc, i);
+              lmn_register_set_wt(r, wt(rc, i));
             }
           }
           proc_tbl_free(copymap);
@@ -1330,9 +1335,9 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 	  for(ip2=0;ip2<ip;ip2++){
 	    if(thread_info[ip2]->judge && judge){
 	      for(i=0;i<warry_use_size(rc);i++){
-		wt(rc, i)=wt(thread_info[ip2]->rc, i);
-		at(rc, i)=at(thread_info[ip2]->rc, i);
-		tt(rc, i)=tt(thread_info[ip2]->rc, i);
+          wt_set(rc, i, wt(thread_info[ip2]->rc, i));
+          at_set(rc, i, at(thread_info[ip2]->rc, i));
+          tt_set(rc, i, tt(thread_info[ip2]->rc, i));
 	      }
 	      if(lmn_env.trace)fprintf(stdout,"( Thread id : %d )",thread_info[ip2]->id);
 	      instr=instr_parallel;
@@ -2273,7 +2278,9 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         if(LMN_ATTR_IS_DATA(at(rc, atomi))) {
           BOOL eq;
           if(at(rc, atomi) != attr) return FALSE; /* comp attr */
-          READ_CMP_DATA_ATOM(attr, wt(rc, atomi), eq, tt(rc, atomi));
+          LmnByte type;          
+          READ_CMP_DATA_ATOM(attr, wt(rc, atomi), eq, type);
+          tt_set(rc, atomi, type);
           if (!eq) return FALSE;
         }
         else {/* symbol atom */
@@ -2305,7 +2312,9 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         if (LMN_ATTR_IS_DATA(at(rc, atomi))) {
           if (at(rc, atomi) == attr) {
             BOOL eq;
-            READ_CMP_DATA_ATOM(attr, wt(rc, atomi), eq, tt(rc, atomi));
+            LmnByte type;
+            READ_CMP_DATA_ATOM(attr, wt(rc, atomi), eq, type);
+            tt_set(rc, atomi, type);
             if (eq) return FALSE;
           } else {
             goto label_skip_data_atom;
@@ -3618,7 +3627,10 @@ label_skip_data_atom:
       READ_VAL(LmnLinkAttr, instr, attr);
       at_set(rc, atomi, attr);
       if (LMN_ATTR_IS_DATA(attr)) {
-        READ_CONST_DATA_ATOM(wt(rc, atomi), at(rc, atomi), tt(rc, atomi));
+        LmnWord w;
+        LmnByte a = at(rc, atomi), t;
+        READ_CONST_DATA_ATOM(w, a, t);
+        warry_set(rc, atomi, w, a, t);
       } else { /* symbol atom */
         LmnFunctor f;
 /*         fprintf(stderr, "symbol atom can't be created in GUARD\n"); */
@@ -3814,7 +3826,10 @@ label_skip_data_atom:
       at_set(rc, funci, attr);
       tt_set(rc, funci, TT_OTHER);
       if(LMN_ATTR_IS_DATA(attr)) {
-        READ_CONST_DATA_ATOM(wt(rc, funci), at(rc, funci), tt(rc, funci));
+        LmnWord w;
+        LmnByte a = at(rc, funci), t;
+        READ_CONST_DATA_ATOM(w, a, t);
+        warry_set(rc, funci, w, a, t);
       }
       else {
         LmnFunctor f;
@@ -3956,7 +3971,9 @@ label_skip_data_atom:
         wt_set(rc, destlinki, LINKED_ATOM(srclinki));
       } else { /* symbol atom */
         ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);
-        proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt(rc, destlinki));
+        LmnWord w = wt(rc, destlinki);
+        proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &w);
+        wt_set(rc, destlinki, w);
       }
       break;
     }
@@ -4776,7 +4793,10 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 
       at_set(rc, atomi, attr);
       if (LMN_ATTR_IS_DATA(attr)) {
-        READ_CONST_DATA_ATOM(wt(rc, atomi), at(rc, atomi), tt(rc, atomi));
+        LmnWord w;
+        LmnByte a = at(rc, atomi), t;
+        READ_CONST_DATA_ATOM(w, a, t);
+        warry_set(rc, atomi, w, a, t);
       } else { /* symbol atom */
         LmnFunctor f;
 /*         fprintf(stderr, "symbol atom can't be created in GUARD\n"); */
@@ -4965,7 +4985,9 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       }
       else { /* symbol atom */
         ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);
-        proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &wt(rc, destlinki));
+        LmnWord w = wt(rc, destlinki);
+        proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &w);
+        wt_set(rc, destlinki, w);
       }
       break;
     }

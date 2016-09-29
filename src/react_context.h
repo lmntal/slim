@@ -49,15 +49,20 @@
 #include "st.h"
 #include "utility/internal_hash.h"
 
-struct LmnRegister {
-  LmnWord wt;
-  LmnByte at;
-  LmnByte tt;
-};
+
+typedef struct LmnRegister *LmnRegisterRef;
+typedef struct LmnRegisterArray *LmnRegisterArray;
+LmnWord lmn_register_wt(LmnRegisterRef r);
+LmnByte lmn_register_at(LmnRegisterRef r);
+LmnByte lmn_register_tt(LmnRegisterRef r);
+void lmn_register_set_wt(LmnRegisterRef r, LmnWord wt);
+void lmn_register_set_at(LmnRegisterRef r, LmnByte at);
+void lmn_register_set_tt(LmnRegisterRef r, LmnByte tt);
+LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx);
 
 struct LmnReactCxt {
   LmnMembraneRef global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
-  LmnRegister *work_arry;   /* ルール適用レジスタ */
+  LmnRegisterArray work_arry;   /* ルール適用レジスタ */
   unsigned int warry_cur;   /* work_arryの現在の使用サイズ */
   unsigned int warry_num;   /* work_arryの最大使用サイズ(SPEC命令指定) */
   unsigned int warry_cap;   /* work_arryのキャパシティ */
@@ -100,28 +105,32 @@ struct LmnReactCxt {
 #define WARRY_DEF_SIZE                 (1024U)
 #define rc_warry(RC)                   ((RC)->work_arry)
 #define rc_warry_set(RC, V)            ((RC)->work_arry = (V))
-#define wt(RC, I)                      ((RC)->work_arry[I].wt)
+#define wt(RC, I)                      (lmn_register_wt(lmn_register_array_get((RC)->work_arry, I)))
 #define wt_set(RC, I, O)                                                       \
   do {                                                                         \
-    (RC)->work_arry[I].wt = (LmnWord)(O);                                      \
+    LmnRegisterRef r__ = lmn_register_array_get((RC)->work_arry, I);             \
+    lmn_register_set_wt(r__, (LmnWord)O);                                        \
     warry_cur_update(RC, I);                                                   \
   } while (0)
-#define at(RC, I)                      ((RC)->work_arry[I].at)
+#define at(RC, I)                      (lmn_register_at(lmn_register_array_get((RC)->work_arry, I)))
 #define at_set(RC, I, O)                                                       \
   do {                                                                         \
-    (RC)->work_arry[I].at = (LmnByte)(O);                                      \
+    LmnRegisterRef r__ = lmn_register_array_get((RC)->work_arry, I);             \
+    lmn_register_set_at(r__, (LmnByte)O);                                        \
     warry_cur_update(RC, I);                                                   \
   } while (0)
-#define tt(RC, I)                      ((RC)->work_arry[I].tt)
+#define tt(RC, I)                      (lmn_register_tt(lmn_register_array_get((RC)->work_arry, I)))
 #define tt_set(RC, I, O)                                                       \
   do {                                                                         \
-    (RC)->work_arry[I].tt = (LmnByte)(O);                                      \
+    LmnRegisterRef r__ = lmn_register_array_get((RC)->work_arry, I);             \
+    lmn_register_set_tt(r__, (LmnByte)O);                                        \
     warry_cur_update(RC, I);                                                   \
   } while (0)
 #define warry_set(RC, I, W, A, T) do {                                         \
-    (RC)->work_arry[I].wt = (LmnWord)(W);                                      \
-    (RC)->work_arry[I].at = (LmnByte)(A);                                      \
-    (RC)->work_arry[I].tt = (LmnByte)(T);                                      \
+    LmnRegisterRef r__ = lmn_register_array_get((RC)->work_arry, I);             \
+    lmn_register_set_wt(r__, (LmnWord)W);                                        \
+    lmn_register_set_at(r__, (LmnByte)A);                                        \
+    lmn_register_set_tt(r__, (LmnByte)T);                                        \
     warry_cur_update(RC, I);                                                   \
   } while (0)
 
@@ -151,9 +160,9 @@ static inline BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxt *rc) {
 }
 
 
-LmnRegister *lmn_register_make(unsigned int size);
-void lmn_register_copy(LmnRegister *to, LmnRegister *from, unsigned int size);
-void lmn_register_free(LmnRegister *v);
+LmnRegisterArray lmn_register_make(unsigned int size);
+void lmn_register_copy(LmnRegisterArray to, LmnRegisterArray from, unsigned int size);
+void lmn_register_free(LmnRegisterArray v);
 void lmn_register_extend(LmnReactCxt *rc, unsigned int new_size);
 void react_context_copy(LmnReactCxt *to, LmnReactCxt *from);
 
