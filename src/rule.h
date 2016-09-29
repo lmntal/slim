@@ -61,21 +61,6 @@ typedef BOOL (*LmnTranslated)(LmnReactCxt*, LmnMembraneRef, LmnRuleRef);
    生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
    た場合FALSEを返す */
 
-/* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
-   現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
-   により、ルールを変換して生成された関数を想定している。*/
-struct LmnRule {
-  BYTE             *inst_seq;
-  int              inst_seq_len;
-  LmnTranslated    translated;
-  lmn_interned_str name;
-  BOOL             is_invisible;
-  st_table_t       history_tbl;
-  lmn_interned_str pre_id;
-
-  /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or costの計算式を入れる */
-  LmnCost          cost;
-};
 
 LmnRuleRef lmn_rule_make(LmnRuleInstr instr, int instr_len, lmn_interned_str name);
 LmnRuleRef dummy_rule(void);
@@ -120,16 +105,7 @@ typedef enum AtomicType{
   ATOMIC_SYNC_STEP,
 } AtomicType;
 
-/* structure of RuleSet */
-struct LmnRuleSet {
-  LmnRuleRef *rules;         /* ルールのリスト */
-  int num, cap;           /* # of rules, and # of capacity */
-  LmnRulesetId id;        /* RuleSet ID */
-  AtomicType atomic;      /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
-  BOOL is_atomic_valid;   /* atomic step中であることを主張するフラグ */
-  BOOL is_copy;
-  BOOL has_uniqrule;
-};
+
 
 /* table, mapping RuleSet ID to RuleSet */
 struct LmnRuleSetTable {
