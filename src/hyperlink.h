@@ -46,6 +46,7 @@
 #include "lmntal.h"
 #include "functor.h"
 #include "membrane.h"
+#include "react_context.h"
 #include "utility/internal_hash.h"
 #include "utility/vector.h"
 
@@ -150,8 +151,8 @@ typedef struct SameProcCxt {
 #define LMN_SPC_PC(SPC, I) ((SPC)->proccxts[(I)])
 
 
-void lmn_sameproccxt_init(LmnReactCxt *rc);
-void lmn_sameproccxt_clear(LmnReactCxt *rc);
+void lmn_sameproccxt_init(LmnReactCxtRef rc);
+void lmn_sameproccxt_clear(LmnReactCxtRef rc);
 SameProcCxt *lmn_sameproccxt_spc_make(int atomi, int length);
 ProcCxt *lmn_sameproccxt_pc_make(int atomi, int arg, ProcCxt *original);
 BOOL lmn_sameproccxt_from_clone(SameProcCxt *spc, int n);

@@ -166,7 +166,7 @@ struct LmnWorker {
   BOOL            (*check)(struct LmnWorker *);   /* 終了検知関数 */
 
   StateSpaceRef   states;        /* Pointer to StateSpace */
-  LmnReactCxt     cxt;           /* ReactContext Object */
+  LmnReactCxtRef  cxt;           /* ReactContext Object */
   LmnWorker       *next;         /* Pointer to Neighbor Worker */
   LmnWorkerGroup  *group;
 

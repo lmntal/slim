@@ -44,7 +44,7 @@
 
 void init_nlmem(void);
 
-void nlmem_copy(LmnReactCxt *rc,
+void nlmem_copy(LmnReactCxtRef rc,
                 LmnMembraneRef mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1,
@@ -94,7 +94,7 @@ void nlmem_copy(LmnReactCxt *rc,
   }
 }
 
-void nlmem_kill(LmnReactCxt *rc,
+void nlmem_kill(LmnReactCxtRef rc,
                 LmnMembraneRef mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1)

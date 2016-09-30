@@ -51,7 +51,7 @@
 
 void por_calc_ampleset(StateSpaceRef  ss,
                        State       *s,
-                       LmnReactCxt *rc,
+                       LmnReactCxtRef rc,
                        Vector      *new_s,
                        BOOL        flag);
 void init_por_vars(void);

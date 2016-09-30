@@ -75,7 +75,7 @@ static LmnSAtom lmn_make_atom(LmnMembraneRef mem, LmnAtom s, LmnAtom size)
  * +a1: 要素数
  * -a2: アトム
  */
-void cb_atom_new(LmnReactCxt *rc,
+void cb_atom_new(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
@@ -116,7 +116,7 @@ void cb_atom_new(LmnReactCxt *rc,
  * -a2: 要素数
  * -a3: 新アトム
  */
-void cb_atom_functor(LmnReactCxt *rc,
+void cb_atom_functor(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
@@ -152,7 +152,7 @@ void cb_atom_functor(LmnReactCxt *rc,
  * -a4: 新アトム
  */
 
-void cb_atom_swap(LmnReactCxt *rc,
+void cb_atom_swap(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,

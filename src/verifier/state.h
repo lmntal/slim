@@ -331,7 +331,7 @@ static inline State         *state_D_ref(State *s);
 static inline void           state_D_cache(State *s, LmnBinStrRef dec);
 static inline LmnBinStrRef      state_D_fetch(State *s);
 static inline void           state_D_flush(State *s);
-static inline void           state_D_progress(State *s, LmnReactCxt *rc);
+static inline void           state_D_progress(State *s, LmnReactCxtRef rc);
 static inline void           state_update_cost(State *s,
                                                TransitionRef t,
                                                State *pre,
@@ -639,7 +639,7 @@ void state_D_flush(State *s) {
 }
 
 /* 差分圧縮バイト列に基づく状態生成処理のfinalizeを行う. */
-static inline void state_D_progress(State *s, LmnReactCxt *rc) {
+static inline void state_D_progress(State *s, LmnReactCxtRef rc) {
   RC_D_PROGRESS(rc);
   state_D_flush(s);
 }

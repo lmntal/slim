@@ -799,7 +799,7 @@ void hs_print(HashSet *hs)
 //  commit      = FALSE;
 //}
 
-void lmn_sameproccxt_init(LmnReactCxt *rc)
+void lmn_sameproccxt_init(LmnReactCxtRef rc)
 {
   RC_SET_HLINK_SPC(rc, hashtbl_make(2));
 }
@@ -842,7 +842,7 @@ static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt)
 
 
 
-void lmn_sameproccxt_clear(LmnReactCxt *rc)
+void lmn_sameproccxt_clear(LmnReactCxtRef rc)
 {
   sameproccxt_destroy(RC_HLINK_SPC(rc));
   RC_SET_HLINK_SPC(rc, NULL);

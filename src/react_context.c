@@ -50,6 +50,23 @@ struct LmnRegister {
   LmnByte tt;
 };
 
+struct LmnReactCxt {
+  LmnMembraneRef global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
+  LmnRegisterArray work_arry;   /* ルール適用レジスタ */
+  unsigned int warry_cur;   /* work_arryの現在の使用サイズ */
+  unsigned int warry_num;   /* work_arryの最大使用サイズ(SPEC命令指定) */
+  unsigned int warry_cap;   /* work_arryのキャパシティ */
+  unsigned int trace_num;   /* ルール適用回数 (通常実行用トレース実行で使用)  */
+  LmnRulesetId atomic_id;   /* atomic step中: atomic set id(signed int), default:-1 */
+  ProcessID proc_org_id;    /* atomic step終了時に Process ID をこの値に復帰 */
+  ProcessID proc_next_id;   /* atomic step継続時に Process ID をこの値に設定 */
+  LmnMembraneRef cur_mem;     /* atomic step継続時に現在膜をこの値に設定 */
+  BYTE mode;
+  BOOL flag;                /* mode以外に指定するフラグ */
+  void *v;                  /* 各mode毎に固有の持ち物 */
+  SimpleHashtbl *hl_sameproccxt; /* findatom 時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持 */
+};
+
 LmnWord lmn_register_wt(LmnRegisterRef r) {
   return r->wt;
 }
@@ -90,7 +107,7 @@ void lmn_register_free(LmnRegisterArray v)
   LMN_FREE(v);
 }
 
-void lmn_register_extend(LmnReactCxt *rc, unsigned int new_size)
+void lmn_register_extend(LmnReactCxtRef rc, unsigned int new_size)
 {
   new_size = round2up(new_size);
   rc->work_arry = (LmnRegisterArray)LMN_REALLOC(struct LmnRegister, rc->work_arry, new_size);
@@ -100,7 +117,174 @@ void lmn_register_extend(LmnReactCxt *rc, unsigned int new_size)
   warry_size_set(rc, new_size);
 }
 
-void react_context_init(LmnReactCxt *rc, BYTE mode)
+
+BYTE RC_MODE(LmnReactCxtRef cxt) {
+  return cxt->mode;
+}
+
+void RC_SET_MODE(LmnReactCxtRef cxt, BYTE mode) {
+  cxt->mode = mode;
+}
+
+void RC_ADD_MODE(LmnReactCxtRef cxt, BYTE mode) {
+  cxt->mode |= mode;
+}
+
+BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
+  return (cxt->mode & mode) == mode;
+}
+
+unsigned int warry_size(LmnReactCxtRef cxt) {
+  return cxt->warry_cap;
+}
+
+void warry_size_set(LmnReactCxtRef cxt, unsigned int n) {
+  cxt->warry_cap = n;
+}
+
+unsigned int warry_use_size(LmnReactCxtRef cxt) {
+  return cxt->warry_num;
+}
+void warry_use_size_set(LmnReactCxtRef cxt, unsigned int n) {
+  cxt->warry_num = n;
+}
+
+unsigned int warry_cur_size(LmnReactCxtRef cxt) {
+  return cxt->warry_cur;
+}
+void warry_cur_size_set(LmnReactCxtRef cxt, unsigned int n) {
+  cxt->warry_cur = n;
+}
+
+void warry_cur_update(LmnReactCxtRef cxt, unsigned int i) {
+  if (warry_cur_size(cxt) <= i) {
+    warry_cur_size_set(cxt, i + 1);
+  }
+}
+
+LmnRegisterArray rc_warry(LmnReactCxtRef cxt) {
+  return cxt->work_arry;
+}
+
+void rc_warry_set(LmnReactCxtRef cxt, LmnRegisterArray arry) {
+  cxt->work_arry = arry;
+}
+
+LmnWord wt(LmnReactCxtRef cxt, unsigned int i) {
+  return lmn_register_wt(lmn_register_array_get(cxt->work_arry, i));
+}
+
+void wt_set(LmnReactCxtRef cxt, unsigned int i, LmnWord o) {
+  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_arry, i);
+  lmn_register_set_wt(r__, o);
+  warry_cur_update(cxt, i);
+}
+
+LmnByte at(LmnReactCxtRef cxt, unsigned int i) {
+  return lmn_register_at(lmn_register_array_get(cxt->work_arry, i));
+}
+
+void at_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o) {
+  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_arry, i);
+  lmn_register_set_at(r__, o);
+  warry_cur_update(cxt, i);
+}
+
+LmnByte tt(LmnReactCxtRef cxt, unsigned int i) {
+  return lmn_register_tt(lmn_register_array_get(cxt->work_arry, i));
+}
+
+void tt_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o) {
+  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_arry, i);
+  lmn_register_set_tt(r__, o);
+  warry_cur_update(cxt, i);
+}
+
+void warry_set(LmnReactCxtRef cxt, unsigned int i, LmnWord w, LmnByte a, LmnByte t) {
+    LmnRegisterRef r__ = lmn_register_array_get(cxt->work_arry, i);
+    lmn_register_set_wt(r__, w);
+    lmn_register_set_at(r__, a);
+    lmn_register_set_tt(r__, t);
+    warry_cur_update(cxt, i);                                                   
+}
+
+unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt) {
+  return cxt->trace_num;
+}
+unsigned int RC_TRACE_NUM_INC(LmnReactCxtRef cxt) {
+  return cxt->trace_num++;
+}
+
+LmnMembraneRef RC_GROOT_MEM(LmnReactCxtRef cxt) {
+  return cxt->global_root;
+}
+
+void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
+  cxt->global_root = mem;
+}
+
+void RC_START_ATOMIC_STEP(LmnReactCxtRef cxt, LmnRulesetId id) {
+  cxt->atomic_id = id;
+}
+
+BOOL RC_IS_ATOMIC_STEP(LmnReactCxtRef cxt) {
+  return cxt->atomic_id >= 0;
+}
+
+void RC_FINISH_ATOMIC_STEP(LmnReactCxtRef cxt) {
+  cxt->atomic_id = -1;
+}
+
+ProcessID RC_PROC_ORG_ID(LmnReactCxtRef cxt) {
+  return cxt->proc_org_id;
+}
+
+void RC_SET_PROC_ORG_ID(LmnReactCxtRef cxt, ProcessID id) {
+  cxt->proc_org_id = id;
+}
+
+ProcessID RC_PROC_NEXT_ID(LmnReactCxtRef cxt) {
+  return cxt->proc_next_id;
+}
+
+void RC_SET_PROC_NEXT_ID(LmnReactCxtRef cxt, ProcessID id) {
+  cxt->proc_next_id = id;
+}
+
+LmnMembraneRef RC_CUR_MEM(LmnReactCxtRef cxt) {
+  return cxt->cur_mem;
+}
+
+void RC_SET_CUR_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
+  cxt->cur_mem = mem;
+}
+
+SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt) {
+  return cxt->hl_sameproccxt;
+}
+
+void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc) {
+  cxt->hl_sameproccxt = spc;
+}
+
+BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
+  /*  return hl_sameproccxtが初期化済み && atomiは同名プロセス文脈を持つアトム */
+  return RC_HLINK_SPC(rc) &&
+         hashtbl_contains(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+}
+
+struct McReactCxtData *RC_ND_DATA(LmnReactCxtRef cxt) {
+  return cxt->v;
+}
+
+LmnReactCxtRef react_context_alloc() {
+  return (LmnReactCxtRef)LMN_MALLOC(struct LmnReactCxt);
+}
+void react_context_dealloc(LmnReactCxtRef cxt) {
+  LMN_FREE(cxt);
+}
+
+void react_context_init(LmnReactCxtRef rc, BYTE mode)
 {
   rc->mode          = mode;
   rc->flag          = 0x00U;
@@ -114,7 +298,7 @@ void react_context_init(LmnReactCxt *rc, BYTE mode)
   rc->hl_sameproccxt = NULL;
 }
 
-void react_context_copy(LmnReactCxt *to, LmnReactCxt *from)
+void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from)
 {
   to->mode          = from->mode;
   to->flag          = from->flag;
@@ -126,7 +310,7 @@ void react_context_copy(LmnReactCxt *to, LmnReactCxt *from)
   to->atomic_id     = from->atomic_id;
 }
 
-void react_context_destroy(LmnReactCxt *rc)
+void react_context_destroy(LmnReactCxtRef rc)
 {
   if (RC_HLINK_SPC(rc)) {
     lmn_sameproccxt_clear(rc);
@@ -140,12 +324,12 @@ void react_context_destroy(LmnReactCxt *rc)
  * Stand Alone React Context
  */
 
-void stand_alone_react_cxt_init(LmnReactCxt *cxt)
+void stand_alone_react_cxt_init(LmnReactCxtRef cxt)
 {
   react_context_init(cxt, REACT_STAND_ALONE);
 }
 
-void stand_alone_react_cxt_destroy(LmnReactCxt *cxt)
+void stand_alone_react_cxt_destroy(LmnReactCxtRef cxt)
 {
   react_context_destroy(cxt);
 }
@@ -154,12 +338,12 @@ void stand_alone_react_cxt_destroy(LmnReactCxt *cxt)
  * Property React Context
  */
 
-void property_react_cxt_init(LmnReactCxt *cxt)
+void property_react_cxt_init(LmnReactCxtRef cxt)
 {
   react_context_init(cxt, REACT_PROPERTY);
 }
 
-void property_react_cxt_destroy(LmnReactCxt *cxt)
+void property_react_cxt_destroy(LmnReactCxtRef cxt)
 {
   react_context_destroy(cxt);
 }
@@ -169,15 +353,23 @@ void property_react_cxt_destroy(LmnReactCxt *cxt)
  * Mem React Context
  */
 
-void mem_react_cxt_init(LmnReactCxt *cxt)
+LmnMemStack RC_MEMSTACK(LmnReactCxtRef cxt) {
+  return ((struct MemReactCxtData *)cxt->v)->memstack;
+}
+
+void RC_MEMSTACK_SET(LmnReactCxtRef cxt, LmnMemStack s) {
+  ((struct MemReactCxtData *)cxt->v)->memstack = s;
+}
+
+void mem_react_cxt_init(LmnReactCxtRef cxt)
 {
   struct MemReactCxtData *v = LMN_MALLOC(struct MemReactCxtData);
   react_context_init(cxt, REACT_MEM_ORIENTED);
   cxt->v = v;
-  RC_MEMSTACK(cxt) = lmn_memstack_make();
+  RC_MEMSTACK_SET(cxt, lmn_memstack_make());
 }
 
-void mem_react_cxt_destroy(LmnReactCxt *cxt)
+void mem_react_cxt_destroy(LmnReactCxtRef cxt)
 {
   lmn_memstack_free(RC_MEMSTACK(cxt));
   LMN_FREE(cxt->v);
@@ -226,7 +418,7 @@ inline static void mc_react_data_free(struct McReactCxtData *v)
   LMN_FREE(v);
 }
 
-void mc_react_cxt_init(LmnReactCxt *rc)
+void mc_react_cxt_init(LmnReactCxtRef rc)
 {
   struct McReactCxtData *v = mc_react_data_make();
   react_context_init(rc, REACT_ND);
@@ -248,14 +440,14 @@ void mc_react_cxt_init(LmnReactCxt *rc)
 }
 
 
-void mc_react_cxt_destroy(LmnReactCxt *cxt)
+void mc_react_cxt_destroy(LmnReactCxtRef cxt)
 {
   mc_react_data_free(RC_ND_DATA(cxt));
   react_context_destroy(cxt);
 }
 
 
-void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
+void mc_react_cxt_add_expanded(LmnReactCxtRef cxt,
                                       LmnMembraneRef mem,
                                       LmnRuleRef rule)
 {
@@ -264,7 +456,7 @@ void mc_react_cxt_add_expanded(LmnReactCxt *cxt,
 }
 
 
-void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
+void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt,
                                 struct MemDeltaRoot *d,
                                 LmnRuleRef rule)
 {
@@ -273,7 +465,7 @@ void mc_react_cxt_add_mem_delta(LmnReactCxt *cxt,
 }
 
 
-LmnWord mc_react_cxt_expanded_pop(LmnReactCxt *cxt) {
+LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
   vec_pop(RC_EXPANDED_RULES(cxt));
   if (RC_MC_USE_DMEM(cxt)) {
     return vec_pop(RC_MEM_DELTAS(cxt));
@@ -282,7 +474,7 @@ LmnWord mc_react_cxt_expanded_pop(LmnReactCxt *cxt) {
   }
 }
 
-LmnWord mc_react_cxt_expanded_get(LmnReactCxt *cxt, unsigned int i) {
+LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i) {
   if (RC_MC_USE_DMEM(cxt)) {
     return vec_get(RC_MEM_DELTAS(cxt), i);
   } else {
@@ -290,11 +482,11 @@ LmnWord mc_react_cxt_expanded_get(LmnReactCxt *cxt, unsigned int i) {
   }
 }
 
-unsigned int mc_react_cxt_succ_num_org(LmnReactCxt *cxt) {
+unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
   return RC_ND_ORG_SUCC_NUM(cxt);
 }
 
-unsigned int mc_react_cxt_expanded_num(LmnReactCxt *cxt) {
+unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
   return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
                              : vec_num(RC_EXPANDED(cxt));
 }

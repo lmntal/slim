@@ -50,8 +50,9 @@ typedef struct LmnRuleSet *LmnRuleSetRef;
 #include "utility/st.h"
 #include "symbol.h"
 #include "membrane.h"
+#include "react_context.h"
 
-typedef BOOL (*LmnTranslated)(LmnReactCxt*, LmnMembraneRef, LmnRuleRef);
+typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
 
 
 /*----------------------------------------------------------------------

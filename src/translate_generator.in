@@ -76,7 +76,7 @@ const BYTE *translate_instruction_generated(const BYTE *instr,
 /* just for debug! */
 static FILE *OUT = NULL;
 
-BOOL interpret_generated(LmnReactCxt *rc,
+BOOL interpret_generated(LmnReactCxtRef rc,
                          LmnRuleRef rule,
                          LmnRuleInstr instr)
 {
@@ -101,7 +101,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 #insertconnectorsinnull LmnInstrVar $list
   {
     const Vector v = vec_const_temporary_from_array($1_num, $1);
-    warry_set(rc, $0, insertconnectors(rc, NULL, &v), 0, TT_OTHER);
+    warry_set(rc, $0, (LmnWord)insertconnectors(rc, NULL, &v), 0, TT_OTHER);
 
 #__echo_t
     {
@@ -122,7 +122,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 #insertconnectors LmnInstrVar $list LmnInstrVar
   {
     const Vector v = vec_const_temporary_from_array($1_num, $1);
-    warry_set(rc, $0, insertconnectors(rc, (LmnMembraneRef)wt(rc, $2), &v), 0, TT_OTHER);
+    warry_set(rc, $0, (LmnWord)insertconnectors(rc, (LmnMembraneRef)wt(rc, $2), &v), 0, TT_OTHER);
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -142,7 +142,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 #commit lmn_interned_str LmnLineNum
   {
     LmnMembraneRef ptmp_global_root;
-    LmnRegisterRef v;
+    LmnRegisterArray v;
     unsigned int org_next_id;
     unsigned int warry_use_org, warry_size_org;
 
@@ -187,7 +187,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
             atom != lmn_atomlist_end(atomlist_ent);
             atom = LMN_SATOM_GET_NEXT_RAW(atom)){
           if(LMN_SATOM_GET_FUNCTOR(atom) != LMN_RESUME_FUNCTOR){
-            wt_set(rc, $0, atom);
+            wt_set(rc, $0, (LmnWord)atom);
             tt_set(rc, $0, TT_ATOM);
 #__echo_t
             {
@@ -215,14 +215,14 @@ BOOL interpret_generated(LmnReactCxt *rc,
   *finishflag = 0;
 
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
-  warry_set(rc, $0, LMN_PROXY_GET_MEM(wt(rc, $1)), 0, TT_MEM);
+  warry_set(rc, $0, (LmnWord)LMN_PROXY_GET_MEM(wt(rc, $1)), 0, TT_MEM);
   if(LMN_MEM_NAME_ID((LmnMembraneRef)wt(rc, $0)) != TR_GSID($2)) $f;
 
 #anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
   {
     LmnMembraneRef mp = lmn_mem_child_head((LmnMembraneRef)wt(rc, $1));
     for (; mp; mp=lmn_mem_next(mp)) {
-      warry_set(rc, $0, mp, 0, TT_MEM);
+      warry_set(rc, $0, (LmnWord)mp, 0, TT_MEM);
       if (LMN_MEM_NAME_ID(mp) == TR_GSID($3)){
 #__echo_t
         {
@@ -266,7 +266,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
    }
 %   break;
 % case LMN_STRING_ATTR:
-    wt_set(rc, $0, lmn_string_make(lmn_id_to_name(TR_GSID($2_string_data))));
+    wt_set(rc, $0, (LmnWord)lmn_string_make(lmn_id_to_name(TR_GSID($2_string_data))));
 %   break;
 % default:
     wt_set(rc, $0, LMN_ATOM(lmn_new_atom(TR_GFID($2_functor_data))));
@@ -338,7 +338,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
   {
     LmnMembraneRef mp = lmn_mem_make();
     lmn_mem_add_child_mem((LmnMembraneRef)wt(rc, $1), mp);
-    wt_set(rc, $0, mp);
+    wt_set(rc, $0, (LmnWord)mp);
     tt_set(rc, $0, TT_MEM);
     lmn_mem_set_active(mp, TRUE);
     if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
@@ -347,7 +347,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
   }
 
 #allocmem LmnInstrVar
-  wt_set(rc, $0, lmn_mem_make());
+  wt_set(rc, $0, (LmnWord)lmn_mem_make());
   tt_set(rc, $0, TT_MEM);
 
 #removeatom LmnInstrVar LmnInstrVar
@@ -392,7 +392,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 #recursiveunlock LmnInstrVar
 
 #derefatom LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, $1), $2)), LMN_SATOM_GET_ATTR(wt(rc, $1), $2), TT_ATOM);
+  warry_set(rc, $0, (LmnWord)LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, $1), $2)), LMN_SATOM_GET_ATTR(wt(rc, $1), $2), TT_ATOM);
 
 #deref LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   {
@@ -534,7 +534,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
 #newlist LmnInstrVar
   {
     Vector *listvec = vec_make(16);
-    warry_set(rc, $0, listvec, 0, TT_OTHER);
+    warry_set(rc, $0, (LmnWord)listvec, 0, TT_OTHER);
 #__echo_t
     {
       char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
@@ -614,7 +614,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
     retvec = vec_make(2);
     vec_push(retvec, (LmnWord)dstlovec);
     vec_push(retvec, (LmnWord)atommap);
-    warry_set(rc, $0, retvec, LIST_AND_MAP, TT_OTHER);
+    warry_set(rc, $0, (LmnWord)retvec, LIST_AND_MAP, TT_OTHER);
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -885,7 +885,7 @@ BOOL interpret_generated(LmnReactCxt *rc,
   if (!lmn_mem_nfreelinks((LmnMembraneRef)wt(rc, $0), $1)) $f;
 
 #copycells LmnInstrVar LmnInstrVar LmnInstrVar
-  wt_set(rc, $0, lmn_mem_copy_cells((LmnMembraneRef)wt(rc, $1), (LmnMembraneRef)wt(rc, $2)));
+  wt_set(rc, $0, (LmnWord)lmn_mem_copy_cells((LmnMembraneRef)wt(rc, $1), (LmnMembraneRef)wt(rc, $2)));
   tt_set(rc, $0, TT_OTHER);
 
 #lookuplink LmnInstrVar LmnInstrVar LmnInstrVar

@@ -204,7 +204,7 @@ unsigned long lmn_string_len(LmnStringRef s)
  * Callbacks
  */
 
-void cb_string_make(LmnReactCxt *rc,
+void cb_string_make(LmnReactCxtRef rc,
                     LmnMembraneRef mem,
                     LmnAtom a0, LmnLinkAttr t0,
                     LmnAtom a1, LmnLinkAttr t1)
@@ -240,7 +240,7 @@ void cb_string_make(LmnReactCxt *rc,
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void cb_string_concat(LmnReactCxt *rc,
+void cb_string_concat(LmnReactCxtRef rc,
                       LmnMembraneRef mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       LmnAtom a1, LmnLinkAttr t1,
@@ -253,7 +253,7 @@ void cb_string_concat(LmnReactCxt *rc,
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
-void cb_string_length(LmnReactCxt *rc,
+void cb_string_length(LmnReactCxtRef rc,
                       LmnMembraneRef mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       LmnAtom a1, LmnLinkAttr t1)
@@ -266,7 +266,7 @@ void cb_string_length(LmnReactCxt *rc,
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void cb_string_reverse(LmnReactCxt *rc,
+void cb_string_reverse(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1)
@@ -284,7 +284,7 @@ void cb_string_reverse(LmnReactCxt *rc,
                   a0, t0, 0);
 }
 
-void cb_string_substr(LmnReactCxt *rc,
+void cb_string_substr(LmnReactCxtRef rc,
                       LmnMembraneRef mem,
                       LmnAtom a0, LmnLinkAttr t0,
                       long begin, LmnLinkAttr t1,
@@ -315,7 +315,7 @@ void cb_string_substr(LmnReactCxt *rc,
   lmn_mem_delete_atom(mem, end, t2);
 }
 
-void cb_string_substr_right(LmnReactCxt *rc,
+void cb_string_substr_right(LmnReactCxtRef rc,
                             LmnMembraneRef mem,
                             LmnAtom a0, LmnLinkAttr t0,
                             long begin, LmnLinkAttr t1,

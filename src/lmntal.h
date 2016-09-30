@@ -180,13 +180,6 @@ typedef struct LmnSPAtomHeader LmnSpAtom;
 typedef uint32_t LmnHlinkRank;
 
 /*----------------------------------------------------------------------
- * React Context
- */
-
-typedef struct LmnReactCxt  LmnReactCxt;
-
-
-/*----------------------------------------------------------------------
  * Mem Stack
  */
 

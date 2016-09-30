@@ -536,7 +536,7 @@ static inline void dfs_loop(LmnWorker *w,
     }
 
     /* サクセッサを展開 */
-    mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+    mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms, worker_flags(w));
 #ifndef MINIMAL_STATE 
     state_set_expander_id(s, worker_id(w));
 #endif
@@ -611,7 +611,7 @@ static inline void mapdfs_loop(LmnWorker *w,
     /* サクセッサを展開 */    
     if(!is_expanded(s)) {
         w->expand++;
-        mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+        mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms, worker_flags(w));
 #ifndef MINIMAL_STATE 
         state_set_expander_id(s, worker_id(w));
 #endif
@@ -735,7 +735,7 @@ static inline void mcdfs_loop(LmnWorker *w,
     state_expand_lock(s);
     FINISH_LOCK();
     if (!is_expanded(s)) {
-      mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+      mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms, worker_flags(w));
       w->expand++;
       state_set_expander_id(s, worker_id(w));
     }
@@ -818,7 +818,7 @@ void costed_dfs_loop(LmnWorker *w,
 
     if (!is_expanded(s)) {
       /* サクセッサを展開 */
-      mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+      mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms, worker_flags(w));
       mc_update_cost(s, new_ss, workers_ewlock(worker_group(w)));
     } else if (s_is_update(s)) {
       mc_update_cost(s, new_ss, workers_ewlock(worker_group(w)));
@@ -1055,7 +1055,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a, Vector 
     }
 
 
-    mc_expand(worker_states(w), s, p_s, &worker_rc(w), new_ss, psyms, worker_flags(w));
+    mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms, worker_flags(w));
 
     if (MAP_COND(w)) map_start(w, s);
     else if (BLEDGE_COND(w)) bledge_store_layer(w, s);

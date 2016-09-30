@@ -70,7 +70,7 @@ struct McPorData {
   st_table_t states;              /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
   Queue      *queue;              /* C1のチェックにあたってstate graphを展開するする際に使用 */
   Vector     *ample_candidate;    /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる */
-  LmnReactCxt *rc;
+  LmnReactCxtRef rc;
   unsigned long next_strans_id;
   BOOL       flags;
 } mc_por;
@@ -112,18 +112,18 @@ static int destroy_tmp_state_graph(State *s, LmnWord _d);
 static void finalize_ample(BOOL org_f);
 static BOOL ample(StateSpaceRef  ss,
                   State       *s,
-                  LmnReactCxt *rc,
+                  LmnReactCxtRef rc,
                   Vector      *new_s,
                   BOOL        org_f);
-static void por_gen_successors(State *s, LmnReactCxt *rc, AutomataRef a, Vector *psyms);
-static void por_store_successors(State *s, LmnReactCxt *rc, BOOL is_store);
+static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a, Vector *psyms);
+static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);
 static int  independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);
 static BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
 static BOOL check_C1(State *s, AutomataRef a, Vector *psyms);
 static BOOL check_C2(State *s);
 static BOOL check_C3(StateSpaceRef  ss,
                      State       *s,
-                     LmnReactCxt *rc,
+                     LmnReactCxtRef rc,
                      Vector      *new_ss,
                      BOOL        f);
 static BOOL is_independent_of_ample(TransitionRef strans);
@@ -133,12 +133,12 @@ static int build_ample_satisfying_lemma(st_data_t key,
                                         st_data_t current_state);
 static void push_ample_to_expanded(StateSpaceRef  ss,
                                    State       *s,
-                                   LmnReactCxt *rc,
+                                   LmnReactCxtRef rc,
                                    Vector      *new_ss,
                                    BOOL        f);
 static BOOL push_succstates_to_expanded(StateSpaceRef  ss,
                                         State       *s,
-                                        LmnReactCxt *rc,
+                                        LmnReactCxtRef rc,
                                         Vector      *new_ss,
                                         BOOL        f);
 /* FOR DEBUG ONLY */
@@ -174,12 +174,12 @@ void free_por_vars() {
 
 void por_calc_ampleset(StateSpaceRef  ss,
                        State       *s,
-                       LmnReactCxt *rc,
+                       LmnReactCxtRef rc,
                        Vector      *new_s,
                        BOOL        f)
 {
   if (!mc_por.rc) {
-    mc_por.rc = LMN_MALLOC(struct LmnReactCxt);
+    mc_por.rc = react_context_alloc();
     mc_react_cxt_init(mc_por.rc);
     mc_por.flags = f;
     mc_unset_por(mc_por.flags);
@@ -263,7 +263,7 @@ static void finalize_ample(BOOL org_f)
  * ample(s)=en(s)の場合にFALSEを返す. */
 static BOOL ample(StateSpaceRef  ss,
                   State       *s,
-                  LmnReactCxt *rc,
+                  LmnReactCxtRef rc,
                   Vector      *new_s,
                   BOOL        org_f)
 {
@@ -348,7 +348,7 @@ static BOOL ample(StateSpaceRef  ss,
 }
 
 
-static void por_gen_successors(State *s, LmnReactCxt *rc, AutomataRef a, Vector *psyms)
+static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a, Vector *psyms)
 {
   LmnMembraneRef mem;
   mem = state_restore_mem(s);
@@ -437,7 +437,7 @@ static inline State *por_state_insert_statespace(StateSpaceRef ss,
 }
 
 
-static inline void por_store_successors_inner(State *s, LmnReactCxt *rc)
+static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc)
 {
   st_table_t succ_tbl;
   unsigned int i, succ_i;
@@ -509,7 +509,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxt *rc)
  * 同時に, 遷移オブジェクトに対して, 仮IDを発行する.
  * なお, サクセッサに対する遷移オブジェクトが存在しない場合はこの時点でmallocを行う.
  * 入力したis_storeが真である場合は, IDの発行と同時に独立性情報テーブルの拡張を行う */
-static void por_store_successors(State *s, LmnReactCxt  *rc, BOOL is_store)
+static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store)
 {
   unsigned int i;
 
@@ -833,7 +833,7 @@ static inline BOOL C3_cycle_proviso_satisfied(State *succ, State *t)
  */
 static BOOL check_C3(StateSpaceRef  ss,
                      State       *s,
-                     LmnReactCxt *rc,
+                     LmnReactCxtRef rc,
                      Vector      *new_ss,
                      BOOL        f)
 {
@@ -1052,7 +1052,7 @@ static int build_ample_satisfying_lemma(st_data_t key,
 
 static void push_ample_to_expanded(StateSpaceRef  ss,
                                    State       *s,
-                                   LmnReactCxt *rc,
+                                   LmnReactCxtRef rc,
                                    Vector      *new_ss,
                                    BOOL        f)
 {
@@ -1101,7 +1101,7 @@ static void push_ample_to_expanded(StateSpaceRef  ss,
  */
 static BOOL push_succstates_to_expanded(StateSpaceRef  ss,
                                         State       *s,
-                                        LmnReactCxt *rc,
+                                        LmnReactCxtRef rc,
                                         Vector      *new_ss,
                                         BOOL        f)
 {

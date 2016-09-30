@@ -68,17 +68,17 @@ enum { TT_OTHER = 0,
 
 void task_init(void);
 void task_finalize(void);
-void lmn_dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr);
+void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 void lmn_run(Vector *rulesets);
-BOOL react_rule(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule);
+BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule);
 void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets);
-BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembraneRef cur_mem);
+BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
 void memstack_push(LmnMembraneRef mem);
-BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr);
+BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 struct Vector user_system_rulesets; /* system ruleset defined by user */
 static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v);
 static inline void free_links(Vector *links);
-HashSet *insertconnectors(LmnReactCxt *rc, LmnMembraneRef mem, const Vector *links);
+HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem, const Vector *links);
 
 static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v) {
   unsigned long i;

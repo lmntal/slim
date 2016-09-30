@@ -198,11 +198,11 @@ static void mc_dump(LmnWorkerGroup *wp)
  *  =====================================================
  */
 
-static inline void mc_gen_successors_inner(LmnReactCxt *rc, LmnMembraneRef cur_mem);
+static inline void mc_gen_successors_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
 static inline void stutter_extension(State       *s,
                                      LmnMembraneRef mem,
                                      BYTE        next_label,
-                                     LmnReactCxt *rc,
+                                     LmnReactCxtRef rc,
                                      BOOL        flags);
 
 
@@ -211,7 +211,7 @@ static inline void stutter_extension(State       *s,
 void mc_expand(const StateSpaceRef ss,
                State            *s,
                AutomataStateRef    p_s,
-               LmnReactCxt      *rc,
+               LmnReactCxtRef      rc,
                Vector           *new_ss,
                Vector           *psyms,
                BOOL             f)
@@ -305,7 +305,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock)
  *   + "新規"状態をnew_ssへ積む.　 */
 void mc_store_successors(const StateSpaceRef ss,
                          State            *s,
-                         LmnReactCxt      *rc,
+                         LmnReactCxtRef      rc,
                          Vector           *new_ss,
                          BOOL             f)
 {
@@ -417,7 +417,7 @@ void mc_store_successors(const StateSpaceRef ss,
  * ルール適用検査を行う
  * 子膜からルール適用を行っていく
  */
-BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembraneRef cur_mem)
+BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem)
 {
   BOOL ret_flag = FALSE;
 
@@ -447,7 +447,7 @@ BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembraneRef cur_mem)
 void mc_gen_successors(State       *src,
                        LmnMembraneRef mem,
                        BYTE        state_name,
-                       LmnReactCxt *rc,
+                       LmnReactCxtRef rc,
                        BOOL        f)
 {
   Vector *expanded_roots, *expanded_rules;
@@ -510,7 +510,7 @@ void mc_gen_successors(State       *src,
 void mc_gen_successors_with_property(State         *s,
                                      LmnMembraneRef   mem,
                                      AutomataStateRef p_s,
-                                     LmnReactCxt   *rc,
+                                     LmnReactCxtRef   rc,
                                      Vector        *propsyms,
                                      BOOL          f)
 {
@@ -595,7 +595,7 @@ void mc_gen_successors_with_property(State         *s,
 static inline void stutter_extension(State       *s,
                                      LmnMembraneRef mem,
                                      BYTE        next_label,
-                                     LmnReactCxt *rc,
+                                     LmnReactCxtRef rc,
                                      BOOL        f)
 {
   vec_data_t data;
@@ -638,7 +638,7 @@ static inline void stutter_extension(State       *s,
 }
 
 
-static inline void mc_gen_successors_inner(LmnReactCxt *rc, LmnMembraneRef cur_mem)
+static inline void mc_gen_successors_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem)
 {
 #ifdef PROFILE
   if(lmn_env.profile_level >= 3) {

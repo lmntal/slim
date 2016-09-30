@@ -1172,7 +1172,7 @@ static void lmn_dump_mem_json(LmnMembraneRef mem)
   fprintf(stdout, "}");
 }
 
-void cb_dump_mem(LmnReactCxt *rc,
+void cb_dump_mem(LmnReactCxtRef rc,
                  LmnMembraneRef mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,

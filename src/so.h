@@ -73,7 +73,7 @@
     if (LMN_ATTR_IS_DATA(at(rc, atom))) {                               \
       warry_set(rc, link, wt(rc, atom), at(rc, atom), TT_ATOM);         \
     } else { /* link to atom */                                         \
-      warry_set(rc, link, LMN_SATOM(wt(rc, atom)), LMN_ATTR_MAKE_LINK(n), TT_ATOM); \
+      warry_set(rc, link, (LmnWord)LMN_SATOM(wt(rc, atom)), LMN_ATTR_MAKE_LINK(n), TT_ATOM); \
     }                                                                   \
   } while(0)
 
@@ -245,14 +245,14 @@
     }                                                                      \
   } while(0)
 
-void tr_instr_commit_ready(LmnReactCxt       *rc,
+void tr_instr_commit_ready(LmnReactCxtRef       rc,
                            LmnRuleRef           rule,
                            lmn_interned_str  rule_name,
                            LmnLineNum        line_num,
                            LmnMembraneRef       *ptmp_global_root,
                            LmnRegisterArray       *V,
                            unsigned int      *org_next_id);
-BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
+BOOL tr_instr_commit_finish(LmnReactCxtRef      rc,
                             LmnRuleRef          rule,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
@@ -261,7 +261,7 @@ BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
                             unsigned int     warry_use_org,
                             unsigned int     warry_size_org);
 BOOL tr_instr_jump(LmnTranslated   f,
-                   LmnReactCxt     *rc,
+                   LmnReactCxtRef     rc,
                    LmnMembraneRef     thisisrootmembutnotused,
                    LmnRuleRef         rule,
                    int             newid_num,

@@ -204,15 +204,17 @@ PropositionRef propsym_get_proposition(SymbolDefinitionRef s)
 
 BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem)
 {
-  LmnReactCxt rc;
+  LmnReactCxtRef rc = react_context_alloc();
   BOOL b;
 
   if (!prop) return FALSE;
 
-  property_react_cxt_init(&rc);
-  RC_SET_GROOT_MEM(&rc, mem);
-  b = react_rule(&rc, mem, proposition_get_rule(prop));
-  property_react_cxt_destroy(&rc);
+  property_react_cxt_init(rc);
+  RC_SET_GROOT_MEM(rc, mem);
+  b = react_rule(rc, mem, proposition_get_rule(prop));
+  property_react_cxt_destroy(rc);
+
+  react_context_dealloc(rc);
   return b;
 }
 

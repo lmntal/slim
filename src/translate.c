@@ -73,7 +73,7 @@ void tr_print_list(int indent, int argi, int list_num, const LmnWord *list)
   fprintf(OUT, "};\n");
 }
 
-void tr_instr_commit_ready(LmnReactCxt      *rc,
+void tr_instr_commit_ready(LmnReactCxtRef      rc,
                            LmnRuleRef          rule,
                            lmn_interned_str rule_name,
                            LmnLineNum       line_num,
@@ -167,7 +167,7 @@ void tr_instr_commit_ready(LmnReactCxt      *rc,
   }
 }
 
-BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
+BOOL tr_instr_commit_finish(LmnReactCxtRef      rc,
                             LmnRuleRef          rule,
                             lmn_interned_str rule_name,
                             LmnLineNum       line_num,
@@ -205,7 +205,7 @@ BOOL tr_instr_commit_finish(LmnReactCxt      *rc,
 }
 
 BOOL tr_instr_jump(LmnTranslated   f,
-                   LmnReactCxt     *rc,
+                   LmnReactCxtRef     rc,
                    LmnMembraneRef     thisisrootmembutnotused,
                    LmnRuleRef         rule,
                    int             newid_num,

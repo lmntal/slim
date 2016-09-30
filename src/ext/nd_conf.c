@@ -50,7 +50,7 @@
  * +a1     : アトム名のunaryアトム
  * +a2     : アリティの整数
  */
-void cb_set_functor_priority(LmnReactCxt *rc,
+void cb_set_functor_priority(LmnReactCxtRef rc,
                              LmnMembraneRef mem,
                              LmnAtom a0, LmnLinkAttr t0,
                              LmnAtom a1, LmnLinkAttr t1,

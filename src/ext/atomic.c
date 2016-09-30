@@ -49,7 +49,7 @@
 # include "runtime_status.h"
 #endif
 
-void atomic_ruleset(LmnReactCxt *rc, LmnMembraneRef mem,
+void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                     LmnAtom a0, LmnLinkAttr t0)
 {
   if (LMN_INT_ATTR == t0) {
@@ -94,7 +94,7 @@ void init_atomic(void)
 
 
 /* this function applies rules in $rs to $mem  as much as possible  */
-static inline BOOL react_ruleset_AMAP(LmnReactCxt *rc,
+static inline BOOL react_ruleset_AMAP(LmnReactCxtRef rc,
                                       LmnMembraneRef mem,
                                       LmnRuleSetRef rs)
 {
@@ -127,7 +127,7 @@ static inline LmnWorker *build_atomic_worker()
   w = lmn_worker_make(sub_states, env_my_thread_id(), sub_flags);
   dfs_env_set(w);
   worker_init(w);
-  mc_react_cxt_init(&worker_rc(w));
+  mc_react_cxt_init(worker_rc(w));
 
   /* TODO: ここで作ったLmnWorkerは所属groupがNULLのため,
    *       atomic stepで更なる並列実行はできない */
@@ -138,13 +138,13 @@ static inline LmnWorker *build_atomic_worker()
 static inline void abort_atomic_worker(LmnWorker *w)
 {
   statespace_free(worker_states(w));
-  mc_react_cxt_destroy(&worker_rc(w));
+  mc_react_cxt_destroy(worker_rc(w));
   lmn_worker_free(w);
 }
 
 /* ルールセットat_setの各ルールを可能な限り適用する.
  * 非決定実行時には状態遷移のサブグラフを構築し, 停止状態をmemの遷移先として生成し, rcに登録する. */
-static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
+static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
                                      LmnMembraneRef mem,
                                      LmnRuleSetRef  at_set)
 {
@@ -160,7 +160,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
   if (n > 0) {
     const Vector *ends;
     LmnWorker *w = build_atomic_worker();
-    RC_START_ATOMIC_STEP(&worker_rc(w), lmn_ruleset_get_id(at_set));
+    RC_START_ATOMIC_STEP(worker_rc(w), lmn_ruleset_get_id(at_set));
     for (i = 0; i < n; i++) {
       State *sub_s = state_make((LmnMembraneRef)mc_react_cxt_expanded_pop(rc),
                                 DEFAULT_STATE_ID,
@@ -201,7 +201,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxt *rc,
  * ---------
  * result: ok, b, b, b, b, b.
  */
-static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
+static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
                                       LmnMembraneRef mem,
                                       LmnRuleSetRef  at_set)
 {
@@ -288,7 +288,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
  * ルールセットの停止性と合流性を仮定している．非決定モードでも
  * 複数の書換え経路の探索は行わない．
  */
-static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
+static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
                                                    LmnMembraneRef mem,
                                                    LmnRuleSetRef  at_set)
 {
@@ -372,7 +372,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxt *rc,
 }
 
 
-BOOL react_ruleset_atomic(LmnReactCxt *rc,
+BOOL react_ruleset_atomic(LmnReactCxtRef rc,
                           LmnMembraneRef mem,
                           LmnRuleSetRef  rs)
 {

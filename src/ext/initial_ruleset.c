@@ -51,7 +51,7 @@ void init_initial_ruleset(void);
 
 const char *initial_modules[] = {"nd_conf"};
 
-BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
+BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   LmnMembraneRef m, next;
   BOOL ok = FALSE;
@@ -89,7 +89,7 @@ BOOL register_initial_rulesets(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef r
   return ok;
 }
 
-BOOL register_initial_module(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
+BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   static int done = 0;
   int i, j;

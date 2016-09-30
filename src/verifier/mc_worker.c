@@ -108,6 +108,7 @@ LmnWorker *lmn_worker_make(StateSpaceRef     ss,
   LmnWorker *w = lmn_worker_make_minimal();
   w->states = ss;
   w->id     = id;
+  w->cxt    = react_context_alloc();
   worker_flags_set(w, flags);
   worker_set_active(w);
   worker_set_white(w);
@@ -118,6 +119,7 @@ LmnWorker *lmn_worker_make(StateSpaceRef     ss,
 
 void lmn_worker_free(LmnWorker *w)
 {
+  react_context_dealloc(w->cxt);
   LMN_FREE(w);
 }
 
@@ -134,7 +136,7 @@ static void lmn_worker_start(void *arg)
   id = worker_id(w);
   worker_TLS_init(id);
 
-  mc_react_cxt_init(&worker_rc(w));
+  mc_react_cxt_init(worker_rc(w));
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
     StateSpaceRef ss = worker_states(w);
@@ -154,7 +156,7 @@ static void lmn_worker_start(void *arg)
   }
 
   if (lmn_env.profile_level >= 1) profile_finish_exec_thread();
-  mc_react_cxt_destroy(&worker_rc(w));
+  mc_react_cxt_destroy(worker_rc(w));
   worker_TLS_finalize();
 }
 

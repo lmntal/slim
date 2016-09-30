@@ -187,7 +187,7 @@ static int contextC1_expand_gatoms_LHS_f(LmnWord _k, LmnWord _v, LmnWord _arg)
 /* 作業配列に含まれるTT_ATOM, TT_MEM属性のプロセスをLHSテーブルに登録する */
 static void contextC1_expand_LHS(McDporData      *d,
                                  ContextC1Ref       c,
-                                 LmnReactCxt     *rc,
+                                 LmnReactCxtRef     rc,
                                  LmnRegisterArray     v)
 {
   unsigned int i;
@@ -392,7 +392,7 @@ static void dpor_data_free(McDporData *d)
 }
 
 
-static void dpor_data_clear(McDporData *d, LmnReactCxt *rc)
+static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc)
 {
   vec_clear(d->wt_gatoms);
   proc_tbl_clear(d->wt_flags);
@@ -568,7 +568,7 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret)
 
 static inline BOOL dpor_explored_cycle(McDporData *mc,
                                        ContextC1Ref  c,
-                                       LmnReactCxt *rc)
+                                       LmnReactCxtRef rc)
 {
   st_data_t t;
   MemDeltaRoot *d;
@@ -595,41 +595,42 @@ static BOOL dpor_explore_subgraph(McDporData *mc,
                                   Vector     *cur_checked_ids)
 {
   LmnMembraneRef cur;
-  LmnReactCxt rc;
+  LmnReactCxtRef rc;
   Vector nxt_checked_ids;
   unsigned int i;
   BOOL ret;
 
+  rc = react_context_alloc();
   cur = DMEM_ROOT_MEM(c->d);
-  mc_react_cxt_init(&rc);
+  mc_react_cxt_init(rc );
   vec_init(&nxt_checked_ids, 4);
-  RC_SET_GROOT_MEM(&rc, cur);
+  RC_SET_GROOT_MEM(rc , cur);
 
   POR_DEBUG({
     printf("explore rec%u, delta_reacted_id=%u\n", mc->cur_depth, c->id);
     lmn_dump_mem_stdout(cur);
   });
-  mc_expand_inner(&rc, cur);
+  mc_expand_inner(rc , cur);
 
   ret = TRUE;
 
-  if (dpor_explored_cycle(mc, c, &rc)) {
+  if (dpor_explored_cycle(mc, c, rc )) {
     POR_DEBUG(printf("detected cycle\n"));
     vec_destroy(&nxt_checked_ids);
-    mc_react_cxt_destroy(&rc);
+    mc_react_cxt_destroy(rc );
     return ret;
   }
 
-  if (dpor_dependency_check(mc, RC_MEM_DELTAS(&rc), NULL) && mc->cur_depth < 200) {
+  if (dpor_dependency_check(mc, RC_MEM_DELTAS(rc ), NULL) && mc->cur_depth < 200) {
 
-    for (i = 0; i < vec_num(RC_MEM_DELTAS(&rc)); i++) {
+    for (i = 0; i < vec_num(RC_MEM_DELTAS(rc )); i++) {
       MemDeltaRoot *succ_d;
       st_data_t t;
 
       if (ret == FALSE) break;
 
       /* succ_dを生成した際に, 等価な遷移と置換されている */
-      succ_d = (MemDeltaRoot *)vec_get(RC_MEM_DELTAS(&rc), i);
+      succ_d = (MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);
       if (st_lookup(mc->delta_tbl, (st_data_t)succ_d, &t)) {
         ContextC1Ref succ_c = (ContextC1Ref)t;
 
@@ -663,13 +664,14 @@ static BOOL dpor_explore_subgraph(McDporData *mc,
   }
 
   vec_destroy(&nxt_checked_ids);
-  mc_react_cxt_destroy(&rc);
+  mc_react_cxt_destroy(rc);
+  react_context_dealloc(rc);
 
   return ret;
 }
 
 
-static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxt *rc, Vector *working_set)
+static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxtRef rc, Vector *working_set)
 {
   Vector checked_ids;
   unsigned int i;
@@ -707,7 +709,7 @@ static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxt *rc, Vector *working_se
 
 void dpor_transition_gen_LHS(McDporData   *mc,
                              MemDeltaRoot *d,
-                             LmnReactCxt  *rc,
+                             LmnReactCxtRef  rc,
                              LmnRegisterArray  v)
 {
   ContextC1Ref c;
@@ -720,7 +722,7 @@ void dpor_transition_gen_LHS(McDporData   *mc,
 
 BOOL dpor_transition_gen_RHS(McDporData   *mc,
                              MemDeltaRoot *d,
-                             LmnReactCxt  *rc,
+                             LmnReactCxtRef  rc,
                              LmnRegisterArray  v)
 {
   ContextC1Ref c, ret;
@@ -804,7 +806,7 @@ static BOOL dpor_check_cycle_proviso(StateSpaceRef ss,
 static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss,
                                        Vector       *ample_set,
                                        Vector       *contextC1_set,
-                                       LmnReactCxt  *rc,
+                                       LmnReactCxtRef  rc,
                                        State        *s,
                                        Vector       *new_ss,
                                        BOOL         f)
@@ -971,7 +973,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss,
 
 //#define DEP_DEVEL
 
-void dpor_start(StateSpaceRef ss, State *s, LmnReactCxt *rc, Vector *new_s, BOOL flag)
+void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL flag)
 {
   McDporData *d = RC_POR_DATA(rc);
 
@@ -1067,7 +1069,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss)
 {
   if (reduced_stack) {
     Vector *new_ss, *search;
-    LmnReactCxt rc;
+    LmnReactCxtRef rc = react_context_alloc();
     BYTE f, org_por, org_old, org_del;
 
     org_por = lmn_env.enable_por;
@@ -1082,7 +1084,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss)
     mc_set_trans(f);
     new_ss = vec_make(32);
     search = vec_make(128);
-    mc_react_cxt_init(&rc);
+    mc_react_cxt_init(rc);
 
     while (!vec_is_empty(reduced_stack)) {
       State *s, *parent, *ret, tmp_s;
@@ -1117,7 +1119,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss)
       p_s = MC_GET_PROPERTY(s, statespace_automata(ss));
 
       s_set_reduced(s);
-      mc_expand(ss, s, p_s, &rc, new_ss, statespace_propsyms(ss), f);
+      mc_expand(ss, s, p_s, rc, new_ss, statespace_propsyms(ss), f);
 
       for (i = 0; i < state_succ_num(s); i++) {
         TransitionRef succ_t = transition(s, i);
@@ -1137,7 +1139,8 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss)
     lmn_env.delta_mem = org_del;
 
     vec_free(reduced_stack);
-    mc_react_cxt_destroy(&rc);
+    mc_react_cxt_destroy(rc);
+    react_context_dealloc(rc);
     vec_free(new_ss);
     vec_free(search);
   }

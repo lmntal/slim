@@ -162,7 +162,7 @@ LmnArrayRef lmn_array_copy(LmnArrayRef array)
  * +a1: 初期値
  * -a2: 配列
  */
-void cb_array_new(LmnReactCxt *rc,
+void cb_array_new(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
@@ -190,7 +190,7 @@ void cb_array_new(LmnReactCxt *rc,
  *
  * +a0: 配列
  */
-void cb_array_free(LmnReactCxt *rc,
+void cb_array_free(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0)
 {
@@ -205,7 +205,7 @@ void cb_array_free(LmnReactCxt *rc,
  * -a1: 要素数
  * -a2: 新配列
  */
-void cb_array_size(LmnReactCxt *rc,
+void cb_array_size(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
@@ -230,7 +230,7 @@ void cb_array_size(LmnReactCxt *rc,
  * -a2: 要素値
  * -a3: 新配列
  */
-void cb_array_get(LmnReactCxt *rc,
+void cb_array_get(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,
@@ -278,7 +278,7 @@ void cb_array_get(LmnReactCxt *rc,
  * +a2: 要素値
  * -a3: 新配列
  */
-void cb_array_put(LmnReactCxt *rc,
+void cb_array_put(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
     LmnAtom a1, LmnLinkAttr t1,

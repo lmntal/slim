@@ -63,28 +63,28 @@
 #include "runtime_status.h"
 
 
-typedef void (* callback_0)(LmnReactCxt *,
+typedef void (* callback_0)(LmnReactCxtRef,
                             LmnMembraneRef);
-typedef void (* callback_1)(LmnReactCxt *,
+typedef void (* callback_1)(LmnReactCxtRef,
                             LmnMembraneRef,
                             LmnAtom, LmnLinkAttr);
-typedef void (* callback_2)(LmnReactCxt *,
+typedef void (* callback_2)(LmnReactCxtRef ,
                             LmnMembraneRef,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr);
-typedef void (* callback_3)(LmnReactCxt *,
+typedef void (* callback_3)(LmnReactCxtRef ,
                             LmnMembraneRef,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr);
-typedef void (* callback_4)(LmnReactCxt *,
+typedef void (* callback_4)(LmnReactCxtRef ,
                             LmnMembraneRef,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr);
 
-typedef void (* callback_5)(LmnReactCxt *,
+typedef void (* callback_5)(LmnReactCxtRef ,
                             LmnMembraneRef,
                             LmnAtom, LmnLinkAttr,
                             LmnAtom, LmnLinkAttr,
@@ -147,17 +147,17 @@ typedef void (* callback_5)(LmnReactCxt *,
 /* リンク先のアトムの引数のattributeを得る */
 #define LINKED_ATTR(LINKI) at(rc, LINKI)
 
-static inline BOOL react_ruleset(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleSetRef ruleset);
-static inline BOOL react_ruleset_inner(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleSetRef rs);
-static inline void react_initial_rulesets(LmnReactCxt *rc, LmnMembraneRef mem);
-static inline BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSetRef rs, LmnMembraneRef mem);
-//static BOOL interpret(LmnReactCxt *rc, LmnRule rule, LmnRuleInstr instr);
-static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr);
+static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef ruleset);
+static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs);
+static inline void react_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem);
+static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs, LmnMembraneRef mem);
+//static BOOL interpret(LmnReactCxtRef rc, LmnRule rule, LmnRuleInstr instr);
+static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 
 
-static void mem_oriented_loop(LmnReactCxt *rc, LmnMembraneRef mem);
+static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem);
 
-void lmn_dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
+void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 {
   dmem_interpret(rc, rule, instr);
 }
@@ -174,7 +174,9 @@ void lmn_dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 void lmn_run(Vector *start_rulesets)
 {
   static LmnMembraneRef mem;
-  static LmnReactCxt mrc;
+  static LmnReactCxtRef mrc = NULL;
+
+  if (!mrc) mrc = react_context_alloc();
 
   /* 通常実行では非決定実行とは異なりProcess IDを
    * 1から再割り当てする機会(状態圧縮と復元)が存在しない.
@@ -188,17 +190,17 @@ void lmn_run(Vector *start_rulesets)
   if (lmn_env.normal_cleaning) {
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
-    mem_react_cxt_destroy(&mrc);
+    mem_react_cxt_destroy(mrc);
     lmn_env.normal_cleaning = FALSE;
   }
 
   /* interactive : (normal_remain時でnormal_remaining=ON)以外の場合は初期化 */
   if (!lmn_env.normal_remain && !lmn_env.normal_remaining) {
-    mem_react_cxt_init(&mrc);
+    mem_react_cxt_init(mrc);
     mem = lmn_mem_make();
-    RC_SET_GROOT_MEM(&mrc, mem);
+    RC_SET_GROOT_MEM(mrc, mem);
   }
-  lmn_memstack_push(RC_MEMSTACK(&mrc), mem);
+  lmn_memstack_push(RC_MEMSTACK(mrc), mem);
 
   //normal parallel mode init
   if(lmn_env.enable_parallel && !lmn_env.nd){
@@ -212,15 +214,15 @@ void lmn_run(Vector *start_rulesets)
   }
 
   react_start_rulesets(mem, start_rulesets);
-  lmn_memstack_reconstruct(RC_MEMSTACK(&mrc), mem);
+  lmn_memstack_reconstruct(RC_MEMSTACK(mrc), mem);
 
   if (lmn_env.trace) {
-    if (lmn_env.output_format != JSON) fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(&mrc));
+    if (lmn_env.output_format != JSON) fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(mrc));
     lmn_dump_cell_stdout(mem);
     if (lmn_env.show_hyperlink) lmn_hyperlink_print(mem);
   }
 
-  mem_oriented_loop(&mrc, mem);
+  mem_oriented_loop(mrc, mem);
 
   /** PROFILE FINISH */
   if (lmn_env.profile_level >= 1) {
@@ -250,7 +252,7 @@ void lmn_run(Vector *start_rulesets)
     lmn_env.normal_remaining = FALSE;
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
-    mem_react_cxt_destroy(&mrc);
+    mem_react_cxt_destroy(mrc);
   }
   if (env_proc_id_pool()) {
     vec_free(env_proc_id_pool());
@@ -260,7 +262,7 @@ void lmn_run(Vector *start_rulesets)
 
 
 /** 膜スタックに基づいた通常実行 */
-static void mem_oriented_loop(LmnReactCxt *rc, LmnMembraneRef mem)
+static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem)
 {
   LmnMemStack memstack = RC_MEMSTACK(rc);
 
@@ -277,7 +279,7 @@ static void mem_oriented_loop(LmnReactCxt *rc, LmnMembraneRef mem)
 /** cur_memに存在するルールすべてに対して適用を試みる
  * @see mem_oriented_loop (task.c)
  * @see expand_inner      (nd.c) */
-BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembraneRef cur_mem)
+BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem)
 {
   unsigned int i;
   struct Vector *rulesets = lmn_mem_get_rulesets(cur_mem); /* 本膜のルールセットの集合 */
@@ -301,7 +303,7 @@ BOOL react_all_rulesets(LmnReactCxt *rc, LmnMembraneRef cur_mem)
 
 
 /* an extenstion rule applier, @see ext/atomic.c */
-extern BOOL react_ruleset_atomic(LmnReactCxt *rc,
+extern BOOL react_ruleset_atomic(LmnReactCxtRef rc,
                                  LmnMembraneRef mem,
                                  LmnRuleSetRef  rs);
 
@@ -309,7 +311,7 @@ extern BOOL react_ruleset_atomic(LmnReactCxt *rc,
  *  戻り値:
  *   通常実行では, 書換えに成功した場合にTRUE, マッチングしなかった場合にFALSEを返す.
  *   非決定実行では常にFALSEを返す(マッチングに失敗するまでバックトラックする仕様). */
-static inline BOOL react_ruleset(LmnReactCxt *rc,
+static inline BOOL react_ruleset(LmnReactCxtRef rc,
                                  LmnMembraneRef mem,
                                  LmnRuleSetRef rs)
 {
@@ -336,7 +338,7 @@ static inline BOOL react_ruleset(LmnReactCxt *rc,
 
 
 /**  @see react_ruleset (task.c)  */
-static inline BOOL react_ruleset_inner(LmnReactCxt *rc,
+static inline BOOL react_ruleset_inner(LmnReactCxtRef rc,
                                        LmnMembraneRef mem,
                                        LmnRuleSetRef  rs)
 {
@@ -362,7 +364,7 @@ static inline BOOL react_ruleset_inner(LmnReactCxt *rc,
  *  戻り値:
  *   通常実行では, 書換えに成功した場合にTRUE, マッチングしなかった場合にFALSEを返す.
  *   非決定実行では, マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
-BOOL react_rule(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
+BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   LmnTranslated translated;
   BYTE *inst_seq;
@@ -371,7 +373,7 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
   translated = lmn_rule_get_translated(rule);
   inst_seq = lmn_rule_get_inst_seq(rule);
 
-  wt_set(rc, 0, mem);
+  wt_set(rc, 0, (LmnWord)mem);
   tt_set(rc, 0, TT_MEM);
   warry_use_size_set(rc, 1);
 
@@ -426,21 +428,23 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
  * 適用結果は無視する */
 void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets)
 {
-  LmnReactCxt rc;
+  LmnReactCxtRef rc = react_context_alloc();
   int i;
 
-  stand_alone_react_cxt_init(&rc);
-  RC_SET_GROOT_MEM(&rc, mem);
+  stand_alone_react_cxt_init(rc);
+  RC_SET_GROOT_MEM(rc, mem);
 
   for (i = 0; i < vec_num(rulesets); i++) {
-    react_ruleset(&rc, mem, (LmnRuleSetRef)vec_get(rulesets, i));
+    react_ruleset(rc, mem, (LmnRuleSetRef)vec_get(rulesets, i));
   }
-  react_initial_rulesets(&rc, mem);
-  stand_alone_react_cxt_destroy(&rc);
+  react_initial_rulesets(rc, mem);
+  stand_alone_react_cxt_destroy(rc);
+
+  react_context_dealloc(rc);
 }
 
 
-inline static void react_initial_rulesets(LmnReactCxt *rc, LmnMembraneRef mem)
+inline static void react_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem)
 {
   int i;
   BOOL reacted;
@@ -461,7 +465,7 @@ inline static void react_initial_rulesets(LmnReactCxt *rc, LmnMembraneRef mem)
 }
 
 /* ルールセットrsをmem以下のすべての膜内で適用する */
-static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSetRef rs, LmnMembraneRef mem)
+static BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs, LmnMembraneRef mem)
 {
   LmnMembraneRef m;
 
@@ -588,7 +592,7 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxt *rc, LmnRuleSetRef rs, LmnMembr
 /* static void print_wt(void); */
 
 /* mem != NULL ならば memにUNIFYを追加、そうでなければUNIFYは膜に所属しない */
-HashSet *insertconnectors(LmnReactCxt *rc, LmnMembraneRef mem, const Vector *links)
+HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem, const Vector *links)
 {
   unsigned int i, j;
   HashSet *retset;
@@ -637,7 +641,7 @@ HashSet *insertconnectors(LmnReactCxt *rc, LmnMembraneRef mem, const Vector *lin
   return retset;
 }
 
-BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
+BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 {
   LmnInstrOp op;
 
@@ -678,7 +682,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         vec_push(&links, (LmnWord)t);
       }
 
-      warry_set(rc, seti, insertconnectors(rc, NULL, &links), 0, TT_OTHER);
+      warry_set(rc, seti, (LmnWord)insertconnectors(rc, NULL, &links), 0, TT_OTHER);
 
       vec_destroy(&links);
 
@@ -710,7 +714,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 
       READ_VAL(LmnInstrVar, instr, memi);
       warry_set(rc, seti,
-                insertconnectors(rc, (LmnMembraneRef)wt(rc, memi), &links),
+                (LmnWord)insertconnectors(rc, (LmnMembraneRef)wt(rc, memi), &links),
                 0,
                 TT_OTHER);
 
@@ -1061,7 +1065,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
           if (atomlist_ent) {
             EACH_ATOM(atom, atomlist_ent, ({
 	      if(lmn_env.find_atom_parallel)return FALSE;
-              warry_set(rc, atomi, atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
+              warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
               if (interpret(rc, rule, instr)) {
                 return TRUE;
               }
@@ -1131,7 +1135,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
             if (atomlist_ent) {
               EACH_ATOM(atom, atomlist_ent, ({
 		    if(lmn_env.find_atom_parallel)return FALSE;
-                warry_set(rc, atomi, atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
+                warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
 
                 if (lmn_sameproccxt_all_pc_check_original(spc, atom, atom_arity) &&
                     interpret(rc, rule, instr)) {
@@ -1197,7 +1201,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 #endif
             if(LMN_SATOM_GET_FUNCTOR(atom) == LMN_RESUME_FUNCTOR)
               continue;
-            wt_set(rc, atomi, atom);
+            wt_set(rc, atomi, (LmnWord)atom);
             tt_set(rc, atomi, TT_ATOM);
             remove_from_atomlist(record, NULL);     /* 履歴アトムの削除 */
             insert_to_atomlist(NULL, record, atom, NULL); /* 履歴アトムの挿入 */
@@ -1216,7 +1220,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
            * 履歴アトムの前のアトムに対してマッチングを試みる */
           EACH_ATOM(atom, atomlist_ent, ({
             if (atom == start_atom) break;
-            wt_set(rc, atomi, atom);
+            wt_set(rc, atomi, (LmnWord)atom);
             tt_set(rc, atomi, TT_ATOM);
             if (interpret(rc, rule, instr)) {
               return TRUE;
@@ -1282,7 +1286,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 	    ip=(int)deq_pop_head(temp);
 	    atom= (LmnSAtom)wt(thread_info[ip]->rc, atomi);
 	    if(check_exist(atom, f)){
-	      warry_set(rc, atomi, atom, LMN_ATTR_MAKE_LINK(0),TT_ATOM);
+	      warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0),TT_ATOM);
 	      if(rc_hlink_opt(atomi, rc)){
 		SameProcCxt *spc;
 		spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
@@ -1382,7 +1386,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 
       m = LMN_PROXY_GET_MEM(wt(rc, atomi));
       if (LMN_MEM_NAME_ID(m) != memn) return FALSE;
-      warry_set(rc, memi, m, 0, TT_MEM);
+      warry_set(rc, memi, (LmnWord)m, 0, TT_MEM);
       break;
     }
     case INSTR_ANYMEM:
@@ -1398,7 +1402,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       tt_set(rc, mem1, TT_MEM);
       mp = lmn_mem_child_head((LmnMembraneRef)wt(rc, mem2));
       while (mp) {
-        wt_set(rc, mem1, mp);
+        wt_set(rc, mem1, (LmnWord)mp);
         at_set(rc, mem1, 0);
         if (LMN_MEM_NAME_ID(mp) == memn && interpret(rc, rule, instr)) {
           return TRUE;
@@ -1521,7 +1525,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       if (LMN_ATTR_IS_DATA(at(rc, atom))) {
         warry_set(rc, link, wt(rc, atom), at(rc, atom), TT_ATOM);
       } else { /* link to atom */
-        warry_set(rc, link, LMN_SATOM(wt(rc, atom)), LMN_ATTR_MAKE_LINK(n), TT_ATOM);
+        warry_set(rc, link, (LmnWord)LMN_SATOM(wt(rc, atom)), LMN_ATTR_MAKE_LINK(n), TT_ATOM);
       }
       break;
     }
@@ -2099,7 +2103,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 
       mp = lmn_mem_make(); /*lmn_new_mem(memf);*/
       lmn_mem_add_child_mem((LmnMembraneRef)wt(rc, parentmemi), mp);
-      wt_set(rc, newmemi, mp);
+      wt_set(rc, newmemi, (LmnWord)mp);
       tt_set(rc, newmemi, TT_MEM);
       lmn_mem_set_active(mp, TRUE);
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
@@ -2111,7 +2115,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
     {
       LmnInstrVar dstmemi;
       READ_VAL(LmnInstrVar, instr, dstmemi);
-      wt_set(rc, dstmemi, lmn_mem_make());
+      wt_set(rc, dstmemi, (LmnWord)lmn_mem_make());
       tt_set(rc, dstmemi, TT_OTHER); /* 2014-05-08, ueda */
       break;
     }
@@ -2237,7 +2241,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, posi);
 
       warry_set(rc, atom1,
-                LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom2), posi)),
+                (LmnWord)LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom2), posi)),
                 LMN_SATOM_GET_ATTR(wt(rc, atom2), posi),
                 TT_ATOM);
       break;
@@ -2652,7 +2656,7 @@ label_skip_data_atom:
                 lmn_fatal("hyperlink's attribute takes only an unary atom");
               }
             }
-            warry_set(rc, atomi, lmn_hyperlink_new_with_attr(ap, attr), LMN_HL_ATTR, TT_ATOM);
+            warry_set(rc, atomi, (LmnWord)lmn_hyperlink_new_with_attr(ap, attr), LMN_HL_ATTR, TT_ATOM);
             break;
           }
         case INSTR_NEWHLINKWITHATTRINDIRECT:
@@ -2667,11 +2671,11 @@ label_skip_data_atom:
                                   LMN_SATOM_GET_ARITY(LMN_SATOM(ap))>1) {
                   lmn_fatal("hyperlink's attribute takes only an unary atom");
                 }
-            warry_set(rc, atomi, lmn_hyperlink_new_with_attr(ap, attr), LMN_HL_ATTR, TT_ATOM);
+            warry_set(rc, atomi, (LmnWord)lmn_hyperlink_new_with_attr(ap, attr), LMN_HL_ATTR, TT_ATOM);
             break;
           }
         case INSTR_NEWHLINK:
-          warry_set(rc, atomi, lmn_hyperlink_new(), LMN_HL_ATTR, TT_ATOM);      
+          warry_set(rc, atomi, (LmnWord)lmn_hyperlink_new(), LMN_HL_ATTR, TT_ATOM);      
           break;
       }
       break;
@@ -2967,7 +2971,7 @@ label_skip_data_atom:
       retvec = vec_make(2);
       vec_push(retvec, (LmnWord)dstlovec);
       vec_push(retvec, (LmnWord)atommap);
-      warry_set(rc, dstlist, retvec, LIST_AND_MAP, TT_OTHER);
+      warry_set(rc, dstlist, (LmnWord)retvec, LIST_AND_MAP, TT_OTHER);
 
       /* 解放のための再帰。ベクタを解放するための中間語命令がない */
       interpret(rc, rule, instr);
@@ -3232,7 +3236,7 @@ label_skip_data_atom:
       LmnInstrVar listi;
       Vector *listvec = vec_make(16);
       READ_VAL(LmnInstrVar, instr, listi);
-      warry_set(rc, listi, listvec, 0, TT_OTHER);
+      warry_set(rc, listi, (LmnWord)listvec, 0, TT_OTHER);
 
       /* 解放のための再帰 */
       if (interpret(rc, rule, instr)) {
@@ -3952,7 +3956,7 @@ label_skip_data_atom:
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
       wt_set(rc, mapi,
-             lmn_mem_copy_cells((LmnMembraneRef)wt(rc, destmemi),
+             (LmnWord)lmn_mem_copy_cells((LmnMembraneRef)wt(rc, destmemi),
                                 (LmnMembraneRef)wt(rc, srcmemi)));
       tt_set(rc, mapi, TT_OTHER);
       break;
@@ -4262,7 +4266,7 @@ label_skip_data_atom:
 /* } */
 
 
-static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
+static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 {
 /*   LmnRuleInstr start = instr; */
   LmnInstrOp op;
@@ -4302,7 +4306,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         vec_push(&links, (LmnWord)t);
       }
 
-      warry_set(rc, seti, insertconnectors(rc, NULL, &links), 0, TT_OTHER);
+      warry_set(rc, seti, (LmnWord)insertconnectors(rc, NULL, &links), 0, TT_OTHER);
       vec_destroy(&links);
 
       /* EFFICIENCY: 解放のための再帰 */
@@ -4333,7 +4337,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, memi);
 
       warry_set(rc, seti,
-                insertconnectors(rc, (LmnMembraneRef)wt(rc, memi), &links),
+                (LmnWord)insertconnectors(rc, (LmnMembraneRef)wt(rc, memi), &links),
                 0,
                 TT_OTHER);
       vec_destroy(&links);
@@ -4398,7 +4402,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
         wt_set(rc, link, wt(rc, atom));
         at_set(rc, link, at(rc, atom));
       } else { /* link to atom */
-        wt_set(rc, link, LMN_SATOM(wt(rc, atom)));
+        wt_set(rc, link, (LmnWord)LMN_SATOM(wt(rc, atom)));
         at_set(rc, link, LMN_ATTR_MAKE_LINK(n));
       }
       tt_set(rc, link, TT_OTHER);
@@ -4521,7 +4525,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       mp = dmem_root_new_mem(RC_ND_MEM_DELTA_ROOT(rc)); /*lmn_new_mem(memf);*/
       dmem_root_add_child_mem(RC_ND_MEM_DELTA_ROOT(rc),
                               (LmnMembraneRef)wt(rc, parentmemi), mp);
-      wt_set(rc, newmemi, mp);
+      wt_set(rc, newmemi, (LmnWord)mp);
       tt_set(rc, newmemi, TT_OTHER);
       lmn_mem_set_active(mp, TRUE);
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
@@ -4535,7 +4539,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
 
       READ_VAL(LmnInstrVar, instr, dstmemi);
 
-      wt_set(rc, dstmemi, dmem_root_new_mem(RC_ND_MEM_DELTA_ROOT(rc)));
+      wt_set(rc, dstmemi, (LmnWord)dmem_root_new_mem(RC_ND_MEM_DELTA_ROOT(rc)));
       tt_set(rc, dstmemi, TT_OTHER);
       break;
     }
@@ -4683,7 +4687,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       retvec = vec_make(2);
       vec_push(retvec, (LmnWord)dstlovec);
       vec_push(retvec, (LmnWord)atommap);
-      warry_set(rc, dstlist, retvec, LIST_AND_MAP, TT_OTHER);
+      warry_set(rc, dstlist, (LmnWord)retvec, LIST_AND_MAP, TT_OTHER);
 
       /* 解放のための再帰。ベクタを解放するための中間語命令がない */
       dmem_interpret(rc, rule, instr);
@@ -4726,7 +4730,7 @@ static BOOL dmem_interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
       LmnInstrVar listi;
       Vector *listvec = vec_make(16);
       READ_VAL(LmnInstrVar, instr, listi);
-      warry_set(rc, listi, listvec, 0, TT_OTHER);
+      warry_set(rc, listi, (LmnWord)listvec, 0, TT_OTHER);
 
       if (dmem_interpret(rc, rule, instr)) {
         vec_free(listvec);

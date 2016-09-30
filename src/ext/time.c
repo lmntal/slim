@@ -41,7 +41,7 @@
 #include "../lmntal_ext.h"
 
 
-void gettime(LmnReactCxt *rc,
+void gettime(LmnReactCxtRef rc,
              LmnMembraneRef mem,
              LmnAtom a0, LmnLinkAttr t0)
 {

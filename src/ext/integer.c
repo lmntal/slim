@@ -55,7 +55,7 @@ void init_integer(void);
  *
  * Creates a (multi)set $g[$a], $g[$a+1], ..., $g[$b].
  */
-void integer_set(LmnReactCxt *rc,
+void integer_set(LmnReactCxtRef rc,
                  LmnMembraneRef mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,
@@ -102,7 +102,7 @@ void integer_set(LmnReactCxt *rc,
  *
  * sets N as the seed for random numbers
  */
-void integer_srand(LmnReactCxt *rc,
+void integer_srand(LmnReactCxtRef rc,
                    LmnMembraneRef mem,
                    LmnAtom a0, LmnLinkAttr t0)
 {
@@ -116,7 +116,7 @@ void integer_srand(LmnReactCxt *rc,
  *
  * H is bound to a random number between 0 and N-1.
  */
-void integer_rand(LmnReactCxt *rc,
+void integer_rand(LmnReactCxtRef rc,
                   LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0,
                   LmnAtom a1, LmnLinkAttr t1)
@@ -136,7 +136,7 @@ void integer_rand(LmnReactCxt *rc,
  *
  * N is bound to a number with the string representation S.
  */
-void integer_of_string(LmnReactCxt *rc,
+void integer_of_string(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
                        LmnAtom a0, LmnLinkAttr t0,
                        LmnAtom a1, LmnLinkAttr t1)

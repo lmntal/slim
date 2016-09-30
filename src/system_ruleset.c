@@ -48,7 +48,7 @@
 void init_default_system_ruleset(void);
 
 /* delete out proxies connected each other */
-static BOOL delete_redundant_outproxies(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
+static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   AtomListEntryRef ent;
   LmnSAtom o0;
@@ -93,7 +93,7 @@ static BOOL delete_redundant_outproxies(LmnReactCxt *rc, LmnMembraneRef mem, Lmn
 }
 
 /* delete in proxies connected each other */
-static BOOL delete_redundant_inproxies(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
+static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   AtomListEntryRef ent;
   LmnSAtom o0;
@@ -125,7 +125,7 @@ static BOOL delete_redundant_inproxies(LmnReactCxt *rc, LmnMembraneRef mem, LmnR
   return FALSE;
 }
 
-static BOOL mem_eq(LmnReactCxt *rc, LmnMembraneRef mem, LmnRuleRef rule)
+static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule)
 {
   AtomListEntryRef ent;
   LmnSAtom op;
