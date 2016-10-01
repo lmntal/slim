@@ -45,9 +45,7 @@
 #include "lmntal.h"
 #include "lmntal_thread.h"
 #include "st.h"
-#include "verifier/mc.h"
-#include "verifier/mc_worker.h"
-#include "verifier/statespace.h"
+#include "verifier/verifier.h"
 #include "vm/vm.h"
 #if defined (TIME_WITH_SYS_TIME)
 # include <time.h>

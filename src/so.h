@@ -49,7 +49,7 @@
 #include "symbol.h"
 #include "slim_header/memstack.h"
 #include "error.h"
-#include "mc.h"
+#include "verifier/verifier.h"
 #include "visitlog.h"
 
 #ifdef PROFILE

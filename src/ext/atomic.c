@@ -41,8 +41,7 @@
 #include "../lmntal_ext.h"
 #include "../slim_header/memstack.h"
 #include "vm/vm.h"
-#include "mc_worker.h"
-#include "mc_generator.h"
+#include "verifier/verifier.h"
 #ifdef PROFILE
 # include "runtime_status.h"
 #endif

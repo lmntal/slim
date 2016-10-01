@@ -40,7 +40,7 @@
 #include "jni_lmntal.h"
 #include "load.h"
 #include "vm/vm.h"
-#include "mc.h"
+#include "verifier/verifier.h"
 #include <ctype.h>
 
 #define JNI_CYGPATH                "/usr/bin/cygpath"

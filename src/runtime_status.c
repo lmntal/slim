@@ -37,12 +37,8 @@
  * $Id$
  */
 #include "runtime_status.h"
-#include "mc.h"
-#include "state.h"
-#include "mem_encode.h"
 #include "util.h"
 #include "dumper.h"
-#include "verifier/binstr_compress.h"
 
 static void mc_profiler2_init(MCProfiler2 *p);
 static void mc_profiler2_destroy(MCProfiler2 *p);
