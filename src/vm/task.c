@@ -38,26 +38,21 @@
 
 
 #include "task.h"
-#include "atom.h"
 #include "dumper.h"
-#include "instruction.h"
 #include "utility/vector.h"
 #include "symbol.h"
-#include "functor.h"
 #include "st.h"
-#include "functor.h"
 #include "error.h"
 #include "ccallback.h"
 #include "special_atom.h"
-#include "hyperlink.h"
 #include "slim_header/string.h"
 #include "slim_header/memstack.h"
 #include "slim_header/port.h"
 #include "visitlog.h"
-#include "delta_membrane.h"
-#include "mc_worker.h"
-#include "mc_generator.h"
-#include "dpor.h"
+#include "../verifier/delta_membrane.h"
+#include "../verifier/mc_worker.h"
+#include "../verifier/mc_generator.h"
+#include "../verifier/dpor.h"
 #include "normal_thread.h"
 
 #include "runtime_status.h"
@@ -5102,3 +5097,25 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr inst
   }
 }
 
+Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v) {
+  unsigned long i;
+  Vector *vec = vec_make(16);
+
+  /* リンクオブジェクトのベクタを構築 */
+  for (i = 0; i < vec_num(link_idxs); i++) {
+    vec_data_t t = vec_get(link_idxs, i);
+    LmnRegisterRef r = lmn_register_array_get(v, t);
+    LinkObjRef l = LinkObj_make(lmn_register_wt(r), lmn_register_at(r));
+    vec_push(vec, (LmnWord)l);
+  }
+  return vec;
+}
+
+void free_links(Vector *links) {
+  unsigned long i;
+
+  for (i = 0; i < vec_num(links); i++) {
+    LMN_FREE(vec_get(links, i));
+  }
+  vec_free(links);
+}

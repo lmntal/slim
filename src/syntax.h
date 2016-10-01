@@ -40,9 +40,8 @@
 #define LMN_SYNTAX_H
 
 #include "lmntal.h"
-#include "instruction.h"
+#include "vm/vm.h"
 #include "utility/vector.h"
-#include "functor.h"
 
 /* cldoc:begin-category(IL) */
 

@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <vector.h>
 #include "automata.h"
-#include "../rule.h"
+#include "vm/vm.h"
 
 typedef struct SymbolDefinition *SymbolDefinitionRef;
 typedef struct Proposition *PropositionRef;

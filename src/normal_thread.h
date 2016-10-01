@@ -38,10 +38,7 @@
  */
 
 #include "lmntal.h"
-#include "atom.h"
-#include "task.h"
-#include "membrane.h"
-#include "react_context.h"
+#include "vm/vm.h"
 #include "runtime_status.h"
 
 

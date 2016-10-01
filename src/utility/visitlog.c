@@ -36,7 +36,6 @@
  */
 
 #include "visitlog.h"
-#include "../membrane.h"
 
 #define PROC_TBL_DEFAULT_SIZE  128U
 

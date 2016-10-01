@@ -41,10 +41,9 @@
  #include "syntax.h"
  #include "arch.h"
  #include "symbol.h"
- #include "react_context.h"
+ #include "vm/vm.h"
  #include "error.h"
  #include "delta_membrane.h"
- #include "task.h"
  #include <stdio.h>
 
 #__echo_t

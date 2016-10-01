@@ -43,7 +43,7 @@
 /* cldoc:begin-category(Lmntal::MembraneStack) */
 
 #include <vector.h>
-#include "../react_context.h"
+#include "vm/vm.h"
 
 LmnMemStack lmn_memstack_make(void);
 void lmn_memstack_free(LmnMemStack memstack);

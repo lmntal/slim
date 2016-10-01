@@ -879,6 +879,7 @@ AC_OUTPUT(Makefile \
           src/verifier/Makefile \
           src/utility/Makefile \
           src/test/Makefile \
+          src/vm/Makefile \
           lib/Makefile \
           ext/Makefile \
           test/Makefile \

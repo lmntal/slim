@@ -45,7 +45,7 @@
 #include "../lmntal.h"
 #include "lmntal_thread.h"
 #include "automata.h"
-#include "../react_context.h"
+#include "vm/vm.h"
 #include "state.h"
 #include "statespace.h"
 #include "mc_worker.h"

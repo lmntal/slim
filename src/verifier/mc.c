@@ -40,7 +40,6 @@
 #include "mc.h"
 #include "mc_worker.h"
 #include "mhash.h"
-#include "../task.h"
 #include "dpor.h"
 #include "../error.h"
 #include "delta_membrane.h"

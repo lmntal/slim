@@ -47,7 +47,7 @@
 /* cldoc:begin-category(Thread) */
 
 #include "../lmntal.h"
-#include "../atom.h"
+#include "vm/vm.h"
 
 /* check for atomic operation */
 #ifdef ENABLE_PARALLEL

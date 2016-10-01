@@ -39,7 +39,6 @@
 
 #include "hyperlink.h"
 #include "atom.h"
-#include "membrane.h"
 #include "react_context.h"
 
 #if SIZEOF_LONG == 4

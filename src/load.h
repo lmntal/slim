@@ -41,7 +41,7 @@
 
 /* cldoc:begin-category(IL) */
 
-#include "rule.h"
+#include "vm/vm.h"
 #include "syntax.h"
 
 LmnRuleSetRef load(FILE *in);

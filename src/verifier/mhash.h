@@ -41,7 +41,7 @@
 /* cldoc:begin-category(Verifier::MembraneHash) */
 
 #include "../lmntal.h"
-#include "../membrane.h"
+#include "vm/vm.h"
 
 unsigned long mhash(LmnMembraneRef mem);
 void mhash_set_depth(int depth);

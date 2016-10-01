@@ -42,7 +42,7 @@
 #include "dumper.h" /* for debug */
 #include "functor.h"
 #include "st.h"
-#include "mhash.h"
+#include "verifier/mhash.h"
 #include "error.h"
 #include "util.h"
 #include "visitlog.h"

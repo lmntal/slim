@@ -1,0 +1,21 @@
+noinst_LIBRARIES = liblmn_vm.a
+
+liblmn_vm_a_CFLAGS =                               \
+        -I../                                            \
+        -I../utility                                     \
+        -I../../third_party/zdelta-2.1                   \
+        $(CFLAGS)
+
+liblmn_vm_a_SOURCES =                              \
+	vm.c \
+	membrane.c membrane.h \
+	atom.c atom.h \
+	ccallback.c ccallback.h \
+	functor.c functor.h \
+	hyperlink.c hyperlink.h \
+	instruction.c　instruction.h \
+	react_context.c react_context.h \
+	rule.c rule.h \
+	special_atom.c special_atom.h \
+	system_ruleset.c system_ruleset.h \
+	task.c task.h

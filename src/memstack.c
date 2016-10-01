@@ -38,8 +38,7 @@
  */
 
 #include "lmntal.h"
-#include "membrane.h"
-#include "task.h"
+#include "vm/vm.h"
 #include "slim_header/memstack.h"
 
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);

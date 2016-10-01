@@ -41,7 +41,7 @@
 #include <util.h>
 #include "../slim_header/string.h"
 #include "../dumper.h"
-#include "../atom.h"
+#include "vm/vm.h"
 
 /*
  * Internal Constructor
@@ -81,7 +81,7 @@ void cb_atom_new(LmnReactCxtRef rc,
     LmnAtom a1, LmnLinkAttr t1,
     LmnAtom a2, LmnLinkAttr t2)
 {
-  LmnSAtom atom, junk, res;
+  LmnSAtom atom, res;
    
   /* a1 is assumed to be an integer data atom */
   if (a1 > 0 && a1 <= 127) {

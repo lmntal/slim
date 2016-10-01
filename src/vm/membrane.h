@@ -43,6 +43,10 @@
 
 typedef struct LmnMembrane *LmnMembraneRef;
 
+typedef struct AtomListEntry *AtomListEntryRef;
+typedef struct AtomListEntry **AtomSet;
+
+typedef struct LinkObj *LinkObjRef;
 
 #include "lmntal.h"
 #include "atom.h"
@@ -52,10 +56,6 @@ typedef struct LmnMembrane *LmnMembraneRef;
 #include "slim_header/port.h"
 #include "error.h"
 #include "functor.h"
-
-typedef struct AtomListEntry *AtomListEntryRef;
-typedef struct AtomListEntry **AtomSet;
-
 
 #define NEW_ATOMLIST
 
@@ -102,7 +102,6 @@ void move_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembraneRef mem);
 /** -----
  *  リンクオブジェクトの代替
  */
-typedef struct LinkObj *LinkObjRef;
 
 LmnAtom LinkObjGetAtom(LinkObjRef o);
 LmnLinkAttr LinkObjGetPos(LinkObjRef o);

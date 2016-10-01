@@ -37,7 +37,6 @@
  */
 
 #include "lmntal.h"
-#include "membrane.h"
 #include "react_context.h"
 #include "functor.h"
 #include "symbol.h"

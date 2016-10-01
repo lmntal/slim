@@ -42,10 +42,7 @@
 /* cldoc:begin-category(Translate) */
 
 #include "lmntal.h"
-#include "atom.h"
-#include "membrane.h"
-#include "rule.h"
-#include "functor.h"
+#include "vm/vm.h"
 #include <stdarg.h>
 
 /* この辺の読み込みマクロはインタプリタ出力時も使えるはず */

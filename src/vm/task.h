@@ -43,8 +43,8 @@
 
 #include "lmntal.h"
 #include "membrane.h"
-#include "rule.h"
 #include "react_context.h"
+#include "internal_hash.h"
 
 /* 中間命令で出現するデータ構造
  * LINK_LIST    リンクオブジェクトのリスト
@@ -76,32 +76,10 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
 void memstack_push(LmnMembraneRef mem);
 BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 struct Vector user_system_rulesets; /* system ruleset defined by user */
-static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v);
-static inline void free_links(Vector *links);
 HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem, const Vector *links);
 
-static inline Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v) {
-  unsigned long i;
-  Vector *vec = vec_make(16);
-
-  /* リンクオブジェクトのベクタを構築 */
-  for (i = 0; i < vec_num(link_idxs); i++) {
-    vec_data_t t = vec_get(link_idxs, i);
-    LmnRegisterRef r = lmn_register_array_get(v, t);
-    LinkObjRef l = LinkObj_make(lmn_register_wt(r), lmn_register_at(r));
-    vec_push(vec, (LmnWord)l);
-  }
-  return vec;
-}
-
-static inline void free_links(Vector *links) {
-  unsigned long i;
-
-  for (i = 0; i < vec_num(links); i++) {
-    LMN_FREE(vec_get(links, i));
-  }
-  vec_free(links);
-}
+Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v);
+void free_links(Vector *links);
 
 /* cldoc:end-category() */
 

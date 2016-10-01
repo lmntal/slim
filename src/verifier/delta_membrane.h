@@ -43,10 +43,9 @@
 /* cldoc:begin-category(Verifier::DeltaMembrane) */
 
 #include "../lmntal.h"
-#include "../atom.h"
+#include "vm/vm.h"
 #include <visitlog.h>
 #include <vector.h>
-#include "../rule.h"
 
 struct MemDeltaRoot {
   LmnMembraneRef root_mem;

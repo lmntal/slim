@@ -47,8 +47,8 @@
 #include "syntax.h"
 #include "symbol.h"
 #include "il_parser.h"
-#include "instruction.h"
-#include "rule.h"
+#include "vm/vm.h"
+
 
 #define _POSIX_SOURCE 1
 #define YY_NO_INPUT
@@ -60,6 +60,7 @@ int get_instr_id(char *);
 int ilget_column  (yyscan_t yyscanner);
 void ilset_column (int  column_no , yyscan_t yyscanner);
 
+static struct InstrSpec spec[];
 
 /* エスケープキャラクタから文字への対応表 */
 static char escape_char_map[] =
@@ -226,3 +227,216 @@ char *unescape_c_str(const char *src)
   s[j] = '\0';
   return s;
 }
+
+static struct InstrSpec spec[] = {
+    {"deref", INSTR_DEREF, {InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"derefatom", INSTR_DEREFATOM, {InstrVar, InstrVar, InstrVar}},
+    {"dereflink", INSTR_DEREFLINK, {InstrVar, InstrVar, InstrVar}},
+    {"findatom", INSTR_FINDATOM, {InstrVar, InstrVar, ArgFunctor}},
+    {"findatom2", INSTR_FINDATOM2, {InstrVar, InstrVar, InstrVar, ArgFunctor}},
+
+    {"lockmem", INSTR_LOCKMEM, {InstrVar, InstrVar, String}},
+    {"anymem", INSTR_ANYMEM, {InstrVar, InstrVar, InstrVar, String}},
+
+    {"getmem", INSTR_GETMEM, {InstrVar, InstrVar, InstrVar, String}},
+    {"getparent", INSTR_GETPARENT, {InstrVar, InstrVar}},
+
+    {"testmem", INSTR_TESTMEM, {InstrVar, InstrVar}},
+    {"norules", INSTR_NORULES, {InstrVar}},
+    {"nfreelinks", INSTR_NFREELINKS, {InstrVar, InstrVar}},
+    {"natoms", INSTR_NATOMS, {InstrVar, InstrVar}},
+    {"natomsindirect", INSTR_NATOMSINDIRECT, {InstrVar, InstrVar}},
+    {"nmems", INSTR_NMEMS, {InstrVar, InstrVar}},
+    {"eqmem", INSTR_EQMEM, {InstrVar, InstrVar}},
+    {"neqmem", INSTR_NEQMEM, {InstrVar, InstrVar}},
+    {"stable", INSTR_STABLE, {InstrVar}},
+
+    {"func", INSTR_FUNC, {InstrVar, ArgFunctor}},
+    {"notfunc", INSTR_NOTFUNC, {InstrVar, ArgFunctor}},
+    {"eqatom", INSTR_EQATOM, {InstrVar, InstrVar}},
+    {"neqatom", INSTR_NEQATOM, {InstrVar, InstrVar}},
+    {"samefunc", INSTR_SAMEFUNC, {InstrVar, InstrVar}},
+
+    {"dereffunc", INSTR_DEREFFUNC, {InstrVar, InstrVar, InstrVar}},
+    {"getfunc", INSTR_GETFUNC, {InstrVar, InstrVar}},
+    {"loadfunc", INSTR_LOADFUNC, {InstrVar, ArgFunctor}},
+    {"eqfunc", INSTR_EQFUNC, {InstrVar, InstrVar}},
+    {"neqfunc", INSTR_NEQFUNC, {InstrVar, InstrVar}},
+
+    {"removeatom", INSTR_REMOVEATOM, {InstrVar, InstrVar, ArgFunctor}},
+    {"removeatom", INSTR_REMOVEATOM, {InstrVar, InstrVar}},
+    {"newatom", INSTR_NEWATOM, {InstrVar, InstrVar, ArgFunctor}},
+    {"newatomindirect", INSTR_NEWATOMINDIRECT, {InstrVar, InstrVar, InstrVar}},
+    {"enqueueatom", INSTR_ENQUEUEATOM, {InstrVar}},
+    {"dequeueatom", INSTR_DEQUEUEATOM, {InstrVar}},
+    {"freeatom", INSTR_FREEATOM, {InstrVar}},
+    {"alterfunc", INSTR_ALTERFUNC, {InstrVar, ArgFunctor}},
+
+    {"tailatom", INSTR_TAILATOM, {InstrVar, InstrVar}},
+    {"headatom", INSTR_HEADATOM, {InstrVar, InstrVar}},
+    {"tailatomlist", INSTR_TAILATOMLIST, {InstrVar, InstrVar}},
+    {"atomtailatom", INSTR_ATOMTAILATOM, {InstrVar,InstrVar, InstrVar}},
+
+    {"clearlink", INSTR_CLEARLINK, {InstrVar, InstrVar}},
+
+    {"findatomp", INSTR_FINDATOMP, {InstrVar, InstrVar, ArgFunctor}},
+    {"sync", INSTR_SYNC, {}},
+
+    {"allocatom", INSTR_ALLOCATOM, {InstrVar, ArgFunctor}},
+    {"allocatomindirect", INSTR_ALLOCATOMINDIRECT, {InstrVar, InstrVar}},
+    {"copyatom", INSTR_COPYATOM, {InstrVar, InstrVar, InstrVar}},
+    {"addatom", INSTR_ADDATOM, {InstrVar, InstrVar}},
+
+    {"removemem", INSTR_REMOVEMEM, {InstrVar, InstrVar}},
+    {"newmem", INSTR_NEWMEM, {InstrVar, InstrVar, InstrVar}},
+    {"allocmem", INSTR_ALLOCMEM, {InstrVar}},
+    {"newroot", INSTR_NEWROOT, {InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"movecells", INSTR_MOVECELLS, {InstrVar, InstrVar}},
+    {"enqueueallatoms", INSTR_ENQUEUEALLATOMS, {InstrVar}},
+    {"freemem", INSTR_FREEMEM, {InstrVar}},
+    {"addmem", INSTR_ADDMEM, {InstrVar, InstrVar}},
+    {"enqueuemem", INSTR_ENQUEUEMEM, {InstrVar}},
+    {"unlockmem", INSTR_UNLOCKMEM, {InstrVar}},
+    {"setmemname", INSTR_SETMEMNAME, {InstrVar, String}},
+
+    {"getlink", INSTR_GETLINK, {InstrVar, InstrVar, InstrVar}},
+    {"hypergetlink", INSTR_HYPERGETLINK, {InstrVar, InstrVar, InstrVar}},
+    {"alloclink", INSTR_ALLOCLINK, {InstrVar, InstrVar, InstrVar}},
+
+    {"newlink", INSTR_NEWLINK, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"relink", INSTR_RELINK, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"swaplink", INSTR_SWAPLINK, {InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"unify", INSTR_UNIFY, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"inheritlink", INSTR_INHERITLINK, {InstrVar, InstrVar, InstrVar, InstrVar}},
+    {"unifylinks", INSTR_UNIFYLINKS, {InstrVar, InstrVar, InstrVar}},
+
+    {"removeproxies", INSTR_REMOVEPROXIES, {InstrVar}},
+    {"removetoplevelproxies", INSTR_REMOVETOPLEVELPROXIES, {InstrVar}},
+    {"insertproxies", INSTR_INSERTPROXIES, {InstrVar, InstrVar}},
+    {"removetemporaryproxies", INSTR_REMOVETEMPORARYPROXIES, {InstrVar}},
+
+    {"loadruleset", INSTR_LOADRULESET, {InstrVar, ArgRuleset}},
+    {"copyrules", INSTR_COPYRULES, {InstrVar, InstrVar}},
+    {"clearrules", INSTR_CLEARRULES, {InstrVar}},
+    {"loadmodule", INSTR_LOADMODULE, {InstrVar, String}},
+
+    {"recursivelock", INSTR_RECURSIVELOCK, {InstrVar}},
+    {"recursiveunlock", INSTR_RECURSIVEUNLOCK, {InstrVar}},
+    {"copycells", INSTR_COPYCELLS, {InstrVar, InstrVar, InstrVar}},
+    {"dropmem", INSTR_DROPMEM, {InstrVar}},
+    {"lookuplink", INSTR_LOOKUPLINK, {InstrVar, InstrVar, InstrVar}},
+    {"insertconnectors", INSTR_INSERTCONNECTORS, {InstrVar, InstrVarList, InstrVar}},
+    {"insertconnectorsinnull", INSTR_INSERTCONNECTORSINNULL, {InstrVar, InstrVarList}},
+    {"deleteconnectors", INSTR_DELETECONNECTORS, {InstrVar, InstrVar}},
+
+    {"react", INSTR_REACT, {InstrVar, InstrVarList, InstrVarList, InstrVarList}},
+    {"jump", INSTR_JUMP, {Label, InstrVarList, InstrVarList, InstrVarList}},
+#ifdef KWBT_OPT
+    {"commit", INSTR_COMMIT, {String, LineNum, InstrVar}},
+#else
+    {"commit", INSTR_COMMIT, {String, LineNum}},
+#endif
+    {"resetvars", INSTR_RESETVARS, {InstrVarList, InstrVarList, InstrVarList,}},
+    {"changevars", INSTR_CHANGEVARS, {InstrVarList, InstrVarList, InstrVarList,}},
+    {"spec", INSTR_SPEC, {InstrVar, InstrVar}},
+    {"proceed", INSTR_PROCEED, {}},
+    {"stop", INSTR_STOP, {}},
+
+    {"loop", INSTR_LOOP, {InstrList}},
+    {"run", INSTR_RUN, {InstrList}},
+    {"not", INSTR_NOT, {InstrList}},
+    {"inline", INSTR_INLINE, {InstrVar, String, InstrVar}},
+    {"callback", INSTR_CALLBACK, {InstrVar, InstrVar}},
+    {"unifyhlinks", INSTR_UNIFYHLINKS, {InstrVar, InstrVar}},
+    {"findproccxt", INSTR_FINDPROCCXT, {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}},
+
+    /* special */
+    {"group", INSTR_GROUP, {InstrList}},
+    {"branch", INSTR_BRANCH, {InstrList}},
+
+    /* guard */
+    {"eqground", INSTR_EQGROUND, {InstrVar, InstrVar}},
+    {"neqground", INSTR_NEQGROUND, {InstrVar, InstrVar}},
+    {"copyhlground", INSTR_COPYHLGROUND, {InstrVar, InstrVar, InstrVar, InstrVarList}},
+    {"copyhlgroundindirect", INSTR_COPYHLGROUNDINDIRECT, {InstrVar, InstrVar, InstrVar, InstrVarList}},
+    {"copyground", INSTR_COPYGROUND, {InstrVar, InstrVar, InstrVar}},
+    {"removeground", INSTR_REMOVEGROUND, {InstrVar, InstrVar}},
+    {"removehlground", INSTR_REMOVEHLGROUND, {InstrVar, InstrVar, InstrVarList}},
+    {"removehlgroundindirect", INSTR_REMOVEHLGROUNDINDIRECT, {InstrVar, InstrVar, InstrVarList}},
+    {"freeground", INSTR_FREEGROUND, {InstrVar}},
+    {"freehlground", INSTR_FREEHLGROUND, {InstrVar, InstrVarList}},
+    {"freehlgroundindirect", INSTR_FREEHLGROUNDINDIRECT, {InstrVar, InstrVarList}},
+    {"isground", INSTR_ISGROUND, {InstrVar, InstrVar, InstrVar}},
+    {"ishlground", INSTR_ISHLGROUND, {InstrVar, InstrVar, InstrVar, InstrVarList}},
+    {"ishlgroundindirect", INSTR_ISHLGROUNDINDIRECT, {InstrVar, InstrVar, InstrVar, InstrVarList}},
+    {"isunary", INSTR_ISUNARY, {InstrVar}},
+    {"isint", INSTR_ISINT, {InstrVar}},
+    {"isintfunc", INSTR_ISINTFUNC, {InstrVar}},
+
+    {"isfloat", INSTR_ISFLOAT, {InstrVar}},
+    {"isstring", INSTR_ISSTRING, {InstrVar}},
+
+    {"uniq", INSTR_UNIQ, {InstrVarList}},
+
+    /* guard: hyperlink */
+    {"newhlink", INSTR_NEWHLINK, {InstrVar}},
+    {"newhlinkwithattr", INSTR_NEWHLINKWITHATTR, {InstrVar, InstrVar}},
+    {"newhlinkwithattrindirect", INSTR_NEWHLINKWITHATTRINDIRECT, {InstrVar, InstrVar}},
+    {"makehlink", INSTR_MAKEHLINK, {InstrVar}},
+    {"ishlink", INSTR_ISHLINK, {InstrVar}},
+    {"getattratom", INSTR_GETATTRATOM, {InstrVar, InstrVar}},
+    {"getnum", INSTR_GETNUM, {InstrVar, InstrVar}},
+
+    /* guard: float */
+    {"fadd", INSTR_FADD, {InstrVar, InstrVar, InstrVar}},
+    {"fsub", INSTR_FSUB, {InstrVar, InstrVar, InstrVar}},
+    {"fmul", INSTR_FMUL, {InstrVar, InstrVar, InstrVar}},
+    {"fdiv", INSTR_FDIV, {InstrVar, InstrVar, InstrVar}},
+    {"fneg", INSTR_FNEG, {InstrVar, InstrVar}},
+    {"flt", INSTR_FLT, {InstrVar, InstrVar}},
+    {"fle", INSTR_FLE, {InstrVar, InstrVar}},
+    {"fgt", INSTR_FGT, {InstrVar, InstrVar}},
+    {"fge", INSTR_FGE, {InstrVar, InstrVar}},
+    {"feq", INSTR_FEQ, {InstrVar, InstrVar}},
+    {"fne", INSTR_FNE, {InstrVar, InstrVar}},
+
+    {"newlist", INSTR_NEWLIST, {InstrVar}},
+    {"addtolist", INSTR_ADDTOLIST, {InstrVar, InstrVar}},
+    {"getfromlist", INSTR_GETFROMLIST, {InstrVar, InstrVar, InstrVar}},
+
+    /* guard: int */
+    {"iadd", INSTR_IADD, {InstrVar, InstrVar, InstrVar}},
+    {"isub", INSTR_ISUB, {InstrVar, InstrVar, InstrVar}},
+    {"imul", INSTR_IMUL, {InstrVar, InstrVar, InstrVar}},
+    {"idiv", INSTR_IDIV, {InstrVar, InstrVar, InstrVar}},
+    {"ineg", INSTR_INEG, {InstrVar, InstrVar}},
+    {"imod", INSTR_IMOD, {InstrVar, InstrVar, InstrVar}},
+    {"ilt", INSTR_ILT, {InstrVar, InstrVar}},
+    {"ile", INSTR_ILE, {InstrVar, InstrVar}},
+    {"igt", INSTR_IGT, {InstrVar, InstrVar}},
+    {"ige", INSTR_IGE, {InstrVar, InstrVar}},
+    {"ieq", INSTR_IEQ, {InstrVar, InstrVar}},
+    {"ine", INSTR_INE, {InstrVar, InstrVar}},
+    {"iand", INSTR_IAND, {InstrVar, InstrVar, InstrVar}},
+    {"ior", INSTR_IOR, {InstrVar, InstrVar, InstrVar}},
+    {"ixor", INSTR_IXOR, {InstrVar, InstrVar, InstrVar}},
+
+    {"iltfunc", INSTR_ILTFUNC, {InstrVar, InstrVar}},
+    {"ilefunc", INSTR_ILEFUNC, {InstrVar, InstrVar}},
+    {"igtfunc", INSTR_IGTFUNC, {InstrVar, InstrVar}},
+    {"igefunc", INSTR_IGEFUNC, {InstrVar, InstrVar}},
+
+    {"iaddfunc", INSTR_IADDFUNC, {InstrVar, InstrVar, InstrVar}},
+    {"isubfunc", INSTR_ISUBFUNC, {InstrVar, InstrVar, InstrVar}},
+    {"imulfunc", INSTR_IMULFUNC, {InstrVar, InstrVar, InstrVar}},
+    {"idivfunc", INSTR_IDIVFUNC, {InstrVar, InstrVar, InstrVar}},
+    {"imodfunc", INSTR_IMODFUNC, {InstrVar, InstrVar, InstrVar}},
+
+    {"getclass", INSTR_GETCLASS, {InstrVar, InstrVar}},
+    {"subclass", INSTR_SUBCLASS, {InstrVar, InstrVar}},
+
+    /* etc */
+    {"celldump", INSTR_CELLDUMP, {}},
+
+    {0}
+  };

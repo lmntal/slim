@@ -258,7 +258,9 @@ enum LmnInstruction {
   INSTR_FINDATOMP,
   INSTR_SYNC,
 
-  INSTR_PRINTINSTR
+  INSTR_PRINTINSTR,
+
+  NUM_INSTRS // this must be the last
 };
 
 
@@ -279,8 +281,6 @@ struct InstrSpec {
   LmnInstrOp op;
   enum ArgType args[128];
 };
-
-extern struct InstrSpec spec[];
 
 /* cldoc:end-category() */
 

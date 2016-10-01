@@ -45,7 +45,7 @@ typedef void* yyscan_t;
 #include "symbol.h"
 #include "syntax.h"
 #include "arch.h"
-#include "rule.h"
+#include "vm/vm.h"
 #include "lmntal_system_adapter.h"
 #include "il_parser.h"
 #include "il_lexer.h"
@@ -283,8 +283,6 @@ void dump_il(ILRef il)
  */
 
 #include "syntax.h"
-#include "atom.h"
-#include "rule.h"
 
 /* 構文木の読み込み時に使うデータ。各ルールの解析じに作成し，解析後に破
    棄する。ラベルは各ルールにローカルなものとして処理している */

@@ -47,13 +47,10 @@ typedef void* yyscan_t;
 #include "propsym_parser.h"
 #include "propsym_lexer.h"
 #include "../lmntal_system_adapter.h"
-#include "../rule.h"
 #include "../syntax.h"
 #include "../load.h"
 #include "../symbol.h"
-#include "../task.h"
 #include "../error.h"
-#include "../react_context.h"
 
 struct SymbolDefinition {
   unsigned int sym_id;

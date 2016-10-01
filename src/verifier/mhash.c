@@ -42,10 +42,6 @@
 
 
 #include "mhash.h"
-#include "../atom.h"
-#include "../membrane.h"
-#include "../rule.h"
-#include "../functor.h"
 #include "st.h"
 #include "visitlog.h"
 #include "../slim_header/string.h"

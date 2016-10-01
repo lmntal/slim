@@ -42,7 +42,6 @@
 #include "../lmntal.h"
 #include "../lmntal_ext.h"
 #include "../slim_header/string.h"
-#include "../special_atom.h"
 #include "visitlog.h"
 
 void init_integer(void);

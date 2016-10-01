@@ -48,7 +48,7 @@
 #include "verifier/mc.h"
 #include "verifier/mc_worker.h"
 #include "verifier/statespace.h"
-#include "rule.h"
+#include "vm/vm.h"
 #if defined (TIME_WITH_SYS_TIME)
 # include <time.h>
 # include <sys/time.h>

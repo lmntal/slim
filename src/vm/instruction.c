@@ -1,5 +1,5 @@
 /*
- * dumper.h
+ * instruction.c - Intermediate code instructions
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -33,34 +33,9 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: dumper.h,v 1.3 2008/09/19 05:18:17 taisuke Exp $
+ * $Id: instruction.c,v 1.4 2008/10/17 07:25:36 iwasawa Exp $
  */
 
-#ifndef LMN_DUMPER_H
-#define LMN_DUMPER_H
+#include "instruction.h"
 
-/* cldoc:begin-category(Lmntal::Dumper) */
 
-#include "lmntal.h"
-#include "slim_header/port.h"
-#include "vm/vm.h"
-
-LMN_EXTERN void dumper_init(void);
-LMN_EXTERN void dumper_finalize(void);
-LMN_EXTERN void lmn_dump_mem_stdout(LmnMembraneRef mem);
-LMN_EXTERN void lmn_dump_mem(LmnMembraneRef mem, LmnPortRef port);
-LMN_EXTERN void lmn_dump_mem_dev(LmnMembraneRef mem);
-LMN_EXTERN void lmn_dump_cell_stdout(LmnMembraneRef mem);
-LMN_EXTERN void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port);
-LMN_EXTERN void lmn_dump_dot(LmnMembraneRef mem);
-LMN_EXTERN void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs);
-LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, Vector *v);
-LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnWord atom, LmnLinkAttr attr);
-
-void dump_escaped(LmnPortRef port, const char *s);
-
-extern char char_to_escape_char[];
-
-/* cldoc:end-category() */
-
-#endif /* LMN_DUMPER_H */

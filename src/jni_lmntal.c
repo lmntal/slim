@@ -39,7 +39,7 @@
 
 #include "jni_lmntal.h"
 #include "load.h"
-#include "task.h"
+#include "vm/vm.h"
 #include "mc.h"
 #include <ctype.h>
 

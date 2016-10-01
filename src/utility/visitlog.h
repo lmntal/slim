@@ -42,8 +42,7 @@
 
 #include "../lmntal.h"
 #include "vector.h"
-#include "../atom.h"
-#include "../membrane.h"
+#include "vm/vm.h"
 #include "../error.h"
 #include "util.h"
 #include <limits.h>

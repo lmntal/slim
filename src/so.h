@@ -43,16 +43,12 @@
 #define SO_H
 
 #include "lmntal.h"
-#include "rule.h"
-#include "functor.h"
+#include "vm/vm.h"
 #include "translate.h"
 #include "load.h"
 #include "symbol.h"
-#include "react_context.h"
 #include "slim_header/memstack.h"
-#include "special_atom.h"
 #include "error.h"
-#include "task.h"
 #include "mc.h"
 #include "visitlog.h"
 

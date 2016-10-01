@@ -41,7 +41,6 @@
 /* cldoc:begin-category(Verifier::MembraneEncoder) */
 
 #include "../lmntal.h"
-#include "../membrane.h"
 #include "delta_membrane.h"
 
 typedef struct LmnBinStr *LmnBinStrRef;

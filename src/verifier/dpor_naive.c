@@ -41,7 +41,7 @@
 #include "delta_membrane.h"
 #include "mc.h"
 #include "mc_worker.h"
-#include "../rule.h"
+#include "vm/vm.h"
 #ifdef PROFILE
 # include "runtime_status.h"
 #endif

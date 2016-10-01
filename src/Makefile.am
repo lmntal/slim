@@ -1,13 +1,15 @@
-SUBDIRS = utility verifier
+SUBDIRS = utility verifier vm
 
 bin_PROGRAMS = slim
 
 slim_LDADD =   -ldl                                    \
                -llmn_verifier                          \
                -llmn_utility                           \
-               -lzd_in_slim
+               -lzd_in_slim                            \
+               -llmn_vm
 slim_LDFLAGS = -L./verifier                            \
                -L./utility                             \
+               -L./vm                                  \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I./verifier                            \
                -I./utility                             \
@@ -62,33 +64,22 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c inte
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
 slim_SOURCES =                                                     \
 	main.c                          lmntal.h                         \
-	alloc.c                         atom.h                           \
-	atom.c                                                           \
-	membrane.c                      membrane.h                       \
-	rule.c                          rule.h                           \
+	alloc.c                                                    \
 	error.c                         error.h                          \
 	normal_thread.c			normal_thread.h			 \
-	task.c                          task.h                           \
 	memory_pool.c                   memory_pool.h                    \
 	dumper.c                        dumper.h                         \
-	system_ruleset.c                system_ruleset.h                 \
-	instruction.c                   instruction.h                    \
 	symbol.c                        symbol.h                         \
-	functor.c                       functor.h                        \
 	syntax.c                        syntax.h                         \
-	react_context.c                 react_context.h                  \
 	il_parser.y                     il_lexer.l                       \
 	load.c                          load.h                           \
 	env.c                           arch.h                           \
 	runtime_status.c                runtime_status.h                 \
 	lmntal_system_adapter.c         lmntal_system_adapter.h          \
-	special_atom.c                  special_atom.h                   \
 	memstack.c                      slim_header/memstack.h           \
 	string.c                        slim_header/string.h             \
 	port.c                          slim_header/port.h               \
 	jni_lmntal.c                    jni_lmntal.h                     \
-	ccallback.c                     ccallback.h                      \
-	hyperlink.c                     hyperlink.h                      \
 	translate.c                     translate.h                      \
 	translate_generated.c           translate_generator.rb           \
 	translate_generator.in          so.h                             \

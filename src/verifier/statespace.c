@@ -43,10 +43,9 @@
 
 #include "statespace.h"
 #include "state.h"
-#include "../membrane.h"
 #include "mem_encode.h"
 #include "automata.h"
-#include "../rule.h"
+#include "vm/vm.h"
 #include "../error.h"
 #include "../dumper.h"
 #include "../runtime_status.h"

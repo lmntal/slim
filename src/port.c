@@ -38,15 +38,10 @@
  */
 
 #include "lmntal.h"
-#include "membrane.h"
-#include "ccallback.h"
-#include "atom.h"
-#include "functor.h"
+#include "vm/vm.h"
 #include "error.h"
-#include "special_atom.h"
 #include "util.h"
 #include "symbol.h"
-#include "task.h"
 #include "slim_header/string.h"
 #include "slim_header/port.h"
 

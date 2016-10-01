@@ -38,9 +38,7 @@
  */
 
 #include <stdio.h>
-#include "../rule.h"
-#include "../membrane.h"
-#include "../react_context.h"
+#include "vm/vm.h"
 #include "../slim_header/memstack.h"
 #include "util.h"
 
