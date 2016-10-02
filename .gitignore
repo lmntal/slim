@@ -67,8 +67,8 @@ lib/*.il
 *.lo
 *.la
 src/arch.h
-src/il_lexer.*
-src/il_parser.*
+src/loader/il_lexer.*
+src/loader/il_parser.*
 src/interpret_generated.c
 src/slim
 src/translate_generated.c

@@ -1,13 +1,15 @@
-SUBDIRS = utility verifier vm
+SUBDIRS = utility verifier vm loader
 
 bin_PROGRAMS = slim
 
 slim_LDADD =   -ldl                                    \
+               -llmn_loader                            \
                -llmn_verifier                          \
                -llmn_utility                           \
                -lzd_in_slim                            \
                -llmn_vm
 slim_LDFLAGS = -L./verifier                            \
+               -L./loader                              \
                -L./utility                             \
                -L./vm                                  \
                -L../third_party/zdelta-2.1
@@ -43,17 +45,8 @@ EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
 DISTCLEANFILES = arch.h ../lib/config.lmn
 
 
-AM_LFLAGS=-P $(patsubst %_lexer.l,%,$<)  \
-           --header-file=$(patsubst %.l,%.h,$<) -o $(patsubst %.l,%.c,$<)
-AM_YFLAGS=-d -p $(patsubst %_parser.y,%,$<) -o $(patsubst %.y,%.c,$<)
-
-PARSERS = il_parser il_lexer
-PARSER_HEADER = $(patsubst %, %.h, $(PARSERS))
-PARSER_SOURCE = $(patsubst %, %.c, $(PARSERS))
-
 # 事前に必要なファイル
 BUILT_SOURCES = arch.h                       \
-                $(PARSER_SOURCE)             \
                 translate_generated.c        \
                 interpret_generated.c
 
@@ -65,13 +58,9 @@ slim_SOURCES =                                                     \
 	main.c                          lmntal.h                         \
 	alloc.c                                                    \
 	error.c                         error.h                          \
-	normal_thread.c			normal_thread.h			 \
 	memory_pool.c                   memory_pool.h                    \
 	dumper.c                        dumper.h                         \
 	symbol.c                        symbol.h                         \
-	syntax.c                        syntax.h                         \
-	il_parser.y                     il_lexer.l                       \
-	load.c                          load.h                           \
 	env.c                           arch.h                           \
 	runtime_status.c                runtime_status.h                 \
 	lmntal_system_adapter.c         lmntal_system_adapter.h          \
@@ -100,13 +89,6 @@ slim_SOURCES =                                                     \
 #	ext.h ext.c
 
 slim_OBJS =
-
-# Automakeは同じディレクトリにある複数のパーサーをコンパイルするため
-# にylwrap を使おうとするが、必要ないので、ルールを上書きする
-.l.c:
-	$(LEX) $(LFLAGS) $(AM_LFLAGS) $<
-.y.c:
-	$(YACC) $(YFLAGS) $(AM_YFLAGS) $<
 
 arch.h ../lib/config.lmn: genconfig
 	$(SHELL) ./genconfig

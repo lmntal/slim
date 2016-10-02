@@ -43,7 +43,7 @@
 #include "util.h"
 #include "symbol.h"
 #include "vm/vm.h"
-#include "load.h"
+#include "loader/load.h"
 #include "translate.h"
 #include "arch.h"
 #include "lmntal_system_adapter.h"

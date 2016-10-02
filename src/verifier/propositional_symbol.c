@@ -47,8 +47,8 @@ typedef void* yyscan_t;
 #include "propsym_parser.h"
 #include "propsym_lexer.h"
 #include "../lmntal_system_adapter.h"
-#include "../syntax.h"
-#include "../load.h"
+#include "loader/syntax.h"
+#include "loader/load.h"
 #include "../symbol.h"
 #include "../error.h"
 

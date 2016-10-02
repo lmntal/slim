@@ -42,7 +42,7 @@
 
 /* cldoc:begin-category(Lmntal::String) */
 
-#include "../lmntal.h"
+#include "lmntal.h"
 typedef struct LmnString *LmnStringRef;
 
 #define LMN_STRING(obj) ((struct LmnString *)(obj))

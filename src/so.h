@@ -45,7 +45,6 @@
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "translate.h"
-#include "load.h"
 #include "symbol.h"
 #include "slim_header/memstack.h"
 #include "error.h"

@@ -38,7 +38,7 @@
  */
 
 #include "jni_lmntal.h"
-#include "load.h"
+#include "loader/load.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 #include <ctype.h>

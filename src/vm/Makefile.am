@@ -14,6 +14,7 @@ liblmn_vm_a_SOURCES =                              \
 	functor.c functor.h \
 	hyperlink.c hyperlink.h \
 	instruction.c　instruction.h \
+	normal_thread.c normal_thread.h \
 	react_context.c react_context.h \
 	rule.c rule.h \
 	special_atom.c special_atom.h \

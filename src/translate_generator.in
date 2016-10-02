@@ -38,7 +38,7 @@
 
 #__echo
  #include "translate.h"
- #include "syntax.h"
+ #include "loader/syntax.h"
  #include "arch.h"
  #include "symbol.h"
  #include "vm/vm.h"

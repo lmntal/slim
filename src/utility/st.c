@@ -4,7 +4,7 @@
 
 #include "st.h"
 #include "vector.h"
-#include "state.h"
+#include "verifier/verifier.h"
 #include "../slim_header/string.h"
 
 typedef struct st_table_entry st_table_entry;
