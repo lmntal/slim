@@ -40,7 +40,7 @@
 #include "array.h"
 #include "../lmntal_ext.h"
 #include <util.h>
-#include "../slim_header/string.h"
+#include "../lmnstring.h"
 #include "../dumper.h"
 #include "vm/vm.h"
 
@@ -316,7 +316,7 @@ void cb_array_put(LmnReactCxtRef rc,
         a0, t0, LMN_ATTR_GET_VALUE(t0),
         a3, t3, LMN_ATTR_GET_VALUE(t3));
     lmn_mem_remove_data_atom(mem, a1, t1);
-    if(!LMN_ARRAY_TYPE(a0)==LMN_HL_ATTR)lmn_mem_remove_data_atom(mem, a2, t2);
+    if(LMN_ARRAY_TYPE(a0)!=LMN_HL_ATTR)lmn_mem_remove_data_atom(mem, a2, t2);
   }
   else lmn_fatal("array.put out of bound");  
 }

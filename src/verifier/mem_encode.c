@@ -126,7 +126,7 @@
 #include "../error.h"
 #include "vm/vm.h"
 #include "st.h"
-#include "../slim_header/port.h"
+#include "../port.h"
 #include "../dumper.h"
 #include "util.h"
 #include "st.h"

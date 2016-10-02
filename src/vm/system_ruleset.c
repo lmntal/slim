@@ -40,7 +40,7 @@
 #include "react_context.h"
 #include "functor.h"
 #include "symbol.h"
-#include "slim_header/memstack.h"
+#include "memstack.h"
 
 /* prototypes */
 

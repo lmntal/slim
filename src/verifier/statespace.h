@@ -52,7 +52,6 @@
 #include "queue.h"
 #include "automata.h"
 #include "state.h"
-#include "../slim_header/port.h"
 #include "lmntal_thread.h"
 #include "delta_membrane.h"
 #include "mem_encode.h"

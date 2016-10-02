@@ -43,9 +43,8 @@
 #include "symbol.h"
 #include "util.h"
 #include "error.h"
-#include "slim_header/memstack.h"
-#include "slim_header/port.h"
-#include "string.h"
+#include "memstack.h"
+#include "lmnstring.h"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"

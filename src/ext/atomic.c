@@ -39,7 +39,7 @@
 
 #include "../lmntal.h"
 #include "../lmntal_ext.h"
-#include "../slim_header/memstack.h"
+#include "../memstack.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 #ifdef PROFILE

@@ -48,8 +48,8 @@
 #include "arch.h"
 #include "lmntal_system_adapter.h"
 #include "verifier/verifier.h"
-#include "slim_header/string.h"
-#include "slim_header/port.h"
+#include "lmnstring.h"
+#include "port.h"
 #include "dumper.h"
 #include "jni_lmntal.h"
 /* #include "ext.h" */

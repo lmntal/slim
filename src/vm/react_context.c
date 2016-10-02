@@ -42,7 +42,7 @@
 #include "util.h"
 #include "hyperlink.h"
 #include "verifier/dpor.h"
-#include "slim_header/memstack.h"
+#include "memstack.h"
 
 struct LmnRegister {
   LmnWord wt;

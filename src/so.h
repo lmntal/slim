@@ -46,7 +46,6 @@
 #include "vm/vm.h"
 #include "translate.h"
 #include "symbol.h"
-#include "slim_header/memstack.h"
 #include "error.h"
 #include "verifier/verifier.h"
 #include "visitlog.h"

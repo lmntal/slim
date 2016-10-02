@@ -64,9 +64,9 @@ slim_SOURCES =                                                     \
 	env.c                           arch.h                           \
 	runtime_status.c                runtime_status.h                 \
 	lmntal_system_adapter.c         lmntal_system_adapter.h          \
-	memstack.c                      slim_header/memstack.h           \
-	string.c                        slim_header/string.h             \
-	port.c                          slim_header/port.h               \
+	memstack.c                      memstack.h                       \
+	lmnstring.c                     lmnstring.h                      \
+	port.c                          port.h                           \
 	jni_lmntal.c                    jni_lmntal.h                     \
 	translate.c                     translate.h                      \
 	translate_generated.c           translate_generator.rb           \

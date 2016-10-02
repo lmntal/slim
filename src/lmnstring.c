@@ -39,7 +39,7 @@
 
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "slim_header/string.h"
+#include "lmnstring.h"
 #include "util.h"
 #include "dumper.h"
 #include <stdio.h>

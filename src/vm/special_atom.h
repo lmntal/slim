@@ -52,7 +52,7 @@
 /* cldoc:begin-category(Lmntal::SpecialAtom) */
 
 #include "lmntal.h"
-#include "slim_header/port.h"
+#include "port.h"
 
 #define LMN_SP_ATOM(atom) ((struct LmnSPAtomHeader *)(atom))
 

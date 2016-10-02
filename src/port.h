@@ -48,7 +48,7 @@
 /* cldoc:begin-category(Lmntal::Port) */
 
 #include "../lmntal.h"
-#include "string.h"
+#include "lmnstring.h"
 
 struct LmnPort {
   LMN_SP_ATOM_HEADER;

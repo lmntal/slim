@@ -42,8 +42,8 @@
 #include "error.h"
 #include "util.h"
 #include "symbol.h"
-#include "slim_header/string.h"
-#include "slim_header/port.h"
+#include "lmnstring.h"
+#include "port.h"
 
 
 static int port_atom_type; /* special atom type */

@@ -53,7 +53,6 @@ typedef struct LinkObj *LinkObjRef;
 #include "utility/internal_hash.h"
 #include "utility/vector.h"
 #include "rule.h"
-#include "slim_header/port.h"
 #include "error.h"
 #include "functor.h"
 

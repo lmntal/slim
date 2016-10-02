@@ -42,7 +42,7 @@
 /* cldoc:begin-category(Lmntal::Dumper) */
 
 #include "lmntal.h"
-#include "slim_header/port.h"
+#include "port.h"
 #include "vm/vm.h"
 
 LMN_EXTERN void dumper_init(void);
