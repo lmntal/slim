@@ -51,11 +51,9 @@ DISTCLEANFILES = arch.h ../lib/config.lmn
 
 
 # 事前に必要なファイル
-BUILT_SOURCES = arch.h                       \
-                translate_generated.c        \
-                interpret_generated.c
+BUILT_SOURCES = arch.h
 
-CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c interpret_generated.c
+CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER)
 
 # .yファイルは .lより先に書く
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
@@ -68,10 +66,6 @@ slim_SOURCES =                                                     \
 	runtime_status.c                runtime_status.h                 \
 	lmntal_system_adapter.c         lmntal_system_adapter.h          \
 	jni_lmntal.c                    jni_lmntal.h                     \
-	translate.c                     translate.h                      \
-	translate_generated.c           translate_generator.rb           \
-	translate_generator.in          so.h                             \
-	interpret_generated.c                                            \
 	\
 	lmntal_ext.h                                                     \
 	ext/init_exts.c                                                  \
@@ -92,12 +86,6 @@ slim_OBJS =
 
 arch.h ../lib/config.lmn: genconfig
 	$(SHELL) ./genconfig
-
-translate_generated.c: translate_generator.in translate_generator.rb
-	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@
-
-interpret_generated.c: translate_generator.in translate_generator.rb
-	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@ -i
 
 ALL_HEADER_FILES := $(wildcard ./*/*.h) $(wildcard ./*.h)
 ALL_SOURCE_FILES := $(wildcard ./*/*.c) $(wildcard ./*.c)
