@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "../lmntal_ext.h"
-#include "../dumper.h"
+#include "vm/vm.h"
 
 void cb_react_rule(LmnReactCxtRef rc,
 			  LmnMembraneRef mem,

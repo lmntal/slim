@@ -39,7 +39,7 @@
 
 #include "ltl2ba_adapter.h"
 #include "../lmntal.h"
-#include "../error.h"
+#include "element/error.h"
 #include <stdlib.h>
 
 FILE *ltl2ba_str(char *ltl)

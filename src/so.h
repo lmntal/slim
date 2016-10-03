@@ -46,7 +46,7 @@
 #include "vm/vm.h"
 #include "translate.h"
 #include "symbol.h"
-#include "error.h"
+#include "element/error.h"
 #include "verifier/verifier.h"
 #include "visitlog.h"
 

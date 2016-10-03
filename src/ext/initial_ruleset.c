@@ -39,7 +39,6 @@
 
 #include <stdio.h>
 #include "vm/vm.h"
-#include "../memstack.h"
 #include "util.h"
 
 void init_initial_ruleset(void);

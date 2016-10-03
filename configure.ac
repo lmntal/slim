@@ -876,6 +876,7 @@ echo $SLIM_VERSION > VERSION
 AC_OUTPUT(Makefile \
           src/Makefile \
           src/genconfig \
+          src/element/Makefile \
           src/loader/Makefile \
           src/verifier/Makefile \
           src/utility/Makefile \

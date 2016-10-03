@@ -39,8 +39,7 @@
 
 #include "../lmntal_ext.h"
 #include <util.h>
-#include "../lmnstring.h"
-#include "../dumper.h"
+#include "element/lmnstring.h"
 #include "vm/vm.h"
 
 /*

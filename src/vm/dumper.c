@@ -42,9 +42,9 @@
 #include "utility/vector.h"
 #include "symbol.h"
 #include "util.h"
-#include "error.h"
+#include "element/error.h"
 #include "memstack.h"
-#include "lmnstring.h"
+#include "element/lmnstring.h"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"

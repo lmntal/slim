@@ -44,7 +44,7 @@
 #define _GNU_SOURCE
 #include "lmntal_thread.h"
 #include "util.h"
-#include "../error.h"
+#include "element/error.h"
 #if defined (HAVE_SCHED_H) && defined (HAVE_SYSCALL_H)
 # include <sched.h>
 # include <syscall.h>

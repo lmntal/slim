@@ -53,7 +53,7 @@ typedef struct LinkObj *LinkObjRef;
 #include "utility/internal_hash.h"
 #include "utility/vector.h"
 #include "rule.h"
-#include "error.h"
+#include "element/error.h"
 #include "functor.h"
 
 #define NEW_ATOMLIST

@@ -40,7 +40,7 @@
 #include "../lmntal.h"
 #include "../lmntal_ext.h"
 #include "visitlog.h"
-#include "../memstack.h"
+#include "vm/vm.h"
 
 void init_nlmem(void);
 

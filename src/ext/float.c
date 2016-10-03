@@ -41,7 +41,7 @@
 
 #include "../lmntal.h"
 #include "../lmntal_ext.h"
-#include "../lmnstring.h"
+#include "element/lmnstring.h"
 #include "visitlog.h"
 
 void init_float(void);

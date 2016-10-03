@@ -39,11 +39,11 @@
 
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "error.h"
+#include "element/error.h"
 #include "util.h"
 #include "symbol.h"
-#include "lmnstring.h"
-#include "port.h"
+#include "element/lmnstring.h"
+#include "element/port.h"
 
 
 static int port_atom_type; /* special atom type */

@@ -48,9 +48,8 @@
 #include "arch.h"
 #include "lmntal_system_adapter.h"
 #include "verifier/verifier.h"
-#include "lmnstring.h"
-#include "port.h"
-#include "dumper.h"
+#include "element/lmnstring.h"
+#include "element/port.h"
 #include "jni_lmntal.h"
 /* #include "ext.h" */
 #include "runtime_status.h"

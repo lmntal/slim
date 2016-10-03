@@ -38,7 +38,7 @@
  */
 #include "runtime_status.h"
 #include "util.h"
-#include "dumper.h"
+#include "vm/dumper.h"
 
 static void mc_profiler2_init(MCProfiler2 *p);
 static void mc_profiler2_destroy(MCProfiler2 *p);

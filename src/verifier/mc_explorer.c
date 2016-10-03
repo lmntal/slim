@@ -42,7 +42,7 @@
 #include "mc_explorer.h"
 #include "state.h"
 #include <vector.h>
-#include "../error.h"
+#include "element/error.h"
 #include "lmntal_thread.h"
 
 #ifdef PROFILE

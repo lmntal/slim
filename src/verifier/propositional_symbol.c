@@ -50,7 +50,7 @@ typedef void* yyscan_t;
 #include "loader/syntax.h"
 #include "loader/load.h"
 #include "../symbol.h"
-#include "../error.h"
+#include "element/error.h"
 
 struct SymbolDefinition {
   unsigned int sym_id;

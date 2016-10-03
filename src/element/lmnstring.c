@@ -39,9 +39,8 @@
 
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "lmnstring.h"
+#include "element/lmnstring.h"
 #include "util.h"
-#include "dumper.h"
 #include <stdio.h>
 
 inline static void string_expand_buf(LmnStringRef s, unsigned long size);

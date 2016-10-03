@@ -41,8 +41,10 @@
 #define LMN_VM_H
 
 #include "ccallback.h"
+#include "dumper.h"
 #include "instruction.h"
 #include "membrane.h"
+#include "memstack.h"
 #include "task.h"
 
 #endif /* LMN_VM_H */

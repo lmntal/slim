@@ -11,9 +11,11 @@ liblmn_vm_a_SOURCES =                              \
 	membrane.c membrane.h \
 	atom.c atom.h \
 	ccallback.c ccallback.h \
+	dumper.c dumper.h \
 	functor.c functor.h \
 	hyperlink.c hyperlink.h \
 	instruction.c　instruction.h \
+	memstack.c memstack.h \
 	normal_thread.c normal_thread.h \
 	react_context.c react_context.h \
 	rule.c rule.h \

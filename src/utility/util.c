@@ -39,7 +39,7 @@
 
 #include "util.h"
 #include "../lmntal.h"
-#include "../error.h"
+#include "element/error.h"
 
 char *int_to_str(long n)
 {

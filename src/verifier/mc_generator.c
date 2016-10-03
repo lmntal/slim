@@ -44,7 +44,7 @@
 #include "state.h"
 #include <vector.h>
 #include "queue.h"
-#include "../error.h"
+#include "element/error.h"
 #include "lmntal_thread.h"
 #include "../runtime_status.h"
 #include <unistd.h>

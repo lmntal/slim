@@ -41,7 +41,7 @@
 #include "task.h"
 #include "util.h"
 #include "hyperlink.h"
-#include "verifier/dpor.h"
+#include "verifier/verifier.h"
 #include "memstack.h"
 
 struct LmnRegister {

@@ -40,7 +40,7 @@
 #include "utility/vector.h"
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "error.h"
+#include "element/error.h"
 #include "lmntal_thread.h"
 #include "util.h"
 

@@ -40,8 +40,7 @@
 #include "array.h"
 #include "../lmntal_ext.h"
 #include <util.h>
-#include "../lmnstring.h"
-#include "../dumper.h"
+#include "element/lmnstring.h"
 #include "vm/vm.h"
 
 static int array_atom_type; /* special atom type */

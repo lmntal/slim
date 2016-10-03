@@ -1,4 +1,4 @@
-SUBDIRS = utility verifier vm loader
+SUBDIRS = utility verifier vm loader element
 
 bin_PROGRAMS = slim
 
@@ -7,17 +7,22 @@ slim_LDADD =   -ldl                                    \
                -llmn_verifier                          \
                -llmn_utility                           \
                -lzd_in_slim                            \
-               -llmn_vm
+               -llmn_vm                                \
+               -llmn_elm
 slim_LDFLAGS = -L./verifier                            \
                -L./loader                              \
                -L./utility                             \
                -L./vm                                  \
+               -L./element                             \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I./utility                             \
                -I../third_party/zdelta-2.1             \
                -std=gnu99
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
-                    ./utility/liblmn_utility.a
+                    ./utility/liblmn_utility.a         \
+                    ./vm/liblmn_vm.a                   \
+                    ./element/liblmn_elm.a             \
+                    ./loader/liblmn_loader.a
 
 if ENABLE_JNI
 slim_LDADD += -ljvm
@@ -57,16 +62,11 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c inte
 slim_SOURCES =                                                     \
 	main.c                          lmntal.h                         \
 	alloc.c                                                    \
-	error.c                         error.h                          \
 	memory_pool.c                   memory_pool.h                    \
-	dumper.c                        dumper.h                         \
 	symbol.c                        symbol.h                         \
 	env.c                           arch.h                           \
 	runtime_status.c                runtime_status.h                 \
 	lmntal_system_adapter.c         lmntal_system_adapter.h          \
-	memstack.c                      memstack.h                       \
-	lmnstring.c                     lmnstring.h                      \
-	port.c                          port.h                           \
 	jni_lmntal.c                    jni_lmntal.h                     \
 	translate.c                     translate.h                      \
 	translate_generated.c           translate_generator.rb           \

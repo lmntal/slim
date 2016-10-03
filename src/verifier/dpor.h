@@ -47,7 +47,7 @@
 #include "visitlog.h"
 #ifdef DEBUG
 # include "dumper.h"
-# include "error.h"
+# include "element/error.h"
 # define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
 #else
 # define POR_DEBUG(V)

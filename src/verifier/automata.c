@@ -47,7 +47,7 @@ typedef void* yyscan_t;
 #include <vector.h>
 #include <st.h>
 #include "propositional_symbol.h"
-#include "../error.h"
+#include "element/error.h"
 
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);

@@ -42,8 +42,8 @@
 #include "dumper.h" /* for debug */
 #include "functor.h"
 #include "st.h"
-#include "verifier/mhash.h"
-#include "error.h"
+#include "verifier/verifier.h"
+#include "element/error.h"
 #include "util.h"
 #include "visitlog.h"
 #include <ctype.h>

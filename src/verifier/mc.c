@@ -41,7 +41,7 @@
 #include "mc_worker.h"
 #include "mhash.h"
 #include "dpor.h"
-#include "../error.h"
+#include "element/error.h"
 #include "delta_membrane.h"
 #include "binstr_compress.h"
 #include "propositional_symbol.h"

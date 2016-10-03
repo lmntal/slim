@@ -42,7 +42,7 @@
  #include "arch.h"
  #include "symbol.h"
  #include "vm/vm.h"
- #include "error.h"
+ #include "element/error.h"
  #include "verifier/verifier.h"
  #include <stdio.h>
 

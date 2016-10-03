@@ -42,8 +42,9 @@
 /* cldoc:begin-category(Lmntal::Dumper) */
 
 #include "lmntal.h"
-#include "port.h"
-#include "vm/vm.h"
+#include "element/port.h"
+#include "membrane.h"
+#include "rule.h"
 
 LMN_EXTERN void dumper_init(void);
 LMN_EXTERN void dumper_finalize(void);

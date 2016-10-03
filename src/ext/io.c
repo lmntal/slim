@@ -39,8 +39,8 @@
 
 #include <stdio.h>
 #include "../lmntal_ext.h"
-#include "../port.h"
-#include "../lmnstring.h"
+#include "element/port.h"
+#include "element/lmnstring.h"
 
 // void init_print(void);
 

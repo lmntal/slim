@@ -43,7 +43,7 @@
 #include "../lmntal.h"
 #include "vector.h"
 #include "vm/vm.h"
-#include "../error.h"
+#include "element/error.h"
 #include "util.h"
 #include <limits.h>
 
