@@ -38,7 +38,6 @@
  */
 
 #include "../lmntal.h"
-#include "../lmntal_ext.h"
 #include "visitlog.h"
 #include "vm/vm.h"
 

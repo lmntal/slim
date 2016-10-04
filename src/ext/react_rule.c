@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "../lmntal_ext.h"
 #include "vm/vm.h"
 
 void cb_react_rule(LmnReactCxtRef rc,

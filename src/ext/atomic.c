@@ -38,7 +38,6 @@
  */
 
 #include "../lmntal.h"
-#include "../lmntal_ext.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 #ifdef PROFILE

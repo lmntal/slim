@@ -45,6 +45,7 @@
 #include "instruction.h"
 #include "membrane.h"
 #include "memstack.h"
+#include "symbol.h"
 #include "task.h"
 
 #endif /* LMN_VM_H */

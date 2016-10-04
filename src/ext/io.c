@@ -38,7 +38,7 @@
  */
 
 #include <stdio.h>
-#include "../lmntal_ext.h"
+#include "vm/vm.h"
 #include "element/port.h"
 #include "element/lmnstring.h"
 

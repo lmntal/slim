@@ -43,10 +43,10 @@
 /* cldoc:begin-category(Verifier::State) */
 
 #include "../lmntal.h"
-#include "lmntal_thread.h"
+#include "utility/lmntal_thread.h"
 #include "mem_encode.h"
 #include "vm/vm.h"
-#include <vector.h>
+#include "utility/vector.h"
 #include "binstr_compress.h"
 #include "tree_compress.h"
 #include "automata.h"

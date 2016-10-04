@@ -46,7 +46,7 @@
 #include "binstr_compress.h"
 #include "propositional_symbol.h"
 #include "ltl2ba_adapter.h"
-#include "../runtime_status.h"
+#include "runtime_status.h"
 #ifdef DEBUG
 #  include "dumper.h"
 #endif

@@ -41,18 +41,17 @@
 #include <getopt.h>
 #include "lmntal.h"
 #include "util.h"
-#include "symbol.h"
 #include "vm/vm.h"
 #include "loader/load.h"
 #include "loader/translate.h"
 #include "arch.h"
-#include "lmntal_system_adapter.h"
+#include "ffi/lmntal_system_adapter.h"
 #include "verifier/verifier.h"
 #include "element/lmnstring.h"
 #include "element/port.h"
-#include "jni_lmntal.h"
+#include "ffi/jni_lmntal.h"
 /* #include "ext.h" */
-#include "runtime_status.h"
+#include "verifier/runtime_status.h"
 
 #ifdef USE_CUNIT
 #include "test/unit_test.h"

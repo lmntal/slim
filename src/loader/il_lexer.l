@@ -45,7 +45,6 @@
 #include <memory.h>
 #include <string.h>
 #include "syntax.h"
-#include "symbol.h"
 #include "il_parser.h"
 #include "vm/vm.h"
 

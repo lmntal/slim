@@ -40,7 +40,6 @@
 /* 整数関連のコールバック */
 
 #include "../lmntal.h"
-#include "../lmntal_ext.h"
 #include "element/lmnstring.h"
 #include "visitlog.h"
 

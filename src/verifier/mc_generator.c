@@ -46,7 +46,7 @@
 #include "queue.h"
 #include "element/error.h"
 #include "lmntal_thread.h"
-#include "../runtime_status.h"
+#include "runtime_status.h"
 #include <unistd.h>
 
 #ifndef MINIMAL_STATE 

@@ -39,8 +39,7 @@
 
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "runtime_status.h"
-
+#include "utility/queue.h"
 
 
 typedef struct normal_prof normal_prof;

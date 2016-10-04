@@ -1,4 +1,4 @@
-SUBDIRS = utility verifier vm loader element
+SUBDIRS = utility verifier vm loader element ffi
 
 bin_PROGRAMS = slim
 
@@ -7,11 +7,13 @@ slim_LDADD =   -ldl                                    \
                -llmn_verifier                          \
                -llmn_utility                           \
                -lzd_in_slim                            \
+               -llmn_ffi                               \
                -llmn_vm                                \
                -llmn_elm
 slim_LDFLAGS = -L./verifier                            \
                -L./loader                              \
                -L./utility                             \
+               -L./ffi                                 \
                -L./vm                                  \
                -L./element                             \
                -L../third_party/zdelta-2.1
@@ -59,13 +61,7 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER)
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
 slim_SOURCES =                                                     \
 	main.c                          lmntal.h                         \
-	alloc.c                                                    \
-	memory_pool.c                   memory_pool.h                    \
-	symbol.c                        symbol.h                         \
 	env.c                           arch.h                           \
-	runtime_status.c                runtime_status.h                 \
-	lmntal_system_adapter.c         lmntal_system_adapter.h          \
-	jni_lmntal.c                    jni_lmntal.h                     \
 	\
 	lmntal_ext.h                                                     \
 	ext/init_exts.c                                                  \

@@ -129,7 +129,7 @@
 #include "util.h"
 #include "st.h"
 #ifdef PROFILE
-#  include "../runtime_status.h"
+#  include "runtime_status.h"
 #endif
 
 

@@ -39,6 +39,7 @@ liblmn_verifier_a_SOURCES =                              \
 	binstr_compress.c        binstr_compress.h             \
 	tree_compress.c          tree_compress.h               \
 	mc_visualizer.c          mc_visualizer.h               \
+	runtime_status.c         runtime_status.h              \
 	stack_macro.h
 
 

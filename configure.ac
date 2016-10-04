@@ -882,6 +882,7 @@ AC_OUTPUT(Makefile \
           src/utility/Makefile \
           src/test/Makefile \
           src/vm/Makefile \
+          src/ffi/Makefile \
           lib/Makefile \
           ext/Makefile \
           test/Makefile \

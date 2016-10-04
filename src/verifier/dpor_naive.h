@@ -42,8 +42,8 @@
 /* cldoc:begin-category(Verifier::Dpor) */
 
 #include "../lmntal.h"
-#include "queue.h"
-#include <vector.h>
+#include "utility/queue.h"
+#include "utility/vector.h"
 #include "state.h"
 #include "statespace.h"
 

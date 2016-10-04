@@ -7,6 +7,8 @@ liblmn_elm_a_CFLAGS =                               \
         $(CFLAGS)
 
 liblmn_elm_a_SOURCES =                              \
+	alloc.c \
 	error.c error.h \
 	lmnstring.c lmnstring.h \
+	memory_pool.c memory_pool.h \
 	port.c port.h

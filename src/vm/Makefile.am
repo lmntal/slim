@@ -20,5 +20,6 @@ liblmn_vm_a_SOURCES =                              \
 	react_context.c react_context.h \
 	rule.c rule.h \
 	special_atom.c special_atom.h \
+	symbol.c symbol.h \
 	system_ruleset.c system_ruleset.h \
 	task.c task.h

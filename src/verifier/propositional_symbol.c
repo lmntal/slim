@@ -46,10 +46,9 @@ typedef void* yyscan_t;
 #include <vector.h>
 #include "propsym_parser.h"
 #include "propsym_lexer.h"
-#include "../lmntal_system_adapter.h"
+#include "ffi/lmntal_system_adapter.h"
 #include "loader/syntax.h"
 #include "loader/load.h"
-#include "../symbol.h"
 #include "element/error.h"
 
 struct SymbolDefinition {

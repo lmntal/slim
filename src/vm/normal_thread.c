@@ -39,6 +39,9 @@
 
 #include "normal_thread.h"
 
+#include "verifier/runtime_status.h"
+
+
 void* normal_thread(void* arg){
   arginfo *thread_data;
   LmnRuleInstr thread_instr;

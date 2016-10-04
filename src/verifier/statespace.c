@@ -47,7 +47,7 @@
 #include "automata.h"
 #include "vm/vm.h"
 #include "element/error.h"
-#include "../runtime_status.h"
+#include "runtime_status.h"
 #include "mc.h"
 #include "lmntal_thread.h"
 #include "delta_membrane.h"

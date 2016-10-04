@@ -42,7 +42,7 @@
 
 /* cldoc:begin-category(Lmntal::MembraneStack) */
 
-#include <vector.h>
+#include "utility/vector.h"
 #include "vm/vm.h"
 
 LmnMemStack lmn_memstack_make(void);

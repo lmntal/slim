@@ -37,8 +37,7 @@
  * $Id$
  */
 
-#include <../runtime_status.h>
-#include "../lmntal_ext.h"
+#include "verifier/runtime_status.h"
 
 
 void gettime(LmnReactCxtRef rc,

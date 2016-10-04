@@ -52,7 +52,7 @@
 #include "verifier/verifier.h"
 #include "normal_thread.h"
 
-#include "runtime_status.h"
+#include "verifier/runtime_status.h"
 
 
 typedef void (* callback_0)(LmnReactCxtRef,

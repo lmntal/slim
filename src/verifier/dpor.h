@@ -44,7 +44,7 @@
 #include "../lmntal.h"
 #include "delta_membrane.h"
 #include "statespace.h"
-#include "visitlog.h"
+#include "utility/visitlog.h"
 #ifdef DEBUG
 # include "dumper.h"
 # include "element/error.h"

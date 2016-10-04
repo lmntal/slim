@@ -38,7 +38,6 @@
 
 #include "lmntal.h"
 #include "syntax.h"
-#include "symbol.h"
 
 
 struct InstrArg {

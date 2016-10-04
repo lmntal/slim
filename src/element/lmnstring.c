@@ -39,7 +39,7 @@
 
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "element/lmnstring.h"
+#include "lmnstring.h"
 #include "util.h"
 #include <stdio.h>
 

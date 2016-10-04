@@ -45,8 +45,8 @@
 #include "../lmntal.h"
 #include "statespace.h"
 #include "state.h"
-#include "queue.h"
-#include "lmntal_thread.h"
+#include "utility/queue.h"
+#include "utility/lmntal_thread.h"
 
 #if defined(HAVE_ATOMIC_SUB) && defined(HAVE_BUILTIN_MBARRIER)
 # //define OPT_WORKERS_SYNC /* とってもbuggyなのでcomment out */

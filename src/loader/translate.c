@@ -42,7 +42,6 @@
 #include "loader/load.h"
 #include "loader/syntax.h"
 #include "arch.h"
-#include "symbol.h"
 #include "utility/vector.h"
 #include "element/error.h"
 #include "so.h"

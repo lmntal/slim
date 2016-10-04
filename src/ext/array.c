@@ -38,7 +38,6 @@
  */
 
 #include "array.h"
-#include "../lmntal_ext.h"
 #include <util.h>
 #include "element/lmnstring.h"
 #include "vm/vm.h"

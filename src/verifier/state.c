@@ -47,7 +47,7 @@
 #include "vm/vm.h"
 #include "util.h"
 #include "binstr_compress.h"
-#include "../runtime_status.h"
+#include "runtime_status.h"
 
 #ifdef KWBT_OPT
 # include <limits.h>

@@ -42,11 +42,10 @@ typedef void* yyscan_t;
 #endif
 #include "load.h"
 #include "lmntal.h"
-#include "symbol.h"
 #include "syntax.h"
 #include "arch.h"
 #include "vm/vm.h"
-#include "lmntal_system_adapter.h"
+#include "ffi/lmntal_system_adapter.h"
 #include "il_parser.h"
 #include "il_lexer.h"
 #include "load.h"

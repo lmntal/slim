@@ -43,7 +43,7 @@
 /* cldoc:begin-category(Verifier) */
 
 #include "../lmntal.h"
-#include "lmntal_thread.h"
+#include "utility/lmntal_thread.h"
 #include "automata.h"
 #include "vm/vm.h"
 #include "state.h"
