@@ -37,8 +37,7 @@
  * $Id$
  */
 
-#include "element/util.h"
-#include "element/lmnstring.h"
+#include "element/element.h"
 #include "vm/vm.h"
 
 /*

@@ -50,10 +50,8 @@ typedef struct LinkObj *LinkObjRef;
 
 #include "lmntal.h"
 #include "atom.h"
-#include "element/internal_hash.h"
-#include "element/vector.h"
+#include "element/element.h"
 #include "rule.h"
-#include "element/error.h"
 #include "functor.h"
 
 #define NEW_ATOMLIST

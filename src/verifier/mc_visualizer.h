@@ -3,7 +3,7 @@
 
 /* cldoc:begin-category(Verifier::Visualizer) */
 
-#include "element/vector.h"
+#include "element/element.h"
 #include "state.h"
 
 void dump_dot(StateSpaceRef ss, int worker_num);

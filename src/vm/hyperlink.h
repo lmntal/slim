@@ -47,8 +47,7 @@
 #include "functor.h"
 #include "membrane.h"
 #include "react_context.h"
-#include "element/internal_hash.h"
-#include "element/vector.h"
+#include "element/element.h"
 
 /* ----------------------------------------------------------------------- *
  *  hyperlink system                                                       *

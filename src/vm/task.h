@@ -44,7 +44,7 @@
 #include "lmntal.h"
 #include "membrane.h"
 #include "react_context.h"
-#include "element/internal_hash.h"
+#include "element/element.h"
 
 /* 中間命令で出現するデータ構造
  * LINK_LIST    リンクオブジェクトのリスト

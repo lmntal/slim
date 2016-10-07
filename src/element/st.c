@@ -5,7 +5,7 @@
 #include "st.h"
 #include "vector.h"
 #include "verifier/verifier.h"
-#include "element/lmnstring.h"
+#include "lmnstring.h"
 
 typedef struct st_table_entry st_table_entry;
 

@@ -41,9 +41,7 @@
 #include "mc_worker.h"
 #include "mc_explorer.h"
 #include "state.h"
-#include "element/vector.h"
-#include "element/error.h"
-#include "element/lmntal_thread.h"
+#include "element/element.h"
 
 #ifdef PROFILE
 #  include "runtime_status.h"

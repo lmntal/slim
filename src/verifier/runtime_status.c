@@ -37,9 +37,7 @@
  * $Id$
  */
 #include "runtime_status.h"
-#include "element/util.h"
 #include "vm/vm.h"
-#include "element/clock.h"
 
 struct RuleProfiler {
   LmnRulesetId   ref_rs_id;

@@ -1,8 +1,7 @@
 /*
- * util.c - common utility functions and macros
+ * element.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                          <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2016, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -37,45 +36,21 @@
  * $Id$
  */
 
-#include "util.h"
-#include "../lmntal.h"
+#ifndef LMN_ELEMENT_H
+#define LMN_ELEMENT_H
+
+#include "clock.h"
 #include "error.h"
+#include "file_util.h"
+#include "internal_hash.h"
+#include "lmnstring.h"
+#include "lmntal_thread.h"
+#include "memory_pool.h"
+#include "port.h"
+#include "process_util.h"
+#include "queue.h"
+#include "st.h"
+#include "util.h"
+#include "vector.h"
 
-char *int_to_str(long n)
-{
-  char *s;
-  int keta = 0;
-  
-  if (n == 0) keta = 1;
-  else {
-    int m = n;
-    keta = 0;
-    if (m < 0) { m = - m, keta = 1; }
-    while (m > 0) {
-      m /= 10;
-      keta++;
-    }
-  }
-
-  s = LMN_NALLOC(char, keta + 1);
-  sprintf(s, "%ld", n);
-
-  return s;
-}
-
-/* ソート用。intの昇順比較を行う。*/
-int comp_int_f(const void *a_, const void *b_)
-{
-  int a = *(int *)a_;
-  int b = *(int *)b_;
-  return a > b ? 1 : (a == b ? 0 : -1);
-}
-
-/* ソート用。intの昇順比較を行う。*/
-int comp_int_greater_f(const void *a_, const void *b_)
-{
-  int a = *(int *)a_;
-  int b = *(int *)b_;
-  return a > b ? -1 : (a == b ? 0 : 1);
-}
-
+#endif /* LMN_ELEMENT_H */

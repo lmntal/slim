@@ -44,10 +44,7 @@ typedef void* yyscan_t;
 #include "automata.h"
 #include "nc_parser.h"
 #include "nc_lexer.h"
-#include "element/vector.h"
-#include "element/st.h"
 #include "propositional_symbol.h"
-#include "element/error.h"
 
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);

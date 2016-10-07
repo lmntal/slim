@@ -45,9 +45,8 @@
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "translate.h"
-#include "element/error.h"
+#include "element/element.h"
 #include "verifier/verifier.h"
-#include "element/visitlog.h"
 
 #ifdef PROFILE
 #  include "runtime_status.h"

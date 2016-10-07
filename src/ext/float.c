@@ -40,8 +40,8 @@
 /* 浮動小数点数関連のコールバック */
 
 #include "../lmntal.h"
-#include "element/lmnstring.h"
-#include "element/visitlog.h"
+#include "element/element.h"
+#include "vm/vm.h"
 
 void init_float(void);
 

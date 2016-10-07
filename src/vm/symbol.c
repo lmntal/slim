@@ -38,8 +38,7 @@
 
 #include "symbol.h"
 #include <stdarg.h>
-#include "element/st.h"
-#include "element/lmntal_thread.h"
+#include "element/element.h"
 
 static struct st_table  *sym_tbl;
 static struct st_table  *sym_rev_tbl;

@@ -44,8 +44,8 @@
 
 #include "../lmntal.h"
 #include "vm/vm.h"
-#include "element/visitlog.h"
-#include "element/vector.h"
+#include "element/element.h"
+#include "visitlog.h"
 
 struct MemDeltaRoot {
   LmnMembraneRef root_mem;

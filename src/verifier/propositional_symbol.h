@@ -43,7 +43,7 @@
 /* cldoc:begin-category(Verifier::Proposition) */
 
 #include <stdio.h>
-#include "element/vector.h"
+#include "element/element.h"
 #include "automata.h"
 #include "vm/vm.h"
 

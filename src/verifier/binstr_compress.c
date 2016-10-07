@@ -38,7 +38,7 @@
  */
 
 #include "binstr_compress.h"
-#include "element/error.h"
+#include "element/element.h"
 #include <zdlib.h>
 #ifdef HAVE_LIBZ
 # include <zlib.h>

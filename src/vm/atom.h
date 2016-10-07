@@ -44,7 +44,7 @@
 #include "lmntal.h"
 #include "special_atom.h"
 #include "functor.h"
-#include "element/error.h"
+#include "element/element.h"
 #include "symbol.h"
 #include "hyperlink.h"
 

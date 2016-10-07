@@ -38,8 +38,7 @@
  */
 
 #include "array.h"
-#include "element/util.h"
-#include "element/lmnstring.h"
+#include "element/element.h"
 #include "vm/vm.h"
 
 static int array_atom_type; /* special atom type */

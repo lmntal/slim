@@ -46,7 +46,6 @@
 #include "mc_explorer.h"
 #include "state.h"
 #include "statespace.h"
-#include "element/error.h"
 #include "runtime_status.h"
 
 #include <limits.h>

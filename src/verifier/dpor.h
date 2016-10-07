@@ -44,10 +44,9 @@
 #include "../lmntal.h"
 #include "delta_membrane.h"
 #include "statespace.h"
-#include "element/visitlog.h"
+#include "element/element.h"
 #ifdef DEBUG
 # include "dumper.h"
-# include "element/error.h"
 # define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
 #else
 # define POR_DEBUG(V)

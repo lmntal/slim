@@ -53,8 +53,7 @@ typedef struct LmnReactCxt *LmnReactCxtRef;
 #include "lmntal.h"
 #include "rule.h"
 #include "memstack.h"
-#include "element/st.h"
-#include "element/internal_hash.h"
+#include "element/element.h"
 
 LmnWord lmn_register_wt(LmnRegisterRef r);
 LmnByte lmn_register_at(LmnRegisterRef r);

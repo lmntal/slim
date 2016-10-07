@@ -46,9 +46,6 @@
 
 /* cldoc:begin-category(Thread) */
 
-#include "../lmntal.h"
-#include "vm/vm.h"
-
 /* check for atomic operation */
 #ifdef ENABLE_PARALLEL
 #
@@ -118,6 +115,8 @@ typedef unsigned long mtx_data_t;
 #define DEFAULT_WLOCK_NUM     (16384U)
 #define READABLE              (TRUE)
 #define DISREADABLE           (FALSE)
+
+#include "../lmntal.h"
 
 struct EWLock {
   BOOL *elock_used;

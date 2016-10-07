@@ -38,7 +38,7 @@
  */
 
 #include "../lmntal.h"
-#include "element/visitlog.h"
+#include "element/element.h"
 #include "vm/vm.h"
 
 void init_nlmem(void);

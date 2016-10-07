@@ -63,7 +63,7 @@ enum st_retval {
 };
 
 #include "../lmntal.h"
-#include "element/lmntal_thread.h"
+#include "lmntal_thread.h"
 
 
 static inline unsigned long st_num(st_table_t table) {

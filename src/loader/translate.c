@@ -37,13 +37,11 @@
  */
 
 #include "translate.h"
-#include "element/lmntal_thread.h"
+#include "element/element.h"
 #include "verifier/verifier.h"
-#include "loader/load.h"
-#include "loader/syntax.h"
+#include "load.h"
+#include "syntax.h"
 #include "arch.h"
-#include "element/vector.h"
-#include "element/error.h"
 #include "so.h"
 
 #ifdef PROFILE

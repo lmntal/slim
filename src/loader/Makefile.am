@@ -17,6 +17,7 @@ liblmn_loader_a_CFLAGS =                               \
         $(CFLAGS)
 
 liblmn_loader_a_SOURCES = \
+        loader.h \
         load.c load.h \
         il_parser.y il_lexer.l \
         syntax.c syntax.h \

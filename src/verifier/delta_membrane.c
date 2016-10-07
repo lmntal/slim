@@ -38,7 +38,6 @@
  */
 
 #include "delta_membrane.h"
-#include "element/lmntal_thread.h"
 #ifdef PROFILE
 #  include "runtime_status.h"
 #endif

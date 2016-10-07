@@ -43,8 +43,8 @@
 /* cldoc:begin-category(Verifier::Automata) */
 
 #include "../lmntal.h"
-#include "element/vector.h"
-#include "element/st.h"
+#include "element/element.h"
+#include "vm/vm.h"
 
 typedef struct Automata            *AutomataRef;
 typedef struct AutomataState       *AutomataStateRef;

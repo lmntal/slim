@@ -41,7 +41,7 @@
 #define LMN_UTIL_H
 
 #include "../lmntal.h"
-#include "element/error.h"
+#include "error.h"
 
 
 /** ----------------------

@@ -40,15 +40,12 @@
 #include <unistd.h>
 #include <getopt.h>
 #include "lmntal.h"
-#include "element/util.h"
+#include "element/element.h"
 #include "vm/vm.h"
-#include "loader/load.h"
-#include "loader/translate.h"
+#include "loader/loader.h"
 #include "arch.h"
 #include "ffi/lmntal_system_adapter.h"
 #include "verifier/verifier.h"
-#include "element/lmnstring.h"
-#include "element/port.h"
 #include "ffi/jni_lmntal.h"
 /* #include "ext.h" */
 #include "verifier/runtime_status.h"

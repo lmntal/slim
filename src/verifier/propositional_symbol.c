@@ -43,13 +43,10 @@ typedef void* yyscan_t;
 #endif
 #include "propositional_symbol.h"
 #include "../lmntal.h"
-#include "element/vector.h"
 #include "propsym_parser.h"
 #include "propsym_lexer.h"
 #include "ffi/lmntal_system_adapter.h"
-#include "loader/syntax.h"
-#include "loader/load.h"
-#include "element/error.h"
+#include "loader/loader.h"
 
 struct SymbolDefinition {
   unsigned int sym_id;

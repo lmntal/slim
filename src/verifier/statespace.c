@@ -46,7 +46,6 @@
 #include "mem_encode.h"
 #include "automata.h"
 #include "vm/vm.h"
-#include "element/error.h"
 #include "runtime_status.h"
 #include "mc.h"
 #include "delta_membrane.h"

@@ -44,7 +44,6 @@
 #include "mc.h"
 #include "mc_worker.h"
 #include "../lmntal.h"
-#include "element/vector.h"
 
 /**
  * Dynamic Partial Order Reduction

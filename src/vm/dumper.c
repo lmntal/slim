@@ -37,13 +37,8 @@
  */
 
 #include "dumper.h"
-#include "element/error.h"
-#include "element/lmnstring.h"
 #include "memstack.h"
 #include "symbol.h"
-#include "element/util.h"
-#include "element/internal_hash.h"
-#include "element/vector.h"
 #include <ctype.h>
 
 #define MAX_DEPTH 1000

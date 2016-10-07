@@ -47,8 +47,11 @@
 
 /* cldoc:begin-category(Lmntal::Port) */
 
+typedef struct LmnPort *LmnPortRef;
+
+
 #include "../lmntal.h"
-#include "element/lmnstring.h"
+#include "lmnstring.h"
 
 struct LmnPort {
   LMN_SP_ATOM_HEADER;
@@ -69,8 +72,6 @@ struct IStrPortData {
   int i;
 };
 
-
-typedef struct LmnPort *LmnPortRef;
 
 #define LMN_PORT(obj) ((LmnPortRef)(obj))
 

@@ -43,8 +43,7 @@
 /* cldoc:begin-category(Lmntal::Runtime) */
 
 #include "lmntal.h"
-#include "element/lmntal_thread.h"
-#include "element/st.h"
+#include "element/element.h"
 #include "verifier/verifier.h"
 
 

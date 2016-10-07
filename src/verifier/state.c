@@ -43,9 +43,7 @@
 #include "mc.h"
 #include "mem_encode.h"
 #include "mhash.h"
-#include "element/error.h"
 #include "vm/vm.h"
-#include "element/util.h"
 #include "binstr_compress.h"
 #include "runtime_status.h"
 

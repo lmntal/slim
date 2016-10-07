@@ -38,10 +38,10 @@
 
 #__echo
  #include "translate.h"
- #include "loader/syntax.h"
+ #include "syntax.h"
  #include "arch.h"
  #include "vm/vm.h"
- #include "element/error.h"
+ #include "element/element.h"
  #include "verifier/verifier.h"
  #include <stdio.h>
 

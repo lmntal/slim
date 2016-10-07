@@ -42,7 +42,7 @@
  */
 
 #include "queue.h"
-#include "element/error.h"
+#include "error.h"
 #include <pthread.h>
 #include <errno.h>
 

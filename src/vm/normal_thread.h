@@ -39,7 +39,7 @@
 
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "element/queue.h"
+#include "element/element.h"
 
 
 typedef struct normal_prof normal_prof;

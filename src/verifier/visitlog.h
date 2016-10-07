@@ -41,10 +41,8 @@
 /* cldoc:begin-category(VisitLog) */
 
 #include "../lmntal.h"
-#include "element/vector.h"
+#include "element/element.h"
 #include "vm/vm.h"
-#include "element/error.h"
-#include "element/util.h"
 #include <limits.h>
 
 
@@ -92,7 +90,7 @@ static inline void proc_tbl_unput(ProcessTableRef p, LmnWord key);
 static inline void proc_tbl_unput_atom(ProcessTableRef p, LmnSAtom atom);
 static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem);
 static inline int  proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value);
-static inline int  proc_tbl_get_by_atom(ProcessTableRef p, LmnSAtom atom, LmnWord *value);
+int  proc_tbl_get_by_atom(ProcessTableRef p, LmnSAtom atom, LmnWord *value);
 static inline int  proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value);
 static inline int  proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWord *value);
 static inline BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key);
@@ -186,9 +184,7 @@ static inline int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value) {
 
 /* テーブルのアトムatomに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにatomが存在しない場合は0を返す */
-static inline int proc_tbl_get_by_atom(ProcessTableRef p, LmnSAtom atom, LmnWord *value) {
-  return proc_tbl_get(p, LMN_SATOM_ID(atom), value);
-}
+int proc_tbl_get_by_atom(ProcessTableRef p, LmnSAtom atom, LmnWord *value);
 
 /* テーブルの膜memに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにmemが存在しない場合は0を返す */

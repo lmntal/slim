@@ -2,11 +2,11 @@ noinst_LIBRARIES = liblmn_elm.a
 
 liblmn_elm_a_CFLAGS =                               \
         -I../                                            \
-        -I../utility                                     \
         -I../../third_party/zdelta-2.1                   \
         $(CFLAGS)
 
 liblmn_elm_a_SOURCES =                              \
+	element.h \
 	alloc.c \
 	clock.c clock.h \
 	error.c error.h \
@@ -20,5 +20,5 @@ liblmn_elm_a_SOURCES =                              \
 	queue.c queue.h \
 	st.c st.h \
 	util.c util.h \
-	vector.c vector.h \
-	visitlog.c visitlog.h
+	vector.c vector.h
+	

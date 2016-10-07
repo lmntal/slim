@@ -42,7 +42,7 @@
 /* cldoc:begin-category(Lmntal::Dumper) */
 
 #include "lmntal.h"
-#include "element/port.h"
+#include "element/element.h"
 #include "membrane.h"
 #include "rule.h"
 

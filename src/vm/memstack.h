@@ -44,7 +44,7 @@
 
 typedef struct Vector *LmnMemStack;
 
-#include "element/vector.h"
+#include "element/element.h"
 #include "membrane.h"
 
 LmnMemStack lmn_memstack_make(void);

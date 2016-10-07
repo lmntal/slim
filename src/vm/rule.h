@@ -46,8 +46,7 @@ typedef struct LmnRule *LmnRuleRef;
 typedef struct LmnRuleSet *LmnRuleSetRef;
 
 #include "lmntal.h"
-#include "element/vector.h"
-#include "element/st.h"
+#include "element/element.h"
 #include "symbol.h"
 #include "membrane.h"
 #include "react_context.h"

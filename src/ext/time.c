@@ -38,7 +38,7 @@
  */
 
 #include "vm/vm.h"
-#include "element/clock.h"
+#include "element/element.h"
 
 
 void gettime(LmnReactCxtRef rc,
