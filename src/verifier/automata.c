@@ -44,8 +44,8 @@ typedef void* yyscan_t;
 #include "automata.h"
 #include "nc_parser.h"
 #include "nc_lexer.h"
-#include <vector.h>
-#include <st.h>
+#include "element/vector.h"
+#include "element/st.h"
 #include "propositional_symbol.h"
 #include "element/error.h"
 

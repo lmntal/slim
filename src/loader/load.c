@@ -48,8 +48,7 @@ typedef void* yyscan_t;
 #include "ffi/lmntal_system_adapter.h"
 #include "il_parser.h"
 #include "il_lexer.h"
-#include "load.h"
-#include "file_util.h"
+#include "element/file_util.h"
 #include "so.h"
 #include <dirent.h>
 #include <limits.h>

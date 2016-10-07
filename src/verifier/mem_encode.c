@@ -119,15 +119,14 @@
 
 #include "mem_encode.h"
 #include "delta_membrane.h"
-#include "lmntal_thread.h"
+#include "element/lmntal_thread.h"
 #include "binstr_compress.h"
-#include "visitlog.h"
+#include "element/visitlog.h"
 #include "element/error.h"
 #include "vm/vm.h"
-#include "st.h"
 #include "element/port.h"
-#include "util.h"
-#include "st.h"
+#include "element/util.h"
+#include "element/st.h"
 #ifdef PROFILE
 #  include "runtime_status.h"
 #endif

@@ -41,11 +41,11 @@
 #include "rule.h"
 #include "dumper.h" /* for debug */
 #include "functor.h"
-#include "st.h"
+#include "element/st.h"
 #include "verifier/verifier.h"
 #include "element/error.h"
-#include "util.h"
-#include "visitlog.h"
+#include "element/util.h"
+#include "element/visitlog.h"
 #include <ctype.h>
 #include <limits.h>
 

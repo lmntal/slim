@@ -43,15 +43,10 @@
 /* cldoc:begin-category(Lmntal::Runtime) */
 
 #include "lmntal.h"
-#include "lmntal_thread.h"
-#include "st.h"
+#include "element/lmntal_thread.h"
+#include "element/st.h"
 #include "verifier/verifier.h"
-#include "vm/vm.h"
-#if defined (TIME_WITH_SYS_TIME)
-# include <time.h>
-# include <sys/time.h>
-# define ENABLE_TIME_PROFILE
-#endif
+
 
 typedef struct MCProfiler2          MCProfiler2;
 typedef struct MCProfiler3          MCProfiler3;
@@ -145,14 +140,6 @@ struct MCProfiler3 {
   unsigned long  counters[PCOUNT_TAIL];       /* カウンタ群, 主に状態管理票の調査に使う */
 };
 
-struct RuleProfiler {
-  LmnRulesetId   ref_rs_id;
-  unsigned long  apply;
-  unsigned long  backtrack;
-  TimeProfiler   trial;
-  LmnRuleRef        src;
-};
-
 struct LmnProfiler {
   BOOL           valid;
   BOOL           has_property; /* プロファイル出力用にこちらの領域にもメモしておく */
@@ -186,7 +173,7 @@ struct LmnProfiler {
    * 実行中に, 詳細に各状態から情報収集する.
    * (実行性能に影響するためベンチマークテストの際には使用しない) */
   MCProfiler3    *lv3;                /* for verifier only */
-  RuleProfiler   *cur;
+  struct RuleProfiler   *cur;
   st_table_t     prules;               /* Set of Rule Profiler */
 };
 
@@ -202,11 +189,7 @@ void profile_start_exec_thread(void);
 void profile_finish_exec_thread(void);
 void dump_profile_data(FILE *f);
 void profile_statespace(LmnWorkerGroup *wp);
-RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRuleRef r);
-void rule_profiler_free(RuleProfiler *p);
 
-double get_cpu_time(void);
-double get_wall_time(void);
 void profile_finish_timer(int type);
 void profile_start_timer(int type);
 void profile_remove_space(int type, unsigned long size);

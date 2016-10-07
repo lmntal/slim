@@ -44,8 +44,8 @@
 #include "lmntal_system_adapter.h"
 #include "lmntal.h"
 #include "arch.h"
-#include "utility/process_util.h"
-#include "utility/vector.h"
+#include "element/process_util.h"
+#include "element/vector.h"
 
 /* Java処理系によるコンパイル時に用いる最適化オプション */
 const char* OPTIMIZE_FLAGS[] = {"-O0",

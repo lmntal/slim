@@ -36,15 +36,15 @@
  * $Id: dumper.c,v 1.15 2008/09/19 18:03:22 taisuke Exp $
  */
 
-#include <ctype.h>
 #include "dumper.h"
-#include "utility/internal_hash.h"
-#include "utility/vector.h"
-#include "symbol.h"
-#include "util.h"
 #include "element/error.h"
-#include "memstack.h"
 #include "element/lmnstring.h"
+#include "memstack.h"
+#include "symbol.h"
+#include "element/util.h"
+#include "element/internal_hash.h"
+#include "element/vector.h"
+#include <ctype.h>
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"

@@ -41,7 +41,7 @@
 
 #include "../lmntal.h"
 #include "element/lmnstring.h"
-#include "visitlog.h"
+#include "element/visitlog.h"
 
 void init_integer(void);
 

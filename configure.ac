@@ -879,7 +879,6 @@ AC_OUTPUT(Makefile \
           src/element/Makefile \
           src/loader/Makefile \
           src/verifier/Makefile \
-          src/utility/Makefile \
           src/test/Makefile \
           src/vm/Makefile \
           src/ffi/Makefile \

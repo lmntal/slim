@@ -47,7 +47,7 @@
 #include "translate.h"
 #include "element/error.h"
 #include "verifier/verifier.h"
-#include "visitlog.h"
+#include "element/visitlog.h"
 
 #ifdef PROFILE
 #  include "runtime_status.h"

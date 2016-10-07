@@ -40,7 +40,7 @@
 #include "normal_thread.h"
 
 #include "verifier/runtime_status.h"
-
+#include "element/clock.h"
 
 void* normal_thread(void* arg){
   arginfo *thread_data;

@@ -41,7 +41,7 @@
 
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "utility/vector.h"
+#include "element/vector.h"
 
 /* cldoc:begin-category(IL) */
 
@@ -206,7 +206,7 @@ void il_free(ILRef il);
 
 /* 字句解析器で用いる情報。
  * TODO: ここに便宜上ここに置いておくが、適切な場所ではない */
-#include "utility/st.h"
+#include "element/st.h"
 struct lexer_context {
   /* 一つの中間言語ファイルにローカルなルールセットのIDとグローバルなIDの
      対応表 */

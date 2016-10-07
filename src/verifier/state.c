@@ -45,7 +45,7 @@
 #include "mhash.h"
 #include "element/error.h"
 #include "vm/vm.h"
-#include "util.h"
+#include "element/util.h"
 #include "binstr_compress.h"
 #include "runtime_status.h"
 

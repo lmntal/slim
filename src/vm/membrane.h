@@ -50,8 +50,8 @@ typedef struct LinkObj *LinkObjRef;
 
 #include "lmntal.h"
 #include "atom.h"
-#include "utility/internal_hash.h"
-#include "utility/vector.h"
+#include "element/internal_hash.h"
+#include "element/vector.h"
 #include "rule.h"
 #include "element/error.h"
 #include "functor.h"

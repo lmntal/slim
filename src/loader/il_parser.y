@@ -40,7 +40,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "syntax.h"
-#include "st.h"
+#include "element/st.h"
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
@@ -288,7 +288,6 @@ functor:
 
 %%
 
-#include "st.h"
 
 /* Called by yyparse on error.  */
 void ilerror (YYLTYPE *loc, yyscan_t scanner, ILRef *il, RuleRef *rule, char *s)

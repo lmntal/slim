@@ -38,7 +38,7 @@
 
 #include "special_atom.h"
 #include "symbol.h"
-#include "utility/vector.h"
+#include "element/vector.h"
 
 Vector *sp_atom_callback_tbl;
 

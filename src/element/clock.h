@@ -1,7 +1,8 @@
 /*
- * dpor_naive.h
+ * clock.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *                                          <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -36,27 +37,17 @@
  * $Id$
  */
 
-#ifndef LMN_MC_POR_H
-#define LMN_MC_POR_H
+#ifndef LMN_CLOCK_H
+#define LMN_CLOCK_H
 
-/* cldoc:begin-category(Verifier::Dpor) */
+/* ------------------------------------------------------------------------
+ * CPU時間・実経過時間を返す.
+ * 取得可能な時間がナノ秒ではあるが精度もその通りであるとは限らないため注意
+ */
 
-#include "../lmntal.h"
-#include "element/queue.h"
-#include "element/vector.h"
-#include "state.h"
-#include "statespace.h"
+/* スレッド単位で計測したCPU時間は,
+ * プロセッサ間でスレッドがスイッチした場合に誤差がでるので結果は鵜呑みせずあくまで目安とする */
+double get_cpu_time(void);
+double get_wall_time(void);
 
-
-
-void por_calc_ampleset(StateSpaceRef  ss,
-                       State       *s,
-                       LmnReactCxtRef rc,
-                       Vector      *new_s,
-                       BOOL        flag);
-void init_por_vars(void);
-void free_por_vars(void);
-
-/* cldoc:end-category() */
-
-#endif
+#endif /* LMN_CLOCK_H */

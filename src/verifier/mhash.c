@@ -42,8 +42,8 @@
 
 
 #include "mhash.h"
-#include "st.h"
-#include "visitlog.h"
+#include "element/st.h"
+#include "element/visitlog.h"
 #include "element/lmnstring.h"
 #ifdef PROFILE
 # include "runtime_status.h"

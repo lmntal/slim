@@ -185,7 +185,6 @@ typedef uint32_t LmnHlinkRank;
 
 struct Vector;
 typedef struct Vector Vector;
-typedef struct Vector *LmnMemStack;
 
 
 /* ---------------------------------------------------------------------

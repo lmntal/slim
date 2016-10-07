@@ -15,7 +15,6 @@ liblmn_verifier_a_DEPENDENCIES =                         \
         ../../third_party/zdelta-2.1/libzd_in_slim.a
 liblmn_verifier_a_CFLAGS =                               \
         -I../                                            \
-        -I../utility                                     \
         -I../../third_party/zdelta-2.1                   \
         $(CFLAGS)
 

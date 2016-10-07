@@ -40,8 +40,8 @@
 %{
 #include <math.h>
 #include <stdio.h>
-#include "utility/st.h"
-#include "utility/vector.h"
+#include "element/st.h"
+#include "element/vector.h"
 #include "automata.h"
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T

@@ -13,7 +13,6 @@ CLEANFILES = $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c interpret_g
 
 liblmn_loader_a_CFLAGS =                               \
         -I../                                            \
-        -I../utility                                     \
         -I../../third_party/zdelta-2.1                   \
         $(CFLAGS)
 

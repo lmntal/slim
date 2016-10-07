@@ -43,7 +43,7 @@ typedef void* yyscan_t;
 #endif
 #include "propositional_symbol.h"
 #include "../lmntal.h"
-#include <vector.h>
+#include "element/vector.h"
 #include "propsym_parser.h"
 #include "propsym_lexer.h"
 #include "ffi/lmntal_system_adapter.h"

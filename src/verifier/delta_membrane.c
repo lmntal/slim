@@ -38,9 +38,7 @@
  */
 
 #include "delta_membrane.h"
-#include "lmntal_thread.h"
-#include "visitlog.h"
-#include "vm/vm.h"
+#include "element/lmntal_thread.h"
 #ifdef PROFILE
 #  include "runtime_status.h"
 #endif

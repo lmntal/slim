@@ -42,10 +42,10 @@
 #include "mc_generator.h"
 #include "mc_explorer.h"
 #include "state.h"
-#include <vector.h>
-#include "queue.h"
+#include "element/vector.h"
+#include "element/queue.h"
 #include "element/error.h"
-#include "lmntal_thread.h"
+#include "element/lmntal_thread.h"
 #include "runtime_status.h"
 #include <unistd.h>
 

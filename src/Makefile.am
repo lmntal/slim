@@ -1,27 +1,23 @@
-SUBDIRS = utility verifier vm loader element ffi
+SUBDIRS = verifier vm loader element ffi
 
 bin_PROGRAMS = slim
 
 slim_LDADD =   -ldl                                    \
+               -llmn_elm                               \
+               -llmn_ffi                               \
                -llmn_loader                            \
                -llmn_verifier                          \
-               -llmn_utility                           \
-               -lzd_in_slim                            \
-               -llmn_ffi                               \
                -llmn_vm                                \
-               -llmn_elm
+               -lzd_in_slim
 slim_LDFLAGS = -L./verifier                            \
                -L./loader                              \
-               -L./utility                             \
                -L./ffi                                 \
                -L./vm                                  \
                -L./element                             \
                -L../third_party/zdelta-2.1
-slim_CFLAGS =  -I./utility                             \
-               -I../third_party/zdelta-2.1             \
+slim_CFLAGS =  -I../third_party/zdelta-2.1             \
                -std=gnu99
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
-                    ./utility/liblmn_utility.a         \
                     ./vm/liblmn_vm.a                   \
                     ./element/liblmn_elm.a             \
                     ./loader/liblmn_loader.a

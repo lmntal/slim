@@ -39,7 +39,7 @@
 
 #include <stdio.h>
 #include "vm/vm.h"
-#include "util.h"
+#include "element/util.h"
 
 void init_initial_ruleset(void);
 

@@ -47,12 +47,12 @@
 /* cldoc:begin-category(Verifier::StateSpace) */
 
 #include "../lmntal.h"
-#include "utility/st.h"
-#include "utility/vector.h"
-#include "utility/queue.h"
+#include "element/st.h"
+#include "element/vector.h"
+#include "element/queue.h"
 #include "automata.h"
 #include "state.h"
-#include "utility/lmntal_thread.h"
+#include "element/lmntal_thread.h"
 #include "delta_membrane.h"
 #include "mem_encode.h"
 #include "tree_compress.h"

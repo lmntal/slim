@@ -41,10 +41,10 @@
 /* cldoc:begin-category(VisitLog) */
 
 #include "../lmntal.h"
-#include "vector.h"
+#include "element/vector.h"
 #include "vm/vm.h"
 #include "element/error.h"
-#include "util.h"
+#include "element/util.h"
 #include <limits.h>
 
 

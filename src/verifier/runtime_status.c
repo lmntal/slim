@@ -37,8 +37,17 @@
  * $Id$
  */
 #include "runtime_status.h"
-#include "util.h"
-#include "vm/dumper.h"
+#include "element/util.h"
+#include "vm/vm.h"
+#include "element/clock.h"
+
+struct RuleProfiler {
+  LmnRulesetId   ref_rs_id;
+  unsigned long  apply;
+  unsigned long  backtrack;
+  TimeProfiler   trial;
+  LmnRuleRef        src;
+};
 
 static void mc_profiler2_init(MCProfiler2 *p);
 static void mc_profiler2_destroy(MCProfiler2 *p);
@@ -1103,46 +1112,3 @@ static const char *profile_space_id_to_name(int type)
   return ret;
 }
 
-
-/* ------------------------------------------------------------------------
- * CPU時間・実経過時間を返す.
- * 取得可能な時間がナノ秒ではあるが精度もその通りであるとは限らないため注意
- */
-
-/* スレッド単位で計測したCPU時間は,
- * プロセッサ間でスレッドがスイッチした場合に誤差がでるので結果は鵜呑みせずあくまで目安とする */
-double get_cpu_time()
-{
-#ifdef ENABLE_TIME_PROFILE
-# if defined(HAVE_LIBRT) && defined(CLOCK_THREAD_CPUTIME_ID)
-  /* 環境によってはCLOCK_THREAD_CPUTIME_IDが定義されていない. */
-  struct timespec ts;
-  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
-  return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
-# else
-  /* この場合, CPU Usageはプロセス単位(全スレッド共有)になってしまう */
-  return clock() / (double)CLOCKS_PER_SEC;
-# endif
-#
-#else
-  fprintf(stderr, "not support the time profiler on this environment.");
-#endif
-}
-
-double get_wall_time()
-{
-#ifdef ENABLE_TIME_PROFILE
-# ifdef HAVE_LIBRT
-  struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9; /* ナノ秒 */
-# else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return tv.tv_sec + (double)tv.tv_usec * 1e-6; /* マイクロ秒 */
-# endif
-#
-#else
-  fprintf(stderr, "not support the time profiler on this environment.");
-#endif
-}

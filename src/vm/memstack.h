@@ -42,8 +42,10 @@
 
 /* cldoc:begin-category(Lmntal::MembraneStack) */
 
-#include "utility/vector.h"
-#include "vm/vm.h"
+typedef struct Vector *LmnMemStack;
+
+#include "element/vector.h"
+#include "membrane.h"
 
 LmnMemStack lmn_memstack_make(void);
 void lmn_memstack_free(LmnMemStack memstack);

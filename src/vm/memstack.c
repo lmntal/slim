@@ -37,8 +37,6 @@
  * $Id$
  */
 
-#include "lmntal.h"
-#include "vm/vm.h"
 #include "memstack.h"
 
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);

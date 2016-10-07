@@ -37,7 +37,8 @@
  * $Id$
  */
 
-#include "verifier/runtime_status.h"
+#include "vm/vm.h"
+#include "element/clock.h"
 
 
 void gettime(LmnReactCxtRef rc,

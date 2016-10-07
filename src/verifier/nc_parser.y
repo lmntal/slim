@@ -40,9 +40,9 @@
 %{
 #include <math.h>
 #include <stdio.h>
-#include "utility/st.h"
+#include "element/st.h"
 #include "automata.h"
-#include "utility/vector.h"
+#include "element/vector.h"
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
@@ -180,7 +180,6 @@ propositional_factor:
 
 %%
 
-#include "st.h"
 
 /* Called by yyparse on error.  */
 void ncerror (YYLTYPE *loc, yyscan_t scanner, AutomataRef a, char *s)

@@ -38,10 +38,10 @@
 
 #include "lmntal.h"
 #include "functor.h"
-#include "st.h"
+#include "element/st.h"
 #include "atom.h"
 #include "symbol.h"
-#include "util.h"
+#include "element/util.h"
 
 struct PredefinedFunctor {
   LmnFunctor id;

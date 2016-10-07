@@ -38,19 +38,19 @@
 
 
 #include "task.h"
-#include "dumper.h"
-#include "utility/vector.h"
-#include "symbol.h"
-#include "st.h"
-#include "element/error.h"
 #include "ccallback.h"
-#include "special_atom.h"
+#include "dumper.h"
+#include "element/error.h"
 #include "element/lmnstring.h"
-#include "memstack.h"
 #include "element/port.h"
-#include "visitlog.h"
-#include "verifier/verifier.h"
+#include "memstack.h"
 #include "normal_thread.h"
+#include "special_atom.h"
+#include "element/st.h"
+#include "symbol.h"
+#include "element/vector.h"
+#include "verifier/verifier.h"
+#include "element/visitlog.h"
 
 #include "verifier/runtime_status.h"
 

@@ -37,12 +37,12 @@
  */
 
 #include "translate.h"
-#include "lmntal_thread.h"
+#include "element/lmntal_thread.h"
 #include "verifier/verifier.h"
 #include "loader/load.h"
 #include "loader/syntax.h"
 #include "arch.h"
-#include "utility/vector.h"
+#include "element/vector.h"
 #include "element/error.h"
 #include "so.h"
 

@@ -38,7 +38,7 @@
  */
 
 #include "array.h"
-#include <util.h>
+#include "element/util.h"
 #include "element/lmnstring.h"
 #include "vm/vm.h"
 

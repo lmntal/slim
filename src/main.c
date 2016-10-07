@@ -40,7 +40,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include "lmntal.h"
-#include "util.h"
+#include "element/util.h"
 #include "vm/vm.h"
 #include "loader/load.h"
 #include "loader/translate.h"

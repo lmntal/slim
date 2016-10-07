@@ -37,7 +37,7 @@
  */
 
 #include "memory_pool.h"
-#include "utility/vector.h"
+#include "vector.h"
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "error.h"

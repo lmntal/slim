@@ -47,7 +47,7 @@
 /* cldoc:begin-category(Queue) */
 
 #include "../lmntal.h"
-#include "lmntal_thread.h"
+#include "element/lmntal_thread.h"
 
 typedef struct Node  Node;
 typedef struct Queue Queue;

@@ -2,7 +2,6 @@ noinst_LIBRARIES = liblmn_vm.a
 
 liblmn_vm_a_CFLAGS =                               \
         -I../                                            \
-        -I../utility                                     \
         -I../../third_party/zdelta-2.1                   \
         $(CFLAGS)
 
