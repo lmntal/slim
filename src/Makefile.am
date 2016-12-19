@@ -106,6 +106,7 @@ slim_SOURCES =                                                     \
 	ext/react_rule.c                                                 \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
+	ext/hash.c			ext/hash.h			\
 	ext/time.c
 #	ext.h ext.c
 

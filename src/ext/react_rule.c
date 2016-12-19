@@ -2,6 +2,7 @@
 #include "../lmntal_ext.h"
 #include "../dumper.h"
 #include "../verifier/mem_encode.h"
+#include "hash.h"
 
 void cb_react_rule(LmnReactCxt *rc,
 			  LmnMembrane *mem,
@@ -148,14 +149,9 @@ void cb_mem_equals(LmnReactCxt *rc,
 {
   LmnMembrane *m0 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem0_proxy, 0));
   LmnMembrane *m1 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem1_proxy, 0));
-
-  LmnBinStrRef s0 = lmn_mem_encode(m0);
-  LmnBinStrRef s1 = lmn_mem_encode(m1);
-  int judge = binstr_compare(s0, s1);
+  int judge = inner_mem_cmp(m0, m1);
   LmnSAtom result;
-  lmn_binstr_free(s0), lmn_binstr_free(s1);
-  
-  if(judge)
+  if(judge==0)
     {
       result = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
     }
