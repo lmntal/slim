@@ -101,7 +101,7 @@ void cb_hash_get(LmnReactCxt *rc,
 
   lmn_mem_newlink(mem,
 		   a0, t0, LMN_ATTR_GET_VALUE(t0),
-		   a4, t4, LMN_ATTR_GET_VALUE(t3));
+		   a4, t4, LMN_ATTR_GET_VALUE(t4));
 }
 
 /* 

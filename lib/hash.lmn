@@ -62,9 +62,9 @@ COMMENTS
 
     Ret = hash.init :- '$callback'('cb_hash_init', Ret).
 
-    Ret = hash.put(Hash, Mem) :- class(Hash, "hash") |
-	'$callback'('cb_hash_put', Hash, Mem, Ret).
+    Ret = hash.put(Hash, Mem, RetM) :- class(Hash, "hash") |
+	'$callback'('cb_hash_put', Hash, Mem, RetM, Ret).
 
-    Ret = hash.get(Hash, Mem, Res) :-  class(Hash, "hash") |
-	'$callback'('cb_hash_get', Hash, Mem, Res, Ret).
+    Ret = hash.get(Hash, Mem, Res, RetM) :- class(Hash, "hash") |
+	'$callback'('cb_hash_get', Hash, Mem, Res, RetM, Ret).
 }.
