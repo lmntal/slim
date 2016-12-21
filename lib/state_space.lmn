@@ -81,4 +81,15 @@
    * RetRule: Ruleと同じ膜
    */
   Ret = rule.react_nd(Rule, Graph, RetRule) :- Ret = '$callback'('cb_react_rule_nd', Rule, Graph, RetRule).
+
+  /*
+   * Ret = rule.react_nd_set(Rule, Graph, RetRule)
+   * 複数ルールに対応したreact_nd
+   *
+   * Ret:     RuleをGraphに一回適用したときにあり得る書き換え後の状態を表す膜のリスト. 適用できなければ空リストが返る
+   * Graph:   適用したいプロセスが入った膜.
+   * Rule:    適用したいルールセットが入っている膜.
+   * RetRule: Ruleと同じ膜
+   */
+  Ret = rule.react_nd_set(Rule, Graph, RetRule) :- '$callback'('cb_react_ruleset_nd', Rule, Graph, RetRule, Ret).
 }.
