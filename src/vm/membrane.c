@@ -46,7 +46,7 @@
 #include <limits.h>
 
 #ifdef PROFILE
-#  include "runtime_status.h"
+#  include "verifier/runtime_status.h"
 #endif
 
 /** ----

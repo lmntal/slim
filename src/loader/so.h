@@ -49,7 +49,7 @@
 #include "verifier/verifier.h"
 
 #ifdef PROFILE
-#  include "runtime_status.h"
+#  include "verifier/runtime_status.h"
 #endif
 
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
