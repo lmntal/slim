@@ -1,0 +1,3 @@
+s($s) :- string($s) | yes. s(hoge), s('hoge'). 
+s(hoge), s(hoge) 
+ok

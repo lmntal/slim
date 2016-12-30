@@ -1,0 +1,3 @@
+{a(X,Y,Z,W),$x[X,Y],$y[Z,W]} :- ground($x), ground($y) | b. {a(A,t(A),B,t(B))}. 
+b. 
+ok

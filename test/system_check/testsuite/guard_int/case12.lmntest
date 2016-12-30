@@ -1,0 +1,3 @@
+bigeq($i,$j)   :- $i >= $j | yes. bigeq(8,4). 
+ yes. 
+ok

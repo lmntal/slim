@@ -1,0 +1,3 @@
+a($x) :- uniq($x) | b($x).  a(t(k,k)). a(t(k,k)).   
+ a(t(k,k)). b(t(k,k)).   
+ok

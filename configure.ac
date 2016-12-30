@@ -11,6 +11,7 @@ AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects])
+AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 TCMALLOC_SO_VERSION=2:2:2
 PROFILER_SO_VERSION=1:1:1
@@ -36,6 +37,7 @@ AC_PROG_YACC
 AC_PROG_LEX
 AM_PROG_LEX
 AC_PROG_RANLIB
+AC_PROG_AWK
 
 AC_SUBST(CFLAGS)
 AM_CONDITIONAL(GCC, test "$GCC" = "yes")   # let the Makefile know if we're gcc

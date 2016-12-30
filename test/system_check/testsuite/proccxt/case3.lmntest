@@ -1,0 +1,4 @@
+{{a(X)},b(X,Y)},{c(Y)}, ({$p},{$q} :- {$p,$q}). 
+{{a(X)},c(b(X))} 
+ok
+%% RemoveProxies のテスト

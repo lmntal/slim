@@ -1,0 +1,3 @@
+a($x), b($y) :- unary($x), $x \= $y | c($x,$y). a(g(g)), b(g(g)), a(m), b(m). 
+ c(m,g(g)), a(g(g)), b(m). 
+ok

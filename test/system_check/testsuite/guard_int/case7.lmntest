@@ -1,0 +1,3 @@
+pro($i,$j,$k)  :- $z=$i*$j*$k  | ans($z). pro(3,4,5). 
+ ans(60) 
+ok

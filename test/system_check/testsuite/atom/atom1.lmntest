@@ -1,0 +1,3 @@
+f(A),a(A,B),f(C),a(D,C) :- end(B,D). a(f,f),a(f,f).
+end(f,f)
+ok

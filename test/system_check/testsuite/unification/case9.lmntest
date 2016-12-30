@@ -1,0 +1,3 @@
+p(a,b), ( Y=E,E=p(X) :- X=F,F=Y ). 
+a(b) 
+ok

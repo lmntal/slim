@@ -1,0 +1,3 @@
+u($u), v($v) :- unary($u), unary($v), $u = $v | yes. u(a), v(a). 
+ yes. 
+ok

@@ -1,0 +1,3 @@
+a($x),b(Y) :- ground($x) | c($x,Y). a(b).         
+ a(b).       
+ok

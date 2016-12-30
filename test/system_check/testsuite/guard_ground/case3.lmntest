@@ -1,0 +1,3 @@
+a($x) :- ground($x) | b($x).  a(n(m(l,l),m(l,l))) 
+ b(n(m(l,l),m(l,l))) 
+ok

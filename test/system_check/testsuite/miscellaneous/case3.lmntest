@@ -1,0 +1,3 @@
+  A=f(f(f(f(A)))),    c,c, ( c, X=f(Y) :- X=g(Y) ).                      
+f(g(g(f(A))),A) 
+ok

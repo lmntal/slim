@@ -1,0 +1,3 @@
+a($x) :- ground($x) | b($x).  a(n).               
+ b(n)       
+ok

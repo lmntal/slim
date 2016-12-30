@@ -1,0 +1,3 @@
+{$p[X,Y],f(X,Y)}:-$p[Z,Z].            {f(X,Z),g(X,Z)}. 
+g(A,A)  
+ok

@@ -1,0 +1,3 @@
+{$p[X,Y]} :- $p[X,Y],$p[A,A].  {f(X,Y)},g(X,Y). 
+ f(X,Y),g(X,Y),f(A,A)  
+ok

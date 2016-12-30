@@ -1,0 +1,3 @@
+{ pi(X), res(X), ( pi(X) :- X=3.14 ) }, ( {res($p),@r} :- result=$p ). 
+result(3.14) 
+ok
