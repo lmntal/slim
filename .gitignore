@@ -83,3 +83,5 @@ third_party/google-perftools-1.8.3/.deps
 third_party/zdelta-2.1/.deps
 third_party/**/tcmalloc.h
 html/*
+test/**/*.log
+test/**/*.trs

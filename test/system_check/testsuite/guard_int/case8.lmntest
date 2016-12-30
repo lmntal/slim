@@ -1,0 +1,3 @@
+dib($i,$j)     :- $z=$i/$j     | ans($z). dib(96,12). 
+ ans(8). 
+ok
