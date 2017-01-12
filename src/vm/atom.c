@@ -37,6 +37,157 @@
  */
 
 #include "atom.h"
+#include <stddef.h>
+
+struct LmnAtomData {
+  LmnWord prev;
+  LmnWord next;
+  LmnWord procId;
+  union {
+    struct {
+      LmnFunctor functor;
+      LmnLinkAttr attr[0];
+    };
+    LmnWord links[0];
+  };
+};
+
+
+LmnAtomDataRef LMN_SATOM_GET_PREV(LmnAtomDataRef atom) {
+  return atom->prev;
+}
+void LMN_SATOM_SET_PREV(LmnAtomDataRef atom, LmnWord prev) {
+  atom->prev = prev;
+}
+LmnAtomDataRef LMN_SATOM_GET_NEXT_RAW(LmnAtomDataRef atom) {
+  return atom->next;
+}
+void LMN_SATOM_SET_NEXT(LmnAtomDataRef atom, LmnWord next) {
+  atom->next = next;
+}
+
+LmnWord LMN_SATOM_ID(LmnAtomDataRef atom) {
+  return atom->procId;
+}
+void LMN_SATOM_SET_ID(LmnAtomDataRef atom, LmnWord id) {
+  atom->procId = id;
+}
+
+
+LmnFunctor LMN_SATOM_GET_FUNCTOR(LmnAtomDataRef atom) {
+  return atom->functor;
+}
+void LMN_SATOM_SET_FUNCTOR(LmnAtomDataRef atom, LmnFunctor func) {
+  atom->functor = func;
+}
+int LMN_SATOM_GET_ARITY(LmnAtomDataRef atom) {
+  return LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(atom));
+}
+int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor func) {
+  return LMN_FUNCTOR_ARITY(func) - (LMN_IS_PROXY_FUNCTOR(func) ? 1U : 0U);
+}
+int LMN_SATOM_GET_LINK_NUM(LmnAtomDataRef atom) {
+  return LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
+}
+
+
+
+/* リンク番号のタグのワード数。ファンクタと同じワードにある分も数える */
+int LMN_ATTR_WORDS(int arity) {
+  return 1 + ((arity + sizeof(LmnFunctor) - 1) >> LMN_WORD_SHIFT);
+}
+
+const LmnWord *LMN_SATOM_PLINK(LmnAtomDataRef atom, int n) {
+  return &atom->links[LMN_ATTR_WORDS(LMN_SATOM_GET_ARITY(atom)) + n];
+}
+
+LmnLinkAttr LMN_SATOM_GET_ATTR(LmnAtomDataRef atom, int n) {
+  return atom->attr[n];
+}
+/* set link attribute value. Tag is not changed. */
+void LMN_SATOM_SET_ATTR(LmnAtomDataRef atom, int n, LmnLinkAttr attr) {
+  atom->attr[n] = attr;
+}
+LmnWord LMN_SATOM_GET_LINK(LmnAtomDataRef atom, int n) {
+  return LMN_ATOM(atom->links[LMN_ATTR_WORDS(LMN_SATOM_GET_ARITY(atom)) + n]);
+}
+void LMN_SATOM_SET_LINK(LmnAtomDataRef atom, int n, LmnWord v) {
+  atom->links[LMN_ATTR_WORDS(LMN_SATOM_GET_ARITY(atom)) + n] = (LmnWord)(v);
+}
+void LMN_HLATOM_SET_LINK(LmnAtomDataRef atom, LmnWord v) {
+  LMN_SATOM_SET_LINK(atom, 0, v);
+}
+
+
+int LMN_SATOM_WORDS(int arity) {
+  return (offsetof(struct LmnAtomData, links) >> LMN_WORD_SHIFT) + LMN_ATTR_WORDS(arity) + arity;
+}
+
+BOOL LMN_HAS_FUNCTOR(LmnAtomDataRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC) {
+  return LMN_ATTR_IS_DATA(ATTR) ? FALSE
+                                : LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM)) == FUNC;
+}
+
+BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr) {
+  return attr & ~LMN_ATTR_MASK;
+}
+
+LmnLinkAttr LMN_ATTR_MAKE_DATA(int X) {
+  return 0x80U | X;
+}
+LmnLinkAttr LMN_ATTR_MAKE_LINK(int X) {
+  return X;
+}
+
+int LMN_ATTR_GET_VALUE(int X) {
+  return X & LMN_ATTR_MASK;
+}
+
+void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X) {
+  *PATTR = (X & ~LMN_ATTR_MASK) | X;
+}
+
+/////
+
+BOOL LMN_SATOM_IS_PROXY(LmnAtomDataRef ATOM) {
+  return LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(ATOM));
+}
+LmnMembraneRef LMN_PROXY_GET_MEM(LmnAtomDataRef PROXY_ATM) {
+  return (LmnMembraneRef)LMN_SATOM_GET_LINK(PROXY_ATM, 2);
+}
+void LMN_PROXY_SET_MEM(LmnAtomDataRef PROXY_ATM, LmnMembraneRef X) {
+  LMN_SATOM_SET_LINK(PROXY_ATM, 2, (LmnWord)X);
+}
+#define LMN_PROXY_FUNCTOR_NUM           (3)
+BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC) {
+  return FUNC < LMN_PROXY_FUNCTOR_NUM;
+}
+BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC) {
+  return FUNC >= LMN_PROXY_FUNCTOR_NUM;
+}
+
+/////
+
+const char *LMN_SATOM_STR(LmnAtomDataRef ATOM) {
+  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM))));
+}
+const char *LMN_FUNCTOR_STR(LmnFunctor F) {
+  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(F));
+}
+
+/////
+
+BOOL LMN_ATTR_IS_DATA_WITHOUT_EX(LmnLinkAttr ATTR) {
+  return LMN_ATTR_IS_DATA(ATTR) && !LMN_ATTR_IS_HL(ATTR);
+}
+BOOL LMN_ATTR_IS_EX(LmnLinkAttr ATTR) {
+  return LMN_ATTR_IS_DATA(ATTR) && LMN_ATTR_IS_HL(ATTR);
+}
+BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC) {
+  return (FUNC) == LMN_HL_FUNC;
+}
+
+/////
 
 /* アトムをコピーして返す。
  * atomがシンボルアトムの場合、リンク先のデータアトムもコピーする */

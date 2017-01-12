@@ -83,11 +83,15 @@
  */
 
 
+typedef struct LmnAtomData *LmnAtomDataRef;
+
+#include "lmntal.h"
+
+
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */
 
 #define LMN_ATOM_ATTR(X)                ((LmnLinkAttr)(X))
-#define LMN_ATTR_BYTES                  (sizeof(LmnLinkAttr))
 #define LMN_ATTR_MASK                   (0x7fU)
 #define LMN_ATTR_FLAG                   (0x80U)
 
@@ -96,88 +100,80 @@
 
 /* アトムリストからATOMのprev/nextアトムを取得/設定する.
  * アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする */
-#define LMN_SATOM_PPREV(ATOM)           (((LmnWord *)(ATOM)))
-#define LMN_SATOM_PNEXT(ATOM)           (((LmnWord *)(ATOM)) + 1)
-#define LMN_SATOM_GET_PREV(ATOM)        (LMN_SATOM(*LMN_SATOM_PPREV(LMN_SATOM(ATOM))))
-#define LMN_SATOM_SET_PREV(ATOM, X)     (*LMN_SATOM_PPREV(LMN_SATOM(ATOM)) = LMN_ATOM((X)))
-#define LMN_SATOM_GET_NEXT_RAW(ATOM)    (LMN_SATOM(*LMN_SATOM_PNEXT(LMN_SATOM(ATOM))))
-#define LMN_SATOM_SET_NEXT(ATOM, X)     (*LMN_SATOM_PNEXT(LMN_SATOM(ATOM)) = LMN_ATOM((X)))
+LmnAtomDataRef LMN_SATOM_GET_PREV(LmnAtomDataRef atom);
+void LMN_SATOM_SET_PREV(LmnAtomDataRef atom, LmnWord prev);
+LmnAtomDataRef LMN_SATOM_GET_NEXT_RAW(LmnAtomDataRef atom);
+void LMN_SATOM_SET_NEXT(LmnAtomDataRef atom, LmnWord next);
 
-/* リンク番号のタグのワード数。ファンクタと同じワードにある分は数えない */
-#define LMN_ATTR_WORDS(ARITY)           (((ARITY + (LMN_WORD_BYTES - 1))) >> LMN_WORD_SHIFT)
 
 /* ファンクタIDの取得/設定, ファンクタIDからリンク数の取得のユーティリティ（プロキシはリンク1本分余分にデータ領域があるので分岐する） */
 
 /* アトムATOMのプロセスIDを取得/設定 */
-#define LMN_SATOM_ID(ATOM)              (*(((LmnWord *)(ATOM)) + 2))
-#define LMN_SATOM_SET_ID(ATOM, ID)      (LMN_SATOM_ID(ATOM) = (ID))
-#define LMN_FUNCTOR_SHIFT               (3)
-#define LMN_LINK_SHIFT                  (4)
+LmnWord LMN_SATOM_ID(LmnAtomDataRef atom);
+void LMN_SATOM_SET_ID(LmnAtomDataRef atom, LmnWord id);
 
-#define LMN_SATOM_GET_FUNCTOR(ATOM)     LMN_FUNCTOR(*(((LmnWord *)LMN_SATOM(ATOM)) + LMN_FUNCTOR_SHIFT))
-#define LMN_SATOM_SET_FUNCTOR(ATOM, X)  (*(LmnFunctor*)((LmnWord*)(ATOM) + LMN_FUNCTOR_SHIFT) = (X))
-#define LMN_SATOM_GET_ARITY(ATOM)       (LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM))))
-#define LMN_FUNCTOR_GET_LINK_NUM(F)     ((LMN_FUNCTOR_ARITY(F)) - (LMN_IS_PROXY_FUNCTOR(F) ? 1U : 0U))
-#define LMN_SATOM_GET_LINK_NUM(ATOM)    (LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM))))
+LmnFunctor LMN_SATOM_GET_FUNCTOR(LmnAtomDataRef atom);
+void LMN_SATOM_SET_FUNCTOR(LmnAtomDataRef atom, LmnFunctor func);
+int LMN_SATOM_GET_ARITY(LmnAtomDataRef atom);
+int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor atom);
+int LMN_SATOM_GET_LINK_NUM(LmnAtomDataRef atom);
+
 
 /* アトムATOMのN番目のリンク属性/リンクデータを取得 */
-#define LMN_SATOM_PATTR(ATOM, N)        ((LmnLinkAttr *)(((BYTE *)(((LmnWord *)(ATOM)) + LMN_LINK_SHIFT)) + (N) * LMN_ATTR_BYTES))
-#define LMN_SATOM_PLINK(ATOM,N)         (((LmnWord *)(ATOM)) + LMN_LINK_SHIFT + LMN_ATTR_WORDS(LMN_SATOM_GET_ARITY(ATOM)) + (N))
-#define LMN_SATOM_GET_ATTR(ATOM, N)     (*LMN_SATOM_PATTR(LMN_SATOM(ATOM), N))
-#define LMN_SATOM_SET_ATTR(ATOM, N, X)  ((*LMN_SATOM_PATTR(LMN_SATOM(ATOM), N)) = (X))
-#define LMN_SATOM_GET_LINK(ATOM, N)     (LMN_ATOM(*LMN_SATOM_PLINK(LMN_SATOM(ATOM), N)))
-#define LMN_SATOM_SET_LINK(ATOM, N, X)  (*LMN_SATOM_PLINK(LMN_SATOM(ATOM), N) = (LmnWord)(X))
-#define LMN_HLATOM_SET_LINK(ATOM, X)    (LMN_SATOM_SET_LINK(ATOM, 0, X))
+LmnLinkAttr LMN_SATOM_GET_ATTR(LmnAtomDataRef atom, int n);
+void LMN_SATOM_SET_ATTR(LmnAtomDataRef atom, int n, LmnLinkAttr attr);
+LmnWord LMN_SATOM_GET_LINK(LmnAtomDataRef atom, int n);
+void LMN_SATOM_SET_LINK(LmnAtomDataRef atom, int n, LmnWord v);
+void LMN_HLATOM_SET_LINK(LmnAtomDataRef atom, LmnWord v);
+
+const LmnWord *LMN_SATOM_PLINK(LmnAtomDataRef atom, int n);
+
 
 /* word size of atom の加算は prev, next, id, functorのワード */
-#define LMN_SATOM_WORDS(ARITY)          (LMN_LINK_SHIFT + LMN_ATTR_WORDS(ARITY) + (ARITY))
+int LMN_SATOM_WORDS(int arity);
 
 /* リンク属性ATTRであるアトムATOMのファンクタがFUNCならばTRUEを返す */
-#define LMN_HAS_FUNCTOR(ATOM, ATTR, FUNC) \
-          (LMN_ATTR_IS_DATA(ATTR) ? FALSE \
-                                  : LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM)) == (FUNC))
+BOOL LMN_HAS_FUNCTOR(LmnAtomDataRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC);
 
 /* operations for link attribute */
-#define LMN_ATTR_IS_DATA(X)             ((X) & ~LMN_ATTR_MASK)
+BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr);
 /* make data/link link attribute from value */
-#define LMN_ATTR_MAKE_DATA(X)           (0x80U | (X))
-#define LMN_ATTR_MAKE_LINK(X)           (X)
+LmnLinkAttr LMN_ATTR_MAKE_DATA(int X);
+LmnLinkAttr LMN_ATTR_MAKE_LINK(int X);
 /* get link attribute value (remove tag) */
-#define LMN_ATTR_GET_VALUE(X)           ((X) & LMN_ATTR_MASK)
+int LMN_ATTR_GET_VALUE(int X);
 /* set link attribute value. Tag is not changed. */
-#define LMN_ATTR_SET_VALUE(PATTR, X)    (*(PATTR) = ((((X) & ~LMN_ATTR_MASK)) | X))
+void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X);
 
 /* get/set membrane of proxy */
-#define LMN_SATOM_IS_PROXY(ATOM)        (LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR((ATOM))))
-#define LMN_PROXY_GET_MEM(PROXY_ATM)    ((LmnMembraneRef)LMN_SATOM_GET_LINK((PROXY_ATM), 2))
-#define LMN_PROXY_SET_MEM(PROXY_ATM, X) LMN_SATOM_SET_LINK((PROXY_ATM), 2, (LmnWord)(X))
-#define LMN_PROXY_FUNCTOR_NUM           (3)
-#define LMN_IS_PROXY_FUNCTOR(FUNC)      ((FUNC) < LMN_PROXY_FUNCTOR_NUM)
-#define LMN_IS_SYMBOL_FUNCTOR(FUNC)     ((FUNC) >= LMN_PROXY_FUNCTOR_NUM)
+BOOL LMN_SATOM_IS_PROXY(LmnAtomDataRef ATOM);
+LmnMembraneRef LMN_PROXY_GET_MEM(LmnAtomDataRef PROXY_ATM);
+void LMN_PROXY_SET_MEM(LmnAtomDataRef PROXY_ATM, LmnMembraneRef X);
+BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC);
+BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC);
 
-#define LMN_SATOM_STR(ATOM)             LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(LMN_SATOM(ATOM))))
-#define LMN_FUNCTOR_STR(F)              LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(F))
+const char *LMN_SATOM_STR(LmnAtomDataRef ATOM);
+const char *LMN_FUNCTOR_STR(LmnFunctor F);
 
 /* operations for extended atom */
-#define LMN_ATTR_IS_DATA_WITHOUT_EX(ATTR)  (LMN_ATTR_IS_DATA(ATTR) \
-                                              && !LMN_ATTR_IS_HL(ATTR) )
-#define LMN_ATTR_IS_EX(ATTR)               (LMN_ATTR_IS_DATA(ATTR) \
-                                              && LMN_ATTR_IS_HL(ATTR) )
-#define LMN_IS_EX_FUNCTOR(FUNC)            ((FUNC) == LMN_HL_FUNC)
+BOOL LMN_ATTR_IS_DATA_WITHOUT_EX(LmnLinkAttr ATTR);
+BOOL LMN_ATTR_IS_EX(LmnLinkAttr ATTR);
+BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC);
 
 /* link attribute of primitive data type */
 /* low 7 bits of link attribute */
-
-#define LMN_INT_ATTR                    (LMN_ATTR_FLAG | 0x00U)
-#define LMN_DBL_ATTR                    (LMN_ATTR_FLAG | 0x01U)
-#define LMN_SP_ATOM_ATTR                (LMN_ATTR_FLAG | 0x03U)
-#define LMN_STRING_ATTR                 LMN_SP_ATOM_ATTR
-/* 定数アトム */
-#define LMN_CONST_STR_ATTR              (LMN_ATTR_FLAG | 0x04U)
-#define LMN_CONST_DBL_ATTR              (LMN_ATTR_FLAG | 0x05U)
-/* ハイパーリンクアトム (⊂ extended atom ⊂ data atom ⊂ unary) 
-ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意 */
-#define LMN_HL_ATTR                     (LMN_ATTR_FLAG | 0x0aU)
+enum {
+  LMN_INT_ATTR       = LMN_ATTR_FLAG | 0x00U,
+  LMN_DBL_ATTR       = LMN_ATTR_FLAG | 0x01U,
+  LMN_SP_ATOM_ATTR   = LMN_ATTR_FLAG | 0x03U,
+  LMN_STRING_ATTR    = LMN_SP_ATOM_ATTR,
+  /* 定数アトム */
+  LMN_CONST_STR_ATTR = LMN_ATTR_FLAG | 0x04U,
+  LMN_CONST_DBL_ATTR = LMN_ATTR_FLAG | 0x05U,
+  /* ハイパーリンクアトム (⊂ extended atom ⊂ data atom ⊂ unary) 
+  ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意 */
+  LMN_HL_ATTR        = LMN_ATTR_FLAG | 0x0aU
+};
 
 /*----------------------------------------------------------------------
  * allocation
