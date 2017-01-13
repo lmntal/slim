@@ -62,7 +62,7 @@ void mpool_init()
   }
 }
 
-LmnSAtom lmn_new_atom(LmnFunctor f)
+LmnSymbolAtomRef lmn_new_atom(LmnFunctor f)
 {
   LmnSAtom ap;
   int arity, cid;
@@ -80,7 +80,7 @@ LmnSAtom lmn_new_atom(LmnFunctor f)
   return ap;
 }
 
-void lmn_delete_atom(LmnSAtom ap)
+void lmn_delete_atom(LmnSymbolAtomRef ap)
 {
   int arity, cid;
 

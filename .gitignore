@@ -85,3 +85,4 @@ third_party/**/tcmalloc.h
 html/*
 test/**/*.log
 test/**/*.trs
+test/**/*.il

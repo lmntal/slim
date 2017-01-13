@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #ifdef WITH_DMALLOC
 # include <dmalloc.h>
@@ -76,7 +77,7 @@
 # define LMN_DEBUG_HELPER      TRUE
 #endif
 
-#if SIZEOF_DOUBLE <= SIZEOF_LONG
+#if SIZEOF_DOUBLE <= SIZEOF_UINTPTR_T
 # define LMN_DOUBLE_IS_IMMEDIATE 1
 #endif
 
@@ -98,11 +99,11 @@ LMN_DECL_BEGIN
  * data types
  */
 
-#if SIZEOF_LONG < SIZEOF_VOIDP
-# error sizeof(long) < sizeof(void*)
+#if SIZEOF_UINTPTR_T < SIZEOF_VOIDP
+# error sizeof(intptr_t) < sizeof(void*)
 #endif
 
-typedef unsigned long LmnWord;
+typedef uintptr_t LmnWord;
 typedef unsigned char BYTE, LmnByte;
 
 #define LMN_WORD_BYTES  SIZEOF_LONG

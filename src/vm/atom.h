@@ -82,8 +82,9 @@
  *
  */
 
-
-typedef struct LmnAtomData *LmnAtomDataRef;
+typedef void *LmnAtomRef;
+typedef LmnWord LmnDataAtomRef;
+typedef struct LmnAtomData *LmnSymbolAtomRef;
 
 #include "lmntal.h"
 
@@ -100,40 +101,40 @@ typedef struct LmnAtomData *LmnAtomDataRef;
 
 /* アトムリストからATOMのprev/nextアトムを取得/設定する.
  * アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする */
-LmnAtomDataRef LMN_SATOM_GET_PREV(LmnAtomDataRef atom);
-void LMN_SATOM_SET_PREV(LmnAtomDataRef atom, LmnWord prev);
-LmnAtomDataRef LMN_SATOM_GET_NEXT_RAW(LmnAtomDataRef atom);
-void LMN_SATOM_SET_NEXT(LmnAtomDataRef atom, LmnWord next);
+LmnSymbolAtomRef LMN_SATOM_GET_PREV(LmnSymbolAtomRef atom);
+void LMN_SATOM_SET_PREV(LmnSymbolAtomRef atom, LmnSymbolAtomRef prev);
+LmnSymbolAtomRef LMN_SATOM_GET_NEXT_RAW(LmnSymbolAtomRef atom);
+void LMN_SATOM_SET_NEXT(LmnSymbolAtomRef atom, LmnSymbolAtomRef next);
 
 
 /* ファンクタIDの取得/設定, ファンクタIDからリンク数の取得のユーティリティ（プロキシはリンク1本分余分にデータ領域があるので分岐する） */
 
 /* アトムATOMのプロセスIDを取得/設定 */
-LmnWord LMN_SATOM_ID(LmnAtomDataRef atom);
-void LMN_SATOM_SET_ID(LmnAtomDataRef atom, LmnWord id);
+LmnWord LMN_SATOM_ID(LmnSymbolAtomRef atom);
+void LMN_SATOM_SET_ID(LmnSymbolAtomRef atom, LmnWord id);
 
-LmnFunctor LMN_SATOM_GET_FUNCTOR(LmnAtomDataRef atom);
-void LMN_SATOM_SET_FUNCTOR(LmnAtomDataRef atom, LmnFunctor func);
-int LMN_SATOM_GET_ARITY(LmnAtomDataRef atom);
+LmnFunctor LMN_SATOM_GET_FUNCTOR(LmnSymbolAtomRef atom);
+void LMN_SATOM_SET_FUNCTOR(LmnSymbolAtomRef atom, LmnFunctor func);
+int LMN_SATOM_GET_ARITY(LmnSymbolAtomRef atom);
 int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor atom);
-int LMN_SATOM_GET_LINK_NUM(LmnAtomDataRef atom);
+int LMN_SATOM_GET_LINK_NUM(LmnSymbolAtomRef atom);
 
 
 /* アトムATOMのN番目のリンク属性/リンクデータを取得 */
-LmnLinkAttr LMN_SATOM_GET_ATTR(LmnAtomDataRef atom, int n);
-void LMN_SATOM_SET_ATTR(LmnAtomDataRef atom, int n, LmnLinkAttr attr);
-LmnWord LMN_SATOM_GET_LINK(LmnAtomDataRef atom, int n);
-void LMN_SATOM_SET_LINK(LmnAtomDataRef atom, int n, LmnWord v);
-void LMN_HLATOM_SET_LINK(LmnAtomDataRef atom, LmnWord v);
+LmnLinkAttr LMN_SATOM_GET_ATTR(LmnSymbolAtomRef atom, int n);
+void LMN_SATOM_SET_ATTR(LmnSymbolAtomRef atom, int n, LmnLinkAttr attr);
+LmnAtomRef LMN_SATOM_GET_LINK(LmnSymbolAtomRef atom, int n);
+void LMN_SATOM_SET_LINK(LmnSymbolAtomRef atom, int n, LmnAtomRef v);
+void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v);
 
-const LmnWord *LMN_SATOM_PLINK(LmnAtomDataRef atom, int n);
+const LmnAtomRef *LMN_SATOM_PLINK(LmnSymbolAtomRef atom, int n);
 
 
 /* word size of atom の加算は prev, next, id, functorのワード */
 int LMN_SATOM_WORDS(int arity);
 
 /* リンク属性ATTRであるアトムATOMのファンクタがFUNCならばTRUEを返す */
-BOOL LMN_HAS_FUNCTOR(LmnAtomDataRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC);
+BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC);
 
 /* operations for link attribute */
 BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr);
@@ -146,13 +147,13 @@ int LMN_ATTR_GET_VALUE(int X);
 void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X);
 
 /* get/set membrane of proxy */
-BOOL LMN_SATOM_IS_PROXY(LmnAtomDataRef ATOM);
-LmnMembraneRef LMN_PROXY_GET_MEM(LmnAtomDataRef PROXY_ATM);
-void LMN_PROXY_SET_MEM(LmnAtomDataRef PROXY_ATM, LmnMembraneRef X);
+BOOL LMN_SATOM_IS_PROXY(LmnSymbolAtomRef ATOM);
+LmnMembraneRef LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM);
+void LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembraneRef X);
 BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC);
 BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC);
 
-const char *LMN_SATOM_STR(LmnAtomDataRef ATOM);
+const char *LMN_SATOM_STR(LmnSymbolAtomRef ATOM);
 const char *LMN_FUNCTOR_STR(LmnFunctor F);
 
 /* operations for extended atom */
@@ -179,8 +180,8 @@ enum {
  * allocation
  */
 
-LmnSAtom lmn_new_atom(LmnFunctor f);
-void lmn_delete_atom(LmnSAtom ap);
+LmnSymbolAtomRef lmn_new_atom(LmnFunctor f);
+void lmn_delete_atom(LmnSymbolAtomRef ap);
 void free_atom_memory_pools(void);
 
 
@@ -189,21 +190,21 @@ void free_atom_memory_pools(void);
  * functions
  */
 void mpool_init(void);
-LmnAtom lmn_copy_atom(LmnAtom atom, LmnLinkAttr attr);
-LmnSAtom lmn_copy_satom(LmnSAtom atom);
-LmnAtom lmn_copy_data_atom(LmnAtom atom, LmnLinkAttr attr);
-LmnSAtom lmn_copy_satom_with_data(LmnSAtom atom, BOOL is_new_hl);
-void lmn_free_atom(LmnAtom atom, LmnLinkAttr attr);
-void free_symbol_atom_with_buddy_data(LmnSAtom atom);
-BOOL lmn_eq_func(LmnAtom atom0, LmnLinkAttr attr0,
-                 LmnAtom atom1,LmnLinkAttr attr1);
-BOOL lmn_data_atom_is_ground(LmnAtom atom, LmnLinkAttr attr,
+LmnAtomRef lmn_copy_atom(LmnAtomRef atom, LmnLinkAttr attr);
+LmnSymbolAtomRef lmn_copy_satom(LmnSymbolAtomRef atom);
+LmnDataAtomRef lmn_copy_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr);
+LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl);
+void lmn_free_atom(LmnAtomRef atom, LmnLinkAttr attr);
+void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom);
+BOOL lmn_eq_func(LmnAtomRef atom0, LmnLinkAttr attr0,
+                 LmnAtomRef atom1,LmnLinkAttr attr1);
+BOOL lmn_data_atom_is_ground(LmnDataAtomRef atom, LmnLinkAttr attr,
                              ProcessTableRef *hlinks);
-BOOL lmn_data_atom_eq(LmnAtom atom1, LmnLinkAttr attr1,
-                      LmnAtom atom2, LmnLinkAttr attr2);
-double lmn_get_double(LmnAtom atom);
-LmnAtom lmn_create_double_atom(double d);
-void lmn_destroy_double_atom(LmnAtom atom);
+BOOL lmn_data_atom_eq(LmnDataAtomRef atom1, LmnLinkAttr attr1,
+                      LmnDataAtomRef atom2, LmnLinkAttr attr2);
+double lmn_get_double(LmnDataAtomRef atom);
+LmnDataAtomRef lmn_create_double_atom(double d);
+void lmn_destroy_double_atom(LmnDataAtomRef atom);
 
 #ifdef LMN_DOUBLE_IS_IMMEDIATE
 # define LMN_GETREF_DOUBLE(Atom) ((double *)&Atom)
