@@ -595,7 +595,7 @@ unsigned long lmn_mem_space(LmnMembraneRef mem)
       ret += internal_hashtbl_space(ent->record);
     }
     EACH_ATOM(atom, ent, ({
-      ret += sizeof(LmnWord) * LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(atom)));
+      ret += LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(atom)));
     }));
   }));
 

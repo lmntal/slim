@@ -130,8 +130,8 @@ void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v);
 const LmnAtomRef *LMN_SATOM_PLINK(LmnSymbolAtomRef atom, int n);
 
 
-/* word size of atom の加算は prev, next, id, functorのワード */
-int LMN_SATOM_WORDS(int arity);
+/* size of atom の加算は prev, next, id, functorのワード */
+size_t LMN_SATOM_SIZE(int arity);
 
 /* リンク属性ATTRであるアトムATOMのファンクタがFUNCならばTRUEを返す */
 BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC);

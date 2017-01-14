@@ -119,8 +119,8 @@ void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v) {
 }
 
 
-int LMN_SATOM_WORDS(int arity) {
-  return (offsetof(struct LmnAtomData, links) >> LMN_WORD_SHIFT) + LMN_ATTR_WORDS(arity) + arity;
+size_t LMN_SATOM_SIZE(int arity) {
+  return offsetof(struct LmnAtomData, links) + (LMN_ATTR_WORDS(arity) + arity) * LMN_WORD_BYTES;
 }
 
 BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC) {
@@ -208,7 +208,7 @@ LmnSymbolAtomRef lmn_copy_satom(LmnSymbolAtomRef atom) {
 
   memcpy((void *)newatom,
          (void *)atom,
-         LMN_WORD_BYTES * LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(f)));
+         LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
 
   LMN_SATOM_SET_ID(newatom, 0);
   return newatom;
@@ -249,7 +249,7 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl)
 
   memcpy((void *)newatom,
          (void *)atom,
-         LMN_WORD_BYTES * LMN_SATOM_WORDS(LMN_FUNCTOR_ARITY(f)));
+         LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
   /* リンク先のデータアトムをコピーする */
   for (i = 0; i < arity; i++) {
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) {
