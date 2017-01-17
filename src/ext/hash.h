@@ -13,6 +13,13 @@ struct LmnHash{
   st_table_t tbl;		/* ハッシュ本体 */
 };
 
+struct LmnState{
+  LMN_SP_ATOM_HEADER;
+  int id;
+  st_table_t state_tbl;
+  st_table_t id_tbl;
+};
+
 
 // 膜mの内側のプロセスのみを対象にバイナリストリングを計算する
 // 注意(1)!!! 膜mは膜外への自由リンクを必ず1本のみ持っていることが条件
@@ -71,15 +78,33 @@ static unsigned long mem_hash(LmnMembrane *m)
   return mhash(m);
 }
 
+static unsigned long id_hash(int a)
+{
+  return (unsigned long)a;
+}
+
+static int id_cmp(int a, int b)
+{
+  return a != b;
+}
+
 static struct st_hash_type type_mem_hash =
   {
     (st_cmp_func)inner_mem_cmp,
     (st_hash_func)mem_hash
   };
 
+static struct st_hash_type type_id_hash =
+  {
+    (st_cmp_func)id_cmp,
+    (st_hash_func)id_hash
+  };
+
 typedef struct LmnHash *LmnHashRef;
+typedef struct LmnState *LmnStateRef;
 
 #define LMN_HASH(obj) ((LmnHashRef)(obj))
+#define LMN_STATE(obj) ((LmnStateRef)(obj))
 
 #endif
   

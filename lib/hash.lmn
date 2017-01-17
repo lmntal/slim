@@ -67,4 +67,31 @@ COMMENTS
 
     Ret = hash.get(Hash, Mem, Res, RetM) :- class(Hash, "hash") |
 	'$callback'('cb_hash_get', Hash, Mem, Res, RetM, Ret).
+
+    Ret = hash.map_put(Hash, Key, Val) :- class(Hash, "hash") |
+	'$callback'('cb_map_put', Hash, Key, Val, Ret).
+
+    Ret = hash.map_get(Hash, Key, Res, Retk) :- class(Hash, "hash") |
+	'$callback'('cb_map_get', Hash, Key, Res, Retk, Ret).
+
+    hash.free(Hash) :- class(Hash, "hash") |
+	'$callback'('cb_hash_free', Hash).
+
+    Ret = hash.state_map_init :- '$callback'('cb_state_map_init', Ret).
+
+    hash.state_map_free(Map) :- class(Map, "state_map") |
+	'$callback'('cb_state_map_free', Map).
+
+    Ret = hash.state_map_find(Map, {$key[]}, Res) :- class(Map, "state_map") |
+	'$callback'('cb_state_map_id_find', Map, {$key[]}, Res, Ret).
+    Ret = hash.state_map_find(Map, $key, Res) :- class(Map, "state_map"), int($key) |
+	'$callback'('cb_state_map_state_find', Map, $key, Res, Ret).
+
+    Ret = hash.set_init :- '$callback'('cb_hash_init', Ret).
+
+    hash.set_free(Set) :- class(Set, "hash") | '$callback'('cb_hash_free', Set).
+
+    Ret = hash.set_insert(Set, Val) :- class(Set, "hash") | '$callback'('cb_set_put', Set, Val, Ret).
+
+    Ret = hash.set_find(Set, Key, Res) :- class(Set, "hash") | '$callback'('cb_set_get', Set, Key, Res, Ret).
 }.
