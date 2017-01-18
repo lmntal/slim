@@ -219,14 +219,11 @@ void cb_set_put(LmnReactCxt *rc,
       lmn_mem_remove_mem(mem, key);
     }else if(f == LMN_LIST_FUNCTOR){
       if(t0 != LMN_SP_ATOM_ATTR){
-	printf("L\n");
 	LmnHashRef atom = LMN_MALLOC(struct LmnHash);
 	LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
 	atom->tbl = st_init_table(&type_tuple_hash);
 	LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 	lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
-	/* lmn_mem_delete_atom(mem, LMN_SATOM_GET_LINK(a0, 0), LMN_SATOM_GET_ATTR(a0, 0)); */
-	/* lmn_mem_delete_atom(mem, LMN_SATOM_GET_LINK(a0, 1), LMN_SATOM_GET_ATTR(a0, 1)); */
 	lmn_mem_remove_atom(mem, a0, t0);
 	a0 = LMN_ATOM(atom);
 	t0 = attr;
