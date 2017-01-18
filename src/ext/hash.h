@@ -88,6 +88,22 @@ static int id_cmp(int a, int b)
   return a != b;
 }
 
+static tuple_hash(LmnSAtom cons)
+{
+  int x = LMN_SATOM_GET_LINK(cons, 0);
+  int y = LMN_SATOM_GET_LINK(cons, 1);
+  return x+y;
+}
+
+static tuple_cmp(LmnSAtom cons0, LmnSAtom cons1)
+{
+  int x0 = LMN_SATOM_GET_LINK(cons0, 0);
+  int y0 = LMN_SATOM_GET_LINK(cons0, 1);
+  int x1 = LMN_SATOM_GET_LINK(cons1, 0);
+  int y1 = LMN_SATOM_GET_LINK(cons1, 1);
+  return ((x0 != x1) && (y0 != y1));
+}
+
 static struct st_hash_type type_mem_hash =
   {
     (st_cmp_func)inner_mem_cmp,
@@ -98,6 +114,12 @@ static struct st_hash_type type_id_hash =
   {
     (st_cmp_func)id_cmp,
     (st_hash_func)id_hash
+  };
+
+static struct st_hash_type type_tuple_hash =
+  {
+    (st_cmp_func)tuple_cmp,
+    (st_hash_func)tuple_hash
   };
 
 typedef struct LmnHash *LmnHashRef;

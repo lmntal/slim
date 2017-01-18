@@ -93,5 +93,5 @@ COMMENTS
 
     Ret = hash.set_insert(Set, Val) :- class(Set, "hash") | '$callback'('cb_set_put', Set, Val, Ret).
 
-    Ret = hash.set_find(Set, Key, Res) :- class(Set, "hash") | '$callback'('cb_set_get', Set, Key, Res, Ret).
+    Ret = hash.set_find(Set, Val, Res) :- class(Set, "hash") | '$callback'('cb_set_get', Set, Val, Res, Ret).
 }.

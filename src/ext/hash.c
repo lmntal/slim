@@ -12,6 +12,7 @@
 static int hash_atom_type;
 
 static int state_atom_type;
+
 #define LMN_HASH_DATA(obj) (LMN_HASH(obj)->tbl)
 #define LMN_STATE_STBL(obj) (LMN_STATE(obj)->state_tbl)
 #define LMN_STATE_ITBL(obj) (LMN_STATE(obj)->id_tbl)
@@ -180,14 +181,104 @@ void cb_set_put(LmnReactCxt *rc,
 		LmnAtom a1, LmnLinkAttr t1,
 		LmnAtom a2, LmnLinkAttr t2)
 {
-  LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-  st_insert(LMN_HASH_DATA(a0), (st_data_t)key, (st_data_t)key);
+  if(LMN_ATTR_IS_DATA(t1))
+    {
+      if(LMN_INT_ATTR == t1){
+	if(t0 != LMN_SP_ATOM_ATTR){
+	  LmnHashRef atom = LMN_MALLOC(struct LmnHash);
+	  LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
+	  atom->tbl = st_init_table(&type_id_hash);
+	  LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+	  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+	  lmn_mem_delete_atom(mem, a0, t0);
+	  a0 = LMN_ATOM(atom);
+	  t0 = attr;	  
+	}
+	st_insert(LMN_HASH_DATA(a0), (st_data_t)a1, (st_data_t)a1);
+	
+      }
 
+    }else{
+    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
+    if(f == LMN_OUT_PROXY_FUNCTOR){
+      if(t0 != LMN_SP_ATOM_ATTR){
+	LmnHashRef atom = lmn_make_hash(mem);
+	LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+	LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
+	lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+	lmn_mem_delete_atom(mem, a0, t0);
+	a0 = LMN_ATOM(atom);
+	t0 = attr;
+      }
+      LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+      st_insert(LMN_HASH_DATA(a0), (st_data_t)key, (st_data_t)key);
+
+      lmn_mem_newlink(mem,
+		      a0, t0, LMN_ATTR_GET_VALUE(t0),
+		      a2, t2, LMN_ATTR_GET_VALUE(t2));
+      lmn_mem_remove_mem(mem, key);
+    }else if(f == LMN_LIST_FUNCTOR){
+      if(t0 != LMN_SP_ATOM_ATTR){
+	printf("L\n");
+	LmnHashRef atom = LMN_MALLOC(struct LmnHash);
+	LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
+	atom->tbl = st_init_table(&type_tuple_hash);
+	LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+	lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+	/* lmn_mem_delete_atom(mem, LMN_SATOM_GET_LINK(a0, 0), LMN_SATOM_GET_ATTR(a0, 0)); */
+	/* lmn_mem_delete_atom(mem, LMN_SATOM_GET_LINK(a0, 1), LMN_SATOM_GET_ATTR(a0, 1)); */
+	lmn_mem_remove_atom(mem, a0, t0);
+	a0 = LMN_ATOM(atom);
+	t0 = attr;
+      }
+      st_insert(LMN_HASH_DATA(a0), (st_data_t)a1, (st_data_t)a1);
+      lmn_mem_remove_atom(mem, a1, t1);
+    }    
+  }
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
-		  a2, t2, LMN_ATTR_GET_VALUE(t2));
-  lmn_mem_remove_mem(mem, key);
+		  a2, t2, LMN_ATTR_GET_VALUE(t2));    
 }
+
+void cb_set_get(LmnReactCxt *rc,
+		LmnMembrane *mem,
+		LmnAtom a0, LmnLinkAttr t0,
+		LmnAtom a1, LmnLinkAttr t1,
+		LmnAtom a2, LmnLinkAttr t2,
+		LmnAtom a3, LmnLinkAttr t3)
+{
+  st_data_t entry;
+  LmnSAtom result;
+  int res;
+  if(LMN_ATTR_IS_DATA(t1)){
+    if(LMN_INT_ATTR == t1){
+      res = st_lookup(LMN_HASH_DATA(a0), (st_data_t)a1, &entry);
+      }
+  }else{
+    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
+    if(f == LMN_OUT_PROXY_FUNCTOR){
+      LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+      res = st_lookup(LMN_HASH_DATA(a0), (st_data_t)key, &entry);
+      lmn_mem_remove_mem(mem, key);      
+    }else if(f == LMN_LIST_FUNCTOR){
+      res = st_lookup(LMN_HASH_DATA(a0), (st_data_t)a1, &entry);
+      lmn_mem_remove_atom(mem, a1, t1);
+    }
+  }
+
+  if(res){
+    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 1));
+  }else{
+    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
+  }
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a3, t3, LMN_ATTR_GET_VALUE(t3));
+  lmn_mem_newlink(mem,
+		  a2, t2, LMN_ATTR_GET_VALUE(t2),
+		  LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0);
+}
+
 
 
 
@@ -219,30 +310,6 @@ void cb_map_put(LmnReactCxt *rc,
 }
 
 
-void cb_set_get(LmnReactCxt *rc,
-		LmnMembrane *mem,
-		LmnAtom a0, LmnLinkAttr t0,
-		LmnAtom a1, LmnLinkAttr t1,
-		LmnAtom a2, LmnLinkAttr t2,
-		LmnAtom a3, LmnLinkAttr t3)
-{
-  st_data_t entry;
-  LmnSAtom result;
-  LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-  int res = st_lookup(LMN_HASH_DATA(a0), (st_data_t)key, &entry);
-  if(res){
-    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 1));
-  }else{
-    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
-  }
-  lmn_mem_newlink(mem,
-		  a0, t0, LMN_ATTR_GET_VALUE(t0),
-		  a3, t3, LMN_ATTR_GET_VALUE(t3));
-  lmn_mem_newlink(mem,
-		  a2, t2, LMN_ATTR_GET_VALUE(t2),
-		  LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0);
-  lmn_mem_remove_mem(mem, key);
-}
 
 
 /*

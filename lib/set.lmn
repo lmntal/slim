@@ -1,0 +1,15 @@
+{
+    module(set).
+
+    Ret = set.init :- Ret = set.empty.
+
+    set.free(Set) :- class(Set, "hash") | '$callback'('cb_set_free', Set).
+
+    Ret = set.insert(Set, Val) :- class(Set, "hash") | '$callback'('cb_set_put', Set, Val, Ret).
+
+    Ret = set.insert(set.empty, Val) :- '$callback'('cb_set_put', set.empty, Val, Ret).
+
+    Ret = set.find(set.empty, Val, Res) :- '$callback'('cb_set_get', set.empty, Val, Res, Ret).
+
+    Ret = set.find(Set, Val, Res) :- class(Set, "hash") | '$callback'('cb_set_get', Set, Val , Res, Ret).
+}
