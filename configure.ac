@@ -19,12 +19,15 @@ PROFILER_SO_VERSION=1:1:1
 AC_SUBST(TCMALLOC_SO_VERSION)
 AC_SUBST(PROFILER_SO_VERSION)
 
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 
 # ----------------------------------------------------------------------
 # Checks for programs.
 #
 
-CFLAGS="-flto $CFLAGS"
+CFLAGS="-O $CFLAGS"
 CXXFLAGS="-g -O2 -mmmx -msse $CXXFLAGS"
 
 AC_LANG(C)

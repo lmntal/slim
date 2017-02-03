@@ -192,15 +192,12 @@ check_DATA = \
 	testsuite/uniq/case5.il \
 	testsuite/uniq/case6.il
 
-
+CLEANFILES = $(check_DATA)
 
 LMNC = $(LMNTAL_HOME)/bin/lmntal
 LMNCFLAGS = --hl --slimcode -O3
-
 
 %.il: %.lmntest
 	awk -f create_testdata.awk $< | \
 	$(LMNC) --stdin-lmn $(LMNCFLAGS) >$@
 
-clean:
-	rm $(check_DATA)

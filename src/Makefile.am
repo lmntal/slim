@@ -78,16 +78,3 @@ slim_OBJS =
 
 arch.h ../lib/config.lmn: genconfig
 	$(SHELL) ./genconfig
-
-ALL_HEADER_FILES := $(wildcard ./*/*.h) $(wildcard ./*.h)
-ALL_SOURCE_FILES := $(wildcard ./*/*.c) $(wildcard ./*.c)
-ALL_PARSER_FILES := $(wildcard ./*/*_parser.c) $(wildcard ./*_parser.c) $(wildcard ./*/*_parser.h) $(wildcard ./*_parser.h)
-ALL_LEXER_FILES := $(wildcard ./*/*_lexer.c) $(wildcard ./*_lexer.c) $(wildcard ./*/*_lexer.h) $(wildcard ./*_lexer.h)
-EXCLUDE_FILES := translate_generated.c interpret_generated.c
-ALL_FILES := $(ALL_HEADER_FILES) $(ALL_SOURCE_FILES)
-DOC_FILES := $(filter-out $(ALL_PARSER_FILES) $(ALL_LEXER_FILES) $(EXCLUDE_FILES), $(ALL_FILES))
-
-cldoc:
-	cldoc generate $(slim_CFLAGS) -- --report --output ../html $(DOC_FILES)
-cldoc-static:
-	cldoc generate $(slim_CFLAGS) -- --static --report --output ../html $(DOC_FILES)
