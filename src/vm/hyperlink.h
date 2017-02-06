@@ -41,7 +41,11 @@
 #ifndef LMN_HYPERLINK_H
 #define LMN_HYPERLINK_H
 
-/* cldoc:begin-category(Lmntal::Hyperlink) */
+/**
+ * @ingroup VM
+ * @defgroup Hyperlink
+ * @{
+ */
 
 #include "lmntal.h"
 #include "functor.h"
@@ -163,6 +167,6 @@ void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl);
 /* ハイパーリンクhlのハッシュ値を返す. */
 unsigned long lmn_hyperlink_hash(HyperLink *hl);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* LMN_HYPERLINK_H */

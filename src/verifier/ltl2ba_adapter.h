@@ -40,7 +40,11 @@
 #ifndef LTL2BA_ADAPTER_H
 #define LTL2BA_ADAPTER_H
 
-/* cldoc:begin-category(Verifier::LTL2BA) */
+/**
+ * @ingroup  Verifier
+ * @defgroup LTL2BA
+ * @{
+ */
 
 #include <stdio.h>
 

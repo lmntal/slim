@@ -39,7 +39,11 @@
 #ifndef LMN_SYMBOL_H
 #define LMN_SYMBOL_H
 
-/* cldoc:begin-category(Lmntal::Symbol) */
+/**
+ * @ingroup VM
+ * @defgroup Symbol
+ * @{
+ */
 
 #include "lmntal.h"
 
@@ -53,6 +57,6 @@ int count_symbols();
 
 #define LMN_SYMBOL_STR(ID)       (lmn_id_to_name(ID))
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

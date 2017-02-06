@@ -40,7 +40,11 @@
 #ifndef LMN_DELTA_MEMBRANE_H
 #define LMN_DELTA_MEMBRANE_H
 
-/* cldoc:begin-category(Verifier::DeltaMembrane) */
+/**
+ * @ingroup  Verifier
+ * @defgroup DeltaMembrane
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "vm/vm.h"
@@ -185,6 +189,6 @@ LmnAtom dmem_root_get_link(struct MemDeltaRoot *d,
                                   LmnSAtom atom,
                                   int i);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

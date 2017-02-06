@@ -39,7 +39,11 @@
 #ifndef LMN_TASK_H
 #define LMN_TASK_H
 
-/* cldoc:begin-category(Lmntal::Task) */
+/**
+ * @ingroup VM
+ * @defgroup Task
+ * @{
+ */
 
 #include "lmntal.h"
 #include "membrane.h"
@@ -81,6 +85,6 @@ HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem, const Vector *l
 Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v);
 void free_links(Vector *links);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

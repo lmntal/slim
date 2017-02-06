@@ -39,6 +39,10 @@
 #ifndef LMN_ELEMENT_H
 #define LMN_ELEMENT_H
 
+/**
+ * @defgroup Element
+ */
+
 #include "clock.h"
 #include "error.h"
 #include "file_util.h"

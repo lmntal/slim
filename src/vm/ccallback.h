@@ -40,7 +40,11 @@
 #ifndef LMN_CCALLBACK
 #define LMN_CCALLBACK
 
-/* cldoc:begin-category(Lmntal::CCallback) */
+/**
+ * @ingroup VM
+ * @defgroup CCallback
+ * @{
+ */
 
 #include "lmntal.h"
 
@@ -55,6 +59,6 @@ void ccallback_finalize(void);
 void lmn_register_c_fun(const char *name, void *f, int arity);
 const struct CCallback *get_ccallback(lmn_interned_str name);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

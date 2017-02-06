@@ -39,7 +39,11 @@
 #ifndef LMN_MC_POR_H
 #define LMN_MC_POR_H
 
-/* cldoc:begin-category(Verifier::Dpor) */
+/**
+ * @ingroup  Verifier
+ * @defgroup DPOR
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "element/element.h"
@@ -56,6 +60,6 @@ void por_calc_ampleset(StateSpaceRef  ss,
 void init_por_vars(void);
 void free_por_vars(void);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

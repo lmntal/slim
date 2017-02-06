@@ -52,6 +52,12 @@
 #  include "verifier/runtime_status.h"
 #endif
 
+/**
+ * @ingroup  Loader
+ * @defgroup SO
+ * @{
+ */
+
 /* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
 /* TR_GRID(x) translate global ruleset id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
@@ -258,4 +264,7 @@ BOOL tr_instr_jump(LmnTranslated   f,
                    LmnRuleRef         rule,
                    int             newid_num,
                    const int       *newid);
+
+/* @} */
+
 #endif

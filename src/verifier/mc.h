@@ -40,7 +40,10 @@
 #ifndef LMN_MC_H
 #define LMN_MC_H
 
-/* cldoc:begin-category(Verifier) */
+/**
+ * @addtogroup  Verifier
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "element/element.h"
@@ -101,6 +104,6 @@ void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *path);
 unsigned long mc_invalids_get_num(LmnWorkerGroup *wp);
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

@@ -39,7 +39,11 @@
 #ifndef LMN_TRANSLATE_H
 #define LMN_TRANSLATE_H
 
-/* cldoc:begin-category(Translate) */
+/**
+ * @ingroup  Loader
+ * @defgroup Translate
+ * @{
+ */
 
 #include "lmntal.h"
 #include "vm/vm.h"
@@ -161,6 +165,6 @@ union LmnFunctorLiteral{
 /* 現在ロードしている情報をfilepath.so の名前で使えるように出力する */
 void translate(char *filepath);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

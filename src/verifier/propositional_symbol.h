@@ -40,7 +40,11 @@
 #ifndef LMN_PROP_DEFINITION_H
 #define LMN_PROP_DEFINITION_H
 
-/* cldoc:begin-category(Verifier::Proposition) */
+/**
+ * @ingroup  Verifier
+ * @defgroup Proposition
+ * @{
+ */
 
 #include <stdio.h>
 #include "element/element.h"
@@ -79,6 +83,6 @@ unsigned int propsyms_num(PropSyms props);
 SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i);
 void propsyms_free(PropSyms props);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

@@ -10,7 +10,11 @@
 #ifndef ST_INCLUDED
 #define ST_INCLUDED
 
-/* cldoc:begin-category(ST) */
+/**
+ * @ingroup Element
+ * @defgroup StateTable
+ * @{
+ */
 
 #include <stddef.h>
 
@@ -114,6 +118,6 @@ void st_concat(st_table_t tbl1, const st_table_t tbl2);
 
 unsigned long st_table_space(st_table_t table);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* ST_INCLUDED */

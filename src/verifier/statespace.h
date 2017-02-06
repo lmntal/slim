@@ -44,7 +44,11 @@
 #ifndef LMN_STATESPACE_H
 #define LMN_STATESPACE_H
 
-/* cldoc:begin-category(Verifier::StateSpace) */
+/**
+ * @ingroup  Verifier
+ * @defgroup StateSpace
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "element/element.h"
@@ -178,6 +182,6 @@ StateTable   *statespace_accept_tbl(StateSpaceRef ss);
 StateTable   *statespace_accept_memid_tbl(StateSpaceRef ss);
 unsigned long statespace_space(StateSpaceRef ss);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

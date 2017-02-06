@@ -40,7 +40,11 @@
 #ifndef LMN_STATE_H
 #define LMN_STATE_H
 
-/* cldoc:begin-category(Verifier::State) */
+/**
+ * @ingroup  Verifier
+ * @defgroup State
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "element/element.h"
@@ -714,6 +718,6 @@ static inline void transition_set_cost(TransitionRef t, LmnCost cost) {
 #endif
 }
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

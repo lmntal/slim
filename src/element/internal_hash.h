@@ -40,7 +40,11 @@
 #ifndef INTERNAL_HASH_H
 #define INTERNAL_HASH_H
 
-/* cldoc:begin-category(Hashtable) */
+/**
+ * @ingroup Element
+ * @defgroup Hash
+ * @{
+ */
 
 /* HashMap */
 typedef unsigned long HashKeyType;

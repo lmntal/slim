@@ -44,7 +44,10 @@
 #ifndef LMNTAL_JNI_H
 #define LMNTAL_JNI_H
 
-/* cldoc:begin-category(Lmntal::Jni) */
+/**
+ * @defgroup FFI
+ * @{
+ */
 
 #include "lmntal.h"
 
@@ -97,7 +100,7 @@ char* run_cygpath(const char* option, const char* arg);
 #endif
 void run_jni_interactive();
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* LMNTAL_JNI_H */
 

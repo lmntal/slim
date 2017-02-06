@@ -39,6 +39,10 @@
 #ifndef LMN_LOADER_H
 #define LMN_LOADER_H
 
+/**
+ * @defgroup Loader
+ */
+
 #include "load.h"
 #include "syntax.h"
 #include "translate.h"

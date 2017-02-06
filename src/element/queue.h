@@ -44,7 +44,11 @@
 #ifndef LMN_QUEUE_H
 #define LMN_QUEUE_H
 
-/* cldoc:begin-category(Queue) */
+/**
+ * @ingroup Element
+ * @defgroup Queue
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "lmntal_thread.h"
@@ -251,6 +255,6 @@ static inline void deq_print(Deque *deq) {
   fprintf(f, "]\n");
 }
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

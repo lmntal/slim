@@ -40,7 +40,11 @@
 #ifndef LMN_MEMSTACK_H
 #define LMN_MEMSTACK_H
 
-/* cldoc:begin-category(Lmntal::MembraneStack) */
+/**
+ * @ingroup VM
+ * @defgroup Memstack
+ * @{
+ */
 
 typedef struct Vector *LmnMemStack;
 
@@ -56,6 +60,6 @@ LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack);
 void lmn_memstack_delete(LmnMemStack memstack, LmnMembraneRef mem);
 void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

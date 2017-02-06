@@ -39,13 +39,17 @@
 #ifndef LMN_SYSTEM_RULESET_H
 #define LMN_SYSTEM_RULESET_H
 
-/* cldoc:begin-category(Lmntal::SystemRuleset) */
+/**
+ * @ingroup VM
+ * @defgroup SystemRuleset
+ * @{
+ */
 
 #include "membrane.h"
 
 BOOL delete_redundant_outproxies(LmnMembraneRef mem);
 BOOL delete_redundant_inproxies(LmnMembraneRef mem);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

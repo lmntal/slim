@@ -40,7 +40,11 @@
 #ifndef RUNTIME_STATUS_H
 #define RUNTIME_STATUS_H
 
-/* cldoc:begin-category(Lmntal::Runtime) */
+/**
+ * @ingroup  Verifier
+ * @defgroup Runtime
+ * @{
+ */
 
 #include "lmntal.h"
 #include "element/element.h"
@@ -212,6 +216,6 @@ void profile_peakcounter_pop(PeakCounter *p, unsigned long size);
 #  define profile_apply()
 #endif
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

@@ -39,7 +39,11 @@
 #ifndef MC_DPOR_H
 #define MC_DPOR_H
 
-/* cldoc:begin-category(Verifier::Dpor) */
+/**
+ * @ingroup  Verifier
+ * @defgroup DPOR
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "delta_membrane.h"
@@ -140,6 +144,6 @@ void dpor_contextC1_dump_eachR(ContextC1Ref c);
 void dpor_contextC1_dump(McDporData *d);
 int  dpor_dependency_tbl_dump(McDporData *d);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

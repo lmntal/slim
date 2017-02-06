@@ -39,7 +39,11 @@
 #ifndef LMN_INSTRUCTION_H
 #define LMN_INSTRUCTION_H
 
-/* cldoc:begin-category(Lmntal::Instruction) */
+/**
+ * @ingroup VM
+ * @defgroup Instruction
+ * @{
+ */
 
 #include "lmntal.h"
 
@@ -282,6 +286,6 @@ struct InstrSpec {
   enum ArgType args[128];
 };
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

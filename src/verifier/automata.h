@@ -40,7 +40,11 @@
 #ifndef LMN_PROP_AUTOMATA
 #define LMN_PROP_AUTOMATA
 
-/* cldoc:begin-category(Verifier::Automata) */
+/**
+ * @ingroup  Verifier
+ * @defgroup Automata
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "element/element.h"
@@ -118,6 +122,6 @@ BOOL               eval_formula(LmnMembraneRef mem, Vector *prop_defs, PLFormula
 /* never claim */
 int                never_claim_load(FILE *f, AutomataRef *a);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* LMN_PROP_AUTOMATA */

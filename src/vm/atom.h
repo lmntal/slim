@@ -39,7 +39,11 @@
 #ifndef LMN_ATOM_H
 #define LMN_ATOM_H
 
-/* cldoc:begin-category(Lmntal::Atom) */
+/**
+ * @ingroup VM
+ * @defgroup Atom
+ * @{
+ */
 
 #include "lmntal.h"
 #include "special_atom.h"
@@ -218,7 +222,7 @@ void lmn_destroy_double_atom(LmnDataAtomRef atom);
   } while (0)
 
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* LMN_ATOM_H */
 

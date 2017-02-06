@@ -39,7 +39,6 @@
 #ifndef LMNTAL_H
 #define LMNTAL_H
 
-/* cldoc:begin-category(Lmntal) */
 
 #include "config.h"
 #include <stdio.h>

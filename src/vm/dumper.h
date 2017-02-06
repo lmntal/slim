@@ -39,7 +39,11 @@
 #ifndef LMN_DUMPER_H
 #define LMN_DUMPER_H
 
-/* cldoc:begin-category(Lmntal::Dumper) */
+/**
+ * @ingroup VM
+ * @defgroup Dumper
+ * @{
+ */
 
 #include "lmntal.h"
 #include "element/element.h"
@@ -62,6 +66,6 @@ void dump_escaped(LmnPortRef port, const char *s);
 
 extern char char_to_escape_char[];
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* LMN_DUMPER_H */

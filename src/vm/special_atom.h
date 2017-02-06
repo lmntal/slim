@@ -49,7 +49,11 @@
 #ifndef LMN_SPECIAL_ATOM_H
 #define LMN_SPECIAL_ATOM_H
 
-/* cldoc:begin-category(Lmntal::SpecialAtom) */
+/**
+ * @ingroup VM
+ * @defgroup SpecialAtom
+ * @{
+ */
 
 #include "lmntal.h"
 #include "element/element.h"
@@ -103,6 +107,6 @@ struct SpecialAtomCallback * sp_atom_get_callback(int id);
   (LMN_SP_ATOM_TYPE(ATOM1) == LMN_SP_ATOM_TYPE(ATOM2) && \
    sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM1))->eq((void *)(ATOM1), (void *)(ATOM2)))
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* LMN_SPECIALATOM_H */

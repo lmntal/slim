@@ -43,7 +43,11 @@
 #include "vm/vm.h"
 #include "element/element.h"
 
-/* cldoc:begin-category(IL) */
+/**
+ * @ingroup  Loader
+ * @defgroup Syntax
+ * @{
+ */
 
 /* 型名の解決の為に上に持ってきた */
 typedef Vector *InstList;
@@ -212,6 +216,6 @@ struct lexer_context {
   st_table_t ruleset_id_tbl;
 };
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

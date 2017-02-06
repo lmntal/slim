@@ -40,7 +40,11 @@
 #ifndef LMN_MC_WORKER_H
 #define LMN_MC_WORKER_H
 
-/* cldoc:begin-category(Verifier::Worker) */
+/**
+ * @ingroup  Verifier
+ * @defgroup Worker
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "statespace.h"
@@ -413,6 +417,6 @@ void lmn_update_opt_cost(LmnWorkerGroup *wp, State *new_s, BOOL f);
 
 LmnWorker *worker_next_generator(LmnWorker* w);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

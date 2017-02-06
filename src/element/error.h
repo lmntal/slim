@@ -36,7 +36,11 @@
  * $Id: error.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
  */
 
-/* cldoc:begin-category(Lmntal::Error) */
+/**
+ * @ingroup Element
+ * @defgroup Error
+ * @{
+ */
 
 #include "lmntal.h"
 
@@ -58,4 +62,4 @@
 void do_lmn_fatal(const char *file, int line, const char *msg);
 LMN_EXTERN void lmn_report(const char *msg, ...);
 
-/* cldoc:end-category() */
+/* @} */

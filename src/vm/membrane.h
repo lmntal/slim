@@ -39,8 +39,12 @@
 #ifndef LMN_MEMBRANE_H
 #define LMN_MEMBRANE_H
 
-/* cldoc:begin-category(Lmntal::Membrane) */
 
+/**
+ * @ingroup VM
+ * @defgroup Membrane
+ * @{
+ */
 typedef struct LmnMembrane *LmnMembraneRef;
 
 typedef struct AtomListEntry *AtomListEntryRef;
@@ -388,6 +392,6 @@ typedef int AtomListIter;
 
 /* LmnSAtom* lmn_atomlist_end(AtomSetEntry * ent); */
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* LMN_MEMBRANE_H */

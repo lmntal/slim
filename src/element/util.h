@@ -43,6 +43,11 @@
 #include "../lmntal.h"
 #include "error.h"
 
+/**
+ * @ingroup  Element
+ * @defgroup Util
+ * @{
+ */
 
 /** ----------------------
  *  ASCII code for printer
@@ -165,5 +170,6 @@ static inline unsigned long round2up(unsigned long n) {
   return v;
 }
 
+/* @} */
 
 #endif /* !LMN_UTIL_H */

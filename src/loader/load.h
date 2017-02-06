@@ -39,7 +39,11 @@
 #ifndef LMN_LOAD_H
 #define LMN_LOAD_H
 
-/* cldoc:begin-category(IL) */
+/**
+ * @ingroup  Loader
+ * @defgroup Load
+ * @{
+ */
 
 #include "vm/vm.h"
 #include "syntax.h"
@@ -57,9 +61,9 @@ void finalize_so_handles();
 /* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
 char *create_formatted_basename(const char *path);
 
-/* cldoc:end-category() */
-
 /* 最適化レベルの最大値 */
 #define OPTIMIZE_LEVEL_MAX 3
+
+/* @} */
 
 #endif /* LMN_MEMBRANE_H */

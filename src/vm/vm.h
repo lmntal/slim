@@ -40,6 +40,14 @@
 #ifndef LMN_VM_H
 #define LMN_VM_H
 
+/**
+ * @defgroup Ext
+ */
+
+/**
+ * @defgroup VM
+ */
+
 #include "ccallback.h"
 #include "dumper.h"
 #include "instruction.h"

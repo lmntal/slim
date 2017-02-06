@@ -39,7 +39,11 @@
 #ifndef LMN_VECTOR_H
 #define LMN_VECTOR_H
 
-/* cldoc:begin-category(Vector) */
+/**
+ * @ingroup  Element
+ * @defgroup Vector
+ * @{
+ */
 
 #include "../lmntal.h"
 
@@ -176,6 +180,6 @@ static inline unsigned long vec_space(Vector *v) {
   return sizeof(struct Vector) + vec_space_inner(v);
 }
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif /* LMN_VECTOR_H */

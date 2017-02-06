@@ -41,15 +41,37 @@
 #include "element/element.h"
 #include "vm/vm.h"
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 static int array_atom_type; /* special atom type */
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 #define LMN_ARRAY_SIZE(obj) (LMN_ARRAY(obj)->size)
+/**
+ * @memberof LmnArray
+ * @private
+ */
 #define LMN_ARRAY_TYPE(obj) (LMN_ARRAY(obj)->type)
+/**
+ * @memberof LmnArray
+ * @private
+ */
 #define LMN_ARRAY_OWNER(obj) (LMN_ARRAY(obj)->owner)
+/**
+ * @memberof LmnArray
+ * @private
+ */
 #define LMN_ARRAY_DATA(obj) (LMN_ARRAY(obj)->data)
 
-/*
- * Internal Constructor
+/**
+ * @brief Internal Constructor
+ * @memberof LmnArray
+ * @private
  */
 static LmnArrayRef make_array(LmnMembraneRef mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
@@ -93,11 +115,19 @@ static LmnArrayRef make_array(LmnMembraneRef mem, LmnAtom size, LmnAtom init_val
   return a;
 }
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 LmnArrayRef lmn_make_array(LmnMembraneRef mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
 {
   return make_array(mem, size, init_value, init_type);
 }
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 void lmn_array_free(LmnArrayRef array, LmnMembraneRef mem)
 {
   unsigned long i;
@@ -125,6 +155,10 @@ void lmn_array_free(LmnArrayRef array, LmnMembraneRef mem)
   LMN_FREE(array);
 }
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 LmnArrayRef lmn_array_copy(LmnArrayRef array)
 {
   /* copy the descriptor and share data */
@@ -158,6 +192,10 @@ LmnArrayRef lmn_array_copy(LmnArrayRef array)
  * +a1: 初期値
  * -a2: 配列
  */
+/**
+ * @memberof LmnArray
+ * @private
+ */
 void cb_array_new(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0,
@@ -186,6 +224,10 @@ void cb_array_new(LmnReactCxtRef rc,
  *
  * +a0: 配列
  */
+/**
+ * @memberof LmnArray
+ * @private
+ */
 void cb_array_free(LmnReactCxtRef rc,
     LmnMembraneRef mem,
     LmnAtom a0, LmnLinkAttr t0)
@@ -200,6 +242,10 @@ void cb_array_free(LmnReactCxtRef rc,
  * +a0: 配列
  * -a1: 要素数
  * -a2: 新配列
+ */
+/**
+ * @memberof LmnArray
+ * @private
  */
 void cb_array_size(LmnReactCxtRef rc,
     LmnMembraneRef mem,
@@ -225,6 +271,10 @@ void cb_array_size(LmnReactCxtRef rc,
  * +a1: 添字
  * -a2: 要素値
  * -a3: 新配列
+ */
+/**
+ * @memberof LmnArray
+ * @private
  */
 void cb_array_get(LmnReactCxtRef rc,
     LmnMembraneRef mem,
@@ -273,6 +323,10 @@ void cb_array_get(LmnReactCxtRef rc,
  * +a1: 添字
  * +a2: 要素値
  * -a3: 新配列
+ */
+/**
+ * @memberof LmnArray
+ * @private
  */
 void cb_array_put(LmnReactCxtRef rc,
     LmnMembraneRef mem,
@@ -323,17 +377,29 @@ void cb_array_put(LmnReactCxtRef rc,
  * Initialization
  */
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 void *sp_cb_array_copy(void *data)
 {
   return lmn_array_copy(LMN_ARRAY(data));
 }
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 void sp_cb_array_free(void *data)
 {
   lmn_array_free(LMN_ARRAY(data),NULL);
 }
 
 /* てきとーに定義した */
+/**
+ * @memberof LmnArray
+ * @private
+ */
 BOOL sp_cb_array_eq(void *_p1, void *_p2)
 {
   return FALSE;
@@ -342,6 +408,10 @@ BOOL sp_cb_array_eq(void *_p1, void *_p2)
 /* defined in string.c */
 void sp_cb_string_dump(void *s, LmnPortRef port);
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 void sp_cb_array_dump(void *array, LmnPortRef port)
 {
   unsigned long i, size;
@@ -381,11 +451,19 @@ void sp_cb_array_dump(void *array, LmnPortRef port)
   port_put_raw_s(port, ">");
 }
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 BOOL sp_cp_array_is_ground(void *data)
 {
   return FALSE;  /* since deep copying is not implemented */
 }
 
+/**
+ * @memberof LmnArray
+ * @private
+ */
 void init_array()
 {
   array_atom_type = lmn_sp_atom_register("array",

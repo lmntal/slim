@@ -38,7 +38,11 @@
 #ifndef MHASH_H
 #define MHASH_H
 
-/* cldoc:begin-category(Verifier::MembraneHash) */
+/**
+ * @ingroup  Verifier
+ * @defgroup MembraneHash
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "vm/vm.h"
@@ -46,6 +50,6 @@
 unsigned long mhash(LmnMembraneRef mem);
 void mhash_set_depth(int depth);
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

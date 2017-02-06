@@ -40,6 +40,12 @@
 #ifndef LMN_CLOCK_H
 #define LMN_CLOCK_H
 
+/**
+ * @ingroup Element
+ * @defgroup Clock
+ * @{
+ */
+
 /* ------------------------------------------------------------------------
  * CPU時間・実経過時間を返す.
  * 取得可能な時間がナノ秒ではあるが精度もその通りであるとは限らないため注意
@@ -49,5 +55,7 @@
  * プロセッサ間でスレッドがスイッチした場合に誤差がでるので結果は鵜呑みせずあくまで目安とする */
 double get_cpu_time(void);
 double get_wall_time(void);
+
+/* @} */
 
 #endif /* LMN_CLOCK_H */

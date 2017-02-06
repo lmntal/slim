@@ -40,6 +40,10 @@
 #ifndef LMN_VERIFIER_H
 #define LMN_VERIFIER_H
 
+/**
+ * @defgroup Verifier
+ */
+
 #include "automata.h"
 #include "binstr_compress.h"
 #include "delta_membrane.h"

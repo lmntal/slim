@@ -42,7 +42,10 @@
 
 #include "../lmntal.h"
 
-
+/**
+ * @ingroup  Ext
+ * @struct LmnArray array.h "ext/array.h"
+ */
 struct LmnArray {
   LMN_SP_ATOM_HEADER;
 
@@ -56,5 +59,6 @@ struct LmnArray {
 typedef struct LmnArray *LmnArrayRef;
 
 #define LMN_ARRAY(obj) ((LmnArrayRef)(obj))
+
 
 #endif

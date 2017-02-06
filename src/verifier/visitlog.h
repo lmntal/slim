@@ -38,7 +38,11 @@
 #ifndef LMN_VISITLOG_H
 #define LMN_VISITLOG_H
 
-/* cldoc:begin-category(VisitLog) */
+/**
+ * @ingroup  Verifier
+ * @defgroup VisitLog
+ * @{
+ */
 
 #include "../lmntal.h"
 #include "element/element.h"
@@ -864,6 +868,6 @@ static inline int visitlog_element_num(VisitLogRef visitlog) {
   return visitlog->element_num;
 }
 
-/* cldoc:end-category() */
+/* @} */
 
 #endif

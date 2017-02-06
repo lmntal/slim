@@ -1,4 +1,4 @@
-SLIM - slim LMNtal imprementation
+SLIM - slim LMNtal imprementation {#mainpage}
 ===============================
 
 バグ報告は lmntal@ueda.info.waseda.ac.jp までお願いします。
