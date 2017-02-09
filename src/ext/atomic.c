@@ -390,6 +390,7 @@ BOOL react_ruleset_atomic(LmnReactCxt *rc,
   case ATOMIC_ALL_EXHAUSTIVE:
     if (RC_GET_MODE(rc, REACT_ND)) {
       result = react_ruleset_atomic_all(rc, mem, rs);
+      break;
     } /*
     else  FALLTHROUTH */
   case ATOMIC_SIMULATION:
