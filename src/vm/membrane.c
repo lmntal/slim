@@ -1299,8 +1299,6 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
     }));
   }));
 
-  lmn_mem_natoms_copy(destmem, srcmem);
-
 //  /* copy activated flag */
 //  destmem->is_activated = srcmem->is_activated; /* MC */
   destmem->is_activated = TRUE;
