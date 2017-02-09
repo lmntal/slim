@@ -2,13 +2,13 @@ SUBDIRS = verifier vm loader element ffi
 
 bin_PROGRAMS = slim
 
-slim_LDADD =   -ldl                                    \
-               -llmn_loader                            \
+slim_LDADD =   -llmn_loader                            \
                -llmn_verifier                          \
                -llmn_vm                                \
                -llmn_ffi                               \
                -llmn_elm                               \
-               -lzd_in_slim
+               -lzd_in_slim                            \
+               -ldl
 slim_LDFLAGS = -L./verifier                            \
                -L./loader                              \
                -L./ffi                                 \
