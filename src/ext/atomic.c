@@ -283,7 +283,13 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxt *rc,
   return ret;
 }
 
-
+static inline BOOL react_ruleset_atomic_simulation_nd(LmnReactCxt *rc,
+						      LmnMembrane *mem,
+						      LmnRuleSetRef at_set)
+{
+  printf("!!!\n");
+  return FALSE;
+}
 /* ルールセットat_setのルールを書換えが停止するまで繰返し適用する．
  * ルールセットの停止性と合流性を仮定している．非決定モードでも
  * 複数の書換え経路の探索は行わない．
@@ -394,7 +400,10 @@ BOOL react_ruleset_atomic(LmnReactCxt *rc,
     } /*
     else  FALLTHROUTH */
   case ATOMIC_SIMULATION:
-    result = react_ruleset_atomic_simulation(rc, mem, rs);
+    if(RC_GET_MODE(rc, REACT_ND))
+      result = react_ruleset_atomic_simulation_nd(rc, mem, rs);
+    else
+      result = react_ruleset_atomic_simulation(rc, mem, rs);      
     break;
   default:
     lmn_fatal("unexpected react testing");
