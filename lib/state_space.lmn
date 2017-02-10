@@ -183,7 +183,7 @@
 % state_space.use.
 % n(0), t(0).
 % run@@Ret = run(Rs, {$ini[]}), n($n) :- $nn = $n+1 |
-%     Ret = exp0(Rs, s(ID, {$ini[]}), hash.state_map_find(hash.state_map_init, {$ini[]}, ID), set.init, set.init), n($nn).
+%     Ret = exp0(Rs, s(ID, {$ini[]}), state_space.state_map_find(state_space.state_map_init, {$ini[]}, ID), set.init, set.init), n($nn).
 
 % exp0@@Ret = exp0(Rs, s($id, {$ini[]}), M, S, T) :- int($id) |
 %     Ret = exp(Rs, [s($id, {$ini[]})], M, set.insert(S, $id), T).
@@ -191,7 +191,7 @@
 % exp0@@Ret = exp({$rs[], @rs}, [], M, S, T) :-
 %     Ret = state_space(M, S, T).
 
-% free@@Ret = state_space(M, S, T) :- Ret = state_space, hash.state_map_free(M), set.free(S), set.free(T).
+% free@@Ret = state_space(M, S, T) :- Ret = state_space, state_space.state_map_free(M), set.free(S), set.free(T).
 
 % exp1@@Ret = exp({$rs[], @rs}, [s($id, {$src[]})|Stk], M, S, T) :- int($id) |
 %     Ret = suc(Rs, Stk, state_space.react_nd_set({$rs[], @rs}, {$src[]}, Rs), s($id, {$src[]}), M, S, T).
@@ -200,7 +200,7 @@
 %     Ret = exp(Rs, Stk, M, S, T).
 
 % suc1@@Ret = suc(Rs, Stk, [{$dest[]}|Suc], Src, M, S, T) :-
-%     Ret = ns0(Rs, Stk, Suc, Src, s(ID, {$dest[]}), hash.state_map_find(M, {$dest[]}, ID), S, T).
+%     Ret = ns0(Rs, Stk, Suc, Src, s(ID, {$dest[]}), state_space.state_map_find(M, {$dest[]}, ID), S, T).
 
 % ns0@@Ret = ns0(Rs, Stk, Suc, Src, s($id_d, {$dest[]}), M, S, T) :- int($id_d) |
 %     Ret = ns(Rs, Stk, Suc, Res, Src, s($id_d, {$dest[]}), M, set.find(S, $id_d, Res), T).

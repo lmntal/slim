@@ -536,4 +536,5 @@ void init_hash(void)
   lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find, 4);
   lmn_register_c_fun("cb_set_put", (void *)cb_set_put, 3);
   lmn_register_c_fun("cb_set_get", (void *)cb_set_get, 4);
+  lmn_register_c_fun("cb_set_free", (void *)cb_hash_free, 1);
 }
