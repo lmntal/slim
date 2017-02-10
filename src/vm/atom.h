@@ -52,17 +52,22 @@
 #include "symbol.h"
 #include "hyperlink.h"
 
-/** Atom Structure
+
+typedef void *LmnAtomRef;
+typedef LmnWord LmnDataAtomRef;
+/**
+ * @struct LmnSymbolAtom
  *
- *  * Atom
- *      1st Word      : アトムリストにおけるprevポインタ
- *      2nd Word      : アトムリストにおけるnextポインタ
- *      3rd Word      : アトムと膜に割り当てる一意な整数ID
- *      aligned Word  : 以下のByte要素の合計をWordサイズへアラインメント
- *        next 2 Bytes: アトムの種類(アトム名とリンク数の組)を表すfunctorに対応した整数ID
- *        N Bytes     : リンク属性   (1 Byte * N本)
- *      N Words       : リンクデータ (1 Word * N本)
- *    (Nはリンクの数)
+ *  Atom Structure
+ *
+ *  * Atom (Nはリンクの数)
+ *   -  1st Word      : アトムリストにおけるprevポインタ
+ *   -  2nd Word      : アトムリストにおけるnextポインタ
+ *   -  3rd Word      : アトムと膜に割り当てる一意な整数ID
+ *   -  aligned Word  : 以下のByte要素の合計をWordサイズへアラインメント
+ *   --   next 2 Bytes: アトムの種類(アトム名とリンク数の組)を表すfunctorに対応した整数ID
+ *   --   N Bytes     : リンク属性   (1 Byte * N本)
+ *   -  N Words       : リンクデータ (1 Word * N本)
  *
  *  * Link Attribute
  *     リンク属性は, 先頭1ビットが立っていない場合は, 下位7bitが接続先リンクの番号を記録しており,
@@ -85,9 +90,6 @@
  *     But, incompletely-specified.
  *
  */
-
-typedef void *LmnAtomRef;
-typedef LmnWord LmnDataAtomRef;
 typedef struct LmnAtomData *LmnSymbolAtomRef;
 
 #include "lmntal.h"
@@ -103,89 +105,230 @@ typedef struct LmnAtomData *LmnSymbolAtomRef;
 #define LMN_ATOM(X)                     ((LmnAtom)(X))
 #define LMN_SATOM(X)                    ((LmnSAtom)(X))
 
-/* アトムリストからATOMのprev/nextアトムを取得/設定する.
- * アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする */
+/**
+ * @brief アトムリストからATOMのprevアトムを取得する.
+ *        アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする
+ * @memberof LmnSymbolAtom
+ */
 LmnSymbolAtomRef LMN_SATOM_GET_PREV(LmnSymbolAtomRef atom);
+/**
+ * @brief アトムリストからATOMのprevアトムを設定する.
+ *        アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする
+ * @memberof LmnSymbolAtom
+ */
 void LMN_SATOM_SET_PREV(LmnSymbolAtomRef atom, LmnSymbolAtomRef prev);
+/**
+ * @brief アトムリストからATOMのnextアトムを取得する.
+ *        アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする
+ * @memberof LmnSymbolAtom
+ */
 LmnSymbolAtomRef LMN_SATOM_GET_NEXT_RAW(LmnSymbolAtomRef atom);
+/**
+ * @brief アトムリストからATOMのnextアトムを設定する.
+ *        アトムリストから履歴アトムを読み飛ばさないので, 呼び出し側で適宜なんとかする
+ * @memberof LmnSymbolAtom
+ */
 void LMN_SATOM_SET_NEXT(LmnSymbolAtomRef atom, LmnSymbolAtomRef next);
 
 
 /* ファンクタIDの取得/設定, ファンクタIDからリンク数の取得のユーティリティ（プロキシはリンク1本分余分にデータ領域があるので分岐する） */
 
-/* アトムATOMのプロセスIDを取得/設定 */
+/**
+ * @brief アトムATOMのプロセスIDを取得
+ * @memberof LmnSymbolAtom
+ */
 LmnWord LMN_SATOM_ID(LmnSymbolAtomRef atom);
+/**
+ * @brief アトムATOMのプロセスIDを設定
+ * @memberof LmnSymbolAtom
+ */
 void LMN_SATOM_SET_ID(LmnSymbolAtomRef atom, LmnWord id);
 
+/**
+ * @brief ファンクタIDの取得
+ * @memberof LmnSymbolAtom
+ */
 LmnFunctor LMN_SATOM_GET_FUNCTOR(LmnSymbolAtomRef atom);
+/**
+ * @brief ファンクタIDの設定
+ * @memberof LmnSymbolAtom
+ */
 void LMN_SATOM_SET_FUNCTOR(LmnSymbolAtomRef atom, LmnFunctor func);
+/**
+ * @brief 価数の取得
+ * @memberof LmnSymbolAtom
+ */
 int LMN_SATOM_GET_ARITY(LmnSymbolAtomRef atom);
+/**
+ * @brief ファンクタから価数を取得する
+ * @memberof LmnSymbolAtom
+ */
 int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor atom);
+/**
+ * @brief リンク本数の取得
+ * @memberof LmnSymbolAtom
+ */
 int LMN_SATOM_GET_LINK_NUM(LmnSymbolAtomRef atom);
 
 
 /* アトムATOMのN番目のリンク属性/リンクデータを取得 */
+/**
+ * @brief アトムATOMのN番目のリンク属性を取得
+ * @memberof LmnSymbolAtom
+ */
 LmnLinkAttr LMN_SATOM_GET_ATTR(LmnSymbolAtomRef atom, int n);
+/**
+ * @brief アトムATOMのN番目のリンク属性を設定
+ * @memberof LmnSymbolAtom
+ */
 void LMN_SATOM_SET_ATTR(LmnSymbolAtomRef atom, int n, LmnLinkAttr attr);
+/**
+ * @brief アトムATOMのN番目のリンク情報を取得
+ * @memberof LmnSymbolAtom
+ */
 LmnAtomRef LMN_SATOM_GET_LINK(LmnSymbolAtomRef atom, int n);
+/**
+ * @brief アトムATOMのN番目のリンク属性を設定
+ * @memberof LmnSymbolAtom
+ */
 void LMN_SATOM_SET_LINK(LmnSymbolAtomRef atom, int n, LmnAtomRef v);
+/**
+ * @brief ハイパーリンクアトムATOMにリンクを設定する
+ * @memberof LmnSymbolAtom
+ */
 void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v);
 
+/**
+ * @brief アトムATOMのN番目のリンク情報のフィールドへのポインタを取得する
+ * @memberof LmnSymbolAtom
+ */
 const LmnAtomRef *LMN_SATOM_PLINK(LmnSymbolAtomRef atom, int n);
 
 
-/* size of atom の加算は prev, next, id, functorのワード */
+/**
+ * @brief アトムのサイズを取得する
+ * @memberof LmnSymbolAtom
+ *
+ * @details size of atom の加算は prev, next, id, functorのワード
+ */
 size_t LMN_SATOM_SIZE(int arity);
 
-/* リンク属性ATTRであるアトムATOMのファンクタがFUNCならばTRUEを返す */
+/**
+ * @brief リンク属性ATTRであるアトムATOMのファンクタがFUNCならばTRUEを返す
+ * @memberof LmnSymbolAtom
+ */
 BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC);
 
-/* operations for link attribute */
+/**
+ * @brief check whether a link attribute is for data.
+ * @memberof LmnLinkAttr
+ */
 BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr);
-/* make data/link link attribute from value */
+/**
+ * @brief make a link attribute for data from value
+ * @memberof LmnLinkAttr
+ */
 LmnLinkAttr LMN_ATTR_MAKE_DATA(int X);
+/**
+ * @brief make a link attribute for link from value
+ * @memberof LmnLinkAttr
+ */
 LmnLinkAttr LMN_ATTR_MAKE_LINK(int X);
-/* get link attribute value (remove tag) */
+/**
+ * @brief get link attribute value (remove tag)
+ * @memberof LmnLinkAttr
+ */
 int LMN_ATTR_GET_VALUE(int X);
-/* set link attribute value. Tag is not changed. */
+/**
+ * @brief set link attribute value. Tag is not changed.
+ * @memberof LmnLinkAttr
+ */
 void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X);
 
-/* get/set membrane of proxy */
+/**
+ * @brief check whether an atom is a proxy atom.
+ * @memberof LmnSymbolAtom
+ */
 BOOL LMN_SATOM_IS_PROXY(LmnSymbolAtomRef ATOM);
+/**
+ * @brief get the membrane of a proxy
+ * @memberof LmnSymbolAtom
+ */ 
 LmnMembraneRef LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM);
+/**
+ * @brief set the membrane of a proxy
+ * @memberof LmnSymbolAtom
+ */
 void LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembraneRef X);
+/**
+ * @brief check whether a functor is a proxy functor.
+ * @memberof LmnFunctor
+ */
 BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC);
+/**
+ * @brief check whether a functor represents a symbol atom.
+ * @memberof LmnFunctor
+ */
 BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC);
 
+/**
+ * @brief get a string representation of a symbol atom.
+ * @memberof LmnSymbolAtom
+ */
 const char *LMN_SATOM_STR(LmnSymbolAtomRef ATOM);
+/**
+ * @brief get a string representation of a functor.
+ * @memberof LmnFunctor
+ */
 const char *LMN_FUNCTOR_STR(LmnFunctor F);
 
-/* operations for extended atom */
+/**
+ * @brief check whether a link attribute is for data except an exclamation atom.
+ * @memberof LmnLinkAttr
+ */
 BOOL LMN_ATTR_IS_DATA_WITHOUT_EX(LmnLinkAttr ATTR);
+/**
+ * @brief check whether a link attribute is for an exclamation atom.
+ * @memberof LmnLinkAttr
+ */
 BOOL LMN_ATTR_IS_EX(LmnLinkAttr ATTR);
+/**
+ * @brief check whether a functor represents an exclamation atom.
+ * @memberof LmnFunctor
+ */
 BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC);
 
-/* link attribute of primitive data type */
-/* low 7 bits of link attribute */
-enum {
-  LMN_INT_ATTR       = LMN_ATTR_FLAG | 0x00U,
-  LMN_DBL_ATTR       = LMN_ATTR_FLAG | 0x01U,
-  LMN_SP_ATOM_ATTR   = LMN_ATTR_FLAG | 0x03U,
-  LMN_STRING_ATTR    = LMN_SP_ATOM_ATTR,
-  /* 定数アトム */
-  LMN_CONST_STR_ATTR = LMN_ATTR_FLAG | 0x04U,
-  LMN_CONST_DBL_ATTR = LMN_ATTR_FLAG | 0x05U,
-  /* ハイパーリンクアトム (⊂ extended atom ⊂ data atom ⊂ unary) 
-  ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意 */
-  LMN_HL_ATTR        = LMN_ATTR_FLAG | 0x0aU
+/**
+ * @brief link attributes of primitive data type
+ *
+ * low 7 bits of link attribute <br>
+ * ハイパーリンクアトム (⊂ extended atom ⊂ data atom ⊂ unary) <br>
+ * ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意
+ */
+enum LmnLinkAttribute {
+  LMN_INT_ATTR       = LMN_ATTR_FLAG | 0x00U, /**< integer literal */
+  LMN_DBL_ATTR       = LMN_ATTR_FLAG | 0x01U, /**< double literal */
+  LMN_SP_ATOM_ATTR   = LMN_ATTR_FLAG | 0x03U, /**< special atom */
+  LMN_STRING_ATTR    = LMN_SP_ATOM_ATTR,      /**< string literal */
+  LMN_CONST_STR_ATTR = LMN_ATTR_FLAG | 0x04U, /**< @deprecated constant string literal */
+  LMN_CONST_DBL_ATTR = LMN_ATTR_FLAG | 0x05U, /**< @deprecated constant double literal */
+  LMN_HL_ATTR        = LMN_ATTR_FLAG | 0x0aU  /**< exclamation atom */
 };
 
-/*----------------------------------------------------------------------
- * allocation
- */
 
+/**
+ * @brief create a new symbol atom.
+ * @member LmnSymbolAtom
+ */
 LmnSymbolAtomRef lmn_new_atom(LmnFunctor f);
+/**
+ * @brief delete a symbol atom
+ * @member LmnSymbolAtom
+ */
 void lmn_delete_atom(LmnSymbolAtomRef ap);
+/**
+ * @brief free memory pools for atoms.
+ */
 void free_atom_memory_pools(void);
 
 
@@ -193,23 +336,71 @@ void free_atom_memory_pools(void);
 /*----------------------------------------------------------------------
  * functions
  */
+/**
+ * @brief initialize memory pools for atoms.
+ */
 void mpool_init(void);
+/**
+ * @brief copy an atom which \e attr indicates the kind of \e atom.
+ */
 LmnAtomRef lmn_copy_atom(LmnAtomRef atom, LmnLinkAttr attr);
+/**
+ * @brief copy a symbol atom.
+ */
 LmnSymbolAtomRef lmn_copy_satom(LmnSymbolAtomRef atom);
+/**
+ * @brief copy a data atom which \e attr indicates the kind of \e atom.
+ */
 LmnDataAtomRef lmn_copy_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr);
+/**
+ * @brief copy a symbol atom and its arguments of data atoms.
+ * @sa free_symbol_atom_with_buddy_data
+ */
 LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl);
+/**
+ * @brief free an atom which \e attr indicates the kind of \e atom.
+ */
 void lmn_free_atom(LmnAtomRef atom, LmnLinkAttr attr);
+/**
+ * @brief シンボルアトムとリンクで接続しているデータアトムを解放する
+ * @sa lmn_copy_satom_with_data
+ */
 void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom);
+/**
+ * @brief check whether two atoms have the same functors.
+ */
 BOOL lmn_eq_func(LmnAtomRef atom0, LmnLinkAttr attr0,
                  LmnAtomRef atom1,LmnLinkAttr attr1);
+/**
+ * @brief check whether a data atom is ground.
+ *
+ * @details A data atom is usually ground, while for a special atom it depends on its user callback.
+ */
 BOOL lmn_data_atom_is_ground(LmnDataAtomRef atom, LmnLinkAttr attr,
                              ProcessTableRef *hlinks);
+/**
+ * @brief check whether two data atoms equal.
+ */
 BOOL lmn_data_atom_eq(LmnDataAtomRef atom1, LmnLinkAttr attr1,
                       LmnDataAtomRef atom2, LmnLinkAttr attr2);
+/**
+ * @brief get double value from a data atom.
+ *
+ * @details if \e atom does not represent double, the return value is undefined.
+ */
 double lmn_get_double(LmnDataAtomRef atom);
+/**
+ * @brief create double atom from double value.
+ */
 LmnDataAtomRef lmn_create_double_atom(double d);
+/**
+ * @brief delete double atom.
+ */
 void lmn_destroy_double_atom(LmnDataAtomRef atom);
 
+/**
+ * @brief get the pointer to a double atom.
+ */
 #ifdef LMN_DOUBLE_IS_IMMEDIATE
 # define LMN_GETREF_DOUBLE(Atom) ((double *)&Atom)
 #else

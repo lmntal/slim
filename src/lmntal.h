@@ -112,6 +112,9 @@ typedef unsigned char BYTE, LmnByte;
 
 typedef LmnWord  LmnAtom;
 typedef void    *LmnSAtom;
+/**
+ * @struct LmnLinkAttr
+ */
 typedef uint8_t  LmnLinkAttr;
 
 //typedef uint16_t ProcessID;
