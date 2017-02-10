@@ -1,3 +1,4 @@
 #!/bin/sh
 ./check.pl \
-	/testsuite/proccxt/case1 \
+	/testsuite/proccxt/case1
+	
