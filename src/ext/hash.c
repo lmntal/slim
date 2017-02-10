@@ -11,11 +11,11 @@
 
 static int hash_atom_type;
 
-static int state_atom_type;
+static int state_map_atom_type;
 
 #define LMN_HASH_DATA(obj) (LMN_HASH(obj)->tbl)
-#define LMN_STATE_STBL(obj) (LMN_STATE(obj)->state_tbl)
-#define LMN_STATE_ITBL(obj) (LMN_STATE(obj)->id_tbl)
+#define LMN_STATE_MAP_STBL(obj) (LMN_STATE_MAP(obj)->state_tbl)
+#define LMN_STATE_MAP_ITBL(obj) (LMN_STATE_MAP(obj)->id_tbl)
 
 /*
  * Internal Constructor
@@ -29,10 +29,10 @@ static LmnHashRef lmn_make_hash(LmnMembrane *mem)
   return h;
 }
 
-static LmnStateRef lmn_make_state(LmnMembrane *mem)
+static LmnStateMapRef lmn_make_state_map(LmnMembrane *mem)
 {
-  LmnStateRef s = LMN_MALLOC(struct LmnState);
-  LMN_SP_ATOM_SET_TYPE(s, state_atom_type);
+  LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
+  LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
   s->state_tbl = st_init_table(&type_mem_hash);
   s->id_tbl = st_init_table(&type_id_hash);
   s->id = 0;
@@ -45,11 +45,11 @@ void lmn_hash_free(LmnHashRef hash, LmnMembrane *mem)
   LMN_FREE(hash);
 }
 
-void lmn_state_free(LmnStateRef state, LmnMembrane *mem)
+void lmn_state_map_free(LmnStateMapRef state_map, LmnMembrane *mem)
 {
-  st_free_table(((LmnStateRef)state)->state_tbl);
-  st_free_table(((LmnStateRef)state)->id_tbl);
-  LMN_FREE(state);
+  st_free_table(((LmnStateMapRef)state_map)->state_tbl);
+  st_free_table(((LmnStateMapRef)state_map)->id_tbl);
+  LMN_FREE(state_map);
 }
 
 /*----------------------------------------------------------------------
@@ -78,9 +78,9 @@ void cb_state_map_init(LmnReactCxt *rc,
 		       LmnMembrane *mem,
 		       LmnAtom a0, LmnLinkAttr t0)
 {
-  LmnStateRef atom = lmn_make_state(mem);
+  LmnStateMapRef atom = lmn_make_state_map(mem);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
-  LMN_SP_ATOM_SET_TYPE(atom, state_atom_type);
+  LMN_SP_ATOM_SET_TYPE(atom, state_map_atom_type);
   lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
@@ -104,7 +104,7 @@ void cb_state_map_free(LmnReactCxt *rc,
 		       LmnMembrane *mem,
 		       LmnAtom a0, LmnLinkAttr t0)
 {
-  lmn_state_free((LmnStateRef)a0, mem);
+  lmn_state_map_free((LmnStateMapRef)a0, mem);
   lmn_mem_remove_data_atom(mem, a0, t0);
 }
 
@@ -380,16 +380,16 @@ void cb_state_map_id_find(LmnReactCxt *rc,
 {
   st_data_t entry;
   LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-  int res = st_lookup(LMN_STATE_STBL(a0), (st_data_t)key, &entry);
+  int res = st_lookup(LMN_STATE_MAP_STBL(a0), (st_data_t)key, &entry);
 
   if(res){
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
 		    entry, LMN_INT_ATTR, 0);
   }else{
-    int x = LMN_STATE(a0)->id++;
-    st_insert(LMN_STATE_STBL(a0), (st_data_t)key, (st_data_t)x);
-    st_insert(LMN_STATE_ITBL(a0), (st_data_t)x, (st_data_t)key);
+    int x = LMN_STATE_MAP(a0)->id++;
+    st_insert(LMN_STATE_MAP_STBL(a0), (st_data_t)key, (st_data_t)x);
+    st_insert(LMN_STATE_MAP_ITBL(a0), (st_data_t)x, (st_data_t)key);
     lmn_mem_push_atom(mem, x, LMN_INT_ATTR);
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
@@ -417,7 +417,7 @@ void cb_state_map_state_find(LmnReactCxt *rc,
 {
   st_data_t entry;
   int key = a1;
-  int res = st_lookup(LMN_STATE_ITBL(a0), (st_data_t)key, &entry);
+  int res = st_lookup(LMN_STATE_MAP_ITBL(a0), (st_data_t)key, &entry);
   LmnSAtom result;
   if(res){
     result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 2));
@@ -480,32 +480,32 @@ void sp_cp_hash_is_ground(void *data)
   return FALSE;
 }
 
-void *sp_cb_state_copy(void *data)
+void *sp_cb_state_map_copy(void *data)
 {
-  LmnStateRef s = LMN_MALLOC(struct LmnState);
-  LMN_SP_ATOM_SET_TYPE(s, state_atom_type);
-  s->state_tbl = st_copy(((LmnStateRef)data)->state_tbl);
-  s->id_tbl = st_copy(((LmnStateRef)data)->id_tbl);
-  s->id = ((LmnStateRef)data)->id;
+  LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
+  LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
+  s->state_tbl = st_copy(((LmnStateMapRef)data)->state_tbl);
+  s->id_tbl = st_copy(((LmnStateMapRef)data)->id_tbl);
+  s->id = ((LmnStateMapRef)data)->id;
   return s;
 }
 
-void sp_cb_state_free(void *data)
+void sp_cb_state_map_free(void *data)
 {
-  lmn_state_free((LmnStateRef)data, NULL);
+  lmn_state_map_free((LmnStateMapRef)data, NULL);
 }
 
-void sp_cb_state_eq(void *_p1, void *_p2)
+void sp_cb_state_map_eq(void *_p1, void *_p2)
 {
   return FALSE;
 }
 
-void sp_cb_state_dump(void *state, LmnPortRef port)
+void sp_cb_state_map_dump(void *state_map, LmnPortRef port)
 {
   port_put_raw_s(port, "<state_map>");
 }
 
-void sp_cb_state_is_ground(void *data)
+void sp_cb_state_map_is_ground(void *data)
 {
   return FALSE;
 }
@@ -518,12 +518,12 @@ void init_hash(void)
 					sp_cb_hash_eq,
 					sp_cb_hash_dump,
 					sp_cp_hash_is_ground);
-  state_atom_type = lmn_sp_atom_register("state_map",
-					 sp_cb_state_copy,
-					 sp_cb_state_free,
-					 sp_cb_state_eq,
-					 sp_cb_state_dump,
-					 sp_cb_state_is_ground);
+  state_map_atom_type = lmn_sp_atom_register("state_map",
+					 sp_cb_state_map_copy,
+					 sp_cb_state_map_free,
+					 sp_cb_state_map_eq,
+					 sp_cb_state_map_dump,
+					 sp_cb_state_map_is_ground);
   lmn_register_c_fun("cb_hash_init", (void *)cb_hash_init, 1);
   lmn_register_c_fun("cb_hash_get", (void *)cb_hash_get, 5);
   lmn_register_c_fun("cb_hash_put", (void *)cb_hash_put, 4);

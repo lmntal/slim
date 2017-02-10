@@ -13,7 +13,7 @@ struct LmnHash{
   st_table_t tbl;		/* ハッシュ本体 */
 };
 
-struct LmnState{
+struct LmnStateMap{
   LMN_SP_ATOM_HEADER;
   int id;
   st_table_t state_tbl;
@@ -123,10 +123,10 @@ static struct st_hash_type type_tuple_hash =
   };
 
 typedef struct LmnHash *LmnHashRef;
-typedef struct LmnState *LmnStateRef;
+typedef struct LmnStateMap *LmnStateMapRef;
 
 #define LMN_HASH(obj) ((LmnHashRef)(obj))
-#define LMN_STATE(obj) ((LmnStateRef)(obj))
+#define LMN_STATE_MAP(obj) ((LmnStateMapRef)(obj))
 
 #endif
   

@@ -86,12 +86,4 @@ COMMENTS
 	'$callback'('cb_state_map_id_find', Map, {$key[]}, Res, Ret).
     Ret = hash.state_map_find(Map, $key, Res) :- class(Map, "state_map"), int($key) |
 	'$callback'('cb_state_map_state_find', Map, $key, Res, Ret).
-
-    Ret = hash.set_init :- '$callback'('cb_hash_init', Ret).
-
-    hash.set_free(Set) :- class(Set, "hash") | '$callback'('cb_hash_free', Set).
-
-    Ret = hash.set_insert(Set, Val) :- class(Set, "hash") | '$callback'('cb_set_put', Set, Val, Ret).
-
-    Ret = hash.set_find(Set, Val, Res) :- class(Set, "hash") | '$callback'('cb_set_get', Set, Val, Res, Ret).
 }.
