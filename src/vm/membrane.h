@@ -62,8 +62,6 @@ typedef struct LinkObj *LinkObjRef;
 
 LmnSAtom atomlist_head(AtomListEntryRef lst);
 LmnSAtom lmn_atomlist_end(AtomListEntryRef lst);
-//#define atomlist_head(L)                    (LMN_SATOM((L)->head))
-//#define lmn_atomlist_end(p_atomset_entry)   (LMN_SATOM(p_atomset_entry))
 int atomlist_ent_num(AtomListEntryRef lst);
 void atomlist_set_num(AtomListEntryRef lst, int n);
 void atomlist_add_num(AtomListEntryRef lst, int n);
