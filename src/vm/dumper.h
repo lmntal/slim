@@ -50,18 +50,62 @@
 #include "membrane.h"
 #include "rule.h"
 
+/** 
+ * @brief initialize dumper module.
+ *
+ * \e dumper_init must be called just once before use.
+ * This function just register callback so far.
+ */
 LMN_EXTERN void dumper_init(void);
+/** 
+ * @brief finalize dumper module.
+ *
+ * \e dumper_finalize muste be called just once after use.
+ * This function does nothing.
+ */
 LMN_EXTERN void dumper_finalize(void);
+/**
+ * @brief print a membrane to stdout.
+ */
 LMN_EXTERN void lmn_dump_mem_stdout(LmnMembraneRef mem);
+/**
+ * @brief print a membrane.
+ */
 LMN_EXTERN void lmn_dump_mem(LmnMembraneRef mem, LmnPortRef port);
+/**
+ * @brief print a membrane in development mode.
+ */
 LMN_EXTERN void lmn_dump_mem_dev(LmnMembraneRef mem);
+/**
+ * @brief print the contents of a membrane to stdout.
+ */
 LMN_EXTERN void lmn_dump_cell_stdout(LmnMembraneRef mem);
+/**
+ * @brief print the contents of a membrane.
+ */
 LMN_EXTERN void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port);
+/**
+ * @brief print a membrane in dot format.
+ */
 LMN_EXTERN void lmn_dump_dot(LmnMembraneRef mem);
+/**
+ * @brief print the instructions of a rule.
+ * @deprecated
+ */
 LMN_EXTERN void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs);
+/**
+ * @brief print rules.
+ * @deprecated
+ */
 LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, Vector *v);
+/**
+ * @brief print an atom and its connected ones.
+ */
 LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnWord atom, LmnLinkAttr attr);
 
+/**
+ * @brief print an escaped string.
+ */
 void dump_escaped(LmnPortRef port, const char *s);
 
 extern char char_to_escape_char[];
