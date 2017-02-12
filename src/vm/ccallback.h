@@ -54,9 +54,25 @@ struct CCallback {
   int arity;
 };
 
+/**
+ * @brief initialize ccallback module.
+ */
 void ccallback_init(void);
+/**
+ * @brief finalize ccallback module.
+ */
 void ccallback_finalize(void);
+/**
+ * @brief register a function as a callback.
+ *
+ * @param name a callmack name used in LMNtal.
+ * @param f a function that has a spacific signature (see \ref callback ).
+ * @param arity the number of arguments of the callback.
+ */
 void lmn_register_c_fun(const char *name, void *f, int arity);
+/**
+ * @brief get a function with its name.
+ */
 const struct CCallback *get_ccallback(lmn_interned_str name);
 
 /* @} */
