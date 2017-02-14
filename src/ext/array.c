@@ -73,32 +73,32 @@ static int array_atom_type; /* special atom type */
  * @memberof LmnArray
  * @private
  */
-static LmnArrayRef make_array(LmnMembraneRef mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
+static LmnArrayRef make_array(LmnMembraneRef mem, LmnWord size, LmnAtomRef init_value, LmnLinkAttr init_type)
 {
   unsigned long i;
-  LmnAtom v;
+  LmnAtomRef v;
 
   LmnArrayRef a = LMN_MALLOC(struct LmnArray);
   LMN_SP_ATOM_SET_TYPE(a, array_atom_type);
   LMN_ARRAY_SIZE(a) = size;
   LMN_ARRAY_TYPE(a) = init_type;
   LMN_ARRAY_OWNER(a) = TRUE;
-  LMN_ARRAY_DATA(a) = LMN_NALLOC(LmnWord, size);
+  LMN_ARRAY_DATA(a) = LMN_NALLOC(LmnAtomRef, (LmnWord)size);
   switch (init_type) {
     case LMN_INT_ATTR:
-      for (i = 0; i < size; i++) {
-        LMN_ARRAY_DATA(a)[i] = (long)init_value;
+      for (unsigned long i = 0; i < size; i++) {
+        LMN_ARRAY_DATA(a)[i] = (LmnAtomRef)init_value;
       }
       break;
     case LMN_DBL_ATTR:
       for (i = 0; i < size; i++) {
-        LMN_COPY_DBL_ATOM(v, init_value);
-        LMN_ARRAY_DATA(a)[i] = LMN_WORD(v);
+        v = (LmnAtomRef)lmn_create_double_atom(lmn_get_double((LmnDataAtomRef)init_value));
+        LMN_ARRAY_DATA(a)[i] = v;
       }
       break;
     case LMN_STRING_ATTR:
       for (i = 0; i < size; i++) {
-        LMN_ARRAY_DATA(a)[i] = LMN_WORD(lmn_string_copy(LMN_STRING(init_value)));
+        LMN_ARRAY_DATA(a)[i] = lmn_string_copy(LMN_STRING(init_value));
         // copied, could be shared
       }
       break;
@@ -119,7 +119,7 @@ static LmnArrayRef make_array(LmnMembraneRef mem, LmnAtom size, LmnAtom init_val
  * @memberof LmnArray
  * @private
  */
-LmnArrayRef lmn_make_array(LmnMembraneRef mem, LmnAtom size, LmnAtom init_value, LmnLinkAttr init_type)
+LmnArrayRef lmn_make_array(LmnMembraneRef mem, LmnWord size, LmnAtomRef init_value, LmnLinkAttr init_type)
 {
   return make_array(mem, size, init_value, init_type);
 }
@@ -146,7 +146,7 @@ void lmn_array_free(LmnArrayRef array, LmnMembraneRef mem)
         break;
       case LMN_HL_ATTR:
         for (i = 0; i < LMN_ARRAY_SIZE(array); i++) {
-          lmn_free_atom((LmnAtom)LMN_ARRAY_DATA(array)[i],LMN_HL_ATTR);
+          lmn_free_atom((LmnAtomRef)LMN_ARRAY_DATA(array)[i],LMN_HL_ATTR);
         }
         break;
     }
@@ -198,25 +198,25 @@ LmnArrayRef lmn_array_copy(LmnArrayRef array)
  */
 void cb_array_new(LmnReactCxtRef rc,
     LmnMembraneRef mem,
-    LmnAtom a0, LmnLinkAttr t0,
-    LmnAtom a1, LmnLinkAttr t1,
-    LmnAtom a2, LmnLinkAttr t2)
+    LmnAtomRef a0, LmnLinkAttr t0,
+    LmnAtomRef a1, LmnLinkAttr t1,
+    LmnAtomRef a2, LmnLinkAttr t2)
 {
-  /* a0 is assumed to be an integer data atom */
-  LmnArrayRef atom = lmn_make_array(mem, a0, a1, t1);
+  LmnWord size = (LmnWord)a0; /**< a0 is assumed to be an integer data atom */
+  LmnArrayRef atom = lmn_make_array(mem, size, a1, t1);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
-  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+  lmn_mem_push_atom(mem, atom, attr);
   if(t1==LMN_HL_ATTR){
     unsigned long i;
-    for(i = 0 ; i < a0 ; i++){
+    for(i = 0 ; i < size; i++){
       lmn_mem_newlink(mem,
-          LMN_ATOM(atom), attr, 0,
+          atom, attr, 0,
           LMN_ARRAY_DATA(atom)[i], t1, 0);
     }
   }
   lmn_mem_newlink(mem,
       a2, t2, LMN_ATTR_GET_VALUE(t2),
-      LMN_ATOM(atom), attr, 0);
+      atom, attr, 0);
 }
 
 /*
@@ -230,10 +230,10 @@ void cb_array_new(LmnReactCxtRef rc,
  */
 void cb_array_free(LmnReactCxtRef rc,
     LmnMembraneRef mem,
-    LmnAtom a0, LmnLinkAttr t0)
+    LmnAtomRef a0, LmnLinkAttr t0)
 {
   lmn_array_free(LMN_ARRAY(a0), mem);
-  lmn_mem_remove_data_atom(mem, a0, t0);
+  lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
 /*
@@ -249,11 +249,11 @@ void cb_array_free(LmnReactCxtRef rc,
  */
 void cb_array_size(LmnReactCxtRef rc,
     LmnMembraneRef mem,
-    LmnAtom a0, LmnLinkAttr t0,
-    LmnAtom a1, LmnLinkAttr t1,
-    LmnAtom a2, LmnLinkAttr t2)
+    LmnAtomRef a0, LmnLinkAttr t0,
+    LmnAtomRef a1, LmnLinkAttr t1,
+    LmnAtomRef a2, LmnLinkAttr t2)
 {
-  long s = LMN_ARRAY_SIZE(a0);
+  LmnAtomRef s = (LmnAtomRef)(LmnWord)LMN_ARRAY_SIZE(a0);
 
   lmn_mem_newlink(mem,
       a1, t1, LMN_ATTR_GET_VALUE(t1),
@@ -261,7 +261,7 @@ void cb_array_size(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
       a0, t0, LMN_ATTR_GET_VALUE(t0),
       a2, t2, LMN_ATTR_GET_VALUE(t2));
-  lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_INT_ATTR);
+  lmn_mem_push_atom(mem, (LmnAtomRef)s, LMN_INT_ATTR);
 }
 
 /*
@@ -278,28 +278,27 @@ void cb_array_size(LmnReactCxtRef rc,
  */
 void cb_array_get(LmnReactCxtRef rc,
     LmnMembraneRef mem,
-    LmnAtom a0, LmnLinkAttr t0,
-    LmnAtom a1, LmnLinkAttr t1,
-    LmnAtom a2, LmnLinkAttr t2,
-    LmnAtom a3, LmnLinkAttr t3)
+    LmnAtomRef a0, LmnLinkAttr t0,
+    LmnAtomRef a1, LmnLinkAttr t1,
+    LmnAtomRef a2, LmnLinkAttr t2,
+    LmnAtomRef a3, LmnLinkAttr t3)
 {
-  LmnAtom ai;
-  LmnAtom v;
+  LmnAtomRef ai;
+  LmnWord i = (LmnWord)a1;
 
-  if (a1 < LMN_ARRAY_SIZE(a0)) {   /* a1 is unsigned and hence nonnegative */
+  if (i < LMN_ARRAY_SIZE(a0)) {   /* i is unsigned and hence nonnegative */
     switch (LMN_ARRAY_TYPE(a0)) {
       case LMN_INT_ATTR:
-        ai = LMN_ATOM(LMN_ARRAY_DATA(a0)[a1]);
+        ai = LMN_ARRAY_DATA(a0)[i];
         break;
       case LMN_DBL_ATTR:
-        LMN_COPY_DBL_ATOM(v, LMN_ARRAY_DATA(a0)[a1]);
-        ai = v;
+        ai = (LmnAtomRef)lmn_create_double_atom(lmn_get_double((LmnDataAtomRef)LMN_ARRAY_DATA(a0)[i]));
         break;
       case LMN_HL_ATTR:
-        ai = lmn_copy_atom(LMN_ARRAY_DATA(a0)[a1], LMN_HL_ATTR);
+        ai = lmn_copy_atom(LMN_ARRAY_DATA(a0)[i], LMN_HL_ATTR);
         break;
       default: /* must be LMN_STRINGL_ATTR) */
-        ai = LMN_ATOM(lmn_string_copy(LMN_STRING(LMN_ARRAY_DATA(a0)[a1])));
+        ai = lmn_string_copy(LMN_STRING(LMN_ARRAY_DATA(a0)[i]));
         break;
     }
 
@@ -311,7 +310,7 @@ void cb_array_get(LmnReactCxtRef rc,
         a0, t0, LMN_ATTR_GET_VALUE(t0),
         a3, t3, LMN_ATTR_GET_VALUE(t3));
 
-    lmn_mem_remove_data_atom(mem, a1, t1);
+    lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a1, t1);
   }
   else lmn_fatal("array.get out of bound");
 }
@@ -330,11 +329,12 @@ void cb_array_get(LmnReactCxtRef rc,
  */
 void cb_array_put(LmnReactCxtRef rc,
     LmnMembraneRef mem,
-    LmnAtom a0, LmnLinkAttr t0,
-    LmnAtom a1, LmnLinkAttr t1,
-    LmnAtom a2, LmnLinkAttr t2,
-    LmnAtom a3, LmnLinkAttr t3)
+    LmnAtomRef a0, LmnLinkAttr t0,
+    LmnAtomRef a1_, LmnLinkAttr t1,
+    LmnAtomRef a2, LmnLinkAttr t2,
+    LmnAtomRef a3, LmnLinkAttr t3)
 {
+  LmnWord a1 = (LmnWord)a1_;
   if (a1 < LMN_ARRAY_SIZE(a0)) {   /* a1 is unsigned and hence nonnegative */
     if (LMN_ARRAY_TYPE(a0) == t2) {
       switch (LMN_ARRAY_TYPE(a0)) {
@@ -347,8 +347,8 @@ void cb_array_put(LmnReactCxtRef rc,
           lmn_string_free(LMN_STRING(LMN_ARRAY_DATA(a0)[a1]));
           break;
         case LMN_HL_ATTR:
-          lmn_mem_remove_atom(mem, (LmnAtom)LMN_ARRAY_DATA(a0)[a1], LMN_HL_ATTR);
-          lmn_free_atom((LmnAtom)LMN_ARRAY_DATA(a0)[a1],LMN_HL_ATTR);
+          lmn_mem_remove_atom(mem, (LmnAtomRef)LMN_ARRAY_DATA(a0)[a1], LMN_HL_ATTR);
+          lmn_free_atom((LmnAtomRef)LMN_ARRAY_DATA(a0)[a1],LMN_HL_ATTR);
 
           break;
       }
@@ -366,8 +366,8 @@ void cb_array_put(LmnReactCxtRef rc,
     lmn_mem_newlink(mem,
         a0, t0, LMN_ATTR_GET_VALUE(t0),
         a3, t3, LMN_ATTR_GET_VALUE(t3));
-    lmn_mem_remove_data_atom(mem, a1, t1);
-    if(LMN_ARRAY_TYPE(a0)!=LMN_HL_ATTR)lmn_mem_remove_data_atom(mem, a2, t2);
+    lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a1, t1);
+    if (LMN_ARRAY_TYPE(a0) != LMN_HL_ATTR) lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a2, t2);
   }
   else lmn_fatal("array.put out of bound");  
 }
@@ -416,7 +416,7 @@ void sp_cb_array_dump(void *array, LmnPortRef port)
 {
   unsigned long i, size;
   LmnLinkAttr type;
-  LmnWord *data;
+  LmnAtomRef *data;
   char buf[64];
 
   port_put_raw_s(port, "<");
@@ -425,24 +425,24 @@ void sp_cb_array_dump(void *array, LmnPortRef port)
   data = LMN_ARRAY_DATA(array);
   if (size > 0) {
     if (type == LMN_INT_ATTR) {
-      port_put_raw_s(port, int_to_str(data[0]));
+      port_put_raw_s(port, int_to_str((LmnWord)data[0]));
     } else if (type == LMN_DBL_ATTR) {
-      sprintf(buf, "%#g", lmn_get_double(data[0]));
+      sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data[0]));
       port_put_raw_s(port, buf);
     } else if (type == LMN_HL_ATTR) {
       lmn_dump_atom(port, data[0], type);
-    }else {
+    } else {
       sp_cb_string_dump((void *)data[0], port);
     }
     for (i = 1; i < size ; i++) {
       port_put_raw_s(port, ",");
       if (type == LMN_INT_ATTR) {
-        port_put_raw_s(port, int_to_str(data[i]));
+        port_put_raw_s(port, int_to_str((LmnWord)data[i]));
       } else if (type == LMN_DBL_ATTR) {
-        sprintf(buf, "%#g", lmn_get_double(data[i]));
+        sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data[i]));
         port_put_raw_s(port, buf);
       } else if (type == LMN_HL_ATTR) {
-        lmn_dump_atom(port, data[i], type);
+        lmn_dump_atom(port, (LmnAtomRef)data[i], type);
       } else {
         sp_cb_string_dump((void *)data[i], port);
       }

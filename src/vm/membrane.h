@@ -60,8 +60,8 @@ typedef struct LinkObj *LinkObjRef;
 
 #define NEW_ATOMLIST
 
-LmnSAtom atomlist_head(AtomListEntryRef lst);
-LmnSAtom lmn_atomlist_end(AtomListEntryRef lst);
+LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst);
+LmnSymbolAtomRef lmn_atomlist_end(AtomListEntryRef lst);
 int atomlist_ent_num(AtomListEntryRef lst);
 void atomlist_set_num(AtomListEntryRef lst, int n);
 void atomlist_add_num(AtomListEntryRef lst, int n);
@@ -74,14 +74,14 @@ void atomlist_set_empty(AtomListEntryRef ent);
 
 /* アトムリストALからアトムAを削除する.
  * ただし, リストのつなぎ変えだけを行い, 膜からのアトムAのdeleteやatomのfreeはしない */
-void remove_from_atomlist(LmnSAtom a, AtomListEntryRef ent);
+void remove_from_atomlist(LmnSymbolAtomRef a, AtomListEntryRef ent);
 
 /* アトムリストentにおいて, アトムprvとアトムnxtの間にアトムinsを挿入する.
  * ただし, prvにNULLを渡した場合はnxtのprevポイント先をprvとして扱う. */
-void insert_to_atomlist(LmnSAtom prv, LmnSAtom ins, LmnSAtom nxt,
+void insert_to_atomlist(LmnSymbolAtomRef prv, LmnSymbolAtomRef ins, LmnSymbolAtomRef nxt,
                                       AtomListEntryRef ent);
 /* アトムリストALの末尾にアトムAを追加する. */
-void push_to_atomlist(LmnSAtom a, AtomListEntryRef ent);
+void push_to_atomlist(LmnSymbolAtomRef a, AtomListEntryRef ent);
 
 int atomlist_get_entries_num(AtomListEntryRef ent);
 
@@ -89,22 +89,22 @@ int atomlist_get_entries_num(AtomListEntryRef ent);
 void atomlist_append(AtomListEntryRef e1, AtomListEntryRef e2);
 
 /* return NULL when atomlist doesn't exist. */
-LmnSAtom atomlist_get_record(AtomListEntryRef atomlist, int findatomid);
+LmnSymbolAtomRef atomlist_get_record(AtomListEntryRef atomlist, int findatomid);
 
-void atomlist_put_record(AtomListEntryRef lst, int id, LmnAtom record);
+void atomlist_put_record(AtomListEntryRef lst, int id, LmnAtomRef record);
 
-void move_atom_to_atomlist_tail(LmnSAtom a, LmnMembraneRef mem);
-void move_atom_to_atomlist_head(LmnSAtom a, LmnMembraneRef mem);
-void move_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembraneRef mem);
-void move_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembraneRef mem);
+void move_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem);
+void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem);
+void move_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem);
+void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1, LmnMembraneRef mem);
 
 /** -----
  *  リンクオブジェクトの代替
  */
 
-LmnAtom LinkObjGetAtom(LinkObjRef o);
+LmnAtomRef LinkObjGetAtom(LinkObjRef o);
 LmnLinkAttr LinkObjGetPos(LinkObjRef o);
-LinkObjRef LinkObj_make(LmnAtom ap, LmnLinkAttr pos);
+LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos);
 
 /** -----
  *  膜
@@ -152,7 +152,7 @@ LmnMembraneRef lmn_mem_make(void);
 void lmn_mem_free(LmnMembraneRef mem);
 void lmn_mem_rulesets_destroy(Vector *rulesets);
 void lmn_mem_drop(LmnMembraneRef mem);
-void mem_push_symbol_atom(LmnMembraneRef mem, LmnSAtom atom);
+void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
 void lmn_mem_add_ruleset_sort(Vector *rulesets, LmnRuleSetRef ruleset);
 
 unsigned long lmn_mem_root_space(LmnMembraneRef mem);
@@ -219,9 +219,9 @@ BOOL ground_atoms_old(Vector *srcvec,
                       HashSet **atoms,
                       unsigned long *natoms);
 
-void move_symbol_atom_to_atomlist_head(LmnSAtom a, LmnMembraneRef mem);
-void move_symbol_atomlist_to_atomlist_tail(LmnSAtom a, LmnMembraneRef mem);
-void move_symbol_atom_to_atom_tail(LmnSAtom a, LmnSAtom a1, LmnMembraneRef mem);
+void move_symbol_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem);
+void move_symbol_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem);
+void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1, LmnMembraneRef mem);
 
 void lmn_mem_remove_mem(LmnMembraneRef parent, LmnMembraneRef mem);
 void lmn_mem_free_rec(LmnMembraneRef mem);
@@ -231,45 +231,45 @@ void lmn_mem_activate_ancestors(LmnMembraneRef mem);
 BOOL lmn_mem_nmems(LmnMembraneRef mem, unsigned int count);
 int  lmn_mem_child_mem_num(LmnMembraneRef mem);
 void lmn_mem_add_child_mem(LmnMembraneRef parentmem, LmnMembraneRef newmem);
-LmnSAtom lmn_mem_newatom(LmnMembraneRef mem, LmnFunctor f);
+LmnSymbolAtomRef lmn_mem_newatom(LmnMembraneRef mem, LmnFunctor f);
 unsigned int lmn_mem_count_children(LmnMembraneRef mem);
 unsigned int lmn_mem_count_descendants(LmnMembraneRef mem);
 BOOL lmn_mem_nfreelinks(LmnMembraneRef mem, unsigned int count);
-void lmn_mem_remove_data_atom(LmnMembraneRef mem, LmnAtom atom, LmnLinkAttr attr);
-void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSAtom atom);
-void mem_remove_symbol_atom_with_buddy_data(LmnMembraneRef mem, LmnSAtom atom);
-void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtom atom, LmnLinkAttr attr);
-void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtom atom, LmnLinkAttr attr);
-void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtom atom, LmnLinkAttr attr);
-void alter_functor(LmnMembraneRef mem, LmnSAtom atom, LmnFunctor f);
+void lmn_mem_remove_data_atom(LmnMembraneRef mem, LmnDataAtomRef atom, LmnLinkAttr attr);
+void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
+void mem_remove_symbol_atom_with_buddy_data(LmnMembraneRef mem, LmnSymbolAtomRef atom);
+void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
+void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
+void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
+void alter_functor(LmnMembraneRef mem, LmnSymbolAtomRef atom, LmnFunctor f);
 void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset);
 void lmn_mem_copy_rules(LmnMembraneRef dest, LmnMembraneRef src);
 void lmn_mem_clearrules(LmnMembraneRef src);
-void newlink_symbol_and_something(LmnSAtom atom0, int pos, LmnAtom atom1, LmnLinkAttr attr);
+void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos, LmnAtomRef atom1, LmnLinkAttr attr);
 
 
 
 void lmn_mem_newlink(LmnMembraneRef mem,
-                     LmnAtom atom0, LmnLinkAttr attr0, int pos0,
-                     LmnAtom atom1, LmnLinkAttr attr1, int pos1);
-void lmn_newlink_in_symbols(LmnSAtom atom0, int pos0,
-                            LmnSAtom atom1, int pos1);
+                     LmnAtomRef atom0, LmnLinkAttr attr0, int pos0,
+                     LmnAtomRef atom1, LmnLinkAttr attr1, int pos1);
+void lmn_newlink_in_symbols(LmnSymbolAtomRef atom0, int pos0,
+                            LmnSymbolAtomRef atom1, int pos1);
 void lmn_newlink_with_ex(LmnMembraneRef mem,
-                         LmnSAtom atom0, LmnLinkAttr attr0, int pos0,
-                         LmnSAtom atom1, LmnLinkAttr attr1, int pos1);
+                         LmnSymbolAtomRef atom0, LmnLinkAttr attr0, int pos0,
+                         LmnSymbolAtomRef atom1, LmnLinkAttr attr1, int pos1);
 void lmn_mem_link_data_atoms(LmnMembraneRef mem,
-                             LmnAtom d1, LmnLinkAttr attr1,
-                             LmnAtom d2, LmnLinkAttr attr2);
+                             LmnAtomRef d1, LmnLinkAttr attr1,
+                             LmnAtomRef d2, LmnLinkAttr attr2);
 void lmn_mem_unify_atom_args(LmnMembraneRef mem,
-                             LmnSAtom atom1, int pos1,
-                             LmnSAtom atom2, int pos2);
-void lmn_mem_unify_symbol_atom_args(LmnSAtom atom1, int pos1,
-                                    LmnSAtom atom2, int pos2);
-void lmn_relink_symbols(LmnSAtom atom0, int pos0,
-                        LmnSAtom atom1, int pos1);
+                             LmnSymbolAtomRef atom1, int pos1,
+                             LmnSymbolAtomRef atom2, int pos2);
+void lmn_mem_unify_symbol_atom_args(LmnSymbolAtomRef atom1, int pos1,
+                                    LmnSymbolAtomRef atom2, int pos2);
+void lmn_relink_symbols(LmnSymbolAtomRef atom0, int pos0,
+                        LmnSymbolAtomRef atom1, int pos1);
 void lmn_mem_relink_atom_args(LmnMembraneRef mem,
-                              LmnAtom atom0, LmnLinkAttr attr0, int pos0,
-                              LmnAtom atom1, LmnLinkAttr attr1, int pos1);
+                              LmnAtomRef atom0, LmnLinkAttr attr0, int pos0,
+                              LmnAtomRef atom1, LmnLinkAttr attr1, int pos1);
 
 typedef int AtomListIter;
 #define atomlist_iter_initializer(AS)      (0)
@@ -388,7 +388,7 @@ typedef int AtomListIter;
   } while (0)
 
 
-/* LmnSAtom* lmn_atomlist_end(AtomSetEntry * ent); */
+/* LmnSymbolAtomRef* lmn_atomlist_end(AtomSetEntry * ent); */
 
 /* @} */
 

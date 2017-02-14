@@ -102,11 +102,11 @@ static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size)
 
 
 
-static inline mhash_t molecule(LmnSAtom    atom,
+static inline mhash_t molecule(LmnSymbolAtomRef    atom,
                                LmnMembraneRef calc_mem,
                                ProcessTableRef  ctx);
 static inline mhash_t memunit(LmnMembraneRef mem,
-                              LmnSAtom    from_in_proxy,
+                              LmnSymbolAtomRef    from_in_proxy,
                               LmnMembraneRef calc_mem,
                               ProcessTableRef  ctx,
                               int         depth);
@@ -141,7 +141,7 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
       LmnFunctor    f;
 
       EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
-        LmnSAtom atom;
+        LmnSymbolAtomRef atom;
         /* プロキシは除く */
         if (LMN_IS_PROXY_FUNCTOR(f) || LMN_IS_EX_FUNCTOR(f)) continue;
         EACH_ATOM(atom, ent, ({
@@ -193,7 +193,7 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
 
 
 
-static inline void do_molecule(LmnAtom     atom,
+static inline void do_molecule(LmnAtomRef     atom,
                                LmnLinkAttr attr,
                                LmnMembraneRef calc_mem,
                                ProcessTableRef  ctx,
@@ -202,7 +202,7 @@ static inline void do_molecule(LmnAtom     atom,
                                mhash_t     *mul);
 
 /* 膜calc_memに所属しているアトムatomをrootにした連結分子のハッシュ値を返す. */
-static inline mhash_t molecule(LmnSAtom    atom,
+static inline mhash_t molecule(LmnSymbolAtomRef    atom,
                                LmnMembraneRef calc_mem,
                                ProcessTableRef  ctx)
 {
@@ -210,23 +210,23 @@ static inline mhash_t molecule(LmnSAtom    atom,
 
   sum = MHASH_ADD_0;
   mul = MHASH_MUL_0;
-  do_molecule(LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), calc_mem, ctx, -1,
+  do_molecule(atom, LMN_ATTR_MAKE_LINK(0), calc_mem, ctx, -1,
               &sum, &mul);
 
   return sum ^ mul;
 }
 
 
-static inline mhash_t mhash_unit(LmnAtom     atom,
+static inline mhash_t mhash_unit(LmnAtomRef     atom,
                                  LmnLinkAttr attr,
                                  LmnMembraneRef calc_mem,
                                  ProcessTableRef  ctx,
                                  int         depth);
-static inline mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr);
+static inline mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr);
 
 /* アトムatomのハッシュ値を求め, 連結分子のハッシュ値sum, mulに掛け合わせる.
  * atomのリンク先アトムに対して再帰する. */
-static inline void do_molecule(LmnAtom     atom,
+static inline void do_molecule(LmnAtomRef     atom,
                                LmnLinkAttr attr,
                                LmnMembraneRef calc_mem,
                                ProcessTableRef  ctx,
@@ -243,7 +243,7 @@ static inline void do_molecule(LmnAtom     atom,
     (*mul) *= t;
   }
   else if (LMN_SATOM_GET_FUNCTOR(atom) != LMN_IN_PROXY_FUNCTOR &&
-           proc_tbl_put_new_atom(ctx, (LmnSAtom)atom, 1)) {
+           proc_tbl_put_new_atom(ctx, (LmnSymbolAtomRef)atom, 1)) {
     /* シンボルアトムの場合:
      *  (連結分子計算は膜の外部に出て行かないものとしているため, proxyならば打切り)
      * 連結分子中の各アトムをルートにして深さDまでのTreeをハッシュ計算の単位とする. */
@@ -273,9 +273,9 @@ static inline void do_molecule(LmnAtom     atom,
 }
 
 
-static inline mhash_t mhash_symbol(LmnSAtom atom);
-static inline mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr);
-static inline mhash_t memlink(LmnSAtom    in_proxy,
+static inline mhash_t mhash_symbol(LmnSymbolAtomRef atom);
+static inline mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr);
+static inline mhash_t memlink(LmnSymbolAtomRef    in_proxy,
                               LmnMembraneRef calc_mem,
                               ProcessTableRef  ctx);
 
@@ -289,7 +289,7 @@ static inline mhash_t memlink(LmnSAtom    in_proxy,
  * 2のように所属膜calc_memの親膜へリンクが抜ける場合や,
  * 3のようにデータアトムを訪問した場合は, 深さDに到達していなくともatomを枝としたトレースを打ち切る.
  * 4のように子膜を頂点とする場合は, 子膜のInSideProxyアトムをトレースする.  */
-static mhash_t mhash_unit(LmnAtom     atom,
+static mhash_t mhash_unit(LmnAtomRef     atom,
                           LmnLinkAttr attr,
                           LmnMembraneRef calc_mem,
                           ProcessTableRef  ctx,
@@ -303,7 +303,7 @@ static mhash_t mhash_unit(LmnAtom     atom,
   }
   else if (LMN_SATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR) {
     /* 4. OutSideProxyアトムの(子膜に入る)場合 */
-    LmnSAtom in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0));
+    LmnSymbolAtomRef in_proxy = LMN_SATOM(LMN_SATOM_GET_LINK(LMN_SATOM(atom), 0));
     if (depth == mhash_depth) {
       /* 深さDに到達した場合
        *   子膜のハッシュ値とリンク接続値を掛け合わせた値を計算してトレースを打ち切る. */
@@ -325,7 +325,7 @@ static mhash_t mhash_unit(LmnAtom     atom,
   else if (depth == mhash_depth) {
     /* 1. シンボルアトムの場合 (深さDに到達)
      *   シンボルアトムのハッシュ値に, 接続先リンク番号を掛け合わせた値をハッシュ値として返す. */
-    return mhash_symbol((LmnSAtom)atom) * (LMN_ATTR_GET_VALUE(attr) + 1);
+    return mhash_symbol((LmnSymbolAtomRef)atom) * (LMN_ATTR_GET_VALUE(attr) + 1);
   }
   else {
     /* 1. シンボルアトムの場合 (深さDに未到達)
@@ -335,7 +335,7 @@ static mhash_t mhash_unit(LmnAtom     atom,
     const int arity  = LMN_SATOM_GET_ARITY(atom);
     const int i_from = (depth == 0) ? -1 : (int)LMN_ATTR_GET_VALUE(attr);
 
-    hash = mhash_symbol((LmnSAtom)atom);
+    hash = mhash_symbol((LmnSymbolAtomRef)atom);
     for (i_arg = 0; i_arg < arity; i_arg++) {
       if (i_arg == i_from) continue;
 
@@ -362,14 +362,14 @@ static mhash_t mhash_unit(LmnAtom     atom,
  * -----------------------------+                              |
  * ------------------------------------------------------------+  */
 static inline mhash_t memunit(LmnMembraneRef child_mem,
-                              LmnSAtom    from_in_proxy,
+                              LmnSymbolAtomRef    from_in_proxy,
                               LmnMembraneRef calc_mem,
                               ProcessTableRef  ctx,
                               int         depth)
 {
   mhash_t hash, child_h;
   AtomListEntryRef insides;
-  LmnSAtom in_proxy, out_proxy;
+  LmnSymbolAtomRef in_proxy, out_proxy;
 
   hash    = 0;
   insides = lmn_mem_get_atomlist(child_mem, LMN_IN_PROXY_FUNCTOR);
@@ -412,11 +412,11 @@ static inline mhash_t memunit(LmnMembraneRef child_mem,
  * atom--?---1--[$in_proxy]-0---|---0-[from_out_proxy]-1--...  |
  * -----------------------------+                              |
  * ------------------------------------------------------------+  */
-static inline mhash_t memlink(LmnSAtom    in_proxy,
+static inline mhash_t memlink(LmnSymbolAtomRef    in_proxy,
                               LmnMembraneRef calc_mem,
                               ProcessTableRef  ctx)
 {
-  LmnAtom atom;
+  LmnAtomRef atom;
   mhash_t hash = 0;
   LmnLinkAttr attr;
 
@@ -433,14 +433,14 @@ static inline mhash_t memlink(LmnSAtom    in_proxy,
   if (LMN_ATTR_IS_DATA(attr)) {
     hash *= mhash_data(atom, attr);
   } else {
-    hash *= mhash_symbol((LmnSAtom)atom) * (LMN_ATTR_GET_VALUE(attr) + 1);
+    hash *= mhash_symbol((LmnSymbolAtomRef)atom) * (LMN_ATTR_GET_VALUE(attr) + 1);
   }
 
   return hash;
 }
 
 /* 非データアトムatomのハッシュ値を返す. */
-static inline mhash_t mhash_symbol(LmnSAtom atom)
+static inline mhash_t mhash_symbol(LmnSymbolAtomRef atom)
 {
   /* ファンクタの種類を示す整数IDを返す */
   return LMN_SATOM_GET_FUNCTOR(atom);
@@ -448,7 +448,7 @@ static inline mhash_t mhash_symbol(LmnSAtom atom)
 
 
 /* データアトムatomのハッシュ値を返す. */
-mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr) {
+mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr) {
   switch (attr) {
     case LMN_INT_ATTR:
       /* こっちの方が本当は好ましいけど遅いから, しょうがない. */
@@ -470,7 +470,7 @@ mhash_t mhash_data(LmnAtom atom, LmnLinkAttr attr) {
         return 1;
       }
     case LMN_HL_ATTR:
-      return (mhash_t)lmn_hyperlink_hash(lmn_hyperlink_at_to_hl((LmnSAtom)atom));
+      return (mhash_t)lmn_hyperlink_hash(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
     default:
       LMN_ASSERT(FALSE);
       return 0;

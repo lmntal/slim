@@ -45,7 +45,7 @@
 #endif
 
 void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
-                    LmnAtom a0, LmnLinkAttr t0)
+                    LmnAtomRef a0, LmnLinkAttr t0)
 {
   if (LMN_INT_ATTR == t0) {
     int i, n = lmn_mem_ruleset_num(mem);

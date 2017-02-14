@@ -16,7 +16,7 @@ slim_LDFLAGS = -L./verifier                            \
                -L./element                             \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I../third_party/zdelta-2.1             \
-               -std=gnu99
+               -std=gnu99 -Werror
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
                     ./vm/liblmn_vm.a                   \
                     ./element/liblmn_elm.a             \

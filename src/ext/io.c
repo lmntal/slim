@@ -49,8 +49,8 @@
  */
 void cb_print_newline_with_port(LmnReactCxtRef rc,
                                 LmnMembraneRef mem,
-                                LmnAtom a0, LmnLinkAttr t0,
-                                LmnAtom a1, LmnLinkAttr t1)
+                                LmnAtomRef a0, LmnLinkAttr t0,
+                                LmnAtomRef a1, LmnLinkAttr t1)
 {
   port_put_raw_s(LMN_PORT(a0), "\n");
 
@@ -66,9 +66,9 @@ void cb_print_newline_with_port(LmnReactCxtRef rc,
  */
 void cb_print_line_with_port(LmnReactCxtRef rc,
                              LmnMembraneRef mem,
-                             LmnAtom a0, LmnLinkAttr t0,
-                             LmnAtom a1, LmnLinkAttr t1,
-                             LmnAtom a2, LmnLinkAttr t2)
+                             LmnAtomRef a0, LmnLinkAttr t0,
+                             LmnAtomRef a1, LmnLinkAttr t1,
+                             LmnAtomRef a2, LmnLinkAttr t2)
 {
   port_puts(LMN_PORT(a0), LMN_STRING(a1));
   port_put_raw_s(LMN_PORT(a0), "\n");
@@ -87,9 +87,9 @@ void cb_print_line_with_port(LmnReactCxtRef rc,
  */
 // void cb_input_line_with_port(LmnReactCxtRef rc,
 //                              LmnMembraneRef mem,
-//                              LmnAtom a0, LmnLinkAttr t0,
-//                              LmnAtom a1, LmnLinkAttr t1,
-//                              LmnAtom a2, LmnLinkAttr t2)
+//                              LmnAtomRef a0, LmnLinkAttr t0,
+//                              LmnAtomRef a1, LmnLinkAttr t1,
+//                              LmnAtomRef a2, LmnLinkAttr t2)
 // {
 //   const int N = 256;
 //   char buf[N], *s=NULL, *p; /* sは行の文字列の先頭、pは作業用 */

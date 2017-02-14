@@ -495,7 +495,7 @@ int st_delete_safe(register st_table_t table, register st_data_t *key, st_data_t
   return 0;
 }
 
-static int delete_never(st_data_t key __attribute__((unused)), st_data_t value, st_data_t never) {
+static int delete_never(st_data_t key LMN_UNUSED, st_data_t value, st_data_t never) {
   if (value == never)
     return ST_DELETE;
   return ST_CONTINUE;

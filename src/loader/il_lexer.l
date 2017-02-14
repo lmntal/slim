@@ -84,6 +84,8 @@ char *unescape_c_str(const char *s);
 
 %}
 
+%option nounput
+
 DIGIT    [0-9]
 
 %%

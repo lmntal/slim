@@ -58,7 +58,7 @@ static inline void time_profiler_destroy(TimeProfiler *p);
 static inline void memory_profiler_init(MemoryProfiler *p);
 static inline void memory_profiler_destroy(MemoryProfiler *p);
 static inline void peak_counter_init(PeakCounter *p);
-static inline void peak_counter_destroy(PeakCounter *p);
+static inline void peak_counter_destroy(PeakCounter *p) LMN_UNUSED;
 static void profile_state_f(State *s, LmnWord arg);
 static const char *profile_space_id_to_name(int type);
 static const char *profile_counter_id_to_name(int type);

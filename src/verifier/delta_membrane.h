@@ -105,9 +105,9 @@ struct NewMemInfo {
 };
 
 
-/* static  inline LmnAtom datom_get_link(struct MemDelta *d, LmnSAtom atom, int i); */
+/* static  inline LmnAtomRef datom_get_link(struct MemDelta *d, LmnSymbolAtomRef atom, int i); */
 
-/* static inline LmnLinkAttr datom_get_attr(struct MemDelta *d, LmnSAtom atom, int i); */
+/* static inline LmnLinkAttr datom_get_attr(struct MemDelta *d, LmnSymbolAtomRef atom, int i); */
 
 /* とりあえず */
 #define DMEM_ROOT_MEM(d) ((d)->root_mem)
@@ -121,36 +121,36 @@ void dmem_root_finish(struct MemDeltaRoot *d);
 void dmem_root_free(struct MemDeltaRoot *p);
 LmnMembraneRef dmem_root_get_root_mem(struct MemDeltaRoot *d);
 unsigned long dmem_root_get_next_id(struct MemDeltaRoot *d);
-LmnSAtom dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f);
-void dmem_root_free_atom(struct MemDeltaRoot *d, LmnAtom atom, LmnLinkAttr attr);
-LmnAtom dmem_root_copy_atom(struct MemDeltaRoot *d, LmnAtom atom, LmnLinkAttr attr);
+LmnSymbolAtomRef dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f);
+void dmem_root_free_atom(struct MemDeltaRoot *d, LmnAtomRef atom, LmnLinkAttr attr);
+LmnAtomRef dmem_root_copy_atom(struct MemDeltaRoot *d, LmnAtomRef atom, LmnLinkAttr attr);
 LmnMembraneRef dmem_root_new_mem(struct MemDeltaRoot *d);
 void dmem_root_push_atom(struct MemDeltaRoot *d,
                          LmnMembraneRef m,
-                         LmnAtom atom,
+                         LmnAtomRef atom,
                          LmnLinkAttr attr);
 void dmem_root_add_new_mem(struct MemDeltaRoot *d, LmnMembraneRef m);
 void dmem_root_add_child_mem(struct MemDeltaRoot *d,
                              LmnMembraneRef parent,
                              LmnMembraneRef child);
 void dmem_root_newlink(struct MemDeltaRoot *d, LmnMembraneRef m,
-                       LmnAtom atom0, LmnLinkAttr attr0, int pos0,
-                       LmnAtom atom1, LmnLinkAttr attr1, int pos1);
+                       LmnAtomRef atom0, LmnLinkAttr attr0, int pos0,
+                       LmnAtomRef atom1, LmnLinkAttr attr1, int pos1);
 void dmem_root_link_data_atoms(struct MemDeltaRoot *d, LmnMembraneRef m,
-                               LmnAtom d1, LmnLinkAttr attr1,
-                               LmnAtom d2,LmnLinkAttr attr2);
+                               LmnDataAtomRef d1, LmnLinkAttr attr1,
+                               LmnDataAtomRef d2,LmnLinkAttr attr2);
 void dmem_root_unify_atom_args(struct MemDeltaRoot *d, LmnMembraneRef m,
-                               LmnSAtom atom1, int pos1,
-                               LmnSAtom atom2, int pos2);
+                               LmnSymbolAtomRef atom1, int pos1,
+                               LmnSymbolAtomRef atom2, int pos2);
 void dmem_root_unify_links(struct MemDeltaRoot *d, LmnMembraneRef m,
-                           LmnAtom atom1, LmnLinkAttr attr1,
-                           LmnAtom atom2, LmnLinkAttr attr2);
+                           LmnAtomRef atom1, LmnLinkAttr attr1,
+                           LmnAtomRef atom2, LmnLinkAttr attr2);
 void dmem_root_relink(struct MemDeltaRoot *d, LmnMembraneRef m,
-                      LmnAtom atom1, LmnLinkAttr attr1, int pos1,
-                      LmnAtom atom2, LmnLinkAttr attr2, int pos2);
+                      LmnAtomRef atom1, LmnLinkAttr attr1, int pos1,
+                      LmnAtomRef atom2, LmnLinkAttr attr2, int pos2);
 void dmem_root_remove_atom(struct MemDeltaRoot *d,
                            LmnMembraneRef m,
-                           LmnAtom atom,
+                           LmnAtomRef atom,
                            LmnLinkAttr attr);
 void dmem_root_remove_mem(struct MemDeltaRoot *d,
                           LmnMembraneRef parent,
@@ -185,8 +185,8 @@ void dmem_root_revert(struct MemDeltaRoot *d);
 
 void dmem_root_dump(struct MemDeltaRoot *d);
 
-LmnAtom dmem_root_get_link(struct MemDeltaRoot *d,
-                                  LmnSAtom atom,
+LmnAtomRef dmem_root_get_link(struct MemDeltaRoot *d,
+                                  LmnSymbolAtomRef atom,
                                   int i);
 
 /* @} */
