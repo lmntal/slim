@@ -16,6 +16,7 @@ slim_LDFLAGS = -L./verifier                            \
                -L./element                             \
                -L../third_party/zdelta-2.1
 slim_CFLAGS =  -I../third_party/zdelta-2.1             \
+               -DCOMMIT_ID=\"`git show -s --format=%h`\" \
                -std=gnu99
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
                     ./vm/liblmn_vm.a                   \

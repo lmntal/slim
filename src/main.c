@@ -132,7 +132,7 @@ void slim_version(FILE *f)
   //fprintf(f, "mntal ");
   //ver_print_with_esc_code(f, "IM", CODE__FORECOLOR_LIGHTBLUE);
   fprintf(f, "Slim Lmntal IMplementation ");
-  fprintf(f, "- version %s\n", SLIM_VERSION);
+  fprintf(f, "- version %s (%s)\n", SLIM_VERSION, COMMIT_ID);
 }
 
 static void parse_options(int *optid, int argc, char *argv[])
