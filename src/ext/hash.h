@@ -5,9 +5,10 @@
 #include <util.h>
 #include <st.h>
 #include "../verifier/mem_encode.h"
+#include "../verifier/statespace.h"
 #include "../atom.h"
 #include "../membrane.h"
-
+#include "../verifier/state.h"
 struct LmnHash{
   LMN_SP_ATOM_HEADER;		/* スペシャルアトムの約束事 */
   st_table_t tbl;		/* ハッシュ本体 */
@@ -15,8 +16,7 @@ struct LmnHash{
 
 struct LmnStateMap{
   LMN_SP_ATOM_HEADER;
-  int id;
-  st_table_t state_tbl;
+  StateSpaceRef states;
   st_table_t id_tbl;
 };
 
