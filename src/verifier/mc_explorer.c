@@ -1266,7 +1266,7 @@ static BOOL mapndfs_loop(State  *seed,
  *  ==================================
  */
 static BOOL mcndfs_loop(LmnWorker* w, State *seed, Vector *search, Vector *postordered, Vector *red_states);
-static void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path);
+static void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) LMN_UNUSED;
 
 void mcndfs_worker_init(LmnWorker *w)
 {

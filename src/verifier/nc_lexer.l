@@ -56,6 +56,8 @@ struct lexer_context;
 
 %}
 
+%option nounput
+
 DIGIT    [0-9]
 
 %%

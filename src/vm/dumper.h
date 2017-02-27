@@ -101,7 +101,7 @@ LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, Vector *v);
 /**
  * @brief print an atom and its connected ones.
  */
-LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnWord atom, LmnLinkAttr attr);
+LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr);
 
 /**
  * @brief print an escaped string.

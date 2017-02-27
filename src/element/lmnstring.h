@@ -42,8 +42,9 @@
 
 /* cldoc:begin-category(Lmntal::String) */
 
-#include "lmntal.h"
 typedef struct LmnString *LmnStringRef;
+
+#include "lmntal.h"
 
 #define LMN_STRING(obj) ((struct LmnString *)(obj))
 
@@ -55,7 +56,6 @@ LmnStringRef lmn_string_make_empty(void);
 void lmn_string_free(LmnStringRef s);
 BOOL lmn_string_eq(LmnStringRef s1, LmnStringRef s2);
 LmnStringRef lmn_string_copy(LmnStringRef s);
-BOOL lmn_is_string(LmnAtom atom, LmnLinkAttr attr);
 unsigned long lmn_string_hash(LmnStringRef atom);
 const char *lmn_string_c_str(LmnStringRef atom);
 void lmn_string_push(LmnStringRef dst, const LmnStringRef src);

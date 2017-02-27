@@ -52,26 +52,26 @@ void init_float(void);
  */
 void float_of_string(LmnReactCxtRef rc,
                      LmnMembraneRef mem,
-                     LmnAtom a0, LmnLinkAttr t0,
-                     LmnAtom a1, LmnLinkAttr t1)
+                     LmnAtomRef a0, LmnLinkAttr t0,
+                     LmnAtomRef a1, LmnLinkAttr t1)
 {
   char *t;
-  LmnAtom d;
+  LmnAtomRef d;
   const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
   t = NULL;
-  d = lmn_create_double_atom(strtod(s, &t));
+  d = (LmnAtomRef)lmn_create_double_atom(strtod(s, &t));
   if (t == NULL || s == t) {
     LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
                                                          lmn_intern("fail"),
                                                          1));
     lmn_mem_newlink(mem,
                     a1, t1, LMN_ATTR_GET_VALUE(t1),
-                    LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
+                    a, LMN_ATTR_MAKE_LINK(0), 0);
   } else { /* 変換できた */
     lmn_mem_newlink(mem,
                     a1, t1, LMN_ATTR_GET_VALUE(t1),
-                    (LmnWord)d, LMN_DBL_ATTR, 0);
-    lmn_mem_push_atom(mem, (LmnWord)d, LMN_DBL_ATTR);
+                    d, LMN_DBL_ATTR, 0);
+    lmn_mem_push_atom(mem, d, LMN_DBL_ATTR);
   }
 
   lmn_mem_delete_atom(mem, a0, t0);

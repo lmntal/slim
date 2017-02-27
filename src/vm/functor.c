@@ -105,7 +105,7 @@ static int functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y)
 
 static long functor_hash(LmnFunctorEntry *x)
 {
-  return abs((x->module*31*31 + x->name*31 + x->arity));
+  return x->module*31*31 + x->name*31 + x->arity;
 }
 
 static struct st_hash_type type_functorhash = {

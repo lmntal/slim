@@ -43,19 +43,17 @@
 /*
  * Internal Constructor
  */
-static LmnSAtom lmn_make_atom(LmnMembraneRef mem, LmnAtom s, LmnAtom size)
+static LmnSymbolAtomRef lmn_make_atom(LmnMembraneRef mem, LmnAtomRef s, LmnWord size)
 {
-  LmnSAtom a;
-  int k;
-    a = lmn_mem_newatom(mem,
+  LmnSymbolAtomRef a = lmn_mem_newatom(mem,
          lmn_functor_intern(ANONYMOUS, 
 			    lmn_intern(lmn_string_c_str(LMN_STRING(s))),
 			    size));
-  for (k = 0; k < (int)size-1; k++) {
+  for (LmnWord k = 0; k < (int)size-1; k++) {
     lmn_mem_newlink(mem,
-                    LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), k,
+                    a, LMN_ATTR_MAKE_LINK(0), k,
                     0, LMN_INT_ATTR, 0);
-    lmn_mem_push_atom(mem, k, LMN_INT_ATTR);
+    lmn_mem_push_atom(mem, (LmnAtomRef)k, LMN_INT_ATTR);
   }
   return a;
 }
@@ -74,31 +72,31 @@ static LmnSAtom lmn_make_atom(LmnMembraneRef mem, LmnAtom s, LmnAtom size)
  */
 void cb_atom_new(LmnReactCxtRef rc,
     LmnMembraneRef mem,
-    LmnAtom a0, LmnLinkAttr t0,
-    LmnAtom a1, LmnLinkAttr t1,
-    LmnAtom a2, LmnLinkAttr t2)
+    LmnAtomRef a0, LmnLinkAttr t0,
+    LmnAtomRef a1_, LmnLinkAttr t1,
+    LmnAtomRef a2, LmnLinkAttr t2)
 {
-  LmnSAtom atom, res;
+  LmnSymbolAtomRef atom, res;
    
-  /* a1 is assumed to be an integer data atom */
+  LmnWord a1 = (LmnWord)a1_; /**< a1 is assumed to be an integer data atom */
   if (a1 > 0 && a1 <= 127) {
     atom = lmn_make_atom(mem, a0, a1);
     res = lmn_mem_newatom(mem,lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 2));
     lmn_mem_newlink(mem,
-		    LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), a1-1,
-		    LMN_ATOM(res), LMN_ATTR_MAKE_LINK(0), 0);
+		    atom, LMN_ATTR_MAKE_LINK(0), a1-1,
+		    res, LMN_ATTR_MAKE_LINK(0), 0);
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
-		    LMN_ATOM(res), LMN_ATTR_MAKE_LINK(0), 1);
-    lmn_mem_delete_atom(mem, a1, t1);
+		    res, LMN_ATTR_MAKE_LINK(0), 1);
+    lmn_mem_delete_atom(mem, a1_, t1);
     lmn_mem_delete_atom(mem, a0, t0);
   } else if (a1 == 0) {
     atom = lmn_make_atom(mem, a0, a1);
     res = lmn_mem_newatom(mem,lmn_functor_intern(ANONYMOUS, lmn_intern("nullary"), 1));
     lmn_mem_newlink(mem,
       a2, t2, LMN_ATTR_GET_VALUE(t2),
-      LMN_ATOM(res), LMN_ATTR_MAKE_LINK(0), 0);
-    lmn_mem_delete_atom(mem, a1, t1);
+      res, LMN_ATTR_MAKE_LINK(0), 0);
+    lmn_mem_delete_atom(mem, a1_, t1);
     lmn_mem_delete_atom(mem, a0, t0);
   } else {
     lmn_fatal("Atom's arity must be between 0 and 127.");
@@ -115,24 +113,24 @@ void cb_atom_new(LmnReactCxtRef rc,
  */
 void cb_atom_functor(LmnReactCxtRef rc,
     LmnMembraneRef mem,
-    LmnAtom a0, LmnLinkAttr t0,
-    LmnAtom a1, LmnLinkAttr t1,
-    LmnAtom a2, LmnLinkAttr t2,
-    LmnAtom a3, LmnLinkAttr t3)
+    LmnAtomRef a0, LmnLinkAttr t0,
+    LmnAtomRef a1, LmnLinkAttr t1,
+    LmnAtomRef a2, LmnLinkAttr t2,
+    LmnAtomRef a3, LmnLinkAttr t3)
 {
   if (LMN_ATTR_IS_DATA(t0)) 
     lmn_fatal("atom.functor cannot be applied to non-symbol atoms\
  (numbers, strings, ...).");
   LmnStringRef s = lmn_string_make(LMN_SATOM_STR(a0));
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1),
-		  LMN_ATOM(s), LMN_SP_ATOM_ATTR, 0);
+		  s, LMN_SP_ATOM_ATTR, 0);
 
-  lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_SP_ATOM_ATTR);
+  lmn_mem_push_atom(mem, s, LMN_SP_ATOM_ATTR);
   long n = LMN_SATOM_GET_ARITY(a0);
   lmn_mem_newlink(mem,
       a2, t2, LMN_ATTR_GET_VALUE(t2),
-      LMN_ATOM(n), LMN_INT_ATTR, 0);
-  lmn_mem_push_atom(mem, LMN_ATOM(n), LMN_INT_ATTR);
+      (LmnAtomRef)n, LMN_INT_ATTR, 0);
+  lmn_mem_push_atom(mem, (LmnAtomRef)n, LMN_INT_ATTR);
   lmn_mem_newlink(mem,
       a0, t0, LMN_ATTR_GET_VALUE(t0),
       a3, t3, LMN_ATTR_GET_VALUE(t3));
@@ -151,13 +149,13 @@ void cb_atom_functor(LmnReactCxtRef rc,
 
 void cb_atom_swap(LmnReactCxtRef rc,
     LmnMembraneRef mem,
-    LmnAtom a0, LmnLinkAttr t0,
-    LmnAtom a1, LmnLinkAttr t1,
-    LmnAtom a2, LmnLinkAttr t2,
-    LmnAtom a3, LmnLinkAttr t3,
-    LmnAtom a4, LmnLinkAttr t4)
+    LmnAtomRef a0, LmnLinkAttr t0,
+    LmnAtomRef a1, LmnLinkAttr t1,
+    LmnAtomRef a2, LmnLinkAttr t2,
+    LmnAtomRef a3, LmnLinkAttr t3,
+    LmnAtomRef a4, LmnLinkAttr t4)
 {
-  LmnAtom ap1, self;
+  LmnAtomRef ap1, self;
   LmnByte attr1;
 
   if (LMN_ATTR_IS_DATA(t0)) 
@@ -169,19 +167,19 @@ void cb_atom_swap(LmnReactCxtRef rc,
   if ((unsigned long)a1 >= LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(a0)))
     lmn_fatal("atom.swap index out of range.");
 
-  self  = LMN_SATOM_GET_LINK(a0,t0);
-  ap1   = LMN_SATOM_GET_LINK(a0,a1);
-  attr1 = LMN_SATOM_GET_ATTR(a0,a1);
+  self  = LMN_SATOM_GET_LINK(a0, t0);
+  ap1   = LMN_SATOM_GET_LINK(a0, (int)a1);
+  attr1 = LMN_SATOM_GET_ATTR(a0, (int)a1);
 
-  //  lmn_relink_symbols(LMN_SATOM(a2), t2, LMN_SATOM(ap1), attr1);  //works fine
-  //  lmn_relink_symbols(LMN_SATOM(a0), a1, LMN_SATOM(self), 3);  // works fine
-  newlink_symbol_and_something(LMN_SATOM(a0), a1, a2, t2);  //works fine
+  //  lmn_relink_symbols(a2, t2, ap1, attr1);  //works fine
+  //  lmn_relink_symbols(a0, a1, self, 3);  // works fine
+  newlink_symbol_and_something(a0, (int)a1, a2, t2);  //works fine
 
-  //  lmn_relink_symbols(LMN_SATOM(ap1), attr1, LMN_SATOM(self), 4);  //works fine
-  //  lmn_relink_symbols(LMN_SATOM(a3), t3, LMN_SATOM(a0), a1); //doesn't work due to ordering
-  newlink_symbol_and_something(LMN_SATOM(a3), t3, ap1, attr1);
+  //  lmn_relink_symbols(ap1, attr1, self, 4);  //works fine
+  //  lmn_relink_symbols(a3, t3, a0, a1); //doesn't work due to ordering
+  newlink_symbol_and_something(a3, t3, ap1, attr1);
 
-  lmn_mem_unify_atom_args(mem, LMN_SATOM(self), 1, LMN_SATOM(self), 5);
+  lmn_mem_unify_atom_args(mem, self, 1, self, 5);
 
 }
 

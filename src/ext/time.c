@@ -43,17 +43,15 @@
 
 void gettime(LmnReactCxtRef rc,
              LmnMembraneRef mem,
-             LmnAtom a0, LmnLinkAttr t0)
+             LmnAtomRef a0, LmnLinkAttr t0)
 {
-  LmnAtom t;
-
-  t = lmn_create_double_atom(get_cpu_time());
+  LmnAtomRef t = (LmnAtomRef)lmn_create_double_atom(get_cpu_time());
 
   lmn_mem_newlink(mem,
                   a0, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(t0),
-                  (LmnWord)t, LMN_DBL_ATTR, 0);
+                  t, LMN_DBL_ATTR, 0);
 
-  lmn_mem_push_atom(mem, (LmnWord)t, LMN_DBL_ATTR);
+  lmn_mem_push_atom(mem, t, LMN_DBL_ATTR);
 
 }
 

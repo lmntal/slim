@@ -48,14 +48,14 @@
  */
 void cb_set_functor_priority(LmnReactCxtRef rc,
                              LmnMembraneRef mem,
-                             LmnAtom a0, LmnLinkAttr t0,
-                             LmnAtom a1, LmnLinkAttr t1,
-                             LmnAtom a2, LmnLinkAttr t2)
+                             LmnAtomRef a0, LmnLinkAttr t0,
+                             LmnAtomRef a1, LmnLinkAttr t1,
+                             LmnAtomRef a2, LmnLinkAttr t2)
 {
   set_functor_priority(lmn_functor_intern(ANONYMOUS,
                                           LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(a1)),
-                                          a2),
-                       a0);
+                                          (int)a2),
+                       (int)a0);
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_delete_atom(mem, a2, t2);

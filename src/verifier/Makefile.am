@@ -16,7 +16,7 @@ liblmn_verifier_a_DEPENDENCIES =                         \
 liblmn_verifier_a_CFLAGS =                               \
         -I../                                            \
         -I../../third_party/zdelta-2.1                   \
-        $(CFLAGS)
+        $(CFLAGS) -Werror
 
 liblmn_verifier_a_SOURCES =                              \
 	automata.c               automata.h                    \
