@@ -67,10 +67,12 @@ lib/*.il
 *.lo
 *.la
 src/arch.h
-src/il_lexer.*
-src/il_parser.*
-src/interpret_generated.c
-src/translate_generated.c
+src/loader/il_lexer.c
+src/loader/il_lexer.h
+src/loader/il_parser.c
+src/loader/il_parser.h
+src/loader/interpret_generated.c
+src/loader/translate_generated.c
 src/slim
 src/verifier/nc_lexer.*
 src/verifier/nc_parser.*

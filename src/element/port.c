@@ -436,8 +436,8 @@ int port_puts(LmnPortRef port, LmnStringRef str)
  */
 void cb_port_close(LmnReactCxtRef rc,
                    LmnMembraneRef mem,
-                   LmnAtom a0, LmnLinkAttr t0,
-                   LmnAtom a1, LmnLinkAttr t1)
+                   LmnAtomRef a0, LmnLinkAttr t0,
+                   LmnAtomRef a1, LmnLinkAttr t1)
 {
   LmnPortRef port = LMN_PORT(a0);
 
@@ -454,10 +454,10 @@ void cb_port_close(LmnReactCxtRef rc,
  */
 void cb_port_free(LmnReactCxtRef rc,
                   LmnMembraneRef mem,
-                  LmnAtom a0, LmnLinkAttr t0)
+                  LmnAtomRef a0, LmnLinkAttr t0)
 {
   lmn_port_free(LMN_PORT(a0));
-  lmn_mem_remove_data_atom(mem, a0, t0);
+  lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
 /*
@@ -465,15 +465,15 @@ void cb_port_free(LmnReactCxtRef rc,
  */
 void cb_stdin_port(LmnReactCxtRef rc,
                    LmnMembraneRef mem,
-                   LmnAtom a0, LmnLinkAttr t0)
+                   LmnAtomRef a0, LmnLinkAttr t0)
 {
   LmnPortRef atom = lmn_stdin_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
-  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+  lmn_mem_push_atom(mem, atom, attr);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  LMN_ATOM(atom), attr, 0);
+                  atom, attr, 0);
 }
 
 /*
@@ -481,15 +481,15 @@ void cb_stdin_port(LmnReactCxtRef rc,
  */
 void cb_stdout_port(LmnReactCxtRef rc,
                     LmnMembraneRef mem,
-                    LmnAtom a0, LmnLinkAttr t0)
+                    LmnAtomRef a0, LmnLinkAttr t0)
 {
   LmnPortRef atom = lmn_stdout_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
-  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+  lmn_mem_push_atom(mem, atom, attr);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  LMN_ATOM(atom), attr, 0);
+                  atom, attr, 0);
 }
 
 /*
@@ -497,15 +497,15 @@ void cb_stdout_port(LmnReactCxtRef rc,
  */
 void cb_stderr_port(LmnReactCxtRef rc,
                     LmnMembraneRef mem,
-                    LmnAtom a0, LmnLinkAttr t0)
+                    LmnAtomRef a0, LmnLinkAttr t0)
 {
   LmnPortRef atom = lmn_stderr_port();
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
 
-  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+  lmn_mem_push_atom(mem, atom, attr);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  LMN_ATOM(atom), attr, 0);
+                  atom, attr, 0);
 }
 
 /*
@@ -515,9 +515,9 @@ void cb_stderr_port(LmnReactCxtRef rc,
  */
 void cb_port_getc(LmnReactCxtRef rc,
                   LmnMembraneRef mem,
-                  LmnAtom a0, LmnLinkAttr t0,
-                  LmnAtom a1, LmnLinkAttr t1,
-                  LmnAtom a2, LmnLinkAttr t2)
+                  LmnAtomRef a0, LmnLinkAttr t0,
+                  LmnAtomRef a1, LmnLinkAttr t1,
+                  LmnAtomRef a2, LmnLinkAttr t2)
 {
   int c;
   char buf[8];
@@ -530,7 +530,7 @@ void cb_port_getc(LmnReactCxtRef rc,
   mem_push_symbol_atom(mem, a);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
-                  LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
+                  a, LMN_ATTR_MAKE_LINK(0), 0);
 
   lmn_mem_newlink(mem,
                   a1, t1, LMN_ATTR_GET_VALUE(t1),
@@ -545,16 +545,16 @@ void cb_port_getc(LmnReactCxtRef rc,
  */
 void cb_port_get_byte(LmnReactCxtRef rc,
                   LmnMembraneRef mem,
-                  LmnAtom a0, LmnLinkAttr t0,
-                  LmnAtom a1, LmnLinkAttr t1,
-                  LmnAtom a2, LmnLinkAttr t2)
+                  LmnAtomRef a0, LmnLinkAttr t0,
+                  LmnAtomRef a1, LmnLinkAttr t1,
+                  LmnAtomRef a2, LmnLinkAttr t2)
 {
-  int c = port_get_raw_c(LMN_PORT(a0));
+  LmnWord c = port_get_raw_c(LMN_PORT(a0));
 
-  lmn_mem_push_atom(mem, c, LMN_INT_ATTR);
+  lmn_mem_push_atom(mem, (LmnAtomRef)c, LMN_INT_ATTR);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
-                  LMN_ATOM(c), LMN_INT_ATTR, 0);
+                  (LmnAtomRef)c, LMN_INT_ATTR, 0);
   lmn_mem_newlink(mem,
                   a1, t1, LMN_ATTR_GET_VALUE(t1),
                   a0, t0, 0);
@@ -567,11 +567,11 @@ void cb_port_get_byte(LmnReactCxtRef rc,
  */
 void cb_port_unget_byte(LmnReactCxtRef rc,
                   LmnMembraneRef mem,
-                  LmnAtom a0, LmnLinkAttr t0,
-                  LmnAtom a1, LmnLinkAttr t1,
-                  LmnAtom a2, LmnLinkAttr t2)
+                  LmnAtomRef a0, LmnLinkAttr t0,
+                  LmnAtomRef a1, LmnLinkAttr t1,
+                  LmnAtomRef a2, LmnLinkAttr t2)
 {
-  port_unget_raw_c(LMN_PORT(a0), a1);
+  port_unget_raw_c(LMN_PORT(a0), (LmnWord)a1);
 
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
@@ -586,9 +586,9 @@ void cb_port_unget_byte(LmnReactCxtRef rc,
  */
 void cb_port_putc(LmnReactCxtRef rc,
                   LmnMembraneRef mem,
-                  LmnAtom a0, LmnLinkAttr t0,
-                  LmnAtom a1, LmnLinkAttr t1,
-                  LmnAtom a2, LmnLinkAttr t2)
+                  LmnAtomRef a0, LmnLinkAttr t0,
+                  LmnAtomRef a1, LmnLinkAttr t1,
+                  LmnAtomRef a2, LmnLinkAttr t2)
 {
   if (LMN_ATTR_IS_DATA_WITHOUT_EX(t1)) {
     switch (t1) {
@@ -602,7 +602,7 @@ void cb_port_putc(LmnReactCxtRef rc,
     case  LMN_DBL_ATTR:
     {
       char buf[64];
-      sprintf(buf, "%#g", lmn_get_double(a1));
+      sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)a1));
       port_put_raw_s(LMN_PORT(a0), buf);
     }
     break;
@@ -637,11 +637,11 @@ void cb_port_putc(LmnReactCxtRef rc,
  */
 void cb_port_put_byte(LmnReactCxtRef rc,
                   LmnMembraneRef mem,
-                  LmnAtom a0, LmnLinkAttr t0,
-                  LmnAtom a1, LmnLinkAttr t1,
-                  LmnAtom a2, LmnLinkAttr t2)
+                  LmnAtomRef a0, LmnLinkAttr t0,
+                  LmnAtomRef a1, LmnLinkAttr t1,
+                  LmnAtomRef a2, LmnLinkAttr t2)
 {
-  port_put_raw_c(LMN_PORT(a0), a1);
+  port_put_raw_c(LMN_PORT(a0), (LmnWord)a1);
 
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
@@ -657,9 +657,9 @@ void cb_port_put_byte(LmnReactCxtRef rc,
  */
 void cb_port_puts(LmnReactCxtRef rc,
                   LmnMembraneRef mem,
-                  LmnAtom a0, LmnLinkAttr t0,
-                  LmnAtom a1, LmnLinkAttr t1,
-                  LmnAtom a2, LmnLinkAttr t2)
+                  LmnAtomRef a0, LmnLinkAttr t0,
+                  LmnAtomRef a1, LmnLinkAttr t1,
+                  LmnAtomRef a2, LmnLinkAttr t2)
 {
   port_puts(LMN_PORT(a0), LMN_STRING(a1));
 
@@ -677,23 +677,23 @@ void cb_port_puts(LmnReactCxtRef rc,
  */
 void cb_port_read_line(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
-                       LmnAtom a0, LmnLinkAttr t0,
-                       LmnAtom a1, LmnLinkAttr t1,
-                       LmnAtom a2, LmnLinkAttr t2)
+                       LmnAtomRef a0, LmnLinkAttr t0,
+                       LmnAtomRef a1, LmnLinkAttr t1,
+                       LmnAtomRef a2, LmnLinkAttr t2)
 {
   LmnStringRef s = port_read_line(LMN_PORT(a0));
 
   if (s != NULL) {
-    lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_SP_ATOM_ATTR);
+    lmn_mem_push_atom(mem, s, LMN_SP_ATOM_ATTR);
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    LMN_ATOM(s), LMN_SP_ATOM_ATTR, 0);
+                    s, LMN_SP_ATOM_ATTR, 0);
   } else {
     LmnSAtom eof = lmn_new_atom(eof_functor);
     mem_push_symbol_atom(mem, LMN_SATOM(eof));
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    LMN_ATOM(eof), LMN_ATTR_MAKE_LINK(0), 0);
+                    eof, LMN_ATTR_MAKE_LINK(0), 0);
   }
 
   lmn_mem_newlink(mem,
@@ -708,23 +708,23 @@ void cb_port_read_line(LmnReactCxtRef rc,
  */
 void cb_port_read_token(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
-                       LmnAtom a0, LmnLinkAttr t0,
-                       LmnAtom a1, LmnLinkAttr t1,
-                       LmnAtom a2, LmnLinkAttr t2)
+                       LmnAtomRef a0, LmnLinkAttr t0,
+                       LmnAtomRef a1, LmnLinkAttr t1,
+                       LmnAtomRef a2, LmnLinkAttr t2)
 {
   LmnStringRef s = port_read_token(LMN_PORT(a0));
 
   if (s != NULL) {
-    lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_SP_ATOM_ATTR);
+    lmn_mem_push_atom(mem, s, LMN_SP_ATOM_ATTR);
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    LMN_ATOM(s), LMN_SP_ATOM_ATTR, 0);
+                    s, LMN_SP_ATOM_ATTR, 0);
   } else {
     LmnSAtom eof = lmn_new_atom(eof_functor);
     mem_push_symbol_atom(mem, LMN_SATOM(eof));
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    LMN_ATOM(eof), LMN_ATTR_MAKE_LINK(0), 0);
+                    eof, LMN_ATTR_MAKE_LINK(0), 0);
   }
 
   lmn_mem_newlink(mem,
@@ -739,12 +739,12 @@ void cb_port_read_token(LmnReactCxtRef rc,
  */
 void cb_make_output_string(LmnReactCxtRef rc,
                            LmnMembraneRef mem,
-                           LmnAtom a0, LmnLinkAttr t0)
+                           LmnAtomRef a0, LmnLinkAttr t0)
 {
   LmnPortRef port = lmn_make_output_string_port();
-  lmn_mem_push_atom(mem, LMN_ATOM(port), LMN_SP_ATOM_ATTR);
+  lmn_mem_push_atom(mem, port, LMN_SP_ATOM_ATTR);
   lmn_mem_newlink(mem,
-                  LMN_ATOM(port), LMN_SP_ATOM_ATTR, 0,
+                  port, LMN_SP_ATOM_ATTR, 0,
                   a0, t0, LMN_ATTR_GET_VALUE(t0));
 }
 
@@ -756,14 +756,14 @@ void cb_make_output_string(LmnReactCxtRef rc,
  */
 void cb_make_input_string(LmnReactCxtRef rc,
                           LmnMembraneRef mem,
-                          LmnAtom a0, LmnLinkAttr t0,
-                          LmnAtom a1, LmnLinkAttr t1)
+                          LmnAtomRef a0, LmnLinkAttr t0,
+                          LmnAtomRef a1, LmnLinkAttr t1)
 {
   LmnPortRef port = lmn_make_input_string_port(LMN_STRING(a0));
 
-  lmn_mem_push_atom(mem, LMN_ATOM(port), LMN_SP_ATOM_ATTR);
+  lmn_mem_push_atom(mem, port, LMN_SP_ATOM_ATTR);
   lmn_mem_newlink(mem,
-                  LMN_ATOM(port), LMN_SP_ATOM_ATTR, 0,
+                  port, LMN_SP_ATOM_ATTR, 0,
                   a1, t1, LMN_ATTR_GET_VALUE(t1));
 }
 
@@ -776,23 +776,23 @@ void cb_make_input_string(LmnReactCxtRef rc,
  */
 void cb_port_output_string(LmnReactCxtRef rc,
                            LmnMembraneRef mem,
-                           LmnAtom a0, LmnLinkAttr t0,
-                           LmnAtom a1, LmnLinkAttr t1,
-                           LmnAtom a2, LmnLinkAttr t2)
+                           LmnAtomRef a0, LmnLinkAttr t0,
+                           LmnAtomRef a1, LmnLinkAttr t1,
+                           LmnAtomRef a2, LmnLinkAttr t2)
 {
   LmnPortRef port = LMN_PORT(a0);
 
   if (LMN_PORT_TYPE(port) == LMN_PORT_OSTR) {
     LmnStringRef s = lmn_port_output_string(port);
-    lmn_mem_push_atom(mem, LMN_ATOM(s), LMN_STRING_ATTR);
+    lmn_mem_push_atom(mem, s, LMN_STRING_ATTR);
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    LMN_ATOM(s), LMN_STRING_ATTR, 0);
+                    s, LMN_STRING_ATTR, 0);
   } else {
     LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    LMN_ATOM(a), LMN_ATTR_MAKE_LINK(0), 0);
+                    a, LMN_ATTR_MAKE_LINK(0), 0);
   }
   lmn_mem_newlink(mem,
                   a1, t1, LMN_ATTR_GET_VALUE(t1), /* debugged */

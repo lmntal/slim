@@ -74,8 +74,8 @@ static inline unsigned long hyperlink_new_id()
 }
 
 
-//HyperLink *lmn_hyperlink_make(LmnSAtom sa)
-void lmn_hyperlink_make(LmnSAtom at)
+//HyperLink *lmn_hyperlink_make(LmnSymbolAtomRef sa)
+void lmn_hyperlink_make(LmnSymbolAtomRef at)
 {
   HyperLink *hl;
 
@@ -90,29 +90,29 @@ void lmn_hyperlink_make(LmnSAtom at)
   hl->attrAtom = 0;
   hl->attr     = 0;
 
-  LMN_SATOM_SET_LINK(LMN_SATOM(at), 1, (LmnWord)hl);
+  LMN_SATOM_SET_LINK(LMN_SATOM(at), 1, hl);
   LMN_SATOM_SET_ATTR(LMN_SATOM(at), 1, 0);
 
 //  hashtbl_put(at_hl, (HashKeyType)at, (HashValueType)hl);
 //  printf("lmn_hyperlink_make %p -> %p\n", hl, LMN_SATOM(hl->atom));
 }
 
-void lmn_hyperlink_put_attr(HyperLink *hl, LmnAtom attrAtom, LmnLinkAttr attr)
+void lmn_hyperlink_put_attr(HyperLink *hl, LmnAtomRef attrAtom, LmnLinkAttr attr)
 {
   hl->attrAtom = attrAtom;
   hl->attr = attr;
 }
 
-void lmn_hyperlink_make_with_attr(LmnSAtom at, LmnAtom attrAtom, LmnLinkAttr attr)
+void lmn_hyperlink_make_with_attr(LmnSymbolAtomRef at, LmnAtomRef attrAtom, LmnLinkAttr attr)
 {
   lmn_hyperlink_make(at);
   lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(at), attrAtom, attr);
 }
 
 /* 新しいhyperlinkの生成 */
-LmnSAtom lmn_hyperlink_new()
+LmnSymbolAtomRef lmn_hyperlink_new()
 {
-  LmnSAtom atom;
+  LmnSymbolAtomRef atom;
 
   atom = lmn_new_atom(LMN_HL_FUNC);
   LMN_SATOM_SET_ID(atom, hyperlink_new_id());
@@ -121,9 +121,9 @@ LmnSAtom lmn_hyperlink_new()
   return atom;
 }
 
-LmnSAtom lmn_hyperlink_new_with_attr(LmnAtom attrAtom, LmnLinkAttr attr)
+LmnSymbolAtomRef lmn_hyperlink_new_with_attr(LmnAtomRef attrAtom, LmnLinkAttr attr)
 {
-  LmnSAtom atom;
+  LmnSymbolAtomRef atom;
   atom = lmn_hyperlink_new();
   lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(atom), attrAtom, attr);
   return atom;
@@ -149,15 +149,15 @@ void hyperlink_rank_calc(HyperLink *hl, int d)
 /* HyperLinkのatom, mem, attrAtom, attrのみを交換する */
 void hyperlink_swap_atom(HyperLink *hl1, HyperLink *hl2)
 {
-  LmnSAtom t_atom;
+  LmnSymbolAtomRef t_atom;
   LmnMembraneRef t_mem;
 
   t_atom    = hl1->atom;
   hl1->atom = hl2->atom;
   hl2->atom = t_atom;
 
-  LMN_SATOM_SET_LINK(hl1->atom, 1, (LmnWord)hl1);
-  LMN_SATOM_SET_LINK(hl2->atom, 1, (LmnWord)hl2);
+  LMN_SATOM_SET_LINK(hl1->atom, 1, hl1);
+  LMN_SATOM_SET_LINK(hl2->atom, 1, hl2);
 
   t_mem     = hl1->mem;
   hl1->mem  = hl2->mem;
@@ -193,7 +193,7 @@ HyperLink *hyperlink_head_child(HyperLink *hl)
  * HyperLink 木は変更せずに、HyperLink に対応しているatom を親子間での交換を繰り返して
  * 末端に向かって移動させ、葉に到達した時点でその位置のHyperLink を削除する
  */
-void lmn_hyperlink_delete(LmnSAtom at)
+void lmn_hyperlink_delete(LmnSymbolAtomRef at)
 {
   HyperLink *hl = lmn_hyperlink_at_to_hl(at);
 
@@ -226,7 +226,7 @@ void lmn_hyperlink_delete(LmnSAtom at)
  * 旧式、使用していないが一応残しておく
  * hyperlinkの削除では何をしているかを把握するためにはいいかも
  */
-void lmn_hyperlink_delete_old(LmnSAtom at)
+void lmn_hyperlink_delete_old(LmnSymbolAtomRef at)
 {
   HyperLink *hl, *parent;
   HashSet *children;
@@ -323,7 +323,7 @@ void lmn_hyperlink_delete_old(LmnSAtom at)
 /* hyperlinkのコピー
  * <=> 新しいHyperLink 構造体を生成し、newatomに対応づけた後、oriatomと併合する
  */
-void lmn_hyperlink_copy(LmnSAtom newatom, LmnSAtom oriatom)
+void lmn_hyperlink_copy(LmnSymbolAtomRef newatom, LmnSymbolAtomRef oriatom)
 {
   HyperLink *newhl, *orihl;
 
@@ -413,7 +413,7 @@ HyperLink *lmn_hyperlink_get_root(HyperLink *hl)
 
 
 /* child をparent の子として併合する（parent, childは共にroot）*/
-HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child, LmnAtom attrAtom, LmnLinkAttr attr)
+HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child, LmnAtomRef attrAtom, LmnLinkAttr attr)
 {
   child->parent = parent;
   if (!parent->children) {
@@ -435,7 +435,7 @@ HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child, LmnAtom attrAtom
  *   rankが等しい場合はhl1をhl2の親とする
  *   attrで指定された属性を併合後のハイパーリンクの属性とする。
  * */
-HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2, LmnAtom attrAtom,  LmnLinkAttr attr)
+HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2, LmnAtomRef attrAtom,  LmnLinkAttr attr)
 {
   HyperLink *root1, *root2, *result;
   int rank1, rank2;
@@ -459,14 +459,14 @@ HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2, LmnAtom attrAtom,
 
 
 /* '!'アトムのポインタ --> 対応するHyperLink 構造体のポインタ */
-HyperLink *lmn_hyperlink_at_to_hl(LmnSAtom at)
+HyperLink *lmn_hyperlink_at_to_hl(LmnSymbolAtomRef at)
 {
   return (HyperLink *)LMN_SATOM_GET_LINK(at, 1);
 }
 
 
 /* HyperLink 構造体のポインタ --> 対応する'!'アトムのポインタ */
-LmnSAtom lmn_hyperlink_hl_to_at(HyperLink *hl)
+LmnSymbolAtomRef lmn_hyperlink_hl_to_at(HyperLink *hl)
 {
 //  if (hl->atom) return hl->atom;
 //  else return 0;
@@ -497,7 +497,7 @@ BOOL lmn_hyperlink_eq_hl(HyperLink *hl1, HyperLink *hl2)
 
 
 /* hyperlink 同士の比較（'!'アトムポインタから直接） */
-BOOL lmn_hyperlink_eq(LmnSAtom atom1, LmnLinkAttr attr1, LmnSAtom atom2, LmnLinkAttr attr2)
+BOOL lmn_hyperlink_eq(LmnSymbolAtomRef atom1, LmnLinkAttr attr1, LmnSymbolAtomRef atom2, LmnLinkAttr attr2)
 {
   return LMN_ATTR_IS_HL(attr1) &&
          LMN_ATTR_IS_HL(attr2) &&
@@ -512,7 +512,7 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element)
 {
   AtomListEntryRef atomlist;
   LmnMembraneRef m;
-  LmnSAtom atom;
+  LmnSymbolAtomRef atom;
   HyperLink *hl, *parent;
   HashSet *children;
   int WIDTH;
@@ -665,7 +665,7 @@ void hyperlink_print_old()
 //  if (at_hl) {
 //    HashIterator it;
 //    HyperLink *hl, *parent;
-//    LmnSAtom atom;
+//    LmnSymbolAtomRef atom;
 //    HashSet *children;
 //
 //    for (it = hashtbl_iterator(at_hl); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
@@ -945,7 +945,7 @@ HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity)
  * b. 同名型付きプロセス文脈を持つ引数
  *   clone側での探索の始点となるhyperlinkをspcに保持させる
  */
-BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int atom_arity)
+BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSymbolAtomRef atom, int atom_arity)
 {
   int i;
   BOOL all_pc_check;
@@ -953,7 +953,7 @@ BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int 
   all_pc_check = TRUE;
   for (i = 0; i < atom_arity; i++) {
     ProcCxt *pc;
-    LmnSAtom linked_atom;
+    LmnSymbolAtomRef linked_atom;
     LmnLinkAttr linked_attr;
 
     pc = (ProcCxt *)LMN_SPC_PC(spc, i);
@@ -995,7 +995,7 @@ BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSAtom atom, int 
  *   b-2. clone側の引数である場合
  *     original側で探索の始点として指定されていたhyperlinkに対応していることを確認する
  */
-BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int atom_arity)
+BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSymbolAtomRef atom, int atom_arity)
 {
   int i;
   BOOL all_pc_check;
@@ -1003,7 +1003,7 @@ BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSAtom atom, int ato
   all_pc_check = TRUE;
   for (i = 0; i < atom_arity; i++) {
     ProcCxt *pc;
-    LmnSAtom linked_atom;
+    LmnSymbolAtomRef linked_atom;
     LmnLinkAttr linked_attr;
 
     pc = (ProcCxt *)LMN_SPC_PC(spc, i);

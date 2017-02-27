@@ -41,6 +41,7 @@
 #define LMN_ARRAY_H
 
 #include "../lmntal.h"
+#include "vm/vm.h"
 
 /**
  * @ingroup  Ext
@@ -53,7 +54,7 @@ struct LmnArray {
   LmnLinkAttr type;  /* element type, currently either
                         LMN_INT_ATTR | LMN_DBL_ATTR | LMN_STRING_ATTR */
   BOOL    owner;     /* am I the owner of array data? */
-  LmnWord *data;     /* array data */
+  LmnAtomRef *data;     /* array data */
 };
 
 typedef struct LmnArray *LmnArrayRef;

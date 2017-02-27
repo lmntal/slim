@@ -46,12 +46,6 @@
  */
 
 #include "lmntal.h"
-#include "special_atom.h"
-#include "functor.h"
-#include "element/element.h"
-#include "symbol.h"
-#include "hyperlink.h"
-
 
 /**
  * @interface LmnAtom
@@ -101,8 +95,11 @@ typedef LmnWord LmnDataAtomRef;
  */
 typedef struct LmnAtomData *LmnSymbolAtomRef;
 
-#include "lmntal.h"
-
+#include "special_atom.h"
+#include "functor.h"
+#include "element/element.h"
+#include "symbol.h"
+#include "hyperlink.h"
 
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */
@@ -406,6 +403,9 @@ LmnDataAtomRef lmn_create_double_atom(double d);
  */
 void lmn_destroy_double_atom(LmnDataAtomRef atom);
 
+BOOL lmn_is_string(LmnAtomRef atom, LmnLinkAttr attr);
+
+
 /**
  * @brief get the pointer to a double atom.
  * @memberof LmnDataAtom
@@ -418,7 +418,7 @@ void lmn_destroy_double_atom(LmnDataAtomRef atom);
 
 #define LMN_COPY_DBL_ATOM(Dst, Src)                                            \
   do {                                                                         \
-    (Dst) = (LmnWord)lmn_create_double_atom(lmn_get_double(Src));              \
+    (Dst) = lmn_create_double_atom(lmn_get_double(Src));                       \
   } while (0)
 
 

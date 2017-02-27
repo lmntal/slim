@@ -56,6 +56,12 @@
 
 #define LMN_EXTERN extern
 
+#if defined(__GNUC__) || defined(__clang__)
+# define LMN_UNUSED __attribute__((unused))
+#else
+# define LMN_UNUSED
+#endif
+
 /*------------------------------------------------------------------------
  *  Some useful macros
  */

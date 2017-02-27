@@ -238,6 +238,7 @@ static inline void contextC1_RHS_tbl_put(ProcessTableRef p, LmnWord key, BYTE se
 }
 
 
+static inline void contextC1_RHS_tbl_unput(ProcessTableRef p, LmnWord key, BYTE unset) LMN_UNUSED;
 static inline void contextC1_RHS_tbl_unput(ProcessTableRef p, LmnWord key, BYTE unset)
 {
   LmnWord t;

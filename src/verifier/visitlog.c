@@ -150,7 +150,7 @@ void sproc_tbl_destroy(SimplyProcessTableRef p)
 
 /* テーブルのアトムatomに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにatomが存在しない場合は0を返す */
-int proc_tbl_get_by_atom(ProcessTableRef p, LmnSAtom atom, LmnWord *value) {
+int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord *value) {
   return proc_tbl_get(p, LMN_SATOM_ID(atom), value);
 }
 

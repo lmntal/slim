@@ -819,7 +819,7 @@ LmnRuleSetRef load_file(char *file_name)
     /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
     const char *lmntal_home = getenv(ENV_LMNTAL_HOME);
     if (!strcmp(&file_name[len-4], ".lmn")) {
-      if (&lmntal_home) {
+      if (lmntal_home) {
         FILE *fp_compiled;
         struct stat st;
 

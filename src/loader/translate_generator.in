@@ -213,7 +213,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   *finishflag = 0;
 
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
-  warry_set(rc, $0, (LmnWord)LMN_PROXY_GET_MEM(wt(rc, $1)), 0, TT_MEM);
+  warry_set(rc, $0, (LmnWord)LMN_PROXY_GET_MEM((LmnSymbolAtomRef)wt(rc, $1)), 0, TT_MEM);
   if(LMN_MEM_NAME_ID((LmnMembraneRef)wt(rc, $0)) != TR_GSID($2)) $f;
 
 #anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
@@ -258,21 +258,21 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 %   break;
 % case LMN_DBL_ATTR:
   {
-    LmnAtom d;
-    d = lmn_create_double_atom($2_double_data);
-    wt_set(rc, $0, d);
+    LmnAtomRef d;
+    d = (LmnAtomRef)lmn_create_double_atom($2_double_data);
+    wt_set(rc, $0, (LmnWord)d);
    }
 %   break;
 % case LMN_STRING_ATTR:
     wt_set(rc, $0, (LmnWord)lmn_string_make(lmn_id_to_name(TR_GSID($2_string_data))));
 %   break;
 % default:
-    wt_set(rc, $0, LMN_ATOM(lmn_new_atom(TR_GFID($2_functor_data))));
+    wt_set(rc, $0, (LmnWord)lmn_new_atom(TR_GFID($2_functor_data)));
 %   break;
 % }
   at_set(rc, $0, $2_attr);
   tt_set(rc, $0, TT_ATOM);
-  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $1), wt(rc, $0), $2_attr);
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $1), (LmnAtomRef)wt(rc, $0), $2_attr);
 
 #natoms LmnInstrVar LmnInstrVar
   if (!lmn_mem_natoms((LmnMembraneRef)wt(rc, $0), $1)) $f;
@@ -287,7 +287,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   TR_INSTR_UNIFYLINKS(rc, $0, $1, $2);
 
 #newlink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
-  lmn_mem_newlink((LmnMembraneRef)wt(rc, $4), wt(rc, $0), at(rc, $0), $1, wt(rc, $2), at(rc, $2), $3);
+  lmn_mem_newlink((LmnMembraneRef)wt(rc, $4), (LmnAtomRef)wt(rc, $0), at(rc, $0), $1, (LmnAtomRef)wt(rc, $2), at(rc, $2), $3);
 
 #relink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_RELINK(rc, $0, $1, $2, $3, $4);
@@ -295,7 +295,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #getlink LmnInstrVar LmnInstrVar LmnInstrVar
 # /* リンク先の取得をせずにリンク元の情報を格納しておく。
 #    リンク元が格納されていることを示すため最下位のビットを立てる */
-  warry_set(rc, $0, LMN_SATOM_GET_LINK(wt(rc, $1), $2), LMN_SATOM_GET_ATTR(wt(rc, $1), $2), TT_ATOM);
+  warry_set(rc, $0, (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, $1), $2), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, $1), $2), TT_ATOM);
 
 #unify LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   lmn_mem_unify_atom_args((LmnMembraneRef)wt(rc, $4), LMN_SATOM(wt(rc, $0)), $1, LMN_SATOM(wt(rc, $2)), $3);
@@ -349,10 +349,10 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   tt_set(rc, $0, TT_MEM);
 
 #removeatom LmnInstrVar LmnInstrVar
-  lmn_mem_remove_atom((LmnMembraneRef)wt(rc, $1), wt(rc, $0), at(rc, $0));
+  lmn_mem_remove_atom((LmnMembraneRef)wt(rc, $1), (LmnAtomRef)wt(rc, $0), at(rc, $0));
 
 #freeatom LmnInstrVar
-  lmn_free_atom(wt(rc, $0), at(rc, $0));
+  lmn_free_atom((LmnAtomRef)wt(rc, $0), at(rc, $0));
 
 #removemem LmnInstrVar LmnInstrVar
   lmn_mem_remove_mem((LmnMembraneRef)wt(rc, $1), (LmnMembraneRef)wt(rc, $0));
@@ -390,17 +390,17 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #recursiveunlock LmnInstrVar
 
 #derefatom LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (LmnWord)LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, $1), $2)), LMN_SATOM_GET_ATTR(wt(rc, $1), $2), TT_ATOM);
+  warry_set(rc, $0, (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, $1), $2), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, $1), $2), TT_ATOM);
 
 #deref LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   {
-    LmnByte attr = LMN_SATOM_GET_ATTR(wt(rc, $1), $2);
+    LmnByte attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, $1), $2);
     if (LMN_ATTR_IS_DATA(attr)) {
       if ($3 != 0) $f;
     } else {
       if (attr != $3) $f;
     }
-    warry_set(rc, $0, LMN_SATOM_GET_LINK(wt(rc, $1), $2), attr, TT_ATOM);
+    warry_set(rc, $0, (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, $1), $2), attr, TT_ATOM);
   }
 
 #func LmnInstrVar $functor
@@ -488,7 +488,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     default:
       break;
     }
-  } else if (LMN_SATOM_GET_ARITY(wt(rc, $0)) != 1){
+  } else if (LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)wt(rc, $0)) != 1){
     $f;
   }
 
@@ -501,7 +501,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if(at(rc, $0) != LMN_DBL_ATTR) $f;
 
 #isstring  LmnInstrVar
-  if(! lmn_is_string(wt(rc, $0), at(rc, $0))) $f;
+  if(! lmn_is_string((LmnSymbolAtomRef)wt(rc, $0), at(rc, $0))) $f;
 
 #isintfunc LmnInstrVar
   if(at(rc, $0) != LMN_INT_ATTR) $f;
@@ -510,8 +510,8 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if(at(rc, $0) != LMN_DBL_ATTR) $f;
 
 #copyatom LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, lmn_copy_atom(wt(rc, $2), at(rc, $2)), at(rc, $2), TT_ATOM);
-  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $1), wt(rc, $0), at(rc, $0));
+  warry_set(rc, $0, (LmnWord)lmn_copy_atom((LmnSymbolAtomRef)wt(rc, $2), at(rc, $2)), at(rc, $2), TT_ATOM);
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $1), (LmnAtomRef)wt(rc, $0), at(rc, $0));
 
 #eqatom LmnInstrVar LmnInstrVar
   if (LMN_ATTR_IS_DATA(at(rc, $0)) ||
@@ -574,7 +574,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     case LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
       LinkObjRef lo = (LinkObjRef)vec_get((Vector *)wt(rc, $1), (unsigned int)$2);
-      warry_set(rc, $0, LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM);
+      warry_set(rc, $0, (LmnWord)LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM);
       break;
     }
   }
@@ -648,102 +648,102 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if (lmn_mem_is_active((LmnMembraneRef)wt(rc, $0))) $f;
 
 #iadd LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (long)wt(rc, $1) + (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) + (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #isub LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (long)wt(rc, $1) - (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) - (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #imul LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (long)wt(rc, $1) * (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) * (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #idiv LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (long)wt(rc, $1) / (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) / (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #ineg LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, -(long)wt(rc, $1), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, -(LmnWord)wt(rc, $1), LMN_INT_ATTR, TT_ATOM);
 
 #imod LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (long)wt(rc, $1) % (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) % (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #inot LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, ~(long)wt(rc, $1), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, ~(LmnWord)wt(rc, $1), LMN_INT_ATTR, TT_ATOM);
 
 #iand LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (long)wt(rc, $1) & (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) & (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #ior LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (long)wt(rc, $1) | (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) | (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #ixor LmnInstrVar LmnInstrVar LmnInstrVar
-  warry_set(rc, $0, (long)wt(rc, $1) ^ (long)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) ^ (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
 
 #ilt LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) < (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) < wt(rc, $1))) $f;
 
 #ile LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) <= (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) <= wt(rc, $1))) $f;
 
 #igt LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) > (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) > wt(rc, $1))) $f;
 
 #ige LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) >= (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) >= wt(rc, $1))) $f;
 
 #ieq LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) == (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) == wt(rc, $1))) $f;
 
 #ine LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) != (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) != wt(rc, $1))) $f;
 
 #iltfunc LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) < (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) < wt(rc, $1))) $f;
 
 #ilefunc LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) <= (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) <= wt(rc, $1))) $f;
 
 #igtfunc LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) > (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) > wt(rc, $1))) $f;
 
 #igefunc LmnInstrVar LmnInstrVar
-  if(!((long)wt(rc, $0) >= (long)wt(rc, $1))) $f;
+  if(!(wt(rc, $0) >= wt(rc, $1))) $f;
 
 #fadd LmnInstrVar LmnInstrVar LmnInstrVar
-  LmnAtom d = lmn_create_double_atom(lmn_get_double(wt(rc, $1)) + lmn_get_double(wt(rc, $2)));
-  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(lmn_get_double(wt(rc, $1)) + lmn_get_double(wt(rc, $2)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
 
 #fsub LmnInstrVar LmnInstrVar LmnInstrVar
-  LmnAtom d = lmn_create_double_atom(lmn_get_double(wt(rc, $1)) - lmn_get_double(wt(rc, $2)));
-  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(lmn_get_double(wt(rc, $1)) - lmn_get_double(wt(rc, $2)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
 
 #fmul LmnInstrVar LmnInstrVar LmnInstrVar
-  LmnAtom d = lmn_create_double_atom(lmn_get_double(wt(rc, $1)) * lmn_get_double(wt(rc, $2)));
-  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(lmn_get_double(wt(rc, $1)) * lmn_get_double(wt(rc, $2)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
 
 #fdiv LmnInstrVar LmnInstrVar LmnInstrVar
-  LmnAtom d = lmn_create_double_atom(lmn_get_double(wt(rc, $1)) / lmn_get_double(wt(rc, $2)));
-  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(lmn_get_double(wt(rc, $1)) / lmn_get_double(wt(rc, $2)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
 
 #fneg LmnInstrVar LmnInstrVar
-  LmnAtom d = lmn_create_double_atom(-lmn_get_double(wt(rc, $1)));
-  warry_set(rc, $0, d, LMN_DBL_ATTR, TT_ATOM);
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(-lmn_get_double(wt(rc, $1)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
 
 #flt LmnInstrVar LmnInstrVar
-  if(!(lmn_get_double(wt(rc, $0)) < lmn_get_double(wt(rc, $1)))) $f;
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) < lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
 
 #fle LmnInstrVar LmnInstrVar
-  if(!(lmn_get_double(wt(rc, $0)) <= lmn_get_double(wt(rc, $1)))) $f;
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) <= lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
 
 #fgt LmnInstrVar LmnInstrVar
-  if(!(lmn_get_double(wt(rc, $0)) > lmn_get_double(wt(rc, $1)))) $f;
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) > lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
 
 #fge LmnInstrVar LmnInstrVar
-  if(!(lmn_get_double(wt(rc, $0)) >= lmn_get_double(wt(rc, $1)))) $f;
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) >= lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
 
 #feq LmnInstrVar LmnInstrVar
-  if(!(lmn_get_double(wt(rc, $0)) == lmn_get_double(wt(rc, $1)))) $f;
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) == lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
 
 #fne LmnInstrVar LmnInstrVar
-  if(!(lmn_get_double(wt(rc, $0)) != lmn_get_double(wt(rc, $1)))) $f;
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) != lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
 
 #allocatom LmnInstrVar $functor
 % switch(targ1_attr){
@@ -769,20 +769,20 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #allocatomindirect LmnInstrVar LmnFunctor
   if (LMN_ATTR_IS_DATA(at(rc, $1))) {
-    warry_set(rc, $0, lmn_copy_data_atom(wt(rc, $1), at(rc, $1)), at(rc, $1), TT_ATOM);
+    warry_set(rc, $0, (LmnWord)lmn_copy_data_atom(wt(rc, $1), at(rc, $1)), at(rc, $1), TT_ATOM);
   } else { /* symbol atom */
     fprintf(stderr, "symbol atom can't be created in GUARD\n");
     exit(EXIT_FAILURE);
   }
 
 #samefunc LmnInstrVar LmnInstrVar
-  if (!lmn_eq_func(wt(rc, $0), at(rc, $0), wt(rc, $1), at(rc, $1))) $f;
+  if (!lmn_eq_func((LmnAtomRef)wt(rc, $0), at(rc, $0), (LmnAtomRef)wt(rc, $1), at(rc, $1))) $f;
 
 #getfunc LmnInstrVar LmnInstrVar
   if(LMN_ATTR_IS_DATA(at(rc, $1))){
-    wt_set(rc, $0, wt(rc, $1));
+    wt_set(rc, $0, (LmnWord)wt(rc, $1));
   }else{
-    wt_set(rc, $0, LMN_SATOM_GET_FUNCTOR(wt(rc, $1)));
+    wt_set(rc, $0, LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)wt(rc, $1)));
   }
   at_set(rc, $0, at(rc, $1));
   tt_set(rc, $0, TT_OTHER);
@@ -871,7 +871,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   }
 
 #addatom LmnInstrVar LmnInstrVar
-  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $0), wt(rc, $1), at(rc, $1));
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $0), (LmnAtomRef)wt(rc, $1), at(rc, $1));
 
 #movecells LmnInstrVar LmnInstrVar
   lmn_mem_move_cells((LmnMembraneRef)wt(rc, $0), (LmnMembraneRef)wt(rc, $1));
@@ -896,7 +896,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   lmn_mem_drop((LmnMembraneRef)wt(rc, $0));
 
 #testmem LmnInstrVar LmnInstrVar
-  if (LMN_PROXY_GET_MEM(wt(rc, $1)) != (LmnMembraneRef)wt(rc, $0)) $f;
+  if (LMN_PROXY_GET_MEM((LmnSymbolAtomRef)wt(rc, $1)) != (LmnMembraneRef)wt(rc, $0)) $f;
 
 #iaddfunc LmnInstrVar LmnInstrVar LmnInstrVar
   warry_set(rc, $0, wt(rc, $1) + wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
