@@ -8,15 +8,15 @@
 #include "hash.h"
 #include "../special_atom.h"
 #include "../verifier/mem_encode.h"
-
+#include "../verifier/mc_worker.h"
 
 static int hash_atom_type;
 
 static int state_map_atom_type;
 
+static BYTE mc_flag = 0x10U;
+
 #define LMN_HASH_DATA(obj) (LMN_HASH(obj)->tbl)
-#define LMN_STATE_MAP_STBL(obj) (LMN_STATE_MAP(obj)->state_tbl)
-#define LMN_STATE_MAP_ITBL(obj) (LMN_STATE_MAP(obj)->id_tbl)
 
 /*
  * Internal Constructor
@@ -35,7 +35,6 @@ static LmnStateMapRef lmn_make_state_map(LmnMembrane *mem)
   LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
   LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
   s->states = statespace_make(NULL, NULL);
-  s->id_tbl = st_init_table(&type_id_hash);
   return s;
 }
 
@@ -48,7 +47,6 @@ void lmn_hash_free(LmnHashRef hash, LmnMembrane *mem)
 void lmn_state_map_free(LmnStateMapRef state_map, LmnMembrane *mem)
 {
   statespace_free(LMN_STATE_MAP(state_map)->states);
-  st_free_table(LMN_STATE_MAP(state_map)->id_tbl);
   LMN_FREE(state_map);
 }
 
@@ -192,10 +190,9 @@ void cb_set_put(LmnReactCxt *rc,
 	  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
 	  lmn_mem_delete_atom(mem, a0, t0);
 	  a0 = LMN_ATOM(atom);
-	  t0 = attr;	  
+	  t0 = attr;
 	}
 	st_insert(LMN_HASH_DATA(a0), (st_data_t)a1, (st_data_t)a1);
-	
       }
 
     }else{
@@ -230,7 +227,7 @@ void cb_set_put(LmnReactCxt *rc,
       }
       st_insert(LMN_HASH_DATA(a0), (st_data_t)a1, (st_data_t)a1);
       lmn_mem_remove_atom(mem, a1, t1);
-    }    
+    }
   }
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
@@ -379,16 +376,39 @@ void cb_state_map_id_find(LmnReactCxt *rc,
 			  LmnAtom a3, LmnLinkAttr t3)
 {
   LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-  State *new_s = state_make(key, NULL, NULL);
-
+  AtomListEntry *ent;
+  LmnFunctor f;
+  LmnSAtom in;
+  LmnSAtom out;
+  LmnSAtom plus;
+  LmnBinStrRef s;
   StateSpaceRef ss = LMN_STATE_MAP(a0)->states;
-  printf("!!!\n");
+  volatile StateTable *dst_st = statespace_tbl(ss);
+
+  EACH_ATOMLIST_WITH_FUNC(key, ent, f, ({
+	LmnSAtom satom;
+	EACH_ATOM(satom, ent, ({
+	      if(f==LMN_UNARY_PLUS_FUNCTOR){
+		plus = satom;
+		in = LMN_SATOM(LMN_SATOM_GET_LINK(plus, 0));
+		out = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
+	      }
+	    }))
+      }));
+
+  mem_remove_symbol_atom(key, in);
+  lmn_delete_atom(in);
+
+  LmnSAtom at = lmn_mem_newatom(key, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
+  lmn_newlink_in_symbols(plus, 0, at, 0);
+
+  State *new_s = state_make(key, NULL, mc_use_canonical(mc_flag));
+
   State *succ = statespace_insert(ss, new_s);
 
-  if(succ = new_s){
+  if(succ == new_s){
     /* new state */
     state_id_issue(succ);
-    st_insert(LMN_STATE_MAP_ITBL(a0), (st_data_t)key, (st_data_t)key);
   }
   lmn_mem_newlink(mem,
 		  a2, t2, LMN_ATTR_GET_VALUE(t2),
@@ -434,16 +454,11 @@ void sp_cp_hash_is_ground(void *data)
 
 void *sp_cb_state_map_copy(void *data)
 {
-  LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
-  LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
-  s->states = ((LmnStateMapRef)data)->states;
-  s->id_tbl = st_copy(((LmnStateMapRef)data)->id_tbl);
-  return s;
+  return data;
 }
 
 void sp_cb_state_map_free(void *data)
 {
-  lmn_state_map_free((LmnStateMapRef)data, NULL);
 }
 
 void sp_cb_state_map_eq(void *_p1, void *_p2)
