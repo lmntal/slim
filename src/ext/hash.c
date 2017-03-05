@@ -426,15 +426,15 @@ void cb_state_map_id_find(LmnReactCxt *rc,
 
 void *sp_cb_hash_copy(void *data)
 {
-  LmnHashRef h = LMN_MALLOC(struct LmnHash);
-  LMN_SP_ATOM_SET_TYPE(h, hash_atom_type);
-  h->tbl = st_copy(LMN_HASH_DATA(LMN_HASH(data)));
-  return h;
+  /* LmnHashRef h = LMN_MALLOC(struct LmnHash); */
+  /* LMN_SP_ATOM_SET_TYPE(h, hash_atom_type); */
+  /* h->tbl = st_copy(LMN_HASH_DATA(LMN_HASH(data))); */
+  return data;
 }
 
 void sp_cb_hash_free(void *data)
 {
-  lmn_hash_free(LMN_HASH(data), NULL);
+  /* lmn_hash_free(LMN_HASH(data), NULL); */
 }
 
 void sp_cb_hash_eq(void *_p1, void *_p2)
