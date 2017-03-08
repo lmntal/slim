@@ -13,12 +13,12 @@
 
     Ret = set.find(Set, Val, Res) :- class(Set, "hash") | '$callback'('cb_set_get', Set, Val , Res, Ret).
 
-    Ret = set.intersection(Set0, Set1) :- class(Set0, "hash"), class(Set1, "hash") |
-	'$callback'('cb_set_intersection', Set0, Set1, Ret).
+    Ret = set.intersect(Set0, Set1) :- class(Set0, "hash"), class(Set1, "hash") |
+	'$callback'('cb_set_intersect', Set0, Set1, Ret).
 
-    Ret = set.intersection(Set, set.empty) :- Ret = set.empty.
+    Ret = set.intersect(Set, set.empty) :- Ret = set.empty.
 
-    Ret = set.intersection(set.empty, Set) :- Ret = set.empty.
+    Ret = set.intersect(set.empty, Set) :- Ret = set.empty.
 
     Ret = set.union(Set0, Set1) :- class(Set0, "hash"), class(Set1, "hash") |
 	'$callback'('cb_set_union', Set0, Set1, Ret).
