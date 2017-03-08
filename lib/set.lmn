@@ -14,11 +14,11 @@
     Ret = set.find(Set, Val, Res) :- class(Set, "hash") | '$callback'('cb_set_get', Set, Val , Res, Ret).
 
     Ret = set.intersect(Set0, Set1) :- class(Set0, "hash"), class(Set1, "hash") |
-	'$callback'('cb_set_intersect', Set0, Set1, Ret).
+    	'$callback'('cb_set_intersect', Set0, Set1, Ret).
 
-    Ret = set.intersect(Set, set.empty) :- Ret = set.empty.
+    Ret = set.intersect(Set, set.empty) :- Ret = set.empty, set.free(Set).
 
-    Ret = set.intersect(set.empty, Set) :- Ret = set.empty.
+    Ret = set.intersect(set.empty, Set) :- Ret = set.empty, set.free(Set).
 
     Ret = set.union(Set0, Set1) :- class(Set0, "hash"), class(Set1, "hash") |
 	'$callback'('cb_set_union', Set0, Set1, Ret).
@@ -27,3 +27,14 @@
 
     Ret = set.union(set.empty, Set) :- Ret = Set.
 }
+
+
+% ---union test------
+% set.use.
+
+% s(set.insert(set.insert(set.init, 1), 2), set.insert(set.insert(set.init, 0), 1)).
+
+% s(Set0, Set1) :- ret=set.find(set.union(Set0, Set1), 0, res). //test0
+% s(Set0, Set1) :- ret=set.find(set.union(Set0, Set1), 1, res). //test1
+% s(Set0, Set1) :- ret=set.find(set.union(Set0, Set1), 2, res). //test2
+% s(Set0, Set1) :- ret=set.find(set.union(Set0, Set1), 3, res). //test3
