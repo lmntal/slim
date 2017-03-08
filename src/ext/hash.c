@@ -297,13 +297,23 @@ void cb_set_intersect(LmnReactCxt *rc,
  * +a1: 集合Y
  * -a2: XとYの和集合
  */
+int hogehoge(st_data_t key, st_data_t rec, st_data_t t)
+{
+  st_table_t tbl = (st_table_t)t;
+  st_insert(tbl, key, rec);
+  return ST_CONTINUE;
+}
+
 void cb_set_union(LmnReactCxt *rc,
 		  LmnMembrane *mem,
 		  LmnAtom a0, LmnLinkAttr t0,
 		  LmnAtom a1, LmnLinkAttr t1,
 		  LmnAtom a2, LmnLinkAttr t2)
 {
-  
+  st_foreach(LMN_HASH_DATA(a0), (int)hogehoge, LMN_HASH_DATA(a1));
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  a2, t2, LMN_ATTR_GET_VALUE(t2));
 }
 
 /*
@@ -532,4 +542,5 @@ void init_hash(void)
   lmn_register_c_fun("cb_set_put", (void *)cb_set_put, 3);
   lmn_register_c_fun("cb_set_get", (void *)cb_set_get, 4);
   lmn_register_c_fun("cb_set_free", (void *)cb_hash_free, 1);
+  lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
 }
