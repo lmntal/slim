@@ -274,7 +274,37 @@ void cb_set_get(LmnReactCxt *rc,
 }
 
 
+/* 
+ * 積集合
+ *
+ * +a0: 集合X
+ * +a1: 集合Y
+ * -a2: XとYの積集合
+ */
+void cb_set_intersect(LmnReactCxt *rc,
+		      LmnMembrane *mem,
+		      LmnAtom a0, LmnLinkAttr t0,
+		      LmnAtom a1, LmnLinkAttr t1,
+		      LmnAtom a2, LmnLinkAttr t2)
+{
+  
+}
 
+/* 
+ * 和集合
+ * 
+ * +a0: 集合X
+ * +a1: 集合Y
+ * -a2: XとYの和集合
+ */
+void cb_set_union(LmnReactCxt *rc,
+		  LmnMembrane *mem,
+		  LmnAtom a0, LmnLinkAttr t0,
+		  LmnAtom a1, LmnLinkAttr t1,
+		  LmnAtom a2, LmnLinkAttr t2)
+{
+  
+}
 
 /*
  * 要素挿入
