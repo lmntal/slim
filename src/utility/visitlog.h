@@ -545,7 +545,8 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
 
 struct TraceLog {
   int cap, num;
-  struct TraceData *tbl;
+  int num_buckets;
+  struct TraceData **tbl_;
   struct LogTracker tracker;
 };
 
@@ -563,9 +564,9 @@ typedef struct TraceLog *TraceLogRef;
 
 #define TLOG_DATA_CLEAR(V)                                                     \
     do {                                                                       \
-      l->tbl[key].flag = TLOG_INIT_DATA;                                       \
-      l->tbl[key].owner_id = 0;                                                \
-      l->tbl[key].matched = 0;                                                 \
+      tracelog_entry(l, key).flag = TLOG_INIT_DATA;                                       \
+      tracelog_entry(l, key).owner_id = 0;                                                \
+      tracelog_entry(l, key).matched = 0;                                                 \
     } while (0)
 
 #define TLOG_MATCHED_ID_NONE       (0U)
@@ -582,6 +583,10 @@ typedef struct TraceLog *TraceLogRef;
 #define TLOG_SET_TRV_SOME(F)       (F = TLOG_TRAVERSED_OTHERS)
 #define TLOG_IS_TRV(F)             (F != TLOG_INIT_DATA)
 #define TLOG_UNSET_TRV(F)          (F = TLOG_INIT_DATA)
+
+#define tracelog_bucket(T, K) ((T)->tbl_[(K) / PROC_TBL_BUCKETS_SIZE])
+#define tracelog_idx_in_bucket(T, K) ((K) % PROC_TBL_BUCKETS_SIZE)
+#define tracelog_entry(T, K) (tracelog_bucket(T, K)[tracelog_idx_in_bucket(T, K)])
 
 /**
  * Function ProtoTypes
@@ -630,7 +635,7 @@ static inline BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
                                                   AtomListEntry *avoid)
 {
   return
-      TLOG_NUM(l->tbl[lmn_mem_id(owner)]) ==
+      (tracelog_bucket(l, lmn_mem_id(owner)) ? TLOG_NUM(tracelog_entry(l, lmn_mem_id(owner))) : 0) ==
           (lmn_mem_symb_atom_num(owner)
               + lmn_mem_child_mem_num(owner)
               + atomlist_get_entries_num(in_ent)
@@ -641,9 +646,18 @@ static inline BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
 static inline void tracelog_tbl_expand(TraceLogRef l, unsigned long new_size)
 {
   unsigned long org_size = l->cap;
+  unsigned int org_n = l->num_buckets;
   while (l->cap <= new_size) l->cap *= 2;
-  l->tbl = LMN_REALLOC(struct TraceData, l->tbl, l->cap);
-  memset(l->tbl + org_size, TLOG_INIT_DATA, sizeof(struct TraceData) * (l->cap - org_size));
+  l->num_buckets = l->cap / PROC_TBL_BUCKETS_SIZE + 1;
+  if (org_n < l->num_buckets) {
+    l->tbl_ = LMN_REALLOC(struct TraceData *, l->tbl_, l->num_buckets);
+    memset(l->tbl_ + org_n, 0, sizeof(struct TraceData *) * (l->num_buckets - org_n));
+  }
+
+  unsigned int b = new_size / PROC_TBL_BUCKETS_SIZE;
+  if (b < l->num_buckets && l->tbl_[b]) return;
+  l->tbl_[b] = LMN_NALLOC(struct TraceData, PROC_TBL_BUCKETS_SIZE);
+  memset(l->tbl_[b], TLOG_INIT_DATA, sizeof(struct TraceData) * PROC_TBL_BUCKETS_SIZE);
 }
 
 /* ログl上のキーkey位置にあるTraceLogに対して, 訪問を記録する.
@@ -653,19 +667,20 @@ static inline void tracelog_tbl_expand(TraceLogRef l, unsigned long new_size)
  * (呼出しコスト削減のために公開関数としているだけ) */
 static inline int tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
                                LmnMembrane *owner) {
-  if (l->cap <= key) {
-    tracelog_tbl_expand(l, key);
-  } else if (TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]))) {
+  tracelog_tbl_expand(l, key);
+
+  if (TLOG_IS_TRV(TLOG_FLAG(tracelog_entry(l, key)))) {
     return 0;
   }
 
   l->num++;
-  TLOG_SET_MATCHED(l->tbl[key], matched_id);
+  TLOG_SET_MATCHED(tracelog_entry(l, key), matched_id);
 
   if (owner) {
-    TLOG_SET_OWNER(l->tbl[key], owner);
+    TLOG_SET_OWNER(tracelog_entry(l, key), owner);
     LMN_ASSERT(l->cap > lmn_mem_id(owner));
-    TLOG_TRV_INC(l->tbl[lmn_mem_id(owner)]);
+    tracelog_tbl_expand(l, lmn_mem_id(owner));
+    TLOG_TRV_INC(tracelog_entry(l, lmn_mem_id(owner)));
   }
 
   LogTracker_TRACE(&l->tracker, key);
@@ -678,7 +693,7 @@ static inline int tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
 static inline int tracelog_put_atom(TraceLogRef l, LmnSAtom atom1, LmnWord  atom2_id,
                                     LmnMembrane *owner1) {
   int ret = tracelog_put(l, LMN_SATOM_ID(atom1), atom2_id, owner1);
-  TLOG_SET_TRV_ATOM(TLOG_FLAG(l->tbl[LMN_SATOM_ID(atom1)]));
+  TLOG_SET_TRV_ATOM(TLOG_FLAG(tracelog_entry(l, LMN_SATOM_ID(atom1))));
   return ret;
 }
 
@@ -686,7 +701,7 @@ static inline int tracelog_put_atom(TraceLogRef l, LmnSAtom atom1, LmnWord  atom
  * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
 static inline int tracelog_put_mem(TraceLogRef l, LmnMembrane *mem1, LmnWord mem2_id) {
   int ret = tracelog_put(l, lmn_mem_id(mem1), mem2_id, lmn_mem_parent(mem1));
-  TLOG_SET_TRV_MEM(TLOG_FLAG(l->tbl[lmn_mem_id(mem1)]));
+  TLOG_SET_TRV_MEM(TLOG_FLAG(tracelog_entry(l, lmn_mem_id(mem1))));
   return ret;
 }
 
@@ -696,21 +711,21 @@ static inline int tracelog_put_mem(TraceLogRef l, LmnMembrane *mem1, LmnWord mem
  * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する */
 static inline int tracelog_put_hlink(TraceLogRef l, HyperLink *hl1, LmnWord hl2_id) {
   int ret = tracelog_put(l, LMN_HL_ID(hl1), hl2_id, NULL);
-  TLOG_SET_TRV_HLINK(TLOG_FLAG(l->tbl[LMN_HL_ID(hl1)]));
+  TLOG_SET_TRV_HLINK(TLOG_FLAG(tracelog_entry(l, LMN_HL_ID(hl1))));
   return ret;
 }
 
 static inline void tracelog_unput(TraceLogRef l, LmnWord key) {
-  LMN_ASSERT (TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]))); /* 訪問済みでもないないのにunputするとnumの値が不正になり得る */
+  LMN_ASSERT (TLOG_IS_TRV(TLOG_FLAG(tracelog_entry(l, key)))); /* 訪問済みでもないないのにunputするとnumの値が不正になり得る */
   if (l->cap > key) {
     l->num--;
-    TLOG_TRV_DEC(l->tbl[TLOG_OWNER(l->tbl[key])]);
-    TLOG_DATA_CLEAR(l->tbl[key]);
+    TLOG_TRV_DEC(tracelog_entry(l, TLOG_OWNER(tracelog_entry(l, key))));
+    TLOG_DATA_CLEAR(tracelog_entry(l, key));
   }
 }
 
 static inline BOOL tracelog_contains(TraceLogRef l, LmnWord key) {
-  return (l->cap > key) && TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]));
+  return (l->cap > key) && tracelog_bucket(l, key) && TLOG_IS_TRV(TLOG_FLAG(tracelog_entry(l, key)));
 }
 
 static inline BOOL tracelog_contains_atom(TraceLogRef l, LmnSAtom atom) {
@@ -726,7 +741,7 @@ static inline BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) {
 }
 
 static inline LmnWord tracelog_get_matched(TraceLogRef l, LmnWord key) {
-  return TLOG_MATCHED(l->tbl[key]);
+  return tracelog_bucket(l, key) ? TLOG_MATCHED(tracelog_entry(l, key)) : 0;
 }
 
 static inline LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSAtom atom) {
@@ -742,7 +757,7 @@ static inline LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) {
 }
 
 static inline BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key) {
-  return TLOG_FLAG(l->tbl[key]);
+  return tracelog_bucket(l, key) ? TLOG_FLAG(tracelog_entry(l, key)) : 0;
 }
 
 static inline void tracelog_backtrack(TraceLogRef l) {

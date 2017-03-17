@@ -222,8 +222,8 @@ void tracelog_init_with_size(TraceLogRef l, unsigned long size)
 {
   l->cap = size;
   l->num = 0;
-  l->tbl = LMN_NALLOC(struct TraceData, l->cap);
-  memset(l->tbl, 0U, sizeof(struct TraceData) * l->cap);
+  l->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
+  l->tbl_ = LMN_CALLOC(struct TraceData *, l->num_buckets);
   tracker_init(&l->tracker);
 }
 
@@ -236,7 +236,10 @@ void tracelog_free(TraceLogRef l)
 
 void tracelog_destroy(TraceLogRef l)
 {
-  LMN_FREE(l->tbl);
+  for (int i = 0; i < l->num_buckets; i++) {
+    LMN_FREE(l->tbl_[i]);
+  }
+  LMN_FREE(l->tbl_);
   tracker_destroy(&l->tracker);
 }
 
