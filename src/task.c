@@ -352,6 +352,8 @@ static inline BOOL react_ruleset(LmnReactCxt *rc,
   return result;
 }
 
+  static clock_t acctime = 0;
+  static int cnt = 0;
 
 /**  @see react_ruleset (task.c)  */
 static inline BOOL react_ruleset_inner(LmnReactCxt *rc,
@@ -407,6 +409,11 @@ BOOL react_rule(LmnReactCxt *rc, LmnMembrane *mem, LmnRuleRef rule)
   profile_finish_trial();
 
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    if (result && strcmp("exp1", lmn_id_to_name(lmn_rule_get_name(rule))) == 0) {
+      clock_t t = clock();
+      printf("%d %d\n", cnt++, lmn_mem_atom_num(mem));
+      acctime = t;
+    }
     if (lmn_env.trace && result) {
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         lmn_dump_mem_stdout(RC_GROOT_MEM(rc));

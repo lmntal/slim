@@ -152,7 +152,6 @@ BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b)
 
 void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n)
 {
-  unsigned long org_size = p->size;
   unsigned int org_n = p->num_buckets;
   while (p->size <= n) p->size *= 2;
   p->num_buckets = p->size / PROC_TBL_BUCKETS_SIZE + 1;
@@ -173,8 +172,8 @@ void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
   p->n   = 0;
   p->cap = size;
 #ifdef TIME_OPT
-  p->tbl = LMN_NALLOC(BYTE, p->cap);
-  memset(p->tbl, SPROC_TBL_INIT_V, sizeof(BYTE) * p->cap);
+  p->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
+  p->tbl = LMN_CALLOC(BYTE *, p->num_buckets);
 #else
   p->tbl = st_init_ptrtable();
 #endif
@@ -188,6 +187,9 @@ void sproc_tbl_init(SimplyProcessTableRef p)
 void sproc_tbl_destroy(SimplyProcessTableRef p)
 {
 #ifdef TIME_OPT
+  for (int i = 0; i < p->num_buckets; i++) {
+    LMN_FREE(p->tbl[i]);
+  }
   LMN_FREE(p->tbl);
 #else
   st_free_table(p->tbl);
