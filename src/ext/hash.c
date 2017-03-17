@@ -405,6 +405,7 @@ void cb_state_map_id_find(LmnReactCxt *rc,
     /* new state */
     state_id_issue(succ);
   }
+  lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   (int)succ, LMN_INT_ATTR, 0);
