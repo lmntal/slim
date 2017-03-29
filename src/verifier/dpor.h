@@ -39,29 +39,34 @@
 #ifndef MC_DPOR_H
 #define MC_DPOR_H
 
-#include "lmntal.h"
+/**
+ * @ingroup  Verifier
+ * @defgroup DPOR
+ * @{
+ */
+
+#include "../lmntal.h"
 #include "delta_membrane.h"
 #include "statespace.h"
-#include "visitlog.h"
+#include "element/element.h"
 #ifdef DEBUG
 # include "dumper.h"
-# include "error.h"
 # define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
 #else
 # define POR_DEBUG(V)
 #endif
 
-typedef struct ContextC2 *ContextC2;
-typedef struct ContextC1 *ContextC1;
+typedef struct ContextC2 *ContextC2Ref;
+typedef struct ContextC1 *ContextC1Ref;
 
 struct McDporData {
   unsigned int cur_depth;
 
-  ContextC1 tmp;  /* ちょっと退避する場所 */
-  ContextC2 c2;
+  ContextC1Ref tmp;  /* ちょっと退避する場所 */
+  ContextC2Ref c2;
 
   Vector     *wt_gatoms;  /* マッチング中, ground命令によるProcessTblを集める作業場 */
-  ProcessTbl wt_flags;    /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
+  ProcessTableRef wt_flags;    /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
 
   Vector *ample_cand;     /* ample setに含める予定のContextC1へのポインタを積む */
   st_table_t delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
@@ -101,12 +106,12 @@ extern McDporData **dpor_data;
 #define RHS_OP(F, S)       ((F) & (S))
 
 
-void dpor_explore_redundunt_graph(StateSpace ss);
+void dpor_explore_redundunt_graph(StateSpaceRef ss);
 
 
-void dpor_start(StateSpace  ss,
+void dpor_start(StateSpaceRef  ss,
                 State       *s,
-                LmnReactCxt *rc,
+                LmnReactCxtRef rc,
                 Vector      *new_s,
                 BOOL flag);
 
@@ -115,69 +120,30 @@ void dpor_env_destroy(void);
 
 void dpor_transition_gen_LHS(McDporData   *mc,
                              MemDeltaRoot *d,
-                             LmnReactCxt  *rc,
-                             LmnRegister  *v);
+                             LmnReactCxtRef  rc,
+                             LmnRegisterArray v);
 BOOL dpor_transition_gen_RHS(McDporData   *mc,
                              MemDeltaRoot *d,
-                             LmnReactCxt  *rc,
-                             LmnRegister  *v);
+                             LmnReactCxtRef  rc,
+                             LmnRegisterArray  v);
 
 
-static inline void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f) {
-  LmnWord t;
-  BYTE flags;
+void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f);
 
-  d = DPOR_DATA();
-  if (proc_tbl_get(d->wt_flags, proc_id, &t)) { /* CONTAINS */
-    flags = (BYTE)t;
-  } else {                                            /* NEW */
-    flags = LHS_DEFAULT;
-  }
+void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f);
 
-  LHS_FL_SET(flags, set_f);
-  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
-}
+void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms);
 
-static inline void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
-  LmnWord t;
-  BYTE flags;
-
-  d = DPOR_DATA();
-  if (proc_tbl_get(d->wt_flags, proc_id, &t)) { /* CONTAINS */
-    flags = (BYTE)t;
-  } else {                                      /* NEW */
-    flags = 0;
-    LMN_ASSERT(0);
-  }
-
-  LHS_FL_UNSET(flags, unset_f);
-  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
-}
-
-static inline void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTbl atoms) {
-  vec_push(d->wt_gatoms, (vec_data_t)atoms);
-}
-
-static inline void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTbl atoms) {
-  if (vec_peek(d->wt_gatoms) == (vec_data_t)atoms) {
-    vec_pop(d->wt_gatoms);
-  } else {
-    /* pushした順にpopされるので, ここに来ることはまずないが念のため書いておく */
-    unsigned int i;
-    for (i = 0; i < vec_num(d->wt_gatoms); i++) {
-      vec_data_t t = vec_get(d->wt_gatoms, i);
-      if (t == (vec_data_t)atoms) {
-        vec_pop_n(d->wt_gatoms, i);
-      }
-    }
-  }
-}
+void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms);
 
 
 
 /* for debug only */
-void dpor_contextC1_dump_eachL(ContextC1 c);
-void dpor_contextC1_dump_eachR(ContextC1 c);
+void dpor_contextC1_dump_eachL(ContextC1Ref c);
+void dpor_contextC1_dump_eachR(ContextC1Ref c);
 void dpor_contextC1_dump(McDporData *d);
 int  dpor_dependency_tbl_dump(McDporData *d);
+
+/* @} */
+
 #endif

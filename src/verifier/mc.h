@@ -40,10 +40,15 @@
 #ifndef LMN_MC_H
 #define LMN_MC_H
 
-#include "lmntal.h"
-#include "lmntal_thread.h"
+/**
+ * @addtogroup  Verifier
+ * @{
+ */
+
+#include "../lmntal.h"
+#include "element/element.h"
 #include "automata.h"
-#include "react_context.h"
+#include "vm/vm.h"
 #include "state.h"
 #include "statespace.h"
 #include "mc_worker.h"
@@ -57,56 +62,48 @@
 
 #define MC_GET_PROPERTY(S, A)  ((A) ? automata_get_state(A, state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
 
-static inline BOOL mc_vec_states_valid(Vector *v) {
-  unsigned int i, j;
-  for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
-    State *s, *t;
-    s = (State *)vec_get(v, i);
-    t = (State *)vec_get(v, j);
-    if (!state_succ_contains(s, t)) return FALSE;
-  }
+BOOL mc_vec_states_valid(Vector *v);
 
-  return TRUE;
-}
-
-void mc_print_vec_states(StateSpace ss,
+void mc_print_vec_states(StateSpaceRef ss,
                          Vector     *v,
                          State      *seed);
-void mc_expand(const StateSpace states,
+void mc_expand(const StateSpaceRef states,
                State            *state,
-               AutomataState    property_automata_state,
-               LmnReactCxt      *rc,
+               AutomataStateRef    property_automata_state,
+               LmnReactCxtRef      rc,
                Vector           *new_s,
                Vector           *psyms,
                BOOL             flag);
 void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock);
 void mc_gen_successors_with_property(State         *s,
-                                     LmnMembrane   *mem,
-                                     AutomataState prop_atm_s,
-                                     LmnReactCxt   *rc,
+                                     LmnMembraneRef   mem,
+                                     AutomataStateRef prop_atm_s,
+                                     LmnReactCxtRef   rc,
                                      Vector        *psyms,
                                      BOOL          flags);
 void mc_gen_successors(State       *src,
-                       LmnMembrane *mem,
+                       LmnMembraneRef mem,
                        BYTE        prop_labels,
-                       LmnReactCxt *rc,
+                       LmnReactCxtRef rc,
                        BOOL        flags);
-void mc_store_successors(const StateSpace ss,
+void mc_store_successors(const StateSpaceRef ss,
                          State            *s,
-                         LmnReactCxt      *rc,
+                         LmnReactCxtRef      rc,
                          Vector           *new_ss,
                          BOOL             f);
-BOOL mc_expand_inner(LmnReactCxt *rc, LmnMembrane *cur_mem);
+BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
 
-void run_mc(Vector *start_rulesets, Automata a, Vector *psyms);
+void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms);
 
-int mc_load_property(Automata *a, PVector *prop_defs);
+int mc_load_property(AutomataRef *a, PVector *prop_defs);
 void mc_explain_error(int error_id);
-char *mc_error_msg(int error_id);
+const char *mc_error_msg(int error_id);
 
 void mc_found_invalid_state(LmnWorkerGroup *wp, State *seed);
 void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *path);
 unsigned long mc_invalids_get_num(LmnWorkerGroup *wp);
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f);
+
+/* @} */
 
 #endif

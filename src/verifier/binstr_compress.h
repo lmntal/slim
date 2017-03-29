@@ -40,23 +40,31 @@
 #ifndef LMN_BS_COMP_H
 #define LMN_BS_COMP_H
 
-#include "lmntal.h"
+/**
+ * @ingroup  Verifier
+ * @defgroup BinaryString
+ * @{
+ */
+
+#include "../lmntal.h"
 #include "mem_encode.h"
 #include "tree_compress.h"
 
-LmnBinStr lmn_bscomp_z_encode(LmnBinStr org);
-LmnBinStr lmn_bscomp_z_decode(LmnBinStr org);
+LmnBinStrRef lmn_bscomp_z_encode(LmnBinStrRef org);
+LmnBinStrRef lmn_bscomp_z_decode(LmnBinStrRef org);
 
 
-LmnBinStr lmn_bscomp_d_encode(LmnBinStr org, LmnBinStr ref);
-LmnBinStr lmn_bscomp_d_decode(LmnBinStr ref, LmnBinStr dif);
+LmnBinStrRef lmn_bscomp_d_encode(LmnBinStrRef org, LmnBinStrRef ref);
+LmnBinStrRef lmn_bscomp_d_decode(LmnBinStrRef ref, LmnBinStrRef dif);
 
 
 BOOL          lmn_bscomp_tree_init();
 BOOL          lmn_bscomp_tree_clean();
 void          lmn_bscomp_tree_profile(FILE *f);
 unsigned long lmn_bscomp_tree_space();
-TreeNodeRef   lmn_bscomp_tree_encode(LmnBinStr str);
-LmnBinStr     lmn_bscomp_tree_decode(TreeNodeRef ref, int len);
+TreeNodeID   lmn_bscomp_tree_encode(LmnBinStrRef str);
+LmnBinStrRef     lmn_bscomp_tree_decode(TreeNodeID ref, int len);
+
+/* @} */
 
 #endif /* LMN_BS_COMP */

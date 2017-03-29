@@ -38,7 +38,7 @@
  */
 
 #include "lmntal.h"
-#include "runtime_status.h"
+#include "verifier/runtime_status.h"
 
 struct Vector         *lmn_id_pool;
 struct LmnEnv         lmn_env;
@@ -68,12 +68,14 @@ static inline void lmn_TLS_destroy(LmnTLS *p) {
   /* nothing now */
 }
 
+static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) LMN_UNUSED;
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) {
   struct LmnTLS *p = LMN_MALLOC(struct LmnTLS);
   lmn_TLS_init(p, thread_id);
   return p;
 }
 
+static inline void lmn_TLS_free(LmnTLS *p) LMN_UNUSED;
 static inline void lmn_TLS_free(LmnTLS *p) {
   lmn_TLS_destroy(p);
   LMN_FREE(p);

@@ -1,3 +1,12 @@
+SLIM (2.3.0) -- 2017/03/29
+  * display commit id in version string
+  * test script with TAP
+    + enabled to run tests using `make check`
+  * add doxygen documents
+    + enabled to generate using `make doxygen-doc`
+  * delete TIME_OPT option
+  * refactoring
+
 SLIM (2.2.7) -- 2015/10/31
   * new feature
     + library function str.times

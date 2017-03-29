@@ -1,0 +1,3 @@
+a($x,Y) :- ground($x) | b($x,Y). a(n(N),N).       
+ b(n(M),M) 
+ng

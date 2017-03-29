@@ -1,0 +1,4 @@
+{a(A,X)},{b(X)},c(A),   ({$p},{$q} :-  $p,$q ). 
+b(a(c))  
+ok
+%% RemoveToplevelProxies のテスト

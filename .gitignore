@@ -67,11 +67,13 @@ lib/*.il
 *.lo
 *.la
 src/arch.h
-src/il_lexer.*
-src/il_parser.*
-src/interpret_generated.c
+src/loader/il_lexer.c
+src/loader/il_lexer.h
+src/loader/il_parser.c
+src/loader/il_parser.h
+src/loader/interpret_generated.c
+src/loader/translate_generated.c
 src/slim
-src/translate_generated.c
 src/verifier/nc_lexer.*
 src/verifier/nc_parser.*
 src/verifier/nc_parser.h
@@ -81,3 +83,9 @@ src/utility/.deps
 src/verifier/.deps
 third_party/google-perftools-1.8.3/.deps
 third_party/zdelta-2.1/.deps
+third_party/**/tcmalloc.h
+doc/doxygen/*
+test/**/*.log
+test/**/*.trs
+test/**/*.il
+.dirstamp

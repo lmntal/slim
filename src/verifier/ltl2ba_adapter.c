@@ -38,8 +38,8 @@
  */
 
 #include "ltl2ba_adapter.h"
-#include "lmntal.h"
-#include "error.h"
+#include "../lmntal.h"
+#include "element/element.h"
 #include <stdlib.h>
 
 FILE *ltl2ba_str(char *ltl)

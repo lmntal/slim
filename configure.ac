@@ -3,14 +3,15 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.2.7], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [2.3.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
+AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 TCMALLOC_SO_VERSION=2:2:2
 PROFILER_SO_VERSION=1:1:1
@@ -18,12 +19,15 @@ PROFILER_SO_VERSION=1:1:1
 AC_SUBST(TCMALLOC_SO_VERSION)
 AC_SUBST(PROFILER_SO_VERSION)
 
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 
 # ----------------------------------------------------------------------
 # Checks for programs.
 #
 
-CFLAGS="-O3 $CFLAGS"
+CFLAGS="-O $CFLAGS"
 CXXFLAGS="-g -O2 -mmmx -msse $CXXFLAGS"
 
 AC_LANG(C)
@@ -36,6 +40,7 @@ AC_PROG_YACC
 AC_PROG_LEX
 AM_PROG_LEX
 AC_PROG_RANLIB
+AC_PROG_AWK
 
 AC_SUBST(CFLAGS)
 AM_CONDITIONAL(GCC, test "$GCC" = "yes")   # let the Makefile know if we're gcc
@@ -60,7 +65,6 @@ default_enable_devel=no
 default_enable_debug=no
 default_enable_gprof=no
 default_enable_profile=no
-default_enable_timeopt=yes
 default_enable_jni=no
 default_enable_tcmalloc=yes
 default_enable_minmax=no
@@ -99,12 +103,6 @@ AC_ARG_ENABLE([profile],
                               [turn on runtime profiler (default no)])],
               [],
               [enable_profile="$default_enable_profile"])
-
-AC_ARG_ENABLE([time_opt],
-              [AS_HELP_STRING([--enable-time-opt],
-                              [turn on optimization for runtime performance (default yes)])],
-              [],
-              [enable_time_opt="$default_enable_timeopt"])
 
 AC_ARG_ENABLE([jni],
               [AS_HELP_STRING([--enable-jni],
@@ -176,14 +174,6 @@ else
   AC_MSG_RESULT([enable profile: no])
 fi
 
-# optimization for runtime performance
-if test "$enable_time_opt" = "no"; then
-  AC_MSG_RESULT([enable time-opt: no])
-else
-  AC_MSG_RESULT([enable time-opt: yes])
-  AC_DEFINE([TIME_OPT], 1, [enable timeopt])
-fi
-
 # jni
 if test "$enable_jni" = "yes"; then
   AC_MSG_RESULT([enable jni: yes])
@@ -250,7 +240,7 @@ AC_C_CHAR_UNSIGNED
 #AC_TYPE_INT32_T
 #AC_TYPE_INT64_T
 #AC_TYPE_INTMAX_T
-#AC_TYPE_INTPTR_T
+AC_TYPE_INTPTR_T
 AC_TYPE_LONG_DOUBLE
 # AC_TYPE_LONG_DOUBLE_WIDER
 # AC_TYPE_LONG_LONG_INT
@@ -262,11 +252,13 @@ AC_TYPE_LONG_DOUBLE
 #AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 #AC_TYPE_UINTMAX_T
-# AC_TYPE_UINTPTR_T
+AC_TYPE_UINTPTR_T
 # AC_TYPE_UNSIGNED_LONG_LONG_INT
 
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(void*)
+AC_CHECK_SIZEOF(double)
+AC_CHECK_SIZEOF(uintptr_t)
 
 
 # ----------------------------------------------------------------------
@@ -890,13 +882,17 @@ echo $SLIM_VERSION > VERSION
 AC_OUTPUT(Makefile \
           src/Makefile \
           src/genconfig \
+          src/element/Makefile \
+          src/loader/Makefile \
           src/verifier/Makefile \
-          src/utility/Makefile \
           src/test/Makefile \
+          src/vm/Makefile \
+          src/ffi/Makefile \
           lib/Makefile \
           ext/Makefile \
           test/Makefile \
           test/system_check/Makefile \
+          test/statespace/Makefile \
           third_party/Makefile \
           third_party/zdelta-2.1/Makefile \
           third_party/google-perftools-1.8.3/Makefile \

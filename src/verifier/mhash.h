@@ -38,10 +38,18 @@
 #ifndef MHASH_H
 #define MHASH_H
 
-#include "lmntal.h"
-#include "membrane.h"
+/**
+ * @ingroup  Verifier
+ * @defgroup MembraneHash
+ * @{
+ */
 
-unsigned long mhash(LmnMembrane *mem);
+#include "../lmntal.h"
+#include "vm/vm.h"
+
+unsigned long mhash(LmnMembraneRef mem);
 void mhash_set_depth(int depth);
+
+/* @} */
 
 #endif

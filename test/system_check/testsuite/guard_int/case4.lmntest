@@ -1,0 +1,3 @@
+i($i) :- int($i) | yes. i(a).             
+ yes.           
+ng

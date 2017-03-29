@@ -40,8 +40,7 @@
 %{
 #include <math.h>
 #include <stdio.h>
-#include "utility/st.h"
-#include "utility/vector.h"
+#include "element/element.h"
 #include "automata.h"
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
@@ -52,7 +51,7 @@ typedef void* yyscan_t;
 %pure-parser
 %locations
 %parse-param {yyscan_t scanner}
-%parse-param {Automata automata}
+%parse-param {AutomataRef automata}
 %parse-param {Vector **definitions}
 %lex-param {yyscan_t scanner}
 
@@ -75,7 +74,7 @@ typedef void* yyscan_t;
 %{
 #include "propsym_lexer.h"
 #include "verifier/propositional_symbol.h"
-static void propsymerror (YYLTYPE*, yyscan_t, Automata, Vector **, char *);
+static void propsymerror (YYLTYPE*, yyscan_t, AutomataRef, Vector **, char *);
 %}
 
 %% /* Grammar rules and actions follow.  */
@@ -129,7 +128,7 @@ definition:
 %%
 
 /* Called by yyparse on error.  */
-void propsymerror (YYLTYPE *loc, yyscan_t scanner, Automata a, Vector **defs, char *s)
+void propsymerror (YYLTYPE *loc, yyscan_t scanner, AutomataRef a, Vector **defs, char *s)
 {
   fprintf(stderr, "propositional symbol: error %s line: %d\n", s, propsymget_lineno(scanner));
   exit(1);

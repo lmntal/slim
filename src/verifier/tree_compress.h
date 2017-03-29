@@ -44,19 +44,25 @@
 #ifndef TREE_COMPRESS_H
 #  define TREE_COMPRESS_H
 
+/**
+ * @ingroup  Verifier
+ * @defgroup TreeCompress
+ * @{
+ */
+
 #include "mem_encode.h"
 
 #define TREE_DB_DEFAULT_SIZE (1024 * 1024 * 128)
 
 typedef uint64_t TreeNodeElement;
-typedef TreeNodeElement TreeNodeRef;
+typedef TreeNodeElement TreeNodeID;
 typedef TreeNodeElement TreeNodeUnit;
 
-typedef struct TreeDatabase *TreeDatabase;
-typedef struct TreeNode *TreeNode;
+typedef struct TreeDatabase *TreeDatabaseRef;
+typedef struct TreeNode *TreeNodeRef;
 
 struct TreeDatabase {
-  TreeNode    *nodes;
+  TreeNodeRef    *nodes;
   uint64_t    node_count;
   size_t      mask;
 };
@@ -66,14 +72,16 @@ struct TreeNode {
   TreeNodeElement right;
 };
 
-TreeDatabase   tree_make(size_t size);
-void           tree_free(TreeDatabase treedb);
-void           tree_clear(TreeDatabase treedb);
-LmnBinStr      tree_get(TreeDatabase treedb, TreeNodeRef ref, int len);
-TreeNodeRef    tree_find_or_put(TreeDatabase treedb, LmnBinStr bs, BOOL *found);
-uint64_t       tree_space(TreeDatabase treedb);
+TreeDatabaseRef   tree_make(size_t size);
+void           tree_free(TreeDatabaseRef treedb);
+void           tree_clear(TreeDatabaseRef treedb);
+LmnBinStrRef      tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len);
+TreeNodeID    tree_find_or_put(TreeDatabaseRef treedb, LmnBinStrRef bs, BOOL *found);
+uint64_t       tree_space(TreeDatabaseRef treedb);
 
 #define tree_db_node_count(db) (db->node_count)
 #define tree_db_string_count(db) (db->string_count)
+
+/* @} */
 
 #endif /* ifndef TREE_COMPRESS_H */

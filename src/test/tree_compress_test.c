@@ -41,9 +41,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include "tree_compress_test.h"
-#include "verifier/tree_compress.h"
+#include <tree_compress.h>
 
-TreeDatabase treedb = NULL;
+TreeDatabaseRef treedb = NULL;
 
 int test_tree_init()
 {
@@ -64,7 +64,7 @@ int test_tree_clean()
 }
 
 
-void print_bs(LmnBinStr bs)
+void print_bs(LmnBinStrRef bs)
 {
   int k;
   for (k = 0; k < lmn_binstr_byte_size(bs); k++)
@@ -77,7 +77,7 @@ void print_bs(LmnBinStr bs)
 
 void test_tree_001()
 {
-  LmnBinStr strings[TEST_1_STR_COUNT];
+  LmnBinStrRef strings[TEST_1_STR_COUNT];
   BOOL found;
   int i, j;
 
@@ -102,10 +102,10 @@ void test_tree_001()
 
 void test_tree_002()
 {
-  LmnBinStr string;
-  LmnBinStr ret;
+  LmnBinStrRef string;
+  LmnBinStrRef ret;
   BOOL found;
-  TreeNodeRef ref;
+  TreeNodeID ref;
   int i, j;
 
   string = lmn_binstr_make(TEST_2_STR_SIZE);
@@ -124,9 +124,9 @@ void test_tree_002()
 
 void test_tree_003()
 {
-  LmnBinStr bs;
-  LmnBinStr bs_ret;
-  TreeNodeRef ref;
+  LmnBinStrRef bs;
+  LmnBinStrRef bs_ret;
+  TreeNodeID ref;
   BOOL found;
   int i, j, k;
 

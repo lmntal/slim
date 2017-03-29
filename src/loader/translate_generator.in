@@ -1,0 +1,936 @@
+/*
+ * translate_generator.in -
+ *
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id: translate_generator.in,v 1.5 2008/09/19 05:18:17 riki Exp $
+ */
+
+#__echo
+ #include "translate.h"
+ #include "syntax.h"
+ #include "arch.h"
+ #include "vm/vm.h"
+ #include "element/element.h"
+ #include "verifier/verifier.h"
+ #include <stdio.h>
+
+#__echo_t
+# トランスレータ用の関数宣言
+const BYTE *translate_instruction_generated(const BYTE *instr,
+                                            Vector *jump_points,
+                                            const char *header,
+                                            const char *successcode,
+                                            const char *failcode,
+                                            int indent,
+                                            int *finishflag)
+{
+  LmnInstrOp op;
+  const BYTE * const op_address = instr;
+
+  READ_VAL(LmnInstrOp, instr, op);
+  *finishflag = 1;
+
+  switch (op) {
+
+
+#__echo_i
+# インタプリタ用の関数宣言
+ #include "so.h"
+ #define TR_GFID(x) (x)
+ #define TR_GSID(x) (x)
+ #define TR_GRID(x) (x)
+
+/* just for debug! */
+static FILE *OUT = NULL;
+
+BOOL interpret_generated(LmnReactCxtRef rc,
+                         LmnRuleRef rule,
+                         LmnRuleInstr instr)
+{
+  LmnInstrOp op;
+
+  /* just for debug! */
+  if(! OUT){
+    /* out = stderr; */
+    OUT = stdout;
+    /* OUT = fopen("/dev/null", "w"); */
+  }
+
+  while (TRUE) {
+  /* LOOP:; */
+    READ_VAL(LmnInstrOp, instr, op);
+    switch (op) {
+
+
+#spec LmnInstrVar LmnInstrVar
+  TR_INSTR_SPEC(rc, $1);
+
+#insertconnectorsinnull LmnInstrVar $list
+  {
+    const Vector v = vec_const_temporary_from_array($1_num, $1);
+    warry_set(rc, $0, (LmnWord)insertconnectors(rc, NULL, &v), 0, TT_OTHER);
+
+#__echo_t
+    {
+      char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
+      free(buf_always);
+    }
+#__format_t
+  label_always_$a:
+    hashset_free((HashSet *)wt(rc, $0));
+    $s;
+    lmn_fatal("translate recursive error\n");
+#__format
+  }
+#__echo_t
+  *finishflag = 0;
+
+#insertconnectors LmnInstrVar $list LmnInstrVar
+  {
+    const Vector v = vec_const_temporary_from_array($1_num, $1);
+    warry_set(rc, $0, (LmnWord)insertconnectors(rc, (LmnMembraneRef)wt(rc, $2), &v), 0, TT_OTHER);
+#__echo_t
+    {
+      char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
+      free(buf_always);
+    }
+#__format_t
+  label_always_$a:
+    hashset_free((HashSet *)wt(rc, $0));
+    $s;
+    lmn_fatal("translate recursive error\n");
+#__format
+  }
+#__echo_t
+  *finishflag = 0;
+
+#commit lmn_interned_str LmnLineNum
+  {
+    LmnMembraneRef ptmp_global_root;
+    LmnRegisterArray v;
+    unsigned int org_next_id;
+    unsigned int warry_use_org, warry_size_org;
+
+    warry_use_org  = warry_use_size(rc);
+    warry_size_org = warry_size(rc);
+    org_next_id = 0;
+    tr_instr_commit_ready(rc, rule, TR_GSID($0), $1, &ptmp_global_root, &v, &org_next_id);
+#__echo_t
+    {
+      char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
+      free(buf_always);
+
+      /* 変換中についでにルール名も設定 */
+      set_translating_rule_name(targ0);
+    }
+#__format_t
+  label_always_$a:
+    if(tr_instr_commit_finish(rc, rule, TR_GSID($0), $1, &ptmp_global_root, &v, warry_use_org, warry_size_org))
+      $s;
+    else
+      env_set_next_id(org_next_id);
+      $f;
+    lmn_fatal("translate recursive error\n");
+#__format
+  }
+#__echo_t
+  *finishflag = 0;
+
+#findatom LmnInstrVar LmnInstrVar $functor
+% if (LMN_ATTR_IS_DATA(targ2_attr)) {
+%   lmn_fatal("I can not find data atoms.");
+% } else {
+    {
+      AtomListEntryRef atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)wt(rc, $1), TR_GFID($2_functor_data));
+      LmnSAtom atom;
+
+      if (atomlist_ent) {
+        at_set(rc, $0, LMN_ATTR_MAKE_LINK(0));
+        /* EACH_ATOMを使うとループ内コード中でコンマが使えない場合が出てくる */
+        for(atom = atomlist_head(atomlist_ent);
+            atom != lmn_atomlist_end(atomlist_ent);
+            atom = LMN_SATOM_GET_NEXT_RAW(atom)){
+          if(LMN_SATOM_GET_FUNCTOR(atom) != LMN_RESUME_FUNCTOR){
+            wt_set(rc, $0, (LmnWord)atom);
+            tt_set(rc, $0, TT_ATOM);
+#__echo_t
+            {
+              char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+              instr = translate_instructions(instr, jump_points, header, successcode, buf_fail, indent+1);
+              free(buf_fail);
+            }
+#__format
+          }
+#__format_t
+        label_fail_$a:
+          ; /* PROFILEでない場合に必要 */
+ #ifdef PROFILE
+          if (lmn_env.profile_level >= 2) {
+
+          }
+ #endif
+#__format
+        }
+      }
+    }
+    $f;
+% }
+#__echo_t
+  *finishflag = 0;
+
+#lockmem LmnInstrVar LmnInstrVar lmn_interned_str
+  warry_set(rc, $0, (LmnWord)LMN_PROXY_GET_MEM((LmnSymbolAtomRef)wt(rc, $1)), 0, TT_MEM);
+  if(LMN_MEM_NAME_ID((LmnMembraneRef)wt(rc, $0)) != TR_GSID($2)) $f;
+
+#anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
+  {
+    LmnMembraneRef mp = lmn_mem_child_head((LmnMembraneRef)wt(rc, $1));
+    for (; mp; mp=lmn_mem_next(mp)) {
+      warry_set(rc, $0, (LmnWord)mp, 0, TT_MEM);
+      if (LMN_MEM_NAME_ID(mp) == TR_GSID($3)){
+#__echo_t
+        {
+          char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+          instr = translate_instructions(instr, jump_points, header, successcode, buf_fail, indent+1);
+          free(buf_fail);
+        }
+#__format
+      }
+#__format_t
+    label_fail_$a:
+      ; /* PROFILEでない場合に必要 */
+ #ifdef PROFILE
+      if (lmn_env.profile_level >= 2) {
+
+      }
+ #endif
+#__format
+    }
+    $f;
+  }
+#__echo_t
+  *finishflag = 0;
+
+#nmems LmnInstrVar LmnInstrVar
+  if (!lmn_mem_nmems((LmnMembraneRef)wt(rc, $0), $1)) $f;
+
+#norules LmnInstrVar
+  if (vec_num(lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, $0)))) $f;
+
+#newatom LmnInstrVar LmnInstrVar $functor
+% switch(targ2_attr){
+% case LMN_INT_ATTR:
+    wt_set(rc, $0, $2_long_data);
+%   break;
+% case LMN_DBL_ATTR:
+  {
+    LmnAtomRef d;
+    d = (LmnAtomRef)lmn_create_double_atom($2_double_data);
+    wt_set(rc, $0, (LmnWord)d);
+   }
+%   break;
+% case LMN_STRING_ATTR:
+    wt_set(rc, $0, (LmnWord)lmn_string_make(lmn_id_to_name(TR_GSID($2_string_data))));
+%   break;
+% default:
+    wt_set(rc, $0, (LmnWord)lmn_new_atom(TR_GFID($2_functor_data)));
+%   break;
+% }
+  at_set(rc, $0, $2_attr);
+  tt_set(rc, $0, TT_ATOM);
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $1), (LmnAtomRef)wt(rc, $0), $2_attr);
+
+#natoms LmnInstrVar LmnInstrVar
+  if (!lmn_mem_natoms((LmnMembraneRef)wt(rc, $0), $1)) $f;
+
+#natomsindirect LmnInstrVar LmnInstrVar
+  if (!lmn_mem_natoms((LmnMembraneRef)wt(rc, $0), wt(rc, $1))) $f;
+
+#alloclink LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_ALLOCLINK(rc, $0, $1, $2);
+
+#unifylinks LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_UNIFYLINKS(rc, $0, $1, $2);
+
+#newlink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
+  lmn_mem_newlink((LmnMembraneRef)wt(rc, $4), (LmnAtomRef)wt(rc, $0), at(rc, $0), $1, (LmnAtomRef)wt(rc, $2), at(rc, $2), $3);
+
+#relink LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_RELINK(rc, $0, $1, $2, $3, $4);
+
+#getlink LmnInstrVar LmnInstrVar LmnInstrVar
+# /* リンク先の取得をせずにリンク元の情報を格納しておく。
+#    リンク元が格納されていることを示すため最下位のビットを立てる */
+  warry_set(rc, $0, (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, $1), $2), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, $1), $2), TT_ATOM);
+
+#unify LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
+  lmn_mem_unify_atom_args((LmnMembraneRef)wt(rc, $4), LMN_SATOM(wt(rc, $0)), $1, LMN_SATOM(wt(rc, $2)), $3);
+
+#proceed
+  $s;
+#__echo_t
+  *finishflag = 0;
+
+#stop
+  $f;
+#__echo_t
+  *finishflag = 0;
+
+#not LmnSubInstrSize
+  { /* not */
+#__echo_t
+    {
+      char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
+      char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+      const BYTE *next = translate_instructions(instr, jump_points, header, buf_success, buf_fail, indent+1);
+      LMN_ASSERT(next == instr+targ0);
+      instr = next;
+    }
+#__format_t
+  label_success_$a: /* not */
+    $f;
+  label_fail_$a: /* not */
+    ;
+#__format
+  }
+
+#enqueueatom LmnInstrVar
+
+#dequeueatom LmnInstrVar
+
+#newmem LmnInstrVar LmnInstrVar LmnInstrVar
+  {
+    LmnMembraneRef mp = lmn_mem_make();
+    lmn_mem_add_child_mem((LmnMembraneRef)wt(rc, $1), mp);
+    wt_set(rc, $0, (LmnWord)mp);
+    tt_set(rc, $0, TT_MEM);
+    lmn_mem_set_active(mp, TRUE);
+    if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+      lmn_memstack_push(RC_MEMSTACK(rc), mp);
+    }
+  }
+
+#allocmem LmnInstrVar
+  wt_set(rc, $0, (LmnWord)lmn_mem_make());
+  tt_set(rc, $0, TT_MEM);
+
+#removeatom LmnInstrVar LmnInstrVar
+  lmn_mem_remove_atom((LmnMembraneRef)wt(rc, $1), (LmnAtomRef)wt(rc, $0), at(rc, $0));
+
+#freeatom LmnInstrVar
+  lmn_free_atom((LmnAtomRef)wt(rc, $0), at(rc, $0));
+
+#removemem LmnInstrVar LmnInstrVar
+  lmn_mem_remove_mem((LmnMembraneRef)wt(rc, $1), (LmnMembraneRef)wt(rc, $0));
+
+#freemem LmnInstrVar
+  lmn_mem_free((LmnMembraneRef)wt(rc, $0));
+
+#addmem LmnInstrVar LmnInstrVar
+  lmn_mem_add_child_mem((LmnMembraneRef)wt(rc, $0), (LmnMembraneRef)wt(rc, $1));
+
+#enqueuemem LmnInstrVar
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembraneRef)wt(rc, $0)); /* 通常実行時 */
+  }
+
+#unlockmem LmnInstrVar
+
+#loadruleset LmnInstrVar LmnRulesetId
+  lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, $0), lmn_ruleset_from_id(TR_GRID($1)));
+
+#loadmodule LmnInstrVar lmn_interned_str
+  {
+    LmnRuleSetRef ruleset;
+    if ((ruleset = lmn_get_module_ruleset(TR_GSID($1)))) {
+#     /* テーブル内にルールセットがある場合 */
+      lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, $0), ruleset);
+    } else {
+#     /* テーブル内にルールセットがない場合 */
+      fprintf(stderr, "Undefined module %s\n", lmn_id_to_name(TR_GSID($1)));
+    }
+  }
+
+#recursivelock LmnInstrVar
+
+#recursiveunlock LmnInstrVar
+
+#derefatom LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, $1), $2), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, $1), $2), TT_ATOM);
+
+#deref LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
+  {
+    LmnByte attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, $1), $2);
+    if (LMN_ATTR_IS_DATA(attr)) {
+      if ($3 != 0) $f;
+    } else {
+      if (attr != $3) $f;
+    }
+    warry_set(rc, $0, (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, $1), $2), attr, TT_ATOM);
+  }
+
+#func LmnInstrVar $functor
+% if (LMN_ATTR_IS_DATA(targ1_attr)) {
+    if (LMN_ATTR_IS_DATA(at(rc, $0)) && at(rc, $0) == $1_attr) {
+      tt_set(rc, $0, TT_ATOM);
+%     switch(targ1_attr) {
+%     case LMN_INT_ATTR:
+        if (wt(rc, $0) != $1_long_data) $f;
+%       break;
+%     case LMN_DBL_ATTR:
+        if (lmn_get_double(wt(rc, $0)) != $1_double_data) $f;
+%       break;
+%     case LMN_STRING_ATTR: {
+        LmnStringRef s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
+        if(! lmn_string_eq(s, (LmnStringRef)wt(rc, $0))) $f;
+        lmn_string_free(s);
+%       fprintf(stderr, "string attr is not implemented.");
+%       break;
+%     }
+%     default:
+%       lmn_fatal("implementation error");
+%     }
+    } else {
+      $f;
+    }
+% } else {
+    if(LMN_ATTR_IS_DATA(at(rc, $0)) ||
+       LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt(rc, $0))) != TR_GFID($1_functor_data)) $f;
+% }
+
+#notfunc LmnInstrVar $functor
+% if (LMN_ATTR_IS_DATA(targ1_attr)) {
+    if(! (LMN_ATTR_IS_DATA(at(rc, $0)) && at(rc, $0) == $1_attr)){
+      tt_set(rc, $0, TT_ATOM);
+%     switch(targ1_attr){
+%     case LMN_INT_ATTR:
+        if(wt(rc, $0) == $1_long_data) $f;
+%       break;
+%     case LMN_DBL_ATTR:
+        if(lmn_get_double(wt(rc, $0)) == $1_double_data) $f;
+%       fprintf(stderr, "double attr is not implemented.");
+%       break;
+%     case LMN_STRING_ATTR: {
+        LmnStringRef s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
+        if(lmn_string_eq(s, (LmnStringRef)wt(rc, $0))) $f;
+        lmn_string_free(s);
+%       fprintf(stderr, "string attr is not implemented.");
+%       break;
+%     }
+%     default:
+%       lmn_fatal("implementation error");
+%     }
+    }
+% } else {
+    if(! (LMN_ATTR_IS_DATA(at(rc, $0)) ||
+          LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt(rc, $0))) != TR_GFID($1_functor_data))) $f;
+% }
+
+#isground LmnInstrVar LmnInstrVar LmnInstrVar
+  {
+    Vector *srcvec;
+    Vector *avovec;
+    unsigned long natoms;
+    BOOL b;
+
+    avovec = links_from_idxs((Vector *)wt(rc, $2), rc_warry(rc));
+    srcvec = links_from_idxs((Vector *)wt(rc, $1), rc_warry(rc));
+    b = lmn_mem_is_ground(srcvec, avovec, &natoms);
+
+    free_links(srcvec);
+    free_links(avovec);
+
+    if(! b) $f;
+    warry_set(rc, $0, natoms, LMN_INT_ATTR, TT_OTHER);
+  }
+
+#isunary LmnInstrVar
+  if (LMN_ATTR_IS_DATA(at(rc, $0))) {
+    switch (at(rc, $0)) {
+    case LMN_SP_ATOM_ATTR:
+#     /* スペシャルアトムはgroundの結果をunaryの結果とする */
+      if (!SP_ATOM_IS_GROUND(wt(rc, $0))) $f;
+      break;
+    default:
+      break;
+    }
+  } else if (LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)wt(rc, $0)) != 1){
+    $f;
+  }
+
+
+
+#isint LmnInstrVar
+  if(at(rc, $0) != LMN_INT_ATTR) $f;
+
+#isfloat LmnInstrVar
+  if(at(rc, $0) != LMN_DBL_ATTR) $f;
+
+#isstring  LmnInstrVar
+  if(! lmn_is_string((LmnSymbolAtomRef)wt(rc, $0), at(rc, $0))) $f;
+
+#isintfunc LmnInstrVar
+  if(at(rc, $0) != LMN_INT_ATTR) $f;
+
+#isfloatfunc LmnInstrVar
+  if(at(rc, $0) != LMN_DBL_ATTR) $f;
+
+#copyatom LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)lmn_copy_atom((LmnSymbolAtomRef)wt(rc, $2), at(rc, $2)), at(rc, $2), TT_ATOM);
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $1), (LmnAtomRef)wt(rc, $0), at(rc, $0));
+
+#eqatom LmnInstrVar LmnInstrVar
+  if (LMN_ATTR_IS_DATA(at(rc, $0)) ||
+      LMN_ATTR_IS_DATA(at(rc, $1)) ||
+      LMN_SATOM(wt(rc, $0)) != LMN_SATOM(wt(rc, $1))) $f;
+
+#neqatom LmnInstrVar LmnInstrVar
+  if (!(LMN_ATTR_IS_DATA(at(rc, $0)) ||
+        LMN_ATTR_IS_DATA(at(rc, $1)) ||
+        LMN_SATOM(wt(rc, $0)) != LMN_SATOM(wt(rc, $1)))) $f;
+
+#eqmem LmnInstrVar LmnInstrVar
+  if(wt(rc, $0) != wt(rc, $1)) $f;
+
+#neqmem LmnInstrVar LmnInstrVar
+  if(wt(rc, $0) == wt(rc, $1)) $f;
+
+#newlist LmnInstrVar
+  {
+    Vector *listvec = vec_make(16);
+    warry_set(rc, $0, (LmnWord)listvec, 0, TT_OTHER);
+#__echo_t
+    {
+      char *buf_success = automalloc_sprintf("goto label_success_%p", op_address);
+      char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_success, buf_fail, indent+1);
+      free(buf_success);
+      free(buf_fail);
+    }
+#__format_t
+  label_success_$a:
+    vec_free(listvec);
+    $s;
+    lmn_fatal("translate recursive error\n");
+  label_fail_$a:
+    vec_free(listvec);
+    $f;
+    lmn_fatal("translate recursive error\n");
+#__format
+  }
+#__echo_t
+  *finishflag = 0;
+
+#addtolist LmnInstrVar LmnInstrVar
+  vec_push((Vector *)wt(rc, $0), $1);
+
+#getfromlist LmnInstrVar LmnInstrVar LmnInstrVar
+  switch (at(rc, $1)) {
+    case LIST_AND_MAP:
+      wt_set(rc, $0, vec_get((Vector *)wt(rc, $1), (unsigned int)$2));
+      tt_set(rc, $0, TT_OTHER);
+      if ($2 == 0){
+        at_set(rc, $0, LINK_LIST);
+      }else if ($2 == 1){
+        at_set(rc, $0, MAP);
+      }else{
+        lmn_fatal("unexpected attribute @instr_getfromlist");
+      }
+      break;
+    case LINK_LIST: /* LinkObjをfreeするのはここ？ */
+    {
+      LinkObjRef lo = (LinkObjRef)vec_get((Vector *)wt(rc, $1), (unsigned int)$2);
+      warry_set(rc, $0, (LmnWord)LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM);
+      break;
+    }
+  }
+
+#eqground LmnInstrVar LmnInstrVar
+  {
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
+    Vector *dstvec = links_from_idxs((Vector*)wt(rc, $1), rc_warry(rc));
+    BOOL same = lmn_mem_cmp_ground(srcvec, dstvec);
+    free_links(srcvec);
+    free_links(dstvec);
+    if(! same) $f;
+  }
+
+#neqground LmnInstrVar LmnInstrVar
+  {
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
+    Vector *dstvec = links_from_idxs((Vector*)wt(rc, $1), rc_warry(rc));
+    BOOL same = lmn_mem_cmp_ground(srcvec, dstvec);
+    free_links(srcvec);
+    free_links(dstvec);
+    if(same) $f;
+  }
+
+#copyground LmnInstrVar LmnInstrVar LmnInstrVar
+  {
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $1), rc_warry(rc));
+    Vector *dstlovec, *retvec;
+    ProcessTableRef atommap;
+
+    lmn_mem_copy_ground((LmnMembraneRef)wt(rc, $2), srcvec, &dstlovec, &atommap);
+    free_links(srcvec);
+
+    /* 返り値の作成 */
+    retvec = vec_make(2);
+    vec_push(retvec, (LmnWord)dstlovec);
+    vec_push(retvec, (LmnWord)atommap);
+    warry_set(rc, $0, (LmnWord)retvec, LIST_AND_MAP, TT_OTHER);
+#__echo_t
+    {
+      char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
+      instr = translate_instructions(instr, jump_points, header, buf_always, buf_always, indent+1);
+      free(buf_always);
+    }
+#__format_t
+  label_always_$a:
+    free_links(dstlovec);
+    vec_free(retvec);
+    $s;
+    lmn_fatal("translate recursive error\n");
+#__format
+  }
+#__echo_t
+  *finishflag = 0;
+
+#removeground LmnInstrVar LmnInstrVar
+  {
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
+    lmn_mem_remove_ground((LmnMembraneRef)wt(rc, $1), srcvec);
+    free_links(srcvec);
+  }
+
+#freeground LmnInstrVar
+  {
+    Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
+    lmn_mem_free_ground(srcvec);
+    free_links(srcvec);
+  }
+
+#stable LmnInstrVar
+  if (lmn_mem_is_active((LmnMembraneRef)wt(rc, $0))) $f;
+
+#iadd LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) + (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#isub LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) - (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#imul LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) * (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#idiv LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) / (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#ineg LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, -(LmnWord)wt(rc, $1), LMN_INT_ATTR, TT_ATOM);
+
+#imod LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) % (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#inot LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, ~(LmnWord)wt(rc, $1), LMN_INT_ATTR, TT_ATOM);
+
+#iand LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) & (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#ior LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) | (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#ixor LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, (LmnWord)wt(rc, $1) ^ (LmnWord)wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#ilt LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) < wt(rc, $1))) $f;
+
+#ile LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) <= wt(rc, $1))) $f;
+
+#igt LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) > wt(rc, $1))) $f;
+
+#ige LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) >= wt(rc, $1))) $f;
+
+#ieq LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) == wt(rc, $1))) $f;
+
+#ine LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) != wt(rc, $1))) $f;
+
+#iltfunc LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) < wt(rc, $1))) $f;
+
+#ilefunc LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) <= wt(rc, $1))) $f;
+
+#igtfunc LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) > wt(rc, $1))) $f;
+
+#igefunc LmnInstrVar LmnInstrVar
+  if(!(wt(rc, $0) >= wt(rc, $1))) $f;
+
+#fadd LmnInstrVar LmnInstrVar LmnInstrVar
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(lmn_get_double(wt(rc, $1)) + lmn_get_double(wt(rc, $2)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
+
+#fsub LmnInstrVar LmnInstrVar LmnInstrVar
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(lmn_get_double(wt(rc, $1)) - lmn_get_double(wt(rc, $2)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
+
+#fmul LmnInstrVar LmnInstrVar LmnInstrVar
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(lmn_get_double(wt(rc, $1)) * lmn_get_double(wt(rc, $2)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
+
+#fdiv LmnInstrVar LmnInstrVar LmnInstrVar
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(lmn_get_double(wt(rc, $1)) / lmn_get_double(wt(rc, $2)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
+
+#fneg LmnInstrVar LmnInstrVar
+  LmnDataAtomRef d = (LmnDataAtomRef)lmn_create_double_atom(-lmn_get_double(wt(rc, $1)));
+  warry_set(rc, $0, (LmnWord)d, LMN_DBL_ATTR, TT_ATOM);
+
+#flt LmnInstrVar LmnInstrVar
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) < lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
+
+#fle LmnInstrVar LmnInstrVar
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) <= lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
+
+#fgt LmnInstrVar LmnInstrVar
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) > lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
+
+#fge LmnInstrVar LmnInstrVar
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) >= lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
+
+#feq LmnInstrVar LmnInstrVar
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) == lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
+
+#fne LmnInstrVar LmnInstrVar
+  if(!(lmn_get_double((LmnDataAtomRef)wt(rc, $0)) != lmn_get_double((LmnDataAtomRef)wt(rc, $1)))) $f;
+
+#allocatom LmnInstrVar $functor
+% switch(targ1_attr){
+% case LMN_INT_ATTR:
+    warry_set(rc, $0, $1_long_data, LMN_INT_ATTR, TT_ATOM);
+%   break;
+% case LMN_DBL_ATTR:
+    {
+#__format_t
+      static const double d = $1_double_data;
+      warry_set(rc, $0, &d, LMN_CONST_DBL_ATTR, TT_ATOM);
+#__format_i
+  /* 困った */
+#__format
+    }
+%   break;
+% case LMN_STRING_ATTR:
+    warry_set(rc, $0, $1_string_data, LMN_CONST_STR_ATTR, TT_ATOM);
+%   break;
+% default:
+%   lmn_fatal("Implementation error");
+% }
+
+#allocatomindirect LmnInstrVar LmnFunctor
+  if (LMN_ATTR_IS_DATA(at(rc, $1))) {
+    warry_set(rc, $0, (LmnWord)lmn_copy_data_atom(wt(rc, $1), at(rc, $1)), at(rc, $1), TT_ATOM);
+  } else { /* symbol atom */
+    fprintf(stderr, "symbol atom can't be created in GUARD\n");
+    exit(EXIT_FAILURE);
+  }
+
+#samefunc LmnInstrVar LmnInstrVar
+  if (!lmn_eq_func((LmnAtomRef)wt(rc, $0), at(rc, $0), (LmnAtomRef)wt(rc, $1), at(rc, $1))) $f;
+
+#getfunc LmnInstrVar LmnInstrVar
+  if(LMN_ATTR_IS_DATA(at(rc, $1))){
+    wt_set(rc, $0, (LmnWord)wt(rc, $1));
+  }else{
+    wt_set(rc, $0, LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)wt(rc, $1)));
+  }
+  at_set(rc, $0, at(rc, $1));
+  tt_set(rc, $0, TT_OTHER);
+
+#setmemname LmnInstrVar lmn_interned_str
+  lmn_mem_set_name((LmnMembraneRef)wt(rc, $0), TR_GSID($1));
+
+#copyrules LmnInstrVar LmnInstrVar
+  TR_INSTR_COPYRULES(rc, $0, $1);
+
+#removeproxies LmnInstrVar
+  lmn_mem_remove_proxies((LmnMembraneRef)wt(rc, $0));
+
+#insertproxies LmnInstrVar LmnInstrVar
+  lmn_mem_insert_proxies((LmnMembraneRef)wt(rc, $0), (LmnMembraneRef)wt(rc, $1));
+
+#deleteconnectors LmnInstrVar LmnInstrVar
+  TR_INSTR_DELETECONNECTORS($0, $1);
+
+#removetoplevelproxies LmnInstrVar
+  lmn_mem_remove_toplevel_proxies((LmnMembraneRef)wt(rc, $0));
+
+#dereffunc LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_DEREFFUNC(rc, $0, $1, $2);
+
+#loadfunc LmnInstrVar $functor
+% if(LMN_ATTR_IS_DATA(targ1_attr)){
+%   switch(targ1_attr){
+%   case LMN_INT_ATTR:
+      wt_set(rc, $0, $1_long_data);
+      at_set(rc, $0, LMN_INT_ATTR);
+%     break;
+%   case LMN_DBL_ATTR:
+      {
+#__format_t
+        const static double x = $1_double_data;
+        wt_set(rc, $0, &x);
+        at_set(rc, $0, LMN_CONST_DBL_ATTR);
+#__format_i
+  /* 困った */
+#__format
+      }
+%     break;
+%   case LMN_STRING_ATTR:
+      wt_set(rc, $0, $1_string_data);
+      at_set(rc, $0, LMN_CONST_STR_ATTR);
+%     break;
+%   default:
+%     lmn_fatal("Implementation error");
+%   }
+% }else{
+    wt_set(rc, $0, $1_functor_data);
+    at_set(rc, $0, $1_attr);
+% }
+  tt_set(rc, $0, TT_OTHER);
+
+#eqfunc LmnInstrVar LmnInstrVar
+  if (at(rc, $0) != at(rc, $1)) $f;
+  switch (at(rc, $0)) {
+  case LMN_INT_ATTR:
+    if ((long)wt(rc, $0) != (long)wt(rc, $1)) $f;
+    break;
+  case LMN_DBL_ATTR:
+    if (lmn_get_double(wt(rc, $0)) !=
+        lmn_get_double(wt(rc, $1))) $f;
+    break;
+  default:
+    if (wt(rc, $0) != wt(rc, $1)) $f;
+    break;
+  }
+
+#neqfunc LmnInstrVar LmnInstrVar
+  if (at(rc, $0) == at(rc, $1)) {
+    switch (at(rc, $0)) {
+    case LMN_INT_ATTR:
+      if ((long)wt(rc, $0) == (long)wt(rc, $1)) $f;
+      break;
+    case LMN_DBL_ATTR:
+      if (lmn_get_double(wt(rc, $0)) ==
+          lmn_get_double(wt(rc, $1))) $f;
+      break;
+    default:
+      if (wt(rc, $0) == wt(rc, $1)) $f;
+      break;
+    }
+  }
+
+#addatom LmnInstrVar LmnInstrVar
+  lmn_mem_push_atom((LmnMembraneRef)wt(rc, $0), (LmnAtomRef)wt(rc, $1), at(rc, $1));
+
+#movecells LmnInstrVar LmnInstrVar
+  lmn_mem_move_cells((LmnMembraneRef)wt(rc, $0), (LmnMembraneRef)wt(rc, $1));
+
+#removetemporaryproxies LmnInstrVar
+  lmn_mem_remove_temporary_proxies((LmnMembraneRef)wt(rc, $0));
+
+#nfreelinks LmnInstrVar LmnInstrVar
+  if (!lmn_mem_nfreelinks((LmnMembraneRef)wt(rc, $0), $1)) $f;
+
+#copycells LmnInstrVar LmnInstrVar LmnInstrVar
+  wt_set(rc, $0, (LmnWord)lmn_mem_copy_cells((LmnMembraneRef)wt(rc, $1), (LmnMembraneRef)wt(rc, $2)));
+  tt_set(rc, $0, TT_OTHER);
+
+#lookuplink LmnInstrVar LmnInstrVar LmnInstrVar
+  TR_INSTR_LOOKUPLINK(rc, $0, $1, $2);
+
+#clearrules LmnInstrVar
+  vec_clear(lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, $0)));
+
+#dropmem LmnInstrVar
+  lmn_mem_drop((LmnMembraneRef)wt(rc, $0));
+
+#testmem LmnInstrVar LmnInstrVar
+  if (LMN_PROXY_GET_MEM((LmnSymbolAtomRef)wt(rc, $1)) != (LmnMembraneRef)wt(rc, $0)) $f;
+
+#iaddfunc LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, wt(rc, $1) + wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#isubfunc LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, wt(rc, $1) - wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#imulfunc LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, wt(rc, $1) * wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#idivfunc LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, wt(rc, $1) / wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+#imodfunc LmnInstrVar LmnInstrVar LmnInstrVar
+  warry_set(rc, $0, wt(rc, $1) % wt(rc, $2), LMN_INT_ATTR, TT_ATOM);
+
+
+#__end
+
+
+#__echo_t
+# トランスレータ用関数の最後
+  default:
+    *finishflag = -1;
+    return instr;
+  }
+}
+
+
+#__echo_i
+# インタプリタ用関数の最後
+    default:
+      fprintf(stderr, "interpret_generated: Unknown operation %d\n", op);
+      exit(1);
+    }
+  }
+}

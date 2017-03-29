@@ -40,11 +40,19 @@
 #ifndef LTL2BA_ADAPTER_H
 #define LTL2BA_ADAPTER_H
 
+/**
+ * @ingroup  Verifier
+ * @defgroup LTL2BA
+ * @{
+ */
+
 #include <stdio.h>
 
 /* 環境変数: ltl2baコマンドのパス */
 #define ENV_LTL2BA  "LTL2BA"
 
 FILE *ltl2ba_str(char *ltl);
+
+/* cldoc:end-category() */
 
 #endif

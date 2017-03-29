@@ -39,10 +39,12 @@
 #ifndef LMNTAL_H
 #define LMNTAL_H
 
+
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #ifdef WITH_DMALLOC
 # include <dmalloc.h>
@@ -53,6 +55,12 @@
 #endif
 
 #define LMN_EXTERN extern
+
+#if defined(__GNUC__) || defined(__clang__)
+# define LMN_UNUSED __attribute__((unused))
+#else
+# define LMN_UNUSED
+#endif
 
 /*------------------------------------------------------------------------
  *  Some useful macros
@@ -74,6 +82,10 @@
 # define LMN_DEBUG_HELPER      TRUE
 #endif
 
+#if SIZEOF_DOUBLE <= SIZEOF_UINTPTR_T
+# define LMN_DOUBLE_IS_IMMEDIATE 1
+#endif
+
 #ifndef LMN_DECL_BEGIN
 # ifdef __cplusplus
 #  define LMN_DECL_BEGIN  extern "C" {
@@ -92,12 +104,11 @@ LMN_DECL_BEGIN
  * data types
  */
 
-#if SIZEOF_LONG < SIZEOF_VOIDP
-# error sizeof(long) < sizeof(void*)
+#if SIZEOF_UINTPTR_T < SIZEOF_VOIDP
+# error sizeof(intptr_t) < sizeof(void*)
 #endif
 
-
-typedef unsigned long LmnWord;
+typedef uintptr_t LmnWord;
 typedef unsigned char BYTE, LmnByte;
 
 #define LMN_WORD_BYTES  SIZEOF_LONG
@@ -107,6 +118,9 @@ typedef unsigned char BYTE, LmnByte;
 
 typedef LmnWord  LmnAtom;
 typedef void    *LmnSAtom;
+/**
+ * @struct LmnLinkAttr
+ */
 typedef uint8_t  LmnLinkAttr;
 
 //typedef uint16_t ProcessID;
@@ -133,7 +147,7 @@ typedef uint32_t  LmnLineNum;
 typedef int16_t   LmnRulesetId;
 typedef uint32_t  LmnSubInstrSize;
 
-typedef struct LmnMembrane LmnMembrane;
+//typedef struct LmnMembrane LmnMembrane;
 typedef struct DeltaMembrane DeltaMembrane;
 
 #if LMN_WORD_BYTES == 4
@@ -151,8 +165,8 @@ typedef struct DeltaMembrane DeltaMembrane;
 # endif
 #endif
 
-typedef struct ProcessTbl    *ProcessTbl;
-typedef struct SimplyProcTbl *SimplyProcTbl;
+typedef struct ProcessTbl    *ProcessTableRef;
+typedef struct SimplyProcTbl *SimplyProcessTableRef;
 
 /*----------------------------------------------------------------------
  * Special Atom
@@ -175,30 +189,21 @@ typedef struct LmnSPAtomHeader LmnSpAtom;
 typedef uint32_t LmnHlinkRank;
 
 /*----------------------------------------------------------------------
- * React Context
- */
-
-typedef struct LmnReactCxt  LmnReactCxt;
-typedef struct LmnRegister  LmnRegister;
-
-
-/*----------------------------------------------------------------------
  * Mem Stack
  */
 
 struct Vector;
 typedef struct Vector Vector;
-typedef struct Vector *LmnMemStack;
 
 
 /* ---------------------------------------------------------------------
  * for Model Checking
  */
 
-typedef struct StateSpace *StateSpace;
+typedef struct StateSpace *StateSpaceRef;
 typedef struct StateTable StateTable;
 typedef struct State       State;
-typedef struct Transition *Transition;
+typedef struct Transition *TransitionRef;
 typedef struct McDporData  McDporData;
 typedef struct MemDeltaRoot MemDeltaRoot;
 
@@ -341,7 +346,7 @@ struct LmnEnv {
   enum OptimizeMode opt_mode;
 
   int  load_path_num;
-  char *load_path[256];
+  const char *load_path[256];
   char *automata_file;         /* never claim file */
   char *propositional_symbol;  /* file for propositional symbol definitions */
   char *ltl_exp;
@@ -403,7 +408,7 @@ void slim_version(FILE *f);
    };
 #
 # endif /* HAVE_PTHREAD_BARRIER */
-# define lmn_thread_create(Pth, Pfunc, Parg)  pthread_create(Pth, NULL, (void *)Pfunc, (void *)Parg)
+# define lmn_thread_create(Pth, Pfunc, Parg)  pthread_create(Pth, NULL, (void * (*)(void *))Pfunc, (void *)Parg)
 # define lmn_thread_join(Th)                  pthread_join(Th, NULL)
 # define lmn_mutex_init(Pm)                   pthread_mutex_init(Pm, NULL)
 # define lmn_mutex_init_onthefly(Pm)          (Pm) = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER
@@ -490,11 +495,7 @@ void lmn_stream_destroy(void);
 
 #define env_proc_id_pool()       (lmn_id_pool)
 #define env_set_proc_id_pool(V)  (lmn_id_pool = (V))
-#ifdef TIME_OPT
-# define env_return_id(N)   if (lmn_id_pool) vec_push(lmn_id_pool, (vec_data_t)(N))
-#else
-# define env_return_id(N)
-#endif
+#define env_return_id(N)   if (lmn_id_pool) vec_push(lmn_id_pool, (vec_data_t)(N))
 
 #if/**/ !defined (ENABLE_PARALLEL) || defined (USE_TLS_KEYWORD)
 # define env_gen_state_id()       (lmn_tls.state_id += lmn_tls.thread_num)
@@ -502,20 +503,12 @@ void lmn_stream_destroy(void);
 # define env_set_my_thread_id(N)  (lmn_tls.thread_id = (N))
 # define env_threads_num()        (lmn_tls.thread_num)
 # define env_set_threads_num(N)   (lmn_tls.thread_num = (N))
-#
-# ifdef TIME_OPT
-#  define env_reset_proc_ids()    (lmn_tls.proc_next_id = 1U)
-#  define env_set_next_id(N)      (lmn_tls.proc_next_id = (N))
-#  define env_gen_next_id()       ((lmn_id_pool && vec_num(lmn_id_pool) > 0)   \
+# define env_reset_proc_ids()    (lmn_tls.proc_next_id = 1U)
+# define env_set_next_id(N)      (lmn_tls.proc_next_id = (N))
+# define env_gen_next_id()       ((lmn_id_pool && vec_num(lmn_id_pool) > 0)   \
                                    ? vec_pop(lmn_id_pool)                      \
                                    : lmn_tls.proc_next_id++)
-#  define env_next_id()           (lmn_tls.proc_next_id)
-# else /* !defined (TIME_OPT) */
-#  define env_reset_proc_ids()
-#  define env_set_next_id(N)
-#  define env_gen_next_id()    0
-#  define env_next_id()        0
-# endif /* TIME_OPT */
+# define env_next_id()           (lmn_tls.proc_next_id)
 #
 #elif/**/ defined (USE_TLS_PTHREAD_KEY)
  static inline unsigned long env_gen_state_id() {
@@ -545,39 +538,29 @@ void lmn_stream_destroy(void);
  }
 #
  static inline void env_reset_proc_ids() {
- #ifdef TIME_OPT
    LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
    p->proc_next_id = 1UL;
- #endif
  }
 #
  static inline void env_set_next_id(unsigned long n) {
-# ifdef TIME_OPT
    LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
    p->proc_next_id = n;
-# endif
  }
 #
-# ifdef TIME_OPT
-#  define env_gen_next_id()                                                    \
+#define env_gen_next_id()                                                      \
  ((lmn_id_pool && vec_num(lmn_id_pool) > 0)                                    \
                ? vec_pop(lmn_id_pool)                                          \
                : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
-# else
-#  define env_gen_next_id() 0
-# endif
 
- static inline unsigned long env_next_id() {
-# ifdef TIME_OPT
-   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-   return p->proc_next_id;
-# else
-   return 0;
-# endif
- }
+static inline unsigned long env_next_id() {
+  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+  return p->proc_next_id;
+}
 
 #endif
 
 LMN_DECL_END
+
+/* cldoc:end-category() */
 
 #endif /* LMNTAL_H */

@@ -1,0 +1,3 @@
+p(A),f(X),p(X) :- unary(A) | .  p(f),p(f),p(f). 
+p(f) 
+ok

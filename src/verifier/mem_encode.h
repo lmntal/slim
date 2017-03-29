@@ -38,11 +38,16 @@
 #ifndef LMN_MEM_ENCODE_H
 #define LMN_MEM_ENCODE_H
 
-#include "lmntal.h"
-#include "membrane.h"
+/**
+ * @ingroup  Verifier
+ * @defgroup MembraneEncoder
+ * @{
+ */
+
+#include "../lmntal.h"
 #include "delta_membrane.h"
 
-typedef struct LmnBinStr *LmnBinStr;
+typedef struct LmnBinStr *LmnBinStrRef;
 
 /* 最終的なエンコード結果を表すバイナリストリング */
 struct LmnBinStr {
@@ -72,21 +77,23 @@ void mem_isom_init(void);
 void mem_isom_finalize(void);
 void set_functor_priority(LmnFunctor f, int priority);
 
-LmnBinStr lmn_mem_encode(LmnMembrane *mem);
-LmnBinStr lmn_mem_encode_delta(struct MemDeltaRoot *d);
-int binstr_compare(const LmnBinStr a, const LmnBinStr b);
-unsigned long binstr_hash(const LmnBinStr a);
-int binstr_byte_size(LmnBinStr p);
-LmnBinStr lmn_binstr_make(unsigned int size);
-LmnBinStr lmn_binstr_copy(LmnBinStr src_bs);
-LmnMembrane *lmn_binstr_decode(const LmnBinStr bs);
+LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem);
+LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d);
+int binstr_compare(const LmnBinStrRef a, const LmnBinStrRef b);
+unsigned long binstr_hash(const LmnBinStrRef a);
+int binstr_byte_size(LmnBinStrRef p);
+LmnBinStrRef lmn_binstr_make(unsigned int size);
+LmnBinStrRef lmn_binstr_copy(LmnBinStrRef src_bs);
+LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs);
 
-BOOL lmn_mem_equals_enc(LmnBinStr bs, LmnMembrane *mem);
+BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem);
 
-void lmn_binstr_free(LmnBinStr p);
-void lmn_binstr_dump(const LmnBinStr bs);
+void lmn_binstr_free(LmnBinStrRef p);
+void lmn_binstr_dump(const LmnBinStrRef bs);
 unsigned long lmn_binstr_space(struct LmnBinStr *bs);
-LmnBinStr lmn_mem_to_binstr(LmnMembrane *mem);
-LmnBinStr lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);
+LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem);
+LmnBinStrRef lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);
+
+/* @} */
 
 #endif /* LMN_MEM_ENCODE_H */

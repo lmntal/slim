@@ -40,6 +40,12 @@
 #ifndef LMN_MC_EXP_H
 #define LMN_MC_EXP_H
 
+/**
+ * @ingroup  Verifier
+ * @defgroup Explorer
+ * @{
+ */
+
 #include "state.h"
 #include "mc_worker.h"
 #include "stack_macro.h"
@@ -127,5 +133,7 @@ void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states);
 void mcndfs_worker_init(LmnWorker *w);
 void mcndfs_worker_finalize(LmnWorker *w);
 void mcndfs_worker_start(LmnWorker *w);
+
+/* @} */
 
 #endif

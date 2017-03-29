@@ -40,27 +40,15 @@
 #include <unistd.h>
 #include <getopt.h>
 #include "lmntal.h"
-#include "util.h"
-#include "task.h"
-#include "symbol.h"
-#include "functor.h"
-#include "load.h"
-#include "translate.h"
+#include "element/element.h"
+#include "vm/vm.h"
+#include "loader/loader.h"
 #include "arch.h"
-#include "lmntal_system_adapter.h"
-#include "automata.h"
-#include "propositional_symbol.h"
-#include "dpor.h"
-#include "mc.h"
-#include "mc_generator.h"
-#include "ccallback.h"
-#include "special_atom.h"
-#include "slim_header/string.h"
-#include "slim_header/port.h"
-#include "dumper.h"
-#include "jni_lmntal.h"
+#include "ffi/lmntal_system_adapter.h"
+#include "verifier/verifier.h"
+#include "ffi/jni_lmntal.h"
 /* #include "ext.h" */
-#include "runtime_status.h"
+#include "verifier/runtime_status.h"
 
 #ifdef USE_CUNIT
 #include "test/unit_test.h"
@@ -102,6 +90,7 @@ static void usage(void)
           "  --ltl-all            (MC) Generate full state space and exhaustive search\n"
           "  --bfs                (MC) Use BFS strategy\n"
           "  --bfs-lsync          (MC) Use Layer Synchronized BFS strategy\n"
+          "  --limited-step=<N>   (MC) Run only first <N> steps (BFS)\n"
           "  --use-owcty          (MC) Use OWCTY algorithm  (LTL model checking)\n"
           "  --use-map            (MC) Use MAP algorithm    (LTL model checking)\n"
           "  --use-mapndfs        (MC) Use Map+NDFS algorithm (LTL model checking)\n"
@@ -143,7 +132,7 @@ void slim_version(FILE *f)
   //fprintf(f, "mntal ");
   //ver_print_with_esc_code(f, "IM", CODE__FORECOLOR_LIGHTBLUE);
   fprintf(f, "Slim Lmntal IMplementation ");
-  fprintf(f, "- version %s\n", SLIM_VERSION);
+  fprintf(f, "- version %s (%s)\n", SLIM_VERSION, COMMIT_ID);
 }
 
 static void parse_options(int *optid, int argc, char *argv[])
@@ -665,7 +654,7 @@ static inline int load_input_files(Vector *start_rulesets, int optid, int argc, 
   /** load input files */
   for (i = optid; i < argc; i++) {
     FILE *in;
-    LmnRuleSet t;
+    LmnRuleSetRef t;
     char *f = argv[i];
 
     if (!strcmp("-", f)) { /* 標準入力からの読込み */
@@ -696,7 +685,7 @@ static inline void slim_exec(Vector *start_rulesets)
   }
   else {
     /* プログラム検証 */
-    Automata automata;
+    AutomataRef automata;
     PVector prop_defs;
     int ret;
 

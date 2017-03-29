@@ -38,8 +38,8 @@
  */
 
 #include "binstr_compress.h"
-#include "error.h"
-#include "zdlib.h"
+#include "element/element.h"
+#include <zdlib.h>
 #ifdef HAVE_LIBZ
 # include <zlib.h>
 #endif
@@ -94,12 +94,12 @@
  *    "A Massively Spiffy Yet Delicately Unobtrusive Compression Library"
  *    @see http://www.zlib.net/
  */
-LmnBinStr lmn_bscomp_z_encode(const LmnBinStr org)
+LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org)
 {
 #ifndef HAVE_LIBZ
   return org;
 #else
-  LmnBinStr cmp;
+  LmnBinStrRef cmp;
   unsigned long org_8len, cmp_8len;
   int ret;
 
@@ -139,12 +139,12 @@ LmnBinStr lmn_bscomp_z_encode(const LmnBinStr org)
 }
 
 
-LmnBinStr lmn_bscomp_z_decode(const LmnBinStr cmp)
+LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp)
 {
 #ifndef HAVE_LIBZ
   return cmp;
 #else
-  LmnBinStr org;
+  LmnBinStrRef org;
   unsigned long cmp_8len, org_8len;
   int ret;
 
@@ -210,9 +210,9 @@ static int zd_buf_n = 3;
 
 /* バイト列refからバイト列orgへの差分を求めて返す.
  * org, ref共にRead Only */
-LmnBinStr lmn_bscomp_d_encode(const LmnBinStr org, const LmnBinStr ref)
+LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org, const LmnBinStrRef ref)
 {
-  LmnBinStr dif;
+  LmnBinStrRef dif;
   unsigned long org_8len, ref_8len, dif_8len;
   int ret, mul;
 
@@ -268,9 +268,9 @@ LmnBinStr lmn_bscomp_d_encode(const LmnBinStr org, const LmnBinStr ref)
 
 /* バイト列refに対して差分difを適用してorgを復元して返す.
  * メモリは読み出し専用 */
-LmnBinStr lmn_bscomp_d_decode(const LmnBinStr ref, const LmnBinStr dif)
+LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref, const LmnBinStrRef dif)
 {
-  LmnBinStr org;
+  LmnBinStrRef org;
   unsigned long ref_8len, dif_8len, org_8len;
   int ret, mul;
 
@@ -324,7 +324,7 @@ LmnBinStr lmn_bscomp_d_decode(const LmnBinStr ref, const LmnBinStr dif)
 }
 
 
-TreeDatabase treedb;
+TreeDatabaseRef treedb;
 #ifdef PROFILE
 uint64_t     node_count;
 uint64_t     table_size;
@@ -377,10 +377,10 @@ unsigned long lmn_bscomp_tree_space()
 }
 
 
-TreeNodeRef lmn_bscomp_tree_encode(LmnBinStr str)
+TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str)
 {
   BOOL found;
-  TreeNodeRef ref;
+  TreeNodeID ref;
 #ifdef PROFILE
   int pre_node_count = tree_db_node_count(treedb);
   int post_node_count = 0;
@@ -407,9 +407,9 @@ TreeNodeRef lmn_bscomp_tree_encode(LmnBinStr str)
 }
 
 
-LmnBinStr lmn_bscomp_tree_decode(TreeNodeRef ref, int len)
+LmnBinStrRef lmn_bscomp_tree_decode(TreeNodeID ref, int len)
 {
-  LmnBinStr bs;
+  LmnBinStrRef bs;
   LMN_ASSERT(treedb);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {

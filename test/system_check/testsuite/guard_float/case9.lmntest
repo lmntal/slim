@@ -1,0 +1,3 @@
+bigeq($i,$j)   :- $i >=. $j | yes. bigeq(8.22,4.33). 
+ yes. 
+ok

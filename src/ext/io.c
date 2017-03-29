@@ -38,20 +38,19 @@
  */
 
 #include <stdio.h>
-#include "lmntal_ext.h"
-#include "slim_header/port.h"
-#include "slim_header/string.h"
+#include "vm/vm.h"
+#include "element/element.h"
 
-void init_print(void);
+// void init_print(void);
 
 /* 改行を出力する
  * +a0     : ポート
  * -a1     : 返すポート
  */
-void cb_print_newline_with_port(LmnReactCxt *rc,
-                                LmnMembrane *mem,
-                                LmnAtom a0, LmnLinkAttr t0,
-                                LmnAtom a1, LmnLinkAttr t1)
+void cb_print_newline_with_port(LmnReactCxtRef rc,
+                                LmnMembraneRef mem,
+                                LmnAtomRef a0, LmnLinkAttr t0,
+                                LmnAtomRef a1, LmnLinkAttr t1)
 {
   port_put_raw_s(LMN_PORT(a0), "\n");
 
@@ -65,11 +64,11 @@ void cb_print_newline_with_port(LmnReactCxt *rc,
  * +a1     : 文字列
  * -a2     : 返すポート
  */
-void cb_print_line_with_port(LmnReactCxt *rc,
-                             LmnMembrane *mem,
-                             LmnAtom a0, LmnLinkAttr t0,
-                             LmnAtom a1, LmnLinkAttr t1,
-                             LmnAtom a2, LmnLinkAttr t2)
+void cb_print_line_with_port(LmnReactCxtRef rc,
+                             LmnMembraneRef mem,
+                             LmnAtomRef a0, LmnLinkAttr t0,
+                             LmnAtomRef a1, LmnLinkAttr t1,
+                             LmnAtomRef a2, LmnLinkAttr t2)
 {
   port_puts(LMN_PORT(a0), LMN_STRING(a1));
   port_put_raw_s(LMN_PORT(a0), "\n");
@@ -86,11 +85,11 @@ void cb_print_line_with_port(LmnReactCxt *rc,
  * -a1     : 返すポート
  * -a2     : 読み込んだ文字列 | eof()
  */
-// void cb_input_line_with_port(LmnReactCxt *rc,
-//                              LmnMembrane *mem,
-//                              LmnAtom a0, LmnLinkAttr t0,
-//                              LmnAtom a1, LmnLinkAttr t1,
-//                              LmnAtom a2, LmnLinkAttr t2)
+// void cb_input_line_with_port(LmnReactCxtRef rc,
+//                              LmnMembraneRef mem,
+//                              LmnAtomRef a0, LmnLinkAttr t0,
+//                              LmnAtomRef a1, LmnLinkAttr t1,
+//                              LmnAtomRef a2, LmnLinkAttr t2)
 // {
 //   const int N = 256;
 //   char buf[N], *s=NULL, *p; /* sは行の文字列の先頭、pは作業用 */
@@ -146,6 +145,6 @@ void cb_print_line_with_port(LmnReactCxt *rc,
 
 void init_io(void)
 {
-  lmn_register_c_fun("cb_print_newline_with_port", cb_print_newline_with_port, 2);
-  lmn_register_c_fun("cb_print_line_with_port", cb_print_line_with_port, 3);
+  lmn_register_c_fun("cb_print_newline_with_port", (void *)cb_print_newline_with_port, 2);
+  lmn_register_c_fun("cb_print_line_with_port", (void *)cb_print_line_with_port, 3);
 }

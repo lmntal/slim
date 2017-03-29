@@ -1,0 +1,92 @@
+/**
+NAME
+	Atom module
+
+SYNOPSIS
+
+AUTHOR
+	Kazunori Ueda
+
+HISTORY
+	2015/07/19(Mon)
+
+*/
+
+{
+module(atom).
+
+/*
+ * A = atom.new(F, N):
+ *
+ * Creates a symbol atom with the functor F (specified as a string) and
+ * N (< 128) arguments.
+ *
+ * If N>0, the first N-1 arguments are set to 0, while the last argument
+ * is connected to the atom 'some'.
+ *
+ * For instance, A=atom.new("pq",3) creates A=some(pq(0,0)).
+ * If N=0, A=atom.new("pq",0) creates A=none and an independent atom 'pq'.
+ */
+
+A=atom.new(F,N) :- string(F), N>=0 | A='$callback'('cb_atom_new',F,N).
+
+/*
+ * atom.new(F, L):
+ *
+ * Creates a symbol atom with the functor F (specified as a string) and
+ * the arguments in the list L.
+ * For instance, atom.new("pq",[X,Y,Z]) creates pq(X,Y,Z).
+ */
+
+atom.new(F,[]) :- string(F) | 
+  atom.update(atom.new(F,0)).
+
+atom.new(F,[X|Xs]) :- string(F) | 
+  list.length([X|Xs], 0,N, NewXs), 
+  atom.update(atom.new(F,N), none, NewXs).
+
+atom.update(some(A0), Final, Xs) :- atom.update(A0, 0, 0, Final, Xs).
+atom.update(none) :- .
+
+// Mysterious 1st base case; use trace mode to see how it works.
+atom.update(A0, K, A0, none, []) :- int(K) | .
+atom.update(A0, K, X0, some(A), []) :- int(K), int(X0) | A = A0.
+atom.update(A0, K, X0, Final, [X|Xs]) :- K1 = K+1, int(X0) |
+    atom.swap(A0, K, X, X1, A1), 
+    atom.update(A1, K1, X1, Final, Xs).
+
+/*
+ * atom.new(F, L, A):
+ *
+ * Creates a symbol atom with the functor F (specified as a string) and
+ * the arguments in the list L and an independent argument A.
+ * For instance, atom.new("pq",[X,Y,Z],A) creates A = pq(X,Y,Z,A).
+ */
+
+A = atom.new(F,Xs) :- string(F) | 
+  list.length(Xs, 1,N1, NewXs), 
+  atom.update(atom.new(F,N1), some(A), NewXs).
+
+/*
+ * A = atom.functor(A0, F, N):
+ *
+ * F is bound to the string representation of the functor of A0
+ * and N is bount to the arity of A0.
+ * Works only when A0 is a symbol atom.
+ */
+
+A=atom.functor(A0,F,N) :- // works for symbol atoms only for now
+  '$callback'('cb_atom_functor',A0,F,N,A).
+
+/*
+ * A = atom.swap(A0, I, NewAi, OldAi):
+ * 
+ * A is bound to the atom A0 whose Ith argument is changed to NewAi.
+ * The original Ith argument is bound to OldAi.
+ * Works only when A0 and OldAi is a symbol atom.
+ */
+
+A=atom.swap(A0, I, NewAi, OldAi) :- int(I) |
+    '$callback'('cb_atom_swap', A0,I,NewAi,OldAi,A).
+
+}.

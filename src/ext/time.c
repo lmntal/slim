@@ -37,27 +37,25 @@
  * $Id$
  */
 
-#include <../runtime_status.h>
-#include "../lmntal_ext.h"
+#include "vm/vm.h"
+#include "element/element.h"
 
 
-void gettime(LmnReactCxt *rc,
-             LmnMembrane *mem,
-             LmnAtom a0, LmnLinkAttr t0)
+void gettime(LmnReactCxtRef rc,
+             LmnMembraneRef mem,
+             LmnAtomRef a0, LmnLinkAttr t0)
 {
-  double *t = LMN_MALLOC(double);
-
-  *t = get_cpu_time();
+  LmnAtomRef t = (LmnAtomRef)lmn_create_double_atom(get_cpu_time());
 
   lmn_mem_newlink(mem,
                   a0, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(t0),
-                  (LmnWord)t, LMN_DBL_ATTR, 0);
+                  t, LMN_DBL_ATTR, 0);
 
-  lmn_mem_push_atom(mem, (LmnWord)t, LMN_DBL_ATTR);
+  lmn_mem_push_atom(mem, t, LMN_DBL_ATTR);
 
 }
 
 void init_time(void)
 {
-  lmn_register_c_fun("gettime", gettime, 1);
+  lmn_register_c_fun("gettime", (void *)gettime, 1);
 }

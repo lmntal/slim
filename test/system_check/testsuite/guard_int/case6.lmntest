@@ -1,0 +1,3 @@
+msum($i,$j,$k) :- $z=-$i-$j-$k | ans($z). msum(4,8,12). 
+ ans(-24) 
+ok
