@@ -50,8 +50,8 @@ void proc_tbl_init_with_size(ProcessTableRef p, unsigned long size)
   p->n    = 0;
   p->size = size;
 #ifdef TIME_OPT
-  p->tbl  = LMN_NALLOC(LmnWord, p->size);
-  memset(p->tbl, 0xffU, sizeof(LmnWord) * p->size);
+  p->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
+  p->tbl = LMN_CALLOC(LmnWord *, p->num_buckets);
 #else
   p->tbl = st_init_ptrtable();
 #endif
@@ -72,6 +72,9 @@ ProcessTableRef proc_tbl_make_with_size(unsigned long size)
 void proc_tbl_destroy(ProcessTableRef p)
 {
 #ifdef TIME_OPT
+  for (int i = 0; i < p->num_buckets; i++) {
+    LMN_FREE(p->tbl[i]);
+  }
   LMN_FREE(p->tbl);
 #else
   st_free_table(p->tbl);
@@ -90,7 +93,9 @@ void proc_tbl_clear(ProcessTableRef p)
 {
   p->n = 0;
 #ifdef TIME_OPT
-  memset(p->tbl, 0xff, sizeof(LmnWord) * p->size);
+  for (int i = 0; i < p->num_buckets; i++) {
+    memset(p->tbl[i], 0xff, sizeof(LmnWord) * PROC_TBL_BUCKETS_SIZE);
+  }
 #else
   st_clear(p->tbl);
 #endif
@@ -103,9 +108,10 @@ int proc_tbl_foreach(ProcessTableRef p, int(*func)(LmnWord key, LmnWord val, Lmn
   unsigned long i, n;
 
   n = 0;
-  for (i = 0; i < p->size && n < process_tbl_entry_num(p); i++) {
-    if (p->tbl[i] != ULONG_MAX) {
-      func(i, p->tbl[i], arg);
+  for (int i = 0; i < p->num_buckets; i++) {
+    if (!p->tbl[i]) continue;
+    for (int j = 0; j < PROC_TBL_BUCKETS_SIZE && n < process_tbl_entry_num(p); j++) {
+      func(i * PROC_TBL_BUCKETS_SIZE + j, p->tbl[i][j], arg);
       n++;
     }
   }
@@ -124,13 +130,13 @@ BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b)
   else {
     unsigned int i, a_checked;
     a_checked = 0;
-    for (i = 0; i < a->size && a_checked < a->n; i++) {
-      if (a->tbl[i] != b->tbl[i]) {
- //       printf("diff tbl[%lu]=, a=%lu, b=%lu\n", i, a->tbl[i], b->tbl[i]);
-        return FALSE;
-      }
-      else if (a->tbl[i] != ULONG_MAX) {
-        a_checked++;
+    for (int i = 0; i < a->num_buckets; i++) {
+      if (!a->tbl[i] && !b->tbl[i]) continue;
+      for (int j = 0; j < PROC_TBL_BUCKETS_SIZE && a_checked < a->n; j++) {
+        LmnWord va = (a->tbl[i]) ? a->tbl[i][j] : ULONG_MAX;
+        LmnWord vb = (b->tbl[i]) ? b->tbl[i][j] : ULONG_MAX;
+        if (va != vb) return FALSE;
+        if (va != ULONG_MAX) a_checked++;
       }
     }
 
@@ -146,10 +152,18 @@ BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b)
 
 void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n)
 {
-  unsigned long org_size = p->size;
+  unsigned int org_n = p->num_buckets;
   while (p->size <= n) p->size *= 2;
-  p->tbl = LMN_REALLOC(LmnWord, p->tbl, p->size);
-  memset(p->tbl + org_size, 0xffU, sizeof(LmnWord) * (p->size - org_size));
+  p->num_buckets = p->size / PROC_TBL_BUCKETS_SIZE + 1;
+  if (org_n < p->num_buckets) {
+    p->tbl = LMN_REALLOC(LmnWord *, p->tbl, p->num_buckets);
+    memset(p->tbl + org_n, 0, sizeof(LmnWord *) * (p->num_buckets - org_n));
+  }
+
+  unsigned int b = n / PROC_TBL_BUCKETS_SIZE;
+  if (b < p->num_buckets && p->tbl[b]) return;
+  p->tbl[b] = LMN_NALLOC(LmnWord, PROC_TBL_BUCKETS_SIZE);
+  memset(p->tbl[b], 0xffU, sizeof(LmnWord) * PROC_TBL_BUCKETS_SIZE);
 }
 
 
@@ -158,8 +172,8 @@ void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
   p->n   = 0;
   p->cap = size;
 #ifdef TIME_OPT
-  p->tbl = LMN_NALLOC(BYTE, p->cap);
-  memset(p->tbl, SPROC_TBL_INIT_V, sizeof(BYTE) * p->cap);
+  p->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
+  p->tbl = LMN_CALLOC(BYTE *, p->num_buckets);
 #else
   p->tbl = st_init_ptrtable();
 #endif
@@ -173,6 +187,9 @@ void sproc_tbl_init(SimplyProcessTableRef p)
 void sproc_tbl_destroy(SimplyProcessTableRef p)
 {
 #ifdef TIME_OPT
+  for (int i = 0; i < p->num_buckets; i++) {
+    LMN_FREE(p->tbl[i]);
+  }
   LMN_FREE(p->tbl);
 #else
   st_free_table(p->tbl);
@@ -205,8 +222,8 @@ void tracelog_init_with_size(TraceLogRef l, unsigned long size)
 {
   l->cap = size;
   l->num = 0;
-  l->tbl = LMN_NALLOC(struct TraceData, l->cap);
-  memset(l->tbl, 0U, sizeof(struct TraceData) * l->cap);
+  l->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
+  l->tbl_ = LMN_CALLOC(struct TraceData *, l->num_buckets);
   tracker_init(&l->tracker);
 }
 
@@ -219,7 +236,10 @@ void tracelog_free(TraceLogRef l)
 
 void tracelog_destroy(TraceLogRef l)
 {
-  LMN_FREE(l->tbl);
+  for (int i = 0; i < l->num_buckets; i++) {
+    LMN_FREE(l->tbl_[i]);
+  }
+  LMN_FREE(l->tbl_);
   tracker_destroy(&l->tracker);
 }
 

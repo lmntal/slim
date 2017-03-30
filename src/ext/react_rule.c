@@ -52,6 +52,9 @@ void cb_react_ruleset_nd(LmnReactCxt *rc,
 			 LmnAtom return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
 			 LmnAtom react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
+  static clock_t time = 0;
+  static int cnt = 0;
+  time = clock();
   LmnMembrane *rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
   LmnAtom in_mem = LMN_SATOM_GET_LINK(graph_mem_proxy, 0);
   LmnMembrane *graph_mem = LMN_PROXY_GET_MEM(in_mem);
@@ -125,6 +128,7 @@ void cb_react_ruleset_nd(LmnReactCxt *rc,
   mc_react_cxt_destroy(&tmp_rc);
 
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr); 
+  //printf("%d %d\n", cnt++, clock() - time);
 }
 
 
