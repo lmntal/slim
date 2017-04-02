@@ -26,6 +26,11 @@
     Ret = set.union(Set, set.empty) :- Ret = Set.
 
     Ret = set.union(set.empty, Set) :- Ret = Set.
+
+    Ret = set.to_list(set.empty, List) :- Ret = set.empty, List = [].
+
+    Ret = set.to_list(Set, List) :- class(Set, "hash") | 
+	'$callback'('cb_set_to_list', Set, List, Ret).
 }
 
 

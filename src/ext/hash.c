@@ -175,6 +175,15 @@ void cb_hash_put(LmnReactCxt *rc,
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
 }
 
+/*----------------------------------------------------------------------
+ * Set
+ *
+ * cb_set_put
+ * cb_set_get
+ * cb_set_union
+ * cb_set_to_list
+ */
+
 void cb_set_put(LmnReactCxt *rc,
                 LmnMembrane *mem,
                 LmnAtom a0, LmnLinkAttr t0,
@@ -324,6 +333,32 @@ void cb_set_union(LmnReactCxt *rc,
 }
 
 /*
+ * リストへの変換
+ *
+ * +a0: 集合
+ * -a1: リスト
+ * -a2: 集合
+ */
+void cb_set_to_list(LmnReactCxt *rc,
+		    LmnMembrane *mem,
+		    LmnAtom a0, LmnLinkAttr t0,
+		    LmnAtom a1, LmnLinkAttr t1,
+		    LmnAtom a2, LmnLinkAttr t2)
+{
+  st_table_t tbl = LMN_HASH_DATA(a0);
+  LmnSAtom nil = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  
+}
+
+
+/*----------------------------------------------------------------------
+ * Map
+ *
+ * cb_map_put
+ * cb_map_get
+ */
+
+/*
  * 要素挿入
  *
  * +a0: ハッシュテーブル
@@ -407,6 +442,14 @@ void cb_map_get(LmnReactCxt *rc,
                    a0, t0, LMN_ATTR_GET_VALUE(t0),
                    a4, t4, LMN_ATTR_GET_VALUE(t4));
 }
+
+/*----------------------------------------------------------------------
+ * State Map
+ *
+ * cb_state_map_state_find
+ * cb_state_map_id_find
+ */
+
 
 /*
  * ID->状態
