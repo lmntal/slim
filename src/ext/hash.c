@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <util.h>
-#include <st.h>
+#include <st.c>
 #include "../dumper.h"
 #include "../slim_header/string.h"
 #include "../lmntal_ext.h"
@@ -346,8 +346,34 @@ void cb_set_to_list(LmnReactCxt *rc,
 		    LmnAtom a2, LmnLinkAttr t2)
 {
   st_table_t tbl = LMN_HASH_DATA(a0);
-  LmnSAtom nil = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
-  
+  st_table_entry *entry;
+  int nb=tbl->num_bins;
+  int i;
+  for(i=0; i<nb; i++)
+    {
+      entry=tbl->bins[i];
+      if(entry)
+	{
+	  while(entry)
+	    {
+	      printf("key=%d\n", (int)(entry->key));
+	      entry=entry->next;
+	    }
+	}
+    }
+
+  /* LmnSAtom nil0 = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR); */
+  /* LmnSAtom nil1 = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR); */
+  /* LmnSAtom cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR); */
+
+  /* lmn_newlink_in_symbols(nil0, 0, cons, 1); */
+  /* lmn_newlink_in_symbols(nil1, 0, cons, 0); */
+  /* lmn_mem_newlink(mem, */
+  /* 		  a1, t1, LMN_ATTR_GET_VALUE(t1), */
+  /* 		  cons, LMN_ATTR_MAKE_LINK(2), 2); */
+  /* lmn_mem_newlink(mem, */
+  /* 		  a0, t0, LMN_ATTR_GET_VALUE(t0), */
+  /* 		  a2, t2, LMN_ATTR_GET_VALUE(t2)); */
 }
 
 
@@ -634,4 +660,5 @@ void init_hash(void)
   lmn_register_c_fun("cb_set_free", (void *)cb_hash_free, 1);
   lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
   lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find, 4);
+  lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
 }
