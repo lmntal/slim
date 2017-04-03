@@ -345,6 +345,11 @@ void cb_set_to_list(LmnReactCxt *rc,
 		    LmnAtom a1, LmnLinkAttr t1,
 		    LmnAtom a2, LmnLinkAttr t2)
 {
+  LmnSAtom cons=lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+  LmnSAtom prev;
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  cons, LMN_ATTR_MAKE_LINK(2), 2);
   st_table_t tbl = LMN_HASH_DATA(a0);
   st_table_entry *entry;
   int nb=tbl->num_bins;
@@ -356,24 +361,26 @@ void cb_set_to_list(LmnReactCxt *rc,
 	{
 	  while(entry)
 	    {
-	      printf("key=%d\n", (int)(entry->key));
+	      lmn_mem_newlink(mem,
+			      cons, LMN_ATTR_MAKE_LINK(0), 0,
+			      (int)(entry->key), LMN_INT_ATTR, 0);
+	      lmn_mem_push_atom(mem, (int)(entry->key), LMN_INT_ATTR);
+
+	      prev=cons;
+	      cons=lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+	      lmn_mem_newlink(mem,
+			      prev, LMN_ATTR_MAKE_LINK(1), 1,
+			      cons, LMN_ATTR_MAKE_LINK(2), 2);
 	      entry=entry->next;
 	    }
 	}
     }
-
-  /* LmnSAtom nil0 = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR); */
-  /* LmnSAtom nil1 = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR); */
-  /* LmnSAtom cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR); */
-
-  /* lmn_newlink_in_symbols(nil0, 0, cons, 1); */
-  /* lmn_newlink_in_symbols(nil1, 0, cons, 0); */
-  /* lmn_mem_newlink(mem, */
-  /* 		  a1, t1, LMN_ATTR_GET_VALUE(t1), */
-  /* 		  cons, LMN_ATTR_MAKE_LINK(2), 2); */
-  /* lmn_mem_newlink(mem, */
-  /* 		  a0, t0, LMN_ATTR_GET_VALUE(t0), */
-  /* 		  a2, t2, LMN_ATTR_GET_VALUE(t2)); */
+  lmn_mem_delete_atom(mem, cons, LMN_ATTR_MAKE_LINK(2));
+  LmnSAtom nil = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  lmn_newlink_in_symbols(nil, 0, prev, 1);
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a2, t2, LMN_ATTR_GET_VALUE(t2));
 }
 
 
