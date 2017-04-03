@@ -504,7 +504,6 @@ void cb_state_map_state_find(LmnReactCxt *rc,
   int res=st_lookup(i_tbl, (st_data_t)s, &entry);
   LmnSAtom result;
   if(res){
-    result=lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 2));
     LmnMembrane *val=(LmnMembrane *)entry;
     AtomListEntry *ent;
     LmnFunctor f;
@@ -519,13 +518,15 @@ void cb_state_map_state_find(LmnReactCxt *rc,
 	      }))
 	    }));
     lmn_newlink_in_symbols(out, 0, in, 0);
-    lmn_newlink_in_symbols(out, 1, result, 1);
+    lmn_mem_newlink(mem,
+		    a2, t2, LMN_ATTR_GET_VALUE(t2),
+		    out, LMN_ATTR_MAKE_LINK(1),1);
   }else{
     result=lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
+    lmn_mem_newlink(mem,
+		    LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
+		    a2, t2, LMN_ATTR_GET_VALUE(t2));
   }
-  lmn_mem_newlink(mem,
-		  LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
-		  a2, t2, LMN_ATTR_GET_VALUE(t2));
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t1),
 		  a3, t3, LMN_ATTR_GET_VALUE(t3));
