@@ -182,6 +182,7 @@ void cb_hash_put(LmnReactCxt *rc,
  * cb_set_get
  * cb_set_union
  * cb_set_to_list
+ * cb_set_diff
  */
 
 void cb_set_put(LmnReactCxt *rc,
@@ -205,7 +206,6 @@ void cb_set_put(LmnReactCxt *rc,
       st_insert(LMN_HASH_DATA(a0), (st_data_t)a1, (st_data_t)a1);
       lmn_mem_delete_atom(mem, a1, t1);
     }
-
   } else {
     LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
     if(f == LMN_OUT_PROXY_FUNCTOR){
@@ -381,6 +381,76 @@ void cb_set_to_list(LmnReactCxt *rc,
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+}
+/*
+ * 差集合
+ *
+ * +a0: 集合X
+ * +a1: 集合Y
+ * -a2: 集合X
+ * -a3: 集合Y
+ * -a4: X\Y(差集合)
+ */
+void cb_set_diff(LmnReactCxt *rc,
+		 LmnMembrane *mem,
+		 LmnAtom a0, LmnLinkAttr t0,
+		 LmnAtom a1, LmnLinkAttr t1,
+		 LmnAtom a2, LmnLinkAttr t2,
+		 LmnAtom a3, LmnLinkAttr t3,
+		 LmnAtom a4, LmnLinkAttr t4)
+{
+  st_table_entry *entry;
+  st_table_t tbl0=LMN_HASH_DATA(a0) ;
+  int nb=tbl0->num_bins;
+  LmnHashRef atom = LMN_MALLOC(struct LmnHash);
+  LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
+  atom->tbl = st_init_table(&type_id_hash);
+
+  LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+  int i;
+  LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
+
+  if(t1 != LMN_SP_ATOM_ATTR){
+    for(i=0; i<nb; i++)
+      {
+	entry=tbl0->bins[i];
+	if(entry)
+	  {
+	    while(entry)
+	      {
+		st_insert(LMN_HASH_DATA(atom), (st_data_t)(entry->key), (st_data_t)(entry->record));
+		entry=entry->next;
+	      }
+	  }
+      }
+  }else{
+  st_table_t tbl1=LMN_HASH_DATA(a1);
+
+  for(i=0; i<nb; i++)
+    {
+      entry=tbl0->bins[i];
+      if(entry)
+	{
+	  while(entry)
+	    {
+	      st_data_t data;
+	      if(!(st_lookup(tbl1, (st_data_t)(entry->key), (st_data_t)(&data))))
+		st_insert(LMN_HASH_DATA(atom), (st_data_t)(entry->key), (st_data_t)(entry->key));
+	      entry=entry->next;
+	    }
+	}
+    }
+  }
+
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  a3, t3, LMN_ATTR_GET_VALUE(t3));
+  lmn_mem_newlink(mem,
+		  a4, t4, LMN_ATTR_GET_VALUE(t4),
+		  LMN_ATOM(atom), attr, 0);
 }
 
 
@@ -669,4 +739,5 @@ void init_hash(void)
   lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
   lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find, 4);
   lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
+  lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 5);
 }

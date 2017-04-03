@@ -31,6 +31,14 @@
 
     Ret = set.to_list(Set, List) :- class(Set, "hash") | 
 	'$callback'('cb_set_to_list', Set, List, Ret).
+    Ret = set.diff(set.empty, set.empty, R0, R1) :-
+    	Ret = set.empty, R0=set.empty, R1=set.empty.
+    Ret = set.diff(set.empty, S1, R0, R1) :- class(S1, "hash") |
+    	Ret=set.empty, R0=set.empty, R1=S1.
+    Ret = set.diff(S0, set.empty, R0, R1) :- class(S0, "hash") |
+	'$callback'('cb_set_diff', S0, set.empty, R0, R1, Ret).
+    Ret = set.diff(S0, S1, R0, R1) :- class(S0, "hash"), class(S1, "hash") |
+    	'$callback'('cb_set_diff', S0, S1, R0, R1, Ret).
 }
 
 
