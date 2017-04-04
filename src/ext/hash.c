@@ -574,7 +574,8 @@ void cb_state_map_state_find(LmnReactCxt *rc,
   int res=st_lookup(i_tbl, (st_data_t)s, &entry);
   LmnSAtom result;
   if(res){
-    LmnMembrane *val=(LmnMembrane *)entry;
+    LmnMembrane *val=LMN_MALLOC(LmnMembrane);
+    val=lmn_mem_copy((LmnMembrane *)entry);
     AtomListEntry *ent;
     LmnFunctor f;
     LmnSAtom in;
