@@ -143,8 +143,8 @@ void cb_hash_get(LmnReactCxt *rc,
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
 
   lmn_mem_newlink(mem,
-                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                   a4, t4, LMN_ATTR_GET_VALUE(t4));
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a4, t4, LMN_ATTR_GET_VALUE(t4));
 }
 
 /* 
@@ -260,7 +260,7 @@ void cb_set_get(LmnReactCxt *rc,
   if(LMN_ATTR_IS_DATA(t1)){
     if(LMN_INT_ATTR == t1){
       res = st_lookup(LMN_HASH_DATA(a0), (st_data_t)a1, &entry);
-      }
+    }
   }else{
     LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
     if(f == LMN_OUT_PROXY_FUNCTOR){
@@ -354,27 +354,62 @@ void cb_set_to_list(LmnReactCxt *rc,
   st_table_entry *entry;
   int nb=tbl->num_bins;
   int i;
-  for(i=0; i<nb; i++)
+  if(tbl->type==&type_id_hash)
     {
-      entry=tbl->bins[i];
-      if(entry)
+      for(i=0; i<nb; i++)
 	{
-	  while(entry)
+	  entry=tbl->bins[i];
+	  if(entry)
 	    {
-	      lmn_mem_newlink(mem,
-			      cons, LMN_ATTR_MAKE_LINK(0), 0,
-			      (int)(entry->key), LMN_INT_ATTR, 0);
-	      lmn_mem_push_atom(mem, (int)(entry->key), LMN_INT_ATTR);
+	      while(entry)
+		{
+		  lmn_mem_newlink(mem,
+				  cons, LMN_ATTR_MAKE_LINK(0), 0,
+				  (int)(entry->key), LMN_INT_ATTR, 0);
+		  lmn_mem_push_atom(mem, (int)(entry->key), LMN_INT_ATTR);
 
-	      prev=cons;
-	      cons=lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
-	      lmn_mem_newlink(mem,
-			      prev, LMN_ATTR_MAKE_LINK(1), 1,
-			      cons, LMN_ATTR_MAKE_LINK(2), 2);
-	      entry=entry->next;
+		  prev=cons;
+		  cons=lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+		  lmn_mem_newlink(mem,
+				  prev, LMN_ATTR_MAKE_LINK(1), 1,
+				  cons, LMN_ATTR_MAKE_LINK(2), 2);
+		  entry=entry->next;
+		}
 	    }
 	}
-    }
+    }else if(tbl->type==&type_tuple_hash){
+    for(i=0; i<nb; i++)
+      {
+	entry=tbl->bins[i];
+	if(entry)
+	  {
+	    while(entry)
+	      {
+		LmnSAtom val=lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("."), 3));
+		LmnWord x=LMN_SATOM_GET_LINK((LmnSAtom)entry->key, 0);
+		LmnWord y=LMN_SATOM_GET_LINK((LmnSAtom)entry->key, 1);
+		lmn_mem_push_atom(mem, x, LMN_INT_ATTR);
+		lmn_mem_push_atom(mem, y, LMN_INT_ATTR);
+		lmn_mem_newlink(mem,
+				val, LMN_ATTR_MAKE_LINK(0), 0,
+				x, LMN_INT_ATTR, 0);
+		lmn_mem_newlink(mem,
+				val, LMN_ATTR_MAKE_LINK(1), 1,
+				y, LMN_INT_ATTR, 0);
+		lmn_mem_newlink(mem,
+				cons, LMN_ATTR_MAKE_LINK(0), 0,
+				val, LMN_ATTR_MAKE_LINK(2), 2);
+
+		prev=cons;
+		cons=lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+		lmn_mem_newlink(mem,
+				prev, LMN_ATTR_MAKE_LINK(1), 1,
+				cons, LMN_ATTR_MAKE_LINK(2), 2);
+		entry=entry->next;
+	      }
+	  }
+      }
+  }
   lmn_mem_delete_atom(mem, cons, LMN_ATTR_MAKE_LINK(2));
   LmnSAtom nil = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   lmn_newlink_in_symbols(nil, 0, prev, 1);
@@ -424,22 +459,22 @@ void cb_set_diff(LmnReactCxt *rc,
 	  }
       }
   }else{
-  st_table_t tbl1=LMN_HASH_DATA(a1);
+    st_table_t tbl1=LMN_HASH_DATA(a1);
 
-  for(i=0; i<nb; i++)
-    {
-      entry=tbl0->bins[i];
-      if(entry)
-	{
-	  while(entry)
-	    {
-	      st_data_t data;
-	      if(!(st_lookup(tbl1, (st_data_t)(entry->key), (st_data_t)(&data))))
-		st_insert(LMN_HASH_DATA(atom), (st_data_t)(entry->key), (st_data_t)(entry->key));
-	      entry=entry->next;
-	    }
-	}
-    }
+    for(i=0; i<nb; i++)
+      {
+	entry=tbl0->bins[i];
+	if(entry)
+	  {
+	    while(entry)
+	      {
+		st_data_t data;
+		if(!(st_lookup(tbl1, (st_data_t)(entry->key), (st_data_t)(&data))))
+		  st_insert(LMN_HASH_DATA(atom), (st_data_t)(entry->key), (st_data_t)(entry->key));
+		entry=entry->next;
+	      }
+	  }
+      }
   }
 
   lmn_mem_newlink(mem,
@@ -542,8 +577,8 @@ void cb_map_get(LmnReactCxt *rc,
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
 
   lmn_mem_newlink(mem,
-                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                   a4, t4, LMN_ATTR_GET_VALUE(t4));
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a4, t4, LMN_ATTR_GET_VALUE(t4));
 }
 
 /*----------------------------------------------------------------------
@@ -720,11 +755,11 @@ void init_hash(void)
                                         sp_cb_hash_dump,
                                         sp_cp_hash_is_ground);
   state_map_atom_type = lmn_sp_atom_register("state_map",
-                                         sp_cb_state_map_copy,
-                                         sp_cb_state_map_free,
-                                         sp_cb_state_map_eq,
-                                         sp_cb_state_map_dump,
-                                         sp_cb_state_map_is_ground);
+					     sp_cb_state_map_copy,
+					     sp_cb_state_map_free,
+					     sp_cb_state_map_eq,
+					     sp_cb_state_map_dump,
+					     sp_cb_state_map_is_ground);
   lmn_register_c_fun("cb_hash_init", (void *)cb_hash_init, 1);
   lmn_register_c_fun("cb_hash_get", (void *)cb_hash_get, 5);
   lmn_register_c_fun("cb_hash_put", (void *)cb_hash_put, 4);
