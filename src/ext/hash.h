@@ -78,12 +78,12 @@ static unsigned long mem_hash(LmnMembrane *m)
   return mhash(m);
 }
 
-static unsigned long id_hash(int a)
+static unsigned long id_hash(st_data_t a)
 {
   return (unsigned long)a;
 }
 
-static int id_cmp(int a, int b)
+static int id_cmp(st_data_t a, st_data_t b)
 {
   return a != b;
 }

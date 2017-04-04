@@ -290,7 +290,7 @@ LmnStringRef string_of_guard_mem(LmnMembrane *mem, LmnSAtom cm_atom)
   AtomListEntry *ent;
   LmnFunctor f;
   const char* constraint_name[4] = {"int", "float", "ground", "unary"};
-  const char* op_name[5] = {"=:=", "=\=", ">", "<", ":="};
+  const char* op_name[7] = {"=:=", "=\=", ">", "<", "=<", ">=",":="};
   result = lmn_string_make_empty();
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
     if(LMN_IS_EX_FUNCTOR(f) || LMN_IS_PROXY_FUNCTOR(f)) continue;
@@ -313,7 +313,7 @@ LmnStringRef string_of_guard_mem(LmnMembrane *mem, LmnSAtom cm_atom)
 	  lmn_string_push_raw_s(result, typed_pc_atom_name);
 	  lmn_string_push_raw_s(result, "),");
 	}
-	for(int i = 0; i < 5; i++){
+	for(int i = 0; i < 7; i++){
 	  if(strcmp(op_name[i], atom_name) != 0) continue;
 	  lmn_string_push(result, string_of_guard_op(satom));
 	  lmn_string_push_raw_s(result, ",");
