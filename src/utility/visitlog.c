@@ -111,6 +111,7 @@ int proc_tbl_foreach(ProcessTableRef p, int(*func)(LmnWord key, LmnWord val, Lmn
   for (int i = 0; i < p->num_buckets; i++) {
     if (!p->tbl[i]) continue;
     for (int j = 0; j < PROC_TBL_BUCKETS_SIZE && n < process_tbl_entry_num(p); j++) {
+      if (p->tbl[i][j] == ULONG_MAX) continue;
       func(i * PROC_TBL_BUCKETS_SIZE + j, p->tbl[i][j], arg);
       n++;
     }
