@@ -22,6 +22,22 @@ static BYTE mc_flag = 0x10U;
  * Internal Constructor
  */
 
+static LmnHashRef lmn_make_int_set(LmnMembrane *mem)
+{
+  LmnHashRef s = LMN_MALLOC(struct LmnHash);
+  LMN_SP_ATOM_SET_TYPE(s, hash_atom_type);
+  s->tbl = st_init_table(&type_id_hash);
+  return s;
+}
+
+static LmnHashRef lmn_make_tuple_set(LmnMembrane *mem)
+{
+  LmnHashRef s = LMN_MALLOC(struct LmnHash);
+  LMN_SP_ATOM_SET_TYPE(s, hash_atom_type);
+  s->tbl = st_init_table(&type_tuple_hash);
+  return s;
+}
+
 static LmnHashRef lmn_make_hash(LmnMembrane *mem)
 {
   LmnHashRef h = LMN_MALLOC(struct LmnHash);
@@ -177,7 +193,7 @@ void cb_hash_put(LmnReactCxt *rc,
 
 /*----------------------------------------------------------------------
  * Set
- *
+ * cb_set_copy
  * cb_set_put
  * cb_set_get
  * cb_set_union
@@ -488,6 +504,64 @@ void cb_set_diff(LmnReactCxt *rc,
 		  LMN_ATOM(atom), attr, 0);
 }
 
+/*
+ * Copy
+ *
+ * +a0: Set
+ * -a1: Src-Set
+ * -a2: Copyed-Set
+ */
+void cb_set_copy(LmnReactCxt *rc,
+		 LmnMembrane *mem,
+		 LmnAtom a0, LmnLinkAttr t0,
+		 LmnAtom a1, LmnLinkAttr t1,
+		 LmnAtom a2, LmnLinkAttr t2)
+{
+  LmnHashRef atom;
+  LmnLinkAttr attr;
+  st_table_t tbl = LMN_HASH_DATA(a0);
+  if(tbl->type==&type_id_hash)
+    {
+      atom = lmn_make_int_set(mem);
+      attr = LMN_SP_ATOM_ATTR;
+      LMN_HASH_DATA(atom) = st_copy(tbl);
+    }else if(tbl->type=&type_tuple_hash){
+    atom = lmn_make_tuple_set(mem);
+    attr = LMN_SP_ATOM_ATTR;
+    st_table_entry *entry;
+    int nb = tbl->num_bins;
+    int i;
+    for(i=0; i<nb; i++)
+      {
+	entry = tbl->bins[i];
+	if(entry)
+	  {
+	    while(entry)
+	      {
+		LmnSAtom cons = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("."), 3));
+		LmnWord x = LMN_SATOM_GET_LINK((LmnSAtom)entry->key, 0);
+		LmnWord y = LMN_SATOM_GET_LINK((LmnSAtom)entry->key, 1);
+		lmn_mem_newlink(mem,
+				cons, LMN_ATTR_MAKE_LINK(0), 0,
+				x, LMN_INT_ATTR, 0);
+		lmn_mem_newlink(mem,
+				cons, LMN_ATTR_MAKE_LINK(1), 1,
+				y, LMN_INT_ATTR, 0);
+		st_insert(LMN_HASH_DATA(atom), (st_data_t)cons, (st_data_t)cons);
+		lmn_mem_remove_atom(mem, cons, LMN_ATTR_MAKE_LINK(0));
+		entry=entry->next;
+	      }
+	  }
+      }
+  }
+  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a1, t1, LMN_ATTR_GET_VALUE(t1));
+  lmn_mem_newlink(mem,
+		  a2, t2, LMN_ATTR_GET_VALUE(t2),
+		  atom, attr, LMN_ATTR_GET_VALUE(attr));
+}
 
 /*----------------------------------------------------------------------
  * Map
@@ -776,4 +850,5 @@ void init_hash(void)
   lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find, 4);
   lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
   lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 5);
+  lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
 }
