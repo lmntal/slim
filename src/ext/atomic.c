@@ -46,7 +46,7 @@
 #include "mc_worker.h"
 #include "mc_generator.h"
 #ifdef PROFILE
-# include "runtime_status.h"
+# include "verifier/runtime_status.h"
 #endif
 
 void atomic_ruleset(LmnReactCxt *rc, LmnMembrane *mem,

@@ -192,6 +192,13 @@ struct LmnProfiler {
   st_table_t     prules;               /* Set of Rule Profiler */
 };
 
+
+/* RuleProfiler Interface */
+void ruleprofiler_incr_backtrack(struct RuleProfiler *p);
+void ruleprofiler_add_backtrack(struct RuleProfiler *p, int num);
+void ruleprofiler_incr_apply(struct RuleProfiler *p);
+TimeProfiler *ruleprofiler_trial(struct RuleProfiler *p);
+
 extern struct LmnProfiler lmn_prof;
 
 void lmn_profiler_init(unsigned int threads_num);
@@ -204,6 +211,7 @@ void profile_start_exec_thread(void);
 void profile_finish_exec_thread(void);
 void dump_profile_data(FILE *f);
 void profile_statespace(LmnWorkerGroup *wp);
+<<<<<<< HEAD:src/runtime_status.h
 RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRuleRef r);
 void rule_profiler_free(RuleProfiler *p);
 
@@ -319,13 +327,27 @@ static inline void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r)
     st_add_direct(lmn_prof.prules, (st_data_t)r, (st_data_t)p);
   }
 }
+=======
+void profile_total_space_update(StateSpaceRef ss);
+
+void profile_finish_timer(int type);
+void profile_start_timer(int type);
+void profile_remove_space(int type, unsigned long size);
+void profile_add_space(int type, unsigned long size);
+void profile_countup(int type);
+void profile_peakcounter_pop(PeakCounter *p, unsigned long size);
+void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r);
+
+void time_profiler_start(TimeProfiler *p);
+void time_profiler_finish(TimeProfiler *p);
+>>>>>>> e7b167e... Fix compile errors when profiling enabled.:src/verifier/runtime_status.h
 
 #ifdef PROFILE
-#  define profile_backtrack()    if (lmn_prof.cur && !lmn_env.findatom_parallel_mode) ((lmn_prof.cur)->backtrack++)
-#  define profile_backtrack_add(NUM) if (lmn_prof.cur) ((lmn_prof.cur)->backtrack+=NUM)
-#  define profile_start_trial()  if (lmn_prof.cur) time_profiler_start(&(lmn_prof.cur)->trial)
-#  define profile_finish_trial() if (lmn_prof.cur) time_profiler_finish(&(lmn_prof.cur)->trial)
-#  define profile_apply()        if (lmn_prof.cur) ((lmn_prof.cur)->apply++)
+#  define profile_backtrack()    if (lmn_prof.cur && !lmn_env.findatom_parallel_mode) (ruleprofiler_incr_backtrack(lmn_prof.cur))
+#  define profile_backtrack_add(NUM) if (lmn_prof.cur) (ruleprofiler_add_backtrack(lmn_prof.cur, NUM))
+#  define profile_start_trial()  if (lmn_prof.cur) time_profiler_start(ruleprofiler_trial(lmn_prof.cur))
+#  define profile_finish_trial() if (lmn_prof.cur) time_profiler_finish(ruleprofiler_trial(lmn_prof.cur))
+#  define profile_apply()        if (lmn_prof.cur) (ruleprofiler_incr_apply(lmn_prof.cur))
 #else
 #  define profile_backtrack()
 #  define profile_backtrack_add(NUM)
