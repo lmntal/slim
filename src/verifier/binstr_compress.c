@@ -335,10 +335,10 @@ uint64_t     memory;
 void lmn_bscomp_tree_profile(FILE *f)
 {
 #ifdef PROFILE
-  fprintf(f, "node count              : %10lu\n", node_count);
-  fprintf(f, "table size              : %10lu\n", table_size);
+  fprintf(f, "node count              : %10llu\n", node_count);
+  fprintf(f, "table size              : %10llu\n", table_size);
   fprintf(f, "load factor             : %10.3lf\n", load_factor);
-  fprintf(f, "memory                  : %7lu MB\n", memory);
+  fprintf(f, "memory                  : %7llu MB\n", memory);
 #else
   fprintf(f, "have to enable profile option\n");
 #endif
