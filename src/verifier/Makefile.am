@@ -19,7 +19,6 @@ liblmn_verifier_a_CFLAGS =                               \
         -I../../third_party/zdelta-2.1                   \
         $(CFLAGS)
 
-        
 liblmn_verifier_a_SOURCES =                              \
 	nc_parser.y	             nc_lexer.l                    \
 	propsym_parser.y         propsym_lexer.l               \

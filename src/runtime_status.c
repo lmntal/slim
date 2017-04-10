@@ -44,19 +44,6 @@
 #include "dumper.h"
 #include "verifier/binstr_compress.h"
 
-void ruleprofiler_incr_backtrack(struct RuleProfiler *p) {
-  p->backtrack++;
-}
-void ruleprofiler_add_backtrack(struct RuleProfiler *p, int num) {
-  p->backtrack += num;
-}
-void ruleprofiler_incr_apply(struct RuleProfiler *p) {
-  p->apply++;
-}
-TimeProfiler *ruleprofiler_trial(struct RuleProfiler *p) {
-  return &p->trial;
-}
-
 static void mc_profiler2_init(MCProfiler2 *p);
 static void mc_profiler2_destroy(MCProfiler2 *p);
 static void mc_profiler2_makeup_report(MCProfiler2 *total);
