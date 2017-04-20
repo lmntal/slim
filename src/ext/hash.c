@@ -199,6 +199,7 @@ void cb_hash_put(LmnReactCxt *rc,
  * cb_set_union
  * cb_set_to_list
  * cb_set_diff
+ * cb_set_erace
  */
 
 void cb_set_put(LmnReactCxt *rc,
@@ -563,6 +564,26 @@ void cb_set_copy(LmnReactCxt *rc,
 		  atom, attr, LMN_ATTR_GET_VALUE(attr));
 }
 
+void cb_set_erase(LmnReactCxt *rc,
+		  LmnMembrane *mem,
+		  LmnAtom a0, LmnLinkAttr t0,
+		  LmnAtom a1, LmnLinkAttr t1,
+		  LmnAtom a2, LmnLinkAttr t2)
+{
+  st_data_t entry;
+  LmnFunctor f= LMN_SATOM_GET_FUNCTOR(a1);
+  st_delete(LMN_HASH_DATA(a0), (st_data_t)a1, &entry);
+  if(f==LMN_LIST_FUNCTOR)
+    {
+      lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, 0), LMN_SATOM_GET_ATTR(a1, 0));
+      lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, 1), LMN_SATOM_GET_ATTR(a1, 1));
+      lmn_mem_remove_atom(mem, a1, t1);
+    }
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+}
+
 /*----------------------------------------------------------------------
  * Map
  *
@@ -851,4 +872,5 @@ void init_hash(void)
   lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
   lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 5);
   lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
+  lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
 }

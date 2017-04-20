@@ -48,4 +48,9 @@
 
     Ret = set.copy(S0, S1) :- class(S0, "hash") |
 	'$callback'('cb_set_copy', S0, S1, Ret).
+
+    Ret=set.erase(set.empty, '.'($x,$y)) :- unary($x),unary($y) |
+	Ret = set.empty.
+    Ret = set.erase(Set, Val) :- class(Set, "hash") |
+	'$callback'('cb_set_erase', Set, Val, Ret).
 }
