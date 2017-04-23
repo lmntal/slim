@@ -1156,7 +1156,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr)
                                                        LMN_SATOM(wt(rc, atomi)),
                                                        atom_arity) &&
                     interpret(rc, rule, instr)) {
-                  return TRUE;
+		   return TRUE;
                 }
                 profile_backtrack();
               }

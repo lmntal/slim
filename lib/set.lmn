@@ -1,56 +1,55 @@
 {
     module(set).
 
-    Ret = set.init :- Ret = set.empty.
+    Ret = set.init :- Ret = set_empty.
 
     set.free(Set) :- class(Set, "hash") | '$callback'('cb_set_free', Set).
 
     Ret = set.insert(Set, Val) :- class(Set, "hash") | '$callback'('cb_set_put', Set, Val, Ret).
 
-    Ret = set.insert(set.empty, Val) :- '$callback'('cb_set_put', set.empty, Val, Ret).
+    Ret = set.insert(set_empty, Val) :- '$callback'('cb_set_put', set_empty, Val, Ret).
 
-    Ret = set.find(set.empty, Val, Res) :- ground(Val) | Ret = set.empty, Res = none.
+    Ret = set.find(set_empty, Val, Res) :- ground(Val) | Ret = set_empty, Res = none.
 
     Ret = set.find(Set, Val, Res) :- class(Set, "hash") | '$callback'('cb_set_get', Set, Val , Res, Ret).
 
     Ret = set.intersect(Set0, Set1) :- class(Set0, "hash"), class(Set1, "hash") |
     	'$callback'('cb_set_intersect', Set0, Set1, Ret).
 
-    Ret = set.intersect(Set, set.empty) :- Ret = set.empty, set.free(Set).
+    Ret = set.intersect(Set, set_empty) :- Ret = set_empty, free(Set).
 
-    Ret = set.intersect(set.empty, Set) :- Ret = set.empty, set.free(Set).
+    Ret = set.intersect(set_empty, Set) :- Ret = set_empty, free(Set).
 
     Ret = set.union(Set0, Set1) :- class(Set0, "hash"), class(Set1, "hash") |
 	'$callback'('cb_set_union', Set0, Set1, Ret).
 
-    Ret = set.union(Set, set.empty) :- Ret = Set.
+    Ret = set.union(Set, set_empty) :- Ret = Set.
 
-    Ret = set.union(set.empty, Set) :- Ret = Set.
+    Ret = set.union(set_empty, Set) :- Ret = Set.
 
-    Ret = set.to_list(set.empty, List) :- Ret = set.empty, List = [].
+    Ret = set.to_list(set_empty, List) :- Ret = set_empty, List = [].
 
     Ret = set.to_list(Set, List) :- class(Set, "hash") | 
 	'$callback'('cb_set_to_list', Set, List, Ret).
 
-    Ret = set.diff(set.empty, set.empty, R0, R1) :-
-    	Ret = set.empty, R0=set.empty, R1=set.empty.
+    Ret = set.diff(set_empty, set_empty, R0, R1) :-
+    	Ret = set_empty, R0=set_empty, R1=set_empty.
 
-    Ret = set.diff(set.empty, S1, R0, R1) :- class(S1, "hash") |
-    	Ret=set.empty, R0=set.empty, R1=S1.
+    Ret = set.diff(set_empty, S1, R0, R1) :- class(S1, "hash") |
+    	Ret=set_empty, R0=set_empty, R1=S1.
 
-    Ret = set.diff(S0, set.empty, R0, R1) :- class(S0, "hash") |
-	'$callback'('cb_set_diff', S0, set.empty, R0, R1, Ret).
-
+    Ret = set.diff(S0, set_empty, R0, R1) :- class(S0, "hash") |
+	R0 = set.copy(S0, S1), R1 = set_empty, Ret = S1.
     Ret = set.diff(S0, S1, R0, R1) :- class(S0, "hash"), class(S1, "hash") |
     	'$callback'('cb_set_diff', S0, S1, R0, R1, Ret).
 
-    Ret = set.copy(set.empty, S) :- Ret = set.empty, S = set.empty.
+    set_copy@@Ret = set.copy(set_empty, S) :- Ret = set_empty, S = set_empty.
 
-    Ret = set.copy(S0, S1) :- class(S0, "hash") |
+    set_copy@@Ret = set.copy(S0, S1) :- class(S0, "hash") |
 	'$callback'('cb_set_copy', S0, S1, Ret).
 
-    Ret=set.erase(set.empty, '.'($x,$y)) :- unary($x),unary($y) |
-	Ret = set.empty.
+    Ret=set.erase(set_empty, '.'($x,$y)) :- unary($x),unary($y) |
+	Ret = set_empt.
     Ret = set.erase(Set, Val) :- class(Set, "hash") |
 	'$callback'('cb_set_erase', Set, Val, Ret).
 }

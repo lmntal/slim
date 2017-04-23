@@ -320,7 +320,53 @@ void cb_set_intersect(LmnReactCxt *rc,
 		      LmnAtom a1, LmnLinkAttr t1,
 		      LmnAtom a2, LmnLinkAttr t2)
 {
+  int i, j;
+  st_table_t tbl_0 = LMN_HASH_DATA(a0);
+  st_table_entry *entry_0;
+  int nb_0=tbl_0->num_bins;
+
+  st_table_t tbl_1 = LMN_HASH_DATA(a1);
+  st_table_entry *entry_1;
+  int nb_1=tbl_1->num_bins;
+
+  LmnHashRef atom = LMN_MALLOC(struct LmnHash);
+  LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
+  atom->tbl = st_init_table(&type_id_hash);
+  LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
   
+
+  for(i = 0; i<nb_0; i++)
+    {
+      entry_0=tbl_0->bins[i];
+      if(entry_0)
+	{
+	  while(entry_0)
+	    {
+
+	      for(j=0; j<nb_1; j++)
+		{
+		  entry_1=tbl_1->bins[j];
+		  if(entry_1)
+		    {
+		      while(entry_1)
+			{
+			  if(entry_0->key == entry_1->key)
+			    {
+			      int k = entry_0->key;
+			      st_insert(LMN_HASH_DATA(atom), (st_data_t)k, (st_data_t)k);
+			    }
+			  entry_1 = entry_1->next;
+			}
+		    }
+		}
+	      entry_0=entry_0->next;
+	    }
+	}
+    }
+  lmn_mem_newlink(mem,
+		  a2, t2, LMN_ATTR_GET_VALUE(t2),
+		  atom, attr, LMN_ATTR_GET_VALUE(attr));
 }
 
 /* 
@@ -457,23 +503,22 @@ void cb_set_diff(LmnReactCxt *rc,
   LmnHashRef atom = LMN_MALLOC(struct LmnHash);
   LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
   atom->tbl = st_init_table(&type_id_hash);
-
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   int i;
-  LMN_SP_ATOM_SET_TYPE(atom, hash_atom_type);
+  int c = 0;
 
   if(t1 != LMN_SP_ATOM_ATTR){
     for(i=0; i<nb; i++)
       {
-	entry=tbl0->bins[i];
-	if(entry)
-	  {
-	    while(entry)
-	      {
-		st_insert(LMN_HASH_DATA(atom), (st_data_t)(entry->key), (st_data_t)(entry->record));
-		entry=entry->next;
-	      }
-	  }
+  	entry=tbl0->bins[i];
+  	if(entry)
+  	  {
+  	    while(entry)
+  	      {
+  		st_insert(LMN_HASH_DATA(atom), (st_data_t)(entry->key), (st_data_t)(entry->record));
+  		entry=entry->next;
+  	      }
+  	  }
       }
   }else{
     st_table_t tbl1=LMN_HASH_DATA(a1);
@@ -486,23 +531,37 @@ void cb_set_diff(LmnReactCxt *rc,
 	    while(entry)
 	      {
 		st_data_t data;
-		if(!(st_lookup(tbl1, (st_data_t)(entry->key), (st_data_t)(&data))))
+		if(!(st_lookup(tbl1, (st_data_t)(entry->key), (st_data_t)(&data)))){
 		  st_insert(LMN_HASH_DATA(atom), (st_data_t)(entry->key), (st_data_t)(entry->key));
+		  c++;
+		}
 		entry=entry->next;
 	      }
 	  }
       }
   }
 
+  if(c ==0)
+    {
+      LmnSAtom empty_set = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
+      /* LmnAtom empty_set = LMN_ATOM(lmn_new_atom(313)); */
+      lmn_mem_newlink(mem,
+		      a4, t4, LMN_ATTR_GET_VALUE(t4),
+		      LMN_ATOM(empty_set), LMN_ATTR_MAKE_LINK(0), 0);
+      lmn_hash_free(atom, mem);
+    }
+  else
+    {
+      lmn_mem_newlink(mem,
+		      a4, t4, LMN_ATTR_GET_VALUE(t4),
+		      LMN_ATOM(atom), attr, 0);
+    }
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
   lmn_mem_newlink(mem,
 		  a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  a3, t3, LMN_ATTR_GET_VALUE(t3));
-  lmn_mem_newlink(mem,
-		  a4, t4, LMN_ATTR_GET_VALUE(t4),
-		  LMN_ATOM(atom), attr, 0);
 }
 
 /*
@@ -873,4 +932,5 @@ void init_hash(void)
   lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 5);
   lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
   lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
+  lmn_register_c_fun("cb_set_intersect", (void *)cb_set_intersect, 3);
 }
