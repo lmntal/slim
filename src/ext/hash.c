@@ -1,12 +1,8 @@
 #include <stdio.h>
-#include <util.h>
-#include <st.h>
-#include "../dumper.h"
-#include "../slim_header/string.h"
-#include "../lmntal_ext.h"
-#include "../atom.h"
+#include "../vm/dumper.h"
+#include "../element/lmnstring.h"
 #include "hash.h"
-#include "../special_atom.h"
+#include "../vm/special_atom.h"
 #include "../verifier/mem_encode.h"
 #include "../verifier/mc_worker.h"
 
@@ -22,7 +18,7 @@ static BYTE mc_flag = 0x10U;
  * Internal Constructor
  */
 
-static LmnHashRef lmn_make_hash(LmnMembrane *mem)
+static LmnHashRef lmn_make_hash(LmnMembraneRef mem)
 {
   LmnHashRef h = LMN_MALLOC(struct LmnHash);
   LMN_SP_ATOM_SET_TYPE(h, hash_atom_type);
@@ -30,7 +26,7 @@ static LmnHashRef lmn_make_hash(LmnMembrane *mem)
   return h;
 }
 
-static LmnStateMapRef lmn_make_state_map(LmnMembrane *mem)
+static LmnStateMapRef lmn_make_state_map(LmnMembraneRef mem)
 {
   LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
   LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
@@ -38,13 +34,13 @@ static LmnStateMapRef lmn_make_state_map(LmnMembrane *mem)
   return s;
 }
 
-void lmn_hash_free(LmnHashRef hash, LmnMembrane *mem)
+void lmn_hash_free(LmnHashRef hash, LmnMembraneRef mem)
 {
   st_free_table(LMN_HASH_DATA(hash));
   LMN_FREE(hash);
 }
 
-void lmn_state_map_free(LmnStateMapRef state_map, LmnMembrane *mem)
+void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
 {
   statespace_free(LMN_STATE_MAP(state_map)->states);
   LMN_FREE(state_map);
@@ -59,8 +55,8 @@ void lmn_state_map_free(LmnStateMapRef state_map, LmnMembrane *mem)
  *
  * -a0: ハッシュテーブル
  */
-void cb_hash_init(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+void cb_hash_init(LmnReactCxtRef rc,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0)
 {
   LmnHashRef atom = lmn_make_hash(mem);
@@ -72,8 +68,8 @@ void cb_hash_init(LmnReactCxt *rc,
                   LMN_ATOM(atom), attr, 0);
 }
 
-void cb_state_map_init(LmnReactCxt *rc,
-                       LmnMembrane *mem,
+void cb_state_map_init(LmnReactCxtRef rc,
+                       LmnMembraneRef mem,
                        LmnAtom a0, LmnLinkAttr t0)
 {
   LmnStateMapRef atom = lmn_make_state_map(mem);
@@ -90,16 +86,16 @@ void cb_state_map_init(LmnReactCxt *rc,
  *
  * +a0: ハッシュテーブル
  */
-void cb_hash_free(LmnReactCxt *rc,
-                  LmnMembrane *mem,
+void cb_hash_free(LmnReactCxtRef rc,
+                  LmnMembraneRef mem,
                   LmnAtom a0, LmnLinkAttr t0)
 {
   lmn_hash_free(LMN_HASH(a0), mem);
   lmn_mem_remove_data_atom(mem, a0, t0);
 }
 
-void cb_state_map_free(LmnReactCxt *rc,
-                       LmnMembrane *mem,
+void cb_state_map_free(LmnReactCxtRef rc,
+                       LmnMembraneRef mem,
                        LmnAtom a0, LmnLinkAttr t0)
 {
   lmn_state_map_free(LMN_STATE_MAP(a0), mem);
@@ -115,8 +111,8 @@ void cb_state_map_free(LmnReactCxt *rc,
  * -a3: 膜
  * -a4: 新ハッシュテーブル
  */
-void cb_hash_get(LmnReactCxt *rc,
-                 LmnMembrane *mem,
+void cb_hash_get(LmnReactCxtRef rc,
+                 LmnMembraneRef mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,
                  LmnAtom a2, LmnLinkAttr t2,
@@ -125,13 +121,13 @@ void cb_hash_get(LmnReactCxt *rc,
 {
   st_data_t entry;
   LmnSAtom result;
-  LmnMembrane *m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
   int res = st_lookup(LMN_HASH_DATA(a0), (st_data_t)m, &entry);
   if(res){
     result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("success"), 1));}
   else{
     result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("fail"), 1));}
-  lmn_dump_cell_stdout((LmnMembrane *)entry);
+  lmn_dump_cell_stdout((LmnMembraneRef )entry);
   lmn_mem_newlink(mem,
                   LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
                   a2, t2, LMN_ATTR_GET_VALUE(t2));
@@ -153,15 +149,15 @@ void cb_hash_get(LmnReactCxt *rc,
  * -a2: 膜
  * -a3: 新ハッシュテーブル
  */
-void cb_hash_put(LmnReactCxt *rc,
-                 LmnMembrane *mem,
+void cb_hash_put(LmnReactCxtRef rc,
+                 LmnMembraneRef mem,
                  LmnAtom a0, LmnLinkAttr t0,
                  LmnAtom a1, LmnLinkAttr t1,
                  LmnAtom a2, LmnLinkAttr t2,
                  LmnAtom a3, LmnLinkAttr t3)
 {
-  LmnMembrane *m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-  LmnMembrane *key = lmn_mem_copy_ex(m);
+  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+  LmnMembraneRef key = lmn_mem_copy_ex(m);
   st_insert(LMN_HASH_DATA(a0), (st_data_t)key, (st_data_t)key);
 
   lmn_mem_newlink(mem,
@@ -173,8 +169,8 @@ void cb_hash_put(LmnReactCxt *rc,
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
 }
 
-void cb_set_put(LmnReactCxt *rc,
-                LmnMembrane *mem,
+void cb_set_put(LmnReactCxtRef rc,
+                LmnMembraneRef mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1,
                 LmnAtom a2, LmnLinkAttr t2)
@@ -207,7 +203,7 @@ void cb_set_put(LmnReactCxt *rc,
         a0 = LMN_ATOM(atom);
         t0 = attr;
       }
-      LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+      LmnMembraneRef key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
       st_insert(LMN_HASH_DATA(a0), (st_data_t)key, (st_data_t)key);
 
       lmn_mem_remove_mem(mem, key);
@@ -236,8 +232,8 @@ void cb_set_put(LmnReactCxt *rc,
                   a2, t2, LMN_ATTR_GET_VALUE(t2));
 }
 
-void cb_set_get(LmnReactCxt *rc,
-                LmnMembrane *mem,
+void cb_set_get(LmnReactCxtRef rc,
+                LmnMembraneRef mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1,
                 LmnAtom a2, LmnLinkAttr t2,
@@ -253,7 +249,7 @@ void cb_set_get(LmnReactCxt *rc,
   }else{
     LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
     if(f == LMN_OUT_PROXY_FUNCTOR){
-      LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+      LmnMembraneRef key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
       res = st_lookup(LMN_HASH_DATA(a0), (st_data_t)key, &entry);
       lmn_mem_remove_mem(mem, key);      
     }else if(f == LMN_LIST_FUNCTOR){
@@ -289,15 +285,15 @@ void cb_set_get(LmnReactCxt *rc,
  * +a2: 膜(val)
  * -a3: ハッシュテーブル
  */
-void cb_map_put(LmnReactCxt *rc,
-                LmnMembrane *mem,
+void cb_map_put(LmnReactCxtRef rc,
+                LmnMembraneRef mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1,
                 LmnAtom a2, LmnLinkAttr t2,
                 LmnAtom a3, LmnLinkAttr t3)
 {
-  LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-  LmnMembrane *val = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a2, 0));
+  LmnMembraneRef key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+  LmnMembraneRef val = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a2, 0));
   st_insert(LMN_HASH_DATA(a0), (st_data_t)key, (st_data_t)val);
 
   lmn_mem_newlink(mem,
@@ -320,8 +316,8 @@ void cb_map_put(LmnReactCxt *rc,
  * -a4: ハッシュテーブル
  */
 
-void cb_map_get(LmnReactCxt *rc,
-                LmnMembrane *mem,
+void cb_map_get(LmnReactCxtRef rc,
+                LmnMembraneRef mem,
                 LmnAtom a0, LmnLinkAttr t0,
                 LmnAtom a1, LmnLinkAttr t1,
                 LmnAtom a2, LmnLinkAttr t2,
@@ -330,13 +326,13 @@ void cb_map_get(LmnReactCxt *rc,
 {
   st_data_t entry;
   LmnSAtom result;
-  LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+  LmnMembraneRef key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
   int res = st_lookup(LMN_HASH_DATA(a0), (st_data_t)key, &entry);
 
   if(res){
     result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 2));
-    LmnMembrane *val = (LmnMembrane *)entry;
-    AtomListEntry *ent;
+    LmnMembraneRef val = (LmnMembraneRef )entry;
+    AtomListEntryRef ent;
     LmnFunctor f;
     LmnSAtom in;
     LmnSAtom out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
@@ -373,15 +369,15 @@ void cb_map_get(LmnReactCxt *rc,
  * -a2 ID
  * -a3 Map
  */
-void cb_state_map_id_find(LmnReactCxt *rc,
-                          LmnMembrane *mem,
+void cb_state_map_id_find(LmnReactCxtRef rc,
+                          LmnMembraneRef mem,
                           LmnAtom a0, LmnLinkAttr t0,
                           LmnAtom a1, LmnLinkAttr t1,
                           LmnAtom a2, LmnLinkAttr t2,
                           LmnAtom a3, LmnLinkAttr t3)
 {
-  LmnMembrane *key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-  AtomListEntry *ent;
+  LmnMembraneRef key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+  AtomListEntryRef ent;
   LmnFunctor f;
   LmnSAtom in = LMN_SATOM_GET_LINK(a1, 0);
   LmnSAtom out = a1;
