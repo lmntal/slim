@@ -2,12 +2,12 @@
 #define LMN_HASH_H
 
 #include "../lmntal.h"
-#include <util.h>
-#include <st.h>
+#include "../element/util.h"
+#include "../element/st.h"
 #include "../verifier/mem_encode.h"
 #include "../verifier/statespace.h"
-#include "../atom.h"
-#include "../membrane.h"
+#include "../vm/atom.h"
+#include "../vm/membrane.h"
 #include "../verifier/state.h"
 struct LmnHash{
   LMN_SP_ATOM_HEADER;		/* スペシャルアトムの約束事 */
@@ -24,9 +24,9 @@ struct LmnStateMap{
 // 注意(1)!!! 膜mは膜外への自由リンクを必ず1本のみ持っていることが条件
 // 注意(2)!!! 膜内に本来存在しないアトム(atアトム)を入れてバイナリストリングを計算しているため，
 //            比較の際は相手の膜もlmn_inner_mem_encodeでエンコードされている必要がある
-static LmnBinStrRef lmn_inner_mem_encode(LmnMembrane *m)
+static LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
 {
-  AtomListEntry *ent;
+  AtomListEntryRef ent;
   LmnFunctor f;
   LmnSAtom in;
   LmnSAtom out;
@@ -62,7 +62,7 @@ static LmnBinStrRef lmn_inner_mem_encode(LmnMembrane *m)
   return s;
 }
 
-static int inner_mem_cmp(LmnMembrane *m0, LmnMembrane *m1)
+static int inner_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1)
 {
   LmnBinStrRef s0 = lmn_inner_mem_encode(m0);
   LmnBinStrRef s1 = lmn_inner_mem_encode(m1);
@@ -72,7 +72,7 @@ static int inner_mem_cmp(LmnMembrane *m0, LmnMembrane *m1)
   return res;
 }
 
-static unsigned long mem_hash(LmnMembrane *m)
+static unsigned long mem_hash(LmnMembraneRef m)
 {
   return mhash(m);
 }
