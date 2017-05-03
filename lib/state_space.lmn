@@ -36,29 +36,8 @@
  *
  */
 
-
 {
   module(state_space).
-
-  /*
-   * Ret = membrane.eq(M0, M1, R0, R1)
-   * M0とM1が一致するかどうかを判定する
-   *
-   * Ret:    一致すればtrue, そうでなければfalse
-   * M0, M1: 膜
-   * R0, R1: M0, M1と同じ膜
-   */
-  Ret = membrane.eq(M0, M1, R0, R1) :- Ret = '$callback'('cb_mem_equals', M0, M1, R0, R1).
-
-  /*
-   * Ret = membrane.hash(Mem, RetMem)
-   * プロセスのハッシュ値を計算する
-   *
-   * Ret:    ハッシュ値（整数）
-   * Mem:    ハッシュ値を計算したい膜
-   * RetMem: Memと同じ膜
-   */
-  Ret = membrane.hash(Mem, RetMem) :- Ret = '$callback'('cb_mhash', Mem, RetMem).
 
   /*
    * Ret = rule.react(Rule, Graph, RetRule)
@@ -104,6 +83,7 @@
 
     Ret = state_space.state_map_find(Map, $key, Res) :- class(Map, "state_map"), int($key) |
 	'$callback'('cb_state_map_state_find', Map, $key, Res, Ret).
+}.
 
 % % *************************************
 % % *                                   *
@@ -186,6 +166,7 @@
 % % 	      },
 % % 	      {x(0,1), x(0,2), x(0,5), x(0,10), light(0),total(0)}).
 % % -----------------------------------------------------------------------
+
 % set.use.
 % state_space.use.
 % n(0), t(0).
@@ -223,4 +204,3 @@
 
 % nt1@@Ret = nt(Rs, Stk, Suc, some, Src, s($id_d, {$dest[]}), M, S, T) :- int($id_d) |
 %     Ret = suc(Rs, Stk, Suc, Src, M, S, T).
-}.
