@@ -113,13 +113,13 @@ void cb_react_rule_nd(LmnReactCxtRef rc,
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr); 
 }
 
-void cb_mhash(LmnReactCxt *rc,
-	      LmnMembrane *mem,
-	      LmnAtom mem_proxy, LmnLinkAttr mem_proxy_link_attr,
-	      LmnAtom ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
-	      LmnAtom ret_hash_atom, LmnLinkAttr ret_hash_atom_link_attr)
+void cb_mhash(LmnReactCxtRef rc,
+	      LmnMembraneRef mem,
+	      LmnAtomRef mem_proxy, LmnLinkAttr mem_proxy_link_attr,
+	      LmnAtomRef ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
+	      LmnAtomRef ret_hash_atom, LmnLinkAttr ret_hash_atom_link_attr)
 {
-  LmnMembrane *m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem_proxy, 0));
+  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem_proxy, 0));
 
   unsigned long h = mhash(m);
 
