@@ -69,6 +69,7 @@ default_enable_jni=no
 default_enable_tcmalloc=yes
 default_enable_minmax=no
 default_enable_cunit=no
+default_enable_firstclass_rule=no
 default_minimal_state=no
 default_cunit_home="/usr/local"
 
@@ -133,6 +134,12 @@ AC_ARG_ENABLE([minimal_state],
                               [minimize the state instead of being unable to use the MCNDFS])],
               [],
               [enable_minimal_state="$default_minimal_state"])
+
+AC_ARG_ENABLE([firstclass_rule],
+              [AS_HELP_STRING([--enable-firstclass-rule]
+                              [turn on first class rules (default no)])],
+              [],
+              [enable_firstclass_rule="$default_enable_firstclass_rule"])
 
 # devel
 if test "$enable_devel" = "yes"; then
@@ -215,6 +222,13 @@ if test "$enable_minimal_state" = "yes"; then
   AC_DEFINE([MINIMAL_STATE], 1, [enable minimal state])
 else
   AC_MSG_RESULT([enable minimal-state: no])
+fi
+
+if test "$enable_firstclass_rule" = "yes"; then
+  AC_MSG_RESULT([enable first-class rule: yes])
+  AC_DEFINE([USE_FIRSTCLASS_RULE], 1, [enable first class rule])
+else
+  AC_MSG_RESULT([enable first-class rule: no])
 fi
 
 AM_CONDITIONAL(ENABLE_JNI,      test "$enable_jni" = "yes")
