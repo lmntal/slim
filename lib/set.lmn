@@ -60,4 +60,9 @@ HISTORY
     Ret = set.insert(Set, Val) :- class(Set, "set") |
 	'$callback'('cb_set_insert', Set, Val, Ret).
 
+    Ret = set.find(set_empty, Val, Res) :- ground(Val) | Ret = set_empty, Res = none.
+
+    Ret = set.find(Set, Val, Res) :- class(Set, "set") |
+    	'$callback'('cb_set_find', Set, Val, Res, Ret).
+
 }

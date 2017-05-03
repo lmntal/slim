@@ -65,6 +65,50 @@ void cb_set_insert(LmnReactCxtRef rc,
                   a2, t2, LMN_ATTR_GET_VALUE(t2));
 }
 
+/*
+ * 検索
+ *
+ * +a0: 集合
+ * +a1: 要素
+ * -a2: some/none
+ * -a2: 新集合
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_set_find(LmnReactCxtRef *rc,
+		 LmnMembraneRef mem,
+		 LmnAtomRef a0, LmnLinkAttr t0,
+		 LmnAtomRef a1, LmnLinkAttr t1,
+		 LmnAtomRef a2, LmnLinkAttr t2,
+		 LmnAtomRef a3, LmnLinkAttr t3)
+{
+  st_data_t entry;
+  LmnAtomRef result;
+  int res;
+  if(LMN_ATTR_IS_DATA(t1)) {
+    if(LMN_INT_ATTR == t1) {
+      res = st_lookup(LMN_SET_DATA(a0), (st_data_t)a1, &entry);
+    }
+  }
+
+  if(res)
+    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 1));
+  else
+    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
+
+  lmn_mem_newlink(mem,
+                  a0, t0, LMN_ATTR_GET_VALUE(t0),
+                  a3, t3, LMN_ATTR_GET_VALUE(t3));
+  lmn_mem_newlink(mem,
+                  a2, t2, LMN_ATTR_GET_VALUE(t2),
+                  LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0);
+
+  lmn_mem_delete_atom(mem, a1, t1);
+}
+
+
 /*----------------------------------------------------------------------
  * Initialization
  */
@@ -128,5 +172,6 @@ void init_set(void)
                                        sp_cb_set_is_ground);
 
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
+  lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
 }
 
