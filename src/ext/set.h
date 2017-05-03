@@ -1,11 +1,15 @@
 #ifndef LMN_SET_H
 #define LMN_SET_H
 
-#include <st.h>
+#include "../element/st.h"
 
+/**
+ * @ingroup  Ext
+ * @struct LmnSet set.h "ext/set.h"
+ */
 struct LmnSet{
   LMN_SP_ATOM_HEADER;
-  st_table_t tbl;
+  st_table_t tbl;		/* hash table */
 };
 
 /* id set */
