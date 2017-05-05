@@ -148,6 +148,76 @@ void cb_set_find(LmnReactCxtRef *rc,
 }
 
 
+/* inner_set_to_listで使用するためだけの構造体 */
+struct InnerToList{
+  LmnMembraneRef mem;
+  LmnAtomRef cons;
+  LmnAtomRef prev;
+};
+
+typedef struct InnerToList *InnerToListRef;
+
+#define ITL(obj) ((InnerToListRef)(obj))
+#define ITL_MEM(obj) (ITL(obj)->mem)
+#define ITL_CONS(obj) (ITL(obj)->cons)
+#define ITL_PREV(obj) (ITL(obj)->prev)
+
+/* プロトタイプ宣言 */
+int inner_set_to_list(st_data_t, st_data_t, st_data_t);
+
+/*
+ * リストへの変換
+ *
+ * +a0: 集合
+ * -a1: リスト
+ * -a2: 集合
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_set_to_list(LmnReactCxtRef rc,
+		    LmnMembraneRef mem,
+		    LmnAtomRef a0, LmnLinkAttr t0,
+		    LmnAtomRef a1, LmnLinkAttr t1,
+		    LmnAtomRef a2, LmnLinkAttr t2)
+{
+  LmnAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  cons, LMN_ATTR_MAKE_LINK(2), 2);
+  st_table_t tbl = LMN_SET_DATA(a0);
+  InnerToListRef *itl = LMN_MALLOC(struct InnerToList);
+  if(tbl->type == &type_id_hash) {
+    ITL_CONS(itl) = cons;
+    ITL_MEM(itl) = mem;
+    st_foreach(tbl, inner_set_to_list, (st_data_t)itl);
+  }
+  lmn_mem_delete_atom(ITL_MEM(itl), ITL_CONS(itl), LMN_ATTR_MAKE_LINK(2));
+  LmnAtomRef nil = lmn_mem_newatom(ITL_MEM(itl), LMN_NIL_FUNCTOR);
+  lmn_newlink_in_symbols(nil, 0, ITL_PREV(itl), 1);
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+}
+
+/**
+ * @memberof LmnSet
+ * @private
+ */
+int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t itl)
+{
+  lmn_mem_newlink(ITL_MEM(itl),
+		  ITL_CONS(itl), LMN_ATTR_MAKE_LINK(0), 0,
+		  (LmnWord)key, LMN_INT_ATTR, 0);
+  lmn_mem_push_atom(ITL_MEM(itl), (LmnWord)key, LMN_INT_ATTR);
+  ITL_PREV(itl) = ITL_CONS(itl);
+  ITL_CONS(itl) = lmn_mem_newatom(ITL_MEM(itl), LMN_LIST_FUNCTOR);
+  lmn_mem_newlink(ITL_MEM(itl),
+		  ITL_PREV(itl), LMN_ATTR_MAKE_LINK(1), 1,
+		  ITL_CONS(itl), LMN_ATTR_MAKE_LINK(2), 2);
+  return ST_CONTINUE;
+}
 /*----------------------------------------------------------------------
  * Initialization
  */
@@ -212,5 +282,6 @@ void init_set(void)
 
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
+  lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
 }
 

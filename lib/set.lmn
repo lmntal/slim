@@ -65,4 +65,8 @@ HISTORY
     Ret = set.find(Set, Val, Res) :- class(Set, "set") |
     	'$callback'('cb_set_find', Set, Val, Res, Ret).
 
+    Ret = set.to_list(set_empty, List) :- Ret = set_empty, List = [].
+
+    Ret = set.to_list(Set, List) :- class(Set, "set") |
+	'$callback'('cb_set_to_list', Set, List, Ret).
 }
