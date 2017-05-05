@@ -222,6 +222,7 @@ void cb_set_to_list(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+  LMN_FREE(itl);
 }
 
 /**
