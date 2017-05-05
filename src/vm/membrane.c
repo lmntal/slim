@@ -293,6 +293,9 @@ struct LmnMembrane {
   LmnMembraneRef          child_head;
   LmnMembraneRef          prev, next;
   struct Vector        rulesets;
+#ifdef USE_FIRSTCLASS_RULE
+  Vector *             firstclass_rulesets;
+#endif
 };
 
 LmnMembraneRef lmn_mem_make(void)
@@ -314,6 +317,10 @@ LmnMembraneRef lmn_mem_make(void)
   mem->atomset       =  LMN_CALLOC(struct AtomListEntry *, mem->atomset_size);
   vec_init(&mem->rulesets, 1);
   lmn_mem_set_id(mem, env_gen_next_id());
+
+#ifdef USE_FIRSTCLASS_RULE
+  mem->firstclass_rulesets = vec_make(4);
+#endif
 
   return mem;
 }
@@ -428,6 +435,7 @@ void lmn_mem_free(LmnMembraneRef mem)
 
   lmn_mem_rulesets_destroy(&mem->rulesets);
   env_return_id(lmn_mem_id(mem));
+  vec_free(mem->firstclass_rulesets);
   LMN_FREE(mem->atomset);
   LMN_FREE(mem);
 }
@@ -3755,14 +3763,30 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0,
 }
 
 Vector *lmn_mem_firstclass_rulesets(LmnMembraneRef mem) {
-  printf("%s(%d): stub\n", __func__, __LINE__);
-  return vec_make(1);
+  return mem->firstclass_rulesets;
 }
 
 void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
-  printf("%s(%d): stub\n", __func__, __LINE__);
+  LMN_ASSERT(fcr);
+  lmn_mem_add_ruleset_sort(mem->firstclass_rulesets, fcr);
 }
 
 void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
-  printf("%s(%d): stub\n", __func__, __LINE__);
+  LmnRulesetId del_id = lmn_ruleset_get_id(fcr);
+  
+  for(int i = 0; i < vec_num(mem->firstclass_rulesets); i++) {
+    LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem->firstclass_rulesets, i);
+    if (lmn_ruleset_get_id(rs) != del_id) continue;
+    
+    /* move successors forward */
+    for(int j = i; j < vec_num(mem->firstclass_rulesets) - 1; j++) {
+      LmnRuleSetRef next = (LmnRuleSetRef)vec_get(mem->firstclass_rulesets, j + 1);
+      vec_set(mem->firstclass_rulesets, j, (vec_data_t)next);
+    }
+
+    mem->firstclass_rulesets->num--;
+    return;
+  }
+
+  LMN_ASSERT(FALSE); // "attempt to delete an absent firstclass ruleset"
 }
