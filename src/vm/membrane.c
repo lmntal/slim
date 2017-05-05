@@ -49,6 +49,10 @@
 #  include "verifier/runtime_status.h"
 #endif
 
+#ifdef USE_FIRSTCLASS_RULE
+#  include "firstclass_rule.h"
+#endif
+
 /** ----
  *  AtomListEntry.
  *  同一ファンクタのアトムをリスト単位でまとめておくための機構
@@ -3753,4 +3757,12 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0,
 Vector *lmn_mem_firstclass_rulesets(LmnMembraneRef mem) {
   printf("%s(%d): stub\n", __func__, __LINE__);
   return vec_make(1);
+}
+
+void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
+  printf("%s(%d): stub\n", __func__, __LINE__);
+}
+
+void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
+  printf("%s(%d): stub\n", __func__, __LINE__);
 }

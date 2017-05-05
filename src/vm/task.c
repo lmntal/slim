@@ -45,8 +45,11 @@
 #include "special_atom.h"
 #include "symbol.h"
 #include "verifier/verifier.h"
-
 #include "verifier/runtime_status.h"
+
+#ifdef USE_FIRSTCLASS_RULE
+#  include "firstclass_rule.h"
+#endif
 
 
 typedef void (* callback_0)(LmnReactCxtRef,
@@ -163,6 +166,10 @@ void lmn_run(Vector *start_rulesets)
   static LmnReactCxtRef mrc = NULL;
 
   if (!mrc) mrc = react_context_alloc();
+
+#ifdef USE_FIRSTCLASS_RULE
+  first_class_rule_tbl_init();
+#endif
 
   /* 通常実行では非決定実行とは異なりProcess IDを
    * 1から再割り当てする機会(状態圧縮と復元)が存在しない.
@@ -2144,7 +2151,9 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       LmnSymbolAtomRef atom = (LmnSymbolAtomRef)wt(rc, atomi);
       LmnLinkAttr attr = at(rc, atomi);
       if (LMN_HAS_FUNCTOR(atom, attr, LMN_COLON_MINUS_FUNCTOR)) {
-        printf("%s(%d): stub(remove first-class rule)\n", __func__, __LINE__);
+        LmnMembraneRef mem = (LmnMembraneRef)wt(rc, memi);
+        lmn_mem_remove_firstclass_ruleset(mem, firstclass_ruleset_lookup(atom));
+        firstclass_ruleset_destroy(atom);
       }
 #endif
 

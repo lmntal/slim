@@ -43,6 +43,10 @@
 #include "verifier/verifier.h"
 #include "memstack.h"
 
+#ifdef USE_FIRSTCLASS_RULE
+#include "firstclass_rule.h"
+#endif
+
 struct LmnRegister {
   LmnWord wt;
   LmnByte at;

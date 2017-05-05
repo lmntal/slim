@@ -250,6 +250,8 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos, LmnAtomRef at
 
 #ifdef USE_FIRSTCLASS_RULE
 Vector *lmn_mem_firstclass_rulesets(LmnMembraneRef mem);
+void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
+void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
 #endif
 
 void lmn_mem_newlink(LmnMembraneRef mem,
