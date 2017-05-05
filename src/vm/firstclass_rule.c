@@ -287,8 +287,8 @@ LmnStringRef string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom)
   LmnStringRef result;
   AtomListEntryRef ent;
   LmnFunctor f;
-  const char* constraint_name[4] = {"int", "float", "ground", "unary"};
-  const char* op_name[7] = {"=:=", "=\\=", ">", "<", "=<", ">=",":="};
+  const char* constraint_name[] = {"int", "float", "ground", "unary", "hlink", "new"};
+  const char* op_name[] = {"=:=", "=\\=", ">", "<", "=<", ">=", ":=", "==", "\\=", "><"};
   result = lmn_string_make_empty();
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
     if(LMN_IS_EX_FUNCTOR(f) || LMN_IS_PROXY_FUNCTOR(f)) continue;
@@ -302,7 +302,7 @@ LmnStringRef string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom)
 	if(cm_atom == LMN_SATOM_GET_LINK(out_proxy, 1)) continue;
       }
       else{
-	for(int i = 0; i < 4; i++) {
+	for(int i = 0; i < ARY_SIZEOF(constraint_name); i++) {
 	  if(strcmp(constraint_name[i], atom_name) != 0) continue;
 	  LmnSymbolAtomRef typed_pc_atom = LMN_SATOM(LMN_SATOM_GET_LINK(satom, 0));
 	  const char *typed_pc_atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(typed_pc_atom)));
@@ -311,7 +311,7 @@ LmnStringRef string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom)
 	  lmn_string_push_raw_s(result, typed_pc_atom_name);
 	  lmn_string_push_raw_s(result, "),");
 	}
-	for(int i = 0; i < 7; i++){
+	for(int i = 0; i < ARY_SIZEOF(op_name); i++){
 	  if(strcmp(op_name[i], atom_name) != 0) continue;
 	  lmn_string_push(result, string_of_guard_op(satom));
 	  lmn_string_push_raw_s(result, ",");
