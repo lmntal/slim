@@ -162,7 +162,7 @@ typedef struct InnerToList *InnerToListRef;
 #define ITL_CONS(obj) (ITL(obj)->cons)
 #define ITL_PREV(obj) (ITL(obj)->prev)
 
-/* プロトタイプ宣言 */
+/* cb_set_to_list内で使用する関数のプロトタイプ宣言 */
 int inner_set_to_list(st_data_t, st_data_t, st_data_t);
 
 /*
@@ -275,6 +275,43 @@ void cb_set_erase(LmnReactCxtRef rc,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
 }
+
+/* cb_set_union内で使用する関数のプロトタイプ宣言 */
+int inner_set_union(st_data_t, st_data_t, st_data_t);
+
+/*
+ * 和集合
+ *
+ * +a0: 集合X
+ * +a1: 集合Y
+ * -a2: XとYの和集合
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_set_union(LmnReactCxtRef rc,
+		  LmnMembraneRef mem,
+		  LmnAtomRef a0, LmnLinkAttr t0,
+		  LmnAtomRef a1, LmnLinkAttr t1,
+		  LmnAtomRef a2, LmnLinkAttr t2)
+{
+  st_foreach(LMN_SET_DATA(a0), (int)inner_set_union, LMN_SET_DATA(a1));
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+}
+
+/**
+ * @memberof LmnSet
+ * @private
+ */
+int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg)
+{
+  st_insert(arg, key, rec);
+  return ST_CONTINUE;
+}
+
 /*----------------------------------------------------------------------
  * Initialization
  */
@@ -342,5 +379,6 @@ void init_set(void)
   lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
   lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
   lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
+  lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
 }
 
