@@ -51,20 +51,21 @@
 
 
 #define VISITLOG_INIT_N       (1)
+#define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
+#define process_tbl_entry(P, IDX) (P->tbl[IDX / PROC_TBL_BUCKETS_SIZE][IDX % PROC_TBL_BUCKETS_SIZE])
 
 /* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
 struct ProcessTbl {
   unsigned long n;
   unsigned long size;
-  LmnWord *tbl;
+  unsigned long num_buckets;
+  LmnWord **tbl;
 };
 
 #define process_tbl_entry_num(P)  ((P)->n)
 void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n);
 #define proc_tbl_expand(p, n)                                                  \
-  if ((p)->size <= (n)) {                                                      \
-    proc_tbl_expand_sub(p, n);                                                 \
-  }
+      proc_tbl_expand_sub(p, n);                                                 
 
 
 /**
@@ -115,7 +116,7 @@ static inline void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value) {
   if (value == ULONG_MAX) lmn_fatal("cannot put ULONG_MAX");
 # endif
   proc_tbl_expand(p, key);
-  p->tbl[key] = value;
+  process_tbl_entry(p, key) = value;
 }
 
 /* テーブルにアトムを追加 */
@@ -142,8 +143,8 @@ static inline int proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value
   if (value == ULONG_MAX) lmn_fatal("cannot put ULONG_MAX");
 #endif
   proc_tbl_expand(p, key);
-  if (p->tbl[key] != ULONG_MAX) return 0;
-  p->tbl[key] = value;
+  if (process_tbl_entry(p, key) != ULONG_MAX) return 0;
+  process_tbl_entry(p, key) = value;
   return 1;
 }
 
@@ -162,7 +163,7 @@ static inline int proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, Lm
 static inline void proc_tbl_unput(ProcessTableRef p, LmnWord key) {
   p->n--;
   proc_tbl_expand(p, key);
-  p->tbl[key] = ULONG_MAX;
+  process_tbl_entry(p, key) = ULONG_MAX;
 }
 
 /* テーブルからアトムとそれに対応した値を削除する */
@@ -178,8 +179,8 @@ static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem) {
 /* テーブルのkeyに対応した値をvalueに設定し, 正の値を返す. keyがテーブルに存在しない場合は0を返す.
  * 通常この間数ではなくget_by_atom, get_by_memを使用する./ */
 static inline int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value) {
-  if (p->size > key && p->tbl[key] != ULONG_MAX) {
-    if (value) *value = p->tbl[key];
+  if (proc_tbl_contains(p, key)) {
+    if (value) *value = process_tbl_entry(p, key);
     return 1;
   } else {
     return 0;
@@ -204,7 +205,7 @@ static inline int proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWor
 }
 
 static inline BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key) {
-  return key < p->size && p->tbl[key] != ULONG_MAX;
+  return key < p->size && p->tbl[key / PROC_TBL_BUCKETS_SIZE] && process_tbl_entry(p, key) != ULONG_MAX;
 }
 
 /* テーブルにアトムatomに対応する値が設定されている場合, 正の値を返す. */
