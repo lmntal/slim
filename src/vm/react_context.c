@@ -69,7 +69,7 @@ struct LmnReactCxt {
   void *v;                  /* 各mode毎に固有の持ち物 */
   SimpleHashtbl *hl_sameproccxt; /* findatom 時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持 */
 #ifdef USE_FIRSTCLASS_RULE
-  Vector *insersion_events;
+  Vector *insertion_events;
 #endif
 };
 
@@ -303,7 +303,7 @@ void react_context_init(LmnReactCxtRef rc, BYTE mode)
   rc->atomic_id     = -1;
   rc->hl_sameproccxt = NULL;
 #ifdef USE_FIRSTCLASS_RULE
-  rc->insersion_events = vec_make(4);
+  rc->insertion_events = vec_make(4);
 #endif
 }
 
@@ -318,8 +318,8 @@ void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from)
   to->warry_cap     = from->warry_cap;
   to->atomic_id     = from->atomic_id;
 #ifdef USE_FIRSTCLASS_RULE
-  vec_free(to->insersion_events);
-  to->insersion_events = vec_copy(from->insersion_events);
+  vec_free(to->insertion_events);
+  to->insertion_events = vec_copy(from->insertion_events);
 #endif
 }
 
@@ -332,8 +332,8 @@ void react_context_destroy(LmnReactCxtRef rc)
     lmn_register_free(rc->work_arry);
   }
 #ifdef USE_FIRSTCLASS_RULE
-  if (rc->insersion_events) {
-    vec_free(rc->insersion_events);
+  if (rc->insertion_events) {
+    vec_free(rc->insertion_events);
   }
 #endif
 }
@@ -517,29 +517,29 @@ struct LRCInsertEvent {
 };
 typedef struct LRCInsertEvent *LRCInsertEventRef;
 
-BOOL lmn_rc_has_insersion(LmnReactCxtRef rc) {
-  return !vec_is_empty(rc->insersion_events);
+BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
+  return !vec_is_empty(rc->insertion_events);
 }
 
-void lmn_rc_push_insersion(LmnReactCxtRef rc, LmnSymbolAtomRef satom, LmnMembraneRef mem) {
+void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom, LmnMembraneRef mem) {
   LRCInsertEventRef e = LMN_MALLOC(struct LRCInsertEvent);
   e->satom = satom;
   e->mem = mem;
-  vec_push(rc->insersion_events, (LmnWord)e);
+  vec_push(rc->insertion_events, (LmnWord)e);
 }
-void lmn_rc_pop_insersion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem) {
-  LRCInsertEventRef e = (LRCInsertEventRef)vec_pop(rc->insersion_events);
+void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem) {
+  LRCInsertEventRef e = (LRCInsertEventRef)vec_pop(rc->insertion_events);
   *satom = e->satom;
   *mem = e->mem;
   LMN_FREE(e);
 }
 
-void lmn_rc_execute_insersion_events(LmnReactCxtRef rc) {
-  while (lmn_rc_has_insersion(rc)) {
+void lmn_rc_execute_insertion_events(LmnReactCxtRef rc) {
+  while (lmn_rc_has_insertion(rc)) {
     LmnSymbolAtomRef satom;
     LmnMembraneRef mem;
 
-    lmn_rc_pop_insersion(rc, &satom, &mem);
+    lmn_rc_pop_insertion(rc, &satom, &mem);
 
     LmnRuleSetRef rs = firstclass_ruleset_create(satom);
     if (rs) lmn_mem_add_firstclass_ruleset(mem, rs);

@@ -301,7 +301,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem)
   ok = ok || react_ruleset_inner(rc, cur_mem, system_ruleset);
 
 #ifdef USE_FIRSTCLASS_RULE
-  lmn_rc_execute_insersion_events(rc);
+  lmn_rc_execute_insertion_events(rc);
 #endif
 
   return ok;
@@ -447,7 +447,7 @@ void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets)
 
 #ifdef USE_FIRSTCLASS_RULE
   // register first-class rulesets produced by the initial process.
-  lmn_rc_execute_insersion_events(rc);
+  lmn_rc_execute_insertion_events(rc);
 #endif
 
   stand_alone_react_cxt_destroy(rc);
@@ -1485,7 +1485,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 
 #ifdef USE_FIRSTCLASS_RULE
         if (f == LMN_COLON_MINUS_FUNCTOR) {
-          lmn_rc_push_insersion(rc, (LmnSymbolAtomRef)ap, (LmnMembraneRef)wt(rc, memi));
+          lmn_rc_push_insertion(rc, (LmnSymbolAtomRef)ap, (LmnMembraneRef)wt(rc, memi));
         }
 #endif
       }
