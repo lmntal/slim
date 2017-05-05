@@ -310,6 +310,7 @@ void cb_set_union(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
 		  a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+  lmn_set_free(a0);
 }
 
 /**
