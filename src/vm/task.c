@@ -280,9 +280,22 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem)
     }
   }
 
+#ifdef USE_FIRSTCLASS_RULE
+  for (i = 0; i < vec_num(lmn_mem_firstclass_rulesets(cur_mem)); i++) {
+    if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)vec_get(lmn_mem_firstclass_rulesets(cur_mem), i))) {
+      ok = TRUE;
+      break;
+    }
+  }
+#endif
+
   /* 通常実行では, 適用が発生しなかった場合にシステムルールの適用を行う
    * ndではokはFALSEなので, system_rulesetが適用される. */
   ok = ok || react_ruleset_inner(rc, cur_mem, system_ruleset);
+
+#ifdef USE_FIRSTCLASS_RULE
+  lmn_rc_execute_insersion_events(rc);
+#endif
 
   return ok;
 }
@@ -425,6 +438,11 @@ void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets)
   }
   react_initial_rulesets(rc, mem);
   stand_alone_react_cxt_destroy(rc);
+
+#ifdef USE_FIRSTCLASS_RULE
+  // register first-class rulesets produced by the initial process.
+  lmn_rc_execute_insersion_events(rc);
+#endif
 
   react_context_dealloc(rc);
 }
@@ -1457,6 +1475,12 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 
         READ_VAL(LmnFunctor, instr, f);
         ap = LMN_ATOM(lmn_new_atom(f));
+
+#ifdef USE_FIRSTCLASS_RULE
+        if (f == LMN_COLON_MINUS_FUNCTOR) {
+          lmn_rc_push_insersion(rc, (LmnSymbolAtomRef)ap, (LmnMembraneRef)wt(rc, memi));
+        }
+#endif
       }
       lmn_mem_push_atom((LmnMembraneRef)wt(rc, memi), (LmnAtomRef)ap, attr);
       warry_set(rc, atomi, ap, attr, TT_ATOM);
@@ -2115,6 +2139,15 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
+
+#ifdef USE_FIRSTCLASS_RULE
+      LmnSymbolAtomRef atom = (LmnSymbolAtomRef)wt(rc, atomi);
+      LmnLinkAttr attr = at(rc, atomi);
+      if (LMN_HAS_FUNCTOR(atom, attr, LMN_COLON_MINUS_FUNCTOR)) {
+        printf("%s(%d): stub(remove first-class rule)\n", __func__, __LINE__);
+      }
+#endif
+
       lmn_mem_remove_atom((LmnMembraneRef)wt(rc, memi),
                           (LmnAtomRef)wt(rc, atomi),
                           at(rc, atomi));

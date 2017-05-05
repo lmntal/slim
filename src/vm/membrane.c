@@ -3750,3 +3750,7 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0,
   }
 }
 
+Vector *lmn_mem_firstclass_rulesets(LmnMembraneRef mem) {
+  printf("%s(%d): stub\n", __func__, __LINE__);
+  return vec_make(1);
+}

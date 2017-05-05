@@ -490,3 +490,22 @@ unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
                              : vec_num(RC_EXPANDED(cxt));
 }
 
+///// first-class rulesets
+
+BOOL lmn_rc_has_insersion(LmnReactCxtRef rc) {
+  printf("%s(%d): stub\n", __func__, __LINE__);
+  return FALSE;
+}
+
+void lmn_rc_push_insersion(LmnReactCxtRef rc, LmnSymbolAtomRef satom, LmnMembraneRef mem) {
+  printf("%s(%d): stub\n", __func__, __LINE__);
+}
+void lmn_rc_pop_insersion(LmnMembraneRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem) {
+  printf("%s(%d): stub\n", __func__, __LINE__);
+  *satom = NULL;
+  *mem = NULL;
+}
+
+void lmn_rc_execute_insersion_events(LmnReactCxtRef rc) {
+  printf("%s(%d): stub\n", __func__, __LINE__);
+}
