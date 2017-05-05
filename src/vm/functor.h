@@ -129,6 +129,11 @@ LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name, in
 #define LMN_FALSE_FUNCTOR 20
 #define LMN_EXCLAMATION_FUNCTOR 21
 
+#ifdef USE_FIRSTCLASS_RULE
+#define COLON_MINUS_ATOM_NAME ":-"
+#define LMN_COLON_MINUS_FUNCTOR 22
+#endif
+
 /* @} */
 
 #endif /* LMN_FUNCTOR_H */

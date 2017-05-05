@@ -75,6 +75,7 @@ struct PredefinedFunctor predefined_functors[] = {
   {LMN_FALSE_FUNCTOR,           FALSE, FALSE_ATOM_NAME,  1},
   /* hyperlinkは第二引数にHyperLink構造体へのポインタを埋め込むため二引数として登録する */
   {LMN_EXCLAMATION_FUNCTOR,     FALSE, EXCLAMATION_NAME, 2},
+  {LMN_COLON_MINUS_FUNCTOR,     FALSE, COLON_MINUS_ATOM_NAME, 3},
 };
 
 struct LmnFunctorTable lmn_functor_table;
