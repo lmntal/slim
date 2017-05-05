@@ -836,6 +836,13 @@ void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem)
          a != lmn_atomlist_end((srcent));
          a  = next) {
       next = LMN_SATOM_GET_NEXT_RAW(a);
+
+#ifdef USE_FIRSTCLASS_RULE
+      if (LMN_SATOM_GET_FUNCTOR(a) == LMN_COLON_MINUS_FUNCTOR) {
+        firstclass_ruleset_move(srcmem, destmem, a);
+      }
+#endif
+
       if (LMN_SATOM_GET_FUNCTOR((a)) != LMN_RESUME_FUNCTOR) {
         int i, arity;
 
