@@ -511,20 +511,37 @@ unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
 
 ///// first-class rulesets
 
+struct LRCInsertEvent {
+  LmnSymbolAtomRef satom;
+  LmnMembraneRef mem;
+};
+typedef struct LRCInsertEvent *LRCInsertEventRef;
+
 BOOL lmn_rc_has_insersion(LmnReactCxtRef rc) {
-  printf("%s(%d): stub\n", __func__, __LINE__);
-  return FALSE;
+  return !vec_is_empty(rc->insersion_events);
 }
 
 void lmn_rc_push_insersion(LmnReactCxtRef rc, LmnSymbolAtomRef satom, LmnMembraneRef mem) {
-  printf("%s(%d): stub\n", __func__, __LINE__);
+  LRCInsertEventRef e = LMN_MALLOC(struct LRCInsertEvent);
+  e->satom = satom;
+  e->mem = mem;
+  vec_push(rc->insersion_events, (LmnWord)e);
 }
-void lmn_rc_pop_insersion(LmnMembraneRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem) {
-  printf("%s(%d): stub\n", __func__, __LINE__);
-  *satom = NULL;
-  *mem = NULL;
+void lmn_rc_pop_insersion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem) {
+  LRCInsertEventRef e = (LRCInsertEventRef)vec_pop(rc->insersion_events);
+  *satom = e->satom;
+  *mem = e->mem;
+  LMN_FREE(e);
 }
 
 void lmn_rc_execute_insersion_events(LmnReactCxtRef rc) {
-  printf("%s(%d): stub\n", __func__, __LINE__);
+  while (lmn_rc_has_insersion(rc)) {
+    LmnSymbolAtomRef satom;
+    LmnMembraneRef mem;
+
+    lmn_rc_pop_insersion(rc, &satom, &mem);
+
+    LmnRuleSetRef rs = firstclass_ruleset_create(satom);
+    if (rs) lmn_mem_add_firstclass_ruleset(mem, rs);
+  }
 }
