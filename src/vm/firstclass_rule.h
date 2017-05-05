@@ -42,10 +42,43 @@
 #include "membrane.h"
 
 
+/**
+ * @ingroup VM
+ * @defgroup FirstClassRule
+ * @{
+ */
+
+/**
+ * @brief Initialize a table to associate first-class rulesets with <tt>':-'/3</tt> atoms.
+ * 
+ * @note
+ *     This function must be called exactly once before using functions of first-class rulesets.
+ */
 void first_class_rule_tbl_init();
 
+/**
+ * @brief Create a first-class ruleset from a <tt>':-'/3</tt> atom.
+ * @return A ruleset or @c NULL.
+ *
+ * @note
+ *     The caller must free the returned ruleset unless it's @c NULL.
+ */
 LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply);
+
+/**
+ * @brief Remove a first-class ruleset associated with @c imply from the table.
+ *
+ * @note
+ *     @c imply must be associated with a first-class ruleset.
+ */
 void firstclass_ruleset_release(LmnSymbolAtomRef imply);
+
+/**
+ * @brief Get a first-class ruleset associated with @c imply.
+ * @return A ruleset, or if no rule is associated with @c imply it returns @c NULL.
+ */
 LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply);
+
+/** @} */
 
 #endif /* LMN_FIRSTCLASS_RULE_H */

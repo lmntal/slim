@@ -249,8 +249,23 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos, LmnAtomRef at
 
 
 #ifdef USE_FIRSTCLASS_RULE
+/**
+ * @brief Get all of the first-class rulesets
+ *
+ * @note you shouldn't modify the returned vector.
+ */
 Vector *lmn_mem_firstclass_rulesets(LmnMembraneRef mem);
+/**
+ * @brief Add a first-class ruleset to a membrane.
+ *
+ * @note @c fcr must not be @c NULL.
+ */
 void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
+/**
+ * @brief Remove a first-class ruleset from a membrane.
+ *
+ * @note @c mem must contain @c fcr.
+ */
 void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
 #endif
 
