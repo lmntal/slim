@@ -69,4 +69,10 @@ HISTORY
 
     Ret = set.to_list(Set, List) :- class(Set, "set") |
 	'$callback'('cb_set_to_list', Set, List, Ret).
+
+    Ret = set.copy(set_empty, S) :- Ret = set_empty, S = set_empty.
+
+    Ret = set.copy(S0, S1) :- class(S0, "set") |
+	'$callback'('cb_set_copy', S0, S1, Ret).
+
 }

@@ -218,6 +218,39 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t itl)
 		  ITL_CONS(itl), LMN_ATTR_MAKE_LINK(2), 2);
   return ST_CONTINUE;
 }
+
+/*
+ * 複製
+ *
+ * +a0: 集合
+ * -a1: コピー元の集合
+ * -a2: コピー集合
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_set_copy(LmnReactCxtRef rc,
+		 LmnMembraneRef mem,
+		 LmnAtomRef a0, LmnLinkAttr t0,
+		 LmnAtomRef a1, LmnLinkAttr t1,
+		 LmnAtomRef a2, LmnLinkAttr t2)
+{
+  LmnSetRef s;
+  LmnLinkAttr attr;
+  if(LMN_SET_DATA(a0)->type == &type_id_hash) {
+    s = make_id_set(mem);
+    attr = LMN_SP_ATOM_ATTR;
+    LMN_SET_DATA(s) = st_copy(LMN_SET_DATA(a0));
+  }
+  lmn_mem_push_atom(mem, LMN_ATOM(s), attr);
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a1, t1, LMN_ATTR_GET_VALUE(t1));
+  lmn_mem_newlink(mem,
+		  a2, t2, LMN_ATTR_GET_VALUE(t2),
+		  s, attr, LMN_ATTR_GET_VALUE(attr));
+}
 /*----------------------------------------------------------------------
  * Initialization
  */
@@ -283,5 +316,6 @@ void init_set(void)
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
   lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
+  lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
 }
 
