@@ -251,6 +251,30 @@ void cb_set_copy(LmnReactCxtRef rc,
 		  a2, t2, LMN_ATTR_GET_VALUE(t2),
 		  s, attr, LMN_ATTR_GET_VALUE(attr));
 }
+
+/*
+ * 消去
+ *
+ * +a0: 集合
+ * +a1: 要素
+ * -a2: 新集合
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_set_erase(LmnReactCxtRef rc,
+		  LmnMembraneRef mem,
+		  LmnAtomRef a0, LmnLinkAttr t0,
+		  LmnAtomRef a1, LmnLinkAttr t1,
+		  LmnAtomRef a2, LmnLinkAttr t2)
+{
+  st_data_t entry;
+  st_delete(LMN_SET_DATA(a0), (st_data_t)a1, &entry);
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+}
 /*----------------------------------------------------------------------
  * Initialization
  */
@@ -317,5 +341,6 @@ void init_set(void)
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
   lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
   lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
+  lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
 }
 
