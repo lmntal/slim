@@ -444,13 +444,13 @@ void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets)
     react_ruleset(rc, mem, (LmnRuleSetRef)vec_get(rulesets, i));
   }
   react_initial_rulesets(rc, mem);
-  stand_alone_react_cxt_destroy(rc);
 
 #ifdef USE_FIRSTCLASS_RULE
   // register first-class rulesets produced by the initial process.
   lmn_rc_execute_insersion_events(rc);
 #endif
 
+  stand_alone_react_cxt_destroy(rc);
   react_context_dealloc(rc);
 }
 
