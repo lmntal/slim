@@ -66,6 +66,17 @@ static LmnSetRef make_id_set(LmnMembraneRef mem)
   s->tbl = st_init_table(&type_id_hash);
   return s;
 }
+
+/**
+ * @brief Internal Constructor
+ * @memberof LmnSet
+ * @private
+ */
+void lmn_set_free(LmnSetRef set)
+{
+  st_free_table(LMN_SET_DATA(set));
+  LMN_FREE(set);
+}
 /*----------------------------------------------------------------------
  * Callbacks
  */
