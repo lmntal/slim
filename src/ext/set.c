@@ -336,6 +336,116 @@ int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg)
   return ST_CONTINUE;
 }
 
+/* cb_set_intersect内で使用する関数のプロトタイプ宣言 */
+int inner_set_intersect(st_data_t, st_data_t, st_data_t);
+
+/* inner_set_intersectで使用するためだけの構造体 */
+struct InnerIntersect{
+  LmnSetRef set;
+  LmnSetRef new_set;
+  int empty_check;
+};
+
+typedef struct InnerIntersect *InnerIntersectRef;
+
+#define II(obj) ((InnerIntersectRef)(obj))
+#define II_S(obj) (II(obj)->set)
+#define II_NS(obj) (II(obj)->new_set)
+#define II_EC(obj) (II(obj)->empty_check)
+
+/* inner_set_intersect内で使用する関数のプロトタイプ宣言 */
+int inner2_set_intersect(st_data_t, st_data_t, st_data_t);
+
+/* inner2_set_intersect内で使用するためだけの構造体 */
+struct Inner2Intersect{
+  st_data_t key;
+  st_data_t rec;
+  LmnSetRef set;
+  int empty_check;
+};
+
+typedef struct Inner2Intersect *Inner2IntersectRef;
+
+#define II2(obj) ((Inner2IntersectRef)(obj))
+#define II2_KEY(obj) (II2(obj)->key)
+#define II2_REC(obj) (II2(obj)->rec)
+#define II2_SET(obj) (II2(obj)->set)
+#define II2_EC(obj) (II2(obj)->empty_check)
+
+/*
+ * 積集合
+ *
+ * +a0: 集合X
+ * +a1: 集合Y
+ * -a2: XとYの積集合
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_set_intersect(LmnReactCxtRef rc,
+		      LmnMembraneRef mem,
+		      LmnAtomRef a0, LmnLinkAttr t0,
+		      LmnAtomRef a1, LmnLinkAttr t1,
+		      LmnAtomRef a2, LmnLinkAttr t2)
+{
+  LmnSetRef set = make_id_set(mem);
+  LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+
+  InnerIntersectRef *ii = LMN_MALLOC(struct InnerIntersect);
+  II_S(ii) = LMN_SET(a1);
+  II_NS(ii) = set;
+  II_EC(ii) = 0;
+  st_foreach(LMN_SET_DATA(a0), (int)inner_set_intersect, ii);
+  if(II_EC(ii)) {
+    lmn_mem_newlink(mem,
+		    a2, t2, LMN_ATTR_GET_VALUE(t2),
+		    LMN_ATOM(set), attr, LMN_ATTR_GET_VALUE(attr));
+    lmn_mem_push_atom(mem, LMN_ATOM(set), attr);
+  } else {
+    LmnAtomRef empty_set = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
+    lmn_mem_newlink(mem,
+		    a2, t2, LMN_ATTR_GET_VALUE(t2),
+		    LMN_ATOM(empty_set), LMN_ATTR_MAKE_LINK(0), 0);
+    lmn_set_free(set);
+  }
+  LMN_FREE(ii);
+  lmn_set_free(a1);
+  lmn_set_free(a0);
+}
+
+/**
+ * @memberof LmnSet
+ * @private
+ */
+int inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg)
+{
+  Inner2IntersectRef *ii2 = LMN_MALLOC(struct Inner2Intersect);
+  II2_KEY(ii2) = key;
+  II2_REC(ii2) = rec;
+  II2_SET(ii2) = II_NS(arg);
+  II2_EC(ii2) = II_EC(arg);
+  st_foreach(LMN_SET_DATA(II_S(arg)), (int)inner2_set_intersect, ii2);
+  if(II2_EC(ii2))
+    II_EC(arg) = 1;
+
+  LMN_FREE(ii2);
+  return ST_CONTINUE;
+}
+
+/**
+ * @memberof LmnSet
+ * @private
+ */
+int inner2_set_intersect(st_data_t key, st_data_t rec, st_data_t arg)
+{
+  if(key == II2_KEY(arg)) {
+    st_insert(LMN_SET_DATA(II2_SET(arg)), (st_data_t)key, (st_data_t)key);    
+    II2_EC(arg) = 1;
+  }
+  return ST_CONTINUE;
+}
+
 /*----------------------------------------------------------------------
  * Initialization
  */
@@ -405,5 +515,6 @@ void init_set(void)
   lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
   lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
   lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
+  lmn_register_c_fun("cb_set_intersect", (void *)cb_set_intersect, 3);
 }
 
