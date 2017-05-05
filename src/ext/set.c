@@ -75,7 +75,6 @@ static LmnSetRef make_id_set(LmnMembraneRef mem)
 void lmn_set_free(LmnSetRef set)
 {
   st_free_table(LMN_SET_DATA(set));
-  LMN_FREE(set);
 }
 /*----------------------------------------------------------------------
  * Callbacks
