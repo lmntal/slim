@@ -68,6 +68,9 @@ struct LmnReactCxt {
   BOOL flag;                /* mode以外に指定するフラグ */
   void *v;                  /* 各mode毎に固有の持ち物 */
   SimpleHashtbl *hl_sameproccxt; /* findatom 時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持 */
+#ifdef USE_FIRSTCLASS_RULE
+  Vector *insersion_events;
+#endif
 };
 
 LmnWord lmn_register_wt(LmnRegisterRef r) {
@@ -299,6 +302,9 @@ void react_context_init(LmnReactCxtRef rc, BYTE mode)
   rc->warry_cap     = WARRY_DEF_SIZE;
   rc->atomic_id     = -1;
   rc->hl_sameproccxt = NULL;
+#ifdef USE_FIRSTCLASS_RULE
+  rc->insersion_events = vec_make(4);
+#endif
 }
 
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from)
@@ -311,6 +317,10 @@ void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from)
   to->warry_num     = from->warry_num;
   to->warry_cap     = from->warry_cap;
   to->atomic_id     = from->atomic_id;
+#ifdef USE_FIRSTCLASS_RULE
+  vec_free(to->insersion_events);
+  to->insersion_events = vec_copy(from->insersion_events);
+#endif
 }
 
 void react_context_destroy(LmnReactCxtRef rc)
@@ -321,6 +331,11 @@ void react_context_destroy(LmnReactCxtRef rc)
   if (rc->work_arry) {
     lmn_register_free(rc->work_arry);
   }
+#ifdef USE_FIRSTCLASS_RULE
+  if (rc->insersion_events) {
+    vec_free(rc->insersion_events);
+  }
+#endif
 }
 
 /*----------------------------------------------------------------------
