@@ -40,29 +40,7 @@
   module(state_space).
 
   /*
-   * Ret = rule.react(Rule, Graph, RetRule)
-   * ルールを一回適用した結果を得る
-   *
-   * Ret:     successアトムにRuleをGraphに適用した後の膜が接続されたもの. 適用できなければfailアトムにGraphと同じ膜が接続されたもの
-   * Graph:   適用したいプロセスが入った膜.
-   * Rule:    適用したいルールが入っている膜. 複数ある場合はどれか一つが非決定的に選ばれる
-   * RetRule: Ruleと同じ膜
-   */
-  Ret = rule.react(Rule, Graph, RetRule) :- Ret = '$callback'('cb_react_rule', Rule, Graph, RetRule).
-
-  /*
-   * Ret = rule.react_nd(Rule, Graph, RetRule)
-   * ルールセットを一回適用したとき起こりうるすべての結果を得る
-   *
-   * Ret:     RuleをGraphに一回適用したときにあり得る書き換え後の状態を表す膜のリスト. 適用できなければ空リストが返る
-   * Graph:   適用したいプロセスが入った膜.
-   * Rule:    適用したいルールセットが入っている膜.
-   * RetRule: Ruleと同じ膜
-   */
-  Ret = rule.react_nd(Rule, Graph, RetRule) :- Ret = '$callback'('cb_react_rule_nd', Rule, Graph, RetRule).
-
-  /*
-   * Ret = rule.react_nd_set(Rule, Graph, RetRule)
+   * Ret = state_space.react_nd_set(Rule, Graph, RetRule)
    * 複数ルールに対応したreact_nd
    *
    * Ret:     RuleをGraphに一回適用したときにあり得る書き換え後の状態を表す膜のリスト. 適用できなければ空リストが返る
