@@ -522,12 +522,14 @@ BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
 }
 
 void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom, LmnMembraneRef mem) {
+  LMN_ASSERT(satom && mem);
   LRCInsertEventRef e = LMN_MALLOC(struct LRCInsertEvent);
   e->satom = satom;
   e->mem = mem;
   vec_push(rc->insertion_events, (LmnWord)e);
 }
 void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem) {
+  LMN_ASSERT(lmn_rc_has_insertion(rc));
   LRCInsertEventRef e = (LRCInsertEventRef)vec_pop(rc->insertion_events);
   *satom = e->satom;
   *mem = e->mem;
@@ -542,6 +544,6 @@ void lmn_rc_execute_insertion_events(LmnReactCxtRef rc) {
     lmn_rc_pop_insertion(rc, &satom, &mem);
 
     LmnRuleSetRef rs = firstclass_ruleset_create(satom);
-    if (rs) lmn_mem_add_firstclass_ruleset(mem, rs);
+    lmn_mem_add_firstclass_ruleset(mem, rs);
   }
 }
