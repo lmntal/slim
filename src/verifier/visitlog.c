@@ -114,7 +114,7 @@ BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b)
 
     for (int i = 0; i < a->num_buckets; i++) {
       if (!a->tbl[i] && !b->tbl[i]) continue;
-      
+
       for (int j = 0; j < PROC_TBL_BUCKETS_SIZE && a_checked < a->n; j++) {
         LmnWord va = (a->tbl[i]) ? a->tbl[i][j] : ULONG_MAX;
         LmnWord vb = (b->tbl[i]) ? b->tbl[i][j] : ULONG_MAX;
@@ -149,8 +149,8 @@ void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
 {
   p->n   = 0;
   p->cap = size;
-  p->tbl = LMN_NALLOC(BYTE, p->cap);
-  memset(p->tbl, SPROC_TBL_INIT_V, sizeof(BYTE) * p->cap);
+  p->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
+  p->tbl = LMN_CALLOC(BYTE *, p->num_buckets);
 }
 
 void sproc_tbl_init(SimplyProcessTableRef p)
@@ -160,6 +160,9 @@ void sproc_tbl_init(SimplyProcessTableRef p)
 
 void sproc_tbl_destroy(SimplyProcessTableRef p)
 {
+  for (int i = 0; i < p->num_buckets; i++) {
+    LMN_FREE(p->tbl[i]);
+  }
   LMN_FREE(p->tbl);
 }
 

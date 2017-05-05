@@ -225,11 +225,13 @@ static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem) 
  */
 struct SimplyProcTbl {
   unsigned long n, cap;
-  BYTE *tbl;
+  unsigned long num_buckets;
+  BYTE **tbl;
 };
 
 #define SPROC_TBL_INIT_V        (0xfU)
 #define sproc_tbl_entry_num(P)  ((P)->n)
+#define sproc_tbl_entry(P, k)   ((P)->tbl[k / PROC_TBL_BUCKETS_SIZE][k % PROC_TBL_BUCKETS_SIZE])
 
 /**
  * Function Prototypes
@@ -269,12 +271,19 @@ static inline void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembrane
  */
 
 static inline void sproc_tbl_expand(SimplyProcessTableRef p, unsigned long n) {
-  unsigned long org_size = p->cap;
+  unsigned int org_n = p->num_buckets;
   while (p->cap <= n) p->cap *= 2;
-  p->tbl = LMN_REALLOC(BYTE, p->tbl, p->cap);
-  memset(p->tbl + org_size,
-         SPROC_TBL_INIT_V,
-         sizeof(BYTE) * (p->cap - org_size));
+  p->num_buckets = p->cap / PROC_TBL_BUCKETS_SIZE + 1;
+
+  if (org_n < p->num_buckets) {
+    p->tbl = LMN_REALLOC(BYTE *, p->tbl, p->num_buckets);
+    memset(p->tbl + org_n, 0, sizeof(BYTE *) * (p->num_buckets - org_n));
+  }
+
+  unsigned int b = n / PROC_TBL_BUCKETS_SIZE;
+  if (b < p->num_buckets && p->tbl[b]) return;
+  p->tbl[b] = LMN_NALLOC(BYTE, PROC_TBL_BUCKETS_SIZE);
+  memset(p->tbl[b], SPROC_TBL_INIT_V, sizeof(BYTE) * PROC_TBL_BUCKETS_SIZE);
 }
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
@@ -282,15 +291,13 @@ static inline void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE valu
 #ifdef DEBUG
   if (value == SPROC_TBL_INIT_V) lmn_fatal("i can't put this value");
 #endif
-  if (p->cap <= key) {
-    sproc_tbl_expand(p, key);
-  }
+  sproc_tbl_expand(p, key);
 
-  if (p->tbl[key] == SPROC_TBL_INIT_V) {
+  if (sproc_tbl_entry(p, key) == SPROC_TBL_INIT_V) {
     p->n++;
   }
 
-  p->tbl[key] = value;
+  sproc_tbl_entry(p, key) = value;
 }
 
 static inline void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom, BYTE value) {
@@ -302,9 +309,9 @@ static inline void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembraneRef mem
 }
 
 static inline void sproc_tbl_unput(SimplyProcessTableRef p, LmnWord key) {
-  if (p->cap < key || p->tbl[key] == SPROC_TBL_INIT_V) return;
+  if (!sproc_tbl_contains(p, key)) return;
   p->n--;
-  p->tbl[key] = SPROC_TBL_INIT_V;
+  sproc_tbl_entry(p, key) = SPROC_TBL_INIT_V;
 }
 
 static inline void sproc_tbl_unput_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom) {
@@ -316,8 +323,8 @@ static inline void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembraneRef m
 }
 
 static inline int sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value) {
-  if (p->cap > key && p->tbl[key] != SPROC_TBL_INIT_V) {
-    if (value) *value = p->tbl[key];
+  if (sproc_tbl_contains(p, key)) {
+    if (value) *value = sproc_tbl_entry(p, key);
     return 1;
   } else {
     return 0;
@@ -333,7 +340,7 @@ static inline int sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembraneRef m
 }
 
 static inline BOOL sproc_tbl_contains(SimplyProcessTableRef p, LmnWord key) {
-  return key < p->cap && p->tbl[key] != SPROC_TBL_INIT_V;
+  return key < p->cap && p->tbl[key / PROC_TBL_BUCKETS_SIZE] && sproc_tbl_entry(p, key) != SPROC_TBL_INIT_V;
 }
 
 static inline BOOL sproc_tbl_contains_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom) {
@@ -345,8 +352,7 @@ static inline BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembraneRe
 }
 
 static inline BOOL sproc_tbl_get_flag(SimplyProcessTableRef p, LmnWord key, BYTE flag) {
-  if (p->cap > key && p->tbl[key] != SPROC_TBL_INIT_V) return p->tbl[key] & flag;
-  else return 0;
+  return sproc_tbl_contains(p, key) ? (sproc_tbl_entry(p, key) & flag) : 0;
 }
 
 static inline BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef key, LmnWord flag) {
@@ -358,26 +364,22 @@ static inline BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembran
 }
 
 static inline void sproc_tbl_unset_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag) {
-  if (p->cap <= key) {
-    sproc_tbl_expand(p, key);
-  }
-  if (p->tbl[key] != SPROC_TBL_INIT_V) {
-    p->tbl[key] |= ~flag;
+  sproc_tbl_expand(p, key);
+  if (sproc_tbl_entry(p, key) != SPROC_TBL_INIT_V) {
+    sproc_tbl_entry(p, key) |= ~flag;
   } else {
     p->n++;
-    p->tbl[key] = 0;
+    sproc_tbl_entry(p, key) = 0;
   }
 }
 
 static inline void sproc_tbl_set_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag) {
-  if (p->cap <= key) {
-    sproc_tbl_expand(p, key);
-  }
-  if (p->tbl[key] != SPROC_TBL_INIT_V) {
-    p->tbl[key] |= flag;
+  sproc_tbl_expand(p, key);
+  if (sproc_tbl_entry(p, key) != SPROC_TBL_INIT_V) {
+    sproc_tbl_entry(p, key) |= flag;
   } else {
     p->n++;
-    p->tbl[key] = flag;
+    sproc_tbl_entry(p, key) = flag;
   }
 }
 
