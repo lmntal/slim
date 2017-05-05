@@ -839,7 +839,9 @@ void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem)
 
 #ifdef USE_FIRSTCLASS_RULE
       if (LMN_SATOM_GET_FUNCTOR(a) == LMN_COLON_MINUS_FUNCTOR) {
-        firstclass_ruleset_move(srcmem, destmem, a);
+        LmnRuleSetRef rs = firstclass_ruleset_lookup(a);
+        lmn_mem_remove_firstclass_ruleset(srcmem, rs);
+        lmn_mem_add_firstclass_ruleset(destmem, rs);
       }
 #endif
 

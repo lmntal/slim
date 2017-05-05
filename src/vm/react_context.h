@@ -125,9 +125,7 @@ void lmn_register_extend(LmnReactCxtRef rc, unsigned int new_size);
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from);
 
 #ifdef USE_FIRSTCLASS_RULE
-BOOL lmn_rc_has_insertion(LmnReactCxtRef rc);
 void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom, LmnMembraneRef mem);
-void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem);
 void lmn_rc_execute_insertion_events(LmnReactCxtRef rc);
 #endif
 

@@ -2153,7 +2153,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       if (LMN_HAS_FUNCTOR(atom, attr, LMN_COLON_MINUS_FUNCTOR)) {
         LmnMembraneRef mem = (LmnMembraneRef)wt(rc, memi);
         lmn_mem_remove_firstclass_ruleset(mem, firstclass_ruleset_lookup(atom));
-        firstclass_ruleset_destroy(atom);
+        firstclass_ruleset_release(atom);
       }
 #endif
 

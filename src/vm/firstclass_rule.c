@@ -444,7 +444,7 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
   return ruleset;
 }
 
-void firstclass_ruleset_destroy(LmnSymbolAtomRef imply) {
+void firstclass_ruleset_release(LmnSymbolAtomRef imply) {
   LMN_ASSERT(st_contains(imply));  
   st_delete(first_class_rule_tbl, (st_data_t)imply, NULL);
 }
@@ -452,11 +452,5 @@ void firstclass_ruleset_destroy(LmnSymbolAtomRef imply) {
 LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply) {
   LmnRulesetId id = imply_to_rulesetid(imply);
   return (id > 0) ? lmn_ruleset_from_id(id) : NULL;
-}
-
-void firstclass_ruleset_move(LmnMembraneRef src, LmnMembraneRef dst, LmnSymbolAtomRef imply) {
-  LmnRuleSetRef rs = firstclass_ruleset_lookup(imply);
-  lmn_mem_remove_firstclass_ruleset(src, rs);
-  lmn_mem_add_firstclass_ruleset(dst, rs);
 }
 

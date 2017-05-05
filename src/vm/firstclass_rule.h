@@ -45,9 +45,7 @@
 void first_class_rule_tbl_init();
 
 LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply);
-void firstclass_ruleset_destroy(LmnSymbolAtomRef imply);
+void firstclass_ruleset_release(LmnSymbolAtomRef imply);
 LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply);
-
-void firstclass_ruleset_move(LmnMembraneRef src, LmnMembraneRef dst, LmnSymbolAtomRef imply);
 
 #endif /* LMN_FIRSTCLASS_RULE_H */
