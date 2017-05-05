@@ -81,6 +81,19 @@ void lmn_set_free(LmnSetRef set)
  */
 
 /*
+ * 解放
+ *
+ * +a0: 集合
+ */
+void cb_set_free(LmnReactCxtRef rc,
+		 LmnMembraneRef mem,
+		 LmnAtom a0, LmnLinkAttr t0)
+{
+  lmn_set_free(LMN_SET(a0));
+  lmn_mem_remove_data_atom(mem, a0, t0);
+}
+
+/*
  * 挿入
  *
  * +a0: 集合
@@ -385,6 +398,7 @@ void init_set(void)
                                        sp_cb_set_dump,
                                        sp_cb_set_is_ground);
 
+  lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
   lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
