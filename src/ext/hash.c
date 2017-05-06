@@ -255,6 +255,55 @@ void cb_map_get(LmnReactCxtRef rc,
 }
 
 /*
+ * ID->状態
+ * +a0 Map
+ * +a1 ID
+ * -a2 状態
+ * -a3 Map
+ */
+void cb_state_map_state_find(LmnReactCxt *rc,
+			     LmnMembrane *mem,
+			     LmnAtom a0, LmnLinkAttr t0,
+			     LmnAtom a1, LmnLinkAttr t1,
+			     LmnAtom a2, LmnLinkAttr t2,
+			     LmnAtom a3, LmnLinkAttr t3)
+{
+  st_table_t i_tbl=LMN_STATE_MAP(a0)->id_tbl;
+  State *s=(State *)a1;
+  st_data_t entry;
+  int res=st_lookup(i_tbl, (st_data_t)s, &entry);
+  LmnSAtom result;
+  if(res){
+    LmnMembrane *val=LMN_MALLOC(LmnMembrane);
+    val=lmn_mem_copy((LmnMembrane *)entry);
+    AtomListEntry *ent;
+    LmnFunctor f;
+    LmnSAtom in;
+    LmnSAtom out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+    EACH_ATOMLIST_WITH_FUNC(val, ent, f, ({
+	  LmnSAtom satom;
+	  EACH_ATOM(satom, ent, ({
+		if(f==LMN_IN_PROXY_FUNCTOR){
+		  in=satom;
+		}
+	      }))
+	    }));
+    lmn_newlink_in_symbols(out, 0, in, 0);
+    lmn_mem_newlink(mem,
+		    a2, t2, LMN_ATTR_GET_VALUE(t2),
+		    out, LMN_ATTR_MAKE_LINK(1),1);
+  }else{
+    result=lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
+    lmn_mem_newlink(mem,
+		    LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
+		    a2, t2, LMN_ATTR_GET_VALUE(t2));
+  }
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t1),
+		  a3, t3, LMN_ATTR_GET_VALUE(t3));
+}
+
+/*
  * 状態->ID
  * +a0 Map
  * +a1 状態
@@ -382,4 +431,5 @@ void init_hash(void)
   lmn_register_c_fun("cb_state_map_init", (void *)cb_state_map_init, 1);
   lmn_register_c_fun("cb_state_map_free", (void *)cb_state_map_free, 1);
   lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
+  lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find, 4);
 }
