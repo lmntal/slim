@@ -447,19 +447,6 @@ int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg)
 /* cb_set_intersect内で使用する関数のプロトタイプ宣言 */
 int inner_set_intersect(st_data_t, st_data_t, st_data_t);
 
-/* inner_set_intersectで使用するためだけの構造体 */
-struct InnerIntersect{
-  LmnSetRef set;
-  LmnSetRef new_set;
-  int empty_check;
-};
-
-typedef struct InnerIntersect *InnerIntersectRef;
-
-#define II(obj) ((InnerIntersectRef)(obj))
-#define II_S(obj) (II(obj)->set)
-#define II_NS(obj) (II(obj)->new_set)
-#define II_EC(obj) (II(obj)->empty_check)
 /*
  * 積集合
  *
@@ -534,29 +521,20 @@ void cb_set_diff(LmnReactCxtRef rc,
 		 LmnAtomRef a1, LmnLinkAttr t1,
 		 LmnAtomRef a2, LmnLinkAttr t2)
 {
-  LmnSetRef set = make_id_set(mem);
-  LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
-
-  InnerIntersectRef *ii = LMN_MALLOC(struct InnerIntersect);
-  II_S(ii) = LMN_SET(a1);
-  II_NS(ii) = set;
-  II_EC(ii) = 0;
-  st_foreach(LMN_SET_DATA(a0), (int)inner_set_diff, ii);
-  if(II_EC(ii)) {
+  st_table_t tbl = LMN_SET_DATA(a0);
+  st_foreach(tbl, (int)inner_set_diff, a1);
+  lmn_set_free(a1);
+  if(st_num(tbl)) {
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
-		    LMN_ATOM(set), attr, LMN_ATTR_GET_VALUE(attr));
-    lmn_mem_push_atom(mem, LMN_ATOM(set), attr);
+		    a0, t0, LMN_ATTR_GET_VALUE(t0));
   } else {
     LmnAtomRef empty_set = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
 		    LMN_ATOM(empty_set), LMN_ATTR_MAKE_LINK(0), 0);
-    lmn_set_free(set);
+    lmn_set_free(a0);
   }
-  LMN_FREE(ii);
-  lmn_set_free(a1);
-  lmn_set_free(a0);
 }
 
 /**
@@ -565,11 +543,13 @@ void cb_set_diff(LmnReactCxtRef rc,
  */
 int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg)
 {
-  st_data_t d;
-  if(!st_lookup(LMN_SET_DATA(II_S(arg)), key, &d)) {
-    st_insert(LMN_SET_DATA(II_NS(arg)), key, key);
-    II_EC(arg) = 1;
+  st_table_t tbl = LMN_SET_DATA(arg);
+  st_data_t entry;
+  if(tbl->type == &type_id_hash) {
+    if(st_lookup(tbl, key, &entry))
+      return ST_DELETE;
   }
+
   return ST_CONTINUE;
 }
 /*----------------------------------------------------------------------
