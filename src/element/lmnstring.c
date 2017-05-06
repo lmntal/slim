@@ -168,6 +168,15 @@ void lmn_string_push_raw_s(LmnStringRef dst, const char *src)
   strcat(dst->buf, src);
 }
 
+void lmn_string_pop(LmnStringRef s) {
+  s->len--;
+  s->buf[s->len] = '\0';
+}
+
+int lmn_string_last(LmnStringRef s) {
+  return (s->len == 0) ? EOF : s->buf[s->len - 1];
+}
+
 LmnStringRef lmn_string_concat(LmnStringRef s0, LmnStringRef s1)
 {
   LmnStringRef ret_atom = string_make_empty_with_size(s0->len + s1->len + 1);

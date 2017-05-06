@@ -1,8 +1,7 @@
 /*
- * string.h - String API
+ * firstclass_rule.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,40 +32,53 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef LMN_STRING_H
-#define LMN_STRING_H
-
-/* cldoc:begin-category(Lmntal::String) */
-
-typedef struct LmnString *LmnStringRef;
+#ifndef LMN_FIRSTCLASS_RULE_H
+#define LMN_FIRSTCLASS_RULE_H
 
 #include "lmntal.h"
+#include "atom.h"
+#include "membrane.h"
 
-#define LMN_STRING(obj) ((struct LmnString *)(obj))
 
-void string_init(void);
-void string_finalize(void);
+/**
+ * @ingroup VM
+ * @defgroup FirstClassRule
+ * @{
+ */
 
-LmnStringRef lmn_string_make(const char *s);
-LmnStringRef lmn_string_make_empty(void);
-void lmn_string_free(LmnStringRef s);
-BOOL lmn_string_eq(LmnStringRef s1, LmnStringRef s2);
-LmnStringRef lmn_string_copy(LmnStringRef s);
-unsigned long lmn_string_hash(LmnStringRef atom);
-const char *lmn_string_c_str(LmnStringRef atom);
-void lmn_string_push(LmnStringRef dst, const LmnStringRef src);
-void lmn_string_push_raw_c(LmnStringRef s, int c);
-void lmn_string_push_raw_s(LmnStringRef dst, const char *src);
-void lmn_string_pop(LmnStringRef s);
-int lmn_string_last(LmnStringRef s);
-int lmn_string_get(LmnStringRef s, int i);
-void lmn_string_set_raw_c(LmnStringRef s, int c, int i);
-unsigned long lmn_string_len(LmnStringRef s);
+/**
+ * @brief Initialize a table to associate first-class rulesets with <tt>':-'/3</tt> atoms.
+ * 
+ * @note
+ *     This function must be called exactly once before using functions of first-class rulesets.
+ */
+void first_class_rule_tbl_init();
 
-/* cldoc:end-category() */
+/**
+ * @brief Create a first-class ruleset from a <tt>':-'/3</tt> atom.
+ * @return A ruleset or @c NULL.
+ *
+ * @note
+ *     The caller must free the returned ruleset unless it's @c NULL.
+ */
+LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply);
 
-#endif
+/**
+ * @brief Remove a first-class ruleset associated with @c imply from the table.
+ *
+ * @note
+ *     @c imply must be associated with a first-class ruleset.
+ */
+void firstclass_ruleset_release(LmnSymbolAtomRef imply);
+
+/**
+ * @brief Get a first-class ruleset associated with @c imply.
+ * @return A ruleset, or if no rule is associated with @c imply it returns @c NULL.
+ */
+LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply);
+
+/** @} */
+
+#endif /* LMN_FIRSTCLASS_RULE_H */
