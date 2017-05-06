@@ -38,7 +38,6 @@
  */
 
 #include "set.h"
-#include "element/element.h"
 #include "vm/vm.h"
 
 
@@ -63,7 +62,20 @@ static LmnSetRef make_id_set(LmnMembraneRef mem)
 {
   LmnSetRef s = LMN_MALLOC(struct LmnSet);
   LMN_SP_ATOM_SET_TYPE(s, set_atom_type);
-  s->tbl = st_init_table(&type_id_hash);
+  LMN_SET_DATA(s) = st_init_table(&type_id_hash);
+  return s;
+}
+
+/**
+ * @brief Internal Constructor
+ * @memberof LmnSet
+ * @private
+ */
+static LmnSetRef make_mem_set(LmnMembraneRef mem)
+{
+  LmnSetRef s = LMN_MALLOC(struct LmnSet);
+  LMN_SP_ATOM_SET_TYPE(s, set_atom_type);
+  LMN_SET_DATA(s) = st_init_table(&type_mem_hash);
   return s;
 }
 
@@ -121,6 +133,22 @@ void cb_set_insert(LmnReactCxtRef rc,
     }
     st_insert(LMN_SET_DATA(a0), (st_data_t)a1, (st_data_t)a1);
     lmn_mem_delete_atom(mem, a1, t1);
+  } else {
+    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
+    if(f == LMN_OUT_PROXY_FUNCTOR) { /* mem set */
+      if(t0 != LMN_SP_ATOM_ATTR) {
+        LmnSetRef s = make_mem_set(mem);
+        LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+        lmn_mem_push_atom(mem, LMN_ATOM(s), attr);
+        lmn_mem_delete_atom(mem, a0, t0);
+        a0 = LMN_ATOM(s);
+        t0 = attr;
+      }
+      LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+      st_insert(LMN_SET_DATA(a0), (st_data_t)m, (st_data_t)m);
+      lmn_mem_remove_mem(mem, m);
+      lmn_mem_delete_atom(mem, a1, t1);
+    }
   }
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
