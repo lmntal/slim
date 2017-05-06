@@ -38,7 +38,7 @@
  */
 
 #include "set.h"
-#include "vm/vm.h"
+#include "../vm/vm.h"
 
 
 /**
@@ -211,6 +211,7 @@ struct InnerToList{
   LmnMembraneRef mem;
   LmnAtomRef cons;
   LmnAtomRef prev;
+  struct st_hash_type *ht;
 };
 
 typedef struct InnerToList *InnerToListRef;
@@ -219,6 +220,7 @@ typedef struct InnerToList *InnerToListRef;
 #define ITL_MEM(obj) (ITL(obj)->mem)
 #define ITL_CONS(obj) (ITL(obj)->cons)
 #define ITL_PREV(obj) (ITL(obj)->prev)
+#define ITL_HT(obj) (ITL(obj)->ht)
 
 /* cb_set_to_list内で使用する関数のプロトタイプ宣言 */
 int inner_set_to_list(st_data_t, st_data_t, st_data_t);
@@ -244,11 +246,11 @@ void cb_set_to_list(LmnReactCxtRef rc,
 		  cons, LMN_ATTR_MAKE_LINK(2), 2);
   st_table_t tbl = LMN_SET_DATA(a0);
   InnerToListRef *itl = LMN_MALLOC(struct InnerToList);
-  if(tbl->type == &type_id_hash) {
-    ITL_CONS(itl) = cons;
-    ITL_MEM(itl) = mem;
-    st_foreach(tbl, inner_set_to_list, (st_data_t)itl);
-  }
+  ITL_CONS(itl) = cons;
+  ITL_MEM(itl) = mem;
+  ITL_HT(itl) = LMN_SET_DATA(a0)->type;
+  st_foreach(tbl, inner_set_to_list, (st_data_t)itl);
+
   lmn_mem_delete_atom(ITL_MEM(itl), ITL_CONS(itl), LMN_ATTR_MAKE_LINK(2));
   LmnAtomRef nil = lmn_mem_newatom(ITL_MEM(itl), LMN_NIL_FUNCTOR);
   lmn_newlink_in_symbols(nil, 0, ITL_PREV(itl), 1);
@@ -262,10 +264,31 @@ void cb_set_to_list(LmnReactCxtRef rc,
  */
 int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t itl)
 {
-  lmn_mem_newlink(ITL_MEM(itl),
-		  ITL_CONS(itl), LMN_ATTR_MAKE_LINK(0), 0,
-		  (LmnWord)key, LMN_INT_ATTR, 0);
-  lmn_mem_push_atom(ITL_MEM(itl), (LmnWord)key, LMN_INT_ATTR);
+  if(ITL_HT(itl) == &type_id_hash) {
+    lmn_mem_newlink(ITL_MEM(itl),
+		    ITL_CONS(itl), LMN_ATTR_MAKE_LINK(0), 0,
+		    (LmnWord)key, LMN_INT_ATTR, 0);
+    lmn_mem_push_atom(ITL_MEM(itl), (LmnWord)key, LMN_INT_ATTR);
+  } else if(ITL_HT(itl) == &type_mem_hash) {
+    AtomListEntryRef ent;
+    LmnFunctor f;
+    LmnAtomRef in;
+    LmnAtomRef out;
+    EACH_ATOMLIST_WITH_FUNC(key, ent, f, ({
+	  LmnAtomRef satom;
+	  EACH_ATOM(satom, ent, ({
+		if(f==LMN_IN_PROXY_FUNCTOR){
+		  in = satom;
+		}
+	      }))
+	    }));
+    out = lmn_mem_newatom(ITL_MEM(itl), LMN_OUT_PROXY_FUNCTOR);
+    lmn_newlink_in_symbols(in, 0, out, 0);
+    lmn_mem_newlink(ITL_MEM(itl),
+		    ITL_CONS(itl), LMN_ATTR_MAKE_LINK(0), 0,
+		    out, LMN_ATTR_MAKE_LINK(1), 1);
+    lmn_mem_add_child_mem(ITL_MEM(itl), (LmnMembraneRef)key);
+  }
   ITL_PREV(itl) = ITL_CONS(itl);
   ITL_CONS(itl) = lmn_mem_newatom(ITL_MEM(itl), LMN_LIST_FUNCTOR);
   lmn_mem_newlink(ITL_MEM(itl),
