@@ -79,6 +79,9 @@ static LmnSetRef make_mem_set(LmnMembraneRef mem)
   return s;
 }
 
+/* cb_set_free内で使用する関数のプロトタイプ宣言 */
+int inner_set_free(st_data_t, st_data_t, st_data_t);
+
 /**
  * @brief Internal Constructor
  * @memberof LmnSet
@@ -86,7 +89,21 @@ static LmnSetRef make_mem_set(LmnMembraneRef mem)
  */
 void lmn_set_free(LmnSetRef set)
 {
-  st_free_table(LMN_SET_DATA(set));
+  st_table_t tbl = LMN_SET_DATA(set);
+  if(tbl->type == &type_mem_hash)
+    st_foreach(tbl, (int)inner_set_free, NULL);
+  st_free_table(tbl);
+}
+
+/**
+ * @memberof LmnSet
+ * @private
+ */
+int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg)
+{
+  LMN_FREE(key);
+  LMN_FREE(rec);
+  return ST_DELETE;
 }
 /*----------------------------------------------------------------------
  * Callbacks
@@ -255,7 +272,7 @@ void cb_set_to_list(LmnReactCxtRef rc,
   LmnAtomRef nil = lmn_mem_newatom(ITL_MEM(itl), LMN_NIL_FUNCTOR);
   lmn_newlink_in_symbols(nil, 0, ITL_PREV(itl), 1);
   LMN_FREE(itl);
-  lmn_set_free(a0);
+  st_free_table(LMN_SET_DATA(a0));
 }
 
 /**
