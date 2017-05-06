@@ -228,7 +228,6 @@ int inner_set_to_list(st_data_t, st_data_t, st_data_t);
  *
  * +a0: 集合
  * -a1: リスト
- * -a2: 集合
  */
 /**
  * @memberof LmnSet
@@ -237,8 +236,7 @@ int inner_set_to_list(st_data_t, st_data_t, st_data_t);
 void cb_set_to_list(LmnReactCxtRef rc,
 		    LmnMembraneRef mem,
 		    LmnAtomRef a0, LmnLinkAttr t0,
-		    LmnAtomRef a1, LmnLinkAttr t1,
-		    LmnAtomRef a2, LmnLinkAttr t2)
+		    LmnAtomRef a1, LmnLinkAttr t1)
 {
   LmnAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
   lmn_mem_newlink(mem,
@@ -254,10 +252,8 @@ void cb_set_to_list(LmnReactCxtRef rc,
   lmn_mem_delete_atom(ITL_MEM(itl), ITL_CONS(itl), LMN_ATTR_MAKE_LINK(2));
   LmnAtomRef nil = lmn_mem_newatom(ITL_MEM(itl), LMN_NIL_FUNCTOR);
   lmn_newlink_in_symbols(nil, 0, ITL_PREV(itl), 1);
-  lmn_mem_newlink(mem,
-		  a0, t0, LMN_ATTR_GET_VALUE(t0),
-		  a2, t2, LMN_ATTR_GET_VALUE(t2));
   LMN_FREE(itl);
+  lmn_set_free(a0);
 }
 
 /**
@@ -604,7 +600,7 @@ void init_set(void)
   lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
-  lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 3);
+  lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 2);
   lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
   lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
   lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
