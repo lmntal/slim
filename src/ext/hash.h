@@ -17,6 +17,7 @@ struct LmnHash{
 struct LmnStateMap{
   LMN_SP_ATOM_HEADER;
   StateSpaceRef states;
+  st_table_t id_tbl;
 };
 
 
@@ -128,4 +129,4 @@ typedef struct LmnStateMap *LmnStateMapRef;
 #define LMN_STATE_MAP(obj) ((LmnStateMapRef)(obj))
 
 #endif
-
+  

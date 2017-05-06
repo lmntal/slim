@@ -31,6 +31,7 @@ static LmnStateMapRef lmn_make_state_map(LmnMembraneRef mem)
   LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
   LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
   s->states = statespace_make(NULL, NULL);
+  s->id_tbl = st_init_table(&type_id_hash);
   return s;
 }
 
@@ -43,6 +44,7 @@ void lmn_hash_free(LmnHashRef hash, LmnMembraneRef mem)
 void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
 {
   statespace_free(LMN_STATE_MAP(state_map)->states);
+  st_free_table(LMN_STATE_MAP(state_map)->id_tbl);
   LMN_FREE(state_map);
 }
 
@@ -261,8 +263,8 @@ void cb_map_get(LmnReactCxtRef rc,
  * -a2 状態
  * -a3 Map
  */
-void cb_state_map_state_find(LmnReactCxt *rc,
-			     LmnMembrane *mem,
+void cb_state_map_state_find(LmnReactCxtRef rc,
+			     LmnMembraneRef mem,
 			     LmnAtom a0, LmnLinkAttr t0,
 			     LmnAtom a1, LmnLinkAttr t1,
 			     LmnAtom a2, LmnLinkAttr t2,
@@ -274,9 +276,8 @@ void cb_state_map_state_find(LmnReactCxt *rc,
   int res=st_lookup(i_tbl, (st_data_t)s, &entry);
   LmnSAtom result;
   if(res){
-    LmnMembrane *val=LMN_MALLOC(LmnMembrane);
-    val=lmn_mem_copy((LmnMembrane *)entry);
-    AtomListEntry *ent;
+    LmnMembraneRef val=lmn_mem_copy((LmnMembraneRef)entry);
+    AtomListEntryRef ent;
     LmnFunctor f;
     LmnSAtom in;
     LmnSAtom out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
@@ -317,35 +318,37 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnAtom a2, LmnLinkAttr t2,
                           LmnAtom a3, LmnLinkAttr t3)
 {
-  LmnMembraneRef key = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-  AtomListEntryRef ent;
-  LmnFunctor f;
+  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
   LmnSAtom in = LMN_SATOM_GET_LINK(a1, 0);
   LmnSAtom out = a1;
   LmnSAtom plus = LMN_SATOM_GET_LINK(in, 1);
-  LmnBinStrRef s;
   LmnLinkAttr in_attr = LMN_SATOM_GET_ATTR(a1, 0);
   StateSpaceRef ss = LMN_STATE_MAP(a0)->states;
-  volatile StateTable *dst_st = statespace_tbl(ss);
+  st_table_t i_tbl = LMN_STATE_MAP(a0)->id_tbl;
 
+  lmn_mem_delete_atom(m, in, in_attr);
 
-  lmn_mem_delete_atom(key, in, in_attr);
-
-  LmnSAtom at = lmn_mem_newatom(key, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
+  LmnSAtom at = lmn_mem_newatom(m, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
-  State *new_s = state_make(key, NULL, mc_use_canonical(mc_flag));
+  State *new_s = state_make(m, NULL, mc_use_canonical(mc_flag));
 
   State *succ = statespace_insert(ss, new_s);
 
   if(succ == new_s){
     /* new state */
     state_id_issue(succ);
+    mem_remove_symbol_atom(m, at);
+    lmn_delete_atom(at);
+    in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR);
+    lmn_newlink_in_symbols(in, 0, out, 0);
+    lmn_newlink_in_symbols(in, 1, plus, 0);
+    st_insert(i_tbl, (st_data_t)new_s, (st_data_t)m);
   }
   lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
-                  (int)succ, LMN_INT_ATTR, 0);
+                  (LmnWord)succ, LMN_INT_ATTR, 0);
 
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
@@ -353,7 +356,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
 
   lmn_mem_delete_atom(mem, a1, t1);
 
-  lmn_mem_remove_mem(mem, key);
+  lmn_mem_remove_mem(mem, m);
 }
 
 /*----------------------------------------------------------------------
