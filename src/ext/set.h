@@ -16,24 +16,24 @@ struct LmnSet{
 };
 
 /* id set */
-static unsigned long id_hash(st_data_t a)
+unsigned long id_hash(st_data_t a)
 {
   return (unsigned long)a;
 }
 
-static int id_cmp(st_data_t a, st_data_t b)
+int id_cmp(st_data_t a, st_data_t b)
 {
   return a != b;
 }
 
-static struct st_hash_type type_id_hash =
+struct st_hash_type type_id_hash =
   {
     (st_cmp_func)id_cmp,
     (st_hash_func)id_hash
   };
 
 /* mem set */
-static LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
+LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
 {
   AtomListEntryRef ent;
   LmnFunctor f;
@@ -71,7 +71,7 @@ static LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
   return s;
 }
 
-static int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1)
+int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1)
 {
   LmnBinStrRef s0 = lmn_inner_mem_encode(m0);
   LmnBinStrRef s1 = lmn_inner_mem_encode(m1);
@@ -81,12 +81,12 @@ static int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1)
   return res;
 }
 
-static unsigned long mem_hash(LmnMembraneRef m)
+unsigned long mem_hash(LmnMembraneRef m)
 {
   return mhash(m);
 }
 
-static struct st_hash_type type_mem_hash =
+struct st_hash_type type_mem_hash =
   {
     (st_cmp_func)mem_cmp,
     (st_hash_func)mem_hash
