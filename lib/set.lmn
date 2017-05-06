@@ -65,6 +65,8 @@ HISTORY
 
     Ret = set.find(set_empty, Val, Res) :- ground(Val) | Ret = set_empty, Res = none.
 
+    Ret = set.find(set_empty, {$v[]}, Res) :- | Ret = set_empty, Res = none.
+
     Ret = set.find(Set, Val, Res) :- class(Set, "set") |
     	'$callback'('cb_set_find', Set, Val, Res, Ret).
 

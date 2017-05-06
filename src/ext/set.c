@@ -181,6 +181,13 @@ void cb_set_find(LmnReactCxtRef *rc,
     if(LMN_INT_ATTR == t1) {
       res = st_lookup(LMN_SET_DATA(a0), (st_data_t)a1, &entry);
     }
+  } else {
+    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
+    if(f == LMN_OUT_PROXY_FUNCTOR) { /* mem set */
+      LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+      res = st_lookup(LMN_SET_DATA(a0), (st_data_t)m, (st_data_t)m);
+      lmn_mem_remove_mem(mem, m);
+    }
   }
 
   if(res)
