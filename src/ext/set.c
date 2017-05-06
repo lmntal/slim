@@ -1,7 +1,7 @@
 /*
  * set.c - set implementation
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
@@ -143,9 +143,9 @@ void cb_set_insert(LmnReactCxtRef rc,
     if(t0 != LMN_SP_ATOM_ATTR) {
       LmnSetRef s = make_id_set(mem);
       LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
-      lmn_mem_push_atom(mem, LMN_ATOM(s), attr);
+      lmn_mem_push_atom(mem, (LmnAtom)s, attr);
       lmn_mem_delete_atom(mem, a0, t0);
-      a0 = LMN_ATOM(s);
+      a0 = (LmnAtom)s;
       t0 = attr;
     }
     st_insert(LMN_SET_DATA(a0), (st_data_t)a1, (st_data_t)a1);
@@ -156,9 +156,9 @@ void cb_set_insert(LmnReactCxtRef rc,
       if(t0 != LMN_SP_ATOM_ATTR) {
         LmnSetRef s = make_mem_set(mem);
         LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
-        lmn_mem_push_atom(mem, LMN_ATOM(s), attr);
+        lmn_mem_push_atom(mem, (LmnAtom)s, attr);
         lmn_mem_delete_atom(mem, a0, t0);
-        a0 = LMN_ATOM(s);
+        a0 = (LmnAtom)s;
         t0 = attr;
       }
       LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
@@ -207,17 +207,14 @@ void cb_set_find(LmnReactCxtRef *rc,
     }
   }
 
-  if(res)
-    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 1));
-  else
-    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
-
+  lmn_interned_str s = (res) ? lmn_intern("some") : lmn_intern("none");
+  result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, s, 1));
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
-                  LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0);
+                  (LmnAtom)result, LMN_ATTR_MAKE_LINK(0), 0);
 
   lmn_mem_delete_atom(mem, a1, t1);
 }
@@ -344,7 +341,7 @@ void cb_set_copy(LmnReactCxtRef rc,
     attr = LMN_SP_ATOM_ATTR;
     st_foreach(LMN_SET_DATA(a0), (int)inner_set_mem_copy, s);
   }
-  lmn_mem_push_atom(mem, LMN_ATOM(s), attr);
+  lmn_mem_push_atom(mem, (LmnAtom)s, attr);
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a1, t1, LMN_ATTR_GET_VALUE(t1));
@@ -433,14 +430,11 @@ int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg)
   st_table_t tbl = LMN_SET_DATA(arg);
   if(tbl->type == &type_id_hash)
     st_insert(tbl, key, rec);
-  else if(tbl->type == &type_mem_hash) {
-    if(st_lookup(tbl, key, rec)) {
-      LMN_FREE(key);
-      LMN_FREE(rec);
-    } else {
+  else if(tbl->type == &type_mem_hash)
+    if(!st_lookup(tbl, key, rec)) {
       st_insert(tbl, key, rec);
+      return ST_DELETE;
     }
-  }
   return ST_CONTINUE;
 }
 
@@ -475,7 +469,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
     LmnAtomRef empty_set = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem,
   		    a2, t2, LMN_ATTR_GET_VALUE(t2),
-  		    LMN_ATOM(empty_set), LMN_ATTR_MAKE_LINK(0), 0);
+  		    (LmnAtom)empty_set, LMN_ATTR_MAKE_LINK(0), 0);
     lmn_set_free(a0);
   }
 }
@@ -488,17 +482,13 @@ int inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg)
 {
   st_table_t tbl = LMN_SET_DATA(arg);
   st_data_t entry;
-  if(tbl->type == &type_id_hash) {
-    if(!st_lookup(tbl, key, &entry))
-      return ST_DELETE;
-  } else if (tbl->type == &type_mem_hash) {
-    if(!st_lookup(tbl, key, &entry)) {
+  if(!st_lookup(tbl, key, &entry)) {
+    if(tbl->type == &type_mem_hash) {
       LMN_FREE(key);
       LMN_FREE(rec);
-      return ST_DELETE;
     }
+    return ST_DELETE;
   }
-
   return ST_CONTINUE;
 }
 
@@ -532,7 +522,7 @@ void cb_set_diff(LmnReactCxtRef rc,
     LmnAtomRef empty_set = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
-		    LMN_ATOM(empty_set), LMN_ATTR_MAKE_LINK(0), 0);
+		    (LmnAtom)empty_set, LMN_ATTR_MAKE_LINK(0), 0);
     lmn_set_free(a0);
   }
 }
@@ -545,17 +535,13 @@ int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg)
 {
   st_table_t tbl = LMN_SET_DATA(arg);
   st_data_t entry;
-  if(tbl->type == &type_id_hash) {
-    if(st_lookup(tbl, key, &entry))
-      return ST_DELETE;
-  } else if(tbl->type == &type_mem_hash) {
-    if(st_lookup(tbl, key, &entry)) {
+  if(st_lookup(tbl, key, &entry)) {
+    if(tbl->type == &type_mem_hash) {
       LMN_FREE(key);
       LMN_FREE(rec);
-      return ST_DELETE;
     }
+    return ST_DELETE;
   }
-
   return ST_CONTINUE;
 }
 /*----------------------------------------------------------------------
