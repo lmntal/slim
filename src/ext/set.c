@@ -185,7 +185,7 @@ void cb_set_find(LmnReactCxtRef *rc,
     LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
     if(f == LMN_OUT_PROXY_FUNCTOR) { /* mem set */
       LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-      res = st_lookup(LMN_SET_DATA(a0), (st_data_t)m, (st_data_t)m);
+      res = st_lookup(LMN_SET_DATA(a0), (st_data_t)m, &entry);
       lmn_mem_remove_mem(mem, m);
     }
   }
@@ -365,7 +365,16 @@ void cb_set_erase(LmnReactCxtRef rc,
 		  LmnAtomRef a2, LmnLinkAttr t2)
 {
   st_data_t entry;
-  st_delete(LMN_SET_DATA(a0), (st_data_t)a1, &entry);
+  if(LMN_SET_DATA(a0)->type == &type_id_hash) {
+    st_delete(LMN_SET_DATA(a0), (st_data_t)a1, &entry);
+  } else if(LMN_SET_DATA(a0)->type == &type_mem_hash) {
+    LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+    if(st_lookup(LMN_SET_DATA(a0), (st_data_t)m, &entry)) {
+      st_delete(LMN_SET_DATA(a0), (st_data_t)m, &entry);
+      lmn_mem_free_rec((LmnMembraneRef)entry);
+    }
+    lmn_mem_delete_mem(mem, m);
+  }
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
