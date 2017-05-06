@@ -400,7 +400,7 @@ void cb_set_union(LmnReactCxtRef rc,
 		  LmnAtomRef a1, LmnLinkAttr t1,
 		  LmnAtomRef a2, LmnLinkAttr t2)
 {
-  st_foreach(LMN_SET_DATA(a0), (int)inner_set_union, LMN_SET_DATA(a1));
+  st_foreach(LMN_SET_DATA(a0), (int)inner_set_union, a1);
   lmn_mem_newlink(mem,
 		  a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
@@ -413,7 +413,17 @@ void cb_set_union(LmnReactCxtRef rc,
  */
 int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg)
 {
-  st_insert(arg, key, rec);
+  st_table_t tbl = LMN_SET_DATA(arg);
+  if(tbl->type == &type_id_hash)
+    st_insert(tbl, key, rec);
+  else if(tbl->type == &type_mem_hash) {
+    if(st_lookup(tbl, key, rec)) {
+      LMN_FREE(key);
+      LMN_FREE(rec);
+    } else {
+      st_insert(tbl, key, rec);
+    }
+  }
   return ST_CONTINUE;
 }
 
