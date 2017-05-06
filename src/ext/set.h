@@ -32,6 +32,28 @@ struct st_hash_type type_id_hash =
     (st_hash_func)id_hash
   };
 
+/* tuple set */
+static unsigned long tuple2_hash(LmnSymbolAtomRef cons)
+{
+  return
+    (unsigned long)(LMN_SATOM_GET_LINK(cons, 0)) +
+    (unsigned long)(LMN_SATOM_GET_LINK(cons, 1));
+}
+
+static int tuple2_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1)
+{
+  return
+    ((unsigned long)(LMN_SATOM_GET_LINK(cons0, 0)) != (unsigned long)(LMN_SATOM_GET_LINK(cons1, 0))) ||
+    ((unsigned long)(LMN_SATOM_GET_LINK(cons0, 1)) != (unsigned long)(LMN_SATOM_GET_LINK(cons1, 1)));
+}
+
+struct st_hash_type type_tuple2_hash =
+  {
+    (st_cmp_func)tuple2_cmp,
+    (st_hash_func)tuple2_hash
+  };
+
+
 /* mem set */
 static LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
 {

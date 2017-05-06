@@ -71,6 +71,19 @@ static LmnSetRef make_id_set(LmnMembraneRef mem)
  * @memberof LmnSet
  * @private
  */
+static LmnSetRef make_tuple2_set(LmnMembraneRef mem)
+{
+  LmnSetRef s = LMN_MALLOC(struct LmnSet);
+  LMN_SP_ATOM_SET_TYPE(s, set_atom_type);
+  LMN_SET_DATA(s) = st_init_table(&type_tuple2_hash);
+  return s;
+}
+
+/**
+ * @brief Internal Constructor
+ * @memberof LmnSet
+ * @private
+ */
 static LmnSetRef make_mem_set(LmnMembraneRef mem)
 {
   LmnSetRef s = LMN_MALLOC(struct LmnSet);
@@ -139,10 +152,11 @@ void cb_set_insert(LmnReactCxtRef rc,
 		   LmnAtomRef a1, LmnLinkAttr t1,
 		   LmnAtomRef a2, LmnLinkAttr t2)
 {
+  LmnSetRef s;
+  LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   if(LMN_INT_ATTR == t1) {	/* id set */
     if(t0 != LMN_SP_ATOM_ATTR) {
-      LmnSetRef s = make_id_set(mem);
-      LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+      s = make_id_set(mem);
       lmn_mem_push_atom(mem, (LmnAtom)s, attr);
       lmn_mem_delete_atom(mem, a0, t0);
       a0 = (LmnAtom)s;
@@ -152,10 +166,10 @@ void cb_set_insert(LmnReactCxtRef rc,
     lmn_mem_delete_atom(mem, a1, t1);
   } else {
     LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
+    char *name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
     if(f == LMN_OUT_PROXY_FUNCTOR) { /* mem set */
       if(t0 != LMN_SP_ATOM_ATTR) {
-        LmnSetRef s = make_mem_set(mem);
-        LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
+        s = make_mem_set(mem);
         lmn_mem_push_atom(mem, (LmnAtom)s, attr);
         lmn_mem_delete_atom(mem, a0, t0);
         a0 = (LmnAtom)s;
@@ -165,6 +179,26 @@ void cb_set_insert(LmnReactCxtRef rc,
       st_insert(LMN_SET_DATA(a0), (st_data_t)m, (st_data_t)m);
       lmn_mem_remove_mem(mem, m);
       lmn_mem_delete_atom(mem, a1, t1);
+    } else if(!strcmp(name, ",")) { /* tuple set */
+      int arity = LMN_SATOM_GET_LINK_NUM(a1);
+      if(t0 != LMN_SP_ATOM_ATTR) {
+	switch (arity) {
+	case 3:
+	  s = make_tuple2_set(mem);
+	  lmn_mem_push_atom(mem, (LmnAtom)s, attr);
+	  lmn_mem_delete_atom(mem, a0, t0);
+	  a0 = (LmnAtom)s;
+	  t0 = attr;
+	  break;
+	default:
+	  break;
+	}
+      }
+      st_insert(LMN_SET_DATA(a0), (st_data_t)a1, (st_data_t)a1);
+      int i;
+      for(i = 0; i < arity-1; i++)
+      	lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, i), LMN_SATOM_GET_ATTR(a1, i));
+      lmn_mem_remove_atom(mem, a1, t1);
     }
   }
   lmn_mem_newlink(mem,
