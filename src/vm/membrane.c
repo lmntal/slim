@@ -435,7 +435,9 @@ void lmn_mem_free(LmnMembraneRef mem)
 
   lmn_mem_rulesets_destroy(&mem->rulesets);
   env_return_id(lmn_mem_id(mem));
+#ifdef USE_FIRSTCLASS_RULE
   vec_free(mem->firstclass_rulesets);
+#endif
   LMN_FREE(mem->atomset);
   LMN_FREE(mem);
 }
