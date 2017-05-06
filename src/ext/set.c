@@ -548,6 +548,12 @@ int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg)
   if(tbl->type == &type_id_hash) {
     if(st_lookup(tbl, key, &entry))
       return ST_DELETE;
+  } else if(tbl->type == &type_mem_hash) {
+    if(st_lookup(tbl, key, &entry)) {
+      LMN_FREE(key);
+      LMN_FREE(rec);
+      return ST_DELETE;
+    }
   }
 
   return ST_CONTINUE;
