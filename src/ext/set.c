@@ -297,6 +297,8 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t itl)
   return ST_CONTINUE;
 }
 
+int inner_set_mem_copy(st_data_t, st_data_t, st_data_t);
+
 /*
  * 複製
  *
@@ -320,6 +322,10 @@ void cb_set_copy(LmnReactCxtRef rc,
     s = make_id_set(mem);
     attr = LMN_SP_ATOM_ATTR;
     LMN_SET_DATA(s) = st_copy(LMN_SET_DATA(a0));
+  } else if(LMN_SET_DATA(a0)->type == &type_mem_hash) {
+    s = make_mem_set(mem);
+    attr = LMN_SP_ATOM_ATTR;
+    st_foreach(LMN_SET_DATA(a0), (int)inner_set_mem_copy, s);
   }
   lmn_mem_push_atom(mem, LMN_ATOM(s), attr);
   lmn_mem_newlink(mem,
@@ -328,6 +334,17 @@ void cb_set_copy(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
 		  a2, t2, LMN_ATTR_GET_VALUE(t2),
 		  s, attr, LMN_ATTR_GET_VALUE(attr));
+}
+
+/**
+ * @memberof LmnSet
+ * @private
+ */
+int inner_set_mem_copy(st_data_t key, st_data_t rec, st_data_t arg)
+{
+  LmnMembraneRef m = lmn_mem_copy(key);
+  st_insert(LMN_SET_DATA(arg), m, m);
+  return ST_CONTINUE;
 }
 
 /*
