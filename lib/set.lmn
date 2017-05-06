@@ -97,4 +97,16 @@ HISTORY
     Ret = set.intersect(Set, set_empty) :- Ret = set_empty, free(Set).
 
     Ret = set.intersect(set_empty, Set) :- Ret = set_empty, free(Set).
+
+    Ret = set.diff(set_empty, set_empty) :-
+    	Ret = set_empty.
+
+    Ret = set.diff(set_empty, S1) :- class(S1, "set") |
+    	Ret = set_empty.
+
+    Ret = set.diff(S0, set_empty) :- class(S0, "set") |
+	Ret = S0.
+
+    Ret = set.diff(S0, S1) :- class(S0, "set"), class(S1, "set") |
+    	'$callback'('cb_set_diff', S0, S1, Ret).
 }
