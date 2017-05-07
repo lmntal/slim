@@ -1,8 +1,8 @@
 /*
  *  state_space.lmn - State Space module
- *  Author: Yutaro Tsunekawa, Taichi Tomioka
+ *  Author: Yutaro Tsunekawa, Taichi Tomioka, Nozomi Matsuzawa
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -50,135 +50,14 @@
    */
   Ret = state_space.react_nd_set(Rule, Graph, RetRule) :- '$callback'('cb_react_ruleset_nd', Rule, Graph, RetRule, Ret).
 
-
   Ret = state_space.state_map_init :- '$callback'('cb_state_map_init', Ret).
 
-    state_space.state_map_free(Map) :- class(Map, "state_map") |
+  state_space.state_map_free(Map) :- class(Map, "state_map") |
 	'$callback'('cb_state_map_free', Map).
 
-    Ret = state_space.state_map_find(Map, {$key[]}, Res) :- class(Map, "state_map") |
+  Ret = state_space.state_map_find(Map, {$key[]}, Res) :- class(Map, "state_map") |
 	'$callback'('cb_state_map_id_find', Map, {$key[]}, Res, Ret).
 
-    Ret = state_space.state_map_find(Map, $key, Res) :- class(Map, "state_map"), int($key) |
+  Ret = state_space.state_map_find(Map, $key, Res) :- class(Map, "state_map"), int($key) |
 	'$callback'('cb_state_map_state_find', Map, $key, Res, Ret).
 }.
-
-% % *************************************
-% % *                                   *
-% % *      State space construction     *
-% % *                                   *
-% % *************************************
-% % +++++test-case 1+++++
-
-% % :- uniq |
-% %     ret = run({':-'({a(!X)}, {}, {b(!X)})}, {a(1), a(2), a(3)}).
-
-% % +++++++++++++++++++++
-% % +++++test-case 2+++++
-
-% % init :- new($z0), new($y), new($a), new($x) |
-% %     ret = run({':-'({append(X, $y, $a), '[]'(X)}, {}, {'=='($y, $a)}),
-% % 	       ':-'({append(X0, $y, $z0), '.'($a, $x, X0)}, {}, {'.'($a, Z, $z0), append($x, $y, Z)})},
-% % 	      {append([1, 2, 3], [4, 5, 6], ret)}).
-
-% % +++++++++++++++++++++
-% % +++++test-case(bubble sort)++++++++
-% :- uniq, new($l), new($l2) |
-% ret = run({':-'({$l=['$x', '$y'|$l2]}, {'>'('$x', '$y')}, {$l=['$y', '$x'|$l2]})},
-% 	  {ret=[6,8,5,7,3,2,4,1]}).
-
-
-
-% % +++++test-case(phi)+++++
-
-% % :-  uniq, new($lx0), new($lx1), new($lxx1), new($rxx1), new($rxxx1), new($lxxx1) |
-% %     ret = run({
-% %     	':-'({p_thinking(!Lx0, !Rx0), fork_free(!Lx1, !Rx0)}, {}, {p_one_fork(!Lx0, !Rx1), fork_used(!Lx1, !Rx1)}),
-% %     	':-'({p_one_fork(!Lxx0, !Rxx0), fork_used(!Lxx1, !Rxx0), fork_free(!Lxx0, !Rxx1)}, {}, {p_eating(!Lxx2, !Rxx2), fork_used(!Lxx1, !Rxx2), fork_used(!Lxx2, !Rxx1)}),
-% %     	':-'({p_eating(!Lxxx0, !Rxxx0), fork_used(!Lxxx0, !Rxxx1), fork_used(!Lxxx1, !Rxxx0)}, {}, {p_thinking(!Lxxx2, !Rxxx2), fork_free(!Lxxx2, !Rxxx1), fork_free(!Lxxx1, !Rxxx2)})
-% %     	      }, 
-% % 	      {
-% % 	p_thinking(L0, R0), fork_free(L0, R1),
-% % 	p_thinking(L1, R1), fork_free(L1, R2),
-% % 	p_thinking(L2, R2), fork_free(L2, R3),
-% %  	p_thinking(L3, R3), fork_free(L3, R4),
-% % 	p_thinking(L4, R4), fork_free(L4, R5),
-% % 	p_thinking(L5, R5), fork_free(L5, R6),
-% % 	p_thinking(L6, R6), fork_free(L6, R7),
-% % 	p_thinking(L7, R7), fork_free(L7, R8),
-% % 	p_thinking(L8, R8), fork_free(L8, R9),
-% % 	p_thinking(L9, R9), fork_free(L9, R10),
-% % 	p_thinking(L10, R10), fork_free(L10, R0)
-% % 	% p_thinking(L11, R11), fork_free(L11, R0)
-% % % 	% p_thinking(L12, R12), fork_free(L12, R0)
-% % 	      }).
-% % +++++++++++++++++++++++
-% % init :- new($x), new($y) |
-% %     ret = run({':-'({a($x, $y)}, {}, {b($x, $y)})}, {a(a(a(a(a(L)))), L)}).
-% % +++++++++++++++++++++++
-% % +++++test-case 4+++++
-
-% % :-uniq|
-% %     ret = run({
-% % 	':-'({-start, -close, -heat, -error, -init}, {}, {start, -close, -heat, error, -init}),
-% % 	':-'({-start, -close, -heat, -error, -init}, {}, {-start, close, -heat, -error, init}),
-% % 	':-'({start, -close, -heat, error, -init}, {}, {start, close, -heat, error, -init}),
-% % 	':-'({-start, close, -heat, -error, init}, {}, {-start, -close, -heat, -error, -init}),
-% % 	':-'({-start, close, -heat, -error, init}, {}, {start, close, -heat, -error, -init}),
-% % 	':-'({-start, close, heat, -error, -init}, {}, {-start, -close, -heat, -error, -init}),
-% % 	':-'({-start, close, heat, -error, -init}, {}, {-start, close, heat, -error, -init}),
-% % 	':-'({-start, close, heat, -error, -init}, {}, {-start, close, -heat, -error, init}),
-% % 	':-'({start, close, -heat, error, -init}, {}, {start, -close, -heat, error, -init}),
-% % 	':-'({start, close, -heat, error, -init}, {}, {-start, close, -heat, -error, init}),
-% % 	':-'({start, close, -heat, -error, -init}, {}, {start, close, heat, -error, -init}),
-% % 	':-'({start, close, heat, -error, -init}, {}, {-start, close, heat, -error, -init})
-% % 	      },
-% % 	      {-start, close, -heat, -error, init}).
-
-% % +++++++++++++++++++++
-% % ++++++test-case5+++++++++++++++
-% % :- uniq|
-% %     ret = run({
-% % 	':-'({x(0, '$t1'), x(0, '$t2'), total('$s'), light(0)}, {'>'('$t1', '-'('$t2', 1)), ':='('$s2', '+'('$s', '$t1'))}, {x(1, '$t1'), x(1, '$t2'), total('$s2'), light(1)}),
-% % 	':-'({x(1, '$t'), total('$s'), light(1)}, {':='('$s2', '+'('$s', '$t'))}, {x(0, '$t'), total('$s2'), light(0)})
-% % 	      },
-% % 	      {x(0,1), x(0,2), x(0,5), x(0,10), light(0),total(0)}).
-% % -----------------------------------------------------------------------
-
-% set.use.
-% state_space.use.
-% n(0), t(0).
-% run@@Ret = run(Rs, {$ini[]}), n($n) :- $nn = $n+1 |
-%     Ret = exp0(Rs, s(ID, {$ini[]}), state_space.state_map_find(state_space.state_map_init, {$ini[]}, ID), set.empty, set.empty), n($nn).
-
-% exp0@@Ret = exp0(Rs, s($id, {$ini[]}), M, S, T) :- int($id) |
-%     Ret = exp(Rs, [s($id, {$ini[]})], M, set.insert(S, $id), T).
-
-% exp0@@Ret = exp({$rs[], @rs}, [], M, S, T) :-
-%     Ret = state_space(M, S, T).
-
-% % free@@Ret = state_space(M, S, T) :- Ret = state_space, state_space.state_map_free(M), set.free(S), set.free(T).
-
-% exp1@@Ret = exp({$rs[], @rs}, [s($id, {$src[]})|Stk], M, S, T) :- int($id) |
-%     Ret = suc(Rs, Stk, state_space.react_nd_set({$rs[], @rs}, {$src[]}, Rs), s($id, {$src[]}), M, S, T).
-
-% suc0@@Ret = suc(Rs, Stk, [], s($id, {$src[]}), M, S, T) :- int($id) |
-%     Ret = exp(Rs, Stk, M, S, T).
-
-% suc1@@Ret = suc(Rs, Stk, [{$dest[]}|Suc], Src, M, S, T) :-
-%     Ret = ns0(Rs, Stk, Suc, Src, s(ID, {$dest[]}), state_space.state_map_find(M, {$dest[]}, ID), S, T).
-
-% ns0@@Ret = ns0(Rs, Stk, Suc, Src, s($id_d, {$dest[]}), M, S, T) :- int($id_d) |
-%     Ret = ns(Rs, Stk, Suc, Res, Src, s($id_d, {$dest[]}), M, set.find(S, $id_d, Res), T).
-
-% ns0@@Ret = ns(Rs, Stk, Suc, none, s($id_s, {$src[]}), s($id_d, Des), M, S, T), n($n), t($t) :- int($id_s), int($id_d), $nn=$n+1, $tt=$t+1 |
-%     Ret = suc(Rs, [s($id_d, Des)|Stk], Suc, s($id_s, {$src[]}), M, set.insert(S, $id_d), set.insert(T, '.'($id_s, $id_d))), n($nn), t($tt).
-
-% ns1@@Ret = ns(Rs, Stk, Suc, some, s($id_s, Src), s($id_d, Des), M, S, T) :- int($id_s), int($id_d) |
-%     Ret = nt(Rs, Stk, Suc, Res, s($id_s, Src), s($id_d, Des), M, S, set.find(T, '.'($id_s, $id_d), Res)).
-
-% nt0@@Ret = nt(Rs, Stk, Suc, none, s($id_s, Src), s($id_d, {$dest[]}), M, S, T), t($t) :- int($id_s), int($id_d), $tt=$t+1 |
-%     Ret = suc(Rs, Stk, Suc, s($id_s, Src), M, S, set.insert(T, '.'($id_s, $id_d))), t($tt).
-
-% nt1@@Ret = nt(Rs, Stk, Suc, some, Src, s($id_d, {$dest[]}), M, S, T) :- int($id_d) |
-%     Ret = suc(Rs, Stk, Suc, Src, M, S, T).

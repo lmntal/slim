@@ -1,7 +1,7 @@
 /*
  * hash.lmn - Hash module
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -47,11 +47,11 @@ SYNOPSIS
 
 AUTHOR
 
-	Yutaro Tsunekawa
+	Yutaro Tsunekawa, Nozomi Matsuzawa
 
 HISTORY
 
-	2016/11/28 original
+	2017/05/07 original
 
 COMMENTS
   
