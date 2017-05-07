@@ -15,12 +15,6 @@ struct LmnHash{
   st_table_t tbl;		/* ハッシュ本体 */
 };
 
-struct LmnStateMap{
-  LMN_SP_ATOM_HEADER;
-  StateSpaceRef states;
-  st_table_t id_tbl;
-};
-
 /**
  * @brief 膜mの内側のプロセスのみを対象にバイナリストリングを計算する
  * @note 注意(1)!!! 膜mは膜外への自由リンクを必ず1本のみ持っていることが条件
