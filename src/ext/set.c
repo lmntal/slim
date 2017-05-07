@@ -127,12 +127,40 @@ int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg)
  *
  * +a0: 集合
  */
+/**
+ * @memberof LmnSet
+ * @private
+ */
 void cb_set_free(LmnReactCxtRef rc,
 		 LmnMembraneRef mem,
-		 LmnAtom a0, LmnLinkAttr t0)
+		 LmnAtomRef a0, LmnLinkAttr t0)
 {
   lmn_set_free(LMN_SET(a0));
   lmn_mem_remove_data_atom(mem, a0, t0);
+}
+
+/*
+ * id_set作成
+ *
+ * +a0: intアトム
+ * -a1: id_set
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_make_id_set(LmnReactCxtRef rc,
+		    LmnMembraneRef mem,
+		    LmnAtomRef a0, LmnLinkAttr t0,
+		    LmnAtomRef a1, LmnLinkAttr t1)
+{
+  LmnSetRef s = make_id_set(mem);
+  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
+  lmn_mem_push_atom(mem, (LmnAtom)s, at);
+  st_insert(LMN_SET_DATA(s), (st_data_t)a0, (st_data_t)a0);
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
 }
 
 /*
@@ -640,6 +668,7 @@ void init_set(void)
                                        sp_cb_set_dump,
                                        sp_cb_set_is_ground);
 
+  lmn_register_c_fun("cb_make_id_set", (void *)cb_make_id_set, 2);
   lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
