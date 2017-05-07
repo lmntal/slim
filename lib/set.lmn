@@ -64,6 +64,9 @@ HISTORY
     Ret = set.insert(set_empty, {$x[]}) :-
 	'$callback'('cb_make_mem_set', {$x[]}, Ret).
 
+    Ret = set.insert(set_empty, ($x0, $x1)) :- int($x0), int($x1) |
+	'$callback'('cb_make_tuple2_set', ($x0, $x1), Ret).
+
     Ret = set.insert(Set, Val) :- class(Set, "set") |
 	'$callback'('cb_set_insert', Set, Val, Ret).
 

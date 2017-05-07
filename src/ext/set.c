@@ -192,6 +192,33 @@ void cb_make_mem_set(LmnReactCxtRef rc,
 }
 
 /*
+ * tuple2_set作成
+ *
+ * +a0: tuple2
+ * -a1: tuple2_set
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_make_tuple2_set(LmnReactCxtRef rc,
+			LmnMembraneRef mem,
+			LmnAtomRef a0, LmnLinkAttr t0,
+			LmnAtomRef a1, LmnLinkAttr t1)
+{
+  LmnSetRef s = make_tuple2_set(mem);
+  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
+  lmn_mem_push_atom(mem, (LmnAtom)s, at);
+  st_insert(LMN_SET_DATA(s), (st_data_t)a0, (st_data_t)a0);
+  lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a0, 0), LMN_SATOM_GET_ATTR(a0, 0));
+  lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a0, 1), LMN_SATOM_GET_ATTR(a0, 1));
+  lmn_mem_remove_atom(mem, a0, t0);
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
+}
+
+/*
  * 挿入
  *
  * +a0: 集合
@@ -698,6 +725,7 @@ void init_set(void)
 
   lmn_register_c_fun("cb_make_id_set", (void *)cb_make_id_set, 2);
   lmn_register_c_fun("cb_make_mem_set", (void *)cb_make_mem_set, 2);
+  lmn_register_c_fun("cb_make_tuple2_set", (void *)cb_make_tuple2_set, 2);
   lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
