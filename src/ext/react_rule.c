@@ -52,14 +52,14 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
 			 LmnAtom react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
-  LmnAtom in_mem = LMN_SATOM_GET_LINK(graph_mem_proxy, 0);
+  LmnAtomRef in_mem = LMN_SATOM_GET_LINK(graph_mem_proxy, 0);
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM(in_mem);
 
   lmn_mem_delete_atom(graph_mem, LMN_SATOM_GET_LINK(in_mem, 1), LMN_SATOM_GET_ATTR(in_mem, 1));
   lmn_mem_delete_atom(graph_mem, in_mem, LMN_SATOM_GET_ATTR(LMN_SATOM(graph_mem_proxy), 0));
 
-  LmnSAtom prev_cons;
-  LmnSAtom nil = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  LmnSymbolAtomRef prev_cons;
+  LmnSymbolAtomRef nil = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int p_nil = 0;
   LmnReactCxtRef tmp_rc = react_context_alloc();
   mc_react_cxt_init(tmp_rc);

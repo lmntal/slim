@@ -9,6 +9,7 @@
 #include "../vm/atom.h"
 #include "../vm/membrane.h"
 #include "../verifier/state.h"
+
 struct LmnHash{
   LMN_SP_ATOM_HEADER;		/* スペシャルアトムの約束事 */
   st_table_t tbl;		/* ハッシュ本体 */
@@ -20,11 +21,12 @@ struct LmnStateMap{
   st_table_t id_tbl;
 };
 
-
-// 膜mの内側のプロセスのみを対象にバイナリストリングを計算する
-// 注意(1)!!! 膜mは膜外への自由リンクを必ず1本のみ持っていることが条件
-// 注意(2)!!! 膜内に本来存在しないアトム(atアトム)を入れてバイナリストリングを計算しているため，
-//            比較の際は相手の膜もlmn_inner_mem_encodeでエンコードされている必要がある
+/**
+ * @brief 膜mの内側のプロセスのみを対象にバイナリストリングを計算する
+ * @note 注意(1)!!! 膜mは膜外への自由リンクを必ず1本のみ持っていることが条件
+ * @note 注意(2)!!! 膜内に本来存在しないアトム(atアトム)を入れてバイナリストリングを計算しているため，比較の際は相手の膜もlmn_inner_mem_encodeでエンコードされている必要がある
+ * @private
+ */
 static LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
 {
   AtomListEntryRef ent;
@@ -129,4 +131,3 @@ typedef struct LmnStateMap *LmnStateMapRef;
 #define LMN_STATE_MAP(obj) ((LmnStateMapRef)(obj))
 
 #endif
-  
