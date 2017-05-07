@@ -158,6 +158,34 @@ void cb_make_id_set(LmnReactCxtRef rc,
   LmnLinkAttr at = LMN_SP_ATOM_ATTR;
   lmn_mem_push_atom(mem, (LmnAtom)s, at);
   st_insert(LMN_SET_DATA(s), (st_data_t)a0, (st_data_t)a0);
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
+}
+
+/*
+ * mem_set作成
+ *
+ * +a0: 膜
+ * -a1: mem_set
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_make_mem_set(LmnReactCxtRef rc,
+		     LmnMembraneRef mem,
+		     LmnAtomRef a0, LmnLinkAttr t0,
+		     LmnAtomRef a1, LmnLinkAttr t1)
+{
+  LmnSetRef s = make_mem_set(mem);
+  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
+  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a0, 0));
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_push_atom(mem, (LmnAtom)s, at);
+  st_insert(LMN_SET_DATA(s), (st_data_t)m, (st_data_t)m);
+  lmn_mem_remove_mem(mem, m);
   lmn_mem_newlink(mem,
 		  a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
@@ -669,6 +697,7 @@ void init_set(void)
                                        sp_cb_set_is_ground);
 
   lmn_register_c_fun("cb_make_id_set", (void *)cb_make_id_set, 2);
+  lmn_register_c_fun("cb_make_mem_set", (void *)cb_make_mem_set, 2);
   lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
