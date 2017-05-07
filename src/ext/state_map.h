@@ -1,5 +1,9 @@
+#pragma once
+
 #include "../lmntal.h"
 #include "../element/st.h"
+
+#define LMN_STATE_MAP(obj) ((LmnStateMapRef)(obj))
 
 typedef struct LmnStateMap *LmnStateMapRef;
 
