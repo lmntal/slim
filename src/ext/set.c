@@ -269,32 +269,25 @@ void cb_set_find(LmnReactCxtRef *rc,
 		 LmnAtomRef a2, LmnLinkAttr t2,
 		 LmnAtomRef a3, LmnLinkAttr t3)
 {
+  st_table_t tbl = LMN_SET_DATA(a0);
+  st_data_t key = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
   st_data_t entry;
-  LmnAtomRef result;
-  int res;
-  if(LMN_ATTR_IS_DATA(t1)) {
-    if(LMN_INT_ATTR == t1) {
-      res = st_lookup(LMN_SET_DATA(a0), (st_data_t)a1, &entry);
-    }
-  } else {
-    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
-    if(f == LMN_OUT_PROXY_FUNCTOR) { /* mem set */
-      LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-      res = st_lookup(LMN_SET_DATA(a0), (st_data_t)m, &entry);
-      lmn_mem_remove_mem(mem, m);
-    }
+  int res = st_lookup(tbl, key, &entry);
+  if(tbl->type == &type_mem_hash) {
+    lmn_mem_remove_mem(mem, key);
+  } else if(tbl->type == &type_tuple2_hash) {
+    lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, 0), LMN_SATOM_GET_ATTR(a1, 0));
+    lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, 1), LMN_SATOM_GET_ATTR(a1, 1));
   }
-
   lmn_interned_str s = (res) ? lmn_intern("some") : lmn_intern("none");
-  result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, s, 1));
+  LmnAtomRef result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, s, 1));
+  lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   (LmnAtom)result, LMN_ATTR_MAKE_LINK(0), 0);
-
-  lmn_mem_delete_atom(mem, a1, t1);
 }
 
 
