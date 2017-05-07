@@ -579,10 +579,10 @@ int inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg)
   st_table_t tbl = LMN_SET_DATA(arg);
   st_data_t entry;
   if(!st_lookup(tbl, key, &entry)) {
-    if(tbl->type == &type_mem_hash) {
-      LMN_FREE(key);
-      LMN_FREE(rec);
-    }
+    if(tbl->type == &type_mem_hash)
+      lmn_mem_free_rec(key);
+    else if(tbl->type == &type_tuple2_hash)
+      free_symbol_atom_with_buddy_data(key);
     return ST_DELETE;
   }
   return ST_CONTINUE;
