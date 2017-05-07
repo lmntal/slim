@@ -14,11 +14,19 @@ static LmnStateMapRef lmn_make_state_map(LmnMembraneRef mem)
   return s;
 }
 
+void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
+{
+  statespace_free(LMN_STATE_MAP(state_map)->states);
+  st_free_table(LMN_STATE_MAP(state_map)->id_tbl);
+  LMN_FREE(state_map);
+}
+
 /*----------------------------------------------------------------------
  * Callbacks
  */
 
 /*
+ * 生成
  * -a0 Map
  */
 void cb_state_map_init(LmnReactCxtRef rc,
@@ -32,6 +40,18 @@ void cb_state_map_init(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
                   LMN_ATOM(atom), attr, 0);
+}
+
+/*
+ * 解放
+ * +a0 Map
+ */
+void cb_state_map_free(LmnReactCxtRef rc,
+                       LmnMembraneRef mem,
+                       LmnAtom a0, LmnLinkAttr t0)
+{
+  lmn_state_map_free(LMN_STATE_MAP(a0), mem);
+  lmn_mem_remove_data_atom(mem, a0, t0);
 }
 
 /*
@@ -172,6 +192,7 @@ void init_state_map(void)
                                          sp_cb_state_map_dump,
                                          sp_cb_state_map_is_ground);
   lmn_register_c_fun("cb_state_map_init", (void *)cb_state_map_init, 1);
+  lmn_register_c_fun("cb_state_map_free", (void *)cb_state_map_free, 1);
   lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
   lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find, 4);
 }
