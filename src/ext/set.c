@@ -389,7 +389,7 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t itl)
   return ST_CONTINUE;
 }
 
-int inner_set_mem_copy(st_data_t, st_data_t, st_data_t);
+int inner_set_copy(st_data_t, st_data_t, st_data_t);
 
 /*
  * 複製
@@ -409,33 +409,36 @@ void cb_set_copy(LmnReactCxtRef rc,
 		 LmnAtomRef a2, LmnLinkAttr t2)
 {
   LmnSetRef s;
-  LmnLinkAttr attr;
-  if(LMN_SET_DATA(a0)->type == &type_id_hash) {
+  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
+  st_table_t tbl = LMN_SET_DATA(a0);
+  if(tbl->type == &type_id_hash) {
     s = make_id_set(mem);
-    attr = LMN_SP_ATOM_ATTR;
-    LMN_SET_DATA(s) = st_copy(LMN_SET_DATA(a0));
-  } else if(LMN_SET_DATA(a0)->type == &type_mem_hash) {
-    s = make_mem_set(mem);
-    attr = LMN_SP_ATOM_ATTR;
-    st_foreach(LMN_SET_DATA(a0), (int)inner_set_mem_copy, s);
+    LMN_SET_DATA(s) = st_copy(tbl);
+  } else {
+    if(tbl->type == &type_mem_hash)
+      s = make_mem_set(mem);
+    else if(tbl->type == &type_tuple2_hash)
+      s = make_tuple2_set(mem);
+    st_foreach(tbl, (int)inner_set_copy, s);
   }
-  lmn_mem_push_atom(mem, (LmnAtom)s, attr);
+  lmn_mem_push_atom(mem, (LmnAtom)s, at);
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a1, t1, LMN_ATTR_GET_VALUE(t1));
   lmn_mem_newlink(mem,
 		  a2, t2, LMN_ATTR_GET_VALUE(t2),
-		  s, attr, LMN_ATTR_GET_VALUE(attr));
+		  s, at, LMN_ATTR_GET_VALUE(at));
 }
 
 /**
  * @memberof LmnSet
  * @private
  */
-int inner_set_mem_copy(st_data_t key, st_data_t rec, st_data_t arg)
+int inner_set_copy(st_data_t key, st_data_t rec, st_data_t arg)
 {
-  LmnMembraneRef m = lmn_mem_copy(key);
-  st_insert(LMN_SET_DATA(arg), m, m);
+  st_table_t tbl = LMN_SET_DATA(arg);
+  st_data_t val = (tbl->type == &type_mem_hash) ? lmn_mem_copy(key) : lmn_copy_satom_with_data((LmnSymbolAtomRef)key, FALSE);
+  st_insert(tbl, val, val);
   return ST_CONTINUE;
 }
 
