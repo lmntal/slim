@@ -235,55 +235,16 @@ void cb_set_insert(LmnReactCxtRef rc,
 		   LmnAtomRef a1, LmnLinkAttr t1,
 		   LmnAtomRef a2, LmnLinkAttr t2)
 {
-  LmnSetRef s;
-  LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
-  if(LMN_INT_ATTR == t1) {	/* id set */
-    if(t0 != LMN_SP_ATOM_ATTR) {
-      s = make_id_set(mem);
-      lmn_mem_push_atom(mem, (LmnAtom)s, attr);
-      lmn_mem_delete_atom(mem, a0, t0);
-      a0 = (LmnAtom)s;
-      t0 = attr;
-    }
-    st_insert(LMN_SET_DATA(a0), (st_data_t)a1, (st_data_t)a1);
-    lmn_mem_delete_atom(mem, a1, t1);
-  } else {
-    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a1);
-    char *name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
-    if(f == LMN_OUT_PROXY_FUNCTOR) { /* mem set */
-      if(t0 != LMN_SP_ATOM_ATTR) {
-        s = make_mem_set(mem);
-        lmn_mem_push_atom(mem, (LmnAtom)s, attr);
-        lmn_mem_delete_atom(mem, a0, t0);
-        a0 = (LmnAtom)s;
-        t0 = attr;
-      }
-      LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
-      st_insert(LMN_SET_DATA(a0), (st_data_t)m, (st_data_t)m);
-      lmn_mem_remove_mem(mem, m);
-      lmn_mem_delete_atom(mem, a1, t1);
-    } else if(!strcmp(name, ",")) { /* tuple set */
-      int arity = LMN_SATOM_GET_LINK_NUM(a1);
-      if(t0 != LMN_SP_ATOM_ATTR) {
-	switch (arity) {
-	case 3:
-	  s = make_tuple2_set(mem);
-	  lmn_mem_push_atom(mem, (LmnAtom)s, attr);
-	  lmn_mem_delete_atom(mem, a0, t0);
-	  a0 = (LmnAtom)s;
-	  t0 = attr;
-	  break;
-	default:
-	  break;
-	}
-      }
-      st_insert(LMN_SET_DATA(a0), (st_data_t)a1, (st_data_t)a1);
-      int i;
-      for(i = 0; i < arity-1; i++)
-      	lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, i), LMN_SATOM_GET_ATTR(a1, i));
-      lmn_mem_remove_atom(mem, a1, t1);
-    }
+  st_table_t tbl = LMN_SET_DATA(a0);
+  st_data_t v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
+  st_insert(tbl, v, v);
+  if(tbl->type == &type_mem_hash) {
+    lmn_mem_remove_mem(mem, v);
+  } else if(tbl->type == &type_tuple2_hash) {
+    lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, 0), LMN_SATOM_GET_ATTR(a1, 0));
+    lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, 1), LMN_SATOM_GET_ATTR(a1, 1));
   }
+  lmn_mem_remove_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
                   a2, t2, LMN_ATTR_GET_VALUE(t2));
