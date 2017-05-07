@@ -104,7 +104,10 @@ void lmn_set_free(LmnSetRef set)
 {
   st_table_t tbl = LMN_SET_DATA(set);
   if(tbl->type == &type_mem_hash)
-    st_foreach(tbl, (int)inner_set_free, NULL);
+    st_foreach(tbl, (int)inner_set_free, tbl->type);
+  else if(tbl->type == &type_tuple2_hash) {
+    st_foreach(tbl, (int)inner_set_free, tbl->type);
+  }
   st_free_table(tbl);
 }
 
@@ -114,8 +117,10 @@ void lmn_set_free(LmnSetRef set)
  */
 int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg)
 {
-  LMN_FREE(key);
-  LMN_FREE(rec);
+  if(arg == &type_mem_hash)
+    lmn_mem_free_rec(key);
+  else
+    free_symbol_atom_with_buddy_data(key);
   return ST_DELETE;
 }
 /*----------------------------------------------------------------------
@@ -512,13 +517,20 @@ void cb_set_union(LmnReactCxtRef rc,
 int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg)
 {
   st_table_t tbl = LMN_SET_DATA(arg);
+  st_data_t entry;
   if(tbl->type == &type_id_hash)
     st_insert(tbl, key, rec);
-  else if(tbl->type == &type_mem_hash)
+  else if(tbl->type == &type_mem_hash) {
+    if(!st_lookup(tbl, key, &entry)) {
+      st_insert(tbl, key, rec);
+      return ST_DELETE;
+    }
+  } else if(tbl->type == &type_tuple2_hash) {
     if(!st_lookup(tbl, key, rec)) {
       st_insert(tbl, key, rec);
       return ST_DELETE;
     }
+  }
   return ST_CONTINUE;
 }
 
