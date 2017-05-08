@@ -365,8 +365,8 @@ void cb_set_copy(LmnReactCxtRef rc,
   } else {
     if(tbl->type == &type_mem_hash)
       s = make_mem_set(mem);
-    else if(tbl->type == &type_tuple2_hash)
-      s = make_tuple2_set(mem);
+    else if(tbl->type == &type_tuple_hash)
+      s = make_tuple_set(mem);
     st_foreach(tbl, (int)inner_set_copy, s);
   }
   lmn_mem_push_atom(mem, (LmnAtom)s, at);
