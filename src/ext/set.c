@@ -463,7 +463,7 @@ int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg)
       st_insert(tbl, key, rec);
       return ST_DELETE;
     }
-  } else if(tbl->type == &type_tuple2_hash) {
+  } else if(tbl->type == &type_tuple_hash) {
     if(!st_lookup(tbl, key, rec)) {
       st_insert(tbl, key, rec);
       return ST_DELETE;
