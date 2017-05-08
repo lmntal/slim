@@ -320,13 +320,14 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t itl)
 		    ITL_CONS(itl), LMN_ATTR_MAKE_LINK(0), 0,
 		    out, LMN_ATTR_MAKE_LINK(1), 1);
     lmn_mem_add_child_mem(ITL_MEM(itl), (LmnMembraneRef)key);
-  } else if(ITL_HT(itl) == &type_tuple2_hash) {
+  } else if(ITL_HT(itl) == &type_tuple_hash) {
+    int i;
     lmn_mem_push_atom(ITL_MEM(itl), (LmnAtomRef)key, LMN_ATTR_MAKE_LINK(3));
-    lmn_mem_push_atom(ITL_MEM(itl), (LmnWord)(LMN_SATOM_GET_LINK(key, 0)), LMN_INT_ATTR);
-    lmn_mem_push_atom(ITL_MEM(itl), (LmnWord)(LMN_SATOM_GET_LINK(key, 1)), LMN_INT_ATTR);
+    for(i = 0; i < LMN_SATOM_GET_ARITY(key) - 1; i++)
+      lmn_mem_push_atom(ITL_MEM(itl), LMN_SATOM_GET_LINK(key, i), LMN_INT_ATTR);
     lmn_mem_newlink(ITL_MEM(itl),
 		    ITL_CONS(itl), LMN_ATTR_MAKE_LINK(0), 0,
-		    (LmnAtomRef)key, LMN_ATTR_MAKE_LINK(2), 2);
+		    (LmnAtomRef)key, LMN_ATTR_MAKE_LINK(i), i);
   }
   ITL_PREV(itl) = ITL_CONS(itl);
   ITL_CONS(itl) = lmn_mem_newatom(ITL_MEM(itl), LMN_LIST_FUNCTOR);
