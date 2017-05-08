@@ -103,11 +103,8 @@ int inner_set_free(st_data_t, st_data_t, st_data_t);
 void lmn_set_free(LmnSetRef set)
 {
   st_table_t tbl = LMN_SET_DATA(set);
-  if(tbl->type == &type_mem_hash)
+  if(tbl->type != &type_id_hash)
     st_foreach(tbl, (int)inner_set_free, tbl->type);
-  else if(tbl->type == &type_tuple2_hash) {
-    st_foreach(tbl, (int)inner_set_free, tbl->type);
-  }
   st_free_table(tbl);
 }
 
