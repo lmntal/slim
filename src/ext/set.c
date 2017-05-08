@@ -219,13 +219,8 @@ void cb_set_find(LmnReactCxtRef *rc,
   st_data_t key = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
   st_data_t entry;
   int res = st_lookup(tbl, key, &entry);
-  if(tbl->type == &type_tuple_hash) {
-    mem_remove_symbol_atom_with_buddy_data(mem, a1);
-    free_symbol_atom_with_buddy_data(a1);
-  } else {
-    if(tbl->type == &type_mem_hash)
+  if(tbl->type == &type_mem_hash)
       lmn_mem_delete_mem(mem, key);
-  }
   lmn_interned_str s = (res) ? lmn_intern("some") : lmn_intern("none");
   LmnAtomRef result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, s, 1));
   lmn_mem_delete_atom(mem, a1, t1);
