@@ -57,7 +57,7 @@ static unsigned long tuple_hash(LmnSymbolAtomRef cons)
 {
   unsigned long ret = 0;
   int i;
-  for(i = 0; i < LMN_SATOM_GET_ARITY(cons); i++)
+  for(i = 0; i < LMN_SATOM_GET_ARITY(cons) - 1; i++)
     ret +=(unsigned long)(LMN_SATOM_GET_LINK(cons, i));
   return ret;
 }
@@ -70,7 +70,7 @@ static int tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1)
   int ret = 0;
   if(num0 != num1)
     return 1;
-  for(i = 0; i < num0; i++)
+  for(i = 0; i < num0 - 1; i++)
     ret = ret || (LMN_SATOM_GET_LINK(cons0, i) != LMN_SATOM_GET_LINK(cons1, i));
   return ret;
 }
