@@ -411,7 +411,7 @@ void cb_set_erase(LmnReactCxtRef rc,
     if(st_delete(tbl, (st_data_t)m, &entry))
       lmn_mem_free_rec((LmnMembraneRef)entry);
     lmn_mem_delete_mem(mem, m);
-  } else if(tbl->type == &type_tuple2_hash) {
+  } else if(tbl->type == &type_tuple_hash) {
     if(st_delete(tbl, a1, &entry))
       free_symbol_atom_with_buddy_data(entry);
   }
