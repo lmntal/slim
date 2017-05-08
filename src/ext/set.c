@@ -71,19 +71,6 @@ static LmnSetRef make_id_set(LmnMembraneRef mem)
  * @memberof LmnSet
  * @private
  */
-static LmnSetRef make_tuple2_set(LmnMembraneRef mem)
-{
-  LmnSetRef s = LMN_MALLOC(struct LmnSet);
-  LMN_SP_ATOM_SET_TYPE(s, set_atom_type);
-  LMN_SET_DATA(s) = st_init_table(&type_tuple2_hash);
-  return s;
-}
-
-/**
- * @brief Internal Constructor
- * @memberof LmnSet
- * @private
- */
 static LmnSetRef make_tuple_set(LmnMembraneRef mem)
 {
   LmnSetRef s = LMN_MALLOC(struct LmnSet);
@@ -572,7 +559,7 @@ int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg)
   if(st_lookup(tbl, key, &entry)) {
     if(tbl->type == &type_mem_hash)
       lmn_mem_free_rec(key);
-    else if(tbl->type == &type_tuple2_hash)
+    else if(tbl->type == &type_tuple_hash)
       free_symbol_atom_with_buddy_data(key);
     return ST_DELETE;
   }
