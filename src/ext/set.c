@@ -155,110 +155,6 @@ void cb_set_free(LmnReactCxtRef rc,
 }
 
 /*
- * id_set作成
- *
- * +a0: intアトム
- * -a1: id_set
- */
-/**
- * @memberof LmnSet
- * @private
- */
-void cb_make_id_set(LmnReactCxtRef rc,
-		    LmnMembraneRef mem,
-		    LmnAtomRef a0, LmnLinkAttr t0,
-		    LmnAtomRef a1, LmnLinkAttr t1)
-{
-  LmnSetRef s = make_id_set(mem);
-  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
-  lmn_mem_push_atom(mem, (LmnAtom)s, at);
-  st_insert(LMN_SET_DATA(s), (st_data_t)a0, (st_data_t)a0);
-  lmn_mem_delete_atom(mem, a0, t0);
-  lmn_mem_newlink(mem,
-		  a1, t1, LMN_ATTR_GET_VALUE(t1),
-		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
-}
-
-/*
- * mem_set作成
- *
- * +a0: 膜
- * -a1: mem_set
- */
-/**
- * @memberof LmnSet
- * @private
- */
-void cb_make_mem_set(LmnReactCxtRef rc,
-		     LmnMembraneRef mem,
-		     LmnAtomRef a0, LmnLinkAttr t0,
-		     LmnAtomRef a1, LmnLinkAttr t1)
-{
-  LmnSetRef s = make_mem_set(mem);
-  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
-  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a0, 0));
-  lmn_mem_delete_atom(mem, a0, t0);
-  lmn_mem_push_atom(mem, (LmnAtom)s, at);
-  st_insert(LMN_SET_DATA(s), (st_data_t)m, (st_data_t)m);
-  lmn_mem_remove_mem(mem, m);
-  lmn_mem_newlink(mem,
-		  a1, t1, LMN_ATTR_GET_VALUE(t1),
-		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
-}
-
-/*
- * tuple2_set作成
- *
- * +a0: tuple2
- * -a1: tuple2_set
- */
-/**
- * @memberof LmnSet
- * @private
- */
-void cb_make_tuple2_set(LmnReactCxtRef rc,
-			LmnMembraneRef mem,
-			LmnAtomRef a0, LmnLinkAttr t0,
-			LmnAtomRef a1, LmnLinkAttr t1)
-{
-  LmnSetRef s = make_tuple2_set(mem);
-  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
-  lmn_mem_push_atom(mem, (LmnAtom)s, at);
-  st_insert(LMN_SET_DATA(s), (st_data_t)a0, (st_data_t)a0);
-  lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a0, 0), LMN_SATOM_GET_ATTR(a0, 0));
-  lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a0, 1), LMN_SATOM_GET_ATTR(a0, 1));
-  lmn_mem_remove_atom(mem, a0, t0);
-  lmn_mem_newlink(mem,
-		  a1, t1, LMN_ATTR_GET_VALUE(t1),
-		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
-}
-
-/*
- * tuple_set作成
- *
- * +a0: tuple
- * -a1: tuple_set
- */
-/**
- * @memberof LmnSet
- * @private
- */
-void cb_make_tuple_set(LmnReactCxtRef rc,
-		       LmnMembraneRef mem,
-		       LmnAtomRef a0, LmnLinkAttr t0,
-		       LmnAtomRef a1, LmnLinkAttr t1)
-{
-  LmnSetRef s = make_tuple2_set(mem);
-  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
-  lmn_mem_push_atom(mem, (LmnAtom)s, at);
-  st_insert(LMN_SET_DATA(s), (st_data_t)a0, (st_data_t)a0);
-  mem_remove_symbol_atom_with_buddy_data(mem, a0);
-  lmn_mem_newlink(mem,
-		  a1, t1, LMN_ATTR_GET_VALUE(t1),
-		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
-}
-
-/*
  * 挿入
  *
  * +a0: 集合
@@ -275,12 +171,22 @@ void cb_set_insert(LmnReactCxtRef rc,
 		   LmnAtomRef a1, LmnLinkAttr t1,
 		   LmnAtomRef a2, LmnLinkAttr t2)
 {
+  if(t0 != LMN_SP_ATOM_ATTR) {
+    lmn_mem_delete_atom(mem, a0, t0);
+    t0 = LMN_SP_ATOM_ATTR;
+    if(LMN_INT_ATTR == t1)
+      a0 = (LmnAtomRef)make_id_set(mem);
+    else if(LMN_SATOM_GET_FUNCTOR(a1) == LMN_OUT_PROXY_FUNCTOR)
+      a0 = (LmnAtomRef)make_mem_set(mem);
+    else
+      a0 = (LmnAtomRef)make_tuple_set(mem);
+  }
   st_table_t tbl = LMN_SET_DATA(a0);
   st_data_t v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
   st_insert(tbl, v, v);
-  if(tbl->type == &type_tuple_hash || tbl->type == &type_tuple2_hash)
+  if(tbl->type == &type_tuple_hash) {
     mem_remove_symbol_atom_with_buddy_data(mem, a1);
-  else {
+  } else {
     lmn_mem_remove_atom(mem, a1, t1);
     if(tbl->type == &type_mem_hash)
       lmn_mem_remove_mem(mem, v);
@@ -737,10 +643,6 @@ void init_set(void)
                                        sp_cb_set_dump,
                                        sp_cb_set_is_ground);
 
-  lmn_register_c_fun("cb_make_id_set", (void *)cb_make_id_set, 2);
-  lmn_register_c_fun("cb_make_mem_set", (void *)cb_make_mem_set, 2);
-  lmn_register_c_fun("cb_make_tuple2_set", (void *)cb_make_tuple2_set, 2);
-  lmn_register_c_fun("cb_make_tuple_set", (void *)cb_make_tuple_set, 2);
   lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
