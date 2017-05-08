@@ -84,6 +84,19 @@ static LmnSetRef make_tuple2_set(LmnMembraneRef mem)
  * @memberof LmnSet
  * @private
  */
+static LmnSetRef make_tuple_set(LmnMembraneRef mem)
+{
+  LmnSetRef s = LMN_MALLOC(struct LmnSet);
+  LMN_SP_ATOM_SET_TYPE(s, set_atom_type);
+  LMN_SET_DATA(s) = st_init_table(&type_tuple_hash);
+  return s;
+}
+
+/**
+ * @brief Internal Constructor
+ * @memberof LmnSet
+ * @private
+ */
 static LmnSetRef make_mem_set(LmnMembraneRef mem)
 {
   LmnSetRef s = LMN_MALLOC(struct LmnSet);
@@ -221,6 +234,31 @@ void cb_make_tuple2_set(LmnReactCxtRef rc,
 }
 
 /*
+ * tuple_set作成
+ *
+ * +a0: tuple
+ * -a1: tuple_set
+ */
+/**
+ * @memberof LmnSet
+ * @private
+ */
+void cb_make_tuple_set(LmnReactCxtRef rc,
+		       LmnMembraneRef mem,
+		       LmnAtomRef a0, LmnLinkAttr t0,
+		       LmnAtomRef a1, LmnLinkAttr t1)
+{
+  LmnSetRef s = make_tuple2_set(mem);
+  LmnLinkAttr at = LMN_SP_ATOM_ATTR;
+  lmn_mem_push_atom(mem, (LmnAtom)s, at);
+  st_insert(LMN_SET_DATA(s), (st_data_t)a0, (st_data_t)a0);
+  mem_remove_symbol_atom_with_buddy_data(mem, a0);
+  lmn_mem_newlink(mem,
+		  a1, t1, LMN_ATTR_GET_VALUE(t1),
+		  (LmnAtom)s, at, LMN_ATTR_GET_VALUE(at));
+}
+
+/*
  * 挿入
  *
  * +a0: 集合
@@ -240,13 +278,13 @@ void cb_set_insert(LmnReactCxtRef rc,
   st_table_t tbl = LMN_SET_DATA(a0);
   st_data_t v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
   st_insert(tbl, v, v);
-  if(tbl->type == &type_mem_hash) {
-    lmn_mem_remove_mem(mem, v);
-  } else if(tbl->type == &type_tuple2_hash) {
-    lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, 0), LMN_SATOM_GET_ATTR(a1, 0));
-    lmn_mem_remove_atom(mem, LMN_SATOM_GET_LINK(a1, 1), LMN_SATOM_GET_ATTR(a1, 1));
+  if(tbl->type == &type_tuple_hash || tbl->type == &type_tuple2_hash)
+    mem_remove_symbol_atom_with_buddy_data(mem, a1);
+  else {
+    lmn_mem_remove_atom(mem, a1, t1);
+    if(tbl->type == &type_mem_hash)
+      lmn_mem_remove_mem(mem, v);
   }
-  lmn_mem_remove_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
                   a2, t2, LMN_ATTR_GET_VALUE(t2));
@@ -702,6 +740,7 @@ void init_set(void)
   lmn_register_c_fun("cb_make_id_set", (void *)cb_make_id_set, 2);
   lmn_register_c_fun("cb_make_mem_set", (void *)cb_make_mem_set, 2);
   lmn_register_c_fun("cb_make_tuple2_set", (void *)cb_make_tuple2_set, 2);
+  lmn_register_c_fun("cb_make_tuple_set", (void *)cb_make_tuple_set, 2);
   lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
   lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);

@@ -53,6 +53,34 @@ struct st_hash_type type_tuple2_hash =
     (st_hash_func)tuple2_hash
   };
 
+static unsigned long tuple_hash(LmnSymbolAtomRef cons)
+{
+  unsigned long ret = 0;
+  int i;
+  for(i = 0; i < LMN_SATOM_GET_ARITY(cons); i++)
+    ret +=(unsigned long)(LMN_SATOM_GET_LINK(cons, i));
+  return ret;
+}
+
+static int tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1)
+{
+  int num0 = LMN_SATOM_GET_ARITY(cons0);
+  int num1 = LMN_SATOM_GET_ARITY(cons1);
+  int i;
+  int ret = 0;
+  if(num0 != num1)
+    return 1;
+  for(i = 0; i < num0; i++)
+    ret = ret || (LMN_SATOM_GET_LINK(cons0, i) != LMN_SATOM_GET_LINK(cons1, i));
+  return ret;
+}
+
+struct st_hash_type type_tuple_hash =
+  {
+    (st_cmp_func)tuple_cmp,
+    (st_hash_func)tuple_hash
+  };
+
 
 /* mem set */
 static LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
