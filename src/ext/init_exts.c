@@ -50,7 +50,6 @@ void init_time(void);
 void init_array(void);
 void init_atom(void);
 void init_react_rule(void);
-void init_hash(void);
 void init_state_map(void);
 
 void init_builtin_extensions(void)
@@ -66,6 +65,5 @@ void init_builtin_extensions(void)
   init_array();
   init_atom();
   init_react_rule();
-  init_hash();
   init_state_map();
 }

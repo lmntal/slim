@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "vm/vm.h"
-#include "hash.h"
+#include "set.h"
 
 void cb_react_rule(LmnReactCxtRef rc,
 			  LmnMembraneRef mem,
@@ -157,7 +157,7 @@ void cb_mem_equals(LmnReactCxtRef rc,
 {
   LmnMembraneRef m0 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem0_proxy, 0));
   LmnMembraneRef m1 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem1_proxy, 0));
-  int judge = inner_mem_cmp(m0, m1);
+  int judge = mem_cmp(m0, m1);
   LmnSAtom result;
   
   if(judge==0)
