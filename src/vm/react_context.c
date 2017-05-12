@@ -517,6 +517,7 @@ struct LRCInsertEvent {
 };
 typedef struct LRCInsertEvent *LRCInsertEventRef;
 
+#ifdef USE_FIRSTCLASS_RULE
 BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
   return !vec_is_empty(rc->insertion_events);
 }
@@ -547,3 +548,4 @@ void lmn_rc_execute_insertion_events(LmnReactCxtRef rc) {
     lmn_mem_add_firstclass_ruleset(mem, rs);
   }
 }
+#endif
