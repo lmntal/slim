@@ -3772,16 +3772,20 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0,
     LMN_SATOM_SET_ATTR(LMN_SATOM(atom1), LMN_ATTR_GET_VALUE(attr), LMN_ATTR_MAKE_LINK(pos));
   }
 }
-
+#ifdef USE_FIRSTCLASS_RULE
 Vector *lmn_mem_firstclass_rulesets(LmnMembraneRef mem) {
   return mem->firstclass_rulesets;
 }
+#endif
 
+#ifdef USE_FIRSTCLASS_RULE
 void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
   LMN_ASSERT(fcr);
   lmn_mem_add_ruleset_sort(mem->firstclass_rulesets, fcr);
 }
+#endif
 
+#ifdef USE_FIRSTCLASS_RULE
 void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
   LmnRulesetId del_id = lmn_ruleset_get_id(fcr);
   
@@ -3801,3 +3805,4 @@ void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
 
   LMN_ASSERT(FALSE); // "attempt to delete an absent firstclass ruleset"
 }
+#endif
