@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../lmntal.h"
-#include "../element/st.h"
+#include "lmntal.h"
+#include "element/st.h"
 
 #define LMN_STATE_MAP(obj) ((LmnStateMapRef)(obj))
 
