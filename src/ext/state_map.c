@@ -1,4 +1,5 @@
 #include "state_map.h"
+#include "set.h"
 #include "../vm/react_context.h"
 #include "../verifier/mc_worker.h"
 
