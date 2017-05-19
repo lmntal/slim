@@ -157,17 +157,8 @@ void cb_mem_equals(LmnReactCxtRef rc,
 {
   LmnMembraneRef m0 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem0_proxy, 0));
   LmnMembraneRef m1 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem1_proxy, 0));
-  int judge = mem_cmp(m0, m1);
-  LmnSAtom result;
-  
-  if(judge==0)
-    {
-      result = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
-    }
-  else
-    {
-      result = lmn_mem_newatom(mem, LMN_FALSE_FUNCTOR);
-    }
+  LmnFunctor judge = (mem_cmp(m0, m1) == 0) ? LMN_TRUE_FUNCTOR : LMN_FALSE_FUNCTOR;
+  LmnSAtom result = lmn_mem_newatom(mem, judge);
 
   lmn_mem_newlink(mem,
 		  LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
