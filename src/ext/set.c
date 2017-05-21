@@ -240,7 +240,7 @@ void lmn_set_free(LmnSetRef set)
 {
   st_table_t tbl = set->tbl;
   if(tbl->type != &type_id_hash)
-    st_foreach(tbl, (int)inner_set_free, tbl->type);
+    st_foreach(tbl, (st_iter_func)inner_set_free, tbl->type);
   st_free_table(tbl);
 }
 
@@ -393,7 +393,7 @@ void cb_set_to_list(LmnReactCxtRef rc,
   itl->cons = cons;
   itl->mem = mem;
   itl->ht = ((LmnSetRef)a0)->tbl;
-  st_foreach(tbl, inner_set_to_list, (st_data_t)itl);
+  st_foreach(tbl, (st_iter_func)inner_set_to_list, (st_data_t)itl);
 
   lmn_mem_delete_atom(itl->mem, itl->cons, LMN_ATTR_MAKE_LINK(2));
   LmnAtomRef nil = lmn_mem_newatom(itl->mem, LMN_NIL_FUNCTOR);
@@ -468,7 +468,7 @@ void cb_set_copy(LmnReactCxtRef rc,
     s->tbl = st_copy(tbl);
   } else {
     s = make_set(tbl->type);
-    st_foreach(tbl, (int)inner_set_copy, s);
+    st_foreach(tbl, (st_iter_func)inner_set_copy, s);
   }
   lmn_mem_push_atom(mem, (LmnAtom)s, at);
   lmn_mem_newlink(mem,
@@ -547,7 +547,7 @@ void cb_set_union(LmnReactCxtRef rc,
 		  LmnAtomRef a1, LmnLinkAttr t1,
 		  LmnAtomRef a2, LmnLinkAttr t2)
 {
-  st_foreach(((LmnSetRef)a0)->tbl, (int)inner_set_union, a1);
+  st_foreach(((LmnSetRef)a0)->tbl, (st_iter_func)inner_set_union, a1);
   lmn_mem_newlink(mem,
 		  a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
@@ -594,7 +594,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
 		      LmnAtomRef a2, LmnLinkAttr t2)
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
-  st_foreach(tbl, (int)inner_set_intersect, a1);
+  st_foreach(tbl, (st_iter_func)inner_set_intersect, a1);
   lmn_set_free(a1);
   if(st_num(tbl)) {
     lmn_mem_newlink(mem,
@@ -647,7 +647,7 @@ void cb_set_diff(LmnReactCxtRef rc,
 		 LmnAtomRef a2, LmnLinkAttr t2)
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
-  st_foreach(tbl, (int)inner_set_diff, a1);
+  st_foreach(tbl, (st_iter_func)inner_set_diff, a1);
   lmn_set_free(a1);
   if(st_num(tbl)) {
     lmn_mem_newlink(mem,
