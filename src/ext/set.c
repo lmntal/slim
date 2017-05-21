@@ -135,8 +135,8 @@ LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
 {
   LmnAtomRef plus = find_first_atom_with_functor(m, LMN_UNARY_PLUS_FUNCTOR);
   LMN_ASSERT(plus != NULL);
-  LmnAtomRef in = LMN_SATOM(LMN_SATOM_GET_LINK(plus, 0));
-  LmnAtomRef out = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
+  LmnAtomRef in = LMN_SATOM_GET_LINK(plus, 0);
+  LmnAtomRef out = LMN_SATOM_GET_LINK(in, 0);
 
   mem_remove_symbol_atom(m, in);
   lmn_delete_atom(in);
