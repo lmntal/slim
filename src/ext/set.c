@@ -342,17 +342,17 @@ void cb_set_find(LmnReactCxtRef *rc,
   st_data_t key = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
   st_data_t entry;
   int res = st_lookup(tbl, key, &entry);
-  if(tbl->type == &type_mem_hash)
-      lmn_mem_delete_mem(mem, key);
   lmn_interned_str s = (res) ? lmn_intern("some") : lmn_intern("none");
   LmnAtomRef result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, s, 1));
-  lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
-                  (LmnAtom)result, LMN_ATTR_MAKE_LINK(0), 0);
+                  result, LMN_ATTR_MAKE_LINK(0), 0);
+  lmn_mem_delete_atom(mem, a1, t1);
+  if(tbl->type == &type_mem_hash)
+    lmn_mem_delete_mem(mem, key);
 }
 
 
