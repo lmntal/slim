@@ -470,7 +470,7 @@ void cb_set_copy(LmnReactCxtRef rc,
     s = make_set(tbl->type);
     st_foreach(tbl, (st_iter_func)inner_set_copy, s);
   }
-  lmn_mem_push_atom(mem, (LmnAtom)s, at);
+  lmn_mem_push_atom(mem, (LmnAtomRef)s, at);
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a1, t1, LMN_ATTR_GET_VALUE(t1));
@@ -563,7 +563,7 @@ int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg)
   st_table_t tbl = ((LmnSetRef)arg)->tbl;
   st_data_t entry;
   if(tbl->type == &type_id_hash) {
-    st_insert(tbl, key, rec)     ;
+    st_insert(tbl, key, rec);
   } else if(tbl->type == &type_mem_hash || tbl->type == &type_tuple_hash) {
     if(!st_lookup(tbl, key, &entry)) {
       st_insert(tbl, key, rec);
@@ -596,7 +596,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_intersect, a1);
   lmn_set_free(a1);
-  if(st_num(tbl)) {
+  if(st_num(tbl) > 0) {
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
 		    a0, t0, LMN_ATTR_GET_VALUE(t0));
@@ -604,7 +604,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
     LmnAtomRef empty_set = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem,
   		    a2, t2, LMN_ATTR_GET_VALUE(t2),
-  		    (LmnAtom)empty_set, LMN_ATTR_MAKE_LINK(0), 0);
+  		    empty_set, LMN_ATTR_MAKE_LINK(0), 0);
     lmn_set_free(a0);
   }
 }
@@ -617,14 +617,13 @@ int inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg)
 {
   st_table_t tbl = ((LmnSetRef)arg)->tbl;
   st_data_t entry;
-  if(!st_lookup(tbl, key, &entry)) {
-    if(tbl->type == &type_mem_hash)
-      lmn_mem_free_rec(key);
-    else if(tbl->type == &type_tuple_hash)
-      free_symbol_atom_with_buddy_data(key);
-    return ST_DELETE;
-  }
-  return ST_CONTINUE;
+  int found = st_lookup(tbl, key, &entry);
+  if (found) return ST_CONTINUE;
+  if(tbl->type == &type_mem_hash)
+    lmn_mem_free_rec(key);
+  else if(tbl->type == &type_tuple_hash)
+    free_symbol_atom_with_buddy_data(key);
+  return ST_DELETE;
 }
 
 int inner_set_diff(st_data_t, st_data_t, st_data_t);
@@ -649,7 +648,7 @@ void cb_set_diff(LmnReactCxtRef rc,
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_diff, a1);
   lmn_set_free(a1);
-  if(st_num(tbl)) {
+  if(st_num(tbl) > 0) {
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
 		    a0, t0, LMN_ATTR_GET_VALUE(t0));
@@ -670,14 +669,13 @@ int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg)
 {
   st_table_t tbl = ((LmnSetRef)arg)->tbl;
   st_data_t entry;
-  if(st_lookup(tbl, key, &entry)) {
-    if(tbl->type == &type_mem_hash)
-      lmn_mem_free_rec(key);
-    else if(tbl->type == &type_tuple_hash)
-      free_symbol_atom_with_buddy_data(key);
-    return ST_DELETE;
-  }
-  return ST_CONTINUE;
+  int found = st_lookup(tbl, key, &entry);
+  if(!found) return ST_CONTINUE;
+  if(tbl->type == &type_mem_hash)
+    lmn_mem_free_rec(key);
+  else if(tbl->type == &type_tuple_hash)
+    free_symbol_atom_with_buddy_data(key);
+  return ST_DELETE;
 }
 /*----------------------------------------------------------------------
  * Initialization
