@@ -49,6 +49,10 @@
 #  include "verifier/runtime_status.h"
 #endif
 
+#ifdef USE_FIRSTCLASS_RULE
+#  include "firstclass_rule.h"
+#endif
+
 /** ----
  *  AtomListEntry.
  *  同一ファンクタのアトムをリスト単位でまとめておくための機構
@@ -289,6 +293,9 @@ struct LmnMembrane {
   LmnMembraneRef          child_head;
   LmnMembraneRef          prev, next;
   struct Vector        rulesets;
+#ifdef USE_FIRSTCLASS_RULE
+  Vector *             firstclass_rulesets;
+#endif
 };
 
 LmnMembraneRef lmn_mem_make(void)
@@ -310,6 +317,10 @@ LmnMembraneRef lmn_mem_make(void)
   mem->atomset       =  LMN_CALLOC(struct AtomListEntry *, mem->atomset_size);
   vec_init(&mem->rulesets, 1);
   lmn_mem_set_id(mem, env_gen_next_id());
+
+#ifdef USE_FIRSTCLASS_RULE
+  mem->firstclass_rulesets = vec_make(4);
+#endif
 
   return mem;
 }
@@ -424,6 +435,9 @@ void lmn_mem_free(LmnMembraneRef mem)
 
   lmn_mem_rulesets_destroy(&mem->rulesets);
   env_return_id(lmn_mem_id(mem));
+#ifdef USE_FIRSTCLASS_RULE
+  vec_free(mem->firstclass_rulesets);
+#endif
   LMN_FREE(mem->atomset);
   LMN_FREE(mem);
 }
@@ -824,6 +838,15 @@ void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem)
          a != lmn_atomlist_end((srcent));
          a  = next) {
       next = LMN_SATOM_GET_NEXT_RAW(a);
+
+#ifdef USE_FIRSTCLASS_RULE
+      if (LMN_SATOM_GET_FUNCTOR(a) == LMN_COLON_MINUS_FUNCTOR) {
+        LmnRuleSetRef rs = firstclass_ruleset_lookup(a);
+        lmn_mem_remove_firstclass_ruleset(srcmem, rs);
+        lmn_mem_add_firstclass_ruleset(destmem, rs);
+      }
+#endif
+
       if (LMN_SATOM_GET_FUNCTOR((a)) != LMN_RESUME_FUNCTOR) {
         int i, arity;
 
@@ -3749,4 +3772,37 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0,
     LMN_SATOM_SET_ATTR(LMN_SATOM(atom1), LMN_ATTR_GET_VALUE(attr), LMN_ATTR_MAKE_LINK(pos));
   }
 }
+#ifdef USE_FIRSTCLASS_RULE
+Vector *lmn_mem_firstclass_rulesets(LmnMembraneRef mem) {
+  return mem->firstclass_rulesets;
+}
+#endif
 
+#ifdef USE_FIRSTCLASS_RULE
+void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
+  LMN_ASSERT(fcr);
+  lmn_mem_add_ruleset_sort(mem->firstclass_rulesets, fcr);
+}
+#endif
+
+#ifdef USE_FIRSTCLASS_RULE
+void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
+  LmnRulesetId del_id = lmn_ruleset_get_id(fcr);
+  
+  for(int i = 0; i < vec_num(mem->firstclass_rulesets); i++) {
+    LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem->firstclass_rulesets, i);
+    if (lmn_ruleset_get_id(rs) != del_id) continue;
+    
+    /* move successors forward */
+    for(int j = i; j < vec_num(mem->firstclass_rulesets) - 1; j++) {
+      LmnRuleSetRef next = (LmnRuleSetRef)vec_get(mem->firstclass_rulesets, j + 1);
+      vec_set(mem->firstclass_rulesets, j, (vec_data_t)next);
+    }
+
+    mem->firstclass_rulesets->num--;
+    return;
+  }
+
+  LMN_ASSERT(FALSE); // "attempt to delete an absent firstclass ruleset"
+}
+#endif

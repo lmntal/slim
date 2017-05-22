@@ -74,6 +74,7 @@ slim_SOURCES =                                                     \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
 	ext/set.c			ext/set.h			 \
+	ext/state_map.c							 \
 	ext/time.c
 #	ext.h ext.c
 
