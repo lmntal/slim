@@ -201,7 +201,7 @@ static int set_atom_type; /* special atom type */
  * @memberof LmnSet
  * @private
  */
-static LmnSetRef make_set(struct st_hash_type *ht)
+static LmnSetRef lmn_set_make(struct st_hash_type *ht)
 {
   LmnSetRef s = LMN_MALLOC(struct LmnSet);
   LMN_SP_ATOM_SET_TYPE(s, set_atom_type);
@@ -279,11 +279,11 @@ void cb_set_insert(LmnReactCxtRef rc,
     lmn_mem_delete_atom(mem, a0, t0);
     t0 = LMN_SP_ATOM_ATTR;
     if(LMN_INT_ATTR == t1)
-      a0 = (LmnAtomRef)make_set(&type_id_hash);
+      a0 = (LmnAtomRef)lmn_set_make(&type_id_hash);
     else if(LMN_SATOM_GET_FUNCTOR(a1) == LMN_OUT_PROXY_FUNCTOR)
-      a0 = (LmnAtomRef)make_set(&type_mem_hash);
+      a0 = (LmnAtomRef)lmn_set_make(&type_mem_hash);
     else
-      a0 = (LmnAtomRef)make_set(&type_tuple_hash);
+      a0 = (LmnAtomRef)lmn_set_make(&type_tuple_hash);
   }
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_data_t v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
@@ -446,10 +446,10 @@ void cb_set_copy(LmnReactCxtRef rc,
   LmnLinkAttr at = LMN_SP_ATOM_ATTR;
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   if(tbl->type == &type_id_hash) {
-    s = make_set(tbl->type);
+    s = lmn_set_make(tbl->type);
     s->tbl = st_copy(tbl);
   } else {
-    s = make_set(tbl->type);
+    s = lmn_set_make(tbl->type);
     st_foreach(tbl, (st_iter_func)inner_set_copy, s);
   }
   lmn_mem_push_atom(mem, (LmnAtomRef)s, at);
