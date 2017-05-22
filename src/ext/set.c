@@ -106,26 +106,6 @@ int tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1)
   return ret;
 }
 
-/**
- * @memberof LmnSet
- * @private
- */
-LmnAtomRef find_first_atom_with_functor(LmnMembraneRef mem, LmnFunctor fun)
-{
-  AtomListEntryRef ent;
-  LmnFunctor f;
-  LmnAtomRef ret = NULL;
-  EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
-	if(f != fun) continue;
-	LmnAtomRef satom;
-	EACH_ATOM(satom, ent, ({
-	      ret = satom;
-	    }))
-	  }));
-
-  return ret;
-}
-
 /* mem set */
 /**
  * @memberof LmnSet
@@ -133,8 +113,9 @@ LmnAtomRef find_first_atom_with_functor(LmnMembraneRef mem, LmnFunctor fun)
  */
 LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
 {
-  LmnAtomRef plus = find_first_atom_with_functor(m, LMN_UNARY_PLUS_FUNCTOR);
-  LMN_ASSERT(plus != NULL);
+  AtomListEntryRef plus_atom_list = lmn_mem_get_atomlist(m, LMN_UNARY_PLUS_FUNCTOR);
+  LMN_ASSERT(plus_atom_list != NULL);
+  LmnAtomRef plus = (LmnAtomRef)atomlist_head(plus_atom_list);
   LmnAtomRef in = LMN_SATOM_GET_LINK(plus, 0);
   LmnAtomRef out = LMN_SATOM_GET_LINK(in, 0);
 
@@ -416,8 +397,9 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj)
 		    (LmnWord)key, LMN_INT_ATTR, 0);
     lmn_mem_push_atom(itl->mem, (LmnWord)key, LMN_INT_ATTR);
   } else if(itl->ht == &type_mem_hash) {
-    LmnAtomRef in = find_first_atom_with_functor(key, LMN_IN_PROXY_FUNCTOR);
-    LMN_ASSERT(in != NULL);
+    AtomListEntryRef in_atom_list = lmn_mem_get_atomlist(key, LMN_IN_PROXY_FUNCTOR);
+    LMN_ASSERT(in_atom_list != NULL);
+    LmnAtomRef in = (LmnAtomRef)atomlist_head(in_atom_list);
     LmnAtomRef out = lmn_mem_newatom(itl->mem, LMN_OUT_PROXY_FUNCTOR);
     lmn_newlink_in_symbols(in, 0, out, 0);
     lmn_mem_newlink(itl->mem,
