@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "vm/vm.h"
+#include "verifier/verifier.h"
 #include "set.h"
 
 void cb_react_rule(LmnReactCxtRef rc,
@@ -46,10 +47,10 @@ void cb_react_rule(LmnReactCxtRef rc,
 
 void cb_react_ruleset_nd(LmnReactCxtRef rc,
 			 LmnMembraneRef mem,
-			 LmnAtom rule_mem_proxy, LmnLinkAttr rule_mem_proxy_link_attr,
-			 LmnAtom graph_mem_proxy, LmnLinkAttr graph_mem_proxy_link_attr,
-			 LmnAtom return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
-			 LmnAtom react_judge_atom, LmnLinkAttr react_judge_link_attr)
+			 LmnAtomRef rule_mem_proxy, LmnLinkAttr rule_mem_proxy_link_attr,
+			 LmnAtomRef graph_mem_proxy, LmnLinkAttr graph_mem_proxy_link_attr,
+			 LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
+			 LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
   LmnAtomRef in_mem = LMN_SATOM_GET_LINK(graph_mem_proxy, 0);
@@ -144,11 +145,11 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
 #endif
 
   if(p_nil == 0){
-    lmn_mem_newlink(mem, LMN_ATOM(nil), LMN_ATTR_MAKE_LINK(0), 0,
+    lmn_mem_newlink(mem, nil, LMN_ATTR_MAKE_LINK(0), 0,
 		    react_judge_atom, react_judge_link_attr,
 		    LMN_ATTR_GET_VALUE(react_judge_link_attr));
   }else{
-    lmn_mem_newlink(mem, LMN_ATOM(prev_cons), LMN_ATTR_MAKE_LINK(0), 2,
+    lmn_mem_newlink(mem, prev_cons, LMN_ATTR_MAKE_LINK(0), 2,
 		    react_judge_atom, react_judge_link_attr,
 		    LMN_ATTR_GET_VALUE(react_judge_link_attr));
   }
@@ -178,9 +179,9 @@ void cb_mhash(LmnReactCxtRef rc,
 
   lmn_mem_newlink(mem,
 		  ret_hash_atom, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(ret_hash_atom_link_attr),
-		  h, LMN_INT_ATTR, 0);
+		  (LmnAtomRef)h, LMN_INT_ATTR, 0);
 
-  lmn_mem_push_atom(mem, h, LMN_INT_ATTR);
+  lmn_mem_push_atom(mem, (LmnAtomRef)h, LMN_INT_ATTR);
   
   lmn_mem_newlink(mem,
 		  ret_mem_proxy, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(ret_mem_proxy_link_attr),
@@ -189,19 +190,19 @@ void cb_mhash(LmnReactCxtRef rc,
 
 void cb_mem_equals(LmnReactCxtRef rc,
 		   LmnMembraneRef mem,
-		   LmnAtom mem0_proxy, LmnLinkAttr mem0_proxy_link_attr,
-		   LmnAtom mem1_proxy, LmnLinkAttr mem1_proxy_link_attr,
-		   LmnAtom ret_mem0_link, LmnLinkAttr ret_mem0_link_attr,
-		   LmnAtom ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
-		   LmnAtom res_link, LmnLinkAttr res_link_attr)
+		   LmnAtomRef mem0_proxy, LmnLinkAttr mem0_proxy_link_attr,
+		   LmnAtomRef mem1_proxy, LmnLinkAttr mem1_proxy_link_attr,
+		   LmnAtomRef ret_mem0_link, LmnLinkAttr ret_mem0_link_attr,
+		   LmnAtomRef ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
+		   LmnAtomRef res_link, LmnLinkAttr res_link_attr)
 {
   LmnMembraneRef m0 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem0_proxy, 0));
   LmnMembraneRef m1 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem1_proxy, 0));
   LmnFunctor judge = (mem_cmp(m0, m1) == 0) ? LMN_TRUE_FUNCTOR : LMN_FALSE_FUNCTOR;
-  LmnSAtom result = lmn_mem_newatom(mem, judge);
+  LmnSymbolAtomRef result = lmn_mem_newatom(mem, judge);
 
   lmn_mem_newlink(mem,
-		  LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
+		  result, LMN_ATTR_MAKE_LINK(0), 0,
 		  res_link, res_link_attr,
 		  LMN_ATTR_GET_VALUE(res_link_attr));
 

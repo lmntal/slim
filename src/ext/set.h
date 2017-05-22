@@ -41,7 +41,9 @@
 #define LMN_SET_H
 
 #include "element/element.h"
+#include "vm/vm.h"
 
+int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
 extern struct st_hash_type type_id_hash;
 
 #endif

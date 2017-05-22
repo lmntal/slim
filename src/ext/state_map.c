@@ -32,15 +32,15 @@ void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
  */
 void cb_state_map_init(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
-                       LmnAtom a0, LmnLinkAttr t0)
+                       LmnAtomRef a0, LmnLinkAttr t0)
 {
   LmnStateMapRef atom = lmn_make_state_map(mem);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   LMN_SP_ATOM_SET_TYPE(atom, state_map_atom_type);
-  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+  lmn_mem_push_atom(mem, atom, attr);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  LMN_ATOM(atom), attr, 0);
+                  atom, attr, 0);
 }
 
 /*
@@ -49,10 +49,10 @@ void cb_state_map_init(LmnReactCxtRef rc,
  */
 void cb_state_map_free(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
-                       LmnAtom a0, LmnLinkAttr t0)
+                       LmnAtomRef a0, LmnLinkAttr t0)
 {
   lmn_state_map_free(LMN_STATE_MAP(a0), mem);
-  lmn_mem_remove_data_atom(mem, a0, t0);
+  lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
 /*
@@ -64,10 +64,10 @@ void cb_state_map_free(LmnReactCxtRef rc,
  */
 void cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnMembraneRef mem,
-                          LmnAtom a0, LmnLinkAttr t0,
-                          LmnAtom a1, LmnLinkAttr t1,
-                          LmnAtom a2, LmnLinkAttr t2,
-                          LmnAtom a3, LmnLinkAttr t3)
+                          LmnAtomRef a0, LmnLinkAttr t0,
+                          LmnAtomRef a1, LmnLinkAttr t1,
+                          LmnAtomRef a2, LmnLinkAttr t2,
+                          LmnAtomRef a3, LmnLinkAttr t3)
 {
   LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
   LmnSAtom in = LMN_SATOM_GET_LINK(a1, 0);
@@ -82,7 +82,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   LmnSAtom at = lmn_mem_newatom(m, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
-  State *new_s = state_make(m, NULL, mc_use_canonical(mc_flag));
+  State *new_s = state_make(m, 0, mc_use_canonical(mc_flag));
 
   State *succ = statespace_insert(ss, new_s);
 
@@ -99,7 +99,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
-                  (LmnWord)succ, LMN_INT_ATTR, 0);
+                  succ, LMN_INT_ATTR, 0);
 
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
@@ -119,10 +119,10 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
  */
 void cb_state_map_state_find(LmnReactCxtRef rc,
 			     LmnMembraneRef mem,
-			     LmnAtom a0, LmnLinkAttr t0,
-			     LmnAtom a1, LmnLinkAttr t1,
-			     LmnAtom a2, LmnLinkAttr t2,
-			     LmnAtom a3, LmnLinkAttr t3)
+			     LmnAtomRef a0, LmnLinkAttr t0,
+			     LmnAtomRef a1, LmnLinkAttr t1,
+			     LmnAtomRef a2, LmnLinkAttr t2,
+			     LmnAtomRef a3, LmnLinkAttr t3)
 {
   st_table_t i_tbl=LMN_STATE_MAP(a0)->id_tbl;
   State *s=(State *)a1;
@@ -150,7 +150,7 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
   }else{
     result=lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
     lmn_mem_newlink(mem,
-		    LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
+		    result, LMN_ATTR_MAKE_LINK(0), 0,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2));
   }
   lmn_mem_newlink(mem,
@@ -171,8 +171,9 @@ void sp_cb_state_map_free(void *data)
 {
 }
 
-void sp_cb_state_map_eq(void *_p1, void *_p2)
+unsigned char sp_cb_state_map_eq(void *_p1, void *_p2)
 {
+  return 0;
 }
 
 void sp_cb_state_map_dump(void *state_map, LmnPortRef port)
@@ -180,8 +181,9 @@ void sp_cb_state_map_dump(void *state_map, LmnPortRef port)
   port_put_raw_s(port, "<state_map>");
 }
 
-void sp_cb_state_map_is_ground(void *data)
+unsigned char sp_cb_state_map_is_ground(void *data)
 {
+  return 1;
 }
 
 void init_state_map(void)
