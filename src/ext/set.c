@@ -373,7 +373,7 @@ void cb_set_to_list(LmnReactCxtRef rc,
   InnerToListRef itl = LMN_MALLOC(struct InnerToList);
   itl->cons = cons;
   itl->mem = mem;
-  itl->ht = ((LmnSetRef)a0)->tbl;
+  itl->ht = tbl->type;
   st_foreach(tbl, (st_iter_func)inner_set_to_list, (st_data_t)itl);
 
   lmn_mem_delete_atom(itl->mem, itl->cons, LMN_ATTR_MAKE_LINK(2));
