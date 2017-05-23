@@ -1,2 +1,2 @@
 
-SUBDIRS = system_check statespace
+SUBDIRS = system_check statespace library_check

@@ -907,6 +907,7 @@ AC_OUTPUT(Makefile \
           test/Makefile \
           test/system_check/Makefile \
           test/statespace/Makefile \
+          test/library_check/Makefile \
           third_party/Makefile \
           third_party/zdelta-2.1/Makefile \
           third_party/google-perftools-1.8.3/Makefile \
