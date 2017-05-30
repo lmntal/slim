@@ -71,37 +71,77 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
       int r_num = lmn_ruleset_rule_num(rs);
 
       for(int j = 0; j < r_num; j++){
-	LmnRuleRef r = lmn_ruleset_get_rule(rs, j);
-	mc_react_cxt_init(tmp_rc);
-	RC_SET_GROOT_MEM(tmp_rc, graph_mem);
-	RC_ADD_MODE(tmp_rc, REACT_ND_MERGE_STS);
-	react_rule(tmp_rc, graph_mem, r);
-	int n_of_results = vec_num(RC_EXPANDED(tmp_rc));
-	int n1 = n_of_results - 1;
+        LmnRuleRef r = lmn_ruleset_get_rule(rs, j);
+        mc_react_cxt_init(tmp_rc);
+        RC_SET_GROOT_MEM(tmp_rc, graph_mem);
+        RC_ADD_MODE(tmp_rc, REACT_ND_MERGE_STS);
+        react_rule(tmp_rc, graph_mem, r);
+        int n_of_results = vec_num(RC_EXPANDED(tmp_rc));
+        int n1 = n_of_results - 1;
 
-	if(n_of_results == 0)
-	  continue;
+        if(n_of_results == 0)
+          continue;
 
-	for(int k = n1; k >= 0; k--){
-	  LmnSAtom cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
-	  LmnMembraneRef m = (LmnMembraneRef)vec_get(RC_EXPANDED(tmp_rc), k);
-	  LmnSAtom in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
-	  LmnSAtom out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
-	  LmnSAtom plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
-	  lmn_mem_add_child_mem(mem, m);
-	  lmn_newlink_in_symbols(in, 0, out, 0);
-	  lmn_newlink_in_symbols(in, 1, plus, 0);
-	  lmn_newlink_in_symbols(out, 1, cons, 0);
-	  if (p_nil == 0) {
-	    lmn_newlink_in_symbols(cons, 1, nil, 0);
-	  } else {
-	    lmn_newlink_in_symbols(cons, 1, prev_cons, 2);
-	  }
-	  prev_cons = cons;
-	  p_nil = 1;
-	}
+        for(int k = n1; k >= 0; k--){
+          LmnSAtom cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+          LmnMembraneRef m = (LmnMembraneRef)vec_get(RC_EXPANDED(tmp_rc), k);
+          LmnSAtom in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
+          LmnSAtom out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+          LmnSAtom plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
+          lmn_mem_add_child_mem(mem, m);
+          lmn_newlink_in_symbols(in, 0, out, 0);
+          lmn_newlink_in_symbols(in, 1, plus, 0);
+          lmn_newlink_in_symbols(out, 1, cons, 0);
+          if (p_nil == 0) {
+            lmn_newlink_in_symbols(cons, 1, nil, 0);
+          } else {
+            lmn_newlink_in_symbols(cons, 1, prev_cons, 2);
+          }
+          prev_cons = cons;
+          p_nil = 1;
+        }
       }
     }
+
+#ifdef USE_FIRSTCLASS_RULES
+  for(int i = 0; i < vec_num(lmn_mem_firstclass_rulesets(rule_mem)); i++)
+    {
+      LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(lmn_mem_firstclass_rulesets(rule_mem), i);
+      int r_num = lmn_ruleset_rule_num(rs);
+
+      for(int j = 0; j < r_num; j++){
+        LmnRuleRef r = lmn_ruleset_get_rule(rs, j);
+        mc_react_cxt_init(tmp_rc);
+        RC_SET_GROOT_MEM(tmp_rc, graph_mem);
+        RC_ADD_MODE(tmp_rc, REACT_ND_MERGE_STS);
+        react_rule(tmp_rc, graph_mem, r);
+        int n_of_results = vec_num(RC_EXPANDED(tmp_rc));
+        int n1 = n_of_results - 1;
+
+        if(n_of_results == 0)
+          continue;
+
+        for(int k = n1; k >= 0; k--){
+          LmnSAtom cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+          LmnMembraneRef m = (LmnMembraneRef)vec_get(RC_EXPANDED(tmp_rc), k);
+          LmnSAtom in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
+          LmnSAtom out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+          LmnSAtom plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
+          lmn_mem_add_child_mem(mem, m);
+          lmn_newlink_in_symbols(in, 0, out, 0);
+          lmn_newlink_in_symbols(in, 1, plus, 0);
+          lmn_newlink_in_symbols(out, 1, cons, 0);
+          if (p_nil == 0) {
+            lmn_newlink_in_symbols(cons, 1, nil, 0);
+          } else {
+            lmn_newlink_in_symbols(cons, 1, prev_cons, 2);
+          }
+          prev_cons = cons;
+          p_nil = 1;
+        }
+      }
+    }
+#endif
 
   if(p_nil == 0){
     lmn_mem_newlink(mem, LMN_ATOM(nil), LMN_ATTR_MAKE_LINK(0), 0,
