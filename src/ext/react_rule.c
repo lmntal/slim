@@ -103,7 +103,7 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
       }
     }
 
-#ifdef USE_FIRSTCLASS_RULES
+#ifdef USE_FIRSTCLASS_RULE
   for(int i = 0; i < vec_num(lmn_mem_firstclass_rulesets(rule_mem)); i++)
     {
       LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(lmn_mem_firstclass_rulesets(rule_mem), i);
