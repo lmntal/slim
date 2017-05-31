@@ -42,13 +42,15 @@
    * usage:
    *   you have to write a test suite with following structure:
    *
-   *     test_suite = {
-   *       test_case = {
-   *         init = { ... }.
-   *         ruleset = { ... }.
-   *         stable = { ... }.
+   *     tap_producer = {
+   *       test_suite = {
+   *         test_case = {
+   *           init = { ... }.
+   *           ruleset = { ... }.
+   *           stable = { ... }.
+   *         }.
+   *         ...
    *       }.
-   *       ...
    *     }.
    *
    *   you must write three attributes in a test case:
@@ -70,43 +72,45 @@
    *   Its format conforms to TAP (Test Anything Protocol), so you can analyze the results with some test harness.
    *
    *   Example:
-   *     test_suite = {
-   *       setup = {}.
+   *     tap_producer = {
+   *       test_suite = {
+   *         setup = {}.
    *     
-   *       test_case = {
-   *         name = "append case 1".
-   *         init = {
-   *           append(c(1,c(2,c(3,n))),c(4,c(5,n)),result).
+   *         test_case = {
+   *           name = "append case 1".
+   *           init = {
+   *             append(c(1,c(2,c(3,n))),c(4,c(5,n)),result).
+   *           }.
+   *     
+   *           ruleset = {
+   *             append(X,Y,Z), n(X) :- Y = Z.
+   *             append(X,Y,Z), c(A,X1,X) :- c(A,Z1,Z), append(X1,Y,Z1).
+   *           }.
+   *     
+   *           stable = {
+   *             result(c(1,c(2,c(3,c(4,c(5,n)))))).
+   *           }.
    *         }.
    *     
-   *         ruleset = {
-   *           append(X,Y,Z), n(X) :- Y = Z.
-   *           append(X,Y,Z), c(A,X1,X) :- c(A,Z1,Z), append(X1,Y,Z1).
+   *         test_case = {
+   *           init = {
+   *             append([1,2,3],[4,5],result).
+   *           }.
+   *     
+   *           ruleset = {
+   *             Z = append([],Y) :- Y = Z.
+   *             Z = append([A|X],Y) :- Z = [A|append(X,Y)].
+   *           }.
+   *     
+   *           stable = {
+   *             result([1,2,3,4,5]).
+   *           }.
+   *     
+   *           message = "should be 'result([1,2,3,4,5])'"
    *         }.
    *     
-   *         stable = {
-   *           result(c(1,c(2,c(3,c(4,c(5,n)))))).
-   *         }.
+   *         teardown = {}.
    *       }.
-   *     
-   *       test_case = {
-   *         init = {
-   *           append([1,2,3],[4,5],result).
-   *         }.
-   *     
-   *         ruleset = {
-   *           Z = append([],Y) :- Y = Z.
-   *           Z = append([A|X],Y) :- Z = [A|append(X,Y)].
-   *         }.
-   *     
-   *         stable = {
-   *           result([1,2,3,4,5]).
-   *         }.
-   *     
-   *         message = "should be 'result([1,2,3,4,5])'"
-   *       }.
-   *     
-   *       teardown = {}.
    *     }.
    */
 
