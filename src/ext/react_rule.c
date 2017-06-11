@@ -154,60 +154,9 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr); 
 }
 
-void cb_mhash(LmnReactCxtRef rc,
-              LmnMembraneRef mem,
-              LmnAtomRef mem_proxy, LmnLinkAttr mem_proxy_link_attr,
-              LmnAtomRef ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
-              LmnAtomRef ret_hash_atom, LmnLinkAttr ret_hash_atom_link_attr)
-{
-  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem_proxy, 0));
-
-  unsigned long h = mhash(m);
-
-  lmn_mem_newlink(mem,
-                  ret_hash_atom, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(ret_hash_atom_link_attr),
-                  (LmnAtomRef)h, LMN_INT_ATTR, 0);
-
-  lmn_mem_push_atom(mem, (LmnAtomRef)h, LMN_INT_ATTR);
-  
-  lmn_mem_newlink(mem,
-                  ret_mem_proxy, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(ret_mem_proxy_link_attr),
-                  mem_proxy, mem_proxy_link_attr, LMN_ATTR_GET_VALUE(mem_proxy_link_attr));
-}
-
-void cb_mem_equals(LmnReactCxtRef rc,
-                   LmnMembraneRef mem,
-                   LmnAtomRef mem0_proxy, LmnLinkAttr mem0_proxy_link_attr,
-                   LmnAtomRef mem1_proxy, LmnLinkAttr mem1_proxy_link_attr,
-                   LmnAtomRef ret_mem0_link, LmnLinkAttr ret_mem0_link_attr,
-                   LmnAtomRef ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
-                   LmnAtomRef res_link, LmnLinkAttr res_link_attr)
-{
-  LmnMembraneRef m0 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem0_proxy, 0));
-  LmnMembraneRef m1 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem1_proxy, 0));
-  LmnFunctor judge = (mem_cmp(m0, m1) == 0) ? LMN_TRUE_FUNCTOR : LMN_FALSE_FUNCTOR;
-  LmnSymbolAtomRef result = lmn_mem_newatom(mem, judge);
-
-  lmn_mem_newlink(mem,
-                  result, LMN_ATTR_MAKE_LINK(0), 0,
-                  res_link, res_link_attr,
-                  LMN_ATTR_GET_VALUE(res_link_attr));
-
-  lmn_mem_newlink(mem,
-                  mem0_proxy, mem0_proxy_link_attr, LMN_ATTR_GET_VALUE(mem0_proxy_link_attr),
-                  ret_mem0_link, LMN_ATTR_MAKE_LINK(0),
-                  LMN_ATTR_GET_VALUE(ret_mem0_link_attr));
-
-  lmn_mem_newlink(mem,
-                  mem1_proxy, mem1_proxy_link_attr, LMN_ATTR_GET_VALUE(mem1_proxy_link_attr),
-                  ret_mem1_link, LMN_ATTR_MAKE_LINK(0),
-                  LMN_ATTR_GET_VALUE(ret_mem1_link_attr));
-}
 
 void init_react_rule(void)
 {
   lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
   lmn_register_c_fun("cb_react_ruleset_nd", (void *)cb_react_ruleset_nd, 4);
-  lmn_register_c_fun("cb_mhash", (void *)cb_mhash, 3);
-  lmn_register_c_fun("cb_mem_equals", (void *)cb_mem_equals, 5);
 }

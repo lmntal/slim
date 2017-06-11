@@ -1,7 +1,7 @@
 /*
- * init_exts.c - String API
+ * ext/membrane.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
@@ -37,37 +37,9 @@
  * $Id$
  */
 
-#include "../lmntal.h"
-#include "membrane.h"
+#ifndef EXT_MEMBRANE_H
+#define EXT_MEMBRANE_H
 
-void init_integer(void);
-void init_float(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_array(void);
-void init_atom(void);
-void init_react_rule(void);
-void init_set(void);
-void init_state_map(void);
+void init_membrane(void);
 
-void init_builtin_extensions(void)
-{
-  init_integer();
-  init_float();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();
-  init_array();
-  init_atom();
-  init_react_rule();
-  init_set();
-  init_state_map();
-  init_membrane();
-}
+#endif /* EXT_MEMBRANE_H */
