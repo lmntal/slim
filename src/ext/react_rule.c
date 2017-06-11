@@ -37,17 +37,15 @@
  * $Id$
  */
 
-#include <stdio.h>
 #include "vm/vm.h"
-#include "verifier/verifier.h"
-#include "set.h"
+
 
 void cb_react_rule(LmnReactCxtRef rc,
-                          LmnMembraneRef mem,
-                          LmnAtomRef rule_mem_proxy, LmnLinkAttr rule_mem_proxy_link_attr,
-                          LmnAtomRef graph_mem_proxy, LmnLinkAttr graph_mem_proxy_link_attr,
-                          LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
-                          LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
+                   LmnMembraneRef mem,
+                   LmnAtomRef rule_mem_proxy, LmnLinkAttr rule_mem_proxy_link_attr,
+                   LmnAtomRef graph_mem_proxy, LmnLinkAttr graph_mem_proxy_link_attr,
+                   LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
+                   LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(graph_mem_proxy, 0));
@@ -79,7 +77,15 @@ void cb_react_rule(LmnReactCxtRef rc,
   react_context_dealloc(tmp_rc);
 }
 
-static void apply_rules_in_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem, LmnMembraneRef src_graph, Vector *rulesets, LmnSymbolAtomRef *tail, int *pos) {
+/**
+ * apply rules in rulesets by one-step.
+ *
+ * the reacted graphs are added to {\c pos} of the list {\c head}.
+ */
+static void apply_rules_in_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
+                                    LmnMembraneRef src_graph, Vector *rulesets,
+                                    LmnSymbolAtomRef *head, int *pos)
+{
   for (int i = 0; i < vec_num(rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
 
@@ -101,8 +107,8 @@ static void apply_rules_in_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem, LmnMe
         lmn_newlink_in_symbols(in, 0, out, 0);
         lmn_newlink_in_symbols(in, 1, plus, 0);
         lmn_newlink_in_symbols(out, 1, cons, 0);
-        lmn_newlink_in_symbols(cons, 1, *tail, *pos);
-        *tail = cons;
+        lmn_newlink_in_symbols(cons, 1, *head, *pos);
+        *head = cons;
         *pos = 2;
       }
     }
@@ -126,18 +132,18 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
   LmnReactCxtRef tmp_rc = react_context_alloc();
   mc_react_cxt_init(tmp_rc);
 
-  LmnSymbolAtomRef tail = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int pos = 0;
 
   Vector *rulesets = lmn_mem_get_rulesets(rule_mem);
-  apply_rules_in_rulesets(tmp_rc, mem, graph_mem, rulesets, &tail, &pos);
+  apply_rules_in_rulesets(tmp_rc, mem, graph_mem, rulesets, &head, &pos);
 
 #ifdef USE_FIRSTCLASS_RULE
   Vector *fstclass_rules = lmn_mem_firstclass_rulesets(rule_mem);
-  apply_rules_in_rulesets(tmp_rc, mem, graph_mem, fstclass_rules, &tail, &pos);
+  apply_rules_in_rulesets(tmp_rc, mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
 
-  lmn_mem_newlink(mem, tail, LMN_ATTR_MAKE_LINK(pos), pos,
+  lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos,
                   react_judge_atom, react_judge_link_attr,
                   LMN_ATTR_GET_VALUE(react_judge_link_attr));
 
