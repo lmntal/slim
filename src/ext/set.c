@@ -130,9 +130,9 @@ LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
   mem_remove_symbol_atom(m, at);
   lmn_delete_atom(at);
 
-  LmnAtomRef new_in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR);
-  lmn_newlink_in_symbols(in, 0, out, 0);
-  lmn_newlink_in_symbols(in, 1, plus, 0);
+  LmnAtomRef new_in = lmn_mem_newatom((LmnAtomRef)m, LMN_IN_PROXY_FUNCTOR);
+  lmn_newlink_in_symbols(new_in, 0, out, 0);
+  lmn_newlink_in_symbols(new_in, 1, plus, 0);
 
   return s;
 }
@@ -221,7 +221,7 @@ void lmn_set_free(LmnSetRef set)
 {
   st_table_t tbl = set->tbl;
   if(tbl->type != &type_id_hash)
-    st_foreach(tbl, (st_iter_func)inner_set_free, tbl->type);
+    st_foreach(tbl, (st_iter_func)inner_set_free, (st_data_t)tbl->type);
   st_free_table(tbl);
 }
 
@@ -231,10 +231,10 @@ void lmn_set_free(LmnSetRef set)
  */
 int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg)
 {
-  if(arg == &type_mem_hash)
-    lmn_mem_free_rec(key);
+  if(arg == (st_data_t)&type_mem_hash)
+    lmn_mem_free_rec((LmnMembraneRef)key);
   else
-    free_symbol_atom_with_buddy_data(key);
+    free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
 }
 /*----------------------------------------------------------------------
@@ -255,7 +255,7 @@ void cb_set_free(LmnReactCxtRef rc,
 		 LmnAtomRef a0, LmnLinkAttr t0)
 {
   lmn_set_free((LmnSetRef)a0);
-  lmn_mem_remove_data_atom(mem, a0, t0);
+  lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
 /*
@@ -286,8 +286,8 @@ void cb_set_insert(LmnReactCxtRef rc,
       a0 = (LmnAtomRef)lmn_set_make(&type_tuple_hash);
   }
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
-  st_data_t v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
-  st_insert(tbl, v, v);
+  LmnAtomRef v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
+  st_insert(tbl, (st_data_t)v, (st_data_t)v);
   if(tbl->type == &type_tuple_hash) {
     mem_remove_symbol_atom_with_buddy_data(mem, a1);
   } else {
@@ -320,9 +320,9 @@ void cb_set_find(LmnReactCxtRef *rc,
 		 LmnAtomRef a3, LmnLinkAttr t3)
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
-  st_data_t key = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
+  LmnAtomRef key = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
   st_data_t entry;
-  int res = st_lookup(tbl, key, &entry);
+  int res = st_lookup(tbl, (st_data_t)key, &entry);
   lmn_interned_str s = (res) ? lmn_intern("some") : lmn_intern("none");
   LmnAtomRef result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, s, 1));
   lmn_mem_newlink(mem,
@@ -394,10 +394,10 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj)
   if(itl->ht == &type_id_hash) {
     lmn_mem_newlink(itl->mem,
 		    itl->cons, LMN_ATTR_MAKE_LINK(0), 0,
-		    (LmnWord)key, LMN_INT_ATTR, 0);
-    lmn_mem_push_atom(itl->mem, (LmnWord)key, LMN_INT_ATTR);
+		    (LmnAtomRef)key, LMN_INT_ATTR, 0);
+    lmn_mem_push_atom(itl->mem, (LmnAtomRef)key, LMN_INT_ATTR);
   } else if(itl->ht == &type_mem_hash) {
-    AtomListEntryRef in_atom_list = lmn_mem_get_atomlist(key, LMN_IN_PROXY_FUNCTOR);
+    AtomListEntryRef in_atom_list = lmn_mem_get_atomlist((LmnMembraneRef)key, LMN_IN_PROXY_FUNCTOR);
     LMN_ASSERT(in_atom_list != NULL);
     LmnAtomRef in = (LmnAtomRef)atomlist_head(in_atom_list);
     LmnAtomRef out = lmn_mem_newatom(itl->mem, LMN_OUT_PROXY_FUNCTOR);
@@ -409,8 +409,8 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj)
   } else if(itl->ht == &type_tuple_hash) {
     int i;
     lmn_mem_push_atom(itl->mem, (LmnAtomRef)key, LMN_ATTR_MAKE_LINK(3));
-    for(i = 0; i < LMN_SATOM_GET_ARITY(key) - 1; i++)
-      lmn_mem_push_atom(itl->mem, LMN_SATOM_GET_LINK(key, i), LMN_INT_ATTR);
+    for(i = 0; i < LMN_SATOM_GET_ARITY((LmnAtomRef)key) - 1; i++)
+      lmn_mem_push_atom(itl->mem, LMN_SATOM_GET_LINK((LmnAtomRef)key, i), LMN_INT_ATTR);
     lmn_mem_newlink(itl->mem,
 		    itl->cons, LMN_ATTR_MAKE_LINK(0), 0,
 		    (LmnAtomRef)key, LMN_ATTR_MAKE_LINK(i), i);
@@ -450,7 +450,7 @@ void cb_set_copy(LmnReactCxtRef rc,
     s->tbl = st_copy(tbl);
   } else {
     s = lmn_set_make(tbl->type);
-    st_foreach(tbl, (st_iter_func)inner_set_copy, s);
+    st_foreach(tbl, (st_iter_func)inner_set_copy, (st_data_t)s);
   }
   lmn_mem_push_atom(mem, (LmnAtomRef)s, at);
   lmn_mem_newlink(mem,
@@ -468,7 +468,9 @@ void cb_set_copy(LmnReactCxtRef rc,
 int inner_set_copy(st_data_t key, st_data_t rec, st_data_t arg)
 {
   st_table_t tbl = ((LmnSetRef)arg)->tbl;
-  st_data_t val = (tbl->type == &type_mem_hash) ? lmn_mem_copy(key) : lmn_copy_satom_with_data((LmnSymbolAtomRef)key, FALSE);
+  st_data_t val = (tbl->type == &type_mem_hash) ?
+                  (st_data_t)lmn_mem_copy((LmnMembraneRef)key) :
+                  (st_data_t)lmn_copy_satom_with_data((LmnSymbolAtomRef)key, FALSE);
   st_insert(tbl, val, val);
   return ST_CONTINUE;
 }
@@ -500,8 +502,8 @@ void cb_set_erase(LmnReactCxtRef rc,
       lmn_mem_free_rec((LmnMembraneRef)entry);
     lmn_mem_delete_mem(mem, m);
   } else if(tbl->type == &type_tuple_hash) {
-    if(st_delete(tbl, a1, &entry))
-      free_symbol_atom_with_buddy_data(entry);
+    if(st_delete(tbl, (st_data_t)a1, &entry))
+      free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)entry);
   }
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_newlink(mem,
@@ -529,7 +531,7 @@ void cb_set_union(LmnReactCxtRef rc,
 		  LmnAtomRef a1, LmnLinkAttr t1,
 		  LmnAtomRef a2, LmnLinkAttr t2)
 {
-  st_foreach(((LmnSetRef)a0)->tbl, (st_iter_func)inner_set_union, a1);
+  st_foreach(((LmnSetRef)a0)->tbl, (st_iter_func)inner_set_union, (st_data_t)a1);
   lmn_mem_newlink(mem,
 		  a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
@@ -576,7 +578,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
 		      LmnAtomRef a2, LmnLinkAttr t2)
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
-  st_foreach(tbl, (st_iter_func)inner_set_intersect, a1);
+  st_foreach(tbl, (st_iter_func)inner_set_intersect, (st_data_t)a1);
   lmn_set_free(a1);
   if(st_num(tbl) > 0) {
     lmn_mem_newlink(mem,
@@ -602,9 +604,9 @@ int inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg)
   int found = st_lookup(tbl, key, &entry);
   if (found) return ST_CONTINUE;
   if(tbl->type == &type_mem_hash)
-    lmn_mem_free_rec(key);
+    lmn_mem_free_rec((LmnMembraneRef)key);
   else if(tbl->type == &type_tuple_hash)
-    free_symbol_atom_with_buddy_data(key);
+    free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
 }
 
@@ -628,7 +630,7 @@ void cb_set_diff(LmnReactCxtRef rc,
 		 LmnAtomRef a2, LmnLinkAttr t2)
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
-  st_foreach(tbl, (st_iter_func)inner_set_diff, a1);
+  st_foreach(tbl, (st_iter_func)inner_set_diff, (st_data_t)a1);
   lmn_set_free(a1);
   if(st_num(tbl) > 0) {
     lmn_mem_newlink(mem,
@@ -638,7 +640,7 @@ void cb_set_diff(LmnReactCxtRef rc,
     LmnAtomRef empty_set = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
-		    (LmnAtom)empty_set, LMN_ATTR_MAKE_LINK(0), 0);
+		    (LmnAtomRef)empty_set, LMN_ATTR_MAKE_LINK(0), 0);
     lmn_set_free(a0);
   }
 }
@@ -654,9 +656,9 @@ int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg)
   int found = st_lookup(tbl, key, &entry);
   if(!found) return ST_CONTINUE;
   if(tbl->type == &type_mem_hash)
-    lmn_mem_free_rec(key);
+    lmn_mem_free_rec((LmnMembraneRef)key);
   else if(tbl->type == &type_tuple_hash)
-    free_symbol_atom_with_buddy_data(key);
+    free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
 }
 /*----------------------------------------------------------------------
@@ -685,9 +687,9 @@ void sp_cb_set_free(void *data)
  * @memberof LmnSet
  * @private
  */
-void sp_cb_set_eq(void *data1, void *data2)
+unsigned char sp_cb_set_eq(void *data1, void *data2)
 {
-
+  return 0;
 }
 
 /**
@@ -703,9 +705,9 @@ void sp_cb_set_dump(void *set, LmnPortRef port)
  * @memberof LmnSet
  * @private
  */
-void sp_cb_set_is_ground(void *data)
+unsigned char sp_cb_set_is_ground(void *data)
 {
-
+  return 1;
 }
 
 /**

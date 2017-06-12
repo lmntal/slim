@@ -1,5 +1,5 @@
 /*
- * state_map.h
+ * ext/membrane.h
  *
  *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,20 +37,9 @@
  * $Id$
  */
 
-#ifndef EXT_STATE_MAP_H
-#define EXT_STATE_MAP_H
+#ifndef EXT_MEMBRANE_H
+#define EXT_MEMBRANE_H
 
-#include "lmntal.h"
-#include "element/element.h"
+void init_membrane(void);
 
-#define LMN_STATE_MAP(obj) ((LmnStateMapRef)(obj))
-
-typedef struct LmnStateMap *LmnStateMapRef;
-
-struct LmnStateMap{
-  LMN_SP_ATOM_HEADER;
-  StateSpaceRef states;
-  st_table_t id_tbl;
-};
-
-#endif /* EXT_STATE_MAP_H */
+#endif /* EXT_MEMBRANE_H */

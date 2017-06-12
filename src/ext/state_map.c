@@ -1,7 +1,46 @@
+/*
+ * state_map.c
+ *
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
+ */
+
 #include "state_map.h"
 #include "set.h"
-#include "../vm/react_context.h"
-#include "../verifier/mc_worker.h"
+#include "vm/vm.h"
+#include "verifier/verifier.h"
 
 static int state_map_atom_type;
 static BYTE mc_flag = 0x10U;
@@ -32,15 +71,15 @@ void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
  */
 void cb_state_map_init(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
-                       LmnAtom a0, LmnLinkAttr t0)
+                       LmnAtomRef a0, LmnLinkAttr t0)
 {
   LmnStateMapRef atom = lmn_make_state_map(mem);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   LMN_SP_ATOM_SET_TYPE(atom, state_map_atom_type);
-  lmn_mem_push_atom(mem, LMN_ATOM(atom), attr);
+  lmn_mem_push_atom(mem, atom, attr);
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  LMN_ATOM(atom), attr, 0);
+                  atom, attr, 0);
 }
 
 /*
@@ -49,10 +88,10 @@ void cb_state_map_init(LmnReactCxtRef rc,
  */
 void cb_state_map_free(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
-                       LmnAtom a0, LmnLinkAttr t0)
+                       LmnAtomRef a0, LmnLinkAttr t0)
 {
   lmn_state_map_free(LMN_STATE_MAP(a0), mem);
-  lmn_mem_remove_data_atom(mem, a0, t0);
+  lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
 /*
@@ -64,10 +103,10 @@ void cb_state_map_free(LmnReactCxtRef rc,
  */
 void cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnMembraneRef mem,
-                          LmnAtom a0, LmnLinkAttr t0,
-                          LmnAtom a1, LmnLinkAttr t1,
-                          LmnAtom a2, LmnLinkAttr t2,
-                          LmnAtom a3, LmnLinkAttr t3)
+                          LmnAtomRef a0, LmnLinkAttr t0,
+                          LmnAtomRef a1, LmnLinkAttr t1,
+                          LmnAtomRef a2, LmnLinkAttr t2,
+                          LmnAtomRef a3, LmnLinkAttr t3)
 {
   LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
   LmnSAtom in = LMN_SATOM_GET_LINK(a1, 0);
@@ -82,7 +121,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   LmnSAtom at = lmn_mem_newatom(m, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
-  State *new_s = state_make(m, NULL, mc_use_canonical(mc_flag));
+  State *new_s = state_make(m, 0, mc_use_canonical(mc_flag));
 
   State *succ = statespace_insert(ss, new_s);
 
@@ -99,7 +138,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
-                  (LmnWord)succ, LMN_INT_ATTR, 0);
+                  succ, LMN_INT_ATTR, 0);
 
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
@@ -119,10 +158,10 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
  */
 void cb_state_map_state_find(LmnReactCxtRef rc,
 			     LmnMembraneRef mem,
-			     LmnAtom a0, LmnLinkAttr t0,
-			     LmnAtom a1, LmnLinkAttr t1,
-			     LmnAtom a2, LmnLinkAttr t2,
-			     LmnAtom a3, LmnLinkAttr t3)
+			     LmnAtomRef a0, LmnLinkAttr t0,
+			     LmnAtomRef a1, LmnLinkAttr t1,
+			     LmnAtomRef a2, LmnLinkAttr t2,
+			     LmnAtomRef a3, LmnLinkAttr t3)
 {
   st_table_t i_tbl=LMN_STATE_MAP(a0)->id_tbl;
   State *s=(State *)a1;
@@ -150,7 +189,7 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
   }else{
     result=lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
     lmn_mem_newlink(mem,
-		    LMN_ATOM(result), LMN_ATTR_MAKE_LINK(0), 0,
+		    result, LMN_ATTR_MAKE_LINK(0), 0,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2));
   }
   lmn_mem_newlink(mem,
@@ -171,8 +210,9 @@ void sp_cb_state_map_free(void *data)
 {
 }
 
-void sp_cb_state_map_eq(void *_p1, void *_p2)
+unsigned char sp_cb_state_map_eq(void *_p1, void *_p2)
 {
+  return 0;
 }
 
 void sp_cb_state_map_dump(void *state_map, LmnPortRef port)
@@ -180,8 +220,9 @@ void sp_cb_state_map_dump(void *state_map, LmnPortRef port)
   port_put_raw_s(port, "<state_map>");
 }
 
-void sp_cb_state_map_is_ground(void *data)
+unsigned char sp_cb_state_map_is_ground(void *data)
 {
+  return 1;
 }
 
 void init_state_map(void)

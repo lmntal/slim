@@ -38,6 +38,7 @@
  */
 
 #include "../lmntal.h"
+#include "membrane.h"
 
 void init_integer(void);
 void init_float(void);
@@ -69,5 +70,6 @@ void init_builtin_extensions(void)
   init_react_rule();
   init_set();
   init_state_map();
+  init_membrane();
   init_zerostep();
 }

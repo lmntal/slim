@@ -1,0 +1,23 @@
+
+unit_test.use.
+
+tap_producer = {
+  test_suite = {
+    setup = { state_space.use. }.
+
+    test_case = {
+      name = "react_nd_set case 1".
+
+      init = { ret = state_space.react_nd_set({a(X) :- b(X)}, {a(1), a(2)}, rules) }.
+
+      ruleset = {}.
+
+      stable = {
+        ret = [{b(1), a(2)}, {a(1), b(2)}].
+      }.
+    }.
+
+    // ルールセットは等価性判定を行えないので削除
+    teardown = { state_space.use :- . rules({@p}) :- . }
+  }.
+}.
