@@ -206,6 +206,7 @@ struct LmnRuleSet {
   AtomicType atomic;      /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
   BOOL is_atomic_valid;   /* atomic step中であることを主張するフラグ */
   BOOL is_copy;
+  BOOL is_0step;
   BOOL has_uniqrule;
 };
 struct LmnRuleSetTable *ruleset_table;
@@ -231,6 +232,7 @@ LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size)
   ruleset->is_atomic_valid = FALSE;
   ruleset->is_copy = FALSE;
   ruleset->has_uniqrule = FALSE;
+  ruleset->is_0step = FALSE;
 
   return ruleset;
 }
@@ -451,6 +453,12 @@ LmnRuleRef *lmn_ruleset_get_rules(LmnRuleSetRef ruleset) {
   return ruleset->rules;
 }
 
+void lmn_ruleset_validate_0step(LmnRuleSetRef ruleset) {
+  ruleset->is_0step = TRUE;
+}
+BOOL lmn_ruleset_is_0step(LmnRuleSetRef ruleset) {
+  return ruleset->is_0step;
+}
 
 /* 2つのrulesetが同じruleを持つか判定する.
  * (ruleの順序はソースコード依存) */

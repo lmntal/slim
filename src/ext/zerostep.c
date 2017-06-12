@@ -1,7 +1,7 @@
 /*
- * init_exts.c - String API
+ * zerostep.c
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
@@ -37,37 +37,41 @@
  * $Id$
  */
 
-#include "../lmntal.h"
+#include "lmntal.h"
+#include "vm/vm.h"
 
-void init_integer(void);
-void init_float(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_array(void);
-void init_atom(void);
-void init_react_rule(void);
-void init_set(void);
-void init_state_map(void);
-void init_zerostep(void);
-
-void init_builtin_extensions(void)
+/**
+ * @brief 0stepルールセットを登録するためのコールバック
+ *
+ * @details
+ *   膜の中に入っているルールセットを0stepルールセットとする。
+ *   そのルールセットを親膜に移動し、元々の膜を削除する。
+ *   ただし、callback命令が終わった際、'$callback'アトムがdeleteされるため、
+ *   膜のメモリを解放してしまうとメモリアクセス違反が起きる。
+ *   現状ではメモリを解放せず親膜からの削除だけ行う。（これはメモリリークになる）
+ * @todo
+ *   メモリアクセス違反が起きないように膜のメモリを解放できるような仕様にする。
+ */
+void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
 {
-  init_integer();
-  init_float();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();
-  init_array();
-  init_atom();
-  init_react_rule();
-  init_set();
-  init_state_map();
-  init_zerostep();
+  LmnMembraneRef parent = lmn_mem_parent(mem);
+
+  /* ルールセットに0step属性をつけて親膜に移動 */
+  for (int i = 0; i < lmn_mem_ruleset_num(mem); i++) {
+    LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
+    lmn_ruleset_validate_0step(rs);
+    lmn_mem_add_ruleset(parent, lmn_ruleset_copy(rs));
+  }
+
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    lmn_memstack_delete(RC_MEMSTACK(rc), mem);
+  }
+  //lmn_mem_delete_mem(parent, mem); //< may cause memory error
+  lmn_mem_remove_mem(parent, mem);
+}
+
+
+void init_zerostep(void)
+{
+  lmn_register_c_fun("zerostep", (void *)cb_zerostep, 0);
 }
