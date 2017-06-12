@@ -70,6 +70,7 @@ LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx);
 #define REACT_PROPERTY      (0x01U << 3)  /* LTLモデル検査: 性質ルールのマッチングのみ */
 #define REACT_ATOMIC        (0x01U << 4)  /* Atomic Step中: インタリーブの抑制 */
 #define REACT_ND_MERGE_STS  (0x01U << 5 | REACT_ND)  /* 非決定実行: 別々の状態のグローバルルート膜がマージされ得る（react_rule_nd用） */
+#define REACT_ZEROSTEP      (0x01U << 6)  /**< 0step rule application */
 
 BYTE RC_MODE(LmnReactCxtRef cxt);
 void RC_SET_MODE(LmnReactCxtRef cxt, BYTE mode);

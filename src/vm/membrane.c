@@ -443,7 +443,7 @@ void lmn_mem_free(LmnMembraneRef mem)
 }
 
 
-/* 膜mem内のアトム, 子膜, ルールセットのメモリを解放する.
+/* 膜mem内のアトム, 子膜のメモリを解放する.
  * 子膜が存在する場合は, その子膜に再帰する. */
 void lmn_mem_drop(LmnMembraneRef mem)
 {
@@ -3539,9 +3539,6 @@ void lmn_mem_remove_mem(LmnMembraneRef parent, LmnMembraneRef mem) {
   if (lmn_mem_child_head(parent) == mem) parent->child_head = lmn_mem_next(mem);
   if (lmn_mem_prev(mem)) mem->prev->next = lmn_mem_next(mem);
   if (lmn_mem_next(mem)) mem->next->prev = lmn_mem_prev(mem);
-//  mem->parent = NULL; /* removeproxies のために必要. */
-  /* --> removeproxiesでmem->parentを使うようになったためコメントアウト
-   * (2011/01/23 meguro) */
 }
 
 /* 膜mem以下全ての階層のメモリを破棄する */
