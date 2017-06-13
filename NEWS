@@ -1,3 +1,15 @@
+SLIM (2.3.1) -- 2017/06/13
+  * new features
+    + add statespace library
+    + add membrane library
+    + add set library
+    + add unit test library
+    + add zerostep library
+  * first-class rewrite rules (experimental)
+    + enabled with --enable-firstclass-rule configure option
+  * refactoring
+  * fix --dump-json doesn't dump string atom correctly
+
 SLIM (2.3.0) -- 2017/03/29
   * display commit id in version string
   * test script with TAP

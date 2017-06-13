@@ -3,7 +3,7 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.3.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [2.3.1], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
@@ -27,7 +27,7 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 # Checks for programs.
 #
 
-CFLAGS="-O $CFLAGS"
+CFLAGS="-O -std=gnu99 $CFLAGS"
 CXXFLAGS="-g -O2 -mmmx -msse $CXXFLAGS"
 
 AC_LANG(C)
