@@ -1,7 +1,7 @@
 /*
- * vm.h
+ * zerostep.c
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
@@ -37,24 +37,41 @@
  * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+#include "lmntal.h"
+#include "vm/vm.h"
 
 /**
- * @defgroup Ext
+ * @brief 0stepルールセットを登録するためのコールバック
+ *
+ * @details
+ *   膜の中に入っているルールセットを0stepルールセットとする。
+ *   そのルールセットを親膜に移動し、元々の膜を削除する。
+ *   ただし、callback命令が終わった際、'$callback'アトムがdeleteされるため、
+ *   膜のメモリを解放してしまうとメモリアクセス違反が起きる。
+ *   現状ではメモリを解放せず親膜からの削除だけ行う。（これはメモリリークになる）
+ * @todo
+ *   メモリアクセス違反が起きないように膜のメモリを解放できるような仕様にする。
  */
+void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
+{
+  LmnMembraneRef parent = lmn_mem_parent(mem);
 
-/**
- * @defgroup VM
- */
+  /* ルールセットに0step属性をつけて親膜に移動 */
+  for (int i = 0; i < lmn_mem_ruleset_num(mem); i++) {
+    LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
+    lmn_ruleset_validate_0step(rs);
+    lmn_mem_add_ruleset(parent, lmn_ruleset_copy(rs));
+  }
 
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    lmn_memstack_delete(RC_MEMSTACK(rc), mem);
+  }
+  //lmn_mem_delete_mem(parent, mem); //< may cause memory error
+  lmn_mem_remove_mem(parent, mem);
+}
 
-#endif /* LMN_VM_H */
+
+void init_zerostep(void)
+{
+  lmn_register_c_fun("zerostep", (void *)cb_zerostep, 0);
+}

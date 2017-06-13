@@ -1,7 +1,7 @@
 /*
- * vm.h
+ * set.h
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
@@ -37,24 +37,13 @@
  * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+#ifndef LMN_SET_H
+#define LMN_SET_H
 
-/**
- * @defgroup Ext
- */
+#include "element/element.h"
+#include "vm/vm.h"
 
-/**
- * @defgroup VM
- */
+int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
+extern struct st_hash_type type_id_hash;
 
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
-
-#endif /* LMN_VM_H */
+#endif

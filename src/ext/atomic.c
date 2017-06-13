@@ -41,7 +41,7 @@
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 #ifdef PROFILE
-# include "runtime_status.h"
+# include "verifier/runtime_status.h"
 #endif
 
 void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,

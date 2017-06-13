@@ -45,8 +45,11 @@
 #include "special_atom.h"
 #include "symbol.h"
 #include "verifier/verifier.h"
-
 #include "verifier/runtime_status.h"
+
+#ifdef USE_FIRSTCLASS_RULE
+#  include "firstclass_rule.h"
+#endif
 
 
 typedef void (* callback_0)(LmnReactCxtRef,
@@ -164,6 +167,10 @@ void lmn_run(Vector *start_rulesets)
 
   if (!mrc) mrc = react_context_alloc();
 
+#ifdef USE_FIRSTCLASS_RULE
+  first_class_rule_tbl_init();
+#endif
+
   /* 通常実行では非決定実行とは異なりProcess IDを
    * 1から再割り当てする機会(状態圧縮と復元)が存在しない.
    * 破棄したProcessのIDを使い回す必要がある.
@@ -261,6 +268,36 @@ static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem)
   }
 }
 
+/**
+ * @brief 膜内の0stepルールセットを適用できるだけ適用する
+ */
+void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
+  struct Vector *rulesets = lmn_mem_get_rulesets(cur_mem);
+  BOOL reacted = FALSE;
+  BYTE mode = RC_MODE(rc);
+
+  RC_ADD_MODE(rc, REACT_ZEROSTEP);
+  do {
+    reacted = FALSE;
+    for (int i = 0; i < vec_num(rulesets); i++) {
+      LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
+      if (!lmn_ruleset_is_0step(rs)) continue;
+      reacted |= react_ruleset(rc, cur_mem, rs);
+    }
+  } while(reacted);
+  RC_SET_MODE(rc, mode);
+}
+
+/**
+ * @brief 膜内の子膜に再帰的に0stepルールセットを適用する
+ * @sa react_zerostep_rulesetsm
+ */
+void react_zerostep_recursive(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
+  for (; cur_mem; cur_mem = lmn_mem_next(cur_mem)) {
+    react_zerostep_recursive(rc, lmn_mem_child_head(cur_mem));
+    react_zerostep_rulesets(rc, cur_mem);
+  }
+}
 
 /** cur_memに存在するルールすべてに対して適用を試みる
  * @see mem_oriented_loop (task.c)
@@ -280,9 +317,22 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem)
     }
   }
 
+#ifdef USE_FIRSTCLASS_RULE
+  for (i = 0; i < vec_num(lmn_mem_firstclass_rulesets(cur_mem)); i++) {
+    if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)vec_get(lmn_mem_firstclass_rulesets(cur_mem), i))) {
+      ok = TRUE;
+      break;
+    }
+  }
+#endif
+
   /* 通常実行では, 適用が発生しなかった場合にシステムルールの適用を行う
    * ndではokはFALSEなので, system_rulesetが適用される. */
   ok = ok || react_ruleset_inner(rc, cur_mem, system_ruleset);
+
+#ifdef USE_FIRSTCLASS_RULE
+  lmn_rc_execute_insertion_events(rc);
+#endif
 
   return ok;
 }
@@ -374,9 +424,12 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule)
 
   if(lmn_env.enable_parallel && !lmn_env.nd && normal_parallel_flag)rule_wall_time_finish();
 
+  /* 適用に成功したら0step実行に入る。既に入っていれば何もしない */
+  if (result && !RC_GET_MODE(rc, REACT_ZEROSTEP)) react_zerostep_rulesets(rc, mem);
+
   profile_finish_trial();
 
-  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
     if (lmn_env.trace && result) {
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         lmn_dump_mem_stdout(RC_GROOT_MEM(rc));
@@ -424,8 +477,14 @@ void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets)
     react_ruleset(rc, mem, (LmnRuleSetRef)vec_get(rulesets, i));
   }
   react_initial_rulesets(rc, mem);
-  stand_alone_react_cxt_destroy(rc);
+  react_zerostep_recursive(rc, mem);
 
+#ifdef USE_FIRSTCLASS_RULE
+  // register first-class rulesets produced by the initial process.
+  lmn_rc_execute_insertion_events(rc);
+#endif
+
+  stand_alone_react_cxt_destroy(rc);
   react_context_dealloc(rc);
 }
 
@@ -861,7 +920,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
        *
        * CONTRACT: COMMIT命令に到達したルールはマッチング検査に成功している
        */
-      if (RC_GET_MODE(rc, REACT_ND)) {
+      if (RC_GET_MODE(rc, REACT_ND) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         ProcessID org_next_id = env_next_id();
         LmnMembraneRef cur_mem = NULL;
 
@@ -997,6 +1056,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 
           /** コピーしたグローバルルート膜と作業配列を用いてBODY命令を適用  */
           interpret(rc, rule, instr);
+          react_zerostep_recursive(rc, tmp_global_root); /**< 0stepルールを適用する */
           mc_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
           if (lmn_rule_get_pre_id(rule) != ANONYMOUS) {
@@ -1145,7 +1205,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       LmnInstrVar atomi, memi, findatomid;
       LmnLinkAttr attr;
 
-      if (RC_GET_MODE(rc, REACT_ND)) {
+      if (RC_GET_MODE(rc, REACT_ND) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         lmn_fatal("This mode:exhaustive search can't use instruction:FindAtom2");
       }
 
@@ -1414,7 +1474,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
         return FALSE;
       }
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         LmnMembraneRef m = (LmnMembraneRef)wt(rc, memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NMEMS);
         interpret(rc, rule, instr);
@@ -1431,7 +1491,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, memi);
       if(vec_num(lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, memi)))) return FALSE;
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         LmnMembraneRef m = (LmnMembraneRef)wt(rc, memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NORULES);
         interpret(rc, rule, instr);
@@ -1457,6 +1517,12 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 
         READ_VAL(LmnFunctor, instr, f);
         ap = LMN_ATOM(lmn_new_atom(f));
+
+#ifdef USE_FIRSTCLASS_RULE
+        if (f == LMN_COLON_MINUS_FUNCTOR) {
+          lmn_rc_push_insertion(rc, (LmnSymbolAtomRef)ap, (LmnMembraneRef)wt(rc, memi));
+        }
+#endif
       }
       lmn_mem_push_atom((LmnMembraneRef)wt(rc, memi), (LmnAtomRef)ap, attr);
       warry_set(rc, atomi, ap, attr, TT_ATOM);
@@ -1472,7 +1538,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
         return FALSE;
       }
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         LmnMembraneRef m = (LmnMembraneRef)wt(rc, memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NATOMS);
         interpret(rc, rule, instr);
@@ -1493,7 +1559,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
         return FALSE;
       }
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         LmnMembraneRef m = (LmnMembraneRef)wt(rc, memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NATOMS);
         interpret(rc, rule, instr);
@@ -2115,6 +2181,17 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
+
+#ifdef USE_FIRSTCLASS_RULE
+      LmnSymbolAtomRef atom = (LmnSymbolAtomRef)wt(rc, atomi);
+      LmnLinkAttr attr = at(rc, atomi);
+      if (LMN_HAS_FUNCTOR(atom, attr, LMN_COLON_MINUS_FUNCTOR)) {
+        LmnMembraneRef mem = (LmnMembraneRef)wt(rc, memi);
+        lmn_mem_remove_firstclass_ruleset(mem, firstclass_ruleset_lookup(atom));
+        firstclass_ruleset_release(atom);
+      }
+#endif
+
       lmn_mem_remove_atom((LmnMembraneRef)wt(rc, memi),
                           (LmnAtomRef)wt(rc, atomi),
                           at(rc, atomi));
@@ -2149,6 +2226,9 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 
       mp = (LmnMembraneRef)wt(rc, memi);
       lmn_mem_free(mp);
+      if (RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+        lmn_memstack_delete(RC_MEMSTACK(rc), mp);
+      }
       break;
     }
     case INSTR_ADDMEM:
@@ -2168,7 +2248,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
     {
       LmnInstrVar memi;
       READ_VAL(LmnInstrVar, instr, memi);
-//      if (RC_GET_MODE(rc, REACT_ND)) {
+//      if (RC_GET_MODE(rc, REACT_ND) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
 //        lmn_mem_activate_ancestors((LmnMembraneRef)wt(rc, memi)); /* MC */
 //      }
 //      else
@@ -2343,7 +2423,7 @@ label_skip_data_atom:
       srcvec = links_from_idxs((Vector *)wt(rc, srclisti), rc_warry(rc));
       avovec = links_from_idxs((Vector *)wt(rc, avolisti), rc_warry(rc));
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         ProcessTableRef atoms;
         ProcessTableRef hlinks;
         hlinks = NULL;
@@ -3211,7 +3291,7 @@ label_skip_data_atom:
         return FALSE;
       }
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         LmnMembraneRef m = (LmnMembraneRef)wt(rc, memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_STABLE);
         interpret(rc, rule, instr);
@@ -3928,7 +4008,7 @@ label_skip_data_atom:
 
       if (!lmn_mem_nfreelinks((LmnMembraneRef)wt(rc, memi), count)) return FALSE;
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
         LmnMembraneRef m = (LmnMembraneRef)wt(rc, memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NFLINKS);
         interpret(rc, rule, instr);
@@ -4596,7 +4676,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr inst
     case INSTR_ENQUEUEMEM:
     {
       SKIP_VAL(LmnInstrVar, instr);
-//      if (RC_GET_MODE(rc, REACT_ND)) {
+//      if (RC_GET_MODE(rc, REACT_ND) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
 //        lmn_mem_activate_ancestors((LmnMembraneRef)wt(rc, memi)); /* MC */
 //      }
       /* 通常実行ではdmem_interpretを使用しないため以下のコードは不要.

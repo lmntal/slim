@@ -1,8 +1,7 @@
 /*
- * vm.h
+ * firstclass_rule.h
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,28 +32,53 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+#ifndef LMN_FIRSTCLASS_RULE_H
+#define LMN_FIRSTCLASS_RULE_H
 
-/**
- * @defgroup Ext
- */
-
-/**
- * @defgroup VM
- */
-
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
+#include "lmntal.h"
+#include "atom.h"
 #include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
 
-#endif /* LMN_VM_H */
+
+/**
+ * @ingroup VM
+ * @defgroup FirstClassRule
+ * @{
+ */
+
+/**
+ * @brief Initialize a table to associate first-class rulesets with <tt>':-'/3</tt> atoms.
+ * 
+ * @note
+ *     This function must be called exactly once before using functions of first-class rulesets.
+ */
+void first_class_rule_tbl_init();
+
+/**
+ * @brief Create a first-class ruleset from a <tt>':-'/3</tt> atom.
+ * @return A ruleset or @c NULL.
+ *
+ * @note
+ *     The caller must free the returned ruleset unless it's @c NULL.
+ */
+LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply);
+
+/**
+ * @brief Remove a first-class ruleset associated with @c imply from the table.
+ *
+ * @note
+ *     @c imply must be associated with a first-class ruleset.
+ */
+void firstclass_ruleset_release(LmnSymbolAtomRef imply);
+
+/**
+ * @brief Get a first-class ruleset associated with @c imply.
+ * @return A ruleset, or if no rule is associated with @c imply it returns @c NULL.
+ */
+LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply);
+
+/** @} */
+
+#endif /* LMN_FIRSTCLASS_RULE_H */

@@ -1,8 +1,8 @@
 /*
- * vm.h
+ *  state_space.lmn - State Space module
+ *  Author: Yutaro Tsunekawa, Taichi Tomioka, Nozomi Matsuzawa
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,27 +34,30 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+{
+  module(state_space).
 
-/**
- * @defgroup Ext
- */
+  /*
+   * Ret = state_space.react_nd_set(Rule, Graph, RetRule)
+   * 複数ルールに対応したreact_nd
+   *
+   * Ret:     RuleをGraphに一回適用したときにあり得る書き換え後の状態を表す膜のリスト. 適用できなければ空リストが返る
+   * Graph:   適用したいプロセスが入った膜.
+   * Rule:    適用したいルールセットが入っている膜.
+   * RetRule: Ruleと同じ膜
+   */
+  Ret = state_space.react_nd_set(Rule, Graph, RetRule) :- '$callback'('cb_react_ruleset_nd', Rule, Graph, RetRule, Ret).
 
-/**
- * @defgroup VM
- */
+  Ret = state_space.state_map_init :- '$callback'('cb_state_map_init', Ret).
 
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
+  state_space.state_map_free(Map) :- class(Map, "state_map") |
+	'$callback'('cb_state_map_free', Map).
 
-#endif /* LMN_VM_H */
+  Ret = state_space.state_map_find(Map, {$key[]}, Res) :- class(Map, "state_map") |
+	'$callback'('cb_state_map_id_find', Map, {$key[]}, Res, Ret).
+
+  Ret = state_space.state_map_find(Map, $key, Res) :- class(Map, "state_map"), int($key) |
+	'$callback'('cb_state_map_state_find', Map, $key, Res, Ret).
+}.

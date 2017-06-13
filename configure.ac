@@ -3,7 +3,7 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.3.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [2.3.1], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
@@ -27,7 +27,7 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 # Checks for programs.
 #
 
-CFLAGS="-O $CFLAGS"
+CFLAGS="-O -std=gnu99 $CFLAGS"
 CXXFLAGS="-g -O2 -mmmx -msse $CXXFLAGS"
 
 AC_LANG(C)
@@ -69,6 +69,7 @@ default_enable_jni=no
 default_enable_tcmalloc=yes
 default_enable_minmax=no
 default_enable_cunit=no
+default_enable_firstclass_rule=no
 default_minimal_state=no
 default_cunit_home="/usr/local"
 
@@ -133,6 +134,12 @@ AC_ARG_ENABLE([minimal_state],
                               [minimize the state instead of being unable to use the MCNDFS])],
               [],
               [enable_minimal_state="$default_minimal_state"])
+
+AC_ARG_ENABLE([firstclass_rule],
+              [AS_HELP_STRING([--enable-firstclass-rule]
+                              [turn on first class rules (default no)])],
+              [],
+              [enable_firstclass_rule="$default_enable_firstclass_rule"])
 
 # devel
 if test "$enable_devel" = "yes"; then
@@ -215,6 +222,13 @@ if test "$enable_minimal_state" = "yes"; then
   AC_DEFINE([MINIMAL_STATE], 1, [enable minimal state])
 else
   AC_MSG_RESULT([enable minimal-state: no])
+fi
+
+if test "$enable_firstclass_rule" = "yes"; then
+  AC_MSG_RESULT([enable first-class rule: yes])
+  AC_DEFINE([USE_FIRSTCLASS_RULE], 1, [enable first class rule])
+else
+  AC_MSG_RESULT([enable first-class rule: no])
 fi
 
 AM_CONDITIONAL(ENABLE_JNI,      test "$enable_jni" = "yes")
@@ -893,6 +907,7 @@ AC_OUTPUT(Makefile \
           test/Makefile \
           test/system_check/Makefile \
           test/statespace/Makefile \
+          test/library_check/Makefile \
           third_party/Makefile \
           third_party/zdelta-2.1/Makefile \
           third_party/google-perftools-1.8.3/Makefile \

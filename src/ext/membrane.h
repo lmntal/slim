@@ -1,7 +1,7 @@
 /*
- * vm.h
+ * ext/membrane.h
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
@@ -37,24 +37,9 @@
  * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+#ifndef EXT_MEMBRANE_H
+#define EXT_MEMBRANE_H
 
-/**
- * @defgroup Ext
- */
+void init_membrane(void);
 
-/**
- * @defgroup VM
- */
-
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
-
-#endif /* LMN_VM_H */
+#endif /* EXT_MEMBRANE_H */

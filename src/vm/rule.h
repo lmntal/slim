@@ -160,6 +160,9 @@ BOOL lmn_ruleset_has_uniqrule(LmnRuleSetRef ruleset);
 
 LmnRuleRef *lmn_ruleset_get_rules(LmnRuleSetRef ruleset);
 
+void lmn_ruleset_validate_0step(LmnRuleSetRef ruleset);
+BOOL lmn_ruleset_is_0step(LmnRuleSetRef ruleset);
+
 
 
 /*----------------------------------------------------------------------

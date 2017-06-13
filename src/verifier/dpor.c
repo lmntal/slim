@@ -481,12 +481,10 @@ static BOOL contextC1s_are_depend(ContextC1Ref src, ContextC1Ref dst)
   lhs_tbl = dst->LHS_procs;
 
   for (i = 0; i < rhs_tbl->size; i++) {
-    if (rhs_tbl->tbl[i] != ULONG_MAX) {
-      LmnWord t;
-      if (proc_tbl_get(lhs_tbl, (LmnWord)i, &t)) {
-        if (dpor_LHS_RHS_are_depend((BYTE)t, (BYTE)rhs_tbl->tbl[i])) {
-          return TRUE;
-        }
+    LmnWord rhs, lhs;
+    if (proc_tbl_get(rhs_tbl, i, &rhs) && proc_tbl_get(lhs_tbl, i, &lhs)) {
+      if (dpor_LHS_RHS_are_depend((BYTE)lhs, (BYTE)rhs)) {
+        return TRUE;
       }
     }
   }

@@ -51,20 +51,21 @@
 
 
 #define VISITLOG_INIT_N       (1)
+#define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
+#define process_tbl_entry(P, IDX) (P->tbl[IDX / PROC_TBL_BUCKETS_SIZE][IDX % PROC_TBL_BUCKETS_SIZE])
 
 /* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
 struct ProcessTbl {
   unsigned long n;
   unsigned long size;
-  LmnWord *tbl;
+  unsigned long num_buckets;
+  LmnWord **tbl;
 };
 
 #define process_tbl_entry_num(P)  ((P)->n)
 void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n);
 #define proc_tbl_expand(p, n)                                                  \
-  if ((p)->size <= (n)) {                                                      \
-    proc_tbl_expand_sub(p, n);                                                 \
-  }
+      proc_tbl_expand_sub(p, n);                                                 
 
 
 /**
@@ -115,7 +116,7 @@ static inline void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value) {
   if (value == ULONG_MAX) lmn_fatal("cannot put ULONG_MAX");
 # endif
   proc_tbl_expand(p, key);
-  p->tbl[key] = value;
+  process_tbl_entry(p, key) = value;
 }
 
 /* テーブルにアトムを追加 */
@@ -142,8 +143,8 @@ static inline int proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value
   if (value == ULONG_MAX) lmn_fatal("cannot put ULONG_MAX");
 #endif
   proc_tbl_expand(p, key);
-  if (p->tbl[key] != ULONG_MAX) return 0;
-  p->tbl[key] = value;
+  if (process_tbl_entry(p, key) != ULONG_MAX) return 0;
+  process_tbl_entry(p, key) = value;
   return 1;
 }
 
@@ -162,7 +163,7 @@ static inline int proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, Lm
 static inline void proc_tbl_unput(ProcessTableRef p, LmnWord key) {
   p->n--;
   proc_tbl_expand(p, key);
-  p->tbl[key] = ULONG_MAX;
+  process_tbl_entry(p, key) = ULONG_MAX;
 }
 
 /* テーブルからアトムとそれに対応した値を削除する */
@@ -178,8 +179,8 @@ static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem) {
 /* テーブルのkeyに対応した値をvalueに設定し, 正の値を返す. keyがテーブルに存在しない場合は0を返す.
  * 通常この間数ではなくget_by_atom, get_by_memを使用する./ */
 static inline int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value) {
-  if (p->size > key && p->tbl[key] != ULONG_MAX) {
-    if (value) *value = p->tbl[key];
+  if (proc_tbl_contains(p, key)) {
+    if (value) *value = process_tbl_entry(p, key);
     return 1;
   } else {
     return 0;
@@ -204,7 +205,7 @@ static inline int proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWor
 }
 
 static inline BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key) {
-  return key < p->size && p->tbl[key] != ULONG_MAX;
+  return key < p->size && p->tbl[key / PROC_TBL_BUCKETS_SIZE] && process_tbl_entry(p, key) != ULONG_MAX;
 }
 
 /* テーブルにアトムatomに対応する値が設定されている場合, 正の値を返す. */
@@ -224,11 +225,13 @@ static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem) 
  */
 struct SimplyProcTbl {
   unsigned long n, cap;
-  BYTE *tbl;
+  unsigned long num_buckets;
+  BYTE **tbl;
 };
 
 #define SPROC_TBL_INIT_V        (0xfU)
 #define sproc_tbl_entry_num(P)  ((P)->n)
+#define sproc_tbl_entry(P, k)   ((P)->tbl[k / PROC_TBL_BUCKETS_SIZE][k % PROC_TBL_BUCKETS_SIZE])
 
 /**
  * Function Prototypes
@@ -268,12 +271,19 @@ static inline void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembrane
  */
 
 static inline void sproc_tbl_expand(SimplyProcessTableRef p, unsigned long n) {
-  unsigned long org_size = p->cap;
+  unsigned int org_n = p->num_buckets;
   while (p->cap <= n) p->cap *= 2;
-  p->tbl = LMN_REALLOC(BYTE, p->tbl, p->cap);
-  memset(p->tbl + org_size,
-         SPROC_TBL_INIT_V,
-         sizeof(BYTE) * (p->cap - org_size));
+  p->num_buckets = p->cap / PROC_TBL_BUCKETS_SIZE + 1;
+
+  if (org_n < p->num_buckets) {
+    p->tbl = LMN_REALLOC(BYTE *, p->tbl, p->num_buckets);
+    memset(p->tbl + org_n, 0, sizeof(BYTE *) * (p->num_buckets - org_n));
+  }
+
+  unsigned int b = n / PROC_TBL_BUCKETS_SIZE;
+  if (b < p->num_buckets && p->tbl[b]) return;
+  p->tbl[b] = LMN_NALLOC(BYTE, PROC_TBL_BUCKETS_SIZE);
+  memset(p->tbl[b], SPROC_TBL_INIT_V, sizeof(BYTE) * PROC_TBL_BUCKETS_SIZE);
 }
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
@@ -281,15 +291,13 @@ static inline void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE valu
 #ifdef DEBUG
   if (value == SPROC_TBL_INIT_V) lmn_fatal("i can't put this value");
 #endif
-  if (p->cap <= key) {
-    sproc_tbl_expand(p, key);
-  }
+  sproc_tbl_expand(p, key);
 
-  if (p->tbl[key] == SPROC_TBL_INIT_V) {
+  if (sproc_tbl_entry(p, key) == SPROC_TBL_INIT_V) {
     p->n++;
   }
 
-  p->tbl[key] = value;
+  sproc_tbl_entry(p, key) = value;
 }
 
 static inline void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom, BYTE value) {
@@ -301,9 +309,9 @@ static inline void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembraneRef mem
 }
 
 static inline void sproc_tbl_unput(SimplyProcessTableRef p, LmnWord key) {
-  if (p->cap < key || p->tbl[key] == SPROC_TBL_INIT_V) return;
+  if (!sproc_tbl_contains(p, key)) return;
   p->n--;
-  p->tbl[key] = SPROC_TBL_INIT_V;
+  sproc_tbl_entry(p, key) = SPROC_TBL_INIT_V;
 }
 
 static inline void sproc_tbl_unput_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom) {
@@ -315,8 +323,8 @@ static inline void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembraneRef m
 }
 
 static inline int sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value) {
-  if (p->cap > key && p->tbl[key] != SPROC_TBL_INIT_V) {
-    if (value) *value = p->tbl[key];
+  if (sproc_tbl_contains(p, key)) {
+    if (value) *value = sproc_tbl_entry(p, key);
     return 1;
   } else {
     return 0;
@@ -332,7 +340,7 @@ static inline int sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembraneRef m
 }
 
 static inline BOOL sproc_tbl_contains(SimplyProcessTableRef p, LmnWord key) {
-  return key < p->cap && p->tbl[key] != SPROC_TBL_INIT_V;
+  return key < p->cap && p->tbl[key / PROC_TBL_BUCKETS_SIZE] && sproc_tbl_entry(p, key) != SPROC_TBL_INIT_V;
 }
 
 static inline BOOL sproc_tbl_contains_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom) {
@@ -344,8 +352,7 @@ static inline BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembraneRe
 }
 
 static inline BOOL sproc_tbl_get_flag(SimplyProcessTableRef p, LmnWord key, BYTE flag) {
-  if (p->cap > key && p->tbl[key] != SPROC_TBL_INIT_V) return p->tbl[key] & flag;
-  else return 0;
+  return sproc_tbl_contains(p, key) ? (sproc_tbl_entry(p, key) & flag) : 0;
 }
 
 static inline BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef key, LmnWord flag) {
@@ -357,26 +364,22 @@ static inline BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembran
 }
 
 static inline void sproc_tbl_unset_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag) {
-  if (p->cap <= key) {
-    sproc_tbl_expand(p, key);
-  }
-  if (p->tbl[key] != SPROC_TBL_INIT_V) {
-    p->tbl[key] |= ~flag;
+  sproc_tbl_expand(p, key);
+  if (sproc_tbl_entry(p, key) != SPROC_TBL_INIT_V) {
+    sproc_tbl_entry(p, key) |= ~flag;
   } else {
     p->n++;
-    p->tbl[key] = 0;
+    sproc_tbl_entry(p, key) = 0;
   }
 }
 
 static inline void sproc_tbl_set_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag) {
-  if (p->cap <= key) {
-    sproc_tbl_expand(p, key);
-  }
-  if (p->tbl[key] != SPROC_TBL_INIT_V) {
-    p->tbl[key] |= flag;
+  sproc_tbl_expand(p, key);
+  if (sproc_tbl_entry(p, key) != SPROC_TBL_INIT_V) {
+    sproc_tbl_entry(p, key) |= flag;
   } else {
     p->n++;
-    p->tbl[key] = flag;
+    sproc_tbl_entry(p, key) = flag;
   }
 }
 
@@ -466,7 +469,8 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
 
 struct TraceLog {
   int cap, num;
-  struct TraceData *tbl;
+  int num_buckets;
+  struct TraceData **tbl;
   struct LogTracker tracker;
 };
 
@@ -484,9 +488,9 @@ typedef struct TraceLog *TraceLogRef;
 
 #define TLOG_DATA_CLEAR(V)                                                     \
     do {                                                                       \
-      l->tbl[key].flag = TLOG_INIT_DATA;                                       \
-      l->tbl[key].owner_id = 0;                                                \
-      l->tbl[key].matched = 0;                                                 \
+      tracelog_entry(l, key).flag = TLOG_INIT_DATA;                                       \
+      tracelog_entry(l, key).owner_id = 0;                                                \
+      tracelog_entry(l, key).matched = 0;                                                 \
     } while (0)
 
 #define TLOG_MATCHED_ID_NONE       (0U)
@@ -503,6 +507,10 @@ typedef struct TraceLog *TraceLogRef;
 #define TLOG_SET_TRV_SOME(F)       (F = TLOG_TRAVERSED_OTHERS)
 #define TLOG_IS_TRV(F)             (F != TLOG_INIT_DATA)
 #define TLOG_UNSET_TRV(F)          (F = TLOG_INIT_DATA)
+
+#define tracelog_bucket(T, K) ((T)->tbl[(K) / PROC_TBL_BUCKETS_SIZE])
+#define tracelog_idx_in_bucket(T, K) ((K) % PROC_TBL_BUCKETS_SIZE)
+#define tracelog_entry(T, K) (tracelog_bucket(T, K)[tracelog_idx_in_bucket(T, K)])
 
 /**
  * Function ProtoTypes
@@ -551,7 +559,7 @@ static inline BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
                                                   AtomListEntryRef avoid)
 {
   return
-      TLOG_NUM(l->tbl[lmn_mem_id(owner)]) ==
+      (tracelog_bucket(l, lmn_mem_id(owner)) ? TLOG_NUM(tracelog_entry(l, lmn_mem_id(owner))) : 0) ==
           (lmn_mem_symb_atom_num(owner)
               + lmn_mem_child_mem_num(owner)
               + atomlist_get_entries_num(in_ent)
@@ -561,10 +569,19 @@ static inline BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
 /* トレースログlのテーブルサイズをnew_size以上の大きさに拡張する. */
 static inline void tracelog_tbl_expand(TraceLogRef l, unsigned long new_size)
 {
-  unsigned long org_size = l->cap;
+  unsigned int org_n = l->num_buckets;
+
   while (l->cap <= new_size) l->cap *= 2;
-  l->tbl = LMN_REALLOC(struct TraceData, l->tbl, l->cap);
-  memset(l->tbl + org_size, TLOG_INIT_DATA, sizeof(struct TraceData) * (l->cap - org_size));
+  l->num_buckets = l->cap / PROC_TBL_BUCKETS_SIZE + 1;
+  if (org_n < l->num_buckets) {
+    l->tbl = LMN_REALLOC(struct TraceData *, l->tbl, l->num_buckets);
+    memset(l->tbl + org_n, 0, sizeof(struct TraceData *) * (l->num_buckets - org_n));
+  }
+
+  unsigned int b = new_size / PROC_TBL_BUCKETS_SIZE;
+  if (b < l->num_buckets && l->tbl[b]) return;
+  l->tbl[b] = LMN_NALLOC(struct TraceData, PROC_TBL_BUCKETS_SIZE);
+  memset(l->tbl[b], TLOG_INIT_DATA, sizeof(struct TraceData) * PROC_TBL_BUCKETS_SIZE);
 }
 
 /* ログl上のキーkey位置にあるTraceLogに対して, 訪問を記録する.
@@ -574,19 +591,20 @@ static inline void tracelog_tbl_expand(TraceLogRef l, unsigned long new_size)
  * (呼出しコスト削減のために公開関数としているだけ) */
 static inline int tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
                                LmnMembraneRef owner) {
-  if (l->cap <= key) {
-    tracelog_tbl_expand(l, key);
-  } else if (TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]))) {
+  tracelog_tbl_expand(l, key);
+
+  if (TLOG_IS_TRV(TLOG_FLAG(tracelog_entry(l, key)))) {
     return 0;
   }
 
   l->num++;
-  TLOG_SET_MATCHED(l->tbl[key], matched_id);
+  TLOG_SET_MATCHED(tracelog_entry(l, key), matched_id);
 
   if (owner) {
-    TLOG_SET_OWNER(l->tbl[key], owner);
+    TLOG_SET_OWNER(tracelog_entry(l, key), owner);
     LMN_ASSERT(l->cap > lmn_mem_id(owner));
-    TLOG_TRV_INC(l->tbl[lmn_mem_id(owner)]);
+    tracelog_tbl_expand(l, lmn_mem_id(owner));
+    TLOG_TRV_INC(tracelog_entry(l, lmn_mem_id(owner)));
   }
 
   LogTracker_TRACE(&l->tracker, key);
@@ -599,7 +617,7 @@ static inline int tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
 static inline int tracelog_put_atom(TraceLogRef l, LmnSymbolAtomRef atom1, LmnWord  atom2_id,
                                     LmnMembraneRef owner1) {
   int ret = tracelog_put(l, LMN_SATOM_ID(atom1), atom2_id, owner1);
-  TLOG_SET_TRV_ATOM(TLOG_FLAG(l->tbl[LMN_SATOM_ID(atom1)]));
+  TLOG_SET_TRV_ATOM(TLOG_FLAG(tracelog_entry(l, LMN_SATOM_ID(atom1))));
   return ret;
 }
 
@@ -607,7 +625,7 @@ static inline int tracelog_put_atom(TraceLogRef l, LmnSymbolAtomRef atom1, LmnWo
  * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
 static inline int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id) {
   int ret = tracelog_put(l, lmn_mem_id(mem1), mem2_id, lmn_mem_parent(mem1));
-  TLOG_SET_TRV_MEM(TLOG_FLAG(l->tbl[lmn_mem_id(mem1)]));
+  TLOG_SET_TRV_MEM(TLOG_FLAG(tracelog_entry(l, lmn_mem_id(mem1))));
   return ret;
 }
 
@@ -617,21 +635,21 @@ static inline int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord m
  * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する */
 static inline int tracelog_put_hlink(TraceLogRef l, HyperLink *hl1, LmnWord hl2_id) {
   int ret = tracelog_put(l, LMN_HL_ID(hl1), hl2_id, NULL);
-  TLOG_SET_TRV_HLINK(TLOG_FLAG(l->tbl[LMN_HL_ID(hl1)]));
+  TLOG_SET_TRV_HLINK(TLOG_FLAG(tracelog_entry(l, LMN_HL_ID(hl1))));
   return ret;
 }
 
 static inline void tracelog_unput(TraceLogRef l, LmnWord key) {
-  LMN_ASSERT (TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]))); /* 訪問済みでもないないのにunputするとnumの値が不正になり得る */
+  LMN_ASSERT (TLOG_IS_TRV(TLOG_FLAG(tracelog_entry(l, key)))); /* 訪問済みでもないないのにunputするとnumの値が不正になり得る */
   if (l->cap > key) {
     l->num--;
-    TLOG_TRV_DEC(l->tbl[TLOG_OWNER(l->tbl[key])]);
-    TLOG_DATA_CLEAR(l->tbl[key]);
+    TLOG_TRV_DEC(tracelog_entry(l, TLOG_OWNER(tracelog_entry(l, key))));
+    TLOG_DATA_CLEAR(tracelog_entry(l, key));
   }
 }
 
 static inline BOOL tracelog_contains(TraceLogRef l, LmnWord key) {
-  return (l->cap > key) && TLOG_IS_TRV(TLOG_FLAG(l->tbl[key]));
+  return (l->cap > key) && tracelog_bucket(l, key) && TLOG_IS_TRV(TLOG_FLAG(tracelog_entry(l, key)));
 }
 
 static inline BOOL tracelog_contains_atom(TraceLogRef l, LmnSymbolAtomRef atom) {
@@ -647,7 +665,7 @@ static inline BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) {
 }
 
 static inline LmnWord tracelog_get_matched(TraceLogRef l, LmnWord key) {
-  return TLOG_MATCHED(l->tbl[key]);
+  return tracelog_bucket(l, key) ? TLOG_MATCHED(tracelog_entry(l, key)) : 0;
 }
 
 static inline LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSymbolAtomRef atom) {
@@ -663,7 +681,7 @@ static inline LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) {
 }
 
 static inline BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key) {
-  return TLOG_FLAG(l->tbl[key]);
+  return tracelog_bucket(l, key) ? TLOG_FLAG(tracelog_entry(l, key)) : 0;
 }
 
 static inline void tracelog_backtrack(TraceLogRef l) {

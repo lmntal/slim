@@ -61,6 +61,8 @@ const char *lmn_string_c_str(LmnStringRef atom);
 void lmn_string_push(LmnStringRef dst, const LmnStringRef src);
 void lmn_string_push_raw_c(LmnStringRef s, int c);
 void lmn_string_push_raw_s(LmnStringRef dst, const char *src);
+void lmn_string_pop(LmnStringRef s);
+int lmn_string_last(LmnStringRef s);
 int lmn_string_get(LmnStringRef s, int i);
 void lmn_string_set_raw_c(LmnStringRef s, int c, int i);
 unsigned long lmn_string_len(LmnStringRef s);

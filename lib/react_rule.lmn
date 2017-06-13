@@ -1,8 +1,8 @@
 /*
- * vm.h
+ *  react_rule.lmn - React Rule module
+ *  Author: Yutaro Tsunekawa, Taichi Tomioka, Nozomi Matsuzawa
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,27 +34,19 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+{
+  module(react_rule).
 
-/**
- * @defgroup Ext
- */
-
-/**
- * @defgroup VM
- */
-
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
-
-#endif /* LMN_VM_H */
+  /*
+   * Ret = react_rule.react(Rule, Graph, RetRule)
+   * ルールを１ステップ適用した結果を得る
+   *
+   * Ret:     successアトムにRuleをGraphに適用した後の膜が接続されたもの. 適用できなければfailアトムにGraphと同じ膜が接続されたもの
+   * Graph:   適用したいプロセスが入った膜.
+   * Rule:    適用したいルールが入っている膜. 複数ある場合はどれか一つが非決定的に選ばれる
+   * RetRule: Ruleと同じ膜
+   */
+  Ret = react_rule.react(Rule, Graph, RetRule) :- Ret = '$callback'('cb_react_rule', Rule, Graph, RetRule).
+}.

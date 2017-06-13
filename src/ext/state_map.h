@@ -1,7 +1,7 @@
 /*
- * vm.h
+ * state_map.h
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
@@ -37,24 +37,20 @@
  * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+#ifndef EXT_STATE_MAP_H
+#define EXT_STATE_MAP_H
 
-/**
- * @defgroup Ext
- */
+#include "lmntal.h"
+#include "element/element.h"
 
-/**
- * @defgroup VM
- */
+#define LMN_STATE_MAP(obj) ((LmnStateMapRef)(obj))
 
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
+typedef struct LmnStateMap *LmnStateMapRef;
 
-#endif /* LMN_VM_H */
+struct LmnStateMap{
+  LMN_SP_ATOM_HEADER;
+  StateSpaceRef states;
+  st_table_t id_tbl;
+};
+
+#endif /* EXT_STATE_MAP_H */
