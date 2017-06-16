@@ -233,7 +233,7 @@ static struct InstrSpec spec[] = {
     {"deref", INSTR_DEREF, {InstrVar, InstrVar, InstrVar, InstrVar}},
     {"derefatom", INSTR_DEREFATOM, {InstrVar, InstrVar, InstrVar}},
     {"dereflink", INSTR_DEREFLINK, {InstrVar, InstrVar, InstrVar}},
-    {"findatom", INSTR_FINDATOM, {InstrVar, InstrVar, ArgFunctor}},
+    {"findatom", INSTR_FINDATOM, {InstrVar, InstrVar, InstrVar, ArgFunctor}},
     {"findatom2", INSTR_FINDATOM2, {InstrVar, InstrVar, InstrVar, ArgFunctor}},
 
     {"lockmem", INSTR_LOCKMEM, {InstrVar, InstrVar, String}},
@@ -438,6 +438,8 @@ static struct InstrSpec spec[] = {
 
     /* etc */
     {"celldump", INSTR_CELLDUMP, {}},
+
+    {"red", INSTR_RED, {InstrVar, InstrVarList}},
 
     {0}
   };

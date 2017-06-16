@@ -1093,9 +1093,10 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
     }
     case INSTR_FINDATOM:
     {
-      LmnInstrVar atomi, memi;
+      LmnInstrVar atomi, memi, cachei;
       LmnLinkAttr attr;
 
+      READ_VAL(LmnInstrVar, instr, cachei);
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnLinkAttr, instr, attr);
@@ -1114,34 +1115,14 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
         if (!rc_hlink_opt(atomi, rc)) { /* 通常はこっち */
           atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)wt(rc, memi), f);
           if (atomlist_ent) {
+            if (cachei > 0) {
+              Vector *cache = vec_make(1);
+              wt_set(rc, cachei, (LmnWord)cache);
+              tt_set(rc, cachei, TT_OTHER);
+            }
+
             EACH_ATOM(atom, atomlist_ent, ({
               if(lmn_env.find_atom_parallel)return FALSE;
-
-              Vector *grd = vec_make(LMN_SATOM_GET_ARITY(atom));
-              for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
-                vec_set(grd, i, (LmnWord)LinkObj_make(atom, i));
-              }
-
-              if (vec_num(memo) > 0) {
-                int found = 0;
-                for (int i = 0; i < vec_num(memo); i++) {
-                  Vector *v = (Vector *)vec_get(memo, i);
-                  if (lmn_mem_cmp_ground(v, grd)) {
-                    found = 1;
-                    break;
-                  }
-                }
-
-                if (found) {
-                  for (int j = 0; j < vec_num(grd); j++) LMN_FREE(vec_get(grd, j));
-                  vec_destroy(grd);
-                  cnt++;
-                  continue;
-                }
-              }
-
-              for (int i = 0; i < vec_num(grd); i++) LMN_FREE(vec_get(grd, i));
-              vec_destroy(grd);
 
               warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
               if (interpret(rc, rule, instr)) {
@@ -1149,13 +1130,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
                 return TRUE;
               }
 
-              if (LMN_SATOM_GET_ARITY(atom) > 0) {
-                Vector *v = vec_make(LMN_SATOM_GET_ARITY(atom));
-                for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
-                  vec_set(v, i, (LmnWord)LinkObj_make(atom, i));
-                }
-                vec_push(memo, (LmnWord)v);
-              }
               profile_backtrack();
             }));
           }
@@ -1233,16 +1207,62 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
             }
           }
         }
-        for (int i = 0; i < vec_num(memo); i++) {
-          Vector *v = (Vector *)vec_get(memo, i);
-          for (int j = 0; j < vec_num(v); j++) {
-            LMN_FREE(vec_get(v, j));
+
+        if (cachei > 0) {
+          Vector *memo = (Vector *)wt(rc, cachei);
+          for (int i = 0; i < vec_num(memo); i++) {
+            Vector *v = (Vector *)vec_get(memo, i);
+            for (int j = 0; j < vec_num(v); j++) {
+              LMN_FREE(vec_get(v, j));
+            }
+            vec_destroy(v);
           }
-          vec_destroy(v);
+          vec_destroy(memo);
         }
-        vec_destroy(memo);
         return FALSE;
       }
+      break;
+    }
+    case INSTR_RED:
+    {
+      LmnInstrVar cachei;
+      LmnInstrVar num_links = 0;
+      READ_VAL(LmnInstrVar, instr, cachei);
+      READ_VAL(LmnInstrVar, instr, num_links);
+
+      Vector *grd = vec_make(num_links);
+      for (int i = 0; i < num_links; i++) {
+        LmnInstrVar v;
+        READ_VAL(LmnInstrVar, instr, v);
+        vec_set(grd, i, (LmnWord)LinkObj_make(wt(rc, v), at(rc, v)));
+      }
+
+      Vector *cache = (Vector *)wt(rc, cachei);
+      if (vec_num(cache) > 0) {
+        if (num_links == 0) return FALSE;
+        int found = 0;
+        for (int i = 0; i < vec_num(cache); i++) {
+          Vector *v = (Vector *)vec_get(cache, i);
+          if (lmn_mem_cmp_ground(v, grd)) {
+            found = 1;
+            break;
+          }
+        }
+
+        if (found) {
+          for (int j = 0; j < vec_num(grd); j++) LMN_FREE(vec_get(grd, j));
+          vec_destroy(grd);
+          return FALSE;
+        }
+
+      }
+
+      if (num_links > 0) {
+        vec_push(cache, (LmnWord)grd);
+      } else {
+        vec_push(cache, (LmnWord)vec_make(0));
+      }
+
       break;
     }
     case INSTR_FINDATOM2:

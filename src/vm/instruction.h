@@ -264,6 +264,8 @@ enum LmnInstruction {
 
   INSTR_PRINTINSTR,
 
+  INSTR_RED,
+
   NUM_INSTRS // this must be the last
 };
 

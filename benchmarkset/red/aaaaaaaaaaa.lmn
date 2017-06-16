@@ -1,0 +1,6 @@
+a,a,a,a,a,a,a,a,a,a,a.
+ a2b@@a,a,a,a,a,a,a,a,a,a,a:-a,a,a,a,a,a,a,a,a,a,b.
+ b2c@@a,a,a,a,a,a,a,a,a,a,b:-a,a,a,a,a,a,a,a,a,a,c.
+ c2d@@a,a,a,a,a,a,a,a,a,a,c:-a,a,a,a,a,a,a,a,a,a,d.
+ d2e@@a,a,a,a,a,a,a,a,a,a,d:-a,a,a,a,a,a,a,a,a,a,e.
+ e2f@@a,a,a,a,a,a,a,a,a,a,e:-a,a,a,a,a,a,a,a,a,a,f.
