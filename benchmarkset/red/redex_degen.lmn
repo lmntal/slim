@@ -1,0 +1,57 @@
+t, t, t, t, t, t, t, t, t, t, t, t, t.
+a(b(a(b(a(b(a(b(a(b(X1)))))))))) = X1.
+a(b(a(b(a(b(a(b(a(b(X2)))))))))) = X2.
+a(b(a(b(a(b(a(b(a(b(X3)))))))))) = X3.
+a(b(a(b(a(b(a(b(a(b(X4)))))))))) = X4.
+a(b(a(b(a(b(a(b(a(b(X5)))))))))) = X5.
+
+a(b(a(b(a(b(a(b(a(b(X11)))))))))) = X11.
+a(b(a(b(a(b(a(b(a(b(X12)))))))))) = X12.
+a(b(a(b(a(b(a(b(a(b(X13)))))))))) = X13.
+a(b(a(b(a(b(a(b(a(b(X14)))))))))) = X14.
+a(b(a(b(a(b(a(b(a(b(X15)))))))))) = X15.
+ 
+a(b(a(b(a(b(a(b(a(b(X21)))))))))) = X21.
+a(b(a(b(a(b(a(b(a(b(X22)))))))))) = X22.
+a(b(a(b(a(b(a(b(a(b(X23)))))))))) = X23.
+a(b(a(b(a(b(a(b(a(b(X24)))))))))) = X24.
+a(b(a(b(a(b(a(b(a(b(X25)))))))))) = X25.
+
+ a(b(a(b(a(b(a(b(a(b(X31)))))))))) = X31.
+ a(b(a(b(a(b(a(b(a(b(X32)))))))))) = X32.
+ a(b(a(b(a(b(a(b(a(b(X33)))))))))) = X33.
+ a(b(a(b(a(b(a(b(a(b(X34)))))))))) = X34.
+ a(b(a(b(a(b(a(b(a(b(X35)))))))))) = X35.
+ 
+ a(b(a(b(a(b(a(b(a(b(X41)))))))))) = X41.
+ a(b(a(b(a(b(a(b(a(b(X42)))))))))) = X42.
+ a(b(a(b(a(b(a(b(a(b(X43)))))))))) = X43.
+ a(b(a(b(a(b(a(b(a(b(X44)))))))))) = X44.
+ a(b(a(b(a(b(a(b(a(b(X45)))))))))) = X45.
+ 
+a(b(a(b(a(b(a(b(a(b(X51)))))))))) = X51.
+a(b(a(b(a(b(a(b(a(b(X52)))))))))) = X52.
+a(b(a(b(a(b(a(b(a(b(X53)))))))))) = X53.
+a(b(a(b(a(b(a(b(a(b(X54)))))))))) = X54.
+a(b(a(b(a(b(a(b(a(b(X55)))))))))) = X55.
+
+a(b(a(b(a(b(a(b(a(b(X61)))))))))) = X61.
+a(b(a(b(a(b(a(b(a(b(X62)))))))))) = X62.
+a(b(a(b(a(b(a(b(a(b(X63)))))))))) = X63.
+a(b(a(b(a(b(a(b(a(b(X64)))))))))) = X64.
+a(b(a(b(a(b(a(b(a(b(X65)))))))))) = X65.
+
+a(b(a(b(a(b(a(b(a(b(X71)))))))))) = X71.
+a(b(a(b(a(b(a(b(a(b(X72)))))))))) = X72.
+a(b(a(b(a(b(a(b(a(b(X73)))))))))) = X73.
+a(b(a(b(a(b(a(b(a(b(X74)))))))))) = X74.
+a(b(a(b(a(b(a(b(a(b(X75)))))))))) = X75.
+
+a(b(a(b(a(b(a(b(a(b(X81)))))))))) = X81.
+a(b(a(b(a(b(a(b(a(b(X82)))))))))) = X82.
+a(b(a(b(a(b(a(b(a(b(X83)))))))))) = X83.
+a(b(a(b(a(b(a(b(a(b(X84)))))))))) = X84.
+a(b(a(b(a(b(a(b(a(b(X85)))))))))) = X85.
+
+
+a(X, Y), b(A, B), t :- a(X, Y), a(A, B).

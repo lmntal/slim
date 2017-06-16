@@ -454,7 +454,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule)
     if(lmn_env.enable_parallel && !lmn_env.nd){
       int i;
       for(i=0;i<lmn_env.core_num;i++){
-	lmn_sameproccxt_clear(thread_info[i]->rc);
+        lmn_sameproccxt_clear(thread_info[i]->rc);
       }
     }
   }
@@ -896,7 +896,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       SKIP_VAL(LmnLineNum,       instr);
 
       if(lmn_env.findatom_parallel_mode){
-	lmn_fatal("Couldn't find sync instruction!!");
+        lmn_fatal("Couldn't find sync instruction!!");
       }
 
 #ifdef KWBT_OPT
@@ -1107,6 +1107,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
         LmnFunctor f;
         AtomListEntryRef atomlist_ent;
         LmnSAtom atom;
+        Vector *memo = vec_make(1);
 
         READ_VAL(LmnFunctor, instr, f);
 
@@ -1114,10 +1115,46 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
           atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)wt(rc, memi), f);
           if (atomlist_ent) {
             EACH_ATOM(atom, atomlist_ent, ({
-	      if(lmn_env.find_atom_parallel)return FALSE;
+              if(lmn_env.find_atom_parallel)return FALSE;
+
+              Vector *grd = vec_make(LMN_SATOM_GET_ARITY(atom));
+              for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
+                vec_set(grd, i, (LmnWord)LinkObj_make(atom, i));
+              }
+
+              if (vec_num(memo) > 0) {
+                int found = 0;
+                for (int i = 0; i < vec_num(memo); i++) {
+                  Vector *v = (Vector *)vec_get(memo, i);
+                  if (lmn_mem_cmp_ground(v, grd)) {
+                    found = 1;
+                    break;
+                  }
+                }
+
+                if (found) {
+                  for (int j = 0; j < vec_num(grd); j++) LMN_FREE(vec_get(grd, j));
+                  vec_destroy(grd);
+                  cnt++;
+                  continue;
+                }
+              }
+
+              for (int i = 0; i < vec_num(grd); i++) LMN_FREE(vec_get(grd, i));
+              vec_destroy(grd);
+
               warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
               if (interpret(rc, rule, instr)) {
+                if (memo) vec_destroy(memo);
                 return TRUE;
+              }
+
+              if (LMN_SATOM_GET_ARITY(atom) > 0) {
+                Vector *v = vec_make(LMN_SATOM_GET_ARITY(atom));
+                for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
+                  vec_set(v, i, (LmnWord)LinkObj_make(atom, i));
+                }
+                vec_push(memo, (LmnWord)v);
               }
               profile_backtrack();
             }));
@@ -1184,7 +1221,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
             atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)wt(rc, memi), f);
             if (atomlist_ent) {
               EACH_ATOM(atom, atomlist_ent, ({
-		    if(lmn_env.find_atom_parallel)return FALSE;
+                if(lmn_env.find_atom_parallel)return FALSE;
                 warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
 
                 if (lmn_sameproccxt_all_pc_check_original(spc, atom, atom_arity) &&
@@ -1196,6 +1233,14 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
             }
           }
         }
+        for (int i = 0; i < vec_num(memo); i++) {
+          Vector *v = (Vector *)vec_get(memo, i);
+          for (int j = 0; j < vec_num(v); j++) {
+            LMN_FREE(vec_get(v, j));
+          }
+          vec_destroy(v);
+        }
+        vec_destroy(memo);
         return FALSE;
       }
       break;
@@ -1286,8 +1331,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
     case INSTR_FINDATOMP:
     {
       if(!lmn_env.enable_parallel||lmn_env.nd){
-	REWRITE_VAL(LmnInstrOp, instr, INSTR_FINDATOM);
-	break;
+        REWRITE_VAL(LmnInstrOp, instr, INSTR_FINDATOM);
+        break;
       }
       LmnInstrVar atomi, memi;
       LmnLinkAttr attr;
@@ -1302,14 +1347,14 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       else { /* symbol atom */
         LmnFunctor f;
         AtomListEntryRef atomlist_ent;
-	int atom_arity;
+        int atom_arity;
 
         READ_VAL(LmnFunctor, instr, f);
 
-	atom_arity = LMN_FUNCTOR_ARITY(f);
+        atom_arity = LMN_FUNCTOR_ARITY(f);
 
         if (rc_hlink_opt(atomi, rc)) {
-	  SameProcCxt *spc;
+          SameProcCxt *spc;
 
           if (!RC_HLINK_SPC(rc)) {
             lmn_sameproccxt_init(rc);
@@ -1319,94 +1364,94 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
           /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
           spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
           if (lmn_sameproccxt_from_clone(spc, atom_arity)) {
-	    lmn_fatal("Can't use hyperlink searching in parallel-runtime mode.\n");
-	  }
-	}
-	atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)wt(rc, memi), f);
-	if (atomlist_ent) {
-	  ///
-	  int ip, ip2;
-	  LmnInstrVar i;
-	  BOOL judge;
-	  LmnSAtom atom;
+            lmn_fatal("Can't use hyperlink searching in parallel-runtime mode.\n");
+          }
+        }
+        atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)wt(rc, memi), f);
+        if (atomlist_ent) {
+          ///
+          int ip, ip2;
+          LmnInstrVar i;
+          BOOL judge;
+          LmnSAtom atom;
 
-	  normal_parallel_flag=TRUE;
+          normal_parallel_flag=TRUE;
 
-	  while(!deq_is_empty(temp)){
-	    ip=(int)deq_pop_head(temp);
-	    atom= (LmnSAtom)wt(thread_info[ip]->rc, atomi);
-	    if(check_exist(atom, f)){
-	      warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0),TT_ATOM);
-	      if(rc_hlink_opt(atomi, rc)){
-		SameProcCxt *spc;
-		spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
-		if (lmn_sameproccxt_all_pc_check_clone(spc, LMN_SATOM(wt(rc, atomi)), atom_arity) && 
-		    interpret(rc, rule, instr)) {
-		  success_temp_check++;
-		  return TRUE;
-		}
-	      }else{
-		if (interpret(rc, rule, instr)){
-		  success_temp_check++;
-		  return TRUE;
-		}
-	      }
-	    }
-	    fail_temp_check++;
-	  }
+          while(!deq_is_empty(temp)){
+            ip=(int)deq_pop_head(temp);
+            atom= (LmnSAtom)wt(thread_info[ip]->rc, atomi);
+            if(check_exist(atom, f)){
+              warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0),TT_ATOM);
+              if(rc_hlink_opt(atomi, rc)){
+                SameProcCxt *spc;
+                spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+                if (lmn_sameproccxt_all_pc_check_clone(spc, LMN_SATOM(wt(rc, atomi)), atom_arity) && 
+                    interpret(rc, rule, instr)) {
+                  success_temp_check++;
+                  return TRUE;
+                }
+              }else{
+                if (interpret(rc, rule, instr)){
+                  success_temp_check++;
+                  return TRUE;
+                }
+              }
+            }
+            fail_temp_check++;
+          }
 
 
-	  if(atomlist_ent_num(atomlist_ent) < lmn_env.core_num){
-	    active_thread = atomlist_ent_num(atomlist_ent);
-	  }else{
-	    active_thread = lmn_env.core_num;
-	  }
+          if(atomlist_ent_num(atomlist_ent) < lmn_env.core_num){
+            active_thread = atomlist_ent_num(atomlist_ent);
+          }else{
+            active_thread = lmn_env.core_num;
+          }
 
-	  lmn_env.findatom_parallel_mode=TRUE;
-	  for(ip=0, atom=atomlist_head(atomlist_ent);
-	      ip<active_thread;
-	      atom=LMN_SATOM_GET_NEXT_RAW(atom),ip++){
-	    //pthread create
-	    if(lmn_env.find_atom_parallel)break;
-	    if(!check_exist(thread_info[ip]->next_atom,f)||
-	       atom == thread_info[ip]->next_atom||
-	       lmn_env.findatom_parallel_inde)
-	      thread_info[ip]->next_atom=NULL;
-	    threadinfo_init(ip, atomi, rule, rc, instr, atomlist_ent, atom_arity);
-	    //
-	    pthread_mutex_unlock(thread_info[ip]->exec);
-	  }
-	  for(ip2=0;ip2<ip;ip2++){
-	    //lmn_thread_join(findthread[ip2]);
-	    op_lock(ip2, 0);
-	    profile_backtrack_add(thread_info[ip2]->backtrack);
-	    thread_info[ip2]->profile->backtrack_num += thread_info[ip2]->backtrack;
-	  }
-	  lmn_env.findatom_parallel_mode=FALSE;
+          lmn_env.findatom_parallel_mode=TRUE;
+          for(ip=0, atom=atomlist_head(atomlist_ent);
+              ip<active_thread;
+              atom=LMN_SATOM_GET_NEXT_RAW(atom),ip++){
+            //pthread create
+            if(lmn_env.find_atom_parallel)break;
+            if(!check_exist(thread_info[ip]->next_atom,f)||
+               atom == thread_info[ip]->next_atom||
+               lmn_env.findatom_parallel_inde)
+              thread_info[ip]->next_atom=NULL;
+            threadinfo_init(ip, atomi, rule, rc, instr, atomlist_ent, atom_arity);
+            //
+            pthread_mutex_unlock(thread_info[ip]->exec);
+          }
+          for(ip2=0;ip2<ip;ip2++){
+            //lmn_thread_join(findthread[ip2]);
+            op_lock(ip2, 0);
+            profile_backtrack_add(thread_info[ip2]->backtrack);
+            thread_info[ip2]->profile->backtrack_num += thread_info[ip2]->backtrack;
+          }
+          lmn_env.findatom_parallel_mode=FALSE;
 
-	  //copy register
-	  judge=TRUE;
-	  for(ip2=0;ip2<ip;ip2++){
-	    if(thread_info[ip2]->judge && judge){
-	      for(i=0;i<warry_use_size(rc);i++){
+          //copy register
+          judge=TRUE;
+          for(ip2=0;ip2<ip;ip2++){
+            if(thread_info[ip2]->judge && judge){
+              for(i=0;i<warry_use_size(rc);i++){
           wt_set(rc, i, wt(thread_info[ip2]->rc, i));
           at_set(rc, i, at(thread_info[ip2]->rc, i));
           tt_set(rc, i, tt(thread_info[ip2]->rc, i));
-	      }
-	      if(lmn_env.trace)fprintf(stdout,"( Thread id : %d )",thread_info[ip2]->id);
-	      instr=instr_parallel;
-	      judge=FALSE;
-	      continue;
-	    }
-	    if(thread_info[ip2]->judge){
-	      deq_push_head(temp,ip2);
-	    }
-	  }
-	    
-	  if(!lmn_env.find_atom_parallel)return FALSE;//Can't find atom
-	  lmn_env.find_atom_parallel=FALSE;
-	  break;//Find atom!!
-	}	
+              }
+              if(lmn_env.trace)fprintf(stdout,"( Thread id : %d )",thread_info[ip2]->id);
+              instr=instr_parallel;
+              judge=FALSE;
+              continue;
+            }
+            if(thread_info[ip2]->judge){
+              deq_push_head(temp,ip2);
+            }
+          }
+            
+          if(!lmn_env.find_atom_parallel)return FALSE;//Can't find atom
+          lmn_env.find_atom_parallel=FALSE;
+          break;//Find atom!!
+        }       
         return FALSE;
       }
       break;
@@ -1414,11 +1459,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
     case INSTR_SYNC:
     {
       if(lmn_env.findatom_parallel_mode){
-	lmn_env.find_atom_parallel=TRUE;
-	instr_parallel=instr;
-	return TRUE;
+        lmn_env.find_atom_parallel=TRUE;
+        instr_parallel=instr;
+        return TRUE;
       }
-	break;
+        break;
     }
 
     case INSTR_LOCKMEM:
@@ -1695,9 +1740,9 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
                             at(rc, atom1),
                             pos1,
                             ap,
-			    // 0,
-			    attr, /* this arg should be attr because  
-				     atom2 may be a hyperlink. */ 
+                            // 0,
+                            attr, /* this arg should be attr because  
+                                     atom2 may be a hyperlink. */ 
                             attr);
       } else {
         lmn_newlink_with_ex((LmnMembraneRef)wt(rc, memi),
@@ -1720,24 +1765,24 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, atom2);
       READ_VAL(LmnInstrVar, instr, pos2);
       if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1)) && LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){
-	//(D,D)
+        //(D,D)
 #ifdef DEBUG
         fprintf(stderr, "Two data atoms are specified in the arg of the swaplink instruction.\n");
 #endif
       }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){
-	//(D,S)
-	ap2 = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom2), pos2);
-	attr2 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom2), pos2);
-	LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)wt(rc, atom1));
-	LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
-	break;
+        //(D,S)
+        ap2 = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom2), pos2);
+        attr2 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom2), pos2);
+        LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)wt(rc, atom1));
+        LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1));
+        break;
       }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){
-	//(S,D)
-	ap1 = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom1), pos1);
-	attr1 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom1), pos1);
-	LMN_SATOM_SET_LINK(ap1, attr1, (LmnAtomRef)wt(rc, atom2));
-	LMN_SATOM_SET_ATTR(ap1, attr1, at(rc, atom2));
-	break;
+        //(S,D)
+        ap1 = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom1), pos1);
+        attr1 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom1), pos1);
+        LMN_SATOM_SET_LINK(ap1, attr1, (LmnAtomRef)wt(rc, atom2));
+        LMN_SATOM_SET_ATTR(ap1, attr1, at(rc, atom2));
+        break;
       }
       //(S,S)
       ap1 = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom1), pos1);
@@ -1746,46 +1791,46 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       attr2 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom2), pos2);
       
       if(LMN_SATOM(wt(rc,atom1)) == ap2 && LMN_SATOM(wt(rc,atom2)) == ap1 
-	  && attr1 == pos2 && attr2 ==pos1){
-	//use same link
-	
+          && attr1 == pos2 && attr2 ==pos1){
+        //use same link
+        
       }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr1) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
-	//(-D,-D)
+        //(-D,-D)
 
-	/* データアトムap2とシンボルアトムatom1 */
-	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+        /* データアトムap2とシンボルアトムatom1 */
+        LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+        LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
 
-	/* データアトムap1とシンボルアトムatom2 */
+        /* データアトムap1とシンボルアトムatom2 */
         LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
         LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1);
 
-	
+        
       }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)){
-	//(-D,-S)
+        //(-D,-S)
 
-	/* データアトムap1とシンボルアトムatom2 */
+        /* データアトムap1とシンボルアトムatom2 */
         LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1);
         LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1);
 
-	/* シンボルアトムatom1とシンボルアトムap2 */
-	if(ap2 != NULL){
-	  LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)wt(rc, atom1));
-	  LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+        /* シンボルアトムatom1とシンボルアトムap2 */
+        if(ap2 != NULL){
+          LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)wt(rc, atom1));
+          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
+          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
         }else{
-	  LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
-	  LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
         }
 
-	
+        
       }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){
-	//(-S,-D)
+        //(-S,-D)
 
-	/* データアトムap2とシンボルアトムatom1 */
-	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
-	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
+        /* データアトムap2とシンボルアトムatom1 */
+        LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+        LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);
 
         /* シンボルアトムatom2とシンボルアトムap1 */
         if(ap1 != NULL){
@@ -1797,9 +1842,9 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, 0);
           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, 0);
         }
-	
+        
       }else{
-	//(-S,-S)
+        //(-S,-S)
 
         /* シンボルアトムatom2とシンボルアトムap1 */
         if(ap1 != NULL){
@@ -1812,15 +1857,15 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
           LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)wt(rc, atom2), pos2, 0);
         }
 
-	/* シンボルアトムatom1とシンボルアトムap2 */
-	if(ap2 != NULL){
-	  LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)wt(rc, atom1));
-	  LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-	  LMN_SATOM_SET_LINK((LmnSymbolAtomRef)(LmnSymbolAtomRef)wt(rc, atom1), pos1, ap2);
-	  LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)wt(rc, atom1), pos1, attr2);
+        /* シンボルアトムatom1とシンボルアトムap2 */
+        if(ap2 != NULL){
+          LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)wt(rc, atom1));
+          LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
+          LMN_SATOM_SET_LINK((LmnSymbolAtomRef)(LmnSymbolAtomRef)wt(rc, atom1), pos1, ap2);
+          LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)wt(rc, atom1), pos1, attr2);
         }else{
-	  LMN_SATOM_SET_LINK((LmnSymbolAtomRef)wt(rc, atom1), pos1, 0);
-	  LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)wt(rc, atom1), pos1, 0);
+          LMN_SATOM_SET_LINK((LmnSymbolAtomRef)wt(rc, atom1), pos1, 0);
+          LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)wt(rc, atom1), pos1, 0);
         }
       }
 
@@ -1849,33 +1894,33 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 /*       }else if(LMN_SATOM(wt(rc,atom1)) == ap2 && LMN_SATOM(wt(rc,atom2)) == ap1 && attr1 == pos2 && attr2 ==pos1){ */
 /*       }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom2))){ */
 /*         /\* データアトムatom2とシンボルアトムap1 *\/ */
-/* 	if(ap1 != NULL){ */
-/* 	  LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2)); */
-/* 	  LMN_SATOM_SET_ATTR(ap1, attr1, pos2); */
-/* 	} */
+/*      if(ap1 != NULL){ */
+/*        LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2)); */
+/*        LMN_SATOM_SET_ATTR(ap1, attr1, pos2); */
+/*      } */
 /*         if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
 /*           /\* データアトムatom1とシンボルアトムap2 *\/ */
-/* 	  if(ap2 != NULL){ */
-/* 	    LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-/* 	    LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
-/* 	  } */
+/*        if(ap2 != NULL){ */
+/*          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*          LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/*        } */
 /*         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
 /*           /\* データアトムap2とシンボルアトムatom1 *\/ */
 /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
 /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
 /*         }else { */
 /*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
-/* 	////// */
-/* 	        if(ap2 != NULL){ */
-/* 			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-/* 	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
-/* 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-/* 	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
-/* 	        }else{ */
-/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
-/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
-/* 	        } */
-/* 	////// */
+/*      ////// */
+/*              if(ap2 != NULL){ */
+/*                      LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*                      LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/*                      LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*                      LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/*              }else{ */
+/*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/*              } */
+/*      ////// */
 /*           /\*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
 /*           LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1)); */
 /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
@@ -1896,17 +1941,17 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
 /*         }else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(attr2)){ */
 /*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
-/* 	////// */
-/* 	        if(ap2 != NULL){ */
-/* 			LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-/* 	          	LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
-/* 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-/* 	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
-/* 	        }else{ */
-/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
-/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
-/* 	        } */
-/* 	////// */
+/*      ////// */
+/*              if(ap2 != NULL){ */
+/*                      LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*                      LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/*                      LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*                      LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/*              }else{ */
+/*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/*              } */
+/*      ////// */
 /*           /\*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
 /*           LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1)); */
 /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
@@ -1926,7 +1971,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, 0); */
 /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, 0); */
 /*         } */
-/* 	if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
+/*      if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
 /*           /\* データアトムatom1とシンボルアトムap2 *\/ */
 /*           LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
 /*           LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
@@ -1936,34 +1981,34 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2)); */
 /*         }else { */
 /*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
-/* 	////// */
-/* 	        if(ap2 != NULL){ */
-/* 			LMN_SATOM_SET_LINK(ap2, LMN_ATTR_GET_VALUE(attr2), wt(rc, atom1)); */
-/* 	          	LMN_SATOM_SET_ATTR(ap2, LMN_ATTR_GET_VALUE(attr2), pos1); */
-/* 	          	LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-/* 	          	LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2)); */
-/* 	        }else{ */
-/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
-/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
-/* 	        } */
-/* 	////// */
-/* 	/\* */
+/*      ////// */
+/*              if(ap2 != NULL){ */
+/*                      LMN_SATOM_SET_LINK(ap2, LMN_ATTR_GET_VALUE(attr2), wt(rc, atom1)); */
+/*                      LMN_SATOM_SET_ATTR(ap2, LMN_ATTR_GET_VALUE(attr2), pos1); */
+/*                      LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*                      LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, LMN_ATTR_GET_VALUE(attr2)); */
+/*              }else{ */
+/*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
+/*              } */
+/*      ////// */
+/*      /\* */
 /*         if(ap2){ */
-/* 	        if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
-/* 	          // データアトムatom1とシンボルアトムap2  */
-/* 	          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-/* 	          LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1)); */
-/* 	        }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
-/* 	          // データアトムap2とシンボルアトムatom1  */
-/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
-/* 	        }else{ */
-/* 	          // シンボルアトムatom1とシンボルアトムap2  */
-/* 	          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-/* 	          LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
-/* 	          LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-/* 	          LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
-/* 	        } */
+/*              if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))){ */
+/*                // データアトムatom1とシンボルアトムap2  */
+/*                LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*                LMN_SATOM_SET_ATTR(ap2, attr2, at(rc, atom1)); */
+/*              }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
+/*                // データアトムap2とシンボルアトムatom1  */
+/*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/*              }else{ */
+/*                // シンボルアトムatom1とシンボルアトムap2  */
+/*                LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
+/*                LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+/*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
+/*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+/*              } */
 /*         }else{ */
 /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
 /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,0); */
@@ -2130,23 +2175,23 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
         LmnInstrVar atomi, atomi2, memi;
 
         READ_VAL(LmnInstrVar, instr, atomi);
-	READ_VAL(LmnInstrVar, instr, atomi2);
+        READ_VAL(LmnInstrVar, instr, atomi2);
         READ_VAL(LmnInstrVar, instr, memi);
         move_atom_to_atom_tail((LmnSAtom)wt(rc,atomi),(LmnSAtom)wt(rc,atomi2),(LmnMembraneRef)wt(rc,memi));
         break;
       }
     case INSTR_CLEARLINK:
       {
-	LmnInstrVar atomi, link;
-	
-	READ_VAL(LmnInstrVar, instr, atomi);
-	READ_VAL(LmnInstrVar, instr, link);
-	
-	if(!LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atomi))){
-	  LMN_SATOM_SET_LINK((LmnSymbolAtomRef)wt(rc,atomi), link, NULL);
-	}
-	
-	break;
+        LmnInstrVar atomi, link;
+        
+        READ_VAL(LmnInstrVar, instr, atomi);
+        READ_VAL(LmnInstrVar, instr, link);
+        
+        if(!LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atomi))){
+          LMN_SATOM_SET_LINK((LmnSymbolAtomRef)wt(rc,atomi), link, NULL);
+        }
+        
+        break;
       }
     case INSTR_NEWMEM:
     {
@@ -2895,35 +2940,35 @@ label_skip_data_atom:
 
       ////normal parallel init
       if(lmn_env.enable_parallel && !lmn_env.nd){
-	for(i=0;i<lmn_env.core_num;i++){
-	  if (!RC_HLINK_SPC(thread_info[i]->rc)) {
-	    lmn_sameproccxt_init(thread_info[i]->rc);
-	  }
+        for(i=0;i<lmn_env.core_num;i++){
+          if (!RC_HLINK_SPC(thread_info[i]->rc)) {
+            lmn_sameproccxt_init(thread_info[i]->rc);
+          }
 
-	  if (!hashtbl_contains(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1)) {
-	    spc1 = lmn_sameproccxt_spc_make(atom1, length1);
-	    hashtbl_put(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1, (HashValueType)spc1);
-	  }
-	  else {
-	    spc1 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1);
-	  }
+          if (!hashtbl_contains(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1)) {
+            spc1 = lmn_sameproccxt_spc_make(atom1, length1);
+            hashtbl_put(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1, (HashValueType)spc1);
+          }
+          else {
+            spc1 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1);
+          }
 
-	  if (!LMN_SPC_PC(spc1, arg1)) {
-	    LMN_SPC_PC(spc1, arg1) = lmn_sameproccxt_pc_make(atom1, arg1, NULL);
-	  }
+          if (!LMN_SPC_PC(spc1, arg1)) {
+            LMN_SPC_PC(spc1, arg1) = lmn_sameproccxt_pc_make(atom1, arg1, NULL);
+          }
 
-	  if (!hashtbl_contains(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2)) {
-	    spc2 = lmn_sameproccxt_spc_make(atom2, length2);
-	    hashtbl_put(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2, (HashValueType)spc2);
-	  }
-	  else {
-	    spc2 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2);
-	  }
+          if (!hashtbl_contains(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2)) {
+            spc2 = lmn_sameproccxt_spc_make(atom2, length2);
+            hashtbl_put(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2, (HashValueType)spc2);
+          }
+          else {
+            spc2 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2);
+          }
 
-	  if (!LMN_SPC_PC(spc2, arg2)) {
-	    LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, (ProcCxt *)LMN_SPC_PC(spc1, arg1));
-	  }
-	}
+          if (!LMN_SPC_PC(spc2, arg2)) {
+            LMN_SPC_PC(spc2, arg2) = lmn_sameproccxt_pc_make(atom2, arg2, (ProcCxt *)LMN_SPC_PC(spc1, arg1));
+          }
+        }
       }
       break;
     }
@@ -4193,13 +4238,13 @@ label_skip_data_atom:
           break;
         }
 
-	/* (2015-07-30) moved to the end so that lmn_dump_mem can safely
+        /* (2015-07-30) moved to the end so that lmn_dump_mem can safely
            be called in callback functions
         lmn_mem_delete_atom((LmnMembraneRef)wt(rc, memi), wt(rc, atomi), at(rc, atomi));
         lmn_mem_delete_atom((LmnMembraneRef)wt(rc, memi),
                             LMN_SATOM_GET_LINK(atom, 0),
                             LMN_SATOM_GET_ATTR(atom, 0));
-	*/
+        */
 
         switch (arity) {
         case 1:
