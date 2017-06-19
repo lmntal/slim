@@ -12,5 +12,6 @@ run ()
 }
 
 run aclocal
+run autoheader
 run automake --add-missing
 run autoreconf
