@@ -1108,7 +1108,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
         LmnFunctor f;
         AtomListEntryRef atomlist_ent;
         LmnSAtom atom;
-        Vector *memo = vec_make(1);
 
         READ_VAL(LmnFunctor, instr, f);
 
@@ -1126,12 +1125,23 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
 
               warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
               if (interpret(rc, rule, instr)) {
-                if (memo) vec_destroy(memo);
                 return TRUE;
               }
 
               profile_backtrack();
             }));
+
+            if (cachei > 0) {
+              Vector *memo = (Vector *)wt(rc, cachei);
+              for (int i = 0; i < vec_num(memo); i++) {
+                Vector *v = (Vector *)vec_get(memo, i);
+                for (int j = 0; j < vec_num(v); j++) {
+                  LMN_FREE(vec_get(v, j));
+                }
+                vec_destroy(v);
+              }
+              vec_destroy(memo);
+            }
           }
         }
         else { /* hyperlink の接続関係を利用したルールマッチング最適化 */
@@ -1208,17 +1218,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
           }
         }
 
-        if (cachei > 0) {
-          Vector *memo = (Vector *)wt(rc, cachei);
-          for (int i = 0; i < vec_num(memo); i++) {
-            Vector *v = (Vector *)vec_get(memo, i);
-            for (int j = 0; j < vec_num(v); j++) {
-              LMN_FREE(vec_get(v, j));
-            }
-            vec_destroy(v);
-          }
-          vec_destroy(memo);
-        }
         return FALSE;
       }
       break;
@@ -1230,6 +1229,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       READ_VAL(LmnInstrVar, instr, cachei);
       READ_VAL(LmnInstrVar, instr, num_links);
 
+
       Vector *grd = vec_make(num_links);
       for (int i = 0; i < num_links; i++) {
         LmnInstrVar v;
@@ -1240,6 +1240,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       Vector *cache = (Vector *)wt(rc, cachei);
       if (vec_num(cache) > 0) {
         if (num_links == 0) return FALSE;
+
         int found = 0;
         for (int i = 0; i < vec_num(cache); i++) {
           Vector *v = (Vector *)vec_get(cache, i);
@@ -1260,7 +1261,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
       if (num_links > 0) {
         vec_push(cache, (LmnWord)grd);
       } else {
-        vec_push(cache, (LmnWord)vec_make(0));
+        vec_push(cache, (LmnWord)vec_make(1));
       }
 
       break;

@@ -1,0 +1,20 @@
+
+p_thinking(Lx0, Rx0), fork_free(Lx1, Rx0) :- p_one_fork(Lx0, Rx1), fork_used(Lx1, Rx1).
+// p_one_fork(Lxx0, Rxx0), fork_used(Lxx1, Rxx0), fork_free(Lxx0, Rxx1) :- p_eating(Lxx2, Rxx2), fork_used(Lxx1, Rxx2), fork_used(Lxx2, Rxx1).
+// p_eating(Lxxx0, Rxxx0), fork_used(Lxxx0, Rxxx1), fork_used(Lxxx1, Rxxx0) :- p_thinking(Lxxx2, Rxxx2), fork_free(Lxxx2, Rxxx1), fork_free(Lxxx1, Rxxx2).
+
+p_thinking(L0, R0), fork_free(L0, R1).
+p_thinking(L1, R1), fork_free(L1, R2).
+p_thinking(L2, R2), fork_free(L2, R3).
+p_thinking(L3, R3), fork_free(L3, R4).
+p_thinking(L4, R4), fork_free(L4, R5).
+p_thinking(L5, R5), fork_free(L5, R6).
+p_thinking(L6, R6), fork_free(L6, R7).
+p_thinking(L7, R7), fork_free(L7, R8).
+p_thinking(L8, R8), fork_free(L8, R9).
+p_thinking(L9, R9), fork_free(L9, R10).
+p_thinking(L10, R10), fork_free(L10, R11).
+p_thinking(L11, R11), fork_free(L11, R12).
+p_thinking(L12, R12), fork_free(L12, R13).
+p_thinking(L13, R13), fork_free(L13, R14).
+p_thinking(L14, R14), fork_free(L14, R0).
