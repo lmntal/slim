@@ -17,9 +17,7 @@ The way to compile this package is:
 ```
 export LMNTAL_HOME=/path/to/devel # set path of compiler
 cd slim
-aclocal
-automake --add-missing
-autoreconf
+./autogen.sh
 ./configure
 make
 ```
