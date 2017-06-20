@@ -756,11 +756,11 @@ static void lmn_dump_cell_internal(LmnPortRef port,
     BOOL dumped = FALSE;
     for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
       if (lmn_dump_mem_internal(port, m, ht, s)) {
-        dumped = TRUE;
-        /* 次の膜が既に出力済みならスキップする */
-        if (lmn_mem_next(m) && !hashtbl_contains(ht, (HashKeyType)(lmn_mem_next(m)))) {
-          port_put_raw_s(port, ", ");
-        }
+	dumped = TRUE;
+      }
+      /* 一回でも出力したことがあって、かつ次回が出力可能ならカンマを打つ */
+      if (dumped && lmn_mem_next(m) && !hashtbl_contains(ht, (HashKeyType)(lmn_mem_next(m)))) {
+	port_put_raw_s(port, ", ");
       }
     }
     if (dumped) {
