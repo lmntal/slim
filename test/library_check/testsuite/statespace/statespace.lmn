@@ -20,4 +20,29 @@ tap_producer = {
     // ルールセットは等価性判定を行えないので削除
     teardown = { state_space.use :- . rules({@p}) :- . }
   }.
+
+  test_suite = {
+    setup = { state_space.use. }.
+
+    test_case = {
+      name = "react_nd_set stable membrane test".
+
+      init = {
+        f({ init{ a. (x :- y).} }).
+      }.
+
+      ruleset = {
+        f({$p[]}) :-
+          ret = state_space.react_nd_set({ init {$q, @q}/ :- $q. }, { $p[] }, rules),
+          delete({$p[]}).
+      }.
+
+      stable = {
+        ret = [{a}].
+      }.
+    }.
+
+    // ルールセットは等価性判定を行えないので削除
+    teardown = { state_space.use :- . rules({@p}) :- . delete({$p[]}) :- . }
+  }.
 }.

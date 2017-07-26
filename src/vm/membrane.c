@@ -1324,7 +1324,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
   }));
 
   /* copy activated flag */
-  destmem->is_activated = vec_num(&destmem->rulesets) || vec_num(&srcmem->rulesets) || srcmem->is_activated;
+  destmem->is_activated = vec_num(&destmem->rulesets) || srcmem->is_activated;
 }
 
 struct LinkObj {
