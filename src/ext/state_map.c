@@ -124,7 +124,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   State *new_s = state_make(m, 0, mc_use_canonical(mc_flag));
 
   State *succ = statespace_insert(ss, new_s);
-
+  lmn_mem_remove_mem(mem, m);
   if(succ == new_s){
     /* new state */
     state_id_issue(succ);
@@ -134,6 +134,9 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
     lmn_newlink_in_symbols(in, 0, out, 0);
     lmn_newlink_in_symbols(in, 1, plus, 0);
     st_insert(i_tbl, (st_data_t)new_s, (st_data_t)m);
+  } else {
+    lmn_memstack_delete(RC_MEMSTACK(rc), m);
+    state_free(new_s);
   }
   lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
   lmn_mem_newlink(mem,
@@ -145,8 +148,6 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
 
   lmn_mem_delete_atom(mem, a1, t1);
-
-  lmn_mem_remove_mem(mem, m);
 }
 
 /*
