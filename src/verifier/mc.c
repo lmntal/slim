@@ -50,7 +50,8 @@
 #  include "dumper.h"
 #endif
 
-
+int mc_ss=0;
+extern int mc_ins;
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
@@ -88,6 +89,8 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms)
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
   }
+  printf("mc_store_successors=%d\n", mc_ss);
+  printf("statespace_insert=%d\n", mc_ins);
 }
 
 
@@ -308,7 +311,7 @@ void mc_store_successors(const StateSpaceRef ss,
                          BOOL             f)
 {
   unsigned int i, succ_i;
-
+  mc_ss++;
   /** 状態登録 */
   succ_i = 0;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
@@ -316,7 +319,6 @@ void mc_store_successors(const StateSpaceRef ss,
     st_data_t tmp;
     State *src_succ, *succ;
     LmnMembraneRef src_succ_m;
-
     /* 状態sのi番目の遷移src_tと遷移先状態src_succを取得 */
     if (!has_trans_obj(s)) {
       /* Transitionオブジェクトを利用しない場合 */
@@ -365,7 +367,6 @@ void mc_store_successors(const StateSpaceRef ss,
         transition_set_state(src_t, succ);
       }
     }
-
     /* 多重辺(1stepで合流する遷移関係)を除去 */
     tmp = 0;
     if (!st_lookup(RC_SUCC_TBL(rc), (st_data_t)succ, (st_data_t *)&tmp)) {

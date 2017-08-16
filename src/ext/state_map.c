@@ -37,10 +37,22 @@
  * $Id$
  */
 
+int id_find=0;
+#include "../cb.h"
+#include <time.h>
 #include "state_map.h"
 #include "set.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
+
+#ifdef CB
+extern struct timespec cb_time[6];
+extern int cb_call[6];
+#endif
+
+/* #ifdef CB */
+/* extern int cb_times[6][2]; */
+/* #endif */
 
 static int state_map_atom_type;
 static BYTE mc_flag = 0x10U;
@@ -73,6 +85,10 @@ void cb_state_map_init(LmnReactCxtRef rc,
                        LmnMembraneRef mem,
                        LmnAtomRef a0, LmnLinkAttr t0)
 {
+#ifdef CB
+  struct timespec tp0, tp1;
+  clock_gettime(CLOCK_REALTIME, &tp0);
+#endif
   LmnStateMapRef atom = lmn_make_state_map(mem);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   LMN_SP_ATOM_SET_TYPE(atom, state_map_atom_type);
@@ -80,6 +96,30 @@ void cb_state_map_init(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
                   atom, attr, 0);
+#ifdef CB
+  clock_gettime(CLOCK_REALTIME, &tp1);
+  long sec, nsec;
+  sec = tp1.tv_sec-tp0.tv_sec;
+  nsec = tp1.tv_nsec-tp0.tv_nsec;
+  if(nsec < 0)
+    {
+      sec--;
+      nsec += 1000000000L;
+    }
+  if(cb_time[2].tv_nsec+nsec>=1000000000L)
+    {
+      sec++;
+      nsec-=1000000000L;
+    }
+
+  cb_time[2].tv_sec+= sec;
+  cb_time[2].tv_nsec+= nsec;
+  cb_call[2]++;
+#endif
+/* #ifdef CB */
+/*   cb_times[2][0]+=clock()-s; */
+/*   cb_times[2][1]++; */
+/* #endif */
 }
 
 /*
@@ -108,6 +148,12 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnAtomRef a2, LmnLinkAttr t2,
                           LmnAtomRef a3, LmnLinkAttr t3)
 {
+#ifdef CB
+  struct timespec tp0, tp1;
+  clock_gettime(CLOCK_REALTIME, &tp0);
+  id_find++;
+  /* clock_t s = clock(); */
+#endif
   LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
   LmnSAtom in = LMN_SATOM_GET_LINK(a1, 0);
   LmnSAtom out = a1;
@@ -145,8 +191,31 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
                   a3, t3, LMN_ATTR_GET_VALUE(t3));
 
   lmn_mem_delete_atom(mem, a1, t1);
-
   lmn_mem_remove_mem(mem, m);
+#ifdef CB
+  clock_gettime(CLOCK_REALTIME, &tp1);
+  long sec, nsec;
+  sec = tp1.tv_sec-tp0.tv_sec;
+  nsec = tp1.tv_nsec-tp0.tv_nsec;
+  if(nsec < 0)
+    {
+      sec--;
+      nsec += 1000000000L;
+    }
+  if(cb_time[3].tv_nsec+nsec>=1000000000L)
+    {
+      sec++;
+      nsec-=1000000000L;
+    }
+
+  cb_time[3].tv_sec+=sec;
+  cb_time[3].tv_nsec+=nsec;
+  cb_call[3]++;
+#endif
+/* #ifdef CB */
+/*   cb_times[3][0]+=clock()-s; */
+/*   cb_times[3][1]++; */
+/* #endif */
 }
 
 /*
@@ -163,6 +232,11 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
 			     LmnAtomRef a2, LmnLinkAttr t2,
 			     LmnAtomRef a3, LmnLinkAttr t3)
 {
+#ifdef CB
+  struct timespec tp0, tp1;
+  clock_gettime(CLOCK_REALTIME, &tp0);
+  /* clock_t st=clock(); */
+#endif
   st_table_t i_tbl=LMN_STATE_MAP(a0)->id_tbl;
   State *s=(State *)a1;
   st_data_t entry;
@@ -195,6 +269,30 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t1),
 		  a3, t3, LMN_ATTR_GET_VALUE(t3));
+/* #ifdef CB */
+/*   cb_times[4][0]+=clock()-st; */
+/*   cb_times[4][1]++; */
+/* #endif */
+#ifdef CB
+  clock_gettime(CLOCK_REALTIME, &tp1);
+  long sec, nsec;
+  sec = tp1.tv_sec-tp0.tv_sec;
+  nsec = tp1.tv_nsec-tp0.tv_nsec;
+  if(nsec < 0)
+    {
+      sec--;
+      nsec += 1000000000L;
+    }
+  if(cb_time[4].tv_nsec+nsec>=1000000000L)
+    {
+      sec++;
+      nsec-=1000000000L;
+    }
+
+  cb_time[4].tv_sec+=sec;
+  cb_time[4].tv_nsec+=nsec;
+  cb_call[4]++;
+#endif
 }
 
 /*----------------------------------------------------------------------

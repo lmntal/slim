@@ -36,6 +36,24 @@
  * $Id: task.c,v 1.37 2008/10/21 11:31:58 riki Exp $
  */
 
+#include "../cb.h"
+#include <time.h>
+#ifdef CB
+struct timespec all_cb_time;
+extern struct timespec cb_time[6];
+extern int cb_call[6];
+extern int id_find;
+/* 
+cb_times[0]=set_insert 
+cb_times[1]=set_find
+cb_times[2]=state_map_init
+cb_times[3]=state_map_id_find
+cb_times[4]=state_map_state_find
+cb_times[5]=react_ruleset_nd
+*/
+#endif
+
+
 
 #include "task.h"
 #include "ccallback.h"
@@ -162,6 +180,13 @@ void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
  */
 void lmn_run(Vector *start_rulesets)
 {
+#ifndef CB
+  /* clock_t start, end; */
+  /* start = clock(); */
+  struct timespec tp0, tp1;
+  clock_gettime(CLOCK_REALTIME, &tp0);
+#endif
+
   static LmnMembraneRef mem;
   static LmnReactCxtRef mrc = NULL;
 
@@ -249,7 +274,44 @@ void lmn_run(Vector *start_rulesets)
   }
   if (env_proc_id_pool()) {
     vec_free(env_proc_id_pool());
+
+
   }
+
+#ifndef CB
+  clock_gettime(CLOCK_REALTIME, &tp1);
+#endif
+
+#ifdef CB
+  int sw=1;
+  printf("%ld.%09ld,", all_cb_time.tv_sec, all_cb_time.tv_nsec);
+  for(int i=0; i<6; i++)
+    {
+      if(sw==1)
+	{
+	  printf("%ld.%09ld,", cb_time[i].tv_sec, cb_time[i].tv_nsec);
+	}
+      else
+	printf("%d, ",cb_call[i]);
+    }
+  printf("\n");
+  printf("id_find=%d\n", id_find);
+#else
+
+  long sec = tp1.tv_sec - tp0.tv_sec;
+  long nsec = tp1.tv_nsec - tp0.tv_nsec;
+  if(nsec < 0)
+    {
+      sec--;
+      nsec += 1000000000L;
+    }
+  if(nsec>=1000000000L)
+    {
+      sec++;
+      nsec-=1000000000L;
+    }
+  printf("%ld.%09ld,\n", sec, nsec);
+#endif
 
 }
 
@@ -4200,7 +4262,12 @@ label_skip_data_atom:
                             LMN_SATOM_GET_LINK(atom, 0),
                             LMN_SATOM_GET_ATTR(atom, 0));
 	*/
-
+#ifdef CB
+	struct timespec tp0, tp1;
+	clock_gettime(CLOCK_REALTIME, &tp0);
+	/* clock_t start, end; */
+	/* start = clock(); */
+#endif
         switch (arity) {
         case 1:
           ((callback_0)c->f)(rc, (LmnMembraneRef)wt(rc, memi));
@@ -4244,7 +4311,26 @@ label_skip_data_atom:
           printf("EXTERNAL FUNCTION: too many arguments\n");
           break;
         }
-
+#ifdef CB
+	clock_gettime(CLOCK_REALTIME, &tp1);
+	long sec, nsec;
+	sec = tp1.tv_sec-tp0.tv_sec;
+	nsec = tp1.tv_nsec-tp0.tv_nsec;
+	if(nsec < 0)
+	  {
+	    sec--;
+	    nsec += 1000000000L;
+	  }
+	if(all_cb_time.tv_nsec+nsec>=1000000000L)
+	  {
+	    sec++;
+	    nsec-=1000000000L;
+	  }
+	all_cb_time.tv_sec+= sec;
+	all_cb_time.tv_nsec+= nsec;
+	/* end = clock(); */
+	/* all_cb_time+=end-start; */
+#endif
         lmn_mem_delete_atom((LmnMembraneRef)wt(rc, memi), (LmnAtomRef)wt(rc, atomi), at(rc, atomi));
         lmn_mem_delete_atom((LmnMembraneRef)wt(rc, memi),
                             LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0),

@@ -36,10 +36,15 @@
  *
  * $Id$
  */
-
+#include "../cb.h"
+#include <time.h>
 #include "set.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
+#ifdef CB
+extern struct timespec cb_time[6];
+extern int cb_call[6];
+#endif
 
 /**
  * @ingroup  Ext
@@ -275,6 +280,11 @@ void cb_set_insert(LmnReactCxtRef rc,
 		   LmnAtomRef a1, LmnLinkAttr t1,
 		   LmnAtomRef a2, LmnLinkAttr t2)
 {
+#ifdef CB
+  struct timespec tp0, tp1;
+  clock_gettime(CLOCK_REALTIME, &tp0);
+  /* clock_t s = clock(); */
+#endif
   if(t0 != LMN_SP_ATOM_ATTR) {
     lmn_mem_delete_atom(mem, a0, t0);
     t0 = LMN_SP_ATOM_ATTR;
@@ -298,6 +308,25 @@ void cb_set_insert(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
                   a2, t2, LMN_ATTR_GET_VALUE(t2));
+#ifdef CB
+  long sec, nsec;
+  clock_gettime(CLOCK_REALTIME, &tp1);
+  sec = tp1.tv_sec-tp0.tv_sec;
+  nsec = tp1.tv_nsec-tp0.tv_nsec;
+  if(nsec < 0)
+    {
+      sec--;
+      nsec += 1000000000L;
+    }
+  if(cb_time[0].tv_nsec+nsec>=1000000000L)
+    {
+      sec++;
+      nsec-=1000000000L;
+    }
+  cb_time[0].tv_sec+= sec;
+  cb_time[0].tv_nsec+= nsec;
+  cb_call[0]++;
+#endif
 }
 
 /*
@@ -319,6 +348,15 @@ void cb_set_find(LmnReactCxtRef *rc,
 		 LmnAtomRef a2, LmnLinkAttr t2,
 		 LmnAtomRef a3, LmnLinkAttr t3)
 {
+/* #ifdef CB */
+/*   clock_t st = clock(); */
+/* #endif */
+
+
+#ifdef CB
+  struct timespec tp0, tp1;
+  clock_gettime(CLOCK_REALTIME, &tp0);
+#endif
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   LmnAtomRef key = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
   st_data_t entry;
@@ -334,6 +372,30 @@ void cb_set_find(LmnReactCxtRef *rc,
   lmn_mem_delete_atom(mem, a1, t1);
   if(tbl->type == &type_mem_hash)
     lmn_mem_delete_mem(mem, key);
+#ifdef CB
+  clock_gettime(CLOCK_REALTIME, &tp1);
+  long sec, nsec;
+  sec = tp1.tv_sec-tp0.tv_sec;
+  nsec = tp1.tv_nsec-tp0.tv_nsec;
+  if(nsec < 0)
+    {
+      sec--;
+      nsec += 1000000000L;
+    }
+  if(cb_time[1].tv_nsec+nsec>=1000000000L)
+    {
+      sec++;
+      nsec-=1000000000L;
+    }
+
+  cb_time[1].tv_sec+=sec;
+  cb_time[1].tv_nsec+=nsec;
+  cb_call[1]++;
+#endif
+/* #ifdef CB */
+/*   cb_times[1][0]+=clock()-st; */
+/*   cb_times[1][1]++; */
+/* #endif */
 }
 
 

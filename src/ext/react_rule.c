@@ -36,8 +36,17 @@
  *
  * $Id$
  */
-
+#include "../cb.h"
+#include <time.h>
 #include "vm/vm.h"
+#ifdef CB
+extern struct timespec cb_time[6];
+extern int cb_call[6];
+#endif
+
+/* #ifdef CB */
+/* extern int cb_times[6][2]; */
+/* #endif */
 
 
 void cb_react_rule(LmnReactCxtRef rc,
@@ -122,6 +131,11 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
                          LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
                          LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
+#ifdef CB
+  struct timespec tp0, tp1;
+  clock_gettime(CLOCK_REALTIME, &tp0);
+  /* clock_t s=clock(); */
+#endif
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
   LmnAtomRef in_mem = LMN_SATOM_GET_LINK(graph_mem_proxy, 0);
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM(in_mem);
@@ -158,6 +172,30 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
   mc_react_cxt_destroy(tmp_rc);
   react_context_dealloc(tmp_rc);
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr); 
+#ifdef CB
+  clock_gettime(CLOCK_REALTIME, &tp1);
+  long sec, nsec;
+  sec = tp1.tv_sec-tp0.tv_sec;
+  nsec = tp1.tv_nsec-tp0.tv_nsec;
+  if(nsec < 0)
+    {
+      sec--;
+      nsec += 1000000000L;
+    }
+  if(cb_time[5].tv_nsec+nsec>=1000000000L)
+    {
+      sec++;
+      nsec-=1000000000L;
+    }
+
+  cb_time[5].tv_sec+=sec;
+  cb_time[5].tv_nsec+=nsec;
+  cb_call[5]++;
+#endif
+/* #ifdef CB */
+/*   cb_times[5][0]+=clock()-s; */
+/*   cb_times[5][1]++; */
+/* #endif */
 }
 
 

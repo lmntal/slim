@@ -40,6 +40,8 @@
 /** @author Masato Gocho
  *  Closed Address Hash Table / Parallel Hash Table for State Management Table
  */
+int mc_ins=0;
+
 
 #include "statespace.h"
 #include "state.h"
@@ -524,6 +526,7 @@ inline BOOL statespace_is_memid_hash(StateSpaceRef states, unsigned long hash)
  * バイナリストリングへのエンコード処理はskipするため, s_memはNULLで構わない. */
 State *statespace_insert(StateSpaceRef ss, State *s)
 {
+  mc_ins++;
   StateTable *insert_dst;
   State *ret;
   BOOL is_accept;

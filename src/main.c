@@ -54,6 +54,15 @@
 #include "test/unit_test.h"
 #endif
 
+#include "cb.h"fg
+
+
+#ifdef CB
+/* int cb_times[6][2]={{0}, {0}}; */
+struct timespec cb_time[6];
+int cb_call[6];
+#endif
+
 void install_builtin_extensions(void);
 void init_builtin_extensions(void); /* ext/init_exts.c */
 
