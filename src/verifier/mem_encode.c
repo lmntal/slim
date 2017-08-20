@@ -1654,8 +1654,6 @@ static inline LmnMembraneRef lmn_binstr_decode_sub(const LmnBinStrRef bs)
   BsDecodeLog *log;
   int nvisit;
 
-  env_reset_proc_ids();
-
   /* MEMO:
    *   8bit列を, binary stringの長さ * TAG_IN_BYTE(== 2)だけ確保(少し多めになる)
    *   logは, 復元したプロセスへのポインタを持ち, 出現(nvisited)順に先頭から積んでいく */
