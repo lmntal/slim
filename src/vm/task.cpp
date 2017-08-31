@@ -3760,6 +3760,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       if (!(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)))->eq_hl(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
         return FALSE;
       break;
+    case LMN_SP_ATOM_ATTR:
+      if (!SP_ATOM_EQ(rc->wt(func0), rc->wt(func1))) return FALSE;
     default:
       if (rc->wt(func0) != rc->wt(func1))
         return FALSE;
@@ -3788,6 +3790,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         if ((lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)))->eq_hl(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
           return FALSE;
         break;
+      case LMN_SP_ATOM_ATTR:
+        if (SP_ATOM_EQ(rc->wt(func0), rc->wt(func1))) return FALSE;
       default:
         if (rc->wt(func0) == rc->wt(func1))
           return FALSE;
