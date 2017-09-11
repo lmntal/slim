@@ -1,0 +1,10 @@
+{
+    module(hashmap).
+    Ret = hashmap.init :- Ret = hashmap.empty.
+
+    Ret = hashmap.insert(H, Key, Val) :- class(H, "hashmap") |
+	'$callback'('cb_hashmap_insert', H, Key, Val, Ret).
+
+    Ret = hashmap.insert(hashmap.empty, Key, Val) :- 
+	'$callback'('cb_hashmap_insert', hashmap.empty, Key, Val, Ret).
+}
