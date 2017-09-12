@@ -57,7 +57,7 @@ LmnHashMapRef lmn_hashmap_make(struct st_hash_type *ht)
   return h;
 }
 
-/* 
+/*
  * 挿入
  *
  * +a0: ハッシュマップ
@@ -79,21 +79,21 @@ void cb_hashmap_insert(LmnReactCxtRef rc,
   }
 
   st_table_t tbl = ((LmnHashMapRef)a0)->tbl;
-  int ret = st_insert_safe(tbl, (st_data_t)a1, (st_data_t)a2);
+  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a2, 0));
+  int ret = st_insert_safe(tbl, (st_data_t)a1, (st_data_t)m);
 
   if(!ret)
     {
       /* key is duplicated */
       st_data_t *val;
-      st_delete(tbl, (st_data_t)a1, val);
+      st_delete(tbl, (st_data_t)a1, &val);
       lmn_mem_free_rec(val);
-      st_insert(tbl, (st_data_t)a1, (st_data_t)a2);
+      st_insert(tbl, (st_data_t)a1, (st_data_t)m);
     }
   
   lmn_mem_remove_atom(mem, a1, t1);
-  LmnAtomRef v = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a2, 0));
-  lmn_mem_remove_atom(mem, a2, t2);
-  lmn_mem_remove_mem(mem, v);
+  lmn_mem_delete_atom(mem, a2, t2);
+  lmn_mem_remove_mem(mem, m);
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a3, t3, LMN_ATTR_GET_VALUE(t3));
