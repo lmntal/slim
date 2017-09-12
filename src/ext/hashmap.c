@@ -151,13 +151,16 @@ void cb_hashmap_find(LmnReactCxtRef rc,
     lmn_mem_add_child_mem(mem, m);
     lmn_mem_newlink(mem,
 		    out, LMN_ATTR_MAKE_LINK(1), 1,
+		    result, LMN_ATTR_MAKE_LINK(0), 0);
+    lmn_mem_newlink(mem,
+		    a2, t2, LMN_ATTR_GET_VALUE(t2),
 		    result, LMN_ATTR_MAKE_LINK(1), 1);
   } else {
     result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
+    lmn_mem_newlink(mem,
+		    a2, t2, LMN_ATTR_GET_VALUE(t2),
+		    result, LMN_ATTR_MAKE_LINK(0), 0);
   }
-  lmn_mem_newlink(mem,
-		  a2, t2, LMN_ATTR_GET_VALUE(t3),
-		  result, LMN_ATTR_MAKE_LINK(0), 0);
   lmn_mem_newlink(mem,
 		  a0, t0, LMN_ATTR_GET_VALUE(t0),
 		  a3, t3, LMN_ATTR_GET_VALUE(t3));
