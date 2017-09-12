@@ -7,4 +7,7 @@
 
     Ret = hashmap.insert(hashmap.empty, Key, Val) :- 
 	'$callback'('cb_hashmap_insert', hashmap.empty, Key, Val, Ret).
+
+    Ret = hashmap.find(H, Key, Res) :- class(H, "hashmap") |
+	'$callback'('cb_hashmap_find', H, Key, Res, Ret).
 }

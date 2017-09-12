@@ -99,6 +99,48 @@ void cb_hashmap_insert(LmnReactCxtRef rc,
 		  a3, t3, LMN_ATTR_GET_VALUE(t3));
 }
 
+/*
+ * 検索
+ *
+ * +a0: ハッシュマップ
+ * +a1: キー
+ * -a2: some(エントリ)/none
+ * -a3: ハッシュマップ
+ */
+void cb_hashmap_find(LmnReactCxtRef rc,
+		     LmnMembraneRef mem,
+		     LmnAtomRef a0, LmnLinkAttr t0,
+		     LmnAtomRef a1, LmnLinkAttr t1,
+		     LmnAtomRef a2, LmnLinkAttr t2,
+		     LmnAtomRef a3, LmnLinkAttr t3)
+{
+  st_table_t tbl = ((LmnHashMapRef)a0)->tbl;
+  st_data_t entry;
+  int res = st_lookup(tbl, (st_data_t)a1, &entry);
+  LmnAtomRef result;
+
+  if(res) {
+    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 2));
+    LmnMembraneRef m = lmn_mem_copy(LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK((LmnAtomRef)entry, 0)));
+    LmnAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+    AtomListEntryRef in_atom_list = lmn_mem_get_atomlist((LmnMembraneRef)m, LMN_IN_PROXY_FUNCTOR);
+    LMN_ASSERT(in_atom_list != NULL);
+    LmnAtomRef in = (LmnAtomRef)atomlist_head(in_atom_list);
+    lmn_newlink_in_symbols(in, 0, out, 0);
+    lmn_mem_add_child_mem(mem, m);
+    lmn_mem_newlink(mem,
+		    out, LMN_ATTR_MAKE_LINK(1), 1,
+		    result, LMN_ATTR_MAKE_LINK(1), 1);
+  } else {
+    result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
+  }
+  lmn_mem_newlink(mem,
+		  a2, t2, LMN_ATTR_GET_VALUE(t3),
+		  result, LMN_ATTR_MAKE_LINK(0), 0);
+  lmn_mem_newlink(mem,
+		  a0, t0, LMN_ATTR_GET_VALUE(t0),
+		  a3, t3, LMN_ATTR_GET_VALUE(t3));
+}
 
 /* 
  * Initialization
@@ -139,4 +181,5 @@ void init_hashmap(void)
 				       sp_cb_hashmap_is_ground);
 
   lmn_register_c_fun("cb_hashmap_insert", (void *)cb_hashmap_insert, 4);
+  lmn_register_c_fun("cb_hashmap_find", (void *)cb_hashmap_find, 4);
 }
