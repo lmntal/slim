@@ -10,4 +10,12 @@
 
     Ret = hashmap.find(H, Key, Res) :- class(H, "hashmap") |
 	'$callback'('cb_hashmap_find', H, Key, Res, Ret).
+
+    Ret = hashmap.find(hashmap.empty, $key, Res) :- int($key) |
+	Ret = hashmap.empty, Res = none.
+
+    hashmap.free(H) :- class(H, "hashmap") |
+	'$callback'('cb_hashmap_free', H).
+
+    hashmap.free(hashmap.empty) :- .
 }

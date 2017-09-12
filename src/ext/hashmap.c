@@ -57,6 +57,27 @@ LmnHashMapRef lmn_hashmap_make(struct st_hash_type *ht)
   return h;
 }
 
+int inner_hashmap_free(st_data_t key, st_data_t rec, st_data_t arg)
+{
+  lmn_mem_free_rec((LmnMembraneRef)rec);
+  return ST_DELETE;
+}
+
+/*
+ * 解放
+ *
+ * +a0: ハッシュマップ
+ */
+void cb_hashmap_free(LmnReactCxtRef rc,
+		     LmnMembraneRef mem,
+		     LmnAtomRef a0, LmnLinkAttr t0)
+{
+  st_table_t tbl = ((LmnHashMapRef)a0)->tbl;
+  st_foreach(tbl, (st_iter_func)inner_hashmap_free, (st_data_t)0);
+  st_free_table(tbl);
+  lmn_mem_delete_atom(mem, a0, t0);
+}
+
 /*
  * 挿入
  *
@@ -182,4 +203,5 @@ void init_hashmap(void)
 
   lmn_register_c_fun("cb_hashmap_insert", (void *)cb_hashmap_insert, 4);
   lmn_register_c_fun("cb_hashmap_find", (void *)cb_hashmap_find, 4);
+  lmn_register_c_fun("cb_hashmap_free", (void *)cb_hashmap_free, 1);
 }
