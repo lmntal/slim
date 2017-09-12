@@ -121,9 +121,9 @@ void cb_hashmap_find(LmnReactCxtRef rc,
 
   if(res) {
     result = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 2));
-    LmnMembraneRef m = lmn_mem_copy(LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK((LmnAtomRef)entry, 0)));
+    LmnMembraneRef m = lmn_mem_copy((LmnMembraneRef)entry);
     LmnAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
-    AtomListEntryRef in_atom_list = lmn_mem_get_atomlist((LmnMembraneRef)m, LMN_IN_PROXY_FUNCTOR);
+    AtomListEntryRef in_atom_list = lmn_mem_get_atomlist(m, LMN_IN_PROXY_FUNCTOR);
     LMN_ASSERT(in_atom_list != NULL);
     LmnAtomRef in = (LmnAtomRef)atomlist_head(in_atom_list);
     lmn_newlink_in_symbols(in, 0, out, 0);
