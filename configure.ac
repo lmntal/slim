@@ -27,7 +27,7 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 # Checks for programs.
 #
 
-CFLAGS="-O -std=gnu99 $CFLAGS"
+CFLAGS="-O -std=gnu99 -Wall $CFLAGS"
 CXXFLAGS="-g -O2 -mmmx -msse $CXXFLAGS"
 
 AC_LANG(C)
@@ -42,20 +42,10 @@ AM_PROG_LEX
 AC_PROG_RANLIB
 AC_PROG_AWK
 
+AC_INCLUDES_DEFAULT
+
 AC_SUBST(CFLAGS)
 AM_CONDITIONAL(GCC, test "$GCC" = "yes")   # let the Makefile know if we're gcc
-
-case "$target_os" in
-  darwin*)
-    CFLAGS="-Wall $CFLAGS"
-    ;;
-  *)
-    CFLAGS="-Wall -export-dynamic $CFLAGS"
-    if test "$GCC" = yes; then
-      CFLAGS="$CFLAGS -fopenmp"
-    fi
-    ;;
-esac
 
 # ----------------------------------------------------------
 # Setting Options
