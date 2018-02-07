@@ -89,3 +89,4 @@ test/**/*.log
 test/**/*.trs
 test/**/*.il
 .dirstamp
+trash/
