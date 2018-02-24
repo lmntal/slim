@@ -112,6 +112,40 @@ LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos);
 
 extern struct st_hash_type type_memhash;
 
+/*
+ * Global variable
+ * */
+Hlground_Data hlground_data;
+
+/*
+* lightweight hlground
+*/
+
+void init_grounddata();
+void free_grounddata();
+void dfs_scope_finder(  LinkObj root_link,
+						Vector *src,
+					    Vector *avovec,
+						unsigned long * natoms,
+						ProcessTbl *attr_functors,
+						Vector *attr_dataAtoms,
+						Vector *attr_dataAtom_attrs);
+
+BOOL purecycle_exit(Vector *srcvec, Vector *avovec);
+BOOL cycle_exist(Vector *srcvec,
+				Vector *avovec,
+				ProcessTbl  *attr_functors,
+				Vector   *attr_dataAtoms,
+		        Vector   *attr_dataAtom_attrs);
+
+void get_neighbours(Vector  *avovec,
+				    Vector *neighbours,
+						LmnAtom atom,
+						LmnLinkAttr pos,
+						ProcessTbl  *attr_functors,
+						Vector   *attr_dataAtoms,
+						Vector   *attr_dataAtom_attrs);
+
 
 lmn_interned_str LMN_MEM_NAME_ID(LmnMembraneRef m);
 const char *LMN_MEM_NAME(LmnMembraneRef m);
