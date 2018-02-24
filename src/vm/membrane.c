@@ -691,10 +691,16 @@ void lmn_mem_unify_atom_args(LmnMembraneRef mem,
   else if (LMN_ATTR_IS_DATA(attr1)) {
     LMN_SATOM_SET_LINK(ap2, attr2, ap1);
     LMN_SATOM_SET_ATTR(ap2, attr2, attr1);
+
+    LMN_SATOM_SET_LINK(ap1, 0, ap2);
+    LMN_SATOM_SET_ATTR(ap1, 0, attr2);
   }
   else if (LMN_ATTR_IS_DATA(attr2)) {
     LMN_SATOM_SET_LINK(ap1, attr1, ap2);
     LMN_SATOM_SET_ATTR(ap1, attr1, attr2);
+
+    LMN_SATOM_SET_LINK(ap2, 0, ap1);
+    LMN_SATOM_SET_ATTR(ap2, 0, attr1);
   }
   else {
     LMN_SATOM_SET_LINK(ap2, attr2, ap1);
