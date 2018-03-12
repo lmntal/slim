@@ -1804,6 +1804,7 @@ BOOL ground_atoms(Vector        *srcvec,
                   Vector        *attr_dataAtom_attrs/* hlgroundの属性(data atomの属性) */
                   )
 {
+
   Vector *unsearched_link_stack;         /* 探索待ちリンク */
   //ProcessTbl found_ground_symbol_atoms;  /* ground内の発見済みのシンボルアトム */
   //unsigned long count_of_ground_atoms;   /* ground内のアトムの個数 */

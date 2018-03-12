@@ -721,6 +721,7 @@ static inline void slim_exec(Vector *start_rulesets)
 
 int main(int argc, char *argv[])
 {
+
   int optid;
   slim_init(&optid, argc, argv);
 

@@ -2410,6 +2410,9 @@ label_skip_data_atom:
     case INSTR_ISHLGROUND:
     case INSTR_ISHLGROUNDINDIRECT:
     {
+      printf("sadfasdf\n");
+      fflush(stdout);
+
       LmnInstrVar funci, srclisti, avolisti;
       Vector *srcvec, *avovec;
       unsigned long natoms;
@@ -2431,6 +2434,8 @@ label_skip_data_atom:
         case INSTR_ISHLGROUND:
         case INSTR_ISHLGROUNDINDIRECT:
         {
+          
+
           ProcessTableRef attr_functors;
           Vector attr_dataAtoms;
           Vector attr_dataAtom_attrs;
@@ -2449,6 +2454,8 @@ label_skip_data_atom:
                   if (LMN_ATTR_IS_DATA(at(rc, ai))) {
                     vec_push(&attr_dataAtom_attrs, at(rc, ai));
                     vec_push(&attr_dataAtoms, ai);
+
+
                   } else {
                     LmnFunctor f;
                     f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)wt(rc, ai));
@@ -2459,15 +2466,19 @@ label_skip_data_atom:
               }
             case INSTR_ISHLGROUND:
               {
-                for (; n--; i++) {
+                for (; n--; i++) 
+                {
                   LmnLinkAttr attr;
                   READ_VAL(LmnLinkAttr, instr, attr);
-                  if (LMN_ATTR_IS_DATA(attr)) {
+                  if (LMN_ATTR_IS_DATA(attr)) 
+                  {
                     LmnAtom at;
                     vec_push(&attr_dataAtom_attrs, attr);
                     READ_DATA_ATOM(at, attr);
                     vec_push(&attr_dataAtoms, at);
-                  } else {
+                  } 
+                  else 
+                  {
                     LmnFunctor f;
                     READ_VAL(LmnFunctor, instr, f);
                     proc_tbl_put(attr_functors, f, f);
@@ -2476,6 +2487,7 @@ label_skip_data_atom:
                 break;
               }
             }
+
             b = ground_atoms(srcvec,
                               avovec,
                               &atoms,
@@ -2491,6 +2503,8 @@ label_skip_data_atom:
           }
         case INSTR_ISGROUND:
           {
+            
+
             b = ground_atoms(srcvec, avovec, &atoms, &natoms, NULL, NULL, NULL, NULL);
             break;
           }
@@ -2570,6 +2584,20 @@ label_skip_data_atom:
                    }
             }*/
 
+            fprintf(stderr,"----------------------------->\n");
+/*           
+            int p;
+            for (p=0; p<vec_num(&attr_dataAtoms);p++) 
+            {
+                  fprintf(stderr, vec_get(&attr_dataAtoms, p));
+                  fprintf(stderr,"\n");
+                  fprintf(stderr, vec_get(&attr_dataAtom_attrs, p));
+                  fprintf(stderr,"\n");
+            }
+*/
+            fprintf(stderr,"<-----------------------------\n");
+
+
             b = lmn_mem_is_hlground(srcvec,
                                     avovec,
                                     &natoms,
@@ -2587,6 +2615,40 @@ label_skip_data_atom:
           }
           case INSTR_ISGROUND:
           {
+
+            printf("is ground\n");
+            fflush(stdout);
+
+            ProcessTableRef attr_functors;
+            Vector attr_dataAtoms;
+            Vector attr_dataAtom_attrs;
+            vec_init(&attr_dataAtoms, 16);
+            vec_init(&attr_dataAtom_attrs, 16);
+            attr_functors = proc_tbl_make_with_size(16);
+            LmnInstrVar i = 0, n;
+
+            READ_VAL(LmnInstrVar, instr, n);
+
+            for (; n--; i++) 
+            {
+                  LmnLinkAttr attr;
+                  READ_VAL(LmnLinkAttr, instr, attr);
+                  if (LMN_ATTR_IS_DATA(attr)) 
+                  {
+                    LmnAtom at;
+                    vec_push(&attr_dataAtom_attrs, attr);
+                    READ_DATA_ATOM(at, attr);
+                    vec_push(&attr_dataAtoms, at);
+                  } 
+                  else 
+                  {
+                    LmnFunctor f;
+                    READ_VAL(LmnFunctor, instr, f);
+                    proc_tbl_put(attr_functors, f, f);
+                  }
+            }
+
+
             b = lmn_mem_is_ground(srcvec, avovec, &natoms);
             break;
           }
@@ -2955,6 +3017,7 @@ label_skip_data_atom:
     case INSTR_COPYHLGROUNDINDIRECT:
     case INSTR_COPYGROUND:
     {
+      printf("copy ground\n");
       LmnInstrVar dstlist, srclist, memi;
       Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
       ProcessTableRef atommap;
@@ -3029,11 +3092,43 @@ label_skip_data_atom:
           break;
         }
         case INSTR_COPYGROUND:
+        {
+          ProcessTableRef attr_functors;
+            Vector attr_dataAtoms;
+            Vector attr_dataAtom_attrs;
+            vec_init(&attr_dataAtoms, 16);
+            vec_init(&attr_dataAtom_attrs, 16);
+            attr_functors = proc_tbl_make_with_size(16);
+            LmnInstrVar i = 0, n;
+
+            READ_VAL(LmnInstrVar, instr, n);
+
+            for (; n--; i++) 
+            {
+                  LmnLinkAttr attr;
+                  READ_VAL(LmnLinkAttr, instr, attr);
+                  if (LMN_ATTR_IS_DATA(attr)) 
+                  {
+                    LmnAtom at;
+                    vec_push(&attr_dataAtom_attrs, attr);
+                    READ_DATA_ATOM(at, attr);
+                    vec_push(&attr_dataAtoms, at);
+                  } 
+                  else 
+                  {
+                    LmnFunctor f;
+                    READ_VAL(LmnFunctor, instr, f);
+                    proc_tbl_put(attr_functors, f, f);
+                  }
+            }
           lmn_mem_copy_ground((LmnMembraneRef)wt(rc, memi),
                               srcvec,
                              &dstlovec,
                              &atommap);
           break;
+
+        }
+
       }
       free_links(srcvec);
 
@@ -3058,6 +3153,7 @@ label_skip_data_atom:
     case INSTR_REMOVEGROUND:
     case INSTR_FREEGROUND:
     {
+      printf("free ground\n");
       LmnInstrVar listi, memi;
       Vector *srcvec; /* 変数番号のリスト */
 
@@ -3147,11 +3243,73 @@ label_skip_data_atom:
             break;
           }
       case INSTR_REMOVEGROUND:
-        lmn_mem_remove_ground((LmnMembraneRef)wt(rc, memi), srcvec);
+      {
+        ProcessTableRef attr_functors;
+            Vector attr_dataAtoms;
+            Vector attr_dataAtom_attrs;
+            vec_init(&attr_dataAtoms, 16);
+            vec_init(&attr_dataAtom_attrs, 16);
+            attr_functors = proc_tbl_make_with_size(16);
+            LmnInstrVar i = 0, n;
+
+            READ_VAL(LmnInstrVar, instr, n);
+
+            for (; n--; i++) 
+            {
+                  LmnLinkAttr attr;
+                  READ_VAL(LmnLinkAttr, instr, attr);
+                  if (LMN_ATTR_IS_DATA(attr)) 
+                  {
+                    LmnAtom at;
+                    vec_push(&attr_dataAtom_attrs, attr);
+                    READ_DATA_ATOM(at, attr);
+                    vec_push(&attr_dataAtoms, at);
+                  } 
+                  else 
+                  {
+                    LmnFunctor f;
+                    READ_VAL(LmnFunctor, instr, f);
+                    proc_tbl_put(attr_functors, f, f);
+                  }
+            }
+           lmn_mem_remove_ground((LmnMembraneRef)wt(rc, memi), srcvec);
         break;
+      }
+       
       case INSTR_FREEGROUND:
+      {
+        ProcessTableRef attr_functors;
+            Vector attr_dataAtoms;
+            Vector attr_dataAtom_attrs;
+            vec_init(&attr_dataAtoms, 16);
+            vec_init(&attr_dataAtom_attrs, 16);
+            attr_functors = proc_tbl_make_with_size(16);
+            LmnInstrVar i = 0, n;
+
+            READ_VAL(LmnInstrVar, instr, n);
+
+            for (; n--; i++) 
+            {
+                  LmnLinkAttr attr;
+                  READ_VAL(LmnLinkAttr, instr, attr);
+                  if (LMN_ATTR_IS_DATA(attr)) 
+                  {
+                    LmnAtom at;
+                    vec_push(&attr_dataAtom_attrs, attr);
+                    READ_DATA_ATOM(at, attr);
+                    vec_push(&attr_dataAtoms, at);
+                  } 
+                  else 
+                  {
+                    LmnFunctor f;
+                    READ_VAL(LmnFunctor, instr, f);
+                    proc_tbl_put(attr_functors, f, f);
+                  }
+            }
         lmn_mem_free_ground(srcvec);
         break;
+      }
+        
       }
 
       free_links(srcvec);
