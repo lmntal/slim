@@ -1370,6 +1370,7 @@ static inline void mem_map_hlink(LmnMembraneRef mem,
                              LmnSymbolAtomRef root_hlAtom,
                              LmnSymbolAtomRef copied_root_hlAtom,
                              Vector *stack,
+                             ProcessTableRef *global_hlinks,
                              ProcessTableRef atommap,
                              ProcessTableRef hlinkmap,
                              ProcessTableRef *attr_functors,
@@ -1380,29 +1381,43 @@ static inline void mem_map_hlink(LmnMembraneRef mem,
   LmnWord t=0; 
   HyperLink *hl = lmn_hyperlink_at_to_hl(root_hlAtom);
   BOOL flg_search_hl=FALSE;
-  if (!LMN_HL_HAS_ATTR(hl)) {//属性を持っていない場合は無条件に探索
-    flg_search_hl = TRUE;
-  } else {
+
+  BOOL flg_local_hl=TRUE;
+  if(proc_tbl_get_by_hlink(*global_hlinks, lmn_hyperlink_get_root(hl), NULL))
+  {//this hyperlink is a global hyperlink
+	  flg_local_hl=FALSE;
+  }
+
+  if (!LMN_HL_HAS_ATTR(hl)) //if hlink has no attribute
+  {
+	  if(vec_num(attr_dataAtoms) == 0)  //hlground has no attribute
+	  {// matched (no attribute vs no attribute)
+		  flg_search_hl=TRUE;
+	  }
+  }
+  
+
+  {
     LmnAtomRef attrAtom = LMN_HL_ATTRATOM(hl);
     LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl);
     int i;
-    if (LMN_ATTR_IS_DATA(attr)) {
-      for (i = 0; i < vec_num(attr_dataAtoms); i++) {
+
+    for (i = 0; i < vec_num(attr_dataAtoms); i++) 
+    {
         if (lmn_eq_func(attrAtom, attr, (LmnAtomRef)vec_get(attr_dataAtoms, i), vec_get(attr_dataAtom_attrs, i))) {
           flg_search_hl = TRUE;
           break;
-        } else {
+        } 
+        else 
+        {
           continue;
         }
-      }
-    } else {
-      if (proc_tbl_get(*attr_functors, LMN_SATOM_GET_FUNCTOR(LMN_SATOM(attrAtom)), NULL)) {
-        flg_search_hl = TRUE;
-      }
-    } 
+    }
+
   }
 
-  if (flg_search_hl) {
+  if (flg_search_hl  && flg_local_hl)
+  {
     if (!proc_tbl_get_by_hlink(hlinkmap, lmn_hyperlink_get_root(hl), &t)) {//同じハイパーリンクが接続されたアトムがスタックに積まれてる場合がある
       int j, element_num;
       proc_tbl_put_new_hlink(hlinkmap, lmn_hyperlink_get_root(hl), (LmnWord)(lmn_hyperlink_at_to_hl(copied_root_hlAtom)));
@@ -1461,6 +1476,7 @@ static inline void mem_map_hlink(LmnMembraneRef mem,
  * hlgroundのフラグも兼ねている */
 static inline void mem_copy_ground_sub(LmnMembraneRef mem,
                              Vector *srcvec,
+                             ProcessTableRef *global_hlink,
                              Vector **ret_dstlovec,
                              ProcessTableRef *ret_atommap,
                              ProcessTableRef *ret_hlinkmap,
@@ -1493,6 +1509,7 @@ static inline void mem_copy_ground_sub(LmnMembraneRef mem,
         mem_map_hlink(mem, LMN_SATOM(l->ap),
                                      LMN_SATOM(cpatom),
                                      stack,
+                                     global_hlink,
                                      atommap,
                                      hlinkmap,
                                      attr_functors,
@@ -1545,6 +1562,7 @@ static inline void mem_copy_ground_sub(LmnMembraneRef mem,
                         LMN_SATOM(next_src),
                         LMN_SATOM(LMN_SATOM_GET_LINK(copied, i)),
                         stack,
+                        global_hlink,
                         atommap,
                         hlinkmap,
                         attr_functors,
@@ -1594,7 +1612,7 @@ void lmn_mem_copy_ground( LmnMembraneRef mem,
                           Vector *attr_dataAtoms,
                           Vector *attr_dataAtom_attrs)
 {
-  mem_copy_ground_sub(mem, srcvec, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
+  mem_copy_ground_sub(mem, srcvec,NULL, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
 }
 
 void lmn_mem_copy_hlground(LmnMembraneRef mem,
@@ -1608,6 +1626,7 @@ void lmn_mem_copy_hlground(LmnMembraneRef mem,
 {
   mem_copy_ground_sub(mem,
                       srcvec,
+                      NULL,
                       ret_dstlovec,
                       ret_atommap,
                       ret_hlinkmap,
