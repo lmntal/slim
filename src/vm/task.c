@@ -2613,7 +2613,7 @@ label_skip_data_atom:
           }
           case INSTR_ISGROUND:
           {
-            printf("--------------------------------is ground\n");  
+            //printf("--------------------------------is ground\n");  
 
             ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
@@ -3095,7 +3095,7 @@ label_skip_data_atom:
         }
         case INSTR_COPYGROUND:
         {
-          printf("--------------------------------copy ground\n");
+          //printf("--------------------------------copy ground\n");
           ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
             Vector attr_dataAtom_attrs;
@@ -3251,7 +3251,7 @@ label_skip_data_atom:
           }
       case INSTR_REMOVEGROUND:
       {
-        printf("--------------------------------remove ground\n");
+        //printf("--------------------------------remove ground\n");
 
         ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
@@ -3291,7 +3291,7 @@ label_skip_data_atom:
        
       case INSTR_FREEGROUND:
       {
-        printf("--------------------------------free ground\n");
+        //printf("--------------------------------free ground\n");
 
         ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
