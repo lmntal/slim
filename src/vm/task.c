@@ -2613,9 +2613,7 @@ label_skip_data_atom:
           }
           case INSTR_ISGROUND:
           {
-
-            printf("is ground\n");
-            fflush(stdout);
+            printf("--------------------------------is ground\n");  
 
             ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
@@ -3021,7 +3019,7 @@ label_skip_data_atom:
     case INSTR_COPYHLGROUNDINDIRECT:
     case INSTR_COPYGROUND:
     {
-      printf("copy ground\n");
+      
       LmnInstrVar dstlist, srclist, memi;
       Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
       ProcessTableRef atommap;
@@ -3097,6 +3095,7 @@ label_skip_data_atom:
         }
         case INSTR_COPYGROUND:
         {
+          printf("--------------------------------copy ground\n");
           ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
             Vector attr_dataAtom_attrs;
@@ -3161,7 +3160,7 @@ label_skip_data_atom:
     case INSTR_REMOVEGROUND:
     case INSTR_FREEGROUND:
     {
-      printf("free ground\n");
+      
       LmnInstrVar listi, memi;
       Vector *srcvec; /* 変数番号のリスト */
 
@@ -3252,6 +3251,8 @@ label_skip_data_atom:
           }
       case INSTR_REMOVEGROUND:
       {
+        printf("--------------------------------remove ground\n");
+
         ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
             Vector attr_dataAtom_attrs;
@@ -3290,6 +3291,8 @@ label_skip_data_atom:
        
       case INSTR_FREEGROUND:
       {
+        printf("--------------------------------free ground\n");
+
         ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
             Vector attr_dataAtom_attrs;

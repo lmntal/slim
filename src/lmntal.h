@@ -236,6 +236,34 @@ LMN_EXTERN void lmn_free (void *p);
 /*----------------------------------------------------------------------
  * Global data
  */
+/* hlground info
+ * */
+typedef struct Hlground_Data{
+
+	BOOL is_hlground;			    //
+	BOOL is_expilicit;			     //if TRUE, then there is no global hyperlinks
+
+	Vector * graph;	                //adjacency list to represent hyperlinks only graph
+	Vector * dist;              	//layer tags of hyperlinks, which are also represented by ID
+	unsigned long source,target;    //source and target node ID
+	int counter;	                //number of nodes
+	Vector * work;
+
+	ProcessTableRef  link_id;           //hyperlinks and their ID in graph
+	ProcessTableRef  id_link;           //ID and corresponding hyperlinks
+	ProcessTableRef  atom_id;           //source and target atoms
+	ProcessTableRef  id_atom;           //id and its atoms
+
+	ProcessTableRef non_hlground_hlinks; //hlinks which neither global nor local, stored as (id,hlink) pair
+	ProcessTableRef non_hlground_atoms;  //atoms in non-hlground, stored as (id,atom) pair
+	ProcessTableRef global_hlinks;               //global hlinks
+	ProcessTableRef local_atoms;     //atoms within hlground
+
+
+} Hlground_Data;
+
+extern Hlground_Data hlground_data;
+
 
 /* 階層グラフ構造の出力形式 */
 enum OutputFormat { DEFAULT, DEV, DOT, JSON };

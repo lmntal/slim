@@ -2043,6 +2043,428 @@ BOOL ground_atoms(Vector        *srcvec,
   return result;
 }
 
+
+
+
+/************extended ground begin***********/
+
+void init_grounddata()
+{
+	hlground_data.global_hlinks =proc_tbl_make_with_size(64);
+	hlground_data.local_atoms=proc_tbl_make_with_size(64);
+}
+
+void free_grounddata()
+{
+	
+}
+
+
+void dfs_scope_finder(      LinkObjRef root_link,
+                            Vector *src,
+              							Vector *avovec,
+              							unsigned long * natoms,
+              							ProcessTableRef *attr_functors,
+              							Vector *attr_dataAtoms,
+              							Vector *attr_dataAtom_attrs)
+{
+	*natoms=0;
+  //ProcessTbl visited_hl=proc_tbl_make_with_size(10);   //visited hlinks
+
+  Vector *stack=vec_make(10);                          //visited atoms 
+  vec_push(stack,(LmnWord)LinkObj_make(root_link->ap,root_link->pos));   //push the rootlink
+
+  while(!vec_is_empty(stack))                                        //dfs stack
+  {
+    LinkObjRef cur_link=vec_pop(stack);                         
+    LmnAtom m_atom=cur_link->ap;
+    LmnLinkAttr m_pos=cur_link->pos;
+    LMN_FREE(cur_link);                                              //free current link                                            
+
+    //printf("m_app= %d  \n",m_atom);
+    //printf("m_pos= %d  \n",m_pos);
+
+
+    if(LMN_ATTR_IS_DATA(m_pos))                         // current link is a hyperlink
+    {
+      if(m_pos == LMN_HL_ATTR)
+      {
+        HyperLink * hl = lmn_hyperlink_at_to_hl(LMN_SATOM(m_atom));    //get hyperlink 
+
+                                    // judge hyperlink attribute
+
+        BOOL flg_search_hl = FALSE;  //True is hlink attribute matches with hlground attribute
+                                     
+        if (!LMN_HL_HAS_ATTR(hl))    //if hlink has no attribute, treat it as a global hyperlink
+        {
+          proc_tbl_put_new_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl), (LmnWord)1);
+        }
+
+        if(LMN_HL_HAS_ATTR(hl))     //hyperlink has attribute 
+        {
+          LmnAtom attrAtom = LMN_HL_ATTRATOM(hl);
+          LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl);
+          int i;
+          for (i = 0; i < vec_num(attr_dataAtoms); i++)
+          {
+            if (lmn_eq_func(attrAtom, attr, vec_get(attr_dataAtoms, i), vec_get(attr_dataAtom_attrs, i)))
+            {
+              flg_search_hl = TRUE;
+              break;
+            }
+            else
+            {
+              continue;
+            }
+          }
+        }
+
+        if (flg_search_hl)  // only count endpoints of hyperlinks which has the specified attribute
+        {
+
+          if(!proc_tbl_get_by_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl), NULL))   
+          { // if not visited
+            unsigned long occurs =  lmn_hyperlink_element_num(hl);  // get number of the hyperlink sublinks
+            if(occurs > 1)  //so we try to visit other endpoints
+            {
+              proc_tbl_put_new_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl), (LmnWord)1);  //start counting endpoints
+            }
+
+          }
+          else //if visited already
+          {
+             unsigned long occurs =  lmn_hyperlink_element_num(hl);  // get number of the hyperlink sublinks 
+             LmnWord count;
+             proc_tbl_get_by_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl),&count );  //get counter
+             count++ ;                                                                                
+             //printf("count= %d  \n",count);
+
+             if ( occurs == count )   //all endpoints are visited, means local hyperlink
+             {     //remove form hashtable
+                proc_tbl_unput_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl));
+             }
+             else  //not all endpoints are visited
+             {  
+                proc_tbl_unput_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl));
+                proc_tbl_put_new_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl),(LmnWord)count);
+             }
+          }
+        }
+
+
+      }
+      else  
+      {
+          printf("neither a regular link or a hyperlink: means an undefined link  \n");
+      }
+      (*natoms)++; // count just like previous version of hlground
+    }
+    else                        //current link is a regular link
+    {
+      if (proc_tbl_get_by_atom(hlground_data.local_atoms, (LmnSAtom)m_atom, NULL))
+      { //not visited yet
+        continue;
+      }
+      proc_tbl_put_atom(hlground_data.local_atoms, (LmnSAtom)m_atom, (LmnWord)m_atom);  //set as visited and set as an local atom
+      (*natoms)++; 
+
+      //keep following regular links
+      int i;
+      for (i = 0; i < LMN_SATOM_GET_ARITY(m_atom); i++)
+      {
+        if (i == m_pos)
+        {
+          if(LMN_SATOM_GET_ARITY(m_atom)==1)
+          {
+            //pure_path=TRUE;
+            //printf(" ***    a local path is ended ***\n");
+          }
+          continue;
+        }
+        vec_push(stack,(LmnWord)LinkObj_make(LMN_SATOM_GET_LINK(m_atom, i),
+                                             LMN_SATOM_GET_ATTR(m_atom, i)));
+
+      }//end for       
+
+    }
+
+  } //dfs while end
+
+  //proc_tbl_free(visited_hl);
+  vec_free(stack);
+
+}
+
+
+BOOL purecycle_exit(Vector *srcvec, Vector *avovec)
+{
+	BOOL m_find=FALSE;
+
+	int m=vec_num(srcvec);
+	int i;
+	for(i=0;i<m;i++)
+	{
+		Vector * stack=vec_make(10);
+		LinkObjRef root = LinkObj_make(((LinkObjRef)vec_get(srcvec,i))->ap,((LinkObjRef)vec_get(srcvec,i))->pos);
+		ProcessTableRef atoms=proc_tbl_make_with_size(64);
+		BOOL m_first=TRUE;
+
+		vec_push(stack,(LmnWord)LinkObj_make(root->ap,root->pos));
+
+		while(!vec_is_empty(stack))
+		{
+			LinkObjRef cur_link=(LinkObjRef)vec_pop(stack);
+
+			//printf(" cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
+			if(cur_link->ap == root->ap  && cur_link->pos ==root->pos && !m_first)
+			{
+				m_find= TRUE;
+				break;
+			}
+
+			if(LMN_ATTR_IS_DATA(cur_link->pos))
+				continue;			//only go on regular links
+
+			 if (proc_tbl_get_by_atom(atoms, (LmnSAtom)cur_link->ap, NULL))
+			 {
+			        continue;
+			 }
+
+			proc_tbl_put_atom(atoms, (LmnSAtom)cur_link->ap, (LmnWord)cur_link->ap);
+
+			Vector * neighbours = vec_make(4);
+			get_neighbours(NULL,
+					neighbours,
+					cur_link->ap,
+					cur_link->pos,
+					NULL,
+					NULL,
+					NULL);
+			LMN_FREE(cur_link);
+
+			while(!vec_is_empty(neighbours))
+			{
+				LinkObjRef Link=vec_pop(neighbours);
+				//printf(" next_link =%d , %d --------\n",Link->ap,Link->pos);
+				vec_push(stack,(LmnWord)Link);
+			}
+			vec_free(neighbours);
+			m_first=FALSE;
+		}
+
+		LMN_FREE(root);
+		proc_tbl_free(atoms);
+
+		if(!stack)
+		{
+			while(!vec_is_empty(stack) )
+			{
+				LinkObjRef Link=(LinkObjRef)vec_pop(stack);
+				LMN_FREE(Link);
+			}
+			vec_free(stack);
+		}
+		if(m_find)
+			break;
+	}
+
+	return m_find;
+}
+
+
+BOOL cycle_exist(   Vector *srcvec,
+                    Vector *avovec,
+                    ProcessTableRef  *attr_functors,
+                    Vector   *attr_dataAtoms,
+                    Vector   *attr_dataAtom_attrs)
+{
+	BOOL m_find=FALSE;
+
+	int m=vec_num(srcvec);
+	int i;
+	for(i=0;i<m;i++)
+	{
+		Vector * stack=vec_make(10);
+		LinkObjRef root = LinkObj_make(((LinkObjRef)vec_get(srcvec,i))->ap,((LinkObjRef)vec_get(srcvec,i))->pos);
+		ProcessTableRef atoms=proc_tbl_make_with_size(64);
+		ProcessTableRef hlinks=proc_tbl_make_with_size(64);
+		BOOL m_first=TRUE;
+		BOOL m_tempfind=FALSE;
+		vec_push(stack,(LmnWord)LinkObj_make(root->ap,root->pos));
+
+		while(!vec_is_empty(stack))
+		{
+			LinkObjRef cur_link=(LinkObjRef)vec_pop(stack);
+			//printf(" cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
+			if(cur_link->ap == root->ap  && cur_link->pos ==root->pos && !m_first )
+			{
+				m_find= TRUE;
+				//printf(" find a cycle --------\n");
+				break;
+			}
+
+			if(LMN_ATTR_IS_DATA(cur_link->pos))
+			{
+				HyperLink *hl = lmn_hyperlink_at_to_hl(LMN_SATOM(cur_link->ap));
+				if(proc_tbl_get_by_hlink(hlinks, lmn_hyperlink_get_root(hl), NULL))
+					continue;
+				else
+					proc_tbl_put_new_hlink(hlinks, lmn_hyperlink_get_root(hl), (LmnWord)hl);
+			}
+			else
+			{
+				if (proc_tbl_get_by_atom(atoms, (LmnSAtom)cur_link->ap, NULL))
+					continue;
+				else
+					proc_tbl_put_atom(atoms, (LmnSAtom)cur_link->ap, (LmnWord)cur_link->ap);
+			}
+
+
+
+			Vector * neighbours = vec_make(4);
+			get_neighbours(NULL,
+						neighbours,
+						cur_link->ap,
+						cur_link->pos,
+						attr_functors,
+						attr_dataAtoms,
+						attr_dataAtom_attrs);
+			LMN_FREE(cur_link);
+
+			while(!vec_is_empty(neighbours))
+			{
+				LinkObjRef Link=vec_pop(neighbours);
+				vec_push(stack,(LmnWord)Link);
+			}
+			vec_free(neighbours);
+			m_first=FALSE;
+
+			if(m_find)
+				break;
+		}
+
+		if(!stack)
+		{
+			while(!vec_is_empty(stack) )
+			{
+				LinkObjRef Link=(LinkObjRef)vec_pop(stack);
+				LMN_FREE(Link);
+			}
+			vec_free(stack);
+		}
+
+		LMN_FREE(root);
+		proc_tbl_free(atoms);
+		proc_tbl_free(hlinks);
+
+		if(m_find)
+			break;
+	}
+
+	return m_find;
+}
+
+
+
+void get_neighbours(  Vector  *avovec,
+                      Vector *neighbours,
+                      LmnAtom atom,
+                      LmnLinkAttr pos,
+                      ProcessTableRef  *attr_functors,
+                      Vector   *attr_dataAtoms,
+                      Vector   *attr_dataAtom_attrs)
+{
+  if (LMN_ATTR_IS_DATA(pos))
+  {
+    HyperLink *hl = lmn_hyperlink_at_to_hl(LMN_SATOM(atom));
+    BOOL flg_search_hl = FALSE;  //True is hlink attribute matches with hlground attribute
+
+    if (!LMN_HL_HAS_ATTR(hl)) //if hlink has no attribute
+    {
+      if(vec_num(attr_dataAtoms) == 0)  //hlground has no attribute
+      {//means,  matched
+        flg_search_hl=TRUE;
+      }
+    }
+
+    {   // check if hlink attribute matches with hlground attribute
+      LmnAtom attrAtom = LMN_HL_ATTRATOM(hl);
+      LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl);
+      int i;
+      for (i = 0; i < vec_num(attr_dataAtoms); i++)
+      {
+        if (lmn_eq_func(attrAtom, attr, vec_get(attr_dataAtoms, i), vec_get(attr_dataAtom_attrs, i)))
+        {
+          flg_search_hl = TRUE;
+          break;
+        }
+        else
+        {
+          continue;
+        }
+      }
+    }
+
+    
+
+    //explore this hyperlink sublinks
+    if (flg_search_hl)
+    {
+      Vector * hl_childs = vec_make(16);
+
+      lmn_hyperlink_get_elements(hl_childs, hl);
+      int child_num = vec_num(hl_childs) - 1;
+      LmnMembraneRef *mem = hl->mem;
+
+      int i;
+      for (i = 0; i < child_num; i++)
+      {
+        if (mem!=((HyperLink *)vec_get(hl_childs, i))->mem)
+        {
+          continue;
+        }
+        /*   a(!H),b(!H).
+         *   a--->!---H--->!--->b
+         *   symbol atoms : a,b
+         *   data atoms   : !
+         *   'hlAtom' is a part of linkobject       : H--->!
+         *   'linked_hlAtom' is a part of linkobject: !--->b
+         * */
+        LmnSAtom hlAtom = ((HyperLink *)vec_get(hl_childs, i))->atom; /* from hyperlink core points to ! atom  */
+        LmnAtom linked_hlAtom;
+        LmnLinkAttr linked_attr;
+
+        if(hlAtom != NULL)
+        {
+          linked_hlAtom = LMN_SATOM_GET_LINK(hlAtom, 0);
+          linked_attr = LMN_SATOM_GET_ATTR(hlAtom, 0);
+          vec_push(neighbours,(LmnWord)LinkObj_make(linked_hlAtom,linked_attr));
+        }
+
+      }
+      vec_free(hl_childs);
+    }
+  }
+  else
+  {  //get regular link children
+    int i;
+      for (i = 0; i < LMN_SATOM_GET_ARITY(atom); i++)
+      {
+        if (i == pos) //don't add this link itself
+          continue;
+
+        LinkObjRef new_obj;
+        new_obj=LinkObj_make(LMN_SATOM_GET_LINK(atom, i),LMN_SATOM_GET_ATTR(atom, i));
+
+        vec_push(neighbours,(LmnWord)LinkObj_make(new_obj->ap,new_obj->pos));
+
+      }
+  }
+}
+
+
+/***********extended ground end********/
+
 /* 前の実装.しばらく残しておく */
 BOOL ground_atoms_old(Vector *srcvec,
                       Vector *avovec,
@@ -2220,7 +2642,7 @@ int free_symbol_atom_with_buddy_data_f(LmnWord _k, LmnWord _v, LmnWord _arg)
 void lmn_mem_free_ground( Vector *srcvec,
                           ProcessTableRef *attr_sym,
                           Vector *attr_data,
-                          Vector *attr_data_at )
+                          Vector *attr_data_at)
 {
   ProcessTableRef atoms;
   unsigned long i, t;

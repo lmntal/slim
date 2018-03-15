@@ -93,6 +93,9 @@ static inline int  proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, L
 static inline void proc_tbl_put_new_hlink(ProcessTableRef p, HyperLink *hl, LmnWord value);
 static inline void proc_tbl_unput(ProcessTableRef p, LmnWord key);
 static inline void proc_tbl_unput_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
+
+static inline void proc_tbl_unput_hlink(ProcessTableRef p, HyperLink *hl);
+
 static inline void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem);
 static inline int  proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value);
 int  proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord *value);
@@ -107,6 +110,11 @@ static inline BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
 /**
  * Inline Functions
  */
+
+static inline void proc_tbl_unput_hlink(ProcessTableRef p, HyperLink *hl)
+{
+	proc_tbl_unput(p, LMN_HL_ID(hl));
+}
 
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */

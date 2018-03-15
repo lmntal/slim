@@ -58,6 +58,45 @@ typedef struct LinkObj *LinkObjRef;
 #include "rule.h"
 #include "functor.h"
 
+
+/*
+ * Global variable
+ * */
+Hlground_Data hlground_data;
+
+
+
+/*
+* extended ground
+*/
+
+void init_grounddata();
+void free_grounddata();
+void dfs_scope_finder(  LinkObjRef root_link,
+                        Vector *src,
+                        Vector *avovec,
+                        unsigned long * natoms,
+                        ProcessTableRef *attr_functors,
+                        Vector *attr_dataAtoms,
+                        Vector *attr_dataAtom_attrs);
+
+BOOL purecycle_exit(Vector *srcvec, Vector *avovec);
+BOOL cycle_exist (Vector *srcvec,
+				          Vector *avovec,
+                  ProcessTableRef  *attr_functors,
+                  Vector   *attr_dataAtoms,
+		              Vector   *attr_dataAtom_attrs);
+
+void get_neighbours(Vector  *avovec,
+                    Vector *neighbours,
+                    LmnAtom atom,
+                    LmnLinkAttr pos,
+                    ProcessTableRef  *attr_functors,
+                    Vector   *attr_dataAtoms,
+                    Vector   *attr_dataAtom_attrs);
+
+/*************************************/
+
 #define NEW_ATOMLIST
 
 LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst);
