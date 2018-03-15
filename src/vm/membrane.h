@@ -89,13 +89,22 @@ BOOL cycle_exist (Vector *srcvec,
 
 void get_neighbours(Vector  *avovec,
                     Vector *neighbours,
-                    LmnAtom atom,
+                    LmnAtomRef atom,
                     LmnLinkAttr pos,
                     ProcessTableRef  *attr_functors,
                     Vector   *attr_dataAtoms,
                     Vector   *attr_dataAtom_attrs);
 
 /*************************************/
+
+BOOL extended_ground_atoms( Vector *srcvec,
+                            Vector *avovec,
+                            ProcessTableRef *atoms,
+                            unsigned long *natoms,
+                            ProcessTableRef *hlinks,
+                            ProcessTableRef *attr_functors,
+                            Vector *attr_dataAtoms,
+                            Vector *attr_dataAtom_attrs);
 
 #define NEW_ATOMLIST
 

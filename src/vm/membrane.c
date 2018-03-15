@@ -1484,6 +1484,9 @@ static inline void mem_copy_ground_sub(LmnMembraneRef mem,
                              Vector *attr_dataAtoms,
                              Vector *attr_dataAtom_attrs)
 {
+  printf("----------------------mem_copy_ground_sub-----------------------  \n");
+  fflush(stdout);
+
   ProcessTableRef atommap;
   ProcessTableRef hlinkmap;
   Vector *stack;
@@ -1612,7 +1615,18 @@ void lmn_mem_copy_ground( LmnMembraneRef mem,
                           Vector *attr_dataAtoms,
                           Vector *attr_dataAtom_attrs)
 {
-  mem_copy_ground_sub(mem, srcvec,NULL, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
+  ProcessTableRef hlinks=hlground_data.global_hlinks;
+
+	mem_copy_ground_sub(mem,
+                      srcvec,
+					            &hlinks,
+                      ret_dstlovec,
+                      ret_atommap,
+                      ret_hlinkmap,
+                      attr_functors,
+                      attr_dataAtoms,
+                      attr_dataAtom_attrs);
+  //mem_copy_ground_sub(mem, srcvec,NULL, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
 }
 
 void lmn_mem_copy_hlground(LmnMembraneRef mem,
@@ -1784,6 +1798,17 @@ BOOL lmn_mem_is_ground(Vector *srcvec,
                          Vector *attr_dataAtoms,
                          Vector *attr_dataAtom_attrs)
 {
+
+  BOOL b;
+  b = extended_ground_atoms(srcvec, avovec, NULL, natoms, NULL, attr_functors, attr_dataAtoms, attr_dataAtom_attrs);
+
+  if(!b)
+  {
+	  proc_tbl_free(hlground_data.local_atoms);
+	  proc_tbl_free(hlground_data.global_hlinks);
+  }
+
+  /*
   ProcessTableRef atoms;
   BOOL b;
 
@@ -1792,7 +1817,7 @@ BOOL lmn_mem_is_ground(Vector *srcvec,
   if (b) {
     proc_tbl_free(atoms);
   }
-
+  */
   return b;
 }
 
@@ -2067,6 +2092,56 @@ BOOL ground_atoms(Vector        *srcvec,
 
 /************extended ground begin***********/
 
+BOOL extended_ground_atoms( Vector          *srcvec, 				//store root link
+                            Vector          *avovec,   				//other links of source atom
+                            ProcessTableRef *atoms,    				/* collects atom within hlground */
+                            unsigned long   *natoms,   				/* number of atoms within hlground */
+                            ProcessTableRef *hlinks,   				/* hlinks!=NULL縺ｪ繧峨�”lground縺ｨ縺励※謗｢邏｢ collects hyperlinks local to hlground  */
+                            ProcessTableRef *attr_functors,			/* hlground縺ｮ螻樊�ｧ�ｼ�unary atom�ｼ� used when attribute is specified */
+                            Vector          *attr_dataAtoms,		/* hlground縺ｮ螻樊�ｧ�ｼ�data atom�ｼ� used when attribute is specified */
+                            Vector          *attr_dataAtom_attrs	/* hlground縺ｮ螻樊�ｧ(data atom縺ｮ螻樊�ｧ) used when attribute is specified */
+                  )
+{
+
+  BOOL result= TRUE;		//TRUE if it is hlground
+  *natoms = 0; 				//number of symbol atoms + local hyperlinks within hlground
+
+  LinkObjRef t_link = (LinkObjRef)vec_get(srcvec, 0);
+  LmnAtomRef root_ap = t_link->ap;
+  LmnLinkAttr root_pos = t_link->pos;
+
+  //printf("root_ap= %d  \n",root_ap);
+  //printf("root_pos= %d  \n",root_pos);
+
+  if(cycle_exist(srcvec,avovec,attr_functors,attr_dataAtoms,attr_dataAtom_attrs))
+  {//there is at least one cycle
+	  if(purecycle_exit(srcvec,avovec))
+    {
+		  result = FALSE;
+	  }
+  }
+
+  if(result)
+  { //hlground exist
+      init_grounddata(); 
+      dfs_scope_finder(LinkObj_make(root_ap,root_pos),
+                       srcvec,
+                       avovec,
+                       natoms,
+                       attr_functors,
+                       attr_dataAtoms,
+                       attr_dataAtom_attrs);
+      
+      //free_hlgrounddata();   //release memory immediately
+      free_grounddata();
+  }
+
+  return result;
+}
+
+
+
+
 void init_grounddata()
 {
 	hlground_data.global_hlinks =proc_tbl_make_with_size(64);
@@ -2096,7 +2171,7 @@ void dfs_scope_finder(      LinkObjRef root_link,
   while(!vec_is_empty(stack))                                        //dfs stack
   {
     LinkObjRef cur_link=vec_pop(stack);                         
-    LmnAtom m_atom=cur_link->ap;
+    LmnAtomRef m_atom=cur_link->ap;
     LmnLinkAttr m_pos=cur_link->pos;
     LMN_FREE(cur_link);                                              //free current link                                            
 
@@ -2121,7 +2196,7 @@ void dfs_scope_finder(      LinkObjRef root_link,
 
         if(LMN_HL_HAS_ATTR(hl))     //hyperlink has attribute 
         {
-          LmnAtom attrAtom = LMN_HL_ATTRATOM(hl);
+          LmnAtomRef attrAtom = LMN_HL_ATTRATOM(hl);
           LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl);
           int i;
           for (i = 0; i < vec_num(attr_dataAtoms); i++)
@@ -2387,7 +2462,7 @@ BOOL cycle_exist(   Vector *srcvec,
 
 void get_neighbours(  Vector  *avovec,
                       Vector *neighbours,
-                      LmnAtom atom,
+                      LmnAtomRef atom,
                       LmnLinkAttr pos,
                       ProcessTableRef  *attr_functors,
                       Vector   *attr_dataAtoms,
@@ -2407,7 +2482,7 @@ void get_neighbours(  Vector  *avovec,
     }
 
     {   // check if hlink attribute matches with hlground attribute
-      LmnAtom attrAtom = LMN_HL_ATTRATOM(hl);
+      LmnAtomRef attrAtom = LMN_HL_ATTRATOM(hl);
       LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl);
       int i;
       for (i = 0; i < vec_num(attr_dataAtoms); i++)
@@ -2450,7 +2525,7 @@ void get_neighbours(  Vector  *avovec,
          *   'linked_hlAtom' is a part of linkobject: !--->b
          * */
         LmnSAtom hlAtom = ((HyperLink *)vec_get(hl_childs, i))->atom; /* from hyperlink core points to ! atom  */
-        LmnAtom linked_hlAtom;
+        LmnAtomRef linked_hlAtom;
         LmnLinkAttr linked_attr;
 
         if(hlAtom != NULL)
@@ -2607,14 +2682,34 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
                             Vector *attr_data,
                             Vector *attr_data_at)
 {
+
+  ProcessTableRef atoms=hlground_data.local_atoms;
+  unsigned long i, t;
+  proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)mem);
+
+  for (i = 0; i < vec_num(srcvec); i++)
+  {
+    LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos))
+    {
+      //printf(" removed data atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
+      lmn_mem_remove_data_atom(mem, l->ap, l->pos);
+    }
+    else if (LMN_ATTR_IS_EX(l->pos))
+    {
+      //printf(" removed symbol atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
+      mem_remove_symbol_atom(mem, LMN_SATOM(l->ap));
+    }
+  }
+
+ /*
   ProcessTableRef atoms;
   unsigned long i, t;
 
   ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
   proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)mem);
 
-  /* atomsはシンボルアトムしか含まないので、
-   * srcvecのリンクが直接データアトムに接続している場合の処理をする */
+
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos)) {
@@ -2624,6 +2719,8 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
     }
   }
   proc_tbl_free(atoms);
+  */
+
 }
 
 void lmn_mem_remove_hlground(LmnMembraneRef mem,
@@ -2663,6 +2760,24 @@ void lmn_mem_free_ground( Vector *srcvec,
                           Vector *attr_data,
                           Vector *attr_data_at)
 {
+  ProcessTableRef atoms=hlground_data.local_atoms;
+
+  unsigned long i, t;
+
+  proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+
+
+  proc_tbl_free(hlground_data.global_hlinks);
+  proc_tbl_free(hlground_data.local_atoms);
+
+  for (i = 0; i < vec_num(srcvec); i++)
+  {
+    LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
+    if (LMN_ATTR_IS_DATA(l->pos))
+    	lmn_free_atom(l->ap, l->pos);
+  }
+
+  /*
   ProcessTableRef atoms;
   unsigned long i, t;
 
@@ -2671,12 +2786,12 @@ void lmn_mem_free_ground( Vector *srcvec,
     proc_tbl_free(atoms);
   }
 
-  /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
-     アトムに接続している場合の処理をする */
   for (i = 0; i < vec_num(srcvec); i++) {
     LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
     if (LMN_ATTR_IS_DATA(l->pos)) lmn_free_atom(l->ap, l->pos);
   }
+  */
+
 }
 
 void lmn_mem_free_hlground(Vector *srcvec,
