@@ -1484,8 +1484,6 @@ static inline void mem_copy_ground_sub(LmnMembraneRef mem,
                              Vector *attr_dataAtoms,
                              Vector *attr_dataAtom_attrs)
 {
-  //printf("----------------------mem_copy_ground_sub-----------------------  \n");
-  //fflush(stdout);
 
   ProcessTableRef atommap;
   ProcessTableRef hlinkmap;
