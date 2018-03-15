@@ -633,14 +633,14 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #removeground LmnInstrVar LmnInstrVar
   {
     Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
-    lmn_mem_remove_ground((LmnMembraneRef)wt(rc, $1), srcvec);
+    lmn_mem_remove_ground((LmnMembraneRef)wt(rc, $1), srcvec,NULL,NULL,NULL);
     free_links(srcvec);
   }
 
 #freeground LmnInstrVar
   {
     Vector *srcvec = links_from_idxs((Vector*)wt(rc, $0), rc_warry(rc));
-    lmn_mem_free_ground(srcvec);
+    lmn_mem_free_ground(srcvec,NULL,NULL,NULL);
     free_links(srcvec);
   }
 

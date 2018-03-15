@@ -2410,8 +2410,6 @@ label_skip_data_atom:
     case INSTR_ISHLGROUND:
     case INSTR_ISHLGROUNDINDIRECT:
     {
-      printf("sadfasdf\n");
-      fflush(stdout);
 
       LmnInstrVar funci, srclisti, avolisti;
       Vector *srcvec, *avovec;
@@ -2649,7 +2647,13 @@ label_skip_data_atom:
             }
 
 
-            b = lmn_mem_is_ground(srcvec, avovec, &natoms);
+            //b = lmn_mem_is_ground(srcvec, avovec, &natoms);
+            b = lmn_mem_is_ground(srcvec,
+                                    avovec,
+                                    &natoms,
+                                    &attr_functors,
+                                    &attr_dataAtoms,
+                                    &attr_dataAtom_attrs);
             break;
           }
         }
@@ -3123,8 +3127,12 @@ label_skip_data_atom:
             }
           lmn_mem_copy_ground((LmnMembraneRef)wt(rc, memi),
                               srcvec,
-                             &dstlovec,
-                             &atommap);
+                              &dstlovec,
+                              &atommap,
+                              &hlinkmap,
+                              &attr_functors,
+                              &attr_dataAtoms,
+                              &attr_dataAtom_attrs);
           break;
 
         }
@@ -3272,7 +3280,11 @@ label_skip_data_atom:
                     proc_tbl_put(attr_functors, f, f);
                   }
             }
-           lmn_mem_remove_ground((LmnMembraneRef)wt(rc, memi), srcvec);
+           lmn_mem_remove_ground( (LmnMembraneRef)wt(rc, memi), 
+                                  srcvec,
+                                  &attr_functors,
+                                  &attr_dataAtoms,
+                                  &attr_dataAtom_attrs);
         break;
       }
        
@@ -3306,7 +3318,10 @@ label_skip_data_atom:
                     proc_tbl_put(attr_functors, f, f);
                   }
             }
-        lmn_mem_free_ground(srcvec);
+        lmn_mem_free_ground(  srcvec,
+                              &attr_functors,
+                              &attr_dataAtoms,
+                              &attr_dataAtom_attrs);
         break;
       }
         

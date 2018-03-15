@@ -175,17 +175,41 @@ void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem);
 void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem);
 
 BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec);
-BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);
+
+
+//BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);
+
+// ground with attributes
+BOOL lmn_mem_is_ground(Vector *srcvec,
+                         Vector *avovec,
+                         unsigned long *natoms,
+                         ProcessTableRef *attr_functors,
+                         Vector *attr_dataAtoms,
+                         Vector *attr_dataAtom_attrs);
+
+
 BOOL lmn_mem_is_hlground(Vector *srcvec,
                          Vector *avovec,
                          unsigned long *natoms,
                          ProcessTableRef *attr_functors,
                          Vector *attr_dataAtoms,
                          Vector *attr_dataAtom_attrs);
+/*                         
 void lmn_mem_copy_ground(LmnMembraneRef mem,
                          Vector *srcvec,
                          Vector **ret_dstlovec,
                          ProcessTableRef *ret_atommap);
+*/
+void lmn_mem_copy_ground(LmnMembraneRef mem,
+                         Vector *srcvec,
+                         Vector **ret_dstlovec,
+                         ProcessTableRef *ret_atommap,
+                         ProcessTableRef *ret_hlinkmap,
+                         ProcessTableRef *attr_functors,
+                         Vector *attr_dataAtoms,
+                         Vector *attr_dataAtom_attrs);
+
+
 void lmn_mem_copy_hlground(LmnMembraneRef mem,
                          Vector *srcvec,
                          Vector **ret_dstlovec,
@@ -194,13 +218,22 @@ void lmn_mem_copy_hlground(LmnMembraneRef mem,
                          ProcessTableRef *attr_functors,
                          Vector *attr_dataAtoms,
                          Vector *attr_dataAtom_attrs);
-void lmn_mem_remove_ground(LmnMembraneRef mem, Vector *srcvec);
+
+//void lmn_mem_remove_ground(LmnMembraneRef mem, Vector *srcvec);
+void lmn_mem_remove_ground( LmnMembraneRef mem, 
+                            Vector *srcvec,
+                            ProcessTableRef *attr_sym,
+                            Vector *attr_data,
+                            Vector *attr_data_at);
 void lmn_mem_remove_hlground(LmnMembraneRef mem,
                              Vector *srcvec,
                              ProcessTableRef *attr_sym,
                              Vector *attr_data,
                              Vector *attr_data_at);
-void lmn_mem_free_ground(Vector *srcvec);
+void lmn_mem_free_ground( Vector *srcvec,
+                          ProcessTableRef *attr_sym,
+                          Vector *attr_data,
+                          Vector *attr_data_at);
 void lmn_mem_free_hlground(Vector *srcvec,
                            ProcessTableRef *attr_sym,
                            Vector *attr_data,

@@ -74,7 +74,7 @@ void integer_set(LmnReactCxtRef rc,
     ProcessTableRef atommap;
     LinkObjRef l;
 
-    lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap);
+    lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap,NULL,NULL,NULL,NULL);
 
     l = (LinkObjRef)vec_get(dstlovec, 0);
     lmn_mem_newlink(mem, (LmnAtomRef)n, LMN_INT_ATTR, 0,

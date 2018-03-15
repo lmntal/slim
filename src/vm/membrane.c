@@ -1585,10 +1585,14 @@ static inline void mem_copy_ground_sub(LmnMembraneRef mem,
   }
 }
 
-void lmn_mem_copy_ground(LmnMembraneRef mem,
-			 Vector *srcvec,
-			 Vector **ret_dstlovec,
-			 ProcessTableRef *ret_atommap)
+void lmn_mem_copy_ground( LmnMembraneRef mem,
+                          Vector *srcvec,
+                          Vector **ret_dstlovec,
+                          ProcessTableRef *ret_atommap,
+                          ProcessTableRef *ret_hlinkmap,
+                          ProcessTableRef *attr_functors,
+                          Vector *attr_dataAtoms,
+                          Vector *attr_dataAtom_attrs)
 {
   mem_copy_ground_sub(mem, srcvec, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
 }
@@ -1753,7 +1757,13 @@ CMPGROUND_BREAK:
 /* srcvecのリンクの列が基底項プロセスに到達(avovecのリンクに到達する場
    合は基底項プロセスではない)している場合、真を返し、natomsに基底項プ
    ロセスないのアトムの数を格納する。*/
-BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms)
+//BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms)
+BOOL lmn_mem_is_ground(Vector *srcvec,
+                         Vector *avovec,
+                         unsigned long *natoms,
+                         ProcessTableRef *attr_functors,
+                         Vector *attr_dataAtoms,
+                         Vector *attr_dataAtom_attrs)
 {
   ProcessTableRef atoms;
   BOOL b;
@@ -2150,7 +2160,11 @@ int mem_remove_symbol_atom_with_buddy_data_f(LmnWord _k,
   return 1;
 }
 
-void lmn_mem_remove_ground(LmnMembraneRef mem, Vector *srcvec)
+void lmn_mem_remove_ground( LmnMembraneRef mem,
+                            Vector *srcvec,
+                            ProcessTableRef *attr_sym,
+                            Vector *attr_data,
+                            Vector *attr_data_at)
 {
   ProcessTableRef atoms;
   unsigned long i, t;
@@ -2203,7 +2217,10 @@ int free_symbol_atom_with_buddy_data_f(LmnWord _k, LmnWord _v, LmnWord _arg)
   return 1;
 }
 
-void lmn_mem_free_ground(Vector *srcvec)
+void lmn_mem_free_ground( Vector *srcvec,
+                          ProcessTableRef *attr_sym,
+                          Vector *attr_data,
+                          Vector *attr_data_at )
 {
   ProcessTableRef atoms;
   unsigned long i, t;
