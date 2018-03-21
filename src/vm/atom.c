@@ -277,6 +277,9 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl)
 }
 
 void free_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr) {
+
+  printf("free_data_atom-----------------\n");
+
   switch (attr) {
     case LMN_INT_ATTR:
       break;
@@ -297,6 +300,8 @@ void free_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr) {
       LMN_ASSERT(FALSE);
       break;
   }
+
+  printf("free_data_atom end-----------------\n");
 }
 
 /* O(ARITY) */

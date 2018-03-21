@@ -469,7 +469,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
     avovec = links_from_idxs((Vector *)wt(rc, $2), rc_warry(rc));
     srcvec = links_from_idxs((Vector *)wt(rc, $1), rc_warry(rc));
-    b = lmn_mem_is_ground(srcvec, avovec, &natoms);
+    b = lmn_mem_is_ground(srcvec, avovec, &natoms,NULL,NULL,NULL);
 
     free_links(srcvec);
     free_links(avovec);
@@ -605,7 +605,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     Vector *dstlovec, *retvec;
     ProcessTableRef atommap;
 
-    lmn_mem_copy_ground((LmnMembraneRef)wt(rc, $2), srcvec, &dstlovec, &atommap);
+    lmn_mem_copy_ground((LmnMembraneRef)wt(rc, $2), srcvec, &dstlovec, &atommap,NULL,NULL,NULL,NULL);
     free_links(srcvec);
 
     /* 返り値の作成 */

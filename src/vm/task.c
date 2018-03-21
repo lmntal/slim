@@ -2652,6 +2652,11 @@ label_skip_data_atom:
                                     &attr_functors,
                                     &attr_dataAtoms,
                                     &attr_dataAtom_attrs);
+            
+            proc_tbl_free(attr_functors);
+            vec_destroy(&attr_dataAtoms);
+            vec_destroy(&attr_dataAtom_attrs);
+
             break;
           }
         }
@@ -3096,7 +3101,7 @@ label_skip_data_atom:
         case INSTR_COPYGROUND:
         {
           //printf("--------------------------------copy ground\n");
-          ProcessTableRef attr_functors;
+            ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
             Vector attr_dataAtom_attrs;
             vec_init(&attr_dataAtoms, 16);
@@ -3132,6 +3137,11 @@ label_skip_data_atom:
                               &attr_functors,
                               &attr_dataAtoms,
                               &attr_dataAtom_attrs);
+
+          proc_tbl_free(attr_functors);
+          vec_destroy(&attr_dataAtoms);
+          vec_destroy(&attr_dataAtom_attrs);
+
           break;
 
         }
@@ -3286,6 +3296,11 @@ label_skip_data_atom:
                                   &attr_functors,
                                   &attr_dataAtoms,
                                   &attr_dataAtom_attrs);
+
+            proc_tbl_free(attr_functors);
+            vec_destroy(&attr_dataAtoms);
+            vec_destroy(&attr_dataAtom_attrs);
+
         break;
       }
        
@@ -3293,7 +3308,7 @@ label_skip_data_atom:
       {
         //printf("--------------------------------free ground\n");
 
-        ProcessTableRef attr_functors;
+            ProcessTableRef attr_functors;
             Vector attr_dataAtoms;
             Vector attr_dataAtom_attrs;
             vec_init(&attr_dataAtoms, 16);
@@ -3321,11 +3336,17 @@ label_skip_data_atom:
                     proc_tbl_put(attr_functors, f, f);
                   }
             }
-        lmn_mem_free_ground(  srcvec,
-                              &attr_functors,
-                              &attr_dataAtoms,
-                              &attr_dataAtom_attrs);
-        break;
+            
+            lmn_mem_free_ground(  srcvec,
+                                  &attr_functors,
+                                  &attr_dataAtoms,
+                                  &attr_dataAtom_attrs);
+
+            proc_tbl_free(attr_functors);
+            vec_destroy(&attr_dataAtoms);
+            vec_destroy(&attr_dataAtom_attrs);
+
+            break;
       }
         
       }

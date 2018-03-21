@@ -1613,6 +1613,8 @@ void lmn_mem_copy_ground( LmnMembraneRef mem,
                           Vector *attr_dataAtoms,
                           Vector *attr_dataAtom_attrs)
 {
+  printf("--------------------------------copy ground\n");
+
   ProcessTableRef hlinks=hlground_data.global_hlinks;
 
 	mem_copy_ground_sub(mem,
@@ -1625,6 +1627,8 @@ void lmn_mem_copy_ground( LmnMembraneRef mem,
                       attr_dataAtoms,
                       attr_dataAtom_attrs);
   //mem_copy_ground_sub(mem, srcvec,NULL, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
+
+  printf("----------------------------end copy ground\n");
 }
 
 void lmn_mem_copy_hlground(LmnMembraneRef mem,
@@ -1796,15 +1800,19 @@ BOOL lmn_mem_is_ground(Vector *srcvec,
                          Vector *attr_dataAtoms,
                          Vector *attr_dataAtom_attrs)
 {
+  printf("--------------------------------is ground\n");
 
   BOOL b;
   b = extended_ground_atoms(srcvec, avovec, NULL, natoms, NULL, attr_functors, attr_dataAtoms, attr_dataAtom_attrs);
 
   if(!b)
   {
+    printf("--------deleting in------------------------is ground\n");
 	  proc_tbl_free(hlground_data.local_atoms);
 	  proc_tbl_free(hlground_data.global_hlinks);
   }
+
+  printf("----------------------------end is ground\n");
 
   /*
   ProcessTableRef atoms;
@@ -2680,6 +2688,7 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
                             Vector *attr_data,
                             Vector *attr_data_at)
 {
+  printf("--------------------------------remove ground\n");
 
   ProcessTableRef atoms=hlground_data.local_atoms;
   unsigned long i, t;
@@ -2700,6 +2709,7 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
     }
   }
 
+  printf("----------------------------end remove ground\n");
  /*
   ProcessTableRef atoms;
   unsigned long i, t;
@@ -2758,12 +2768,18 @@ void lmn_mem_free_ground( Vector *srcvec,
                           Vector *attr_data,
                           Vector *attr_data_at)
 {
+  
+  if(!attr_sym)
+  {
+     return;
+  }
+  printf("--------------------------------free ground\n");
+
   ProcessTableRef atoms=hlground_data.local_atoms;
 
   unsigned long i, t;
 
   proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
-
 
   proc_tbl_free(hlground_data.global_hlinks);
   proc_tbl_free(hlground_data.local_atoms);
@@ -2774,6 +2790,8 @@ void lmn_mem_free_ground( Vector *srcvec,
     if (LMN_ATTR_IS_DATA(l->pos))
     	lmn_free_atom(l->ap, l->pos);
   }
+
+  printf("----------------------------end free ground\n");
 
   /*
   ProcessTableRef atoms;

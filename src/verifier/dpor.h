@@ -50,10 +50,10 @@
 #include "statespace.h"
 #include "element/element.h"
 #ifdef DEBUG
-# include "dumper.h"
-# define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
+#include "vm/dumper.h"
+#define POR_DEBUG(V) if (lmn_env.debug_por) {(V);}
 #else
-# define POR_DEBUG(V)
+#define POR_DEBUG(V)
 #endif
 
 typedef struct ContextC2 *ContextC2Ref;

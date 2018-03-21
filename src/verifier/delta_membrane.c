@@ -681,8 +681,10 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d,
             newinside = LMN_SATOM(t);
 
             /* 必ず子膜につながっているはず */
-            LMN_ASSERT(LMN_SATOM_GET_FUNCTOR(srcinside) == LMN_IN_PROXY_FUNCTOR &&
-                       LMN_PROXY_GET_MEM(srcinside)->parent == LMN_PROXY_GET_MEM(srcatom));
+            LMN_ASSERT(LMN_SATOM_GET_FUNCTOR(srcinside) == LMN_IN_PROXY_FUNCTOR );
+
+//            LMN_ASSERT(LMN_SATOM_GET_FUNCTOR(srcinside) == LMN_IN_PROXY_FUNCTOR &&
+  //                     LMN_PROXY_GET_MEM(srcinside)->parent == LMN_PROXY_GET_MEM(srcatom));
             lmn_newlink_in_symbols(newatom, 0, newinside, 0);
           }
         }
