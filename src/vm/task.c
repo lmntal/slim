@@ -1143,8 +1143,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr)
              * (Vector*)LMN_SPC_TREE(spc)に取得.
              * (Vector*)LMN_SPC_TREE(spc)の最後に格納されているHyperLinkは
              * 探索の対象外なので要素数を-1する */
-            lmn_hyperlink_get_elements(LMN_SPC_TREE(spc),
-                                       lmn_sameproccxt_start(spc, atom_arity));
+            HyperLink *h = lmn_sameproccxt_start(spc, atom_arity);
+            lmn_hyperlink_get_elements(LMN_SPC_TREE(spc), h);
             element_num = vec_num(LMN_SPC_TREE(spc)) - 1;
             if (element_num <= 0) return FALSE;
 
