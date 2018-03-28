@@ -46,7 +46,7 @@ struct Checkpoint {
 
 /* 訪問済みのアトムや膜の記録 */
 struct VisitLog {
-  struct ProcessTbl tbl;         /* プロセスIDをkeyにした訪問表 */
+  ProcessTableRef   tbl;         /* プロセスIDをkeyにした訪問表 */
   int               ref_n,       /* バイト列から読み出したプロセスに再訪問が発生した場合のための参照番号割当カウンタ */
                     element_num; /* 訪問したプロセス数のカウンタ */
   Vector            checkpoints; /* Checkpointオブジェクトの配列 */
@@ -77,9 +77,9 @@ void checkpoint_free(struct Checkpoint *cp)
 void visitlog_init_with_size(VisitLogRef p, unsigned long tbl_size)
 {
   if (tbl_size != 0) {
-    proc_tbl_init_with_size(&p->tbl, tbl_size);
+    p->tbl = proc_tbl_make_with_size(tbl_size);
   } else {
-    proc_tbl_init(&p->tbl);
+    p->tbl = proc_tbl_make();
   }
 /*   printf("size = %lu\n", tbl_size); */
   p->ref_n = VISITLOG_INIT_N;
@@ -100,7 +100,7 @@ void visitlog_destroy(struct VisitLog *p)
 {
   int i;
 
-  proc_tbl_destroy(&p->tbl);
+  proc_tbl_destroy(p->tbl);
 
   for (i = 0; i < vec_num(&p->checkpoints); i++) {
     vec_free((Vector *)vec_get(&p->checkpoints, i));
@@ -124,7 +124,7 @@ struct Checkpoint *visitlog_pop_checkpoint(VisitLogRef visitlog)
 
   checkpoint = (struct Checkpoint *)vec_pop(&visitlog->checkpoints);
   for (i = 0; i < vec_num(&checkpoint->elements); i++) {
-    proc_tbl_unput(&visitlog->tbl, vec_get(&checkpoint->elements, i));
+    proc_tbl_unput(visitlog->tbl, vec_get(&checkpoint->elements, i));
     visitlog->element_num--;
     visitlog->ref_n--;
   }
@@ -165,7 +165,7 @@ void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp)
 
   vec_push(&visitlog->checkpoints, (vec_data_t)cp);
   for (i = 0; i < vec_num(&cp->elements); i++) {
-    proc_tbl_put(&visitlog->tbl, vec_get(&cp->elements, i), visitlog->ref_n++);
+    proc_tbl_put(visitlog->tbl, vec_get(&cp->elements, i), visitlog->ref_n++);
     visitlog->element_num++;
   }
   visitlog->element_num += cp->n_data_atom;
@@ -175,7 +175,7 @@ void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp)
 /* ログにpを追加し, 正の値を返す. すでにpが存在した場合は0を返す.
  * 通常この関数ではなくput_atom, put_memを使用する. */
 int visitlog_put(VisitLogRef visitlog, LmnWord p) {
-  if (proc_tbl_put_new(&visitlog->tbl, p, visitlog->ref_n++)) {
+  if (proc_tbl_put_new(visitlog->tbl, p, visitlog->ref_n++)) {
     if (vec_num(&visitlog->checkpoints) > 0) {
       CheckpointRef checkpoint = (CheckpointRef)vec_last(&visitlog->checkpoints);
       vec_push(&checkpoint->elements, p);
@@ -216,20 +216,20 @@ void visitlog_put_data(VisitLogRef visitlog) {
 /* ログに記録されたアトムatomに対応する値をvalueに設定し, 正の値を返す.
  * ログにatomが存在しない場合は, 0を返す. */
 int visitlog_get_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom, LmnWord *value) {
-  return proc_tbl_get_by_atom(&visitlog->tbl, atom, value);
+  return proc_tbl_get_by_atom(visitlog->tbl, atom, value);
 }
 
 /* ログに記録された膜memに対応する値をvalueに設定, 正の値を返す.
  * ログにmemが存在しない場合は, 0を返す. */
 int visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value) {
-  return proc_tbl_get_by_mem(&visitlog->tbl, mem, value);
+  return proc_tbl_get_by_mem(visitlog->tbl, mem, value);
 }
 
 /* ログに記録されたhlに対応する値をvalueに設定し, 正の値を返す.
  * ログにhlが存在しない場合は, 0を返す. */
 int visitlog_get_hlink(VisitLogRef visitlog, HyperLink *hl, LmnWord *value)
 {
-  return proc_tbl_get_by_hlink(&visitlog->tbl, hl, value);
+  return proc_tbl_get_by_hlink(visitlog->tbl, hl, value);
 }
 
 /* visitlogに記録した要素（膜、アトム）の数を返す */

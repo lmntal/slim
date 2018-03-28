@@ -40,6 +40,14 @@
 #include <limits.h>
 
 
+/* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
+struct ProcessTbl {
+  unsigned long n;
+  unsigned long size;
+  unsigned long num_buckets;
+  LmnWord **tbl;
+};
+
 void proc_tbl_init(ProcessTableRef p)
 {
   proc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
@@ -145,6 +153,9 @@ void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n)
   memset(p->tbl[b], 0xffU, sizeof(LmnWord) * PROC_TBL_BUCKETS_SIZE);
 }
 
+unsigned long proc_tbl_get_size(ProcessTableRef p) {
+  return p->size;
+}
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
 void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value) {

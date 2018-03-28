@@ -83,16 +83,16 @@ mhash_t mhash(LmnMembraneRef mem)
 
 static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size)
 {
-  struct ProcessTbl c;
+  ProcessTableRef c = proc_tbl_make();
   mhash_t t;
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3)  profile_start_timer(PROFILE_TIME__STATE_HASH_MEM);
 #endif
 
-  proc_tbl_init_with_size((ProcessTableRef)&c, tbl_size);
-  t = mhash_membrane(mem, NULL, (ProcessTableRef)&c);
-  proc_tbl_destroy((ProcessTableRef)&c);
+  proc_tbl_init_with_size(c, tbl_size);
+  t = mhash_membrane(mem, NULL, c);
+  proc_tbl_destroy(c);
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) profile_finish_timer(PROFILE_TIME__STATE_HASH_MEM);

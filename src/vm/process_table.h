@@ -43,7 +43,7 @@ extern "C" {
 #endif
 
 #include "element/element.h"
-	
+
 typedef struct ProcessTbl *ProcessTableRef;
 
 #include "hyperlink.h"
@@ -53,13 +53,6 @@ typedef struct ProcessTbl *ProcessTableRef;
 #define process_tbl_entry(P, IDX) (P->tbl[IDX / PROC_TBL_BUCKETS_SIZE][IDX % PROC_TBL_BUCKETS_SIZE])
 
 
-/* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
-struct ProcessTbl {
-  unsigned long n;
-  unsigned long size;
-  unsigned long num_buckets;
-  LmnWord **tbl;
-};
 
 #define process_tbl_entry_num(P)  ((P)->n)
 void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n);
@@ -83,6 +76,7 @@ int        proc_tbl_foreach(ProcessTableRef p,
                             LmnWord arg);
 BOOL       proc_tbl_eq(ProcessTableRef a, ProcessTableRef b);
 
+unsigned long proc_tbl_get_size(ProcessTableRef p);
 void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value);
 void proc_tbl_put_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord value);
 void proc_tbl_put_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);

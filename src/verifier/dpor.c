@@ -480,7 +480,7 @@ static BOOL contextC1s_are_depend(ContextC1Ref src, ContextC1Ref dst)
   rhs_tbl = src->RHS_procs;
   lhs_tbl = dst->LHS_procs;
 
-  for (i = 0; i < rhs_tbl->size; i++) {
+  for (i = 0; i < proc_tbl_get_size(rhs_tbl); i++) {
     LmnWord rhs, lhs;
     if (proc_tbl_get(rhs_tbl, i, &rhs) && proc_tbl_get(lhs_tbl, i, &lhs)) {
       if (dpor_LHS_RHS_are_depend((BYTE)lhs, (BYTE)rhs)) {
