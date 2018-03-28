@@ -641,9 +641,14 @@ static inline int tracelog_put_hlink(TraceLogRef l, HyperLink *hl1, LmnWord hl2_
 
 static inline void tracelog_unput(TraceLogRef l, LmnWord key) {
   LMN_ASSERT (TLOG_IS_TRV(TLOG_FLAG(tracelog_entry(l, key)))); /* 訪問済みでもないないのにunputするとnumの値が不正になり得る */
-  if (l->cap > key) {
+  if (l->cap > key && tracelog_bucket(l, key)) {
     l->num--;
-    TLOG_TRV_DEC(tracelog_entry(l, TLOG_OWNER(tracelog_entry(l, key))));
+
+    ProcessID owner_id = TLOG_OWNER(tracelog_entry(l, key));
+    if (tracelog_bucket(l, owner_id)) {
+      TLOG_TRV_DEC(tracelog_entry(l, owner_id));
+    }
+
     TLOG_DATA_CLEAR(tracelog_entry(l, key));
   }
 }
