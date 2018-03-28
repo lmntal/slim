@@ -17,6 +17,7 @@ TESTS = \
 	testsuite/guard_unary/check.sh \
 	testsuite/guard_ground/check.sh \
 	testsuite/guard_ground_multi/check.sh \
+	testsuite/hyperlink/check.sh \
 	testsuite/simpagation/check.sh \
 	testsuite/count/check.sh \
 	testsuite/mem_name/check.sh \
@@ -178,6 +179,7 @@ check_DATA = \
 	testsuite/guard_ground_multi/case14.il \
 	testsuite/guard_ground_multi/case15.il \
 	testsuite/guard_ground_multi/case16.il \
+	testsuite/hyperlink/case1.il \
 	testsuite/simpagation/case1.il \
 	testsuite/simpagation/case2.il \
 	testsuite/count/case1.il \
@@ -195,9 +197,11 @@ check_DATA = \
 CLEANFILES = $(check_DATA)
 
 LMNC = $(LMNTAL_HOME)/bin/lmntal
-LMNCFLAGS = --hl --slimcode -O3
+LMNCFLAGS = --hl-opt --slimcode -O3
 
 %.il: %.lmntest
 	awk -f create_testdata.awk $< | \
 	$(LMNC) --stdin-lmn $(LMNCFLAGS) >$@
+%.il: %.lmn
+	$(LMNC) $(LMNCFLAGS) $< >$@
 

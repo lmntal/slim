@@ -1,0 +1,29 @@
+
+unit_test.use.
+
+tap_producer = {
+  test_suite = {
+    setup = { }.
+
+    test_case = {
+      name = "hyperlink case 1".
+
+      init = {
+        :- uniq |
+          a(!A), b(!A).
+      }.
+
+      ruleset = {
+          a(!T), b(!T) :- x(!T).
+          x(!H) :- ok.
+      }.
+
+      stable = {
+        ok.
+      }.
+    }.
+
+    // ルールセットは等価性判定を行えないので削除
+    teardown = { rules({@p}) :- . }
+  }.
+}.
