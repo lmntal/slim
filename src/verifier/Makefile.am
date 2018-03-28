@@ -42,6 +42,7 @@ liblmn_verifier_a_SOURCES =                              \
 	visitlog.c               visitlog.h                    \
 	process_table.c          process_table.h               \
 	simply_process_table.c   simply_process_table.h        \
+	trace_log.h              trace_log.c                   \
 	stack_macro.h
 
 

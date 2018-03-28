@@ -53,68 +53,6 @@ struct VisitLog {
 };
 
 
-/*------------
- * TraceLog
- */
-
-static inline void tracker_init(struct LogTracker *track);
-static inline void tracker_destroy(struct LogTracker *track);
-
-TraceLogRef tracelog_make(void)
-{
-  struct TraceLog *l = LMN_MALLOC(struct TraceLog);
-  tracelog_init(l);
-  return l;
-}
-
-
-void tracelog_init(TraceLogRef l)
-{
-  tracelog_init_with_size(l, PROC_TBL_DEFAULT_SIZE);
-}
-
-
-void tracelog_init_with_size(TraceLogRef l, unsigned long size)
-{
-  l->cap = size;
-  l->num = 0;
-  l->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
-  l->tbl = LMN_CALLOC(struct TraceData *, l->num_buckets);
-  tracker_init(&l->tracker);
-}
-
-
-void tracelog_free(TraceLogRef l)
-{
-  tracelog_destroy(l);
-  LMN_FREE(l);
-}
-
-void tracelog_destroy(TraceLogRef l)
-{
-  for (int i = 0; i < l->num_buckets; i++) {
-    LMN_FREE(l->tbl[i]);
-  }
-  LMN_FREE(l->tbl);
-  tracker_destroy(&l->tracker);
-}
-
-/*----------------
- * Tracker
- */
-
-static inline void tracker_init(struct LogTracker *track)
-{
-  vec_init(&track->traced_ids, PROC_TBL_DEFAULT_SIZE);
-  vec_init(&track->btp_idx, PROC_TBL_DEFAULT_SIZE);
-}
-
-static inline void tracker_destroy(struct LogTracker *track)
-{
-  vec_destroy(&track->traced_ids);
-  vec_destroy(&track->btp_idx);
-}
-
 
 /*------------
  * SimplyTraceLog
