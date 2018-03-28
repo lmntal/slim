@@ -53,7 +53,7 @@ extern "C" {
  */
 
 struct SimplyTraceLog {
-  struct SimplyProcTbl tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
+  SimplyProcessTableRef tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
   struct LogTracker tracker;
 };
 

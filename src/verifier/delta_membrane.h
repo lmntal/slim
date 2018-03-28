@@ -55,7 +55,7 @@ struct MemDeltaRoot {
   LmnMembraneRef root_mem;
 
   ProcessTableRef    proc_tbl;
-  struct SimplyProcTbl flag_tbl;
+  SimplyProcessTableRef flag_tbl;
   ProcessTableRef    owner_tbl;
 
   Vector modified_atoms;

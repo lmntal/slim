@@ -49,20 +49,20 @@ void simplylog_init(SimplyLog s)
 
 void simplylog_init_with_size(SimplyLog s, unsigned long size)
 {
-  sproc_tbl_init_with_size(&s->tbl, size);
+  s->tbl = sproc_tbl_make_with_size(size);
   tracker_init(&s->tracker);
 }
 
 void simplylog_destroy(SimplyLog s)
 {
-  sproc_tbl_destroy(&s->tbl);
+  sproc_tbl_free(s->tbl);
   tracker_destroy(&s->tracker);
 }
 
 void simplylog_put(SimplyLog l, LmnWord key)
 {
   LogTracker_TRACE(&l->tracker, key);
-  sproc_tbl_put(&l->tbl, key, STRACE_TRUE);
+  sproc_tbl_put(l->tbl, key, STRACE_TRUE);
 }
 
 void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom) {
@@ -74,15 +74,15 @@ void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) {
 }
 
 BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom) {
-  return sproc_tbl_contains_atom(&l->tbl, atom);
+  return sproc_tbl_contains_atom(l->tbl, atom);
 }
 
 BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem) {
-  return sproc_tbl_contains_mem(&l->tbl, mem);
+  return sproc_tbl_contains_mem(l->tbl, mem);
 }
 
 void simplylog_backtrack(SimplyLog l) {
-  LogTracker_REVERT(&l->tracker, sproc_tbl_unput, &l->tbl);
+  LogTracker_REVERT(&l->tracker, sproc_tbl_unput, l->tbl);
 }
 
 void simplylog_set_btpoint(SimplyLog l) {

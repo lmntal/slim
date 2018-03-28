@@ -37,12 +37,14 @@
 
 #include "simply_process_table.h"
 
+struct SimplyProcTbl : ProcessTable<BYTE> {};
+
 
 
 void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
 {
   p->n   = 0;
-  p->cap = size;
+  p->size = size;
   p->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
   p->tbl = LMN_CALLOC(BYTE *, p->num_buckets);
 }
@@ -50,6 +52,18 @@ void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
 void sproc_tbl_init(SimplyProcessTableRef p)
 {
   sproc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
+}
+
+SimplyProcessTableRef sproc_tbl_make(void)
+{
+  return sproc_tbl_make_with_size(PROC_TBL_DEFAULT_SIZE);
+}
+
+SimplyProcessTableRef sproc_tbl_make_with_size(unsigned long size)
+{
+  SimplyProcessTableRef p = LMN_MALLOC(struct SimplyProcTbl);
+  sproc_tbl_init_with_size(p, size);
+  return p;
 }
 
 void sproc_tbl_destroy(SimplyProcessTableRef p)
@@ -60,11 +74,17 @@ void sproc_tbl_destroy(SimplyProcessTableRef p)
   LMN_FREE(p->tbl);
 }
 
+void sproc_tbl_free(SimplyProcessTableRef p)
+{
+  sproc_tbl_destroy(p);
+  LMN_FREE(p);
+}
+
 
 void sproc_tbl_expand(SimplyProcessTableRef p, unsigned long n) {
   unsigned int org_n = p->num_buckets;
-  while (p->cap <= n) p->cap *= 2;
-  p->num_buckets = p->cap / PROC_TBL_BUCKETS_SIZE + 1;
+  while (p->size <= n) p->size *= 2;
+  p->num_buckets = p->size / PROC_TBL_BUCKETS_SIZE + 1;
 
   if (org_n < p->num_buckets) {
     p->tbl = LMN_REALLOC(BYTE *, p->tbl, p->num_buckets);
@@ -131,7 +151,7 @@ int sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembraneRef mem, BYTE *valu
 }
 
 BOOL sproc_tbl_contains(SimplyProcessTableRef p, LmnWord key) {
-  return key < p->cap && p->tbl[key / PROC_TBL_BUCKETS_SIZE] && sproc_tbl_entry(p, key) != SPROC_TBL_INIT_V;
+  return key < p->size && p->tbl[key / PROC_TBL_BUCKETS_SIZE] && sproc_tbl_entry(p, key) != SPROC_TBL_INIT_V;
 }
 
 BOOL sproc_tbl_contains_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom) {

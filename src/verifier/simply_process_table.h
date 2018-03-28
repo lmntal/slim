@@ -59,12 +59,7 @@ extern "C" {
  *  SimplyProcTbl
  *  プロセスIDをkeyにしたBYTEサイズテーブル
  */
-struct SimplyProcTbl {
-  unsigned long n;
-  unsigned long cap;
-  unsigned long num_buckets;
-  BYTE **tbl;
-};
+
 typedef struct SimplyProcTbl *SimplyProcessTableRef;
 
 
@@ -77,9 +72,12 @@ typedef struct SimplyProcTbl *SimplyProcessTableRef;
  */
 
 
+SimplyProcessTableRef sproc_tbl_make_with_size(unsigned long size);
+SimplyProcessTableRef sproc_tbl_make(void);
 void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size);
 void sproc_tbl_init(SimplyProcessTableRef p);
 void sproc_tbl_destroy(SimplyProcessTableRef p);
+void sproc_tbl_free(SimplyProcessTableRef p);
 
 void sproc_tbl_expand(SimplyProcessTableRef p, unsigned long n);
 void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value);
