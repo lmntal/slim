@@ -1,5 +1,5 @@
 /*
- * simply_trace_log.h
+ * simply_trace_log.c
  *
  *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -35,44 +35,60 @@
  *
  */
 
-#ifndef SIMPLY_TRACE_LOG
-#define SIMPLY_TRACE_LOG
+#include "simply_trace_log.h"
 
-#include "vm/vm.h"
 
-#include "simply_process_table.h"
-#include "trace_log.h"
-
-/** ------
- *  SimpleTraceLog
+/*------------
+ * SimplyTraceLog
  */
 
-struct SimplyTraceLog {
-  struct SimplyProcTbl tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
-  struct LogTracker tracker;
-};
+void simplylog_init(SimplyLog s)
+{
+  simplylog_init_with_size(s, PROC_TBL_DEFAULT_SIZE);
+}
 
-#define STRACE_TRUE   (!SPROC_TBL_INIT_V)
+void simplylog_init_with_size(SimplyLog s, unsigned long size)
+{
+  sproc_tbl_init_with_size(&s->tbl, size);
+  tracker_init(&s->tracker);
+}
 
-typedef struct SimplyTraceLog *SimplyLog;
+void simplylog_destroy(SimplyLog s)
+{
+  sproc_tbl_destroy(&s->tbl);
+  tracker_destroy(&s->tracker);
+}
 
-/**
- * Function ProtoTypes
- */
+void simplylog_put(SimplyLog l, LmnWord key)
+{
+  LogTracker_TRACE(&l->tracker, key);
+  sproc_tbl_put(&l->tbl, key, STRACE_TRUE);
+}
 
-void simplylog_init(SimplyLog trc);
-void simplylog_init_with_size(SimplyLog trc, unsigned long size);
-void simplylog_destroy(SimplyLog trc);
+void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom) {
+  simplylog_put(l, LMN_SATOM_ID(atom));
+}
 
-void simplylog_put(SimplyLog l, LmnWord key);
-void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom);
-void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem);
-BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom);
-BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem);
-void simplylog_backtrack(SimplyLog l);
-void simplylog_set_btpoint(SimplyLog l);
-void simplylog_continue_trace(SimplyLog l);
+void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) {
+  simplylog_put(l, lmn_mem_id(mem));
+}
 
+BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom) {
+  return sproc_tbl_contains_atom(&l->tbl, atom);
+}
 
-#endif /* SIMPLY_TRACE_LOG */
+BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem) {
+  return sproc_tbl_contains_mem(&l->tbl, mem);
+}
 
+void simplylog_backtrack(SimplyLog l) {
+  LogTracker_REVERT(&l->tracker, sproc_tbl_unput, &l->tbl);
+}
+
+void simplylog_set_btpoint(SimplyLog l) {
+  LogTracker_PUSH(&l->tracker);
+}
+
+void simplylog_continue_trace(SimplyLog l) {
+  LogTracker_POP(&l->tracker);
+}

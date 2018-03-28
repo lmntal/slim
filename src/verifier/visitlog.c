@@ -54,28 +54,6 @@ struct VisitLog {
 
 
 
-/*------------
- * SimplyTraceLog
- */
-
-void simplylog_init(SimplyLog s)
-{
-  simplylog_init_with_size(s, PROC_TBL_DEFAULT_SIZE);
-}
-
-void simplylog_init_with_size(SimplyLog s, unsigned long size)
-{
-  sproc_tbl_init_with_size(&s->tbl, size);
-  tracker_init(&s->tracker);
-}
-
-void simplylog_destroy(SimplyLog s)
-{
-  sproc_tbl_destroy(&s->tbl);
-  tracker_destroy(&s->tracker);
-}
-
-
 /*----------------------------------------------------------------------
  * VisitLog: アトムや膜への訪問の記録
  */
