@@ -39,6 +39,18 @@
 #define PROCESS_TABLE_H
 
 #ifdef __cplusplus
+extern "C++" {
+/* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
+template<typename T> struct ProcessTable {
+  unsigned long n;
+  unsigned long size;
+  unsigned long num_buckets;
+  T **tbl;
+};
+}
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 

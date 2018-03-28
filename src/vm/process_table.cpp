@@ -40,13 +40,7 @@
 #include <limits.h>
 
 
-/* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
-struct ProcessTbl {
-  unsigned long n;
-  unsigned long size;
-  unsigned long num_buckets;
-  LmnWord **tbl;
-};
+struct ProcessTbl : ProcessTable<LmnWord> {};
 
 void proc_tbl_init(ProcessTableRef p)
 {
