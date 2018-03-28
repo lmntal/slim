@@ -1202,15 +1202,15 @@ LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d)
 static LmnBinStrRef lmn_mem_encode_sub(LmnMembraneRef mem, unsigned long tbl_size)
 {
   struct BinStrPtr bsp;
-  struct VisitLog visited;
+  VisitLogRef visited = visitlog_create();
   LmnBinStrRef ret_bs;
   BinStr bs;
 
   bs = binstr_make();
   bsptr_init(&bsp, bs);
-  visitlog_init_with_size(&visited, tbl_size);
+  visitlog_init_with_size(visited, tbl_size);
 
-  encode_root_mem(mem, &bsp, &visited);
+  encode_root_mem(mem, &bsp, visited);
 
   /* 最後に、ポインタの位置を修正する */
   bs->cur = bsp.pos;
@@ -1218,7 +1218,7 @@ static LmnBinStrRef lmn_mem_encode_sub(LmnMembraneRef mem, unsigned long tbl_siz
 
   binstr_free(bs);
   bsptr_destroy(&bsp);
-  visitlog_destroy(&visited);
+  visitlog_destroy(visited);
 
   return ret_bs;
 }
@@ -2171,13 +2171,13 @@ static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembraneRef mem, unsigned long tbl_
   LmnBinStrRef ret_bs;
   BinStr bs;
   struct BinStrPtr bsp;
-  struct VisitLog visitlog;
+  VisitLogRef visitlog = visitlog_create();
 
   bs = binstr_make();
   bsptr_init_direct(&bsp, bs);
-  visitlog_init_with_size(&visitlog, tbl_size);
+  visitlog_init_with_size(visitlog, tbl_size);
 
-  dump_root_mem(mem, &bsp, &visitlog);
+  dump_root_mem(mem, &bsp, visitlog);
 
   /* 最後に、ポインタの位置を修正する */
   bs->cur = bsp.pos;
@@ -2185,7 +2185,7 @@ static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembraneRef mem, unsigned long tbl_
 
   binstr_free(bs);
   bsptr_destroy(&bsp);
-  visitlog_destroy(&visitlog);
+  visitlog_destroy(visitlog);
 
   return ret_bs;
 }

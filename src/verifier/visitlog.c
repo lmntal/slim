@@ -39,6 +39,21 @@
 
 #define PROC_TBL_DEFAULT_SIZE  128U
 
+/* VisitLogに記録された変更のスナップショット */
+struct Checkpoint {
+  int n_data_atom;
+  Vector elements;
+};
+
+/* 訪問済みのアトムや膜の記録 */
+struct VisitLog {
+  struct ProcessTbl tbl;         /* プロセスIDをkeyにした訪問表 */
+  int               ref_n,       /* バイト列から読み出したプロセスに再訪問が発生した場合のための参照番号割当カウンタ */
+                    element_num; /* 訪問したプロセス数のカウンタ */
+  Vector            checkpoints; /* Checkpointオブジェクトの配列 */
+};
+
+
 void proc_tbl_init(ProcessTableRef p)
 {
   proc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
@@ -290,6 +305,10 @@ void visitlog_init_with_size(VisitLogRef p, unsigned long tbl_size)
   vec_init(&p->checkpoints, PROC_TBL_DEFAULT_SIZE);
 }
 
+VisitLogRef visitlog_create() {
+  return LMN_CALLOC(struct VisitLog, 1);
+}
+
 void visitlog_init(struct VisitLog *p)
 {
   visitlog_init_with_size(p, 0);
@@ -305,6 +324,8 @@ void visitlog_destroy(struct VisitLog *p)
     vec_free((Vector *)vec_get(&p->checkpoints, i));
   }
   vec_destroy(&p->checkpoints);
+
+  LMN_FREE(p);
 }
 
 /* チェックポイントを設定する。 */
@@ -366,4 +387,70 @@ void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp)
     visitlog->element_num++;
   }
   visitlog->element_num += cp->n_data_atom;
+}
+
+
+/* ログにpを追加し, 正の値を返す. すでにpが存在した場合は0を返す.
+ * 通常この関数ではなくput_atom, put_memを使用する. */
+int visitlog_put(VisitLogRef visitlog, LmnWord p) {
+  if (proc_tbl_put_new(&visitlog->tbl, p, visitlog->ref_n++)) {
+    if (vec_num(&visitlog->checkpoints) > 0) {
+      CheckpointRef checkpoint = (CheckpointRef)vec_last(&visitlog->checkpoints);
+      vec_push(&checkpoint->elements, p);
+    }
+    visitlog->element_num++;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+/* ログにアトムを追加し, 正の値を返す. すでにアトムが存在した場合は0を返す */
+int visitlog_put_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom) {
+  return visitlog_put(visitlog, LMN_SATOM_ID(atom));
+}
+
+/* ログに膜を追加し, 正の値を返す. すでに膜が存在した場合は0を返す */
+int visitlog_put_mem(VisitLogRef visitlog, LmnMembraneRef mem) {
+  return visitlog_put(visitlog, lmn_mem_id(mem));
+}
+
+/* ログにハイパーリンクを追加し, 正の値を返す. すでにハイパーリンクが存在した場合は0を返す */
+int visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl)
+{
+  return visitlog_put(visitlog, LMN_HL_ID(hl));
+}
+
+/* ログにデータアトムを追加する.
+ * （引数がログしか無いことから分かるように, 単に訪問したアトムを数えるために使用する） */
+void visitlog_put_data(VisitLogRef visitlog) {
+  if (vec_num(&visitlog->checkpoints) > 0) {
+    struct Checkpoint *checkpoint = (struct Checkpoint *)vec_last(&visitlog->checkpoints);
+    checkpoint->n_data_atom++;
+  }
+  visitlog->element_num++;
+}
+
+/* ログに記録されたアトムatomに対応する値をvalueに設定し, 正の値を返す.
+ * ログにatomが存在しない場合は, 0を返す. */
+int visitlog_get_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom, LmnWord *value) {
+  return proc_tbl_get_by_atom(&visitlog->tbl, atom, value);
+}
+
+/* ログに記録された膜memに対応する値をvalueに設定, 正の値を返す.
+ * ログにmemが存在しない場合は, 0を返す. */
+int visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value) {
+  return proc_tbl_get_by_mem(&visitlog->tbl, mem, value);
+}
+
+/* ログに記録されたhlに対応する値をvalueに設定し, 正の値を返す.
+ * ログにhlが存在しない場合は, 0を返す. */
+int visitlog_get_hlink(VisitLogRef visitlog, HyperLink *hl, LmnWord *value)
+{
+  return proc_tbl_get_by_hlink(&visitlog->tbl, hl, value);
+}
+
+/* visitlogに記録した要素（膜、アトム）の数を返す */
+int visitlog_element_num(VisitLogRef visitlog) {
+  return visitlog->element_num;
 }
