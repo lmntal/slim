@@ -35,8 +35,13 @@
  *
  */
 
-#ifndef SIMPLY_TRACE_LOG
-#define SIMPLY_TRACE_LOG
+#ifndef SIMPLY_TRACE_LOG_H
+#define SIMPLY_TRACE_LOG_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #include "vm/vm.h"
 
@@ -73,6 +78,9 @@ void simplylog_backtrack(SimplyLog l);
 void simplylog_set_btpoint(SimplyLog l);
 void simplylog_continue_trace(SimplyLog l);
 
+#ifdef __cplusplus
+}
+#endif
 
-#endif /* SIMPLY_TRACE_LOG */
+#endif /* SIMPLY_TRACE_LOG_H */
 

@@ -100,6 +100,7 @@ typedef struct LmnAtomData *LmnSymbolAtomRef;
 #include "element/element.h"
 #include "symbol.h"
 #include "hyperlink.h"
+#include "process_table.h"
 
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */

@@ -52,7 +52,6 @@
 
 #define VISITLOG_INIT_N       (1)
 
-#include "process_table.h"
 #include "simply_process_table.h"
 #include "trace_log.h"
 #include "simply_trace_log.h"

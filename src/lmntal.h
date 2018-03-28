@@ -165,8 +165,6 @@ typedef struct DeltaMembrane DeltaMembrane;
 # endif
 #endif
 
-typedef struct ProcessTbl    *ProcessTableRef;
-
 /*----------------------------------------------------------------------
  * Special Atom
  */

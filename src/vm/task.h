@@ -79,7 +79,7 @@ void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets);
 BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
 void memstack_push(LmnMembraneRef mem);
 BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
-struct Vector user_system_rulesets; /* system ruleset defined by user */
+extern struct Vector user_system_rulesets; /* system ruleset defined by user */
 HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem, const Vector *links);
 
 Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v);

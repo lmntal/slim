@@ -57,6 +57,7 @@ typedef struct LinkObj *LinkObjRef;
 #include "element/element.h"
 #include "rule.h"
 #include "functor.h"
+#include "process_table.h"
 
 #define NEW_ATOMLIST
 

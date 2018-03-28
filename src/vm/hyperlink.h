@@ -48,6 +48,9 @@
  */
 
 #include "lmntal.h"
+
+struct HyperLink;
+
 #include "functor.h"
 #include "membrane.h"
 #include "react_context.h"

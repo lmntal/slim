@@ -81,6 +81,8 @@ typedef void (* callback_5)(LmnReactCxtRef ,
                             LmnAtomRef, LmnLinkAttr,
                             LmnAtomRef, LmnLinkAttr);
 
+struct Vector user_system_rulesets; /* system ruleset defined by user */
+
 /**
   Javaによる処理系ではリンクはリンクオブジェクトで表現するが、SLIMでは
   リンクオブジェクトはなく直接リンク先のアトムと引数番号でリンクを表す。

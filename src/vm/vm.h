@@ -56,5 +56,6 @@
 #include "symbol.h"
 #include "task.h"
 #include "rule.h"
+#include "process_table.h"
 
 #endif /* LMN_VM_H */

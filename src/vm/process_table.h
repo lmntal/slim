@@ -35,13 +35,22 @@
  *
  */
 
+#ifndef PROCESS_TABLE_H
+#define PROCESS_TABLE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "element/element.h"
-#include "vm/vm.h"
+	
+typedef struct ProcessTbl *ProcessTableRef;
+
+#include "hyperlink.h"
 
 #define PROC_TBL_DEFAULT_SIZE  128U
 #define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
 #define process_tbl_entry(P, IDX) (P->tbl[IDX / PROC_TBL_BUCKETS_SIZE][IDX % PROC_TBL_BUCKETS_SIZE])
-
 
 
 /* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
@@ -80,15 +89,21 @@ void proc_tbl_put_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
 int  proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value);
 int  proc_tbl_put_new_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord value);
 int  proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
-void proc_tbl_put_new_hlink(ProcessTableRef p, HyperLink *hl, LmnWord value);
+void proc_tbl_put_new_hlink(ProcessTableRef p, struct HyperLink *hl, LmnWord value);
 void proc_tbl_unput(ProcessTableRef p, LmnWord key);
 void proc_tbl_unput_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem);
 int  proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value);
 int  proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord *value);
 int  proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value);
-int  proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWord *value);
+int  proc_tbl_get_by_hlink(ProcessTableRef p, struct HyperLink *hl, LmnWord *value);
 BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key);
 BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
 
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif /* PROCESS_TABLE_H */

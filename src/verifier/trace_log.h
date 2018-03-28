@@ -38,6 +38,11 @@
 #ifndef LMN_TRACE_LOG_H
 #define LMN_TRACE_LOG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "vm/vm.h"
 
 
@@ -166,5 +171,10 @@ void tracelog_backtrack(TraceLogRef l);
 void tracelog_set_btpoint(TraceLogRef l);
 void tracelog_continue_trace(TraceLogRef l);
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* LMN_TRACE_LOG_H */

@@ -38,6 +38,11 @@
 #ifndef LMN_SIMPLY_PROCESS_TABLE_H
 #define LMN_SIMPLY_PROCESS_TABLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "element/element.h"
 #include "vm/vm.h"
 
@@ -98,5 +103,10 @@ void sproc_tbl_set_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key, LmnW
 void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag);
 void sproc_tbl_unset_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key, LmnWord flag);
 void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* LMN_SIMPLY_PROCESS_TABLE_H */
