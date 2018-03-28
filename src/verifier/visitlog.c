@@ -37,7 +37,6 @@
 
 #include "visitlog.h"
 
-#define PROC_TBL_DEFAULT_SIZE  128U
 
 /* VisitLogに記録された変更のスナップショット */
 struct Checkpoint {
@@ -54,110 +53,6 @@ struct VisitLog {
 };
 
 
-void proc_tbl_init(ProcessTableRef p)
-{
-  proc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
-}
-
-void proc_tbl_init_with_size(ProcessTableRef p, unsigned long size)
-{
-  p->n    = 0;
-  p->size = size;
-  p->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
-  p->tbl = LMN_CALLOC(LmnWord *, p->num_buckets);
-}
-
-ProcessTableRef proc_tbl_make(void)
-{
-  return proc_tbl_make_with_size(PROC_TBL_DEFAULT_SIZE);
-}
-
-ProcessTableRef proc_tbl_make_with_size(unsigned long size)
-{
-  ProcessTableRef p = LMN_MALLOC(struct ProcessTbl);
-  proc_tbl_init_with_size(p, size);
-  return p;
-}
-
-void proc_tbl_destroy(ProcessTableRef p)
-{
-  for (int i = 0; i < p->num_buckets; i++) {
-    LMN_FREE(p->tbl[i]);
-  }
-  LMN_FREE(p->tbl);
-}
-
-
-void proc_tbl_free(ProcessTableRef p)
-{
-  proc_tbl_destroy(p);
-  LMN_FREE(p);
-}
-
-
-void proc_tbl_clear(ProcessTableRef p)
-{
-  p->n = 0;
-  for (int i = 0; i < p->num_buckets; i++) {
-    memset(p->tbl[i], 0xff, sizeof(LmnWord) * PROC_TBL_BUCKETS_SIZE);
-  }
-}
-
-
-int proc_tbl_foreach(ProcessTableRef p, int(*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg)
-{
-  unsigned long n = 0;
-
-  for (int i = 0; i < p->num_buckets; i++) {
-    if (!p->tbl[i]) continue;
-    for (int j = 0; j < PROC_TBL_BUCKETS_SIZE && n < process_tbl_entry_num(p); j++) {
-      if (p->tbl[i][j] == ULONG_MAX) continue;
-      func(i * PROC_TBL_BUCKETS_SIZE + j, p->tbl[i][j], arg);
-      n++;
-    }
-  }
-  return 0;
-}
-
-
-
-BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b)
-{
-  if (a->n != b->n) return FALSE;
-  else {
-    unsigned int a_checked = 0;
-
-    for (int i = 0; i < a->num_buckets; i++) {
-      if (!a->tbl[i] && !b->tbl[i]) continue;
-
-      for (int j = 0; j < PROC_TBL_BUCKETS_SIZE && a_checked < a->n; j++) {
-        LmnWord va = (a->tbl[i]) ? a->tbl[i][j] : ULONG_MAX;
-        LmnWord vb = (b->tbl[i]) ? b->tbl[i][j] : ULONG_MAX;
-        if (va != vb) return FALSE;
-        if (va != ULONG_MAX) a_checked++;
-      }
-    }
-
-    return TRUE;
-  }
-}
-
-
-void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n)
-{
-  unsigned int org_n = p->num_buckets;
-  while (p->size <= n) p->size *= 2;
-  p->num_buckets = p->size / PROC_TBL_BUCKETS_SIZE + 1;
-  if (org_n < p->num_buckets) {
-    p->tbl = LMN_REALLOC(LmnWord *, p->tbl, p->num_buckets);
-    memset(p->tbl + org_n, 0, sizeof(LmnWord *) * (p->num_buckets - org_n));
-  }
-
-  unsigned int b = n / PROC_TBL_BUCKETS_SIZE;
-  if (b < p->num_buckets && p->tbl[b]) return;
-  p->tbl[b] = LMN_NALLOC(LmnWord, PROC_TBL_BUCKETS_SIZE);
-  memset(p->tbl[b], 0xffU, sizeof(LmnWord) * PROC_TBL_BUCKETS_SIZE);
-}
 
 
 void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
@@ -179,12 +74,6 @@ void sproc_tbl_destroy(SimplyProcessTableRef p)
     LMN_FREE(p->tbl[i]);
   }
   LMN_FREE(p->tbl);
-}
-
-/* テーブルのアトムatomに対応する値をvalueに設定し, 正の値を返す.
- * テーブルにatomが存在しない場合は0を返す */
-int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord *value) {
-  return proc_tbl_get(p, LMN_SATOM_ID(atom), value);
 }
 
 /*------------

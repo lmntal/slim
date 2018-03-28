@@ -38,6 +38,7 @@
 #include "element/element.h"
 #include "vm/vm.h"
 
+#define PROC_TBL_DEFAULT_SIZE  128U
 #define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
 #define process_tbl_entry(P, IDX) (P->tbl[IDX / PROC_TBL_BUCKETS_SIZE][IDX % PROC_TBL_BUCKETS_SIZE])
 
