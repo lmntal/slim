@@ -53,29 +53,6 @@ struct VisitLog {
 };
 
 
-
-
-void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size)
-{
-  p->n   = 0;
-  p->cap = size;
-  p->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
-  p->tbl = LMN_CALLOC(BYTE *, p->num_buckets);
-}
-
-void sproc_tbl_init(SimplyProcessTableRef p)
-{
-  sproc_tbl_init_with_size(p, PROC_TBL_DEFAULT_SIZE);
-}
-
-void sproc_tbl_destroy(SimplyProcessTableRef p)
-{
-  for (int i = 0; i < p->num_buckets; i++) {
-    LMN_FREE(p->tbl[i]);
-  }
-  LMN_FREE(p->tbl);
-}
-
 /*------------
  * TraceLog
  */
