@@ -7,7 +7,7 @@ AC_INIT([SLIM], [2.3.1], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
-AC_CONFIG_SRCDIR([src/main.c])
+AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects])
@@ -28,9 +28,9 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 #
 
 CFLAGS="-O -std=gnu99 -Wall $CFLAGS"
-CXXFLAGS="-g -O2 -mmmx -msse $CXXFLAGS"
+CXXFLAGS="-O2 -mmmx -msse $CXXFLAGS"
 
-AC_LANG(C)
+AC_LANG(C++)
 AC_PROG_CXX
 AC_PROG_CC
 AM_PROG_CC_C_O

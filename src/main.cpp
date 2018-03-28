@@ -36,6 +36,7 @@
  * $Id: main.c,v 1.17 2008/10/16 18:14:00 sasaki Exp $
  */
 
+extern "C" {
 #include <ctype.h>
 #include <unistd.h>
 #include <getopt.h>
@@ -56,6 +57,14 @@
 
 void install_builtin_extensions(void);
 void init_builtin_extensions(void); /* ext/init_exts.c */
+
+void init_default_system_ruleset();
+void init_rules();
+void destroy_rules();
+void sym_tbl_destroy();
+void sym_tbl_init();
+
+}
 
 static void usage(void)
 {
@@ -577,12 +586,6 @@ static void parse_options(int *optid, int argc, char *argv[])
 
   (*optid) = optind;
 }
-
-void init_default_system_ruleset();
-void init_rules();
-void destroy_rules();
-void sym_tbl_destroy();
-void sym_tbl_init();
 
 /* 処理系内部の初期化処理 */
 static void init_internal(void)

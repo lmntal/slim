@@ -15,9 +15,9 @@ slim_LDFLAGS = -L./verifier                            \
                -L./vm                                  \
                -L./element                             \
                -L../third_party/zdelta-2.1
-slim_CFLAGS =  -I../third_party/zdelta-2.1             \
-               -DCOMMIT_ID=\"`git show -s --format=%h`\" \
-               -std=gnu99
+slim_CXXFLAGS =  -I../third_party/zdelta-2.1             \
+               -DCOMMIT_ID=\"`git show -s --format=%h`\"
+slim_CFLAGS = $(slim_CXXFLAGS) -std=gnu99
 
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
                     ./vm/liblmn_vm.a                   \
@@ -58,7 +58,7 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER)
 # .yファイルは .lより先に書く
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
 slim_SOURCES =                                                     \
-	main.c                          lmntal.h                         \
+	main.cpp                          lmntal.h                         \
 	env.c                           arch.h                           \
 	\
 	lmntal_ext.h                                                     \
