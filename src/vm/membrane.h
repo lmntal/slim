@@ -72,7 +72,9 @@ Hlground_Data hlground_data;
 
 void init_grounddata();
 void free_grounddata();
-void dfs_scope_finder(  LinkObjRef root_link,
+void dfs_scope_finder(  ProcessTableRef *global_hlinks,
+                        ProcessTableRef *local_atoms,
+                        LinkObjRef root_link,
                         Vector *src,
                         Vector *avovec,
                         ProcessTableRef *attr_functors,
@@ -96,7 +98,9 @@ void get_neighbours(Vector  *avovec,
 
 /*************************************/
 
-BOOL extended_ground_atoms( Vector *srcvec,
+BOOL extended_ground_atoms( ProcessTableRef *global_hlinks,
+                            ProcessTableRef *local_atoms,
+                            Vector *srcvec,
                             Vector *avovec,
                             ProcessTableRef *atoms,
                             ProcessTableRef *hlinks,

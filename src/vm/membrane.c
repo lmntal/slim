@@ -1613,13 +1613,21 @@ void lmn_mem_copy_ground( LmnMembraneRef mem,
                           Vector *attr_dataAtoms,
                           Vector *attr_dataAtom_attrs)
 {
+  ProcessTableRef global_hlinks = proc_tbl_make_with_size(64);
+	ProcessTableRef local_atoms = proc_tbl_make_with_size(64);
+
+  BOOL b;
+  b = extended_ground_atoms(&global_hlinks,&local_atoms, srcvec, NULL, NULL, NULL, attr_functors, attr_dataAtoms, attr_dataAtom_attrs);
+
+	
+
   // printf("--------------------------------copy ground\n");
 
-  ProcessTableRef hlinks=hlground_data.global_hlinks;
+  //ProcessTableRef hlinks=hlground_data.global_hlinks;
 
 	mem_copy_ground_sub(mem,
                       srcvec,
-					            &hlinks,
+					            &global_hlinks,
                       ret_dstlovec,
                       ret_atommap,
                       ret_hlinkmap,
@@ -1627,6 +1635,9 @@ void lmn_mem_copy_ground( LmnMembraneRef mem,
                       attr_dataAtoms,
                       attr_dataAtom_attrs);
   //mem_copy_ground_sub(mem, srcvec,NULL, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
+
+  proc_tbl_free(local_atoms);
+	proc_tbl_free(global_hlinks);
 
 }
 
@@ -1801,14 +1812,14 @@ BOOL lmn_mem_is_ground(Vector *srcvec,
 {
   // printf("--------------------------------is ground\n");
 
-  BOOL b;
-  b = extended_ground_atoms(srcvec, avovec, NULL, NULL, attr_functors, attr_dataAtoms, attr_dataAtom_attrs);
+  ProcessTableRef global_hlinks = proc_tbl_make_with_size(64);
+	ProcessTableRef local_atoms = proc_tbl_make_with_size(64);
 
-  if(!b)
-  {
-	  proc_tbl_free(hlground_data.local_atoms);
-	  proc_tbl_free(hlground_data.global_hlinks);
-  }
+  BOOL b;
+  b = extended_ground_atoms(&global_hlinks,&local_atoms, srcvec, avovec, NULL, NULL, attr_functors, attr_dataAtoms, attr_dataAtom_attrs);
+
+	proc_tbl_free(local_atoms);
+	proc_tbl_free(global_hlinks);
 
   /*
   ProcessTableRef atoms;
@@ -2094,7 +2105,10 @@ BOOL ground_atoms(Vector        *srcvec,
 
 /************extended ground begin***********/
 
-BOOL extended_ground_atoms( Vector          *srcvec, 				//store root link
+BOOL extended_ground_atoms( 
+                            ProcessTableRef *global_hlinks,
+                            ProcessTableRef *local_atoms,
+                            Vector          *srcvec, 				//store root link
                             Vector          *avovec,   				//other links of source atom
                             ProcessTableRef *atoms,    				/* collects atom within hlground */
                             ProcessTableRef *hlinks,   				/* hlinks!=NULL縺ｪ繧峨�”lground縺ｨ縺励※謗｢邏｢ collects hyperlinks local to hlground  */
@@ -2124,7 +2138,9 @@ BOOL extended_ground_atoms( Vector          *srcvec, 				//store root link
   if(result)
   { //hlground exist
       init_grounddata(); 
-      dfs_scope_finder(LinkObj_make(root_ap,root_pos),
+      dfs_scope_finder(global_hlinks,
+                       local_atoms,
+                       LinkObj_make(root_ap,root_pos),
                        srcvec,
                        avovec,
                        attr_functors,
@@ -2153,7 +2169,9 @@ void free_grounddata()
 }
 
 
-void dfs_scope_finder(      LinkObjRef root_link,
+void dfs_scope_finder(      ProcessTableRef *global_hlinks,
+                            ProcessTableRef *local_atoms,
+                            LinkObjRef root_link,
                             Vector *src,
               							Vector *avovec,
               							ProcessTableRef *attr_functors,
@@ -2188,7 +2206,7 @@ void dfs_scope_finder(      LinkObjRef root_link,
                                      
         if (!LMN_HL_HAS_ATTR(hl))    //if hlink has no attribute, treat it as a global hyperlink
         {
-          proc_tbl_put_new_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl), (LmnWord)1);
+          proc_tbl_put_new_hlink(global_hlinks, lmn_hyperlink_get_root(hl), (LmnWord)1);
         }
 
         if(LMN_HL_HAS_ATTR(hl))     //hyperlink has attribute 
@@ -2213,12 +2231,12 @@ void dfs_scope_finder(      LinkObjRef root_link,
         if (flg_search_hl)  // only count endpoints of hyperlinks which has the specified attribute
         {
 
-          if(!proc_tbl_get_by_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl), NULL))   
+          if(!proc_tbl_get_by_hlink(*global_hlinks, lmn_hyperlink_get_root(hl), NULL))   
           { // if not visited
             unsigned long occurs =  lmn_hyperlink_element_num(hl);  // get number of the hyperlink sublinks
             if(occurs > 1)  //so we try to visit other endpoints
             {
-              proc_tbl_put_new_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl), (LmnWord)1);  //start counting endpoints
+              proc_tbl_put_new_hlink(*global_hlinks, lmn_hyperlink_get_root(hl), (LmnWord)1);  //start counting endpoints
             }
 
           }
@@ -2226,18 +2244,18 @@ void dfs_scope_finder(      LinkObjRef root_link,
           {
              unsigned long occurs =  lmn_hyperlink_element_num(hl);  // get number of the hyperlink sublinks 
              LmnWord count;
-             proc_tbl_get_by_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl),&count );  //get counter
+             proc_tbl_get_by_hlink(*global_hlinks, lmn_hyperlink_get_root(hl),&count );  //get counter
              count++ ;                                                                                
              //printf("count= %d  \n",count);
 
              if ( occurs == count )   //all endpoints are visited, means local hyperlink
              {     //remove form hashtable
-                proc_tbl_unput_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl));
+                proc_tbl_unput_hlink(*global_hlinks, lmn_hyperlink_get_root(hl));
              }
              else  //not all endpoints are visited
              {  
-                proc_tbl_unput_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl));
-                proc_tbl_put_new_hlink(hlground_data.global_hlinks, lmn_hyperlink_get_root(hl),(LmnWord)count);
+                proc_tbl_unput_hlink(*global_hlinks, lmn_hyperlink_get_root(hl));
+                proc_tbl_put_new_hlink(*global_hlinks, lmn_hyperlink_get_root(hl),(LmnWord)count);
              }
           }
         }
@@ -2251,11 +2269,11 @@ void dfs_scope_finder(      LinkObjRef root_link,
     }
     else                        //current link is a regular link
     {
-      if (proc_tbl_get_by_atom(hlground_data.local_atoms, (LmnSAtom)m_atom, NULL))
+      if (proc_tbl_get_by_atom(*local_atoms, (LmnSAtom)m_atom, NULL))
       { //not visited yet
         continue;
       }
-      proc_tbl_put_atom(hlground_data.local_atoms, (LmnSAtom)m_atom, (LmnWord)m_atom);  //set as visited and set as an local atom
+      proc_tbl_put_atom(*local_atoms, (LmnSAtom)m_atom, (LmnWord)m_atom);  //set as visited and set as an local atom
 
       //keep following regular links
       int i;
@@ -2677,11 +2695,21 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
                             Vector *attr_data,
                             Vector *attr_data_at)
 {
+
+  ProcessTableRef global_hlinks = proc_tbl_make_with_size(64);
+	ProcessTableRef local_atoms = proc_tbl_make_with_size(64);
+
+  BOOL b;
+  b = extended_ground_atoms(&global_hlinks,&local_atoms, srcvec, NULL, NULL, NULL, attr_sym, attr_data, attr_data_at);
+
+
   //printf("--------------------------------remove ground\n");
 
-  ProcessTableRef atoms=hlground_data.local_atoms;
+  //ProcessTableRef atoms=hlground_data.local_atoms;
+
+
   unsigned long i, t;
-  proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)mem);
+  proc_tbl_foreach(local_atoms, mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)mem);
 
   for (i = 0; i < vec_num(srcvec); i++)
   {
@@ -2698,6 +2726,9 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
       mem_remove_symbol_atom(mem, LMN_SATOM(l->ap));
     }
   }
+
+  proc_tbl_free(global_hlinks);
+  proc_tbl_free(local_atoms);
 
  /*
   ProcessTableRef atoms;
@@ -2758,21 +2789,25 @@ void lmn_mem_free_ground( Vector *srcvec,
                           Vector *attr_data_at)
 {
   
+  ProcessTableRef global_hlinks = proc_tbl_make_with_size(64);
+	ProcessTableRef local_atoms = proc_tbl_make_with_size(64);
+
+  BOOL b;
+  b = extended_ground_atoms(&global_hlinks,&local_atoms, srcvec, NULL, NULL, NULL, attr_sym, attr_data, attr_data_at);
+
+
   //printf("--------------------------------free ground\n");
 
-  ProcessTableRef atoms=hlground_data.local_atoms;
+  //ProcessTableRef atoms=hlground_data.local_atoms;
 
   unsigned long i, t;
 
-  proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+  proc_tbl_foreach(local_atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
 
 
   //proc_tbl_free(hlground_data.global_hlinks);
-  printf("----------------delete hlinks---- \n");
-
   //proc_tbl_free(hlground_data.local_atoms);
-  printf("----------------delete atoms----\n");
-  
+
   for (i = 0; i < vec_num(srcvec); i++)
   {
     LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
@@ -2780,11 +2815,12 @@ void lmn_mem_free_ground( Vector *srcvec,
     {
     //  printf("lmn_mem_free_ground data atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
       lmn_free_atom(l->ap, l->pos);
-      
     }
     	
   }
 
+  proc_tbl_free(global_hlinks);
+  proc_tbl_free(local_atoms);
 
   /*
   ProcessTableRef atoms;
