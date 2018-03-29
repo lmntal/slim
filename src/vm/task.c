@@ -2582,7 +2582,7 @@ label_skip_data_atom:
                    }
             }*/
 
-            fprintf(stderr,"----------------------------->\n");
+           
 /*           
             int p;
             for (p=0; p<vec_num(&attr_dataAtoms);p++) 
@@ -2593,7 +2593,6 @@ label_skip_data_atom:
                   fprintf(stderr,"\n");
             }
 */
-            fprintf(stderr,"<-----------------------------\n");
 
 
             b = lmn_mem_is_hlground(srcvec,

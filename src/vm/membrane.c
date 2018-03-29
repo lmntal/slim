@@ -1613,7 +1613,7 @@ void lmn_mem_copy_ground( LmnMembraneRef mem,
                           Vector *attr_dataAtoms,
                           Vector *attr_dataAtom_attrs)
 {
-  printf("--------------------------------copy ground\n");
+  // printf("--------------------------------copy ground\n");
 
   ProcessTableRef hlinks=hlground_data.global_hlinks;
 
@@ -1628,7 +1628,6 @@ void lmn_mem_copy_ground( LmnMembraneRef mem,
                       attr_dataAtom_attrs);
   //mem_copy_ground_sub(mem, srcvec,NULL, ret_dstlovec, ret_atommap, NULL, NULL, NULL, NULL);
 
-  printf("----------------------------end copy ground\n");
 }
 
 void lmn_mem_copy_hlground(LmnMembraneRef mem,
@@ -1800,19 +1799,16 @@ BOOL lmn_mem_is_ground(Vector *srcvec,
                          Vector *attr_dataAtoms,
                          Vector *attr_dataAtom_attrs)
 {
-  printf("--------------------------------is ground\n");
+  // printf("--------------------------------is ground\n");
 
   BOOL b;
-  b = extended_ground_atoms(srcvec, avovec, NULL, natoms, NULL, attr_functors, attr_dataAtoms, attr_dataAtom_attrs);
+  b = extended_ground_atoms(srcvec, avovec, NULL, NULL, attr_functors, attr_dataAtoms, attr_dataAtom_attrs);
 
   if(!b)
   {
-    printf("--------deleting in------------------------is ground\n");
 	  proc_tbl_free(hlground_data.local_atoms);
 	  proc_tbl_free(hlground_data.global_hlinks);
   }
-
-  printf("----------------------------end is ground\n");
 
   /*
   ProcessTableRef atoms;
@@ -2101,7 +2097,6 @@ BOOL ground_atoms(Vector        *srcvec,
 BOOL extended_ground_atoms( Vector          *srcvec, 				//store root link
                             Vector          *avovec,   				//other links of source atom
                             ProcessTableRef *atoms,    				/* collects atom within hlground */
-                            unsigned long   *natoms,   				/* number of atoms within hlground */
                             ProcessTableRef *hlinks,   				/* hlinks!=NULL縺ｪ繧峨�”lground縺ｨ縺励※謗｢邏｢ collects hyperlinks local to hlground  */
                             ProcessTableRef *attr_functors,			/* hlground縺ｮ螻樊�ｧ�ｼ�unary atom�ｼ� used when attribute is specified */
                             Vector          *attr_dataAtoms,		/* hlground縺ｮ螻樊�ｧ�ｼ�data atom�ｼ� used when attribute is specified */
@@ -2110,7 +2105,6 @@ BOOL extended_ground_atoms( Vector          *srcvec, 				//store root link
 {
 
   BOOL result= TRUE;		//TRUE if it is hlground
-  *natoms = 0; 				//number of symbol atoms + local hyperlinks within hlground
 
   LinkObjRef t_link = (LinkObjRef)vec_get(srcvec, 0);
   LmnAtomRef root_ap = t_link->ap;
@@ -2133,7 +2127,6 @@ BOOL extended_ground_atoms( Vector          *srcvec, 				//store root link
       dfs_scope_finder(LinkObj_make(root_ap,root_pos),
                        srcvec,
                        avovec,
-                       natoms,
                        attr_functors,
                        attr_dataAtoms,
                        attr_dataAtom_attrs);
@@ -2163,12 +2156,10 @@ void free_grounddata()
 void dfs_scope_finder(      LinkObjRef root_link,
                             Vector *src,
               							Vector *avovec,
-              							unsigned long * natoms,
               							ProcessTableRef *attr_functors,
               							Vector *attr_dataAtoms,
               							Vector *attr_dataAtom_attrs)
 {
-	*natoms=0;
   //ProcessTbl visited_hl=proc_tbl_make_with_size(10);   //visited hlinks
 
   Vector *stack=vec_make(10);                          //visited atoms 
@@ -2257,7 +2248,6 @@ void dfs_scope_finder(      LinkObjRef root_link,
       {
           printf("neither a regular link or a hyperlink: means an undefined link  \n");
       }
-      (*natoms)++; // count just like previous version of hlground
     }
     else                        //current link is a regular link
     {
@@ -2266,7 +2256,6 @@ void dfs_scope_finder(      LinkObjRef root_link,
         continue;
       }
       proc_tbl_put_atom(hlground_data.local_atoms, (LmnSAtom)m_atom, (LmnWord)m_atom);  //set as visited and set as an local atom
-      (*natoms)++; 
 
       //keep following regular links
       int i;
@@ -2688,7 +2677,7 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
                             Vector *attr_data,
                             Vector *attr_data_at)
 {
-  printf("--------------------------------remove ground\n");
+  //printf("--------------------------------remove ground\n");
 
   ProcessTableRef atoms=hlground_data.local_atoms;
   unsigned long i, t;
@@ -2697,19 +2686,19 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
   for (i = 0; i < vec_num(srcvec); i++)
   {
     LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
+
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos))
     {
-      //printf(" removed data atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
+    //  printf(" lmn_mem_remove_ground data atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
       lmn_mem_remove_data_atom(mem, l->ap, l->pos);
     }
     else if (LMN_ATTR_IS_EX(l->pos))
     {
-      //printf(" removed symbol atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
+      //printf(" lmn_mem_remove_ground symbol atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
       mem_remove_symbol_atom(mem, LMN_SATOM(l->ap));
     }
   }
 
-  printf("----------------------------end remove ground\n");
  /*
   ProcessTableRef atoms;
   unsigned long i, t;
@@ -2769,11 +2758,7 @@ void lmn_mem_free_ground( Vector *srcvec,
                           Vector *attr_data_at)
 {
   
-  if(!attr_sym)
-  {
-     return;
-  }
-  printf("--------------------------------free ground\n");
+  //printf("--------------------------------free ground\n");
 
   ProcessTableRef atoms=hlground_data.local_atoms;
 
@@ -2781,17 +2766,25 @@ void lmn_mem_free_ground( Vector *srcvec,
 
   proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
 
-  proc_tbl_free(hlground_data.global_hlinks);
-  proc_tbl_free(hlground_data.local_atoms);
 
+  //proc_tbl_free(hlground_data.global_hlinks);
+  printf("----------------delete hlinks---- \n");
+
+  //proc_tbl_free(hlground_data.local_atoms);
+  printf("----------------delete atoms----\n");
+  
   for (i = 0; i < vec_num(srcvec); i++)
   {
     LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
     if (LMN_ATTR_IS_DATA(l->pos))
-    	lmn_free_atom(l->ap, l->pos);
+    {
+    //  printf("lmn_mem_free_ground data atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
+      lmn_free_atom(l->ap, l->pos);
+      
+    }
+    	
   }
 
-  printf("----------------------------end free ground\n");
 
   /*
   ProcessTableRef atoms;
