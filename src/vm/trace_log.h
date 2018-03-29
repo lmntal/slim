@@ -42,10 +42,6 @@
 extern "C" {
 #endif
 
-
-#include "vm/vm.h"
-
-
 #ifndef PROC_TBL_DEFAULT_SIZE
 #define PROC_TBL_DEFAULT_SIZE  128U
 #endif
@@ -54,6 +50,8 @@ extern "C" {
 #define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
 #endif
 
+#include "element/element.h"
+#include "membrane.h"
 
 /*----------------------------------------------------------------------
  * TraceLog
@@ -97,6 +95,8 @@ struct LogTracker {
 #define LogTracker_POP(TR)  (vec_pop(&(TR)->btp_idx))
 /* プロセスID集合にIDを追加する */
 #define LogTracker_TRACE(TR, ID) (vec_push(&(TR)->traced_ids, (ID)))
+
+
 
 /* ----
  * TraceLog

@@ -100,7 +100,7 @@ void visitlog_destroy(struct VisitLog *p)
 {
   int i;
 
-  proc_tbl_destroy(p->tbl);
+  proc_tbl_free(p->tbl);
 
   for (i = 0; i < vec_num(&p->checkpoints); i++) {
     vec_free((Vector *)vec_get(&p->checkpoints, i));

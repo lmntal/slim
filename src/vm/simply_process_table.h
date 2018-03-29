@@ -42,6 +42,13 @@
 extern "C" {
 #endif
 
+/* --------------
+ *  SimplyProcTbl
+ *  プロセスIDをkeyにしたBYTEサイズテーブル
+ */
+
+typedef struct SimplyProcTbl *SimplyProcessTableRef;
+
 
 #include "element/element.h"
 #include "vm/vm.h"
@@ -53,14 +60,6 @@ extern "C" {
 #ifndef PROC_TBL_BUCKETS_SIZE
 #define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
 #endif
-
-
-/* --------------
- *  SimplyProcTbl
- *  プロセスIDをkeyにしたBYTEサイズテーブル
- */
-
-typedef struct SimplyProcTbl *SimplyProcessTableRef;
 
 
 #define SPROC_TBL_INIT_V        (0xfU)

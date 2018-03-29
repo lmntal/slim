@@ -39,18 +39,6 @@
 #define PROCESS_TABLE_H
 
 #ifdef __cplusplus
-extern "C++" {
-/* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
-template<typename T> struct ProcessTable {
-  unsigned long n;
-  unsigned long size;
-  unsigned long num_buckets;
-  T **tbl;
-};
-}
-#endif
-
-#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -62,25 +50,14 @@ typedef struct ProcessTbl *ProcessTableRef;
 
 #define PROC_TBL_DEFAULT_SIZE  128U
 #define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
-#define process_tbl_entry(P, IDX) (P->tbl[IDX / PROC_TBL_BUCKETS_SIZE][IDX % PROC_TBL_BUCKETS_SIZE])
-
-
-
-#define process_tbl_entry_num(P)  ((P)->n)
-void proc_tbl_expand_sub(ProcessTableRef p, unsigned long n);
-#define proc_tbl_expand(p, n)                                                  \
-      proc_tbl_expand_sub(p, n);                                                 
 
 
 /**
  * Function ProtoTypes
  */
 
-void       proc_tbl_init_with_size(ProcessTableRef p, unsigned long size);
-void       proc_tbl_init(ProcessTableRef p);
 ProcessTableRef proc_tbl_make_with_size(unsigned long size);
 ProcessTableRef proc_tbl_make(void);
-void       proc_tbl_destroy(ProcessTableRef p);
 void       proc_tbl_free(ProcessTableRef p);
 void       proc_tbl_clear(ProcessTableRef p);
 int        proc_tbl_foreach(ProcessTableRef p,

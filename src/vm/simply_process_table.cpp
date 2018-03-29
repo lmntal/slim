@@ -37,6 +37,8 @@
 
 #include "simply_process_table.h"
 
+#include "vm/process_table.hpp"
+
 struct SimplyProcTbl : ProcessTable<BYTE> {};
 
 

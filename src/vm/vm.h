@@ -57,5 +57,8 @@
 #include "task.h"
 #include "rule.h"
 #include "process_table.h"
+#include "simply_process_table.h"
+#include "trace_log.h"
+#include "simply_trace_log.h"
 
 #endif /* LMN_VM_H */

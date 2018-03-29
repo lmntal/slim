@@ -40,9 +40,6 @@ liblmn_verifier_a_SOURCES =                              \
 	statespace.c             statespace.h                  \
 	tree_compress.c          tree_compress.h               \
 	visitlog.c               visitlog.h                    \
-	simply_process_table.cpp simply_process_table.h        \
-	trace_log.h              trace_log.cpp                 \
-	simply_trace_log.h       simply_trace_log.cpp            \
 	stack_macro.h
 
 

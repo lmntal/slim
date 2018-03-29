@@ -27,8 +27,8 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 # Checks for programs.
 #
 
-CFLAGS="-O -std=gnu99 -Wall $CFLAGS"
-CXXFLAGS="-O2 -mmmx -msse $CXXFLAGS"
+CFLAGS="-O -std=c11 -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
+CXXFLAGS="-O2 -std=c++11 -mmmx -msse $CXXFLAGS"
 
 AC_LANG(C++)
 AC_PROG_CXX

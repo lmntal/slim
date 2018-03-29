@@ -37,6 +37,7 @@
 
 #include "simply_trace_log.h"
 
+extern "C" {
 
 /*------------
  * SimplyTraceLog
@@ -91,4 +92,6 @@ void simplylog_set_btpoint(SimplyLog l) {
 
 void simplylog_continue_trace(SimplyLog l) {
   LogTracker_POP(&l->tracker);
+}
+
 }
