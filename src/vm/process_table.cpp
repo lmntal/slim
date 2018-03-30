@@ -42,8 +42,6 @@
 
 #include "process_table.hpp"
 
-#define process_tbl_entry(P, IDX) (P->tbl[IDX / PROC_TBL_BUCKETS_SIZE][IDX % PROC_TBL_BUCKETS_SIZE])
-#define process_tbl_entry_num(P)  ((P)->n)
 
 struct ProcessTbl : ProcessTable<LmnWord> {
   ProcessTbl(unsigned long size) : ProcessTable<LmnWord>(size) {};

@@ -37,6 +37,18 @@
 
 #include "simply_trace_log.h"
 
+#ifndef PROC_TBL_DEFAULT_SIZE
+#define PROC_TBL_DEFAULT_SIZE  128U
+#endif
+
+#ifndef PROC_TBL_BUCKETS_SIZE
+#define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
+#endif
+
+
+#define SPROC_TBL_INIT_V        (0xfU)
+
+
 extern "C" {
 
 /*------------

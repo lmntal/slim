@@ -48,8 +48,6 @@ typedef struct ProcessTbl *ProcessTableRef;
 
 #include "hyperlink.h"
 
-#define PROC_TBL_DEFAULT_SIZE  128U
-#define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
 
 
 /**

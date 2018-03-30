@@ -38,9 +38,6 @@
 #ifndef PROCESS_TABLE_HPP
 #define PROCESS_TABLE_HPP
 
-#ifndef PROC_TBL_DEFAULT_SIZE
-#define PROC_TBL_DEFAULT_SIZE  128U
-#endif
 
 #include <limits>
 #include <stdexcept>
@@ -53,26 +50,28 @@ extern "C" {
 
 extern "C++" {
 /* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
-template<typename Value> struct ProcessTable {
-  using Key = LmnWord;
-  using limit = std::numeric_limits<Key>;
-  class iterator;
-  friend iterator;
+template<typename T> struct ProcessTable {
+  using key_type = LmnWord;
+  using value_type = T;
+
+  static const key_type not_found = std::numeric_limits<key_type>::max();
+  static const value_type unused = std::numeric_limits<value_type>::max();
+  static const std::size_t buckets_size = 1 << 12; // heuristics
 
   unsigned long n;
   unsigned long size;
   unsigned long num_buckets;
-  Value **tbl;
+  value_type **tbl;
 
   ProcessTable(unsigned long size) {
     this->n    = 0;
     this->size = size;
-    this->num_buckets = size / PROC_TBL_BUCKETS_SIZE + 1;
-    this->tbl = LMN_CALLOC(Key *, this->num_buckets);
+    this->num_buckets = size / buckets_size + 1;
+    this->tbl = LMN_CALLOC(value_type *, this->num_buckets);
   }
 
   ProcessTable() {
-    ProcessTable(PROC_TBL_BUCKETS_SIZE);
+    ProcessTable(0);
   }
 
   ~ProcessTable() {
@@ -82,71 +81,66 @@ template<typename Value> struct ProcessTable {
     LMN_FREE(this->tbl);
   }
 
-  static void* operator new(std::size_t size) {
-    return lmn_malloc(size);
-  }
-  static void operator delete(void *p) {
-    lmn_free(p);
-  }
-
-  bool operator==(const ProcessTable<Value> *b) {
+  bool operator==(const ProcessTable<value_type> *b) {
     if (this->n != b->n) return false;
-    else {
-      unsigned int a_checked = 0;
+    
+    unsigned int a_checked = 0;
 
-      for (int i = 0; i < this->num_buckets; i++) {
-        if (!this->tbl[i] && !b->tbl[i]) continue;
+    for (int i = 0; i < this->num_buckets; i++) {
+      if (!this->tbl[i] && !b->tbl[i]) continue;
 
-        for (int j = 0; j < PROC_TBL_BUCKETS_SIZE && a_checked < this->n; j++) {
-          Key va = (this->tbl[i]) ? this->tbl[i][j] : limit::max();
-          Key vb = (b->tbl[i]) ? b->tbl[i][j] : limit::max();
-          if (va != vb) return false;
-          if (va != limit::max()) a_checked++;
-        }
+      for (int j = 0; j < buckets_size && a_checked < this->n; j++) {
+        value_type va = (this->tbl[i]) ? this->tbl[i][j] : unused;
+        value_type vb = (b->tbl[i]) ? b->tbl[i][j] : unused;
+        if (va != vb) return false;
+        if (va != unused) a_checked++;
       }
-
-      return true;
     }
+
+    return true;
   }
 
-  const Value &operator[](Key key) const {
+  const value_type &operator[](key_type key) const {
     if (!this->contains(key)) throw new std::out_of_range("accessed with invalid key");
-    return this->tbl[key / PROC_TBL_BUCKETS_SIZE][key % PROC_TBL_BUCKETS_SIZE];
+    return this->tbl[key / buckets_size][key % buckets_size];
   }
 
-  bool contains(Key key) const {
-    return key < this->size && this->tbl[key / PROC_TBL_BUCKETS_SIZE] &&
-      this->tbl[key / PROC_TBL_BUCKETS_SIZE][key % PROC_TBL_BUCKETS_SIZE] != limit::max();
+  bool contains(key_type key) const {
+    return key < this->size && this->tbl[key / buckets_size] &&
+      this->tbl[key / buckets_size][key % buckets_size] != unused;
   }
 
-  void put(Key key, Value value) {
+  void put(key_type key, value_type value) {
 #ifdef DEBUG
-    if (value == limit::max()) lmn_fatal("cannot put ULONG_MAX");
+    if (value == unused) lmn_fatal("cannot put 'unused' value.");
 #endif
-    this->n++;
-    this->expand(key);
-    this->tbl[key / PROC_TBL_BUCKETS_SIZE][key % PROC_TBL_BUCKETS_SIZE] = value;
+    if (!this->contains(key)) {
+      this->n++;
+      this->expand(key);
+    }
+    this->tbl[key / buckets_size][key % buckets_size] = value;
   }
 
-  bool put_if_absent(Key key, Value value) {
+  bool put_if_absent(key_type key, value_type value) {
     if (this->contains(key)) return false;
     this->put(key, value);
     return true;
   }
 
-  void unput(Key key) {
+  void unput(key_type key) {
 #ifdef DEBUG
     if (!this->contains(key)) throw new std::logic_error("attempted to unput an absent key.");
 #endif
     this->n--;
-    this->tbl[key / PROC_TBL_BUCKETS_SIZE][key % PROC_TBL_BUCKETS_SIZE] = limit::max();
+    this->tbl[key / buckets_size][key % buckets_size] = unused;
   }
 
-  bool get(Key key, Value &value) {
+  bool get(key_type key, value_type &value) {
     if (this->contains(key)) {
       value = (*this)[key];
       return true;
     } else {
+      value = unused;
       return false;
     }
   }
@@ -154,45 +148,38 @@ template<typename Value> struct ProcessTable {
   void clear() {
     this->n = 0;
     for (int i = 0; i < this->num_buckets; i++) {
-      memset(this->tbl[i], 0xff, sizeof(Value) * PROC_TBL_BUCKETS_SIZE);
+      if (this->tbl[i])
+        memset(this->tbl[i], 0xff, sizeof(value_type) * buckets_size);
     }
   }
 
-  void foreach(int(*func)(Key key, Value val, LmnWord arg), LmnWord arg) {
+  void foreach(int(*func)(key_type key, value_type val, LmnWord arg), LmnWord arg) {
     unsigned long n = 0;
 
     for (int i = 0; i < this->num_buckets; i++) {
       if (!this->tbl[i]) continue;
-      for (int j = 0; j < PROC_TBL_BUCKETS_SIZE && n < this->n; j++) {
-        if (this->tbl[i][j] == limit::max()) continue;
-        func(i * PROC_TBL_BUCKETS_SIZE + j, this->tbl[i][j], arg);
+      for (int j = 0; j < buckets_size && n < this->n; j++) {
+        if (this->tbl[i][j] == not_found) continue;
+        func(i * buckets_size + j, this->tbl[i][j], arg);
         n++;
       }
     }
-  }
-
-  iterator begin() {
-    return iterator(*this);
-  }
-
-  iterator end() {
-    return iterator(*this, 0, 0, std::numeric_limits<unsigned long>::max());
   }
 
 private:
   void expand(unsigned long n) {
     unsigned int org_n = this->num_buckets;
     while (this->size <= n) this->size *= 2;
-    this->num_buckets = this->size / PROC_TBL_BUCKETS_SIZE + 1;
+    this->num_buckets = this->size / buckets_size + 1;
     if (org_n < this->num_buckets) {
-      this->tbl = LMN_REALLOC(Value *, this->tbl, this->num_buckets);
-      memset(this->tbl + org_n, 0, sizeof(Value *) * (this->num_buckets - org_n));
+      this->tbl = LMN_REALLOC(value_type *, this->tbl, this->num_buckets);
+      memset(this->tbl + org_n, 0, sizeof(value_type *) * (this->num_buckets - org_n));
     }
 
-    unsigned int b = n / PROC_TBL_BUCKETS_SIZE;
+    unsigned int b = n / buckets_size;
     if (b < this->num_buckets && this->tbl[b]) return;
-    this->tbl[b] = LMN_NALLOC(Value, PROC_TBL_BUCKETS_SIZE);
-    memset(this->tbl[b], 0xffU, sizeof(Value) * PROC_TBL_BUCKETS_SIZE);
+    this->tbl[b] = LMN_NALLOC(value_type, buckets_size);
+    memset(this->tbl[b], 0xff, sizeof(value_type) * buckets_size);
   }
 };
 }

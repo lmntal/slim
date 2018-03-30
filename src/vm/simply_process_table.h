@@ -53,18 +53,32 @@ typedef struct SimplyProcTbl *SimplyProcessTableRef;
 #include "element/element.h"
 #include "vm/vm.h"
 
-#ifndef PROC_TBL_DEFAULT_SIZE
-#define PROC_TBL_DEFAULT_SIZE  128U
+#ifdef __cplusplus
+extern "C++" {
+#include "vm/process_table.hpp"
+
+struct SimplyProcTbl : ProcessTable<BYTE> {
+  SimplyProcTbl() : ProcessTable<BYTE>() {};
+  SimplyProcTbl(unsigned long size) : ProcessTable<BYTE>(size) {};
+
+  bool get_flag(key_type key, value_type flag) {
+    return this->contains(key) ? ((*this)[key] & flag) : false;
+  }
+
+  void unset_flag(key_type key, value_type flag) {
+    value_type v;
+    this->get(key, v);
+    this->put(key, v & ~flag);
+  }
+
+  void set_flag(key_type key, value_type flag) {
+    value_type v;
+    this->get(key, v);
+    this->put(key, v | flag);
+  }
+};
+}
 #endif
-
-#ifndef PROC_TBL_BUCKETS_SIZE
-#define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
-#endif
-
-
-#define SPROC_TBL_INIT_V        (0xfU)
-#define sproc_tbl_entry_num(P)  ((P)->n)
-#define sproc_tbl_entry(P, k)   ((P)->tbl[k / PROC_TBL_BUCKETS_SIZE][k % PROC_TBL_BUCKETS_SIZE])
 
 /**
  * Function Prototypes
@@ -73,12 +87,8 @@ typedef struct SimplyProcTbl *SimplyProcessTableRef;
 
 SimplyProcessTableRef sproc_tbl_make_with_size(unsigned long size);
 SimplyProcessTableRef sproc_tbl_make(void);
-void sproc_tbl_init_with_size(SimplyProcessTableRef p, unsigned long size);
-void sproc_tbl_init(SimplyProcessTableRef p);
-void sproc_tbl_destroy(SimplyProcessTableRef p);
 void sproc_tbl_free(SimplyProcessTableRef p);
 
-void sproc_tbl_expand(SimplyProcessTableRef p, unsigned long n);
 void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value);
 void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom, BYTE value);
 void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembraneRef mem, BYTE value);

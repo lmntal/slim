@@ -37,6 +37,14 @@
 
 #include "visitlog.h"
 
+#ifndef PROC_TBL_DEFAULT_SIZE
+#define PROC_TBL_DEFAULT_SIZE  128U
+#endif
+
+#ifndef PROC_TBL_BUCKETS_SIZE
+#define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
+#endif
+
 
 /* VisitLogに記録された変更のスナップショット */
 struct Checkpoint {
