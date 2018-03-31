@@ -45,29 +45,22 @@ extern "C" {
 
 #include "vm/vm.h"
 
-#include "simply_process_table.h"
-#include "trace_log.h"
-
 /** ------
  *  SimpleTraceLog
  */
 
-struct SimplyTraceLog {
-  SimplyProcessTableRef tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
-  struct LogTracker tracker;
-};
 
 #define STRACE_TRUE   (!SPROC_TBL_INIT_V)
 
-typedef struct SimplyTraceLog *SimplyLog;
+typedef struct SimpleTraceLog *SimplyLog;
 
 /**
  * Function ProtoTypes
  */
 
-void simplylog_init(SimplyLog trc);
-void simplylog_init_with_size(SimplyLog trc, unsigned long size);
-void simplylog_destroy(SimplyLog trc);
+SimplyLog simplylog_make();
+SimplyLog simplylog_make_with_size(unsigned long size);
+void simplylog_free(SimplyLog trc);
 
 void simplylog_put(SimplyLog l, LmnWord key);
 void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom);

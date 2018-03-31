@@ -49,33 +49,66 @@
 #define SPROC_TBL_INIT_V        (0xfU)
 
 
-extern "C" {
+#include "simply_process_table.h"
+#include "trace_log.h"
+
+
+struct SimpleTraceLog {
+  SimpleProcessTable tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
+  struct LogTracker tracker;
+
+  SimpleTraceLog(unsigned long size = PROC_TBL_DEFAULT_SIZE) : tbl(size) {
+    tracker_init(&this->tracker);
+  }
+
+  ~SimpleTraceLog() {
+    tracker_destroy(&this->tracker);
+  }
+
+  void visit(LmnWord key) {
+    LogTracker_TRACE(&this->tracker, key);
+    tbl.put(key, STRACE_TRUE);
+  }
+
+  template<typename T>
+  bool is_visited(T key) {
+    return tbl.contains(key);
+  }
+
+  void backtrack() {
+    LogTracker_REVERT(&this->tracker, sproc_tbl_unput, &this->tbl);
+  }
+
+  void set_btpoint() {
+    LogTracker_PUSH(&this->tracker);
+  }
+
+  void continue_trace() {
+    LogTracker_POP(&this->tracker);
+  }
+};
+
 
 /*------------
- * SimplyTraceLog
+ * SimpleTraceLog
  */
 
-void simplylog_init(SimplyLog s)
-{
-  simplylog_init_with_size(s, PROC_TBL_DEFAULT_SIZE);
+SimplyLog simplylog_make() {
+  return new SimpleTraceLog;
 }
 
-void simplylog_init_with_size(SimplyLog s, unsigned long size)
-{
-  s->tbl = sproc_tbl_make_with_size(size);
-  tracker_init(&s->tracker);
+SimplyLog simplylog_make_with_size(unsigned long size) {
+  return new SimpleTraceLog(size);
 }
 
-void simplylog_destroy(SimplyLog s)
+void simplylog_free(SimplyLog s)
 {
-  sproc_tbl_free(s->tbl);
-  tracker_destroy(&s->tracker);
+  delete s;
 }
 
 void simplylog_put(SimplyLog l, LmnWord key)
 {
-  LogTracker_TRACE(&l->tracker, key);
-  sproc_tbl_put(l->tbl, key, STRACE_TRUE);
+  l->visit(key);
 }
 
 void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom) {
@@ -87,23 +120,22 @@ void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) {
 }
 
 BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom) {
-  return sproc_tbl_contains_atom(l->tbl, atom);
+  return l->is_visited(atom);
 }
 
 BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem) {
-  return sproc_tbl_contains_mem(l->tbl, mem);
+  return l->is_visited(mem);
 }
 
 void simplylog_backtrack(SimplyLog l) {
-  LogTracker_REVERT(&l->tracker, sproc_tbl_unput, l->tbl);
+  l->backtrack();
 }
 
 void simplylog_set_btpoint(SimplyLog l) {
-  LogTracker_PUSH(&l->tracker);
+  l->set_btpoint();
 }
 
 void simplylog_continue_trace(SimplyLog l) {
-  LogTracker_POP(&l->tracker);
+  l->continue_trace();
 }
 
-}

@@ -43,11 +43,11 @@ extern "C" {
 #endif
 
 /* --------------
- *  SimplyProcTbl
+ *  SimpleProcTbl
  *  プロセスIDをkeyにしたBYTEサイズテーブル
  */
 
-typedef struct SimplyProcTbl *SimplyProcessTableRef;
+typedef struct SimpleProcessTable *SimplyProcessTableRef;
 
 
 #include "element/element.h"
@@ -57,9 +57,9 @@ typedef struct SimplyProcTbl *SimplyProcessTableRef;
 extern "C++" {
 #include "vm/process_table.hpp"
 
-struct SimplyProcTbl : ProcessTable<BYTE> {
-  SimplyProcTbl() : ProcessTable<BYTE>() {};
-  SimplyProcTbl(unsigned long size) : ProcessTable<BYTE>(size) {};
+struct SimpleProcessTable : ProcessTable<BYTE> {
+  SimpleProcessTable() : ProcessTable<BYTE>() {};
+  SimpleProcessTable(unsigned long size) : ProcessTable<BYTE>(size) {};
 
   bool get_flag(key_type key, value_type flag) {
     return this->contains(key) ? ((*this)[key] & flag) : false;
@@ -75,6 +75,18 @@ struct SimplyProcTbl : ProcessTable<BYTE> {
     value_type v;
     this->get(key, v);
     this->put(key, v | flag);
+  }
+
+  bool contains(key_type key) {
+    return ProcessTable<BYTE>::contains(key);
+  }
+
+  bool contains(LmnSymbolAtomRef atom) {
+    return contains(LMN_SATOM_ID(atom));
+  }
+
+  bool contains(LmnMembraneRef mem) {
+    return contains(lmn_mem_id(mem));
   }
 };
 }

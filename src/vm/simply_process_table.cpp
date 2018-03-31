@@ -40,12 +40,12 @@
 
 SimplyProcessTableRef sproc_tbl_make(void)
 {
-  return new SimplyProcTbl();
+  return new SimpleProcessTable();
 }
 
 SimplyProcessTableRef sproc_tbl_make_with_size(unsigned long size)
 {
-  return new SimplyProcTbl(size);
+  return new SimpleProcessTable(size);
 }
 
 void sproc_tbl_free(SimplyProcessTableRef p)
