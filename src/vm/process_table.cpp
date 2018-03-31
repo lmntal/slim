@@ -48,7 +48,6 @@ struct ProcessTbl : ProcessTable<LmnWord> {
   ProcessTbl() : ProcessTable<LmnWord>() {};
 };
 
-
 ProcessTableRef proc_tbl_make(void)
 {
   return new ProcessTbl();

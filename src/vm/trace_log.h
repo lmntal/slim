@@ -91,37 +91,7 @@ struct LogTracker {
 
 
 
-/* ----
- * TraceLog
- * グラフ同形成判定用データ構造本体
- */
 
-/** MEMO:
- *  非TIME-OPT版を実装していない
- */
-
-/* 各{シンボルアトム, inside proxyアトム, 膜}に対して1つずつ対応させるデータ構造
- * outside proxyアトムは含めない */
-struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
-  BYTE flag;                   /* 対応させているデータの種類を示すフラグ */
-  unsigned int traversed_proc; /* 膜に対応させている場合は, その膜内で訪問した
-                                   {シンボルアトム, inside proxyアトム, 子膜}の総数
-                                  を記録している.
-                                  他のデータに対応させている場合は0のまま */
-  ProcessID owner_id;          /* 対応させているデータ構造の所属膜のID.
-                                * プロセスIDは1から始まるため,
-                                * 所属膜がない(例えばグローバルルート膜の)場合は, 0 */
-  ProcessID matched;           /* 対応させているプロセスとマッチさせたプロセスのID.
-                                * in-proxyアトムはBS encode時の訪問順序に数えないため,
-                                * in-proxyアトムへの対応としては0をセット */
-};
-
-struct TraceLog {
-  int cap, num;
-  int num_buckets;
-  struct TraceData **tbl;
-  struct LogTracker tracker;
-};
 
 typedef struct TraceLog *TraceLogRef;
 
@@ -135,18 +105,13 @@ void tracker_destroy(struct LogTracker *track);
  */
 
 TraceLogRef tracelog_make(void);
+TraceLogRef tracelog_make_with_size(unsigned long size);
 void tracelog_free(TraceLogRef trc);
-void tracelog_init(TraceLogRef trc);
-void tracelog_init_with_size(TraceLogRef trc, unsigned long size);
-void tracelog_destroy(TraceLogRef trc);
 
 BOOL tracelog_eq_traversed_proc_num(TraceLogRef      l,
                                     LmnMembraneRef   owner,
                                     AtomListEntryRef in_ent,
                                     AtomListEntryRef avoid);
-void tracelog_tbl_expand(TraceLogRef l, unsigned long new_size);
-int  tracelog_put(TraceLogRef l, LmnWord key, LmnWord matched_id,
-                  LmnMembraneRef owner);
 int  tracelog_put_atom(TraceLogRef l, LmnSymbolAtomRef atom1, LmnWord atom2_id,
                        LmnMembraneRef owner1);
 int  tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id);

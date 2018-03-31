@@ -49,14 +49,15 @@ extern "C" {
 }
 
 extern "C++" {
+
 /* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
 template<typename T> struct ProcessTable {
   using key_type = LmnWord;
   using value_type = T;
 
-  static const key_type not_found = std::numeric_limits<key_type>::max();
-  static const value_type unused = std::numeric_limits<value_type>::max();
-  static const std::size_t buckets_size = 1 << 12; // heuristics
+  const static key_type not_found;
+  const static value_type unused;
+  static constexpr std::size_t buckets_size = 1 << 12; // heuristics
 
   unsigned long n;
   unsigned long size;
@@ -179,9 +180,16 @@ private:
     unsigned int b = n / buckets_size;
     if (b < this->num_buckets && this->tbl[b]) return;
     this->tbl[b] = LMN_NALLOC(value_type, buckets_size);
-    memset(this->tbl[b], 0xff, sizeof(value_type) * buckets_size);
+    for (int i = 0; i < buckets_size; i++)
+      this->tbl[b][i] = unused;
   }
 };
+
+template<typename T>
+const LmnWord ProcessTable<T>::not_found = std::numeric_limits<LmnWord>::max();
+template<typename T>
+const T ProcessTable<T>::unused = std::numeric_limits<T>::max();
+
 }
 
 #endif /* PROCESS_TABLE_HPP */
