@@ -37,37 +37,26 @@
 
 #include "simply_trace_log.h"
 
-#ifndef PROC_TBL_DEFAULT_SIZE
-#define PROC_TBL_DEFAULT_SIZE  128U
-#endif
-
-#ifndef PROC_TBL_BUCKETS_SIZE
-#define PROC_TBL_BUCKETS_SIZE  (1 << 12) // heuristics
-#endif
-
-
-#define SPROC_TBL_INIT_V        (0xfU)
-
 
 #include "simply_process_table.h"
 #include "trace_log.h"
 
 
-struct SimpleTraceLog {
+class SimpleTraceLog {
   SimpleProcessTable tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
-  struct LogTracker tracker;
+  LogTracker tracker;
 
-  SimpleTraceLog(unsigned long size = PROC_TBL_DEFAULT_SIZE) : tbl(size) {
-    tracker_init(&this->tracker);
-  }
-
-  ~SimpleTraceLog() {
-    tracker_destroy(&this->tracker);
-  }
+public:
+  SimpleTraceLog() {}
+  SimpleTraceLog(unsigned long size) : tbl(size) {}
 
   void visit(LmnWord key) {
-    LogTracker_TRACE(&this->tracker, key);
-    tbl.put(key, STRACE_TRUE);
+    tracker.trace(key);
+    tbl.put(key, true);
+  }
+
+  void leave(LmnWord key) {
+    tbl.unput(key);
   }
 
   template<typename T>
@@ -76,15 +65,15 @@ struct SimpleTraceLog {
   }
 
   void backtrack() {
-    LogTracker_REVERT(&this->tracker, sproc_tbl_unput, &this->tbl);
+    tracker.revert(this);
   }
 
   void set_btpoint() {
-    LogTracker_PUSH(&this->tracker);
+    tracker.push();
   }
 
   void continue_trace() {
-    LogTracker_POP(&this->tracker);
+    tracker.pop();
   }
 };
 

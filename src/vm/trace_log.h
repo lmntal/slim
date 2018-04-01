@@ -63,32 +63,166 @@ extern "C" {
  * 訪問済みテーブルの状態をバックトラックさせるためのデータ構造
  */
 
-struct LogTracker {
-  struct Vector traced_ids, btp_idx;
+#ifdef __cplusplus
+extern "C++" {
+
+#include <stack>
+#include "process_table.hpp"
+
+
+class LogTracker {
+  std::stack<ProcessID> traced_ids;
+  std::stack<std::size_t> btp_idx;
+
+public:
+  void push() {
+    btp_idx.push(traced_ids.size());
+  }
+
+  void pop() {
+    btp_idx.pop();
+  }
+
+  void trace(ProcessID id) {
+    traced_ids.push(id);
+  }
+
+  /* 前回のトレースプロセス数を基に, ログを巻き戻す. */
+  template<typename T>
+  void revert(T table) {
+    /* 前回セットしたトレース数のメモを取り出す */
+    const auto bt_idx = btp_idx.top();
+    btp_idx.pop();
+    /* bt_idxより上のidxに積まれたデータをログ上からunputしていく */
+    while (traced_ids.size() > bt_idx) {
+      auto key = traced_ids.top();
+      traced_ids.pop();
+      table->leave(key);
+    }     
+  }
 };
 
-/* 前回のトレースプロセス数を基に, ログを巻き戻す. */
-#define LogTracker_REVERT(Tracker, UnputFunc, Tbl)                             \
-  do {                                                                         \
-    unsigned long __bt_idx;                                                    \
-    LMN_ASSERT(!vec_is_empty(&((Tracker)->btp_idx)));                          \
-                                                                               \
-    /* 前回セットしたトレース数のメモを取り出す */                                     \
-    __bt_idx = vec_pop(&((Tracker)->btp_idx));                                 \
-    /* bt_idxより上のidxに積まれたデータをログ上からunputしていく */                    \
-    while (vec_num(&((Tracker)->traced_ids)) > __bt_idx) {                     \
-      LmnWord __key = vec_pop(&((Tracker)->traced_ids));                       \
-      UnputFunc(Tbl, __key);                                                   \
-    }                                                                          \
-  } while (0)
+/* ----
+ * TraceLog
+ * グラフ同形成判定用データ構造本体
+ */
 
-/* 現在のトレースプロセス数をログlにメモしておく */
-#define LogTracker_PUSH(TR) (vec_push(&(TR)->btp_idx, vec_num(&(TR)->traced_ids)))
-/* 最も最近にメモしたトレースプロセス数の記録を削除する */
-#define LogTracker_POP(TR)  (vec_pop(&(TR)->btp_idx))
-/* プロセスID集合にIDを追加する */
-#define LogTracker_TRACE(TR, ID) (vec_push(&(TR)->traced_ids, (ID)))
+/* 各{シンボルアトム, inside proxyアトム, 膜}に対して1つずつ対応させるデータ構造
+ * outside proxyアトムは含めない */
+struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
+  BYTE flag;                   /* 対応させているデータの種類を示すフラグ */
+  unsigned int traversed_proc; /* 膜に対応させている場合は, その膜内で訪問した
+                                   {シンボルアトム, inside proxyアトム, 子膜}の総数
+                                  を記録している.
+                                  他のデータに対応させている場合は0のまま */
+  ProcessID owner_id;          /* 対応させているデータ構造の所属膜のID.
+                                * プロセスIDは1から始まるため,
+                                * 所属膜がない(例えばグローバルルート膜の)場合は, 0 */
+  ProcessID matched;           /* 対応させているプロセスとマッチさせたプロセスのID.
+                                * in-proxyアトムはBS encode時の訪問順序に数えないため,
+                                * in-proxyアトムへの対応としては0をセット */
 
+  bool operator==(const TraceData &a) const {
+    return a.flag == flag && a.traversed_proc == traversed_proc &&
+        a.owner_id == owner_id && a.matched == matched;
+  }
+  bool operator!=(const TraceData &a) const {
+    return !(*this == a);
+  }
+
+  enum options {
+    TRAVERSED_ATOM   = 0x1U,
+    TRAVERSED_MEM    = 0x2U,
+    TRAVERSED_HLINK  = 0x3U,
+    TRAVERSED_OTHERS = 0xfU,
+  };
+};
+
+
+struct TraceLog : ProcessTable<TraceData> {
+  LogTracker tracker;
+
+  TraceLog(unsigned long size) : ProcessTable<TraceData>(size) {}
+  TraceLog() : ProcessTable<TraceData>() {}
+
+  unsigned int traversed_proc_count(LmnMembraneRef owner) {
+    return this->contains(lmn_mem_id(owner)) ? (*this)[lmn_mem_id(owner)].traversed_proc : 0;
+  }
+  bool eq_traversed_proc_num(LmnMembraneRef owner, AtomListEntryRef in_ent, AtomListEntryRef avoid) {
+    return traversed_proc_count(owner) ==
+          (lmn_mem_symb_atom_num(owner)
+              + lmn_mem_child_mem_num(owner)
+              + atomlist_get_entries_num(in_ent)
+              - atomlist_get_entries_num(avoid));
+  }
+
+private:
+  /* ログl上のキーkey位置にあるTraceLogに対して, 訪問を記録する.
+   * matched_idはマッチしたプロセスのID, ownerは所属膜.
+   * 所属膜がNULLでない場合は, 所属膜の情報を記録し, 所属膜側のプロセス訪問カウンタを回す.
+   */
+  bool visit(LmnWord key, BYTE flag, LmnWord matched_id, LmnMembraneRef owner) {
+    if (this->contains(key)) {
+      return false;
+    }
+
+    TraceData value = {flag, 0, 0, matched_id};
+
+    if (owner) {
+      value.owner_id = lmn_mem_id(owner);
+
+      TraceData dat;
+      this->get(lmn_mem_id(owner), dat);
+      dat.traversed_proc++;
+      this->put(lmn_mem_id(owner), dat);
+    }
+
+    this->put(key, value);
+
+    tracker.trace(key);
+
+    return true;
+  }
+
+public:
+  bool visit(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
+    return this->visit(LMN_SATOM_ID(atom), TraceData::options::TRAVERSED_ATOM, atom2_id, owner);
+  }
+
+  bool visit(LmnMembraneRef mem1, LmnWord mem2_id) {
+    return this->visit(lmn_mem_id(mem1), TraceData::options::TRAVERSED_MEM, mem2_id, lmn_mem_parent(mem1));
+  }
+
+  bool visit(HyperLink *hl1, LmnWord hl2_id) {
+    return this->visit(LMN_HL_ID(hl1), TraceData::options::TRAVERSED_HLINK, hl2_id, NULL);
+  }
+
+  void leave(key_type key) {
+    const auto owner_id = (*this)[key].owner_id;
+
+    TraceData dat;
+    this->get(owner_id, dat);
+    dat.traversed_proc--;
+    this->put(owner_id, dat);
+
+    this->unput(key);
+  }
+
+  void backtrack() {
+    tracker.revert(this);
+  }
+
+  void set_btpoint() {
+    tracker.push();
+  }
+
+  void continue_trace() {
+    tracker.pop();
+  }
+};
+}
+
+#endif
 
 
 
@@ -96,9 +230,6 @@ struct LogTracker {
 typedef struct TraceLog *TraceLogRef;
 
 #define TLOG_MATCHED_ID_NONE       (0U)
-
-void tracker_init(struct LogTracker *track);
-void tracker_destroy(struct LogTracker *track);
 
 /**
  * Function ProtoTypes

@@ -50,7 +50,6 @@ extern "C" {
  */
 
 
-#define STRACE_TRUE   (!SPROC_TBL_INIT_V)
 
 typedef struct SimpleTraceLog *SimplyLog;
 
