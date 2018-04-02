@@ -67,13 +67,13 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
 
   void unset_flag(key_type key, value_type flag) {
     value_type v;
-    this->get(key, v);
+    this->get(key, &v);
     this->put(key, v & ~flag);
   }
 
   void set_flag(key_type key, value_type flag) {
     value_type v;
-    this->get(key, v);
+    this->get(key, &v);
     this->put(key, v | flag);
   }
 

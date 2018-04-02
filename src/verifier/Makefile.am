@@ -22,7 +22,7 @@ liblmn_verifier_a_SOURCES =                              \
 	automata.c               automata.h                    \
 	binstr_compress.c        binstr_compress.h             \
 	delta_membrane.c         delta_membrane.h              \
-	dpor.c                   dpor.h                        \
+	dpor.cpp                 dpor.h                        \
 	dpor_naive.c             dpor_naive.h                  \
 	ltl2ba_adapter.c         ltl2ba_adapter.h              \
 	mc.c                     mc.h                          \

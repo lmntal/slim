@@ -36,6 +36,8 @@
  * $Id:
  */
 
+extern "C" {
+
 #include "dpor.h"
 #include "dpor_naive.h"
 #include "vm/vm.h"
@@ -43,7 +45,9 @@
 #include "state.h"
 #include "mc.h"
 #include "mc_worker.h"
-#include "../lmntal.h"
+#include "lmntal.h"
+
+}
 
 /**
  * Dynamic Partial Order Reduction
@@ -79,6 +83,7 @@ struct ContextC1 {
   BOOL         is_ample_cand;
   BOOL         is_on_path;
   MemDeltaRoot *d;              /* 本遷移を実現する階層グラフの差分オブジェクトへのポインタ */
+  /* TODO: BYTEサイズのflagをサポートするSimpleProcessTableにする */
   ProcessTableRef LHS_procs;         /* プロセスのIDがkey, LHSフラグがvalue */
   ProcessTableRef RHS_procs;         /* プロセスのIDがkey, RHSフラグがvalue */
   unsigned int id;
@@ -194,7 +199,7 @@ static void contextC1_expand_LHS(McDporData      *d,
     LmnRegisterRef r = lmn_register_array_get(v, i);
 
     if (lmn_register_tt(r) == TT_ATOM && !LMN_ATTR_IS_DATA(lmn_register_at(r))) {
-      key = LMN_SATOM_ID((LmnSAtom)lmn_register_wt(r));
+      key = LMN_SATOM_ID((LmnSymbolAtomRef)lmn_register_wt(r));
     } else if (lmn_register_tt(r) == TT_MEM) {
       key = lmn_mem_id((LmnMembraneRef)lmn_register_wt(r));
       if (i == 0) {
@@ -299,7 +304,7 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d)
 
   /* アトムが削除されるなら, そのアトムが左辺に出現した遷移に依存する */
   for (i = 0; i < vec_num(&d->del_atoms); i++) {
-    LmnSAtom a = (LmnSAtom)vec_get(&d->del_atoms, i);
+    LmnSymbolAtomRef a = (LmnSymbolAtomRef)vec_get(&d->del_atoms, i);
     contextC1_RHS_tbl_put(c->RHS_procs, LMN_SATOM_ID(a), OP_DEP_EXISTS);
     if (LMN_SATOM_GET_FUNCTOR(a) == LMN_IN_PROXY_FUNCTOR) {
       need_flink_check = TRUE;
@@ -480,10 +485,10 @@ static BOOL contextC1s_are_depend(ContextC1Ref src, ContextC1Ref dst)
   rhs_tbl = src->RHS_procs;
   lhs_tbl = dst->LHS_procs;
 
-  for (i = 0; i < proc_tbl_get_size(rhs_tbl); i++) {
-    LmnWord rhs, lhs;
-    if (proc_tbl_get(rhs_tbl, i, &rhs) && proc_tbl_get(lhs_tbl, i, &lhs)) {
-      if (dpor_LHS_RHS_are_depend((BYTE)lhs, (BYTE)rhs)) {
+  for (auto rhs : *rhs_tbl) {
+    ProcessID lhs;
+    if (lhs_tbl->get(rhs.first, &lhs)) {
+      if (dpor_LHS_RHS_are_depend((BYTE)lhs, (BYTE)rhs.second)) {
         return TRUE;
       }
     }

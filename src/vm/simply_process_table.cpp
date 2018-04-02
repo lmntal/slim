@@ -80,7 +80,7 @@ void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembraneRef mem) {
 
 int sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value) {
   BYTE v;
-  bool res = p->get(key, v);
+  bool res = p->get(key, &v);
   if (value) *value = v;
   return res;
 }

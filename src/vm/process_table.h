@@ -48,6 +48,16 @@ typedef struct ProcessTbl *ProcessTableRef;
 
 #include "hyperlink.h"
 
+#ifdef __cplusplus
+extern "C++" {
+#include "process_table.hpp"
+
+struct ProcessTbl : ProcessTable<LmnWord> {
+  ProcessTbl(unsigned long size) : ProcessTable<LmnWord>(size) {};
+  ProcessTbl() : ProcessTable<LmnWord>() {};
+};
+}
+#endif
 
 
 /**
@@ -63,7 +73,6 @@ int        proc_tbl_foreach(ProcessTableRef p,
                             LmnWord arg);
 BOOL       proc_tbl_eq(ProcessTableRef a, ProcessTableRef b);
 
-unsigned long proc_tbl_get_size(ProcessTableRef p);
 void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value);
 void proc_tbl_put_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord value);
 void proc_tbl_put_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);

@@ -172,7 +172,7 @@ private:
       value.owner_id = lmn_mem_id(owner);
 
       TraceData dat;
-      this->get(lmn_mem_id(owner), dat);
+      this->get(lmn_mem_id(owner), &dat);
       dat.traversed_proc++;
       this->put(lmn_mem_id(owner), dat);
     }
@@ -201,7 +201,7 @@ public:
     const auto owner_id = (*this)[key].owner_id;
 
     TraceData dat;
-    this->get(owner_id, dat);
+    this->get(owner_id, &dat);
     dat.traversed_proc--;
     this->put(owner_id, dat);
 
