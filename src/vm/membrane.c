@@ -1503,6 +1503,9 @@ static inline void mem_copy_ground_sub(LmnMembraneRef mem,
     LinkObjRef l = (LinkObjRef)vec_get(srcvec, i);
     LmnAtomRef cpatom;
 
+    //printf("copying atoms= %d  \n",l->ap);
+    //printf("copying_pos= %d  \n",l->pos);
+
     if (LMN_ATTR_IS_DATA(l->pos)) {
       if (ret_hlinkmap != NULL && l->pos == LMN_HL_ATTR) {//hlgroundならハイパーリンクの先を辿ってコピーする
         cpatom = (LmnAtomRef)lmn_hyperlink_new_with_attr(LMN_HL_ATTRATOM(lmn_hyperlink_at_to_hl(LMN_SATOM(l->ap))),
@@ -1552,9 +1555,14 @@ static inline void mem_copy_ground_sub(LmnMembraneRef mem,
     proc_tbl_get_by_atom(atommap, src_atom, &t);
     copied = (LmnSymbolAtomRef)t;
 
+    //printf("copying atoms= %d  \n",src_atom);
+    
     for (i = 0; i < LMN_SATOM_GET_ARITY(src_atom); i++) {
       LmnAtomRef     next_src  = LMN_SATOM_GET_LINK(src_atom, i);
       LmnLinkAttr next_attr = LMN_SATOM_GET_ATTR(src_atom, i);
+
+      //printf("next_src atoms= %d  \n", next_src);
+      //printf("next_attr_pos= %d  \n", next_attr);
 
       /* LMN_SATOM_GET_LINK(copied, i)が0になる場合は、根に到達した場合 */
       if (LMN_ATTR_IS_DATA(next_attr)) {
@@ -1595,6 +1603,8 @@ static inline void mem_copy_ground_sub(LmnMembraneRef mem,
         LMN_SATOM_SET_LINK(copied, i, next_copied);
       }
     }
+
+    //printf("copying_pos= %d  \n",copied);
   }
 
   vec_free(stack);
@@ -2126,7 +2136,8 @@ BOOL extended_ground_atoms(
 
   //printf("root_ap= %d  \n",root_ap);
   //printf("root_pos= %d  \n",root_pos);
-
+ 
+  /*
   if(cycle_exist(srcvec,avovec,attr_functors,attr_dataAtoms,attr_dataAtom_attrs))
   {//there is at least one cycle
 	  if(purecycle_exit(srcvec,avovec))
@@ -2134,10 +2145,18 @@ BOOL extended_ground_atoms(
 		  result = FALSE;
 	  }
   }
+  */
+
+  //no ground if there is at least one pure path
+	if(purecycle_exit(srcvec,avovec))
+  {
+		result = FALSE;
+	}
+
 
   if(result)
   { //hlground exist
-      init_grounddata(); 
+     // init_grounddata(); 
       dfs_scope_finder(global_hlinks,
                        local_atoms,
                        LinkObj_make(root_ap,root_pos),
@@ -2213,6 +2232,10 @@ void dfs_scope_finder(      ProcessTableRef *global_hlinks,
         {
           LmnAtomRef attrAtom = LMN_HL_ATTRATOM(hl);
           LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl);
+
+          //printf("hlink_app= %d  \n", attrAtom);
+          //printf("hlink_pos= %d  \n", attr);
+
           int i;
           for (i = 0; i < vec_num(attr_dataAtoms); i++)
           {
@@ -2322,7 +2345,7 @@ BOOL purecycle_exit(Vector *srcvec, Vector *avovec)
 		{
 			LinkObjRef cur_link=(LinkObjRef)vec_pop(stack);
 
-			//printf(" cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
+			//printf("pure path check cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
 			if(cur_link->ap == root->ap  && cur_link->pos ==root->pos && !m_first)
 			{
 				m_find= TRUE;
@@ -2352,7 +2375,7 @@ BOOL purecycle_exit(Vector *srcvec, Vector *avovec)
 			while(!vec_is_empty(neighbours))
 			{
 				LinkObjRef Link=vec_pop(neighbours);
-				//printf(" next_link =%d , %d --------\n",Link->ap,Link->pos);
+				//printf("pure path check pushed_link =%d , %d --------\n",Link->ap,Link->pos);
 				vec_push(stack,(LmnWord)Link);
 			}
 			vec_free(neighbours);
@@ -2402,7 +2425,12 @@ BOOL cycle_exist(   Vector *srcvec,
 		while(!vec_is_empty(stack))
 		{
 			LinkObjRef cur_link=(LinkObjRef)vec_pop(stack);
-			//printf(" cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
+			printf("cycle exist cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
+
+      // we are having a ref-link with value (0,0) here, which is causing the error.
+      // I guess the graph is currupted somewhere.
+      //if(cur_link->ap == 0) continue;
+
 			if(cur_link->ap == root->ap  && cur_link->pos ==root->pos && !m_first )
 			{
 				m_find= TRUE;
@@ -2481,6 +2509,9 @@ void get_neighbours(  Vector  *avovec,
                       Vector   *attr_dataAtoms,
                       Vector   *attr_dataAtom_attrs)
 {
+  //printf("        get neighbors atom= %d  \n",atom);
+  //printf("        get neighbors pos= %d  \n",pos);
+
   if (LMN_ATTR_IS_DATA(pos))
   {
     HyperLink *hl = lmn_hyperlink_at_to_hl(LMN_SATOM(atom));
@@ -2717,12 +2748,12 @@ void lmn_mem_remove_ground( LmnMembraneRef mem,
 
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos))
     {
-    //  printf(" lmn_mem_remove_ground data atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
+      printf(" lmn_mem_remove_ground data atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
       lmn_mem_remove_data_atom(mem, l->ap, l->pos);
     }
     else if (LMN_ATTR_IS_EX(l->pos))
     {
-      //printf(" lmn_mem_remove_ground symbol atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
+      printf(" lmn_mem_remove_ground symbol atom: atom= %d, pos=%d \n",LMN_SATOM(l->ap),l->pos);
       mem_remove_symbol_atom(mem, LMN_SATOM(l->ap));
     }
   }
