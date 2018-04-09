@@ -331,8 +331,8 @@ typedef int AtomListIter;
   if ((ENT)) {                                                                 \
     for ((V)  = atomlist_head((ENT));                                          \
          (V) != lmn_atomlist_end((ENT));                                       \
-         (V)  = LMN_SATOM_GET_NEXT_RAW((V))) {                                 \
-      if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR) {                  \
+         (V)  = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {                                 \
+      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) != LMN_RESUME_FUNCTOR) {                  \
         (CODE);                                                                \
       }                                                                        \
     }                                                                          \
@@ -343,8 +343,8 @@ typedef int AtomListIter;
     if ((ENT)) {							\
       for ((V)  = atomlist_head((ENT));					\
 	   (V) != lmn_atomlist_end((ENT));				\
-	   (V)  = LMN_SATOM_GET_NEXT_RAW((V))) {			\
-	if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR && id == 0) { \
+	   (V)  = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {			\
+	if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) != LMN_RESUME_FUNCTOR && id == 0) { \
 	  (CODE);							\
 	  id=(NUM);							\
 	}								\
@@ -364,13 +364,13 @@ typedef int AtomListIter;
       }								\
       for (;							\
 	   (V) != lmn_atomlist_end((ENT)) || flag ;		\
-	   (V)  = LMN_SATOM_GET_NEXT_RAW((V))) {		\
+	   (V)  = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {		\
 	if((V) == lmn_atomlist_end((ENT))){			\
 	  (V)  = atomlist_head((ENT));				\
 	  id = (ID);						\
 	  flag--;						\
 	}							\
-	if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR	\
+	if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) != LMN_RESUME_FUNCTOR	\
 	    && id == 0) {					\
 	  (CODE);						\
 	  id=(NUM);						\

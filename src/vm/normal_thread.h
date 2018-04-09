@@ -37,6 +37,9 @@
  * $Id$
  */
 
+#ifndef NORMAL_THREAD_H
+#define NORMAL_THREAD_H
+
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "element/element.h"
@@ -68,15 +71,15 @@ struct arginfo{
 
   normal_prof *profile;
 };
-pthread_t *findthread;
-arginfo **thread_info;
-int active_thread;
-Deque *temp;
-double walltime;//rule walltime
-double walltime_temp;
-BOOL normal_parallel_flag;
-unsigned long success_temp_check;
-unsigned long fail_temp_check;
+extern pthread_t *findthread;
+extern arginfo **thread_info;
+extern int active_thread;
+extern Deque *temp;
+extern double walltime;//rule walltime
+extern double walltime_temp;
+extern BOOL normal_parallel_flag;
+extern unsigned long success_temp_check;
+extern unsigned long fail_temp_check;
 
 static LmnRuleInstr instr_parallel;
 
@@ -91,7 +94,9 @@ void op_lock(int id, int flag);
 void normal_parallel_prof_dump(FILE *f);
 
 
-BOOL check_exist(LmnSAtom atom, LmnFunctor f);
+BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f);
 
 void rule_wall_time_start(void);
 void rule_wall_time_finish(void);
+
+#endif

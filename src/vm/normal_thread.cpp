@@ -1,5 +1,5 @@
 /*
- * normal_thread.c
+ * normal_thread.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,9 +37,23 @@
  * $Id$
  */
 
+extern "C" {
 #include "normal_thread.h"
 
 #include "verifier/runtime_status.h"
+}
+
+pthread_t *findthread;
+arginfo **thread_info;
+int active_thread;
+Deque *temp;
+double walltime;//rule walltime
+double walltime_temp;
+BOOL normal_parallel_flag;
+unsigned long success_temp_check;
+unsigned long fail_temp_check;
+
+
 
 void* normal_thread(void* arg){
   arginfo *thread_data;
@@ -64,7 +78,7 @@ void* normal_thread(void* arg){
 	  warry_set(thread_data->rc, thread_data->atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM);
 	  if(rc_hlink_opt(thread_data->atomi, thread_data->rc)){
 	    spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_data->rc), (HashKeyType)thread_data->atomi);
-	    if (lmn_sameproccxt_all_pc_check_clone(spc, LMN_SATOM(wt(thread_data->rc, thread_data->atomi)), thread_data->atom_arity) && 
+	    if (lmn_sameproccxt_all_pc_check_clone(spc, (LmnSymbolAtomRef)wt(thread_data->rc, thread_data->atomi), thread_data->atom_arity) && 
 		interpret(thread_data->rc, thread_data->rule, thread_instr)) {
 	      thread_data->judge=TRUE;
 	      thread_data->profile->findatom_num++;
@@ -189,7 +203,7 @@ void normal_parallel_prof_dump(FILE *f){
 }
 
 
-BOOL check_exist(LmnSAtom atom, LmnFunctor f){
+BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f){
   if(!atom)return FALSE;
   if(LMN_SATOM_GET_FUNCTOR(atom)!=f)return FALSE;
   return TRUE;

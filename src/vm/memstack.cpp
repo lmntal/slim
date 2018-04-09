@@ -1,5 +1,5 @@
 /*
- * memstack.c - Membrane Stack implementation
+ * memstack.cpp - Membrane Stack implementation
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,7 +37,9 @@
  * $Id$
  */
 
+extern "C" {
 #include "memstack.h"
+}
 
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
 

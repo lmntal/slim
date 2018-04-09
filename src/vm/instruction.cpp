@@ -1,8 +1,7 @@
 /*
- * ccallback.c
+ * instruction.cpp - Intermediate code instructions
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,53 +33,9 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
+ * $Id: instruction.c,v 1.4 2008/10/17 07:25:36 iwasawa Exp $
  */
 
-#include "ccallback.h"
-#include "element/element.h"
-#include "symbol.h"
+#include "instruction.h"
 
-int free_v(st_data_t key, st_data_t v, st_data_t _t);
-
-st_table_t ccallback_tbl;
-
-void ccallback_init()
-{
-  ccallback_tbl = st_init_numtable();
-}
-
-void ccallback_finalize()
-{
-  st_foreach(ccallback_tbl, (st_iter_func)free_v, 0);
-  st_free_table(ccallback_tbl);
-}
-
-int free_v(st_data_t key, st_data_t v, st_data_t _t)
-{
-  LMN_FREE(v);
-  return ST_CONTINUE;
-}
-
-/* コールバックを名前nameで登録する。arityはコールバックに引数として
-   渡されるアトムのリンク数 */
-void lmn_register_c_fun(const char *name, void *f, int arity)
-{
-  struct CCallback *c = LMN_MALLOC(struct CCallback);
-  c->f = f;
-  c->arity = arity;
-  st_insert(ccallback_tbl, (st_data_t)lmn_intern(name), (st_data_t)c);
-}
-
-/* nameで登録されたコールバック返す */
-const struct CCallback *get_ccallback(lmn_interned_str name)
-{
-  st_data_t t;
-
-  if (st_lookup(ccallback_tbl, name, &t)) {
-    return (struct CCallback *)t;
-  } else {
-    return NULL;
-  }
-}
 
