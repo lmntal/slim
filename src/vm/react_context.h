@@ -45,7 +45,7 @@
 /* cldoc:begin-category(Lmntal::ReactContext) */
 
 typedef struct LmnRegister *LmnRegisterRef;
-typedef struct LmnRegisterArray *LmnRegisterArray;
+typedef struct __LmnRegisterArray *LmnRegisterArray;
 
 typedef struct LmnReactCxt *LmnReactCxtRef;
 

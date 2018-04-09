@@ -1202,15 +1202,15 @@ LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d)
 static LmnBinStrRef lmn_mem_encode_sub(LmnMembraneRef mem, unsigned long tbl_size)
 {
   struct BinStrPtr bsp;
-  struct VisitLog visited;
+  VisitLogRef visited = visitlog_create();
   LmnBinStrRef ret_bs;
   BinStr bs;
 
   bs = binstr_make();
   bsptr_init(&bsp, bs);
-  visitlog_init_with_size(&visited, tbl_size);
+  visitlog_init_with_size(visited, tbl_size);
 
-  encode_root_mem(mem, &bsp, &visited);
+  encode_root_mem(mem, &bsp, visited);
 
   /* 最後に、ポインタの位置を修正する */
   bs->cur = bsp.pos;
@@ -1218,7 +1218,7 @@ static LmnBinStrRef lmn_mem_encode_sub(LmnMembraneRef mem, unsigned long tbl_siz
 
   binstr_free(bs);
   bsptr_destroy(&bsp);
-  visitlog_destroy(&visited);
+  visitlog_destroy(visited);
 
   return ret_bs;
 }
@@ -2171,13 +2171,13 @@ static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembraneRef mem, unsigned long tbl_
   LmnBinStrRef ret_bs;
   BinStr bs;
   struct BinStrPtr bsp;
-  struct VisitLog visitlog;
+  VisitLogRef visitlog = visitlog_create();
 
   bs = binstr_make();
   bsptr_init_direct(&bsp, bs);
-  visitlog_init_with_size(&visitlog, tbl_size);
+  visitlog_init_with_size(visitlog, tbl_size);
 
-  dump_root_mem(mem, &bsp, &visitlog);
+  dump_root_mem(mem, &bsp, visitlog);
 
   /* 最後に、ポインタの位置を修正する */
   bs->cur = bsp.pos;
@@ -2185,7 +2185,7 @@ static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembraneRef mem, unsigned long tbl_
 
   binstr_free(bs);
   bsptr_destroy(&bsp);
-  visitlog_destroy(&visitlog);
+  visitlog_destroy(visitlog);
 
   return ret_bs;
 }
@@ -2358,7 +2358,7 @@ BOOL lmn_mem_equals_enc_delta(LmnBinStrRef bs, struct MemDeltaRoot *d)
 
 static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem, unsigned long tbl_size)
 {
-  LmnMeqLog log;
+  LmnMeqLog *log;
   BsDecodeLog *ref_log;
   int i_bs, i_ref;
   BOOL t;
@@ -2374,20 +2374,20 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem, unsigned lon
 
 #ifndef BS_MEMEQ_OLD
   ref_log = NULL;
-  tracelog_init_with_size(&log, tbl_size);
-  tracelog_put_mem(&log, mem, TLOG_MATCHED_ID_NONE);
-  t = mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, &log);
-  tracelog_destroy(&log);
+  log = tracelog_make_with_size(tbl_size);
+  tracelog_put_mem(log, mem, TLOG_MATCHED_ID_NONE);
+  t = mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, log);
+  tracelog_free(log);
 
 #else
 
   /* **とりあえず**これなら参照の数以上のサイズになる */
   ref_log = LMN_NALLOC(BsDecodeLog, round2up(binstr_byte_size(bs) * TAG_IN_BYTE));
-  visitlog_init_with_size(&log, tbl_size);
-  t = mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, &log)
+  log = visitlog_make_with_size(log, tbl_size);
+  t = mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, log)
       /* memに未訪問のプロセスが存在する場合, FALSE */
-      && visitlog_element_num(&log) == process_num(mem);
-  visitlog_destroy(&log);
+      && visitlog_element_num(log) == process_num(mem);
+  visitlog_free(log);
   LMN_FREE(ref_log);
 #endif
 

@@ -22,4 +22,8 @@ liblmn_vm_a_SOURCES =                              \
 	special_atom.c special_atom.h \
 	symbol.c symbol.h \
 	system_ruleset.c system_ruleset.h \
-	task.c task.h
+	task.c task.h \
+	process_table.cpp process_table.h \
+	simply_process_table.cpp simply_process_table.h        \
+	trace_log.h              trace_log.cpp                 \
+	simply_trace_log.h       simply_trace_log.cpp          

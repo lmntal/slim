@@ -1,8 +1,7 @@
 /*
- * vm.h
+ * simply_trace_log.c
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,31 +33,98 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
-
-/**
- * @defgroup Ext
- */
-
-/**
- * @defgroup VM
- */
-
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
-#include "process_table.h"
-#include "simply_process_table.h"
-#include "trace_log.h"
 #include "simply_trace_log.h"
 
-#endif /* LMN_VM_H */
+
+#include "simply_process_table.h"
+#include "trace_log.h"
+
+
+class SimpleTraceLog {
+  SimpleProcessTable tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
+  LogTracker tracker;
+
+public:
+  SimpleTraceLog() {}
+  SimpleTraceLog(unsigned long size) : tbl(size) {}
+
+  void visit(LmnWord key) {
+    tracker.trace(key);
+    tbl.put(key, true);
+  }
+
+  void leave(LmnWord key) {
+    tbl.unput(key);
+  }
+
+  template<typename T>
+  bool is_visited(T key) {
+    return tbl.contains(key);
+  }
+
+  void backtrack() {
+    tracker.revert(this);
+  }
+
+  void set_btpoint() {
+    tracker.push();
+  }
+
+  void continue_trace() {
+    tracker.pop();
+  }
+};
+
+
+/*------------
+ * SimpleTraceLog
+ */
+
+SimplyLog simplylog_make() {
+  return new SimpleTraceLog;
+}
+
+SimplyLog simplylog_make_with_size(unsigned long size) {
+  return new SimpleTraceLog(size);
+}
+
+void simplylog_free(SimplyLog s)
+{
+  delete s;
+}
+
+void simplylog_put(SimplyLog l, LmnWord key)
+{
+  l->visit(key);
+}
+
+void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom) {
+  simplylog_put(l, LMN_SATOM_ID(atom));
+}
+
+void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) {
+  simplylog_put(l, lmn_mem_id(mem));
+}
+
+BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom) {
+  return l->is_visited(atom);
+}
+
+BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem) {
+  return l->is_visited(mem);
+}
+
+void simplylog_backtrack(SimplyLog l) {
+  l->backtrack();
+}
+
+void simplylog_set_btpoint(SimplyLog l) {
+  l->set_btpoint();
+}
+
+void simplylog_continue_trace(SimplyLog l) {
+  l->continue_trace();
+}
+

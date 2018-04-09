@@ -1,8 +1,7 @@
 /*
- * vm.h
+ * simply_trace_log.h
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,31 +33,46 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+#ifndef SIMPLY_TRACE_LOG_H
+#define SIMPLY_TRACE_LOG_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include "vm/vm.h"
+
+/** ------
+ *  SimpleTraceLog
+ */
+
+
+
+typedef struct SimpleTraceLog *SimplyLog;
 
 /**
- * @defgroup Ext
+ * Function ProtoTypes
  */
 
-/**
- * @defgroup VM
- */
+SimplyLog simplylog_make();
+SimplyLog simplylog_make_with_size(unsigned long size);
+void simplylog_free(SimplyLog trc);
 
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
-#include "process_table.h"
-#include "simply_process_table.h"
-#include "trace_log.h"
-#include "simply_trace_log.h"
+void simplylog_put(SimplyLog l, LmnWord key);
+void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom);
+void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem);
+BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom);
+BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem);
+void simplylog_backtrack(SimplyLog l);
+void simplylog_set_btpoint(SimplyLog l);
+void simplylog_continue_trace(SimplyLog l);
 
-#endif /* LMN_VM_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SIMPLY_TRACE_LOG_H */
+
