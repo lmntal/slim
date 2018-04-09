@@ -1,5 +1,5 @@
 /*
- * file_util.c - file utilities
+ * process_util.c - process utility
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,64 +37,58 @@
  * $Id$
  */
 
-#include "file_util.h"
-#include <string.h>
-#include "../arch.h"
+/* 外部プログラムの起動など、プロセス関連の便利関数の定義 */
+
+extern "C"{
 #include <stdio.h>
 #include <stdlib.h>
-
-char *build_path(const char *dir, const char *component)
-{
-  const int dir_len = strlen(dir);
-  const int comp_len = strlen(component);
-  char *buf;
-
-  if (dir_len > 0 && dir[dir_len - 1] == DIR_SEPARATOR_CHAR) {
-    buf = (char *)malloc(sizeof(char) * dir_len + comp_len + 1);
-    sprintf(buf, "%s%s", dir, component);
-  } else {
-    buf = (char *)malloc(sizeof(char) * dir_len + comp_len +
-                 strlen(DIR_SEPARATOR_STR) + comp_len + 1);
-    sprintf(buf, "%s%s%s", dir, DIR_SEPARATOR_STR, component);
-  }
-
-  return buf;
+#include <sys/wait.h>
+#include "process_util.h"
 }
 
-char *basename_ext(const char *path)
+/* program_pathにあるプログラムを引数argsで起動し、プログラムの出力のストリームを返す。*/
+FILE *run_program(const char *program_path, char **args)
 {
-  char *buf = strdup(path);
-  int len = strlen(buf);
-  int i;
+   pid_t pid;
+   int pipes[2];
 
-  for (i = len-1; i >= 0; i--) {
-    if (buf[i] == '.') {
-      buf[i] = '\0';
-      break;
-    }
-  }
+   if (pipe(pipes)) { /* fail : -1 */
+     perror("pipe failed");
+     exit(EXIT_FAILURE);
+   }
 
-  return buf;
-}
+   pid = fork();
 
-char *extension(const char *path)
-{
-  int len = strlen(path);
-  int i;
-  char *ext;
+   switch (pid) {
+   case 0: /* 子プロセス */
+   {
+     int old;
+     close(fileno(stdout));
+     old = dup(pipes[1]);
+     close(pipes[0]);
+     close(pipes[1]);
 
-  for (i = len-1; i >= 0; i--) {
-    if (path[i] == '.') {
-      break;
-    }
-  }
+     if (execv(program_path, args) == -1) {
+       perror("execv failed");
+       exit(EXIT_FAILURE);
+     }
+   }
+   case -1: /* fork失敗 */
+     perror("fork failed");
+     exit(EXIT_FAILURE);
+   default: /* 親プロセス */
+   {
+//     int status;
 
-  if (i < 0) {
-    ext = strdup("");
-  } else {
-    ext = (char *)malloc(sizeof(char) * (len - i));
-    sprintf(ext, "%s", path + i + 1);
-  }
+     close(pipes[1]);
+     /* TODO: パイプのバッファを越える出力を受けた場合,
+      *       読み込むまでブロックされるためデッドロックしてしまう */
+//     if (waitpid(pid, &status, 0) == -1) {
+//       perror("waitpid failed");
+//       exit(EXIT_FAILURE);
+//     }
 
-  return ext;
+     return fdopen(pipes[0], "r");
+   }
+   }
 }

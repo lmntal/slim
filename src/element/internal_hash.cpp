@@ -45,6 +45,7 @@
  *
  */
 
+extern "C"{
 #include "internal_hash.h"
 #include "../config.h"
 #include "util.h"
@@ -52,6 +53,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+}
 
 /* Hashtable
  *
