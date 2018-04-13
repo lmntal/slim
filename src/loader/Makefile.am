@@ -18,10 +18,10 @@ liblmn_loader_a_CFLAGS =                               \
 
 liblmn_loader_a_SOURCES = \
         loader.h \
-        load.c load.h \
+        load.cpp load.h \
         il_parser.y il_lexer.l \
-        syntax.c syntax.h \
-        translate.c translate.h \
+        syntax.cpp syntax.h \
+        translate.cpp translate.h \
         translate_generated.c translate_generator.rb \
         translate_generator.in \
         so.h \

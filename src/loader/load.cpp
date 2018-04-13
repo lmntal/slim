@@ -1,5 +1,5 @@
 /*
- * load.c - Load Intermediate Language
+ * load.cpp - Load Intermediate Language
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -40,9 +40,10 @@
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
+
+extern "C" {
 #include "load.h"
 #include "lmntal.h"
-#include "syntax.h"
 #include "arch.h"
 #include "vm/vm.h"
 #include "ffi/lmntal_system_adapter.h"
@@ -60,181 +61,11 @@ typedef void* yyscan_t;
 
 /* prototypes */
 
-void dump_module(ModuleRef m);
-void dump_il(ILRef il);
 void build_cmd(char *buf, char *file_name);
 FILE *compile(char *filename);
-
-/*----------------------------------------------------------------------
- * Dump(デバッグ用)。最初使用しただけなので dump_*は消してOK
- */
-
-static void dump_functor(FunctorRef f)
-{
-  switch (functor_get_type(f)) {
-  case STX_SYMBOL:
-    printf("%s.%s_%d[%d]",
-           lmn_id_to_name(LMN_FUNCTOR_MODULE_ID(functor_get_id(f))),
-           lmn_id_to_name(LMN_FUNCTOR_NAME_ID(functor_get_id(f))),
-           LMN_FUNCTOR_ARITY(functor_get_id(f)),
-           functor_get_id(f)
-           );
-    break;
-  case INT_FUNC:
-    printf("%ld", functor_get_int_value(f));
-    break;
-  case FLOAT_FUNC:
-    printf("%f", functor_get_float_value(f));
-    break;
-  case STX_IN_PROXY:
-    printf("$in");
-    break;
-  case STX_OUT_PROXY:
-    printf("$out");
-    break;
-  case STX_UNIFY:
-    printf("=");
-    break;
-  default:
-    fprintf(stderr, "functor type %d", functor_get_type(f));
-    lmn_fatal("unexpected");
-  }
 }
 
-static void dump_instr(InstructionRef inst);
-
-static void dump_arg(InstrArgRef arg)
-{
-  switch (inst_arg_get_type(arg)) {
-  case InstrVar:
-    printf("%d", inst_arg_get_var(arg));
-    break;
-  case Label:
-    printf("L%d", inst_arg_get_label(arg));
-    break;
-  case String:
-    printf("\"%s\"", lmn_id_to_name(inst_arg_get_str_id(arg)));
-    break;
-  case LineNum:
-    printf("Line:%d", inst_arg_get_linenum(arg));
-    break;
-  case ArgRuleset:
-    printf("@%d", inst_arg_get_ruleset_id(arg));
-    break;
-  case ArgFunctor:
-    dump_functor(inst_arg_get_functor(arg));
-    break;
-  case InstrVarList:
-  {
-    unsigned int i;
-    ArgList l;
-
-    l = inst_arg_get_var_list(arg);
-    printf("[");
-    for (i = 0; i < var_list_num(l); i++) {
-      if (i > 0) printf(", ");
-      printf("%ld", (long)var_list_get(l, i));
-    }
-    printf("]");
-    break;
-  }
-  case InstrList:
-  {
-    unsigned int i;
-    InstList l;
-
-    l = inst_arg_get_inst_list(arg);
-    printf("[\n");
-    for (i = 0; i < inst_list_num(l); i++) {
-      printf("   ");
-      dump_instr(inst_list_get(l, i));
-    }
-    printf("     ]");
-    break;
-  }
-  default:
-    LMN_ASSERT(FALSE);
-    break;
-  }
-}
-
-static void dump_instr(InstructionRef inst)
-{
-  unsigned int i;
-  ArgList l;
-
-  printf("     %d arg= [", inst_get_id(inst));
-  l = inst_get_args(inst);
-  for (i = 0; i < arg_list_num(l); i++) {
-    if (i > 0) printf(", ");
-    dump_arg(arg_list_get(l, i));
-  }
-  printf("]\n");
-}
-
-static void dump_instblock(InstBlockRef ib)
-{
-  unsigned int i;
-  InstList l;
-
-  printf("    Label=%d \n", inst_block_get_label(ib));
-  l = inst_block_get_instructions(ib);
-  for (i = 0; i < inst_list_num(l); i++) {
-    dump_instr(inst_list_get(l, i));
-  }
-}
-
-static void dump_rule(RuleRef rule)
-{
-  printf("Rule NAME=%s \n", lmn_id_to_name(rule_get_name(rule)));
-  printf("  amatch \n");
-  dump_instblock(rule_get_amatch(rule));
-  printf("  mmatch \n");
-  dump_instblock(rule_get_mmatch(rule));
-  printf("  guard \n");
-  dump_instblock(rule_get_guard(rule));
-  printf("  body \n");
-  dump_instblock(rule_get_body(rule));
-}
-
-static void dump_ruleset(RuleSetRef rs)
-{
-  unsigned int i;
-  RuleList rl;
-
-  if (ruleset_is_system_ruleset(rs)) printf("SystemRuleset:\n");
-  printf("Ruleset ID=%d \n", ruleset_get_id(rs));
-
-  rl = ruleset_get_rulelist(rs);
-  for (i = 0; i < rulelist_num(rl); i++) {
-    dump_rule(rulelist_get(rl, i));
-  }
-}
-
-void dump_module(ModuleRef m)
-{
-  printf("module %s, %d\n",
-         lmn_id_to_name(module_get_name(m)),
-         module_get_ruleset(m));
-}
-
-void dump_il(ILRef il)
-{
-  int i;
-  RuleSets rss;
-  ModuleList ml;
-
-  rss = il_get_rulesets(il);
-  ml = il_get_module_list(il);
-
-  for (i = 0; i < rulesets_num(rss); i++) {
-    dump_ruleset(rulesets_get(rss, i));
-  }
-  for (i = 0; i < module_list_num(ml); i++) {
-    dump_module(module_list_get(ml, i));
-  }
-
-}
+#include "syntax.hpp"
 
 /*
  *  Instruction Format
@@ -280,7 +111,6 @@ void dump_il(ILRef il)
  *
  */
 
-#include "syntax.h"
 
 /* 構文木の読み込み時に使うデータ。各ルールの解析じに作成し，解析後に破
    棄する。ラベルは各ルールにローカルなものとして処理している */
@@ -363,52 +193,50 @@ static void load_arg(InstrArgRef arg, ContextRef c)
 {
   unsigned int i;
 
-  switch (inst_arg_get_type(arg)) {
+  switch (arg->type) {
   case InstrVar:
-    WRITE_MOVE(LmnInstrVar, inst_arg_get_var(arg), c);
+    WRITE_MOVE(LmnInstrVar, arg->instr_var, c);
     break;
   case Label:
-    st_insert(c->loc_to_label_ref, (st_data_t)c->loc, (st_data_t)inst_arg_get_label(arg));
+    st_insert(c->loc_to_label_ref, (st_data_t)c->loc, (st_data_t)arg->label);
     MOVE(LmnJumpOffset, c);
     break;
   case InstrVarList:
     {
-      VarList var_list = inst_arg_get_var_list(arg);
+      VarList var_list = arg->var_list;
 
-//      WRITE_MOVE(int16_t, var_list_num(var_list), c);
-      WRITE_MOVE(LmnInstrVar, var_list_num(var_list), c);
-      for (i = 0; i < var_list_num(var_list); i++) {
-       // WRITE_MOVE(LmnInstrVar, var_list_get(var_list, i), c);
-       load_arg(var_list_get(var_list, i), c);
+      WRITE_MOVE(LmnInstrVar, var_list->size(), c);
+      for (auto &v : *var_list) {
+        load_arg(v, c);
       }
     }
     break;
   case String:
-    WRITE_MOVE(lmn_interned_str, inst_arg_get_str_id(arg), c);
+    WRITE_MOVE(lmn_interned_str, arg->str_id, c);
     break;
   case LineNum:
-    WRITE_MOVE(LmnLineNum, inst_arg_get_linenum(arg), c);
+    WRITE_MOVE(LmnLineNum, arg->line_num, c);
     break;
   case ArgFunctor:
     {
-      FunctorRef functor = inst_arg_get_functor(arg);
+      FunctorRef functor = arg->functor;
 
-      switch (functor_get_type(functor)) {
+      switch (functor->type) {
       case STX_SYMBOL:
         WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
-        WRITE_MOVE(LmnFunctor, functor_get_id(functor), c);
+        WRITE_MOVE(LmnFunctor, functor->functor_id, c);
         break;
       case INT_FUNC:
         WRITE_MOVE(LmnLinkAttr, LMN_INT_ATTR, c);
-        WRITE_MOVE(long, functor_get_int_value(functor), c);
+        WRITE_MOVE(long, static_cast<long>(*functor), c);
         break;
       case FLOAT_FUNC:
         WRITE_MOVE(LmnLinkAttr, LMN_DBL_ATTR, c);
-        WRITE_MOVE(double, functor_get_float_value(functor), c);
+        WRITE_MOVE(double, static_cast<double>(*functor), c);
         break;
       case STRING_FUNC:
         WRITE_MOVE(LmnLinkAttr, LMN_STRING_ATTR, c);
-        WRITE_MOVE(lmn_interned_str, functor_get_string_value(functor), c);
+        WRITE_MOVE(lmn_interned_str, static_cast<lmn_interned_str>(*functor), c);
         break;
       case STX_IN_PROXY:
         WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
@@ -429,7 +257,7 @@ static void load_arg(InstrArgRef arg, ContextRef c)
       break;
     }
   case ArgRuleset:
-    WRITE_MOVE(LmnRulesetId, inst_arg_get_ruleset_id(arg), c);
+    WRITE_MOVE(LmnRulesetId, arg->ruleset, c);
     break;
   case InstrList:
     {
@@ -441,10 +269,9 @@ static void load_arg(InstrArgRef arg, ContextRef c)
       start = c->loc;
       MOVE(LmnSubInstrSize, c);
 
-      inst_list = inst_arg_get_inst_list(arg);
-      for (i = 0; i < inst_list_num(inst_list); i++) {
-        load_instruction(inst_list_get(inst_list, i), c);
-      }
+      inst_list = arg->inst_list;
+      for (auto &inst : *inst_list)
+        load_instruction(inst, c);
 
       /* startの位置に現在の位置との差を書き込む */
       t      = c->loc;
@@ -461,23 +288,19 @@ static void load_arg(InstrArgRef arg, ContextRef c)
 
 static void load_instruction(InstructionRef inst, ContextRef c)
 {
-  ArgList args;
-  int i;
-  int arg_num;
+  ArgList args = inst->args;
 
-  args = inst_get_args(inst);
-
-  WRITE_MOVE(LmnInstrOp, inst_get_id(inst), c);
-  arg_num = arg_list_num(args);
+  WRITE_MOVE(LmnInstrOp, inst->id, c);
+  auto arg_num = args->size();
 
   /* REMOVEATOMは引数の数が2と3の場合がある。第三引数の
      ファンクタは無視する */
-  if (inst_get_id(inst) == INSTR_REMOVEATOM && arg_num == 3) {
+  if (inst->id == INSTR_REMOVEATOM && arg_num == 3) {
     arg_num = 2;
   }
 
-  for (i = 0; i < arg_num; i++) {
-    load_arg(arg_list_get(args, i), c);
+  for (int i = 0; i < arg_num; i++) {
+    load_arg(args->at(i), c);
   }
 }
 
@@ -486,15 +309,14 @@ static void load_inst_block(InstBlockRef ib, ContextRef c)
   InstList inst_list;
   unsigned int i;
 
-  if (inst_block_has_label(ib)) {
-    st_insert(c->label_to_loc, (st_data_t)inst_block_get_label(ib), (st_data_t)c->loc);
+  if (ib->has_label()) {
+    st_insert(c->label_to_loc, (st_data_t)ib->label, (st_data_t)c->loc);
   }
 
-  inst_list = inst_block_get_instructions(ib);
+  inst_list = ib->instrs;
 
-  for (i = 0; i < inst_list_num(inst_list); i++) {
-    load_instruction(inst_list_get(inst_list, i), c);
-  }
+  for (auto &inst : *inst_list)
+    load_instruction(inst, c);
 }
 
 static int fill_label_ref(st_data_t loc, st_data_t label, void *c_)
@@ -524,10 +346,10 @@ LmnRuleRef load_rule(RuleRef rule)
   c->label_to_loc = st_init_numtable();
   c->loc_to_label_ref = st_init_numtable();
 
-/*   load_inst_block(rule_get_amatch(rule), c); */
-  load_inst_block(rule_get_mmatch(rule), c);
-  load_inst_block(rule_get_guard(rule), c);
-  load_inst_block(rule_get_body(rule), c);
+/*   load_inst_block(rule->amatch, c); */
+  load_inst_block(rule->mmatch, c);
+  load_inst_block(rule->guard, c);
+  load_inst_block(rule->body, c);
 
   /* ラベルを参照している位置に、実際のラベルの位置を書き込む */
   st_foreach(c->loc_to_label_ref, (st_iter_func)fill_label_ref, (st_data_t)c);
@@ -536,7 +358,7 @@ LmnRuleRef load_rule(RuleRef rule)
   st_free_table(c->loc_to_label_ref);
 
   runtime_rule = lmn_rule_make(c->byte_seq, c->cap, ANONYMOUS);
-  if (rule_get_hasuniq(rule)) lmn_rule_init_uniq_rule(runtime_rule);
+  if (rule->hasuniq) lmn_rule_init_uniq_rule(runtime_rule);
   context_free(c);
   return runtime_rule;
 }
@@ -548,15 +370,14 @@ static LmnRuleSetRef load_ruleset(RuleSetRef rs)
   unsigned int i;
 
   runtime_ruleset = lmn_ruleset_make(ruleset_get_id(rs), 10);
-  rl = ruleset_get_rulelist(rs);
+  rl = rs->rules;
 
-  for (i = 0; i < rulelist_num(rl); i++) {
-    lmn_ruleset_put(runtime_ruleset, load_rule(rulelist_get(rl, i)));
-  }
+  for (auto &r : *rl)
+    lmn_ruleset_put(runtime_ruleset, load_rule(r));
 
   lmn_set_ruleset(runtime_ruleset, ruleset_get_id(rs));
 
-  if (ruleset_is_system_ruleset(rs)) {
+  if (rs->is_system_ruleset) {
     /* 各ルールをシステムルールセットに追加する */
     for (i = 0; i < lmn_ruleset_rule_num(runtime_ruleset); i++) {
       LmnRuleRef rule2 = lmn_rule_copy(lmn_ruleset_get_rule(runtime_ruleset, i));
@@ -576,10 +397,10 @@ static LmnRuleSetRef load_il(ILRef il)
   int i;
 
   /* load rules */
-  rulesets     = il_get_rulesets(il);
+  rulesets     = il->rulesets;
   first_ruleset = NULL;
-  for (i = 0; i < rulesets_num(rulesets); i++) {
-    t = load_ruleset(rulesets_get(rulesets, i));
+  for (i = 0; i < rulesets->size(); i++) {
+    t = load_ruleset(rulesets->at(i));
     if (i == 0) first_ruleset = t;
   }
 
@@ -589,10 +410,9 @@ static LmnRuleSetRef load_il(ILRef il)
 
 
   /* load module list */
-  module_list = il_get_module_list(il);
-  for (i = 0; i < module_list_num(module_list); i++) {
-    ModuleRef m = module_list_get(module_list, i);
-    lmn_set_module(module_get_name(m), lmn_ruleset_from_id(module_get_ruleset(m)));
+  module_list = il->modules;
+  for (auto &m : *module_list) {
+    lmn_set_module(m->name_id, lmn_ruleset_from_id(m->ruleset_id));
   }
 
   return first_ruleset;
@@ -770,7 +590,7 @@ LmnRuleSetRef load(FILE *in)
   }
 
   first_ruleset = load_il(il);
-  il_free(il);
+  delete il;
   return first_ruleset;
 }
 
@@ -991,6 +811,7 @@ FILE *fopen_il_file(char *file_name)
   return 0;
 }
 
+extern "C"
 int ilparse(yyscan_t scanner, ILRef *il, RuleRef *rule);
 
 /* inから中間言語を読み込み、構文木を作る。構文木はilに設定される。
@@ -1037,7 +858,8 @@ int il_parse_rule(FILE *in, RuleRef *rule)
 
 char *create_formatted_basename(const char *filepath)
 {
-  char *begin, *end, *basename, *p;
+  const char *begin, *end, *p;
+  char *basename;
   int i;
 
   begin = strrchr(filepath, DIR_SEPARATOR_CHAR); /* パス内最後の/を探す */

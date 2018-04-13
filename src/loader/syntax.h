@@ -50,16 +50,16 @@
  */
 
 /* 型名の解決の為に上に持ってきた */
-typedef Vector *InstList;
+typedef struct __InstList *InstList;
 
 typedef struct InstrArg *InstrArgRef;
 
+
 /* List of instrction variables */
-typedef Vector *VarList;
+typedef struct __VarList *VarList;
+
 VarList var_list_make(void);
 void var_list_push(VarList l, InstrArgRef n);
-unsigned int var_list_num(VarList l);
-InstrArgRef var_list_get(VarList l, int i);
 
 /* Functor */
 
@@ -75,24 +75,10 @@ FunctorRef string_functor_make(lmn_interned_str name);
 FunctorRef module_symbol_functor_make(lmn_interned_str module,
                                    lmn_interned_str name,
                                    int arity);
-enum FunctorType functor_get_type(FunctorRef f);
-long functor_get_int_value(FunctorRef f);
-double functor_get_float_value(FunctorRef f);
-lmn_interned_str functor_get_string_value(FunctorRef f);
-int functor_get_id(FunctorRef f);
 
 /* Instruction Argument */
 
 InstrArgRef inst_arg_make(enum ArgType type);
-enum ArgType inst_arg_get_type(InstrArgRef arg);
-int inst_arg_get_var(InstrArgRef arg);
-int inst_arg_get_label(InstrArgRef arg);
-lmn_interned_str inst_arg_get_str_id(InstrArgRef arg);
-int inst_arg_get_linenum(InstrArgRef arg);
-FunctorRef inst_arg_get_functor(InstrArgRef arg);
-int inst_arg_get_ruleset_id(InstrArgRef arg);
-VarList inst_arg_get_var_list(InstrArgRef arg);
-InstList inst_arg_get_inst_list(InstrArgRef arg);
 
 InstrArgRef instr_var_arg_make(int var);
 InstrArgRef ruleset_arg_make(int ruleset_id);
@@ -104,26 +90,19 @@ InstrArgRef inst_list_arg_make(InstList inst_list);
 
 /* List of arguments */
 
-typedef Vector *ArgList;
+typedef struct __ArgList *ArgList;
 ArgList arg_list_make(void);
-unsigned int arg_list_num(ArgList l);
 void arg_list_push(ArgList l, InstrArgRef arg);
-InstrArgRef arg_list_get(ArgList l, int index);
 
 /* Instruction */
 
 typedef struct Instruction *InstructionRef;
-
 InstructionRef inst_make(enum LmnInstruction id, ArgList args);
-int inst_get_id(InstructionRef inst);
-ArgList inst_get_args(InstructionRef inst);
 
 /* List of instructions */
 
 InstList inst_list_make(void);
 void inst_list_push(InstList l, InstructionRef inst);
-unsigned int inst_list_num(InstList l);
-InstructionRef inst_list_get(InstList l, int index);
 
 /* amatch, memmatchなど、命令をまとめたもの */
 
@@ -131,9 +110,6 @@ typedef struct InstBlock *InstBlockRef;
 
 InstBlockRef inst_block_make(int label, InstList instrs );
 InstBlockRef inst_block_make_without_label(InstList instrs);
-int inst_block_get_label(InstBlockRef ib);
-InstList inst_block_get_instructions(InstBlockRef ib);
-BOOL inst_block_has_label(InstBlockRef ib);
 
 /* Rule */
 
@@ -142,59 +118,43 @@ typedef struct Rule *RuleRef;
 RuleRef rule_make_anonymous(BOOL hasuniq, InstBlockRef amatch, InstBlockRef mmatch, InstBlockRef guard, InstBlockRef body);
 lmn_interned_str rule_get_name(RuleRef rule);
 void stx_rule_free(RuleRef rule);
-InstBlockRef rule_get_amatch(RuleRef rule);
-InstBlockRef rule_get_mmatch(RuleRef rule);
-InstBlockRef rule_get_guard(RuleRef rule);
-InstBlockRef rule_get_body(RuleRef rule);
-BOOL rule_get_hasuniq(RuleRef rule);
 
 /* List of rules */
 
-typedef Vector *RuleList;
+typedef struct __RuleList *RuleList;
 RuleList rulelist_make(void);
 void rulelist_push(RuleList l, RuleRef r);
-RuleRef rulelist_get(RuleList l, int index);
-unsigned int rulelist_num(RuleList l);
 
 /* Rule set */
 
 typedef struct RuleSet *RuleSetRef;
 
 RuleSetRef ruleset_make(int id, RuleList rules, BOOL is_system_ruleset);
-BOOL ruleset_is_system_ruleset(RuleSetRef rs);
 int ruleset_get_id(RuleSetRef rs);
-RuleList ruleset_get_rulelist(RuleSetRef rs);
 
 /* List of rule sets */
 
-typedef Vector *RuleSets;
+typedef struct __RuleSets *RuleSets;
 RuleSets rulesets_make(void);
 void rulesets_push(RuleSets rulesets, RuleSetRef rs);
-int rulesets_num(RuleSets rulesets);
-RuleSetRef rulesets_get(RuleSets rulesets, int i);
 
 
 /* Module, モジュール名とルールセットの対応 */
 
 typedef struct Module *ModuleRef;
-
 ModuleRef module_make(lmn_interned_str name_id, int ruleset_id);
-lmn_interned_str module_get_name(ModuleRef m);
-int module_get_ruleset(ModuleRef m);
 
 /* List of modules */
 
-typedef Vector *ModuleList;
-
+typedef struct __ModuleList *ModuleList;
 ModuleList module_list_make(void);
 void module_list_push(ModuleList l, ModuleRef m);
-int module_list_num(ModuleList l);
-ModuleRef module_list_get(ModuleList l, int i);
 
 /* Inline */
 /* ファイル名が並んでいるだけ？ */
 
-typedef Vector *InlineList;
+typedef struct __InlineList *InlineList;
+
 InlineList inline_list_make(void);
 void inline_list_push(InlineList l, lmn_interned_str file_name);
 
@@ -203,10 +163,6 @@ void inline_list_push(InlineList l, lmn_interned_str file_name);
 typedef struct IL *ILRef;
 
 ILRef il_make(RuleSets rulesets, ModuleList module_list, InlineList inlien_list);
-RuleSets il_get_rulesets(ILRef il);
-ModuleList il_get_module_list(ILRef il);
-InlineList il_get_inline_list(ILRef il);
-void il_free(ILRef il);
 
 /* 字句解析器で用いる情報。
  * TODO: ここに便宜上ここに置いておくが、適切な場所ではない */
