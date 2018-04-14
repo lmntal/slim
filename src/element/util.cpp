@@ -37,9 +37,11 @@
  * $Id$
  */
 
+extern "C"{
 #include "util.h"
 #include "../lmntal.h"
 #include "error.h"
+}
 
 char *int_to_str(long n)
 {

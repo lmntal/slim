@@ -36,14 +36,14 @@
  *
  * $Id$
  */
-
+extern "C"{
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "error.h"
 #include "util.h"
 #include "lmnstring.h"
 #include "port.h"
-
+}
 
 static int port_atom_type; /* special atom type */
 static LmnFunctor eof_functor;
@@ -367,7 +367,7 @@ LmnStringRef port_read_token(LmnPortRef port)
 /* 文字はunaryアトムで表現している */
 int port_putc(LmnPortRef port, LmnSAtom unary_atom)
 {
-  return port_put_raw_s(port, LMN_SATOM_STR(unary_atom));
+  return port_put_raw_s(port, LMN_SATOM_STR((LmnSymbolAtomRef)unary_atom));
 }
 
 /* Cの文字をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
@@ -527,7 +527,7 @@ void cb_port_getc(LmnReactCxtRef rc,
   if (c == EOF) sprintf(buf, "eof");
   else sprintf(buf, "%c", c);
   a = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern(buf), 1));
-  mem_push_symbol_atom(mem, a);
+  mem_push_symbol_atom(mem, (LmnSymbolAtomRef)a);
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
                   a, LMN_ATTR_MAKE_LINK(0), 0);
@@ -690,7 +690,7 @@ void cb_port_read_line(LmnReactCxtRef rc,
                     s, LMN_SP_ATOM_ATTR, 0);
   } else {
     LmnSAtom eof = lmn_new_atom(eof_functor);
-    mem_push_symbol_atom(mem, LMN_SATOM(eof));
+    mem_push_symbol_atom(mem, (LmnSymbolAtomRef)LMN_SATOM(eof));
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
                     eof, LMN_ATTR_MAKE_LINK(0), 0);
@@ -721,7 +721,7 @@ void cb_port_read_token(LmnReactCxtRef rc,
                     s, LMN_SP_ATOM_ATTR, 0);
   } else {
     LmnSAtom eof = lmn_new_atom(eof_functor);
-    mem_push_symbol_atom(mem, LMN_SATOM(eof));
+    mem_push_symbol_atom(mem, (LmnSymbolAtomRef)LMN_SATOM(eof));
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
                     eof, LMN_ATTR_MAKE_LINK(0), 0);

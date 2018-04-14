@@ -41,6 +41,7 @@
  *  common thread library
  */
 
+extern "C"{
 #define _GNU_SOURCE
 #include "lmntal_thread.h"
 #include "util.h"
@@ -52,6 +53,7 @@
 # include <sys/types.h>
 # define ENABLE_CPU_AFFINITY
 #endif
+}
 
 /* 呼び出したスレッドとn番のCPUを貼り付ける */
 void lmn_thread_set_CPU_affinity(unsigned long n)

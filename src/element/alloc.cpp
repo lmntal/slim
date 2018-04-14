@@ -36,6 +36,7 @@
  * $Id: alloc.c,v 1.3 2008/09/19 05:18:17 taisuke Exp $
  */
 
+extern "C"{
 #include "memory_pool.h"
 #include "vector.h"
 #include "lmntal.h"
@@ -43,7 +44,7 @@
 #include "error.h"
 #include "lmntal_thread.h"
 #include "util.h"
-
+}
 
 /*----------------------------------------------------------------------
  * memory allocation for atom
@@ -64,7 +65,7 @@ void mpool_init()
 
 LmnSymbolAtomRef lmn_new_atom(LmnFunctor f)
 {
-  LmnSAtom ap;
+  LmnSymbolAtomRef ap;
   int arity, cid;
   arity = LMN_FUNCTOR_ARITY(f);
   cid   = env_my_thread_id();
@@ -73,7 +74,7 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f)
     atom_memory_pools[arity][cid] =
       memory_pool_new(LMN_SATOM_SIZE(arity));
   }
-  ap = LMN_SATOM(memory_pool_malloc(atom_memory_pools[arity][cid]));
+  ap = (LmnSymbolAtomRef)memory_pool_malloc(atom_memory_pools[arity][cid]);
   LMN_SATOM_SET_FUNCTOR(ap, f);
   LMN_SATOM_SET_ID(ap, 0);
 
