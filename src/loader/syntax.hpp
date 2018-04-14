@@ -40,6 +40,7 @@
 #define LMN_SYNTAX_HPP
 
 #include <vector>
+#include <memory>
 
 extern "C" {
 #include "lmntal.h"
@@ -48,9 +49,6 @@ extern "C" {
 #include "syntax.h"
 }
 
-struct __VarList : std::vector<InstrArgRef> {
-  using std::vector<InstrArgRef>::vector;
-};
 
 struct Functor {
   enum FunctorType type;
@@ -62,15 +60,13 @@ struct Functor {
   };
 
   Functor(FunctorType type) : type(type) {};
-  Functor(long v) : type(INT_FUNC) {
-    this->int_value = v;
-  };
-  Functor(double v) : type(FLOAT_FUNC) {
-    this->float_value = v;
-  };
-  Functor(lmn_interned_str v) : type(STRING_FUNC) {
-    this->str = v;
-  };
+  Functor(long v) : type(INT_FUNC), int_value(v) {}
+  Functor(double v) : type(FLOAT_FUNC), float_value(v) {}
+  Functor(lmn_interned_str v) : type(STRING_FUNC), str(v) {}
+  Functor(lmn_interned_str name, int arity) :
+    Functor(ANONYMOUS, name, arity) {}
+  Functor(lmn_interned_str module, lmn_interned_str name, int arity) :
+    type(STX_SYMBOL), functor_id(lmn_functor_intern(module, name, arity)) {}
 
   operator long() {
     return int_value;
@@ -83,6 +79,8 @@ struct Functor {
   }
 };
 
+struct __VarList;
+
 struct InstrArg {
   enum ArgType type;
   union {
@@ -93,13 +91,22 @@ struct InstrArg {
     int line_num;
     FunctorRef functor;
     int ruleset;
-    VarList var_list;
+    __VarList *var_list;
     InstList inst_list;
   };
 
   InstrArg(ArgType type) : type(type) {};
 
   ~InstrArg();
+
+  template <ArgType type, typename V>
+  static InstrArg *create(V value);
+};
+
+struct __VarList : std::vector<InstrArgRef> {
+  using std::vector<InstrArgRef>::vector;
+
+  ~__VarList() { for (auto r : *this) delete r; }
 };
 
 struct __ArgList : std::vector<InstrArgRef> {
@@ -193,13 +200,6 @@ struct RuleSet {
   }
 };
 
-struct __RuleSets : std::vector<RuleSetRef> {
-  using std::vector<RuleSetRef>::vector;
-
-  ~__RuleSets() {
-    for (auto &r : *this) delete r;
-  }
-};
 
 struct Module {
   lmn_interned_str name_id;
@@ -209,25 +209,15 @@ struct Module {
     name_id(name_id), ruleset_id(ruleset_id) {}
 };
 
-struct __ModuleList : std::vector<ModuleRef> {
-  using std::vector<ModuleRef>::vector;
-
-  ~__ModuleList() {
-    for (auto &m : *this) delete m;
-  }
-};
-
-struct __InlineList : std::vector<lmn_interned_str> {
-  using std::vector<lmn_interned_str>::vector;
-};
-
 struct IL {
-  RuleSets rulesets;
-  ModuleList modules;
-  InlineList inlines;
+  std::vector<std::shared_ptr<RuleSet>> *rulesets;
+  std::vector<std::unique_ptr<Module>> *modules;
+  std::vector<lmn_interned_str> *inlines;
 
-  IL(RuleSets rulesets, ModuleList module_list, InlineList inline_list) :
+  IL(std::vector<std::shared_ptr<RuleSet>> *rulesets, std::vector<std::unique_ptr<Module>> *module_list, std::vector<lmn_interned_str> *inline_list) :
     rulesets(rulesets), modules(module_list), inlines(inline_list) {}
+  IL(std::vector<std::shared_ptr<RuleSet>> *rulesets) :
+    rulesets(rulesets), modules(new std::vector<std::unique_ptr<Module>>), inlines(new std::vector<lmn_interned_str>) {}
 
   ~IL() {
     delete rulesets;

@@ -1,7 +1,7 @@
 /*
- * il_lexer.l - Intermediate Language scanner
+ * il_lexer.cpp.re - Intermediate Language scanner
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,201 +33,16 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: il_lex.l,v 1.5 2008/09/19 05:18:17 taisuke Exp $
  */
 
-%option reentrant noyywrap bison-bridge bison-locations yylineno
 
+#include "il_lexer.hpp"
 
-%{
-/* need this for the call to atof() below */
-#include <math.h>
-#include <memory.h>
-#include <string.h>
-#include "syntax.h"
+#include <iostream>
+
+#include "lmntal.h"
+#include "syntax.hpp"
 #include "il_parser.hpp"
-#include "vm/vm.h"
-
-
-#define _POSIX_SOURCE 1
-#define YY_NO_INPUT
-#define YY_NO_UNISTD_H
-
-struct lexer_context;
-int get_instr_id(char *);
-
-int ilget_column  (yyscan_t yyscanner);
-void ilset_column (int  column_no , yyscan_t yyscanner);
-
-static struct InstrSpec spec[];
-
-/* エスケープキャラクタから文字への対応表 */
-static char escape_char_map[] =
-  {0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0, '"',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\\',   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\n',   0,
-   0,   0, '\r',  0,'\t',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
-
-char *unescape_c_str(const char *s);
-
-%}
-
-%option nounput
-
-DIGIT    [0-9]
-
-%%
-
- /* ルールは行の先頭から書く。ルール以外（コメントやアクション）を先頭から
-    書くことはできない */
- /* Rules must NOT be indented. Others (comments and actions) must be indented. */
-
- /* This can handle illmatic cases such as
-    'slash star star star slash' or 'slash star slash star slash'.
-    cf. コンパイラの構成と最適化 第2版, pp.65-66, 中田育男, 朝倉書店, 1999 */
-"/*"[^*/]*"*/" /* eat comment */
-"//".*                             /* eat one line comment */
-[ \t\n\r]+                         /* eat blanks */
- /* float */
--?{DIGIT}+"."{DIGIT}+ { yylval->_float = atof(yytext); return FLOAT; }
- /* integer */
--?{DIGIT}+ { yylval->_int = atoi(yytext); return INT; }
-
- /* ruleset id */
-@{DIGIT}+ {
-  /* この時点でVM内で一意のルールセットIDに変換する */
-  /* Convert input text into ruleset ID unique in the VM */
-  st_data_t id_local = atoi(yytext+1);
-  st_data_t id_global;
-  struct lexer_context *c;
-
-  c = yyget_extra(yyscanner);
-  if (!st_lookup(c->ruleset_id_tbl, id_local, &id_global)) {
-    /* テーブルになければ新しく追加 */
-    /* Update ruleset ID table */
-    id_global = lmn_gen_ruleset_id();
-    st_insert(c->ruleset_id_tbl, id_local, id_global);
-  }
-  yylval->_int = (int)id_global;
-  return RULESET_ID; }
-"null" { /* name of anonymous membrane */
-         yylval->str = ANONYMOUS;
-         return DQUOTED_STRING; }
-
- /* label */
-L{DIGIT}+ { yylval->_int = atoi(yytext+1); return LABEL; }
-,                    { return COMMA; }
-\.                   { return PERIOD; }
-:                    { return COLON; }
-"_"                  { return UNDERBAR; }
-\{                   { return LBRACE; }
-\}                   { return RBRACE; }
-\[                   { return LBRACKET; }
-\]                   { return RBRACKET; }
-"$in_2"              { return INSIDE_PROXY; }
-"$out_2"             { return OUTSIDE_PROXY; }
-"Compiled SystemRuleset"   { return KW_COMPILED_SYSTEM_RULESET; }
-"Compiled Ruleset"   { return KW_COMPILED_RULESET; }
-"Compiled Uniq Rule" { return KW_COMPILED_UNIQ_RULE; }
-"Compiled Rule"      { return KW_COMPILED_RULE; }
-"--atommatch"        { return KW_ATOMMATCH; }
-"--memmatch"         { return KW_MEMMATCH; }
-"--guard"            { return KW_GUARD; }
-"--body"             { return KW_BODY; }
-"Inline"             { return KW_INLINE; }
-"Module"             { return KW_MODULE; }
-
- /* instruction name */
-[a-z2]+ {
-  yylval->_int = get_instr_id(yytext);
-  /* 変数のリストと命令のリストは構文解析では判別不可能なので
-　 　命令のリストを持つ中間語命令を特別に扱う */
-  /* Lists of variables and lists of instructions cannot be
-     parsed distinguishedly, so treat instructions accompanied by
-     a list of instructions as special cases. */
-  if (yylval->_int == INSTR_LOOP) { return INST_TK_LOOP; }
-  if (yylval->_int == INSTR_RUN) { return INST_TK_RUN; }
-  if (yylval->_int == INSTR_NOT) { return INST_TK_NOT; }
-  if (yylval->_int == INSTR_GROUP) { return INST_TK_GROUP; }
-  if (yylval->_int == INSTR_BRANCH) { return INST_TK_BRANCH; }
-
-  if (yylval->_int < 0) {
-    fprintf(stderr, "unknown instruction name %s\n", yytext);
-    exit(EXIT_FAILURE);
-  }
-  return INST_NAME; }
-
- /* double quoted string */
-\"("\\\""|[^"])*\" {
-    char *t, *t2;
-    t = malloc(sizeof(char)*yyleng-1);
-    strncpy(t, yytext+1, yyleng-2);
-    t[yyleng-2] = '\0';
-    t2 = unescape_c_str(t);
-    yylval->str = lmn_intern(t2);
-    free(t);
-    free(t2);
-    return DQUOTED_STRING; }
-
- /* single quoted string */
-'[^']*' { char *t, *t2;
-          t = malloc(sizeof(char)*yyleng-1);
-          strncpy(t, yytext+1, yyleng-2);
-          t[yyleng-2] = '\0';
-          t2 = unescape_c_str(t);
-          yylval->id = lmn_intern(t2);
-          free(t);
-          free(t2);
-          return SQUOTED_STRING; }
-<<EOF>>              { yyterminate(); return _EOF; }
-
-%%
-
-/* 命令の名前からIDを得る */
-/* gets instruction ID from instruction name */
-int get_instr_id(char *name)
-{
-  int i;
-  for (i = 0; spec[i].op_str; i++) {
-    if (!strcmp(name, spec[i].op_str)) return spec[i].op;
-  }
-  return -1;
-}
-
-/* エスケープシーケンスを含むCの文字列を、エスケープキャラクタを実際の
-   文字に変換した、新しい文字列を返す */
-/* returns newly allocated string which is unescaped form of src */
-char *unescape_c_str(const char *src)
-{
-  int len = strlen(src);
-  char *s = malloc(sizeof(char) * len + 1);
-  int i, j;
-
-  for (i = 0, j = 0; i < len; i++, j++) {
-    char c;
-    if (i < len - 1 && src[i] == '\\' && escape_char_map[(int)src[i+1]]) {
-      c = escape_char_map[(int)src[i+1]];
-      i++;
-    } else {
-      c = src[i];
-    }
-    s[j] = c;
-  }
-  s[j] = '\0';
-  return s;
-}
 
 static struct InstrSpec spec[] = {
     {"deref", INSTR_DEREF, {InstrVar, InstrVar, InstrVar, InstrVar}},
@@ -441,3 +256,200 @@ static struct InstrSpec spec[] = {
 
     {0}
   };
+
+/* エスケープキャラクタから文字への対応表 */
+static char escape_char_map[] =
+  {0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0, '"',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\\',   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,'\n',   0,
+   0,   0, '\r',  0,'\t',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
+
+
+int get_instr_id(const char *name)
+{
+  int i;
+  for (i = 0; spec[i].op_str; i++) {
+    if (!strcmp(name, spec[i].op_str)) return spec[i].op;
+  }
+  return -1;
+}
+
+/* エスケープシーケンスを含むCの文字列を、エスケープキャラクタを実際の
+   文字に変換した、新しい文字列を返す */
+/* returns newly allocated string which is unescaped form of src */
+char *unescape_c_str(const char *src)
+{
+  int len = strlen(src);
+  char *s = (char *)malloc(sizeof(char) * len + 1);
+  int i, j;
+
+  for (i = 0, j = 0; i < len; i++, j++) {
+    char c;
+    if (i < len - 1 && src[i] == '\\' && escape_char_map[(int)src[i+1]]) {
+      c = escape_char_map[(int)src[i+1]];
+      i++;
+    } else {
+      c = src[i];
+    }
+    s[j] = c;
+  }
+  s[j] = '\0';
+  return s;
+}
+
+namespace il {
+  using namespace std;
+
+  /*!max:re2c*/
+
+  lexer::lexer(FILE *in) :
+      input(in), ruleset_id_tbl(st_init_numtable()), eof(false) {
+    buf = new char[YYMAXFILL + SIZE];
+    YYLIMIT = buf + SIZE;
+    YYCURSOR = YYLIMIT;
+    token = YYLIMIT;
+  }
+
+  int lexer::lex(YYSTYPE *yylval, YYLTYPE *yyloc) {
+  start:
+    char *YYMARKER;
+    token = YYCURSOR;
+    /*!re2c
+      re2c:define:YYCTYPE = char;
+      re2c:define:YYFILL@len = #;
+      re2c:define:YYFILL = "if (!fill(#)) return _EOF;";
+      re2c:define:YYFILL:naked = 1;
+
+      digit = [0-9];
+      blank = [ \t\n\r];
+
+      sstr = "'"  [^']* "'";
+      dstr = "\"" [^"]* "\"";
+
+      "\x00" { return _EOF; }
+      blank+ { goto start; }
+
+      '-'?digit+ {
+        yylval->_int = stol(get_token());
+        return INT;
+      }
+      '-'?digit+"."digit+ {
+        yylval->_float = stod(get_token());
+        return FLOAT;
+      }
+      '@' digit+ {
+        // この時点でVM内で一意のルールセットIDに変換する
+        // Convert input text into ruleset ID unique in the VM
+        st_data_t id_local = stol(get_token().substr(1));
+        st_data_t id_global;
+
+        if (!st_lookup(ruleset_id_tbl, id_local, &id_global)) {
+          id_global = lmn_gen_ruleset_id();
+          st_insert(ruleset_id_tbl, id_local, id_global);
+        }
+        yylval->_int = (int)id_global;
+        return RULESET_ID; 
+      }
+
+      "null" { // name of anonymous membrane
+         yylval->str = ANONYMOUS;
+         return DQUOTED_STRING;
+       }
+      'L'digit+ {
+        yylval->_int = stol(get_token().substr(1));
+        return LABEL;
+      }
+      ','                    { return COMMA; }
+      '\.'                   { return PERIOD; }
+      ':'                    { return COLON; }
+      "_"                  { return UNDERBAR; }
+      '\{'                   { return LBRACE; }
+      '\}'                   { return RBRACE; }
+      '\['                   { return LBRACKET; }
+      '\]'                   { return RBRACKET; }
+      "$in_2"              { return INSIDE_PROXY; }
+      "$out_2"             { return OUTSIDE_PROXY; }
+      "Compiled SystemRuleset"   { return KW_COMPILED_SYSTEM_RULESET; }
+      "Compiled Ruleset"   { return KW_COMPILED_RULESET; }
+      "Compiled Uniq Rule" { return KW_COMPILED_UNIQ_RULE; }
+      "Compiled Rule"      { return KW_COMPILED_RULE; }
+      "--atommatch"        { return KW_ATOMMATCH; }
+      "--memmatch"         { return KW_MEMMATCH; }
+      "--guard"            { return KW_GUARD; }
+      "--body"             { return KW_BODY; }
+      "Inline"             { return KW_INLINE; }
+      "Module"             { return KW_MODULE; }
+
+      [a-z2]+ {
+        yylval->_int = get_instr_id(get_token().c_str());
+        // 変数のリストと命令のリストは構文解析では判別不可能なので
+        // 命令のリストを持つ中間語命令を特別に扱う
+        // Lists of variables and lists of instructions cannot be
+        // parsed distinguishedly, so treat instructions accompanied by
+        // a list of instructions as special cases.
+        if (yylval->_int == INSTR_LOOP) { return INST_TK_LOOP; }
+        if (yylval->_int == INSTR_RUN) { return INST_TK_RUN; }
+        if (yylval->_int == INSTR_NOT) { return INST_TK_NOT; }
+        if (yylval->_int == INSTR_GROUP) { return INST_TK_GROUP; }
+        if (yylval->_int == INSTR_BRANCH) { return INST_TK_BRANCH; }
+
+        if (yylval->_int < 0) {
+          fprintf(stderr, "unknown instruction name %s\n", get_token().c_str());
+          exit(EXIT_FAILURE);
+        }
+        return INST_NAME;
+      }
+
+      dstr {
+        char *t2;
+        auto t = get_token();
+        t2 = unescape_c_str(t.substr(1, t.size() - 2).c_str());
+        yylval->str = lmn_intern(t2);
+        free(t2);
+        return DQUOTED_STRING;
+      }
+
+      sstr {
+        char *t2;
+        auto t = get_token();
+        t2 = unescape_c_str(t.substr(1, t.size() - 2).c_str());
+        yylval->str = lmn_intern(t2);
+        free(t2);
+        return SQUOTED_STRING;
+      }
+    */
+  }
+
+  bool lexer::fill(size_t need) {
+    if (eof) return false;
+    const size_t free = token - buf;
+    if (free < need) return false;
+    memmove(buf, token, YYLIMIT - token);
+    YYLIMIT -= free;
+    YYCURSOR -= free;
+    token -= free;
+    YYLIMIT += fread(YYLIMIT, 1, free, input);
+    if (YYLIMIT < buf + SIZE) {
+        eof = true;
+        memset(YYLIMIT, 0, YYMAXFILL);
+        YYLIMIT += YYMAXFILL;
+    }
+    return true;
+  }
+}
+
+int illex(YYSTYPE *yylval, YYLTYPE *yyloc, il::lexer *lexer) {
+  return lexer->lex(yylval, yyloc);
+}

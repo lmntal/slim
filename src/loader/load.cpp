@@ -47,8 +47,6 @@ extern "C" {
 #include "arch.h"
 #include "vm/vm.h"
 #include "ffi/lmntal_system_adapter.h"
-#include "il_parser.h"
-#include "il_lexer.h"
 #include "element/element.h"
 #include "so.h"
 #include <dirent.h>
@@ -66,6 +64,8 @@ FILE *compile(char *filename);
 }
 
 #include "syntax.hpp"
+#include "il_lexer.hpp"
+#include "il_parser.hpp"
 
 /*
  *  Instruction Format
@@ -203,7 +203,7 @@ static void load_arg(InstrArgRef arg, ContextRef c)
     break;
   case InstrVarList:
     {
-      VarList var_list = arg->var_list;
+      auto var_list = arg->var_list;
 
       WRITE_MOVE(LmnInstrVar, var_list->size(), c);
       for (auto &v : *var_list) {
@@ -262,7 +262,7 @@ static void load_arg(InstrArgRef arg, ContextRef c)
   case InstrList:
     {
       unsigned int start, t;
-      InstList inst_list;
+      std::vector<InstructionRef> *inst_list;
 
       /* 命令列の長さを求めるため、開始位置を記録する */
       /* INSTR_NOTでサブ命令列の長さを知る必要がある */
@@ -288,7 +288,7 @@ static void load_arg(InstrArgRef arg, ContextRef c)
 
 static void load_instruction(InstructionRef inst, ContextRef c)
 {
-  ArgList args = inst->args;
+  auto args = inst->args;
 
   WRITE_MOVE(LmnInstrOp, inst->id, c);
   auto arg_num = args->size();
@@ -306,7 +306,7 @@ static void load_instruction(InstructionRef inst, ContextRef c)
 
 static void load_inst_block(InstBlockRef ib, ContextRef c)
 {
-  InstList inst_list;
+  std::vector<InstructionRef> *inst_list;
   unsigned int i;
 
   if (ib->has_label()) {
@@ -363,19 +363,18 @@ LmnRuleRef load_rule(RuleRef rule)
   return runtime_rule;
 }
 
-static LmnRuleSetRef load_ruleset(RuleSetRef rs)
+static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs)
 {
-  RuleList rl;
   LmnRuleSetRef runtime_ruleset;
   unsigned int i;
 
-  runtime_ruleset = lmn_ruleset_make(ruleset_get_id(rs), 10);
-  rl = rs->rules;
+  runtime_ruleset = lmn_ruleset_make(rs->id, 10);
+  auto rl = rs->rules;
 
   for (auto &r : *rl)
     lmn_ruleset_put(runtime_ruleset, load_rule(r));
 
-  lmn_set_ruleset(runtime_ruleset, ruleset_get_id(rs));
+  lmn_set_ruleset(runtime_ruleset, rs->id);
 
   if (rs->is_system_ruleset) {
     /* 各ルールをシステムルールセットに追加する */
@@ -392,14 +391,11 @@ static LmnRuleSetRef load_ruleset(RuleSetRef rs)
 static LmnRuleSetRef load_il(ILRef il)
 {
   LmnRuleSetRef t, first_ruleset;
-  RuleSets rulesets;
-  ModuleList module_list;
-  int i;
 
   /* load rules */
-  rulesets     = il->rulesets;
+  auto rulesets     = il->rulesets;
   first_ruleset = NULL;
-  for (i = 0; i < rulesets->size(); i++) {
+  for (int i = 0; i < rulesets->size(); i++) {
     t = load_ruleset(rulesets->at(i));
     if (i == 0) first_ruleset = t;
   }
@@ -410,7 +406,7 @@ static LmnRuleSetRef load_il(ILRef il)
 
 
   /* load module list */
-  module_list = il->modules;
+  auto module_list = il->modules;
   for (auto &m : *module_list) {
     lmn_set_module(m->name_id, lmn_ruleset_from_id(m->ruleset_id));
   }
@@ -811,27 +807,16 @@ FILE *fopen_il_file(char *file_name)
   return 0;
 }
 
-extern "C"
-int ilparse(yyscan_t scanner, ILRef *il, RuleRef *rule);
+int ilparse(il::lexer* scanner, ILRef *il, RuleRef *rule);
 
 /* inから中間言語を読み込み、構文木を作る。構文木はilに設定される。
    正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
 int il_parse(FILE *in, ILRef *il)
 {
   int r;
-  yyscan_t scanner;
-  struct lexer_context c;
+  il::lexer scanner(in);
 
-  /* ルールセットのローカルなIDとグローバルなIDの対応表 */
-  c.ruleset_id_tbl = st_init_numtable();
-
-  illex_init(&scanner);
-  ilset_extra(&c, scanner);
-  ilset_in(in, scanner);
-  r = ilparse(scanner, il, NULL);
-  illex_destroy(scanner);
-
-  st_free_table(c.ruleset_id_tbl);
+  r = ilparse(&scanner, il, NULL);
 
   return r;
 }
@@ -839,19 +824,9 @@ int il_parse(FILE *in, ILRef *il)
 int il_parse_rule(FILE *in, RuleRef *rule)
 {
   int r;
-  yyscan_t scanner;
-  struct lexer_context c;
+  il::lexer scanner(in);
 
-  /* ルールセットのローカルなIDとグローバルなIDの対応表 */
-  c.ruleset_id_tbl = st_init_numtable();
-
-  illex_init(&scanner);
-  ilset_extra(&c, scanner);
-  ilset_in(in, scanner);
-  r = ilparse(scanner, NULL, rule);
-  illex_destroy(scanner);
-
-  st_free_table(c.ruleset_id_tbl);
+  r = ilparse(&scanner, NULL, rule);
 
   return r;
 }

@@ -1,7 +1,7 @@
 /*
- * syntax.h - syntax tree  of the Intermediate Language
+ * il_lexer.hpp - Intermediate Language scanner
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,78 +33,50 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: syntax.h,v 1.4 2008/09/29 05:23:40 taisuke Exp $
  */
 
-#ifndef LMN_SYNTAX_H
-#define LMN_SYNTAX_H
+#ifndef IL_LEXER_HPP
+#define IL_LEXER_HPP
+
+#include <cstdio>
+#include <string>
+
+namespace il {
+  class lexer;
+}
 
 #include "lmntal.h"
-#include "vm/vm.h"
-#include "element/element.h"
-
-/**
- * @ingroup  Loader
- * @defgroup Syntax
- * @{
- */
-
-/* 型名の解決の為に上に持ってきた */
-typedef struct __InstList *InstList;
-
-typedef struct InstrArg *InstrArgRef;
-
-typedef struct __VarList *VarList;
-
-/* List of instrction variables */
+#include "syntax.hpp"
+#include "il_parser.hpp"
 
 
-/* Functor */
+namespace il {
+  class lexer {
+    static const size_t SIZE = 256;
+    st_table_t ruleset_id_tbl;
+    FILE *input;
+    char *buf;
+    char *YYCURSOR;
+    char *token;
+    char *YYLIMIT;
+    bool eof;
 
-enum FunctorType {STX_SYMBOL, INT_FUNC, FLOAT_FUNC, STRING_FUNC, STX_IN_PROXY, STX_OUT_PROXY, STX_UNIFY};
+    std::string get_token() const {
+      return std::string(token, YYCURSOR - token);
+    };
 
-typedef struct Functor *FunctorRef;
+  public:
+    lexer(FILE *in);
+    ~lexer() {
+      st_free_table(ruleset_id_tbl);
+    }
 
-/* Instruction Argument */
+    int lineno() const { return 0; }
+    int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
+    bool fill(size_t need);
+  };
+}
 
+int illex(YYSTYPE *yylval, YYLTYPE *yyloc, il::lexer *lexer);
 
-/* List of arguments */
-
-typedef struct __ArgList *ArgList;
-
-/* Instruction */
-
-typedef struct Instruction *InstructionRef;
-
-/* List of instructions */
-/* amatch, memmatchなど、命令をまとめたもの */
-
-typedef struct InstBlock *InstBlockRef;
-/* Rule */
-
-typedef struct Rule *RuleRef;
-
-/* List of rules */
-
-typedef struct __RuleList *RuleList;
-
-/* Rule set */
-
-typedef struct RuleSet *RuleSetRef;
-
-/* List of rule sets */
-
-typedef struct __RuleSets *RuleSets;
-/* Module, モジュール名とルールセットの対応 */
-
-typedef struct Module *ModuleRef;
-
-/* Root of the IL syntax tree */
-
-typedef struct IL *ILRef;
-
-void stx_rule_free(RuleRef rule);
-
-/* @} */
-
-#endif
+#endif /* IL_LEXER_HPP */
