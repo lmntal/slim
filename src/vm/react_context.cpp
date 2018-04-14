@@ -1,5 +1,5 @@
 /*
- * react_context.c
+ * react_context.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,6 +37,7 @@
  * $Id$
  */
 
+extern "C" {
 #include "react_context.h"
 #include "task.h"
 #include "hyperlink.h"
@@ -46,6 +47,7 @@
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
+}
 
 struct LmnRegister {
   LmnWord wt;
@@ -280,7 +282,7 @@ BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
 }
 
 struct McReactCxtData *RC_ND_DATA(LmnReactCxtRef cxt) {
-  return cxt->v;
+  return (McReactCxtData *)cxt->v;
 }
 
 LmnReactCxtRef react_context_alloc() {

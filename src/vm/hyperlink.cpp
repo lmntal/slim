@@ -1,5 +1,5 @@
 /*
- * hyperlink.c
+ * hyperlink.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,9 +37,11 @@
  * $Id$
  */
 
+extern "C" {
 #include "hyperlink.h"
 #include "atom.h"
 #include "react_context.h"
+}
 
 #if SIZEOF_LONG == 4
 #  define EMPTY_KEY   0xffffffffUL
@@ -90,8 +92,8 @@ void lmn_hyperlink_make(LmnSymbolAtomRef at)
   hl->attrAtom = 0;
   hl->attr     = 0;
 
-  LMN_SATOM_SET_LINK(LMN_SATOM(at), 1, hl);
-  LMN_SATOM_SET_ATTR(LMN_SATOM(at), 1, 0);
+  LMN_SATOM_SET_LINK(at, 1, hl);
+  LMN_SATOM_SET_ATTR(at, 1, 0);
 
 //  hashtbl_put(at_hl, (HashKeyType)at, (HashValueType)hl);
 //  printf("lmn_hyperlink_make %p -> %p\n", hl, LMN_SATOM(hl->atom));
@@ -548,7 +550,7 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element)
 
       /* linked with */
       if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0)) && LMN_SATOM_GET_LINK(atom, 0)) {
-        fprintf(f, " %13s", LMN_SATOM_STR(LMN_SATOM_GET_LINK(atom, 0)));
+        fprintf(f, " %13s", LMN_SATOM_STR((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 0)));
       } else {
         fprintf(f, " %13s", "---");
       }
@@ -959,7 +961,7 @@ BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc, LmnSymbolAtomRef at
     pc = (ProcCxt *)LMN_SPC_PC(spc, i);
     if (!pc) continue; /* atom(spc)の第i引数が同名プロセス文脈 */
 
-    linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(atom, i));
+    linked_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
     linked_attr = LMN_SATOM_GET_ATTR(atom, i);
 
     if (!LMN_ATTR_IS_HL(linked_attr)) {
@@ -1009,7 +1011,7 @@ BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSymbolAtomRef atom,
     pc = (ProcCxt *)LMN_SPC_PC(spc, i);
     if (!pc) continue;
 
-    linked_atom = LMN_SATOM(LMN_SATOM_GET_LINK(atom, i));
+    linked_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
     linked_attr = LMN_SATOM_GET_ATTR(atom, i);
 
     if (!LMN_ATTR_IS_HL(linked_attr)) { /* atomの第i引数がハイパーリンク */

@@ -1,5 +1,5 @@
 /*
- * functor.c - functor operations
+ * functor.cpp - functor operations
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -36,11 +36,13 @@
  * $Id: functor.c,v 1.5 2008/09/29 05:23:40 taisuke Exp $
  */
 
+extern "C" {
 #include "lmntal.h"
 #include "functor.h"
 #include "element/element.h"
 #include "atom.h"
 #include "symbol.h"
+}
 
 struct PredefinedFunctor {
   LmnFunctor id;

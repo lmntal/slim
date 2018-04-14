@@ -1,5 +1,5 @@
 /*
- * simply_process_table.c
+ * simply_process_table.cpp
  *
  *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.

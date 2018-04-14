@@ -1,5 +1,5 @@
 /*
- * rule.c
+ * rule.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -36,8 +36,10 @@
  * $Id: rule.c,v 1.7 2008/10/16 18:12:55 sasaki Exp $
  */
 
+extern "C" {
 #include "rule.h"
 #include "system_ruleset.h"
+}
 
 /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
    現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
@@ -60,10 +62,12 @@ struct LmnRule {
  * Rule
  */
 
+extern "C" {
 /* prototypes */
 LmnRuleRef make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name);
 void init_rules(void);
 void destroy_rules(void);
+}
 
 /* create new rule */
 LmnRuleRef make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name)
@@ -250,7 +254,7 @@ void lmn_ruleset_free(LmnRuleSetRef ruleset)
 }
 
 /* Adds rule into ruleset */
-inline void lmn_ruleset_put(LmnRuleSetRef ruleset, LmnRuleRef rule)
+void lmn_ruleset_put(LmnRuleSetRef ruleset, LmnRuleRef rule)
 {
   if (ruleset->num == ruleset->cap) {
     ruleset->cap = (ruleset->cap * 2);

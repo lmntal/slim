@@ -1,5 +1,5 @@
 /*
- * simply_trace_log.c
+ * simply_trace_log.cpp
  *
  *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.

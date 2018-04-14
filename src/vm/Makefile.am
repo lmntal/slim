@@ -6,23 +6,23 @@ liblmn_vm_a_CFLAGS =                               \
         $(CFLAGS)
 
 liblmn_vm_a_SOURCES =                              \
-	vm.c \
-	membrane.c membrane.h \
-	atom.c atom.h \
-	ccallback.c ccallback.h \
-	dumper.c dumper.h \
-	functor.c functor.h \
-	firstclass_rule.c firstclass_rule.h \
-	hyperlink.c hyperlink.h \
-	instruction.c　instruction.h \
-	memstack.c memstack.h \
-	normal_thread.c normal_thread.h \
-	react_context.c react_context.h \
-	rule.c rule.h \
-	special_atom.c special_atom.h \
-	symbol.c symbol.h \
-	system_ruleset.c system_ruleset.h \
-	task.c task.h \
+	vm.cpp \
+	membrane.cpp membrane.h \
+	atom.cpp atom.h \
+	ccallback.cpp ccallback.h \
+	dumper.cpp dumper.h \
+	functor.cpp functor.h \
+	firstclass_rule.cpp firstclass_rule.h \
+	hyperlink.cpp hyperlink.h \
+	instruction.cpp　instruction.h \
+	memstack.cpp memstack.h \
+	normal_thread.cpp normal_thread.h \
+	react_context.cpp react_context.h \
+	rule.cpp rule.h \
+	special_atom.cpp special_atom.h \
+	symbol.cpp symbol.h \
+	system_ruleset.cpp system_ruleset.h \
+	task.cpp task.h \
 	process_table.cpp process_table.h \
 	simply_process_table.cpp simply_process_table.h        \
 	trace_log.h              trace_log.cpp                 \

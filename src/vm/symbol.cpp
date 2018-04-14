@@ -1,5 +1,5 @@
 /*
- * symbol.c - mapping symbol names to their id
+ * symbol.cpp - mapping symbol names to their id
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -36,9 +36,11 @@
  * $Id: symbol.c,v 1.4 2008/09/29 05:23:40 taisuke Exp $
  */
 
+extern "C" {
 #include "symbol.h"
 #include <stdarg.h>
 #include "element/element.h"
+}
 
 static struct st_table  *sym_tbl;
 static struct st_table  *sym_rev_tbl;
@@ -48,10 +50,12 @@ static lmn_mutex_t      sym_mtx;
 
 /* prototypes */
 
+extern "C" {
 void sym_tbl_init(void);
 int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i);
 void sym_tbl_destroy(void);
 lmn_interned_str create_new_id(void);
+}
 
 void sym_tbl_init()
 {

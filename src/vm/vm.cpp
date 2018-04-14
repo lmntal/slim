@@ -1,5 +1,5 @@
 /*
- * vm.c
+ * vm.cpp
  *
  *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>

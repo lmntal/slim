@@ -1,5 +1,5 @@
 /*
- * dumper.c - dump membrane
+ * dumper.cpp - dump membrane
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -36,11 +36,13 @@
  * $Id: dumper.c,v 1.15 2008/09/19 18:03:22 taisuke Exp $
  */
 
+extern "C" {
 #include "dumper.h"
 #include "memstack.h"
 #include "symbol.h"
 #include "ccallback.h"
 #include <ctype.h>
+}
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -268,17 +270,17 @@ static BOOL dump_data_atom(LmnPortRef port,
       char buf[18];
       port_put_raw_s(port, EXCLAMATION_NAME);
       if (lmn_env.show_hyperlink) {
-        sprintf(buf, "H%lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(LMN_SATOM(data))));
+        sprintf(buf, "H%lx", LMN_HL_ID(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data)));
       } else {
-        sprintf(buf, "H%lx", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(LMN_SATOM(data))));
+        sprintf(buf, "H%lx", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)data)));
       }
-      if (LMN_HL_HAS_ATTR(lmn_hyperlink_at_to_hl(LMN_SATOM(data)))) {
+      if (LMN_HL_HAS_ATTR(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data))) {
         port_put_raw_s(port, buf);
         sprintf(buf, ":");
         port_put_raw_s(port, buf);
         dump_hl_attratom(port,
-                         LMN_HL_ATTRATOM(lmn_hyperlink_at_to_hl(LMN_SATOM(data))),
-                         LMN_HL_ATTRATOM_ATTR(lmn_hyperlink_at_to_hl(LMN_SATOM(data)))); 
+                         LMN_HL_ATTRATOM(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data)),
+                         LMN_HL_ATTRATOM_ATTR(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data))); 
       } else {
         port_put_raw_s(port, buf);
       }
@@ -298,7 +300,7 @@ static BOOL dump_hl_attratom(LmnPortRef port,
     dump_data_atom(port, atom, attr);
   } else {//unary型atomに対する処理
     LmnFunctor f;
-    f = LMN_SATOM_GET_FUNCTOR(atom);
+    f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom);
 
     dump_atomname(port, f);
   }
@@ -327,11 +329,11 @@ static BOOL dump_list(LmnPortRef port,
 
   /* リストの要素を出力していく*/
   while (TRUE) {
-    if (LMN_HAS_FUNCTOR(a, attr, LMN_LIST_FUNCTOR) &&
+    if (LMN_HAS_FUNCTOR((LmnSymbolAtomRef)a, attr, LMN_LIST_FUNCTOR) &&
         LMN_ATTR_GET_VALUE(attr) == 2) {
       struct AtomRec *rec;
 
-      rec = get_atomrec(ht, LMN_SATOM(a));
+      rec = get_atomrec(ht, (LmnSymbolAtomRef)a);
 
       if (rec->done) { /* cyclic */
         int link = s->link_num++;
@@ -345,14 +347,14 @@ static BOOL dump_list(LmnPortRef port,
       if (!first)   port_put_raw_s(port, ",");
       first = FALSE;
 
-      dump_arg(port, LMN_SATOM(a), 0, ht, s, call_depth + 1);
+      dump_arg(port, (LmnSymbolAtomRef)a, 0, ht, s, call_depth + 1);
 
-      attr = LMN_SATOM_GET_ATTR(a, 1);
+      attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)a, 1);
 
       prev_a = a;
-      a = LMN_SATOM_GET_LINK(a, 1);
+      a = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a, 1);
     }
-    else if (LMN_HAS_FUNCTOR(a, attr, LMN_NIL_FUNCTOR)) {
+    else if (LMN_HAS_FUNCTOR((LmnSymbolAtomRef)a, attr, LMN_NIL_FUNCTOR)) {
       struct AtomRec *rec;
       rec = atomrec_make();
       rec->done = TRUE;
@@ -363,7 +365,7 @@ static BOOL dump_list(LmnPortRef port,
 
       //      /* 直前の.アトムを取得 */
       //            LmnSymbolAtomRef atom = LMN_SATOM(LMN_SATOM_GET_LINK(a, LMN_ATTR_GET_VALUE(attr)));
-      dump_arg(port, LMN_SATOM(prev_a), 1, ht, s, call_depth + 1);
+      dump_arg(port, (LmnSymbolAtomRef)prev_a, 1, ht, s, call_depth + 1);
       break;
     }
   }
@@ -388,7 +390,7 @@ static void propagate_proxy_link(LmnSymbolAtomRef atom,
 
   t->link_num = link_num;
   for (i = 0; i < 2; i++) {
-    propagate_proxy_link(LMN_SATOM(LMN_SATOM_GET_LINK(atom, i)),
+    propagate_proxy_link((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i),
                          LMN_SATOM_GET_ATTR(atom, i),
                          ht,
                          link_num);
@@ -435,12 +437,12 @@ static BOOL dump_proxy(LmnPortRef port,
     /* outプロキシの接続先である膜の自由リンクが一つで、一引数の'+'アトムに
        接続している場合、膜をその場に出力する */
     if (LMN_SATOM_GET_FUNCTOR(atom) == LMN_OUT_PROXY_FUNCTOR) {
-      const LmnSymbolAtomRef in = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
+      const LmnSymbolAtomRef in = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 0);
       if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(in, 1)) &&
-          LMN_SATOM_GET_FUNCTOR(LMN_SATOM_GET_LINK(in, 1)) == LMN_UNARY_PLUS_FUNCTOR) {
+          LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in, 1)) == LMN_UNARY_PLUS_FUNCTOR) {
         LmnMembraneRef mem = LMN_PROXY_GET_MEM(in);
         if (lmn_mem_nfreelinks(mem, 1)) {
-          get_atomrec(ht, LMN_SATOM(LMN_SATOM_GET_LINK(in, 1)))->done = TRUE;
+          get_atomrec(ht, (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in, 1))->done = TRUE;
           lmn_dump_mem_internal(port, mem, ht, s);
           dumped = TRUE;
         }
@@ -534,19 +536,20 @@ static BOOL dump_atom(LmnPortRef port,
     return dump_data_atom(port, atom, attr);
   }
   else {
-    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
+    LmnSymbolAtomRef a = (LmnSymbolAtomRef)atom;
+    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
     int link_pos = LMN_ATTR_GET_VALUE(attr);
     if (!lmn_env.show_proxy &&
         (f == LMN_IN_PROXY_FUNCTOR ||
          f == LMN_OUT_PROXY_FUNCTOR)) {
-      return dump_proxy(port, LMN_SATOM(atom), ht, link_pos, s, call_depth);
+      return dump_proxy(port, a, ht, link_pos, s, call_depth);
     }
     else if (f == LMN_LIST_FUNCTOR &&
              link_pos == 2) {
-      return dump_list(port, LMN_SATOM(atom), ht, s, call_depth);
+      return dump_list(port, a, ht, s, call_depth);
     }
     else {
-      return dump_symbol_atom(port, LMN_SATOM(atom), ht, link_pos, s, call_depth);
+      return dump_symbol_atom(port, a, ht, link_pos, s, call_depth);
     }
   }
 }
@@ -712,14 +715,14 @@ static void lmn_dump_cell_internal(LmnPortRef port,
                f != LMN_NIL_FUNCTOR &&
                (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0)) ||
                 (int)LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(atom, 0)) ==
-                LMN_SATOM_GET_ARITY(LMN_SATOM_GET_LINK(atom, 0)) - 1)) {
+                LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 0)) - 1)) {
         vec_push(&pred_atoms[P1], (LmnWord)atom);
       }
       /* link to the last argument */
       else if (arity > 1 &&
                (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, arity-1)) ||
                 (int)LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(atom, arity-1)) ==
-                LMN_SATOM_GET_ARITY(LMN_SATOM_GET_LINK(atom, arity-1)) - 1)) {
+                LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, arity-1)) - 1)) {
         vec_push(&pred_atoms[P2], (LmnWord)atom);
       }
       else {
@@ -731,14 +734,14 @@ static void lmn_dump_cell_internal(LmnPortRef port,
   if (!lmn_env.show_proxy) {
     /* assign link to proxies */
     for (i = 0; i < pred_atoms[PROXY].num; i++) {
-      assign_link_to_proxy(LMN_SATOM(vec_get(&pred_atoms[PROXY], i)), ht, s);
+      assign_link_to_proxy((LmnSymbolAtomRef)vec_get(&pred_atoms[PROXY], i), ht, s);
     }
   }
 
   { /* dump atoms */
     for (i = 0; i < PRI_NUM; i++) {
       for (j = 0; j < pred_atoms[i].num; j++) {
-        LmnSymbolAtomRef atom = LMN_SATOM(vec_get(&pred_atoms[i], j));
+        LmnSymbolAtomRef atom = (LmnSymbolAtomRef)vec_get(&pred_atoms[i], j);
         if (dump_toplevel_atom(port, atom, ht, s)) {
           /* TODO アトムの出力の後には常に ". "が入ってしまう.
              アトムの間に ", "を挟んだ方が見栄えが良い */
@@ -893,8 +896,8 @@ void dump_atom_dev(LmnSymbolAtomRef atom)
     else if (!LMN_ATTR_IS_DATA(attr)) { /* symbol atom */
       fprintf(stdout, " link[%5d, Addr:%p,    ID:%2lu], "
                     , LMN_ATTR_GET_VALUE(attr)
-                    , LMN_SATOM(LMN_SATOM_GET_LINK(atom, i))
-                    , LMN_SATOM_ID(LMN_SATOM_GET_LINK(atom, i)));
+                    , LMN_SATOM_GET_LINK(atom, i)
+                    , LMN_SATOM_ID((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i)));
     }
     else {
       switch (attr) {
@@ -907,7 +910,7 @@ void dump_atom_dev(LmnSymbolAtomRef atom)
         case  LMN_HL_ATTR:
           fprintf(stdout, "hlink[ !, Addr:%lu, ID:%lu], "
                         , (LmnWord)LMN_SATOM_GET_LINK(atom, i)
-                        , LMN_SATOM_ID(LMN_SATOM_GET_LINK(atom, i)));
+                        , LMN_SATOM_ID((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i)));
           break;
         default:
           fprintf(stdout, "unknown data type[%d], ", attr);
@@ -1001,7 +1004,7 @@ static void dump_dot_cell(LmnMembraneRef mem,
       unsigned int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
 
       for (i = 0; i < arity; i++) {
-        LmnLinkAttr attr = LMN_SATOM_GET_ATTR(LMN_SATOM(atom), i);
+        LmnLinkAttr attr = LMN_SATOM_GET_ATTR(atom, i);
 
         if (ar && hashtbl_contains(&ar->args, i)) continue;
         fprintf(stdout, "%lu -- ", (LmnWord)atom);
@@ -1084,7 +1087,7 @@ static void lmn_dump_link_json(LmnSymbolAtomRef atom, int index)
         break;
       case LMN_HL_ATTR:
         {
-          LmnSymbolAtomRef a = LMN_SATOM(data);
+          LmnSymbolAtomRef a = (LmnSymbolAtomRef)data;
           HyperLink *root = LMN_HL_ATOM_ROOT_HL(a);
           fprintf(stdout, "\"data\":%d", (int)root->id);
         }
@@ -1093,7 +1096,7 @@ static void lmn_dump_link_json(LmnSymbolAtomRef atom, int index)
         break;
     }
   } else {
-    LmnSymbolAtomRef a = LMN_SATOM(data);
+    LmnSymbolAtomRef a = (LmnSymbolAtomRef)data;
     if (a != NULL) {
       fprintf(stdout, "\"data\":%d", (int)LMN_SATOM_ID(a));
     }
@@ -1167,11 +1170,11 @@ void cb_dump_mem(LmnReactCxtRef rc,
                  LmnAtomRef a1, LmnLinkAttr t1,
                  LmnAtomRef a2, LmnLinkAttr t2)
 {
-  LmnAtomRef in = LMN_SATOM_GET_LINK(a1, 0);
+  LmnSymbolAtomRef in = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0);
   LmnMembraneRef m = LMN_PROXY_GET_MEM(in);
 
   lmn_mem_delete_atom(m, LMN_SATOM_GET_LINK(in, 1), LMN_SATOM_GET_ATTR(in, 1));
-  lmn_mem_delete_atom(m, in, LMN_SATOM_GET_ATTR(a1, 0));
+  lmn_mem_delete_atom(m, in, LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)a1, 0));
   lmn_mem_delete_atom(mem, a1, t1);
 
   lmn_dump_mem(m, LMN_PORT(a0));
@@ -1188,7 +1191,7 @@ void cb_dump_mem(LmnReactCxtRef rc,
 
 void dumper_init()
 {
-  lmn_register_c_fun("cb_dump_mem", cb_dump_mem, 3);
+  lmn_register_c_fun("cb_dump_mem", (void *)cb_dump_mem, 3);
 }
 
 void dumper_finalize()
