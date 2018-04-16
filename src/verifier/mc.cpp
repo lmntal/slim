@@ -1,5 +1,5 @@
 /*
- * mc.c
+ * mc.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -36,7 +36,7 @@
  *
  * $Id$
  */
-
+extern "C"{
 #include "mc.h"
 #include "mc_worker.h"
 #include "mhash.h"
@@ -49,7 +49,7 @@
 #ifdef DEBUG
 #  include "dumper.h"
 #endif
-
+}
 
 /** =======================================
  *  ==== Entrance for model checking ======
