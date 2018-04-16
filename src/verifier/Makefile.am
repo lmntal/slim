@@ -26,7 +26,7 @@ liblmn_verifier_a_SOURCES =                              \
 	dpor_naive.c             dpor_naive.h                  \
 	ltl2ba_adapter.c         ltl2ba_adapter.h              \
 	mc.cpp                     mc.h                          \
-	mc_explorer.c            mc_explorer.h                 \
+	mc_explorer.cpp            mc_explorer.h                 \
 	mc_generator.c           mc_generator.h                \
 	mc_visualizer.c          mc_visualizer.h               \
 	mc_worker.c              mc_worker.h                   \
