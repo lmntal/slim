@@ -1,11 +1,9 @@
 noinst_LIBRARIES = liblmn_loader.a
 
-AM_LFLAGS=-P $(patsubst %_lexer.l,%,$<)  \
-           --header-file=$(patsubst %.l,%.h,$<) -o $(patsubst %.l,%.c,$<)
 AM_YFLAGS=-d -p $(patsubst %_parser.ypp,%,$<) -o $(patsubst %.ypp,%.cpp,$<)
 
 PARSERS = il_lexer il_parser
-PARSER_HEADER = il_lexer.h il_parser.hpp
+PARSER_HEADER = il_parser.hpp
 PARSER_SOURCE = il_parser.cpp il_lexer.cpp
 
 BUILT_SOURCES = $(PARSER_SOURCE) translate_generated.c interpret_generated.c
