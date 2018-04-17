@@ -36,10 +36,7 @@
  * $Id: load.c,v 1.13 2008/10/17 08:40:50 sasaki Exp $
  */
 
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
-typedef void* yyscan_t;
-#endif
+#include <map>
 
 extern "C" {
 #include "load.h"
@@ -114,271 +111,224 @@ FILE *compile(char *filename);
 
 /* 構文木の読み込み時に使うデータ。各ルールの解析じに作成し，解析後に破
    棄する。ラベルは各ルールにローカルなものとして処理している */
-struct Context {
-  st_table_t   label_to_loc;     /* ラベルのからラベルのある位置の対応*/
-  st_table_t   loc_to_label_ref; /* ラベルを参照している位置と参照しているラベルの対応 */
-  unsigned int loc, cap;         /* 書き込み位置とbyte_seqのキャパシティ */
+class ByteEncoder {
+  using label = int;
+  using location = size_t;
+  std::map<label, location> label_loc; /* ラベルのからラベルのある位置の対応*/
+  std::map<location, label> loc_label_ref; /* ラベルを参照している位置と参照しているラベルの対応 */
+  location loc;
+  location cap;         /* 書き込み位置とbyte_seqのキャパシティ */
   BYTE         *byte_seq;        /* ルールの命令列を書き込む領域 */
+
+public:
+  ByteEncoder() :
+    loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)) {}
+
+  void load(InstBlockRef ib)
+  {
+    if (ib->has_label()) {
+      label_loc[ib->label] = loc;
+    }
+
+    for (auto &inst : *ib->instrs)
+      load(inst);
+  }
+
+  void resolve_labels() {
+    for (auto &p : loc_label_ref) {
+      auto loc = p.first;
+      auto label = p.second;
+      auto target_loc = label_loc.find(label);
+
+      if (target_loc != label_loc.end()) {
+        write_at<LmnJumpOffset>(
+                   target_loc->second - loc - sizeof(LmnJumpOffset),
+                   loc);
+      } else {
+        fprintf(stderr, "label not found L%d\n", label);
+        lmn_fatal("implementation error");
+      }
+    }
+  }
+
+  LmnRuleRef create_rule() {
+    return lmn_rule_make(byte_seq, cap, ANONYMOUS);
+  }
+
+private:
+  void expand_byte_sec() {
+    cap *= 2;
+    byte_seq = LMN_REALLOC(BYTE, byte_seq, cap);
+  }
+
+  void load(InstructionRef inst)
+  {
+    auto args = inst->args;
+
+    write_forward<LmnInstrOp>(inst->id);
+    auto arg_num = args->size();
+
+    /* REMOVEATOMは引数の数が2と3の場合がある。第三引数の
+       ファンクタは無視する */
+    if (inst->id == INSTR_REMOVEATOM && arg_num == 3) {
+      arg_num = 2;
+    }
+
+    for (int i = 0; i < arg_num; i++) {
+      load(args->at(i));
+    }
+  }
+
+
+  /* 現在の位置に書き込TYPE型のデータを書き込む */
+  template<typename T>
+  void write(T value) {
+    write_at<T>(value, loc);
+  }
+
+  /* 現在の書き込み位置を移動する */
+  template<typename T>
+  void move_by() {
+    loc += sizeof(T);
+  }
+
+  /* write & move_by */
+  template<typename T>
+  void write_forward(T value) {
+    write<T>(value);
+    move_by<T>();
+  }
+
+  /* LCOの位置に書き込む */
+  template<typename T>
+  void write_at(T value, size_t loc) {
+    while (loc + sizeof(T) >= cap)
+      expand_byte_sec();
+    *(T*)(byte_seq + loc) = (value);
+  }
+
+  void load(InstrArgRef arg)
+  {
+    switch (arg->type) {
+    case InstrVar:
+      write_forward<LmnInstrVar>(arg->instr_var);
+      break;
+    case Label:
+      loc_label_ref[loc] = arg->label;
+      move_by<LmnJumpOffset>();
+      break;
+    case InstrVarList:
+      {
+        auto var_list = arg->var_list;
+
+        write_forward<LmnInstrVar>(var_list->size());
+        for (auto &v : *var_list) {
+          load(v);
+        }
+      }
+      break;
+    case String:
+      write_forward<lmn_interned_str>(arg->str_id);
+      break;
+    case LineNum:
+      write_forward<LmnLineNum>(arg->line_num);
+      break;
+    case ArgFunctor:
+      load(arg->functor);
+      break;
+    case ArgRuleset:
+      write_forward<LmnRulesetId>(arg->ruleset);
+      break;
+    case InstrList:
+      {
+        /* 命令列の長さを求めるため、開始位置を記録する */
+        /* INSTR_NOTでサブ命令列の長さを知る必要がある */
+        auto start = loc;
+        move_by<LmnSubInstrSize>();
+
+        for (auto &inst : *arg->inst_list)
+          load(inst);
+
+        /* startの位置に現在の位置との差を書き込む */
+        auto t = loc;
+        loc = start;
+        write<LmnSubInstrSize>(t - (start + sizeof(LmnSubInstrSize)));
+        loc = t;
+        break;
+      }
+    default:
+      LMN_ASSERT(FALSE);
+      break;
+    }
+  }
+
+  void load(FunctorRef functor) {
+    switch (functor->type) {
+    case STX_SYMBOL:
+      write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
+      write_forward<LmnFunctor>(functor->functor_id);
+      break;
+    case INT_FUNC:
+      write_forward<LmnLinkAttr>(LMN_INT_ATTR);
+      write_forward<long>(static_cast<long>(*functor));
+      break;
+    case FLOAT_FUNC:
+      write_forward<LmnLinkAttr>(LMN_DBL_ATTR);
+      write_forward<double>(static_cast<double>(*functor));
+      break;
+    case STRING_FUNC:
+      write_forward<LmnLinkAttr>(LMN_STRING_ATTR);
+      write_forward<lmn_interned_str>(static_cast<lmn_interned_str>(*functor));
+      break;
+    case STX_IN_PROXY:
+      write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
+      write_forward<LmnFunctor>(LMN_IN_PROXY_FUNCTOR);
+      break;
+    case STX_OUT_PROXY:
+      write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
+      write_forward<LmnFunctor>(LMN_OUT_PROXY_FUNCTOR);
+      break;
+    case STX_UNIFY:
+      write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
+      write_forward<LmnFunctor>(LMN_UNIFY_FUNCTOR);
+      break;
+    default:
+      LMN_ASSERT(FALSE);
+      break;
+    }
+  }
 };
-typedef struct Context *ContextRef;
-
-
-void expand_byte_sec(ContextRef c);
-static void load_instruction(InstructionRef inst, ContextRef c);
-
-/* Contextを作成する */
-static ContextRef context_make()
-{
-  ContextRef c = LMN_MALLOC(struct Context);
-
-  c->loc = 0;
-  c->cap = 256;
-  c->byte_seq = LMN_NALLOC(BYTE, c->cap);
-
-  return c;
-}
-
-/* Contextの解放 */
-static void context_free(ContextRef c)
-{
-  LMN_FREE(c);
-}
-
-/* 命令列を書き込む領域を広げる */
-void expand_byte_sec(ContextRef c)
-{
-  c->cap *= 2;
-  c->byte_seq = LMN_REALLOC(BYTE, c->byte_seq, c->cap);
-}
-
-/* 現在の一に書き込TYPE型のデータを書き込む */
-#define WRITE(TYPE, VALUE, CONTEXT)                              \
-  do {                                                           \
-    while ((CONTEXT)->loc + sizeof(TYPE) >= (CONTEXT)->cap) {    \
-      expand_byte_sec(CONTEXT);                                  \
-    }                                                            \
-    *(TYPE*)((CONTEXT)->byte_seq + (CONTEXT)->loc) = (VALUE);    \
- } while (0)
-
-
-
-/* 現在の書き込み位置を移動する */
-#define MOVE(TYPE, CONTEXT)  (CONTEXT)->loc += sizeof(TYPE)
-
-/* WRITE & MOVE */
-#define WRITE_MOVE(TYPE, VALUE, CONTEXT)                         \
-  do {                                                           \
-    do {                                                         \
-      while ((CONTEXT)->loc + sizeof(TYPE) >= (CONTEXT)->cap) {  \
-        expand_byte_sec(CONTEXT);                                \
-      }                                                          \
-      *(TYPE*)((CONTEXT)->byte_seq + (CONTEXT)->loc) = (VALUE);  \
-    } while (0);                                                 \
-    (CONTEXT)->loc += sizeof(TYPE);                              \
-  } while (0)
-
-/* LCOの位置に書き込む */
-#define WRITE_HERE(TYPE, VALUE, CONTEXT, LOC)                    \
-  do {                                                           \
-    do {                                                         \
-      while ((LOC) + sizeof(TYPE) >= (CONTEXT)->cap) {           \
-        expand_byte_sec(CONTEXT);                                \
-      }                                                          \
-      *(TYPE*)((CONTEXT)->byte_seq + (LOC)) = (VALUE);           \
-    } while (0);                                                 \
-  } while (0)
-
-
-static void load_arg(InstrArgRef arg, ContextRef c)
-{
-  unsigned int i;
-
-  switch (arg->type) {
-  case InstrVar:
-    WRITE_MOVE(LmnInstrVar, arg->instr_var, c);
-    break;
-  case Label:
-    st_insert(c->loc_to_label_ref, (st_data_t)c->loc, (st_data_t)arg->label);
-    MOVE(LmnJumpOffset, c);
-    break;
-  case InstrVarList:
-    {
-      auto var_list = arg->var_list;
-
-      WRITE_MOVE(LmnInstrVar, var_list->size(), c);
-      for (auto &v : *var_list) {
-        load_arg(v, c);
-      }
-    }
-    break;
-  case String:
-    WRITE_MOVE(lmn_interned_str, arg->str_id, c);
-    break;
-  case LineNum:
-    WRITE_MOVE(LmnLineNum, arg->line_num, c);
-    break;
-  case ArgFunctor:
-    {
-      FunctorRef functor = arg->functor;
-
-      switch (functor->type) {
-      case STX_SYMBOL:
-        WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
-        WRITE_MOVE(LmnFunctor, functor->functor_id, c);
-        break;
-      case INT_FUNC:
-        WRITE_MOVE(LmnLinkAttr, LMN_INT_ATTR, c);
-        WRITE_MOVE(long, static_cast<long>(*functor), c);
-        break;
-      case FLOAT_FUNC:
-        WRITE_MOVE(LmnLinkAttr, LMN_DBL_ATTR, c);
-        WRITE_MOVE(double, static_cast<double>(*functor), c);
-        break;
-      case STRING_FUNC:
-        WRITE_MOVE(LmnLinkAttr, LMN_STRING_ATTR, c);
-        WRITE_MOVE(lmn_interned_str, static_cast<lmn_interned_str>(*functor), c);
-        break;
-      case STX_IN_PROXY:
-        WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
-        WRITE_MOVE(LmnFunctor, LMN_IN_PROXY_FUNCTOR, c);
-        break;
-      case STX_OUT_PROXY:
-        WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
-        WRITE_MOVE(LmnFunctor, LMN_OUT_PROXY_FUNCTOR, c);
-        break;
-      case STX_UNIFY:
-        WRITE_MOVE(LmnLinkAttr, LMN_ATTR_MAKE_LINK(0), c);
-        WRITE_MOVE(LmnFunctor, LMN_UNIFY_FUNCTOR, c);
-        break;
-      default:
-        LMN_ASSERT(FALSE);
-        break;
-      }
-      break;
-    }
-  case ArgRuleset:
-    WRITE_MOVE(LmnRulesetId, arg->ruleset, c);
-    break;
-  case InstrList:
-    {
-      unsigned int start, t;
-      std::vector<InstructionRef> *inst_list;
-
-      /* 命令列の長さを求めるため、開始位置を記録する */
-      /* INSTR_NOTでサブ命令列の長さを知る必要がある */
-      start = c->loc;
-      MOVE(LmnSubInstrSize, c);
-
-      inst_list = arg->inst_list;
-      for (auto &inst : *inst_list)
-        load_instruction(inst, c);
-
-      /* startの位置に現在の位置との差を書き込む */
-      t      = c->loc;
-      c->loc = start;
-      WRITE(LmnSubInstrSize, t - (start + sizeof(LmnSubInstrSize)), c);
-      c->loc = t;
-      break;
-    }
-  default:
-    LMN_ASSERT(FALSE);
-    break;
-  }
-}
-
-static void load_instruction(InstructionRef inst, ContextRef c)
-{
-  auto args = inst->args;
-
-  WRITE_MOVE(LmnInstrOp, inst->id, c);
-  auto arg_num = args->size();
-
-  /* REMOVEATOMは引数の数が2と3の場合がある。第三引数の
-     ファンクタは無視する */
-  if (inst->id == INSTR_REMOVEATOM && arg_num == 3) {
-    arg_num = 2;
-  }
-
-  for (int i = 0; i < arg_num; i++) {
-    load_arg(args->at(i), c);
-  }
-}
-
-static void load_inst_block(InstBlockRef ib, ContextRef c)
-{
-  std::vector<InstructionRef> *inst_list;
-  unsigned int i;
-
-  if (ib->has_label()) {
-    st_insert(c->label_to_loc, (st_data_t)ib->label, (st_data_t)c->loc);
-  }
-
-  inst_list = ib->instrs;
-
-  for (auto &inst : *inst_list)
-    load_instruction(inst, c);
-}
-
-static int fill_label_ref(st_data_t loc, st_data_t label, void *c_)
-{
-  ContextRef  c = (ContextRef)c_;
-  st_data_t target_loc;
-
-  if (st_lookup(c->label_to_loc, label, &target_loc)) {
-    WRITE_HERE(LmnJumpOffset,
-               (int)target_loc - (int)loc - sizeof(LmnJumpOffset),
-               c,
-               (int)loc);
-  } else {
-    fprintf(stderr, "label not found L%d\n", (int)label);
-    lmn_fatal("implementation error");
-  }
-
-  return ST_CONTINUE;
-}
 
 LmnRuleRef load_rule(RuleRef rule)
 {
-  LmnRuleRef runtime_rule;
-  ContextRef c;
+  ByteEncoder encoder;
 
-  c = context_make();
-  c->label_to_loc = st_init_numtable();
-  c->loc_to_label_ref = st_init_numtable();
-
-/*   load_inst_block(rule->amatch, c); */
-  load_inst_block(rule->mmatch, c);
-  load_inst_block(rule->guard, c);
-  load_inst_block(rule->body, c);
+/*   load_inst_block(rule->amatch, encoder); */
+  encoder.load(rule->mmatch);
+  encoder.load(rule->guard);
+  encoder.load(rule->body);
 
   /* ラベルを参照している位置に、実際のラベルの位置を書き込む */
-  st_foreach(c->loc_to_label_ref, (st_iter_func)fill_label_ref, (st_data_t)c);
+  encoder.resolve_labels();
 
-  st_free_table(c->label_to_loc);
-  st_free_table(c->loc_to_label_ref);
-
-  runtime_rule = lmn_rule_make(c->byte_seq, c->cap, ANONYMOUS);
+  auto runtime_rule = encoder.create_rule();
   if (rule->hasuniq) lmn_rule_init_uniq_rule(runtime_rule);
-  context_free(c);
+  
   return runtime_rule;
 }
 
 static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs)
 {
-  LmnRuleSetRef runtime_ruleset;
-  unsigned int i;
-
-  runtime_ruleset = lmn_ruleset_make(rs->id, 10);
-  auto rl = rs->rules;
-
-  for (auto &r : *rl)
+  auto runtime_ruleset = lmn_ruleset_make(rs->id, 10);
+  
+  for (auto &r : *rs->rules)
     lmn_ruleset_put(runtime_ruleset, load_rule(r));
 
   lmn_set_ruleset(runtime_ruleset, rs->id);
 
   if (rs->is_system_ruleset) {
     /* 各ルールをシステムルールセットに追加する */
-    for (i = 0; i < lmn_ruleset_rule_num(runtime_ruleset); i++) {
+    for (int i = 0; i < lmn_ruleset_rule_num(runtime_ruleset); i++) {
       LmnRuleRef rule2 = lmn_rule_copy(lmn_ruleset_get_rule(runtime_ruleset, i));
       lmn_add_system_rule(rule2);
     }
@@ -393,7 +343,7 @@ static LmnRuleSetRef load_il(ILRef il)
   LmnRuleSetRef t, first_ruleset;
 
   /* load rules */
-  auto rulesets     = il->rulesets;
+  auto rulesets = il->rulesets;
   first_ruleset = NULL;
   for (int i = 0; i < rulesets->size(); i++) {
     t = load_ruleset(rulesets->at(i));
@@ -813,22 +763,14 @@ int ilparse(il::lexer* scanner, ILRef *il, RuleRef *rule);
    正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
 int il_parse(FILE *in, ILRef *il)
 {
-  int r;
   il::lexer scanner(in);
-
-  r = ilparse(&scanner, il, NULL);
-
-  return r;
+  return ilparse(&scanner, il, NULL);
 }
 
 int il_parse_rule(FILE *in, RuleRef *rule)
 {
-  int r;
   il::lexer scanner(in);
-
-  r = ilparse(&scanner, NULL, rule);
-
-  return r;
+  return ilparse(&scanner, NULL, rule);
 }
 
 char *create_formatted_basename(const char *filepath)
