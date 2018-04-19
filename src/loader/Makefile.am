@@ -19,6 +19,7 @@ liblmn_loader_a_SOURCES = \
         load.cpp load.h \
         il_parser.ypp il_lexer.cpp \
         syntax.cpp syntax.h \
+        byte_encoder.cpp \
         translate.cpp translate.h \
         translate_generated.c translate_generator.rb \
         translate_generator.in \

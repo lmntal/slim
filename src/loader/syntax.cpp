@@ -38,78 +38,67 @@
 
 #include "syntax.hpp"
 
+#include "byte_encoder.hpp"
 
-
-/* Instruction Argument */
-
-template <>
-InstrArg *InstrArg::create<InstrVar>(int var) {
-  auto result = new InstrArg(InstrVar);
-  result->instr_var = var;
-  return result;
-}
-
-template <>
-InstrArg *InstrArg::create<ArgRuleset>(int var) {
-  auto result = new InstrArg(ArgRuleset);
-  result->ruleset = var;
-  return result;
-}
-
-template <>
-InstrArg *InstrArg::create<InstrVarList>(VarList var) {
-  auto result = new InstrArg(InstrVarList);
-  result->var_list = var;
-  return result;
-}
-
-template <>
-InstrArg *InstrArg::create<ArgFunctor>(FunctorRef var) {
-  auto result = new InstrArg(ArgFunctor);
-  result->functor = var;
-  return result;
-}
-
-template <>
-InstrArg *InstrArg::create<Label>(int var) {
-  auto result = new InstrArg(Label);
-  result->label = var;
-  return result;
-}
-
-template <>
-InstrArg *InstrArg::create<String>(unsigned int var) {
-  auto result = new InstrArg(String);
-  result->str_id = var;
-  return result;
-}
-
-template <>
-InstrArg *InstrArg::create<InstrList>(InstList var) {
-  auto result = new InstrArg(InstrList);
-  result->inst_list = var;
-  return result;
-}
-
-/* List of arguments */
-
-InstrArg::~InstrArg() {
-  switch (type) {
-  case ArgFunctor:
-    delete functor;
-    break;
-  case InstrList:
-    delete inst_list;
-    break;
-  case InstrVarList:
-    delete var_list;
-  default:
-    break;
+namespace il {
+  namespace functor {
+    void in_proxy::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void out_proxy::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void unify::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void integer::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void real::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void string::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void symbol::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
   }
 }
 
 
-void stx_rule_free(RuleRef rule)
+namespace il {
+  namespace instr_arg {
+    void var::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void label::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void string::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void lineno::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void functor::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void ruleset::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void var_list::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void inst_list::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+  }
+}
+
+extern "C" void stx_rule_free(Rule *rule);
+
+void stx_rule_free(Rule *rule)
 {
   delete rule;
 }

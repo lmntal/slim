@@ -41,164 +41,180 @@
 
 #include <vector>
 #include <memory>
+#include <type_traits>
 
 extern "C" {
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "element/element.h"
-#include "syntax.h"
 }
 
+class ByteEncoder;
+struct Instruction;
 
-struct Functor {
-  enum FunctorType type;
-  union {
-    long int_value;
-    double float_value;
-    lmn_interned_str str;
-    int functor_id;
-  };
+namespace il {
+  namespace functor {
+    struct interface {
+      virtual ~interface() = default; 
+      virtual void visit(ByteEncoder &) = 0;
+    };
 
-  Functor(FunctorType type) : type(type) {};
-  Functor(long v) : type(INT_FUNC), int_value(v) {}
-  Functor(double v) : type(FLOAT_FUNC), float_value(v) {}
-  Functor(lmn_interned_str v) : type(STRING_FUNC), str(v) {}
-  Functor(lmn_interned_str name, int arity) :
-    Functor(ANONYMOUS, name, arity) {}
-  Functor(lmn_interned_str module, lmn_interned_str name, int arity) :
-    type(STX_SYMBOL), functor_id(lmn_functor_intern(module, name, arity)) {}
-
-  operator long() {
-    return int_value;
+    struct in_proxy : interface {
+      void visit(ByteEncoder &);
+    };
+    struct out_proxy : interface {
+      void visit(ByteEncoder &);
+    };
+    struct unify : interface {
+      void visit(ByteEncoder &);
+    };
+    struct integer : interface {
+      long value;
+      integer(long value) : value(value) {}
+      void visit(ByteEncoder &);
+    };
+    struct real : interface {
+      double value;
+      real(double value) : value(value) {}
+      void visit(ByteEncoder &);
+    };
+    struct string : interface {
+      lmn_interned_str value;
+      string(lmn_interned_str value) : value(value) {}
+      void visit(ByteEncoder &);
+    };
+    struct symbol : interface {
+      lmn_interned_str value;
+      symbol(lmn_interned_str name, int arity) :
+        value(lmn_functor_intern(ANONYMOUS, name, arity)) {}
+      symbol(lmn_interned_str module, lmn_interned_str name, int arity) :
+        value(lmn_functor_intern(module, name, arity)) {}
+      void visit(ByteEncoder &);
+    };
   }
-  operator double() {
-    return float_value;
+
+  using Functor = functor::interface;
+
+  namespace instr_arg {
+    using namespace std;
+
+    struct interface {
+      virtual ~interface() = default;
+      virtual void visit(ByteEncoder &) const = 0;
+    };
+
+    struct var : interface {
+      int value;
+      var(int value) : value(value) {}
+      void visit(ByteEncoder &) const;
+    };
+    struct label : interface {
+      int value;
+      label(int value) : value(value) {}
+      void visit(ByteEncoder &) const;
+    };
+    struct string : interface {
+      int value;
+      string(int value) : value(value) {}
+      void visit(ByteEncoder &) const;
+    };
+    struct lineno : interface {
+      int value;
+      lineno(int value) : value(value) {}
+      void visit(ByteEncoder &) const;
+    };
+    struct functor : interface {
+      shared_ptr<il::Functor> value;
+      functor(shared_ptr<il::Functor> value) : value(value) {}
+      void visit(ByteEncoder &) const;
+    };
+    struct ruleset : interface {
+      int value;
+      ruleset(int value) : value(value) {}
+      void visit(ByteEncoder &) const;
+    };
+    struct var_list : interface {
+      vector<shared_ptr<interface>> value;
+      var_list(vector<shared_ptr<interface>> &&value) :
+        value(std::move(value)) {}
+      void visit(ByteEncoder &) const;
+    };
+    struct inst_list : interface {
+      vector<shared_ptr<Instruction>> value;
+      inst_list(vector<shared_ptr<Instruction>> &&value) :
+        value(std::move(value)) {}
+      void visit(ByteEncoder &) const;
+    };
   }
-  operator lmn_interned_str() {
-    return str;
-  }
-};
 
-struct __VarList;
-
-struct InstrArg {
-  enum ArgType type;
-  union {
-    int int_value;
-    int instr_var;
-    int label;
-    int str_id;
-    int line_num;
-    FunctorRef functor;
-    int ruleset;
-    __VarList *var_list;
-    InstList inst_list;
-  };
-
-  InstrArg(ArgType type) : type(type) {};
-
-  ~InstrArg();
-
-  template <ArgType type, typename V>
-  static InstrArg *create(V value);
-};
-
-struct __VarList : std::vector<InstrArgRef> {
-  using std::vector<InstrArgRef>::vector;
-
-  ~__VarList() { for (auto r : *this) delete r; }
-};
-
-struct __ArgList : std::vector<InstrArgRef> {
-  using std::vector<InstrArgRef>::vector;
-
-  ~__ArgList() {
-    for (auto &r : *this) delete r;
-  }
-};
-
+  using InstrArg = instr_arg::interface;
+}
 
 struct Instruction {
-  enum LmnInstruction id;
-  ArgList args;
+  LmnInstruction id;
+  std::vector<std::shared_ptr<il::InstrArg>> args;
 
-  Instruction(LmnInstruction id, ArgList args) : id(id), args(args) {
-    /* COMMITの第二引数を変数番号ではなく行番号とする */
-    if (id == INSTR_COMMIT) {
-      InstrArgRef &line_num_arg = args->at(1);
-      line_num_arg->type = LineNum;
-      line_num_arg->line_num = line_num_arg->instr_var;
-    }
-  }
+  Instruction(LmnInstruction id, std::vector<std::shared_ptr<il::InstrArg>> &&args) :
+    id(id), args(std::move(args)) {}
 
-  ~Instruction() {
-    delete args;
-  }
+  Instruction(Instruction &&) noexcept = default;
 };
-
-struct __InstList : std::vector<InstructionRef> {
-  using std::vector<InstructionRef>::vector;
-
-  ~__InstList() {
-    for (auto &i : *this) delete i;
-  }
-};
+static_assert(std::is_nothrow_move_constructible<Instruction>::value == true, "");
 
 struct InstBlock {
   int label;
-  InstList instrs;
+  std::vector<std::shared_ptr<Instruction>> instrs;
 
-  InstBlock(int label, InstList instrs) : label(label), instrs(instrs) {}
-  InstBlock(InstList instrs) : InstBlock(0, instrs) {}
+  InstBlock(int label, std::vector<std::shared_ptr<Instruction>> &&instrs) noexcept :
+    label(label), instrs(std::move(instrs)) {}
+  InstBlock(std::vector<std::shared_ptr<Instruction>> &&instrs) noexcept :
+    label(0), instrs(std::move(instrs)) {}
+  InstBlock() noexcept :
+    label(0) {}
+  InstBlock(InstBlock &&) noexcept = default;
+  InstBlock(const InstBlock &ib) noexcept = delete;
 
-  ~InstBlock() {
-    delete instrs;
-  }
+  ~InstBlock() noexcept = default;
+
 
   BOOL has_label() const {
     return label != 0;
   }
 };
 
+static_assert(std::is_nothrow_move_constructible<InstBlock>::value == true, "");
+
 struct Rule {
-  BOOL hasuniq;
-  lmn_interned_str name;
-  InstBlockRef amatch;
-  InstBlockRef mmatch;
-  InstBlockRef guard;
-  InstBlockRef body;
+  const BOOL hasuniq;
+  const lmn_interned_str name;
+  InstBlock amatch;
+  InstBlock mmatch;
+  InstBlock guard;
+  InstBlock body;
 
-  Rule(BOOL hasuniq, InstBlockRef amatch, InstBlockRef mmatch, InstBlockRef guard, InstBlockRef body)
-    : hasuniq(hasuniq), name(ANONYMOUS), amatch(amatch), mmatch(mmatch), guard(guard), body(body) {}
+  Rule(BOOL hasuniq, InstBlock &&amatch, InstBlock &&mmatch, InstBlock &&guard, InstBlock &&body) :
+    hasuniq(hasuniq), name(ANONYMOUS),
+    amatch(std::move(amatch)), mmatch(std::move(mmatch)),
+    guard(std::move(guard)), body(std::move(body)) {}
+  Rule(Rule &&) noexcept = default;
 
-  ~Rule() {
-    delete amatch;
-    delete mmatch;
-    delete guard;
-    delete body;
-  }
+  ~Rule() noexcept = default;
 };
-
-struct __RuleList : std::vector<RuleRef> {
-  using std::vector<RuleRef>::vector;
-
-  ~__RuleList() {
-    for (auto &r : *this) delete r;
-  }
-};
+static_assert(std::is_nothrow_move_constructible<Rule>::value == true, "");
 
 struct RuleSet {
   BOOL is_system_ruleset;
   int id;
-  RuleList rules;
+  std::vector<std::shared_ptr<Rule>> rules;
 
-  RuleSet(int id, RuleList rules, BOOL is_system_ruleset) :
-    id(id), rules(rules), is_system_ruleset(is_system_ruleset) {}
+  RuleSet(int id, std::vector<std::shared_ptr<Rule>> &&rules, BOOL is_system_ruleset) :
+    id(id), rules(std::move(rules)), is_system_ruleset(is_system_ruleset) {}
+  RuleSet(RuleSet &&) noexcept = default;
 
-  ~RuleSet() {
-    delete rules;
-  }
+  ~RuleSet() noexcept = default;
+
 };
+static_assert(std::is_nothrow_move_constructible<RuleSet>::value == true, "");
 
 
 struct Module {
@@ -210,20 +226,21 @@ struct Module {
 };
 
 struct IL {
-  std::vector<std::shared_ptr<RuleSet>> *rulesets;
-  std::vector<std::unique_ptr<Module>> *modules;
-  std::vector<lmn_interned_str> *inlines;
+  std::vector<std::shared_ptr<RuleSet>> rulesets;
+  std::vector<std::shared_ptr<Module>> modules;
+  std::vector<lmn_interned_str> inlines;
 
-  IL(std::vector<std::shared_ptr<RuleSet>> *rulesets, std::vector<std::unique_ptr<Module>> *module_list, std::vector<lmn_interned_str> *inline_list) :
-    rulesets(rulesets), modules(module_list), inlines(inline_list) {}
-  IL(std::vector<std::shared_ptr<RuleSet>> *rulesets) :
-    rulesets(rulesets), modules(new std::vector<std::unique_ptr<Module>>), inlines(new std::vector<lmn_interned_str>) {}
+  IL(std::vector<std::shared_ptr<RuleSet>> &&rulesets, std::vector<std::shared_ptr<Module>> &&module_list, std::vector<lmn_interned_str> &&inline_list) :
+    rulesets(std::move(rulesets)), modules(std::move(module_list)), inlines(std::move(inline_list)) {}
+  IL(std::vector<std::shared_ptr<RuleSet>> &&rulesets, std::vector<std::shared_ptr<Module>> &&module_list) :
+    rulesets(std::move(rulesets)), modules(std::move(module_list)) {}
+  IL(std::vector<std::shared_ptr<RuleSet>> &&rulesets, std::vector<lmn_interned_str> &&inline_list) :
+    rulesets(std::move(rulesets)), inlines(std::move(inline_list)) {}
+  IL(std::vector<std::shared_ptr<RuleSet>> &&rulesets) :
+    rulesets(std::move(rulesets)) {}
 
-  ~IL() {
-    delete rulesets;
-    delete modules;
-    delete inlines;
-  }
+  IL(IL&&) noexcept = default;
 };
+static_assert(std::is_nothrow_move_constructible<IL>::value == true, "");
 
 #endif

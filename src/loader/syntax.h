@@ -39,6 +39,10 @@
 #ifndef LMN_SYNTAX_H
 #define LMN_SYNTAX_H
 
+#ifdef __cplusplus
+#warning 'syntax.h' is deprecated. Use 'syntax.hpp' instead.
+#endif
+
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "element/element.h"
@@ -49,55 +53,10 @@
  * @{
  */
 
-/* 型名の解決の為に上に持ってきた */
-typedef struct __InstList *InstList;
 
-typedef struct InstrArg *InstrArgRef;
-
-typedef struct __VarList *VarList;
-
-/* List of instrction variables */
-
-
-/* Functor */
-
-enum FunctorType {STX_SYMBOL, INT_FUNC, FLOAT_FUNC, STRING_FUNC, STX_IN_PROXY, STX_OUT_PROXY, STX_UNIFY};
-
-typedef struct Functor *FunctorRef;
-
-/* Instruction Argument */
-
-
-/* List of arguments */
-
-typedef struct __ArgList *ArgList;
-
-/* Instruction */
-
-typedef struct Instruction *InstructionRef;
-
-/* List of instructions */
-/* amatch, memmatchなど、命令をまとめたもの */
-
-typedef struct InstBlock *InstBlockRef;
 /* Rule */
 
 typedef struct Rule *RuleRef;
-
-/* List of rules */
-
-typedef struct __RuleList *RuleList;
-
-/* Rule set */
-
-typedef struct RuleSet *RuleSetRef;
-
-/* List of rule sets */
-
-typedef struct __RuleSets *RuleSets;
-/* Module, モジュール名とルールセットの対応 */
-
-typedef struct Module *ModuleRef;
 
 /* Root of the IL syntax tree */
 
