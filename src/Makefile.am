@@ -77,6 +77,7 @@ slim_SOURCES =                                                     \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
 	ext/set.c			ext/set.h			 \
+	ext/hashmap.c							 \
 	ext/state_map.c							 \
 	ext/membrane.c      ext/membrane.h       \
 	ext/zerostep.c \

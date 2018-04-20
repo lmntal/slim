@@ -1,0 +1,21 @@
+{
+    module(hashmap).
+    Ret = hashmap.init :- Ret = hashmap.empty.
+
+    Ret = hashmap.insert(H, Key, Val) :- class(H, "hashmap") |
+	'$callback'('cb_hashmap_insert', H, Key, Val, Ret).
+
+    Ret = hashmap.insert(hashmap.empty, Key, Val) :- 
+	'$callback'('cb_hashmap_insert', hashmap.empty, Key, Val, Ret).
+
+    Ret = hashmap.find(H, Key, Res) :- class(H, "hashmap") |
+	'$callback'('cb_hashmap_find', H, Key, Res, Ret).
+
+    Ret = hashmap.find(hashmap.empty, $key, Res) :- int($key) |
+	Ret = hashmap.empty, Res = none.
+
+    hashmap.free(H) :- class(H, "hashmap") |
+	'$callback'('cb_hashmap_free', H).
+
+    hashmap.free(hashmap.empty) :- .
+}
