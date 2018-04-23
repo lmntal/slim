@@ -6,6 +6,8 @@ before_install:
   - git clone https://github.com/lmntal/lmntal-compiler.git
   - cd lmntal-compiler && ant compile && cd ..
   - export LMNTAL_HOME="`pwd`/lmntal-compiler"
+  - sudo apt-get -qq update
+  - sudo apt-get install -y re2c
 install:
   - ./autogen.sh
   - ./configure

@@ -1,5 +1,5 @@
 /*
- * syntax.h - syntax tree  of the Intermediate Language
+ * syntax.c - syntax tree  of the Intermediate Language
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -33,37 +33,72 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: syntax.h,v 1.4 2008/09/29 05:23:40 taisuke Exp $
+ * $Id: syntax.c,v 1.5 2008/09/29 05:23:40 taisuke Exp $
  */
 
-#ifndef LMN_SYNTAX_H
-#define LMN_SYNTAX_H
+#include "syntax.hpp"
 
-#ifdef __cplusplus
-#warning 'syntax.h' is deprecated. Use 'syntax.hpp' instead.
-#endif
+#include "byte_encoder.hpp"
 
-#include "lmntal.h"
-#include "vm/vm.h"
-#include "element/element.h"
+namespace il {
+  namespace functor {
+    void in_proxy::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void out_proxy::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void unify::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void integer::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void real::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void string::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+    void symbol::visit(ByteEncoder &encoder) {
+      encoder.load(*this);
+    }
+  }
+}
 
-/**
- * @ingroup  Loader
- * @defgroup Syntax
- * @{
- */
 
+namespace il {
+  namespace instr_arg {
+    void var::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void label::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void string::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void lineno::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void functor::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void ruleset::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void var_list::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+    void inst_list::visit(ByteEncoder &encoder) const {
+      encoder.load(*this);
+    }
+  }
+}
 
-/* Rule */
+extern "C" void stx_rule_free(Rule *rule);
 
-typedef struct Rule *RuleRef;
-
-/* Root of the IL syntax tree */
-
-typedef struct IL *ILRef;
-
-void stx_rule_free(RuleRef rule);
-
-/* @} */
-
-#endif
+void stx_rule_free(Rule *rule)
+{
+  delete rule;
+}

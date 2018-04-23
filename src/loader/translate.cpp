@@ -36,6 +36,7 @@
  * $Id: translate.c,v 1.34 2008/10/16 18:12:27 sasaki Exp $
  */
 
+extern "C" {
 #include "translate.h"
 #include "element/element.h"
 #include "verifier/verifier.h"
@@ -47,6 +48,7 @@
 #ifdef PROFILE
 # include "verifier/runtime_status.h"
 #endif
+}
 
 /* just for debug ! */
 static FILE *OUT;
@@ -125,7 +127,7 @@ void tr_instr_commit_ready(LmnReactCxtRef      rc,
         if (lmn_register_tt(r) == TT_ATOM) {
           if (LMN_ATTR_IS_DATA(lmn_register_at(r))) {
             lmn_register_set_wt(r, (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i), (LmnLinkAttr)lmn_register_at(r)));
-          } else if (proc_tbl_get_by_atom(copymap, LMN_SATOM(wt(rc, i)), &t)) {
+          } else if (proc_tbl_get_by_atom(copymap, (LmnSymbolAtomRef)wt(rc, i), &t)) {
             lmn_register_set_wt(r, (LmnWord)t);
           } else {
             t = 0;

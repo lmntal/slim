@@ -89,3 +89,6 @@ test/**/*.log
 test/**/*.trs
 test/**/*.il
 .dirstamp
+il_lexer.cpp
+il_parser.cpp
+il_parser.hpp

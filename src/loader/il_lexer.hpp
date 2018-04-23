@@ -1,7 +1,7 @@
 /*
- * syntax.h - syntax tree  of the Intermediate Language
+ * il_lexer.hpp - Intermediate Language scanner
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,37 +33,50 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: syntax.h,v 1.4 2008/09/29 05:23:40 taisuke Exp $
  */
 
-#ifndef LMN_SYNTAX_H
-#define LMN_SYNTAX_H
+#ifndef IL_LEXER_HPP
+#define IL_LEXER_HPP
 
-#ifdef __cplusplus
-#warning 'syntax.h' is deprecated. Use 'syntax.hpp' instead.
-#endif
+#include <cstdio>
+#include <string>
+
+namespace il {
+  class lexer;
+}
 
 #include "lmntal.h"
-#include "vm/vm.h"
-#include "element/element.h"
-
-/**
- * @ingroup  Loader
- * @defgroup Syntax
- * @{
- */
+#include "syntax.hpp"
+#include "il_parser.hpp"
 
 
-/* Rule */
+namespace il {
+  class lexer {
+    static const size_t SIZE = 256;
+    st_table_t ruleset_id_tbl;
+    FILE *input;
+    char *buf;
+    char *YYCURSOR;
+    char *token;
+    char *YYLIMIT;
+    bool eof;
 
-typedef struct Rule *RuleRef;
+    std::string get_token() const {
+      return std::string(token, YYCURSOR - token);
+    };
 
-/* Root of the IL syntax tree */
+  public:
+    lexer(FILE *in);
+    ~lexer() {
+      st_free_table(ruleset_id_tbl);
+    }
 
-typedef struct IL *ILRef;
+    int lineno() const { return 0; }
+    int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
+    bool fill(size_t need);
+  };
+}
 
-void stx_rule_free(RuleRef rule);
+int illex(YYSTYPE *yylval, YYLTYPE *yyloc, il::lexer *lexer);
 
-/* @} */
-
-#endif
+#endif /* IL_LEXER_HPP */
