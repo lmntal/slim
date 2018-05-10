@@ -21,7 +21,7 @@ liblmn_verifier_a_CFLAGS =                               \
 liblmn_verifier_a_SOURCES =                              \
 	automata.cpp               automata.h                    \
 	binstr_compress.c        binstr_compress.h             \
-	delta_membrane.c         delta_membrane.h              \
+	delta_membrane.cpp         delta_membrane.h              \
 	dpor.cpp                 dpor.h                        \
 	dpor_naive.cpp             dpor_naive.h                  \
 	ltl2ba_adapter.cpp         ltl2ba_adapter.h              \
