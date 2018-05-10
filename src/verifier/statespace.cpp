@@ -1,5 +1,5 @@
 /*
- * statespace.c
+ * statespace.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -40,7 +40,7 @@
 /** @author Masato Gocho
  *  Closed Address Hash Table / Parallel Hash Table for State Management Table
  */
-
+extern "C"{
 #include "statespace.h"
 #include "state.h"
 #include "mem_encode.h"
@@ -84,7 +84,7 @@ static void statetable_resize(StateTable *st, unsigned long old_size);
 void statetable_set_rehash_tbl(StateTable *st, StateTable *rehash_tbl);
 StateTable *statetable_rehash_tbl(StateTable *st);
 static void statetable_memid_rehash(State *pred, StateTable *ss);
-
+}
 /** Macros
  */
 #define TABLE_DEFAULT_INIT_SIZE     (1U << 15)  /* TODO: テーブルの初期サイズはいくつが適当か. (固定サイズにしているモデル検査器は多い) */
@@ -652,7 +652,7 @@ void statespace_add_direct(StateSpaceRef ss, State *s)
 
 
 /* 高階関数 */
-void statespace_foreach(StateSpaceRef ss, void (*func) ( ),
+void statespace_foreach(StateSpaceRef ss, void (*func) (ANYARGS ),
                         LmnWord _arg1, LmnWord _arg2)
 {
   statetable_foreach(statespace_tbl(ss),              func, _arg1, _arg2);
@@ -661,7 +661,7 @@ void statespace_foreach(StateSpaceRef ss, void (*func) ( ),
   statetable_foreach(statespace_accept_memid_tbl(ss), func, _arg1, _arg2);
 }
 
-void statespace_foreach_parallel(StateSpaceRef ss, void (*func) ( ),
+void statespace_foreach_parallel(StateSpaceRef ss, void (*func) (ANYARGS ),
                                  LmnWord _arg1, LmnWord _arg2, int nPE)
 {
   statetable_foreach_parallel(statespace_tbl(ss),
@@ -743,7 +743,7 @@ static void statetable_free(StateTable *st, int nPEs)
 {
   if (st) {
 
-    statetable_foreach_parallel(st, (void (*)())state_free, DEFAULT_ARGS, DEFAULT_ARGS, nPEs);
+    statetable_foreach_parallel(st, (void (*)(ANYARGS))state_free, DEFAULT_ARGS, DEFAULT_ARGS, nPEs);
 
     if (st->lock) {
       ewlock_free(st->lock);
@@ -1367,39 +1367,39 @@ void statespace_dumper(StateSpaceRef ss)
 static void statespace_dump_all_states(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     (void (*)())dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))dump_state_data, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
 static void statespace_dump_all_transitions(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     (void (*)())state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))state_print_transition, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
 static void statespace_dump_all_labels(StateSpaceRef ss)
 {
   statetable_foreach(statespace_tbl(ss),
-                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_memid_tbl(ss),
-                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_tbl(ss),
-                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))state_print_label, (LmnWord)ss->out, (LmnWord)ss);
   statetable_foreach(statespace_accept_memid_tbl(ss),
-                     (void (*)())state_print_label, (LmnWord)ss->out, (LmnWord)ss);
+                     (void (*)(ANYARGS))state_print_label, (LmnWord)ss->out, (LmnWord)ss);
 }
 
 
@@ -1453,8 +1453,9 @@ void statetable_format_states(StateTable *st)
 {
   if (st) {
     qsort(st->tbl, st->cap, sizeof(struct State *), statetable_cmp_state_id_gr_f);
-    statetable_foreach(st, (void (*)())statetable_issue_state_id_f,
+    statetable_foreach(st, (void (*)(ANYARGS))statetable_issue_state_id_f,
                        DEFAULT_ARGS, DEFAULT_ARGS);
   }
 }
+
 

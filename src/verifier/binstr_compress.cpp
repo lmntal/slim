@@ -1,5 +1,5 @@
 /*
- * binstr_compress.c
+ * binstr_compress.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -36,17 +36,17 @@
  *
  * $Id$
  */
-
+extern "C"{
 #include "binstr_compress.h"
 #include "element/element.h"
-#include <zdlib.h>
+#include "../third_party/zdelta-2.1/zdlib.h"
 #ifdef HAVE_LIBZ
 # include <zlib.h>
 #endif
 #ifdef PROFILE
 # include "runtime_status.h"
 #endif
-
+}
 
 /** ============================
  *  Binary String Compressor

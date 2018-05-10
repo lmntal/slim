@@ -492,7 +492,7 @@ void profile_statespace(LmnWorkerGroup *wp)
     for (i = 0; i < lmn_prof.thread_num; i++) {
       mc_profiler2_init(&lmn_prof.lv2[i]);
     }
-    statespace_foreach(worker_states(w), (void (*)())profile_state_f,
+    statespace_foreach(worker_states(w), (void (*)(ANYARGS))profile_state_f,
                        (LmnWord)worker_states(w), DEFAULT_ARGS);
 
     if (lmn_env.tree_compress) {

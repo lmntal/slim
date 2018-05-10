@@ -352,7 +352,7 @@ static inline void statetable_enqueue_f(State *s, LmnWord _q)
 
 void statetable_to_state_queue(StateTable *st, Queue *q)
 {
-  statetable_foreach(st, (void (*)())statetable_enqueue_f, (LmnWord)q, DEFAULT_ARGS);
+  statetable_foreach(st, (void (*)(ANYARGS))statetable_enqueue_f, (LmnWord)q, DEFAULT_ARGS);
 }
 
 static void owcty_env_init(LmnWorker *w)

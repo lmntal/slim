@@ -20,14 +20,14 @@ liblmn_verifier_a_CFLAGS =                               \
         
 liblmn_verifier_a_SOURCES =                              \
 	automata.cpp               automata.h                    \
-	binstr_compress.c        binstr_compress.h             \
+	binstr_compress.cpp        binstr_compress.h             \
 	delta_membrane.cpp         delta_membrane.h              \
 	dpor.cpp                 dpor.h                        \
 	dpor_naive.cpp             dpor_naive.h                  \
 	ltl2ba_adapter.cpp         ltl2ba_adapter.h              \
 	mc.cpp                     mc.h                          \
 	mc_explorer.cpp            mc_explorer.h                 \
-	mc_generator.c           mc_generator.h                \
+	mc_generator.cpp           mc_generator.h                \
 	mc_visualizer.cpp          mc_visualizer.h               \
 	mc_worker.cpp              mc_worker.h                   \
 	mem_encode.cpp             mem_encode.h                  \
@@ -36,8 +36,8 @@ liblmn_verifier_a_SOURCES =                              \
 	propositional_symbol.cpp   propositional_symbol.h        \
 	propsym_parser.y         propsym_lexer.l               \
 	runtime_status.cpp         runtime_status.h              \
-	state.c                  state.h                       \
-	statespace.c             statespace.h                  \
+	state.cpp                  state.h                       \
+	statespace.cpp             statespace.h                  \
 	tree_compress.cpp          tree_compress.h               \
 	visitlog.cpp               visitlog.h                    \
 	stack_macro.h

@@ -1,5 +1,5 @@
 /*
- * state.c
+ * state.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -37,7 +37,7 @@
  * $Id$
  */
 
-
+extern "C"{
 #include "state.h"
 #include "automata.h"
 #include "mc.h"
@@ -50,7 +50,7 @@
 #ifdef KWBT_OPT
 # include <limits.h>
 #endif
-
+}
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org, State *ref_s);
 
 void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref)
