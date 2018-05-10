@@ -38,7 +38,7 @@ liblmn_verifier_a_SOURCES =                              \
 	runtime_status.cpp         runtime_status.h              \
 	state.c                  state.h                       \
 	statespace.c             statespace.h                  \
-	tree_compress.c          tree_compress.h               \
+	tree_compress.cpp          tree_compress.h               \
 	visitlog.c               visitlog.h                    \
 	stack_macro.h
 
