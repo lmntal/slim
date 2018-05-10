@@ -1,5 +1,5 @@
 /*
- * mc_worker.c
+ * mc_worker.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                          <lmntal@ueda.info.waseda.ac.jp>
@@ -39,7 +39,7 @@
 
 /** @author Masato Gocho
  *  utilities for parallel/concurrent execution */
-
+extern "C"{
 #include "mc.h"
 #include "mc_worker.h"
 #include "mc_generator.h"
@@ -47,9 +47,8 @@
 #include "state.h"
 #include "statespace.h"
 #include "runtime_status.h"
-
 #include <limits.h>
-
+}
 /** -------------------------------------
  *  MC object
  */
