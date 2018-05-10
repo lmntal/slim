@@ -1,5 +1,5 @@
 /*
- * automata.c
+ * automata.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -41,11 +41,12 @@
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
+extern "C"{
 #include "automata.h"
 #include "nc_parser.h"
 #include "nc_lexer.h"
 #include "propositional_symbol.h"
-
+}
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static void atmstate_free(AutomataStateRef s);
@@ -300,7 +301,7 @@ void inline atmstate_set_scc(AutomataStateRef s, AutomataSCC *scc)
   s->scc = scc;
 }
 
-BYTE inline atmstate_scc_type(AutomataStateRef s)
+BYTE atmstate_scc_type(AutomataStateRef s)
 {
   return atmscc_type(atmstate_scc(s));
 }

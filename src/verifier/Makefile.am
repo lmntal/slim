@@ -19,7 +19,7 @@ liblmn_verifier_a_CFLAGS =                               \
         $(CFLAGS)
         
 liblmn_verifier_a_SOURCES =                              \
-	automata.c               automata.h                    \
+	automata.cpp               automata.h                    \
 	binstr_compress.c        binstr_compress.h             \
 	delta_membrane.c         delta_membrane.h              \
 	dpor.cpp                 dpor.h                        \
