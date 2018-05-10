@@ -1,5 +1,5 @@
 /*
- * propositional_symbol.c - Propositional symbol definition
+ * propositional_symbol.cpp - Propositional symbol definition
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -41,13 +41,14 @@
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
+extern "C"{
 #include "propositional_symbol.h"
 #include "../lmntal.h"
 #include "propsym_parser.h"
 #include "propsym_lexer.h"
 #include "ffi/lmntal_system_adapter.h"
 #include "loader/loader.h"
-
+}
 struct SymbolDefinition {
   unsigned int sym_id;
   PropositionRef prop;
