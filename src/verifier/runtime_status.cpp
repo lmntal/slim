@@ -1,5 +1,5 @@
 /*
- * runtime_status.c
+ * runtime_status.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                          <lmntal@ueda.info.waseda.ac.jp>
@@ -36,9 +36,10 @@
  *
  * $Id$
  */
+extern "C"{
 #include "runtime_status.h"
 #include "vm/vm.h"
-
+}
 struct RuleProfiler {
   LmnRulesetId   ref_rs_id;
   unsigned long  apply;
