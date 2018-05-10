@@ -30,7 +30,7 @@ liblmn_verifier_a_SOURCES =                              \
 	mc_generator.c           mc_generator.h                \
 	mc_visualizer.c          mc_visualizer.h               \
 	mc_worker.c              mc_worker.h                   \
-	mem_encode.c             mem_encode.h                  \
+	mem_encode.cpp             mem_encode.h                  \
 	mhash.c                  mhash.h                       \
 	nc_parser.y	             nc_lexer.l                    \
 	propositional_symbol.c   propositional_symbol.h        \
