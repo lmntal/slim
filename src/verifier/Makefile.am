@@ -28,7 +28,7 @@ liblmn_verifier_a_SOURCES =                              \
 	mc.cpp                     mc.h                          \
 	mc_explorer.cpp            mc_explorer.h                 \
 	mc_generator.c           mc_generator.h                \
-	mc_visualizer.c          mc_visualizer.h               \
+	mc_visualizer.cpp          mc_visualizer.h               \
 	mc_worker.c              mc_worker.h                   \
 	mem_encode.cpp             mem_encode.h                  \
 	mhash.c                  mhash.h                       \
