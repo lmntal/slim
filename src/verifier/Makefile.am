@@ -24,7 +24,7 @@ liblmn_verifier_a_SOURCES =                              \
 	delta_membrane.c         delta_membrane.h              \
 	dpor.cpp                 dpor.h                        \
 	dpor_naive.cpp             dpor_naive.h                  \
-	ltl2ba_adapter.c         ltl2ba_adapter.h              \
+	ltl2ba_adapter.cpp         ltl2ba_adapter.h              \
 	mc.cpp                     mc.h                          \
 	mc_explorer.cpp            mc_explorer.h                 \
 	mc_generator.c           mc_generator.h                \

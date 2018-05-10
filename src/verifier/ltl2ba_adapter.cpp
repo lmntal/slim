@@ -1,5 +1,5 @@
 /*
- * ltl2ba_adapter.c
+ * ltl2ba_adapter.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -36,12 +36,12 @@
  *
  * $Id$
  */
-
+extern "C"{
 #include "ltl2ba_adapter.h"
 #include "../lmntal.h"
 #include "element/element.h"
 #include <stdlib.h>
-
+}
 FILE *ltl2ba_str(char *ltl)
 {
   char *cmd;
