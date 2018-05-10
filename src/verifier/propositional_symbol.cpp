@@ -164,6 +164,7 @@ unsigned int propsym_symbol_id(SymbolDefinitionRef s)
   return s->sym_id;
 }
 
+extern "C"
 int propsymparse(yyscan_t, AutomataRef, Vector**);
 
 int propsym_parse(FILE *in, AutomataRef a, PVector *definitions)

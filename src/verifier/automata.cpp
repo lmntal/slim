@@ -521,6 +521,7 @@ PLFormulaRef atm_transition_get_formula(AutomataTransitionRef t)
  * never claim
  */
 
+extern "C"
 int ncparse(yyscan_t, AutomataRef);
 
 /* 正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
