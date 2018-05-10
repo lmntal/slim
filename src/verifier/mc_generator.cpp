@@ -1,5 +1,5 @@
 /*
- * mc_generator.c
+ * mc_generator.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -36,7 +36,7 @@
  *
  * $Id$
  */
-
+extern "C"{
 #include "mc.h"
 #include "mc_worker.h"
 #include "mc_generator.h"
@@ -49,7 +49,7 @@
 #ifndef MINIMAL_STATE 
 #include "mc_visualizer.h"
 #endif
-
+}
 /* TODO: C++ template関数で書き直した方がよい */
 
 /* 邪魔なので上に持ってきた */

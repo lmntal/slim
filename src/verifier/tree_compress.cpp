@@ -1,5 +1,5 @@
 /*
- * tree_compress.c
+ * tree_compress.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -40,10 +40,10 @@
 /** @author Taketo Yoshida
  *  Parallel Recursive State Compression for Free
  */
-
+extern "C"{
 #include <math.h>
 #include "tree_compress.h"
-
+}
 
 #define atomic_fetch_and_inc(t) __sync_fetch_and_add (t, 1)
 #define atomic_fetch_and_dec(t) __sync_fetch_and_sub (t, 1)

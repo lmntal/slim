@@ -1,5 +1,5 @@
 /*
- * dpor_naive.c
+ * dpor_naive.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -35,7 +35,7 @@
  *
  * $Id$
  */
-
+extern "C"{
 #include "dpor.h"
 #include "dpor_naive.h"
 #include "delta_membrane.h"
@@ -45,7 +45,7 @@
 #ifdef PROFILE
 # include "runtime_status.h"
 #endif
-
+}
 
 /* 概要:
  *   Sasaki P.O.RコードをRev.108から復刻した. (gocho Rev.422)

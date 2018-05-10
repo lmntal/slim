@@ -1,5 +1,5 @@
 /*
- * mem_encode.c
+ * mem_encode.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -116,16 +116,17 @@
  *   rank        : 4byte
  *
  */
-
+extern "C"{
 #include "mem_encode.h"
 #include "delta_membrane.h"
 #include "element/element.h"
 #include "binstr_compress.h"
 #include "vm/vm.h"
+
 #ifdef PROFILE
 #  include "runtime_status.h"
 #endif
-
+}
 
 /* Tags */
 #define TAG_ATOM_START         0x0
@@ -217,7 +218,7 @@ void set_functor_priority(LmnFunctor f, int priority)
 /*----------------------------------------------------------------------
  * Binary String
  */
-inline LmnBinStrRef lmn_binstr_make(unsigned int real_len)
+LmnBinStrRef lmn_binstr_make(unsigned int real_len)
 {
   LmnBinStrRef bs = LMN_MALLOC(struct LmnBinStr);
   bs->len  = real_len * TAG_IN_BYTE;
@@ -968,7 +969,7 @@ static inline int bsptr_push_hlink(BinStrPtrRef p, LmnAtomRef atom, VisitLogRef 
   LmnHlinkRank hl_num;
 
   /* hyperlink構造を圧縮する際は, rootオブジェクトをバイト列に記録する. */
-  hl_root = lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(LMN_SATOM(atom)));
+  hl_root = lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
   hl_num  = lmn_hyperlink_element_num(hl_root);
   if (visitlog_get_hlink(log, hl_root, &ref)) {
     return bsptr_push1(p, TAG_VISITED_ATOMHLINK) &&
@@ -987,7 +988,7 @@ static inline int bsptr_push_hlink(BinStrPtrRef p, LmnAtomRef atom, VisitLogRef 
       if (LMN_ATTR_IS_DATA(attr)) {
         return bsptr_push_data_atom(p, attrAtom, attr, log);
       } else {
-        return bsptr_push_atom(p, LMN_SATOM(attrAtom));
+        return bsptr_push_atom(p, (LmnSymbolAtomRef)attrAtom);
       }
     } else {
       bsptr_push_from(p);
@@ -1293,7 +1294,7 @@ static void write_mem(LmnMembraneRef mem,
                                      LMN_SATOM_GET_LINK(in, 1),
                                      LMN_SATOM_GET_ATTR(in, 1),
                                      visited);
-          out = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
+          out = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in, 0);
           write_mol(LMN_SATOM_GET_LINK(out, 1),
                     LMN_SATOM_GET_ATTR(out, 1),
                     LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(out, 1)),
@@ -1347,16 +1348,16 @@ static void write_mol(LmnAtomRef atom, LmnLinkAttr attr, int from,
     return;
   }
 
-  f = LMN_SATOM_GET_FUNCTOR(atom);
+  f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom);
   if (f == LMN_OUT_PROXY_FUNCTOR) {
     /* outside proxyの場合, inside proxy側の膜をwrite_memで書き込む */
     LmnSymbolAtomRef in;
     LmnMembraneRef in_mem;
 
-    in = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
+    in = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
     in_mem = LMN_PROXY_GET_MEM(in);
-    if (visitlog_get_atom(visited, LMN_SATOM(in), NULL)) {
-      visitlog_put_atom(visited, LMN_SATOM(in));
+    if (visitlog_get_atom(visited, in, NULL)) {
+      visitlog_put_atom(visited, in);
     }
     write_mem(in_mem,
               LMN_SATOM_GET_LINK(in, 1),
@@ -1369,11 +1370,11 @@ static void write_mol(LmnAtomRef atom, LmnLinkAttr attr, int from,
   else if (f == LMN_IN_PROXY_FUNCTOR) {
     /* inside proxyの場合, 親膜へ抜ける旨を示すタグTAG_ESCAPE_MEMを書き込む.
      * その後, outside proxyから分子のトレース(write_mol)を引き続き実行する */
-    LmnSymbolAtomRef out = LMN_SATOM(LMN_SATOM_GET_LINK(atom, 0));
+    LmnSymbolAtomRef out = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
     bsptr_push_escape_mem(bsp);
 
-    if (visitlog_get_atom(visited, LMN_SATOM(atom), NULL)) {
-      visitlog_put_atom(visited, LMN_SATOM(atom));
+    if (visitlog_get_atom(visited, (LmnSymbolAtomRef)atom, NULL)) {
+      visitlog_put_atom(visited, (LmnSymbolAtomRef)atom);
     }
 
     write_mol(LMN_SATOM_GET_LINK(out, 1),
@@ -1383,10 +1384,10 @@ static void write_mol(LmnAtomRef atom, LmnLinkAttr attr, int from,
               visited,
               is_id);
   }
-  else if (!visitlog_get_atom(visited, LMN_SATOM(atom), &n_visited)) {
+  else if (!visitlog_get_atom(visited, (LmnSymbolAtomRef)atom, &n_visited)) {
     /* 未訪問のシンボルアトムの場合 */
-    visitlog_put_atom(visited, LMN_SATOM(atom));
-    bsptr_push_atom(bsp, LMN_SATOM(atom));
+    visitlog_put_atom(visited, (LmnSymbolAtomRef)atom);
+    bsptr_push_atom(bsp, (LmnSymbolAtomRef)atom);
     if (!bsptr_valid(bsp)) return;
 
     arity = LMN_FUNCTOR_GET_LINK_NUM(f);
@@ -1395,9 +1396,9 @@ static void write_mol(LmnAtomRef atom, LmnLinkAttr attr, int from,
         bsptr_push_from(bsp); /* TAG_FROM */
         continue;
       }
-      write_mol(LMN_SATOM_GET_LINK(atom, i_arg),
-                LMN_SATOM_GET_ATTR(atom, i_arg),
-                LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(atom, i_arg)),
+      write_mol(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, i_arg),
+                LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)atom, i_arg),
+                LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)atom, i_arg)),
                 bsp,
                 visited,
                 is_id);
@@ -1426,7 +1427,7 @@ static void write_mols(Vector *atoms,
   natom = vec_num(atoms);
   last_valid_i = -1;
   for (i = 0; i < natom; i++) {
-    LmnSymbolAtomRef atom = LMN_SATOM(vec_get(atoms, i));
+    LmnSymbolAtomRef atom = (LmnSymbolAtomRef)vec_get(atoms, i);
 
     if (!atom || LMN_IS_HL(atom)) continue;
     /* 最適化: 最小のファンクタ以外は試す必要なし */
@@ -2224,7 +2225,7 @@ static void dump_mols(Vector *atoms,
   /* atoms中の未訪問のアトムを起点とする分子を、それぞれ試みる */
   natom = vec_num(atoms);
   for (i = 0; i < natom; i++) {
-    LmnSymbolAtomRef atom = LMN_SATOM(vec_get(atoms, i));
+    LmnSymbolAtomRef atom = (LmnSymbolAtomRef)vec_get(atoms, i);
 
     if (visitlog_get_atom(visited, atom, NULL) || LMN_IS_HL(atom)) {
       continue;
@@ -2327,7 +2328,7 @@ static long process_num(LmnMembraneRef mem);
 #endif
 
 /* 膜のダンプ or エンコードと、膜の同型性判定を行う */
-inline BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem)
+BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem)
 {
   BOOL ret;
 
@@ -2560,7 +2561,7 @@ static int mem_eq_enc_mols(LmnBinStrRef   bs,
            * -----------------+
            */
 
-          data = LMN_SATOM_GET_LINK(in, 1);
+          data = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in, 1);
           data_attr = LMN_SATOM_GET_ATTR(in, 1);
 
           tmp_i_bs  = *i_bs;
@@ -2673,13 +2674,13 @@ static BOOL mem_eq_enc_atom(LmnBinStrRef   bs,       int     *i_bs,
   /* アトムatomがファンクタfのアトムでない場合,
    * 既にチェック済みのアトムの場合, FALSEを返す */
 
-  if (f != LMN_SATOM_GET_FUNCTOR(atom)) return FALSE;
+  if (f != LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom)) return FALSE;
 #ifdef BS_MEMEQ_OLD
-  if (!visitlog_put_atom(log, LMN_SATOM(atom))) return FALSE;
+  if (!visitlog_put_atom(log, atom)) return FALSE;
   ref_log[*i_ref].v    = (LmnWord)atom;
   ref_log[*i_ref].type = BS_LOG_TYPE_ATOM;
 #else
-  if (!tracelog_put_atom(log, LMN_SATOM(atom), *i_ref, mem)) return FALSE;
+  if (!tracelog_put_atom(log, (LmnSymbolAtomRef)atom, *i_ref, mem)) return FALSE;
 #endif
   (*i_ref)++;
   arity = LMN_FUNCTOR_ARITY(f);
@@ -2689,8 +2690,8 @@ static BOOL mem_eq_enc_atom(LmnBinStrRef   bs,       int     *i_bs,
     if (!mem_eq_enc_mol(bs,
                         i_bs,
                         mem,
-                        LMN_SATOM_GET_LINK(atom, i),
-                        LMN_SATOM_GET_ATTR(atom, i),
+                        LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, i),
+                        LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)atom, i),
                         ref_log,
                         i_ref,
                         log)) {
@@ -2716,22 +2717,22 @@ BOOL mem_eq_enc_traced_mem(BOOL is_named,
   LmnAtomRef in;
 
   if (LMN_ATTR_IS_DATA(attr) ||
-      LMN_SATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) {
+      LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) != LMN_OUT_PROXY_FUNCTOR) {
     return FALSE;
   }
 
   /* 子膜側のinside proxyアトムを取得 */
-  in = LMN_SATOM_GET_LINK(atom, 0);
+  in = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
 
   if (is_named) {
     const lmn_interned_str mem_name = binstr_get_mem_name(bs->v, *i_bs);
     (*i_bs) += BS_MEM_NAME_SIZE;
-    if (mem_name != LMN_MEM_NAME_ID(LMN_PROXY_GET_MEM(in))) {
+    if (mem_name != LMN_MEM_NAME_ID(LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in))) {
       return FALSE;
     }
   }
 
-  in_mem = LMN_PROXY_GET_MEM(in);
+  in_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
 
 #ifdef BS_MEMEQ_OLD
   visitlog_put_mem(log, in_mem);
@@ -2739,7 +2740,7 @@ BOOL mem_eq_enc_traced_mem(BOOL is_named,
   ref_log[*i_ref].type = BS_LOG_TYPE_MEM;
 #else
   tracelog_put_mem(log, in_mem, *i_ref);
-  tracelog_put_atom(log, LMN_SATOM(in), TLOG_MATCHED_ID_NONE, in_mem);
+  tracelog_put_atom(log, (LmnSymbolAtomRef)in, TLOG_MATCHED_ID_NONE, in_mem);
 #endif
   (*i_ref)++;
 
@@ -2748,8 +2749,8 @@ BOOL mem_eq_enc_traced_mem(BOOL is_named,
   if (mem_eq_enc_mol(bs,
                      i_bs,
                      in_mem,
-                     LMN_SATOM_GET_LINK(in, 1),
-                     LMN_SATOM_GET_ATTR(in, 1),
+                     LMN_SATOM_GET_LINK((LmnSymbolAtomRef)in, 1),
+                     LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)in, 1),
                      ref_log,
                      i_ref,
                      log) &&
@@ -3041,17 +3042,17 @@ static inline BOOL mem_eq_enc_mem_ref(LmnBinStrRef    bs,       int          *i_
                                       unsigned int ref,      LmnMeqLog    *log)
 {
   if (LMN_ATTR_IS_DATA(attr) ||
-      LMN_SATOM_GET_FUNCTOR(atom) != LMN_OUT_PROXY_FUNCTOR) {
+      LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) != LMN_OUT_PROXY_FUNCTOR) {
     return FALSE;
   }
   else {
     LmnMembraneRef in_mem;
     LmnAtomRef in;
 
-    in       = LMN_SATOM_GET_LINK(atom, 0);
-    in_mem   = LMN_PROXY_GET_MEM(in);
+    in       = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
+    in_mem   = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
 #ifndef BS_MEMEQ_OLD
-    tracelog_put_atom(log, LMN_SATOM(in), TLOG_MATCHED_ID_NONE, in_mem);
+    tracelog_put_atom(log, (LmnSymbolAtomRef)in, TLOG_MATCHED_ID_NONE, in_mem);
     if (ref != tracelog_get_memMatched(log, in_mem)) return FALSE;
 #else
     if (ref_log[ref].v != (LmnWord)in_mem) return FALSE;
@@ -3065,8 +3066,8 @@ static inline BOOL mem_eq_enc_mem_ref(LmnBinStrRef    bs,       int          *i_
     return mem_eq_enc_mol(bs,
                           i_bs,
                           in_mem,
-                          LMN_SATOM_GET_LINK(in, 1),
-                          LMN_SATOM_GET_ATTR(in, 1),
+                          LMN_SATOM_GET_LINK((LmnSymbolAtomRef)in, 1),
+                          LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)in, 1),
                           ref_log,
                           i_ref,
                           log);
@@ -3112,19 +3113,19 @@ static inline BOOL mem_eq_enc_escape_mem(LmnBinStrRef   bs,
                                          LmnMeqLog   *log)
 {
   if (LMN_ATTR_IS_DATA(attr) ||
-      LMN_SATOM_GET_FUNCTOR(atom) != LMN_IN_PROXY_FUNCTOR) {
+      LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) != LMN_IN_PROXY_FUNCTOR) {
     return FALSE;
   }
   else {
-    LmnAtomRef out = LMN_SATOM_GET_LINK(atom, 0);
+    LmnAtomRef out = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
 #ifndef  BS_MEMEQ_OLD
-    tracelog_put_atom(log, LMN_SATOM(atom), TLOG_MATCHED_ID_NONE, LMN_PROXY_GET_MEM(atom));
+    tracelog_put_atom(log, (LmnSymbolAtomRef)atom, TLOG_MATCHED_ID_NONE, LMN_PROXY_GET_MEM((LmnSymbolAtomRef)atom));
 #endif
     return mem_eq_enc_mol(bs,
                           i_bs,
                           lmn_mem_parent(mem),
-                          LMN_SATOM_GET_LINK(out, 1),
-                          LMN_SATOM_GET_ATTR(out, 1),
+                          LMN_SATOM_GET_LINK((LmnSymbolAtomRef)out, 1),
+                          LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)out, 1),
                           ref_log,
                           i_ref,
                           log);
@@ -3171,7 +3172,7 @@ static inline BOOL mem_eq_enc_hlink(LmnBinStrRef   bs,
               f = binstr_get_functor(bs->v, *i_bs); /* functorを持ってくる */
               *i_bs  += BS_FUNCTOR_SIZE;
               if (LMN_ATTR_IS_DATA(LMN_HL_ATTRATOM_ATTR(hl_root)) ||
-                  f!=LMN_SATOM_GET_FUNCTOR(LMN_HL_ATTRATOM(hl_root))) {
+                  f!=LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)LMN_HL_ATTRATOM(hl_root))) {
                 return FALSE;
               }
             }

@@ -1,5 +1,5 @@
 /*
- * visitlog.c
+ * visitlog.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -34,9 +34,9 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
+extern "C"{
 #include "visitlog.h"
-
+}
 #ifndef PROC_TBL_DEFAULT_SIZE
 #define PROC_TBL_DEFAULT_SIZE  128U
 #endif

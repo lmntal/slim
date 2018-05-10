@@ -1,5 +1,5 @@
 /*
- * mc_explorer.c
+ * mc_explorer.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -36,12 +36,13 @@
  *
  * $Id$
  */
-
+extern "C"{
 #include "mc.h"
 #include "mc_worker.h"
 #include "mc_explorer.h"
 #include "state.h"
 #include "element/element.h"
+}
 
 #ifdef PROFILE
 #  include "runtime_status.h"
@@ -351,7 +352,7 @@ static inline void statetable_enqueue_f(State *s, LmnWord _q)
 
 void statetable_to_state_queue(StateTable *st, Queue *q)
 {
-  statetable_foreach(st, (void (*)())statetable_enqueue_f, (LmnWord)q, DEFAULT_ARGS);
+  statetable_foreach(st, (void (*)(ANYARGS))statetable_enqueue_f, (LmnWord)q, DEFAULT_ARGS);
 }
 
 static void owcty_env_init(LmnWorker *w)

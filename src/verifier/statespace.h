@@ -124,9 +124,9 @@ struct StateTable {
  *  StateTable
  */
 
-void statetable_foreach(StateTable *st, void (*func) ( ),
+void statetable_foreach(StateTable *st, void (*func) (ANYARGS ),
                                LmnWord _arg1, LmnWord _arg2);
-void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) ( ),
+void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func) (ANYARGS ),
                                  LmnWord _arg1, LmnWord _arg2, int nthreads);
 void statetable_format_states(StateTable *st);
 
@@ -157,9 +157,9 @@ void       statespace_free(StateSpaceRef ss);
 void       statespace_add_direct(StateSpaceRef ss, State *s);
 State     *statespace_insert(StateSpaceRef ss, State *s);
 State     *statespace_insert_delta(StateSpaceRef ss, State *s, struct MemDeltaRoot *d);
-void       statespace_foreach(StateSpaceRef ss, void (*func) ( ),
+void       statespace_foreach(StateSpaceRef ss, void (*func) (ANYARGS ),
                               LmnWord _arg1, LmnWord _arg2);
-void       statespace_foreach_parallel(StateSpaceRef ss, void (*func) ( ),
+void       statespace_foreach_parallel(StateSpaceRef ss, void (*func) (ANYARGS ),
                               LmnWord _arg1, LmnWord _arg2, int nPE);
 void       statespace_format_states(StateSpaceRef ss);
 void       statespace_clear(StateSpaceRef ss);
