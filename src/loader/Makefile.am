@@ -35,7 +35,7 @@ interpret_generated.c: translate_generator.in translate_generator.rb
 	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@ -i
 
 il_lexer.cpp: il_lexer.cpp.re
-	re2c -o il_lexer.cpp il_lexer.cpp.re
+	$(RE2C) -o il_lexer.cpp il_lexer.cpp.re
 
 .ypp.cpp:
 	$(YACC) $(YFLAGS) $(AM_YFLAGS) $<
