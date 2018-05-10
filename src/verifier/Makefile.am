@@ -39,7 +39,7 @@ liblmn_verifier_a_SOURCES =                              \
 	state.c                  state.h                       \
 	statespace.c             statespace.h                  \
 	tree_compress.cpp          tree_compress.h               \
-	visitlog.c               visitlog.h                    \
+	visitlog.cpp               visitlog.h                    \
 	stack_macro.h
 
 
