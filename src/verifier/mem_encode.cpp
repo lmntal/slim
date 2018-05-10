@@ -218,7 +218,7 @@ void set_functor_priority(LmnFunctor f, int priority)
 /*----------------------------------------------------------------------
  * Binary String
  */
-inline LmnBinStrRef lmn_binstr_make(unsigned int real_len)
+LmnBinStrRef lmn_binstr_make(unsigned int real_len)
 {
   LmnBinStrRef bs = LMN_MALLOC(struct LmnBinStr);
   bs->len  = real_len * TAG_IN_BYTE;
@@ -2328,7 +2328,7 @@ static long process_num(LmnMembraneRef mem);
 #endif
 
 /* 膜のダンプ or エンコードと、膜の同型性判定を行う */
-inline BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem)
+BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem)
 {
   BOOL ret;
 
