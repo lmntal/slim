@@ -31,7 +31,7 @@ liblmn_verifier_a_SOURCES =                              \
 	mc_visualizer.cpp          mc_visualizer.h               \
 	mc_worker.cpp              mc_worker.h                   \
 	mem_encode.cpp             mem_encode.h                  \
-	mhash.c                  mhash.h                       \
+	mhash.cpp                  mhash.h                       \
 	nc_parser.y	             nc_lexer.l                    \
 	propositional_symbol.c   propositional_symbol.h        \
 	propsym_parser.y         propsym_lexer.l               \
