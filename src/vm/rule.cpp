@@ -71,12 +71,6 @@ LmnRuleRef make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated tran
   return rule;
 }
 
-/* create new rule with byte sequence of instructions.
-   inst_seq_sizeはinst_seqの長さ(バイト単位)を表す */
-LmnRuleRef lmn_rule_make(BYTE *inst_seq, int inst_seq_len, lmn_interned_str name)
-{
-  return new LmnRule(inst_seq, inst_seq_len, NULL, name);
-}
 
 /* 中身のない、名前だけを持つルールを生成する */
 LmnRuleRef lmn_rule_make_dummy(lmn_interned_str name)

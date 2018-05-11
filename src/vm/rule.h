@@ -68,7 +68,6 @@ typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
    た場合FALSEを返す */
 
 
-LmnRuleRef lmn_rule_make(LmnRuleInstr instr, int instr_len, lmn_interned_str name);
 LmnRuleRef dummy_rule(void);
 LmnRuleRef lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name);
 LmnRuleRef lmn_rule_copy(LmnRuleRef rule);
