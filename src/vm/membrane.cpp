@@ -54,6 +54,7 @@ extern "C" {
 #  include "firstclass_rule.h"
 #endif
 }
+#include "rule.hpp"
 
 /** ----
  *  AtomListEntry.

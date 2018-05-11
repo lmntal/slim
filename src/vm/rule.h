@@ -56,7 +56,9 @@ typedef struct LmnRuleSet *LmnRuleSetRef;
 #include "react_context.h"
 
 typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
-
+/* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
+   現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
+   により、ルールを変換して生成された関数を想定している。*/
 
 /*----------------------------------------------------------------------
  * Rule

@@ -18,7 +18,7 @@ liblmn_vm_a_SOURCES =                              \
 	memstack.cpp memstack.h \
 	normal_thread.cpp normal_thread.h \
 	react_context.cpp react_context.h \
-	rule.cpp rule.h \
+	rule.cpp rule.hpp \
 	special_atom.cpp special_atom.h \
 	symbol.cpp symbol.h \
 	system_ruleset.cpp system_ruleset.h \
