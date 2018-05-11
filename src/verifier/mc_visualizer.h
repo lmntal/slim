@@ -8,7 +8,7 @@
  */
 
 #include "element/element.h"
-#include "state.h"
+#include "verifier.h"
 
 void dump_dot(StateSpaceRef ss, int worker_num);
 

@@ -47,7 +47,7 @@
 
 #include "../lmntal.h"
 #include "element/element.h"
-#include "state.h"
+#include "verifier.h"
 #include "statespace.h"
 
 

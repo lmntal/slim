@@ -62,7 +62,7 @@ extern "C" {
 #include "mem_encode.h"
 #include "mhash.h"
 #include "propositional_symbol.h"
-#include "state.h"
+#include "state.hpp"
 #include "statespace.h"
 #include "tree_compress.h"
 

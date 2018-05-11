@@ -1,7 +1,7 @@
 extern "C"{
 #include "mc_visualizer.h"
 #include "statespace.h"
-#include "state.h"
+#include "verifier.h"
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>

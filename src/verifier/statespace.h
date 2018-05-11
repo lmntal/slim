@@ -53,7 +53,7 @@
 #include "../lmntal.h"
 #include "element/element.h"
 #include "automata.h"
-#include "state.h"
+#include "verifier.h"
 #include "delta_membrane.h"
 #include "mem_encode.h"
 #include "tree_compress.h"

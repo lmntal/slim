@@ -44,7 +44,7 @@ extern "C"{
 #include "mc_worker.h"
 #include "mc_generator.h"
 #include "mc_explorer.h"
-#include "state.h"
+#include "verifier.h"
 #include "statespace.h"
 #include "runtime_status.h"
 #include <limits.h>

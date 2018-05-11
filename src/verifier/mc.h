@@ -49,7 +49,7 @@
 #include "element/element.h"
 #include "automata.h"
 #include "vm/vm.h"
-#include "state.h"
+#include "verifier.h"
 #include "statespace.h"
 #include "mc_worker.h"
 

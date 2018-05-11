@@ -42,7 +42,7 @@
  */
 extern "C"{
 #include "statespace.h"
-#include "state.h"
+#include "verifier.h"
 #include "mem_encode.h"
 #include "automata.h"
 #include "vm/vm.h"
