@@ -68,6 +68,7 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+#include "state.hpp"
 #endif
 
 #endif /* LMN_VERIFIER_H */

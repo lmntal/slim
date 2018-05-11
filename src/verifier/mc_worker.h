@@ -48,7 +48,6 @@
 
 #include "../lmntal.h"
 #include "statespace.h"
-#include "state.h"
 #include "element/element.h"
 
 #if defined(HAVE_ATOMIC_SUB) && defined(HAVE_BUILTIN_MBARRIER)

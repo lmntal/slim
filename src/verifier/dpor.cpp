@@ -42,12 +42,12 @@ extern "C" {
 #include "dpor_naive.h"
 #include "vm/vm.h"
 #include "delta_membrane.h"
-#include "state.h"
 #include "mc.h"
 #include "mc_worker.h"
 #include "lmntal.h"
-
+#include "state.h"
 }
+#include "state.hpp"
 
 /**
  * Dynamic Partial Order Reduction

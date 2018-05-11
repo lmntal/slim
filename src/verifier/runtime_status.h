@@ -48,8 +48,8 @@
 
 #include "lmntal.h"
 #include "element/element.h"
-#include "verifier/verifier.h"
-
+#include "vm/vm.h"
+#include "mc_worker.h"
 
 typedef struct MCProfiler2          MCProfiler2;
 typedef struct MCProfiler3          MCProfiler3;

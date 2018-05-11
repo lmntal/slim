@@ -1,11 +1,13 @@
 extern "C"{
 #include "mc_visualizer.h"
 #include "statespace.h"
-#include "state.h"
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include "state.h"
 }
+#include "state.hpp"
+
 #define R(c) ((c >> 16) & 0xff)
 #define G(c) ((c >> 8) & 0xff)
 #define B(c) ((c) & 0xff)

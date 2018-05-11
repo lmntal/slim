@@ -49,7 +49,9 @@ extern "C"{
 #ifdef DEBUG
 #  include "dumper.h"
 #endif
+#include "state.h"
 }
+#include "state.hpp"
 
 /** =======================================
  *  ==== Entrance for model checking ======

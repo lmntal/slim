@@ -46,7 +46,6 @@
  * @{
  */
 
-#include "state.h"
 #include "mc_worker.h"
 #include "stack_macro.h"
 

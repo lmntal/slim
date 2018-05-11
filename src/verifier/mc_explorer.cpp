@@ -40,9 +40,10 @@ extern "C"{
 #include "mc.h"
 #include "mc_worker.h"
 #include "mc_explorer.h"
-#include "state.h"
 #include "element/element.h"
+#include "state.h"
 }
+#include "state.hpp"
 
 #ifdef PROFILE
 #  include "runtime_status.h"
@@ -476,7 +477,7 @@ static inline void owcty_reachability(LmnWorker *w,
     }
     else if (STATE_PROP_SCC_N(w, s, statespace_automata(ss)) ||
                smap_is_deleted(s) ||
-               (MAP_COND(w) && !state_map(s))) {
+               (MAP_COND(w) && !s->map)) {
       /* A. 性質オートマトン上でSCCを跨ぐ遷移ならば受理サイクルを形成しない
        * B. 既に削除マーキング済
        * C. map iteration1週目でなんらかのMAP値が設定されていない頂点は受理頂点から到達不可能
@@ -725,10 +726,10 @@ static State *map_ordering_propagate_state(LmnWorker *w, State *u, AutomataRef a
   State *propag;
 
   if (!state_is_accept(a, u) || smap_is_deleted(u)) {
-    propag = state_map(u);
+    propag = u->map;
   }
   else { /* u ∈ A */
-    propag = map_ordering(u, state_map(u), a);
+    propag = map_ordering(u, u->map, a);
 
     if (!worker_use_weak_map(w)) {
       if (propag == u) {
@@ -752,7 +753,7 @@ static void map_propagate(LmnWorker *w, State *s, State *t, State *propag, Autom
   if (propag == t || (state_is_accept(a, t) && t == s)) {
     map_found_accepting_cycle(w, t);
   }
-  else if (propag == map_ordering(propag, state_map(t), a)) {
+  else if (propag == map_ordering(propag, t->map, a)) {
     if (map_entry_state(t, propag, a) && !worker_use_weak_map(w) && is_expanded(t)) {
       enqueue(MAP_WORKER_PROPAG_G(w), (LmnWord)t);
     }
@@ -767,14 +768,14 @@ static inline BOOL map_entry_state(State *t, State *propag, AutomataRef a)
   BOOL ret = FALSE;
 
   do {
-    State *fetch = state_map(t);
+    State *fetch = t->map;
 
     if (fetch == propag) {
       break;
-    } else if (CAS(state_map(t), fetch, propag)) {
+    } else if (CAS(t->map, fetch, propag)) {
       ret = TRUE;
       break;
-    } else if (propag != map_ordering(state_map(t), propag, a)) {
+    } else if (propag != map_ordering(t->map, propag, a)) {
       ret = FALSE;
       break;
     }
