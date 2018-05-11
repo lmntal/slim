@@ -91,7 +91,7 @@ public:
   // TODO: よくない設計。コピーにするか、したくなければ
   //       LmnRuleのコンストラクタに右辺値参照としてByteEncoderを渡して初期化とか。
   LmnRuleRef create_rule() {
-    return lmn_rule_make(byte_seq, cap, ANONYMOUS);
+    return new LmnRule(byte_seq, cap, NULL, ANONYMOUS);
   }
 
 private:

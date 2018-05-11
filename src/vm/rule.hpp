@@ -1,8 +1,7 @@
 /*
- * vm.h
+ * rule.hpp - types and functions about rule, rule set, module
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -34,40 +33,27 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
+ * $Id: rule.hpp,v 1.6 2008/09/29 05:23:40 taisuke Exp $
  */
+#ifndef LMN_RULE_HPP
+#define LMN_RULE_HPP
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
+struct LmnRule {
+  BYTE             *inst_seq;
+  int              inst_seq_len;
+  LmnTranslated    translated;
+  lmn_interned_str name;
+  BOOL             is_invisible;
+  st_table_t       history_tbl;
+  lmn_interned_str pre_id;
 
-/**
- * @defgroup Ext
- */
+  /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or costの計算式を入れる */
+  LmnCost          cost;
 
-/**
- * @defgroup VM
- */
+  LmnRule (LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name):
+    inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated), name(name), is_invisible(FALSE), pre_id(ANONYMOUS), history_tbl(NULL) {}
 
-#ifdef __cplusplus
-extern "C" {
+  LmnRule () {}
+};
+
 #endif
-
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "symbol.h"
-#include "task.h"
-#include "rule.h"
-#include "process_table.h"
-#include "simply_process_table.h"
-#include "trace_log.h"
-#include "simply_trace_log.h"
-
-#ifdef __cplusplus
-}
-#include "rule.hpp"
-#endif
-
-#endif /* LMN_VM_H */

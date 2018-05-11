@@ -40,22 +40,7 @@ extern "C" {
 #include "rule.h"
 #include "system_ruleset.h"
 }
-
-/* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
-   現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
-   により、ルールを変換して生成された関数を想定している。*/
-struct LmnRule {
-  BYTE             *inst_seq;
-  int              inst_seq_len;
-  LmnTranslated    translated;
-  lmn_interned_str name;
-  BOOL             is_invisible;
-  st_table_t       history_tbl;
-  lmn_interned_str pre_id;
-
-  /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or costの計算式を入れる */
-  LmnCost          cost;
-};
+#include "rule.hpp"
 
 
 /*----------------------------------------------------------------------
@@ -86,23 +71,17 @@ LmnRuleRef make_rule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated tran
   return rule;
 }
 
-/* create new rule with byte sequence of instructions.
-   inst_seq_sizeはinst_seqの長さ(バイト単位)を表す */
-LmnRuleRef lmn_rule_make(BYTE *inst_seq, int inst_seq_len, lmn_interned_str name)
-{
-  return make_rule(inst_seq, inst_seq_len, NULL, name);
-}
 
 /* 中身のない、名前だけを持つルールを生成する */
 LmnRuleRef lmn_rule_make_dummy(lmn_interned_str name)
 {
-  return make_rule(NULL, -1, NULL, name);
+  return new LmnRule(NULL, -1, NULL, name);
 }
 
 /* create new rule with a translated function */
 LmnRuleRef lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name)
 {
-  return make_rule(NULL, 0, translated, name);
+  return new LmnRule(NULL, 0, translated, name);
 }
 
 /* ruleをコピーして新しいルールを作成する */
@@ -118,7 +97,7 @@ LmnRuleRef lmn_rule_copy(LmnRuleRef rule)
     inst_seq = NULL;
   }
 
-  new_rule = make_rule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
+  new_rule = new LmnRule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
   if (lmn_rule_get_history_tbl(rule)) {
     new_rule->history_tbl = st_copy(lmn_rule_get_history_tbl(rule));
     new_rule->pre_id = lmn_rule_get_pre_id(rule);
