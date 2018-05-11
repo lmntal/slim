@@ -1,7 +1,8 @@
 /*
- * dpor_naive.h
+ * state_defs.h - types used in state.hpp. This is a temporal file.
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -36,29 +37,33 @@
  * $Id$
  */
 
-#ifndef LMN_MC_POR_H
-#define LMN_MC_POR_H
+#ifndef STATE_DEFS_H
+#define STATE_DEFS_H
 
-/**
- * @ingroup  Verifier
- * @defgroup DPOR
- * @{
- */
+#include "lmntal.h"
 
-#include "../lmntal.h"
-#include "element/element.h"
-#include "statespace.h"
+typedef void *succ_data_t;
+typedef void *state_data_t;
+
+/* unionで書く方が良い? どうしよっかな */
+// typedef union succ_data_t  succ_data_t;
+// union succ_data_t {
+//  State      *succ_s;
+//  Transition succ_t;
+//};
+// typedef union state_data_t state_data_t;
+// union state_data_t { /* 8(4)Byte */
+//  LmnMembraneRef       mem;             /*  8(4)byte:
+//  LMNtalプログラムの状態であるグローバルルート膜へのポインタ */ LmnBinStr
+//  compress_mem;    /*  8(4)byte: 膜memをエンコードしたバイナリストリング */
+//}
+
+typedef BYTE TreeRootRef[6];
+
+typedef struct TreeCompressData {
+  TreeRootRef root_ref;
+  unsigned short byte_length;
+} TreeCompressData;
 
 
-
-void por_calc_ampleset(StateSpaceRef  ss,
-                       State       *s,
-                       LmnReactCxtRef rc,
-                       Vector      *new_s,
-                       BOOL        flag);
-void init_por_vars(void);
-void free_por_vars(void);
-
-/* @} */
-
-#endif
+#endif /* STATE_DEFS_H */

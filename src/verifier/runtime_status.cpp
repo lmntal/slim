@@ -39,7 +39,10 @@
 extern "C"{
 #include "runtime_status.h"
 #include "vm/vm.h"
+#include "state.h"
 }
+#include "state.hpp"
+
 struct RuleProfiler {
   LmnRulesetId   ref_rs_id;
   unsigned long  apply;

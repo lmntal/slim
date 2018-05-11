@@ -45,7 +45,9 @@ extern "C" {
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
+#include "state.h"
 }
+#include "state.hpp"
 
 /* 概要:
  *   Sasaki P.O.RコードをRev.108から復刻した. (gocho Rev.422)

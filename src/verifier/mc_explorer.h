@@ -46,7 +46,6 @@
  * @{
  */
 
-#include "verifier.h"
 #include "mc_worker.h"
 #include "stack_macro.h"
 

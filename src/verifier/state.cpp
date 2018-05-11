@@ -38,19 +38,20 @@
  */
 
 extern "C" {
+#include "state.h"
 #include "automata.h"
 #include "binstr_compress.h"
 #include "mc.h"
 #include "mem_encode.h"
 #include "mhash.h"
 #include "runtime_status.h"
-#include "verifier.h"
 #include "vm/vm.h"
 
 #ifdef KWBT_OPT
 #include <limits.h>
 #endif
 }
+#include "state.hpp"
 
 BYTE state_flags(State *s) { return s->flags; }
 BYTE state_flags2(State *s) { return s->flags2; }
@@ -72,7 +73,117 @@ void state_expand_unlock(State *s) { lmn_mutex_unlock(&(s->expand_lock)); }
 
 #endif
 
+BOOL has_trans_obj(State *S) { return ((S)->flags & TRANS_OBJ_MASK); }
+BOOL is_binstr_user(State *S) { return ((S)->flags & MEM_DIRECT_MASK); }
+BOOL is_dummy(State *S) { return ((S)->flags & DUMMY_SYMBOL_MASK); }
+BOOL is_encoded(State *S) { return ((S)->flags & MEM_ENCODED_MASK); }
+BOOL is_expanded(State *S) { return ((S)->flags & EXPANDED_MASK); }
+BOOL is_on_cycle(State *S) { return ((S)->flags & ON_CYCLE_MASK); }
+BOOL is_on_stack(State *S) { return ((S)->flags & ON_STACK_MASK); }
+BOOL is_snd(State *S) { return ((S)->flags & FOR_MC_MASK); }
+
+void set_binstr_user(State *S) { ((S)->flags |= MEM_DIRECT_MASK); }
+void set_dummy(State *S) { ((S)->flags |= DUMMY_SYMBOL_MASK); }
+void set_encoded(State *S) { ((S)->flags |= MEM_ENCODED_MASK); }
+void set_expanded(State *S) { ((S)->flags |= EXPANDED_MASK); }
+void set_on_cycle(State *S) { ((S)->flags |= ON_CYCLE_MASK); }
+void set_on_stack(State *S) { ((S)->flags |= ON_STACK_MASK); }
+void set_snd(State *S) { ((S)->flags |= FOR_MC_MASK); }
+void set_trans_obj(State *S) { ((S)->flags |= TRANS_OBJ_MASK); }
+
+void unset_binstr_user(State *S) { ((S)->flags &= (~MEM_DIRECT_MASK)); }
+void unset_dummy(State *S) { ((S)->flags &= (~DUMMY_SYMBOL_MASK)); }
+void unset_encoded(State *S) { ((S)->flags &= (~MEM_ENCODED_MASK)); }
+void unset_expanded(State *S) { ((S)->flags &= (~EXPANDED_MASK)); }
+void unset_on_cycle(State *S) { ((S)->flags &= (~ON_CYCLE_MASK)); }
+void unset_on_stack(State *S) { ((S)->flags &= (~ON_STACK_MASK)); }
+void unset_snd(State *S) { ((S)->flags &= (~FOR_MC_MASK)); }
+void unset_trans_obj(State *S) { ((S)->flags &= (~TRANS_OBJ_MASK)); }
+
 void set_on_hash_compaction(State *s) { s->flags3 |= HASH_COMPACTION_MASK; }
+
+BOOL s_is_d(State *S) { return ((S)->flags2 & STATE_DELTA_MASK); }
+BOOL s_is_reduced(State *S) { return ((S)->flags2 & STATE_REDUCED_MASK); }
+BOOL s_is_update(State *S) { return ((S)->flags2 & STATE_UPDATE_MASK); }
+void s_set_d(State *S) { ((S)->flags2 |= STATE_DELTA_MASK); }
+void s_set_reduced(State *S) { ((S)->flags2 |= STATE_REDUCED_MASK); }
+void s_set_update(State *S) { ((S)->flags2 |= STATE_UPDATE_MASK); }
+void s_unset_d(State *S) { ((S)->flags2 &= (~STATE_DELTA_MASK)); }
+void s_unset_reduced(State *S) { ((S)->flags2 &= (~STATE_REDUCED_MASK)); }
+void s_unset_update(State *S) { ((S)->flags2 &= (~STATE_UPDATE_MASK)); }
+
+BOOL s_is_visited_by_explorer(State *S) {
+  return ((S)->flags2 & EXPLORER_VISIT_MASK);
+}
+BOOL s_is_visited_by_generator(State *S) {
+  return ((S)->flags2 & GENERATOR_VISIT_MASK);
+}
+void s_set_visited_by_explorer(State *S) {
+  ((S)->flags2 |= EXPLORER_VISIT_MASK);
+}
+void s_set_visited_by_generator(State *S) {
+  ((S)->flags2 |= GENERATOR_VISIT_MASK);
+}
+void s_unset_visited_by_explorer(State *S) {
+  ((S)->flags2 &= (~EXPLORER_VISIT_MASK));
+}
+void s_unset_visited_by_generator(State *S) {
+  ((S)->flags2 &= (~GENERATOR_VISIT_MASK));
+}
+
+void s_set_unvisited(State *S) {
+  s_unset_visited_by_explorer(S);
+  s_unset_visited_by_generator(S);
+}
+BOOL s_is_unvisited(State *S) {
+  return !s_is_visited_by_explorer(S) && !s_is_visited_by_generator(S);
+}
+
+BOOL s_is_blue(State *S) { return ((S)->flags2 & STATE_BLUE_MASK); }
+BOOL s_is_red(State *S) { return ((S)->flags2 & STATE_RED_MASK); }
+BOOL s_is_visited_by_visualizer(State *S) {
+  return ((S)->flags2 & STATE_VIS_VISITED_MASK);
+}
+
+void s_set_blue(State *S) { ((S)->flags2 |= STATE_BLUE_MASK); }
+void s_set_red(State *S) { ((S)->flags2 |= STATE_RED_MASK); }
+void s_set_visited_by_visualizer(State *S) {
+  ((S)->flags2 |= STATE_VIS_VISITED_MASK);
+}
+void s_unset_blue(State *S) { ((S)->flags2 &= (~STATE_BLUE_MASK)); }
+void s_unset_red(State *S) { ((S)->flags2 &= (~STATE_RED_MASK)); }
+void s_unset_visited_by_visualizer(State *S) {
+  ((S)->flags2 &= (~STATE_VIS_VISITED_MASK));
+}
+
+void s_set_fresh(State *S) { ((S)->flags3 |= STATE_FRESH_MASK); }
+void s_unset_fresh(State *S) { ((S)->flags3 &= (~STATE_FRESH_MASK)); }
+BOOL s_is_fresh(State *S) { return ((S)->flags3 & STATE_FRESH_MASK); }
+
+void s_set_cyan(State *S, int i) {
+  ((((S)->local_flags)[i]) |= STATE_CYAN_MASK);
+}
+void s_unset_cyan(State *S, int i) {
+  ((((S)->local_flags)[i]) &= (~STATE_CYAN_MASK));
+}
+BOOL s_is_cyan(State *S, int i) {
+  return (((S)->local_flags) && ((((S)->local_flags)[i]) & STATE_CYAN_MASK));
+}
+
+LmnCost state_cost(State *S) {
+#ifdef KWBT_OPT
+  return ((S)->cost);
+#else
+  return 0U;
+#endif
+}
+
+void state_cost_lock(EWLock *EWLOCK, mtx_data_t ID) {
+  (ewlock_acquire_write(EWLOCK, ID));
+}
+void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
+  (ewlock_release_write(EWLOCK, ID));
+}
 
 // #define set_on_hash_compaction(S)      (state_flags3(S) |=
 // HASH_COMPACTION_MASK)
@@ -986,4 +1097,311 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
     lmn_fatal("unexpected");
     break;
   }
+}
+
+
+/* 状態sに対応する階層グラフ構造memへのアドレスを返す.
+ * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
+ * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
+LmnMembraneRef state_restore_mem(State *s) {
+  return state_restore_mem_inner(s, TRUE);
+}
+
+/* delta-compression用のinner関数.
+ * flagが真の場合, デコード済みのバイナリストリングをキャッシュから取得する.
+ * キャッシュにバイナリストリングを置かないケースで使用する場合は,
+ * inner関数を直接呼び出し, flagに偽を渡しておけばよい. */
+LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag) {
+  if (state_mem(s)) {
+    return state_mem(s);
+  } else if (s_is_d(s)) {
+    LmnBinStrRef b;
+    if (flag) {
+      b = state_D_fetch(s);
+    } else {
+      b = state_binstr_reconstructor(s);
+    }
+    return lmn_binstr_decode(b);
+  } else {
+    LmnBinStrRef b = state_binstr(s);
+    if (lmn_env.tree_compress && b == NULL) {
+      TreeNodeID ref;
+      tcd_get_root_ref(&s->tcd, &ref);
+      LMN_ASSERT(ref);
+      LMN_ASSERT(tcd_get_byte_length(&s->tcd) != 0);
+      b = lmn_bscomp_tree_decode((TreeNodeID)ref, tcd_get_byte_length(&s->tcd));
+    }
+    LMN_ASSERT(b);
+    return lmn_binstr_decode(b);
+  }
+}
+
+/* 状態sに割り当てた整数IDを返す. */
+unsigned long state_id(State *s) { return s->state_id; }
+
+/* 状態sに対して, 状態固有となる整数IDを割り当てる.
+ * 即ち, 実行スレッド間で, 同じ整数IDは使用されない.
+ * 既にIDが割り当てられている場合はなにもしない. */
+void state_id_issue(State *s) {
+  if (s->state_id == 0) {
+    /* 状態ID用に設置したTLS機構から整数IDを生成して割り当てる. */
+    s->state_id = env_gen_state_id();
+  }
+}
+
+/* 特殊な整数ID(format id) vを状態sに割り当てる.
+ * 状態遷移グラフをCUIにプリントする際, 可視性を向上させるために呼び出す.
+ * 状態遷移グラフの構築および探索中に使用してはならない */
+void state_set_format_id(State *s, unsigned long v) {
+  /* ハッシュ値が不要となる段階で呼び出すため, hash値の領域を再利用する */
+  s->hash = v;
+}
+
+/* 状態sに割り当てた特殊な整数ID(format id)を返す.
+ * format_idを割り当てていない場合(is_formated==FALSE)や
+ * 状態遷移グラフを構築しながら状態データを出力する場合は,
+ * 状態生成時に割り当てた整数IDをそのまま返す. */
+unsigned long state_format_id(State *s, BOOL is_formated) {
+  if (is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
+    return s->hash;
+  } else {
+    return state_id(s);
+  }
+}
+
+/* 状態sに割り当てた性質オートマトン上の状態名を返す.
+ * 性質オートマトンを使用していない場合は, 戻り値は0 */
+BYTE state_property_state(State *s) { return s->state_name; }
+
+/* 状態sに性質オートマトン上の状態名labelを割り当てる. */
+void state_set_property_state(State *s, BYTE label) {
+  s->state_name = label;
+}
+
+/* 状態sに対応するハッシュ値を返す. */
+unsigned long state_hash(State *s) {
+  /* state_property_stateは0の場合があるので+1する */
+  return s->hash * (state_property_state(s) + 1);
+}
+
+/* 状態sに対応する階層グラフ構造を返す.
+ * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
+LmnMembraneRef state_mem(State *s) {
+  if (is_binstr_user(s)) {
+    return NULL;
+  } else {
+    return (LmnMembraneRef)s->data;
+  }
+}
+
+/* 状態sに階層グラフ構造memを割り当てる.
+ * sに対してバイナリストリングBを割り当てている場合は,
+ * Bのメモリ管理は呼出し側で行う*/
+void state_set_mem(State *s, LmnMembraneRef mem) {
+  unset_binstr_user(s);
+  s->data = (state_data_t)mem;
+}
+
+/* 状態sが参照する階層グラフ構造用の領域をクリアする.
+ * 階層グラフ構造の参照を持たない場合は, なにもしない. */
+void state_unset_mem(State *s) {
+  if (!is_binstr_user(s)) {
+    state_set_mem(s, NULL);
+  }
+}
+
+/* 状態sに割り当てたバイナリストリングを返す. */
+LmnBinStrRef state_binstr(State *s) {
+  if (is_binstr_user(s)) {
+    return (LmnBinStrRef)s->data;
+  } else {
+    return NULL;
+  }
+}
+
+/* 状態sに対応する階層グラフ構造からエンコードしたバイナリストリングbsを,
+ * sに割り当てる　*/
+void state_set_binstr(State *s, LmnBinStrRef bs) {
+  s->data = (state_data_t)bs;
+  set_binstr_user(s);
+}
+
+/* 状態sが参照するバイナリストリング用の領域をクリアする.
+ * バイナリストリングに対する参照を持たない場合は, なにもしない. */
+void state_unset_binstr(State *s) {
+  if (is_binstr_user(s)) {
+    s->data = (state_data_t)NULL;
+    unset_binstr_user(s);
+  }
+}
+
+/* 状態sを生成した状態(親ノード)へのアドレスを返す. */
+State *state_get_parent(State *s) { return s->parent; }
+
+/* 状態sに, sを生成した状態(親ノード)へのアドレスを割り当てる. */
+void state_set_parent(State *s, State *parent) {
+  s->parent = parent;
+}
+
+/* 状態sから遷移可能な状態数を返す. */
+unsigned int state_succ_num(State *s) { return s->successor_num; }
+
+/* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
+State *state_succ_state(State *s, int idx) {
+  /* successorデータはTransitionがある場合とそうでない場合とで処理が異なる */
+  if (has_trans_obj(s)) {
+    return transition_next_state((TransitionRef)s->successors[idx]);
+  } else {
+    return (State *)s->successors[idx];
+  }
+}
+
+/* 状態sから遷移可能な状態集合に, 状態tが含まれている場合に真を返す.
+ * O(state_succ_num(s))と効率的ではないため, 可能な限り利用しない. */
+BOOL state_succ_contains(State *s, State *t) {
+  unsigned int i;
+  for (i = 0; i < state_succ_num(s); i++) {
+    State *succ = state_succ_state(s, i);
+    if (succ == t)
+      return TRUE;
+  }
+  return FALSE;
+}
+
+/* 状態sが,
+ * 性質オートマトンa上のaccept状態に対応している(受理状態)ならば真を返す.
+ * 性質オートマトンaが存在しない場合は直ちに偽を返す. */
+BOOL state_is_accept(AutomataRef a, State *s) {
+  if (a) {
+    return atmstate_is_accept(automata_get_state(a, state_property_state(s)));
+  } else {
+    return FALSE;
+  }
+}
+
+/* 状態sが, 性質オートマトンa上のend状態に対応している(invalid end
+ * state)ならば真を返す. 性質オートマトンaが存在しない場合は直ちに偽を返す.
+ * TOFIX: rename (end --> invalid end) */
+BOOL state_is_end(AutomataRef a, State *s) {
+  if (a) {
+    return atmstate_is_end(automata_get_state(a, state_property_state(s)));
+  } else {
+    return FALSE;
+  }
+}
+
+/* 状態sに対応する性質オートマトンa上の状態が,
+ * 属している強連結成分(scc)のグループIDを返す.
+ * 性質オートマトンaが存在しない場合は直ちに偽を返す.
+ * 性質オートマトンaに対して強連結成分分解を行っていない場合の戻り値は, 未定義.
+ */
+BYTE state_scc_id(AutomataRef a, State *s) {
+  if (a) {
+    return atmstate_scc_type(automata_get_state(a, state_property_state(s)));
+  } else {
+    return FALSE;
+  }
+}
+
+/* 状態sとの差分計算の対象とする状態に対する参照を返す. */
+State *state_D_ref(State *s) {
+  /* とりあえず親ノードにした */
+  return state_get_parent(s);
+}
+
+/* 状態sに対応する非圧縮バイナリストリングdをキャッシングする. */
+void state_D_cache(State *s, LmnBinStrRef d) {
+  LMN_ASSERT(!state_D_fetch(s));
+  /* メモリ節約の結果, 保守性ないコード. 注意 */
+  s->successors = (succ_data_t *)d;
+}
+
+/* キャッシングしておいた状態sに対応する非圧縮バイナリストリングに対する参照を返す.
+ */
+LmnBinStrRef state_D_fetch(State *s) {
+  if (s_is_d(s)) {
+    return (LmnBinStrRef)s->successors;
+  } else {
+    return NULL;
+  }
+}
+
+/* 状態sに対応する非圧縮バイナリストリングのキャッシュをクリアする. */
+void state_D_flush(State *s) {
+  LmnBinStrRef cached = state_D_fetch(s);
+  if (cached) {
+    lmn_binstr_free(cached);
+  }
+  s->successors = NULL;
+}
+
+/* 差分圧縮バイト列に基づく状態生成処理のfinalizeを行う. */
+void state_D_progress(State *s, LmnReactCxtRef rc) {
+  RC_D_PROGRESS(rc);
+  state_D_flush(s);
+}
+
+/* MT-unsafe */
+void state_set_cost(State *s, LmnCost cost, State *pre) {
+#ifdef KWBT_OPT
+  s->cost = cost;
+#endif
+  s->map = pre;
+}
+
+/* 状態sのcostが最適ならば更新し、状態sを遷移先更新状態にする
+ * f==true: minimize
+ * f==false: maximize */
+void state_update_cost(State *s, TransitionRef t, State *pre,
+                                     Vector *new_ss, BOOL f, EWLock *ewlock) {
+  LmnCost cost;
+  cost = transition_cost(t) + state_cost(pre);
+  if (env_threads_num() >= 2)
+    state_cost_lock(ewlock, state_hash(s));
+  if ((f && state_cost(s) > cost) || (!f && state_cost(s) < cost)) {
+    state_set_cost(s, cost, pre);
+    if (is_expanded(s) && new_ss)
+      vec_push(new_ss, (vec_data_t)s);
+    s_set_update(s);
+  }
+  if (env_threads_num() >= 2)
+    state_cost_unlock(ewlock, state_hash(s));
+}
+
+/* 遷移tに割り当てたidを返す. */
+unsigned long transition_id(TransitionRef t) { return t->id; }
+
+/* 遷移tに整数ID idを割り当てる. */
+void transition_set_id(TransitionRef t, unsigned long id) {
+  t->id = id;
+}
+
+int transition_rule_num(TransitionRef t) {
+  return vec_num(&t->rule_names);
+}
+
+lmn_interned_str transition_rule(TransitionRef t, int idx) {
+  return vec_get(&t->rule_names, idx);
+}
+
+State *transition_next_state(TransitionRef t) { return t->s; }
+
+void transition_set_state(TransitionRef t, State *s) { t->s = s; }
+
+TransitionRef transition(State *s, unsigned int i) {
+  return (TransitionRef)(s->successors[i]);
+}
+
+LmnCost transition_cost(TransitionRef t) {
+#ifdef KWBT_OPT
+  return t->cost;
+#else
+  return 0;
+#endif
+}
+
+void transition_set_cost(TransitionRef t, LmnCost cost) {
+#ifdef KWBT_OPT
+  t->cost = cost;
+#endif
 }

@@ -42,7 +42,6 @@
  */
 extern "C"{
 #include "statespace.h"
-#include "verifier.h"
 #include "mem_encode.h"
 #include "automata.h"
 #include "vm/vm.h"
@@ -50,6 +49,7 @@ extern "C"{
 #include "mc.h"
 #include "delta_membrane.h"
 #include "../lmntal.h"
+#include "state.h"
 
 /** ProtoTypes
  */
@@ -85,6 +85,8 @@ void statetable_set_rehash_tbl(StateTable *st, StateTable *rehash_tbl);
 StateTable *statetable_rehash_tbl(StateTable *st);
 static void statetable_memid_rehash(State *pred, StateTable *ss);
 }
+
+#include "state.hpp"
 /** Macros
  */
 #define TABLE_DEFAULT_INIT_SIZE     (1U << 15)  /* TODO: テーブルの初期サイズはいくつが適当か. (固定サイズにしているモデル検査器は多い) */

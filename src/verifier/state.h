@@ -1,0 +1,479 @@
+/*
+ * state.h
+ *
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions are
+ *   met:
+ *
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
+ *
+ *    3. Neither the name of the Ueda Laboratory LMNtal Group nor the
+ *       names of its contributors may be used to endorse or promote
+ *       products derived from this software without specific prior
+ *       written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
+ */
+
+#ifndef LMN_STATE_H
+#define LMN_STATE_H
+
+/**
+ * @ingroup  Verifier
+ * @defgroup State
+ * @{
+ */
+
+#include "../lmntal.h"
+#include "automata.h"
+#include "binstr_compress.h"
+#include "element/element.h"
+#include "mem_encode.h"
+#include "tree_compress.h"
+#include "vm/vm.h"
+#include "state_defs.h"
+
+/** ------------
+ *  State
+ */
+
+void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref);
+void tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref);
+unsigned short tcd_get_byte_length(TreeCompressData *data);
+void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
+
+struct State;
+
+BYTE state_flags(State *s);
+BYTE state_flags2(State *s);
+BYTE state_flags3(State *s);
+
+#ifndef MINIMAL_STATE
+
+void state_set_expander_id(State *s, unsigned long id);
+unsigned long state_expander_id(State *s);
+void state_expand_lock_init(State *s);
+void state_expand_lock_destroy(State *s);
+void state_expand_lock(State *s);
+void state_expand_unlock(State *s);
+
+#else
+
+#define state_set_expander_id(S, ID) (NULL)
+#define state_expander_id(S) (0)
+#define state_expand_lock_init(S) (NULL)
+#define state_expand_lock_destroy(S) (NULL)
+#define state_expand_lock(S) (NULL)
+#define state_expand_unlock(S) (NULL)
+#endif
+
+#ifndef MINIMAL_STATE
+BYTE *state_loflags(State *s);
+
+#endif
+
+#define HASH_COMPACTION_MASK (0x01U << 5)
+
+void set_on_hash_compaction(State *s);
+void unset_on_hash_compaction(State *s);
+BYTE is_on_hash_compaction(State *s);
+
+/** Flags (8bit)
+ *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
+ *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
+ *  0000 0100  遷移先を計算済みであること(closed node)を示すフラグ.
+ *  0000 1000  受理サイクル上の状態であることを示すフラグ
+ *  0001 0000  ハッシュ表上でDummyオブジェクトであるか否かを示すフラグ
+ * (Rehash処理で使用) 0010 0000  successorとしてstruct Stateを直接参照するか,
+ * struct Transitionを介して参照するかを示すフラグ. 0100 0000
+ * 状態データ(union)がmemを直接的に保持する場合に立てるフラグ 1000 0000
+ * 保持するバイナリストリングが階層グラフ構造に対して一意なIDであるかを示すフラグ
+ */
+
+#define ON_STACK_MASK (0x01U)
+#define FOR_MC_MASK (0x01U << 1)
+#define ON_CYCLE_MASK (0x01U << 2)
+#define EXPANDED_MASK (0x01U << 3)
+#define DUMMY_SYMBOL_MASK (0x01U << 4)
+#define TRANS_OBJ_MASK (0x01U << 5)
+#define MEM_ENCODED_MASK (0x01U << 6)
+#define MEM_DIRECT_MASK (0x01U << 7)
+
+/* manipulation for flags */
+BOOL has_trans_obj(State *S);
+BOOL is_binstr_user(State *S);
+BOOL is_dummy(State *S);
+BOOL is_encoded(State *S);
+BOOL is_expanded(State *S);
+BOOL is_on_cycle(State *S);
+BOOL is_on_stack(State *S);
+BOOL is_snd(State *S);
+void set_binstr_user(State *S);
+void set_dummy(State *S);
+void set_encoded(State *S);
+void set_expanded(State *S);
+void set_on_cycle(State *S);
+void set_on_stack(State *S);
+void set_snd(State *S);
+void set_trans_obj(State *S);
+void unset_binstr_user(State *S);
+void unset_dummy(State *S);
+void unset_encoded(State *S);
+void unset_expanded(State *S);
+void unset_on_cycle(State *S);
+void unset_on_stack(State *S);
+void unset_snd(State *S);
+void unset_trans_obj(State *S);
+
+/** Flags2 (8bit)
+ *  0000 0001  Partial Order
+ * ReductionによるReductionマーキング(debug/demo用機能) 0000 0010  D compression
+ * stateか否かを示すフラグ 0000 0100  (MAPNDFS)explorer visit flag 0000 1000
+ * (MAPNDFS)generator visit flag 0001 0000  (MCNDFS)blue flag 0010 0000
+ * (MCNDFS)red flag 0100 0000  (Visualize)visited 1000 0000
+ */
+
+#define STATE_REDUCED_MASK (0x01U)
+#define STATE_DELTA_MASK (0x01U << 1)
+#define STATE_UPDATE_MASK (0x01U << 2)
+#define EXPLORER_VISIT_MASK (0x01U << 3)
+#define GENERATOR_VISIT_MASK (0x01U << 4)
+#define STATE_BLUE_MASK (0x01U << 5)
+#define STATE_RED_MASK (0x01U << 6)
+#define STATE_VIS_VISITED_MASK (0x01U << 7)
+
+/* manipulation for flags2 */
+BOOL s_is_d(State *S);
+BOOL s_is_reduced(State *S);
+BOOL s_is_update(State *S);
+void s_set_d(State *S);
+void s_set_reduced(State *S);
+void s_set_update(State *S);
+void s_unset_d(State *S);
+void s_unset_reduced(State *S);
+void s_unset_update(State *S);
+
+BOOL s_is_visited_by_explorer(State *S);
+BOOL s_is_visited_by_generator(State *S);
+void s_set_visited_by_explorer(State *S);
+void s_set_visited_by_generator(State *S);
+void s_unset_visited_by_explorer(State *S);
+void s_unset_visited_by_generator(State *S);
+void s_set_unvisited(State *S);
+BOOL s_is_unvisited(State *S);
+
+BOOL s_is_blue(State *S);
+BOOL s_is_red(State *S);
+BOOL s_is_visited_by_visualizer(State *S);
+void s_set_blue(State *S);
+void s_set_red(State *S);
+void s_set_visited_by_visualizer(State *S);
+void s_unset_blue(State *S);
+void s_unset_red(State *S);
+void s_unset_visited_by_visualizer(State *S);
+
+/** Flags3 (8bit)
+ *  0000 0001
+ * freshな状態(展開されておらず、または展開用スタックにも積まれていない状態)。fresh
+ * successor heuristcs用。 0000 0010 0000 0100 0000 1000 0001 0000 0010 0000
+ *  0100 0000
+ *  1000 0000
+ */
+
+#define STATE_FRESH_MASK (0x01U)
+
+/* manipulation for flags2 */
+void s_set_fresh(State *S);
+void s_unset_fresh(State *S);
+BOOL s_is_fresh(State *S);
+
+/** local flags (8bit)
+ *  0000 0001  (MCNDFS)cyan flag
+ *  0000 0010
+ *  0000 0100
+ *  0000 1000
+ *  0001 0000
+ *  0010 0000
+ *  0100 0000
+ *  1000 0000
+ */
+#define STATE_CYAN_MASK (0x01U)
+
+/* manipulation for local flags */
+void s_set_cyan(State *S, int i);
+void s_unset_cyan(State *S, int i);
+BOOL s_is_cyan(State *S, int i);
+
+/*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
+#define DEFAULT_STATE_ID 0
+#define DEFAULT_TRANSITION_ID 0
+#define DEFAULT_PROP_AUTOMATA NULL
+
+State *state_make(LmnMembraneRef mem, BYTE state_name, BOOL encode);
+State *state_make_minimal(void);
+State *state_copy(State *src, LmnMembraneRef src_mem);
+void state_free(State *s);
+void state_succ_set(State *s, Vector *v);
+void state_succ_add(State *s, succ_data_t succ);
+void state_succ_clear(State *s);
+void state_free_mem(State *s);
+void state_free_binstr(State *s);
+void state_calc_mem_encode(State *s);
+LmnBinStrRef state_calc_mem_dump(State *s);
+LmnBinStrRef state_calc_mem_dump_with_z(State *s);
+LmnBinStrRef state_calc_mem_dump_with_tree(State *s);
+LmnBinStrRef state_calc_mem_dummy(State *s);
+void state_calc_hash(State *s, LmnMembraneRef mem, BOOL encode);
+void state_free_compress_mem(State *s);
+LmnMembraneRef state_mem_copy(State *state);
+int state_cmp(State *s1, State *s2);
+int state_cmp_with_compress(State *s1, State *s2);
+int state_cmp_with_tree(State *s1, State *s2);
+void state_binstr_d_compress(State *s);
+LmnBinStrRef state_binstr_reconstructor(State *s);
+void state_calc_binstr_delta(State *s);
+
+LmnMembraneRef state_restore_mem(State *s);
+LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag);
+unsigned long state_id(State *s);
+void state_id_issue(State *s);
+void state_set_format_id(State *s, unsigned long v);
+unsigned long state_format_id(State *s, BOOL is_formated);
+BYTE state_property_state(State *s);
+void state_set_property_state(State *s, BYTE label);
+unsigned long state_hash(State *s);
+LmnMembraneRef state_mem(State *s);
+void state_set_mem(State *s, LmnMembraneRef mem);
+void state_unset_mem(State *s);
+LmnBinStrRef state_binstr(State *s);
+void state_set_binstr(State *s, LmnBinStrRef bs);
+void state_unset_binstr(State *s);
+State *state_get_parent(State *s);
+void state_set_parent(State *s, State *parent);
+unsigned int state_succ_num(State *s);
+State *state_succ_state(State *s, int idx);
+BOOL state_succ_contains(State *s, State *t);
+BOOL state_is_accept(AutomataRef a, State *s);
+BOOL state_is_end(AutomataRef a, State *s);
+BYTE state_scc_id(AutomataRef a, State *s);
+State *state_D_ref(State *s);
+void state_D_cache(State *s, LmnBinStrRef dec);
+LmnBinStrRef state_D_fetch(State *s);
+void state_D_flush(State *s);
+void state_D_progress(State *s, LmnReactCxtRef rc);
+void state_update_cost(State *s, TransitionRef t, State *pre,
+                       Vector *new_ss, BOOL f, EWLock *ewlock);
+void state_set_cost(State *s, LmnCost cost, State *pre);
+
+LmnCost state_cost(State *S);
+void state_cost_lock(EWLock *EWLOCK, mtx_data_t ID);
+void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID);
+
+/** ------------
+ *  Transition
+ */
+
+struct Transition {
+  State *s;         /*  8byte: 遷移先状態 */
+  unsigned long id; /*  8byte: State graph(=\=
+                       Automata)上の各遷移に付与されるグローバルなID．
+                               ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる．
+                     */
+  Vector rule_names; /* 24byte: ルール名 複数あるのは多重辺(porなしの場合)*/
+#ifdef KWBT_OPT
+  LmnCost cost; /*  8(4)byte: cost */
+#endif
+};
+
+TransitionRef transition_make(State *s, lmn_interned_str rule_name);
+unsigned long transition_space(TransitionRef t);
+void transition_free(TransitionRef t);
+void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
+                         LmnCost cost);
+
+unsigned long transition_id(TransitionRef t);
+void transition_set_id(TransitionRef t, unsigned long x);
+int transition_rule_num(TransitionRef t);
+lmn_interned_str transition_rule(TransitionRef t, int idx);
+State *transition_next_state(TransitionRef t);
+void transition_set_state(TransitionRef t, State *s);
+TransitionRef transition(State *s, unsigned int i);
+LmnCost transition_cost(TransitionRef t);
+void transition_set_cost(TransitionRef t, LmnCost cost);
+
+/** ------------
+ *  Printer
+ */
+
+void dump_state_data(State *s, LmnWord _fp, LmnWord _owner);
+void state_print_mem(State *s, LmnWord _fp);
+void state_print_transition(State *s, LmnWord _fp, LmnWord _owner);
+void state_print_label(State *s, LmnWord _fp, LmnWord _owner);
+void state_print_error_path(State *s, LmnWord _fp);
+
+/** -------
+ *  inline functions
+ */
+
+/* 状態sに対応する階層グラフ構造memへのアドレスを返す.
+ * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
+ * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
+LmnMembraneRef state_restore_mem(State *s);
+/* delta-compression用のinner関数.
+ * flagが真の場合, デコード済みのバイナリストリングをキャッシュから取得する.
+ * キャッシュにバイナリストリングを置かないケースで使用する場合は,
+ * inner関数を直接呼び出し, flagに偽を渡しておけばよい. */
+LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag);
+
+/* 状態sに割り当てた整数IDを返す. */
+unsigned long state_id(State *s);
+
+/* 状態sに対して, 状態固有となる整数IDを割り当てる.
+ * 即ち, 実行スレッド間で, 同じ整数IDは使用されない.
+ * 既にIDが割り当てられている場合はなにもしない. */
+void state_id_issue(State *s);
+
+/* 特殊な整数ID(format id) vを状態sに割り当てる.
+ * 状態遷移グラフをCUIにプリントする際, 可視性を向上させるために呼び出す.
+ * 状態遷移グラフの構築および探索中に使用してはならない */
+void state_set_format_id(State *s, unsigned long v);
+
+/* 状態sに割り当てた特殊な整数ID(format id)を返す.
+ * format_idを割り当てていない場合(is_formated==FALSE)や
+ * 状態遷移グラフを構築しながら状態データを出力する場合は,
+ * 状態生成時に割り当てた整数IDをそのまま返す. */
+unsigned long state_format_id(State *s, BOOL is_formated);
+
+/* 状態sに割り当てた性質オートマトン上の状態名を返す.
+ * 性質オートマトンを使用していない場合は, 戻り値は0 */
+BYTE state_property_state(State *s);
+/* 状態sに性質オートマトン上の状態名labelを割り当てる. */
+void state_set_property_state(State *s, BYTE label);
+
+/* 状態sに対応するハッシュ値を返す. */
+unsigned long state_hash(State *s);
+
+/* 状態sに対応する階層グラフ構造を返す.
+ * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
+LmnMembraneRef state_mem(State *s);
+
+/* 状態sに階層グラフ構造memを割り当てる.
+ * sに対してバイナリストリングBを割り当てている場合は,
+ * Bのメモリ管理は呼出し側で行う*/
+void state_set_mem(State *s, LmnMembraneRef mem);
+
+/* 状態sが参照する階層グラフ構造用の領域をクリアする.
+ * 階層グラフ構造の参照を持たない場合は, なにもしない. */
+void state_unset_mem(State *s);
+
+/* 状態sに割り当てたバイナリストリングを返す. */
+LmnBinStrRef state_binstr(State *s);
+
+/* 状態sに対応する階層グラフ構造からエンコードしたバイナリストリングbsを,
+ * sに割り当てる　*/
+void state_set_binstr(State *s, LmnBinStrRef bs);
+
+/* 状態sが参照するバイナリストリング用の領域をクリアする.
+ * バイナリストリングに対する参照を持たない場合は, なにもしない. */
+void state_unset_binstr(State *s);
+
+/* 状態sを生成した状態(親ノード)へのアドレスを返す. */
+State *state_get_parent(State *s);
+
+/* 状態sに, sを生成した状態(親ノード)へのアドレスを割り当てる. */
+void state_set_parent(State *s, State *parent);
+
+/* 状態sから遷移可能な状態数を返す. */
+unsigned int state_succ_num(State *s);
+/* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
+State *state_succ_state(State *s, int idx);
+
+/* 状態sから遷移可能な状態集合に, 状態tが含まれている場合に真を返す.
+ * O(state_succ_num(s))と効率的ではないため, 可能な限り利用しない. */
+BOOL state_succ_contains(State *s, State *t);
+
+/* 状態sが,
+ * 性質オートマトンa上のaccept状態に対応している(受理状態)ならば真を返す.
+ * 性質オートマトンaが存在しない場合は直ちに偽を返す. */
+BOOL state_is_accept(AutomataRef a, State *s);
+
+/* 状態sが, 性質オートマトンa上のend状態に対応している(invalid end
+ * state)ならば真を返す. 性質オートマトンaが存在しない場合は直ちに偽を返す.
+ * TOFIX: rename (end --> invalid end) */
+BOOL state_is_end(AutomataRef a, State *s);
+
+/* 状態sに対応する性質オートマトンa上の状態が,
+ * 属している強連結成分(scc)のグループIDを返す.
+ * 性質オートマトンaが存在しない場合は直ちに偽を返す.
+ * 性質オートマトンaに対して強連結成分分解を行っていない場合の戻り値は, 未定義.
+ */
+BYTE state_scc_id(AutomataRef a, State *s);
+
+/* 状態sとの差分計算の対象とする状態に対する参照を返す. */
+State *state_D_ref(State *s);
+
+/* 状態sに対応する非圧縮バイナリストリングdをキャッシングする. */
+void state_D_cache(State *s, LmnBinStrRef d);
+
+/* キャッシングしておいた状態sに対応する非圧縮バイナリストリングに対する参照を返す.
+ */
+LmnBinStrRef state_D_fetch(State *s);
+
+/* 状態sに対応する非圧縮バイナリストリングのキャッシュをクリアする. */
+void state_D_flush(State *s);
+
+/* 差分圧縮バイト列に基づく状態生成処理のfinalizeを行う. */
+void state_D_progress(State *s, LmnReactCxtRef rc);
+
+/* MT-unsafe */
+void state_set_cost(State *s, LmnCost cost, State *pre);
+
+/* 状態sのcostが最適ならば更新し、状態sを遷移先更新状態にする
+ * f==true: minimize
+ * f==false: maximize */
+void state_update_cost(State *s, TransitionRef t, State *pre,
+                                     Vector *new_ss, BOOL f, EWLock *ewlock);
+
+/* 遷移tに割り当てたidを返す. */
+unsigned long transition_id(TransitionRef t);
+
+/* 遷移tに整数ID idを割り当てる. */
+void transition_set_id(TransitionRef t, unsigned long id);
+
+int transition_rule_num(TransitionRef t);
+lmn_interned_str transition_rule(TransitionRef t, int idx);
+
+State *transition_next_state(TransitionRef t);
+
+void transition_set_state(TransitionRef t, State *s);
+
+TransitionRef transition(State *s, unsigned int i);
+
+LmnCost transition_cost(TransitionRef t);
+
+void transition_set_cost(TransitionRef t, LmnCost cost);
+/* @} */
+
+#endif

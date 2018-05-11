@@ -62,12 +62,13 @@ extern "C" {
 #include "mem_encode.h"
 #include "mhash.h"
 #include "propositional_symbol.h"
-#include "state.hpp"
+#include "state.h"
 #include "statespace.h"
 #include "tree_compress.h"
 
 #ifdef __cplusplus
 }
+#include "state.hpp"
 #endif
 
 #endif /* LMN_VERIFIER_H */

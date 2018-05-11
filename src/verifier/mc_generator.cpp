@@ -41,7 +41,6 @@ extern "C"{
 #include "mc_worker.h"
 #include "mc_generator.h"
 #include "mc_explorer.h"
-#include "verifier.h"
 #include "element/element.h"
 #include "runtime_status.h"
 #include <unistd.h>
@@ -49,7 +48,9 @@ extern "C"{
 #ifndef MINIMAL_STATE 
 #include "mc_visualizer.h"
 #endif
+#include "state.h"
 }
+#include "state.hpp"
 /* TODO: C++ template関数で書き直した方がよい */
 
 /* 邪魔なので上に持ってきた */
