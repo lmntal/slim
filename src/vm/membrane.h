@@ -44,10 +44,11 @@
  * @defgroup Membrane
  * @{
  */
-typedef struct LmnMembrane *LmnMembraneRef;
+
+#include "membrane.hpp"
+
 
 typedef struct AtomListEntry *AtomListEntryRef;
-typedef struct AtomListEntry **AtomSet;
 
 typedef struct LinkObj *LinkObjRef;
 
