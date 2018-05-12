@@ -85,10 +85,6 @@ void state_expand_unlock(State *s);
 #define state_expand_unlock(S) (NULL)
 #endif
 
-#ifndef MINIMAL_STATE
-BYTE *state_loflags(State *s);
-
-#endif
 
 #define HASH_COMPACTION_MASK (0x01U << 5)
 

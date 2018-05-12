@@ -55,7 +55,6 @@ extern "C" {
 
 #ifndef MINIMAL_STATE
 
-BYTE *state_loflags(State *s) { return s->local_flags; }
 void state_set_expander_id(State *s, unsigned long id) { s->expander_id = id; }
 unsigned long state_expander_id(State *s) { return s->expander_id; }
 void state_expand_lock_init(State *s) { lmn_mutex_init(&(s->expand_lock)); }
@@ -181,7 +180,6 @@ void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
   (ewlock_release_write(EWLOCK, ID));
 }
 
-// #define set_on_hash_compaction(S)      (state_flags3(S) |=
 // HASH_COMPACTION_MASK)
 void unset_on_hash_compaction(State *s) { s->flags3 &= HASH_COMPACTION_MASK; }
 BYTE is_on_hash_compaction(State *s) {
