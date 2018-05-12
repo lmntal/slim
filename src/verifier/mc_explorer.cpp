@@ -89,7 +89,7 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ) || !s->is_expanded())
+        if (succ->is_on_cycle() || !s->is_expanded())
           continue;
         else if (succ == goal) {
           return TRUE;
@@ -215,7 +215,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ)) {
+        if (succ->is_on_cycle()) {
           return FALSE;
         } else if (!succ->is_expanded()) {
           continue;
@@ -498,7 +498,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
 
         if (state_is_end(a, seed)) {
           mc_found_invalid_state(wp, seed);
-        } else if (!is_on_cycle(seed)) {
+        } else if (!seed->is_on_cycle()) {
           if (state_to_state_path(seed, seed, &search, &path,
                                   OWCTY_WORKER_HASHSET(w))) {
             Vector *v;
@@ -780,7 +780,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
     workers_set_exit(wp);
   }
 
-  if (lmn_env.dump && !is_on_cycle(s)) {
+  if (lmn_env.dump && !s->is_on_cycle()) {
     /* TODO: とりあえず単純なself reachability testで実装しているので,
      *        MAP値の等しい状態だけを辿るようにしたself reachabilityに直す */
     Vector search, path;
@@ -913,7 +913,7 @@ void bledge_start(LmnWorker *w) {
       State *v = state_succ_state(u, i);
 
       if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v] */
-        if (!is_on_cycle(u) && !is_on_cycle(v) &&
+        if (!u->is_on_cycle() && !v->is_on_cycle() &&
             bledge_explorer_accepting_cycle(w, u, v)) {
           vec_push(BLE_WORKER_PATH_VEC(w), (vec_data_t)u);
           bledge_found_accepting_cycle(w, BLE_WORKER_PATH_VEC(w));
@@ -1135,7 +1135,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ)) {
+        if (succ->is_on_cycle()) {
           return FALSE;
         } else if (!succ->is_expanded()) {
           continue;
@@ -1330,7 +1330,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ)) {
+        if (succ->is_on_cycle()) {
           return FALSE;
         } else if (!succ->is_expanded()) {
           continue;

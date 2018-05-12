@@ -62,7 +62,7 @@ void dump_dot_state_edges(State *s) {
   for (i = 0, n = state_succ_num(s); i < n; i++) {
     State *succ = state_succ_state(s, i);
     printf("  %lu -> %lu", state_hash(s), state_hash(succ));
-    if (is_on_cycle(s) && is_on_cycle(succ))
+    if (s->is_on_cycle() && succ->is_on_cycle())
       printf(" [color = \"#ff0000\"]");
     printf(";\n");
   }
@@ -76,7 +76,7 @@ void dump_dot_state_attr(State *s, AutomataRef *a, int *colors) {
   printf("\", ");
   if (state_is_accept(*a, s))
     printf("peripheries = 2, ");
-  if (is_on_cycle(s))
+  if (s->is_on_cycle())
     printf("color = \"#ff0000\", ");
   printf("style = filled, fillcolor = \"#%02x%02x%02x\"", R(color), G(color),
          B(color));

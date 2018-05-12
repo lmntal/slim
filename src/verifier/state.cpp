@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL is_on_cycle(State *S) { return ((S)->flags & ON_CYCLE_MASK); }
 BOOL is_on_stack(State *S) { return ((S)->flags & ON_STACK_MASK); }
 BOOL is_snd(State *S) { return ((S)->flags & FOR_MC_MASK); }
 

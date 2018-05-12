@@ -111,6 +111,7 @@ struct State {                /* Total:72(36)byte */
   BOOL is_dummy() { return flags & DUMMY_SYMBOL_MASK; }
   BOOL is_encoded() { return flags & MEM_ENCODED_MASK; }
   BOOL is_expanded() { return flags & EXPANDED_MASK; }
+  BOOL is_on_cycle() { return flags & ON_CYCLE_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
