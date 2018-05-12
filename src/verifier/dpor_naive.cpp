@@ -230,7 +230,7 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a) {
       transition_free(succ_t);
       s->successors[i] = (succ_data_t)succ_s;
     }
-    unset_trans_obj(s);
+    s->unset_trans_obj();
   }
 
   return ST_DELETE;

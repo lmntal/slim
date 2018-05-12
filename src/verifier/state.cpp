@@ -53,8 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void unset_trans_obj(State *S) { ((S)->flags &= (~TRANS_OBJ_MASK)); }
-
 BOOL s_is_d(State *S) { return ((S)->flags2 & STATE_DELTA_MASK); }
 BOOL s_is_reduced(State *S) { return ((S)->flags2 & STATE_REDUCED_MASK); }
 BOOL s_is_update(State *S) { return ((S)->flags2 & STATE_UPDATE_MASK); }
@@ -390,7 +388,7 @@ void state_succ_clear(State *s) {
   LMN_FREE(s->successors);
   s->successors = NULL;
   s->successor_num = 0;
-  unset_trans_obj(s);
+  s->unset_trans_obj();
 }
 
 /* 状態sに対応する階層グラフ構造と等価な階層グラフ構造を新たに構築して返す.

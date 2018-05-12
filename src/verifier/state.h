@@ -66,9 +66,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 
 struct State;
 
-/* manipulation for flags */
-void unset_trans_obj(State *S);
-
 /** Flags2 (8bit)
  *  0000 0001  Partial Order
  * ReductionによるReductionマーキング(debug/demo用機能) 0000 0010  D compression
