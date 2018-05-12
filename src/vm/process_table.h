@@ -1,8 +1,8 @@
 /*
  * process_table.h
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -53,12 +53,11 @@ extern "C++" {
 #include "process_table.hpp"
 
 struct ProcessTbl : ProcessTable<LmnWord> {
-  ProcessTbl(unsigned long size) : ProcessTable<LmnWord>(size) {};
-  ProcessTbl() : ProcessTable<LmnWord>() {};
+  ProcessTbl(unsigned long size) : ProcessTable<LmnWord>(size){};
+  ProcessTbl() : ProcessTable<LmnWord>(){};
 };
 }
 #endif
-
 
 /**
  * Function ProtoTypes
@@ -66,27 +65,31 @@ struct ProcessTbl : ProcessTable<LmnWord> {
 
 ProcessTableRef proc_tbl_make_with_size(unsigned long size);
 ProcessTableRef proc_tbl_make(void);
-void       proc_tbl_free(ProcessTableRef p);
-void       proc_tbl_clear(ProcessTableRef p);
-int        proc_tbl_foreach(ProcessTableRef p,
-                            int(*func)(LmnWord key, LmnWord val, LmnWord arg),
-                            LmnWord arg);
-BOOL       proc_tbl_eq(ProcessTableRef a, ProcessTableRef b);
+void proc_tbl_free(ProcessTableRef p);
+void proc_tbl_clear(ProcessTableRef p);
+int proc_tbl_foreach(ProcessTableRef p,
+                     int (*func)(LmnWord key, LmnWord val, LmnWord arg),
+                     LmnWord arg);
+BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b);
 
 void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value);
 void proc_tbl_put_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord value);
 void proc_tbl_put_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
-int  proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value);
-int  proc_tbl_put_new_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord value);
-int  proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
-void proc_tbl_put_new_hlink(ProcessTableRef p, struct HyperLink *hl, LmnWord value);
+int proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value);
+int proc_tbl_put_new_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
+                          LmnWord value);
+int proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
+void proc_tbl_put_new_hlink(ProcessTableRef p, struct HyperLink *hl,
+                            LmnWord value);
 void proc_tbl_unput(ProcessTableRef p, LmnWord key);
 void proc_tbl_unput_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem);
-int  proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value);
-int  proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord *value);
-int  proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value);
-int  proc_tbl_get_by_hlink(ProcessTableRef p, struct HyperLink *hl, LmnWord *value);
+int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value);
+int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
+                         LmnWord *value);
+int proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value);
+int proc_tbl_get_by_hlink(ProcessTableRef p, struct HyperLink *hl,
+                          LmnWord *value);
 BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key);
 BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
@@ -94,6 +97,5 @@ BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* PROCESS_TABLE_H */

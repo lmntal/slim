@@ -40,23 +40,22 @@
 #ifndef NORMAL_THREAD_H
 #define NORMAL_THREAD_H
 
+#include "element/element.h"
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "element/element.h"
-
 
 typedef struct normal_prof normal_prof;
 
-struct normal_prof{
+struct normal_prof {
   unsigned long wakeup;
   unsigned long backtrack_num;
   unsigned long findatom_num;
 };
 
 typedef struct arginfo arginfo;
-struct arginfo{
-  int id;//thread id
-  BOOL judge;//whether react atom or not
+struct arginfo {
+  int id;     // thread id
+  BOOL judge; // whether react atom or not
   LmnInstrVar atomi;
   LmnReactCxtRef rc;
   LmnRuleRef rule;
@@ -75,7 +74,7 @@ extern pthread_t *findthread;
 extern arginfo **thread_info;
 extern int active_thread;
 extern Deque *temp;
-extern double walltime;//rule walltime
+extern double walltime; // rule walltime
 extern double walltime_temp;
 extern BOOL normal_parallel_flag;
 extern unsigned long success_temp_check;
@@ -83,16 +82,17 @@ extern unsigned long fail_temp_check;
 
 static LmnRuleInstr instr_parallel;
 
-void* normal_thread(void* arg);
+void *normal_thread(void *arg);
 
 void normal_parallel_init(void);
 void normal_parallel_free(void);
-void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxtRef rc, LmnRuleInstr instr, AtomListEntryRef atomlist_ent, int atom_arity);
+void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule,
+                     LmnReactCxtRef rc, LmnRuleInstr instr,
+                     AtomListEntryRef atomlist_ent, int atom_arity);
 
 void op_lock(int id, int flag);
 
 void normal_parallel_prof_dump(FILE *f);
-
 
 BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f);
 

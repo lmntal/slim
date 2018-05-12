@@ -1,8 +1,8 @@
 /*
  * atom.cpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -54,7 +54,6 @@ struct LmnAtomData {
   };
 };
 
-
 LmnSymbolAtomRef LMN_SATOM_GET_PREV(LmnSymbolAtomRef atom) {
   return atom->prev;
 }
@@ -68,13 +67,8 @@ void LMN_SATOM_SET_NEXT(LmnSymbolAtomRef atom, LmnSymbolAtomRef next) {
   atom->next = next;
 }
 
-LmnWord LMN_SATOM_ID(LmnSymbolAtomRef atom) {
-  return atom->procId;
-}
-void LMN_SATOM_SET_ID(LmnSymbolAtomRef atom, LmnWord id) {
-  atom->procId = id;
-}
-
+LmnWord LMN_SATOM_ID(LmnSymbolAtomRef atom) { return atom->procId; }
+void LMN_SATOM_SET_ID(LmnSymbolAtomRef atom, LmnWord id) { atom->procId = id; }
 
 LmnFunctor LMN_SATOM_GET_FUNCTOR(LmnSymbolAtomRef atom) {
   return atom->functor;
@@ -91,8 +85,6 @@ int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor func) {
 int LMN_SATOM_GET_LINK_NUM(LmnSymbolAtomRef atom) {
   return LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
 }
-
-
 
 /* リンク番号のタグのワード数。ファンクタと同じワードにある分も数える */
 int LMN_ATTR_WORDS(int arity) {
@@ -120,30 +112,21 @@ void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v) {
   LMN_SATOM_SET_LINK(atom, 0, v);
 }
 
-
 size_t LMN_SATOM_SIZE(int arity) {
-  return offsetof(struct LmnAtomData, links) + (LMN_ATTR_WORDS(arity) + arity) * LMN_WORD_BYTES;
+  return offsetof(struct LmnAtomData, links) +
+         (LMN_ATTR_WORDS(arity) + arity) * LMN_WORD_BYTES;
 }
 
 BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC) {
-  return LMN_ATTR_IS_DATA(ATTR) ? FALSE
-                                : LMN_SATOM_GET_FUNCTOR(ATOM) == FUNC;
+  return LMN_ATTR_IS_DATA(ATTR) ? FALSE : LMN_SATOM_GET_FUNCTOR(ATOM) == FUNC;
 }
 
-BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr) {
-  return attr & ~LMN_ATTR_MASK;
-}
+BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr) { return attr & ~LMN_ATTR_MASK; }
 
-LmnLinkAttr LMN_ATTR_MAKE_DATA(int X) {
-  return 0x80U | X;
-}
-LmnLinkAttr LMN_ATTR_MAKE_LINK(int X) {
-  return X;
-}
+LmnLinkAttr LMN_ATTR_MAKE_DATA(int X) { return 0x80U | X; }
+LmnLinkAttr LMN_ATTR_MAKE_LINK(int X) { return X; }
 
-int LMN_ATTR_GET_VALUE(int X) {
-  return X & LMN_ATTR_MASK;
-}
+int LMN_ATTR_GET_VALUE(int X) { return X & LMN_ATTR_MASK; }
 
 void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X) {
   *PATTR = (X & ~LMN_ATTR_MASK) | X;
@@ -160,7 +143,7 @@ LmnMembraneRef LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM) {
 void LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembraneRef X) {
   LMN_SATOM_SET_LINK(PROXY_ATM, 2, X);
 }
-#define LMN_PROXY_FUNCTOR_NUM           (3)
+#define LMN_PROXY_FUNCTOR_NUM (3)
 BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC) {
   return FUNC < LMN_PROXY_FUNCTOR_NUM;
 }
@@ -185,9 +168,7 @@ BOOL LMN_ATTR_IS_DATA_WITHOUT_EX(LmnLinkAttr ATTR) {
 BOOL LMN_ATTR_IS_EX(LmnLinkAttr ATTR) {
   return LMN_ATTR_IS_DATA(ATTR) && LMN_ATTR_IS_HL(ATTR);
 }
-BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC) {
-  return FUNC == LMN_HL_FUNC;
-}
+BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC) { return FUNC == LMN_HL_FUNC; }
 
 /////
 
@@ -208,9 +189,7 @@ LmnSymbolAtomRef lmn_copy_satom(LmnSymbolAtomRef atom) {
   f = LMN_SATOM_GET_FUNCTOR(atom);
   newatom = lmn_new_atom(f);
 
-  memcpy((void *)newatom,
-         (void *)atom,
-         LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
+  memcpy((void *)newatom, (void *)atom, LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
 
   LMN_SATOM_SET_ID(newatom, 0);
   return newatom;
@@ -218,28 +197,28 @@ LmnSymbolAtomRef lmn_copy_satom(LmnSymbolAtomRef atom) {
 
 LmnDataAtomRef lmn_copy_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr) {
   switch (attr) {
-    case LMN_INT_ATTR:
-      return atom;
-    case LMN_DBL_ATTR:
-      return lmn_create_double_atom(lmn_get_double(atom));
-    case LMN_SP_ATOM_ATTR:
-      return (LmnDataAtomRef)SP_ATOM_COPY(atom);
-    case LMN_HL_ATTR:
-    {
-      LmnSymbolAtomRef copyatom = lmn_copy_satom((LmnSymbolAtomRef)atom);
-      LMN_SATOM_SET_ID(copyatom, 0);
+  case LMN_INT_ATTR:
+    return atom;
+  case LMN_DBL_ATTR:
+    return lmn_create_double_atom(lmn_get_double(atom));
+  case LMN_SP_ATOM_ATTR:
+    return (LmnDataAtomRef)SP_ATOM_COPY(atom);
+  case LMN_HL_ATTR: {
+    LmnSymbolAtomRef copyatom = lmn_copy_satom((LmnSymbolAtomRef)atom);
+    LMN_SATOM_SET_ID(copyatom, 0);
 
-      lmn_hyperlink_copy(copyatom, (LmnSymbolAtomRef)atom);
-      return (LmnDataAtomRef)copyatom;
-    }
-    default:
-      LMN_ASSERT(FALSE);
-      return -1;
+    lmn_hyperlink_copy(copyatom, (LmnSymbolAtomRef)atom);
+    return (LmnDataAtomRef)copyatom;
+  }
+  default:
+    LMN_ASSERT(FALSE);
+    return -1;
   }
 }
-//is_new_hl = TRUEで新しく生成したハイパーリンクは元のハイパーリンクと接続しない
-LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl)
-{
+// is_new_hl =
+// TRUEで新しく生成したハイパーリンクは元のハイパーリンクと接続しない
+LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom,
+                                          BOOL is_new_hl) {
   LmnFunctor f;
   LmnSymbolAtomRef newatom;
   unsigned int i, arity = LMN_SATOM_GET_LINK_NUM(atom);
@@ -249,25 +228,27 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl)
 
   LMN_ASSERT(newatom != atom);
 
-  memcpy((void *)newatom,
-         (void *)atom,
-         LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
+  memcpy((void *)newatom, (void *)atom, LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
   /* リンク先のデータアトムをコピーする */
   for (i = 0; i < arity; i++) {
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) {
-      if (is_new_hl && LMN_SATOM_GET_ATTR(atom, i) == LMN_HL_ATTR) { 
+      if (is_new_hl && LMN_SATOM_GET_ATTR(atom, i) == LMN_HL_ATTR) {
         LmnAtomRef hlAtom = LMN_SATOM_GET_LINK(atom, i);
         HyperLink *hl = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)hlAtom);
-        LmnAtomRef new_hlAtom = lmn_hyperlink_new_with_attr(LMN_HL_ATTRATOM(hl), LMN_HL_ATTRATOM_ATTR(hl));
+        LmnAtomRef new_hlAtom = lmn_hyperlink_new_with_attr(
+            LMN_HL_ATTRATOM(hl), LMN_HL_ATTRATOM_ATTR(hl));
         LMN_SATOM_SET_LINK(newatom, i, new_hlAtom);
         LMN_SATOM_SET_ATTR(newatom, i, LMN_HL_ATTR);
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)new_hlAtom, 0, newatom); 
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)new_hlAtom, 0, LMN_ATTR_MAKE_LINK(i));
+        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)new_hlAtom, 0, newatom);
+        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)new_hlAtom, 0,
+                           LMN_ATTR_MAKE_LINK(i));
       } else {
-        LmnDataAtomRef dt = lmn_copy_data_atom((LmnDataAtomRef)LMN_SATOM_GET_LINK(atom, i), LMN_SATOM_GET_ATTR(atom, i));
+        LmnDataAtomRef dt =
+            lmn_copy_data_atom((LmnDataAtomRef)LMN_SATOM_GET_LINK(atom, i),
+                               LMN_SATOM_GET_ATTR(atom, i));
         LMN_SATOM_SET_LINK(newatom, i, (LmnAtomRef)dt);
         if (LMN_SATOM_GET_ATTR(atom, i) == LMN_HL_ATTR) {
-          LMN_HLATOM_SET_LINK((LmnSymbolAtomRef)dt, newatom); 
+          LMN_HLATOM_SET_LINK((LmnSymbolAtomRef)dt, newatom);
         }
       }
     }
@@ -280,24 +261,24 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl)
 
 void free_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr) {
   switch (attr) {
-    case LMN_INT_ATTR:
-      break;
-    case LMN_DBL_ATTR:
-      lmn_destroy_double_atom(atom);
-      break;
-    case LMN_CONST_STR_ATTR: /* FALLTHROUGH */
-    case LMN_CONST_DBL_ATTR:
-      break;
-    case LMN_SP_ATOM_ATTR:
-      SP_ATOM_FREE(atom);
-      break;
-    case LMN_HL_ATTR:
-      lmn_hyperlink_delete((LmnSymbolAtomRef)atom);
-      lmn_delete_atom((LmnSymbolAtomRef)atom);
-      break;
-    default:
-      LMN_ASSERT(FALSE);
-      break;
+  case LMN_INT_ATTR:
+    break;
+  case LMN_DBL_ATTR:
+    lmn_destroy_double_atom(atom);
+    break;
+  case LMN_CONST_STR_ATTR: /* FALLTHROUGH */
+  case LMN_CONST_DBL_ATTR:
+    break;
+  case LMN_SP_ATOM_ATTR:
+    SP_ATOM_FREE(atom);
+    break;
+  case LMN_HL_ATTR:
+    lmn_hyperlink_delete((LmnSymbolAtomRef)atom);
+    lmn_delete_atom((LmnSymbolAtomRef)atom);
+    break;
+  default:
+    LMN_ASSERT(FALSE);
+    break;
   }
 }
 
@@ -311,14 +292,14 @@ void lmn_free_atom(LmnAtomRef atom, LmnLinkAttr attr) {
 }
 
 /* シンボルアトムとリンクで接続しているデータアトムを解放する */
-void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom)
-{
+void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom) {
   unsigned int i;
   unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
   /* free linked data atoms */
   for (i = 0; i < end; i++) {
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) {
-      free_data_atom((LmnDataAtomRef)LMN_SATOM_GET_LINK(atom, i), LMN_SATOM_GET_ATTR(atom, i));
+      free_data_atom((LmnDataAtomRef)LMN_SATOM_GET_LINK(atom, i),
+                     LMN_SATOM_GET_ATTR(atom, i));
     }
   }
 
@@ -329,25 +310,30 @@ void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom)
   lmn_delete_atom(atom);
 }
 
-BOOL lmn_eq_func(LmnAtomRef     atom0, LmnLinkAttr attr0,
-                 LmnAtomRef     atom1, LmnLinkAttr attr1) {
+BOOL lmn_eq_func(LmnAtomRef atom0, LmnLinkAttr attr0, LmnAtomRef atom1,
+                 LmnLinkAttr attr1) {
   /* TODO: TOFIX シンボルアトムのattrがすべて等しい値であることを確認する */
-  if (attr0 != attr1) return FALSE;
+  if (attr0 != attr1)
+    return FALSE;
   switch (attr0) {
   case LMN_INT_ATTR:
     return atom0 == atom1;
   case LMN_DBL_ATTR:
-    return lmn_get_double((LmnDataAtomRef)atom0) == lmn_get_double((LmnDataAtomRef)atom1);
+    return lmn_get_double((LmnDataAtomRef)atom0) ==
+           lmn_get_double((LmnDataAtomRef)atom1);
   case LMN_SP_ATOM_ATTR:
     return SP_ATOM_EQ(atom0, atom1);
   case LMN_HL_ATTR:
-    return lmn_hyperlink_eq((LmnSymbolAtomRef)atom0, attr0, (LmnSymbolAtomRef)atom1, attr1);
+    return lmn_hyperlink_eq((LmnSymbolAtomRef)atom0, attr0,
+                            (LmnSymbolAtomRef)atom1, attr1);
   default: /* symbol atom */
-    return LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom0) == LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom1);
+    return LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom0) ==
+           LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom1);
   }
 }
 
-BOOL lmn_data_atom_is_ground(LmnDataAtomRef atom, LmnLinkAttr attr, ProcessTableRef *hlinks) {
+BOOL lmn_data_atom_is_ground(LmnDataAtomRef atom, LmnLinkAttr attr,
+                             ProcessTableRef *hlinks) {
   switch (attr) {
   case LMN_INT_ATTR:
   case LMN_DBL_ATTR:
@@ -364,8 +350,7 @@ BOOL lmn_data_atom_eq(LmnDataAtomRef atom1, LmnLinkAttr attr1,
                       LmnDataAtomRef atom2, LmnLinkAttr attr2) {
   if (attr1 != attr2) {
     return FALSE;
-  }
-  else {
+  } else {
     switch (attr1) {
     case LMN_INT_ATTR:
       return atom1 == atom2;
@@ -374,7 +359,8 @@ BOOL lmn_data_atom_eq(LmnDataAtomRef atom1, LmnLinkAttr attr1,
     case LMN_SP_ATOM_ATTR:
       return SP_ATOM_EQ(atom1, atom2);
     case LMN_HL_ATTR:
-      return lmn_hyperlink_eq((LmnSymbolAtomRef)atom1, attr1, (LmnSymbolAtomRef)atom2, attr2);
+      return lmn_hyperlink_eq((LmnSymbolAtomRef)atom1, attr1,
+                              (LmnSymbolAtomRef)atom2, attr2);
     default:
       lmn_fatal("Implementation error");
       return FALSE;
@@ -391,7 +377,8 @@ double lmn_get_double(LmnDataAtomRef atom) {
 #endif
 }
 
-/* Create atom represents double data. Return value must be freed by |lmn_destroy_double_atom| */
+/* Create atom represents double data. Return value must be freed by
+ * |lmn_destroy_double_atom| */
 LmnDataAtomRef lmn_create_double_atom(double d) {
 #ifdef LMN_DOUBLE_IS_IMMEDIATE
   return *(LmnDataAtomRef *)&d; // forward bit pattern

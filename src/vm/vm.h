@@ -57,13 +57,13 @@ extern "C" {
 #include "instruction.h"
 #include "membrane.h"
 #include "memstack.h"
+#include "process_table.h"
+#include "rule.h"
+#include "simply_process_table.h"
+#include "simply_trace_log.h"
 #include "symbol.h"
 #include "task.h"
-#include "rule.h"
-#include "process_table.h"
-#include "simply_process_table.h"
 #include "trace_log.h"
-#include "simply_trace_log.h"
 
 #ifdef __cplusplus
 }

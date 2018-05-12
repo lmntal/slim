@@ -1,8 +1,8 @@
 /*
  * rule.h - types and functions about rule, rule set, module
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -49,11 +49,11 @@ typedef struct LmnRule *LmnRuleRef;
 
 typedef struct LmnRuleSet *LmnRuleSetRef;
 
-#include "lmntal.h"
 #include "element/element.h"
-#include "symbol.h"
+#include "lmntal.h"
 #include "membrane.h"
 #include "react_context.h"
+#include "symbol.h"
 
 typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
 /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
@@ -67,9 +67,9 @@ typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
    生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
    た場合FALSEを返す */
 
-
 LmnRuleRef dummy_rule(void);
-LmnRuleRef lmn_rule_make_translated(LmnTranslated translated, lmn_interned_str name);
+LmnRuleRef lmn_rule_make_translated(LmnTranslated translated,
+                                    lmn_interned_str name);
 LmnRuleRef lmn_rule_copy(LmnRuleRef rule);
 void lmn_rule_free(LmnRuleRef rule);
 
@@ -98,19 +98,16 @@ BOOL lmn_rule_is_invisible(LmnRuleRef rule);
 
 void lmn_rule_init_uniq_rule(LmnRuleRef rule);
 
-
 /*----------------------------------------------------------------------
  * Rule Set
  */
 
-typedef enum AtomicType{
+typedef enum AtomicType {
   ATOMIC_NONE = 0,
   ATOMIC_ALL_EXHAUSTIVE,
   ATOMIC_SIMULATION,
   ATOMIC_SYNC_STEP,
 } AtomicType;
-
-
 
 /* table, mapping RuleSet ID to RuleSet */
 struct LmnRuleSetTable {
@@ -164,8 +161,6 @@ LmnRuleRef *lmn_ruleset_get_rules(LmnRuleSetRef ruleset);
 void lmn_ruleset_validate_0step(LmnRuleSetRef ruleset);
 BOOL lmn_ruleset_is_0step(LmnRuleSetRef ruleset);
 
-
-
 /*----------------------------------------------------------------------
  * System Rule Set
  */
@@ -186,7 +181,8 @@ void lmn_add_initial_system_rule(LmnRuleRef rule);
  * Module
  */
 
-LMN_EXTERN void lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset);
+LMN_EXTERN void lmn_set_module(lmn_interned_str module_name,
+                               LmnRuleSetRef ruleset);
 LMN_EXTERN LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name);
 
 /* @} */

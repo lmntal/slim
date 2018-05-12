@@ -1,8 +1,8 @@
 /*
  * instructions.h - Intermediate code instructions
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -266,7 +266,6 @@ enum LmnInstruction {
 
   NUM_INSTRS // this must be the last
 };
-
 
 enum ArgType {
   ARG_END = 0,
