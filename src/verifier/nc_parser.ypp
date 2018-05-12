@@ -41,18 +41,17 @@
 #include <math.h>
 #include <stdio.h>
 #include "element/element.h"
+extern "C" {
 #include "automata.h"
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
-typedef void* yyscan_t;
-#endif
+}
+#include "nc_lexer.hpp"
 %}
 
 %pure-parser
 %locations
-%parse-param {yyscan_t scanner}
+%parse-param {nc::lexer *scanner}
 %parse-param {AutomataRef automata}
-%lex-param {yyscan_t scanner}
+%lex-param {nc::lexer *scanner}
 
 %union {
   int _int;
@@ -83,8 +82,8 @@ typedef void* yyscan_t;
 %type <PLFormula> propositional_exp;
 
 %{
-#include "nc_lexer.h"
-static void ncerror (YYLTYPE*, yyscan_t, AutomataRef, char *);
+#include "nc_lexer.hpp"
+static void ncerror (YYLTYPE*, nc::lexer *, AutomataRef, const char *);
 %}
 
 %% /* Grammar rules and actions follow.  */
@@ -181,8 +180,8 @@ propositional_factor:
 
 
 /* Called by yyparse on error.  */
-void ncerror (YYLTYPE *loc, yyscan_t scanner, AutomataRef a, char *s)
+void ncerror (YYLTYPE *loc, nc::lexer *scanner, AutomataRef a, const char *s)
 {
-  fprintf(stderr, "never claim parser: error %s line: %d\n", s, ncget_lineno(scanner));
+  fprintf(stderr, "never claim parser: error %s line: %d\n", s, scanner->lineno());
   exit(EXIT_FAILURE);
 }

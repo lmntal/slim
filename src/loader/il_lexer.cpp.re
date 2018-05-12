@@ -342,7 +342,8 @@ namespace il {
       blank+ { goto start; }
 
       '-'?digit+ {
-        yylval->_int = stol(get_token());
+        string s = get_token();
+        yylval->_int = s.empty() ? 0 : stol(s);
         return INT;
       }
       '-'?digit+"."digit+ {
