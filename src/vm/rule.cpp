@@ -154,6 +154,17 @@ struct LmnRuleSet {
   BOOL is_copy;
   BOOL is_0step;
   BOOL has_uniqrule;
+  LmnRuleSet(LmnRulesetId id,int init_size){
+  	this->id = id,
+  	this->rules =LMN_CALLOC(LmnRuleRef, init_size);
+  	this->num =0;
+  	this->cap =init_size;
+  	this->atomic = ATOMIC_NONE;
+  	this->is_atomic_valid=FALSE;
+  	this->is_copy=FALSE;
+  	this->has_uniqrule=FALSE;
+  	this->is_0step=FALSE;
+  }
 };
 struct LmnRuleSetTable *ruleset_table;
 
@@ -165,21 +176,7 @@ int lmn_gen_ruleset_id() {
 }
 
 /* Generates a new RuleSet */
-LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size) {
-  LmnRuleSetRef ruleset = LMN_MALLOC(struct LmnRuleSet);
-
-  ruleset->id = id;
-  ruleset->rules = LMN_CALLOC(LmnRuleRef, init_size);
-  ruleset->num = 0;
-  ruleset->cap = init_size;
-  ruleset->atomic = ATOMIC_NONE;
-  ruleset->is_atomic_valid = FALSE;
-  ruleset->is_copy = FALSE;
-  ruleset->has_uniqrule = FALSE;
-  ruleset->is_0step = FALSE;
-
-  return ruleset;
-}
+LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size) {  return new LmnRuleSet(id,init_size); }
 
 /* Frees RuleSet and its elements */
 void lmn_ruleset_free(LmnRuleSetRef ruleset) {
