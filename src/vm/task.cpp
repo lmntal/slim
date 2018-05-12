@@ -1265,7 +1265,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
               continue;
             wt_set(rc, atomi, (LmnWord)atom);
             tt_set(rc, atomi, TT_ATOM);
-            remove_from_atomlist(record, NULL); /* 履歴アトムの削除 */
+            LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(record), LMN_SATOM_GET_PREV(record));
+            LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(record), LMN_SATOM_GET_NEXT_RAW(record));
             insert_to_atomlist(NULL, record, atom, NULL); /* 履歴アトムの挿入 */
 
             if (interpret(rc, rule, instr)) {
@@ -3813,7 +3814,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
         /* mem がないので仕方なく直接アトムリストをつなぎ変える.
          * UNIFYアトムはnatomに含まれないので大丈夫 */
-        remove_from_atomlist(copy, NULL);
+        LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy), LMN_SATOM_GET_PREV(copy));
+        LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy), LMN_SATOM_GET_NEXT_RAW(copy));
 
         lmn_delete_atom(copy);
       }

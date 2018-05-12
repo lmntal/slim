@@ -43,6 +43,7 @@ extern "C" {
 #include "react_context.h"
 #include "symbol.h"
 }
+#include "membrane.hpp"
 
 /* prototypes */
 
@@ -79,13 +80,13 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
                 m1 = LMN_PROXY_GET_MEM(i1);
 
                 if (m0 == m1) {
-                  remove_from_atomlist(o0, ent); /* for efficiency */
-                  remove_from_atomlist(o1, ent);
+                  ent -> remove(o0); /* for efficiency */
+                  ent -> remove(o1);
                   lmn_delete_atom(o0);
                   lmn_delete_atom(o1);
                   lmn_mem_unify_atom_args(m0, i0, 1, i1, 1);
-                  remove_from_atomlist(i0, ent);
-                  remove_from_atomlist(i1, ent);
+                  ent -> remove(i0);
+                  ent -> remove(i1);
                   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
                     lmn_memstack_push(RC_MEMSTACK(rc), m0);
                   }
@@ -120,13 +121,13 @@ static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
               if (LMN_SATOM_GET_FUNCTOR(i1) == LMN_IN_PROXY_FUNCTOR) {
                 LmnSymbolAtomRef o1 =
                     (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(i1, 0);
-                remove_from_atomlist(o0, ent);
-                remove_from_atomlist(o1, ent);
+                ent -> remove(o0);
+                ent -> remove(o1);
                 lmn_delete_atom(o0);
                 lmn_delete_atom(o1);
                 lmn_mem_unify_atom_args(mem, o0, 1, o1, 1);
-                remove_from_atomlist(i0, ent);
-                remove_from_atomlist(i1, ent);
+                ent -> remove(i0);
+                ent -> remove(i1);
                 return TRUE;
               }
             }));

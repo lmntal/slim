@@ -67,15 +67,7 @@ void atomlist_set_num(AtomListEntryRef lst, int n);
 void atomlist_add_num(AtomListEntryRef lst, int n);
 
 void atomlist_modify_num(AtomListEntryRef ent, int n);
-BOOL atomlist_is_empty(AtomListEntryRef ent);
 
-/* アトムリストasを空にする. */
-void atomlist_set_empty(AtomListEntryRef ent);
-
-/* アトムリストALからアトムAを削除する.
- * ただし, リストのつなぎ変えだけを行い,
- * 膜からのアトムAのdeleteやatomのfreeはしない */
-void remove_from_atomlist(LmnSymbolAtomRef a, AtomListEntryRef ent);
 
 /* アトムリストentにおいて, アトムprvとアトムnxtの間にアトムinsを挿入する.
  * ただし, prvにNULLを渡した場合はnxtのprevポイント先をprvとして扱う. */

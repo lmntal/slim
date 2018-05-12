@@ -54,6 +54,8 @@ extern "C" {
 #include "firstclass_rule.h"
 #endif
 }
+
+#include "membrane.hpp"
 #include "rule.hpp"
 
 /** ----
@@ -63,13 +65,6 @@ extern "C" {
 
 /* この構造体をAtomとして扱うことで,この構造体自身が
    HeadとTailの両方の役目を果たしている */
-typedef struct AtomListEntry {
-  LmnSymbolAtomRef tail, head;
-#ifdef NEW_ATOMLIST
-  int n;
-#endif
-  struct SimpleHashtbl *record;
-} AtomListEntry;
 
 LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst) { return lst->head; }
 LmnSymbolAtomRef lmn_atomlist_end(AtomListEntryRef lst) {
@@ -90,27 +85,10 @@ void atomlist_modify_num(AtomListEntry *ent, int n) {
   atomlist_add_num(ent, n);
 }
 
-BOOL atomlist_is_empty(AtomListEntry *ent) {
-  return atomlist_head(ent) == LMN_SATOM(ent);
-}
-
-/* アトムリストasを空にする. */
-void atomlist_set_empty(AtomListEntry *ent) {
-  LMN_SATOM_SET_PREV((LmnSymbolAtomRef)ent, (LmnSymbolAtomRef)ent);
-  LMN_SATOM_SET_NEXT((LmnSymbolAtomRef)ent, (LmnSymbolAtomRef)ent);
-  atomlist_set_num(ent, 0);
-}
 
 /* アトムリストALからアトムAを削除する.
  * ただし, リストのつなぎ変えだけを行い,
  * 膜からのアトムAのdeleteやatomのfreeはしない */
-void remove_from_atomlist(LmnSymbolAtomRef a, AtomListEntry *ent) {
-  LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
-  LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
-  if (ent) {
-    atomlist_modify_num(ent, -1);
-  }
-}
 
 /* アトムリストentにおいて, アトムprvとアトムnxtの間にアトムinsを挿入する.
  * ただし, prvにNULLを渡した場合はnxtのprevポイント先をprvとして扱う. */
@@ -172,7 +150,7 @@ void atomlist_append(AtomListEntry *e1, AtomListEntry *e2) {
     e1->tail = e2->tail;
     atomlist_modify_num(e1, atomlist_get_entries_num(e2));
   }
-  atomlist_set_empty(e2);
+  e2 -> set_empty();
 }
 
 /* return NULL when atomlist doesn't exist. */
@@ -241,7 +219,7 @@ static inline AtomListEntry *make_atomlist() {
   AtomListEntry *as = LMN_MALLOC(struct AtomListEntry);
   as->record = NULL; /* 全てのアトムの種類に対してfindatom2用ハッシュ表が必要なわけではないので動的にmallocさせる
                       */
-  atomlist_set_empty(as);
+  as -> set_empty();
 
   return as;
 }
@@ -413,7 +391,7 @@ void lmn_mem_drop(LmnMembraneRef mem) {
           a = LMN_SATOM_GET_NEXT_RAW(a);
           free_symbol_atom_with_buddy_data(b);
         }
-        atomlist_set_empty(ent);
+        ent -> set_empty();
       }));
 
   mem->atom_symb_num = 0U;
@@ -2423,7 +2401,7 @@ memIsomorIter_atom_traversed(MemIsomorIter *iter) {
     f = atomlist_iter_get_functor(iter->pos);
     ent = atomlist_iter_get_entry(iter->mem, iter->pos);
 
-    if (!ent || atomlist_is_empty(ent) || f == LMN_OUT_PROXY_FUNCTOR) {
+    if (!ent || ent -> is_empty() || f == LMN_OUT_PROXY_FUNCTOR) {
       /* アトムリストが空の場合, 次の候補リストを取得する.
        * outside proxyは候補としない */
       continue; /* OUTER LOOP */
@@ -3608,10 +3586,11 @@ void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
 #ifdef NEW_ATOMLIST
   {
     AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
-    remove_from_atomlist(atom, ent);
+    ent -> remove(atom);
   }
 #else
-  remove_from_atomlist(atom, NULL);
+    LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
+    LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
 #endif
 
   if (LMN_IS_PROXY_FUNCTOR(f)) {
