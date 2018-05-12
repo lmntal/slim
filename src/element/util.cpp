@@ -37,22 +37,24 @@
  * $Id$
  */
 
-extern "C"{
+extern "C" {
 #include "util.h"
 #include "../lmntal.h"
 #include "error.h"
 }
 
-char *int_to_str(long n)
-{
+char *int_to_str(long n) {
   char *s;
   int keta = 0;
-  
-  if (n == 0) keta = 1;
+
+  if (n == 0)
+    keta = 1;
   else {
     int m = n;
     keta = 0;
-    if (m < 0) { m = - m, keta = 1; }
+    if (m < 0) {
+      m = -m, keta = 1;
+    }
     while (m > 0) {
       m /= 10;
       keta++;
@@ -66,18 +68,15 @@ char *int_to_str(long n)
 }
 
 /* ソート用。intの昇順比較を行う。*/
-int comp_int_f(const void *a_, const void *b_)
-{
+int comp_int_f(const void *a_, const void *b_) {
   int a = *(int *)a_;
   int b = *(int *)b_;
   return a > b ? 1 : (a == b ? 0 : -1);
 }
 
 /* ソート用。intの昇順比較を行う。*/
-int comp_int_greater_f(const void *a_, const void *b_)
-{
+int comp_int_greater_f(const void *a_, const void *b_) {
   int a = *(int *)a_;
   int b = *(int *)b_;
   return a > b ? -1 : (a == b ? 0 : 1);
 }
-

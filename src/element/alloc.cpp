@@ -1,8 +1,8 @@
 /*
  * alloc.c -- memory management
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -36,14 +36,14 @@
  * $Id: alloc.c,v 1.3 2008/09/19 05:18:17 taisuke Exp $
  */
 
-extern "C"{
-#include "memory_pool.h"
-#include "vector.h"
-#include "lmntal.h"
-#include "vm/vm.h"
+extern "C" {
 #include "error.h"
+#include "lmntal.h"
 #include "lmntal_thread.h"
+#include "memory_pool.h"
 #include "util.h"
+#include "vector.h"
+#include "vm/vm.h"
 }
 
 /*----------------------------------------------------------------------
@@ -52,27 +52,25 @@ extern "C"{
 
 static memory_pool **atom_memory_pools[128];
 
-void mpool_init()
-{
+void mpool_init() {
   int i, core_num, arity_num;
   arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num  = lmn_env.core_num;
+  core_num = lmn_env.core_num;
   for (i = 0; i < arity_num; i++) {
-    atom_memory_pools[i] = (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
+    atom_memory_pools[i] =
+        (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
     memset(atom_memory_pools[i], 0, sizeof(memory_pool *) * core_num);
   }
 }
 
-LmnSymbolAtomRef lmn_new_atom(LmnFunctor f)
-{
+LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
   LmnSymbolAtomRef ap;
   int arity, cid;
   arity = LMN_FUNCTOR_ARITY(f);
-  cid   = env_my_thread_id();
+  cid = env_my_thread_id();
 
   if (atom_memory_pools[arity][cid] == 0) {
-    atom_memory_pools[arity][cid] =
-      memory_pool_new(LMN_SATOM_SIZE(arity));
+    atom_memory_pools[arity][cid] = memory_pool_new(LMN_SATOM_SIZE(arity));
   }
   ap = (LmnSymbolAtomRef)memory_pool_malloc(atom_memory_pools[arity][cid]);
   LMN_SATOM_SET_FUNCTOR(ap, f);
@@ -81,8 +79,7 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f)
   return ap;
 }
 
-void lmn_delete_atom(LmnSymbolAtomRef ap)
-{
+void lmn_delete_atom(LmnSymbolAtomRef ap) {
   int arity, cid;
 
   env_return_id(LMN_SATOM_ID(ap));
@@ -92,12 +89,11 @@ void lmn_delete_atom(LmnSymbolAtomRef ap)
   memory_pool_free(atom_memory_pools[arity][cid], ap);
 }
 
-void free_atom_memory_pools(void)
-{
+void free_atom_memory_pools(void) {
   unsigned int i, j, arity_num, core_num;
 
   arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num  = lmn_env.core_num;
+  core_num = lmn_env.core_num;
   for (i = 0; i < arity_num; i++) {
     for (j = 0; j < core_num; j++) {
       if (atom_memory_pools[i][j]) {
@@ -123,11 +119,10 @@ void free_atom_memory_pools(void)
  *   headerに持っていってstatic inlineにした方が良い?
  *   memory exhausted時にもprofile情報をdumpさせたい */
 
-void *lmn_calloc(size_t num, size_t size)
-{
+void *lmn_calloc(size_t num, size_t size) {
   void *result;
 #if HAVE_DECL_CALLOC
-  result = calloc (num, size);
+  result = calloc(num, size);
   if (!result) {
     lmn_fatal("Memory exhausted");
   }
@@ -139,28 +134,26 @@ void *lmn_calloc(size_t num, size_t size)
   return result;
 }
 
-void *lmn_malloc(size_t num)
-{
+void *lmn_malloc(size_t num) {
   LMN_ASSERT(num > 0);
-//printf("%lu\n", num);
+  // printf("%lu\n", num);
   void *result = malloc(num);
-  if (!result) lmn_fatal("Memory exhausted");
+  if (!result)
+    lmn_fatal("Memory exhausted");
 
   return result;
 }
 
-void *lmn_realloc(void *p, size_t num)
-{
+void *lmn_realloc(void *p, size_t num) {
   void *result;
 
-  if (!p) return lmn_malloc (num);
-  result = realloc (p, num);
-  if (!result) lmn_fatal("Memory exhausted");
+  if (!p)
+    return lmn_malloc(num);
+  result = realloc(p, num);
+  if (!result)
+    lmn_fatal("Memory exhausted");
 
   return result;
 }
 
-void lmn_free(void *p)
-{
-  free(p);
-}
+void lmn_free(void *p) { free(p); }

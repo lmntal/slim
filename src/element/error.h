@@ -1,8 +1,8 @@
 /*
  * error.h - error handling
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -46,17 +46,17 @@
 
 /* Error */
 #ifdef DEBUG
-# define lmn_fatal(Msg)                            \
-    do {                                           \
-      do_lmn_fatal(__FILE__, __LINE__, Msg);       \
-      assert(FALSE);                               \
-    } while (0);
+#define lmn_fatal(Msg)                                                         \
+  do {                                                                         \
+    do_lmn_fatal(__FILE__, __LINE__, Msg);                                     \
+    assert(FALSE);                                                             \
+  } while (0);
 #else
-# define lmn_fatal(Msg)                            \
-    do {                                           \
-      do_lmn_fatal(__FILE__, __LINE__, Msg);       \
-      exit(EXIT_FAILURE);                          \
-    } while (0);
+#define lmn_fatal(Msg)                                                         \
+  do {                                                                         \
+    do_lmn_fatal(__FILE__, __LINE__, Msg);                                     \
+    exit(EXIT_FAILURE);                                                        \
+  } while (0);
 #endif
 
 void do_lmn_fatal(const char *file, int line, const char *msg);

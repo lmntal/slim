@@ -1,8 +1,8 @@
 /*
  * intrnal_hash.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -36,7 +36,6 @@
  * $Id: internal_hash.h,v 1.5 2008/10/16 18:06:34 sasaki Exp $
  */
 
-
 #ifndef INTERNAL_HASH_H
 #define INTERNAL_HASH_H
 
@@ -65,12 +64,10 @@ typedef struct HashIterator {
   unsigned int i;
 } HashIterator;
 
-
 void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size);
 SimpleHashtbl *hashtbl_make(unsigned int init_size);
 HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key);
-HashValueType hashtbl_get_default(SimpleHashtbl *ht,
-                                  HashKeyType key,
+HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key,
                                   HashValueType default_value);
 int hashtbl_contains(SimpleHashtbl *ht, HashKeyType key);
 void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType val);
@@ -86,7 +83,7 @@ void hashtbliter_next(HashIterator *iter);
 
 /* HashSet */
 typedef struct HashSet {
-  HashKeyType* tbl;
+  HashKeyType *tbl;
   unsigned int cap, num;
 } HashSet;
 
@@ -110,13 +107,11 @@ void hashsetiter_next(HashSetIterator *it);
 #define hashsetiter_entry(I) ((I)->set->tbl[(I)->i])
 #define hashsetiter_isend(I) ((I)->i >= (I)->set->cap)
 
-inline static unsigned long internal_hashtbl_space_inner(SimpleHashtbl *ht)
-{
+inline static unsigned long internal_hashtbl_space_inner(SimpleHashtbl *ht) {
   return (sizeof(struct HashEntry) * ht->cap);
 }
 
-inline static unsigned long internal_hashtbl_space(SimpleHashtbl *ht)
-{
+inline static unsigned long internal_hashtbl_space(SimpleHashtbl *ht) {
   return sizeof(struct SimpleHashtbl) + internal_hashtbl_space_inner(ht);
 }
 

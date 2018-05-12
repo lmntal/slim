@@ -39,56 +39,54 @@
 
 /* 外部プログラムの起動など、プロセス関連の便利関数の定義 */
 
-extern "C"{
-#include <stdio.h>
+extern "C" {
+#include "process_util.h"
 #include <stdlib.h>
 #include <sys/wait.h>
-#include "process_util.h"
 }
 
 /* program_pathにあるプログラムを引数argsで起動し、プログラムの出力のストリームを返す。*/
-FILE *run_program(const char *program_path, char **args)
-{
-   pid_t pid;
-   int pipes[2];
+FILE *run_program(const char *program_path, char **args) {
+  pid_t pid;
+  int pipes[2];
 
-   if (pipe(pipes)) { /* fail : -1 */
-     perror("pipe failed");
-     exit(EXIT_FAILURE);
-   }
+  if (pipe(pipes)) { /* fail : -1 */
+    perror("pipe failed");
+    exit(EXIT_FAILURE);
+  }
 
-   pid = fork();
+  pid = fork();
 
-   switch (pid) {
-   case 0: /* 子プロセス */
-   {
-     int old;
-     close(fileno(stdout));
-     old = dup(pipes[1]);
-     close(pipes[0]);
-     close(pipes[1]);
+  switch (pid) {
+  case 0: /* 子プロセス */
+  {
+    int old;
+    close(fileno(stdout));
+    old = dup(pipes[1]);
+    close(pipes[0]);
+    close(pipes[1]);
 
-     if (execv(program_path, args) == -1) {
-       perror("execv failed");
-       exit(EXIT_FAILURE);
-     }
-   }
-   case -1: /* fork失敗 */
-     perror("fork failed");
-     exit(EXIT_FAILURE);
-   default: /* 親プロセス */
-   {
-//     int status;
+    if (execv(program_path, args) == -1) {
+      perror("execv failed");
+      exit(EXIT_FAILURE);
+    }
+  }
+  case -1: /* fork失敗 */
+    perror("fork failed");
+    exit(EXIT_FAILURE);
+  default: /* 親プロセス */
+  {
+    //     int status;
 
-     close(pipes[1]);
-     /* TODO: パイプのバッファを越える出力を受けた場合,
-      *       読み込むまでブロックされるためデッドロックしてしまう */
-//     if (waitpid(pid, &status, 0) == -1) {
-//       perror("waitpid failed");
-//       exit(EXIT_FAILURE);
-//     }
+    close(pipes[1]);
+    /* TODO: パイプのバッファを越える出力を受けた場合,
+     *       読み込むまでブロックされるためデッドロックしてしまう */
+    //     if (waitpid(pid, &status, 0) == -1) {
+    //       perror("waitpid failed");
+    //       exit(EXIT_FAILURE);
+    //     }
 
-     return fdopen(pipes[0], "r");
-   }
-   }
+    return fdopen(pipes[0], "r");
+  }
+  }
 }

@@ -1,4 +1,5 @@
-/* This is a public domain general purpose hash table package written by Peter Moore @ UCB. */
+/* This is a public domain general purpose hash table package written by Peter
+ * Moore @ UCB. */
 
 /* @(#) st.h 5.1 89/12/14 */
 
@@ -18,16 +19,15 @@
 
 #include <stddef.h>
 
- 
 #ifndef _
-# define _(args) args
+#define _(args) args
 #endif
 #ifndef ANYARGS
-# ifdef __cplusplus
-#   define ANYARGS ...
-# else
-#   define ANYARGS
-# endif
+#ifdef __cplusplus
+#define ANYARGS ...
+#else
+#define ANYARGS
+#endif
 #endif
 
 typedef unsigned long st_data_t;
@@ -38,8 +38,9 @@ typedef long (*st_hash_func)(void *);
 typedef int (*st_iter_func)(ANYARGS);
 
 struct st_hash_type {
-  int (*compare)(void *, void*); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数 */
-  long (*hash)(void *);    /* ハッシュ関数 */
+  int (*compare)(void *, void *); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数
+                                   */
+  long (*hash)(void *);           /* ハッシュ関数 */
 };
 
 /* num_bins = 5, num_entries = 3 なる struct st_table_entry **bins の例
@@ -53,30 +54,26 @@ struct st_hash_type {
  */
 struct st_table {
   struct st_hash_type *type;
-  unsigned long num_bins; /* ハッシュ表のサイズ(スロット数) */
+  unsigned long num_bins;    /* ハッシュ表のサイズ(スロット数) */
   unsigned long num_entries; /* ハッシュ表に放り込まれた要素の個数
-                      (各スロットは同一のハッシュ値を持つ要素を格納する(Linked)リスト構造(struct st_table_entry *)を持ち、
+                      (各スロットは同一のハッシュ値を持つ要素を格納する(Linked)リスト構造(struct
+                      st_table_entry *)を持ち、
                        同じリスト内に放り込まれた各要素は別個にカウントする) */
   struct st_table_entry **bins; /* チェイン法に基づくハッシュ表本体 */
 };
 
-#define st_is_member(table,key) st_lookup(table,key,(st_data_t *)0)
+#define st_is_member(table, key) st_lookup(table, key, (st_data_t *)0)
 
-enum st_retval {
-  ST_CONTINUE, ST_STOP, ST_DELETE, ST_CHECK
-};
+enum st_retval { ST_CONTINUE, ST_STOP, ST_DELETE, ST_CHECK };
 
 #include "../lmntal.h"
 #include "lmntal_thread.h"
-
 
 static inline unsigned long st_num(st_table_t table) {
   return table->num_entries;
 }
 
-static inline unsigned long st_cap(st_table_t table) {
-  return table->num_bins;
-}
+static inline unsigned long st_cap(st_table_t table) { return table->num_bins; }
 
 st_table_t st_init_table(struct st_hash_type *t);
 st_table_t st_init_table_with_size(struct st_hash_type *t, int size);
@@ -88,12 +85,15 @@ st_table_t st_init_strtable(void);
 st_table_t st_init_strtable_with_size(int size);
 st_table_t st_init_ptrtable(void);
 st_table_t st_init_ptrtable_with_size(int size);
-int st_delete(register st_table_t tbl, register st_data_t key, st_data_t *value);
-int st_delete_safe(register st_table_t tbl, st_data_t *key, st_data_t *value, st_data_t never);
+int st_delete(register st_table_t tbl, register st_data_t key,
+              st_data_t *value);
+int st_delete_safe(register st_table_t tbl, st_data_t *key, st_data_t *value,
+                   st_data_t never);
 int st_insert(st_table_t tbl, st_data_t key, st_data_t value);
 int st_insert_safe(st_table_t tbl, st_data_t key, st_data_t value);
 int st_lookup(st_table_t tbl, st_data_t key, st_data_t *value);
-int st_lookup_with_col(st_table_t tbl, st_data_t key, st_data_t *value, long *n_col);
+int st_lookup_with_col(st_table_t tbl, st_data_t key, st_data_t *value,
+                       long *n_col);
 int st_contains(st_table_t tbl, st_data_t key);
 int st_foreach(st_table_t tbl, st_iter_func f, st_data_t arg);
 void st_add_direct(st_table_t tbl, st_data_t key, st_data_t value);
@@ -110,7 +110,8 @@ long st_strhash(const char *str);
 int st_numcmp(long num1, long num2);
 long st_numhash(long num);
 long st_statehash(LmnWord state);
-int st_foreach_hash(st_table_t table, st_data_t hash, int(*func)( ANYARGS), st_data_t arg);
+int st_foreach_hash(st_table_t table, st_data_t hash, int (*func)(ANYARGS),
+                    st_data_t arg);
 
 /* tbl1にtbl2のすべてのエントリを追加する。tbl1とtbl2に同じキーを持つエ
    ントリが存在する場合の動作は（とりあえず）未定義。 */

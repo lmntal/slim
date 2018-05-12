@@ -1,8 +1,8 @@
 /*
  * memory_pool.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -46,7 +46,7 @@
  */
 
 typedef struct memory_pool_ {
-  int   sizeof_element;
+  int sizeof_element;
   void *block_head;
   void *free_head;
 } memory_pool;

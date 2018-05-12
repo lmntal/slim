@@ -1,8 +1,8 @@
 /*
  * vector.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -48,40 +48,37 @@
 #include "../lmntal.h"
 
 struct Vector {
-  LmnWord* tbl;
+  LmnWord *tbl;
   unsigned int num, cap;
 };
-
 
 typedef struct Vector *PVector;
 typedef LmnWord vec_data_t;
 
-#define vec_cap(V)      ((V)->cap)
-#define vec_num(V)      ((V)->num)
+#define vec_cap(V) ((V)->cap)
+#define vec_num(V) ((V)->num)
 #define vec_is_empty(V) ((V)->num == 0)
 
 static inline Vector *vec_init(Vector *vec, unsigned int init_size);
 static inline Vector *vec_make(unsigned int init_size);
-static inline void    vec_push(Vector *vec, LmnWord keyp);
+static inline void vec_push(Vector *vec, LmnWord keyp);
 static inline LmnWord vec_pop(Vector *vec);
 static inline LmnWord vec_peek(const Vector *vec);
-static inline void    vec_set(Vector *vec, unsigned int index, LmnWord keyp);
+static inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp);
 static inline LmnWord vec_get(const Vector *vec, unsigned int index);
 static inline LmnWord vec_last(Vector *vec);
-static inline void    vec_clear(Vector *vec);
-static inline void    vec_destroy(Vector *vec);
-static inline void    vec_free(Vector *vec);
+static inline void vec_clear(Vector *vec);
+static inline void vec_destroy(Vector *vec);
+static inline void vec_free(Vector *vec);
 static inline unsigned long vec_space(Vector *v);
 static inline unsigned long vec_space_inner(Vector *v);
 
 LmnWord vec_pop_n(Vector *vec, unsigned int n);
-BOOL    vec_contains(const Vector *vec, LmnWord keyp);
+BOOL vec_contains(const Vector *vec, LmnWord keyp);
 Vector *vec_copy(Vector *vec);
-void    vec_reverse(Vector *vec);
-void    vec_resize(Vector *vec, unsigned int size, vec_data_t val);
-void    vec_sort(const Vector *vec,
-                 int (*compare)(const void*, const void*));
-
+void vec_reverse(Vector *vec);
+void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
+void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
 /* init */
 static inline Vector *vec_init(Vector *vec, unsigned int init_size) {
@@ -94,7 +91,7 @@ static inline Vector *vec_init(Vector *vec, unsigned int init_size) {
 /* make */
 static inline Vector *vec_make(unsigned int init_size) {
   LMN_ASSERT(init_size > 0);
-  Vector* vec = LMN_MALLOC(Vector);
+  Vector *vec = LMN_MALLOC(Vector);
   return vec_init(vec, init_size);
 }
 
@@ -106,7 +103,7 @@ static inline void vec_extend(Vector *vec) {
 
 /* push */
 static inline void vec_push(Vector *vec, LmnWord keyp) {
-  if(vec->num == vec->cap) {
+  if (vec->num == vec->cap) {
     vec_extend(vec);
   }
   (vec->tbl)[vec->num] = keyp;
@@ -124,12 +121,14 @@ static inline LmnWord vec_pop(Vector *vec) {
   LmnWord ret;
   LMN_ASSERT(vec->num > 0);
   /* Stackとして利用する場合, reallocが頻繁に発生してしまう.
-   * Stackなのでサイズの増減は頻繁に発生するものだが, 頻繁なreallocはパフォーマンスに影響する.
-   * >>とりあえず<< サイズの下限値を設ける. LmnStackなる構造を別に作るべきかも. (gocho) */
-  if (vec->num <= vec->cap/2 && vec->cap > 1024) {
+   * Stackなのでサイズの増減は頻繁に発生するものだが,
+   * 頻繁なreallocはパフォーマンスに影響する.
+   * >>とりあえず<< サイズの下限値を設ける. LmnStackなる構造を別に作るべきかも.
+   * (gocho) */
+  if (vec->num <= vec->cap / 2 && vec->cap > 1024) {
     vec_reduce(vec);
   }
-  ret = vec_get(vec, (vec->num-1));
+  ret = vec_get(vec, (vec->num - 1));
   vec->num--;
   return ret;
 }
@@ -148,23 +147,16 @@ static inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp) {
 /* get */
 static inline LmnWord vec_get(const Vector *vec, unsigned int index) {
   LMN_ASSERT(index < vec->num);
-  return(vec->tbl[index]);
+  return (vec->tbl[index]);
 }
 
-static inline LmnWord vec_last(Vector *vec)
-{
-  return vec->tbl[vec->num-1];
-}
+static inline LmnWord vec_last(Vector *vec) { return vec->tbl[vec->num - 1]; }
 
 /* pop all elements from vec */
-static inline void vec_clear(Vector *vec) {
-  vec->num = 0;
-}
+static inline void vec_clear(Vector *vec) { vec->num = 0; }
 
 /* destroy */
-static inline void vec_destroy(Vector *vec) {
-  LMN_FREE(vec->tbl);
-}
+static inline void vec_destroy(Vector *vec) { LMN_FREE(vec->tbl); }
 
 /* free */
 static inline void vec_free(Vector *vec) {
