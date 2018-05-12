@@ -53,10 +53,7 @@ extern "C" {
 }
 #include "state.hpp"
 
-void unset_dummy(State *S) { ((S)->flags &= (~DUMMY_SYMBOL_MASK)); }
-void unset_encoded(State *S) { ((S)->flags &= (~MEM_ENCODED_MASK)); }
-void unset_expanded(State *S) { ((S)->flags &= (~EXPANDED_MASK)); }
-void unset_on_cycle(State *S) { ((S)->flags &= (~ON_CYCLE_MASK)); }
+
 void unset_on_stack(State *S) { ((S)->flags &= (~ON_STACK_MASK)); }
 void unset_snd(State *S) { ((S)->flags &= (~FOR_MC_MASK)); }
 void unset_trans_obj(State *S) { ((S)->flags &= (~TRANS_OBJ_MASK)); }
