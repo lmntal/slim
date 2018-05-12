@@ -86,6 +86,6 @@ test/**/*.il
 il_lexer.cpp
 il_parser.cpp
 il_parser.hpp
-src/loader/interpret_generated.c
-src/loader/translate_generated.c
+src/loader/interpret_generated.cpp
+src/loader/translate_generated.cpp
 third_party/google-perftools-1.8.3/test-suite.log

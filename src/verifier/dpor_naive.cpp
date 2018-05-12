@@ -230,7 +230,7 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a) {
       transition_free(succ_t);
       s->successors[i] = (succ_data_t)succ_s;
     }
-    unset_trans_obj(s);
+    s->unset_trans_obj();
   }
 
   return ST_DELETE;
@@ -381,7 +381,7 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
   } else {
     LmnBinStrRef bs;
     st_add_direct(mc_por.states, (st_data_t)succ, (st_data_t)succ);
-    if (!is_encoded(succ)) {
+    if (!succ->is_encoded()) {
       bs = state_calc_mem_dump(succ);
       state_set_binstr(succ, bs);
     }
@@ -438,7 +438,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     State *src_succ, *succ;
     MemDeltaRoot *d;
 
-    if (has_trans_obj(s)) {
+    if (s->has_trans_obj()) {
       src_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
       src_succ = transition_next_state(src_t);
     } else {
@@ -476,8 +476,8 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     RC_MEM_DELTAS(rc)->num = succ_i;
   }
 
-  if (!has_trans_obj(s)) {
-    set_trans_obj(s);
+  if (!s->has_trans_obj()) {
+   s->set_trans_obj();
   }
 
   if (s->successors) {
@@ -738,7 +738,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
       return FALSE;
     } else {
       State *succ_s = transition_next_state(succ_t);
-      //      if (!is_independency_checked(succ_s) && !is_expanded(succ_s)) {
+      //      if (!is_independency_checked(succ_s) && !succ_s->is_expanded()) {
       if (!is_independency_checked(succ_s)) {
         independency_check(succ_s, a, psyms);
         for (i = 0; i < state_succ_num(succ_s); i++) {
@@ -795,12 +795,12 @@ static inline BOOL C3_cycle_proviso_satisfied(State *succ, State *t) {
   } else if (t == mc_por.root) {
     /* self-loop detection */
     return FALSE;
-  } else if (is_on_stack(t)) {
+  } else if (t->is_on_stack()) {
     /* Stack Proviso:
      *  Stack上の状態に戻るということは閉路であるということ
      *  DFS Stackによる空間構築(逐次)が前提 */
     return FALSE;
-  } else if (lmn_env.bfs && is_expanded(t) && lmn_env.core_num == 1) {
+  } else if (lmn_env.bfs && t->is_expanded() && lmn_env.core_num == 1) {
     /* Open Set Proviso:
      *  閉路形成を行なう遷移は,
      *  展開済み状態へ再訪問する遷移のサブセットである.(逐次限定) */
@@ -1158,7 +1158,7 @@ int dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a) {
 
       fprintf(f, "%lu", state_format_id(state_succ_state(s, i), is_formated));
 
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         TransitionRef t;
         unsigned int j;
 

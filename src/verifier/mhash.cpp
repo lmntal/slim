@@ -462,14 +462,14 @@ static mhash_t mhash_rulesets(Vector *rulesets) {
   hash = 1;
   for (i = 0; i < vec_num(rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
-    hash *= lmn_ruleset_get_id(rs);
+    hash *= rs->id;
 
-    if (lmn_ruleset_has_uniqrule(rs)) {
+    if (rs->has_unique()) {
       /* 履歴テーブルを持つ場合は, 履歴の整数IDも掛け合わせる.
        * この計算方法で十分かどうかはちゃんと考えていない. */
-      for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+      for (j = 0; j < rs->num; j++) {
         st_table_t his_tbl =
-            lmn_rule_get_history_tbl(lmn_ruleset_get_rule(rs, j));
+            lmn_rule_get_history_tbl(rs->get_rule(j));
         if (!his_tbl || st_num(his_tbl) == 0)
           continue;
         st_foreach(his_tbl, (st_iter_func)mhash_multiply_rhistories_f,

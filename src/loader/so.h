@@ -45,7 +45,7 @@
 
 #include "element/element.h"
 #include "lmntal.h"
-#include "translate.h"
+#include "translate.hpp"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 
@@ -149,7 +149,7 @@
   do {                                                                         \
     LmnSymbolAtomRef ap;                                                       \
     LmnByte attr;                                                              \
-    ap = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom2), pos2);            \
+    ap = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom2), pos2);            \
     attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom2), pos2);          \
                                                                                \
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1)) &&                          \
@@ -185,10 +185,10 @@
     struct Vector *v;                                                          \
     v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));                 \
     for (i = 0; i < v->num; i++) {                                             \
-      LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));       \
+      LmnRuleSetRef cp = ((LmnRuleSetRef)vec_get(v, i))->duplicate();       \
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);               \
       if (RC_GET_MODE(rc, REACT_ATOMIC)) {                                     \
-        lmn_ruleset_invalidate_atomic(cp);                                     \
+        cp->invalidate_atomic();                                     \
       }                                                                        \
     }                                                                          \
   } while (0)
@@ -202,7 +202,7 @@
     } else { /* symbol atom */                                                 \
       ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);                      \
       LmnWord w = wt(rc, destlinki);                                           \
-      proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &w);          \
+      proc_tbl_get_by_atom(ht, (LmnSymbolAtomRef)(LINKED_ATOM(srclinki)), &w);          \
       wt_set(rc, destlinki, w);                                                \
     }                                                                          \
   } while (0)
@@ -220,10 +220,10 @@
       LmnSymbolAtomRef orig, copy;                                             \
       LmnWord t;                                                               \
                                                                                \
-      orig = LMN_SATOM(hashsetiter_entry(&it));                                \
+      orig = (LmnSymbolAtomRef)(hashsetiter_entry(&it));                                \
       t = 0; /* warningを黙らす */                                         \
       proc_tbl_get_by_atom(delmap, orig, &t);                                  \
-      copy = LMN_SATOM(t);                                                     \
+      copy = (LmnSymbolAtomRef)(t);                                                     \
       lmn_mem_unify_symbol_atom_args(orig, 0, orig, 1);                        \
       lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);                        \
                                                                                \
@@ -246,7 +246,7 @@
           attr, TT_OTHER);                                                     \
     } else { /* symbol atom */                                                 \
       warry_set(rc, funci,                                                     \
-                (LmnWord)LMN_SATOM_GET_FUNCTOR(                                \
+                (LmnWord)LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)                                \
                     LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), pos)), \
                 attr, TT_OTHER);                                               \
     }                                                                          \

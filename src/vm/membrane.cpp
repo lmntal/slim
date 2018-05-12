@@ -54,7 +54,10 @@ extern "C" {
 #include "firstclass_rule.h"
 #endif
 }
+
+#include "membrane.hpp"
 #include "rule.hpp"
+#include <cassert>
 
 /** ----
  *  AtomListEntry.
@@ -63,131 +66,10 @@ extern "C" {
 
 /* この構造体をAtomとして扱うことで,この構造体自身が
    HeadとTailの両方の役目を果たしている */
-typedef struct AtomListEntry {
-  LmnSymbolAtomRef tail, head;
-#ifdef NEW_ATOMLIST
-  int n;
-#endif
-  struct SimpleHashtbl *record;
-} AtomListEntry;
 
 LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst) { return lst->head; }
 LmnSymbolAtomRef lmn_atomlist_end(AtomListEntryRef lst) {
   return (LmnSymbolAtomRef)lst;
-}
-
-#ifdef NEW_ATOMLIST
-int atomlist_ent_num(AtomListEntryRef lst) { return lst->n; }
-void atomlist_set_num(AtomListEntryRef lst, int n) { lst->n = n; }
-void atomlist_add_num(AtomListEntryRef lst, int n) { lst->n += n; }
-#else
-int atomlist_ent_num(AtomListEntryRef lst) { return -1; }
-void atomlist_set_num(AtomListEntryRef lst, int n) {}
-void atomlist_add_num(AtomListEntryRef lst, int n) {}
-#endif
-
-void atomlist_modify_num(AtomListEntry *ent, int n) {
-  atomlist_add_num(ent, n);
-}
-
-BOOL atomlist_is_empty(AtomListEntry *ent) {
-  return atomlist_head(ent) == LMN_SATOM(ent);
-}
-
-/* アトムリストasを空にする. */
-void atomlist_set_empty(AtomListEntry *ent) {
-  LMN_SATOM_SET_PREV((LmnSymbolAtomRef)ent, (LmnSymbolAtomRef)ent);
-  LMN_SATOM_SET_NEXT((LmnSymbolAtomRef)ent, (LmnSymbolAtomRef)ent);
-  atomlist_set_num(ent, 0);
-}
-
-/* アトムリストALからアトムAを削除する.
- * ただし, リストのつなぎ変えだけを行い,
- * 膜からのアトムAのdeleteやatomのfreeはしない */
-void remove_from_atomlist(LmnSymbolAtomRef a, AtomListEntry *ent) {
-  LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
-  LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
-  if (ent) {
-    atomlist_modify_num(ent, -1);
-  }
-}
-
-/* アトムリストentにおいて, アトムprvとアトムnxtの間にアトムinsを挿入する.
- * ただし, prvにNULLを渡した場合はnxtのprevポイント先をprvとして扱う. */
-void insert_to_atomlist(LmnSymbolAtomRef prv, LmnSymbolAtomRef ins,
-                        LmnSymbolAtomRef nxt, AtomListEntry *ent) {
-  if (!prv) {
-    prv = LMN_SATOM_GET_PREV(nxt);
-  }
-
-  LMN_SATOM_SET_NEXT(prv, ins);
-  LMN_SATOM_SET_PREV(ins, prv);
-  LMN_SATOM_SET_NEXT(ins, nxt);
-  LMN_SATOM_SET_PREV(nxt, ins);
-
-  if (ent) {
-    atomlist_modify_num(ent, +1);
-  }
-}
-
-/* アトムリストALの末尾にアトムAを追加する. */
-void push_to_atomlist(LmnSymbolAtomRef a, AtomListEntry *ent) {
-  LMN_SATOM_SET_NEXT(a, (LmnSymbolAtomRef)ent);
-  LMN_SATOM_SET_PREV(a, ent->tail);
-  LMN_SATOM_SET_NEXT(ent->tail, a);
-  ent->tail = a;
-  atomlist_modify_num(ent, +1);
-}
-
-int atomlist_get_entries_num(AtomListEntry *ent) {
-  if (!ent) {
-    return 0;
-  } else {
-#ifdef NEW_ATOMLIST
-    /* O(1) */
-    return ent->n;
-
-#else
-    /* O(N) */
-    LmnSymbolAtomRef atom;
-    int ret = 0;
-    for (atom = atomlist_head(ent); atom != lmn_atomlist_end(ent);
-         atom = LMN_SATOM_GET_NEXT_RAW(atom)) {
-      if (LMN_SATOM_GET_FUNCTOR(atom) != LMN_RESUME_FUNCTOR) {
-        ret++;
-      }
-    }
-
-    return ret;
-#endif
-  }
-}
-
-/* append e2 to e1 */
-void atomlist_append(AtomListEntry *e1, AtomListEntry *e2) {
-  if (atomlist_head(e2) != lmn_atomlist_end(e2)) { /* true if e2 is not empty */
-    LMN_SATOM_SET_NEXT(e1->tail, e2->head);
-    LMN_SATOM_SET_PREV(e2->head, e1->tail);
-    LMN_SATOM_SET_NEXT(e2->tail, (LmnSymbolAtomRef)e1);
-    e1->tail = e2->tail;
-    atomlist_modify_num(e1, atomlist_get_entries_num(e2));
-  }
-  atomlist_set_empty(e2);
-}
-
-/* return NULL when atomlist doesn't exist. */
-LmnSymbolAtomRef atomlist_get_record(AtomListEntry *atomlist, int findatomid) {
-  if (atomlist->record) {
-    return (LmnSymbolAtomRef)hashtbl_get_default(atomlist->record, findatomid,
-                                                 0);
-  } else {
-    atomlist->record = hashtbl_make(4);
-    return NULL;
-  }
-}
-
-void atomlist_put_record(AtomListEntryRef lst, int id, LmnAtomRef record) {
-  hashtbl_put(lst->record, id, (HashKeyType)record);
 }
 
 static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
@@ -199,16 +81,16 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
 void lmn_mem_add_ruleset_sort(Vector *src_v, LmnRuleSetRef add_rs) {
   int i, j, n;
   LmnRulesetId add_id;
-  add_id = lmn_ruleset_get_id(add_rs);
+  add_id = add_rs->id;
   n = vec_num(src_v);
   for (i = 0; i < n; i++) {
     LmnRuleSetRef rs_i;
     LmnRulesetId dst_id;
 
     rs_i = (LmnRuleSetRef)vec_get(src_v, i);
-    dst_id = lmn_ruleset_get_id(rs_i);
+    dst_id = rs_i->id;
 
-    if (dst_id == add_id && !lmn_ruleset_has_uniqrule(add_rs)) {
+    if (dst_id == add_id && !add_rs->has_unique()) {
       /* 同じ階層にuniqでない同一のルールセットが既に存在するならば追加する必要はない
        */
       break;
@@ -239,9 +121,10 @@ static inline void free_atomlist(AtomListEntry *as);
 /* 新しいアトムリストを作る */
 static inline AtomListEntry *make_atomlist() {
   AtomListEntry *as = LMN_MALLOC(struct AtomListEntry);
-  as->record = NULL; /* 全てのアトムの種類に対してfindatom2用ハッシュ表が必要なわけではないので動的にmallocさせる
-                      */
-  atomlist_set_empty(as);
+  as->record =
+      NULL; /* 全てのアトムの種類に対してfindatom2用ハッシュ表が必要なわけではないので動的にmallocさせる
+             */
+  as->set_empty();
 
   return as;
 }
@@ -257,28 +140,6 @@ static inline void free_atomlist(AtomListEntry *as) {
     LMN_FREE(as);
   }
 }
-
-/*----------------------------------------------------------------------
- * Membrane
- */
-
-struct LmnMembrane {
-  AtomSet atomset;
-  ProcessID id;
-  unsigned int max_functor;
-  unsigned int atomset_size;
-  unsigned int atom_symb_num; /* # of symbol atom except proxy */
-  unsigned int atom_data_num;
-  lmn_interned_str name;
-  BOOL is_activated;
-  LmnMembraneRef parent;
-  LmnMembraneRef child_head;
-  LmnMembraneRef prev, next;
-  struct Vector rulesets;
-#ifdef USE_FIRSTCLASS_RULE
-  Vector *firstclass_rulesets;
-#endif
-};
 
 LmnMembraneRef lmn_mem_make(void) {
   LmnMembraneRef mem;
@@ -413,7 +274,7 @@ void lmn_mem_drop(LmnMembraneRef mem) {
           a = LMN_SATOM_GET_NEXT_RAW(a);
           free_symbol_atom_with_buddy_data(b);
         }
-        atomlist_set_empty(ent);
+        ent->set_empty();
       }));
 
   mem->atom_symb_num = 0U;
@@ -427,8 +288,8 @@ void lmn_mem_rulesets_destroy(Vector *rulesets) {
   for (i = 0; i < n; i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
 
-    if (lmn_ruleset_is_copy(rs)) {
-      lmn_ruleset_copied_free(rs);
+    if (rs->is_copy()) {
+      delete rs;
     }
   }
   vec_destroy(rulesets);
@@ -505,8 +366,9 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
 
   as = lmn_mem_get_atomlist(mem, f);
   if (!as) { /* 本膜内に初めてアトムatomがPUSHされた場合 */
-    LMN_ASSERT(mem->atomset); /* interpreter側で値がオーバーフローすると発生するので,
-                                 ここで止める */
+    LMN_ASSERT(
+        mem->atomset); /* interpreter側で値がオーバーフローすると発生するので,
+                          ここで止める */
     if (mem->max_functor < f + 1) {
       mem->max_functor = f + 1;
       while (mem->atomset_size - 1 < mem->max_functor) {
@@ -532,7 +394,7 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
     lmn_mem_symb_atom_inc(mem);
   }
 
-  push_to_atomlist(atom, as);
+  as->push(atom);
 }
 
 unsigned long lmn_mem_space(LmnMembraneRef mem) {
@@ -560,8 +422,8 @@ unsigned long lmn_mem_space(LmnMembraneRef mem) {
   ret += vec_space_inner(&mem->rulesets);
   for (i = 0; i < vec_num(&mem->rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&mem->rulesets, i);
-    if (lmn_ruleset_is_copy(rs)) {
-      ret += lmn_ruleset_space(rs);
+    if (rs->is_copy()) {
+      ret += rs->space();
     }
   }
 
@@ -1068,8 +930,8 @@ lmn_mem_copy_with_map_inner(LmnMembraneRef src, ProcessTableRef *ret_copymap,
   }
 
   for (i = 0; i < src->rulesets.num; i++) {
-    vec_push(&new_mem->rulesets, (LmnWord)lmn_ruleset_copy((
-                                     LmnRuleSetRef)vec_get(&src->rulesets, i)));
+    vec_push(&new_mem->rulesets, (LmnWord)((
+                                     LmnRuleSetRef)vec_get(&src->rulesets, i))->duplicate());
   }
   *ret_copymap = copymap;
 
@@ -1118,8 +980,8 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
     new_mem->name = m->name;
     /* copy rulesets */
     for (i = 0; i < m->rulesets.num; i++) {
-      vec_push(&new_mem->rulesets, (LmnWord)lmn_ruleset_copy((
-                                       LmnRuleSetRef)vec_get(&m->rulesets, i)));
+      vec_push(&new_mem->rulesets, (LmnWord)((
+                                       LmnRuleSetRef)vec_get(&m->rulesets, i))->duplicate());
     }
   }
 
@@ -2310,8 +2172,9 @@ static BOOL mem_equals_atomlists(LmnMembraneRef mem1, LmnMembraneRef mem2) {
 
   EACH_ATOMLIST_WITH_FUNC(mem1, ent1, f, ({
                             AtomListEntry *ent2 = lmn_mem_get_atomlist(mem2, f);
-                            if (atomlist_get_entries_num(ent1) !=
-                                atomlist_get_entries_num(ent2)) {
+                            size_t s1 = ent1 ? ent1->size() : 0;
+                            size_t s2 = ent2 ? ent2->size() : 0;
+                            if (s1 != s2) {
                               return FALSE;
                             }
                           }));
@@ -2423,7 +2286,7 @@ memIsomorIter_atom_traversed(MemIsomorIter *iter) {
     f = atomlist_iter_get_functor(iter->pos);
     ent = atomlist_iter_get_entry(iter->mem, iter->pos);
 
-    if (!ent || atomlist_is_empty(ent) || f == LMN_OUT_PROXY_FUNCTOR) {
+    if (!ent || ent->is_empty() || f == LMN_OUT_PROXY_FUNCTOR) {
       /* アトムリストが空の場合, 次の候補リストを取得する.
        * outside proxyは候補としない */
       continue; /* OUTER LOOP */
@@ -2882,9 +2745,10 @@ static inline BOOL mem_equals_children(LmnMembraneRef mem1, LmnMembraneRef mem2,
   } else if (child_n == 0) {
     return TRUE;
   } else {
-    Vector *v_mems_children1, *v_mems_children2; /* 本膜直下の子膜を管理するVector
-                                                    (このVectorが空になるまで子膜を起点とする走査が続く)
-                                                  */
+    Vector *v_mems_children1,
+        *v_mems_children2; /* 本膜直下の子膜を管理するVector
+                              (このVectorが空になるまで子膜を起点とする走査が続く)
+                            */
     BOOL matched;
 
     v_mems_children1 = vec_make(child_n);
@@ -3393,8 +3257,9 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
   LmnFunctor f;
   LmnSymbolAtomRef a;
   AtomListEntry *ent;
-  unsigned int anum_max; /* 膜内に存在するアトムをファンクタ毎にグループ化した際の、集合の大きさの最大値
-                          */
+  unsigned int
+      anum_max; /* 膜内に存在するアトムをファンクタ毎にグループ化した際の、集合の大きさの最大値
+                 */
   unsigned int i, j;
 
   vec = vec_make(1);
@@ -3581,20 +3446,7 @@ BOOL lmn_mem_nfreelinks(LmnMembraneRef mem, unsigned int count) {
   if (!ent) {
     return count == 0;
   } else {
-#ifdef NEW_ATOMLIST
     return count == ent->n;
-
-#else
-    LmnSymbolAtomRef atom;
-    unsigned int n;
-    /* EFFICIENCY: リストをたどって数を数えているのでO(n)。
-       countがそれほど大きくならなければ問題はないが */
-    for (atom = atomlist_head(ent), n = 0;
-         atom != lmn_atomlist_end(ent) && n <= count;
-         atom = LMN_SATOM_GET_NEXT_RAW(atom), n++)
-      ;
-    return count == n;
-#endif
   }
 }
 
@@ -3605,14 +3457,10 @@ void lmn_mem_remove_data_atom(LmnMembraneRef mem, LmnDataAtomRef atom,
 
 void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
-#ifdef NEW_ATOMLIST
   {
     AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
-    remove_from_atomlist(atom, ent);
+    ent->remove(atom);
   }
-#else
-  remove_from_atomlist(atom, NULL);
-#endif
 
   if (LMN_IS_PROXY_FUNCTOR(f)) {
     LMN_PROXY_SET_MEM(atom, NULL);
@@ -3650,11 +3498,6 @@ void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom,
   }
 }
 
-void move_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
-  // move_symbol_atom_to_atomlist_tail(LMN_SATOM(a), mem);
-  mem_remove_symbol_atom(mem, a);
-  mem_push_symbol_atom(mem, a);
-}
 
 void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem) {
   //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda
@@ -3699,7 +3542,7 @@ void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset) {
 void lmn_mem_copy_rules(LmnMembraneRef dest, LmnMembraneRef src) {
   int i;
   for (i = 0; i < lmn_mem_ruleset_num(src); i++) {
-    lmn_mem_add_ruleset(dest, lmn_ruleset_copy(lmn_mem_get_ruleset(src, i)));
+    lmn_mem_add_ruleset(dest, lmn_mem_get_ruleset(src, i)->duplicate());
   }
 }
 
@@ -3707,8 +3550,8 @@ void lmn_mem_clearrules(LmnMembraneRef src) {
   unsigned int i;
   for (i = 0; i < vec_num(&src->rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&src->rulesets, i);
-    if (lmn_ruleset_is_copy(rs)) {
-      lmn_ruleset_copied_free(rs);
+    if (rs->is_copy()) {
+      delete rs;
     }
   }
   vec_clear(&src->rulesets);
@@ -3741,11 +3584,11 @@ void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
 
 #ifdef USE_FIRSTCLASS_RULE
 void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
-  LmnRulesetId del_id = lmn_ruleset_get_id(fcr);
+  LmnRulesetId del_id = fcr->id;
 
   for (int i = 0; i < vec_num(mem->firstclass_rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem->firstclass_rulesets, i);
-    if (lmn_ruleset_get_id(rs) != del_id)
+    if (rs->id != del_id)
       continue;
 
     /* move successors forward */

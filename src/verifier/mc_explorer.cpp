@@ -89,7 +89,7 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ) || !is_expanded(s))
+        if (succ->is_on_cycle() || !s->is_expanded())
           continue;
         else if (succ == goal) {
           return TRUE;
@@ -177,14 +177,14 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   workers_found_error(wp);
 
   gen_counter_example = lmn_env.dump;
-  set_on_cycle(seed); /* 受理サイクルに含まれるフラグを立てる */
+ seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
   v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
     State *s = (State *)vec_get(cycle_path, i);
-    set_on_cycle(s);
+   s->set_on_cycle();
 
     if (gen_counter_example)
       vec_push(v, (vec_data_t)s);
@@ -202,7 +202,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
   while (vec_num(search) > 0) {
     State *s = (State *)vec_peek(search);
 
-    if (is_snd(s)) { /* 訪問済み */
+    if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)vec_pop(search);
       if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
@@ -211,15 +211,15 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
     } else {
       unsigned int i;
       vec_push(path, (vec_data_t)s);
-      set_snd(s);
+     s->set_snd();
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ)) {
+        if (succ->is_on_cycle()) {
           return FALSE;
-        } else if (!is_expanded(succ)) {
+        } else if (!succ->is_expanded()) {
           continue;
-        } else if (succ == seed /* || is_on_stack(succ) */) {
+        } else if (succ == seed /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
         } else {
@@ -498,7 +498,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
 
         if (state_is_end(a, seed)) {
           mc_found_invalid_state(wp, seed);
-        } else if (!is_on_cycle(seed)) {
+        } else if (!seed->is_on_cycle()) {
           if (state_to_state_path(seed, seed, &search, &path,
                                   OWCTY_WORKER_HASHSET(w))) {
             Vector *v;
@@ -507,7 +507,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
             v = vec_make(vec_num(&path));
             for (i = 0; i < vec_num(&path); i++) {
               State *tmp = (State *)vec_get(&path, i);
-              set_on_cycle(tmp);
+             tmp->set_on_cycle();
               vec_push(v, (vec_data_t)tmp);
             }
 
@@ -678,7 +678,7 @@ static void map_propagate(LmnWorker *w, State *s, State *t, State *propag,
     map_found_accepting_cycle(w, t);
   } else if (propag == map_ordering(propag, t->map, a)) {
     if (map_entry_state(t, propag, a) && !worker_use_weak_map(w) &&
-        is_expanded(t)) {
+        t->is_expanded()) {
       enqueue(MAP_WORKER_PROPAG_G(w), (LmnWord)t);
     }
   }
@@ -753,7 +753,7 @@ void backward_elimination(LmnWorker *w, State *s) {
     smap_set_deleted(s);
     s = state_get_parent(s);
 
-    if (!s || smap_is_deleted(s) || !is_expanded(s)) {
+    if (!s || smap_is_deleted(s) || !s->is_expanded()) {
       return;
     } else if (state_succ_num(s) == 1) {
       continue;
@@ -780,7 +780,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
     workers_set_exit(wp);
   }
 
-  if (lmn_env.dump && !is_on_cycle(s)) {
+  if (lmn_env.dump && !s->is_on_cycle()) {
     /* TODO: とりあえず単純なself reachability testで実装しているので,
      *        MAP値の等しい状態だけを辿るようにしたself reachabilityに直す */
     Vector search, path;
@@ -801,7 +801,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
       v = vec_make(vec_num(&path));
       for (i = 0; i < vec_num(&path); i++) {
         State *tmp = (State *)vec_get(&path, i);
-        set_on_cycle(tmp);
+       tmp->set_on_cycle();
         vec_push(v, (vec_data_t)tmp);
       }
       mc_found_invalid_path(wp, v);
@@ -912,8 +912,8 @@ void bledge_start(LmnWorker *w) {
     for (i = 0; i < state_succ_num(u); i++) {
       State *v = state_succ_state(u, i);
 
-      if (is_expanded(v)) { /* detected back level edge:t where [u]--t-->[v] */
-        if (!is_on_cycle(u) && !is_on_cycle(v) &&
+      if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v] */
+        if (!u->is_on_cycle() && !v->is_on_cycle() &&
             bledge_explorer_accepting_cycle(w, u, v)) {
           vec_push(BLE_WORKER_PATH_VEC(w), (vec_data_t)u);
           bledge_found_accepting_cycle(w, BLE_WORKER_PATH_VEC(w));
@@ -950,7 +950,7 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
     State *s = (State *)vec_get(cycle_path, i);
-    set_on_cycle(s);
+   s->set_on_cycle();
     if (gen_counter_example)
       vec_push(v, (vec_data_t)s);
   }
@@ -1097,14 +1097,14 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   workers_found_error(wp);
 
   gen_counter_example = lmn_env.dump;
-  set_on_cycle(seed); /* 受理サイクルに含まれるフラグを立てる */
+ seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
   v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
     State *s = (State *)vec_get(cycle_path, i);
-    set_on_cycle(s);
+   s->set_on_cycle();
 
     if (gen_counter_example)
       vec_push(v, (vec_data_t)s);
@@ -1122,7 +1122,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
   while (vec_num(search) > 0) {
     State *s = (State *)vec_peek(search);
 
-    if (is_snd(s)) { /* 訪問済み */
+    if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)vec_pop(search);
       if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
@@ -1131,15 +1131,15 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
     } else {
       unsigned int i;
       vec_push(path, (vec_data_t)s);
-      set_snd(s);
+     s->set_snd();
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ)) {
+        if (succ->is_on_cycle()) {
           return FALSE;
-        } else if (!is_expanded(succ)) {
+        } else if (!succ->is_expanded()) {
           continue;
-        } else if (succ == seed /* || is_on_stack(succ) */) {
+        } else if (succ == seed /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
         } else {
@@ -1254,14 +1254,14 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   workers_found_error(wp);
 
   gen_counter_example = lmn_env.dump;
-  set_on_cycle(seed); /* 受理サイクルに含まれるフラグを立てる */
+ seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
   v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
     State *s = (State *)vec_get(cycle_path, i);
-    set_on_cycle(s);
+   s->set_on_cycle();
 
     if (gen_counter_example)
       vec_push(v, (vec_data_t)s);
@@ -1284,7 +1284,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
   while (vec_num(search) > 0) {
     State *s = (State *)vec_peek(search);
 
-    if (is_snd(s)) {
+    if (s->is_snd()) {
       t = (State *)vec_pop(search);
       if (vec_num(path) > 0 && (State *)vec_peek(path) == t) {
         vec_pop(path);
@@ -1293,14 +1293,14 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     }
 
     put_stack(red_states, s);
-    set_snd(s);
+   s->set_snd();
 
     n = state_succ_num(s);
     for (i = 0; i < n; i++) {
       succ = state_succ_state(s, i);
-      if (s_is_cyan(succ, worker_id(w))) {
+      if (succ->s_is_cyan(worker_id(w))) {
         return TRUE;
-      } else if (!s_is_red(succ)) {
+      } else if (!succ->s_is_red()) {
         m = vec_num(red_states);
         contained = FALSE;
         for (j = 0; j < m; j++) {
@@ -1316,7 +1316,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     }
 
 #if 0
-    if (is_snd(s)) { /* 訪問済み */
+    if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)vec_pop(search);
       if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
@@ -1326,15 +1326,15 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     else {
       unsigned int i;
       vec_push(path, (vec_data_t)s);
-      set_snd(s);
+     s->set_snd();
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ)) {
+        if (succ->is_on_cycle()) {
           return FALSE;
-        } else if (!is_expanded(succ)) {
+        } else if (!succ->is_expanded()) {
           continue;
-        } else if (s_is_cyan(s, worker_id(w))/*succ == seed*/ /* || is_on_stack(succ) */) {
+        } else if (s->s_is_cyan(worker_id(w))/*succ == seed*/ /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る */
         } else {
           vec_push(search, (vec_data_t)succ);

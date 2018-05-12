@@ -109,17 +109,16 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
       A,BはGETLINKを行った際のリンク元の情報を持つ。実際のリンク先は
       リンクのつなぎ替えを行う際に得る。
 
-             (Bのリンク先を得る)                (Aのリンク先を得る)  aが消滅
-                                 +---------+      +---------+ +---------+-+
-  +-----------+ |         |      |         |       |         | |      | | B B v
-  B   |      v     B   |       v     B   | |      v           | | b-->| b     |
-  |      b     |   |       b     |   | |      b           |
-  +---0<--+       +---0<--+      | +---0   |      | +---0   |       | +---0   |
-  |      |           | |   a   |  =>   |   a   |  =>  | |   a   |  =>  | |   a
-  |  =>   | |   a   | | =>   |           |
-  +-->1---+       +-->1---+      +-+-->1---+      +-+-->1---+       | +-->1---+
-  |      |           | |              |                |                |<--b
-  +------|--->b      +---------->b A              A                A A A
+         (Bのリンク先を得る)        (Aのリンク先を得る)    aが消滅
+                          +---------+    +---------+    +---------+-+    +----+
+                          |         |    |         |    |         | |    |    |
+  B             B         v     B   |    v     B   |    v     B   | |    v    |
+  |         b-->|         b     |   |    b     |   |    b     |   | |    b    |
++---0<--+    +---0<--+    | +---0   |    | +---0   |    | +---0   | |    |    |
+|   a   | => |   a   | => | |   a   | => | |   a   | => | |   a   | | => |    |
++-->1---+    +-->1---+    +-+-->1---+    +-+-->1---+    | +-->1---+ |    |    |
+      |            |              |              |<--b  +------|--->b    +--->b
+      A            A              A              A             A
 */
 
 /* リンク先のアトムを得る */
@@ -278,7 +277,7 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
     reacted = FALSE;
     for (int i = 0; i < vec_num(rulesets); i++) {
       LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
-      if (!lmn_ruleset_is_0step(rs))
+      if (!rs->is_zerostep())
         continue;
       reacted |= react_ruleset(rc, cur_mem, rs);
     }
@@ -339,7 +338,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 }
 
 /* an extenstion rule applier, @see ext/atomic.c */
-extern "C" BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
+BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
                                      LmnRuleSetRef rs);
 
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
@@ -356,12 +355,12 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     /* atomic_step時: atomic stepが複数ある場合,
      *               atomic適用中のrulesetとそうでないものを区別する必要がある
      */
-    if (lmn_ruleset_is_valid_atomic(rs)) {
+    if (rs->is_atomic()) {
       result = react_ruleset_inner(rc, mem, rs);
     } else {
       result = FALSE;
     }
-  } else if (lmn_ruleset_atomic_type(rs) == ATOMIC_NONE) {
+  } else if (rs->atomic == ATOMIC_NONE) {
     result = react_ruleset_inner(rc, mem, rs);
   } else {
     result = react_ruleset_atomic(rc, mem, rs);
@@ -375,8 +374,8 @@ static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
                                        LmnRuleSetRef rs) {
   unsigned int i;
   BOOL ret = FALSE;
-  for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
-    LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
+  for (i = 0; i < rs->num; i++) {
+    LmnRuleRef r = rs->get_rule(i);
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2) {
       profile_rule_obj_set(rs, r);
@@ -495,8 +494,8 @@ inline static void react_initial_rulesets(LmnReactCxtRef rc,
       reacted = TRUE;
       continue;
     }
-    for (i = 0; i < lmn_ruleset_rule_num(initial_ruleset); i++) {
-      if (react_rule(rc, mem, lmn_ruleset_get_rule(initial_ruleset, i))) {
+    for (i = 0; i < initial_ruleset->num; i++) {
+      if (react_rule(rc, mem, initial_ruleset->get_rule(i))) {
         reacted = TRUE;
         break;
       }
@@ -1239,11 +1238,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           at_set(rc, atomi, LMN_ATTR_MAKE_LINK(0));
           tt_set(rc, atomi, TT_ATOM);
 
-          record = atomlist_get_record(atomlist_ent, findatomid);
+          record = atomlist_ent->get_record(findatomid);
           if (!record) {
             start_atom = atomlist_head(atomlist_ent);
             record = lmn_new_atom(LMN_RESUME_FUNCTOR);
-            atomlist_put_record(atomlist_ent, findatomid, record);
+            atomlist_ent->put_record(findatomid, record);
             /* 履歴アトムを挿入する */
             LMN_SATOM_SET_NEXT((LmnSymbolAtomRef)atomlist_ent, record);
             LMN_SATOM_SET_PREV(record, (LmnSymbolAtomRef)atomlist_ent);
@@ -1265,8 +1264,16 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
               continue;
             wt_set(rc, atomi, (LmnWord)atom);
             tt_set(rc, atomi, TT_ATOM);
-            remove_from_atomlist(record, NULL); /* 履歴アトムの削除 */
-            insert_to_atomlist(NULL, record, atom, NULL); /* 履歴アトムの挿入 */
+            LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(record), LMN_SATOM_GET_PREV(record));
+            LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(record), LMN_SATOM_GET_NEXT_RAW(record));
+
+            /* アトムリストentにおいて, アトムprvとアトムnxtの間にアトムinsを挿入する.
+            * ただし, prvにNULLを渡した場合はnxtのprevポイント先をprvとして扱う. */
+            LmnSymbolAtomRef prv = LMN_SATOM_GET_PREV(atom);
+            LMN_SATOM_SET_NEXT(prv, record);
+            LMN_SATOM_SET_PREV(record, prv);
+            LMN_SATOM_SET_NEXT(record, atom);
+            LMN_SATOM_SET_PREV(atom, record);
 
             if (interpret(rc, rule, instr)) {
 #if DBG
@@ -1370,8 +1377,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
             fail_temp_check++;
           }
 
-          if (atomlist_ent_num(atomlist_ent) < lmn_env.core_num) {
-            active_thread = atomlist_ent_num(atomlist_ent);
+          if (atomlist_ent->n < lmn_env.core_num) {
+            active_thread = atomlist_ent->n;
           } else {
             active_thread = lmn_env.core_num;
           }
@@ -2153,11 +2160,13 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
     }
     case INSTR_TAILATOM: {
       LmnInstrVar atomi, memi;
-
+      LmnMembraneRef mem = (LmnMembraneRef)wt(rc, memi);
+      LmnSymbolAtomRef sa = (LmnSymbolAtomRef)wt(rc, atomi);
+      LmnFunctor f = LMN_SATOM_GET_FUNCTOR(sa);
+      AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
-      move_atom_to_atomlist_tail((LmnSymbolAtomRef)wt(rc, atomi),
-                                 (LmnMembraneRef)wt(rc, memi));
+      ent->move_atom_to_atomlist_tail(sa);
       break;
     }
 
@@ -2315,7 +2324,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnRulesetId, instr, id);
 
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, memi),
-                          lmn_ruleset_from_id(id));
+                          ruleset_table->get(id));
       break;
     }
     case INSTR_LOADMODULE: {
@@ -3764,11 +3773,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));
       for (i = 0; i < v->num; i++) {
-        LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));
+        LmnRuleSetRef cp = ((LmnRuleSetRef)vec_get(v, i))->duplicate();
         lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);
         if (RC_GET_MODE(rc, REACT_ATOMIC)) {
           /* atomic step中にatomic setをコピーした場合のため */
-          lmn_ruleset_invalidate_atomic(cp);
+          cp->invalidate_atomic();
         }
       }
       break;
@@ -3813,7 +3822,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
         /* mem がないので仕方なく直接アトムリストをつなぎ変える.
          * UNIFYアトムはnatomに含まれないので大丈夫 */
-        remove_from_atomlist(copy, NULL);
+        LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy), LMN_SATOM_GET_PREV(copy));
+        LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy), LMN_SATOM_GET_NEXT_RAW(copy));
 
         lmn_delete_atom(copy);
       }
@@ -4646,7 +4656,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnRulesetId, instr, id);
 
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, memi),
-                          lmn_ruleset_from_id(id));
+                          ruleset_table->get(id));
       break;
     }
     case INSTR_LOADMODULE: {

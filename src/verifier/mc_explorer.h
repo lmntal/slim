@@ -52,12 +52,12 @@
 /* Nested-DFSが起動するための条件 */
 #define NDFS_COND(W, SYST_S, PROP_S)                                           \
   (!worker_on_parallel(W) && worker_use_ndfs(W) &&                             \
-   atmstate_is_accept(PROP_S) && !is_snd(SYST_S) && !is_on_cycle(SYST_S))
+   atmstate_is_accept(PROP_S) && !SYST_S->is_snd() && !SYST_S ->is_on_cycle())
 
 #define MAPNDFS_COND(W, SYST_S, PROP_S)                                        \
   (worker_on_parallel(W) && worker_use_mapndfs(W) &&                           \
-   atmstate_is_accept(PROP_S) && !is_snd(SYST_S) && !is_on_cycle(SYST_S) &&    \
-   s_is_visited_by_explorer(SYST_S) && worker_is_explorer(W))
+   atmstate_is_accept(PROP_S) && !SYST_S->is_snd() && !SYST_S ->is_on_cycle() &&    \
+   SYST_S->s_is_visited_by_explorer() && worker_is_explorer(W))
 
 #define MCNDFS_COND(W, SYST_S, PROP_S) (atmstate_is_accept(PROP_S))
 

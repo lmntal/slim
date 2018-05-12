@@ -44,6 +44,7 @@ extern "C" {
 #include <ctype.h>
 }
 #include "rule.hpp"
+#include "atomlist.hpp"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -513,18 +514,18 @@ static int dump_history_f(st_data_t _key, st_data_t _value, st_data_t _arg) {
 static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
   unsigned int i, n;
 
-  if (!lmn_ruleset_has_uniqrule(rs))
+  if (!rs->has_unique())
     return;
 
   port_put_raw_s(port, "_CHR");
 
-  n = lmn_ruleset_rule_num(rs);
+  n = rs->num;
   for (i = 0; i < n; i++) {
     LmnRuleRef r;
     st_table_t his_tbl;
     unsigned int his_num;
 
-    r = lmn_ruleset_get_rule(rs, i);
+    r = rs->get_rule(i);
     /* TODO: uniqはコピー先のルールオブジェクトに名前を設定するため,
      *        コピー元のルールオブジェクトの名前が空になってしまう */
     // if (lmn_rule_get_name(r) == ANONYMOUS) continue;
@@ -554,7 +555,7 @@ static void dump_ruleset(LmnPortRef port, struct Vector *v) {
     char *s;
 
     rs = (LmnRuleSetRef)vec_get(v, i);
-    s = int_to_str(lmn_ruleset_get_id(rs));
+    s = int_to_str(rs->id);
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       if (i > 0) {
         port_put_raw_s(port, ",");
@@ -847,7 +848,7 @@ static void dump_ruleset_dev(struct Vector *v) {
   unsigned int i;
   fprintf(stdout, "ruleset[");
   for (i = 0; i < v->num; i++) {
-    fprintf(stdout, "%d ", lmn_ruleset_get_id((LmnRuleSetRef)vec_get(v, i)));
+    fprintf(stdout, "%d ", ((LmnRuleSetRef)vec_get(v, i))->id);
   }
   fprintf(stdout, "]\n");
 }

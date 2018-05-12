@@ -44,7 +44,6 @@ extern "C" {
 
 #include "element/element.h"
 #include "membrane.h"
-
 /*----------------------------------------------------------------------
  * TraceLog
  * --------
@@ -67,6 +66,8 @@ extern "C++" {
 
 #include "process_table.hpp"
 #include <stack>
+#include "membrane.hpp"
+#include "atomlist.hpp"
 
 class LogTracker {
   std::stack<ProcessID> traced_ids;
@@ -140,9 +141,11 @@ struct TraceLog : ProcessTable<TraceData> {
   }
   bool eq_traversed_proc_num(LmnMembraneRef owner, AtomListEntryRef in_ent,
                              AtomListEntryRef avoid) {
+    size_t s1 = in_ent ? in_ent->size() : 0;
+    size_t s2 = avoid ? avoid->size() : 0;
     return traversed_proc_count(owner) ==
            (lmn_mem_symb_atom_num(owner) + lmn_mem_child_mem_num(owner) +
-            atomlist_get_entries_num(in_ent) - atomlist_get_entries_num(avoid));
+            s1 - s2);
   }
 
 private:

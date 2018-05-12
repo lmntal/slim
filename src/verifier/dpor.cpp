@@ -735,12 +735,12 @@ static BOOL dpor_check_cycle_proviso(StateSpaceRef ss, State *src,
   } else if (ins_succ == src) {
     /* self-loop detection */
     return FALSE;
-  } else if (is_on_stack(ins_succ)) {
+  } else if (ins_succ->is_on_stack()) {
     /* Stack Proviso:
      *  Stack上の状態に戻るということは閉路であるということ
      *  DFS Stackによる空間構築(逐次)が前提 */
     return FALSE;
-  } else if (lmn_env.bfs && is_expanded(ins_succ) && lmn_env.core_num == 1) {
+  } else if (lmn_env.bfs && ins_succ->is_expanded() && lmn_env.core_num == 1) {
     /* Open Set Proviso:
      *  閉路形成を行なう遷移は,
      *  展開済み状態へ再訪問する遷移のサブセットである.(逐次限定) */
@@ -763,7 +763,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
   for (i = 0; i < vec_num(RC_EXPANDED(rc)); i++) { /* ごめんなさいort */
     State *succ_s;
-    if (has_trans_obj(s)) {
+    if (s->has_trans_obj()) {
       TransitionRef succ_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
       succ_s = transition_next_state(succ_t);
       transition_free(succ_t);
@@ -786,7 +786,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     src_succ = state_make_minimal();
     state_set_parent(src_succ, s);
     state_set_property_state(src_succ, DEFAULT_STATE_ID);
-    if (has_trans_obj(s)) {
+    if (s->has_trans_obj()) {
       src_t = transition_make(src_succ, lmn_intern("ample set"));
     } else {
       src_t = NULL;
@@ -802,7 +802,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       }
     } else {
       state_free(src_succ);
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         transition_set_state(src_t, succ);
       } else {
         vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
@@ -815,11 +815,11 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
     tmp = 0;
     if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
-      st_data_t ins = has_trans_obj(s) ? (st_data_t)src_t : (st_data_t)succ;
+      st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
       st_add_direct(succ_tbl, (st_data_t)succ, ins);
       vec_set(RC_EXPANDED(rc), succ_i++, ins);
     } else {
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         transition_free(src_t);
       }
     }
@@ -843,7 +843,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       src_succ = state_make_minimal();
       state_set_parent(src_succ, s);
       state_set_property_state(src_succ, DEFAULT_STATE_ID);
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         src_t = transition_make(src_succ, ANONYMOUS);
       } else {
         src_t = NULL;
@@ -859,7 +859,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         }
       } else {
         state_free(src_succ);
-        if (has_trans_obj(s)) {
+        if (s->has_trans_obj()) {
           transition_set_state(src_t, succ);
         } else {
           vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
@@ -868,11 +868,11 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
       tmp = 0;
       if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
-        st_data_t ins = has_trans_obj(s) ? (st_data_t)src_t : (st_data_t)succ;
+        st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
         st_add_direct(succ_tbl, (st_data_t)succ, ins);
         vec_set(RC_EXPANDED(rc), succ_i++, ins);
       } else {
-        if (has_trans_obj(s)) {
+        if (s->has_trans_obj()) {
           transition_free(src_t);
         }
       }
@@ -1003,7 +1003,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         succ = state_succ_state(s, i);
         s->successors[i] = transition_make(succ, name);
       }
-      set_trans_obj(s);
+     s->set_trans_obj();
     }
 #endif
   }
@@ -1044,7 +1044,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       s_mem = state_mem(s);
       ret = statespace_insert(ss, s);
       if (ret == s) {
-        s_set_reduced(s);
+        s->s_set_reduced();
         lmn_mem_free_rec(s_mem);
         vec_push(search, (vec_data_t)s);
       } else {
@@ -1063,7 +1063,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       s = (State *)vec_pop(search);
       p_s = MC_GET_PROPERTY(s, statespace_automata(ss));
 
-      s_set_reduced(s);
+      s->s_set_reduced();
       mc_expand(ss, s, p_s, rc, new_ss, statespace_propsyms(ss), f);
 
       for (i = 0; i < state_succ_num(s); i++) {

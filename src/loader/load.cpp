@@ -53,7 +53,6 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
 /* prototypes */
 
 void build_cmd(char *buf, char *file_name);
@@ -129,18 +128,18 @@ LmnRuleRef load_rule(Rule *rule) {
 }
 
 static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs) {
-  auto runtime_ruleset = lmn_ruleset_make(rs->id, 10);
+  auto runtime_ruleset = new LmnRuleSet(rs->id, 10);
 
   for (auto &r : rs->rules)
-    lmn_ruleset_put(runtime_ruleset, load_rule(r.get()));
+    runtime_ruleset->put(load_rule(r.get()));
 
-  lmn_set_ruleset(runtime_ruleset, rs->id);
+  ruleset_table->register_ruleset(runtime_ruleset, rs->id);
 
   if (rs->is_system_ruleset) {
     /* 各ルールをシステムルールセットに追加する */
-    for (int i = 0; i < lmn_ruleset_rule_num(runtime_ruleset); i++) {
+    for (int i = 0; i < runtime_ruleset->num; i++) {
       LmnRuleRef rule2 =
-          lmn_rule_copy(lmn_ruleset_get_rule(runtime_ruleset, i));
+          lmn_rule_copy(runtime_ruleset->get_rule(i));
       lmn_add_system_rule(rule2);
     }
   }
@@ -167,7 +166,7 @@ static LmnRuleSetRef load_il(ILRef il) {
 
   /* load module list */
   for (auto &m : il->modules) {
-    lmn_set_module(m->name_id, lmn_ruleset_from_id(m->ruleset_id));
+    lmn_set_module(m->name_id, ruleset_table->get(m->ruleset_id));
   }
 
   return first_ruleset;
@@ -240,13 +239,13 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
 
     tr = maindata->ruleset_table[i];
     gid = lmn_gen_ruleset_id();
-    rs = lmn_ruleset_make(gid, tr.size);
-    lmn_set_ruleset(rs, gid);
+    rs = new LmnRuleSet(gid, tr.size);
+    ruleset_table->register_ruleset(rs, gid);
 
     for (j = 0; j < tr.size; j++) {
       LmnRuleRef r = lmn_rule_make_translated(
           tr.rules[j].function, maindata->symbol_exchange[tr.rules[j].name]);
-      lmn_ruleset_put(rs, r);
+      rs->put(r);
     }
 
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく
@@ -261,7 +260,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   for (i = 0; i < maindata->count_of_module; i++) {
     struct trans_module mo = maindata->module_table[i];
     lmn_set_module(maindata->symbol_exchange[mo.name],
-                   lmn_ruleset_from_id(maindata->ruleset_exchange[mo.ruleset]));
+                   ruleset_table->get(maindata->ruleset_exchange[mo.ruleset]));
   }
 
   return ret;

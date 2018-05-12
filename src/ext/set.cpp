@@ -37,10 +37,11 @@
  * $Id$
  */
 
+extern "C" {
 #include "set.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
-
+}
 /**
  * @ingroup  Ext
  * @struct LmnSet set.c "ext/set.c"
@@ -116,23 +117,23 @@ LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
   AtomListEntryRef plus_atom_list = lmn_mem_get_atomlist(m, LMN_UNARY_PLUS_FUNCTOR);
   LMN_ASSERT(plus_atom_list != NULL);
   LmnAtomRef plus = (LmnAtomRef)atomlist_head(plus_atom_list);
-  LmnAtomRef in = LMN_SATOM_GET_LINK(plus, 0);
-  LmnAtomRef out = LMN_SATOM_GET_LINK(in, 0);
+  LmnAtomRef in = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)plus, 0);
+  LmnAtomRef out = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)in, 0);
 
-  mem_remove_symbol_atom(m, in);
-  lmn_delete_atom(in);
+  mem_remove_symbol_atom(m, (LmnSymbolAtomRef)in);
+  lmn_delete_atom((LmnSymbolAtomRef)in);
 
   LmnAtomRef at = lmn_mem_newatom(m, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
-  lmn_newlink_in_symbols(plus, 0, at, 0);
+  lmn_newlink_in_symbols((LmnSymbolAtomRef)plus, 0, (LmnSymbolAtomRef)at, 0);
 
   LmnBinStrRef s = lmn_mem_encode(m);
 
-  mem_remove_symbol_atom(m, at);
-  lmn_delete_atom(at);
+  mem_remove_symbol_atom(m, (LmnSymbolAtomRef)at);
+  lmn_delete_atom((LmnSymbolAtomRef)at);
 
-  LmnAtomRef new_in = lmn_mem_newatom((LmnAtomRef)m, LMN_IN_PROXY_FUNCTOR);
-  lmn_newlink_in_symbols(new_in, 0, out, 0);
-  lmn_newlink_in_symbols(new_in, 1, plus, 0);
+  LmnAtomRef new_in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR);
+  lmn_newlink_in_symbols((LmnSymbolAtomRef)new_in, 0, (LmnSymbolAtomRef)out, 0);
+  lmn_newlink_in_symbols((LmnSymbolAtomRef)new_in, 1, (LmnSymbolAtomRef)plus, 0);
 
   return s;
 }
@@ -280,20 +281,20 @@ void cb_set_insert(LmnReactCxtRef rc,
     t0 = LMN_SP_ATOM_ATTR;
     if(LMN_INT_ATTR == t1)
       a0 = (LmnAtomRef)lmn_set_make(&type_id_hash);
-    else if(LMN_SATOM_GET_FUNCTOR(a1) == LMN_OUT_PROXY_FUNCTOR)
+    else if(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1) == LMN_OUT_PROXY_FUNCTOR)
       a0 = (LmnAtomRef)lmn_set_make(&type_mem_hash);
     else
       a0 = (LmnAtomRef)lmn_set_make(&type_tuple_hash);
   }
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
-  LmnAtomRef v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
+  LmnAtomRef v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0)) : a1;
   st_insert(tbl, (st_data_t)v, (st_data_t)v);
   if(tbl->type == &type_tuple_hash) {
-    mem_remove_symbol_atom_with_buddy_data(mem, a1);
+    mem_remove_symbol_atom_with_buddy_data(mem, (LmnSymbolAtomRef)a1);
   } else {
     lmn_mem_remove_atom(mem, a1, t1);
     if(tbl->type == &type_mem_hash)
-      lmn_mem_remove_mem(mem, v);
+      lmn_mem_remove_mem(mem, (LmnMembraneRef)v);
   }
   lmn_mem_newlink(mem,
                   a0, t0, LMN_ATTR_GET_VALUE(t0),
@@ -320,7 +321,7 @@ void cb_set_find(LmnReactCxtRef *rc,
 		 LmnAtomRef a3, LmnLinkAttr t3)
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
-  LmnAtomRef key = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0)) : a1;
+  LmnAtomRef key = (tbl->type == &type_mem_hash) ? (LmnAtomRef)LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0)) : a1;
   st_data_t entry;
   int res = st_lookup(tbl, (st_data_t)key, &entry);
   lmn_interned_str s = (res) ? lmn_intern("some") : lmn_intern("none");
@@ -333,7 +334,7 @@ void cb_set_find(LmnReactCxtRef *rc,
                   result, LMN_ATTR_MAKE_LINK(0), 0);
   lmn_mem_delete_atom(mem, a1, t1);
   if(tbl->type == &type_mem_hash)
-    lmn_mem_delete_mem(mem, key);
+    lmn_mem_delete_mem(mem, (LmnMembraneRef)key);
 }
 
 
@@ -378,7 +379,7 @@ void cb_set_to_list(LmnReactCxtRef rc,
 
   lmn_mem_delete_atom(itl->mem, itl->cons, LMN_ATTR_MAKE_LINK(2));
   LmnAtomRef nil = lmn_mem_newatom(itl->mem, LMN_NIL_FUNCTOR);
-  lmn_newlink_in_symbols(nil, 0, itl->prev, 1);
+  lmn_newlink_in_symbols((LmnSymbolAtomRef)nil, 0, (LmnSymbolAtomRef)itl->prev, 1);
   LMN_FREE(itl);
   st_free_table(((LmnSetRef)a0)->tbl);
 }
@@ -401,7 +402,7 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj)
     LMN_ASSERT(in_atom_list != NULL);
     LmnAtomRef in = (LmnAtomRef)atomlist_head(in_atom_list);
     LmnAtomRef out = lmn_mem_newatom(itl->mem, LMN_OUT_PROXY_FUNCTOR);
-    lmn_newlink_in_symbols(in, 0, out, 0);
+    lmn_newlink_in_symbols((LmnSymbolAtomRef)in, 0, (LmnSymbolAtomRef)out, 0);
     lmn_mem_newlink(itl->mem,
 		    itl->cons, LMN_ATTR_MAKE_LINK(0), 0,
 		    out, LMN_ATTR_MAKE_LINK(1), 1);
@@ -409,8 +410,8 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj)
   } else if(itl->ht == &type_tuple_hash) {
     int i;
     lmn_mem_push_atom(itl->mem, (LmnAtomRef)key, LMN_ATTR_MAKE_LINK(3));
-    for(i = 0; i < LMN_SATOM_GET_ARITY((LmnAtomRef)key) - 1; i++)
-      lmn_mem_push_atom(itl->mem, LMN_SATOM_GET_LINK((LmnAtomRef)key, i), LMN_INT_ATTR);
+    for(i = 0; i < LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)key) - 1; i++)
+      lmn_mem_push_atom(itl->mem, LMN_SATOM_GET_LINK((LmnSymbolAtomRef)key, i), LMN_INT_ATTR);
     lmn_mem_newlink(itl->mem,
 		    itl->cons, LMN_ATTR_MAKE_LINK(0), 0,
 		    (LmnAtomRef)key, LMN_ATTR_MAKE_LINK(i), i);
@@ -497,7 +498,7 @@ void cb_set_erase(LmnReactCxtRef rc,
   if(tbl->type == &type_id_hash) {
     st_delete(((LmnSetRef)a0)->tbl, (st_data_t)a1, &entry);
   } else if(tbl->type == &type_mem_hash) {
-    LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+    LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0));
     if(st_delete(tbl, (st_data_t)m, &entry))
       lmn_mem_free_rec((LmnMembraneRef)entry);
     lmn_mem_delete_mem(mem, m);
@@ -535,7 +536,7 @@ void cb_set_union(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
 		  a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
-  lmn_set_free(a0);
+  lmn_set_free((LmnSetRef)a0);
 }
 
 /**
@@ -579,7 +580,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_intersect, (st_data_t)a1);
-  lmn_set_free(a1);
+  lmn_set_free((LmnSetRef)a1);
   if(st_num(tbl) > 0) {
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
@@ -589,7 +590,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
     lmn_mem_newlink(mem,
   		    a2, t2, LMN_ATTR_GET_VALUE(t2),
   		    empty_set, LMN_ATTR_MAKE_LINK(0), 0);
-    lmn_set_free(a0);
+    lmn_set_free((LmnSetRef)a0);
   }
 }
 
@@ -631,7 +632,7 @@ void cb_set_diff(LmnReactCxtRef rc,
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_diff, (st_data_t)a1);
-  lmn_set_free(a1);
+  lmn_set_free((LmnSetRef)a1);
   if(st_num(tbl) > 0) {
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
@@ -641,7 +642,7 @@ void cb_set_diff(LmnReactCxtRef rc,
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
 		    (LmnAtomRef)empty_set, LMN_ATTR_MAKE_LINK(0), 0);
-    lmn_set_free(a0);
+    lmn_set_free((LmnSetRef)a0);
   }
 }
 
@@ -714,6 +715,8 @@ unsigned char sp_cb_set_is_ground(void *data)
  * @memberof LmnSet
  * @private
  */
+extern "C" void init_set(void);
+
 void init_set(void)
 {
   set_atom_type = lmn_sp_atom_register("set",
@@ -733,4 +736,3 @@ void init_set(void)
   lmn_register_c_fun("cb_set_intersect", (void *)cb_set_intersect, 3);
   lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 3);
 }
-
