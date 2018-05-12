@@ -72,7 +72,7 @@ slim_SOURCES =                                                     \
 	ext/nlmem.cpp                                                      \
 	ext/io.c                                                         \
 	ext/array.cpp			ext/array.h                      \
-	ext/atom.c                                                       \
+	ext/atom.cpp                                                     \
 	ext/react_rule.cpp                                               \
 	ext/initial_ruleset.cpp                                          \
 	ext/nd_conf.c							 \
