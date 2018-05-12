@@ -6,7 +6,7 @@
   do {                                                                         \
     State *pop = (State *)vec_pop(List);                                       \
     if (pop->is_on_stack())                                                      \
-      unset_on_stack(pop);                                                     \
+     pop->unset_on_stack();                                                     \
     if (lmn_env.profile_level >= 3) {                                          \
       profile_remove_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));         \
     }                                                                          \
@@ -61,7 +61,7 @@
   do {                                                                         \
     State *pop = (State *)vec_pop(List);                                       \
     if (pop->is_on_stack())                                                      \
-      unset_on_stack(pop);                                                     \
+     pop->unset_on_stack();                                                     \
   } while (0)
 #define put_stack(List, St) vec_push((List), (vec_data_t)(St))
 #define pop_deq(Deq, Dir)                                                      \
