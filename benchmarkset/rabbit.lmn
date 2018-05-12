@@ -13,7 +13,7 @@
 % property0: 解はない
 
 proc_generator{
-  r(8).
+  r(13).
   init=[free].
   init @@ r(N), E=[free |F] :- N>0, M=N-1 |
           r(M), E=[x,free,o |F],

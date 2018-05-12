@@ -17,13 +17,14 @@ task_set_OK @@
   input{
   {
 
+/*
 % instance1(testcode)
     task{id(a), r(2), c(1), d(3), t(6)}.
     task{id(b), r(0), c(3), d(8), t(8)}.
     task{id(c), r(0), c(4), d(12),t(12)}.
     task{id(d), r(2), c(2), d(8), t(8)}.
+*/
 
-/*
 % instance2
     task{id(a), r(2), c(1), d(3), t(6)}.
     task{id(b), r(0), c(3), d(8), t(8)}.
@@ -31,7 +32,7 @@ task_set_OK @@
     task{id(d), r(2), c(2), d(8), t(8)}.
     task{id(e), r(1), c(1), d(4), t(5)}.
     task{id(f), r(0), c(2), d(3), t(3)}.
-*/
+
 /*
 % instance3
     task{id(a), r(2), c(1), d(3), t(6)}.

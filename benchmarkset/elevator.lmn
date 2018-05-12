@@ -14,7 +14,7 @@
 % np(PARAM2)
  
 nf(3).					% number of floors
-np(2).					% number of passengers
+np(4).					% number of passengers
 ctl{call([])}.	% request manager
 elv{}.					% Elevator
 flr([]).
