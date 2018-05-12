@@ -93,9 +93,6 @@ struct State;
 
 #define STATE_FRESH_MASK (0x01U)
 
-/* manipulation for flags2 */
-BOOL s_is_fresh(State *S);
-
 /** local flags (8bit)
  *  0000 0001  (MCNDFS)cyan flag
  *  0000 0010

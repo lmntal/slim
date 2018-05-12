@@ -53,8 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL s_is_fresh(State *S) { return ((S)->flags3 & STATE_FRESH_MASK); }
-
 #ifndef MINIMAL_STATE
 
 void s_set_cyan(State *S, int i) {
