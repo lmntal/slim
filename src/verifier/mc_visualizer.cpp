@@ -98,7 +98,7 @@ void dump_dot_loop(State *s, AutomataRef *a, int *colors, int depth) {
 
   for (i = 0, n = state_succ_num(s); i < n; i++) {
     State *succ = state_succ_state(s, i);
-    if (!s_is_visited_by_visualizer(succ)) {
+    if (!succ->s_is_visited_by_visualizer()) {
       dump_dot_loop(succ, a, colors, depth + 1);
     }
   }

@@ -83,7 +83,6 @@ struct State;
 #define STATE_RED_MASK (0x01U << 6)
 #define STATE_VIS_VISITED_MASK (0x01U << 7)
 
-BOOL s_is_visited_by_visualizer(State *S);
 void s_set_blue(State *S);
 void s_set_red(State *S);
 void s_set_visited_by_visualizer(State *S);
