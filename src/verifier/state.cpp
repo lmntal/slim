@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL is_binstr_user(State *S) { return ((S)->flags & MEM_DIRECT_MASK); }
 BOOL is_dummy(State *S) { return ((S)->flags & DUMMY_SYMBOL_MASK); }
 BOOL is_encoded(State *S) { return ((S)->flags & MEM_ENCODED_MASK); }
 BOOL is_expanded(State *S) { return ((S)->flags & EXPANDED_MASK); }
@@ -278,7 +277,7 @@ State *state_copy(State *src, LmnMembraneRef mem) {
 
   State *dst = state_make_minimal();
 
-  if (!is_binstr_user(src) && !mem) {
+  if (!src->is_binstr_user() && !mem) {
     mem = state_mem(src);
   }
 
@@ -421,9 +420,9 @@ void state_succ_clear(State *s) {
  * 構築できなかった場合は偽を返す. */
 LmnMembraneRef state_mem_copy(State *s) {
   LmnMembraneRef ret = NULL;
-  if (!is_binstr_user(s) && state_mem(s)) {
+  if (!s->is_binstr_user() && state_mem(s)) {
     ret = lmn_mem_copy(state_mem(s));
-  } else if (is_binstr_user(s) && state_binstr(s)) {
+  } else if (s->is_binstr_user() && state_binstr(s)) {
     ret = lmn_binstr_decode(state_binstr(s));
   }
 
@@ -728,7 +727,7 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
  * 状態sはread only */
 LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
   LmnBinStrRef ret;
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     /* 既にバイナリストリングを保持している場合は, なにもしない. */
     ret = state_binstr(s);
   } else if (state_mem(s)) {
@@ -943,7 +942,7 @@ void state_print_mem(State *s, LmnWord _fp) {
       lmn_hyperlink_print(mem);
   }
 
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     lmn_mem_free_rec(mem);
   }
 }
@@ -1158,7 +1157,7 @@ unsigned long state_hash(State *s) {
 /* 状態sに対応する階層グラフ構造を返す.
  * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
 LmnMembraneRef state_mem(State *s) {
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     return NULL;
   } else {
     return (LmnMembraneRef)s->data;
@@ -1176,14 +1175,14 @@ void state_set_mem(State *s, LmnMembraneRef mem) {
 /* 状態sが参照する階層グラフ構造用の領域をクリアする.
  * 階層グラフ構造の参照を持たない場合は, なにもしない. */
 void state_unset_mem(State *s) {
-  if (!is_binstr_user(s)) {
+  if (!s->is_binstr_user()) {
     state_set_mem(s, NULL);
   }
 }
 
 /* 状態sに割り当てたバイナリストリングを返す. */
 LmnBinStrRef state_binstr(State *s) {
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     return (LmnBinStrRef)s->data;
   } else {
     return NULL;
@@ -1200,7 +1199,7 @@ void state_set_binstr(State *s, LmnBinStrRef bs) {
 /* 状態sが参照するバイナリストリング用の領域をクリアする.
  * バイナリストリングに対する参照を持たない場合は, なにもしない. */
 void state_unset_binstr(State *s) {
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     s->data = (state_data_t)NULL;
     unset_binstr_user(s);
   }

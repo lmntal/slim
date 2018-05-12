@@ -45,6 +45,27 @@
 
 #include "state_defs.h"
 
+/** Flags (8bit)
+ *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
+ *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
+ *  0000 0100  遷移先を計算済みであること(closed node)を示すフラグ.
+ *  0000 1000  受理サイクル上の状態であることを示すフラグ
+ *  0001 0000  ハッシュ表上でDummyオブジェクトであるか否かを示すフラグ
+ * (Rehash処理で使用) 0010 0000  successorとしてstruct Stateを直接参照するか,
+ * struct Transitionを介して参照するかを示すフラグ. 0100 0000
+ * 状態データ(union)がmemを直接的に保持する場合に立てるフラグ 1000 0000
+ * 保持するバイナリストリングが階層グラフ構造に対して一意なIDであるかを示すフラグ
+ */
+
+#define ON_STACK_MASK (0x01U)
+#define FOR_MC_MASK (0x01U << 1)
+#define ON_CYCLE_MASK (0x01U << 2)
+#define EXPANDED_MASK (0x01U << 3)
+#define DUMMY_SYMBOL_MASK (0x01U << 4)
+#define TRANS_OBJ_MASK (0x01U << 5)
+#define MEM_ENCODED_MASK (0x01U << 6)
+#define MEM_DIRECT_MASK (0x01U << 7)
+
 /* Descriptor */
 struct State {                /* Total:72(36)byte */
   unsigned int successor_num; /*  4(4)byte: サクセッサの数 */
@@ -84,32 +105,10 @@ struct State {                /* Total:72(36)byte */
   void state_expand_unlock() {}
 #endif
   BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
+  BOOL is_binstr_user() { return flags & MEM_DIRECT_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
 };
-
-#define HASH_COMPACTION_MASK (0x01U << 5)
-
-/** Flags (8bit)
- *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
- *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
- *  0000 0100  遷移先を計算済みであること(closed node)を示すフラグ.
- *  0000 1000  受理サイクル上の状態であることを示すフラグ
- *  0001 0000  ハッシュ表上でDummyオブジェクトであるか否かを示すフラグ
- * (Rehash処理で使用) 0010 0000  successorとしてstruct Stateを直接参照するか,
- * struct Transitionを介して参照するかを示すフラグ. 0100 0000
- * 状態データ(union)がmemを直接的に保持する場合に立てるフラグ 1000 0000
- * 保持するバイナリストリングが階層グラフ構造に対して一意なIDであるかを示すフラグ
- */
-
-#define ON_STACK_MASK (0x01U)
-#define FOR_MC_MASK (0x01U << 1)
-#define ON_CYCLE_MASK (0x01U << 2)
-#define EXPANDED_MASK (0x01U << 3)
-#define DUMMY_SYMBOL_MASK (0x01U << 4)
-#define TRANS_OBJ_MASK (0x01U << 5)
-#define MEM_ENCODED_MASK (0x01U << 6)
-#define MEM_DIRECT_MASK (0x01U << 7)
 
 #endif

@@ -235,7 +235,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     }
 #endif
     lmn_mem_free_rec(mem);
-    if (is_binstr_user(s) &&
+    if (s->is_binstr_user() &&
         (lmn_env.hash_compaction || lmn_env.tree_compress)) {
       state_free_binstr(s);
     }

@@ -810,7 +810,7 @@ static State *statetable_insert(StateTable *st, State *ins)
   State *ret;
   LmnBinStrRef compress;
 
-  if (is_binstr_user(ins)) {
+  if (ins->is_binstr_user()) {
     /* 既に状態insがバイナリストリングを保持している場合 */
     compress = state_binstr(ins);
   } else {
@@ -889,7 +889,7 @@ static State *statetable_insert(StateTable *st, State *ins)
            *     直接dummy状態上のメモリを比較対象とするとスレッドセーフでなくなる)
            */
 
-          if (is_binstr_user(ins)) {
+          if (ins->is_binstr_user()) {
             state_free_binstr(ins);
           } else if (compress) {
             lmn_binstr_free(compress);
@@ -951,7 +951,7 @@ static State *statetable_insert(StateTable *st, State *ins)
             }
 
             /* 比較元をencode */
-            if (is_binstr_user(ins)) {
+            if (ins->is_binstr_user()) {
               state_free_binstr(ins);
             } else if (compress) {
               lmn_binstr_free(compress);
@@ -1022,7 +1022,7 @@ static State *statetable_insert(StateTable *st, State *ins)
 
   if (ret != ins) {
     /* 別のスレッドの割込みで追加に失敗した場合, 計算したバイト列を破棄する.*/
-    if (is_binstr_user(ins)) {
+    if (ins->is_binstr_user()) {
       state_free_binstr(ins);
     } else if (compress) {
       // lmn_binstr_free(compress);
@@ -1041,7 +1041,7 @@ static void statetable_add_direct(StateTable *st, State *s) {
     unsigned long bucket;
     BOOL inserted;
 
-    if (is_binstr_user(s)) {
+    if (s->is_binstr_user()) {
       compress = state_binstr(s);
     } else {
       compress = NULL;

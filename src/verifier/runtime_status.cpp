@@ -470,9 +470,9 @@ static void profile_state_f(State *s, LmnWord arg) {
 
   /* メモリ */
   p->state_space += sizeof(State);
-  if (!is_binstr_user(s) && state_mem(s)) {
+  if (!s->is_binstr_user() && state_mem(s)) {
     p->membrane_space += lmn_mem_root_space(state_mem(s));
-  } else if (is_binstr_user(s) && state_binstr(s)) {
+  } else if (s->is_binstr_user() && state_binstr(s)) {
     p->binstr_space += lmn_binstr_space(state_binstr(s));
   }
 
