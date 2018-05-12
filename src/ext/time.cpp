@@ -37,9 +37,14 @@
  * $Id$
  */
 
+extern "C"{
 #include "vm/vm.h"
 #include "element/element.h"
-
+void gettime(LmnReactCxtRef rc,
+             LmnMembraneRef mem,
+             LmnAtomRef a0, LmnLinkAttr t0);
+void init_time(void);
+}
 
 void gettime(LmnReactCxtRef rc,
              LmnMembraneRef mem,

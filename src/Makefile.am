@@ -80,7 +80,7 @@ slim_SOURCES =                                                     \
 	ext/state_map.cpp						 \
 	ext/membrane.cpp      ext/membrane.h       \
 	ext/zerostep.cpp \
-	ext/time.c
+	ext/time.cpp
 #	ext.h ext.c
 
 slim_OBJS =
