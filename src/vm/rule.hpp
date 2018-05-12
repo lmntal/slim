@@ -55,7 +55,12 @@ struct LmnRule {
 
   LmnRule () {}
 
-  ~LmnRule(){}
+  ~LmnRule () {
+    LMN_FREE(this->inst_seq);
+    if (lmn_rule_get_history_tbl(this)) {
+      st_free_table(lmn_rule_get_history_tbl(this));
+    }
+  }
 };
 
 #endif

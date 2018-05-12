@@ -71,7 +71,6 @@ LmnRuleRef dummy_rule(void);
 LmnRuleRef lmn_rule_make_translated(LmnTranslated translated,
                                     lmn_interned_str name);
 LmnRuleRef lmn_rule_copy(LmnRuleRef rule);
-void lmn_rule_free(LmnRuleRef rule);
 
 st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule);
 

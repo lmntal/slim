@@ -87,15 +87,6 @@ LmnRuleRef lmn_rule_copy(LmnRuleRef rule) {
   return new_rule;
 }
 
-/* ruleとruleの要素を解放する */
-void lmn_rule_free(LmnRuleRef rule) {
-  LMN_FREE(rule->inst_seq);
-  if (lmn_rule_get_history_tbl(rule)) {
-    st_free_table(lmn_rule_get_history_tbl(rule));
-  }
-  delete(rule);
-}
-
 st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule) {
   return rule->history_tbl;
 }
@@ -195,7 +186,7 @@ void lmn_ruleset_free(LmnRuleSetRef ruleset) {
   int i;
 
   for (i = 0; i < ruleset->num; i++) {
-    lmn_rule_free(ruleset->rules[i]);
+    delete(ruleset->rules[i]);
   }
   LMN_FREE(ruleset->rules);
   LMN_FREE(ruleset);
@@ -280,7 +271,7 @@ void lmn_ruleset_copied_free(LmnRuleSetRef rs) {
   unsigned int i;
   for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
     LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
-    lmn_rule_free(r); /* free copied rule object */
+    delete(r); /* free copied rule object */
   }
 
   /* free copied ruleset object */
