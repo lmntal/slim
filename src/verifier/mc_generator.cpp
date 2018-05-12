@@ -785,7 +785,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
 
     if ((lmn_env.opt_mode == OPT_MINIMIZE &&
          workers_opt_cost(worker_group(w)) < state_cost(s)) ||
-        (s->is_expanded() && !s_is_update(s)) ||
+        (s->is_expanded() && !s->s_is_update()) ||
         (!worker_ltl_none(w) && atmstate_is_end(p_s))) {
       pop_deq(deq, TRUE);
       continue;
@@ -796,7 +796,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms,
                 worker_flags(w));
       mc_update_cost(s, new_ss, workers_ewlock(worker_group(w)));
-    } else if (s_is_update(s)) {
+    } else if (s->s_is_update()) {
       mc_update_cost(s, new_ss, workers_ewlock(worker_group(w)));
     }
 
@@ -811,7 +811,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
         State *succ = state_succ_state(s, i);
         if (!succ->is_expanded()) {
           push_deq(deq, succ, TRUE);
-        } else if (s_is_update(succ)) {
+        } else if (succ->s_is_update()) {
           push_deq(deq, succ, FALSE);
         }
       }
@@ -828,7 +828,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
           } else {
             if (!new_s->is_expanded()) {
               push_deq(deq, new_s, TRUE);
-            } else if (s_is_update(new_s)) {
+            } else if (new_s->s_is_update()) {
               push_deq(deq, new_s, FALSE);
             }
           }
