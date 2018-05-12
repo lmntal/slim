@@ -213,7 +213,7 @@ struct State {                /* Total:72(36)byte */
   void state_calc_hash(LmnMembraneRef mem, BOOL canonical) {
     if (canonical) {
       state_set_binstr(lmn_mem_encode(mem));
-      hash = binstr_hash(state_binstr());
+      hash = binstr_hash(this->state_binstr());
       set_encoded();
     } else {
       hash = mhash(mem);
@@ -255,7 +255,8 @@ struct State {                /* Total:72(36)byte */
 #endif
   }
 
-    State (LmnMembraneRef mem, BYTE property_label, BOOL do_encode) {
+  State (LmnMembraneRef mem, BYTE property_label, BOOL do_encode) :
+    State () {
       state_set_mem(mem);
       state_name = property_label;
       state_calc_hash(mem, do_encode);
