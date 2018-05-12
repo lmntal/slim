@@ -1239,11 +1239,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           at_set(rc, atomi, LMN_ATTR_MAKE_LINK(0));
           tt_set(rc, atomi, TT_ATOM);
 
-          record = atomlist_get_record(atomlist_ent, findatomid);
+          record = atomlist_ent->get_record(findatomid);
           if (!record) {
             start_atom = atomlist_head(atomlist_ent);
             record = lmn_new_atom(LMN_RESUME_FUNCTOR);
-            atomlist_put_record(atomlist_ent, findatomid, record);
+            atomlist_ent->put_record(findatomid, record);
             /* 履歴アトムを挿入する */
             LMN_SATOM_SET_NEXT((LmnSymbolAtomRef)atomlist_ent, record);
             LMN_SATOM_SET_PREV(record, (LmnSymbolAtomRef)atomlist_ent);
@@ -1265,8 +1265,16 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
               continue;
             wt_set(rc, atomi, (LmnWord)atom);
             tt_set(rc, atomi, TT_ATOM);
-            remove_from_atomlist(record, NULL); /* 履歴アトムの削除 */
-            insert_to_atomlist(NULL, record, atom, NULL); /* 履歴アトムの挿入 */
+            LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(record), LMN_SATOM_GET_PREV(record));
+            LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(record), LMN_SATOM_GET_NEXT_RAW(record));
+
+            /* アトムリストentにおいて, アトムprvとアトムnxtの間にアトムinsを挿入する.
+            * ただし, prvにNULLを渡した場合はnxtのprevポイント先をprvとして扱う. */
+            LmnSymbolAtomRef prv = LMN_SATOM_GET_PREV(atom);
+            LMN_SATOM_SET_NEXT(prv, record);
+            LMN_SATOM_SET_PREV(record, prv);
+            LMN_SATOM_SET_NEXT(record, atom);
+            LMN_SATOM_SET_PREV(atom, record);
 
             if (interpret(rc, rule, instr)) {
 #if DBG
@@ -1370,8 +1378,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
             fail_temp_check++;
           }
 
-          if (atomlist_ent_num(atomlist_ent) < lmn_env.core_num) {
-            active_thread = atomlist_ent_num(atomlist_ent);
+          if (atomlist_ent->n < lmn_env.core_num) {
+            active_thread = atomlist_ent->n;
           } else {
             active_thread = lmn_env.core_num;
           }
@@ -2153,11 +2161,13 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
     }
     case INSTR_TAILATOM: {
       LmnInstrVar atomi, memi;
-
+      LmnMembraneRef mem = (LmnMembraneRef)wt(rc, memi);
+      LmnSymbolAtomRef sa = (LmnSymbolAtomRef)wt(rc, atomi);
+      LmnFunctor f = LMN_SATOM_GET_FUNCTOR(sa);
+      AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
-      move_atom_to_atomlist_tail((LmnSymbolAtomRef)wt(rc, atomi),
-                                 (LmnMembraneRef)wt(rc, memi));
+      ent->move_atom_to_atomlist_tail(sa);
       break;
     }
 
@@ -3813,7 +3823,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
         /* mem がないので仕方なく直接アトムリストをつなぎ変える.
          * UNIFYアトムはnatomに含まれないので大丈夫 */
-        remove_from_atomlist(copy, NULL);
+        LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy), LMN_SATOM_GET_PREV(copy));
+        LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy), LMN_SATOM_GET_NEXT_RAW(copy));
 
         lmn_delete_atom(copy);
       }

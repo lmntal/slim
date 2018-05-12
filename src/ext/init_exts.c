@@ -36,10 +36,8 @@
  *
  * $Id$
  */
-
 #include "../lmntal.h"
 #include "membrane.h"
-
 void init_integer(void);
 void init_float(void);
 void init_nlmem(void);

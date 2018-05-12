@@ -44,6 +44,7 @@ extern "C" {
 #include <ctype.h>
 }
 #include "rule.hpp"
+#include "atomlist.hpp"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"

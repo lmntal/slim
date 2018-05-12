@@ -1170,7 +1170,6 @@ static void write_mem(LmnMembraneRef mem, LmnAtomRef from_atom,
     dump_mem_atoms(mem, bsp, visited);
     dump_mems(mem, bsp, visited);
 
-#ifdef NEW_ATOMLIST
     /* 膜memに存在するデータアトムを起点にしたinside
      * proxyアトムをちゃんと書き込んでおく */
     {
@@ -1196,7 +1195,6 @@ static void write_mem(LmnMembraneRef mem, LmnAtomRef from_atom,
             }));
       }
     }
-#endif
   }
 
   write_rulesets(mem, bsp);

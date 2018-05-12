@@ -1,9 +1,8 @@
 /*
- * vm.h
+ * membrane.hpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -34,42 +33,48 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#ifndef LMN_VM_H
-#define LMN_VM_H
 
-/**
- * @defgroup Ext
- */
-
-/**
- * @defgroup VM
+#ifndef LMN_MEMBRANE_HPP
+#define LMN_MEMBRANE_HPP
+/*----------------------------------------------------------------------
+ * Membrane
  */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"{
 #endif
 
-#include "ccallback.h"
-#include "dumper.h"
-#include "instruction.h"
-#include "membrane.h"
-#include "memstack.h"
-#include "process_table.h"
-#include "rule.h"
-#include "simply_process_table.h"
-#include "simply_trace_log.h"
-#include "symbol.h"
-#include "task.h"
-#include "trace_log.h"
+#include "lmntal.h"
+#include "../element/vector.h"
 
 #ifdef __cplusplus
 }
-#include "rule.hpp"
-#include "atomlist.hpp"
-
 #endif
 
-#endif /* LMN_VM_H */
+
+struct LmnMembrane;
+typedef struct LmnMembrane *LmnMembraneRef;
+typedef struct AtomListEntry **AtomSet;
+
+struct LmnMembrane {
+  AtomSet atomset;
+  ProcessID id;
+  unsigned int max_functor;
+  unsigned int atomset_size;
+  unsigned int atom_symb_num; /* # of symbol atom except proxy */
+  unsigned int atom_data_num;
+  lmn_interned_str name;
+  BOOL is_activated;
+  LmnMembraneRef parent;
+  LmnMembraneRef child_head;
+  LmnMembraneRef prev, next;
+  struct Vector rulesets;
+#ifdef USE_FIRSTCLASS_RULE
+  Vector *firstclass_rulesets;
+#endif
+
+};
+
+#endif
