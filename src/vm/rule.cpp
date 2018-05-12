@@ -48,29 +48,12 @@ extern "C" {
 
 extern "C" {
 /* prototypes */
-LmnRuleRef make_rule(LmnRuleInstr inst_seq, int inst_seq_len,
-                     LmnTranslated translated, lmn_interned_str name);
 void init_rules(void);
 void destroy_rules(void);
 }
 
-/* create new rule */
-LmnRuleRef make_rule(LmnRuleInstr inst_seq, int inst_seq_len,
-                     LmnTranslated translated, lmn_interned_str name) {
-  LmnRuleRef rule = LMN_MALLOC(struct LmnRule);
 
-  rule->inst_seq = inst_seq;
-  rule->inst_seq_len = inst_seq_len; /* inst_seqの長さ */
-  rule->translated = translated;
-  rule->name = name;          /* ルール名 */
-  rule->is_invisible = FALSE; /* ルールの可視性を決定するコンパイラ部分の実装が完成するまでは，すべてのルールをvisibleに固定しておく
-                               */
-  rule->pre_id = ANONYMOUS;
-  rule->history_tbl = NULL;
-  // rule->cost = 0U;
 
-  return rule;
-}
 
 /* 中身のない、名前だけを持つルールを生成する */
 LmnRuleRef lmn_rule_make_dummy(lmn_interned_str name) {
@@ -110,7 +93,7 @@ void lmn_rule_free(LmnRuleRef rule) {
   if (lmn_rule_get_history_tbl(rule)) {
     st_free_table(lmn_rule_get_history_tbl(rule));
   }
-  LMN_FREE(rule);
+  delete(rule);
 }
 
 st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule) {

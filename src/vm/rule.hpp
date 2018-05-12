@@ -54,6 +54,8 @@ struct LmnRule {
     inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated), name(name), is_invisible(FALSE), pre_id(ANONYMOUS), history_tbl(NULL) {}
 
   LmnRule () {}
+
+  ~LmnRule(){}
 };
 
 #endif
