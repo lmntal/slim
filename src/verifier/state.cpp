@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void set_binstr_user(State *S) { ((S)->flags |= MEM_DIRECT_MASK); }
 void set_dummy(State *S) { ((S)->flags |= DUMMY_SYMBOL_MASK); }
 void set_encoded(State *S) { ((S)->flags |= MEM_ENCODED_MASK); }
 void set_expanded(State *S) { ((S)->flags |= EXPANDED_MASK); }
@@ -1186,7 +1185,7 @@ LmnBinStrRef state_binstr(State *s) {
  * sに割り当てる　*/
 void state_set_binstr(State *s, LmnBinStrRef bs) {
   s->data = (state_data_t)bs;
-  set_binstr_user(s);
+  s->set_binstr_user();
 }
 
 /* 状態sが参照するバイナリストリング用の領域をクリアする.
