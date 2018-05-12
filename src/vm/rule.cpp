@@ -183,13 +183,7 @@ LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size) {
 
 /* Frees RuleSet and its elements */
 void lmn_ruleset_free(LmnRuleSetRef ruleset) {
-  int i;
-
-  for (i = 0; i < ruleset->num; i++) {
-    delete(ruleset->rules[i]);
-  }
-  LMN_FREE(ruleset->rules);
-  LMN_FREE(ruleset);
+  delete(ruleset);
 }
 
 /* Adds rule into ruleset */
@@ -216,15 +210,7 @@ static void init_ruleset_table() {
 
 /* ルールセットテーブルの解放処理 */
 static void destroy_ruleset_table() {
-  unsigned int i;
-
-  for (i = 0; i < ruleset_table->size; i++) {
-    if (ruleset_table->entry[i]) {
-      lmn_ruleset_free(ruleset_table->entry[i]);
-    }
-  }
-  LMN_FREE(ruleset_table->entry);
-  LMN_FREE(ruleset_table);
+  delete(ruleset_table);
 }
 
 /* Associates id with ruleset */

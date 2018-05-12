@@ -72,6 +72,16 @@ struct LmnRuleSetTable {
     size(size) {
       this->entry = LMN_NALLOC(LmnRuleSetRef, this->size);
     }
+  
+  ~LmnRuleSetTable () {
+    unsigned int i;
+    for (i = 0; i < this->size; i++) {
+      if (this->entry[i]) {
+        lmn_ruleset_free(this->entry[i]);
+      }
+    }
+    delete(this->entry);
+  }
 };
 
 #endif
