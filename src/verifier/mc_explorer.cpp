@@ -211,7 +211,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
     } else {
       unsigned int i;
       vec_push(path, (vec_data_t)s);
-      set_snd(s);
+     s->set_snd();
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
@@ -1131,7 +1131,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
     } else {
       unsigned int i;
       vec_push(path, (vec_data_t)s);
-      set_snd(s);
+     s->set_snd();
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
@@ -1293,7 +1293,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     }
 
     put_stack(red_states, s);
-    set_snd(s);
+   s->set_snd();
 
     n = state_succ_num(s);
     for (i = 0; i < n; i++) {
@@ -1326,7 +1326,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     else {
       unsigned int i;
       vec_push(path, (vec_data_t)s);
-      set_snd(s);
+     s->set_snd();
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 

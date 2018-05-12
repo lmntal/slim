@@ -67,7 +67,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 struct State;
 
 /* manipulation for flags */
-void set_snd(State *S);
 void set_trans_obj(State *S);
 void unset_binstr_user(State *S);
 void unset_dummy(State *S);

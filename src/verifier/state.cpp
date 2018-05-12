@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void set_snd(State *S) { ((S)->flags |= FOR_MC_MASK); }
 void set_trans_obj(State *S) { ((S)->flags |= TRANS_OBJ_MASK); }
 
 void unset_binstr_user(State *S) { ((S)->flags &= (~MEM_DIRECT_MASK)); }

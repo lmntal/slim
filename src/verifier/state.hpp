@@ -120,6 +120,7 @@ struct State {                /* Total:72(36)byte */
   void set_expanded() { flags |= EXPANDED_MASK; }
   void set_on_cycle() { flags |= ON_CYCLE_MASK; }
   void set_on_stack() { flags |= ON_STACK_MASK; }
+  void set_snd() { flags |= FOR_MC_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
