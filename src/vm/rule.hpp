@@ -76,6 +76,21 @@ struct LmnRuleSet {
   BOOL has_uniqrule;
   LmnRuleSet(LmnRulesetId id,int init_size):
   	id(id), cap(init_size), rules(LMN_CALLOC(LmnRuleRef, init_size)), num(0), atomic(ATOMIC_NONE), is_atomic_valid(FALSE), is_copy(FALSE), has_uniqrule(FALSE), is_0step(FALSE) {}
+
+  /* Adds rule into ruleset */
+  void put(LmnRuleRef rule) {
+   if (this->num == this->cap) {
+     this->cap = (this->cap * 2);
+     this->rules = LMN_REALLOC(LmnRuleRef, this->rules, this->cap);
+   }
+   this->rules[this->num++] = rule;
+
+   /* 非uniqrulesetにuniq ruleが追加されたら, フラグを立てる. */
+   if (!lmn_ruleset_has_uniqrule(this) && lmn_rule_get_history_tbl(rule)) {
+     this->has_uniqrule = TRUE;
+   }
+  }
+
 };
 
 /* table, mapping RuleSet ID to RuleSet */
@@ -92,7 +107,7 @@ struct LmnRuleSetTable {
     unsigned int i;
     for (i = 0; i < this->size; i++) {
       if (this->entry[i]) {
-        lmn_ruleset_free(this->entry[i]);
+        delete(this->entry[i]);
       }
     }
     delete(this->entry);

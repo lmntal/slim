@@ -111,9 +111,6 @@ typedef enum AtomicType {
 extern struct LmnRuleSetTable *ruleset_table;
 
 int lmn_gen_ruleset_id(void);
-LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size);
-void lmn_ruleset_free(LmnRuleSetRef ruleset);
-void lmn_ruleset_put(LmnRuleSetRef ruleset, LmnRuleRef rule);
 void lmn_set_ruleset(LmnRuleSetRef ruleset, int id);
 long lmn_ruleset_history_num(LmnRuleSetRef ruleset);
 LmnRuleSetRef lmn_ruleset_copy(LmnRuleSetRef ruleset);

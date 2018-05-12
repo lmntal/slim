@@ -154,25 +154,6 @@ int lmn_gen_ruleset_id() {
 }
 
 
-/* Frees RuleSet and its elements */
-void lmn_ruleset_free(LmnRuleSetRef ruleset) {
-  delete(ruleset);
-}
-
-/* Adds rule into ruleset */
-void lmn_ruleset_put(LmnRuleSetRef ruleset, LmnRuleRef rule) {
-  if (ruleset->num == ruleset->cap) {
-    ruleset->cap = (ruleset->cap * 2);
-    ruleset->rules = LMN_REALLOC(LmnRuleRef, ruleset->rules, ruleset->cap);
-  }
-  ruleset->rules[ruleset->num++] = rule;
-
-  /* 非uniqrulesetにuniq ruleが追加されたら, フラグを立てる. */
-  if (!lmn_ruleset_has_uniqrule(ruleset) && lmn_rule_get_history_tbl(rule)) {
-    ruleset->has_uniqrule = TRUE;
-  }
-}
-
 /* ルールセットテーブルの初期化 */
 static void init_ruleset_table() {
   ruleset_table = new LmnRuleSetTable(64);
@@ -181,10 +162,7 @@ static void init_ruleset_table() {
          ruleset_table->size * sizeof(ruleset_table->entry[0]));
 }
 
-/* ルールセットテーブルの解放処理 */
-static void destroy_ruleset_table() {
-  delete(ruleset_table);
-}
+
 
 /* Associates id with ruleset */
 void lmn_set_ruleset(LmnRuleSetRef ruleset, int id) {
@@ -249,7 +227,7 @@ static inline LmnRuleSetRef lmn_ruleset_copy_object(LmnRuleSetRef src) {
   /* ルール単位のオブジェクト複製 */
   for (i = 0; i < r_n; i++) {
     LmnRuleRef r = lmn_ruleset_get_rule(src, i);
-    lmn_ruleset_put(result, lmn_rule_copy(r));
+    result->put(lmn_rule_copy(r));
   }
   return result;
 }
@@ -495,12 +473,12 @@ static void init_system_rulset() {
   system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
 }
 
-static void destroy_system_ruleset() { lmn_ruleset_free(system_ruleset); }
+static void destroy_system_ruleset() { delete(system_ruleset); }
 
 /* Adds rule to the system ruleset.
    ruleの解放は呼び出され側が行う */
 void lmn_add_system_rule(LmnRuleRef rule) {
-  lmn_ruleset_put(system_ruleset, rule);
+  system_ruleset->put(rule);
 }
 
 /*----------------------------------------------------------------------
@@ -516,18 +494,18 @@ static void init_initial_rulset() {
 }
 
 static void destroy_initial_ruleset() {
-  lmn_ruleset_free(initial_ruleset);
-  lmn_ruleset_free(initial_system_ruleset);
+  delete(initial_ruleset);
+  delete(initial_system_ruleset);
 }
 
 /* Adds rule to the system ruleset.
    ruleの解放は呼び出され側が行う */
 void lmn_add_initial_rule(LmnRuleRef rule) {
-  lmn_ruleset_put(initial_ruleset, rule);
+  initial_ruleset->put(rule);
 }
 
 void lmn_add_initial_system_rule(LmnRuleRef rule) {
-  lmn_ruleset_put(initial_system_ruleset, rule);
+  initial_system_ruleset->put(rule);
 }
 
 /*----------------------------------------------------------------------
@@ -564,7 +542,7 @@ void init_rules() {
 }
 
 void destroy_rules() {
-  destroy_ruleset_table();
+  delete(ruleset_table);
   destroy_module_table();
   destroy_system_ruleset();
   destroy_initial_ruleset();

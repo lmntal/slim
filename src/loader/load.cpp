@@ -131,7 +131,7 @@ static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs) {
   auto runtime_ruleset = new LmnRuleSet(rs->id, 10);
 
   for (auto &r : rs->rules)
-    lmn_ruleset_put(runtime_ruleset, load_rule(r.get()));
+    runtime_ruleset->put(load_rule(r.get()));
 
   lmn_set_ruleset(runtime_ruleset, rs->id);
 
@@ -245,7 +245,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
     for (j = 0; j < tr.size; j++) {
       LmnRuleRef r = lmn_rule_make_translated(
           tr.rules[j].function, maindata->symbol_exchange[tr.rules[j].name]);
-      lmn_ruleset_put(rs, r);
+      rs->put(r);
     }
 
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく
