@@ -1300,7 +1300,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
       succ = state_succ_state(s, i);
       if (s_is_cyan(succ, worker_id(w))) {
         return TRUE;
-      } else if (!s_is_red(succ)) {
+      } else if (!succ->s_is_red()) {
         m = vec_num(red_states);
         contained = FALSE;
         for (j = 0; j < m; j++) {

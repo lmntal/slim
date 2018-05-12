@@ -670,7 +670,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
             State *r = (State *)vec_get(&red_states, i);
 
             if (state_id(r) != state_id(s) && state_is_accept(a, r)) {
-              if (!s_is_red(r)) {
+              if (!r->s_is_red()) {
                 repaired = FALSE;
                 usleep(1);
                 break;

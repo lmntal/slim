@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL s_is_red(State *S) { return ((S)->flags2 & STATE_RED_MASK); }
 BOOL s_is_visited_by_visualizer(State *S) {
   return ((S)->flags2 & STATE_VIS_VISITED_MASK);
 }
