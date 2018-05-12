@@ -75,7 +75,7 @@ slim_SOURCES =                                                     \
 	ext/atom.cpp                                                     \
 	ext/react_rule.cpp                                               \
 	ext/initial_ruleset.cpp                                          \
-	ext/nd_conf.c							 \
+	ext/nd_conf.cpp							 \
 	ext/set.cpp			ext/set.h			 \
 	ext/state_map.cpp						 \
 	ext/membrane.cpp      ext/membrane.h       \
