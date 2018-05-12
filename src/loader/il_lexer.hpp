@@ -1,8 +1,8 @@
 /*
  * il_lexer.hpp - Intermediate Language scanner
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -42,40 +42,37 @@
 #include <string>
 
 namespace il {
-  class lexer;
+class lexer;
 }
 
 #include "lmntal.h"
 #include "syntax.hpp"
 #include "il_parser.hpp"
 
-
 namespace il {
-  class lexer {
-    static const size_t SIZE = 256;
-    st_table_t ruleset_id_tbl;
-    FILE *input;
-    char *buf;
-    char *YYCURSOR;
-    char *token;
-    char *YYLIMIT;
-    bool eof;
+class lexer {
+  static const size_t SIZE = 256;
+  st_table_t ruleset_id_tbl;
+  FILE *input;
+  char *buf;
+  char *YYCURSOR;
+  char *token;
+  char *YYLIMIT;
+  bool eof;
 
-    std::string get_token() const {
-      return std::string(token, YYCURSOR - token);
-    };
-
-  public:
-    lexer(FILE *in);
-    ~lexer() {
-      st_free_table(ruleset_id_tbl);
-    }
-
-    int lineno() const { return 0; }
-    int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
-    bool fill(size_t need);
+  std::string get_token() const {
+    return std::string(token, YYCURSOR - token);
   };
-}
+
+public:
+  lexer(FILE *in);
+  ~lexer() { st_free_table(ruleset_id_tbl); }
+
+  int lineno() const { return 0; }
+  int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
+  bool fill(size_t need);
+};
+} // namespace il
 
 int illex(YYSTYPE *yylval, YYLTYPE *yyloc, il::lexer *lexer);
 

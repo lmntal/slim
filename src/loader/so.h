@@ -1,8 +1,8 @@
 /*
  * so.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -36,20 +36,21 @@
  * $Id: so.h,v 1.00 2009/10/01 18:18:00 riki Exp $
  */
 
-/* このファイルはトランスレータから出力された.cファイルの中で必要なものをすべて含む */
+/* このファイルはトランスレータから出力された.cファイルの中で必要なものをすべて含む
+ */
 /* .cの中でのみ必要な情報はここに直接書く */
 
 #ifndef SO_H
 #define SO_H
 
-#include "lmntal.h"
-#include "vm/vm.h"
-#include "translate.h"
 #include "element/element.h"
+#include "lmntal.h"
+#include "translate.h"
 #include "verifier/verifier.h"
+#include "vm/vm.h"
 
 #ifdef PROFILE
-#  include "verifier/runtime_status.h"
+#include "verifier/runtime_status.h"
 #endif
 
 /**
@@ -58,212 +59,212 @@
  * @{
  */
 
-/* TR_GSID(x) translate global symbol id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
-/* TR_GFID(x) translate global functor id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
-/* TR_GRID(x) translate global ruleset id xのグローバルidを得る (定義に出力ファイル名を含むため.c内で出力) */
+/* TR_GSID(x) translate global symbol id xのグローバルidを得る
+ * (定義に出力ファイル名を含むため.c内で出力) */
+/* TR_GFID(x) translate global functor id xのグローバルidを得る
+ * (定義に出力ファイル名を含むため.c内で出力) */
+/* TR_GRID(x) translate global ruleset id xのグローバルidを得る
+ * (定義に出力ファイル名を含むため.c内で出力) */
 /* インタプリタ用の定義では変換は必要ないため TR_G*ID(x) = x となる */
 
 #define LINKED_ATOM(x) wt(rc, x)
 #define LINKED_ATTR(x) at(rc, x)
 
-#define TR_INSTR_ALLOCLINK(rc, link, atom, n)                           \
-  do {                                                                  \
-    if (LMN_ATTR_IS_DATA(at(rc, atom))) {                               \
-      warry_set(rc, link, wt(rc, atom), at(rc, atom), TT_ATOM);         \
-    } else { /* link to atom */                                         \
-      warry_set(rc, link, wt(rc, atom), LMN_ATTR_MAKE_LINK(n), TT_ATOM); \
-    }                                                                   \
-  } while(0)
-
-/* @see INSTR_SPEC in task.c */
-#define TR_INSTR_SPEC(rc, size)                                         \
-  do {                                                                  \
-    if(size > warry_size(rc)){                                          \
-      lmn_register_extend(rc, round2up(size));                          \
-    }                                                                   \
-    warry_use_size_set(rc, size);                                       \
-  } while(0)
-
-#define TR_INSTR_UNIFYLINKS(rc, link1, link2, mem)                      \
-  do{                                                                   \
-      LmnLinkAttr attr1 = LINKED_ATTR(link1);                           \
-      LmnLinkAttr attr2 = LINKED_ATTR(link2);                           \
-                                                                        \
-      if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) {                         \
-        if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 1, 2 are data */   \
-          lmn_mem_link_data_atoms((LmnMembraneRef)wt(rc, mem),           \
-                                  (LmnAtomRef)wt(rc, link1), at(rc, link1), (LmnAtomRef)LINKED_ATOM(link2), attr2);\
-        }                                                               \
-        else { /* 1 is data */                                          \
-          LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(attr2), (LmnAtomRef)LINKED_ATOM(link1)); \
-          LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(attr2), attr1); \
-        }                                                               \
-      }                                                                 \
-      else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 2 is data */    \
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(attr1), (LmnAtomRef)LINKED_ATOM(link2)); \
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(attr1), attr2); \
-      }                                                                 \
-      else { /* 1, 2 are symbol atom */                                 \
-                                                                        \
-        if (LMN_ATTR_IS_EX(attr1)) {                                    \
-          if (LMN_ATTR_IS_EX(attr2)) { /* 1, 2 are ex */                \
-            lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),             \
-                                (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1, 0, \
-                                (LmnSymbolAtomRef)(LINKED_ATOM(link2)), attr2, 0);\
-          } else { /* 1 is ex */                                         \
-            lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),              \
-                                (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1, 0, \
-                                (LmnSymbolAtomRef)(LINKED_ATOM(link2)), attr2, attr2);\
-          }                                                                   \
-        } else if (LMN_ATTR_IS_EX(attr2)) { /* 2 is ex */                     \
-          lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),                     \
-                              (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1, attr1,    \
-                              (LmnSymbolAtomRef)(LINKED_ATOM(link2)), attr2, 0);       \
-        } else {                                                              \
-          LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(attr1), (LmnAtomRef)LINKED_ATOM(link2)); \
-          LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(attr2), (LmnAtomRef)LINKED_ATOM(link1)); \
-          LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link1), LMN_ATTR_GET_VALUE(attr1), attr2);              \
-          LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link2), LMN_ATTR_GET_VALUE(attr2), attr1);              \
-        }                                                               \
-                                                                        \
-      }                                                                 \
-  } while(0)
-
-#define TR_INSTR_RELINK(rc, atom1,pos1,atom2,pos2,memi)                     \
-  do{                                                                       \
-    LmnSymbolAtomRef ap;                                                            \
-    LmnByte attr;                                                           \
-    ap = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom2), pos2);                \
-    attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom2), pos2);                         \
-                                                                            \
-    if(LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1)) && LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {\
-      fprintf(stderr, "Two data atoms are connected each other.\n");        \
-    }                                                                       \
-    else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))) {                  \
-      LMN_SATOM_SET_LINK(ap, attr, (LmnAtomRef)wt(rc, atom1));                          \
-      LMN_SATOM_SET_ATTR(ap, attr, at(rc, atom1));                          \
-    }                                                                       \
-    else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {                           \
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)(wt(rc, atom1)), pos1, (LmnAtomRef)ap);               \
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)(wt(rc, atom1)), pos1, attr);             \
-    }                                                                       \
-    else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(attr)) {     \
-      LMN_SATOM_SET_LINK(ap, attr, (LmnAtomRef)wt(rc, atom1));                          \
-      LMN_SATOM_SET_ATTR(ap, attr, pos1);                                   \
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)(wt(rc, atom1)), pos1, (LmnAtomRef)ap);               \
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)(wt(rc, atom1)), pos1, attr);             \
-    } else if (LMN_ATTR_IS_EX(at(rc, atom1))) {                             \
-      lmn_newlink_with_ex((LmnMembraneRef)wt(rc, memi),                      \
-                          (LmnSymbolAtomRef)(wt(rc, atom1)),                         \
-                          at(rc, atom1),                                    \
-                          pos1,                                             \
-                          ap,                                               \
-                          0,                                                \
-                          attr);                                            \
-    } else {                                                                \
-      lmn_newlink_with_ex((LmnMembraneRef)wt(rc, memi),                      \
-                          (LmnSymbolAtomRef)(wt(rc, atom1)),                         \
-                          at(rc, atom1),                                    \
-                          pos1,                                             \
-                          ap,                                               \
-                          attr,                                             \
-                          0);                                               \
-                                                                            \
-    }                                                                       \
-  } while(0)
-
-#define TR_INSTR_COPYRULES(rc, destmemi, srcmemi)                          \
-  do {                                                                     \
-    unsigned int i;                                                        \
-    struct Vector *v;                                                      \
-    v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));                       \
-    for (i = 0; i< v->num; i++) {                                          \
-      LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));         \
-      lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);            \
-      if (RC_GET_MODE(rc, REACT_ATOMIC)) {                                 \
-        lmn_ruleset_invalidate_atomic(cp);                                 \
-      }                                                                    \
-    }                                                                      \
-  } while(0)
-
-#define TR_INSTR_LOOKUPLINK(rc, destlinki, tbli, srclinki)                 \
-  do {                                                                     \
-    at_set(rc, destlinki, LINKED_ATTR(srclinki));                          \
-    tt_set(rc, destlinki, TT_ATOM);                                        \
-    if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {                         \
-      wt_set(rc, destlinki, LINKED_ATOM(srclinki));                        \
-    } else { /* symbol atom */                                             \
-      ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);                  \
-      LmnWord w = wt(rc, destlinki);                                       \
-      proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &w);      \
-      wt_set(rc, destlinki, w);                                            \
-    }                                                                      \
-  } while(0)
-
-#define TR_INSTR_DELETECONNECTORS(srcset, srcmap)                          \
-  do {                                                                     \
-    HashSet *delset;                                                       \
-    ProcessTableRef delmap;                                                \
-    HashSetIterator it;                                                    \
-    delset = (HashSet *)wt(rc, srcset);                                    \
-    delmap = (ProcessTableRef)wt(rc, srcmap);                              \
-                                                                           \
-    for (it = hashset_iterator(delset); !hashsetiter_isend(&it); hashsetiter_next(&it)) {\
-      LmnSymbolAtomRef orig, copy;                                                 \
-      LmnWord t;                                                           \
-                                                                           \
-      orig = LMN_SATOM(hashsetiter_entry(&it));                            \
-      t = 0; /* warningを黙らす */                                           \
-      proc_tbl_get_by_atom(delmap, orig, &t);                              \
-      copy = LMN_SATOM(t);                                                 \
-      lmn_mem_unify_symbol_atom_args(orig, 0, orig, 1);                    \
-      lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);                    \
-                                                                           \
-      lmn_delete_atom(orig);                                               \
-      lmn_delete_atom(copy);                                               \
-    }                                                                      \
-                                                                           \
-    if (delmap) proc_tbl_free(delmap);                                     \
+#define TR_INSTR_ALLOCLINK(rc, link, atom, n)                                  \
+  do {                                                                         \
+    if (LMN_ATTR_IS_DATA(at(rc, atom))) {                                      \
+      warry_set(rc, link, wt(rc, atom), at(rc, atom), TT_ATOM);                \
+    } else { /* link to atom */                                                \
+      warry_set(rc, link, wt(rc, atom), LMN_ATTR_MAKE_LINK(n), TT_ATOM);       \
+    }                                                                          \
   } while (0)
 
-#define TR_INSTR_DEREFFUNC(rc, funci, atomi, pos)                          \
-  do {                                                                     \
-    LmnLinkAttr attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atomi), pos);  \
-    if (LMN_ATTR_IS_DATA(attr)) {                                          \
-      warry_set(rc, funci,                                                 \
-                (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), pos),         \
-                attr,                                                      \
-                TT_OTHER);                                                 \
-    }                                                                      \
-    else { /* symbol atom */                                               \
-    warry_set(rc, funci,                                                   \
-              (LmnWord)LMN_SATOM_GET_FUNCTOR(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), pos)),\
-              attr,                                                        \
-              TT_OTHER);                                                   \
-    }                                                                      \
-  } while(0)
+/* @see INSTR_SPEC in task.c */
+#define TR_INSTR_SPEC(rc, size)                                                \
+  do {                                                                         \
+    if (size > warry_size(rc)) {                                               \
+      lmn_register_extend(rc, round2up(size));                                 \
+    }                                                                          \
+    warry_use_size_set(rc, size);                                              \
+  } while (0)
 
-void tr_instr_commit_ready(LmnReactCxtRef       rc,
-                           LmnRuleRef           rule,
-                           lmn_interned_str  rule_name,
-                           LmnLineNum        line_num,
-                           LmnMembraneRef       *ptmp_global_root,
-                           LmnRegisterArray       *V,
-                           unsigned int      *org_next_id);
-BOOL tr_instr_commit_finish(LmnReactCxtRef      rc,
-                            LmnRuleRef          rule,
-                            lmn_interned_str rule_name,
-                            LmnLineNum       line_num,
-                            LmnMembraneRef      *ptmp_global_root,
-                            LmnRegisterArray      *p_v_tmp,
-                            unsigned int     warry_use_org,
-                            unsigned int     warry_size_org);
-BOOL tr_instr_jump(LmnTranslated   f,
-                   LmnReactCxtRef     rc,
-                   LmnMembraneRef     thisisrootmembutnotused,
-                   LmnRuleRef         rule,
-                   int             newid_num,
-                   const int       *newid);
+#define TR_INSTR_UNIFYLINKS(rc, link1, link2, mem)                             \
+  do {                                                                         \
+    LmnLinkAttr attr1 = LINKED_ATTR(link1);                                    \
+    LmnLinkAttr attr2 = LINKED_ATTR(link2);                                    \
+                                                                               \
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) {                                  \
+      if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 1, 2 are data */            \
+        lmn_mem_link_data_atoms((LmnMembraneRef)wt(rc, mem),                   \
+                                (LmnAtomRef)wt(rc, link1), at(rc, link1),      \
+                                (LmnAtomRef)LINKED_ATOM(link2), attr2);        \
+      } else { /* 1 is data */                                                 \
+        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link2),               \
+                           LMN_ATTR_GET_VALUE(attr2),                          \
+                           (LmnAtomRef)LINKED_ATOM(link1));                    \
+        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link2),               \
+                           LMN_ATTR_GET_VALUE(attr2), attr1);                  \
+      }                                                                        \
+    } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 2 is data */           \
+      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link1),                 \
+                         LMN_ATTR_GET_VALUE(attr1),                            \
+                         (LmnAtomRef)LINKED_ATOM(link2));                      \
+      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link1),                 \
+                         LMN_ATTR_GET_VALUE(attr1), attr2);                    \
+    } else { /* 1, 2 are symbol atom */                                        \
+                                                                               \
+      if (LMN_ATTR_IS_EX(attr1)) {                                             \
+        if (LMN_ATTR_IS_EX(attr2)) { /* 1, 2 are ex */                         \
+          lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),                     \
+                              (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1,   \
+                              0, (LmnSymbolAtomRef)(LINKED_ATOM(link2)),       \
+                              attr2, 0);                                       \
+        } else { /* 1 is ex */                                                 \
+          lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),                     \
+                              (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1,   \
+                              0, (LmnSymbolAtomRef)(LINKED_ATOM(link2)),       \
+                              attr2, attr2);                                   \
+        }                                                                      \
+      } else if (LMN_ATTR_IS_EX(attr2)) { /* 2 is ex */                        \
+        lmn_newlink_with_ex((LmnMembraneRef)wt(rc, mem),                       \
+                            (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1,     \
+                            attr1, (LmnSymbolAtomRef)(LINKED_ATOM(link2)),     \
+                            attr2, 0);                                         \
+      } else {                                                                 \
+        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link1),               \
+                           LMN_ATTR_GET_VALUE(attr1),                          \
+                           (LmnAtomRef)LINKED_ATOM(link2));                    \
+        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link2),               \
+                           LMN_ATTR_GET_VALUE(attr2),                          \
+                           (LmnAtomRef)LINKED_ATOM(link1));                    \
+        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link1),               \
+                           LMN_ATTR_GET_VALUE(attr1), attr2);                  \
+        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link2),               \
+                           LMN_ATTR_GET_VALUE(attr2), attr1);                  \
+      }                                                                        \
+    }                                                                          \
+  } while (0)
+
+#define TR_INSTR_RELINK(rc, atom1, pos1, atom2, pos2, memi)                    \
+  do {                                                                         \
+    LmnSymbolAtomRef ap;                                                       \
+    LmnByte attr;                                                              \
+    ap = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom2), pos2);            \
+    attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom2), pos2);          \
+                                                                               \
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1)) &&                          \
+        LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {                                   \
+      fprintf(stderr, "Two data atoms are connected each other.\n");           \
+    } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(at(rc, atom1))) {                   \
+      LMN_SATOM_SET_LINK(ap, attr, (LmnAtomRef)wt(rc, atom1));                 \
+      LMN_SATOM_SET_ATTR(ap, attr, at(rc, atom1));                             \
+    } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {                            \
+      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)(wt(rc, atom1)), pos1,              \
+                         (LmnAtomRef)ap);                                      \
+      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)(wt(rc, atom1)), pos1, attr);       \
+    } else if (!LMN_ATTR_IS_EX(at(rc, atom1)) && !LMN_ATTR_IS_EX(attr)) {      \
+      LMN_SATOM_SET_LINK(ap, attr, (LmnAtomRef)wt(rc, atom1));                 \
+      LMN_SATOM_SET_ATTR(ap, attr, pos1);                                      \
+      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)(wt(rc, atom1)), pos1,              \
+                         (LmnAtomRef)ap);                                      \
+      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)(wt(rc, atom1)), pos1, attr);       \
+    } else if (LMN_ATTR_IS_EX(at(rc, atom1))) {                                \
+      lmn_newlink_with_ex((LmnMembraneRef)wt(rc, memi),                        \
+                          (LmnSymbolAtomRef)(wt(rc, atom1)), at(rc, atom1),    \
+                          pos1, ap, 0, attr);                                  \
+    } else {                                                                   \
+      lmn_newlink_with_ex((LmnMembraneRef)wt(rc, memi),                        \
+                          (LmnSymbolAtomRef)(wt(rc, atom1)), at(rc, atom1),    \
+                          pos1, ap, attr, 0);                                  \
+    }                                                                          \
+  } while (0)
+
+#define TR_INSTR_COPYRULES(rc, destmemi, srcmemi)                              \
+  do {                                                                         \
+    unsigned int i;                                                            \
+    struct Vector *v;                                                          \
+    v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));                 \
+    for (i = 0; i < v->num; i++) {                                             \
+      LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));       \
+      lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);               \
+      if (RC_GET_MODE(rc, REACT_ATOMIC)) {                                     \
+        lmn_ruleset_invalidate_atomic(cp);                                     \
+      }                                                                        \
+    }                                                                          \
+  } while (0)
+
+#define TR_INSTR_LOOKUPLINK(rc, destlinki, tbli, srclinki)                     \
+  do {                                                                         \
+    at_set(rc, destlinki, LINKED_ATTR(srclinki));                              \
+    tt_set(rc, destlinki, TT_ATOM);                                            \
+    if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {                             \
+      wt_set(rc, destlinki, LINKED_ATOM(srclinki));                            \
+    } else { /* symbol atom */                                                 \
+      ProcessTableRef ht = (ProcessTableRef)wt(rc, tbli);                      \
+      LmnWord w = wt(rc, destlinki);                                           \
+      proc_tbl_get_by_atom(ht, LMN_SATOM(LINKED_ATOM(srclinki)), &w);          \
+      wt_set(rc, destlinki, w);                                                \
+    }                                                                          \
+  } while (0)
+
+#define TR_INSTR_DELETECONNECTORS(srcset, srcmap)                              \
+  do {                                                                         \
+    HashSet *delset;                                                           \
+    ProcessTableRef delmap;                                                    \
+    HashSetIterator it;                                                        \
+    delset = (HashSet *)wt(rc, srcset);                                        \
+    delmap = (ProcessTableRef)wt(rc, srcmap);                                  \
+                                                                               \
+    for (it = hashset_iterator(delset); !hashsetiter_isend(&it);               \
+         hashsetiter_next(&it)) {                                              \
+      LmnSymbolAtomRef orig, copy;                                             \
+      LmnWord t;                                                               \
+                                                                               \
+      orig = LMN_SATOM(hashsetiter_entry(&it));                                \
+      t = 0; /* warningを黙らす */                                         \
+      proc_tbl_get_by_atom(delmap, orig, &t);                                  \
+      copy = LMN_SATOM(t);                                                     \
+      lmn_mem_unify_symbol_atom_args(orig, 0, orig, 1);                        \
+      lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);                        \
+                                                                               \
+      lmn_delete_atom(orig);                                                   \
+      lmn_delete_atom(copy);                                                   \
+    }                                                                          \
+                                                                               \
+    if (delmap)                                                                \
+      proc_tbl_free(delmap);                                                   \
+  } while (0)
+
+#define TR_INSTR_DEREFFUNC(rc, funci, atomi, pos)                              \
+  do {                                                                         \
+    LmnLinkAttr attr =                                                         \
+        LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atomi), pos);              \
+    if (LMN_ATTR_IS_DATA(attr)) {                                              \
+      warry_set(                                                               \
+          rc, funci,                                                           \
+          (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), pos),   \
+          attr, TT_OTHER);                                                     \
+    } else { /* symbol atom */                                                 \
+      warry_set(rc, funci,                                                     \
+                (LmnWord)LMN_SATOM_GET_FUNCTOR(                                \
+                    LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), pos)), \
+                attr, TT_OTHER);                                               \
+    }                                                                          \
+  } while (0)
+
+void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
+                           lmn_interned_str rule_name, LmnLineNum line_num,
+                           LmnMembraneRef *ptmp_global_root,
+                           LmnRegisterArray *V, unsigned int *org_next_id);
+BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
+                            lmn_interned_str rule_name, LmnLineNum line_num,
+                            LmnMembraneRef *ptmp_global_root,
+                            LmnRegisterArray *p_v_tmp,
+                            unsigned int warry_use_org,
+                            unsigned int warry_size_org);
+BOOL tr_instr_jump(LmnTranslated f, LmnReactCxtRef rc,
+                   LmnMembraneRef thisisrootmembutnotused, LmnRuleRef rule,
+                   int newid_num, const int *newid);
 
 /* @} */
 
