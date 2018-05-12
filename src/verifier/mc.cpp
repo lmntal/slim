@@ -311,7 +311,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
     if (RC_MC_USE_D(rc) && RC_D_COND(rc)) {
       /* delta-stringフラグをこの時点で初めて立てる */
-      s_set_d(src_succ);
+      src_succ->s_set_d();
     }
 
     /* 状態空間に状態src_succを記録 */
