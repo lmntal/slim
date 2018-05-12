@@ -783,7 +783,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
     succ_c = (ContextC1Ref)vec_get(ample_set, i);
     succ_d = succ_c->d;
-    src_succ = state_make_minimal();
+    src_succ = new State();
     state_set_parent(src_succ, s);
     state_set_property_state(src_succ, DEFAULT_STATE_ID);
     if (s->has_trans_obj()) {
@@ -840,7 +840,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         continue; /* さっき登録した */
 
       succ_d = succ_c->d;
-      src_succ = state_make_minimal();
+      src_succ = new State();
       state_set_parent(src_succ, s);
       state_set_property_state(src_succ, DEFAULT_STATE_ID);
       if (s->has_trans_obj()) {

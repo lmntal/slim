@@ -126,7 +126,7 @@ static inline LmnBinStrRef statetable_compress_state(StateTable *st, State *s,
  * statetable_{insert/add_direct}内の排他制御ブロック内で呼び出す. */
 static inline void state_set_compress_for_table(State *s, LmnBinStrRef bs) {
   if (!s->is_encoded() && bs) {
-    state_set_binstr(s, bs);
+    s->state_set_binstr(bs);
   }
 }
 
@@ -436,11 +436,11 @@ static void statetable_memid_rehash(State *s, StateTable *st) {
   State *new_s;
   LmnMembraneRef m;
 
-  new_s = state_make_minimal();
-  m = lmn_binstr_decode(state_binstr(s));
+  new_s = new State();
+  m = lmn_binstr_decode(s->state_binstr());
   new_s->state_name = s->state_name;
-  state_set_binstr(new_s, lmn_mem_encode(m));
-  new_s->hash = binstr_hash(state_binstr(new_s));
+  new_s->state_set_binstr(lmn_mem_encode(m));
+  new_s->hash = binstr_hash(new_s->state_binstr());
 
   new_s->set_encoded();
   new_s->set_expanded();
@@ -582,10 +582,10 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
   /* d->mem (parentに対応する階層グラフ構造)を,
    * sに対応する階層グラフ構造Xへ書換え */
   dmem_root_commit(d);
-  state_set_mem(s, DMEM_ROOT_MEM(d));
+  s->state_set_mem(DMEM_ROOT_MEM(d));
 
   /* Xを基に, ハッシュ値/mem_idなどの状態データを計算する */
-  state_calc_hash(s, state_mem(s), statespace_use_memenc(ss));
+  s->state_calc_hash(state_mem(s), statespace_use_memenc(ss));
 
   /* 既にバイナリストリング計算済みとなるcanonical membrane使用時は,
    * この時点でdelta-stringを計算する */
@@ -600,8 +600,8 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
 
   /* LmnMembraneとLmnBinStrのデータ領域を統合(@rev.458)したため, NULL設定に注意
    */
-  if (!state_binstr(s)) {
-    state_set_mem(s, NULL);
+  if (!s->state_binstr()) {
+    s->state_set_mem(NULL);
   }
 
   return ret;
@@ -812,7 +812,7 @@ static State *statetable_insert(StateTable *st, State *ins)
 
   if (ins->is_binstr_user()) {
     /* 既に状態insがバイナリストリングを保持している場合 */
-    compress = state_binstr(ins);
+    compress = ins->state_binstr();
   } else {
     compress = NULL;
   }
@@ -838,8 +838,8 @@ static State *statetable_insert(StateTable *st, State *ins)
         statetable_num_add(st, 1);
         if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
           TreeNodeID ref;
-          tcd_set_byte_length(&ins->tcd, state_binstr(ins)->len);
-          ref = lmn_bscomp_tree_encode(state_binstr(ins));
+          tcd_set_byte_length(&ins->tcd, ins->state_binstr()->len);
+          ref = lmn_bscomp_tree_encode(ins->state_binstr());
           tcd_set_root_ref(&ins->tcd, ref);
         }
         st->tbl[bucket] = ins;
@@ -998,8 +998,8 @@ static State *statetable_insert(StateTable *st, State *ins)
           state_set_compress_for_table(ins, compress);
           if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
             TreeNodeID ref;
-            tcd_set_byte_length(&ins->tcd, state_binstr(ins)->len);
-            ref = lmn_bscomp_tree_encode(state_binstr(ins));
+            tcd_set_byte_length(&ins->tcd, ins->state_binstr()->len);
+            ref = lmn_bscomp_tree_encode(ins->state_binstr());
             tcd_set_root_ref(&ins->tcd, ref);
           }
           str->next = ins;
@@ -1042,7 +1042,7 @@ static void statetable_add_direct(StateTable *st, State *s) {
     BOOL inserted;
 
     if (s->is_binstr_user()) {
-      compress = state_binstr(s);
+      compress = s->state_binstr();
     } else {
       compress = NULL;
     }
@@ -1060,8 +1060,8 @@ static void statetable_add_direct(StateTable *st, State *s) {
         statetable_num_add(st, 1);
         if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
           TreeNodeID ref;
-          tcd_set_byte_length(&s->tcd, state_binstr(s)->len);
-          ref = lmn_bscomp_tree_encode(state_binstr(s));
+          tcd_set_byte_length(&s->tcd, s->state_binstr()->len);
+          ref = lmn_bscomp_tree_encode(s->state_binstr());
           tcd_set_root_ref(&s->tcd, ref);
         }
         st->tbl[bucket] = s;

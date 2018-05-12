@@ -472,8 +472,8 @@ static void profile_state_f(State *s, LmnWord arg) {
   p->state_space += sizeof(State);
   if (!s->is_binstr_user() && state_mem(s)) {
     p->membrane_space += lmn_mem_root_space(state_mem(s));
-  } else if (s->is_binstr_user() && state_binstr(s)) {
-    p->binstr_space += lmn_binstr_space(state_binstr(s));
+  } else if (s->is_binstr_user() && s->state_binstr()) {
+    p->binstr_space += lmn_binstr_space(s->state_binstr());
   }
 
   p->transition_space += succ_num * sizeof(succ_data_t); /* # of pointer*/

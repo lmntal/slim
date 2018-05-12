@@ -368,8 +368,8 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
 
   if (d) {
     dmem_root_commit(d);
-    state_set_mem(succ, DMEM_ROOT_MEM(d));
-    state_calc_hash(succ, state_mem(succ), lmn_env.mem_enc);
+    succ->state_set_mem(DMEM_ROOT_MEM(d));
+    succ->state_calc_hash(state_mem(succ), lmn_env.mem_enc);
     tmp_m = NULL;
   } else {
     tmp_m = state_mem(succ);
@@ -383,7 +383,7 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
     st_add_direct(mc_por.states, (st_data_t)succ, (st_data_t)succ);
     if (!succ->is_encoded()) {
       bs = state_calc_mem_dump(succ);
-      state_set_binstr(succ, bs);
+      succ->state_set_binstr(bs);
     }
     ret = succ;
     POR_DEBUG({ state_id_issue(succ); });

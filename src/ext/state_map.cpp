@@ -126,7 +126,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_memstack_delete(RC_MEMSTACK(rc), m);
   lmn_mem_remove_mem(mem, m);
 
-  State *new_s = state_make(m, 0, TRUE);
+  State *new_s = new State(m, 0, TRUE);
   State *succ = statespace_insert(ss, new_s);
 
   if (succ == new_s) { /* new state */
