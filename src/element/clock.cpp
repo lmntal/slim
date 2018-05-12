@@ -37,16 +37,16 @@
  * $Id$
  */
 
-extern "C"{
+extern "C" {
 #include "clock.h"
 
 #include "lmntal.h" // config.h
 #include <stdio.h>
 
-#if defined (TIME_WITH_SYS_TIME)
-# include <time.h>
-# include <sys/time.h>
-# define ENABLE_TIME_PROFILE
+#if defined(TIME_WITH_SYS_TIME)
+#include <sys/time.h>
+#include <time.h>
+#define ENABLE_TIME_PROFILE
 #endif
 }
 /* ------------------------------------------------------------------------
@@ -55,37 +55,36 @@ extern "C"{
  */
 
 /* スレッド単位で計測したCPU時間は,
- * プロセッサ間でスレッドがスイッチした場合に誤差がでるので結果は鵜呑みせずあくまで目安とする */
-double get_cpu_time()
-{
+ * プロセッサ間でスレッドがスイッチした場合に誤差がでるので結果は鵜呑みせずあくまで目安とする
+ */
+double get_cpu_time() {
 #ifdef ENABLE_TIME_PROFILE
-# if defined(HAVE_LIBRT) && defined(CLOCK_THREAD_CPUTIME_ID)
+#if defined(HAVE_LIBRT) && defined(CLOCK_THREAD_CPUTIME_ID)
   /* 環境によってはCLOCK_THREAD_CPUTIME_IDが定義されていない. */
   struct timespec ts;
   clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
   return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
-# else
+#else
   /* この場合, CPU Usageはプロセス単位(全スレッド共有)になってしまう */
   return clock() / (double)CLOCKS_PER_SEC;
-# endif
+#endif
 #
 #else
   fprintf(stderr, "not support the time profiler on this environment.");
 #endif
 }
 
-double get_wall_time()
-{
+double get_wall_time() {
 #ifdef ENABLE_TIME_PROFILE
-# ifdef HAVE_LIBRT
+#ifdef HAVE_LIBRT
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
   return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9; /* ナノ秒 */
-# else
+#else
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return tv.tv_sec + (double)tv.tv_usec * 1e-6; /* マイクロ秒 */
-# endif
+#endif
 #
 #else
   fprintf(stderr, "not support the time profiler on this environment.");

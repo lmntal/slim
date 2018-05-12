@@ -1,8 +1,8 @@
 /*
  * syntax.h - syntax tree  of the Intermediate Language
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -43,16 +43,15 @@
 #warning 'syntax.h' is deprecated. Use 'syntax.hpp' instead.
 #endif
 
+#include "element/element.h"
 #include "lmntal.h"
 #include "vm/vm.h"
-#include "element/element.h"
 
 /**
  * @ingroup  Loader
  * @defgroup Syntax
  * @{
  */
-
 
 /* Rule */
 

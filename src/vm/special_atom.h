@@ -1,8 +1,8 @@
 /*
  * special_atom.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -55,8 +55,8 @@
  * @{
  */
 
-#include "lmntal.h"
 #include "element/element.h"
+#include "lmntal.h"
 
 #define LMN_SP_ATOM(atom) ((struct LmnSPAtomHeader *)(atom))
 
@@ -64,11 +64,11 @@
 #define LMN_SP_ATOM_TYPE(X) (LMN_SP_ATOM(X)->type)
 #define LMN_SP_ATOM_SET_TYPE(obj, t) (LMN_SP_ATOM((obj))->type = (t))
 
-typedef void *(*f_copy)(void*);
-typedef BOOL (*f_eq)(void*, void*);
-typedef void (*f_free)(void*);
+typedef void *(*f_copy)(void *);
+typedef BOOL (*f_eq)(void *, void *);
+typedef void (*f_free)(void *);
 typedef void (*f_dump)(void *, LmnPortRef);
-typedef BOOL (*f_is_ground)(void*);
+typedef BOOL (*f_is_ground)(void *);
 
 struct SpecialAtomCallback {
   lmn_interned_str name;
@@ -83,29 +83,26 @@ void sp_atom_init(void);
 void sp_atom_finalize(void);
 
 /* 新しいスペシャルアトムのタイプを登録する。登録されたタイプのIDを返す */
-int lmn_sp_atom_register(const char *name,   /* move owner */
-                         f_copy f_copy,
-                         f_free f_free,
-                         f_eq f_eq,
-                         f_dump f_dump,
+int lmn_sp_atom_register(const char *name, /* move owner */
+                         f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
                          f_is_ground f_is_ground);
 
-struct SpecialAtomCallback * sp_atom_get_callback(int id);
+struct SpecialAtomCallback *sp_atom_get_callback(int id);
 
-#define SP_ATOM_NAME(ATOM)  \
-  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->name)
-#define SP_ATOM_COPY(ATOM) \
+#define SP_ATOM_NAME(ATOM) (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->name)
+#define SP_ATOM_COPY(ATOM)                                                     \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->copy((void *)(ATOM)))
 
-#define SP_ATOM_FREE(ATOM) \
+#define SP_ATOM_FREE(ATOM)                                                     \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->free((void *)(ATOM)))
-#define SP_ATOM_DUMP(ATOM, PORT) \
+#define SP_ATOM_DUMP(ATOM, PORT)                                               \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->dump((void *)(ATOM), (PORT)))
-#define SP_ATOM_IS_GROUND(ATOM) \
+#define SP_ATOM_IS_GROUND(ATOM)                                                \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->is_ground((void *)(ATOM)))
-#define SP_ATOM_EQ(ATOM1, ATOM2)                                       \
-  (LMN_SP_ATOM_TYPE(ATOM1) == LMN_SP_ATOM_TYPE(ATOM2) && \
-   sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM1))->eq((void *)(ATOM1), (void *)(ATOM2)))
+#define SP_ATOM_EQ(ATOM1, ATOM2)                                               \
+  (LMN_SP_ATOM_TYPE(ATOM1) == LMN_SP_ATOM_TYPE(ATOM2) &&                       \
+   sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM1))                               \
+       ->eq((void *)(ATOM1), (void *)(ATOM2)))
 
 /* @} */
 

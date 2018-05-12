@@ -53,7 +53,7 @@
 #include "../lmntal.h"
 #include "lmntal_thread.h"
 
-typedef struct Node  Node;
+typedef struct Node Node;
 typedef struct Queue Queue;
 struct Node {
   LmnWord v;
@@ -63,7 +63,7 @@ struct Node {
 struct Queue {
   Node *head;
   Node *tail;
-  BOOL  lock;
+  BOOL lock;
   unsigned long enq_num, deq_num;
   pthread_mutex_t enq_mtx, deq_mtx;
 };
@@ -90,64 +90,61 @@ static inline unsigned long queue_entry_num(Queue *q) {
 }
 
 static inline void queue_clear(Queue *q) {
-  while (dequeue(q));
+  while (dequeue(q))
+    ;
 }
-
 
 /** ==========
  *  DeQue (KaWaBaTa code)
  */
 
 struct Deque {
-  LmnWord* tbl;
+  LmnWord *tbl;
   unsigned int head, tail, cap;
 };
 
-
 typedef struct Deque Deque;
-typedef LmnWord      deq_data_t;
+typedef LmnWord deq_data_t;
 
-#define deq_cap(V)       ((V)->cap)
-#define deq_head(V)      ((V)->head)
-#define deq_tail(V)      ((V)->tail)
-#define deq_num(V)       ((V)->tail > (V)->head                       \
-                          ? (V)->tail - (V)->head - 1                 \
-                          : (V)->cap  - (V)->head + (V)->tail - 1)
-#define deq_is_empty(V)  (deq_num(V) == 0)
-#define DEQ_DEC(X, C)    (X = X != 0     ? X - 1 : C - 1)
-#define DEQ_INC(X, C)    (X = X != C - 1 ? X + 1 : 0)
+#define deq_cap(V) ((V)->cap)
+#define deq_head(V) ((V)->head)
+#define deq_tail(V) ((V)->tail)
+#define deq_num(V)                                                             \
+  ((V)->tail > (V)->head ? (V)->tail - (V)->head - 1                           \
+                         : (V)->cap - (V)->head + (V)->tail - 1)
+#define deq_is_empty(V) (deq_num(V) == 0)
+#define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
+#define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
-static inline void    deq_init(Deque *deq, unsigned int init_size);
-static inline Deque  *deq_make(unsigned int init_size);
-static inline void    deq_push_head(Deque *deq, LmnWord keyp);
-static inline void    deq_push_tail(Deque *deq, LmnWord keyp);
+static inline void deq_init(Deque *deq, unsigned int init_size);
+static inline Deque *deq_make(unsigned int init_size);
+static inline void deq_push_head(Deque *deq, LmnWord keyp);
+static inline void deq_push_tail(Deque *deq, LmnWord keyp);
 static inline LmnWord deq_pop_head(Deque *deq);
 static inline LmnWord deq_pop_tail(Deque *deq);
 static inline LmnWord deq_peek_head(const Deque *deq);
 static inline LmnWord deq_peek_tail(const Deque *deq);
 static inline LmnWord deq_get(const Deque *deq, unsigned int i);
-static inline void    deq_clear(Deque *deq);
-static inline void    deq_destroy(Deque *deq);
-static inline void    deq_free(Deque *deq);
+static inline void deq_clear(Deque *deq);
+static inline void deq_destroy(Deque *deq);
+static inline void deq_free(Deque *deq);
 static inline unsigned long deq_space(Deque *deq);
 static inline unsigned long deq_space_inner(Deque *deq);
-static inline void    deq_print(Deque *deq);
+static inline void deq_print(Deque *deq);
 
 LmnWord deq_pop_n(Deque *deq, unsigned int n);
-BOOL    deq_contains(const Deque *deq, LmnWord keyp);
-Deque  *deq_copy(Deque *deq);
-void    deq_reverse(Deque *deq);
-void    deq_resize(Deque *deq, unsigned int size, deq_data_t val);
-void    deq_sort(const Deque *deq,
-                 int (*compare)(const void*, const void*));
-
+BOOL deq_contains(const Deque *deq, LmnWord keyp);
+Deque *deq_copy(Deque *deq);
+void deq_reverse(Deque *deq);
+void deq_resize(Deque *deq, unsigned int size, deq_data_t val);
+void deq_sort(const Deque *deq, int (*compare)(const void *, const void *));
 
 /* init */
 static inline void deq_init(Deque *deq, unsigned int init_size) {
-  deq->tbl  = LMN_NALLOC(LmnWord, init_size);
+  deq->tbl = LMN_NALLOC(LmnWord, init_size);
   deq->head = 0;
   deq->tail = 1;
-  deq->cap  = init_size;
+  deq->cap = init_size;
 }
 
 /* make */
@@ -174,7 +171,7 @@ static inline void deq_extend(Deque *deq) {
 
 /* push */
 static inline void deq_push_head(Deque *deq, LmnWord keyp) {
-  if(deq_num(deq) == deq->cap - 1) {
+  if (deq_num(deq) == deq->cap - 1) {
     deq_extend(deq);
   }
   (deq->tbl)[deq->head] = keyp;
@@ -183,7 +180,7 @@ static inline void deq_push_head(Deque *deq, LmnWord keyp) {
 
 /*  */
 static inline void deq_push_tail(Deque *deq, LmnWord keyp) {
-  if(deq_num(deq) == deq->cap - 1) {
+  if (deq_num(deq) == deq->cap - 1) {
     deq_extend(deq);
   }
   (deq->tbl)[deq_tail(deq)] = keyp;
@@ -229,9 +226,7 @@ static inline void deq_clear(Deque *deq) {
 }
 
 /* destroy */
-static inline void deq_destroy(Deque *deq) {
-  LMN_FREE(deq->tbl);
-}
+static inline void deq_destroy(Deque *deq) { LMN_FREE(deq->tbl); }
 
 /* free */
 static inline void deq_free(Deque *deq) {
@@ -250,8 +245,10 @@ static inline unsigned long deq_space(Deque *deq) {
 static inline void deq_print(Deque *deq) {
   unsigned int i;
   FILE *f = stdout;
-  fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", deq->cap, deq->head, deq->tail, deq_num(deq));
-  for (i = 0; i < deq->cap; i++) fprintf(f, "%lu, ", deq->tbl[i]);
+  fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", deq->cap, deq->head,
+          deq->tail, deq_num(deq));
+  for (i = 0; i < deq->cap; i++)
+    fprintf(f, "%lu, ", deq->tbl[i]);
   fprintf(f, "]\n");
 }
 

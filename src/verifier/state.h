@@ -51,9 +51,9 @@
 #include "binstr_compress.h"
 #include "element/element.h"
 #include "mem_encode.h"
+#include "state_defs.h"
 #include "tree_compress.h"
 #include "vm/vm.h"
-#include "state_defs.h"
 
 /** ------------
  *  State
@@ -283,8 +283,8 @@ void state_D_cache(State *s, LmnBinStrRef dec);
 LmnBinStrRef state_D_fetch(State *s);
 void state_D_flush(State *s);
 void state_D_progress(State *s, LmnReactCxtRef rc);
-void state_update_cost(State *s, TransitionRef t, State *pre,
-                       Vector *new_ss, BOOL f, EWLock *ewlock);
+void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
+                       BOOL f, EWLock *ewlock);
 void state_set_cost(State *s, LmnCost cost, State *pre);
 
 LmnCost state_cost(State *S);
@@ -296,11 +296,12 @@ void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID);
  */
 
 struct Transition {
-  State *s;         /*  8byte: 遷移先状態 */
-  unsigned long id; /*  8byte: State graph(=\=
-                       Automata)上の各遷移に付与されるグローバルなID．
-                               ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる．
-                     */
+  State *s; /*  8byte: 遷移先状態 */
+  unsigned long
+      id; /*  8byte: State graph(=\=
+             Automata)上の各遷移に付与されるグローバルなID．
+                     ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる．
+           */
   Vector rule_names; /* 24byte: ルール名 複数あるのは多重辺(porなしの場合)*/
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
@@ -453,8 +454,8 @@ void state_set_cost(State *s, LmnCost cost, State *pre);
 /* 状態sのcostが最適ならば更新し、状態sを遷移先更新状態にする
  * f==true: minimize
  * f==false: maximize */
-void state_update_cost(State *s, TransitionRef t, State *pre,
-                                     Vector *new_ss, BOOL f, EWLock *ewlock);
+void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
+                       BOOL f, EWLock *ewlock);
 
 /* 遷移tに割り当てたidを返す. */
 unsigned long transition_id(TransitionRef t);

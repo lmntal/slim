@@ -75,8 +75,9 @@ struct McPorData {
   st_table_t
       states; /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
   Queue *queue; /* C1のチェックにあたってstate graphを展開するする際に使用 */
-  Vector *ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
-                            */
+  Vector *
+      ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
+                        */
   LmnReactCxtRef rc;
   unsigned long next_strans_id;
   BOOL flags;
@@ -641,8 +642,10 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
           ss2_j2 = transition(ss2, j2);
           t2 = transition_next_state(ss2_j2);
 
-          if (t1 == t2 && ss1_i2 != ss2_j2 /* ss1=ss2となった際に，同一の遷移同士で独立性を定義しないようにする
-                                            */
+          if (t1 == t2 &&
+              ss1_i2 !=
+                  ss2_j2 /* ss1=ss2となった際に，同一の遷移同士で独立性を定義しないようにする
+                          */
           ) {
             /* 遷移s_iと遷移s_jが独立であるため，IDを書換えた上で独立性情報テーブルを更新する
              */
@@ -967,8 +970,9 @@ static BOOL push_independent_strans_to_table(unsigned long i1,
 static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
                                         st_data_t current_state) {
   unsigned long id_key; /* 現在チェック中のエントリーのキー */
-  Vector *ids_independent_of_id_key; /* キーのIDを持つ遷移と独立な遷移が持つIDを管理するVector
-                                      */
+  Vector *
+      ids_independent_of_id_key; /* キーのIDを持つ遷移と独立な遷移が持つIDを管理するVector
+                                  */
   State *s;
   unsigned int i, j, k;
   BOOL
@@ -996,8 +1000,9 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
      * sから可能な遷移の中のi番目(id_key)に対応 */
     for (j = 0; j < state_succ_num(s); j++) {
       TransitionRef check;
-      unsigned long checked_id; /* キーのIDを持つ遷移と依存関係がある可能性のある遷移IDを一時的に管理
-                                 */
+      unsigned long
+          checked_id; /* キーのIDを持つ遷移と依存関係がある可能性のある遷移IDを一時的に管理
+                       */
       BOOL
           is_dependent; /* checked_id
                            なるIDを持つ遷移がキーのIDと依存関係にあるならば真 */

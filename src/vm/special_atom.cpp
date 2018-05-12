@@ -1,8 +1,8 @@
 /*
  * special_atom.cpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -43,13 +43,9 @@ extern "C" {
 
 Vector *sp_atom_callback_tbl;
 
-void sp_atom_init()
-{
-  sp_atom_callback_tbl = vec_make(64);
-}
+void sp_atom_init() { sp_atom_callback_tbl = vec_make(64); }
 
-void sp_atom_finalize()
-{
+void sp_atom_finalize() {
   int i;
 
   for (i = 0; i < vec_num(sp_atom_callback_tbl); i++) {
@@ -58,16 +54,10 @@ void sp_atom_finalize()
   vec_free(sp_atom_callback_tbl);
 }
 
-int lmn_sp_atom_register(const char *name,
-                         f_copy f_copy,
-                         f_free f_free,
-                         f_eq f_eq,
-                         f_dump f_dump,
-                         f_is_ground f_is_ground)
-{
+int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
+                         f_eq f_eq, f_dump f_dump, f_is_ground f_is_ground) {
   struct SpecialAtomCallback *c = LMN_MALLOC(struct SpecialAtomCallback);
-  c->name = lmn_intern(name),
-  c->copy = f_copy;
+  c->name = lmn_intern(name), c->copy = f_copy;
   c->free = f_free;
   c->eq = f_eq;
   c->dump = f_dump;
@@ -77,9 +67,7 @@ int lmn_sp_atom_register(const char *name,
   return vec_num(sp_atom_callback_tbl) - 1;
 }
 
-struct SpecialAtomCallback *sp_atom_get_callback(int id)
-{
+struct SpecialAtomCallback *sp_atom_get_callback(int id) {
   LMN_ASSERT(vec_num(sp_atom_callback_tbl) > id);
   return (struct SpecialAtomCallback *)vec_get(sp_atom_callback_tbl, id);
 }
-

@@ -1,8 +1,8 @@
 /*
  * firstclass_rule.h
  *
- *   Copyright (c) 2017, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -37,10 +37,9 @@
 #ifndef LMN_FIRSTCLASS_RULE_H
 #define LMN_FIRSTCLASS_RULE_H
 
-#include "lmntal.h"
 #include "atom.h"
+#include "lmntal.h"
 #include "membrane.h"
-
 
 /**
  * @ingroup VM
@@ -49,10 +48,12 @@
  */
 
 /**
- * @brief Initialize a table to associate first-class rulesets with <tt>':-'/3</tt> atoms.
- * 
+ * @brief Initialize a table to associate first-class rulesets with
+ * <tt>':-'/3</tt> atoms.
+ *
  * @note
- *     This function must be called exactly once before using functions of first-class rulesets.
+ *     This function must be called exactly once before using functions of
+ * first-class rulesets.
  */
 void first_class_rule_tbl_init();
 
@@ -75,7 +76,8 @@ void firstclass_ruleset_release(LmnSymbolAtomRef imply);
 
 /**
  * @brief Get a first-class ruleset associated with @c imply.
- * @return A ruleset, or if no rule is associated with @c imply it returns @c NULL.
+ * @return A ruleset, or if no rule is associated with @c imply it returns @c
+ * NULL.
  */
 LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply);
 

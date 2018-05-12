@@ -41,28 +41,27 @@
  *  common thread library
  */
 
-extern "C"{
+extern "C" {
 #define _GNU_SOURCE
 #include "lmntal_thread.h"
-#include "util.h"
 #include "error.h"
-#if defined (HAVE_SCHED_H) && defined (HAVE_SYSCALL_H)
-# include <sched.h>
-# include <syscall.h>
-# include <unistd.h>
-# include <sys/types.h>
-# define ENABLE_CPU_AFFINITY
+#include "util.h"
+#if defined(HAVE_SCHED_H) && defined(HAVE_SYSCALL_H)
+#include <sched.h>
+#include <sys/types.h>
+#include <syscall.h>
+#include <unistd.h>
+#define ENABLE_CPU_AFFINITY
 #endif
 }
 
 /* 呼び出したスレッドとn番のCPUを貼り付ける */
-void lmn_thread_set_CPU_affinity(unsigned long n)
-{
+void lmn_thread_set_CPU_affinity(unsigned long n) {
   /* TODO: マニュアルによればpthread_npライブラリを使った方がよい  */
 #ifdef ENABLE_CPU_AFFINITY
   if (lmn_env.core_num <= HAVE_PROCESSOR_ELEMENTS) {
-    pid_t      my_pid;
-    cpu_set_t  my_mask;
+    pid_t my_pid;
+    cpu_set_t my_mask;
     my_pid = syscall(SYS_gettid);
     CPU_ZERO(&my_mask);
     sched_setaffinity(my_pid, sizeof(my_mask), &my_mask);
@@ -71,30 +70,25 @@ void lmn_thread_set_CPU_affinity(unsigned long n)
 }
 
 #ifdef HAVE_SCHED_H
-void thread_yield_CPU()
-{
-  sched_yield();
-}
+void thread_yield_CPU() { sched_yield(); }
 #endif
-
 
 /** ----------------------------------
  *  Double Lock
  */
 
 /* TODO: stripeの粒度を呼出側で指定できた方が汎用的だと思う */
-EWLock *ewlock_make(unsigned int e_num, unsigned int w_num)
-{
+EWLock *ewlock_make(unsigned int e_num, unsigned int w_num) {
   EWLock *lock;
   unsigned int i;
   w_num = round2up(w_num);
 
   lock = LMN_MALLOC(EWLock);
-  lock->elock_used   = NULL;
-  lock->elock_num    = e_num;
-  lock->elock        = NULL;
-  lock->wlock_num    = w_num;
-  lock->wlock        = NULL;
+  lock->elock_used = NULL;
+  lock->elock_num = e_num;
+  lock->elock = NULL;
+  lock->wlock_num = w_num;
+  lock->wlock = NULL;
 
   lock->elock = LMN_NALLOC(lmn_mutex_t, e_num);
   for (i = 0; i < e_num; i++) {
@@ -109,8 +103,7 @@ EWLock *ewlock_make(unsigned int e_num, unsigned int w_num)
   return lock;
 }
 
-void ewlock_free(EWLock *lock)
-{
+void ewlock_free(EWLock *lock) {
   unsigned long i, e_num, w_num;
 
   e_num = lock->elock_num;
@@ -128,49 +121,39 @@ void ewlock_free(EWLock *lock)
   LMN_FREE(lock);
 }
 
-
-void ewlock_acquire_write(EWLock *lock, mtx_data_t id)
-{
+void ewlock_acquire_write(EWLock *lock, mtx_data_t id) {
   unsigned long idx = id & (lock->wlock_num - 1);
   lmn_mutex_lock(&(lock->wlock[idx]));
 }
 
-void ewlock_release_write(EWLock *lock, mtx_data_t id)
-{
+void ewlock_release_write(EWLock *lock, mtx_data_t id) {
   unsigned long idx = id & (lock->wlock_num - 1);
   lmn_mutex_unlock(&(lock->wlock[idx]));
 }
 
-void ewlock_acquire_enter(EWLock *lock, mtx_data_t id)
-{
-  id = id >= lock->elock_num ? id % lock->elock_num
-                            : id;
+void ewlock_acquire_enter(EWLock *lock, mtx_data_t id) {
+  id = id >= lock->elock_num ? id % lock->elock_num : id;
   lmn_mutex_lock(&(lock->elock[id]));
 }
 
-void ewlock_release_enter(EWLock *lock, mtx_data_t id)
-{
-  id = id >= lock->elock_num ? id % lock->elock_num
-                             : id;
+void ewlock_release_enter(EWLock *lock, mtx_data_t id) {
+  id = id >= lock->elock_num ? id % lock->elock_num : id;
   lmn_mutex_unlock(&(lock->elock[id]));
 }
 
 /* lockが持つelockを昇順に確保していく.
- * 呼びたしスレッドがelockを既に確保していた場合の処理は未定義 (単にskipするだけでもよいような) */
-void ewlock_reject_enter(EWLock *lock, mtx_data_t my_id)
-{
+ * 呼びたしスレッドがelockを既に確保していた場合の処理は未定義
+ * (単にskipするだけでもよいような) */
+void ewlock_reject_enter(EWLock *lock, mtx_data_t my_id) {
   unsigned long i, n = lock->elock_num;
   for (i = 0; i < n; i++) {
     lmn_mutex_lock(&(lock->elock[i]));
   }
 }
 
-void ewlock_permit_enter(EWLock *lock, mtx_data_t my_id)
-{
+void ewlock_permit_enter(EWLock *lock, mtx_data_t my_id) {
   unsigned long i, n = lock->elock_num;
   for (i = 0; i < n; i++) {
     lmn_mutex_unlock(&(lock->elock[i]));
   }
 }
-
-

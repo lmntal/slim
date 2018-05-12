@@ -1,8 +1,8 @@
 /*
  * simply_process_table.h
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -49,7 +49,6 @@ extern "C" {
 
 typedef struct SimpleProcessTable *SimplyProcessTableRef;
 
-
 #include "element/element.h"
 #include "vm/vm.h"
 
@@ -58,8 +57,8 @@ extern "C++" {
 #include "vm/process_table.hpp"
 
 struct SimpleProcessTable : ProcessTable<BYTE> {
-  SimpleProcessTable() : ProcessTable<BYTE>() {};
-  SimpleProcessTable(unsigned long size) : ProcessTable<BYTE>(size) {};
+  SimpleProcessTable() : ProcessTable<BYTE>(){};
+  SimpleProcessTable(unsigned long size) : ProcessTable<BYTE>(size){};
 
   bool get_flag(key_type key, value_type flag) {
     return this->contains(key) ? ((*this)[key] & flag) : false;
@@ -77,17 +76,11 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
     this->put(key, v | flag);
   }
 
-  bool contains(key_type key) {
-    return ProcessTable<BYTE>::contains(key);
-  }
+  bool contains(key_type key) { return ProcessTable<BYTE>::contains(key); }
 
-  bool contains(LmnSymbolAtomRef atom) {
-    return contains(LMN_SATOM_ID(atom));
-  }
+  bool contains(LmnSymbolAtomRef atom) { return contains(LMN_SATOM_ID(atom)); }
 
-  bool contains(LmnMembraneRef mem) {
-    return contains(lmn_mem_id(mem));
-  }
+  bool contains(LmnMembraneRef mem) { return contains(lmn_mem_id(mem)); }
 };
 }
 #endif
@@ -96,36 +89,43 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
  * Function Prototypes
  */
 
-
 SimplyProcessTableRef sproc_tbl_make_with_size(unsigned long size);
 SimplyProcessTableRef sproc_tbl_make(void);
 void sproc_tbl_free(SimplyProcessTableRef p);
 
 void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value);
-void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom, BYTE value);
+void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom,
+                        BYTE value);
 void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembraneRef mem, BYTE value);
 void sproc_tbl_unput(SimplyProcessTableRef p, LmnWord key);
 void sproc_tbl_unput_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom);
 void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembraneRef mem);
-int  sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value);
-int  sproc_tbl_get_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom, BYTE *value);
-int  sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembraneRef mem, BYTE *value);
+int sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value);
+int sproc_tbl_get_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom,
+                          BYTE *value);
+int sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembraneRef mem,
+                         BYTE *value);
 BOOL sproc_tbl_contains(SimplyProcessTableRef p, LmnWord key);
 BOOL sproc_tbl_contains_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom);
 BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembraneRef mem);
 BOOL sproc_tbl_get_flag(SimplyProcessTableRef p, LmnWord key, BYTE flag);
-BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef key, LmnWord flag);
-BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag);
+BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef key,
+                                LmnWord flag);
+BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembraneRef key,
+                               LmnWord flag);
 void sproc_tbl_unset_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag);
 void sproc_tbl_set_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag);
-void sproc_tbl_set_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key, LmnWord flag);
-void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag);
-void sproc_tbl_unset_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key, LmnWord flag);
-void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag);
+void sproc_tbl_set_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key,
+                             LmnWord flag);
+void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key,
+                            LmnWord flag);
+void sproc_tbl_unset_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key,
+                               LmnWord flag);
+void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key,
+                              LmnWord flag);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* LMN_SIMPLY_PROCESS_TABLE_H */

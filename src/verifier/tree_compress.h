@@ -42,7 +42,7 @@
  */
 
 #ifndef TREE_COMPRESS_H
-#  define TREE_COMPRESS_H
+#define TREE_COMPRESS_H
 
 /**
  * @ingroup  Verifier
@@ -62,9 +62,9 @@ typedef struct TreeDatabase *TreeDatabaseRef;
 typedef struct TreeNode *TreeNodeRef;
 
 struct TreeDatabase {
-  TreeNodeRef    *nodes;
-  uint64_t    node_count;
-  size_t      mask;
+  TreeNodeRef *nodes;
+  uint64_t node_count;
+  size_t mask;
 };
 
 struct TreeNode {
@@ -72,12 +72,13 @@ struct TreeNode {
   TreeNodeElement right;
 };
 
-TreeDatabaseRef   tree_make(size_t size);
-void           tree_free(TreeDatabaseRef treedb);
-void           tree_clear(TreeDatabaseRef treedb);
-LmnBinStrRef      tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len);
-TreeNodeID    tree_find_or_put(TreeDatabaseRef treedb, LmnBinStrRef bs, BOOL *found);
-uint64_t       tree_space(TreeDatabaseRef treedb);
+TreeDatabaseRef tree_make(size_t size);
+void tree_free(TreeDatabaseRef treedb);
+void tree_clear(TreeDatabaseRef treedb);
+LmnBinStrRef tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len);
+TreeNodeID tree_find_or_put(TreeDatabaseRef treedb, LmnBinStrRef bs,
+                            BOOL *found);
+uint64_t tree_space(TreeDatabaseRef treedb);
 
 #define tree_db_node_count(db) (db->node_count)
 #define tree_db_string_count(db) (db->string_count)

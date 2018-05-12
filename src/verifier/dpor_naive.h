@@ -1,8 +1,8 @@
 /*
  * dpor_naive.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -49,13 +49,8 @@
 #include "element/element.h"
 #include "statespace.h"
 
-
-
-void por_calc_ampleset(StateSpaceRef  ss,
-                       State       *s,
-                       LmnReactCxtRef rc,
-                       Vector      *new_s,
-                       BOOL        flag);
+void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
+                       Vector *new_s, BOOL flag);
 void init_por_vars(void);
 void free_por_vars(void);
 

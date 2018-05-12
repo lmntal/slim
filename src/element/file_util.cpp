@@ -37,16 +37,15 @@
  * $Id$
  */
 
-extern "C"{
+extern "C" {
 #include "file_util.h"
-#include <string.h>
 #include "../arch.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 }
 
-char *build_path(const char *dir, const char *component)
-{
+char *build_path(const char *dir, const char *component) {
   const int dir_len = strlen(dir);
   const int comp_len = strlen(component);
   char *buf;
@@ -56,20 +55,19 @@ char *build_path(const char *dir, const char *component)
     sprintf(buf, "%s%s", dir, component);
   } else {
     buf = (char *)malloc(sizeof(char) * dir_len + comp_len +
-                 strlen(DIR_SEPARATOR_STR) + comp_len + 1);
+                         strlen(DIR_SEPARATOR_STR) + comp_len + 1);
     sprintf(buf, "%s%s%s", dir, DIR_SEPARATOR_STR, component);
   }
 
   return buf;
 }
 
-char *basename_ext(const char *path)
-{
+char *basename_ext(const char *path) {
   char *buf = strdup(path);
   int len = strlen(buf);
   int i;
 
-  for (i = len-1; i >= 0; i--) {
+  for (i = len - 1; i >= 0; i--) {
     if (buf[i] == '.') {
       buf[i] = '\0';
       break;
@@ -79,13 +77,12 @@ char *basename_ext(const char *path)
   return buf;
 }
 
-char *extension(const char *path)
-{
+char *extension(const char *path) {
   int len = strlen(path);
   int i;
   char *ext;
 
-  for (i = len-1; i >= 0; i--) {
+  for (i = len - 1; i >= 0; i--) {
     if (path[i] == '.') {
       break;
     }

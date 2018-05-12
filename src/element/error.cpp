@@ -1,8 +1,8 @@
 /*
  * error.c - error handling
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -36,21 +36,19 @@
  * $Id: error.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
  */
 
-extern "C"{
+extern "C" {
+#include "error.h"
+#include "lmntal.h"
 #include <stdarg.h>
 #include <stdlib.h>
-#include "lmntal.h"
-#include "error.h"
 }
 
-void do_lmn_fatal(const char *file, int line, const char *msg)
-{
-  fprintf(stderr,"%s(%d) %s\n", file, line, msg);
+void do_lmn_fatal(const char *file, int line, const char *msg) {
+  fprintf(stderr, "%s(%d) %s\n", file, line, msg);
   fflush(stderr);
 }
 
-void lmn_report(const char *msg, ...)
-{
+void lmn_report(const char *msg, ...) {
   va_list args;
   va_start(args, msg);
   /* use raw port */

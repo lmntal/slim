@@ -1,8 +1,8 @@
 /*
  * byte_encoder.hpp - Encode IL AST to bytecode.
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -53,17 +53,16 @@ class ByteEncoder {
   using label = int;
   using location = size_t;
   std::map<label, location> label_loc; /* ラベルのからラベルのある位置の対応*/
-  std::map<location, label> loc_label_ref; /* ラベルを参照している位置と参照しているラベルの対応 */
+  std::map<location, label>
+      loc_label_ref; /* ラベルを参照している位置と参照しているラベルの対応 */
   location loc;
-  location cap;         /* 書き込み位置とbyte_seqのキャパシティ */
-  BYTE         *byte_seq;        /* ルールの命令列を書き込む領域 */
+  location cap;   /* 書き込み位置とbyte_seqのキャパシティ */
+  BYTE *byte_seq; /* ルールの命令列を書き込む領域 */
 
 public:
-  ByteEncoder() :
-    loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)) {}
+  ByteEncoder() : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)) {}
 
-  void load(const InstBlock &ib)
-  {
+  void load(const InstBlock &ib) {
     if (ib.has_label())
       label_loc[ib.label] = loc;
 
@@ -79,8 +78,7 @@ public:
 
       if (target_loc != label_loc.end()) {
         write_at<LmnJumpOffset>(
-                   target_loc->second - loc - sizeof(LmnJumpOffset),
-                   loc);
+            target_loc->second - loc - sizeof(LmnJumpOffset), loc);
       } else {
         fprintf(stderr, "label not found L%d\n", label);
         lmn_fatal("implementation error");
@@ -100,8 +98,7 @@ private:
     byte_seq = LMN_REALLOC(BYTE, byte_seq, cap);
   }
 
-  void load(std::shared_ptr<Instruction> inst)
-  {
+  void load(std::shared_ptr<Instruction> inst) {
     write_forward<LmnInstrOp>(inst->id);
     auto arg_num = inst->args.size();
 
@@ -116,39 +113,27 @@ private:
     }
   }
 
-  void load(std::shared_ptr<il::InstrArg> arg) {
-    arg->visit(*this);
-  }
+  void load(std::shared_ptr<il::InstrArg> arg) { arg->visit(*this); }
 
-  void load(std::shared_ptr<il::Functor> functor) {
-    functor->visit(*this);
-  }
+  void load(std::shared_ptr<il::Functor> functor) { functor->visit(*this); }
 
   /* 現在の位置に書き込TYPE型のデータを書き込む */
-  template<typename T>
-  void write(T value) {
-    write_at<T>(value, loc);
-  }
+  template <typename T> void write(T value) { write_at<T>(value, loc); }
 
   /* 現在の書き込み位置を移動する */
-  template<typename T>
-  void move_by() {
-    loc += sizeof(T);
-  }
+  template <typename T> void move_by() { loc += sizeof(T); }
 
   /* write & move_by */
-  template<typename T>
-  void write_forward(T value) {
+  template <typename T> void write_forward(T value) {
     write<T>(value);
     move_by<T>();
   }
 
   /* LCOの位置に書き込む */
-  template<typename T>
-  void write_at(T value, size_t loc) {
+  template <typename T> void write_at(T value, size_t loc) {
     while (loc + sizeof(T) >= cap)
       expand_byte_sec();
-    *(T*)(byte_seq + loc) = (value);
+    *(T *)(byte_seq + loc) = (value);
   }
 
 public:

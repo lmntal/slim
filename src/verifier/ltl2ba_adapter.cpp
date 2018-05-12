@@ -36,17 +36,16 @@
  *
  * $Id$
  */
-extern "C"{
+extern "C" {
 #include "ltl2ba_adapter.h"
 #include "../lmntal.h"
 #include "element/element.h"
 #include <stdlib.h>
 }
-FILE *ltl2ba_str(char *ltl)
-{
+FILE *ltl2ba_str(char *ltl) {
   char *cmd;
   char buf[2048] = {0};
-  
+
   if ((cmd = getenv(ENV_LTL2BA))) {
     sprintf(buf, "%s -f \"%s\"", cmd, ltl);
     return popen(buf, "r");

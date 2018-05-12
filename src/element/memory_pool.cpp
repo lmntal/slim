@@ -1,8 +1,8 @@
 /*
  * memory_pool.c
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -36,33 +36,34 @@
  * $Id: memory_pool.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
  */
 
-extern "C"{
-#include "lmntal.h"
+extern "C" {
 #include "memory_pool.h"
+#include "lmntal.h"
 }
 
-#define REF_CAST(T,X) (*(T*)&(X))
+#define REF_CAST(T, X) (*(T *)&(X))
 
-/* each element must be bigger than void*, so align everything in sizeof(void*) !! */
+/* each element must be bigger than void*, so align everything in sizeof(void*)
+ * !! */
 /* after alignment, X byte object needs ALIGNED_SIZE(X) byte. */
-#define ALIGNED_SIZE(X) (((X + sizeof(void*) - 1) / sizeof(void*)) * sizeof(void*))
+#define ALIGNED_SIZE(X)                                                        \
+  (((X + sizeof(void *) - 1) / sizeof(void *)) * sizeof(void *))
 
-memory_pool *memory_pool_new(int s)
-{
+memory_pool *memory_pool_new(int s) {
   memory_pool *res = LMN_MALLOC(memory_pool);
 
   res->sizeof_element = ALIGNED_SIZE(s);
   res->block_head = 0;
   res->free_head = 0;
 
-  /* fprintf(stderr, "this memory_pool allocate %d, aligned as %d\n", s, res->sizeof_element); */
+  /* fprintf(stderr, "this memory_pool allocate %d, aligned as %d\n", s,
+   * res->sizeof_element); */
 
   return res;
 }
 
 static const int blocksize = 8;
-void *memory_pool_malloc(memory_pool *p)
-{
+void *memory_pool_malloc(memory_pool *p) {
   void *res;
 
   if (p->free_head == 0) {
@@ -72,42 +73,42 @@ void *memory_pool_malloc(memory_pool *p)
     /* fprintf(stderr, "no more free space, so allocate new block\n"); */
 
     /* top of block is used as pointer to head of next block */
-    rawblock = (char *)lmn_malloc(ALIGNED_SIZE(sizeof(void*)) + p->sizeof_element * blocksize);
-    *(void**)rawblock = p->block_head;
+    rawblock = (char *)lmn_malloc(ALIGNED_SIZE(sizeof(void *)) +
+                                  p->sizeof_element * blocksize);
+    *(void **)rawblock = p->block_head;
     p->block_head = rawblock;
 
     /* rest is used as space for elements */
     /* skip top of block */
-    rawblock = rawblock + ALIGNED_SIZE(sizeof(void*));
+    rawblock = rawblock + ALIGNED_SIZE(sizeof(void *));
     p->free_head = rawblock;
 
     for (i = 0; i < (blocksize - 1); i++) {
       /* top of each empty elements is used as pointer to next empty element */
-      REF_CAST(void*, rawblock[p->sizeof_element * i]) = &rawblock[p->sizeof_element * (i + 1)];
+      REF_CAST(void *, rawblock[p->sizeof_element * i]) =
+          &rawblock[p->sizeof_element * (i + 1)];
     }
-    REF_CAST(void*, rawblock[p->sizeof_element * (blocksize - 1)]) = 0;
+    REF_CAST(void *, rawblock[p->sizeof_element * (blocksize - 1)]) = 0;
   }
 
   res = p->free_head;
-  p->free_head = *(void**)p->free_head;
+  p->free_head = *(void **)p->free_head;
 
   return res;
 }
 
-void memory_pool_free(memory_pool *p, void *e)
-{
+void memory_pool_free(memory_pool *p, void *e) {
   if (p) {
-    *(void**)e = p->free_head;
+    *(void **)e = p->free_head;
     p->free_head = e;
   }
 }
 
-void memory_pool_delete(memory_pool *p)
-{
+void memory_pool_delete(memory_pool *p) {
   void *blockhead = p->block_head;
 
-  while(blockhead){
-    void *next_blockhead = *(void**)blockhead;
+  while (blockhead) {
+    void *next_blockhead = *(void **)blockhead;
     free(blockhead);
     blockhead = next_blockhead;
   }

@@ -45,6 +45,7 @@
  * @{
  */
 
+#include <stdio.h>
 #include <unistd.h>
 
 FILE *run_program(const char *program_name, char **args);

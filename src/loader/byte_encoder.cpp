@@ -1,8 +1,8 @@
 /*
  * byte_encoder.cpp - Encode IL AST to bytecode.
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -79,12 +79,9 @@ void ByteEncoder::load(const il::instr_arg::string &arg) {
 void ByteEncoder::load(const il::instr_arg::lineno &arg) {
   write_forward<LmnLineNum>(arg.value);
 }
-void ByteEncoder::load(const il::instr_arg::functor &arg) {
-  load(arg.value);
-}
+void ByteEncoder::load(const il::instr_arg::functor &arg) { load(arg.value); }
 void ByteEncoder::load(const il::instr_arg::ruleset &arg) {
   write_forward<LmnRulesetId>(arg.value);
-
 }
 void ByteEncoder::load(const il::instr_arg::var_list &arg) {
   auto &var_list = arg.value;

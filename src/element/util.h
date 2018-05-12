@@ -53,52 +53,48 @@
  *  ASCII code for printer
  */
 enum ESC_CODE {
-  CODE__HIGH_LIGHT           =  0x01,
-  CODE__UNDER_LINE           =  0x04,
-  CODE__DASH_LINE            =  0x05,
-  CODE__REVERSAL             =  0x07,
-  CODE__FORECOLOR_BLACK      =  0x1e,
-  CODE__FORECOLOR_RED        =  0x1f,
-  CODE__FORECOLOR_GREEN      =  0x20,
-  CODE__FORECOLOR_YELLOW     =  0x21,
-  CODE__FORECOLOR_DEEPBLUE   =  0x22,
-  CODE__FORECOLOR_PURPLE     =  0x23,
-  CODE__FORECOLOR_LIGHTBLUE  =  0x24,
-  CODE__FORECOLOR_WHITE      =  0x25,
-  CODE__BACKCOLOR_BLACK      =  0x28,
-  CODE__BACKCOLOR_RED        =  0x29,
-  CODE__BACKCOLOR_GREEN      =  0x2a,
-  CODE__BACKCOLOR_YELLOW     =  0x2b,
-  CODE__BACKCOLOR_DEEPBLUE   =  0x2c,
-  CODE__BACKCOLOR_PURPLE     =  0x2d,
-  CODE__BACKCOLOR_LIGHTBLUE  =  0x2e,
-  CODE__BACKCOLOR_GRAY       =  0x2f,
+  CODE__HIGH_LIGHT = 0x01,
+  CODE__UNDER_LINE = 0x04,
+  CODE__DASH_LINE = 0x05,
+  CODE__REVERSAL = 0x07,
+  CODE__FORECOLOR_BLACK = 0x1e,
+  CODE__FORECOLOR_RED = 0x1f,
+  CODE__FORECOLOR_GREEN = 0x20,
+  CODE__FORECOLOR_YELLOW = 0x21,
+  CODE__FORECOLOR_DEEPBLUE = 0x22,
+  CODE__FORECOLOR_PURPLE = 0x23,
+  CODE__FORECOLOR_LIGHTBLUE = 0x24,
+  CODE__FORECOLOR_WHITE = 0x25,
+  CODE__BACKCOLOR_BLACK = 0x28,
+  CODE__BACKCOLOR_RED = 0x29,
+  CODE__BACKCOLOR_GREEN = 0x2a,
+  CODE__BACKCOLOR_YELLOW = 0x2b,
+  CODE__BACKCOLOR_DEEPBLUE = 0x2c,
+  CODE__BACKCOLOR_PURPLE = 0x2d,
+  CODE__BACKCOLOR_LIGHTBLUE = 0x2e,
+  CODE__BACKCOLOR_GRAY = 0x2f,
 };
 
-#define __ESC_START__  "\x1b["
-#define __ESC_END__    "m"
+#define __ESC_START__ "\x1b["
+#define __ESC_END__ "m"
 
-static inline void esc_code_clear(){
+static inline void esc_code_clear() {
   printf("%s%s", __ESC_START__, __ESC_END__);
   return;
 }
 
-static inline void esc_code_add(int code)
-{
+static inline void esc_code_add(int code) {
   printf("%s%d%s", __ESC_START__, code, __ESC_END__);
 }
 
-static inline void esc_code_clear_f(FILE *f){
-  fprintf(f,"%s%s", __ESC_START__, __ESC_END__);
+static inline void esc_code_clear_f(FILE *f) {
+  fprintf(f, "%s%s", __ESC_START__, __ESC_END__);
   return;
 }
 
-static inline void esc_code_add_f(FILE *f,int code)
-{
-  fprintf(f,"%s%d%s", __ESC_START__, code, __ESC_END__);
+static inline void esc_code_add_f(FILE *f, int code) {
+  fprintf(f, "%s%d%s", __ESC_START__, code, __ESC_END__);
 }
-
-
 
 /** ----------------------
  *  byte operation
@@ -106,13 +102,13 @@ static inline void esc_code_add_f(FILE *f,int code)
 
 /* See http://isthe.com/chongo/tech/comp/fnv/ */
 #if SIZEOF_LONG == 4
-#  define FNV_PRIME 16777619UL
-#  define FNV_BASIS 2166136261UL
+#define FNV_PRIME 16777619UL
+#define FNV_BASIS 2166136261UL
 #elif SIZEOF_LONG == 8
-#  define FNV_PRIME  1099511628211UL
-#  define FNV_BASIS 14695981039346656037UL
+#define FNV_PRIME 1099511628211UL
+#define FNV_BASIS 14695981039346656037UL
 #else
-#  error "not supported"
+#error "not supported"
 #endif
 
 static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
@@ -135,17 +131,13 @@ static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
  * ０: a = b
  * 負: a ＜ b */
 static inline int lmn_byte_cmp(const unsigned char *a, long alen,
-                               const unsigned char *b, long blen)
-{
+                               const unsigned char *b, long blen) {
   if (alen != blen) {
     return alen - blen;
   } else {
     return memcmp(a, b, alen);
   }
 }
-
-
-
 
 /** ----------------------
  *  else

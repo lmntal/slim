@@ -46,17 +46,17 @@
  * @{
  */
 
-#include <stdio.h>
-#include "element/element.h"
 #include "automata.h"
+#include "element/element.h"
 #include "vm/vm.h"
+#include <stdio.h>
 
 typedef struct SymbolDefinition *SymbolDefinitionRef;
 typedef struct Proposition *PropositionRef;
 typedef Vector *PropSyms;
 
 /* propositional symbol definition */
- 
+
 SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p);
 void propsym_free(SymbolDefinitionRef s);
 unsigned int propsym_symbol_id(SymbolDefinitionRef s);
@@ -66,19 +66,16 @@ PropositionRef propsym_get_proposition(SymbolDefinitionRef s);
 
 /* proposition */
 
-PropositionRef proposition_make(const char *head,
-                             const char *guard,
-                             const char *body);
+PropositionRef proposition_make(const char *head, const char *guard,
+                                const char *body);
 void proposition_free(PropositionRef p);
 LmnRuleRef proposition_get_rule(PropositionRef p);
 BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem);
-  
+
 /* propositional symbol definitions */
 
 PropSyms propsyms_make(void);
-void propsyms_set(PropSyms props,
-                      unsigned int id,
-                      SymbolDefinitionRef symdef);
+void propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef);
 unsigned int propsyms_num(PropSyms props);
 SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i);
 void propsyms_free(PropSyms props);

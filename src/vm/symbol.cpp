@@ -1,8 +1,8 @@
 /*
  * symbol.cpp - mapping symbol names to their id
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -38,15 +38,14 @@
 
 extern "C" {
 #include "symbol.h"
-#include <stdarg.h>
 #include "element/element.h"
+#include <stdarg.h>
 }
 
-static struct st_table  *sym_tbl;
-static struct st_table  *sym_rev_tbl;
+static struct st_table *sym_tbl;
+static struct st_table *sym_rev_tbl;
 static lmn_interned_str *next_sym_id;
-static lmn_mutex_t      sym_mtx;
-
+static lmn_mutex_t sym_mtx;
 
 /* prototypes */
 
@@ -57,8 +56,7 @@ void sym_tbl_destroy(void);
 lmn_interned_str create_new_id(void);
 }
 
-void sym_tbl_init()
-{
+void sym_tbl_init() {
   int i, n;
   sym_tbl = st_init_strtable();
   sym_rev_tbl = st_init_numtable();
@@ -68,17 +66,16 @@ void sym_tbl_init()
     next_sym_id[i] = i + 1; /* 0はIDに使わない */
   }
 
-  if (lmn_env.core_num >= 2) lmn_mutex_init(&(sym_mtx));
+  if (lmn_env.core_num >= 2)
+    lmn_mutex_init(&(sym_mtx));
 }
 
-int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i)
-{
+int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i) {
   LMN_FREE(name);
   return ST_DELETE;
 }
 
-void sym_tbl_destroy()
-{
+void sym_tbl_destroy() {
   /* テーブル中の文字列の領域を解放 */
   st_foreach(sym_tbl, (st_iter_func)free_sym_tbl_entry, 0);
 
@@ -86,46 +83,48 @@ void sym_tbl_destroy()
   st_free_table(sym_rev_tbl);
   free(next_sym_id);
 
-  if (lmn_env.core_num >= 2) lmn_mutex_destroy(&(sym_mtx));
+  if (lmn_env.core_num >= 2)
+    lmn_mutex_destroy(&(sym_mtx));
 }
 
-
-lmn_interned_str create_new_id()
-{
+lmn_interned_str create_new_id() {
   int cid = env_my_thread_id();
   lmn_interned_str new_id = next_sym_id[cid];
   next_sym_id[cid] += env_threads_num();
   return new_id;
 }
 
-lmn_interned_str lmn_intern(const char *name)
-{
+lmn_interned_str lmn_intern(const char *name) {
   st_data_t new_id;
   char *name2;
 
   /* すでにnameに対応する値があるならそれを返す */
-  if (st_lookup(sym_tbl, (st_data_t)name, &new_id)) return new_id;
+  if (st_lookup(sym_tbl, (st_data_t)name, &new_id))
+    return new_id;
 
   /* 新しいIDを作る */
   new_id = create_new_id();
   name2 = strdup(name);
-  if (env_threads_num() >= 2) lmn_mutex_lock(&(sym_mtx));
+  if (env_threads_num() >= 2)
+    lmn_mutex_lock(&(sym_mtx));
   st_add_direct(sym_tbl, (st_data_t)name2, (st_data_t)new_id);
   st_add_direct(sym_rev_tbl, (st_data_t)new_id, (st_data_t)name2);
-  if (env_threads_num() >= 2) lmn_mutex_unlock(&(sym_mtx));
+  if (env_threads_num() >= 2)
+    lmn_mutex_unlock(&(sym_mtx));
   return new_id;
 }
 
-const char *lmn_id_to_name(lmn_interned_str id)
-{
+const char *lmn_id_to_name(lmn_interned_str id) {
   char *name;
 
-  if (id == ANONYMOUS) return "";
-  else if (st_lookup(sym_rev_tbl, (st_data_t)id, (st_data_t *)&name)) return name;
-  else return NULL;
+  if (id == ANONYMOUS)
+    return "";
+  else if (st_lookup(sym_rev_tbl, (st_data_t)id, (st_data_t *)&name))
+    return name;
+  else
+    return NULL;
 }
 
-int count_symbols()
-{
+int count_symbols() {
   return st_num(sym_tbl) + 1; /* symbol 0 is out of table */
 }
