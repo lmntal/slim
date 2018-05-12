@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void unset_binstr_user(State *S) { ((S)->flags &= (~MEM_DIRECT_MASK)); }
 void unset_dummy(State *S) { ((S)->flags &= (~DUMMY_SYMBOL_MASK)); }
 void unset_encoded(State *S) { ((S)->flags &= (~MEM_ENCODED_MASK)); }
 void unset_expanded(State *S) { ((S)->flags &= (~EXPANDED_MASK)); }
@@ -639,7 +638,7 @@ void state_free_binstr(State *s) {
     lmn_binstr_free(state_binstr(s));
     s->data = NULL;
   }
-  unset_binstr_user(s);
+  s->unset_binstr_user();
 }
 
 /* 状態sに対応する階層グラフ構造Xを,
@@ -1152,7 +1151,7 @@ LmnMembraneRef state_mem(State *s) {
  * sに対してバイナリストリングBを割り当てている場合は,
  * Bのメモリ管理は呼出し側で行う*/
 void state_set_mem(State *s, LmnMembraneRef mem) {
-  unset_binstr_user(s);
+  s->unset_binstr_user();
   s->data = (state_data_t)mem;
 }
 
@@ -1185,7 +1184,7 @@ void state_set_binstr(State *s, LmnBinStrRef bs) {
 void state_unset_binstr(State *s) {
   if (s->is_binstr_user()) {
     s->data = (state_data_t)NULL;
-    unset_binstr_user(s);
+    s->unset_binstr_user();
   }
 }
 
