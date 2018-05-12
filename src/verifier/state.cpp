@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_unset_reduced(State *S) { ((S)->flags2 &= (~STATE_REDUCED_MASK)); }
 void s_unset_update(State *S) { ((S)->flags2 &= (~STATE_UPDATE_MASK)); }
 
 BOOL s_is_visited_by_explorer(State *S) {

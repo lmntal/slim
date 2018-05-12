@@ -84,7 +84,6 @@ struct State;
 #define STATE_VIS_VISITED_MASK (0x01U << 7)
 
 /* manipulation for flags2 */
-void s_unset_reduced(State *S);
 void s_unset_update(State *S);
 
 BOOL s_is_visited_by_explorer(State *S);
