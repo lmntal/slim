@@ -189,7 +189,7 @@ static void statetable_resize(StateTable *st, unsigned long old_cap) {
         next = ptr->next;
         bucket = state_hash(ptr) % new_cap;
         ptr->next = new_tbl[bucket];
-        if (ptr->is_dummy() && is_expanded(ptr) && !ptr->is_encoded()) {
+        if (ptr->is_dummy() && ptr->is_expanded() && !ptr->is_encoded()) {
           /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要
            * (resize中に,
            * 展開済み状態へのデータアクセスは発生しないよう設計している) */

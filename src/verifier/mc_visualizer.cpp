@@ -69,9 +69,9 @@ void dump_dot_state_edges(State *s) {
 }
 
 void dump_dot_state_attr(State *s, AutomataRef *a, int *colors) {
-  int color = is_expanded(s) ? colors[s->state_expander_id()] : 0x999999;
+  int color = s->is_expanded() ? colors[s->state_expander_id()] : 0x999999;
   printf("  %lu [label=\"", state_hash(s));
-  if (is_expanded(s))
+  if (s->is_expanded())
     printf("%lu", s->state_expander_id());
   printf("\", ");
   if (state_is_accept(*a, s))

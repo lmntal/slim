@@ -493,7 +493,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     /** 展開元の状態の取得 */
     s = (State *)vec_peek(stack);
     p_s = MC_GET_PROPERTY(s, a);
-    if (is_expanded(s)) {
+    if (s->is_expanded()) {
       if (NDFS_COND(w, s, p_s)) {
         /** entering second DFS */
         w->red++;
@@ -527,7 +527,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
 
-        if (!is_expanded(succ)) {
+        if (!succ->is_expanded()) {
           put_stack(stack, succ);
         }
       }
@@ -566,7 +566,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     /** 展開元の状態の取得 */
     s = (State *)vec_peek(stack);
     p_s = MC_GET_PROPERTY(s, a);
-    if (is_expanded(s)) {
+    if (s->is_expanded()) {
       if (MAPNDFS_COND(w, s, p_s)) {
         /** entering red DFS **/
         w->red++;
@@ -583,7 +583,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     }
 
     /* サクセッサを展開 */
-    if (!is_expanded(s)) {
+    if (!s->is_expanded()) {
       w->expand++;
       mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms,
                 worker_flags(w));
@@ -709,7 +709,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     START_LOCK();
     s->state_expand_lock();
     FINISH_LOCK();
-    if (!is_expanded(s)) {
+    if (!s->is_expanded()) {
       mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms,
                 worker_flags(w));
       w->expand++;
@@ -743,7 +743,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
         State *succ = state_succ_state(s, (start + i) % n);
 
         if (!s_is_blue(succ) && !s_is_cyan(succ, worker_id(w))) {
-          if (!is_expanded(succ) && s_is_fresh(succ))
+          if (!succ->is_expanded() && s_is_fresh(succ))
             put_stack(fresh, succ);
           else
             put_stack(stack, succ);
@@ -785,13 +785,13 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
 
     if ((lmn_env.opt_mode == OPT_MINIMIZE &&
          workers_opt_cost(worker_group(w)) < state_cost(s)) ||
-        (is_expanded(s) && !s_is_update(s)) ||
+        (s->is_expanded() && !s_is_update(s)) ||
         (!worker_ltl_none(w) && atmstate_is_end(p_s))) {
       pop_deq(deq, TRUE);
       continue;
     }
 
-    if (!is_expanded(s)) {
+    if (!s->is_expanded()) {
       /* サクセッサを展開 */
       mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms,
                 worker_flags(w));
@@ -809,7 +809,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       n = state_succ_num(s);
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
-        if (!is_expanded(succ)) {
+        if (!succ->is_expanded()) {
           push_deq(deq, succ, TRUE);
         } else if (s_is_update(succ)) {
           push_deq(deq, succ, FALSE);
@@ -826,7 +826,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
           if (DFS_LOAD_BALANCING_DEQ(deq, w, i, n)) {
             dfs_handoff_task(w, (LmnWord)new_s);
           } else {
-            if (!is_expanded(new_s)) {
+            if (!new_s->is_expanded()) {
               push_deq(deq, new_s, TRUE);
             } else if (s_is_update(new_s)) {
               push_deq(deq, new_s, FALSE);
@@ -1022,7 +1022,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
       return; /* dequeueはNULLを返すことがある */
 
     p_s = MC_GET_PROPERTY(s, a);
-    if (is_expanded(s)) {
+    if (s->is_expanded()) {
       continue;
     } else if (!worker_ltl_none(w) &&
                atmstate_is_end(p_s)) { /* safety property analysis */

@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL is_expanded(State *S) { return ((S)->flags & EXPANDED_MASK); }
 BOOL is_on_cycle(State *S) { return ((S)->flags & ON_CYCLE_MASK); }
 BOOL is_on_stack(State *S) { return ((S)->flags & ON_STACK_MASK); }
 BOOL is_snd(State *S) { return ((S)->flags & FOR_MC_MASK); }
@@ -1326,7 +1325,7 @@ void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
     state_cost_lock(ewlock, state_hash(s));
   if ((f && state_cost(s) > cost) || (!f && state_cost(s) < cost)) {
     state_set_cost(s, cost, pre);
-    if (is_expanded(s) && new_ss)
+    if (s->is_expanded() && new_ss)
       vec_push(new_ss, (vec_data_t)s);
     s_set_update(s);
   }

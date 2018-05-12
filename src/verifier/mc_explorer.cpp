@@ -89,7 +89,7 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
       for (i = 0; i < state_succ_num(s); i++) {
         State *succ = state_succ_state(s, i);
 
-        if (is_on_cycle(succ) || !is_expanded(s))
+        if (is_on_cycle(succ) || !s->is_expanded())
           continue;
         else if (succ == goal) {
           return TRUE;
@@ -217,7 +217,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
 
         if (is_on_cycle(succ)) {
           return FALSE;
-        } else if (!is_expanded(succ)) {
+        } else if (!succ->is_expanded()) {
           continue;
         } else if (succ == seed /* || is_on_stack(succ) */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
@@ -678,7 +678,7 @@ static void map_propagate(LmnWorker *w, State *s, State *t, State *propag,
     map_found_accepting_cycle(w, t);
   } else if (propag == map_ordering(propag, t->map, a)) {
     if (map_entry_state(t, propag, a) && !worker_use_weak_map(w) &&
-        is_expanded(t)) {
+        t->is_expanded()) {
       enqueue(MAP_WORKER_PROPAG_G(w), (LmnWord)t);
     }
   }
@@ -753,7 +753,7 @@ void backward_elimination(LmnWorker *w, State *s) {
     smap_set_deleted(s);
     s = state_get_parent(s);
 
-    if (!s || smap_is_deleted(s) || !is_expanded(s)) {
+    if (!s || smap_is_deleted(s) || !s->is_expanded()) {
       return;
     } else if (state_succ_num(s) == 1) {
       continue;
@@ -912,7 +912,7 @@ void bledge_start(LmnWorker *w) {
     for (i = 0; i < state_succ_num(u); i++) {
       State *v = state_succ_state(u, i);
 
-      if (is_expanded(v)) { /* detected back level edge:t where [u]--t-->[v] */
+      if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v] */
         if (!is_on_cycle(u) && !is_on_cycle(v) &&
             bledge_explorer_accepting_cycle(w, u, v)) {
           vec_push(BLE_WORKER_PATH_VEC(w), (vec_data_t)u);
@@ -1137,7 +1137,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
 
         if (is_on_cycle(succ)) {
           return FALSE;
-        } else if (!is_expanded(succ)) {
+        } else if (!succ->is_expanded()) {
           continue;
         } else if (succ == seed /* || is_on_stack(succ) */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
@@ -1332,7 +1332,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
 
         if (is_on_cycle(succ)) {
           return FALSE;
-        } else if (!is_expanded(succ)) {
+        } else if (!succ->is_expanded()) {
           continue;
         } else if (s_is_cyan(s, worker_id(w))/*succ == seed*/ /* || is_on_stack(succ) */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る */

@@ -738,7 +738,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
       return FALSE;
     } else {
       State *succ_s = transition_next_state(succ_t);
-      //      if (!is_independency_checked(succ_s) && !is_expanded(succ_s)) {
+      //      if (!is_independency_checked(succ_s) && !succ_s->is_expanded()) {
       if (!is_independency_checked(succ_s)) {
         independency_check(succ_s, a, psyms);
         for (i = 0; i < state_succ_num(succ_s); i++) {
@@ -800,7 +800,7 @@ static inline BOOL C3_cycle_proviso_satisfied(State *succ, State *t) {
      *  Stack上の状態に戻るということは閉路であるということ
      *  DFS Stackによる空間構築(逐次)が前提 */
     return FALSE;
-  } else if (lmn_env.bfs && is_expanded(t) && lmn_env.core_num == 1) {
+  } else if (lmn_env.bfs && t->is_expanded() && lmn_env.core_num == 1) {
     /* Open Set Proviso:
      *  閉路形成を行なう遷移は,
      *  展開済み状態へ再訪問する遷移のサブセットである.(逐次限定) */

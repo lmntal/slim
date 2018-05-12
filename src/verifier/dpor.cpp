@@ -740,7 +740,7 @@ static BOOL dpor_check_cycle_proviso(StateSpaceRef ss, State *src,
      *  Stack上の状態に戻るということは閉路であるということ
      *  DFS Stackによる空間構築(逐次)が前提 */
     return FALSE;
-  } else if (lmn_env.bfs && is_expanded(ins_succ) && lmn_env.core_num == 1) {
+  } else if (lmn_env.bfs && ins_succ->is_expanded() && lmn_env.core_num == 1) {
     /* Open Set Proviso:
      *  閉路形成を行なう遷移は,
      *  展開済み状態へ再訪問する遷移のサブセットである.(逐次限定) */
