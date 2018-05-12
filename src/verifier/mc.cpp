@@ -245,7 +245,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
    * (フラグがセットされた状態が, 受理サイクル探索の対象となるので,
    *  フラグセットのタイミングは重要.) */
 
-  set_expanded(s);
+  s->set_expanded();
   RC_CLEAR_DATA(rc);
 
 #ifdef PROFILE
