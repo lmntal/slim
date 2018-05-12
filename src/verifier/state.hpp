@@ -129,6 +129,7 @@ struct State {                /* Total:72(36)byte */
   BOOL s_is_reduced() { return flags2 & STATE_REDUCED_MASK; }
   BOOL s_is_update() { return flags2 & STATE_UPDATE_MASK; }
   void s_set_d() { flags2 |= STATE_DELTA_MASK; }
+  void s_set_reduced() { flags2 |= STATE_REDUCED_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif

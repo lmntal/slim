@@ -1044,7 +1044,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       s_mem = state_mem(s);
       ret = statespace_insert(ss, s);
       if (ret == s) {
-        s_set_reduced(s);
+        s->s_set_reduced();
         lmn_mem_free_rec(s_mem);
         vec_push(search, (vec_data_t)s);
       } else {
@@ -1063,7 +1063,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       s = (State *)vec_pop(search);
       p_s = MC_GET_PROPERTY(s, statespace_automata(ss));
 
-      s_set_reduced(s);
+      s->s_set_reduced();
       mc_expand(ss, s, p_s, rc, new_ss, statespace_propsyms(ss), f);
 
       for (i = 0; i < state_succ_num(s); i++) {

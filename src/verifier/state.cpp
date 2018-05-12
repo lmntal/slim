@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_set_reduced(State *S) { ((S)->flags2 |= STATE_REDUCED_MASK); }
 void s_set_update(State *S) { ((S)->flags2 |= STATE_UPDATE_MASK); }
 void s_unset_d(State *S) { ((S)->flags2 &= (~STATE_DELTA_MASK)); }
 void s_unset_reduced(State *S) { ((S)->flags2 &= (~STATE_REDUCED_MASK)); }
