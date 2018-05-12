@@ -522,7 +522,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     if (!worker_on_parallel(w)) { /* Nested-DFS:
                                      postorder順を求めるDFS(再度到達した未展開状態がStackに積み直される)
                                    */
-      set_on_stack(s);
+     s->set_on_stack();
       n = state_succ_num(s);
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
@@ -605,7 +605,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     /* Nested-DFS:
      * postorder順を求めるDFS(explorerから未到達の状態がStackに積み直される) */
     if (worker_is_explorer(w)) {
-      set_on_stack(s);
+     s->set_on_stack();
       n = state_succ_num(s);
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);

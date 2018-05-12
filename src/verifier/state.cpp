@@ -53,9 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-
-
-void set_on_stack(State *S) { ((S)->flags |= ON_STACK_MASK); }
 void set_snd(State *S) { ((S)->flags |= FOR_MC_MASK); }
 void set_trans_obj(State *S) { ((S)->flags |= TRANS_OBJ_MASK); }
 
