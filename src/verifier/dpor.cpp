@@ -763,7 +763,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
   for (i = 0; i < vec_num(RC_EXPANDED(rc)); i++) { /* ごめんなさいort */
     State *succ_s;
-    if (has_trans_obj(s)) {
+    if (s->has_trans_obj()) {
       TransitionRef succ_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
       succ_s = transition_next_state(succ_t);
       transition_free(succ_t);
@@ -786,7 +786,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     src_succ = state_make_minimal();
     state_set_parent(src_succ, s);
     state_set_property_state(src_succ, DEFAULT_STATE_ID);
-    if (has_trans_obj(s)) {
+    if (s->has_trans_obj()) {
       src_t = transition_make(src_succ, lmn_intern("ample set"));
     } else {
       src_t = NULL;
@@ -802,7 +802,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       }
     } else {
       state_free(src_succ);
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         transition_set_state(src_t, succ);
       } else {
         vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
@@ -815,11 +815,11 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
     tmp = 0;
     if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
-      st_data_t ins = has_trans_obj(s) ? (st_data_t)src_t : (st_data_t)succ;
+      st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
       st_add_direct(succ_tbl, (st_data_t)succ, ins);
       vec_set(RC_EXPANDED(rc), succ_i++, ins);
     } else {
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         transition_free(src_t);
       }
     }
@@ -843,7 +843,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       src_succ = state_make_minimal();
       state_set_parent(src_succ, s);
       state_set_property_state(src_succ, DEFAULT_STATE_ID);
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         src_t = transition_make(src_succ, ANONYMOUS);
       } else {
         src_t = NULL;
@@ -859,7 +859,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         }
       } else {
         state_free(src_succ);
-        if (has_trans_obj(s)) {
+        if (s->has_trans_obj()) {
           transition_set_state(src_t, succ);
         } else {
           vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
@@ -868,11 +868,11 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
       tmp = 0;
       if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
-        st_data_t ins = has_trans_obj(s) ? (st_data_t)src_t : (st_data_t)succ;
+        st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
         st_add_direct(succ_tbl, (st_data_t)succ, ins);
         vec_set(RC_EXPANDED(rc), succ_i++, ins);
       } else {
-        if (has_trans_obj(s)) {
+        if (s->has_trans_obj()) {
           transition_free(src_t);
         }
       }

@@ -438,7 +438,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     State *src_succ, *succ;
     MemDeltaRoot *d;
 
-    if (has_trans_obj(s)) {
+    if (s->has_trans_obj()) {
       src_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
       src_succ = transition_next_state(src_t);
     } else {
@@ -476,7 +476,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     RC_MEM_DELTAS(rc)->num = succ_i;
   }
 
-  if (!has_trans_obj(s)) {
+  if (!s->has_trans_obj()) {
     set_trans_obj(s);
   }
 
@@ -1158,7 +1158,7 @@ int dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a) {
 
       fprintf(f, "%lu", state_format_id(state_succ_state(s, i), is_formated));
 
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         TransitionRef t;
         unsigned int j;
 

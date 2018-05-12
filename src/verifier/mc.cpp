@@ -300,7 +300,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     LmnMembraneRef src_succ_m;
 
     /* 状態sのi番目の遷移src_tと遷移先状態src_succを取得 */
-    if (!has_trans_obj(s)) {
+    if (!s->has_trans_obj()) {
       /* Transitionオブジェクトを利用しない場合 */
       src_t = NULL;
       src_succ = (State *)vec_get(RC_EXPANDED(rc), i);
@@ -342,7 +342,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     } else {
       /* contains */
       state_free(src_succ);
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         /* Transitionオブジェクトが指すサクセッサを検出した等価な状態の方へ設定し直す
          */
         transition_set_state(src_t, succ);
@@ -354,7 +354,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     if (!st_lookup(RC_SUCC_TBL(rc), (st_data_t)succ, (st_data_t *)&tmp)) {
       /* succへの遷移が多重辺ではない場合 */
       st_data_t ins;
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         ins = (st_data_t)src_t;
       } else {
         ins = (st_data_t)succ;
@@ -364,7 +364,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       st_add_direct(RC_SUCC_TBL(rc), (st_data_t)succ, ins);
       /* 遷移先情報を記録する一時領域(in ReactCxt)を更新 */
       vec_set(RC_EXPANDED(rc), succ_i++, ins);
-    } else if (has_trans_obj(s)) {
+    } else if (s->has_trans_obj()) {
       /* succへの遷移が多重辺かつTransitionオブジェクトを利用する場合 */
       /* src_tは状態生成時に張り付けたルール名なので, 0番にしか要素はないはず */
       transition_add_rule((TransitionRef)tmp, transition_rule(src_t, 0),

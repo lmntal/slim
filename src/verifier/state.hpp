@@ -75,6 +75,7 @@ struct State {                /* Total:72(36)byte */
   void state_set_expander_id(unsigned long id) {}
   unsigned long state_expander_id() { return 0; }
 #endif
+  BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif

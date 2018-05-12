@@ -81,7 +81,6 @@ void state_expand_unlock(State *s);
 #define state_expand_unlock(S) (NULL)
 #endif
 
-
 #define HASH_COMPACTION_MASK (0x01U << 5)
 
 void set_on_hash_compaction(State *s);
@@ -110,7 +109,6 @@ BYTE is_on_hash_compaction(State *s);
 #define MEM_DIRECT_MASK (0x01U << 7)
 
 /* manipulation for flags */
-BOOL has_trans_obj(State *S);
 BOOL is_binstr_user(State *S);
 BOOL is_dummy(State *S);
 BOOL is_encoded(State *S);

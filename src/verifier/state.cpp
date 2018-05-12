@@ -55,7 +55,6 @@ extern "C" {
 
 #ifndef MINIMAL_STATE
 
-
 void state_expand_lock_init(State *s) { lmn_mutex_init(&(s->expand_lock)); }
 void state_expand_lock_destroy(State *s) {
   lmn_mutex_destroy(&(s->expand_lock));
@@ -67,7 +66,6 @@ void state_expand_unlock(State *s) { lmn_mutex_unlock(&(s->expand_lock)); }
 
 #endif
 
-BOOL has_trans_obj(State *S) { return ((S)->flags & TRANS_OBJ_MASK); }
 BOOL is_binstr_user(State *S) { return ((S)->flags & MEM_DIRECT_MASK); }
 BOOL is_dummy(State *S) { return ((S)->flags & DUMMY_SYMBOL_MASK); }
 BOOL is_encoded(State *S) { return ((S)->flags & MEM_ENCODED_MASK); }
@@ -347,7 +345,7 @@ void state_free(State *s) {
                            sizeof(succ_data_t) * state_succ_num(s));
 #endif
 
-    if (has_trans_obj(s)) {
+    if (s->has_trans_obj()) {
       unsigned int i;
       for (i = 0; i < state_succ_num(s); i++) {
         transition_free(transition(s, i));
@@ -418,7 +416,7 @@ void state_succ_add(State *s, succ_data_t succ) {
 }
 
 void state_succ_clear(State *s) {
-  if (has_trans_obj(s)) {
+  if (s->has_trans_obj()) {
     unsigned int i;
     for (i = 0; i < state_succ_num(s); i++) {
       TransitionRef t = transition(s, i);
@@ -1038,7 +1036,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
        */
       fprintf(f, "%lu", state_format_id(state_succ_state(s, i), formated));
 
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         TransitionRef t;
         unsigned int j;
 
@@ -1241,7 +1239,7 @@ unsigned int state_succ_num(State *s) { return s->successor_num; }
 /* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
 State *state_succ_state(State *s, int idx) {
   /* successorデータはTransitionがある場合とそうでない場合とで処理が異なる */
-  if (has_trans_obj(s)) {
+  if (s->has_trans_obj()) {
     return transition_next_state((TransitionRef)s->successors[idx]);
   } else {
     return (State *)s->successors[idx];
