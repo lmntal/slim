@@ -1,7 +1,7 @@
 /*
- * membrane.h
+ * membrane.hpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -43,33 +43,69 @@
 
 struct SimpleHashtbl;
 
-typedef struct AtomListEntry {
+struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
-#ifdef NEW_ATOMLIST
   int n;
-#endif
   struct SimpleHashtbl *record;
 
-  bool is_empty(){
-    return this -> head == reinterpret_cast<LmnSymbolAtomRef>(this);
+  bool is_empty() {
+    return this->head == reinterpret_cast<LmnSymbolAtomRef>(this);
   }
 
-  void set_empty(){
-    LMN_SATOM_SET_PREV(reinterpret_cast<LmnSymbolAtomRef>(this), reinterpret_cast<LmnSymbolAtomRef>(this));
-    LMN_SATOM_SET_NEXT(reinterpret_cast<LmnSymbolAtomRef>(this), reinterpret_cast<LmnSymbolAtomRef>(this));
-    atomlist_set_num(this, 0);
+  void set_empty() {
+    LMN_SATOM_SET_PREV(reinterpret_cast<LmnSymbolAtomRef>(this),
+                       reinterpret_cast<LmnSymbolAtomRef>(this));
+    LMN_SATOM_SET_NEXT(reinterpret_cast<LmnSymbolAtomRef>(this),
+                       reinterpret_cast<LmnSymbolAtomRef>(this));
+    this->n = 0;
   }
 
   /* アトムリストALからアトムAを削除する.
    * ただし, リストのつなぎ変えだけを行い,
    * 膜からのアトムAのdeleteやatomのfreeはしない */
-  void remove(LmnSymbolAtomRef a){
+  void remove(LmnSymbolAtomRef a) {
     LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
     LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
-    atomlist_modify_num(this, -1);
+    this->n -= 1;
   }
 
-} AtomListEntry;
+  /* アトムリストALの末尾にアトムAを追加する. */
+  void push(LmnSymbolAtomRef a) {
+    LMN_SATOM_SET_NEXT(a, reinterpret_cast<LmnSymbolAtomRef>(this));
+    LMN_SATOM_SET_PREV(a, this->tail);
+    LMN_SATOM_SET_NEXT(this->tail, a);
+    this->tail = a;
+    this->n += 1;
+  }
+
+  int size() { return this->n; }
+
+  void append(AtomListEntry *e2) {
+    if (atomlist_head(e2) !=
+        lmn_atomlist_end(e2)) { /* true if e2 is not empty */
+      LMN_SATOM_SET_NEXT(this->tail, e2->head);
+      LMN_SATOM_SET_PREV(e2->head, this->tail);
+      LMN_SATOM_SET_NEXT(e2->tail, (LmnSymbolAtomRef)this);
+      this->tail = e2->tail;
+      this->n += e2->size();
+    }
+    e2->set_empty();
+  }
+
+  /* return NULL when atomlist doesn't exist. */
+  LmnSymbolAtomRef get_record(int findatomid) {
+    if (this->record) {
+      return (LmnSymbolAtomRef)hashtbl_get_default(this->record, findatomid, 0);
+    } else {
+      this->record = hashtbl_make(4);
+      return NULL;
+    }
+  }
+
+  void put_record(int id, LmnAtomRef record) {
+    hashtbl_put(this->record, id, (HashKeyType)record);
+  }
+};
 
 
 #endif

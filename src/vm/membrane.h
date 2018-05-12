@@ -58,33 +58,8 @@ typedef struct LinkObj *LinkObjRef;
 #include "process_table.h"
 #include "rule.h"
 
-#define NEW_ATOMLIST
-
 LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst);
 LmnSymbolAtomRef lmn_atomlist_end(AtomListEntryRef lst);
-int atomlist_ent_num(AtomListEntryRef lst);
-void atomlist_set_num(AtomListEntryRef lst, int n);
-void atomlist_add_num(AtomListEntryRef lst, int n);
-
-void atomlist_modify_num(AtomListEntryRef ent, int n);
-
-
-/* アトムリストentにおいて, アトムprvとアトムnxtの間にアトムinsを挿入する.
- * ただし, prvにNULLを渡した場合はnxtのprevポイント先をprvとして扱う. */
-void insert_to_atomlist(LmnSymbolAtomRef prv, LmnSymbolAtomRef ins,
-                        LmnSymbolAtomRef nxt, AtomListEntryRef ent);
-/* アトムリストALの末尾にアトムAを追加する. */
-void push_to_atomlist(LmnSymbolAtomRef a, AtomListEntryRef ent);
-
-int atomlist_get_entries_num(AtomListEntryRef ent);
-
-/* append e2 to e1 */
-void atomlist_append(AtomListEntryRef e1, AtomListEntryRef e2);
-
-/* return NULL when atomlist doesn't exist. */
-LmnSymbolAtomRef atomlist_get_record(AtomListEntryRef atomlist, int findatomid);
-
-void atomlist_put_record(AtomListEntryRef lst, int id, LmnAtomRef record);
 
 void move_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem);
 void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem);
@@ -276,111 +251,109 @@ typedef int AtomListIter;
 #define atomlist_iter_get_entry(Mem, Iter) lmn_mem_get_atomlist(Mem, Iter)
 #define atomlist_iter_get_functor(Iter) (Iter)
 
-#define EACH_ATOMLIST_WITH_FUNC(MEM, ENT, F, CODE)                             \
-  do {                                                                         \
-    AtomListIter __iter;                                                       \
-    for (__iter = atomlist_iter_initializer((MEM)->atomset);                   \
-         atomlist_iter_condition(MEM, __iter); atomlist_iter_next(__iter)) {   \
-      (ENT) = atomlist_iter_get_entry(MEM, __iter);                            \
-      (F) = atomlist_iter_get_functor(__iter);                                 \
-      if (!(ENT))                                                              \
-        continue;                                                              \
-      (CODE);                                                                  \
-    }                                                                          \
+#define EACH_ATOMLIST_WITH_FUNC(MEM, ENT, F, CODE)                           \
+  do {                                                                       \
+    AtomListIter __iter;                                                     \
+    for (__iter = atomlist_iter_initializer((MEM)->atomset);                 \
+         atomlist_iter_condition(MEM, __iter); atomlist_iter_next(__iter)) { \
+      (ENT) = atomlist_iter_get_entry(MEM, __iter);                          \
+      (F) = atomlist_iter_get_functor(__iter);                               \
+      if (!(ENT)) continue;                                                  \
+      (CODE);                                                                \
+    }                                                                        \
   } while (0)
-#define EACH_ATOMLIST(MEM, ENT, CODE)                                          \
-  do {                                                                         \
-    AtomListIter __iter;                                                       \
-    for (__iter = atomlist_iter_initializer((MEM)->atomset);                   \
-         atomlist_iter_condition(MEM, __iter); atomlist_iter_next(__iter)) {   \
-      (ENT) = atomlist_iter_get_entry(MEM, __iter);                            \
-      if (!(ENT))                                                              \
-        continue;                                                              \
-      (CODE);                                                                  \
-    }                                                                          \
+#define EACH_ATOMLIST(MEM, ENT, CODE)                                        \
+  do {                                                                       \
+    AtomListIter __iter;                                                     \
+    for (__iter = atomlist_iter_initializer((MEM)->atomset);                 \
+         atomlist_iter_condition(MEM, __iter); atomlist_iter_next(__iter)) { \
+      (ENT) = atomlist_iter_get_entry(MEM, __iter);                          \
+      if (!(ENT)) continue;                                                  \
+      (CODE);                                                                \
+    }                                                                        \
   } while (0)
 
 /* アトムリストENTのアトムに対してCODEを実行する。
    それぞれのループでCODEを実行する前に、Vにアトムが割り当てられる。
    履歴アトムがアトムリストにある場合は、読み飛ばす */
-#define EACH_ATOM(V, ENT, CODE)                                                \
-  if ((ENT)) {                                                                 \
-    for ((V) = atomlist_head((ENT)); (V) != lmn_atomlist_end((ENT));           \
-         (V) = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {                \
-      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=                      \
-          LMN_RESUME_FUNCTOR) {                                                \
-        (CODE);                                                                \
-      }                                                                        \
-    }                                                                          \
+#define EACH_ATOM(V, ENT, CODE)                                      \
+  if ((ENT)) {                                                       \
+    for ((V) = atomlist_head((ENT)); (V) != lmn_atomlist_end((ENT)); \
+         (V) = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {      \
+      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=            \
+          LMN_RESUME_FUNCTOR) {                                      \
+        (CODE);                                                      \
+      }                                                              \
+    }                                                                \
   }
 
-#define EACH_ATOM_THREAD(V, ENT, ID, NUM, CODE)                                \
-  int id = (ID);                                                               \
-  if ((ENT)) {                                                                 \
-    for ((V) = atomlist_head((ENT)); (V) != lmn_atomlist_end((ENT));           \
-         (V) = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {                \
-      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=                      \
-              LMN_RESUME_FUNCTOR &&                                            \
-          id == 0) {                                                           \
-        (CODE);                                                                \
-        id = (NUM);                                                            \
-      }                                                                        \
-      id--;                                                                    \
-    }                                                                          \
+#define EACH_ATOM_THREAD(V, ENT, ID, NUM, CODE)                      \
+  int id = (ID);                                                     \
+  if ((ENT)) {                                                       \
+    for ((V) = atomlist_head((ENT)); (V) != lmn_atomlist_end((ENT)); \
+         (V) = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {      \
+      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=            \
+              LMN_RESUME_FUNCTOR &&                                  \
+          id == 0) {                                                 \
+        (CODE);                                                      \
+        id = (NUM);                                                  \
+      }                                                              \
+      id--;                                                          \
+    }                                                                \
   }
 
-#define EACH_ATOM_THREAD_OPT(V, ENT, ID, NUM, START, CODE)                     \
-  int id = (ID);                                                               \
-  int flag = 1;                                                                \
-  if ((ENT)) {                                                                 \
-    if ((START) == NULL) {                                                     \
-      (V) = atomlist_head((ENT));                                              \
-      flag--;                                                                  \
-    } else {                                                                   \
-      (V) = (START);                                                           \
-    }                                                                          \
-    for (; (V) != lmn_atomlist_end((ENT)) || flag;                             \
-         (V) = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {                \
-      if ((V) == lmn_atomlist_end((ENT))) {                                    \
-        (V) = atomlist_head((ENT));                                            \
-        id = (ID);                                                             \
-        flag--;                                                                \
-      }                                                                        \
-      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=                      \
-              LMN_RESUME_FUNCTOR &&                                            \
-          id == 0) {                                                           \
-        (CODE);                                                                \
-        id = (NUM);                                                            \
-      }                                                                        \
-      id--;                                                                    \
-    }                                                                          \
+#define EACH_ATOM_THREAD_OPT(V, ENT, ID, NUM, START, CODE)      \
+  int id = (ID);                                                \
+  int flag = 1;                                                 \
+  if ((ENT)) {                                                  \
+    if ((START) == NULL) {                                      \
+      (V) = atomlist_head((ENT));                               \
+      flag--;                                                   \
+    } else {                                                    \
+      (V) = (START);                                            \
+    }                                                           \
+    for (; (V) != lmn_atomlist_end((ENT)) || flag;              \
+         (V) = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) { \
+      if ((V) == lmn_atomlist_end((ENT))) {                     \
+        (V) = atomlist_head((ENT));                             \
+        id = (ID);                                              \
+        flag--;                                                 \
+      }                                                         \
+      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=       \
+              LMN_RESUME_FUNCTOR &&                             \
+          id == 0) {                                            \
+        (CODE);                                                 \
+        id = (NUM);                                             \
+      }                                                         \
+      id--;                                                     \
+    }                                                           \
   }
 
-#define EACH_FUNC_ATOM(MEM, F, V, CODE)                                        \
-  do {                                                                         \
-    AtomListEntry *__ent = lmn_mem_get_atomlist((MEM), (F));                   \
-    if (__ent) {                                                               \
-      for ((V) = atomlist_head(__ent); (V) != lmn_atomlist_end(__ent);         \
-           (V) = LMN_SATOM_GET_NEXT_RAW((V))) {                                \
-        if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR) {                \
-          (CODE);                                                              \
-        }                                                                      \
-      }                                                                        \
-    }                                                                          \
+#define EACH_FUNC_ATOM(MEM, F, V, CODE)                                \
+  do {                                                                 \
+    AtomListEntry *__ent = lmn_mem_get_atomlist((MEM), (F));           \
+    if (__ent) {                                                       \
+      for ((V) = atomlist_head(__ent); (V) != lmn_atomlist_end(__ent); \
+           (V) = LMN_SATOM_GET_NEXT_RAW((V))) {                        \
+        if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR) {        \
+          (CODE);                                                      \
+        }                                                              \
+      }                                                                \
+    }                                                                  \
   } while (0)
 
-#define ALL_ATOMS(MEM, V, CODE)                                                \
-  do {                                                                         \
-    AtomListEntryRef __ent;                                                    \
-    EACH_ATOMLIST((MEM), __ent, ({                                             \
-                    for ((V) = atomlist_head(__ent);                           \
-                         (V) != lmn_atomlist_end(__ent);                       \
-                         (V) = LMN_SATOM_GET_NEXT_RAW((V))) {                  \
-                      if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR) {  \
-                        (CODE);                                                \
-                      }                                                        \
-                    }                                                          \
-                  }));                                                         \
+#define ALL_ATOMS(MEM, V, CODE)                                               \
+  do {                                                                        \
+    AtomListEntryRef __ent;                                                   \
+    EACH_ATOMLIST((MEM), __ent, ({                                            \
+                    for ((V) = atomlist_head(__ent);                          \
+                         (V) != lmn_atomlist_end(__ent);                      \
+                         (V) = LMN_SATOM_GET_NEXT_RAW((V))) {                 \
+                      if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR) { \
+                        (CODE);                                               \
+                      }                                                       \
+                    }                                                         \
+                  }));                                                        \
   } while (0)
 
 /* LmnSymbolAtomRef* lmn_atomlist_end(AtomSetEntry * ent); */
