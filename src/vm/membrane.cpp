@@ -199,16 +199,16 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
 void lmn_mem_add_ruleset_sort(Vector *src_v, LmnRuleSetRef add_rs) {
   int i, j, n;
   LmnRulesetId add_id;
-  add_id = lmn_ruleset_get_id(add_rs);
+  add_id = add_rs->id;
   n = vec_num(src_v);
   for (i = 0; i < n; i++) {
     LmnRuleSetRef rs_i;
     LmnRulesetId dst_id;
 
     rs_i = (LmnRuleSetRef)vec_get(src_v, i);
-    dst_id = lmn_ruleset_get_id(rs_i);
+    dst_id = rs_i->id;
 
-    if (dst_id == add_id && !lmn_ruleset_has_uniqrule(add_rs)) {
+    if (dst_id == add_id && !add_rs->has_unique()) {
       /* 同じ階層にuniqでない同一のルールセットが既に存在するならば追加する必要はない
        */
       break;
@@ -427,7 +427,7 @@ void lmn_mem_rulesets_destroy(Vector *rulesets) {
   for (i = 0; i < n; i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
 
-    if (lmn_ruleset_is_copy(rs)) {
+    if (rs->is_copy()) {
       delete rs;
     }
   }
@@ -560,7 +560,7 @@ unsigned long lmn_mem_space(LmnMembraneRef mem) {
   ret += vec_space_inner(&mem->rulesets);
   for (i = 0; i < vec_num(&mem->rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&mem->rulesets, i);
-    if (lmn_ruleset_is_copy(rs)) {
+    if (rs->is_copy()) {
       ret += rs->space();
     }
   }
@@ -1068,8 +1068,8 @@ lmn_mem_copy_with_map_inner(LmnMembraneRef src, ProcessTableRef *ret_copymap,
   }
 
   for (i = 0; i < src->rulesets.num; i++) {
-    vec_push(&new_mem->rulesets, (LmnWord)lmn_ruleset_copy((
-                                     LmnRuleSetRef)vec_get(&src->rulesets, i)));
+    vec_push(&new_mem->rulesets, (LmnWord)((
+                                     LmnRuleSetRef)vec_get(&src->rulesets, i))->duplicate());
   }
   *ret_copymap = copymap;
 
@@ -1118,8 +1118,8 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
     new_mem->name = m->name;
     /* copy rulesets */
     for (i = 0; i < m->rulesets.num; i++) {
-      vec_push(&new_mem->rulesets, (LmnWord)lmn_ruleset_copy((
-                                       LmnRuleSetRef)vec_get(&m->rulesets, i)));
+      vec_push(&new_mem->rulesets, (LmnWord)((
+                                       LmnRuleSetRef)vec_get(&m->rulesets, i))->duplicate());
     }
   }
 
@@ -3699,7 +3699,7 @@ void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset) {
 void lmn_mem_copy_rules(LmnMembraneRef dest, LmnMembraneRef src) {
   int i;
   for (i = 0; i < lmn_mem_ruleset_num(src); i++) {
-    lmn_mem_add_ruleset(dest, lmn_ruleset_copy(lmn_mem_get_ruleset(src, i)));
+    lmn_mem_add_ruleset(dest, lmn_mem_get_ruleset(src, i)->duplicate());
   }
 }
 
@@ -3707,7 +3707,7 @@ void lmn_mem_clearrules(LmnMembraneRef src) {
   unsigned int i;
   for (i = 0; i < vec_num(&src->rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&src->rulesets, i);
-    if (lmn_ruleset_is_copy(rs)) {
+    if (rs->is_copy()) {
       delete rs;
     }
   }
@@ -3741,11 +3741,11 @@ void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
 
 #ifdef USE_FIRSTCLASS_RULE
 void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
-  LmnRulesetId del_id = lmn_ruleset_get_id(fcr);
+  LmnRulesetId del_id = fcr->id;
 
   for (int i = 0; i < vec_num(mem->firstclass_rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem->firstclass_rulesets, i);
-    if (lmn_ruleset_get_id(rs) != del_id)
+    if (rs->id != del_id)
       continue;
 
     /* move successors forward */

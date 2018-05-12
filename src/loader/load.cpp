@@ -166,7 +166,7 @@ static LmnRuleSetRef load_il(ILRef il) {
 
   /* load module list */
   for (auto &m : il->modules) {
-    lmn_set_module(m->name_id, lmn_ruleset_from_id(m->ruleset_id));
+    lmn_set_module(m->name_id, ruleset_table->get(m->ruleset_id));
   }
 
   return first_ruleset;
@@ -260,7 +260,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   for (i = 0; i < maindata->count_of_module; i++) {
     struct trans_module mo = maindata->module_table[i];
     lmn_set_module(maindata->symbol_exchange[mo.name],
-                   lmn_ruleset_from_id(maindata->ruleset_exchange[mo.ruleset]));
+                   ruleset_table->get(maindata->ruleset_exchange[mo.ruleset]));
   }
 
   return ret;

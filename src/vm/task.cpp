@@ -278,7 +278,7 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
     reacted = FALSE;
     for (int i = 0; i < vec_num(rulesets); i++) {
       LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
-      if (!lmn_ruleset_is_0step(rs))
+      if (!rs->is_zerostep())
         continue;
       reacted |= react_ruleset(rc, cur_mem, rs);
     }
@@ -361,7 +361,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     } else {
       result = FALSE;
     }
-  } else if (lmn_ruleset_atomic_type(rs) == ATOMIC_NONE) {
+  } else if (rs->atomic == ATOMIC_NONE) {
     result = react_ruleset_inner(rc, mem, rs);
   } else {
     result = react_ruleset_atomic(rc, mem, rs);
@@ -2315,7 +2315,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnRulesetId, instr, id);
 
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, memi),
-                          lmn_ruleset_from_id(id));
+                          ruleset_table->get(id));
       break;
     }
     case INSTR_LOADMODULE: {
@@ -3764,7 +3764,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));
       for (i = 0; i < v->num; i++) {
-        LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));
+        LmnRuleSetRef cp = ((LmnRuleSetRef)vec_get(v, i))->duplicate();
         lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);
         if (RC_GET_MODE(rc, REACT_ATOMIC)) {
           /* atomic step中にatomic setをコピーした場合のため */
@@ -4646,7 +4646,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnRulesetId, instr, id);
 
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, memi),
-                          lmn_ruleset_from_id(id));
+                          ruleset_table->get(id));
       break;
     }
     case INSTR_LOADMODULE: {

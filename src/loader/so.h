@@ -185,10 +185,10 @@
     struct Vector *v;                                                          \
     v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));                 \
     for (i = 0; i < v->num; i++) {                                             \
-      LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));       \
+      LmnRuleSetRef cp = ((LmnRuleSetRef)vec_get(v, i))->duplicate();       \
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);               \
       if (RC_GET_MODE(rc, REACT_ATOMIC)) {                                     \
-        lmn_ruleset_invalidate_atomic(cp);                                     \
+        cp->invalidate_atomic();                                     \
       }                                                                        \
     }                                                                          \
   } while (0)

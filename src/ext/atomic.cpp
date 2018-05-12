@@ -69,9 +69,9 @@ void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     }
 
     for (i = 0; i < n; i++) {
-      lmn_ruleset_set_atomic(lmn_mem_get_ruleset(mem, i), atomic_type);
+      lmn_mem_get_ruleset(mem, i)->atomic = atomic_type;
       lmn_mem_add_ruleset(lmn_mem_parent(mem),
-                          lmn_ruleset_copy(lmn_mem_get_ruleset(mem, i)));
+                          lmn_mem_get_ruleset(mem, i)->duplicate());
     }
     lmn_mem_delete_atom(mem, a0, t0);
   }
@@ -158,7 +158,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
   if (n > 0) {
     const Vector *ends;
     LmnWorker *w = build_atomic_worker();
-    RC_START_ATOMIC_STEP(worker_rc(w), lmn_ruleset_get_id(at_set));
+    RC_START_ATOMIC_STEP(worker_rc(w), at_set->id);
     for (i = 0; i < n; i++) {
       State *sub_s = state_make((LmnMembraneRef)mc_react_cxt_expanded_pop(rc),
                                 DEFAULT_STATE_ID,
@@ -379,8 +379,8 @@ BOOL react_ruleset_atomic(LmnReactCxtRef rc,
     lmn_fatal("unsupported delta-membrane, atomic step");
   }
 
-  RC_START_ATOMIC_STEP(rc, lmn_ruleset_get_id(rs));
-  switch (lmn_ruleset_atomic_type(rs)) {
+  RC_START_ATOMIC_STEP(rc, rs->id);
+  switch (rs->atomic) {
   case ATOMIC_SYNC_STEP:
     result = react_ruleset_atomic_sync(rc, mem, rs);
     break;

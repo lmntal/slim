@@ -75,15 +75,18 @@ struct LmnRule {
 
 /* structure of RuleSet */
 struct LmnRuleSet {
+ private:
+  BOOL is_copied;
+  BOOL has_uniqrule;
+  BOOL is_0step;
+
+ public:
   LmnRule **rules; /* ルールのリスト */
   int num, cap;    /* # of rules, and # of capacity */
   LmnRulesetId id; /* RuleSet ID */
   AtomicType
       atomic; /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
   BOOL is_atomic_valid; /* atomic step中であることを主張するフラグ */
-  BOOL is_copy;
-  BOOL is_0step;
-  BOOL has_uniqrule;
   LmnRuleSet(LmnRulesetId id, int init_size)
       : id(id),
         cap(init_size),
@@ -91,7 +94,7 @@ struct LmnRuleSet {
         num(0),
         atomic(ATOMIC_NONE),
         is_atomic_valid(FALSE),
-        is_copy(FALSE),
+        is_copied(FALSE),
         has_uniqrule(FALSE),
         is_0step(FALSE) {}
 
@@ -109,7 +112,7 @@ struct LmnRuleSet {
     this->rules[this->num++] = rule;
 
     /* 非uniqrulesetにuniq ruleが追加されたら, フラグを立てる. */
-    if (!lmn_ruleset_has_uniqrule(this) && lmn_rule_get_history_tbl(rule)) {
+    if (!this->has_unique() && lmn_rule_get_history_tbl(rule)) {
       this->has_uniqrule = TRUE;
     }
   }
@@ -119,22 +122,21 @@ struct LmnRuleSet {
     unsigned int i, r_n;
 
     r_n = this->num;
-    result = new LmnRuleSet(lmn_ruleset_get_id(this), r_n);
-    result->is_copy = TRUE;
+    result = new LmnRuleSet(this->id, r_n);
+    result->is_copied = TRUE;
     result->atomic = this->atomic;
     result->is_atomic_valid = this->is_atomic_valid;
 
     /* ルール単位のオブジェクト複製 */
     for (i = 0; i < r_n; i++) {
-      LmnRule* r = this->get_rule(i);
+      LmnRule *r = this->get_rule(i);
       result->put(lmn_rule_copy(r));
     }
     return result;
   }
 
   bool ruleset_cp_is_need_object() {
-    return lmn_ruleset_has_uniqrule(this) ||
-           (lmn_ruleset_atomic_type(this) != ATOMIC_NONE);
+    return this->has_unique() || (this->atomic != ATOMIC_NONE);
   }
 
   /* ルールセットsrcを複製して返す.
@@ -154,38 +156,31 @@ struct LmnRuleSet {
    * (ruleの順序はソースコード依存) */
   bool operator==(const LmnRuleSet &set2) {
     /* rulesetの種類をチェック */
-    if (this->id != set2.id)
-      return false;
-    
+    if (this->id != set2.id) return false;
+
     bool t1 = this->has_uniqrule;
     bool t2 = set2.has_uniqrule;
 
     /* 互いにuniq rulsetでなければruleset idの比較でok */
-    if (!t1 && !t2)
-      return true;
+    if (!t1 && !t2) return true;
 
     /* uniq ruleset同士ではなければ当然FALSE */
-    if (t1 ^ t2)
-      return false;
+    if (t1 ^ t2) return false;
 
     /* uniq ruleset同士の場合:
      *   ruleの適用ヒストリまで比較 */
-    if (this->num != set2.num)
-      return false;
-    
+    if (this->num != set2.num) return false;
+
     for (int i = 0; i < this->num; i++) {
       LmnRule *rule1 = this->rules[i];
       LmnRule *rule2 = set2.rules[i];
       st_table_t hist1 = lmn_rule_get_history_tbl(rule1);
       st_table_t hist2 = lmn_rule_get_history_tbl(rule2);
 
-      if (!hist1 && !hist2)
-        continue;
+      if (!hist1 && !hist2) continue;
 
-      if (!hist1 || !hist2)
-        return false;
-      if (!st_equals(hist1, hist2))
-        return false;
+      if (!hist1 || !hist2) return false;
+      if (!st_equals(hist1, hist2)) return false;
     }
 
     return true;
@@ -195,14 +190,14 @@ struct LmnRuleSet {
 
   unsigned long space() {
     unsigned long ret = 0;
-    if (lmn_ruleset_has_uniqrule(this) || lmn_ruleset_is_copy(this)) {
+    if (this->has_unique() || is_copy()) {
       unsigned int i, n;
 
       n = this->num;
       ret += sizeof(struct LmnRuleSet);
       ret += sizeof(struct LmnRule *) * n;
       for (i = 0; i < n; i++) {
-        LmnRuleRef r = this->get_rule(i);
+        LmnRule *r = this->get_rule(i);
         if (lmn_rule_get_history_tbl(r)) { /* 履歴表を持っている場合  */
           st_table_space(lmn_rule_get_history_tbl(r));
         }
@@ -211,21 +206,17 @@ struct LmnRuleSet {
     return ret;
   }
 
-  void validate_atomic() {
-    this->is_atomic_valid = TRUE;
-  }
+  void validate_atomic() { this->is_atomic_valid = TRUE; }
+  void invalidate_atomic() { this->is_atomic_valid = FALSE; }
+  void validate_zerostep() { this->is_0step = TRUE; }
+  bool is_zerostep() { return this->is_0step; }
 
-  void invalidate_atomic() {
-    this->is_atomic_valid = FALSE;
-  }
-  bool is_atomic(){
-    return this->is_atomic_valid;
-  }
+  bool is_atomic() { return this->is_atomic_valid; }
+  bool is_copy() { return this->is_copied; }
+  bool has_unique() { return this->has_uniqrule; }
 
   /* Returns the ith rule in ruleset */
-  LmnRuleRef get_rule(int i) {
-    return this->rules[i];
-  }
+  LmnRule *get_rule(int i) { return this->rules[i]; }
 };
 
 /* table, mapping RuleSet ID to RuleSet */
@@ -234,34 +225,39 @@ struct LmnRuleSetTable {
   LmnRuleSet **entry;
 
   LmnRuleSetTable(unsigned int size) : size(size) {
-    this->entry = LMN_NALLOC(LmnRuleSetRef, this->size);
+    this->entry = LMN_NALLOC(LmnRuleSet *, this->size);
   }
 
   ~LmnRuleSetTable() {
-    unsigned int i;
-    for (i = 0; i < this->size; i++) {
-      if (this->entry[i]) {
-        delete(this->entry[i]);
-      }
+    for (unsigned int i = 0; i < this->size; i++)
+      if (this->entry[i])
+        delete (this->entry[i]);
+    delete (this->entry);
+  }
+
+  /* Associates id with ruleset */
+  void register_ruleset(LmnRuleSet *ruleset, int id) {
+    /* 必要ならば容量を拡張 */
+    while (this->size <= (unsigned int)id) {
+      int old_size = this->size;
+      this->size *= 2;
+      this->entry =
+          LMN_REALLOC(LmnRuleSet *, this->entry, this->size);
+      /* 安全なメモリ解放の為ゼロクリア */
+      memset(this->entry + old_size, 0,
+             (this->size - old_size) * sizeof(LmnRuleSet *));
     }
-    delete(this->entry);
+
+    this->entry[id] = ruleset;
   }
 
-/* Associates id with ruleset */
-void register_ruleset(LmnRuleSet *ruleset, int id) {
-  /* 必要ならば容量を拡張 */
-  while (this->size <= (unsigned int)id) {
-    int old_size = this->size;
-    this->size *= 2;
-    this->entry =
-        LMN_REALLOC(LmnRuleSetRef, this->entry, this->size);
-    /* 安全なメモリ解放の為ゼロクリア */
-    memset(this->entry + old_size, 0,
-           (this->size - old_size) * sizeof(LmnRuleSetRef));
+  /* Returns RuleSet associated with id. If nothing is, returns NULL */
+  LmnRuleSet * get(int id) {
+    if (ruleset_table->size <= (unsigned int)id)
+      return NULL;
+    else
+      return ruleset_table->entry[id];
   }
-
-  this->entry[id] = ruleset;
-}
 };
 
 #endif

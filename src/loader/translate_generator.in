@@ -371,7 +371,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #unlockmem LmnInstrVar
 
 #loadruleset LmnInstrVar LmnRulesetId
-  lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, $0), lmn_ruleset_from_id(TR_GRID($1)));
+  lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, $0), ruleset_table->get(TR_GRID($1)));
 
 #loadmodule LmnInstrVar lmn_interned_str
   {

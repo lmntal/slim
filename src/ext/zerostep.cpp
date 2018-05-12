@@ -59,8 +59,8 @@ void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
   /* ルールセットに0step属性をつけて親膜に移動 */
   for (int i = 0; i < lmn_mem_ruleset_num(mem); i++) {
     LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
-    lmn_ruleset_validate_0step(rs);
-    lmn_mem_add_ruleset(parent, lmn_ruleset_copy(rs));
+    rs->validate_zerostep();
+    lmn_mem_add_ruleset(parent, rs->duplicate());
   }
 
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
@@ -70,6 +70,7 @@ void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
   lmn_mem_remove_mem(parent, mem);
 }
 
+extern "C" void init_zerostep(void);
 
 void init_zerostep(void)
 {
