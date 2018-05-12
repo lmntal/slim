@@ -83,10 +83,6 @@ struct State;
 #define STATE_RED_MASK (0x01U << 6)
 #define STATE_VIS_VISITED_MASK (0x01U << 7)
 
-void s_unset_blue(State *S);
-void s_unset_red(State *S);
-void s_unset_visited_by_visualizer(State *S);
-
 /** Flags3 (8bit)
  *  0000 0001
  * freshな状態(展開されておらず、または展開用スタックにも積まれていない状態)。fresh

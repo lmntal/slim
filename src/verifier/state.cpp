@@ -53,12 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_unset_blue(State *S) { ((S)->flags2 &= (~STATE_BLUE_MASK)); }
-void s_unset_red(State *S) { ((S)->flags2 &= (~STATE_RED_MASK)); }
-void s_unset_visited_by_visualizer(State *S) {
-  ((S)->flags2 &= (~STATE_VIS_VISITED_MASK));
-}
-
 void s_set_fresh(State *S) { ((S)->flags3 |= STATE_FRESH_MASK); }
 void s_unset_fresh(State *S) { ((S)->flags3 &= (~STATE_FRESH_MASK)); }
 BOOL s_is_fresh(State *S) { return ((S)->flags3 & STATE_FRESH_MASK); }
