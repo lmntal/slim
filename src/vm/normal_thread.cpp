@@ -76,7 +76,7 @@ void *normal_thread(void *arg) {
     EACH_ATOM_THREAD_OPT(
         atom, thread_data->atomlist_ent, thread_data->id, active_thread,
         thread_data->next_atom, ({
-          warry_set(thread_data->rc, thread_data->atomi, (LmnWord)atom,
+          warray_set(thread_data->rc, thread_data->atomi, (LmnWord)atom,
                     LMN_ATTR_MAKE_LINK(0), TT_ATOM);
           if (rc_hlink_opt(thread_data->atomi, thread_data->rc)) {
             spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_data->rc),
@@ -125,9 +125,9 @@ void normal_parallel_init(void) {
   for (i = 0; i < lmn_env.core_num; i++) {
     thread_info[i] = LMN_MALLOC(arginfo);
     thread_info[i]->rc = react_context_alloc();
-    rc_warry_set(thread_info[i]->rc, lmn_register_make(WARRY_DEF_SIZE));
+    rc_warray_set(thread_info[i]->rc, lmn_register_make(warray_DEF_SIZE));
     RC_SET_HLINK_SPC(thread_info[i]->rc, NULL);
-    thread_info[i]->register_size = WARRY_DEF_SIZE;
+    thread_info[i]->register_size = warray_DEF_SIZE;
     thread_info[i]->id = i;
     thread_info[i]->next_atom = NULL;
     thread_info[i]->exec_flag = 1;
@@ -154,7 +154,7 @@ void normal_parallel_free(void) {
     lmn_thread_join(findthread[i]);
     pthread_mutex_destroy(thread_info[i]->exec);
     lmn_free(thread_info[i]->exec);
-    lmn_register_free(rc_warry(thread_info[i]->rc));
+    lmn_register_free(rc_warray(thread_info[i]->rc));
     react_context_dealloc(thread_info[i]->rc);
     lmn_free(thread_info[i]->profile);
     lmn_free(thread_info[i]);
@@ -174,12 +174,12 @@ void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule,
   thread_info[id]->rule = rule;
   thread_info[id]->backtrack = 0;
   react_context_copy(thread_info[id]->rc, rc);
-  if (thread_info[id]->register_size < warry_use_size(rc)) {
-    lmn_register_extend(thread_info[id]->rc, warry_use_size(rc));
-    thread_info[id]->register_size = warry_use_size(rc);
+  if (thread_info[id]->register_size < warray_use_size(rc)) {
+    lmn_register_extend(thread_info[id]->rc, warray_use_size(rc));
+    thread_info[id]->register_size = warray_use_size(rc);
   }
-  lmn_register_copy(rc_warry(thread_info[id]->rc), rc_warry(rc),
-                    warry_use_size(rc));
+  lmn_register_copy(rc_warray(thread_info[id]->rc), rc_warray(rc),
+                    warray_use_size(rc));
   thread_info[id]->instr = instr;
   thread_info[id]->atomlist_ent = atomlist_ent;
   thread_info[id]->atom_arity = atom_arity;

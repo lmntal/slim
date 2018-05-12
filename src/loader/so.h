@@ -73,19 +73,19 @@
 #define TR_INSTR_ALLOCLINK(rc, link, atom, n)                                  \
   do {                                                                         \
     if (LMN_ATTR_IS_DATA(at(rc, atom))) {                                      \
-      warry_set(rc, link, wt(rc, atom), at(rc, atom), TT_ATOM);                \
+      warray_set(rc, link, wt(rc, atom), at(rc, atom), TT_ATOM);                \
     } else { /* link to atom */                                                \
-      warry_set(rc, link, wt(rc, atom), LMN_ATTR_MAKE_LINK(n), TT_ATOM);       \
+      warray_set(rc, link, wt(rc, atom), LMN_ATTR_MAKE_LINK(n), TT_ATOM);       \
     }                                                                          \
   } while (0)
 
 /* @see INSTR_SPEC in task.c */
 #define TR_INSTR_SPEC(rc, size)                                                \
   do {                                                                         \
-    if (size > warry_size(rc)) {                                               \
+    if (size > warray_size(rc)) {                                               \
       lmn_register_extend(rc, round2up(size));                                 \
     }                                                                          \
-    warry_use_size_set(rc, size);                                              \
+    warray_use_size_set(rc, size);                                              \
   } while (0)
 
 #define TR_INSTR_UNIFYLINKS(rc, link1, link2, mem)                             \
@@ -240,12 +240,12 @@
     LmnLinkAttr attr =                                                         \
         LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atomi), pos);              \
     if (LMN_ATTR_IS_DATA(attr)) {                                              \
-      warry_set(                                                               \
+      warray_set(                                                               \
           rc, funci,                                                           \
           (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), pos),   \
           attr, TT_OTHER);                                                     \
     } else { /* symbol atom */                                                 \
-      warry_set(rc, funci,                                                     \
+      warray_set(rc, funci,                                                     \
                 (LmnWord)LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)                                \
                     LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), pos)), \
                 attr, TT_OTHER);                                               \
@@ -260,8 +260,8 @@ BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
                             lmn_interned_str rule_name, LmnLineNum line_num,
                             LmnMembraneRef *ptmp_global_root,
                             LmnRegisterArray *p_v_tmp,
-                            unsigned int warry_use_org,
-                            unsigned int warry_size_org);
+                            unsigned int warray_use_org,
+                            unsigned int warray_size_org);
 BOOL tr_instr_jump(LmnTranslated f, LmnReactCxtRef rc,
                    LmnMembraneRef thisisrootmembutnotused, LmnRuleRef rule,
                    int newid_num, const int *newid);

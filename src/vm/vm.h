@@ -69,7 +69,7 @@ extern "C" {
 }
 #include "rule.hpp"
 #include "atomlist.hpp"
-
+#include "react_context.hpp"
 #endif
 
 #endif /* LMN_VM_H */

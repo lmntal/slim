@@ -178,16 +178,16 @@ static void contextC1_expand_LHS(McDporData *d, ContextC1Ref c,
                                  LmnReactCxtRef rc, LmnRegisterArray v) {
   unsigned int i;
 
-  for (i = 0; i < warry_use_size(rc); i++) {
+  for (i = 0; i < warray_use_size(rc); i++) {
     LmnWord key, t;
     BYTE flag;
     LmnRegisterRef r = lmn_register_array_get(v, i);
 
-    if (lmn_register_tt(r) == TT_ATOM &&
-        !LMN_ATTR_IS_DATA(lmn_register_at(r))) {
-      key = LMN_SATOM_ID((LmnSymbolAtomRef)lmn_register_wt(r));
-    } else if (lmn_register_tt(r) == TT_MEM) {
-      key = lmn_mem_id((LmnMembraneRef)lmn_register_wt(r));
+    if (r->register_tt() == TT_ATOM &&
+        !LMN_ATTR_IS_DATA(r->register_at())) {
+      key = LMN_SATOM_ID((LmnSymbolAtomRef)r->register_wt());
+    } else if (r->register_tt() == TT_MEM) {
+      key = lmn_mem_id((LmnMembraneRef)r->register_wt());
       if (i == 0) {
         dpor_LHS_flag_add(d, key, LHS_MEM_GROOT);
       }

@@ -404,7 +404,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 
   wt_set(rc, 0, (LmnWord)mem);
   tt_set(rc, 0, TT_MEM);
-  warry_use_size_set(rc, 1);
+  warray_use_size_set(rc, 1);
 
   profile_start_trial();
 
@@ -698,11 +698,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       SKIP_VAL(LmnInstrVar, instr);
       READ_VAL(LmnInstrVar, instr, s0);
 
-      if (s0 > warry_size(rc)) {
+      if (s0 > warray_size(rc)) {
         lmn_register_extend(rc, s0);
       }
-      warry_use_size_set(rc, s0);
-      warry_cur_size_set(rc, 0);
+      warray_use_size_set(rc, s0);
+      warray_cur_size_set(rc, 0);
       break;
     }
     case INSTR_INSERTCONNECTORSINNULL: {
@@ -720,7 +720,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         vec_push(&links, (LmnWord)t);
       }
 
-      warry_set(rc, seti, (LmnWord)insertconnectors(rc, NULL, &links), 0,
+      warray_set(rc, seti, (LmnWord)insertconnectors(rc, NULL, &links), 0,
                 TT_OTHER);
 
       vec_destroy(&links);
@@ -751,7 +751,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       }
 
       READ_VAL(LmnInstrVar, instr, memi);
-      warry_set(
+      warray_set(
           rc, seti,
           (LmnWord)insertconnectors(rc, (LmnMembraneRef)wt(rc, memi), &links),
           0, TT_OTHER);
@@ -775,13 +775,13 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       LmnRuleInstr next;
       LmnInstrVar num, i, n;
       LmnJumpOffset offset;
-      unsigned int warry_size_org, warry_use_org, warry_cur_org;
+      unsigned int warray_size_org, warray_use_org, warray_cur_org;
       BOOL ret;
 
-      warry_size_org = warry_size(rc);
-      warry_use_org = warry_use_size(rc);
-      warry_cur_org = warry_cur_size(rc);
-      v = lmn_register_make(warry_size_org);
+      warray_size_org = warray_size(rc);
+      warray_use_org = warray_use_size(rc);
+      warray_cur_org = warray_cur_size(rc);
+      v = lmn_register_make(warray_size_org);
 
       READ_VAL(LmnJumpOffset, instr, offset);
       next = instr + offset;
@@ -792,41 +792,41 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
         LmnRegisterRef r = lmn_register_array_get(v, i);
-        lmn_register_set_wt(r, wt(rc, n));
-        lmn_register_set_at(r, at(rc, n));
-        lmn_register_set_tt(r, tt(rc, n));
+        r->register_set_wt(wt(rc, n));
+        r->register_set_at(at(rc, n));
+        r->register_set_tt(tt(rc, n));
       }
       /* mem */
       READ_VAL(LmnInstrVar, instr, num);
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
         LmnRegisterRef r = lmn_register_array_get(v, i);
-        lmn_register_set_wt(r, wt(rc, n));
-        lmn_register_set_at(r, at(rc, n));
-        lmn_register_set_tt(r, tt(rc, n));
+        r->register_set_wt(wt(rc, n));
+        r->register_set_at(at(rc, n));
+        r->register_set_tt(tt(rc, n));
       }
       /* vars */
       READ_VAL(LmnInstrVar, instr, num);
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
         LmnRegisterRef r = lmn_register_array_get(v, i);
-        lmn_register_set_wt(r, wt(rc, n));
-        lmn_register_set_at(r, at(rc, n));
-        lmn_register_set_tt(r, tt(rc, n));
+        r->register_set_wt(wt(rc, n));
+        r->register_set_at(at(rc, n));
+        r->register_set_tt(tt(rc, n));
       }
 
       instr = next;
 
-      tmp = rc_warry(rc);
-      rc_warry_set(rc, v);
+      tmp = rc_warray(rc);
+      rc_warray_set(rc, v);
 
       ret = interpret(rc, rule, instr);
 
-      lmn_register_free(rc_warry(rc));
-      rc_warry_set(rc, tmp);
-      warry_size_set(rc, warry_size_org);
-      warry_use_size_set(rc, warry_use_org);
-      warry_cur_size_set(rc, warry_cur_org);
+      lmn_register_free(rc_warray(rc));
+      rc_warray_set(rc, tmp);
+      warray_size_set(rc, warray_size_org);
+      warray_use_size_set(rc, warray_use_org);
+      warray_cur_size_set(rc, warray_cur_org);
 
       return ret;
     }
@@ -834,7 +834,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       LmnRegisterArray v;
       LmnInstrVar num, i, n, t;
 
-      v = lmn_register_make(warry_use_size(rc));
+      v = lmn_register_make(warray_use_size(rc));
 
       i = 0;
       /* atom */
@@ -842,9 +842,9 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
         LmnRegisterRef r = lmn_register_array_get(v, i);
-        lmn_register_set_wt(r, wt(rc, n));
-        lmn_register_set_at(r, at(rc, n));
-        lmn_register_set_tt(r, tt(rc, n));
+        r->register_set_wt(wt(rc, n));
+        r->register_set_at(at(rc, n));
+        r->register_set_tt(tt(rc, n));
       }
 
       /* mem */
@@ -852,9 +852,9 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
         LmnRegisterRef r = lmn_register_array_get(v, i);
-        lmn_register_set_wt(r, wt(rc, n));
-        lmn_register_set_at(r, at(rc, n));
-        lmn_register_set_tt(r, tt(rc, n));
+        r->register_set_wt(wt(rc, n));
+        r->register_set_at(at(rc, n));
+        r->register_set_tt(tt(rc, n));
       }
 
       /* vars */
@@ -862,15 +862,15 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       for (; num--; i++) {
         READ_VAL(LmnInstrVar, instr, n);
         LmnRegisterRef r = lmn_register_array_get(v, i);
-        lmn_register_set_wt(r, wt(rc, n));
-        lmn_register_set_at(r, at(rc, n));
-        lmn_register_set_tt(r, tt(rc, n));
+        r->register_set_wt(wt(rc, n));
+        r->register_set_at(at(rc, n));
+        r->register_set_tt(tt(rc, n));
       }
 
       for (t = 0; t <= i; t++) {
         LmnRegisterRef r0 = lmn_register_array_get(v, t);
-        warry_set(rc, t, lmn_register_wt(r0), lmn_register_at(r0),
-                  lmn_register_tt(r0));
+        warray_set(rc, t, r0->register_wt(), r0->register_at(),
+                  r0->register_tt());
       }
 
       lmn_register_free(v);
@@ -933,7 +933,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           }
 
           if (RC_MC_USE_DPOR(rc)) {
-            dpor_transition_gen_LHS(RC_POR_DATA(rc), d, rc, rc_warry(rc));
+            dpor_transition_gen_LHS(RC_POR_DATA(rc), d, rc, rc_warray(rc));
           }
 
           dmem_interpret(rc, rule, instr);
@@ -941,7 +941,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
           if (RC_MC_USE_DPOR(rc)) {
             if (!dpor_transition_gen_RHS(RC_POR_DATA(rc), d, rc,
-                                         rc_warry(rc))) {
+                                         rc_warray(rc))) {
               dmem_root_free(d);
             } else {
               mc_react_cxt_add_mem_delta(rc, d, rule);
@@ -963,7 +963,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           LmnRegisterArray v, tmp;
           ProcessTableRef copymap;
           LmnMembraneRef tmp_global_root;
-          unsigned int warry_size_org, warry_use_org, warry_cur_org;
+          unsigned int warray_size_org, warray_use_org, warray_cur_org;
           unsigned int i, n;
 
 #ifdef PROFILE
@@ -972,69 +972,69 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           }
 #endif
 
-          warry_size_org = warry_size(rc);
-          warry_use_org = warry_use_size(rc);
-          warry_cur_org = warry_cur_size(rc);
+          warray_size_org = warray_size(rc);
+          warray_use_org = warray_use_size(rc);
+          warray_cur_org = warray_cur_size(rc);
           tmp_global_root =
               lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
 
           /** 変数配列および属性配列のコピー */
-          v = lmn_register_make(warry_size_org);
+          v = lmn_register_make(warray_size_org);
 
-          if (warry_cur_org > 0) {
+          if (warray_cur_org > 0) {
             /* -O3は, JUMP命令削除により,
              * レジスタサイズはBODY命令込みの値になっているため,
              * 複数回のマッチングバックトラックが発生する場合に備え,
              * COMMIT命令到達時点での レジスタ使用サイズを使って,
              * 作業配列をコピーするようにする. */
-            n = warry_cur_org;
+            n = warray_cur_org;
           } else {
             /* JUMP命令を使用する場合は, SPEC命令が複数呼び出される.
              * このため, O3用の変数cur_sizeはこの時点で0である.
              * SPECが指定したサイズで作業配列をコピーする. */
-            n = warry_use_org;
+            n = warray_use_org;
           }
 
           /** copymapの情報を基に変数配列を書換える */
           for (i = 0; i < n; i++) {
             LmnWord t;
             LmnRegisterRef r = lmn_register_array_get(v, i);
-            lmn_register_set_at(r, at(rc, i));
-            lmn_register_set_tt(r, tt(rc, i));
+            r->register_set_at(at(rc, i));
+            r->register_set_tt(tt(rc, i));
 
-            if (lmn_register_tt(r) == TT_ATOM) {
-              if (LMN_ATTR_IS_DATA(lmn_register_at(r))) {
+            if (r->register_tt() == TT_ATOM) {
+              if (LMN_ATTR_IS_DATA(r->register_at())) {
                 /* data-atom */
-                if (lmn_register_at(r) == LMN_HL_ATTR) {
+                if (r->register_at() == LMN_HL_ATTR) {
                   if (proc_tbl_get_by_hlink(
                           copymap,
                           lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)wt(rc, i)),
                           &t)) {
-                    lmn_register_set_wt(
-                        r, (LmnWord)lmn_hyperlink_hl_to_at((HyperLink *)t));
+                    r->register_set_wt(
+                        (LmnWord)lmn_hyperlink_hl_to_at((HyperLink *)t));
                   } else {
-                    lmn_register_set_wt(
-                        r, (LmnWord)wt(rc, i)); /* new_hlink命令等の場合 */
+                    r->register_set_wt(
+                        (LmnWord)wt(rc, i)); /* new_hlink命令等の場合 */
                   }
                 } else {
-                  lmn_register_set_wt(
-                      r, (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i),
-                                                     lmn_register_at(r)));
+                  r->register_set_wt(
+                      (LmnWord)lmn_copy_data_atom((LmnAtom)wt(rc, i),
+                                                     r->register_at()));
                 }
               } else if (proc_tbl_get_by_atom(
                              copymap, (LmnSymbolAtomRef)wt(rc, i), &t)) {
                 /* symbol-atom */
-                lmn_register_set_wt(r, (LmnWord)t);
+                r->register_set_wt((LmnWord)t);
               } else {
                 t = 0;
               }
-            } else if (lmn_register_tt(r) == TT_MEM) {
+            } else if (r->register_tt() == TT_MEM) {
               if (wt(rc, i) ==
                   (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-                lmn_register_set_wt(r, (LmnWord)tmp_global_root);
+                r->register_set_wt((LmnWord)tmp_global_root);
               } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)wt(rc, i),
                                              &t)) {
-                lmn_register_set_wt(r, (LmnWord)t);
+                r->register_set_wt((LmnWord)t);
               } else {
                 t = 0;
                 //              v[i].wt = wt(rc, i); //
@@ -1042,14 +1042,14 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
                 //              ueda)
               }
             } else { /* TT_OTHER */
-              lmn_register_set_wt(r, wt(rc, i));
+              r->register_set_wt(wt(rc, i));
             }
           }
           proc_tbl_free(copymap);
 
           /** 変数配列および属性配列をコピーと入れ換え, コピー側を書き換える */
-          tmp = rc_warry(rc);
-          rc_warry_set(rc, v);
+          tmp = rc_warray(rc);
+          rc_warray_set(rc, v);
 
 #ifdef PROFILE
           if (lmn_env.profile_level >= 3) {
@@ -1072,11 +1072,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
           cur_mem = (LmnMembraneRef)wt(rc, 0);
           /* 変数配列および属性配列を元に戻す */
-          lmn_register_free(rc_warry(rc));
-          rc_warry_set(rc, tmp);
-          warry_size_set(rc, warry_size_org);
-          warry_use_size_set(rc, warry_use_org);
-          warry_cur_size_set(rc, warry_cur_org);
+          lmn_register_free(rc_warray(rc));
+          rc_warray_set(rc, tmp);
+          warray_size_set(rc, warray_size_org);
+          warray_use_size_set(rc, warray_use_org);
+          warray_cur_size_set(rc, warray_cur_org);
         }
 
         /* アトミック実行の際にProcess Idのリセットを一旦撤回するために
@@ -1119,7 +1119,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
             EACH_ATOM(atom, atomlist_ent, ({
                         if (lmn_env.find_atom_parallel)
                           return FALSE;
-                        warry_set(rc, atomi, (LmnWord)atom,
+                        warray_set(rc, atomi, (LmnWord)atom,
                                   LMN_ATTR_MAKE_LINK(0), TT_ATOM);
                         if (interpret(rc, rule, instr)) {
                           return TRUE;
@@ -1195,7 +1195,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
               EACH_ATOM(atom, atomlist_ent, ({
                           if (lmn_env.find_atom_parallel)
                             return FALSE;
-                          warry_set(rc, atomi, (LmnWord)atom,
+                          warray_set(rc, atomi, (LmnWord)atom,
                                     LMN_ATTR_MAKE_LINK(0), TT_ATOM);
 
                           if (lmn_sameproccxt_all_pc_check_original(
@@ -1355,7 +1355,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
             ip = (int)deq_pop_head(temp);
             atom = (LmnSymbolAtomRef)wt(thread_info[ip]->rc, atomi);
             if (check_exist(atom, f)) {
-              warry_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0),
+              warray_set(rc, atomi, (LmnWord)atom, LMN_ATTR_MAKE_LINK(0),
                         TT_ATOM);
               if (rc_hlink_opt(atomi, rc)) {
                 SameProcCxt *spc;
@@ -1411,7 +1411,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           judge = TRUE;
           for (ip2 = 0; ip2 < ip; ip2++) {
             if (thread_info[ip2]->judge && judge) {
-              for (i = 0; i < warry_use_size(rc); i++) {
+              for (i = 0; i < warray_use_size(rc); i++) {
                 wt_set(rc, i, wt(thread_info[ip2]->rc, i));
                 at_set(rc, i, at(thread_info[ip2]->rc, i));
                 tt_set(rc, i, tt(thread_info[ip2]->rc, i));
@@ -1461,7 +1461,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)wt(rc, atomi));
       if (LMN_MEM_NAME_ID(m) != memn)
         return FALSE;
-      warry_set(rc, memi, (LmnWord)m, 0, TT_MEM);
+      warray_set(rc, memi, (LmnWord)m, 0, TT_MEM);
       break;
     }
     case INSTR_ANYMEM: {
@@ -1550,7 +1550,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 #endif
       }
       lmn_mem_push_atom((LmnMembraneRef)wt(rc, memi), (LmnAtomRef)ap, attr);
-      warry_set(rc, atomi, (LmnWord)ap, attr, TT_ATOM);
+      warray_set(rc, atomi, (LmnWord)ap, attr, TT_ATOM);
       break;
     }
     case INSTR_NATOMS: {
@@ -1602,9 +1602,9 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, n);
 
       if (LMN_ATTR_IS_DATA(at(rc, atom))) {
-        warry_set(rc, link, wt(rc, atom), at(rc, atom), TT_ATOM);
+        warray_set(rc, link, wt(rc, atom), at(rc, atom), TT_ATOM);
       } else { /* link to atom */
-        warry_set(rc, link, (LmnWord)LMN_SATOM(wt(rc, atom)),
+        warray_set(rc, link, (LmnWord)LMN_SATOM(wt(rc, atom)),
                   LMN_ATTR_MAKE_LINK(n), TT_ATOM);
       }
       break;
@@ -2075,7 +2075,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
       /* リンク先の取得をせずにリンク元の情報を格納しておく。
        * リンク元が格納されていることを示すため最下位のビットを立てる */
-      warry_set(
+      warray_set(
           rc, linki,
           (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), posi),
           LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atomi), posi), TT_ATOM);
@@ -2109,7 +2109,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
                 ((HyperLink *)vec_get(&hl_childs, i))->atom;
             LmnAtomRef linked_atom = LMN_SATOM_GET_LINK(child_hlAtom, 0);
 
-            warry_set(rc, linki, (LmnWord)linked_atom,
+            warray_set(rc, linki, (LmnWord)linked_atom,
                       LMN_SATOM_GET_ATTR(child_hlAtom, 0), TT_ATOM);
 
             if (interpret(rc, rule, instr)) {
@@ -2361,7 +2361,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom2);
       READ_VAL(LmnInstrVar, instr, posi);
 
-      warry_set(rc, atom1,
+      warray_set(rc, atom1,
                 (LmnWord)LMN_SATOM(
                     LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom2), posi)),
                 LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atom2), posi),
@@ -2386,7 +2386,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         if (attr != pos2)
           return FALSE;
       }
-      warry_set(
+      warray_set(
           rc, atom1,
           (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atom2), pos1),
           attr, TT_ATOM);
@@ -2471,8 +2471,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, avolisti);
 
       /* リンクオブジェクトのベクタを構築 */
-      srcvec = links_from_idxs((Vector *)wt(rc, srclisti), rc_warry(rc));
-      avovec = links_from_idxs((Vector *)wt(rc, avolisti), rc_warry(rc));
+      srcvec = links_from_idxs((Vector *)wt(rc, srclisti), rc_warray(rc));
+      avovec = links_from_idxs((Vector *)wt(rc, avolisti), rc_warray(rc));
 
       if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) &&
           !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
@@ -2545,7 +2545,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         if (b) {
           /* proc_tblを登録 */
           dpor_LHS_add_ground_atoms(RC_POR_DATA(rc), atoms);
-          warry_set(rc, funci, natoms, LMN_INT_ATTR, TT_OTHER);
+          warray_set(rc, funci, natoms, LMN_INT_ATTR, TT_OTHER);
 
           interpret(rc, rule, instr); /* 開放のための再帰 */
 
@@ -2632,7 +2632,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
         if (!b)
           return FALSE;
-        warry_set(rc, funci, natoms, LMN_INT_ATTR, TT_OTHER);
+        warray_set(rc, funci, natoms, LMN_INT_ATTR, TT_OTHER);
       }
 
       break;
@@ -2755,7 +2755,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
             lmn_fatal("hyperlink's attribute takes only an unary atom");
           }
         }
-        warry_set(
+        warray_set(
             rc, atomi,
             (LmnWord)lmn_hyperlink_new_with_attr((LmnSymbolAtomRef)ap, attr),
             LMN_HL_ATTR, TT_ATOM);
@@ -2772,12 +2772,12 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
             LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)ap) > 1) {
           lmn_fatal("hyperlink's attribute takes only an unary atom");
         }
-        warry_set(rc, atomi, (LmnWord)lmn_hyperlink_new_with_attr(ap, attr),
+        warray_set(rc, atomi, (LmnWord)lmn_hyperlink_new_with_attr(ap, attr),
                   LMN_HL_ATTR, TT_ATOM);
         break;
       }
       case INSTR_NEWHLINK:
-        warry_set(rc, atomi, (LmnWord)lmn_hyperlink_new(), LMN_HL_ATTR,
+        warray_set(rc, atomi, (LmnWord)lmn_hyperlink_new(), LMN_HL_ATTR,
                   TT_ATOM);
         break;
       }
@@ -2807,7 +2807,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, dstatomi);
       READ_VAL(LmnInstrVar, instr, atomi);
 
-      warry_set(rc, dstatomi,
+      warray_set(rc, dstatomi,
                 (LmnWord)LMN_HL_ATTRATOM(
                     lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)wt(rc, atomi))),
                 LMN_HL_ATTRATOM_ATTR(
@@ -2822,7 +2822,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, dstatomi);
       READ_VAL(LmnInstrVar, instr, atomi);
 
-      warry_set(rc, dstatomi,
+      warray_set(rc, dstatomi,
                 lmn_hyperlink_element_num(
                     lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)wt(rc, atomi))),
                 LMN_INT_ATTR, TT_OTHER);
@@ -2975,8 +2975,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, srci);
       READ_VAL(LmnInstrVar, instr, dsti);
 
-      srcvec = links_from_idxs((Vector *)wt(rc, srci), rc_warry(rc));
-      dstvec = links_from_idxs((Vector *)wt(rc, dsti), rc_warry(rc));
+      srcvec = links_from_idxs((Vector *)wt(rc, srci), rc_warray(rc));
+      dstvec = links_from_idxs((Vector *)wt(rc, dsti), rc_warray(rc));
 
       ret_flag = lmn_mem_cmp_ground(srcvec, dstvec);
 
@@ -3002,7 +3002,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, memi);
 
       /* リンクオブジェクトのベクタを構築 */
-      srcvec = links_from_idxs((Vector *)wt(rc, srclist), rc_warry(rc));
+      srcvec = links_from_idxs((Vector *)wt(rc, srclist), rc_warray(rc));
 
       switch (op) {
       case INSTR_COPYHLGROUND:
@@ -3068,7 +3068,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       retvec = vec_make(2);
       vec_push(retvec, (LmnWord)dstlovec);
       vec_push(retvec, (LmnWord)atommap);
-      warry_set(rc, dstlist, (LmnWord)retvec, LIST_AND_MAP, TT_OTHER);
+      warray_set(rc, dstlist, (LmnWord)retvec, LIST_AND_MAP, TT_OTHER);
 
       /* 解放のための再帰。ベクタを解放するための中間語命令がない */
       interpret(rc, rule, instr);
@@ -3094,7 +3094,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       } else {
         memi = 0;
       }
-      srcvec = links_from_idxs((Vector *)wt(rc, listi), rc_warry(rc));
+      srcvec = links_from_idxs((Vector *)wt(rc, listi), rc_warray(rc));
 
       switch (op) {
       case INSTR_REMOVEHLGROUND:
@@ -3245,7 +3245,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(
+      warray_set(
           rc, atom1,
           (LmnWord)lmn_copy_atom((LmnAtomRef)wt(rc, atom2), at(rc, atom2)),
           at(rc, atom2), TT_OTHER);
@@ -3317,7 +3317,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       LmnInstrVar listi;
       Vector *listvec = vec_make(16);
       READ_VAL(LmnInstrVar, instr, listi);
-      warry_set(rc, listi, (LmnWord)listvec, 0, TT_OTHER);
+      warray_set(rc, listi, (LmnWord)listvec, 0, TT_OTHER);
 
       /* 解放のための再帰 */
       if (interpret(rc, rule, instr)) {
@@ -3346,11 +3346,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       switch (at(rc, listi)) {
       case LIST_AND_MAP:
         if (posi == 0) {
-          warry_set(rc, dsti,
+          warray_set(rc, dsti,
                     vec_get((Vector *)wt(rc, listi), (unsigned int)posi),
                     LINK_LIST, TT_OTHER);
         } else if (posi == 1) {
-          warry_set(rc, dsti,
+          warray_set(rc, dsti,
                     vec_get((Vector *)wt(rc, listi), (unsigned int)posi), MAP,
                     TT_OTHER);
         } else {
@@ -3361,7 +3361,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       {
         LinkObjRef lo =
             (LinkObjRef)vec_get((Vector *)wt(rc, listi), (unsigned int)posi);
-        warry_set(rc, dsti, (LmnWord)LinkObjGetAtom(lo), LinkObjGetPos(lo),
+        warray_set(rc, dsti, (LmnWord)LinkObjGetAtom(lo), LinkObjGetPos(lo),
                   TT_ATOM);
         break;
       }
@@ -3373,7 +3373,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
-      warry_set(rc, dstatom, ((long)wt(rc, atom1) + (long)wt(rc, atom2)),
+      warray_set(rc, dstatom, ((long)wt(rc, atom1) + (long)wt(rc, atom2)),
                 LMN_INT_ATTR, TT_ATOM);
       break;
     }
@@ -3383,7 +3383,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(rc, dstatom, ((long)wt(rc, atom1) - (long)wt(rc, atom2)),
+      warray_set(rc, dstatom, ((long)wt(rc, atom1) - (long)wt(rc, atom2)),
                 LMN_INT_ATTR, TT_ATOM);
       break;
     }
@@ -3393,7 +3393,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(rc, dstatom, ((long)wt(rc, atom1) * (long)wt(rc, atom2)),
+      warray_set(rc, dstatom, ((long)wt(rc, atom1) * (long)wt(rc, atom2)),
                 LMN_INT_ATTR, TT_ATOM);
       break;
     }
@@ -3403,7 +3403,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(rc, dstatom, ((long)wt(rc, atom1) / (long)wt(rc, atom2)),
+      warray_set(rc, dstatom, ((long)wt(rc, atom1) / (long)wt(rc, atom2)),
                 LMN_INT_ATTR, TT_ATOM);
 
       break;
@@ -3412,7 +3412,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       LmnInstrVar dstatom, atomi;
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atomi);
-      warry_set(rc, dstatom, (-(long)wt(rc, atomi)), LMN_INT_ATTR, TT_ATOM);
+      warray_set(rc, dstatom, (-(long)wt(rc, atomi)), LMN_INT_ATTR, TT_ATOM);
       break;
     }
     case INSTR_IMOD: {
@@ -3421,7 +3421,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(rc, dstatom, ((long)wt(rc, atom1) % (long)wt(rc, atom2)),
+      warray_set(rc, dstatom, ((long)wt(rc, atom1) % (long)wt(rc, atom2)),
                 LMN_INT_ATTR, TT_ATOM);
       break;
     }
@@ -3429,7 +3429,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       LmnInstrVar dstatom, atomi;
       READ_VAL(LmnInstrVar, instr, dstatom);
       READ_VAL(LmnInstrVar, instr, atomi);
-      warry_set(rc, dstatom, (~(int)wt(rc, atomi)), LMN_INT_ATTR, TT_ATOM);
+      warray_set(rc, dstatom, (~(int)wt(rc, atomi)), LMN_INT_ATTR, TT_ATOM);
       break;
     }
     case INSTR_IAND: {
@@ -3438,7 +3438,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(rc, dstatom, ((long)wt(rc, atom1) & (long)wt(rc, atom2)),
+      warray_set(rc, dstatom, ((long)wt(rc, atom1) & (long)wt(rc, atom2)),
                 LMN_INT_ATTR, TT_ATOM);
       break;
     }
@@ -3448,7 +3448,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(rc, dstatom, ((long)wt(rc, atom1) | (long)wt(rc, atom2)),
+      warray_set(rc, dstatom, ((long)wt(rc, atom1) | (long)wt(rc, atom2)),
                 LMN_INT_ATTR, TT_ATOM);
 
       break;
@@ -3459,7 +3459,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(rc, dstatom, ((long)wt(rc, atom1) ^ (long)wt(rc, atom2)),
+      warray_set(rc, dstatom, ((long)wt(rc, atom1) ^ (long)wt(rc, atom2)),
                 LMN_INT_ATTR, TT_ATOM);
       break;
     }
@@ -3562,7 +3562,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
       d = lmn_create_double_atom(lmn_get_double(wt(rc, atom1)) +
                                  lmn_get_double(wt(rc, atom2)));
-      warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
+      warray_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case INSTR_FSUB: {
@@ -3574,7 +3574,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
       d = lmn_create_double_atom(lmn_get_double(wt(rc, atom1)) -
                                  lmn_get_double(wt(rc, atom2)));
-      warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
+      warray_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case INSTR_FMUL: {
@@ -3587,7 +3587,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
       d = lmn_create_double_atom(lmn_get_double(wt(rc, atom1)) *
                                  lmn_get_double(wt(rc, atom2)));
-      warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
+      warray_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case INSTR_FDIV: {
@@ -3600,7 +3600,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
       d = lmn_create_double_atom(lmn_get_double(wt(rc, atom1)) /
                                  lmn_get_double(wt(rc, atom2)));
-      warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
+      warray_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case INSTR_FNEG: {
@@ -3610,7 +3610,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atomi);
 
       d = lmn_create_double_atom(-lmn_get_double(wt(rc, atomi)));
-      warry_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
+      warray_set(rc, dstatom, d, LMN_DBL_ATTR, TT_ATOM);
       break;
     }
     case INSTR_FLT: {
@@ -3678,7 +3678,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         LmnWord w;
         LmnByte a = at(rc, atomi), t;
         READ_CONST_DATA_ATOM(w, a, t);
-        warry_set(rc, atomi, w, a, t);
+        warray_set(rc, atomi, w, a, t);
       } else { /* symbol atom */
         LmnFunctor f;
         /*         fprintf(stderr, "symbol atom can't be created in GUARD\n");
@@ -3735,9 +3735,9 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       if (LMN_ATTR_IS_DATA(at(rc, atomi))) {
         /* ここで得るファンクタはガード命令中で一時的に使われるだけなので
            double はポインタのコピーで十分なはず */
-        warry_set(rc, funci, wt(rc, atomi), at(rc, atomi), TT_OTHER);
+        warray_set(rc, funci, wt(rc, atomi), at(rc, atomi), TT_OTHER);
       } else {
-        warry_set(
+        warray_set(
             rc, funci,
             (LmnWord)LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)wt(rc, atomi)),
             at(rc, atomi), TT_OTHER);
@@ -3848,12 +3848,12 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
       attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, atomi), pos);
       if (LMN_ATTR_IS_DATA(attr)) {
-        warry_set(
+        warray_set(
             rc, funci,
             (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, atomi), pos),
             attr, TT_OTHER);
       } else { /* symbol atom */
-        warry_set(rc, funci,
+        warray_set(rc, funci,
                   LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(
                       (LmnSymbolAtomRef)wt(rc, atomi), pos)),
                   attr, TT_OTHER);
@@ -3872,7 +3872,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         LmnWord w;
         LmnByte a = at(rc, funci), t;
         READ_CONST_DATA_ATOM(w, a, t);
-        warry_set(rc, funci, w, a, t);
+        warray_set(rc, funci, w, a, t);
       } else {
         LmnFunctor f;
 
@@ -4056,7 +4056,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, i1);
       LMN_ASSERT(at(rc, i0) == LMN_INT_ATTR);
       LMN_ASSERT(at(rc, i1) == LMN_INT_ATTR);
-      warry_set(rc, desti, wt(rc, i0) + wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
+      warray_set(rc, desti, wt(rc, i0) + wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
       break;
     }
     case INSTR_ISUBFUNC: {
@@ -4067,7 +4067,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, i1);
       LMN_ASSERT(at(rc, i0) == LMN_INT_ATTR);
       LMN_ASSERT(at(rc, i1) == LMN_INT_ATTR);
-      warry_set(rc, desti, wt(rc, i0) - wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
+      warray_set(rc, desti, wt(rc, i0) - wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
       break;
     }
     case INSTR_IMULFUNC: {
@@ -4078,7 +4078,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, i1);
       LMN_ASSERT(at(rc, i0) == LMN_INT_ATTR);
       LMN_ASSERT(at(rc, i1) == LMN_INT_ATTR);
-      warry_set(rc, desti, wt(rc, i0) * wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
+      warray_set(rc, desti, wt(rc, i0) * wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
       break;
     }
     case INSTR_IDIVFUNC: {
@@ -4089,7 +4089,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, i1);
       LMN_ASSERT(at(rc, i0) == LMN_INT_ATTR);
       LMN_ASSERT(at(rc, i1) == LMN_INT_ATTR);
-      warry_set(rc, desti, wt(rc, i0) / wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
+      warray_set(rc, desti, wt(rc, i0) / wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
       break;
     }
     case INSTR_IMODFUNC: {
@@ -4100,7 +4100,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, i1);
       LMN_ASSERT(at(rc, i0) == LMN_INT_ATTR);
       LMN_ASSERT(at(rc, i1) == LMN_INT_ATTR);
-      warry_set(rc, desti, wt(rc, i0) % wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
+      warray_set(rc, desti, wt(rc, i0) % wt(rc, i1), LMN_INT_ATTR, TT_ATOM);
       break;
     }
     case INSTR_GROUP: {
@@ -4316,11 +4316,11 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       SKIP_VAL(LmnInstrVar, instr);
       READ_VAL(LmnInstrVar, instr, s0);
 
-      if (s0 > warry_size(rc)) {
+      if (s0 > warray_size(rc)) {
         lmn_register_extend(rc, s0);
       }
-      warry_use_size_set(rc, s0);
-      warry_cur_size_set(rc, 0);
+      warray_use_size_set(rc, s0);
+      warray_cur_size_set(rc, 0);
       break;
     }
     case INSTR_INSERTCONNECTORSINNULL: {
@@ -4338,7 +4338,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         vec_push(&links, (LmnWord)t);
       }
 
-      warry_set(rc, seti, (LmnWord)insertconnectors(rc, NULL, &links), 0,
+      warray_set(rc, seti, (LmnWord)insertconnectors(rc, NULL, &links), 0,
                 TT_OTHER);
       vec_destroy(&links);
 
@@ -4368,7 +4368,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, memi);
 
-      warry_set(
+      warray_set(
           rc, seti,
           (LmnWord)insertconnectors(rc, (LmnMembraneRef)wt(rc, memi), &links),
           0, TT_OTHER);
@@ -4402,7 +4402,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       dmem_root_push_atom(RC_ND_MEM_DELTA_ROOT(rc),
                           (LmnMembraneRef)wt(rc, memi), (LmnAtomRef)ap, attr);
-      warry_set(
+      warray_set(
           rc, atomi, (LmnWord)ap, attr,
           TT_OTHER); /* BODY命令のアトムなのでコピー対象にしない->TT_OTHER */
       break;
@@ -4414,7 +4414,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atom2);
 
-      warry_set(rc, atom1,
+      warray_set(rc, atom1,
                 (LmnWord)dmem_root_copy_atom(RC_ND_MEM_DELTA_ROOT(rc),
                                              (LmnAtomRef)wt(rc, atom2),
                                              at(rc, atom2)),
@@ -4697,7 +4697,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
 
       /* リンクオブジェクトのベクタを構築 */
-      srcvec = links_from_idxs((Vector *)wt(rc, srclist), rc_warry(rc));
+      srcvec = links_from_idxs((Vector *)wt(rc, srclist), rc_warray(rc));
 
       dmem_root_copy_ground(RC_ND_MEM_DELTA_ROOT(rc),
                             (LmnMembraneRef)wt(rc, memi), srcvec, &dstlovec,
@@ -4708,7 +4708,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       retvec = vec_make(2);
       vec_push(retvec, (LmnWord)dstlovec);
       vec_push(retvec, (LmnWord)atommap);
-      warry_set(rc, dstlist, (LmnWord)retvec, LIST_AND_MAP, TT_OTHER);
+      warray_set(rc, dstlist, (LmnWord)retvec, LIST_AND_MAP, TT_OTHER);
 
       /* 解放のための再帰。ベクタを解放するための中間語命令がない */
       dmem_interpret(rc, rule, instr);
@@ -4729,7 +4729,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         READ_VAL(LmnInstrVar, instr, memi);
       }
 
-      srcvec = links_from_idxs((Vector *)wt(rc, listi), rc_warry(rc));
+      srcvec = links_from_idxs((Vector *)wt(rc, listi), rc_warray(rc));
 
       switch (op) {
       case INSTR_REMOVEGROUND:
@@ -4750,7 +4750,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       LmnInstrVar listi;
       Vector *listvec = vec_make(16);
       READ_VAL(LmnInstrVar, instr, listi);
-      warry_set(rc, listi, (LmnWord)listvec, 0, TT_OTHER);
+      warray_set(rc, listi, (LmnWord)listvec, 0, TT_OTHER);
 
       if (dmem_interpret(rc, rule, instr)) {
         vec_free(listvec);
@@ -4778,11 +4778,11 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       case LIST_AND_MAP:
 
         if (posi == 0) {
-          warry_set(rc, dsti,
+          warray_set(rc, dsti,
                     vec_get((Vector *)wt(rc, listi), (unsigned int)posi),
                     LINK_LIST, TT_OTHER);
         } else if (posi == 1) {
-          warry_set(rc, dsti,
+          warray_set(rc, dsti,
                     vec_get((Vector *)wt(rc, listi), (unsigned int)posi), MAP,
                     TT_OTHER);
         } else {
@@ -4815,7 +4815,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         LmnWord w;
         LmnByte a = at(rc, atomi), t;
         READ_CONST_DATA_ATOM(w, a, t);
-        warry_set(rc, atomi, w, a, t);
+        warray_set(rc, atomi, w, a, t);
       } else { /* symbol atom */
         LmnFunctor f;
         /*         fprintf(stderr, "symbol atom can't be created in GUARD\n");
@@ -4838,7 +4838,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, srcatomi);
 
       if (LMN_ATTR_IS_DATA(at(rc, srcatomi))) {
-        warry_set(rc, atomi,
+        warray_set(rc, atomi,
                   lmn_copy_data_atom(wt(rc, srcatomi), at(rc, srcatomi)),
                   at(rc, srcatomi), TT_OTHER);
       } else { /* symbol atom */
@@ -5120,7 +5120,7 @@ Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v) {
     vec_data_t t = vec_get(link_idxs, i);
     LmnRegisterRef r = lmn_register_array_get(v, t);
     LinkObjRef l =
-        LinkObj_make((LmnAtomRef)lmn_register_wt(r), lmn_register_at(r));
+        LinkObj_make((LmnAtomRef)r->register_wt(), r->register_at());
     vec_push(vec, (LmnWord)l);
   }
   return vec;

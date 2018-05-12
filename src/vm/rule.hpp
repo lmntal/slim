@@ -217,6 +217,7 @@ struct LmnRuleSet {
 
   /* Returns the ith rule in ruleset */
   LmnRule *get_rule(int i) { return this->rules[i]; }
+
 };
 
 /* table, mapping RuleSet ID to RuleSet */

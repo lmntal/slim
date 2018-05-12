@@ -54,12 +54,6 @@ typedef struct LmnReactCxt *LmnReactCxtRef;
 #include "memstack.h"
 #include "rule.h"
 
-LmnWord lmn_register_wt(LmnRegisterRef r);
-LmnByte lmn_register_at(LmnRegisterRef r);
-LmnByte lmn_register_tt(LmnRegisterRef r);
-void lmn_register_set_wt(LmnRegisterRef r, LmnWord wt);
-void lmn_register_set_at(LmnRegisterRef r, LmnByte at);
-void lmn_register_set_tt(LmnRegisterRef r, LmnByte tt);
 LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx);
 
 #define REACT_MEM_ORIENTED (0x01U) /* 膜主導テスト */
@@ -79,24 +73,24 @@ void RC_SET_MODE(LmnReactCxtRef cxt, BYTE mode);
 void RC_ADD_MODE(LmnReactCxtRef cxt, BYTE mode);
 BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode);
 
-unsigned int warry_size(LmnReactCxtRef cxt);
-void warry_size_set(LmnReactCxtRef cxt, unsigned int n);
-unsigned int warry_use_size(LmnReactCxtRef cxt);
-void warry_use_size_set(LmnReactCxtRef cxt, unsigned int n);
-unsigned int warry_cur_size(LmnReactCxtRef cxt);
-void warry_cur_size_set(LmnReactCxtRef cxt, unsigned int n);
-void warry_cur_update(LmnReactCxtRef cxt, unsigned int i);
+unsigned int warray_size(LmnReactCxtRef cxt);
+void warray_size_set(LmnReactCxtRef cxt, unsigned int n);
+unsigned int warray_use_size(LmnReactCxtRef cxt);
+void warray_use_size_set(LmnReactCxtRef cxt, unsigned int n);
+unsigned int warray_cur_size(LmnReactCxtRef cxt);
+void warray_cur_size_set(LmnReactCxtRef cxt, unsigned int n);
+void warray_cur_update(LmnReactCxtRef cxt, unsigned int i);
 
-#define WARRY_DEF_SIZE (1024U)
-LmnRegisterArray rc_warry(LmnReactCxtRef cxt);
-void rc_warry_set(LmnReactCxtRef cxt, LmnRegisterArray arry);
+#define warray_DEF_SIZE (1024U)
+LmnRegisterArray rc_warray(LmnReactCxtRef cxt);
+void rc_warray_set(LmnReactCxtRef cxt, LmnRegisterArray arry);
 LmnWord wt(LmnReactCxtRef cxt, unsigned int i);
 void wt_set(LmnReactCxtRef cxt, unsigned int i, LmnWord o);
 LmnByte at(LmnReactCxtRef cxt, unsigned int i);
 void at_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o);
 LmnByte tt(LmnReactCxtRef cxt, unsigned int i);
 void tt_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o);
-void warry_set(LmnReactCxtRef cxt, unsigned int i, LmnWord w, LmnByte a,
+void warray_set(LmnReactCxtRef cxt, unsigned int i, LmnWord w, LmnByte a,
                LmnByte t);
 
 unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt);
