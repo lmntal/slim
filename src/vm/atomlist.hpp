@@ -40,11 +40,16 @@
 
 #include "atom.h"
 
+
 struct SimpleHashtbl;
+#ifdef __cplusplus
 extern "C"{
+#endif
   LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst);
   LmnSymbolAtomRef lmn_atomlist_end(AtomListEntryRef lst);
+#ifdef __cplusplus
 }
+#endif
 struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
   int n;
@@ -107,10 +112,24 @@ struct AtomListEntry {
   void put_record(int id, LmnAtomRef record) {
     hashtbl_put(this->record, id, (HashKeyType)record);
   }
+  // void mem_remove_symbol_atom(LmnSymbolAtomRef atom) {
+  //   this->remove(atom);
+  // }
+  void move_atom_to_atomlist_tail(LmnSymbolAtomRef a) {
+    LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
+    LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
+    LMN_SATOM_SET_NEXT(this->tail, a);
+    // ent->remove(a);
+    // if (LMN_IS_PROXY_FUNCTOR(f)) {
+    //   LMN_PROXY_SET_MEM(a, NULL);
+    // } else if (f != LMN_UNIFY_FUNCTOR) {
+    //   lmn_mem_symb_atom_dec(this);
+    // }
+    // mem_push_symbol_atom(this, a);
+  }
 };
 
 
-void move_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem);
 void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem);
 void move_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem);
 void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
@@ -131,7 +150,7 @@ typedef int AtomListIter;
       (ENT) = atomlist_iter_get_entry(MEM, __iter);                          \
       (F) = atomlist_iter_get_functor(__iter);                               \
       if (!(ENT)) continue;                                                  \
-      (CODE);                                                                \
+      (CODE);								\
     }                                                                        \
   } while (0)
 #define EACH_ATOMLIST(MEM, ENT, CODE)                                        \

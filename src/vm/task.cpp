@@ -2161,11 +2161,13 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
     }
     case INSTR_TAILATOM: {
       LmnInstrVar atomi, memi;
-
+      LmnMembraneRef mem = (LmnMembraneRef)wt(rc, memi);
+      LmnSymbolAtomRef sa = (LmnSymbolAtomRef)wt(rc, atomi);
+      LmnFunctor f = LMN_SATOM_GET_FUNCTOR(sa);
+      AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
-      move_atom_to_atomlist_tail((LmnSymbolAtomRef)wt(rc, atomi),
-                                 (LmnMembraneRef)wt(rc, memi));
+      ent->move_atom_to_atomlist_tail(sa);
       break;
     }
 

@@ -3498,11 +3498,6 @@ void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom,
   }
 }
 
-void move_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
-  // move_symbol_atom_to_atomlist_tail(LMN_SATOM(a), mem);
-  mem_remove_symbol_atom(mem, a);
-  mem_push_symbol_atom(mem, a);
-}
 
 void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem) {
   //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda

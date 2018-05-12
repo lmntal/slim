@@ -9,6 +9,7 @@ liblmn_vm_a_SOURCES =                              \
 	vm.cpp \
 	membrane.cpp membrane.h \
 	membrane.hpp \
+	atomlist.hpp \
 	atom.cpp atom.h \
 	ccallback.cpp ccallback.h \
 	dumper.cpp dumper.h \

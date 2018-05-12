@@ -74,8 +74,6 @@ struct LmnMembrane {
 #ifdef USE_FIRSTCLASS_RULE
   Vector *firstclass_rulesets;
 #endif
-  // void f (){
-  // }
 
 };
 

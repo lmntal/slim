@@ -47,9 +47,7 @@
 
 #include "membrane.hpp"
 
-
 typedef struct AtomListEntry *AtomListEntryRef;
-
 typedef struct LinkObj *LinkObjRef;
 
 #include "atom.h"
