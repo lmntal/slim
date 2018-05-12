@@ -688,7 +688,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
         }
       }
 
-      s_set_blue(s);
+      s->s_set_blue();
       s_unset_cyan(s, worker_id(w));
 
       pop_stack(stack);

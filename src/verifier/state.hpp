@@ -150,7 +150,8 @@ struct State {                /* Total:72(36)byte */
   BOOL s_is_visited_by_visualizer() {
     return flags2 & STATE_VIS_VISITED_MASK;
   }
-#ifdef KWBT_OPT
+  void s_set_blue() { flags2 |= STATE_BLUE_MASK; }
+  #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
 };
