@@ -39,12 +39,31 @@
 
 /* 整数関連のコールバック */
 
+extern "C"{
 #include "../lmntal.h"
 #include "element/element.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 
 void init_integer(void);
+void integer_set(LmnReactCxtRef rc,
+                 LmnMembraneRef mem,
+                 LmnAtomRef a0, LmnLinkAttr t0,
+                 LmnAtomRef a1, LmnLinkAttr t1,
+                 LmnAtomRef a2, LmnLinkAttr t2);
+void integer_srand(LmnReactCxtRef rc,
+                   LmnMembraneRef mem,
+                   LmnAtomRef a0, LmnLinkAttr t0);
+void integer_rand(LmnReactCxtRef rc,
+                  LmnMembraneRef mem,
+                  LmnAtomRef a0, LmnLinkAttr t0,
+                  LmnAtomRef a1, LmnLinkAttr t1);
+void integer_of_string(LmnReactCxtRef rc,
+                       LmnMembraneRef mem,
+                       LmnAtomRef a0, LmnLinkAttr t0,
+                       LmnAtomRef a1, LmnLinkAttr t1);
+void init_integer(void);
+}
 
 /**
  * ($start, $end, $g)
@@ -61,11 +80,10 @@ void integer_set(LmnReactCxtRef rc,
                  LmnAtomRef a2, LmnLinkAttr t2)
 {
   Vector *srcvec;
-  LmnWord i, n;
-  int start, end;
+  LmnWord i, n, start, end;
 
-  start  = (int)a0;
-  end    = (int)a1;
+  start  = (LmnWord)a0;
+  end    = (LmnWord)a1;
   srcvec = vec_make(16);
   vec_push(srcvec, (LmnWord)LinkObj_make(a2, t2));
 

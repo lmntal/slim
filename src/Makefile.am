@@ -66,7 +66,7 @@ slim_SOURCES =                                                     \
 	\
 	lmntal_ext.h                                                     \
 	ext/init_exts.cpp                                                  \
-	ext/integer.c                                                    \
+	ext/integer.cpp                                                    \
 	ext/float.cpp                                                      \
 	ext/atomic.cpp                                                   \
 	ext/nlmem.cpp                                                      \
