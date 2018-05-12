@@ -90,7 +90,7 @@ void dump_dot_header_comment(State *s) {
 void dump_dot_loop(State *s, AutomataRef *a, int *colors, int depth) {
   int i, n;
 
-  s_set_visited_by_visualizer(s);
+  s->s_set_visited_by_visualizer();
 
   dump_dot_header_comment(s);
   dump_dot_state_edges(s);

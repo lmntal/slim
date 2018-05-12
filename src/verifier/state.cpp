@@ -53,9 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_set_visited_by_visualizer(State *S) {
-  ((S)->flags2 |= STATE_VIS_VISITED_MASK);
-}
 void s_unset_blue(State *S) { ((S)->flags2 &= (~STATE_BLUE_MASK)); }
 void s_unset_red(State *S) { ((S)->flags2 &= (~STATE_RED_MASK)); }
 void s_unset_visited_by_visualizer(State *S) {
