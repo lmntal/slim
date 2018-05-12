@@ -111,7 +111,7 @@ extern "C" {
 
 /* 既に到達した状態であるかを判定するための条件 */
 #define MAPNDFS_ALREADY_VISITED(w, s)                                          \
-  ((s_is_visited_by_explorer(s) && worker_is_explorer(w)) ||                   \
+  ((s->s_is_visited_by_explorer() && worker_is_explorer(w)) ||                   \
    (s_is_visited_by_generator(s) && worker_is_generator(w)))
 
 /* 初期状態を割り当てるワーカーの条件 */
@@ -609,7 +609,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       n = state_succ_num(s);
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
-        if (!s_is_visited_by_explorer(succ)) {
+        if (!succ->s_is_visited_by_explorer()) {
           put_stack(stack, succ);
         }
       }
