@@ -726,7 +726,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, (start + i) % n);
 
-        if (!s_is_blue(succ) && !s_is_cyan(succ, worker_id(w))) {
+        if (!succ->s_is_blue() && !s_is_cyan(succ, worker_id(w))) {
           put_stack(stack, succ);
         }
       }
@@ -742,7 +742,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, (start + i) % n);
 
-        if (!s_is_blue(succ) && !s_is_cyan(succ, worker_id(w))) {
+        if (!succ->s_is_blue() && !s_is_cyan(succ, worker_id(w))) {
           if (!succ->is_expanded() && s_is_fresh(succ))
             put_stack(fresh, succ);
           else
