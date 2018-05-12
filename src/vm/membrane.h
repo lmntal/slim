@@ -235,7 +235,6 @@ void lmn_mem_relink_atom_args(LmnMembraneRef mem, LmnAtomRef atom0,
                               LmnLinkAttr attr0, int pos0, LmnAtomRef atom1,
                               LmnLinkAttr attr1, int pos1);
 
-
 /* @} */
 
 #endif /* LMN_MEMBRANE_H */
