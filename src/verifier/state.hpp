@@ -57,14 +57,16 @@
  * 保持するバイナリストリングが階層グラフ構造に対して一意なIDであるかを示すフラグ
  */
 
-#define ON_STACK_MASK (0x01U)
-#define FOR_MC_MASK (0x01U << 1)
-#define ON_CYCLE_MASK (0x01U << 2)
-#define EXPANDED_MASK (0x01U << 3)
-#define DUMMY_SYMBOL_MASK (0x01U << 4)
-#define TRANS_OBJ_MASK (0x01U << 5)
-#define MEM_ENCODED_MASK (0x01U << 6)
-#define MEM_DIRECT_MASK (0x01U << 7)
+enum StateFlags {
+  ON_STACK_MASK = 0x01U,
+  FOR_MC_MASK = 0x01U << 1,
+  ON_CYCLE_MASK = 0x01U << 2,
+  EXPANDED_MASK = 0x01U << 3,
+  DUMMY_SYMBOL_MASK = 0x01U << 4,
+  TRANS_OBJ_MASK = 0x01U << 5,
+  MEM_ENCODED_MASK = 0x01U << 6,
+  MEM_DIRECT_MASK = 0x01U << 7
+};
 
 /* Descriptor */
 struct State {                /* Total:72(36)byte */
