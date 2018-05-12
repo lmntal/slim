@@ -42,6 +42,7 @@ extern "C" {
 #include "atom.h"
 #include "react_context.h"
 }
+#include "atomlist.hpp"
 
 #if SIZEOF_LONG == 4
 #define EMPTY_KEY 0xffffffffUL

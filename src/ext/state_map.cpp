@@ -37,10 +37,12 @@
  * $Id$
  */
 
+extern "C" {
 #include "state_map.h"
 #include "set.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
+}
 
 struct LmnStateMap {
   LMN_SP_ATOM_HEADER;
@@ -110,14 +112,14 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnAtomRef a2, LmnLinkAttr t2,
                           LmnAtomRef a3, LmnLinkAttr t3)
 {
-  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(a1, 0));
+  LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0));
   StateSpaceRef ss = ((LmnStateMapRef)a0)->states;
-  LmnSymbolAtomRef out = a1;
-  LmnSymbolAtomRef in = LMN_SATOM_GET_LINK(a1, 0);
-  LmnLinkAttr in_attr = LMN_SATOM_GET_ATTR(a1, 0);
+  LmnSymbolAtomRef out = (LmnSymbolAtomRef)a1;
+  LmnSymbolAtomRef in = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0);
+  LmnLinkAttr in_attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)a1, 0);
 
   LmnSymbolAtomRef at = lmn_mem_newatom(m, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
-  LmnSymbolAtomRef plus = LMN_SATOM_GET_LINK(in, 1);
+  LmnSymbolAtomRef plus = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in, 1);
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
   lmn_mem_delete_atom(m, in, in_attr);
@@ -171,11 +173,11 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
   EACH_ATOMLIST_WITH_FUNC(new_mem, ent, f, {
     if (f != at_functor) continue;
 
-    LMN_ASSERT(atomlist_ent_num(ent) == 1);
+    LMN_ASSERT(ent->n == 1);
     at_atom = atomlist_head(ent);
   });
 
-  LmnSymbolAtomRef plus = LMN_SATOM_GET_LINK(at_atom, 0);
+  LmnSymbolAtomRef plus = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(at_atom, 0);
   lmn_mem_delete_atom(new_mem, at_atom, 0);
 
   LmnSymbolAtomRef in = lmn_mem_newatom(new_mem, LMN_IN_PROXY_FUNCTOR);
@@ -222,6 +224,9 @@ unsigned char sp_cb_state_map_is_ground(void *data)
 {
   return 1;
 }
+
+extern "C"
+void init_state_map(void);
 
 void init_state_map(void)
 {

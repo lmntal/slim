@@ -42,7 +42,9 @@
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 
-void init_nlmem(void);
+
+
+extern "C" void init_nlmem(void);
 
 void nlmem_copy(LmnReactCxtRef rc,
                 LmnMembraneRef mem,
@@ -57,7 +59,7 @@ void nlmem_copy(LmnReactCxtRef rc,
 
   copy_tag_name = LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1));
   copy_tag_func = lmn_functor_intern(ANONYMOUS, copy_tag_name, 3);
-  org_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
+  org_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
   trg_mem = lmn_mem_make();
   atom_map = lmn_mem_copy_cells(trg_mem, org_mem);
   lmn_mem_add_child_mem(mem, trg_mem);
@@ -73,8 +75,8 @@ void nlmem_copy(LmnReactCxtRef rc,
       EACH_ATOM(org_in, ent, ({
         /* タグアトムを作り、リンクの接続を行う */
         proc_tbl_get_by_atom(atom_map, org_in, &t);
-        trg_in = LMN_SATOM(t);
-        org_out = LMN_SATOM(LMN_SATOM_GET_LINK(org_in, 0));
+        trg_in = (LmnSymbolAtomRef)(t);
+        org_out = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK(org_in, 0));
         trg_out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
         lmn_newlink_in_symbols(trg_in, 0, trg_out, 0);
         tag_atom = lmn_mem_newatom(mem, copy_tag_func);
@@ -108,7 +110,7 @@ void nlmem_kill(LmnReactCxtRef rc,
     return;
   }
 
-  org_in = LMN_SATOM(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
+  org_in = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
   org_mem = LMN_PROXY_GET_MEM(org_in);
   {
     AtomListEntryRef ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
@@ -120,7 +122,7 @@ void nlmem_kill(LmnReactCxtRef rc,
 
       EACH_ATOM(in, ent, ({
         if (in == org_in) continue;
-        out = LMN_SATOM(LMN_SATOM_GET_LINK(in, 0));
+        out = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK(in, 0));
         out_attr = LMN_SATOM_GET_ATTR(in, 0);
         tag_atom = lmn_mem_newatom(mem, kill_tag_func);
         lmn_relink_symbols(tag_atom, 0, out, 1);
