@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_unset_fresh(State *S) { ((S)->flags3 &= (~STATE_FRESH_MASK)); }
 BOOL s_is_fresh(State *S) { return ((S)->flags3 & STATE_FRESH_MASK); }
 
 #ifndef MINIMAL_STATE

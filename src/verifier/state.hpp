@@ -156,6 +156,7 @@ struct State {                /* Total:72(36)byte */
     flags2 |= STATE_VIS_VISITED_MASK;
   }
   void s_set_fresh() { flags3 |= STATE_FRESH_MASK; }
+  void s_unset_fresh() { flags3 &= (~STATE_FRESH_MASK); }
   #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif

@@ -757,7 +757,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       if (n > 0) {
         for (i = 0; i < n; i++) {
           State *fs = (State *)vec_get(fresh, i);
-          s_unset_fresh(fs);
+          fs->s_unset_fresh();
           put_stack(stack, fs);
         }
       }
