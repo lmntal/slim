@@ -684,7 +684,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
         n = vec_num(&red_states);
         for (i = 0; i < n; i++) {
           State *r = (State *)vec_get(&red_states, i);
-          s_set_red(r);
+          r->s_set_red();
         }
       }
 
