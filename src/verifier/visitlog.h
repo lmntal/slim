@@ -1,8 +1,8 @@
 /*
  * visitlog.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -49,22 +49,21 @@
 #include "vm/vm.h"
 #include <limits.h>
 
-
-#define VISITLOG_INIT_N       (1)
-
+#define VISITLOG_INIT_N (1)
 
 /*----------------------------------------------------------------------
  * Visit Log
  */
 
-/* VisitLog - 同型性判定や、IDなどバックトラックをしながらグラフを探索する場合に用いる.
+/* VisitLog -
+ * 同型性判定や、IDなどバックトラックをしながらグラフを探索する場合に用いる.
  * アトムや膜のログへの追加時には追加順に自動的に番号を付加する.
- * チェックポイントを使うことで, バックトラック時にログをバックトラック前の状態に元に戻すことができる.
+ * チェックポイントを使うことで,
+ * バックトラック時にログをバックトラック前の状態に元に戻すことができる.
  */
 
-typedef struct VisitLog    *VisitLogRef;
-typedef struct Checkpoint  *CheckpointRef;
-
+typedef struct VisitLog *VisitLogRef;
+typedef struct Checkpoint *CheckpointRef;
 
 /**
  * Function ProtoTypes
@@ -81,15 +80,16 @@ void visitlog_revert_checkpoint(VisitLogRef visitlog);
 void visitlog_commit_checkpoint(VisitLogRef visitlog);
 void visitlog_push_checkpoint(VisitLogRef visitlog, CheckpointRef cp);
 
-int  visitlog_put(VisitLogRef visitlog, LmnWord p);
-int  visitlog_put_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom);
-int  visitlog_put_mem(VisitLogRef visitlog, LmnMembraneRef mem);
-int  visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl);
+int visitlog_put(VisitLogRef visitlog, LmnWord p);
+int visitlog_put_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom);
+int visitlog_put_mem(VisitLogRef visitlog, LmnMembraneRef mem);
+int visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl);
 void visitlog_put_data(VisitLogRef visitlog);
-int  visitlog_get_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom, LmnWord *value);
-int  visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value);
-int  visitlog_get_hlink(VisitLogRef visitlog, HyperLink *hl, LmnWord *value);
-int  visitlog_element_num(VisitLogRef visitlog);
+int visitlog_get_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom,
+                      LmnWord *value);
+int visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value);
+int visitlog_get_hlink(VisitLogRef visitlog, HyperLink *hl, LmnWord *value);
+int visitlog_element_num(VisitLogRef visitlog);
 
 /* @} */
 

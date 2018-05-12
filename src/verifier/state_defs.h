@@ -65,5 +65,4 @@ typedef struct TreeCompressData {
   unsigned short byte_length;
 } TreeCompressData;
 
-
 #endif /* STATE_DEFS_H */

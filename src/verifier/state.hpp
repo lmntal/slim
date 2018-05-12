@@ -63,9 +63,10 @@ struct State {                /* Total:72(36)byte */
   unsigned long state_id; /*  8(4)byte: 生成順に割り当てる状態の整数ID */
   State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
 #ifndef MINIMAL_STATE
-  BYTE *local_flags; /*  8(4)byte:
-                        並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等)
-                      */
+  BYTE *
+      local_flags; /*  8(4)byte:
+                      並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等)
+                    */
   pthread_mutex_t expand_lock;
   unsigned long expander_id;
 #endif
@@ -73,6 +74,5 @@ struct State {                /* Total:72(36)byte */
   LmnCost cost; /*  8(4)byte: cost */
 #endif
 };
-
 
 #endif

@@ -39,9 +39,9 @@
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
-typedef void* yyscan_t;
+typedef void *yyscan_t;
 #endif
-extern "C"{
+extern "C" {
 #include "propositional_symbol.h"
 #include "../lmntal.h"
 #include "propsym_parser.h"
@@ -61,16 +61,12 @@ struct Proposition {
   LmnRuleRef rule;
 };
 
-static char *rule_str_for_compile(const char *head,
-                                  const char *guard,
+static char *rule_str_for_compile(const char *head, const char *guard,
                                   const char *body);
 static int propsym_parse(FILE *in, AutomataRef a, PVector *definitions);
 
-
-PropositionRef proposition_make(const char *head,
-                             const char *guard,
-                             const char *body)
-{
+PropositionRef proposition_make(const char *head, const char *guard,
+                                const char *body) {
   PropositionRef p = LMN_MALLOC(struct Proposition);
   RuleRef rule;
   FILE *fp;
@@ -101,8 +97,7 @@ PropositionRef proposition_make(const char *head,
   return p;
 }
 
-void proposition_free(PropositionRef p)
-{
+void proposition_free(PropositionRef p) {
   LMN_FREE(p->head);
   LMN_FREE(p->guard);
   LMN_FREE(p->body);
@@ -110,22 +105,17 @@ void proposition_free(PropositionRef p)
   LMN_FREE(p);
 }
 
-LmnRuleRef proposition_get_rule(PropositionRef p)
-{
-  return p->rule;
-}
+LmnRuleRef proposition_get_rule(PropositionRef p) { return p->rule; }
 
-static char *rule_str_for_compile(const char *head,
-                                  const char *guard,
-                                  const char *body)
-{
+static char *rule_str_for_compile(const char *head, const char *guard,
+                                  const char *body) {
   char *buf;
   const char *head_s = head;
   const char *guard_s = (guard == NULL ? "" : guard);
   const char *body_s = (body == NULL ? head : body);
 
-  buf = LMN_NALLOC(char,
-                   strlen(head_s) + strlen(guard_s) + strlen(body_s) + 32);
+  buf =
+      LMN_NALLOC(char, strlen(head_s) + strlen(guard_s) + strlen(body_s) + 32);
   buf[0] = '\0';
   strcat(buf, head_s);
   strcat(buf, " :- ");
@@ -137,13 +127,11 @@ static char *rule_str_for_compile(const char *head,
   return buf;
 }
 
-
 /*----------------------------------------------------------------------
  * propositional symbol definition
  */
 
-SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p)
-{
+SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p) {
   SymbolDefinitionRef s = LMN_MALLOC(struct SymbolDefinition);
 
   s->sym_id = sym_id;
@@ -151,24 +139,18 @@ SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p)
   return s;
 }
 
-void propsym_free(SymbolDefinitionRef s)
-{
+void propsym_free(SymbolDefinitionRef s) {
   if (s) {
     proposition_free(s->prop);
     LMN_FREE(s);
   }
 }
 
-unsigned int propsym_symbol_id(SymbolDefinitionRef s)
-{
-  return s->sym_id;
-}
+unsigned int propsym_symbol_id(SymbolDefinitionRef s) { return s->sym_id; }
 
-extern "C"
-int propsymparse(yyscan_t, AutomataRef, Vector**);
+extern "C" int propsymparse(yyscan_t, AutomataRef, Vector **);
 
-int propsym_parse(FILE *in, AutomataRef a, PVector *definitions)
-{
+int propsym_parse(FILE *in, AutomataRef a, PVector *definitions) {
   int r;
   yyscan_t scanner;
 
@@ -182,27 +164,25 @@ int propsym_parse(FILE *in, AutomataRef a, PVector *definitions)
 }
 
 /* 正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
-int propsym_load_file(FILE *in, AutomataRef a, Vector **definitions)
-{
+int propsym_load_file(FILE *in, AutomataRef a, Vector **definitions) {
   return propsym_parse(in, a, definitions);
 }
 
-void propsym_dump(SymbolDefinitionRef s)
-{
-  fprintf(stdout, "%d := %s | %s. \n", s->sym_id, s->prop->head, s->prop->guard);
+void propsym_dump(SymbolDefinitionRef s) {
+  fprintf(stdout, "%d := %s | %s. \n", s->sym_id, s->prop->head,
+          s->prop->guard);
 }
 
-PropositionRef propsym_get_proposition(SymbolDefinitionRef s)
-{
+PropositionRef propsym_get_proposition(SymbolDefinitionRef s) {
   return s ? s->prop : NULL;
 }
 
-BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem)
-{
+BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
   LmnReactCxtRef rc = react_context_alloc();
   BOOL b;
 
-  if (!prop) return FALSE;
+  if (!prop)
+    return FALSE;
 
   property_react_cxt_init(rc);
   RC_SET_GROOT_MEM(rc, mem);
@@ -213,28 +193,19 @@ BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem)
   return b;
 }
 
-
 /*----------------------------------------------------------------------
  * propositional symbol definitions
  */
 
-PropSyms propsyms_make()
-{
-  return vec_make(32);
-}
+PropSyms propsyms_make() { return vec_make(32); }
 
-unsigned int propsyms_num(PropSyms props)
-{
-  return vec_num(props);
-}
+unsigned int propsyms_num(PropSyms props) { return vec_num(props); }
 
-SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i)
-{
+SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i) {
   return (SymbolDefinitionRef)vec_get(props, i);
 }
 
-void propsyms_free(PropSyms props)
-{
+void propsyms_free(PropSyms props) {
   unsigned int i;
   for (i = 0; i < vec_num(props); i++) {
     propsym_free((SymbolDefinitionRef)vec_get(props, i));
@@ -242,13 +213,9 @@ void propsyms_free(PropSyms props)
   vec_free(props);
 }
 
-void propsyms_set(PropSyms props,
-                      unsigned int id,
-                      SymbolDefinitionRef symdef)
-{
+void propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef) {
   if (vec_num(props) <= id) {
-    vec_resize(props, id+1, (vec_data_t)NULL);
+    vec_resize(props, id + 1, (vec_data_t)NULL);
   }
   vec_set(props, id, (vec_data_t)symdef);
 }
-

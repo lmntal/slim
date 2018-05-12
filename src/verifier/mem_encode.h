@@ -1,8 +1,8 @@
 /*
  * mem_encode.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -51,27 +51,29 @@ typedef struct LmnBinStr *LmnBinStrRef;
 
 /* 最終的なエンコード結果を表すバイナリストリング */
 struct LmnBinStr {
-  BOOL type;          /* バイト列への記録方式を記録しておくためのbit field. 圧縮方式のメモ用に用いる.
-                       * (64bit環境ではアラインメントの隙間に配置されるのでメモリ使用量は増えないはず) */
-  unsigned int len;   /* 確保したbyte型の数(列の長さ) */
-  BYTE *v;            /* 1byte(8bit)の可変列へのポインタ */
+  BOOL type; /* バイト列への記録方式を記録しておくためのbit field.
+              * 圧縮方式のメモ用に用いる.
+              * (64bit環境ではアラインメントの隙間に配置されるのでメモリ使用量は増えないはず)
+              */
+  unsigned int len; /* 確保したbyte型の数(列の長さ) */
+  BYTE *v;          /* 1byte(8bit)の可変列へのポインタ */
 };
 
-#define BS_COMP_Z                 (0x01U)
-#define BS_COMP_D                 (0x01U << 1)
+#define BS_COMP_Z (0x01U)
+#define BS_COMP_D (0x01U << 1)
 
-#define is_comp_z(BS)             (((BS)->type) & BS_COMP_Z)
-#define set_comp_z(BS)            (((BS)->type) |= BS_COMP_Z)
-#define unset_comp_z(BS)          (((BS)->type) &= ~(BS_COMP_Z))
-#define is_comp_d(BS)             (((BS)->type) & BS_COMP_D)
-#define set_comp_d(BS)            (((BS)->type) |= BS_COMP_D)
-#define unset_comp_d(BS)          (((BS)->type) &= ~(BS_COMP_D))
+#define is_comp_z(BS) (((BS)->type) & BS_COMP_Z)
+#define set_comp_z(BS) (((BS)->type) |= BS_COMP_Z)
+#define unset_comp_z(BS) (((BS)->type) &= ~(BS_COMP_Z))
+#define is_comp_d(BS) (((BS)->type) & BS_COMP_D)
+#define set_comp_d(BS) (((BS)->type) |= BS_COMP_D)
+#define unset_comp_d(BS) (((BS)->type) &= ~(BS_COMP_D))
 
-#define TAG_BIT_SIZE      4
+#define TAG_BIT_SIZE 4
 #define TAG_DATA_TYPE_BIT 2
-#define TAG_IN_BYTE       2
+#define TAG_IN_BYTE 2
 
-#define lmn_binstr_byte_size(bs)         ((bs->len + 1)/ TAG_IN_BYTE)
+#define lmn_binstr_byte_size(bs) ((bs->len + 1) / TAG_IN_BYTE)
 
 void mem_isom_init(void);
 void mem_isom_finalize(void);

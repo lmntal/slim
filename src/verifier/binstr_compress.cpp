@@ -36,15 +36,15 @@
  *
  * $Id$
  */
-extern "C"{
+extern "C" {
 #include "binstr_compress.h"
-#include "element/element.h"
 #include "../third_party/zdelta-2.1/zdlib.h"
+#include "element/element.h"
 #ifdef HAVE_LIBZ
-# include <zlib.h>
+#include <zlib.h>
 #endif
 #ifdef PROFILE
-# include "runtime_status.h"
+#include "runtime_status.h"
 #endif
 }
 
@@ -55,7 +55,8 @@ extern "C"{
  */
 
 /* ハーフバイトは1バイトの半分のサイズであるため, バイトサイズの2倍の長さとなる.
- * ハーフバイトサイズhとバイトサイズbの変換では, 除算による1未満切り捨てを考慮する必要がある.
+ * ハーフバイトサイズhとバイトサイズbの変換では,
+ * 除算による1未満切り捨てを考慮する必要がある.
  *
  * ENCODE:
  *   LmnBinStr org, cmp;
@@ -68,10 +69,12 @@ extern "C"{
  *   2. org = uncompress(cmp);
  *   3. org.h <==  x2 <== org.b
  *
- * bからhを求めると, 2倍しているため必ず偶数となり, DECODEした際に正確なhの値とならない.
- * そこで, ENCODEの際に, orgのハーフバイトサイズが奇数ならば, cmpのハーフバイトサイズに1を加算する.
+ * bからhを求めると, 2倍しているため必ず偶数となり,
+ * DECODEした際に正確なhの値とならない. そこで, ENCODEの際に,
+ * orgのハーフバイトサイズが奇数ならば, cmpのハーフバイトサイズに1を加算する.
  * 加算した1はDECODEの際に1/2するため切り捨てられる.
- * 最終的に, DECODEしたハーフバイトサイズを計算したとき, cmpのハーフバイトサイズが奇数なら1を減算する.
+ * 最終的に, DECODEしたハーフバイトサイズを計算したとき,
+ * cmpのハーフバイトサイズが奇数なら1を減算する.
  *
  * 例:
  * ENCODE(org.h = 13)
@@ -88,14 +91,12 @@ extern "C"{
  *              = 13
  */
 
-
 /** --------------------------
  *  Method1: zlib
  *    "A Massively Spiffy Yet Delicately Unobtrusive Compression Library"
  *    @see http://www.zlib.net/
  */
-LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org)
-{
+LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org) {
 #ifndef HAVE_LIBZ
   return org;
 #else
@@ -138,9 +139,7 @@ LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org)
 #endif
 }
 
-
-LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp)
-{
+LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp) {
 #ifndef HAVE_LIBZ
   return cmp;
 #else
@@ -166,7 +165,7 @@ LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp)
   }
 
   org->type = cmp->type;
-  org->len  = org_8len * TAG_IN_BYTE - ((cmp->len & 0x1U) ? 1 : 0);
+  org->len = org_8len * TAG_IN_BYTE - ((cmp->len & 0x1U) ? 1 : 0);
   unset_comp_z(org);
 
 #ifdef PROFILE
@@ -181,15 +180,13 @@ LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp)
 #endif
 }
 
-
 /** --------------------------
  *  Method2: zdelta
  *    "A General Purpose Lossless Delta Compression Library")
  *    @see http://cis.poly.edu/zdelta/
  */
 
-static inline const char *zd_ret_str(int n)
-{
+static inline const char *zd_ret_str(int n) {
   switch (n) {
   case ZD_BUF_ERROR:
     return "Buffer Error";
@@ -210,8 +207,8 @@ static int zd_buf_n = 3;
 
 /* バイト列refからバイト列orgへの差分を求めて返す.
  * org, ref共にRead Only */
-LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org, const LmnBinStrRef ref)
-{
+LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org,
+                                 const LmnBinStrRef ref) {
   LmnBinStrRef dif;
   unsigned long org_8len, ref_8len, dif_8len;
   int ret, mul;
@@ -233,7 +230,8 @@ LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org, const LmnBinStrRef ref)
   dif_8len = org_8len;
 
   while (1) {
-    if (dif) lmn_binstr_free(dif);
+    if (dif)
+      lmn_binstr_free(dif);
     dif_8len *= mul;
     dif = lmn_binstr_make(dif_8len);
     ret = zd_compress(ref->v, ref_8len, org->v, org_8len, dif->v, &dif_8len);
@@ -250,7 +248,7 @@ LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org, const LmnBinStrRef ref)
     lmn_fatal("fail to compress");
   }
 
-  dif->len  = dif_8len * TAG_IN_BYTE + ((org->len & 0x1U) ? 1 : 0);
+  dif->len = dif_8len * TAG_IN_BYTE + ((org->len & 0x1U) ? 1 : 0);
   dif->type = org->type;
   set_comp_d(dif);
 
@@ -268,8 +266,8 @@ LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org, const LmnBinStrRef ref)
 
 /* バイト列refに対して差分difを適用してorgを復元して返す.
  * メモリは読み出し専用 */
-LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref, const LmnBinStrRef dif)
-{
+LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref,
+                                 const LmnBinStrRef dif) {
   LmnBinStrRef org;
   unsigned long ref_8len, dif_8len, org_8len;
   int ret, mul;
@@ -290,7 +288,8 @@ LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref, const LmnBinStrRef dif)
   org_8len = ref_8len + dif_8len;
 
   while (1) {
-    if (org) lmn_binstr_free(org);
+    if (org)
+      lmn_binstr_free(org);
     org_8len *= mul;
     org = lmn_binstr_make(org_8len);
 
@@ -308,7 +307,7 @@ LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref, const LmnBinStrRef dif)
     lmn_fatal("fail to uncompress: zdlib");
   }
 
-  org->len  = org_8len * TAG_IN_BYTE - ((dif->len & 0x1U) ? 1 : 0);
+  org->len = org_8len * TAG_IN_BYTE - ((dif->len & 0x1U) ? 1 : 0);
   org->type = dif->type;
   unset_comp_d(org);
 
@@ -323,17 +322,15 @@ LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref, const LmnBinStrRef dif)
   return org;
 }
 
-
 TreeDatabaseRef treedb;
 #ifdef PROFILE
-uint64_t     node_count;
-uint64_t     table_size;
-double       load_factor;
-uint64_t     memory;
+uint64_t node_count;
+uint64_t table_size;
+double load_factor;
+uint64_t memory;
 #endif
 
-void lmn_bscomp_tree_profile(FILE *f)
-{
+void lmn_bscomp_tree_profile(FILE *f) {
 #ifdef PROFILE
   fprintf(f, "node count              : %10llu\n", node_count);
   fprintf(f, "table size              : %10llu\n", table_size);
@@ -344,8 +341,7 @@ void lmn_bscomp_tree_profile(FILE *f)
 #endif
 }
 
-BOOL lmn_bscomp_tree_init()
-{
+BOOL lmn_bscomp_tree_init() {
   if (treedb == NULL) {
     treedb = tree_make(2ULL << lmn_env.tree_compress_table_size);
     return TRUE;
@@ -353,15 +349,13 @@ BOOL lmn_bscomp_tree_init()
   return FALSE;
 }
 
-
-BOOL lmn_bscomp_tree_clean()
-{
+BOOL lmn_bscomp_tree_clean() {
   if (treedb != NULL) {
 #ifdef PROFILE
-    node_count  = tree_db_node_count(treedb);
-    table_size  = treedb->mask + 1;
+    node_count = tree_db_node_count(treedb);
+    table_size = treedb->mask + 1;
     load_factor = (double)node_count / (treedb->mask + 1);
-    memory      = (uint64_t)tree_space(treedb) / 1024 / 1024;
+    memory = (uint64_t)tree_space(treedb) / 1024 / 1024;
 #endif
     tree_free(treedb);
     treedb = NULL;
@@ -370,15 +364,9 @@ BOOL lmn_bscomp_tree_clean()
   return FALSE;
 }
 
+unsigned long lmn_bscomp_tree_space() { return tree_space(treedb); }
 
-unsigned long lmn_bscomp_tree_space()
-{
-  return tree_space(treedb);
-}
-
-
-TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str)
-{
+TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
   BOOL found;
   TreeNodeID ref;
 #ifdef PROFILE
@@ -406,9 +394,7 @@ TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str)
   return ref;
 }
 
-
-LmnBinStrRef lmn_bscomp_tree_decode(TreeNodeID ref, int len)
-{
+LmnBinStrRef lmn_bscomp_tree_decode(TreeNodeID ref, int len) {
   LmnBinStrRef bs;
   LMN_ASSERT(treedb);
 #ifdef PROFILE

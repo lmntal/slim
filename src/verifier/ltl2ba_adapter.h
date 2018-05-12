@@ -49,7 +49,7 @@
 #include <stdio.h>
 
 /* 環境変数: ltl2baコマンドのパス */
-#define ENV_LTL2BA  "LTL2BA"
+#define ENV_LTL2BA "LTL2BA"
 
 FILE *ltl2ba_str(char *ltl);
 

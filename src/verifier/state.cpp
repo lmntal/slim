@@ -1099,7 +1099,6 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   }
 }
 
-
 /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
  * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
  * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
@@ -1174,9 +1173,7 @@ unsigned long state_format_id(State *s, BOOL is_formated) {
 BYTE state_property_state(State *s) { return s->state_name; }
 
 /* 状態sに性質オートマトン上の状態名labelを割り当てる. */
-void state_set_property_state(State *s, BYTE label) {
-  s->state_name = label;
-}
+void state_set_property_state(State *s, BYTE label) { s->state_name = label; }
 
 /* 状態sに対応するハッシュ値を返す. */
 unsigned long state_hash(State *s) {
@@ -1239,9 +1236,7 @@ void state_unset_binstr(State *s) {
 State *state_get_parent(State *s) { return s->parent; }
 
 /* 状態sに, sを生成した状態(親ノード)へのアドレスを割り当てる. */
-void state_set_parent(State *s, State *parent) {
-  s->parent = parent;
-}
+void state_set_parent(State *s, State *parent) { s->parent = parent; }
 
 /* 状態sから遷移可能な状態数を返す. */
 unsigned int state_succ_num(State *s) { return s->successor_num; }
@@ -1352,8 +1347,8 @@ void state_set_cost(State *s, LmnCost cost, State *pre) {
 /* 状態sのcostが最適ならば更新し、状態sを遷移先更新状態にする
  * f==true: minimize
  * f==false: maximize */
-void state_update_cost(State *s, TransitionRef t, State *pre,
-                                     Vector *new_ss, BOOL f, EWLock *ewlock) {
+void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
+                       BOOL f, EWLock *ewlock) {
   LmnCost cost;
   cost = transition_cost(t) + state_cost(pre);
   if (env_threads_num() >= 2)
@@ -1372,13 +1367,9 @@ void state_update_cost(State *s, TransitionRef t, State *pre,
 unsigned long transition_id(TransitionRef t) { return t->id; }
 
 /* 遷移tに整数ID idを割り当てる. */
-void transition_set_id(TransitionRef t, unsigned long id) {
-  t->id = id;
-}
+void transition_set_id(TransitionRef t, unsigned long id) { t->id = id; }
 
-int transition_rule_num(TransitionRef t) {
-  return vec_num(&t->rule_names);
-}
+int transition_rule_num(TransitionRef t) { return vec_num(&t->rule_names); }
 
 lmn_interned_str transition_rule(TransitionRef t, int idx) {
   return vec_get(&t->rule_names, idx);

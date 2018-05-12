@@ -49,49 +49,38 @@
 #include "mc_worker.h"
 #include "stack_macro.h"
 
-
 /* Nested-DFSが起動するための条件 */
-#define NDFS_COND(W, SYST_S, PROP_S)    (!worker_on_parallel(W)           \
-                                          && worker_use_ndfs(W)           \
-                                          && atmstate_is_accept(PROP_S)   \
-                                          && !is_snd(SYST_S)              \
-                                          && !is_on_cycle(SYST_S))
+#define NDFS_COND(W, SYST_S, PROP_S)                                           \
+  (!worker_on_parallel(W) && worker_use_ndfs(W) &&                             \
+   atmstate_is_accept(PROP_S) && !is_snd(SYST_S) && !is_on_cycle(SYST_S))
 
-#define MAPNDFS_COND(W, SYST_S, PROP_S)    (worker_on_parallel(W)          \
-                                          && worker_use_mapndfs(W)         \
-                                          &&atmstate_is_accept(PROP_S)    \
-                                          && !is_snd(SYST_S)              \
-                                          && !is_on_cycle(SYST_S)         \
-                                           && s_is_visited_by_explorer(SYST_S)           \
-                                           && worker_is_explorer(W))
+#define MAPNDFS_COND(W, SYST_S, PROP_S)                                        \
+  (worker_on_parallel(W) && worker_use_mapndfs(W) &&                           \
+   atmstate_is_accept(PROP_S) && !is_snd(SYST_S) && !is_on_cycle(SYST_S) &&    \
+   s_is_visited_by_explorer(SYST_S) && worker_is_explorer(W))
 
-#define MCNDFS_COND(W, SYST_S, PROP_S)    (atmstate_is_accept(PROP_S))
+#define MCNDFS_COND(W, SYST_S, PROP_S) (atmstate_is_accept(PROP_S))
 
-#define OWCTY_COND(W)                   (worker_use_owcty(W)              \
-                                          && !w->group->mc_exit)
+#define OWCTY_COND(W) (worker_use_owcty(W) && !w->group->mc_exit)
 
-#define MAP_COND(W)                     (worker_use_map(W)                \
-                                          && !w->group->mc_exit)
+#define MAP_COND(W) (worker_use_map(W) && !w->group->mc_exit)
 
-#define BLEDGE_COND(W)                  (worker_use_ble(W)                \
-                                          && !w->group->mc_exit)
+#define BLEDGE_COND(W) (worker_use_ble(W) && !w->group->mc_exit)
 
-#define MC_MAP_MASK                     (0x01U)
-#define MC_MAP2_MASK                    (0x01U << 1)
-#define MC_BLE_MASK                     (0x01U << 2)
+#define MC_MAP_MASK (0x01U)
+#define MC_MAP2_MASK (0x01U << 1)
+#define MC_BLE_MASK (0x01U << 2)
 
+#define smap_set_deleted(S) (OR_AND_FETCH((S)->flags2, MC_MAP_MASK))
+#define smap_unset_deleted(S) (AND_AND_FETCH((S)->flags2, MC_MAP_MASK))
+#define smap_is_deleted(S) ((S)->flags2 & MC_MAP_MASK)
+#define smap_set_not_delete(S) (OR_AND_FETCH((S)->flags2, MC_MAP2_MASK))
+#define smap_unset_not_delete(S) (AND_AND_FETCH((S)->flags2, MC_MAP2_MASK))
+#define smap_is_not_delete(S) ((S)->flags2 & MC_MAP2_MASK)
 
-#define smap_set_deleted(S)       (OR_AND_FETCH((S)->flags2,  MC_MAP_MASK))
-#define smap_unset_deleted(S)     (AND_AND_FETCH((S)->flags2, MC_MAP_MASK))
-#define smap_is_deleted(S)        ((S)->flags2 & MC_MAP_MASK)
-#define smap_set_not_delete(S)    (OR_AND_FETCH((S)->flags2,  MC_MAP2_MASK))
-#define smap_unset_not_delete(S)  (AND_AND_FETCH((S)->flags2, MC_MAP2_MASK))
-#define smap_is_not_delete(S)     ((S)->flags2 & MC_MAP2_MASK)
-
-#define sble_set_on_stack(S)      (OR_AND_FETCH((S)->flags2,  MC_BLE_MASK))
-#define sble_unset_on_stack(S)    (AND_AND_FETCH((S)->flags2, MC_BLE_MASK))
-#define sble_is_on_stack(S)       ((S)->flags2 & MC_BLE_MASK)
-
+#define sble_set_on_stack(S) (OR_AND_FETCH((S)->flags2, MC_BLE_MASK))
+#define sble_unset_on_stack(S) (AND_AND_FETCH((S)->flags2, MC_BLE_MASK))
+#define sble_is_on_stack(S) ((S)->flags2 & MC_BLE_MASK)
 
 /** prototypes
  */

@@ -45,6 +45,8 @@
  * @{
  */
 
+#include "lmntal.h"
+
 /* Functor Information */
 
 typedef struct LmnFunctorTable {
