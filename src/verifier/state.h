@@ -67,7 +67,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 struct State;
 
 /* manipulation for flags */
-BOOL is_encoded(State *S);
 BOOL is_expanded(State *S);
 BOOL is_on_cycle(State *S);
 BOOL is_on_stack(State *S);

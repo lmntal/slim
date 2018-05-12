@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL is_encoded(State *S) { return ((S)->flags & MEM_ENCODED_MASK); }
 BOOL is_expanded(State *S) { return ((S)->flags & EXPANDED_MASK); }
 BOOL is_on_cycle(State *S) { return ((S)->flags & ON_CYCLE_MASK); }
 BOOL is_on_stack(State *S) { return ((S)->flags & ON_STACK_MASK); }
@@ -197,7 +196,7 @@ State *state_make(LmnMembraneRef mem, BYTE property_label, BOOL do_encode) {
   new_s->state_name = property_label;
   state_calc_hash(new_s, mem, do_encode);
 
-  if (is_encoded(new_s)) {
+  if (new_s->is_encoded()) {
     lmn_mem_free_rec(mem);
   }
 #ifdef PROFILE
@@ -289,7 +288,7 @@ State *state_copy(State *src, LmnMembraneRef mem) {
 #endif
   } else if (state_binstr(src)) {
     state_set_binstr(dst, lmn_binstr_copy(state_binstr(src)));
-    if (is_encoded(src)) {
+    if (src->is_encoded()) {
       set_encoded(dst);
     }
 #ifdef PROFILE
@@ -484,7 +483,7 @@ static int state_equals_with_compress(State *check, State *stored) {
     bs2 = state_binstr(stored);
   }
 
-  if (is_encoded(check) && is_encoded(stored)) {
+  if (check->is_encoded() && stored->is_encoded()) {
     /* 膜のIDで比較 */
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
@@ -621,7 +620,7 @@ static int state_equals_with_tree(State *check, State *stored) {
   bs2 = lmn_bscomp_tree_decode((TreeNodeID)ref,
                                tcd_get_byte_length(&stored->tcd));
 
-  if (is_encoded(check) && is_encoded(stored)) {
+  if (check->is_encoded() && stored->is_encoded()) {
     /* 膜のIDで比較 */
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
@@ -667,7 +666,7 @@ void state_free_binstr(State *s) {
  * 既に割当済みのバイナリストリングを破棄するため,
  * sをハッシュ表に登録した後の操作はMT-unsafeとなる. 要注意. */
 void state_calc_mem_encode(State *s) {
-  if (!is_encoded(s)) {
+  if (!s->is_encoded()) {
     LmnBinStrRef mid;
 
     if (state_mem(s)) {
@@ -867,7 +866,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
    * このようなStateオブジェクトのバイナリストリングは
    * Rehashされた側のテーブルに存在するStateオブジェクトに登録されているためcontinueする.
    */
-  if (s->is_dummy() && !is_encoded(s))
+  if (s->is_dummy() && !s->is_encoded())
     return;
 
   f = (FILE *)_fp;
@@ -961,7 +960,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
    * RehashしたオリジナルのStateオブジェクトが保持しているため,
    * dummyフラグが真かつエンコード済みの状態には遷移情報は載っていない.
    * (エンコード済のバイナリストリングしか載っていない) */
-  if ((s->is_dummy() && is_encoded(s)))
+  if ((s->is_dummy() && s->is_encoded()))
     return;
 
   f = (FILE *)_fp;
@@ -1044,7 +1043,7 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   StateSpaceRef owner;
 
   owner = (StateSpaceRef)_owner;
-  if (!statespace_has_property(owner) || (s->is_dummy() && is_encoded(s))) {
+  if (!statespace_has_property(owner) || (s->is_dummy() && s->is_encoded())) {
     return;
   }
 

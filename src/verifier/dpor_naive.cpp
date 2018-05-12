@@ -381,7 +381,7 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
   } else {
     LmnBinStrRef bs;
     st_add_direct(mc_por.states, (st_data_t)succ, (st_data_t)succ);
-    if (!is_encoded(succ)) {
+    if (!succ->is_encoded()) {
       bs = state_calc_mem_dump(succ);
       state_set_binstr(succ, bs);
     }

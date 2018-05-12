@@ -125,7 +125,7 @@ static inline LmnBinStrRef statetable_compress_state(StateTable *st, State *s,
 /* 既に計算済のバイナリストリングbsを状態sに登録する.
  * statetable_{insert/add_direct}内の排他制御ブロック内で呼び出す. */
 static inline void state_set_compress_for_table(State *s, LmnBinStrRef bs) {
-  if (!is_encoded(s) && bs) {
+  if (!s->is_encoded() && bs) {
     state_set_binstr(s, bs);
   }
 }
@@ -189,7 +189,7 @@ static void statetable_resize(StateTable *st, unsigned long old_cap) {
         next = ptr->next;
         bucket = state_hash(ptr) % new_cap;
         ptr->next = new_tbl[bucket];
-        if (ptr->is_dummy() && is_expanded(ptr) && !is_encoded(ptr)) {
+        if (ptr->is_dummy() && is_expanded(ptr) && !ptr->is_encoded()) {
           /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要
            * (resize中に,
            * 展開済み状態へのデータアクセスは発生しないよう設計している) */
@@ -507,7 +507,7 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
   is_accept = statespace_has_property(ss) &&
               state_is_accept(statespace_automata(ss), s);
 
-  if (is_encoded(s)) {
+  if (s->is_encoded()) {
     /* already calculated canonical binary strings */
     if (is_accept) {
       insert_dst = statespace_accept_memid_tbl(ss);
@@ -541,7 +541,7 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
   }
 #endif
 
-  if (is_encoded(ret)) {
+  if (ret->is_encoded()) {
     /* rehasherが機能した場合, 通常のテーブルを入り口に,
      * memidテーブルにエントリが追加されている
      * なにも考慮せずにテーブル拡張の判定を行ってしまうと,
@@ -589,7 +589,7 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
 
   /* 既にバイナリストリング計算済みとなるcanonical membrane使用時は,
    * この時点でdelta-stringを計算する */
-  if (is_encoded(s) && s_is_d(s)) {
+  if (s->is_encoded() && s_is_d(s)) {
     state_calc_binstr_delta(s);
   }
 
@@ -611,7 +611,7 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
 void statespace_add_direct(StateSpaceRef ss, State *s) {
   StateTable *add_dst;
 
-  if (is_encoded(s)) {
+  if (s->is_encoded()) {
     add_dst = statespace_memid_tbl(ss);
   } else {
     add_dst = statespace_tbl(ss);
@@ -871,7 +871,7 @@ static State *statetable_insert(StateTable *st, State *ins)
       if (hash == state_hash(str)) {
         /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
         if (lmn_env.hash_compaction) {
-          if (str->is_dummy() && is_encoded(str)) {
+          if (str->is_dummy() && str->is_encoded()) {
             /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
              */
             ret = state_get_parent(str);
@@ -881,7 +881,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           break;
         }
 
-        if (statetable_use_rehasher(st) && str->is_dummy() && !is_encoded(str) &&
+        if (statetable_use_rehasher(st) && str->is_dummy() && !str->is_encoded() &&
             lmn_env.tree_compress == FALSE) {
           /* A. オリジナルテーブルにおいて, dummy状態が比較対象
            * 　 --> memidテーブル側の探索へ切り替える.
@@ -908,7 +908,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           /** B. memidテーブルへのlookupの場合,
            *     もしくはオリジナルテーブルへのlookupで非dummy状態と等価な場合
            */
-          if (str->is_dummy() && is_encoded(str)) {
+          if (str->is_dummy() && str->is_encoded()) {
             /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
              */
             ret = state_get_parent(str);
@@ -917,7 +917,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           }
           LMN_ASSERT(ret);
           break;
-        } else if (is_encoded(str)) {
+        } else if (str->is_encoded()) {
           /** C. memidテーブルへのlookupでハッシュ値が衝突した場合.
            * (同形成判定結果が偽) */
 #ifdef PROFILE
