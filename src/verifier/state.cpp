@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL is_dummy(State *S) { return ((S)->flags & DUMMY_SYMBOL_MASK); }
 BOOL is_encoded(State *S) { return ((S)->flags & MEM_ENCODED_MASK); }
 BOOL is_expanded(State *S) { return ((S)->flags & EXPANDED_MASK); }
 BOOL is_on_cycle(State *S) { return ((S)->flags & ON_CYCLE_MASK); }
@@ -868,7 +867,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
    * このようなStateオブジェクトのバイナリストリングは
    * Rehashされた側のテーブルに存在するStateオブジェクトに登録されているためcontinueする.
    */
-  if (is_dummy(s) && !is_encoded(s))
+  if (s->is_dummy() && !is_encoded(s))
     return;
 
   f = (FILE *)_fp;
@@ -877,7 +876,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     /* この時点で状態は, ノーマル || (dummyフラグが立っている &&
      * エンコード済)である. dummyならば,
      * バイナリストリング以外のデータはオリジナル側(parent)に記録している. */
-    State *target = !is_dummy(s) ? s : state_get_parent(s);
+    State *target = !s->is_dummy() ? s : state_get_parent(s);
     if (owner) {
       print_id = state_format_id(target, owner->is_formated);
     } else {
@@ -962,7 +961,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
    * RehashしたオリジナルのStateオブジェクトが保持しているため,
    * dummyフラグが真かつエンコード済みの状態には遷移情報は載っていない.
    * (エンコード済のバイナリストリングしか載っていない) */
-  if ((is_dummy(s) && is_encoded(s)))
+  if ((s->is_dummy() && is_encoded(s)))
     return;
 
   f = (FILE *)_fp;
@@ -1045,7 +1044,7 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   StateSpaceRef owner;
 
   owner = (StateSpaceRef)_owner;
-  if (!statespace_has_property(owner) || (is_dummy(s) && is_encoded(s))) {
+  if (!statespace_has_property(owner) || (s->is_dummy() && is_encoded(s))) {
     return;
   }
 

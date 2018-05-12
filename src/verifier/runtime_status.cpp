@@ -487,7 +487,7 @@ static void profile_state_f(State *s, LmnWord arg) {
   /* 遷移数 */
   p->transition_num += succ_num;
 
-  if (!(is_encoded(s) && is_dummy(s))) {
+  if (!(is_encoded(s) && s->is_dummy())) {
     if (statespace_has_property(ss)) {
       AutomataRef a = statespace_automata(ss);
       if (state_is_accept(a, s)) {
@@ -505,7 +505,7 @@ static void profile_state_f(State *s, LmnWord arg) {
 
     if (is_encoded(s)) {
       p->midhash_num++;
-      if (is_dummy(s)) {
+      if (s->is_dummy()) {
         p->rehashed_num++;
       }
     } else {

@@ -189,7 +189,7 @@ static void statetable_resize(StateTable *st, unsigned long old_cap) {
         next = ptr->next;
         bucket = state_hash(ptr) % new_cap;
         ptr->next = new_tbl[bucket];
-        if (is_dummy(ptr) && is_expanded(ptr) && !is_encoded(ptr)) {
+        if (ptr->is_dummy() && is_expanded(ptr) && !is_encoded(ptr)) {
           /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要
            * (resize中に,
            * 展開済み状態へのデータアクセスは発生しないよう設計している) */
@@ -871,7 +871,7 @@ static State *statetable_insert(StateTable *st, State *ins)
       if (hash == state_hash(str)) {
         /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
         if (lmn_env.hash_compaction) {
-          if (is_dummy(str) && is_encoded(str)) {
+          if (str->is_dummy() && is_encoded(str)) {
             /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
              */
             ret = state_get_parent(str);
@@ -881,7 +881,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           break;
         }
 
-        if (statetable_use_rehasher(st) && is_dummy(str) && !is_encoded(str) &&
+        if (statetable_use_rehasher(st) && str->is_dummy() && !is_encoded(str) &&
             lmn_env.tree_compress == FALSE) {
           /* A. オリジナルテーブルにおいて, dummy状態が比較対象
            * 　 --> memidテーブル側の探索へ切り替える.
@@ -908,7 +908,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           /** B. memidテーブルへのlookupの場合,
            *     もしくはオリジナルテーブルへのlookupで非dummy状態と等価な場合
            */
-          if (is_dummy(str) && is_encoded(str)) {
+          if (str->is_dummy() && is_encoded(str)) {
             /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
              */
             ret = state_get_parent(str);

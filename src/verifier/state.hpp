@@ -108,6 +108,7 @@ struct State {                /* Total:72(36)byte */
 #endif
   BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
   BOOL is_binstr_user() { return flags & MEM_DIRECT_MASK; }
+  BOOL is_dummy() { return flags & DUMMY_SYMBOL_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
