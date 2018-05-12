@@ -113,6 +113,7 @@ struct State {                /* Total:72(36)byte */
   BOOL is_expanded() { return flags & EXPANDED_MASK; }
   BOOL is_on_cycle() { return flags & ON_CYCLE_MASK; }
   BOOL is_on_stack() { return flags & ON_STACK_MASK; }
+  BOOL is_snd() { return flags & FOR_MC_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif

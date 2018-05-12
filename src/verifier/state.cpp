@@ -53,8 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL is_snd(State *S) { return ((S)->flags & FOR_MC_MASK); }
-
 void set_binstr_user(State *S) { ((S)->flags |= MEM_DIRECT_MASK); }
 void set_dummy(State *S) { ((S)->flags |= DUMMY_SYMBOL_MASK); }
 void set_encoded(State *S) { ((S)->flags |= MEM_ENCODED_MASK); }

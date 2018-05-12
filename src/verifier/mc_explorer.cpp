@@ -202,7 +202,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
   while (vec_num(search) > 0) {
     State *s = (State *)vec_peek(search);
 
-    if (is_snd(s)) { /* 訪問済み */
+    if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)vec_pop(search);
       if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
@@ -1122,7 +1122,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
   while (vec_num(search) > 0) {
     State *s = (State *)vec_peek(search);
 
-    if (is_snd(s)) { /* 訪問済み */
+    if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)vec_pop(search);
       if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
@@ -1284,7 +1284,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
   while (vec_num(search) > 0) {
     State *s = (State *)vec_peek(search);
 
-    if (is_snd(s)) {
+    if (s->is_snd()) {
       t = (State *)vec_pop(search);
       if (vec_num(path) > 0 && (State *)vec_peek(path) == t) {
         vec_pop(path);
@@ -1316,7 +1316,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     }
 
 #if 0
-    if (is_snd(s)) { /* 訪問済み */
+    if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)vec_pop(search);
       if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
