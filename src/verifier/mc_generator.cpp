@@ -112,7 +112,7 @@ extern "C" {
 /* 既に到達した状態であるかを判定するための条件 */
 #define MAPNDFS_ALREADY_VISITED(w, s)                                          \
   ((s->s_is_visited_by_explorer() && worker_is_explorer(w)) ||                   \
-   (s_is_visited_by_generator(s) && worker_is_generator(w)))
+   (s->s_is_visited_by_generator() && worker_is_generator(w)))
 
 /* 初期状態を割り当てるワーカーの条件 */
 #define WORKER_FOR_INIT_STATE(w, s)                                            \

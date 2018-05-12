@@ -53,9 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL s_is_visited_by_generator(State *S) {
-  return ((S)->flags2 & GENERATOR_VISIT_MASK);
-}
 void s_set_visited_by_explorer(State *S) {
   ((S)->flags2 |= EXPLORER_VISIT_MASK);
 }
@@ -74,7 +71,7 @@ void s_set_unvisited(State *S) {
   s_unset_visited_by_generator(S);
 }
 BOOL s_is_unvisited(State *S) {
-  return !S->s_is_visited_by_explorer() && !s_is_visited_by_generator(S);
+  return !S->s_is_visited_by_explorer() && !S->s_is_visited_by_generator();
 }
 
 BOOL s_is_blue(State *S) { return ((S)->flags2 & STATE_BLUE_MASK); }
