@@ -477,7 +477,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
   }
 
   if (!s->has_trans_obj()) {
-    set_trans_obj(s);
+   s->set_trans_obj();
   }
 
   if (s->successors) {

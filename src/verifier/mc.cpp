@@ -459,7 +459,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       lmn_interned_str nid;
       nid = lmn_rule_get_name((LmnRuleRef)vec_get(expanded_rules, i));
       data = (vec_data_t)transition_make(news, nid);
-      set_trans_obj(src);
+     src->set_trans_obj();
     } else {
       data = (vec_data_t)news;
     }
@@ -546,7 +546,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 #ifdef KWBT_OPT
         transition_set_cost((Transition)data, transition_cost(src_succ_t));
 #endif
-        set_trans_obj(s);
+       s->set_trans_obj();
       } else {
         data = (vec_data_t)new_s;
       }
@@ -602,7 +602,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
   if (mc_has_trans(f)) {
     data = (vec_data_t)transition_make(new_s, lmn_intern("ε"));
-    set_trans_obj(s);
+   s->set_trans_obj();
   } else {
     data = (vec_data_t)new_s;
   }

@@ -1003,7 +1003,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         succ = state_succ_state(s, i);
         s->successors[i] = transition_make(succ, name);
       }
-      set_trans_obj(s);
+     s->set_trans_obj();
     }
 #endif
   }
