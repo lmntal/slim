@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void unset_snd(State *S) { ((S)->flags &= (~FOR_MC_MASK)); }
 void unset_trans_obj(State *S) { ((S)->flags &= (~TRANS_OBJ_MASK)); }
 
 BOOL s_is_d(State *S) { return ((S)->flags2 & STATE_DELTA_MASK); }
