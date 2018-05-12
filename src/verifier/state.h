@@ -68,10 +68,6 @@ struct State;
 
 #define HASH_COMPACTION_MASK (0x01U << 5)
 
-void set_on_hash_compaction(State *s);
-void unset_on_hash_compaction(State *s);
-BYTE is_on_hash_compaction(State *s);
-
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
  *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ

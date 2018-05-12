@@ -79,8 +79,6 @@ void unset_on_stack(State *S) { ((S)->flags &= (~ON_STACK_MASK)); }
 void unset_snd(State *S) { ((S)->flags &= (~FOR_MC_MASK)); }
 void unset_trans_obj(State *S) { ((S)->flags &= (~TRANS_OBJ_MASK)); }
 
-void set_on_hash_compaction(State *s) { s->flags3 |= HASH_COMPACTION_MASK; }
-
 BOOL s_is_d(State *S) { return ((S)->flags2 & STATE_DELTA_MASK); }
 BOOL s_is_reduced(State *S) { return ((S)->flags2 & STATE_REDUCED_MASK); }
 BOOL s_is_update(State *S) { return ((S)->flags2 & STATE_UPDATE_MASK); }
@@ -166,12 +164,6 @@ void state_cost_lock(EWLock *EWLOCK, mtx_data_t ID) {
 }
 void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
   (ewlock_release_write(EWLOCK, ID));
-}
-
-// HASH_COMPACTION_MASK)
-void unset_on_hash_compaction(State *s) { s->flags3 &= HASH_COMPACTION_MASK; }
-BYTE is_on_hash_compaction(State *s) {
-  return s->flags3 & HASH_COMPACTION_MASK;
 }
 
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
