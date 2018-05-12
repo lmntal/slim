@@ -597,7 +597,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
     /* explorerが到達した状態はblueに着色 */
     if (worker_is_explorer(w))
-      s_set_visited_by_explorer(s);
+      s->s_set_visited_by_explorer();
     // generatorが到達した状態はredに着色
     else if (worker_is_generator(w))
       s_set_visited_by_generator(s);

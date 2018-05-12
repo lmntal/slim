@@ -139,6 +139,9 @@ struct State {                /* Total:72(36)byte */
   BOOL s_is_visited_by_generator() {
     return flags2 & GENERATOR_VISIT_MASK;
   }
+  void s_set_visited_by_explorer() {
+    flags2 |= EXPLORER_VISIT_MASK;
+  }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
