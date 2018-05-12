@@ -66,87 +66,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 
 struct State;
 
-BYTE state_flags(State *s);
-BYTE state_flags2(State *s);
-BYTE state_flags3(State *s);
-
-#ifndef MINIMAL_STATE
-
-void state_set_expander_id(State *s, unsigned long id);
-unsigned long state_expander_id(State *s);
-void state_expand_lock_init(State *s);
-void state_expand_lock_destroy(State *s);
-void state_expand_lock(State *s);
-void state_expand_unlock(State *s);
-
-#else
-
-#define state_set_expander_id(S, ID) (NULL)
-#define state_expander_id(S) (0)
-#define state_expand_lock_init(S) (NULL)
-#define state_expand_lock_destroy(S) (NULL)
-#define state_expand_lock(S) (NULL)
-#define state_expand_unlock(S) (NULL)
-#endif
-
-#ifndef MINIMAL_STATE
-BYTE *state_loflags(State *s);
-
-#endif
-
-#define HASH_COMPACTION_MASK (0x01U << 5)
-
-void set_on_hash_compaction(State *s);
-void unset_on_hash_compaction(State *s);
-BYTE is_on_hash_compaction(State *s);
-
-/** Flags (8bit)
- *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
- *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
- *  0000 0100  遷移先を計算済みであること(closed node)を示すフラグ.
- *  0000 1000  受理サイクル上の状態であることを示すフラグ
- *  0001 0000  ハッシュ表上でDummyオブジェクトであるか否かを示すフラグ
- * (Rehash処理で使用) 0010 0000  successorとしてstruct Stateを直接参照するか,
- * struct Transitionを介して参照するかを示すフラグ. 0100 0000
- * 状態データ(union)がmemを直接的に保持する場合に立てるフラグ 1000 0000
- * 保持するバイナリストリングが階層グラフ構造に対して一意なIDであるかを示すフラグ
- */
-
-#define ON_STACK_MASK (0x01U)
-#define FOR_MC_MASK (0x01U << 1)
-#define ON_CYCLE_MASK (0x01U << 2)
-#define EXPANDED_MASK (0x01U << 3)
-#define DUMMY_SYMBOL_MASK (0x01U << 4)
-#define TRANS_OBJ_MASK (0x01U << 5)
-#define MEM_ENCODED_MASK (0x01U << 6)
-#define MEM_DIRECT_MASK (0x01U << 7)
-
-/* manipulation for flags */
-BOOL has_trans_obj(State *S);
-BOOL is_binstr_user(State *S);
-BOOL is_dummy(State *S);
-BOOL is_encoded(State *S);
-BOOL is_expanded(State *S);
-BOOL is_on_cycle(State *S);
-BOOL is_on_stack(State *S);
-BOOL is_snd(State *S);
-void set_binstr_user(State *S);
-void set_dummy(State *S);
-void set_encoded(State *S);
-void set_expanded(State *S);
-void set_on_cycle(State *S);
-void set_on_stack(State *S);
-void set_snd(State *S);
-void set_trans_obj(State *S);
-void unset_binstr_user(State *S);
-void unset_dummy(State *S);
-void unset_encoded(State *S);
-void unset_expanded(State *S);
-void unset_on_cycle(State *S);
-void unset_on_stack(State *S);
-void unset_snd(State *S);
-void unset_trans_obj(State *S);
-
 /** Flags2 (8bit)
  *  0000 0001  Partial Order
  * ReductionによるReductionマーキング(debug/demo用機能) 0000 0010  D compression
@@ -164,36 +83,6 @@ void unset_trans_obj(State *S);
 #define STATE_RED_MASK (0x01U << 6)
 #define STATE_VIS_VISITED_MASK (0x01U << 7)
 
-/* manipulation for flags2 */
-BOOL s_is_d(State *S);
-BOOL s_is_reduced(State *S);
-BOOL s_is_update(State *S);
-void s_set_d(State *S);
-void s_set_reduced(State *S);
-void s_set_update(State *S);
-void s_unset_d(State *S);
-void s_unset_reduced(State *S);
-void s_unset_update(State *S);
-
-BOOL s_is_visited_by_explorer(State *S);
-BOOL s_is_visited_by_generator(State *S);
-void s_set_visited_by_explorer(State *S);
-void s_set_visited_by_generator(State *S);
-void s_unset_visited_by_explorer(State *S);
-void s_unset_visited_by_generator(State *S);
-void s_set_unvisited(State *S);
-BOOL s_is_unvisited(State *S);
-
-BOOL s_is_blue(State *S);
-BOOL s_is_red(State *S);
-BOOL s_is_visited_by_visualizer(State *S);
-void s_set_blue(State *S);
-void s_set_red(State *S);
-void s_set_visited_by_visualizer(State *S);
-void s_unset_blue(State *S);
-void s_unset_red(State *S);
-void s_unset_visited_by_visualizer(State *S);
-
 /** Flags3 (8bit)
  *  0000 0001
  * freshな状態(展開されておらず、または展開用スタックにも積まれていない状態)。fresh
@@ -203,11 +92,6 @@ void s_unset_visited_by_visualizer(State *S);
  */
 
 #define STATE_FRESH_MASK (0x01U)
-
-/* manipulation for flags2 */
-void s_set_fresh(State *S);
-void s_unset_fresh(State *S);
-BOOL s_is_fresh(State *S);
 
 /** local flags (8bit)
  *  0000 0001  (MCNDFS)cyan flag
@@ -220,11 +104,6 @@ BOOL s_is_fresh(State *S);
  *  1000 0000
  */
 #define STATE_CYAN_MASK (0x01U)
-
-/* manipulation for local flags */
-void s_set_cyan(State *S, int i);
-void s_unset_cyan(State *S, int i);
-BOOL s_is_cyan(State *S, int i);
 
 /*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
 #define DEFAULT_STATE_ID 0

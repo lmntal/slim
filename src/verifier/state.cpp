@@ -53,123 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BYTE state_flags(State *s) { return s->flags; }
-BYTE state_flags2(State *s) { return s->flags2; }
-BYTE state_flags3(State *s) { return s->flags3; }
-
-#ifndef MINIMAL_STATE
-
-BYTE *state_loflags(State *s) { return s->local_flags; }
-void state_set_expander_id(State *s, unsigned long id) { s->expander_id = id; }
-unsigned long state_expander_id(State *s) { return s->expander_id; }
-void state_expand_lock_init(State *s) { lmn_mutex_init(&(s->expand_lock)); }
-void state_expand_lock_destroy(State *s) {
-  lmn_mutex_destroy(&(s->expand_lock));
-}
-void state_expand_lock(State *s) { lmn_mutex_lock(&(s->expand_lock)); }
-void state_expand_unlock(State *s) { lmn_mutex_unlock(&(s->expand_lock)); }
-
-#else
-
-#endif
-
-BOOL has_trans_obj(State *S) { return ((S)->flags & TRANS_OBJ_MASK); }
-BOOL is_binstr_user(State *S) { return ((S)->flags & MEM_DIRECT_MASK); }
-BOOL is_dummy(State *S) { return ((S)->flags & DUMMY_SYMBOL_MASK); }
-BOOL is_encoded(State *S) { return ((S)->flags & MEM_ENCODED_MASK); }
-BOOL is_expanded(State *S) { return ((S)->flags & EXPANDED_MASK); }
-BOOL is_on_cycle(State *S) { return ((S)->flags & ON_CYCLE_MASK); }
-BOOL is_on_stack(State *S) { return ((S)->flags & ON_STACK_MASK); }
-BOOL is_snd(State *S) { return ((S)->flags & FOR_MC_MASK); }
-
-void set_binstr_user(State *S) { ((S)->flags |= MEM_DIRECT_MASK); }
-void set_dummy(State *S) { ((S)->flags |= DUMMY_SYMBOL_MASK); }
-void set_encoded(State *S) { ((S)->flags |= MEM_ENCODED_MASK); }
-void set_expanded(State *S) { ((S)->flags |= EXPANDED_MASK); }
-void set_on_cycle(State *S) { ((S)->flags |= ON_CYCLE_MASK); }
-void set_on_stack(State *S) { ((S)->flags |= ON_STACK_MASK); }
-void set_snd(State *S) { ((S)->flags |= FOR_MC_MASK); }
-void set_trans_obj(State *S) { ((S)->flags |= TRANS_OBJ_MASK); }
-
-void unset_binstr_user(State *S) { ((S)->flags &= (~MEM_DIRECT_MASK)); }
-void unset_dummy(State *S) { ((S)->flags &= (~DUMMY_SYMBOL_MASK)); }
-void unset_encoded(State *S) { ((S)->flags &= (~MEM_ENCODED_MASK)); }
-void unset_expanded(State *S) { ((S)->flags &= (~EXPANDED_MASK)); }
-void unset_on_cycle(State *S) { ((S)->flags &= (~ON_CYCLE_MASK)); }
-void unset_on_stack(State *S) { ((S)->flags &= (~ON_STACK_MASK)); }
-void unset_snd(State *S) { ((S)->flags &= (~FOR_MC_MASK)); }
-void unset_trans_obj(State *S) { ((S)->flags &= (~TRANS_OBJ_MASK)); }
-
-void set_on_hash_compaction(State *s) { s->flags3 |= HASH_COMPACTION_MASK; }
-
-BOOL s_is_d(State *S) { return ((S)->flags2 & STATE_DELTA_MASK); }
-BOOL s_is_reduced(State *S) { return ((S)->flags2 & STATE_REDUCED_MASK); }
-BOOL s_is_update(State *S) { return ((S)->flags2 & STATE_UPDATE_MASK); }
-void s_set_d(State *S) { ((S)->flags2 |= STATE_DELTA_MASK); }
-void s_set_reduced(State *S) { ((S)->flags2 |= STATE_REDUCED_MASK); }
-void s_set_update(State *S) { ((S)->flags2 |= STATE_UPDATE_MASK); }
-void s_unset_d(State *S) { ((S)->flags2 &= (~STATE_DELTA_MASK)); }
-void s_unset_reduced(State *S) { ((S)->flags2 &= (~STATE_REDUCED_MASK)); }
-void s_unset_update(State *S) { ((S)->flags2 &= (~STATE_UPDATE_MASK)); }
-
-BOOL s_is_visited_by_explorer(State *S) {
-  return ((S)->flags2 & EXPLORER_VISIT_MASK);
-}
-BOOL s_is_visited_by_generator(State *S) {
-  return ((S)->flags2 & GENERATOR_VISIT_MASK);
-}
-void s_set_visited_by_explorer(State *S) {
-  ((S)->flags2 |= EXPLORER_VISIT_MASK);
-}
-void s_set_visited_by_generator(State *S) {
-  ((S)->flags2 |= GENERATOR_VISIT_MASK);
-}
-void s_unset_visited_by_explorer(State *S) {
-  ((S)->flags2 &= (~EXPLORER_VISIT_MASK));
-}
-void s_unset_visited_by_generator(State *S) {
-  ((S)->flags2 &= (~GENERATOR_VISIT_MASK));
-}
-
-void s_set_unvisited(State *S) {
-  s_unset_visited_by_explorer(S);
-  s_unset_visited_by_generator(S);
-}
-BOOL s_is_unvisited(State *S) {
-  return !s_is_visited_by_explorer(S) && !s_is_visited_by_generator(S);
-}
-
-BOOL s_is_blue(State *S) { return ((S)->flags2 & STATE_BLUE_MASK); }
-BOOL s_is_red(State *S) { return ((S)->flags2 & STATE_RED_MASK); }
-BOOL s_is_visited_by_visualizer(State *S) {
-  return ((S)->flags2 & STATE_VIS_VISITED_MASK);
-}
-
-void s_set_blue(State *S) { ((S)->flags2 |= STATE_BLUE_MASK); }
-void s_set_red(State *S) { ((S)->flags2 |= STATE_RED_MASK); }
-void s_set_visited_by_visualizer(State *S) {
-  ((S)->flags2 |= STATE_VIS_VISITED_MASK);
-}
-void s_unset_blue(State *S) { ((S)->flags2 &= (~STATE_BLUE_MASK)); }
-void s_unset_red(State *S) { ((S)->flags2 &= (~STATE_RED_MASK)); }
-void s_unset_visited_by_visualizer(State *S) {
-  ((S)->flags2 &= (~STATE_VIS_VISITED_MASK));
-}
-
-void s_set_fresh(State *S) { ((S)->flags3 |= STATE_FRESH_MASK); }
-void s_unset_fresh(State *S) { ((S)->flags3 &= (~STATE_FRESH_MASK)); }
-BOOL s_is_fresh(State *S) { return ((S)->flags3 & STATE_FRESH_MASK); }
-
-void s_set_cyan(State *S, int i) {
-  ((((S)->local_flags)[i]) |= STATE_CYAN_MASK);
-}
-void s_unset_cyan(State *S, int i) {
-  ((((S)->local_flags)[i]) &= (~STATE_CYAN_MASK));
-}
-BOOL s_is_cyan(State *S, int i) {
-  return (((S)->local_flags) && ((((S)->local_flags)[i]) & STATE_CYAN_MASK));
-}
-
 LmnCost state_cost(State *S) {
 #ifdef KWBT_OPT
   return ((S)->cost);
@@ -183,13 +66,6 @@ void state_cost_lock(EWLock *EWLOCK, mtx_data_t ID) {
 }
 void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
   (ewlock_release_write(EWLOCK, ID));
-}
-
-// #define set_on_hash_compaction(S)      (state_flags3(S) |=
-// HASH_COMPACTION_MASK)
-void unset_on_hash_compaction(State *s) { s->flags3 &= HASH_COMPACTION_MASK; }
-BYTE is_on_hash_compaction(State *s) {
-  return s->flags3 & HASH_COMPACTION_MASK;
 }
 
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
@@ -225,7 +101,7 @@ State *state_make(LmnMembraneRef mem, BYTE property_label, BOOL do_encode) {
   new_s->state_name = property_label;
   state_calc_hash(new_s, mem, do_encode);
 
-  if (is_encoded(new_s)) {
+  if (new_s->is_encoded()) {
     lmn_mem_free_rec(mem);
   }
 #ifdef PROFILE
@@ -255,11 +131,11 @@ State *state_make_minimal() {
   memset(&new_s->tcd, 0x00, sizeof(TreeCompressData));
 
 #ifndef MINIMAL_STATE
-  state_set_expander_id(new_s, LONG_MAX);
+  new_s->state_set_expander_id(LONG_MAX);
   new_s->local_flags = 0x00U;
-  state_expand_lock_init(new_s);
+  new_s->state_expand_lock_init();
 #endif
-  s_set_fresh(new_s);
+  new_s->s_set_fresh();
 
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE) {
@@ -281,7 +157,7 @@ void state_calc_hash(State *s, LmnMembraneRef mem, BOOL canonical) {
   if (canonical) {
     state_set_binstr(s, lmn_mem_encode(mem));
     s->hash = binstr_hash(state_binstr(s));
-    set_encoded(s);
+    s->set_encoded();
   } else {
     s->hash = mhash(mem);
   }
@@ -304,7 +180,7 @@ State *state_copy(State *src, LmnMembraneRef mem) {
 
   State *dst = state_make_minimal();
 
-  if (!is_binstr_user(src) && !mem) {
+  if (!src->is_binstr_user() && !mem) {
     mem = state_mem(src);
   }
 
@@ -317,8 +193,8 @@ State *state_copy(State *src, LmnMembraneRef mem) {
 #endif
   } else if (state_binstr(src)) {
     state_set_binstr(dst, lmn_binstr_copy(state_binstr(src)));
-    if (is_encoded(src)) {
-      set_encoded(dst);
+    if (src->is_encoded()) {
+      dst->set_encoded();
     }
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -350,7 +226,7 @@ void state_free(State *s) {
                            sizeof(succ_data_t) * state_succ_num(s));
 #endif
 
-    if (has_trans_obj(s)) {
+    if (s->has_trans_obj()) {
       unsigned int i;
       for (i = 0; i < state_succ_num(s); i++) {
         transition_free(transition(s, i));
@@ -365,7 +241,7 @@ void state_free(State *s) {
   }
 #endif
 
-  state_expand_lock_destroy(s);
+  s->state_expand_lock_destroy();
 
   state_free_mem(s);
   state_free_binstr(s);
@@ -421,7 +297,7 @@ void state_succ_add(State *s, succ_data_t succ) {
 }
 
 void state_succ_clear(State *s) {
-  if (has_trans_obj(s)) {
+  if (s->has_trans_obj()) {
     unsigned int i;
     for (i = 0; i < state_succ_num(s); i++) {
       TransitionRef t = transition(s, i);
@@ -440,16 +316,16 @@ void state_succ_clear(State *s) {
   LMN_FREE(s->successors);
   s->successors = NULL;
   s->successor_num = 0;
-  unset_trans_obj(s);
+  s->unset_trans_obj();
 }
 
 /* 状態sに対応する階層グラフ構造と等価な階層グラフ構造を新たに構築して返す.
  * 構築できなかった場合は偽を返す. */
 LmnMembraneRef state_mem_copy(State *s) {
   LmnMembraneRef ret = NULL;
-  if (!is_binstr_user(s) && state_mem(s)) {
+  if (!s->is_binstr_user() && state_mem(s)) {
     ret = lmn_mem_copy(state_mem(s));
-  } else if (is_binstr_user(s) && state_binstr(s)) {
+  } else if (s->is_binstr_user() && state_binstr(s)) {
     ret = lmn_binstr_decode(state_binstr(s));
   }
 
@@ -465,14 +341,14 @@ LmnMembraneRef state_mem_copy(State *s) {
 /* 状態sに対応するバイナリストリングを, sがrefする状態を基に再構築して返す. */
 LmnBinStrRef state_binstr_reconstructor(State *s) {
   LmnBinStrRef ret;
-  if (!s_is_d(s)) {
+  if (!s->s_is_d()) {
     ret = state_binstr(s);
   } else {
     LmnBinStrRef ref;
     LMN_ASSERT(state_D_ref(s));
     ref = state_binstr_reconstructor(state_D_ref(s));
     ret = lmn_bscomp_d_decode(ref, state_binstr(s));
-    if (s_is_d(state_D_ref(s))) {
+    if (state_D_ref(s)->s_is_d()) {
       lmn_binstr_free(ref);
     }
   }
@@ -500,19 +376,19 @@ static int state_equals_with_compress(State *check, State *stored) {
   }
 #endif
 
-  if (s_is_d(check)) {
+  if (check->s_is_d()) {
     bs1 = state_D_fetch(check);
   } else {
     bs1 = state_binstr(check);
   }
 
-  if (s_is_d(stored)) {
+  if (stored->s_is_d()) {
     bs2 = state_binstr_reconstructor(stored);
   } else {
     bs2 = state_binstr(stored);
   }
 
-  if (is_encoded(check) && is_encoded(stored)) {
+  if (check->is_encoded() && stored->is_encoded()) {
     /* 膜のIDで比較 */
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
@@ -530,7 +406,7 @@ static int state_equals_with_compress(State *check, State *stored) {
     lmn_fatal("implementation error");
   }
 
-  if (s_is_d(stored)) {
+  if (stored->s_is_d()) {
     lmn_binstr_free(bs2);
   }
 
@@ -649,7 +525,7 @@ static int state_equals_with_tree(State *check, State *stored) {
   bs2 = lmn_bscomp_tree_decode((TreeNodeID)ref,
                                tcd_get_byte_length(&stored->tcd));
 
-  if (is_encoded(check) && is_encoded(stored)) {
+  if (check->is_encoded() && stored->is_encoded()) {
     /* 膜のIDで比較 */
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
@@ -682,7 +558,7 @@ void state_free_binstr(State *s) {
     lmn_binstr_free(state_binstr(s));
     s->data = NULL;
   }
-  unset_binstr_user(s);
+  s->unset_binstr_user();
 }
 
 /* 状態sに対応する階層グラフ構造Xを,
@@ -695,7 +571,7 @@ void state_free_binstr(State *s) {
  * 既に割当済みのバイナリストリングを破棄するため,
  * sをハッシュ表に登録した後の操作はMT-unsafeとなる. 要注意. */
 void state_calc_mem_encode(State *s) {
-  if (!is_encoded(s)) {
+  if (!s->is_encoded()) {
     LmnBinStrRef mid;
 
     if (state_mem(s)) {
@@ -713,7 +589,7 @@ void state_calc_mem_encode(State *s) {
 
     state_set_binstr(s, mid);
     s->hash = binstr_hash(state_binstr(s));
-    set_encoded(s);
+    s->set_encoded();
   }
 }
 
@@ -726,7 +602,7 @@ void state_calc_binstr_delta(State *s) {
     state_D_cache(s, org);
     state_set_binstr(s, dif);
   } else {
-    s_unset_d(s);
+    s->s_unset_d();
   }
 }
 
@@ -742,7 +618,7 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
   } else {
     ref = state_binstr_reconstructor(ref_s);
     dif = lmn_bscomp_d_encode(org, ref);
-    if (s_is_d(ref_s)) {
+    if (ref_s->s_is_d()) {
       lmn_binstr_free(ref);
     }
   }
@@ -754,7 +630,7 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
  * 状態sはread only */
 LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
   LmnBinStrRef ret;
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     /* 既にバイナリストリングを保持している場合は, なにもしない. */
     ret = state_binstr(s);
   } else if (state_mem(s)) {
@@ -781,14 +657,14 @@ LmnBinStrRef state_calc_mem_dump(State *s) {
     ret = state_binstr(s);
   } else if (state_mem(s)) {
     ret = lmn_mem_to_binstr(state_mem(s));
-    if (s_is_d(s) && state_D_ref(s)) {
+    if (s->s_is_d() && state_D_ref(s)) {
       LmnBinStrRef dif;
       dif = state_binstr_D_compress(ret, state_D_ref(s));
       /* 元のバイト列は直ちに破棄せず, 一時的にキャッシュしておく. */
       state_D_cache(s, ret);
       ret = dif;
     } else {
-      s_unset_d(s);
+      s->s_unset_d();
     }
   } else {
     lmn_fatal("unexpected.");
@@ -895,7 +771,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
    * このようなStateオブジェクトのバイナリストリングは
    * Rehashされた側のテーブルに存在するStateオブジェクトに登録されているためcontinueする.
    */
-  if (is_dummy(s) && !is_encoded(s))
+  if (s->is_dummy() && !s->is_encoded())
     return;
 
   f = (FILE *)_fp;
@@ -904,7 +780,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     /* この時点で状態は, ノーマル || (dummyフラグが立っている &&
      * エンコード済)である. dummyならば,
      * バイナリストリング以外のデータはオリジナル側(parent)に記録している. */
-    State *target = !is_dummy(s) ? s : state_get_parent(s);
+    State *target = !s->is_dummy() ? s : state_get_parent(s);
     if (owner) {
       print_id = state_format_id(target, owner->is_formated);
     } else {
@@ -969,7 +845,7 @@ void state_print_mem(State *s, LmnWord _fp) {
       lmn_hyperlink_print(mem);
   }
 
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     lmn_mem_free_rec(mem);
   }
 }
@@ -989,7 +865,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
    * RehashしたオリジナルのStateオブジェクトが保持しているため,
    * dummyフラグが真かつエンコード済みの状態には遷移情報は載っていない.
    * (エンコード済のバイナリストリングしか載っていない) */
-  if ((is_dummy(s) && is_encoded(s)))
+  if ((s->is_dummy() && s->is_encoded()))
     return;
 
   f = (FILE *)_fp;
@@ -1041,7 +917,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
        */
       fprintf(f, "%lu", state_format_id(state_succ_state(s, i), formated));
 
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         TransitionRef t;
         unsigned int j;
 
@@ -1072,7 +948,7 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   StateSpaceRef owner;
 
   owner = (StateSpaceRef)_owner;
-  if (!statespace_has_property(owner) || (is_dummy(s) && is_encoded(s))) {
+  if (!statespace_has_property(owner) || (s->is_dummy() && s->is_encoded())) {
     return;
   }
 
@@ -1113,7 +989,7 @@ LmnMembraneRef state_restore_mem(State *s) {
 LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag) {
   if (state_mem(s)) {
     return state_mem(s);
-  } else if (s_is_d(s)) {
+  } else if (s->s_is_d()) {
     LmnBinStrRef b;
     if (flag) {
       b = state_D_fetch(s);
@@ -1184,7 +1060,7 @@ unsigned long state_hash(State *s) {
 /* 状態sに対応する階層グラフ構造を返す.
  * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
 LmnMembraneRef state_mem(State *s) {
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     return NULL;
   } else {
     return (LmnMembraneRef)s->data;
@@ -1195,21 +1071,21 @@ LmnMembraneRef state_mem(State *s) {
  * sに対してバイナリストリングBを割り当てている場合は,
  * Bのメモリ管理は呼出し側で行う*/
 void state_set_mem(State *s, LmnMembraneRef mem) {
-  unset_binstr_user(s);
+  s->unset_binstr_user();
   s->data = (state_data_t)mem;
 }
 
 /* 状態sが参照する階層グラフ構造用の領域をクリアする.
  * 階層グラフ構造の参照を持たない場合は, なにもしない. */
 void state_unset_mem(State *s) {
-  if (!is_binstr_user(s)) {
+  if (!s->is_binstr_user()) {
     state_set_mem(s, NULL);
   }
 }
 
 /* 状態sに割り当てたバイナリストリングを返す. */
 LmnBinStrRef state_binstr(State *s) {
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     return (LmnBinStrRef)s->data;
   } else {
     return NULL;
@@ -1220,15 +1096,15 @@ LmnBinStrRef state_binstr(State *s) {
  * sに割り当てる　*/
 void state_set_binstr(State *s, LmnBinStrRef bs) {
   s->data = (state_data_t)bs;
-  set_binstr_user(s);
+  s->set_binstr_user();
 }
 
 /* 状態sが参照するバイナリストリング用の領域をクリアする.
  * バイナリストリングに対する参照を持たない場合は, なにもしない. */
 void state_unset_binstr(State *s) {
-  if (is_binstr_user(s)) {
+  if (s->is_binstr_user()) {
     s->data = (state_data_t)NULL;
-    unset_binstr_user(s);
+    s->unset_binstr_user();
   }
 }
 
@@ -1244,7 +1120,7 @@ unsigned int state_succ_num(State *s) { return s->successor_num; }
 /* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
 State *state_succ_state(State *s, int idx) {
   /* successorデータはTransitionがある場合とそうでない場合とで処理が異なる */
-  if (has_trans_obj(s)) {
+  if (s->has_trans_obj()) {
     return transition_next_state((TransitionRef)s->successors[idx]);
   } else {
     return (State *)s->successors[idx];
@@ -1314,7 +1190,7 @@ void state_D_cache(State *s, LmnBinStrRef d) {
 /* キャッシングしておいた状態sに対応する非圧縮バイナリストリングに対する参照を返す.
  */
 LmnBinStrRef state_D_fetch(State *s) {
-  if (s_is_d(s)) {
+  if (s->s_is_d()) {
     return (LmnBinStrRef)s->successors;
   } else {
     return NULL;
@@ -1355,9 +1231,9 @@ void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
     state_cost_lock(ewlock, state_hash(s));
   if ((f && state_cost(s) > cost) || (!f && state_cost(s) < cost)) {
     state_set_cost(s, cost, pre);
-    if (is_expanded(s) && new_ss)
+    if (s->is_expanded() && new_ss)
       vec_push(new_ss, (vec_data_t)s);
-    s_set_update(s);
+    s->s_set_update();
   }
   if (env_threads_num() >= 2)
     state_cost_unlock(ewlock, state_hash(s));

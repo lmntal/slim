@@ -36,7 +36,7 @@ liblmn_verifier_a_SOURCES =                              \
 	propositional_symbol.cpp   propositional_symbol.h        \
 	propsym_parser.y         propsym_lexer.l               \
 	runtime_status.cpp         runtime_status.h              \
-	state.cpp                  state.h                       \
+	state.cpp                  state.h          state.hpp             \
 	statespace.cpp             statespace.h                  \
 	tree_compress.cpp          tree_compress.h               \
 	visitlog.cpp               visitlog.h                    \

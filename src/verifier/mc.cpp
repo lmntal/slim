@@ -218,7 +218,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   if (mc_react_cxt_expanded_num(rc) == 0) {
     /* sを最終状態集合として記録 */
     statespace_add_end_state(ss, s);
-  } else if (mc_enable_por(f) && !s_is_reduced(s)) {
+  } else if (mc_enable_por(f) && !s->s_is_reduced()) {
     /* POR: 遷移先状態集合:en(s)からample(s)を計算する.
      * 呼び出し先で, mc_store_successorsに相当する処理を済ませる */
     dpor_start(ss, s, rc, new_ss, f);
@@ -235,7 +235,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     }
 #endif
     lmn_mem_free_rec(mem);
-    if (is_binstr_user(s) &&
+    if (s->is_binstr_user() &&
         (lmn_env.hash_compaction || lmn_env.tree_compress)) {
       state_free_binstr(s);
     }
@@ -245,7 +245,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
    * (フラグがセットされた状態が, 受理サイクル探索の対象となるので,
    *  フラグセットのタイミングは重要.) */
 
-  set_expanded(s);
+  s->set_expanded();
   RC_CLEAR_DATA(rc);
 
 #ifdef PROFILE
@@ -268,7 +268,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
   }
 #endif
 
-  s_unset_update(s);
+  s->s_unset_update();
   n = state_succ_num(s);
   f = (lmn_env.opt_mode == OPT_MINIMIZE);
   for (i = 0; i < n; i++) {
@@ -300,7 +300,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     LmnMembraneRef src_succ_m;
 
     /* 状態sのi番目の遷移src_tと遷移先状態src_succを取得 */
-    if (!has_trans_obj(s)) {
+    if (!s->has_trans_obj()) {
       /* Transitionオブジェクトを利用しない場合 */
       src_t = NULL;
       src_succ = (State *)vec_get(RC_EXPANDED(rc), i);
@@ -311,7 +311,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
     if (RC_MC_USE_D(rc) && RC_D_COND(rc)) {
       /* delta-stringフラグをこの時点で初めて立てる */
-      s_set_d(src_succ);
+      src_succ->s_set_d();
     }
 
     /* 状態空間に状態src_succを記録 */
@@ -319,8 +319,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       MemDeltaRoot *d = (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);
       succ = statespace_insert_delta(ss, src_succ, d);
       src_succ_m = NULL;
-    } else if (is_encoded(src_succ)) { /* !--delta-mem && --mem-enc */
-      if (s_is_d(src_succ))
+    } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
+      if (src_succ->s_is_d())
         state_calc_binstr_delta(src_succ);
       succ = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
@@ -342,7 +342,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     } else {
       /* contains */
       state_free(src_succ);
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         /* Transitionオブジェクトが指すサクセッサを検出した等価な状態の方へ設定し直す
          */
         transition_set_state(src_t, succ);
@@ -354,7 +354,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     if (!st_lookup(RC_SUCC_TBL(rc), (st_data_t)succ, (st_data_t *)&tmp)) {
       /* succへの遷移が多重辺ではない場合 */
       st_data_t ins;
-      if (has_trans_obj(s)) {
+      if (s->has_trans_obj()) {
         ins = (st_data_t)src_t;
       } else {
         ins = (st_data_t)succ;
@@ -364,7 +364,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       st_add_direct(RC_SUCC_TBL(rc), (st_data_t)succ, ins);
       /* 遷移先情報を記録する一時領域(in ReactCxt)を更新 */
       vec_set(RC_EXPANDED(rc), succ_i++, ins);
-    } else if (has_trans_obj(s)) {
+    } else if (s->has_trans_obj()) {
       /* succへの遷移が多重辺かつTransitionオブジェクトを利用する場合 */
       /* src_tは状態生成時に張り付けたルール名なので, 0番にしか要素はないはず */
       transition_add_rule((TransitionRef)tmp, transition_rule(src_t, 0),
@@ -459,7 +459,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       lmn_interned_str nid;
       nid = lmn_rule_get_name((LmnRuleRef)vec_get(expanded_rules, i));
       data = (vec_data_t)transition_make(news, nid);
-      set_trans_obj(src);
+     src->set_trans_obj();
     } else {
       data = (vec_data_t)news;
     }
@@ -546,7 +546,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 #ifdef KWBT_OPT
         transition_set_cost((Transition)data, transition_cost(src_succ_t));
 #endif
-        set_trans_obj(s);
+       s->set_trans_obj();
       } else {
         data = (vec_data_t)new_s;
       }
@@ -602,7 +602,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
   if (mc_has_trans(f)) {
     data = (vec_data_t)transition_make(new_s, lmn_intern("ε"));
-    set_trans_obj(s);
+   s->set_trans_obj();
   } else {
     data = (vec_data_t)new_s;
   }

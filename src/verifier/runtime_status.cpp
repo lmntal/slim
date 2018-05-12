@@ -470,9 +470,9 @@ static void profile_state_f(State *s, LmnWord arg) {
 
   /* メモリ */
   p->state_space += sizeof(State);
-  if (!is_binstr_user(s) && state_mem(s)) {
+  if (!s->is_binstr_user() && state_mem(s)) {
     p->membrane_space += lmn_mem_root_space(state_mem(s));
-  } else if (is_binstr_user(s) && state_binstr(s)) {
+  } else if (s->is_binstr_user() && state_binstr(s)) {
     p->binstr_space += lmn_binstr_space(state_binstr(s));
   }
 
@@ -487,7 +487,7 @@ static void profile_state_f(State *s, LmnWord arg) {
   /* 遷移数 */
   p->transition_num += succ_num;
 
-  if (!(is_encoded(s) && is_dummy(s))) {
+  if (!(s->is_encoded() && s->is_dummy())) {
     if (statespace_has_property(ss)) {
       AutomataRef a = statespace_automata(ss);
       if (state_is_accept(a, s)) {
@@ -503,9 +503,9 @@ static void profile_state_f(State *s, LmnWord arg) {
   if (!st_contains(p->hashes, (st_data_t)state_hash(s))) {
     st_insert(p->hashes, (st_data_t)state_hash(s), 0);
 
-    if (is_encoded(s)) {
+    if (s->is_encoded()) {
       p->midhash_num++;
-      if (is_dummy(s)) {
+      if (s->is_dummy()) {
         p->rehashed_num++;
       }
     } else {

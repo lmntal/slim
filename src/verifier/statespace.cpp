@@ -125,7 +125,7 @@ static inline LmnBinStrRef statetable_compress_state(StateTable *st, State *s,
 /* 既に計算済のバイナリストリングbsを状態sに登録する.
  * statetable_{insert/add_direct}内の排他制御ブロック内で呼び出す. */
 static inline void state_set_compress_for_table(State *s, LmnBinStrRef bs) {
-  if (!is_encoded(s) && bs) {
+  if (!s->is_encoded() && bs) {
     state_set_binstr(s, bs);
   }
 }
@@ -189,13 +189,13 @@ static void statetable_resize(StateTable *st, unsigned long old_cap) {
         next = ptr->next;
         bucket = state_hash(ptr) % new_cap;
         ptr->next = new_tbl[bucket];
-        if (is_dummy(ptr) && is_expanded(ptr) && !is_encoded(ptr)) {
+        if (ptr->is_dummy() && ptr->is_expanded() && !ptr->is_encoded()) {
           /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要
            * (resize中に,
            * 展開済み状態へのデータアクセスは発生しないよう設計している) */
           state_free_binstr(ptr);
-          if (s_is_d(ptr)) {
-            s_unset_d(ptr);
+          if (ptr->s_is_d()) {
+            ptr->s_unset_d();
           }
         }
         new_tbl[bucket] = ptr;
@@ -442,9 +442,9 @@ static void statetable_memid_rehash(State *s, StateTable *st) {
   state_set_binstr(new_s, lmn_mem_encode(m));
   new_s->hash = binstr_hash(state_binstr(new_s));
 
-  set_encoded(new_s);
-  set_expanded(new_s);
-  set_dummy(new_s);
+  new_s->set_encoded();
+  new_s->set_expanded();
+  new_s->set_dummy();
 
   rehash_tbl = statetable_rehash_tbl(st);
   statetable_add_direct(rehash_tbl,
@@ -507,7 +507,7 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
   is_accept = statespace_has_property(ss) &&
               state_is_accept(statespace_automata(ss), s);
 
-  if (is_encoded(s)) {
+  if (s->is_encoded()) {
     /* already calculated canonical binary strings */
     if (is_accept) {
       insert_dst = statespace_accept_memid_tbl(ss);
@@ -541,7 +541,7 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
   }
 #endif
 
-  if (is_encoded(ret)) {
+  if (ret->is_encoded()) {
     /* rehasherが機能した場合, 通常のテーブルを入り口に,
      * memidテーブルにエントリが追加されている
      * なにも考慮せずにテーブル拡張の判定を行ってしまうと,
@@ -589,7 +589,7 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
 
   /* 既にバイナリストリング計算済みとなるcanonical membrane使用時は,
    * この時点でdelta-stringを計算する */
-  if (is_encoded(s) && s_is_d(s)) {
+  if (s->is_encoded() && s->s_is_d()) {
     state_calc_binstr_delta(s);
   }
 
@@ -611,7 +611,7 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
 void statespace_add_direct(StateSpaceRef ss, State *s) {
   StateTable *add_dst;
 
-  if (is_encoded(s)) {
+  if (s->is_encoded()) {
     add_dst = statespace_memid_tbl(ss);
   } else {
     add_dst = statespace_tbl(ss);
@@ -810,7 +810,7 @@ static State *statetable_insert(StateTable *st, State *ins)
   State *ret;
   LmnBinStrRef compress;
 
-  if (is_binstr_user(ins)) {
+  if (ins->is_binstr_user()) {
     /* 既に状態insがバイナリストリングを保持している場合 */
     compress = state_binstr(ins);
   } else {
@@ -871,7 +871,7 @@ static State *statetable_insert(StateTable *st, State *ins)
       if (hash == state_hash(str)) {
         /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
         if (lmn_env.hash_compaction) {
-          if (is_dummy(str) && is_encoded(str)) {
+          if (str->is_dummy() && str->is_encoded()) {
             /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
              */
             ret = state_get_parent(str);
@@ -881,7 +881,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           break;
         }
 
-        if (statetable_use_rehasher(st) && is_dummy(str) && !is_encoded(str) &&
+        if (statetable_use_rehasher(st) && str->is_dummy() && !str->is_encoded() &&
             lmn_env.tree_compress == FALSE) {
           /* A. オリジナルテーブルにおいて, dummy状態が比較対象
            * 　 --> memidテーブル側の探索へ切り替える.
@@ -889,12 +889,12 @@ static State *statetable_insert(StateTable *st, State *ins)
            *     直接dummy状態上のメモリを比較対象とするとスレッドセーフでなくなる)
            */
 
-          if (is_binstr_user(ins)) {
+          if (ins->is_binstr_user()) {
             state_free_binstr(ins);
           } else if (compress) {
             lmn_binstr_free(compress);
           }
-          s_unset_d(ins);
+          ins->s_unset_d();
           state_calc_mem_encode(ins);
           /*compress = NULL;*/
 
@@ -908,7 +908,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           /** B. memidテーブルへのlookupの場合,
            *     もしくはオリジナルテーブルへのlookupで非dummy状態と等価な場合
            */
-          if (is_dummy(str) && is_encoded(str)) {
+          if (str->is_dummy() && str->is_encoded()) {
             /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
              */
             ret = state_get_parent(str);
@@ -917,7 +917,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           }
           LMN_ASSERT(ret);
           break;
-        } else if (is_encoded(str)) {
+        } else if (str->is_encoded()) {
           /** C. memidテーブルへのlookupでハッシュ値が衝突した場合.
            * (同形成判定結果が偽) */
 #ifdef PROFILE
@@ -947,16 +947,16 @@ static State *statetable_insert(StateTable *st, State *ins)
                *    本スレッドが立てるdummyフラグを他のスレッドが見逃す恐れがあるため
                */
               statetable_memid_rehash(str, st);
-              set_dummy(str);
+              str->set_dummy();
             }
 
             /* 比較元をencode */
-            if (is_binstr_user(ins)) {
+            if (ins->is_binstr_user()) {
               state_free_binstr(ins);
             } else if (compress) {
               lmn_binstr_free(compress);
             }
-            s_unset_d(ins);
+            ins->s_unset_d();
             state_calc_mem_encode(ins);
 
 #ifndef PROFILE
@@ -1022,7 +1022,7 @@ static State *statetable_insert(StateTable *st, State *ins)
 
   if (ret != ins) {
     /* 別のスレッドの割込みで追加に失敗した場合, 計算したバイト列を破棄する.*/
-    if (is_binstr_user(ins)) {
+    if (ins->is_binstr_user()) {
       state_free_binstr(ins);
     } else if (compress) {
       // lmn_binstr_free(compress);
@@ -1041,7 +1041,7 @@ static void statetable_add_direct(StateTable *st, State *s) {
     unsigned long bucket;
     BOOL inserted;
 
-    if (is_binstr_user(s)) {
+    if (s->is_binstr_user()) {
       compress = state_binstr(s);
     } else {
       compress = NULL;

@@ -62,21 +62,21 @@ void dump_dot_state_edges(State *s) {
   for (i = 0, n = state_succ_num(s); i < n; i++) {
     State *succ = state_succ_state(s, i);
     printf("  %lu -> %lu", state_hash(s), state_hash(succ));
-    if (is_on_cycle(s) && is_on_cycle(succ))
+    if (s->is_on_cycle() && succ->is_on_cycle())
       printf(" [color = \"#ff0000\"]");
     printf(";\n");
   }
 }
 
 void dump_dot_state_attr(State *s, AutomataRef *a, int *colors) {
-  int color = is_expanded(s) ? colors[state_expander_id(s)] : 0x999999;
+  int color = s->is_expanded() ? colors[s->state_expander_id()] : 0x999999;
   printf("  %lu [label=\"", state_hash(s));
-  if (is_expanded(s))
-    printf("%lu", state_expander_id(s));
+  if (s->is_expanded())
+    printf("%lu", s->state_expander_id());
   printf("\", ");
   if (state_is_accept(*a, s))
     printf("peripheries = 2, ");
-  if (is_on_cycle(s))
+  if (s->is_on_cycle())
     printf("color = \"#ff0000\", ");
   printf("style = filled, fillcolor = \"#%02x%02x%02x\"", R(color), G(color),
          B(color));
@@ -90,7 +90,7 @@ void dump_dot_header_comment(State *s) {
 void dump_dot_loop(State *s, AutomataRef *a, int *colors, int depth) {
   int i, n;
 
-  s_set_visited_by_visualizer(s);
+  s->s_set_visited_by_visualizer();
 
   dump_dot_header_comment(s);
   dump_dot_state_edges(s);
@@ -98,7 +98,7 @@ void dump_dot_loop(State *s, AutomataRef *a, int *colors, int depth) {
 
   for (i = 0, n = state_succ_num(s); i < n; i++) {
     State *succ = state_succ_state(s, i);
-    if (!s_is_visited_by_visualizer(succ)) {
+    if (!succ->s_is_visited_by_visualizer()) {
       dump_dot_loop(succ, a, colors, depth + 1);
     }
   }
