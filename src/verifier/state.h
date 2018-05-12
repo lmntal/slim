@@ -66,17 +66,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 
 struct State;
 
-#ifndef MINIMAL_STATE
-
-void state_expand_lock(State *s);
-void state_expand_unlock(State *s);
-
-#else
-
-#define state_expand_lock(S) (NULL)
-#define state_expand_unlock(S) (NULL)
-#endif
-
 #define HASH_COMPACTION_MASK (0x01U << 5)
 
 void set_on_hash_compaction(State *s);

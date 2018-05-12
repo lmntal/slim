@@ -707,7 +707,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
     // 同時に状態を展開すると問題が起こるのでロック
     START_LOCK();
-    state_expand_lock(s);
+    s->state_expand_lock();
     FINISH_LOCK();
     if (!is_expanded(s)) {
       mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms,
@@ -715,7 +715,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       w->expand++;
       s->state_set_expander_id(worker_id(w));
     }
-    state_expand_unlock(s);
+    s->state_expand_unlock();
 
 #if 0
     // workerごとにsuccessorをずらして積む

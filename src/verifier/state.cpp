@@ -53,15 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-#ifndef MINIMAL_STATE
-
-void state_expand_lock(State *s) { lmn_mutex_lock(&(s->expand_lock)); }
-void state_expand_unlock(State *s) { lmn_mutex_unlock(&(s->expand_lock)); }
-
-#else
-
-#endif
-
 BOOL is_binstr_user(State *S) { return ((S)->flags & MEM_DIRECT_MASK); }
 BOOL is_dummy(State *S) { return ((S)->flags & DUMMY_SYMBOL_MASK); }
 BOOL is_encoded(State *S) { return ((S)->flags & MEM_ENCODED_MASK); }

@@ -73,11 +73,15 @@ struct State {                /* Total:72(36)byte */
   unsigned long state_expander_id() { return expander_id; }
   void state_expand_lock_init() { lmn_mutex_init(&(expand_lock)); }
   void state_expand_lock_destroy() { lmn_mutex_destroy(&(expand_lock)); }
+  void state_expand_lock() { lmn_mutex_lock(&(expand_lock)); }
+  void state_expand_unlock() { lmn_mutex_unlock(&(expand_lock)); }
 #else
   void state_set_expander_id(unsigned long id) { }
   unsigned long state_expander_id() { return 0; }
   void state_expand_lock_init() { }
   void state_expand_lock_destroy() { }
+  void state_expand_lock() { }
+  void state_expand_unlock() { }
 #endif
   BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
 #ifdef KWBT_OPT
