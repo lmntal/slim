@@ -132,7 +132,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   if (succ == new_s) { /* new state */
     state_id_issue(succ);
   } else {
-    state_free(new_s);
+    delete(new_s);
   }
 
   lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);

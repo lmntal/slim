@@ -271,6 +271,37 @@ struct State {                /* Total:72(36)byte */
 #endif
     }
 
+  ~State() {
+    if (successors) {
+#ifdef PROFILE
+      if (lmn_env.profile_level >= 3)
+        profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
+                            sizeof(succ_data_t) * state_succ_num(s));
+#endif
+      if (has_trans_obj()) {
+        unsigned int i;
+        for (i = 0; i < state_succ_num(this); i++) {
+          transition_free(transition(this, i));
+        }
+      }
+      LMN_FREE(successors);
+    }
+#ifndef MINIMAL_STATE
+    if (local_flags) {
+      LMN_FREE(local_flags);
+    }
+#endif
+    state_expand_lock_destroy();
+
+    state_free_mem(this);
+    state_free_binstr(this);
+
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_remove_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
+    }
+#endif
+  }
 };
 
 #endif

@@ -94,7 +94,6 @@ struct State;
 #define DEFAULT_PROP_AUTOMATA NULL
 
 State *state_copy(State *src, LmnMembraneRef src_mem);
-void state_free(State *s);
 void state_succ_set(State *s, Vector *v);
 void state_succ_add(State *s, succ_data_t succ);
 void state_succ_clear(State *s);

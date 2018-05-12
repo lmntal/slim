@@ -146,45 +146,6 @@ State *state_copy(State *src, LmnMembraneRef mem) {
   return dst;
 }
 
-/**
- * デストラクタ
- */
-void state_free(State *s) {
-  if (s->successors) {
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3)
-      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
-                           sizeof(succ_data_t) * state_succ_num(s));
-#endif
-
-    if (s->has_trans_obj()) {
-      unsigned int i;
-      for (i = 0; i < state_succ_num(s); i++) {
-        transition_free(transition(s, i));
-      }
-    }
-    LMN_FREE(s->successors);
-  }
-
-#ifndef MINIMAL_STATE
-  if (s->local_flags) {
-    LMN_FREE(s->local_flags);
-  }
-#endif
-
-  s->state_expand_lock_destroy();
-
-  state_free_mem(s);
-  state_free_binstr(s);
-  LMN_FREE(s);
-
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3) {
-    profile_remove_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
-  }
-#endif
-}
-
 void state_free_mem(State *s) {
   if (state_mem(s)) {
 #ifdef PROFILE

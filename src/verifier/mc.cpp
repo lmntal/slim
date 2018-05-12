@@ -341,7 +341,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
     } else {
       /* contains */
-      state_free(src_succ);
+      delete(src_succ);
       if (s->has_trans_obj()) {
         /* Transitionオブジェクトが指すサクセッサを検出した等価な状態の方へ設定し直す
          */

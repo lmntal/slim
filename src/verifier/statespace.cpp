@@ -704,6 +704,10 @@ static inline void statetable_clear(StateTable *st) {
   }
 }
 
+static void state_free(State *s) {
+  delete(s);
+}
+
 static void statetable_free(StateTable *st, int nPEs) {
   if (st) {
 

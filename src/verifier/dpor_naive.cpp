@@ -217,7 +217,7 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a) {
       s->flags3 = 0x00U;
     } else {
       /* それ以外は, rootでなければ開放 */
-      state_free(s);
+     delete(s);
     }
   } else if (!mc_has_trans(((BOOL)_a))) {
     /* rootなら, サクセッサの遷移オブジェクトを調整 */
@@ -451,7 +451,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
                            : NULL;
     succ = por_state_insert(src_succ, d);
     if (succ != src_succ) {
-      state_free(src_succ);
+     delete(src_succ);
       transition_set_state(src_t, succ);
     }
 

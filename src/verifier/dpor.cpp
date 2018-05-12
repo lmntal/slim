@@ -770,7 +770,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     } else {
       succ_s = (State *)vec_get(RC_EXPANDED(rc), i);
     }
-    state_free(succ_s);
+   delete(succ_s);
   }
 
   satisfied_C3 = TRUE;
@@ -801,7 +801,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         vec_push(new_ss, (vec_data_t)succ);
       }
     } else {
-      state_free(src_succ);
+     delete(src_succ);
       if (s->has_trans_obj()) {
         transition_set_state(src_t, succ);
       } else {
@@ -858,7 +858,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
           vec_push(new_ss, (vec_data_t)succ);
         }
       } else {
-        state_free(src_succ);
+       delete(src_succ);
         if (s->has_trans_obj()) {
           transition_set_state(src_t, succ);
         } else {
@@ -1049,7 +1049,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
         vec_push(search, (vec_data_t)s);
       } else {
         transition_set_state(t, ret);
-        state_free(s);
+       delete(s);
       }
 
       state_free_mem(&tmp_s);

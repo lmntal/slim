@@ -164,7 +164,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
                                 DEFAULT_STATE_ID,
                                 statespace_use_memenc(worker_states(w)));
       if (sub_s != statespace_insert(worker_states(w), sub_s)) {
-        state_free(sub_s);
+        delete(sub_s);
       } else {
         worker_states(w)->init_state = sub_s;
         dfs_start(w);
