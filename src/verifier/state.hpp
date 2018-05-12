@@ -70,6 +70,25 @@ enum StateFlags {
   MEM_DIRECT_MASK = 0x01U << 7
 };
 
+/** Flags2 (8bit)
+ *  0000 0001  Partial Order
+ * ReductionによるReductionマーキング(debug/demo用機能) 0000 0010  D compression
+ * stateか否かを示すフラグ 0000 0100  (MAPNDFS)explorer visit flag 0000 1000
+ * (MAPNDFS)generator visit flag 0001 0000  (MCNDFS)blue flag 0010 0000
+ * (MCNDFS)red flag 0100 0000  (Visualize)visited 1000 0000
+ */
+
+enum StateFlags2 {
+  STATE_REDUCED_MASK = 0x01U,
+  STATE_DELTA_MASK = 0x01U << 1,
+  STATE_UPDATE_MASK = 0x01U << 2,
+  EXPLORER_VISIT_MASK = 0x01U << 3,
+  GENERATOR_VISIT_MASK = 0x01U << 4,
+  STATE_BLUE_MASK = 0x01U << 5,
+  STATE_RED_MASK = 0x01U << 6,
+  STATE_VIS_VISITED_MASK = 0x01U << 7
+};
+
 /* Descriptor */
 struct State {                /* Total:72(36)byte */
   unsigned int successor_num; /*  4(4)byte: サクセッサの数 */

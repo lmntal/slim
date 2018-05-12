@@ -66,23 +66,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 
 struct State;
 
-/** Flags2 (8bit)
- *  0000 0001  Partial Order
- * ReductionによるReductionマーキング(debug/demo用機能) 0000 0010  D compression
- * stateか否かを示すフラグ 0000 0100  (MAPNDFS)explorer visit flag 0000 1000
- * (MAPNDFS)generator visit flag 0001 0000  (MCNDFS)blue flag 0010 0000
- * (MCNDFS)red flag 0100 0000  (Visualize)visited 1000 0000
- */
-
-#define STATE_REDUCED_MASK (0x01U)
-#define STATE_DELTA_MASK (0x01U << 1)
-#define STATE_UPDATE_MASK (0x01U << 2)
-#define EXPLORER_VISIT_MASK (0x01U << 3)
-#define GENERATOR_VISIT_MASK (0x01U << 4)
-#define STATE_BLUE_MASK (0x01U << 5)
-#define STATE_RED_MASK (0x01U << 6)
-#define STATE_VIS_VISITED_MASK (0x01U << 7)
-
 /** Flags3 (8bit)
  *  0000 0001
  * freshな状態(展開されておらず、または展開用スタックにも積まれていない状態)。fresh
