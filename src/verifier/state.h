@@ -66,9 +66,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 
 struct State;
 
-BYTE state_flags2(State *s);
-BYTE state_flags3(State *s);
-
 #ifndef MINIMAL_STATE
 
 void state_set_expander_id(State *s, unsigned long id);

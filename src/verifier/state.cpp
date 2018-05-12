@@ -53,9 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BYTE state_flags2(State *s) { return s->flags2; }
-BYTE state_flags3(State *s) { return s->flags3; }
-
 #ifndef MINIMAL_STATE
 
 BYTE *state_loflags(State *s) { return s->local_flags; }
