@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BYTE state_flags(State *s) { return s->flags; }
 BYTE state_flags2(State *s) { return s->flags2; }
 BYTE state_flags3(State *s) { return s->flags3; }
 
