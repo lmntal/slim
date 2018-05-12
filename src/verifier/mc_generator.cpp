@@ -513,7 +513,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms,
               worker_flags(w));
 #ifndef MINIMAL_STATE
-    state_set_expander_id(s, worker_id(w));
+    s->state_set_expander_id(worker_id(w));
 #endif
 
     if (MAP_COND(w))
@@ -588,7 +588,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms,
                 worker_flags(w));
 #ifndef MINIMAL_STATE
-      state_set_expander_id(s, worker_id(w));
+      s->state_set_expander_id(worker_id(w));
 #endif
     }
 
@@ -713,7 +713,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       mc_expand(worker_states(w), s, p_s, worker_rc(w), new_ss, psyms,
                 worker_flags(w));
       w->expand++;
-      state_set_expander_id(s, worker_id(w));
+      s->state_set_expander_id(worker_id(w));
     }
     state_expand_unlock(s);
 

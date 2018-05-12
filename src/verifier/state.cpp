@@ -55,7 +55,7 @@ extern "C" {
 
 #ifndef MINIMAL_STATE
 
-void state_set_expander_id(State *s, unsigned long id) { s->expander_id = id; }
+
 unsigned long state_expander_id(State *s) { return s->expander_id; }
 void state_expand_lock_init(State *s) { lmn_mutex_init(&(s->expand_lock)); }
 void state_expand_lock_destroy(State *s) {
@@ -253,7 +253,7 @@ State *state_make_minimal() {
   memset(&new_s->tcd, 0x00, sizeof(TreeCompressData));
 
 #ifndef MINIMAL_STATE
-  state_set_expander_id(new_s, LONG_MAX);
+  new_s->state_set_expander_id(LONG_MAX);
   new_s->local_flags = 0x00U;
   state_expand_lock_init(new_s);
 #endif
