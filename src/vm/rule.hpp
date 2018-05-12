@@ -63,4 +63,15 @@ struct LmnRule {
   }
 };
 
+/* table, mapping RuleSet ID to RuleSet */
+struct LmnRuleSetTable {
+  unsigned int size;
+  LmnRuleSetRef *entry;
+
+  LmnRuleSetTable (unsigned int size):
+    size(size) {
+      this->entry = LMN_NALLOC(LmnRuleSetRef, this->size);
+    }
+};
+
 #endif

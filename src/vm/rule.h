@@ -108,12 +108,6 @@ typedef enum AtomicType {
   ATOMIC_SYNC_STEP,
 } AtomicType;
 
-/* table, mapping RuleSet ID to RuleSet */
-struct LmnRuleSetTable {
-  unsigned int size;
-  LmnRuleSetRef *entry;
-};
-
 extern struct LmnRuleSetTable *ruleset_table;
 
 int lmn_gen_ruleset_id(void);

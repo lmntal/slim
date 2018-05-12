@@ -208,9 +208,7 @@ void lmn_ruleset_put(LmnRuleSetRef ruleset, LmnRuleRef rule) {
 
 /* ルールセットテーブルの初期化 */
 static void init_ruleset_table() {
-  ruleset_table = LMN_MALLOC(struct LmnRuleSetTable);
-  ruleset_table->size = 64;
-  ruleset_table->entry = LMN_NALLOC(LmnRuleSetRef, ruleset_table->size);
+  ruleset_table = new LmnRuleSetTable(64);
   /* 安全なメモリ解放の為ゼロクリア */
   memset(ruleset_table->entry, 0,
          ruleset_table->size * sizeof(ruleset_table->entry[0]));
