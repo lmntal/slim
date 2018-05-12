@@ -44,6 +44,7 @@ extern "C" {
 #include "symbol.h"
 }
 #include "membrane.hpp"
+#include "atomlist.hpp"
 
 /* prototypes */
 

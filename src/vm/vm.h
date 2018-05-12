@@ -68,6 +68,8 @@ extern "C" {
 #ifdef __cplusplus
 }
 #include "rule.hpp"
+#include "atomlist.hpp"
+
 #endif
 
 #endif /* LMN_VM_H */

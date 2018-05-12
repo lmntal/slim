@@ -69,14 +69,14 @@ slim_SOURCES =                                                     \
 	ext/integer.c                                                    \
 	ext/float.c                                                      \
 	ext/atomic.c                                                     \
-	ext/nlmem.c                                                      \
+	ext/nlmem.cpp                                                      \
 	ext/io.c                                                         \
 	ext/array.c			ext/array.h                      \
 	ext/atom.c                                                       \
 	ext/react_rule.c                                                 \
 	ext/initial_ruleset.c                                            \
 	ext/nd_conf.c							 \
-	ext/set.c			ext/set.h			 \
+	ext/set.cpp			ext/set.h			 \
 	ext/state_map.cpp						 \
 	ext/membrane.c      ext/membrane.h       \
 	ext/zerostep.c \

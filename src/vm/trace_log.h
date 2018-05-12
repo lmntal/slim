@@ -44,7 +44,6 @@ extern "C" {
 
 #include "element/element.h"
 #include "membrane.h"
-
 /*----------------------------------------------------------------------
  * TraceLog
  * --------
@@ -68,6 +67,7 @@ extern "C++" {
 #include "process_table.hpp"
 #include <stack>
 #include "membrane.hpp"
+#include "atomlist.hpp"
 
 class LogTracker {
   std::stack<ProcessID> traced_ids;
