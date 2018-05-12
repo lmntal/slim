@@ -50,7 +50,7 @@ void cb_react_rule(LmnReactCxtRef rc,
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rule_mem_proxy, 0));
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)graph_mem_proxy, 0));
   LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(lmn_mem_get_rulesets(rule_mem), 0);
-  LmnRuleRef r = lmn_ruleset_get_rule(rs, 0);
+  LmnRuleRef r = rs->get_rule(0);
   LmnReactCxtRef tmp_rc = react_context_alloc();
 
   mem_react_cxt_init(tmp_rc);
@@ -90,7 +90,7 @@ static void apply_rules_in_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
 
     for (int j = 0; j < rs->num; j++) {
-      LmnRuleRef r = lmn_ruleset_get_rule(rs, j);
+      LmnRuleRef r = rs->get_rule(j);
       mc_react_cxt_init(rc);
       RC_SET_GROOT_MEM(rc, src_graph);
       RC_ADD_MODE(rc, REACT_ND_MERGE_STS);

@@ -69,9 +69,9 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef
 
         for (j = 0; j < rs->num; j++) {
           if (LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_RULESET_MEM_NAME)) {
-            lmn_add_initial_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
+            lmn_add_initial_rule(lmn_rule_copy(rs->get_rule(j)));
           } else if (LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) {
-            lmn_add_initial_system_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
+            lmn_add_initial_system_rule(lmn_rule_copy(rs->get_rule(j)));
           }
         }
       }
@@ -100,7 +100,7 @@ BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef r
     LmnRuleSetRef rs = lmn_get_module_ruleset(lmn_intern(initial_modules[i]));
     if (rs) {
       for (j = 0; j < rs->num; j++) {
-        lmn_add_initial_system_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
+        lmn_add_initial_system_rule(lmn_rule_copy(rs->get_rule(j)));
       }
     }
   }

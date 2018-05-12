@@ -167,39 +167,9 @@ LmnRuleSetRef lmn_ruleset_copy(LmnRuleSetRef src) {
   return src->duplicate();
 }
 
-unsigned long lmn_ruleset_space(LmnRuleSetRef rs) {
-  unsigned long ret = 0;
-  if (lmn_ruleset_has_uniqrule(rs) || lmn_ruleset_is_copy(rs)) {
-    unsigned int i, n;
-
-    n = rs->num;
-    ret += sizeof(struct LmnRuleSet);
-    ret += sizeof(struct LmnRule *) * n;
-    for (i = 0; i < n; i++) {
-      LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
-      if (lmn_rule_get_history_tbl(r)) { /* 履歴表を持っている場合  */
-        st_table_space(lmn_rule_get_history_tbl(r));
-      }
-    }
-  }
-  return ret;
-}
-
-void lmn_ruleset_validate_atomic(LmnRuleSetRef rs) {
-  rs->is_atomic_valid = TRUE;
-}
 
 void lmn_ruleset_invalidate_atomic(LmnRuleSetRef rs) {
-  rs->is_atomic_valid = FALSE;
-}
-
-BOOL lmn_ruleset_is_valid_atomic(LmnRuleSetRef rs) {
-  return rs->is_atomic_valid;
-}
-
-/* Returns the ith rule in ruleset */
-LmnRuleRef lmn_ruleset_get_rule(LmnRuleSetRef ruleset, int i) {
-  return ruleset->rules[i];
+  rs->invalidate_atomic();
 }
 
 /* Returns id of ruleset */
@@ -237,22 +207,6 @@ void lmn_ruleset_validate_0step(LmnRuleSetRef ruleset) {
 BOOL lmn_ruleset_is_0step(LmnRuleSetRef ruleset) { return ruleset->is_0step; }
 
 
-/* rulesetsにrulesetが含まれているか判定 */
-BOOL lmn_rulesets_contains(Vector *rs_vec, LmnRuleSetRef set1) {
-  unsigned int i, rs1_id;
-
-  rs1_id = lmn_ruleset_get_id(set1);
-  for (i = 0; i < vec_num(rs_vec); i++) {
-    LmnRuleSetRef set2 = (LmnRuleSetRef)vec_get(rs_vec, i);
-
-    /* 同じrulesetが見つかればTRUEを返す */
-    if (rs1_id == lmn_ruleset_get_id(set2) && *set1 == *set2) {
-      return TRUE;
-    }
-  }
-  /* 見つからなければFALSE */
-  return FALSE;
-}
 
 /* 2つの(Vector *)rulesetsが等価であるか判定, 等価の場合に真を返す.
  * Vectorはルールセットの整数IDで整列済みであることが前提 */

@@ -457,7 +457,7 @@ static void translate_ruleset(LmnRuleSetRef ruleset, const char *header) {
 
   for (i = 0; i < ruleset->num; i++) {
     snprintf(buf, buf_len, "%s_%d", header, i); /* ルールのシグネチャ */
-    translate_rule(lmn_ruleset_get_rule(ruleset, i), buf);
+    translate_rule(ruleset->get_rule(i), buf);
     rule_names[i] = translating_rule_name;
   }
   fprintf(OUT, "struct trans_rule %s_rules[%d] = {", header,

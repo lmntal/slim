@@ -126,7 +126,7 @@ struct LmnRuleSet {
 
     /* ルール単位のオブジェクト複製 */
     for (i = 0; i < r_n; i++) {
-      LmnRule *r = lmn_ruleset_get_rule(this, i);
+      LmnRule* r = this->get_rule(i);
       result->put(lmn_rule_copy(r));
     }
     return result;
@@ -192,6 +192,40 @@ struct LmnRuleSet {
   }
 
   bool operator!=(const LmnRuleSet &set) { return !(*this == set); }
+
+  unsigned long space() {
+    unsigned long ret = 0;
+    if (lmn_ruleset_has_uniqrule(this) || lmn_ruleset_is_copy(this)) {
+      unsigned int i, n;
+
+      n = this->num;
+      ret += sizeof(struct LmnRuleSet);
+      ret += sizeof(struct LmnRule *) * n;
+      for (i = 0; i < n; i++) {
+        LmnRuleRef r = this->get_rule(i);
+        if (lmn_rule_get_history_tbl(r)) { /* 履歴表を持っている場合  */
+          st_table_space(lmn_rule_get_history_tbl(r));
+        }
+      }
+    }
+    return ret;
+  }
+
+  void validate_atomic() {
+    this->is_atomic_valid = TRUE;
+  }
+
+  void invalidate_atomic() {
+    this->is_atomic_valid = FALSE;
+  }
+  bool is_atomic(){
+    return this->is_atomic_valid;
+  }
+
+  /* Returns the ith rule in ruleset */
+  LmnRuleRef get_rule(int i) {
+    return this->rules[i];
+  }
 };
 
 /* table, mapping RuleSet ID to RuleSet */

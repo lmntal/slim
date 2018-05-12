@@ -718,7 +718,7 @@ static void binstr_dump(BYTE *bs, int len) {
 
         for (k = 0; k < rule_num; k++) {
           printf("[%s", lmn_id_to_name(
-                            lmn_rule_get_name(lmn_ruleset_get_rule(rs, k))));
+                            lmn_rule_get_name(rs->get_rule(k))));
 
           his_num = binstr_get_history_num(bs, pos);
           pos += BS_HISTORY_NUM_SIZE;
@@ -1032,7 +1032,7 @@ static inline void bsptr_push_ruleset_uniq(BinStrPtrRef bsp, LmnMembraneRef mem,
     bsptr_push_ruleset(bsp, rs); /* write ruleset id */
 
     for (j = 0; j < rs->num; j++) { /* foreach rule history */
-      bsptr_push_rule_histories(bsp, lmn_ruleset_get_rule(rs, j));
+      bsptr_push_rule_histories(bsp, rs->get_rule(j));
     }
   }
 }
@@ -1632,7 +1632,7 @@ static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
        * コピー元となるルールセットオブジェクトに直接履歴を持たせていないため,
        *       上記コメントは考慮しなくてよい. */
 
-      r = lmn_ruleset_get_rule(rs, j);
+      r = rs->get_rule(j);
       his_num = binstr_get_history_num(bs->v, *i_bs);
       (*i_bs) += BS_HISTORY_NUM_SIZE;
 
