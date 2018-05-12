@@ -84,7 +84,6 @@ struct State;
 #define STATE_VIS_VISITED_MASK (0x01U << 7)
 
 /* manipulation for flags2 */
-BOOL s_is_reduced(State *S);
 BOOL s_is_update(State *S);
 void s_set_d(State *S);
 void s_set_reduced(State *S);

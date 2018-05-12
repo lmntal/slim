@@ -218,7 +218,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   if (mc_react_cxt_expanded_num(rc) == 0) {
     /* sを最終状態集合として記録 */
     statespace_add_end_state(ss, s);
-  } else if (mc_enable_por(f) && !s_is_reduced(s)) {
+  } else if (mc_enable_por(f) && !s->s_is_reduced()) {
     /* POR: 遷移先状態集合:en(s)からample(s)を計算する.
      * 呼び出し先で, mc_store_successorsに相当する処理を済ませる */
     dpor_start(ss, s, rc, new_ss, f);
