@@ -94,7 +94,6 @@ struct State;
 #define STATE_FRESH_MASK (0x01U)
 
 /* manipulation for flags2 */
-void s_set_fresh(State *S);
 void s_unset_fresh(State *S);
 BOOL s_is_fresh(State *S);
 

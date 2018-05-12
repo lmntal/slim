@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_set_fresh(State *S) { ((S)->flags3 |= STATE_FRESH_MASK); }
 void s_unset_fresh(State *S) { ((S)->flags3 &= (~STATE_FRESH_MASK)); }
 BOOL s_is_fresh(State *S) { return ((S)->flags3 & STATE_FRESH_MASK); }
 
@@ -153,7 +152,7 @@ State *state_make_minimal() {
   new_s->local_flags = 0x00U;
   new_s->state_expand_lock_init();
 #endif
-  s_set_fresh(new_s);
+  new_s->s_set_fresh();
 
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE) {
