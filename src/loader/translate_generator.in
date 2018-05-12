@@ -37,7 +37,7 @@
  */
 
 #__echo
- #include "translate.h"
+ #include "translate.hpp"
  #include "syntax.h"
  #include "arch.h"
  #include "vm/vm.h"
@@ -176,7 +176,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 % } else {
     {
       AtomListEntryRef atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)wt(rc, $1), TR_GFID($2_functor_data));
-      LmnSAtom atom;
+      LmnSymbolAtomRef atom;
 
       if (atomlist_ent) {
         at_set(rc, $0, LMN_ATTR_MAKE_LINK(0));
@@ -298,7 +298,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   warry_set(rc, $0, (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)wt(rc, $1), $2), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)wt(rc, $1), $2), TT_ATOM);
 
 #unify LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
-  lmn_mem_unify_atom_args((LmnMembraneRef)wt(rc, $4), LMN_SATOM(wt(rc, $0)), $1, LMN_SATOM(wt(rc, $2)), $3);
+  lmn_mem_unify_atom_args((LmnMembraneRef)wt(rc, $4), (LmnSymbolAtomRef)(wt(rc, $0)), $1, (LmnSymbolAtomRef)(wt(rc, $2)), $3);
 
 #proceed
   $s;
@@ -429,7 +429,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 % } else {
     if(LMN_ATTR_IS_DATA(at(rc, $0)) ||
-       LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt(rc, $0))) != TR_GFID($1_functor_data)) $f;
+       LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(wt(rc, $0))) != TR_GFID($1_functor_data)) $f;
 % }
 
 #notfunc LmnInstrVar $functor
@@ -457,7 +457,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 % } else {
     if(! (LMN_ATTR_IS_DATA(at(rc, $0)) ||
-          LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt(rc, $0))) != TR_GFID($1_functor_data))) $f;
+          LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(wt(rc, $0))) != TR_GFID($1_functor_data))) $f;
 % }
 
 #isground LmnInstrVar LmnInstrVar LmnInstrVar

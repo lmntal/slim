@@ -36,8 +36,9 @@
  * $Id: translate.c,v 1.34 2008/10/16 18:12:27 sasaki Exp $
  */
 
+#include "translate.hpp"
+
 extern "C" {
-#include "translate.h"
 #include "arch.h"
 #include "element/element.h"
 #include "load.h"

@@ -6,8 +6,8 @@ PARSERS = il_lexer il_parser
 PARSER_HEADER = il_parser.hpp
 PARSER_SOURCE = il_parser.cpp il_lexer.cpp
 
-BUILT_SOURCES = $(PARSER_SOURCE) translate_generated.c interpret_generated.c
-CLEANFILES = $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.c interpret_generated.c
+BUILT_SOURCES = $(PARSER_SOURCE) translate_generated.cpp interpret_generated.cpp
+CLEANFILES = $(PARSER_SOURCE) $(PARSER_HEADER) translate_generated.cpp interpret_generated.cpp
 
 liblmn_loader_a_CFLAGS =                               \
         -I../                                            \
@@ -21,17 +21,17 @@ liblmn_loader_a_SOURCES = \
         syntax.cpp syntax.h \
         byte_encoder.cpp \
         translate.cpp translate.h \
-        translate_generated.c translate_generator.rb \
+        translate_generated.cpp translate_generator.rb \
         translate_generator.in \
         so.h \
-        interpret_generated.c
+        interpret_generated.cpp
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
 
-translate_generated.c: translate_generator.in translate_generator.rb
+translate_generated.cpp: translate_generator.in translate_generator.rb
 	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@
 
-interpret_generated.c: translate_generator.in translate_generator.rb
+interpret_generated.cpp: translate_generator.in translate_generator.rb
 	ruby --encoding=utf-8 ./translate_generator.rb <$< >$@ -i
 
 il_lexer.cpp: il_lexer.cpp.re
