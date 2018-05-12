@@ -83,7 +83,6 @@ struct State;
 #define STATE_RED_MASK (0x01U << 6)
 #define STATE_VIS_VISITED_MASK (0x01U << 7)
 
-void s_set_visited_by_generator(State *S);
 void s_unset_visited_by_explorer(State *S);
 void s_unset_visited_by_generator(State *S);
 void s_set_unvisited(State *S);

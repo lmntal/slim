@@ -600,7 +600,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       s->s_set_visited_by_explorer();
     // generatorが到達した状態はredに着色
     else if (worker_is_generator(w))
-      s_set_visited_by_generator(s);
+      s->s_set_visited_by_generator();
 
     /* Nested-DFS:
      * postorder順を求めるDFS(explorerから未到達の状態がStackに積み直される) */
