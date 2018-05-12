@@ -53,7 +53,7 @@ extern "C" {
 }
 #include "state.hpp"
 
-void set_dummy(State *S) { ((S)->flags |= DUMMY_SYMBOL_MASK); }
+
 void set_encoded(State *S) { ((S)->flags |= MEM_ENCODED_MASK); }
 void set_expanded(State *S) { ((S)->flags |= EXPANDED_MASK); }
 void set_on_cycle(State *S) { ((S)->flags |= ON_CYCLE_MASK); }

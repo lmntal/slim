@@ -444,7 +444,7 @@ static void statetable_memid_rehash(State *s, StateTable *st) {
 
   set_encoded(new_s);
   set_expanded(new_s);
-  set_dummy(new_s);
+  new_s->set_dummy();
 
   rehash_tbl = statetable_rehash_tbl(st);
   statetable_add_direct(rehash_tbl,
@@ -947,7 +947,7 @@ static State *statetable_insert(StateTable *st, State *ins)
                *    本スレッドが立てるdummyフラグを他のスレッドが見逃す恐れがあるため
                */
               statetable_memid_rehash(str, st);
-              set_dummy(str);
+              str->set_dummy();
             }
 
             /* 比較元をencode */
