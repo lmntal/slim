@@ -53,8 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_unset_update(State *S) { ((S)->flags2 &= (~STATE_UPDATE_MASK)); }
-
 BOOL s_is_visited_by_explorer(State *S) {
   return ((S)->flags2 & EXPLORER_VISIT_MASK);
 }

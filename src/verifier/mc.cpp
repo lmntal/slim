@@ -268,7 +268,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
   }
 #endif
 
-  s_unset_update(s);
+  s->s_unset_update();
   n = state_succ_num(s);
   f = (lmn_env.opt_mode == OPT_MINIMIZE);
   for (i = 0; i < n; i++) {
