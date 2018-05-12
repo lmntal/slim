@@ -714,7 +714,7 @@ static void binstr_dump(BYTE *bs, int len) {
         /* dump applied histories of uniq constraint rules */
 
         rs = lmn_ruleset_from_id(rs_id);
-        rule_num = lmn_ruleset_rule_num(rs);
+        rule_num = rs->num;
 
         for (k = 0; k < rule_num; k++) {
           printf("[%s", lmn_id_to_name(
@@ -1031,7 +1031,7 @@ static inline void bsptr_push_ruleset_uniq(BinStrPtrRef bsp, LmnMembraneRef mem,
     LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
     bsptr_push_ruleset(bsp, rs); /* write ruleset id */
 
-    for (j = 0; j < lmn_ruleset_rule_num(rs); j++) { /* foreach rule history */
+    for (j = 0; j < rs->num; j++) { /* foreach rule history */
       bsptr_push_rule_histories(bsp, lmn_ruleset_get_rule(rs, j));
     }
   }
@@ -1621,7 +1621,7 @@ static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
         lmn_ruleset_copy(lmn_ruleset_from_id(binstr_get_ruleset(bs->v, *i_bs)));
     (*i_bs) += BS_RULESET_SIZE;
 
-    for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+    for (j = 0; j < rs->num; j++) {
       LmnRuleRef r;
       int his_num;
 

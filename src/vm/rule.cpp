@@ -163,91 +163,8 @@ static void init_ruleset_table() {
 }
 
 
-
-/* Associates id with ruleset */
-void lmn_set_ruleset(LmnRuleSetRef ruleset, int id) {
-  /* 必要ならば容量を拡張 */
-  while (ruleset_table->size <= (unsigned int)id) {
-    int old_size = ruleset_table->size;
-    ruleset_table->size *= 2;
-    ruleset_table->entry =
-        LMN_REALLOC(LmnRuleSetRef, ruleset_table->entry, ruleset_table->size);
-    /* 安全なメモリ解放の為ゼロクリア */
-    memset(ruleset_table->entry + old_size, 0,
-           (ruleset_table->size - old_size) * sizeof(LmnRuleSetRef));
-  }
-
-  ruleset_table->entry[id] = ruleset;
-}
-
-/* uniq rulesetに存在する各ruleの履歴の総数を返す.
- * uniq rulesetではない場合, -1を返す.
- */
-long lmn_ruleset_history_num(LmnRuleSetRef rs) {
-  if (lmn_ruleset_has_uniqrule(rs)) {
-    return -1;
-  } else {
-    int i, n, his_num;
-
-    n = 0;
-    his_num = 0;
-    for (i = 0; i < n; i++) {
-      LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
-      if (lmn_rule_get_history_tbl(r)) {
-        his_num += st_num(lmn_rule_get_history_tbl(r));
-      }
-    }
-    return his_num;
-  }
-}
-
-/* 実態をコピーしたルールセットを開放する */
-void lmn_ruleset_copied_free(LmnRuleSetRef rs) {
-  unsigned int i;
-  for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
-    LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
-    delete(r); /* free copied rule object */
-  }
-
-  /* free copied ruleset object */
-  LMN_FREE(rs->rules);
-  LMN_FREE(rs);
-}
-
-static inline LmnRuleSetRef lmn_ruleset_copy_object(LmnRuleSetRef src) {
-  LmnRuleSetRef result;
-  unsigned int i, r_n;
-
-  r_n = lmn_ruleset_rule_num(src);
-  result = new LmnRuleSet(lmn_ruleset_get_id(src), r_n);
-  result->is_copy = TRUE;
-  result->atomic = src->atomic;
-  result->is_atomic_valid = src->is_atomic_valid;
-
-  /* ルール単位のオブジェクト複製 */
-  for (i = 0; i < r_n; i++) {
-    LmnRuleRef r = lmn_ruleset_get_rule(src, i);
-    result->put(lmn_rule_copy(r));
-  }
-  return result;
-}
-
-static inline BOOL ruleset_cp_is_need_object(LmnRuleSetRef src) {
-  return lmn_ruleset_has_uniqrule(src) ||
-         (lmn_ruleset_atomic_type(src) != ATOMIC_NONE);
-}
-
-/* ルールセットsrcを複製して返す.
- * 基本的にはオリジナルのobjectへの参照を返すのみ.
- * ただし, uniqルールセットである場合(現在はuniq使用時のみ),
- * ルールセットオブジェクトを独立に扱うため新たにmallocして複製したオブジェクトを返す.
- * uniqルールの場合, ルール単位でobjectを複製する */
 LmnRuleSetRef lmn_ruleset_copy(LmnRuleSetRef src) {
-  if (ruleset_cp_is_need_object(src)) {
-    return lmn_ruleset_copy_object(src);
-  } else {
-    return src;
-  }
+  return src->duplicate();
 }
 
 unsigned long lmn_ruleset_space(LmnRuleSetRef rs) {
@@ -255,7 +172,7 @@ unsigned long lmn_ruleset_space(LmnRuleSetRef rs) {
   if (lmn_ruleset_has_uniqrule(rs) || lmn_ruleset_is_copy(rs)) {
     unsigned int i, n;
 
-    n = lmn_ruleset_rule_num(rs);
+    n = rs->num;
     ret += sizeof(struct LmnRuleSet);
     ret += sizeof(struct LmnRule *) * n;
     for (i = 0; i < n; i++) {
@@ -278,11 +195,6 @@ void lmn_ruleset_invalidate_atomic(LmnRuleSetRef rs) {
 
 BOOL lmn_ruleset_is_valid_atomic(LmnRuleSetRef rs) {
   return rs->is_atomic_valid;
-}
-
-/* Returns the # of rules in ruleset */
-unsigned int lmn_ruleset_rule_num(LmnRuleSetRef ruleset) {
-  return ruleset->num;
 }
 
 /* Returns the ith rule in ruleset */
@@ -324,53 +236,6 @@ void lmn_ruleset_validate_0step(LmnRuleSetRef ruleset) {
 }
 BOOL lmn_ruleset_is_0step(LmnRuleSetRef ruleset) { return ruleset->is_0step; }
 
-/* 2つのrulesetが同じruleを持つか判定する.
- * (ruleの順序はソースコード依存) */
-BOOL lmn_ruleset_equals(LmnRuleSetRef set1, LmnRuleSetRef set2) {
-  /* rulesetの種類をチェック */
-  if (lmn_ruleset_get_id(set1) != lmn_ruleset_get_id(set2)) {
-    return FALSE;
-  } else {
-    BOOL t1, t2;
-    t1 = lmn_ruleset_has_uniqrule(set1);
-    t2 = lmn_ruleset_has_uniqrule(set2);
-
-    if (!t1 && !t2) {
-      /* 互いにuniq rulsetでなければruleset idの比較でok */
-      return TRUE;
-    } else if ((!t1 && t2) || (t1 && !t2)) {
-      /* uniq ruleset同士ではなければ当然FALSE */
-      return FALSE;
-    } else {
-      /* uniq ruleset同士の場合:
-       *   ruleの適用ヒストリまで比較 */
-      unsigned int i, n;
-
-      n = lmn_ruleset_rule_num(set1);
-      if (n != lmn_ruleset_rule_num(set2)) {
-        return FALSE;
-      }
-      for (i = 0; i < n; i++) {
-        LmnRuleRef rule1, rule2;
-        st_table_t hist1, hist2;
-
-        rule1 = lmn_ruleset_get_rule(set1, i);
-        rule2 = lmn_ruleset_get_rule(set2, i);
-        hist1 = lmn_rule_get_history_tbl(rule1);
-        hist2 = lmn_rule_get_history_tbl(rule2);
-
-        if (!hist1 && !hist2) {
-          continue;
-        } else if ((!hist1 && hist2) || (hist1 && !hist2) ||
-                   !st_equals(hist1, hist2)) {
-          return FALSE;
-        }
-      }
-
-      return TRUE;
-    }
-  }
-}
 
 /* rulesetsにrulesetが含まれているか判定 */
 BOOL lmn_rulesets_contains(Vector *rs_vec, LmnRuleSetRef set1) {
@@ -381,7 +246,7 @@ BOOL lmn_rulesets_contains(Vector *rs_vec, LmnRuleSetRef set1) {
     LmnRuleSetRef set2 = (LmnRuleSetRef)vec_get(rs_vec, i);
 
     /* 同じrulesetが見つかればTRUEを返す */
-    if (rs1_id == lmn_ruleset_get_id(set2) && lmn_ruleset_equals(set1, set2)) {
+    if (rs1_id == lmn_ruleset_get_id(set2) && *set1 == *set2) {
       return TRUE;
     }
   }
@@ -444,7 +309,7 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
             /* 比較打ち切り */
             break; /* INNER LOOP */
           } else if (lmn_ruleset_get_id(rs1) == lmn_ruleset_get_id(rs2) &&
-                     !rs2v_matched[j] && lmn_ruleset_equals(rs1, rs2)) {
+                     !rs2v_matched[j] && *rs1 == *rs2) {
             is_ok = TRUE;
             rs2v_matched[j] = TRUE;
             break; /* INNER LOOP */

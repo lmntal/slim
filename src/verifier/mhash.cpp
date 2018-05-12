@@ -467,7 +467,7 @@ static mhash_t mhash_rulesets(Vector *rulesets) {
     if (lmn_ruleset_has_uniqrule(rs)) {
       /* 履歴テーブルを持つ場合は, 履歴の整数IDも掛け合わせる.
        * この計算方法で十分かどうかはちゃんと考えていない. */
-      for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+      for (j = 0; j < rs->num; j++) {
         st_table_t his_tbl =
             lmn_rule_get_history_tbl(lmn_ruleset_get_rule(rs, j));
         if (!his_tbl || st_num(his_tbl) == 0)

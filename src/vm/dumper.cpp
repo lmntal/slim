@@ -518,7 +518,7 @@ static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
 
   port_put_raw_s(port, "_CHR");
 
-  n = lmn_ruleset_rule_num(rs);
+  n = rs->num;
   for (i = 0; i < n; i++) {
     LmnRuleRef r;
     st_table_t his_tbl;

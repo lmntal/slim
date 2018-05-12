@@ -47,8 +47,8 @@ void cb_react_rule(LmnReactCxtRef rc,
                    LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
                    LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
-  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
-  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(graph_mem_proxy, 0));
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rule_mem_proxy, 0));
+  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)graph_mem_proxy, 0));
   LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(lmn_mem_get_rulesets(rule_mem), 0);
   LmnRuleRef r = lmn_ruleset_get_rule(rs, 0);
   LmnReactCxtRef tmp_rc = react_context_alloc();
@@ -89,7 +89,7 @@ static void apply_rules_in_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
   for (int i = 0; i < vec_num(rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
 
-    for (int j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+    for (int j = 0; j < rs->num; j++) {
       LmnRuleRef r = lmn_ruleset_get_rule(rs, j);
       mc_react_cxt_init(rc);
       RC_SET_GROOT_MEM(rc, src_graph);
@@ -122,12 +122,12 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
                          LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
                          LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
-  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(rule_mem_proxy, 0));
-  LmnAtomRef in_mem = LMN_SATOM_GET_LINK(graph_mem_proxy, 0);
-  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM(in_mem);
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rule_mem_proxy, 0));
+  LmnAtomRef in_mem = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)graph_mem_proxy, 0);
+  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in_mem);
 
-  lmn_mem_delete_atom(graph_mem, LMN_SATOM_GET_LINK(in_mem, 1), LMN_SATOM_GET_ATTR(in_mem, 1));
-  lmn_mem_delete_atom(graph_mem, in_mem, LMN_SATOM_GET_ATTR(LMN_SATOM(graph_mem_proxy), 0));
+  lmn_mem_delete_atom(graph_mem, LMN_SATOM_GET_LINK((LmnSymbolAtomRef)in_mem, 1), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)in_mem, 1));
+  lmn_mem_delete_atom(graph_mem, in_mem, LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)graph_mem_proxy, 0));
 
   LmnReactCxtRef tmp_rc = react_context_alloc();
   mc_react_cxt_init(tmp_rc);
@@ -160,6 +160,8 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr); 
 }
 
+
+extern "C" void init_react_rule(void);
 
 void init_react_rule(void)
 {

@@ -38,6 +38,8 @@
 #ifndef LMN_RULE_HPP
 #define LMN_RULE_HPP
 
+#include "lmntal.h"
+
 struct LmnRule {
   BYTE             *inst_seq;
   int              inst_seq_len;
@@ -65,7 +67,7 @@ struct LmnRule {
 
 /* structure of RuleSet */
 struct LmnRuleSet {
-  LmnRuleRef *rules; /* ルールのリスト */
+  LmnRule* *rules; /* ルールのリスト */
   int num, cap;      /* # of rules, and # of capacity */
   LmnRulesetId id;   /* RuleSet ID */
   AtomicType
@@ -75,13 +77,19 @@ struct LmnRuleSet {
   BOOL is_0step;
   BOOL has_uniqrule;
   LmnRuleSet(LmnRulesetId id,int init_size):
-  	id(id), cap(init_size), rules(LMN_CALLOC(LmnRuleRef, init_size)), num(0), atomic(ATOMIC_NONE), is_atomic_valid(FALSE), is_copy(FALSE), has_uniqrule(FALSE), is_0step(FALSE) {}
+  	id(id), cap(init_size), rules(LMN_CALLOC(LmnRule*, init_size)), num(0), atomic(ATOMIC_NONE), is_atomic_valid(FALSE), is_copy(FALSE), has_uniqrule(FALSE), is_0step(FALSE) {}
+
+  ~LmnRuleSet() {
+      for (int i = 0; i < this->num; i++)
+        delete this->rules[i];
+      LMN_FREE(this->rules);
+  }
 
   /* Adds rule into ruleset */
-  void put(LmnRuleRef rule) {
+  void put(LmnRule* rule) {
    if (this->num == this->cap) {
      this->cap = (this->cap * 2);
-     this->rules = LMN_REALLOC(LmnRuleRef, this->rules, this->cap);
+     this->rules = LMN_REALLOC(LmnRule*, this->rules, this->cap);
    }
    this->rules[this->num++] = rule;
 
@@ -91,12 +99,101 @@ struct LmnRuleSet {
    }
   }
 
+  LmnRuleSet *duplicate_object() {
+    LmnRuleSet *result;
+    unsigned int i, r_n;
+
+    r_n = this->num;
+    result = new LmnRuleSet(lmn_ruleset_get_id(this), r_n);
+    result->is_copy = TRUE;
+    result->atomic = this->atomic;
+    result->is_atomic_valid = this->is_atomic_valid;
+
+    /* ルール単位のオブジェクト複製 */
+    for (i = 0; i < r_n; i++) {
+      LmnRule* r = lmn_ruleset_get_rule(this, i);
+      result->put(lmn_rule_copy(r));
+    }
+    return result;
+  }
+
+  bool ruleset_cp_is_need_object() {
+    return lmn_ruleset_has_uniqrule(this) ||
+           (lmn_ruleset_atomic_type(this) != ATOMIC_NONE);
+  }
+
+  /* ルールセットsrcを複製して返す.
+   * 基本的にはオリジナルのobjectへの参照を返すのみ.
+   * ただし, uniqルールセットである場合(現在はuniq使用時のみ),
+   * ルールセットオブジェクトを独立に扱うため新たにmallocして複製したオブジェクトを返す.
+   * uniqルールの場合, ルール単位でobjectを複製する */
+  LmnRuleSet *duplicate() {
+    if (ruleset_cp_is_need_object()) {
+      return duplicate_object();
+    } else {
+      return this;
+    }
+  }
+
+  /* 2つのrulesetが同じruleを持つか判定する.
+   * (ruleの順序はソースコード依存) */
+  bool operator ==(const LmnRuleSet &set2) {
+    /* rulesetの種類をチェック */
+    if (this->id != set2.id) {
+      return false;
+    } else {
+      BOOL t1, t2;
+      t1 = this->has_uniqrule;
+      t2 = set2.has_uniqrule;
+
+      if (!t1 && !t2) {
+        /* 互いにuniq rulsetでなければruleset idの比較でok */
+        return true;
+      } else if ((!t1 && t2) || (t1 && !t2)) {
+        /* uniq ruleset同士ではなければ当然FALSE */
+        return false;
+      } else {
+        /* uniq ruleset同士の場合:
+         *   ruleの適用ヒストリまで比較 */
+        unsigned int i, n;
+
+        n = this->num;
+        if (n != set2.num) {
+          return false;
+        }
+        for (i = 0; i < n; i++) {
+          LmnRule *rule1;
+          LmnRule *rule2;
+          st_table_t hist1;
+          st_table_t hist2;
+
+          rule1 = this->rules[i];
+          rule2 = set2.rules[i];
+          hist1 = lmn_rule_get_history_tbl(rule1);
+          hist2 = lmn_rule_get_history_tbl(rule2);
+
+          if (!hist1 && !hist2) {
+            continue;
+          } else if ((!hist1 && hist2) || (hist1 && !hist2) ||
+                     !st_equals(hist1, hist2)) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+    }
+  }
+
+  bool operator !=(const LmnRuleSet &set) {
+    return !(*this == set);
+  }
 };
 
 /* table, mapping RuleSet ID to RuleSet */
 struct LmnRuleSetTable {
   unsigned int size;
-  LmnRuleSetRef *entry;
+  LmnRuleSet **entry;
 
   LmnRuleSetTable (unsigned int size):
     size(size) {
@@ -112,6 +209,22 @@ struct LmnRuleSetTable {
     }
     delete(this->entry);
   }
+
+/* Associates id with ruleset */
+void register_ruleset(LmnRuleSet *ruleset, int id) {
+  /* 必要ならば容量を拡張 */
+  while (this->size <= (unsigned int)id) {
+    int old_size = this->size;
+    this->size *= 2;
+    this->entry =
+        LMN_REALLOC(LmnRuleSetRef, this->entry, this->size);
+    /* 安全なメモリ解放の為ゼロクリア */
+    memset(this->entry + old_size, 0,
+           (this->size - old_size) * sizeof(LmnRuleSetRef));
+  }
+
+  this->entry[id] = ruleset;
+}
 };
 
 #endif

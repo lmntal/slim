@@ -111,11 +111,7 @@ typedef enum AtomicType {
 extern struct LmnRuleSetTable *ruleset_table;
 
 int lmn_gen_ruleset_id(void);
-void lmn_set_ruleset(LmnRuleSetRef ruleset, int id);
-long lmn_ruleset_history_num(LmnRuleSetRef ruleset);
 LmnRuleSetRef lmn_ruleset_copy(LmnRuleSetRef ruleset);
-void lmn_ruleset_copied_free(LmnRuleSetRef rs);
-BOOL lmn_ruleset_equals(LmnRuleSetRef set1, LmnRuleSetRef set2);
 BOOL lmn_rulesets_contains(Vector *rulesets, LmnRuleSetRef set1);
 BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
 unsigned long lmn_ruleset_space(LmnRuleSetRef rs);
@@ -125,9 +121,6 @@ void lmn_ruleset_validate_atomic(LmnRuleSetRef rs);
 void lmn_ruleset_invalidate_atomic(LmnRuleSetRef rs);
 
 BOOL lmn_ruleset_is_valid_atomic(LmnRuleSetRef rs);
-
-/* Returns the # of rules in ruleset */
-unsigned int lmn_ruleset_rule_num(LmnRuleSetRef ruleset);
 
 /* Returns the ith rule in ruleset */
 LmnRuleRef lmn_ruleset_get_rule(LmnRuleSetRef ruleset, int i);

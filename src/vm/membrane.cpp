@@ -428,7 +428,7 @@ void lmn_mem_rulesets_destroy(Vector *rulesets) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
 
     if (lmn_ruleset_is_copy(rs)) {
-      lmn_ruleset_copied_free(rs);
+      delete rs;
     }
   }
   vec_destroy(rulesets);
@@ -3708,7 +3708,7 @@ void lmn_mem_clearrules(LmnMembraneRef src) {
   for (i = 0; i < vec_num(&src->rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&src->rulesets, i);
     if (lmn_ruleset_is_copy(rs)) {
-      lmn_ruleset_copied_free(rs);
+      delete rs;
     }
   }
   vec_clear(&src->rulesets);

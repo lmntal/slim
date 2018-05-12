@@ -460,7 +460,7 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
   LmnRulesetId id = lmn_gen_ruleset_id();
   LmnRuleSetRef ruleset = new LmnRuleSet(id, 1);
   ruleset->put(load_rule(ruleAST));
-  lmn_set_ruleset(ruleset, id);
+  ruleset_table->register_ruleset(ruleset, id);
 
   fclose(compiled_rulesets);
 

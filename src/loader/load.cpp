@@ -133,11 +133,11 @@ static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs) {
   for (auto &r : rs->rules)
     runtime_ruleset->put(load_rule(r.get()));
 
-  lmn_set_ruleset(runtime_ruleset, rs->id);
+  ruleset_table->register_ruleset(runtime_ruleset, rs->id);
 
   if (rs->is_system_ruleset) {
     /* 各ルールをシステムルールセットに追加する */
-    for (int i = 0; i < lmn_ruleset_rule_num(runtime_ruleset); i++) {
+    for (int i = 0; i < runtime_ruleset->num; i++) {
       LmnRuleRef rule2 =
           lmn_rule_copy(lmn_ruleset_get_rule(runtime_ruleset, i));
       lmn_add_system_rule(rule2);
@@ -240,7 +240,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
     tr = maindata->ruleset_table[i];
     gid = lmn_gen_ruleset_id();
     rs = new LmnRuleSet(gid, tr.size);
-    lmn_set_ruleset(rs, gid);
+    ruleset_table->register_ruleset(rs, gid);
 
     for (j = 0; j < tr.size; j++) {
       LmnRuleRef r = lmn_rule_make_translated(

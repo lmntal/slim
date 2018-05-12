@@ -339,7 +339,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 }
 
 /* an extenstion rule applier, @see ext/atomic.c */
-extern "C" BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
+BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
                                      LmnRuleSetRef rs);
 
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
@@ -375,7 +375,7 @@ static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
                                        LmnRuleSetRef rs) {
   unsigned int i;
   BOOL ret = FALSE;
-  for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
+  for (i = 0; i < rs->num; i++) {
     LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2) {
@@ -495,7 +495,7 @@ inline static void react_initial_rulesets(LmnReactCxtRef rc,
       reacted = TRUE;
       continue;
     }
-    for (i = 0; i < lmn_ruleset_rule_num(initial_ruleset); i++) {
+    for (i = 0; i < initial_ruleset->num; i++) {
       if (react_rule(rc, mem, lmn_ruleset_get_rule(initial_ruleset, i))) {
         reacted = TRUE;
         break;
