@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_set_update(State *S) { ((S)->flags2 |= STATE_UPDATE_MASK); }
 void s_unset_d(State *S) { ((S)->flags2 &= (~STATE_DELTA_MASK)); }
 void s_unset_reduced(State *S) { ((S)->flags2 &= (~STATE_REDUCED_MASK)); }
 void s_unset_update(State *S) { ((S)->flags2 &= (~STATE_UPDATE_MASK)); }
@@ -1300,7 +1299,7 @@ void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
     state_set_cost(s, cost, pre);
     if (s->is_expanded() && new_ss)
       vec_push(new_ss, (vec_data_t)s);
-    s_set_update(s);
+    s->s_set_update();
   }
   if (env_threads_num() >= 2)
     state_cost_unlock(ewlock, state_hash(s));
