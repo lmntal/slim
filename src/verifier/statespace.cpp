@@ -195,7 +195,7 @@ static void statetable_resize(StateTable *st, unsigned long old_cap) {
            * 展開済み状態へのデータアクセスは発生しないよう設計している) */
           state_free_binstr(ptr);
           if (ptr->s_is_d()) {
-            s_unset_d(ptr);
+            ptr->s_unset_d();
           }
         }
         new_tbl[bucket] = ptr;
@@ -894,7 +894,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           } else if (compress) {
             lmn_binstr_free(compress);
           }
-          s_unset_d(ins);
+          ins->s_unset_d();
           state_calc_mem_encode(ins);
           /*compress = NULL;*/
 
@@ -956,7 +956,7 @@ static State *statetable_insert(StateTable *st, State *ins)
             } else if (compress) {
               lmn_binstr_free(compress);
             }
-            s_unset_d(ins);
+            ins->s_unset_d();
             state_calc_mem_encode(ins);
 
 #ifndef PROFILE

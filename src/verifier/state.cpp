@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-void s_unset_d(State *S) { ((S)->flags2 &= (~STATE_DELTA_MASK)); }
 void s_unset_reduced(State *S) { ((S)->flags2 &= (~STATE_REDUCED_MASK)); }
 void s_unset_update(State *S) { ((S)->flags2 &= (~STATE_UPDATE_MASK)); }
 
@@ -668,7 +667,7 @@ void state_calc_binstr_delta(State *s) {
     state_D_cache(s, org);
     state_set_binstr(s, dif);
   } else {
-    s_unset_d(s);
+    s->s_unset_d();
   }
 }
 
@@ -730,7 +729,7 @@ LmnBinStrRef state_calc_mem_dump(State *s) {
       state_D_cache(s, ret);
       ret = dif;
     } else {
-      s_unset_d(s);
+      s->s_unset_d();
     }
   } else {
     lmn_fatal("unexpected.");
