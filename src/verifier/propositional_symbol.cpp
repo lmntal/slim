@@ -101,7 +101,7 @@ void proposition_free(PropositionRef p) {
   LMN_FREE(p->head);
   LMN_FREE(p->guard);
   LMN_FREE(p->body);
-  lmn_rule_free(p->rule);
+  delete(p->rule);
   LMN_FREE(p);
 }
 

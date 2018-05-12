@@ -71,7 +71,6 @@ LmnRuleRef dummy_rule(void);
 LmnRuleRef lmn_rule_make_translated(LmnTranslated translated,
                                     lmn_interned_str name);
 LmnRuleRef lmn_rule_copy(LmnRuleRef rule);
-void lmn_rule_free(LmnRuleRef rule);
 
 st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule);
 
@@ -109,57 +108,10 @@ typedef enum AtomicType {
   ATOMIC_SYNC_STEP,
 } AtomicType;
 
-/* table, mapping RuleSet ID to RuleSet */
-struct LmnRuleSetTable {
-  unsigned int size;
-  LmnRuleSetRef *entry;
-};
-
 extern struct LmnRuleSetTable *ruleset_table;
 
 int lmn_gen_ruleset_id(void);
-LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size);
-void lmn_ruleset_free(LmnRuleSetRef ruleset);
-void lmn_ruleset_put(LmnRuleSetRef ruleset, LmnRuleRef rule);
-void lmn_set_ruleset(LmnRuleSetRef ruleset, int id);
-long lmn_ruleset_history_num(LmnRuleSetRef ruleset);
-LmnRuleSetRef lmn_ruleset_copy(LmnRuleSetRef ruleset);
-void lmn_ruleset_copied_free(LmnRuleSetRef rs);
-BOOL lmn_ruleset_equals(LmnRuleSetRef set1, LmnRuleSetRef set2);
-BOOL lmn_rulesets_contains(Vector *rulesets, LmnRuleSetRef set1);
 BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
-unsigned long lmn_ruleset_space(LmnRuleSetRef rs);
-
-void lmn_ruleset_validate_atomic(LmnRuleSetRef rs);
-
-void lmn_ruleset_invalidate_atomic(LmnRuleSetRef rs);
-
-BOOL lmn_ruleset_is_valid_atomic(LmnRuleSetRef rs);
-
-/* Returns the # of rules in ruleset */
-unsigned int lmn_ruleset_rule_num(LmnRuleSetRef ruleset);
-
-/* Returns the ith rule in ruleset */
-LmnRuleRef lmn_ruleset_get_rule(LmnRuleSetRef ruleset, int i);
-
-/* Returns id of ruleset */
-int lmn_ruleset_get_id(LmnRuleSetRef ruleset);
-
-AtomicType lmn_ruleset_atomic_type(LmnRuleSetRef ruleset);
-
-void lmn_ruleset_set_atomic(LmnRuleSetRef ruleset, AtomicType t);
-
-/* Returns RuleSet associated with id. If nothing is, returns NULL */
-LmnRuleSetRef lmn_ruleset_from_id(int id);
-
-BOOL lmn_ruleset_is_copy(LmnRuleSetRef ruleset);
-
-BOOL lmn_ruleset_has_uniqrule(LmnRuleSetRef ruleset);
-
-LmnRuleRef *lmn_ruleset_get_rules(LmnRuleSetRef ruleset);
-
-void lmn_ruleset_validate_0step(LmnRuleSetRef ruleset);
-BOOL lmn_ruleset_is_0step(LmnRuleSetRef ruleset);
 
 /*----------------------------------------------------------------------
  * System Rule Set

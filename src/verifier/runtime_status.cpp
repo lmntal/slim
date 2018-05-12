@@ -384,7 +384,7 @@ void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r) {
   if (st_lookup(lmn_prof.prules, (st_data_t)r, &t)) {
     lmn_prof.cur = (RuleProfiler *)t;
   } else {
-    RuleProfiler *p = rule_profiler_make(lmn_ruleset_get_id(src), r);
+    RuleProfiler *p = rule_profiler_make(src->id, r);
     lmn_prof.cur = p;
     st_add_direct(lmn_prof.prules, (st_data_t)r, (st_data_t)p);
   }

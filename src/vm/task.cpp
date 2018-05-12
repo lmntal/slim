@@ -278,7 +278,7 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
     reacted = FALSE;
     for (int i = 0; i < vec_num(rulesets); i++) {
       LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
-      if (!lmn_ruleset_is_0step(rs))
+      if (!rs->is_zerostep())
         continue;
       reacted |= react_ruleset(rc, cur_mem, rs);
     }
@@ -339,7 +339,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 }
 
 /* an extenstion rule applier, @see ext/atomic.c */
-extern "C" BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
+BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
                                      LmnRuleSetRef rs);
 
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
@@ -356,12 +356,12 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     /* atomic_step時: atomic stepが複数ある場合,
      *               atomic適用中のrulesetとそうでないものを区別する必要がある
      */
-    if (lmn_ruleset_is_valid_atomic(rs)) {
+    if (rs->is_atomic()) {
       result = react_ruleset_inner(rc, mem, rs);
     } else {
       result = FALSE;
     }
-  } else if (lmn_ruleset_atomic_type(rs) == ATOMIC_NONE) {
+  } else if (rs->atomic == ATOMIC_NONE) {
     result = react_ruleset_inner(rc, mem, rs);
   } else {
     result = react_ruleset_atomic(rc, mem, rs);
@@ -375,8 +375,8 @@ static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
                                        LmnRuleSetRef rs) {
   unsigned int i;
   BOOL ret = FALSE;
-  for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
-    LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
+  for (i = 0; i < rs->num; i++) {
+    LmnRuleRef r = rs->get_rule(i);
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2) {
       profile_rule_obj_set(rs, r);
@@ -495,8 +495,8 @@ inline static void react_initial_rulesets(LmnReactCxtRef rc,
       reacted = TRUE;
       continue;
     }
-    for (i = 0; i < lmn_ruleset_rule_num(initial_ruleset); i++) {
-      if (react_rule(rc, mem, lmn_ruleset_get_rule(initial_ruleset, i))) {
+    for (i = 0; i < initial_ruleset->num; i++) {
+      if (react_rule(rc, mem, initial_ruleset->get_rule(i))) {
         reacted = TRUE;
         break;
       }
@@ -2325,7 +2325,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnRulesetId, instr, id);
 
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, memi),
-                          lmn_ruleset_from_id(id));
+                          ruleset_table->get(id));
       break;
     }
     case INSTR_LOADMODULE: {
@@ -3774,11 +3774,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));
       for (i = 0; i < v->num; i++) {
-        LmnRuleSetRef cp = lmn_ruleset_copy((LmnRuleSetRef)vec_get(v, i));
+        LmnRuleSetRef cp = ((LmnRuleSetRef)vec_get(v, i))->duplicate();
         lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);
         if (RC_GET_MODE(rc, REACT_ATOMIC)) {
           /* atomic step中にatomic setをコピーした場合のため */
-          lmn_ruleset_invalidate_atomic(cp);
+          cp->invalidate_atomic();
         }
       }
       break;
@@ -4657,7 +4657,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnRulesetId, instr, id);
 
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, memi),
-                          lmn_ruleset_from_id(id));
+                          ruleset_table->get(id));
       break;
     }
     case INSTR_LOADMODULE: {

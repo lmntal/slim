@@ -37,12 +37,14 @@
  * $Id$
  */
 
+extern "C" {
 #include "../lmntal.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 #ifdef PROFILE
 # include "verifier/runtime_status.h"
 #endif
+}
 
 void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                     LmnAtomRef a0, LmnLinkAttr t0)
@@ -51,7 +53,7 @@ void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     int i, n = lmn_mem_ruleset_num(mem);
     AtomicType atomic_type;
 
-    switch ((int)a0) {
+    switch ((LmnWord)a0) {
     case  1:
       atomic_type = ATOMIC_ALL_EXHAUSTIVE;
       break;
@@ -67,9 +69,9 @@ void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     }
 
     for (i = 0; i < n; i++) {
-      lmn_ruleset_set_atomic(lmn_mem_get_ruleset(mem, i), atomic_type);
+      lmn_mem_get_ruleset(mem, i)->atomic = atomic_type;
       lmn_mem_add_ruleset(lmn_mem_parent(mem),
-                          lmn_ruleset_copy(lmn_mem_get_ruleset(mem, i)));
+                          lmn_mem_get_ruleset(mem, i)->duplicate());
     }
     lmn_mem_delete_atom(mem, a0, t0);
   }
@@ -80,6 +82,7 @@ void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   lmn_mem_delete_mem(lmn_mem_parent(mem), mem);
 }
 
+extern "C" void init_atomic(void);
 
 void init_atomic(void)
 {
@@ -95,8 +98,8 @@ static inline BOOL react_ruleset_AMAP(LmnReactCxtRef rc,
 {
   unsigned int i;
   BOOL ret = FALSE;
-  for (i = 0; i < lmn_ruleset_rule_num(rs); i++) {
-    LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
+  for (i = 0; i < rs->num; i++) {
+    LmnRuleRef r = rs->get_rule(i);
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2) {
       profile_rule_obj_set(rs, r);
@@ -144,18 +147,18 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
                                      LmnRuleSetRef  at_set)
 {
   unsigned int i, n, succ_i_from;
-  lmn_ruleset_validate_atomic(at_set);
+  at_set->validate_atomic();
 
   succ_i_from  = mc_react_cxt_expanded_num(rc);
-  for (i = 0; i < lmn_ruleset_rule_num(at_set); i++) {
-    react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i));
+  for (i = 0; i < at_set->num; i++) {
+    react_rule(rc, mem, at_set->get_rule(i));
   }
 
   n = mc_react_cxt_expanded_num(rc) - succ_i_from;
   if (n > 0) {
     const Vector *ends;
     LmnWorker *w = build_atomic_worker();
-    RC_START_ATOMIC_STEP(worker_rc(w), lmn_ruleset_get_id(at_set));
+    RC_START_ATOMIC_STEP(worker_rc(w), at_set->id);
     for (i = 0; i < n; i++) {
       State *sub_s = state_make((LmnMembraneRef)mc_react_cxt_expanded_pop(rc),
                                 DEFAULT_STATE_ID,
@@ -178,7 +181,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
     abort_atomic_worker(w);
   }
 
-  lmn_ruleset_invalidate_atomic(at_set);
+  at_set->invalidate_atomic();
   return succ_i_from != mc_react_cxt_expanded_num(rc);
 }
 
@@ -205,8 +208,8 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
   if (!RC_GET_MODE(rc, REACT_ND)) {
     unsigned int i;
     ret = FALSE;
-    for (i = 0; i < lmn_ruleset_rule_num(at_set); i++) {
-      if (react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i))) {
+    for (i = 0; i < at_set->num; i++) {
+      if (react_rule(rc, mem, at_set->get_rule(i))) {
         ret = TRUE;
       }
     }
@@ -216,12 +219,11 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
     BYTE mode_org;
     LmnMembraneRef groot_m;
 
-    //    lmn_ruleset_validate_atomic(at_set);
     succ_i_from = mc_react_cxt_expanded_num(rc);
 
     /* 1step目: generate successor membrane */
-    for (r_i = 0; r_i < lmn_ruleset_rule_num(at_set); r_i++) {
-      react_rule(rc, mem, lmn_ruleset_get_rule(at_set, r_i));
+    for (r_i = 0; r_i < at_set->num; r_i++) {
+      react_rule(rc, mem, at_set->get_rule(r_i));
       if (mc_react_cxt_expanded_num(rc) > succ_i_from) {
         r_i++;
         break;
@@ -231,8 +233,8 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
     /* ND モードでの Process ID のリセットをオーバーライド */
     env_set_next_id(RC_PROC_NEXT_ID(rc));
 
-    if (r_i < lmn_ruleset_rule_num(at_set)) {
-      lmn_ruleset_validate_atomic(at_set);
+    if (r_i < at_set->num) {
+      at_set->validate_atomic();
       mode_org = RC_MODE(rc);
       groot_m = RC_GROOT_MEM(rc);
       RC_SET_MODE(rc, REACT_STAND_ALONE);
@@ -259,8 +261,8 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
 
         RC_SET_GROOT_MEM(rc, succ_m);
         react_ruleset_AMAP(rc, cur_mem, system_ruleset);
-        for (j = r_i; j < lmn_ruleset_rule_num(at_set); j++) {
-          if (react_rule(rc, cur_mem, lmn_ruleset_get_rule(at_set, j))) {
+        for (j = r_i; j < at_set->num; j++) {
+          if (react_rule(rc, cur_mem, at_set->get_rule(j))) {
             react_ruleset_AMAP(rc, cur_mem, system_ruleset);
           }
         }
@@ -268,7 +270,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
 
       RC_SET_GROOT_MEM(rc, groot_m);
       RC_SET_MODE(rc, mode_org);
-      lmn_ruleset_invalidate_atomic(at_set);
+      at_set->invalidate_atomic();
     }
 
     env_set_next_id(RC_PROC_ORG_ID(rc));
@@ -303,8 +305,8 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
 
     succ_i_from = mc_react_cxt_expanded_num(rc);
     /* 1step目: generate successor membrane */
-    for (i = 0; i < lmn_ruleset_rule_num(at_set); i++) {
-      react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i));
+    for (i = 0; i < at_set->num; i++) {
+      react_rule(rc, mem, at_set->get_rule(i));
       if (mc_react_cxt_expanded_num(rc) > succ_i_from) {
         break;
       }
@@ -313,8 +315,8 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
     /* ND モードでの Process ID のリセットをオーバーライド */
     env_set_next_id(RC_PROC_NEXT_ID(rc));
 
-    if (i < lmn_ruleset_rule_num(at_set)) {
-      lmn_ruleset_validate_atomic(at_set);
+    if (i < at_set->num) {
+      at_set->validate_atomic();
       mode_org = RC_MODE(rc);
       groot_m = RC_GROOT_MEM(rc);
       RC_SET_MODE(rc, REACT_STAND_ALONE);
@@ -345,9 +347,9 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
         reacted = TRUE;
         while (reacted) {
           reacted = FALSE;
-          for (j = 0; j < lmn_ruleset_rule_num(at_set); j++) {
+          for (j = 0; j < at_set->num; j++) {
             reacted = reacted ||
-                      react_rule(rc, cur_mem, lmn_ruleset_get_rule(at_set, j));
+                      react_rule(rc, cur_mem, at_set->get_rule(j));
           }
           if (reacted) {
             react_ruleset_AMAP(rc, cur_mem, system_ruleset);
@@ -356,7 +358,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
         //    }
       RC_SET_GROOT_MEM(rc, groot_m);
       RC_SET_MODE(rc, mode_org);
-      lmn_ruleset_invalidate_atomic(at_set);
+      at_set->invalidate_atomic();
     }
 
     env_set_next_id(RC_PROC_ORG_ID(rc));
@@ -377,8 +379,8 @@ BOOL react_ruleset_atomic(LmnReactCxtRef rc,
     lmn_fatal("unsupported delta-membrane, atomic step");
   }
 
-  RC_START_ATOMIC_STEP(rc, lmn_ruleset_get_id(rs));
-  switch (lmn_ruleset_atomic_type(rs)) {
+  RC_START_ATOMIC_STEP(rc, rs->id);
+  switch (rs->atomic) {
   case ATOMIC_SYNC_STEP:
     result = react_ruleset_atomic_sync(rc, mem, rs);
     break;

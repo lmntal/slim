@@ -713,12 +713,12 @@ static void binstr_dump(BYTE *bs, int len) {
 
         /* dump applied histories of uniq constraint rules */
 
-        rs = lmn_ruleset_from_id(rs_id);
-        rule_num = lmn_ruleset_rule_num(rs);
+        rs = ruleset_table->get(rs_id);
+        rule_num = rs->num;
 
         for (k = 0; k < rule_num; k++) {
           printf("[%s", lmn_id_to_name(
-                            lmn_rule_get_name(lmn_ruleset_get_rule(rs, k))));
+                            lmn_rule_get_name(rs->get_rule(k))));
 
           his_num = binstr_get_history_num(bs, pos);
           pos += BS_HISTORY_NUM_SIZE;
@@ -988,7 +988,7 @@ static inline int bsptr_push_start_rulesets(BinStrPtrRef p, int n) {
 static inline int bsptr_push_ruleset(BinStrPtrRef p, LmnRuleSetRef rs) {
   int id;
 
-  id = lmn_ruleset_get_id(rs);
+  id = rs->id;
   return bsptr_push(p, (BYTE *)&id, BS_RULESET_SIZE);
 }
 
@@ -1031,8 +1031,8 @@ static inline void bsptr_push_ruleset_uniq(BinStrPtrRef bsp, LmnMembraneRef mem,
     LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
     bsptr_push_ruleset(bsp, rs); /* write ruleset id */
 
-    for (j = 0; j < lmn_ruleset_rule_num(rs); j++) { /* foreach rule history */
-      bsptr_push_rule_histories(bsp, lmn_ruleset_get_rule(rs, j));
+    for (j = 0; j < rs->num; j++) { /* foreach rule history */
+      bsptr_push_rule_histories(bsp, rs->get_rule(j));
     }
   }
 }
@@ -1423,7 +1423,7 @@ static void write_rulesets(LmnMembraneRef mem, BinStrPtrRef bsp) {
      *       O(ルールセット数)かかってしまうため.
      *       ルールの移動や複製を行うプログラムで非効率 */
     for (i = 0; i < n; i++) {
-      if (lmn_ruleset_has_uniqrule(lmn_mem_get_ruleset(mem, i))) {
+      if (lmn_mem_get_ruleset(mem, i)->has_unique()) {
         has_uniq = TRUE;
         break;
       }
@@ -1575,7 +1575,7 @@ static int binstr_decode_cell(LmnBinStrRef bs, int pos, BsDecodeLog *log,
       pos++;
       rs_id = binstr_get_ruleset(bs->v, pos);
       pos += BS_RULESET_SIZE;
-      lmn_mem_add_ruleset(mem, lmn_ruleset_from_id(rs_id));
+      lmn_mem_add_ruleset(mem, ruleset_table->get(rs_id));
     } else if (tag == TAG_RULESET) {
       /* 複数のルールセット */
       int j, n, rs_id;
@@ -1585,7 +1585,7 @@ static int binstr_decode_cell(LmnBinStrRef bs, int pos, BsDecodeLog *log,
       for (j = 0; j < n; j++) {
         rs_id = binstr_get_ruleset(bs->v, pos);
         pos += BS_RULESET_SIZE;
-        lmn_mem_add_ruleset(mem, lmn_ruleset_from_id(rs_id));
+        lmn_mem_add_ruleset(mem, ruleset_table->get(rs_id));
       }
     } else if (tag == TAG_RULESET_UNIQ) {
       int rs_num;
@@ -1616,10 +1616,10 @@ static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
     lmn_interned_str id;
 
     rs =
-        lmn_ruleset_copy(lmn_ruleset_from_id(binstr_get_ruleset(bs->v, *i_bs)));
+        ruleset_table->get(binstr_get_ruleset(bs->v, *i_bs))->duplicate();
     (*i_bs) += BS_RULESET_SIZE;
 
-    for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+    for (j = 0; j < rs->num; j++) {
       LmnRuleRef r;
       int his_num;
 
@@ -1630,7 +1630,7 @@ static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
        * コピー元となるルールセットオブジェクトに直接履歴を持たせていないため,
        *       上記コメントは考慮しなくてよい. */
 
-      r = lmn_ruleset_get_rule(rs, j);
+      r = rs->get_rule(j);
       his_num = binstr_get_history_num(bs->v, *i_bs);
       (*i_bs) += BS_HISTORY_NUM_SIZE;
 
@@ -2619,7 +2619,7 @@ static inline BOOL mem_eq_enc_ruleset(LmnBinStrRef bs, int *i_bs,
   long id;
 
   id = binstr_get_ruleset(bs->v, *i_bs);
-  if (id != lmn_ruleset_get_id(rs)) {
+  if (id != rs->id) {
     return FALSE;
   }
   (*i_bs) += BS_RULESET_SIZE;

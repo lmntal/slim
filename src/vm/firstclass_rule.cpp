@@ -400,7 +400,7 @@ void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
 
   for (int i = 0; i < vec_num(mem_rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem_rulesets, i);
-    if (lmn_ruleset_get_id(rs) != del_id)
+    if (rs->id != del_id)
       continue;
 
     /* move successors forward */
@@ -458,9 +458,9 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
   RuleRef ruleAST;
   il_parse_rule(compiled_rulesets, &ruleAST);
   LmnRulesetId id = lmn_gen_ruleset_id();
-  LmnRuleSetRef ruleset = lmn_ruleset_make(id, 1);
-  lmn_ruleset_put(ruleset, load_rule(ruleAST));
-  lmn_set_ruleset(ruleset, id);
+  LmnRuleSetRef ruleset = new LmnRuleSet(id, 1);
+  ruleset->put(load_rule(ruleAST));
+  ruleset_table->register_ruleset(ruleset, id);
 
   fclose(compiled_rulesets);
 
@@ -478,5 +478,5 @@ void firstclass_ruleset_release(LmnSymbolAtomRef imply) {
 
 LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply) {
   LmnRulesetId id = imply_to_rulesetid(imply);
-  return (id > 0) ? lmn_ruleset_from_id(id) : NULL;
+  return (id > 0) ? ruleset_table->get(id) : NULL;
 }

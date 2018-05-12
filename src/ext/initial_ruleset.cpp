@@ -37,11 +37,13 @@
  * $Id$
  */
 
+extern "C" {
 #include <stdio.h>
 #include "vm/vm.h"
 #include "element/element.h"
+}
 
-void init_initial_ruleset(void);
+extern "C" void init_initial_ruleset(void);
 
 #define INITIAL_RULESET_MEM_NAME "initial_ruleset"
 #define INITIAL_SYSTEM_RULESET_MEM_NAME "initial_system_ruleset"
@@ -65,11 +67,11 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef
       for (i = 0; i < lmn_mem_ruleset_num(m); i++) {
         LmnRuleSetRef rs = lmn_mem_get_ruleset(m, i);
 
-        for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
+        for (j = 0; j < rs->num; j++) {
           if (LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_RULESET_MEM_NAME)) {
-            lmn_add_initial_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
+            lmn_add_initial_rule(lmn_rule_copy(rs->get_rule(j)));
           } else if (LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) {
-            lmn_add_initial_system_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
+            lmn_add_initial_system_rule(lmn_rule_copy(rs->get_rule(j)));
           }
         }
       }
@@ -97,8 +99,8 @@ BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef r
   for (i = 0; i < ARY_SIZEOF(initial_modules); i++) {
     LmnRuleSetRef rs = lmn_get_module_ruleset(lmn_intern(initial_modules[i]));
     if (rs) {
-      for (j = 0; j < lmn_ruleset_rule_num(rs); j++) {
-        lmn_add_initial_system_rule(lmn_rule_copy(lmn_ruleset_get_rule(rs, j)));
+      for (j = 0; j < rs->num; j++) {
+        lmn_add_initial_system_rule(lmn_rule_copy(rs->get_rule(j)));
       }
     }
   }
