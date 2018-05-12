@@ -219,7 +219,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
           return FALSE;
         } else if (!succ->is_expanded()) {
           continue;
-        } else if (succ == seed /* || is_on_stack(succ) */) {
+        } else if (succ == seed /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
         } else {
@@ -1139,7 +1139,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
           return FALSE;
         } else if (!succ->is_expanded()) {
           continue;
-        } else if (succ == seed /* || is_on_stack(succ) */) {
+        } else if (succ == seed /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
         } else {
@@ -1334,7 +1334,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
           return FALSE;
         } else if (!succ->is_expanded()) {
           continue;
-        } else if (s_is_cyan(s, worker_id(w))/*succ == seed*/ /* || is_on_stack(succ) */) {
+        } else if (s_is_cyan(s, worker_id(w))/*succ == seed*/ /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る */
         } else {
           vec_push(search, (vec_data_t)succ);

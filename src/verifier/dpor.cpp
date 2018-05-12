@@ -735,7 +735,7 @@ static BOOL dpor_check_cycle_proviso(StateSpaceRef ss, State *src,
   } else if (ins_succ == src) {
     /* self-loop detection */
     return FALSE;
-  } else if (is_on_stack(ins_succ)) {
+  } else if (ins_succ->is_on_stack()) {
     /* Stack Proviso:
      *  Stack上の状態に戻るということは閉路であるということ
      *  DFS Stackによる空間構築(逐次)が前提 */

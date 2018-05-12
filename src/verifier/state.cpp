@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL is_on_stack(State *S) { return ((S)->flags & ON_STACK_MASK); }
 BOOL is_snd(State *S) { return ((S)->flags & FOR_MC_MASK); }
 
 void set_binstr_user(State *S) { ((S)->flags |= MEM_DIRECT_MASK); }

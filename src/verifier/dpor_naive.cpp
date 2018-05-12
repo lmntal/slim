@@ -795,7 +795,7 @@ static inline BOOL C3_cycle_proviso_satisfied(State *succ, State *t) {
   } else if (t == mc_por.root) {
     /* self-loop detection */
     return FALSE;
-  } else if (is_on_stack(t)) {
+  } else if (t->is_on_stack()) {
     /* Stack Proviso:
      *  Stack上の状態に戻るということは閉路であるということ
      *  DFS Stackによる空間構築(逐次)が前提 */
