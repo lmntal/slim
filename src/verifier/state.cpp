@@ -55,9 +55,6 @@ extern "C" {
 
 #ifndef MINIMAL_STATE
 
-void state_expand_lock_destroy(State *s) {
-  lmn_mutex_destroy(&(s->expand_lock));
-}
 void state_expand_lock(State *s) { lmn_mutex_lock(&(s->expand_lock)); }
 void state_expand_unlock(State *s) { lmn_mutex_unlock(&(s->expand_lock)); }
 
@@ -359,7 +356,7 @@ void state_free(State *s) {
   }
 #endif
 
-  state_expand_lock_destroy(s);
+  s->state_expand_lock_destroy();
 
   state_free_mem(s);
   state_free_binstr(s);
