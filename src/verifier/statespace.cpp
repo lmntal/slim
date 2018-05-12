@@ -194,7 +194,7 @@ static void statetable_resize(StateTable *st, unsigned long old_cap) {
            * (resize中に,
            * 展開済み状態へのデータアクセスは発生しないよう設計している) */
           state_free_binstr(ptr);
-          if (s_is_d(ptr)) {
+          if (ptr->s_is_d()) {
             s_unset_d(ptr);
           }
         }
@@ -589,7 +589,7 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
 
   /* 既にバイナリストリング計算済みとなるcanonical membrane使用時は,
    * この時点でdelta-stringを計算する */
-  if (s->is_encoded() && s_is_d(s)) {
+  if (s->is_encoded() && s->s_is_d()) {
     state_calc_binstr_delta(s);
   }
 

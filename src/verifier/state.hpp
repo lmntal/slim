@@ -125,6 +125,7 @@ struct State {                /* Total:72(36)byte */
   void unset_binstr_user() { flags &= (~MEM_DIRECT_MASK); }
   void unset_on_stack() { flags &= (~ON_STACK_MASK); }
   void unset_trans_obj() { flags &= (~TRANS_OBJ_MASK); }
+  BOOL s_is_d() { return flags2 & STATE_DELTA_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif

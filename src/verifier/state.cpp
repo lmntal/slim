@@ -53,7 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-BOOL s_is_d(State *S) { return ((S)->flags2 & STATE_DELTA_MASK); }
 BOOL s_is_reduced(State *S) { return ((S)->flags2 & STATE_REDUCED_MASK); }
 BOOL s_is_update(State *S) { return ((S)->flags2 & STATE_UPDATE_MASK); }
 void s_set_d(State *S) { ((S)->flags2 |= STATE_DELTA_MASK); }
@@ -413,14 +412,14 @@ LmnMembraneRef state_mem_copy(State *s) {
 /* 状態sに対応するバイナリストリングを, sがrefする状態を基に再構築して返す. */
 LmnBinStrRef state_binstr_reconstructor(State *s) {
   LmnBinStrRef ret;
-  if (!s_is_d(s)) {
+  if (!s->s_is_d()) {
     ret = state_binstr(s);
   } else {
     LmnBinStrRef ref;
     LMN_ASSERT(state_D_ref(s));
     ref = state_binstr_reconstructor(state_D_ref(s));
     ret = lmn_bscomp_d_decode(ref, state_binstr(s));
-    if (s_is_d(state_D_ref(s))) {
+    if (state_D_ref(s)->s_is_d()) {
       lmn_binstr_free(ref);
     }
   }
@@ -448,13 +447,13 @@ static int state_equals_with_compress(State *check, State *stored) {
   }
 #endif
 
-  if (s_is_d(check)) {
+  if (check->s_is_d()) {
     bs1 = state_D_fetch(check);
   } else {
     bs1 = state_binstr(check);
   }
 
-  if (s_is_d(stored)) {
+  if (stored->s_is_d()) {
     bs2 = state_binstr_reconstructor(stored);
   } else {
     bs2 = state_binstr(stored);
@@ -478,7 +477,7 @@ static int state_equals_with_compress(State *check, State *stored) {
     lmn_fatal("implementation error");
   }
 
-  if (s_is_d(stored)) {
+  if (stored->s_is_d()) {
     lmn_binstr_free(bs2);
   }
 
@@ -690,7 +689,7 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
   } else {
     ref = state_binstr_reconstructor(ref_s);
     dif = lmn_bscomp_d_encode(org, ref);
-    if (s_is_d(ref_s)) {
+    if (ref_s->s_is_d()) {
       lmn_binstr_free(ref);
     }
   }
@@ -729,7 +728,7 @@ LmnBinStrRef state_calc_mem_dump(State *s) {
     ret = state_binstr(s);
   } else if (state_mem(s)) {
     ret = lmn_mem_to_binstr(state_mem(s));
-    if (s_is_d(s) && state_D_ref(s)) {
+    if (s->s_is_d() && state_D_ref(s)) {
       LmnBinStrRef dif;
       dif = state_binstr_D_compress(ret, state_D_ref(s));
       /* 元のバイト列は直ちに破棄せず, 一時的にキャッシュしておく. */
@@ -1061,7 +1060,7 @@ LmnMembraneRef state_restore_mem(State *s) {
 LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag) {
   if (state_mem(s)) {
     return state_mem(s);
-  } else if (s_is_d(s)) {
+  } else if (s->s_is_d()) {
     LmnBinStrRef b;
     if (flag) {
       b = state_D_fetch(s);
@@ -1262,7 +1261,7 @@ void state_D_cache(State *s, LmnBinStrRef d) {
 /* キャッシングしておいた状態sに対応する非圧縮バイナリストリングに対する参照を返す.
  */
 LmnBinStrRef state_D_fetch(State *s) {
-  if (s_is_d(s)) {
+  if (s->s_is_d()) {
     return (LmnBinStrRef)s->successors;
   } else {
     return NULL;

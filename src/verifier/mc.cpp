@@ -320,7 +320,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       succ = statespace_insert_delta(ss, src_succ, d);
       src_succ_m = NULL;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
-      if (s_is_d(src_succ))
+      if (src_succ->s_is_d())
         state_calc_binstr_delta(src_succ);
       succ = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
