@@ -68,7 +68,6 @@ struct State;
 
 #ifndef MINIMAL_STATE
 
-unsigned long state_expander_id(State *s);
 void state_expand_lock_init(State *s);
 void state_expand_lock_destroy(State *s);
 void state_expand_lock(State *s);
@@ -76,7 +75,6 @@ void state_expand_unlock(State *s);
 
 #else
 
-#define state_expander_id(S) (0)
 #define state_expand_lock_init(S) (NULL)
 #define state_expand_lock_destroy(S) (NULL)
 #define state_expand_lock(S) (NULL)

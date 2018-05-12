@@ -56,7 +56,6 @@ extern "C" {
 #ifndef MINIMAL_STATE
 
 
-unsigned long state_expander_id(State *s) { return s->expander_id; }
 void state_expand_lock_init(State *s) { lmn_mutex_init(&(s->expand_lock)); }
 void state_expand_lock_destroy(State *s) {
   lmn_mutex_destroy(&(s->expand_lock));

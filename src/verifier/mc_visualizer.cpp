@@ -69,10 +69,10 @@ void dump_dot_state_edges(State *s) {
 }
 
 void dump_dot_state_attr(State *s, AutomataRef *a, int *colors) {
-  int color = is_expanded(s) ? colors[state_expander_id(s)] : 0x999999;
+  int color = is_expanded(s) ? colors[s->state_expander_id()] : 0x999999;
   printf("  %lu [label=\"", state_hash(s));
   if (is_expanded(s))
-    printf("%lu", state_expander_id(s));
+    printf("%lu", s->state_expander_id());
   printf("\", ");
   if (state_is_accept(*a, s))
     printf("peripheries = 2, ");

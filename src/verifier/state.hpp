@@ -70,9 +70,10 @@ struct State {                /* Total:72(36)byte */
   pthread_mutex_t expand_lock;
   unsigned long expander_id;
   void state_set_expander_id(unsigned long id) { expander_id = id; }
+  unsigned long state_expander_id() { return expander_id; }
 #else
-  void state_set_expander_id(unsigned long id) { }
-
+  void state_set_expander_id(unsigned long id) {}
+  unsigned long state_expander_id() { return 0; }
 #endif
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
