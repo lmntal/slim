@@ -143,29 +143,7 @@ LmnRuleRef dummy_rule(void) {
 /*----------------------------------------------------------------------
  * Rule Set
  */
-/* structure of RuleSet */
-struct LmnRuleSet {
-  LmnRuleRef *rules; /* ルールのリスト */
-  int num, cap;      /* # of rules, and # of capacity */
-  LmnRulesetId id;   /* RuleSet ID */
-  AtomicType
-      atomic; /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
-  BOOL is_atomic_valid; /* atomic step中であることを主張するフラグ */
-  BOOL is_copy;
-  BOOL is_0step;
-  BOOL has_uniqrule;
-  LmnRuleSet(LmnRulesetId id,int init_size){
-  	this->id = id,
-  	this->rules =LMN_CALLOC(LmnRuleRef, init_size);
-  	this->num =0;
-  	this->cap =init_size;
-  	this->atomic = ATOMIC_NONE;
-  	this->is_atomic_valid=FALSE;
-  	this->is_copy=FALSE;
-  	this->has_uniqrule=FALSE;
-  	this->is_0step=FALSE;
-  }
-};
+
 struct LmnRuleSetTable *ruleset_table;
 
 /* Generates and returns new RuleSet id */
@@ -175,8 +153,6 @@ int lmn_gen_ruleset_id() {
   return ruleset_next_id++;
 }
 
-/* Generates a new RuleSet */
-LmnRuleSetRef lmn_ruleset_make(LmnRulesetId id, int init_size) {  return new LmnRuleSet(id,init_size); }
 
 /* Frees RuleSet and its elements */
 void lmn_ruleset_free(LmnRuleSetRef ruleset) {
@@ -265,7 +241,7 @@ static inline LmnRuleSetRef lmn_ruleset_copy_object(LmnRuleSetRef src) {
   unsigned int i, r_n;
 
   r_n = lmn_ruleset_rule_num(src);
-  result = lmn_ruleset_make(lmn_ruleset_get_id(src), r_n);
+  result = new LmnRuleSet(lmn_ruleset_get_id(src), r_n);
   result->is_copy = TRUE;
   result->atomic = src->atomic;
   result->is_atomic_valid = src->is_atomic_valid;
@@ -516,7 +492,7 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
 LmnRuleSetRef system_ruleset;
 
 static void init_system_rulset() {
-  system_ruleset = lmn_ruleset_make(lmn_gen_ruleset_id(), 10);
+  system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
 }
 
 static void destroy_system_ruleset() { lmn_ruleset_free(system_ruleset); }
@@ -535,8 +511,8 @@ LmnRuleSetRef initial_ruleset;
 LmnRuleSetRef initial_system_ruleset;
 
 static void init_initial_rulset() {
-  initial_ruleset = lmn_ruleset_make(lmn_gen_ruleset_id(), 10);
-  initial_system_ruleset = lmn_ruleset_make(lmn_gen_ruleset_id(), 10);
+  initial_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
+  initial_system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
 }
 
 static void destroy_initial_ruleset() {

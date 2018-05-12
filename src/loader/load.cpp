@@ -53,7 +53,6 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
 /* prototypes */
 
 void build_cmd(char *buf, char *file_name);
@@ -129,7 +128,7 @@ LmnRuleRef load_rule(Rule *rule) {
 }
 
 static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs) {
-  auto runtime_ruleset = lmn_ruleset_make(rs->id, 10);
+  auto runtime_ruleset = new LmnRuleSet(rs->id, 10);
 
   for (auto &r : rs->rules)
     lmn_ruleset_put(runtime_ruleset, load_rule(r.get()));
@@ -240,7 +239,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
 
     tr = maindata->ruleset_table[i];
     gid = lmn_gen_ruleset_id();
-    rs = lmn_ruleset_make(gid, tr.size);
+    rs = new LmnRuleSet(gid, tr.size);
     lmn_set_ruleset(rs, gid);
 
     for (j = 0; j < tr.size; j++) {

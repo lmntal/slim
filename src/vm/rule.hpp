@@ -63,6 +63,21 @@ struct LmnRule {
   }
 };
 
+/* structure of RuleSet */
+struct LmnRuleSet {
+  LmnRuleRef *rules; /* ルールのリスト */
+  int num, cap;      /* # of rules, and # of capacity */
+  LmnRulesetId id;   /* RuleSet ID */
+  AtomicType
+      atomic; /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
+  BOOL is_atomic_valid; /* atomic step中であることを主張するフラグ */
+  BOOL is_copy;
+  BOOL is_0step;
+  BOOL has_uniqrule;
+  LmnRuleSet(LmnRulesetId id,int init_size):
+  	id(id), cap(init_size), rules(LMN_CALLOC(LmnRuleRef, init_size)), num(0), atomic(ATOMIC_NONE), is_atomic_valid(FALSE), is_copy(FALSE), has_uniqrule(FALSE), is_0step(FALSE) {}
+};
+
 /* table, mapping RuleSet ID to RuleSet */
 struct LmnRuleSetTable {
   unsigned int size;
