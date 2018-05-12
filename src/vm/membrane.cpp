@@ -561,7 +561,7 @@ unsigned long lmn_mem_space(LmnMembraneRef mem) {
   for (i = 0; i < vec_num(&mem->rulesets); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(&mem->rulesets, i);
     if (lmn_ruleset_is_copy(rs)) {
-      ret += lmn_ruleset_space(rs);
+      ret += rs->space();
     }
   }
 

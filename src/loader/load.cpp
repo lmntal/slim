@@ -139,7 +139,7 @@ static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs) {
     /* 各ルールをシステムルールセットに追加する */
     for (int i = 0; i < runtime_ruleset->num; i++) {
       LmnRuleRef rule2 =
-          lmn_rule_copy(lmn_ruleset_get_rule(runtime_ruleset, i));
+          lmn_rule_copy(runtime_ruleset->get_rule(i));
       lmn_add_system_rule(rule2);
     }
   }

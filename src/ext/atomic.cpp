@@ -99,7 +99,7 @@ static inline BOOL react_ruleset_AMAP(LmnReactCxtRef rc,
   unsigned int i;
   BOOL ret = FALSE;
   for (i = 0; i < rs->num; i++) {
-    LmnRuleRef r = lmn_ruleset_get_rule(rs, i);
+    LmnRuleRef r = rs->get_rule(i);
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2) {
       profile_rule_obj_set(rs, r);
@@ -147,11 +147,11 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
                                      LmnRuleSetRef  at_set)
 {
   unsigned int i, n, succ_i_from;
-  lmn_ruleset_validate_atomic(at_set);
+  at_set->validate_atomic();
 
   succ_i_from  = mc_react_cxt_expanded_num(rc);
   for (i = 0; i < at_set->num; i++) {
-    react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i));
+    react_rule(rc, mem, at_set->get_rule(i));
   }
 
   n = mc_react_cxt_expanded_num(rc) - succ_i_from;
@@ -181,7 +181,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
     abort_atomic_worker(w);
   }
 
-  lmn_ruleset_invalidate_atomic(at_set);
+  at_set->invalidate_atomic();
   return succ_i_from != mc_react_cxt_expanded_num(rc);
 }
 
@@ -209,7 +209,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
     unsigned int i;
     ret = FALSE;
     for (i = 0; i < at_set->num; i++) {
-      if (react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i))) {
+      if (react_rule(rc, mem, at_set->get_rule(i))) {
         ret = TRUE;
       }
     }
@@ -219,12 +219,11 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
     BYTE mode_org;
     LmnMembraneRef groot_m;
 
-    //    lmn_ruleset_validate_atomic(at_set);
     succ_i_from = mc_react_cxt_expanded_num(rc);
 
     /* 1step目: generate successor membrane */
     for (r_i = 0; r_i < at_set->num; r_i++) {
-      react_rule(rc, mem, lmn_ruleset_get_rule(at_set, r_i));
+      react_rule(rc, mem, at_set->get_rule(r_i));
       if (mc_react_cxt_expanded_num(rc) > succ_i_from) {
         r_i++;
         break;
@@ -235,7 +234,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
     env_set_next_id(RC_PROC_NEXT_ID(rc));
 
     if (r_i < at_set->num) {
-      lmn_ruleset_validate_atomic(at_set);
+      at_set->validate_atomic();
       mode_org = RC_MODE(rc);
       groot_m = RC_GROOT_MEM(rc);
       RC_SET_MODE(rc, REACT_STAND_ALONE);
@@ -263,7 +262,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
         RC_SET_GROOT_MEM(rc, succ_m);
         react_ruleset_AMAP(rc, cur_mem, system_ruleset);
         for (j = r_i; j < at_set->num; j++) {
-          if (react_rule(rc, cur_mem, lmn_ruleset_get_rule(at_set, j))) {
+          if (react_rule(rc, cur_mem, at_set->get_rule(j))) {
             react_ruleset_AMAP(rc, cur_mem, system_ruleset);
           }
         }
@@ -271,7 +270,7 @@ static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc,
 
       RC_SET_GROOT_MEM(rc, groot_m);
       RC_SET_MODE(rc, mode_org);
-      lmn_ruleset_invalidate_atomic(at_set);
+      at_set->invalidate_atomic();
     }
 
     env_set_next_id(RC_PROC_ORG_ID(rc));
@@ -307,7 +306,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
     succ_i_from = mc_react_cxt_expanded_num(rc);
     /* 1step目: generate successor membrane */
     for (i = 0; i < at_set->num; i++) {
-      react_rule(rc, mem, lmn_ruleset_get_rule(at_set, i));
+      react_rule(rc, mem, at_set->get_rule(i));
       if (mc_react_cxt_expanded_num(rc) > succ_i_from) {
         break;
       }
@@ -317,7 +316,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
     env_set_next_id(RC_PROC_NEXT_ID(rc));
 
     if (i < at_set->num) {
-      lmn_ruleset_validate_atomic(at_set);
+      at_set->validate_atomic();
       mode_org = RC_MODE(rc);
       groot_m = RC_GROOT_MEM(rc);
       RC_SET_MODE(rc, REACT_STAND_ALONE);
@@ -350,7 +349,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
           reacted = FALSE;
           for (j = 0; j < at_set->num; j++) {
             reacted = reacted ||
-                      react_rule(rc, cur_mem, lmn_ruleset_get_rule(at_set, j));
+                      react_rule(rc, cur_mem, at_set->get_rule(j));
           }
           if (reacted) {
             react_ruleset_AMAP(rc, cur_mem, system_ruleset);
@@ -359,7 +358,7 @@ static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
         //    }
       RC_SET_GROOT_MEM(rc, groot_m);
       RC_SET_MODE(rc, mode_org);
-      lmn_ruleset_invalidate_atomic(at_set);
+      at_set->invalidate_atomic();
     }
 
     env_set_next_id(RC_PROC_ORG_ID(rc));
