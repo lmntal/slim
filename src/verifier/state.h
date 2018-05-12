@@ -105,11 +105,6 @@ struct State;
  */
 #define STATE_CYAN_MASK (0x01U)
 
-/* manipulation for local flags */
-void s_set_cyan(State *S, int i);
-void s_unset_cyan(State *S, int i);
-BOOL s_is_cyan(State *S, int i);
-
 /*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
 #define DEFAULT_STATE_ID 0
 #define DEFAULT_TRANSITION_ID 0

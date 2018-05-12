@@ -85,6 +85,7 @@ struct State {                /* Total:72(36)byte */
   State *parent; /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
   unsigned long state_id; /*  8(4)byte: 生成順に割り当てる状態の整数ID */
   State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
+
 #ifndef MINIMAL_STATE
   BYTE *
       local_flags; /*  8(4)byte:
@@ -98,6 +99,13 @@ struct State {                /* Total:72(36)byte */
   void state_expand_lock_destroy() { lmn_mutex_destroy(&(expand_lock)); }
   void state_expand_lock() { lmn_mutex_lock(&(expand_lock)); }
   void state_expand_unlock() { lmn_mutex_unlock(&(expand_lock)); }
+
+  /* manipulation for local flags */
+  void s_set_cyan(int i) { local_flags[i] |= STATE_CYAN_MASK; }
+  void s_unset_cyan(int i) { local_flags[i] &= (~STATE_CYAN_MASK); }
+  BOOL s_is_cyan(int i) {
+    return (local_flags && (local_flags[i] & STATE_CYAN_MASK));
+  }
 #else
   void state_set_expander_id(unsigned long id) {}
   unsigned long state_expander_id() { return 0; }
@@ -106,6 +114,7 @@ struct State {                /* Total:72(36)byte */
   void state_expand_lock() {}
   void state_expand_unlock() {}
 #endif
+
   BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
   BOOL is_binstr_user() { return flags & MEM_DIRECT_MASK; }
   BOOL is_dummy() { return flags & DUMMY_SYMBOL_MASK; }

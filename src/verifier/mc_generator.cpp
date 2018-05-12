@@ -653,7 +653,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     p_s = MC_GET_PROPERTY(s, a);
 
     // backtrack
-    if (s_is_cyan(s, worker_id(w))) {
+    if (s->s_is_cyan(worker_id(w))) {
       if (state_is_accept(a, s)) {
         Vector red_states;
         vec_init(&red_states, 8192);
@@ -689,7 +689,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       }
 
       s->s_set_blue();
-      s_unset_cyan(s, worker_id(w));
+      s->s_unset_cyan(worker_id(w));
 
       pop_stack(stack);
       continue;
@@ -703,7 +703,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     }
 
     // cyanに着色
-    s_set_cyan(s, worker_id(w));
+    s->s_set_cyan(worker_id(w));
 
     // 同時に状態を展開すると問題が起こるのでロック
     START_LOCK();
@@ -726,7 +726,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, (start + i) % n);
 
-        if (!succ->s_is_blue() && !s_is_cyan(succ, worker_id(w))) {
+        if (!succ->s_is_blue() && !succ->s_is_cyan(worker_id(w))) {
           put_stack(stack, succ);
         }
       }
@@ -742,7 +742,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, (start + i) % n);
 
-        if (!succ->s_is_blue() && !s_is_cyan(succ, worker_id(w))) {
+        if (!succ->s_is_blue() && !succ->s_is_cyan(worker_id(w))) {
           if (!succ->is_expanded() && succ->s_is_fresh())
             put_stack(fresh, succ);
           else

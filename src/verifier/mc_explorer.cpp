@@ -1298,7 +1298,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     n = state_succ_num(s);
     for (i = 0; i < n; i++) {
       succ = state_succ_state(s, i);
-      if (s_is_cyan(succ, worker_id(w))) {
+      if (succ->s_is_cyan(worker_id(w))) {
         return TRUE;
       } else if (!succ->s_is_red()) {
         m = vec_num(red_states);
@@ -1334,7 +1334,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
           return FALSE;
         } else if (!succ->is_expanded()) {
           continue;
-        } else if (s_is_cyan(s, worker_id(w))/*succ == seed*/ /* || succ->is_on_stack() */) {
+        } else if (s->s_is_cyan(worker_id(w))/*succ == seed*/ /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る */
         } else {
           vec_push(search, (vec_data_t)succ);

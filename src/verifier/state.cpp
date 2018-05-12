@@ -53,20 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-#ifndef MINIMAL_STATE
-
-void s_set_cyan(State *S, int i) {
-  ((((S)->local_flags)[i]) |= STATE_CYAN_MASK);
-}
-void s_unset_cyan(State *S, int i) {
-  ((((S)->local_flags)[i]) &= (~STATE_CYAN_MASK));
-}
-BOOL s_is_cyan(State *S, int i) {
-  return (((S)->local_flags) && ((((S)->local_flags)[i]) & STATE_CYAN_MASK));
-}
-
-#endif
-
 LmnCost state_cost(State *S) {
 #ifdef KWBT_OPT
   return ((S)->cost);
