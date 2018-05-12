@@ -53,8 +53,6 @@ extern "C" {
 }
 #include "state.hpp"
 
-
-void set_encoded(State *S) { ((S)->flags |= MEM_ENCODED_MASK); }
 void set_expanded(State *S) { ((S)->flags |= EXPANDED_MASK); }
 void set_on_cycle(State *S) { ((S)->flags |= ON_CYCLE_MASK); }
 void set_on_stack(State *S) { ((S)->flags |= ON_STACK_MASK); }
@@ -246,7 +244,7 @@ void state_calc_hash(State *s, LmnMembraneRef mem, BOOL canonical) {
   if (canonical) {
     state_set_binstr(s, lmn_mem_encode(mem));
     s->hash = binstr_hash(state_binstr(s));
-    set_encoded(s);
+    s->set_encoded();
   } else {
     s->hash = mhash(mem);
   }
@@ -283,7 +281,7 @@ State *state_copy(State *src, LmnMembraneRef mem) {
   } else if (state_binstr(src)) {
     state_set_binstr(dst, lmn_binstr_copy(state_binstr(src)));
     if (src->is_encoded()) {
-      set_encoded(dst);
+      dst->set_encoded();
     }
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -678,7 +676,7 @@ void state_calc_mem_encode(State *s) {
 
     state_set_binstr(s, mid);
     s->hash = binstr_hash(state_binstr(s));
-    set_encoded(s);
+    s->set_encoded();
   }
 }
 

@@ -442,7 +442,7 @@ static void statetable_memid_rehash(State *s, StateTable *st) {
   state_set_binstr(new_s, lmn_mem_encode(m));
   new_s->hash = binstr_hash(state_binstr(new_s));
 
-  set_encoded(new_s);
+  new_s->set_encoded();
   set_expanded(new_s);
   new_s->set_dummy();
 

@@ -116,6 +116,7 @@ struct State {                /* Total:72(36)byte */
   BOOL is_snd() { return flags & FOR_MC_MASK; }
   void set_binstr_user() { flags |= MEM_DIRECT_MASK; }
   void set_dummy() { (flags |= DUMMY_SYMBOL_MASK); }
+  void set_encoded() { (flags |= MEM_ENCODED_MASK); }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
