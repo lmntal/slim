@@ -470,7 +470,7 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
 }
 
 void firstclass_ruleset_release(LmnSymbolAtomRef imply) {
-  LMN_ASSERT(st_contains(imply));
+  LMN_ASSERT(st_contains(first_class_rule_tbl, (st_data_t)imply));
   st_delete(first_class_rule_tbl, (st_data_t)imply, NULL);
 }
 

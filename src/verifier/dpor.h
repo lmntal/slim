@@ -50,7 +50,7 @@
 #include "element/element.h"
 #include "statespace.h"
 #ifdef DEBUG
-#include "dumper.h"
+#include "vm/dumper.h"
 #define POR_DEBUG(V)                                                           \
   if (lmn_env.debug_por) {                                                     \
     (V);                                                                       \
