@@ -65,22 +65,22 @@ slim_SOURCES =                                                     \
 	env.c                           arch.h                           \
 	\
 	lmntal_ext.h                                                     \
-	ext/init_exts.c                                                  \
-	ext/integer.c                                                    \
-	ext/float.c                                                      \
+	ext/init_exts.cpp                                                  \
+	ext/integer.cpp                                                    \
+	ext/float.cpp                                                      \
 	ext/atomic.cpp                                                   \
 	ext/nlmem.cpp                                                      \
-	ext/io.c                                                         \
-	ext/array.c			ext/array.h                      \
-	ext/atom.c                                                       \
+	ext/io.cpp                                                         \
+	ext/array.cpp			ext/array.h                      \
+	ext/atom.cpp                                                     \
 	ext/react_rule.cpp                                               \
 	ext/initial_ruleset.cpp                                          \
-	ext/nd_conf.c							 \
+	ext/nd_conf.cpp							 \
 	ext/set.cpp			ext/set.h			 \
 	ext/state_map.cpp						 \
-	ext/membrane.c      ext/membrane.h       \
+	ext/membrane.cpp      ext/membrane.h       \
 	ext/zerostep.cpp \
-	ext/time.c
+	ext/time.cpp
 #	ext.h ext.c
 
 slim_OBJS =

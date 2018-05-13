@@ -19,7 +19,7 @@ data_generator{
 endI @@ data_generator{m(0), $p,@p}/ :- $p.
 */
 
-n(7).
+n(8).
 initial_ruleset{
   init @@ n(N) :- N>0, M=N-1 |
           m(M), data([0]). 

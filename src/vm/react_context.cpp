@@ -39,6 +39,7 @@
 
 extern "C" {
 #include "react_context.h"
+
 #include "hyperlink.h"
 #include "memstack.h"
 #include "task.h"
@@ -50,42 +51,37 @@ extern "C" {
 }
 #include "rule.hpp"
 
-struct LmnRegister {
-  LmnWord wt;
-  LmnByte at;
-  LmnByte tt;
-};
+#include "react_context.hpp"
+//struct LmnRegister {
+//  LmnWord wt;
+//  LmnByte at;
+//  LmnByte tt;
+//};
 
-struct LmnReactCxt {
-  LmnMembraneRef
-      global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
-  LmnRegisterArray work_arry; /* ルール適用レジスタ */
-  unsigned int warry_cur;     /* work_arryの現在の使用サイズ */
-  unsigned int warry_num; /* work_arryの最大使用サイズ(SPEC命令指定) */
-  unsigned int warry_cap; /* work_arryのキャパシティ */
-  unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
-  LmnRulesetId
-      atomic_id; /* atomic step中: atomic set id(signed int), default:-1 */
-  ProcessID proc_org_id; /* atomic step終了時に Process ID をこの値に復帰 */
-  ProcessID proc_next_id; /* atomic step継続時に Process ID をこの値に設定 */
-  LmnMembraneRef cur_mem; /* atomic step継続時に現在膜をこの値に設定 */
-  BYTE mode;
-  BOOL flag;                     /* mode以外に指定するフラグ */
-  void *v;                       /* 各mode毎に固有の持ち物 */
-  SimpleHashtbl *hl_sameproccxt; /* findatom
-                                    時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
-                                  */
-#ifdef USE_FIRSTCLASS_RULE
-  Vector *insertion_events;
-#endif
-};
+//struct LmnReactCxt {
+//  LmnMembraneRef
+//      global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
+//  LmnRegisterArray work_arry; /* ルール適用レジスタ */
+//  unsigned int warray_cur;     /* work_arryの現在の使用サイズ */
+//  unsigned int warray_num; /* work_arryの最大使用サイズ(SPEC命令指定) */
+//  unsigned int warray_cap; /* work_arryのキャパシティ */
+//  unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
+//  LmnRulesetId
+//      atomic_id; /* atomic step中: atomic set id(signed int), default:-1 */
+//  ProcessID proc_org_id; /* atomic step終了時に Process ID をこの値に復帰 */
+//  ProcessID proc_next_id; /* atomic step継続時に Process ID をこの値に設定 */
+//  LmnMembraneRef cur_mem; /* atomic step継続時に現在膜をこの値に設定 */
+//  BYTE mode;
+//  BOOL flag;                     /* mode以外に指定するフラグ */
+//  void *v;                       /* 各mode毎に固有の持ち物 */
+//  SimpleHashtbl *hl_sameproccxt; /* findatom
+//                                    時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
+//                                  */
+//#ifdef USE_FIRSTCLASS_RULE
+//  Vector *insertion_events;
+//#endif
+//};
 
-LmnWord lmn_register_wt(LmnRegisterRef r) { return r->wt; }
-LmnByte lmn_register_at(LmnRegisterRef r) { return r->at; }
-LmnByte lmn_register_tt(LmnRegisterRef r) { return r->tt; }
-void lmn_register_set_wt(LmnRegisterRef r, LmnWord wt) { r->wt = wt; }
-void lmn_register_set_at(LmnRegisterRef r, LmnByte at) { r->at = at; }
-void lmn_register_set_tt(LmnRegisterRef r, LmnByte tt) { r->tt = tt; }
 
 LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx) {
   return (LmnRegisterRef)array + idx;
@@ -107,11 +103,11 @@ void lmn_register_free(LmnRegisterArray v) { LMN_FREE(v); }
 
 void lmn_register_extend(LmnReactCxtRef rc, unsigned int new_size) {
   new_size = round2up(new_size);
-  rc->work_arry = (LmnRegisterArray)LMN_REALLOC(struct LmnRegister,
-                                                rc->work_arry, new_size);
-  memset((LmnRegisterRef)rc->work_arry + warry_size(rc), 0,
-         sizeof(struct LmnRegister) * (new_size - warry_size(rc)));
-  warry_size_set(rc, new_size);
+  rc->work_array = (LmnRegisterArray)LMN_REALLOC(struct LmnRegister,
+                                                rc->work_array, new_size);
+  memset((LmnRegisterRef)rc->work_array + warray_size(rc), 0,
+         sizeof(struct LmnRegister) * (new_size - warray_size(rc)));
+  warray_size_set(rc, new_size);
 }
 
 BYTE RC_MODE(LmnReactCxtRef cxt) { return cxt->mode; }
@@ -124,69 +120,69 @@ BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
   return (cxt->mode & mode) == mode;
 }
 
-unsigned int warry_size(LmnReactCxtRef cxt) { return cxt->warry_cap; }
+unsigned int warray_size(LmnReactCxtRef cxt) { return cxt->warray_cap; }
 
-void warry_size_set(LmnReactCxtRef cxt, unsigned int n) { cxt->warry_cap = n; }
+void warray_size_set(LmnReactCxtRef cxt, unsigned int n) { cxt->warray_cap = n; }
 
-unsigned int warry_use_size(LmnReactCxtRef cxt) { return cxt->warry_num; }
-void warry_use_size_set(LmnReactCxtRef cxt, unsigned int n) {
-  cxt->warry_num = n;
+unsigned int warray_use_size(LmnReactCxtRef cxt) { return cxt->warray_num; }
+void warray_use_size_set(LmnReactCxtRef cxt, unsigned int n) {
+  cxt->warray_num = n;
 }
 
-unsigned int warry_cur_size(LmnReactCxtRef cxt) { return cxt->warry_cur; }
-void warry_cur_size_set(LmnReactCxtRef cxt, unsigned int n) {
-  cxt->warry_cur = n;
+unsigned int warray_cur_size(LmnReactCxtRef cxt) { return cxt->warray_cur; }
+void warray_cur_size_set(LmnReactCxtRef cxt, unsigned int n) {
+  cxt->warray_cur = n;
 }
 
-void warry_cur_update(LmnReactCxtRef cxt, unsigned int i) {
-  if (warry_cur_size(cxt) <= i) {
-    warry_cur_size_set(cxt, i + 1);
+void warray_cur_update(LmnReactCxtRef cxt, unsigned int i) {
+  if (warray_cur_size(cxt) <= i) {
+    warray_cur_size_set(cxt, i + 1);
   }
 }
 
-LmnRegisterArray rc_warry(LmnReactCxtRef cxt) { return cxt->work_arry; }
+LmnRegisterArray rc_warray(LmnReactCxtRef cxt) { return cxt->work_array; }
 
-void rc_warry_set(LmnReactCxtRef cxt, LmnRegisterArray arry) {
-  cxt->work_arry = arry;
+void rc_warray_set(LmnReactCxtRef cxt, LmnRegisterArray array) {
+  cxt->work_array = array;
 }
 
 LmnWord wt(LmnReactCxtRef cxt, unsigned int i) {
-  return lmn_register_wt(lmn_register_array_get(cxt->work_arry, i));
+  return lmn_register_array_get(cxt->work_array, i)->register_wt();
 }
 
 void wt_set(LmnReactCxtRef cxt, unsigned int i, LmnWord o) {
-  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_arry, i);
-  lmn_register_set_wt(r__, o);
-  warry_cur_update(cxt, i);
+  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
+  r__->register_set_wt(o);
+  warray_cur_update(cxt, i);
 }
 
 LmnByte at(LmnReactCxtRef cxt, unsigned int i) {
-  return lmn_register_at(lmn_register_array_get(cxt->work_arry, i));
+  return lmn_register_array_get(cxt->work_array, i)->register_at();
 }
 
 void at_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o) {
-  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_arry, i);
-  lmn_register_set_at(r__, o);
-  warry_cur_update(cxt, i);
+  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
+  r__->register_set_at(o);
+  warray_cur_update(cxt, i);
 }
 
 LmnByte tt(LmnReactCxtRef cxt, unsigned int i) {
-  return lmn_register_tt(lmn_register_array_get(cxt->work_arry, i));
+  return lmn_register_array_get(cxt->work_array, i)->register_tt();
 }
 
 void tt_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o) {
-  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_arry, i);
-  lmn_register_set_tt(r__, o);
-  warry_cur_update(cxt, i);
+  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
+  r__->register_set_tt(o);
+  warray_cur_update(cxt, i);
 }
 
-void warry_set(LmnReactCxtRef cxt, unsigned int i, LmnWord w, LmnByte a,
+void warray_set(LmnReactCxtRef cxt, unsigned int i, LmnWord w, LmnByte a,
                LmnByte t) {
-  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_arry, i);
-  lmn_register_set_wt(r__, w);
-  lmn_register_set_at(r__, a);
-  lmn_register_set_tt(r__, t);
-  warry_cur_update(cxt, i);
+  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
+  r__->register_set_wt(w);
+  r__->register_set_at(a);
+  r__->register_set_tt(t);
+  warray_cur_update(cxt, i);
 }
 
 unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt) { return cxt->trace_num; }
@@ -251,10 +247,10 @@ void react_context_init(LmnReactCxtRef rc, BYTE mode) {
   rc->flag = 0x00U;
   rc->global_root = NULL;
   rc->v = NULL;
-  rc->work_arry = lmn_register_make(WARRY_DEF_SIZE);
-  rc->warry_cur = 0;
-  rc->warry_num = 0;
-  rc->warry_cap = WARRY_DEF_SIZE;
+  rc->work_array = lmn_register_make(warray_DEF_SIZE);
+  rc->warray_cur = 0;
+  rc->warray_num = 0;
+  rc->warray_cap = warray_DEF_SIZE;
   rc->atomic_id = -1;
   rc->hl_sameproccxt = NULL;
 #ifdef USE_FIRSTCLASS_RULE
@@ -267,9 +263,9 @@ void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) {
   to->flag = from->flag;
   to->global_root = from->global_root;
   to->v = from->v;
-  to->warry_cur = from->warry_cur;
-  to->warry_num = from->warry_num;
-  to->warry_cap = from->warry_cap;
+  to->warray_cur = from->warray_cur;
+  to->warray_num = from->warray_num;
+  to->warray_cap = from->warray_cap;
   to->atomic_id = from->atomic_id;
 #ifdef USE_FIRSTCLASS_RULE
   vec_free(to->insertion_events);
@@ -281,8 +277,8 @@ void react_context_destroy(LmnReactCxtRef rc) {
   if (RC_HLINK_SPC(rc)) {
     lmn_sameproccxt_clear(rc);
   }
-  if (rc->work_arry) {
-    lmn_register_free(rc->work_arry);
+  if (rc->work_array) {
+    lmn_register_free(rc->work_array);
   }
 #ifdef USE_FIRSTCLASS_RULE
   if (rc->insertion_events) {

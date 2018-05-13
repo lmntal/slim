@@ -49,7 +49,7 @@
 
 ss{
 proc_generator{
-  n=2.
+  n=4.
   isTerminated(0).
   _init0 @@ n(X) :- int(X), Y=X-1 |
             m(Y), th_num(X).

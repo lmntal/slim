@@ -10,7 +10,7 @@
 
 % msg(Message, Bit).
 sender{
-  mnum(1).
+  mnum(10000).
   msg(0,0).
   ackOK @@ exp(I,B), mnum(Max), ack(0,A) :- A=:=B,J=(I+1) mod Max, C=1-B	|
            msg(J,C), mnum(Max).

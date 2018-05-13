@@ -1,6 +1,4 @@
-
-
-% property0: 解�????
+% property0: lest_qの値(置かなければならないqueenの残り個数)が0になることはない
 
 /*
 init{
@@ -21,7 +19,7 @@ init{
 init{$i,@i}/ :- $i.
 
 */
-n(8).
+n(12).
 initial_ruleset{
   init0 @@ n(N) :- int(N) |
            m(N), lest_q(N).

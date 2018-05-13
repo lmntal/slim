@@ -1,49 +1,49 @@
 {
- wSize(2).     // ¥¦¥£¥ó¥É¥¦¥µ¥¤¥º
- nMAX(2).     // ºÆÁ÷½èÍý¤Ê¤É¤ÎÀ©¸æ¤ËÍøÍÑ¤¹¤ë¥Ê¥ó¥Ð¡¼n¤Î¾å¸ÂÃÍ
+ wSize(2).     // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚º
+ nMAX(2).     // å†é€å‡¦ç†ãªã©ã®åˆ¶å¾¡ã«åˆ©ç”¨ã™ã‚‹ãƒŠãƒ³ãƒãƒ¼nã®ä¸Šé™å€¤
  
- sender{ n(0), c(0) }.  // ¥Ç¡¼¥¿Á÷¿®¼Ô
- ss=rr.                 // ¥Ç¡¼¥¿¤¬ÄÌ¤ëÄÌ¿®Ï©
- rs=sr.                 // ACK¤¬ÄÌ¤ëÄÌ¿®Ï©
- receiver{ n(0) }.      // ¥Ç¡¼¥¿¼õ¿®¼Ô
+ sender{ n(0), c(0) }.  // ãƒ‡ãƒ¼ã‚¿é€ä¿¡è€…
+ ss=rr.                 // ãƒ‡ãƒ¼ã‚¿ãŒé€šã‚‹é€šä¿¡è·¯
+ rs=sr.                 // ACKãŒé€šã‚‹é€šä¿¡è·¯
+ receiver{ n(0) }.      // ãƒ‡ãƒ¼ã‚¿å—ä¿¡è€…
  
- // Á÷¿®¼Ô : ¥Ç¡¼¥¿¤ÎÁ÷¿® sender -> [data]
+ // é€ä¿¡è€… : ãƒ‡ãƒ¼ã‚¿ã®é€ä¿¡ sender -> [data]
  s_send@@ sender{ n(N), c(C) }, nMAX(NMAX),wSize(W), ss=SC
    :- C<W, C_=C+1, DN=(N+C) mod NMAX
    |  sender{ n(N), c(C_)}, nMAX(NMAX), wSize(W), ss=[data(DN)|SC].
  
- // ¼õ¿®¼Ô : ¥Ç¡¼¥¿¼õ¿®¡¤ACK¤ÎÊÖÁ÷(Í½´ü¤·¤Æ¤¤¤¿¥Ç¡¼¥¿) [data] -> receiver -> [ack]
+ // å—ä¿¡è€… : ãƒ‡ãƒ¼ã‚¿å—ä¿¡ï¼ŒACKã®è¿”é€(äºˆæœŸã—ã¦ã„ãŸãƒ‡ãƒ¼ã‚¿) [data] -> receiver -> [ack]
  r_rec@@ receiver{ n(N) }, nMAX(NMAX), SC=[data(DN)|rr], rs=RC
    :- N=:=DN, N_=(N+1) mod NMAX
     | receiver{ n(N_) }, nMAX(NMAX), SC=rr, rs=[ack(DN)|RC].
  
- // ¼õ¿®¼Ô : ¥Ç¡¼¥¿¼õ¿®¡¤¥Ç¡¼¥¿ÇË´þ(¼õ¿®¤¹¤ë¤Ï¤º¤Î¥Ç¡¼¥¿¤Î¾Ã¼º¸¡½Ð) [data] -> []
+ // å—ä¿¡è€… : ãƒ‡ãƒ¼ã‚¿å—ä¿¡ï¼Œãƒ‡ãƒ¼ã‚¿ç ´æ£„(å—ä¿¡ã™ã‚‹ã¯ãšã®ãƒ‡ãƒ¼ã‚¿ã®æ¶ˆå¤±æ¤œå‡º) [data] -> []
  r_unrec@@ receiver{ n(N) }, SC=[data(DN)|rr]
    :- N=\=DN, ground(SC)
     | receiver{ n(N) }, SC=rr.
  
- // Á÷¿®¼Ô : ACK¤Î¼õ¿®(Í½´ü¤·¤Æ¤¤¤¿ACK) [ack] -> slide
+ // é€ä¿¡è€… : ACKã®å—ä¿¡(äºˆæœŸã—ã¦ã„ãŸACK) [ack] -> slide
  s_slide@@ sender{ n(N), c(C) }, nMAX(NMAX), RC=[ack(ACK)|sr]
   :- N=:=ACK, C>0, N_=(N+1) mod NMAX, C_=C-1
    | sender{ n(N_), c(C_)}, nMAX(NMAX), RC=sr.
  
- // Á÷¿®¼Ô : ACK¤Î¼õ¿®¡¤ACK¤ÎÇË´þ(¥Ç¡¼¥¿¤«ACK¤Î¾Ã¼º¸¡½Ð) [ack] -> []
+ // é€ä¿¡è€… : ACKã®å—ä¿¡ï¼ŒACKã®ç ´æ£„(ãƒ‡ãƒ¼ã‚¿ã‹ACKã®æ¶ˆå¤±æ¤œå‡º) [ack] -> []
  s_r@@ sender{ n(N), c(C) }, RC=[ack(ACK)|sr]
   :- N=\=ACK, int(C)
    | sender{ n(N), c(C) }, RC=sr.
  
- // Á÷¿®¼Ô : ¥¿¥¤¥à¥¢¥¦¥È¤Î¸¡½Ð [timeout] -> reset
+ // é€ä¿¡è€… : ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã®æ¤œå‡º [timeout] -> reset
  s_timeout@@ sender{ n(N), c(C) }, timeout
   :- int(N), int(C)
    | sender{ n(N), c(0) }.
  
- // ÄÌ¿®Ï© : ¥Ç¡¼¥¿,ACK¤Î¾Ã¼º [data] -> [], [ack] -> []
+ // é€šä¿¡è·¯ : ãƒ‡ãƒ¼ã‚¿,ACKã®æ¶ˆå¤± [data] -> [], [ack] -> []
  lost_data@@ X=[data(DN)|Y] :- int(DN) | X=Y.
  lost_ack@@ X=[ack(ACK)|Y] :- int(ACK) | X=Y .
  
- // ÄÌ¿®Ï© : ½ç½øµÕÅ¾
+ // é€šä¿¡è·¯ : é †åºé€†è»¢
  //sd@@ X=[data(DN1),data(DN2)|Y] :- X=[data(DN2),data(DN1)|Y].
  //sa@@ X=[ack(A1),ack(A2)|Y] :- X=[ack(A2),ack(A1)|Y].
 }.
-// ¥¿¥¤¥à¥¢¥¦¥È¤ÎÈ¯À¸ [] -> [timeout]
+// ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã®ç™ºç”Ÿ [] -> [timeout]
 o_timeout@@ { $p, @p }/ :- { timeout, $p, @p }.

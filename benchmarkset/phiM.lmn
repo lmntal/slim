@@ -8,7 +8,7 @@
 % property0: hungry状態の哲学者(ID=1)は, 絶対にいつか食にありつける
 
 proc_generator{
-  n=5.
+  n=7.
   init1 @@  n(N)   :- int(N) |
             n(N,N).
   init2 @@  n(N,Z) :- N>0, M=N-1 |

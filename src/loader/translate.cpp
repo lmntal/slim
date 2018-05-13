@@ -102,7 +102,7 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
       LmnRegisterArray v, tmp;
       ProcessTableRef copymap;
       LmnMembraneRef tmp_global_root;
-      unsigned int i, warry_size_org, warry_use_org;
+      unsigned int i, warray_size_org, warray_use_org;
 
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
@@ -110,50 +110,50 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
       }
 #endif
 
-      warry_size_org = warry_size(rc);
-      warry_use_org = warry_use_size(rc);
+      warray_size_org = warray_size(rc);
+      warray_use_org = warray_use_size(rc);
       tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
 
       /** 変数配列および属性配列のコピー */
-      v = lmn_register_make(warry_size_org);
+      v = lmn_register_make(warray_size_org);
 
       /** copymapの情報を基に変数配列を書換える */
-      for (i = 0; i < warry_use_org; i++) {
+      for (i = 0; i < warray_use_org; i++) {
         LmnWord t;
         LmnRegisterRef r = lmn_register_array_get(v, i);
-        lmn_register_set_at(r, at(rc, i));
-        lmn_register_set_tt(r, tt(rc, i));
-        if (lmn_register_tt(r) == TT_ATOM) {
-          if (LMN_ATTR_IS_DATA(lmn_register_at(r))) {
-            lmn_register_set_wt(
-                r, (LmnWord)lmn_copy_data_atom(
-                       (LmnAtom)wt(rc, i), (LmnLinkAttr)lmn_register_at(r)));
+        r->register_set_at(at(rc, i));
+        r->register_set_tt(tt(rc, i));
+        if (r->register_tt() == TT_ATOM) {
+          if (LMN_ATTR_IS_DATA(r->register_at())) {
+            r->register_set_wt(
+                (LmnWord)lmn_copy_data_atom(
+                       (LmnAtom)wt(rc, i), (LmnLinkAttr)r->register_at()));
           } else if (proc_tbl_get_by_atom(copymap, (LmnSymbolAtomRef)wt(rc, i),
                                           &t)) {
-            lmn_register_set_wt(r, (LmnWord)t);
+            r->register_set_wt((LmnWord)t);
           } else {
             t = 0;
             lmn_fatal("implementation error");
           }
-        } else if (lmn_register_tt(r) == TT_MEM) {
+        } else if (r->register_tt() == TT_MEM) {
           if (wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-            lmn_register_set_wt(r, (LmnWord)tmp_global_root);
+            r->register_set_wt((LmnWord)tmp_global_root);
           } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)wt(rc, i),
                                          &t)) {
-            lmn_register_set_wt(r, (LmnWord)t);
+            r->register_set_wt((LmnWord)t);
           } else {
             t = 0;
             lmn_fatal("implementation error");
           }
         } else { /* TT_OTHER */
-          lmn_register_set_wt(r, wt(rc, i));
+          r->register_set_wt(wt(rc, i));
         }
       }
       proc_tbl_free(copymap);
 
       /** SWAP */
-      tmp = rc_warry(rc);
-      rc_warry_set(rc, v);
+      tmp = rc_warray(rc);
+      rc_warray_set(rc, v);
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
@@ -171,8 +171,8 @@ BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
                             lmn_interned_str rule_name, LmnLineNum line_num,
                             LmnMembraneRef *ptmp_global_root,
                             LmnRegisterArray *p_v_tmp,
-                            unsigned int warry_use_org,
-                            unsigned int warry_size_org) {
+                            unsigned int warray_use_org,
+                            unsigned int warray_size_org) {
   if (RC_GET_MODE(rc, REACT_ND)) {
     /* 処理中の変数を外から持ち込む */
     LmnMembraneRef tmp_global_root;
@@ -190,10 +190,10 @@ BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
 
     /* 変数配列および属性配列を元に戻す */
 
-    lmn_register_free(rc_warry(rc));
-    rc_warry_set(rc, v);
-    warry_size_set(rc, warry_size_org);
-    warry_use_size_set(rc, warry_use_org);
+    lmn_register_free(rc_warray(rc));
+    rc_warray_set(rc, v);
+    warray_size_set(rc, warray_size_org);
+    warray_use_size_set(rc, warray_use_org);
 
     return FALSE;
   } else {
@@ -209,25 +209,25 @@ BOOL tr_instr_jump(LmnTranslated f, LmnReactCxtRef rc,
   BOOL ret;
   int i;
 
-  org_use = warry_use_size(rc);
-  org_size = warry_size(rc);
+  org_use = warray_use_size(rc);
+  org_size = warray_size(rc);
   v = lmn_register_make(org_size);
   for (i = 0; i < newid_num; i++) {
     LmnRegisterRef r = lmn_register_array_get(v, i);
-    lmn_register_set_wt(r, wt(rc, newid[i]));
-    lmn_register_set_at(r, at(rc, newid[i]));
-    lmn_register_set_tt(r, tt(rc, newid[i]));
+    r->register_set_wt(wt(rc, newid[i]));
+    r->register_set_at(at(rc, newid[i]));
+    r->register_set_tt(tt(rc, newid[i]));
   }
 
-  tmp = rc_warry(rc);
-  rc_warry_set(rc, v);
+  tmp = rc_warray(rc);
+  rc_warray_set(rc, v);
 
   ret = (*f)(rc, thisisrootmembutnotused, rule);
 
-  lmn_register_free(rc_warry(rc));
-  rc_warry_set(rc, tmp);
-  warry_size_set(rc, org_size);
-  warry_use_size_set(rc, org_use);
+  lmn_register_free(rc_warray(rc));
+  rc_warray_set(rc, tmp);
+  warray_size_set(rc, org_size);
+  warray_use_size_set(rc, org_use);
 
   return ret;
 }

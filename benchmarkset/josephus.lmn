@@ -13,7 +13,7 @@
 % property0: ID1番の人間が生き残ることはできない
 
 init{
-  num(5).
+  num(100).
   dagger(0).
   list=[null].
 

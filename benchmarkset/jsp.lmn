@@ -20,6 +20,7 @@
 
 {
   
+  /*
   % system0(testcode)
   job{id(1), task=[m(1,0,3), m(2,0,3), m(3,0,2)]}.
   job{id(2), task=[m(1,0,2), m(3,0,5), m(2,0,3)]}.
@@ -28,8 +29,8 @@
   machine(1, free).
   machine(2, free).
   machine(3, free).
+  */
   
-  /*
   % system1
   job{id(1), task=[m(1,0,3), m(2,0,3), m(4,0,5), m(3,0,2)]}.
   job{id(2), task=[m(1,0,2), m(4,0,4), m(3,0,5), m(2,0,3)]}.
@@ -42,7 +43,7 @@
   machine(2, free).
   machine(3, free).
   machine(4, free).
-  */
+
   /*
   % system2
   job{id(1), task=[m(1,0,3), m(2,0,3), m(4,0,5), m(3,0,2)]}.

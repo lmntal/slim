@@ -221,7 +221,7 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
 
 LmnRuleSetRef system_ruleset;
 
-static void init_system_rulset() {
+static void init_system_ruleset() {
   system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
 }
 
@@ -238,7 +238,7 @@ void lmn_add_system_rule(LmnRuleRef rule) { system_ruleset->put(rule); }
 LmnRuleSetRef initial_ruleset;
 LmnRuleSetRef initial_system_ruleset;
 
-static void init_initial_rulset() {
+static void init_initial_ruleset() {
   initial_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
   initial_system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
 }
@@ -285,8 +285,8 @@ LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name) {
 void init_rules() {
   init_ruleset_table();
   init_module_table();
-  init_system_rulset();
-  init_initial_rulset();
+  init_system_ruleset();
+  init_initial_ruleset();
 }
 
 void destroy_rules() {
