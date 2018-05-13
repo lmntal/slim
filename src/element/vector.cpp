@@ -36,9 +36,7 @@
  * $Id: vector.c,v 1.8 2008/09/19 05:18:17 taisuke Exp $
  */
 
-extern "C" {
 #include "vector.h"
-}
 
 /* pop Nth element */
 LmnWord vec_pop_n(Vector *vec, unsigned int n) {

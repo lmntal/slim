@@ -37,7 +37,6 @@
  * $Id$
  */
 
-extern "C"{
 #include <stdio.h>
 #include "vm/vm.h"
 #include "verifier/verifier.h"
@@ -46,8 +45,6 @@ void cb_set_functor_priority(LmnReactCxtRef rc,
                              LmnAtomRef a0, LmnLinkAttr t0,
                              LmnAtomRef a1, LmnLinkAttr t1,
                              LmnAtomRef a2, LmnLinkAttr t2);
-void init_nd_conf(void);
-}
 
 /* ポートa0から一行読み込む
  * +a0     : 優先度を表す整数

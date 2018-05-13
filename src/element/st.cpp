@@ -3,12 +3,10 @@
 
 /* static char  sccsid[] = "@(#) st.c 5.1 89/12/14 Crucible"; */
 
-extern "C" {
 #include "st.h"
 #include "lmnstring.h"
 #include "vector.h"
 #include "verifier/verifier.h"
-}
 
 typedef struct st_table_entry st_table_entry;
 

@@ -42,16 +42,10 @@
  * Membrane
  */
 
-#ifdef __cplusplus
-extern "C"{
-#endif
 
 #include "lmntal.h"
 #include "../element/vector.h"
 
-#ifdef __cplusplus
-}
-#endif
 
 
 struct LmnMembrane;

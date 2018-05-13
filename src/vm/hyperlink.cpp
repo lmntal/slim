@@ -37,11 +37,9 @@
  * $Id$
  */
 
-extern "C" {
 #include "hyperlink.h"
 #include "atom.h"
 #include "react_context.h"
-}
 #include "atomlist.hpp"
 
 #if SIZEOF_LONG == 4

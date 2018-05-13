@@ -37,14 +37,12 @@
  * $Id$
  */
 
-extern "C" {
 #include "../lmntal.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 #ifdef PROFILE
 # include "verifier/runtime_status.h"
 #endif
-}
 
 void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                     LmnAtomRef a0, LmnLinkAttr t0)
@@ -81,8 +79,6 @@ void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   }
   lmn_mem_delete_mem(lmn_mem_parent(mem), mem);
 }
-
-extern "C" void init_atomic(void);
 
 void init_atomic(void)
 {

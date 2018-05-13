@@ -38,9 +38,6 @@
 #ifndef PROCESS_TABLE_H
 #define PROCESS_TABLE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "element/element.h"
 
@@ -48,16 +45,12 @@ typedef struct ProcessTbl *ProcessTableRef;
 
 #include "hyperlink.h"
 
-#ifdef __cplusplus
-extern "C++" {
 #include "process_table.hpp"
 
 struct ProcessTbl : ProcessTable<LmnWord> {
   ProcessTbl(unsigned long size) : ProcessTable<LmnWord>(size){};
   ProcessTbl() : ProcessTable<LmnWord>(){};
 };
-}
-#endif
 
 /**
  * Function ProtoTypes
@@ -94,8 +87,5 @@ BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key);
 BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* PROCESS_TABLE_H */

@@ -38,7 +38,6 @@
 
 #include <map>
 
-extern "C" {
 #include "arch.h"
 #include "element/element.h"
 #include "ffi/lmntal_system_adapter.h"
@@ -57,7 +56,6 @@ extern "C" {
 
 void build_cmd(char *buf, char *file_name);
 FILE *compile(char *filename);
-}
 
 #include "byte_encoder.hpp"
 #include "il_lexer.hpp"

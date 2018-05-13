@@ -37,12 +37,10 @@
  * $Id$
  */
 
-extern "C" {
 #include "state_map.h"
 #include "set.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
-}
 
 struct LmnStateMap {
   LMN_SP_ATOM_HEADER;
@@ -224,9 +222,6 @@ unsigned char sp_cb_state_map_is_ground(void *data)
 {
   return 1;
 }
-
-extern "C"
-void init_state_map(void);
 
 void init_state_map(void)
 {

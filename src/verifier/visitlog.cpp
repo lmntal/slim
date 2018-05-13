@@ -34,9 +34,7 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-extern "C" {
 #include "visitlog.h"
-}
 #ifndef PROC_TBL_DEFAULT_SIZE
 #define PROC_TBL_DEFAULT_SIZE 128U
 #endif

@@ -35,7 +35,6 @@
  *
  * $Id$
  */
-extern "C" {
 #include "dpor_naive.h"
 #include "delta_membrane.h"
 #include "dpor.h"
@@ -46,7 +45,6 @@ extern "C" {
 #include "runtime_status.h"
 #endif
 #include "state.h"
-}
 #include "state.hpp"
 
 /* 概要:

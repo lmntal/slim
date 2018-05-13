@@ -9,5 +9,5 @@ liblmn_ffi_a_CFLAGS =                               \
         $(CFLAGS)
 
 liblmn_ffi_a_SOURCES =                              \
-	jni_lmntal.c jni_lmntal.h \
-	lmntal_system_adapter.c lmntal_system_adapter.h
+	jni_lmntal.cpp jni_lmntal.h \
+	lmntal_system_adapter.cpp lmntal_system_adapter.h

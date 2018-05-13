@@ -37,10 +37,8 @@
  * $Id$
  */
 
-extern "C" {
 #include "automata.h"
 #include "propositional_symbol.h"
-}
 #include "nc_lexer.hpp"
 #include "nc_parser.hpp"
 

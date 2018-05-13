@@ -37,13 +37,11 @@
  * $Id$
  */
 
-extern "C" {
 #include "lmnstring.h"
 #include "lmntal.h"
 #include "util.h"
 #include "vm/vm.h"
 #include <stdio.h>
-}
 
 inline static void string_expand_buf(LmnStringRef s, unsigned long size);
 
@@ -310,9 +308,6 @@ void *sp_cb_string_copy(void *s) { return lmn_string_copy((LmnStringRef)s); }
 
 void sp_cb_string_free(void *s) { lmn_string_free((LmnStringRef)s); }
 
-extern "C" {
-void sp_cb_string_dump(void *s, LmnPortRef port);
-}
 
 void sp_cb_string_dump(void *s, LmnPortRef port) {
   port_put_raw_c(port, '"');

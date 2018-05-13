@@ -44,10 +44,6 @@
  * @defgroup Verifier
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "automata.h"
 #include "binstr_compress.h"
 #include "delta_membrane.h"
@@ -65,10 +61,6 @@ extern "C" {
 #include "state.h"
 #include "statespace.h"
 #include "tree_compress.h"
-
-#ifdef __cplusplus
-}
 #include "state.hpp"
-#endif
 
 #endif /* LMN_VERIFIER_H */

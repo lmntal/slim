@@ -37,9 +37,7 @@
  * $Id$
  */
 
-extern "C" {
 #include "memstack.h"
-}
 
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
 

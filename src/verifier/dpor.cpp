@@ -36,7 +36,6 @@
  * $Id:
  */
 
-extern "C" {
 
 #include "dpor.h"
 #include "delta_membrane.h"
@@ -46,7 +45,6 @@ extern "C" {
 #include "mc_worker.h"
 #include "state.h"
 #include "vm/vm.h"
-}
 #include "state.hpp"
 
 /**

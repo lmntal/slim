@@ -36,7 +36,6 @@
  *
  * $Id$
  */
-extern "C" {
 #include "mc_generator.h"
 #include "element/element.h"
 #include "mc.h"
@@ -49,7 +48,6 @@ extern "C" {
 #include "mc_visualizer.h"
 #endif
 #include "state.h"
-}
 #include "state.hpp"
 /* TODO: C++ template関数で書き直した方がよい */
 

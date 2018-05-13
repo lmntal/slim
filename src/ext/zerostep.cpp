@@ -70,8 +70,6 @@ void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
   lmn_mem_remove_mem(parent, mem);
 }
 
-extern "C" void init_zerostep(void);
-
 void init_zerostep(void)
 {
   lmn_register_c_fun("zerostep", (void *)cb_zerostep, 0);

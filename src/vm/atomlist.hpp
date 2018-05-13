@@ -42,14 +42,8 @@
 
 
 struct SimpleHashtbl;
-#ifdef __cplusplus
-extern "C"{
-#endif
   LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst);
   LmnSymbolAtomRef lmn_atomlist_end(AtomListEntryRef lst);
-#ifdef __cplusplus
-}
-#endif
 struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
   int n;

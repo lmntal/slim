@@ -37,13 +37,11 @@
  * $Id$
  */
 
-extern "C" {
 #include "file_util.h"
 #include "../arch.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-}
 
 char *build_path(const char *dir, const char *component) {
   const int dir_len = strlen(dir);

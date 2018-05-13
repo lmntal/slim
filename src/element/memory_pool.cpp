@@ -36,10 +36,8 @@
  * $Id: memory_pool.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
  */
 
-extern "C" {
 #include "memory_pool.h"
 #include "lmntal.h"
-}
 
 #define REF_CAST(T, X) (*(T *)&(X))
 

@@ -65,6 +65,5 @@ void inst_list::visit(ByteEncoder &encoder) const { encoder.load(*this); }
 } // namespace instr_arg
 } // namespace il
 
-extern "C" void stx_rule_free(Rule *rule);
 
 void stx_rule_free(Rule *rule) { delete rule; }

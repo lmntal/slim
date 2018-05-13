@@ -36,7 +36,6 @@
  * $Id: membrane.c,v 1.34 2008/10/16 18:12:27 sasaki Exp $
  */
 
-extern "C" {
 #include "membrane.h"
 #include "atom.h"
 #include "dumper.h" /* for debug */
@@ -53,7 +52,6 @@ extern "C" {
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
-}
 
 #include "membrane.hpp"
 #include "rule.hpp"

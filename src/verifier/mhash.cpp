@@ -40,14 +40,12 @@
  * 注意すること
  */
 
-extern "C" {
 #include "mhash.h"
 #include "element/element.h"
 #include "visitlog.h"
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
-}
 
 /* #define MHASH_C 31 /\* 深さを深くした場合、31は小さすぎるかも *\/ */
 #define MHASH_C (101)

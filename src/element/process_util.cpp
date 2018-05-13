@@ -39,11 +39,9 @@
 
 /* 外部プログラムの起動など、プロセス関連の便利関数の定義 */
 
-extern "C" {
 #include "process_util.h"
 #include <stdlib.h>
 #include <sys/wait.h>
-}
 
 /* program_pathにあるプログラムを引数argsで起動し、プログラムの出力のストリームを返す。*/
 FILE *run_program(const char *program_path, char **args) {

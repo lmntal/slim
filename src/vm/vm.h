@@ -48,9 +48,6 @@
  * @defgroup VM
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "ccallback.h"
 #include "dumper.h"
@@ -65,11 +62,8 @@ extern "C" {
 #include "task.h"
 #include "trace_log.h"
 
-#ifdef __cplusplus
-}
 #include "rule.hpp"
 #include "atomlist.hpp"
 #include "react_context.hpp"
-#endif
 
 #endif /* LMN_VM_H */

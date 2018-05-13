@@ -36,12 +36,10 @@
  *
  * $Id$
  */
-extern "C" {
 #include "delta_membrane.h"
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
-}
 enum {
   TAG_DEL_MEM = 1U /* 0000 0001 */,
   TAG_NEW_ATOM = 2U /* 0000 0010 */,

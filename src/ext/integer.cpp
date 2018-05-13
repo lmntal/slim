@@ -39,7 +39,6 @@
 
 /* 整数関連のコールバック */
 
-extern "C"{
 #include "../lmntal.h"
 #include "element/element.h"
 #include "vm/vm.h"
@@ -63,7 +62,6 @@ void integer_of_string(LmnReactCxtRef rc,
                        LmnAtomRef a0, LmnLinkAttr t0,
                        LmnAtomRef a1, LmnLinkAttr t1);
 void init_integer(void);
-}
 
 /**
  * ($start, $end, $g)

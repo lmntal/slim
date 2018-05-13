@@ -36,11 +36,9 @@
  *
  * $Id$
  */
-extern "C" {
 #include "runtime_status.h"
 #include "state.h"
 #include "vm/vm.h"
-}
 #include "state.hpp"
 
 struct RuleProfiler {

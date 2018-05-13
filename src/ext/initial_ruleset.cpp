@@ -37,13 +37,9 @@
  * $Id$
  */
 
-extern "C" {
 #include <stdio.h>
 #include "vm/vm.h"
 #include "element/element.h"
-}
-
-extern "C" void init_initial_ruleset(void);
 
 #define INITIAL_RULESET_MEM_NAME "initial_ruleset"
 #define INITIAL_SYSTEM_RULESET_MEM_NAME "initial_system_ruleset"

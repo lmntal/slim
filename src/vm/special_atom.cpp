@@ -36,10 +36,8 @@
  * $Id$
  */
 
-extern "C" {
 #include "special_atom.h"
 #include "symbol.h"
-}
 
 Vector *sp_atom_callback_tbl;
 

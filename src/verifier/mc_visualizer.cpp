@@ -1,11 +1,9 @@
-extern "C" {
 #include "mc_visualizer.h"
 #include "state.h"
 #include "statespace.h"
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
-}
 #include "state.hpp"
 
 #define R(c) ((c >> 16) & 0xff)

@@ -41,12 +41,10 @@
  *  library for queue / parallel queue
  */
 
-extern "C" {
 #include "queue.h"
 #include "error.h"
 #include <errno.h>
 #include <pthread.h>
-}
 
 #define Q_DEQ 0
 #define Q_ENQ 1

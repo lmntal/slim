@@ -39,7 +39,6 @@
 
 /** @author Masato Gocho
  *  utilities for parallel/concurrent execution */
-extern "C" {
 #include "mc_worker.h"
 #include "mc.h"
 #include "mc_explorer.h"
@@ -48,7 +47,6 @@ extern "C" {
 #include "state.h"
 #include "statespace.h"
 #include <limits.h>
-}
 #include "state.hpp"
 
 /** -------------------------------------

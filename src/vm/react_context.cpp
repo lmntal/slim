@@ -37,7 +37,6 @@
  * $Id$
  */
 
-extern "C" {
 #include "react_context.h"
 
 #include "hyperlink.h"
@@ -48,7 +47,6 @@ extern "C" {
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
-}
 #include "rule.hpp"
 
 #include "react_context.hpp"

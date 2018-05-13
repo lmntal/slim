@@ -36,12 +36,10 @@
  * $Id: error.c,v 1.2 2008/09/19 05:18:17 taisuke Exp $
  */
 
-extern "C" {
 #include "error.h"
 #include "lmntal.h"
 #include <stdarg.h>
 #include <stdlib.h>
-}
 
 void do_lmn_fatal(const char *file, int line, const char *msg) {
   fprintf(stderr, "%s(%d) %s\n", file, line, msg);

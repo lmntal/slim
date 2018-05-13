@@ -38,7 +38,6 @@
 
 #include "translate.hpp"
 
-extern "C" {
 #include "arch.h"
 #include "element/element.h"
 #include "load.h"
@@ -49,7 +48,6 @@ extern "C" {
 #ifdef PROFILE
 #include "verifier/runtime_status.h"
 #endif
-}
 
 /* just for debug ! */
 static FILE *OUT;

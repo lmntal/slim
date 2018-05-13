@@ -36,21 +36,17 @@
  * $Id: rule.c,v 1.7 2008/10/16 18:12:55 sasaki Exp $
  */
 
-extern "C" {
 #include "rule.h"
 #include "system_ruleset.h"
-}
 #include "rule.hpp"
 
 /*----------------------------------------------------------------------
  * Rule
  */
 
-extern "C" {
 /* prototypes */
 void init_rules(void);
 void destroy_rules(void);
-}
 
 /* 中身のない、名前だけを持つルールを生成する */
 LmnRuleRef lmn_rule_make_dummy(lmn_interned_str name) {

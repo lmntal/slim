@@ -36,7 +36,6 @@
  * $Id: main.c,v 1.17 2008/10/16 18:14:00 sasaki Exp $
  */
 
-extern "C" {
 #include "arch.h"
 #include "element/element.h"
 #include "ffi/jni_lmntal.h"
@@ -63,7 +62,6 @@ void init_rules();
 void destroy_rules();
 void sym_tbl_destroy();
 void sym_tbl_init();
-}
 
 static void usage(void) {
   fprintf(

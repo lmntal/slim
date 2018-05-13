@@ -37,7 +37,6 @@
  * $Id$
  */
 
-extern "C" {
 #include "clock.h"
 
 #include "lmntal.h" // config.h
@@ -48,7 +47,7 @@ extern "C" {
 #include <time.h>
 #define ENABLE_TIME_PROFILE
 #endif
-}
+
 /* ------------------------------------------------------------------------
  * CPU時間・実経過時間を返す.
  * 取得可能な時間がナノ秒ではあるが精度もその通りであるとは限らないため注意
