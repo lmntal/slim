@@ -37,16 +37,13 @@
  * $Id$
  */
 
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
-typedef void *yyscan_t;
-#endif
 extern "C" {
 #include "automata.h"
-#include "nc_parser.h"
-#include "nc_lexer.h"
 #include "propositional_symbol.h"
 }
+#include "nc_lexer.hpp"
+#include "nc_parser.hpp"
+
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static void atmstate_free(AutomataStateRef s);
@@ -458,21 +455,15 @@ PLFormulaRef atm_transition_get_formula(AutomataTransitionRef t) {
  * never claim
  */
 
-extern "C" int ncparse(yyscan_t, AutomataRef);
+int ncparse(nc::lexer *, AutomataRef);
 
 /* 正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
 static int nc_parse(FILE *in, AutomataRef *automata) {
-  int r;
-  yyscan_t scanner;
+  nc::lexer scanner(in);
 
   *automata = automata_make();
 
-  nclex_init(&scanner);
-  ncset_in(in, scanner);
-  r = ncparse(scanner, *automata);
-  nclex_destroy(scanner);
-
-  return r;
+  return ncparse(&scanner, *automata);
 }
 
 int never_claim_load(FILE *f, AutomataRef *a) { return nc_parse(f, a); }

@@ -41,19 +41,18 @@
 #include <math.h>
 #include <stdio.h>
 #include "element/element.h"
+extern "C" {
 #include "automata.h"
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
-typedef void* yyscan_t;
-#endif
+}
+#include "propsym_lexer.hpp"
 %}
 
 %pure-parser
 %locations
-%parse-param {yyscan_t scanner}
+%parse-param {propsym::lexer *scanner}
 %parse-param {AutomataRef automata}
 %parse-param {Vector **definitions}
-%lex-param {yyscan_t scanner}
+%lex-param {propsym::lexer *scanner}
 
 %union {
   int _int;
@@ -72,9 +71,11 @@ typedef void* yyscan_t;
 %type <definition> definition;
 
 %{
-#include "propsym_lexer.h"
+#include "propsym_lexer.hpp"
+extern "C" {
 #include "verifier/propositional_symbol.h"
-static void propsymerror (YYLTYPE*, yyscan_t, AutomataRef, Vector **, char *);
+}
+static void propsymerror (YYLTYPE*, propsym::lexer *, AutomataRef, Vector **, const char *);
 %}
 
 %% /* Grammar rules and actions follow.  */
@@ -128,8 +129,8 @@ definition:
 %%
 
 /* Called by yyparse on error.  */
-void propsymerror (YYLTYPE *loc, yyscan_t scanner, AutomataRef a, Vector **defs, char *s)
+void propsymerror (YYLTYPE *loc, propsym::lexer *scanner, AutomataRef a, Vector **defs, const char *s)
 {
-  fprintf(stderr, "propositional symbol: error %s line: %d\n", s, propsymget_lineno(scanner));
+  fprintf(stderr, "propositional symbol: error %s line: %d\n", s, scanner->lineno());
   exit(1);
 }

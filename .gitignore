@@ -68,11 +68,12 @@ lib/*.il
 *.la
 src/arch.h
 src/slim
-src/verifier/nc_lexer.*
-src/verifier/nc_parser.*
-src/verifier/nc_parser.h
-src/verifier/propsym_lexer.*
-src/verifier/propsym_parser.*
+src/verifier/nc_lexer.cpp
+src/verifier/nc_parser.cpp
+src/verifier/nc_parser.hpp
+src/verifier/propsym_lexer.cpp
+src/verifier/propsym_parser.cpp
+src/verifier/propsym_parser.hpp
 src/utility/.deps
 src/verifier/.deps
 third_party/google-perftools-1.8.3/.deps

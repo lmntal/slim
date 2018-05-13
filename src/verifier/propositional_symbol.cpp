@@ -44,11 +44,11 @@ typedef void *yyscan_t;
 extern "C" {
 #include "propositional_symbol.h"
 #include "../lmntal.h"
-#include "propsym_parser.h"
-#include "propsym_lexer.h"
 #include "ffi/lmntal_system_adapter.h"
 #include "loader/loader.h"
 }
+#include "propsym_lexer.hpp"
+#include "propsym_parser.hpp"
 struct SymbolDefinition {
   unsigned int sym_id;
   PropositionRef prop;
@@ -148,19 +148,20 @@ void propsym_free(SymbolDefinitionRef s) {
 
 unsigned int propsym_symbol_id(SymbolDefinitionRef s) { return s->sym_id; }
 
-extern "C" int propsymparse(yyscan_t, AutomataRef, Vector **);
+int propsymparse(propsym::lexer *, AutomataRef, Vector **);
 
 int propsym_parse(FILE *in, AutomataRef a, PVector *definitions) {
-  int r;
-  yyscan_t scanner;
+  // int r;
+  // yyscan_t scanner;
+  propsym::lexer scanner(in);
 
-  propsymlex_init(&scanner);
-  propsymset_extra(NULL, scanner);
-  propsymset_in(in, scanner);
-  r = propsymparse(scanner, a, definitions);
-  propsymlex_destroy(scanner);
+  // propsymlex_init(&scanner);
+  // propsymset_extra(NULL, scanner);
+  // propsymset_in(in, scanner);
+  // r = propsymparse(scanner, a, definitions);
+  // propsymlex_destroy(scanner);
 
-  return r;
+  return propsymparse(&scanner, a, definitions);;
 }
 
 /* 正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/

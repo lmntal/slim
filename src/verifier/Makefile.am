@@ -1,12 +1,11 @@
 noinst_LIBRARIES = liblmn_verifier.a
 
-AM_LFLAGS=-P $(patsubst %_lexer.l,%,$<)  \
-           --header-file=$(patsubst %.l,%.h,$<) -o $(patsubst %.l,%.c,$<)
-AM_YFLAGS=-d -p $(patsubst %_parser.y,%,$<) -o $(patsubst %.y,%.c,$<)
+
+AM_YFLAGS=-d -p $(patsubst %_parser.ypp,%,$<) -o $(patsubst %.ypp,%.cpp,$<)
 
 PARSERS = nc_parser nc_lexer propsym_parser propsym_lexer
-PARSER_HEADER = $(patsubst %, %.h, $(PARSERS))
-PARSER_SOURCE = $(patsubst %, %.c, $(PARSERS))
+PARSER_HEADER = nc_parser.hpp propsym_parser.hpp
+PARSER_SOURCE = nc_parser.cpp nc_lexer.cpp propsym_parser.cpp propsym_lexer.cpp
 
 BUILT_SOURCES = $(PARSER_SOURCE)
 CLEANFILES = $(PARSER_SOURCE) $(PARSER_HEADER)
@@ -32,9 +31,9 @@ liblmn_verifier_a_SOURCES =                              \
 	mc_worker.cpp              mc_worker.h                   \
 	mem_encode.cpp             mem_encode.h                  \
 	mhash.cpp                  mhash.h                       \
-	nc_parser.y	             nc_lexer.l                    \
+	nc_parser.ypp	             nc_lexer.cpp                    \
 	propositional_symbol.cpp   propositional_symbol.h        \
-	propsym_parser.y         propsym_lexer.l               \
+	propsym_parser.ypp         propsym_lexer.cpp               \
 	runtime_status.cpp         runtime_status.h              \
 	state.cpp                  state.h          state.hpp             \
 	statespace.cpp             statespace.h                  \
@@ -45,7 +44,12 @@ liblmn_verifier_a_SOURCES =                              \
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
 
-.l.c:
-	$(LEX) $(LFLAGS) $(AM_LFLAGS) $<
-.y.c:
+nc_lexer.cpp: nc_lexer.cpp.re
+	$(RE2C) -o nc_lexer.cpp nc_lexer.cpp.re
+
+propsym_lexer.cpp: propsym_lexer.cpp.re
+	$(RE2C) -c -o propsym_lexer.cpp propsym_lexer.cpp.re
+
+
+.ypp.cpp:
 	$(YACC) $(YFLAGS) $(AM_YFLAGS) $<
