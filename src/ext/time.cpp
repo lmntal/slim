@@ -1,5 +1,5 @@
 /*
- * init_exts.c - String API
+ * time.c - Timer API
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -36,38 +36,31 @@
  *
  * $Id$
  */
-#include "../lmntal.h"
-#include "membrane.h"
-void init_integer(void);
-void init_float(void);
-void init_nlmem(void);
-void init_atomic(void);
-void init_io(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_array(void);
-void init_atom(void);
-void init_react_rule(void);
-void init_set(void);
-void init_state_map(void);
-void init_zerostep(void);
 
-void init_builtin_extensions(void)
+extern "C"{
+#include "vm/vm.h"
+#include "element/element.h"
+void gettime(LmnReactCxtRef rc,
+             LmnMembraneRef mem,
+             LmnAtomRef a0, LmnLinkAttr t0);
+void init_time(void);
+}
+
+void gettime(LmnReactCxtRef rc,
+             LmnMembraneRef mem,
+             LmnAtomRef a0, LmnLinkAttr t0)
 {
-  init_integer();
-  init_float();
-  init_nlmem();
-  init_atomic();
-  init_io();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();
-  init_array();
-  init_atom();
-  init_react_rule();
-  init_set();
-  init_state_map();
-  init_membrane();
-  init_zerostep();
+  LmnAtomRef t = (LmnAtomRef)lmn_create_double_atom(get_cpu_time());
+
+  lmn_mem_newlink(mem,
+                  a0, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(t0),
+                  t, LMN_DBL_ATTR, 0);
+
+  lmn_mem_push_atom(mem, t, LMN_DBL_ATTR);
+
+}
+
+void init_time(void)
+{
+  lmn_register_c_fun("gettime", (void *)gettime, 1);
 }

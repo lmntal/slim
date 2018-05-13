@@ -37,6 +37,7 @@
  * $Id$
  */
 
+extern "C"{
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
@@ -46,9 +47,25 @@ void cb_mhash(LmnReactCxtRef rc,
               LmnMembraneRef mem,
               LmnAtomRef mem_proxy, LmnLinkAttr mem_proxy_link_attr,
               LmnAtomRef ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
+              LmnAtomRef ret_hash_atom, LmnLinkAttr ret_hash_atom_link_attr);
+void cb_mem_equals(LmnReactCxtRef rc,
+                   LmnMembraneRef mem,
+                   LmnAtomRef mem0_proxy, LmnLinkAttr mem0_proxy_link_attr,
+                   LmnAtomRef mem1_proxy, LmnLinkAttr mem1_proxy_link_attr,
+                   LmnAtomRef ret_mem0_link, LmnLinkAttr ret_mem0_link_attr,
+                   LmnAtomRef ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
+                   LmnAtomRef res_link, LmnLinkAttr res_link_attr);
+void init_membrane(void);
+}
+
+
+void cb_mhash(LmnReactCxtRef rc,
+              LmnMembraneRef mem,
+              LmnAtomRef mem_proxy, LmnLinkAttr mem_proxy_link_attr,
+              LmnAtomRef ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
               LmnAtomRef ret_hash_atom, LmnLinkAttr ret_hash_atom_link_attr)
 {
-  LmnMembraneRef m = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem_proxy, 0));
+  LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)mem_proxy, 0));
 
   unsigned long h = mhash(m);
 
@@ -71,8 +88,8 @@ void cb_mem_equals(LmnReactCxtRef rc,
                    LmnAtomRef ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
                    LmnAtomRef res_link, LmnLinkAttr res_link_attr)
 {
-  LmnMembraneRef m0 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem0_proxy, 0));
-  LmnMembraneRef m1 = LMN_PROXY_GET_MEM(LMN_SATOM_GET_LINK(mem1_proxy, 0));
+  LmnMembraneRef m0 = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)mem0_proxy, 0));
+  LmnMembraneRef m1 = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)mem1_proxy, 0));
   LmnFunctor judge = (mem_cmp(m0, m1) == 0) ? LMN_TRUE_FUNCTOR : LMN_FALSE_FUNCTOR;
   LmnSymbolAtomRef result = lmn_mem_newatom(mem, judge);
 

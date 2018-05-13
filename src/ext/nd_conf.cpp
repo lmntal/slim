@@ -37,9 +37,17 @@
  * $Id$
  */
 
+extern "C"{
 #include <stdio.h>
 #include "vm/vm.h"
 #include "verifier/verifier.h"
+void cb_set_functor_priority(LmnReactCxtRef rc,
+                             LmnMembraneRef mem,
+                             LmnAtomRef a0, LmnLinkAttr t0,
+                             LmnAtomRef a1, LmnLinkAttr t1,
+                             LmnAtomRef a2, LmnLinkAttr t2);
+void init_nd_conf(void);
+}
 
 /* ポートa0から一行読み込む
  * +a0     : 優先度を表す整数
@@ -53,9 +61,9 @@ void cb_set_functor_priority(LmnReactCxtRef rc,
                              LmnAtomRef a2, LmnLinkAttr t2)
 {
   set_functor_priority(lmn_functor_intern(ANONYMOUS,
-                                          LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(a1)),
-                                          (int)a2),
-                       (int)a0);
+                                          LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1)),
+                                          (LmnWord)a2),
+                       (LmnWord)a0);
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_delete_atom(mem, a2, t2);
