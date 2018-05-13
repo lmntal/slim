@@ -37,11 +37,9 @@
  * $Id$
  */
 
-extern "C" {
 #include "normal_thread.h"
 
 #include "verifier/runtime_status.h"
-}
 
 pthread_t *findthread;
 arginfo **thread_info;

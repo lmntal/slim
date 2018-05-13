@@ -36,9 +36,7 @@
  * $Id $
  */
 
-extern "C" {
 #include "atom.h"
-}
 #include <stddef.h>
 
 struct LmnAtomData {

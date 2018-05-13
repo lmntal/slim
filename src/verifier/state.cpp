@@ -37,7 +37,6 @@
  * $Id$
  */
 
-extern "C" {
 #include "state.h"
 #include "automata.h"
 #include "binstr_compress.h"
@@ -50,7 +49,6 @@ extern "C" {
 #ifdef KWBT_OPT
 #include <limits.h>
 #endif
-}
 #include "state.hpp"
 
 LmnCost state_cost(State *S) {

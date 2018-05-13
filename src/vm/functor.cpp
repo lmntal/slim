@@ -36,13 +36,11 @@
  * $Id: functor.c,v 1.5 2008/09/29 05:23:40 taisuke Exp $
  */
 
-extern "C" {
 #include "functor.h"
 #include "atom.h"
 #include "element/element.h"
 #include "lmntal.h"
 #include "symbol.h"
-}
 
 struct PredefinedFunctor {
   LmnFunctor id;

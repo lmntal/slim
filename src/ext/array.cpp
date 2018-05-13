@@ -36,11 +36,9 @@
  *
  * $Id$
  */
-extern "C"{
 #include "array.h"
 #include "element/element.h"
 #include "vm/vm.h"
-}
 /**
  * @memberof LmnArray
  * @private
@@ -405,10 +403,8 @@ BOOL sp_cb_array_eq(void *_p1, void *_p2)
   return FALSE;
 }
 
-extern "C"{
 /* defined in string.c */
 void sp_cb_string_dump(void *s, LmnPortRef port);
-}
 
 /**
  * @memberof LmnArray
@@ -468,9 +464,7 @@ BOOL sp_cp_array_is_ground(void *data)
  * @memberof LmnArray
  * @private
  */
-extern "C"{
 void init_array();
-}
 
 void init_array()
 {

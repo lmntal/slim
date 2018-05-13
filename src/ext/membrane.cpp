@@ -37,7 +37,6 @@
  * $Id$
  */
 
-extern "C"{
 #include "lmntal.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
@@ -56,7 +55,6 @@ void cb_mem_equals(LmnReactCxtRef rc,
                    LmnAtomRef ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
                    LmnAtomRef res_link, LmnLinkAttr res_link_attr);
 void init_membrane(void);
-}
 
 
 void cb_mhash(LmnReactCxtRef rc,

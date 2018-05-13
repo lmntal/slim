@@ -34,13 +34,11 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern "C" {
 #include "firstclass_rule.h"
 
 #include "element/st.h"
 #include "ffi/lmntal_system_adapter.h"
 #include "loader/loader.h"
-}
 
 #define LINK_PREFIX "L"
 #define LINKCONNECTION_MAX 100000

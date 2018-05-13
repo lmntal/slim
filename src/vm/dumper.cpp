@@ -36,13 +36,11 @@
  * $Id: dumper.c,v 1.15 2008/09/19 18:03:22 taisuke Exp $
  */
 
-extern "C" {
 #include "dumper.h"
 #include "ccallback.h"
 #include "memstack.h"
 #include "symbol.h"
 #include <ctype.h>
-}
 #include "rule.hpp"
 #include "atomlist.hpp"
 

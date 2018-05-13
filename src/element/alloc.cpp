@@ -36,7 +36,6 @@
  * $Id: alloc.c,v 1.3 2008/09/19 05:18:17 taisuke Exp $
  */
 
-extern "C" {
 #include "error.h"
 #include "lmntal.h"
 #include "lmntal_thread.h"
@@ -44,7 +43,6 @@ extern "C" {
 #include "util.h"
 #include "vector.h"
 #include "vm/vm.h"
-}
 
 /*----------------------------------------------------------------------
  * memory allocation for atom

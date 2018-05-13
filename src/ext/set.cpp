@@ -37,11 +37,9 @@
  * $Id$
  */
 
-extern "C" {
 #include "set.h"
 #include "vm/vm.h"
 #include "verifier/verifier.h"
-}
 /**
  * @ingroup  Ext
  * @struct LmnSet set.c "ext/set.c"
@@ -715,8 +713,6 @@ unsigned char sp_cb_set_is_ground(void *data)
  * @memberof LmnSet
  * @private
  */
-extern "C" void init_set(void);
-
 void init_set(void)
 {
   set_atom_type = lmn_sp_atom_register("set",

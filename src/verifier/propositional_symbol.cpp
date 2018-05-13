@@ -41,12 +41,10 @@
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void *yyscan_t;
 #endif
-extern "C" {
 #include "propositional_symbol.h"
 #include "../lmntal.h"
 #include "ffi/lmntal_system_adapter.h"
 #include "loader/loader.h"
-}
 #include "propsym_lexer.hpp"
 #include "propsym_parser.hpp"
 struct SymbolDefinition {

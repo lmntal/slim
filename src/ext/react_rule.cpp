@@ -161,7 +161,6 @@ void cb_react_ruleset_nd(LmnReactCxtRef rc,
 }
 
 
-extern "C" void init_react_rule(void);
 
 void init_react_rule(void)
 {

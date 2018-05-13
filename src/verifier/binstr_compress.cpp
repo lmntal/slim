@@ -36,7 +36,6 @@
  *
  * $Id$
  */
-extern "C" {
 #include "binstr_compress.h"
 #include "../third_party/zdelta-2.1/zdlib.h"
 #include "element/element.h"
@@ -46,7 +45,6 @@ extern "C" {
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
-}
 
 /** ============================
  *  Binary String Compressor

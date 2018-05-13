@@ -46,9 +46,7 @@ class lexer;
 }
 
 #include "lmntal.h"
-extern "C" {
 #include "automata.h"
-}
 #include "nc_parser.hpp"
 
 namespace nc {

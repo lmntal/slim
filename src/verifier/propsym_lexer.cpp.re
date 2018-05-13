@@ -40,9 +40,7 @@
 #include <iostream>
 
 #include "lmntal.h"
-extern "C" {
 #include "automata.h"
-}
 #include "propsym_parser.hpp"
 
 int get_instr_id(char *);

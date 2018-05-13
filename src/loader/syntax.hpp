@@ -43,11 +43,9 @@
 #include <type_traits>
 #include <vector>
 
-extern "C" {
 #include "element/element.h"
 #include "lmntal.h"
 #include "vm/vm.h"
-}
 
 class ByteEncoder;
 struct Instruction;

@@ -36,19 +36,16 @@
  * $Id: system_ruleset.c,v 1.8 2008/09/29 05:23:40 taisuke Exp $
  */
 
-extern "C" {
 #include "functor.h"
 #include "lmntal.h"
 #include "memstack.h"
 #include "react_context.h"
 #include "symbol.h"
-}
 #include "membrane.hpp"
 #include "atomlist.hpp"
 
 /* prototypes */
 
-extern "C" void init_default_system_ruleset(void);
 
 /* delete out proxies connected each other */
 static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,

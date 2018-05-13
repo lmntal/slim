@@ -36,14 +36,12 @@
  *
  * $Id$
  */
-extern "C" {
 #include "port.h"
 #include "error.h"
 #include "lmnstring.h"
 #include "lmntal.h"
 #include "util.h"
 #include "vm/vm.h"
-}
 
 static int port_atom_type; /* special atom type */
 static LmnFunctor eof_functor;

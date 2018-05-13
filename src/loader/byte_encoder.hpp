@@ -40,10 +40,8 @@
 
 #include <map>
 
-extern "C" {
 #include "lmntal.h"
 #include "vm/vm.h"
-}
 
 #include "syntax.hpp"
 

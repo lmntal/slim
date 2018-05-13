@@ -38,14 +38,11 @@
  */
 
 /* 浮動小数点数関連のコールバック */
-extern "C"{
 #include "../lmntal.h"
 #include "element/element.h"
 #include "vm/vm.h"
 
 
-void init_float(void);
-}
 
 /*
  * (S, N):

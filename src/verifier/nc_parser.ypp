@@ -41,9 +41,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "element/element.h"
-extern "C" {
 #include "automata.h"
-}
 #include "nc_lexer.hpp"
 %}
 

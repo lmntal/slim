@@ -37,12 +37,10 @@
  * $Id$
  */
 
-extern "C"{
 #include <stdio.h>
 #include "vm/vm.h"
 #include "element/element.h"
 void init_io(void);
-}
 // void init_print(void);
 
 /* 改行を出力する

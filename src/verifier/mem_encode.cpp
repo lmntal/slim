@@ -116,7 +116,6 @@
  *   rank        : 4byte
  *
  */
-extern "C" {
 #include "mem_encode.h"
 #include "binstr_compress.h"
 #include "delta_membrane.h"
@@ -126,7 +125,6 @@ extern "C" {
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
-}
 
 /* Tags */
 #define TAG_ATOM_START 0x0

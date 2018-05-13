@@ -36,13 +36,11 @@
  *
  * $Id$
  */
-extern "C" {
 #include "mc_explorer.h"
 #include "element/element.h"
 #include "mc.h"
 #include "mc_worker.h"
 #include "state.h"
-}
 #include "state.hpp"
 
 #ifdef PROFILE

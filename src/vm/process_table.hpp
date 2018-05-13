@@ -44,9 +44,7 @@
 #include <iterator>
 #include <utility>
 
-extern "C" {
 #include "lmntal.h"
-}
 
 
 namespace slim {

@@ -46,9 +46,7 @@ class lexer;
 }
 
 #include "lmntal.h"
-extern "C" {
 #include "automata.h"
-}
 #include "propsym_parser.hpp"
 
 namespace propsym {

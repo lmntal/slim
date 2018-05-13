@@ -44,7 +44,6 @@
 
 
 
-extern "C" void init_nlmem(void);
 
 void nlmem_copy(LmnReactCxtRef rc,
                 LmnMembraneRef mem,

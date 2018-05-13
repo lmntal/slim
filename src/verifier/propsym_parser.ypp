@@ -41,9 +41,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "element/element.h"
-extern "C" {
 #include "automata.h"
-}
 #include "propsym_lexer.hpp"
 %}
 
@@ -72,9 +70,7 @@ extern "C" {
 
 %{
 #include "propsym_lexer.hpp"
-extern "C" {
 #include "verifier/propositional_symbol.h"
-}
 static void propsymerror (YYLTYPE*, propsym::lexer *, AutomataRef, Vector **, const char *);
 %}
 

@@ -62,7 +62,7 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER)
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
 slim_SOURCES =                                                     \
 	main.cpp                          lmntal.h                         \
-	env.c                           arch.h                           \
+	env.cpp                           arch.h                           \
 	\
 	lmntal_ext.h                                                     \
 	ext/init_exts.cpp                                                  \

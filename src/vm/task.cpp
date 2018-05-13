@@ -36,7 +36,6 @@
  * $Id: task.c,v 1.37 2008/10/21 11:31:58 riki Exp $
  */
 
-extern "C" {
 #include "task.h"
 #include "ccallback.h"
 #include "dumper.h"
@@ -50,7 +49,6 @@ extern "C" {
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
-}
 
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,

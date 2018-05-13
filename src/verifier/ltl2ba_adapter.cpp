@@ -36,12 +36,10 @@
  *
  * $Id$
  */
-extern "C" {
 #include "ltl2ba_adapter.h"
 #include "../lmntal.h"
 #include "element/element.h"
 #include <stdlib.h>
-}
 FILE *ltl2ba_str(char *ltl) {
   char *cmd;
   char buf[2048] = {0};

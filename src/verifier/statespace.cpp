@@ -40,7 +40,6 @@
 /** @author Masato Gocho
  *  Closed Address Hash Table / Parallel Hash Table for State Management Table
  */
-extern "C" {
 #include "statespace.h"
 #include "../lmntal.h"
 #include "automata.h"
@@ -87,7 +86,6 @@ static void statetable_resize(StateTable *st, unsigned long old_size);
 void statetable_set_rehash_tbl(StateTable *st, StateTable *rehash_tbl);
 StateTable *statetable_rehash_tbl(StateTable *st);
 static void statetable_memid_rehash(State *pred, StateTable *ss);
-}
 
 #include "state.hpp"
 /** Macros

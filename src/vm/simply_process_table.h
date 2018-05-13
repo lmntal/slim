@@ -38,9 +38,6 @@
 #ifndef LMN_SIMPLY_PROCESS_TABLE_H
 #define LMN_SIMPLY_PROCESS_TABLE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* --------------
  *  SimpleProcTbl
@@ -52,8 +49,6 @@ typedef struct SimpleProcessTable *SimplyProcessTableRef;
 #include "element/element.h"
 #include "vm/vm.h"
 
-#ifdef __cplusplus
-extern "C++" {
 #include "vm/process_table.hpp"
 
 struct SimpleProcessTable : ProcessTable<BYTE> {
@@ -82,8 +77,6 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
 
   bool contains(LmnMembraneRef mem) { return contains(lmn_mem_id(mem)); }
 };
-}
-#endif
 
 /**
  * Function Prototypes
@@ -124,8 +117,5 @@ void sproc_tbl_unset_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key,
 void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key,
                               LmnWord flag);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LMN_SIMPLY_PROCESS_TABLE_H */

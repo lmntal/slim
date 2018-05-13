@@ -37,10 +37,8 @@
  * $Id$
  */
 
-extern "C"{
 #include "element/element.h"
 #include "vm/vm.h"
-}
 
 /*
  * Internal Constructor
@@ -188,10 +186,6 @@ void cb_atom_swap(LmnReactCxtRef rc,
 /*----------------------------------------------------------------------
  * Initialization
  */
-
-extern "C"{
-void init_atom();
-}
 
 void init_atom()
 {

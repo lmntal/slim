@@ -37,7 +37,6 @@
  * $Id$
  */
 
-extern "C"{
 #include "../lmntal.h"
 #include "membrane.h"
 void init_integer(void);
@@ -55,7 +54,6 @@ void init_set(void);
 void init_state_map(void);
 void init_zerostep(void);
 void init_builtin_extensions(void);
-}
 
 void init_builtin_extensions(void)
 {

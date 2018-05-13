@@ -36,7 +36,6 @@
  *
  * $Id$
  */
-extern "C" {
 #include "mc.h"
 #include "binstr_compress.h"
 #include "delta_membrane.h"
@@ -50,7 +49,6 @@ extern "C" {
 #include "dumper.h"
 #endif
 #include "state.h"
-}
 #include "state.hpp"
 
 /** =======================================

@@ -38,9 +38,6 @@
 #ifndef LMN_TRACE_LOG_H
 #define LMN_TRACE_LOG_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "element/element.h"
 #include "membrane.h"
@@ -61,8 +58,6 @@ extern "C" {
  * 訪問済みテーブルの状態をバックトラックさせるためのデータ構造
  */
 
-#ifdef __cplusplus
-extern "C++" {
 
 #include "process_table.hpp"
 #include <stack>
@@ -210,9 +205,6 @@ public:
 
   void continue_trace() { tracker.pop(); }
 };
-}
-
-#endif
 
 typedef struct TraceLog *TraceLogRef;
 
@@ -247,8 +239,5 @@ void tracelog_set_btpoint(TraceLogRef l);
 void tracelog_continue_trace(TraceLogRef l);
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LMN_TRACE_LOG_H */
