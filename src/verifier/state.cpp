@@ -106,23 +106,6 @@ void state_free_mem(State *s) {
   }
 }
 
-void state_succ_set(State *s, Vector *v) {
-  if (!vec_is_empty(v) && !s->successors) {
-    unsigned int i;
-    s->successor_num = vec_num(v);
-    s->successors = LMN_NALLOC(succ_data_t, state_succ_num(s));
-    for (i = 0; i < state_succ_num(s); i++) {
-      s->successors[i] = (succ_data_t)vec_get(v, i);
-    }
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
-                        sizeof(succ_data_t) * vec_num(v));
-      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
-    }
-#endif
-  }
-}
 
 void state_succ_add(State *s, succ_data_t succ) {
   if (!s->successors) {
@@ -138,7 +121,7 @@ void state_succ_add(State *s, succ_data_t succ) {
 void state_succ_clear(State *s) {
   if (s->has_trans_obj()) {
     unsigned int i;
-    for (i = 0; i < state_succ_num(s); i++) {
+    for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
       transition_free(t);
     }
@@ -147,7 +130,7 @@ void state_succ_clear(State *s) {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
-                         sizeof(succ_data_t) * state_succ_num(s));
+                         sizeof(succ_data_t) * s->successor_num);
     profile_add_space(PROFILE_SPACE__TRANS_OBJECT, 0);
   }
 #endif
@@ -637,7 +620,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     fprintf(f, "1\n");
     break;
   case Dir_DOT:
-    if (state_succ_num(s) == 0) {
+    if (s->successor_num == 0) {
       fprintf(
           f,
           "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n",
@@ -744,7 +727,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
   }
 
   if (s->successors) {
-    for (i = 0; i < state_succ_num(s); i++) { /* dump dst state's IDs */
+    for (i = 0; i < s->successor_num; i++) { /* dump dst state's IDs */
       if (need_id_foreach_trans) {
         fprintf(f, "%lu%s", state_format_id(s, formated), state_separator);
       } else if (i > 0) {
@@ -771,7 +754,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
         fprintf(f, "%s", label_end);
       }
 
-      if (i + 1 < state_succ_num(s) && need_id_foreach_trans) {
+      if (i + 1 < s->successor_num && need_id_foreach_trans) {
         fprintf(f, "\n");
       }
     }
@@ -931,7 +914,7 @@ State *state_get_parent(State *s) { return s->parent; }
 void state_set_parent(State *s, State *parent) { s->parent = parent; }
 
 /* 状態sから遷移可能な状態数を返す. */
-unsigned int state_succ_num(State *s) { return s->successor_num; }
+
 
 /* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
 State *state_succ_state(State *s, int idx) {
@@ -944,10 +927,10 @@ State *state_succ_state(State *s, int idx) {
 }
 
 /* 状態sから遷移可能な状態集合に, 状態tが含まれている場合に真を返す.
- * O(state_succ_num(s))と効率的ではないため, 可能な限り利用しない. */
+ * O(successor_num)と効率的ではないため, 可能な限り利用しない. */
 BOOL state_succ_contains(State *s, State *t) {
   unsigned int i;
-  for (i = 0; i < state_succ_num(s); i++) {
+  for (i = 0; i < s->successor_num; i++) {
     State *succ = state_succ_state(s, i);
     if (succ == t)
       return TRUE;

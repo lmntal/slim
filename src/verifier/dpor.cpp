@@ -913,7 +913,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 #endif
 
   RC_EXPANDED(rc)->num = succ_i;
-  state_succ_set(s, RC_EXPANDED(rc)); /* successorを登録 */
+  s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
   st_clear(RC_SUCC_TBL(rc));
 }
 
@@ -986,7 +986,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
     } else {
       unsigned int i, j;
       mc_store_successors(ss, s, rc, new_s, flag);
-      for (i = 0; i < state_succ_num(s); i++) {
+      for (i = 0; i < s->successor_num; i++) {
         State *succ;
         lmn_interned_str name = lmn_intern("ind");
 
@@ -1064,7 +1064,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       s->s_set_reduced();
       mc_expand(ss, s, p_s, rc, new_ss, statespace_propsyms(ss), f);
 
-      for (i = 0; i < state_succ_num(s); i++) {
+      for (i = 0; i < s->successor_num; i++) {
         TransitionRef succ_t = transition(s, i);
         vec_clear(&succ_t->rule_names);
         transition_add_rule(succ_t, lmn_intern("reduced"), 0U);

@@ -220,7 +220,7 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a) {
   } else if (!mc_has_trans(((BOOL)_a))) {
     /* rootなら, サクセッサの遷移オブジェクトを調整 */
     unsigned int i;
-    for (i = 0; i < state_succ_num(s); i++) {
+    for (i = 0; i < s->successor_num; i++) {
       TransitionRef succ_t;
       State *succ_s;
       succ_t = transition(s, i);
@@ -274,7 +274,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
    * その中でC2，C3を共に満足する1本をample_candidateの要素とする */
   if (vec_is_empty(mc_por.ample_candidate)) {
     unsigned int i;
-    for (i = 0; i < state_succ_num(s); i++) {
+    for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
       set_ample(transition_next_state(t));
       vec_push(mc_por.ample_candidate, (vec_data_t)transition_id(t));
@@ -308,7 +308,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
      */
     //    if (vec_num(mc_por.ample_candidate) == state_succ_num(s) ||
     //        !check_C2(s) || !check_C3(ss, s, rc, new_s, org_f)) {
-    if (vec_num(mc_por.ample_candidate) == state_succ_num(s) ||
+    if (vec_num(mc_por.ample_candidate) == s->successor_num ||
         !check_C1(s, statespace_automata(ss), statespace_propsyms(ss)) ||
         !check_C2(s)) {
       return FALSE;
@@ -484,7 +484,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
                     (LmnWord)NULL);
   }
 
-  state_succ_set(s, RC_EXPANDED(rc));
+  s->succ_set(RC_EXPANDED(rc));
   st_clear(RC_SUCC_TBL(rc));
 }
 
@@ -498,7 +498,7 @@ static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
   unsigned int i;
 
   por_store_successors_inner(s, rc);
-  for (i = 0; i < state_succ_num(s); i++) {
+  for (i = 0; i < s->successor_num; i++) {
     TransitionRef succ_t;
     unsigned long assign_id = 0;
 
@@ -572,7 +572,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   /* |en(s)|<=1の場合はsで可能な遷移間で
    * 独立性を定義することができないのでFALSEを返して終了する */
-  if (state_succ_num(s) <= 1) {
+  if (s->successor_num <= 1) {
     set_independency_checked(s);
     return FALSE;
   }
@@ -580,7 +580,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
   /* >>>>>>>>>>>>>>>>>>>> Step 2. <<<<<<<<<<<<<<<<<<<< */
 
   /* sから2step目の遷移を経て到達可能なすべての状態を求める */
-  for (i = 0; i < state_succ_num(s); i++) {
+  for (i = 0; i < s->successor_num; i++) {
     TransitionRef succ_t;
     State *succ_s;
 
@@ -608,7 +608,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
    * "por_gen_successors"した際に付けられた仮のIDは独立性有りと判定された際，
    * 対応するsを起点とする遷移に付与されているIDで書換えられる． */
   // por_successor_comb_foreach(s, por_update_independency_tbl);
-  for (i = 0; i < state_succ_num(s) - 1; i++) {
+  for (i = 0; i < s->successor_num - 1; i++) {
     /*
      *    s ----(s_i)---- ss1
      *    |                |
@@ -628,15 +628,15 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
     s_i = transition(s, i);
     ss1 = transition_next_state(s_i);
 
-    for (j = i + 1; j < state_succ_num(s); j++) {
+    for (j = i + 1; j < s->successor_num; j++) {
       s_j = transition(s, j);
       ss2 = transition_next_state(s_j);
 
-      for (i2 = 0; i2 < state_succ_num(ss1); i2++) {
+      for (i2 = 0; i2 < ss1->successor_num; i2++) {
         ss1_i2 = transition(ss1, i2);
         t1 = transition_next_state(ss1_i2);
 
-        for (j2 = 0; j2 < state_succ_num(ss2); j2++) {
+        for (j2 = 0; j2 < ss2->successor_num; j2++) {
           ss2_j2 = transition(ss2, j2);
           t2 = transition_next_state(ss2_j2);
 
@@ -670,13 +670,13 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
    * まだエントリーが作成されていないものについてエントリーの新規作成を行う．
    * ここで対象となる遷移は，sから可能な遷移と独立でないものに限られる．
    * (∵独立なものはIDを書換えられた上でテーブル内に整理済のため) */
-  for (i = 0; i < state_succ_num(s); i++) {
+  for (i = 0; i < s->successor_num; i++) {
     State *ss;
     TransitionRef s2ss;
 
     s2ss = transition(s, i);
     ss = transition_next_state(s2ss);
-    for (j = 0; j < state_succ_num(ss); j++) {
+    for (j = 0; j < ss->successor_num; j++) {
       st_data_t t;
       unsigned long id;
 
@@ -713,7 +713,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
 static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
   unsigned int i;
 
-  for (i = 0; i < state_succ_num(s); i++) {
+  for (i = 0; i < s->successor_num; i++) {
     TransitionRef t = transition(s, i);
     if (!vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
       /* sで可能かつample(s)の候補に含まれない遷移をスタック上に乗せる */
@@ -739,7 +739,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
       //      if (!is_independency_checked(succ_s) && !succ_s->is_expanded()) {
       if (!is_independency_checked(succ_s)) {
         independency_check(succ_s, a, psyms);
-        for (i = 0; i < state_succ_num(succ_s); i++) {
+        for (i = 0; i < succ_s->successor_num; i++) {
           TransitionRef succ_succ_t = transition(succ_s, i);
           if (!vec_contains(mc_por.ample_candidate,
                             (vec_data_t)transition_id(succ_succ_t))) {
@@ -766,7 +766,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
 static BOOL check_C2(State *s) {
   if (lmn_env.ltl) {
     unsigned int i;
-    for (i = 0; i < state_succ_num(s); i++) {
+    for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
       if (vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
         /* TODO: 設計と実装 */
@@ -821,7 +821,7 @@ static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   if (!mc_has_property(f))
     return TRUE;
 
-  for (i = 0; i < state_succ_num(s); i++) {
+  for (i = 0; i < s->successor_num; i++) {
     TransitionRef succ_t;
     State *succ_s, *t;
 
@@ -988,7 +988,7 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
    * 含まれていないIDの遷移が, ID=id_keyの遷移と依存関係にある遷移Tである.
    * このような遷移Tとid_keyをample(s)の候補に放り込む */
 
-  for (i = 0; i < state_succ_num(s); i++) {
+  for (i = 0; i < s->successor_num; i++) {
     /* 目的のID以外はskip.. */
     TransitionRef trans_key = transition(s, i);
     if (transition_id(trans_key) != id_key)
@@ -996,7 +996,7 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
 
     /* 現在チェックしているテーブル上のエントリーが
      * sから可能な遷移の中のi番目(id_key)に対応 */
-    for (j = 0; j < state_succ_num(s); j++) {
+    for (j = 0; j < s->successor_num; j++) {
       TransitionRef check;
       unsigned long
           checked_id; /* キーのIDを持つ遷移と依存関係がある可能性のある遷移IDを一時的に管理
@@ -1043,12 +1043,12 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
 
 static void push_ample_to_expanded(StateSpaceRef ss, State *s,
                                    LmnReactCxtRef rc, Vector *new_ss, BOOL f) {
-  if (state_succ_num(s) > 0) {
+  if (s->successor_num > 0) {
     struct Vector tmp;
     unsigned int i;
     vec_init(&tmp, 32);
 
-    for (i = 0; i < state_succ_num(s); i++) {
+    for (i = 0; i < s->successor_num; i++) {
       TransitionRef succ_t;
       State *succ_s;
 
@@ -1075,7 +1075,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
     LMN_FREE(s->successors);
     s->successors = NULL;
     s->successor_num = 0;
-    state_succ_set(s, &tmp);
+    s->succ_set(&tmp);
     vec_destroy(&tmp);
   }
 }
@@ -1090,10 +1090,10 @@ static BOOL push_succstates_to_expanded(StateSpaceRef ss, State *s,
                                         LmnReactCxtRef rc, Vector *new_ss,
                                         BOOL f) {
   BOOL ret = FALSE;
-  if (is_por_expanded(s) && state_succ_num(s) > 0) {
+  if (is_por_expanded(s) && s->successor_num > 0) {
     unsigned int i;
     ret = TRUE;
-    for (i = 0; i < state_succ_num(s); i++) {
+    for (i = 0; i < s->successor_num; i++) {
       TransitionRef succ_t;
       State *succ_s;
 
@@ -1149,7 +1149,7 @@ int dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a) {
 
   fprintf(f, "%lu::", state_format_id(s, is_formated));
   if (s->successors) {
-    for (i = 0; i < state_succ_num(s); i++) {
+    for (i = 0; i < s->successor_num; i++) {
 
       if (i > 0)
         fprintf(f, ",");

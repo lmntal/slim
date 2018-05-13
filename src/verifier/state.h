@@ -93,7 +93,6 @@ struct State;
 #define DEFAULT_TRANSITION_ID 0
 #define DEFAULT_PROP_AUTOMATA NULL
 
-void state_succ_set(State *s, Vector *v);
 void state_succ_add(State *s, succ_data_t succ);
 void state_succ_clear(State *s);
 void state_free_mem(State *s);
@@ -124,7 +123,6 @@ void state_unset_mem(State *s);
 void state_unset_binstr(State *s);
 State *state_get_parent(State *s);
 void state_set_parent(State *s, State *parent);
-unsigned int state_succ_num(State *s);
 State *state_succ_state(State *s, int idx);
 BOOL state_succ_contains(State *s, State *t);
 BOOL state_is_accept(AutomataRef a, State *s);
@@ -258,8 +256,6 @@ State *state_get_parent(State *s);
 /* 状態sに, sを生成した状態(親ノード)へのアドレスを割り当てる. */
 void state_set_parent(State *s, State *parent);
 
-/* 状態sから遷移可能な状態数を返す. */
-unsigned int state_succ_num(State *s);
 /* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
 State *state_succ_state(State *s, int idx);
 

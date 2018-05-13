@@ -273,6 +273,25 @@ struct State {                /* Total:72(36)byte */
     return dst;
   }
 
+  void succ_set(Vector *v) {
+    if (!vec_is_empty(v) && !successors) {
+      unsigned int i;
+      successor_num = vec_num(v);
+      successors = LMN_NALLOC(succ_data_t, successor_num);
+      for (i = 0; i < successor_num; i++) {
+	successors[i] = (succ_data_t)vec_get(v, i);
+      }
+#ifdef PROFILE
+      if (lmn_env.profile_level >= 3) {
+	profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
+			  sizeof(succ_data_t) * vec_num(v));
+	profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
+      }
+#endif
+    }
+  }
+
+
   State () :
     data(NULL),
     state_name(0x00U),
@@ -333,7 +352,7 @@ struct State {                /* Total:72(36)byte */
 #endif
       if (has_trans_obj()) {
         unsigned int i;
-        for (i = 0; i < state_succ_num(this); i++) {
+        for (i = 0; i < successor_num; i++) {
           transition_free(transition(this, i));
         }
       }

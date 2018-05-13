@@ -267,7 +267,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 #endif
 
   s->s_unset_update();
-  n = state_succ_num(s);
+  n = s->successor_num;
   f = (lmn_env.opt_mode == OPT_MINIMIZE);
   for (i = 0; i < n; i++) {
     succ = state_succ_state(s, i);
@@ -386,7 +386,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   //  }
 
   state_D_progress(s, rc);
-  state_succ_set(s, RC_EXPANDED(rc)); /* successorを登録 */
+  s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
 }
 
 /*

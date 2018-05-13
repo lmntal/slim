@@ -521,7 +521,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                                      postorder順を求めるDFS(再度到達した未展開状態がStackに積み直される)
                                    */
      s->set_on_stack();
-      n = state_succ_num(s);
+      n = s->successor_num;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
 
@@ -604,7 +604,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
      * postorder順を求めるDFS(explorerから未到達の状態がStackに積み直される) */
     if (worker_is_explorer(w)) {
      s->set_on_stack();
-      n = state_succ_num(s);
+      n = s->successor_num;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
         if (!succ->s_is_visited_by_explorer()) {
@@ -717,7 +717,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
 #if 0
     // workerごとにsuccessorをずらして積む
-    n = state_succ_num(s);
+    n = s->successor_num;
 
     if (n > 0) {
       start = worker_id(w) % n;
@@ -731,7 +731,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     }
 #else
     // fresh successor heuristics
-    n = state_succ_num(s);
+    n = s->successor_num;
     Vector *fresh = NULL;
 
     if (n > 0) {
@@ -804,7 +804,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
     }
 
     if (!worker_on_parallel(w)) {
-      n = state_succ_num(s);
+      n = s->successor_num;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
         if (!succ->is_expanded()) {
@@ -1036,7 +1036,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
     else if (BLEDGE_COND(w))
       bledge_store_layer(w, s);
 
-    if (state_succ_num(s) == 0) {
+    if (s->successor_num == 0) {
       if (lmn_env.nd_search_end) {
         /* 最終状態探索モードの場合, 発見次第探索を打ち切る */
         workers_set_exit(wp);
