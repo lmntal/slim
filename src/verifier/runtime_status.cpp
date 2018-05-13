@@ -464,12 +464,12 @@ static void profile_state_f(State *s, LmnWord arg) {
 
   p = &lmn_prof.lv2[lmn_OMP_get_my_id()];
   ss = (StateSpaceRef)arg;
-  succ_num = state_succ_num(s);
+  succ_num = s->successor_num;
 
   /* メモリ */
   p->state_space += sizeof(State);
-  if (!s->is_binstr_user() && state_mem(s)) {
-    p->membrane_space += lmn_mem_root_space(state_mem(s));
+  if (!s->is_binstr_user() && s->state_mem()) {
+    p->membrane_space += lmn_mem_root_space(s->state_mem());
   } else if (s->is_binstr_user() && s->state_binstr()) {
     p->binstr_space += lmn_binstr_space(s->state_binstr());
   }

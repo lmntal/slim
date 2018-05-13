@@ -225,7 +225,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     mc_store_successors(ss, s, rc, new_ss, f);
   }
 
-  if (!state_mem(s)) {
+  if (!s->state_mem()) {
     /** free   : 遷移先を求めた状態sからLMNtalプロセスを開放 */
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -235,7 +235,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     lmn_mem_free_rec(mem);
     if (s->is_binstr_user() &&
         (lmn_env.hash_compaction || lmn_env.tree_compress)) {
-      state_free_binstr(s);
+      s->free_binstr();
     }
   }
 
@@ -267,7 +267,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 #endif
 
   s->s_unset_update();
-  n = state_succ_num(s);
+  n = s->successor_num;
   f = (lmn_env.opt_mode == OPT_MINIMIZE);
   for (i = 0; i < n; i++) {
     succ = state_succ_state(s, i);
@@ -319,11 +319,11 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ_m = NULL;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
       if (src_succ->s_is_d())
-        state_calc_binstr_delta(src_succ);
+        src_succ->calc_binstr_delta();
       succ = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
     } else {                            /* default */
-      src_succ_m = state_mem(src_succ); /* for free mem pointed by src_succ */
+      src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ = statespace_insert(ss, src_succ);
     }
 
@@ -386,7 +386,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   //  }
 
   state_D_progress(s, rc);
-  state_succ_set(s, RC_EXPANDED(rc)); /* successorを登録 */
+  s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
 }
 
 /*
@@ -534,7 +534,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
         src_succ_s = (State *)vec_get(RC_EXPANDED(rc), j);
       }
 
-      new_s = state_copy(src_succ_s, NULL);
+      new_s = src_succ_s->duplicate(NULL);
       state_set_parent(new_s, s);
       state_set_property_state(new_s, p_nxt_l);
 
@@ -593,7 +593,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
     /* 遷移元状態sをdeep copyする.
      * ただし, sに対応した階層グラフ構造はこの時点では既に破棄されているため,
      * mc_expandの時点で再構築した階層グラフ構造memを渡す.  */
-    new_s = state_copy(s, mem);
+    new_s = s->duplicate(mem);
   }
   state_set_property_state(new_s, next_label);
   state_set_parent(new_s, s);

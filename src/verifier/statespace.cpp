@@ -191,7 +191,7 @@ static void statetable_resize(StateTable *st, unsigned long old_cap) {
           /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要
            * (resize中に,
            * 展開済み状態へのデータアクセスは発生しないよう設計している) */
-          state_free_binstr(ptr);
+          ptr->free_binstr();
           if (ptr->s_is_d()) {
             ptr->s_unset_d();
           }
@@ -522,7 +522,7 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
 #ifdef PROFILE
     if (lmn_env.optimize_hash_old && statespace_is_memid_hash(ss, hashv) &&
         lmn_env.tree_compress == FALSE) {
-      state_calc_mem_encode(s);
+      s->calc_mem_encode();
       insert_dst = is_accept ? statespace_accept_memid_tbl(ss)
                              : statespace_memid_tbl(ss);
     }
@@ -583,12 +583,12 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
   s->state_set_mem(DMEM_ROOT_MEM(d));
 
   /* Xを基に, ハッシュ値/mem_idなどの状態データを計算する */
-  s->state_calc_hash(state_mem(s), statespace_use_memenc(ss));
+  s->state_calc_hash(s->state_mem(), statespace_use_memenc(ss));
 
   /* 既にバイナリストリング計算済みとなるcanonical membrane使用時は,
    * この時点でdelta-stringを計算する */
   if (s->is_encoded() && s->s_is_d()) {
-    state_calc_binstr_delta(s);
+    s->calc_binstr_delta();
   }
 
   ret = statespace_insert(ss, s);
@@ -892,12 +892,12 @@ static State *statetable_insert(StateTable *st, State *ins)
            */
 
           if (ins->is_binstr_user()) {
-            state_free_binstr(ins);
+            ins->free_binstr();
           } else if (compress) {
             lmn_binstr_free(compress);
           }
           ins->s_unset_d();
-          state_calc_mem_encode(ins);
+          ins->calc_mem_encode();
           /*compress = NULL;*/
 
 #ifndef PROFILE
@@ -954,12 +954,12 @@ static State *statetable_insert(StateTable *st, State *ins)
 
             /* 比較元をencode */
             if (ins->is_binstr_user()) {
-              state_free_binstr(ins);
+              ins->free_binstr();
             } else if (compress) {
               lmn_binstr_free(compress);
             }
             ins->s_unset_d();
-            state_calc_mem_encode(ins);
+            ins->calc_mem_encode();
 
 #ifndef PROFILE
             ret = statetable_insert(statetable_rehash_tbl(st), ins);
@@ -1025,7 +1025,7 @@ static State *statetable_insert(StateTable *st, State *ins)
   if (ret != ins) {
     /* 別のスレッドの割込みで追加に失敗した場合, 計算したバイト列を破棄する.*/
     if (ins->is_binstr_user()) {
-      state_free_binstr(ins);
+      ins->free_binstr();
     } else if (compress) {
       // lmn_binstr_free(compress);
     }
@@ -1141,7 +1141,7 @@ void statespace_set_init_state(StateSpaceRef ss, State *init_state,
   ss->init_state = init_state;
   statespace_add_direct(ss, init_state);
   if (enable_binstr) {
-    state_free_mem(init_state);
+    init_state->free_mem();
   }
 }
 

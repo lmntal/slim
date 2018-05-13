@@ -13,7 +13,7 @@
 #define make_rgb(r, g, b) ((r << 16) | (g << 8) | (b))
 #define for_each_successors(s, f)                                              \
   do {                                                                         \
-    int i, n = state_succ_num(s);                                              \
+    int i, n = s->successor_num;                                              \
     for (i = 0; i < n; i++) {                                                  \
       State *succ = state_succ_state(s, i);                                    \
       f(s, succ);                                                              \
@@ -57,7 +57,7 @@ void calc_colors(int worker_num, int **colors) {
 
 void dump_dot_state_edges(State *s) {
   int i, n;
-  for (i = 0, n = state_succ_num(s); i < n; i++) {
+  for (i = 0, n = s->successor_num; i < n; i++) {
     State *succ = state_succ_state(s, i);
     printf("  %lu -> %lu", state_hash(s), state_hash(succ));
     if (s->is_on_cycle() && succ->is_on_cycle())
@@ -94,7 +94,7 @@ void dump_dot_loop(State *s, AutomataRef *a, int *colors, int depth) {
   dump_dot_state_edges(s);
   dump_dot_state_attr(s, a, colors);
 
-  for (i = 0, n = state_succ_num(s); i < n; i++) {
+  for (i = 0, n = s->successor_num; i < n; i++) {
     State *succ = state_succ_state(s, i);
     if (!succ->s_is_visited_by_visualizer()) {
       dump_dot_loop(succ, a, colors, depth + 1);

@@ -162,7 +162,7 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
   State *s = (State *)a1;
   st_data_t entry;
 
-  LmnMembraneRef new_mem = state_mem_copy(s);
+  LmnMembraneRef new_mem = s->duplicate_membrane();
   LmnFunctor at_functor = lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1);
 
   AtomListEntryRef ent;

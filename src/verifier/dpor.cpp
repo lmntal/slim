@@ -901,7 +901,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       dmem_root_commit(succ_d); /* src_succに対応したグラフ構造へ */
       src_succ->state_set_mem(DMEM_ROOT_MEM(succ_d));
       src_succ->state_calc_hash(
-          state_mem(src_succ),
+          src_succ->state_mem(),
           statespace_use_memenc(ss)); /* それを元にハッシュ値やmem_idを計算 */
       if (!src_succ->is_encoded()) {
         src_succ->state_set_binstr(state_calc_mem_dump(src_succ));
@@ -913,7 +913,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 #endif
 
   RC_EXPANDED(rc)->num = succ_i;
-  state_succ_set(s, RC_EXPANDED(rc)); /* successorを登録 */
+  s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
   st_clear(RC_SUCC_TBL(rc));
 }
 
@@ -986,7 +986,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
     } else {
       unsigned int i, j;
       mc_store_successors(ss, s, rc, new_s, flag);
-      for (i = 0; i < state_succ_num(s); i++) {
+      for (i = 0; i < s->successor_num; i++) {
         State *succ;
         lmn_interned_str name = lmn_intern("ind");
 
@@ -1037,9 +1037,9 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       t = (TransitionRef)vec_pop(reduced_stack);
       s = transition_next_state(t);
       parent = state_get_parent(s);
-      state_succ_add(parent, (succ_data_t)t);
+      parent->succ_add((succ_data_t)t);
 
-      s_mem = state_mem(s);
+      s_mem = s->state_mem();
       ret = statespace_insert(ss, s);
       if (ret == s) {
         s->s_set_reduced();
@@ -1050,7 +1050,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
        delete(s);
       }
 
-      state_free_mem(&tmp_s);
+      tmp_s.free_mem();
     }
 
     while (!vec_is_empty(search)) {
@@ -1064,7 +1064,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       s->s_set_reduced();
       mc_expand(ss, s, p_s, rc, new_ss, statespace_propsyms(ss), f);
 
-      for (i = 0; i < state_succ_num(s); i++) {
+      for (i = 0; i < s->successor_num; i++) {
         TransitionRef succ_t = transition(s, i);
         vec_clear(&succ_t->rule_names);
         transition_add_rule(succ_t, lmn_intern("reduced"), 0U);

@@ -92,159 +92,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
 /* 膜memを用いて状態sのハッシュ値を計算する.
  * canonicalをTRUEで入力した場合, バイナリストリングの設定まで行う */
 
-/* 状態srcと等価な状態を新たに構築して返す.
- * srcに階層グラフ構造が割り当てられている場合, その階層グラフ構造までを,
- * else: srcにバイナリストリングが割り当てられている場合,
- * そのバイナリストリングを, 複製(即ち, deep copy)する. また,
- * これに伴うencode関連の状態フラグもコピーするが,
- * 状態空間構築のためのフラグはコピーしない.
- * なお, 引数memがNULLではない場合は,
- * これをsrcに対応する階層グラフ構造として扱う.　*/
-State *state_copy(State *src, LmnMembraneRef mem) {
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3 && mem) {
-    profile_start_timer(PROFILE_TIME__STATE_COPY);
-  }
-#endif
-
-  State *dst = new State();
-
-  if (!src->is_binstr_user() && !mem) {
-    mem = state_mem(src);
-  }
-
-  if (mem) {
-    dst->state_set_mem(lmn_mem_copy_ex(mem));
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
-    }
-#endif
-  } else if (src->state_binstr()) {
-    dst->state_set_binstr(lmn_binstr_copy(src->state_binstr()));
-    if (src->is_encoded()) {
-      dst->set_encoded();
-    }
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
-    }
-#endif
-  }
-
-  dst->hash = src->hash;
-
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3 && mem) {
-    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
-    profile_finish_timer(PROFILE_TIME__STATE_COPY);
-  }
-#endif
-
-  return dst;
-}
-
-void state_free_mem(State *s) {
-  if (state_mem(s)) {
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
-      profile_remove_space(PROFILE_SPACE__STATE_MEMBRANE,
-                           lmn_mem_space(state_mem(s)));
-    }
-#endif
-    lmn_mem_free_rec(state_mem(s));
-    s->state_set_mem(NULL);
-  }
-}
-
-void state_succ_set(State *s, Vector *v) {
-  if (!vec_is_empty(v) && !s->successors) {
-    unsigned int i;
-    s->successor_num = vec_num(v);
-    s->successors = LMN_NALLOC(succ_data_t, state_succ_num(s));
-    for (i = 0; i < state_succ_num(s); i++) {
-      s->successors[i] = (succ_data_t)vec_get(v, i);
-    }
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
-                        sizeof(succ_data_t) * vec_num(v));
-      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
-    }
-#endif
-  }
-}
-
-void state_succ_add(State *s, succ_data_t succ) {
-  if (!s->successors) {
-    s->successors = LMN_NALLOC(succ_data_t, 1);
-  } else {
-    s->successors =
-        LMN_REALLOC(succ_data_t, s->successors, s->successor_num + 1);
-  }
-  s->successors[s->successor_num] = succ;
-  s->successor_num++;
-}
-
-void state_succ_clear(State *s) {
-  if (s->has_trans_obj()) {
-    unsigned int i;
-    for (i = 0; i < state_succ_num(s); i++) {
-      TransitionRef t = transition(s, i);
-      transition_free(t);
-    }
-  }
-
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3) {
-    profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
-                         sizeof(succ_data_t) * state_succ_num(s));
-    profile_add_space(PROFILE_SPACE__TRANS_OBJECT, 0);
-  }
-#endif
-
-  LMN_FREE(s->successors);
-  s->successors = NULL;
-  s->successor_num = 0;
-  s->unset_trans_obj();
-}
-
-/* 状態sに対応する階層グラフ構造と等価な階層グラフ構造を新たに構築して返す.
- * 構築できなかった場合は偽を返す. */
-LmnMembraneRef state_mem_copy(State *s) {
-  LmnMembraneRef ret = NULL;
-  if (!s->is_binstr_user() && state_mem(s)) {
-    ret = lmn_mem_copy(state_mem(s));
-  } else if (s->is_binstr_user() && s->state_binstr()) {
-    ret = lmn_binstr_decode(s->state_binstr());
-  }
-
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3 && ret) {
-    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(ret));
-  }
-#endif
-
-  return ret;
-}
-
-/* 状態sに対応するバイナリストリングを, sがrefする状態を基に再構築して返す. */
-LmnBinStrRef state_binstr_reconstructor(State *s) {
-  LmnBinStrRef ret;
-  if (!s->s_is_d()) {
-    ret = s->state_binstr();
-  } else {
-    LmnBinStrRef ref;
-    LMN_ASSERT(state_D_ref(s));
-    ref = state_binstr_reconstructor(state_D_ref(s));
-    ret = lmn_bscomp_d_decode(ref, s->state_binstr());
-    if (state_D_ref(s)->s_is_d()) {
-      lmn_binstr_free(ref);
-    }
-  }
-
-  return ret;
-}
 
 /**
  * 引数としてあたえられたStateが等しいかどうかを判定する
@@ -273,7 +120,7 @@ static int state_equals_with_compress(State *check, State *stored) {
   }
 
   if (stored->s_is_d()) {
-    bs2 = state_binstr_reconstructor(stored);
+    bs2 = stored->reconstruct_binstr();
   } else {
     bs2 = stored->state_binstr();
   }
@@ -282,10 +129,10 @@ static int state_equals_with_compress(State *check, State *stored) {
     /* 膜のIDで比較 */
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
-  } else if (state_mem(check) && bs2) {
+  } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
     t = check->state_name == stored->state_name &&
-        lmn_mem_equals_enc(bs2, state_mem(check));
+        lmn_mem_equals_enc(bs2, check->state_mem());
   } else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
@@ -310,7 +157,7 @@ static int state_equals(State *s1, State *s2) {
   }
 #endif
   return s1->state_name == s2->state_name && s1->hash == s2->hash &&
-         lmn_mem_equals(state_mem(s1), state_mem(s2));
+         lmn_mem_equals(s1->state_mem(), s2->state_mem());
 }
 
 /**
@@ -335,15 +182,15 @@ int state_cmp_with_compress(State *s1, State *s2) {
     /* s1がcheckなのでmem, s2がstored(ハッシュ表に記録済み)なのでbinstrを保持 */
 
     /* データ構造の構築 */
-    s2_mem = lmn_binstr_decode(s2->state_binstr());
-    s1_mid = lmn_mem_encode(state_mem(s1));
+    s2_mem = lmn_binstr_decode(s2->->state_binstr());
+    s1_mid = lmn_mem_encode(s1->state_mem());
     s2_mid = lmn_mem_encode(s2_mem);
 
     org_check = (state_equals_with_compress(s1, s2) !=
                  0); /* A. slim本来のグラフ同型成判定手続き */
     mid_check = (binstr_compare(s1_mid, s2_mid) ==
                  0); /* B. 互いに一意エンコードしたグラフの比較手続き */
-    meq_check = (lmn_mem_equals(state_mem(s1),
+    meq_check = (lmn_mem_equals(s1->state_mem(),
                                 s2_mem)); /* C. 膜同士のグラフ同型性判定 */
 
     /* A, B, Cが同じ判定結果を返す場合はokだが.. */
@@ -354,12 +201,12 @@ int state_cmp_with_compress(State *s1, State *s2) {
       BOOL sp1_check, sp2_check, sp3_check, sp4_check;
 
       f = stdout;
-      s1_bs = lmn_mem_to_binstr(state_mem(s1));
+      s1_bs = lmn_mem_to_binstr(s1->state_mem());
 
-      sp1_check = (lmn_mem_equals(state_mem(s1), s2_mem) != 0);
+      sp1_check = (lmn_mem_equals(s1->state_mem(), s2_mem) != 0);
       sp2_check = (lmn_mem_equals_enc(s1_bs, s2_mem) != 0);
       sp3_check = (lmn_mem_equals_enc(s1_mid, s2_mem) != 0);
-      sp4_check = (lmn_mem_equals_enc(s2_mid, state_mem(s1)) != 0);
+      sp4_check = (lmn_mem_equals_enc(s2_mid, s1->state_mem()) != 0);
       fprintf(f, "fatal error: checking graphs isomorphism was invalid\n");
       fprintf(f, "============================================================="
                  "=======================\n");
@@ -380,8 +227,8 @@ int state_cmp_with_compress(State *s1, State *s2) {
       fprintf(f, "============================================================="
                  "=======================\n");
 
-      lmn_binstr_dump(s2->state_binstr());
-      lmn_dump_mem_stdout(state_mem(s1));
+      lmn_binstr_dump(s2->->state_binstr());
+      lmn_dump_mem_stdout(s1->state_mem());
 
       lmn_binstr_free(s1_bs);
       lmn_fatal("graph isomorphism procedure has invalid implementations");
@@ -419,10 +266,10 @@ static int state_equals_with_tree(State *check, State *stored) {
     /* 膜のIDで比較 */
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
-  } else if (state_mem(check) && bs2) {
+  } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
     t = check->state_name == stored->state_name &&
-        lmn_mem_equals_enc(bs2, state_mem(check));
+        lmn_mem_equals_enc(bs2, check->state_mem());
   } else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
@@ -443,58 +290,6 @@ int state_cmp_with_tree(State *s1, State *s2) {
 
 int state_cmp(State *s1, State *s2) { return !state_equals(s1, s2); }
 
-void state_free_binstr(State *s) {
-  if (s->state_binstr()) {
-    lmn_binstr_free(s->state_binstr());
-    s->data = NULL;
-  }
-  s->unset_binstr_user();
-}
-
-/* 状態sに対応する階層グラフ構造Xを,
- * Xに対して一意なIDとなるバイナリストリングへエンコードする.
- * エンコードしたバイナリストリングをsに割り当てる.
- * sに対応する階層グラフ構造Xへのメモリ参照が消えるため,
- * 呼び出し側でメモリ管理を行う. sが既にバイナリストリングを保持している場合は,
- * そのバイナリストリングは破棄する. (ただし,
- * sが既に一意なIDとなるバイナリストリングへエンコード済みの場合は何もしない.)
- * 既に割当済みのバイナリストリングを破棄するため,
- * sをハッシュ表に登録した後の操作はMT-unsafeとなる. 要注意. */
-void state_calc_mem_encode(State *s) {
-  if (!s->is_encoded()) {
-    LmnBinStrRef mid;
-
-    if (state_mem(s)) {
-      mid = lmn_mem_encode(state_mem(s));
-    } else if (s->state_binstr()) {
-      LmnMembraneRef m;
-
-      m = lmn_binstr_decode(s->state_binstr());
-      mid = lmn_mem_encode(m);
-      state_free_binstr(s);
-      lmn_mem_free_rec(m);
-    } else {
-      lmn_fatal("unexpected.");
-    }
-
-    s->state_set_binstr(mid);
-    s->hash = binstr_hash(s->state_binstr());
-    s->set_encoded();
-  }
-}
-
-/**/
-void state_calc_binstr_delta(State *s) {
-  LmnBinStrRef org = s->state_binstr();
-  if (org && state_D_ref(s)) {
-    LmnBinStrRef dif;
-    dif = state_binstr_D_compress(org, state_D_ref(s));
-    state_D_cache(s, org);
-    s->state_set_binstr(dif);
-  } else {
-    s->s_unset_d();
-  }
-}
 
 /* バイナリストリングorgと状態ref_sのバイナリストリングとの差分バイナリストリングを返す.
  * orgのメモリ管理は呼出し側で行う. */
@@ -506,7 +301,7 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
   if (ref) {
     dif = lmn_bscomp_d_encode(org, ref);
   } else {
-    ref = state_binstr_reconstructor(ref_s);
+    ref = ref_s->reconstruct_binstr();
     dif = lmn_bscomp_d_encode(org, ref);
     if (ref_s->s_is_d()) {
       lmn_binstr_free(ref);
@@ -516,70 +311,22 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
   return dif;
 }
 
+LmnBinStrRef state_calc_mem_dump(State *s) {
+  return s->mem_dump();
+}
+
+
 /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
  * 状態sはread only */
 LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
-  LmnBinStrRef ret;
-  if (s->is_binstr_user()) {
-    /* 既にバイナリストリングを保持している場合は, なにもしない. */
-    ret = s->state_binstr();
-  } else if (state_mem(s)) {
-    LmnBinStrRef bs = lmn_mem_to_binstr(state_mem(s));
-    /* TODO: --d-compressとの組合わせ */
-    ret = lmn_bscomp_z_encode(bs);
-    if (ret != bs) { /* 圧縮成功 */
-      lmn_binstr_free(bs);
-    }
-  } else {
-    lmn_fatal("unexpected");
-  }
-
-  return ret;
+  return s->mem_dump_with_z();
 }
 
-/* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
- * sのフラグを操作する. */
-LmnBinStrRef state_calc_mem_dump(State *s) {
-  LmnBinStrRef ret;
-
-  if (s->state_binstr()) {
-    /* 既にエンコード済みの場合は何もしない. */
-    ret = s->state_binstr();
-  } else if (state_mem(s)) {
-    ret = lmn_mem_to_binstr(state_mem(s));
-    if (s->s_is_d() && state_D_ref(s)) {
-      LmnBinStrRef dif;
-      dif = state_binstr_D_compress(ret, state_D_ref(s));
-      /* 元のバイト列は直ちに破棄せず, 一時的にキャッシュしておく. */
-      state_D_cache(s, ret);
-      ret = dif;
-    } else {
-      s->s_unset_d();
-    }
-  } else {
-    lmn_fatal("unexpected.");
-    ret = NULL;
-  }
-
-  return ret;
-}
 
 /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
  * sのフラグを操作する. */
 LmnBinStrRef state_calc_mem_dump_with_tree(State *s) {
-  LmnBinStrRef ret;
-
-  if (s->state_binstr()) {
-    /* 既にエンコード済みの場合は何もしない. */
-    ret = s->state_binstr();
-  } else if (state_mem(s)) {
-    ret = lmn_mem_to_binstr(state_mem(s));
-  } else {
-    lmn_fatal("unexpected.");
-    ret = NULL;
-  }
-
-  return ret;
+  return s->mem_dump_with_tree();
 }
 
 LmnBinStrRef state_calc_mem_dummy(State *s) {
@@ -688,7 +435,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     fprintf(f, "1\n");
     break;
   case Dir_DOT:
-    if (state_succ_num(s) == 0) {
+    if (s->successor_num == 0) {
       fprintf(
           f,
           "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n",
@@ -722,7 +469,7 @@ void state_print_mem(State *s, LmnWord _fp) {
   ProcessID org_next_id;
 
   org_next_id = env_next_id();
-  mem = state_restore_mem_inner(s, FALSE);
+  mem = s->restore_membrane_inner(FALSE);
   env_set_next_id(org_next_id);
 
   //  fprintf((FILE *)_fp, "natoms=%lu :: hash=%16lu ::", lmn_mem_atom_num(mem),
@@ -795,7 +542,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
   }
 
   if (s->successors) {
-    for (i = 0; i < state_succ_num(s); i++) { /* dump dst state's IDs */
+    for (i = 0; i < s->successor_num; i++) { /* dump dst state's IDs */
       if (need_id_foreach_trans) {
         fprintf(f, "%lu%s", state_format_id(s, formated), state_separator);
       } else if (i > 0) {
@@ -822,7 +569,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
         fprintf(f, "%s", label_end);
       }
 
-      if (i + 1 < state_succ_num(s) && need_id_foreach_trans) {
+      if (i + 1 < s->successor_num && need_id_foreach_trans) {
         fprintf(f, "\n");
       }
     }
@@ -869,36 +616,7 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
  * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
  * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
 LmnMembraneRef state_restore_mem(State *s) {
-  return state_restore_mem_inner(s, TRUE);
-}
-
-/* delta-compression用のinner関数.
- * flagが真の場合, デコード済みのバイナリストリングをキャッシュから取得する.
- * キャッシュにバイナリストリングを置かないケースで使用する場合は,
- * inner関数を直接呼び出し, flagに偽を渡しておけばよい. */
-LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag) {
-  if (state_mem(s)) {
-    return state_mem(s);
-  } else if (s->s_is_d()) {
-    LmnBinStrRef b;
-    if (flag) {
-      b = state_D_fetch(s);
-    } else {
-      b = state_binstr_reconstructor(s);
-    }
-    return lmn_binstr_decode(b);
-  } else {
-    LmnBinStrRef b = s->state_binstr();
-    if (lmn_env.tree_compress && b == NULL) {
-      TreeNodeID ref;
-      tcd_get_root_ref(&s->tcd, &ref);
-      LMN_ASSERT(ref);
-      LMN_ASSERT(tcd_get_byte_length(&s->tcd) != 0);
-      b = lmn_bscomp_tree_decode((TreeNodeID)ref, tcd_get_byte_length(&s->tcd));
-    }
-    LMN_ASSERT(b);
-    return lmn_binstr_decode(b);
-  }
+  return s->restore_membrane();
 }
 
 /* 状態sに割り当てた整数IDを返す. */
@@ -947,15 +665,7 @@ unsigned long state_hash(State *s) {
   return s->hash * (state_property_state(s) + 1);
 }
 
-/* 状態sに対応する階層グラフ構造を返す.
- * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
-LmnMembraneRef state_mem(State *s) {
-  if (s->is_binstr_user()) {
-    return NULL;
-  } else {
-    return (LmnMembraneRef)s->data;
-  }
-}
+
 
 /* 状態sに階層グラフ構造memを割り当てる.
  * sに対してバイナリストリングBを割り当てている場合は,
@@ -990,7 +700,7 @@ State *state_get_parent(State *s) { return s->parent; }
 void state_set_parent(State *s, State *parent) { s->parent = parent; }
 
 /* 状態sから遷移可能な状態数を返す. */
-unsigned int state_succ_num(State *s) { return s->successor_num; }
+
 
 /* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
 State *state_succ_state(State *s, int idx) {
@@ -1003,10 +713,10 @@ State *state_succ_state(State *s, int idx) {
 }
 
 /* 状態sから遷移可能な状態集合に, 状態tが含まれている場合に真を返す.
- * O(state_succ_num(s))と効率的ではないため, 可能な限り利用しない. */
+ * O(successor_num)と効率的ではないため, 可能な限り利用しない. */
 BOOL state_succ_contains(State *s, State *t) {
   unsigned int i;
-  for (i = 0; i < state_succ_num(s); i++) {
+  for (i = 0; i < s->successor_num; i++) {
     State *succ = state_succ_state(s, i);
     if (succ == t)
       return TRUE;

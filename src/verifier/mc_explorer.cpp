@@ -84,7 +84,7 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
       st_add_direct(traversed, (st_data_t)s, (st_data_t)s);
       vec_push(path, (vec_data_t)s);
 
-      for (i = 0; i < state_succ_num(s); i++) {
+      for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
 
         if (succ->is_on_cycle() || !s->is_expanded())
@@ -210,7 +210,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
       unsigned int i;
       vec_push(path, (vec_data_t)s);
      s->set_snd();
-      for (i = 0; i < state_succ_num(s); i++) {
+      for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
 
         if (succ->is_on_cycle()) {
@@ -428,7 +428,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
       continue;
     }
 
-    for (i = 0, cnt = 0; i < state_succ_num(s); i++) {
+    for (i = 0, cnt = 0; i < s->successor_num; i++) {
       State *succ = state_succ_state(s, i);
 
       if (TRANS_BETWEEN_DIFF_SCCs(w, s, succ, statespace_automata(ss)))
@@ -600,7 +600,7 @@ void map_start(LmnWorker *w, State *u) {
 
   START_CYCLE_SEARCH();
 
-  if (state_succ_num(u) == 0) {
+  if (u->successor_num == 0) {
     backward_elimination(w, u);
   }
 
@@ -611,7 +611,7 @@ void map_start(LmnWorker *w, State *u) {
     unsigned int i;
 
     propag = map_ordering_propagate_state(w, u, a);
-    for (i = 0; i < state_succ_num(u); i++) {
+    for (i = 0; i < u->successor_num; i++) {
       State *t = state_succ_state(u, i);
       map_propagate(w, u, t, propag, a);
     }
@@ -753,13 +753,13 @@ void backward_elimination(LmnWorker *w, State *s) {
 
     if (!s || smap_is_deleted(s) || !s->is_expanded()) {
       return;
-    } else if (state_succ_num(s) == 1) {
+    } else if (s->successor_num == 1) {
       continue;
     }
 
     /* state_succ_num > 1 */
 
-    for (i = 0; i < state_succ_num(s); i++) {
+    for (i = 0; i < s->successor_num; i++) {
       if (!smap_is_deleted(state_succ_state(s, i))) {
         return;
       }
@@ -907,7 +907,7 @@ void bledge_start(LmnWorker *w) {
 
     if (!(u = (State *)dequeue(BLE_WORKER_LAYER_Q(w))))
       continue;
-    for (i = 0; i < state_succ_num(u); i++) {
+    for (i = 0; i < u->successor_num; i++) {
       State *v = state_succ_state(u, i);
 
       if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v] */
@@ -928,7 +928,7 @@ void bledge_start(LmnWorker *w) {
 }
 
 void bledge_store_layer(LmnWorker *w, State *s) {
-  if (state_succ_num(s) > 0) {
+  if (s->successor_num > 0) {
     enqueue(BLE_WORKER_LAYER_Q(w), (LmnWord)s);
   }
 }
@@ -1130,7 +1130,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
       unsigned int i;
       vec_push(path, (vec_data_t)s);
      s->set_snd();
-      for (i = 0; i < state_succ_num(s); i++) {
+      for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
 
         if (succ->is_on_cycle()) {
@@ -1293,7 +1293,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     put_stack(red_states, s);
    s->set_snd();
 
-    n = state_succ_num(s);
+    n = s->successor_num;
     for (i = 0; i < n; i++) {
       succ = state_succ_state(s, i);
       if (succ->s_is_cyan(worker_id(w))) {
@@ -1325,7 +1325,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
       unsigned int i;
       vec_push(path, (vec_data_t)s);
      s->set_snd();
-      for (i = 0; i < state_succ_num(s); i++) {
+      for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
 
         if (succ->is_on_cycle()) {
