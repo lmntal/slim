@@ -152,7 +152,7 @@ static int state_equals_with_compress(State *check, State *stored) {
 
 static int state_equals(State *s1, State *s2) {
 #ifdef DEBUG
-  if (is_binstr_user(s1) || is_binstr_user(s2)) {
+  if (s1->is_binstr_user() || s2->is_binstr_user()) {
     lmn_fatal("unexpected");
   }
 #endif
@@ -172,7 +172,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
 #define CMP_STR(Str) ((Str) ? "equal" : "NOT equal")
 
 int state_cmp_with_compress(State *s1, State *s2) {
-  if (lmn_env.debug_isomor && !(is_encoded(s1) && is_encoded(s2))) {
+  if (lmn_env.debug_isomor && !(s1->is_encoded() && s2->is_encoded())) {
     LmnMembraneRef s2_mem;
     LmnBinStrRef s1_mid, s2_mid;
     BOOL org_check, mid_check, meq_check;

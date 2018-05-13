@@ -114,7 +114,7 @@ static inline LmnBinStrRef statetable_compress_state(StateTable *st, State *s,
     /* canonical idにエンコードを行った場合,
      * bsは状態生成時に計算済みになっているため,
      * このブロックを実行することはない. */
-    LMN_ASSERT(!is_encoded(s));
+    LMN_ASSERT(!s->is_encoded());
     bs = (*((st)->type->compress))(s);
   }
   return bs;
@@ -931,7 +931,7 @@ static State *statetable_insert(StateTable *st, State *ins)
           /** D.
            * オリジナルテーブルへのlookupで非dummy状態とハッシュ値が衝突した場合.
            */
-          LMN_ASSERT(!is_encoded(str));
+          LMN_ASSERT(!str->is_encoded());
 #ifdef PROFILE
           (*col)++;
           if (lmn_env.profile_level >= 3) {

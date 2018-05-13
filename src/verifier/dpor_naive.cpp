@@ -330,7 +330,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
 
   POR_DEBUG({
     printf("*** C1--3 ok! ample set calculated\n");
-    st_foreach(mc_por.strans_independency, dump__strans_independency,
+    st_foreach(mc_por.strans_independency, (st_iter_func)dump__strans_independency,
                (st_data_t)0);
     dump__ample_candidate();
   });
@@ -600,7 +600,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   POR_DEBUG({
     printf("\nbefore\n");
-    st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)FALSE);
+    st_foreach(mc_por.states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
     printf("\n");
   });
 
@@ -662,7 +662,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   POR_DEBUG({
     printf("after\n");
-    st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)FALSE);
+    st_foreach(mc_por.states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
     printf("\n");
   });
 
@@ -727,10 +727,10 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
       /* Fに反する経路Pが検出されたので偽を返して終了する */
       POR_DEBUG({
         printf("   λ.. C1 violate_id::%lu\n", transition_id(succ_t));
-        st_foreach(mc_por.strans_independency, dump__strans_independency,
+        st_foreach(mc_por.strans_independency, (st_iter_func)dump__strans_independency,
                    (st_data_t)0);
         dump__ample_candidate();
-        st_foreach(mc_por.states, dump__tmp_graph, (st_data_t)FALSE);
+        st_foreach(mc_por.states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
         printf("\n");
       });
       return FALSE;
