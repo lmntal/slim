@@ -350,7 +350,7 @@ static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
   }
 
   if (mc_use_compress(mc_por.flags)) {
-    if (!state_mem(s)) { /* compact-stack */
+    if (!s->state_mem()) { /* compact-stack */
       lmn_mem_drop(mem);
       lmn_mem_free(mem);
     } else {
@@ -367,10 +367,10 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
   if (d) {
     dmem_root_commit(d);
     succ->state_set_mem(DMEM_ROOT_MEM(d));
-    succ->state_calc_hash(state_mem(succ), lmn_env.mem_enc);
+    succ->state_calc_hash(succ->state_mem(), lmn_env.mem_enc);
     tmp_m = NULL;
   } else {
-    tmp_m = state_mem(succ);
+    tmp_m = succ->state_mem();
   }
 
   t = 0;
@@ -403,7 +403,7 @@ static inline State *por_state_insert_statespace(StateSpaceRef ss,
   State *t;
   LmnMembraneRef succ_m;
 
-  succ_m = state_mem(succ_s);
+  succ_m = succ_s->state_mem();
   t = statespace_insert(ss, succ_s);
 
   set_inserted(t);

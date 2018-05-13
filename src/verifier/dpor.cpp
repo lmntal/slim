@@ -901,7 +901,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       dmem_root_commit(succ_d); /* src_succに対応したグラフ構造へ */
       state_set_mem(src_succ, DMEM_ROOT_MEM(succ_d));
       state_calc_hash(
-          src_succ, state_mem(src_succ),
+          src_succ, src_succ->state_mem(),
           statespace_use_memenc(ss)); /* それを元にハッシュ値やmem_idを計算 */
       if (!is_encoded(src_succ)) {
         state_set_binstr(src_succ, state_calc_mem_dump(src_succ));
@@ -1039,7 +1039,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       parent = state_get_parent(s);
       state_succ_add(parent, (succ_data_t)t);
 
-      s_mem = state_mem(s);
+      s_mem = s->state_mem();
       ret = statespace_insert(ss, s);
       if (ret == s) {
         s->s_set_reduced();

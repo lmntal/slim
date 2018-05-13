@@ -93,7 +93,6 @@ struct State;
 #define DEFAULT_TRANSITION_ID 0
 #define DEFAULT_PROP_AUTOMATA NULL
 
-State *state_copy(State *src, LmnMembraneRef src_mem);
 void state_succ_set(State *s, Vector *v);
 void state_succ_add(State *s, succ_data_t succ);
 void state_succ_clear(State *s);
@@ -121,7 +120,6 @@ unsigned long state_format_id(State *s, BOOL is_formated);
 BYTE state_property_state(State *s);
 void state_set_property_state(State *s, BYTE label);
 unsigned long state_hash(State *s);
-LmnMembraneRef state_mem(State *s);
 void state_unset_mem(State *s);
 void state_unset_binstr(State *s);
 State *state_get_parent(State *s);

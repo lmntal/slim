@@ -92,67 +92,16 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
 /* 膜memを用いて状態sのハッシュ値を計算する.
  * canonicalをTRUEで入力した場合, バイナリストリングの設定まで行う */
 
-/* 状態srcと等価な状態を新たに構築して返す.
- * srcに階層グラフ構造が割り当てられている場合, その階層グラフ構造までを,
- * else: srcにバイナリストリングが割り当てられている場合,
- * そのバイナリストリングを, 複製(即ち, deep copy)する. また,
- * これに伴うencode関連の状態フラグもコピーするが,
- * 状態空間構築のためのフラグはコピーしない.
- * なお, 引数memがNULLではない場合は,
- * これをsrcに対応する階層グラフ構造として扱う.　*/
-State *state_copy(State *src, LmnMembraneRef mem) {
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3 && mem) {
-    profile_start_timer(PROFILE_TIME__STATE_COPY);
-  }
-#endif
-
-  State *dst = new State();
-
-  if (!src->is_binstr_user() && !mem) {
-    mem = state_mem(src);
-  }
-
-  if (mem) {
-    dst->state_set_mem(lmn_mem_copy_ex(mem));
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
-    }
-#endif
-  } else if (src->state_binstr()) {
-    dst->state_set_binstr(lmn_binstr_copy(src->state_binstr()));
-    if (src->is_encoded()) {
-      dst->set_encoded();
-    }
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
-    }
-#endif
-  }
-
-  dst->hash = src->hash;
-
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3 && mem) {
-    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
-    profile_finish_timer(PROFILE_TIME__STATE_COPY);
-  }
-#endif
-
-  return dst;
-}
 
 void state_free_mem(State *s) {
-  if (state_mem(s)) {
+  if (s->state_mem()) {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_remove_space(PROFILE_SPACE__STATE_MEMBRANE,
-                           lmn_mem_space(state_mem(s)));
+                           lmn_mem_space(s->state_mem()));
     }
 #endif
-    lmn_mem_free_rec(state_mem(s));
+    lmn_mem_free_rec(s->state_mem());
     s->state_set_mem(NULL);
   }
 }
@@ -213,8 +162,8 @@ void state_succ_clear(State *s) {
  * 構築できなかった場合は偽を返す. */
 LmnMembraneRef state_mem_copy(State *s) {
   LmnMembraneRef ret = NULL;
-  if (!s->is_binstr_user() && state_mem(s)) {
-    ret = lmn_mem_copy(state_mem(s));
+  if (!s->is_binstr_user() && s->state_mem()) {
+    ret = lmn_mem_copy(s->state_mem());
   } else if (s->is_binstr_user() && s->state_binstr()) {
     ret = lmn_binstr_decode(s->state_binstr());
   }
@@ -282,10 +231,10 @@ static int state_equals_with_compress(State *check, State *stored) {
     /* 膜のIDで比較 */
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
-  } else if (state_mem(check) && bs2) {
+  } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
     t = check->state_name == stored->state_name &&
-        lmn_mem_equals_enc(bs2, state_mem(check));
+        lmn_mem_equals_enc(bs2, check->state_mem());
   } else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
@@ -310,7 +259,7 @@ static int state_equals(State *s1, State *s2) {
   }
 #endif
   return s1->state_name == s2->state_name && s1->hash == s2->hash &&
-         lmn_mem_equals(state_mem(s1), state_mem(s2));
+         lmn_mem_equals(s1->state_mem(), s2->state_mem());
 }
 
 /**
@@ -336,14 +285,14 @@ int state_cmp_with_compress(State *s1, State *s2) {
 
     /* データ構造の構築 */
     s2_mem = lmn_binstr_decode(s2->->state_binstr());
-    s1_mid = lmn_mem_encode(state_mem(s1));
+    s1_mid = lmn_mem_encode(s1->state_mem());
     s2_mid = lmn_mem_encode(s2_mem);
 
     org_check = (state_equals_with_compress(s1, s2) !=
                  0); /* A. slim本来のグラフ同型成判定手続き */
     mid_check = (binstr_compare(s1_mid, s2_mid) ==
                  0); /* B. 互いに一意エンコードしたグラフの比較手続き */
-    meq_check = (lmn_mem_equals(state_mem(s1),
+    meq_check = (lmn_mem_equals(s1->state_mem(),
                                 s2_mem)); /* C. 膜同士のグラフ同型性判定 */
 
     /* A, B, Cが同じ判定結果を返す場合はokだが.. */
@@ -354,12 +303,12 @@ int state_cmp_with_compress(State *s1, State *s2) {
       BOOL sp1_check, sp2_check, sp3_check, sp4_check;
 
       f = stdout;
-      s1_bs = lmn_mem_to_binstr(state_mem(s1));
+      s1_bs = lmn_mem_to_binstr(s1->state_mem());
 
-      sp1_check = (lmn_mem_equals(state_mem(s1), s2_mem) != 0);
+      sp1_check = (lmn_mem_equals(s1->state_mem(), s2_mem) != 0);
       sp2_check = (lmn_mem_equals_enc(s1_bs, s2_mem) != 0);
       sp3_check = (lmn_mem_equals_enc(s1_mid, s2_mem) != 0);
-      sp4_check = (lmn_mem_equals_enc(s2_mid, state_mem(s1)) != 0);
+      sp4_check = (lmn_mem_equals_enc(s2_mid, s1->state_mem()) != 0);
       fprintf(f, "fatal error: checking graphs isomorphism was invalid\n");
       fprintf(f, "============================================================="
                  "=======================\n");
@@ -381,7 +330,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
                  "=======================\n");
 
       lmn_binstr_dump(s2->->state_binstr());
-      lmn_dump_mem_stdout(state_mem(s1));
+      lmn_dump_mem_stdout(s1->state_mem());
 
       lmn_binstr_free(s1_bs);
       lmn_fatal("graph isomorphism procedure has invalid implementations");
@@ -419,10 +368,10 @@ static int state_equals_with_tree(State *check, State *stored) {
     /* 膜のIDで比較 */
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
-  } else if (state_mem(check) && bs2) {
+  } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
     t = check->state_name == stored->state_name &&
-        lmn_mem_equals_enc(bs2, state_mem(check));
+        lmn_mem_equals_enc(bs2, check->state_mem());
   } else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
@@ -464,8 +413,8 @@ void state_calc_mem_encode(State *s) {
   if (!s->is_encoded()) {
     LmnBinStrRef mid;
 
-    if (state_mem(s)) {
-      mid = lmn_mem_encode(state_mem(s));
+    if (s->state_mem()) {
+      mid = lmn_mem_encode(s->state_mem());
     } else if (s->state_binstr()) {
       LmnMembraneRef m;
 
@@ -523,8 +472,8 @@ LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
   if (s->is_binstr_user()) {
     /* 既にバイナリストリングを保持している場合は, なにもしない. */
     ret = s->state_binstr();
-  } else if (state_mem(s)) {
-    LmnBinStrRef bs = lmn_mem_to_binstr(state_mem(s));
+  } else if (s->state_mem()) {
+    LmnBinStrRef bs = lmn_mem_to_binstr(s->state_mem());
     /* TODO: --d-compressとの組合わせ */
     ret = lmn_bscomp_z_encode(bs);
     if (ret != bs) { /* 圧縮成功 */
@@ -545,8 +494,8 @@ LmnBinStrRef state_calc_mem_dump(State *s) {
   if (s->state_binstr()) {
     /* 既にエンコード済みの場合は何もしない. */
     ret = s->state_binstr();
-  } else if (state_mem(s)) {
-    ret = lmn_mem_to_binstr(state_mem(s));
+  } else if (s->state_mem()) {
+    ret = lmn_mem_to_binstr(s->state_mem());
     if (s->s_is_d() && state_D_ref(s)) {
       LmnBinStrRef dif;
       dif = state_binstr_D_compress(ret, state_D_ref(s));
@@ -572,8 +521,8 @@ LmnBinStrRef state_calc_mem_dump_with_tree(State *s) {
   if (s->state_binstr()) {
     /* 既にエンコード済みの場合は何もしない. */
     ret = s->state_binstr();
-  } else if (state_mem(s)) {
-    ret = lmn_mem_to_binstr(state_mem(s));
+  } else if (s->state_mem()) {
+    ret = lmn_mem_to_binstr(s->state_mem());
   } else {
     lmn_fatal("unexpected.");
     ret = NULL;
@@ -877,8 +826,8 @@ LmnMembraneRef state_restore_mem(State *s) {
  * キャッシュにバイナリストリングを置かないケースで使用する場合は,
  * inner関数を直接呼び出し, flagに偽を渡しておけばよい. */
 LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag) {
-  if (state_mem(s)) {
-    return state_mem(s);
+  if (s->state_mem()) {
+    return s->state_mem();
   } else if (s->s_is_d()) {
     LmnBinStrRef b;
     if (flag) {
@@ -947,15 +896,7 @@ unsigned long state_hash(State *s) {
   return s->hash * (state_property_state(s) + 1);
 }
 
-/* 状態sに対応する階層グラフ構造を返す.
- * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
-LmnMembraneRef state_mem(State *s) {
-  if (s->is_binstr_user()) {
-    return NULL;
-  } else {
-    return (LmnMembraneRef)s->data;
-  }
-}
+
 
 /* 状態sに階層グラフ構造memを割り当てる.
  * sに対してバイナリストリングBを割り当てている場合は,

@@ -217,7 +217,62 @@ struct State {                /* Total:72(36)byte */
       hash = mhash(mem);
     }
   }
-  
+
+  /* 状態sに対応する階層グラフ構造を返す.
+   * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
+  LmnMembraneRef state_mem() {
+    if (is_binstr_user()) {
+      return NULL;
+    } else {
+      return (LmnMembraneRef)data;
+    }
+  }
+
+  /* 状態srcと等価な状態を新たに構築して返す.
+   * srcに階層グラフ構造が割り当てられている場合, その階層グラフ構造までを,
+   * else: srcにバイナリストリングが割り当てられている場合,
+   * そのバイナリストリングを, 複製(即ち, deep copy)する. また,
+   * これに伴うencode関連の状態フラグもコピーするが,
+   * 状態空間構築のためのフラグはコピーしない.
+   * なお, 引数memがNULLではない場合は,
+   * これをsrcに対応する階層グラフ構造として扱う.　*/
+  State *duplicate(LmnMembraneRef mem) {
+    State *dst = new State();
+
+    if (!is_binstr_user() && !mem) {
+      mem = state_mem();
+    }
+
+    if (mem) {
+      dst->state_set_mem(lmn_mem_copy_ex(mem));
+#ifdef PROFILE
+      if (lmn_env.profile_level >= 3) {
+	profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+      }
+#endif
+    } else if (state_binstr()) {
+      dst->state_set_binstr(lmn_binstr_copy(state_binstr()));
+      if (is_encoded()) {
+	dst->set_encoded();
+      }
+#ifdef PROFILE
+      if (lmn_env.profile_level >= 3) {
+	profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
+      }
+#endif
+    }
+
+    dst->hash = hash;
+
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3 && mem) {
+    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+    profile_finish_timer(PROFILE_TIME__STATE_COPY);
+  }
+#endif
+    return dst;
+  }
+
   State () :
     data(NULL),
     state_name(0x00U),

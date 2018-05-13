@@ -225,7 +225,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     mc_store_successors(ss, s, rc, new_ss, f);
   }
 
-  if (!state_mem(s)) {
+  if (!s->state_mem()) {
     /** free   : 遷移先を求めた状態sからLMNtalプロセスを開放 */
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -323,7 +323,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       succ = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
     } else {                            /* default */
-      src_succ_m = state_mem(src_succ); /* for free mem pointed by src_succ */
+      src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ = statespace_insert(ss, src_succ);
     }
 
@@ -534,7 +534,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
         src_succ_s = (State *)vec_get(RC_EXPANDED(rc), j);
       }
 
-      new_s = state_copy(src_succ_s, NULL);
+      new_s = src_succ_s->duplicate(NULL);
       state_set_parent(new_s, s);
       state_set_property_state(new_s, p_nxt_l);
 
@@ -593,7 +593,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
     /* 遷移元状態sをdeep copyする.
      * ただし, sに対応した階層グラフ構造はこの時点では既に破棄されているため,
      * mc_expandの時点で再構築した階層グラフ構造memを渡す.  */
-    new_s = state_copy(s, mem);
+    new_s = s->duplicate(mem);
   }
   state_set_property_state(new_s, next_label);
   state_set_parent(new_s, s);

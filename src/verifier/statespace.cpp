@@ -583,7 +583,7 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
   s->state_set_mem(DMEM_ROOT_MEM(d));
 
   /* Xを基に, ハッシュ値/mem_idなどの状態データを計算する */
-  s->state_calc_hash(state_mem(s), statespace_use_memenc(ss));
+  s->state_calc_hash(s->state_mem(), statespace_use_memenc(ss));
 
   /* 既にバイナリストリング計算済みとなるcanonical membrane使用時は,
    * この時点でdelta-stringを計算する */
