@@ -106,7 +106,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   p_label = a ? automata_get_init_state(a) : DEFAULT_STATE_ID;
   mem = lmn_mem_copy(world_mem_org);
-  init_s = state_make(mem, p_label, statespace_use_memenc(states));
+  init_s = new State(mem, p_label, statespace_use_memenc(states));
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
@@ -339,7 +339,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
     } else {
       /* contains */
-      state_free(src_succ);
+      delete(src_succ);
       if (s->has_trans_obj()) {
         /* Transitionオブジェクトが指すサクセッサを検出した等価な状態の方へ設定し直す
          */
@@ -445,9 +445,9 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
 
     /* DeltaMembrane時はこの時点でSuccessor Membraneがない */
     if (mc_use_delta(f)) {
-      news = state_make_minimal();
+      news = new State();
     } else {
-      news = state_make((LmnMembraneRef)vec_get(expanded_roots, i), state_name,
+      news = new State((LmnMembraneRef)vec_get(expanded_roots, i), state_name,
                         mc_use_canonical(f));
     }
 
@@ -588,7 +588,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
   if (mc_use_delta(f)) {
     /* 差分構造が存在しないstruct MemDeltaRootを登録する. */
     mc_react_cxt_add_mem_delta(rc, dmem_root_make(mem, NULL, 0), NULL);
-    new_s = state_make_minimal();
+    new_s = new State();
   } else {
     /* 遷移元状態sをdeep copyする.
      * ただし, sに対応した階層グラフ構造はこの時点では既に破棄されているため,

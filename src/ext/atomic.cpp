@@ -156,11 +156,11 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
     LmnWorker *w = build_atomic_worker();
     RC_START_ATOMIC_STEP(worker_rc(w), at_set->id);
     for (i = 0; i < n; i++) {
-      State *sub_s = state_make((LmnMembraneRef)mc_react_cxt_expanded_pop(rc),
+      State *sub_s = new State((LmnMembraneRef)mc_react_cxt_expanded_pop(rc),
                                 DEFAULT_STATE_ID,
                                 statespace_use_memenc(worker_states(w)));
       if (sub_s != statespace_insert(worker_states(w), sub_s)) {
-        state_free(sub_s);
+        delete(sub_s);
       } else {
         worker_states(w)->init_state = sub_s;
         dfs_start(w);
@@ -170,7 +170,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
     /* サブルーチン側であるatomic workerの並列実行は想定していないので, 以下の記述でもok */
     ends = statespace_end_states(worker_states(w));
     for (i = 0; i < vec_num(ends); i++) {
-      LmnMembraneRef end_m = lmn_binstr_decode(state_binstr((State *)vec_get(ends, i)));
+      LmnMembraneRef end_m = lmn_binstr_decode(((State *)vec_get(ends, i))->state_binstr());
       mc_react_cxt_add_expanded(rc, end_m, dummy_rule());
     }
 //    RC_FINISH_ATOMIC_STEP(&WORKER_RC(w)); /* どうせ破棄しちゃうから要らない */

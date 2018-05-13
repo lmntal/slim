@@ -66,23 +66,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 
 struct State;
 
-/** Flags2 (8bit)
- *  0000 0001  Partial Order
- * ReductionによるReductionマーキング(debug/demo用機能) 0000 0010  D compression
- * stateか否かを示すフラグ 0000 0100  (MAPNDFS)explorer visit flag 0000 1000
- * (MAPNDFS)generator visit flag 0001 0000  (MCNDFS)blue flag 0010 0000
- * (MCNDFS)red flag 0100 0000  (Visualize)visited 1000 0000
- */
-
-#define STATE_REDUCED_MASK (0x01U)
-#define STATE_DELTA_MASK (0x01U << 1)
-#define STATE_UPDATE_MASK (0x01U << 2)
-#define EXPLORER_VISIT_MASK (0x01U << 3)
-#define GENERATOR_VISIT_MASK (0x01U << 4)
-#define STATE_BLUE_MASK (0x01U << 5)
-#define STATE_RED_MASK (0x01U << 6)
-#define STATE_VIS_VISITED_MASK (0x01U << 7)
-
 /** Flags3 (8bit)
  *  0000 0001
  * freshな状態(展開されておらず、または展開用スタックにも積まれていない状態)。fresh
@@ -110,10 +93,7 @@ struct State;
 #define DEFAULT_TRANSITION_ID 0
 #define DEFAULT_PROP_AUTOMATA NULL
 
-State *state_make(LmnMembraneRef mem, BYTE state_name, BOOL encode);
-State *state_make_minimal(void);
 State *state_copy(State *src, LmnMembraneRef src_mem);
-void state_free(State *s);
 void state_succ_set(State *s, Vector *v);
 void state_succ_add(State *s, succ_data_t succ);
 void state_succ_clear(State *s);
@@ -124,7 +104,6 @@ LmnBinStrRef state_calc_mem_dump(State *s);
 LmnBinStrRef state_calc_mem_dump_with_z(State *s);
 LmnBinStrRef state_calc_mem_dump_with_tree(State *s);
 LmnBinStrRef state_calc_mem_dummy(State *s);
-void state_calc_hash(State *s, LmnMembraneRef mem, BOOL encode);
 void state_free_compress_mem(State *s);
 LmnMembraneRef state_mem_copy(State *state);
 int state_cmp(State *s1, State *s2);
@@ -133,7 +112,6 @@ int state_cmp_with_tree(State *s1, State *s2);
 void state_binstr_d_compress(State *s);
 LmnBinStrRef state_binstr_reconstructor(State *s);
 void state_calc_binstr_delta(State *s);
-
 LmnMembraneRef state_restore_mem(State *s);
 LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag);
 unsigned long state_id(State *s);
@@ -144,10 +122,7 @@ BYTE state_property_state(State *s);
 void state_set_property_state(State *s, BYTE label);
 unsigned long state_hash(State *s);
 LmnMembraneRef state_mem(State *s);
-void state_set_mem(State *s, LmnMembraneRef mem);
 void state_unset_mem(State *s);
-LmnBinStrRef state_binstr(State *s);
-void state_set_binstr(State *s, LmnBinStrRef bs);
 void state_unset_binstr(State *s);
 State *state_get_parent(State *s);
 void state_set_parent(State *s, State *parent);

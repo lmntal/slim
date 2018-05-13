@@ -215,7 +215,7 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a) {
       s->flags3 = 0x00U;
     } else {
       /* それ以外は, rootでなければ開放 */
-      state_free(s);
+     delete(s);
     }
   } else if (!mc_has_trans(((BOOL)_a))) {
     /* rootなら, サクセッサの遷移オブジェクトを調整 */
@@ -366,8 +366,8 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
 
   if (d) {
     dmem_root_commit(d);
-    state_set_mem(succ, DMEM_ROOT_MEM(d));
-    state_calc_hash(succ, state_mem(succ), lmn_env.mem_enc);
+    succ->state_set_mem(DMEM_ROOT_MEM(d));
+    succ->state_calc_hash(state_mem(succ), lmn_env.mem_enc);
     tmp_m = NULL;
   } else {
     tmp_m = state_mem(succ);
@@ -381,7 +381,7 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
     st_add_direct(mc_por.states, (st_data_t)succ, (st_data_t)succ);
     if (!succ->is_encoded()) {
       bs = state_calc_mem_dump(succ);
-      state_set_binstr(succ, bs);
+      succ->state_set_binstr(bs);
     }
     ret = succ;
     POR_DEBUG({ state_id_issue(succ); });
@@ -449,7 +449,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
                            : NULL;
     succ = por_state_insert(src_succ, d);
     if (succ != src_succ) {
-      state_free(src_succ);
+     delete(src_succ);
       transition_set_state(src_t, succ);
     }
 

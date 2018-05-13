@@ -39,12 +39,12 @@
 
 #ifndef LMN_STATE_HPP
 #define LMN_STATE_HPP
-
+extern "C"{
 #include "lmntal.h"
 #include "vm/vm.h"
-
+#include "mhash.h"
 #include "state_defs.h"
-
+}
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
  *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
@@ -68,6 +68,25 @@ enum StateFlags {
   TRANS_OBJ_MASK = 0x01U << 5,
   MEM_ENCODED_MASK = 0x01U << 6,
   MEM_DIRECT_MASK = 0x01U << 7
+};
+
+/** Flags2 (8bit)
+ *  0000 0001  Partial Order
+ * ReductionによるReductionマーキング(debug/demo用機能) 0000 0010  D compression
+ * stateか否かを示すフラグ 0000 0100  (MAPNDFS)explorer visit flag 0000 1000
+ * (MAPNDFS)generator visit flag 0001 0000  (MCNDFS)blue flag 0010 0000
+ * (MCNDFS)red flag 0100 0000  (Visualize)visited 1000 0000
+ */
+
+enum StateFlags2 {
+  STATE_REDUCED_MASK = 0x01U,
+  STATE_DELTA_MASK = 0x01U << 1,
+  STATE_UPDATE_MASK = 0x01U << 2,
+  EXPLORER_VISIT_MASK = 0x01U << 3,
+  GENERATOR_VISIT_MASK = 0x01U << 4,
+  STATE_BLUE_MASK = 0x01U << 5,
+  STATE_RED_MASK = 0x01U << 6,
+  STATE_VIS_VISITED_MASK = 0x01U << 7
 };
 
 /* Descriptor */
@@ -116,6 +135,7 @@ struct State {                /* Total:72(36)byte */
   void state_expand_lock() {}
   void state_expand_unlock() {}
 #endif
+      
 
   BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
   BOOL is_binstr_user() { return flags & MEM_DIRECT_MASK; }
@@ -172,6 +192,116 @@ struct State {                /* Total:72(36)byte */
   #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
+  LmnBinStrRef state_binstr() {
+    if (is_binstr_user()) {
+      return (LmnBinStrRef)data;
+    } else {
+      return NULL;
+    }
+  }
+
+  void state_set_binstr(LmnBinStrRef bs) {
+    data = (state_data_t)bs;
+    set_binstr_user();
+  }
+
+  void state_set_mem(LmnMembraneRef mem) {
+    unset_binstr_user();
+    data = (state_data_t)mem;
+  }
+
+  void state_calc_hash(LmnMembraneRef mem, BOOL canonical) {
+    if (canonical) {
+      state_set_binstr(lmn_mem_encode(mem));
+      hash = binstr_hash(this->state_binstr());
+      set_encoded();
+    } else {
+      hash = mhash(mem);
+    }
+  }
+  
+  State () :
+    data(NULL),
+    state_name(0x00U),
+    flags(0x00U),
+    flags2(0x00U),
+    flags3(0x00U),
+    hash(0),
+    next(NULL),
+    successors(NULL),
+    successor_num(0),
+    parent(NULL),
+    state_id(0),
+    map(NULL)
+  {
+    memset(&tcd, 0x00, sizeof(TreeCompressData));
+#ifndef MINIMAL_STATE
+    state_set_expander_id(LONG_MAX);
+    local_flags = 0x00U;
+    state_expand_lock_init();
+#endif
+    s_set_fresh();
+    
+#ifdef KWBT_OPT
+    if (lmn_env.opt_mode != OPT_NONE) {
+      cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
+    }
+#endif
+
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
+    }
+#endif
+  }
+
+  State (LmnMembraneRef mem, BYTE property_label, BOOL do_encode) :
+    State () {
+      state_set_mem(mem);
+      state_name = property_label;
+      state_calc_hash(mem, do_encode);
+
+      if (is_encoded()) {
+	lmn_mem_free_rec(mem);
+      }
+#ifdef PROFILE
+      else if (lmn_env.profile_level >= 3) {
+	profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+      }
+#endif
+    }
+
+  ~State() {
+    if (successors) {
+#ifdef PROFILE
+      if (lmn_env.profile_level >= 3)
+        profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
+                            sizeof(succ_data_t) * state_succ_num(s));
+#endif
+      if (has_trans_obj()) {
+        unsigned int i;
+        for (i = 0; i < state_succ_num(this); i++) {
+          transition_free(transition(this, i));
+        }
+      }
+      LMN_FREE(successors);
+    }
+#ifndef MINIMAL_STATE
+    if (local_flags) {
+      LMN_FREE(local_flags);
+    }
+#endif
+    state_expand_lock_destroy();
+
+    state_free_mem(this);
+    state_free_binstr(this);
+
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_remove_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
+    }
+#endif
+  }
 };
 
 #endif

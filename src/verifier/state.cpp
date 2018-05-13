@@ -89,77 +89,8 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
  * State
  */
 
-/* delta-membrane使用時には呼ばない.
- * memに対して一意なIDとなるバイナリストリングを計算した場合は, memを破棄する.
- */
-State *state_make(LmnMembraneRef mem, BYTE property_label, BOOL do_encode) {
-  State *new_s = state_make_minimal();
-
-  state_set_mem(new_s, mem);
-  new_s->state_name = property_label;
-  state_calc_hash(new_s, mem, do_encode);
-
-  if (new_s->is_encoded()) {
-    lmn_mem_free_rec(mem);
-  }
-#ifdef PROFILE
-  else if (lmn_env.profile_level >= 3) {
-    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
-  }
-#endif
-
-  return new_s;
-}
-
-/* まっさらなState構造体をmallocして返してもらう */
-State *state_make_minimal() {
-  State *new_s = LMN_MALLOC(State);
-  new_s->data = NULL;
-  new_s->state_name = 0x00U;
-  new_s->flags = 0x00U;
-  new_s->flags2 = 0x00U;
-  new_s->flags3 = 0x00U;
-  new_s->hash = 0;
-  new_s->next = NULL;
-  new_s->successors = NULL;
-  new_s->successor_num = 0;
-  new_s->parent = NULL;
-  new_s->state_id = 0;
-  new_s->map = NULL;
-  memset(&new_s->tcd, 0x00, sizeof(TreeCompressData));
-
-#ifndef MINIMAL_STATE
-  new_s->state_set_expander_id(LONG_MAX);
-  new_s->local_flags = 0x00U;
-  new_s->state_expand_lock_init();
-#endif
-  new_s->s_set_fresh();
-
-#ifdef KWBT_OPT
-  if (lmn_env.opt_mode != OPT_NONE) {
-    new_s->cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
-  }
-#endif
-
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3) {
-    profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
-  }
-#endif
-  return new_s;
-}
-
 /* 膜memを用いて状態sのハッシュ値を計算する.
  * canonicalをTRUEで入力した場合, バイナリストリングの設定まで行う */
-void state_calc_hash(State *s, LmnMembraneRef mem, BOOL canonical) {
-  if (canonical) {
-    state_set_binstr(s, lmn_mem_encode(mem));
-    s->hash = binstr_hash(state_binstr(s));
-    s->set_encoded();
-  } else {
-    s->hash = mhash(mem);
-  }
-}
 
 /* 状態srcと等価な状態を新たに構築して返す.
  * srcに階層グラフ構造が割り当てられている場合, その階層グラフ構造までを,
@@ -176,21 +107,21 @@ State *state_copy(State *src, LmnMembraneRef mem) {
   }
 #endif
 
-  State *dst = state_make_minimal();
+  State *dst = new State();
 
   if (!src->is_binstr_user() && !mem) {
     mem = state_mem(src);
   }
 
   if (mem) {
-    state_set_mem(dst, lmn_mem_copy_ex(mem));
+    dst->state_set_mem(lmn_mem_copy_ex(mem));
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
     }
 #endif
-  } else if (state_binstr(src)) {
-    state_set_binstr(dst, lmn_binstr_copy(state_binstr(src)));
+  } else if (src->state_binstr()) {
+    dst->state_set_binstr(lmn_binstr_copy(src->state_binstr()));
     if (src->is_encoded()) {
       dst->set_encoded();
     }
@@ -213,45 +144,6 @@ State *state_copy(State *src, LmnMembraneRef mem) {
   return dst;
 }
 
-/**
- * デストラクタ
- */
-void state_free(State *s) {
-  if (s->successors) {
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3)
-      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
-                           sizeof(succ_data_t) * state_succ_num(s));
-#endif
-
-    if (s->has_trans_obj()) {
-      unsigned int i;
-      for (i = 0; i < state_succ_num(s); i++) {
-        transition_free(transition(s, i));
-      }
-    }
-    LMN_FREE(s->successors);
-  }
-
-#ifndef MINIMAL_STATE
-  if (s->local_flags) {
-    LMN_FREE(s->local_flags);
-  }
-#endif
-
-  s->state_expand_lock_destroy();
-
-  state_free_mem(s);
-  state_free_binstr(s);
-  LMN_FREE(s);
-
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3) {
-    profile_remove_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
-  }
-#endif
-}
-
 void state_free_mem(State *s) {
   if (state_mem(s)) {
 #ifdef PROFILE
@@ -261,7 +153,7 @@ void state_free_mem(State *s) {
     }
 #endif
     lmn_mem_free_rec(state_mem(s));
-    state_set_mem(s, NULL);
+    s->state_set_mem(NULL);
   }
 }
 
@@ -323,8 +215,8 @@ LmnMembraneRef state_mem_copy(State *s) {
   LmnMembraneRef ret = NULL;
   if (!s->is_binstr_user() && state_mem(s)) {
     ret = lmn_mem_copy(state_mem(s));
-  } else if (s->is_binstr_user() && state_binstr(s)) {
-    ret = lmn_binstr_decode(state_binstr(s));
+  } else if (s->is_binstr_user() && s->state_binstr()) {
+    ret = lmn_binstr_decode(s->state_binstr());
   }
 
 #ifdef PROFILE
@@ -340,12 +232,12 @@ LmnMembraneRef state_mem_copy(State *s) {
 LmnBinStrRef state_binstr_reconstructor(State *s) {
   LmnBinStrRef ret;
   if (!s->s_is_d()) {
-    ret = state_binstr(s);
+    ret = s->state_binstr();
   } else {
     LmnBinStrRef ref;
     LMN_ASSERT(state_D_ref(s));
     ref = state_binstr_reconstructor(state_D_ref(s));
-    ret = lmn_bscomp_d_decode(ref, state_binstr(s));
+    ret = lmn_bscomp_d_decode(ref, s->state_binstr());
     if (state_D_ref(s)->s_is_d()) {
       lmn_binstr_free(ref);
     }
@@ -377,13 +269,13 @@ static int state_equals_with_compress(State *check, State *stored) {
   if (check->s_is_d()) {
     bs1 = state_D_fetch(check);
   } else {
-    bs1 = state_binstr(check);
+    bs1 = check->state_binstr();
   }
 
   if (stored->s_is_d()) {
     bs2 = state_binstr_reconstructor(stored);
   } else {
-    bs2 = state_binstr(stored);
+    bs2 = stored->state_binstr();
   }
 
   if (check->is_encoded() && stored->is_encoded()) {
@@ -443,7 +335,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
     /* s1がcheckなのでmem, s2がstored(ハッシュ表に記録済み)なのでbinstrを保持 */
 
     /* データ構造の構築 */
-    s2_mem = lmn_binstr_decode(state_binstr(s2));
+    s2_mem = lmn_binstr_decode(s2->->state_binstr());
     s1_mid = lmn_mem_encode(state_mem(s1));
     s2_mid = lmn_mem_encode(s2_mem);
 
@@ -488,7 +380,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
       fprintf(f, "============================================================="
                  "=======================\n");
 
-      lmn_binstr_dump(state_binstr(s2));
+      lmn_binstr_dump(s2->->state_binstr());
       lmn_dump_mem_stdout(state_mem(s1));
 
       lmn_binstr_free(s1_bs);
@@ -515,7 +407,7 @@ static int state_equals_with_tree(State *check, State *stored) {
   TreeNodeID ref;
   int t;
 
-  bs1 = state_binstr(check);
+  bs1 = check->state_binstr();
 
   tcd_get_root_ref(&stored->tcd, &ref);
   LMN_ASSERT(ref != 0);
@@ -552,8 +444,8 @@ int state_cmp_with_tree(State *s1, State *s2) {
 int state_cmp(State *s1, State *s2) { return !state_equals(s1, s2); }
 
 void state_free_binstr(State *s) {
-  if (state_binstr(s)) {
-    lmn_binstr_free(state_binstr(s));
+  if (s->state_binstr()) {
+    lmn_binstr_free(s->state_binstr());
     s->data = NULL;
   }
   s->unset_binstr_user();
@@ -574,10 +466,10 @@ void state_calc_mem_encode(State *s) {
 
     if (state_mem(s)) {
       mid = lmn_mem_encode(state_mem(s));
-    } else if (state_binstr(s)) {
+    } else if (s->state_binstr()) {
       LmnMembraneRef m;
 
-      m = lmn_binstr_decode(state_binstr(s));
+      m = lmn_binstr_decode(s->state_binstr());
       mid = lmn_mem_encode(m);
       state_free_binstr(s);
       lmn_mem_free_rec(m);
@@ -585,20 +477,20 @@ void state_calc_mem_encode(State *s) {
       lmn_fatal("unexpected.");
     }
 
-    state_set_binstr(s, mid);
-    s->hash = binstr_hash(state_binstr(s));
+    s->state_set_binstr(mid);
+    s->hash = binstr_hash(s->state_binstr());
     s->set_encoded();
   }
 }
 
 /**/
 void state_calc_binstr_delta(State *s) {
-  LmnBinStrRef org = state_binstr(s);
+  LmnBinStrRef org = s->state_binstr();
   if (org && state_D_ref(s)) {
     LmnBinStrRef dif;
     dif = state_binstr_D_compress(org, state_D_ref(s));
     state_D_cache(s, org);
-    state_set_binstr(s, dif);
+    s->state_set_binstr(dif);
   } else {
     s->s_unset_d();
   }
@@ -630,7 +522,7 @@ LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
   LmnBinStrRef ret;
   if (s->is_binstr_user()) {
     /* 既にバイナリストリングを保持している場合は, なにもしない. */
-    ret = state_binstr(s);
+    ret = s->state_binstr();
   } else if (state_mem(s)) {
     LmnBinStrRef bs = lmn_mem_to_binstr(state_mem(s));
     /* TODO: --d-compressとの組合わせ */
@@ -650,9 +542,9 @@ LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
 LmnBinStrRef state_calc_mem_dump(State *s) {
   LmnBinStrRef ret;
 
-  if (state_binstr(s)) {
+  if (s->state_binstr()) {
     /* 既にエンコード済みの場合は何もしない. */
-    ret = state_binstr(s);
+    ret = s->state_binstr();
   } else if (state_mem(s)) {
     ret = lmn_mem_to_binstr(state_mem(s));
     if (s->s_is_d() && state_D_ref(s)) {
@@ -677,9 +569,9 @@ LmnBinStrRef state_calc_mem_dump(State *s) {
 LmnBinStrRef state_calc_mem_dump_with_tree(State *s) {
   LmnBinStrRef ret;
 
-  if (state_binstr(s)) {
+  if (s->state_binstr()) {
     /* 既にエンコード済みの場合は何もしない. */
-    ret = state_binstr(s);
+    ret = s->state_binstr();
   } else if (state_mem(s)) {
     ret = lmn_mem_to_binstr(state_mem(s));
   } else {
@@ -996,7 +888,7 @@ LmnMembraneRef state_restore_mem_inner(State *s, BOOL flag) {
     }
     return lmn_binstr_decode(b);
   } else {
-    LmnBinStrRef b = state_binstr(s);
+    LmnBinStrRef b = s->state_binstr();
     if (lmn_env.tree_compress && b == NULL) {
       TreeNodeID ref;
       tcd_get_root_ref(&s->tcd, &ref);
@@ -1068,34 +960,19 @@ LmnMembraneRef state_mem(State *s) {
 /* 状態sに階層グラフ構造memを割り当てる.
  * sに対してバイナリストリングBを割り当てている場合は,
  * Bのメモリ管理は呼出し側で行う*/
-void state_set_mem(State *s, LmnMembraneRef mem) {
-  s->unset_binstr_user();
-  s->data = (state_data_t)mem;
-}
+
 
 /* 状態sが参照する階層グラフ構造用の領域をクリアする.
  * 階層グラフ構造の参照を持たない場合は, なにもしない. */
 void state_unset_mem(State *s) {
   if (!s->is_binstr_user()) {
-    state_set_mem(s, NULL);
+    s->state_set_mem(NULL);
   }
 }
 
-/* 状態sに割り当てたバイナリストリングを返す. */
-LmnBinStrRef state_binstr(State *s) {
-  if (s->is_binstr_user()) {
-    return (LmnBinStrRef)s->data;
-  } else {
-    return NULL;
-  }
-}
 
 /* 状態sに対応する階層グラフ構造からエンコードしたバイナリストリングbsを,
  * sに割り当てる　*/
-void state_set_binstr(State *s, LmnBinStrRef bs) {
-  s->data = (state_data_t)bs;
-  s->set_binstr_user();
-}
 
 /* 状態sが参照するバイナリストリング用の領域をクリアする.
  * バイナリストリングに対する参照を持たない場合は, なにもしない. */
