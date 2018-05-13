@@ -4,7 +4,7 @@
  *  @author  Masato Gocho
  *  @date    2009.08.04
  *           2009.11.19  modified
- */
+ *
  */
  
  
@@ -15,7 +15,7 @@
 
 % Init phase
 init{
-  p_num=4. // # of processes
+  p_num=9. // # of processes
   _init0 @@ p_num(P)   :- int(P) |
             p_num(P,P).
   _init1 @@ p_num(P,M) :- P>0, Q=P-1 |
