@@ -904,7 +904,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
           src_succ, src_succ->state_mem(),
           statespace_use_memenc(ss)); /* それを元にハッシュ値やmem_idを計算 */
       if (!is_encoded(src_succ)) {
-        state_set_binstr(src_succ, state_calc_mem_dump(src_succ));
+        state_set_binstr(src_succ, src_succ->mem_dump());
       }
       vec_push(reduced_stack, (vec_data_t)src_t);
       dmem_root_revert(succ_d); /* 元に戻す */
@@ -1037,7 +1037,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       t = (TransitionRef)vec_pop(reduced_stack);
       s = transition_next_state(t);
       parent = state_get_parent(s);
-      state_succ_add(parent, (succ_data_t)t);
+      parent->succ_add((succ_data_t)t);
 
       s_mem = s->state_mem();
       ret = statespace_insert(ss, s);
@@ -1050,7 +1050,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
        delete(s);
       }
 
-      state_free_mem(&tmp_s);
+      tmp_s.free_mem();
     }
 
     while (!vec_is_empty(search)) {

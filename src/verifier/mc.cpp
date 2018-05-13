@@ -235,7 +235,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     lmn_mem_free_rec(mem);
     if (s->is_binstr_user() &&
         (lmn_env.hash_compaction || lmn_env.tree_compress)) {
-      state_free_binstr(s);
+      s->free_binstr();
     }
   }
 
@@ -319,7 +319,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ_m = NULL;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
       if (src_succ->s_is_d())
-        state_calc_binstr_delta(src_succ);
+        src_succ->calc_binstr_delta();
       succ = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
     } else {                            /* default */

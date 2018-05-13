@@ -211,7 +211,7 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a) {
     if (is_outside_exist(s)) {
       /* 展開元の状態から1stepで遷移可能な頂点(rootのサクセサ)が状態空間に追加されている場合
        */
-      state_succ_clear(s);
+      s->succ_clear();
       s->flags3 = 0x00U;
     } else {
       /* それ以外は, rootでなければ開放 */
@@ -354,7 +354,7 @@ static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
       lmn_mem_drop(mem);
       lmn_mem_free(mem);
     } else {
-      state_free_mem(s);
+      s->free_mem();
     }
   }
 }
@@ -380,7 +380,7 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
     LmnBinStrRef bs;
     st_add_direct(mc_por.states, (st_data_t)succ, (st_data_t)succ);
     if (!succ->is_encoded()) {
-      bs = state_calc_mem_dump(succ);
+      bs = succ->mem_dump();
       succ->state_set_binstr(bs);
     }
     ret = succ;
