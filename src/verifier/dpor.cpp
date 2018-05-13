@@ -893,18 +893,18 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         continue; /* さっき登録した */
 
       succ_d = succ_c->d;
-      src_succ = state_make_minimal();
+      src_succ = new State();
       state_set_parent(src_succ, s);
       state_set_property_state(src_succ, DEFAULT_STATE_ID);
       src_t = transition_make(src_succ, lmn_intern("reduced"));
 
       dmem_root_commit(succ_d); /* src_succに対応したグラフ構造へ */
-      state_set_mem(src_succ, DMEM_ROOT_MEM(succ_d));
-      state_calc_hash(
-          src_succ, state_mem(src_succ),
+      src_succ->state_set_mem(DMEM_ROOT_MEM(succ_d));
+      src_succ->state_calc_hash(
+          state_mem(src_succ),
           statespace_use_memenc(ss)); /* それを元にハッシュ値やmem_idを計算 */
-      if (!is_encoded(src_succ)) {
-        state_set_binstr(src_succ, state_calc_mem_dump(src_succ));
+      if (!src_succ->is_encoded()) {
+        src_succ->state_set_binstr(state_calc_mem_dump(src_succ));
       }
       vec_push(reduced_stack, (vec_data_t)src_t);
       dmem_root_revert(succ_d); /* 元に戻す */

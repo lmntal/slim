@@ -305,7 +305,7 @@ static int state_equals_with_compress(State *check, State *stored) {
 
 static int state_equals(State *s1, State *s2) {
 #ifdef DEBUG
-  if (is_binstr_user(s1) || is_binstr_user(s2)) {
+  if (s1->is_binstr_user() || s2->is_binstr_user()) {
     lmn_fatal("unexpected");
   }
 #endif
@@ -325,7 +325,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
 #define CMP_STR(Str) ((Str) ? "equal" : "NOT equal")
 
 int state_cmp_with_compress(State *s1, State *s2) {
-  if (lmn_env.debug_isomor && !(is_encoded(s1) && is_encoded(s2))) {
+  if (lmn_env.debug_isomor && !(s1->is_encoded() && s2->is_encoded())) {
     LmnMembraneRef s2_mem;
     LmnBinStrRef s1_mid, s2_mid;
     BOOL org_check, mid_check, meq_check;
@@ -335,7 +335,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
     /* s1がcheckなのでmem, s2がstored(ハッシュ表に記録済み)なのでbinstrを保持 */
 
     /* データ構造の構築 */
-    s2_mem = lmn_binstr_decode(s2->->state_binstr());
+    s2_mem = lmn_binstr_decode(s2->state_binstr());
     s1_mid = lmn_mem_encode(state_mem(s1));
     s2_mid = lmn_mem_encode(s2_mem);
 
@@ -380,7 +380,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
       fprintf(f, "============================================================="
                  "=======================\n");
 
-      lmn_binstr_dump(s2->->state_binstr());
+      lmn_binstr_dump(s2->state_binstr());
       lmn_dump_mem_stdout(state_mem(s1));
 
       lmn_binstr_free(s1_bs);

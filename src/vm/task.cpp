@@ -1453,7 +1453,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
       LMN_ASSERT(!LMN_ATTR_IS_DATA(at(rc, atomi)));
       LMN_ASSERT(LMN_IS_PROXY_FUNCTOR(
-          LMN_SATOM_GET_FUNCTOR(LMN_SATOM(wt(rc, atomi)))));
+          LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(wt(rc, atomi)))));
       //      LMN_ASSERT(((LmnMembraneRef)wt(rc, memi))->parent);
 
       m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)wt(rc, atomi));
@@ -4039,7 +4039,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
       LMN_ASSERT(!LMN_ATTR_IS_DATA(at(rc, atomi)));
-      LMN_ASSERT(LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(wt(rc, atomi))));
+      LMN_ASSERT(LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)wt(rc, atomi))));
 
       if (LMN_PROXY_GET_MEM((LmnSymbolAtomRef)wt(rc, atomi)) !=
           (LmnMembraneRef)wt(rc, memi))

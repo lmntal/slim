@@ -46,7 +46,7 @@
 #include "propositional_symbol.h"
 #include "runtime_status.h"
 #ifdef DEBUG
-#include "dumper.h"
+#include "vm/dumper.h"
 #endif
 #include "state.h"
 #include "state.hpp"
