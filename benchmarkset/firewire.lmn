@@ -27,8 +27,8 @@
   node{id(b), neig{num(3), +AB,+BC,+BD}, children{}, phase(rec)}.
   node{id(c), neig{num(1), +BC},         children{}, phase(rec)}.
 	node{id(d), neig{num(1), +BD},         children{}, phase(rec)}.
-
 */
+
 % NetWork1
 /*
   node{id(a), neig{num(1), +AC},         children{}, phase(rec)}.
@@ -40,6 +40,7 @@
 */
 
 % NetWork2
+/*
   node{id(a), neig{num(1), +AC},         children{}, phase(rec)}.
   node{id(b), neig{num(2), +BC,+BD},     children{}, phase(rec)}.
   node{id(c), neig{num(3), +AC,+BC,+CE}, children{}, phase(rec)}.
@@ -54,8 +55,8 @@
   node{id(l), neig{num(3), +KL,+LM,+LN}, children{}, phase(rec)}.
   node{id(m), neig{num(1), +LM},         children{}, phase(rec)}.
   node{id(n), neig{num(1), +LN},         children{}, phase(rec)}.  
+*/
 
-/*
 % NetWork3
   node{id(a), neig{num(1), +AC},         children{}, phase(rec)}.
   node{id(b), neig{num(2), +BC,+BD},     children{}, phase(rec)}.
@@ -71,7 +72,6 @@
   node{id(l), neig{num(1), +HL},         children{}, phase(rec)}.
   node{id(m), neig{num(1), +IM},         children{}, phase(rec)}.
   node{id(n), neig{num(1), +IN},         children{}, phase(rec)}.
-*/
 
 % NetWork4
 /*
