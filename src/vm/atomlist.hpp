@@ -51,7 +51,7 @@ struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
   int n;
   struct SimpleHashtbl *record;
-  typedef AtomListIter_ iterator;
+  typedef struct AtomListIter_ iterator;
   iterator begin();
   iterator end();
 
@@ -136,18 +136,32 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
 
 struct AtomListIter_
     : public std::iterator<std::forward_iterator_tag, LmnSymbolAtomRef> {
-  size_t a_index;
+  LmnSymbolAtomRef a_index;
   AtomListEntryRef a_ent;
-  AtomListIter_();
-  AtomListIter_(AtomListEntryRef ent, int index);
+  // AtomListIter_(){
 
-  AtomListIter_(const AtomListIter_ &itr);
+  // };
+  AtomListIter_(AtomListEntryRef ent, LmnSymbolAtomRef index) {
+    a_ent = ent;
+    a_index = index;
+  };
 
-  AtomListIter_ &operator++();
-  AtomListIter_ operator++(int);
-  int &operator*();
-  bool operator==(const AtomListIter_ &itr);
-  bool operator!=(const AtomListIter_ &itr);
+  // AtomListIter_(const AtomListIter_ &itr);
+
+  AtomListIter_ &operator++() {
+    a_index = LMN_SATOM_GET_NEXT_RAW(a_index);
+    return *this;
+  };
+  AtomListIter_ operator++(int) {
+    AtomListIter_ ret = *this;
+    a_index = LMN_SATOM_GET_NEXT_RAW(a_index);
+    return ret;
+  };
+  LmnSymbolAtomRef &operator*() { return this->a_index; };
+  bool operator!=(const AtomListIter_ &itr) {
+    return this->a_ent != itr.a_ent || this->a_index != itr.a_index;
+  };
+  bool operator==(const AtomListIter_ &itr) { return !(*this != itr); };
 };
 
 typedef int AtomListIter;
