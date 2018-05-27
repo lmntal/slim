@@ -46,7 +46,7 @@
 #include "lmntal.h"
 #include "../element/vector.h"
 
-
+#include <map>
 
 struct LmnMembrane;
 typedef struct LmnMembrane *LmnMembraneRef;
@@ -69,6 +69,13 @@ struct LmnMembrane {
   Vector *firstclass_rulesets;
 #endif
 
+  std::map<LmnFunctor, AtomListEntry *> atom_lists() const {
+    std::map<LmnFunctor, AtomListEntry *> res;
+    for (int i = 0; i < max_functor; i++)
+      if (atomset[i])
+        res[i] = atomset[i];
+    return res;
+  }
 };
 
 #endif

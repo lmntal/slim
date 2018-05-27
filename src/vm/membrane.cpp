@@ -74,6 +74,14 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
                                    LmnMembraneRef srcmem, ProcessTableRef atoms,
                                    BOOL hl_nd);
 
+typedef int AtomListIter;
+#define atomlist_iter_initializer(AS) (0)
+#define atomlist_iter_condition(Mem, Iter) ((Iter) < lmn_mem_max_functor(Mem))
+#define atomlist_iter_next(Iter) ((Iter)++)
+#define atomlist_iter_get_entry(Mem, Iter) lmn_mem_get_atomlist(Mem, Iter)
+#define atomlist_iter_get_functor(Iter) (Iter)
+
+
 /* ルールセットadd_rsをルールセット配列src_vへ追加する.
  * グラフ同型性判定処理などのために整数IDの昇順を維持するよう追加する. */
 void lmn_mem_add_ruleset_sort(Vector *src_v, LmnRuleSetRef add_rs) {
