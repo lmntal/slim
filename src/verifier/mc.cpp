@@ -51,10 +51,44 @@
 #include "state.h"
 #include "state.hpp"
 
+#include <map>
+#include <set>
+#include <iterator>
+
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
  */
+
+template <typename Key>
+class DisjointSet {
+  std::map<Key, Key> parent;
+public:
+  Key find(Key k) {
+    auto p = parent[k];
+    if (p == k) return p;
+    return (parent[k] = find(p));
+  }
+  void unite(Key a, Key b) {
+    auto ra = find(a);
+    auto rb = find(b);
+    if (ra != rb) parent[ra] = rb;
+  }
+  void add(Key a) {
+    if (parent[a] == nullptr)
+      parent[a] = a;
+  }
+
+  std::set<Key> roots() {
+    std::set<Key> res;
+    for (auto &p : parent) {
+      auto r = find(p.first);
+      if (res.find(r) == res.end())
+        res.insert(r);
+    }
+    return res;
+  }
+};
 
 static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
                          int thread_num);
@@ -75,6 +109,33 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   }
 
   react_start_rulesets(mem, start_rulesets);
+
+  DisjointSet<LmnSymbolAtomRef> ingredients;
+  lmn_dump_mem_stdout(mem);
+  AtomListEntry ent;
+  LmnSymbolAtomRef atom;
+  ALL_ATOMS(mem, atom, {
+    ingredients.add(atom);
+
+    for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
+      if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) continue;
+      auto s = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(atom, i));
+      ingredients.add(s);
+      ingredients.unite(atom, s);
+    }
+  });
+
+  for (auto a : ingredients.roots()) {
+    printf("%s\n", LMN_SATOM_STR(a));
+  }
+
+  auto roots = ingredients.roots();
+  for (auto it1 = roots.cbegin(); it1 != roots.cend(); ++it1) {
+    for (auto it2 = std::next(it1, 1); it2 != roots.cend(); ++it2) {
+      printf("%s %s\n", LMN_SATOM_STR(*it1), LMN_SATOM_STR(*it2));
+    }
+  }
+
   lmn_mem_activate_ancestors(mem);
 
   do_mc(mem, a, psyms, lmn_env.core_num);
