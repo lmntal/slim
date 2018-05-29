@@ -54,6 +54,9 @@
 #include <map>
 #include <set>
 #include <iterator>
+#include <vector>
+#include <queue>
+#include <algorithm>
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -79,13 +82,10 @@ public:
       parent[a] = a;
   }
 
-  std::set<Key> roots() {
-    std::set<Key> res;
-    for (auto &p : parent) {
-      auto r = find(p.first);
-      if (res.find(r) == res.end())
-        res.insert(r);
-    }
+  std::map<Key, std::set<Key>> disjoint_set() {
+    std::map<Key, std::set<Key>> res;
+    for (auto &p : parent)
+      res[p.second].insert(p.first);
     return res;
   }
 };
@@ -93,6 +93,53 @@ public:
 static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
                          int thread_num);
 static void mc_dump(LmnWorkerGroup *wp);
+
+std::set<std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>> max_common_subproc_matching(LmnSymbolAtomRef a, LmnSymbolAtomRef b) {
+  std::set<std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>> res;
+  std::queue<std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>> q;
+  q.push({a, b});
+
+  while (!q.empty()) {
+    auto p = q.front();
+    q.pop();
+
+    if (res.find(p) != res.end())
+      continue;
+    res.insert(p);
+
+    auto x = p.first, y = p.second;
+    for (int i = 0; i < LMN_SATOM_GET_ARITY(x); i++) {
+      auto xattr = LMN_SATOM_GET_ATTR(x, i);
+      auto yattr = LMN_SATOM_GET_ATTR(y, i);
+      if (LMN_ATTR_IS_DATA(xattr) || LMN_ATTR_IS_DATA(yattr))
+        continue;
+      auto xa = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(x, i));
+      auto ya = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(y, i));
+      if (LMN_SATOM_GET_FUNCTOR(xa) != LMN_SATOM_GET_FUNCTOR(ya))
+        continue;
+
+      q.push({xa, ya});
+    }
+  }
+
+  return res;
+}
+
+namespace ssr {
+  using match = std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>;
+}
+
+bool contradict(std::set<ssr::match> a, std::set<ssr::match> b) {
+  std::set<LmnSymbolAtomRef> b0, b1;
+  for (auto y : b) {
+    b0.insert(y.first);
+    b1.insert(y.second);
+  }
+  for (auto x : a)
+    if (b0.find(x.first) != b0.end() || b1.find(x.second) != b1.end())
+      return false;
+  return true;
+}
 
 /* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
 void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
@@ -114,25 +161,109 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   lmn_dump_mem_stdout(mem);
   AtomListEntry ent;
   LmnSymbolAtomRef atom;
-  ALL_ATOMS(mem, atom, {
-    ingredients.add(atom);
 
-    for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
-      if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) continue;
-      auto s = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(atom, i));
-      ingredients.add(s);
-      ingredients.unite(atom, s);
+  for (auto p : mem->atom_lists()) {
+    auto atomlist = p.second;
+
+    for (auto atom : *atomlist) {
+      ingredients.add(atom);
+
+      for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
+        if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) continue;
+        auto s = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(atom, i));
+        ingredients.add(s);
+        ingredients.unite(atom, s);
+      }
     }
-  });
-
-  for (auto a : ingredients.roots()) {
-    printf("%s\n", LMN_SATOM_STR(a));
   }
 
-  auto roots = ingredients.roots();
-  for (auto it1 = roots.cbegin(); it1 != roots.cend(); ++it1) {
-    for (auto it2 = std::next(it1, 1); it2 != roots.cend(); ++it2) {
-      printf("%s %s\n", LMN_SATOM_STR(*it1), LMN_SATOM_STR(*it2));
+  // this should be constructed from rules.
+  std::set<LmnFunctor> compulsory_functors;
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("buy"), 2));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("buy_button"), 2));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin_inserted"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin_return"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin_return"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin_sink"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("empty"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("insert_coin"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("inserting"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("item"), 2));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("item_return"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("item_returned"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("operation"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("power_off"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("power_on"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("power_switch"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("pressed"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("ready"), 1));
+  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("state"), 1));
+
+  auto sets = ingredients.disjoint_set();
+  for (auto it1 = sets.cbegin(); it1 != sets.cend(); ++it1) {
+    for (auto it2 = std::next(it1, 1); it2 != sets.cend(); ++it2) {
+      auto &s1 = it1->second;
+      auto &s2 = it2->second;
+
+      using match = std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>;
+      std::set<std::set<match>> matching_pairs;
+      for (auto a1 : s1) {
+        for (auto a2 : s2) {
+          if (LMN_SATOM_GET_FUNCTOR(a1) != LMN_SATOM_GET_FUNCTOR(a2))
+            continue;
+
+          auto m = match(a1, a2);
+          std::set<match> mps = max_common_subproc_matching(a1, a2);
+          std::set<std::set<match>> new_mps;
+          for (auto &mps2 : matching_pairs) {
+            if (contradict(mps, mps2))
+              continue;
+            std::set<match> res;
+            std::set_union(mps.begin(), mps.end(), mps2.begin(), mps2.end(), std::inserter(res, res.end()));
+            new_mps.insert(res);
+          }
+          matching_pairs.insert(mps);
+          matching_pairs.insert(new_mps.begin(), new_mps.end());
+        }
+      }
+
+      std::set<std::set<match>> mps;
+      std::remove_copy_if(matching_pairs.begin(), matching_pairs.end(), std::inserter(mps, mps.end()), [&](std::set<ssr::match> m) {
+        std::set<LmnSymbolAtomRef> ds, a, b, r;
+        for (auto p : m) {
+          a.insert(p.first);
+          b.insert(p.second);
+        }
+        std::set_difference(s1.begin(), s1.end(), a.begin(), a.end(), std::inserter(ds, ds.end()));
+        std::set_difference(s2.begin(), s2.end(), b.begin(), b.end(), std::inserter(ds, ds.end()));
+        return std::any_of(ds.begin(), ds.end(), [&](LmnSymbolAtomRef satom) {
+          return (compulsory_functors.find(LMN_SATOM_GET_FUNCTOR(satom)) != compulsory_functors.end());
+        });
+      });
+      if (mps.size() == 0) continue;
+
+      printf("%s %s --> %lu\n", LMN_SATOM_STR(it1->first), LMN_SATOM_STR(it2->first), mps.size());
+      auto mcsp = *std::max_element(mps.begin(), mps.end(), [](const std::set<ssr::match> &s1, const std::set<ssr::match> &s2) { return s1.size() - s2.size(); });
+      std::set<LmnSymbolAtomRef> mcsp1, mcsp2;
+      for (auto p : mcsp) {
+        mcsp1.insert(p.first);
+        mcsp2.insert(p.second);
+      }
+
+      auto abs_functor = lmn_functor_intern(ANONYMOUS, lmn_intern("_"), 1);
+      for (auto satom : s1) {
+        if (mcsp1.find(satom) != mcsp1.end())
+          continue;
+        printf("%s is abstracted\n", LMN_SATOM_STR(satom));
+        LMN_SATOM_SET_FUNCTOR(satom, abs_functor);
+      }
+      for (auto satom : s2) {
+        if (mcsp2.find(satom) != mcsp2.end())
+          continue;
+        printf("%s is abstracted\n", LMN_SATOM_STR(satom));
+        LMN_SATOM_SET_FUNCTOR(satom, abs_functor);
+      }
     }
   }
 

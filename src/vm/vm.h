@@ -64,5 +64,6 @@
 #include "rule.hpp"
 #include "atomlist.hpp"
 #include "react_context.hpp"
+#include "membrane.hpp"
 
 #endif /* LMN_VM_H */
