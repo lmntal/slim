@@ -85,18 +85,6 @@
 #define LMN_DOUBLE_IS_IMMEDIATE 1
 #endif
 
-#ifndef LMN_DECL_BEGIN
-#ifdef __cplusplus
-#define LMN_DECL_BEGIN extern "C" {
-#define LMN_DECL_END }
-#else
-#define LMN_DECL_BEGIN
-#define LMN_DECL_END
-#endif /* __cplusplus */
-#endif /* LMN_DECL_BEGIN */
-
-LMN_DECL_BEGIN
-
 /*----------------------------------------------------------------------
  * data types
  */
@@ -551,8 +539,6 @@ static inline unsigned long env_next_id() {
 }
 
 #endif
-
-LMN_DECL_END
 
 /* cldoc:end-category() */
 

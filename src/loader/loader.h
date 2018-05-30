@@ -46,10 +46,6 @@
 #include "load.h"
 #include "syntax.h"
 
-#ifdef __cplusplus
-extern "C++" {
 #include "translate.hpp"
-}
-#endif
 
 #endif /* LMN_LOADER_H */

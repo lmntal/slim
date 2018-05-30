@@ -47,6 +47,7 @@
 #include "error.h"
 #include "file_util.h"
 #include "internal_hash.h"
+#include "instruction.hpp"
 #include "lmnstring.h"
 #include "lmntal_thread.h"
 #include "memory_pool.h"
