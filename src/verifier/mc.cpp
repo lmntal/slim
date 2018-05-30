@@ -141,6 +141,171 @@ bool contradict(std::set<ssr::match> a, std::set<ssr::match> b) {
   return true;
 }
 
+BYTE *skip_instruction_arg(BYTE *instr, ArgType type) {
+  switch (type) {
+    case Label:
+      return instr + sizeof(LmnJumpOffset);
+    case InstrVar:
+      return instr + sizeof(LmnInstrVar);
+    case InstrVarList: {
+      LmnInstrVar n = *(LmnInstrVar *)instr;
+      return instr + sizeof(LmnInstrVar) + n * sizeof(LmnInstrVar);
+    }
+    case ArgFunctor: {
+      LmnLinkAttr attr = *(LmnLinkAttr *)instr;
+      instr += sizeof(LmnLinkAttr);
+      if (!LMN_ATTR_IS_DATA(attr)) {
+        return instr + sizeof(LmnFunctor);
+      } else {
+        switch (attr) {
+          case LMN_INT_ATTR:
+            return instr + sizeof(long);
+          case LMN_DBL_ATTR:
+            return instr + sizeof(double);
+          case LMN_STRING_ATTR:
+            return instr + sizeof(lmn_interned_str);
+          default:
+            lmn_fatal("unknown data attribute.");
+        }
+      }
+    }
+  }
+  return NULL;
+}
+
+LmnFunctor read_functor(BYTE *instr) {
+  return *(LmnFunctor *)(instr + sizeof(LmnLinkAttr));
+}
+
+std::set<LmnFunctor> compulsory_functors_with_rule(LmnRuleRef rule) {
+  std::set<LmnFunctor> res;
+
+  BYTE *instr = lmn_rule_get_inst_seq(rule);
+  while (true) {
+    LmnInstrOp op = *(LmnInstrOp *)instr;
+    instr += sizeof(LmnInstrOp);
+
+    switch (op) {
+      case INSTR_DEREF:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_SPEC:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_JUMP:
+        instr = skip_instruction_arg(instr, Label);
+        instr = skip_instruction_arg(instr, InstrVarList);
+        instr = skip_instruction_arg(instr, InstrVarList);
+        instr = skip_instruction_arg(instr, InstrVarList);
+        break;
+      case INSTR_GETFUNC:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_DEREFFUNC:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_DEREFATOM:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_ALLOCATOM:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, ArgFunctor);
+        break;
+      case INSTR_ALLOCATOMINDIRECT:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_ISINT: /* fallthrough */
+      case INSTR_ISFLOAT: /* fallthrough */
+      case INSTR_ISSTRING: /* fallthrough */
+      case INSTR_ISINTFUNC: /* fallthrough */
+      case INSTR_ISUNARY:
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_EQATOM: /* fallthrough */
+      case INSTR_NEQATOM: /* fallthrough */
+      case INSTR_SAMEFUNC: /* fallthrough */
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_IADD: /* fallthrough */
+      case INSTR_ISUB: /* fallthrough */
+      case INSTR_IMUL: /* fallthrough */
+      case INSTR_IDIV: /* fallthrough */
+      case INSTR_IAND: /* fallthrough */
+      case INSTR_IOR:  /* fallthrough */
+      case INSTR_IXOR: /* fallthrough */
+      case INSTR_IMOD:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_INEG: /* fallthrough */
+      case INSTR_ILT: /* fallthrough */
+      case INSTR_ILE: /* fallthrough */
+      case INSTR_IGT: /* fallthrough */
+      case INSTR_IGE: /* fallthrough */
+      case INSTR_IEQ: /* fallthrough */
+      case INSTR_INE:
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        break;
+      case INSTR_FINDATOM: {
+        instr = skip_instruction_arg(instr, InstrVar);
+        instr = skip_instruction_arg(instr, InstrVar);
+        if (LMN_ATTR_IS_DATA(*(LmnLinkAttr *)instr))
+          lmn_fatal("data atom can't be find.");
+        res.insert(read_functor(instr));
+        instr = skip_instruction_arg(instr, ArgFunctor);
+        break;
+      }
+      case INSTR_FUNC: {
+        instr = skip_instruction_arg(instr, InstrVar);
+        if (!LMN_ATTR_IS_DATA(*(LmnLinkAttr *)instr)) {
+          res.insert(read_functor(instr));
+        }
+        instr = skip_instruction_arg(instr, ArgFunctor);
+        break;
+      }
+      case INSTR_COMMIT:
+        return res;
+      default:
+        printf("!%d\n", op);
+        return res;
+        break;
+    }
+  }
+
+  return res;
+}
+
+std::set<LmnFunctor> compulsory_functors_with_rule_in_mem(LmnMembraneRef mem) {
+  std::set<LmnFunctor> res;
+  for (LmnMembraneRef child = lmn_mem_child_head(mem); child; child = lmn_mem_next(child)) {
+    auto s = compulsory_functors_with_rule_in_mem(child);
+    res.insert(s.begin(), s.end());
+  }
+
+  for (int i = 0; i < lmn_mem_ruleset_num(mem); i++) {
+    auto rs = lmn_mem_get_ruleset(mem, i);
+    for (int j = 0; j < rs->num; j++) {
+      auto s = compulsory_functors_with_rule(rs->get_rule(j));
+      res.insert(s.begin(), s.end());  
+    }
+  }
+
+  return res;
+}
+
 /* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
 void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   static LmnMembraneRef mem;
@@ -179,26 +344,16 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
 
   // this should be constructed from rules.
   std::set<LmnFunctor> compulsory_functors;
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("buy"), 2));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("buy_button"), 2));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin_inserted"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin_return"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin_return"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("coin_sink"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("empty"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("insert_coin"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("inserting"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("item"), 2));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("item_return"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("item_returned"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("operation"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("power_off"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("power_on"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("power_switch"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("pressed"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("ready"), 1));
-  compulsory_functors.insert(lmn_functor_intern(ANONYMOUS, lmn_intern("state"), 1));
+  for (int i = 0; psyms && i < vec_num(psyms); i++) {
+    auto psym = reinterpret_cast<SymbolDefinitionRef>(vec_get(psyms, i));
+    auto p = propsym_get_proposition(psym);
+    auto rule = proposition_get_rule(p);
+    auto c = compulsory_functors_with_rule(rule);
+    compulsory_functors.insert(c.begin(), c.end());
+  }
+
+  auto cs = compulsory_functors_with_rule_in_mem(mem);
+  compulsory_functors.insert(cs.begin(), cs.end());
 
   auto sets = ingredients.disjoint_set();
   for (auto it1 = sets.cbegin(); it1 != sets.cend(); ++it1) {
