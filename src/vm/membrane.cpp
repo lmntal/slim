@@ -147,6 +147,29 @@ static inline void free_atomlist(AtomListEntry *as) {
   }
 }
 
+std::map<LmnSymbolAtomRef, std::set<LmnSymbolAtomRef>> LmnMembrane::ingredients() {
+  psr_gsd::disjoint_set<LmnSymbolAtomRef> ingredients;
+  AtomListEntry ent;
+  LmnSymbolAtomRef atom;
+
+  for (auto p : this->atom_lists()) {
+    auto atomlist = p.second;
+
+    for (auto atom : *atomlist) {
+      ingredients.insert(atom);
+
+      for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
+        if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) continue;
+        auto s = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(atom, i));
+        ingredients.insert(s);
+        ingredients.unite(atom, s);
+      }
+    }
+  }
+
+  return ingredients.sets();
+}
+
 LmnMembraneRef lmn_mem_make(void) {
   LmnMembraneRef mem;
 

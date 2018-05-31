@@ -44,13 +44,16 @@
 
 
 #include "lmntal.h"
-#include "../element/vector.h"
+#include "element/element.h"
 
 #include <map>
+#include <set>
 
 struct LmnMembrane;
 typedef struct LmnMembrane *LmnMembraneRef;
 typedef struct AtomListEntry **AtomSet;
+
+#include "atom.h"
 
 struct LmnMembrane {
   AtomSet atomset;
@@ -76,6 +79,8 @@ struct LmnMembrane {
         res[i] = atomset[i];
     return res;
   }
+
+  std::map<LmnSymbolAtomRef, std::set<LmnSymbolAtomRef>> ingredients();
 };
 
 #endif

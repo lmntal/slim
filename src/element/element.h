@@ -66,4 +66,6 @@
 #include "conditional_ostream.hpp"
 #include "optional.hpp"
 
+#include "psr_gsd/disjoint_set.hpp"
+
 #endif /* LMN_ELEMENT_H */

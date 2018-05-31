@@ -63,33 +63,6 @@
  *  =======================================
  */
 
-template <typename Key>
-class DisjointSet {
-  std::map<Key, Key> parent;
-public:
-  Key find(Key k) {
-    auto p = parent[k];
-    if (p == k) return p;
-    return (parent[k] = find(p));
-  }
-  void unite(Key a, Key b) {
-    auto ra = find(a);
-    auto rb = find(b);
-    if (ra != rb) parent[ra] = rb;
-  }
-  void add(Key a) {
-    if (parent[a] == nullptr)
-      parent[a] = a;
-  }
-
-  std::map<Key, std::set<Key>> disjoint_set() {
-    std::map<Key, std::set<Key>> res;
-    for (auto &p : parent)
-      res[p.second].insert(p.first);
-    return res;
-  }
-};
-
 static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
                          int thread_num);
 static void mc_dump(LmnWorkerGroup *wp);
@@ -125,11 +98,12 @@ std::set<std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>> max_common_subproc_match
   return res;
 }
 
-namespace ssr {
+namespace psr_ssd {
   using match = std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>;
+  using matching_set = std::set<match>;
 }
 
-bool contradict(std::set<ssr::match> a, std::set<ssr::match> b) {
+bool contradict(psr_ssd::matching_set a, psr_ssd::matching_set b) {
   std::set<LmnSymbolAtomRef> b0, b1;
   for (auto y : b) {
     b0.insert(y.first);
@@ -143,34 +117,46 @@ bool contradict(std::set<ssr::match> a, std::set<ssr::match> b) {
 
 BYTE *skip_instruction_arg(BYTE *instr, ArgType type) {
   switch (type) {
-    case Label:
-      return instr + sizeof(LmnJumpOffset);
-    case InstrVar:
-      return instr + sizeof(LmnInstrVar);
-    case InstrVarList: {
-      LmnInstrVar n = *(LmnInstrVar *)instr;
-      return instr + sizeof(LmnInstrVar) + n * sizeof(LmnInstrVar);
-    }
-    case ArgFunctor: {
-      LmnLinkAttr attr = *(LmnLinkAttr *)instr;
-      instr += sizeof(LmnLinkAttr);
-      if (!LMN_ATTR_IS_DATA(attr)) {
-        return instr + sizeof(LmnFunctor);
-      } else {
-        switch (attr) {
-          case LMN_INT_ATTR:
-            return instr + sizeof(long);
-          case LMN_DBL_ATTR:
-            return instr + sizeof(double);
-          case LMN_STRING_ATTR:
-            return instr + sizeof(lmn_interned_str);
-          default:
-            lmn_fatal("unknown data attribute.");
-        }
+  case ARG_END:
+    return instr;
+  case InstrVar:
+    return instr + sizeof(LmnInstrVar);
+  case Label:
+    return instr + sizeof(LmnJumpOffset);
+  case InstrVarList: {
+    LmnInstrVar n = *(LmnInstrVar *)instr;
+    return instr + sizeof(LmnInstrVar) + n * sizeof(LmnInstrVar);
+  }
+  case String:
+    return instr + sizeof(lmn_interned_str);
+  case LineNum:
+    return instr + sizeof(LmnLineNum);
+  case ArgFunctor: {
+    LmnLinkAttr attr = *(LmnLinkAttr *)instr;
+    instr += sizeof(LmnLinkAttr);
+    if (!LMN_ATTR_IS_DATA(attr)) {
+      return instr + sizeof(LmnFunctor);
+    } else {
+      switch (attr) {
+      case LMN_INT_ATTR:
+        return instr + sizeof(long);
+      case LMN_DBL_ATTR:
+        return instr + sizeof(double);
+      case LMN_STRING_ATTR:
+        return instr + sizeof(lmn_interned_str);
+      default:
+        lmn_fatal("unknown data attribute.");
       }
     }
   }
-  return NULL;
+  case ArgRuleset:
+    return instr + sizeof(LmnRulesetId);
+  case InstrList: {
+    LmnSubInstrSize n = *(LmnSubInstrSize *)instr;
+    return instr + sizeof(LmnSubInstrSize) + n;
+  }
+  }
+  return NULL; /* can't be here */
 }
 
 LmnFunctor read_functor(BYTE *instr) {
@@ -186,79 +172,6 @@ std::set<LmnFunctor> compulsory_functors_with_rule(LmnRuleRef rule) {
     instr += sizeof(LmnInstrOp);
 
     switch (op) {
-      case INSTR_DEREF:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_SPEC:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_JUMP:
-        instr = skip_instruction_arg(instr, Label);
-        instr = skip_instruction_arg(instr, InstrVarList);
-        instr = skip_instruction_arg(instr, InstrVarList);
-        instr = skip_instruction_arg(instr, InstrVarList);
-        break;
-      case INSTR_GETFUNC:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_DEREFFUNC:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_DEREFATOM:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_ALLOCATOM:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, ArgFunctor);
-        break;
-      case INSTR_ALLOCATOMINDIRECT:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_ISINT: /* fallthrough */
-      case INSTR_ISFLOAT: /* fallthrough */
-      case INSTR_ISSTRING: /* fallthrough */
-      case INSTR_ISINTFUNC: /* fallthrough */
-      case INSTR_ISUNARY:
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_EQATOM: /* fallthrough */
-      case INSTR_NEQATOM: /* fallthrough */
-      case INSTR_SAMEFUNC: /* fallthrough */
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_IADD: /* fallthrough */
-      case INSTR_ISUB: /* fallthrough */
-      case INSTR_IMUL: /* fallthrough */
-      case INSTR_IDIV: /* fallthrough */
-      case INSTR_IAND: /* fallthrough */
-      case INSTR_IOR:  /* fallthrough */
-      case INSTR_IXOR: /* fallthrough */
-      case INSTR_IMOD:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
-      case INSTR_INEG: /* fallthrough */
-      case INSTR_ILT: /* fallthrough */
-      case INSTR_ILE: /* fallthrough */
-      case INSTR_IGT: /* fallthrough */
-      case INSTR_IGE: /* fallthrough */
-      case INSTR_IEQ: /* fallthrough */
-      case INSTR_INE:
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        break;
       case INSTR_FINDATOM: {
         instr = skip_instruction_arg(instr, InstrVar);
         instr = skip_instruction_arg(instr, InstrVar);
@@ -279,8 +192,9 @@ std::set<LmnFunctor> compulsory_functors_with_rule(LmnRuleRef rule) {
       case INSTR_COMMIT:
         return res;
       default:
-        printf("!%d\n", op);
-        return res;
+        auto &spec = instr_spec.at(LmnInstruction(op));
+        for (auto t : spec.args)
+          instr = skip_instruction_arg(instr, t);
         break;
     }
   }
@@ -290,7 +204,7 @@ std::set<LmnFunctor> compulsory_functors_with_rule(LmnRuleRef rule) {
 
 std::set<LmnFunctor> compulsory_functors_with_rule_in_mem(LmnMembraneRef mem) {
   std::set<LmnFunctor> res;
-  for (LmnMembraneRef child = lmn_mem_child_head(mem); child; child = lmn_mem_next(child)) {
+  for (auto child = lmn_mem_child_head(mem); child; child = lmn_mem_next(child)) {
     auto s = compulsory_functors_with_rule_in_mem(child);
     res.insert(s.begin(), s.end());
   }
@@ -299,7 +213,7 @@ std::set<LmnFunctor> compulsory_functors_with_rule_in_mem(LmnMembraneRef mem) {
     auto rs = lmn_mem_get_ruleset(mem, i);
     for (int j = 0; j < rs->num; j++) {
       auto s = compulsory_functors_with_rule(rs->get_rule(j));
-      res.insert(s.begin(), s.end());  
+      res.insert(s.begin(), s.end());
     }
   }
 
@@ -322,27 +236,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
 
   react_start_rulesets(mem, start_rulesets);
 
-  DisjointSet<LmnSymbolAtomRef> ingredients;
   lmn_dump_mem_stdout(mem);
-  AtomListEntry ent;
-  LmnSymbolAtomRef atom;
-
-  for (auto p : mem->atom_lists()) {
-    auto atomlist = p.second;
-
-    for (auto atom : *atomlist) {
-      ingredients.add(atom);
-
-      for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
-        if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) continue;
-        auto s = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(atom, i));
-        ingredients.add(s);
-        ingredients.unite(atom, s);
-      }
-    }
-  }
-
-  // this should be constructed from rules.
   std::set<LmnFunctor> compulsory_functors;
   for (int i = 0; psyms && i < vec_num(psyms); i++) {
     auto psym = reinterpret_cast<SymbolDefinitionRef>(vec_get(psyms, i));
@@ -355,51 +249,60 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   auto cs = compulsory_functors_with_rule_in_mem(mem);
   compulsory_functors.insert(cs.begin(), cs.end());
 
-  auto sets = ingredients.disjoint_set();
+  auto sets = mem->ingredients();
   for (auto it1 = sets.cbegin(); it1 != sets.cend(); ++it1) {
     for (auto it2 = std::next(it1, 1); it2 != sets.cend(); ++it2) {
       auto &s1 = it1->second;
       auto &s2 = it2->second;
 
-      using match = std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>;
-      std::set<std::set<match>> matching_pairs;
+      std::set<psr_ssd::matching_set> mp_sets;
       for (auto a1 : s1) {
         for (auto a2 : s2) {
           if (LMN_SATOM_GET_FUNCTOR(a1) != LMN_SATOM_GET_FUNCTOR(a2))
             continue;
 
-          auto m = match(a1, a2);
-          std::set<match> mps = max_common_subproc_matching(a1, a2);
-          std::set<std::set<match>> new_mps;
-          for (auto &mps2 : matching_pairs) {
+          psr_ssd::matching_set mps = max_common_subproc_matching(a1, a2);
+          std::set<psr_ssd::matching_set> new_mps;
+          for (auto &mps2 : mp_sets) {
             if (contradict(mps, mps2))
               continue;
-            std::set<match> res;
-            std::set_union(mps.begin(), mps.end(), mps2.begin(), mps2.end(), std::inserter(res, res.end()));
+            psr_ssd::matching_set res;
+            std::set_union(mps.begin(), mps.end(), mps2.begin(), mps2.end(),
+                           std::inserter(res, res.end()));
             new_mps.insert(res);
           }
-          matching_pairs.insert(mps);
-          matching_pairs.insert(new_mps.begin(), new_mps.end());
+          mp_sets.insert(mps);
+          mp_sets.insert(new_mps.begin(), new_mps.end());
         }
       }
 
-      std::set<std::set<match>> mps;
-      std::remove_copy_if(matching_pairs.begin(), matching_pairs.end(), std::inserter(mps, mps.end()), [&](std::set<ssr::match> m) {
-        std::set<LmnSymbolAtomRef> ds, a, b, r;
-        for (auto p : m) {
-          a.insert(p.first);
-          b.insert(p.second);
-        }
-        std::set_difference(s1.begin(), s1.end(), a.begin(), a.end(), std::inserter(ds, ds.end()));
-        std::set_difference(s2.begin(), s2.end(), b.begin(), b.end(), std::inserter(ds, ds.end()));
-        return std::any_of(ds.begin(), ds.end(), [&](LmnSymbolAtomRef satom) {
-          return (compulsory_functors.find(LMN_SATOM_GET_FUNCTOR(satom)) != compulsory_functors.end());
-        });
-      });
-      if (mps.size() == 0) continue;
+      std::set<psr_ssd::matching_set> mps;
+      std::remove_copy_if(
+          mp_sets.begin(), mp_sets.end(), std::inserter(mps, mps.end()),
+          [&](const psr_ssd::matching_set &m) {
+            std::set<LmnSymbolAtomRef> ds, a, b, r;
+            for (auto p : m) {
+              a.insert(p.first);
+              b.insert(p.second);
+            }
+            std::set_difference(s1.begin(), s1.end(), a.begin(), a.end(),
+                                std::inserter(ds, ds.end()));
+            std::set_difference(s2.begin(), s2.end(), b.begin(), b.end(),
+                                std::inserter(ds, ds.end()));
+            return std::any_of(
+                ds.begin(), ds.end(), [&](LmnSymbolAtomRef satom) {
+                  return (compulsory_functors.find(LMN_SATOM_GET_FUNCTOR(
+                              satom)) != compulsory_functors.end());
+                });
+          });
+      if (mps.size() == 0)
+        continue;
 
-      printf("%s %s --> %lu\n", LMN_SATOM_STR(it1->first), LMN_SATOM_STR(it2->first), mps.size());
-      auto mcsp = *std::max_element(mps.begin(), mps.end(), [](const std::set<ssr::match> &s1, const std::set<ssr::match> &s2) { return s1.size() - s2.size(); });
+      auto mcsp = *std::max_element(
+          mps.begin(), mps.end(),
+          [](const psr_ssd::matching_set &s1, const psr_ssd::matching_set &s2) {
+            return s1.size() - s2.size();
+          });
       std::set<LmnSymbolAtomRef> mcsp1, mcsp2;
       for (auto p : mcsp) {
         mcsp1.insert(p.first);
@@ -410,17 +313,17 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
       for (auto satom : s1) {
         if (mcsp1.find(satom) != mcsp1.end())
           continue;
-        printf("%s is abstracted\n", LMN_SATOM_STR(satom));
         LMN_SATOM_SET_FUNCTOR(satom, abs_functor);
       }
       for (auto satom : s2) {
         if (mcsp2.find(satom) != mcsp2.end())
           continue;
-        printf("%s is abstracted\n", LMN_SATOM_STR(satom));
         LMN_SATOM_SET_FUNCTOR(satom, abs_functor);
       }
     }
   }
+  printf("abstracted initial state:\n");
+  lmn_dump_mem_stdout(mem);
 
   lmn_mem_activate_ancestors(mem);
 
