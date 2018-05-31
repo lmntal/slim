@@ -43,6 +43,7 @@
 #include "vm/vm.h"
 #include "mhash.h"
 #include "state_defs.h"
+#include "runtime_status.h"
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
  *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
@@ -602,7 +603,7 @@ public:
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3)
         profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
-                            sizeof(succ_data_t) * state_succ_num(s));
+                            sizeof(succ_data_t) * this->successor_num);
 #endif
       if (has_trans_obj()) {
         unsigned int i;
