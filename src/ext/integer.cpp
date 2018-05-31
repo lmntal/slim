@@ -78,10 +78,11 @@ void integer_set(LmnReactCxtRef rc,
                  LmnAtomRef a2, LmnLinkAttr t2)
 {
   Vector *srcvec;
-  LmnWord i, n, start, end;
+  LmnWord i;
+  long long n, start, end;
 
-  start  = (LmnWord)a0;
-  end    = (LmnWord)a1;
+  start  = (long long)a0;
+  end    = (long long)a1;
   srcvec = vec_make(16);
   vec_push(srcvec, (LmnWord)LinkObj_make(a2, t2));
 
