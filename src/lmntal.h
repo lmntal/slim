@@ -321,6 +321,8 @@ struct LmnEnv {
 
   BOOL run_test;
 
+  bool use_upe;
+
   enum OutputFormat output_format;
   enum MCdumpFormat mc_dump_format;
   enum SPdumpFormat sp_dump_format;

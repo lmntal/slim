@@ -220,23 +220,7 @@ std::set<LmnFunctor> compulsory_functors_with_rule_in_mem(LmnMembraneRef mem) {
   return res;
 }
 
-/* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
-void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
-  static LmnMembraneRef mem;
-
-  if (lmn_env.nd_cleaning) {
-    /* nd_cleaning状態の場合は、グローバルルート膜の解放を行う */
-    lmn_mem_free_rec(mem);
-    lmn_env.nd_cleaning = FALSE;
-  }
-
-  if (!lmn_env.nd_remain && !lmn_env.nd_remaining) {
-    mem = lmn_mem_make();
-  }
-
-  react_start_rulesets(mem, start_rulesets);
-
-  lmn_dump_mem_stdout(mem);
+void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
   std::set<LmnFunctor> compulsory_functors;
   for (int i = 0; psyms && i < vec_num(psyms); i++) {
     auto psym = reinterpret_cast<SymbolDefinitionRef>(vec_get(psyms, i));
@@ -322,8 +306,27 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
       }
     }
   }
-  printf("abstracted initial state:\n");
-  lmn_dump_mem_stdout(mem);
+}
+
+/* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
+void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
+  static LmnMembraneRef mem;
+
+  if (lmn_env.nd_cleaning) {
+    /* nd_cleaning状態の場合は、グローバルルート膜の解放を行う */
+    lmn_mem_free_rec(mem);
+    lmn_env.nd_cleaning = FALSE;
+  }
+
+  if (!lmn_env.nd_remain && !lmn_env.nd_remaining) {
+    mem = lmn_mem_make();
+  }
+
+  react_start_rulesets(mem, start_rulesets);
+
+  if (lmn_env.use_upe) {
+    eliminate_unused_processes(mem, psyms);
+  }
 
   lmn_mem_activate_ancestors(mem);
 

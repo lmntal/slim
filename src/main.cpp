@@ -134,6 +134,7 @@ static void usage(void) {
       "  --ltl-f <ltl>        (MC) Input <ltl> formula directly. (need LTL2BA "
       "env)\n"
       "  --visualize          (MC) Output information for visualize\n"
+      "  --upe                (MC) Use unused process elimination\n"
       "  --run-test           Run CUnit\n"
       "  --version            Prints version and exits.\n"
       "  --help               This Help.\n");
@@ -231,6 +232,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
+                                  {"upe", 0, 0, 7000},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -571,6 +573,9 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     }
     case 6070:
       lmn_env.run_test = TRUE;
+      break;
+    case 7000:
+      lmn_env.use_upe = true;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
