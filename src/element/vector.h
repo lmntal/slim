@@ -46,6 +46,8 @@
  */
 
 #include "../lmntal.h"
+#include <vector>
+#include "util.h"
 
 struct Vector {
   LmnWord *tbl;
@@ -170,6 +172,27 @@ static inline unsigned long vec_space_inner(Vector *v) {
 
 static inline unsigned long vec_space(Vector *v) {
   return sizeof(struct Vector) + vec_space_inner(v);
+}
+
+template <class T> Vector *vec_make(const std::vector<T> &v) {
+  static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
+                "vector elements must be scalars.");
+  auto res = vec_make(v.size());
+  memcpy(res->tbl, v.data(), sizeof(T) * v.size());
+  res->num = v.size();
+  return res;
+}
+
+namespace slim {
+namespace element {
+template <class T> std::vector<T> make_vector(Vector *v) {
+  if (!v)
+    return std::vector<T>();
+  return std::vector<T>(
+      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
+      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
+}
+}
 }
 
 /* @} */

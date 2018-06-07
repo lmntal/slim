@@ -162,6 +162,43 @@ static inline unsigned long round2up(unsigned long n) {
   return v;
 }
 
+#include <iterator>
+
+namespace slim {
+namespace element {
+template <class T> class raw_pointer_iterator {
+  T *p;
+
+public:
+  using iterator_category = std::input_iterator_tag;
+  using value_type = T;
+  using difference_type = std::ptrdiff_t;
+  using pointer = T *;
+  using reference = T &;
+
+  raw_pointer_iterator(T *ptr) : p(ptr) {}
+  raw_pointer_iterator(const raw_pointer_iterator<T> &it) : p(it.p) {}
+  raw_pointer_iterator &operator=(const raw_pointer_iterator<T> &it) {
+    p = it.p;
+  }
+  ~raw_pointer_iterator() noexcept = default;
+
+  reference operator*() const { return *p; }
+  pointer operator->() const { return p; }
+  raw_pointer_iterator<T> &operator++() {
+    p++;
+    return *this;
+  }
+  raw_pointer_iterator<T> operator++(int i) {
+    return raw_pointer_iterator<T>(p + 1);
+  }
+
+  bool operator!=(const raw_pointer_iterator<T> &a) { return !(*this == a); }
+  bool operator==(const raw_pointer_iterator<T> &a) { return p == a.p; }
+};
+}
+}
+
 /* @} */
 
 #endif /* !LMN_UTIL_H */
