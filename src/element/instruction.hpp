@@ -1,5 +1,5 @@
 /*
- * instructions.h - Intermediate code instructions
+ * instructions.hpp - Intermediate code instructions
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
@@ -33,19 +33,16 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: instruction.h,v 1.5 2008/09/19 05:18:17 taisuke Exp $
  */
 
-#ifndef LMN_INSTRUCTION_H
-#define LMN_INSTRUCTION_H
+#ifndef LMN_INSTRUCTION_HPP
+#define LMN_INSTRUCTION_HPP
 
-/**
- * @ingroup VM
- * @defgroup Instruction
- * @{
- */
 
 #include "lmntal.h"
+
+#include <map>
+#include <vector>
 
 enum LmnInstruction {
   INSTR_OPT,
@@ -281,10 +278,11 @@ enum ArgType {
 
 struct InstrSpec {
   const char *op_str;
-  LmnInstrOp op;
-  enum ArgType args[128];
+  std::vector<ArgType> args;
 };
 
-/* @} */
+extern const std::map<LmnInstruction, InstrSpec> instr_spec;
+
+int get_instr_id(const char *name);
 
 #endif

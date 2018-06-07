@@ -16,7 +16,6 @@ liblmn_vm_a_SOURCES =                              \
 	functor.cpp functor.h \
 	firstclass_rule.cpp firstclass_rule.h \
 	hyperlink.cpp hyperlink.h \
-	instruction.cpp　instruction.h \
 	memstack.cpp memstack.h \
 	normal_thread.cpp normal_thread.h \
 	react_context.cpp react_context.h \

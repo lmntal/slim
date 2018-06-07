@@ -20,5 +20,6 @@ liblmn_elm_a_SOURCES =                              \
 	queue.cpp queue.h \
 	st.cpp st.h \
 	util.cpp util.h \
-	vector.cpp vector.h
+	vector.cpp vector.h \
+	instruction.cpp
 	
