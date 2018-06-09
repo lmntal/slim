@@ -1,8 +1,9 @@
 /*
- * element.h
+ * scope.hpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -33,30 +34,42 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#ifndef LMN_ELEMENT_H
-#define LMN_ELEMENT_H
+#ifndef ELEMENT_SCOPE_HPP
+#define ELEMENT_SCOPE_HPP
 
+#include <functional>
+
+namespace slim {
+namespace element {
 /**
- * @defgroup Element
+ * @brief Calls a function before exiting the current scope.
+ *
+ *   Example:
+ *   @code
+ *   void critical_function() {
+ *     scope free_resource {
+ *       [] {
+ *         // some finalization steps...
+ *       }
+ *     };
+ *     ...
+ *     return; // here the lambda expr of 'free_resource' is executed.
+ *   }
+ *   @endcode
  */
+class scope {
+  std::function<void()> f;
 
-#include "clock.h"
-#include "error.h"
-#include "file_util.h"
-#include "internal_hash.h"
-#include "instruction.hpp"
-#include "lmnstring.h"
-#include "lmntal_thread.h"
-#include "memory_pool.h"
-#include "port.h"
-#include "process_util.h"
-#include "queue.h"
-#include "st.h"
-#include "util.h"
-#include "vector.h"
-#include "scope.hpp"
+public:
+  explicit scope(std::function<void()> f) : f(f) {}
+  scope(scope const &) = delete;
+  void operator=(scope const &) = delete;
 
-#endif /* LMN_ELEMENT_H */
+  ~scope() { f(); }
+};
+} // namespace element
+} // namespace slim
+
+#endif /* ELEMENT_SCOPE_HPP */
