@@ -1,7 +1,7 @@
 /*
- * loader.h
+ * exception.hpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,20 +33,20 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id$
  */
 
-#ifndef LMN_LOADER_H
-#define LMN_LOADER_H
+#ifndef LOADER_EXCEPTION_HPP
+#define LOADER_EXCEPTION_HPP
 
-/**
- * @defgroup Loader
- */
+#include <stdexcept>
+#include <string>
 
-#include "load.h"
-#include "syntax.h"
+namespace slim {
+namespace loader {
+class exception : public std::runtime_error {
+  using std::runtime_error::runtime_error;
+};
+} // namespace loader
+} // namespace slim
 
-#include "translate.hpp"
-#include "exception.hpp"
-
-#endif /* LMN_LOADER_H */
+#endif /* LOADER_EXCEPTION_HPP */
