@@ -120,7 +120,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
 }
 
 /* LMNtalソースコードのファイルを中間言語にコンパイルし結果のストリームを返す*/
-FILE *lmntal_compile_file(char *filename)
+FILE *lmntal_compile_file(const char *filename)
 {
   return run_lmntal_system(0 /*dummy*/, OPT_SLIM_CODE, filename, 0);
 }

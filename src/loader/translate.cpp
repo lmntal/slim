@@ -703,7 +703,7 @@ static void print_trans_initfunction(const char *filename) {
 }
 
 void translate(char *filepath) {
-  char *filename;
+  std::string filename;
 
   /* just for debug ! */
   /* OUT = stderr; */
@@ -713,18 +713,17 @@ void translate(char *filepath) {
   if (filepath) {
     filename = create_formatted_basename(filepath);
   } else {
-    filename = strdup("anonymous");
+    filename = "anonymous";
   }
 
-  print_trans_header(filename);
-  print_trans_symbols(filename);
-  print_trans_functors(filename);
-  print_trans_rulesets(filename);
-  print_trans_modules(filename);
-  print_trans_maindata(filename);
-  print_trans_initfunction(filename);
+  print_trans_header(filename.c_str());
+  print_trans_symbols(filename.c_str());
+  print_trans_functors(filename.c_str());
+  print_trans_rulesets(filename.c_str());
+  print_trans_modules(filename.c_str());
+  print_trans_maindata(filename.c_str());
+  print_trans_initfunction(filename.c_str());
 
-  free(filename);
   if (OUT != stdout)
     fprintf(stderr, "--translate is under construction\n");
 }

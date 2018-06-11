@@ -49,7 +49,7 @@
 #define ENV_LMNTAL_HOME  "LMNTAL_HOME"
 #define ENV_CFLAGS       "SLIM_CFLAGS"
 
-FILE *lmntal_compile_file(char *filename);
+FILE *lmntal_compile_file(const char *filename);
 FILE *lmntal_compile_rule_str(char *rule_str);
 
 /* @} */

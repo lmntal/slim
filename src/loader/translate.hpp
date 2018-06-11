@@ -45,6 +45,7 @@
  * @{
  */
 
+#include "element/element.h"
 #include "lmntal.h"
 #include "vm/vm.h"
 #include <stdarg.h>
@@ -91,6 +92,12 @@ struct trans_rule {
 struct trans_ruleset {
   int size;
   struct trans_rule *rules;
+  slim::element::raw_pointer_iterator<trans_rule> begin() const {
+    return rules;
+  }
+  slim::element::raw_pointer_iterator<trans_rule> end() const {
+    return rules + size;
+  }
 };
 
 struct trans_module {

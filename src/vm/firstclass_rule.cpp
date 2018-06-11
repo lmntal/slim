@@ -452,15 +452,20 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
       lmntal_compile_rule_str((char *)lmn_string_c_str(rule_str));
   lmn_string_free(rule_str);
 
+  slim::element::scope close_compiled_rulesets {
+    [=] {
+      fclose(compiled_rulesets);
+    }
+  };
+
   /* コンパイルされたルールからルールセットを生成 */
-  RuleRef ruleAST;
-  il_parse_rule(compiled_rulesets, &ruleAST);
+  auto ruleAST = il_parse_rule(compiled_rulesets);
   LmnRulesetId id = lmn_gen_ruleset_id();
   LmnRuleSetRef ruleset = new LmnRuleSet(id, 1);
-  ruleset->put(load_rule(ruleAST));
+  auto rule = load_rule(*ruleAST);
+  ruleset->put(rule.get());
   ruleset_table->register_ruleset(ruleset, id);
-
-  fclose(compiled_rulesets);
+  rule.release();
 
   /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加
    */

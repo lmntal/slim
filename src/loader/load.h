@@ -46,20 +46,22 @@
  */
 
 #include "syntax.h"
+#include "syntax.hpp"
 #include "vm/vm.h"
 
+#include <memory>
+#include <string>
+
 LmnRuleSetRef load(FILE *in);
-LmnRuleRef load_rule(RuleRef rule);
-LmnRuleSetRef load_file(char *file_name);
+std::unique_ptr<LmnRule> load_rule(const Rule &rule);
+LmnRuleSetRef load_file(const char *file_name);
 void load_il_files(const char *path);
-int il_parse(FILE *in, ILRef *il);
-int il_parse_rule(FILE *in, RuleRef *rule);
-FILE *fopen_il_file(char *name);
+std::unique_ptr<Rule> il_parse_rule(FILE *in);
 void init_so_handles();
 void finalize_so_handles();
 /* pathにsoがある場合の,関数名の元となれるファイル名を返す */
 /* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
-char *create_formatted_basename(const char *path);
+std::string create_formatted_basename(const std::string &path);
 
 /* 最適化レベルの最大値 */
 #define OPTIMIZE_LEVEL_MAX 3

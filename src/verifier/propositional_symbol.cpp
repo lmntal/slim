@@ -66,7 +66,6 @@ static int propsym_parse(FILE *in, AutomataRef a, PVector *definitions);
 PropositionRef proposition_make(const char *head, const char *guard,
                                 const char *body) {
   PropositionRef p = LMN_MALLOC(struct Proposition);
-  RuleRef rule;
   FILE *fp;
   char *rule_str;
   BYTE optimization_level_org;
@@ -85,13 +84,15 @@ PropositionRef proposition_make(const char *head, const char *guard,
 
   lmn_env.optimization_level = optimization_level_org;
 
-  if (!il_parse_rule(fp, &rule)) {
-    p->rule = load_rule(rule);
-    stx_rule_free(rule);
-    fclose(fp);
-  } else {
-    lmn_fatal("Implementation Error: failed to compile rule");
-  }
+  slim::element::scope close_fp {
+    [=] {
+      if (fp) fclose(fp);
+    }
+  };
+
+  auto rule = load_rule(*il_parse_rule(fp));
+  p->rule = rule.get();
+  rule.release();
   return p;
 }
 
