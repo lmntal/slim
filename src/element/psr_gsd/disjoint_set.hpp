@@ -32,7 +32,7 @@ public:
   std::map<Key, std::set<Key>> sets() {
     std::map<Key, std::set<Key>> res;
     for (auto &p : parent)
-      res[p.second].insert(p.first);
+      res[find(p.second)].insert(p.first);
     return res;
   }
 };
