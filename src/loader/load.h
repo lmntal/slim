@@ -54,7 +54,7 @@
 
 LmnRuleSetRef load(FILE *in);
 std::unique_ptr<LmnRule> load_rule(const Rule &rule);
-LmnRuleSetRef load_file(const char *file_name);
+LmnRuleSetRef load_file(const std::string &file_name);
 void load_il_files(const char *path);
 std::unique_ptr<Rule> il_parse_rule(FILE *in);
 void init_so_handles();
