@@ -72,14 +72,7 @@ struct LmnMembrane {
   Vector *firstclass_rulesets;
 #endif
 
-  std::map<LmnFunctor, AtomListEntry *> atom_lists() const {
-    std::map<LmnFunctor, AtomListEntry *> res;
-    for (int i = 0; i < max_functor; i++)
-      if (atomset[i])
-        res[i] = atomset[i];
-    return res;
-  }
-
+  std::map<LmnFunctor, AtomListEntry *> atom_lists() const;
   std::map<LmnSymbolAtomRef, std::set<LmnSymbolAtomRef>> ingredients();
 };
 

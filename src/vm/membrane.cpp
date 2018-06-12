@@ -147,13 +147,20 @@ static inline void free_atomlist(AtomListEntry *as) {
   }
 }
 
+std::map<LmnFunctor, AtomListEntry *> LmnMembrane::atom_lists() const {
+  std::map<LmnFunctor, AtomListEntry *> res;
+  for (int i = 0; i < max_functor; i++)
+    if (atomset[i] && !atomset[i]->is_empty())
+      res[i] = atomset[i];
+  return res;
+}
+
 std::map<LmnSymbolAtomRef, std::set<LmnSymbolAtomRef>> LmnMembrane::ingredients() {
   psr_gsd::disjoint_set<LmnSymbolAtomRef> ingredients;
-  AtomListEntry ent;
-  LmnSymbolAtomRef atom;
 
   for (auto p : this->atom_lists()) {
     auto atomlist = p.second;
+    if (LMN_FUNC_IS_HL(p.first)) continue;
 
     for (auto atom : *atomlist) {
       ingredients.insert(atom);

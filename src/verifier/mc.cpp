@@ -235,9 +235,10 @@ void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
 
   auto sets = mem->ingredients();
   for (auto it1 = sets.cbegin(); it1 != sets.cend(); ++it1) {
+    auto a1 = it1->first;
+    auto &s1 = it1->second;
     for (auto it2 = std::next(it1, 1); it2 != sets.cend(); ++it2) {
-      auto &s1 = it1->second;
-      auto &s2 = it2->second;
+      auto s2 = it2->second;
 
       std::set<psr_ssd::matching_set> mp_sets;
       for (auto a1 : s1) {
