@@ -565,7 +565,7 @@ public:
   }
 
   State(LmnMembraneRef mem, BYTE property_label, BOOL do_encode) : State() {
-    // lmn_dump_mem_dev(mem);
+    lmn_dump_mem_dev(mem);
     state_set_mem(mem);
     state_name = property_label;
     state_calc_hash(mem, do_encode);
