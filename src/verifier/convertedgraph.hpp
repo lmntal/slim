@@ -60,6 +60,9 @@ struct ConvertedGraphVertex {
 struct ConvertedGraph {
   std::vector<ConvertedGraphVertex> atoms;
   std::vector<ConvertedGraphVertex> hyperlinkatoms;
+  ConvertedGraph (LmnMembraneRef mem) {
+    
+  };
 };
 
 #endif
