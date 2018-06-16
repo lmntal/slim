@@ -65,7 +65,7 @@ struct ConvertedGraph {
   ConvertedGraphVertex convert_atom(LmnSymbolAtomRef atom) {
     ConvertedGraphVertex cv;
     LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
-    LmnArity arity = LMN_FUNCTOR_ARITY;
+    LmnArity arity = LMN_FUNCTOR_ARITY(f);
 
     return cv;
   }
