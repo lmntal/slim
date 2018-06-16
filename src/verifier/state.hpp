@@ -105,7 +105,7 @@ struct State {                /* Total:72(36)byte */
   State *parent; /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
   unsigned long state_id; /*  8(4)byte: 生成順に割り当てる状態の整数ID */
   State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
-  ConvertedGraph convertedgraph;
+  ConvertedGraph *convertedgraph;
 
 #ifndef MINIMAL_STATE
   BYTE *
@@ -588,7 +588,7 @@ public:
       state_set_mem(mem);
       state_name = property_label;
       state_calc_hash(mem, do_encode);
-
+      convertedgraph = new ConvertedGraph();
       if (is_encoded()) {
 	lmn_mem_free_rec(mem);
       }
