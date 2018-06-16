@@ -589,7 +589,7 @@ public:
       state_set_mem(mem);
       state_name = property_label;
       state_calc_hash(mem, do_encode);
-      convertedgraph = new ConvertedGraph();
+      convertedgraph = new ConvertedGraph(mem);
       if (is_encoded()) {
 	lmn_mem_free_rec(mem);
       }
