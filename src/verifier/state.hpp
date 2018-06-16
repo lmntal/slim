@@ -39,21 +39,23 @@
 
 #ifndef LMN_STATE_HPP
 #define LMN_STATE_HPP
+#include "convertedgraph.hpp"
 #include "lmntal.h"
-#include "vm/vm.h"
 #include "mhash.h"
 #include "state_defs.h"
 #include "runtime_status.h"
 #include "convertedgraph.hpp"
+#include "vm/vm.h"
+
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
  *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
  *  0000 0100  遷移先を計算済みであること(closed node)を示すフラグ.
  *  0000 1000  受理サイクル上の状態であることを示すフラグ
  *  0001 0000  ハッシュ表上でDummyオブジェクトであるか否かを示すフラグ
- *             (Rehash処理で使用) 
+ *             (Rehash処理で使用)
  *  0010 0000  successorとしてstruct Stateを直接参照するか,
- *             struct Transitionを介して参照するかを示すフラグ. 
+ *             struct Transitionを介して参照するかを示すフラグ.
  *  0100 0000  状態データ(union)がmemを直接的に保持する場合に立てるフラグ
  *  1000 0000  保持するバイナリストリングが階層グラフ構造に対して一意なID
  *             であるかを示すフラグ
@@ -136,7 +138,6 @@ struct State {                /* Total:72(36)byte */
   void state_expand_lock() {}
   void state_expand_unlock() {}
 #endif
-      
 
   BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
   BOOL is_binstr_user() { return flags & MEM_DIRECT_MASK; }
@@ -165,32 +166,20 @@ struct State {                /* Total:72(36)byte */
   void s_set_update() { flags2 |= STATE_UPDATE_MASK; }
   void s_unset_d() { flags2 &= (~STATE_DELTA_MASK); }
   void s_unset_update() { flags2 &= (~STATE_UPDATE_MASK); }
-  BOOL s_is_visited_by_explorer() {
-    return flags2 & EXPLORER_VISIT_MASK;
-  }
-  BOOL s_is_visited_by_generator() {
-    return flags2 & GENERATOR_VISIT_MASK;
-  }
-  void s_set_visited_by_explorer() {
-    flags2 |= EXPLORER_VISIT_MASK;
-  }
-  void s_set_visited_by_generator() {
-    flags2 |= GENERATOR_VISIT_MASK;
-  }
+  BOOL s_is_visited_by_explorer() { return flags2 & EXPLORER_VISIT_MASK; }
+  BOOL s_is_visited_by_generator() { return flags2 & GENERATOR_VISIT_MASK; }
+  void s_set_visited_by_explorer() { flags2 |= EXPLORER_VISIT_MASK; }
+  void s_set_visited_by_generator() { flags2 |= GENERATOR_VISIT_MASK; }
   BOOL s_is_blue() { return flags2 & STATE_BLUE_MASK; }
   BOOL s_is_red() { return flags2 & STATE_RED_MASK; }
-  BOOL s_is_visited_by_visualizer() {
-    return flags2 & STATE_VIS_VISITED_MASK;
-  }
+  BOOL s_is_visited_by_visualizer() { return flags2 & STATE_VIS_VISITED_MASK; }
   void s_set_blue() { flags2 |= STATE_BLUE_MASK; }
   void s_set_red() { flags2 |= STATE_RED_MASK; }
-  void s_set_visited_by_visualizer() {
-    flags2 |= STATE_VIS_VISITED_MASK;
-  }
+  void s_set_visited_by_visualizer() { flags2 |= STATE_VIS_VISITED_MASK; }
   void s_set_fresh() { flags3 |= STATE_FRESH_MASK; }
   void s_unset_fresh() { flags3 &= (~STATE_FRESH_MASK); }
   BOOL s_is_fresh() { return flags3 & STATE_FRESH_MASK; }
-  #ifdef KWBT_OPT
+#ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
   LmnBinStrRef state_binstr() {
@@ -250,17 +239,17 @@ struct State {                /* Total:72(36)byte */
       dst->state_set_mem(lmn_mem_copy_ex(mem));
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
-	profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+        profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
       }
 #endif
     } else if (state_binstr()) {
       dst->state_set_binstr(lmn_binstr_copy(state_binstr()));
       if (is_encoded()) {
-	dst->set_encoded();
+        dst->set_encoded();
       }
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
-	profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
+        profile_add_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));
       }
 #endif
     }
@@ -268,10 +257,10 @@ struct State {                /* Total:72(36)byte */
     dst->hash = hash;
 
 #ifdef PROFILE
-  if (lmn_env.profile_level >= 3 && mem) {
-    profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
-    profile_finish_timer(PROFILE_TIME__STATE_COPY);
-  }
+    if (lmn_env.profile_level >= 3 && mem) {
+      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+      profile_finish_timer(PROFILE_TIME__STATE_COPY);
+    }
 #endif
     return dst;
   }
@@ -282,13 +271,13 @@ struct State {                /* Total:72(36)byte */
       successor_num = vec_num(v);
       successors = LMN_NALLOC(succ_data_t, successor_num);
       for (i = 0; i < successor_num; i++) {
-	successors[i] = (succ_data_t)vec_get(v, i);
+        successors[i] = (succ_data_t)vec_get(v, i);
       }
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
-	profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
-			  sizeof(succ_data_t) * vec_num(v));
-	profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
+        profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
+                          sizeof(succ_data_t) * vec_num(v));
+        profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
       }
 #endif
     }
@@ -298,8 +287,7 @@ struct State {                /* Total:72(36)byte */
     if (!successors) {
       successors = LMN_NALLOC(succ_data_t, 1);
     } else {
-      successors =
-          LMN_REALLOC(succ_data_t, successors, successor_num + 1);
+      successors = LMN_REALLOC(succ_data_t, successors, successor_num + 1);
     }
     successors[successor_num] = succ;
     successor_num++;
@@ -314,13 +302,13 @@ struct State {                /* Total:72(36)byte */
       }
     }
 
-  #ifdef PROFILE
+#ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
                            sizeof(succ_data_t) * this->successor_num);
       profile_add_space(PROFILE_SPACE__TRANS_OBJECT, 0);
     }
-  #endif
+#endif
 
     LMN_FREE(this->successors);
     this->successors = NULL;
@@ -330,12 +318,12 @@ struct State {                /* Total:72(36)byte */
 
   void free_mem() {
     if (this->state_mem()) {
-  #ifdef PROFILE
+#ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_remove_space(PROFILE_SPACE__STATE_MEMBRANE,
                              lmn_mem_space(this->state_mem()));
       }
-  #endif
+#endif
       lmn_mem_free_rec(this->state_mem());
       this->state_set_mem(NULL);
     }
@@ -381,10 +369,10 @@ struct State {                /* Total:72(36)byte */
   LmnBinStrRef mem_dump_with_tree() {
     if (this->state_binstr()) /* 既にエンコード済みの場合は何もしない. */
       return this->state_binstr();
-    
+
     if (this->state_mem())
       return lmn_mem_to_binstr(this->state_mem());
-    
+
     lmn_fatal("unexpected.");
     return NULL;
   }
@@ -420,11 +408,11 @@ struct State {                /* Total:72(36)byte */
       ret = lmn_binstr_decode(this->state_binstr());
     }
 
-  #ifdef PROFILE
+#ifdef PROFILE
     if (lmn_env.profile_level >= 3 && ret) {
       profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(ret));
     }
-  #endif
+#endif
 
     return ret;
   }
@@ -433,7 +421,8 @@ struct State {                /* Total:72(36)byte */
    * Xに対して一意なIDとなるバイナリストリングへエンコードする.
    * エンコードしたバイナリストリングをsに割り当てる.
    * sに対応する階層グラフ構造Xへのメモリ参照が消えるため,
-   * 呼び出し側でメモリ管理を行う. sが既にバイナリストリングを保持している場合は,
+   * 呼び出し側でメモリ管理を行う.
+   * sが既にバイナリストリングを保持している場合は,
    * そのバイナリストリングは破棄する. (ただし,
    * sが既に一意なIDとなるバイナリストリングへエンコード済みの場合は何もしない.)
    * 既に割当済みのバイナリストリングを破棄するため,
@@ -514,7 +503,6 @@ struct State {                /* Total:72(36)byte */
     return ret;
   }
 
-
   /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
    * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
    * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
@@ -531,7 +519,8 @@ struct State {                /* Total:72(36)byte */
       return this->state_mem();
 
     if (this->s_is_d()) {
-      LmnBinStrRef b = (flag) ? state_D_fetch(this) : this->reconstruct_binstr();
+      LmnBinStrRef b =
+          (flag) ? state_D_fetch(this) : this->reconstruct_binstr();
       return lmn_binstr_decode(b);
     }
 
@@ -541,7 +530,8 @@ struct State {                /* Total:72(36)byte */
       tcd_get_root_ref(&this->tcd, &ref);
       LMN_ASSERT(ref);
       LMN_ASSERT(tcd_get_byte_length(&this->tcd) != 0);
-      b = lmn_bscomp_tree_decode((TreeNodeID)ref, tcd_get_byte_length(&this->tcd));
+      b = lmn_bscomp_tree_decode((TreeNodeID)ref,
+                                 tcd_get_byte_length(&this->tcd));
     }
 
     LMN_ASSERT(b);
@@ -549,20 +539,10 @@ struct State {                /* Total:72(36)byte */
   }
 
 public:
-  State () :
-    data(NULL),
-    state_name(0x00U),
-    flags(0x00U),
-    flags2(0x00U),
-    flags3(0x00U),
-    hash(0),
-    next(NULL),
-    successors(NULL),
-    successor_num(0),
-    parent(NULL),
-    state_id(0),
-    map(NULL)
-  {
+  State()
+      : data(NULL), state_name(0x00U), flags(0x00U), flags2(0x00U),
+        flags3(0x00U), hash(0), next(NULL), successors(NULL), successor_num(0),
+        parent(NULL), state_id(0), map(NULL) {
     memset(&tcd, 0x00, sizeof(TreeCompressData));
 #ifndef MINIMAL_STATE
     state_set_expander_id(LONG_MAX);
@@ -570,7 +550,7 @@ public:
     state_expand_lock_init();
 #endif
     s_set_fresh();
-    
+
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
@@ -584,28 +564,32 @@ public:
 #endif
   }
 
-  State (LmnMembraneRef mem, BYTE property_label, BOOL do_encode) :
-    State () {
-      state_set_mem(mem);
-      state_name = property_label;
-      state_calc_hash(mem, do_encode);
-      convertedgraph = new ConvertedGraph(mem);
-      if (is_encoded()) {
-	lmn_mem_free_rec(mem);
-      }
-#ifdef PROFILE
-      else if (lmn_env.profile_level >= 3) {
-	profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
-      }
-#endif
+  State(LmnMembraneRef mem, BYTE property_label, BOOL do_encode) : State() {
+    // lmn_dump_mem_dev(mem);
+    state_set_mem(mem);
+    state_name = property_label;
+    state_calc_hash(mem, do_encode);
+    convertedgraph = new ConvertedGraph(mem);
+    if (is_encoded()) {
+      lmn_mem_free_rec(mem);
     }
+#ifdef PROFILE
+    else if (lmn_env.profile_level >= 3) {
+      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+    }
+#endif
+  }
 
   ~State() {
     if (successors) {
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3)
         profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
+
                             sizeof(succ_data_t) * this->successor_num);
+
+                             // sizeof(succ_data_t) * state_succ_num(s));
+
 #endif
       if (has_trans_obj()) {
         unsigned int i;
