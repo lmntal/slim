@@ -44,6 +44,7 @@
 #include "mhash.h"
 #include "state_defs.h"
 #include "runtime_status.h"
+#include "convertedgraph.hpp"
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
  *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
@@ -105,6 +106,7 @@ struct State {                /* Total:72(36)byte */
   State *parent; /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
   unsigned long state_id; /*  8(4)byte: 生成順に割り当てる状態の整数ID */
   State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
+  ConvertedGraph convertedgraph;
 
 #ifndef MINIMAL_STATE
   BYTE *
