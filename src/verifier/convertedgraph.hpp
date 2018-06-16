@@ -39,6 +39,7 @@
 #ifndef LMN_CONVERTEDGRAPH_HPP
 #define LMN_CONVERTEDGRAPH_HPP
 #include "lmntal.h"
+#include "vm/atomlist.hpp"
 #include "vm/vm.h"
 #include <vector>
 
@@ -60,9 +61,29 @@ struct ConvertedGraphVertex {
 struct ConvertedGraph {
   std::vector<ConvertedGraphVertex> atoms;
   std::vector<ConvertedGraphVertex> hyperlinkatoms;
-  ConvertedGraph (LmnMembraneRef mem) {
-    
-  };
+
+  ConvertedGraphVertex convert_atom(LmnSymbolAtomRef atom) {
+    ConvertedGraphVertex cv;
+    return cv;
+  }
+
+  std::vector<ConvertedGraphVertex> convert_atoms(LmnMembraneRef mem) {
+    std::vector<ConvertedGraphVertex> cv;
+    AtomListEntryRef ent;
+    EACH_ATOMLIST(mem, ent, ({
+                    LmnSymbolAtomRef atom;
+                    EACH_ATOM(atom, ent,
+                              ({ cv.push_back(convert_atom(atom)); }));
+                  }));
+    return cv;
+  }
+
+  std::vector<ConvertedGraphVertex> convert_hyperlinks(LmnMembraneRef mem) {}
+
+  ConvertedGraph(LmnMembraneRef mem) {
+    atoms = convert_atoms(mem);
+    // hyperlinkatoms = convert_hyperlinks(mem);
+  }
 };
 
 #endif
