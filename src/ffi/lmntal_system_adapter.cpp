@@ -46,6 +46,7 @@
 #include "arch.h"
 #include "element/element.h"
 
+using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
 
 /* Java処理系によるコンパイル時に用いる最適化オプション */
 const char* OPTIMIZE_FLAGS[] = {"-O0",
@@ -102,15 +103,16 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
   /* opt_argsにある引数を追加 */
   while (TRUE) {
     char *p = va_arg(opt_args, char*);
-    if (!p) break;
+    if (!p)
+      break;
     add_arg(args, p);
   }
-  
+
   /* 最後の要素は0で終端する */
   vec_push(args, 0);
   { /* vectorの要素をコピー */
     unsigned int i;
-    *ret_args = LMN_CALLOC(char*, vec_num(args));
+    *ret_args = LMN_CALLOC(char *, vec_num(args));
     for (i = 0; i < vec_num(args); i++) {
       (*ret_args)[i] = (char *)vec_get(args, i);
     }
@@ -120,20 +122,20 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
 }
 
 /* LMNtalソースコードのファイルを中間言語にコンパイルし結果のストリームを返す*/
-FILE *lmntal_compile_file(const char *filename)
-{
-  return run_lmntal_system(0 /*dummy*/, OPT_SLIM_CODE, filename, 0);
+file_ptr lmntal_compile_file(const char *filename) {
+  return file_ptr(run_lmntal_system(0 /*dummy*/, OPT_SLIM_CODE, filename, 0),
+                  fclose);
 }
 
 /* LMNtalのルールを中間言語にコンパイルし結果のストリームを返す*/
-FILE *lmntal_compile_rule_str(char *rule_str)
+file_ptr lmntal_compile_rule_str(char *rule_str)
 {
-  return run_lmntal_system(0, /*dummy*/
+  return file_ptr(run_lmntal_system(0, /*dummy*/
                            OPT_SLIM_CODE,
                            OPT_COMPILE_RULE,
                            OPT_EVAL,
                            rule_str,
-                           0);
+                           0), fclose);
 }
 
 /* LMNtal systemを呼び出す。プログラムを呼び出し時に渡す引数を

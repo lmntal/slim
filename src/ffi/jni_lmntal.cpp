@@ -344,12 +344,14 @@ static BOOL jni_lmntal_compile(char **result, const char *code)
   return TRUE;
 }
 
-static void _run(FILE **fp)
+using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
+
+static void _run(file_ptr fp)
 {
   Vector *start_rulesets;
   LmnRuleSetRef t;
 
-  t = load(*fp);
+  t = load(std::move(fp));
   start_rulesets = vec_make(2);
 
   vec_push(start_rulesets, (vec_data_t)t);
@@ -551,14 +553,13 @@ void run_jni_interactive()
         printf("unknown command: %s\n",line);
       }
     } else if (jni_lmntal_compile(&result, line)) {
-      FILE *tmpfp = tmpfile(); /* il_parserはFILE*しか受け取らない(?)ので、一時ファイルで対応する */
+      auto tmpfp = file_ptr(tmpfile(), fclose); /* il_parserはFILE*しか受け取らない(?)ので、一時ファイルで対応する */
       if (tmpfp == NULL) {
         is_processing = FALSE; // 終了
       } else {
-        fprintf(tmpfp, "%s", result);
-        rewind(tmpfp); // ポインタを先頭に
-        _run(&tmpfp);
-        fclose(tmpfp);
+        fprintf(tmpfp.get(), "%s", result);
+        rewind(tmpfp.get()); // ポインタを先頭に
+        _run(std::move(tmpfp));
       }
 
       /* slimcode文字列の解放 */

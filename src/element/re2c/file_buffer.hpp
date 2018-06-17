@@ -40,6 +40,7 @@
 #include <cstddef>
 #include <fstream>
 #include <memory>
+#include <type_traits>
 
 #include "../exception.hpp"
 #include "buffer.hpp"
@@ -57,7 +58,7 @@ public:
       throw exception("cannot open file '" + file_path + "'");
   }
 
-  file_buffer(std::unique_ptr<std::ifstream> &&ifs, int fill_size, int size = 256)
+  file_buffer(std::unique_ptr<std::ifstream> ifs, int fill_size, int size = 256)
       : buffer(fill_size, size), ifs(std::move(ifs)) {}
 
   bool is_finished() const { return ifs->eof(); }

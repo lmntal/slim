@@ -55,7 +55,6 @@
 /* prototypes */
 
 void build_cmd(char *buf, char *file_name);
-FILE *compile(char *filename);
 
 #include "byte_encoder.hpp"
 #include "exception.hpp"
@@ -66,6 +65,7 @@ FILE *compile(char *filename);
 #include <algorithm>
 #include <map>
 #include <string>
+#include <set>
 
 using loader_error = slim::loader::exception;
 
@@ -164,10 +164,8 @@ static LmnRuleSetRef load_il(const IL &il) {
   /* load rules */
   auto &rulesets = il.rulesets;
   first_ruleset = NULL;
-  for (int i = 0; i < rulesets.size(); i++) {
-    auto t = load_ruleset(*rulesets.at(i));
-    if (i == 0)
-      first_ruleset = t;
+  for (int i = rulesets.size() - 1; i >= 0; i--) {
+    first_ruleset = load_ruleset(*rulesets.at(i));
   }
 
   if (!first_ruleset)
@@ -288,9 +286,20 @@ LmnRuleSetRef load_compiled_il(const std::string &filename, void *sohandle) {
 
 /* ファイルから中間言語を読み込みランタイム中に配置する。
  * 最初のルールセットを返す */
-LmnRuleSetRef load(FILE *in) {
+using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
+LmnRuleSetRef load(file_ptr in) {
   std::unique_ptr<IL> il;
-  il::lexer scanner(in);
+  il::lexer scanner(std::move(in));
+
+  if (ilparse(&scanner, &il, NULL))
+    throw loader_error("failed in parsing il files");
+
+  return load_il(*il);
+}
+
+LmnRuleSetRef load(const std::string &file_path) {
+  std::unique_ptr<IL> il;
+  il::lexer scanner(file_path);
 
   if (ilparse(&scanner, &il, NULL))
     throw loader_error("failed in parsing il files");
@@ -334,12 +343,7 @@ LmnRuleSetRef load_lmn_file(const std::string &file_name) {
         std::string("Failed to run lmntal compiler (lmntal don't exist at ") +
         lmntal_home + ")");
 
-  auto fp_compiled = lmntal_compile_file(file_name.c_str());
-  slim::element::scope free_fp_compiled{[=] {
-    if (fp_compiled)
-      fclose(fp_compiled);
-  }};
-  return load(fp_compiled);
+  return load(lmntal_compile_file(file_name.c_str()));
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置し、最初のルールセットを返す。
@@ -349,19 +353,14 @@ LmnRuleSetRef load_lmn_file(const std::string &file_name) {
 
 LmnRuleSetRef load_file(const std::string &file_name) {
   fs::path filepath(file_name);
+  
   if (filepath.extension().string() == "so")
     return load_so_file(file_name);
 
   if (filepath.extension().string() == "lmn")
     return load_lmn_file(file_name);
 
-  auto fp = fopen(filepath.string().c_str(), "r");
-  if (!fp) {
-    perror(filepath.string().c_str());
-    throw loader_error(filepath.string());
-  }
-  slim::element::scope free_fp{[=] { fclose(fp); }};
-  return load(fp);
+  return load(file_name);
 }
 
 static std::string extension_table[] = {"", "lmn", "il", "so"};
@@ -416,8 +415,8 @@ void load_il_files(const char *path_string) {
 
 /* inから中間言語を読み込み、構文木を作る。構文木はruleに設定される。
    正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
-std::unique_ptr<Rule> il_parse_rule(FILE *in) {
-  il::lexer scanner(in);
+std::unique_ptr<Rule> il_parse_rule(file_ptr in) {
+  il::lexer scanner(std::move(in));
   std::unique_ptr<Rule> rule;
   if (ilparse(&scanner, NULL, &rule))
     throw loader_error("failed in parsing il files");

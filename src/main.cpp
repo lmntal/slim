@@ -668,14 +668,12 @@ static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, i
 
   /** load input files */
   for (i = optid; i < argc; i++) {
-    FILE *in;
     LmnRuleSetRef t;
     char *f = argv[i];
 
     try {
       if (!strcmp("-", f)) { /* 標準入力からの読込み */
-        in = stdin;
-        t = load(in);
+        t = load(std::unique_ptr<FILE, decltype(&fclose)>(stdin, [](FILE *) -> int { return 0; }));
         start_rulesets.push_back(t);
       } else {
         t = load_file(f);

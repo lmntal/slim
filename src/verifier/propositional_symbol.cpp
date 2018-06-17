@@ -66,7 +66,6 @@ static int propsym_parse(FILE *in, AutomataRef a, PVector *definitions);
 PropositionRef proposition_make(const char *head, const char *guard,
                                 const char *body) {
   PropositionRef p = LMN_MALLOC(struct Proposition);
-  FILE *fp;
   char *rule_str;
   BYTE optimization_level_org;
 
@@ -79,18 +78,12 @@ PropositionRef proposition_make(const char *head, const char *guard,
 
   rule_str = rule_str_for_compile(head, guard, body);
 
-  fp = lmntal_compile_rule_str(rule_str);
+  auto fp = lmntal_compile_rule_str(rule_str);
   LMN_FREE(rule_str);
 
   lmn_env.optimization_level = optimization_level_org;
 
-  slim::element::scope close_fp {
-    [=] {
-      if (fp) fclose(fp);
-    }
-  };
-
-  auto rule = load_rule(*il_parse_rule(fp));
+  auto rule = load_rule(*il_parse_rule(std::move(fp)));
   p->rule = rule.get();
   rule.release();
   return p;

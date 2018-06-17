@@ -51,12 +51,13 @@
 
 #include <memory>
 #include <string>
+#include <cstdio>
 
-LmnRuleSetRef load(FILE *in);
+LmnRuleSetRef load(std::unique_ptr<FILE, decltype(&fclose)> in);
 std::unique_ptr<LmnRule> load_rule(const Rule &rule);
 LmnRuleSetRef load_file(const std::string &file_name);
 void load_il_files(const char *path);
-std::unique_ptr<Rule> il_parse_rule(FILE *in);
+std::unique_ptr<Rule> il_parse_rule(std::unique_ptr<FILE, decltype(&fclose)> in);
 void init_so_handles();
 void finalize_so_handles();
 /* pathにsoがある場合の,関数名の元となれるファイル名を返す */

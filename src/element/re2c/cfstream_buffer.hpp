@@ -51,7 +51,7 @@ class cfstream_buffer : public buffer {
   file_ptr fp;
 
 public:
-  cfstream_buffer(file_ptr &&input, int fill_size, int size = 256)
+  cfstream_buffer(file_ptr input, int fill_size, int size = 256)
       : buffer(fill_size, size), fp(std::move(input)) {}
 
   bool is_finished() const { return feof(fp.get()); }
