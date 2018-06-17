@@ -1,7 +1,7 @@
 /*
- * exception.hpp
+ * cfstream_buffer.cpp
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,20 +32,34 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LOADER_EXCEPTION_HPP
-#define LOADER_EXCEPTION_HPP
+#ifndef ELEMENT_RE2C_CFSTREAM_BUFFER_HPP
+#define ELEMENT_RE2C_CFSTREAM_BUFFER_HPP
 
-#include "element/element.h"
+#include <cstddef>
+#include <cstdio>
+#include <memory>
+
+#include "buffer.hpp"
 
 namespace slim {
-namespace loader {
-class exception : public slim::element::exception {
-  using slim::element::exception::exception;
+namespace element {
+namespace re2c {
+using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
+class cfstream_buffer : public buffer {
+  file_ptr fp;
+
+public:
+  cfstream_buffer(file_ptr &&input, int fill_size, int size = 256)
+      : buffer(fill_size, size), fp(std::move(input)) {}
+
+  bool is_finished() const { return feof(fp.get()); }
+
+  void update_limit(size_t free) { YYLIMIT += fread(YYLIMIT, 1, free, fp.get()); }
 };
-} // namespace loader
+} // namespace re2c
+} // namespace element
 } // namespace slim
 
-#endif /* LOADER_EXCEPTION_HPP */
+#endif /* ELEMENT_RE2C_CFSTREAM_BUFFER_HPP */

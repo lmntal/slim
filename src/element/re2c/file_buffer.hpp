@@ -1,7 +1,7 @@
 /*
- * exception.hpp
+ * file_buffer.cpp
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,20 +32,43 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LOADER_EXCEPTION_HPP
-#define LOADER_EXCEPTION_HPP
+#ifndef ELEMENT_RE2C_FILE_BUFFER_HPP
+#define ELEMENT_RE2C_FILE_BUFFER_HPP
 
-#include "element/element.h"
+#include <cstddef>
+#include <fstream>
+#include <memory>
+
+#include "../exception.hpp"
+#include "buffer.hpp"
 
 namespace slim {
-namespace loader {
-class exception : public slim::element::exception {
-  using slim::element::exception::exception;
+namespace element {
+namespace re2c {
+class file_buffer : public buffer {
+  std::unique_ptr<std::ifstream> ifs;
+
+public:
+  file_buffer(const std::string &file_path, int fill_size, int size = 256)
+      : buffer(fill_size, size), ifs(std::unique_ptr<std::ifstream>(new std::ifstream(file_path))) {
+    if (ifs->fail())
+      throw exception("cannot open file '" + file_path + "'");
+  }
+
+  file_buffer(std::unique_ptr<std::ifstream> &&ifs, int fill_size, int size = 256)
+      : buffer(fill_size, size), ifs(std::move(ifs)) {}
+
+  bool is_finished() const { return ifs->eof(); }
+
+  void update_limit(size_t free) {
+    ifs->read(YYLIMIT, free);
+    YYLIMIT += ifs->gcount();
+  }
 };
-} // namespace loader
+} // namespace re2c
+} // namespace element
 } // namespace slim
 
-#endif /* LOADER_EXCEPTION_HPP */
+#endif /* ELEMENT_RE2C_FILE_BUFFER_HPP */

@@ -6,11 +6,13 @@ liblmn_elm_a_CFLAGS =                               \
         $(CFLAGS)
 
 liblmn_elm_a_SOURCES =                              \
-	element.h \
 	alloc.cpp \
+	re2c/buffer.cpp \
 	clock.cpp clock.h \
+	element.h \
 	error.cpp error.h \
 	file_util.cpp file_util.h \
+	instruction.cpp \
 	internal_hash.cpp internal_hash.h \
 	lmnstring.cpp lmnstring.h \
 	lmntal_thread.cpp lmntal_thread.h \
@@ -20,6 +22,5 @@ liblmn_elm_a_SOURCES =                              \
 	queue.cpp queue.h \
 	st.cpp st.h \
 	util.cpp util.h \
-	vector.cpp vector.h \
-	instruction.cpp
+	vector.cpp vector.h
 	

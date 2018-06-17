@@ -1,7 +1,7 @@
 /*
- * exception.hpp
+ * buffer.hpp
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,20 +32,36 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LOADER_EXCEPTION_HPP
-#define LOADER_EXCEPTION_HPP
+#ifndef ELEMENT_RE2C_BUFFER_HPP
+#define ELEMENT_RE2C_BUFFER_HPP
 
-#include "element/element.h"
+#include <cstddef>
 
 namespace slim {
-namespace loader {
-class exception : public slim::element::exception {
-  using slim::element::exception::exception;
+namespace element {
+namespace re2c {
+class buffer {
+protected:
+  char *buf;
+  int size;
+  int fill_size;
+
+public:
+  char *YYLIMIT;
+  char *YYCURSOR;
+  char *parsed_pos;
+
+  buffer(int fill_size, int size = 256);
+  virtual ~buffer() {}
+  virtual bool is_finished() const = 0;
+  virtual void update_limit(size_t free) = 0;
+
+  bool fill(size_t need);
 };
-} // namespace loader
+} // namespace re2c
+} // namespace element
 } // namespace slim
 
-#endif /* LOADER_EXCEPTION_HPP */
+#endif /* ELEMENT_RE2C_BUFFER_HPP */

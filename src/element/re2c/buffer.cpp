@@ -1,7 +1,7 @@
 /*
- * exception.hpp
+ * buffer.cpp
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,20 +32,36 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LOADER_EXCEPTION_HPP
-#define LOADER_EXCEPTION_HPP
+#include "buffer.hpp"
 
-#include "element/element.h"
+#include <algorithm>
 
 namespace slim {
-namespace loader {
-class exception : public slim::element::exception {
-  using slim::element::exception::exception;
-};
-} // namespace loader
-} // namespace slim
+namespace element {
+namespace re2c {
+buffer::buffer(int fill_size, int size)
+    : fill_size(fill_size), size(size), buf(new char[fill_size + size]),
+      YYLIMIT(buf + size), YYCURSOR(YYLIMIT), parsed_pos(YYLIMIT) {}
 
-#endif /* LOADER_EXCEPTION_HPP */
+bool buffer::fill(size_t need) {
+  if (is_finished())
+    return false;
+  const auto free = parsed_pos - buf;
+  if (free < need)
+    return false;
+  std::move(parsed_pos, YYLIMIT, buf);
+  YYLIMIT -= free;
+  YYCURSOR -= free;
+  parsed_pos -= free;
+  update_limit(free);
+  if (YYLIMIT < buf + size) {
+    std::fill(YYLIMIT, YYLIMIT + fill_size, 0);
+    YYLIMIT += fill_size;
+  }
+  return true;
+}
+} // namespace re2c
+} // namespace element
+} // namespace slim

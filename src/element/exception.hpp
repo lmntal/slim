@@ -1,7 +1,7 @@
 /*
- * exception.hpp
+ * exception.cpp
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,20 +32,19 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LOADER_EXCEPTION_HPP
-#define LOADER_EXCEPTION_HPP
+#ifndef ELEMENT_RE2C_EXCEPTION_HPP
+#define ELEMENT_RE2C_EXCEPTION_HPP
 
-#include "element/element.h"
+#include <stdexcept>
 
 namespace slim {
-namespace loader {
-class exception : public slim::element::exception {
-  using slim::element::exception::exception;
+namespace element {
+class exception : public std::runtime_error {
+  using std::runtime_error::runtime_error;
 };
-} // namespace loader
+} // namespace element
 } // namespace slim
 
-#endif /* LOADER_EXCEPTION_HPP */
+#endif /* ELEMENT_EXCEPTION_HPP */
