@@ -40,6 +40,7 @@
 
 #include <cstdio>
 #include <string>
+#include <memory>
 
 namespace il {
 class lexer;
@@ -53,24 +54,17 @@ namespace il {
 class lexer {
   static const size_t SIZE = 256;
   st_table_t ruleset_id_tbl;
-  FILE *input;
-  char *buf;
-  char *YYCURSOR;
-  char *token;
-  char *YYLIMIT;
-  bool eof;
+  std::unique_ptr<slim::element::re2c::buffer> buffer;
 
-  std::string get_token() const {
-    return std::string(token, YYCURSOR - token);
-  };
+  std::string get_token() const;
 
 public:
-  lexer(FILE *in);
-  ~lexer() { st_free_table(ruleset_id_tbl); }
+  lexer(std::unique_ptr<FILE, decltype(&fclose)> in);
+  lexer(const std::string &file_path);
+  ~lexer();
 
   int lineno() const { return 0; }
   int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
-  bool fill(size_t need);
 };
 } // namespace il
 

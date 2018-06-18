@@ -86,8 +86,8 @@ public:
 
   // TODO: よくない設計。コピーにするか、したくなければ
   //       LmnRuleのコンストラクタに右辺値参照としてByteEncoderを渡して初期化とか。
-  LmnRuleRef create_rule() {
-    return new LmnRule(byte_seq, cap, NULL, ANONYMOUS);
+  std::unique_ptr<LmnRule> create_rule() {
+    return std::unique_ptr<LmnRule>(new LmnRule(byte_seq, cap, NULL, ANONYMOUS));
   }
 
 private:

@@ -55,12 +55,22 @@
 /* prototypes */
 
 void build_cmd(char *buf, char *file_name);
-FILE *compile(char *filename);
 
 #include "byte_encoder.hpp"
+#include "exception.hpp"
 #include "il_lexer.hpp"
 #include "il_parser.hpp"
 #include "syntax.hpp"
+
+#include <algorithm>
+#include <map>
+#include <string>
+#include <set>
+
+using loader_error = slim::loader::exception;
+
+int ilparse(il::lexer *scanner, std::unique_ptr<IL> *il,
+            std::unique_ptr<Rule> *rule);
 
 /*
  *  Instruction Format
@@ -107,37 +117,39 @@ FILE *compile(char *filename);
  *
  */
 
-LmnRuleRef load_rule(Rule *rule) {
+std::unique_ptr<LmnRule> load_rule(Rule const &rule) {
   ByteEncoder encoder;
 
   /*   load_inst_block(rule->amatch, encoder); */
-  encoder.load(rule->mmatch);
-  encoder.load(rule->guard);
-  encoder.load(rule->body);
+  encoder.load(rule.mmatch);
+  encoder.load(rule.guard);
+  encoder.load(rule.body);
 
   /* ラベルを参照している位置に、実際のラベルの位置を書き込む */
   encoder.resolve_labels();
 
   auto runtime_rule = encoder.create_rule();
-  if (rule->hasuniq)
-    lmn_rule_init_uniq_rule(runtime_rule);
+  if (rule.hasuniq)
+    lmn_rule_init_uniq_rule(runtime_rule.get());
 
   return runtime_rule;
 }
 
-static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs) {
-  auto runtime_ruleset = new LmnRuleSet(rs->id, 10);
+static LmnRuleSetRef load_ruleset(const RuleSet &rs) {
+  auto runtime_ruleset = new LmnRuleSet(rs.id, 10);
 
-  for (auto &r : rs->rules)
-    runtime_ruleset->put(load_rule(r.get()));
+  for (auto &r : rs.rules) {
+    auto rule = load_rule(*r);
+    runtime_ruleset->put(rule.get());
+    rule.release();
+  }
 
-  ruleset_table->register_ruleset(runtime_ruleset, rs->id);
+  ruleset_table->register_ruleset(runtime_ruleset, rs.id);
 
-  if (rs->is_system_ruleset) {
+  if (rs.is_system_ruleset) {
     /* 各ルールをシステムルールセットに追加する */
     for (int i = 0; i < runtime_ruleset->num; i++) {
-      LmnRuleRef rule2 =
-          lmn_rule_copy(runtime_ruleset->get_rule(i));
+      LmnRuleRef rule2 = lmn_rule_copy(runtime_ruleset->get_rule(i));
       lmn_add_system_rule(rule2);
     }
   }
@@ -146,26 +158,22 @@ static LmnRuleSetRef load_ruleset(std::shared_ptr<RuleSet> rs) {
 }
 
 /* 最初のルールセットを返す */
-static LmnRuleSetRef load_il(ILRef il) {
-  LmnRuleSetRef t, first_ruleset;
+static LmnRuleSetRef load_il(const IL &il) {
+  LmnRuleSetRef first_ruleset;
 
   /* load rules */
-  auto &rulesets = il->rulesets;
+  auto &rulesets = il.rulesets;
   first_ruleset = NULL;
-  for (int i = 0; i < rulesets.size(); i++) {
-    t = load_ruleset(rulesets.at(i));
-    if (i == 0)
-      first_ruleset = t;
+  for (int i = rulesets.size() - 1; i >= 0; i--) {
+    first_ruleset = load_ruleset(*rulesets.at(i));
   }
 
-  if (!first_ruleset) {
-    lmn_fatal("implementation error: no ruleset in il");
-  }
+  if (!first_ruleset)
+    throw loader_error("no ruleset in il");
 
   /* load module list */
-  for (auto &m : il->modules) {
+  for (auto &m : il.modules)
     lmn_set_module(m->name_id, ruleset_table->get(m->ruleset_id));
-  }
 
   return first_ruleset;
 }
@@ -174,18 +182,14 @@ static LmnRuleSetRef load_il(ILRef il) {
 void helloworld(const char *s) { fprintf(stdout, "hello %s world!\n", s); }
 
 LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
-  int i;
-  struct trans_ruleset ruleset;
   LmnRuleSetRef ret = 0; /* ワーニング抑制 */
 
   /* シンボルを読み込み+変換テーブルを設定 */
-  for (i = 1; i < maindata->count_of_symbol; i++) {
-    lmn_interned_str gid = lmn_intern(maindata->symbol_table[i]);
-    maindata->symbol_exchange[i] = gid;
-  }
+  for (int i = 1; i < maindata->count_of_symbol; i++)
+    maindata->symbol_exchange[i] = lmn_intern(maindata->symbol_table[i]);
 
   /* ファンクタを読み込み+変換テーブルを設定 */
-  for (i = 0; i < maindata->count_of_functor; i++) {
+  for (int i = 0; i < maindata->count_of_functor; i++) {
     LmnFunctorEntry ent = maindata->functor_table[i];
     /* スペシャルファンクタは登録できないが,
      * functor.c内で登録される共通部分以外出現しようがないはずなので問題ない */
@@ -203,48 +207,34 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
 
   /* ルールセット0番は数合わせ */
   /* システムルールセット読み込み */
-  ruleset = maindata->ruleset_table[1];
-  for (i = 0; i < ruleset.size; i++) {
-    LmnRuleRef r = lmn_rule_make_translated(
-        ruleset.rules[i].function,
-        maindata->symbol_exchange[ruleset.rules[i].name]);
-    lmn_add_system_rule(r);
+  for (auto &rule : maindata->ruleset_table[1]) {
+    lmn_add_system_rule(lmn_rule_make_translated(
+        rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセット2番はinitial ruleset */
-  ruleset = maindata->ruleset_table[2];
-  for (i = 0; i < ruleset.size; i++) {
-    LmnRuleRef r = lmn_rule_make_translated(
-        ruleset.rules[i].function,
-        maindata->symbol_exchange[ruleset.rules[i].name]);
-    lmn_add_initial_rule(r);
+  for (auto &rule : maindata->ruleset_table[2]) {
+    lmn_add_initial_rule(lmn_rule_make_translated(
+        rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセット3番はinitial system ruleset */
-  ruleset = maindata->ruleset_table[3];
-  for (i = 0; i < ruleset.size; i++) {
-    LmnRuleRef r = lmn_rule_make_translated(
-        ruleset.rules[i].function,
-        maindata->symbol_exchange[ruleset.rules[i].name]);
-    lmn_add_initial_system_rule(r);
+  for (auto &rule : maindata->ruleset_table[3]) {
+    lmn_add_initial_system_rule(lmn_rule_make_translated(
+        rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセットを読み込み+変換テーブルを設定 */
-  for (i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset; i++) {
-    int j, gid;
-    LmnRuleSetRef rs;
-    struct trans_ruleset tr;
-
-    tr = maindata->ruleset_table[i];
-    gid = lmn_gen_ruleset_id();
-    rs = new LmnRuleSet(gid, tr.size);
+  for (int i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset;
+       i++) {
+    auto &tr = maindata->ruleset_table[i];
+    auto gid = lmn_gen_ruleset_id();
+    auto rs = new LmnRuleSet(gid, tr.size);
     ruleset_table->register_ruleset(rs, gid);
 
-    for (j = 0; j < tr.size; j++) {
-      LmnRuleRef r = lmn_rule_make_translated(
-          tr.rules[j].function, maindata->symbol_exchange[tr.rules[j].name]);
-      rs->put(r);
-    }
+    for (auto &r : tr)
+      rs->put(lmn_rule_make_translated(r.function,
+                                       maindata->symbol_exchange[r.name]));
 
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく
      */
@@ -255,8 +245,8 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   }
 
   /* モジュール読込み */
-  for (i = 0; i < maindata->count_of_module; i++) {
-    struct trans_module mo = maindata->module_table[i];
+  for (int i = 0; i < maindata->count_of_module; i++) {
+    auto &mo = maindata->module_table[i];
     lmn_set_module(maindata->symbol_exchange[mo.name],
                    ruleset_table->get(maindata->ruleset_exchange[mo.ruleset]));
   }
@@ -264,321 +254,180 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   return ret;
 }
 
-static inline LmnRuleSetRef load_compiled_il_inner(char *basename, char *buf,
-                                                   int buf_len, void *sohandle,
-                                                   char *filename);
-
 /* soハンドルから中間命令を読み出す. load_extは開始ルールを認識しない.
  * 複数ファイルを1つのsoにした場合,
  * 初期データ生成ルールが複数あるはずだがとりあえず無視.
  * TODO:
  *   初期データ生成ルールセットのルールを1つのルールセットにまとめて出力すれば問題無し.
  *   1回適用成功したところで止めなければok     */
-LmnRuleSetRef load_compiled_il(char *filename, void *sohandle) {
-  char *basename, *buf;
-  int buf_len;
-  LmnRuleSetRef ret;
+LmnRuleSetRef load_compiled_il(const std::string &filename, void *sohandle) {
+  auto basename = create_formatted_basename(filename);
+  auto init_str = std::string("init_") + basename;
+  auto init_f = (void (*)())dlsym(sohandle, init_str.c_str());
 
-  basename = create_formatted_basename(filename);
-  buf_len =
-      strlen(basename) + 50; /* 適当に50文字余分にとったけどこれでいいのか  */
-  buf = (char *)lmn_malloc(buf_len +
-                           1); /* 必要ないけど一応最後に1byte余分をとっておく */
+  if (!init_f)
+    throw loader_error(std::string("init function \"") + init_str +
+                       "\" not found in " + filename);
 
-  ret = load_compiled_il_inner(basename, buf, buf_len, sohandle, filename);
+  /* 初期化関数を呼び出し */
+  (*init_f)();
 
-  lmn_free(buf);
-  lmn_free(basename);
+  /* データオブジェクトを取得 */
+  auto maindata_str = std::string("trans_") + basename + "_maindata";
+  auto maindata = (trans_maindata *)dlsym(sohandle, maindata_str.c_str());
 
-  return ret;
-}
+  if (!maindata)
+    throw loader_error(std::string("maindata \"") + maindata_str +
+                       " not found in " + basename + ".");
 
-static inline LmnRuleSetRef load_compiled_il_inner(char *basename, char *buf,
-                                                   int buf_len, void *sohandle,
-                                                   char *filename) {
-  void (*init_f)();
-
-  snprintf(buf, buf_len, "init_%s", basename);
-  init_f = (void (*)())dlsym(sohandle, buf);
-
-  if (!init_f) {
-    fprintf(stderr, "init function \"%s\" not found in %s.\n", buf, filename);
-    return NULL;
-  } else {
-    struct trans_maindata *maindata;
-
-    /* 初期化関数を呼び出し */
-    (*init_f)();
-
-    /* データオブジェクトを取得 */
-    snprintf(buf, buf_len, "trans_%s_maindata", basename);
-    maindata = (struct trans_maindata *)dlsym(sohandle, buf);
-
-    if (!maindata) {
-      fprintf(stderr, "maindata \"%s\" not found in %s.\n", buf, basename);
-      return NULL;
-    } else {
-      /* 読み込みと変換テーブルの設定 */
-      return load_and_setting_trans_maindata(maindata);
-    }
-  }
+  /* 読み込みと変換テーブルの設定 */
+  return load_and_setting_trans_maindata(maindata);
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置する。
  * 最初のルールセットを返す */
-LmnRuleSetRef load(FILE *in) {
-  ILRef il;
-  LmnRuleSetRef first_ruleset;
+using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
+LmnRuleSetRef load(file_ptr in) {
+  std::unique_ptr<IL> il;
+  il::lexer scanner(std::move(in));
 
-  if (il_parse(in, &il)) {
-    /* 構文解析に失敗 */
-    exit(EXIT_FAILURE);
-  }
+  if (ilparse(&scanner, &il, NULL))
+    throw loader_error("failed in parsing il files");
 
-  first_ruleset = load_il(il);
-  delete il;
-  return first_ruleset;
+  return load_il(*il);
 }
 
-static Vector *opened_so_files;
-void init_so_handles() { opened_so_files = vec_make(2); }
+LmnRuleSetRef load(const std::string &file_path) {
+  std::unique_ptr<IL> il;
+  il::lexer scanner(file_path);
+
+  if (ilparse(&scanner, &il, NULL))
+    throw loader_error("failed in parsing il files");
+
+  return load_il(*il);
+}
+
+static std::vector<void *> opened_so_files;
+void init_so_handles() {}
 
 void finalize_so_handles() {
-  int i;
-  for (i = 0; i < vec_num(opened_so_files); i++) {
-    dlclose((void *)vec_get(opened_so_files, i));
-  }
-  vec_free(opened_so_files);
+  for (auto v : opened_so_files)
+    dlclose(v);
+  opened_so_files.clear();
+}
+
+namespace fs = slim::element::filesystem;
+
+/* 拡張子がsoならリンクする */
+/* dlopenは環境変数にLD_LIBRARY_PATH="."と設定しないとカレントディレクトリを検索してくれないので注意
+ */
+LmnRuleSetRef load_so_file(const std::string &file_name) {
+  auto sohandle = dlopen(file_name.c_str(), RTLD_LAZY);
+  if (!sohandle)
+    throw loader_error(std::string("Failed to open ") + file_name + " (" +
+                       dlerror() + ")");
+
+  dlerror();
+  opened_so_files.push_back(sohandle);
+  return load_compiled_il(file_name.c_str(), sohandle);
+}
+
+/* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
+LmnRuleSetRef load_lmn_file(const std::string &file_name) {
+  const char *lmntal_home = getenv(ENV_LMNTAL_HOME);
+  if (!lmntal_home)
+    throw loader_error("environment variable \"LMNTAL_HOME\" is not set");
+
+  if (fs::exists(std::string(lmntal_home)))
+    throw loader_error(
+        std::string("Failed to run lmntal compiler (lmntal don't exist at ") +
+        lmntal_home + ")");
+
+  return load(lmntal_compile_file(file_name.c_str()));
 }
 
 /* ファイルから中間言語を読み込みランタイム中に配置し、最初のルールセットを返す。
  * ファイルの拡張子が lmn の場合、Javaによる処理系でファイルをコンパイルし、
  * 中間言語を生成する。soの場合、dlopenしておきハンドラはopened_so_filesで管理。
  * dlcloseはfinalize()でされる */
-LmnRuleSetRef load_file(char *file_name) {
-  FILE *fp;
-  int len;
-  LmnRuleSetRef rs;
-  void *sohandle;
 
-  len = strlen(file_name);
+LmnRuleSetRef load_file(const std::string &file_name) {
+  fs::path filepath(file_name);
+  
+  if (filepath.extension().string() == "so")
+    return load_so_file(file_name);
 
-  /* 拡張子がsoならリンクする */
-  /* dlopenは環境変数にLD_LIBRARY_PATH="."と設定しないとカレントディレクトリを検索してくれないので注意
-   */
-  if (!strcmp(file_name + len - 3, ".so")) {
-    sohandle = dlopen(file_name, RTLD_LAZY);
-    if (!sohandle) {
-      fprintf(stderr, "Failed to open %s\n", file_name);
-      fprintf(stderr, "dlopen: %s\n", dlerror());
-      rs = 0;
-    } else {
-      dlerror();
-      vec_push(opened_so_files, (vec_data_t)sohandle);
-      rs = load_compiled_il(file_name, sohandle);
-    }
-  } else if ((fp = fopen(file_name, "r"))) {
-    /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
-    const char *lmntal_home = getenv(ENV_LMNTAL_HOME);
-    if (!strcmp(&file_name[len - 4], ".lmn")) {
-      if (lmntal_home) {
-        FILE *fp_compiled;
-        struct stat st;
+  if (filepath.extension().string() == "lmn")
+    return load_lmn_file(file_name);
 
-        if (stat(lmntal_home, &st) == 0) {
-          fp_compiled = lmntal_compile_file(file_name);
-        } else {
-          fprintf(stderr, "Failed to run lmntal compiler\n");
-          fprintf(stderr, "lmntal don't exist at %s\n", lmntal_home);
-          exit(EXIT_FAILURE);
-        }
-
-        rs = load(fp_compiled);
-        fclose(fp_compiled);
-      } else {
-        fprintf(stderr, "environment variable \"LMNTAL_HOME\" is not set");
-        exit(EXIT_FAILURE);
-      }
-    } else {
-      rs = load(fp);
-    }
-    fclose(fp);
-  } else {
-    perror(file_name);
-    exit(EXIT_FAILURE);
-  }
-
-  return rs;
+  return load(file_name);
 }
 
-static const char *const extension_table[] = {"", "lmn", "il", "so"};
-
-static int file_type(const char *extension) {
-  int i = 0;
-  int filetype = 0;
-
-  for (i = 1; i < sizeof(extension_table) / sizeof(extension_table[0]); ++i) {
-    if (!strcmp(extension, extension_table[i])) {
-      filetype = i;
-      break;
-    }
-  }
-
-  return filetype;
-}
-
-int load_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path) {
-  const char *extension;
-  char *buf;
-
-  extension = extension_table[filetype];
-  buf = LMN_NALLOC(char, strlen((char *)path) + NAME_MAX + 2);
-
-  sprintf(buf, "%s%s%s.%s", (char *)path, DIR_SEPARATOR_STR, (char *)basename,
-          extension);
-  load_file(buf);
-
-  LMN_FREE(buf);
-  return ST_CONTINUE;
-}
-
-int free_loading_tbl_entry(st_data_t basename, st_data_t filetype, void *path) {
-  LMN_FREE(basename);
-  return ST_CONTINUE;
+static std::string extension_table[] = {"", "lmn", "il", "so"};
+static int file_type(const fs::path &filename) {
+  auto ext = filename.extension().string();
+  auto i =
+      std::find(std::begin(extension_table), std::end(extension_table), ext);
+  if (i == std::end(extension_table))
+    return 0;
+  return i - std::begin(extension_table);
 }
 
 /* pathのディレクトリ内のファイルを中間コードとしてロードする.
  * 拡張子を除いてファイル名が同一な場合はextension_tableで指定した優先順で1種類のみ読み込む
  */
-void load_il_files(const char *path) {
-  int path_len;
-  char *buf;
-  DIR *dir;
+void load_il_files(const char *path_string) {
+  try {
+    fs::path path(path_string);
+    fs::directory_iterator dir = path;
 
-  path_len = strlen(path);
-  buf = LMN_NALLOC(char, path_len + NAME_MAX + 2);
-  dir = opendir(path);
-
-  if (dir) {
-    st_table_t loading_files_type;
-    struct stat st;
-    struct dirent *dp;
-
-    loading_files_type = st_init_strtable();
+    std::map<std::string, int> loading_files_type;
 
     /* 読み込むファイルをリストアップする */
-    while ((dp = readdir(dir))) {
-      sprintf(buf, "%s%s%s", path, DIR_SEPARATOR_STR, dp->d_name);
-      stat(buf, &st);
-      if (S_ISREG(st.st_mode)) {
-        char *ext;
-        int filetype;
+    for (auto dp : dir) {
+      if (!fs::is_regular_file(dp.status()))
+        continue;
 
-        ext = extension(dp->d_name);
-        filetype = file_type(ext);
+      auto dname = dp.path().filename();
+      auto filetype = file_type(dname);
+      if (filetype == 0)
+        continue;
 
-        if (filetype > 0) { /* 読み込むべき拡張子なら追加 */
-          char *basename;
-          st_data_t old_filetype;
-
-          basename = basename_ext(dp->d_name);
-          if (st_lookup(loading_files_type, (st_data_t)basename,
-                        &old_filetype)) {
-            if (filetype > old_filetype) {
-              st_insert(loading_files_type, (st_data_t)basename, filetype);
-            }
-            LMN_FREE(basename);
-          } else {
-            st_insert(loading_files_type, (st_data_t)basename, filetype);
-          }
-        }
-        LMN_FREE(ext);
-      }
+      auto basename = dname.stem().string();
+      if (filetype > loading_files_type[basename])
+        loading_files_type[basename] = filetype;
     }
 
     /* 読み込む */
-    st_foreach(loading_files_type, (st_iter_func)load_loading_tbl_entry,
-               (st_data_t)path);
-    /* 開放 */
-    st_foreach(loading_files_type, (st_iter_func)free_loading_tbl_entry,
-               (st_data_t)path);
-    st_free_table(loading_files_type);
+    for (auto &p : loading_files_type) {
+      fs::path basename(p.first);
+      auto filetype = p.second;
+      auto extension = extension_table[filetype];
 
-    closedir(dir);
-  }
-
-  LMN_FREE(buf);
-}
-
-/* ファイルが*.lmnならコンパイル結果のFILE*を返す.
- * ファイルが*.ilならfopen結果のFILE*を返す.
- * それ以外の拡張子だったり存在しないファイルだったらNULLを返す.   */
-FILE *fopen_il_file(char *file_name) {
-  FILE *fp;
-  int len = strlen(file_name);
-
-  if ((fp = fopen(file_name, "r"))) {
-    /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
-    if (!strcmp(&file_name[len - 4], ".lmn")) {
-      if (getenv(ENV_LMNTAL_HOME)) {
-        FILE *fp_compiled;
-
-        fp_compiled = lmntal_compile_file(file_name);
-        if (!fp_compiled) {
-          fprintf(stderr, "Failed to run lmntal compiler");
-          exit(EXIT_FAILURE);
-        }
-
-        return fp_compiled;
-      } else {
-        fprintf(stderr, "environment variable \"LMNTAL_HOME\" is not set");
-      }
-    } else if (!strcmp(&file_name[len - 3], ".il")) {
-      return fp;
+      auto file = path / basename.replace_extension(extension);
+      load_file(file.string());
     }
   }
-
-  return 0;
+  catch (const fs::filesystem_error &e) {
+    fprintf(stderr, "%s\n", e.what());
+  }
 }
 
-int ilparse(il::lexer *scanner, ILRef *il, RuleRef *rule);
-
-/* inから中間言語を読み込み、構文木を作る。構文木はilに設定される。
+/* inから中間言語を読み込み、構文木を作る。構文木はruleに設定される。
    正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
-int il_parse(FILE *in, ILRef *il) {
-  il::lexer scanner(in);
-  return ilparse(&scanner, il, NULL);
+std::unique_ptr<Rule> il_parse_rule(file_ptr in) {
+  il::lexer scanner(std::move(in));
+  std::unique_ptr<Rule> rule;
+  if (ilparse(&scanner, NULL, &rule))
+    throw loader_error("failed in parsing il files");
+  return rule;
 }
 
-int il_parse_rule(FILE *in, RuleRef *rule) {
-  il::lexer scanner(in);
-  return ilparse(&scanner, NULL, rule);
-}
-
-char *create_formatted_basename(const char *filepath) {
-  const char *begin, *end, *p;
-  char *basename;
-  int i;
-
-  begin = strrchr(filepath, DIR_SEPARATOR_CHAR); /* パス内最後の/を探す */
-
-  if (!begin) { /* もし/があればその次がファイル名の先頭 */
-    begin += 1;
-  } else {
-    begin = (char *)filepath; /* もし/がなければ全体の先頭がファイル名の先頭 */
-  }
-
-  end = strchr(begin, '.'); /* ファイル名最初の.を探す ないと困る */
-  basename = (char *)lmn_malloc(end - begin + 1);
-  for (i = 0, p = begin; i < end - begin; i++, p++) {
-    if (isalpha((unsigned char)*p) || isdigit((unsigned char)*p)) {
-      basename[i] = *p;
-    } else {
-      basename[i] = 'O'; /* 記号は全部Oにする */
-    }
-  }
-
-  basename[end - begin] = '\0';
-
+std::string create_formatted_basename(const std::string &filepath) {
+  auto sep = filepath.find_last_of(DIR_SEPARATOR_CHAR);
+  auto begin = (sep == std::string::npos) ? filepath.begin() : (filepath.begin() + sep + 1);
+  auto end = std::find(begin, filepath.end(), '.'); /* ファイル名最初の.を探す ないと困る */
+  std::string basename(begin, end + 1);
+  std::replace_if(basename.begin(), basename.end(), [](char &c) { return !(isalpha(c) || isdigit(c)); }, 'O');
   return basename;
 }

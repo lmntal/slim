@@ -40,6 +40,8 @@
 #include "ffi/lmntal_system_adapter.h"
 #include "loader/loader.h"
 
+#include <cstdio>
+
 #define LINK_PREFIX "L"
 #define LINKCONNECTION_MAX 100000
 #define MAX_RULE_STR 10000
@@ -448,19 +450,17 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
   LmnMembraneRef guard = get_mem_linked_atom(imply, 1);
   LmnMembraneRef body = get_mem_linked_atom(imply, 2);
   LmnStringRef rule_str = string_of_firstclass_rule(head, guard, body, imply);
-  FILE *compiled_rulesets =
-      lmntal_compile_rule_str((char *)lmn_string_c_str(rule_str));
+  auto compiled_rulesets = lmntal_compile_rule_str((char *)lmn_string_c_str(rule_str));
   lmn_string_free(rule_str);
 
   /* コンパイルされたルールからルールセットを生成 */
-  RuleRef ruleAST;
-  il_parse_rule(compiled_rulesets, &ruleAST);
+  auto ruleAST = il_parse_rule(std::move(compiled_rulesets));
   LmnRulesetId id = lmn_gen_ruleset_id();
   LmnRuleSetRef ruleset = new LmnRuleSet(id, 1);
-  ruleset->put(load_rule(ruleAST));
+  auto rule = load_rule(*ruleAST);
+  ruleset->put(rule.get());
   ruleset_table->register_ruleset(ruleset, id);
-
-  fclose(compiled_rulesets);
+  rule.release();
 
   /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加
    */

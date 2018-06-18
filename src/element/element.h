@@ -58,5 +58,9 @@
 #include "util.h"
 #include "vector.h"
 #include "scope.hpp"
+#include "re2c/buffer.hpp"
+#include "re2c/cfstream_buffer.hpp"
+#include "re2c/file_buffer.hpp"
+#include "exception.hpp"
 
 #endif /* LMN_ELEMENT_H */

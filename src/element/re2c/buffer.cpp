@@ -1,5 +1,5 @@
 /*
- * load.h
+ * buffer.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
@@ -32,41 +32,36 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: load.h,v 1.4 2008/09/29 04:47:03 taisuke Exp $
  */
 
-#ifndef LMN_LOAD_H
-#define LMN_LOAD_H
+#include "buffer.hpp"
 
-/**
- * @ingroup  Loader
- * @defgroup Load
- * @{
- */
+#include <algorithm>
 
-#include "syntax.h"
-#include "syntax.hpp"
-#include "vm/vm.h"
+namespace slim {
+namespace element {
+namespace re2c {
+buffer::buffer(int fill_size, int size)
+    : fill_size(fill_size), size(size), buf(new char[fill_size + size]),
+      YYLIMIT(buf + size), YYCURSOR(YYLIMIT), parsed_pos(YYLIMIT) {}
 
-#include <memory>
-#include <string>
-#include <cstdio>
-
-LmnRuleSetRef load(std::unique_ptr<FILE, decltype(&fclose)> in);
-std::unique_ptr<LmnRule> load_rule(const Rule &rule);
-LmnRuleSetRef load_file(const std::string &file_name);
-void load_il_files(const char *path);
-std::unique_ptr<Rule> il_parse_rule(std::unique_ptr<FILE, decltype(&fclose)> in);
-void init_so_handles();
-void finalize_so_handles();
-/* pathにsoがある場合の,関数名の元となれるファイル名を返す */
-/* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
-std::string create_formatted_basename(const std::string &path);
-
-/* 最適化レベルの最大値 */
-#define OPTIMIZE_LEVEL_MAX 3
-
-/* @} */
-
-#endif /* LMN_MEMBRANE_H */
+bool buffer::fill(size_t need) {
+  if (is_finished())
+    return false;
+  const auto free = parsed_pos - buf;
+  if (free < need)
+    return false;
+  std::move(parsed_pos, YYLIMIT, buf);
+  YYLIMIT -= free;
+  YYCURSOR -= free;
+  parsed_pos -= free;
+  update_limit(free);
+  if (YYLIMIT < buf + size) {
+    std::fill(YYLIMIT, YYLIMIT + fill_size, 0);
+    YYLIMIT += fill_size;
+  }
+  return true;
+}
+} // namespace re2c
+} // namespace element
+} // namespace slim

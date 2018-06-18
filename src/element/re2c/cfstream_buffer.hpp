@@ -1,5 +1,5 @@
 /*
- * load.h
+ * cfstream_buffer.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
@@ -32,41 +32,34 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: load.h,v 1.4 2008/09/29 04:47:03 taisuke Exp $
  */
 
-#ifndef LMN_LOAD_H
-#define LMN_LOAD_H
+#ifndef ELEMENT_RE2C_CFSTREAM_BUFFER_HPP
+#define ELEMENT_RE2C_CFSTREAM_BUFFER_HPP
 
-/**
- * @ingroup  Loader
- * @defgroup Load
- * @{
- */
-
-#include "syntax.h"
-#include "syntax.hpp"
-#include "vm/vm.h"
-
-#include <memory>
-#include <string>
+#include <cstddef>
 #include <cstdio>
+#include <memory>
 
-LmnRuleSetRef load(std::unique_ptr<FILE, decltype(&fclose)> in);
-std::unique_ptr<LmnRule> load_rule(const Rule &rule);
-LmnRuleSetRef load_file(const std::string &file_name);
-void load_il_files(const char *path);
-std::unique_ptr<Rule> il_parse_rule(std::unique_ptr<FILE, decltype(&fclose)> in);
-void init_so_handles();
-void finalize_so_handles();
-/* pathにsoがある場合の,関数名の元となれるファイル名を返す */
-/* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
-std::string create_formatted_basename(const std::string &path);
+#include "buffer.hpp"
 
-/* 最適化レベルの最大値 */
-#define OPTIMIZE_LEVEL_MAX 3
+namespace slim {
+namespace element {
+namespace re2c {
+using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
+class cfstream_buffer : public buffer {
+  file_ptr fp;
 
-/* @} */
+public:
+  cfstream_buffer(file_ptr input, int fill_size, int size = 256)
+      : buffer(fill_size, size), fp(std::move(input)) {}
 
-#endif /* LMN_MEMBRANE_H */
+  bool is_finished() const { return feof(fp.get()); }
+
+  void update_limit(size_t free) { YYLIMIT += fread(YYLIMIT, 1, free, fp.get()); }
+};
+} // namespace re2c
+} // namespace element
+} // namespace slim
+
+#endif /* ELEMENT_RE2C_CFSTREAM_BUFFER_HPP */

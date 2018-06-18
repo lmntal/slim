@@ -47,5 +47,6 @@
 #include "syntax.h"
 
 #include "translate.hpp"
+#include "exception.hpp"
 
 #endif /* LMN_LOADER_H */

@@ -1,5 +1,5 @@
 /*
- * load.h
+ * exception.cpp
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
@@ -32,41 +32,19 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: load.h,v 1.4 2008/09/29 04:47:03 taisuke Exp $
  */
 
-#ifndef LMN_LOAD_H
-#define LMN_LOAD_H
+#ifndef ELEMENT_RE2C_EXCEPTION_HPP
+#define ELEMENT_RE2C_EXCEPTION_HPP
 
-/**
- * @ingroup  Loader
- * @defgroup Load
- * @{
- */
+#include <stdexcept>
 
-#include "syntax.h"
-#include "syntax.hpp"
-#include "vm/vm.h"
+namespace slim {
+namespace element {
+class exception : public std::runtime_error {
+  using std::runtime_error::runtime_error;
+};
+} // namespace element
+} // namespace slim
 
-#include <memory>
-#include <string>
-#include <cstdio>
-
-LmnRuleSetRef load(std::unique_ptr<FILE, decltype(&fclose)> in);
-std::unique_ptr<LmnRule> load_rule(const Rule &rule);
-LmnRuleSetRef load_file(const std::string &file_name);
-void load_il_files(const char *path);
-std::unique_ptr<Rule> il_parse_rule(std::unique_ptr<FILE, decltype(&fclose)> in);
-void init_so_handles();
-void finalize_so_handles();
-/* pathにsoがある場合の,関数名の元となれるファイル名を返す */
-/* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
-std::string create_formatted_basename(const std::string &path);
-
-/* 最適化レベルの最大値 */
-#define OPTIMIZE_LEVEL_MAX 3
-
-/* @} */
-
-#endif /* LMN_MEMBRANE_H */
+#endif /* ELEMENT_EXCEPTION_HPP */

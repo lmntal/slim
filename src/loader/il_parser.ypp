@@ -47,8 +47,8 @@
 %pure-parser
 %locations
 %parse-param {il::lexer* scanner}
-%parse-param {IL** ret_il}
-%parse-param {Rule** ret_rule}
+%parse-param {std::unique_ptr<IL> * ret_il}
+%parse-param {std::unique_ptr<Rule> * ret_rule}
 /* ローカルのルールセットIDからグローバルなIDへのテーブル */
 %lex-param {il::lexer* scanner}
 
@@ -122,14 +122,14 @@
 %{
 #include "il_lexer.hpp"
 int illex(YYSTYPE *yylval, YYLTYPE *yyloc, il::lexer *lexer);
-void ilerror (YYLTYPE*, il::lexer*, IL **, Rule **, const char *);
+void ilerror (YYLTYPE*, il::lexer*, std::unique_ptr<IL>*, std::unique_ptr<Rule>*, const char *);
 %}
 
 %% /* Grammar rules and actions follow.  */
 
 start:
-  world _EOF { *ret_il = $1; }   /* 中間言語全体のパース */
-| rule { *ret_rule = $1; }  /* ルールのみの入力をパース */
+  world _EOF { *ret_il = std::unique_ptr<IL>($1); }   /* 中間言語全体のパース */
+| rule { *ret_rule = std::unique_ptr<Rule>($1); }  /* ルールのみの入力をパース */
 ;
 
 world:
@@ -290,7 +290,7 @@ functor:
 
 
 /* Called by yyparse on error.  */
-void ilerror (YYLTYPE *loc, il::lexer* scanner, IL **il, Rule **rule, const char *s)
+void ilerror (YYLTYPE *loc, il::lexer* scanner, std::unique_ptr<IL>*il, std::unique_ptr<Rule>*rule, const char *s)
 {
   fprintf (stderr, "il parser: error %s line: %d\n", s, scanner->lineno());
   exit(1);

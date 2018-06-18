@@ -54,6 +54,8 @@
 #include "test/unit_test.h"
 #endif
 
+#include <vector>
+
 void install_builtin_extensions(void);
 void init_builtin_extensions(void); /* ext/init_exts.c */
 
@@ -660,28 +662,32 @@ static inline void slim_finalize(void) {
   lmn_stream_destroy();
 }
 
-static inline int load_input_files(Vector *start_rulesets, int optid, int argc,
+static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, int optid, int argc,
                                    char **argv) {
   int i;
 
   /** load input files */
   for (i = optid; i < argc; i++) {
-    FILE *in;
     LmnRuleSetRef t;
     char *f = argv[i];
 
-    if (!strcmp("-", f)) { /* 標準入力からの読込み */
-      in = stdin;
-      t = load(in);
-      vec_push(start_rulesets, (vec_data_t)t);
-    } else {
-      t = load_file(f);
-      if (t)
-        vec_push(start_rulesets, (vec_data_t)t);
+    try {
+      if (!strcmp("-", f)) { /* 標準入力からの読込み */
+        t = load(std::unique_ptr<FILE, decltype(&fclose)>(stdin, [](FILE *) -> int { return 0; }));
+        start_rulesets.push_back(t);
+      } else {
+        t = load_file(f);
+        if (t)
+          start_rulesets.push_back(t);
+      }
+    }
+    catch (const slim::loader::exception &e) {
+      fprintf(stderr, "loader error: %s\n", e.what());
+      return 0;
     }
   }
 
-  if (vec_is_empty(start_rulesets)) {
+  if (start_rulesets.empty()) {
     /** detected invalid file */
     fprintf(stderr, "bad input file.\n");
     return 0;
@@ -690,10 +696,10 @@ static inline int load_input_files(Vector *start_rulesets, int optid, int argc,
   }
 }
 
-static inline void slim_exec(Vector *start_rulesets) {
+static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
   if (!lmn_env.nd) {
     /* プログラム実行 */
-    lmn_run(start_rulesets);
+    lmn_run(vec_make(start_rulesets));
   } else {
     /* プログラム検証 */
     AutomataRef automata;
@@ -721,7 +727,7 @@ static inline void slim_exec(Vector *start_rulesets) {
       }
     }
 
-    run_mc(start_rulesets, automata, prop_defs);
+    run_mc(vec_make(start_rulesets), automata, prop_defs);
 
     if (!ret) {
       automata_free(automata);
@@ -753,7 +759,7 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "no input file\n");
     }
   } else {
-    Vector *start_rulesets = vec_make(2);
+    std::vector<LmnRuleSetRef> start_rulesets;
 
     if (load_input_files(start_rulesets, optid, argc, argv)) {
       if (lmn_env.translate) { /** lmntalコードからCへの変換実行の場合 */
@@ -773,7 +779,6 @@ int main(int argc, char *argv[]) {
           dump_profile_data(stderr);
         }
       }
-      vec_free(start_rulesets);
     }
   }
 
