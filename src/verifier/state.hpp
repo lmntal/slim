@@ -585,11 +585,15 @@ public:
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3)
         profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
+<<<<<<< HEAD
 
                             sizeof(succ_data_t) * this->successor_num);
 
                              // sizeof(succ_data_t) * state_succ_num(s));
 
+=======
+                             sizeof(succ_data_t) * state_succ_num(s));
+>>>>>>> 79d659cb73517302f435bb154d439d3dc0beaccc
 #endif
       if (has_trans_obj()) {
         unsigned int i;
