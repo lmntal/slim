@@ -41,6 +41,7 @@
 #include "lmntal.h"
 #include "vm/atomlist.hpp"
 #include "vm/vm.h"
+#include <iostream>
 #include <string>
 #include <vector>
 typedef enum {
@@ -65,7 +66,6 @@ struct ConvertedGraphLink {
 
 public:
   ConvertedGraphLink(LmnSymbolAtomRef atom, int pos) {
-    AtomData data;
     attr = LMN_SATOM_GET_ATTR(atom, pos);
     if (!LMN_ATTR_IS_DATA(attr)) {
       data.id = LMN_SATOM_ID((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, pos));
@@ -80,6 +80,7 @@ public:
         break;
       }
     }
+    printf("%s:%d data=%d\n", __FUNCTION__, __LINE__, data.integer);
   }
 };
 
@@ -87,7 +88,8 @@ struct ConvertedGraphVertex {
   ConvertedGraphVertexType type;
   std::vector<ConvertedGraphLink *> links;
   int id;
-  std::string name;
+  // std::string name;
+  const char *name;
   bool isPushedIntoDiffInfoStack;
   bool isVisitedInBFS;
 
@@ -96,11 +98,14 @@ struct ConvertedGraphVertex {
     LmnArity arity = LMN_FUNCTOR_ARITY(f);
     type = convertedAtom;
     id = LMN_SATOM_ID(atom);
+    // name = std::string(lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)));
     name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
+    // printf("%s:%d name=%s\n", __FILE__, __LINE__, name);
     isPushedIntoDiffInfoStack = false;
     isVisitedInBFS = false;
     for (int i = 0; i < arity; i++) {
       ConvertedGraphLink *l = new ConvertedGraphLink(atom, i);
+      printf("%s:%d data=%d\n", __FUNCTION__, __LINE__, l->data.integer);
       links.push_back(l);
     }
   }
@@ -108,10 +113,10 @@ struct ConvertedGraphVertex {
 
 struct ConvertedGraph {
   std::vector<ConvertedGraphVertex *> atoms;
-  std::vector<ConvertedGraphVertex> hyperlinkatoms;
+  std::vector<ConvertedGraphVertex *> hyperlinkatoms;
 
-  std::vector<ConvertedGraphVertex *> convert_atoms(LmnMembraneRef mem) {
-    std::vector<ConvertedGraphVertex *> cv;
+  void convert_atoms(LmnMembraneRef mem,
+                     std::vector<ConvertedGraphVertex *> *atoms) {
     AtomListEntryRef ent;
     EACH_ATOMLIST(
         mem, ent, ({
@@ -121,17 +126,46 @@ struct ConvertedGraph {
                           !LMN_FUNC_IS_HL(LMN_SATOM_GET_FUNCTOR(atom))) {
                         ConvertedGraphVertex *v =
                             new ConvertedGraphVertex(atom);
-                        cv.push_back(v);
+                        (*atoms).push_back(v);
                       }
                     }));
         }));
+    // return cv;
+  }
+
+  std::vector<ConvertedGraphVertex *> convert_hyperlinks(LmnMembraneRef mem) {
+    std::vector<ConvertedGraphVertex *> cv;
     return cv;
   }
 
-  std::vector<ConvertedGraphVertex> convert_hyperlinks(LmnMembraneRef mem) {}
+  // memに対応するvertexを返す
+  //  1. memに対応するvertex(m)を作成
+  //  2. mem内のatomをvertexに変換, mへのハイパーリンクを張る
+  //  3. mem内のハイパーリンクを変換
+  //  4. 子膜に対して再帰的にconvert_memを適用
+  //  5. 返ってきたvertexからmへハイパーリンクを張る
+  //  return m
+  void convert_mem(LmnMembraneRef mem,
+                   std::vector<ConvertedGraphVertex *> *atoms,
+                   std::vector<ConvertedGraphVertex *> *hyperlinkatoms) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+  }
 
+  //  1. mem内のatomをvertexに変換，gm属性でリンクを張る
+  //  2. mem内のハイパーリンクを変換
+  //  3. 子膜に対してconvert_memを適用
+  //  4. 返ってきたvertexにgm属性でリンクを張る
   ConvertedGraph(LmnMembraneRef mem) {
-    atoms = convert_atoms(mem);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    convert_atoms(mem, &atoms);
+    for (auto i = atoms.begin(); i != atoms.end(); i++) {
+      printf("%s:%d name = %s\n", __FUNCTION__, __LINE__, (*i)->name);
+      for (auto j = (*i)->links.begin(); j != (*i)->links.end(); j++) {
+        printf("<%d, %d> ", (*j)->attr, (*j)->data.integer);
+      }
+      printf("\n");
+    }
+    convert_mem(mem, &atoms, &hyperlinkatoms);
     // hyperlinkatoms = convert_hyperlinks(mem);
   }
 };
