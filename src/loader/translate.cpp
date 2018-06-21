@@ -502,8 +502,7 @@ static int count_rulesets() {
   int i;
 
   for (i = FIRST_ID_OF_NORMAL_RULESET;; i++) {
-    LmnRuleSetRef rs = ruleset_table->get(i);
-    if (!rs)
+    if (!LmnRuleSetTable::at(i))
       break;
   }
 
@@ -612,7 +611,7 @@ static void print_trans_rules(const char *filename) {
   /* 通常ルールセットの出力 */
   for (i = FIRST_ID_OF_NORMAL_RULESET; i < count; ++i) {
     snprintf(buf, buf_len, "trans_%s_%d", filename, i);
-    translate_ruleset(ruleset_table->get(i), buf);
+    translate_ruleset(LmnRuleSetTable::at(i), buf);
   }
 
   free(buf);
@@ -642,7 +641,7 @@ static void print_trans_rulesets(const char *filename) {
           initial_system_ruleset->num, filename);
   /* 以降は普通のrulesetなので出力(どれが初期データルールかはload時に拾う) */
   for (i = FIRST_ID_OF_NORMAL_RULESET; i < count; i++) {
-    LmnRuleSetRef rs = ruleset_table->get(i);
+    LmnRuleSetRef rs = LmnRuleSetTable::at(i);
     LMN_ASSERT(rs); /* countで数えているからNULLにあたることはないはず */
 
     fprintf(OUT, "  {%d,trans_%s_%d_rules}", rs->num, filename,

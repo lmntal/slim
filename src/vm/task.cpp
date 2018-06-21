@@ -2322,7 +2322,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnRulesetId, instr, id);
 
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, memi),
-                          ruleset_table->get(id));
+                          LmnRuleSetTable::at(id));
       break;
     }
     case INSTR_LOADMODULE: {
@@ -4654,7 +4654,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnRulesetId, instr, id);
 
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, memi),
-                          ruleset_table->get(id));
+                          LmnRuleSetTable::at(id));
       break;
     }
     case INSTR_LOADMODULE: {

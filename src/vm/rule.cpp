@@ -73,23 +73,6 @@ LmnRuleRef lmn_rule_copy(LmnRuleRef rule) {
  * Rule Set
  */
 
-struct LmnRuleSetTable *ruleset_table;
-
-/* Generates and returns new RuleSet id */
-int lmn_gen_ruleset_id() {
-  static int ruleset_next_id = 1;
-
-  return ruleset_next_id++;
-}
-
-/* ルールセットテーブルの初期化 */
-static void init_ruleset_table() {
-  ruleset_table = new LmnRuleSetTable(64);
-  /* 安全なメモリ解放の為ゼロクリア */
-  memset(ruleset_table->entry, 0,
-         ruleset_table->size * sizeof(ruleset_table->entry[0]));
-}
-
 /* 2つの(Vector *)rulesetsが等価であるか判定, 等価の場合に真を返す.
  * Vectorはルールセットの整数IDで整列済みであることが前提 */
 BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
@@ -159,7 +142,7 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
 LmnRuleSetRef system_ruleset;
 
 static void init_system_ruleset() {
-  system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
+  system_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
 }
 
 static void destroy_system_ruleset() { delete (system_ruleset); }
@@ -176,8 +159,8 @@ LmnRuleSetRef initial_ruleset;
 LmnRuleSetRef initial_system_ruleset;
 
 static void init_initial_ruleset() {
-  initial_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
-  initial_system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
+  initial_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
+  initial_system_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
 }
 
 static void destroy_initial_ruleset() {
@@ -220,14 +203,12 @@ LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name) {
 /*----------------------------------------------------------------------*/
 
 void init_rules() {
-  init_ruleset_table();
   init_module_table();
   init_system_ruleset();
   init_initial_ruleset();
 }
 
 void destroy_rules() {
-  delete(ruleset_table);
   destroy_module_table();
   destroy_system_ruleset();
   destroy_initial_ruleset();

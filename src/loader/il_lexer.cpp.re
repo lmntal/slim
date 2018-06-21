@@ -138,7 +138,7 @@ start:
       st_data_t id_global;
 
       if (!st_lookup(ruleset_id_tbl, id_local, &id_global)) {
-        id_global = lmn_gen_ruleset_id();
+        id_global = LmnRuleSetTable::gen_id();
         st_insert(ruleset_id_tbl, id_local, id_global);
       }
       yylval->_int = (int)id_global;

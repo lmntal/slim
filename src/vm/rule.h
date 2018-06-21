@@ -66,8 +66,6 @@ typedef enum AtomicType {
   ATOMIC_SYNC_STEP,
 } AtomicType;
 
-extern struct LmnRuleSetTable *ruleset_table;
-
 int lmn_gen_ruleset_id(void);
 BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
 

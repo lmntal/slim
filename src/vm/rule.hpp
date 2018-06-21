@@ -40,6 +40,8 @@
 
 #include "lmntal.h"
 
+#include <vector>
+
 #include "membrane.h"
 #include "react_context.h"
 
@@ -63,8 +65,13 @@ struct LmnRule {
      により、ルールを変換して生成された関数を想定している。*/
   LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated,
           lmn_interned_str name)
-      : inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated),
-        name(name), is_invisible(FALSE), pre_id(ANONYMOUS), history_tbl(NULL) {}
+      : inst_seq(inst_seq),
+        inst_seq_len(inst_seq_len),
+        translated(translated),
+        name(name),
+        is_invisible(FALSE),
+        pre_id(ANONYMOUS),
+        history_tbl(NULL) {}
 
   /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
      生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
@@ -86,12 +93,12 @@ struct LmnRule {
 
 /* structure of RuleSet */
 struct LmnRuleSet {
-private:
+ private:
   BOOL is_copied;
   BOOL has_uniqrule;
   BOOL is_0step;
 
-public:
+ public:
   LmnRule **rules; /* ルールのリスト */
   int num, cap;    /* # of rules, and # of capacity */
   LmnRulesetId id; /* RuleSet ID */
@@ -99,13 +106,18 @@ public:
       atomic; /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
   BOOL is_atomic_valid; /* atomic step中であることを主張するフラグ */
   LmnRuleSet(LmnRulesetId id, int init_size)
-      : id(id), cap(init_size), rules(LMN_CALLOC(LmnRule *, init_size)), num(0),
-        atomic(ATOMIC_NONE), is_atomic_valid(FALSE), is_copied(FALSE),
-        has_uniqrule(FALSE), is_0step(FALSE) {}
+      : id(id),
+        cap(init_size),
+        rules(LMN_CALLOC(LmnRule *, init_size)),
+        num(0),
+        atomic(ATOMIC_NONE),
+        is_atomic_valid(FALSE),
+        is_copied(FALSE),
+        has_uniqrule(FALSE),
+        is_0step(FALSE) {}
 
   ~LmnRuleSet() {
-    for (int i = 0; i < this->num; i++)
-      delete this->rules[i];
+    for (int i = 0; i < this->num; i++) delete this->rules[i];
     LMN_FREE(this->rules);
   }
 
@@ -162,24 +174,20 @@ public:
    * (ruleの順序はソースコード依存) */
   bool operator==(const LmnRuleSet &set2) {
     /* rulesetの種類をチェック */
-    if (this->id != set2.id)
-      return false;
+    if (this->id != set2.id) return false;
 
     bool t1 = this->has_uniqrule;
     bool t2 = set2.has_uniqrule;
 
     /* 互いにuniq rulsetでなければruleset idの比較でok */
-    if (!t1 && !t2)
-      return true;
+    if (!t1 && !t2) return true;
 
     /* uniq ruleset同士ではなければ当然FALSE */
-    if (t1 ^ t2)
-      return false;
+    if (t1 ^ t2) return false;
 
     /* uniq ruleset同士の場合:
      *   ruleの適用ヒストリまで比較 */
-    if (this->num != set2.num)
-      return false;
+    if (this->num != set2.num) return false;
 
     for (int i = 0; i < this->num; i++) {
       LmnRule *rule1 = this->rules[i];
@@ -187,13 +195,10 @@ public:
       st_table_t hist1 = rule1->history_tbl;
       st_table_t hist2 = rule2->history_tbl;
 
-      if (!hist1 && !hist2)
-        continue;
+      if (!hist1 && !hist2) continue;
 
-      if (!hist1 || !hist2)
-        return false;
-      if (!st_equals(hist1, hist2))
-        return false;
+      if (!hist1 || !hist2) return false;
+      if (!st_equals(hist1, hist2)) return false;
     }
 
     return true;
@@ -233,43 +238,37 @@ public:
 };
 
 /* table, mapping RuleSet ID to RuleSet */
-struct LmnRuleSetTable {
-  unsigned int size;
-  LmnRuleSet **entry;
+class LmnRuleSetTable {
+  std::vector<LmnRuleSet *> entry;
+  int next_id;
 
-  LmnRuleSetTable(unsigned int size) : size(size) {
-    this->entry = LMN_NALLOC(LmnRuleSet *, this->size);
+  static LmnRuleSetTable &instance() {
+    static LmnRuleSetTable instance_(64);
+    return instance_;
   }
+  LmnRuleSetTable(unsigned int size) : entry(size) {}
 
   ~LmnRuleSetTable() {
-    for (unsigned int i = 0; i < this->size; i++)
-      if (this->entry[i])
-        delete (this->entry[i]);
-    delete (this->entry);
+    for (auto rs : entry) delete(rs);
+  }
+
+public:
+  /* Returns RuleSet associated with id. If nothing is, returns NULL */
+  static LmnRuleSet *at(int id) {
+    return instance().entry[id];
   }
 
   /* Associates id with ruleset */
-  void register_ruleset(LmnRuleSet *ruleset, int id) {
-    /* 必要ならば容量を拡張 */
-    while (this->size <= (unsigned int)id) {
-      int old_size = this->size;
-      this->size *= 2;
-      this->entry =
-          LMN_REALLOC(LmnRuleSet *, this->entry, this->size);
-      /* 安全なメモリ解放の為ゼロクリア */
-      memset(this->entry + old_size, 0,
-             (this->size - old_size) * sizeof(LmnRuleSet *));
-    }
-
-    this->entry[id] = ruleset;
+  static void add(LmnRuleSet *ruleset, int id) {
+    auto &tbl = LmnRuleSetTable::instance();
+    if (tbl.entry.size() <= id)
+      tbl.entry.resize(id + 1);
+    tbl.entry[id] = ruleset;
   }
 
-  /* Returns RuleSet associated with id. If nothing is, returns NULL */
-  LmnRuleSet * get(int id) {
-    if (ruleset_table->size <= (unsigned int)id)
-      return NULL;
-    else
-      return ruleset_table->entry[id];
+  /* Generates and returns new RuleSet id */
+  static int gen_id() {
+    return instance().next_id++;
   }
 };
 

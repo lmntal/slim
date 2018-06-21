@@ -144,7 +144,7 @@ static LmnRuleSetRef load_ruleset(const RuleSet &rs) {
     rule.release();
   }
 
-  ruleset_table->register_ruleset(runtime_ruleset, rs.id);
+  LmnRuleSetTable::add(runtime_ruleset, rs.id);
 
   if (rs.is_system_ruleset) {
     /* 各ルールをシステムルールセットに追加する */
@@ -173,7 +173,7 @@ static LmnRuleSetRef load_il(const IL &il) {
 
   /* load module list */
   for (auto &m : il.modules)
-    lmn_set_module(m->name_id, ruleset_table->get(m->ruleset_id));
+    lmn_set_module(m->name_id, LmnRuleSetTable::at(m->ruleset_id));
 
   return first_ruleset;
 }
@@ -228,9 +228,9 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   for (int i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset;
        i++) {
     auto &tr = maindata->ruleset_table[i];
-    auto gid = lmn_gen_ruleset_id();
+    auto gid = LmnRuleSetTable::gen_id();
     auto rs = new LmnRuleSet(gid, tr.size);
-    ruleset_table->register_ruleset(rs, gid);
+    LmnRuleSetTable::add(rs, gid);
 
     for (auto &r : tr)
       rs->put(new LmnRule(r.function,
@@ -248,7 +248,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   for (int i = 0; i < maindata->count_of_module; i++) {
     auto &mo = maindata->module_table[i];
     lmn_set_module(maindata->symbol_exchange[mo.name],
-                   ruleset_table->get(maindata->ruleset_exchange[mo.ruleset]));
+                   LmnRuleSetTable::at(maindata->ruleset_exchange[mo.ruleset]));
   }
 
   return ret;

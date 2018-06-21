@@ -711,7 +711,7 @@ static void binstr_dump(BYTE *bs, int len) {
 
         /* dump applied histories of uniq constraint rules */
 
-        rs = ruleset_table->get(rs_id);
+        rs = LmnRuleSetTable::at(rs_id);
         rule_num = rs->num;
 
         for (k = 0; k < rule_num; k++) {
@@ -1573,7 +1573,7 @@ static int binstr_decode_cell(LmnBinStrRef bs, int pos, BsDecodeLog *log,
       pos++;
       rs_id = binstr_get_ruleset(bs->v, pos);
       pos += BS_RULESET_SIZE;
-      lmn_mem_add_ruleset(mem, ruleset_table->get(rs_id));
+      lmn_mem_add_ruleset(mem, LmnRuleSetTable::at(rs_id));
     } else if (tag == TAG_RULESET) {
       /* 複数のルールセット */
       int j, n, rs_id;
@@ -1583,7 +1583,7 @@ static int binstr_decode_cell(LmnBinStrRef bs, int pos, BsDecodeLog *log,
       for (j = 0; j < n; j++) {
         rs_id = binstr_get_ruleset(bs->v, pos);
         pos += BS_RULESET_SIZE;
-        lmn_mem_add_ruleset(mem, ruleset_table->get(rs_id));
+        lmn_mem_add_ruleset(mem, LmnRuleSetTable::at(rs_id));
       }
     } else if (tag == TAG_RULESET_UNIQ) {
       int rs_num;
@@ -1613,8 +1613,7 @@ static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
     LmnRuleSetRef rs;
     lmn_interned_str id;
 
-    rs =
-        ruleset_table->get(binstr_get_ruleset(bs->v, *i_bs))->duplicate();
+    rs = LmnRuleSetTable::at(binstr_get_ruleset(bs->v, *i_bs))->duplicate();
     (*i_bs) += BS_RULESET_SIZE;
 
     for (j = 0; j < rs->num; j++) {
