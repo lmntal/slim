@@ -700,7 +700,7 @@ static void binstr_dump(BYTE *bs, int len) {
     case TAG_RULESET_UNIQ: {
       LmnRuleSetRef rs;
       lmn_interned_str id;
-      unsigned int j, k, l, n, rs_id, rule_num, his_num;
+      unsigned int j, k, l, n, rs_id, his_num;
 
       n = binstr_get_ruleset_num(bs, pos);
       pos += BS_RULESET_NUM_SIZE;
@@ -710,13 +710,8 @@ static void binstr_dump(BYTE *bs, int len) {
         printf("@%d/", rs_id);
 
         /* dump applied histories of uniq constraint rules */
-
-        rs = LmnRuleSetTable::at(rs_id);
-        rule_num = rs->num;
-
-        for (k = 0; k < rule_num; k++) {
-          printf("[%s", lmn_id_to_name(
-                            rs->get_rule(k)->name));
+        for (auto r : *LmnRuleSetTable::at(rs_id)) {
+          printf("[%s", lmn_id_to_name(r->name));
 
           his_num = binstr_get_history_num(bs, pos);
           pos += BS_HISTORY_NUM_SIZE;
@@ -1029,9 +1024,8 @@ static inline void bsptr_push_ruleset_uniq(BinStrPtrRef bsp, LmnMembraneRef mem,
     LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
     bsptr_push_ruleset(bsp, rs); /* write ruleset id */
 
-    for (j = 0; j < rs->num; j++) { /* foreach rule history */
-      bsptr_push_rule_histories(bsp, rs->get_rule(j));
-    }
+    for (auto r : *rs)
+      bsptr_push_rule_histories(bsp, r);
   }
 }
 
@@ -1608,16 +1602,14 @@ static int binstr_decode_cell(LmnBinStrRef bs, int pos, BsDecodeLog *log,
 /* UNIQ制約を含むルールセットrulesetsを再構築する */
 static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
                                    int rs_num) {
-  int i, j, k;
-  for (i = 0; i < rs_num; i++) {
+  for (int i = 0; i < rs_num; i++) {
     LmnRuleSetRef rs;
     lmn_interned_str id;
 
     rs = LmnRuleSetTable::at(binstr_get_ruleset(bs->v, *i_bs))->duplicate();
     (*i_bs) += BS_RULESET_SIZE;
 
-    for (j = 0; j < rs->num; j++) {
-      LmnRuleRef r;
+    for (auto r : *rs) {
       int his_num;
 
       /* ruleset idから復元したrulesetには既に履歴が存在しており,
@@ -1627,12 +1619,11 @@ static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
        * コピー元となるルールセットオブジェクトに直接履歴を持たせていないため,
        *       上記コメントは考慮しなくてよい. */
 
-      r = rs->get_rule(j);
       his_num = binstr_get_history_num(bs->v, *i_bs);
       (*i_bs) += BS_HISTORY_NUM_SIZE;
 
       if (his_num > 0) {
-        for (k = 0; k < his_num; k++) {
+        for (int j = 0; j < his_num; j++) {
           id = binstr_get_history(bs->v, *i_bs);
           (*i_bs) += BS_HISTORY_SIZE;
           st_add_direct(r->history_tbl, (st_data_t)id, 0);

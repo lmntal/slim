@@ -53,20 +53,10 @@ typedef struct LmnRuleSet *LmnRuleSetRef;
 #include "lmntal.h"
 #include "symbol.h"
 
-LmnRuleRef lmn_rule_copy(LmnRuleRef rule);
-
 /*----------------------------------------------------------------------
  * Rule Set
  */
 
-typedef enum AtomicType {
-  ATOMIC_NONE = 0,
-  ATOMIC_ALL_EXHAUSTIVE,
-  ATOMIC_SIMULATION,
-  ATOMIC_SYNC_STEP,
-} AtomicType;
-
-int lmn_gen_ruleset_id(void);
 BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
 
 /*----------------------------------------------------------------------

@@ -48,27 +48,6 @@
 void init_rules(void);
 void destroy_rules(void);
 
-/* ruleをコピーして新しいルールを作成する */
-LmnRuleRef lmn_rule_copy(LmnRuleRef rule) {
-  LmnRuleRef new_rule;
-  BYTE *inst_seq;
-
-  if (rule->inst_seq) {
-    inst_seq = LMN_NALLOC(BYTE, rule->inst_seq_len);
-    inst_seq = (BYTE *)memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
-  } else {
-    inst_seq = NULL;
-  }
-
-  new_rule =
-      new LmnRule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
-  if (rule->history_tbl) {
-    new_rule->history_tbl = st_copy(rule->history_tbl);
-    new_rule->pre_id = rule->pre_id;
-  }
-  return new_rule;
-}
-
 /*----------------------------------------------------------------------
  * Rule Set
  */

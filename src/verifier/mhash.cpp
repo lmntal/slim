@@ -465,9 +465,8 @@ static mhash_t mhash_rulesets(Vector *rulesets) {
     if (rs->has_unique()) {
       /* 履歴テーブルを持つ場合は, 履歴の整数IDも掛け合わせる.
        * この計算方法で十分かどうかはちゃんと考えていない. */
-      for (j = 0; j < rs->num; j++) {
-        st_table_t his_tbl =
-            rs->get_rule(j)->history_tbl;
+      for (auto r : *rs) {
+        auto his_tbl = r->history_tbl;
         if (!his_tbl || st_num(his_tbl) == 0)
           continue;
         st_foreach(his_tbl, (st_iter_func)mhash_multiply_rhistories_f,

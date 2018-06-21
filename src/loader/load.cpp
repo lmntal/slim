@@ -138,21 +138,14 @@ std::unique_ptr<LmnRule> load_rule(Rule const &rule) {
 static LmnRuleSetRef load_ruleset(const RuleSet &rs) {
   auto runtime_ruleset = new LmnRuleSet(rs.id, 10);
 
-  for (auto &r : rs.rules) {
-    auto rule = load_rule(*r);
-    runtime_ruleset->put(rule.get());
-    rule.release();
-  }
+  for (auto &r : rs.rules)
+    runtime_ruleset->put(load_rule(*r));
 
   LmnRuleSetTable::add(runtime_ruleset, rs.id);
 
-  if (rs.is_system_ruleset) {
-    /* 各ルールをシステムルールセットに追加する */
-    for (int i = 0; i < runtime_ruleset->num; i++) {
-      LmnRuleRef rule2 = lmn_rule_copy(runtime_ruleset->get_rule(i));
-      lmn_add_system_rule(rule2);
-    }
-  }
+  if (rs.is_system_ruleset)
+    for (auto r : *runtime_ruleset)
+      lmn_add_system_rule(new LmnRule(*r));
 
   return runtime_ruleset;
 }
@@ -233,8 +226,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
     LmnRuleSetTable::add(rs, gid);
 
     for (auto &r : tr)
-      rs->put(new LmnRule(r.function,
-                                       maindata->symbol_exchange[r.name]));
+      rs->put(new LmnRule(r.function, maindata->symbol_exchange[r.name]));
 
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく
      */

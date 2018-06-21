@@ -65,19 +65,32 @@ struct LmnRule {
      により、ルールを変換して生成された関数を想定している。*/
   LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated,
           lmn_interned_str name)
-      : inst_seq(inst_seq),
-        inst_seq_len(inst_seq_len),
-        translated(translated),
-        name(name),
-        is_invisible(FALSE),
-        pre_id(ANONYMOUS),
-        history_tbl(NULL) {}
+      : inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated),
+        name(name), is_invisible(FALSE), pre_id(ANONYMOUS), history_tbl(NULL) {}
 
   /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
      生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
      た場合FALSEを返す */
   LmnRule(LmnTranslated translated, lmn_interned_str name)
       : LmnRule(NULL, 0, translated, name) {}
+
+  LmnRule(const LmnRule &rule)
+      : is_invisible(false), pre_id(ANONYMOUS), history_tbl(NULL) {
+    if (rule.inst_seq) {
+      inst_seq = LMN_NALLOC(BYTE, rule.inst_seq_len);
+      inst_seq = (BYTE *)memcpy(inst_seq, rule.inst_seq, rule.inst_seq_len);
+    } else {
+      inst_seq = NULL;
+    }
+
+    inst_seq_len = rule.inst_seq_len;
+    translated = rule.translated;
+    name = rule.name;
+    if (rule.history_tbl) {
+      this->history_tbl = st_copy(rule.history_tbl);
+      this->pre_id = rule.pre_id;
+    }
+  }
 
   LmnRule() : name(lmn_intern("")) {}
 
@@ -91,70 +104,66 @@ struct LmnRule {
   void init_uniq_table() { history_tbl = st_init_numtable(); }
 };
 
-/* structure of RuleSet */
-struct LmnRuleSet {
- private:
-  BOOL is_copied;
-  BOOL has_uniqrule;
-  BOOL is_0step;
+enum AtomicType {
+  ATOMIC_NONE = 0,
+  ATOMIC_ALL_EXHAUSTIVE,
+  ATOMIC_SIMULATION,
+  ATOMIC_SYNC_STEP,
+};
 
- public:
-  LmnRule **rules; /* ルールのリスト */
-  int num, cap;    /* # of rules, and # of capacity */
-  LmnRulesetId id; /* RuleSet ID */
+/* structure of RuleSet */
+class LmnRuleSet {
+  bool is_copied;
+  bool has_uniqrule;
+  bool is_0step;
+  std::vector<LmnRule *> rules;
+
+  bool ruleset_cp_is_need_object() const {
+    return has_unique() || (atomic != ATOMIC_NONE);
+  }
+
+public:
+  LmnRulesetId id;
   AtomicType
       atomic; /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
-  BOOL is_atomic_valid; /* atomic step中であることを主張するフラグ */
+  bool is_atomic_valid; /* atomic step中であることを主張するフラグ */
+
   LmnRuleSet(LmnRulesetId id, int init_size)
-      : id(id),
-        cap(init_size),
-        rules(LMN_CALLOC(LmnRule *, init_size)),
-        num(0),
-        atomic(ATOMIC_NONE),
-        is_atomic_valid(FALSE),
-        is_copied(FALSE),
-        has_uniqrule(FALSE),
-        is_0step(FALSE) {}
+      : id(id), atomic(ATOMIC_NONE), is_atomic_valid(false), is_copied(false),
+        has_uniqrule(false), is_0step(false) {}
 
   ~LmnRuleSet() {
-    for (int i = 0; i < this->num; i++) delete this->rules[i];
-    LMN_FREE(this->rules);
+    for (auto r : rules)
+      delete r;
   }
+
+  size_t size() const { return rules.size(); }
 
   /* Adds rule into ruleset */
   void put(LmnRule *rule) {
-    if (this->num == this->cap) {
-      this->cap = (this->cap * 2);
-      this->rules = LMN_REALLOC(LmnRule *, this->rules, this->cap);
-    }
-    this->rules[this->num++] = rule;
+    rules.push_back(rule);
 
     /* 非uniqrulesetにuniq ruleが追加されたら, フラグを立てる. */
-    if (!this->has_unique() && rule->history_tbl) {
-      this->has_uniqrule = TRUE;
+    if (!has_unique() && rule->history_tbl) {
+      has_uniqrule = true;
     }
+  }
+
+  void put(std::unique_ptr<LmnRule> rule) {
+    put(rule.get());
+  	rule.release();
   }
 
   LmnRuleSet *duplicate_object() {
-    LmnRuleSet *result;
-    unsigned int i, r_n;
-
-    r_n = this->num;
-    result = new LmnRuleSet(this->id, r_n);
-    result->is_copied = TRUE;
-    result->atomic = this->atomic;
-    result->is_atomic_valid = this->is_atomic_valid;
+    auto result = new LmnRuleSet(id, rules.capacity());
+    result->is_copied = true;
+    result->atomic = atomic;
+    result->is_atomic_valid = is_atomic_valid;
 
     /* ルール単位のオブジェクト複製 */
-    for (i = 0; i < r_n; i++) {
-      LmnRule *r = this->get_rule(i);
-      result->put(lmn_rule_copy(r));
-    }
+    for (auto r : rules)
+      result->put(new LmnRule(*r));
     return result;
-  }
-
-  bool ruleset_cp_is_need_object() {
-    return this->has_unique() || (this->atomic != ATOMIC_NONE);
   }
 
   /* ルールセットsrcを複製して返す.
@@ -163,78 +172,79 @@ struct LmnRuleSet {
    * ルールセットオブジェクトを独立に扱うため新たにmallocして複製したオブジェクトを返す.
    * uniqルールの場合, ルール単位でobjectを複製する */
   LmnRuleSet *duplicate() {
-    if (ruleset_cp_is_need_object()) {
-      return duplicate_object();
-    } else {
-      return this;
-    }
+    return (ruleset_cp_is_need_object()) ? duplicate_object() : this;
   }
 
   /* 2つのrulesetが同じruleを持つか判定する.
    * (ruleの順序はソースコード依存) */
-  bool operator==(const LmnRuleSet &set2) {
+  bool operator==(const LmnRuleSet &set2) const {
     /* rulesetの種類をチェック */
-    if (this->id != set2.id) return false;
+    if (id != set2.id)
+      return false;
 
-    bool t1 = this->has_uniqrule;
+    bool t1 = has_uniqrule;
     bool t2 = set2.has_uniqrule;
 
     /* 互いにuniq rulsetでなければruleset idの比較でok */
-    if (!t1 && !t2) return true;
+    if (!t1 && !t2)
+      return true;
 
     /* uniq ruleset同士ではなければ当然FALSE */
-    if (t1 ^ t2) return false;
+    if (t1 ^ t2)
+      return false;
 
     /* uniq ruleset同士の場合:
      *   ruleの適用ヒストリまで比較 */
-    if (this->num != set2.num) return false;
+    if (rules.size() != set2.rules.size())
+      return false;
 
-    for (int i = 0; i < this->num; i++) {
-      LmnRule *rule1 = this->rules[i];
+    for (int i = 0; i < rules.size(); i++) {
+      LmnRule *rule1 = rules[i];
       LmnRule *rule2 = set2.rules[i];
       st_table_t hist1 = rule1->history_tbl;
       st_table_t hist2 = rule2->history_tbl;
 
-      if (!hist1 && !hist2) continue;
+      if (!hist1 && !hist2)
+        continue;
 
-      if (!hist1 || !hist2) return false;
-      if (!st_equals(hist1, hist2)) return false;
+      if (!hist1 || !hist2)
+        return false;
+      if (!st_equals(hist1, hist2))
+        return false;
     }
 
     return true;
   }
 
-  bool operator!=(const LmnRuleSet &set) { return !(*this == set); }
+  bool operator!=(const LmnRuleSet &set) const { return !(*this == set); }
 
-  unsigned long space() {
+  unsigned long space() const {
+    if (!has_unique() && !is_copy())
+      return 0;
+
     unsigned long ret = 0;
-    if (this->has_unique() || is_copy()) {
-      unsigned int i, n;
-
-      n = this->num;
-      ret += sizeof(struct LmnRuleSet);
-      ret += sizeof(struct LmnRule *) * n;
-      for (i = 0; i < n; i++) {
-        LmnRule *r = this->get_rule(i);
-        if (r->history_tbl) { /* 履歴表を持っている場合  */
-          st_table_space(r->history_tbl);
-        }
-      }
-    }
+    ret += sizeof(struct LmnRuleSet);
+    ret += sizeof(struct LmnRule *) * rules.size();
+    for (auto r : rules)
+      if (r->history_tbl)
+        st_table_space(r->history_tbl);
     return ret;
   }
 
-  void validate_atomic() { this->is_atomic_valid = TRUE; }
-  void invalidate_atomic() { this->is_atomic_valid = FALSE; }
-  void validate_zerostep() { this->is_0step = TRUE; }
-  bool is_zerostep() { return this->is_0step; }
+  void validate_atomic() { is_atomic_valid = true; }
+  void invalidate_atomic() { is_atomic_valid = false; }
+  void validate_zerostep() { is_0step = true; }
+  bool is_zerostep() const { return is_0step; }
 
-  bool is_atomic() { return this->is_atomic_valid; }
-  bool is_copy() { return this->is_copied; }
-  bool has_unique() { return this->has_uniqrule; }
+  bool is_atomic() const { return is_atomic_valid; }
+  bool is_copy() const { return is_copied; }
+  bool has_unique() const { return has_uniqrule; }
 
   /* Returns the ith rule in ruleset */
-  LmnRule *get_rule(int i) { return this->rules[i]; }
+  LmnRule *get_rule(int i) const { return rules[i]; }
+
+  std::vector<LmnRule *>::const_iterator begin() const { return rules.begin(); }
+  std::vector<LmnRule *>::const_iterator end() const { return rules.end(); }
 };
 
 /* table, mapping RuleSet ID to RuleSet */

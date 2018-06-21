@@ -442,26 +442,25 @@ static void translate_rule(LmnRuleRef rule, const char *header) {
 static void translate_ruleset(LmnRuleSetRef ruleset, const char *header) {
   char *buf;
   lmn_interned_str *rule_names;
-  int i, buf_len, rules_count;
+  int buf_len;
 
   buf_len = strlen(header) + 50; /* 適当. これだけあれば足りるはず */
   buf = (char *)lmn_malloc(buf_len + 1);
-  rules_count = ruleset->num;
-  if (rules_count > 0) {
-    rule_names = LMN_CALLOC(lmn_interned_str, rules_count);
+  if (ruleset->size() > 0) {
+    rule_names = LMN_CALLOC(lmn_interned_str, ruleset->size());
   } else {
     rule_names = NULL;
   }
 
-  for (i = 0; i < ruleset->num; i++) {
+  for (int i = 0; i < ruleset->size(); i++) {
     snprintf(buf, buf_len, "%s_%d", header, i); /* ルールのシグネチャ */
     translate_rule(ruleset->get_rule(i), buf);
     rule_names[i] = translating_rule_name;
   }
-  fprintf(OUT, "struct trans_rule %s_rules[%d] = {", header,
-          ruleset->num);
+  fprintf(OUT, "struct trans_rule %s_rules[%lu] = {", header,
+          ruleset->size());
 
-  for (i = 0; i < ruleset->num; i++) {
+  for (int i = 0; i < ruleset->size(); i++) {
     if (i != 0)
       fprintf(OUT, ", ");
     fprintf(OUT, "{%d, %s_%d_0}", rule_names[i], header,
@@ -632,19 +631,19 @@ static void print_trans_rulesets(const char *filename) {
   /* ruleset0番は存在しないが数合わせに出力 */
   fprintf(OUT, "  {0,0},\n");
   /* ruleset1番はtableに登録されていないがsystemrulesetなので出力 */
-  fprintf(OUT, "  {%d,trans_%s_1_rules},\n",
-          system_ruleset->num, filename);
+  fprintf(OUT, "  {%lu,trans_%s_1_rules},\n",
+          system_ruleset->size(), filename);
   /* ruleset2番,3番はinitial ruleset, initial system ruleset */
-  fprintf(OUT, "  {%d,trans_%s_2_rules},\n",
-          initial_ruleset->num, filename);
-  fprintf(OUT, "  {%d,trans_%s_3_rules},\n",
-          initial_system_ruleset->num, filename);
+  fprintf(OUT, "  {%lu,trans_%s_2_rules},\n",
+          initial_ruleset->size(), filename);
+  fprintf(OUT, "  {%lu,trans_%s_3_rules},\n",
+          initial_system_ruleset->size(), filename);
   /* 以降は普通のrulesetなので出力(どれが初期データルールかはload時に拾う) */
   for (i = FIRST_ID_OF_NORMAL_RULESET; i < count; i++) {
     LmnRuleSetRef rs = LmnRuleSetTable::at(i);
     LMN_ASSERT(rs); /* countで数えているからNULLにあたることはないはず */
 
-    fprintf(OUT, "  {%d,trans_%s_%d_rules}", rs->num, filename,
+    fprintf(OUT, "  {%lu,trans_%s_%d_rules}", rs->size(), filename,
             i);
     if (i != count - 1) {
       fprintf(OUT, ",");

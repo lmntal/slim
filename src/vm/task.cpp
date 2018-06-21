@@ -370,21 +370,15 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
 /**  @see react_ruleset (task.c)  */
 static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
                                        LmnRuleSetRef rs) {
-  unsigned int i;
-  BOOL ret = FALSE;
-  for (i = 0; i < rs->num; i++) {
-    LmnRuleRef r = rs->get_rule(i);
+  for (auto r : *rs) {
 #ifdef PROFILE
-    if (!lmn_env.nd && lmn_env.profile_level >= 2) {
+    if (!lmn_env.nd && lmn_env.profile_level >= 2)
       profile_rule_obj_set(rs, r);
-    }
 #endif
-    if (react_rule(rc, mem, r)) {
-      ret = TRUE;
-      break;
-    }
+    if (react_rule(rc, mem, r))
+      return true;
   }
-  return ret;
+  return false;
 }
 
 /** 膜memに対してルールruleの適用を試みる.
@@ -483,7 +477,6 @@ void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
 
 inline static void react_initial_rulesets(LmnReactCxtRef rc,
                                           LmnMembraneRef mem) {
-  int i;
   BOOL reacted;
 
   do {
@@ -492,8 +485,8 @@ inline static void react_initial_rulesets(LmnReactCxtRef rc,
       reacted = TRUE;
       continue;
     }
-    for (i = 0; i < initial_ruleset->num; i++) {
-      if (react_rule(rc, mem, initial_ruleset->get_rule(i))) {
+    for (auto r : *initial_ruleset) {
+      if (react_rule(rc, mem, r)) {
         reacted = TRUE;
         break;
       }

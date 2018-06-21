@@ -517,13 +517,10 @@ static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
 
   port_put_raw_s(port, "_CHR");
 
-  n = rs->num;
-  for (i = 0; i < n; i++) {
-    LmnRuleRef r;
+  for (auto r : *rs) {
     st_table_t his_tbl;
     unsigned int his_num;
 
-    r = rs->get_rule(i);
     /* TODO: uniqはコピー先のルールオブジェクトに名前を設定するため,
      *        コピー元のルールオブジェクトの名前が空になってしまう */
     // if (r->name == ANONYMOUS) continue;
