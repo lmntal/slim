@@ -40,6 +40,11 @@
 
 #include "lmntal.h"
 
+#include "membrane.h"
+#include "react_context.h"
+
+typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
+
 struct LmnRule {
   BYTE *inst_seq;
   int inst_seq_len;
@@ -53,34 +58,40 @@ struct LmnRule {
    * costの計算式を入れる */
   LmnCost cost;
 
+  /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
+     現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
+     により、ルールを変換して生成された関数を想定している。*/
   LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated,
           lmn_interned_str name)
-      : inst_seq(inst_seq),
-        inst_seq_len(inst_seq_len),
-        translated(translated),
-        name(name),
-        is_invisible(FALSE),
-        pre_id(ANONYMOUS),
-        history_tbl(NULL) {}
+      : inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated),
+        name(name), is_invisible(FALSE), pre_id(ANONYMOUS), history_tbl(NULL) {}
 
-  LmnRule() {}
+  /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
+     生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
+     た場合FALSEを返す */
+  LmnRule(LmnTranslated translated, lmn_interned_str name)
+      : LmnRule(NULL, 0, translated, name) {}
+
+  LmnRule() : name(lmn_intern("")) {}
 
   ~LmnRule() {
     delete (this->inst_seq);
-    if (lmn_rule_get_history_tbl(this)) {
-      st_free_table(lmn_rule_get_history_tbl(this));
+    if (this->history_tbl) {
+      st_free_table(this->history_tbl);
     }
   }
+
+  void init_uniq_table() { history_tbl = st_init_numtable(); }
 };
 
 /* structure of RuleSet */
 struct LmnRuleSet {
- private:
+private:
   BOOL is_copied;
   BOOL has_uniqrule;
   BOOL is_0step;
 
- public:
+public:
   LmnRule **rules; /* ルールのリスト */
   int num, cap;    /* # of rules, and # of capacity */
   LmnRulesetId id; /* RuleSet ID */
@@ -88,18 +99,13 @@ struct LmnRuleSet {
       atomic; /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
   BOOL is_atomic_valid; /* atomic step中であることを主張するフラグ */
   LmnRuleSet(LmnRulesetId id, int init_size)
-      : id(id),
-        cap(init_size),
-        rules(LMN_CALLOC(LmnRule *, init_size)),
-        num(0),
-        atomic(ATOMIC_NONE),
-        is_atomic_valid(FALSE),
-        is_copied(FALSE),
-        has_uniqrule(FALSE),
-        is_0step(FALSE) {}
+      : id(id), cap(init_size), rules(LMN_CALLOC(LmnRule *, init_size)), num(0),
+        atomic(ATOMIC_NONE), is_atomic_valid(FALSE), is_copied(FALSE),
+        has_uniqrule(FALSE), is_0step(FALSE) {}
 
   ~LmnRuleSet() {
-    for (int i = 0; i < this->num; i++) delete this->rules[i];
+    for (int i = 0; i < this->num; i++)
+      delete this->rules[i];
     LMN_FREE(this->rules);
   }
 
@@ -112,7 +118,7 @@ struct LmnRuleSet {
     this->rules[this->num++] = rule;
 
     /* 非uniqrulesetにuniq ruleが追加されたら, フラグを立てる. */
-    if (!this->has_unique() && lmn_rule_get_history_tbl(rule)) {
+    if (!this->has_unique() && rule->history_tbl) {
       this->has_uniqrule = TRUE;
     }
   }
@@ -156,31 +162,38 @@ struct LmnRuleSet {
    * (ruleの順序はソースコード依存) */
   bool operator==(const LmnRuleSet &set2) {
     /* rulesetの種類をチェック */
-    if (this->id != set2.id) return false;
+    if (this->id != set2.id)
+      return false;
 
     bool t1 = this->has_uniqrule;
     bool t2 = set2.has_uniqrule;
 
     /* 互いにuniq rulsetでなければruleset idの比較でok */
-    if (!t1 && !t2) return true;
+    if (!t1 && !t2)
+      return true;
 
     /* uniq ruleset同士ではなければ当然FALSE */
-    if (t1 ^ t2) return false;
+    if (t1 ^ t2)
+      return false;
 
     /* uniq ruleset同士の場合:
      *   ruleの適用ヒストリまで比較 */
-    if (this->num != set2.num) return false;
+    if (this->num != set2.num)
+      return false;
 
     for (int i = 0; i < this->num; i++) {
       LmnRule *rule1 = this->rules[i];
       LmnRule *rule2 = set2.rules[i];
-      st_table_t hist1 = lmn_rule_get_history_tbl(rule1);
-      st_table_t hist2 = lmn_rule_get_history_tbl(rule2);
+      st_table_t hist1 = rule1->history_tbl;
+      st_table_t hist2 = rule2->history_tbl;
 
-      if (!hist1 && !hist2) continue;
+      if (!hist1 && !hist2)
+        continue;
 
-      if (!hist1 || !hist2) return false;
-      if (!st_equals(hist1, hist2)) return false;
+      if (!hist1 || !hist2)
+        return false;
+      if (!st_equals(hist1, hist2))
+        return false;
     }
 
     return true;
@@ -198,8 +211,8 @@ struct LmnRuleSet {
       ret += sizeof(struct LmnRule *) * n;
       for (i = 0; i < n; i++) {
         LmnRule *r = this->get_rule(i);
-        if (lmn_rule_get_history_tbl(r)) { /* 履歴表を持っている場合  */
-          st_table_space(lmn_rule_get_history_tbl(r));
+        if (r->history_tbl) { /* 履歴表を持っている場合  */
+          st_table_space(r->history_tbl);
         }
       }
     }
@@ -217,7 +230,6 @@ struct LmnRuleSet {
 
   /* Returns the ith rule in ruleset */
   LmnRule *get_rule(int i) { return this->rules[i]; }
-
 };
 
 /* table, mapping RuleSet ID to RuleSet */

@@ -754,7 +754,7 @@ void dump_profile_data(FILE *f) {
         for (i = 0; i < vec_num(&v); i++) {
           RuleProfiler *rp = (RuleProfiler *)vec_get(&v, i);
           if (rp->trial.called_num > 0) {
-            if (lmn_rule_get_name(rp->src) == ANONYMOUS) {
+            if (rp->src->name == ANONYMOUS) {
               /* 一度もマッチングに成功しなかったルールはまとめる */
               r_others->trial.called_num += rp->trial.called_num;
               r_others->trial.total_time += rp->trial.total_time;
@@ -762,7 +762,7 @@ void dump_profile_data(FILE *f) {
             } else {
               /* 一応ナノセックまで取得できるが, 精度は環境依存 */
               fprintf(f, "@%-3d %8.8s : %9lu %9lu %9lu %13.1lf\n",
-                      rp->ref_rs_id, lmn_id_to_name(lmn_rule_get_name(rp->src)),
+                      rp->ref_rs_id, lmn_id_to_name(rp->src->name),
                       rp->trial.called_num, rp->apply, rp->backtrack,
                       rp->trial.total_time / 1e-6);
             }

@@ -130,7 +130,7 @@ std::unique_ptr<LmnRule> load_rule(Rule const &rule) {
 
   auto runtime_rule = encoder.create_rule();
   if (rule.hasuniq)
-    lmn_rule_init_uniq_rule(runtime_rule.get());
+    runtime_rule->init_uniq_table();
 
   return runtime_rule;
 }
@@ -208,19 +208,19 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   /* ルールセット0番は数合わせ */
   /* システムルールセット読み込み */
   for (auto &rule : maindata->ruleset_table[1]) {
-    lmn_add_system_rule(lmn_rule_make_translated(
+    lmn_add_system_rule(new LmnRule(
         rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセット2番はinitial ruleset */
   for (auto &rule : maindata->ruleset_table[2]) {
-    lmn_add_initial_rule(lmn_rule_make_translated(
+    lmn_add_initial_rule(new LmnRule(
         rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセット3番はinitial system ruleset */
   for (auto &rule : maindata->ruleset_table[3]) {
-    lmn_add_initial_system_rule(lmn_rule_make_translated(
+    lmn_add_initial_system_rule(new LmnRule(
         rule.function, maindata->symbol_exchange[rule.name]));
   }
 
@@ -233,7 +233,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
     ruleset_table->register_ruleset(rs, gid);
 
     for (auto &r : tr)
-      rs->put(lmn_rule_make_translated(r.function,
+      rs->put(new LmnRule(r.function,
                                        maindata->symbol_exchange[r.name]));
 
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく

@@ -247,9 +247,9 @@ struct MemDeltaRoot *dmem_root_make(LmnMembraneRef root_mem, LmnRuleRef rule,
   p->flag_tbl = sproc_tbl_make_with_size(size);
 
   /* add an appried history for constraint handling rules */
-  if (rule && lmn_rule_get_history_tbl(rule) &&
-      lmn_rule_get_pre_id(rule) != 0) {
-    p->applied_history = lmn_rule_get_pre_id(rule);
+  if (rule && rule->history_tbl &&
+      rule->pre_id != 0) {
+    p->applied_history = rule->pre_id;
   } else {
     p->applied_history = ANONYMOUS;
   }
@@ -981,7 +981,7 @@ void dmem_root_commit(struct MemDeltaRoot *d) {
     printf("before commit : ");
     lmn_dump_mem_dev(d->root_mem);
     //    printf("before commit %s %p: ",
-    //    lmn_id_to_name(lmn_rule_get_name(d->applied_rule)), d->root_mem);
+    //    lmn_id_to_name(d->applied_rule->name), d->root_mem);
     //    lmn_dump_cell_stdout(d->root_mem); printf("before commit : ");
     //    lmn_dump_cell_stdout(d->root_mem);
   }
@@ -1028,7 +1028,7 @@ void dmem_root_commit(struct MemDeltaRoot *d) {
   }
 
   if (d->applied_history != ANONYMOUS) {
-    st_insert(lmn_rule_get_history_tbl(d->applied_rule), d->applied_history, 0);
+    st_insert(d->applied_rule->history_tbl, d->applied_history, 0);
   }
 
   d->committed = TRUE;
@@ -1137,7 +1137,7 @@ void dmem_root_revert(struct MemDeltaRoot *d) {
    * 直接メンバ変数を書き換えてしまってもMT-safeなはず.これでとりあえずuniqも動くようになるはず.
    * TODO: dmem_copyrulesでuniq rulesetを複製(deep copy)するコードが必要. */
   if (d->applied_history != ANONYMOUS) {
-    st_delete(lmn_rule_get_history_tbl(d->applied_rule), d->applied_history, 0);
+    st_delete(d->applied_rule->history_tbl, d->applied_history, 0);
   }
 
   d->committed = FALSE;

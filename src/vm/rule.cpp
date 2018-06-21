@@ -37,8 +37,8 @@
  */
 
 #include "rule.h"
-#include "system_ruleset.h"
 #include "rule.hpp"
+#include "system_ruleset.h"
 
 /*----------------------------------------------------------------------
  * Rule
@@ -48,23 +48,12 @@
 void init_rules(void);
 void destroy_rules(void);
 
-/* 中身のない、名前だけを持つルールを生成する */
-LmnRuleRef lmn_rule_make_dummy(lmn_interned_str name) {
-  return new LmnRule(NULL, -1, NULL, name);
-}
-
-/* create new rule with a translated function */
-LmnRuleRef lmn_rule_make_translated(LmnTranslated translated,
-                                    lmn_interned_str name) {
-  return new LmnRule(NULL, 0, translated, name);
-}
-
 /* ruleをコピーして新しいルールを作成する */
 LmnRuleRef lmn_rule_copy(LmnRuleRef rule) {
   LmnRuleRef new_rule;
   BYTE *inst_seq;
 
-  if (lmn_rule_get_inst_seq(rule)) {
+  if (rule->inst_seq) {
     inst_seq = LMN_NALLOC(BYTE, rule->inst_seq_len);
     inst_seq = (BYTE *)memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
   } else {
@@ -73,64 +62,11 @@ LmnRuleRef lmn_rule_copy(LmnRuleRef rule) {
 
   new_rule =
       new LmnRule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
-  if (lmn_rule_get_history_tbl(rule)) {
-    new_rule->history_tbl = st_copy(lmn_rule_get_history_tbl(rule));
-    new_rule->pre_id = lmn_rule_get_pre_id(rule);
+  if (rule->history_tbl) {
+    new_rule->history_tbl = st_copy(rule->history_tbl);
+    new_rule->pre_id = rule->pre_id;
   }
   return new_rule;
-}
-
-st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule) {
-  return rule->history_tbl;
-}
-
-lmn_interned_str lmn_rule_get_pre_id(LmnRuleRef rule) { return rule->pre_id; }
-
-void lmn_rule_set_pre_id(LmnRuleRef rule, lmn_interned_str t) {
-  rule->pre_id = t;
-}
-
-/* ルールの処理を行う関数を返す。ルールが関数を持たなければNULLを返す */
-LmnTranslated lmn_rule_get_translated(LmnRuleRef rule) {
-  return rule->translated;
-}
-
-/* ルールの処理を行う中間語命令列を変換したバイト列を返す。ルールが列を
-   持たなければNULLを返す。*/
-BYTE *lmn_rule_get_inst_seq(LmnRuleRef rule) { return rule->inst_seq; }
-
-/* ルールの名前を返す */
-lmn_interned_str lmn_rule_get_name(LmnRuleRef rule) { return rule->name; }
-
-/* ルール名のセット */
-void lmn_rule_set_name(LmnRuleRef rule, lmn_interned_str rule_name) {
-  rule->name = rule_name;
-}
-
-LmnCost lmn_rule_get_cost(LmnRuleRef rule) { return rule->cost; }
-
-void lmn_rule_set_cost(LmnRuleRef rule, LmnCost rule_cost) {
-  rule->cost = rule_cost;
-}
-
-BOOL lmn_rule_is_invisible(LmnRuleRef rule) {
-  return rule->is_invisible == TRUE;
-}
-
-void lmn_rule_init_uniq_rule(LmnRuleRef rule) {
-  rule->history_tbl = st_init_numtable();
-}
-
-LmnRuleRef dummy_rule(void) {
-  static struct LmnRule rule;
-  static BOOL first = TRUE;
-
-  if (first) {
-    first = FALSE;
-    rule.name = lmn_intern("");
-  }
-
-  return &rule;
 }
 
 /*----------------------------------------------------------------------
@@ -158,7 +94,8 @@ static void init_ruleset_table() {
  * Vectorはルールセットの整数IDで整列済みであることが前提 */
 BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
   unsigned int n = vec_num(rs_v1);
-  if (vec_num(rs_v1) != vec_num(rs_v2)) return false;
+  if (vec_num(rs_v1) != vec_num(rs_v2))
+    return false;
 
   /* ルールセットの種類の比較 (IDで昇順に並べておくコードに依存) */
   unsigned int un1 = 0;
@@ -173,12 +110,16 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
       return false;
 
     /* rulesetsがuniq ruleを含むrulesetを何個持っているか調べておく */
-    if (rs1->has_unique()) un1++;
-    if (rs2->has_unique()) un2++;
+    if (rs1->has_unique())
+      un1++;
+    if (rs2->has_unique())
+      un2++;
   }
 
-  if (un1 != un2) return false;
-  if (un1 == 0) return true;
+  if (un1 != un2)
+    return false;
+  if (un1 == 0)
+    return true;
 
   /* ---uniq制約がある場合の処理--- */
   LMN_ASSERT(vec_num(rs_v1) > 0);
@@ -194,7 +135,7 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
     for (unsigned int j = 0; j < vec_num(rs_v1); j++) {
       LmnRuleSetRef rs2 = (LmnRuleSetRef)vec_get(rs_v2, i);
       if (rs1->id < rs2->id) /* 比較打ち切り */
-        break; /* INNER LOOP */
+        break;               /* INNER LOOP */
 
       if (rs1->id == rs2->id && !rs2v_matched[j] && *rs1 == *rs2) {
         is_ok = true;

@@ -43,6 +43,7 @@
 #include "symbol.h"
 #include "membrane.hpp"
 #include "atomlist.hpp"
+#include "rule.hpp"
 
 /* prototypes */
 
@@ -227,8 +228,8 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 
 void init_default_system_ruleset() {
   lmn_add_system_rule(
-      lmn_rule_make_translated(delete_redundant_outproxies, ANONYMOUS));
+      new LmnRule(delete_redundant_outproxies, ANONYMOUS));
   lmn_add_system_rule(
-      lmn_rule_make_translated(delete_redundant_inproxies, ANONYMOUS));
-  lmn_add_system_rule(lmn_rule_make_translated(mem_eq, ANONYMOUS));
+      new LmnRule(delete_redundant_inproxies, ANONYMOUS));
+  lmn_add_system_rule(new LmnRule(mem_eq, ANONYMOUS));
 }

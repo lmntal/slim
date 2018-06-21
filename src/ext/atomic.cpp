@@ -171,7 +171,7 @@ static BOOL react_ruleset_atomic_all(LmnReactCxtRef rc,
     ends = statespace_end_states(worker_states(w));
     for (i = 0; i < vec_num(ends); i++) {
       LmnMembraneRef end_m = lmn_binstr_decode(((State *)vec_get(ends, i))->state_binstr());
-      mc_react_cxt_add_expanded(rc, end_m, dummy_rule());
+      mc_react_cxt_add_expanded(rc, end_m, new LmnRule());
     }
 //    RC_FINISH_ATOMIC_STEP(&WORKER_RC(w)); /* どうせ破棄しちゃうから要らない */
     abort_atomic_worker(w);

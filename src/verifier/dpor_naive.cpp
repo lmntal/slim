@@ -770,7 +770,7 @@ static BOOL check_C2(State *s) {
       TransitionRef t = transition(s, i);
       if (vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
         /* TODO: 設計と実装 */
-        //        if (!lmn_rule_is_invisible(strans->rule)) {
+        //        if (!strans->rule->is_invisible) {
         return FALSE;
         //        }
       }

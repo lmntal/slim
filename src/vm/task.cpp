@@ -397,8 +397,8 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   BYTE *inst_seq;
   BOOL result;
 
-  translated = lmn_rule_get_translated(rule);
-  inst_seq = lmn_rule_get_inst_seq(rule);
+  translated = rule->translated;
+  inst_seq = rule->inst_seq;
 
   wt_set(rc, 0, (LmnWord)mem);
   tt_set(rc, 0, TT_MEM);
@@ -434,7 +434,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
       } else if (lmn_env.output_format == JSON) {
         lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
       } else {
-        fprintf(stdout, "---->%s\n", lmn_id_to_name(lmn_rule_get_name(rule)));
+        fprintf(stdout, "---->%s\n", lmn_id_to_name(rule->name));
         fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(rc));
         lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
         if (lmn_env.show_hyperlink)
@@ -888,11 +888,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       {
         LmnInstrVar cost;
         READ_VAL(LmnInstrVar, instr, cost);
-        lmn_rule_set_cost(rule, cost);
+        rule->cost = cost;
       }
 #endif
 
-      lmn_rule_set_name(rule, rule_name);
+      rule->name = rule_name;
 
       profile_apply();
 
@@ -915,19 +915,19 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
           struct MemDeltaRoot *d;
 
-          if (lmn_rule_get_pre_id(rule) != ANONYMOUS) {
+          if (rule->pre_id != ANONYMOUS) {
             /* dmem_commit/revertとの整合性を保つため,
              * uniq処理の特殊性を吸収しておく */
-            LMN_ASSERT(lmn_rule_get_history_tbl(rule));
-            st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule),
+            LMN_ASSERT(rule->history_tbl);
+            st_delete(rule->history_tbl, rule->pre_id,
                       0);
           }
 
           d = dmem_root_make(RC_GROOT_MEM(rc), rule, env_next_id());
           RC_ND_SET_MEM_DELTA_ROOT(rc, d);
 
-          if (lmn_rule_get_pre_id(rule) != ANONYMOUS) {
-            lmn_rule_set_pre_id(rule, ANONYMOUS);
+          if (rule->pre_id != ANONYMOUS) {
+          	rule->pre_id = ANONYMOUS;
           }
 
           if (RC_MC_USE_DPOR(rc)) {
@@ -1061,11 +1061,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
               rc, tmp_global_root); /**< 0stepルールを適用する */
           mc_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
-          if (lmn_rule_get_pre_id(rule) != ANONYMOUS) {
-            LMN_ASSERT(lmn_rule_get_history_tbl(rule));
-            st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule),
+          if (rule->pre_id != ANONYMOUS) {
+            LMN_ASSERT(rule->history_tbl);
+            st_delete(rule->history_tbl, rule->pre_id,
                       0);
-            lmn_rule_set_pre_id(rule, ANONYMOUS);
+            rule->pre_id = ANONYMOUS;
           }
 
           cur_mem = (LmnMembraneRef)wt(rc, 0);
@@ -2718,12 +2718,12 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         lmn_env.show_hyperlink = TRUE;
 
       /* 履歴表と照合 */
-      if (st_is_member(lmn_rule_get_history_tbl(rule), (st_data_t)id))
+      if (st_is_member(rule->history_tbl, (st_data_t)id))
         return FALSE;
 
       /* 履歴に挿入 */
-      st_insert(lmn_rule_get_history_tbl(rule), (st_data_t)id, 0);
-      lmn_rule_set_pre_id(rule, id);
+      st_insert(rule->history_tbl, (st_data_t)id, 0);
+      rule->pre_id = id;
 
       break;
     }

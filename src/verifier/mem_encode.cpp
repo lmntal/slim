@@ -716,7 +716,7 @@ static void binstr_dump(BYTE *bs, int len) {
 
         for (k = 0; k < rule_num; k++) {
           printf("[%s", lmn_id_to_name(
-                            lmn_rule_get_name(rs->get_rule(k))));
+                            rs->get_rule(k)->name));
 
           his_num = binstr_get_history_num(bs, pos);
           pos += BS_HISTORY_NUM_SIZE;
@@ -1007,7 +1007,7 @@ static inline void bsptr_push_rule_histories(BinStrPtrRef bsp, LmnRuleRef r) {
   st_table_t his_tbl;
   unsigned int his_num;
 
-  his_tbl = lmn_rule_get_history_tbl(r);
+  his_tbl = r->history_tbl;
   his_num = his_tbl ? st_num(his_tbl) : 0;
   bsptr_push(bsp, (BYTE *)&his_num,
              BS_HISTORY_NUM_SIZE); /* write history num */
@@ -1636,7 +1636,7 @@ static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
         for (k = 0; k < his_num; k++) {
           id = binstr_get_history(bs->v, *i_bs);
           (*i_bs) += BS_HISTORY_SIZE;
-          st_add_direct(lmn_rule_get_history_tbl(r), (st_data_t)id, 0);
+          st_add_direct(r->history_tbl, (st_data_t)id, 0);
         }
       }
     }

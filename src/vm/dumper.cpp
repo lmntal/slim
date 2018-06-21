@@ -526,15 +526,15 @@ static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
     r = rs->get_rule(i);
     /* TODO: uniqはコピー先のルールオブジェクトに名前を設定するため,
      *        コピー元のルールオブジェクトの名前が空になってしまう */
-    // if (lmn_rule_get_name(r) == ANONYMOUS) continue;
-    his_tbl = lmn_rule_get_history_tbl(r);
+    // if (r->name == ANONYMOUS) continue;
+    his_tbl = r->history_tbl;
     his_num = his_tbl ? st_num(his_tbl) : 0;
 
     /* 少なくともCOMMIT命令を1度以上処理したuniqルールを対象に,
      * ルール名と履歴を出力する */
     if (his_num > 0) {
       port_put_raw_s(port, "[id:");
-      port_put_raw_s(port, lmn_id_to_name(lmn_rule_get_name(r))); /* ルール名 */
+      port_put_raw_s(port, lmn_id_to_name(r->name)); /* ルール名 */
       port_put_raw_s(port, "\"");
       st_foreach(his_tbl, (st_iter_func)dump_history_f, (st_data_t)port);
       port_put_raw_s(port, "\"]");

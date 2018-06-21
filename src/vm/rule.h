@@ -51,51 +51,9 @@ typedef struct LmnRuleSet *LmnRuleSetRef;
 
 #include "element/element.h"
 #include "lmntal.h"
-#include "membrane.h"
-#include "react_context.h"
 #include "symbol.h"
 
-typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
-/* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
-   現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
-   により、ルールを変換して生成された関数を想定している。*/
-
-/*----------------------------------------------------------------------
- * Rule
- */
-/* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
-   生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
-   た場合FALSEを返す */
-
-LmnRuleRef dummy_rule(void);
-LmnRuleRef lmn_rule_make_translated(LmnTranslated translated,
-                                    lmn_interned_str name);
 LmnRuleRef lmn_rule_copy(LmnRuleRef rule);
-
-st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule);
-
-lmn_interned_str lmn_rule_get_pre_id(LmnRuleRef rule);
-void lmn_rule_set_pre_id(LmnRuleRef rule, lmn_interned_str t);
-
-/* ルールの処理を行う関数を返す。ルールが関数を持たなければNULLを返す */
-LmnTranslated lmn_rule_get_translated(LmnRuleRef rule);
-
-/* ルールの処理を行う中間語命令列を変換したバイト列を返す。ルールが列を
-   持たなければNULLを返す。*/
-BYTE *lmn_rule_get_inst_seq(LmnRuleRef rule);
-/* ルールの名前を返す */
-lmn_interned_str lmn_rule_get_name(LmnRuleRef rule);
-
-/* ルール名のセット */
-void lmn_rule_set_name(LmnRuleRef rule, lmn_interned_str rule_name);
-
-LmnCost lmn_rule_get_cost(LmnRuleRef rule);
-
-void lmn_rule_set_cost(LmnRuleRef rule, LmnCost rule_cost);
-
-BOOL lmn_rule_is_invisible(LmnRuleRef rule);
-
-void lmn_rule_init_uniq_rule(LmnRuleRef rule);
 
 /*----------------------------------------------------------------------
  * Rule Set

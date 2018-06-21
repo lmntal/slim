@@ -78,7 +78,7 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
                            LmnRegisterArray *p_v_tmp,
                            unsigned int *org_next_id) {
   LMN_ASSERT(rule);
-  lmn_rule_set_name(rule, rule_name);
+  rule->name = rule_name;
 
   *org_next_id = env_next_id();
 
@@ -182,8 +182,8 @@ BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
     mc_react_cxt_add_expanded(rc, tmp_global_root,
                               rule); /* このruleはNULLではまずい気がする */
 
-    if (lmn_rule_get_history_tbl(rule) && lmn_rule_get_pre_id(rule) != 0) {
-      st_delete(lmn_rule_get_history_tbl(rule), lmn_rule_get_pre_id(rule), 0);
+    if (rule->history_tbl && rule->pre_id != 0) {
+      st_delete(rule->history_tbl, rule->pre_id, 0);
     }
 
     /* 変数配列および属性配列を元に戻す */
@@ -416,7 +416,7 @@ static void translate_rule(LmnRuleRef rule, const char *header) {
   Vector *jump_points = vec_make(4);
   int i;
 
-  vec_push(jump_points, (LmnWord)lmn_rule_get_inst_seq(rule));
+  vec_push(jump_points, (LmnWord)rule->inst_seq);
 
   for (i = 0; i < vec_num(jump_points) /*変換中にjump_pointsは増えていく*/;
        i++) {

@@ -106,6 +106,6 @@ BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef r
 
 void init_initial_ruleset(void)
 {
-  lmn_add_initial_rule(lmn_rule_make_translated(register_initial_rulesets, lmn_intern("register_initial_ruleset")));
-  lmn_add_initial_rule(lmn_rule_make_translated(register_initial_module, lmn_intern("register_initial_module")));
+  lmn_add_initial_rule(new LmnRule(register_initial_rulesets, lmn_intern("register_initial_ruleset")));
+  lmn_add_initial_rule(new LmnRule(register_initial_module, lmn_intern("register_initial_module")));
 }
