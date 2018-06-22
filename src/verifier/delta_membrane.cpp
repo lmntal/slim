@@ -247,12 +247,7 @@ struct MemDeltaRoot *dmem_root_make(LmnMembraneRef root_mem, LmnRuleRef rule,
   p->flag_tbl = sproc_tbl_make_with_size(size);
 
   /* add an appried history for constraint handling rules */
-  if (rule && rule->history_tbl &&
-      rule->pre_id != 0) {
-    p->applied_history = rule->pre_id;
-  } else {
-    p->applied_history = ANONYMOUS;
-  }
+  p->applied_history = rule ? rule->latest_history() : ANONYMOUS;
 
   /* この時点で最大のIDを記録しておくことで,
    * 以降に生成されたIDが新規か否かを判定する */
@@ -1028,7 +1023,7 @@ void dmem_root_commit(struct MemDeltaRoot *d) {
   }
 
   if (d->applied_history != ANONYMOUS) {
-    st_insert(d->applied_rule->history_tbl, d->applied_history, 0);
+    d->applied_rule->add_history(d->applied_history);
   }
 
   d->committed = TRUE;
@@ -1137,7 +1132,7 @@ void dmem_root_revert(struct MemDeltaRoot *d) {
    * 直接メンバ変数を書き換えてしまってもMT-safeなはず.これでとりあえずuniqも動くようになるはず.
    * TODO: dmem_copyrulesでuniq rulesetを複製(deep copy)するコードが必要. */
   if (d->applied_history != ANONYMOUS) {
-    st_delete(d->applied_rule->history_tbl, d->applied_history, 0);
+    d->applied_rule->delete_history(d->applied_history);
   }
 
   d->committed = FALSE;

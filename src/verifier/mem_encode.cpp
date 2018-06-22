@@ -985,31 +985,13 @@ static inline int bsptr_push_ruleset(BinStrPtrRef p, LmnRuleSetRef rs) {
   return bsptr_push(p, (BYTE *)&id, BS_RULESET_SIZE);
 }
 
-/* 履歴表は, interned_idをkeyに, valueを0にしている */
-static inline int bsptr_push_history_f(st_data_t _key, st_data_t _value,
-                                       st_data_t _arg) {
-  BinStrPtrRef bsp;
-  lmn_interned_str id;
-
-  bsp = (BinStrPtrRef)_arg;
-  id = (lmn_interned_str)_key;
-  bsptr_push(bsp, (BYTE *)&id, BS_HISTORY_SIZE);
-
-  return ST_CONTINUE;
-}
-
 static inline void bsptr_push_rule_histories(BinStrPtrRef bsp, LmnRuleRef r) {
-  st_table_t his_tbl;
-  unsigned int his_num;
-
-  his_tbl = r->history_tbl;
-  his_num = his_tbl ? st_num(his_tbl) : 0;
+  auto his_num = r->history().size();
   bsptr_push(bsp, (BYTE *)&his_num,
              BS_HISTORY_NUM_SIZE); /* write history num */
 
-  if (his_num > 0) { /* write each id of histories */
-    st_foreach(his_tbl, (st_iter_func)bsptr_push_history_f, (st_data_t)bsp);
-  }
+  for (auto entry : r->history())
+    bsptr_push(bsp, (BYTE *)&entry, BS_HISTORY_SIZE);
 }
 
 static inline void bsptr_push_ruleset_uniq(BinStrPtrRef bsp, LmnMembraneRef mem,
@@ -1603,31 +1585,23 @@ static int binstr_decode_cell(LmnBinStrRef bs, int pos, BsDecodeLog *log,
 static void binstr_decode_rulesets(LmnBinStrRef bs, int *i_bs, Vector *rulesets,
                                    int rs_num) {
   for (int i = 0; i < rs_num; i++) {
-    LmnRuleSetRef rs;
-    lmn_interned_str id;
-
-    rs = LmnRuleSetTable::at(binstr_get_ruleset(bs->v, *i_bs))->duplicate();
+    auto rs = new LmnRuleSet(*LmnRuleSetTable::at(binstr_get_ruleset(bs->v, *i_bs)));
     (*i_bs) += BS_RULESET_SIZE;
 
     for (auto r : *rs) {
-      int his_num;
-
       /* ruleset idから復元したrulesetには既に履歴が存在しており,
        * 履歴ごと複製した可能性がある. そのため,
        * バイナリスストリングから履歴をデコードする前に,
        * ruleset上の履歴を一旦解放する必要がある. MEMO: 現実装では,
        * コピー元となるルールセットオブジェクトに直接履歴を持たせていないため,
        *       上記コメントは考慮しなくてよい. */
-
-      his_num = binstr_get_history_num(bs->v, *i_bs);
+      auto his_num = binstr_get_history_num(bs->v, *i_bs);
       (*i_bs) += BS_HISTORY_NUM_SIZE;
 
-      if (his_num > 0) {
-        for (int j = 0; j < his_num; j++) {
-          id = binstr_get_history(bs->v, *i_bs);
-          (*i_bs) += BS_HISTORY_SIZE;
-          st_add_direct(r->history_tbl, (st_data_t)id, 0);
-        }
+      for (int j = 0; j < his_num; j++) {
+        auto id = binstr_get_history(bs->v, *i_bs);
+        (*i_bs) += BS_HISTORY_SIZE;
+        r->add_history(id);
       }
     }
     lmn_mem_add_ruleset_sort(rulesets, rs);

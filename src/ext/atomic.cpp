@@ -68,7 +68,7 @@ void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
     for (i = 0; i < n; i++) {
       lmn_mem_get_ruleset(mem, i)->atomic = atomic_type;
       lmn_mem_add_ruleset(lmn_mem_parent(mem),
-                          lmn_mem_get_ruleset(mem, i)->duplicate());
+                          new LmnRuleSet(*lmn_mem_get_ruleset(mem, i)));
     }
     lmn_mem_delete_atom(mem, a0, t0);
   }

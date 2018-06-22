@@ -118,21 +118,7 @@ int ilparse(il::lexer *scanner, std::unique_ptr<IL> *il,
  */
 
 std::unique_ptr<LmnRule> load_rule(Rule const &rule) {
-  ByteEncoder encoder;
-
-  /*   load_inst_block(rule->amatch, encoder); */
-  encoder.load(rule.mmatch);
-  encoder.load(rule.guard);
-  encoder.load(rule.body);
-
-  /* ラベルを参照している位置に、実際のラベルの位置を書き込む */
-  encoder.resolve_labels();
-
-  auto runtime_rule = encoder.create_rule();
-  if (rule.hasuniq)
-    runtime_rule->init_uniq_table();
-
-  return runtime_rule;
+  return ByteEncoder::encode_rule_ast(rule);
 }
 
 static LmnRuleSetRef load_ruleset(const RuleSet &rs) {

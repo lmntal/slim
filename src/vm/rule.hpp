@@ -41,54 +41,62 @@
 #include "lmntal.h"
 
 #include <vector>
+#include <set>
 
 #include "membrane.h"
 #include "react_context.h"
 
 typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
 
-struct LmnRule {
+/* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
+   現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
+   により、ルールを変換して生成された関数を想定している。*/
+class LmnRule {
+  std::set<lmn_interned_str> history_tbl;
+  bool is_unique_;
+  lmn_interned_str latest_history_;
+public:
   BYTE *inst_seq;
   int inst_seq_len;
   LmnTranslated translated;
   lmn_interned_str name;
-  BOOL is_invisible;
-  st_table_t history_tbl;
-  lmn_interned_str pre_id;
 
   /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or
    * costの計算式を入れる */
   LmnCost cost;
 
-  /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
-     現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
-     により、ルールを変換して生成された関数を想定している。*/
+private:
   LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated,
-          lmn_interned_str name)
+          lmn_interned_str name, bool is_unique_)
       : inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated),
-        name(name), is_invisible(FALSE), pre_id(ANONYMOUS), history_tbl(NULL) {}
+        name(name), latest_history_(ANONYMOUS), is_unique_(is_unique_) {}
 
+public:
   /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
      生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
      た場合FALSEを返す */
   LmnRule(LmnTranslated translated, lmn_interned_str name)
-      : LmnRule(NULL, 0, translated, name) {}
+      : LmnRule(nullptr, 0, translated, name, false) {}
+
+  LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, lmn_interned_str name, bool is_unique = false)
+      : LmnRule(inst_seq, inst_seq_len, nullptr, name, is_unique) {}
 
   LmnRule(const LmnRule &rule)
-      : is_invisible(false), pre_id(ANONYMOUS), history_tbl(NULL) {
+      : latest_history_(ANONYMOUS), is_unique_(false) {
     if (rule.inst_seq) {
       inst_seq = LMN_NALLOC(BYTE, rule.inst_seq_len);
       inst_seq = (BYTE *)memcpy(inst_seq, rule.inst_seq, rule.inst_seq_len);
     } else {
-      inst_seq = NULL;
+      inst_seq = nullptr;
     }
 
     inst_seq_len = rule.inst_seq_len;
     translated = rule.translated;
     name = rule.name;
-    if (rule.history_tbl) {
-      this->history_tbl = st_copy(rule.history_tbl);
-      this->pre_id = rule.pre_id;
+    if (rule.is_unique()) {
+      history_tbl = rule.history_tbl;
+      latest_history_ = rule.latest_history_;
+      is_unique_ = true;
     }
   }
 
@@ -96,12 +104,56 @@ struct LmnRule {
 
   ~LmnRule() {
     delete (this->inst_seq);
-    if (this->history_tbl) {
-      st_free_table(this->history_tbl);
+  }
+
+  void init_uniq_table() { is_unique_ = true; }
+
+  lmn_interned_str latest_history() const {
+    return is_unique() ? latest_history_ : ANONYMOUS;
+  }
+
+  void add_history(lmn_interned_str history) {
+    history_tbl.insert(history);
+    latest_history_ = history;
+  }
+
+  void undo_history() {
+    if (is_unique() && latest_history_ != 0) {
+      history_tbl.erase(latest_history_);
+      latest_history_ = ANONYMOUS;
     }
   }
 
-  void init_uniq_table() { history_tbl = st_init_numtable(); }
+  void delete_history(lmn_interned_str history) {
+    history_tbl.erase(history);
+  }
+
+  bool has_history(lmn_interned_str history) {
+    return history_tbl.find(history) != history_tbl.end();
+  }
+
+  bool history_equals(const LmnRule &rule) const {
+    auto hist1 = history_tbl;
+    auto hist2 = rule.history_tbl;
+
+    if (!is_unique() && !rule.is_unique())
+      return true;
+
+    return history_tbl == rule.history_tbl;
+  }
+
+  size_t history_table_size() const {
+    // NOTE: this value may not be correct.
+    return (is_unique()) ? history_tbl.max_size() * sizeof(lmn_interned_str) : 0;
+  }
+
+  const std::set<lmn_interned_str> &history() const {
+    return history_tbl;
+  }
+
+  bool is_unique() const {
+    return is_unique_;
+  }
 };
 
 enum AtomicType {
@@ -132,6 +184,16 @@ public:
       : id(id), atomic(ATOMIC_NONE), is_atomic_valid(false), is_copied(false),
         has_uniqrule(false), is_0step(false) {}
 
+  LmnRuleSet(const LmnRuleSet &rs) : LmnRuleSet(rs.id, rs.rules.capacity()) {
+    is_copied = true;
+    atomic = rs.atomic;
+    is_atomic_valid = rs.is_atomic_valid;
+
+    /* ルール単位のオブジェクト複製 */
+    for (auto r : rs.rules)
+      put(new LmnRule(*r));
+  }
+
   ~LmnRuleSet() {
     for (auto r : rules)
       delete r;
@@ -144,35 +206,12 @@ public:
     rules.push_back(rule);
 
     /* 非uniqrulesetにuniq ruleが追加されたら, フラグを立てる. */
-    if (!has_unique() && rule->history_tbl) {
-      has_uniqrule = true;
-    }
+    has_uniqrule |= rule->is_unique();
   }
 
   void put(std::unique_ptr<LmnRule> rule) {
     put(rule.get());
-  	rule.release();
-  }
-
-  LmnRuleSet *duplicate_object() {
-    auto result = new LmnRuleSet(id, rules.capacity());
-    result->is_copied = true;
-    result->atomic = atomic;
-    result->is_atomic_valid = is_atomic_valid;
-
-    /* ルール単位のオブジェクト複製 */
-    for (auto r : rules)
-      result->put(new LmnRule(*r));
-    return result;
-  }
-
-  /* ルールセットsrcを複製して返す.
-   * 基本的にはオリジナルのobjectへの参照を返すのみ.
-   * ただし, uniqルールセットである場合(現在はuniq使用時のみ),
-   * ルールセットオブジェクトを独立に扱うため新たにmallocして複製したオブジェクトを返す.
-   * uniqルールの場合, ルール単位でobjectを複製する */
-  LmnRuleSet *duplicate() {
-    return (ruleset_cp_is_need_object()) ? duplicate_object() : this;
+    rule.release();
   }
 
   /* 2つのrulesetが同じruleを持つか判定する.
@@ -198,20 +237,9 @@ public:
     if (rules.size() != set2.rules.size())
       return false;
 
-    for (int i = 0; i < rules.size(); i++) {
-      LmnRule *rule1 = rules[i];
-      LmnRule *rule2 = set2.rules[i];
-      st_table_t hist1 = rule1->history_tbl;
-      st_table_t hist2 = rule2->history_tbl;
-
-      if (!hist1 && !hist2)
-        continue;
-
-      if (!hist1 || !hist2)
+    for (int i = 0; i < rules.size(); i++)
+      if (!rules[i]->history_equals(*set2.rules[i]))
         return false;
-      if (!st_equals(hist1, hist2))
-        return false;
-    }
 
     return true;
   }
@@ -226,8 +254,7 @@ public:
     ret += sizeof(struct LmnRuleSet);
     ret += sizeof(struct LmnRule *) * rules.size();
     for (auto r : rules)
-      if (r->history_tbl)
-        st_table_space(r->history_tbl);
+      ret += r->history_table_size();
     return ret;
   }
 

@@ -446,9 +446,6 @@ mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr) {
   }
 }
 
-static inline int mhash_multiply_rhistories_f(st_data_t _key, st_data_t _value,
-                                              st_data_t _arg);
-
 /* ルールセットのハッシュ値を返す.
  * 基本は, ルールセットIDを掛け合わせた値.
  * uniqルールセットの場合は, 更にuniqの適用履歴に一意な整数IDを掛け合わせる.
@@ -465,28 +462,11 @@ static mhash_t mhash_rulesets(Vector *rulesets) {
     if (rs->has_unique()) {
       /* 履歴テーブルを持つ場合は, 履歴の整数IDも掛け合わせる.
        * この計算方法で十分かどうかはちゃんと考えていない. */
-      for (auto r : *rs) {
-        auto his_tbl = r->history_tbl;
-        if (!his_tbl || st_num(his_tbl) == 0)
-          continue;
-        st_foreach(his_tbl, (st_iter_func)mhash_multiply_rhistories_f,
-                   (st_data_t)&hash);
-      }
+      for (auto r : *rs)
+        for (auto entry : r->history())
+          hash *= entry;
     }
   }
 
   return hash;
-}
-
-/* 履歴表は, lmn_interned_idをkeyに, valueを0にしている */
-static inline int mhash_multiply_rhistories_f(st_data_t _key, st_data_t _value,
-                                              st_data_t _arg) {
-  unsigned long *u;
-  lmn_interned_str id;
-
-  u = (unsigned long *)_arg;
-  id = (lmn_interned_str)_key;
-  (*u) *= id;
-
-  return ST_CONTINUE;
 }

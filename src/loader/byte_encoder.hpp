@@ -56,9 +56,25 @@ class ByteEncoder {
   location loc;
   location cap;   /* 書き込み位置とbyte_seqのキャパシティ */
   BYTE *byte_seq; /* ルールの命令列を書き込む領域 */
+  const Rule &rule;
 
 public:
-  ByteEncoder() : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)) {}
+  static std::unique_ptr<LmnRule> encode_rule_ast(const Rule &rule) {
+    return ByteEncoder(rule).create_rule();
+  }
+
+private:
+  ByteEncoder(const Rule &rule) : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)), rule(rule) {
+    /* load(rule.amatch); */
+    load(rule.mmatch);
+    load(rule.guard);
+    load(rule.body);
+    resolve_labels();
+  }
+
+  std::unique_ptr<LmnRule> create_rule() {
+    return std::unique_ptr<LmnRule>(new LmnRule(byte_seq, cap, ANONYMOUS, rule.hasuniq));
+  }
 
   void load(const InstBlock &ib) {
     if (ib.has_label())
@@ -84,13 +100,6 @@ public:
     }
   }
 
-  // TODO: よくない設計。コピーにするか、したくなければ
-  //       LmnRuleのコンストラクタに右辺値参照としてByteEncoderを渡して初期化とか。
-  std::unique_ptr<LmnRule> create_rule() {
-    return std::unique_ptr<LmnRule>(new LmnRule(byte_seq, cap, NULL, ANONYMOUS));
-  }
-
-private:
   void expand_byte_sec() {
     cap *= 2;
     byte_seq = LMN_REALLOC(BYTE, byte_seq, cap);

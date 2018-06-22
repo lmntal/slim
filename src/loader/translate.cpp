@@ -182,9 +182,7 @@ BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
     mc_react_cxt_add_expanded(rc, tmp_global_root,
                               rule); /* このruleはNULLではまずい気がする */
 
-    if (rule->history_tbl && rule->pre_id != 0) {
-      st_delete(rule->history_tbl, rule->pre_id, 0);
-    }
+    rule->undo_history();
 
     /* 変数配列および属性配列を元に戻す */
 

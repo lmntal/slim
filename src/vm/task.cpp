@@ -906,22 +906,12 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
           /** >>>>>>>> enable delta-membrane <<<<<<< **/
           /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
-          struct MemDeltaRoot *d;
-
-          if (rule->pre_id != ANONYMOUS) {
-            /* dmem_commit/revertとの整合性を保つため,
-             * uniq処理の特殊性を吸収しておく */
-            LMN_ASSERT(rule->history_tbl);
-            st_delete(rule->history_tbl, rule->pre_id,
-                      0);
-          }
-
-          d = dmem_root_make(RC_GROOT_MEM(rc), rule, env_next_id());
+          struct MemDeltaRoot *d = dmem_root_make(RC_GROOT_MEM(rc), rule, env_next_id());
           RC_ND_SET_MEM_DELTA_ROOT(rc, d);
 
-          if (rule->pre_id != ANONYMOUS) {
-          	rule->pre_id = ANONYMOUS;
-          }
+          /* dmem_commit/revertとの整合性を保つため,
+           * uniq処理の特殊性を吸収しておく */
+          rule->undo_history();
 
           if (RC_MC_USE_DPOR(rc)) {
             dpor_transition_gen_LHS(RC_POR_DATA(rc), d, rc, rc_warray(rc));
@@ -1054,12 +1044,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
               rc, tmp_global_root); /**< 0stepルールを適用する */
           mc_react_cxt_add_expanded(rc, tmp_global_root, rule);
 
-          if (rule->pre_id != ANONYMOUS) {
-            LMN_ASSERT(rule->history_tbl);
-            st_delete(rule->history_tbl, rule->pre_id,
-                      0);
-            rule->pre_id = ANONYMOUS;
-          }
+          rule->undo_history();
 
           cur_mem = (LmnMembraneRef)wt(rc, 0);
           /* 変数配列および属性配列を元に戻す */
@@ -2711,12 +2696,11 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
         lmn_env.show_hyperlink = TRUE;
 
       /* 履歴表と照合 */
-      if (st_is_member(rule->history_tbl, (st_data_t)id))
+      if (rule->has_history(id))
         return FALSE;
 
       /* 履歴に挿入 */
-      st_insert(rule->history_tbl, (st_data_t)id, 0);
-      rule->pre_id = id;
+      rule->add_history(id);
 
       break;
     }
@@ -3764,7 +3748,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, srcmemi);
       v = lmn_mem_get_rulesets((LmnMembraneRef)wt(rc, srcmemi));
       for (i = 0; i < v->num; i++) {
-        LmnRuleSetRef cp = ((LmnRuleSetRef)vec_get(v, i))->duplicate();
+        auto cp = new LmnRuleSet(*(LmnRuleSetRef)vec_get(v, i));
         lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);
         if (RC_GET_MODE(rc, REACT_ATOMIC)) {
           /* atomic step中にatomic setをコピーした場合のため */
