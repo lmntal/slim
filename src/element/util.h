@@ -163,6 +163,7 @@ static inline unsigned long round2up(unsigned long n) {
 }
 
 #include <iterator>
+#include <memory>
 
 namespace slim {
 namespace element {
@@ -190,14 +191,21 @@ public:
     return *this;
   }
   raw_pointer_iterator<T> operator++(int i) {
-    return raw_pointer_iterator<T>(p + 1);
+    auto it = *this;
+    ++(*this);
+    return it;
   }
 
   bool operator!=(const raw_pointer_iterator<T> &a) { return !(*this == a); }
   bool operator==(const raw_pointer_iterator<T> &a) { return p == a.p; }
 };
+
+template <class T, class... Args>
+std::unique_ptr<T> make_unique(Args &&... args) {
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
-}
+} // namespace element
+} // namespace slim
 
 /* @} */
 
