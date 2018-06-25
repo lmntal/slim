@@ -808,3 +808,27 @@ int st_ptrcmp(void *x, void *y) { return x != y; }
 long st_ptrhash(void *n) { return (long)n; }
 
 long st_statehash(LmnWord s) { return (long)state_hash((State *)s); }
+
+st_iterator::st_iterator(st_table_t table) : table(table), ptr(nullptr) {
+  for (bin_index = 0; bin_index < table->num_bins && !ptr; bin_index++)
+    ptr = table->bins[bin_index];
+  if (ptr)
+    value = std::pair<st_data_t, st_data_t>(ptr->key, ptr->record);
+}
+st_iterator &st_iterator::operator=(const st_iterator &it) noexcept {
+  table = it.table;
+  bin_index = it.bin_index;
+  ptr = it.ptr;
+  if (ptr)
+    value = std::pair<st_data_t, st_data_t>(ptr->key, ptr->record);
+  return *this;
+}
+
+st_iterator &st_iterator::operator++() {
+  ptr = ptr->next;
+  for (; bin_index < table->num_bins && !ptr; bin_index++)
+    ptr = table->bins[bin_index];
+  if (ptr)
+    value = std::pair<st_data_t, st_data_t>(ptr->key, ptr->record);
+  return *this;
+}
