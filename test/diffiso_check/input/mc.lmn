@@ -1,0 +1,13 @@
+% Missionaries and cannibals problem
+% Kazunori Ueda, 2010-06-11
+%
+% Each bank of the river is represented as a multiset.
+
+ok,{left,m,m,m,c,c,c,boat},{right}.
+ok,{m,$b1,boat},{$b2} :- check,{$b1},{m,$b2,boat}.
+ok,{c,$b1,boat},{$b2} :- check,{$b1},{c,$b2,boat}.
+ok,{m,m,$b1,boat},{$b2} :- check,{$b1},{m,m,$b2,boat}.
+ok,{m,c,$b1,boat},{$b2} :- check,{$b1},{m,c,$b2,boat}.
+ok,{c,c,$b1,boat},{$b2} :- check,{$b1},{c,c,$b2,boat}.
+check,{m,m,m,$b} :- ok,{m,m,m,$b}.
+check,{m,m,c,c,$b1},{m,c,$b2} :- ok,{m,m,c,c,$b1},{m,c,$b2}.

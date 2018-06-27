@@ -1,0 +1,16 @@
+% Dining philosophers
+
+phi(L1,R1), fork{+R1,+L1}.
+//phi(L2,R2), fork{+R2,+L1}.
+
+l@@ %% grab a left fork
+fork{+X,+L}, phi(L,R),  :-
+fork{-X,+L}, phi(L,R).
+
+r@@ %% grab a right fork
+fork{-X,+L}, phi(L,R), fork{+R,+Y} :-
+fork{-X,+L}, phi(L,R), fork{+R,-Y}.
+
+lr@@ %% release forks
+fork{-X,+L}, phi(L,R), fork{+R,-Y} :-
+fork{+X,+L}, phi(L,R), fork{+R,+Y}.

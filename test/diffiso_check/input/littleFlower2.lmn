@@ -1,0 +1,6 @@
+
+init.
+
+init :- tail(a(b(!H))),tail(a(b(!H))),tail(a(b(!H))),tail(a(b(!H))).
+
+tail(X) :- head(X).

@@ -1,0 +1,10 @@
+% Simple program to check nondeterministic execution
+% (10 states, non-confluent, non-terminating)
+
+a, a.
+
+a:-b.
+a:-c.
+a:-d.
+
+d,d :- a,a.

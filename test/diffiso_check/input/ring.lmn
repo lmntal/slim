@@ -1,0 +1,16 @@
+% Five people sitting at a round table hold
+% positive or negative integer values with a
+% total of zero.  At least one of them holds
+% a non-zero value initially.
+% A person holding a negative number -n (n>0)
+% can negate it (i.e., increase it by 2n) by
+% subtracting n from each neighbor.
+% Is it possible that this process evetually
+% terminates (i.e., ends up with five zeros)? 
+
+X=[1,2,3,-2,-4|X].
+
+X=[A0,B0,C0|Y] :-
+  B0<0, A=A0+B0, C=C0+B0, B=-B0 |
+  X=[A,B,C|Y].
+  
