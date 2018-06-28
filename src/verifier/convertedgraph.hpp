@@ -80,7 +80,6 @@ public:
         break;
       }
     }
-    printf("%s:%d data=%d\n", __FUNCTION__, __LINE__, data.integer);
   }
 };
 
@@ -105,7 +104,6 @@ struct ConvertedGraphVertex {
     isVisitedInBFS = false;
     for (int i = 0; i < arity; i++) {
       ConvertedGraphLink *l = new ConvertedGraphLink(atom, i);
-      printf("%s:%d data=%d\n", __FUNCTION__, __LINE__, l->data.integer);
       links.push_back(l);
     }
   }
@@ -148,7 +146,6 @@ struct ConvertedGraph {
   void convert_mem(LmnMembraneRef mem,
                    std::vector<ConvertedGraphVertex *> *atoms,
                    std::vector<ConvertedGraphVertex *> *hyperlinkatoms) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   //  1. mem内のatomをvertexに変換，gm属性でリンクを張る
@@ -156,15 +153,7 @@ struct ConvertedGraph {
   //  3. 子膜に対してconvert_memを適用
   //  4. 返ってきたvertexにgm属性でリンクを張る
   ConvertedGraph(LmnMembraneRef mem) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     convert_atoms(mem, &atoms);
-    for (auto i = atoms.begin(); i != atoms.end(); i++) {
-      printf("%s:%d name = %s\n", __FUNCTION__, __LINE__, (*i)->name);
-      for (auto j = (*i)->links.begin(); j != (*i)->links.end(); j++) {
-        printf("<%d, %d> ", (*j)->attr, (*j)->data.integer);
-      }
-      printf("\n");
-    }
     convert_mem(mem, &atoms, &hyperlinkatoms);
     // hyperlinkatoms = convert_hyperlinks(mem);
   }
