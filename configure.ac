@@ -161,6 +161,8 @@ fi
 if test "$enable_gprof" = "yes" && test -x /usr/bin/gprof && test "$GCC" = "yes"; then
   AC_MSG_RESULT([enable GNU gprof: yes])
   CFLAGS="-pg -g $CFLAGS"
+  CPPFLAGS="-pg -g $CPPFLAGS"
+  CXXFLAGS="-pg -g $CXXFLAGS"
 else
   AC_MSG_RESULT([enable GNU gprof: no])
 fi
