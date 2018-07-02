@@ -38,6 +38,8 @@
 #ifndef VERIFIER_UPE_HPP
 #define VERIFIER_UPE_HPP
 
+#include <algorithm>
+
 #include "vm/vm.h"
 
 namespace slim {
@@ -54,7 +56,7 @@ class matching_set {
  public:
   void insert(const matching_pair &p) {
     if (std::find(std::begin(a), std::end(a), p.first) != std::end(a) ||
-        std::find(std::begin(b), std::end(b), p.first) != std::end(b))
+        std::find(std::begin(b), std::end(b), p.second) != std::end(b))
       return;
     a.push_back(p.first);
     b.push_back(p.second);
@@ -67,6 +69,9 @@ class matching_set {
 
   size_t size() const { return a.size(); }
   bool empty() const { return a.empty(); }
+
+  const std::vector<node> &first() const { return a; }
+  const std::vector<node> &second() const { return b; }
 
   class iterator {
     matching_set *set;
@@ -131,6 +136,53 @@ matching_set match_connected_process(LmnSymbolAtomRef p, LmnSymbolAtomRef q,
     }
   }
   return r;
+}
+
+template <typename Process, typename Functor>
+bool contains_any_functor(Process P, Functor F) {
+  for (auto p : P)
+    if (std::find(std::begin(F), std::end(F), LMN_SATOM_GET_FUNCTOR(p)) !=
+        std::end(F))
+      return true;
+
+  return false;
+}
+
+template <typename Process, typename Functor>
+matching_set match_common_sub_processes(Process P, Process Q, Functor F) {
+  if (P.empty() || Q.empty()) return matching_set();
+
+  matching_set R;
+  int max_size = 0;
+  for (auto p : P) {
+    for (auto q : Q) {
+      auto r = match_connected_process(p, q);
+      if (r.size() > max_size) {
+        max_size = r.size();
+        R = r;
+      }
+    }
+  }
+
+  Process unreached_P;
+  Process unreached_Q;
+  std::set_difference(std::begin(P), std::end(P), std::begin(R.first()),
+                      std::end(R.first()),
+                      std::inserter(unreached_P, std::end(unreached_P)));
+  std::set_difference(std::begin(Q), std::end(Q), std::begin(R.second()),
+                      std::end(R.second()),
+                      std::inserter(unreached_Q, std::end(unreached_Q)));
+
+  if (!R.empty()) {
+    auto mcsp = match_common_sub_processes(unreached_P, unreached_Q, F);
+    R.insert(std::begin(mcsp), std::end(mcsp));
+  }
+
+  if (contains_any_functor(P, F) || contains_any_functor(Q, F)) {
+    return matching_set();
+  }
+
+  return R;
 }
 
 }  // namespace upe
