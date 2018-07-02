@@ -1,0 +1,4 @@
+
+a(A,B),b(B,C),b(C,D),b(D,E),b(E,F),b(F,A).
+
+a(X,Y) :- b(X,Y).

@@ -1,0 +1,15 @@
+v(X1,Y1,Z1),v(X1,Y1,Z1).
+
+
+
+v(X1,Ya,Za),v(X1,Yb,Zb),v(X2,Yc,Zc),v(X2,Yd,Zd)
+:-
+v(X3,Ya,Za),v(X4,Yb,Zb),v(X3,Yc,Zc),v(X4,Yd,Zd).
+
+v(Xa,Y1,Za),v(Xb,Y1,Zb),v(Xc,Y2,Zc),v(Xd,Y2,Zd)
+:-
+v(Xa,Y3,Za),v(Xb,Y4,Zb),v(Xc,Y3,Zc),v(Xd,Y4,Zd).
+
+v(Xa,Ya,Z1),v(Xb,Yb,Z1),v(Xc,Yc,Z2),v(Xd,Yd,Z2)
+:-
+v(Xa,Ya,Z3),v(Xb,Yb,Z4),v(Xc,Yc,Z3),v(Xd,Yd,Z4).
