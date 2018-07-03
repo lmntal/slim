@@ -45,12 +45,12 @@
 #include "mhash.h"
 #include "propositional_symbol.h"
 #include "runtime_status.h"
+#include "graphinfo.hpp"
 #ifdef DEBUG
 #include "vm/dumper.h"
 #endif
 #include "state.h"
 #include "state.hpp"
-#include "graphinfo.hpp"
 #define DIFFISO_GEN
 
 /** =======================================

@@ -259,6 +259,8 @@ public:
 			      json_value *);
 
 
+
+
 #ifdef __cplusplus
    } /* extern "C" */
 #endif
