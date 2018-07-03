@@ -59,7 +59,8 @@ struct Graphinfo {
 
   Graphinfo(LmnMembraneRef mem) {
     std::string json = mem_to_json(mem);
-    // json_string = json.c_str();
+    json_val = json_parse(json.c_str(), json.size()+1);
+    state_id = -1;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };

@@ -40,7 +40,8 @@ liblmn_verifier_a_SOURCES =                              \
 	tree_compress.cpp          tree_compress.h               \
 	visitlog.cpp               visitlog.h                    \
 	stack_macro.h                                            \
-	convertedgraph.hpp
+	convertedgraph.hpp	   graphinfo.hpp		\
+	json.hpp		   json.cpp
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
