@@ -50,7 +50,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
-
+#include "graphinfo.hpp"
 #define DIFFISO_GEN
 
 /** =======================================
@@ -228,6 +228,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 #ifdef DIFFISO_GEN
   printf("Succ number Information\n");
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  GraphInfo::Graphinfo * gi = new GraphInfo::Graphinfo(mem);
 #endif
   /** expand  : 状態の展開 */
   if (p_s) {
