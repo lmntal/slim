@@ -209,6 +209,7 @@ json_value * json_parse_ex (json_settings * settings,
                             size_t length,
                             char * error_buf)
 {
+  printf("json=%s\n", json);
   json_char error [json_error_max];
   unsigned int cur_line;
   const json_char * cur_line_begin, * i, * end;
@@ -247,6 +248,7 @@ json_value * json_parse_ex (json_settings * settings,
 
   for (state.first_pass = 1; state.first_pass >= 0; -- state.first_pass)
     {
+
       json_uchar uchar;
       unsigned char uc_b1, uc_b2, uc_b3, uc_b4;
       json_char * string = 0;
@@ -775,6 +777,7 @@ json_value * json_parse_ex (json_settings * settings,
       alloc = root;
     }
 
+
   return root;
 
  e_unknown_value:
@@ -820,6 +823,9 @@ json_value * json_parse_ex (json_settings * settings,
 
 json_value * json_parse (const json_char * json, size_t length)
 {
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);  
+  // printf("json=%s\n", json);
+  // printf("length=%d\n", length);
   json_settings settings = { 0 };
   return json_parse_ex (&settings, json, length, 0);
 }

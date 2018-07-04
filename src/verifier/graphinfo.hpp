@@ -39,6 +39,7 @@
 #ifndef LMN_GRAPHINFO_HPP
 #define LMN_GRAPHINFO_HPP
 #include "convertedgraph.hpp"
+// #include "jsonValueDump.h"
 #include "json.hpp"
 #include "lmntal.h"
 #include "vm/atomlist.hpp"
@@ -46,6 +47,8 @@
 #include <string>
 
 namespace GraphInfo {
+void jsonDump(json_value * jVal);
+int globalrootmem_id(json_value *jVal);
 std::string mem_to_json(LmnMembraneRef mem);
 std::string atom_to_json(LmnSymbolAtomRef atom);
 std::string link_to_json(LmnSymbolAtomRef atom, int index);
@@ -59,9 +62,11 @@ struct Graphinfo {
 
   Graphinfo(LmnMembraneRef mem) {
     std::string json = mem_to_json(mem);
-    json_val = json_parse(json.c_str(), json.size()+1);
+    json_val = json_parse(json.c_str(), json.size() + 1);
     state_id = -1;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    jsonDump(json_val);
+    globalRootMemID = globalrootmem_id(json_val);
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };
 
@@ -93,8 +98,22 @@ std::string mem_to_json(LmnMembraneRef mem) {
                                         }));
                             }));
   }
-  std::cout << s << std::endl;
+  s+="],";
+  s+="\"membranes\":[";
+  LmnMembraneRef m;
+  BOOL needs_comma = FALSE;
+  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+    if (needs_comma)
+      s+=",";
+    needs_comma = TRUE;
+    s+=mem_to_json(m);
+  }
+  s+="]";
+  s+="}";
   return s;
+}
+int globalrootmem_id(json_value *jVal) {
+  return jVal->u.object.values[0].value->u.integer;
 }
 
 std::string atom_to_json(LmnSymbolAtomRef atom) {
@@ -169,6 +188,65 @@ std::string link_to_json(LmnSymbolAtomRef atom, int index) {
   s += "}";
   return s;
 }
+
+void jsonDump(json_value * jVal){
+  //printf("jVal is %0llx\n",jVal);
+  //printf("jVal->type is %d\n",jVal->type);
+  //printf("\n");
+  setvbuf( stdout, NULL, _IONBF, BUFSIZ );
+
+  switch(jVal->type){
+  case json_none:
+    printf("NONE");
+    break;
+  case json_object:
+    printf("object:[");
+    if(jVal->u.object.length>0){
+      int i;
+      printf("<name:\"%s\",value:",jVal->u.object.values[0].name);
+      jsonDump(jVal->u.object.values[0].value);
+      printf(">");
+      for(i=1;i<jVal->u.object.length;i++){
+	printf(", ");
+	printf("<name:\"%s\",value:",jVal->u.object.values[i].name);
+	jsonDump(jVal->u.object.values[i].value);
+	printf(">");
+      }
+    }
+    printf("]");
+    break;
+  case json_array:
+    printf("array:[");
+    if(jVal->u.array.length > 0){
+      jsonDump(jVal->u.array.values[0]);
+      int i;
+      for(i=1;i<jVal->u.array.length;i++){
+	printf(", ");
+	jsonDump(jVal->u.array.values[i]);
+      }
+    }
+    printf("]");
+    break;
+  case json_integer:
+    printf("integer:%lld",jVal->u.integer);
+    break;
+  case json_double:
+    printf("double:%f",jVal->u.dbl);
+    break;
+  case json_string:
+    printf("string:\"%s\"",jVal->u.string.ptr);
+    break;
+  case json_boolean:
+    printf("boolean:%s",jVal->u.boolean ? "TRUE" : "FALSE");
+    break;
+  case json_null:
+    printf("NULL");
+    break;
+  default:
+    break;
+  }
+}
+
 } // namespace GraphInfo
 
 #endif
