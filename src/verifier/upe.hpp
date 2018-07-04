@@ -123,6 +123,7 @@ matching_set match_connected_process(LmnSymbolAtomRef p, LmnSymbolAtomRef q,
 
   r.insert({p, q});
   for (auto i = 0; i < LMN_SATOM_GET_LINK_NUM(p); i++) {
+    if (i == 0 && (LMN_SATOM_IS_PROXY(p) || LMN_SATOM_IS_PROXY(q))) continue;
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(p, i)) ||
         LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(q, i)))
       continue;
@@ -178,7 +179,7 @@ matching_set match_common_sub_processes(Process P, Process Q, Functor F) {
     R.insert(std::begin(mcsp), std::end(mcsp));
   }
 
-  if (contains_any_functor(P, F) || contains_any_functor(Q, F)) {
+  if (contains_any_functor(unreached_P, F) || contains_any_functor(unreached_Q, F)) {
     return matching_set();
   }
 

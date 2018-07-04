@@ -221,8 +221,26 @@ std::set<LmnFunctor> compulsory_functors_with_rule_in_mem(LmnMembraneRef mem) {
   return res;
 }
 
+std::vector<std::vector<std::pair<LmnMembraneRef, std::set<LmnSymbolAtomRef>>>> level_of_ingredients(LmnMembraneRef mem) {
+  std::vector<std::vector<std::pair<LmnMembraneRef, std::set<LmnSymbolAtomRef>>>> result(1);
+  for (auto ing : mem->ingredients()) {
+    result[0].push_back({mem, ing.second});
+  }
+
+  for (auto m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+    auto ings = level_of_ingredients(m);
+
+    if (result.size() < ings.size() + 1) result.resize(ings.size() + 1);
+    for (int l = 0; l < ings.size(); l++) {
+      std::copy(std::begin(ings[l]), std::end(ings[l]), std::back_inserter(result[l + 1]));
+    }
+  }
+
+  return result;
+}
+
 void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
-  std::set<LmnFunctor> compulsory_functors;
+  std::set<LmnFunctor> compulsory_functors = {LMN_IN_PROXY_FUNCTOR, LMN_OUT_PROXY_FUNCTOR, LMN_EXCLAMATION_FUNCTOR};
   for (int i = 0; psyms && i < vec_num(psyms); i++) {
     auto psym = reinterpret_cast<SymbolDefinitionRef>(vec_get(psyms, i));
     auto p = propsym_get_proposition(psym);
@@ -234,77 +252,56 @@ void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
   auto cs = compulsory_functors_with_rule_in_mem(mem);
   compulsory_functors.insert(cs.begin(), cs.end());
 
-  auto sets = mem->ingredients();
-  for (auto it1 = sets.cbegin(); it1 != sets.cend(); ++it1) {
-    auto a1 = it1->first;
-    auto &s1 = it1->second;
-    for (auto it2 = std::next(it1, 1); it2 != sets.cend(); ++it2) {
-      auto s2 = it2->second;
+  auto abs_str = lmn_intern("#");
+  for (auto sets : level_of_ingredients(mem)) {
+    for (auto it1 = sets.begin(); it1 != sets.end(); ++it1) {
+      auto &s1 = it1->second;
+      auto mem1 = it1->first;
 
-      std::set<psr_ssd::matching_set> mp_sets;
-      for (auto a1 : s1) {
-        for (auto a2 : s2) {
-          if (LMN_SATOM_GET_FUNCTOR(a1) != LMN_SATOM_GET_FUNCTOR(a2))
-            continue;
+      for (auto it2 = std::next(it1, 1); it2 != sets.end(); ++it2) {
+        auto &s2 = it2->second;
+        auto mem2 = it2->first;
 
-          psr_ssd::matching_set mps = max_common_subproc_matching(a1, a2);
-          std::set<psr_ssd::matching_set> new_mps;
-          for (auto &mps2 : mp_sets) {
-            if (contradict(mps, mps2))
-              continue;
-            psr_ssd::matching_set res;
-            std::set_union(mps.begin(), mps.end(), mps2.begin(), mps2.end(),
-                           std::inserter(res, res.end()));
-            new_mps.insert(res);
+        auto mcsp = slim::verifier::upe::match_common_sub_processes(s1, s2, compulsory_functors);        
+        std::vector<LmnSymbolAtomRef> first = mcsp.first();
+        std::vector<LmnSymbolAtomRef> second = mcsp.second();
+        std::sort(std::begin(first), std::end(first));
+
+        using port = std::pair<LmnSymbolAtomRef, int>;
+        std::vector<std::pair<port, port>> ports;
+
+        for (auto mp : mcsp) {
+          auto a1 = mp.first;
+          auto a2 = mp.second;
+
+          for (auto i = 0; i < LMN_SATOM_GET_LINK_NUM(a1); i++) {
+            if (i == 0 && LMN_SATOM_IS_PROXY(a1)) continue;
+            if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(a1, i))) continue;
+            auto satom1 = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(a1, i));
+            if (std::binary_search(std::begin(first), std::end(first), satom1)) continue;
+
+            auto satom2 = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(a2, i));
+            // satom1 and satom2 are not common to s1 and s2.
+            s1.erase(satom1);
+            s2.erase(satom2);
+            lmn_mem_remove_atom(mem1, satom1, 0);
+            lmn_mem_remove_atom(mem2, satom2, 0);
+            ports.push_back({{a1, i}, {a2, i}});
           }
-          mp_sets.insert(mps);
-          mp_sets.insert(new_mps.begin(), new_mps.end());
         }
-      }
 
-      std::set<psr_ssd::matching_set> mps;
-      std::remove_copy_if(
-          mp_sets.begin(), mp_sets.end(), std::inserter(mps, mps.end()),
-          [&](const psr_ssd::matching_set &m) {
-            std::set<LmnSymbolAtomRef> ds, a, b, r;
-            for (auto p : m) {
-              a.insert(p.first);
-              b.insert(p.second);
-            }
-            std::set_difference(s1.begin(), s1.end(), a.begin(), a.end(),
-                                std::inserter(ds, ds.end()));
-            std::set_difference(s2.begin(), s2.end(), b.begin(), b.end(),
-                                std::inserter(ds, ds.end()));
-            return std::any_of(
-                ds.begin(), ds.end(), [&](LmnSymbolAtomRef satom) {
-                  return (compulsory_functors.find(LMN_SATOM_GET_FUNCTOR(
-                              satom)) != compulsory_functors.end());
-                });
-          });
-      if (mps.size() == 0)
-        continue;
-
-      auto mcsp = *std::max_element(
-          mps.begin(), mps.end(),
-          [](const psr_ssd::matching_set &s1, const psr_ssd::matching_set &s2) {
-            return s1.size() - s2.size();
-          });
-      std::set<LmnSymbolAtomRef> mcsp1, mcsp2;
-      for (auto p : mcsp) {
-        mcsp1.insert(p.first);
-        mcsp2.insert(p.second);
-      }
-
-      auto abs_functor = lmn_functor_intern(ANONYMOUS, lmn_intern("_"), 1);
-      for (auto satom : s1) {
-        if (mcsp1.find(satom) != mcsp1.end())
-          continue;
-        LMN_SATOM_SET_FUNCTOR(satom, abs_functor);
-      }
-      for (auto satom : s2) {
-        if (mcsp2.find(satom) != mcsp2.end())
-          continue;
-        LMN_SATOM_SET_FUNCTOR(satom, abs_functor);
+        if (!ports.empty()) {
+          auto abs_func = lmn_functor_intern(ANONYMOUS, abs_str, ports.size());
+          auto abs1 = lmn_mem_newatom(mem1, abs_func);
+          auto abs2 = lmn_mem_newatom(mem2, abs_func);
+          for (int i = 0; i < ports.size(); i++) {
+            auto p = ports[i];
+            auto p1 = p.first;
+            auto p2 = p.second;
+            lmn_newlink_in_symbols(abs1, i, p1.first, p1.second);
+            lmn_newlink_in_symbols(abs2, i, p2.first, p2.second);
+          }
+        }
       }
     }
   }

@@ -158,18 +158,24 @@ std::map<LmnFunctor, AtomListEntry *> LmnMembrane::atom_lists() const {
 std::map<LmnSymbolAtomRef, std::set<LmnSymbolAtomRef>> LmnMembrane::ingredients() {
   psr_gsd::disjoint_set<LmnSymbolAtomRef> ingredients;
 
-  for (auto p : this->atom_lists()) {
+  for (auto p : atom_lists()) {
     auto atomlist = p.second;
     if (LMN_FUNC_IS_HL(p.first)) continue;
 
     for (auto atom : *atomlist) {
       ingredients.insert(atom);
 
-      for (int i = 0; i < LMN_SATOM_GET_ARITY(atom); i++) {
-        if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) continue;
-        auto s = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(atom, i));
+      if (LMN_SATOM_IS_PROXY(atom)) {
+        auto s = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(atom, 1));
         ingredients.insert(s);
         ingredients.unite(atom, s);
+      } else {
+        for (int i = 0; i < LMN_SATOM_GET_LINK_NUM(atom); i++) {
+          if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) continue;
+          auto s = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(atom, i));
+          ingredients.insert(s);
+          ingredients.unite(atom, s);
+        }
       }
     }
   }
