@@ -4,6 +4,8 @@
 #include<stdint.h>
 #include"util.hpp"
 #include"hash.hpp"
+#include<string>
+#include<cstring>
 #define INIT_CAP (4)
 typedef enum Order{
   LT,//less than
@@ -14,13 +16,15 @@ typedef enum Order{
 struct DynamicArray{
   int cap;
   void **body;
+
+
   DynamicArray(){
     cap = INIT_CAP;
     if((body = (void **)calloc(sizeof(void *),INIT_CAP)) == NULL){
       CHECKER("CALLOC ERROR");
       exit(EXIT_FAILURE);
     }
-  }
+  };
 };
 
 DynamicArray *makeDynamicArray();
@@ -33,10 +37,18 @@ void *readDynamicArray(DynamicArray *DArray,int index);
 void *writeDynamicArray(DynamicArray *DArray,int index,void *value);
 void dynamicArrayDump(DynamicArray *DArray,void valueDump(void *));
 
-typedef struct _Stack{
+struct Stack{
   int num;
   DynamicArray *body;
-} Stack;
+
+  int numStack(){
+    return num;
+  }
+  Stack() {
+    num=0;
+    body=new DynamicArray();
+  };
+};
 
 Stack *makeStack();
 void freeStack(Stack *stack);
