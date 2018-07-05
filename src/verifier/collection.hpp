@@ -4,7 +4,7 @@
 #include<stdint.h>
 #include"util.hpp"
 #include"hash.hpp"
-
+#define INIT_CAP (4)
 typedef enum Order{
   LT,//less than
   EQ,//equal

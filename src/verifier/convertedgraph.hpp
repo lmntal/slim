@@ -41,11 +41,12 @@
 #include "json.hpp"
 #include "collection.hpp"
 struct ConvertedGraph {
-  DynamicArray atoms;
-  DynamicArray hyperlinks;
+  DynamicArray *atoms;
+  DynamicArray *hyperlinks;
 
   ConvertedGraph(json_value *json_val) {
-    
+    atoms = makeDynamicArray();
+    hyperlinks = makeDynamicArray();
   }
 };
 #endif
