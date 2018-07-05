@@ -52,7 +52,7 @@
 #include "state.h"
 #include "state.hpp"
 // #define DIFFISO_GEN
-
+bool diff_gen_finish=false;
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
@@ -227,10 +227,13 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
 #ifdef DIFFISO_GEN
-  printf("Succ number Information\n");
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  if(!diff_gen_finish) {
+    printf("Succ number Information\n");
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+  }
 #endif
-  Graphinfo * gi = new Graphinfo(mem);
+  if(!diff_gen_finish)
+    new Graphinfo(mem);
   /** expand  : 状態の展開 */
   if (p_s) {
     mc_gen_successors_with_property(s, mem, p_s, rc, psyms, f);
@@ -238,12 +241,15 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
 #ifdef DIFFISO_GEN
-  printf("%d\n", mc_react_cxt_expanded_num(rc));
-  printf("Parent Graph\n");
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  lmn_dump_mem_stdout(mem);
+  if(!diff_gen_finish) {
+    printf("%d\n", mc_react_cxt_expanded_num(rc));
+    printf("Parent Graph\n");
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    lmn_dump_mem_stdout(mem);
+  }
 #endif
   if (mc_react_cxt_expanded_num(rc) == 0) {
+    diff_gen_finish=true;
     /* sを最終状態集合として記録 */
     statespace_add_end_state(ss, s);
   } else if (mc_enable_por(f) && !s->s_is_reduced()) {
@@ -323,7 +329,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   succ_i = 0;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
 #ifdef DIFFISO_GEN
-    printf("Child Graph\n");
+    if(!diff_gen_finish)
+      printf("Child Graph\n");
 #endif
     TransitionRef src_t;
     st_data_t tmp;
@@ -360,10 +367,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       succ = statespace_insert(ss, src_succ);
     }
 #ifdef DIFFISO_GEN
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    lmn_dump_mem_stdout(src_succ_m);
+    if(!diff_gen_finish) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      lmn_dump_mem_stdout(src_succ_m);
+    }
 #endif
-    Graphinfo * child = new Graphinfo(src_succ_m);
+    if(!diff_gen_finish)
+      new Graphinfo(src_succ_m);
   
     if (succ == src_succ) {
       /* new state */
@@ -412,13 +422,15 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     */
   }
 #ifdef DIFFISO_GEN
-  printf("Parent State ID\n");
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  printf("%d\n", s->state_id);
-  for(i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
-    printf("Child State ID\n");
+  if(!diff_gen_finish){
+    printf("Parent State ID\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    printf("%d\n", ((State *)vec_get(RC_EXPANDED(rc), i))->state_id);
+    printf("%d\n", s->state_id);
+    for(i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+      printf("Child State ID\n");
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      printf("%d\n", ((State *)vec_get(RC_EXPANDED(rc), i))->state_id);
+    }    
   }
 #endif
   st_clear(RC_SUCC_TBL(rc));
