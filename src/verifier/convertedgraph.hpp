@@ -38,126 +38,14 @@
  */
 #ifndef LMN_CONVERTEDGRAPH_HPP
 #define LMN_CONVERTEDGRAPH_HPP
-#include "lmntal.h"
-#include "vm/atomlist.hpp"
-#include "vm/vm.h"
-#include <iostream>
-#include <string>
-#include <vector>
-namespace ConvertedGraph{
-typedef enum {
-  convertedNone,
-  convertedAtom,
-  convertedHyperLink,
-  convertedNull
-} ConvertedGraphVertexType;
-
-union AtomData {
-  int integer;
-  double dbl;
-  std::string s;
-  int id;
-  AtomData() {}
-  ~AtomData() {}
-};
-
-struct ConvertedGraphLink {
-  int attr;
-  AtomData data;
-
-public:
-  ConvertedGraphLink(LmnSymbolAtomRef atom, int pos) {
-    attr = LMN_SATOM_GET_ATTR(atom, pos);
-    if (!LMN_ATTR_IS_DATA(attr)) {
-      data.id = LMN_SATOM_ID((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, pos));
-    } else {
-      switch (attr) {
-      case LMN_INT_ATTR:
-        data.integer = (LmnWord)LMN_SATOM_GET_LINK(atom, pos);
-        break;
-      case LMN_DBL_ATTR:
-        data.dbl =
-            lmn_get_double((LmnDataAtomRef)LMN_SATOM_GET_LINK(atom, pos));
-        break;
-      }
-    }
-  }
-};
-
-struct ConvertedGraphVertex {
-  ConvertedGraphVertexType type;
-  std::vector<ConvertedGraphLink *> links;
-  int id;
-  // std::string name;
-  const char *name;
-  bool isPushedIntoDiffInfoStack;
-  bool isVisitedInBFS;
-
-  ConvertedGraphVertex(LmnSymbolAtomRef atom) {
-    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
-    LmnArity arity = LMN_FUNCTOR_ARITY(f);
-    type = convertedAtom;
-    id = LMN_SATOM_ID(atom);
-    // name = std::string(lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)));
-    name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
-    // printf("%s:%d name=%s\n", __FILE__, __LINE__, name);
-    isPushedIntoDiffInfoStack = false;
-    isVisitedInBFS = false;
-    for (int i = 0; i < arity; i++) {
-      ConvertedGraphLink *l = new ConvertedGraphLink(atom, i);
-      links.push_back(l);
-    }
-  }
-};
-
+#include "json.hpp"
+#include "collection.hpp"
 struct ConvertedGraph {
-  std::vector<ConvertedGraphVertex *> atoms;
-  std::vector<ConvertedGraphVertex *> hyperlinkatoms;
+  DynamicArray atoms;
+  DynamicArray hyperlinks;
 
-  void convert_atoms(LmnMembraneRef mem,
-                     std::vector<ConvertedGraphVertex *> *atoms) {
-    AtomListEntryRef ent;
-    EACH_ATOMLIST(
-        mem, ent, ({
-          LmnSymbolAtomRef atom;
-          EACH_ATOM(atom, ent, ({
-                      if (!LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(atom)) &&
-                          !LMN_FUNC_IS_HL(LMN_SATOM_GET_FUNCTOR(atom))) {
-                        ConvertedGraphVertex *v =
-                            new ConvertedGraphVertex(atom);
-                        (*atoms).push_back(v);
-                      }
-                    }));
-        }));
-    // return cv;
-  }
-
-  std::vector<ConvertedGraphVertex *> convert_hyperlinks(LmnMembraneRef mem) {
-    std::vector<ConvertedGraphVertex *> cv;
-    return cv;
-  }
-
-  // memに対応するvertexを返す
-  //  1. memに対応するvertex(m)を作成
-  //  2. mem内のatomをvertexに変換, mへのハイパーリンクを張る
-  //  3. mem内のハイパーリンクを変換
-  //  4. 子膜に対して再帰的にconvert_memを適用
-  //  5. 返ってきたvertexからmへハイパーリンクを張る
-  //  return m
-  void convert_mem(LmnMembraneRef mem,
-                   std::vector<ConvertedGraphVertex *> *atoms,
-                   std::vector<ConvertedGraphVertex *> *hyperlinkatoms) {
-  }
-
-  //  1. mem内のatomをvertexに変換，gm属性でリンクを張る
-  //  2. mem内のハイパーリンクを変換
-  //  3. 子膜に対してconvert_memを適用
-  //  4. 返ってきたvertexにgm属性でリンクを張る
-  ConvertedGraph(LmnMembraneRef mem) {
-    convert_atoms(mem, &atoms);
-    convert_mem(mem, &atoms, &hyperlinkatoms);
-    // hyperlinkatoms = convert_hyperlinks(mem);
+  ConvertedGraph(json_value *json_val) {
+    
   }
 };
-}
 #endif

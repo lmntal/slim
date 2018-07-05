@@ -42,7 +42,8 @@ liblmn_verifier_a_SOURCES =                              \
 	stack_macro.h                                            \
 	convertedgraph.hpp	   graphinfo.hpp		\
 	json.hpp		   json.cpp			\
-	graphinfo.cpp
+	graphinfo.cpp		   collection.hpp		\
+	util.hpp		   hash.hpp
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)

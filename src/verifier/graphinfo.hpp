@@ -39,7 +39,6 @@
 #ifndef LMN_GRAPHINFO_HPP
 #define LMN_GRAPHINFO_HPP
 #include "convertedgraph.hpp"
-// #include "jsonValueDump.h"
 #include "json.hpp"
 #include "lmntal.h"
 #include "vm/atomlist.hpp"
@@ -52,12 +51,11 @@ std::string mem_to_json(LmnMembraneRef mem);
 std::string atom_to_json(LmnSymbolAtomRef atom);
 std::string link_to_json(LmnSymbolAtomRef atom, int index);
 
-namespace GraphInfo {
 struct Graphinfo {
   std::string json_string;
   json_value *json_val;
   int state_id;
-  ConvertedGraph::ConvertedGraph *cv;
+  ConvertedGraph *cv;
   int globalRootMemID;
 
   Graphinfo(LmnMembraneRef mem) {
@@ -66,9 +64,8 @@ struct Graphinfo {
     state_id = -1;
     jsonDump(json_val);
     globalRootMemID = globalrootmem_id(json_val);
-    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    cv = new ConvertedGraph(json_val);
   }
 };
-} // namespace GraphInfo
 
 #endif
