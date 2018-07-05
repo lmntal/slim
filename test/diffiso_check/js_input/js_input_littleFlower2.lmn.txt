@@ -1,0 +1,134 @@
+Succ number Information
+do_mc:115
+1
+Parent Graph
+do_mc:118
+{"id":5,"name":"","atoms":[],"membranes":[]}
+Child Graph
+do_mc:121
+{"id":3,"name":"","atoms":[{"id":4,"name":"init","links":[]}],"membranes":[]}
+Parent State ID
+do_mc:124
+0
+Child State ID
+do_mc:127
+1
+Succ number Information
+mc_expand:232
+1
+Parent Graph
+mc_expand:247
+{"id":1,"name":"","atoms":[{"id":2,"name":"init","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":5,"name":"","atoms":[{"id":15,"name":"tail","links":[{"attr":1,"data":16}]},{"id":18,"name":"tail","links":[{"attr":1,"data":19}]},{"id":21,"name":"tail","links":[{"attr":1,"data":22}]},{"id":24,"name":"tail","links":[{"attr":1,"data":25}]},{"id":16,"name":"a","links":[{"attr":1,"data":17},{"attr":0,"data":15}]},{"id":19,"name":"a","links":[{"attr":1,"data":20},{"attr":0,"data":18}]},{"id":22,"name":"a","links":[{"attr":1,"data":23},{"attr":0,"data":21}]},{"id":25,"name":"a","links":[{"attr":1,"data":26},{"attr":0,"data":24}]},{"id":17,"name":"b","links":[{"attr":138,"data":4},{"attr":0,"data":16}]},{"id":20,"name":"b","links":[{"attr":138,"data":4},{"attr":0,"data":19}]},{"id":23,"name":"b","links":[{"attr":138,"data":4},{"attr":0,"data":22}]},{"id":26,"name":"b","links":[{"attr":138,"data":4},{"attr":0,"data":25}]}],"membranes":[]}
+Parent State ID
+mc_store_successors:427
+1
+Child State ID
+mc_store_successors:431
+2
+Succ number Information
+mc_expand:232
+4
+Parent Graph
+mc_expand:247
+{"id":5,"name":"","atoms":[{"id":10,"name":"tail","links":[{"attr":1,"data":9}]},{"id":15,"name":"tail","links":[{"attr":1,"data":14}]},{"id":20,"name":"tail","links":[{"attr":1,"data":19}]},{"id":25,"name":"tail","links":[{"attr":1,"data":24}]},{"id":9,"name":"a","links":[{"attr":1,"data":6},{"attr":0,"data":10}]},{"id":14,"name":"a","links":[{"attr":1,"data":11},{"attr":0,"data":15}]},{"id":19,"name":"a","links":[{"attr":1,"data":16},{"attr":0,"data":20}]},{"id":24,"name":"a","links":[{"attr":1,"data":21},{"attr":0,"data":25}]},{"id":6,"name":"b","links":[{"attr":138,"data":8},{"attr":0,"data":9}]},{"id":11,"name":"b","links":[{"attr":138,"data":8},{"attr":0,"data":14}]},{"id":16,"name":"b","links":[{"attr":138,"data":8},{"attr":0,"data":19}]},{"id":21,"name":"b","links":[{"attr":138,"data":8},{"attr":0,"data":24}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":26,"name":"","atoms":[{"id":28,"name":"tail","links":[{"attr":1,"data":32}]},{"id":29,"name":"tail","links":[{"attr":1,"data":33}]},{"id":30,"name":"tail","links":[{"attr":1,"data":34}]},{"id":31,"name":"a","links":[{"attr":1,"data":35},{"attr":0,"data":47}]},{"id":32,"name":"a","links":[{"attr":1,"data":38},{"attr":0,"data":28}]},{"id":33,"name":"a","links":[{"attr":1,"data":41},{"attr":0,"data":29}]},{"id":34,"name":"a","links":[{"attr":1,"data":44},{"attr":0,"data":30}]},{"id":35,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":31}]},{"id":38,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":32}]},{"id":41,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":33}]},{"id":44,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":34}]},{"id":47,"name":"head","links":[{"attr":1,"data":31}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":26,"name":"","atoms":[{"id":27,"name":"tail","links":[{"attr":1,"data":31}]},{"id":29,"name":"tail","links":[{"attr":1,"data":33}]},{"id":30,"name":"tail","links":[{"attr":1,"data":34}]},{"id":31,"name":"a","links":[{"attr":1,"data":35},{"attr":0,"data":27}]},{"id":32,"name":"a","links":[{"attr":1,"data":38},{"attr":0,"data":47}]},{"id":33,"name":"a","links":[{"attr":1,"data":41},{"attr":0,"data":29}]},{"id":34,"name":"a","links":[{"attr":1,"data":44},{"attr":0,"data":30}]},{"id":35,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":31}]},{"id":38,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":32}]},{"id":41,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":33}]},{"id":44,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":34}]},{"id":47,"name":"head","links":[{"attr":1,"data":32}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":26,"name":"","atoms":[{"id":27,"name":"tail","links":[{"attr":1,"data":31}]},{"id":28,"name":"tail","links":[{"attr":1,"data":32}]},{"id":30,"name":"tail","links":[{"attr":1,"data":34}]},{"id":31,"name":"a","links":[{"attr":1,"data":35},{"attr":0,"data":27}]},{"id":32,"name":"a","links":[{"attr":1,"data":38},{"attr":0,"data":28}]},{"id":33,"name":"a","links":[{"attr":1,"data":41},{"attr":0,"data":47}]},{"id":34,"name":"a","links":[{"attr":1,"data":44},{"attr":0,"data":30}]},{"id":35,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":31}]},{"id":38,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":32}]},{"id":41,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":33}]},{"id":44,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":34}]},{"id":47,"name":"head","links":[{"attr":1,"data":33}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":26,"name":"","atoms":[{"id":27,"name":"tail","links":[{"attr":1,"data":31}]},{"id":28,"name":"tail","links":[{"attr":1,"data":32}]},{"id":29,"name":"tail","links":[{"attr":1,"data":33}]},{"id":31,"name":"a","links":[{"attr":1,"data":35},{"attr":0,"data":27}]},{"id":32,"name":"a","links":[{"attr":1,"data":38},{"attr":0,"data":28}]},{"id":33,"name":"a","links":[{"attr":1,"data":41},{"attr":0,"data":29}]},{"id":34,"name":"a","links":[{"attr":1,"data":44},{"attr":0,"data":47}]},{"id":35,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":31}]},{"id":38,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":32}]},{"id":41,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":33}]},{"id":44,"name":"b","links":[{"attr":138,"data":37},{"attr":0,"data":34}]},{"id":47,"name":"head","links":[{"attr":1,"data":34}]}],"membranes":[]}
+Parent State ID
+mc_store_successors:427
+2
+Child State ID
+mc_store_successors:431
+3
+Child State ID
+mc_store_successors:431
+0
+Child State ID
+mc_store_successors:431
+0
+Child State ID
+mc_store_successors:431
+0
+Succ number Information
+mc_expand:232
+3
+Parent Graph
+mc_expand:247
+{"id":26,"name":"","atoms":[{"id":36,"name":"tail","links":[{"attr":1,"data":35}]},{"id":41,"name":"tail","links":[{"attr":1,"data":40}]},{"id":46,"name":"tail","links":[{"attr":1,"data":45}]},{"id":28,"name":"a","links":[{"attr":1,"data":29},{"attr":0,"data":27}]},{"id":35,"name":"a","links":[{"attr":1,"data":32},{"attr":0,"data":36}]},{"id":40,"name":"a","links":[{"attr":1,"data":37},{"attr":0,"data":41}]},{"id":45,"name":"a","links":[{"attr":1,"data":42},{"attr":0,"data":46}]},{"id":29,"name":"b","links":[{"attr":138,"data":31},{"attr":0,"data":28}]},{"id":32,"name":"b","links":[{"attr":138,"data":31},{"attr":0,"data":35}]},{"id":37,"name":"b","links":[{"attr":138,"data":31},{"attr":0,"data":40}]},{"id":42,"name":"b","links":[{"attr":138,"data":31},{"attr":0,"data":45}]},{"id":27,"name":"head","links":[{"attr":1,"data":28}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":47,"name":"","atoms":[{"id":49,"name":"tail","links":[{"attr":1,"data":53}]},{"id":50,"name":"tail","links":[{"attr":1,"data":54}]},{"id":51,"name":"a","links":[{"attr":1,"data":55},{"attr":0,"data":67}]},{"id":52,"name":"a","links":[{"attr":1,"data":58},{"attr":0,"data":68}]},{"id":53,"name":"a","links":[{"attr":1,"data":61},{"attr":0,"data":49}]},{"id":54,"name":"a","links":[{"attr":1,"data":64},{"attr":0,"data":50}]},{"id":55,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":51}]},{"id":58,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":52}]},{"id":61,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":53}]},{"id":64,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":54}]},{"id":67,"name":"head","links":[{"attr":1,"data":51}]},{"id":68,"name":"head","links":[{"attr":1,"data":52}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":47,"name":"","atoms":[{"id":48,"name":"tail","links":[{"attr":1,"data":52}]},{"id":50,"name":"tail","links":[{"attr":1,"data":54}]},{"id":51,"name":"a","links":[{"attr":1,"data":55},{"attr":0,"data":67}]},{"id":52,"name":"a","links":[{"attr":1,"data":58},{"attr":0,"data":48}]},{"id":53,"name":"a","links":[{"attr":1,"data":61},{"attr":0,"data":68}]},{"id":54,"name":"a","links":[{"attr":1,"data":64},{"attr":0,"data":50}]},{"id":55,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":51}]},{"id":58,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":52}]},{"id":61,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":53}]},{"id":64,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":54}]},{"id":67,"name":"head","links":[{"attr":1,"data":51}]},{"id":68,"name":"head","links":[{"attr":1,"data":53}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":47,"name":"","atoms":[{"id":48,"name":"tail","links":[{"attr":1,"data":52}]},{"id":49,"name":"tail","links":[{"attr":1,"data":53}]},{"id":51,"name":"a","links":[{"attr":1,"data":55},{"attr":0,"data":67}]},{"id":52,"name":"a","links":[{"attr":1,"data":58},{"attr":0,"data":48}]},{"id":53,"name":"a","links":[{"attr":1,"data":61},{"attr":0,"data":49}]},{"id":54,"name":"a","links":[{"attr":1,"data":64},{"attr":0,"data":68}]},{"id":55,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":51}]},{"id":58,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":52}]},{"id":61,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":53}]},{"id":64,"name":"b","links":[{"attr":138,"data":57},{"attr":0,"data":54}]},{"id":67,"name":"head","links":[{"attr":1,"data":51}]},{"id":68,"name":"head","links":[{"attr":1,"data":54}]}],"membranes":[]}
+Parent State ID
+mc_store_successors:427
+3
+Child State ID
+mc_store_successors:431
+4
+Child State ID
+mc_store_successors:431
+0
+Child State ID
+mc_store_successors:431
+0
+Succ number Information
+mc_expand:232
+2
+Parent Graph
+mc_expand:247
+{"id":47,"name":"","atoms":[{"id":62,"name":"tail","links":[{"attr":1,"data":61}]},{"id":67,"name":"tail","links":[{"attr":1,"data":66}]},{"id":49,"name":"a","links":[{"attr":1,"data":50},{"attr":0,"data":48}]},{"id":54,"name":"a","links":[{"attr":1,"data":55},{"attr":0,"data":53}]},{"id":61,"name":"a","links":[{"attr":1,"data":58},{"attr":0,"data":62}]},{"id":66,"name":"a","links":[{"attr":1,"data":63},{"attr":0,"data":67}]},{"id":50,"name":"b","links":[{"attr":138,"data":52},{"attr":0,"data":49}]},{"id":55,"name":"b","links":[{"attr":138,"data":52},{"attr":0,"data":54}]},{"id":58,"name":"b","links":[{"attr":138,"data":52},{"attr":0,"data":61}]},{"id":63,"name":"b","links":[{"attr":138,"data":52},{"attr":0,"data":66}]},{"id":48,"name":"head","links":[{"attr":1,"data":49}]},{"id":53,"name":"head","links":[{"attr":1,"data":54}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":68,"name":"","atoms":[{"id":70,"name":"tail","links":[{"attr":1,"data":74}]},{"id":71,"name":"a","links":[{"attr":1,"data":75},{"attr":0,"data":87}]},{"id":72,"name":"a","links":[{"attr":1,"data":78},{"attr":0,"data":88}]},{"id":73,"name":"a","links":[{"attr":1,"data":81},{"attr":0,"data":89}]},{"id":74,"name":"a","links":[{"attr":1,"data":84},{"attr":0,"data":70}]},{"id":75,"name":"b","links":[{"attr":138,"data":77},{"attr":0,"data":71}]},{"id":78,"name":"b","links":[{"attr":138,"data":77},{"attr":0,"data":72}]},{"id":81,"name":"b","links":[{"attr":138,"data":77},{"attr":0,"data":73}]},{"id":84,"name":"b","links":[{"attr":138,"data":77},{"attr":0,"data":74}]},{"id":87,"name":"head","links":[{"attr":1,"data":71}]},{"id":88,"name":"head","links":[{"attr":1,"data":72}]},{"id":89,"name":"head","links":[{"attr":1,"data":73}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":68,"name":"","atoms":[{"id":69,"name":"tail","links":[{"attr":1,"data":73}]},{"id":71,"name":"a","links":[{"attr":1,"data":75},{"attr":0,"data":87}]},{"id":72,"name":"a","links":[{"attr":1,"data":78},{"attr":0,"data":88}]},{"id":73,"name":"a","links":[{"attr":1,"data":81},{"attr":0,"data":69}]},{"id":74,"name":"a","links":[{"attr":1,"data":84},{"attr":0,"data":89}]},{"id":75,"name":"b","links":[{"attr":138,"data":77},{"attr":0,"data":71}]},{"id":78,"name":"b","links":[{"attr":138,"data":77},{"attr":0,"data":72}]},{"id":81,"name":"b","links":[{"attr":138,"data":77},{"attr":0,"data":73}]},{"id":84,"name":"b","links":[{"attr":138,"data":77},{"attr":0,"data":74}]},{"id":87,"name":"head","links":[{"attr":1,"data":71}]},{"id":88,"name":"head","links":[{"attr":1,"data":72}]},{"id":89,"name":"head","links":[{"attr":1,"data":74}]}],"membranes":[]}
+Parent State ID
+mc_store_successors:427
+4
+Child State ID
+mc_store_successors:431
+5
+Child State ID
+mc_store_successors:431
+0
+Succ number Information
+mc_expand:232
+1
+Parent Graph
+mc_expand:247
+{"id":68,"name":"","atoms":[{"id":88,"name":"tail","links":[{"attr":1,"data":87}]},{"id":70,"name":"a","links":[{"attr":1,"data":71},{"attr":0,"data":69}]},{"id":75,"name":"a","links":[{"attr":1,"data":76},{"attr":0,"data":74}]},{"id":80,"name":"a","links":[{"attr":1,"data":81},{"attr":0,"data":79}]},{"id":87,"name":"a","links":[{"attr":1,"data":84},{"attr":0,"data":88}]},{"id":71,"name":"b","links":[{"attr":138,"data":73},{"attr":0,"data":70}]},{"id":76,"name":"b","links":[{"attr":138,"data":73},{"attr":0,"data":75}]},{"id":81,"name":"b","links":[{"attr":138,"data":73},{"attr":0,"data":80}]},{"id":84,"name":"b","links":[{"attr":138,"data":73},{"attr":0,"data":87}]},{"id":69,"name":"head","links":[{"attr":1,"data":70}]},{"id":74,"name":"head","links":[{"attr":1,"data":75}]},{"id":79,"name":"head","links":[{"attr":1,"data":80}]}],"membranes":[]}
+Child Graph
+mc_store_successors:371
+{"id":89,"name":"","atoms":[{"id":91,"name":"a","links":[{"attr":1,"data":95},{"attr":0,"data":107}]},{"id":92,"name":"a","links":[{"attr":1,"data":98},{"attr":0,"data":108}]},{"id":93,"name":"a","links":[{"attr":1,"data":101},{"attr":0,"data":109}]},{"id":94,"name":"a","links":[{"attr":1,"data":104},{"attr":0,"data":110}]},{"id":95,"name":"b","links":[{"attr":138,"data":97},{"attr":0,"data":91}]},{"id":98,"name":"b","links":[{"attr":138,"data":97},{"attr":0,"data":92}]},{"id":101,"name":"b","links":[{"attr":138,"data":97},{"attr":0,"data":93}]},{"id":104,"name":"b","links":[{"attr":138,"data":97},{"attr":0,"data":94}]},{"id":107,"name":"head","links":[{"attr":1,"data":91}]},{"id":108,"name":"head","links":[{"attr":1,"data":92}]},{"id":109,"name":"head","links":[{"attr":1,"data":93}]},{"id":110,"name":"head","links":[{"attr":1,"data":94}]}],"membranes":[]}
+Parent State ID
+mc_store_successors:427
+5
+Child State ID
+mc_store_successors:431
+6
+Succ number Information
+mc_expand:232
+0
+Parent Graph
+mc_expand:247
+{"id":89,"name":"","atoms":[{"id":91,"name":"a","links":[{"attr":1,"data":92},{"attr":0,"data":90}]},{"id":96,"name":"a","links":[{"attr":1,"data":97},{"attr":0,"data":95}]},{"id":101,"name":"a","links":[{"attr":1,"data":102},{"attr":0,"data":100}]},{"id":106,"name":"a","links":[{"attr":1,"data":107},{"attr":0,"data":105}]},{"id":92,"name":"b","links":[{"attr":138,"data":94},{"attr":0,"data":91}]},{"id":97,"name":"b","links":[{"attr":138,"data":94},{"attr":0,"data":96}]},{"id":102,"name":"b","links":[{"attr":138,"data":94},{"attr":0,"data":101}]},{"id":107,"name":"b","links":[{"attr":138,"data":94},{"attr":0,"data":106}]},{"id":90,"name":"head","links":[{"attr":1,"data":91}]},{"id":95,"name":"head","links":[{"attr":1,"data":96}]},{"id":100,"name":"head","links":[{"attr":1,"data":101}]},{"id":105,"name":"head","links":[{"attr":1,"data":106}]}],"membranes":[]}
+'# of States'(stored)   = 6.
+'# of States'(end)      = 1.

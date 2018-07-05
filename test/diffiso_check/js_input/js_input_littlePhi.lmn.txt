@@ -1,0 +1,38 @@
+Succ number Information
+do_mc:115
+1
+Parent Graph
+do_mc:118
+{"id":19,"name":"","atoms":[],"membranes":[]}
+Child Graph
+do_mc:121
+{"id":10,"name":"","atoms":[{"id":16,"name":"$out","links":[{"attr":0,"data":12},{"attr":0,"data":18}]},{"id":17,"name":"$out","links":[{"attr":0,"data":13},{"attr":1,"data":18}]},{"id":18,"name":"phi","links":[{"attr":1,"data":16},{"attr":1,"data":17}]}],"membranes":[{"id":11,"name":"fork","atoms":[{"id":12,"name":"$in","links":[{"attr":0,"data":16},{"attr":0,"data":15}]},{"id":13,"name":"$in","links":[{"attr":0,"data":17},{"attr":0,"data":14}]},{"id":14,"name":"+","links":[{"attr":1,"data":13}]},{"id":15,"name":"+","links":[{"attr":1,"data":12}]}],"membranes":[]}]}
+Parent State ID
+do_mc:124
+0
+Child State ID
+do_mc:127
+1
+Succ number Information
+mc_expand:232
+1
+Parent Graph
+mc_expand:247
+{"id":1,"name":"","atoms":[{"id":5,"name":"$out","links":[{"attr":0,"data":4},{"attr":0,"data":2}]},{"id":9,"name":"$out","links":[{"attr":0,"data":8},{"attr":1,"data":2}]},{"id":2,"name":"phi","links":[{"attr":1,"data":5},{"attr":1,"data":9}]}],"membranes":[{"id":3,"name":"fork","atoms":[{"id":4,"name":"$in","links":[{"attr":0,"data":5},{"attr":0,"data":6}]},{"id":8,"name":"$in","links":[{"attr":0,"data":9},{"attr":0,"data":7}]},{"id":6,"name":"+","links":[{"attr":1,"data":4}]},{"id":7,"name":"+","links":[{"attr":1,"data":8}]}],"membranes":[]}]}
+Child Graph
+mc_store_successors:371
+{"id":10,"name":"","atoms":[{"id":24,"name":"$out","links":[{"attr":0,"data":21},{"attr":1,"data":23}]},{"id":25,"name":"$out","links":[{"attr":0,"data":22},{"attr":0,"data":23}]},{"id":23,"name":"phi","links":[{"attr":1,"data":25},{"attr":1,"data":24}]}],"membranes":[{"id":11,"name":"fork","atoms":[{"id":21,"name":"$in","links":[{"attr":0,"data":24},{"attr":0,"data":19}]},{"id":22,"name":"$in","links":[{"attr":0,"data":25},{"attr":0,"data":20}]},{"id":20,"name":"+","links":[{"attr":1,"data":22}]},{"id":19,"name":"-","links":[{"attr":1,"data":21}]}],"membranes":[]}]}
+Parent State ID
+mc_store_successors:427
+1
+Child State ID
+mc_store_successors:431
+2
+Succ number Information
+mc_expand:232
+0
+Parent Graph
+mc_expand:247
+{"id":10,"name":"","atoms":[{"id":14,"name":"$out","links":[{"attr":0,"data":13},{"attr":0,"data":11}]},{"id":18,"name":"$out","links":[{"attr":0,"data":17},{"attr":1,"data":11}]},{"id":11,"name":"phi","links":[{"attr":1,"data":14},{"attr":1,"data":18}]}],"membranes":[{"id":12,"name":"fork","atoms":[{"id":13,"name":"$in","links":[{"attr":0,"data":14},{"attr":0,"data":15}]},{"id":17,"name":"$in","links":[{"attr":0,"data":18},{"attr":0,"data":16}]},{"id":15,"name":"+","links":[{"attr":1,"data":13}]},{"id":16,"name":"-","links":[{"attr":1,"data":17}]}],"membranes":[]}]}
+'# of States'(stored)   = 2.
+'# of States'(end)      = 1.
