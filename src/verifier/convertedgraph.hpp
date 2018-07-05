@@ -40,6 +40,29 @@
 #define LMN_CONVERTEDGRAPH_HPP
 #include "json.hpp"
 #include "collection.hpp"
+#define NAME_LENGTH 256
+#define INTEGER_ATTR 128
+#define DOUBLE_ATTR 129
+#define STRING_ATTR 131
+#define HYPER_LINK_ATTR 138
+#define GLOBAL_ROOT_MEM_ATTR 255
+
+union LMNtalData{
+  int integer;
+  double dbl;
+  char string[NAME_LENGTH];
+  int ID;
+};
+
+struct LMNtalLink{
+  int attr;
+  LMNtalData data;
+  LMNtalLink(int attr,LMNtalData data) {
+    attr = attr;
+    data = data;
+  }
+};
+
 struct ConvertedGraph {
   DynamicArray *atoms;
   DynamicArray *hyperlinks;
@@ -47,6 +70,9 @@ struct ConvertedGraph {
   ConvertedGraph(json_value *json_val) {
     atoms = makeDynamicArray();
     hyperlinks = makeDynamicArray();
+    LMNtalData data;
+    data.integer = 0;
+    LMNtalLink *gRootMemLink = new LMNtalLink(GLOBAL_ROOT_MEM_ATTR,data);
   }
 };
 #endif
