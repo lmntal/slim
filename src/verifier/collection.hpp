@@ -14,6 +14,13 @@ typedef enum Order{
 struct DynamicArray{
   int cap;
   void **body;
+  DynamicArray(){
+    cap = INIT_CAP;
+    if((body = (void **)calloc(sizeof(void *),INIT_CAP)) == NULL){
+      CHECKER("CALLOC ERROR");
+      exit(EXIT_FAILURE);
+    }
+  }
 };
 
 DynamicArray *makeDynamicArray();

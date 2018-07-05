@@ -68,8 +68,8 @@ struct ConvertedGraph {
   DynamicArray *hyperlinks;
 
   ConvertedGraph(json_value *json_val) {
-    atoms = makeDynamicArray();
-    hyperlinks = makeDynamicArray();
+    atoms = new DynamicArray();
+    hyperlinks = new DynamicArray();
     LMNtalData data;
     data.integer = 0;
     LMNtalLink *gRootMemLink = new LMNtalLink(GLOBAL_ROOT_MEM_ATTR,data);
