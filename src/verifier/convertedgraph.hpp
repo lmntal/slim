@@ -84,8 +84,8 @@ struct ConvertedGraphVertex{
   Bool isVisitedInBFS;
   InheritedVertex *correspondingVertexInTrie;
 
-  ConvertedGraphVertex(int id, char *Name) {
-    type = convertedAtom;
+  ConvertedGraphVertex(ConvertedGraphVertexType t, int id, char *Name) {
+    type = t;
     links = new Stack();
     ID = id;
     strcpy(name,Name);
@@ -148,7 +148,7 @@ struct ConvertedGraph {
 
     if(link->attr == HYPER_LINK_ATTR){
       if(readDynamicArray(hyperlinks,link->data.ID) == NULL){
-	ConvertedGraphVertex *cv_hyper = new ConvertedGraphVertex(link->data.ID,"");
+	ConvertedGraphVertex *cv_hyper = new ConvertedGraphVertex(convertedHyperLink, link->data.ID,"");
 	writeDynamicArray(hyperlinks,link->data.ID,cv_hyper);
       }
 
@@ -173,7 +173,7 @@ struct ConvertedGraph {
       LMNtalNameCopy(jVal,tmpName2);
       strcat(tmpName1,tmpName2);
 
-      ConvertedGraphVertex *cVertex = new ConvertedGraphVertex(LMNtalID(jVal),tmpName1);
+      ConvertedGraphVertex *cVertex = new ConvertedGraphVertex(convertedAtom, LMNtalID(jVal),tmpName1);
       writeDynamicArray(atoms,LMNtalID(jVal),cVertex);
       convertGraphLinksArray(jVal->u.object.values[2].value,atoms, hyperlinks ,cVertex);
       pushStack(cVertex->links,copyLink(linkToParentMem));
@@ -202,8 +202,8 @@ struct ConvertedGraph {
     LMNtalNameCopy(jVal,tmpName2);
     strcat(tmpName1,tmpName2);
 
-    ConvertedGraphVertex *cVertex = new ConvertedGraphVertex(LMNtalID(jVal),tmpName1);
-    ConvertedGraphVertex *cHyperlink = new ConvertedGraphVertex(LMNtalID(jVal),"");
+    ConvertedGraphVertex *cVertex = new ConvertedGraphVertex(convertedAtom, LMNtalID(jVal),tmpName1);
+    ConvertedGraphVertex *cHyperlink = new ConvertedGraphVertex(convertedHyperLink, LMNtalID(jVal),"");
 
     writeDynamicArray(atoms,LMNtalID(jVal),cVertex);
     writeDynamicArray(hyperlinks,LMNtalID(jVal),cHyperlink);

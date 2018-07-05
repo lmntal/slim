@@ -62,7 +62,7 @@ struct Graphinfo {
     std::string json = mem_to_json(mem);
     json_val = json_parse(json.c_str(), json.size() + 1);
     state_id = -1;
-    jsonDump(json_val);
+    // jsonDump(json_val);
     globalRootMemID = globalrootmem_id(json_val);
     cv = new ConvertedGraph(json_val);
     convertedGraphDump(cv);

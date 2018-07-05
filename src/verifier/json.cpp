@@ -209,7 +209,6 @@ json_value * json_parse_ex (json_settings * settings,
                             size_t length,
                             char * error_buf)
 {
-  printf("json=%s\n", json);
   json_char error [json_error_max];
   unsigned int cur_line;
   const json_char * cur_line_begin, * i, * end;

@@ -51,7 +51,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
-#define DIFFISO_GEN
+// #define DIFFISO_GEN
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -127,7 +127,8 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   printf("1\n");
 #endif
-
+  new Graphinfo(lmn_mem_make());
+  new Graphinfo(mem);
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -228,8 +229,8 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 #ifdef DIFFISO_GEN
   printf("Succ number Information\n");
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  Graphinfo * gi = new Graphinfo(mem);
 #endif
+  Graphinfo * gi = new Graphinfo(mem);
   /** expand  : 状態の展開 */
   if (p_s) {
     mc_gen_successors_with_property(s, mem, p_s, rc, psyms, f);
@@ -362,6 +363,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     lmn_dump_mem_stdout(src_succ_m);
 #endif
+    Graphinfo * child = new Graphinfo(src_succ_m);
+  
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
