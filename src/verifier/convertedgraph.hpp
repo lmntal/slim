@@ -44,6 +44,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+namespace ConvertedGraph{
 typedef enum {
   convertedNone,
   convertedAtom,
@@ -158,5 +159,5 @@ struct ConvertedGraph {
     // hyperlinkatoms = convert_hyperlinks(mem);
   }
 };
-
+}
 #endif

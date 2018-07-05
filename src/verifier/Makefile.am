@@ -41,7 +41,8 @@ liblmn_verifier_a_SOURCES =                              \
 	visitlog.cpp               visitlog.h                    \
 	stack_macro.h                                            \
 	convertedgraph.hpp	   graphinfo.hpp		\
-	json.hpp		   json.cpp
+	json.hpp		   json.cpp			\
+	graphinfo.cpp
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
