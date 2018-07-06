@@ -12,6 +12,16 @@ struct DiffInfo{
   Stack *addedVertices;
   Stack *relinkedVertices;
 
+  void diffInfoDump(){
+    fprintf(stdout,"deletedVertices:\n\n");
+    deletedVertices->stackDump(convertedGraphVertexDumpCaster);
+    fprintf(stdout,"addedVertices:\n\n");
+    addedVertices->stackDump(convertedGraphVertexDumpCaster);
+    fprintf(stdout,"relinkedVertices:\n\n");
+    relinkedVertices->stackDump(convertedGraphVertexDumpCaster);
+    return;
+  }
+
   DiffInfo(Graphinfo *before_gi, Graphinfo *after_gi) {
     DynamicArray *before_atoms=before_gi->cv->atoms;
     DynamicArray *before_hyperlinks=before_gi->cv->hyperlinks;

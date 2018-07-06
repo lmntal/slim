@@ -65,7 +65,7 @@ struct Graphinfo {
     // jsonDump(json_val);
     globalRootMemID = globalrootmem_id(json_val);
     cv = new ConvertedGraph(json_val);
-    convertedGraphDump(cv);
+    // convertedGraphDump(cv);
   }
 };
 

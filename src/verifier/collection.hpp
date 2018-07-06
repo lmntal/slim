@@ -44,6 +44,8 @@ struct Stack{
   int numStack(){
     return num;
   }
+
+  void stackDump(void valueDump(void *));
   Stack() {
     num=0;
     body=new DynamicArray();
@@ -62,7 +64,7 @@ int numStack(Stack *stack);
 void *readStack(Stack *stack,int index);
 void *writeStack(Stack *stack,int index,void *value);
 void swapStack(Stack *source,Stack *target);
-void stackDump(Stack *stack,void valueDump(void *));
+
 
 typedef intptr_t CollectionInt;
 

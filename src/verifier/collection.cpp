@@ -76,3 +76,15 @@ void dynamicArrayDump(DynamicArray *DArray,void valueDump(void *)){
 void *readStack(Stack *stack,int index){
   return readDynamicArray(stack->body,index);
 }
+
+void Stack::stackDump(void valueDump(void *)){
+  int i;
+
+  for(i=0;i<numStack();i++){
+    void *value = readStack(this,i);
+
+    fprintf(stdout,"%d:",i);
+    valueDump(value);
+    fprintf(stdout,"\n");
+  }
+}

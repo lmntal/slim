@@ -52,7 +52,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
-// #define DIFFISO_GEN
+#define DIFFISO_GEN
 bool diff_gen_finish=false;
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -128,9 +128,10 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   printf("1\n");
 #endif
-  Graphinfo *empty = new Graphinfo(lmn_mem_make());
-  Graphinfo *init = new Graphinfo(mem);
-  DiffInfo *diff = new DiffInfo(empty, init);
+  // Graphinfo *empty = new Graphinfo(lmn_mem_make());
+  // Graphinfo *init = new Graphinfo(mem);
+  // DiffInfo *diff = new DiffInfo(empty, init);
+  // diff->diffInfoDump();
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -234,8 +235,8 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 #endif
-  if(!diff_gen_finish)
-    new Graphinfo(mem);
+  // if(!diff_gen_finish)
+  //   new Graphinfo(mem);
   /** expand  : 状態の展開 */
   if (p_s) {
     mc_gen_successors_with_property(s, mem, p_s, rc, psyms, f);
@@ -326,7 +327,11 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                          Vector *new_ss, BOOL f) {
   unsigned int i, succ_i;
-  
+  Graphinfo *parent_gi;
+  if(!diff_gen_finish) {
+    LmnMembraneRef org_mem = state_restore_mem(s);  
+    parent_gi = new Graphinfo(org_mem);
+  }
   /** 状態登録 */
   succ_i = 0;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
@@ -368,15 +373,17 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ = statespace_insert(ss, src_succ);
     }
+    if(!diff_gen_finish) {
+      Graphinfo *child_gi = new Graphinfo(src_succ_m);
+      // DiffInfo *di = new DiffInfo(parent_gi, child_gi);
+      // di->diffInfoDump();
+    }
 #ifdef DIFFISO_GEN
     if(!diff_gen_finish) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       lmn_dump_mem_stdout(src_succ_m);
     }
 #endif
-    if(!diff_gen_finish)
-      new Graphinfo(src_succ_m);
-  
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
