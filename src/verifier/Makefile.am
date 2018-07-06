@@ -45,7 +45,7 @@ liblmn_verifier_a_SOURCES =                              \
 	graphinfo.cpp		   collection.hpp		\
 	util.hpp		   hash.hpp			\
 	collection.cpp		   trie.hpp			\
-	convertedgraph.cpp
+	convertedgraph.cpp	   diff_info.hpp
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)

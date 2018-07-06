@@ -1,33 +1,32 @@
 #include "collection.hpp"
+unsigned int round2up(unsigned int n){
+  unsigned int ret = 1;
+  while(ret && ret < n){
+    ret <<= 1;
+  }
+  if(ret == 0){
+    CHECKER("LARGE SIZE ERROR");
+    exit(EXIT_FAILURE);
+  }
+  return ret;
+}
 
-  unsigned int round2up(unsigned int n){
-    unsigned int ret = 1;
-    while(ret && ret < n){
-      ret <<= 1;
-    }
-    if(ret == 0){
-      CHECKER("LARGE SIZE ERROR");
+DynamicArray *assureSizeOfDynamicArray(DynamicArray *DArray,int index){
+  if(index >= DArray->cap){
+    int newCap = round2up((unsigned int)(index+1));
+    void **newBody = (void **)realloc(DArray->body,newCap*sizeof(void *));
+    if(newBody == NULL){
+      CHECKER("REALLOC ERROR");
       exit(EXIT_FAILURE);
     }
-    return ret;
+    memset(newBody+DArray->cap,0,(newCap-DArray->cap)*sizeof(void *));
+    DArray->cap = newCap;
+    DArray->body = newBody;
+    return DArray;
+  }else{
+    return DArray;
   }
-
-  DynamicArray *assureSizeOfDynamicArray(DynamicArray *DArray,int index){
-    if(index >= DArray->cap){
-      int newCap = round2up((unsigned int)(index+1));
-      void **newBody = (void **)realloc(DArray->body,newCap*sizeof(void *));
-      if(newBody == NULL){
-	CHECKER("REALLOC ERROR");
-	exit(EXIT_FAILURE);
-      }
-      memset(newBody+DArray->cap,0,(newCap-DArray->cap)*sizeof(void *));
-      DArray->cap = newCap;
-      DArray->body = newBody;
-      return DArray;
-    }else{
-      return DArray;
-    }
-  }
+}
 
 void *writeDynamicArray(DynamicArray *DArray,int index,void *value){
   assureSizeOfDynamicArray(DArray,index);

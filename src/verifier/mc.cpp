@@ -46,6 +46,7 @@
 #include "propositional_symbol.h"
 #include "runtime_status.h"
 #include "graphinfo.hpp"
+#include "diff_info.hpp"
 #ifdef DEBUG
 #include "vm/dumper.h"
 #endif
@@ -127,8 +128,9 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   printf("1\n");
 #endif
-  new Graphinfo(lmn_mem_make());
-  new Graphinfo(mem);
+  Graphinfo *empty = new Graphinfo(lmn_mem_make());
+  Graphinfo *init = new Graphinfo(mem);
+  DiffInfo *diff = new DiffInfo(empty, init);
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */

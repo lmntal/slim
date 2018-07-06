@@ -250,4 +250,9 @@ void convertedGraphDump(ConvertedGraph *cGraph);
 void LMNtalLinkDump(LMNtalLink *link);
 void convertedGraphVertexDump(ConvertedGraphVertex *cVertex);
 void convertedGraphVertexDumpCaster(void *cVertex);
+void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(Stack *stack,ConvertedGraphVertex *cVertex);
+void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom,DynamicArray *afterConvertedHyperLinks,Stack *relinkedVertices);
+Bool isEqualLinks(LMNtalLink *linkA,LMNtalLink *linkB);
+Bool isHyperLink(LMNtalLink *link);
+
 #endif
