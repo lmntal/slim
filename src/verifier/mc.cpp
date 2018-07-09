@@ -68,54 +68,6 @@ static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
                          int thread_num);
 static void mc_dump(LmnWorkerGroup *wp);
 
-std::set<std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>> max_common_subproc_matching(LmnSymbolAtomRef a, LmnSymbolAtomRef b) {
-  std::set<std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>> res;
-  std::queue<std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>> q;
-  q.push({a, b});
-
-  while (!q.empty()) {
-    auto p = q.front();
-    q.pop();
-
-    if (res.find(p) != res.end())
-      continue;
-    res.insert(p);
-
-    auto x = p.first, y = p.second;
-    for (int i = 0; i < LMN_SATOM_GET_ARITY(x); i++) {
-      auto xattr = LMN_SATOM_GET_ATTR(x, i);
-      auto yattr = LMN_SATOM_GET_ATTR(y, i);
-      if (LMN_ATTR_IS_DATA(xattr) || LMN_ATTR_IS_DATA(yattr))
-        continue;
-      auto xa = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(x, i));
-      auto ya = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(y, i));
-      if (LMN_SATOM_GET_FUNCTOR(xa) != LMN_SATOM_GET_FUNCTOR(ya))
-        continue;
-
-      q.push({xa, ya});
-    }
-  }
-
-  return res;
-}
-
-namespace psr_ssd {
-  using match = std::pair<LmnSymbolAtomRef, LmnSymbolAtomRef>;
-  using matching_set = std::set<match>;
-}
-
-bool contradict(psr_ssd::matching_set a, psr_ssd::matching_set b) {
-  std::set<LmnSymbolAtomRef> b0, b1;
-  for (auto y : b) {
-    b0.insert(y.first);
-    b1.insert(y.second);
-  }
-  for (auto x : a)
-    if (b0.find(x.first) != b0.end() || b1.find(x.second) != b1.end())
-      return false;
-  return true;
-}
-
 BYTE *skip_instruction_arg(BYTE *instr, ArgType type) {
   switch (type) {
   case ARG_END:
@@ -239,8 +191,37 @@ std::vector<std::vector<std::pair<LmnMembraneRef, std::set<LmnSymbolAtomRef>>>> 
   return result;
 }
 
+template <typename F>
+void eliminate_unused_connected_process(LmnMembraneRef mem, F functors) {
+  auto abs_str = lmn_intern("#");
+  auto loi = level_of_ingredients(mem);
+  for (auto sets : loi) {
+    bool first = true;
+    for (auto p : sets) {
+      if (std::any_of(std::begin(p.second), std::end(p.second),
+                      [&](LmnSymbolAtomRef satom) {
+                        return std::find(std::begin(functors),
+                                         std::end(functors),
+                                         LMN_SATOM_GET_FUNCTOR(satom)) !=
+                               std::end(functors);
+                      }))
+        continue;
+
+      for (auto satom : p.second)
+        lmn_mem_remove_atom(p.first, satom, 0);
+
+      if (first) {
+        auto abs_func = lmn_functor_intern(ANONYMOUS, abs_str, 0);
+        lmn_mem_newatom(p.first, abs_func);
+        first = false;
+      }
+    }
+  }
+}
+
 void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
-  std::set<LmnFunctor> compulsory_functors = {LMN_IN_PROXY_FUNCTOR, LMN_OUT_PROXY_FUNCTOR, LMN_EXCLAMATION_FUNCTOR};
+  std::set<LmnFunctor> compulsory_functors = {
+      LMN_IN_PROXY_FUNCTOR, LMN_OUT_PROXY_FUNCTOR, LMN_EXCLAMATION_FUNCTOR};
   for (int i = 0; psyms && i < vec_num(psyms); i++) {
     auto psym = reinterpret_cast<SymbolDefinitionRef>(vec_get(psyms, i));
     auto p = propsym_get_proposition(psym);
@@ -252,6 +233,8 @@ void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
   auto cs = compulsory_functors_with_rule_in_mem(mem);
   compulsory_functors.insert(cs.begin(), cs.end());
 
+  eliminate_unused_connected_process(mem, compulsory_functors);
+
   auto abs_str = lmn_intern("#");
   for (auto sets : level_of_ingredients(mem)) {
     for (auto it1 = sets.begin(); it1 != sets.end(); ++it1) {
@@ -262,7 +245,8 @@ void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
         auto &s2 = it2->second;
         auto mem2 = it2->first;
 
-        auto mcsp = slim::verifier::upe::match_common_sub_processes(s1, s2, compulsory_functors);        
+        auto mcsp = slim::verifier::upe::match_common_sub_processes(
+            s1, s2, compulsory_functors);
         std::vector<LmnSymbolAtomRef> first = mcsp.first();
         std::vector<LmnSymbolAtomRef> second = mcsp.second();
         std::sort(std::begin(first), std::end(first));
@@ -275,12 +259,17 @@ void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
           auto a2 = mp.second;
 
           for (auto i = 0; i < LMN_SATOM_GET_LINK_NUM(a1); i++) {
-            if (i == 0 && LMN_SATOM_IS_PROXY(a1)) continue;
-            if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(a1, i))) continue;
-            auto satom1 = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(a1, i));
-            if (std::binary_search(std::begin(first), std::end(first), satom1)) continue;
+            if (i == 0 && LMN_SATOM_IS_PROXY(a1))
+              continue;
+            if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(a1, i)))
+              continue;
+            auto satom1 =
+                reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(a1, i));
+            if (std::binary_search(std::begin(first), std::end(first), satom1))
+              continue;
 
-            auto satom2 = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(a2, i));
+            auto satom2 =
+                reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(a2, i));
             // satom1 and satom2 are not common to s1 and s2.
             s1.erase(satom1);
             s2.erase(satom2);

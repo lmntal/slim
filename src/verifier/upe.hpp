@@ -53,7 +53,7 @@ class matching_set {
   std::vector<node> a;
   std::vector<node> b;
 
- public:
+public:
   void insert(const matching_pair &p) {
     if (std::find(std::begin(a), std::end(a), p.first) != std::end(a) ||
         std::find(std::begin(b), std::end(b), p.second) != std::end(b))
@@ -64,7 +64,8 @@ class matching_set {
 
   template <typename InputIterator>
   void insert(InputIterator first, InputIterator last) {
-    for (auto it = first; it != last; ++it) insert(*it);
+    for (auto it = first; it != last; ++it)
+      insert(*it);
   }
 
   size_t size() const { return a.size(); }
@@ -77,7 +78,7 @@ class matching_set {
     matching_set *set;
     int idx;
 
-   public:
+  public:
     using iterator_category = std::input_iterator_tag;
     using value_type = std::pair<node, node>;
     using difference_type = std::ptrdiff_t;
@@ -96,7 +97,8 @@ class matching_set {
     reference operator*() const { return {set->a[idx], set->b[idx]}; }
     iterator &operator++() {
       idx++;
-      if (idx >= set->size()) idx = set->size();
+      if (idx >= set->size())
+        idx = set->size();
       return *this;
     }
     iterator operator++(int i) {
@@ -123,7 +125,8 @@ matching_set match_connected_process(LmnSymbolAtomRef p, LmnSymbolAtomRef q,
 
   r.insert({p, q});
   for (auto i = 0; i < LMN_SATOM_GET_LINK_NUM(p); i++) {
-    if (i == 0 && (LMN_SATOM_IS_PROXY(p) || LMN_SATOM_IS_PROXY(q))) continue;
+    if (i == 0 && (LMN_SATOM_IS_PROXY(p) || LMN_SATOM_IS_PROXY(q)))
+      continue;
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(p, i)) ||
         LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(q, i)))
       continue;
@@ -151,7 +154,8 @@ bool contains_any_functor(Process P, Functor F) {
 
 template <typename Process, typename Functor>
 matching_set match_common_sub_processes(Process P, Process Q, Functor F) {
-  if (P.empty() || Q.empty()) return matching_set();
+  if (P.empty() || Q.empty())
+    return matching_set();
 
   matching_set R;
   int max_size = 0;
@@ -167,27 +171,46 @@ matching_set match_common_sub_processes(Process P, Process Q, Functor F) {
 
   Process unreached_P;
   Process unreached_Q;
-  std::set_difference(std::begin(P), std::end(P), std::begin(R.first()),
-                      std::end(R.first()),
+  auto fst = R.first();
+  auto snd = R.second();
+  std::sort(std::begin(fst), std::end(fst));
+  std::sort(std::begin(snd), std::end(snd));
+
+  std::set_difference(std::begin(P), std::end(P), std::begin(fst),
+                      std::end(fst),
                       std::inserter(unreached_P, std::end(unreached_P)));
-  std::set_difference(std::begin(Q), std::end(Q), std::begin(R.second()),
-                      std::end(R.second()),
+  std::set_difference(std::begin(Q), std::end(Q), std::begin(snd),
+                      std::end(snd),
                       std::inserter(unreached_Q, std::end(unreached_Q)));
 
   if (!R.empty()) {
     auto mcsp = match_common_sub_processes(unreached_P, unreached_Q, F);
     R.insert(std::begin(mcsp), std::end(mcsp));
+
+    unreached_P.clear();
+    unreached_Q.clear();
+    auto fst = R.first();
+    auto snd = R.second();
+    std::sort(std::begin(fst), std::end(fst));
+    std::sort(std::begin(snd), std::end(snd));
+    std::set_difference(std::begin(P), std::end(P), std::begin(fst),
+                        std::end(fst),
+                        std::inserter(unreached_P, std::end(unreached_P)));
+    std::set_difference(std::begin(Q), std::end(Q), std::begin(snd),
+                        std::end(snd),
+                        std::inserter(unreached_Q, std::end(unreached_Q)));
   }
 
-  if (contains_any_functor(unreached_P, F) || contains_any_functor(unreached_Q, F)) {
+  if (contains_any_functor(unreached_P, F) ||
+      contains_any_functor(unreached_Q, F)) {
     return matching_set();
   }
 
   return R;
 }
 
-}  // namespace upe
-}  // namespace verifier
-}  // namespace slim
+} // namespace upe
+} // namespace verifier
+} // namespace slim
 
 #endif /* VERIFIER_UPE_HPP */
