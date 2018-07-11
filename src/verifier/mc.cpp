@@ -119,7 +119,7 @@ LmnFunctor read_functor(BYTE *instr) {
 std::set<LmnFunctor> compulsory_functors_with_rule(LmnRuleRef rule) {
   std::set<LmnFunctor> res;
 
-  BYTE *instr = lmn_rule_get_inst_seq(rule);
+  BYTE *instr = rule->inst_seq;
   while (true) {
     LmnInstrOp op = *(LmnInstrOp *)instr;
     instr += sizeof(LmnInstrOp);
@@ -164,8 +164,8 @@ std::set<LmnFunctor> compulsory_functors_with_rule_in_mem(LmnMembraneRef mem) {
 
   for (int i = 0; i < lmn_mem_ruleset_num(mem); i++) {
     auto rs = lmn_mem_get_ruleset(mem, i);
-    for (int j = 0; j < rs->num; j++) {
-      auto s = compulsory_functors_with_rule(rs->get_rule(j));
+    for (auto rule : *rs) {
+      auto s = compulsory_functors_with_rule(rule);
       res.insert(s.begin(), s.end());
     }
   }
@@ -195,8 +195,9 @@ template <typename F>
 void eliminate_unused_connected_process(LmnMembraneRef mem, F functors) {
   auto abs_str = lmn_intern("#");
   auto loi = level_of_ingredients(mem);
+  std::set<LmnMembraneRef> abstracted;
+
   for (auto sets : loi) {
-    bool first = true;
     for (auto p : sets) {
       if (std::any_of(std::begin(p.second), std::end(p.second),
                       [&](LmnSymbolAtomRef satom) {
@@ -210,14 +211,16 @@ void eliminate_unused_connected_process(LmnMembraneRef mem, F functors) {
       for (auto satom : p.second)
         lmn_mem_remove_atom(p.first, satom, 0);
 
-      if (first) {
+      if (abstracted.find(p.first) == abstracted.end()) {
         auto abs_func = lmn_functor_intern(ANONYMOUS, abs_str, 0);
         lmn_mem_newatom(p.first, abs_func);
-        first = false;
+        abstracted.insert(p.first);
       }
     }
   }
 }
+
+#include <iostream>
 
 void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
   std::set<LmnFunctor> compulsory_functors = {
