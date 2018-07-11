@@ -1,0 +1,506 @@
+29a30,34
+> 0:type:ATOM
+> ID:2
+> name:ATOM_a
+> links:<255,0>
+> 
+40a46,50
+> 0:type:ATOM
+> ID:2
+> name:ATOM_a
+> links:<255,0>
+> 
+82a93,102
+> 0:type:ATOM
+> ID:4
+> name:ATOM_c
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:5
+> name:ATOM_b
+> links:<255,0>
+> 
+216a237,256
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+232a273,292
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+248a309,328
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+264a345,364
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+280a381,400
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+296a417,436
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+312a453,472
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+328a489,508
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+344a525,544
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+360a561,580
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+376a597,616
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+392a633,652
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+408a669,688
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+424a705,724
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+440a741,760
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+456a777,796
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+472a813,832
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+488a849,868
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+504a885,904
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+520a921,940
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+536a957,976
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+552a993,1012
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>
+> 
+567a1028,1047
+> 
+> 0:type:ATOM
+> ID:15
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:16
+> name:ATOM_d
+> links:<255,0>
+> 
+> 2:type:ATOM
+> ID:17
+> name:ATOM_d
+> links:<255,0>
+> 
+> 3:type:ATOM
+> ID:18
+> name:ATOM_d
+> links:<255,0>

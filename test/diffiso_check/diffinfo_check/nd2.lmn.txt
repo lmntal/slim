@@ -42,6 +42,16 @@ relinkedVertices:
 
 deletedVertices:
 
+0:type:ATOM
+ID:2
+name:ATOM_a
+links:<255,0>
+
+1:type:ATOM
+ID:3
+name:ATOM_a
+links:<255,0>
+
 addedVertices:
 
 0:type:ATOM
@@ -58,6 +68,16 @@ relinkedVertices:
 
 deletedVertices:
 
+0:type:ATOM
+ID:2
+name:ATOM_a
+links:<255,0>
+
+1:type:ATOM
+ID:3
+name:ATOM_a
+links:<255,0>
+
 addedVertices:
 
 0:type:ATOM
@@ -73,6 +93,16 @@ links:<255,0>
 relinkedVertices:
 
 deletedVertices:
+
+0:type:ATOM
+ID:2
+name:ATOM_a
+links:<255,0>
+
+1:type:ATOM
+ID:3
+name:ATOM_a
+links:<255,0>
 
 addedVertices:
 
@@ -90,6 +120,16 @@ relinkedVertices:
 
 deletedVertices:
 
+0:type:ATOM
+ID:2
+name:ATOM_a
+links:<255,0>
+
+1:type:ATOM
+ID:3
+name:ATOM_a
+links:<255,0>
+
 addedVertices:
 
 0:type:ATOM
@@ -105,6 +145,16 @@ links:<255,0>
 relinkedVertices:
 
 deletedVertices:
+
+0:type:ATOM
+ID:2
+name:ATOM_a
+links:<255,0>
+
+1:type:ATOM
+ID:3
+name:ATOM_a
+links:<255,0>
 
 addedVertices:
 
@@ -148,6 +198,16 @@ relinkedVertices:
 
 deletedVertices:
 
+0:type:ATOM
+ID:5
+name:ATOM_d
+links:<255,0>
+
+1:type:ATOM
+ID:6
+name:ATOM_a
+links:<255,0>
+
 addedVertices:
 
 0:type:ATOM
@@ -163,6 +223,16 @@ links:<255,0>
 relinkedVertices:
 
 deletedVertices:
+
+0:type:ATOM
+ID:5
+name:ATOM_d
+links:<255,0>
+
+1:type:ATOM
+ID:6
+name:ATOM_a
+links:<255,0>
 
 addedVertices:
 
@@ -205,6 +275,16 @@ links:<255,0>
 relinkedVertices:
 
 deletedVertices:
+
+0:type:ATOM
+ID:8
+name:ATOM_d
+links:<255,0>
+
+1:type:ATOM
+ID:9
+name:ATOM_d
+links:<255,0>
 
 addedVertices:
 

@@ -1,0 +1,88 @@
+44a45,54
+> 0:type:ATOM
+> ID:2
+> name:ATOM_a
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:3
+> name:ATOM_a
+> links:<255,0>
+> 
+60a71,80
+> 0:type:ATOM
+> ID:2
+> name:ATOM_a
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:3
+> name:ATOM_a
+> links:<255,0>
+> 
+76a97,106
+> 0:type:ATOM
+> ID:2
+> name:ATOM_a
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:3
+> name:ATOM_a
+> links:<255,0>
+> 
+92a123,132
+> 0:type:ATOM
+> ID:2
+> name:ATOM_a
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:3
+> name:ATOM_a
+> links:<255,0>
+> 
+108a149,158
+> 0:type:ATOM
+> ID:2
+> name:ATOM_a
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:3
+> name:ATOM_a
+> links:<255,0>
+> 
+150a201,210
+> 0:type:ATOM
+> ID:5
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:6
+> name:ATOM_a
+> links:<255,0>
+> 
+166a227,236
+> 0:type:ATOM
+> ID:5
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:6
+> name:ATOM_a
+> links:<255,0>
+> 
+207a278,287
+> 
+> 0:type:ATOM
+> ID:8
+> name:ATOM_d
+> links:<255,0>
+> 
+> 1:type:ATOM
+> ID:9
+> name:ATOM_d
+> links:<255,0>

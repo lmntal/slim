@@ -52,7 +52,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
-#define DIFFISO_GEN
+// #define DIFFISO_GEN
 bool diff_gen_finish=false;
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -128,10 +128,10 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   printf("1\n");
 #endif
-  // Graphinfo *empty = new Graphinfo(lmn_mem_make());
-  // Graphinfo *init = new Graphinfo(mem);
-  // DiffInfo *diff = new DiffInfo(empty, init);
-  // diff->diffInfoDump();
+  Graphinfo *empty = new Graphinfo(lmn_mem_make());
+  Graphinfo *init = new Graphinfo(mem);
+  DiffInfo *diff = new DiffInfo(empty, init);
+  diff->diffInfoDump();
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -214,7 +214,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
  *  === Fundamental System for StateSpace Generation ====
  *  =====================================================
  */
-
+LmnMembraneRef org_mem;
 static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
                                            LmnMembraneRef cur_mem);
 static inline void stutter_extension(State *s, LmnMembraneRef mem,
@@ -229,14 +229,25 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
+  org_mem = mem;
 #ifdef DIFFISO_GEN
   if(!diff_gen_finish) {
     printf("Succ number Information\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 #endif
-  // if(!diff_gen_finish)
-  //   new Graphinfo(mem);
+  if(!diff_gen_finish) {
+    // printf("_______________\n");
+    // new Graphinfo(mem);    
+    // LmnMembraneRef mem_ = state_restore_mem(s);
+    // printf("***************\n");
+    // new Graphinfo(mem_);
+    // LmnMembraneRef mem__ = state_restore_mem(s);
+    // printf("***************\n");
+    // new Graphinfo(mem__);
+    // printf("_______________\n");
+  }
+
   /** expand  : 状態の展開 */
   if (p_s) {
     mc_gen_successors_with_property(s, mem, p_s, rc, psyms, f);
@@ -328,10 +339,11 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                          Vector *new_ss, BOOL f) {
   unsigned int i, succ_i;
   Graphinfo *parent_gi;
+  // printf("----------------------------------------\n");
   if(!diff_gen_finish) {
-    LmnMembraneRef org_mem = state_restore_mem(s);  
     parent_gi = new Graphinfo(org_mem);
   }
+  // printf("******************************************\n");
   /** 状態登録 */
   succ_i = 0;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
@@ -375,8 +387,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     }
     if(!diff_gen_finish) {
       Graphinfo *child_gi = new Graphinfo(src_succ_m);
-      // DiffInfo *di = new DiffInfo(parent_gi, child_gi);
-      // di->diffInfoDump();
+      DiffInfo *di = new DiffInfo(parent_gi, child_gi);
+      di->diffInfoDump();
     }
 #ifdef DIFFISO_GEN
     if(!diff_gen_finish) {
