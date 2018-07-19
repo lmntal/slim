@@ -54,6 +54,7 @@ void init_set(void);
 void init_state_map(void);
 void init_zerostep(void);
 void init_builtin_extensions(void);
+void init_quantum();
 
 void init_builtin_extensions(void)
 {
@@ -72,4 +73,5 @@ void init_builtin_extensions(void)
   init_state_map();
   init_membrane();
   init_zerostep();
+  init_quantum();
 }

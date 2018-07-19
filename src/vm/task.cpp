@@ -45,6 +45,7 @@
 #include "symbol.h"
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
+#include "ext/quantum.hpp"
 
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
@@ -670,6 +671,25 @@ HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem,
   }
 
   return retset;
+}
+
+namespace {
+bool is_quantum_at_register(LmnReactCxtRef rc, LmnInstrVar ri) {
+  return at(rc, ri) == LMN_SP_ATOM_ATTR && LMN_SP_ATOM_TYPE(wt(rc, ri)) == slim::ext::Quantum::atom_type;
+}
+
+template <typename T>
+bool assume_constraint(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr, LmnInstrVar atomi, T value) {
+  auto q = reinterpret_cast<slim::ext::Quantum *>(wt(rc, atomi));
+  if (q->constraints->check(value) == slim::ext::trilean::fls) return false;
+
+  q->save_constraints();
+  q->constraints->assume(value);
+  auto result = interpret(rc, rule, instr);
+  if (!result) q->restore_constraints();
+
+  return result;
+}
 }
 
 BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
@@ -3176,6 +3196,10 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       LmnInstrVar atomi;
       READ_VAL(LmnInstrVar, instr, atomi);
 
+      if (is_quantum_at_register(rc, atomi)) {
+        return assume_constraint(rc, rule, instr, atomi, slim::ext::constraint::integer);
+      }
+
       if (at(rc, atomi) != LMN_INT_ATTR)
         return FALSE;
       break;
@@ -3443,6 +3467,14 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
 
+     if (is_quantum_at_register(rc, atom1) && !is_quantum_at_register(rc, atom2)) {
+        return assume_constraint(rc, rule, instr, atom1, slim::ext::constraint::lt((long)wt(rc, atom2)));
+      } else if (!is_quantum_at_register(rc, atom1) && is_quantum_at_register(rc, atom2)) {
+        return assume_constraint(rc, rule, instr, atom2, slim::ext::constraint::lt((long)wt(rc, atom1)));
+      } else if (is_quantum_at_register(rc, atom1) && is_quantum_at_register(rc, atom2)) {
+        throw "not supported";
+      }
+
       if (!((long)wt(rc, atom1) < (long)wt(rc, atom2)))
         return FALSE;
       break;
@@ -3460,6 +3492,14 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       LmnInstrVar atom1, atom2;
       READ_VAL(LmnInstrVar, instr, atom1);
       READ_VAL(LmnInstrVar, instr, atom2);
+
+      if (is_quantum_at_register(rc, atom1) && !is_quantum_at_register(rc, atom2)) {
+        return assume_constraint(rc, rule, instr, atom1, slim::ext::constraint::gt((long)wt(rc, atom2)));
+      } else if (!is_quantum_at_register(rc, atom1) && is_quantum_at_register(rc, atom2)) {
+        return assume_constraint(rc, rule, instr, atom2, slim::ext::constraint::gt((long)wt(rc, atom1)));
+      } else if (is_quantum_at_register(rc, atom1) && is_quantum_at_register(rc, atom2)) {
+        throw "not supported";
+      }
 
       if (!((long)wt(rc, atom1) > (long)wt(rc, atom2)))
         return FALSE;
