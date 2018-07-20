@@ -1,7 +1,7 @@
 /*
- * mem_encode.h
+ * decoder.hpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,60 +32,45 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LMN_MEM_ENCODE_H
-#define LMN_MEM_ENCODE_H
+#ifndef SLIM_VERIFIER_MEM_ENCODE_DECODER_HPP
+#define SLIM_VERIFIER_MEM_ENCODE_DECODER_HPP
 
-/**
- * @ingroup  Verifier
- * @defgroup MembraneEncoder
- * @{
- */
+#include "halfbyte_scanner.hpp"
 
-#include "../lmntal.h"
-#include "delta_membrane.h"
-#include "mem_encode/lmn_binstr.hpp"
+#include "vm/vm.h"
 
+enum log_type : uint8_t {
+  BS_LOG_TYPE_NONE = (0x0U),
+  BS_LOG_TYPE_ATOM = (0x1U),
+  BS_LOG_TYPE_MEM = (0x2U),
+  BS_LOG_TYPE_HLINK = (0x3U),
+};
 
-#define BS_COMP_Z (0x01U)
-#define BS_COMP_D (0x01U << 1)
+struct BsDecodeLog {
+  LmnWord v;
+  log_type type;
+};
 
-#define is_comp_z(BS) (((BS)->type) & BS_COMP_Z)
-#define set_comp_z(BS) (((BS)->type) |= BS_COMP_Z)
-#define unset_comp_z(BS) (((BS)->type) &= ~(BS_COMP_Z))
-#define is_comp_d(BS) (((BS)->type) & BS_COMP_D)
-#define set_comp_d(BS) (((BS)->type) |= BS_COMP_D)
-#define unset_comp_d(BS) (((BS)->type) &= ~(BS_COMP_D))
+struct binstr_decoder {
+  halfbyte_scanner scanner;
+  std::vector<BsDecodeLog> log;
+  int nvisit; /* カウンタ(== 1): 順序付けを記録しながらデコードする.
+               * (0はグローバルルート膜なので1から) */
 
-#define TAG_BIT_SIZE 4
-#define TAG_DATA_TYPE_BIT 2
-#define TAG_IN_BYTE 2
+  binstr_decoder(BYTE *bs, size_t len, size_t idx = 0)
+      : scanner(bs, len, idx), log(len * TAG_IN_BYTE), nvisit(VISITLOG_INIT_N) {
+  }
 
-#define lmn_binstr_byte_size(bs) ((bs->len + 1) / TAG_IN_BYTE)
+  int decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);
 
-void mem_isom_init(void);
-void mem_isom_finalize(void);
-void set_functor_priority(LmnFunctor f, int priority);
+private:
+  int decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);
+  int decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);
 
-LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem);
-LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d);
-int binstr_compare(const LmnBinStrRef a, const LmnBinStrRef b);
-unsigned long binstr_hash(const LmnBinStrRef a);
-int binstr_byte_size(LmnBinStrRef p);
-LmnBinStrRef lmn_binstr_make(unsigned int size);
-LmnBinStrRef lmn_binstr_copy(LmnBinStrRef src_bs);
-LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs);
+public:
+  void decode_rulesets(int rs_num, Vector *rulesets);
+};
 
-BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem);
-
-void lmn_binstr_free(LmnBinStrRef p);
-void lmn_binstr_dump(const LmnBinStrRef bs);
-unsigned long lmn_binstr_space(struct LmnBinStr *bs);
-LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem);
-LmnBinStrRef lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);
-
-/* @} */
-
-#endif /* LMN_MEM_ENCODE_H */
+#endif
