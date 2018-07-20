@@ -1,0 +1,194 @@
+1,4c1,16
+< CONVERTED ATOMS:
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 11:type:ATOM
+---
+> deletedVertices:
+> 
+> addedVertices:
+> 
+> relinkedVertices:
+> 
+> deletedVertices:
+> 
+> addedVertices:
+> 
+> 0:type:HYPERLINK
+> ID:11
+> name:
+> links:<0,11>,<2,12>,<2,13>,<1,14>,<1,15>
+> 
+> 1:type:ATOM
+9c21
+< 12:type:ATOM
+---
+> 2:type:ATOM
+14c26
+< 13:type:ATOM
+---
+> 3:type:ATOM
+19c31
+< 14:type:ATOM
+---
+> 4:type:ATOM
+24c36
+< 15:type:ATOM
+---
+> 5:type:ATOM
+29c41
+< 16:type:ATOM
+---
+> 6:type:ATOM
+34c46
+< 17:type:ATOM
+---
+> 7:type:ATOM
+39c51
+< 18:type:ATOM
+---
+> 8:type:ATOM
+44,48c56
+< CONVERTED HYPERLINKS:
+< 11:type:HYPERLINK
+< ID:11
+< name:
+< links:<0,11>,<2,12>,<2,13>,<1,14>,<1,15>
+---
+> relinkedVertices:
+50,54c58
+< CONVERTED ATOMS:
+< 11:type:ATOM
+< ID:11
+< name:MEM_fork
+< links:<138,11>,<255,0>
+---
+> deletedVertices:
+56c60
+< 12:type:ATOM
+---
+> 0:type:ATOM
+61c65
+< 13:type:ATOM
+---
+> 1:type:ATOM
+66c70
+< 14:type:ATOM
+---
+> 2:type:ATOM
+71c75
+< 15:type:ATOM
+---
+> 3:type:ATOM
+76c80
+< 16:type:ATOM
+---
+> 4:type:ATOM
+81c85
+< 17:type:ATOM
+---
+> 5:type:ATOM
+86c90
+< 18:type:ATOM
+---
+> 6:type:ATOM
+91,101c95
+< CONVERTED HYPERLINKS:
+< 11:type:HYPERLINK
+< ID:11
+< name:
+< links:<0,11>,<2,12>,<2,13>,<1,14>,<1,15>
+< 
+< CONVERTED ATOMS:
+< 11:type:ATOM
+< ID:11
+< name:MEM_fork
+< links:<138,11>,<255,0>
+---
+> addedVertices:
+103c97
+< 19:type:ATOM
+---
+> 0:type:ATOM
+108c102
+< 20:type:ATOM
+---
+> 1:type:ATOM
+113c107
+< 21:type:ATOM
+---
+> 2:type:ATOM
+118c112
+< 22:type:ATOM
+---
+> 3:type:ATOM
+123c117
+< 23:type:ATOM
+---
+> 4:type:ATOM
+128c122
+< 24:type:ATOM
+---
+> 5:type:ATOM
+133c127
+< 25:type:ATOM
+---
+> 6:type:ATOM
+138,142c132
+< CONVERTED HYPERLINKS:
+< 11:type:HYPERLINK
+< ID:11
+< name:
+< links:<0,11>,<2,21>,<2,22>,<1,20>,<1,19>
+---
+> relinkedVertices:
+144,186c134
+< CONVERTED ATOMS:
+< 11:type:ATOM
+< ID:11
+< name:MEM_fork
+< links:<138,11>,<255,0>
+< 
+< 12:type:ATOM
+< ID:12
+< name:ATOM_$in
+< links:<0,16>,<0,14>,<138,11>
+< 
+< 13:type:ATOM
+< ID:13
+< name:ATOM_$in
+< links:<0,17>,<0,15>,<138,11>
+< 
+< 14:type:ATOM
+< ID:14
+< name:ATOM_+
+< links:<1,12>,<138,11>
+< 
+< 15:type:ATOM
+< ID:15
+< name:ATOM_+
+< links:<1,13>,<138,11>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_$out
+< links:<0,12>,<0,18>,<255,0>
+< 
+< 17:type:ATOM
+< ID:17
+< name:ATOM_$out
+< links:<0,13>,<1,18>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_phi
+< links:<1,16>,<1,17>,<255,0>
+< 
+< CONVERTED HYPERLINKS:
+< 11:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+189c137
+< links:<0,11>,<2,12>,<2,13>,<1,14>,<1,15>
+---
+> links:<0,11>,<2,21>,<2,22>,<1,20>,<1,19>

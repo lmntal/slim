@@ -1,0 +1,212 @@
+1,4c1,11
+< CONVERTED ATOMS:
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 5:type:ATOM
+---
+> deletedVertices:
+> 
+> addedVertices:
+> 
+> relinkedVertices:
+> 
+> deletedVertices:
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+9c16
+< 6:type:ATOM
+---
+> 1:type:ATOM
+14,16c21,25
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 5:type:ATOM
+---
+> relinkedVertices:
+> 
+> deletedVertices:
+> 
+> 0:type:ATOM
+21,24c30
+< 6:type:ATOM
+< ID:6
+< name:ATOM_answer
+< links:<1,5>,<255,0>
+---
+> addedVertices:
+26,33c32
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 6:type:ATOM
+< ID:6
+< name:ATOM_answer
+< links:<2,8>,<255,0>
+< 
+< 7:type:ATOM
+---
+> 0:type:ATOM
+38c37
+< 8:type:ATOM
+---
+> 1:type:ATOM
+43,46c42,45
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 9:type:ATOM
+< ID:9
+---
+> relinkedVertices:
+> 
+> 0:type:ATOM
+> ID:6
+48c47
+< links:<2,11>,<255,0>
+---
+> links:<2,8>,<255,0>
+50c49,51
+< 10:type:ATOM
+---
+> deletedVertices:
+> 
+> 0:type:ATOM
+55,65c56
+< 11:type:ATOM
+< ID:11
+< name:ATOM_sift
+< links:<128,2000>,<2,10>,<0,9>,<255,0>
+< 
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 9:type:ATOM
+< ID:9
+< name:ATOM_answer
+< links:<2,11>,<255,0>
+---
+> addedVertices:
+67,72c58
+< 11:type:ATOM
+< ID:11
+< name:ATOM_sift
+< links:<128,2000>,<2,12>,<0,9>,<255,0>
+< 
+< 12:type:ATOM
+---
+> 0:type:ATOM
+77c63
+< 13:type:ATOM
+---
+> 1:type:ATOM
+82c68
+< 14:type:ATOM
+---
+> 2:type:ATOM
+87,92c73
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 15:type:ATOM
+< ID:15
+< name:ATOM_.
+< links:<128,2>,<2,18>,<1,19>,<255,0>
+---
+> relinkedVertices:
+94,97c75,78
+< 16:type:ATOM
+< ID:16
+< name:ATOM_+
+< links:<128,2>,<128,1>,<0,18>,<255,0>
+---
+> 0:type:ATOM
+> ID:11
+> name:ATOM_sift
+> links:<128,2000>,<2,12>,<0,9>,<255,0>
+99,102c80
+< 17:type:ATOM
+< ID:17
+< name:ATOM_answer
+< links:<2,19>,<255,0>
+---
+> deletedVertices:
+104,107c82,85
+< 18:type:ATOM
+< ID:18
+< name:ATOM_gen
+< links:<2,16>,<128,2000>,<1,15>,<255,0>
+---
+> 0:type:ATOM
+> ID:15
+> name:ATOM_.
+> links:<128,2>,<2,18>,<1,19>,<255,0>
+109c87
+< 19:type:ATOM
+---
+> 1:type:ATOM
+114,129c92
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 16:type:ATOM
+< ID:16
+< name:ATOM_+
+< links:<128,2>,<128,1>,<0,18>,<255,0>
+< 
+< 17:type:ATOM
+< ID:17
+< name:ATOM_answer
+< links:<2,20>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_gen
+< links:<2,16>,<128,2000>,<1,21>,<255,0>
+---
+> addedVertices:
+131c94
+< 20:type:ATOM
+---
+> 0:type:ATOM
+136c99
+< 21:type:ATOM
+---
+> 1:type:ATOM
+141c104
+< 22:type:ATOM
+---
+> 2:type:ATOM
+146,151c109
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 15:type:ATOM
+< ID:15
+< name:ATOM_.
+< links:<128,2>,<2,18>,<1,19>,<255,0>
+---
+> relinkedVertices:
+153,158c111
+< 16:type:ATOM
+< ID:16
+< name:ATOM_+
+< links:<128,2>,<128,1>,<0,18>,<255,0>
+< 
+< 17:type:ATOM
+---
+> 0:type:ATOM
+161c114
+< links:<2,19>,<255,0>
+---
+> links:<2,20>,<255,0>
+163c116
+< 18:type:ATOM
+---
+> 1:type:ATOM
+166,171c119
+< links:<2,16>,<128,2000>,<1,15>,<255,0>
+< 
+< 19:type:ATOM
+< ID:19
+< name:ATOM_sift
+< links:<128,2000>,<2,15>,<0,17>,<255,0>
+---
+> links:<2,16>,<128,2000>,<1,21>,<255,0>
+173d120
+< CONVERTED HYPERLINKS:

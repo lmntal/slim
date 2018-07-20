@@ -1,0 +1,147 @@
+1,4c1,11
+< CONVERTED ATOMS:
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 9:type:ATOM
+---
+> deletedVertices:
+> 
+> addedVertices:
+> 
+> relinkedVertices:
+> 
+> deletedVertices:
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+9c16
+< 10:type:ATOM
+---
+> 1:type:ATOM
+14c21
+< 11:type:ATOM
+---
+> 2:type:ATOM
+19c26
+< 12:type:ATOM
+---
+> 3:type:ATOM
+24c31
+< 13:type:ATOM
+---
+> 4:type:ATOM
+29c36
+< 14:type:ATOM
+---
+> 5:type:ATOM
+34,36c41,45
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 9:type:ATOM
+---
+> relinkedVertices:
+> 
+> deletedVertices:
+> 
+> 0:type:ATOM
+41,76c50
+< 10:type:ATOM
+< ID:10
+< name:ATOM_b
+< links:<1,9>,<0,14>,<255,0>
+< 
+< 11:type:ATOM
+< ID:11
+< name:ATOM_b
+< links:<1,12>,<0,9>,<255,0>
+< 
+< 12:type:ATOM
+< ID:12
+< name:ATOM_b
+< links:<1,13>,<0,11>,<255,0>
+< 
+< 13:type:ATOM
+< ID:13
+< name:ATOM_b
+< links:<1,14>,<0,12>,<255,0>
+< 
+< 14:type:ATOM
+< ID:14
+< name:ATOM_b
+< links:<1,10>,<0,13>,<255,0>
+< 
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 10:type:ATOM
+< ID:10
+< name:ATOM_b
+< links:<1,15>,<0,14>,<255,0>
+< 
+< 11:type:ATOM
+< ID:11
+< name:ATOM_b
+< links:<1,12>,<0,15>,<255,0>
+---
+> addedVertices:
+78,93c52
+< 12:type:ATOM
+< ID:12
+< name:ATOM_b
+< links:<1,13>,<0,11>,<255,0>
+< 
+< 13:type:ATOM
+< ID:13
+< name:ATOM_b
+< links:<1,14>,<0,12>,<255,0>
+< 
+< 14:type:ATOM
+< ID:14
+< name:ATOM_b
+< links:<1,10>,<0,13>,<255,0>
+< 
+< 15:type:ATOM
+---
+> 0:type:ATOM
+98,103c57
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 9:type:ATOM
+< ID:9
+< name:ATOM_a
+< links:<1,11>,<0,10>,<255,0>
+---
+> relinkedVertices:
+105c59
+< 10:type:ATOM
+---
+> 0:type:ATOM
+108c62
+< links:<1,9>,<0,14>,<255,0>
+---
+> links:<1,15>,<0,14>,<255,0>
+110c64
+< 11:type:ATOM
+---
+> 1:type:ATOM
+113,128c67
+< links:<1,12>,<0,9>,<255,0>
+< 
+< 12:type:ATOM
+< ID:12
+< name:ATOM_b
+< links:<1,13>,<0,11>,<255,0>
+< 
+< 13:type:ATOM
+< ID:13
+< name:ATOM_b
+< links:<1,14>,<0,12>,<255,0>
+< 
+< 14:type:ATOM
+< ID:14
+< name:ATOM_b
+< links:<1,10>,<0,13>,<255,0>
+---
+> links:<1,12>,<0,15>,<255,0>
+130d68
+< CONVERTED HYPERLINKS:

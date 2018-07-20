@@ -1,0 +1,9775 @@
+1,7c1
+< CONVERTED ATOMS:
+< CONVERTED HYPERLINKS:
+< CONVERTED ATOMS:
+< 15:type:ATOM
+< ID:15
+< name:MEM_
+< links:<138,15>,<255,0>
+---
+> deletedVertices:
+9,12c3
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> addedVertices:
+14,17c5
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> relinkedVertices:
+19,22c7
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> deletedVertices:
+24,27c9
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> addedVertices:
+29,65c11
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+< links:<138,17>
+< 
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+< links:<138,17>
+< 
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+< links:<138,17>
+< 
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+< 
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+< 
+< 25:type:ATOM
+< ID:25
+< name:ATOM_boat
+< links:<138,17>
+< 
+< 26:type:ATOM
+< ID:26
+< name:ATOM_ok
+< links:<255,0>
+< 
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+70c16
+< 17:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+75,76c21
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 2:type:ATOM
+81c26
+< 16:type:ATOM
+---
+> 3:type:ATOM
+86c31
+< 17:type:ATOM
+---
+> 4:type:ATOM
+91c36
+< 18:type:ATOM
+---
+> 5:type:ATOM
+96c41
+< 19:type:ATOM
+---
+> 6:type:ATOM
+101c46
+< 20:type:ATOM
+---
+> 7:type:ATOM
+106c51
+< 21:type:ATOM
+---
+> 8:type:ATOM
+111c56
+< 22:type:ATOM
+---
+> 9:type:ATOM
+116c61
+< 23:type:ATOM
+---
+> 10:type:ATOM
+121c66
+< 24:type:ATOM
+---
+> 11:type:ATOM
+126c71
+< 25:type:ATOM
+---
+> 12:type:ATOM
+131c76
+< 26:type:ATOM
+---
+> 13:type:ATOM
+136,145c81
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,16>
+< 
+< 17:type:HYPERLINK
+< ID:17
+< name:
+< links:<0,17>,<0,18>,<0,19>,<0,20>,<0,21>,<0,22>,<0,23>,<0,24>,<0,25>
+---
+> relinkedVertices:
+147,156c83
+< CONVERTED ATOMS:
+< 15:type:ATOM
+< ID:15
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> deletedVertices:
+158,174c85,86
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+< 
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+< links:<138,17>
+< 
+< 21:type:ATOM
+< ID:21
+---
+> 0:type:ATOM
+> ID:19
+178,180c90,92
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:25
+> name:ATOM_boat
+183,186c95,98
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 2:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+188,191c100
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+193c102
+< 27:type:ATOM
+---
+> 0:type:ATOM
+198c107
+< 28:type:ATOM
+---
+> 1:type:ATOM
+203c112
+< 29:type:ATOM
+---
+> 2:type:ATOM
+208,212c117
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,16>
+---
+> relinkedVertices:
+214c119
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+219,220c124
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+222,238c126,127
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,16>
+240,243c129
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+245,246c131,132
+< 21:type:ATOM
+< ID:21
+---
+> 0:type:ATOM
+> ID:20
+250,252c136,138
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:25
+> name:ATOM_boat
+255,258c141,144
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 2:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+260,263c146
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+265c148
+< 27:type:ATOM
+---
+> 0:type:ATOM
+270c153
+< 28:type:ATOM
+---
+> 1:type:ATOM
+275c158
+< 29:type:ATOM
+---
+> 2:type:ATOM
+280,284c163
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,16>
+---
+> relinkedVertices:
+286c165
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+291,292c170
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+294,310c172,173
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,16>
+312,315c175
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+317,318c177,178
+< 20:type:ATOM
+< ID:20
+---
+> 0:type:ATOM
+> ID:21
+322,324c182,184
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:25
+> name:ATOM_boat
+327,330c187,190
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 2:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+332,335c192
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+337c194
+< 27:type:ATOM
+---
+> 0:type:ATOM
+342c199
+< 28:type:ATOM
+---
+> 1:type:ATOM
+347c204
+< 29:type:ATOM
+---
+> 2:type:ATOM
+352,356c209
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,16>
+---
+> relinkedVertices:
+358c211
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+363,364c216
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+366,382c218,219
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,16>
+384,387c221
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+389,391c223,225
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 0:type:ATOM
+> ID:22
+> name:ATOM_c
+394,396c228,230
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:25
+> name:ATOM_boat
+399,402c233,236
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 2:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+404,407c238
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+409c240
+< 27:type:ATOM
+---
+> 0:type:ATOM
+414c245
+< 28:type:ATOM
+---
+> 1:type:ATOM
+419c250
+< 29:type:ATOM
+---
+> 2:type:ATOM
+424,428c255
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,16>
+---
+> relinkedVertices:
+430c257
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+435,436c262
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+438,454c264,265
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,16>
+456,459c267
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+461,463c269,271
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 0:type:ATOM
+> ID:23
+> name:ATOM_c
+466,468c274,276
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:25
+> name:ATOM_boat
+471,474c279,282
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+< links:<138,17>
+---
+> 2:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+476,479c284
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+481c286
+< 27:type:ATOM
+---
+> 0:type:ATOM
+486c291
+< 28:type:ATOM
+---
+> 1:type:ATOM
+491c296
+< 29:type:ATOM
+---
+> 2:type:ATOM
+496,500c301
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,16>
+---
+> relinkedVertices:
+502c303
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+507,508c308
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+510,526c310,311
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,16>
+528,531c313
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+533,535c315,317
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 0:type:ATOM
+> ID:24
+> name:ATOM_c
+538,540c320,322
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:25
+> name:ATOM_boat
+543,546c325,328
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+< links:<138,17>
+---
+> 2:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+548,551c330
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+553c332
+< 27:type:ATOM
+---
+> 0:type:ATOM
+558c337
+< 28:type:ATOM
+---
+> 1:type:ATOM
+563c342
+< 29:type:ATOM
+---
+> 2:type:ATOM
+568,572c347
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,16>
+---
+> relinkedVertices:
+574c349
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+579,580c354
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+582,588c356,357
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,16>
+590,593c359
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+595,597c361,363
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:19
+> name:ATOM_m
+600,601c366,367
+< 21:type:ATOM
+< ID:21
+---
+> 1:type:ATOM
+> ID:20
+605,607c371,373
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+610,613c376,379
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+615,618c381
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+620c383
+< 27:type:ATOM
+---
+> 0:type:ATOM
+625c388
+< 28:type:ATOM
+---
+> 1:type:ATOM
+630c393
+< 29:type:ATOM
+---
+> 2:type:ATOM
+635c398
+< 30:type:ATOM
+---
+> 3:type:ATOM
+640,644c403
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+646c405
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+651,652c410
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+654,660c412,413
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+662,665c415
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+667,669c417,419
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:19
+> name:ATOM_m
+672,673c422,423
+< 20:type:ATOM
+< ID:20
+---
+> 1:type:ATOM
+> ID:21
+677,679c427,429
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+682,685c432,435
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+687,690c437
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+692c439
+< 27:type:ATOM
+---
+> 0:type:ATOM
+697c444
+< 28:type:ATOM
+---
+> 1:type:ATOM
+702c449
+< 29:type:ATOM
+---
+> 2:type:ATOM
+707c454
+< 30:type:ATOM
+---
+> 3:type:ATOM
+712,716c459
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+718c461
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+723,724c466
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+726,732c468,469
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+734,737c471
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+739,741c473,475
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:19
+> name:ATOM_m
+744,745c478,479
+< 21:type:ATOM
+< ID:21
+---
+> 1:type:ATOM
+> ID:20
+749,751c483,485
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+754,757c488,491
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+759,762c493
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+764c495
+< 27:type:ATOM
+---
+> 0:type:ATOM
+769c500
+< 28:type:ATOM
+---
+> 1:type:ATOM
+774c505
+< 29:type:ATOM
+---
+> 2:type:ATOM
+779c510
+< 30:type:ATOM
+---
+> 3:type:ATOM
+784,788c515
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+790c517
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+795,796c522
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+798,804c524,525
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+806,809c527
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+811,813c529,531
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:20
+> name:ATOM_m
+816,817c534,535
+< 19:type:ATOM
+< ID:19
+---
+> 1:type:ATOM
+> ID:21
+821,823c539,541
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+826,829c544,547
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+831,834c549
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+836c551
+< 27:type:ATOM
+---
+> 0:type:ATOM
+841c556
+< 28:type:ATOM
+---
+> 1:type:ATOM
+846c561
+< 29:type:ATOM
+---
+> 2:type:ATOM
+851c566
+< 30:type:ATOM
+---
+> 3:type:ATOM
+856,860c571
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+862c573
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+867,868c578
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+870,876c580,581
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+878,881c583
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+883,885c585,587
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:19
+> name:ATOM_m
+888,889c590,591
+< 20:type:ATOM
+< ID:20
+---
+> 1:type:ATOM
+> ID:21
+893,895c595,597
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+898,901c600,603
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+903,906c605
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+908c607
+< 27:type:ATOM
+---
+> 0:type:ATOM
+913c612
+< 28:type:ATOM
+---
+> 1:type:ATOM
+918c617
+< 29:type:ATOM
+---
+> 2:type:ATOM
+923c622
+< 30:type:ATOM
+---
+> 3:type:ATOM
+928,932c627
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+934c629
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+939,940c634
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+942,948c636,637
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+950,953c639
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+955,957c641,643
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:20
+> name:ATOM_m
+960,961c646,647
+< 19:type:ATOM
+< ID:19
+---
+> 1:type:ATOM
+> ID:21
+965,967c651,653
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+970,973c656,659
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+975,978c661
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+980c663
+< 27:type:ATOM
+---
+> 0:type:ATOM
+985c668
+< 28:type:ATOM
+---
+> 1:type:ATOM
+990c673
+< 29:type:ATOM
+---
+> 2:type:ATOM
+995c678
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1000,1004c683
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1006c685
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1011,1012c690
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1014,1030c692,693
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1032,1035c695
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+1037,1038c697,698
+< 21:type:ATOM
+< ID:21
+---
+> 0:type:ATOM
+> ID:19
+1042,1043c702,703
+< 23:type:ATOM
+< ID:23
+---
+> 1:type:ATOM
+> ID:22
+1047,1049c707,709
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1052c712,719
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1057c724
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1062c729
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1067c734
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1072,1076c739
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1078c741
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1083,1084c746
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1086,1102c748,749
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1104,1107c751
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+1109,1110c753,754
+< 21:type:ATOM
+< ID:21
+---
+> 0:type:ATOM
+> ID:19
+1114,1115c758,759
+< 22:type:ATOM
+< ID:22
+---
+> 1:type:ATOM
+> ID:23
+1119,1121c763,765
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1124c768,775
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1129c780
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1134c785
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1139c790
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1144,1148c795
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1150c797
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1155,1156c802
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1158,1169c804,805
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1171,1174c807
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> deletedVertices:
+1176,1182c809,810
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+< links:<138,17>
+< 
+< 21:type:ATOM
+< ID:21
+---
+> 0:type:ATOM
+> ID:19
+1186,1187c814,815
+< 22:type:ATOM
+< ID:22
+---
+> 1:type:ATOM
+> ID:24
+1191,1193c819,821
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1196c824,831
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1201c836
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1206c841
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1211c846
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1216,1220c851
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1222c853
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1227,1228c858
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1230,1246c860,861
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1248,1251c863
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+1253,1254c865,866
+< 21:type:ATOM
+< ID:21
+---
+> 0:type:ATOM
+> ID:20
+1258,1259c870,871
+< 23:type:ATOM
+< ID:23
+---
+> 1:type:ATOM
+> ID:22
+1263,1265c875,877
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1268c880,887
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1273c892
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1278c897
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1283c902
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1288,1292c907
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1294c909
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1299,1300c914
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1302,1318c916,917
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1320,1323c919
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+1325,1326c921,922
+< 21:type:ATOM
+< ID:21
+---
+> 0:type:ATOM
+> ID:20
+1330,1331c926,927
+< 22:type:ATOM
+< ID:22
+---
+> 1:type:ATOM
+> ID:23
+1335,1337c931,933
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1340c936,943
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1345c948
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1350c953
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1355c958
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1360,1364c963
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1366c965
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1371,1372c970
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1374,1390c972,973
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1392,1395c975
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+1397,1398c977,978
+< 21:type:ATOM
+< ID:21
+---
+> 0:type:ATOM
+> ID:20
+1402,1403c982,983
+< 22:type:ATOM
+< ID:22
+---
+> 1:type:ATOM
+> ID:24
+1407,1409c987,989
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1412c992,999
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1417c1004
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1422c1009
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1427c1014
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1432,1436c1019
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1438c1021
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1443,1444c1026
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1446,1462c1028,1029
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1464,1467c1031
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+1469,1470c1033,1034
+< 20:type:ATOM
+< ID:20
+---
+> 0:type:ATOM
+> ID:21
+1474,1475c1038,1039
+< 23:type:ATOM
+< ID:23
+---
+> 1:type:ATOM
+> ID:22
+1479,1481c1043,1045
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1484c1048,1055
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1489c1060
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1494c1065
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1499c1070
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1504,1508c1075
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1510c1077
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1515,1516c1082
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1518,1534c1084,1085
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1536,1539c1087
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+1541,1542c1089,1090
+< 20:type:ATOM
+< ID:20
+---
+> 0:type:ATOM
+> ID:21
+1546,1547c1094,1095
+< 22:type:ATOM
+< ID:22
+---
+> 1:type:ATOM
+> ID:23
+1551,1553c1099,1101
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1556c1104,1111
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1561c1116
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1566c1121
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1571c1126
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1576,1580c1131
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1582c1133
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1587,1588c1138
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1590,1606c1140,1141
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+< 
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+< 
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+< links:<138,17>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1608,1611c1143
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+< links:<138,17>
+---
+> deletedVertices:
+1613,1614c1145,1146
+< 20:type:ATOM
+< ID:20
+---
+> 0:type:ATOM
+> ID:21
+1618,1619c1150,1151
+< 22:type:ATOM
+< ID:22
+---
+> 1:type:ATOM
+> ID:24
+1623,1625c1155,1157
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1628c1160,1167
+< 27:type:ATOM
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+1633c1172
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1638c1177
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1643c1182
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1648,1652c1187
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1654c1189
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1659,1660c1194
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1662,1668c1196,1197
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1670,1673c1199
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+1675,1677c1201,1203
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:22
+> name:ATOM_c
+1680,1682c1206,1208
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:23
+> name:ATOM_c
+1685,1687c1211,1213
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1690,1693c1216,1219
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+1695,1698c1221
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+1700c1223
+< 27:type:ATOM
+---
+> 0:type:ATOM
+1705c1228
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1710c1233
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1715c1238
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1720,1724c1243
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1726c1245
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1731,1732c1250
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1734,1740c1252,1253
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1742,1745c1255
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+1747,1749c1257,1259
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:22
+> name:ATOM_c
+1752,1754c1262,1264
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:24
+> name:ATOM_c
+1757,1759c1267,1269
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1762,1765c1272,1275
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+1767,1770c1277
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+1772c1279
+< 27:type:ATOM
+---
+> 0:type:ATOM
+1777c1284
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1782c1289
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1787c1294
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1792,1796c1299
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1798c1301
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1803,1804c1306
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1806,1812c1308,1309
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1814,1817c1311
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+1819,1821c1313,1315
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:22
+> name:ATOM_c
+1824,1826c1318,1320
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:23
+> name:ATOM_c
+1829,1831c1323,1325
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1834,1837c1328,1331
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+1839,1842c1333
+< 24:type:ATOM
+< ID:24
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+1844c1335
+< 27:type:ATOM
+---
+> 0:type:ATOM
+1849c1340
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1854c1345
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1859c1350
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1864,1868c1355
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1870c1357
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1875,1876c1362
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1878,1884c1364,1365
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1886,1889c1367
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+1891,1893c1369,1371
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:23
+> name:ATOM_c
+1896,1898c1374,1376
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:24
+> name:ATOM_c
+1901,1903c1379,1381
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1906,1909c1384,1387
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+1911,1914c1389
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+1916c1391
+< 27:type:ATOM
+---
+> 0:type:ATOM
+1921c1396
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1926c1401
+< 29:type:ATOM
+---
+> 2:type:ATOM
+1931c1406
+< 30:type:ATOM
+---
+> 3:type:ATOM
+1936,1940c1411
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+1942c1413
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+1947,1948c1418
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+1950,1956c1420,1421
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+1958,1961c1423
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+1963,1965c1425,1427
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:22
+> name:ATOM_c
+1968,1970c1430,1432
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:24
+> name:ATOM_c
+1973,1975c1435,1437
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+1978,1981c1440,1443
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+1983,1986c1445
+< 23:type:ATOM
+< ID:23
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+1988c1447
+< 27:type:ATOM
+---
+> 0:type:ATOM
+1993c1452
+< 28:type:ATOM
+---
+> 1:type:ATOM
+1998c1457
+< 29:type:ATOM
+---
+> 2:type:ATOM
+2003c1462
+< 30:type:ATOM
+---
+> 3:type:ATOM
+2008,2012c1467
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+2014c1469
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+2019,2020c1474
+< CONVERTED ATOMS:
+< 15:type:ATOM
+---
+> 1:type:HYPERLINK
+2022,2028c1476,1477
+< name:MEM_
+< links:<138,15>,<255,0>
+< 
+< 16:type:ATOM
+< ID:16
+< name:ATOM_right
+< links:<138,15>
+---
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+2030,2033c1479
+< 17:type:ATOM
+< ID:17
+< name:MEM_
+< links:<138,17>,<255,0>
+---
+> deletedVertices:
+2035,2037c1481,1483
+< 18:type:ATOM
+< ID:18
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:23
+> name:ATOM_c
+2040,2042c1486,1488
+< 19:type:ATOM
+< ID:19
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:24
+> name:ATOM_c
+2045,2047c1491,1493
+< 20:type:ATOM
+< ID:20
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:25
+> name:ATOM_boat
+2050,2053c1496,1499
+< 21:type:ATOM
+< ID:21
+< name:ATOM_m
+< links:<138,17>
+---
+> 3:type:ATOM
+> ID:26
+> name:ATOM_ok
+> links:<255,0>
+2055,2058c1501
+< 22:type:ATOM
+< ID:22
+< name:ATOM_c
+< links:<138,17>
+---
+> addedVertices:
+2060c1503
+< 27:type:ATOM
+---
+> 0:type:ATOM
+2065c1508
+< 28:type:ATOM
+---
+> 1:type:ATOM
+2070c1513
+< 29:type:ATOM
+---
+> 2:type:ATOM
+2075c1518
+< 30:type:ATOM
+---
+> 3:type:ATOM
+2080,2084c1523
+< CONVERTED HYPERLINKS:
+< 15:type:HYPERLINK
+< ID:15
+< name:
+< links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+---
+> relinkedVertices:
+2086c1525
+< 17:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+2091,2120c1530,1533
+< CONVERTED ATOMS:
+< 28:type:ATOM
+< ID:28
+< name:MEM_
+< links:<138,28>,<255,0>
+< 
+< 29:type:ATOM
+< ID:29
+< name:ATOM_c
+< links:<138,28>
+< 
+< 30:type:ATOM
+< ID:30
+< name:ATOM_c
+< links:<138,28>
+< 
+< 31:type:ATOM
+< ID:31
+< name:ATOM_boat
+< links:<138,28>
+< 
+< 32:type:ATOM
+< ID:32
+< name:ATOM_right
+< links:<138,28>
+< 
+< 33:type:ATOM
+< ID:33
+< name:MEM_
+< links:<138,33>,<255,0>
+---
+> 1:type:HYPERLINK
+> ID:15
+> name:
+> links:<0,15>,<0,27>,<0,28>,<0,29>,<0,16>
+2122,2125c1535
+< 34:type:ATOM
+< ID:34
+< name:ATOM_left
+< links:<138,33>
+---
+> deletedVertices:
+2127c1537
+< 35:type:ATOM
+---
+> 0:type:ATOM
+2132c1542
+< 36:type:ATOM
+---
+> 1:type:ATOM
+2137c1547
+< 37:type:ATOM
+---
+> 2:type:ATOM
+2142,2147c1552
+< 38:type:ATOM
+< ID:38
+< name:ATOM_c
+< links:<138,33>
+< 
+< 39:type:ATOM
+---
+> 3:type:ATOM
+2152,2202c1557
+< CONVERTED HYPERLINKS:
+< 28:type:HYPERLINK
+< ID:28
+< name:
+< links:<0,28>,<0,29>,<0,30>,<0,31>,<0,32>
+< 
+< 33:type:HYPERLINK
+< ID:33
+< name:
+< links:<0,33>,<0,34>,<0,35>,<0,36>,<0,37>,<0,38>
+< 
+< CONVERTED ATOMS:
+< 28:type:ATOM
+< ID:28
+< name:MEM_
+< links:<138,28>,<255,0>
+< 
+< 29:type:ATOM
+< ID:29
+< name:ATOM_c
+< links:<138,28>
+< 
+< 30:type:ATOM
+< ID:30
+< name:ATOM_c
+< links:<138,28>
+< 
+< 31:type:ATOM
+< ID:31
+< name:ATOM_boat
+< links:<138,28>
+< 
+< 32:type:ATOM
+< ID:32
+< name:ATOM_right
+< links:<138,28>
+< 
+< 33:type:ATOM
+< ID:33
+< name:MEM_
+< links:<138,33>,<255,0>
+< 
+< 34:type:ATOM
+< ID:34
+< name:ATOM_left
+< links:<138,33>
+< 
+< 38:type:ATOM
+< ID:38
+< name:ATOM_c
+< links:<138,33>
+---
+> addedVertices:
+2204c1559
+< 40:type:ATOM
+---
+> 0:type:ATOM
+2209c1564
+< 41:type:ATOM
+---
+> 1:type:ATOM
+2214c1569
+< 42:type:ATOM
+---
+> 2:type:ATOM
+2219c1574
+< 43:type:ATOM
+---
+> 3:type:ATOM
+2224,2228c1579
+< CONVERTED HYPERLINKS:
+< 28:type:HYPERLINK
+< ID:28
+< name:
+< links:<0,28>,<0,29>,<0,30>,<0,31>,<0,32>
+---
+> relinkedVertices:
+2230c1581
+< 33:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+2235,2259c1586
+< CONVERTED ATOMS:
+< 28:type:ATOM
+< ID:28
+< name:MEM_
+< links:<138,28>,<255,0>
+< 
+< 29:type:ATOM
+< ID:29
+< name:ATOM_c
+< links:<138,28>
+< 
+< 30:type:ATOM
+< ID:30
+< name:ATOM_c
+< links:<138,28>
+< 
+< 31:type:ATOM
+< ID:31
+< name:ATOM_boat
+< links:<138,28>
+< 
+< 32:type:ATOM
+< ID:32
+< name:ATOM_right
+< links:<138,28>
+---
+> deletedVertices:
+2261,2264c1588,1591
+< 33:type:ATOM
+< ID:33
+< name:MEM_
+< links:<138,33>,<255,0>
+---
+> 0:type:ATOM
+> ID:35
+> name:ATOM_m
+> links:<138,33>
+2266,2268c1593,1595
+< 34:type:ATOM
+< ID:34
+< name:ATOM_left
+---
+> 1:type:ATOM
+> ID:36
+> name:ATOM_m
+2271,2273c1598,1600
+< 38:type:ATOM
+< ID:38
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:37
+> name:ATOM_m
+2276c1603,1610
+< 40:type:ATOM
+---
+> 3:type:ATOM
+> ID:39
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+2281c1615
+< 41:type:ATOM
+---
+> 1:type:ATOM
+2286c1620
+< 42:type:ATOM
+---
+> 2:type:ATOM
+2291c1625
+< 43:type:ATOM
+---
+> 3:type:ATOM
+2296,2300c1630
+< CONVERTED HYPERLINKS:
+< 28:type:HYPERLINK
+< ID:28
+< name:
+< links:<0,28>,<0,29>,<0,30>,<0,31>,<0,32>
+---
+> relinkedVertices:
+2302c1632
+< 33:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+2307,2326c1637
+< CONVERTED ATOMS:
+< 28:type:ATOM
+< ID:28
+< name:MEM_
+< links:<138,28>,<255,0>
+< 
+< 29:type:ATOM
+< ID:29
+< name:ATOM_c
+< links:<138,28>
+< 
+< 30:type:ATOM
+< ID:30
+< name:ATOM_c
+< links:<138,28>
+< 
+< 31:type:ATOM
+< ID:31
+< name:ATOM_boat
+< links:<138,28>
+---
+> deletedVertices:
+2328,2336c1639,1642
+< 32:type:ATOM
+< ID:32
+< name:ATOM_right
+< links:<138,28>
+< 
+< 33:type:ATOM
+< ID:33
+< name:MEM_
+< links:<138,33>,<255,0>
+---
+> 0:type:ATOM
+> ID:35
+> name:ATOM_m
+> links:<138,33>
+2338,2340c1644,1646
+< 34:type:ATOM
+< ID:34
+< name:ATOM_left
+---
+> 1:type:ATOM
+> ID:36
+> name:ATOM_m
+2343,2345c1649,1651
+< 38:type:ATOM
+< ID:38
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:37
+> name:ATOM_m
+2348c1654,1661
+< 40:type:ATOM
+---
+> 3:type:ATOM
+> ID:39
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+2353c1666
+< 41:type:ATOM
+---
+> 1:type:ATOM
+2358c1671
+< 42:type:ATOM
+---
+> 2:type:ATOM
+2363c1676
+< 43:type:ATOM
+---
+> 3:type:ATOM
+2368,2372c1681
+< CONVERTED HYPERLINKS:
+< 28:type:HYPERLINK
+< ID:28
+< name:
+< links:<0,28>,<0,29>,<0,30>,<0,31>,<0,32>
+---
+> relinkedVertices:
+2374c1683
+< 33:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+2379,2403c1688
+< CONVERTED ATOMS:
+< 28:type:ATOM
+< ID:28
+< name:MEM_
+< links:<138,28>,<255,0>
+< 
+< 29:type:ATOM
+< ID:29
+< name:ATOM_c
+< links:<138,28>
+< 
+< 30:type:ATOM
+< ID:30
+< name:ATOM_c
+< links:<138,28>
+< 
+< 31:type:ATOM
+< ID:31
+< name:ATOM_boat
+< links:<138,28>
+< 
+< 32:type:ATOM
+< ID:32
+< name:ATOM_right
+< links:<138,28>
+---
+> deletedVertices:
+2405,2408c1690,1693
+< 33:type:ATOM
+< ID:33
+< name:MEM_
+< links:<138,33>,<255,0>
+---
+> 0:type:ATOM
+> ID:35
+> name:ATOM_m
+> links:<138,33>
+2410,2412c1695,1697
+< 34:type:ATOM
+< ID:34
+< name:ATOM_left
+---
+> 1:type:ATOM
+> ID:36
+> name:ATOM_m
+2415,2417c1700,1702
+< 38:type:ATOM
+< ID:38
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:37
+> name:ATOM_m
+2420c1705,1712
+< 40:type:ATOM
+---
+> 3:type:ATOM
+> ID:39
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+2425c1717
+< 41:type:ATOM
+---
+> 1:type:ATOM
+2430c1722
+< 42:type:ATOM
+---
+> 2:type:ATOM
+2435c1727
+< 43:type:ATOM
+---
+> 3:type:ATOM
+2440,2444c1732
+< CONVERTED HYPERLINKS:
+< 28:type:HYPERLINK
+< ID:28
+< name:
+< links:<0,28>,<0,29>,<0,30>,<0,31>,<0,32>
+---
+> relinkedVertices:
+2446c1734
+< 33:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+2451,2470c1739
+< CONVERTED ATOMS:
+< 28:type:ATOM
+< ID:28
+< name:MEM_
+< links:<138,28>,<255,0>
+< 
+< 29:type:ATOM
+< ID:29
+< name:ATOM_c
+< links:<138,28>
+< 
+< 30:type:ATOM
+< ID:30
+< name:ATOM_c
+< links:<138,28>
+< 
+< 31:type:ATOM
+< ID:31
+< name:ATOM_boat
+< links:<138,28>
+---
+> deletedVertices:
+2472,2480c1741,1744
+< 32:type:ATOM
+< ID:32
+< name:ATOM_right
+< links:<138,28>
+< 
+< 33:type:ATOM
+< ID:33
+< name:MEM_
+< links:<138,33>,<255,0>
+---
+> 0:type:ATOM
+> ID:35
+> name:ATOM_m
+> links:<138,33>
+2482,2484c1746,1748
+< 34:type:ATOM
+< ID:34
+< name:ATOM_left
+---
+> 1:type:ATOM
+> ID:36
+> name:ATOM_m
+2487,2489c1751,1753
+< 38:type:ATOM
+< ID:38
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:37
+> name:ATOM_m
+2492c1756,1763
+< 40:type:ATOM
+---
+> 3:type:ATOM
+> ID:39
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+2497c1768
+< 41:type:ATOM
+---
+> 1:type:ATOM
+2502c1773
+< 42:type:ATOM
+---
+> 2:type:ATOM
+2507c1778
+< 43:type:ATOM
+---
+> 3:type:ATOM
+2512,2516c1783
+< CONVERTED HYPERLINKS:
+< 28:type:HYPERLINK
+< ID:28
+< name:
+< links:<0,28>,<0,29>,<0,30>,<0,31>,<0,32>
+---
+> relinkedVertices:
+2518c1785
+< 33:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+2523,2537c1790
+< CONVERTED ATOMS:
+< 28:type:ATOM
+< ID:28
+< name:MEM_
+< links:<138,28>,<255,0>
+< 
+< 29:type:ATOM
+< ID:29
+< name:ATOM_c
+< links:<138,28>
+< 
+< 30:type:ATOM
+< ID:30
+< name:ATOM_c
+< links:<138,28>
+---
+> deletedVertices:
+2539,2552c1792,1795
+< 31:type:ATOM
+< ID:31
+< name:ATOM_boat
+< links:<138,28>
+< 
+< 32:type:ATOM
+< ID:32
+< name:ATOM_right
+< links:<138,28>
+< 
+< 33:type:ATOM
+< ID:33
+< name:MEM_
+< links:<138,33>,<255,0>
+---
+> 0:type:ATOM
+> ID:35
+> name:ATOM_m
+> links:<138,33>
+2554,2556c1797,1799
+< 34:type:ATOM
+< ID:34
+< name:ATOM_left
+---
+> 1:type:ATOM
+> ID:36
+> name:ATOM_m
+2559,2561c1802,1804
+< 38:type:ATOM
+< ID:38
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:37
+> name:ATOM_m
+2564c1807,1814
+< 40:type:ATOM
+---
+> 3:type:ATOM
+> ID:39
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+2569c1819
+< 41:type:ATOM
+---
+> 1:type:ATOM
+2574c1824
+< 42:type:ATOM
+---
+> 2:type:ATOM
+2579c1829
+< 43:type:ATOM
+---
+> 3:type:ATOM
+2584,2588c1834
+< CONVERTED HYPERLINKS:
+< 28:type:HYPERLINK
+< ID:28
+< name:
+< links:<0,28>,<0,29>,<0,30>,<0,31>,<0,32>
+---
+> relinkedVertices:
+2590c1836
+< 33:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+2595,2599c1841
+< CONVERTED ATOMS:
+< 41:type:ATOM
+< ID:41
+< name:MEM_
+< links:<138,41>,<255,0>
+---
+> deletedVertices:
+2601c1843
+< 42:type:ATOM
+---
+> 0:type:ATOM
+2606,2611c1848
+< 43:type:ATOM
+< ID:43
+< name:ATOM_c
+< links:<138,41>
+< 
+< 44:type:ATOM
+---
+> 1:type:ATOM
+2616,2651c1853
+< 45:type:ATOM
+< ID:45
+< name:ATOM_right
+< links:<138,41>
+< 
+< 46:type:ATOM
+< ID:46
+< name:MEM_
+< links:<138,46>,<255,0>
+< 
+< 47:type:ATOM
+< ID:47
+< name:ATOM_left
+< links:<138,46>
+< 
+< 48:type:ATOM
+< ID:48
+< name:ATOM_m
+< links:<138,46>
+< 
+< 49:type:ATOM
+< ID:49
+< name:ATOM_m
+< links:<138,46>
+< 
+< 50:type:ATOM
+< ID:50
+< name:ATOM_m
+< links:<138,46>
+< 
+< 51:type:ATOM
+< ID:51
+< name:ATOM_c
+< links:<138,46>
+< 
+< 52:type:ATOM
+---
+> 2:type:ATOM
+2656,2660c1858
+< CONVERTED HYPERLINKS:
+< 41:type:HYPERLINK
+< ID:41
+< name:
+< links:<0,41>,<0,42>,<0,43>,<0,44>,<0,45>
+---
+> addedVertices:
+2662,2713c1860
+< 46:type:HYPERLINK
+< ID:46
+< name:
+< links:<0,46>,<0,47>,<0,48>,<0,49>,<0,50>,<0,51>
+< 
+< CONVERTED ATOMS:
+< 41:type:ATOM
+< ID:41
+< name:MEM_
+< links:<138,41>,<255,0>
+< 
+< 43:type:ATOM
+< ID:43
+< name:ATOM_c
+< links:<138,41>
+< 
+< 45:type:ATOM
+< ID:45
+< name:ATOM_right
+< links:<138,41>
+< 
+< 46:type:ATOM
+< ID:46
+< name:MEM_
+< links:<138,46>,<255,0>
+< 
+< 47:type:ATOM
+< ID:47
+< name:ATOM_left
+< links:<138,46>
+< 
+< 48:type:ATOM
+< ID:48
+< name:ATOM_m
+< links:<138,46>
+< 
+< 49:type:ATOM
+< ID:49
+< name:ATOM_m
+< links:<138,46>
+< 
+< 50:type:ATOM
+< ID:50
+< name:ATOM_m
+< links:<138,46>
+< 
+< 51:type:ATOM
+< ID:51
+< name:ATOM_c
+< links:<138,46>
+< 
+< 53:type:ATOM
+---
+> 0:type:ATOM
+2718c1865
+< 54:type:ATOM
+---
+> 1:type:ATOM
+2723c1870
+< 55:type:ATOM
+---
+> 2:type:ATOM
+2728,2729c1875,1877
+< CONVERTED HYPERLINKS:
+< 41:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+2734c1882
+< 46:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+2739,2743c1887
+< CONVERTED ATOMS:
+< 41:type:ATOM
+< ID:41
+< name:MEM_
+< links:<138,41>,<255,0>
+---
+> deletedVertices:
+2745,2746c1889,1890
+< 42:type:ATOM
+< ID:42
+---
+> 0:type:ATOM
+> ID:43
+2750,2752c1894,1896
+< 45:type:ATOM
+< ID:45
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:44
+> name:ATOM_boat
+2755,2778c1899,1902
+< 46:type:ATOM
+< ID:46
+< name:MEM_
+< links:<138,46>,<255,0>
+< 
+< 47:type:ATOM
+< ID:47
+< name:ATOM_left
+< links:<138,46>
+< 
+< 48:type:ATOM
+< ID:48
+< name:ATOM_m
+< links:<138,46>
+< 
+< 49:type:ATOM
+< ID:49
+< name:ATOM_m
+< links:<138,46>
+< 
+< 50:type:ATOM
+< ID:50
+< name:ATOM_m
+< links:<138,46>
+---
+> 2:type:ATOM
+> ID:52
+> name:ATOM_ok
+> links:<255,0>
+2780,2783c1904
+< 51:type:ATOM
+< ID:51
+< name:ATOM_c
+< links:<138,46>
+---
+> addedVertices:
+2785c1906
+< 53:type:ATOM
+---
+> 0:type:ATOM
+2790c1911
+< 54:type:ATOM
+---
+> 1:type:ATOM
+2795c1916
+< 55:type:ATOM
+---
+> 2:type:ATOM
+2800,2801c1921,1923
+< CONVERTED HYPERLINKS:
+< 41:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+2806c1928
+< 46:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+2811,2815c1933
+< CONVERTED ATOMS:
+< 41:type:ATOM
+< ID:41
+< name:MEM_
+< links:<138,41>,<255,0>
+---
+> deletedVertices:
+2817,2819c1935,1937
+< 45:type:ATOM
+< ID:45
+< name:ATOM_right
+---
+> 0:type:ATOM
+> ID:42
+> name:ATOM_c
+2822,2835c1940,1943
+< 46:type:ATOM
+< ID:46
+< name:MEM_
+< links:<138,46>,<255,0>
+< 
+< 47:type:ATOM
+< ID:47
+< name:ATOM_left
+< links:<138,46>
+< 
+< 48:type:ATOM
+< ID:48
+< name:ATOM_m
+< links:<138,46>
+---
+> 1:type:ATOM
+> ID:43
+> name:ATOM_c
+> links:<138,41>
+2837,2840c1945,1948
+< 49:type:ATOM
+< ID:49
+< name:ATOM_m
+< links:<138,46>
+---
+> 2:type:ATOM
+> ID:44
+> name:ATOM_boat
+> links:<138,41>
+2842,2845c1950,1953
+< 50:type:ATOM
+< ID:50
+< name:ATOM_m
+< links:<138,46>
+---
+> 3:type:ATOM
+> ID:52
+> name:ATOM_ok
+> links:<255,0>
+2847,2850c1955
+< 51:type:ATOM
+< ID:51
+< name:ATOM_c
+< links:<138,46>
+---
+> addedVertices:
+2852c1957
+< 53:type:ATOM
+---
+> 0:type:ATOM
+2857c1962
+< 54:type:ATOM
+---
+> 1:type:ATOM
+2862c1967
+< 55:type:ATOM
+---
+> 2:type:ATOM
+2867c1972
+< 56:type:ATOM
+---
+> 3:type:ATOM
+2872,2873c1977,1979
+< CONVERTED HYPERLINKS:
+< 41:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+2878c1984
+< 46:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+2883,2887c1989
+< CONVERTED ATOMS:
+< 41:type:ATOM
+< ID:41
+< name:MEM_
+< links:<138,41>,<255,0>
+---
+> deletedVertices:
+2889,2891c1991,1993
+< 45:type:ATOM
+< ID:45
+< name:ATOM_right
+---
+> 0:type:ATOM
+> ID:42
+> name:ATOM_c
+2894,2907c1996,1999
+< 46:type:ATOM
+< ID:46
+< name:MEM_
+< links:<138,46>,<255,0>
+< 
+< 47:type:ATOM
+< ID:47
+< name:ATOM_left
+< links:<138,46>
+< 
+< 48:type:ATOM
+< ID:48
+< name:ATOM_m
+< links:<138,46>
+---
+> 1:type:ATOM
+> ID:43
+> name:ATOM_c
+> links:<138,41>
+2909,2912c2001,2004
+< 49:type:ATOM
+< ID:49
+< name:ATOM_m
+< links:<138,46>
+---
+> 2:type:ATOM
+> ID:44
+> name:ATOM_boat
+> links:<138,41>
+2914,2917c2006,2009
+< 50:type:ATOM
+< ID:50
+< name:ATOM_m
+< links:<138,46>
+---
+> 3:type:ATOM
+> ID:52
+> name:ATOM_ok
+> links:<255,0>
+2919,2922c2011
+< 51:type:ATOM
+< ID:51
+< name:ATOM_c
+< links:<138,46>
+---
+> addedVertices:
+2924c2013
+< 53:type:ATOM
+---
+> 0:type:ATOM
+2929c2018
+< 54:type:ATOM
+---
+> 1:type:ATOM
+2934c2023
+< 55:type:ATOM
+---
+> 2:type:ATOM
+2939c2028
+< 56:type:ATOM
+---
+> 3:type:ATOM
+2944,2945c2033,2035
+< CONVERTED HYPERLINKS:
+< 41:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+2950c2040
+< 46:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+2955,2969c2045
+< CONVERTED ATOMS:
+< 54:type:ATOM
+< ID:54
+< name:MEM_
+< links:<138,54>,<255,0>
+< 
+< 55:type:ATOM
+< ID:55
+< name:ATOM_right
+< links:<138,54>
+< 
+< 56:type:ATOM
+< ID:56
+< name:MEM_
+< links:<138,56>,<255,0>
+---
+> deletedVertices:
+2971,2976c2047
+< 57:type:ATOM
+< ID:57
+< name:ATOM_left
+< links:<138,56>
+< 
+< 58:type:ATOM
+---
+> 0:type:ATOM
+2981c2052
+< 59:type:ATOM
+---
+> 1:type:ATOM
+2986c2057
+< 60:type:ATOM
+---
+> 2:type:ATOM
+2991,3011c2062
+< 61:type:ATOM
+< ID:61
+< name:ATOM_c
+< links:<138,56>
+< 
+< 62:type:ATOM
+< ID:62
+< name:ATOM_c
+< links:<138,56>
+< 
+< 63:type:ATOM
+< ID:63
+< name:ATOM_c
+< links:<138,56>
+< 
+< 64:type:ATOM
+< ID:64
+< name:ATOM_boat
+< links:<138,56>
+< 
+< 65:type:ATOM
+---
+> 3:type:ATOM
+3016,3020c2067
+< CONVERTED HYPERLINKS:
+< 54:type:HYPERLINK
+< ID:54
+< name:
+< links:<0,54>,<0,55>
+---
+> addedVertices:
+3022,3068c2069
+< 56:type:HYPERLINK
+< ID:56
+< name:
+< links:<0,56>,<0,57>,<0,58>,<0,59>,<0,60>,<0,61>,<0,62>,<0,63>,<0,64>
+< 
+< CONVERTED ATOMS:
+< 54:type:ATOM
+< ID:54
+< name:MEM_
+< links:<138,54>,<255,0>
+< 
+< 55:type:ATOM
+< ID:55
+< name:ATOM_right
+< links:<138,54>
+< 
+< 56:type:ATOM
+< ID:56
+< name:MEM_
+< links:<138,56>,<255,0>
+< 
+< 57:type:ATOM
+< ID:57
+< name:ATOM_left
+< links:<138,56>
+< 
+< 61:type:ATOM
+< ID:61
+< name:ATOM_c
+< links:<138,56>
+< 
+< 62:type:ATOM
+< ID:62
+< name:ATOM_c
+< links:<138,56>
+< 
+< 63:type:ATOM
+< ID:63
+< name:ATOM_c
+< links:<138,56>
+< 
+< 64:type:ATOM
+< ID:64
+< name:ATOM_boat
+< links:<138,56>
+< 
+< 66:type:ATOM
+---
+> 0:type:ATOM
+3073c2074
+< 67:type:ATOM
+---
+> 1:type:ATOM
+3078c2079
+< 68:type:ATOM
+---
+> 2:type:ATOM
+3083c2084
+< 69:type:ATOM
+---
+> 3:type:ATOM
+3088,3092c2089
+< CONVERTED HYPERLINKS:
+< 54:type:HYPERLINK
+< ID:54
+< name:
+< links:<0,54>,<0,55>
+---
+> relinkedVertices:
+3094c2091
+< 56:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3099,3103c2096
+< CONVERTED ATOMS:
+< 54:type:ATOM
+< ID:54
+< name:MEM_
+< links:<138,54>,<255,0>
+---
+> deletedVertices:
+3105,3117c2098,2100
+< 55:type:ATOM
+< ID:55
+< name:ATOM_right
+< links:<138,54>
+< 
+< 56:type:ATOM
+< ID:56
+< name:MEM_
+< links:<138,56>,<255,0>
+< 
+< 57:type:ATOM
+< ID:57
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:58
+> name:ATOM_m
+3120,3122c2103,2105
+< 61:type:ATOM
+< ID:61
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:59
+> name:ATOM_m
+3125,3127c2108,2110
+< 62:type:ATOM
+< ID:62
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:60
+> name:ATOM_m
+3130,3133c2113,2116
+< 63:type:ATOM
+< ID:63
+< name:ATOM_c
+< links:<138,56>
+---
+> 3:type:ATOM
+> ID:65
+> name:ATOM_check
+> links:<255,0>
+3135,3138c2118
+< 64:type:ATOM
+< ID:64
+< name:ATOM_boat
+< links:<138,56>
+---
+> addedVertices:
+3140c2120
+< 66:type:ATOM
+---
+> 0:type:ATOM
+3145c2125
+< 67:type:ATOM
+---
+> 1:type:ATOM
+3150c2130
+< 68:type:ATOM
+---
+> 2:type:ATOM
+3155c2135
+< 69:type:ATOM
+---
+> 3:type:ATOM
+3160,3164c2140
+< CONVERTED HYPERLINKS:
+< 54:type:HYPERLINK
+< ID:54
+< name:
+< links:<0,54>,<0,55>
+---
+> relinkedVertices:
+3166c2142
+< 56:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3171,3185c2147
+< CONVERTED ATOMS:
+< 54:type:ATOM
+< ID:54
+< name:MEM_
+< links:<138,54>,<255,0>
+< 
+< 55:type:ATOM
+< ID:55
+< name:ATOM_right
+< links:<138,54>
+< 
+< 56:type:ATOM
+< ID:56
+< name:MEM_
+< links:<138,56>,<255,0>
+---
+> deletedVertices:
+3187,3189c2149,2151
+< 57:type:ATOM
+< ID:57
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:58
+> name:ATOM_m
+3192,3194c2154,2156
+< 61:type:ATOM
+< ID:61
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:59
+> name:ATOM_m
+3197,3199c2159,2161
+< 62:type:ATOM
+< ID:62
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:60
+> name:ATOM_m
+3202,3205c2164,2167
+< 63:type:ATOM
+< ID:63
+< name:ATOM_c
+< links:<138,56>
+---
+> 3:type:ATOM
+> ID:65
+> name:ATOM_check
+> links:<255,0>
+3207,3210c2169
+< 64:type:ATOM
+< ID:64
+< name:ATOM_boat
+< links:<138,56>
+---
+> addedVertices:
+3212c2171
+< 66:type:ATOM
+---
+> 0:type:ATOM
+3217c2176
+< 67:type:ATOM
+---
+> 1:type:ATOM
+3222c2181
+< 68:type:ATOM
+---
+> 2:type:ATOM
+3227c2186
+< 69:type:ATOM
+---
+> 3:type:ATOM
+3232,3236c2191
+< CONVERTED HYPERLINKS:
+< 54:type:HYPERLINK
+< ID:54
+< name:
+< links:<0,54>,<0,55>
+---
+> relinkedVertices:
+3238c2193
+< 56:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3243,3247c2198
+< CONVERTED ATOMS:
+< 54:type:ATOM
+< ID:54
+< name:MEM_
+< links:<138,54>,<255,0>
+---
+> deletedVertices:
+3249,3261c2200,2202
+< 55:type:ATOM
+< ID:55
+< name:ATOM_right
+< links:<138,54>
+< 
+< 56:type:ATOM
+< ID:56
+< name:MEM_
+< links:<138,56>,<255,0>
+< 
+< 57:type:ATOM
+< ID:57
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:58
+> name:ATOM_m
+3264,3266c2205,2207
+< 61:type:ATOM
+< ID:61
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:59
+> name:ATOM_m
+3269,3271c2210,2212
+< 62:type:ATOM
+< ID:62
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:60
+> name:ATOM_m
+3274,3277c2215,2218
+< 63:type:ATOM
+< ID:63
+< name:ATOM_c
+< links:<138,56>
+---
+> 3:type:ATOM
+> ID:65
+> name:ATOM_check
+> links:<255,0>
+3279,3282c2220
+< 64:type:ATOM
+< ID:64
+< name:ATOM_boat
+< links:<138,56>
+---
+> addedVertices:
+3284c2222
+< 66:type:ATOM
+---
+> 0:type:ATOM
+3289c2227
+< 67:type:ATOM
+---
+> 1:type:ATOM
+3294c2232
+< 68:type:ATOM
+---
+> 2:type:ATOM
+3299c2237
+< 69:type:ATOM
+---
+> 3:type:ATOM
+3304,3308c2242
+< CONVERTED HYPERLINKS:
+< 54:type:HYPERLINK
+< ID:54
+< name:
+< links:<0,54>,<0,55>
+---
+> relinkedVertices:
+3310c2244
+< 56:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3315,3324c2249
+< CONVERTED ATOMS:
+< 54:type:ATOM
+< ID:54
+< name:MEM_
+< links:<138,54>,<255,0>
+< 
+< 55:type:ATOM
+< ID:55
+< name:ATOM_right
+< links:<138,54>
+---
+> deletedVertices:
+3326,3333c2251,2253
+< 56:type:ATOM
+< ID:56
+< name:MEM_
+< links:<138,56>,<255,0>
+< 
+< 57:type:ATOM
+< ID:57
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:58
+> name:ATOM_m
+3336,3338c2256,2258
+< 61:type:ATOM
+< ID:61
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:59
+> name:ATOM_m
+3341,3343c2261,2263
+< 62:type:ATOM
+< ID:62
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:60
+> name:ATOM_m
+3346,3349c2266,2269
+< 63:type:ATOM
+< ID:63
+< name:ATOM_c
+< links:<138,56>
+---
+> 3:type:ATOM
+> ID:65
+> name:ATOM_check
+> links:<255,0>
+3351,3354c2271
+< 64:type:ATOM
+< ID:64
+< name:ATOM_boat
+< links:<138,56>
+---
+> addedVertices:
+3356c2273
+< 66:type:ATOM
+---
+> 0:type:ATOM
+3361c2278
+< 67:type:ATOM
+---
+> 1:type:ATOM
+3366c2283
+< 68:type:ATOM
+---
+> 2:type:ATOM
+3371c2288
+< 69:type:ATOM
+---
+> 3:type:ATOM
+3376,3380c2293
+< CONVERTED HYPERLINKS:
+< 54:type:HYPERLINK
+< ID:54
+< name:
+< links:<0,54>,<0,55>
+---
+> relinkedVertices:
+3382c2295
+< 56:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3387,3401c2300
+< CONVERTED ATOMS:
+< 54:type:ATOM
+< ID:54
+< name:MEM_
+< links:<138,54>,<255,0>
+< 
+< 55:type:ATOM
+< ID:55
+< name:ATOM_right
+< links:<138,54>
+< 
+< 56:type:ATOM
+< ID:56
+< name:MEM_
+< links:<138,56>,<255,0>
+---
+> deletedVertices:
+3403,3405c2302,2304
+< 57:type:ATOM
+< ID:57
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:58
+> name:ATOM_m
+3408,3410c2307,2309
+< 61:type:ATOM
+< ID:61
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:59
+> name:ATOM_m
+3413,3415c2312,2314
+< 62:type:ATOM
+< ID:62
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:60
+> name:ATOM_m
+3418,3421c2317,2320
+< 63:type:ATOM
+< ID:63
+< name:ATOM_c
+< links:<138,56>
+---
+> 3:type:ATOM
+> ID:65
+> name:ATOM_check
+> links:<255,0>
+3423,3426c2322
+< 64:type:ATOM
+< ID:64
+< name:ATOM_boat
+< links:<138,56>
+---
+> addedVertices:
+3428c2324
+< 66:type:ATOM
+---
+> 0:type:ATOM
+3433c2329
+< 67:type:ATOM
+---
+> 1:type:ATOM
+3438c2334
+< 68:type:ATOM
+---
+> 2:type:ATOM
+3443c2339
+< 69:type:ATOM
+---
+> 3:type:ATOM
+3448,3452c2344
+< CONVERTED HYPERLINKS:
+< 54:type:HYPERLINK
+< ID:54
+< name:
+< links:<0,54>,<0,55>
+---
+> relinkedVertices:
+3454c2346
+< 56:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3459,3483c2351
+< CONVERTED ATOMS:
+< 67:type:ATOM
+< ID:67
+< name:MEM_
+< links:<138,67>,<255,0>
+< 
+< 68:type:ATOM
+< ID:68
+< name:ATOM_c
+< links:<138,67>
+< 
+< 69:type:ATOM
+< ID:69
+< name:ATOM_right
+< links:<138,67>
+< 
+< 70:type:ATOM
+< ID:70
+< name:MEM_
+< links:<138,70>,<255,0>
+< 
+< 71:type:ATOM
+< ID:71
+< name:ATOM_left
+< links:<138,70>
+---
+> deletedVertices:
+3485c2353
+< 72:type:ATOM
+---
+> 0:type:ATOM
+3490c2358
+< 73:type:ATOM
+---
+> 1:type:ATOM
+3495c2363
+< 74:type:ATOM
+---
+> 2:type:ATOM
+3500,3515c2368
+< 75:type:ATOM
+< ID:75
+< name:ATOM_c
+< links:<138,70>
+< 
+< 76:type:ATOM
+< ID:76
+< name:ATOM_c
+< links:<138,70>
+< 
+< 77:type:ATOM
+< ID:77
+< name:ATOM_boat
+< links:<138,70>
+< 
+< 78:type:ATOM
+---
+> 3:type:ATOM
+3520,3545c2373
+< CONVERTED HYPERLINKS:
+< 67:type:HYPERLINK
+< ID:67
+< name:
+< links:<0,67>,<0,68>,<0,69>
+< 
+< 70:type:HYPERLINK
+< ID:70
+< name:
+< links:<0,70>,<0,71>,<0,72>,<0,73>,<0,74>,<0,75>,<0,76>,<0,77>
+< 
+< CONVERTED ATOMS:
+< 67:type:ATOM
+< ID:67
+< name:MEM_
+< links:<138,67>,<255,0>
+< 
+< 68:type:ATOM
+< ID:68
+< name:ATOM_c
+< links:<138,67>
+< 
+< 69:type:ATOM
+< ID:69
+< name:ATOM_right
+< links:<138,67>
+---
+> addedVertices:
+3547,3572c2375
+< 70:type:ATOM
+< ID:70
+< name:MEM_
+< links:<138,70>,<255,0>
+< 
+< 71:type:ATOM
+< ID:71
+< name:ATOM_left
+< links:<138,70>
+< 
+< 75:type:ATOM
+< ID:75
+< name:ATOM_c
+< links:<138,70>
+< 
+< 76:type:ATOM
+< ID:76
+< name:ATOM_c
+< links:<138,70>
+< 
+< 77:type:ATOM
+< ID:77
+< name:ATOM_boat
+< links:<138,70>
+< 
+< 79:type:ATOM
+---
+> 0:type:ATOM
+3577c2380
+< 80:type:ATOM
+---
+> 1:type:ATOM
+3582c2385
+< 81:type:ATOM
+---
+> 2:type:ATOM
+3587c2390
+< 82:type:ATOM
+---
+> 3:type:ATOM
+3592,3596c2395
+< CONVERTED HYPERLINKS:
+< 67:type:HYPERLINK
+< ID:67
+< name:
+< links:<0,67>,<0,68>,<0,69>
+---
+> relinkedVertices:
+3598c2397
+< 70:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3603,3622c2402
+< CONVERTED ATOMS:
+< 67:type:ATOM
+< ID:67
+< name:MEM_
+< links:<138,67>,<255,0>
+< 
+< 68:type:ATOM
+< ID:68
+< name:ATOM_c
+< links:<138,67>
+< 
+< 69:type:ATOM
+< ID:69
+< name:ATOM_right
+< links:<138,67>
+< 
+< 70:type:ATOM
+< ID:70
+< name:MEM_
+< links:<138,70>,<255,0>
+---
+> deletedVertices:
+3624,3626c2404,2406
+< 71:type:ATOM
+< ID:71
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:72
+> name:ATOM_m
+3629,3631c2409,2411
+< 75:type:ATOM
+< ID:75
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:73
+> name:ATOM_m
+3634,3636c2414,2416
+< 76:type:ATOM
+< ID:76
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:74
+> name:ATOM_m
+3639,3642c2419,2424
+< 77:type:ATOM
+< ID:77
+< name:ATOM_boat
+< links:<138,70>
+---
+> 3:type:ATOM
+> ID:78
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+3644c2426
+< 79:type:ATOM
+---
+> 0:type:ATOM
+3649c2431
+< 80:type:ATOM
+---
+> 1:type:ATOM
+3654c2436
+< 81:type:ATOM
+---
+> 2:type:ATOM
+3659c2441
+< 82:type:ATOM
+---
+> 3:type:ATOM
+3664,3668c2446
+< CONVERTED HYPERLINKS:
+< 67:type:HYPERLINK
+< ID:67
+< name:
+< links:<0,67>,<0,68>,<0,69>
+---
+> relinkedVertices:
+3670c2448
+< 70:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3675,3694c2453
+< CONVERTED ATOMS:
+< 67:type:ATOM
+< ID:67
+< name:MEM_
+< links:<138,67>,<255,0>
+< 
+< 68:type:ATOM
+< ID:68
+< name:ATOM_c
+< links:<138,67>
+< 
+< 69:type:ATOM
+< ID:69
+< name:ATOM_right
+< links:<138,67>
+< 
+< 70:type:ATOM
+< ID:70
+< name:MEM_
+< links:<138,70>,<255,0>
+---
+> deletedVertices:
+3696,3698c2455,2457
+< 71:type:ATOM
+< ID:71
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:72
+> name:ATOM_m
+3701,3703c2460,2462
+< 75:type:ATOM
+< ID:75
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:73
+> name:ATOM_m
+3706,3708c2465,2467
+< 76:type:ATOM
+< ID:76
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:74
+> name:ATOM_m
+3711,3714c2470,2475
+< 77:type:ATOM
+< ID:77
+< name:ATOM_boat
+< links:<138,70>
+---
+> 3:type:ATOM
+> ID:78
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+3716c2477
+< 79:type:ATOM
+---
+> 0:type:ATOM
+3721c2482
+< 80:type:ATOM
+---
+> 1:type:ATOM
+3726c2487
+< 81:type:ATOM
+---
+> 2:type:ATOM
+3731c2492
+< 82:type:ATOM
+---
+> 3:type:ATOM
+3736,3740c2497
+< CONVERTED HYPERLINKS:
+< 67:type:HYPERLINK
+< ID:67
+< name:
+< links:<0,67>,<0,68>,<0,69>
+---
+> relinkedVertices:
+3742c2499
+< 70:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3747,3766c2504
+< CONVERTED ATOMS:
+< 67:type:ATOM
+< ID:67
+< name:MEM_
+< links:<138,67>,<255,0>
+< 
+< 68:type:ATOM
+< ID:68
+< name:ATOM_c
+< links:<138,67>
+< 
+< 69:type:ATOM
+< ID:69
+< name:ATOM_right
+< links:<138,67>
+< 
+< 70:type:ATOM
+< ID:70
+< name:MEM_
+< links:<138,70>,<255,0>
+---
+> deletedVertices:
+3768,3770c2506,2508
+< 71:type:ATOM
+< ID:71
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:72
+> name:ATOM_m
+3773,3775c2511,2513
+< 75:type:ATOM
+< ID:75
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:73
+> name:ATOM_m
+3778,3780c2516,2518
+< 76:type:ATOM
+< ID:76
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:74
+> name:ATOM_m
+3783,3786c2521,2526
+< 77:type:ATOM
+< ID:77
+< name:ATOM_boat
+< links:<138,70>
+---
+> 3:type:ATOM
+> ID:78
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+3788c2528
+< 79:type:ATOM
+---
+> 0:type:ATOM
+3793c2533
+< 80:type:ATOM
+---
+> 1:type:ATOM
+3798c2538
+< 81:type:ATOM
+---
+> 2:type:ATOM
+3803c2543
+< 82:type:ATOM
+---
+> 3:type:ATOM
+3808,3812c2548
+< CONVERTED HYPERLINKS:
+< 67:type:HYPERLINK
+< ID:67
+< name:
+< links:<0,67>,<0,68>,<0,69>
+---
+> relinkedVertices:
+3814c2550
+< 70:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3819,3838c2555
+< CONVERTED ATOMS:
+< 67:type:ATOM
+< ID:67
+< name:MEM_
+< links:<138,67>,<255,0>
+< 
+< 68:type:ATOM
+< ID:68
+< name:ATOM_c
+< links:<138,67>
+< 
+< 69:type:ATOM
+< ID:69
+< name:ATOM_right
+< links:<138,67>
+< 
+< 70:type:ATOM
+< ID:70
+< name:MEM_
+< links:<138,70>,<255,0>
+---
+> deletedVertices:
+3840,3842c2557,2559
+< 71:type:ATOM
+< ID:71
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:72
+> name:ATOM_m
+3845,3847c2562,2564
+< 75:type:ATOM
+< ID:75
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:73
+> name:ATOM_m
+3850,3852c2567,2569
+< 76:type:ATOM
+< ID:76
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:74
+> name:ATOM_m
+3855,3858c2572,2577
+< 77:type:ATOM
+< ID:77
+< name:ATOM_boat
+< links:<138,70>
+---
+> 3:type:ATOM
+> ID:78
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+3860c2579
+< 79:type:ATOM
+---
+> 0:type:ATOM
+3865c2584
+< 80:type:ATOM
+---
+> 1:type:ATOM
+3870c2589
+< 81:type:ATOM
+---
+> 2:type:ATOM
+3875c2594
+< 82:type:ATOM
+---
+> 3:type:ATOM
+3880,3884c2599
+< CONVERTED HYPERLINKS:
+< 67:type:HYPERLINK
+< ID:67
+< name:
+< links:<0,67>,<0,68>,<0,69>
+---
+> relinkedVertices:
+3886c2601
+< 70:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3891,3910c2606
+< CONVERTED ATOMS:
+< 67:type:ATOM
+< ID:67
+< name:MEM_
+< links:<138,67>,<255,0>
+< 
+< 68:type:ATOM
+< ID:68
+< name:ATOM_c
+< links:<138,67>
+< 
+< 69:type:ATOM
+< ID:69
+< name:ATOM_right
+< links:<138,67>
+< 
+< 70:type:ATOM
+< ID:70
+< name:MEM_
+< links:<138,70>,<255,0>
+---
+> deletedVertices:
+3912,3914c2608,2610
+< 71:type:ATOM
+< ID:71
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:72
+> name:ATOM_m
+3917,3919c2613,2615
+< 75:type:ATOM
+< ID:75
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:73
+> name:ATOM_m
+3922,3924c2618,2620
+< 76:type:ATOM
+< ID:76
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:74
+> name:ATOM_m
+3927,3930c2623,2628
+< 77:type:ATOM
+< ID:77
+< name:ATOM_boat
+< links:<138,70>
+---
+> 3:type:ATOM
+> ID:78
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+3932c2630
+< 79:type:ATOM
+---
+> 0:type:ATOM
+3937c2635
+< 80:type:ATOM
+---
+> 1:type:ATOM
+3942c2640
+< 81:type:ATOM
+---
+> 2:type:ATOM
+3947c2645
+< 82:type:ATOM
+---
+> 3:type:ATOM
+3952,3956c2650
+< CONVERTED HYPERLINKS:
+< 67:type:HYPERLINK
+< ID:67
+< name:
+< links:<0,67>,<0,68>,<0,69>
+---
+> relinkedVertices:
+3958c2652
+< 70:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+3963,3987c2657
+< CONVERTED ATOMS:
+< 80:type:ATOM
+< ID:80
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+< 
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+3989c2659
+< 85:type:ATOM
+---
+> 0:type:ATOM
+3994,4014c2664
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+< links:<138,83>
+< 
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+< links:<138,83>
+< 
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+< links:<138,83>
+< 
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+< 
+< 90:type:ATOM
+---
+> 1:type:ATOM
+4019c2669
+< 91:type:ATOM
+---
+> 2:type:ATOM
+4024,4079c2674
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,81>,<0,82>
+< 
+< 83:type:HYPERLINK
+< ID:83
+< name:
+< links:<0,83>,<0,84>,<0,85>,<0,86>,<0,87>,<0,88>,<0,89>,<0,90>
+< 
+< CONVERTED ATOMS:
+< 80:type:ATOM
+< ID:80
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+< 
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+< 
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+< links:<138,83>
+< 
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+< links:<138,83>
+< 
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+< links:<138,83>
+< 
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> addedVertices:
+4081c2676
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4086c2681
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4091c2686
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4096,4100c2691
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,82>
+---
+> relinkedVertices:
+4102c2693
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4107,4108c2698
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4110,4126c2700,2701
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,82>
+4128,4131c2703
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+4133,4134c2705,2706
+< 85:type:ATOM
+< ID:85
+---
+> 0:type:ATOM
+> ID:86
+4138,4140c2710,2712
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:90
+> name:ATOM_boat
+4143,4146c2715,2718
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+< links:<138,83>
+---
+> 2:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+4148,4151c2720
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> addedVertices:
+4153c2722
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4158c2727
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4163c2732
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4168,4172c2737
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,82>
+---
+> relinkedVertices:
+4174c2739
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4179,4180c2744
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4182,4198c2746,2747
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,82>
+4200,4203c2749
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+4205,4206c2751,2752
+< 85:type:ATOM
+< ID:85
+---
+> 0:type:ATOM
+> ID:87
+4210,4212c2756,2758
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:90
+> name:ATOM_boat
+4215,4218c2761,2764
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+< links:<138,83>
+---
+> 2:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+4220,4223c2766
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> addedVertices:
+4225c2768
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4230c2773
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4235c2778
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4240,4244c2783
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,82>
+---
+> relinkedVertices:
+4246c2785
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4251,4252c2790
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4254,4270c2792,2793
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,82>
+4272,4275c2795
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+4277,4279c2797,2799
+< 85:type:ATOM
+< ID:85
+< name:ATOM_m
+---
+> 0:type:ATOM
+> ID:88
+> name:ATOM_c
+4282,4284c2802,2804
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:90
+> name:ATOM_boat
+4287,4290c2807,2810
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+< links:<138,83>
+---
+> 2:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+4292,4295c2812
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> addedVertices:
+4297c2814
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4302c2819
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4307c2824
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4312,4316c2829
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,81>,<0,92>,<0,93>,<0,82>
+---
+> relinkedVertices:
+4318c2831
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4323,4324c2836
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4326,4342c2838,2839
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,81>,<0,92>,<0,93>,<0,82>
+4344,4347c2841
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+4349,4351c2843,2845
+< 85:type:ATOM
+< ID:85
+< name:ATOM_m
+---
+> 0:type:ATOM
+> ID:89
+> name:ATOM_c
+4354,4356c2848,2850
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:90
+> name:ATOM_boat
+4359,4362c2853,2856
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+< links:<138,83>
+---
+> 2:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+4364,4367c2858
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+< links:<138,83>
+---
+> addedVertices:
+4369c2860
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4374c2865
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4379c2870
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4384,4388c2875
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,81>,<0,92>,<0,93>,<0,82>
+---
+> relinkedVertices:
+4390c2877
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4395,4396c2882
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4398,4409c2884,2885
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,81>,<0,92>,<0,93>,<0,82>
+4411,4414c2887
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> deletedVertices:
+4416,4418c2889,2891
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:85
+> name:ATOM_m
+4421,4422c2894,2895
+< 87:type:ATOM
+< ID:87
+---
+> 1:type:ATOM
+> ID:86
+4426,4428c2899,2901
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+4431,4434c2904,2909
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+4436c2911
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4441c2916
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4446c2921
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4451c2926
+< 95:type:ATOM
+---
+> 3:type:ATOM
+4456,4460c2931
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+---
+> relinkedVertices:
+4462c2933
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4467,4468c2938
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4470,4481c2940,2941
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+4483,4486c2943
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> deletedVertices:
+4488,4490c2945,2947
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:85
+> name:ATOM_m
+4493,4494c2950,2951
+< 86:type:ATOM
+< ID:86
+---
+> 1:type:ATOM
+> ID:87
+4498,4500c2955,2957
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+4503,4506c2960,2965
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+4508c2967
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4513c2972
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4518c2977
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4523c2982
+< 95:type:ATOM
+---
+> 3:type:ATOM
+4528,4532c2987
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+---
+> relinkedVertices:
+4534c2989
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4539,4540c2994
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4542,4553c2996,2997
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+4555,4558c2999
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> deletedVertices:
+4560,4562c3001,3003
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:85
+> name:ATOM_m
+4565,4566c3006,3007
+< 87:type:ATOM
+< ID:87
+---
+> 1:type:ATOM
+> ID:86
+4570,4572c3011,3013
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+4575,4578c3016,3021
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+4580c3023
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4585c3028
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4590c3033
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4595c3038
+< 95:type:ATOM
+---
+> 3:type:ATOM
+4600,4604c3043
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+---
+> relinkedVertices:
+4606c3045
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4611,4612c3050
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4614,4625c3052,3053
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+4627,4630c3055
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> deletedVertices:
+4632,4634c3057,3059
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:86
+> name:ATOM_m
+4637,4638c3062,3063
+< 85:type:ATOM
+< ID:85
+---
+> 1:type:ATOM
+> ID:87
+4642,4644c3067,3069
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+4647,4650c3072,3077
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+4652c3079
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4657c3084
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4662c3089
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4667c3094
+< 95:type:ATOM
+---
+> 3:type:ATOM
+4672,4676c3099
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+---
+> relinkedVertices:
+4678c3101
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4683,4684c3106
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4686,4692c3108,3109
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+4694,4697c3111
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> deletedVertices:
+4699,4706c3113,3115
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+< 
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:85
+> name:ATOM_m
+4709,4710c3118,3119
+< 86:type:ATOM
+< ID:86
+---
+> 1:type:ATOM
+> ID:87
+4714,4716c3123,3125
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+4719,4722c3128,3131
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+4724c3133,3135
+< 92:type:ATOM
+---
+> addedVertices:
+> 
+> 0:type:ATOM
+4729c3140
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4734c3145
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4739c3150
+< 95:type:ATOM
+---
+> 3:type:ATOM
+4744,4748c3155
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+---
+> relinkedVertices:
+4750c3157
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4755,4756c3162
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4758,4769c3164,3165
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+4771,4774c3167
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> deletedVertices:
+4776,4778c3169,3171
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:86
+> name:ATOM_m
+4781,4782c3174,3175
+< 85:type:ATOM
+< ID:85
+---
+> 1:type:ATOM
+> ID:87
+4786,4788c3179,3181
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+4791,4794c3184,3189
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+< links:<138,83>
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+4796c3191
+< 92:type:ATOM
+---
+> 0:type:ATOM
+4801c3196
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4806c3201
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4811c3206
+< 95:type:ATOM
+---
+> 3:type:ATOM
+4816,4820c3211
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+---
+> relinkedVertices:
+4822c3213
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4827,4828c3218
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4830,4846c3220,3221
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,92>,<0,93>,<0,81>,<0,94>,<0,82>
+4848,4851c3223
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+4853,4854c3225,3226
+< 86:type:ATOM
+< ID:86
+---
+> 0:type:ATOM
+> ID:85
+4858,4860c3230,3232
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:88
+> name:ATOM_c
+4863,4865c3235,3237
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+4868c3240,3247
+< 92:type:ATOM
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+4873c3252
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4878c3257
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4883c3262
+< 95:type:ATOM
+---
+> 3:type:ATOM
+4888,4892c3267
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+---
+> relinkedVertices:
+4894c3269
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4899,4900c3274
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4902,4918c3276,3277
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+4920,4923c3279
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+4925,4926c3281,3282
+< 86:type:ATOM
+< ID:86
+---
+> 0:type:ATOM
+> ID:85
+4930,4932c3286,3288
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:89
+> name:ATOM_c
+4935,4937c3291,3293
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+4940c3296,3303
+< 92:type:ATOM
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+4945c3308
+< 93:type:ATOM
+---
+> 1:type:ATOM
+4950c3313
+< 94:type:ATOM
+---
+> 2:type:ATOM
+4955c3318
+< 95:type:ATOM
+---
+> 3:type:ATOM
+4960,4964c3323
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+---
+> relinkedVertices:
+4966c3325
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+4971,4972c3330
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+4974,4990c3332,3333
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+4992,4995c3335
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+4997,4998c3337,3338
+< 85:type:ATOM
+< ID:85
+---
+> 0:type:ATOM
+> ID:86
+5002,5004c3342,3344
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:88
+> name:ATOM_c
+5007,5009c3347,3349
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+5012c3352,3359
+< 92:type:ATOM
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+5017c3364
+< 93:type:ATOM
+---
+> 1:type:ATOM
+5022c3369
+< 94:type:ATOM
+---
+> 2:type:ATOM
+5027c3374
+< 95:type:ATOM
+---
+> 3:type:ATOM
+5032,5036c3379
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+---
+> relinkedVertices:
+5038c3381
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5043,5044c3386
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+5046,5057c3388,3389
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+5059,5062c3391
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> deletedVertices:
+5064,5070c3393,3394
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+< 
+< 85:type:ATOM
+< ID:85
+---
+> 0:type:ATOM
+> ID:86
+5074,5076c3398,3400
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:89
+> name:ATOM_c
+5079,5081c3403,3405
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+5084c3408,3415
+< 92:type:ATOM
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+5089c3420
+< 93:type:ATOM
+---
+> 1:type:ATOM
+5094c3425
+< 94:type:ATOM
+---
+> 2:type:ATOM
+5099c3430
+< 95:type:ATOM
+---
+> 3:type:ATOM
+5104,5108c3435
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+---
+> relinkedVertices:
+5110c3437
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5115,5116c3442
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+5118,5134c3444,3445
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+5136,5139c3447
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+5141,5142c3449,3450
+< 85:type:ATOM
+< ID:85
+---
+> 0:type:ATOM
+> ID:87
+5146,5148c3454,3456
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:88
+> name:ATOM_c
+5151,5153c3459,3461
+< 89:type:ATOM
+< ID:89
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+5156c3464,3471
+< 92:type:ATOM
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+5161c3476
+< 93:type:ATOM
+---
+> 1:type:ATOM
+5166c3481
+< 94:type:ATOM
+---
+> 2:type:ATOM
+5171c3486
+< 95:type:ATOM
+---
+> 3:type:ATOM
+5176,5180c3491
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+---
+> relinkedVertices:
+5182c3493
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5187,5188c3498
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+5190,5206c3500,3501
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+< 
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+5208,5211c3503
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+< links:<138,83>
+---
+> deletedVertices:
+5213,5214c3505,3506
+< 85:type:ATOM
+< ID:85
+---
+> 0:type:ATOM
+> ID:87
+5218,5220c3510,3512
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:89
+> name:ATOM_c
+5223,5225c3515,3517
+< 88:type:ATOM
+< ID:88
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+5228c3520,3527
+< 92:type:ATOM
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+5233c3532
+< 93:type:ATOM
+---
+> 1:type:ATOM
+5238c3537
+< 94:type:ATOM
+---
+> 2:type:ATOM
+5243c3542
+< 95:type:ATOM
+---
+> 3:type:ATOM
+5248,5252c3547
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+---
+> relinkedVertices:
+5254c3549
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5259,5260c3554
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+5262,5273c3556,3557
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,92>,<0,81>,<0,93>,<0,94>,<0,82>
+5275,5278c3559
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> deletedVertices:
+5280,5282c3561,3563
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:88
+> name:ATOM_c
+5285,5287c3566,3568
+< 85:type:ATOM
+< ID:85
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:89
+> name:ATOM_c
+5290,5292c3571,3573
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+5295,5298c3576,3581
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+< links:<138,83>
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+5300c3583
+< 92:type:ATOM
+---
+> 0:type:ATOM
+5305c3588
+< 93:type:ATOM
+---
+> 1:type:ATOM
+5310c3593
+< 94:type:ATOM
+---
+> 2:type:ATOM
+5315c3598
+< 95:type:ATOM
+---
+> 3:type:ATOM
+5320,5324c3603
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,81>,<0,92>,<0,93>,<0,94>,<0,82>
+---
+> relinkedVertices:
+5326c3605
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5331,5332c3610
+< CONVERTED ATOMS:
+< 80:type:ATOM
+---
+> 1:type:HYPERLINK
+5334,5345c3612,3613
+< name:MEM_
+< links:<138,80>,<255,0>
+< 
+< 81:type:ATOM
+< ID:81
+< name:ATOM_c
+< links:<138,80>
+< 
+< 82:type:ATOM
+< ID:82
+< name:ATOM_right
+< links:<138,80>
+---
+> name:
+> links:<0,80>,<0,81>,<0,92>,<0,93>,<0,94>,<0,82>
+5347,5350c3615
+< 83:type:ATOM
+< ID:83
+< name:MEM_
+< links:<138,83>,<255,0>
+---
+> deletedVertices:
+5352,5354c3617,3619
+< 84:type:ATOM
+< ID:84
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:88
+> name:ATOM_c
+5357,5359c3622,3624
+< 85:type:ATOM
+< ID:85
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:89
+> name:ATOM_c
+5362,5364c3627,3629
+< 86:type:ATOM
+< ID:86
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:90
+> name:ATOM_boat
+5367,5370c3632,3635
+< 87:type:ATOM
+< ID:87
+< name:ATOM_m
+< links:<138,83>
+---
+> 3:type:ATOM
+> ID:91
+> name:ATOM_ok
+> links:<255,0>
+5372c3637,3639
+< 92:type:ATOM
+---
+> addedVertices:
+> 
+> 0:type:ATOM
+5377c3644
+< 93:type:ATOM
+---
+> 1:type:ATOM
+5382c3649
+< 94:type:ATOM
+---
+> 2:type:ATOM
+5387c3654
+< 95:type:ATOM
+---
+> 3:type:ATOM
+5392,5396c3659
+< CONVERTED HYPERLINKS:
+< 80:type:HYPERLINK
+< ID:80
+< name:
+< links:<0,80>,<0,81>,<0,92>,<0,93>,<0,94>,<0,82>
+---
+> relinkedVertices:
+5398c3661
+< 83:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5403,5437c3666,3669
+< CONVERTED ATOMS:
+< 93:type:ATOM
+< ID:93
+< name:MEM_
+< links:<138,93>,<255,0>
+< 
+< 94:type:ATOM
+< ID:94
+< name:ATOM_c
+< links:<138,93>
+< 
+< 95:type:ATOM
+< ID:95
+< name:ATOM_c
+< links:<138,93>
+< 
+< 96:type:ATOM
+< ID:96
+< name:ATOM_c
+< links:<138,93>
+< 
+< 97:type:ATOM
+< ID:97
+< name:ATOM_boat
+< links:<138,93>
+< 
+< 98:type:ATOM
+< ID:98
+< name:ATOM_right
+< links:<138,93>
+< 
+< 99:type:ATOM
+< ID:99
+< name:MEM_
+< links:<138,99>,<255,0>
+---
+> 1:type:HYPERLINK
+> ID:80
+> name:
+> links:<0,80>,<0,81>,<0,92>,<0,93>,<0,94>,<0,82>
+5439,5442c3671
+< 100:type:ATOM
+< ID:100
+< name:ATOM_left
+< links:<138,99>
+---
+> deletedVertices:
+5444c3673
+< 101:type:ATOM
+---
+> 0:type:ATOM
+5449c3678
+< 102:type:ATOM
+---
+> 1:type:ATOM
+5454c3683
+< 103:type:ATOM
+---
+> 2:type:ATOM
+5459c3688
+< 104:type:ATOM
+---
+> 3:type:ATOM
+5464,5514c3693
+< CONVERTED HYPERLINKS:
+< 93:type:HYPERLINK
+< ID:93
+< name:
+< links:<0,93>,<0,94>,<0,95>,<0,96>,<0,97>,<0,98>
+< 
+< 99:type:HYPERLINK
+< ID:99
+< name:
+< links:<0,99>,<0,100>,<0,101>,<0,102>,<0,103>
+< 
+< CONVERTED ATOMS:
+< 93:type:ATOM
+< ID:93
+< name:MEM_
+< links:<138,93>,<255,0>
+< 
+< 94:type:ATOM
+< ID:94
+< name:ATOM_c
+< links:<138,93>
+< 
+< 95:type:ATOM
+< ID:95
+< name:ATOM_c
+< links:<138,93>
+< 
+< 96:type:ATOM
+< ID:96
+< name:ATOM_c
+< links:<138,93>
+< 
+< 97:type:ATOM
+< ID:97
+< name:ATOM_boat
+< links:<138,93>
+< 
+< 98:type:ATOM
+< ID:98
+< name:ATOM_right
+< links:<138,93>
+< 
+< 99:type:ATOM
+< ID:99
+< name:MEM_
+< links:<138,99>,<255,0>
+< 
+< 100:type:ATOM
+< ID:100
+< name:ATOM_left
+< links:<138,99>
+---
+> addedVertices:
+5516c3695
+< 105:type:ATOM
+---
+> 0:type:ATOM
+5521c3700
+< 106:type:ATOM
+---
+> 1:type:ATOM
+5526c3705
+< 107:type:ATOM
+---
+> 2:type:ATOM
+5531c3710
+< 108:type:ATOM
+---
+> 3:type:ATOM
+5536,5540c3715
+< CONVERTED HYPERLINKS:
+< 93:type:HYPERLINK
+< ID:93
+< name:
+< links:<0,93>,<0,94>,<0,95>,<0,96>,<0,97>,<0,98>
+---
+> relinkedVertices:
+5542c3717
+< 99:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5547,5561c3722
+< CONVERTED ATOMS:
+< 93:type:ATOM
+< ID:93
+< name:MEM_
+< links:<138,93>,<255,0>
+< 
+< 94:type:ATOM
+< ID:94
+< name:ATOM_c
+< links:<138,93>
+< 
+< 95:type:ATOM
+< ID:95
+< name:ATOM_c
+< links:<138,93>
+---
+> deletedVertices:
+5563,5566c3724,3727
+< 96:type:ATOM
+< ID:96
+< name:ATOM_c
+< links:<138,93>
+---
+> 0:type:ATOM
+> ID:101
+> name:ATOM_m
+> links:<138,99>
+5568,5571c3729,3732
+< 97:type:ATOM
+< ID:97
+< name:ATOM_boat
+< links:<138,93>
+---
+> 1:type:ATOM
+> ID:102
+> name:ATOM_m
+> links:<138,99>
+5573,5576c3734,3737
+< 98:type:ATOM
+< ID:98
+< name:ATOM_right
+< links:<138,93>
+---
+> 2:type:ATOM
+> ID:103
+> name:ATOM_m
+> links:<138,99>
+5578,5581c3739,3742
+< 99:type:ATOM
+< ID:99
+< name:MEM_
+< links:<138,99>,<255,0>
+---
+> 3:type:ATOM
+> ID:104
+> name:ATOM_check
+> links:<255,0>
+5583,5586c3744
+< 100:type:ATOM
+< ID:100
+< name:ATOM_left
+< links:<138,99>
+---
+> addedVertices:
+5588c3746
+< 105:type:ATOM
+---
+> 0:type:ATOM
+5593c3751
+< 106:type:ATOM
+---
+> 1:type:ATOM
+5598c3756
+< 107:type:ATOM
+---
+> 2:type:ATOM
+5603c3761
+< 108:type:ATOM
+---
+> 3:type:ATOM
+5608,5612c3766
+< CONVERTED HYPERLINKS:
+< 93:type:HYPERLINK
+< ID:93
+< name:
+< links:<0,93>,<0,94>,<0,95>,<0,96>,<0,97>,<0,98>
+---
+> relinkedVertices:
+5614c3768
+< 99:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5619,5633c3773
+< CONVERTED ATOMS:
+< 93:type:ATOM
+< ID:93
+< name:MEM_
+< links:<138,93>,<255,0>
+< 
+< 94:type:ATOM
+< ID:94
+< name:ATOM_c
+< links:<138,93>
+< 
+< 95:type:ATOM
+< ID:95
+< name:ATOM_c
+< links:<138,93>
+---
+> deletedVertices:
+5635,5638c3775,3778
+< 96:type:ATOM
+< ID:96
+< name:ATOM_c
+< links:<138,93>
+---
+> 0:type:ATOM
+> ID:101
+> name:ATOM_m
+> links:<138,99>
+5640,5643c3780,3783
+< 97:type:ATOM
+< ID:97
+< name:ATOM_boat
+< links:<138,93>
+---
+> 1:type:ATOM
+> ID:102
+> name:ATOM_m
+> links:<138,99>
+5645,5648c3785,3788
+< 98:type:ATOM
+< ID:98
+< name:ATOM_right
+< links:<138,93>
+---
+> 2:type:ATOM
+> ID:103
+> name:ATOM_m
+> links:<138,99>
+5650,5653c3790,3793
+< 99:type:ATOM
+< ID:99
+< name:MEM_
+< links:<138,99>,<255,0>
+---
+> 3:type:ATOM
+> ID:104
+> name:ATOM_check
+> links:<255,0>
+5655,5658c3795
+< 100:type:ATOM
+< ID:100
+< name:ATOM_left
+< links:<138,99>
+---
+> addedVertices:
+5660c3797
+< 105:type:ATOM
+---
+> 0:type:ATOM
+5665c3802
+< 106:type:ATOM
+---
+> 1:type:ATOM
+5670c3807
+< 107:type:ATOM
+---
+> 2:type:ATOM
+5675c3812
+< 108:type:ATOM
+---
+> 3:type:ATOM
+5680,5684c3817
+< CONVERTED HYPERLINKS:
+< 93:type:HYPERLINK
+< ID:93
+< name:
+< links:<0,93>,<0,94>,<0,95>,<0,96>,<0,97>,<0,98>
+---
+> relinkedVertices:
+5686c3819
+< 99:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5691,5700c3824
+< CONVERTED ATOMS:
+< 93:type:ATOM
+< ID:93
+< name:MEM_
+< links:<138,93>,<255,0>
+< 
+< 94:type:ATOM
+< ID:94
+< name:ATOM_c
+< links:<138,93>
+---
+> deletedVertices:
+5702,5710c3826,3829
+< 95:type:ATOM
+< ID:95
+< name:ATOM_c
+< links:<138,93>
+< 
+< 96:type:ATOM
+< ID:96
+< name:ATOM_c
+< links:<138,93>
+---
+> 0:type:ATOM
+> ID:101
+> name:ATOM_m
+> links:<138,99>
+5712,5715c3831,3834
+< 97:type:ATOM
+< ID:97
+< name:ATOM_boat
+< links:<138,93>
+---
+> 1:type:ATOM
+> ID:102
+> name:ATOM_m
+> links:<138,99>
+5717,5720c3836,3839
+< 98:type:ATOM
+< ID:98
+< name:ATOM_right
+< links:<138,93>
+---
+> 2:type:ATOM
+> ID:103
+> name:ATOM_m
+> links:<138,99>
+5722,5725c3841,3844
+< 99:type:ATOM
+< ID:99
+< name:MEM_
+< links:<138,99>,<255,0>
+---
+> 3:type:ATOM
+> ID:104
+> name:ATOM_check
+> links:<255,0>
+5727,5730c3846
+< 100:type:ATOM
+< ID:100
+< name:ATOM_left
+< links:<138,99>
+---
+> addedVertices:
+5732c3848
+< 105:type:ATOM
+---
+> 0:type:ATOM
+5737c3853
+< 106:type:ATOM
+---
+> 1:type:ATOM
+5742c3858
+< 107:type:ATOM
+---
+> 2:type:ATOM
+5747c3863
+< 108:type:ATOM
+---
+> 3:type:ATOM
+5752,5756c3868
+< CONVERTED HYPERLINKS:
+< 93:type:HYPERLINK
+< ID:93
+< name:
+< links:<0,93>,<0,94>,<0,95>,<0,96>,<0,97>,<0,98>
+---
+> relinkedVertices:
+5758c3870
+< 99:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5763,5772c3875
+< CONVERTED ATOMS:
+< 93:type:ATOM
+< ID:93
+< name:MEM_
+< links:<138,93>,<255,0>
+< 
+< 94:type:ATOM
+< ID:94
+< name:ATOM_c
+< links:<138,93>
+---
+> deletedVertices:
+5774,5782c3877,3880
+< 95:type:ATOM
+< ID:95
+< name:ATOM_c
+< links:<138,93>
+< 
+< 96:type:ATOM
+< ID:96
+< name:ATOM_c
+< links:<138,93>
+---
+> 0:type:ATOM
+> ID:101
+> name:ATOM_m
+> links:<138,99>
+5784,5787c3882,3885
+< 97:type:ATOM
+< ID:97
+< name:ATOM_boat
+< links:<138,93>
+---
+> 1:type:ATOM
+> ID:102
+> name:ATOM_m
+> links:<138,99>
+5789,5792c3887,3890
+< 98:type:ATOM
+< ID:98
+< name:ATOM_right
+< links:<138,93>
+---
+> 2:type:ATOM
+> ID:103
+> name:ATOM_m
+> links:<138,99>
+5794,5797c3892,3895
+< 99:type:ATOM
+< ID:99
+< name:MEM_
+< links:<138,99>,<255,0>
+---
+> 3:type:ATOM
+> ID:104
+> name:ATOM_check
+> links:<255,0>
+5799,5802c3897
+< 100:type:ATOM
+< ID:100
+< name:ATOM_left
+< links:<138,99>
+---
+> addedVertices:
+5804c3899
+< 105:type:ATOM
+---
+> 0:type:ATOM
+5809c3904
+< 106:type:ATOM
+---
+> 1:type:ATOM
+5814c3909
+< 107:type:ATOM
+---
+> 2:type:ATOM
+5819c3914
+< 108:type:ATOM
+---
+> 3:type:ATOM
+5824,5828c3919
+< CONVERTED HYPERLINKS:
+< 93:type:HYPERLINK
+< ID:93
+< name:
+< links:<0,93>,<0,94>,<0,95>,<0,96>,<0,97>,<0,98>
+---
+> relinkedVertices:
+5830c3921
+< 99:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5835,5849c3926
+< CONVERTED ATOMS:
+< 93:type:ATOM
+< ID:93
+< name:MEM_
+< links:<138,93>,<255,0>
+< 
+< 94:type:ATOM
+< ID:94
+< name:ATOM_c
+< links:<138,93>
+< 
+< 95:type:ATOM
+< ID:95
+< name:ATOM_c
+< links:<138,93>
+---
+> deletedVertices:
+5851,5854c3928,3931
+< 96:type:ATOM
+< ID:96
+< name:ATOM_c
+< links:<138,93>
+---
+> 0:type:ATOM
+> ID:101
+> name:ATOM_m
+> links:<138,99>
+5856,5859c3933,3936
+< 97:type:ATOM
+< ID:97
+< name:ATOM_boat
+< links:<138,93>
+---
+> 1:type:ATOM
+> ID:102
+> name:ATOM_m
+> links:<138,99>
+5861,5864c3938,3941
+< 98:type:ATOM
+< ID:98
+< name:ATOM_right
+< links:<138,93>
+---
+> 2:type:ATOM
+> ID:103
+> name:ATOM_m
+> links:<138,99>
+5866,5869c3943,3946
+< 99:type:ATOM
+< ID:99
+< name:MEM_
+< links:<138,99>,<255,0>
+---
+> 3:type:ATOM
+> ID:104
+> name:ATOM_check
+> links:<255,0>
+5871,5874c3948
+< 100:type:ATOM
+< ID:100
+< name:ATOM_left
+< links:<138,99>
+---
+> addedVertices:
+5876c3950
+< 105:type:ATOM
+---
+> 0:type:ATOM
+5881c3955
+< 106:type:ATOM
+---
+> 1:type:ATOM
+5886c3960
+< 107:type:ATOM
+---
+> 2:type:ATOM
+5891c3965
+< 108:type:ATOM
+---
+> 3:type:ATOM
+5896,5900c3970
+< CONVERTED HYPERLINKS:
+< 93:type:HYPERLINK
+< ID:93
+< name:
+< links:<0,93>,<0,94>,<0,95>,<0,96>,<0,97>,<0,98>
+---
+> relinkedVertices:
+5902c3972
+< 99:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+5907,5911c3977
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+5913c3979
+< 107:type:ATOM
+---
+> 0:type:ATOM
+5918,5928c3984
+< 108:type:ATOM
+< ID:108
+< name:ATOM_c
+< links:<138,106>
+< 
+< 109:type:ATOM
+< ID:109
+< name:ATOM_c
+< links:<138,106>
+< 
+< 110:type:ATOM
+---
+> 1:type:ATOM
+5933,5963c3989
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+< links:<138,106>
+< 
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+< 
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+< 
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+< 
+< 117:type:ATOM
+---
+> 2:type:ATOM
+5968,6018c3994
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+< ID:106
+< name:
+< links:<0,106>,<0,107>,<0,108>,<0,109>,<0,110>,<0,111>
+< 
+< 112:type:HYPERLINK
+< ID:112
+< name:
+< links:<0,112>,<0,113>,<0,114>,<0,115>,<0,116>
+< 
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+< 
+< 108:type:ATOM
+< ID:108
+< name:ATOM_c
+< links:<138,106>
+< 
+< 109:type:ATOM
+< ID:109
+< name:ATOM_c
+< links:<138,106>
+< 
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+< links:<138,106>
+< 
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+< 
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6020,6025c3996
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+< 
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6030c4001
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6035c4006
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6040,6041c4011,4013
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6046c4018
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6051,6055c4023
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+6057,6063c4025,4026
+< 107:type:ATOM
+< ID:107
+< name:ATOM_c
+< links:<138,106>
+< 
+< 109:type:ATOM
+< ID:109
+---
+> 0:type:ATOM
+> ID:108
+6067,6069c4030,4032
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:110
+> name:ATOM_boat
+6072,6090c4035,4038
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+< 
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> 2:type:ATOM
+> ID:117
+> name:ATOM_ok
+> links:<255,0>
+6092,6095c4040
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6097c4042
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6102c4047
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6107c4052
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6112,6113c4057,4059
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6118c4064
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6123,6127c4069
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+6129,6135c4071,4072
+< 107:type:ATOM
+< ID:107
+< name:ATOM_c
+< links:<138,106>
+< 
+< 108:type:ATOM
+< ID:108
+---
+> 0:type:ATOM
+> ID:109
+6139,6141c4076,4078
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:110
+> name:ATOM_boat
+6144,6162c4081,4084
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+< 
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> 2:type:ATOM
+> ID:117
+> name:ATOM_ok
+> links:<255,0>
+6164,6167c4086
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6169c4088
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6174c4093
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6179c4098
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6184,6185c4103,4105
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6190c4110
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6195,6199c4115
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+6201,6202c4117,4118
+< 109:type:ATOM
+< ID:109
+---
+> 0:type:ATOM
+> ID:107
+6206,6208c4122,4124
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:108
+> name:ATOM_c
+6211,6224c4127,4130
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+---
+> 2:type:ATOM
+> ID:110
+> name:ATOM_boat
+> links:<138,106>
+6226,6229c4132,4135
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> 3:type:ATOM
+> ID:117
+> name:ATOM_ok
+> links:<255,0>
+6231,6234c4137
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6236c4139
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6241c4144
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6246c4149
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6251c4154
+< 121:type:ATOM
+---
+> 3:type:ATOM
+6256,6257c4159,4161
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6262c4166
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6267,6271c4171
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+6273,6274c4173,4174
+< 108:type:ATOM
+< ID:108
+---
+> 0:type:ATOM
+> ID:107
+6278,6280c4178,4180
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:109
+> name:ATOM_c
+6283,6296c4183,4186
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+---
+> 2:type:ATOM
+> ID:110
+> name:ATOM_boat
+> links:<138,106>
+6298,6301c4188,4191
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> 3:type:ATOM
+> ID:117
+> name:ATOM_ok
+> links:<255,0>
+6303,6306c4193
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6308c4195
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6313c4200
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6318c4205
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6323c4210
+< 121:type:ATOM
+---
+> 3:type:ATOM
+6328,6329c4215,4217
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6334c4222
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6339,6343c4227
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+6345,6346c4229,4230
+< 109:type:ATOM
+< ID:109
+---
+> 0:type:ATOM
+> ID:107
+6350,6352c4234,4236
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:108
+> name:ATOM_c
+6355,6368c4239,4242
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+---
+> 2:type:ATOM
+> ID:110
+> name:ATOM_boat
+> links:<138,106>
+6370,6373c4244,4247
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> 3:type:ATOM
+> ID:117
+> name:ATOM_ok
+> links:<255,0>
+6375,6378c4249
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6380c4251
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6385c4256
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6390c4261
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6395c4266
+< 121:type:ATOM
+---
+> 3:type:ATOM
+6400,6401c4271,4273
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6406c4278
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6411,6415c4283
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+6417,6418c4285,4286
+< 107:type:ATOM
+< ID:107
+---
+> 0:type:ATOM
+> ID:108
+6422,6424c4290,4292
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:109
+> name:ATOM_c
+6427,6440c4295,4298
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+---
+> 2:type:ATOM
+> ID:110
+> name:ATOM_boat
+> links:<138,106>
+6442,6445c4300,4303
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> 3:type:ATOM
+> ID:117
+> name:ATOM_ok
+> links:<255,0>
+6447,6450c4305
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6452c4307
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6457c4312
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6462c4317
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6467c4322
+< 121:type:ATOM
+---
+> 3:type:ATOM
+6472,6473c4327,4329
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6478c4334
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6483,6487c4339
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+6489,6490c4341,4342
+< 108:type:ATOM
+< ID:108
+---
+> 0:type:ATOM
+> ID:107
+6494,6496c4346,4348
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:109
+> name:ATOM_c
+6499,6512c4351,4354
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+---
+> 2:type:ATOM
+> ID:110
+> name:ATOM_boat
+> links:<138,106>
+6514,6517c4356,4359
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> 3:type:ATOM
+> ID:117
+> name:ATOM_ok
+> links:<255,0>
+6519,6522c4361
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6524c4363
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6529c4368
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6534c4373
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6539c4378
+< 121:type:ATOM
+---
+> 3:type:ATOM
+6544,6545c4383,4385
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6550c4390
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6555,6559c4395
+< CONVERTED ATOMS:
+< 106:type:ATOM
+< ID:106
+< name:MEM_
+< links:<138,106>,<255,0>
+---
+> deletedVertices:
+6561,6562c4397,4398
+< 107:type:ATOM
+< ID:107
+---
+> 0:type:ATOM
+> ID:108
+6566,6568c4402,4404
+< 111:type:ATOM
+< ID:111
+< name:ATOM_right
+---
+> 1:type:ATOM
+> ID:109
+> name:ATOM_c
+6571,6584c4407,4410
+< 112:type:ATOM
+< ID:112
+< name:MEM_
+< links:<138,112>,<255,0>
+< 
+< 113:type:ATOM
+< ID:113
+< name:ATOM_left
+< links:<138,112>
+< 
+< 114:type:ATOM
+< ID:114
+< name:ATOM_m
+< links:<138,112>
+---
+> 2:type:ATOM
+> ID:110
+> name:ATOM_boat
+> links:<138,106>
+6586,6589c4412,4415
+< 115:type:ATOM
+< ID:115
+< name:ATOM_m
+< links:<138,112>
+---
+> 3:type:ATOM
+> ID:117
+> name:ATOM_ok
+> links:<255,0>
+6591,6594c4417
+< 116:type:ATOM
+< ID:116
+< name:ATOM_m
+< links:<138,112>
+---
+> addedVertices:
+6596c4419
+< 118:type:ATOM
+---
+> 0:type:ATOM
+6601c4424
+< 119:type:ATOM
+---
+> 1:type:ATOM
+6606c4429
+< 120:type:ATOM
+---
+> 2:type:ATOM
+6611c4434
+< 121:type:ATOM
+---
+> 3:type:ATOM
+6616,6617c4439,4441
+< CONVERTED HYPERLINKS:
+< 106:type:HYPERLINK
+---
+> relinkedVertices:
+> 
+> 0:type:HYPERLINK
+6622c4446
+< 112:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+6627,6651c4451
+< CONVERTED ATOMS:
+< 119:type:ATOM
+< ID:119
+< name:MEM_
+< links:<138,119>,<255,0>
+< 
+< 120:type:ATOM
+< ID:120
+< name:ATOM_c
+< links:<138,119>
+< 
+< 121:type:ATOM
+< ID:121
+< name:ATOM_c
+< links:<138,119>
+< 
+< 122:type:ATOM
+< ID:122
+< name:ATOM_right
+< links:<138,119>
+< 
+< 123:type:ATOM
+< ID:123
+< name:MEM_
+< links:<138,123>,<255,0>
+---
+> deletedVertices:
+6653,6658c4453
+< 124:type:ATOM
+< ID:124
+< name:ATOM_left
+< links:<138,123>
+< 
+< 125:type:ATOM
+---
+> 0:type:ATOM
+6663c4458
+< 126:type:ATOM
+---
+> 1:type:ATOM
+6668c4463
+< 127:type:ATOM
+---
+> 2:type:ATOM
+6673,6683c4468
+< 128:type:ATOM
+< ID:128
+< name:ATOM_c
+< links:<138,123>
+< 
+< 129:type:ATOM
+< ID:129
+< name:ATOM_boat
+< links:<138,123>
+< 
+< 130:type:ATOM
+---
+> 3:type:ATOM
+6688,6738c4473
+< CONVERTED HYPERLINKS:
+< 119:type:HYPERLINK
+< ID:119
+< name:
+< links:<0,119>,<0,120>,<0,121>,<0,122>
+< 
+< 123:type:HYPERLINK
+< ID:123
+< name:
+< links:<0,123>,<0,124>,<0,125>,<0,126>,<0,127>,<0,128>,<0,129>
+< 
+< CONVERTED ATOMS:
+< 119:type:ATOM
+< ID:119
+< name:MEM_
+< links:<138,119>,<255,0>
+< 
+< 120:type:ATOM
+< ID:120
+< name:ATOM_c
+< links:<138,119>
+< 
+< 121:type:ATOM
+< ID:121
+< name:ATOM_c
+< links:<138,119>
+< 
+< 122:type:ATOM
+< ID:122
+< name:ATOM_right
+< links:<138,119>
+< 
+< 123:type:ATOM
+< ID:123
+< name:MEM_
+< links:<138,123>,<255,0>
+< 
+< 124:type:ATOM
+< ID:124
+< name:ATOM_left
+< links:<138,123>
+< 
+< 128:type:ATOM
+< ID:128
+< name:ATOM_c
+< links:<138,123>
+< 
+< 129:type:ATOM
+< ID:129
+< name:ATOM_boat
+< links:<138,123>
+---
+> addedVertices:
+6740c4475
+< 131:type:ATOM
+---
+> 0:type:ATOM
+6745c4480
+< 132:type:ATOM
+---
+> 1:type:ATOM
+6750c4485
+< 133:type:ATOM
+---
+> 2:type:ATOM
+6755c4490
+< 134:type:ATOM
+---
+> 3:type:ATOM
+6760,6764c4495
+< CONVERTED HYPERLINKS:
+< 119:type:HYPERLINK
+< ID:119
+< name:
+< links:<0,119>,<0,120>,<0,121>,<0,122>
+---
+> relinkedVertices:
+6766c4497
+< 123:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+6771,6775c4502
+< CONVERTED ATOMS:
+< 119:type:ATOM
+< ID:119
+< name:MEM_
+< links:<138,119>,<255,0>
+---
+> deletedVertices:
+6777,6799c4504,4506
+< 120:type:ATOM
+< ID:120
+< name:ATOM_c
+< links:<138,119>
+< 
+< 121:type:ATOM
+< ID:121
+< name:ATOM_c
+< links:<138,119>
+< 
+< 122:type:ATOM
+< ID:122
+< name:ATOM_right
+< links:<138,119>
+< 
+< 123:type:ATOM
+< ID:123
+< name:MEM_
+< links:<138,123>,<255,0>
+< 
+< 124:type:ATOM
+< ID:124
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:125
+> name:ATOM_m
+6802,6804c4509,4511
+< 128:type:ATOM
+< ID:128
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:126
+> name:ATOM_m
+6807,6809c4514,4516
+< 129:type:ATOM
+< ID:129
+< name:ATOM_boat
+---
+> 2:type:ATOM
+> ID:127
+> name:ATOM_m
+6812c4519,4526
+< 131:type:ATOM
+---
+> 3:type:ATOM
+> ID:130
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+6817c4531
+< 132:type:ATOM
+---
+> 1:type:ATOM
+6822c4536
+< 133:type:ATOM
+---
+> 2:type:ATOM
+6827c4541
+< 134:type:ATOM
+---
+> 3:type:ATOM
+6832,6836c4546
+< CONVERTED HYPERLINKS:
+< 119:type:HYPERLINK
+< ID:119
+< name:
+< links:<0,119>,<0,120>,<0,121>,<0,122>
+---
+> relinkedVertices:
+6838c4548
+< 123:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+6843,6867c4553
+< CONVERTED ATOMS:
+< 119:type:ATOM
+< ID:119
+< name:MEM_
+< links:<138,119>,<255,0>
+< 
+< 120:type:ATOM
+< ID:120
+< name:ATOM_c
+< links:<138,119>
+< 
+< 121:type:ATOM
+< ID:121
+< name:ATOM_c
+< links:<138,119>
+< 
+< 122:type:ATOM
+< ID:122
+< name:ATOM_right
+< links:<138,119>
+< 
+< 123:type:ATOM
+< ID:123
+< name:MEM_
+< links:<138,123>,<255,0>
+---
+> deletedVertices:
+6869,6871c4555,4557
+< 124:type:ATOM
+< ID:124
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:125
+> name:ATOM_m
+6874,6876c4560,4562
+< 128:type:ATOM
+< ID:128
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:126
+> name:ATOM_m
+6879,6881c4565,4567
+< 129:type:ATOM
+< ID:129
+< name:ATOM_boat
+---
+> 2:type:ATOM
+> ID:127
+> name:ATOM_m
+6884c4570,4577
+< 131:type:ATOM
+---
+> 3:type:ATOM
+> ID:130
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+6889c4582
+< 132:type:ATOM
+---
+> 1:type:ATOM
+6894c4587
+< 133:type:ATOM
+---
+> 2:type:ATOM
+6899c4592
+< 134:type:ATOM
+---
+> 3:type:ATOM
+6904,6908c4597
+< CONVERTED HYPERLINKS:
+< 119:type:HYPERLINK
+< ID:119
+< name:
+< links:<0,119>,<0,120>,<0,121>,<0,122>
+---
+> relinkedVertices:
+6910c4599
+< 123:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+6915,6939c4604
+< CONVERTED ATOMS:
+< 119:type:ATOM
+< ID:119
+< name:MEM_
+< links:<138,119>,<255,0>
+< 
+< 120:type:ATOM
+< ID:120
+< name:ATOM_c
+< links:<138,119>
+< 
+< 121:type:ATOM
+< ID:121
+< name:ATOM_c
+< links:<138,119>
+< 
+< 122:type:ATOM
+< ID:122
+< name:ATOM_right
+< links:<138,119>
+< 
+< 123:type:ATOM
+< ID:123
+< name:MEM_
+< links:<138,123>,<255,0>
+---
+> deletedVertices:
+6941,6943c4606,4608
+< 124:type:ATOM
+< ID:124
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:125
+> name:ATOM_m
+6946,6948c4611,4613
+< 128:type:ATOM
+< ID:128
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:126
+> name:ATOM_m
+6951,6953c4616,4618
+< 129:type:ATOM
+< ID:129
+< name:ATOM_boat
+---
+> 2:type:ATOM
+> ID:127
+> name:ATOM_m
+6956c4621,4628
+< 131:type:ATOM
+---
+> 3:type:ATOM
+> ID:130
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+6961c4633
+< 132:type:ATOM
+---
+> 1:type:ATOM
+6966c4638
+< 133:type:ATOM
+---
+> 2:type:ATOM
+6971c4643
+< 134:type:ATOM
+---
+> 3:type:ATOM
+6976,6980c4648
+< CONVERTED HYPERLINKS:
+< 119:type:HYPERLINK
+< ID:119
+< name:
+< links:<0,119>,<0,120>,<0,121>,<0,122>
+---
+> relinkedVertices:
+6982c4650
+< 123:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+6987,7006c4655
+< CONVERTED ATOMS:
+< 119:type:ATOM
+< ID:119
+< name:MEM_
+< links:<138,119>,<255,0>
+< 
+< 120:type:ATOM
+< ID:120
+< name:ATOM_c
+< links:<138,119>
+< 
+< 121:type:ATOM
+< ID:121
+< name:ATOM_c
+< links:<138,119>
+< 
+< 122:type:ATOM
+< ID:122
+< name:ATOM_right
+< links:<138,119>
+---
+> deletedVertices:
+7008,7015c4657,4659
+< 123:type:ATOM
+< ID:123
+< name:MEM_
+< links:<138,123>,<255,0>
+< 
+< 124:type:ATOM
+< ID:124
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:125
+> name:ATOM_m
+7018,7020c4662,4664
+< 128:type:ATOM
+< ID:128
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:126
+> name:ATOM_m
+7023,7025c4667,4669
+< 129:type:ATOM
+< ID:129
+< name:ATOM_boat
+---
+> 2:type:ATOM
+> ID:127
+> name:ATOM_m
+7028c4672,4679
+< 131:type:ATOM
+---
+> 3:type:ATOM
+> ID:130
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7033c4684
+< 132:type:ATOM
+---
+> 1:type:ATOM
+7038c4689
+< 133:type:ATOM
+---
+> 2:type:ATOM
+7043c4694
+< 134:type:ATOM
+---
+> 3:type:ATOM
+7048,7052c4699
+< CONVERTED HYPERLINKS:
+< 119:type:HYPERLINK
+< ID:119
+< name:
+< links:<0,119>,<0,120>,<0,121>,<0,122>
+---
+> relinkedVertices:
+7054c4701
+< 123:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7059,7078c4706
+< CONVERTED ATOMS:
+< 119:type:ATOM
+< ID:119
+< name:MEM_
+< links:<138,119>,<255,0>
+< 
+< 120:type:ATOM
+< ID:120
+< name:ATOM_c
+< links:<138,119>
+< 
+< 121:type:ATOM
+< ID:121
+< name:ATOM_c
+< links:<138,119>
+< 
+< 122:type:ATOM
+< ID:122
+< name:ATOM_right
+< links:<138,119>
+---
+> deletedVertices:
+7080,7087c4708,4710
+< 123:type:ATOM
+< ID:123
+< name:MEM_
+< links:<138,123>,<255,0>
+< 
+< 124:type:ATOM
+< ID:124
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:125
+> name:ATOM_m
+7090,7092c4713,4715
+< 128:type:ATOM
+< ID:128
+< name:ATOM_c
+---
+> 1:type:ATOM
+> ID:126
+> name:ATOM_m
+7095,7097c4718,4720
+< 129:type:ATOM
+< ID:129
+< name:ATOM_boat
+---
+> 2:type:ATOM
+> ID:127
+> name:ATOM_m
+7100c4723,4730
+< 131:type:ATOM
+---
+> 3:type:ATOM
+> ID:130
+> name:ATOM_check
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7105c4735
+< 132:type:ATOM
+---
+> 1:type:ATOM
+7110c4740
+< 133:type:ATOM
+---
+> 2:type:ATOM
+7115c4745
+< 134:type:ATOM
+---
+> 3:type:ATOM
+7120,7124c4750
+< CONVERTED HYPERLINKS:
+< 119:type:HYPERLINK
+< ID:119
+< name:
+< links:<0,119>,<0,120>,<0,121>,<0,122>
+---
+> relinkedVertices:
+7126c4752
+< 123:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7131,7155c4757
+< CONVERTED ATOMS:
+< 132:type:ATOM
+< ID:132
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+< 
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+7157,7162c4759
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+< links:<138,136>
+< 
+< 138:type:ATOM
+---
+> 0:type:ATOM
+7167,7182c4764
+< 139:type:ATOM
+< ID:139
+< name:ATOM_m
+< links:<138,136>
+< 
+< 140:type:ATOM
+< ID:140
+< name:ATOM_m
+< links:<138,136>
+< 
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+< links:<138,136>
+< 
+< 142:type:ATOM
+---
+> 1:type:ATOM
+7187c4769
+< 143:type:ATOM
+---
+> 2:type:ATOM
+7192,7242c4774
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,133>,<0,134>,<0,135>
+< 
+< 136:type:HYPERLINK
+< ID:136
+< name:
+< links:<0,136>,<0,137>,<0,138>,<0,139>,<0,140>,<0,141>,<0,142>
+< 
+< CONVERTED ATOMS:
+< 132:type:ATOM
+< ID:132
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+< 
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+< 
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+< links:<138,136>
+< 
+< 139:type:ATOM
+< ID:139
+< name:ATOM_m
+< links:<138,136>
+< 
+< 140:type:ATOM
+< ID:140
+< name:ATOM_m
+< links:<138,136>
+---
+> addedVertices:
+7244,7249c4776
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+< links:<138,136>
+< 
+< 144:type:ATOM
+---
+> 0:type:ATOM
+7254c4781
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7259c4786
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7264,7268c4791
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,135>
+---
+> relinkedVertices:
+7270c4793
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7275,7276c4798
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7278,7299c4800,4801
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+< 
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> name:
+> links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,135>
+7301,7304c4803
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+< links:<138,136>
+---
+> deletedVertices:
+7306,7307c4805,4806
+< 138:type:ATOM
+< ID:138
+---
+> 0:type:ATOM
+> ID:139
+7311,7313c4810,4812
+< 140:type:ATOM
+< ID:140
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:142
+> name:ATOM_boat
+7316,7319c4815,4818
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+< links:<138,136>
+---
+> 2:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+7321c4820,4822
+< 144:type:ATOM
+---
+> addedVertices:
+> 
+> 0:type:ATOM
+7326c4827
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7331c4832
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7336,7340c4837
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,135>
+---
+> relinkedVertices:
+7342c4839
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7347,7348c4844
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7350,7371c4846,4847
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+< 
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> name:
+> links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,135>
+7373,7376c4849
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+< links:<138,136>
+---
+> deletedVertices:
+7378,7379c4851,4852
+< 138:type:ATOM
+< ID:138
+---
+> 0:type:ATOM
+> ID:140
+7383,7385c4856,4858
+< 139:type:ATOM
+< ID:139
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:142
+> name:ATOM_boat
+7388,7391c4861,4864
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+< links:<138,136>
+---
+> 2:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+7393c4866,4868
+< 144:type:ATOM
+---
+> addedVertices:
+> 
+> 0:type:ATOM
+7398c4873
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7403c4878
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7408,7412c4883
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,135>
+---
+> relinkedVertices:
+7414c4885
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7419,7420c4890
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7422,7423c4892,4893
+< name:MEM_
+< links:<138,132>,<255,0>
+---
+> name:
+> links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,135>
+7425,7428c4895
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+---
+> deletedVertices:
+7430,7431c4897,4898
+< 134:type:ATOM
+< ID:134
+---
+> 0:type:ATOM
+> ID:141
+7433,7447d4899
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+< 
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+< 
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+7450,7452c4902,4904
+< 138:type:ATOM
+< ID:138
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:142
+> name:ATOM_boat
+7455,7458c4907,4910
+< 139:type:ATOM
+< ID:139
+< name:ATOM_m
+< links:<138,136>
+---
+> 2:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+7460,7463c4912
+< 140:type:ATOM
+< ID:140
+< name:ATOM_m
+< links:<138,136>
+---
+> addedVertices:
+7465c4914
+< 144:type:ATOM
+---
+> 0:type:ATOM
+7470c4919
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7475c4924
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7480,7484c4929
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,133>,<0,134>,<0,144>,<0,145>,<0,135>
+---
+> relinkedVertices:
+7486c4931
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7491,7492c4936
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7494,7505c4938,4939
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,133>,<0,134>,<0,144>,<0,145>,<0,135>
+7507,7510c4941
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> deletedVertices:
+7512,7519c4943,4945
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+< 
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:138
+> name:ATOM_m
+7522,7523c4948,4949
+< 140:type:ATOM
+< ID:140
+---
+> 1:type:ATOM
+> ID:139
+7527,7529c4953,4955
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+7532c4958,4965
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7537c4970
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7542c4975
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7547c4980
+< 147:type:ATOM
+---
+> 3:type:ATOM
+7552,7556c4985
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+---
+> relinkedVertices:
+7558c4987
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7563,7564c4992
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7566,7582c4994,4995
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+7584,7587c4997
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+7589,7591c4999,5001
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:138
+> name:ATOM_m
+7594,7595c5004,5005
+< 139:type:ATOM
+< ID:139
+---
+> 1:type:ATOM
+> ID:140
+7599,7601c5009,5011
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+7604c5014,5021
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7609c5026
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7614c5031
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7619c5036
+< 147:type:ATOM
+---
+> 3:type:ATOM
+7624,7628c5041
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+---
+> relinkedVertices:
+7630c5043
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7635,7636c5048
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7638,7654c5050,5051
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+7656,7659c5053
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+7661,7663c5055,5057
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:138
+> name:ATOM_m
+7666,7667c5060,5061
+< 140:type:ATOM
+< ID:140
+---
+> 1:type:ATOM
+> ID:139
+7671,7673c5065,5067
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+7676c5070,5077
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7681c5082
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7686c5087
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7691c5092
+< 147:type:ATOM
+---
+> 3:type:ATOM
+7696,7700c5097
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+---
+> relinkedVertices:
+7702c5099
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7707,7708c5104
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7710,7726c5106,5107
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+7728,7731c5109
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+7733,7735c5111,5113
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:139
+> name:ATOM_m
+7738,7739c5116,5117
+< 138:type:ATOM
+< ID:138
+---
+> 1:type:ATOM
+> ID:140
+7743,7745c5121,5123
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+7748c5126,5133
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7753c5138
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7758c5143
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7763c5148
+< 147:type:ATOM
+---
+> 3:type:ATOM
+7768,7772c5153
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+---
+> relinkedVertices:
+7774c5155
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7779,7780c5160
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7782,7798c5162,5163
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+7800,7803c5165
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+7805,7807c5167,5169
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:138
+> name:ATOM_m
+7810,7811c5172,5173
+< 139:type:ATOM
+< ID:139
+---
+> 1:type:ATOM
+> ID:140
+7815,7817c5177,5179
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+7820c5182,5189
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7825c5194
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7830c5199
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7835c5204
+< 147:type:ATOM
+---
+> 3:type:ATOM
+7840,7844c5209
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+---
+> relinkedVertices:
+7846c5211
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7851,7852c5216
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7854,7870c5218,5219
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+7872,7875c5221
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+7877,7879c5223,5225
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:139
+> name:ATOM_m
+7882,7883c5228,5229
+< 138:type:ATOM
+< ID:138
+---
+> 1:type:ATOM
+> ID:140
+7887,7889c5233,5235
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+7892c5238,5245
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7897c5250
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7902c5255
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7907c5260
+< 147:type:ATOM
+---
+> 3:type:ATOM
+7912,7916c5265
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+---
+> relinkedVertices:
+7918c5267
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7923,7924c5272
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7926,7942c5274,5275
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,144>,<0,145>,<0,133>,<0,134>,<0,146>,<0,135>
+7944,7947c5277
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+7949,7951c5279,5281
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:138
+> name:ATOM_m
+7954,7956c5284,5286
+< 139:type:ATOM
+< ID:139
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:141
+> name:ATOM_c
+7959,7961c5289,5291
+< 140:type:ATOM
+< ID:140
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+7964c5294,5301
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+7969c5306
+< 145:type:ATOM
+---
+> 1:type:ATOM
+7974c5311
+< 146:type:ATOM
+---
+> 2:type:ATOM
+7979c5316
+< 147:type:ATOM
+---
+> 3:type:ATOM
+7984,7988c5321
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,146>,<0,135>
+---
+> relinkedVertices:
+7990c5323
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+7995,7996c5328
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+7998,8014c5330,5331
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,146>,<0,135>
+8016,8019c5333
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+8021,8023c5335,5337
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:139
+> name:ATOM_m
+8026,8028c5340,5342
+< 138:type:ATOM
+< ID:138
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:141
+> name:ATOM_c
+8031,8033c5345,5347
+< 140:type:ATOM
+< ID:140
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+8036c5350,5357
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+8041c5362
+< 145:type:ATOM
+---
+> 1:type:ATOM
+8046c5367
+< 146:type:ATOM
+---
+> 2:type:ATOM
+8051c5372
+< 147:type:ATOM
+---
+> 3:type:ATOM
+8056,8060c5377
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,146>,<0,135>
+---
+> relinkedVertices:
+8062c5379
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+8067,8068c5384
+< CONVERTED ATOMS:
+< 132:type:ATOM
+---
+> 1:type:HYPERLINK
+8070,8086c5386,5387
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+---
+> name:
+> links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,146>,<0,135>
+8088,8091c5389
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+---
+> deletedVertices:
+8093,8095c5391,5393
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+---
+> 0:type:ATOM
+> ID:140
+> name:ATOM_m
+8098,8100c5396,5398
+< 138:type:ATOM
+< ID:138
+< name:ATOM_m
+---
+> 1:type:ATOM
+> ID:141
+> name:ATOM_c
+8103,8105c5401,5403
+< 139:type:ATOM
+< ID:139
+< name:ATOM_m
+---
+> 2:type:ATOM
+> ID:142
+> name:ATOM_boat
+8108c5406,5413
+< 144:type:ATOM
+---
+> 3:type:ATOM
+> ID:143
+> name:ATOM_ok
+> links:<255,0>
+> 
+> addedVertices:
+> 
+> 0:type:ATOM
+8113c5418
+< 145:type:ATOM
+---
+> 1:type:ATOM
+8118c5423
+< 146:type:ATOM
+---
+> 2:type:ATOM
+8123c5428
+< 147:type:ATOM
+---
+> 3:type:ATOM
+8128,8132c5433
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+< ID:132
+< name:
+< links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,146>,<0,135>
+---
+> relinkedVertices:
+8134c5435
+< 136:type:HYPERLINK
+---
+> 0:type:HYPERLINK
+8139,8201c5440
+< CONVERTED ATOMS:
+< 132:type:ATOM
+< ID:132
+< name:MEM_
+< links:<138,132>,<255,0>
+< 
+< 133:type:ATOM
+< ID:133
+< name:ATOM_c
+< links:<138,132>
+< 
+< 134:type:ATOM
+< ID:134
+< name:ATOM_c
+< links:<138,132>
+< 
+< 135:type:ATOM
+< ID:135
+< name:ATOM_right
+< links:<138,132>
+< 
+< 136:type:ATOM
+< ID:136
+< name:MEM_
+< links:<138,136>,<255,0>
+< 
+< 137:type:ATOM
+< ID:137
+< name:ATOM_left
+< links:<138,136>
+< 
+< 138:type:ATOM
+< ID:138
+< name:ATOM_m
+< links:<138,136>
+< 
+< 139:type:ATOM
+< ID:139
+< name:ATOM_m
+< links:<138,136>
+< 
+< 140:type:ATOM
+< ID:140
+< name:ATOM_m
+< links:<138,136>
+< 
+< 141:type:ATOM
+< ID:141
+< name:ATOM_c
+< links:<138,136>
+< 
+< 142:type:ATOM
+< ID:142
+< name:ATOM_boat
+< links:<138,136>
+< 
+< 143:type:ATOM
+< ID:143
+< name:ATOM_ok
+< links:<255,0>
+< 
+< CONVERTED HYPERLINKS:
+< 132:type:HYPERLINK
+---
+> 1:type:HYPERLINK
+8204,8209c5443
+< links:<0,132>,<0,133>,<0,134>,<0,135>
+< 
+< 136:type:HYPERLINK
+< ID:136
+< name:
+< links:<0,136>,<0,137>,<0,138>,<0,139>,<0,140>,<0,141>,<0,142>
+---
+> links:<0,132>,<0,144>,<0,133>,<0,134>,<0,145>,<0,146>,<0,135>
