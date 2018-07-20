@@ -1,222 +1,194 @@
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
+CONVERTED ATOMS:
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+5:type:ATOM
 ID:5
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+6:type:ATOM
 ID:6
 name:ATOM_a
 links:<255,0>
 
-relinkedVertices:
-
-deletedVertices:
-
-0:type:ATOM
-ID:2
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+5:type:ATOM
+ID:5
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
-ID:3
-name:ATOM_a
-links:<255,0>
-
-addedVertices:
-
-0:type:ATOM
+6:type:ATOM
 ID:6
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+6:type:ATOM
+ID:6
+name:ATOM_a
+links:<255,0>
+
+7:type:ATOM
 ID:7
 name:ATOM_b
 links:<255,0>
 
-relinkedVertices:
-
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+5:type:ATOM
 ID:5
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+7:type:ATOM
 ID:7
 name:ATOM_b
 links:<255,0>
 
-relinkedVertices:
-
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+6:type:ATOM
 ID:6
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+7:type:ATOM
 ID:7
 name:ATOM_c
 links:<255,0>
 
-relinkedVertices:
-
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+5:type:ATOM
 ID:5
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+7:type:ATOM
 ID:7
 name:ATOM_c
 links:<255,0>
 
-relinkedVertices:
-
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+6:type:ATOM
 ID:6
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+7:type:ATOM
 ID:7
 name:ATOM_d
 links:<255,0>
 
-relinkedVertices:
-
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+5:type:ATOM
 ID:5
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+7:type:ATOM
 ID:7
 name:ATOM_d
 links:<255,0>
 
-relinkedVertices:
-
-deletedVertices:
-
-0:type:ATOM
-ID:5
-name:ATOM_d
-links:<255,0>
-
-1:type:ATOM
-ID:6
-name:ATOM_a
-links:<255,0>
-
-addedVertices:
-
-0:type:ATOM
-ID:9
-name:ATOM_d
-links:<255,0>
-
-1:type:ATOM
-ID:10
-name:ATOM_b
-links:<255,0>
-
-relinkedVertices:
-
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
-ID:9
-name:ATOM_d
-links:<255,0>
-
-1:type:ATOM
-ID:10
-name:ATOM_c
-links:<255,0>
-
-relinkedVertices:
-
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
-ID:9
-name:ATOM_d
-links:<255,0>
-
-1:type:ATOM
-ID:10
-name:ATOM_d
-links:<255,0>
-
-relinkedVertices:
-
-deletedVertices:
-
-0:type:ATOM
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+8:type:ATOM
 ID:8
-name:ATOM_d
+name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+9:type:ATOM
 ID:9
 name:ATOM_d
 links:<255,0>
 
-addedVertices:
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+9:type:ATOM
+ID:9
+name:ATOM_d
+links:<255,0>
 
-0:type:ATOM
+10:type:ATOM
+ID:10
+name:ATOM_b
+links:<255,0>
+
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+9:type:ATOM
+ID:9
+name:ATOM_d
+links:<255,0>
+
+10:type:ATOM
+ID:10
+name:ATOM_c
+links:<255,0>
+
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+9:type:ATOM
+ID:9
+name:ATOM_d
+links:<255,0>
+
+10:type:ATOM
+ID:10
+name:ATOM_d
+links:<255,0>
+
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+11:type:ATOM
+ID:11
+name:ATOM_d
+links:<255,0>
+
+12:type:ATOM
+ID:12
+name:ATOM_d
+links:<255,0>
+
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+13:type:ATOM
 ID:13
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+14:type:ATOM
 ID:14
 name:ATOM_a
 links:<255,0>
 
-relinkedVertices:
-
-deletedVertices:
-
-addedVertices:
-
-0:type:ATOM
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+13:type:ATOM
 ID:13
 name:ATOM_a
 links:<255,0>
 
-1:type:ATOM
+14:type:ATOM
 ID:14
 name:ATOM_a
 links:<255,0>
 
-relinkedVertices:
+CONVERTED HYPERLINKS:
+CONVERTED ATOMS:
+11:type:ATOM
+ID:11
+name:ATOM_d
+links:<255,0>
 
+12:type:ATOM
+ID:12
+name:ATOM_d
+links:<255,0>
+
+CONVERTED HYPERLINKS:

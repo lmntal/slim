@@ -9,7 +9,7 @@ for file in `ls input/`; do
     echo -n $file
     ../../src/slim --hl --nd input/$file > o
     head -n -2 o > ./out/out_$file.txt
-    diff ./out/out_$file.txt convertedgraph_check/$file.txt > ./out/diff/diff_$file
+    diff ./out/out_$file.txt convertedgraph_check/js_input_$file.txt > ./out/diff/diff_$file
     if [ -s ./out/diff/diff_$file ]; then
 	echo -e '\e[31;1m:FAIL'
     else

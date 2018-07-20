@@ -234,6 +234,8 @@ struct ConvertedGraph {
     }
   }
 
+
+
   ConvertedGraph(json_value *json_val) {
     atoms = new DynamicArray();
     hyperlinks = new DynamicArray();

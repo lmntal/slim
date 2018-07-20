@@ -1,254 +1,254 @@
 Succ number Information
-do_mc:115
+do_mc:117
 1
 Parent Graph
-do_mc:118
+do_mc:120
 {"id":5,"name":"","atoms":[],"membranes":[]}
 Child Graph
-do_mc:121
+do_mc:123
 {"id":3,"name":"","atoms":[{"id":4,"name":"a","links":[]}],"membranes":[]}
 Parent State ID
-do_mc:124
+do_mc:126
 0
 Child State ID
-do_mc:127
+do_mc:129
 1
 Succ number Information
-mc_expand:232
+mc_expand:237
 3
 Parent Graph
-mc_expand:247
-{"id":1,"name":"","atoms":[{"id":2,"name":"a","links":[]}],"membranes":[]}
+mc_expand:264
+{"id":3,"name":"","atoms":[{"id":4,"name":"a","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":3,"name":"","atoms":[{"id":5,"name":"b","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":3,"name":"","atoms":[{"id":5,"name":"c","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":3,"name":"","atoms":[{"id":5,"name":"b","links":[]},{"id":6,"name":"c","links":[]}],"membranes":[]}
 Parent State ID
-mc_store_successors:427
+mc_store_successors:452
 1
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 2
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 3
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 4
 Succ number Information
-mc_expand:232
+mc_expand:237
 2
 Parent Graph
-mc_expand:247
-{"id":3,"name":"","atoms":[{"id":5,"name":"b","links":[]},{"id":4,"name":"c","links":[]}],"membranes":[]}
+mc_expand:264
+{"id":6,"name":"","atoms":[{"id":7,"name":"b","links":[]},{"id":8,"name":"c","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":6,"name":"","atoms":[{"id":8,"name":"c","links":[]},{"id":9,"name":"c","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":6,"name":"","atoms":[{"id":7,"name":"b","links":[]},{"id":9,"name":"d","links":[]},{"id":10,"name":"d","links":[]}],"membranes":[]}
 Parent State ID
-mc_store_successors:427
+mc_store_successors:452
 4
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 5
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 6
 Succ number Information
-mc_expand:232
+mc_expand:237
 1
 Parent Graph
-mc_expand:247
-{"id":6,"name":"","atoms":[{"id":9,"name":"b","links":[]},{"id":7,"name":"d","links":[]},{"id":8,"name":"d","links":[]}],"membranes":[]}
+mc_expand:264
+{"id":10,"name":"","atoms":[{"id":11,"name":"b","links":[]},{"id":12,"name":"d","links":[]},{"id":13,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":10,"name":"","atoms":[{"id":14,"name":"c","links":[]},{"id":12,"name":"d","links":[]},{"id":13,"name":"d","links":[]}],"membranes":[]}
 Parent State ID
-mc_store_successors:427
+mc_store_successors:452
 6
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 7
 Succ number Information
-mc_expand:232
+mc_expand:237
 1
 Parent Graph
-mc_expand:247
-{"id":10,"name":"","atoms":[{"id":13,"name":"c","links":[]},{"id":11,"name":"d","links":[]},{"id":12,"name":"d","links":[]}],"membranes":[]}
+mc_expand:264
+{"id":14,"name":"","atoms":[{"id":15,"name":"c","links":[]},{"id":16,"name":"d","links":[]},{"id":17,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":14,"name":"","atoms":[{"id":16,"name":"d","links":[]},{"id":17,"name":"d","links":[]},{"id":18,"name":"d","links":[]},{"id":19,"name":"d","links":[]}],"membranes":[]}
 Parent State ID
-mc_store_successors:427
+mc_store_successors:452
 7
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 8
 Succ number Information
-mc_expand:232
+mc_expand:237
 24
 Parent Graph
-mc_expand:247
-{"id":14,"name":"","atoms":[{"id":15,"name":"d","links":[]},{"id":16,"name":"d","links":[]},{"id":17,"name":"d","links":[]},{"id":18,"name":"d","links":[]}],"membranes":[]}
+mc_expand:264
+{"id":19,"name":"","atoms":[{"id":20,"name":"d","links":[]},{"id":21,"name":"d","links":[]},{"id":22,"name":"d","links":[]},{"id":23,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Child Graph
-mc_store_successors:371
+mc_store_successors:399
 {"id":19,"name":"","atoms":[{"id":24,"name":"d","links":[]},{"id":25,"name":"d","links":[]}],"membranes":[]}
 Parent State ID
-mc_store_successors:427
+mc_store_successors:452
 8
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 9
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
-0
+mc_store_successors:456
+746413403
 Child State ID
-mc_store_successors:431
+mc_store_successors:456
 0
 Succ number Information
-mc_expand:232
+mc_expand:237
 0
 Parent Graph
-mc_expand:247
-{"id":19,"name":"","atoms":[{"id":20,"name":"d","links":[]},{"id":21,"name":"d","links":[]}],"membranes":[]}
+mc_expand:264
+{"id":19,"name":"","atoms":[{"id":20,"name":"d","links":[]},{"id":21,"name":"d","links":[]},{"id":22,"name":"d","links":[]},{"id":23,"name":"d","links":[]}],"membranes":[]}
 '# of States'(stored)   = 9.
 '# of States'(end)      = 1.
