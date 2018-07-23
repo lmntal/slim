@@ -11,7 +11,7 @@ struct ConvertedGraph;
 
 #define CLASS_SENTINEL (NULL)
 
-typedef struct _TrieBody{
+struct TrieBody{
   KeyContainer key;
   List *inheritedVertices;
   struct _TrieBody *parent;
@@ -19,18 +19,36 @@ typedef struct _TrieBody{
   int depth;
   Bool isInfinitedDepth;
   Bool isPushedIntoGoAheadStack;
-}TrieBody;
 
-typedef struct _TerminationConditionInfo{
+  TrieBody() {
+    key.type = key_null;
+    inheritedVertices = new List();
+    parent = NULL;
+    children = new RedBlackTree();
+    depth = -1;
+    isInfinitedDepth = false;
+    isPushedIntoGoAheadStack = false;
+  }
+};
+
+struct TerminationConditionInfo{
   OmegaArray *distribution;
   OmegaArray *increase;
-}TerminationConditionInfo;
+  TerminationConditionInfo() {
+    distribution = new OmegaArray();
+    increase = new OmegaArray();
+  };
+};
 
-typedef struct _Trie{
+struct Trie{
   TrieBody *body;
   TerminationConditionInfo *info;
+  Trie() {
+    body = new TrieBody();
+    info = new TerminationConditionInfo();
+  };
   //HashTable *trieLeavesTable;
-}Trie;
+};
 
 typedef struct _CanonicalLabel{
   Hash first;

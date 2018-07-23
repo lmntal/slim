@@ -161,9 +161,12 @@ typedef struct _RedBlackTreeBody{
   struct _RedBlackTreeBody *children[2];
 }RedBlackTreeBody;
 
-typedef struct _RedBlackTree{
+struct RedBlackTree{
   RedBlackTreeBody *body;
-}RedBlackTree;
+  RedBlackTree () {
+    body = NULL;
+  }
+};
 
 
 void redBlackTreeKeyDump(RedBlackTree *rbt);

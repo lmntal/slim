@@ -9,10 +9,14 @@
 #define EXTERNAL2INTERNAL(EXTERNAL_INDEX) ((EXTERNAL_INDEX) == OMEGA ? 0 : (EXTERNAL_INDEX) + 1)
 //#define INTERNAL2EXTERNAL(INTERNAL_INDEX) ((INTERNAL_INDEX) == 0 ? OMEGA : (INTERNAL_INDEX) - 1)
 
-typedef struct _OmegaArray{
+struct OmegaArray{
   int maxFiniteIndex;
   DynamicArray *body;
-}OmegaArray;
+  OmegaArray () {
+    maxFiniteIndex = -1;
+    body = new DynamicArray();
+  }
+};
 
 typedef struct _IntContainer{
   int value;
