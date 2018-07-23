@@ -17,3 +17,4 @@ for file in `ls input/`; do
     fi
     rm o
 done
+rm -rf out
