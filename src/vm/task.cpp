@@ -45,11 +45,13 @@
 #include "symbol.h"
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
-
+#include "verifier/graphinfo.hpp"
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
-
+bool json_dump_gen;
+Graphinfo * parent_graphinfo;
+extern bool diff_gen_finish;
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr);
@@ -302,7 +304,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   struct Vector *rulesets =
       lmn_mem_get_rulesets(cur_mem); /* 本膜のルールセットの集合 */
   BOOL ok = FALSE;
-
+  json_dump_gen=true;
   /* ルールセットの適用 */
   for (i = 0; i < vec_num(rulesets); i++) {
     if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)vec_get(rulesets, i))) {
@@ -975,7 +977,12 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           warray_cur_org = warray_cur_size(rc);
           tmp_global_root =
               lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
-
+	  if(json_dump_gen and !diff_gen_finish) {
+	    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+	    // lmn_dump_mem_stdout(tmp_global_root);
+	    json_dump_gen=false;
+	    parent_graphinfo = new Graphinfo(tmp_global_root);
+	  }
           /** 変数配列および属性配列のコピー */
           v = lmn_register_make(warray_size_org);
 

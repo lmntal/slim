@@ -1,0 +1,38 @@
+Succ number Information
+do_mc:117
+1
+Parent Graph
+do_mc:120
+{"id":5,"name":"","atoms":[],"membranes":[]}
+Child Graph
+do_mc:123
+{"id":3,"name":"","atoms":[{"id":4,"name":"init","links":[]}],"membranes":[]}
+Parent State ID
+do_mc:126
+0
+Child State ID
+do_mc:129
+1
+Succ number Information
+mc_expand:237
+1
+Parent Graph
+mc_expand:264
+{"id":19,"name":"","atoms":[{"id":20,"name":"init","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":19,"name":"","atoms":[{"id":69,"name":"e","links":[{"attr":138,"data":4},{"attr":1,"data":70}]},{"id":70,"name":"e","links":[{"attr":138,"data":6},{"attr":1,"data":69}]},{"id":71,"name":"e","links":[{"attr":138,"data":6},{"attr":1,"data":72}]},{"id":72,"name":"e","links":[{"attr":138,"data":8},{"attr":1,"data":71}]},{"id":73,"name":"e","links":[{"attr":138,"data":8},{"attr":1,"data":74}]},{"id":74,"name":"e","links":[{"attr":138,"data":10},{"attr":1,"data":73}]},{"id":75,"name":"e","links":[{"attr":138,"data":10},{"attr":1,"data":76}]},{"id":76,"name":"e","links":[{"attr":138,"data":12},{"attr":1,"data":75}]},{"id":77,"name":"e","links":[{"attr":138,"data":12},{"attr":1,"data":78}]},{"id":78,"name":"e","links":[{"attr":138,"data":14},{"attr":1,"data":77}]},{"id":79,"name":"e","links":[{"attr":138,"data":14},{"attr":1,"data":80}]},{"id":80,"name":"e","links":[{"attr":138,"data":16},{"attr":1,"data":79}]},{"id":81,"name":"e","links":[{"attr":138,"data":16},{"attr":1,"data":82}]},{"id":82,"name":"e","links":[{"attr":138,"data":18},{"attr":1,"data":81}]},{"id":83,"name":"e","links":[{"attr":138,"data":18},{"attr":1,"data":84}]},{"id":84,"name":"e","links":[{"attr":138,"data":4},{"attr":1,"data":83}]},{"id":85,"name":"e","links":[{"attr":138,"data":4},{"attr":1,"data":86}]},{"id":86,"name":"e","links":[{"attr":138,"data":8},{"attr":1,"data":85}]},{"id":87,"name":"e","links":[{"attr":138,"data":6},{"attr":1,"data":88}]},{"id":88,"name":"e","links":[{"attr":138,"data":12},{"attr":1,"data":87}]},{"id":89,"name":"e","links":[{"attr":138,"data":10},{"attr":1,"data":90}]},{"id":90,"name":"e","links":[{"attr":138,"data":16},{"attr":1,"data":89}]},{"id":91,"name":"e","links":[{"attr":138,"data":14},{"attr":1,"data":92}]},{"id":92,"name":"e","links":[{"attr":138,"data":18},{"attr":1,"data":91}]}],"membranes":[]}
+Parent State ID
+mc_store_successors:452
+1
+Child State ID
+mc_store_successors:456
+2
+Succ number Information
+mc_expand:237
+0
+Parent Graph
+mc_expand:264
+{"id":19,"name":"","atoms":[{"id":20,"name":"init","links":[]}],"membranes":[]}
+'# of States'(stored)   = 2.
+'# of States'(end)      = 1.

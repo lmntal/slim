@@ -45,12 +45,17 @@
 #include "mhash.h"
 #include "propositional_symbol.h"
 #include "runtime_status.h"
+#include "graphinfo.hpp"
+#include "diff_info.hpp"
+#include <iostream>
 #ifdef DEBUG
 #include "vm/dumper.h"
 #endif
 #include "state.h"
 #include "state.hpp"
-
+// #define DIFFISO_GEN
+bool diff_gen_finish=false;
+extern Graphinfo * parent_graphinfo;
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
@@ -108,6 +113,29 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   mem = lmn_mem_copy(world_mem_org);
   init_s = new State(mem, p_label, statespace_use_memenc(states));
   state_id_issue(init_s); /* 状態に整数IDを発行 */
+#ifdef DIFFISO_GEN
+  printf("Succ number Information\n");
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  printf("1\n");
+  printf("Parent Graph\n");
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  lmn_dump_mem_stdout(lmn_mem_make());
+  printf("Child Graph\n");
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  lmn_dump_mem_stdout(mem);
+  printf("Parent State ID\n");
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  printf("0\n");
+  printf("Child State ID\n");
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  printf("1\n");
+#endif
+  Graphinfo *empty = new Graphinfo(lmn_mem_make());
+  // convertedGraphDump(empty->cv);
+  Graphinfo *init = new Graphinfo(mem);
+  // convertedGraphDump(init->cv);
+  DiffInfo *diff = new DiffInfo(empty, init);
+  diff->diffInfoDump();
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -190,7 +218,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
  *  === Fundamental System for StateSpace Generation ====
  *  =====================================================
  */
-
+LmnMembraneRef org_mem;
 static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
                                            LmnMembraneRef cur_mem);
 static inline void stutter_extension(State *s, LmnMembraneRef mem,
@@ -205,6 +233,24 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
+  org_mem = mem;
+#ifdef DIFFISO_GEN
+  if(!diff_gen_finish) {
+    printf("Succ number Information\n");
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+  }
+#endif
+  if(!diff_gen_finish) {
+    // printf("_______________\n");
+    // new Graphinfo(mem);    
+    // LmnMembraneRef mem_ = state_restore_mem(s);
+    // printf("***************\n");
+    // new Graphinfo(mem_);
+    // LmnMembraneRef mem__ = state_restore_mem(s);
+    // printf("***************\n");
+    // new Graphinfo(mem__);
+    // printf("_______________\n");
+  }
 
   /** expand  : 状態の展開 */
   if (p_s) {
@@ -213,7 +259,24 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
 
+  // if(!diff_gen_finish) {
+  //   // printf("!!!\n");
+  //   convertedGraphDump(parent_graphinfo->cv);
+  //   // delete parent_graphinfo;
+  // }
+
+#ifdef DIFFISO_GEN
+  if(!diff_gen_finish) {
+    printf("%d\n", mc_react_cxt_expanded_num(rc));
+    printf("Parent Graph\n");
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout<<parent_graphinfo->json_string<<std::endl;
+    // lmn_dump_mem_stdout(mem);
+  }
+
+#endif
   if (mc_react_cxt_expanded_num(rc) == 0) {
+    diff_gen_finish=true;
     /* sを最終状態集合として記録 */
     statespace_add_end_state(ss, s);
   } else if (mc_enable_por(f) && !s->s_is_reduced()) {
@@ -288,10 +351,17 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                          Vector *new_ss, BOOL f) {
   unsigned int i, succ_i;
+  Graphinfo *parent_gi;
+  // printf("----------------------------------------\n");
 
+  // printf("******************************************\n");
   /** 状態登録 */
   succ_i = 0;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+#ifdef DIFFISO_GEN
+    if(!diff_gen_finish)
+      printf("Child Graph\n");
+#endif
     TransitionRef src_t;
     st_data_t tmp;
     State *src_succ, *succ;
@@ -326,7 +396,19 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ = statespace_insert(ss, src_succ);
     }
-
+    if(!diff_gen_finish) {
+      Graphinfo *child_gi = new Graphinfo(src_succ_m);
+      // convertedGraphDump(child_gi->cv);
+      DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
+      di->diffInfoDump();
+      // delete child_gi;
+    }
+#ifdef DIFFISO_GEN
+    if(!diff_gen_finish) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      lmn_dump_mem_stdout(src_succ_m);
+    }
+#endif
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
@@ -373,7 +455,18 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
          then "辺"という構造を持たない(直接pointerで刺している)ので何もしない
     */
   }
-
+#ifdef DIFFISO_GEN
+  if(!diff_gen_finish){
+    printf("Parent State ID\n");
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    printf("%d\n", s->state_id);
+    for(i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+      printf("Child State ID\n");
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      printf("%d\n", ((State *)vec_get(RC_EXPANDED(rc), i))->state_id);
+    }    
+  }
+#endif
   st_clear(RC_SUCC_TBL(rc));
 
   RC_EXPANDED(rc)->num = succ_i; /* 危険なコード. いつか直すかも. */

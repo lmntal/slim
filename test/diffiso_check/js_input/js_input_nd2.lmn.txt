@@ -1,0 +1,116 @@
+Succ number Information
+do_mc:117
+1
+Parent Graph
+do_mc:120
+{"id":7,"name":"","atoms":[],"membranes":[]}
+Child Graph
+do_mc:123
+{"id":4,"name":"","atoms":[{"id":5,"name":"a","links":[]},{"id":6,"name":"a","links":[]}],"membranes":[]}
+Parent State ID
+do_mc:126
+0
+Child State ID
+do_mc:129
+1
+Succ number Information
+mc_expand:237
+6
+Parent Graph
+mc_expand:264
+{"id":4,"name":"","atoms":[{"id":5,"name":"a","links":[]},{"id":6,"name":"a","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":4,"name":"","atoms":[{"id":6,"name":"a","links":[]},{"id":7,"name":"b","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":4,"name":"","atoms":[{"id":5,"name":"a","links":[]},{"id":7,"name":"b","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":4,"name":"","atoms":[{"id":6,"name":"a","links":[]},{"id":7,"name":"c","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":4,"name":"","atoms":[{"id":5,"name":"a","links":[]},{"id":7,"name":"c","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":4,"name":"","atoms":[{"id":6,"name":"a","links":[]},{"id":7,"name":"d","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":4,"name":"","atoms":[{"id":5,"name":"a","links":[]},{"id":7,"name":"d","links":[]}],"membranes":[]}
+Parent State ID
+mc_store_successors:452
+1
+Child State ID
+mc_store_successors:456
+2
+Child State ID
+mc_store_successors:456
+3
+Child State ID
+mc_store_successors:456
+4
+Child State ID
+mc_store_successors:456
+578497661
+Child State ID
+mc_store_successors:456
+4
+Child State ID
+mc_store_successors:456
+0
+Succ number Information
+mc_expand:237
+3
+Parent Graph
+mc_expand:264
+{"id":7,"name":"","atoms":[{"id":8,"name":"a","links":[]},{"id":9,"name":"d","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":7,"name":"","atoms":[{"id":10,"name":"b","links":[]},{"id":9,"name":"d","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":7,"name":"","atoms":[{"id":10,"name":"c","links":[]},{"id":9,"name":"d","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":7,"name":"","atoms":[{"id":9,"name":"d","links":[]},{"id":10,"name":"d","links":[]}],"membranes":[]}
+Parent State ID
+mc_store_successors:452
+4
+Child State ID
+mc_store_successors:456
+5
+Child State ID
+mc_store_successors:456
+6
+Child State ID
+mc_store_successors:456
+7
+Succ number Information
+mc_expand:237
+2
+Parent Graph
+mc_expand:264
+{"id":10,"name":"","atoms":[{"id":11,"name":"d","links":[]},{"id":12,"name":"d","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":10,"name":"","atoms":[{"id":13,"name":"a","links":[]},{"id":14,"name":"a","links":[]}],"membranes":[]}
+Child Graph
+mc_store_successors:399
+{"id":10,"name":"","atoms":[{"id":13,"name":"a","links":[]},{"id":14,"name":"a","links":[]}],"membranes":[]}
+Parent State ID
+mc_store_successors:452
+7
+Child State ID
+mc_store_successors:456
+1
+Child State ID
+mc_store_successors:456
+0
+Succ number Information
+mc_expand:237
+0
+Parent Graph
+mc_expand:264
+{"id":10,"name":"","atoms":[{"id":11,"name":"d","links":[]},{"id":12,"name":"d","links":[]}],"membranes":[]}
+'# of States'(stored)   = 10.
+'# of States'(end)      = 5.

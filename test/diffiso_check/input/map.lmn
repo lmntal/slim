@@ -1,0 +1,12 @@
+/* Map function for closed functions
+   (functions with no free variables)
+   Kazunori Ueda, 2005-02-24
+*/
+
+map({i(X), {$p[X,Y]}, o(Y)}, [], R) :- R = [].
+map({i(X), {$p[X,Y]}, o(Y)}, [H0|T], R0) :- 
+    R0 = [H|R], $p[H0,H],
+    map({i(X), {$p[X,Y]}, o(Y)}, T, R).
+
+map({i(X), {Y=2*X}, o(Y)}, [2,3,5,7,11],
+    result) .

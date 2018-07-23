@@ -1,0 +1,19 @@
+/* natural numbers in axiomatic set theory 
+   2005-11-22, Kazunori Ueda
+   
+   When run with LMNtal Java in the interactive
+   mode (i.e., not under LMNtalEditor IDE),
+   run with the --remain and --interpret option and
+   give as many more inc's as you like!
+*/
+
+% The successor of a set S is S U {S}.  So, for
+% each inc message, S will evolve into its new
+% version by including the old S as a new member.
+inc, {$p[]} :- {$p[], {$p[]}}.
+
+% we have a zero initially
+{}.
+
+% specify several inc's below
+inc.  inc.  inc.

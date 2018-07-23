@@ -1,0 +1,6 @@
+% Nondeterministic Bubblesort
+
+L=[$x,$y|L2] :- $x > $y | L=[$y,$x|L2].
+
+res=[3,1,7,0,5,4,2].
+// r=[9,6,2,7,1,4,10,8,5,3].
