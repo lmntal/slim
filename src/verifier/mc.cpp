@@ -45,6 +45,8 @@
 #include "mhash.h"
 #include "propositional_symbol.h"
 #include "runtime_status.h"
+#include "mckay.hpp"
+#include "trie.hpp"
 #include "graphinfo.hpp"
 #include "diff_info.hpp"
 #include <iostream>
@@ -136,6 +138,8 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   // convertedGraphDump(init->cv);
   DiffInfo *diff = new DiffInfo(empty, init);
   diff->diffInfoDump();
+  init_s->trie = new Trie();
+  trieMcKay(init_s->trie, diff, init, empty);
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
