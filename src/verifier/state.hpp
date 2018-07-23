@@ -39,12 +39,11 @@
 
 #ifndef LMN_STATE_HPP
 #define LMN_STATE_HPP
-#include "convertedgraph.hpp"
+#include "trie.hpp"
 #include "lmntal.h"
 #include "mhash.h"
 #include "state_defs.h"
 #include "runtime_status.h"
-#include "convertedgraph.hpp"
 #include "vm/vm.h"
 
 /** Flags (8bit)
@@ -110,7 +109,7 @@ struct State {                /* Total:72(36)byte */
   State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
   // GraphInfo *graphinfo;
   // ConvertedGraph *convertedgraph;
-
+  Trie *trie;
 #ifndef MINIMAL_STATE
   BYTE *
       local_flags; /*  8(4)byte:

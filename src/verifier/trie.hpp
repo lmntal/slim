@@ -2,9 +2,9 @@
 #define _TRIE_H
 
 #include"collection.hpp"
-// #include"omegaArray.h"
+#include"omegaArray.hpp"
 #include"hash.hpp"
-// #include"diff.h"
+#include"diff_info.hpp"
 // #include"convertedgraph.hpp"
 
 struct ConvertedGraph;
@@ -42,7 +42,7 @@ typedef struct _HashString{
   DynamicArray *body;
 }HashString;
 
-typedef struct _InheritedVertex{
+struct InheritedVertex{
   ConvertedGraphVertexType type;
   char name[NAME_LENGTH];
   CanonicalLabel canonicalLabel;
@@ -54,7 +54,7 @@ typedef struct _InheritedVertex{
   IntStack *conventionalPropagationMemo;
   DisjointSetForest *equivalenceClassOfIsomorphism;
   //set form?
-}InheritedVertex;
+};
 
 void freeInheritedVertex(InheritedVertex *iVertex);
 Trie *makeTrie();
