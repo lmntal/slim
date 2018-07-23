@@ -55,6 +55,7 @@
 #include "state.hpp"
 // #define DIFFISO_GEN
 bool diff_gen_finish=false;
+extern Graphinfo * parent_graphinfo;
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
@@ -130,11 +131,11 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("1\n");
 #endif
   Graphinfo *empty = new Graphinfo(lmn_mem_make());
-  convertedGraphDump(empty->cv);
+  // convertedGraphDump(empty->cv);
   Graphinfo *init = new Graphinfo(mem);
-  convertedGraphDump(init->cv);
-  // DiffInfo *diff = new DiffInfo(empty, init);
-  // diff->diffInfoDump();
+  // convertedGraphDump(init->cv);
+  DiffInfo *diff = new DiffInfo(empty, init);
+  diff->diffInfoDump();
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -257,12 +258,12 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   } else {
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
-  extern Graphinfo * parent_graphinfo;
-  if(!diff_gen_finish) {
-    // printf("!!!\n");
-    convertedGraphDump(parent_graphinfo->cv);
-    // delete parent_graphinfo;
-  }
+
+  // if(!diff_gen_finish) {
+  //   // printf("!!!\n");
+  //   convertedGraphDump(parent_graphinfo->cv);
+  //   // delete parent_graphinfo;
+  // }
 
 #ifdef DIFFISO_GEN
   if(!diff_gen_finish) {
@@ -397,9 +398,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     }
     if(!diff_gen_finish) {
       Graphinfo *child_gi = new Graphinfo(src_succ_m);
-      convertedGraphDump(child_gi->cv);
-      // DiffInfo *di = new DiffInfo(parent_gi, child_gi);
-      // di->diffInfoDump();
+      // convertedGraphDump(child_gi->cv);
+      DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
+      di->diffInfoDump();
       // delete child_gi;
     }
 #ifdef DIFFISO_GEN
