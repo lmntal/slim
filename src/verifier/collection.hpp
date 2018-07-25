@@ -43,8 +43,10 @@ struct Stack{
 
   int numStack(){
     return num;
-  }
-
+  };
+  bool isEmptyStack() {
+    return num == 0;
+  };
   void stackDump(void valueDump(void *));
   Stack() {
     num=0;
@@ -55,7 +57,7 @@ struct Stack{
 Stack *makeStack();
 void freeStack(Stack *stack);
 void freeStackAndValues(Stack *stack,void freeValue(void *));
-Bool isEmptyStack(Stack *stack);
+// Bool isEmptyStack(Stack *stack);
 void setStackEmpty(Stack *stack);
 void *peekStack(Stack *stack);
 void *popStack(Stack *stack);
@@ -68,9 +70,13 @@ void swapStack(Stack *source,Stack *target);
 
 typedef intptr_t CollectionInt;
 
-typedef struct _IntStack{
+struct IntStack{
   Stack *body;
-} IntStack;
+
+  IntStack() {
+    body = new Stack();
+  }
+};
 
 IntStack *makeIntStack();
 void freeIntStack(IntStack *iStack);
@@ -96,15 +102,29 @@ typedef enum {
   key_null
 }KeyType;
 
-typedef struct _ListBody{
+struct ListBody{
   void *value;
-  struct _ListBody *next;
-  struct _ListBody *prev;
-}ListBody;
+  ListBody *next;
+  ListBody *prev;
+  ListBody() {
+    
+  };
+};
 
-typedef struct _List{
+struct List{
   ListBody *sentinel;
-}List;
+
+  bool isEmptyList() {
+    return sentinel->next == sentinel;
+  }
+  List() {
+    sentinel = new ListBody();
+    sentinel->value = NULL;
+    sentinel->next = sentinel;
+    sentinel->prev = sentinel;
+  }
+
+};
 
 List *makeList();
 void pushList(List *list,void *value);
@@ -214,10 +234,14 @@ ValueWithPriority popPriorityQueue(PriorityQueue *pQueue);
 int numPriorityQueue(PriorityQueue *pQueue);
 void priorityQueueDump(PriorityQueue *pQueue);
 
-typedef struct _DisjointSetForest{
-  struct _DisjointSetForest *parent;
+struct DisjointSetForest{
+  DisjointSetForest *parent;
   int rank;
-} DisjointSetForest;
+  DisjointSetForest() {
+    parent = this;
+    rank = 0;
+  }
+};
 
 DisjointSetForest *makeDisjointSetForest();
 void freeDisjointSetForest(DisjointSetForest *x);

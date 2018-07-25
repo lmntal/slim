@@ -42,10 +42,20 @@ void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(Stack *stack,ConvertedGr
   if(cVertex != NULL){
     if(!cVertex->isPushedIntoDiffInfoStack){
       pushStack(stack,cVertex);
-      cVertex->isPushedIntoDiffInfoStack = TRUE;
+      cVertex->isPushedIntoDiffInfoStack = true;
     }
   }
 }
+
+
+ConvertedGraphVertex *popConvertedVertexFromDiffInfoStackWithoutOverlap(Stack *stack){
+  ConvertedGraphVertex *ret = (ConvertedGraphVertex *)popStack(stack);
+  ret->isPushedIntoDiffInfoStack = false;
+
+  return ret;
+}
+
+
 Bool isHyperLink(LMNtalLink *link){
   return link->attr == HYPER_LINK_ATTR;
 }

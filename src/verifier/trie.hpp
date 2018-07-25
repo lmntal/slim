@@ -14,7 +14,7 @@ struct ConvertedGraph;
 struct TrieBody{
   KeyContainer key;
   List *inheritedVertices;
-  struct _TrieBody *parent;
+  TrieBody *parent;
   RedBlackTree *children;
   int depth;
   Bool isInfinitedDepth;
@@ -55,10 +55,16 @@ typedef struct _CanonicalLabel{
   int second;
 } CanonicalLabel;
 
-typedef struct _HashString{
+struct HashString{
   int creditIndex;
   DynamicArray *body;
-}HashString;
+
+  HashString(){
+    creditIndex = 0;
+    body = new DynamicArray();
+  }
+
+};
 
 struct InheritedVertex{
   ConvertedGraphVertexType type;
@@ -71,13 +77,28 @@ struct InheritedVertex{
   ListBody *ownerCell;
   IntStack *conventionalPropagationMemo;
   DisjointSetForest *equivalenceClassOfIsomorphism;
-  //set form?
+
+  InheritedVertex(ConvertedGraphVertex *cVertex, int gapOfGlobalRootMemID) {
+    type = cVertex->type;
+    strcpy(name, cVertex->name);
+    canonicalLabel.first = 0;
+    canonicalLabel.second = 0;
+    hashString = new HashString();
+    isPushedIntoFixCreditIndex = false;
+    beforeID = cVertex->ID - gapOfGlobalRootMemID;
+    cVertex->correspondingVertexInTrie = this;
+    ownerNode = NULL;
+    ownerCell = NULL;
+    conventionalPropagationMemo = new IntStack();
+    equivalenceClassOfIsomorphism = new DisjointSetForest();
+  };
 };
 
+void pushTrieBodyIntoGoAheadStackWithoutOverlap(Stack *stack,TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);
 Trie *makeTrie();
 void freeTrie(Trie *trie);
-Bool triePropagate(Trie *trie,DiffInfo *diffInfo,ConvertedGraph *cAfterGraph,ConvertedGraph *cBeforeGraph,int gapOfGlobalRootMemID,int *stepOfPropagationPtr,Bool measure);
+Bool triePropagate(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph,int gapOfGlobalRootMemID,int *stepOfPropagationPtr);
 List *makeConventionalPropagationList(Trie *trie,int stepOfPropagation);
 ListBody *getNextSentinel(ListBody *beginSentinel);
 void putLabelsToAdjacentVertices(List *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
@@ -98,5 +119,5 @@ void fixCreditIndex(Stack *fixCreditIndexStack,ConvertedGraph *cAfterGraph,int g
 Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,Stack *fixCreditIndexStack);
 
 void terminationConditionInfoDumpExperimentFromTrie(Trie *trie);
-
+ConvertedGraphVertex *correspondingVertexInConvertedGraph(InheritedVertex *iVertex,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
 #endif

@@ -256,5 +256,5 @@ void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(Stack *stack,ConvertedGr
 void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom,DynamicArray *afterConvertedHyperLinks,Stack *relinkedVertices);
 Bool isEqualLinks(LMNtalLink *linkA,LMNtalLink *linkB);
 Bool isHyperLink(LMNtalLink *link);
-
+ConvertedGraphVertex *popConvertedVertexFromDiffInfoStackWithoutOverlap(Stack *stack);
 #endif

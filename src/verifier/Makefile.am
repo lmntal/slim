@@ -47,7 +47,8 @@ liblmn_verifier_a_SOURCES =                              \
 	collection.cpp		   trie.hpp			\
 	convertedgraph.cpp	   diff_info.hpp		\
 	omegaArray.hpp		   mckay.hpp			\
-	mckay.cpp
+	mckay.cpp		   trie.cpp			\
+	omegaArray.cpp
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
