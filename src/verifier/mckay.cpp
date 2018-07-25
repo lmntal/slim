@@ -306,45 +306,32 @@ Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,RedBlackTree *McKa
   return isValid;
 }
 
-void trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph) {
+List * trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph) {
   int gapOfGlobalRootMemID = cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
   Bool verticesAreCompletelySorted = triePropagate(trie,diffInfo,cAfterGraph,cBeforeGraph,gapOfGlobalRootMemID,&stepOfPropagation);
-  // if(IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted){
-  //   if(measure){
-  //     countOfSortedInTrie++;
-  //   }
-  //   /* printf("%s:%d\n", __FUNCTION__, __LINE__); */
-  //   return makeList();
-  // }else{
-  //   if(measure){
-  //     countOfNotSortedInTrie++;
-  //   }
+  if(IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted){
+    /* printf("%s:%d\n", __FUNCTION__, __LINE__); */
+    return makeList();
+  }else{
 
-  //   beforeTime = get_dtime();
+    List *propagationListOfInheritedVertices = makeConventionalPropagationList(trie,stepOfPropagation);
 
-  //   List *propagationListOfInheritedVertices = makeConventionalPropagationList(trie,stepOfPropagation);
+    /*
+       CHECKER("###### before list propagate ######\n");
 
-  //   /*
-  //      CHECKER("###### before list propagate ######\n");
+    //*/
+    /* printf("%s:%d\n", __FUNCTION__, __LINE__); */
+    /* listDump(propagationListOfInheritedVertices,inheritedVertexDumpCaster),fprintf(stdout,"\n"); */
+    List *canonicalDiscreteRefinement = listMcKay(propagationListOfInheritedVertices,cAfterGraph->cv,gapOfGlobalRootMemID);
 
-  //   //*/
-  //   /* printf("%s:%d\n", __FUNCTION__, __LINE__); */
-  //   /* listDump(propagationListOfInheritedVertices,inheritedVertexDumpCaster),fprintf(stdout,"\n"); */
-  //   List *canonicalDiscreteRefinement = listMcKay(propagationListOfInheritedVertices,cAfterGraph,gapOfGlobalRootMemID);
+    /*
+       CHECKER("###### after list propagate ######\n");
+       listDump(canonicalDiscreteRefinement,inheritedVertexDumpCaster),fprintf(stdout,"\n");
+    //*/
 
-  //   /*
-  //      CHECKER("###### after list propagate ######\n");
-  //      listDump(canonicalDiscreteRefinement,inheritedVertexDumpCaster),fprintf(stdout,"\n");
-  //   //*/
+    freeList(propagationListOfInheritedVertices);
 
-  //   freeList(propagationListOfInheritedVertices);
-
-  //   afterTime = get_dtime();
-  //   if(measure){
-  //     listMcKayTime += afterTime - beforeTime;
-  //   }
-
-  //   return canonicalDiscreteRefinement;
-  // }
+    return canonicalDiscreteRefinement;
+  }
 }

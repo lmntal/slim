@@ -17,7 +17,7 @@ struct CanonicalAdjacencyList{
   Stack *adjacencyInformations;
 };
 
-void trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph);
+List* trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph);
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(List *listA,List *listB);
 void freePreserveDiscreteProapgationList(List *pdpList);
 void freePreserveDiscreteProapgationListCaster(void *pdpList);
