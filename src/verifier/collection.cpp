@@ -308,7 +308,7 @@ void insertNextCell(ListBody *cellA,ListBody *cellB){
 }
 
 void pushList(List *list,void *value){
-  ListBody *cell = (ListBody *)malloc(sizeof(ListBody));
+  ListBody *cell = new ListBody();
   cell->value = value;
   insertNextCell(list->sentinel,cell);
 

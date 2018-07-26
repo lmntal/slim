@@ -140,6 +140,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   diff->diffInfoDump();
   init_s->trie = new Trie();
   trieMcKay(init_s->trie, diff, init, empty);
+  trieDump(init_s->trie);
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -405,6 +406,10 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       // convertedGraphDump(child_gi->cv);
       DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
       di->diffInfoDump();
+      // Trie * tr = new Trie();
+      // trieMcKay(tr, di, parent_graphinfo, child_gi);
+      // trieMcKay(src_succ->trie, di, parent_graphinfo, child_gi);
+      // trieDump(src_succ->trie);
       // delete child_gi;
     }
 #ifdef DIFFISO_GEN

@@ -107,7 +107,9 @@ struct ListBody{
   ListBody *next;
   ListBody *prev;
   ListBody() {
-    
+    value = NULL;
+    next = this;
+    prev = this;
   };
 };
 
@@ -119,9 +121,6 @@ struct List{
   }
   List() {
     sentinel = new ListBody();
-    sentinel->value = NULL;
-    sentinel->next = sentinel;
-    sentinel->prev = sentinel;
   }
 
 };

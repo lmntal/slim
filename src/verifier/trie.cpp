@@ -643,10 +643,14 @@ void goAheadProcessOfCurrentTrieNodes(Stack *goAheadStack,Stack *fixCreditIndexS
 
 void deleteInheritedVerticesFromTrie(Trie *trie,Stack *deletedVertices,Stack *goAheadStack){
   while(!deletedVertices->isEmptyStack()){
+
     ConvertedGraphVertex *targetCVertex = popConvertedVertexFromDiffInfoStackWithoutOverlap(deletedVertices);
+    convertedGraphVertexDump(targetCVertex);
+
     InheritedVertex *targetIVertex = targetCVertex->correspondingVertexInTrie;
 
     ListBody *targetCell = targetIVertex->ownerCell;
+
     cutCell(targetCell);
     TrieBody *currentNode = targetIVertex->ownerNode;
 
@@ -1333,6 +1337,7 @@ Bool triePropagate(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinf
   *stepOfPropagationPtr = stepOfPropagation;
 
   return verticesAreCompletelySorted;
+
 }
 
 
