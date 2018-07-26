@@ -43,6 +43,8 @@
 #include "vm/vm.h"
 #include <stdio.h>
 
+#include <algorithm>
+
 inline static void string_expand_buf(LmnStringRef s, unsigned long size);
 
 struct LmnString {
@@ -321,10 +323,22 @@ BOOL sp_cb_string_eq(void *s1, void *s2) {
   return lmn_string_eq((LmnStringRef)s1, (LmnStringRef)s2);
 }
 
+std::vector<uint8_t> sp_cb_string_encode(void *data) {
+  std::vector<uint8_t> res(sizeof(lmn_interned_str));
+  *(lmn_interned_str *)res.data() = lmn_intern(lmn_string_c_str((LmnString *)data));
+  std::reverse(res.begin(), res.end()); // little endian
+  return res;
+}
+
+void *sp_cb_string_decode(const std::vector<uint8_t> &bytes) {
+  auto n_id = *(lmn_interned_str *)bytes.data();
+  return lmn_string_make(lmn_id_to_name(n_id));
+}
+
 void string_init() {
   string_atom_type = lmn_sp_atom_register(
       "string", sp_cb_string_copy, sp_cb_string_free, sp_cb_string_eq,
-      sp_cb_string_dump, sp_cb_string_is_ground);
+      sp_cb_string_dump, sp_cb_string_is_ground, sp_cb_string_encode, sp_cb_string_decode);
 
   lmn_register_c_fun("string_make", (void *)cb_string_make, 2);
   lmn_register_c_fun("string_concat", (void *)cb_string_concat, 3);

@@ -60,6 +60,23 @@ int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
   c->eq = f_eq;
   c->dump = f_dump;
   c->is_ground = f_is_ground;
+  c->encode = nullptr;
+  c->decode = nullptr;
+
+  vec_push(sp_atom_callback_tbl, (LmnWord)c);
+  return vec_num(sp_atom_callback_tbl) - 1;
+}
+
+int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
+                         f_eq f_eq, f_dump f_dump, f_is_ground f_is_ground, f_encode encoder, f_decode decoder) {
+  struct SpecialAtomCallback *c = LMN_MALLOC(struct SpecialAtomCallback);
+  c->name = lmn_intern(name), c->copy = f_copy;
+  c->free = f_free;
+  c->eq = f_eq;
+  c->dump = f_dump;
+  c->is_ground = f_is_ground;
+  c->encode = encoder;
+  c->decode = decoder;
 
   vec_push(sp_atom_callback_tbl, (LmnWord)c);
   return vec_num(sp_atom_callback_tbl) - 1;

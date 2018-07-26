@@ -142,10 +142,11 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     } else if (sub_tag == TAG_DBL_DATA) {
       n = scanner.scan_double();
       n_attr = LMN_DBL_ATTR;
-    } else if (sub_tag == TAG_STR_DATA) {
-      lmn_interned_str n_id = scanner.scan_strid();
-      n = (LmnWord)lmn_string_make(lmn_id_to_name(n_id));
-      n_attr = LMN_STRING_ATTR;
+    } else if (sub_tag == TAG_SP_ATOM_DATA) {
+      auto type = scanner.scan_sp_atom_type();
+      auto bytes = scanner.scan_bytes();
+      n = (LmnWord)sp_atom_decoder(type)(bytes);
+      n_attr = LMN_SP_ATOM_ATTR;
     } else {
       n = 0;
       n_attr = 0; /* false positive対策 */
@@ -205,11 +206,11 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
       LmnAtomRef n = (LmnAtomRef)lmn_create_double_atom(scanner.scan_double());
       lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom), n, LMN_DBL_ATTR);
     } break;
-    case TAG_STR_DATA: {
-      auto n = scanner.scan_strid();
-      auto str = lmn_string_make(lmn_id_to_name(n));
-      lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom), (LmnAtomRef)str,
-                             LMN_SP_ATOM_ATTR);
+    case TAG_SP_ATOM_DATA: {
+      auto type = scanner.scan_sp_atom_type();
+      auto bytes = scanner.scan_bytes();
+      auto atom = sp_atom_decoder(type)(bytes);
+      lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom), atom, LMN_SP_ATOM_ATTR);
     } break;
     default:
       printf("tag = %d\n", tag);
@@ -272,12 +273,13 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     LMN_SATOM_SET_ATTR(from_atom, from_arg, LMN_DBL_ATTR);
     lmn_mem_push_atom(mem, n, LMN_DBL_ATTR);
   } break;
-  case TAG_STR_DATA: {
-    lmn_interned_str n = scanner.scan_strid();
-    LmnStringRef str = lmn_string_make(lmn_id_to_name(n));
-    LMN_SATOM_SET_LINK(from_atom, from_arg, str);
+  case TAG_SP_ATOM_DATA: {
+    auto type = scanner.scan_sp_atom_type();
+    auto bytes = scanner.scan_bytes();
+    auto atom = sp_atom_decoder(type)(bytes);
+    LMN_SATOM_SET_LINK(from_atom, from_arg, atom);
     LMN_SATOM_SET_ATTR(from_atom, from_arg, LMN_SP_ATOM_ATTR);
-    lmn_mem_push_atom(mem, str, LMN_STRING_ATTR);
+    lmn_mem_push_atom(mem, atom, LMN_SP_ATOM_ATTR);
   } break;
   default:
     printf("tag = %d\n", tag);

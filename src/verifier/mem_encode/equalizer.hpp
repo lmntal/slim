@@ -383,11 +383,12 @@ private:
               (n == lmn_get_double((LmnDataAtomRef)atom)));
     }
 
-    if (tag == TAG_STR_DATA) {
-      auto n = scanner.scan_strid();
+    if (tag == TAG_SP_ATOM_DATA) {
+      auto type = scanner.scan_sp_atom_type();
+      auto bytes = scanner.scan_bytes();
+      auto n = sp_atom_decoder(type)(bytes);
       (*i_bs) = scanner.location();
-      return (lmn_is_string(atom, attr) &&
-              (n == lmn_intern(lmn_string_c_str(LMN_STRING(atom)))));
+      return (attr == LMN_SP_ATOM_ATTR) && SP_ATOM_EQ(n, atom);
     }
 
     lmn_fatal("unexpected.");
@@ -416,7 +417,7 @@ private:
       return TRUE;
     case TAG_INT_DATA: /* FALLTHROUGH */
     case TAG_DBL_DATA: /* FALLTHROUGH */
-    case TAG_STR_DATA:
+    case TAG_SP_ATOM_DATA:
       return mem_eq_enc_data_atom(tag, i_bs, atom, attr);
     default:
       lmn_fatal("not implemented");
@@ -491,14 +492,14 @@ private:
         return FALSE;
       }
     } break;
-    case TAG_STR_DATA: {
-      auto n = binstr_get_strid(bs->v, *i_bs);
-      auto str = lmn_string_make(lmn_id_to_name(n));
-      *i_bs += BS_STR_ID_SIZE;
-      if (LMN_HL_ATTRATOM_ATTR(hl_root) != LMN_STRING_ATTR ||
-          !lmn_string_eq(str, (LmnStringRef)LMN_HL_ATTRATOM(hl_root))) {
-        return FALSE;
-      }
+    case TAG_SP_ATOM_DATA: {
+      halfbyte_scanner scanner(bs->v, bs->len, *i_bs);
+      auto type = scanner.scan_sp_atom_type();
+      auto bytes = scanner.scan_bytes();
+      auto atom = sp_atom_decoder(type)(bytes);
+      *i_bs = scanner.location();
+      if (LMN_HL_ATTRATOM_ATTR(hl_root) != LMN_SP_ATOM_ATTR || !SP_ATOM_EQ(atom, LMN_HL_ATTRATOM(hl_root)))
+        return false;
     } break;
     default:
       printf("tag = %d\n", tag);
@@ -873,13 +874,15 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
         visitlog_put_data(log);
         return TRUE;
       }
-    } else if (tag == TAG_STR_DATA) {
-      lmn_interned_str n = binstr_get_strid(bs->v, *i_bs);
-      (*i_bs) += BS_STR_ID_SIZE;
-      if (lmn_is_string(atom, attr) &&
-          (n == lmn_intern(lmn_string_c_str(LMN_STRING(atom))))) {
+    } else if (tag == TAG_SP_ATOM_DATA) {
+      halfbyte_scanner scanner(bs->v, bs->len, *i_bs);
+      auto type = scanner.scan_sp_atom_type();
+      auto bytes = scanner.scan_bytes();
+      auto n = sp_atom_decoder(type)(bytes);
+      *i_bs = scanner.location();
+      if (attr == LMN_SP_ATOM_ATTR && SP_ATOM_EQ(n, atom)) {
         visitlog_put_data(log);
-        return TRUE;
+        return true;
       }
     } else {
       lmn_fatal("unexpected.");
@@ -918,7 +921,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
       return TRUE;
     case TAG_INT_DATA: /* FALLTHROUGH */
     case TAG_DBL_DATA: /* FALLTHROUGH */
-    case TAG_STR_DATA:
+    case TAG_SP_ATOM_DATA:
       return mem_eq_enc_data_atom(tag, bs, i_bs, atom, attr, log);
     default:
       lmn_fatal("not implemented");
