@@ -57,9 +57,11 @@ struct dumper {
       auto n = scanner.scan_double();
       printf("_DBL%lf_", n);
     } break;
-    case TAG_STR_DATA: {
-      auto n = scanner.scan_strid();
-      printf("\"%s\"", lmn_id_to_name(n));
+    case TAG_SP_ATOM_DATA: {
+      auto type = scanner.scan_sp_atom_type();
+      auto bytes = scanner.scan_bytes();
+      auto atom = sp_atom_decoder(type)(bytes);
+      SP_ATOM_DUMP(atom, lmn_stdout_port());
     } break;
     default:
       lmn_fatal("unexpected.");
@@ -117,7 +119,7 @@ struct dumper {
         } break;
         case TAG_INT_DATA:
         case TAG_DBL_DATA:
-        case TAG_STR_DATA: {
+        case TAG_SP_ATOM_DATA: {
           dump_data_atom(scanner, tag);
         } break;
         default:
@@ -158,7 +160,7 @@ struct dumper {
       } break;
       case TAG_INT_DATA: /* FALL TROUGH */
       case TAG_DBL_DATA: /* FALL TROUGH */
-      case TAG_STR_DATA:
+      case TAG_SP_ATOM_DATA:
         dump_data_atom(scanner, tag);
         break;
       case TAG_RULESET1: {
