@@ -978,9 +978,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           tmp_global_root =
               lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
 	  if(json_dump_gen and !diff_gen_finish) {
-	    // printf("%s:%d\n", __FUNCTION__, __LINE__);
-	    // lmn_dump_mem_stdout(tmp_global_root);
-	    json_dump_gen=false;
+	    // json_dump_gen=false;
+	    printf("%s:%d\n", __FUNCTION__, __LINE__);
 	    parent_graphinfo = new Graphinfo(tmp_global_root);
 	  }
           /** 変数配列および属性配列のコピー */

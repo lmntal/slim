@@ -139,6 +139,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   DiffInfo *diff = new DiffInfo(empty, init);
   diff->diffInfoDump();
   init_s->trie = new Trie();
+  init_s->graphinfo = init;
   trieMcKay(init_s->trie, diff, init, empty);
   trieDump(init_s->trie);
 #ifdef KWBT_OPT
@@ -223,7 +224,6 @@ static void mc_dump(LmnWorkerGroup *wp) {
  *  === Fundamental System for StateSpace Generation ====
  *  =====================================================
  */
-LmnMembraneRef org_mem;
 static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
                                            LmnMembraneRef cur_mem);
 static inline void stutter_extension(State *s, LmnMembraneRef mem,
@@ -236,12 +236,10 @@ Trie * parent_trie;
 void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
                LmnReactCxtRef rc, Vector *new_ss, Vector *psyms, BOOL f) {
   LmnMembraneRef mem;
-  parent_trie = s->trie;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  trieDump(parent_trie);
+  // parent_trie = s->trie;
+  // trieDump(parent_trie);
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
-  org_mem = mem;
 #ifdef DIFFISO_GEN
   if(!diff_gen_finish) {
     printf("Succ number Information\n");
@@ -385,14 +383,14 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       succ = statespace_insert(ss, src_succ);
     }
     if(!diff_gen_finish) {
-      Graphinfo *child_gi = new Graphinfo(src_succ_m);
-      convertedGraphDump(parent_graphinfo->cv);
-      convertedGraphDump(child_gi->cv);
-      DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
-      di->diffInfoDump();
-      trieDump(parent_trie);
+      // Graphinfo *child_gi = new Graphinfo(src_succ_m);
+      // convertedGraphDump(parent_graphinfo->cv);
+      // convertedGraphDump(child_gi->cv);
+      // DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
+      // di->diffInfoDump();
+      // trieDump(parent_trie);
 
-      trieMcKay(parent_trie, di, parent_graphinfo, child_gi);
+      // trieMcKay(parent_trie, di, parent_graphinfo, child_gi);
     }
 #ifdef DIFFISO_GEN
     if(!diff_gen_finish) {
