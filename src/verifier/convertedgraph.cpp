@@ -55,7 +55,6 @@ ConvertedGraphVertex *popConvertedVertexFromDiffInfoStackWithoutOverlap(Stack *s
   return ret;
 }
 
-
 Bool isHyperLink(LMNtalLink *link){
   return link->attr == HYPER_LINK_ATTR;
 }

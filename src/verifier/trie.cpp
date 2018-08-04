@@ -643,14 +643,14 @@ void goAheadProcessOfCurrentTrieNodes(Stack *goAheadStack,Stack *fixCreditIndexS
 
 void deleteInheritedVerticesFromTrie(Trie *trie,Stack *deletedVertices,Stack *goAheadStack){
   while(!deletedVertices->isEmptyStack()){
-
     ConvertedGraphVertex *targetCVertex = popConvertedVertexFromDiffInfoStackWithoutOverlap(deletedVertices);
     convertedGraphVertexDump(targetCVertex);
 
     InheritedVertex *targetIVertex = targetCVertex->correspondingVertexInTrie;
 
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     ListBody *targetCell = targetIVertex->ownerCell;
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     cutCell(targetCell);
     TrieBody *currentNode = targetIVertex->ownerNode;
 

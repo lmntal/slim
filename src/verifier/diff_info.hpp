@@ -27,12 +27,6 @@ struct DiffInfo{
     DynamicArray *before_hyperlinks=before_gi->cv->hyperlinks;
     DynamicArray *after_atoms=after_gi->cv->atoms;
     DynamicArray *after_hyperlinks=after_gi->cv->hyperlinks;
-    // printf("****************************\n");
-    // printf("-----------before-----------\n");
-    // convertedGraphDump(before_gi->cv);
-    // printf("-----------after-----------\n");
-    // convertedGraphDump(after_gi->cv);
-    // printf("****************************\n");
     deletedVertices=new Stack();
     addedVertices=new Stack();
     relinkedVertices=new Stack();
@@ -54,24 +48,6 @@ struct DiffInfo{
     for(int i=begin; i<end; i++) {
       ConvertedGraphVertex *before_atom = (ConvertedGraphVertex *)readDynamicArray(before_atoms, i);
       ConvertedGraphVertex *after_atom = (ConvertedGraphVertex *)readDynamicArray(after_atoms, i);
-      // printf("before atom:\n");
-      // if(before_atom==NULL) printf("NULL\n");
-      // else {
-      // 	convertedGraphVertexDump(before_atom);
-      // 	if(before_atom->isPushedIntoDiffInfoStack)
-      // 	  printf("pushed = yes\n");
-      // 	else
-      // 	  printf("pushed = no\n");
-      // }
-      // printf("after atom:\n");
-      // if(after_atom==NULL) printf("NULL\n");
-      // else {
-      // 	convertedGraphVertexDump(after_atom);
-      // 	if(after_atom->isPushedIntoDiffInfoStack)
-      // 	  printf("pushed = yes\n");
-      // 	else
-      // 	  printf("pushed = no\n");
-      // } 
       if(before_atom != NULL && after_atom == NULL) {
 	pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices, before_atom);
 	checkRelink(before_atom, after_atom, after_hyperlinks, relinkedVertices);

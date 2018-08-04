@@ -232,10 +232,13 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
 /* 状態sから1stepで遷移する状態を計算し, 遷移元状態と状態空間に登録を行う
  * 遷移先状態のうち新規状態がnew_statesに積まれる */
+Trie * parent_trie;
 void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
                LmnReactCxtRef rc, Vector *new_ss, Vector *psyms, BOOL f) {
   LmnMembraneRef mem;
-
+  parent_trie = s->trie;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  trieDump(parent_trie);
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
   org_mem = mem;
@@ -245,38 +248,18 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 #endif
-  if(!diff_gen_finish) {
-    // printf("_______________\n");
-    // new Graphinfo(mem);    
-    // LmnMembraneRef mem_ = state_restore_mem(s);
-    // printf("***************\n");
-    // new Graphinfo(mem_);
-    // LmnMembraneRef mem__ = state_restore_mem(s);
-    // printf("***************\n");
-    // new Graphinfo(mem__);
-    // printf("_______________\n");
-  }
-
   /** expand  : 状態の展開 */
   if (p_s) {
     mc_gen_successors_with_property(s, mem, p_s, rc, psyms, f);
   } else {
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
-
-  // if(!diff_gen_finish) {
-  //   // printf("!!!\n");
-  //   convertedGraphDump(parent_graphinfo->cv);
-  //   // delete parent_graphinfo;
-  // }
-
 #ifdef DIFFISO_GEN
   if(!diff_gen_finish) {
     printf("%d\n", mc_react_cxt_expanded_num(rc));
     printf("Parent Graph\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout<<parent_graphinfo->json_string<<std::endl;
-    // lmn_dump_mem_stdout(mem);
   }
 
 #endif
@@ -403,14 +386,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     }
     if(!diff_gen_finish) {
       Graphinfo *child_gi = new Graphinfo(src_succ_m);
-      // convertedGraphDump(child_gi->cv);
+      convertedGraphDump(parent_graphinfo->cv);
+      convertedGraphDump(child_gi->cv);
       DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
       di->diffInfoDump();
-      // Trie * tr = new Trie();
-      // trieMcKay(tr, di, parent_graphinfo, child_gi);
-      // trieMcKay(src_succ->trie, di, parent_graphinfo, child_gi);
-      // trieDump(src_succ->trie);
-      // delete child_gi;
+      trieDump(parent_trie);
+
+      trieMcKay(parent_trie, di, parent_graphinfo, child_gi);
     }
 #ifdef DIFFISO_GEN
     if(!diff_gen_finish) {
