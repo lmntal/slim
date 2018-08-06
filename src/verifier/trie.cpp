@@ -54,7 +54,9 @@ Hash integerHashValue(int i){
 
 Hash initialHashValue(ConvertedGraphVertex *cVertex){
   Hash ret = OFFSET_BASIS;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  convertedGraphVertexDump(cVertex);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   switch(cVertex->type){
     case convertedAtom:
       ret *= FNV_PRIME;
@@ -194,19 +196,25 @@ void fixCreditIndex(Stack *fixCreditIndexStack,ConvertedGraph *cAfterGraph,int g
 
 Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,Stack *fixCreditIndexStack){
   HashString *hashString = iVertex->hashString;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if(index < 0){
     return 0;
   }else if(index < hashString->creditIndex){
     return ((KeyContainer *)readDynamicArray(hashString->body,index))->u.ui32;
   }else if(index == 0){
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     Hash tmp = initialHashValue(correspondingVertexInConvertedGraph(iVertex,cAfterGraph,gapOfGlobalRootMemID));
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     KeyContainer *old = (KeyContainer *)writeDynamicArray(hashString->body,index,allocKey(makeUInt32Key(tmp)));
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if(old != NULL){
       free(old);
     }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     hashString->creditIndex = 1;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(fixCreditIndexStack,iVertex);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     return tmp;
   }else{
     Hash prevMyHash = callHashValue(iVertex,index - 1,cAfterGraph,gapOfGlobalRootMemID,fixCreditIndexStack);
@@ -238,13 +246,20 @@ ConvertedGraphVertex *getConvertedVertexFromGraphAndIDAndType(ConvertedGraph *cG
 }
 
 ConvertedGraphVertex *correspondingVertexInConvertedGraph(InheritedVertex *iVertex,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   int afterID = iVertex->beforeID + gapOfGlobalRootMemID;
 
   switch(iVertex->type){
     case convertedAtom:
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      convertedGraphDump(cAfterGraph);
+      printf("afterID=%d\n", afterID);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      convertedGraphVertexDump((ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms,afterID));
       return (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms,afterID);
       break;
     case convertedHyperLink:
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       return (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->hyperlinks,afterID);
       break;
     default:
@@ -585,28 +600,34 @@ void goBackProcessOfCurrentConvertedVertices(Stack *BFSStack,Stack *goAheadStack
 void goAheadProcess(TrieBody *targetNode,Stack *goAheadStack,Stack *fixCreditIndexStack,TerminationConditionInfo *tInfo,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
   List *inheritedVerticesList = targetNode->inheritedVertices;
   RedBlackTree *children = targetNode->children;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if(isSingletonList(inheritedVerticesList) && isEmptyRedBlackTree(children) && targetNode->depth != -1){
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     incrementOmegaArray(tInfo->distribution,targetNode->depth);
     ((InheritedVertex *)peekCell(inheritedVerticesList)->value)->canonicalLabel.first = targetNode->key.u.ui32;
   }else{
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     while(!isEmptyList(inheritedVerticesList)){
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       ListBody *tmpCell = popCell(inheritedVerticesList);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       KeyContainer key = makeUInt32Key(callHashValue(((InheritedVertex *)tmpCell->value),targetNode->depth,cAfterGraph,gapOfGlobalRootMemID,fixCreditIndexStack));
-
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       TrieBody *nextNode = (TrieBody *)searchRedBlackTree(children,key);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       if(nextNode == NULL){
         if(!isEmptyRedBlackTree(children)){
           incrementOmegaArray(tInfo->increase,targetNode->depth);
         }
-
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         nextNode = makeTrieBody();
         insertRedBlackTree(children,key,nextNode);
         nextNode->key = key;
         nextNode->parent = targetNode;
         nextNode->depth = targetNode->depth + 1;
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
       }
-
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       if(!nextNode->isPushedIntoGoAheadStack && !isEmptyList(nextNode->inheritedVertices)){
         if(isSingletonList(nextNode->inheritedVertices)){
           decrementOmegaArray(tInfo->distribution,nextNode->depth);
@@ -618,10 +639,11 @@ void goAheadProcess(TrieBody *targetNode,Stack *goAheadStack,Stack *fixCreditInd
           }
         }
       }
-
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       pushCell(nextNode->inheritedVertices,tmpCell);
       ((InheritedVertex *)tmpCell->value)->ownerNode = nextNode;
       pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack,nextNode);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
   }
 }
@@ -630,9 +652,11 @@ void goAheadProcessOfCurrentTrieNodes(Stack *goAheadStack,Stack *fixCreditIndexS
   Stack *nextGoAheadStack = makeStack();
 
   while(!goAheadStack->isEmptyStack()){
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *targetNode = popTrieBodyFromGoAheadStackWithoutOverlap(goAheadStack);
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     goAheadProcess(targetNode,nextGoAheadStack,fixCreditIndexStack,tInfo,cAfterGraph,gapOfGlobalRootMemID);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   swapStack(nextGoAheadStack,goAheadStack);
@@ -644,7 +668,7 @@ void goAheadProcessOfCurrentTrieNodes(Stack *goAheadStack,Stack *fixCreditIndexS
 void deleteInheritedVerticesFromTrie(Trie *trie,Stack *deletedVertices,Stack *goAheadStack){
   while(!deletedVertices->isEmptyStack()){
     ConvertedGraphVertex *targetCVertex = popConvertedVertexFromDiffInfoStackWithoutOverlap(deletedVertices);
-    convertedGraphVertexDump(targetCVertex);
+    // convertedGraphVertexDump(targetCVertex);
 
     InheritedVertex *targetIVertex = targetCVertex->correspondingVertexInTrie;
 
@@ -1244,9 +1268,13 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(ConvertedGraph *cAf
   int i;
   for(i=0;i<cAfterGraph->atoms->cap;i++){
     ConvertedGraphVertex *cAfterVertex = ( ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms,i);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if(cAfterVertex != NULL){
       if(cAfterVertex->correspondingVertexInTrie == NULL){
+	convertedGraphVertexDump(cAfterVertex);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         ConvertedGraphVertex *cBeforeVertex = getConvertedVertexFromGraphAndIDAndType(cBeforeGraph,cAfterVertex->ID - gapOfGlobalRootMemID,cAfterVertex->type);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         cAfterVertex->correspondingVertexInTrie = cBeforeVertex->correspondingVertexInTrie;
         cAfterVertex->correspondingVertexInTrie->beforeID = cBeforeVertex->ID;
       }
@@ -1292,20 +1320,23 @@ Bool triePropagate(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinf
   Stack *initializeConvertedVerticesStack = new Stack();
   Stack *fixCreditIndexStack = new Stack();
   TerminationConditionInfo *tInfo = trie->info;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   deleteInheritedVerticesFromTrie(trie, diffInfo->deletedVertices, goAheadStack);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   addInheritedVerticesToTrie(trie,diffInfo->addedVertices,initializeConvertedVerticesStack,goAheadStack,cAfterGraph,gapOfGlobalRootMemID);
-
   //実際のSLIMでは起きない操作
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   assureReferenceFromConvertedVerticesToInheritedVertices(cAfterGraph->cv,cBeforeGraph->cv,gapOfGlobalRootMemID);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   moveInheritedRelinkedVerticesToBFSStack(diffInfo->relinkedVertices,initializeConvertedVerticesStack,BFSStack);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   int stepOfPropagation = -1;
   goAheadProcessOfCurrentTrieNodes(goAheadStack,fixCreditIndexStack,tInfo,cAfterGraph->cv,gapOfGlobalRootMemID);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   stepOfPropagation = 0;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   goAheadProcessOfCurrentTrieNodes(goAheadStack,fixCreditIndexStack,tInfo,cAfterGraph->cv,gapOfGlobalRootMemID);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   while(triePropagationIsContinued(goAheadStack,tInfo,stepOfPropagation)){
     stepOfPropagation++;
     triePropagateInner(trie,BFSStack,initializeConvertedVerticesStack,goAheadStack,fixCreditIndexStack,tInfo,stepOfPropagation,cAfterGraph->cv,gapOfGlobalRootMemID);
@@ -1518,4 +1549,21 @@ void terminationConditionInfoDumpExperimentFromTrie(Trie *trie){
   terminationConditionInfoDumpExperiment(trie->info);
 
   return;
+}
+
+Trie *gen_tmp_trie_from_originaltrie(Graphinfo *tmp_gi) {
+  Graphinfo *empty = new Graphinfo(lmn_mem_make());
+  DiffInfo *diff = new DiffInfo(empty, tmp_gi);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  convertedGraphDump(tmp_gi->cv);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  diff->diffInfoDump();
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  Trie * trie = new Trie();
+  int gapOfGlobalRootMemID = empty->globalRootMemID - tmp_gi->globalRootMemID;
+  int step;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  triePropagate(trie, diff, tmp_gi, empty, gapOfGlobalRootMemID, &step);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  return trie;
 }

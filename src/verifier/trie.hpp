@@ -120,4 +120,5 @@ Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGrap
 
 void terminationConditionInfoDumpExperimentFromTrie(Trie *trie);
 ConvertedGraphVertex *correspondingVertexInConvertedGraph(InheritedVertex *iVertex,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
+Trie *gen_tmp_trie_from_originaltrie(Graphinfo *tmp_gi);
 #endif

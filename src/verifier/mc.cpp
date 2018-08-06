@@ -383,14 +383,17 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       succ = statespace_insert(ss, src_succ);
     }
     if(!diff_gen_finish) {
-      // Graphinfo *child_gi = new Graphinfo(src_succ_m);
-      // convertedGraphDump(parent_graphinfo->cv);
-      // convertedGraphDump(child_gi->cv);
-      // DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
-      // di->diffInfoDump();
-      // trieDump(parent_trie);
-
-      // trieMcKay(parent_trie, di, parent_graphinfo, child_gi);
+      Graphinfo *child_gi = new Graphinfo(src_succ_m);
+      convertedGraphDump(parent_graphinfo->cv);
+      Trie * tmp_trie = gen_tmp_trie_from_originaltrie(parent_graphinfo);
+      trieDump(tmp_trie);
+      DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      di->diffInfoDump();
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      trieMcKay(tmp_trie, di, parent_graphinfo, child_gi);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      trieDump(tmp_trie);
     }
 #ifdef DIFFISO_GEN
     if(!diff_gen_finish) {
