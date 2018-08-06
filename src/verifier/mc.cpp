@@ -232,11 +232,13 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
 /* 状態sから1stepで遷移する状態を計算し, 遷移元状態と状態空間に登録を行う
  * 遷移先状態のうち新規状態がnew_statesに積まれる */
-Trie * parent_trie;
+Trie * org_trie;
+Graphinfo * org_gi;
 void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
                LmnReactCxtRef rc, Vector *new_ss, Vector *psyms, BOOL f) {
   LmnMembraneRef mem;
-  // parent_trie = s->trie;
+  org_trie = s->trie;
+  org_gi = s->graphinfo;
   // trieDump(parent_trie);
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
@@ -384,14 +386,15 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     }
     if(!diff_gen_finish) {
       Graphinfo *child_gi = new Graphinfo(src_succ_m);
-      convertedGraphDump(parent_graphinfo->cv);
-      Trie * tmp_trie = gen_tmp_trie_from_originaltrie(parent_graphinfo);
+      // convertedGraphDump(parent_graphinfo->cv);
+
+      Trie * tmp_trie = gen_tmp_trie_from_originaltrie_and_gi(org_trie, org_gi, parent_graphinfo);
       trieDump(tmp_trie);
       DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       di->diffInfoDump();
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      trieMcKay(tmp_trie, di, parent_graphinfo, child_gi);
+      // trieMcKay(tmp_trie, di, parent_graphinfo, child_gi);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       trieDump(tmp_trie);
     }

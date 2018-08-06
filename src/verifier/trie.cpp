@@ -1550,20 +1550,12 @@ void terminationConditionInfoDumpExperimentFromTrie(Trie *trie){
 
   return;
 }
-
-Trie *gen_tmp_trie_from_originaltrie(Graphinfo *tmp_gi) {
-  Graphinfo *empty = new Graphinfo(lmn_mem_make());
-  DiffInfo *diff = new DiffInfo(empty, tmp_gi);
+Trie *gen_tmp_trie_from_originaltrie_and_gi(Trie *org_trie, Graphinfo *org_gi, Graphinfo *tmp_gi) {
+  Trie *trie = new Trie();
+  trieDump(org_trie);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  convertedGraphDump(tmp_gi->cv);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  diff->diffInfoDump();
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  Trie * trie = new Trie();
-  int gapOfGlobalRootMemID = empty->globalRootMemID - tmp_gi->globalRootMemID;
-  int step;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  triePropagate(trie, diff, tmp_gi, empty, gapOfGlobalRootMemID, &step);
+  listDump(org_trie->body->inheritedVertices, inheritedVertexDumpCaster);
+  printf("\n");
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   return trie;
 }
