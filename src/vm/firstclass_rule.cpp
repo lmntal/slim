@@ -455,11 +455,11 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
 
   /* コンパイルされたルールからルールセットを生成 */
   auto ruleAST = il_parse_rule(std::move(compiled_rulesets));
-  LmnRulesetId id = lmn_gen_ruleset_id();
+  LmnRulesetId id = LmnRuleSetTable::gen_id();
   LmnRuleSetRef ruleset = new LmnRuleSet(id, 1);
   auto rule = load_rule(*ruleAST);
   ruleset->put(rule.get());
-  ruleset_table->register_ruleset(ruleset, id);
+  LmnRuleSetTable::add(ruleset, id);
   rule.release();
 
   /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加
@@ -476,5 +476,5 @@ void firstclass_ruleset_release(LmnSymbolAtomRef imply) {
 
 LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply) {
   LmnRulesetId id = imply_to_rulesetid(imply);
-  return (id > 0) ? ruleset_table->get(id) : NULL;
+  return (id > 0) ? LmnRuleSetTable::at(id) : NULL;
 }

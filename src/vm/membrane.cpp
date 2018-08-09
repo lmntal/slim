@@ -936,8 +936,8 @@ lmn_mem_copy_with_map_inner(LmnMembraneRef src, ProcessTableRef *ret_copymap,
   }
 
   for (i = 0; i < src->rulesets.num; i++) {
-    vec_push(&new_mem->rulesets, (LmnWord)((
-                                     LmnRuleSetRef)vec_get(&src->rulesets, i))->duplicate());
+    vec_push(&new_mem->rulesets, (LmnWord)new LmnRuleSet(*(
+                                     LmnRuleSetRef)vec_get(&src->rulesets, i)));
   }
   *ret_copymap = copymap;
 
@@ -986,8 +986,8 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
     new_mem->name = m->name;
     /* copy rulesets */
     for (i = 0; i < m->rulesets.num; i++) {
-      vec_push(&new_mem->rulesets, (LmnWord)((
-                                       LmnRuleSetRef)vec_get(&m->rulesets, i))->duplicate());
+      vec_push(&new_mem->rulesets, (LmnWord)new LmnRuleSet(*(
+                                       LmnRuleSetRef)vec_get(&m->rulesets, i)));
     }
   }
 
@@ -3548,7 +3548,7 @@ void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset) {
 void lmn_mem_copy_rules(LmnMembraneRef dest, LmnMembraneRef src) {
   int i;
   for (i = 0; i < lmn_mem_ruleset_num(src); i++) {
-    lmn_mem_add_ruleset(dest, lmn_mem_get_ruleset(src, i)->duplicate());
+    lmn_mem_add_ruleset(dest, new LmnRuleSet(*lmn_mem_get_ruleset(src, i)));
   }
 }
 

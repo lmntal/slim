@@ -500,15 +500,6 @@ static BOOL dump_toplevel_atom(LmnPortRef port, LmnSymbolAtomRef atom,
   }
 }
 
-static int dump_history_f(st_data_t _key, st_data_t _value, st_data_t _arg) {
-  LmnPortRef port = (LmnPortRef)_arg;
-
-  port_put_raw_s(port, " ");
-  port_put_raw_s(port, lmn_id_to_name((lmn_interned_str)_key));
-
-  return ST_CONTINUE;
-}
-
 static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
   unsigned int i, n;
 
@@ -517,26 +508,21 @@ static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
 
   port_put_raw_s(port, "_CHR");
 
-  n = rs->num;
-  for (i = 0; i < n; i++) {
-    LmnRuleRef r;
-    st_table_t his_tbl;
-    unsigned int his_num;
-
-    r = rs->get_rule(i);
+  for (auto r : *rs) {
     /* TODO: uniqはコピー先のルールオブジェクトに名前を設定するため,
      *        コピー元のルールオブジェクトの名前が空になってしまう */
-    // if (lmn_rule_get_name(r) == ANONYMOUS) continue;
-    his_tbl = lmn_rule_get_history_tbl(r);
-    his_num = his_tbl ? st_num(his_tbl) : 0;
+    // if (r->name == ANONYMOUS) continue;
 
     /* 少なくともCOMMIT命令を1度以上処理したuniqルールを対象に,
      * ルール名と履歴を出力する */
-    if (his_num > 0) {
+    if (r->history().size() > 0) {
       port_put_raw_s(port, "[id:");
-      port_put_raw_s(port, lmn_id_to_name(lmn_rule_get_name(r))); /* ルール名 */
+      port_put_raw_s(port, lmn_id_to_name(r->name)); /* ルール名 */
       port_put_raw_s(port, "\"");
-      st_foreach(his_tbl, (st_iter_func)dump_history_f, (st_data_t)port);
+      for (auto entry : r->history()) {
+        port_put_raw_s(port, " ");
+        port_put_raw_s(port, lmn_id_to_name(entry));
+      }
       port_put_raw_s(port, "\"]");
     }
   }

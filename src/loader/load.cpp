@@ -118,41 +118,20 @@ int ilparse(il::lexer *scanner, std::unique_ptr<IL> *il,
  */
 
 std::unique_ptr<LmnRule> load_rule(Rule const &rule) {
-  ByteEncoder encoder;
-
-  /*   load_inst_block(rule->amatch, encoder); */
-  encoder.load(rule.mmatch);
-  encoder.load(rule.guard);
-  encoder.load(rule.body);
-
-  /* ラベルを参照している位置に、実際のラベルの位置を書き込む */
-  encoder.resolve_labels();
-
-  auto runtime_rule = encoder.create_rule();
-  if (rule.hasuniq)
-    lmn_rule_init_uniq_rule(runtime_rule.get());
-
-  return runtime_rule;
+  return ByteEncoder::encode_rule_ast(rule);
 }
 
 static LmnRuleSetRef load_ruleset(const RuleSet &rs) {
   auto runtime_ruleset = new LmnRuleSet(rs.id, 10);
 
-  for (auto &r : rs.rules) {
-    auto rule = load_rule(*r);
-    runtime_ruleset->put(rule.get());
-    rule.release();
-  }
+  for (auto &r : rs.rules)
+    runtime_ruleset->put(load_rule(*r));
 
-  ruleset_table->register_ruleset(runtime_ruleset, rs.id);
+  LmnRuleSetTable::add(runtime_ruleset, rs.id);
 
-  if (rs.is_system_ruleset) {
-    /* 各ルールをシステムルールセットに追加する */
-    for (int i = 0; i < runtime_ruleset->num; i++) {
-      LmnRuleRef rule2 = lmn_rule_copy(runtime_ruleset->get_rule(i));
-      lmn_add_system_rule(rule2);
-    }
-  }
+  if (rs.is_system_ruleset)
+    for (auto r : *runtime_ruleset)
+      lmn_add_system_rule(new LmnRule(*r));
 
   return runtime_ruleset;
 }
@@ -173,7 +152,7 @@ static LmnRuleSetRef load_il(const IL &il) {
 
   /* load module list */
   for (auto &m : il.modules)
-    lmn_set_module(m->name_id, ruleset_table->get(m->ruleset_id));
+    lmn_set_module(m->name_id, LmnRuleSetTable::at(m->ruleset_id));
 
   return first_ruleset;
 }
@@ -208,19 +187,19 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   /* ルールセット0番は数合わせ */
   /* システムルールセット読み込み */
   for (auto &rule : maindata->ruleset_table[1]) {
-    lmn_add_system_rule(lmn_rule_make_translated(
+    lmn_add_system_rule(new LmnRule(
         rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセット2番はinitial ruleset */
   for (auto &rule : maindata->ruleset_table[2]) {
-    lmn_add_initial_rule(lmn_rule_make_translated(
+    lmn_add_initial_rule(new LmnRule(
         rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセット3番はinitial system ruleset */
   for (auto &rule : maindata->ruleset_table[3]) {
-    lmn_add_initial_system_rule(lmn_rule_make_translated(
+    lmn_add_initial_system_rule(new LmnRule(
         rule.function, maindata->symbol_exchange[rule.name]));
   }
 
@@ -228,13 +207,12 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   for (int i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset;
        i++) {
     auto &tr = maindata->ruleset_table[i];
-    auto gid = lmn_gen_ruleset_id();
+    auto gid = LmnRuleSetTable::gen_id();
     auto rs = new LmnRuleSet(gid, tr.size);
-    ruleset_table->register_ruleset(rs, gid);
+    LmnRuleSetTable::add(rs, gid);
 
     for (auto &r : tr)
-      rs->put(lmn_rule_make_translated(r.function,
-                                       maindata->symbol_exchange[r.name]));
+      rs->put(new LmnRule(r.function, maindata->symbol_exchange[r.name]));
 
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく
      */
@@ -248,7 +226,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   for (int i = 0; i < maindata->count_of_module; i++) {
     auto &mo = maindata->module_table[i];
     lmn_set_module(maindata->symbol_exchange[mo.name],
-                   ruleset_table->get(maindata->ruleset_exchange[mo.ruleset]));
+                   LmnRuleSetTable::at(maindata->ruleset_exchange[mo.ruleset]));
   }
 
   return ret;

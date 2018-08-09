@@ -37,8 +37,8 @@
  */
 
 #include "rule.h"
-#include "system_ruleset.h"
 #include "rule.hpp"
+#include "system_ruleset.h"
 
 /*----------------------------------------------------------------------
  * Rule
@@ -48,117 +48,16 @@
 void init_rules(void);
 void destroy_rules(void);
 
-/* 中身のない、名前だけを持つルールを生成する */
-LmnRuleRef lmn_rule_make_dummy(lmn_interned_str name) {
-  return new LmnRule(NULL, -1, NULL, name);
-}
-
-/* create new rule with a translated function */
-LmnRuleRef lmn_rule_make_translated(LmnTranslated translated,
-                                    lmn_interned_str name) {
-  return new LmnRule(NULL, 0, translated, name);
-}
-
-/* ruleをコピーして新しいルールを作成する */
-LmnRuleRef lmn_rule_copy(LmnRuleRef rule) {
-  LmnRuleRef new_rule;
-  BYTE *inst_seq;
-
-  if (lmn_rule_get_inst_seq(rule)) {
-    inst_seq = LMN_NALLOC(BYTE, rule->inst_seq_len);
-    inst_seq = (BYTE *)memcpy(inst_seq, rule->inst_seq, rule->inst_seq_len);
-  } else {
-    inst_seq = NULL;
-  }
-
-  new_rule =
-      new LmnRule(inst_seq, rule->inst_seq_len, rule->translated, rule->name);
-  if (lmn_rule_get_history_tbl(rule)) {
-    new_rule->history_tbl = st_copy(lmn_rule_get_history_tbl(rule));
-    new_rule->pre_id = lmn_rule_get_pre_id(rule);
-  }
-  return new_rule;
-}
-
-st_table_t lmn_rule_get_history_tbl(LmnRuleRef rule) {
-  return rule->history_tbl;
-}
-
-lmn_interned_str lmn_rule_get_pre_id(LmnRuleRef rule) { return rule->pre_id; }
-
-void lmn_rule_set_pre_id(LmnRuleRef rule, lmn_interned_str t) {
-  rule->pre_id = t;
-}
-
-/* ルールの処理を行う関数を返す。ルールが関数を持たなければNULLを返す */
-LmnTranslated lmn_rule_get_translated(LmnRuleRef rule) {
-  return rule->translated;
-}
-
-/* ルールの処理を行う中間語命令列を変換したバイト列を返す。ルールが列を
-   持たなければNULLを返す。*/
-BYTE *lmn_rule_get_inst_seq(LmnRuleRef rule) { return rule->inst_seq; }
-
-/* ルールの名前を返す */
-lmn_interned_str lmn_rule_get_name(LmnRuleRef rule) { return rule->name; }
-
-/* ルール名のセット */
-void lmn_rule_set_name(LmnRuleRef rule, lmn_interned_str rule_name) {
-  rule->name = rule_name;
-}
-
-LmnCost lmn_rule_get_cost(LmnRuleRef rule) { return rule->cost; }
-
-void lmn_rule_set_cost(LmnRuleRef rule, LmnCost rule_cost) {
-  rule->cost = rule_cost;
-}
-
-BOOL lmn_rule_is_invisible(LmnRuleRef rule) {
-  return rule->is_invisible == TRUE;
-}
-
-void lmn_rule_init_uniq_rule(LmnRuleRef rule) {
-  rule->history_tbl = st_init_numtable();
-}
-
-LmnRuleRef dummy_rule(void) {
-  static struct LmnRule rule;
-  static BOOL first = TRUE;
-
-  if (first) {
-    first = FALSE;
-    rule.name = lmn_intern("");
-  }
-
-  return &rule;
-}
-
 /*----------------------------------------------------------------------
  * Rule Set
  */
-
-struct LmnRuleSetTable *ruleset_table;
-
-/* Generates and returns new RuleSet id */
-int lmn_gen_ruleset_id() {
-  static int ruleset_next_id = 1;
-
-  return ruleset_next_id++;
-}
-
-/* ルールセットテーブルの初期化 */
-static void init_ruleset_table() {
-  ruleset_table = new LmnRuleSetTable(64);
-  /* 安全なメモリ解放の為ゼロクリア */
-  memset(ruleset_table->entry, 0,
-         ruleset_table->size * sizeof(ruleset_table->entry[0]));
-}
 
 /* 2つの(Vector *)rulesetsが等価であるか判定, 等価の場合に真を返す.
  * Vectorはルールセットの整数IDで整列済みであることが前提 */
 BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
   unsigned int n = vec_num(rs_v1);
-  if (vec_num(rs_v1) != vec_num(rs_v2)) return false;
+  if (vec_num(rs_v1) != vec_num(rs_v2))
+    return false;
 
   /* ルールセットの種類の比較 (IDで昇順に並べておくコードに依存) */
   unsigned int un1 = 0;
@@ -173,12 +72,16 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
       return false;
 
     /* rulesetsがuniq ruleを含むrulesetを何個持っているか調べておく */
-    if (rs1->has_unique()) un1++;
-    if (rs2->has_unique()) un2++;
+    if (rs1->has_unique())
+      un1++;
+    if (rs2->has_unique())
+      un2++;
   }
 
-  if (un1 != un2) return false;
-  if (un1 == 0) return true;
+  if (un1 != un2)
+    return false;
+  if (un1 == 0)
+    return true;
 
   /* ---uniq制約がある場合の処理--- */
   LMN_ASSERT(vec_num(rs_v1) > 0);
@@ -194,7 +97,7 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
     for (unsigned int j = 0; j < vec_num(rs_v1); j++) {
       LmnRuleSetRef rs2 = (LmnRuleSetRef)vec_get(rs_v2, i);
       if (rs1->id < rs2->id) /* 比較打ち切り */
-        break; /* INNER LOOP */
+        break;               /* INNER LOOP */
 
       if (rs1->id == rs2->id && !rs2v_matched[j] && *rs1 == *rs2) {
         is_ok = true;
@@ -218,7 +121,7 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
 LmnRuleSetRef system_ruleset;
 
 static void init_system_ruleset() {
-  system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
+  system_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
 }
 
 static void destroy_system_ruleset() { delete (system_ruleset); }
@@ -235,8 +138,8 @@ LmnRuleSetRef initial_ruleset;
 LmnRuleSetRef initial_system_ruleset;
 
 static void init_initial_ruleset() {
-  initial_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
-  initial_system_ruleset = new LmnRuleSet(lmn_gen_ruleset_id(), 10);
+  initial_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
+  initial_system_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
 }
 
 static void destroy_initial_ruleset() {
@@ -279,14 +182,12 @@ LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name) {
 /*----------------------------------------------------------------------*/
 
 void init_rules() {
-  init_ruleset_table();
   init_module_table();
   init_system_ruleset();
   init_initial_ruleset();
 }
 
 void destroy_rules() {
-  delete(ruleset_table);
   destroy_module_table();
   destroy_system_ruleset();
   destroy_initial_ruleset();
