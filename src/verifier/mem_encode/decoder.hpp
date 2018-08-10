@@ -1,7 +1,7 @@
 /*
- * rule.h - types and functions about rule, rule set, module
+ * decoder.hpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,57 +32,45 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: rule.h,v 1.6 2008/09/29 05:23:40 taisuke Exp $
  */
 
-#ifndef LMN_RULE_H
-#define LMN_RULE_H
+#ifndef SLIM_VERIFIER_MEM_ENCODE_DECODER_HPP
+#define SLIM_VERIFIER_MEM_ENCODE_DECODER_HPP
 
-/**
- * @ingroup VM
- * @defgroup Rule
- * @{
- */
+#include "halfbyte_scanner.hpp"
 
-typedef struct LmnRule *LmnRuleRef;
+#include "vm/vm.h"
 
-typedef struct LmnRuleSet *LmnRuleSetRef;
+enum log_type : uint8_t {
+  BS_LOG_TYPE_NONE = (0x0U),
+  BS_LOG_TYPE_ATOM = (0x1U),
+  BS_LOG_TYPE_MEM = (0x2U),
+  BS_LOG_TYPE_HLINK = (0x3U),
+};
 
-#include "element/element.h"
-#include "lmntal.h"
-#include "symbol.h"
+struct BsDecodeLog {
+  LmnWord v;
+  log_type type;
+};
 
-/*----------------------------------------------------------------------
- * Rule Set
- */
+struct binstr_decoder {
+  halfbyte_scanner scanner;
+  std::vector<BsDecodeLog> log;
+  int nvisit; /* カウンタ(== 1): 順序付けを記録しながらデコードする.
+               * (0はグローバルルート膜なので1から) */
 
-BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
+  binstr_decoder(BYTE *bs, size_t len, size_t idx = 0)
+      : scanner(bs, len, idx), log(len * TAG_IN_BYTE), nvisit(VISITLOG_INIT_N) {
+  }
 
-/*----------------------------------------------------------------------
- * System Rule Set
- */
+  int decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);
 
-extern LmnRuleSetRef system_ruleset;
-void lmn_add_system_rule(LmnRuleRef rule);
+private:
+  int decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);
+  int decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);
 
-/*----------------------------------------------------------------------
- * Initial Rule Set
- */
+public:
+  void decode_rulesets(int rs_num, Vector *rulesets);
+};
 
-extern LmnRuleSetRef initial_ruleset;
-extern LmnRuleSetRef initial_system_ruleset;
-void lmn_add_initial_rule(LmnRuleRef rule);
-void lmn_add_initial_system_rule(LmnRuleRef rule);
-
-/*----------------------------------------------------------------------
- * Module
- */
-
-LMN_EXTERN void lmn_set_module(lmn_interned_str module_name,
-                               LmnRuleSetRef ruleset);
-LMN_EXTERN LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name);
-
-/* @} */
-
-#endif /* LMN_RULE_H */
+#endif

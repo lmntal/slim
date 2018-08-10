@@ -1,7 +1,7 @@
 /*
- * rule.h - types and functions about rule, rule set, module
+ * lmn_binstr.hpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,57 +32,23 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: rule.h,v 1.6 2008/09/29 05:23:40 taisuke Exp $
  */
 
-#ifndef LMN_RULE_H
-#define LMN_RULE_H
+#ifndef SLIM_VERIFIER_MEM_ENCODE_LMN_BINSTR_HPP
+#define SLIM_VERIFIER_MEM_ENCODE_LMN_BINSTR_HPP
 
-/**
- * @ingroup VM
- * @defgroup Rule
- * @{
- */
+#include <cstdint>
 
-typedef struct LmnRule *LmnRuleRef;
+typedef struct LmnBinStr *LmnBinStrRef;
 
-typedef struct LmnRuleSet *LmnRuleSetRef;
+/* 最終的なエンコード結果を表すバイナリストリング */
+struct LmnBinStr {
+  bool type; /* バイト列への記録方式を記録しておくためのbit field.
+              * 圧縮方式のメモ用に用いる.
+              * (64bit環境ではアラインメントの隙間に配置されるのでメモリ使用量は増えないはず)
+              */
+  unsigned int len; /* 確保したbyte型の数(列の長さ) */
+  uint8_t *v;          /* 1byte(8bit)の可変列へのポインタ */
+};
 
-#include "element/element.h"
-#include "lmntal.h"
-#include "symbol.h"
-
-/*----------------------------------------------------------------------
- * Rule Set
- */
-
-BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
-
-/*----------------------------------------------------------------------
- * System Rule Set
- */
-
-extern LmnRuleSetRef system_ruleset;
-void lmn_add_system_rule(LmnRuleRef rule);
-
-/*----------------------------------------------------------------------
- * Initial Rule Set
- */
-
-extern LmnRuleSetRef initial_ruleset;
-extern LmnRuleSetRef initial_system_ruleset;
-void lmn_add_initial_rule(LmnRuleRef rule);
-void lmn_add_initial_system_rule(LmnRuleRef rule);
-
-/*----------------------------------------------------------------------
- * Module
- */
-
-LMN_EXTERN void lmn_set_module(lmn_interned_str module_name,
-                               LmnRuleSetRef ruleset);
-LMN_EXTERN LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name);
-
-/* @} */
-
-#endif /* LMN_RULE_H */
+#endif /* SLIM_VERIFIER_MEM_ENCODE_BINSTR_HPP */

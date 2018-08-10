@@ -49,6 +49,8 @@ liblmn_verifier_a_SOURCES =                              \
 	omegaArray.hpp		   mckay.hpp			\
 	mckay.cpp		   trie.cpp			\
 	omegaArray.cpp
+	mem_encode/decoder.cpp     mem_encode/binstr.cpp
+
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)

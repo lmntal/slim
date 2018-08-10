@@ -18,6 +18,8 @@
  */
 
 #include <stddef.h>
+#include <iterator>
+#include <utility>
 
 #ifndef _
 #define _(args) args
@@ -118,6 +120,43 @@ int st_foreach_hash(st_table_t table, st_data_t hash, int (*func)(ANYARGS),
 void st_concat(st_table_t tbl1, const st_table_t tbl2);
 
 unsigned long st_table_space(st_table_t table);
+
+class st_iterator {
+public:
+  using iterator_category = std::input_iterator_tag;
+  using value_type = std::pair<st_data_t, st_data_t>;
+  using difference_type = std::ptrdiff_t;
+  using pointer = std::pair<st_data_t, st_data_t> *;
+  using reference = std::pair<st_data_t, st_data_t> &;
+
+private:
+  st_table_t table;
+  size_t bin_index;
+  st_table_entry *ptr;
+  value_type value;
+
+public:
+  st_iterator() : ptr(nullptr) {}
+  st_iterator(st_table_t table);
+  st_iterator(const st_iterator &it);
+  ~st_iterator() noexcept = default;
+
+  st_iterator &operator=(const st_iterator &it) noexcept;
+  reference operator*() { return value; }
+  pointer operator->() { return &value; }
+  st_iterator &operator++();
+  st_iterator operator++(int i) {
+    auto s = st_iterator(*this);
+    ++(*this);
+    return s;
+  }
+
+  bool operator!=(const st_iterator &a) { return !(*this == a); }
+  bool operator==(const st_iterator &a) { return ptr == a.ptr; }
+};
+
+inline st_iterator begin(const st_table_t &table) { return (table) ? st_iterator(table) : st_iterator(); }
+inline st_iterator end(const st_table_t &table) { return st_iterator(); }
 
 /* @} */
 

@@ -1,7 +1,7 @@
 /*
- * rule.h - types and functions about rule, rule set, module
+ * binstr.cpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,56 +33,62 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: rule.h,v 1.6 2008/09/29 05:23:40 taisuke Exp $
  */
 
-#ifndef LMN_RULE_H
-#define LMN_RULE_H
+#include "binstr.hpp"
 
-/**
- * @ingroup VM
- * @defgroup Rule
- * @{
- */
+bool BinStrCursor::push(const BYTE *v, int size) {
+  const int half_len = size / 2;
+  if (!is_valid())
+    return false;
 
-typedef struct LmnRule *LmnRuleRef;
+  if (direct) {
+    if (size & 1) {
+      binstr->write_direct(v[size >> 1] & 0x0f, pos_++);
+    }
+    for (int i = half_len - 1; i >= 0; i--) {
+      binstr->write_direct((v[i] >> TAG_BIT_SIZE & 0x0f), pos_++);
+      binstr->write_direct(v[i] & 0x0f, pos_++);
+    }
+    return true;
+  } else {
+    if (size & 1) {
+      if (binstr->write(v[size >> 1] & 0x0f, pos_))
+        pos_++;
+      else {
+        invalidate();
+        return false;
+      }
+    }
 
-typedef struct LmnRuleSet *LmnRuleSetRef;
+    for (int i = half_len - 1; i >= 0; i--) {
+      if (binstr->write(v[i] >> TAG_BIT_SIZE & 0x0f, pos_)) {
+        pos_++;
+      } else {
+        invalidate();
+        return false;
+      }
+      if (binstr->write(v[i] & 0x0f, pos_))
+        pos_++;
+      else {
+        invalidate();
+        return false;
+      }
+    }
+    return true;
+  }
+}
 
-#include "element/element.h"
-#include "lmntal.h"
-#include "symbol.h"
+/* pのBinStrのバイト列へ4bitのTAG vを書き込む. */
+bool BinStrCursor::push(BYTE v) {
+  if (!is_valid())
+    return false;
 
-/*----------------------------------------------------------------------
- * Rule Set
- */
-
-BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
-
-/*----------------------------------------------------------------------
- * System Rule Set
- */
-
-extern LmnRuleSetRef system_ruleset;
-void lmn_add_system_rule(LmnRuleRef rule);
-
-/*----------------------------------------------------------------------
- * Initial Rule Set
- */
-
-extern LmnRuleSetRef initial_ruleset;
-extern LmnRuleSetRef initial_system_ruleset;
-void lmn_add_initial_rule(LmnRuleRef rule);
-void lmn_add_initial_system_rule(LmnRuleRef rule);
-
-/*----------------------------------------------------------------------
- * Module
- */
-
-LMN_EXTERN void lmn_set_module(lmn_interned_str module_name,
-                               LmnRuleSetRef ruleset);
-LMN_EXTERN LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name);
-
-/* @} */
-
-#endif /* LMN_RULE_H */
+  if (binstr->write(v & 0x0f, pos_)) {
+    pos_++;
+    return true;
+  } else {
+    invalidate();
+    return false;
+  }
+}

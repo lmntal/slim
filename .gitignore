@@ -43,6 +43,7 @@ Thumbs.db
 Makefile
 Makefile.in
 autom4te.cache/
+benchmarkset/*.il
 compile
 config.guess
 config.log

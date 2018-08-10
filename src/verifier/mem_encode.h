@@ -46,18 +46,8 @@
 
 #include "../lmntal.h"
 #include "delta_membrane.h"
+#include "mem_encode/lmn_binstr.hpp"
 
-typedef struct LmnBinStr *LmnBinStrRef;
-
-/* 最終的なエンコード結果を表すバイナリストリング */
-struct LmnBinStr {
-  BOOL type; /* バイト列への記録方式を記録しておくためのbit field.
-              * 圧縮方式のメモ用に用いる.
-              * (64bit環境ではアラインメントの隙間に配置されるのでメモリ使用量は増えないはず)
-              */
-  unsigned int len; /* 確保したbyte型の数(列の長さ) */
-  BYTE *v;          /* 1byte(8bit)の可変列へのポインタ */
-};
 
 #define BS_COMP_Z (0x01U)
 #define BS_COMP_D (0x01U << 1)

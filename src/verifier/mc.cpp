@@ -543,7 +543,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     state_set_parent(news, src);
     if (mc_has_trans(f)) {
       lmn_interned_str nid;
-      nid = lmn_rule_get_name((LmnRuleRef)vec_get(expanded_rules, i));
+      nid = ((LmnRuleRef)vec_get(expanded_rules, i))->name;
       data = (vec_data_t)transition_make(news, nid);
      src->set_trans_obj();
     } else {

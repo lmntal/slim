@@ -60,7 +60,7 @@ void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
   for (int i = 0; i < lmn_mem_ruleset_num(mem); i++) {
     LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
     rs->validate_zerostep();
-    lmn_mem_add_ruleset(parent, rs->duplicate());
+    lmn_mem_add_ruleset(parent, new LmnRuleSet(*rs));
   }
 
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
