@@ -39,7 +39,8 @@ liblmn_verifier_a_SOURCES =                              \
 	statespace.cpp             statespace.h                  \
 	tree_compress.cpp          tree_compress.h               \
 	visitlog.cpp               visitlog.h                    \
-	stack_macro.h
+	stack_macro.h              \
+	mem_encode/decoder.cpp     mem_encode/binstr.cpp
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)

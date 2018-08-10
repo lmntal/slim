@@ -1,7 +1,7 @@
 /*
- * mem_encode.h
+ * lmn_binstr.hpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,60 +32,23 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LMN_MEM_ENCODE_H
-#define LMN_MEM_ENCODE_H
+#ifndef SLIM_VERIFIER_MEM_ENCODE_LMN_BINSTR_HPP
+#define SLIM_VERIFIER_MEM_ENCODE_LMN_BINSTR_HPP
 
-/**
- * @ingroup  Verifier
- * @defgroup MembraneEncoder
- * @{
- */
+#include <cstdint>
 
-#include "../lmntal.h"
-#include "delta_membrane.h"
-#include "mem_encode/lmn_binstr.hpp"
+typedef struct LmnBinStr *LmnBinStrRef;
 
+/* 最終的なエンコード結果を表すバイナリストリング */
+struct LmnBinStr {
+  bool type; /* バイト列への記録方式を記録しておくためのbit field.
+              * 圧縮方式のメモ用に用いる.
+              * (64bit環境ではアラインメントの隙間に配置されるのでメモリ使用量は増えないはず)
+              */
+  unsigned int len; /* 確保したbyte型の数(列の長さ) */
+  uint8_t *v;          /* 1byte(8bit)の可変列へのポインタ */
+};
 
-#define BS_COMP_Z (0x01U)
-#define BS_COMP_D (0x01U << 1)
-
-#define is_comp_z(BS) (((BS)->type) & BS_COMP_Z)
-#define set_comp_z(BS) (((BS)->type) |= BS_COMP_Z)
-#define unset_comp_z(BS) (((BS)->type) &= ~(BS_COMP_Z))
-#define is_comp_d(BS) (((BS)->type) & BS_COMP_D)
-#define set_comp_d(BS) (((BS)->type) |= BS_COMP_D)
-#define unset_comp_d(BS) (((BS)->type) &= ~(BS_COMP_D))
-
-#define TAG_BIT_SIZE 4
-#define TAG_DATA_TYPE_BIT 2
-#define TAG_IN_BYTE 2
-
-#define lmn_binstr_byte_size(bs) ((bs->len + 1) / TAG_IN_BYTE)
-
-void mem_isom_init(void);
-void mem_isom_finalize(void);
-void set_functor_priority(LmnFunctor f, int priority);
-
-LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem);
-LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d);
-int binstr_compare(const LmnBinStrRef a, const LmnBinStrRef b);
-unsigned long binstr_hash(const LmnBinStrRef a);
-int binstr_byte_size(LmnBinStrRef p);
-LmnBinStrRef lmn_binstr_make(unsigned int size);
-LmnBinStrRef lmn_binstr_copy(LmnBinStrRef src_bs);
-LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs);
-
-BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem);
-
-void lmn_binstr_free(LmnBinStrRef p);
-void lmn_binstr_dump(const LmnBinStrRef bs);
-unsigned long lmn_binstr_space(struct LmnBinStr *bs);
-LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem);
-LmnBinStrRef lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);
-
-/* @} */
-
-#endif /* LMN_MEM_ENCODE_H */
+#endif /* SLIM_VERIFIER_MEM_ENCODE_BINSTR_HPP */

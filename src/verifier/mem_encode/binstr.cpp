@@ -1,7 +1,7 @@
 /*
- * mem_encode.h
+ * binstr.cpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -35,57 +35,60 @@
  *
  */
 
-#ifndef LMN_MEM_ENCODE_H
-#define LMN_MEM_ENCODE_H
+#include "binstr.hpp"
 
-/**
- * @ingroup  Verifier
- * @defgroup MembraneEncoder
- * @{
- */
+bool BinStrCursor::push(const BYTE *v, int size) {
+  const int half_len = size / 2;
+  if (!is_valid())
+    return false;
 
-#include "../lmntal.h"
-#include "delta_membrane.h"
-#include "mem_encode/lmn_binstr.hpp"
+  if (direct) {
+    if (size & 1) {
+      binstr->write_direct(v[size >> 1] & 0x0f, pos_++);
+    }
+    for (int i = half_len - 1; i >= 0; i--) {
+      binstr->write_direct((v[i] >> TAG_BIT_SIZE & 0x0f), pos_++);
+      binstr->write_direct(v[i] & 0x0f, pos_++);
+    }
+    return true;
+  } else {
+    if (size & 1) {
+      if (binstr->write(v[size >> 1] & 0x0f, pos_))
+        pos_++;
+      else {
+        invalidate();
+        return false;
+      }
+    }
 
+    for (int i = half_len - 1; i >= 0; i--) {
+      if (binstr->write(v[i] >> TAG_BIT_SIZE & 0x0f, pos_)) {
+        pos_++;
+      } else {
+        invalidate();
+        return false;
+      }
+      if (binstr->write(v[i] & 0x0f, pos_))
+        pos_++;
+      else {
+        invalidate();
+        return false;
+      }
+    }
+    return true;
+  }
+}
 
-#define BS_COMP_Z (0x01U)
-#define BS_COMP_D (0x01U << 1)
+/* pのBinStrのバイト列へ4bitのTAG vを書き込む. */
+bool BinStrCursor::push(BYTE v) {
+  if (!is_valid())
+    return false;
 
-#define is_comp_z(BS) (((BS)->type) & BS_COMP_Z)
-#define set_comp_z(BS) (((BS)->type) |= BS_COMP_Z)
-#define unset_comp_z(BS) (((BS)->type) &= ~(BS_COMP_Z))
-#define is_comp_d(BS) (((BS)->type) & BS_COMP_D)
-#define set_comp_d(BS) (((BS)->type) |= BS_COMP_D)
-#define unset_comp_d(BS) (((BS)->type) &= ~(BS_COMP_D))
-
-#define TAG_BIT_SIZE 4
-#define TAG_DATA_TYPE_BIT 2
-#define TAG_IN_BYTE 2
-
-#define lmn_binstr_byte_size(bs) ((bs->len + 1) / TAG_IN_BYTE)
-
-void mem_isom_init(void);
-void mem_isom_finalize(void);
-void set_functor_priority(LmnFunctor f, int priority);
-
-LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem);
-LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d);
-int binstr_compare(const LmnBinStrRef a, const LmnBinStrRef b);
-unsigned long binstr_hash(const LmnBinStrRef a);
-int binstr_byte_size(LmnBinStrRef p);
-LmnBinStrRef lmn_binstr_make(unsigned int size);
-LmnBinStrRef lmn_binstr_copy(LmnBinStrRef src_bs);
-LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs);
-
-BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem);
-
-void lmn_binstr_free(LmnBinStrRef p);
-void lmn_binstr_dump(const LmnBinStrRef bs);
-unsigned long lmn_binstr_space(struct LmnBinStr *bs);
-LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem);
-LmnBinStrRef lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);
-
-/* @} */
-
-#endif /* LMN_MEM_ENCODE_H */
+  if (binstr->write(v & 0x0f, pos_)) {
+    pos_++;
+    return true;
+  } else {
+    invalidate();
+    return false;
+  }
+}
