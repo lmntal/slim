@@ -52,12 +52,12 @@
 #include "state.hpp"
 #include "upe.hpp"
 
-#include <map>
-#include <set>
-#include <iterator>
-#include <vector>
-#include <queue>
 #include <algorithm>
+#include <iterator>
+#include <map>
+#include <queue>
+#include <set>
+#include <vector>
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -125,30 +125,30 @@ std::set<LmnFunctor> compulsory_functors_with_rule(LmnRuleRef rule) {
     instr += sizeof(LmnInstrOp);
 
     switch (op) {
-      case INSTR_FINDATOM: {
-        instr = skip_instruction_arg(instr, InstrVar);
-        instr = skip_instruction_arg(instr, InstrVar);
-        if (LMN_ATTR_IS_DATA(*(LmnLinkAttr *)instr))
-          lmn_fatal("data atom can't be find.");
+    case INSTR_FINDATOM: {
+      instr = skip_instruction_arg(instr, InstrVar);
+      instr = skip_instruction_arg(instr, InstrVar);
+      if (LMN_ATTR_IS_DATA(*(LmnLinkAttr *)instr))
+        lmn_fatal("data atom can't be find.");
+      res.insert(read_functor(instr));
+      instr = skip_instruction_arg(instr, ArgFunctor);
+      break;
+    }
+    case INSTR_FUNC: {
+      instr = skip_instruction_arg(instr, InstrVar);
+      if (!LMN_ATTR_IS_DATA(*(LmnLinkAttr *)instr)) {
         res.insert(read_functor(instr));
-        instr = skip_instruction_arg(instr, ArgFunctor);
-        break;
       }
-      case INSTR_FUNC: {
-        instr = skip_instruction_arg(instr, InstrVar);
-        if (!LMN_ATTR_IS_DATA(*(LmnLinkAttr *)instr)) {
-          res.insert(read_functor(instr));
-        }
-        instr = skip_instruction_arg(instr, ArgFunctor);
-        break;
-      }
-      case INSTR_COMMIT:
-        return res;
-      default:
-        auto &spec = instr_spec.at(LmnInstruction(op));
-        for (auto t : spec.args)
-          instr = skip_instruction_arg(instr, t);
-        break;
+      instr = skip_instruction_arg(instr, ArgFunctor);
+      break;
+    }
+    case INSTR_COMMIT:
+      return res;
+    default:
+      auto &spec = instr_spec.at(LmnInstruction(op));
+      for (auto t : spec.args)
+        instr = skip_instruction_arg(instr, t);
+      break;
     }
   }
 
@@ -157,7 +157,8 @@ std::set<LmnFunctor> compulsory_functors_with_rule(LmnRuleRef rule) {
 
 std::set<LmnFunctor> compulsory_functors_with_rule_in_mem(LmnMembraneRef mem) {
   std::set<LmnFunctor> res;
-  for (auto child = lmn_mem_child_head(mem); child; child = lmn_mem_next(child)) {
+  for (auto child = lmn_mem_child_head(mem); child;
+       child = lmn_mem_next(child)) {
     auto s = compulsory_functors_with_rule_in_mem(child);
     res.insert(s.begin(), s.end());
   }
@@ -173,8 +174,11 @@ std::set<LmnFunctor> compulsory_functors_with_rule_in_mem(LmnMembraneRef mem) {
   return res;
 }
 
-std::vector<std::vector<std::pair<LmnMembraneRef, std::set<LmnSymbolAtomRef>>>> level_of_ingredients(LmnMembraneRef mem) {
-  std::vector<std::vector<std::pair<LmnMembraneRef, std::set<LmnSymbolAtomRef>>>> result(1);
+std::vector<std::vector<std::pair<LmnMembraneRef, std::set<LmnSymbolAtomRef>>>>
+level_of_ingredients(LmnMembraneRef mem) {
+  std::vector<
+      std::vector<std::pair<LmnMembraneRef, std::set<LmnSymbolAtomRef>>>>
+      result(1);
   for (auto ing : mem->ingredients()) {
     result[0].push_back({mem, ing.second});
   }
@@ -182,9 +186,11 @@ std::vector<std::vector<std::pair<LmnMembraneRef, std::set<LmnSymbolAtomRef>>>> 
   for (auto m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
     auto ings = level_of_ingredients(m);
 
-    if (result.size() < ings.size() + 1) result.resize(ings.size() + 1);
+    if (result.size() < ings.size() + 1)
+      result.resize(ings.size() + 1);
     for (int l = 0; l < ings.size(); l++) {
-      std::copy(std::begin(ings[l]), std::end(ings[l]), std::back_inserter(result[l + 1]));
+      std::copy(std::begin(ings[l]), std::end(ings[l]),
+                std::back_inserter(result[l + 1]));
     }
   }
 
@@ -222,9 +228,16 @@ void eliminate_unused_connected_process(LmnMembraneRef mem, F functors) {
 
 #include <iostream>
 
+template <typename Container, typename Value>
+bool contains(const Container &c, const Value &v) {
+  return std::find(std::begin(c), std::end(c), v) != std::end(c);
+}
+
 void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
+  auto abs_str = lmn_intern("#");
+  auto abs_func = lmn_functor_intern(ANONYMOUS, abs_str, 1);
   std::set<LmnFunctor> compulsory_functors = {
-      LMN_IN_PROXY_FUNCTOR, LMN_OUT_PROXY_FUNCTOR, LMN_EXCLAMATION_FUNCTOR};
+      LMN_IN_PROXY_FUNCTOR, LMN_OUT_PROXY_FUNCTOR, LMN_EXCLAMATION_FUNCTOR, abs_func, lmn_functor_intern(ANONYMOUS, abs_str, 0)};
   for (int i = 0; psyms && i < vec_num(psyms); i++) {
     auto psym = reinterpret_cast<SymbolDefinitionRef>(vec_get(psyms, i));
     auto p = propsym_get_proposition(psym);
@@ -238,62 +251,37 @@ void eliminate_unused_processes(LmnMembraneRef mem, Vector *psyms) {
 
   eliminate_unused_connected_process(mem, compulsory_functors);
 
-  auto abs_str = lmn_intern("#");
   for (auto sets : level_of_ingredients(mem)) {
     for (auto it1 = sets.begin(); it1 != sets.end(); ++it1) {
       auto &s1 = it1->second;
       auto mem1 = it1->first;
 
-      for (auto it2 = std::next(it1, 1); it2 != sets.end(); ++it2) {
-        auto &s2 = it2->second;
-        auto mem2 = it2->first;
+      std::vector<LmnSymbolAtomRef> eliminated;
 
-        auto mcsp = slim::verifier::upe::match_common_sub_processes(
-            s1, s2, compulsory_functors);
-        std::vector<LmnSymbolAtomRef> first = mcsp.first();
-        std::vector<LmnSymbolAtomRef> second = mcsp.second();
-        std::sort(std::begin(first), std::end(first));
-
-        using port = std::pair<LmnSymbolAtomRef, int>;
-        std::vector<std::pair<port, port>> ports;
-
-        for (auto mp : mcsp) {
-          auto a1 = mp.first;
-          auto a2 = mp.second;
-
-          for (auto i = 0; i < LMN_SATOM_GET_LINK_NUM(a1); i++) {
-            if (i == 0 && LMN_SATOM_IS_PROXY(a1))
-              continue;
-            if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(a1, i)))
-              continue;
-            auto satom1 =
-                reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(a1, i));
-            if (std::binary_search(std::begin(first), std::end(first), satom1))
-              continue;
-
-            auto satom2 =
-                reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(a2, i));
-            // satom1 and satom2 are not common to s1 and s2.
-            s1.erase(satom1);
-            s2.erase(satom2);
-            lmn_mem_remove_atom(mem1, satom1, 0);
-            lmn_mem_remove_atom(mem2, satom2, 0);
-            ports.push_back({{a1, i}, {a2, i}});
-          }
+      for (auto ap : s1) {
+        if (!contains(compulsory_functors, LMN_SATOM_GET_FUNCTOR(ap))) {
+          eliminated.push_back(ap);
+          continue;
         }
 
-        if (!ports.empty()) {
-          auto abs_func = lmn_functor_intern(ANONYMOUS, abs_str, ports.size());
-          auto abs1 = lmn_mem_newatom(mem1, abs_func);
-          auto abs2 = lmn_mem_newatom(mem2, abs_func);
-          for (int i = 0; i < ports.size(); i++) {
-            auto p = ports[i];
-            auto p1 = p.first;
-            auto p2 = p.second;
-            lmn_newlink_in_symbols(abs1, i, p1.first, p1.second);
-            lmn_newlink_in_symbols(abs2, i, p2.first, p2.second);
+        for (int i = 0; i < LMN_SATOM_GET_LINK_NUM(ap); i++) {
+          if (i == 0 && LMN_SATOM_IS_PROXY(ap)) // skip a reference to its membrane
+            continue;
+          if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(ap, i))) {
+            auto atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(ap, i);
+            if (contains(compulsory_functors, LMN_SATOM_GET_FUNCTOR(atom)))
+              continue;
+
+            auto abs = lmn_mem_newatom(mem1, abs_func);
+            lmn_newlink_in_symbols(ap, i, abs, 0);
+          } else {
+            // TODO: dataatoms
           }
         }
+      }
+
+      for (auto satom : eliminated) {
+        lmn_mem_remove_atom(mem1, satom, 0);
       }
     }
   }
@@ -566,7 +554,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         src_succ->calc_binstr_delta();
       succ = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
-    } else {                            /* default */
+    } else {                              /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ = statespace_insert(ss, src_succ);
     }
@@ -583,7 +571,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
     } else {
       /* contains */
-      delete(src_succ);
+      delete (src_succ);
       if (s->has_trans_obj()) {
         /* Transitionオブジェクトが指すサクセッサを検出した等価な状態の方へ設定し直す
          */
@@ -692,7 +680,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       news = new State();
     } else {
       news = new State((LmnMembraneRef)vec_get(expanded_roots, i), state_name,
-                        mc_use_canonical(f));
+                       mc_use_canonical(f));
     }
 
     state_set_property_state(news, state_name);
@@ -701,7 +689,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       lmn_interned_str nid;
       nid = ((LmnRuleRef)vec_get(expanded_rules, i))->name;
       data = (vec_data_t)transition_make(news, nid);
-     src->set_trans_obj();
+      src->set_trans_obj();
     } else {
       data = (vec_data_t)news;
     }
@@ -788,7 +776,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 #ifdef KWBT_OPT
         transition_set_cost((Transition)data, transition_cost(src_succ_t));
 #endif
-       s->set_trans_obj();
+        s->set_trans_obj();
       } else {
         data = (vec_data_t)new_s;
       }
@@ -844,7 +832,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
   if (mc_has_trans(f)) {
     data = (vec_data_t)transition_make(new_s, lmn_intern("ε"));
-   s->set_trans_obj();
+    s->set_trans_obj();
   } else {
     data = (vec_data_t)new_s;
   }

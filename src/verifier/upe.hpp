@@ -115,7 +115,8 @@ public:
   iterator end() { return iterator(this, size()); }
 };
 
-matching_set match_connected_process(LmnSymbolAtomRef p, LmnSymbolAtomRef q,
+template <typename Functor>
+matching_set match_connected_process(LmnSymbolAtomRef p, LmnSymbolAtomRef q, Functor F,
                                      matching_set r = matching_set()) {
   if (LMN_SATOM_GET_FUNCTOR(p) != LMN_SATOM_GET_FUNCTOR(q))
     return matching_set();
@@ -125,7 +126,7 @@ matching_set match_connected_process(LmnSymbolAtomRef p, LmnSymbolAtomRef q,
 
   r.insert({p, q});
   for (auto i = 0; i < LMN_SATOM_GET_LINK_NUM(p); i++) {
-    if (i == 0 && (LMN_SATOM_IS_PROXY(p) || LMN_SATOM_IS_PROXY(q)))
+    if (i == 0 && (LMN_SATOM_IS_PROXY(p) || LMN_SATOM_IS_PROXY(q))) // reference to membrane
       continue;
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(p, i)) ||
         LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(q, i)))
@@ -134,8 +135,10 @@ matching_set match_connected_process(LmnSymbolAtomRef p, LmnSymbolAtomRef q,
     auto qi = reinterpret_cast<LmnSymbolAtomRef>(LMN_SATOM_GET_LINK(q, i));
     auto pip = LMN_SATOM_GET_ATTR(p, i);
     auto qip = LMN_SATOM_GET_ATTR(q, i);
-    if (LMN_SATOM_GET_FUNCTOR(pi) == LMN_SATOM_GET_FUNCTOR(qi) && pip == qip) {
-      auto s = match_connected_process(pi, qi, r);
+    auto pif = LMN_SATOM_GET_FUNCTOR(p);
+    auto qif = LMN_SATOM_GET_FUNCTOR(q);
+    if (pif == qif && pip == qip && std::find(std::begin(F), std::end(F), pif) != std::end(F) && std::find(std::begin(F), std::end(F), qif) != std::end(F)) {
+      auto s = match_connected_process(pi, qi, F, r);
       r.insert(std::begin(s), std::end(s));
     }
   }
@@ -161,7 +164,7 @@ matching_set match_common_sub_processes(Process P, Process Q, Functor F) {
   int max_size = 0;
   for (auto p : P) {
     for (auto q : Q) {
-      auto r = match_connected_process(p, q);
+      auto r = match_connected_process(p, q, F);
       if (r.size() > max_size) {
         max_size = r.size();
         R = r;
