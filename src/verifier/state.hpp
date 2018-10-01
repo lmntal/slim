@@ -340,7 +340,7 @@ struct State {                /* Total:72(36)byte */
    * sのフラグを操作する. */
   LmnBinStrRef mem_dump() {
     LmnBinStrRef ret;
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (this->state_binstr()) {
       /* 既にエンコード済みの場合は何もしない. */
       ret = this->state_binstr();

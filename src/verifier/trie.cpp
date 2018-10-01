@@ -246,20 +246,13 @@ ConvertedGraphVertex *getConvertedVertexFromGraphAndIDAndType(ConvertedGraph *cG
 }
 
 ConvertedGraphVertex *correspondingVertexInConvertedGraph(InheritedVertex *iVertex,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   int afterID = iVertex->beforeID + gapOfGlobalRootMemID;
 
   switch(iVertex->type){
     case convertedAtom:
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-      convertedGraphDump(cAfterGraph);
-      printf("afterID=%d\n", afterID);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-      convertedGraphVertexDump((ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms,afterID));
       return (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms,afterID);
       break;
     case convertedHyperLink:
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       return (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->hyperlinks,afterID);
       break;
     default:

@@ -299,7 +299,7 @@ int binstr_decoder::decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
   log[(nvisit)].v = (LmnWord)atom; /* アドレスを記録(*nvisitは初期値1) */
   log[(nvisit)].type = BS_LOG_TYPE_ATOM;
   (nvisit)++;
-
+  
   for (auto i = 0; i < LMN_FUNCTOR_ARITY(f); i++)
     LMN_SATOM_SET_LINK(atom, i, 0);
 

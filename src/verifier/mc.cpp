@@ -236,6 +236,7 @@ Trie * org_trie;
 Graphinfo * org_gi;
 void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
                LmnReactCxtRef rc, Vector *new_ss, Vector *psyms, BOOL f) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   LmnMembraneRef mem;
   org_trie = s->trie;
   org_gi = s->graphinfo;
@@ -338,6 +339,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
  *   + "新規"状態をnew_ssへ積む.　 */
 void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                          Vector *new_ss, BOOL f) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   unsigned int i, succ_i;
   Graphinfo *parent_gi;
   // printf("----------------------------------------\n");
@@ -382,7 +384,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ_m = NULL;
     } else {                            /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       succ = statespace_insert(ss, src_succ);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
     if(!diff_gen_finish) {
       Graphinfo *child_gi = new Graphinfo(src_succ_m);

@@ -245,6 +245,10 @@ struct encoder {
       /* 未訪問のシンボルアトムの場合 */
       visitlog_put_atom(visited, satom);
       bsp.push_atom(satom);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      printf("ID=%d\n", LMN_SATOM_ID(satom));
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      // bsp.binstr->satom_tbl->push_prev_id(LMN_SATOM_ID(satom));
       if (!bsp.is_valid())
         return;
 
@@ -358,22 +362,23 @@ struct encoder {
   /* 膜memに存在する全てのアトムをファンクタIDの降順の列で求め,
    * 求めた列をdump_molsする */
   void dump_mem_atoms(LmnMembraneRef mem, BinStrCursor &bsp,
-                      VisitLogRef visited) {
-    dump_mols(mem_atoms(mem), bsp, visited);
+                      VisitLogRef visited,
+		      PidMapTableRef map) {
+    dump_mols(mem_atoms(mem), bsp, visited, map);
   }
 
   /* アトム列atomsから, visitedに未登録のアトムに対し, write_molを行う
    * つまり, mhash同様に, 各アトムを起点とした分子単位でエンコードを行っている
    */
   void dump_mols(const std::vector<LmnSymbolAtomRef> &atoms, BinStrCursor &bsp,
-                 VisitLogRef visited) {
+                 VisitLogRef visited, PidMapTableRef map) {
     /* atoms中の未訪問のアトムを起点とする分子を、それぞれ試みる */
     for (auto atom : atoms) {
       if (visitlog_get_atom(visited, atom, NULL) || LMN_IS_HL(atom))
         continue;
 
       write_mol((LmnAtomRef)atom, LMN_ATTR_MAKE_LINK(0), -1, bsp, visited,
-                FALSE);
+                FALSE, map);
     }
   }
 
@@ -394,7 +399,7 @@ struct encoder {
     auto &visited = e.visit_log;
     auto &bs = e.binstr;
     auto &bsp = e.cur;
-
+    
     e.write_mem_atoms(mem, *bsp, visited);
     e.write_mems(mem, *bsp, visited);
     e.write_rulesets(mem, *bsp);
@@ -408,6 +413,8 @@ struct encoder {
     auto &bs = e.binstr;
     auto &bsp = e.cur;
 
+    PidMapTableRef satom_map = new PidMapTable();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     e.dump_mem_atoms(mem, *bsp, visitlog); /* 1. アトムから */
     e.dump_mems(mem, *bsp, visitlog);      /* 2. 子膜から */
     e.write_rulesets(mem, *bsp);           /* 3. 最後にルール */

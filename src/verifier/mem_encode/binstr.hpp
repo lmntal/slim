@@ -301,13 +301,14 @@ class BinStr {
   int size; /* バッファのサイズ（4ビット単位）: 現在のバイト列の大きさ(128 *
                TAG_IN_BYTEで初期化) */
   int cur; /* 書き込み位置（4ビット単位）    : 次に書き込む位置(0で初期化) */
-
+  PidMapTableRef satom_tbl;
 public:
   BinStr() {
     size = BS_TBL_SIZE * TAG_IN_BYTE;
     v = LMN_NALLOC(BYTE, size / TAG_IN_BYTE);
     memset(v, 0x0U, sizeof(BYTE) * BS_TBL_SIZE);
     cur = 0;
+    satom_tbl = new PidMapTable();
   }
 
   ~BinStr() { LMN_FREE(v); }
@@ -362,6 +363,7 @@ public:
     ret_bs = LMN_MALLOC(struct LmnBinStr);
     ret_bs->v = LMN_NALLOC(BYTE, size);
     ret_bs->type = 0x00U;
+    ret_bs->satom_tbl = this->satom_tbl;
     memcpy(ret_bs->v, this->v, size);
     ret_bs->len = this->cur;
     if (ret_bs->len & 1) {

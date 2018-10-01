@@ -38,8 +38,26 @@
 #define SLIM_VERIFIER_MEM_ENCODE_LMN_BINSTR_HPP
 
 #include <cstdint>
+#include <vector>
+#include <utility>
 
 typedef struct LmnBinStr *LmnBinStrRef;
+typedef struct PidMapTable *PidMapTableRef;
+
+struct PidMapTable {
+  std::vector<std::pair<int,int>> symbol_atom_tbl;  
+  int pos;
+  PidMapTable() {
+    pos=0;
+  }
+
+  void push_prev_id(int id) {
+    std::pair<int, int> p;
+    p.first = id;
+    p.second = -1;
+    symbol_atom_tbl.push_back(p);
+  }
+};
 
 /* 最終的なエンコード結果を表すバイナリストリング */
 struct LmnBinStr {
@@ -49,6 +67,7 @@ struct LmnBinStr {
               */
   unsigned int len; /* 確保したbyte型の数(列の長さ) */
   uint8_t *v;          /* 1byte(8bit)の可変列へのポインタ */
+  PidMapTableRef satom_tbl;
 };
 
 #endif /* SLIM_VERIFIER_MEM_ENCODE_BINSTR_HPP */
