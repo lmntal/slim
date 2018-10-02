@@ -115,6 +115,10 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   mem = lmn_mem_copy(world_mem_org);
   init_s = new State(mem, p_label, statespace_use_memenc(states));
   state_id_issue(init_s); /* 状態に整数IDを発行 */
+
+  /*
+    ===== Diffiso ====
+   */
 #ifdef DIFFISO_GEN
   printf("Succ number Information\n");
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -142,6 +146,11 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   init_s->graphinfo = init;
   trieMcKay(init_s->trie, diff, init, empty);
   trieDump(init_s->trie);
+  /*
+    ===== Diffiso ====
+   */
+
+
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -237,9 +246,18 @@ Graphinfo * org_gi;
 void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
                LmnReactCxtRef rc, Vector *new_ss, Vector *psyms, BOOL f) {
   LmnMembraneRef mem;
+
+
+  /*
+    ===== Diffiso ====
+   */
   org_trie = s->trie;
   org_gi = s->graphinfo;
   // trieDump(parent_trie);
+  /*
+    ===== Diffiso ====
+   */
+
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
 #ifdef DIFFISO_GEN
@@ -384,19 +402,24 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ = statespace_insert(ss, src_succ);
     }
+
+
+  /*
+    ===== Diffiso ====
+   */
     if(!diff_gen_finish) {
       Graphinfo *child_gi = new Graphinfo(src_succ_m);
       // convertedGraphDump(parent_graphinfo->cv);
 
-      Trie * tmp_trie = gen_tmp_trie_from_originaltrie_and_gi(org_trie, org_gi, parent_graphinfo);
-      trieDump(tmp_trie);
+      // Trie * tmp_trie = gen_tmp_trie_from_originaltrie_and_gi(org_trie, org_gi, parent_graphinfo);
+      // trieDump(tmp_trie);
       DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       di->diffInfoDump();
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       // trieMcKay(tmp_trie, di, parent_graphinfo, child_gi);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      trieDump(tmp_trie);
+      // trieDump(tmp_trie);
     }
 #ifdef DIFFISO_GEN
     if(!diff_gen_finish) {
@@ -404,6 +427,11 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       lmn_dump_mem_stdout(src_succ_m);
     }
 #endif
+  /*
+    ===== Diffiso ====
+   */
+
+
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
