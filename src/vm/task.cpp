@@ -962,8 +962,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
               lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
 	  if(json_dump_gen and !diff_gen_finish) {
 	    // json_dump_gen=false;
-	    printf("%s:%d\n", __FUNCTION__, __LINE__);
-	    parent_graphinfo = new Graphinfo(tmp_global_root);
+	    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+	    // parent_graphinfo = new Graphinfo(tmp_global_root);
 	  }
           /** 変数配列および属性配列のコピー */
           v = lmn_register_make(warray_size_org);
