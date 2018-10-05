@@ -126,10 +126,6 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
 /* リンク先のアトムの引数のattributeを得る */
 #define LINKED_ATTR(LINKI) at(rc, LINKI)
 
-int proc_tbl_func(LmnWord key, LmnWord val, LmnWord arg) {
-  
-}
-
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef ruleset);
 static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
@@ -971,8 +967,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
 	  printf("%s:%d\n", __FUNCTION__, __LINE__);
 	  lmn_dump_mem_dev(tmp_global_root);
-
-	  proc_tbl_foreach(copymap, )
 
 	  if(json_dump_gen and !diff_gen_finish) {
 	    // json_dump_gen=false;
