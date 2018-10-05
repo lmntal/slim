@@ -958,8 +958,16 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           warray_size_org = warray_size(rc);
           warray_use_org = warray_use_size(rc);
           warray_cur_org = warray_cur_size(rc);
+
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+	  lmn_dump_mem_dev(RC_GROOT_MEM(rc));
+
           tmp_global_root =
               lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
+
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+	  lmn_dump_mem_dev(tmp_global_root);
+
 	  if(json_dump_gen and !diff_gen_finish) {
 	    // json_dump_gen=false;
 	    // printf("%s:%d\n", __FUNCTION__, __LINE__);
