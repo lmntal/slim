@@ -5,16 +5,18 @@
 #include"collection.hpp"
 #include"trie.hpp"
 
+#include <vector>
+
 struct CanonicalAdjacencyInformation{
   Hash hash;
   CanonicalLabel myLabel;
-  Stack *adjacentLabels;
+  std::vector<void *> adjacentLabels; // ??
 };
 
 struct CanonicalAdjacencyList{
   Hash hashSum;
   Hash hashMul;
-  Stack *adjacencyInformations;
+  std::vector<void *> adjacencyInformations; // ??
 };
 
 List* trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph);

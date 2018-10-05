@@ -77,7 +77,7 @@ typedef enum {
 
 struct ConvertedGraphVertex{
   ConvertedGraphVertexType type;
-  Stack *links;
+  std::vector<LMNtalLink *> *links;
   int ID;
   char name[NAME_LENGTH];
   Bool isPushedIntoDiffInfoStack;
@@ -86,8 +86,8 @@ struct ConvertedGraphVertex{
 
   ConvertedGraphVertex(ConvertedGraphVertexType t, int id, char *Name) {
     type = t;
-    links = new Stack();
     ID = id;
+    links = new std::vector<LMNtalLink *>;
     strcpy(name,Name);
     isPushedIntoDiffInfoStack = FALSE;
     isVisitedInBFS = FALSE;
@@ -180,7 +180,7 @@ struct ConvertedGraph {
       if(linkToParentMem->attr != GLOBAL_ROOT_MEM_ATTR){
 	LMNtalData data;
 	data.integer = LMNtalID(jVal);
-	LMNtalLink * hl = new LMNtalLink(cVertex->links->num-1, data);
+	LMNtalLink * hl = new LMNtalLink(cVertex->links->size()-1, data);
 	pushStack(((ConvertedGraphVertex *)readDynamicArray(hyperlinks,linkToParentMem->data.ID))->links, hl);
       }
       
@@ -252,9 +252,23 @@ void convertedGraphDump(ConvertedGraph *cGraph);
 void LMNtalLinkDump(LMNtalLink *link);
 void convertedGraphVertexDump(ConvertedGraphVertex *cVertex);
 void convertedGraphVertexDumpCaster(void *cVertex);
-void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(Stack *stack,ConvertedGraphVertex *cVertex);
-void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom,DynamicArray *afterConvertedHyperLinks,Stack *relinkedVertices);
+template <typename S>
+void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(S *stack,ConvertedGraphVertex *cVertex){
+  if(cVertex != NULL){
+    if(!cVertex->isPushedIntoDiffInfoStack){
+      pushStack(stack,cVertex);
+      cVertex->isPushedIntoDiffInfoStack = true;
+    }
+  }
+}
+template <typename S>
+ConvertedGraphVertex *popConvertedVertexFromDiffInfoStackWithoutOverlap(S *stack){
+  ConvertedGraphVertex *ret = (ConvertedGraphVertex *)popStack(stack);
+  ret->isPushedIntoDiffInfoStack = false;
+  return ret;
+}
+template <typename S>
+void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom,DynamicArray *afterConvertedHyperLinks, S *relinkedVertices);
 Bool isEqualLinks(LMNtalLink *linkA,LMNtalLink *linkB);
 Bool isHyperLink(LMNtalLink *link);
-ConvertedGraphVertex *popConvertedVertexFromDiffInfoStackWithoutOverlap(Stack *stack);
 #endif

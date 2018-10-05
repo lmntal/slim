@@ -6,6 +6,9 @@
 #include"hash.hpp"
 #include<string>
 #include<cstring>
+#include <stack>
+#include <vector>
+
 #define INIT_CAP (4)
 typedef enum Order{
   LT,//less than
@@ -37,60 +40,57 @@ void *readDynamicArray(DynamicArray *DArray,int index);
 void *writeDynamicArray(DynamicArray *DArray,int index,void *value);
 void dynamicArrayDump(DynamicArray *DArray,void valueDump(void *));
 
-struct Stack{
-  int num;
-  DynamicArray *body;
+template <typename T>
+void freeStack(std::stack<T> *stack) { delete stack; }
+template <typename T>
+void freeStack(std::vector<T> *stack) { delete stack; }
+template <typename T>
+auto popStack(std::vector<T> *stack) -> decltype(stack->back()) {
+  auto ret = stack->back();
+  stack->pop_back();
+  return ret;
+}
+template <typename T>
+auto popStack(std::stack<T> *stack) -> decltype(stack->top()) {
+  auto ret = stack->top();
+  stack->pop();
+  return ret;
+}
+template <typename T, typename U>
+void pushStack(std::vector<T> *stack, U value){
+  stack->push_back(value);
+}
+template <typename T, typename U>
+void pushStack(std::stack<T> *stack, U value){
+  stack->push(value);
+}
+template <typename T>
+int numStack(T *stack){
+  return stack->size();
+}
+template <typename T>
+T readStack(std::vector<T> *stack,int index) {
+  return stack->at(index);
+}
+template <typename T>
+void writeStack(std::vector<T> *stack,int index,T value) {
+  (*stack)[index] = value;
+}
+template <typename T, typename U>
+void swapStack(T *source,U *target) {
+  source->swap(*target);
+}
 
-  int numStack(){
-    return num;
-  };
-  bool isEmptyStack() {
-    return num == 0;
-  };
-  void stackDump(void valueDump(void *));
-  Stack() {
-    num=0;
-    body=new DynamicArray();
-  };
-};
-
-Stack *makeStack();
-void freeStack(Stack *stack);
-void freeStackAndValues(Stack *stack,void freeValue(void *));
-// Bool isEmptyStack(Stack *stack);
-void setStackEmpty(Stack *stack);
-void *peekStack(Stack *stack);
-void *popStack(Stack *stack);
-void *pushStack(Stack *stack,void *value);
-int numStack(Stack *stack);
-void *readStack(Stack *stack,int index);
-void *writeStack(Stack *stack,int index,void *value);
-void swapStack(Stack *source,Stack *target);
-
+template <typename T>
+void dump(const std::vector<T> &stack, void valueDump(T)){
+  for (int i = 0; i < stack.size(); i++) {
+    fprintf(stdout,"%d:",i);
+    valueDump(stack[i]);
+    fprintf(stdout,"\n");
+  }
+}
 
 typedef intptr_t CollectionInt;
-
-struct IntStack{
-  Stack *body;
-
-  IntStack() {
-    body = new Stack();
-  }
-};
-
-IntStack *makeIntStack();
-void freeIntStack(IntStack *iStack);
-Bool isEmptyIntStack(IntStack *iStack);
-void setIntStackEmpty(IntStack *iStack);
-int peekIntStack(IntStack *iStack);
-int popIntStack(IntStack *iStack);
-void pushIntStack(IntStack *iStack,int value);
-int numIntStack(IntStack *iStack);
-int readIntStack(IntStack *iStack,int index);
-int writeIntStack(IntStack *iStack,int index,int value);
-void collectionIntDump(CollectionInt cInt);
-void collectionIntDumpCaster(void *cInt);
-void intStackDump(IntStack *iStack);
 
 typedef enum {
   key_none,

@@ -49,20 +49,20 @@ Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(I
     return LT;
   }else if(strcmp(iVertexA->name,iVertexB->name) > 0){
     return GT;
-  }else if(numIntStack(iVertexA->conventionalPropagationMemo) < numIntStack(iVertexB->conventionalPropagationMemo)){
+  }else if(numStack(iVertexA->conventionalPropagationMemo) < numStack(iVertexB->conventionalPropagationMemo)){
     return LT;
-  }else if(numIntStack(iVertexA->conventionalPropagationMemo) > numIntStack(iVertexB->conventionalPropagationMemo)){
+  }else if(numStack(iVertexA->conventionalPropagationMemo) > numStack(iVertexB->conventionalPropagationMemo)){
     return GT;
   }else{
-    int degree = numIntStack(iVertexA->conventionalPropagationMemo);
+    int degree = numStack(iVertexA->conventionalPropagationMemo);
     int i;
-    IntStack *iStackA = iVertexA->conventionalPropagationMemo;
-    IntStack *iStackB = iVertexB->conventionalPropagationMemo;
+    std::vector<int> *iStackA = iVertexA->conventionalPropagationMemo;
+    std::vector<int> *iStackB = iVertexB->conventionalPropagationMemo;
 
     for(i=0;i<degree;i++){
-      if(readIntStack(iStackA,i) < readIntStack(iStackB,i)){
+      if(readStack(iStackA,i) < readStack(iStackB,i)){
         return LT;
-      }else if(readIntStack(iStackA,i) > readIntStack(iStackB,i)){
+      }else if(readStack(iStackA,i) > readStack(iStackB,i)){
         return GT;
       }
     }
@@ -83,7 +83,7 @@ void initializeInheritedVertexAdjacentLabels(InheritedVertex *iVertex){
   if(iVertex == CLASS_SENTINEL){
     return;
   }else{
-    setIntStackEmpty(iVertex->conventionalPropagationMemo);
+    iVertex->conventionalPropagationMemo->clear();
 
     return;
   }
@@ -97,7 +97,7 @@ void initializeInheritedVertexAdjacentLabelsCaster(void *iVertex){
 
 void freeInheritedVertexOfPreserveDiscretePropagationList(InheritedVertex *iVertex){
   if(iVertex != CLASS_SENTINEL){
-    freeIntStack(iVertex->conventionalPropagationMemo);
+    freeStack(iVertex->conventionalPropagationMemo);
     free(iVertex);
   }
 

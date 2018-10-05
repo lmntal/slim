@@ -75,7 +75,7 @@ struct InheritedVertex{
   int beforeID;
   TrieBody *ownerNode;
   ListBody *ownerCell;
-  IntStack *conventionalPropagationMemo;
+  std::vector<int> *conventionalPropagationMemo;
   DisjointSetForest *equivalenceClassOfIsomorphism;
 
   InheritedVertex(ConvertedGraphVertex *cVertex, int gapOfGlobalRootMemID) {
@@ -89,12 +89,13 @@ struct InheritedVertex{
     cVertex->correspondingVertexInTrie = this;
     ownerNode = NULL;
     ownerCell = NULL;
-    conventionalPropagationMemo = new IntStack();
+    conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
   };
 };
 
-void pushTrieBodyIntoGoAheadStackWithoutOverlap(Stack *stack,TrieBody *body);
+template <typename S>
+void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack,TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);
 Trie *makeTrie();
 void freeTrie(Trie *trie);
@@ -113,10 +114,14 @@ void trieDump(Trie *trie);
 
 HashString *makeHashString();
 void freeHashString(HashString *hashString);
-void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(Stack *fixCreditIndexStack,InheritedVertex *iVertex);
-InheritedVertex *popInheritedVertexFromFixCreditIndexStackWithoutOverlap(Stack *fixCreditIndexStack);
-void fixCreditIndex(Stack *fixCreditIndexStack,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
-Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,Stack *fixCreditIndexStack);
+template <typename S>
+void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack,InheritedVertex *iVertex);
+template <typename S>
+InheritedVertex *popInheritedVertexFromFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack);
+template <typename S>
+void fixCreditIndex(S *fixCreditIndexStack,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
+template <typename S>
+Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,S *fixCreditIndexStack);
 
 void terminationConditionInfoDumpExperimentFromTrie(Trie *trie);
 ConvertedGraphVertex *correspondingVertexInConvertedGraph(InheritedVertex *iVertex,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);

@@ -1,6 +1,6 @@
 #include "trie.hpp"
-
-Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,Stack *fixCreditIndexStack);
+#include <stack>
+#include <vector>
 
 HashString *makeHashString(){
   HashString *ret = (HashString *)malloc(sizeof(HashString));
@@ -85,7 +85,8 @@ Hash initialHashValue(ConvertedGraphVertex *cVertex){
   }
 }
 
-Hash linkHashValue(LMNtalLink *link,int index,ConvertedGraph *cGraph,int gapOfGlobalRootMemID,Stack *fixCreditIndexStack){
+template <typename S>
+Hash linkHashValue(LMNtalLink *link,int index,ConvertedGraph *cGraph,int gapOfGlobalRootMemID, S *fixCreditIndexStack){
   Hash ret;
 
   switch(link->attr){
@@ -131,7 +132,8 @@ Hash linkHashValue(LMNtalLink *link,int index,ConvertedGraph *cGraph,int gapOfGl
   }
 }
 
-Hash adjacentHashValue(ConvertedGraphVertex *cVertex,int index,ConvertedGraph *cGraph,int gapOfGlobalRootMemID,Stack *fixCreditIndexStack){
+template <typename S>
+Hash adjacentHashValue(ConvertedGraphVertex *cVertex,int index,ConvertedGraph *cGraph,int gapOfGlobalRootMemID,S *fixCreditIndexStack){
   Hash ret;
   Hash sum,mul;
   Hash tmp;
@@ -166,7 +168,8 @@ Hash adjacentHashValue(ConvertedGraphVertex *cVertex,int index,ConvertedGraph *c
   }
 }
 
-void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(Stack *fixCreditIndexStack,InheritedVertex *iVertex){
+template <typename S>
+void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack,InheritedVertex *iVertex){
   if(!iVertex->isPushedIntoFixCreditIndex){
     pushStack(fixCreditIndexStack,iVertex);
     iVertex->isPushedIntoFixCreditIndex = TRUE;
@@ -175,15 +178,17 @@ void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(Stack *fixCreditIn
   return;
 }
 
-InheritedVertex *popInheritedVertexFromFixCreditIndexStackWithoutOverlap(Stack *fixCreditIndexStack){
+template <typename S>
+InheritedVertex *popInheritedVertexFromFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack){
   InheritedVertex *iVertex = (InheritedVertex *)popStack(fixCreditIndexStack);
   iVertex->isPushedIntoFixCreditIndex = FALSE;
 
   return iVertex;
 }
 
-void fixCreditIndex(Stack *fixCreditIndexStack,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
-  while(!fixCreditIndexStack->isEmptyStack()){
+template <typename S>
+void fixCreditIndex(S *fixCreditIndexStack,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
+  while(!fixCreditIndexStack->empty()){
     InheritedVertex *iVertex = popInheritedVertexFromFixCreditIndexStackWithoutOverlap(fixCreditIndexStack);
     TrieBody *ownerNode = iVertex->ownerNode;
     HashString *hashString = iVertex->hashString;
@@ -194,7 +199,8 @@ void fixCreditIndex(Stack *fixCreditIndexStack,ConvertedGraph *cAfterGraph,int g
   return;
 }
 
-Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,Stack *fixCreditIndexStack){
+template <typename S>
+Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,S *fixCreditIndexStack){
   HashString *hashString = iVertex->hashString;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   if(index < 0){
@@ -269,10 +275,11 @@ ConvertedGraphVertex *correspondingVertexInConvertedGraph(InheritedVertex *iVert
   }
 }
 
-void getNextDistanceConvertedVertices(Stack *BFSStack,Stack *initializeConvertedVerticesStack,ConvertedGraph *cAfterGraph){
-  Stack *nextBFSStack = makeStack();
+template <typename S1, typename S2>
+void getNextDistanceConvertedVertices(S1 BFSStack,S2 initializeConvertedVerticesStack,ConvertedGraph *cAfterGraph){
+  S1 nextBFSStack = new std::vector<ConvertedGraphVertex *>();
 
-  while(!BFSStack->isEmptyStack()){
+  while(!BFSStack->empty()){
     ConvertedGraphVertex *cVertex = ( ConvertedGraphVertex *)popStack(BFSStack);
 
     int i;
@@ -358,7 +365,7 @@ int compareTrieLeaves(TrieBody *a,TrieBody *b){
 
 void freeInheritedVertex(InheritedVertex *iVertex){
   freeHashString(iVertex->hashString);
-  freeIntStack(iVertex->conventionalPropagationMemo);
+  freeStack(iVertex->conventionalPropagationMemo);
   freeDisjointSetForest(iVertex->equivalenceClassOfIsomorphism);
   free(iVertex);
 
@@ -464,25 +471,28 @@ void deleteTrieDescendants(TrieBody *body){
   return;
 }
 
-void pushTrieBodyIntoGoAheadStackWithoutOverlap(Stack *stack,TrieBody *body){
+template <typename S>
+void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack,TrieBody *body){
   if(body != NULL){
     if(!body->isPushedIntoGoAheadStack){
-      pushStack(stack,body);
+      stack->push(body);
       body->isPushedIntoGoAheadStack = TRUE;
     }
   }
   return;
 }
 
-TrieBody *popTrieBodyFromGoAheadStackWithoutOverlap(Stack *stack){
-  TrieBody *ret = (TrieBody *)popStack(stack);
+template <typename S>
+TrieBody *popTrieBodyFromGoAheadStackWithoutOverlap(S *stack){
+  TrieBody *ret = popStack(stack);
 
   ret->isPushedIntoGoAheadStack = FALSE;
 
   return ret;
 }
 
-void goBackProcessInnerManyCommonPrefixVertices(ListBody *targetCell,TrieBody *currentNode,Stack *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
+template <typename S>
+void goBackProcessInnerManyCommonPrefixVertices(ListBody *targetCell,TrieBody *currentNode, S *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
   if(targetDepth == currentNode->depth){
     pushCell(currentNode->inheritedVertices,targetCell);
     ((InheritedVertex *)targetCell->value)->ownerNode = currentNode;
@@ -495,7 +505,8 @@ void goBackProcessInnerManyCommonPrefixVertices(ListBody *targetCell,TrieBody *c
   }
 }
 
-void goBackProcessInnerDoubleCommonPrefixVertices(ListBody *targetCell,ListBody *brotherCell,TrieBody *currentNode,TrieBody *prevNode,Stack *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
+template <typename S>
+void goBackProcessInnerDoubleCommonPrefixVertices(ListBody *targetCell,ListBody *brotherCell,TrieBody *currentNode,TrieBody *prevNode,S *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
   if(targetDepth == currentNode->depth){
     pushCell(currentNode->inheritedVertices,targetCell);
     ((InheritedVertex *)targetCell->value)->ownerNode = currentNode;
@@ -525,7 +536,8 @@ void goBackProcessInnerDoubleCommonPrefixVertices(ListBody *targetCell,ListBody 
   }
 }
 
-void goBackProcessInnerSingleCommonPrefixVertex(ListBody *targetCell,TrieBody *currentNode,Stack *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
+template <typename S>
+void goBackProcessInnerSingleCommonPrefixVertex(ListBody *targetCell,TrieBody *currentNode,S *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
   if(targetDepth == currentNode->depth){
     pushCell(currentNode->inheritedVertices,targetCell);
     ((InheritedVertex *)targetCell->value)->ownerNode = currentNode;
@@ -548,7 +560,8 @@ void goBackProcessInnerSingleCommonPrefixVertex(ListBody *targetCell,TrieBody *c
 }
 
 //trie is minimal for uniqueness!!
-void goBackProcess(ListBody *targetCell,TrieBody *currentNode,Stack *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
+template <typename S>
+void goBackProcess(ListBody *targetCell,TrieBody *currentNode,S *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
   if(targetDepth < currentNode->depth){
     if(isEmptyList(currentNode->inheritedVertices)){
       TrieBody *parent = currentNode->parent;
@@ -581,7 +594,8 @@ void goBackProcess(ListBody *targetCell,TrieBody *currentNode,Stack *goAheadStac
   }
 }
 
-void goBackProcessOfCurrentConvertedVertices(Stack *BFSStack,Stack *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
+template <typename S1, typename S2>
+void goBackProcessOfCurrentConvertedVertices(S1 *BFSStack,S2 *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
   int i;
 
   for(i=0;i<numStack(BFSStack);i++){
@@ -597,7 +611,8 @@ void goBackProcessOfCurrentConvertedVertices(Stack *BFSStack,Stack *goAheadStack
   return;
 }
 
-void goAheadProcess(TrieBody *targetNode,Stack *goAheadStack,Stack *fixCreditIndexStack,TerminationConditionInfo *tInfo,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
+template <typename S1, typename S2>
+void goAheadProcess(TrieBody *targetNode,S1 *goAheadStack,S2 *fixCreditIndexStack,TerminationConditionInfo *tInfo,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
   List *inheritedVerticesList = targetNode->inheritedVertices;
   RedBlackTree *children = targetNode->children;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -648,10 +663,11 @@ void goAheadProcess(TrieBody *targetNode,Stack *goAheadStack,Stack *fixCreditInd
   }
 }
 
-void goAheadProcessOfCurrentTrieNodes(Stack *goAheadStack,Stack *fixCreditIndexStack,TerminationConditionInfo *tInfo,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
-  Stack *nextGoAheadStack = makeStack();
+template <typename S1, typename S2>
+void goAheadProcessOfCurrentTrieNodes(S1 *goAheadStack,S2 *fixCreditIndexStack,TerminationConditionInfo *tInfo,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
+  S1 *nextGoAheadStack = new std::stack<TrieBody *>();
 
-  while(!goAheadStack->isEmptyStack()){
+  while(!goAheadStack->empty()){
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *targetNode = popTrieBodyFromGoAheadStackWithoutOverlap(goAheadStack);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -665,8 +681,9 @@ void goAheadProcessOfCurrentTrieNodes(Stack *goAheadStack,Stack *fixCreditIndexS
   return;
 }
 
-void deleteInheritedVerticesFromTrie(Trie *trie,Stack *deletedVertices,Stack *goAheadStack){
-  while(!deletedVertices->isEmptyStack()){
+template <typename S1, typename S2>
+void deleteInheritedVerticesFromTrie(Trie *trie,S1 *deletedVertices,S2 *goAheadStack){
+  while(!deletedVertices->empty()){
     ConvertedGraphVertex *targetCVertex = popConvertedVertexFromDiffInfoStackWithoutOverlap(deletedVertices);
     // convertedGraphVertexDump(targetCVertex);
 
@@ -698,18 +715,19 @@ InheritedVertex *wrapAfterConvertedVertexInInheritedVertex(ConvertedGraphVertex 
   cVertex->correspondingVertexInTrie = iVertex;
   iVertex->ownerNode = NULL;
   iVertex->ownerCell = NULL;
-  iVertex->conventionalPropagationMemo = makeIntStack();
+  iVertex->conventionalPropagationMemo = new std::vector<int>();
   iVertex->equivalenceClassOfIsomorphism = makeDisjointSetForest();
 
   return iVertex;
 }
 
-void addInheritedVerticesToTrie(Trie *trie,Stack *addedVertices,Stack *initializeConvertedVerticesStack,Stack *goAheadStack,Graphinfo *cAfterGraph,int gapOfGlobalRootMemID){
-  if(!addedVertices->isEmptyStack()){
+template <typename S1, typename S2, typename S3>
+void addInheritedVerticesToTrie(Trie *trie,S1 *addedVertices,S2 *initializeConvertedVerticesStack,S3 *goAheadStack,Graphinfo *cAfterGraph,int gapOfGlobalRootMemID){
+  if(!addedVertices->empty()){
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack,trie->body);
   }
 
-  while(!addedVertices->isEmptyStack()){
+  while(!addedVertices->empty()){
     ConvertedGraphVertex *targetCVertex = popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
     InheritedVertex *targetIVertex = wrapAfterConvertedVertexInInheritedVertex(targetCVertex,gapOfGlobalRootMemID);
 
@@ -722,18 +740,20 @@ void addInheritedVerticesToTrie(Trie *trie,Stack *addedVertices,Stack *initializ
   return;
 }
 
-void moveInheritedRelinkedVerticesToBFSStack(Stack *relinkedVertices,Stack *initializeConvertedVerticesStack,Stack *BFSStack){
-  while(!relinkedVertices->isEmptyStack()){
+template <typename S1, typename S2, typename S3>
+void moveInheritedRelinkedVerticesToBFSStack(S1 *relinkedVertices,S2 *initializeConvertedVerticesStack,S3 *BFSStack){
+  while(!relinkedVertices->empty()){
     ConvertedGraphVertex *cVertex = popConvertedVertexFromDiffInfoStackWithoutOverlap(relinkedVertices);
-    pushStack(BFSStack,cVertex);
+    BFSStack->push_back(cVertex);
     cVertex->isVisitedInBFS = TRUE;
   }
 
   return;
 }
 
-void initializeConvertedVertices(Stack *initializeConvertedVerticesStack){
-  while(!initializeConvertedVerticesStack->isEmptyStack()){
+template <typename S>
+void initializeConvertedVertices(S *initializeConvertedVerticesStack){
+  while(!initializeConvertedVerticesStack->empty()){
     ConvertedGraphVertex *cVertex = (ConvertedGraphVertex *)popStack(initializeConvertedVerticesStack);
     cVertex->isVisitedInBFS = FALSE;
   }
@@ -745,21 +765,25 @@ Bool isEmptyTrie(Trie *trie){
   return isEmptyRedBlackTree(trie->body->children);
 }
 
-Bool isDescreteTrie(Stack *goAheadStack,TerminationConditionInfo *tInfo,int depth){
-  return maxIndex(tInfo->distribution) == depth && goAheadStack->isEmptyStack();
+template <typename S>
+Bool isDescreteTrie(S *goAheadStack,TerminationConditionInfo *tInfo,int depth){
+  return maxIndex(tInfo->distribution) == depth && goAheadStack->empty();
 }
 
 Bool isRefinedTrie(TerminationConditionInfo *tInfo,int step){
   return readOmegaArray(tInfo->increase,step) != 0;
 }
 
-Bool triePropagationIsContinued(Stack *goAheadStack,TerminationConditionInfo *tInfo,int step){
+template <typename S>
+Bool triePropagationIsContinued(S *goAheadStack,TerminationConditionInfo *tInfo,int step){
   return isRefinedTrie(tInfo,step) && !isDescreteTrie(goAheadStack,tInfo,step);
 }
 
-void pushInftyDepthTrieNodesIntoGoAheadStackInner(TrieBody *body,Stack *goAheadStack,TerminationConditionInfo *tInfo,int depth);
+template <typename S>
+void pushInftyDepthTrieNodesIntoGoAheadStackInner(TrieBody *body,S *goAheadStack,TerminationConditionInfo *tInfo,int depth);
 
-void pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(RedBlackTreeBody *trieChildrenBody,Stack *goAheadStack,TerminationConditionInfo *tInfo,int depth){
+template <typename S>
+void pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(RedBlackTreeBody *trieChildrenBody,S *goAheadStack,TerminationConditionInfo *tInfo,int depth){
   if(trieChildrenBody != NULL){
     pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(trieChildrenBody->children[LEFT],goAheadStack,tInfo,depth);
     pushInftyDepthTrieNodesIntoGoAheadStackInner((TrieBody *)trieChildrenBody->value,goAheadStack,tInfo,depth);
@@ -771,7 +795,8 @@ void pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(RedBlackTreeBody *trieChi
 
 void collectDescendantConvertedVerticesInner(TrieBody *ancestorBody,RedBlackTreeBody *rbtb);
 
-void pushInftyDepthTrieNodesIntoGoAheadStackInner(TrieBody *body,Stack *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
+template <typename S>
+void pushInftyDepthTrieNodesIntoGoAheadStackInner(TrieBody *body,S *goAheadStack,TerminationConditionInfo *tInfo,int targetDepth){
   if(body->depth == targetDepth){
     if(!body->isPushedIntoGoAheadStack){
       collectDescendantConvertedVerticesInner(body,body->children->body);
@@ -795,13 +820,15 @@ void pushInftyDepthTrieNodesIntoGoAheadStackInner(TrieBody *body,Stack *goAheadS
   return;
 }
 
-void pushInftyDepthTrieNodesIntoGoAheadStack(Trie *trie,Stack *goAheadStack,int targetDepth){
+template <typename S>
+void pushInftyDepthTrieNodesIntoGoAheadStack(Trie *trie,S *goAheadStack,int targetDepth){
   pushInftyDepthTrieNodesIntoGoAheadStackInner(trie->body,goAheadStack,trie->info,targetDepth);
 
   return;
 }
 
-void triePropagateInner(Trie *trie,Stack *BFSStack,Stack *initializeConvertedVerticesStack,Stack *goAheadStack,Stack *fixCreditIndexStack,TerminationConditionInfo *tInfo,int stepOfPropagation,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
+template <typename S1, typename S2, typename S3, typename S4>
+void triePropagateInner(Trie *trie,S1 *BFSStack,S2 *initializeConvertedVerticesStack,S3 *goAheadStack,S4 *fixCreditIndexStack,TerminationConditionInfo *tInfo,int stepOfPropagation,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
   if(maxIndex(tInfo->distribution) == OMEGA && maxIndex(tInfo->increase) == stepOfPropagation - 1){
     pushInftyDepthTrieNodesIntoGoAheadStack(trie,goAheadStack,stepOfPropagation);
   }
@@ -1127,7 +1154,7 @@ void putLabelsToAdjacentVertices(List *pList,ConvertedGraph *cAfterGraph,int gap
 
         switch(tmpLink->attr){
           case INTEGER_ATTR:
-            writeIntStack(((InheritedVertex *)(iteratorCell->value))->conventionalPropagationMemo,i,tmpLink->data.integer*256+INTEGER_ATTR);
+            writeStack(((InheritedVertex *)(iteratorCell->value))->conventionalPropagationMemo,i,tmpLink->data.integer*256+INTEGER_ATTR);
             break;
           //case DOUBLE_ATTR:
             //break;
@@ -1135,7 +1162,7 @@ void putLabelsToAdjacentVertices(List *pList,ConvertedGraph *cAfterGraph,int gap
             //break;
           case HYPER_LINK_ATTR:
             adjacentVertex = getConvertedVertexFromGraphAndIDAndType(cAfterGraph,tmpLink->data.ID,convertedHyperLink);
-            pushIntStack(adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo,tmpLabel*256+i);
+            pushStack(adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo,tmpLabel*256+i);
             break;
           case GLOBAL_ROOT_MEM_ATTR:
             break;
@@ -1144,10 +1171,10 @@ void putLabelsToAdjacentVertices(List *pList,ConvertedGraph *cAfterGraph,int gap
               adjacentVertex = getConvertedVertexFromGraphAndIDAndType(cAfterGraph,tmpLink->data.ID,convertedAtom);
               switch(tmpType){
                 case convertedAtom:
-                  writeIntStack(adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo,tmpLink->attr,tmpLabel*256+i);
+                  writeStack(adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo,tmpLink->attr,tmpLabel*256+i);
                   break;
                 case convertedHyperLink:
-                  writeIntStack(adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo,tmpLink->attr,tmpLabel*256+HYPER_LINK_ATTR);
+                  writeStack(adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo,tmpLink->attr,tmpLabel*256+HYPER_LINK_ATTR);
                   break;
                 default:
                   CHECKER("unexpected vertex type\n");
@@ -1176,7 +1203,7 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(ListBody *b
     ListBody *tmpCell = beginSentinel->next;
     cutCell(tmpCell);
 
-    int tmpPriority = popIntStack(((InheritedVertex *)(tmpCell->value))->conventionalPropagationMemo);
+    int tmpPriority = popStack(((InheritedVertex *)(tmpCell->value))->conventionalPropagationMemo);
     pushPriorityQueue(cellPQueue,tmpCell,tmpPriority);
   }
 
@@ -1248,11 +1275,11 @@ InheritedVertex *copyInheritedVertex(InheritedVertex *iVertex){
     ret->beforeID = iVertex->beforeID;
     ret->ownerNode = iVertex->ownerNode;
     ret->ownerCell = iVertex->ownerCell;
-    ret->conventionalPropagationMemo = makeIntStack();
+    ret->conventionalPropagationMemo = new std::vector<int>();
     int i;
-    for(i=0;i<numIntStack(iVertex->conventionalPropagationMemo);i++){
-      int tmp = readIntStack(iVertex->conventionalPropagationMemo,i);
-      writeIntStack(ret->conventionalPropagationMemo,i,tmp);
+    for(i=0;i<numStack(iVertex->conventionalPropagationMemo);i++){
+      int tmp = readStack(iVertex->conventionalPropagationMemo,i);
+      writeStack(ret->conventionalPropagationMemo,i,tmp);
     }
     ret->equivalenceClassOfIsomorphism = iVertex->equivalenceClassOfIsomorphism;
 
@@ -1315,55 +1342,50 @@ void initializeReferencesFromConvertedVerticesToInheritedVertices(ConvertedGraph
 }
 
 Bool triePropagate(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph,int gapOfGlobalRootMemID,int *stepOfPropagationPtr) {
-  Stack *goAheadStack = new Stack();
-  Stack *BFSStack = new Stack();
-  Stack *initializeConvertedVerticesStack = new Stack();
-  Stack *fixCreditIndexStack = new Stack();
+  std::stack<TrieBody *> goAheadStack;
+  std::vector<ConvertedGraphVertex *> BFSStack;
+  std::vector<ConvertedGraphVertex *> initializeConvertedVerticesStack;
+  std::stack<InheritedVertex *> fixCreditIndexStack;
   TerminationConditionInfo *tInfo = trie->info;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  deleteInheritedVerticesFromTrie(trie, diffInfo->deletedVertices, goAheadStack);
+  deleteInheritedVerticesFromTrie(trie, diffInfo->deletedVertices, &goAheadStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  addInheritedVerticesToTrie(trie,diffInfo->addedVertices,initializeConvertedVerticesStack,goAheadStack,cAfterGraph,gapOfGlobalRootMemID);
+  addInheritedVerticesToTrie(trie,diffInfo->addedVertices,&initializeConvertedVerticesStack,&goAheadStack,cAfterGraph,gapOfGlobalRootMemID);
   //実際のSLIMでは起きない操作
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   assureReferenceFromConvertedVerticesToInheritedVertices(cAfterGraph->cv,cBeforeGraph->cv,gapOfGlobalRootMemID);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  moveInheritedRelinkedVerticesToBFSStack(diffInfo->relinkedVertices,initializeConvertedVerticesStack,BFSStack);
+  moveInheritedRelinkedVerticesToBFSStack(diffInfo->relinkedVertices,&initializeConvertedVerticesStack,&BFSStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   int stepOfPropagation = -1;
-  goAheadProcessOfCurrentTrieNodes(goAheadStack,fixCreditIndexStack,tInfo,cAfterGraph->cv,gapOfGlobalRootMemID);
+  goAheadProcessOfCurrentTrieNodes(&goAheadStack,&fixCreditIndexStack,tInfo,cAfterGraph->cv,gapOfGlobalRootMemID);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   stepOfPropagation = 0;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  goAheadProcessOfCurrentTrieNodes(goAheadStack,fixCreditIndexStack,tInfo,cAfterGraph->cv,gapOfGlobalRootMemID);
+  goAheadProcessOfCurrentTrieNodes(&goAheadStack,&fixCreditIndexStack,tInfo,cAfterGraph->cv,gapOfGlobalRootMemID);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  while(triePropagationIsContinued(goAheadStack,tInfo,stepOfPropagation)){
+  while(triePropagationIsContinued(&goAheadStack,tInfo,stepOfPropagation)){
     stepOfPropagation++;
-    triePropagateInner(trie,BFSStack,initializeConvertedVerticesStack,goAheadStack,fixCreditIndexStack,tInfo,stepOfPropagation,cAfterGraph->cv,gapOfGlobalRootMemID);
+    triePropagateInner(trie,&BFSStack,&initializeConvertedVerticesStack,&goAheadStack,&fixCreditIndexStack,tInfo,stepOfPropagation,cAfterGraph->cv,gapOfGlobalRootMemID);
   }
 
-  Bool verticesAreCompletelySorted = isDescreteTrie(goAheadStack,tInfo,stepOfPropagation) || isEmptyTrie(trie);
+  Bool verticesAreCompletelySorted = isDescreteTrie(&goAheadStack,tInfo,stepOfPropagation) || isEmptyTrie(trie);
   if(!verticesAreCompletelySorted){
     makeTrieMinimum(trie,stepOfPropagation);
 
-    while(!goAheadStack->isEmptyStack()){
-      popTrieBodyFromGoAheadStackWithoutOverlap(goAheadStack);
+    while(!goAheadStack.empty()){
+      popTrieBodyFromGoAheadStackWithoutOverlap(&goAheadStack);
     }
 
   }
 
-  initializeConvertedVertices(initializeConvertedVerticesStack);
-  initializeConvertedVertices(BFSStack);
-  fixCreditIndex(fixCreditIndexStack,cAfterGraph->cv,gapOfGlobalRootMemID);
+  initializeConvertedVertices(&initializeConvertedVerticesStack);
+  initializeConvertedVertices(&BFSStack);
+  fixCreditIndex(&fixCreditIndexStack,cAfterGraph->cv,gapOfGlobalRootMemID);
 
 
   //実際のSLIMでは起きない操作
   initializeReferencesFromConvertedVerticesToInheritedVertices(cBeforeGraph->cv);
-
-  freeStack(goAheadStack);
-  freeStack(BFSStack);
-  freeStack(initializeConvertedVerticesStack);
-  freeStack(fixCreditIndexStack);
 
   *stepOfPropagationPtr = stepOfPropagation;
 
