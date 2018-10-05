@@ -139,7 +139,9 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   Graphinfo *empty = new Graphinfo(lmn_mem_make());
   // convertedGraphDump(empty->cv);
   Graphinfo *init = new Graphinfo(mem);
-  // convertedGraphDump(init->cv);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  lmn_dump_mem_dev(mem);
+  convertedGraphDump(init->cv);
   // DiffInfo *diff = new DiffInfo(empty, init);
   // diff->diffInfoDump();
   // init_s->trie = new Trie();
@@ -260,6 +262,8 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  lmn_dump_mem_dev(mem);
 #ifdef DIFFISO_GEN
   if(!diff_gen_finish) {
     printf("Succ number Information\n");
