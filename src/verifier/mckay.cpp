@@ -1,6 +1,7 @@
 #include "mckay.hpp"
 #include "trie.hpp"
 
+template <typename List>
 void initializeDisjointSetForestsOfPropagationList(List *pList){
   ListBody *iteratorCell;
 
@@ -16,6 +17,7 @@ void initializeDisjointSetForestsOfPropagationList(List *pList){
 
 #define IS_DISCRETE_LIST (NULL)
 
+template <typename List>
 ListBody *firstNonTrivialCell(List *pList){
   ListBody *beginSentinel = pList->sentinel;
   ListBody *endSentinel = beginSentinel;
@@ -75,10 +77,6 @@ Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCa
   return compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner((InheritedVertex *)iVertexA,(InheritedVertex *)iVertexB);
 }
 
-Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(List *listA,List *listB){
-  return compareList(listA,listB,compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster);
-}
-
 void initializeInheritedVertexAdjacentLabels(InheritedVertex *iVertex){
   if(iVertex == CLASS_SENTINEL){
     return;
@@ -110,6 +108,7 @@ void freeInheritedVertexOfPreserveDiscretePropagationListCaster(void *iVertex){
   return;
 }
 
+template <typename List>
 void freePreserveDiscreteProapgationList(List *pdpList){
   freeListWithValues(pdpList,freeInheritedVertexOfPreserveDiscretePropagationListCaster);
 
@@ -122,6 +121,7 @@ void freePreserveDiscreteProapgationListCaster(void *pdpList){
   return;
 }
 
+template <typename List>
 Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(RedBlackTree *discretePropagationListsOfInheritedVerticesWithAdjacentLabels,List *dpList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
   Bool isExisting;
 
@@ -159,6 +159,7 @@ Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(Re
   }
 }
 
+template <typename List>
 void discretePropagationListDump(List *dpList){
   listDump(dpList,inheritedVertexDumpCaster);
   fprintf(stdout,"\n");
@@ -188,6 +189,7 @@ Bool isNewSplit(ListBody *sentinelCell,ListBody *splitCell){
   return TRUE;
 }
 
+template <typename List>
 Bool listMcKayInner(List *propagationListOfInheritedVertices,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,RedBlackTree *discretePropagationListsOfInheritedVerticesWithAdjacentLabels){
   Bool isUsefulBranch = TRUE;
 
@@ -241,8 +243,9 @@ Bool listMcKayInner(List *propagationListOfInheritedVertices,ConvertedGraph *cAf
   return isUsefulBranch;
 }
 
+template <typename List>
 List *listMcKay(List *propagationListOfInheritedVertices,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID){
-  if(isEmptyList(propagationListOfInheritedVertices)){
+  if(propagationListOfInheritedVertices->empty()){
     List *canonicalDiscreteRefinement = copyList(propagationListOfInheritedVertices);
     return canonicalDiscreteRefinement;
   }else{
@@ -271,6 +274,7 @@ List *listMcKay(List *propagationListOfInheritedVertices,ConvertedGraph *cAfterG
   }
 }
 
+template <typename List>
 Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,RedBlackTree *McKayKeyCollection,List *canonicalDiscreteRefinement,int stateID){
   Bool isValid = TRUE;
 
@@ -306,6 +310,7 @@ Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,RedBlackTree *McKa
   return isValid;
 }
 
+template <typename List>
 List * trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph) {
   int gapOfGlobalRootMemID = cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;

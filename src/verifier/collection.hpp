@@ -113,35 +113,78 @@ struct ListBody{
   };
 };
 
-struct List{
+class List{
   ListBody *sentinel;
 
-  bool isEmptyList() {
+public:
+  using iterator = ListBody *;
+
+  bool empty() {
     return sentinel->next == sentinel;
   }
   List() {
-    sentinel = new ListBody();
+    sentinel = new ListBody;
+    sentinel->value = NULL;
+    sentinel->next = sentinel;
+    sentinel->prev = sentinel;
   }
 
+  void *front() {
+    return sentinel->next->value;
+  }
+
+  ListBody *begin() {
+    return sentinel->next;
+  }
+  ListBody *end() {
+    return sentinel;
+  }
+
+  friend List *makeList();
+  friend void pushList(List *list,void *value);
+  friend void *peekList(List *list);
+  friend ListBody *makeCell(void *value);
+  friend void pushCell(List *list,ListBody *cell);
+  friend ListBody *popCell(List *list);
+  friend ListBody *peekCell(List *list);
+  friend void *cutCell(ListBody *cell);
+  friend void insertNextCell(ListBody *cellA,ListBody *cellB);
+  friend void forEachValueOfList(List *list,void func(void *));
+  friend void forEachCellOfList(List *list,void func(ListBody *));
+  friend void listDump(List *list,void valueDump(void *));
+  friend void freeList(List *list);
+  friend void freeListCaster(void *list);
+  friend void freeListWithValues(List *list,void freeValue(void *));
+  friend Bool isEmptyList(List *list);
+  friend Bool isSingletonList(List *list);
+  friend Order compareList(List *listA,List *listB,Order compareValue(void *,void *));
+  friend List *copyList(List *l);
+  friend List *copyListWithValues(List *l,void *copyValue(void *));
+
+  void push_front(void *value) {
+    pushList(this, value);
+  }
 };
 
+namespace std {
+  inline ListBody *next(ListBody *b, int n) {
+    for (int i = 0; i < n; i++)
+      b = b->next;
+    return b;
+  }
+}
+
 List *makeList();
-void pushList(List *list,void *value);
-void *popList(List *list);
-void *peekList(List *list);
 ListBody *makeCell(void *value);
 void pushCell(List *list,ListBody *cell);
 ListBody *popCell(List *list);
-ListBody *peekCell(List *list);
 void *cutCell(ListBody *cell);
 void insertNextCell(ListBody *cellA,ListBody *cellB);
 void forEachValueOfList(List *list,void func(void *));
-void forEachCellOfList(List *list,void func(ListBody *));
 void listDump(List *list,void valueDump(void *));
 void freeList(List *list);
 void freeListCaster(void *list);
 void freeListWithValues(List *list,void freeValue(void *));
-Bool isEmptyList(List *list);
 Bool isSingletonList(List *list);
 Order compareList(List *listA,List *listB,Order compareValue(void *,void *));
 List *copyList(List *l);

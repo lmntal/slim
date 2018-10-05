@@ -20,9 +20,15 @@ struct CanonicalAdjacencyList{
 };
 
 List* trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph);
-Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(List *listA,List *listB);
+Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster(void *iVertexA,void *iVertexB);
+template <typename Lista, typename Listb>
+Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(Lista *listA,Listb *listB){
+  return compareList(listA,listB,compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster);
+}
+template <typename List>
 void freePreserveDiscreteProapgationList(List *pdpList);
 void freePreserveDiscreteProapgationListCaster(void *pdpList);
+template <typename List>
 Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,RedBlackTree *McKayKeyCollection,List *canonicalDiscreteRefinement,int stateID);
 
 #endif
