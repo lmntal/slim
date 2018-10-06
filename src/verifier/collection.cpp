@@ -3,10 +3,6 @@
 #include "trie.hpp"
 #define INIT_CAP (4)
 
-
-
-
-
 unsigned int round2up(unsigned int n) {
   unsigned int ret = 1;
   while (ret && ret < n) {
@@ -19,76 +15,63 @@ unsigned int round2up(unsigned int n) {
   return ret;
 }
 
+List__<void *> *makeList() { return new List__<void *>; }
 
-List *makeList() { return new List; }
-
-Bool isEmptyList(List *list) {
+Bool isEmptyList(List__<void *> *list) {
   return (list->sentinel->next == list->sentinel);
 }
 
-Bool isSingletonList(List *list) {
+template <typename T> bool isSingletonList(List__<T> *list) {
   return (!isEmptyList(list) && (list->sentinel->next->next == list->sentinel));
 }
 
-ListBody *makeCell(void *value) {
-  ListBody *ret = (ListBody *)malloc(sizeof(ListBody));
-  ret->value = value;
-  ret->next = NULL;
-  ret->prev = NULL;
-
-  return ret;
+template <typename T> ListBody__<T> *makeCell(T value) {
+  return new ListBody__<T>(value);
 }
 
-void connectCell(ListBody *cellA, ListBody *cellB) {
+template <typename T>
+void connectCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
   cellA->next = cellB;
   cellB->prev = cellA;
 
   return;
 }
 
-void insertNextCell(ListBody *cellA, ListBody *cellB) {
+template <typename T>
+void insertNextCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
   connectCell(cellB, cellA->next);
   connectCell(cellA, cellB);
 
   return;
 }
 
-void pushList(List *list, void *value) {
-  ListBody *cell = new ListBody();
-  cell->value = value;
-  insertNextCell(list->sentinel, cell);
+void *peekList(List__<void *> *list) { return list->sentinel->next->value; }
 
-  return;
-}
-
-void *peekList(List *list) { return list->sentinel->next->value; }
-
-void pushCell(List *list, ListBody *cell) {
+template <typename T> void pushCell(List__<T> *list, ListBody__<T> *cell) {
   insertNextCell(list->begin(), cell);
 
   return;
 }
 
-ListBody *popCell(List *list) {
-  ListBody *cell = list->sentinel->next;
+template <typename T> ListBody__<T> *popCell(List__<T> *list) {
+  auto cell = list->sentinel->next;
   connectCell(list->sentinel, cell->next);
 
   return cell;
 }
 
-void *cutCell(ListBody *cell) {
+template <typename T> void *cutCell(ListBody__<T> *cell) {
   void *ret = cell->value;
   connectCell(cell->prev, cell->next);
 
   return ret;
 }
 
-void forEachValueOfList(List *list, void func(void *)) {
-  ListBody *sentinel = list->sentinel;
-  ListBody *iterator;
+template <typename T> void forEachValueOfList(List__<T> *list, void func(T)) {
+  auto sentinel = list->sentinel;
 
-  for (iterator = sentinel->next; iterator != sentinel;) {
-    ListBody *iteratorNext = iterator->next;
+  for (auto iterator = sentinel->next; iterator != sentinel;) {
+    auto iteratorNext = iterator->next;
 
     func(iterator->value);
 
@@ -98,12 +81,12 @@ void forEachValueOfList(List *list, void func(void *)) {
   return;
 }
 
-void forEachCellOfList(List *list, void func(ListBody *)) {
-  ListBody *sentinel = list->sentinel;
-  ListBody *iterator;
+template <typename T>
+void forEachCellOfList(List__<T> *list, void func(ListBody__<T> *)) {
+  auto sentinel = list->sentinel;
 
-  for (iterator = sentinel->next; iterator != sentinel;) {
-    ListBody *iteratorNext = iterator->next;
+  for (auto iterator = sentinel->next; iterator != sentinel;) {
+    auto iteratorNext = iterator->next;
 
     func(iterator);
 
@@ -113,14 +96,13 @@ void forEachCellOfList(List *list, void func(ListBody *)) {
   return;
 }
 
-void listDump(List *list, void valueDump(void *)) {
-  ListBody *sentinel = list->sentinel;
-  ListBody *iterator;
+template <typename T> void listDump(List__<T> *list, void valueDump(T)) {
+  auto sentinel = list->sentinel;
 
   fprintf(stdout, "[");
 
-  for (iterator = sentinel->next; iterator != sentinel;) {
-    ListBody *iteratorNext = iterator->next;
+  for (auto iterator = sentinel->next; iterator != sentinel;) {
+    auto iteratorNext = iterator->next;
 
     valueDump(iterator->value);
 
@@ -136,13 +118,13 @@ void listDump(List *list, void valueDump(void *)) {
   return;
 }
 
-void freeCell(ListBody *cell) {
+template <typename T> void freeCell(ListBody__<T> *cell) {
   free(cell);
 
   return;
 }
 
-void freeList(List *list) {
+template <typename T> void freeList(List__<T> *list) {
   forEachCellOfList(list, freeCell);
   free(list->sentinel);
   free(list);
@@ -151,12 +133,13 @@ void freeList(List *list) {
 }
 
 void freeListCaster(void *list) {
-  freeList((List *)list);
+  freeList((List__<void *> *)list);
 
   return;
 }
 
-void freeListWithValues(List *list, void freeValue(void *)) {
+template <typename T>
+void freeListWithValues(List__<T> *list, void freeValue(T)) {
   forEachValueOfList(list, freeValue);
   forEachCellOfList(list, freeCell);
   free(list->sentinel);
@@ -165,10 +148,11 @@ void freeListWithValues(List *list, void freeValue(void *)) {
   return;
 }
 
-Order compareList(List *listA, List *listB,
-                  Order compareValue(void *, void *)) {
-  ListBody *iteratorCellA = listA->sentinel->next;
-  ListBody *iteratorCellB = listB->sentinel->next;
+template <typename T1, typename T2>
+Order compareList(List__<T1> *listA, List__<T2> *listB,
+                  Order compareValue(T1, T2)) {
+  auto iteratorCellA = listA->sentinel->next;
+  auto iteratorCellB = listB->sentinel->next;
 
   while (iteratorCellA != listA->sentinel && iteratorCellB != listB->sentinel) {
     switch (compareValue(iteratorCellA->value, iteratorCellB->value)) {
@@ -200,132 +184,55 @@ Order compareList(List *listA, List *listB,
   }
 }
 
-List *copyList(List *l) {
-  List *ret = makeList();
+template <typename T> List__<T> *copyList(List__<T> *l) {
+  List__<T> *ret = new List__<T>();
 
-  ListBody *iteratorCell;
-  for (iteratorCell = l->sentinel->prev; iteratorCell != l->sentinel;
+  for (auto iteratorCell = l->sentinel->prev; iteratorCell != l->sentinel;
        iteratorCell = iteratorCell->prev) {
-    ListBody *tmpCell = (ListBody *)malloc(sizeof(ListBody));
-    tmpCell->value = iteratorCell->value;
-    pushCell(ret, tmpCell);
+    pushCell(ret, new ListBody__<T>(iteratorCell->value));
   }
 
   return ret;
 }
 
-List *copyListWithValues(List *l, void *copyValue(void *)) {
-  List *ret = makeList();
+template <typename T>
+List__<T> *copyListWithValues(List__<T> *l, void *copyValue(T)) {
+  List__<void *> *ret = makeList();
 
-  ListBody *iteratorCell;
-  for (iteratorCell = l->sentinel->prev; iteratorCell != l->sentinel;
+  for (auto iteratorCell = l->sentinel->prev; iteratorCell != l->sentinel;
        iteratorCell = iteratorCell->prev) {
-    ListBody *tmpCell = (ListBody *)malloc(sizeof(ListBody));
-    tmpCell->value = copyValue(iteratorCell->value);
-    pushCell(ret, tmpCell);
+    pushCell(ret, new ListBody__<T>(copyValue(iteratorCell->value)));
   }
 
   return ret;
 }
 
-KeyContainer *allocKey(KeyContainer key) {
-  KeyContainer *ret = (KeyContainer *)malloc(sizeof(KeyContainer));
-  *ret = key;
+KeyContainer__<List__<void *> *>
+makeDiscretePropagationListKey(List__<void *> *dpList) {
+  KeyContainer__<List__<void *> *> ret;
+
+  ret.value = dpList;
 
   return ret;
 }
 
-KeyContainer makeIntKey(int i) {
-  KeyContainer ret;
-
-  ret.type = key_int;
-  ret.u.integer = i;
-
-  return ret;
+template <typename T>
+Order compareKey(KeyContainer__<T> a, KeyContainer__<T> b) {
+  return compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(
+      a.value, b.value);
 }
 
-KeyContainer makeUInt32Key(uint32_t ui32) {
-  KeyContainer ret;
-
-  ret.type = key_uint32;
-  ret.u.ui32 = ui32;
-
-  return ret;
+template <typename T>
+bool operator<(const KeyContainer__<T> &a, const KeyContainer__<T> &b) {
+  return compareKey(a, b) == LT;
 }
-
-KeyContainer makeDiscretePropagationListKey(List *dpList) {
-  KeyContainer ret;
-
-  ret.type = key_discretePropagationList;
-  ret.u.discretePropagationList = dpList;
-
-  return ret;
+template <typename T>
+bool operator==(const KeyContainer__<T> &a, const KeyContainer__<T> &b) {
+  return compareKey(a, b) == EQ;
 }
-
-Order compareKey(KeyContainer a, KeyContainer b) {
-  int strcmpResult;
-
-  assert(a.type == b.type);
-  switch (a.type) {
-
-  case key_uint32:
-    return (a.u.ui32 < b.u.ui32 ? LT : a.u.ui32 > b.u.ui32 ? GT : EQ);
-    break;
-
-  case key_discretePropagationList:
-    return compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(
-        a.u.discretePropagationList, b.u.discretePropagationList);
-    break;
-
-  case key_int:
-    return (a.u.integer < b.u.integer ? LT
-                                      : a.u.integer > b.u.integer ? GT : EQ);
-    break;
-
-  case key_double:
-    return (a.u.dbl < b.u.dbl ? LT : a.u.dbl > b.u.dbl ? GT : EQ);
-    break;
-
-  case key_string:
-    strcmpResult = strcmp(a.u.string, b.u.string);
-    return (strcmpResult < 0 ? LT : strcmpResult > 0 ? GT : EQ);
-    break;
-
-  default:
-    CHECKER("This is unexpected key type\n");
-    exit(EXIT_FAILURE);
-    break;
-  }
-}
-
-void keyDump(KeyContainer key) {
-  switch (key.type) {
-
-  case key_uint32:
-    fprintf(stdout, "%08X", key.u.ui32);
-    break;
-
-  case key_discretePropagationList:
-    listDump(key.u.discretePropagationList, inheritedVertexDumpCaster);
-    break;
-
-  case key_int:
-    fprintf(stdout, "%d", key.u.integer);
-    break;
-
-  case key_double:
-    fprintf(stdout, "%f", key.u.dbl);
-    break;
-
-  case key_string:
-    fprintf(stdout, "%s", key.u.string);
-    break;
-
-  default:
-    CHECKER("This is enexpected key type\n");
-    exit(EXIT_FAILURE);
-    break;
-  }
+template <typename T>
+bool operator>(const KeyContainer__<T> &a, const KeyContainer__<T> &b) {
+  return compareKey(a, b) == GT;
 }
 
 void setRBColor(Color color) {
@@ -344,7 +251,8 @@ void setDefaultColor() {
   return;
 }
 
-void redBlackTreeKeyDumpInner(RedBlackTreeBody *rbtb, int depth) {
+template <typename K, typename V>
+void redBlackTreeKeyDumpInner(_RedBlackTreeBody<K, V> *rbtb, int depth) {
   int i;
   if (rbtb == NULL) {
     return;
@@ -354,14 +262,15 @@ void redBlackTreeKeyDumpInner(RedBlackTreeBody *rbtb, int depth) {
       fprintf(stdout, "    ");
     }
     setRBColor(rbtb->color);
-    keyDump(rbtb->key);
+    listDump(rbtb->key.value, inheritedVertexDumpCaster);
     setDefaultColor();
     fprintf(stdout, "\n");
     redBlackTreeKeyDumpInner(rbtb->children[RIGHT], depth + 1);
   }
 }
 
-void redBlackTreeKeyDump(RedBlackTree *rbt) {
+template <typename K, typename V>
+void redBlackTreeKeyDump(RedBlackTree__<K, V> *rbt) {
   redBlackTreeKeyDumpInner(rbt->body, 0);
   return;
 }
@@ -400,14 +309,9 @@ void freeRedBlackTreeInner(RedBlackTreeBody *rbtb) {
   return;
 }
 
-void freeRedBlackTree(RedBlackTree *rbt) {
-  freeRedBlackTreeInner(rbt->body);
-  free(rbt);
-  return;
-}
-
-void freeRedBlackTreeWithValueInner(RedBlackTreeBody *rbtb,
-                                    void freeValue(void *)) {
+template <typename K, typename V>
+void freeRedBlackTreeWithValueInner(_RedBlackTreeBody<K, V> *rbtb,
+                                    void freeValue(V)) {
   if (rbtb != NULL) {
     freeRedBlackTreeWithValueInner(rbtb->children[LEFT], freeValue);
     freeRedBlackTreeWithValueInner(rbtb->children[RIGHT], freeValue);
@@ -418,45 +322,42 @@ void freeRedBlackTreeWithValueInner(RedBlackTreeBody *rbtb,
   return;
 }
 
-void freeRedBlackTreeWithValue(RedBlackTree *rbt, void freeValue(void *)) {
+template <typename K, typename V>
+void freeRedBlackTree(RedBlackTree__<K, V> *rbt) {
+  freeRedBlackTreeInner(rbt->body);
+  free(rbt);
+  return;
+}
+
+template <typename K, typename V>
+void freeRedBlackTreeWithValue(RedBlackTree__<K, V> *rbt, void freeValue(V)) {
   freeRedBlackTreeWithValueInner(rbt->body, freeValue);
   free(rbt);
   return;
 }
 
-void *searchRedBlackTreeInner(RedBlackTreeBody *rbtb, KeyContainer key) {
+template <typename K, typename V>
+void *searchRedBlackTreeInner(_RedBlackTreeBody<K, V> *rbtb, K key) {
   if (rbtb == NULL) {
     return NULL;
   } else {
-    Order ord = compareKey(key, rbtb->key);
-    switch (ord) {
-
-    case LT:
+    if (key < rbtb->key)
       return searchRedBlackTreeInner(rbtb->children[LEFT], key);
-      break;
-
-    case EQ:
+    else if (key == rbtb->key)
       return rbtb->value;
-      break;
-
-    case GT:
+    else
       return searchRedBlackTreeInner(rbtb->children[RIGHT], key);
-      break;
-
-    default:
-      CHECKER("This is unexpected order\n");
-      exit(EXIT_FAILURE);
-      break;
-    }
   }
 }
 
-void *searchRedBlackTree(RedBlackTree *rbt, KeyContainer key) {
+template <typename K, typename V>
+void *searchRedBlackTree(RedBlackTree__<K, V> *rbt, K key) {
   return searchRedBlackTreeInner(rbt->body, key);
 }
 
-RedBlackTreeBody *insertRedBlackTreeInner(RedBlackTreeBody *rbtb,
-                                          KeyContainer key, void *value) {
+template <typename K, typename V>
+RedBlackTreeBody *insertRedBlackTreeInner(_RedBlackTreeBody<K, V> *rbtb,
+                                          const K &key, void *value) {
   if (rbtb == NULL) {
     RedBlackTreeBody *newRbtb =
         (RedBlackTreeBody *)malloc(sizeof(RedBlackTreeBody));
@@ -467,49 +368,9 @@ RedBlackTreeBody *insertRedBlackTreeInner(RedBlackTreeBody *rbtb,
     newRbtb->children[RIGHT] = NULL;
     return newRbtb;
   } else {
-    Order ord = compareKey(key, rbtb->key);
     RedBlackTreeBody *child, *grandChild;
 
-    switch (ord) {
-
-    case LT:
-    case EQ:
-      child = insertRedBlackTreeInner(rbtb->children[LEFT], key, value);
-      rbtb->children[LEFT] = child;
-
-      if (rbtb->color == BLACK && child != NULL && child->color == RED) {
-        if (child->children[LEFT] != NULL &&
-            child->children[LEFT]->color == RED) {
-          grandChild = child->children[LEFT];
-
-          rbtb->children[LEFT] = child->children[RIGHT];
-          child->children[RIGHT] = rbtb;
-
-          grandChild->color = BLACK;
-
-          return child;
-        } else if (child->children[RIGHT] != NULL &&
-                   child->children[RIGHT]->color == RED) {
-          grandChild = child->children[RIGHT];
-
-          rbtb->children[LEFT] = grandChild->children[RIGHT];
-          child->children[RIGHT] = grandChild->children[LEFT];
-          grandChild->children[LEFT] = child;
-          grandChild->children[RIGHT] = rbtb;
-
-          child->color = BLACK;
-
-          return grandChild;
-        } else {
-          return rbtb;
-        }
-      } else {
-        return rbtb;
-      }
-
-      break;
-
-    case GT:
+    if (key > rbtb->key) {
       child = insertRedBlackTreeInner(rbtb->children[RIGHT], key, value);
       rbtb->children[RIGHT] = child;
 
@@ -543,18 +404,45 @@ RedBlackTreeBody *insertRedBlackTreeInner(RedBlackTreeBody *rbtb,
       } else {
         return rbtb;
       }
+    } else {
+      child = insertRedBlackTreeInner(rbtb->children[LEFT], key, value);
+      rbtb->children[LEFT] = child;
 
-      break;
+      if (rbtb->color == BLACK && child != NULL && child->color == RED) {
+        if (child->children[LEFT] != NULL &&
+            child->children[LEFT]->color == RED) {
+          grandChild = child->children[LEFT];
 
-    default:
-      CHECKER("This is unexpected order\n");
-      exit(EXIT_FAILURE);
-      break;
+          rbtb->children[LEFT] = child->children[RIGHT];
+          child->children[RIGHT] = rbtb;
+
+          grandChild->color = BLACK;
+
+          return child;
+        } else if (child->children[RIGHT] != NULL &&
+                   child->children[RIGHT]->color == RED) {
+          grandChild = child->children[RIGHT];
+
+          rbtb->children[LEFT] = grandChild->children[RIGHT];
+          child->children[RIGHT] = grandChild->children[LEFT];
+          grandChild->children[LEFT] = child;
+          grandChild->children[RIGHT] = rbtb;
+
+          child->color = BLACK;
+
+          return grandChild;
+        } else {
+          return rbtb;
+        }
+      } else {
+        return rbtb;
+      }
     }
   }
 }
 
-void insertRedBlackTree(RedBlackTree *rbt, KeyContainer key, void *value) {
+template <typename K, typename V>
+void insertRedBlackTree(RedBlackTree__<K, V> *rbt, K key, void *value) {
   rbt->body = insertRedBlackTreeInner(rbt->body, key, value);
   rbt->body->color = BLACK;
   return;
@@ -650,16 +538,14 @@ RedBlackTreeBody *exchangeMaxValue(RedBlackTreeBody *rbtb,
   }
 }
 
-RedBlackTreeBody *deleteRedBlackTreeInner(RedBlackTreeBody *rbtb,
-                                          KeyContainer key, Bool *changeFlag) {
+template <typename K, typename V>
+RedBlackTreeBody *deleteRedBlackTreeInner(_RedBlackTreeBody<K, V> *rbtb, K key,
+                                          Bool *changeFlag) {
   if (rbtb == NULL) {
     *changeFlag = FALSE;
     return NULL;
   } else {
-    Order ord = compareKey(key, rbtb->key);
-    switch (ord) {
-
-    case LT:
+    if (key < rbtb->key) {
       rbtb->children[LEFT] =
           deleteRedBlackTreeInner(rbtb->children[LEFT], key, changeFlag);
 
@@ -668,9 +554,8 @@ RedBlackTreeBody *deleteRedBlackTreeInner(RedBlackTreeBody *rbtb,
       } else {
         return rbtb;
       }
-      break;
-
-    case EQ:
+    }
+    if (key == rbtb->key) {
       if (rbtb->children[LEFT] == NULL) {
         *changeFlag = (rbtb->color == BLACK);
 
@@ -688,9 +573,8 @@ RedBlackTreeBody *deleteRedBlackTreeInner(RedBlackTreeBody *rbtb,
           return rbtb;
         }
       }
-      break;
-
-    case GT:
+    }
+    if (key > rbtb->key) {
       rbtb->children[RIGHT] =
           deleteRedBlackTreeInner(rbtb->children[RIGHT], key, changeFlag);
 
@@ -699,17 +583,12 @@ RedBlackTreeBody *deleteRedBlackTreeInner(RedBlackTreeBody *rbtb,
       } else {
         return rbtb;
       }
-      break;
-
-    default:
-      CHECKER("This is unexpected order\n");
-      exit(EXIT_FAILURE);
-      break;
     }
   }
 }
 
-void deleteRedBlackTree(RedBlackTree *rbt, KeyContainer key) {
+template <typename K, typename V>
+void deleteRedBlackTree(RedBlackTree__<K, V> *rbt, K key) {
   Bool changeFlagBody;
   changeFlagBody = FALSE;
 
@@ -717,9 +596,13 @@ void deleteRedBlackTree(RedBlackTree *rbt, KeyContainer key) {
   return;
 }
 
-Bool isEmptyRedBlackTree(RedBlackTree *rbt) { return (rbt->body == NULL); }
+template <typename K, typename V>
+Bool isEmptyRedBlackTree(RedBlackTree__<K, V> *rbt) {
+  return (rbt->body == NULL);
+}
 
-Bool isSingletonRedBlackTree(RedBlackTree *rbt) {
+template <typename K, typename V>
+Bool isSingletonRedBlackTree(RedBlackTree__<K, V> *rbt) {
   return (!isEmptyRedBlackTree(rbt) && (rbt->body->children[LEFT] == NULL &&
                                         rbt->body->children[RIGHT] == NULL));
 }
@@ -732,113 +615,10 @@ void *minimumElementOfRedBlackTreeInner(RedBlackTreeBody *rbtb) {
   }
 }
 
-void *minimumElementOfRedBlackTree(RedBlackTree *rbt) {
+template <typename K, typename V>
+V minimumElementOfRedBlackTree(RedBlackTree__<K, V> *rbt) {
   return minimumElementOfRedBlackTreeInner(rbt->body);
 }
-
-HashTable *makeHashTable() {
-  HashTable *ret = (HashTable *)malloc(sizeof(HashTable));
-  ret->body = (List **)calloc(HASH_SIZE, sizeof(List *));
-
-  return ret;
-}
-
-void freeHashTable(HashTable *hTable) {
-  free(hTable->body);
-  free(hTable);
-
-  return;
-}
-
-void *findHashTable(HashTable *hTable, Hash key, void *value,
-                    int valueCompare(void *, void *)) {
-  Hash bucket = key & HASH_MASK;
-  List *chain = hTable->body[bucket];
-
-  if (chain == NULL) {
-    return NULL;
-  } else {
-    for (auto iterator = std::begin(*chain); iterator != std::end(*chain);
-         iterator = std::next(iterator, 1)) {
-      if (valueCompare(value, iterator->value) == 0) {
-        return iterator;
-      }
-    }
-  }
-
-  return NULL;
-}
-
-void setHashTable(HashTable *hTable, Hash key, void *value,
-                  int valueCompare(void *, void *)) {
-  Hash bucket = key & HASH_MASK;
-  List *chain = hTable->body[bucket];
-
-  if (chain == NULL) {
-    chain = makeList();
-    hTable->body[bucket] = chain;
-  }
-
-  for (auto iterator = std::begin(*chain);; iterator = std::next(iterator, 1)) {
-    if (iterator == std::end(*chain) ||
-        (valueCompare(value, iterator->value) <= 0)) {
-      ListBody *cell = (ListBody *)malloc(sizeof(ListBody));
-      cell->value = value;
-      insertNextCell(iterator->prev, cell);
-      break;
-    }
-  }
-
-  return;
-}
-
-void *getHashTable(HashTable *hTable, Hash key, void *value,
-                   int valueCompare(void *, void *)) {
-  Hash bucket = key & HASH_MASK;
-  List *chain = hTable->body[bucket];
-  void *ret = NULL;
-
-  if (chain == NULL) {
-    return NULL;
-  } else {
-    for (auto iterator = std::begin(*chain); iterator != std::end(*chain);
-         iterator = iterator->next) {
-      int compareResult = valueCompare(value, iterator->value);
-      if (compareResult == 0) {
-        ret = iterator->value;
-        cutCell(iterator);
-        freeCell(iterator);
-        break;
-      } else if (compareResult < 0) {
-        break;
-      }
-    }
-
-    if (isEmptyList(chain)) {
-      freeList(chain);
-      hTable->body[bucket] = NULL;
-    }
-
-    return ret;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 DisjointSetForest *makeDisjointSetForest() {
   DisjointSetForest *ret =

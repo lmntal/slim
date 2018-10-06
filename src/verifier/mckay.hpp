@@ -19,14 +19,14 @@ struct CanonicalAdjacencyList{
   std::vector<void *> adjacencyInformations; // ??
 };
 
-List* trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph);
+List__<void *>* trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph);
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster(void *iVertexA,void *iVertexB);
 template <typename Lista, typename Listb>
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(Lista *listA,Listb *listB){
   return compareList(listA,listB,compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster);
 }
 template <typename List>
-void freePreserveDiscreteProapgationList(List *pdpList);
+void freePreserveDiscreteProapgationList(List__<void *> *pdpList);
 void freePreserveDiscreteProapgationListCaster(void *pdpList);
 template <typename List>
 Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,RedBlackTree *McKayKeyCollection,List *canonicalDiscreteRefinement,int stateID);
