@@ -1123,23 +1123,24 @@ typename List::iterator getNextSentinel(typename List::iterator beginSentinel) {
   return endSentinel;
 }
 
-Bool putClassesWithPriority(typename List::iterator beginSentinel, typename List::iterator endSentinel,
-                            PriorityQueue *cellPQueue) {
+Bool putClassesWithPriority(typename List::iterator beginSentinel,
+                            typename List::iterator endSentinel,
+                            std::priority_queue<std::pair<int, ListBody *>> *cellPQueue) {
   Bool isRefined = FALSE;
-  ValueWithPriority prevWrapper = peekPriorityQueue(cellPQueue);
-  ValueWithPriority tmpWrapper;
+  auto prevWrapper = cellPQueue->top();
 
-  while (!isEmptyPriorityQueue(cellPQueue)) {
-    tmpWrapper = popPriorityQueue(cellPQueue);
+  while (!cellPQueue->empty()) {
+    auto tmpWrapper = cellPQueue->top();
+    cellPQueue->pop();
 
-    if (tmpWrapper.priority < prevWrapper.priority) {
+    if (tmpWrapper.first < prevWrapper.first) {
       typename List::iterator classSentinel = makeCell(CLASS_SENTINEL);
       insertNextCell(beginSentinel, classSentinel);
 
       isRefined = TRUE;
     }
 
-    insertNextCell(beginSentinel, (ListBody *)tmpWrapper.value);
+    insertNextCell(beginSentinel, (ListBody *)tmpWrapper.second);
 
     prevWrapper = tmpWrapper;
   }
@@ -1152,12 +1153,12 @@ Bool classifyConventionalPropagationList(
     List *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
     Bool classifyConventionalPropagationListInner(ListBody *, ListBody *,
                                                   ConvertedGraph *, int,
-                                                  PriorityQueue *)) {
+                                                  std::priority_queue<std::pair<int, ListBody *>> *)) {
   if (pList->empty()) {
     return FALSE;
   } else {
     Bool isRefined = FALSE;
-    PriorityQueue *cellPQueue = makePriorityQueue();
+    auto cellPQueue = std::priority_queue<std::pair<int, ListBody *>>();
 
     typename List::iterator beginSentinel;
     typename List::iterator endSentinel;
@@ -1170,27 +1171,26 @@ Bool classifyConventionalPropagationList(
 
       if (classifyConventionalPropagationListInner(
               beginSentinel, endSentinel, cAfterGraph, gapOfGlobalRootMemID,
-              cellPQueue)) {
+              &cellPQueue)) {
         isRefined = TRUE;
       }
       beginSentinel = endSentinel;
     } while (endSentinel != pList->sentinel);
-
-    freePriorityQueue(cellPQueue);
 
     return isRefined;
   }
 }
 
 Bool classifyConventionalPropagationListWithTypeInner(
-    typename List::iterator beginSentinel, typename List::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID, PriorityQueue *cellPQueue) {
+    typename List::iterator beginSentinel, typename List::iterator endSentinel,
+    ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
+    std::priority_queue<std::pair<int, ListBody *>> *cellPQueue) {
   while (beginSentinel->next != endSentinel) {
     typename List::iterator tmpCell = beginSentinel->next;
     cutCell(tmpCell);
 
     int tmpPriority = ((InheritedVertex *)(tmpCell->value))->type;
-    pushPriorityQueue(cellPQueue, tmpCell, tmpPriority);
+    cellPQueue->emplace(tmpPriority, tmpCell);
   }
 
   Bool isRefined =
@@ -1200,8 +1200,9 @@ Bool classifyConventionalPropagationListWithTypeInner(
 }
 
 Bool classifyConventionalPropagationListWithDegreeInner(
-    typename List::iterator beginSentinel, typename List::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID, PriorityQueue *cellPQueue) {
+    typename List::iterator beginSentinel, typename List::iterator endSentinel,
+    ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
+    std::priority_queue<std::pair<int, ListBody *>> *cellPQueue) {
   while (beginSentinel->next != endSentinel) {
     typename List::iterator tmpCell = beginSentinel->next;
     cutCell(tmpCell);
@@ -1210,7 +1211,7 @@ Bool classifyConventionalPropagationListWithDegreeInner(
                                    ((InheritedVertex *)(tmpCell->value)),
                                    cAfterGraph, gapOfGlobalRootMemID)
                                    ->links);
-    pushPriorityQueue(cellPQueue, tmpCell, tmpPriority);
+    cellPQueue->emplace(tmpPriority, tmpCell);
   }
 
   Bool isRefined =
@@ -1220,8 +1221,9 @@ Bool classifyConventionalPropagationListWithDegreeInner(
 }
 
 Bool classifyConventionalPropagationListWithNameLengthInner(
-    typename List::iterator beginSentinel, typename List::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID, PriorityQueue *cellPQueue) {
+    typename List::iterator beginSentinel, typename List::iterator endSentinel,
+    ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
+    std::priority_queue<std::pair<int, ListBody *>> *cellPQueue) {
   while (beginSentinel->next != endSentinel) {
     typename List::iterator tmpCell = beginSentinel->next;
     cutCell(tmpCell);
@@ -1230,7 +1232,7 @@ Bool classifyConventionalPropagationListWithNameLengthInner(
                                  ((InheritedVertex *)(tmpCell->value)),
                                  cAfterGraph, gapOfGlobalRootMemID)
                                  ->name);
-    pushPriorityQueue(cellPQueue, tmpCell, tmpPriority);
+    cellPQueue->emplace(tmpPriority, tmpCell);
   }
 
   Bool isRefined =
@@ -1240,8 +1242,9 @@ Bool classifyConventionalPropagationListWithNameLengthInner(
 }
 
 Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
-    typename List::iterator beginSentinel, typename List::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID, int index, PriorityQueue *cellPQueue) {
+    typename List::iterator beginSentinel, typename List::iterator endSentinel,
+    ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID, int index,
+    std::priority_queue<std::pair<int, ListBody *>> *cellPQueue) {
   while (beginSentinel->next != endSentinel) {
     typename List::iterator tmpCell = beginSentinel->next;
     cutCell(tmpCell);
@@ -1250,7 +1253,7 @@ Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
                            ((InheritedVertex *)(tmpCell->value)), cAfterGraph,
                            gapOfGlobalRootMemID)
                            ->name)[index];
-    pushPriorityQueue(cellPQueue, tmpCell, tmpPriority);
+    cellPQueue->emplace(tmpPriority, tmpCell);
   }
 
   Bool isRefined =
@@ -1260,8 +1263,9 @@ Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
 }
 
 Bool classifyConventionalPropagationListWithNameCharactersInner(
-    typename List::iterator beginSentinel, typename List::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID, PriorityQueue *cellPQueue) {
+    typename List::iterator beginSentinel, typename List::iterator endSentinel,
+    ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
+    std::priority_queue<std::pair<int, ListBody *>> *cellPQueue) {
   Bool isRefined = FALSE;
 
   typename List::iterator innerBeginSentinel;
@@ -1441,14 +1445,15 @@ void putLabelsToAdjacentVertices(List *pList, ConvertedGraph *cAfterGraph,
 }
 
 Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
-    typename List::iterator beginSentinel, typename List::iterator endSentinel, PriorityQueue *cellPQueue) {
+    typename List::iterator beginSentinel, typename List::iterator endSentinel,
+    std::priority_queue<std::pair<int, ListBody *>> *cellPQueue) {
   while (beginSentinel->next != endSentinel) {
     typename List::iterator tmpCell = beginSentinel->next;
     cutCell(tmpCell);
 
     int tmpPriority = popStack(
         ((InheritedVertex *)(tmpCell->value))->conventionalPropagationMemo);
-    pushPriorityQueue(cellPQueue, tmpCell, tmpPriority);
+    cellPQueue->emplace(tmpPriority, tmpCell);
   }
 
   Bool isRefined =
@@ -1458,8 +1463,9 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
 }
 
 Bool classifyConventionalPropagationListWithAdjacentLabelsInner(
-    typename List::iterator beginSentinel, typename List::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID, PriorityQueue *cellPQueue) {
+    typename List::iterator beginSentinel, typename List::iterator endSentinel,
+    ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
+    std::priority_queue<std::pair<int, ListBody *>> *cellPQueue) {
   Bool isRefined = FALSE;
 
   typename List::iterator innerBeginSentinel;
