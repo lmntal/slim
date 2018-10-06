@@ -43,8 +43,8 @@ Bool isHyperLink(LMNtalLink *link){
   return link->attr == HYPER_LINK_ATTR;
 }
 
-template <typename S>
-void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom,DynamicArray *afterConvertedHyperLinks, S *relinkedVertices){
+template <typename S, typename DynamicArray>
+void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom, std::vector<ConvertedGraphVertex *> *afterConvertedHyperLinks, S *relinkedVertices){
   if(beforeCAtom != NULL && afterCAtom != NULL){
     int i;
     assert(beforeCAtom->links->size()==afterCAtom->links->size());
@@ -55,10 +55,10 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCA
       if(!isEqualLinks(beforeLink,afterLink)){
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterCAtom);
         if(isHyperLink(beforeLink)){
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,(ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,beforeLink->data.ID));
+          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterConvertedHyperLinks->at(beforeLink->data.ID));
         }
         if(isHyperLink(afterLink)){
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,(ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,afterLink->data.ID));
+          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterConvertedHyperLinks->at(afterLink->data.ID));
         }
       }
     }
@@ -68,7 +68,7 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCA
       LMNtalLink *beforeLink = (LMNtalLink *)readStack(beforeCAtom->links,i);
 
       if(isHyperLink(beforeLink)){
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,(ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,beforeLink->data.ID));
+        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterConvertedHyperLinks->at(beforeLink->data.ID));
       }
     }
   }else if(beforeCAtom == NULL && afterCAtom != NULL){
@@ -77,7 +77,7 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCA
       LMNtalLink *afterLink = (LMNtalLink *)readStack(afterCAtom->links,i);
 
       if(isHyperLink(afterLink)){
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,(ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,afterLink->data.ID));
+        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterConvertedHyperLinks->at(afterLink->data.ID));
       }
     }
   }else{
@@ -88,9 +88,9 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCA
 
 void convertedGraphDump(ConvertedGraph *cGraph){
   fprintf(stdout,"CONVERTED ATOMS:\n");
-  dynamicArrayDump(cGraph->atoms,convertedGraphVertexDumpCaster);
+  dynamicArrayDump(cGraph->atoms,convertedGraphVertexDump);
   fprintf(stdout,"CONVERTED HYPERLINKS:\n");
-  dynamicArrayDump(cGraph->hyperlinks,convertedGraphVertexDumpCaster);
+  dynamicArrayDump(cGraph->hyperlinks,convertedGraphVertexDump);
   return;
 }
 

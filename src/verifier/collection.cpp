@@ -3,38 +3,9 @@
 #include "trie.hpp"
 #define INIT_CAP (4)
 
-DynamicArray *makeDynamicArray() {
-  DynamicArray *ret = (DynamicArray *)malloc(sizeof(DynamicArray));
-  ret->cap = INIT_CAP;
-  if ((ret->body = (void **)calloc(sizeof(void *), INIT_CAP)) == NULL) {
-    CHECKER("CALLOC ERROR");
-    exit(EXIT_FAILURE);
-  }
-  return ret;
-}
 
-void freeDynamicArray(DynamicArray *DArray) {
-  free(DArray->body);
-  free(DArray);
-  return;
-}
 
-void freeValuesOfDynamicArray(DynamicArray *DArray, void freeValue(void *)) {
-  int i;
 
-  for (i = 0; i < DArray->cap; i++) {
-    if (DArray->body[i] != NULL) {
-      freeValue(DArray->body[i]);
-      DArray->body[i] = NULL;
-    }
-  }
-}
-
-void freeDynamicArrayAndValues(DynamicArray *DArray, void freeValue(void *)) {
-  freeValuesOfDynamicArray(DArray, freeValue);
-  freeDynamicArray(DArray);
-  return;
-}
 
 unsigned int round2up(unsigned int n) {
   unsigned int ret = 1;
@@ -48,53 +19,6 @@ unsigned int round2up(unsigned int n) {
   return ret;
 }
 
-DynamicArray *assureSizeOfDynamicArray(DynamicArray *DArray, int index) {
-  if (index >= DArray->cap) {
-    int newCap = round2up((unsigned int)(index + 1));
-    void **newBody = (void **)realloc(DArray->body, newCap * sizeof(void *));
-    if (newBody == NULL) {
-      CHECKER("REALLOC ERROR");
-      exit(EXIT_FAILURE);
-    }
-    memset(newBody + DArray->cap, 0, (newCap - DArray->cap) * sizeof(void *));
-    DArray->cap = newCap;
-    DArray->body = newBody;
-    return DArray;
-  } else {
-    return DArray;
-  }
-}
-
-void *readDynamicArray(DynamicArray *DArray, int index) {
-  if (index < 0) {
-    return NULL;
-  } else if (index < DArray->cap) {
-    return DArray->body[index];
-  } else {
-    return NULL;
-  }
-}
-
-void *writeDynamicArray(DynamicArray *DArray, int index, void *value) {
-  assureSizeOfDynamicArray(DArray, index);
-  void *ret = DArray->body[index];
-  DArray->body[index] = value;
-
-  return ret;
-}
-
-void dynamicArrayDump(DynamicArray *DArray, void valueDump(void *)) {
-  int i;
-  for (i = 0; i < DArray->cap; i++) {
-    if (DArray->body[i] == NULL) {
-      // fprintf(stdout,"%d:NULL\n",i);
-    } else {
-      fprintf(stdout, "%d:", i);
-      valueDump(DArray->body[i]);
-      printf("\n");
-    }
-  }
-}
 
 List *makeList() { return new List; }
 
@@ -958,16 +882,16 @@ void pushPriorityQueue(PriorityQueue *pQueue, void *value, int priority) {
         (ValueWithPriority *)readDynamicArray(pQueue->body, parentIndex);
 
     if (tmpWrapper->priority < parentWrapper->priority) {
-      writeDynamicArray(pQueue->body, tmpIndex, tmpWrapper);
+      writeDynamicArray(pQueue->body, tmpIndex, (void *)tmpWrapper);
       break;
     } else {
-      writeDynamicArray(pQueue->body, tmpIndex, parentWrapper);
+      writeDynamicArray(pQueue->body, tmpIndex, (void *)parentWrapper);
       tmpIndex = parentIndex;
     }
   }
 
   if (tmpIndex == 0) {
-    writeDynamicArray(pQueue->body, tmpIndex, tmpWrapper);
+    writeDynamicArray(pQueue->body, tmpIndex, (void *)tmpWrapper);
   }
 
   pQueue->num++;
@@ -1012,16 +936,16 @@ ValueWithPriority popPriorityQueue(PriorityQueue *pQueue) {
     }
 
     if (tmpWrapper->priority > greatWrapper->priority) {
-      writeDynamicArray(pQueue->body, tmpIndex, tmpWrapper);
+      writeDynamicArray(pQueue->body, tmpIndex, (void *)tmpWrapper);
       break;
     } else {
-      writeDynamicArray(pQueue->body, tmpIndex, greatWrapper);
+      writeDynamicArray(pQueue->body, tmpIndex, (void *)greatWrapper);
       tmpIndex = greatChildIndex;
     }
   }
 
   if (PQ_L_CHILD(tmpIndex) >= pQueue->num) {
-    writeDynamicArray(pQueue->body, tmpIndex, tmpWrapper);
+    writeDynamicArray(pQueue->body, tmpIndex, (void *)tmpWrapper);
   }
 
   return ret;

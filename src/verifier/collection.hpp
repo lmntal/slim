@@ -16,29 +16,48 @@ typedef enum Order{
   GT//greater than
 }Order;
 
-struct DynamicArray{
-  int cap;
-  void **body;
+using DynamicArray = std::vector<void *>;
 
+inline DynamicArray *makeDynamicArray() {
+  return new DynamicArray;
+}
+inline void freeDynamicArray(DynamicArray *DArray) {
+  delete DArray;
+}
+inline void freeDynamicArrayAndValues(DynamicArray *DArray, void freeValue(void *)) {
+  int i;
 
-  DynamicArray(){
-    cap = INIT_CAP;
-    if((body = (void **)calloc(sizeof(void *),INIT_CAP)) == NULL){
-      CHECKER("CALLOC ERROR");
-      exit(EXIT_FAILURE);
+  for (i = 0; i < DArray->size(); i++) {
+    if ((*DArray)[i] != NULL) {
+      freeValue((*DArray)[i]);
+      (*DArray)[i] = NULL;
     }
-  };
-};
-
-DynamicArray *makeDynamicArray();
-void freeDynamicArray(DynamicArray *DArray);
-void freeValuesOfDynamicArray(DynamicArray *DArray,void freeValue(void *));
-void freeDynamicArrayAndValues(DynamicArray *DArray,void freeValue(void *));
-
-DynamicArray *assureSizeOfDynamicArray(DynamicArray *DstDArray,int index);
-void *readDynamicArray(DynamicArray *DArray,int index);
-void *writeDynamicArray(DynamicArray *DArray,int index,void *value);
-void dynamicArrayDump(DynamicArray *DArray,void valueDump(void *));
+  }
+  freeDynamicArray(DArray);
+  return;
+}
+template <typename T>
+inline T readDynamicArray(std::vector<T> *DArray, int index) {
+  return (*DArray)[index];
+}
+template <typename T>
+inline void writeDynamicArray(std::vector<T> *DArray, int index, T value) {
+  DArray->resize(index, nullptr);
+  (*DArray)[index] = value;
+}
+template <typename T>
+inline void dynamicArrayDump(std::vector<T> *DArray, void valueDump(T)) {
+  int i;
+  for (i = 0; i < DArray->size(); i++) {
+    if ((*DArray)[i] == NULL) {
+      // fprintf(stdout,"%d:NULL\n",i);
+    } else {
+      fprintf(stdout, "%d:", i);
+      valueDump((*DArray)[i]);
+      printf("\n");
+    }
+  }
+}
 
 template <typename T>
 void freeStack(std::stack<T> *stack) { delete stack; }

@@ -23,10 +23,10 @@ struct DiffInfo {
   }
 
   DiffInfo(Graphinfo *before_gi, Graphinfo *after_gi) {
-    DynamicArray *before_atoms = before_gi->cv->atoms;
-    DynamicArray *before_hyperlinks = before_gi->cv->hyperlinks;
-    DynamicArray *after_atoms = after_gi->cv->atoms;
-    DynamicArray *after_hyperlinks = after_gi->cv->hyperlinks;
+    auto before_atoms = before_gi->cv->atoms;
+    auto before_hyperlinks = before_gi->cv->hyperlinks;
+    auto after_atoms = after_gi->cv->atoms;
+    auto after_hyperlinks = after_gi->cv->hyperlinks;
     deletedVertices = new std::vector<ConvertedGraphVertex *>();
     addedVertices = new std::vector<ConvertedGraphVertex *>();
     relinkedVertices = new std::vector<ConvertedGraphVertex *>();
@@ -35,8 +35,8 @@ struct DiffInfo {
         after_gi->globalRootMemID - before_gi->globalRootMemID;
     int begin = std::min(0, -gap_of_grootmem_id);
     int end = std::max(
-        std::max(before_atoms->cap, after_hyperlinks->cap - gap_of_grootmem_id),
-        std::max(after_atoms->cap, after_hyperlinks->cap - gap_of_grootmem_id));
+        std::max(before_atoms->size(), after_hyperlinks->size() - gap_of_grootmem_id),
+        std::max(after_atoms->size(), after_hyperlinks->size() - gap_of_grootmem_id));
     for (int i = begin; i < end; i++) {
       ConvertedGraphVertex *before_hl =
           (ConvertedGraphVertex *)readDynamicArray(before_hyperlinks, i);
