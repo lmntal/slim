@@ -4,11 +4,11 @@
 #include "hash.hpp"
 #include "util.hpp"
 #include <cstring>
+#include <queue>
 #include <stack>
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <queue>
 
 #define INIT_CAP (4)
 typedef enum Order {
@@ -85,156 +85,135 @@ void dump(const std::vector<T> &stack, void valueDump(T)) {
 
 typedef intptr_t CollectionInt;
 
-typedef enum {
-  key_none,
-  key_uint32,
-  key_discretePropagationList,
-  key_int,
-  key_double,
-  key_string,
-  key_null
-} KeyType;
-
-struct ListBody {
-  void *value;
-  ListBody *next;
-  ListBody *prev;
-  ListBody() {
+template <typename T> struct ListBody__ {
+  T value;
+  ListBody__ *next;
+  ListBody__ *prev;
+  ListBody__() {
     value = NULL;
     next = this;
     prev = this;
   };
+  ListBody__(T value) : value(value), next(nullptr), prev(nullptr) {}
 };
 
-class List {
-  ListBody *sentinel;
-
+template <typename T> class List__ {
 public:
-  using iterator = ListBody *;
+  ListBody__<T> *sentinel;
+
+  using iterator = ListBody__<T> *;
 
   bool empty() { return sentinel->next == sentinel; }
-  List() {
-    sentinel = new ListBody;
+  List__() {
+    sentinel = new ListBody__<T>;
     sentinel->value = NULL;
     sentinel->next = sentinel;
     sentinel->prev = sentinel;
   }
 
-  void *front() { return sentinel->next->value; }
+  T front() { return sentinel->next->value; }
 
-  ListBody *begin() { return sentinel->next; }
-  ListBody *end() { return sentinel; }
+  iterator begin() { return sentinel->next; }
+  iterator end() { return sentinel; }
 
-  friend List *makeList();
-  friend void pushList(List *list, void *value);
-  friend void *peekList(List *list);
-  friend ListBody *makeCell(void *value);
-  friend void pushCell(List *list, ListBody *cell);
-  friend ListBody *popCell(List *list);
-  friend ListBody *peekCell(List *list);
-  friend void *cutCell(ListBody *cell);
-  friend void insertNextCell(ListBody *cellA, ListBody *cellB);
-  friend void forEachValueOfList(List *list, void func(void *));
-  friend void forEachCellOfList(List *list, void func(ListBody *));
-  friend void listDump(List *list, void valueDump(void *));
-  friend void freeList(List *list);
-  friend void freeListCaster(void *list);
-  friend void freeListWithValues(List *list, void freeValue(void *));
-  friend Bool isEmptyList(List *list);
-  friend Bool isSingletonList(List *list);
-  friend Order compareList(List *listA, List *listB,
-                           Order compareValue(void *, void *));
-  friend List *copyList(List *l);
-  friend List *copyListWithValues(List *l, void *copyValue(void *));
+  void push_front(T value) { splice(begin(), new ListBody__<T>(value)); }
 
-  void push_front(void *value) { pushList(this, value); }
+  void splice(iterator iter, iterator cell) {
+    cell->next = iter;
+    iter->prev = cell;
+    iter->prev->next = cell;
+    cell->prev = iter->prev;
+  }
 };
 
 namespace std {
-inline ListBody *next(ListBody *b, int n) {
+template <typename T> inline ListBody__<T> *next(ListBody__<T> *b, int n) {
   for (int i = 0; i < n; i++)
     b = b->next;
   return b;
 }
 } // namespace std
 
-List *makeList();
-ListBody *makeCell(void *value);
-void pushCell(List *list, ListBody *cell);
-ListBody *popCell(List *list);
-void *cutCell(ListBody *cell);
-void insertNextCell(ListBody *cellA, ListBody *cellB);
-void forEachValueOfList(List *list, void func(void *));
-void listDump(List *list, void valueDump(void *));
-void freeList(List *list);
+List__<void *> *makeList();
+template <typename T> void pushCell(List__<T> *list, ListBody__<T> *cell);
+template <typename T> ListBody__<T> *popCell(List__<T> *list);
+template <typename T> void *cutCell(ListBody__<T> *cell);
+template <typename T>
+void insertNextCell(ListBody__<T> *cellA, ListBody__<T> *cellB);
+template <typename T> void forEachValueOfList(List__<T> *list, void func(T));
+template <typename T> void listDump(List__<T> *list, void valueDump(T));
+template <typename T> void freeList(List__<T> *list);
 void freeListCaster(void *list);
-void freeListWithValues(List *list, void freeValue(void *));
-Bool isSingletonList(List *list);
-Order compareList(List *listA, List *listB, Order compareValue(void *, void *));
-List *copyList(List *l);
-List *copyListWithValues(List *l, void *copyValue(void *));
+template <typename T>
+void freeListWithValues(List__<T> *list, void freeValue(T));
+template <typename T> bool isSingletonList(List__<T> *list);
+template <typename T1, typename T2>
+Order compareList(List__<T1> *listA, List__<T2> *listB,
+                  Order compareValue(T1, T2));
+template <typename T> List__<T> *copyList(List__<T> *l);
+template <typename T>
+List__<T> *copyListWithValues(List__<T> *l, void *copyValue(T));
 
-typedef struct _KeyContainer {
-  KeyType type;
-  union {
-    uint32_t ui32;
-    List *discretePropagationList;
-    int integer;
-    double dbl;
-    char *string;
-  } u;
-} KeyContainer;
+template <typename T> struct KeyContainer__;
+template <typename T> T get(const KeyContainer__<T> &key);
 
-KeyContainer *allocKey(KeyContainer key);
-void keyDump(KeyContainer key);
-KeyContainer makeUInt32Key(uint32_t ui32);
-KeyContainer makeDiscretePropagationListKey(List *dpList);
+template <typename T> struct KeyContainer__ {
+  T value;
+
+  KeyContainer__() = default;
+  template <typename U>
+  KeyContainer__(const KeyContainer__<U> &k) : value(k.value) {
+    value = k.value;
+  }
+
+  operator T() { return get<KeyContainer__<T>>(*this); }
+};
+
+KeyContainer__<List__<void *> *>
+makeDiscretePropagationListKey(List__<void *> *dpList);
 
 typedef enum _Color { RED, BLACK } Color;
 
 typedef enum _Direction { LEFT, RIGHT } Direction;
 
-typedef struct _RedBlackTreeBody {
-  KeyContainer key;
+template <typename K, typename V> struct _RedBlackTreeBody {
+  KeyContainer__<K> key;
   Color color;
-  void *value;
+  V value;
   struct _RedBlackTreeBody *children[2];
-} RedBlackTreeBody;
-
-struct RedBlackTree {
-  RedBlackTreeBody *body;
-  RedBlackTree() { body = NULL; }
 };
+using RedBlackTreeBody = _RedBlackTreeBody<void *, void *>;
 
-void redBlackTreeKeyDump(RedBlackTree *rbt);
+template <typename K, typename V> struct RedBlackTree__ {
+  _RedBlackTreeBody<K, V> *body;
+  RedBlackTree__() { body = NULL; }
+};
+using RedBlackTree = RedBlackTree__<void *, void *>;
+
+template <typename K, typename V>
+void redBlackTreeKeyDump(RedBlackTree__<K, V> *rbt);
 RedBlackTree *makeRedBlackTree();
-void redBlackTreeValueDump(RedBlackTree *rbt, void valueDump(void *));
-void freeRedBlackTree(RedBlackTree *rbt);
-void freeRedBlackTreeWithValueInner(RedBlackTreeBody *rbtb,
-                                    void freeValue(void *));
-void freeRedBlackTreeWithValue(RedBlackTree *rbt, void freeValue(void *));
-void *searchRedBlackTree(RedBlackTree *rbt, KeyContainer key);
-void insertRedBlackTree(RedBlackTree *rbt, KeyContainer key, void *value);
-void deleteRedBlackTree(RedBlackTree *rbt, KeyContainer key);
-Bool isEmptyRedBlackTree(RedBlackTree *rbt);
-Bool isSingletonRedBlackTree(RedBlackTree *rbt);
-void *minimumElementOfRedBlackTree(RedBlackTree *rbt);
-
-#define HASH_SIZE (1 << 16)
-#define HASH_MASK (HASH_SIZE - 1)
-
-typedef struct _HashTable {
-  List **body;
-} HashTable;
-
-HashTable *makeHashTable();
-void freeHashTable(HashTable *hTable);
-void *findHashTable(HashTable *hTable, Hash key, void *value,
-                    int valueCompare(void *, void *));
-void setHashTable(HashTable *hTable, Hash key, void *value,
-                  int valueCompare(void *, void *));
-void *getHashTable(HashTable *hTable, Hash key, void *value,
-                   int valueCompare(void *, void *));
+template <typename K, typename V>
+void redBlackTreeValueDump(RedBlackTree__<K, V> *rbt, void valueDump(V));
+template <typename K, typename V>
+void freeRedBlackTree(RedBlackTree__<K, V> *rbt);
+template <typename K, typename V>
+void freeRedBlackTreeWithValueInner(_RedBlackTreeBody<K, V> *rbtb,
+                                    void freeValue(V));
+template <typename K, typename V>
+void freeRedBlackTreeWithValue(RedBlackTree__<K, V> *rbt, void freeValue(V));
+template <typename K, typename V>
+void *searchRedBlackTree(RedBlackTree__<K, V> *rbt, K key);
+template <typename K, typename V>
+void insertRedBlackTree(RedBlackTree__<K, V> *rbt, K key, V value);
+template <typename K, typename V>
+void deleteRedBlackTree(RedBlackTree__<K, V> *rbt, K key);
+template <typename K, typename V>
+Bool isEmptyRedBlackTree(RedBlackTree__<K, V> *rbt);
+template <typename K, typename V>
+Bool isSingletonRedBlackTree(RedBlackTree__<K, V> *rbt);
+template <typename K, typename V>
+V minimumElementOfRedBlackTree(RedBlackTree__<K, V> *rbt);
 
 struct DisjointSetForest {
   DisjointSetForest *parent;

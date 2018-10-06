@@ -11,20 +11,21 @@ struct ConvertedGraph;
 
 #define CLASS_SENTINEL (NULL)
 
+using vertex_list = List__<InheritedVertex *>;
+
 struct TrieBody{
-  KeyContainer key;
-  List *inheritedVertices;
+  uint32_t key;
+  vertex_list *inheritedVertices;
   TrieBody *parent;
-  RedBlackTree *children;
+  RedBlackTree__<uint32_t, TrieBody *> *children;
   int depth;
   Bool isInfinitedDepth;
   Bool isPushedIntoGoAheadStack;
 
   TrieBody() {
-    key.type = key_null;
-    inheritedVertices = new List();
+    inheritedVertices = new vertex_list();
     parent = NULL;
-    children = new RedBlackTree();
+    children = new RedBlackTree__<uint32_t, TrieBody *>();
     depth = -1;
     isInfinitedDepth = false;
     isPushedIntoGoAheadStack = false;
@@ -57,11 +58,11 @@ typedef struct _CanonicalLabel{
 
 struct HashString{
   int creditIndex;
-  DynamicArray *body;
+  std::vector<uint32_t *> *body;
 
   HashString(){
     creditIndex = 0;
-    body = new DynamicArray();
+    body = new std::vector<uint32_t *>();
   }
 
 };
@@ -74,7 +75,7 @@ struct InheritedVertex{
   Bool isPushedIntoFixCreditIndex;
   int beforeID;
   TrieBody *ownerNode;
-  ListBody *ownerCell;
+  vertex_list::iterator ownerCell;
   std::vector<int> *conventionalPropagationMemo;
   DisjointSetForest *equivalenceClassOfIsomorphism;
 
@@ -100,11 +101,12 @@ void freeInheritedVertex(InheritedVertex *iVertex);
 Trie *makeTrie();
 void freeTrie(Trie *trie);
 Bool triePropagate(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph,int gapOfGlobalRootMemID,int *stepOfPropagationPtr);
-List *makeConventionalPropagationList(Trie *trie,int stepOfPropagation);
-ListBody *getNextSentinel(ListBody *beginSentinel);
-void putLabelsToAdjacentVertices(List *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
-Bool classifyConventionalPropagationListWithAttribute(List *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
-Bool getStableRefinementOfConventionalPropagationList(List *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
+vertex_list *makeConventionalPropagationList(Trie *trie,int stepOfPropagation);
+template <typename T>
+typename List__<T>::iterator getNextSentinel(typename List__<T>::iterator beginSentinel);
+void putLabelsToAdjacentVertices(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
+Bool classifyConventionalPropagationListWithAttribute(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
+Bool getStableRefinementOfConventionalPropagationList(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
 InheritedVertex *copyInheritedVertex(InheritedVertex *iVertex);
 void *copyInheritedVertexCaster(void *iVertex);
 void inheritedVertexDump(InheritedVertex *iVertex);
