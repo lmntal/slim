@@ -823,154 +823,22 @@ void *getHashTable(HashTable *hTable, Hash key, void *value,
   }
 }
 
-ValueWithPriority *wrapValueAndPriority(void *value, int priority) {
-  ValueWithPriority *ret =
-      (ValueWithPriority *)malloc(sizeof(ValueWithPriority));
-  ret->value = value;
-  ret->priority = priority;
 
-  return ret;
-}
 
-void freePriorityWrapper(ValueWithPriority *vwPriority) {
-  free(vwPriority);
 
-  return;
-}
 
-PriorityQueue *makePriorityQueue() {
-  PriorityQueue *ret = (PriorityQueue *)malloc(sizeof(PriorityQueue));
-  ret->num = 0;
-  ret->body = makeDynamicArray();
 
-  return ret;
-}
 
-void freePriorityQueue(PriorityQueue *pQueue) {
-  int i;
 
-  for (i = 0; i < pQueue->num; i++) {
-    ValueWithPriority *wrapper =
-        (ValueWithPriority *)readDynamicArray(pQueue->body, i);
-    freePriorityWrapper(wrapper);
-  }
 
-  freeDynamicArray(pQueue->body);
-  free(pQueue);
 
-  return;
-}
 
-Bool isEmptyPriorityQueue(PriorityQueue *pQueue) { return pQueue->num == 0; }
 
-#define PQ_L_CHILD(X) (2 * (X) + 1)
-#define PQ_R_CHILD(X) (2 * (X) + 2)
-#define PQ_PARENT(X) (((X)-1) / 2)
 
-ValueWithPriority peekPriorityQueue(PriorityQueue *pQueue) {
-  return *((ValueWithPriority *)readDynamicArray(pQueue->body, 0));
-}
 
-void pushPriorityQueue(PriorityQueue *pQueue, void *value, int priority) {
-  ValueWithPriority *tmpWrapper = wrapValueAndPriority(value, priority);
 
-  int tmpIndex = pQueue->num;
 
-  while (tmpIndex != 0) {
-    int parentIndex = PQ_PARENT(tmpIndex);
-    ValueWithPriority *parentWrapper =
-        (ValueWithPriority *)readDynamicArray(pQueue->body, parentIndex);
 
-    if (tmpWrapper->priority < parentWrapper->priority) {
-      writeDynamicArray(pQueue->body, tmpIndex, (void *)tmpWrapper);
-      break;
-    } else {
-      writeDynamicArray(pQueue->body, tmpIndex, (void *)parentWrapper);
-      tmpIndex = parentIndex;
-    }
-  }
-
-  if (tmpIndex == 0) {
-    writeDynamicArray(pQueue->body, tmpIndex, (void *)tmpWrapper);
-  }
-
-  pQueue->num++;
-
-  return;
-}
-
-ValueWithPriority popPriorityQueue(PriorityQueue *pQueue) {
-  ValueWithPriority *retWrapper =
-      (ValueWithPriority *)readDynamicArray(pQueue->body, 0);
-  ValueWithPriority ret = *retWrapper;
-  freePriorityWrapper(retWrapper);
-
-  int tmpIndex = 0;
-  ValueWithPriority *tmpWrapper =
-      (ValueWithPriority *)readDynamicArray(pQueue->body, pQueue->num - 1);
-  pQueue->num--;
-
-  int greatChildIndex;
-  ValueWithPriority *greatWrapper;
-
-  while (PQ_L_CHILD(tmpIndex) < pQueue->num) {
-    if (PQ_R_CHILD(tmpIndex) < pQueue->num) {
-      int leftChildIndex = PQ_L_CHILD(tmpIndex);
-      int rightChildIndex = PQ_R_CHILD(tmpIndex);
-      ValueWithPriority *leftWrapper =
-          (ValueWithPriority *)readDynamicArray(pQueue->body, leftChildIndex);
-      ValueWithPriority *rightWrapper =
-          (ValueWithPriority *)readDynamicArray(pQueue->body, rightChildIndex);
-
-      if (leftWrapper->priority > rightWrapper->priority) {
-        greatChildIndex = leftChildIndex;
-        greatWrapper = leftWrapper;
-      } else {
-        greatChildIndex = rightChildIndex;
-        greatWrapper = rightWrapper;
-      }
-    } else {
-      greatChildIndex = PQ_L_CHILD(tmpIndex);
-      greatWrapper =
-          (ValueWithPriority *)readDynamicArray(pQueue->body, greatChildIndex);
-    }
-
-    if (tmpWrapper->priority > greatWrapper->priority) {
-      writeDynamicArray(pQueue->body, tmpIndex, (void *)tmpWrapper);
-      break;
-    } else {
-      writeDynamicArray(pQueue->body, tmpIndex, (void *)greatWrapper);
-      tmpIndex = greatChildIndex;
-    }
-  }
-
-  if (PQ_L_CHILD(tmpIndex) >= pQueue->num) {
-    writeDynamicArray(pQueue->body, tmpIndex, (void *)tmpWrapper);
-  }
-
-  return ret;
-}
-
-int numPriorityQueue(PriorityQueue *pQueue) { return pQueue->num; }
-
-void priorityWrapperDump(ValueWithPriority *wrapper) {
-  fprintf(stdout, "<%p,%d>", wrapper->value, wrapper->priority);
-
-  return;
-}
-
-void priorityWrapperDumpCaster(void *wrapper) {
-  priorityWrapperDump((ValueWithPriority *)wrapper);
-
-  return;
-}
-
-void priorityQueueDump(PriorityQueue *pQueue) {
-  fprintf(stdout, "PQ_NUM:%d\n", pQueue->num);
-  dynamicArrayDump(pQueue->body, priorityWrapperDumpCaster);
-
-  return;
-}
 
 DisjointSetForest *makeDisjointSetForest() {
   DisjointSetForest *ret =
