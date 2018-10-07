@@ -58,9 +58,17 @@ struct binstr_decoder {
   std::vector<BsDecodeLog> log;
   int nvisit; /* カウンタ(== 1): 順序付けを記録しながらデコードする.
                * (0はグローバルルート膜なので1から) */
-
+  std::vector<std::pair<int,int>> pos_to_id;
   binstr_decoder(BYTE *bs, size_t len, size_t idx = 0)
       : scanner(bs, len, idx), log(len * TAG_IN_BYTE), nvisit(VISITLOG_INIT_N) {
+  }
+
+
+  binstr_decoder(BYTE *bs, size_t len, std::vector<std::pair<int,int>> pos_vec, size_t idx = 0)
+      : scanner(bs, len, idx), log(len * TAG_IN_BYTE), nvisit(VISITLOG_INIT_N) {
+    for(auto it=pos_vec.begin(); it!=pos_vec.end(); it++) {
+      pos_to_id.push_back(std::make_pair(it->first, it->second));
+    }
   }
 
   int decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);

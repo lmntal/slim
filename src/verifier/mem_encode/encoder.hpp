@@ -430,7 +430,7 @@ struct encoder {
   }
 
   LmnBinStr *binary_string() {
-    return binstr.to_lmn_binstr();
+    return binstr.to_lmn_binstr(cur->pos_to_id);
   }
 };
 } // namespace mem_encode

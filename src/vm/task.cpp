@@ -1077,7 +1077,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 	  printf("%s:%d\n", __FUNCTION__, __LINE__);
 	  lmn_dump_mem_dev(tmp_global_root);
 
-	  print_correspond_procces_id(copymap, RC_GROOT_MEM(rc));
+	  // print_correspond_procces_id(copymap, RC_GROOT_MEM(rc));
 
 	  if(json_dump_gen and !diff_gen_finish) {
 	    // json_dump_gen=false;
