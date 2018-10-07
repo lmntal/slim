@@ -6,12 +6,13 @@
 #include"hash.hpp"
 #include"diff_info.hpp"
 // #include"convertedgraph.hpp"
+#include <list>
 
 struct ConvertedGraph;
 
 #define CLASS_SENTINEL (NULL)
 
-using vertex_list = List__<InheritedVertex *>;
+using vertex_list = std::list<InheritedVertex *>;
 
 struct TrieBody{
   uint32_t key;
@@ -75,6 +76,7 @@ struct InheritedVertex{
   Bool isPushedIntoFixCreditIndex;
   int beforeID;
   TrieBody *ownerNode;
+  vertex_list *ownerList;
   vertex_list::iterator ownerCell;
   std::vector<int> *conventionalPropagationMemo;
   DisjointSetForest *equivalenceClassOfIsomorphism;
@@ -89,7 +91,7 @@ struct InheritedVertex{
     beforeID = cVertex->ID - gapOfGlobalRootMemID;
     cVertex->correspondingVertexInTrie = this;
     ownerNode = NULL;
-    ownerCell = NULL;
+    ownerList = nullptr;
     conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
   };

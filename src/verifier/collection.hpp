@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <list>
 
 #define INIT_CAP (4)
 typedef enum Order {
@@ -95,13 +96,54 @@ template <typename T> struct ListBody__ {
     prev = this;
   };
   ListBody__(T value) : value(value), next(nullptr), prev(nullptr) {}
+
+  T & operator *() { return value; }
 };
 
 template <typename T> class List__ {
 public:
   ListBody__<T> *sentinel;
 
-  using iterator = ListBody__<T> *;
+  struct iterator {
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = T *;
+    using reference = T &;
+
+    ListBody__<T> *body;
+
+    iterator() : body(nullptr) {}
+    iterator(ListBody__<T> *body) : body(body) {}
+    iterator(const iterator &iter) : body(iter.body) {}
+
+    T &operator *() { return body->value; }
+    const T &operator *() const { return body->value; }
+
+    iterator &operator++() {
+      body = body->next;
+      return *this;
+    }
+    iterator operator++(int i) {
+      auto it = *this;
+      ++(*this);
+      return it;
+    }
+    iterator &operator--() {
+      body = body->prev;
+      return *this;
+    }
+    iterator operator--(int i) {
+      auto it = *this;
+      --(*this);
+      return it;
+    }
+
+    bool operator==(const iterator &iter) const { return iter.body == body; }
+    bool operator!=(const iterator &iter) const { return !(*this == iter); }
+
+    bool operator<(const iterator &iter) const { return *(*this) < *iter; }
+  };
 
   bool empty() { return sentinel->next == sentinel; }
   List__() {
@@ -110,20 +152,55 @@ public:
     sentinel->next = sentinel;
     sentinel->prev = sentinel;
   }
+  ~List__() {
+    for (auto it = begin(); it != end(); ++it) delete it.body;
+    delete sentinel;
+  }
 
   T front() { return sentinel->next->value; }
 
   iterator begin() { return sentinel->next; }
   iterator end() { return sentinel; }
 
-  void push_front(T value) { splice(begin(), new ListBody__<T>(value)); }
+  const iterator begin() const { return sentinel->next; }
+  const iterator end() const { return sentinel; }
+
+  void push_front(T value) { splice(begin(), iterator(new ListBody__<T>(value))); }
+
+  void insert(iterator iter, T value) {
+    splice(iter, iterator(new ListBody__<T>(value)));
+  }
 
   void splice(iterator iter, iterator cell) {
-    cell->next = iter;
-    iter->prev = cell;
-    iter->prev->next = cell;
-    cell->prev = iter->prev;
+    if (cell.body->prev) cell.body->prev->next = cell.body->next;
+    if (cell.body->next) cell.body->next->prev = cell.body->prev;
+
+    cell.body->next = iter.body;
+    iter.body->prev = cell.body;
+    iter.body->prev->next = cell.body;
+    cell.body->prev = iter.body->prev;
   }
+
+  void splice(iterator position, List__& x, iterator i) {
+    if (i.body->prev) i.body->prev->next = i.body->next;
+    if (i.body->next) i.body->next->prev = i.body->prev;
+
+    i.body->next = position.body;
+    position.body->prev = i.body;
+    position.body->prev->next = i.body;
+    i.body->prev = position.body->prev;
+  }
+
+  iterator erase(iterator position) {
+    auto ret = std::next(position, 1);
+    if (position.body->prev) position.body->prev->next = position.body->next;
+    if (position.body->next) position.body->next->prev = position.body->prev;
+    delete position.body;
+    return ret;
+  }
+
+  friend iterator begin(List__ &list);
+  friend iterator end(List__ &list);
 };
 
 namespace std {
@@ -135,18 +212,19 @@ template <typename T> inline ListBody__<T> *next(ListBody__<T> *b, int n) {
 } // namespace std
 
 List__<void *> *makeList();
-template <typename T> void pushCell(List__<T> *list, ListBody__<T> *cell);
-template <typename T> ListBody__<T> *popCell(List__<T> *list);
-template <typename T> void *cutCell(ListBody__<T> *cell);
+template <typename Iter, typename T = typename Iter::value_type> void *cutCell(Iter cell);
 template <typename T>
-void insertNextCell(ListBody__<T> *cellA, ListBody__<T> *cellB);
+void insertNextCell(typename List__<T>::iterator cellA, typename List__<T>::iterator cellB);
 template <typename T> void forEachValueOfList(List__<T> *list, void func(T));
-template <typename T> void listDump(List__<T> *list, void valueDump(T));
+template <typename List, typename T> void listDump(List *list, void valueDump(T));
 template <typename T> void freeList(List__<T> *list);
-void freeListCaster(void *list);
 template <typename T>
 void freeListWithValues(List__<T> *list, void freeValue(T));
 template <typename T> bool isSingletonList(List__<T> *list);
+template <typename T>
+inline bool isSingletonList(std::list<T> *list) {
+  return std::begin(*list) != std::end(*list) && std::next(std::begin(*list), 1) == std::end(*list);
+}
 template <typename T1, typename T2>
 Order compareList(List__<T1> *listA, List__<T2> *listB,
                   Order compareValue(T1, T2));

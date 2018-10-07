@@ -127,8 +127,8 @@ void insertNextCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
 
 void *peekList(List__<void *> *list) { return list->sentinel->next->value; }
 
-template <typename T> void pushCell(List__<T> *list, ListBody__<T> *cell) {
-  insertNextCell(list->begin(), cell);
+template <typename T> void pushCell(List__<T> *list, typename List__<T>::iterator cell) {
+  insertNextCell(list->begin(), cell.body);
 
   return;
 }
@@ -176,21 +176,17 @@ void forEachCellOfList(List__<T> *list, void func(ListBody__<T> *)) {
   return;
 }
 
-template <typename T> void listDump(List__<T> *list, void valueDump(T)) {
-  auto sentinel = list->sentinel;
+template <typename List, typename T> void listDump(List *list, void valueDump(T)) {
+  auto sentinel = std::end(*list);
 
   fprintf(stdout, "[");
 
-  for (auto iterator = sentinel->next; iterator != sentinel;) {
-    auto iteratorNext = iterator->next;
+  for (auto iterator = std::begin(*list); iterator != sentinel; ++iterator) {
+    valueDump(*iterator);
 
-    valueDump(iterator->value);
-
-    if (iterator->next != sentinel) {
+    if (std::next(iterator, 1) != sentinel) {
       fprintf(stdout, ",");
     }
-
-    iterator = iteratorNext;
   }
 
   fprintf(stdout, "]");
