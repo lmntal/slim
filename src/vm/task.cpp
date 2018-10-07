@@ -674,6 +674,115 @@ HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem,
   return retset;
 }
 
+void print_correspond_atom_id(ProcessTableRef proc_tbl, LmnSymbolAtomRef atom) {
+  LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
+  LmnArity arity = LMN_FUNCTOR_ARITY(f);
+  LmnWord val;
+  fprintf(stdout, "ORG: Func[%3u], Name[%5s], A[%2u], Addr[%p], ID[%2lu], \n", f,
+	  lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)), arity, atom,
+	  LMN_SATOM_ID(atom));
+  if (LMN_FUNC_IS_HL(f)) {
+    fprintf(stdout, "HL_OBJ_ID[%2lu], ", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(atom)));
+  }
+
+  printf("\n");
+
+  if(proc_tbl_get_by_atom(proc_tbl, atom, &val)) {
+    LmnFunctor new_f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)val);
+    LmnArity new_arity = LMN_FUNCTOR_ARITY(new_f);
+    fprintf(stdout, "NEW: Func[%3u], Name[%5s], A[%2u], Addr[%p], ID[%2lu], \n", new_f,
+	    lmn_id_to_name(LMN_FUNCTOR_NAME_ID(new_f)), new_arity, val,
+	    LMN_SATOM_ID((LmnSymbolAtomRef)val));
+    if (LMN_FUNC_IS_HL(f)) {
+      fprintf(stdout, "HL_OBJ_ID[%2lu], ", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)val)));
+    }
+  } else {
+    printf("NO CORRESPOND PROCCES\n");
+  }
+
+  printf("\n");
+
+    for (int i = 0; i < arity; i++) {
+    LmnLinkAttr attr;
+
+    fprintf(stdout, "   %2u: ", i);
+    attr = LMN_SATOM_GET_ATTR(atom, i);
+    if (i == 2 && LMN_IS_PROXY_FUNCTOR(f)) { /* membrane */
+      fprintf(stdout, "mem[%p], ", (void *)LMN_PROXY_GET_MEM(atom));
+      continue;
+    } else if (i == 1 && LMN_FUNC_IS_HL(f)) {
+      HyperLink *h = (HyperLink *)LMN_SATOM_GET_LINK(atom, i);
+      fprintf(stdout,
+              " link[HLobj, Addr:%p, HL_ID:%2lu, ROOT_HL_ID:%2lu, "
+              "Owner!Addr:%p, Owner'!'ID:%2lu], ",
+              h, LMN_HL_ID(h), LMN_HL_ID(lmn_hyperlink_get_root(h)),
+              lmn_hyperlink_hl_to_at(h),
+              LMN_SATOM_ID(lmn_hyperlink_hl_to_at(h)));
+    } else if (!LMN_ATTR_IS_DATA(attr)) { /* symbol atom */
+      fprintf(stdout, " link[%5d, Addr:%p,    ID:%2lu], ",
+              LMN_ATTR_GET_VALUE(attr), LMN_SATOM_GET_LINK(atom, i),
+              LMN_SATOM_ID((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i)));
+    } else {
+      switch (attr) {
+      case LMN_INT_ATTR:
+        fprintf(stdout, "int[%lu], ", (LmnWord)LMN_SATOM_GET_LINK(atom, i));
+        break;
+      case LMN_DBL_ATTR:
+        fprintf(stdout, "double[%f], ",
+                lmn_get_double((LmnDataAtomRef)LMN_SATOM_GET_LINK(atom, i)));
+        break;
+      case LMN_HL_ATTR:
+        fprintf(stdout, "hlink[ !, Addr:%lu, ID:%lu], ",
+                (LmnWord)LMN_SATOM_GET_LINK(atom, i),
+                LMN_SATOM_ID((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i)));
+        break;
+      default:
+        fprintf(stdout, "unknown data type[%d], ", attr);
+        break;
+      }
+    }
+    fprintf(stdout, "\n");
+    fflush(stdout);
+  }
+
+  if (arity == 0)
+    fprintf(stdout, "\n");
+  fflush(stdout);
+
+
+}
+
+void print_correspond_procces_id(ProcessTableRef proc_tbl, LmnMembraneRef org_mem) {
+  AtomListEntryRef ent;
+  if (!org_mem)
+    return;
+  LmnWord val;
+  fprintf(stdout, "{\n");
+  fprintf(stdout, "ORG: Mem[%u], Addr[%p], ID[%lu]\n", LMN_MEM_NAME_ID(org_mem), org_mem,
+          lmn_mem_id(org_mem));
+  
+  if(proc_tbl_get_by_mem(proc_tbl, org_mem, &val)) {
+    fprintf(stdout, "NEW: Mem[%u], Addr[%p], ID[%lu]\n", LMN_MEM_NAME_ID((LmnMembraneRef)val), val, lmn_mem_id((LmnMembraneRef)val));    
+  } else {
+    printf("NO CORRESPOND MEM\n");
+  }
+
+  LmnFunctor f;
+  EACH_ATOMLIST(org_mem, ent, ({
+                  LmnSymbolAtomRef atom;
+		  // if (LMN_IS_EX_FUNCTOR(f))
+		  //   continue;
+		  // if (LMN_IS_PROXY_FUNCTOR(f))
+		  //   continue;
+                  EACH_ATOM(atom, ent, ({ print_correspond_atom_id(proc_tbl, atom); }));
+                }));
+
+  print_correspond_procces_id(proc_tbl, lmn_mem_child_head(org_mem));
+  fprintf(stdout, "}\n");
+  print_correspond_procces_id(proc_tbl, lmn_mem_next(org_mem));
+
+}
+
 BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
   LmnInstrOp op;
 
@@ -967,6 +1076,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
 	  printf("%s:%d\n", __FUNCTION__, __LINE__);
 	  lmn_dump_mem_dev(tmp_global_root);
+
+	  print_correspond_procces_id(copymap, RC_GROOT_MEM(rc));
 
 	  if(json_dump_gen and !diff_gen_finish) {
 	    // json_dump_gen=false;
