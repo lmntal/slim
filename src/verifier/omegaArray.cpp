@@ -62,7 +62,7 @@ void incrementOmegaArray(OmegaArray *oArray,int externalIndex){
 
     if(tmp == NULL){
       tmp = makeInt();
-      writeDynamicArray(oArray->body,internalIndex,tmp);
+      writeDynamicArray(oArray->body,internalIndex, (void *)tmp);
       tmp->value++;
     }else{
       tmp->value++;
@@ -83,7 +83,7 @@ void decrementOmegaArray(OmegaArray *oArray,int externalIndex){
 
     if(tmp == NULL){
       tmp = makeInt();
-      writeDynamicArray(oArray->body,internalIndex,tmp);
+      writeDynamicArray(oArray->body,internalIndex, (void *)tmp);
       tmp->value--;
     }else{
       tmp->value--;

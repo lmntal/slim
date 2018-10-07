@@ -5,22 +5,30 @@
 #include"collection.hpp"
 #include"trie.hpp"
 
+#include <vector>
+
 struct CanonicalAdjacencyInformation{
   Hash hash;
   CanonicalLabel myLabel;
-  Stack *adjacentLabels;
+  std::vector<void *> adjacentLabels; // ??
 };
 
 struct CanonicalAdjacencyList{
   Hash hashSum;
   Hash hashMul;
-  Stack *adjacencyInformations;
+  std::vector<void *> adjacencyInformations; // ??
 };
 
-List* trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph);
-Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(List *listA,List *listB);
-void freePreserveDiscreteProapgationList(List *pdpList);
+List__<void *>* trieMcKay(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph);
+Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster(void *iVertexA,void *iVertexB);
+template <typename Lista, typename Listb>
+Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(Lista *listA,Listb *listB){
+  return compareList(listA,listB,compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster);
+}
+template <typename List>
+void freePreserveDiscreteProapgationList(List__<void *> *pdpList);
 void freePreserveDiscreteProapgationListCaster(void *pdpList);
+template <typename List>
 Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,RedBlackTree *McKayKeyCollection,List *canonicalDiscreteRefinement,int stateID);
 
 #endif

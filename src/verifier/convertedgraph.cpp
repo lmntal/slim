@@ -38,61 +38,46 @@ Bool isEqualLinks(LMNtalLink *linkA,LMNtalLink *linkB){
 
 }
 
-void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(Stack *stack,ConvertedGraphVertex *cVertex){
-  if(cVertex != NULL){
-    if(!cVertex->isPushedIntoDiffInfoStack){
-      pushStack(stack,cVertex);
-      cVertex->isPushedIntoDiffInfoStack = true;
-    }
-  }
-}
-
-
-ConvertedGraphVertex *popConvertedVertexFromDiffInfoStackWithoutOverlap(Stack *stack){
-  ConvertedGraphVertex *ret = (ConvertedGraphVertex *)popStack(stack);
-  ret->isPushedIntoDiffInfoStack = false;
-
-  return ret;
-}
 
 Bool isHyperLink(LMNtalLink *link){
   return link->attr == HYPER_LINK_ATTR;
 }
 
-void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom,DynamicArray *afterConvertedHyperLinks,Stack *relinkedVertices){
+template <typename S, typename DynamicArray>
+void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom, std::vector<ConvertedGraphVertex *> *afterConvertedHyperLinks, S *relinkedVertices){
   if(beforeCAtom != NULL && afterCAtom != NULL){
     int i;
-    assert(beforeCAtom->links->numStack()==afterCAtom->links->numStack());
-    for(i=0;i<beforeCAtom->links->numStack();i++){
+    assert(beforeCAtom->links->size()==afterCAtom->links->size());
+    for(i=0;i<beforeCAtom->links->size();i++){
       LMNtalLink *beforeLink = (LMNtalLink *)readStack(beforeCAtom->links,i);
       LMNtalLink *afterLink = (LMNtalLink *)readStack(afterCAtom->links,i);
 
       if(!isEqualLinks(beforeLink,afterLink)){
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterCAtom);
         if(isHyperLink(beforeLink)){
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,(ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,beforeLink->data.ID));
+          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterConvertedHyperLinks->at(beforeLink->data.ID));
         }
         if(isHyperLink(afterLink)){
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,(ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,afterLink->data.ID));
+          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterConvertedHyperLinks->at(afterLink->data.ID));
         }
       }
     }
   }else if(beforeCAtom != NULL && afterCAtom == NULL){
     int i;
-    for(i=0;i<beforeCAtom->links->numStack();i++){
+    for(i=0;i<beforeCAtom->links->size();i++){
       LMNtalLink *beforeLink = (LMNtalLink *)readStack(beforeCAtom->links,i);
 
       if(isHyperLink(beforeLink)){
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,(ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,beforeLink->data.ID));
+        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterConvertedHyperLinks->at(beforeLink->data.ID));
       }
     }
   }else if(beforeCAtom == NULL && afterCAtom != NULL){
     int i;
-    for(i=0;i<afterCAtom->links->numStack();i++){
+    for(i=0;i<afterCAtom->links->size();i++){
       LMNtalLink *afterLink = (LMNtalLink *)readStack(afterCAtom->links,i);
 
       if(isHyperLink(afterLink)){
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,(ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,afterLink->data.ID));
+        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,afterConvertedHyperLinks->at(afterLink->data.ID));
       }
     }
   }else{
@@ -103,9 +88,9 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCA
 
 void convertedGraphDump(ConvertedGraph *cGraph){
   fprintf(stdout,"CONVERTED ATOMS:\n");
-  dynamicArrayDump(cGraph->atoms,convertedGraphVertexDumpCaster);
+  dynamicArrayDump(cGraph->atoms,convertedGraphVertexDump);
   fprintf(stdout,"CONVERTED HYPERLINKS:\n");
-  dynamicArrayDump(cGraph->hyperlinks,convertedGraphVertexDumpCaster);
+  dynamicArrayDump(cGraph->hyperlinks,convertedGraphVertexDump);
   return;
 }
 
@@ -127,7 +112,7 @@ void convertedGraphVertexDump(ConvertedGraphVertex *cVertex){
   fprintf(stdout,"name:%s\n",cVertex->name);
 
   fprintf(stdout,"links:");
-  for(i=0;i<cVertex->links->numStack();i++){
+  for(i=0;i<cVertex->links->size();i++){
     if(i!=0){
       fprintf(stdout,",");
     }
