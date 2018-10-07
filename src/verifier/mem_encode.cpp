@@ -309,7 +309,7 @@ static LmnMembraneRef lmn_binstr_decode_sub(const LmnBinStrRef bs) {
   auto groot = lmn_mem_make();
 
   lmn_mem_set_active(groot, TRUE); /* globalだから恒真 */
-  binstr_decoder dec(bs->v, bs->len);
+  binstr_decoder dec(bs->v, bs->len, bs->pos_to_id);
   dec.decode_cell(groot, NULL, 0);
 
   return groot;
