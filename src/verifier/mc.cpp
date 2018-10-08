@@ -263,6 +263,11 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  LmnBinStrRef bs = s->state_binstr();
+  for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
+    printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);    
+  }
+
   lmn_dump_mem_dev(mem);
 #ifdef DIFFISO_GEN
   if(!diff_gen_finish) {
