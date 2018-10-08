@@ -301,22 +301,13 @@ static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembraneRef mem,
                                           unsigned long tbl_size);
 
 /* エンコードされた膜をデコードし、構造を再構築する */
-static LmnMembraneRef lmn_binstr_decode_sub(const LmnBinStrRef bs) {
+LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs) {
   /* MEMO:
    *   8bit列を, binary stringの長さ * TAG_IN_BYTE(== 2)だけ確保(少し多めになる)
    *   logは, 復元したプロセスへのポインタを持ち,
    * 出現(nvisited)順に先頭から積んでいく */
-  auto groot = lmn_mem_make();
-
-  lmn_mem_set_active(groot, TRUE); /* globalだから恒真 */
-  binstr_decoder dec(bs->v, bs->len, bs->pos_to_id);
-  dec.decode_cell(groot, NULL, 0);
-
-  return groot;
-}
-
-LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs) {
   auto target = is_comp_z(bs) ? lmn_bscomp_z_decode(bs) : bs;
+
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -324,7 +315,11 @@ LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs) {
   }
 #endif
 
-  auto ret = lmn_binstr_decode_sub(target);
+  auto groot = lmn_mem_make();
+
+  lmn_mem_set_active(groot, TRUE); /* globalだから恒真 */
+  binstr_decoder dec(target->v, target->len, target->pos_to_id);
+  dec.decode_cell(groot, NULL, 0);
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -335,7 +330,7 @@ LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs) {
   if (is_comp_z(bs)) {
     lmn_binstr_free(target);
   }
-  return ret;
+  return groot;
 }
 
 /*----------------------------------------------------------------------
@@ -343,6 +338,8 @@ LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs) {
  */
 
 LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem) {
+
+
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__MENC_DUMP);
