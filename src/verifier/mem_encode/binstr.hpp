@@ -114,7 +114,7 @@ class BinStrCursor {
 
 
 public:
-  std::vector<std::pair<int,int>> pos_to_id; /* positionとprocess IDの対応*/
+  std::map<int, std::pair<int,int>> pos_to_id; /* positionとprocess IDの対応*/
 
   BinStrCursor() : binstr(nullptr), pos_(0), valid(false), direct(false) {}
 
@@ -127,8 +127,7 @@ public:
     valid = p.valid;
     direct = p.direct;
     for(auto it=p.pos_to_id.begin(); it!=p.pos_to_id.end(); it++) {
-      std::pair<int, int> pa=std::make_pair(it->first, it->second);
-      pos_to_id.push_back(pa);
+      pos_to_id[it->first]=it->second;
     }
     return p;
   }
@@ -162,10 +161,10 @@ public:
   int push_atom(LmnSymbolAtomRef a) {
     /* ファンクタの最大値からファンクタの値を引いて、大小を反転させる */
     LmnFunctor f = (LmnFunctor)FUNCTOR_MAX - LMN_SATOM_GET_FUNCTOR(a);
-    std::pair<int,int> pa=std::make_pair(pos_,LMN_SATOM_ID(a));
+    std::pair<int,int> pa=std::make_pair(LMN_SATOM_ID(a), -1);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("%d %d\n", pos_, LMN_SATOM_ID(a));
-    pos_to_id.push_back(pa);
+    pos_to_id[pos_]=pa;
     return push(TAG_ATOM_START) && push((const BYTE *)&f, BS_FUNCTOR_SIZE);
   }
 
@@ -366,7 +365,7 @@ public:
     return true;
   }
 
-  LmnBinStr *to_lmn_binstr(std::vector<std::pair<int,int>> pos_to_id_) const {
+  LmnBinStr *to_lmn_binstr(std::map<int,std::pair<int,int>> pos_to_id_) const {
     struct LmnBinStr *ret_bs;
     int size = (this->cur + 1) / 2;
     ret_bs = new LmnBinStr();
@@ -379,7 +378,7 @@ public:
       ret_bs->v[ret_bs->len >> 1] = ret_bs->v[ret_bs->len >> 1] & 0x0f;
     }
     for(auto it=pos_to_id_.begin(); it!=pos_to_id_.end(); it++) {
-      ret_bs->pos_to_id.push_back(std::make_pair(it->first, it->second));
+      ret_bs->pos_to_id[it->first]=it->second;
     }
     return ret_bs;
   }
