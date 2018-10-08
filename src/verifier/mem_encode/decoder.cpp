@@ -294,15 +294,17 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
 int binstr_decoder::decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
                                 int from_arg) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  std::pair<int,int> pa = pos_to_id[scanner.location()-1];
+  int pos = scanner.location()-1;
+  std::pair<int,int> pa = pos_to_id->at(pos);
   printf("%d %d\n", pa.first, pa.second);
   auto f = scanner.scan_functor();
 
   auto atom = lmn_mem_newatom(mem, f); /* アトムを生成する */
+  pos_to_id->at(pos).second=LMN_SATOM_ID(atom);
   log[(nvisit)].v = (LmnWord)atom; /* アドレスを記録(*nvisitは初期値1) */
   log[(nvisit)].type = BS_LOG_TYPE_ATOM;
   (nvisit)++;
-  pos_to_id[scanner.location()-1].second=LMN_SATOM_ID(atom);
+
   for (auto i = 0; i < LMN_FUNCTOR_ARITY(f); i++)
     LMN_SATOM_SET_LINK(atom, i, 0);
 
