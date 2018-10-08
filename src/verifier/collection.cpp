@@ -3,37 +3,19 @@
 #include "trie.hpp"
 #define INIT_CAP (4)
 
-DynamicArray *makeDynamicArray() {
-  DynamicArray *ret = (DynamicArray *)malloc(sizeof(DynamicArray));
-  ret->cap = INIT_CAP;
-  if ((ret->body = (void **)calloc(sizeof(void *), INIT_CAP)) == NULL) {
-    CHECKER("CALLOC ERROR");
-    exit(EXIT_FAILURE);
-  }
-  return ret;
-}
+DynamicArray *makeDynamicArray() { return new DynamicArray(INIT_CAP, nullptr); }
 
-void freeDynamicArray(DynamicArray *DArray) {
-  free(DArray->body);
-  free(DArray);
-  return;
-}
+void freeDynamicArray(DynamicArray *DArray) { delete DArray; }
 
 void freeValuesOfDynamicArray(DynamicArray *DArray, void freeValue(void *)) {
-  int i;
-
-  for (i = 0; i < DArray->cap; i++) {
-    if (DArray->body[i] != NULL) {
-      freeValue(DArray->body[i]);
-      DArray->body[i] = NULL;
-    }
-  }
+  for (auto v : *DArray)
+    freeValue(v);
+  DArray->clear();
 }
 
 void freeDynamicArrayAndValues(DynamicArray *DArray, void freeValue(void *)) {
   freeValuesOfDynamicArray(DArray, freeValue);
   freeDynamicArray(DArray);
-  return;
 }
 
 unsigned int round2up(unsigned int n) {
@@ -49,27 +31,17 @@ unsigned int round2up(unsigned int n) {
 }
 
 DynamicArray *assureSizeOfDynamicArray(DynamicArray *DArray, int index) {
-  if (index >= DArray->cap) {
-    int newCap = round2up((unsigned int)(index + 1));
-    void **newBody = (void **)realloc(DArray->body, newCap * sizeof(void *));
-    if (newBody == NULL) {
-      CHECKER("REALLOC ERROR");
-      exit(EXIT_FAILURE);
-    }
-    memset(newBody + DArray->cap, 0, (newCap - DArray->cap) * sizeof(void *));
-    DArray->cap = newCap;
-    DArray->body = newBody;
-    return DArray;
-  } else {
-    return DArray;
+  if (index >= DArray->size()) {
+    DArray->resize(index + 1, nullptr);
   }
+    return DArray;
 }
 
 void *readDynamicArray(DynamicArray *DArray, int index) {
   if (index < 0) {
     return NULL;
-  } else if (index < DArray->cap) {
-    return DArray->body[index];
+  } else if (index < DArray->size()) {
+    return DArray->at(index);
   } else {
     return NULL;
   }
@@ -77,20 +49,20 @@ void *readDynamicArray(DynamicArray *DArray, int index) {
 
 void *writeDynamicArray(DynamicArray *DArray, int index, void *value) {
   assureSizeOfDynamicArray(DArray, index);
-  void *ret = DArray->body[index];
-  DArray->body[index] = value;
+  void *ret = DArray->at(index);
+  (*DArray)[index] = value;
 
   return ret;
 }
 
 void dynamicArrayDump(DynamicArray *DArray, void valueDump(void *)) {
   int i;
-  for (i = 0; i < DArray->cap; i++) {
-    if (DArray->body[i] == NULL) {
+  for (i = 0; i < DArray->size(); i++) {
+    if (DArray->at(i) == NULL) {
       // fprintf(stdout,"%d:NULL\n",i);
     } else {
       fprintf(stdout, "%d:", i);
-      valueDump(DArray->body[i]);
+      valueDump(DArray->at(i));
       printf("\n");
     }
   }
@@ -127,7 +99,8 @@ void insertNextCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
 
 void *peekList(List__<void *> *list) { return list->sentinel->next->value; }
 
-template <typename T> void pushCell(List__<T> *list, typename List__<T>::iterator cell) {
+template <typename T>
+void pushCell(List__<T> *list, typename List__<T>::iterator cell) {
   insertNextCell(list->begin(), cell.body);
 
   return;
@@ -176,7 +149,8 @@ void forEachCellOfList(List__<T> *list, void func(ListBody__<T> *)) {
   return;
 }
 
-template <typename List, typename T> void listDump(List *list, void valueDump(T)) {
+template <typename List, typename T>
+void listDump(List *list, void valueDump(T)) {
   auto sentinel = std::end(*list);
 
   fprintf(stdout, "[");

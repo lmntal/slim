@@ -18,18 +18,7 @@ typedef enum Order {
   GT  // greater than
 } Order;
 
-struct DynamicArray{
-  int cap;
-  void **body;
-
-  DynamicArray(){
-    cap = INIT_CAP;
-    if((body = (void **)calloc(sizeof(void *),INIT_CAP)) == NULL){
-      CHECKER("CALLOC ERROR");
-      exit(EXIT_FAILURE);
-    }
-  };
-};
+using DynamicArray = std::vector<void *>;
 
 DynamicArray *makeDynamicArray();
 void freeDynamicArray(DynamicArray *DArray);

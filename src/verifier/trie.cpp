@@ -1546,7 +1546,7 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
     ConvertedGraph *cAfterGraph, ConvertedGraph *cBeforeGraph,
     int gapOfGlobalRootMemID) {
   int i;
-  for (i = 0; i < cAfterGraph->atoms->cap; i++) {
+  for (i = 0; i < cAfterGraph->atoms->size(); i++) {
     ConvertedGraphVertex *cAfterVertex =
         (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms, i);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -1566,7 +1566,7 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
     }
   }
 
-  for (i = 0; i < cAfterGraph->hyperlinks->cap; i++) {
+  for (i = 0; i < cAfterGraph->hyperlinks->size(); i++) {
     ConvertedGraphVertex *cAfterVertex =
         (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->hyperlinks, i);
     if (cAfterVertex != NULL) {
@@ -1588,7 +1588,7 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
 void initializeReferencesFromConvertedVerticesToInheritedVertices(
     ConvertedGraph *cBeforeGraph) {
   int i;
-  for (i = 0; i < cBeforeGraph->atoms->cap; i++) {
+  for (i = 0; i < cBeforeGraph->atoms->size(); i++) {
     ConvertedGraphVertex *cBeforeVertex =
         (ConvertedGraphVertex *)readDynamicArray(cBeforeGraph->atoms, i);
     if (cBeforeVertex != NULL) {
@@ -1596,7 +1596,7 @@ void initializeReferencesFromConvertedVerticesToInheritedVertices(
     }
   }
 
-  for (i = 0; i < cBeforeGraph->hyperlinks->cap; i++) {
+  for (i = 0; i < cBeforeGraph->hyperlinks->size(); i++) {
     ConvertedGraphVertex *cBeforeVertex =
         (ConvertedGraphVertex *)readDynamicArray(cBeforeGraph->hyperlinks, i);
     if (cBeforeVertex != NULL) {

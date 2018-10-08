@@ -35,8 +35,8 @@ struct DiffInfo {
         after_gi->globalRootMemID - before_gi->globalRootMemID;
     int begin = std::min(0, -gap_of_grootmem_id);
     int end = std::max(
-        std::max(before_atoms->cap, after_hyperlinks->cap - gap_of_grootmem_id),
-        std::max(after_atoms->cap, after_hyperlinks->cap - gap_of_grootmem_id));
+        std::max(before_atoms->size(), after_hyperlinks->size() - gap_of_grootmem_id),
+        std::max(after_atoms->size(), after_hyperlinks->size() - gap_of_grootmem_id));
     for (int i = begin; i < end; i++) {
       ConvertedGraphVertex *before_hl =
           (ConvertedGraphVertex *)readDynamicArray(before_hyperlinks, i);
