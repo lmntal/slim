@@ -63,5 +63,6 @@
 #include "re2c/file_buffer.hpp"
 #include "exception.hpp"
 #include "conditional_ostream.hpp"
+#include "optional.hpp"
 
 #endif /* LMN_ELEMENT_H */
