@@ -40,6 +40,7 @@
 #define LMN_CONVERTEDGRAPH_HPP
 #include "collection.hpp"
 #include "json.hpp"
+#include <map>
 #define NAME_LENGTH 256
 #define INTEGER_ATTR 128
 #define DOUBLE_ATTR 129
@@ -249,6 +250,7 @@ struct ConvertedGraph {
 };
 
 void convertedGraphDump(ConvertedGraph *cGraph);
+bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph* copy, std::map<int,int> iso_m);
 void LMNtalLinkDump(LMNtalLink *link);
 void convertedGraphVertexDump(ConvertedGraphVertex *cVertex);
 void convertedGraphVertexDumpCaster(void *cVertex);

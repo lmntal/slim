@@ -245,14 +245,6 @@ std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   return ret_m;
 }
 
-bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int, int> iso_m) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  for(auto it=iso_m.begin(); it!=iso_m.end(); it++) {
-    printf("%d %d\n", it->first, it->second);
-  }
-  return true;
-}
-
 /** =====================================================
  *  === Fundamental System for StateSpace Generation ====
  *  =====================================================
