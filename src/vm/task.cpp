@@ -688,17 +688,30 @@ void print_correspond_atom_id(ProcessTableRef proc_tbl, LmnSymbolAtomRef atom) {
   }
 
   printf("\n");
-
+  LmnFunctor new_f;
+  LmnArity new_arity;
   if(proc_tbl_get_by_atom(proc_tbl, atom, &val)) {
-    LmnFunctor new_f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)val);
-    LmnArity new_arity = LMN_FUNCTOR_ARITY(new_f);
+    new_f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)val);
+    new_arity = LMN_FUNCTOR_ARITY(new_f);
     fprintf(stdout, "NEW: Func[%3u], Name[%5s], A[%2u], Addr[%p], ID[%2lu], ", new_f,
 	    lmn_id_to_name(LMN_FUNCTOR_NAME_ID(new_f)), new_arity, val,
 	    LMN_SATOM_ID((LmnSymbolAtomRef)val));
     if (LMN_FUNC_IS_HL(new_f)) {
       fprintf(stdout, "HL_OBJ_ID[%2lu], ", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)val)));
     }
-  } else {
+  }else if(LMN_FUNC_IS_HL(f)) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    HyperLink* org_hl = lmn_hyperlink_at_to_hl(atom);
+    if(proc_tbl_get_by_hlink(proc_tbl, org_hl, &val)) {
+      LmnSymbolAtomRef hl_atom = lmn_hyperlink_hl_to_at((HyperLink*)val);
+      new_f = LMN_SATOM_GET_FUNCTOR(hl_atom);
+      new_arity = LMN_FUNCTOR_ARITY(new_f);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      fprintf(stdout, "NEW: Func[%3u], Name[%5s], A[%2u], Addr[%p], ID[%2lu], ", new_f,
+	      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(new_f)), new_arity, hl_atom,
+	      LMN_SATOM_ID(hl_atom));
+    }
+  }else {
     printf("NO CORRESPOND PROCCES\n");
   }
 
@@ -755,6 +768,7 @@ void print_correspond_atom_id(ProcessTableRef proc_tbl, LmnSymbolAtomRef atom) {
 }
 
 void make_id_to_id(ProcessTableRef proc_tbl, LmnMembraneRef org_mem, std::map<int,int> *m) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   AtomListEntryRef ent;
   if (!org_mem)
     return;
@@ -763,8 +777,14 @@ void make_id_to_id(ProcessTableRef proc_tbl, LmnMembraneRef org_mem, std::map<in
                   LmnSymbolAtomRef atom;
                   EACH_ATOM(atom, ent, ({ 
 			LmnWord val;
+			f = LMN_SATOM_GET_FUNCTOR(atom);
 			if(proc_tbl_get_by_atom(proc_tbl, atom, &val)) {
 			  (*m)[LMN_SATOM_ID(atom)]=LMN_SATOM_ID((LmnSymbolAtomRef)val);
+			}else if(LMN_FUNC_IS_HL(f)){
+			  HyperLink* org_hl = lmn_hyperlink_at_to_hl(atom);
+			  if(proc_tbl_get_by_hlink(proc_tbl, org_hl, &val)) {
+			    (*m)[LMN_SATOM_ID(lmn_hyperlink_hl_to_at(org_hl))]=LMN_SATOM_ID(lmn_hyperlink_hl_to_at((HyperLink*)val));
+			  }
 			}
 		      }));
                 }));
