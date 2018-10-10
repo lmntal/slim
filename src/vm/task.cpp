@@ -770,13 +770,16 @@ void print_correspond_atom_id(ProcessTableRef proc_tbl, LmnSymbolAtomRef atom) {
 void make_id_to_id(ProcessTableRef proc_tbl, LmnMembraneRef org_mem, std::map<int,int> *m) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   AtomListEntryRef ent;
+  LmnWord val;
   if (!org_mem)
     return;
+  if (proc_tbl_get_by_mem(proc_tbl, org_mem, &val)) {
+    (*m)[lmn_mem_id(org_mem)]=lmn_mem_id((LmnMembraneRef)val);
+  }
   LmnFunctor f;
   EACH_ATOMLIST(org_mem, ent, ({
                   LmnSymbolAtomRef atom;
                   EACH_ATOM(atom, ent, ({ 
-			LmnWord val;
 			f = LMN_SATOM_GET_FUNCTOR(atom);
 			if(proc_tbl_get_by_atom(proc_tbl, atom, &val)) {
 			  (*m)[LMN_SATOM_ID(atom)]=LMN_SATOM_ID((LmnSymbolAtomRef)val);
