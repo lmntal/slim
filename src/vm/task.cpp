@@ -786,7 +786,7 @@ void make_id_to_id(ProcessTableRef proc_tbl, LmnMembraneRef org_mem, std::map<in
 			}else if(LMN_FUNC_IS_HL(f)){
 			  HyperLink* org_hl = lmn_hyperlink_at_to_hl(atom);
 			  if(proc_tbl_get_by_hlink(proc_tbl, org_hl, &val)) {
-			    (*m)[LMN_SATOM_ID(lmn_hyperlink_hl_to_at(org_hl))]=LMN_SATOM_ID(lmn_hyperlink_hl_to_at((HyperLink*)val));
+			    (*m)[LMN_HL_ID(org_hl)]=LMN_HL_ID((HyperLink*)val);
 			  }
 			}
 		      }));

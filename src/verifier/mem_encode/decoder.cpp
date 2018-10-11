@@ -179,7 +179,7 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     LmnSymbolAtomRef hl_atom = lmn_hyperlink_new();
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("location-1=%d\n", scanner.location()-1);
-    pos_to_id->at(scanner.location()-1).second=LMN_SATOM_ID(hl_atom);
+    pos_to_id->at(scanner.location()-1).second=LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(hl_atom));
     log[(nvisit)].v = (LmnWord)hl_atom;
     log[(nvisit)].type = BS_LOG_TYPE_HLINK;
     (nvisit)++;
@@ -257,9 +257,9 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
       lmn_mem_push_atom(mem, hl_atom, LMN_HL_ATTR);
       lmn_mem_newlink(mem, from_atom, LMN_ATTR_GET_VALUE((LmnWord)from_atom),
                       from_arg, hl_atom, LMN_HL_ATTR, 0);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-      printf("pos=%d\n", pos);
-      pos_to_id->at(pos).second=LMN_SATOM_ID(hl_atom);
+      // printf("%s:%d\n", __FUNCTION__, __LINE__);
+      // printf("pos=%d\n", pos);
+      // pos_to_id->at(pos).second=LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(hl_atom));
     } break;
     default:
       lmn_fatal("unexpected reference");

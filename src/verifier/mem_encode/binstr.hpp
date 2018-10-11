@@ -176,10 +176,10 @@ public:
         lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
 
     if (visitlog_get_hlink(log, hl_root, &ref)) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-      printf("%d %d\n", pos_, LMN_SATOM_ID((LmnSymbolAtomRef)atom));
-      std::pair<int,int> pa=std::make_pair(LMN_SATOM_ID((LmnSymbolAtomRef)atom), -1);
-      pos_to_id[pos_]=pa;
+      // printf("%s:%d\n", __FUNCTION__, __LINE__);
+      // printf("%d %d\n", pos_, LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)));
+      // std::pair<int,int> pa=std::make_pair(LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)), -1);
+      // pos_to_id[pos_]=pa;
       return push(TAG_VISITED_ATOMHLINK) &&
              push((BYTE *)&ref, BS_PROC_REF_SIZE);
     }
@@ -188,8 +188,8 @@ public:
 
     visitlog_put_hlink(log, hl_root); /* 訪問済みにした */
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    printf("%d %d\n", pos_, LMN_SATOM_ID((LmnSymbolAtomRef)atom));
-    std::pair<int,int> pa=std::make_pair(LMN_SATOM_ID((LmnSymbolAtomRef)atom), -1);
+    printf("%d %d\n", pos_, LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)));
+    std::pair<int,int> pa=std::make_pair(LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)), -1);
     pos_to_id[pos_]=pa;
     push(TAG_HLINK);
     push((const BYTE *)&hl_num, BS_HLINK_NUM_SIZE);

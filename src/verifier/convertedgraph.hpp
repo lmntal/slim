@@ -148,6 +148,8 @@ struct ConvertedGraph {
     pushStack(cVertex->links,link);
 
     if(link->attr == HYPER_LINK_ATTR){
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      printf("link->data.ID=%d\n", link->data.ID);
       if(readDynamicArray(hyperlinks,link->data.ID) == NULL){
 	ConvertedGraphVertex *cv_hyper = new ConvertedGraphVertex(convertedHyperLink, link->data.ID,"");
 	writeDynamicArray(hyperlinks,link->data.ID,cv_hyper);
