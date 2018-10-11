@@ -126,8 +126,38 @@ void convertedGraphVertexDumpCaster(void *cVertex){
   return;
 }
 
+bool check_corresponding_atoms(ConvertedGraphVertex* org_atom, ConvertedGraphVertex* copy_atom, std::map<int,int> iso_m) {
+  if(copy_atom==NULL) {printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+  if(org_atom->links->size() != copy_atom->links->size()){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+  for(int i=0; i<org_atom->links->size(); i++) {
+    LMNtalLink* org_l = (LMNtalLink*)readStack(org_atom->links, i);
+    LMNtalLink* copy_l = (LMNtalLink*)readStack(copy_atom->links, i);
+    if(org_l->attr != copy_l->attr){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+    if(org_l->attr == INTEGER_ATTR || org_l->attr == DOUBLE_ATTR ||
+       org_l->attr == STRING_ATTR || org_l->attr == GLOBAL_ROOT_MEM_ATTR) {
+      if(!isEqualLinks(org_l, copy_l)){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+    }else if(org_l->attr < 128) {
+      auto it = iso_m.find(org_l->data.ID);
+      if(it!=iso_m.end()) {
+	if(it->second != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+      } else {
+	if(org_l->data.ID != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+      }
+    }else if(org_l->attr == HYPER_LINK_ATTR) {
+      printf("**HYPER**\n");
+      auto it = iso_m.find(org_l->data.ID);
+      if(it!=iso_m.end()) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	if(it->second != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+      }
+    }
+  }
+  return true;
+}
+
 bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int, int> iso_m) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  printf("===iso_m===\n");
   for(auto it=iso_m.begin(); it!=iso_m.end(); it++) {
     printf("%d %d\n", it->first, it->second);
   }
@@ -142,29 +172,20 @@ bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int,
       } else {
 	copy_atom = (ConvertedGraphVertex *)readDynamicArray(copy->atoms, org_atom->ID);
       }
-      if(copy_atom==NULL) {printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
-	// convertedGraphVertexDump(org_atom);
-	// convertedGraphVertexDump(copy_atom);
-	if(org_atom->links->size() != copy_atom->links->size()){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
-	for(int i=0; i<org_atom->links->size(); i++) {
-	  LMNtalLink* org_l = (LMNtalLink*)readStack(org_atom->links, i);
-	  LMNtalLink* copy_l = (LMNtalLink*)readStack(copy_atom->links, i);
-	  if(org_l->attr != copy_l->attr){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
-	  if(org_l->attr == INTEGER_ATTR || org_l->attr == DOUBLE_ATTR ||
-	     org_l->attr == STRING_ATTR || org_l->attr == GLOBAL_ROOT_MEM_ATTR) {
-	    if(!isEqualLinks(org_l, copy_l)){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
-	  }else if(org_l->attr < 128) {
-	    auto it = iso_m.find(org_l->data.ID);
-	    if(it!=iso_m.end()) {
-	      if(it->second != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
-	    } else {
-	      if(org_l->data.ID != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
-	    }
-	  }else if(org_l->attr == HYPER_LINK_ATTR) {
-	    printf("%s:%d\n", __FUNCTION__, __LINE__);
-	    printf("**HYPER**\n");
-	  }
-	}
+      if(!check_corresponding_atoms(org_atom, copy_atom, iso_m)){printf("%s:%d\n", __FUNCTION__, __LINE__);return false;}
+    }
+  }
+  for(int i=0; i<org->hyperlinks->size(); i++) {
+    if(org->hyperlinks->at(i)!=NULL) {
+      ConvertedGraphVertex* org_hlatom = (ConvertedGraphVertex*)(org->hyperlinks->at(i));
+      ConvertedGraphVertex* copy_hlatom;
+      auto it = iso_m.find(org_hlatom->ID);
+      if(it!=iso_m.end()) {
+	copy_hlatom = (ConvertedGraphVertex*)readDynamicArray(copy->hyperlinks, it->second);
+      } else {
+	copy_hlatom = (ConvertedGraphVertex*)readDynamicArray(copy->hyperlinks, org_hlatom->ID);
+      }
+      if(!check_corresponding_atoms(org_hlatom, copy_hlatom, iso_m)){printf("%s:%d\n", __FUNCTION__, __LINE__);return false;}
     }
   }
   return true;
