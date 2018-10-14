@@ -238,14 +238,14 @@ static void mc_dump(LmnWorkerGroup *wp) {
 std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   std::map<int, int> ret_m;
 
-  // printf("===pos_to_id===\n");
-  // for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
-  //   printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
-  // }
-  // printf("===id_to_id_at_commit===\n");
-  // for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
-  //   printf("%d %d\n", it->first, it->second);
-  // }
+  printf("===pos_to_id===\n");
+  for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
+    printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
+  }
+  printf("===id_to_id_at_commit===\n");
+  for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
+    printf("%d %d\n", it->first, it->second);
+  }
 
   for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
     auto itr = id_to_id_at_commit.find(it->second.second);
@@ -329,6 +329,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("===org converted graph===\n");
     convertedGraphDump(s->graphinfo->cv);
+    jsonDump(s->graphinfo->json_val);
     printf("===copy converted graph===\n");
     convertedGraphDump(parent_graphinfo->cv);
     std::map<int, int> iso_m = make_iso_morphism(bs);
