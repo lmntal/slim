@@ -337,6 +337,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
       printf("%d %d\n", it->first, it->second);
     }
+    add_proxy_mapping(s->graphinfo->cv, parent_graphinfo->cv, &iso_m);
     if(check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
       printf("IsoCheck ok\n");
     } else {

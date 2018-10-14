@@ -47,6 +47,7 @@
 #define STRING_ATTR 131
 #define HYPER_LINK_ATTR 138
 #define GLOBAL_ROOT_MEM_ATTR 255
+#define PROXY_ATTR 140
 
 struct InheritedVertex;
 
@@ -73,7 +74,9 @@ typedef enum {
   convertedNone,
   convertedAtom,
   convertedHyperLink,
-  convertedNull
+  convertedNull,
+  convertedInProxy,
+  convertedOutProxy
 } ConvertedGraphVertexType;
 
 struct ConvertedGraphVertex{
@@ -175,8 +178,14 @@ struct ConvertedGraph {
       char tmpName2[NAME_LENGTH];
       LMNtalNameCopy(jVal,tmpName2);
       strcat(tmpName1,tmpName2);
-
-      ConvertedGraphVertex *cVertex = new ConvertedGraphVertex(convertedAtom, LMNtalID(jVal),tmpName1);
+      ConvertedGraphVertexType t;
+      if(strcmp(tmpName2, "$out")==0)
+	t = convertedOutProxy;
+      else if(strcmp(tmpName2, "$in")==0)
+	t = convertedInProxy;
+      else
+	t = convertedAtom;
+      ConvertedGraphVertex *cVertex = new ConvertedGraphVertex(t, LMNtalID(jVal),tmpName1);
       writeDynamicArray(atoms,LMNtalID(jVal),cVertex);
       convertGraphLinksArray(jVal->u.object.values[2].value,atoms, hyperlinks ,cVertex);
       pushStack(cVertex->links,copyLink(linkToParentMem));
@@ -253,6 +262,7 @@ struct ConvertedGraph {
 
 void convertedGraphDump(ConvertedGraph *cGraph);
 bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph* copy, std::map<int,int> iso_m);
+void add_proxy_mapping(ConvertedGraph* org, ConvertedGraph* copy, std::map<int, int>* iso_m);
 void LMNtalLinkDump(LMNtalLink *link);
 void convertedGraphVertexDump(ConvertedGraphVertex *cVertex);
 void convertedGraphVertexDumpCaster(void *cVertex);

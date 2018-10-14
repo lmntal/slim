@@ -106,6 +106,8 @@ void convertedGraphVertexDump(ConvertedGraphVertex *cVertex){
     fprintf(stdout,"type:ATOM\n");
   }else if(cVertex->type == convertedHyperLink){
     fprintf(stdout,"type:HYPERLINK\n");
+  } else if(cVertex->type == convertedInProxy or cVertex->type == convertedOutProxy) {
+    fprintf(stdout, "type:PROXY\n");
   }
 
   fprintf(stdout,"ID:%d\n",cVertex->ID);
@@ -126,7 +128,37 @@ void convertedGraphVertexDumpCaster(void *cVertex){
   return;
 }
 
+
+void add_proxy_mapping(ConvertedGraph* org, ConvertedGraph* copy, std::map<int, int>* iso_m) {
+  for(int i=0; i<org->atoms->size(); i++) {
+    if(org->atoms->at(i)!=NULL) {
+      ConvertedGraphVertex* org_atom = (ConvertedGraphVertex*)(org->atoms->at(i));
+      if(org_atom->type==convertedInProxy) {
+	LMNtalLink* hl_link = (LMNtalLink *)readStack(org_atom->links, 2);
+	LMNtalLink* out_prox_link = (LMNtalLink*)(readStack(org_atom->links, 0));
+	int out_prox_id = out_prox_link->data.ID;
+	int copied_hl_id = iso_m->at(hl_link->data.ID);
+	for(int j=0; j<copy->atoms->size(); j++) {
+	  if(copy->atoms->at(j)!=NULL){
+	    ConvertedGraphVertex* copy_atom = (ConvertedGraphVertex*)(copy->atoms->at(j));
+	    if(copy_atom->type==convertedInProxy) {
+	      LMNtalLink* copy_hl_link = (LMNtalLink*)readStack(copy_atom->links, 2);
+	      if(copy_hl_link->data.ID==copied_hl_id) {
+		iso_m->insert(std::make_pair(org_atom->ID, copy_atom->ID));
+		LMNtalLink* copied_out_prox_link = (LMNtalLink*)readStack(copy_atom->links, 0);
+		iso_m->insert(std::make_pair(out_prox_id, copied_out_prox_link->data.ID));
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
+
+
 bool check_corresponding_atoms(ConvertedGraphVertex* org_atom, ConvertedGraphVertex* copy_atom, std::map<int,int> iso_m) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if(copy_atom==NULL) {printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
   if(org_atom->links->size() != copy_atom->links->size()){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
   for(int i=0; i<org_atom->links->size(); i++) {
@@ -154,6 +186,7 @@ bool check_corresponding_atoms(ConvertedGraphVertex* org_atom, ConvertedGraphVer
   return true;
 }
 
+
 bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int, int> iso_m) {
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // printf("===iso_m===\n");
@@ -162,6 +195,7 @@ bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int,
   // }
 
   for(int i=0; i<org->atoms->size(); i++) {
+
     if(org->atoms->at(i)!=NULL) {
       ConvertedGraphVertex * org_atom = (ConvertedGraphVertex *)(org->atoms->at(i));
       ConvertedGraphVertex* copy_atom;
@@ -185,6 +219,7 @@ bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int,
       } else {
 	copy_hlatom = (ConvertedGraphVertex*)readDynamicArray(copy->hyperlinks, org_hlatom->ID);
       }
+      printf("org_hl=%d copy_hl=%d\n", org_hlatom->ID, copy_hlatom->ID);
       if(!check_corresponding_atoms(org_hlatom, copy_hlatom, iso_m)){printf("%s:%d\n", __FUNCTION__, __LINE__);return false;}
     }
   }

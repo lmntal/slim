@@ -780,6 +780,8 @@ void make_id_to_id(ProcessTableRef proc_tbl, LmnMembraneRef org_mem, std::map<in
                   LmnSymbolAtomRef atom;
                   EACH_ATOM(atom, ent, ({ 
 			f = LMN_SATOM_GET_FUNCTOR(atom);
+			if(f==LMN_OUT_PROXY_FUNCTOR || f==LMN_IN_PROXY_FUNCTOR)
+			  continue;
 			if(proc_tbl_get_by_atom(proc_tbl, atom, &val)) {
 			  (*m)[LMN_SATOM_ID(atom)]=LMN_SATOM_ID((LmnSymbolAtomRef)val);
 			}else if(LMN_FUNC_IS_HL(f)){
