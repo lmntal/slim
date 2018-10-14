@@ -99,16 +99,24 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
   auto tag = scanner.scan_tag();
 
   lmn_interned_str mem_name = ANONYMOUS;
-
+  int pos_;
   switch (tag) {
   case TAG_ATOM_START:
     return decode_atom(mem, from_atom, from_arg);
-  case TAG_NAMED_MEM_START:
+  case TAG_NAMED_MEM_START: {
+    pos_=scanner.location()-1;
     mem_name = scanner.scan_mem_name();
-    /* FALL THROUGH */
+  }    /* FALL THROUGH */
   case TAG_MEM_START: {
     auto new_mem = lmn_mem_make();
-    pos_to_id->at(scanner.location()-1).second=lmn_mem_id(new_mem);
+
+    if(tag==TAG_MEM_START) {
+      pos_to_id->at(scanner.location()-1).second=lmn_mem_id(new_mem);
+    } else {
+      pos_to_id->at(pos_).second=lmn_mem_id(new_mem);
+    }
+
+
     lmn_mem_set_name(new_mem, mem_name);
     lmn_mem_set_active(new_mem, TRUE);
     lmn_mem_add_child_mem(mem, new_mem);
@@ -178,8 +186,8 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
   }
   case TAG_HLINK: {
     LmnSymbolAtomRef hl_atom = lmn_hyperlink_new();
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    printf("location-1=%d\n", scanner.location()-1);
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // printf("location-1=%d\n", scanner.location()-1);
     pos_to_id->at(scanner.location()-1).second=LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(hl_atom));
     log[(nvisit)].v = (LmnWord)hl_atom;
     log[(nvisit)].type = BS_LOG_TYPE_HLINK;
@@ -301,10 +309,10 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
  * 辿って来た場合, from_atomとそのリンク番号が渡される */
 int binstr_decoder::decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
                                 int from_arg) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
   int pos = scanner.location()-1;
   std::pair<int,int> pa = pos_to_id->at(pos);
-  printf("%d %d\n", pa.first, pa.second);
+  // printf("%d %d\n", pa.first, pa.second);
   auto f = scanner.scan_functor();
 
   auto atom = lmn_mem_newatom(mem, f); /* アトムを生成する */
