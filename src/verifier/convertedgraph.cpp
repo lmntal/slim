@@ -186,16 +186,53 @@ bool check_corresponding_atoms(ConvertedGraphVertex* org_atom, ConvertedGraphVer
   return true;
 }
 
+bool check_corresponding_hlatoms(ConvertedGraphVertex* org_hl, ConvertedGraphVertex* copy_hl, std::map<int,int> iso_m) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  if(copy_hl==NULL) {printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+  if(org_hl->links->size() != copy_hl->links->size()){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+  for(int i=0; i<org_hl->links->size(); i++) {
+    LMNtalLink* org_l = (LMNtalLink*)readStack(org_hl->links, i);
+    bool f=false;
+    for(int j=0; j<copy_hl->links->size(); j++) {
+      LMNtalLink* copy_l = (LMNtalLink*)readStack(copy_hl->links, j);
+      printf("org_l=<%d,%d> copy_l=<%d,%d>\n", org_l->attr, org_l->data.ID, copy_l->attr, copy_l->data.ID);
+      if(org_l->attr != copy_l->attr){printf("%s:%d\n", __FUNCTION__, __LINE__); continue;}
+      if(org_l->attr == INTEGER_ATTR || org_l->attr == DOUBLE_ATTR ||
+	 org_l->attr == STRING_ATTR || org_l->attr == GLOBAL_ROOT_MEM_ATTR) {
+	if(!isEqualLinks(org_l, copy_l)){printf("%s:%d\n", __FUNCTION__, __LINE__); continue;}
+      }else if(org_l->attr < 128) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	auto it = iso_m.find(org_l->data.ID);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	if(it!=iso_m.end()) {
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+	  printf("%d %d\n", it->second, copy_l->data.ID);
+	  if(it->second != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); continue;}
+	} else {
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+	  if(org_l->data.ID != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); continue;}
+	}
+      }else if(org_l->attr == HYPER_LINK_ATTR) {
+	auto it = iso_m.find(org_l->data.ID);
+	if(it!=iso_m.end()) {
+	  if(it->second != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); continue;}
+	}
+      }else{
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	exit(1);
+      }
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      f=true;
+      break;
+    }
+    if(!f) return false;
+  }
+  return true;
+}
+
 
 bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int, int> iso_m) {
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // printf("===iso_m===\n");
-  // for(auto it=iso_m.begin(); it!=iso_m.end(); it++) {
-  //   printf("%d %d\n", it->first, it->second);
-  // }
-
   for(int i=0; i<org->atoms->size(); i++) {
-
     if(org->atoms->at(i)!=NULL) {
       ConvertedGraphVertex * org_atom = (ConvertedGraphVertex *)(org->atoms->at(i));
       ConvertedGraphVertex* copy_atom;
@@ -213,6 +250,7 @@ bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int,
     if(org->hyperlinks->at(i)!=NULL) {
       ConvertedGraphVertex* org_hlatom = (ConvertedGraphVertex*)(org->hyperlinks->at(i));
       ConvertedGraphVertex* copy_hlatom;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       auto it = iso_m.find(org_hlatom->ID);
       if(it!=iso_m.end()) {
 	copy_hlatom = (ConvertedGraphVertex*)readDynamicArray(copy->hyperlinks, it->second);
@@ -220,7 +258,7 @@ bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int,
 	copy_hlatom = (ConvertedGraphVertex*)readDynamicArray(copy->hyperlinks, org_hlatom->ID);
       }
       printf("org_hl=%d copy_hl=%d\n", org_hlatom->ID, copy_hlatom->ID);
-      if(!check_corresponding_atoms(org_hlatom, copy_hlatom, iso_m)){printf("%s:%d\n", __FUNCTION__, __LINE__);return false;}
+      if(!check_corresponding_hlatoms(org_hlatom, copy_hlatom, iso_m)){printf("%s:%d\n", __FUNCTION__, __LINE__);return false;}
     }
   }
   return true;
