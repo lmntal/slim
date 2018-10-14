@@ -236,6 +236,15 @@ static void mc_dump(LmnWorkerGroup *wp) {
 
 std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   std::map<int, int> ret_m;
+
+  printf("===pos_to_id===\n");
+  for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
+    printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
+  }
+  printf("===id_to_id_at_commit===\n");
+  for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
+    printf("%d %d\n", it->first, it->second);
+  }
   for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
     auto itr = id_to_id_at_commit.find(it->second.second);
     if(itr!=id_to_id_at_commit.end()) {
@@ -278,9 +287,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   mem = state_restore_mem(s);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   LmnBinStrRef bs = s->state_binstr();
-  for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
-    printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);    
-  }
+
 
   lmn_dump_mem_dev(mem);
 #ifdef DIFFISO_GEN
