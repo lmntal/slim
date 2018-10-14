@@ -151,7 +151,7 @@ struct encoder {
     }
 
     visitlog_put_mem(visited, mem);
-    bsp.push_start_mem(LMN_MEM_NAME_ID(mem));
+    bsp.push_start_mem(mem);
 
     if (!bsp.is_valid())
       return;

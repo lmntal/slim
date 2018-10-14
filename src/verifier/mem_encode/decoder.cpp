@@ -108,6 +108,7 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     /* FALL THROUGH */
   case TAG_MEM_START: {
     auto new_mem = lmn_mem_make();
+    pos_to_id->at(scanner.location()-1).second=lmn_mem_id(new_mem);
     lmn_mem_set_name(new_mem, mem_name);
     lmn_mem_set_active(new_mem, TRUE);
     lmn_mem_add_child_mem(mem, new_mem);

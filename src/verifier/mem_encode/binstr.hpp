@@ -148,7 +148,10 @@ public:
   bool push(const BYTE *v, int size);
   bool push(BYTE v);
 
-  bool push_start_mem(lmn_interned_str name) {
+  bool push_start_mem(LmnMembraneRef mem) {
+    lmn_interned_str name=LMN_MEM_NAME_ID(mem);
+    std::pair<int,int> pa=std::make_pair(lmn_mem_id(mem), -1);
+    pos_to_id[pos_]=pa;
     if (name == ANONYMOUS) {
       return push(TAG_MEM_START);
     } else {
