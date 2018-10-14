@@ -165,8 +165,8 @@ public:
     /* ファンクタの最大値からファンクタの値を引いて、大小を反転させる */
     LmnFunctor f = (LmnFunctor)FUNCTOR_MAX - LMN_SATOM_GET_FUNCTOR(a);
     std::pair<int,int> pa=std::make_pair(LMN_SATOM_ID(a), -1);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    printf("%d %d\n", pos_, LMN_SATOM_ID(a));
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // printf("%d %d\n", pos_, LMN_SATOM_ID(a));
     pos_to_id[pos_]=pa;
     return push(TAG_ATOM_START) && push((const BYTE *)&f, BS_FUNCTOR_SIZE);
   }
@@ -190,8 +190,8 @@ public:
     auto hl_num = lmn_hyperlink_element_num(hl_root);
 
     visitlog_put_hlink(log, hl_root); /* 訪問済みにした */
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    printf("%d %d\n", pos_, LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)));
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // printf("%d %d\n", pos_, LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)));
     std::pair<int,int> pa=std::make_pair(LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)), -1);
     pos_to_id[pos_]=pa;
     push(TAG_HLINK);

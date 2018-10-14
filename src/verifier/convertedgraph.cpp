@@ -132,7 +132,8 @@ bool check_corresponding_atoms(ConvertedGraphVertex* org_atom, ConvertedGraphVer
   for(int i=0; i<org_atom->links->size(); i++) {
     LMNtalLink* org_l = (LMNtalLink*)readStack(org_atom->links, i);
     LMNtalLink* copy_l = (LMNtalLink*)readStack(copy_atom->links, i);
-    if(org_l->attr != copy_l->attr){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
+    printf("org_l=<%d,%d> copy_l=<%d,%d>\n", org_l->attr, org_l->data.ID, copy_l->attr, copy_l->data.ID);
+  if(org_l->attr != copy_l->attr){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
     if(org_l->attr == INTEGER_ATTR || org_l->attr == DOUBLE_ATTR ||
        org_l->attr == STRING_ATTR || org_l->attr == GLOBAL_ROOT_MEM_ATTR) {
       if(!isEqualLinks(org_l, copy_l)){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
@@ -144,10 +145,8 @@ bool check_corresponding_atoms(ConvertedGraphVertex* org_atom, ConvertedGraphVer
 	if(org_l->data.ID != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
       }
     }else if(org_l->attr == HYPER_LINK_ATTR) {
-      printf("**HYPER**\n");
       auto it = iso_m.find(org_l->data.ID);
       if(it!=iso_m.end()) {
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	if(it->second != copy_l->data.ID){printf("%s:%d\n", __FUNCTION__, __LINE__); return false;}
       }
     }
@@ -156,11 +155,11 @@ bool check_corresponding_atoms(ConvertedGraphVertex* org_atom, ConvertedGraphVer
 }
 
 bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int, int> iso_m) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  printf("===iso_m===\n");
-  for(auto it=iso_m.begin(); it!=iso_m.end(); it++) {
-    printf("%d %d\n", it->first, it->second);
-  }
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // printf("===iso_m===\n");
+  // for(auto it=iso_m.begin(); it!=iso_m.end(); it++) {
+  //   printf("%d %d\n", it->first, it->second);
+  // }
 
   for(int i=0; i<org->atoms->size(); i++) {
     if(org->atoms->at(i)!=NULL) {
@@ -172,6 +171,7 @@ bool check_iso_morphism(ConvertedGraph* org, ConvertedGraph* copy, std::map<int,
       } else {
 	copy_atom = (ConvertedGraphVertex *)readDynamicArray(copy->atoms, org_atom->ID);
       }
+      printf("org=%d copy=%d\n", org_atom->ID, copy_atom->ID);
       if(!check_corresponding_atoms(org_atom, copy_atom, iso_m)){printf("%s:%d\n", __FUNCTION__, __LINE__);return false;}
     }
   }

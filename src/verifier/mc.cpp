@@ -140,9 +140,10 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   Graphinfo *empty = new Graphinfo(lmn_mem_make());
   // convertedGraphDump(empty->cv);
   Graphinfo *init = new Graphinfo(mem);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  lmn_dump_mem_dev(mem);
-  convertedGraphDump(init->cv);
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // lmn_dump_mem_dev(mem);
+  // convertedGraphDump(init->cv);
+
   // DiffInfo *diff = new DiffInfo(empty, init);
   // diff->diffInfoDump();
   // init_s->trie = new Trie();
@@ -237,14 +238,15 @@ static void mc_dump(LmnWorkerGroup *wp) {
 std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   std::map<int, int> ret_m;
 
-  printf("===pos_to_id===\n");
-  for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
-    printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
-  }
-  printf("===id_to_id_at_commit===\n");
-  for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
-    printf("%d %d\n", it->first, it->second);
-  }
+  // printf("===pos_to_id===\n");
+  // for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
+  //   printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
+  // }
+  // printf("===id_to_id_at_commit===\n");
+  // for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
+  //   printf("%d %d\n", it->first, it->second);
+  // }
+
   for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
     auto itr = id_to_id_at_commit.find(it->second.second);
     if(itr!=id_to_id_at_commit.end()) {
@@ -285,11 +287,10 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // lmn_dump_mem_dev(mem);
+
   LmnBinStrRef bs = s->state_binstr();
 
-
-  lmn_dump_mem_dev(mem);
 #ifdef DIFFISO_GEN
   if(!diff_gen_finish) {
     printf("Succ number Information\n");
@@ -331,10 +332,15 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     printf("===copy converted graph===\n");
     convertedGraphDump(parent_graphinfo->cv);
     std::map<int, int> iso_m = make_iso_morphism(bs);
+    printf("===iso_m===\n");
+    for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
+      printf("%d %d\n", it->first, it->second);
+    }
     if(check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
       printf("IsoCheck ok\n");
     } else {
       printf("IsoCheck err\n");
+      exit(1);
     }
 
     mc_store_successors(ss, s, rc, new_ss, f);
@@ -434,7 +440,6 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ->s_set_d();
     }
 
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     /* 状態空間に状態src_succを記録 */
     if (RC_MC_USE_DMEM(rc)) { /* --delta-mem */
       MemDeltaRoot *d = (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);

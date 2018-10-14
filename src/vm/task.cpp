@@ -768,7 +768,6 @@ void print_correspond_atom_id(ProcessTableRef proc_tbl, LmnSymbolAtomRef atom) {
 }
 
 void make_id_to_id(ProcessTableRef proc_tbl, LmnMembraneRef org_mem, std::map<int,int> *m) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   AtomListEntryRef ent;
   LmnWord val;
   if (!org_mem)
@@ -1113,15 +1112,16 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           warray_use_org = warray_use_size(rc);
           warray_cur_org = warray_cur_size(rc);
 
-	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+#ifdef DEBUG
 	  lmn_dump_mem_dev(RC_GROOT_MEM(rc));
-
+#endif DEBUG
           tmp_global_root =
               lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
 
+#ifdef DEBUG
 	  printf("%s:%d\n", __FUNCTION__, __LINE__);
 	  lmn_dump_mem_dev(tmp_global_root);
-
+#endif
 
 
 	  if(json_dump_gen // and !diff_gen_finish
@@ -1129,7 +1129,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 	    json_dump_gen=false;
 	    // printf("%s:%d\n", __FUNCTION__, __LINE__);
 
-	    print_correspond_procces_id(copymap, RC_GROOT_MEM(rc));
+	    // print_correspond_procces_id(copymap, RC_GROOT_MEM(rc));
 	    std::map<int,int> tmp_id_to_id;
 	    make_id_to_id(copymap, RC_GROOT_MEM(rc), &tmp_id_to_id);
 	    id_to_id_at_commit=tmp_id_to_id;
