@@ -51,7 +51,6 @@
 
 struct InheritedVertex;
 
-
 union LMNtalData {
   int integer;
   double dbl;
@@ -66,8 +65,7 @@ struct LMNtalLink {
     attr = a;
     data = d;
   }
-  ~LMNtalLink(){
-  }
+  ~LMNtalLink() {}
 };
 
 typedef enum {
@@ -79,7 +77,7 @@ typedef enum {
   convertedOutProxy
 } ConvertedGraphVertexType;
 
-struct ConvertedGraphVertex{
+struct ConvertedGraphVertex {
   ConvertedGraphVertexType type;
   std::vector<LMNtalLink *> *links;
   int ID;
@@ -92,36 +90,36 @@ struct ConvertedGraphVertex{
     type = t;
     ID = id;
     links = new std::vector<LMNtalLink *>;
-    strcpy(name,Name);
+    strcpy(name, Name);
     isPushedIntoDiffInfoStack = FALSE;
     isVisitedInBFS = FALSE;
     correspondingVertexInTrie = NULL;
   }
 };
 
-
 struct ConvertedGraph {
   DynamicArray *atoms;
   DynamicArray *hyperlinks;
 
-  int LMNtalID(json_value *jVal){
+  int LMNtalID(json_value *jVal) {
     return jVal->u.object.values[0].value->u.integer;
   }
 
-  void LMNtalNameCopy(json_value *jVal,char *dstString){
-    strcpy(dstString,jVal->u.object.values[1].value->u.string.ptr);
+  void LMNtalNameCopy(json_value *jVal, char *dstString) {
+    strcpy(dstString, jVal->u.object.values[1].value->u.string.ptr);
   }
 
-  LMNtalLink *copyLink(LMNtalLink *link){
-    return new LMNtalLink(link->attr,link->data);
+  LMNtalLink *copyLink(LMNtalLink *link) {
+    return new LMNtalLink(link->attr, link->data);
   }
 
-
-  void convertGraphLink(json_value *jVal,DynamicArray *atoms, DynamicArray* hyperlinks, ConvertedGraphVertex *cVertex,int linkNumber){
+  void convertGraphLink(json_value *jVal, DynamicArray *atoms,
+                        DynamicArray *hyperlinks, ConvertedGraphVertex *cVertex,
+                        int linkNumber) {
     int attr = jVal->u.object.values[0].value->u.integer;
     LMNtalData data;
 
-    switch(attr){
+    switch (attr) {
     case INTEGER_ATTR:
       data.integer = jVal->u.object.values[1].value->u.integer;
       break;
@@ -129,7 +127,7 @@ struct ConvertedGraph {
       data.dbl = jVal->u.object.values[1].value->u.dbl;
       break;
     case STRING_ATTR:
-      strcpy(data.string,jVal->u.object.values[1].value->u.string.ptr);
+      strcpy(data.string, jVal->u.object.values[1].value->u.string.ptr);
       break;
     case HYPER_LINK_ATTR:
       data.ID = jVal->u.object.values[1].value->u.integer;
@@ -138,115 +136,133 @@ struct ConvertedGraph {
       data.ID = jVal->u.object.values[1].value->u.integer;
       break;
     default:
-      if(attr < 128){
+      if (attr < 128) {
         data.ID = jVal->u.object.values[1].value->u.integer;
-      }else{
+      } else {
         CHECKER("unexpected attr\n");
         exit(EXIT_FAILURE);
       }
       break;
     }
 
-    LMNtalLink *link = new LMNtalLink(attr,data);
-    pushStack(cVertex->links,link);
+    LMNtalLink *link = new LMNtalLink(attr, data);
+    pushStack(cVertex->links, link);
 
-    if(link->attr == HYPER_LINK_ATTR){
+    if (link->attr == HYPER_LINK_ATTR) {
       // printf("%s:%d\n", __FUNCTION__, __LINE__);
       // printf("link->data.ID=%d\n", link->data.ID);
-      if(readDynamicArray(hyperlinks,link->data.ID) == NULL){
-	ConvertedGraphVertex *cv_hyper = new ConvertedGraphVertex(convertedHyperLink, link->data.ID,"");
-	writeDynamicArray(hyperlinks,link->data.ID,cv_hyper);
+      if (readDynamicArray(hyperlinks, link->data.ID) == NULL) {
+        ConvertedGraphVertex *cv_hyper =
+            new ConvertedGraphVertex(convertedHyperLink, link->data.ID, "");
+        writeDynamicArray(hyperlinks, link->data.ID, cv_hyper);
       }
 
       LMNtalData data;
       data.integer = cVertex->ID;
-      LMNtalLink *linkFromHyperLink = new LMNtalLink(linkNumber,data);
-      pushStack(((ConvertedGraphVertex *)readDynamicArray(hyperlinks,link->data.ID))->links,copyLink(linkFromHyperLink));
+      LMNtalLink *linkFromHyperLink = new LMNtalLink(linkNumber, data);
+      pushStack(
+          ((ConvertedGraphVertex *)readDynamicArray(hyperlinks, link->data.ID))
+              ->links,
+          copyLink(linkFromHyperLink));
     }
   }
 
-  void convertGraphLinksArray(json_value *jVal,DynamicArray *atoms, DynamicArray* hyperlinks,ConvertedGraphVertex *cVertex){
-    for(int i=0;i<jVal->u.array.length;i++){
-      convertGraphLink(jVal->u.array.values[i],atoms, hyperlinks ,cVertex,i);
+  void convertGraphLinksArray(json_value *jVal, DynamicArray *atoms,
+                              DynamicArray *hyperlinks,
+                              ConvertedGraphVertex *cVertex) {
+    for (int i = 0; i < jVal->u.array.length; i++) {
+      convertGraphLink(jVal->u.array.values[i], atoms, hyperlinks, cVertex, i);
     }
   }
 
-
-  void convertGraphAtom(json_value *jVal, DynamicArray *atoms, DynamicArray *hyperlinks, LMNtalLink *linkToParentMem) {
-      char tmpName1[NAME_LENGTH];
-      strcpy(tmpName1,"ATOM_");
-      char tmpName2[NAME_LENGTH];
-      LMNtalNameCopy(jVal,tmpName2);
-      strcat(tmpName1,tmpName2);
-      ConvertedGraphVertexType t;
-      if(strcmp(tmpName2, "$out")==0)
-	t = convertedOutProxy;
-      else if(strcmp(tmpName2, "$in")==0)
-	t = convertedInProxy;
-      else
-	t = convertedAtom;
-      ConvertedGraphVertex *cVertex = new ConvertedGraphVertex(t, LMNtalID(jVal),tmpName1);
-      writeDynamicArray(atoms,LMNtalID(jVal),cVertex);
-      convertGraphLinksArray(jVal->u.object.values[2].value,atoms, hyperlinks ,cVertex);
-      pushStack(cVertex->links,copyLink(linkToParentMem));
-      if(linkToParentMem->attr != GLOBAL_ROOT_MEM_ATTR){
-	LMNtalData data;
-	data.integer = LMNtalID(jVal);
-	LMNtalLink * hl = new LMNtalLink(cVertex->links->size()-1, data);
-	pushStack(((ConvertedGraphVertex *)readDynamicArray(hyperlinks,linkToParentMem->data.ID))->links, hl);
-      }
-      
+  void convertGraphAtom(json_value *jVal, DynamicArray *atoms,
+                        DynamicArray *hyperlinks, LMNtalLink *linkToParentMem) {
+    char tmpName1[NAME_LENGTH];
+    strcpy(tmpName1, "ATOM_");
+    char tmpName2[NAME_LENGTH];
+    LMNtalNameCopy(jVal, tmpName2);
+    strcat(tmpName1, tmpName2);
+    ConvertedGraphVertexType t;
+    if (strcmp(tmpName2, "$out") == 0)
+      t = convertedOutProxy;
+    else if (strcmp(tmpName2, "$in") == 0)
+      t = convertedInProxy;
+    else
+      t = convertedAtom;
+    ConvertedGraphVertex *cVertex =
+        new ConvertedGraphVertex(t, LMNtalID(jVal), tmpName1);
+    writeDynamicArray(atoms, LMNtalID(jVal), cVertex);
+    convertGraphLinksArray(jVal->u.object.values[2].value, atoms, hyperlinks,
+                           cVertex);
+    pushStack(cVertex->links, copyLink(linkToParentMem));
+    if (linkToParentMem->attr != GLOBAL_ROOT_MEM_ATTR) {
+      LMNtalData data;
+      data.integer = LMNtalID(jVal);
+      LMNtalLink *hl = new LMNtalLink(cVertex->links->size() - 1, data);
+      pushStack(((ConvertedGraphVertex *)readDynamicArray(
+                     hyperlinks, linkToParentMem->data.ID))
+                    ->links,
+                hl);
+    }
   }
 
   void convertGraphAtomsArray(json_value *jVal, DynamicArray *atoms,
-                                DynamicArray *hyperlinks,
-                                LMNtalLink *linkToParentMem) {
+                              DynamicArray *hyperlinks,
+                              LMNtalLink *linkToParentMem) {
     for (int i = 0; i < jVal->u.array.length; i++) {
       convertGraphAtom(jVal->u.array.values[i], atoms, hyperlinks,
                        linkToParentMem);
     }
   };
 
-  void convertGraphMem(json_value *jVal,DynamicArray *atoms, DynamicArray *hyperlinks,LMNtalLink *linkToParentMem){
+  void convertGraphMem(json_value *jVal, DynamicArray *atoms,
+                       DynamicArray *hyperlinks, LMNtalLink *linkToParentMem) {
     char tmpName1[NAME_LENGTH];
-    strcpy(tmpName1,"MEM_");
+    strcpy(tmpName1, "MEM_");
     char tmpName2[NAME_LENGTH];
-    LMNtalNameCopy(jVal,tmpName2);
-    strcat(tmpName1,tmpName2);
+    LMNtalNameCopy(jVal, tmpName2);
+    strcat(tmpName1, tmpName2);
 
-    ConvertedGraphVertex *cVertex = new ConvertedGraphVertex(convertedAtom, LMNtalID(jVal),tmpName1);
-    ConvertedGraphVertex *cHyperlink = new ConvertedGraphVertex(convertedHyperLink, LMNtalID(jVal),"");
+    ConvertedGraphVertex *cVertex =
+        new ConvertedGraphVertex(convertedAtom, LMNtalID(jVal), tmpName1);
+    ConvertedGraphVertex *cHyperlink =
+        new ConvertedGraphVertex(convertedHyperLink, LMNtalID(jVal), "");
 
-    writeDynamicArray(atoms,LMNtalID(jVal),cVertex);
-    writeDynamicArray(hyperlinks,LMNtalID(jVal),cHyperlink);
+    writeDynamicArray(atoms, LMNtalID(jVal), cVertex);
+    writeDynamicArray(hyperlinks, LMNtalID(jVal), cHyperlink);
 
     LMNtalData data;
     data.integer = LMNtalID(jVal);
-    LMNtalLink *linkToThisMem = new LMNtalLink(HYPER_LINK_ATTR,data);
+    LMNtalLink *linkToThisMem = new LMNtalLink(HYPER_LINK_ATTR, data);
 
-    pushStack(cVertex->links,copyLink(linkToThisMem));
-    pushStack(cVertex->links,copyLink(linkToParentMem));
+    pushStack(cVertex->links, copyLink(linkToThisMem));
+    pushStack(cVertex->links, copyLink(linkToParentMem));
     data.integer = LMNtalID(jVal);
     LMNtalLink *hl = new LMNtalLink(0, data);
-    pushStack(cHyperlink->links,hl);
-    if(linkToParentMem->attr != GLOBAL_ROOT_MEM_ATTR){
+    pushStack(cHyperlink->links, hl);
+    if (linkToParentMem->attr != GLOBAL_ROOT_MEM_ATTR) {
       data.integer = LMNtalID(jVal);
       LMNtalLink *newlink = new LMNtalLink(1, data);
-      pushStack(((ConvertedGraphVertex *)readDynamicArray(hyperlinks,linkToParentMem->data.ID))->links,newlink);
+      pushStack(((ConvertedGraphVertex *)readDynamicArray(
+                     hyperlinks, linkToParentMem->data.ID))
+                    ->links,
+                newlink);
     }
 
-    convertGraphAtomsArray(jVal->u.object.values[2].value,atoms,hyperlinks,linkToThisMem);
-    convertGraphMemsArray(jVal->u.object.values[3].value,atoms,hyperlinks,linkToThisMem);
+    convertGraphAtomsArray(jVal->u.object.values[2].value, atoms, hyperlinks,
+                           linkToThisMem);
+    convertGraphMemsArray(jVal->u.object.values[3].value, atoms, hyperlinks,
+                          linkToThisMem);
   }
 
-
-  void convertGraphMemsArray(json_value *jVal,DynamicArray *atoms, DynamicArray *hyperlinks, LMNtalLink *linkToParentMem){
-    for(int i=0;i<jVal->u.array.length;i++){
-      convertGraphMem(jVal->u.array.values[i],atoms, hyperlinks,linkToParentMem);
+  void convertGraphMemsArray(json_value *jVal, DynamicArray *atoms,
+                             DynamicArray *hyperlinks,
+                             LMNtalLink *linkToParentMem) {
+    for (int i = 0; i < jVal->u.array.length; i++) {
+      convertGraphMem(jVal->u.array.values[i], atoms, hyperlinks,
+                      linkToParentMem);
     }
   }
-
-
 
   ConvertedGraph(json_value *json_val) {
     atoms = new DynamicArray();
@@ -255,34 +271,41 @@ struct ConvertedGraph {
     data.integer = 0;
     LMNtalLink *gRootMemLink = new LMNtalLink(GLOBAL_ROOT_MEM_ATTR, data);
     convertGraphAtomsArray(json_val->u.object.values[2].value, atoms,
-                             hyperlinks, gRootMemLink);
-    convertGraphMemsArray(json_val->u.object.values[3].value,atoms,hyperlinks,gRootMemLink);
+                           hyperlinks, gRootMemLink);
+    convertGraphMemsArray(json_val->u.object.values[3].value, atoms, hyperlinks,
+                          gRootMemLink);
   }
 };
 
 void convertedGraphDump(ConvertedGraph *cGraph);
-bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph* copy, std::map<int,int> iso_m);
-void add_proxy_mapping(ConvertedGraph* org, ConvertedGraph* copy, std::map<int, int>* iso_m);
+bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
+                        std::map<int, int> iso_m);
+void add_proxy_mapping(ConvertedGraph *org, ConvertedGraph *copy,
+                       std::map<int, int> *iso_m);
 void LMNtalLinkDump(LMNtalLink *link);
 void convertedGraphVertexDump(ConvertedGraphVertex *cVertex);
 void convertedGraphVertexDumpCaster(void *cVertex);
 template <typename S>
-void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(S *stack,ConvertedGraphVertex *cVertex){
-  if(cVertex != NULL){
-    if(!cVertex->isPushedIntoDiffInfoStack){
-      pushStack(stack,cVertex);
+void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+    S *stack, ConvertedGraphVertex *cVertex) {
+  if (cVertex != NULL) {
+    if (!cVertex->isPushedIntoDiffInfoStack) {
+      pushStack(stack, cVertex);
       cVertex->isPushedIntoDiffInfoStack = true;
     }
   }
 }
 template <typename S>
-ConvertedGraphVertex *popConvertedVertexFromDiffInfoStackWithoutOverlap(S *stack){
+ConvertedGraphVertex *
+popConvertedVertexFromDiffInfoStackWithoutOverlap(S *stack) {
   ConvertedGraphVertex *ret = (ConvertedGraphVertex *)popStack(stack);
   ret->isPushedIntoDiffInfoStack = false;
   return ret;
 }
 template <typename S>
-void checkRelink(ConvertedGraphVertex *beforeCAtom,ConvertedGraphVertex *afterCAtom,DynamicArray *afterConvertedHyperLinks, S *relinkedVertices);
-Bool isEqualLinks(LMNtalLink *linkA,LMNtalLink *linkB);
+void checkRelink(ConvertedGraphVertex *beforeCAtom,
+                 ConvertedGraphVertex *afterCAtom,
+                 DynamicArray *afterConvertedHyperLinks, S *relinkedVertices);
+Bool isEqualLinks(LMNtalLink *linkA, LMNtalLink *linkB);
 Bool isHyperLink(LMNtalLink *link);
 #endif
