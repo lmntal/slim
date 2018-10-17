@@ -281,6 +281,15 @@ struct ConvertedGraph {
     convertGraphMemsArray(json_val->u.object.values[3].value, atoms, hyperlinks,
                           gRootMemLink);
   }
+
+  ~ConvertedGraph() {
+    for (auto v = atoms->begin(); v != atoms->end(); v++)
+      delete (*v);
+    atoms->clear();
+    for (auto v = hyperlinks->begin(); v != hyperlinks->end(); v++)
+      delete (*v);
+    hyperlinks->clear();
+  }
 };
 
 void convertedGraphDump(ConvertedGraph *cGraph);
