@@ -95,6 +95,12 @@ struct ConvertedGraphVertex {
     isVisitedInBFS = FALSE;
     correspondingVertexInTrie = NULL;
   }
+
+  ~ConvertedGraphVertex() {
+    for(auto l = links->begin(); l != links->end(); l++) {
+      delete (*l);
+    }
+  }
 };
 
 struct ConvertedGraph {
