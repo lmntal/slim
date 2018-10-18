@@ -71,6 +71,7 @@ struct Graphinfo {
   }
 
   ~Graphinfo() {
+    json_value_free(json_val);
     delete cv;
   }
 };
