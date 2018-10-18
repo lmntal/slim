@@ -603,10 +603,9 @@ public:
     }
 #endif
     state_expand_lock_destroy();
-
     this->free_mem();
     this->free_binstr();
-
+    delete graphinfo;
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_remove_space(PROFILE_SPACE__STATE_OBJECT, sizeof(struct State));

@@ -238,14 +238,14 @@ static void mc_dump(LmnWorkerGroup *wp) {
 std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   std::map<int, int> ret_m;
 
-  printf("===pos_to_id===\n");
-  for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
-    printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
-  }
-  printf("===id_to_id_at_commit===\n");
-  for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
-    printf("%d %d\n", it->first, it->second);
-  }
+  // printf("===pos_to_id===\n");
+  // for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
+  //   printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
+  // }
+  // printf("===id_to_id_at_commit===\n");
+  // for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
+  //   printf("%d %d\n", it->first, it->second);
+  // }
 
   for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
     auto itr = id_to_id_at_commit.find(it->second.second);
@@ -268,8 +268,6 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
 /* 状態sから1stepで遷移する状態を計算し, 遷移元状態と状態空間に登録を行う
  * 遷移先状態のうち新規状態がnew_statesに積まれる */
-Trie * org_trie;
-Graphinfo * org_gi;
 void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
                LmnReactCxtRef rc, Vector *new_ss, Vector *psyms, BOOL f) {
   LmnMembraneRef mem;
@@ -278,13 +276,10 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   /*
     ===== Diffiso ====
    */
-  org_trie = s->trie;
-  org_gi = s->graphinfo;
   // trieDump(parent_trie);
   /*
     ===== Diffiso ====
    */
-
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
   // lmn_dump_mem_dev(mem);
@@ -326,25 +321,22 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     dpor_start(ss, s, rc, new_ss, f);
   } else {
     /* sのサクセッサを状態空間ssに記録 */
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    printf("===org converted graph===\n");
-    convertedGraphDump(s->graphinfo->cv);
-    jsonDump(s->graphinfo->json_val);
-    printf("===copy converted graph===\n");
-    convertedGraphDump(parent_graphinfo->cv);
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // printf("===org converted graph===\n");
+    // convertedGraphDump(s->graphinfo->cv);
+    // jsonDump(s->graphinfo->json_val);
+    // printf("===copy converted graph===\n");
+    // convertedGraphDump(parent_graphinfo->cv);
     std::map<int, int> iso_m = make_iso_morphism(bs);
-    printf("===iso_m===\n");
-    for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
-      printf("%d %d\n", it->first, it->second);
-    }
-    add_proxy_mapping(s->graphinfo->cv, parent_graphinfo->cv, &iso_m);
-    if(check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
-      printf("IsoCheck ok\n");
-    } else {
-      printf("IsoCheck err\n");
+    // printf("===iso_m===\n");
+    // for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
+    //   printf("%d %d\n", it->first, it->second);
+    // }
+    if(!check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       exit(1);
     }
-
+    delete parent_graphinfo;
     mc_store_successors(ss, s, rc, new_ss, f);
   }
 
@@ -411,7 +403,6 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                          Vector *new_ss, BOOL f) {
   unsigned int i, succ_i;
-  Graphinfo *parent_gi;
   // printf("----------------------------------------\n");
 
   // printf("******************************************\n");
@@ -441,7 +432,6 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       /* delta-stringフラグをこの時点で初めて立てる */
       src_succ->s_set_d();
     }
-
     /* 状態空間に状態src_succを記録 */
     if (RC_MC_USE_DMEM(rc)) { /* --delta-mem */
       MemDeltaRoot *d = (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);
@@ -482,10 +472,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     ===== Diffiso ====
    */
 
-
+    src_succ->graphinfo = new Graphinfo(src_succ_m);
     if (succ == src_succ) {
       /* new state */
-      succ->graphinfo = new Graphinfo(src_succ_m);
       state_id_issue(succ);
       if (mc_use_compress(f) && src_succ_m) {
         lmn_mem_free_rec(src_succ_m);
@@ -503,7 +492,6 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         transition_set_state(src_t, succ);
       }
     }
-
     /* 多重辺(1stepで合流する遷移関係)を除去 */
     tmp = 0;
     if (!st_lookup(RC_SUCC_TBL(rc), (st_data_t)succ, (st_data_t *)&tmp)) {

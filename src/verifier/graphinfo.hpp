@@ -64,12 +64,14 @@ struct Graphinfo {
 
   Graphinfo(LmnMembraneRef mem) {
     json_string = mem_to_json(mem);
-      json_val = json_parse(json_string.c_str(), json_string.size() + 1);
+    json_val = json_parse(json_string.c_str(), json_string.size() + 1);
     state_id = -1;
-    // jsonDump(json_val);
     globalRootMemID = globalrootmem_id(json_val);
     cv = new ConvertedGraph(json_val);
-    // convertedGraphDump(cv);
+  }
+
+  ~Graphinfo() {
+    delete cv;
   }
 };
 
