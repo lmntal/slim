@@ -137,7 +137,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   printf("1\n");
 #endif
-  Graphinfo *empty = new Graphinfo(lmn_mem_make());
+  // Graphinfo *empty = new Graphinfo(lmn_mem_make());
   // convertedGraphDump(empty->cv);
   Graphinfo *init = new Graphinfo(mem);
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
