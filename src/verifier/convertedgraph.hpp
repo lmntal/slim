@@ -41,6 +41,7 @@
 #include "collection.hpp"
 #include "json.hpp"
 #include <map>
+#include <vector>
 #define NAME_LENGTH 256
 #define INTEGER_ATTR 128
 #define DOUBLE_ATTR 129
@@ -97,8 +98,8 @@ struct ConvertedGraphVertex {
   }
 
   ~ConvertedGraphVertex() {
-    for(auto l = links->begin(); l != links->end(); l++) {
-      delete (*l);
+    for (auto l : *links){
+      delete l;
     }
   }
 };
@@ -270,6 +271,24 @@ struct ConvertedGraph {
     }
   }
 
+  void remove_proxy() {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    for (auto in = atoms->begin(); in != atoms->end(); in++) {
+      if((*in) != NULL and ((ConvertedGraphVertex*)(*in))->type == convertedInProxy) {
+	ConvertedGraphVertex* in_proxy = (ConvertedGraphVertex*)*in;
+	int out_proxy_id = in_proxy->links->at(0)->data.ID;
+	ConvertedGraphVertex* out_proxy = (ConvertedGraphVertex*)(atoms->at(out_proxy_id));
+	printf("in_proxy[id]=%d\n", in_proxy->ID);
+	printf("out_proxy[id]=%d\n", out_proxy->ID);
+	delete in_proxy;
+	delete out_proxy;
+	*in = NULL;
+	*(atoms->begin()+out_proxy_id) = NULL;
+      }
+    }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+  }
+
   ConvertedGraph(json_value *json_val) {
     atoms = new DynamicArray();
     hyperlinks = new DynamicArray();
@@ -280,14 +299,15 @@ struct ConvertedGraph {
                            hyperlinks, gRootMemLink);
     convertGraphMemsArray(json_val->u.object.values[3].value, atoms, hyperlinks,
                           gRootMemLink);
+    remove_proxy();
   }
 
   ~ConvertedGraph() {
     for (auto v = atoms->begin(); v != atoms->end(); v++)
-      delete (*v);
+      delete (ConvertedGraphVertex*)(*v);
     atoms->clear();
     for (auto v = hyperlinks->begin(); v != hyperlinks->end(); v++)
-      delete (*v);
+      delete (ConvertedGraphVertex*)(*v);
     hyperlinks->clear();
   }
 };
