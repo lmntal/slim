@@ -101,6 +101,7 @@ struct ConvertedGraphVertex {
     for (auto l : *links){
       delete l;
     }
+    delete links;
   }
 };
 
@@ -280,6 +281,7 @@ struct ConvertedGraph {
 	ConvertedGraphVertex* out_proxy = (ConvertedGraphVertex*)(atoms->at(out_proxy_id));
 	printf("in_proxy[id]=%d\n", in_proxy->ID);
 	printf("out_proxy[id]=%d\n", out_proxy->ID);
+
 	delete in_proxy;
 	delete out_proxy;
 	*in = NULL;
@@ -309,6 +311,8 @@ struct ConvertedGraph {
     for (auto v = hyperlinks->begin(); v != hyperlinks->end(); v++)
       delete (ConvertedGraphVertex*)(*v);
     hyperlinks->clear();
+    delete atoms;
+    delete hyperlinks;
   }
 };
 
