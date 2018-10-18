@@ -175,7 +175,7 @@ void add_proxy_mapping(ConvertedGraph *org, ConvertedGraph *copy,
 
 bool check_corresponding_atoms(ConvertedGraphVertex *org_atom,
                                ConvertedGraphVertex *copy_atom,
-                               std::map<int, int> iso_m) {
+                               std::map<int, int> &iso_m) {
   if (copy_atom == NULL) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     return false;
@@ -225,7 +225,7 @@ bool check_corresponding_atoms(ConvertedGraphVertex *org_atom,
 
 bool check_corresponding_hlatoms(ConvertedGraphVertex *org_hl,
                                  ConvertedGraphVertex *copy_hl,
-                                 std::map<int, int> iso_m) {
+                                 std::map<int, int> &iso_m) {
   if (copy_hl == NULL) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     return false;
@@ -279,7 +279,7 @@ bool check_corresponding_hlatoms(ConvertedGraphVertex *org_hl,
 }
 
 bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
-                        std::map<int, int> iso_m) {
+                        std::map<int, int> &iso_m) {
   for (int i = 0; i < org->atoms->size(); i++) {
     if (org->atoms->at(i) != NULL) {
       ConvertedGraphVertex *org_atom =

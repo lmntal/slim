@@ -359,7 +359,7 @@ struct ConvertedGraph {
 
 void convertedGraphDump(ConvertedGraph *cGraph);
 bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
-                        std::map<int, int> iso_m);
+                        std::map<int, int> &iso_m);
 void LMNtalLinkDump(LMNtalLink *link);
 void convertedGraphVertexDump(ConvertedGraphVertex *cVertex);
 void convertedGraphVertexDumpCaster(void *const &cVertex);
