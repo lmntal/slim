@@ -23,10 +23,10 @@ struct DiffInfo {
   }
 
   DiffInfo(Graphinfo *before_gi, Graphinfo *after_gi) {
-    DynamicArray *before_atoms = before_gi->cv->atoms;
-    DynamicArray *before_hyperlinks = before_gi->cv->hyperlinks;
-    DynamicArray *after_atoms = after_gi->cv->atoms;
-    DynamicArray *after_hyperlinks = after_gi->cv->hyperlinks;
+    const auto &before_atoms = before_gi->cv->atoms;
+    const auto &before_hyperlinks = before_gi->cv->hyperlinks;
+    const auto &after_atoms = after_gi->cv->atoms;
+    const auto &after_hyperlinks = after_gi->cv->hyperlinks;
     deletedVertices = new std::vector<ConvertedGraphVertex *>();
     addedVertices = new std::vector<ConvertedGraphVertex *>();
     relinkedVertices = new std::vector<ConvertedGraphVertex *>();
@@ -39,9 +39,9 @@ struct DiffInfo {
         std::max(after_atoms->size(), after_hyperlinks->size() - gap_of_grootmem_id));
     for (int i = begin; i < end; i++) {
       ConvertedGraphVertex *before_hl =
-          (ConvertedGraphVertex *)readDynamicArray(before_hyperlinks, i);
+          (ConvertedGraphVertex *)before_hyperlinks->read( i);
       ConvertedGraphVertex *after_hl =
-          (ConvertedGraphVertex *)readDynamicArray(after_hyperlinks, i);
+          (ConvertedGraphVertex *)after_hyperlinks->read( i);
       if (before_hl != NULL && after_hl == NULL) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
                                                            before_hl);
@@ -53,9 +53,9 @@ struct DiffInfo {
 
     for (int i = begin; i < end; i++) {
       ConvertedGraphVertex *before_atom =
-          (ConvertedGraphVertex *)readDynamicArray(before_atoms, i);
+          (ConvertedGraphVertex *)before_atoms->read( i);
       ConvertedGraphVertex *after_atom =
-          (ConvertedGraphVertex *)readDynamicArray(after_atoms, i);
+          (ConvertedGraphVertex *)after_atoms->read( i);
       if (before_atom != NULL && after_atom == NULL) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
                                                            before_atom);

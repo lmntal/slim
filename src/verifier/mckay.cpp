@@ -315,7 +315,7 @@ List *listMcKay(List *propagationListOfInheritedVertices,
 }
 
 template <typename List>
-Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,
+Bool checkIsomorphismValidity(unbound_vector<List *> *slimKeyCollection,
                               RedBlackTree *McKayKeyCollection,
                               List *canonicalDiscreteRefinement, int stateID) {
   Bool isValid = TRUE;
@@ -336,8 +336,7 @@ Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,
       insertRedBlackTree(McKayKeyCollection, key, (void *)(stateID + 1));
     }
 
-    List *seniorDiscreteRefinement =
-        (List *)readDynamicArray(slimKeyCollection, stateID);
+    List *seniorDiscreteRefinement = slimKeyCollection->read(stateID);
     if (seniorDiscreteRefinement != NULL) {
       if (compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(
               canonicalDiscreteRefinement, seniorDiscreteRefinement) != EQ) {
@@ -348,8 +347,7 @@ Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,
         freePreserveDiscreteProapgationList(canonicalDiscreteRefinement);
       }
     } else {
-      writeDynamicArray(slimKeyCollection, stateID,
-                        canonicalDiscreteRefinement);
+      slimKeyCollection->write(stateID, canonicalDiscreteRefinement);
     }
   }
 

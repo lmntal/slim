@@ -42,7 +42,8 @@ Bool isHyperLink(LMNtalLink *link) { return link->attr == HYPER_LINK_ATTR; }
 template <typename S>
 void checkRelink(ConvertedGraphVertex *beforeCAtom,
                  ConvertedGraphVertex *afterCAtom,
-                 DynamicArray *afterConvertedHyperLinks, S *relinkedVertices) {
+                 unbound_vector<ConvertedGraphVertex *> *afterConvertedHyperLinks,
+                 S *relinkedVertices) {
   if (beforeCAtom != NULL && afterCAtom != NULL) {
     int i;
     assert(beforeCAtom->links->size() == afterCAtom->links->size());
@@ -56,14 +57,14 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,
         if (isHyperLink(beforeLink)) {
           pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
               relinkedVertices,
-              (ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,
-                                                       beforeLink->data.ID));
+              (ConvertedGraphVertex *)afterConvertedHyperLinks->read(
+                  beforeLink->data.ID));
         }
         if (isHyperLink(afterLink)) {
           pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
               relinkedVertices,
-              (ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,
-                                                       afterLink->data.ID));
+              (ConvertedGraphVertex *)afterConvertedHyperLinks->read(
+                  afterLink->data.ID));
         }
       }
     }
@@ -75,8 +76,8 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,
       if (isHyperLink(beforeLink)) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
             relinkedVertices,
-            (ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,
-                                                     beforeLink->data.ID));
+            (ConvertedGraphVertex *)afterConvertedHyperLinks->read(
+                beforeLink->data.ID));
       }
     }
   } else if (beforeCAtom == NULL && afterCAtom != NULL) {
@@ -87,8 +88,8 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,
       if (isHyperLink(afterLink)) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
             relinkedVertices,
-            (ConvertedGraphVertex *)readDynamicArray(afterConvertedHyperLinks,
-                                                     afterLink->data.ID));
+            (ConvertedGraphVertex *)afterConvertedHyperLinks->read(
+                afterLink->data.ID));
       }
     }
   } else {
@@ -98,10 +99,9 @@ void checkRelink(ConvertedGraphVertex *beforeCAtom,
 
 void convertedGraphDump(ConvertedGraph *cGraph) {
   fprintf(stdout, "CONVERTED ATOMS:\n");
-  dynamicArrayDump(cGraph->atoms, convertedGraphVertexDumpCaster);
+  cGraph->atoms->dump(convertedGraphVertexDump);
   fprintf(stdout, "CONVERTED HYPERLINKS:\n");
-  dynamicArrayDump(cGraph->hyperlinks, convertedGraphVertexDumpCaster);
-  return;
+  cGraph->hyperlinks->dump(convertedGraphVertexDump);
 }
 
 void LMNtalLinkDump(LMNtalLink *link) {
@@ -288,10 +288,10 @@ bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
       auto it = iso_m.find(org_atom->ID);
       if (it != iso_m.end()) {
         copy_atom =
-            (ConvertedGraphVertex *)readDynamicArray(copy->atoms, it->second);
+            (ConvertedGraphVertex *)copy->atoms->read( it->second);
       } else {
         copy_atom =
-            (ConvertedGraphVertex *)readDynamicArray(copy->atoms, org_atom->ID);
+            (ConvertedGraphVertex *)copy->atoms->read( org_atom->ID);
       }
       // printf("org=%d copy=%d\n", org_atom->ID, copy_atom->ID);
       if (!check_corresponding_atoms(org_atom, copy_atom, iso_m)) {
@@ -308,10 +308,10 @@ bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
       // printf("%s:%d\n", __FUNCTION__, __LINE__);
       auto it = iso_m.find(org_hlatom->ID);
       if (it != iso_m.end()) {
-        copy_hlatom = (ConvertedGraphVertex *)readDynamicArray(copy->hyperlinks,
+        copy_hlatom = (ConvertedGraphVertex *)copy->hyperlinks->read(
                                                                it->second);
       } else {
-        copy_hlatom = (ConvertedGraphVertex *)readDynamicArray(copy->hyperlinks,
+        copy_hlatom = (ConvertedGraphVertex *)copy->hyperlinks->read(
                                                                org_hlatom->ID);
       }
       // printf("org_hl=%d copy_hl=%d\n", org_hlatom->ID, copy_hlatom->ID);

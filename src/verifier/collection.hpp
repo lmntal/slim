@@ -4,12 +4,13 @@
 #include "hash.hpp"
 #include "util.hpp"
 #include <cstring>
+#include <list>
 #include <queue>
 #include <stack>
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <list>
+#include <type_traits>
 
 #define INIT_CAP (4)
 typedef enum Order {
@@ -18,17 +19,61 @@ typedef enum Order {
   GT  // greater than
 } Order;
 
-using DynamicArray = std::vector<void *>;
+template <typename T> struct unbound_vector {
+  static_assert(std::is_pointer<T>::value, "");
+  std::vector<T> vec;
 
-DynamicArray *makeDynamicArray();
-void freeDynamicArray(DynamicArray *DArray);
-void freeValuesOfDynamicArray(DynamicArray *DArray,void freeValue(void *));
-void freeDynamicArrayAndValues(DynamicArray *DArray,void freeValue(void *));
+  using reference = typename std::vector<T>::reference;
+  using const_reference = typename std::vector<T>::const_reference;
+  using size_type = typename std::vector<T>::size_type;
+  using difference_type = typename std::vector<T>::difference_type;
+  using iterator = typename std::vector<T>::iterator;
+  using const_iterator = typename std::vector<T>::const_iterator;
 
-DynamicArray *assureSizeOfDynamicArray(DynamicArray *DstDArray,int index);
-void *readDynamicArray(DynamicArray *DArray,int index);
-void *writeDynamicArray(DynamicArray *DArray,int index,void *value);
-void dynamicArrayDump(DynamicArray *DArray,void valueDump(void *));
+  unbound_vector() {}
+  unbound_vector(size_type s, const T &v) : vec(s, v) {}
+
+  size_type size() const { return vec.size(); }
+
+  void clear() { vec.clear(); }
+
+  reference at(size_type index) { return vec.at(index); }
+
+  reference operator[](size_type index) { return vec[index]; }
+
+  void resize(size_type sz) { vec.resize(sz); }
+
+  void resize(size_type sz, const T &c) { vec.resize(sz, c); }
+
+  iterator begin() noexcept { return vec.begin(); }
+  const_iterator begin() const noexcept { return vec.begin(); }
+  iterator end() noexcept { return vec.end(); }
+  const_iterator end() const noexcept { return vec.end(); }
+
+  void dump(void dumper(T value)) {
+    for (int i = 0; i < this->size(); i++) {
+      if (!this->at(i))
+        continue;
+
+      fprintf(stdout, "%d:", i);
+      dumper(this->at(i));
+      printf("\n");
+    }
+  }
+
+  T read(int index) {
+    if (0 <= index && index < vec.size())
+      return vec.at(index);  
+    return nullptr;
+  }
+
+  void write(size_type index, const T &value) {
+    if (index >= vec.size()) {
+      vec.resize(index + 1, nullptr);
+    }
+    vec.at(index) = value;
+  }
+};
 
 template <typename T> void freeStack(std::stack<T> *stack) { delete stack; }
 template <typename T> void freeStack(std::vector<T> *stack) { delete stack; }
@@ -86,7 +131,7 @@ template <typename T> struct ListBody__ {
   };
   ListBody__(T value) : value(value), next(nullptr), prev(nullptr) {}
 
-  T & operator *() { return value; }
+  T &operator*() { return value; }
 };
 
 template <typename T> class List__ {
@@ -106,8 +151,8 @@ public:
     iterator(ListBody__<T> *body) : body(body) {}
     iterator(const iterator &iter) : body(iter.body) {}
 
-    T &operator *() { return body->value; }
-    const T &operator *() const { return body->value; }
+    T &operator*() { return body->value; }
+    const T &operator*() const { return body->value; }
 
     iterator &operator++() {
       body = body->next;
@@ -142,7 +187,8 @@ public:
     sentinel->prev = sentinel;
   }
   ~List__() {
-    for (auto it = begin(); it != end(); ++it) delete it.body;
+    for (auto it = begin(); it != end(); ++it)
+      delete it.body;
     delete sentinel;
   }
 
@@ -154,15 +200,19 @@ public:
   const iterator begin() const { return sentinel->next; }
   const iterator end() const { return sentinel; }
 
-  void push_front(T value) { splice(begin(), iterator(new ListBody__<T>(value))); }
+  void push_front(T value) {
+    splice(begin(), iterator(new ListBody__<T>(value)));
+  }
 
   void insert(iterator iter, T value) {
     splice(iter, iterator(new ListBody__<T>(value)));
   }
 
   void splice(iterator iter, iterator cell) {
-    if (cell.body->prev) cell.body->prev->next = cell.body->next;
-    if (cell.body->next) cell.body->next->prev = cell.body->prev;
+    if (cell.body->prev)
+      cell.body->prev->next = cell.body->next;
+    if (cell.body->next)
+      cell.body->next->prev = cell.body->prev;
 
     cell.body->next = iter.body;
     iter.body->prev = cell.body;
@@ -170,9 +220,11 @@ public:
     cell.body->prev = iter.body->prev;
   }
 
-  void splice(iterator position, List__& x, iterator i) {
-    if (i.body->prev) i.body->prev->next = i.body->next;
-    if (i.body->next) i.body->next->prev = i.body->prev;
+  void splice(iterator position, List__ &x, iterator i) {
+    if (i.body->prev)
+      i.body->prev->next = i.body->next;
+    if (i.body->next)
+      i.body->next->prev = i.body->prev;
 
     i.body->next = position.body;
     position.body->prev = i.body;
@@ -182,8 +234,10 @@ public:
 
   iterator erase(iterator position) {
     auto ret = std::next(position, 1);
-    if (position.body->prev) position.body->prev->next = position.body->next;
-    if (position.body->next) position.body->next->prev = position.body->prev;
+    if (position.body->prev)
+      position.body->prev->next = position.body->next;
+    if (position.body->next)
+      position.body->next->prev = position.body->prev;
     delete position.body;
     return ret;
   }
@@ -201,18 +255,21 @@ template <typename T> inline ListBody__<T> *next(ListBody__<T> *b, int n) {
 } // namespace std
 
 List__<void *> *makeList();
-template <typename Iter, typename T = typename Iter::value_type> void *cutCell(Iter cell);
+template <typename Iter, typename T = typename Iter::value_type>
+void *cutCell(Iter cell);
 template <typename T>
-void insertNextCell(typename List__<T>::iterator cellA, typename List__<T>::iterator cellB);
+void insertNextCell(typename List__<T>::iterator cellA,
+                    typename List__<T>::iterator cellB);
 template <typename T> void forEachValueOfList(List__<T> *list, void func(T));
-template <typename List, typename T> void listDump(List *list, void valueDump(T));
+template <typename List, typename T>
+void listDump(List *list, void valueDump(T));
 template <typename T> void freeList(List__<T> *list);
 template <typename T>
 void freeListWithValues(List__<T> *list, void freeValue(T));
 template <typename T> bool isSingletonList(List__<T> *list);
-template <typename T>
-inline bool isSingletonList(std::list<T> *list) {
-  return std::begin(*list) != std::end(*list) && std::next(std::begin(*list), 1) == std::end(*list);
+template <typename T> inline bool isSingletonList(std::list<T> *list) {
+  return std::begin(*list) != std::end(*list) &&
+         std::next(std::begin(*list), 1) == std::end(*list);
 }
 template <typename T1, typename T2>
 Order compareList(List__<T1> *listA, List__<T2> *listB,

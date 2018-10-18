@@ -29,6 +29,6 @@ template <typename List>
 void freePreserveDiscreteProapgationList(List__<void *> *pdpList);
 void freePreserveDiscreteProapgationListCaster(void *pdpList);
 template <typename List>
-Bool checkIsomorphismValidity(DynamicArray *slimKeyCollection,RedBlackTree *McKayKeyCollection,List *canonicalDiscreteRefinement,int stateID);
+Bool checkIsomorphismValidity(unbound_vector<List *> *slimKeyCollection,RedBlackTree *McKayKeyCollection,List *canonicalDiscreteRefinement,int stateID);
 
 #endif

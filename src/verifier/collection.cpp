@@ -3,70 +3,8 @@
 #include "trie.hpp"
 #define INIT_CAP (4)
 
-DynamicArray *makeDynamicArray() { return new DynamicArray(INIT_CAP, nullptr); }
 
-void freeDynamicArray(DynamicArray *DArray) { delete DArray; }
 
-void freeValuesOfDynamicArray(DynamicArray *DArray, void freeValue(void *)) {
-  for (auto v : *DArray)
-    freeValue(v);
-  DArray->clear();
-}
-
-void freeDynamicArrayAndValues(DynamicArray *DArray, void freeValue(void *)) {
-  freeValuesOfDynamicArray(DArray, freeValue);
-  freeDynamicArray(DArray);
-}
-
-unsigned int round2up(unsigned int n) {
-  unsigned int ret = 1;
-  while (ret && ret < n) {
-    ret <<= 1;
-  }
-  if (ret == 0) {
-    CHECKER("LARGE SIZE ERROR");
-    exit(EXIT_FAILURE);
-  }
-  return ret;
-}
-
-DynamicArray *assureSizeOfDynamicArray(DynamicArray *DArray, int index) {
-  if (index >= DArray->size()) {
-    DArray->resize(index + 1, nullptr);
-  }
-    return DArray;
-}
-
-void *readDynamicArray(DynamicArray *DArray, int index) {
-  if (index < 0) {
-    return NULL;
-  } else if (index < DArray->size()) {
-    return DArray->at(index);
-  } else {
-    return NULL;
-  }
-}
-
-void *writeDynamicArray(DynamicArray *DArray, int index, void *value) {
-  assureSizeOfDynamicArray(DArray, index);
-  void *ret = DArray->at(index);
-  (*DArray)[index] = value;
-
-  return ret;
-}
-
-void dynamicArrayDump(DynamicArray *DArray, void valueDump(void *)) {
-  int i;
-  for (i = 0; i < DArray->size(); i++) {
-    if (DArray->at(i) == NULL) {
-      // fprintf(stdout,"%d:NULL\n",i);
-    } else {
-      fprintf(stdout, "%d:", i);
-      valueDump(DArray->at(i));
-      printf("\n");
-    }
-  }
-}
 List__<void *> *makeList() { return new List__<void *>; }
 
 Bool isEmptyList(List__<void *> *list) {

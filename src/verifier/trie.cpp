@@ -1,9 +1,9 @@
 #include "trie.hpp"
+#include <algorithm>
 #include <iterator>
 #include <stack>
-#include <vector>
-#include <algorithm>
 #include <tuple>
+#include <vector>
 
 HashString *makeHashString() {
   HashString *ret = (HashString *)malloc(sizeof(HashString));
@@ -109,11 +109,10 @@ Hash linkHashValue(LMNtalLink *link, int index, ConvertedGraph *cGraph,
     ret *= FNV_PRIME;
     ret ^= link->attr;
     ret *= FNV_PRIME;
-    ret ^=
-        callHashValue(((ConvertedGraphVertex *)readDynamicArray(
-                           cGraph->hyperlinks, link->data.ID))
-                          ->correspondingVertexInTrie,
-                      index, cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
+    ret ^= callHashValue(
+        ((ConvertedGraphVertex *)cGraph->hyperlinks->read(link->data.ID))
+            ->correspondingVertexInTrie,
+        index, cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
     return ret;
     break;
   case GLOBAL_ROOT_MEM_ATTR:
@@ -132,11 +131,10 @@ Hash linkHashValue(LMNtalLink *link, int index, ConvertedGraph *cGraph,
       ret *= FNV_PRIME;
       ret ^= link->attr;
       ret *= FNV_PRIME;
-      ret ^= callHashValue(((ConvertedGraphVertex *)readDynamicArray(
-                                cGraph->atoms, link->data.ID))
-                               ->correspondingVertexInTrie,
-                           index, cGraph, gapOfGlobalRootMemID,
-                           fixCreditIndexStack);
+      ret ^= callHashValue(
+          ((ConvertedGraphVertex *)cGraph->atoms->read(link->data.ID))
+              ->correspondingVertexInTrie,
+          index, cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
       return ret;
     } else {
       CHECKER("unexpected type\n");
@@ -276,10 +274,10 @@ getConvertedVertexFromGraphAndIDAndType(ConvertedGraph *cGraph, int ID,
                                         ConvertedGraphVertexType type) {
   switch (type) {
   case convertedAtom:
-    return (ConvertedGraphVertex *)readDynamicArray(cGraph->atoms, ID);
+    return (ConvertedGraphVertex *)cGraph->atoms->read(ID);
     break;
   case convertedHyperLink:
-    return (ConvertedGraphVertex *)readDynamicArray(cGraph->hyperlinks, ID);
+    return (ConvertedGraphVertex *)cGraph->hyperlinks->read(ID);
     break;
   default:
     CHECKER("unexpected vertex type\n");
@@ -302,14 +300,12 @@ correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
     printf("afterID=%d\n", afterID);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     convertedGraphVertexDump(
-        (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms, afterID));
-    return (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms,
-                                                    afterID);
+        (ConvertedGraphVertex *)cAfterGraph->atoms->read(afterID));
+    return (ConvertedGraphVertex *)cAfterGraph->atoms->read(afterID);
     break;
   case convertedHyperLink:
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    return (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->hyperlinks,
-                                                    afterID);
+    return (ConvertedGraphVertex *)cAfterGraph->hyperlinks->read(afterID);
     break;
   default:
     CHECKER("unexpected vertex type\n");
@@ -340,8 +336,8 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
       case STRING_ATTR:
         break;
       case HYPER_LINK_ATTR:
-        adjacentVertex = (ConvertedGraphVertex *)readDynamicArray(
-            cAfterGraph->hyperlinks, link->data.ID);
+        adjacentVertex = (ConvertedGraphVertex *)cAfterGraph->hyperlinks->read(
+            link->data.ID);
         if (!adjacentVertex->isVisitedInBFS) {
           pushStack(nextBFSStack, adjacentVertex);
           adjacentVertex->isVisitedInBFS = TRUE;
@@ -351,8 +347,8 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
         break;
       default:
         if (link->attr < 128) {
-          adjacentVertex = (ConvertedGraphVertex *)readDynamicArray(
-              cAfterGraph->atoms, link->data.ID);
+          adjacentVertex =
+              (ConvertedGraphVertex *)cAfterGraph->atoms->read(link->data.ID);
           if (!adjacentVertex->isVisitedInBFS) {
             pushStack(nextBFSStack, adjacentVertex);
             adjacentVertex->isVisitedInBFS = TRUE;
@@ -541,13 +537,16 @@ TrieBody *popTrieBodyFromGoAheadStackWithoutOverlap(S *stack) {
 }
 
 template <typename S>
-void goBackProcessInnerManyCommonPrefixVertices(
-    InheritedVertex &target, TrieBody *currentNode,
-    S *goAheadStack, TerminationConditionInfo *tInfo, int targetDepth) {
+void goBackProcessInnerManyCommonPrefixVertices(InheritedVertex &target,
+                                                TrieBody *currentNode,
+                                                S *goAheadStack,
+                                                TerminationConditionInfo *tInfo,
+                                                int targetDepth) {
   auto targetCell = target.ownerCell;
   if (targetDepth == currentNode->depth) {
     currentNode->inheritedVertices->splice(
-        std::begin(*currentNode->inheritedVertices), *target.ownerList, targetCell);
+        std::begin(*currentNode->inheritedVertices), *target.ownerList,
+        targetCell);
     (*targetCell)->ownerNode = currentNode;
     (*targetCell)->hashString->creditIndex = currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
@@ -559,19 +558,20 @@ void goBackProcessInnerManyCommonPrefixVertices(
 
 template <typename S>
 void goBackProcessInnerDoubleCommonPrefixVertices(
-    InheritedVertex &target,
-    InheritedVertex &brother, TrieBody *currentNode,
+    InheritedVertex &target, InheritedVertex &brother, TrieBody *currentNode,
     TrieBody *prevNode, S *goAheadStack, TerminationConditionInfo *tInfo,
     int targetDepth) {
   auto targetCell = target.ownerCell;
   auto brotherCell = brother.ownerCell;
   if (targetDepth == currentNode->depth) {
     currentNode->inheritedVertices->splice(
-        std::begin(*currentNode->inheritedVertices), *target.ownerList, targetCell);
+        std::begin(*currentNode->inheritedVertices), *target.ownerList,
+        targetCell);
     (*targetCell)->ownerNode = currentNode;
     (*targetCell)->hashString->creditIndex = currentNode->depth;
     prevNode->inheritedVertices->splice(
-        std::begin(*prevNode->inheritedVertices), *brother.ownerList, brotherCell);
+        std::begin(*prevNode->inheritedVertices), *brother.ownerList,
+        brotherCell);
     (*brotherCell)->ownerNode = prevNode;
     (*brotherCell)->hashString->creditIndex = prevNode->depth;
     incrementOmegaArray(tInfo->distribution, prevNode->depth);
@@ -583,13 +583,13 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
 
     deleteTrieBody(prevNode);
     goBackProcessInnerDoubleCommonPrefixVertices(
-        target, brother, parent, currentNode, goAheadStack, tInfo,
-        targetDepth);
+        target, brother, parent, currentNode, goAheadStack, tInfo, targetDepth);
   } else {
     TrieBody *parent = currentNode->parent;
 
     prevNode->inheritedVertices->splice(
-        std::begin(*prevNode->inheritedVertices), *brother.ownerList, brotherCell);
+        std::begin(*prevNode->inheritedVertices), *brother.ownerList,
+        brotherCell);
     (*brotherCell)->ownerNode = prevNode;
     (*brotherCell)->hashString->creditIndex = prevNode->depth;
     incrementOmegaArray(tInfo->distribution, prevNode->depth);
@@ -602,12 +602,15 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
 
 template <typename S>
 void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
-    TrieBody *currentNode,
-    S *goAheadStack, TerminationConditionInfo *tInfo, int targetDepth) {
+                                                TrieBody *currentNode,
+                                                S *goAheadStack,
+                                                TerminationConditionInfo *tInfo,
+                                                int targetDepth) {
   auto targetCell = ivertex.ownerCell;
   if (targetDepth == currentNode->depth) {
     currentNode->inheritedVertices->splice(
-        std::begin(*currentNode->inheritedVertices), *ivertex.ownerList, targetCell);
+        std::begin(*currentNode->inheritedVertices), *ivertex.ownerList,
+        targetCell);
     (*targetCell)->ownerNode = currentNode;
     (*targetCell)->hashString->creditIndex = currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
@@ -648,8 +651,8 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
 
       deleteTrieBody(currentNode);
 
-      goBackProcessInnerSingleCommonPrefixVertex(
-          ivertex, parent, goAheadStack, tInfo, targetDepth);
+      goBackProcessInnerSingleCommonPrefixVertex(ivertex, parent, goAheadStack,
+                                                 tInfo, targetDepth);
     } else if (isSingletonList(currentNode->inheritedVertices)) {
       auto brother = std::begin(*currentNode->inheritedVertices);
       TrieBody *parent = currentNode->parent;
@@ -665,12 +668,13 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
 
       decrementOmegaArray(tInfo->distribution, OMEGA);
 
-      goBackProcessInnerManyCommonPrefixVertices(
-          ivertex, parent, goAheadStack, tInfo, targetDepth);
+      goBackProcessInnerManyCommonPrefixVertices(ivertex, parent, goAheadStack,
+                                                 tInfo, targetDepth);
     }
   } else {
     currentNode->inheritedVertices->splice(
-        std::begin(*currentNode->inheritedVertices), *ivertex.ownerList, ivertex.ownerCell);
+        std::begin(*currentNode->inheritedVertices), *ivertex.ownerList,
+        ivertex.ownerCell);
   }
 }
 
@@ -1110,18 +1114,17 @@ vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel) {
 }
 
 vertex_list::iterator
-getNextSentinel(vertex_list &list,
-                const vertex_list::iterator beginSentinel) {
+getNextSentinel(vertex_list &list, const vertex_list::iterator beginSentinel) {
   return std::find(beginSentinel, std::end(list),
                    (InheritedVertex *)CLASS_SENTINEL);
 }
 
 using vertex_queue = std::priority_queue<std::pair<int, InheritedVertex *>>;
 
-bool putClassesWithPriority(
-    vertex_list &list, vertex_list::iterator beginSentinel,
-    vertex_list::iterator endSentinel,
-    vertex_queue *cellPQueue) {
+bool putClassesWithPriority(vertex_list &list,
+                            vertex_list::iterator beginSentinel,
+                            vertex_list::iterator endSentinel,
+                            vertex_queue *cellPQueue) {
   bool isRefined = false;
   int prev_priority;
   InheritedVertex *prev_vert;
@@ -1146,10 +1149,9 @@ bool putClassesWithPriority(
   return isRefined;
 }
 
-using classifier =
-    Bool(vertex_list &, vertex_list::iterator, vertex_list::iterator,
-         ConvertedGraph *, int,
-         vertex_queue *);
+using classifier = Bool(vertex_list &, vertex_list::iterator,
+                        vertex_list::iterator, ConvertedGraph *, int,
+                        vertex_queue *);
 
 Bool classifyConventionalPropagationList(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
@@ -1180,8 +1182,7 @@ Bool classifyConventionalPropagationList(
 Bool classifyConventionalPropagationListWithTypeInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID,
-    vertex_queue *cellPQueue) {
+    int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
     int tmpPriority = (*tmpCell)->type;
@@ -1197,8 +1198,7 @@ Bool classifyConventionalPropagationListWithTypeInner(
 Bool classifyConventionalPropagationListWithDegreeInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID,
-    vertex_queue *cellPQueue) {
+    int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
@@ -1217,8 +1217,7 @@ Bool classifyConventionalPropagationListWithDegreeInner(
 Bool classifyConventionalPropagationListWithNameLengthInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID,
-    vertex_queue *cellPQueue) {
+    int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
@@ -1237,8 +1236,7 @@ Bool classifyConventionalPropagationListWithNameLengthInner(
 Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID, int index,
-    vertex_queue *cellPQueue) {
+    int gapOfGlobalRootMemID, int index, vertex_queue *cellPQueue) {
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
@@ -1257,8 +1255,7 @@ Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
 Bool classifyConventionalPropagationListWithNameCharactersInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID,
-    vertex_queue *cellPQueue) {
+    int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   Bool isRefined = FALSE;
 
   int nameLength = strlen(
@@ -1430,8 +1427,7 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
 
 Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
-    vertex_list::iterator endSentinel,
-    vertex_queue *cellPQueue) {
+    vertex_list::iterator endSentinel, vertex_queue *cellPQueue) {
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
@@ -1448,8 +1444,7 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
 Bool classifyConventionalPropagationListWithAdjacentLabelsInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID,
-    vertex_queue *cellPQueue) {
+    int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   Bool isRefined = FALSE;
 
   int degree = numStack(
@@ -1545,10 +1540,8 @@ void *copyInheritedVertexCaster(void *iVertex) {
 void assureReferenceFromConvertedVerticesToInheritedVertices(
     ConvertedGraph *cAfterGraph, ConvertedGraph *cBeforeGraph,
     int gapOfGlobalRootMemID) {
-  int i;
-  for (i = 0; i < cAfterGraph->atoms->size(); i++) {
-    ConvertedGraphVertex *cAfterVertex =
-        (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->atoms, i);
+  for (auto &v : *cAfterGraph->atoms) {
+    auto cAfterVertex = (ConvertedGraphVertex *)v;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (cAfterVertex != NULL) {
       if (cAfterVertex->correspondingVertexInTrie == NULL) {
@@ -1566,9 +1559,8 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
     }
   }
 
-  for (i = 0; i < cAfterGraph->hyperlinks->size(); i++) {
-    ConvertedGraphVertex *cAfterVertex =
-        (ConvertedGraphVertex *)readDynamicArray(cAfterGraph->hyperlinks, i);
+  for (auto &v : *cAfterGraph->hyperlinks) {
+    auto cAfterVertex = (ConvertedGraphVertex *)v;
     if (cAfterVertex != NULL) {
       if (cAfterVertex->correspondingVertexInTrie == NULL) {
         ConvertedGraphVertex *cBeforeVertex =
@@ -1587,18 +1579,15 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
 
 void initializeReferencesFromConvertedVerticesToInheritedVertices(
     ConvertedGraph *cBeforeGraph) {
-  int i;
-  for (i = 0; i < cBeforeGraph->atoms->size(); i++) {
-    ConvertedGraphVertex *cBeforeVertex =
-        (ConvertedGraphVertex *)readDynamicArray(cBeforeGraph->atoms, i);
+  for (auto &v : *cBeforeGraph->atoms) {
+    auto cBeforeVertex = (ConvertedGraphVertex *)v;
     if (cBeforeVertex != NULL) {
       cBeforeVertex->correspondingVertexInTrie = NULL;
     }
   }
 
-  for (i = 0; i < cBeforeGraph->hyperlinks->size(); i++) {
-    ConvertedGraphVertex *cBeforeVertex =
-        (ConvertedGraphVertex *)readDynamicArray(cBeforeGraph->hyperlinks, i);
+  for (auto &v : *cBeforeGraph->hyperlinks) {
+    auto cBeforeVertex = (ConvertedGraphVertex *)v;
     if (cBeforeVertex != NULL) {
       cBeforeVertex->correspondingVertexInTrie = NULL;
     }
