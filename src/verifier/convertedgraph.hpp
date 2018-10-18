@@ -52,6 +52,8 @@
 
 struct InheritedVertex;
 
+
+
 union LMNtalData {
   int integer;
   double dbl;
@@ -98,13 +100,13 @@ struct ConvertedGraphVertex {
   }
 
   ~ConvertedGraphVertex() {
-    for (auto l : *links){
+    for (auto l : *links) {
       delete l;
     }
     delete links;
   }
 };
-
+Bool isEqualLinks(LMNtalLink* a, LMNtalLink* b);
 struct ConvertedGraph {
   DynamicArray *atoms;
   DynamicArray *hyperlinks;
@@ -272,23 +274,61 @@ struct ConvertedGraph {
     }
   }
 
+  void connect_link(ConvertedGraphVertex *a, int ai, ConvertedGraphVertex *b,
+                    int bi) {
+    LMNtalLink* x = a->links->at(ai);
+    ConvertedGraphVertex* target_a = (ConvertedGraphVertex*)atoms->at(x->data.ID);
+    LMNtalLink* y = b->links->at(bi);
+    ConvertedGraphVertex* target_b = (ConvertedGraphVertex*)atoms->at(y->data.ID);
+    for (auto i = target_a->links->begin(); i != target_a->links->end(); i++) {
+      if ((*i)->data.ID == a->ID) {
+	delete (*i);
+	*i = copyLink(y);
+	break;
+      }
+    }
+    for (auto i = target_b->links->begin(); i != target_b->links->end(); i++) {
+      if ((*i)->data.ID == b->ID) {
+	delete (*i);
+	*i = copyLink(x);
+	break;
+      }
+    }
+  }
+
+  void remove_hl_link(ConvertedGraphVertex* atom, int index) {
+    int hl_id = atom->links->at(index)->data.ID;
+    if(hyperlinks->at(hl_id) != NULL) {
+      ConvertedGraphVertex* hl_atom = (ConvertedGraphVertex*)(hyperlinks->at(hl_id));
+      for(auto i = hl_atom->links->begin(); i != hl_atom->links->end(); i++) {
+	if((*i)->data.ID == atom->ID) {
+	  delete (*i);
+	  hl_atom->links->erase(i);
+	}
+      }
+    }
+  }
+
   void remove_proxy() {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto in = atoms->begin(); in != atoms->end(); in++) {
-      if((*in) != NULL and ((ConvertedGraphVertex*)(*in))->type == convertedInProxy) {
-	ConvertedGraphVertex* in_proxy = (ConvertedGraphVertex*)*in;
-	int out_proxy_id = in_proxy->links->at(0)->data.ID;
-	ConvertedGraphVertex* out_proxy = (ConvertedGraphVertex*)(atoms->at(out_proxy_id));
-	printf("in_proxy[id]=%d\n", in_proxy->ID);
-	printf("out_proxy[id]=%d\n", out_proxy->ID);
-
-	delete in_proxy;
-	delete out_proxy;
-	*in = NULL;
-	*(atoms->begin()+out_proxy_id) = NULL;
+      if ((*in) != NULL and
+          ((ConvertedGraphVertex *)(*in))->type == convertedInProxy) {
+        ConvertedGraphVertex *in_proxy = (ConvertedGraphVertex *)*in;
+        int out_proxy_id = in_proxy->links->at(0)->data.ID;
+        ConvertedGraphVertex *out_proxy =
+            (ConvertedGraphVertex *)(atoms->at(out_proxy_id));
+        connect_link(in_proxy, 1, out_proxy, 1);
+	remove_hl_link(in_proxy, 2);
+	if (out_proxy->links->at(2)->attr == HYPER_LINK_ATTR) {
+	  remove_hl_link(out_proxy, 2);
+	}
+        delete in_proxy;
+        delete out_proxy;
+        *in = NULL;
+        *(atoms->begin() + out_proxy_id) = NULL;
       }
     }
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   ConvertedGraph(json_value *json_val) {
@@ -306,10 +346,10 @@ struct ConvertedGraph {
 
   ~ConvertedGraph() {
     for (auto v = atoms->begin(); v != atoms->end(); v++)
-      delete (ConvertedGraphVertex*)(*v);
+      delete (ConvertedGraphVertex *)(*v);
     atoms->clear();
     for (auto v = hyperlinks->begin(); v != hyperlinks->end(); v++)
-      delete (ConvertedGraphVertex*)(*v);
+      delete (ConvertedGraphVertex *)(*v);
     hyperlinks->clear();
     delete atoms;
     delete hyperlinks;
