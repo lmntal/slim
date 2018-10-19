@@ -271,8 +271,6 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
                LmnReactCxtRef rc, Vector *new_ss, Vector *psyms, BOOL f) {
   LmnMembraneRef mem;
-
-
   /*
     ===== Diffiso ====
    */
@@ -324,7 +322,6 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
     // printf("===org converted graph===\n");
     // convertedGraphDump(s->graphinfo->cv);
-    // jsonDump(s->graphinfo->json_val);
     // printf("===copy converted graph===\n");
     // convertedGraphDump(parent_graphinfo->cv);
     std::map<int, int> iso_m = make_iso_morphism(bs);

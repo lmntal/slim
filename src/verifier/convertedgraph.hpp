@@ -122,7 +122,8 @@ struct ConvertedGraph {
     return new LMNtalLink(link->attr, link->data);
   }
 
-  void convertGraphLink(json_value *jVal, unbound_vector<ConvertedGraphVertex *> *atoms,
+  void convertGraphLink(json_value *jVal,
+                        unbound_vector<ConvertedGraphVertex *> *atoms,
                         unbound_vector<ConvertedGraphVertex *> *hyperlinks,
                         ConvertedGraphVertex *cVertex, int linkNumber) {
     int attr = jVal->u.object.values[0].value->u.integer;
@@ -173,15 +174,18 @@ struct ConvertedGraph {
     }
   }
 
-  void convertGraphLinksArray(json_value *jVal, unbound_vector<ConvertedGraphVertex *> *atoms,
-                              unbound_vector<ConvertedGraphVertex *> *hyperlinks,
-                              ConvertedGraphVertex *cVertex) {
+  void
+  convertGraphLinksArray(json_value *jVal,
+                         unbound_vector<ConvertedGraphVertex *> *atoms,
+                         unbound_vector<ConvertedGraphVertex *> *hyperlinks,
+                         ConvertedGraphVertex *cVertex) {
     for (int i = 0; i < jVal->u.array.length; i++) {
       convertGraphLink(jVal->u.array.values[i], atoms, hyperlinks, cVertex, i);
     }
   }
 
-  void convertGraphAtom(json_value *jVal, unbound_vector<ConvertedGraphVertex *> *atoms,
+  void convertGraphAtom(json_value *jVal,
+                        unbound_vector<ConvertedGraphVertex *> *atoms,
                         unbound_vector<ConvertedGraphVertex *> *hyperlinks,
                         LMNtalLink *linkToParentMem) {
     char tmpName1[NAME_LENGTH];
@@ -198,7 +202,7 @@ struct ConvertedGraph {
       t = convertedAtom;
 
     ConvertedGraphVertex *cVertex =
-        new ConvertedGraphVertex(convertedAtom, LMNtalID(jVal), tmpName1);
+        new ConvertedGraphVertex(t, LMNtalID(jVal), tmpName1);
     atoms->write(LMNtalID(jVal), cVertex);
     convertGraphLinksArray(jVal->u.object.values[2].value, atoms, hyperlinks,
                            cVertex);
@@ -214,16 +218,19 @@ struct ConvertedGraph {
     }
   }
 
-  void convertGraphAtomsArray(json_value *jVal, unbound_vector<ConvertedGraphVertex *> *atoms,
-                              unbound_vector<ConvertedGraphVertex *> *hyperlinks,
-                              LMNtalLink *linkToParentMem) {
+  void
+  convertGraphAtomsArray(json_value *jVal,
+                         unbound_vector<ConvertedGraphVertex *> *atoms,
+                         unbound_vector<ConvertedGraphVertex *> *hyperlinks,
+                         LMNtalLink *linkToParentMem) {
     for (int i = 0; i < jVal->u.array.length; i++) {
       convertGraphAtom(jVal->u.array.values[i], atoms, hyperlinks,
                        linkToParentMem);
     }
   };
 
-  void convertGraphMem(json_value *jVal, unbound_vector<ConvertedGraphVertex *> *atoms,
+  void convertGraphMem(json_value *jVal,
+                       unbound_vector<ConvertedGraphVertex *> *atoms,
                        unbound_vector<ConvertedGraphVertex *> *hyperlinks,
                        LMNtalLink *linkToParentMem) {
     char tmpName1[NAME_LENGTH];
@@ -264,7 +271,8 @@ struct ConvertedGraph {
                           linkToThisMem);
   }
 
-  void convertGraphMemsArray(json_value *jVal, unbound_vector<ConvertedGraphVertex *> *atoms,
+  void convertGraphMemsArray(json_value *jVal,
+                             unbound_vector<ConvertedGraphVertex *> *atoms,
                              unbound_vector<ConvertedGraphVertex *> *hyperlinks,
                              LMNtalLink *linkToParentMem) {
     for (int i = 0; i < jVal->u.array.length; i++) {
@@ -312,10 +320,10 @@ struct ConvertedGraph {
   }
 
   void remove_proxy() {
-    for (auto in = atoms->begin(); in != atoms->end(); in++) {
-      if ((*in) != NULL and
-          ((ConvertedGraphVertex *)(*in))->type == convertedInProxy) {
-        ConvertedGraphVertex *in_proxy = (ConvertedGraphVertex *)*in;
+    for (int in = 0; in < atoms->size(); in++) {
+      if (atoms->at(in) != NULL and
+          ((ConvertedGraphVertex *)(atoms->at(in)))->type == convertedInProxy) {
+        ConvertedGraphVertex *in_proxy = (ConvertedGraphVertex *)(atoms->at(in));
         int out_proxy_id = in_proxy->links->at(0)->data.ID;
         ConvertedGraphVertex *out_proxy =
             (ConvertedGraphVertex *)(atoms->at(out_proxy_id));
@@ -326,7 +334,7 @@ struct ConvertedGraph {
         }
         delete in_proxy;
         delete out_proxy;
-        *in = NULL;
+        atoms->at(in) = NULL;
         *(atoms->begin() + out_proxy_id) = NULL;
       }
     }
@@ -381,10 +389,10 @@ popConvertedVertexFromDiffInfoStackWithoutOverlap(S *stack) {
   return ret;
 }
 template <typename S>
-void checkRelink(ConvertedGraphVertex *beforeCAtom,
-                 ConvertedGraphVertex *afterCAtom,
-                 unbound_vector<ConvertedGraphVertex *> *afterConvertedHyperLinks,
-                 S *relinkedVertices);
+void checkRelink(
+    ConvertedGraphVertex *beforeCAtom, ConvertedGraphVertex *afterCAtom,
+    unbound_vector<ConvertedGraphVertex *> *afterConvertedHyperLinks,
+    S *relinkedVertices);
 Bool isEqualLinks(LMNtalLink *linkA, LMNtalLink *linkB);
 Bool isHyperLink(LMNtalLink *link);
 #endif
