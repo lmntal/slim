@@ -40,33 +40,32 @@ struct DiffInfo {
                                 after_hyperlinks.rbegin()->first - gap_of_grootmem_id));
 
     for (int i = begin; i < end; i++) {
-      auto &before_hl = before_hyperlinks[i];
-      auto &after_hl = after_hyperlinks[i];
-      if (before_hl != NULL && after_hl == NULL) {
+      const auto &before_hl = before_hyperlinks.find(i);
+      const auto &after_hl = after_hyperlinks.find(i);
+      if (before_hl != before_hyperlinks.end() && after_hl == after_hyperlinks.end()) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-                                                           before_hl);
-      } else if (before_hl == NULL && after_hl != NULL) {
+                                                           before_hl->second);
+      } else if (before_hl == before_hyperlinks.end() && after_hl != after_hyperlinks.end()) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-                                                           after_hl);
+                                                           after_hl->second);
       }
     }
 
     for (int i = begin; i < end; i++) {
-      ConvertedGraphVertex *before_atom =
-          (ConvertedGraphVertex *)before_atoms[i];
-      ConvertedGraphVertex *after_atom = (ConvertedGraphVertex *)after_atoms[i];
-      if (before_atom != NULL && after_atom == NULL) {
+      const auto &before_atom = before_atoms.find(i);
+      const auto &after_atom = after_atoms.find(i);
+      if (before_atom != before_atoms.end() && after_atom == after_atoms.end()) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-                                                           before_atom);
-        checkRelink(before_atom, after_atom, after_hyperlinks,
+                                                           before_atom->second);
+        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
                     relinkedVertices);
-      } else if (before_atom == NULL && after_atom != NULL) {
+      } else if (before_atom == before_atoms.end() && after_atom != after_atoms.end()) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-                                                           after_atom);
-        checkRelink(before_atom, after_atom, after_hyperlinks,
+                                                           after_atom->second);
+        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
                     relinkedVertices);
-      } else if (before_atom != NULL && after_atom != NULL) {
-        checkRelink(before_atom, after_atom, after_hyperlinks,
+      } else if (before_atom != before_atoms.end() && after_atom != after_atoms.end()) {
+        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
                     relinkedVertices);
       }
     }

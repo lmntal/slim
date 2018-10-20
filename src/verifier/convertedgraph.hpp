@@ -287,12 +287,11 @@ private:
   }
 
   void remove_proxy() {
+    std::vector<std::pair<size_t, ConvertedGraphVertex *>> removed;
     for (auto &kv : atoms) {
-      if (!kv.second)
-        continue;
       if (kv.second->type != convertedInProxy)
         continue;
-      
+
       ConvertedGraphVertex *in_proxy = kv.second;
       int out_proxy_id = in_proxy->links->at(0)->data.ID;
       ConvertedGraphVertex *out_proxy = atoms[out_proxy_id];
@@ -301,10 +300,13 @@ private:
       if (out_proxy->links->at(2)->attr == HYPER_LINK_ATTR) {
         remove_hl_link(out_proxy, 2);
       }
-      delete in_proxy;
-      delete out_proxy;
-      atoms[kv.first] = NULL;
-      atoms[out_proxy_id] = NULL;
+      removed.push_back(kv);
+      removed.emplace_back(out_proxy_id, out_proxy);
+    }
+
+    for (auto &kv : removed) {
+      delete kv.second;
+      atoms.erase(kv.first);
     }
   }
 
