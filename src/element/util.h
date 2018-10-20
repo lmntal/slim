@@ -101,30 +101,43 @@ static inline void esc_code_add_f(FILE *f, int code) {
  */
 
 /* See http://isthe.com/chongo/tech/comp/fnv/ */
-#if SIZEOF_LONG == 4
-#define FNV_PRIME 16777619UL
-#define FNV_BASIS 2166136261UL
-#elif SIZEOF_LONG == 8
-#define FNV_PRIME 1099511628211UL
-#define FNV_BASIS 14695981039346656037UL
-#else
-#error "not supported"
-#endif
 
-static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
-  unsigned long hval;
+namespace fnv {
+template <size_t size = SIZEOF_LONG> constexpr unsigned long prime();
+
+template <> constexpr unsigned long prime<4>() {
+  return 16777619UL;
+};
+template <> constexpr unsigned long prime<8>() {
+  return 1099511628211UL;
+};
+
+template <size_t size = SIZEOF_LONG> constexpr unsigned long basis();
+template <> constexpr unsigned long basis<4>() {
+  return 2166136261UL;
+}
+template <> constexpr unsigned long basis<8>() {
+  return 14695981039346656037UL;
+}
+
+inline unsigned long hash(const unsigned char *str, long i) {
   /*
    * FNV-1a hash each octet in the buffer
    */
-  hval = FNV_BASIS;
+  auto hval = fnv::basis();
   while (--i >= 0) {
     /* xor the bottom with the current octet */
     hval ^= (unsigned int)str[i];
     /* multiply by the FNV magic prime mod 2^32 or 2^64 */
-    hval *= FNV_PRIME;
+    hval *= fnv::prime();
   }
 
   return hval;
+}
+} // namespace fnv
+
+static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
+  return fnv::hash(str, i);
 }
 
 /* 正: a ＞ b
