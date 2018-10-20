@@ -110,9 +110,8 @@ Hash linkHashValue(LMNtalLink *link, int index, ConvertedGraph *cGraph,
     ret ^= link->attr;
     ret *= FNV_PRIME;
     ret ^= callHashValue(
-        ((ConvertedGraphVertex *)cGraph->hyperlinks->read(link->data.ID))
-            ->correspondingVertexInTrie,
-        index, cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
+        cGraph->hyperlinks[link->data.ID]->correspondingVertexInTrie, index,
+        cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
     return ret;
     break;
   case GLOBAL_ROOT_MEM_ATTR:
@@ -132,9 +131,8 @@ Hash linkHashValue(LMNtalLink *link, int index, ConvertedGraph *cGraph,
       ret ^= link->attr;
       ret *= FNV_PRIME;
       ret ^= callHashValue(
-          ((ConvertedGraphVertex *)cGraph->atoms->read(link->data.ID))
-              ->correspondingVertexInTrie,
-          index, cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
+          cGraph->atoms[link->data.ID]->correspondingVertexInTrie, index,
+          cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
       return ret;
     } else {
       CHECKER("unexpected type\n");
@@ -274,11 +272,9 @@ getConvertedVertexFromGraphAndIDAndType(ConvertedGraph *cGraph, int ID,
                                         ConvertedGraphVertexType type) {
   switch (type) {
   case convertedAtom:
-    return (ConvertedGraphVertex *)cGraph->atoms->read(ID);
-    break;
+    return cGraph->atoms[ID];
   case convertedHyperLink:
-    return (ConvertedGraphVertex *)cGraph->hyperlinks->read(ID);
-    break;
+    return cGraph->hyperlinks[ID];
   default:
     CHECKER("unexpected vertex type\n");
     exit(EXIT_FAILURE);
@@ -299,13 +295,11 @@ correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
     convertedGraphDump(cAfterGraph);
     printf("afterID=%d\n", afterID);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    convertedGraphVertexDump(
-        (ConvertedGraphVertex *)cAfterGraph->atoms->read(afterID));
-    return (ConvertedGraphVertex *)cAfterGraph->atoms->read(afterID);
-    break;
+    convertedGraphVertexDump(cAfterGraph->atoms[afterID]);
+    return cAfterGraph->atoms[afterID];
   case convertedHyperLink:
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    return (ConvertedGraphVertex *)cAfterGraph->hyperlinks->read(afterID);
+    return cAfterGraph->hyperlinks[afterID];
     break;
   default:
     CHECKER("unexpected vertex type\n");
@@ -336,8 +330,7 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
       case STRING_ATTR:
         break;
       case HYPER_LINK_ATTR:
-        adjacentVertex = (ConvertedGraphVertex *)cAfterGraph->hyperlinks->read(
-            link->data.ID);
+        adjacentVertex = cAfterGraph->hyperlinks[link->data.ID];
         if (!adjacentVertex->isVisitedInBFS) {
           pushStack(nextBFSStack, adjacentVertex);
           adjacentVertex->isVisitedInBFS = TRUE;
@@ -347,8 +340,7 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
         break;
       default:
         if (link->attr < 128) {
-          adjacentVertex =
-              (ConvertedGraphVertex *)cAfterGraph->atoms->read(link->data.ID);
+          adjacentVertex = cAfterGraph->atoms[link->data.ID];
           if (!adjacentVertex->isVisitedInBFS) {
             pushStack(nextBFSStack, adjacentVertex);
             adjacentVertex->isVisitedInBFS = TRUE;
@@ -1540,8 +1532,8 @@ void *copyInheritedVertexCaster(void *iVertex) {
 void assureReferenceFromConvertedVerticesToInheritedVertices(
     ConvertedGraph *cAfterGraph, ConvertedGraph *cBeforeGraph,
     int gapOfGlobalRootMemID) {
-  for (auto &v : *cAfterGraph->atoms) {
-    auto cAfterVertex = (ConvertedGraphVertex *)v;
+  for (auto &v : cAfterGraph->atoms) {
+    auto cAfterVertex = v.second;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (cAfterVertex != NULL) {
       if (cAfterVertex->correspondingVertexInTrie == NULL) {
@@ -1559,8 +1551,8 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
     }
   }
 
-  for (auto &v : *cAfterGraph->hyperlinks) {
-    auto cAfterVertex = (ConvertedGraphVertex *)v;
+  for (auto &v : cAfterGraph->hyperlinks) {
+    auto cAfterVertex = v.second;
     if (cAfterVertex != NULL) {
       if (cAfterVertex->correspondingVertexInTrie == NULL) {
         ConvertedGraphVertex *cBeforeVertex =
@@ -1579,15 +1571,15 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
 
 void initializeReferencesFromConvertedVerticesToInheritedVertices(
     ConvertedGraph *cBeforeGraph) {
-  for (auto &v : *cBeforeGraph->atoms) {
-    auto cBeforeVertex = (ConvertedGraphVertex *)v;
+  for (auto &v : cBeforeGraph->atoms) {
+    auto cBeforeVertex = v.second;
     if (cBeforeVertex != NULL) {
       cBeforeVertex->correspondingVertexInTrie = NULL;
     }
   }
 
-  for (auto &v : *cBeforeGraph->hyperlinks) {
-    auto cBeforeVertex = (ConvertedGraphVertex *)v;
+  for (auto &v : cBeforeGraph->hyperlinks) {
+    auto cBeforeVertex = v.second;
     if (cBeforeVertex != NULL) {
       cBeforeVertex->correspondingVertexInTrie = NULL;
     }
