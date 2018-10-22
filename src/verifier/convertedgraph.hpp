@@ -87,7 +87,7 @@ struct ConvertedGraphVertex {
   Bool isVisitedInBFS;
   InheritedVertex *correspondingVertexInTrie;
 
-  ConvertedGraphVertex(ConvertedGraphVertexType t, int id, char *Name) {
+  ConvertedGraphVertex(ConvertedGraphVertexType t, int id, const char *Name) {
     type = t;
     ID = id;
     links = new std::vector<LMNtalLink *>;
@@ -107,9 +107,11 @@ struct ConvertedGraphVertex {
 Bool isEqualLinks(LMNtalLink *a, LMNtalLink *b);
 
 struct ConvertedGraph {
-  unbound_vector<ConvertedGraphVertex *> *atoms;
-  unbound_vector<ConvertedGraphVertex *> *hyperlinks;
+public:
+  std::map<size_t, ConvertedGraphVertex *> atoms;
+  std::map<size_t, ConvertedGraphVertex *> hyperlinks;
 
+private:
   int LMNtalID(json_value *jVal) {
     return jVal->u.object.values[0].value->u.integer;
   }
@@ -122,10 +124,8 @@ struct ConvertedGraph {
     return new LMNtalLink(link->attr, link->data);
   }
 
-  void convertGraphLink(json_value *jVal,
-                        unbound_vector<ConvertedGraphVertex *> *atoms,
-                        unbound_vector<ConvertedGraphVertex *> *hyperlinks,
-                        ConvertedGraphVertex *cVertex, int linkNumber) {
+  void convertGraphLink(json_value *jVal, ConvertedGraphVertex *cVertex,
+                        int linkNumber) {
     int attr = jVal->u.object.values[0].value->u.integer;
     LMNtalData data;
 
@@ -159,35 +159,26 @@ struct ConvertedGraph {
     pushStack(cVertex->links, link);
 
     if (link->attr == HYPER_LINK_ATTR) {
-      if (!hyperlinks->read(link->data.ID)) {
+      if (!hyperlinks[link->data.ID]) {
         ConvertedGraphVertex *cv_hyper =
             new ConvertedGraphVertex(convertedHyperLink, link->data.ID, "");
-        hyperlinks->write(link->data.ID, cv_hyper);
+        hyperlinks[link->data.ID] = cv_hyper;
       }
 
       LMNtalData data;
       data.integer = cVertex->ID;
       LMNtalLink *linkFromHyperLink = new LMNtalLink(linkNumber, data);
-      pushStack(
-          ((ConvertedGraphVertex *)hyperlinks->read(link->data.ID))->links,
-          copyLink(linkFromHyperLink));
+      pushStack(hyperlinks[link->data.ID]->links, copyLink(linkFromHyperLink));
     }
   }
 
-  void
-  convertGraphLinksArray(json_value *jVal,
-                         unbound_vector<ConvertedGraphVertex *> *atoms,
-                         unbound_vector<ConvertedGraphVertex *> *hyperlinks,
-                         ConvertedGraphVertex *cVertex) {
+  void convertGraphLinksArray(json_value *jVal, ConvertedGraphVertex *cVertex) {
     for (int i = 0; i < jVal->u.array.length; i++) {
-      convertGraphLink(jVal->u.array.values[i], atoms, hyperlinks, cVertex, i);
+      convertGraphLink(jVal->u.array.values[i], cVertex, i);
     }
   }
 
-  void convertGraphAtom(json_value *jVal,
-                        unbound_vector<ConvertedGraphVertex *> *atoms,
-                        unbound_vector<ConvertedGraphVertex *> *hyperlinks,
-                        LMNtalLink *linkToParentMem) {
+  void convertGraphAtom(json_value *jVal, LMNtalLink *linkToParentMem) {
     char tmpName1[NAME_LENGTH];
     strcpy(tmpName1, "ATOM_");
     char tmpName2[NAME_LENGTH];
@@ -203,36 +194,24 @@ struct ConvertedGraph {
 
     ConvertedGraphVertex *cVertex =
         new ConvertedGraphVertex(t, LMNtalID(jVal), tmpName1);
-    atoms->write(LMNtalID(jVal), cVertex);
-    convertGraphLinksArray(jVal->u.object.values[2].value, atoms, hyperlinks,
-                           cVertex);
+    atoms[LMNtalID(jVal)] = cVertex;
+    convertGraphLinksArray(jVal->u.object.values[2].value, cVertex);
     pushStack(cVertex->links, copyLink(linkToParentMem));
     if (linkToParentMem->attr != GLOBAL_ROOT_MEM_ATTR) {
       LMNtalData data;
       data.integer = LMNtalID(jVal);
       LMNtalLink *hl = new LMNtalLink(cVertex->links->size() - 1, data);
-      pushStack(
-          ((ConvertedGraphVertex *)hyperlinks->read(linkToParentMem->data.ID))
-              ->links,
-          hl);
+      pushStack(hyperlinks[linkToParentMem->data.ID]->links, hl);
     }
   }
 
-  void
-  convertGraphAtomsArray(json_value *jVal,
-                         unbound_vector<ConvertedGraphVertex *> *atoms,
-                         unbound_vector<ConvertedGraphVertex *> *hyperlinks,
-                         LMNtalLink *linkToParentMem) {
+  void convertGraphAtomsArray(json_value *jVal, LMNtalLink *linkToParentMem) {
     for (int i = 0; i < jVal->u.array.length; i++) {
-      convertGraphAtom(jVal->u.array.values[i], atoms, hyperlinks,
-                       linkToParentMem);
+      convertGraphAtom(jVal->u.array.values[i], linkToParentMem);
     }
   };
 
-  void convertGraphMem(json_value *jVal,
-                       unbound_vector<ConvertedGraphVertex *> *atoms,
-                       unbound_vector<ConvertedGraphVertex *> *hyperlinks,
-                       LMNtalLink *linkToParentMem) {
+  void convertGraphMem(json_value *jVal, LMNtalLink *linkToParentMem) {
     char tmpName1[NAME_LENGTH];
     strcpy(tmpName1, "MEM_");
     char tmpName2[NAME_LENGTH];
@@ -244,8 +223,8 @@ struct ConvertedGraph {
     ConvertedGraphVertex *cHyperlink =
         new ConvertedGraphVertex(convertedHyperLink, LMNtalID(jVal), "");
 
-    atoms->write(LMNtalID(jVal), cVertex);
-    hyperlinks->write(LMNtalID(jVal), cHyperlink);
+    atoms[LMNtalID(jVal)] = cVertex;
+    hyperlinks[LMNtalID(jVal)] = cHyperlink;
 
     LMNtalData data;
     data.integer = LMNtalID(jVal);
@@ -259,36 +238,25 @@ struct ConvertedGraph {
     if (linkToParentMem->attr != GLOBAL_ROOT_MEM_ATTR) {
       data.integer = LMNtalID(jVal);
       LMNtalLink *newlink = new LMNtalLink(1, data);
-      pushStack(
-          ((ConvertedGraphVertex *)hyperlinks->read(linkToParentMem->data.ID))
-              ->links,
-          newlink);
+      pushStack(hyperlinks[linkToParentMem->data.ID]->links, newlink);
     }
 
-    convertGraphAtomsArray(jVal->u.object.values[2].value, atoms, hyperlinks,
-                           linkToThisMem);
-    convertGraphMemsArray(jVal->u.object.values[3].value, atoms, hyperlinks,
-                          linkToThisMem);
+    convertGraphAtomsArray(jVal->u.object.values[2].value, linkToThisMem);
+    convertGraphMemsArray(jVal->u.object.values[3].value, linkToThisMem);
   }
 
-  void convertGraphMemsArray(json_value *jVal,
-                             unbound_vector<ConvertedGraphVertex *> *atoms,
-                             unbound_vector<ConvertedGraphVertex *> *hyperlinks,
-                             LMNtalLink *linkToParentMem) {
+  void convertGraphMemsArray(json_value *jVal, LMNtalLink *linkToParentMem) {
     for (int i = 0; i < jVal->u.array.length; i++) {
-      convertGraphMem(jVal->u.array.values[i], atoms, hyperlinks,
-                      linkToParentMem);
+      convertGraphMem(jVal->u.array.values[i], linkToParentMem);
     }
   }
 
   void connect_link(ConvertedGraphVertex *a, int ai, ConvertedGraphVertex *b,
                     int bi) {
     LMNtalLink *x = a->links->at(ai);
-    ConvertedGraphVertex *target_a =
-        (ConvertedGraphVertex *)atoms->at(x->data.ID);
+    ConvertedGraphVertex *target_a = atoms[x->data.ID];
     LMNtalLink *y = b->links->at(bi);
-    ConvertedGraphVertex *target_b =
-        (ConvertedGraphVertex *)atoms->at(y->data.ID);
+    ConvertedGraphVertex *target_b = atoms[y->data.ID];
     for (auto i = target_a->links->begin(); i != target_a->links->end(); i++) {
       if ((*i)->data.ID == a->ID) {
         delete (*i);
@@ -307,9 +275,8 @@ struct ConvertedGraph {
 
   void remove_hl_link(ConvertedGraphVertex *atom, int index) {
     int hl_id = atom->links->at(index)->data.ID;
-    if (hyperlinks->at(hl_id) != NULL) {
-      ConvertedGraphVertex *hl_atom =
-          (ConvertedGraphVertex *)(hyperlinks->at(hl_id));
+    if (hyperlinks[hl_id] != NULL) {
+      ConvertedGraphVertex *hl_atom = hyperlinks[hl_id];
       for (auto i = hl_atom->links->begin(); i != hl_atom->links->end(); i++) {
         if ((*i)->data.ID == atom->ID) {
           delete (*i);
@@ -320,48 +287,44 @@ struct ConvertedGraph {
   }
 
   void remove_proxy() {
-    for (int in = 0; in < atoms->size(); in++) {
-      if (atoms->at(in) != NULL and
-          ((ConvertedGraphVertex *)(atoms->at(in)))->type == convertedInProxy) {
-        ConvertedGraphVertex *in_proxy = (ConvertedGraphVertex *)(atoms->at(in));
-        int out_proxy_id = in_proxy->links->at(0)->data.ID;
-        ConvertedGraphVertex *out_proxy =
-            (ConvertedGraphVertex *)(atoms->at(out_proxy_id));
-        connect_link(in_proxy, 1, out_proxy, 1);
-        remove_hl_link(in_proxy, 2);
-        if (out_proxy->links->at(2)->attr == HYPER_LINK_ATTR) {
-          remove_hl_link(out_proxy, 2);
-        }
-        delete in_proxy;
-        delete out_proxy;
-        atoms->at(in) = NULL;
-        *(atoms->begin() + out_proxy_id) = NULL;
+    std::vector<std::pair<size_t, ConvertedGraphVertex *>> removed;
+    for (auto &kv : atoms) {
+      if (kv.second->type != convertedInProxy)
+        continue;
+
+      ConvertedGraphVertex *in_proxy = kv.second;
+      int out_proxy_id = in_proxy->links->at(0)->data.ID;
+      ConvertedGraphVertex *out_proxy = atoms[out_proxy_id];
+      connect_link(in_proxy, 1, out_proxy, 1);
+      remove_hl_link(in_proxy, 2);
+      if (out_proxy->links->at(2)->attr == HYPER_LINK_ATTR) {
+        remove_hl_link(out_proxy, 2);
       }
+      removed.push_back(kv);
+      removed.emplace_back(out_proxy_id, out_proxy);
+    }
+
+    for (auto &kv : removed) {
+      delete kv.second;
+      atoms.erase(kv.first);
     }
   }
 
+public:
   ConvertedGraph(json_value *json_val) {
-    atoms = new unbound_vector<ConvertedGraphVertex *>();
-    hyperlinks = new unbound_vector<ConvertedGraphVertex *>();
     LMNtalData data;
     data.integer = 0;
     LMNtalLink *gRootMemLink = new LMNtalLink(GLOBAL_ROOT_MEM_ATTR, data);
-    convertGraphAtomsArray(json_val->u.object.values[2].value, atoms,
-                           hyperlinks, gRootMemLink);
-    convertGraphMemsArray(json_val->u.object.values[3].value, atoms, hyperlinks,
-                          gRootMemLink);
+    convertGraphAtomsArray(json_val->u.object.values[2].value, gRootMemLink);
+    convertGraphMemsArray(json_val->u.object.values[3].value, gRootMemLink);
     remove_proxy();
   }
 
   ~ConvertedGraph() {
-    for (auto v = atoms->begin(); v != atoms->end(); v++)
-      delete (ConvertedGraphVertex *)(*v);
-    atoms->clear();
-    for (auto v = hyperlinks->begin(); v != hyperlinks->end(); v++)
-      delete (ConvertedGraphVertex *)(*v);
-    hyperlinks->clear();
-    delete atoms;
-    delete hyperlinks;
+    for (auto v : atoms)
+      delete v.second;
+    for (auto v : hyperlinks)
+      delete v.second;
   }
 };
 
@@ -391,7 +354,7 @@ popConvertedVertexFromDiffInfoStackWithoutOverlap(S *stack) {
 template <typename S>
 void checkRelink(
     ConvertedGraphVertex *beforeCAtom, ConvertedGraphVertex *afterCAtom,
-    unbound_vector<ConvertedGraphVertex *> *afterConvertedHyperLinks,
+    std::map<size_t, ConvertedGraphVertex *> &afterConvertedHyperLinks,
     S *relinkedVertices);
 Bool isEqualLinks(LMNtalLink *linkA, LMNtalLink *linkB);
 Bool isHyperLink(LMNtalLink *link);

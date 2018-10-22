@@ -61,7 +61,7 @@ template <typename T> struct unbound_vector {
     }
   }
 
-  T read(int index) {
+  T read(int index) const {
     if (0 <= index && index < vec.size())
       return vec.at(index);  
     return nullptr;
@@ -78,13 +78,13 @@ template <typename T> struct unbound_vector {
 template <typename T> void freeStack(std::stack<T> *stack) { delete stack; }
 template <typename T> void freeStack(std::vector<T> *stack) { delete stack; }
 template <typename T>
-auto popStack(std::vector<T> *stack) -> decltype(stack->back()) {
+T popStack(std::vector<T> *stack) {
   auto ret = stack->back();
   stack->pop_back();
   return ret;
 }
 template <typename T>
-auto popStack(std::stack<T> *stack) -> decltype(stack->top()) {
+T popStack(std::stack<T> *stack) {
   auto ret = stack->top();
   stack->pop();
   return ret;

@@ -23,10 +23,10 @@ struct DiffInfo {
   }
 
   DiffInfo(Graphinfo *before_gi, Graphinfo *after_gi) {
-    const auto &before_atoms = before_gi->cv->atoms;
-    const auto &before_hyperlinks = before_gi->cv->hyperlinks;
-    const auto &after_atoms = after_gi->cv->atoms;
-    const auto &after_hyperlinks = after_gi->cv->hyperlinks;
+    auto &before_atoms = before_gi->cv->atoms;
+    auto &before_hyperlinks = before_gi->cv->hyperlinks;
+    auto &after_atoms = after_gi->cv->atoms;
+    auto &after_hyperlinks = after_gi->cv->hyperlinks;
     deletedVertices = new std::vector<ConvertedGraphVertex *>();
     addedVertices = new std::vector<ConvertedGraphVertex *>();
     relinkedVertices = new std::vector<ConvertedGraphVertex *>();
@@ -34,40 +34,38 @@ struct DiffInfo {
     int gap_of_grootmem_id =
         after_gi->globalRootMemID - before_gi->globalRootMemID;
     int begin = std::min(0, -gap_of_grootmem_id);
-    int end = std::max(
-        std::max(before_atoms->size(), after_hyperlinks->size() - gap_of_grootmem_id),
-        std::max(after_atoms->size(), after_hyperlinks->size() - gap_of_grootmem_id));
+    int end = std::max(std::max(before_atoms.rbegin()->first,
+                                after_hyperlinks.rbegin()->first - gap_of_grootmem_id),
+                       std::max(after_atoms.rbegin()->first,
+                                after_hyperlinks.rbegin()->first - gap_of_grootmem_id));
+
     for (int i = begin; i < end; i++) {
-      ConvertedGraphVertex *before_hl =
-          (ConvertedGraphVertex *)before_hyperlinks->read( i);
-      ConvertedGraphVertex *after_hl =
-          (ConvertedGraphVertex *)after_hyperlinks->read( i);
-      if (before_hl != NULL && after_hl == NULL) {
+      const auto &before_hl = before_hyperlinks.find(i);
+      const auto &after_hl = after_hyperlinks.find(i);
+      if (before_hl != before_hyperlinks.end() && after_hl == after_hyperlinks.end()) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-                                                           before_hl);
-      } else if (before_hl == NULL && after_hl != NULL) {
+                                                           before_hl->second);
+      } else if (before_hl == before_hyperlinks.end() && after_hl != after_hyperlinks.end()) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-                                                           after_hl);
+                                                           after_hl->second);
       }
     }
 
     for (int i = begin; i < end; i++) {
-      ConvertedGraphVertex *before_atom =
-          (ConvertedGraphVertex *)before_atoms->read( i);
-      ConvertedGraphVertex *after_atom =
-          (ConvertedGraphVertex *)after_atoms->read( i);
-      if (before_atom != NULL && after_atom == NULL) {
+      const auto &before_atom = before_atoms.find(i);
+      const auto &after_atom = after_atoms.find(i);
+      if (before_atom != before_atoms.end() && after_atom == after_atoms.end()) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-                                                           before_atom);
-        checkRelink(before_atom, after_atom, after_hyperlinks,
+                                                           before_atom->second);
+        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
                     relinkedVertices);
-      } else if (before_atom == NULL && after_atom != NULL) {
+      } else if (before_atom == before_atoms.end() && after_atom != after_atoms.end()) {
         pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-                                                           after_atom);
-        checkRelink(before_atom, after_atom, after_hyperlinks,
+                                                           after_atom->second);
+        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
                     relinkedVertices);
-      } else if (before_atom != NULL && after_atom != NULL) {
-        checkRelink(before_atom, after_atom, after_hyperlinks,
+      } else if (before_atom != before_atoms.end() && after_atom != after_atoms.end()) {
+        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
                     relinkedVertices);
       }
     }
