@@ -1,43 +1,5 @@
 #include "convertedgraph.hpp"
 #include "collection.hpp"
-Bool isEqualLinks(LMNtalLink *linkA, LMNtalLink *linkB) {
-  if (linkA->attr != linkB->attr) {
-    return FALSE;
-  }
-
-  switch (linkA->attr) {
-  case INTEGER_ATTR:
-    return linkA->data.integer == linkB->data.integer;
-    break;
-  case DOUBLE_ATTR:
-    return linkA->data.dbl == linkB->data.dbl;
-    break;
-  case STRING_ATTR:
-    if (strcmp(linkA->data.string, linkB->data.string) == 0) {
-      return TRUE;
-    } else {
-      return FALSE;
-    }
-    break;
-  case HYPER_LINK_ATTR:
-    return linkA->data.ID == linkB->data.ID;
-    break;
-  case GLOBAL_ROOT_MEM_ATTR:
-    return linkA->data.ID == linkB->data.ID;
-    break;
-  default:
-    if (linkA->attr < 128) {
-      return linkA->data.ID == linkB->data.ID;
-    } else {
-      CHECKER("unexpected attr\n");
-      exit(EXIT_FAILURE);
-      return FALSE;
-    }
-    break;
-  }
-}
-
-Bool isHyperLink(LMNtalLink *link) { return link->attr == HYPER_LINK_ATTR; }
 
 template <typename S>
 void checkRelink(
@@ -45,48 +7,42 @@ void checkRelink(
     std::map<size_t, ConvertedGraphVertex *> &afterConvertedHyperLinks,
     S *relinkedVertices) {
   if (beforeCAtom != NULL && afterCAtom != NULL) {
-    int i;
-    assert(beforeCAtom->links->size() == afterCAtom->links->size());
-    for (i = 0; i < beforeCAtom->links->size(); i++) {
-      LMNtalLink *beforeLink = (LMNtalLink *)readStack(beforeCAtom->links, i);
-      LMNtalLink *afterLink = (LMNtalLink *)readStack(afterCAtom->links, i);
+    assert(beforeCAtom->links.size() == afterCAtom->links.size());
+    for (auto i = 0; i < beforeCAtom->links.size(); i++) {
+      auto &beforeLink = beforeCAtom->links[i];
+      auto &afterLink = afterCAtom->links[i];
 
-      if (!isEqualLinks(beforeLink, afterLink)) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,
-                                                           afterCAtom);
-        if (isHyperLink(beforeLink)) {
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-              relinkedVertices, afterConvertedHyperLinks[beforeLink->data.ID]);
-        }
-        if (isHyperLink(afterLink)) {
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-              relinkedVertices, afterConvertedHyperLinks[afterLink->data.ID]);
-        }
+      if (beforeLink == afterLink)
+        continue;
+
+      pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,
+                                                         afterCAtom);
+      if (beforeLink.is_hyper()) {
+        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+            relinkedVertices, afterConvertedHyperLinks[beforeLink.data.ID]);
+      }
+      if (afterLink.is_hyper()) {
+        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+            relinkedVertices, afterConvertedHyperLinks[afterLink.data.ID]);
       }
     }
   } else if (beforeCAtom != NULL && afterCAtom == NULL) {
-    int i;
-    for (i = 0; i < beforeCAtom->links->size(); i++) {
-      LMNtalLink *beforeLink = (LMNtalLink *)readStack(beforeCAtom->links, i);
+    for (auto &beforeLink : beforeCAtom->links) {
+      if (!beforeLink.is_hyper())
+        continue;
 
-      if (isHyperLink(beforeLink)) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-            relinkedVertices, afterConvertedHyperLinks[beforeLink->data.ID]);
-      }
+      pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+          relinkedVertices, afterConvertedHyperLinks[beforeLink.data.ID]);
     }
   } else if (beforeCAtom == NULL && afterCAtom != NULL) {
-    int i;
-    for (i = 0; i < afterCAtom->links->size(); i++) {
-      LMNtalLink *afterLink = (LMNtalLink *)readStack(afterCAtom->links, i);
+    for (auto &afterLink : afterCAtom->links) {
+      if (!afterLink.is_hyper())
+        continue;
 
-      if (isHyperLink(afterLink)) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-            relinkedVertices, afterConvertedHyperLinks[afterLink->data.ID]);
-      }
+      pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+          relinkedVertices, afterConvertedHyperLinks[afterLink.data.ID]);
     }
-  } else {
   }
-  return;
 }
 
 void convertedGraphDump(ConvertedGraph *cGraph) {
@@ -125,11 +81,11 @@ void convertedGraphVertexDump(ConvertedGraphVertex *cVertex) {
   fprintf(stdout, "name:%s\n", cVertex->name);
 
   fprintf(stdout, "links:");
-  for (i = 0; i < cVertex->links->size(); i++) {
+  for (i = 0; i < cVertex->links.size(); i++) {
     if (i != 0) {
       fprintf(stdout, ",");
     }
-    LMNtalLinkDump((LMNtalLink *)readStack(cVertex->links, i));
+    LMNtalLinkDump(&cVertex->links[i]);
   }
   fprintf(stdout, "\n");
 }
@@ -141,34 +97,30 @@ void convertedGraphVertexDumpCaster(void *cVertex) {
 
 void add_proxy_mapping(ConvertedGraph *org, ConvertedGraph *copy,
                        std::map<int, int> *iso_m) {
-  for (int i = 0; i < org->atoms.size(); i++) {
-    if (org->atoms.at(i) != NULL) {
-      ConvertedGraphVertex *org_atom =
-          (ConvertedGraphVertex *)(org->atoms.at(i));
-      if (org_atom->type == convertedInProxy) {
-        LMNtalLink *hl_link = (LMNtalLink *)readStack(org_atom->links, 2);
-        LMNtalLink *out_prox_link =
-            (LMNtalLink *)(readStack(org_atom->links, 0));
-        int out_prox_id = out_prox_link->data.ID;
-        int copied_hl_id = iso_m->at(hl_link->data.ID);
-        for (int j = 0; j < copy->atoms.size(); j++) {
-          if (copy->atoms.at(j) != NULL) {
-            ConvertedGraphVertex *copy_atom =
-                (ConvertedGraphVertex *)(copy->atoms.at(j));
-            if (copy_atom->type == convertedInProxy) {
-              LMNtalLink *copy_hl_link =
-                  (LMNtalLink *)readStack(copy_atom->links, 2);
-              if (copy_hl_link->data.ID == copied_hl_id) {
-                iso_m->insert(std::make_pair(org_atom->ID, copy_atom->ID));
-                LMNtalLink *copied_out_prox_link =
-                    (LMNtalLink *)readStack(copy_atom->links, 0);
-                iso_m->insert(
-                    std::make_pair(out_prox_id, copied_out_prox_link->data.ID));
-              }
-            }
-          }
-        }
-      }
+  for (auto &kv : org->atoms) {
+    if (kv.second == NULL)
+      continue;
+
+    ConvertedGraphVertex *org_atom = kv.second;
+    if (org_atom->type != convertedInProxy)
+      continue;
+
+    int out_prox_id = org_atom->links[0].data.ID;
+    int copied_hl_id = iso_m->at(org_atom->links[2].data.ID);
+    for (auto &kv : copy->atoms) {
+      if (kv.second == NULL)
+        continue;
+
+      ConvertedGraphVertex *copy_atom = kv.second;
+      if (copy_atom->type != convertedInProxy)
+        continue;
+
+      auto &copy_hl_link = copy_atom->links[2];
+      if (copy_hl_link.data.ID != copied_hl_id)
+        continue;
+
+      iso_m->insert(std::make_pair(org_atom->ID, copy_atom->ID));
+      iso_m->insert(std::make_pair(out_prox_id, copy_atom->links[0].data.ID));
     }
   }
 }
@@ -180,40 +132,40 @@ bool check_corresponding_atoms(ConvertedGraphVertex *org_atom,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     return false;
   }
-  if (org_atom->links->size() != copy_atom->links->size()) {
+  if (org_atom->links.size() != copy_atom->links.size()) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     return false;
   }
-  for (int i = 0; i < org_atom->links->size(); i++) {
-    LMNtalLink *org_l = (LMNtalLink *)readStack(org_atom->links, i);
-    LMNtalLink *copy_l = (LMNtalLink *)readStack(copy_atom->links, i);
-    if (org_l->attr != copy_l->attr) {
+  for (int i = 0; i < org_atom->links.size(); i++) {
+    auto &org_l = org_atom->links[i];
+    auto &copy_l = copy_atom->links[i];
+    if (org_l.attr != copy_l.attr) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       return false;
     }
-    if (org_l->attr == INTEGER_ATTR || org_l->attr == DOUBLE_ATTR ||
-        org_l->attr == STRING_ATTR || org_l->attr == GLOBAL_ROOT_MEM_ATTR) {
-      if (!isEqualLinks(org_l, copy_l)) {
+    if (org_l.attr == INTEGER_ATTR || org_l.attr == DOUBLE_ATTR ||
+        org_l.attr == STRING_ATTR || org_l.attr == GLOBAL_ROOT_MEM_ATTR) {
+      if (org_l != copy_l) {
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         return false;
       }
-    } else if (org_l->attr < 128) {
-      auto it = iso_m.find(org_l->data.ID);
+    } else if (org_l.attr < 128) {
+      auto it = iso_m.find(org_l.data.ID);
       if (it != iso_m.end()) {
-        if (it->second != copy_l->data.ID) {
+        if (it->second != copy_l.data.ID) {
           printf("%s:%d\n", __FUNCTION__, __LINE__);
           return false;
         }
       } else {
-        if (org_l->data.ID != copy_l->data.ID) {
+        if (org_l.data.ID != copy_l.data.ID) {
           printf("%s:%d\n", __FUNCTION__, __LINE__);
           return false;
         }
       }
-    } else if (org_l->attr == HYPER_LINK_ATTR) {
-      auto it = iso_m.find(org_l->data.ID);
+    } else if (org_l.attr == HYPER_LINK_ATTR) {
+      auto it = iso_m.find(org_l.data.ID);
       if (it != iso_m.end()) {
-        if (it->second != copy_l->data.ID) {
+        if (it->second != copy_l.data.ID) {
           printf("%s:%d\n", __FUNCTION__, __LINE__);
           return false;
         }
@@ -230,38 +182,36 @@ bool check_corresponding_hlatoms(ConvertedGraphVertex *org_hl,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     return false;
   }
-  if (org_hl->links->size() != copy_hl->links->size()) {
+  if (org_hl->links.size() != copy_hl->links.size()) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     return false;
   }
-  for (int i = 0; i < org_hl->links->size(); i++) {
-    LMNtalLink *org_l = (LMNtalLink *)readStack(org_hl->links, i);
+  for (auto &org_l : org_hl->links) {
     bool f = false;
-    for (int j = 0; j < copy_hl->links->size(); j++) {
-      LMNtalLink *copy_l = (LMNtalLink *)readStack(copy_hl->links, j);
-      if (org_l->attr != copy_l->attr) {
+    for (auto &copy_l : copy_hl->links) {
+      if (org_l.attr != copy_l.attr) {
         continue;
       }
-      if (org_l->attr == INTEGER_ATTR || org_l->attr == DOUBLE_ATTR ||
-          org_l->attr == STRING_ATTR || org_l->attr == GLOBAL_ROOT_MEM_ATTR) {
-        if (!isEqualLinks(org_l, copy_l)) {
+      if (org_l.attr == INTEGER_ATTR || org_l.attr == DOUBLE_ATTR ||
+          org_l.attr == STRING_ATTR || org_l.attr == GLOBAL_ROOT_MEM_ATTR) {
+        if (org_l != copy_l) {
           continue;
         }
-      } else if (org_l->attr < 128) {
-        auto it = iso_m.find(org_l->data.ID);
+      } else if (org_l.attr < 128) {
+        auto it = iso_m.find(org_l.data.ID);
         if (it != iso_m.end()) {
-          if (it->second != copy_l->data.ID) {
+          if (it->second != copy_l.data.ID) {
             continue;
           }
         } else {
-          if (org_l->data.ID != copy_l->data.ID) {
+          if (org_l.data.ID != copy_l.data.ID) {
             continue;
           }
         }
-      } else if (org_l->attr == HYPER_LINK_ATTR) {
-        auto it = iso_m.find(org_l->data.ID);
+      } else if (org_l.attr == HYPER_LINK_ATTR) {
+        auto it = iso_m.find(org_l.data.ID);
         if (it != iso_m.end()) {
-          if (it->second != copy_l->data.ID) {
+          if (it->second != copy_l.data.ID) {
             continue;
           }
         }

@@ -69,7 +69,7 @@ Hash initialHashValue(ConvertedGraphVertex *cVertex) {
     ret *= FNV_PRIME;
     ret ^= stringHashValue(cVertex->name);
     ret *= FNV_PRIME;
-    ret ^= numStack(cVertex->links);
+    ret ^= numStack(&cVertex->links);
     ret *= FNV_PRIME;
 
     return ret;
@@ -154,11 +154,10 @@ Hash adjacentHashValue(ConvertedGraphVertex *cVertex, int index,
   switch (cVertex->type) {
   case convertedAtom:
     ret = OFFSET_BASIS;
-    for (i = 0; i < numStack(cVertex->links); i++) {
+    for (i = 0; i < numStack(&cVertex->links); i++) {
       ret *= FNV_PRIME;
-      ret ^=
-          linkHashValue((LMNtalLink *)readStack(cVertex->links, i), index - 1,
-                        cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
+      ret ^= linkHashValue(&cVertex->links[i], index - 1, cGraph,
+                           gapOfGlobalRootMemID, fixCreditIndexStack);
     }
 
     return ret;
@@ -166,9 +165,9 @@ Hash adjacentHashValue(ConvertedGraphVertex *cVertex, int index,
   case convertedHyperLink:
     sum = ADD_INIT;
     mul = MUL_INIT;
-    for (i = 0; i < numStack(cVertex->links); i++) {
-      tmp = linkHashValue((LMNtalLink *)readStack(cVertex->links, i), index - 1,
-                          cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
+    for (i = 0; i < numStack(&cVertex->links); i++) {
+      tmp = linkHashValue(&cVertex->links[i], index - 1, cGraph,
+                          gapOfGlobalRootMemID, fixCreditIndexStack);
       sum += tmp;
       mul *= (tmp * 2 + 1);
     }
@@ -318,11 +317,11 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
     ConvertedGraphVertex *cVertex = (ConvertedGraphVertex *)popStack(BFSStack);
 
     int i;
-    for (i = 0; i < numStack(cVertex->links); i++) {
-      LMNtalLink *link = (LMNtalLink *)readStack(cVertex->links, i);
+    for (i = 0; i < numStack(&cVertex->links); i++) {
+      auto &link = cVertex->links[i];
       ConvertedGraphVertex *adjacentVertex;
 
-      switch (link->attr) {
+      switch (link.attr) {
       case INTEGER_ATTR:
         break;
       case DOUBLE_ATTR:
@@ -330,7 +329,7 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
       case STRING_ATTR:
         break;
       case HYPER_LINK_ATTR:
-        adjacentVertex = cAfterGraph->hyperlinks[link->data.ID];
+        adjacentVertex = cAfterGraph->hyperlinks[link.data.ID];
         if (!adjacentVertex->isVisitedInBFS) {
           pushStack(nextBFSStack, adjacentVertex);
           adjacentVertex->isVisitedInBFS = TRUE;
@@ -339,8 +338,8 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
       case GLOBAL_ROOT_MEM_ATTR:
         break;
       default:
-        if (link->attr < 128) {
-          adjacentVertex = cAfterGraph->atoms[link->data.ID];
+        if (link.attr < 128) {
+          adjacentVertex = cAfterGraph->atoms[link.data.ID];
           if (!adjacentVertex->isVisitedInBFS) {
             pushStack(nextBFSStack, adjacentVertex);
             adjacentVertex->isVisitedInBFS = TRUE;
@@ -1194,9 +1193,9 @@ Bool classifyConventionalPropagationListWithDegreeInner(
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
-    int tmpPriority = numStack(correspondingVertexInConvertedGraph(
-                                   *tmpCell, cAfterGraph, gapOfGlobalRootMemID)
-                                   ->links);
+    int tmpPriority = numStack(&correspondingVertexInConvertedGraph(
+                                    *tmpCell, cAfterGraph, gapOfGlobalRootMemID)
+                                    ->links);
     cellPQueue->emplace(tmpPriority, *tmpCell);
   }
 
@@ -1342,9 +1341,9 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                             (InheritedVertex *)CLASS_SENTINEL);
 
     int tmpDegree = numStack(
-        correspondingVertexInConvertedGraph((*std::next(beginSentinel, 1)),
-                                            cAfterGraph, gapOfGlobalRootMemID)
-            ->links);
+        &correspondingVertexInConvertedGraph((*std::next(beginSentinel, 1)),
+                                             cAfterGraph, gapOfGlobalRootMemID)
+             ->links);
     ConvertedGraphVertexType tmpType =
         correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
                                             cAfterGraph, gapOfGlobalRootMemID)
@@ -1355,17 +1354,15 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
       for (auto iteratorCell = std::next(beginSentinel, 1);
            iteratorCell != endSentinel;
            iteratorCell = std::next(iteratorCell, 1)) {
-        LMNtalLink *tmpLink = (LMNtalLink *)readStack(
-            correspondingVertexInConvertedGraph((*iteratorCell), cAfterGraph,
-                                                gapOfGlobalRootMemID)
-                ->links,
-            i);
+        auto &tmpLink = correspondingVertexInConvertedGraph(
+                            (*iteratorCell), cAfterGraph, gapOfGlobalRootMemID)
+                            ->links[i];
         ConvertedGraphVertex *adjacentVertex;
 
-        switch (tmpLink->attr) {
+        switch (tmpLink.attr) {
         case INTEGER_ATTR:
           writeStack((*(iteratorCell))->conventionalPropagationMemo, i,
-                     tmpLink->data.integer * 256 + INTEGER_ATTR);
+                     tmpLink.data.integer * 256 + INTEGER_ATTR);
           break;
         // case DOUBLE_ATTR:
         // break;
@@ -1373,7 +1370,7 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
         // break;
         case HYPER_LINK_ATTR:
           adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
-              cAfterGraph, tmpLink->data.ID, convertedHyperLink);
+              cAfterGraph, tmpLink.data.ID, convertedHyperLink);
           pushStack(adjacentVertex->correspondingVertexInTrie
                         ->conventionalPropagationMemo,
                     tmpLabel * 256 + i);
@@ -1381,19 +1378,19 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
         case GLOBAL_ROOT_MEM_ATTR:
           break;
         default:
-          if (tmpLink->attr < 128) {
+          if (tmpLink.attr < 128) {
             adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
-                cAfterGraph, tmpLink->data.ID, convertedAtom);
+                cAfterGraph, tmpLink.data.ID, convertedAtom);
             switch (tmpType) {
             case convertedAtom:
               writeStack(adjacentVertex->correspondingVertexInTrie
                              ->conventionalPropagationMemo,
-                         tmpLink->attr, tmpLabel * 256 + i);
+                         tmpLink.attr, tmpLabel * 256 + i);
               break;
             case convertedHyperLink:
               writeStack(adjacentVertex->correspondingVertexInTrie
                              ->conventionalPropagationMemo,
-                         tmpLink->attr, tmpLabel * 256 + HYPER_LINK_ATTR);
+                         tmpLink.attr, tmpLabel * 256 + HYPER_LINK_ATTR);
               break;
             default:
               CHECKER("unexpected vertex type\n");
@@ -1440,9 +1437,9 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInner(
   Bool isRefined = FALSE;
 
   int degree = numStack(
-      correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
-                                          cAfterGraph, gapOfGlobalRootMemID)
-          ->links);
+      &correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
+                                           cAfterGraph, gapOfGlobalRootMemID)
+           ->links);
 
   int i;
   for (i = 0; i < degree; i++) {
