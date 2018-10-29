@@ -538,8 +538,8 @@ void goBackProcessInnerManyCommonPrefixVertices(InheritedVertex &target,
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *target.ownerList,
         targetCell);
-    (*targetCell)->ownerNode = currentNode;
-    (*targetCell)->hashString->creditIndex = currentNode->depth;
+    ((InheritedVertex *)*targetCell)->ownerNode = currentNode;
+    ((InheritedVertex *)*targetCell)->hashString->creditIndex = currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else {
     goBackProcessInnerManyCommonPrefixVertices(
@@ -558,15 +558,15 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *target.ownerList,
         targetCell);
-    (*targetCell)->ownerNode = currentNode;
-    (*targetCell)->hashString->creditIndex = currentNode->depth;
+    ((InheritedVertex *)*targetCell)->ownerNode = currentNode;
+    ((InheritedVertex *)*targetCell)->hashString->creditIndex = currentNode->depth;
     prevNode->inheritedVertices->splice(
         std::begin(*prevNode->inheritedVertices), *brother.ownerList,
         brotherCell);
-    (*brotherCell)->ownerNode = prevNode;
-    (*brotherCell)->hashString->creditIndex = prevNode->depth;
+    ((InheritedVertex *)*brotherCell)->ownerNode = prevNode;
+    ((InheritedVertex *)*brotherCell)->hashString->creditIndex = prevNode->depth;
     incrementOmegaArray(tInfo->distribution, prevNode->depth);
-    (*brotherCell)->canonicalLabel.first = prevNode->key;
+    ((InheritedVertex *)*brotherCell)->canonicalLabel.first = prevNode->key;
 
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else if (isSingletonRedBlackTree(currentNode->children)) {
@@ -581,10 +581,10 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     prevNode->inheritedVertices->splice(
         std::begin(*prevNode->inheritedVertices), *brother.ownerList,
         brotherCell);
-    (*brotherCell)->ownerNode = prevNode;
-    (*brotherCell)->hashString->creditIndex = prevNode->depth;
+    ((InheritedVertex *)*brotherCell)->ownerNode = prevNode;
+    ((InheritedVertex *)*brotherCell)->hashString->creditIndex = prevNode->depth;
     incrementOmegaArray(tInfo->distribution, prevNode->depth);
-    (*brotherCell)->canonicalLabel.first = prevNode->key;
+    ((InheritedVertex *)*brotherCell)->canonicalLabel.first = prevNode->key;
 
     goBackProcessInnerManyCommonPrefixVertices(target, parent, goAheadStack,
                                                tInfo, targetDepth);
@@ -602,8 +602,8 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *ivertex.ownerList,
         targetCell);
-    (*targetCell)->ownerNode = currentNode;
-    (*targetCell)->hashString->creditIndex = currentNode->depth;
+    ((InheritedVertex *)*targetCell)->ownerNode = currentNode;
+    ((InheritedVertex *)*targetCell)->hashString->creditIndex = currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else if (isSingletonRedBlackTree(currentNode->children) &&
              isSingletonList(((TrieBody *)(currentNode->children->body->value))
@@ -614,7 +614,7 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
     decrementOmegaArray(tInfo->distribution, childNode->depth);
 
     goBackProcessInnerDoubleCommonPrefixVertices(
-        ivertex, *(*brother), currentNode, childNode, goAheadStack, tInfo,
+        ivertex, *((InheritedVertex *)*brother), currentNode, childNode, goAheadStack, tInfo,
         targetDepth);
   } else {
     TrieBody *parent = currentNode->parent;
@@ -651,7 +651,7 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
       decrementOmegaArray(tInfo->distribution, OMEGA);
       decrementOmegaArray(tInfo->distribution, OMEGA);
 
-      goBackProcessInnerDoubleCommonPrefixVertices(ivertex, *(*brother), parent,
+      goBackProcessInnerDoubleCommonPrefixVertices(ivertex, *((InheritedVertex *)*brother), parent,
                                                    currentNode, goAheadStack,
                                                    tInfo, targetDepth);
     } else {
@@ -704,7 +704,7 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       auto tmpCell = std::begin(*inheritedVerticesList);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      auto key = callHashValue((*tmpCell), targetNode->depth, cAfterGraph,
+      auto key = callHashValue(((InheritedVertex *)*tmpCell), targetNode->depth, cAfterGraph,
                                gapOfGlobalRootMemID, fixCreditIndexStack);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       TrieBody *nextNode = (TrieBody *)searchRedBlackTree(children, key);
@@ -738,7 +738,7 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       nextNode->inheritedVertices->splice(
           std::begin(*nextNode->inheritedVertices), *inheritedVerticesList,
           tmpCell);
-      (*tmpCell)->ownerNode = nextNode;
+      ((InheritedVertex *)*tmpCell)->ownerNode = nextNode;
       pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, nextNode);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
@@ -986,9 +986,9 @@ void collectDescendantConvertedVertices(TrieBody *ancestorBody,
       ancestorBody->inheritedVertices->splice(
           std::begin(*ancestorBody->inheritedVertices),
           *descendantBody->inheritedVertices, targetCell);
-      (*targetCell)->ownerNode = ancestorBody;
-      (*targetCell)->hashString->creditIndex = ancestorBody->depth;
-      (*targetCell)->canonicalLabel.first = ancestorBody->key;
+      ((InheritedVertex *)*targetCell)->ownerNode = ancestorBody;
+      ((InheritedVertex *)*targetCell)->hashString->creditIndex = ancestorBody->depth;
+      ((InheritedVertex *)*targetCell)->canonicalLabel.first = ancestorBody->key;
     }
   } else {
     collectDescendantConvertedVerticesInner(ancestorBody,
@@ -1019,7 +1019,7 @@ void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
     if (body->isPushedIntoGoAheadStack) {
       for (auto &v : *body->inheritedVertices) {
         incrementOmegaArray(tInfo->distribution, OMEGA);
-        v->canonicalLabel.first = body->key;
+        ((InheritedVertex *)v)->canonicalLabel.first = body->key;
       }
     }
 
@@ -1176,8 +1176,8 @@ Bool classifyConventionalPropagationListWithTypeInner(
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
-    int tmpPriority = (*tmpCell)->type;
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    int tmpPriority = ((InheritedVertex *)*tmpCell)->type;
+    cellPQueue->emplace(tmpPriority, (InheritedVertex *)*tmpCell);
   }
 
   Bool isRefined =
@@ -1194,9 +1194,9 @@ Bool classifyConventionalPropagationListWithDegreeInner(
     auto tmpCell = std::next(beginSentinel, 1);
 
     int tmpPriority = numStack(&correspondingVertexInConvertedGraph(
-                                    *tmpCell, cAfterGraph, gapOfGlobalRootMemID)
+                                    (InheritedVertex *)*tmpCell, cAfterGraph, gapOfGlobalRootMemID)
                                     ->links);
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    cellPQueue->emplace(tmpPriority, (InheritedVertex *)*tmpCell);
   }
 
   Bool isRefined =
@@ -1213,9 +1213,9 @@ Bool classifyConventionalPropagationListWithNameLengthInner(
     auto tmpCell = std::next(beginSentinel, 1);
 
     int tmpPriority = strlen(correspondingVertexInConvertedGraph(
-                                 (*tmpCell), cAfterGraph, gapOfGlobalRootMemID)
+                                 ((InheritedVertex *)*tmpCell), cAfterGraph, gapOfGlobalRootMemID)
                                  ->name);
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    cellPQueue->emplace(tmpPriority, (InheritedVertex *)*tmpCell);
   }
 
   Bool isRefined =
@@ -1232,9 +1232,9 @@ Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
     auto tmpCell = std::next(beginSentinel, 1);
 
     int tmpPriority = (correspondingVertexInConvertedGraph(
-                           (*tmpCell), cAfterGraph, gapOfGlobalRootMemID)
+                           ((InheritedVertex *)*tmpCell), cAfterGraph, gapOfGlobalRootMemID)
                            ->name)[index];
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    cellPQueue->emplace(tmpPriority, (InheritedVertex *)*tmpCell);
   }
 
   Bool isRefined =
@@ -1250,7 +1250,7 @@ Bool classifyConventionalPropagationListWithNameCharactersInner(
   Bool isRefined = FALSE;
 
   int nameLength = strlen(
-      correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
+      correspondingVertexInConvertedGraph(((InheritedVertex *)*(std::next(beginSentinel, 1))),
                                           cAfterGraph, gapOfGlobalRootMemID)
           ->name);
 
@@ -1341,11 +1341,11 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                             (InheritedVertex *)CLASS_SENTINEL);
 
     int tmpDegree = numStack(
-        &correspondingVertexInConvertedGraph((*std::next(beginSentinel, 1)),
+        &correspondingVertexInConvertedGraph(((InheritedVertex *)*std::next(beginSentinel, 1)),
                                              cAfterGraph, gapOfGlobalRootMemID)
              ->links);
     ConvertedGraphVertexType tmpType =
-        correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
+        correspondingVertexInConvertedGraph(((InheritedVertex *)*(std::next(beginSentinel, 1))),
                                             cAfterGraph, gapOfGlobalRootMemID)
             ->type;
 
@@ -1355,13 +1355,13 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
            iteratorCell != endSentinel;
            iteratorCell = std::next(iteratorCell, 1)) {
         auto &tmpLink = correspondingVertexInConvertedGraph(
-                            (*iteratorCell), cAfterGraph, gapOfGlobalRootMemID)
+                            ((InheritedVertex *)*iteratorCell), cAfterGraph, gapOfGlobalRootMemID)
                             ->links[i];
         ConvertedGraphVertex *adjacentVertex;
 
         switch (tmpLink.attr) {
         case INTEGER_ATTR:
-          writeStack((*(iteratorCell))->conventionalPropagationMemo, i,
+          writeStack(((InheritedVertex *)*(iteratorCell))->conventionalPropagationMemo, i,
                      tmpLink.data.integer * 256 + INTEGER_ATTR);
           break;
         // case DOUBLE_ATTR:
@@ -1420,8 +1420,8 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
-    int tmpPriority = popStack((*tmpCell)->conventionalPropagationMemo);
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    int tmpPriority = popStack(((InheritedVertex *)*tmpCell)->conventionalPropagationMemo);
+    cellPQueue->emplace(tmpPriority, (InheritedVertex *)*tmpCell);
   }
 
   Bool isRefined =
@@ -1437,7 +1437,7 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInner(
   Bool isRefined = FALSE;
 
   int degree = numStack(
-      &correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
+      &correspondingVertexInConvertedGraph(((InheritedVertex *)*(std::next(beginSentinel, 1))),
                                            cAfterGraph, gapOfGlobalRootMemID)
            ->links);
 

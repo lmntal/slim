@@ -246,6 +246,8 @@ public:
   friend iterator end(List__ &list);
 };
 
+using vertex_list = List__<void *>;
+
 namespace std {
 template <typename T> inline ListBody__<T> *next(ListBody__<T> *b, int n) {
   for (int i = 0; i < n; i++)
@@ -254,12 +256,25 @@ template <typename T> inline ListBody__<T> *next(ListBody__<T> *b, int n) {
 }
 } // namespace std
 
-List__<void *> *makeList();
+template <typename T>
+inline void connectCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
+  cellA->next = cellB;
+  cellB->prev = cellA;
+  return;
+}
+
 template <typename Iter, typename T = typename Iter::value_type>
 void *cutCell(Iter cell);
+inline void insertNextCell(vertex_list::iterator cellA, vertex_list::iterator cellB) {
+  connectCell(cellB.body, cellA.body->next);
+  connectCell(cellA.body, cellB.body);
+  return;
+}
 template <typename T>
-void insertNextCell(typename List__<T>::iterator cellA,
-                    typename List__<T>::iterator cellB);
+void insertNextCell(List__<T> *listA, typename List__<T>::iterator cellA,
+                    List__<T> *listB, typename List__<T>::iterator cellB) {
+  listA->splice(cellA, *listB, cellB);
+}
 template <typename T> void forEachValueOfList(List__<T> *list, void func(T));
 template <typename List, typename T>
 void listDump(List *list, void valueDump(T));

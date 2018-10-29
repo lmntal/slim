@@ -4,9 +4,6 @@
 #define INIT_CAP (4)
 
 
-
-List__<void *> *makeList() { return new List__<void *>; }
-
 Bool isEmptyList(List__<void *> *list) {
   return (list->sentinel->next == list->sentinel);
 }
@@ -17,22 +14,6 @@ template <typename T> bool isSingletonList(List__<T> *list) {
 
 template <typename T> ListBody__<T> *makeCell(T value) {
   return new ListBody__<T>(value);
-}
-
-template <typename T>
-void connectCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
-  cellA->next = cellB;
-  cellB->prev = cellA;
-
-  return;
-}
-
-template <typename T>
-void insertNextCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
-  connectCell(cellB, cellA->next);
-  connectCell(cellA, cellB);
-
-  return;
 }
 
 void *peekList(List__<void *> *list) { return list->sentinel->next->value; }
@@ -185,7 +166,7 @@ template <typename T> List__<T> *copyList(List__<T> *l) {
 
 template <typename T>
 List__<T> *copyListWithValues(List__<T> *l, void *copyValue(T)) {
-  List__<void *> *ret = makeList();
+  List__<void *> *ret = new List__<void *>();
 
   for (auto iteratorCell = l->sentinel->prev; iteratorCell != l->sentinel;
        iteratorCell = iteratorCell->prev) {

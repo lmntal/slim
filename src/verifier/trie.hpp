@@ -12,8 +12,6 @@ struct ConvertedGraph;
 
 #define CLASS_SENTINEL (NULL)
 
-using vertex_list = std::list<InheritedVertex *>;
-
 struct TrieBody{
   uint32_t key;
   vertex_list *inheritedVertices;
@@ -104,8 +102,7 @@ Trie *makeTrie();
 void freeTrie(Trie *trie);
 Bool triePropagate(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph,int gapOfGlobalRootMemID,int *stepOfPropagationPtr);
 vertex_list *makeConventionalPropagationList(Trie *trie,int stepOfPropagation);
-template <typename T>
-typename List__<T>::iterator getNextSentinel(typename List__<T>::iterator beginSentinel);
+vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel);
 void putLabelsToAdjacentVertices(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
 Bool classifyConventionalPropagationListWithAttribute(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
 Bool getStableRefinementOfConventionalPropagationList(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
