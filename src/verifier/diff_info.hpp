@@ -13,13 +13,39 @@ struct DiffInfo {
   std::vector<ConvertedGraphVertex *> *relinkedVertices;
 
   void diffInfoDump() {
-    fprintf(stdout, "deletedVertices:\n\n");
+    printf("****DIFF INFO****\n");
+    fprintf(stdout, "+++deletedVertices:\n\n");
     dump(*deletedVertices, convertedGraphVertexDump);
-    fprintf(stdout, "addedVertices:\n\n");
+    fprintf(stdout, "+++addedVertices:\n\n");
     dump(*addedVertices, convertedGraphVertexDump);
-    fprintf(stdout, "relinkedVertices:\n\n");
+    fprintf(stdout, "+++relinkedVertices:\n\n");
     dump(*relinkedVertices, convertedGraphVertexDump);
+    printf("*****************\n");
     return;
+  }
+
+  void change_ref_before_graph(std::map<int,int> iso_m, Graphinfo* before_gi, Graphinfo* org_gi) {
+    std::vector<ConvertedGraphVertex *> *new_deletedVertices;
+    new_deletedVertices = new std::vector<ConvertedGraphVertex *>();
+    for(auto i = deletedVertices->begin(); i!=deletedVertices->end(); ++i) {
+      int id = (*i)->ID;
+      const auto& org_id= iso_m.find(id);
+      if(org_id!=iso_m.end()) {
+	if((*i)->type == convertedAtom) {
+	  const auto& org_atom = org_gi->cv->atoms.find(org_id->second);
+	  if(org_atom != org_gi->cv->atoms.end()) {
+	    new_deletedVertices->push_back(org_atom->second);
+	  }
+	} else if((*i)->type == convertedHyperLink) {
+	  const auto& org_hl = org_gi->cv->hyperlinks.find(org_id->second);
+	  if(org_hl != org_gi->cv->hyperlinks.end()) {
+	    new_deletedVertices->push_back(org_hl->second);
+	  }
+	}
+      }
+    }
+    delete deletedVertices;
+    deletedVertices = new_deletedVertices;
   }
 
   DiffInfo(Graphinfo *init_gi) {

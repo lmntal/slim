@@ -57,6 +57,7 @@
 #include "state.hpp"
 // #define DIFFISO_GEN
 bool diff_gen_finish=false;
+std::map<int,int> iso_m;
 extern Graphinfo * parent_graphinfo;
 extern std::map<int,int> id_to_id_at_commit;
 /** =======================================
@@ -324,7 +325,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     // convertedGraphDump(s->graphinfo->cv);
     // printf("===copy converted graph===\n");
     // convertedGraphDump(parent_graphinfo->cv);
-    std::map<int, int> iso_m = make_iso_morphism(bs);
+    iso_m = make_iso_morphism(bs);
     // printf("===iso_m===\n");
     // for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
     //   printf("%d %d\n", it->first, it->second);
@@ -469,11 +470,17 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
    */
 
     src_succ->graphinfo = new Graphinfo(src_succ_m);
-    // printf("%s:%d\n", __FUNCTION__, __LINE__);
-    // convertedGraphDump(parent_graphinfo->cv);
-    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // printf("===org===\n");
+    // convertedGraphDump(s->graphinfo->cv);
+    // printf("===succ===\n");
     // convertedGraphDump(src_succ->graphinfo->cv);
     DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
+    // dif->diffInfoDump();
+    std::map<int, int> rev_iso;
+    for(auto i = iso_m.begin(); i!=iso_m.end(); ++i) {
+      rev_iso[i->second]=i->first;
+    }
+    dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
     dif->diffInfoDump();
     if (succ == src_succ) {
       /* new state */
