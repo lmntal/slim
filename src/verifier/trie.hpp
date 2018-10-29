@@ -1,10 +1,10 @@
 #ifndef _TRIE_H
 #define _TRIE_H
 
-#include"collection.hpp"
-#include"omegaArray.hpp"
-#include"hash.hpp"
-#include"diff_info.hpp"
+#include "collection.hpp"
+#include "diff_info.hpp"
+#include "hash.hpp"
+#include "omegaArray.hpp"
 // #include"convertedgraph.hpp"
 #include <list>
 
@@ -12,9 +12,7 @@ struct ConvertedGraph;
 
 #define CLASS_SENTINEL (NULL)
 
-using vertex_list = std::list<InheritedVertex *>;
-
-struct TrieBody{
+struct TrieBody {
   uint32_t key;
   vertex_list *inheritedVertices;
   TrieBody *parent;
@@ -33,7 +31,7 @@ struct TrieBody{
   }
 };
 
-struct TerminationConditionInfo{
+struct TerminationConditionInfo {
   OmegaArray *distribution;
   OmegaArray *increase;
   TerminationConditionInfo() {
@@ -42,33 +40,32 @@ struct TerminationConditionInfo{
   };
 };
 
-struct Trie{
+struct Trie {
   TrieBody *body;
   TerminationConditionInfo *info;
   Trie() {
     body = new TrieBody();
     info = new TerminationConditionInfo();
   };
-  //HashTable *trieLeavesTable;
+  // HashTable *trieLeavesTable;
 };
 
-typedef struct _CanonicalLabel{
+typedef struct _CanonicalLabel {
   Hash first;
   int second;
 } CanonicalLabel;
 
-struct HashString{
+struct HashString {
   int creditIndex;
   std::vector<uint32_t *> *body;
 
-  HashString(){
+  HashString() {
     creditIndex = 0;
     body = new std::vector<uint32_t *>();
   }
-
 };
 
-struct InheritedVertex{
+struct InheritedVertex {
   ConvertedGraphVertexType type;
   char name[NAME_LENGTH];
   CanonicalLabel canonicalLabel;
@@ -97,18 +94,84 @@ struct InheritedVertex{
   };
 };
 
+inline bool operator==(const InheritedVertex &iVertexA,
+                       const InheritedVertex &iVertexB) {
+  if (iVertexA.type < iVertexB.type) {
+    return false;
+  } else if (iVertexA.type > iVertexB.type) {
+    return false;
+  } else if (strcmp(iVertexA.name, iVertexB.name) < 0) {
+    return false;
+  } else if (strcmp(iVertexA.name, iVertexB.name) > 0) {
+    return false;
+  } else if (numStack(iVertexA.conventionalPropagationMemo) <
+             numStack(iVertexB.conventionalPropagationMemo)) {
+    return false;
+  } else if (numStack(iVertexA.conventionalPropagationMemo) >
+             numStack(iVertexB.conventionalPropagationMemo)) {
+    return false;
+  } else {
+    int degree = numStack(iVertexA.conventionalPropagationMemo);
+    int i;
+    std::vector<int> *iStackA = iVertexA.conventionalPropagationMemo;
+    std::vector<int> *iStackB = iVertexB.conventionalPropagationMemo;
+
+    for (i = 0; i < degree; i++) {
+      if (readStack(iStackA, i) < readStack(iStackB, i)) {
+        return false;
+      } else if (readStack(iStackA, i) > readStack(iStackB, i)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+}
+inline bool operator!=(const InheritedVertex &a, const InheritedVertex &b) {
+  return !(a == b);
+}
+
+inline std::ostream &operator<<(std::ostream &os,
+                                const InheritedVertex &iVertex) {
+  os << "<";
+
+  switch (iVertex.type) {
+  case convertedAtom:
+    os << "SYMBOLATOM,";
+    break;
+  case convertedHyperLink:
+    os << " HYPERLINK,";
+    break;
+  default:
+    fprintf(stderr, "This is unexpected vertex type\n");
+    exit(EXIT_FAILURE);
+    break;
+  }
+
+  os << "BEFORE_ID=" << iVertex.beforeID << ",";
+  os << "NAME:\"" << iVertex.name << "\"";
+
+  os << ">";
+  return os;
+}
+
 template <typename S>
-void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack,TrieBody *body);
+void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);
 Trie *makeTrie();
 void freeTrie(Trie *trie);
-Bool triePropagate(Trie *trie,DiffInfo *diffInfo,Graphinfo *cAfterGraph,Graphinfo *cBeforeGraph,int gapOfGlobalRootMemID,int *stepOfPropagationPtr);
-vertex_list *makeConventionalPropagationList(Trie *trie,int stepOfPropagation);
-template <typename T>
-typename List__<T>::iterator getNextSentinel(typename List__<T>::iterator beginSentinel);
-void putLabelsToAdjacentVertices(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
-Bool classifyConventionalPropagationListWithAttribute(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
-Bool getStableRefinementOfConventionalPropagationList(vertex_list *pList,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
+Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
+                   Graphinfo *cBeforeGraph, int gapOfGlobalRootMemID,
+                   int *stepOfPropagationPtr);
+vertex_list *makeConventionalPropagationList(Trie *trie, int stepOfPropagation);
+vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel);
+void putLabelsToAdjacentVertices(vertex_list *pList,
+                                 ConvertedGraph *cAfterGraph,
+                                 int gapOfGlobalRootMemID);
+Bool classifyConventionalPropagationListWithAttribute(
+    vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
+Bool getStableRefinementOfConventionalPropagationList(
+    vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
 InheritedVertex *copyInheritedVertex(InheritedVertex *iVertex);
 void *copyInheritedVertexCaster(void *iVertex);
 void inheritedVertexDump(InheritedVertex *iVertex);
@@ -119,15 +182,24 @@ void trieDump(Trie *trie);
 HashString *makeHashString();
 void freeHashString(HashString *hashString);
 template <typename S>
-void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack,InheritedVertex *iVertex);
+void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(
+    S *fixCreditIndexStack, InheritedVertex *iVertex);
 template <typename S>
-InheritedVertex *popInheritedVertexFromFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack);
+InheritedVertex *
+popInheritedVertexFromFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack);
 template <typename S>
-void fixCreditIndex(S *fixCreditIndexStack,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
+void fixCreditIndex(S *fixCreditIndexStack, ConvertedGraph *cAfterGraph,
+                    int gapOfGlobalRootMemID);
 template <typename S>
-Hash callHashValue(InheritedVertex *iVertex,int index,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID,S *fixCreditIndexStack);
+Hash callHashValue(InheritedVertex *iVertex, int index,
+                   ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
+                   S *fixCreditIndexStack);
 
 void terminationConditionInfoDumpExperimentFromTrie(Trie *trie);
-ConvertedGraphVertex *correspondingVertexInConvertedGraph(InheritedVertex *iVertex,ConvertedGraph *cAfterGraph,int gapOfGlobalRootMemID);
-Trie *gen_tmp_trie_from_originaltrie_and_gi(Trie *org_trie, Graphinfo *org_gi, Graphinfo *tmp_gi);
+ConvertedGraphVertex *
+correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
+                                    ConvertedGraph *cAfterGraph,
+                                    int gapOfGlobalRootMemID);
+Trie *gen_tmp_trie_from_originaltrie_and_gi(Trie *org_trie, Graphinfo *org_gi,
+                                            Graphinfo *tmp_gi);
 #endif
