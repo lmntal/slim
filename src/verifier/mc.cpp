@@ -333,7 +333,6 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       exit(1);
     }
-    delete parent_graphinfo;
     mc_store_successors(ss, s, rc, new_ss, f);
   }
 
@@ -472,9 +471,10 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     src_succ->graphinfo = new Graphinfo(src_succ_m);
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
     // convertedGraphDump(parent_graphinfo->cv);
-    // convertedGraphDump(src_succ->graphinfo->cv);
-    // DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
-    // dif->diffInfoDump();
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    convertedGraphDump(src_succ->graphinfo->cv);
+    DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
+    dif->diffInfoDump();
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
@@ -545,7 +545,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
   state_D_progress(s, rc);
   s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
-  // delete parent_graphinfo;
+  delete parent_graphinfo;
 }
 
 /*

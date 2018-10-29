@@ -47,47 +47,110 @@ struct DiffInfo {
     addedVertices = new std::vector<ConvertedGraphVertex *>();
     relinkedVertices = new std::vector<ConvertedGraphVertex *>();
 
-    int gap_of_grootmem_id =
-        after_gi->globalRootMemID - before_gi->globalRootMemID;
-    printf("after_gi->globalRootMemID=%d\n", after_gi->globalRootMemID);
-    printf("before_gi->globalRootMemID=%d\n", before_gi->globalRootMemID);
-    int begin = std::min(0, -gap_of_grootmem_id);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    int end = std::max(std::max(before_atoms.rbegin()->first,
-                                after_hyperlinks.rbegin()->first - gap_of_grootmem_id),
-                       std::max(after_atoms.rbegin()->first,
-                                after_hyperlinks.rbegin()->first - gap_of_grootmem_id));
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    for (int i = begin; i < end; i++) {
-      const auto &before_hl = before_hyperlinks.find(i);
-      const auto &after_hl = after_hyperlinks.find(i);
-      if (before_hl != before_hyperlinks.end() && after_hl == after_hyperlinks.end()) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-                                                           before_hl->second);
-      } else if (before_hl == before_hyperlinks.end() && after_hl != after_hyperlinks.end()) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-                                                           after_hl->second);
+    for(auto i = before_hyperlinks.begin(); i!=before_hyperlinks.end(); ++i) {
+      const auto &after_hl = after_hyperlinks.find(i->first);
+      if(after_hl==after_hyperlinks.end()) {
+	pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
+                                                           i->second);
       }
     }
+    for(auto i = after_hyperlinks.begin(); i!=after_hyperlinks.end(); ++i) {
+      const auto &before_hl = before_hyperlinks.find(i->first);
+      if(before_hl==before_hyperlinks.end()) {
+	pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
+							   i->second);
+      }
+    }
+    for(auto i = before_atoms.begin(); i!=before_atoms.end(); ++i) {
+      const auto &after_atom = after_atoms.find(i->first);
+      if(after_atom==after_atoms.end()) {
+        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
+                                                           i->second);
+	for (auto &beforeLink : i->second->links) {
+	  if (!beforeLink.is_hyper())
+	    continue;
+	  pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,
+							     after_hyperlinks[beforeLink.data.ID]);
+	}
+      }else{
+	assert(i->second->links.size() == after_atom->second->links.size());
+	for (auto j = 0; j < i->second->links.size(); j++) {
+	  const auto &beforeLink = i->second->links[j];
+	  const auto &afterLink = after_atom->second->links[j];
 
-    for (int i = begin; i < end; i++) {
-      const auto &before_atom = before_atoms.find(i);
-      const auto &after_atom = after_atoms.find(i);
-      if (before_atom != before_atoms.end() && after_atom == after_atoms.end()) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-                                                           before_atom->second);
-        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
-                    relinkedVertices);
-      } else if (before_atom == before_atoms.end() && after_atom != after_atoms.end()) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-                                                           after_atom->second);
-        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
-                    relinkedVertices);
-      } else if (before_atom != before_atoms.end() && after_atom != after_atoms.end()) {
-        checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
-                    relinkedVertices);
+	  if (beforeLink == afterLink)
+	    continue;
+
+	  pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,
+							     after_atom->second);
+	  if (beforeLink.is_hyper()) {
+	    pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices, after_hyperlinks[beforeLink.data.ID]);
+	  }
+	  if (afterLink.is_hyper()) {
+	    pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices, after_hyperlinks[afterLink.data.ID]);
+	  }
+	}
       }
     }
+    for(auto i = after_atoms.begin(); i!=after_atoms.end(); ++i) {
+      const auto &before_atom = before_atoms.find(i->first);
+      if(before_atom==before_atoms.end()) {
+	pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices, i->second);
+	for (auto &afterLink : i->second->links) {
+	  if (!afterLink.is_hyper())
+	    continue;
+	  pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices, after_hyperlinks[afterLink.data.ID]);
+	}
+      } else {
+	assert(i->second->links.size() == before_atom->second->links.size());
+	for (auto j = 0; j < before_atom->second->links.size(); j++) {
+	  const auto &beforeLink = before_atom->second->links[j];
+	  const auto &afterLink = i->second->links[j];
+
+	  if (beforeLink == afterLink)
+	    continue;
+
+	  pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices, i->second);
+	  if (beforeLink.is_hyper()) {
+	    pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices, after_hyperlinks[beforeLink.data.ID]);
+	  }
+	  if (afterLink.is_hyper()) {
+	    pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices, after_hyperlinks[afterLink.data.ID]);
+	  }
+	}
+      }
+    }
+    
+    // for (int i = begin; i < end; i++) {
+    //   const auto &before_hl = before_hyperlinks.find(i);
+    //   const auto &after_hl = after_hyperlinks.find(i);
+    //   if (before_hl != before_hyperlinks.end() && after_hl == after_hyperlinks.end()) {
+    //     pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
+    //                                                        before_hl->second);
+    //   } else if (before_hl == before_hyperlinks.end() && after_hl != after_hyperlinks.end()) {
+    //     pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
+    //                                                        after_hl->second);
+    //   }
+    // }
+
+    // for (int i = begin; i < end; i++) {
+    //   const auto &before_atom = before_atoms.find(i);
+    //   const auto &after_atom = after_atoms.find(i);
+    //   if (before_atom != before_atoms.end() && after_atom == after_atoms.end()) {
+    //     pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
+    //                                                        before_atom->second);
+    //     checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
+    //                 relinkedVertices);
+    //   } else if (before_atom == before_atoms.end() && after_atom != after_atoms.end()) {
+    //     pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
+    //                                                        after_atom->second);
+    //     checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
+    //                 relinkedVertices);
+    //   } else if (before_atom != before_atoms.end() && after_atom != after_atoms.end()) {
+    //     checkRelink(before_atom->second, after_atom->second, after_hyperlinks,
+    //                 relinkedVertices);
+    //   }
+    // }
   }
 };
 
