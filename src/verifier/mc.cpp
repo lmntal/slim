@@ -472,7 +472,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
     // convertedGraphDump(parent_graphinfo->cv);
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
-    convertedGraphDump(src_succ->graphinfo->cv);
+    // convertedGraphDump(src_succ->graphinfo->cv);
     DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
     dif->diffInfoDump();
     if (succ == src_succ) {
