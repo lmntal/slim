@@ -135,7 +135,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   Graphinfo *init = new Graphinfo(mem);
   // convertedGraphDump(init->cv);
   DiffInfo *diff = new DiffInfo(empty, init);
-  diff->diffInfoDump();
+  // diff->diffInfoDump();
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -396,13 +396,11 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ = statespace_insert(ss, src_succ);
     }
-    if(!diff_gen_finish) {
       Graphinfo *child_gi = new Graphinfo(src_succ_m);
       // convertedGraphDump(child_gi->cv);
       DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
       di->diffInfoDump();
       // delete child_gi;
-    }
 #ifdef DIFFISO_GEN
     if(!diff_gen_finish) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
