@@ -1,148 +1,66 @@
 #include "collection.hpp"
 #include "mckay.hpp"
 #include "trie.hpp"
+#include <iostream>
 #define INIT_CAP (4)
 
+// template <typename T1, typename T2>
+// Order compareList(List__<T1> *listA, List__<T2> *listB,
+//                   Order compareValue(T1, T2)) {
+//   auto iteratorCellA = listA->sentinel->next;
+//   auto iteratorCellB = listB->sentinel->next;
 
-template <typename T>
-inline void connectCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
-  cellA->next = cellB;
-  cellB->prev = cellA;
-  return;
-}
+//   while (iteratorCellA != listA->sentinel && iteratorCellB !=
+//   listB->sentinel) {
+//     switch (compareValue(iteratorCellA->value, iteratorCellB->value)) {
+//     case LT:
+//       return LT;
+//       break;
+//     case GT:
+//       return GT;
+//       break;
+//     case EQ:
+//       iteratorCellA = iteratorCellA->next;
+//       iteratorCellB = iteratorCellB->next;
+//       continue;
+//       break;
+//     default:
+//       CHECKER("unexpected order type\n");
+//       exit(EXIT_FAILURE);
+//       break;
+//     }
+//   }
 
-Bool isEmptyList(List__<void *> *list) {
-  return (list->sentinel->next == list->sentinel);
-}
+//   if (iteratorCellA == listA->sentinel && iteratorCellB != listB->sentinel) {
+//     return LT;
+//   } else if (iteratorCellA != listA->sentinel &&
+//              iteratorCellB == listB->sentinel) {
+//     return GT;
+//   } else {
+//     return EQ;
+//   }
+// }
 
-template <typename T> bool isSingletonList(List__<T> *list) {
-  return (!isEmptyList(list) && (list->sentinel->next->next == list->sentinel));
-}
-
-template <typename T> ListBody__<T> *makeCell(T value) {
-  return new ListBody__<T>(value);
-}
-
-void *peekList(List__<void *> *list) { return list->sentinel->next->value; }
-
-inline void insertNextCell(vertex_list::iterator cellA, vertex_list::iterator cellB) {
-  connectCell(cellB.body, cellA.body->next);
-  connectCell(cellA.body, cellB.body);
-  return;
-}
-
-template <typename T>
-void pushCell(List__<T> *list, typename List__<T>::iterator cell) {
-  insertNextCell(list->begin(), cell.body);
-
-  return;
-}
-
-template <typename T> ListBody__<T> *popCell(List__<T> *list) {
-  auto cell = list->sentinel->next;
-  connectCell(list->sentinel, cell->next);
-
-  return cell;
-}
-
-template <typename List, typename T>
-void listDump(List *list, void valueDump(T)) {
-  auto sentinel = std::end(*list);
-
-  fprintf(stdout, "[");
-
-  for (auto iterator = std::begin(*list); iterator != sentinel; ++iterator) {
-    valueDump(*iterator);
-
-    if (std::next(iterator, 1) != sentinel) {
-      fprintf(stdout, ",");
-    }
-  }
-
-  fprintf(stdout, "]");
-
-  return;
-}
-
-template <typename T> void freeCell(ListBody__<T> *cell) {
-  free(cell);
-
-  return;
-}
-
-template <typename T1, typename T2>
-Order compareList(List__<T1> *listA, List__<T2> *listB,
-                  Order compareValue(T1, T2)) {
-  auto iteratorCellA = listA->sentinel->next;
-  auto iteratorCellB = listB->sentinel->next;
-
-  while (iteratorCellA != listA->sentinel && iteratorCellB != listB->sentinel) {
-    switch (compareValue(iteratorCellA->value, iteratorCellB->value)) {
-    case LT:
-      return LT;
-      break;
-    case GT:
-      return GT;
-      break;
-    case EQ:
-      iteratorCellA = iteratorCellA->next;
-      iteratorCellB = iteratorCellB->next;
-      continue;
-      break;
-    default:
-      CHECKER("unexpected order type\n");
-      exit(EXIT_FAILURE);
-      break;
-    }
-  }
-
-  if (iteratorCellA == listA->sentinel && iteratorCellB != listB->sentinel) {
-    return LT;
-  } else if (iteratorCellA != listA->sentinel &&
-             iteratorCellB == listB->sentinel) {
-    return GT;
-  } else {
-    return EQ;
-  }
-}
-
-template <typename T> List__<T> *copyList(List__<T> *l) {
-  List__<T> *ret = new List__<T>();
-
-  for (auto iteratorCell = l->sentinel->prev; iteratorCell != l->sentinel;
-       iteratorCell = iteratorCell->prev) {
-    pushCell(ret, new ListBody__<T>(iteratorCell->value));
-  }
-
-  return ret;
-}
-
-KeyContainer__<List__<void *> *>
-makeDiscretePropagationListKey(List__<void *> *dpList) {
-  KeyContainer__<List__<void *> *> ret;
+KeyContainer__<vertex_list *>
+makeDiscretePropagationListKey(vertex_list *dpList) {
+  KeyContainer__<vertex_list *> ret;
 
   ret.value = dpList;
 
   return ret;
 }
 
-template <typename T>
-Order compareKey(KeyContainer__<T> a, KeyContainer__<T> b) {
-  return compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(
-      a.value, b.value);
+bool operator<(const KeyContainer__<vertex_list *> &a,
+               const KeyContainer__<vertex_list *> &b) {
+  return *a.value < *b.value;
 }
-
-template <typename T>
-bool operator<(const KeyContainer__<T> &a, const KeyContainer__<T> &b) {
-  return compareKey(a, b) == LT;
+bool operator==(const KeyContainer__<vertex_list *> &a,
+                const KeyContainer__<vertex_list *> &b) {
+  return *a.value == *b.value;
 }
-template <typename T>
-bool operator==(const KeyContainer__<T> &a, const KeyContainer__<T> &b) {
-  return compareKey(a, b) == EQ;
-}
-template <typename T>
-bool operator>(const KeyContainer__<T> &a, const KeyContainer__<T> &b) {
-  return compareKey(a, b) == GT;
+bool operator>(const KeyContainer__<vertex_list *> &a,
+               const KeyContainer__<vertex_list *> &b) {
+  return *b.value < *a.value;
 }
 
 void setRBColor(Color color) {
@@ -172,7 +90,7 @@ void redBlackTreeKeyDumpInner(_RedBlackTreeBody<K, V> *rbtb, int depth) {
       fprintf(stdout, "    ");
     }
     setRBColor(rbtb->color);
-    listDump(rbtb->key.value, inheritedVertexDumpCaster);
+    std::cout << *rbtb->key.value;
     setDefaultColor();
     fprintf(stdout, "\n");
     redBlackTreeKeyDumpInner(rbtb->children[RIGHT], depth + 1);

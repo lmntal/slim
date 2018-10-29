@@ -5,13 +5,13 @@
 #include "util.hpp"
 #include <cstring>
 #include <list>
+#include <ostream>
 #include <queue>
 #include <stack>
 #include <stdint.h>
 #include <string>
 #include <type_traits>
 #include <vector>
-#include <ostream>
 
 #define INIT_CAP (4)
 typedef enum Order {
@@ -203,9 +203,7 @@ public:
     splice(begin(), iterator(new ListBody__<T>(value)));
   }
 
-  void push_back(T value) {
-    splice(end(), iterator(new ListBody__<T>(value)));
-  }
+  void push_back(T value) { splice(end(), iterator(new ListBody__<T>(value))); }
 
   iterator insert(iterator iter, const T &value) {
     auto it = iterator(new ListBody__<T>(value));
@@ -251,13 +249,16 @@ public:
   friend iterator end(List__ &list);
 };
 
-template <typename T1, typename T2, typename Compare>
-bool operator==(const List__<T1> &listA, const List__<T2> &listB) {
+template <typename T, typename std::enable_if<std::is_pointer<T>::value,
+                                              std::nullptr_t>::type = nullptr>
+bool operator==(const List__<T> &listA, const List__<T> &listB) {
   auto iteratorCellA = std::begin(listA);
   auto iteratorCellB = std::end(listB);
 
   while (iteratorCellA != std::end(listA) && iteratorCellB != std::end(listB)) {
-    if (*iteratorCellA != *iteratorCellB) {
+    if (!*iteratorCellA && !*iteratorCellB)
+      continue;
+    if (**iteratorCellA != **iteratorCellB) {
       return false;
     }
 
@@ -280,32 +281,34 @@ bool operator!=(const List__<T1> &listA, const List__<T2> &listB) {
   return !(listA == listB);
 }
 
-template <typename T1, typename T2, typename Compare>
-bool operator<(const List__<T1> &listA, const List__<T2> &listB) {
-  auto iteratorCellA = listA->sentinel->next;
-  auto iteratorCellB = listB->sentinel->next;
+template <typename T, typename std::enable_if<std::is_pointer<T>::value,
+                                              std::nullptr_t>::type = nullptr>
+bool operator<(const List__<T> &listA, const List__<T> &listB) {
+  auto iteratorCellA = listA.sentinel->next;
+  auto iteratorCellB = listB.sentinel->next;
 
-  while (iteratorCellA != listA->sentinel && iteratorCellB != listB->sentinel) {
-    if (*iteratorCellA < *iteratorCellB)
+  while (iteratorCellA != listA.sentinel && iteratorCellB != listB.sentinel) {
+    if (**iteratorCellA < **iteratorCellB)
       return true;
-    if (*iteratorCellA > *iteratorCellB)
+    if (**iteratorCellB < **iteratorCellA)
       return false;
 
     iteratorCellA = iteratorCellA->next;
     iteratorCellB = iteratorCellB->next;
   }
 
-  if (iteratorCellA == listA->sentinel && iteratorCellB != listB->sentinel) {
+  if (iteratorCellA == listA.sentinel && iteratorCellB != listB.sentinel) {
     return true;
-  } else if (iteratorCellA != listA->sentinel &&
-             iteratorCellB == listB->sentinel) {
+  } else if (iteratorCellA != listA.sentinel &&
+             iteratorCellB == listB.sentinel) {
     return false;
   } else {
     return false;
   }
 }
 
-using vertex_list = List__<void *>;
+struct InheritedVertex;
+using vertex_list = List__<InheritedVertex *>;
 
 namespace std {
 template <typename T> inline ListBody__<T> *next(ListBody__<T> *b, int n) {
@@ -315,8 +318,9 @@ template <typename T> inline ListBody__<T> *next(ListBody__<T> *b, int n) {
 }
 } // namespace std
 
-template <typename T, typename std::enable_if<std::is_pointer<T>::value, std::nullptr_t> = nullptr>
-inline std::ostream & operator<<(std::ostream &os, const List__<T> &list) {
+template <typename T, typename std::enable_if<std::is_pointer<T>::value,
+                                              std::nullptr_t>::type = nullptr>
+inline std::ostream &operator<<(std::ostream &os, const List__<T> &list) {
   auto sentinel = std::end(list);
   os << "[";
   for (auto iterator = std::begin(list); iterator != sentinel; ++iterator) {
@@ -332,18 +336,10 @@ inline std::ostream & operator<<(std::ostream &os, const List__<T> &list) {
   return os;
 }
 
-template <typename List, typename T>
-void listDump(List *list, void valueDump(T));
-
 template <typename List> inline bool isSingletonList(List *list) {
   return std::begin(*list) != std::end(*list) &&
          std::next(std::begin(*list), 1) == std::end(*list);
 }
-
-template <typename T1, typename T2>
-Order compareList(List__<T1> *listA, List__<T2> *listB,
-                  Order compareValue(T1, T2));
-
 
 template <typename T> struct KeyContainer__;
 template <typename T> T get(const KeyContainer__<T> &key);
@@ -360,8 +356,8 @@ template <typename T> struct KeyContainer__ {
   operator T() { return get<KeyContainer__<T>>(*this); }
 };
 
-KeyContainer__<List__<void *> *>
-makeDiscretePropagationListKey(List__<void *> *dpList);
+KeyContainer__<vertex_list *>
+makeDiscretePropagationListKey(vertex_list *dpList);
 
 typedef enum _Color { RED, BLACK } Color;
 
