@@ -145,7 +145,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   // convertedGraphDump(init->cv);
 
   DiffInfo *diff = new DiffInfo(init);
-  diff->diffInfoDump();
+  // diff->diffInfoDump();
   // init_s->trie = new Trie();
   init_s->graphinfo = init;
   // trieMcKay(init_s->trie, diff, init, empty);
@@ -470,6 +470,11 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
    */
 
     src_succ->graphinfo = new Graphinfo(src_succ_m);
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // convertedGraphDump(parent_graphinfo->cv);
+    // convertedGraphDump(src_succ->graphinfo->cv);
+    // DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
+    // dif->diffInfoDump();
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
@@ -540,6 +545,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
   state_D_progress(s, rc);
   s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
+  // delete parent_graphinfo;
 }
 
 /*

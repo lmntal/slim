@@ -364,9 +364,8 @@ popConvertedVertexFromDiffInfoStackWithoutOverlap(S *stack) {
   ret->isPushedIntoDiffInfoStack = false;
   return ret;
 }
-template <typename S>
 void checkRelink(
     ConvertedGraphVertex *beforeCAtom, ConvertedGraphVertex *afterCAtom,
     std::map<size_t, ConvertedGraphVertex *> &afterConvertedHyperLinks,
-    S *relinkedVertices);
+    std::vector<ConvertedGraphVertex *> *relinkedVertices);
 #endif

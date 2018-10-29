@@ -49,12 +49,15 @@ struct DiffInfo {
 
     int gap_of_grootmem_id =
         after_gi->globalRootMemID - before_gi->globalRootMemID;
+    printf("after_gi->globalRootMemID=%d\n", after_gi->globalRootMemID);
+    printf("before_gi->globalRootMemID=%d\n", before_gi->globalRootMemID);
     int begin = std::min(0, -gap_of_grootmem_id);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     int end = std::max(std::max(before_atoms.rbegin()->first,
                                 after_hyperlinks.rbegin()->first - gap_of_grootmem_id),
                        std::max(after_atoms.rbegin()->first,
                                 after_hyperlinks.rbegin()->first - gap_of_grootmem_id));
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (int i = begin; i < end; i++) {
       const auto &before_hl = before_hyperlinks.find(i);
       const auto &after_hl = after_hyperlinks.find(i);

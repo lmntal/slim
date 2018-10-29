@@ -1,11 +1,10 @@
 #include "convertedgraph.hpp"
 #include "collection.hpp"
 
-template <typename S>
 void checkRelink(
     ConvertedGraphVertex *beforeCAtom, ConvertedGraphVertex *afterCAtom,
     std::map<size_t, ConvertedGraphVertex *> &afterConvertedHyperLinks,
-    S *relinkedVertices) {
+    std::vector<ConvertedGraphVertex *> *relinkedVertices) {
   if (beforeCAtom != NULL && afterCAtom != NULL) {
     assert(beforeCAtom->links.size() == afterCAtom->links.size());
     for (auto i = 0; i < beforeCAtom->links.size(); i++) {
