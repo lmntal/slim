@@ -144,13 +144,14 @@ Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     initializeInheritedVertexAdjacentLabelsCaster(v);
 
   auto key = makeDiscretePropagationListKey(preserveDPList);
-  auto seniorDPList = (vertex_list *)searchRedBlackTree(
-      discretePropagationListsOfInheritedVerticesWithAdjacentLabels, key);
+  auto seniorDPList =
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->search(
+          key);
 
   if (seniorDPList == NULL) {
-    insertRedBlackTree(
-        discretePropagationListsOfInheritedVerticesWithAdjacentLabels, key,
-        preserveDPList);
+
+    discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
+        key, preserveDPList);
     isExisting = FALSE;
     return isExisting;
   } else {
@@ -317,8 +318,7 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
 
   if (stateID != 0) {
     auto key = makeDiscretePropagationListKey(canonicalDiscreteRefinement);
-    CollectionInt seniorID =
-        (CollectionInt)searchRedBlackTree(McKayKeyCollection, key) - 1;
+    CollectionInt seniorID = McKayKeyCollection->search(key) - 1;
     if (seniorID != -1) {
       if (stateID != seniorID) {
         fprintf(stdout, "stateID is wrong.\n");
@@ -328,7 +328,7 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
         return isValid;
       }
     } else {
-      insertRedBlackTree(McKayKeyCollection, key, (stateID + 1));
+      McKayKeyCollection->insert(key, (stateID + 1));
     }
 
     vertex_list *seniorDiscreteRefinement = slimKeyCollection->read(stateID);

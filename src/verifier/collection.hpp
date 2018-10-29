@@ -132,12 +132,17 @@ template <typename T> struct KeyContainer__ {
   T value;
 
   KeyContainer__() = default;
+  KeyContainer__(const T &v) : value(v) {}
   template <typename U>
-  KeyContainer__(const KeyContainer__<U> &k) : value(k.value) {
-    value = k.value;
-  }
+  KeyContainer__(const KeyContainer__<U> &k) : value(k.value) {}
 
-  operator T() { return get<KeyContainer__<T>>(*this); }
+  operator T() const { return this->value; }
+
+  bool operator==(const KeyContainer__<T> &b) const {
+    return *value == *b.value;
+  }
+  bool operator<(const KeyContainer__<T> &b) const { return *value < *b.value; }
+  bool operator>(const KeyContainer__<T> &b) const { return *b.value > *value; }
 };
 
 KeyContainer__<vertex_list *>
@@ -148,39 +153,195 @@ typedef enum _Color { RED, BLACK } Color;
 typedef enum _Direction { LEFT, RIGHT } Direction;
 
 template <typename K, typename V> struct _RedBlackTreeBody {
-  KeyContainer__<K> key;
   Color color;
-  V value;
+  std::pair<K, V> elm;
   struct _RedBlackTreeBody *children[2];
+
+  _RedBlackTreeBody(const K &key, const V &value)
+      : elm(key, value), color(RED) {
+    children[LEFT] = nullptr;
+    children[RIGHT] = nullptr;
+  }
+
+  ~_RedBlackTreeBody() {
+    delete children[LEFT];
+    delete children[RIGHT];
+  }
+
+  V search(const K &key) const {
+    if (key < KeyContainer__<K>(elm.first))
+      return children[LEFT] ? children[LEFT]->search(key) : (V) nullptr;
+    else if (key == KeyContainer__<K>(elm.first))
+      return elm.second;
+    else
+      return children[RIGHT] ? children[RIGHT]->search(key) : (V) nullptr;
+  }
+
+  _RedBlackTreeBody *insert(const K &key, const V &value) {
+    _RedBlackTreeBody *child, *grandChild;
+
+    if (key > KeyContainer__<K>(elm.first)) {
+      if (!this->children[RIGHT]) {
+        child = new _RedBlackTreeBody(key, value);
+      } else {
+        child = this->children[RIGHT]->insert(key, value);
+      }
+      this->children[RIGHT] = child;
+
+      if (this->color == BLACK && child != NULL && child->color == RED) {
+        if (child->children[LEFT] != NULL &&
+            child->children[LEFT]->color == RED) {
+          grandChild = child->children[LEFT];
+
+          this->children[RIGHT] = grandChild->children[LEFT];
+          child->children[LEFT] = grandChild->children[RIGHT];
+          grandChild->children[LEFT] = this;
+          grandChild->children[RIGHT] = child;
+
+          child->color = BLACK;
+
+          return grandChild;
+        } else if (child->children[RIGHT] != NULL &&
+                   child->children[RIGHT]->color == RED) {
+
+          grandChild = child->children[RIGHT];
+
+          this->children[RIGHT] = child->children[LEFT];
+          child->children[LEFT] = this;
+
+          grandChild->color = BLACK;
+
+          return child;
+        } else {
+          return this;
+        }
+      } else {
+        return this;
+      }
+    } else {
+      if (!children[LEFT]) {
+        child = new _RedBlackTreeBody(key, value);
+      } else {
+        child = this->children[LEFT]->insert(key, value);
+      }
+      this->children[LEFT] = child;
+
+      if (this->color == BLACK && child != NULL && child->color == RED) {
+        if (child->children[LEFT] != NULL &&
+            child->children[LEFT]->color == RED) {
+          grandChild = child->children[LEFT];
+
+          this->children[LEFT] = child->children[RIGHT];
+          child->children[RIGHT] = this;
+
+          grandChild->color = BLACK;
+
+          return child;
+        } else if (child->children[RIGHT] != NULL &&
+                   child->children[RIGHT]->color == RED) {
+          grandChild = child->children[RIGHT];
+
+          this->children[LEFT] = grandChild->children[RIGHT];
+          child->children[RIGHT] = grandChild->children[LEFT];
+          grandChild->children[LEFT] = child;
+          grandChild->children[RIGHT] = this;
+
+          child->color = BLACK;
+
+          return grandChild;
+        } else {
+          return this;
+        }
+      } else {
+        return this;
+      }
+    }
+  }
 };
 using RedBlackTreeBody = _RedBlackTreeBody<void *, void *>;
 
 template <typename K, typename V> struct RedBlackTree__ {
   _RedBlackTreeBody<K, V> *body;
   RedBlackTree__() { body = NULL; }
+
+  V search(const K &key) const { return body->search(key); }
+  void insert(const K &key, const V &value) {
+    this->body = this->body->insert(key, value);
+    this->body->color = BLACK;
+  }
+
+  bool empty() const { return body == nullptr; }
+
+  struct iterator {
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = std::pair<K, V>;
+    using difference_type = std::ptrdiff_t;
+    using pointer = std::pair<K, V> *;
+    using reference = std::pair<K, V> &;
+    using const_reference = const std::pair<K, V> &;
+
+    iterator() : body(nullptr) {}
+    iterator(_RedBlackTreeBody<K, V> &b, iterator parent)
+        : body(&b), parent(parent) {}
+    iterator(const iterator &iter) : body(iter.body) {}
+
+    reference operator*() { return body->elm; }
+    const_reference operator*() const { return body->elm; }
+
+    iterator &operator++() {
+      if (!body->children[RIGHT]) {
+        *this = parent;
+      } else {
+        *this = leftmost_descendant(body->children[RIGHT], parent);
+      }
+      return *this;
+    }
+    iterator operator++(int i) {
+      auto it = *this;
+      ++(*this);
+      return it;
+    }
+
+    bool operator==(const iterator &iter) const { return iter.body == body; }
+    bool operator!=(const iterator &iter) const { return !(*this == iter); }
+
+    static iterator leftmost_descendant(_RedBlackTreeBody<K, V> *body, iterator &p) {
+      iterator result = p;
+      auto b = body;
+      while (b) {
+        result = iterator(*b, result);
+        b = b->children[LEFT];
+      }
+      return result;
+    }
+
+  private:
+    _RedBlackTreeBody<K, V> *body;
+    iterator parent;
+    bool visited = false;
+  };
+
+  iterator begin() const {
+    return iterator::leftmost_descendant(body, iterator());
+  }
+  iterator end() const {
+    return iterator();
+  }
 };
 using RedBlackTree = RedBlackTree__<void *, void *>;
 
 template <typename K, typename V>
 void redBlackTreeKeyDump(RedBlackTree__<K, V> *rbt);
-RedBlackTree *makeRedBlackTree();
 template <typename K, typename V>
 void redBlackTreeValueDump(RedBlackTree__<K, V> *rbt, void valueDump(V));
-template <typename K, typename V>
-void freeRedBlackTree(RedBlackTree__<K, V> *rbt);
 template <typename K, typename V>
 void freeRedBlackTreeWithValueInner(_RedBlackTreeBody<K, V> *rbtb,
                                     void freeValue(V));
 template <typename K, typename V>
 void freeRedBlackTreeWithValue(RedBlackTree__<K, V> *rbt, void freeValue(V));
-template <typename K, typename V>
-void *searchRedBlackTree(RedBlackTree__<K, V> *rbt, K key);
-template <typename K, typename V>
-void insertRedBlackTree(RedBlackTree__<K, V> *rbt, K key, V value);
+
 template <typename K, typename V>
 void deleteRedBlackTree(RedBlackTree__<K, V> *rbt, K key);
-template <typename K, typename V>
-Bool isEmptyRedBlackTree(RedBlackTree__<K, V> *rbt);
 template <typename K, typename V>
 Bool isSingletonRedBlackTree(RedBlackTree__<K, V> *rbt);
 template <typename K, typename V>

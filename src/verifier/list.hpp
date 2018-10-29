@@ -189,6 +189,10 @@ bool operator<(const List__<T> &listA, const List__<T> &listB) {
     return false;
   }
 }
+template <typename T, typename T2>
+bool operator>(const List__<T> &listA, const List__<T2> &listB) {
+	return listB < listA;
+}
 
 struct InheritedVertex;
 using vertex_list = List__<InheritedVertex *>;

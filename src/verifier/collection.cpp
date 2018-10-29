@@ -50,19 +50,6 @@ makeDiscretePropagationListKey(vertex_list *dpList) {
   return ret;
 }
 
-bool operator<(const KeyContainer__<vertex_list *> &a,
-               const KeyContainer__<vertex_list *> &b) {
-  return *a.value < *b.value;
-}
-bool operator==(const KeyContainer__<vertex_list *> &a,
-                const KeyContainer__<vertex_list *> &b) {
-  return *a.value == *b.value;
-}
-bool operator>(const KeyContainer__<vertex_list *> &a,
-               const KeyContainer__<vertex_list *> &b) {
-  return *b.value < *a.value;
-}
-
 void setRBColor(Color color) {
   if (color == BLACK) {
     printf("\x1b[47m");
@@ -115,7 +102,7 @@ void redBlackTreeValueDumpInner(RedBlackTreeBody *rbtb,
     return;
   } else {
     redBlackTreeValueDumpInner(rbtb->children[LEFT], valueDump);
-    valueDump(rbtb->value);
+    valueDump(rbtb->elm.second);
     // fprintf(stdout,"\n");
     redBlackTreeValueDumpInner(rbtb->children[RIGHT], valueDump);
     return;
@@ -143,7 +130,6 @@ void freeRedBlackTreeWithValueInner(_RedBlackTreeBody<K, V> *rbtb,
   if (rbtb != NULL) {
     freeRedBlackTreeWithValueInner(rbtb->children[LEFT], freeValue);
     freeRedBlackTreeWithValueInner(rbtb->children[RIGHT], freeValue);
-    freeValue(rbtb->value);
     free(rbtb);
   }
 
@@ -159,7 +145,9 @@ void freeRedBlackTree(RedBlackTree__<K, V> *rbt) {
 
 template <typename K, typename V>
 void freeRedBlackTreeWithValue(RedBlackTree__<K, V> *rbt, void freeValue(V)) {
-  freeRedBlackTreeWithValueInner(rbt->body, freeValue);
+  for (auto &v : *rbt)
+    freeValue(rbt);
+  delete (rbt->body);
   free(rbt);
   return;
 }
@@ -176,104 +164,6 @@ void *searchRedBlackTreeInner(_RedBlackTreeBody<K, V> *rbtb, K key) {
     else
       return searchRedBlackTreeInner(rbtb->children[RIGHT], key);
   }
-}
-
-template <typename K, typename V>
-void *searchRedBlackTree(RedBlackTree__<K, V> *rbt, K key) {
-  return searchRedBlackTreeInner(rbt->body, key);
-}
-
-template <typename K, typename V>
-RedBlackTreeBody *insertRedBlackTreeInner(_RedBlackTreeBody<K, V> *rbtb,
-                                          const K &key, void *value) {
-  if (rbtb == NULL) {
-    RedBlackTreeBody *newRbtb =
-        (RedBlackTreeBody *)malloc(sizeof(RedBlackTreeBody));
-    newRbtb->key = key;
-    newRbtb->color = RED;
-    newRbtb->value = value;
-    newRbtb->children[LEFT] = NULL;
-    newRbtb->children[RIGHT] = NULL;
-    return newRbtb;
-  } else {
-    RedBlackTreeBody *child, *grandChild;
-
-    if (key > rbtb->key) {
-      child = insertRedBlackTreeInner(rbtb->children[RIGHT], key, value);
-      rbtb->children[RIGHT] = child;
-
-      if (rbtb->color == BLACK && child != NULL && child->color == RED) {
-        if (child->children[LEFT] != NULL &&
-            child->children[LEFT]->color == RED) {
-          grandChild = child->children[LEFT];
-
-          rbtb->children[RIGHT] = grandChild->children[LEFT];
-          child->children[LEFT] = grandChild->children[RIGHT];
-          grandChild->children[LEFT] = rbtb;
-          grandChild->children[RIGHT] = child;
-
-          child->color = BLACK;
-
-          return grandChild;
-        } else if (child->children[RIGHT] != NULL &&
-                   child->children[RIGHT]->color == RED) {
-
-          grandChild = child->children[RIGHT];
-
-          rbtb->children[RIGHT] = child->children[LEFT];
-          child->children[LEFT] = rbtb;
-
-          grandChild->color = BLACK;
-
-          return child;
-        } else {
-          return rbtb;
-        }
-      } else {
-        return rbtb;
-      }
-    } else {
-      child = insertRedBlackTreeInner(rbtb->children[LEFT], key, value);
-      rbtb->children[LEFT] = child;
-
-      if (rbtb->color == BLACK && child != NULL && child->color == RED) {
-        if (child->children[LEFT] != NULL &&
-            child->children[LEFT]->color == RED) {
-          grandChild = child->children[LEFT];
-
-          rbtb->children[LEFT] = child->children[RIGHT];
-          child->children[RIGHT] = rbtb;
-
-          grandChild->color = BLACK;
-
-          return child;
-        } else if (child->children[RIGHT] != NULL &&
-                   child->children[RIGHT]->color == RED) {
-          grandChild = child->children[RIGHT];
-
-          rbtb->children[LEFT] = grandChild->children[RIGHT];
-          child->children[RIGHT] = grandChild->children[LEFT];
-          grandChild->children[LEFT] = child;
-          grandChild->children[RIGHT] = rbtb;
-
-          child->color = BLACK;
-
-          return grandChild;
-        } else {
-          return rbtb;
-        }
-      } else {
-        return rbtb;
-      }
-    }
-  }
-}
-
-template <typename K, typename V>
-void insertRedBlackTree(RedBlackTree__<K, V> *rbt, K key, void *value) {
-  rbt->body = insertRedBlackTreeInner(rbt->body, key, value);
-  rbt->body->color = BLACK;
-  return;
 }
 
 Direction counterDirection(Direction dir) {
@@ -344,8 +234,7 @@ RedBlackTreeBody *correctInDelete(RedBlackTreeBody *rbtb, Bool *changeFlag,
 RedBlackTreeBody *exchangeMaxValue(RedBlackTreeBody *rbtb,
                                    RedBlackTreeBody *target, Bool *changeFlag) {
   if (rbtb->children[RIGHT] == NULL) {
-    target->value = rbtb->value;
-    target->key = rbtb->key;
+    target->elm = rbtb->elm;
 
     *changeFlag = (rbtb->color == BLACK);
 
@@ -425,19 +314,14 @@ void deleteRedBlackTree(RedBlackTree__<K, V> *rbt, K key) {
 }
 
 template <typename K, typename V>
-Bool isEmptyRedBlackTree(RedBlackTree__<K, V> *rbt) {
-  return (rbt->body == NULL);
-}
-
-template <typename K, typename V>
 Bool isSingletonRedBlackTree(RedBlackTree__<K, V> *rbt) {
-  return (!isEmptyRedBlackTree(rbt) && (rbt->body->children[LEFT] == NULL &&
+  return (!rbt->empty() && (rbt->body->children[LEFT] == NULL &&
                                         rbt->body->children[RIGHT] == NULL));
 }
 
 void *minimumElementOfRedBlackTreeInner(RedBlackTreeBody *rbtb) {
   if (rbtb->children[LEFT] == NULL) {
-    return rbtb->value;
+    return rbtb->elm.second;
   } else {
     return minimumElementOfRedBlackTreeInner(rbtb->children[LEFT]);
   }
