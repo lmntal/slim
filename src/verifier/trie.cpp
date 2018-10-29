@@ -1,5 +1,6 @@
 #include "trie.hpp"
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <stack>
 #include <tuple>
@@ -196,7 +197,7 @@ void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(
 template <typename S>
 InheritedVertex *popInheritedVertexFromFixCreditIndexStackWithoutOverlap(
     S *fixCreditIndexStack) {
-  InheritedVertex *iVertex = (InheritedVertex *)popStack(fixCreditIndexStack);
+  InheritedVertex *iVertex = popStack(fixCreditIndexStack);
   iVertex->isPushedIntoFixCreditIndex = FALSE;
 
   return iVertex;
@@ -371,10 +372,8 @@ int compareTrieLeaves(TrieBody *a, TrieBody *b) {
   } else {
     int depthA = a->depth;
     int depthB = b->depth;
-    HashString *hStringA =
-        ((InheritedVertex *)a->inheritedVertices->front())->hashString;
-    HashString *hStringB =
-        ((InheritedVertex *)b->inheritedVertices->front())->hashString;
+    HashString *hStringA = (a->inheritedVertices->front())->hashString;
+    HashString *hStringB = (b->inheritedVertices->front())->hashString;
 
     int i;
     for (i = 0;; i++) {
@@ -696,8 +695,7 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       targetNode->depth != -1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     incrementOmegaArray(tInfo->distribution, targetNode->depth);
-    ((InheritedVertex *)inheritedVerticesList->front())->canonicalLabel.first =
-        targetNode->key;
+    (inheritedVerticesList->front())->canonicalLabel.first = targetNode->key;
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     while (!inheritedVerticesList->empty()) {
@@ -1019,7 +1017,7 @@ void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
     if (body->isPushedIntoGoAheadStack) {
       for (auto &v : *body->inheritedVertices) {
         incrementOmegaArray(tInfo->distribution, OMEGA);
-        v->canonicalLabel.first = body->key;
+        (v)->canonicalLabel.first = body->key;
       }
     }
 
@@ -1715,8 +1713,7 @@ void trieDumpInner(TrieBody *body) {
 
   spacePrinter(body->depth);
   fprintf(stdout, "VERTICES:");
-  listDump(body->inheritedVertices, inheritedVertexDump);
-  fprintf(stdout, "\n");
+  std::cout << *body->inheritedVertices << "\n";
 
   if (body->isPushedIntoGoAheadStack) {
     fprintf(stdout, "\x1b[39m");
@@ -1854,7 +1851,7 @@ Trie *gen_tmp_trie_from_originaltrie_and_gi(Trie *org_trie, Graphinfo *org_gi,
   Trie *trie = new Trie();
   trieDump(org_trie);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  listDump(org_trie->body->inheritedVertices, inheritedVertexDump);
+  std::cout << *org_trie->body->inheritedVertices << "\n";
   printf("\n");
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   return trie;
