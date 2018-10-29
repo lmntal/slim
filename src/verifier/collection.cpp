@@ -4,6 +4,13 @@
 #define INIT_CAP (4)
 
 
+template <typename T>
+inline void connectCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
+  cellA->next = cellB;
+  cellB->prev = cellA;
+  return;
+}
+
 Bool isEmptyList(List__<void *> *list) {
   return (list->sentinel->next == list->sentinel);
 }
@@ -18,6 +25,12 @@ template <typename T> ListBody__<T> *makeCell(T value) {
 
 void *peekList(List__<void *> *list) { return list->sentinel->next->value; }
 
+inline void insertNextCell(vertex_list::iterator cellA, vertex_list::iterator cellB) {
+  connectCell(cellB.body, cellA.body->next);
+  connectCell(cellA.body, cellB.body);
+  return;
+}
+
 template <typename T>
 void pushCell(List__<T> *list, typename List__<T>::iterator cell) {
   insertNextCell(list->begin(), cell.body);
@@ -30,42 +43,6 @@ template <typename T> ListBody__<T> *popCell(List__<T> *list) {
   connectCell(list->sentinel, cell->next);
 
   return cell;
-}
-
-template <typename T> void *cutCell(ListBody__<T> *cell) {
-  void *ret = cell->value;
-  connectCell(cell->prev, cell->next);
-
-  return ret;
-}
-
-template <typename T> void forEachValueOfList(List__<T> *list, void func(T)) {
-  auto sentinel = list->sentinel;
-
-  for (auto iterator = sentinel->next; iterator != sentinel;) {
-    auto iteratorNext = iterator->next;
-
-    func(iterator->value);
-
-    iterator = iteratorNext;
-  }
-
-  return;
-}
-
-template <typename T>
-void forEachCellOfList(List__<T> *list, void func(ListBody__<T> *)) {
-  auto sentinel = list->sentinel;
-
-  for (auto iterator = sentinel->next; iterator != sentinel;) {
-    auto iteratorNext = iterator->next;
-
-    func(iterator);
-
-    iterator = iteratorNext;
-  }
-
-  return;
 }
 
 template <typename List, typename T>
@@ -89,30 +66,6 @@ void listDump(List *list, void valueDump(T)) {
 
 template <typename T> void freeCell(ListBody__<T> *cell) {
   free(cell);
-
-  return;
-}
-
-template <typename T> void freeList(List__<T> *list) {
-  forEachCellOfList(list, freeCell);
-  free(list->sentinel);
-  free(list);
-
-  return;
-}
-
-void freeListCaster(void *list) {
-  freeList((List__<void *> *)list);
-
-  return;
-}
-
-template <typename T>
-void freeListWithValues(List__<T> *list, void freeValue(T)) {
-  forEachValueOfList(list, freeValue);
-  forEachCellOfList(list, freeCell);
-  free(list->sentinel);
-  free(list);
 
   return;
 }
@@ -159,18 +112,6 @@ template <typename T> List__<T> *copyList(List__<T> *l) {
   for (auto iteratorCell = l->sentinel->prev; iteratorCell != l->sentinel;
        iteratorCell = iteratorCell->prev) {
     pushCell(ret, new ListBody__<T>(iteratorCell->value));
-  }
-
-  return ret;
-}
-
-template <typename T>
-List__<T> *copyListWithValues(List__<T> *l, void *copyValue(T)) {
-  List__<void *> *ret = new List__<void *>();
-
-  for (auto iteratorCell = l->sentinel->prev; iteratorCell != l->sentinel;
-       iteratorCell = iteratorCell->prev) {
-    pushCell(ret, new ListBody__<T>(copyValue(iteratorCell->value)));
   }
 
   return ret;

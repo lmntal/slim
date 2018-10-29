@@ -9,8 +9,9 @@
 #include <stack>
 #include <stdint.h>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
+#include <ostream>
 
 #define INIT_CAP (4)
 typedef enum Order {
@@ -63,7 +64,7 @@ template <typename T> struct unbound_vector {
 
   T read(int index) const {
     if (0 <= index && index < vec.size())
-      return vec.at(index);  
+      return vec.at(index);
     return nullptr;
   }
 
@@ -77,14 +78,12 @@ template <typename T> struct unbound_vector {
 
 template <typename T> void freeStack(std::stack<T> *stack) { delete stack; }
 template <typename T> void freeStack(std::vector<T> *stack) { delete stack; }
-template <typename T>
-T popStack(std::vector<T> *stack) {
+template <typename T> T popStack(std::vector<T> *stack) {
   auto ret = stack->back();
   stack->pop_back();
   return ret;
 }
-template <typename T>
-T popStack(std::stack<T> *stack) {
+template <typename T> T popStack(std::stack<T> *stack) {
   auto ret = stack->top();
   stack->pop();
   return ret;
@@ -204,8 +203,14 @@ public:
     splice(begin(), iterator(new ListBody__<T>(value)));
   }
 
-  void insert(iterator iter, T value) {
-    splice(iter, iterator(new ListBody__<T>(value)));
+  void push_back(T value) {
+    splice(end(), iterator(new ListBody__<T>(value)));
+  }
+
+  iterator insert(iterator iter, const T &value) {
+    auto it = iterator(new ListBody__<T>(value));
+    splice(iter, it);
+    return it;
   }
 
   void splice(iterator iter, iterator cell) {
@@ -246,6 +251,60 @@ public:
   friend iterator end(List__ &list);
 };
 
+template <typename T1, typename T2, typename Compare>
+bool operator==(const List__<T1> &listA, const List__<T2> &listB) {
+  auto iteratorCellA = std::begin(listA);
+  auto iteratorCellB = std::end(listB);
+
+  while (iteratorCellA != std::end(listA) && iteratorCellB != std::end(listB)) {
+    if (*iteratorCellA != *iteratorCellB) {
+      return false;
+    }
+
+    iteratorCellA = std::next(iteratorCellA, 1);
+    iteratorCellB = std::next(iteratorCellB, 1);
+  }
+
+  if (iteratorCellA == std::end(listA) && iteratorCellB != std::end(listB)) {
+    return false;
+  } else if (iteratorCellA != std::end(listA) &&
+             iteratorCellB == std::end(listB)) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+template <typename T1, typename T2>
+bool operator!=(const List__<T1> &listA, const List__<T2> &listB) {
+  return !(listA == listB);
+}
+
+template <typename T1, typename T2, typename Compare>
+bool operator<(const List__<T1> &listA, const List__<T2> &listB) {
+  auto iteratorCellA = listA->sentinel->next;
+  auto iteratorCellB = listB->sentinel->next;
+
+  while (iteratorCellA != listA->sentinel && iteratorCellB != listB->sentinel) {
+    if (*iteratorCellA < *iteratorCellB)
+      return true;
+    if (*iteratorCellA > *iteratorCellB)
+      return false;
+
+    iteratorCellA = iteratorCellA->next;
+    iteratorCellB = iteratorCellB->next;
+  }
+
+  if (iteratorCellA == listA->sentinel && iteratorCellB != listB->sentinel) {
+    return true;
+  } else if (iteratorCellA != listA->sentinel &&
+             iteratorCellB == listB->sentinel) {
+    return false;
+  } else {
+    return false;
+  }
+}
+
 using vertex_list = List__<void *>;
 
 namespace std {
@@ -256,42 +315,35 @@ template <typename T> inline ListBody__<T> *next(ListBody__<T> *b, int n) {
 }
 } // namespace std
 
-template <typename T>
-inline void connectCell(ListBody__<T> *cellA, ListBody__<T> *cellB) {
-  cellA->next = cellB;
-  cellB->prev = cellA;
-  return;
+template <typename T, typename std::enable_if<std::is_pointer<T>::value, std::nullptr_t> = nullptr>
+inline std::ostream & operator<<(std::ostream &os, const List__<T> &list) {
+  auto sentinel = std::end(list);
+  os << "[";
+  for (auto iterator = std::begin(list); iterator != sentinel; ++iterator) {
+    if (*iterator)
+      os << **iterator;
+    else
+      os << "CLASS_SENTINEL\n";
+    if (std::next(iterator, 1) != sentinel) {
+      os << ",";
+    }
+  }
+  os << "]";
+  return os;
 }
 
-template <typename Iter, typename T = typename Iter::value_type>
-void *cutCell(Iter cell);
-inline void insertNextCell(vertex_list::iterator cellA, vertex_list::iterator cellB) {
-  connectCell(cellB.body, cellA.body->next);
-  connectCell(cellA.body, cellB.body);
-  return;
-}
-template <typename T>
-void insertNextCell(List__<T> *listA, typename List__<T>::iterator cellA,
-                    List__<T> *listB, typename List__<T>::iterator cellB) {
-  listA->splice(cellA, *listB, cellB);
-}
-template <typename T> void forEachValueOfList(List__<T> *list, void func(T));
 template <typename List, typename T>
 void listDump(List *list, void valueDump(T));
-template <typename T> void freeList(List__<T> *list);
-template <typename T>
-void freeListWithValues(List__<T> *list, void freeValue(T));
-template <typename T> bool isSingletonList(List__<T> *list);
-template <typename T> inline bool isSingletonList(std::list<T> *list) {
+
+template <typename List> inline bool isSingletonList(List *list) {
   return std::begin(*list) != std::end(*list) &&
          std::next(std::begin(*list), 1) == std::end(*list);
 }
+
 template <typename T1, typename T2>
 Order compareList(List__<T1> *listA, List__<T2> *listB,
                   Order compareValue(T1, T2));
-template <typename T> List__<T> *copyList(List__<T> *l);
-template <typename T>
-List__<T> *copyListWithValues(List__<T> *l, void *copyValue(T));
+
 
 template <typename T> struct KeyContainer__;
 template <typename T> T get(const KeyContainer__<T> &key);

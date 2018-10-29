@@ -115,10 +115,10 @@ void freeInheritedVertexOfPreserveDiscretePropagationListCaster(void *iVertex) {
 
 template <typename List>
 void freePreserveDiscreteProapgationList(List *pdpList) {
-  freeListWithValues(
-      pdpList, freeInheritedVertexOfPreserveDiscretePropagationListCaster);
+  for (auto &v : *pdpList)
+   freeInheritedVertexOfPreserveDiscretePropagationListCaster(v);
 
-  return;
+  delete pdpList;
 }
 
 void freePreserveDiscreteProapgationListCaster(void *pdpList) {
@@ -134,8 +134,11 @@ Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
   Bool isExisting;
 
   putLabelsToAdjacentVertices(dpList, cAfterGraph, gapOfGlobalRootMemID);
-  vertex_list *preserveDPList = copyListWithValues(dpList, copyInheritedVertexCaster);
-  forEachValueOfList(dpList, initializeInheritedVertexAdjacentLabelsCaster);
+  vertex_list *preserveDPList = new vertex_list();
+  for (auto &v : *dpList)
+    preserveDPList->push_back(copyInheritedVertexCaster(v));
+  for (auto &v : *dpList)
+    initializeInheritedVertexAdjacentLabelsCaster(v);
 
   auto key = makeDiscretePropagationListKey(preserveDPList);
   auto seniorDPList = (vertex_list *)searchRedBlackTree(
@@ -210,7 +213,7 @@ Bool listMcKayInner(
         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
   Bool isUsefulBranch = TRUE;
 
-  auto stabilizer = copyList(propagationListOfInheritedVertices);
+  auto stabilizer = new vertex_list(*propagationListOfInheritedVertices);
   getStableRefinementOfConventionalPropagationList(stabilizer, cAfterGraph,
                                                    gapOfGlobalRootMemID);
 
@@ -230,23 +233,20 @@ Bool listMcKayInner(
     Bool isFirstLoop = TRUE;
 
     auto endSentinel = getNextSentinel(beginSentinel);
-    auto sentinelCell = vertex_list::iterator(CLASS_SENTINEL);
-    insertNextCell(beginSentinel, sentinelCell);
+    auto sentinelCell = stabilizer->insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
 
     for (auto iteratorCell = sentinelCell; std::next(iteratorCell, 1) != endSentinel;
          iteratorCell = std::next(iteratorCell, 1)) {
       auto splitCell = std::next(iteratorCell, 1);
 
       if (isNewSplit(sentinelCell, splitCell)) {
-        cutCell(splitCell);
-        insertNextCell(beginSentinel, splitCell);
+        stabilizer->splice(std::next(beginSentinel, 1), *stabilizer, splitCell);
 
         Bool isUsefulChild = listMcKayInner(
             stabilizer, cAfterGraph, gapOfGlobalRootMemID,
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
 
-        cutCell(splitCell);
-        insertNextCell(iteratorCell, splitCell);
+        stabilizer->splice(std::next(iteratorCell, 1), *stabilizer, splitCell);
 
         if (isFirstLoop) {
           isFirstLoop = FALSE;
@@ -261,7 +261,7 @@ Bool listMcKayInner(
     }
   }
 
-  freeList(stabilizer);
+  delete (stabilizer);
 
   return isUsefulBranch;
 }
@@ -270,7 +270,7 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
                 ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
   if (propagationListOfInheritedVertices->empty()) {
     vertex_list *canonicalDiscreteRefinement =
-        copyList(propagationListOfInheritedVertices);
+        new vertex_list(*propagationListOfInheritedVertices);
     return canonicalDiscreteRefinement;
   } else {
     initializeDisjointSetForestsOfPropagationList(
@@ -290,10 +290,10 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
         propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID,
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
 
-    vertex_list *canonicalDiscreteRefinement = (vertex_list *)copyListWithValues(
-        minimumElementOfRedBlackTree(
-            discretePropagationListsOfInheritedVerticesWithAdjacentLabels),
-        copyInheritedVertexCaster);
+    vertex_list *canonicalDiscreteRefinement = new vertex_list();
+    for (auto &v : *minimumElementOfRedBlackTree(
+            discretePropagationListsOfInheritedVerticesWithAdjacentLabels))
+      canonicalDiscreteRefinement->push_back(copyInheritedVertexCaster(v));
 
     /*
     CHECKER("########### candidates of canonical discrete refinement
@@ -309,10 +309,9 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
   }
 }
 
-template <typename List>
-Bool checkIsomorphismValidity(unbound_vector<List *> *slimKeyCollection,
-                              RedBlackTree *McKayKeyCollection,
-                              List *canonicalDiscreteRefinement, int stateID) {
+Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
+                              RedBlackTree__<KeyContainer__<vertex_list *>, CollectionInt> *McKayKeyCollection,
+                              vertex_list *canonicalDiscreteRefinement, long stateID) {
   Bool isValid = TRUE;
 
   if (stateID != 0) {
@@ -322,16 +321,16 @@ Bool checkIsomorphismValidity(unbound_vector<List *> *slimKeyCollection,
     if (seniorID != -1) {
       if (stateID != seniorID) {
         fprintf(stdout, "stateID is wrong.\n");
-        fprintf(stdout, "juniorStateID is %d\n", stateID);
-        fprintf(stdout, "seniorStateID is %d\n", seniorID);
+        fprintf(stdout, "juniorStateID is %ld\n", stateID);
+        fprintf(stdout, "seniorStateID is %ld\n", seniorID);
         isValid = FALSE;
         return isValid;
       }
     } else {
-      insertRedBlackTree(McKayKeyCollection, key, (void *)(stateID + 1));
+      insertRedBlackTree(McKayKeyCollection, key, (stateID + 1));
     }
 
-    List *seniorDiscreteRefinement = slimKeyCollection->read(stateID);
+    vertex_list *seniorDiscreteRefinement = slimKeyCollection->read(stateID);
     if (seniorDiscreteRefinement != NULL) {
       if (compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabels(
               canonicalDiscreteRefinement, seniorDiscreteRefinement) != EQ) {
@@ -381,7 +380,7 @@ List__<void *> *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph
        listDump(canonicalDiscreteRefinement,inheritedVertexDumpCaster),fprintf(stdout,"\n");
     //*/
 
-    freeList(propagationListOfInheritedVertices);
+    delete (propagationListOfInheritedVertices);
 
     return canonicalDiscreteRefinement;
   }
