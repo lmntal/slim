@@ -22,6 +22,22 @@ struct DiffInfo {
     return;
   }
 
+  DiffInfo(Graphinfo *init_gi) {
+    auto &before_atoms = init_gi->cv->atoms;
+    auto &before_hyperlinks = init_gi->cv->hyperlinks;
+    deletedVertices = new std::vector<ConvertedGraphVertex *>();
+    addedVertices = new std::vector<ConvertedGraphVertex *>();
+    relinkedVertices = new std::vector<ConvertedGraphVertex *>();
+    for(auto i = before_atoms.begin(); i!=before_atoms.end(); ++i) {
+      pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
+							 i->second);
+    }
+    for(auto i = before_hyperlinks.begin(); i!=before_hyperlinks.end(); ++i) {
+      pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
+							 i->second);
+    }
+  }
+
   DiffInfo(Graphinfo *before_gi, Graphinfo *after_gi) {
     auto &before_atoms = before_gi->cv->atoms;
     auto &before_hyperlinks = before_gi->cv->hyperlinks;

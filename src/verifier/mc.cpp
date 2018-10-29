@@ -144,8 +144,8 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   // lmn_dump_mem_dev(mem);
   // convertedGraphDump(init->cv);
 
-  // DiffInfo *diff = new DiffInfo(empty, init);
-  // diff->diffInfoDump();
+  DiffInfo *diff = new DiffInfo(init);
+  diff->diffInfoDump();
   // init_s->trie = new Trie();
   init_s->graphinfo = init;
   // trieMcKay(init_s->trie, diff, init, empty);
