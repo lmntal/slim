@@ -132,7 +132,7 @@ Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     initializeInheritedVertexAdjacentLabels(
         &slim::element::get<InheritedVertex>(v));
 
-  auto key = makeDiscretePropagationListKey(preserveDPList);
+  auto key = KeyContainer__<vertex_list *>(preserveDPList);
   auto seniorDPList =
       discretePropagationListsOfInheritedVerticesWithAdjacentLabels->search(
           key);
@@ -307,7 +307,7 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
   Bool isValid = TRUE;
 
   if (stateID != 0) {
-    auto key = makeDiscretePropagationListKey(canonicalDiscreteRefinement);
+    auto key = KeyContainer__<vertex_list *>(canonicalDiscreteRefinement);
     CollectionInt seniorID = McKayKeyCollection->search(key) - 1;
     if (seniorID != -1) {
       if (stateID != seniorID) {

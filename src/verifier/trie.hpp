@@ -9,8 +9,11 @@
 #include <list>
 
 struct ConvertedGraph;
+struct InheritedVertex;
 
 constexpr auto CLASS_SENTINEL = slim::element::monostate();
+
+using vertex_list = std::list<slim::element::variant<slim::element::monostate, InheritedVertex>>;
 
 struct TrieBody {
   uint32_t key;
@@ -217,6 +220,20 @@ inline std::ostream &operator<<(
     return os << "CLASS_SENTINEL\n";
   else
     return os << slim::element::get<InheritedVertex>(v);
+}
+
+template <typename T>
+inline std::ostream &operator<<(std::ostream &os, const std::list<T> &list) {
+  auto sentinel = std::end(list);
+  os << "[";
+  for (auto iterator = std::begin(list); iterator != sentinel; ++iterator) {
+    os << (*iterator);
+    if (std::next(iterator, 1) != sentinel) {
+      os << ",";
+    }
+  }
+  os << "]";
+  return os;
 }
 
 template <typename S>

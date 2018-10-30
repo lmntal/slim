@@ -127,10 +127,8 @@ template <typename List> inline bool isSingletonList(List *list) {
          std::next(std::begin(*list), 1) == std::end(*list);
 }
 
-template <typename T> struct KeyContainer__;
-template <typename T> T get(const KeyContainer__<T> &key);
-
 template <typename T> struct KeyContainer__ {
+  static_assert(std::is_pointer<T>::value, "");
   T value;
 
   KeyContainer__() = default;
@@ -147,14 +145,12 @@ template <typename T> struct KeyContainer__ {
   bool operator>(const KeyContainer__<T> &b) const { return *b.value > *value; }
 };
 
-KeyContainer__<vertex_list *>
-makeDiscretePropagationListKey(vertex_list *dpList);
-
 typedef enum _Color { RED, BLACK } Color;
 
 typedef enum _Direction { LEFT, RIGHT } Direction;
 
 template <typename K, typename V> struct _RedBlackTreeBody {
+  static_assert(!std::is_pointer<K>::value, "");
   Color color;
   std::pair<K, V> elm;
   struct _RedBlackTreeBody *children[2];
@@ -171,9 +167,9 @@ template <typename K, typename V> struct _RedBlackTreeBody {
   }
 
   V search(const K &key) const {
-    if (key < KeyContainer__<K>(elm.first))
+    if (key < elm.first)
       return children[LEFT] ? children[LEFT]->search(key) : (V) nullptr;
-    else if (key == KeyContainer__<K>(elm.first))
+    else if (key == elm.first)
       return elm.second;
     else
       return children[RIGHT] ? children[RIGHT]->search(key) : (V) nullptr;
@@ -182,7 +178,7 @@ template <typename K, typename V> struct _RedBlackTreeBody {
   _RedBlackTreeBody *insert(const K &key, const V &value) {
     _RedBlackTreeBody *child, *grandChild;
 
-    if (key > KeyContainer__<K>(elm.first)) {
+    if (key > elm.first) {
       if (!this->children[RIGHT]) {
         child = new _RedBlackTreeBody(key, value);
       } else {
@@ -285,7 +281,7 @@ template <typename K, typename V> struct _RedBlackTreeBody {
   }
 
   _RedBlackTreeBody *erase(const K &key, bool *changeFlag) {
-    if (key < KeyContainer__<K>(elm.first)) {
+    if (key < elm.first) {
       if (!this->children[LEFT]) {
         *changeFlag = false;
         return nullptr;
@@ -299,7 +295,7 @@ template <typename K, typename V> struct _RedBlackTreeBody {
         return this;
       }
     }
-    if (key == KeyContainer__<K>(elm.first)) {
+    if (key == elm.first) {
       if (this->children[LEFT] == NULL) {
         *changeFlag = (this->color == BLACK);
 
@@ -318,7 +314,7 @@ template <typename K, typename V> struct _RedBlackTreeBody {
         }
       }
     }
-    if (key > KeyContainer__<K>(elm.first)) {
+    if (key > elm.first) {
       if (!this->children[RIGHT]) {
         *changeFlag = false;
         return nullptr;

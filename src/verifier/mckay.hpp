@@ -23,8 +23,7 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
                        Graphinfo *cBeforeGraph);
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
     InheritedVertex *iVertexA, InheritedVertex *iVertexB);
-template <typename List>
-void freePreserveDiscreteProapgationList(List__<void *> *pdpList);
+void freePreserveDiscreteProapgationList(vertex_list *pdpList);
 template <typename List>
 Bool checkIsomorphismValidity(unbound_vector<List *> *slimKeyCollection,
                               RedBlackTree *McKayKeyCollection,

@@ -41,15 +41,6 @@
 //   }
 // }
 
-KeyContainer__<vertex_list *>
-makeDiscretePropagationListKey(vertex_list *dpList) {
-  KeyContainer__<vertex_list *> ret;
-
-  ret.value = dpList;
-
-  return ret;
-}
-
 void setRBColor(Color color) {
   if (color == BLACK) {
     printf("\x1b[47m");
