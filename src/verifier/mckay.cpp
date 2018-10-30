@@ -118,7 +118,7 @@ void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
 }
 
 Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
-    RedBlackTree__<KeyContainer__<vertex_list *>, vertex_list *>
+    discrete_propagation_lists
         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
     vertex_list *dpList, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID) {
@@ -132,20 +132,20 @@ Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     initializeInheritedVertexAdjacentLabels(
         &slim::element::get<InheritedVertex>(v));
 
-  auto key = KeyContainer__<vertex_list *>(preserveDPList);
+  auto &key = *preserveDPList;
   auto seniorDPList =
-      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->search(
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(
           key);
 
-  if (seniorDPList == NULL) {
+  if (seniorDPList == std::end(*discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
 
     discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
-        key, preserveDPList);
+        std::make_pair(key, preserveDPList));
     isExisting = FALSE;
     return isExisting;
   } else {
     auto iteratorCell = std::begin(*preserveDPList);
-    auto iteratorCellSenior = std::begin(*seniorDPList);
+    auto iteratorCellSenior = std::begin(*seniorDPList->second);
 
     while (iteratorCell != std::end(*preserveDPList)) {
       if (*iteratorCell != CLASS_SENTINEL) {
@@ -196,7 +196,7 @@ Bool isNewSplit(vertex_list::iterator sentinelCell,
 Bool listMcKayInner(
     vertex_list *propagationListOfInheritedVertices,
     ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
-    RedBlackTree__<KeyContainer__<vertex_list *>, vertex_list *>
+    discrete_propagation_lists
         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
   Bool isUsefulBranch = TRUE;
 
@@ -265,7 +265,7 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
     initializeDisjointSetForestsOfPropagationList(
         propagationListOfInheritedVertices);
     auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels =
-        new RedBlackTree__<KeyContainer__<vertex_list *>, vertex_list *>();
+        new discrete_propagation_lists();
 
     classifyConventionalPropagationListWithAttribute(
         propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID);
@@ -288,28 +288,28 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
     /*
     CHECKER("########### candidates of canonical discrete refinement
     ###########\n");
-    redBlackTreeValueDump(discretePropagationListsOfInheritedVerticesWithAdjacentLabels,discretePropagationListDump);
+    std::cout << (*discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
     //*/
 
-    freeRedBlackTreeWithValue(
-        discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
-        freePreserveDiscreteProapgationList);
+    for (auto &v : *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
+      freePreserveDiscreteProapgationList(v.second);
+    delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
 
     return canonicalDiscreteRefinement;
   }
 }
 
 Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
-                              RedBlackTree__<KeyContainer__<vertex_list *>,
-                                             CollectionInt> *McKayKeyCollection,
+                              key_collection *McKayKeyCollection,
                               vertex_list *canonicalDiscreteRefinement,
                               long stateID) {
   Bool isValid = TRUE;
 
   if (stateID != 0) {
-    auto key = KeyContainer__<vertex_list *>(canonicalDiscreteRefinement);
-    CollectionInt seniorID = McKayKeyCollection->search(key) - 1;
-    if (seniorID != -1) {
+    auto &key = *canonicalDiscreteRefinement;
+    auto it = McKayKeyCollection->find(key);
+    if (it != std::end(*McKayKeyCollection)) {
+      CollectionInt seniorID = it->second - 1;
       if (stateID != seniorID) {
         fprintf(stdout, "stateID is wrong.\n");
         fprintf(stdout, "juniorStateID is %ld\n", stateID);
@@ -318,7 +318,7 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
         return isValid;
       }
     } else {
-      McKayKeyCollection->insert(key, (stateID + 1));
+      McKayKeyCollection->insert(std::make_pair(key, (stateID + 1)));
     }
 
     vertex_list *seniorDiscreteRefinement = slimKeyCollection->read(stateID);

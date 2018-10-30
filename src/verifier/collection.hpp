@@ -148,6 +148,7 @@ template <typename T> struct KeyContainer__ {
 typedef enum _Color { RED, BLACK } Color;
 
 typedef enum _Direction { LEFT, RIGHT } Direction;
+template <typename K, typename V> struct RedBlackTree__;
 
 template <typename K, typename V> struct _RedBlackTreeBody {
   static_assert(!std::is_pointer<K>::value, "");
@@ -166,13 +167,15 @@ template <typename K, typename V> struct _RedBlackTreeBody {
     delete children[RIGHT];
   }
 
-  V search(const K &key) const {
+  typename RedBlackTree__<K, V>::iterator find(const K &key) {
     if (key < elm.first)
-      return children[LEFT] ? children[LEFT]->search(key) : (V) nullptr;
+      return children[LEFT] ? children[LEFT]->find(key)
+                            : typename RedBlackTree__<K, V>::iterator();
     else if (key == elm.first)
-      return elm.second;
+      return typename RedBlackTree__<K, V>::iterator(*this, nullptr);
     else
-      return children[RIGHT] ? children[RIGHT]->search(key) : (V) nullptr;
+      return children[RIGHT] ? children[RIGHT]->find(key)
+                             : typename RedBlackTree__<K, V>::iterator();
   }
 
   _RedBlackTreeBody *insert(const K &key, const V &value) {
@@ -313,8 +316,7 @@ template <typename K, typename V> struct _RedBlackTreeBody {
           return this;
         }
       }
-    }
-    if (key > elm.first) {
+    } else {
       if (!this->children[RIGHT]) {
         *changeFlag = false;
         return nullptr;
@@ -394,15 +396,18 @@ template <typename K, typename V> struct _RedBlackTreeBody {
     }
   }
 };
-using RedBlackTreeBody = _RedBlackTreeBody<void *, void *>;
 
 template <typename K, typename V> struct RedBlackTree__ {
   _RedBlackTreeBody<K, V> *body;
   RedBlackTree__() { body = NULL; }
+  ~RedBlackTree__() { delete body; }
 
-  V search(const K &key) const { return body->search(key); }
-  void insert(const K &key, const V &value) {
-    this->body = this->body->insert(key, value);
+  size_t size() const {
+    return std::distance(std::begin(*this), std::end(*this));
+  }
+
+  void insert(const std::pair<K, V> &x) {
+    this->body = this->body->insert(x.first, x.second);
     this->body->color = BLACK;
   }
 
@@ -410,6 +415,11 @@ template <typename K, typename V> struct RedBlackTree__ {
     bool changeFlagBody = false;
     this->body = body->erase(x, &changeFlagBody);
     return changeFlagBody;
+  }
+
+  void clear() {
+    delete body;
+    body = nullptr;
   }
 
   bool empty() const { return body == nullptr; }
@@ -425,10 +435,15 @@ template <typename K, typename V> struct RedBlackTree__ {
     iterator() : body(nullptr) {}
     iterator(_RedBlackTreeBody<K, V> &b, std::unique_ptr<iterator> &&parent)
         : body(&b), parent(std::move(parent)) {}
-    iterator(const iterator &iter) = delete;
-    iterator(iterator &&iter) : body(iter.body), parent(std::move(iter.parent)) {}
+    iterator(const iterator &iter) : body(iter.body) {
+      if (iter.parent)
+        parent = slim::element::make_unique<iterator>(*iter.parent);
+    }
+    iterator(iterator &&iter)
+        : body(iter.body), parent(std::move(iter.parent)) {}
 
     pointer operator->() { return &body->elm; }
+    const pointer operator->() const { return &body->elm; }
     reference operator*() { return body->elm; }
     const_reference operator*() const { return body->elm; }
 
@@ -470,56 +485,30 @@ template <typename K, typename V> struct RedBlackTree__ {
     bool visited = false;
   };
 
+  iterator find(const K &key) { return std::move(body->find(key)); }
+
   iterator begin() const {
     return std::move(*iterator::leftmost_descendant(body, nullptr));
   }
   iterator end() const { return iterator(); }
 };
-using RedBlackTree = RedBlackTree__<void *, void *>;
 
 template <typename K, typename V>
-void redBlackTreeValueDumpInner(_RedBlackTreeBody<K, V> *rbtb,
-                                void valueDump(V)) {
-  if (rbtb == NULL) {
-    return;
-  } else {
-    redBlackTreeValueDumpInner(rbtb->children[LEFT], valueDump);
-    valueDump(rbtb->elm.second);
-    // fprintf(stdout,"\n");
-    redBlackTreeValueDumpInner(rbtb->children[RIGHT], valueDump);
-    return;
-  }
+inline std::ostream &operator<<(std::ostream &os,
+                                const _RedBlackTreeBody<K, V> &rbtb) {
+  if (rbtb.children[LEFT])
+    os << *rbtb.children[LEFT];
+  os << rbtb.elm.second;
+  if (rbtb.children[RIGHT])
+    os << *rbtb.children[RIGHT];
+  return os;
 }
 
+#include <iostream>
 template <typename K, typename V>
-void redBlackTreeValueDump(RedBlackTree__<K, V> *rbt, void valueDump(V)) {
-  redBlackTreeValueDumpInner(rbt->body, valueDump);
-  return;
-}
-template <typename K, typename V>
-void freeRedBlackTreeWithValueInner(_RedBlackTreeBody<K, V> *rbtb,
-                                    void freeValue(V)) {
-  if (rbtb != NULL) {
-    freeRedBlackTreeWithValueInner(rbtb->children[LEFT], freeValue);
-    freeRedBlackTreeWithValueInner(rbtb->children[RIGHT], freeValue);
-    free(rbtb);
-  }
-
-  return;
-}
-template <typename K, typename V>
-void freeRedBlackTreeWithValue(RedBlackTree__<K, V> *rbt, void freeValue(V)) {
-  for (auto &v : *rbt)
-    freeValue(v.second);
-  delete (rbt->body);
-  free(rbt);
-  return;
-}
-
-template <typename K, typename V>
-Bool isSingletonRedBlackTree(RedBlackTree__<K, V> *rbt) {
-  return (!rbt->empty() && (rbt->body->children[LEFT] == NULL &&
-                            rbt->body->children[RIGHT] == NULL));
+inline std::ostream &operator<<(std::ostream &os,
+                                const RedBlackTree__<K, V> &rbt) {
+  return os << *rbt.body;
 }
 
 struct DisjointSetForest {

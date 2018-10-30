@@ -10,16 +10,18 @@
 
 struct ConvertedGraph;
 struct InheritedVertex;
+struct TrieBody;
 
 constexpr auto CLASS_SENTINEL = slim::element::monostate();
 
 using vertex_list = std::list<slim::element::variant<slim::element::monostate, InheritedVertex>>;
+using trie_body_map = RedBlackTree__<uint32_t, TrieBody *>;
 
 struct TrieBody {
   uint32_t key;
   vertex_list *inheritedVertices;
   TrieBody *parent;
-  RedBlackTree__<uint32_t, TrieBody *> *children;
+  trie_body_map *children;
   int depth;
   Bool isInfinitedDepth;
   Bool isPushedIntoGoAheadStack;
@@ -27,7 +29,7 @@ struct TrieBody {
   TrieBody() {
     inheritedVertices = new vertex_list();
     parent = NULL;
-    children = new RedBlackTree__<uint32_t, TrieBody *>();
+    children = new trie_body_map();
     depth = -1;
     isInfinitedDepth = false;
     isPushedIntoGoAheadStack = false;

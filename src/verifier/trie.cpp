@@ -414,7 +414,7 @@ TrieBody *makeTrieBody() {
   TrieBody *ret = (TrieBody *)malloc(sizeof(TrieBody));
   ret->inheritedVertices = new vertex_list();
   ret->parent = NULL;
-  ret->children = new RedBlackTree__<uint32_t, TrieBody *>();
+  ret->children = new trie_body_map();
   ret->depth = -1;
   ret->isInfinitedDepth = FALSE;
   ret->isPushedIntoGoAheadStack = FALSE;
@@ -444,7 +444,9 @@ void freeTrieInnerCaster(void *body);
 
 void freeTrieInner(TrieBody *body) {
   delete (body->inheritedVertices);
-  freeRedBlackTreeWithValue(body->children, freeTrieInner);
+  for (auto &v : *body->children)
+    freeTrieInner(v.second);
+  delete body->children;
   free(body);
 
   return;
@@ -495,7 +497,9 @@ void deleteTrieDescendantsAndItselfCaster(void *body) {
 
 void deleteTrieDescendantsAndItself(TrieBody *body) {
   if (body != NULL) {
-    freeRedBlackTreeWithValue(body->children, deleteTrieDescendantsAndItself);
+    for (auto &v : *body->children)
+      deleteTrieDescendantsAndItself(v.second);
+    delete body->children;
     free(body);
   }
 
@@ -503,9 +507,9 @@ void deleteTrieDescendantsAndItself(TrieBody *body) {
 }
 
 void deleteTrieDescendants(TrieBody *body) {
-  freeRedBlackTreeWithValueInner(body->children->body,
-                                 deleteTrieDescendantsAndItself);
-  body->children->body = NULL;
+  for (auto &v : *body->children)
+    deleteTrieDescendantsAndItself(v.second);
+  body->children->clear();
 
   return;
 }
@@ -576,7 +580,7 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
         prevNode->key;
 
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
-  } else if (isSingletonRedBlackTree(currentNode->children)) {
+  } else if (currentNode->children->size() == 1) {
     TrieBody *parent = currentNode->parent;
 
     deleteTrieBody(prevNode);
@@ -615,7 +619,7 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
     slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
         currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
-  } else if (isSingletonRedBlackTree(currentNode->children) &&
+  } else if (currentNode->children->size() == 1 &&
              isSingletonList(
                  ((TrieBody *)(currentNode->children->body->elm.second))
                      ->inheritedVertices)) {
@@ -647,7 +651,7 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
       TrieBody *parent = currentNode->parent;
 
       decrementOmegaArray(tInfo->distribution, currentNode->depth);
-      if (parent->depth >= 0 && !isSingletonRedBlackTree(parent->children)) {
+      if (parent->depth >= 0 && parent->children->size() != 1) {
         decrementOmegaArray(tInfo->increase, parent->depth);
       }
 
@@ -719,19 +723,22 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
                                targetNode->depth, cAfterGraph,
                                gapOfGlobalRootMemID, fixCreditIndexStack);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      TrieBody *nextNode = children->search(key);
+      auto it = children->find(key);
+      TrieBody *nextNode;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      if (nextNode == NULL) {
+      if (it == std::end(*children)) {
         if (!children->empty()) {
           incrementOmegaArray(tInfo->increase, targetNode->depth);
         }
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         nextNode = makeTrieBody();
-        children->insert(key, nextNode);
+        children->insert(std::make_pair(key, nextNode));
         nextNode->key = key;
         nextNode->parent = targetNode;
         nextNode->depth = targetNode->depth + 1;
         printf("%s:%d\n", __FUNCTION__, __LINE__);
+      } else {
+        nextNode = it->second;
       }
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       if (!nextNode->isPushedIntoGoAheadStack &&
@@ -977,8 +984,8 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
 void collectDescendantConvertedVertices(TrieBody *ancestorBody,
                                         TrieBody *descendantBody);
 
-void collectDescendantConvertedVerticesInner(TrieBody *ancestorBody,
-                                             _RedBlackTreeBody<uint32_t, TrieBody *> *rbtb) {
+void collectDescendantConvertedVerticesInner(
+    TrieBody *ancestorBody, _RedBlackTreeBody<uint32_t, TrieBody *> *rbtb) {
   if (rbtb != NULL) {
     collectDescendantConvertedVerticesInner(ancestorBody, rbtb->children[LEFT]);
     collectDescendantConvertedVertices(ancestorBody,
@@ -1682,13 +1689,7 @@ void inheritedVertexDump(InheritedVertex *iVertex) {
   return;
 }
 
-void trieDumpInner(TrieBody *body);
-
-void trieDumpInnerCaster(void *body) {
-  trieDumpInner((TrieBody *)body);
-
-  return;
-}
+#include <iostream>
 
 void trieDumpInner(TrieBody *body) {
   if (body->isPushedIntoGoAheadStack) {
@@ -1708,7 +1709,7 @@ void trieDumpInner(TrieBody *body) {
     fprintf(stdout, "\x1b[39m");
   }
 
-  redBlackTreeValueDump(body->children, trieDumpInner);
+  std::cout << *body->children;
 
   return;
 }
@@ -1784,7 +1785,7 @@ void trieDump(Trie *trie) {
 
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
   terminationConditionInfoDump(trie->info);
-  redBlackTreeValueDump(trie->body->children, trieDumpInner);
+  std::cout << *trie->body->children;
 
   makeTerminationConditionMemo(trie, distributionMemo, increaseMemo);
 
