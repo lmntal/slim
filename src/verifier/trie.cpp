@@ -605,9 +605,9 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
     (*targetCell)->hashString->creditIndex = currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else if (isSingletonRedBlackTree(currentNode->children) &&
-             isSingletonList(((TrieBody *)(currentNode->children->body->value))
+             isSingletonList(((TrieBody *)(currentNode->children->body->elm.second))
                                  ->inheritedVertices)) {
-    TrieBody *childNode = (TrieBody *)currentNode->children->body->value;
+    TrieBody *childNode = (TrieBody *)currentNode->children->body->elm.second;
     auto brother = std::begin(*childNode->inheritedVertices);
 
     decrementOmegaArray(tInfo->distribution, childNode->depth);
@@ -691,7 +691,7 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
   auto inheritedVerticesList = targetNode->inheritedVertices;
   auto children = targetNode->children;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  if (isSingletonList(inheritedVerticesList) && isEmptyRedBlackTree(children) &&
+  if (isSingletonList(inheritedVerticesList) && children->empty() &&
       targetNode->depth != -1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     incrementOmegaArray(tInfo->distribution, targetNode->depth);
@@ -705,15 +705,15 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       auto key = callHashValue((*tmpCell), targetNode->depth, cAfterGraph,
                                gapOfGlobalRootMemID, fixCreditIndexStack);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      TrieBody *nextNode = (TrieBody *)searchRedBlackTree(children, key);
+      TrieBody *nextNode = children->search(key);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       if (nextNode == NULL) {
-        if (!isEmptyRedBlackTree(children)) {
+        if (!children->empty()) {
           incrementOmegaArray(tInfo->increase, targetNode->depth);
         }
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         nextNode = makeTrieBody();
-        insertRedBlackTree(children, key, nextNode);
+        children->insert(key, nextNode);
         nextNode->key = key;
         nextNode->parent = targetNode;
         nextNode->depth = targetNode->depth + 1;
@@ -859,7 +859,7 @@ void initializeConvertedVertices(S *initializeConvertedVerticesStack) {
 }
 
 Bool isEmptyTrie(Trie *trie) {
-  return isEmptyRedBlackTree(trie->body->children);
+  return trie->body->children->empty();
 }
 
 template <typename S>
@@ -892,7 +892,7 @@ void pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(
     pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(
         trieChildrenBody->children[LEFT], goAheadStack, tInfo, depth);
     pushInftyDepthTrieNodesIntoGoAheadStackInner(
-        (TrieBody *)trieChildrenBody->value, goAheadStack, tInfo, depth);
+        (TrieBody *)trieChildrenBody->elm.second, goAheadStack, tInfo, depth);
     pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(
         trieChildrenBody->children[RIGHT], goAheadStack, tInfo, depth);
   }
@@ -968,7 +968,7 @@ void collectDescendantConvertedVerticesInner(TrieBody *ancestorBody,
                                              RedBlackTreeBody *rbtb) {
   if (rbtb != NULL) {
     collectDescendantConvertedVerticesInner(ancestorBody, rbtb->children[LEFT]);
-    collectDescendantConvertedVertices(ancestorBody, (TrieBody *)rbtb->value);
+    collectDescendantConvertedVertices(ancestorBody, (TrieBody *)rbtb->elm.second);
     collectDescendantConvertedVerticesInner(ancestorBody,
                                             rbtb->children[RIGHT]);
   }
@@ -978,7 +978,7 @@ void collectDescendantConvertedVerticesInner(TrieBody *ancestorBody,
 
 void collectDescendantConvertedVertices(TrieBody *ancestorBody,
                                         TrieBody *descendantBody) {
-  if (isEmptyRedBlackTree(descendantBody->children)) {
+  if (descendantBody->children->empty()) {
     while (!descendantBody->inheritedVertices->empty()) {
       auto targetCell = std::begin(*descendantBody->inheritedVertices);
       ancestorBody->inheritedVertices->splice(
@@ -1004,7 +1004,7 @@ void makeTrieMinimumInnerInner(_RedBlackTreeBody<uint32_t, TrieBody *> *rbtb,
                                int stepOfPropagation) {
   if (rbtb != NULL) {
     makeTrieMinimumInnerInner(rbtb->children[LEFT], tInfo, stepOfPropagation);
-    makeTrieMinimumInner((TrieBody *)rbtb->value, tInfo, stepOfPropagation);
+    makeTrieMinimumInner((TrieBody *)rbtb->elm.second, tInfo, stepOfPropagation);
     makeTrieMinimumInnerInner(rbtb->children[RIGHT], tInfo, stepOfPropagation);
   }
 
@@ -1021,7 +1021,7 @@ void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
       }
     }
 
-    if (!isEmptyRedBlackTree(body->children)) {
+    if (!body->children->empty()) {
       collectDescendantConvertedVerticesInner(body, body->children->body);
       deleteTrieDescendants(body);
     }
@@ -1063,7 +1063,7 @@ void makeConventionalPropagationListInnerInner(
 
   makeConventionalPropagationListInnerInner(body->children[LEFT], list,
                                             stepOfPropagation);
-  makeConventionalPropagationListInner((TrieBody *)body->value, list,
+  makeConventionalPropagationListInner((TrieBody *)body->elm.second, list,
                                        stepOfPropagation);
   makeConventionalPropagationListInnerInner(body->children[RIGHT], list,
                                             stepOfPropagation);
@@ -1071,7 +1071,7 @@ void makeConventionalPropagationListInnerInner(
 
 void makeConventionalPropagationListInner(TrieBody *body, vertex_list *list,
                                           int stepOfPropagation) {
-  if (isEmptyRedBlackTree(body->children)) {
+  if (body->children->empty()) {
     if (!list->empty()) {
       list->push_front(CLASS_SENTINEL);
     }
@@ -1743,7 +1743,7 @@ void makeTerminationConditionMemoInnerInner(
   if (rBody != NULL) {
     makeTerminationConditionMemoInnerInner(rBody->children[LEFT],
                                            distributionMemo, increaseMemo);
-    makeTerminationConditionMemoInner((TrieBody *)rBody->value,
+    makeTerminationConditionMemoInner((TrieBody *)rBody->elm.second,
                                       distributionMemo, increaseMemo);
     makeTerminationConditionMemoInnerInner(rBody->children[RIGHT],
                                            distributionMemo, increaseMemo);
@@ -1774,7 +1774,7 @@ void makeTerminationConditionMemoInner(TrieBody *tBody,
   makeTerminationConditionMemoInnerInner(tBody->children->body,
                                          distributionMemo, increaseMemo);
 
-  if (!isEmptyRedBlackTree(tBody->children)) {
+  if (!tBody->children->empty()) {
     decrementOmegaArray(increaseMemo, tBody->depth);
   }
 
