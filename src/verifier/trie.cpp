@@ -965,7 +965,7 @@ void collectDescendantConvertedVertices(TrieBody *ancestorBody,
                                         TrieBody *descendantBody);
 
 void collectDescendantConvertedVerticesInner(TrieBody *ancestorBody,
-                                             RedBlackTreeBody *rbtb) {
+                                             _RedBlackTreeBody<uint32_t, TrieBody *> *rbtb) {
   if (rbtb != NULL) {
     collectDescendantConvertedVerticesInner(ancestorBody, rbtb->children[LEFT]);
     collectDescendantConvertedVertices(ancestorBody, (TrieBody *)rbtb->elm.second);
