@@ -899,37 +899,16 @@ Bool triePropagationIsContinued(S *goAheadStack,
          !isDescreteTrie(goAheadStack, tInfo, step);
 }
 
-template <typename S>
+void collectDescendantConvertedVertices(TrieBody *ancestorBody,
+                                        TrieBody *descendantBody);
+
 void pushInftyDepthTrieNodesIntoGoAheadStackInner(
-    TrieBody *body, S *goAheadStack, TerminationConditionInfo *tInfo,
-    int depth);
-
-template <typename S>
-void pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(
-    _RedBlackTreeBody<uint32_t, TrieBody *> *trieChildrenBody, S *goAheadStack,
-    TerminationConditionInfo *tInfo, int depth) {
-  if (trieChildrenBody != NULL) {
-    pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(
-        trieChildrenBody->children[LEFT], goAheadStack, tInfo, depth);
-    pushInftyDepthTrieNodesIntoGoAheadStackInner(
-        (TrieBody *)trieChildrenBody->elm.second, goAheadStack, tInfo, depth);
-    pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(
-        trieChildrenBody->children[RIGHT], goAheadStack, tInfo, depth);
-  }
-
-  return;
-}
-
-void collectDescendantConvertedVerticesInner(
-    TrieBody *ancestorBody, _RedBlackTreeBody<uint32_t, TrieBody *> *rbtb);
-
-template <typename S>
-void pushInftyDepthTrieNodesIntoGoAheadStackInner(
-    TrieBody *body, S *goAheadStack, TerminationConditionInfo *tInfo,
+    TrieBody *body, std::stack<TrieBody *> *goAheadStack, TerminationConditionInfo *tInfo,
     int targetDepth) {
   if (body->depth == targetDepth) {
     if (!body->isPushedIntoGoAheadStack) {
-      collectDescendantConvertedVerticesInner(body, body->children->body);
+      for (auto &v : *body->children)
+        collectDescendantConvertedVertices(body, v.second);
       deleteTrieDescendants(body);
       body->isInfinitedDepth = FALSE;
 
@@ -942,15 +921,12 @@ void pushInftyDepthTrieNodesIntoGoAheadStackInner(
       }
     }
   } else {
-    pushInftyDepthTrieNodesIntoGoAheadStackInnerInner(
-        body->children->body, goAheadStack, tInfo, targetDepth);
+    for (auto &v : *body->children)
+      pushInftyDepthTrieNodesIntoGoAheadStackInner(v.second, goAheadStack, tInfo, targetDepth);
   }
-
-  return;
 }
 
-template <typename S>
-void pushInftyDepthTrieNodesIntoGoAheadStack(Trie *trie, S *goAheadStack,
+void pushInftyDepthTrieNodesIntoGoAheadStack(Trie *trie, std::stack<TrieBody *> *goAheadStack,
                                              int targetDepth) {
   pushInftyDepthTrieNodesIntoGoAheadStackInner(trie->body, goAheadStack,
                                                trie->info, targetDepth);
@@ -982,22 +958,6 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
 }
 
 void collectDescendantConvertedVertices(TrieBody *ancestorBody,
-                                        TrieBody *descendantBody);
-
-void collectDescendantConvertedVerticesInner(
-    TrieBody *ancestorBody, _RedBlackTreeBody<uint32_t, TrieBody *> *rbtb) {
-  if (rbtb != NULL) {
-    collectDescendantConvertedVerticesInner(ancestorBody, rbtb->children[LEFT]);
-    collectDescendantConvertedVertices(ancestorBody,
-                                       (TrieBody *)rbtb->elm.second);
-    collectDescendantConvertedVerticesInner(ancestorBody,
-                                            rbtb->children[RIGHT]);
-  }
-
-  return;
-}
-
-void collectDescendantConvertedVertices(TrieBody *ancestorBody,
                                         TrieBody *descendantBody) {
   if (descendantBody->children->empty()) {
     while (!descendantBody->inheritedVertices->empty()) {
@@ -1012,27 +972,9 @@ void collectDescendantConvertedVertices(TrieBody *ancestorBody,
           ancestorBody->key;
     }
   } else {
-    collectDescendantConvertedVerticesInner(ancestorBody,
-                                            descendantBody->children->body);
+    for (auto &v : *descendantBody->children)
+      collectDescendantConvertedVertices(ancestorBody, v.second);
   }
-
-  return;
-}
-
-void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
-                          int stepOfPropagation);
-
-void makeTrieMinimumInnerInner(_RedBlackTreeBody<uint32_t, TrieBody *> *rbtb,
-                               TerminationConditionInfo *tInfo,
-                               int stepOfPropagation) {
-  if (rbtb != NULL) {
-    makeTrieMinimumInnerInner(rbtb->children[LEFT], tInfo, stepOfPropagation);
-    makeTrieMinimumInner((TrieBody *)rbtb->elm.second, tInfo,
-                         stepOfPropagation);
-    makeTrieMinimumInnerInner(rbtb->children[RIGHT], tInfo, stepOfPropagation);
-  }
-
-  return;
 }
 
 void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
@@ -1046,13 +988,15 @@ void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
     }
 
     if (!body->children->empty()) {
-      collectDescendantConvertedVerticesInner(body, body->children->body);
+      for (auto &v : *body->children)
+        collectDescendantConvertedVertices(body, v.second);
       deleteTrieDescendants(body);
     }
 
     body->isInfinitedDepth = TRUE;
   } else {
-    makeTrieMinimumInnerInner(body->children->body, tInfo, stepOfPropagation);
+    for (auto &v : *body->children)
+      makeTrieMinimumInner(v.second, tInfo, stepOfPropagation);
   }
 
   return;
@@ -1077,23 +1021,6 @@ void makeTrieMinimum(Trie *trie, int stepOfPropagation) {
 }
 
 void makeConventionalPropagationListInner(TrieBody *body, vertex_list *list,
-                                          int stepOfPropagation);
-
-void makeConventionalPropagationListInnerInner(
-    _RedBlackTreeBody<uint32_t, TrieBody *> *body, vertex_list *list,
-    int stepOfPropagation) {
-  if (!body)
-    return;
-
-  makeConventionalPropagationListInnerInner(body->children[LEFT], list,
-                                            stepOfPropagation);
-  makeConventionalPropagationListInner((TrieBody *)body->elm.second, list,
-                                       stepOfPropagation);
-  makeConventionalPropagationListInnerInner(body->children[RIGHT], list,
-                                            stepOfPropagation);
-}
-
-void makeConventionalPropagationListInner(TrieBody *body, vertex_list *list,
                                           int stepOfPropagation) {
   if (body->children->empty()) {
     if (!list->empty()) {
@@ -1104,8 +1031,8 @@ void makeConventionalPropagationListInner(TrieBody *body, vertex_list *list,
       list->push_front(v);
     }
   } else {
-    makeConventionalPropagationListInnerInner(body->children->body, list,
-                                              stepOfPropagation);
+    for (auto &v : *body->children)
+      makeConventionalPropagationListInner(v.second, list, stepOfPropagation);
   }
 
   return;
@@ -1725,25 +1652,6 @@ void terminationConditionInfoDump(TerminationConditionInfo *tInfo) {
 
 void makeTerminationConditionMemoInner(TrieBody *tBody,
                                        OmegaArray *distributionMemo,
-                                       OmegaArray *increaseMemo);
-
-void makeTerminationConditionMemoInnerInner(
-    _RedBlackTreeBody<uint32_t, TrieBody *> *rBody,
-    OmegaArray *distributionMemo, OmegaArray *increaseMemo) {
-  if (rBody != NULL) {
-    makeTerminationConditionMemoInnerInner(rBody->children[LEFT],
-                                           distributionMemo, increaseMemo);
-    makeTerminationConditionMemoInner((TrieBody *)rBody->elm.second,
-                                      distributionMemo, increaseMemo);
-    makeTerminationConditionMemoInnerInner(rBody->children[RIGHT],
-                                           distributionMemo, increaseMemo);
-  }
-
-  return;
-}
-
-void makeTerminationConditionMemoInner(TrieBody *tBody,
-                                       OmegaArray *distributionMemo,
                                        OmegaArray *increaseMemo) {
   if (!tBody->isPushedIntoGoAheadStack) {
     if (isSingletonList(tBody->inheritedVertices)) {
@@ -1761,8 +1669,8 @@ void makeTerminationConditionMemoInner(TrieBody *tBody,
     incrementOmegaArray(increaseMemo, tBody->depth - 1);
   }
 
-  makeTerminationConditionMemoInnerInner(tBody->children->body,
-                                         distributionMemo, increaseMemo);
+  for (auto &v : *tBody->children)
+    makeTerminationConditionMemoInner(v.second, distributionMemo, increaseMemo);
 
   if (!tBody->children->empty()) {
     decrementOmegaArray(increaseMemo, tBody->depth);
@@ -1773,8 +1681,8 @@ void makeTerminationConditionMemoInner(TrieBody *tBody,
 
 void makeTerminationConditionMemo(Trie *trie, OmegaArray *distributionMemo,
                                   OmegaArray *increaseMemo) {
-  makeTerminationConditionMemoInnerInner(trie->body->children->body,
-                                         distributionMemo, increaseMemo);
+  for (auto &v : *trie->body->children)
+    makeTerminationConditionMemoInner(v.second, distributionMemo, increaseMemo);
 
   return;
 }
