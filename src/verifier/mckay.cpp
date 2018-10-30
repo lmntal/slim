@@ -291,8 +291,9 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
 
     vertex_list *canonicalDiscreteRefinement = new vertex_list();
-    for (auto &v : *minimumElementOfRedBlackTree(
-             discretePropagationListsOfInheritedVerticesWithAdjacentLabels))
+    for (auto &v :
+         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()
+              ->second)
       canonicalDiscreteRefinement->push_back(copyInheritedVertex(v));
 
     /*
