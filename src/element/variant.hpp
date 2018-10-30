@@ -231,6 +231,15 @@ constexpr bool holds_alternative(const variant<Types...> &v) noexcept {
   return variant_type_index<T, Types...>() == v.index();
 }
 
+struct monostate {};
+
+constexpr bool operator<(monostate, monostate) noexcept { return false; }
+constexpr bool operator>(monostate, monostate) noexcept { return false; }
+constexpr bool operator<=(monostate, monostate) noexcept { return true; }
+constexpr bool operator>=(monostate, monostate) noexcept { return true; }
+constexpr bool operator==(monostate, monostate) noexcept { return true; }
+constexpr bool operator!=(monostate, monostate) noexcept { return false; }
+
 } // namespace element
 } // namespace slim
 
