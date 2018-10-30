@@ -621,9 +621,8 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else if (currentNode->children->size() == 1 &&
              isSingletonList(
-                 ((TrieBody *)(currentNode->children->body->elm.second))
-                     ->inheritedVertices)) {
-    TrieBody *childNode = (TrieBody *)currentNode->children->body->elm.second;
+                 currentNode->children->begin()->second->inheritedVertices)) {
+    TrieBody *childNode = (TrieBody *)currentNode->children->begin()->second;
     auto brother = std::begin(*childNode->inheritedVertices);
 
     decrementOmegaArray(tInfo->distribution, childNode->depth);
@@ -903,8 +902,8 @@ void collectDescendantConvertedVertices(TrieBody *ancestorBody,
                                         TrieBody *descendantBody);
 
 void pushInftyDepthTrieNodesIntoGoAheadStackInner(
-    TrieBody *body, std::stack<TrieBody *> *goAheadStack, TerminationConditionInfo *tInfo,
-    int targetDepth) {
+    TrieBody *body, std::stack<TrieBody *> *goAheadStack,
+    TerminationConditionInfo *tInfo, int targetDepth) {
   if (body->depth == targetDepth) {
     if (!body->isPushedIntoGoAheadStack) {
       for (auto &v : *body->children)
@@ -922,12 +921,13 @@ void pushInftyDepthTrieNodesIntoGoAheadStackInner(
     }
   } else {
     for (auto &v : *body->children)
-      pushInftyDepthTrieNodesIntoGoAheadStackInner(v.second, goAheadStack, tInfo, targetDepth);
+      pushInftyDepthTrieNodesIntoGoAheadStackInner(v.second, goAheadStack,
+                                                   tInfo, targetDepth);
   }
 }
 
-void pushInftyDepthTrieNodesIntoGoAheadStack(Trie *trie, std::stack<TrieBody *> *goAheadStack,
-                                             int targetDepth) {
+void pushInftyDepthTrieNodesIntoGoAheadStack(
+    Trie *trie, std::stack<TrieBody *> *goAheadStack, int targetDepth) {
   pushInftyDepthTrieNodesIntoGoAheadStackInner(trie->body, goAheadStack,
                                                trie->info, targetDepth);
 

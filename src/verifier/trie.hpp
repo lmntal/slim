@@ -15,7 +15,7 @@ struct TrieBody;
 constexpr auto CLASS_SENTINEL = slim::element::monostate();
 
 using vertex_list = std::list<slim::element::variant<slim::element::monostate, InheritedVertex>>;
-using trie_body_map = RedBlackTree__<uint32_t, TrieBody *>;
+using trie_body_map = std::map<uint32_t, TrieBody *>;
 
 struct TrieBody {
   uint32_t key;

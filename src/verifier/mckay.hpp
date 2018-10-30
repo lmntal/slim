@@ -21,9 +21,9 @@ struct CanonicalAdjacencyList {
 };
 
 using discrete_propagation_lists =
-    RedBlackTree__<vertex_list, vertex_list *>;
+    std::map<vertex_list, vertex_list *>;
 using key_collection =
-    RedBlackTree__<vertex_list, CollectionInt>;
+    std::map<vertex_list, CollectionInt>;
 
 vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
                        Graphinfo *cBeforeGraph);
