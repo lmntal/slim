@@ -1,6 +1,8 @@
 #ifndef _COLLECTION_H
 #define _COLLECTION_H
 
+#include "element/element.h"
+
 #include "hash.hpp"
 #include "list.hpp"
 #include "util.hpp"
@@ -257,6 +259,144 @@ template <typename K, typename V> struct _RedBlackTreeBody {
       }
     }
   }
+
+  _RedBlackTreeBody *exchangeMaxValue(_RedBlackTreeBody *target,
+                                      bool *changeFlag) {
+    if (this->children[RIGHT] == NULL) {
+      target->elm = this->elm;
+
+      *changeFlag = (this->color == BLACK);
+
+      auto tmp = this->children[LEFT];
+
+      free(this);
+
+      return tmp;
+    } else {
+      this->children[RIGHT] =
+          this->children[RIGHT]->exchangeMaxValue(target, changeFlag);
+
+      if (*changeFlag) {
+        return this->correctInDelete(changeFlag, RIGHT);
+      } else {
+        return this;
+      }
+    }
+  }
+
+  _RedBlackTreeBody *erase(const K &key, bool *changeFlag) {
+    if (key < KeyContainer__<K>(elm.first)) {
+      if (!this->children[LEFT]) {
+        *changeFlag = false;
+        return nullptr;
+      }
+
+      this->children[LEFT] = this->children[LEFT]->erase(key, changeFlag);
+
+      if (*changeFlag) {
+        return this->correctInDelete(changeFlag, LEFT);
+      } else {
+        return this;
+      }
+    }
+    if (key == KeyContainer__<K>(elm.first)) {
+      if (this->children[LEFT] == NULL) {
+        *changeFlag = (this->color == BLACK);
+
+        auto tmp = this->children[RIGHT];
+
+        free(this);
+
+        return tmp;
+      } else {
+        this->children[LEFT] =
+            this->children[LEFT]->exchangeMaxValue(this, changeFlag);
+        if (*changeFlag) {
+          return this->correctInDelete(changeFlag, LEFT);
+        } else {
+          return this;
+        }
+      }
+    }
+    if (key > KeyContainer__<K>(elm.first)) {
+      if (!this->children[RIGHT]) {
+        *changeFlag = false;
+        return nullptr;
+      }
+      this->children[RIGHT] = this->children[RIGHT]->erase(key, changeFlag);
+
+      if (*changeFlag) {
+        return this->correctInDelete(changeFlag, RIGHT);
+      } else {
+        return this;
+      }
+    }
+  }
+
+  _RedBlackTreeBody *correctInDelete(bool *changeFlag,
+                                     Direction CHILD_DIRECTION) {
+    Direction dir = CHILD_DIRECTION;
+    Direction cou = counterDirection(dir);
+
+    auto child = this->children[cou];
+
+    if (child->color == BLACK) {
+      if (child->children[dir] != NULL && child->children[dir]->color == RED) {
+        auto grandChild = child->children[dir];
+
+        this->children[cou] = grandChild->children[dir];
+        child->children[dir] = grandChild->children[cou];
+        grandChild->children[dir] = this;
+        grandChild->children[cou] = child;
+
+        grandChild->color = this->color;
+        this->color = BLACK;
+
+        *changeFlag = FALSE;
+
+        return grandChild;
+      } else if (child->children[cou] != NULL &&
+                 child->children[cou]->color == RED) {
+        auto grandChild = child->children[cou];
+
+        this->children[cou] = child->children[dir];
+        child->children[dir] = this;
+
+        child->color = this->color;
+        this->color = BLACK;
+        grandChild->color = BLACK;
+
+        *changeFlag = FALSE;
+
+        return child;
+      } else {
+        *changeFlag = (this->color == BLACK);
+
+        this->color = BLACK;
+        child->color = RED;
+
+        return this;
+      }
+    } else {
+      this->children[cou] = child->children[dir];
+      child->children[dir] = this;
+
+      this->color = RED;
+      child->color = BLACK;
+
+      child->children[dir] = this->correctInDelete(changeFlag, dir);
+
+      return child;
+    }
+  }
+
+  Direction counterDirection(Direction dir) {
+    if (dir == LEFT) {
+      return RIGHT;
+    } else {
+      return LEFT;
+    }
+  }
 };
 using RedBlackTreeBody = _RedBlackTreeBody<void *, void *>;
 
@@ -270,6 +410,12 @@ template <typename K, typename V> struct RedBlackTree__ {
     this->body->color = BLACK;
   }
 
+  size_t erase(const K &x) {
+    bool changeFlagBody = false;
+    this->body = body->erase(x, &changeFlagBody);
+    return changeFlagBody;
+  }
+
   bool empty() const { return body == nullptr; }
 
   struct iterator {
@@ -281,18 +427,23 @@ template <typename K, typename V> struct RedBlackTree__ {
     using const_reference = const std::pair<K, V> &;
 
     iterator() : body(nullptr) {}
-    iterator(_RedBlackTreeBody<K, V> &b, iterator parent)
-        : body(&b), parent(parent) {}
-    iterator(const iterator &iter) : body(iter.body) {}
+    iterator(_RedBlackTreeBody<K, V> &b, std::unique_ptr<iterator> &&parent)
+        : body(&b), parent(std::move(parent)) {}
+    iterator(const iterator &iter) = delete;
+    iterator(iterator &&iter) : body(iter.body), parent(std::move(iter.parent)) {}
 
+    pointer operator->() { return &body->elm; }
     reference operator*() { return body->elm; }
     const_reference operator*() const { return body->elm; }
 
     iterator &operator++() {
       if (!body->children[RIGHT]) {
-        *this = parent;
+        body = parent->body;
+        parent = std::move(parent->parent);
       } else {
-        *this = leftmost_descendant(body->children[RIGHT], parent);
+        auto i = leftmost_descendant(body->children[RIGHT], std::move(parent));
+        body = i->body;
+        parent = std::move(i->parent);
       }
       return *this;
     }
@@ -305,11 +456,13 @@ template <typename K, typename V> struct RedBlackTree__ {
     bool operator==(const iterator &iter) const { return iter.body == body; }
     bool operator!=(const iterator &iter) const { return !(*this == iter); }
 
-    static iterator leftmost_descendant(_RedBlackTreeBody<K, V> *body, iterator &p) {
-      iterator result = p;
+    static std::unique_ptr<iterator>
+    leftmost_descendant(_RedBlackTreeBody<K, V> *body,
+                        std::unique_ptr<iterator> &&p) {
+      auto result = std::move(p);
       auto b = body;
       while (b) {
-        result = iterator(*b, result);
+        result = slim::element::make_unique<iterator>(*b, std::move(result));
         b = b->children[LEFT];
       }
       return result;
@@ -317,35 +470,61 @@ template <typename K, typename V> struct RedBlackTree__ {
 
   private:
     _RedBlackTreeBody<K, V> *body;
-    iterator parent;
+    std::unique_ptr<iterator> parent;
     bool visited = false;
   };
 
   iterator begin() const {
-    return iterator::leftmost_descendant(body, iterator());
+    return std::move(*iterator::leftmost_descendant(body, nullptr));
   }
-  iterator end() const {
-    return iterator();
-  }
+  iterator end() const { return iterator(); }
 };
 using RedBlackTree = RedBlackTree__<void *, void *>;
 
 template <typename K, typename V>
-void redBlackTreeKeyDump(RedBlackTree__<K, V> *rbt);
-template <typename K, typename V>
-void redBlackTreeValueDump(RedBlackTree__<K, V> *rbt, void valueDump(V));
-template <typename K, typename V>
-void freeRedBlackTreeWithValueInner(_RedBlackTreeBody<K, V> *rbtb,
-                                    void freeValue(V));
-template <typename K, typename V>
-void freeRedBlackTreeWithValue(RedBlackTree__<K, V> *rbt, void freeValue(V));
+void redBlackTreeValueDumpInner(_RedBlackTreeBody<K, V> *rbtb,
+                                void valueDump(V)) {
+  if (rbtb == NULL) {
+    return;
+  } else {
+    redBlackTreeValueDumpInner(rbtb->children[LEFT], valueDump);
+    valueDump(rbtb->elm.second);
+    // fprintf(stdout,"\n");
+    redBlackTreeValueDumpInner(rbtb->children[RIGHT], valueDump);
+    return;
+  }
+}
 
 template <typename K, typename V>
-void deleteRedBlackTree(RedBlackTree__<K, V> *rbt, K key);
+void redBlackTreeValueDump(RedBlackTree__<K, V> *rbt, void valueDump(V)) {
+  redBlackTreeValueDumpInner(rbt->body, valueDump);
+  return;
+}
 template <typename K, typename V>
-Bool isSingletonRedBlackTree(RedBlackTree__<K, V> *rbt);
+void freeRedBlackTreeWithValueInner(_RedBlackTreeBody<K, V> *rbtb,
+                                    void freeValue(V)) {
+  if (rbtb != NULL) {
+    freeRedBlackTreeWithValueInner(rbtb->children[LEFT], freeValue);
+    freeRedBlackTreeWithValueInner(rbtb->children[RIGHT], freeValue);
+    free(rbtb);
+  }
+
+  return;
+}
 template <typename K, typename V>
-V minimumElementOfRedBlackTree(RedBlackTree__<K, V> *rbt);
+void freeRedBlackTreeWithValue(RedBlackTree__<K, V> *rbt, void freeValue(V)) {
+  for (auto &v : *rbt)
+    freeValue(v.second);
+  delete (rbt->body);
+  free(rbt);
+  return;
+}
+
+template <typename K, typename V>
+Bool isSingletonRedBlackTree(RedBlackTree__<K, V> *rbt) {
+  return (!rbt->empty() && (rbt->body->children[LEFT] == NULL &&
+                            rbt->body->children[RIGHT] == NULL));
+}
 
 struct DisjointSetForest {
   DisjointSetForest *parent;

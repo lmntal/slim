@@ -475,7 +475,7 @@ void freeTrie(Trie *trie) {
 }
 
 void deleteTrieBody(TrieBody *body) {
-  deleteRedBlackTree(body->parent->children, body->key);
+  body->parent->children->erase(body->key);
   freeTrieBody(body);
 
   return;
