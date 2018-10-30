@@ -99,11 +99,13 @@ public:
       cell.body->prev->next = cell.body->next;
     if (cell.body->next)
       cell.body->next->prev = cell.body->prev;
-
+    
     cell.body->next = iter.body;
-    iter.body->prev = cell.body;
     iter.body->prev->next = cell.body;
     cell.body->prev = iter.body->prev;
+    iter.body->prev = cell.body;
+
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   void splice(iterator position, List__ &x, iterator i) {

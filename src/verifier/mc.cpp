@@ -138,7 +138,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   printf("1\n");
 #endif
-  // Graphinfo *empty = new Graphinfo(lmn_mem_make());
+  Graphinfo *empty = new Graphinfo(lmn_mem_make());
   // convertedGraphDump(empty->cv);
   Graphinfo *init = new Graphinfo(mem);
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -146,11 +146,12 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   // convertedGraphDump(init->cv);
 
   DiffInfo *diff = new DiffInfo(init);
-  // diff->diffInfoDump();
-  // init_s->trie = new Trie();
+  diff->diffInfoDump();
+  init_s->trie = new Trie();
   init_s->graphinfo = init;
-  // trieMcKay(init_s->trie, diff, init, empty);
-  // trieDump(init_s->trie);
+  vertex_list* l = trieMcKay(init_s->trie, diff, init, empty);
+  std::cout<< (*l) <<std::endl;
+  trieDump(init_s->trie);
   /*
     ===== Diffiso ====
    */

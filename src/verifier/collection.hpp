@@ -485,6 +485,7 @@ template <typename K, typename V>
 void redBlackTreeValueDumpInner(_RedBlackTreeBody<K, V> *rbtb,
                                 void valueDump(V)) {
   if (rbtb == NULL) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     return;
   } else {
     redBlackTreeValueDumpInner(rbtb->children[LEFT], valueDump);

@@ -510,6 +510,7 @@ template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body) {
   if (body != NULL) {
     if (!body->isPushedIntoGoAheadStack) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       stack->push(body);
       body->isPushedIntoGoAheadStack = TRUE;
     }
@@ -815,21 +816,26 @@ void addInheritedVerticesToTrie(Trie *trie, S1 *addedVertices,
                                 S3 *goAheadStack, Graphinfo *cAfterGraph,
                                 int gapOfGlobalRootMemID) {
   if (!addedVertices->empty()) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, trie->body);
   }
 
   while (!addedVertices->empty()) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     ConvertedGraphVertex *targetCVertex =
         popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
+    // convertedGraphVertexDump(targetCVertex);
     InheritedVertex *targetIVertex = wrapAfterConvertedVertexInInheritedVertex(
         targetCVertex, gapOfGlobalRootMemID);
-
+    std::cout<< (*targetIVertex) <<std::endl;
     trie->body->inheritedVertices->push_front(targetIVertex);
+
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
     targetCVertex->isVisitedInBFS = TRUE;
     pushStack(initializeConvertedVerticesStack, targetCVertex);
   }
+  std::cout<< *(trie->body->inheritedVertices) <<std::endl;
 
   return;
 }
@@ -1792,11 +1798,11 @@ void makeTerminationConditionMemo(Trie *trie, OmegaArray *distributionMemo,
 void trieDump(Trie *trie) {
   OmegaArray *distributionMemo = makeOmegaArray();
   OmegaArray *increaseMemo = makeOmegaArray();
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
   terminationConditionInfoDump(trie->info);
   redBlackTreeValueDump(trie->body->children, trieDumpInner);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   makeTerminationConditionMemo(trie, distributionMemo, increaseMemo);
 
   if (!isEqualOmegaArray(distributionMemo, trie->info->distribution) ||

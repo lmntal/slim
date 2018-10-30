@@ -357,7 +357,7 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   Bool verticesAreCompletelySorted =
       triePropagate(trie, diffInfo, cAfterGraph, cBeforeGraph,
                     gapOfGlobalRootMemID, &stepOfPropagation);
-  if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted) {
+  if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
     /* printf("%s:%d\n", __FUNCTION__, __LINE__); */
     return new vertex_list();
   } else {
