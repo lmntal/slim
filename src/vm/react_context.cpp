@@ -251,6 +251,7 @@ void react_context_init(LmnReactCxtRef rc, BYTE mode) {
   rc->warray_cap = warray_DEF_SIZE;
   rc->atomic_id = -1;
   rc->hl_sameproccxt = NULL;
+  rc->trace_num = 0;
 #ifdef USE_FIRSTCLASS_RULE
   rc->insertion_events = vec_make(4);
 #endif
