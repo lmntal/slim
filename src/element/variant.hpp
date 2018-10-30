@@ -92,7 +92,7 @@ static auto variant_store(void *p, T &&t) -> typename std::enable_if<
 
 template <typename T, typename U, typename... Types>
 static auto variant_store(void *p, const T &t) -> typename std::enable_if<
-    std::is_same<U, typename std::decay<T>::type>::value>::type {
+    std::is_same<U, typename std::decay<T>::type>::value && std::is_copy_constructible<U>::value>::type {
   ::new (p) typename std::decay<T>::type(t);
 }
 
@@ -150,6 +150,15 @@ auto visit(Visitor &&vis, Variant &&var)
   return visit_impl<0>(std::forward<Visitor>(vis), std::forward<Variant>(var));
 }
 
+inline bool lor() {
+  return false;
+}
+
+template <class T, class... U>
+constexpr bool lor(const T &tf, const U&... l) {
+  return tf || lor(l...);
+}
+
 template <typename... Types> struct variant {
   using type_tuple = std::tuple<Types...>;
   struct deleter {
@@ -200,7 +209,7 @@ template <typename... Types> struct variant {
   }
   template <typename T,
             typename std::enable_if<
-                !std::is_same<typename std::decay<T>::type, variant>::value,
+                !std::is_same<typename std::decay<T>::type, variant>::value && lor(std::is_constructible<Types, T>::value...),
                 std::nullptr_t>::type = nullptr>
   variant(T &&t) {
     variant_store<T, Types...>(&storage_, std::forward<T>(t));
@@ -252,9 +261,21 @@ constexpr bool operator==(const slim::element::variant<Types...> &v,
                    typename slim::element::variant<Types...>::equalizer(v), w);
 }
 
+template <class T, class... Types>
+constexpr bool operator==(const slim::element::variant<Types...> &v, const T &w) {
+  return (v.index() != slim::element::variant_type_index<T, Types...>())
+             ? false
+             : slim::element::get<T>(v) == w;
+}
+
 template <class... Types>
 constexpr bool operator!=(const slim::element::variant<Types...> &v,
                           const slim::element::variant<Types...> &w) {
+  return !(v == w);
+}
+
+template <class T, class... Types>
+constexpr bool operator!=(const slim::element::variant<Types...> &v, const T &w) {
   return !(v == w);
 }
 

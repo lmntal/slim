@@ -1,17 +1,18 @@
 
 #include <iterator>
 #include <ostream>
+#include "element/element.h"
 
 template <typename T> struct ListBody__ {
   T value;
   ListBody__ *next;
   ListBody__ *prev;
   ListBody__() {
-    value = NULL;
     next = this;
     prev = this;
   };
-  ListBody__(T value) : value(value), next(nullptr), prev(nullptr) {}
+  ListBody__(const T &value) : value(value), next(nullptr), prev(nullptr) {}
+  ListBody__(T &&value) : value(std::move(value)), next(nullptr), prev(nullptr) {}
 
   T &operator*() { return value; }
 };
@@ -64,7 +65,6 @@ public:
   bool empty() { return sentinel->next == sentinel; }
   List__() {
     sentinel = new ListBody__<T>;
-    sentinel->value = NULL;
     sentinel->next = sentinel;
     sentinel->prev = sentinel;
   }
@@ -74,7 +74,7 @@ public:
     delete sentinel;
   }
 
-  T front() { return sentinel->next->value; }
+  T &front() { return sentinel->next->value; }
 
   iterator begin() { return sentinel->next; }
   iterator end() { return sentinel; }
@@ -90,6 +90,12 @@ public:
 
   iterator insert(iterator iter, const T &value) {
     auto it = iterator(new ListBody__<T>(value));
+    splice(iter, it);
+    return it;
+  }
+
+  iterator insert(iterator iter, T &&value) {
+    auto it = iterator(new ListBody__<T>(std::move(value)));
     splice(iter, it);
     return it;
   }
@@ -132,16 +138,13 @@ public:
   friend iterator end(List__ &list);
 };
 
-template <typename T, typename std::enable_if<std::is_pointer<T>::value,
-                                              std::nullptr_t>::type = nullptr>
+template <typename T>
 bool operator==(const List__<T> &listA, const List__<T> &listB) {
   auto iteratorCellA = std::begin(listA);
   auto iteratorCellB = std::end(listB);
 
   while (iteratorCellA != std::end(listA) && iteratorCellB != std::end(listB)) {
-    if (!*iteratorCellA && !*iteratorCellB)
-      continue;
-    if (**iteratorCellA != **iteratorCellB) {
+    if (*iteratorCellA != *iteratorCellB) {
       return false;
     }
 
@@ -164,26 +167,25 @@ bool operator!=(const List__<T1> &listA, const List__<T2> &listB) {
   return !(listA == listB);
 }
 
-template <typename T, typename std::enable_if<std::is_pointer<T>::value,
-                                              std::nullptr_t>::type = nullptr>
+template <typename T>
 bool operator<(const List__<T> &listA, const List__<T> &listB) {
-  auto iteratorCellA = listA.sentinel->next;
-  auto iteratorCellB = listB.sentinel->next;
+  auto iteratorCellA = std::begin(listA);
+  auto iteratorCellB = std::begin(listB);
 
-  while (iteratorCellA != listA.sentinel && iteratorCellB != listB.sentinel) {
-    if (**iteratorCellA < **iteratorCellB)
+  while (iteratorCellA != std::end(listA) && iteratorCellB != std::end(listB)) {
+    if (*iteratorCellA < *iteratorCellB)
       return true;
-    if (**iteratorCellB < **iteratorCellA)
+    if (*iteratorCellB < *iteratorCellA)
       return false;
 
-    iteratorCellA = iteratorCellA->next;
-    iteratorCellB = iteratorCellB->next;
+    iteratorCellA = std::next(iteratorCellA, 1);
+    iteratorCellB = std::next(iteratorCellB, 1);
   }
 
-  if (iteratorCellA == listA.sentinel && iteratorCellB != listB.sentinel) {
+  if (iteratorCellA == std::end(listA) && iteratorCellB != std::end(listB)) {
     return true;
-  } else if (iteratorCellA != listA.sentinel &&
-             iteratorCellB == listB.sentinel) {
+  } else if (iteratorCellA != std::end(listA) &&
+             iteratorCellB == std::end(listB)) {
     return false;
   } else {
     return false;
@@ -195,18 +197,14 @@ bool operator>(const List__<T> &listA, const List__<T2> &listB) {
 }
 
 struct InheritedVertex;
-using vertex_list = List__<InheritedVertex *>;
+using vertex_list = List__<slim::element::variant<slim::element::monostate, InheritedVertex>>;
 
-template <typename T, typename std::enable_if<std::is_pointer<T>::value,
-                                              std::nullptr_t>::type = nullptr>
+template <typename T>
 inline std::ostream &operator<<(std::ostream &os, const List__<T> &list) {
   auto sentinel = std::end(list);
   os << "[";
   for (auto iterator = std::begin(list); iterator != sentinel; ++iterator) {
-    if (*iterator)
-      os << **iterator;
-    else
-      os << "CLASS_SENTINEL\n";
+    os << (*iterator);
     if (std::next(iterator, 1) != sentinel) {
       os << ",";
     }

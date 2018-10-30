@@ -5,18 +5,16 @@
 
 template <typename List>
 void initializeDisjointSetForestsOfPropagationList(List *pList) {
-  for (auto iteratorCell = pList->sentinel->next;
-       iteratorCell != pList->sentinel; iteratorCell = iteratorCell->next) {
-    if (iteratorCell->value != CLASS_SENTINEL) {
-      InheritedVertex *iVertex = (InheritedVertex *)iteratorCell->value;
-      initializeDisjointSetForest(iVertex->equivalenceClassOfIsomorphism);
+  for (auto iteratorCell = std::begin(*pList); iteratorCell != std::end(*pList);
+       iteratorCell = std::next(iteratorCell, 1)) {
+    if (*iteratorCell != CLASS_SENTINEL) {
+      auto &iVertex = slim::element::get<InheritedVertex>(*iteratorCell);
+      initializeDisjointSetForest(iVertex.equivalenceClassOfIsomorphism);
     }
   }
 
   return;
 }
-
-#define IS_DISCRETE_LIST (NULL)
 
 vertex_list::iterator firstNonTrivialCell(vertex_list *pList) {
   auto beginSentinel = std::begin(*pList);
@@ -29,19 +27,19 @@ vertex_list::iterator firstNonTrivialCell(vertex_list *pList) {
       return beginSentinel;
     }
     beginSentinel = endSentinel;
-  } while (endSentinel != pList->sentinel);
+  } while (endSentinel != std::end(*pList));
 
-  return IS_DISCRETE_LIST;
+  return std::end(*pList);
 }
 
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
     InheritedVertex *iVertexA, InheritedVertex *iVertexB) {
-  if (iVertexA == CLASS_SENTINEL && iVertexB == CLASS_SENTINEL) {
+  if (iVertexA == nullptr && iVertexB == nullptr) {
     return EQ;
-  } else if (iVertexA == CLASS_SENTINEL && iVertexB != CLASS_SENTINEL) {
+  } else if (iVertexA == nullptr && iVertexB != nullptr) {
     CHECKER("CLASS_SENTINEL is invalid\n");
     exit(EXIT_FAILURE);
-  } else if (iVertexA != CLASS_SENTINEL && iVertexB == CLASS_SENTINEL) {
+  } else if (iVertexA != nullptr && iVertexB == nullptr) {
     CHECKER("CLASS_SENTINEL is invalid\n");
     exit(EXIT_FAILURE);
   } else if (iVertexA->type < iVertexB->type) {
@@ -83,7 +81,7 @@ Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCa
 }
 
 void initializeInheritedVertexAdjacentLabels(InheritedVertex *iVertex) {
-  if (iVertex == CLASS_SENTINEL) {
+  if (iVertex == nullptr) {
     return;
   } else {
     iVertex->conventionalPropagationMemo->clear();
@@ -100,7 +98,7 @@ void initializeInheritedVertexAdjacentLabelsCaster(void *iVertex) {
 
 void freeInheritedVertexOfPreserveDiscretePropagationList(
     InheritedVertex *iVertex) {
-  if (iVertex != CLASS_SENTINEL) {
+  if (iVertex != nullptr) {
     freeStack(iVertex->conventionalPropagationMemo);
     free(iVertex);
   }
@@ -108,25 +106,15 @@ void freeInheritedVertexOfPreserveDiscretePropagationList(
   return;
 }
 
-void freeInheritedVertexOfPreserveDiscretePropagationListCaster(void *iVertex) {
-  freeInheritedVertexOfPreserveDiscretePropagationList(
-      (InheritedVertex *)iVertex);
-
-  return;
-}
-
-template <typename List>
-void freePreserveDiscreteProapgationList(List *pdpList) {
-  for (auto &v : *pdpList)
-    freeInheritedVertexOfPreserveDiscretePropagationListCaster(v);
+void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
+  for (auto &v : *pdpList) {
+    if (slim::element::holds_alternative<InheritedVertex>(v)) {
+      freeStack(
+          slim::element::get<InheritedVertex>(v).conventionalPropagationMemo);
+    }
+  }
 
   delete pdpList;
-}
-
-void freePreserveDiscreteProapgationListCaster(void *pdpList) {
-  freePreserveDiscreteProapgationList((List__<void *> *)pdpList);
-
-  return;
 }
 
 Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
@@ -139,9 +127,10 @@ Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
   putLabelsToAdjacentVertices(dpList, cAfterGraph, gapOfGlobalRootMemID);
   vertex_list *preserveDPList = new vertex_list();
   for (auto &v : *dpList)
-    preserveDPList->push_back(copyInheritedVertex(v));
+    preserveDPList->push_back(v);
   for (auto &v : *dpList)
-    initializeInheritedVertexAdjacentLabelsCaster(v);
+    initializeInheritedVertexAdjacentLabels(
+        &slim::element::get<InheritedVertex>(v));
 
   auto key = makeDiscretePropagationListKey(preserveDPList);
   auto seniorDPList =
@@ -155,21 +144,21 @@ Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     isExisting = FALSE;
     return isExisting;
   } else {
-    auto iteratorCell = preserveDPList->sentinel->next;
-    auto iteratorCellSenior = seniorDPList->sentinel->next;
+    auto iteratorCell = std::begin(*preserveDPList);
+    auto iteratorCellSenior = std::begin(*seniorDPList);
 
-    while (iteratorCell != preserveDPList->sentinel) {
-      if (iteratorCell->value != CLASS_SENTINEL) {
-        InheritedVertex *iVertex = (InheritedVertex *)iteratorCell->value;
-        InheritedVertex *iVertexSenior =
-            (InheritedVertex *)iteratorCellSenior->value;
+    while (iteratorCell != std::end(*preserveDPList)) {
+      if (*iteratorCell != CLASS_SENTINEL) {
+        auto &iVertex = slim::element::get<InheritedVertex>(*iteratorCell);
+        auto &iVertexSenior =
+            slim::element::get<InheritedVertex>(*iteratorCellSenior);
 
-        unionDisjointSetForest(iVertex->equivalenceClassOfIsomorphism,
-                               iVertexSenior->equivalenceClassOfIsomorphism);
+        unionDisjointSetForest(iVertex.equivalenceClassOfIsomorphism,
+                               iVertexSenior.equivalenceClassOfIsomorphism);
       }
 
-      iteratorCell = iteratorCell->next;
-      iteratorCellSenior = iteratorCellSenior->next;
+      iteratorCell = std::next(iteratorCell, 1);
+      iteratorCellSenior = std::next(iteratorCellSenior, 1);
     }
 
     freePreserveDiscreteProapgationList(preserveDPList);
@@ -191,12 +180,12 @@ Bool isNewSplit(vertex_list::iterator sentinelCell,
                 vertex_list::iterator splitCell) {
   for (auto iteratorCell = std::next(sentinelCell, 1);
        iteratorCell != splitCell; iteratorCell = std::next(iteratorCell, 1)) {
-    InheritedVertex *splitIVertex = (InheritedVertex *)*splitCell;
-    InheritedVertex *iteratorIVertex = (InheritedVertex *)*iteratorCell;
+    auto &splitIVertex = slim::element::get<InheritedVertex>(*splitCell);
+    auto &iteratorIVertex = slim::element::get<InheritedVertex>(*iteratorCell);
 
     if (isInSameDisjointSetForest(
-            splitIVertex->equivalenceClassOfIsomorphism,
-            iteratorIVertex->equivalenceClassOfIsomorphism)) {
+            splitIVertex.equivalenceClassOfIsomorphism,
+            iteratorIVertex.equivalenceClassOfIsomorphism)) {
       return FALSE;
     }
   }
@@ -222,7 +211,7 @@ Bool listMcKayInner(
 
   auto beginSentinel = firstNonTrivialCell(stabilizer);
 
-  if (beginSentinel == IS_DISCRETE_LIST) {
+  if (beginSentinel == std::end(*stabilizer)) {
     isUsefulBranch =
         !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
@@ -294,7 +283,7 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
     for (auto &v :
          *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()
               ->second)
-      canonicalDiscreteRefinement->push_back(copyInheritedVertex(v));
+      canonicalDiscreteRefinement->push_back(v);
 
     /*
     CHECKER("########### candidates of canonical discrete refinement

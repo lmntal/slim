@@ -372,8 +372,12 @@ int compareTrieLeaves(TrieBody *a, TrieBody *b) {
   } else {
     int depthA = a->depth;
     int depthB = b->depth;
-    HashString *hStringA = (a->inheritedVertices->front())->hashString;
-    HashString *hStringB = (b->inheritedVertices->front())->hashString;
+    HashString *hStringA =
+        slim::element::get<InheritedVertex>(a->inheritedVertices->front())
+            .hashString;
+    HashString *hStringB =
+        slim::element::get<InheritedVertex>(b->inheritedVertices->front())
+            .hashString;
 
     int i;
     for (i = 0;; i++) {
@@ -537,8 +541,9 @@ void goBackProcessInnerManyCommonPrefixVertices(InheritedVertex &target,
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *target.ownerList,
         targetCell);
-    (*targetCell)->ownerNode = currentNode;
-    (*targetCell)->hashString->creditIndex = currentNode->depth;
+    slim::element::get<InheritedVertex>(*targetCell).ownerNode = currentNode;
+    slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
+        currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else {
     goBackProcessInnerManyCommonPrefixVertices(
@@ -557,15 +562,18 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *target.ownerList,
         targetCell);
-    (*targetCell)->ownerNode = currentNode;
-    (*targetCell)->hashString->creditIndex = currentNode->depth;
+    slim::element::get<InheritedVertex>(*targetCell).ownerNode = currentNode;
+    slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
+        currentNode->depth;
     prevNode->inheritedVertices->splice(
         std::begin(*prevNode->inheritedVertices), *brother.ownerList,
         brotherCell);
-    (*brotherCell)->ownerNode = prevNode;
-    (*brotherCell)->hashString->creditIndex = prevNode->depth;
+    slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
+    slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex =
+        prevNode->depth;
     incrementOmegaArray(tInfo->distribution, prevNode->depth);
-    (*brotherCell)->canonicalLabel.first = prevNode->key;
+    slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
+        prevNode->key;
 
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else if (isSingletonRedBlackTree(currentNode->children)) {
@@ -580,10 +588,12 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     prevNode->inheritedVertices->splice(
         std::begin(*prevNode->inheritedVertices), *brother.ownerList,
         brotherCell);
-    (*brotherCell)->ownerNode = prevNode;
-    (*brotherCell)->hashString->creditIndex = prevNode->depth;
+    slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
+    slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex =
+        prevNode->depth;
     incrementOmegaArray(tInfo->distribution, prevNode->depth);
-    (*brotherCell)->canonicalLabel.first = prevNode->key;
+    slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
+        prevNode->key;
 
     goBackProcessInnerManyCommonPrefixVertices(target, parent, goAheadStack,
                                                tInfo, targetDepth);
@@ -601,20 +611,22 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *ivertex.ownerList,
         targetCell);
-    (*targetCell)->ownerNode = currentNode;
-    (*targetCell)->hashString->creditIndex = currentNode->depth;
+    slim::element::get<InheritedVertex>(*targetCell).ownerNode = currentNode;
+    slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
+        currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else if (isSingletonRedBlackTree(currentNode->children) &&
-             isSingletonList(((TrieBody *)(currentNode->children->body->elm.second))
-                                 ->inheritedVertices)) {
+             isSingletonList(
+                 ((TrieBody *)(currentNode->children->body->elm.second))
+                     ->inheritedVertices)) {
     TrieBody *childNode = (TrieBody *)currentNode->children->body->elm.second;
     auto brother = std::begin(*childNode->inheritedVertices);
 
     decrementOmegaArray(tInfo->distribution, childNode->depth);
 
     goBackProcessInnerDoubleCommonPrefixVertices(
-        ivertex, *(*brother), currentNode, childNode, goAheadStack, tInfo,
-        targetDepth);
+        ivertex, slim::element::get<InheritedVertex>(*brother), currentNode,
+        childNode, goAheadStack, tInfo, targetDepth);
   } else {
     TrieBody *parent = currentNode->parent;
 
@@ -650,9 +662,9 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
       decrementOmegaArray(tInfo->distribution, OMEGA);
       decrementOmegaArray(tInfo->distribution, OMEGA);
 
-      goBackProcessInnerDoubleCommonPrefixVertices(ivertex, *(*brother), parent,
-                                                   currentNode, goAheadStack,
-                                                   tInfo, targetDepth);
+      goBackProcessInnerDoubleCommonPrefixVertices(
+          ivertex, slim::element::get<InheritedVertex>(*brother), parent,
+          currentNode, goAheadStack, tInfo, targetDepth);
     } else {
       TrieBody *parent = currentNode->parent;
 
@@ -695,14 +707,16 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       targetNode->depth != -1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     incrementOmegaArray(tInfo->distribution, targetNode->depth);
-    (inheritedVerticesList->front())->canonicalLabel.first = targetNode->key;
+    slim::element::get<InheritedVertex>(inheritedVerticesList->front())
+        .canonicalLabel.first = targetNode->key;
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     while (!inheritedVerticesList->empty()) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       auto tmpCell = std::begin(*inheritedVerticesList);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      auto key = callHashValue((*tmpCell), targetNode->depth, cAfterGraph,
+      auto key = callHashValue(&slim::element::get<InheritedVertex>(*tmpCell),
+                               targetNode->depth, cAfterGraph,
                                gapOfGlobalRootMemID, fixCreditIndexStack);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       TrieBody *nextNode = children->search(key);
@@ -736,7 +750,7 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       nextNode->inheritedVertices->splice(
           std::begin(*nextNode->inheritedVertices), *inheritedVerticesList,
           tmpCell);
-      (*tmpCell)->ownerNode = nextNode;
+      slim::element::get<InheritedVertex>(*tmpCell).ownerNode = nextNode;
       pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, nextNode);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
@@ -809,11 +823,11 @@ wrapAfterConvertedVertexInInheritedVertex(ConvertedGraphVertex *cVertex,
   return iVertex;
 }
 
-template <typename S1, typename S2, typename S3>
-void addInheritedVerticesToTrie(Trie *trie, S1 *addedVertices,
-                                S2 *initializeConvertedVerticesStack,
-                                S3 *goAheadStack, Graphinfo *cAfterGraph,
-                                int gapOfGlobalRootMemID) {
+void addInheritedVerticesToTrie(
+    Trie *trie, std::vector<ConvertedGraphVertex *> *addedVertices,
+    std::vector<ConvertedGraphVertex *> *initializeConvertedVerticesStack,
+    std::stack<TrieBody *> *goAheadStack, Graphinfo *cAfterGraph,
+    int gapOfGlobalRootMemID) {
   if (!addedVertices->empty()) {
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, trie->body);
   }
@@ -824,10 +838,11 @@ void addInheritedVerticesToTrie(Trie *trie, S1 *addedVertices,
     InheritedVertex *targetIVertex = wrapAfterConvertedVertexInInheritedVertex(
         targetCVertex, gapOfGlobalRootMemID);
 
-    trie->body->inheritedVertices->push_front(targetIVertex);
+    trie->body->inheritedVertices->push_front(*targetIVertex);
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
     targetCVertex->isVisitedInBFS = TRUE;
+    delete targetIVertex;
     pushStack(initializeConvertedVerticesStack, targetCVertex);
   }
 
@@ -858,9 +873,7 @@ void initializeConvertedVertices(S *initializeConvertedVerticesStack) {
   return;
 }
 
-Bool isEmptyTrie(Trie *trie) {
-  return trie->body->children->empty();
-}
+Bool isEmptyTrie(Trie *trie) { return trie->body->children->empty(); }
 
 template <typename S>
 Bool isDescreteTrie(S *goAheadStack, TerminationConditionInfo *tInfo,
@@ -968,7 +981,8 @@ void collectDescendantConvertedVerticesInner(TrieBody *ancestorBody,
                                              _RedBlackTreeBody<uint32_t, TrieBody *> *rbtb) {
   if (rbtb != NULL) {
     collectDescendantConvertedVerticesInner(ancestorBody, rbtb->children[LEFT]);
-    collectDescendantConvertedVertices(ancestorBody, (TrieBody *)rbtb->elm.second);
+    collectDescendantConvertedVertices(ancestorBody,
+                                       (TrieBody *)rbtb->elm.second);
     collectDescendantConvertedVerticesInner(ancestorBody,
                                             rbtb->children[RIGHT]);
   }
@@ -984,9 +998,11 @@ void collectDescendantConvertedVertices(TrieBody *ancestorBody,
       ancestorBody->inheritedVertices->splice(
           std::begin(*ancestorBody->inheritedVertices),
           *descendantBody->inheritedVertices, targetCell);
-      (*targetCell)->ownerNode = ancestorBody;
-      (*targetCell)->hashString->creditIndex = ancestorBody->depth;
-      (*targetCell)->canonicalLabel.first = ancestorBody->key;
+      slim::element::get<InheritedVertex>(*targetCell).ownerNode = ancestorBody;
+      slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
+          ancestorBody->depth;
+      slim::element::get<InheritedVertex>(*targetCell).canonicalLabel.first =
+          ancestorBody->key;
     }
   } else {
     collectDescendantConvertedVerticesInner(ancestorBody,
@@ -1004,7 +1020,8 @@ void makeTrieMinimumInnerInner(_RedBlackTreeBody<uint32_t, TrieBody *> *rbtb,
                                int stepOfPropagation) {
   if (rbtb != NULL) {
     makeTrieMinimumInnerInner(rbtb->children[LEFT], tInfo, stepOfPropagation);
-    makeTrieMinimumInner((TrieBody *)rbtb->elm.second, tInfo, stepOfPropagation);
+    makeTrieMinimumInner((TrieBody *)rbtb->elm.second, tInfo,
+                         stepOfPropagation);
     makeTrieMinimumInnerInner(rbtb->children[RIGHT], tInfo, stepOfPropagation);
   }
 
@@ -1017,7 +1034,7 @@ void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
     if (body->isPushedIntoGoAheadStack) {
       for (auto &v : *body->inheritedVertices) {
         incrementOmegaArray(tInfo->distribution, OMEGA);
-        (v)->canonicalLabel.first = body->key;
+        slim::element::get<InheritedVertex>(v).canonicalLabel.first = body->key;
       }
     }
 
@@ -1073,7 +1090,7 @@ void makeConventionalPropagationListInner(TrieBody *body, vertex_list *list,
                                           int stepOfPropagation) {
   if (body->children->empty()) {
     if (!list->empty()) {
-      list->push_front(CLASS_SENTINEL);
+      // list->push_front(CLASS_SENTINEL);
     }
 
     for (auto &v : *body->inheritedVertices) {
@@ -1104,8 +1121,7 @@ vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel) {
 
 vertex_list::iterator
 getNextSentinel(vertex_list &list, const vertex_list::iterator beginSentinel) {
-  return std::find(beginSentinel, std::end(list),
-                   (InheritedVertex *)CLASS_SENTINEL);
+  return std::find(beginSentinel, std::end(list), CLASS_SENTINEL);
 }
 
 using vertex_queue = std::priority_queue<std::pair<int, InheritedVertex *>>;
@@ -1154,8 +1170,7 @@ Bool classifyConventionalPropagationList(
   auto beginSentinel = endSentinel;
 
   do {
-    endSentinel = std::find(beginSentinel, std::end(*pList),
-                            (InheritedVertex *)CLASS_SENTINEL);
+    endSentinel = std::find(beginSentinel, std::end(*pList), CLASS_SENTINEL);
 
     if (classifyConventionalPropagationListInner(
             *pList, beginSentinel, endSentinel, cAfterGraph,
@@ -1174,8 +1189,9 @@ Bool classifyConventionalPropagationListWithTypeInner(
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
-    int tmpPriority = (*tmpCell)->type;
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    int tmpPriority = slim::element::get<InheritedVertex>(*tmpCell).type;
+    cellPQueue->emplace(tmpPriority,
+                        &slim::element::get<InheritedVertex>(*tmpCell));
   }
 
   Bool isRefined =
@@ -1191,10 +1207,13 @@ Bool classifyConventionalPropagationListWithDegreeInner(
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
-    int tmpPriority = numStack(&correspondingVertexInConvertedGraph(
-                                    *tmpCell, cAfterGraph, gapOfGlobalRootMemID)
-                                    ->links);
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    int tmpPriority =
+        numStack(&correspondingVertexInConvertedGraph(
+                      &slim::element::get<InheritedVertex>(*tmpCell),
+                      cAfterGraph, gapOfGlobalRootMemID)
+                      ->links);
+    cellPQueue->emplace(tmpPriority,
+                        &slim::element::get<InheritedVertex>(*tmpCell));
   }
 
   Bool isRefined =
@@ -1211,9 +1230,11 @@ Bool classifyConventionalPropagationListWithNameLengthInner(
     auto tmpCell = std::next(beginSentinel, 1);
 
     int tmpPriority = strlen(correspondingVertexInConvertedGraph(
-                                 (*tmpCell), cAfterGraph, gapOfGlobalRootMemID)
+                                 &slim::element::get<InheritedVertex>(*tmpCell),
+                                 cAfterGraph, gapOfGlobalRootMemID)
                                  ->name);
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    cellPQueue->emplace(tmpPriority,
+                        &slim::element::get<InheritedVertex>(*tmpCell));
   }
 
   Bool isRefined =
@@ -1230,9 +1251,11 @@ Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
     auto tmpCell = std::next(beginSentinel, 1);
 
     int tmpPriority = (correspondingVertexInConvertedGraph(
-                           (*tmpCell), cAfterGraph, gapOfGlobalRootMemID)
+                           &slim::element::get<InheritedVertex>(*tmpCell),
+                           cAfterGraph, gapOfGlobalRootMemID)
                            ->name)[index];
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    cellPQueue->emplace(tmpPriority,
+                        &slim::element::get<InheritedVertex>(*tmpCell));
   }
 
   Bool isRefined =
@@ -1248,8 +1271,9 @@ Bool classifyConventionalPropagationListWithNameCharactersInner(
   Bool isRefined = FALSE;
 
   int nameLength = strlen(
-      correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
-                                          cAfterGraph, gapOfGlobalRootMemID)
+      correspondingVertexInConvertedGraph(
+          &slim::element::get<InheritedVertex>(*(std::next(beginSentinel, 1))),
+          cAfterGraph, gapOfGlobalRootMemID)
           ->name);
 
   int i;
@@ -1258,8 +1282,8 @@ Bool classifyConventionalPropagationListWithNameCharactersInner(
     auto innerBeginSentinel = beginSentinel;
 
     do {
-      innerEndSentinel = std::find(innerBeginSentinel, std::end(list),
-                                   (InheritedVertex *)CLASS_SENTINEL);
+      innerEndSentinel =
+          std::find(innerBeginSentinel, std::end(list), CLASS_SENTINEL);
 
       isRefined =
           classifyConventionalPropagationListWithNameCharactersInnerInner(
@@ -1335,17 +1359,18 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
   auto endSentinel = beginSentinel;
 
   do {
-    endSentinel = std::find(beginSentinel, std::end(*pList),
-                            (InheritedVertex *)CLASS_SENTINEL);
+    endSentinel = std::find(beginSentinel, std::end(*pList), CLASS_SENTINEL);
 
     int tmpDegree = numStack(
-        &correspondingVertexInConvertedGraph((*std::next(beginSentinel, 1)),
-                                             cAfterGraph, gapOfGlobalRootMemID)
+        &correspondingVertexInConvertedGraph(
+             &slim::element::get<InheritedVertex>(*std::next(beginSentinel, 1)),
+             cAfterGraph, gapOfGlobalRootMemID)
              ->links);
-    ConvertedGraphVertexType tmpType =
-        correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
-                                            cAfterGraph, gapOfGlobalRootMemID)
-            ->type;
+    ConvertedGraphVertexType tmpType = correspondingVertexInConvertedGraph(
+                                           &slim::element::get<InheritedVertex>(
+                                               *(std::next(beginSentinel, 1))),
+                                           cAfterGraph, gapOfGlobalRootMemID)
+                                           ->type;
 
     int i;
     for (i = 0; i < tmpDegree; i++) {
@@ -1353,14 +1378,16 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
            iteratorCell != endSentinel;
            iteratorCell = std::next(iteratorCell, 1)) {
         auto &tmpLink = correspondingVertexInConvertedGraph(
-                            (*iteratorCell), cAfterGraph, gapOfGlobalRootMemID)
+                            &slim::element::get<InheritedVertex>(*iteratorCell),
+                            cAfterGraph, gapOfGlobalRootMemID)
                             ->links[i];
         ConvertedGraphVertex *adjacentVertex;
 
         switch (tmpLink.attr) {
         case INTEGER_ATTR:
-          writeStack((*(iteratorCell))->conventionalPropagationMemo, i,
-                     tmpLink.data.integer * 256 + INTEGER_ATTR);
+          writeStack(slim::element::get<InheritedVertex>(*(iteratorCell))
+                         .conventionalPropagationMemo,
+                     i, tmpLink.data.integer * 256 + INTEGER_ATTR);
           break;
         // case DOUBLE_ATTR:
         // break;
@@ -1418,8 +1445,10 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
-    int tmpPriority = popStack((*tmpCell)->conventionalPropagationMemo);
-    cellPQueue->emplace(tmpPriority, *tmpCell);
+    int tmpPriority = popStack(slim::element::get<InheritedVertex>(*tmpCell)
+                                   .conventionalPropagationMemo);
+    cellPQueue->emplace(tmpPriority,
+                        &slim::element::get<InheritedVertex>(*tmpCell));
   }
 
   Bool isRefined =
@@ -1435,8 +1464,9 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInner(
   Bool isRefined = FALSE;
 
   int degree = numStack(
-      &correspondingVertexInConvertedGraph((*(std::next(beginSentinel, 1))),
-                                           cAfterGraph, gapOfGlobalRootMemID)
+      &correspondingVertexInConvertedGraph(
+           &slim::element::get<InheritedVertex>(*(std::next(beginSentinel, 1))),
+           cAfterGraph, gapOfGlobalRootMemID)
            ->links);
 
   int i;
@@ -1445,8 +1475,8 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInner(
     auto innerBeginSentinel = beginSentinel;
 
     do {
-      innerEndSentinel = std::find(innerBeginSentinel, std::end(list),
-                                   (InheritedVertex *)CLASS_SENTINEL);
+      innerEndSentinel =
+          std::find(innerBeginSentinel, std::end(list), CLASS_SENTINEL);
 
       isRefined =
           classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
@@ -1491,37 +1521,6 @@ Bool getStableRefinementOfConventionalPropagationList(
   }
 
   return isRefined;
-}
-
-InheritedVertex *copyInheritedVertex(InheritedVertex *iVertex) {
-  if (iVertex == CLASS_SENTINEL) {
-    return CLASS_SENTINEL;
-  } else {
-    InheritedVertex *ret = (InheritedVertex *)malloc(sizeof(InheritedVertex));
-
-    ret->type = iVertex->type;
-    strcpy(ret->name, iVertex->name);
-    ret->canonicalLabel = iVertex->canonicalLabel;
-    ret->hashString = iVertex->hashString;
-    ret->isPushedIntoFixCreditIndex = iVertex->isPushedIntoFixCreditIndex;
-    ret->beforeID = iVertex->beforeID;
-    ret->ownerNode = iVertex->ownerNode;
-    ret->ownerList = iVertex->ownerList;
-    ret->ownerCell = iVertex->ownerCell;
-    ret->conventionalPropagationMemo = new std::vector<int>();
-    int i;
-    for (i = 0; i < numStack(iVertex->conventionalPropagationMemo); i++) {
-      int tmp = readStack(iVertex->conventionalPropagationMemo, i);
-      writeStack(ret->conventionalPropagationMemo, i, tmp);
-    }
-    ret->equivalenceClassOfIsomorphism = iVertex->equivalenceClassOfIsomorphism;
-
-    return ret;
-  }
-}
-
-void *copyInheritedVertexCaster(void *iVertex) {
-  return copyInheritedVertex((InheritedVertex *)iVertex);
 }
 
 void assureReferenceFromConvertedVerticesToInheritedVertices(
@@ -1680,16 +1679,6 @@ void inheritedVertexDump(InheritedVertex *iVertex) {
   fprintf(stdout, ">");
 
   // intStackDump(iVertex->conventionalPropagationMemo);
-  return;
-}
-
-void inheritedVertexDumpCaster(void *iVertex) {
-  if (iVertex == CLASS_SENTINEL) {
-    fprintf(stdout, "CLASS_SENTINEL\n");
-  } else {
-    inheritedVertexDump((InheritedVertex *)iVertex);
-  }
-
   return;
 }
 

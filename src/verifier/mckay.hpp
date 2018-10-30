@@ -25,7 +25,6 @@ Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
     InheritedVertex *iVertexA, InheritedVertex *iVertexB);
 template <typename List>
 void freePreserveDiscreteProapgationList(List__<void *> *pdpList);
-void freePreserveDiscreteProapgationListCaster(void *pdpList);
 template <typename List>
 Bool checkIsomorphismValidity(unbound_vector<List *> *slimKeyCollection,
                               RedBlackTree *McKayKeyCollection,
