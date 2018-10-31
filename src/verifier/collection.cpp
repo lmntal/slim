@@ -4,62 +4,6 @@
 #include <iostream>
 #define INIT_CAP (4)
 
-// template <typename T1, typename T2>
-// Order compareList(List__<T1> *listA, List__<T2> *listB,
-//                   Order compareValue(T1, T2)) {
-//   auto iteratorCellA = listA->sentinel->next;
-//   auto iteratorCellB = listB->sentinel->next;
-
-//   while (iteratorCellA != listA->sentinel && iteratorCellB !=
-//   listB->sentinel) {
-//     switch (compareValue(iteratorCellA->value, iteratorCellB->value)) {
-//     case LT:
-//       return LT;
-//       break;
-//     case GT:
-//       return GT;
-//       break;
-//     case EQ:
-//       iteratorCellA = iteratorCellA->next;
-//       iteratorCellB = iteratorCellB->next;
-//       continue;
-//       break;
-//     default:
-//       CHECKER("unexpected order type\n");
-//       exit(EXIT_FAILURE);
-//       break;
-//     }
-//   }
-
-//   if (iteratorCellA == listA->sentinel && iteratorCellB != listB->sentinel) {
-//     return LT;
-//   } else if (iteratorCellA != listA->sentinel &&
-//              iteratorCellB == listB->sentinel) {
-//     return GT;
-//   } else {
-//     return EQ;
-//   }
-// }
-
-KeyContainer__<vertex_list *>
-makeDiscretePropagationListKey(vertex_list *dpList) {
-  KeyContainer__<vertex_list *> ret;
-
-  ret.value = dpList;
-
-  return ret;
-}
-
-void setRBColor(Color color) {
-  if (color == BLACK) {
-    printf("\x1b[47m");
-    printf("\x1b[30m");
-  } else {
-    printf("\x1b[41m");
-  }
-  return;
-}
-
 void setDefaultColor() {
   printf("\x1b[49m");
   printf("\x1b[39m");

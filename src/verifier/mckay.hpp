@@ -6,6 +6,7 @@
 #include "trie.hpp"
 
 #include <vector>
+#include <map>
 
 struct CanonicalAdjacencyInformation {
   Hash hash;
@@ -19,16 +20,19 @@ struct CanonicalAdjacencyList {
   std::vector<void *> adjacencyInformations; // ??
 };
 
+using discrete_propagation_lists =
+    std::map<vertex_list, vertex_list *>;
+using key_collection =
+    std::map<vertex_list, CollectionInt>;
+
 vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
                        Graphinfo *cBeforeGraph);
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
     InheritedVertex *iVertexA, InheritedVertex *iVertexB);
-template <typename List>
-void freePreserveDiscreteProapgationList(List__<void *> *pdpList);
-void freePreserveDiscreteProapgationListCaster(void *pdpList);
-template <typename List>
-Bool checkIsomorphismValidity(unbound_vector<List *> *slimKeyCollection,
-                              RedBlackTree *McKayKeyCollection,
-                              List *canonicalDiscreteRefinement, int stateID);
+void freePreserveDiscreteProapgationList(vertex_list *pdpList);
+Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
+                              key_collection *McKayKeyCollection,
+                              vertex_list *canonicalDiscreteRefinement,
+                              long stateID);
 
 #endif

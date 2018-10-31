@@ -9,14 +9,19 @@
 #include <list>
 
 struct ConvertedGraph;
+struct InheritedVertex;
+struct TrieBody;
 
-#define CLASS_SENTINEL (NULL)
+constexpr auto CLASS_SENTINEL = slim::element::monostate();
+
+using vertex_list = std::list<slim::element::variant<slim::element::monostate, InheritedVertex>>;
+using trie_body_map = std::map<uint32_t, TrieBody *>;
 
 struct TrieBody {
   uint32_t key;
   vertex_list *inheritedVertices;
   TrieBody *parent;
-  RedBlackTree__<uint32_t, TrieBody *> *children;
+  trie_body_map *children;
   int depth;
   Bool isInfinitedDepth;
   Bool isPushedIntoGoAheadStack;
@@ -24,7 +29,7 @@ struct TrieBody {
   TrieBody() {
     inheritedVertices = new vertex_list();
     parent = NULL;
-    children = new RedBlackTree__<uint32_t, TrieBody *>();
+    children = new trie_body_map();
     depth = -1;
     isInfinitedDepth = false;
     isPushedIntoGoAheadStack = false;
@@ -92,6 +97,25 @@ struct InheritedVertex {
     conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
   };
+
+  InheritedVertex(const InheritedVertex &iVertex) {
+    this->type = iVertex.type;
+    strcpy(this->name, iVertex.name);
+    this->canonicalLabel = iVertex.canonicalLabel;
+    this->hashString = iVertex.hashString;
+    this->isPushedIntoFixCreditIndex = iVertex.isPushedIntoFixCreditIndex;
+    this->beforeID = iVertex.beforeID;
+    this->ownerNode = iVertex.ownerNode;
+    this->ownerList = iVertex.ownerList;
+    this->ownerCell = iVertex.ownerCell;
+    this->conventionalPropagationMemo = new std::vector<int>();
+    int i;
+    for (i = 0; i < numStack(iVertex.conventionalPropagationMemo); i++) {
+      int tmp = readStack(iVertex.conventionalPropagationMemo, i);
+      writeStack(this->conventionalPropagationMemo, i, tmp);
+    }
+    this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
+  }
 };
 
 inline bool operator==(const InheritedVertex &iVertexA,
@@ -127,6 +151,41 @@ inline bool operator==(const InheritedVertex &iVertexA,
     return true;
   }
 }
+
+inline bool operator<(const InheritedVertex &iVertexA,
+                      const InheritedVertex &iVertexB) {
+  if (iVertexA.type < iVertexB.type) {
+    return true;
+  } else if (iVertexA.type > iVertexB.type) {
+    return false;
+  } else if (strcmp(iVertexA.name, iVertexB.name) < 0) {
+    return true;
+  } else if (strcmp(iVertexA.name, iVertexB.name) > 0) {
+    return false;
+  } else if (numStack(iVertexA.conventionalPropagationMemo) <
+             numStack(iVertexB.conventionalPropagationMemo)) {
+    return true;
+  } else if (numStack(iVertexA.conventionalPropagationMemo) >
+             numStack(iVertexB.conventionalPropagationMemo)) {
+    return false;
+  } else {
+    int degree = numStack(iVertexA.conventionalPropagationMemo);
+    int i;
+    std::vector<int> *iStackA = iVertexA.conventionalPropagationMemo;
+    std::vector<int> *iStackB = iVertexB.conventionalPropagationMemo;
+
+    for (i = 0; i < degree; i++) {
+      if (readStack(iStackA, i) < readStack(iStackB, i)) {
+        return true;
+      } else if (readStack(iStackA, i) > readStack(iStackB, i)) {
+        return false;
+      }
+    }
+
+    return false;
+  }
+}
+
 inline bool operator!=(const InheritedVertex &a, const InheritedVertex &b) {
   return !(a == b);
 }
@@ -155,6 +214,30 @@ inline std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const slim::element::variant<slim::element::monostate, InheritedVertex>
+        &v) {
+  if (slim::element::holds_alternative<slim::element::monostate>(v))
+    return os << "CLASS_SENTINEL\n";
+  else
+    return os << slim::element::get<InheritedVertex>(v);
+}
+
+template <typename T>
+inline std::ostream &operator<<(std::ostream &os, const std::list<T> &list) {
+  auto sentinel = std::end(list);
+  os << "[";
+  for (auto iterator = std::begin(list); iterator != sentinel; ++iterator) {
+    os << (*iterator);
+    if (std::next(iterator, 1) != sentinel) {
+      os << ",";
+    }
+  }
+  os << "]";
+  return os;
+}
+
 template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);
@@ -172,10 +255,7 @@ Bool classifyConventionalPropagationListWithAttribute(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
 Bool getStableRefinementOfConventionalPropagationList(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
-InheritedVertex *copyInheritedVertex(InheritedVertex *iVertex);
-void *copyInheritedVertexCaster(void *iVertex);
 void inheritedVertexDump(InheritedVertex *iVertex);
-void inheritedVertexDumpCaster(void *iVertex);
 void terminationConditionInfoDump(TerminationConditionInfo *tInfo);
 void trieDump(Trie *trie);
 
