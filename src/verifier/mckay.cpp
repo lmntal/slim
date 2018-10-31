@@ -199,11 +199,11 @@ Bool listMcKayInner(
     discrete_propagation_lists
         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
   Bool isUsefulBranch = TRUE;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   auto stabilizer = new vertex_list(*propagationListOfInheritedVertices);
   getStableRefinementOfConventionalPropagationList(stabilizer, cAfterGraph,
                                                    gapOfGlobalRootMemID);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   /*
   CHECKER("###### after stable refinement ######\n");
   std::cout << *stabilizer << std::endl;
@@ -212,11 +212,14 @@ Bool listMcKayInner(
   auto beginSentinel = firstNonTrivialCell(stabilizer);
 
   if (beginSentinel == std::end(*stabilizer)) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     isUsefulBranch =
         !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
             stabilizer, cAfterGraph, gapOfGlobalRootMemID);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     Bool isFirstLoop = TRUE;
 
     auto endSentinel = getNextSentinel(beginSentinel);
@@ -229,14 +232,15 @@ Bool listMcKayInner(
       auto splitCell = std::next(iteratorCell, 1);
 
       if (isNewSplit(sentinelCell, splitCell)) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         stabilizer->splice(std::next(beginSentinel, 1), *stabilizer, splitCell);
 
         Bool isUsefulChild = listMcKayInner(
             stabilizer, cAfterGraph, gapOfGlobalRootMemID,
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
-
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         stabilizer->splice(std::next(iteratorCell, 1), *stabilizer, splitCell);
-
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         if (isFirstLoop) {
           isFirstLoop = FALSE;
           if (!isUsefulChild) {
@@ -257,19 +261,21 @@ Bool listMcKayInner(
 
 vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
                        ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (propagationListOfInheritedVertices->empty()) {
     vertex_list *canonicalDiscreteRefinement =
         new vertex_list(*propagationListOfInheritedVertices);
     return canonicalDiscreteRefinement;
   } else {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     initializeDisjointSetForestsOfPropagationList(
         propagationListOfInheritedVertices);
     auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels =
         new discrete_propagation_lists();
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     classifyConventionalPropagationListWithAttribute(
         propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID);
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     /*
     CHECKER("###### after attribute classifying ######\n");
     std::cout << *propagationListOfInheritedVertices << std::endl;
@@ -278,7 +284,7 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
     listMcKayInner(
         propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID,
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     vertex_list *canonicalDiscreteRefinement = new vertex_list();
     for (auto &v :
          *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()
@@ -297,6 +303,7 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
 
     return canonicalDiscreteRefinement;
   }
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
 }
 
 Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
@@ -346,14 +353,15 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   Bool verticesAreCompletelySorted =
       triePropagate(trie, diffInfo, cAfterGraph, cBeforeGraph,
                     gapOfGlobalRootMemID, &stepOfPropagation);
-  if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
+  if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted &&false) {
     /* printf("%s:%d\n", __FUNCTION__, __LINE__); */
     return new vertex_list();
   } else {
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     vertex_list *propagationListOfInheritedVertices =
         makeConventionalPropagationList(trie, stepOfPropagation);
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout<< *propagationListOfInheritedVertices << std::endl;
     /*
        CHECKER("###### before list propagate ######\n");
 
@@ -363,7 +371,7 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
     vertex_list *canonicalDiscreteRefinement =
         listMcKay(propagationListOfInheritedVertices, cAfterGraph->cv,
                   gapOfGlobalRootMemID);
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     /*
        CHECKER("###### after list propagate ######\n");
        std::cout << *canonicalDiscreteRefinement << std::endl;

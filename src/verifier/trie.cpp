@@ -11,7 +11,6 @@ HashString *makeHashString() {
 
   ret->creditIndex = 0;
   ret->body = new std::vector<uint32_t *>();
-
   return ret;
 }
 
@@ -1040,7 +1039,7 @@ void makeConventionalPropagationListInner(TrieBody *body, vertex_list *list,
                                           int stepOfPropagation) {
   if (body->children->empty()) {
     if (!list->empty()) {
-      // list->push_front(CLASS_SENTINEL);
+      list->push_front(CLASS_SENTINEL);
     }
 
     for (auto &v : *body->inheritedVertices) {
@@ -1050,7 +1049,6 @@ void makeConventionalPropagationListInner(TrieBody *body, vertex_list *list,
     for (auto &v : *body->children)
       makeConventionalPropagationListInner(v.second, list, stepOfPropagation);
   }
-
   return;
 }
 
@@ -1118,10 +1116,14 @@ Bool classifyConventionalPropagationList(
   auto cellPQueue = vertex_queue();
   auto endSentinel = std::end(*pList);
   auto beginSentinel = endSentinel;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout<< *pList << std::endl;
   do {
     endSentinel = std::find(beginSentinel, std::end(*pList), CLASS_SENTINEL);
-
+    if(endSentinel == pList->end()) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (classifyConventionalPropagationListInner(
             *pList, beginSentinel, endSentinel, cAfterGraph,
             gapOfGlobalRootMemID, &cellPQueue)) {
@@ -1137,8 +1139,10 @@ Bool classifyConventionalPropagationListWithTypeInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
+    // std::cout << (*tmpCell) <<std::endl;
     int tmpPriority = slim::element::get<InheritedVertex>(*tmpCell).type;
     cellPQueue->emplace(tmpPriority,
                         &slim::element::get<InheritedVertex>(*tmpCell));
@@ -1283,16 +1287,19 @@ Bool classifyConventionalPropagationListWithName(vertex_list *pList,
 Bool classifyConventionalPropagationListWithAttribute(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
   Bool isRefined = FALSE;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   isRefined = classifyConventionalPropagationListWithType(
                   pList, cAfterGraph, gapOfGlobalRootMemID) ||
               isRefined;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   isRefined = classifyConventionalPropagationListWithDegree(
                   pList, cAfterGraph, gapOfGlobalRootMemID) ||
               isRefined;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   isRefined = classifyConventionalPropagationListWithName(
                   pList, cAfterGraph, gapOfGlobalRootMemID) ||
               isRefined;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return isRefined;
 }
 
@@ -1575,24 +1582,28 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   Bool verticesAreCompletelySorted =
       isDescreteTrie(&goAheadStack, tInfo, stepOfPropagation) ||
       isEmptyTrie(trie);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (!verticesAreCompletelySorted) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     makeTrieMinimum(trie, stepOfPropagation);
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     while (!goAheadStack.empty()) {
       popTrieBodyFromGoAheadStackWithoutOverlap(&goAheadStack);
     }
   }
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   initializeConvertedVertices(&initializeConvertedVerticesStack);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   initializeConvertedVertices(&BFSStack);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   fixCreditIndex(&fixCreditIndexStack, cAfterGraph->cv, gapOfGlobalRootMemID);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   //実際のSLIMでは起きない操作
   initializeReferencesFromConvertedVerticesToInheritedVertices(
       cBeforeGraph->cv);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   *stepOfPropagationPtr = stepOfPropagation;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return verticesAreCompletelySorted;
 }
 
