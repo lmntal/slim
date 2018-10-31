@@ -1082,19 +1082,16 @@ bool putClassesWithPriority(vertex_list &list,
   int prev_priority;
   InheritedVertex *prev_vert;
   std::tie(prev_priority, prev_vert) = cellPQueue->top();
-
   while (!cellPQueue->empty()) {
     int priority;
     InheritedVertex *vert;
-
     std::tie(priority, vert) = cellPQueue->top();
+    std::cout<<(*vert)<<std::endl;
     cellPQueue->pop();
-
     if (priority < prev_priority) {
       list.insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
       isRefined = true;
     }
-
     list.splice(std::next(beginSentinel, 1), *vert->ownerList, vert->ownerCell);
     std::tie(prev_priority, prev_vert) = std::tie(priority, vert);
   }
@@ -1119,7 +1116,7 @@ Bool classifyConventionalPropagationList(
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout<< *pList << std::endl;
   do {
-    endSentinel = std::find(beginSentinel, std::end(*pList), CLASS_SENTINEL);
+    endSentinel = std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
     if(endSentinel == pList->end()) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
@@ -1140,14 +1137,18 @@ Bool classifyConventionalPropagationListWithTypeInner(
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // std::cout<<(*beginSentinel)<<std::endl;
+  std::cout<<(*endSentinel)<<std::endl;
+  std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
-    // std::cout << (*tmpCell) <<std::endl;
+    std::cout << (*tmpCell) <<std::endl;
+    list.erase(tmpCell);
     int tmpPriority = slim::element::get<InheritedVertex>(*tmpCell).type;
     cellPQueue->emplace(tmpPriority,
                         &slim::element::get<InheritedVertex>(*tmpCell));
   }
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool isRefined =
       putClassesWithPriority(list, beginSentinel, endSentinel, cellPQueue);
 
