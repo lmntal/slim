@@ -225,6 +225,8 @@ Hash callHashValue(InheritedVertex *iVertex, int index,
                    S *fixCreditIndexStack) {
   HashString *hashString = iVertex->hashString;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << *iVertex << std::endl;
+  std::cout << index << std::endl;
   if (index < 0) {
     return 0;
   } else if (index < hashString->creditIndex) {
@@ -234,13 +236,15 @@ Hash callHashValue(InheritedVertex *iVertex, int index,
     Hash tmp = initialHashValue(correspondingVertexInConvertedGraph(
         iVertex, cAfterGraph, gapOfGlobalRootMemID));
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    auto old = hashString->body->at(index);
-    (*hashString->body)[index] = new uint32_t(tmp);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    if (old != NULL) {
-      free(old);
+    if(hashString->body->size() > 0) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      auto old = hashString->body->at(index);
+      if (old != NULL) {
+	free(old);
+      }
     }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    hashString->body->push_back(new uint32_t(tmp));
     hashString->creditIndex = 1;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(
@@ -288,7 +292,7 @@ correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
                                     int gapOfGlobalRootMemID) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   int afterID = iVertex->beforeID + gapOfGlobalRootMemID;
-
+  std::cout<< "beforeID=" << iVertex->beforeID << std::endl;
   switch (iVertex->type) {
   case convertedAtom:
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -312,6 +316,7 @@ template <typename S1, typename S2>
 void getNextDistanceConvertedVertices(S1 BFSStack,
                                       S2 initializeConvertedVerticesStack,
                                       ConvertedGraph *cAfterGraph) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   S1 nextBFSStack = new std::vector<ConvertedGraphVertex *>();
 
   while (!BFSStack->empty()) {
@@ -358,7 +363,7 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
 
   swapStack(nextBFSStack, BFSStack);
   freeStack(nextBFSStack);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return;
 }
 
@@ -516,6 +521,7 @@ void deleteTrieDescendants(TrieBody *body) {
 
 template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (body != NULL) {
     if (!body->isPushedIntoGoAheadStack) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -719,10 +725,12 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       auto tmpCell = std::begin(*inheritedVerticesList);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << targetNode->depth << std::endl;
       auto key = callHashValue(&slim::element::get<InheritedVertex>(*tmpCell),
                                targetNode->depth, cAfterGraph,
                                gapOfGlobalRootMemID, fixCreditIndexStack);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << key <<std::endl;
       auto it = children->find(key);
       TrieBody *nextNode;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -738,6 +746,7 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
         nextNode->depth = targetNode->depth + 1;
         printf("%s:%d\n", __FUNCTION__, __LINE__);
       } else {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         nextNode = it->second;
       }
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -847,7 +856,7 @@ void addInheritedVerticesToTrie(
     // convertedGraphVertexDump(targetCVertex);
     InheritedVertex *targetIVertex = wrapAfterConvertedVertexInInheritedVertex(
         targetCVertex, gapOfGlobalRootMemID);
-
+    std::cout<< *(targetIVertex) << std::endl;
     trie->body->inheritedVertices->push_front(*targetIVertex);
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
@@ -947,18 +956,20 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
                         ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
   if (maxIndex(tInfo->distribution) == OMEGA &&
       maxIndex(tInfo->increase) == stepOfPropagation - 1) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushInftyDepthTrieNodesIntoGoAheadStack(trie, goAheadStack,
                                             stepOfPropagation);
   }
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   goBackProcessOfCurrentConvertedVertices(BFSStack, goAheadStack, tInfo,
                                           stepOfPropagation);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   goAheadProcessOfCurrentTrieNodes(goAheadStack, fixCreditIndexStack, tInfo,
                                    cAfterGraph, gapOfGlobalRootMemID);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   getNextDistanceConvertedVertices(BFSStack, initializeConvertedVerticesStack,
                                    cAfterGraph);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return;
 }
 
@@ -1560,7 +1571,7 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
                        stepOfPropagation, cAfterGraph->cv,
                        gapOfGlobalRootMemID);
   }
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool verticesAreCompletelySorted =
       isDescreteTrie(&goAheadStack, tInfo, stepOfPropagation) ||
       isEmptyTrie(trie);
