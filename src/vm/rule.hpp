@@ -188,6 +188,7 @@ public:
     is_copied = true;
     atomic = rs.atomic;
     is_atomic_valid = rs.is_atomic_valid;
+    is_0step = rs.is_0step;
 
     /* ルール単位のオブジェクト複製 */
     for (auto r : rs.rules)
