@@ -6,24 +6,14 @@
 #include <tuple>
 #include <vector>
 
-HashString *makeHashString() {
-  HashString *ret = (HashString *)malloc(sizeof(HashString));
+#define HERE __FUNCTION__ << "(" << __LINE__ << "): "
+slim::element::conditional_ostream debug(std::cout);
 
-  ret->creditIndex = 0;
-  ret->body = new std::vector<uint32_t *>();
-  return ret;
-}
+Hash callHashValue(InheritedVertex *iVertex, int index,
+                   ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
+                   std::stack<InheritedVertex *> *fixCreditIndexStack);
 
-void freeHashString(HashString *hashString) {
-  for (auto v : *hashString->body)
-    free(v);
-  free(hashString->body);
-  free(hashString);
-
-  return;
-}
-
-Hash stringHashValue(char *string) {
+Hash stringHash(const char *string) {
   Hash ret = OFFSET_BASIS;
   int i;
 
@@ -33,28 +23,6 @@ Hash stringHashValue(char *string) {
   }
 
   return ret;
-}
-
-Hash doubleHashValue(double dbl) {
-  union {
-    double d;
-    Hash h;
-  } uni;
-
-  uni.d = dbl;
-
-  return uni.h;
-}
-
-Hash integerHashValue(int i) {
-  union {
-    int i;
-    Hash h;
-  } uni;
-
-  uni.i = i;
-
-  return uni.h;
 }
 
 Hash initialHashValue(ConvertedGraphVertex *cVertex) {
@@ -67,7 +35,7 @@ Hash initialHashValue(ConvertedGraphVertex *cVertex) {
     ret *= FNV_PRIME;
     ret ^= cVertex->type;
     ret *= FNV_PRIME;
-    ret ^= stringHashValue(cVertex->name);
+    ret ^= stringHash(cVertex->name);
     ret *= FNV_PRIME;
     ret ^= numStack(&cVertex->links);
     ret *= FNV_PRIME;
@@ -78,7 +46,7 @@ Hash initialHashValue(ConvertedGraphVertex *cVertex) {
     ret *= FNV_PRIME;
     ret ^= cVertex->type;
     ret *= FNV_PRIME;
-    ret ^= stringHashValue(cVertex->name);
+    ret ^= stringHash(cVertex->name);
     ret *= FNV_PRIME;
 
     return ret;
@@ -90,9 +58,8 @@ Hash initialHashValue(ConvertedGraphVertex *cVertex) {
   }
 }
 
-template <typename S>
 Hash linkHashValue(LMNtalLink *link, int index, ConvertedGraph *cGraph,
-                   int gapOfGlobalRootMemID, S *fixCreditIndexStack) {
+                   int gapOfGlobalRootMemID, std::stack<InheritedVertex *> *fixCreditIndexStack) {
   Hash ret;
 
   switch (link->attr) {
@@ -142,10 +109,9 @@ Hash linkHashValue(LMNtalLink *link, int index, ConvertedGraph *cGraph,
   }
 }
 
-template <typename S>
 Hash adjacentHashValue(ConvertedGraphVertex *cVertex, int index,
                        ConvertedGraph *cGraph, int gapOfGlobalRootMemID,
-                       S *fixCreditIndexStack) {
+                       std::stack<InheritedVertex *> *fixCreditIndexStack) {
   Hash ret;
   Hash sum, mul;
   Hash tmp;
@@ -182,33 +148,12 @@ Hash adjacentHashValue(ConvertedGraphVertex *cVertex, int index,
   }
 }
 
-template <typename S>
-void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(
-    S *fixCreditIndexStack, InheritedVertex *iVertex) {
-  if (!iVertex->isPushedIntoFixCreditIndex) {
-    pushStack(fixCreditIndexStack, iVertex);
-    iVertex->isPushedIntoFixCreditIndex = TRUE;
-  }
-
-  return;
-}
-
-template <typename S>
-InheritedVertex *popInheritedVertexFromFixCreditIndexStackWithoutOverlap(
-    S *fixCreditIndexStack) {
-  InheritedVertex *iVertex = popStack(fixCreditIndexStack);
-  iVertex->isPushedIntoFixCreditIndex = FALSE;
-
-  return iVertex;
-}
-
-template <typename S>
-void fixCreditIndex(S *fixCreditIndexStack, ConvertedGraph *cAfterGraph,
+void fixCreditIndex(std::stack<InheritedVertex *> *fixCreditIndexStack, ConvertedGraph *cAfterGraph,
                     int gapOfGlobalRootMemID) {
   while (!fixCreditIndexStack->empty()) {
-    InheritedVertex *iVertex =
-        popInheritedVertexFromFixCreditIndexStackWithoutOverlap(
-            fixCreditIndexStack);
+    InheritedVertex *iVertex = fixCreditIndexStack->top();
+    fixCreditIndexStack->pop();
+    iVertex->isPushedIntoFixCreditIndex = FALSE;
     TrieBody *ownerNode = iVertex->ownerNode;
     HashString *hashString = iVertex->hashString;
 
@@ -218,13 +163,11 @@ void fixCreditIndex(S *fixCreditIndexStack, ConvertedGraph *cAfterGraph,
   return;
 }
 
-template <typename S>
 Hash callHashValue(InheritedVertex *iVertex, int index,
                    ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
-                   S *fixCreditIndexStack) {
+                   std::stack<InheritedVertex *> *fixCreditIndexStack) {
   HashString *hashString = iVertex->hashString;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  std::cout << *iVertex << std::endl;
+  std::cout << HERE << *iVertex << std::endl;
   std::cout << index << std::endl;
   if (index < 0) {
     return 0;
@@ -235,19 +178,19 @@ Hash callHashValue(InheritedVertex *iVertex, int index,
     Hash tmp = initialHashValue(correspondingVertexInConvertedGraph(
         iVertex, cAfterGraph, gapOfGlobalRootMemID));
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    if(hashString->body->size() > 0) {
+    if (hashString->body->size() > 0) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       auto old = hashString->body->at(index);
       if (old != NULL) {
-	free(old);
+        free(old);
       }
     }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     hashString->body->push_back(new uint32_t(tmp));
     hashString->creditIndex = 1;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(
-        fixCreditIndexStack, iVertex);
+    fixCreditIndexStack->push(iVertex);
+    iVertex->isPushedIntoFixCreditIndex = true;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     return tmp;
   } else {
@@ -264,8 +207,8 @@ Hash callHashValue(InheritedVertex *iVertex, int index,
       free(old);
     }
     hashString->creditIndex = index + 1;
-    pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(
-        fixCreditIndexStack, iVertex);
+    fixCreditIndexStack->push(iVertex);
+    iVertex->isPushedIntoFixCreditIndex = true;
     return newMyHash;
   }
 }
@@ -399,7 +342,7 @@ int compareTrieLeaves(TrieBody *a, TrieBody *b) {
 }
 
 void freeInheritedVertex(InheritedVertex *iVertex) {
-  freeHashString(iVertex->hashString);
+  delete (iVertex->hashString);
   freeStack(iVertex->conventionalPropagationMemo);
   freeDisjointSetForest(iVertex->equivalenceClassOfIsomorphism);
   free(iVertex);
@@ -722,7 +665,7 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
                                targetNode->depth, cAfterGraph,
                                gapOfGlobalRootMemID, fixCreditIndexStack);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      std::cout << key <<std::endl;
+      std::cout << key << std::endl;
       auto it = children->find(key);
       TrieBody *nextNode;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -738,7 +681,7 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
         nextNode->depth = targetNode->depth + 1;
         printf("%s:%d\n", __FUNCTION__, __LINE__);
       } else {
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         nextNode = it->second;
       }
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -818,7 +761,7 @@ wrapAfterConvertedVertexInInheritedVertex(ConvertedGraphVertex *cVertex,
   strcpy(iVertex->name, cVertex->name);
   iVertex->canonicalLabel.first = 0;
   iVertex->canonicalLabel.second = 0;
-  iVertex->hashString = makeHashString();
+  iVertex->hashString = new HashString();
   iVertex->isPushedIntoFixCreditIndex = FALSE;
   iVertex->beforeID = cVertex->ID - gapOfGlobalRootMemID;
   cVertex->correspondingVertexInTrie = iVertex;
@@ -848,7 +791,7 @@ void addInheritedVerticesToTrie(
     // convertedGraphVertexDump(targetCVertex);
     InheritedVertex *targetIVertex = wrapAfterConvertedVertexInInheritedVertex(
         targetCVertex, gapOfGlobalRootMemID);
-    std::cout<< *(targetIVertex) << std::endl;
+    std::cout << *(targetIVertex) << std::endl;
     trie->body->inheritedVertices->push_front(*targetIVertex);
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
@@ -856,7 +799,7 @@ void addInheritedVerticesToTrie(
     delete targetIVertex;
     pushStack(initializeConvertedVerticesStack, targetCVertex);
   }
-  std::cout<< *(trie->body->inheritedVertices) <<std::endl;
+  std::cout << *(trie->body->inheritedVertices) << std::endl;
 
   return;
 }
@@ -1080,7 +1023,7 @@ bool putClassesWithPriority(vertex_list &list,
     int priority;
     InheritedVertex *vert;
     std::tie(priority, vert) = cellPQueue->top();
-    std::cout<<(*vert)<<std::endl;
+    std::cout << (*vert) << std::endl;
     cellPQueue->pop();
     if (priority < prev_priority) {
       list.insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
@@ -1108,10 +1051,11 @@ Bool classifyConventionalPropagationList(
   auto endSentinel = std::end(*pList);
   auto beginSentinel = endSentinel;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  std::cout<< *pList << std::endl;
+  std::cout << *pList << std::endl;
   do {
-    endSentinel = std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
-    if(endSentinel == pList->end()) {
+    endSentinel =
+        std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
+    if (endSentinel == pList->end()) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -1136,7 +1080,7 @@ Bool classifyConventionalPropagationListWithTypeInner(
   // std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
-    std::cout << (*tmpCell) <<std::endl;
+    std::cout << (*tmpCell) << std::endl;
     list.erase(tmpCell);
     int tmpPriority = slim::element::get<InheritedVertex>(*tmpCell).type;
     cellPQueue->emplace(tmpPriority,
@@ -1238,8 +1182,8 @@ Bool classifyConventionalPropagationListWithNameCharactersInner(
     auto innerBeginSentinel = beginSentinel;
 
     do {
-      innerEndSentinel =
-	std::find(std::next(innerBeginSentinel, 1), std::end(list), CLASS_SENTINEL);
+      innerEndSentinel = std::find(std::next(innerBeginSentinel, 1),
+                                   std::end(list), CLASS_SENTINEL);
 
       isRefined =
           classifyConventionalPropagationListWithNameCharactersInnerInner(

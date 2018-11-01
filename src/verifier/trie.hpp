@@ -14,7 +14,8 @@ struct TrieBody;
 
 constexpr auto CLASS_SENTINEL = slim::element::monostate();
 
-using vertex_list = std::list<slim::element::variant<slim::element::monostate, InheritedVertex>>;
+using vertex_list = std::list<
+    slim::element::variant<slim::element::monostate, InheritedVertex>>;
 using trie_body_map = std::map<uint32_t, TrieBody *>;
 
 struct TrieBody {
@@ -67,6 +68,12 @@ struct HashString {
   HashString() {
     creditIndex = 0;
     body = new std::vector<uint32_t *>();
+  }
+
+  ~HashString() {
+    for (auto v : *this->body)
+      free(v);
+    delete (this->body);
   }
 };
 
@@ -259,8 +266,6 @@ void inheritedVertexDump(InheritedVertex *iVertex);
 void terminationConditionInfoDump(TerminationConditionInfo *tInfo);
 void trieDump(Trie *trie);
 
-HashString *makeHashString();
-void freeHashString(HashString *hashString);
 template <typename S>
 void pushInheritedVertexIntoFixCreditIndexStackWithoutOverlap(
     S *fixCreditIndexStack, InheritedVertex *iVertex);
@@ -270,11 +275,6 @@ popInheritedVertexFromFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack);
 template <typename S>
 void fixCreditIndex(S *fixCreditIndexStack, ConvertedGraph *cAfterGraph,
                     int gapOfGlobalRootMemID);
-template <typename S>
-Hash callHashValue(InheritedVertex *iVertex, int index,
-                   ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
-                   S *fixCreditIndexStack);
-
 void terminationConditionInfoDumpExperimentFromTrie(Trie *trie);
 ConvertedGraphVertex *
 correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
