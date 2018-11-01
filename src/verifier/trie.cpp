@@ -289,19 +289,11 @@ ConvertedGraphVertex *
 correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
                                     ConvertedGraph *cAfterGraph,
                                     int gapOfGlobalRootMemID) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   int afterID = iVertex->beforeID + gapOfGlobalRootMemID;
-  std::cout<< "beforeID=" << iVertex->beforeID << std::endl;
   switch (iVertex->type) {
   case convertedAtom:
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    convertedGraphDump(cAfterGraph);
-    printf("afterID=%d\n", afterID);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    convertedGraphVertexDump(cAfterGraph->atoms[afterID]);
     return cAfterGraph->atoms[afterID];
   case convertedHyperLink:
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     return cAfterGraph->hyperlinks[afterID];
     break;
   default:
@@ -1078,6 +1070,7 @@ bool putClassesWithPriority(vertex_list &list,
                             vertex_list::iterator beginSentinel,
                             vertex_list::iterator endSentinel,
                             vertex_queue *cellPQueue) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   bool isRefined = false;
   int prev_priority;
   InheritedVertex *prev_vert;
@@ -1092,7 +1085,7 @@ bool putClassesWithPriority(vertex_list &list,
       list.insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
       isRefined = true;
     }
-    list.splice(std::next(beginSentinel, 1), *vert->ownerList, vert->ownerCell);
+    list.insert(std::next(beginSentinel, 1), *vert);
     std::tie(prev_priority, prev_vert) = std::tie(priority, vert);
   }
 
@@ -1138,8 +1131,8 @@ Bool classifyConventionalPropagationListWithTypeInner(
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   // std::cout<<(*beginSentinel)<<std::endl;
-  std::cout<<(*endSentinel)<<std::endl;
-  std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
+  // std::cout<<(*endSentinel)<<std::endl;
+  // std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
     std::cout << (*tmpCell) <<std::endl;
