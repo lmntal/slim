@@ -1,8 +1,9 @@
 /*
- * element.h
+ * conditional_ostream.hpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *                                          <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -32,37 +33,57 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef LMN_ELEMENT_H
-#define LMN_ELEMENT_H
+#ifndef SLIM_ELEMENT_CONDITIONAL_OSTREAM
+#define SLIM_ELEMENT_CONDITIONAL_OSTREAM
+
+#include <ostream>
+
+namespace slim {
+namespace element {
 
 /**
- * @defgroup Element
+ * @brief Outputs values to std::ostream conditionally.
+ *
+ *   Examples:
+ *   @code
+ *   slim::element::conditional_ostream debug_log(std::cout)
+ *   debug_log << "it is printed." << std::endl;
+ *   @endcode
+ *
+ *   @code
+ *   slim::element::conditional_ostream debug_log(std::cout, false)
+ *   debug_log << "it is not printed." << std::endl;
+ *   @endcode
+ *
+ * @note When the validity of a conditional ostream can be determined at compile
+ * time, the printing codes are usually omitted at runtime by compiler's
+ * optimization.
  */
+struct conditional_ostream {
+  bool is_valid;
+  std::ostream &os;
 
-#include "clock.h"
-#include "error.h"
-#include "file_util.h"
-#include "internal_hash.h"
-#include "instruction.hpp"
-#include "lmnstring.h"
-#include "lmntal_thread.h"
-#include "memory_pool.h"
-#include "port.h"
-#include "process_util.h"
-#include "queue.h"
-#include "st.h"
-#include "util.h"
-#include "vector.h"
-#include "scope.hpp"
-#include "re2c/buffer.hpp"
-#include "re2c/cfstream_buffer.hpp"
-#include "re2c/file_buffer.hpp"
-#include "exception.hpp"
-#include "variant.hpp"
-#include "conditional_ostream.hpp"
+  constexpr conditional_ostream(std::ostream &stream, bool is_valid = true)
+      : os(stream), is_valid(is_valid) {}
 
-#endif /* LMN_ELEMENT_H */
+  slim::element::conditional_ostream &
+  operator<<(std::ostream &(*pf)(std::ostream &)) {
+    if (is_valid)
+      pf(os);
+    return *this;
+  }
+};
+} // namespace element
+} // namespace slim
+
+template <typename T>
+slim::element::conditional_ostream &
+operator<<(slim::element::conditional_ostream &ds, const T &v) {
+  if (ds.is_valid)
+    ds.os << v;
+  return ds;
+}
+
+#endif /* SLIM_ELEMENT_CONDITIONAL_OSTREAM */
