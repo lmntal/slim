@@ -289,6 +289,7 @@ ConvertedGraphVertex *
 correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
                                     ConvertedGraph *cAfterGraph,
                                     int gapOfGlobalRootMemID) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   int afterID = iVertex->beforeID + gapOfGlobalRootMemID;
   switch (iVertex->type) {
   case convertedAtom:
@@ -1152,6 +1153,7 @@ Bool classifyConventionalPropagationListWithDegreeInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
@@ -1162,6 +1164,7 @@ Bool classifyConventionalPropagationListWithDegreeInner(
                       ->links);
     cellPQueue->emplace(tmpPriority,
                         &slim::element::get<InheritedVertex>(*tmpCell));
+    list.erase(tmpCell);
   }
 
   Bool isRefined =
@@ -1174,6 +1177,7 @@ Bool classifyConventionalPropagationListWithNameLengthInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
@@ -1181,6 +1185,7 @@ Bool classifyConventionalPropagationListWithNameLengthInner(
                                  &slim::element::get<InheritedVertex>(*tmpCell),
                                  cAfterGraph, gapOfGlobalRootMemID)
                                  ->name);
+    list.erase(tmpCell);
     cellPQueue->emplace(tmpPriority,
                         &slim::element::get<InheritedVertex>(*tmpCell));
   }
@@ -1195,6 +1200,7 @@ Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, int index, vertex_queue *cellPQueue) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
@@ -1202,6 +1208,7 @@ Bool classifyConventionalPropagationListWithNameCharactersInnerInner(
                            &slim::element::get<InheritedVertex>(*tmpCell),
                            cAfterGraph, gapOfGlobalRootMemID)
                            ->name)[index];
+    list.erase(tmpCell);
     cellPQueue->emplace(tmpPriority,
                         &slim::element::get<InheritedVertex>(*tmpCell));
   }
@@ -1216,6 +1223,7 @@ Bool classifyConventionalPropagationListWithNameCharactersInner(
     vertex_list &list, vertex_list::iterator beginSentinel,
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool isRefined = FALSE;
 
   int nameLength = strlen(
@@ -1231,7 +1239,7 @@ Bool classifyConventionalPropagationListWithNameCharactersInner(
 
     do {
       innerEndSentinel =
-          std::find(innerBeginSentinel, std::end(list), CLASS_SENTINEL);
+	std::find(std::next(innerBeginSentinel, 1), std::end(list), CLASS_SENTINEL);
 
       isRefined =
           classifyConventionalPropagationListWithNameCharactersInnerInner(
@@ -1265,16 +1273,18 @@ Bool classifyConventionalPropagationListWithDegree(vertex_list *pList,
 Bool classifyConventionalPropagationListWithName(vertex_list *pList,
                                                  ConvertedGraph *cAfterGraph,
                                                  int gapOfGlobalRootMemID) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool isRefined = FALSE;
   isRefined = classifyConventionalPropagationList(
                   pList, cAfterGraph, gapOfGlobalRootMemID,
                   classifyConventionalPropagationListWithNameLengthInner) ||
               isRefined;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   isRefined = classifyConventionalPropagationList(
                   pList, cAfterGraph, gapOfGlobalRootMemID,
                   classifyConventionalPropagationListWithNameCharactersInner) ||
               isRefined;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return isRefined;
 }
 
