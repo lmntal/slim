@@ -5,6 +5,7 @@
 #include <stack>
 #include <tuple>
 #include <vector>
+slim::element::conditional_ostream debug_log(std::cout);
 
 HashString *makeHashString() {
   HashString *ret = (HashString *)malloc(sizeof(HashString));
@@ -821,13 +822,19 @@ wrapAfterConvertedVertexInInheritedVertex(ConvertedGraphVertex *cVertex,
   iVertex->hashString = makeHashString();
   iVertex->isPushedIntoFixCreditIndex = FALSE;
   iVertex->beforeID = cVertex->ID - gapOfGlobalRootMemID;
+
+  debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
+  debug_log << cVertex << std::endl;
+  convertedGraphVertexDump(cVertex);
+
   cVertex->correspondingVertexInTrie = iVertex;
   iVertex->ownerNode = NULL;
   iVertex->ownerList = nullptr;
   iVertex->ownerCell = vertex_list::iterator();
   iVertex->conventionalPropagationMemo = new std::vector<int>();
   iVertex->equivalenceClassOfIsomorphism = makeDisjointSetForest();
-
+  debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
+  debug_log << iVertex << std::endl;
   return iVertex;
 }
 
@@ -845,10 +852,14 @@ void addInheritedVerticesToTrie(
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     ConvertedGraphVertex *targetCVertex =
         popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
+    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
+    debug_log << targetCVertex << std::endl;
     // convertedGraphVertexDump(targetCVertex);
     InheritedVertex *targetIVertex = wrapAfterConvertedVertexInInheritedVertex(
         targetCVertex, gapOfGlobalRootMemID);
+    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     std::cout<< *(targetIVertex) << std::endl;
+    debug_log << *(targetCVertex->correspondingVertexInTrie) << std::endl;
     trie->body->inheritedVertices->push_front(*targetIVertex);
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
@@ -1313,14 +1324,15 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
   if (pList->empty()) {
     return;
   }
-
+  debug_log  << __FUNCTION__ << ":" << __LINE__ << std::endl;
   int tmpLabel = 0;
 
   auto beginSentinel = std::end(*pList);
   auto endSentinel = beginSentinel;
-
+  debug_log << __FUNCTION__ << std::endl;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   do {
-    endSentinel = std::find(beginSentinel, std::end(*pList), CLASS_SENTINEL);
+    endSentinel = std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
 
     int tmpDegree = numStack(
         &correspondingVertexInConvertedGraph(
@@ -1332,20 +1344,23 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                                                *(std::next(beginSentinel, 1))),
                                            cAfterGraph, gapOfGlobalRootMemID)
                                            ->type;
-
+    std::cout<< *(std::next(beginSentinel, 1)) <<std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     int i;
     for (i = 0; i < tmpDegree; i++) {
       for (auto iteratorCell = std::next(beginSentinel, 1);
            iteratorCell != endSentinel;
            iteratorCell = std::next(iteratorCell, 1)) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         auto &tmpLink = correspondingVertexInConvertedGraph(
                             &slim::element::get<InheritedVertex>(*iteratorCell),
                             cAfterGraph, gapOfGlobalRootMemID)
                             ->links[i];
         ConvertedGraphVertex *adjacentVertex;
-
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         switch (tmpLink.attr) {
         case INTEGER_ATTR:
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
           writeStack(slim::element::get<InheritedVertex>(*(iteratorCell))
                          .conventionalPropagationMemo,
                      i, tmpLink.data.integer * 256 + INTEGER_ATTR);
@@ -1355,6 +1370,7 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
         // case STRING_ATTR:
         // break;
         case HYPER_LINK_ATTR:
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
           adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
               cAfterGraph, tmpLink.data.ID, convertedHyperLink);
           pushStack(adjacentVertex->correspondingVertexInTrie
@@ -1362,18 +1378,31 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                     tmpLabel * 256 + i);
           break;
         case GLOBAL_ROOT_MEM_ATTR:
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
           break;
         default:
           if (tmpLink.attr < 128) {
+	    printf("%s:%d\n", __FUNCTION__, __LINE__);
             adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
                 cAfterGraph, tmpLink.data.ID, convertedAtom);
+	    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
+	    debug_log << adjacentVertex << std::endl;
+
+	    convertedGraphVertexDump(adjacentVertex);
+	    std::cout<< adjacentVertex->correspondingVertexInTrie << std::endl;
+	    debug_log << "name" << ":" << adjacentVertex->correspondingVertexInTrie->name << std::endl;
+	    debug_log << "before_ID" << ":" << adjacentVertex->correspondingVertexInTrie->beforeID << std::endl;
             switch (tmpType) {
             case convertedAtom:
+	      printf("%s:%d\n", __FUNCTION__, __LINE__);
+	      std::cout<< *(adjacentVertex->correspondingVertexInTrie) << std::endl;
               writeStack(adjacentVertex->correspondingVertexInTrie
                              ->conventionalPropagationMemo,
                          tmpLink.attr, tmpLabel * 256 + i);
+	      printf("%s:%d\n", __FUNCTION__, __LINE__);
               break;
             case convertedHyperLink:
+	      printf("%s:%d\n", __FUNCTION__, __LINE__);
               writeStack(adjacentVertex->correspondingVertexInTrie
                              ->conventionalPropagationMemo,
                          tmpLink.attr, tmpLabel * 256 + HYPER_LINK_ATTR);
@@ -1387,13 +1416,15 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
             CHECKER("unexpected vertex type\n");
             exit(EXIT_FAILURE);
           }
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
           break;
         }
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
       }
     }
 
     tmpLabel++;
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     beginSentinel = endSentinel;
   } while (endSentinel != std::end(*pList));
 
@@ -1461,21 +1492,22 @@ Bool classifyConventionalPropagationListWithAdjacentLabels(
 Bool refineConventionalPropagationListByPropagation(vertex_list *pList,
                                                     ConvertedGraph *cAfterGraph,
                                                     int gapOfGlobalRootMemID) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool isRefined = FALSE;
 
   putLabelsToAdjacentVertices(pList, cAfterGraph, gapOfGlobalRootMemID);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   isRefined = classifyConventionalPropagationListWithAdjacentLabels(
                   pList, cAfterGraph, gapOfGlobalRootMemID) ||
               isRefined;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return isRefined;
 }
 
 Bool getStableRefinementOfConventionalPropagationList(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
   Bool isRefined = FALSE;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (refineConventionalPropagationListByPropagation(pList, cAfterGraph,
                                                         gapOfGlobalRootMemID)) {
     isRefined = TRUE;
@@ -1558,6 +1590,14 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   addInheritedVerticesToTrie(trie, diffInfo->addedVertices,
                              &initializeConvertedVerticesStack, &goAheadStack,
                              cAfterGraph, gapOfGlobalRootMemID);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+
+  for(auto i = cAfterGraph->cv->atoms.begin(); i!=cAfterGraph->cv->atoms.end(); ++i) {
+    convertedGraphVertexDump(i->second);
+    debug_log << i->second << std::endl;
+    // std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
+  }
+
   //実際のSLIMでは起きない操作
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   assureReferenceFromConvertedVerticesToInheritedVertices(
@@ -1608,6 +1648,7 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   *stepOfPropagationPtr = stepOfPropagation;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  trieDump(trie);
   return verticesAreCompletelySorted;
 }
 
@@ -1718,13 +1759,22 @@ void makeTerminationConditionMemo(Trie *trie, OmegaArray *distributionMemo,
   return;
 }
 
+void trieBodyDump(TrieBody *body) {
+  for(auto i = body->children->begin(); i!= body->children->end(); ++i) {
+    trieBodyDump(i->second);
+  }
+  trieDumpInner(body);
+}
+
 void trieDump(Trie *trie) {
   OmegaArray *distributionMemo = makeOmegaArray();
   OmegaArray *increaseMemo = makeOmegaArray();
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
   terminationConditionInfoDump(trie->info);
-  std::cout << *trie->body->children;
+  
+  trieBodyDump(trie->body);
+  std::cout << *trie->body->children << std::endl;
 
   makeTerminationConditionMemo(trie, distributionMemo, increaseMemo);
 
