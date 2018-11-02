@@ -4,6 +4,7 @@
 #include <iostream>
 
 template <typename List>
+
 void initializeDisjointSetForestsOfPropagationList(List *pList) {
   for (auto iteratorCell = std::begin(*pList); iteratorCell != std::end(*pList);
        iteratorCell = std::next(iteratorCell, 1)) {
@@ -201,6 +202,7 @@ Bool listMcKayInner(
   Bool isUsefulBranch = TRUE;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   auto stabilizer = new vertex_list(*propagationListOfInheritedVertices);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   getStableRefinementOfConventionalPropagationList(stabilizer, cAfterGraph,
                                                    gapOfGlobalRootMemID);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -358,9 +360,13 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
     return new vertex_list();
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+
+    for(auto i = cAfterGraph->cv->atoms.begin(); i!=cAfterGraph->cv->atoms.end(); ++i) {
+      std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
+    }
     vertex_list *propagationListOfInheritedVertices =
         makeConventionalPropagationList(trie, stepOfPropagation);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     std::cout<< *propagationListOfInheritedVertices << std::endl;
     /*
        CHECKER("###### before list propagate ######\n");
