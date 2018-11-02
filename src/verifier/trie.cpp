@@ -9,207 +9,180 @@
 #define HERE __FUNCTION__ << "(" << __LINE__ << "): "
 slim::element::conditional_ostream debug(std::cout);
 
-Hash callHashValue(InheritedVertex *iVertex, int index,
-                   ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
-                   std::stack<InheritedVertex *> *fixCreditIndexStack);
+struct hash_generator {
+  ConvertedGraph *cGraph;
+  int gapOfGlobalRootMemID;
+  std::stack<InheritedVertex *> *fixCreditIndexStack;
 
-Hash stringHash(const char *string) {
-  Hash ret = OFFSET_BASIS;
-  int i;
+  hash_generator(ConvertedGraph *cGraph, int gapOfGlobalRootMemID,
+                 std::stack<InheritedVertex *> *fixCreditIndexStack)
+      : cGraph(cGraph), gapOfGlobalRootMemID(gapOfGlobalRootMemID),
+        fixCreditIndexStack(fixCreditIndexStack) {}
 
-  for (i = 0; string[i] != '\0'; i++) {
-    ret ^= (Hash)string[i];
-    ret *= FNV_PRIME;
-  }
+  Hash hash(InheritedVertex *iVertex, int index) {
+    HashString *hashString = iVertex->hashString;
+    debug << HERE << *iVertex << std::endl;
+    debug << index << std::endl;
 
-  return ret;
-}
-
-Hash initialHashValue(ConvertedGraphVertex *cVertex) {
-  Hash ret = OFFSET_BASIS;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  convertedGraphVertexDump(cVertex);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  switch (cVertex->type) {
-  case convertedAtom:
-    ret *= FNV_PRIME;
-    ret ^= cVertex->type;
-    ret *= FNV_PRIME;
-    ret ^= stringHash(cVertex->name);
-    ret *= FNV_PRIME;
-    ret ^= numStack(&cVertex->links);
-    ret *= FNV_PRIME;
-
-    return ret;
-    break;
-  case convertedHyperLink:
-    ret *= FNV_PRIME;
-    ret ^= cVertex->type;
-    ret *= FNV_PRIME;
-    ret ^= stringHash(cVertex->name);
-    ret *= FNV_PRIME;
-
-    return ret;
-    break;
-  default:
-    CHECKER("unexpected type\n");
-    exit(EXIT_FAILURE);
-    break;
-  }
-}
-
-Hash linkHashValue(LMNtalLink *link, int index, ConvertedGraph *cGraph,
-                   int gapOfGlobalRootMemID, std::stack<InheritedVertex *> *fixCreditIndexStack) {
-  Hash ret;
-
-  switch (link->attr) {
-  case INTEGER_ATTR:
-    ret = OFFSET_BASIS;
-    ret *= FNV_PRIME;
-    ret ^= link->attr;
-    ret *= FNV_PRIME;
-    ret ^= link->data.ID;
-    return ret;
-    break;
-  case HYPER_LINK_ATTR:
-    ret = OFFSET_BASIS;
-    ret *= FNV_PRIME;
-    ret ^= link->attr;
-    ret *= FNV_PRIME;
-    ret ^= callHashValue(
-        cGraph->hyperlinks[link->data.ID]->correspondingVertexInTrie, index,
-        cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
-    return ret;
-    break;
-  case GLOBAL_ROOT_MEM_ATTR:
-    ret = OFFSET_BASIS;
-    ret *= FNV_PRIME;
-    ret ^= link->attr;
-    ret *= FNV_PRIME;
-    ret ^= link->data.ID;
-    return ret;
-    break;
-  case DOUBLE_ATTR: // LMNtalLink非対応
-  case STRING_ATTR: // LMNtalLink非対応
-  default:
-    if (link->attr < 128) {
-      ret = OFFSET_BASIS;
-      ret *= FNV_PRIME;
-      ret ^= link->attr;
-      ret *= FNV_PRIME;
-      ret ^= callHashValue(
-          cGraph->atoms[link->data.ID]->correspondingVertexInTrie, index,
-          cGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
-      return ret;
+    if (index < 0) {
+      return 0;
+    } else if (index < hashString->creditIndex) {
+      return *(*hashString->body)[index];
+    } else if (index == 0) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      Hash tmp = initialHashValue(correspondingVertexInConvertedGraph(
+          iVertex, cGraph, gapOfGlobalRootMemID));
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      if (hashString->body->size() > 0) {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        auto old = hashString->body->at(index);
+        if (old != NULL) {
+          free(old);
+        }
+      }
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      hashString->body->push_back(new uint32_t(tmp));
+      hashString->creditIndex = 1;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      fixCreditIndexStack->push(iVertex);
+      iVertex->isPushedIntoFixCreditIndex = true;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      return tmp;
     } else {
+      Hash prevMyHash = hash(iVertex, index - 1);
+      Hash adjacentHash = hash(correspondingVertexInConvertedGraph(
+                                   iVertex, cGraph, gapOfGlobalRootMemID),
+                               index);
+      Hash newMyHash = (FNV_PRIME * prevMyHash) ^ adjacentHash;
+      auto old = hashString->body->at(index);
+      (*hashString->body)[index] = new uint32_t(newMyHash);
+      if (old != NULL) {
+        free(old);
+      }
+      hashString->creditIndex = index + 1;
+      fixCreditIndexStack->push(iVertex);
+      iVertex->isPushedIntoFixCreditIndex = true;
+      return newMyHash;
+    }
+  }
+
+  Hash hash(ConvertedGraphVertex *cVertex, int index) {
+    Hash ret;
+    Hash sum, mul;
+    Hash tmp;
+    int i;
+
+    switch (cVertex->type) {
+    case convertedAtom:
+      ret = OFFSET_BASIS;
+      for (i = 0; i < numStack(&cVertex->links); i++) {
+        ret *= FNV_PRIME;
+        ret ^= hash(&cVertex->links[i], index - 1);
+      }
+
+      return ret;
+      break;
+    case convertedHyperLink:
+      sum = ADD_INIT;
+      mul = MUL_INIT;
+      for (i = 0; i < numStack(&cVertex->links); i++) {
+        tmp = hash(&cVertex->links[i], index - 1);
+        sum += tmp;
+        mul *= (tmp * 2 + 1);
+      }
+      ret = sum ^ mul;
+
+      return ret;
+      break;
+    default:
       CHECKER("unexpected type\n");
       exit(EXIT_FAILURE);
+      break;
     }
-    break;
   }
-}
 
-Hash adjacentHashValue(ConvertedGraphVertex *cVertex, int index,
-                       ConvertedGraph *cGraph, int gapOfGlobalRootMemID,
-                       std::stack<InheritedVertex *> *fixCreditIndexStack) {
-  Hash ret;
-  Hash sum, mul;
-  Hash tmp;
-  int i;
+  Hash hash(LMNtalLink *link, int index) {
+    Hash ret;
 
-  switch (cVertex->type) {
-  case convertedAtom:
     ret = OFFSET_BASIS;
-    for (i = 0; i < numStack(&cVertex->links); i++) {
-      ret *= FNV_PRIME;
-      ret ^= linkHashValue(&cVertex->links[i], index - 1, cGraph,
-                           gapOfGlobalRootMemID, fixCreditIndexStack);
+    ret *= FNV_PRIME;
+    ret ^= link->attr;
+    ret *= FNV_PRIME;
+    switch (link->attr) {
+    case INTEGER_ATTR:
+      ret ^= link->data.ID;
+      return ret;
+      break;
+    case HYPER_LINK_ATTR:
+      ret ^= hash(cGraph->hyperlinks[link->data.ID]->correspondingVertexInTrie,
+                  index);
+      return ret;
+      break;
+    case GLOBAL_ROOT_MEM_ATTR:
+      ret ^= link->data.ID;
+      return ret;
+      break;
+    case DOUBLE_ATTR: // LMNtalLink非対応
+    case STRING_ATTR: // LMNtalLink非対応
+    default:
+      if (link->attr < 128) {
+        ret ^= hash(cGraph->atoms[link->data.ID]->correspondingVertexInTrie,
+                    index);
+        return ret;
+      } else {
+        CHECKER("unexpected type\n");
+        exit(EXIT_FAILURE);
+      }
+      break;
     }
-
-    return ret;
-    break;
-  case convertedHyperLink:
-    sum = ADD_INIT;
-    mul = MUL_INIT;
-    for (i = 0; i < numStack(&cVertex->links); i++) {
-      tmp = linkHashValue(&cVertex->links[i], index - 1, cGraph,
-                          gapOfGlobalRootMemID, fixCreditIndexStack);
-      sum += tmp;
-      mul *= (tmp * 2 + 1);
-    }
-    ret = sum ^ mul;
-
-    return ret;
-    break;
-  default:
-    CHECKER("unexpected type\n");
-    exit(EXIT_FAILURE);
-    break;
   }
-}
 
-void fixCreditIndex(std::stack<InheritedVertex *> *fixCreditIndexStack, ConvertedGraph *cAfterGraph,
-                    int gapOfGlobalRootMemID) {
+  Hash initialHashValue(ConvertedGraphVertex *cVertex) {
+    Hash ret = OFFSET_BASIS;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    convertedGraphVertexDump(cVertex);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    ret *= FNV_PRIME;
+    ret ^= cVertex->type;
+    ret *= FNV_PRIME;
+    ret ^= stringHash(cVertex->name);
+    ret *= FNV_PRIME;
+
+    switch (cVertex->type) {
+    case convertedAtom:
+      ret ^= cVertex->links.size();
+      ret *= FNV_PRIME;
+      return ret;
+      break;
+    case convertedHyperLink:
+      return ret;
+      break;
+    default:
+      CHECKER("unexpected type\n");
+      exit(EXIT_FAILURE);
+      break;
+    }
+  }
+
+  Hash stringHash(const char *string) {
+    Hash ret = OFFSET_BASIS;
+    int i;
+
+    for (i = 0; string[i] != '\0'; i++) {
+      ret ^= (Hash)string[i];
+      ret *= FNV_PRIME;
+    }
+
+    return ret;
+  }
+};
+
+void fixCreditIndex(std::stack<InheritedVertex *> *fixCreditIndexStack) {
   while (!fixCreditIndexStack->empty()) {
     InheritedVertex *iVertex = fixCreditIndexStack->top();
     fixCreditIndexStack->pop();
     iVertex->isPushedIntoFixCreditIndex = FALSE;
-    TrieBody *ownerNode = iVertex->ownerNode;
-    HashString *hashString = iVertex->hashString;
-
-    hashString->creditIndex = ownerNode->depth;
-  }
-
-  return;
-}
-
-Hash callHashValue(InheritedVertex *iVertex, int index,
-                   ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
-                   std::stack<InheritedVertex *> *fixCreditIndexStack) {
-  HashString *hashString = iVertex->hashString;
-  std::cout << HERE << *iVertex << std::endl;
-  std::cout << index << std::endl;
-  if (index < 0) {
-    return 0;
-  } else if (index < hashString->creditIndex) {
-    return *(*hashString->body)[index];
-  } else if (index == 0) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    Hash tmp = initialHashValue(correspondingVertexInConvertedGraph(
-        iVertex, cAfterGraph, gapOfGlobalRootMemID));
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    if (hashString->body->size() > 0) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-      auto old = hashString->body->at(index);
-      if (old != NULL) {
-        free(old);
-      }
-    }
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    hashString->body->push_back(new uint32_t(tmp));
-    hashString->creditIndex = 1;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    fixCreditIndexStack->push(iVertex);
-    iVertex->isPushedIntoFixCreditIndex = true;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    return tmp;
-  } else {
-    Hash prevMyHash = callHashValue(iVertex, index - 1, cAfterGraph,
-                                    gapOfGlobalRootMemID, fixCreditIndexStack);
-    Hash adjacentHash = adjacentHashValue(
-        correspondingVertexInConvertedGraph(iVertex, cAfterGraph,
-                                            gapOfGlobalRootMemID),
-        index, cAfterGraph, gapOfGlobalRootMemID, fixCreditIndexStack);
-    Hash newMyHash = (FNV_PRIME * prevMyHash) ^ adjacentHash;
-    auto old = hashString->body->at(index);
-    (*hashString->body)[index] = new uint32_t(newMyHash);
-    if (old != NULL) {
-      free(old);
-    }
-    hashString->creditIndex = index + 1;
-    fixCreditIndexStack->push(iVertex);
-    iVertex->isPushedIntoFixCreditIndex = true;
-    return newMyHash;
+    iVertex->hashString->creditIndex = iVertex->ownerNode->depth;
   }
 }
 
@@ -625,10 +598,10 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
   }
 }
 
-template <typename S1, typename S2>
-void goBackProcessOfCurrentConvertedVertices(S1 *BFSStack, S2 *goAheadStack,
-                                             TerminationConditionInfo *tInfo,
-                                             int targetDepth) {
+template <typename S1>
+void goBackProcessOfCurrentConvertedVertices(
+    S1 *BFSStack, std::stack<TrieBody *> *goAheadStack,
+    TerminationConditionInfo *tInfo, int targetDepth) {
   int i;
 
   for (i = 0; i < numStack(BFSStack); i++) {
@@ -641,10 +614,8 @@ void goBackProcessOfCurrentConvertedVertices(S1 *BFSStack, S2 *goAheadStack,
   return;
 }
 
-template <typename S1, typename S2>
-void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
-                    S2 *fixCreditIndexStack, TerminationConditionInfo *tInfo,
-                    ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
+void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
+                    TerminationConditionInfo *tInfo, hash_generator gen) {
   auto inheritedVerticesList = targetNode->inheritedVertices;
   auto children = targetNode->children;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -661,9 +632,8 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       auto tmpCell = std::begin(*inheritedVerticesList);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << targetNode->depth << std::endl;
-      auto key = callHashValue(&slim::element::get<InheritedVertex>(*tmpCell),
-                               targetNode->depth, cAfterGraph,
-                               gapOfGlobalRootMemID, fixCreditIndexStack);
+      auto key = gen.hash(&slim::element::get<InheritedVertex>(*tmpCell),
+                           targetNode->depth);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << key << std::endl;
       auto it = children->find(key);
@@ -687,12 +657,11 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       if (!nextNode->isPushedIntoGoAheadStack &&
           !nextNode->inheritedVertices->empty()) {
-        if (isSingletonList(nextNode->inheritedVertices)) {
+        auto size = nextNode->inheritedVertices->size();
+        if (size == 1) {
           decrementOmegaArray(tInfo->distribution, nextNode->depth);
         } else {
-          for (auto iterator = std::begin(*nextNode->inheritedVertices);
-               iterator != std::end(*nextNode->inheritedVertices);
-               iterator = std::next(iterator, 1)) {
+          for (auto i = 0; i < size; i++) {
             decrementOmegaArray(tInfo->distribution, OMEGA);
           }
         }
@@ -708,27 +677,21 @@ void goAheadProcess(TrieBody *targetNode, S1 *goAheadStack,
   }
 }
 
-template <typename S1, typename S2>
-void goAheadProcessOfCurrentTrieNodes(S1 *goAheadStack, S2 *fixCreditIndexStack,
+void goAheadProcessOfCurrentTrieNodes(std::stack<TrieBody *> *goAheadStack,
                                       TerminationConditionInfo *tInfo,
-                                      ConvertedGraph *cAfterGraph,
-                                      int gapOfGlobalRootMemID) {
-  S1 *nextGoAheadStack = new std::stack<TrieBody *>();
+                                      hash_generator gen) {
+  auto nextGoAheadStack = std::stack<TrieBody *>();
 
   while (!goAheadStack->empty()) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *targetNode =
         popTrieBodyFromGoAheadStackWithoutOverlap(goAheadStack);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    goAheadProcess(targetNode, nextGoAheadStack, fixCreditIndexStack, tInfo,
-                   cAfterGraph, gapOfGlobalRootMemID);
+    goAheadProcess(targetNode, &nextGoAheadStack, tInfo, gen);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
-  swapStack(nextGoAheadStack, goAheadStack);
-  freeStack(nextGoAheadStack);
-
-  return;
+  swapStack(&nextGoAheadStack, goAheadStack);
 }
 
 template <typename S1, typename S2>
@@ -883,12 +846,11 @@ void pushInftyDepthTrieNodesIntoGoAheadStack(
   return;
 }
 
-template <typename S1, typename S2, typename S3, typename S4>
+template <typename S1, typename S2, typename S3>
 void triePropagateInner(Trie *trie, S1 *BFSStack,
                         S2 *initializeConvertedVerticesStack, S3 *goAheadStack,
-                        S4 *fixCreditIndexStack,
                         TerminationConditionInfo *tInfo, int stepOfPropagation,
-                        ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
+                        hash_generator data) {
   if (maxIndex(tInfo->distribution) == OMEGA &&
       maxIndex(tInfo->increase) == stepOfPropagation - 1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -899,11 +861,10 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
   goBackProcessOfCurrentConvertedVertices(BFSStack, goAheadStack, tInfo,
                                           stepOfPropagation);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  goAheadProcessOfCurrentTrieNodes(goAheadStack, fixCreditIndexStack, tInfo,
-                                   cAfterGraph, gapOfGlobalRootMemID);
+  goAheadProcessOfCurrentTrieNodes(goAheadStack, tInfo, data);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   getNextDistanceConvertedVertices(BFSStack, initializeConvertedVerticesStack,
-                                   cAfterGraph);
+                                   data.cGraph);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   return;
 }
@@ -1502,6 +1463,8 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   addInheritedVerticesToTrie(trie, diffInfo->addedVertices,
                              &initializeConvertedVerticesStack, &goAheadStack,
                              cAfterGraph, gapOfGlobalRootMemID);
+  auto hash_gen = hash_generator(cAfterGraph->cv, gapOfGlobalRootMemID,
+                                 &fixCreditIndexStack);
   //実際のSLIMでは起きない操作
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   assureReferenceFromConvertedVerticesToInheritedVertices(
@@ -1511,20 +1474,18 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
       diffInfo->relinkedVertices, &initializeConvertedVerticesStack, &BFSStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   int stepOfPropagation = -1;
-  goAheadProcessOfCurrentTrieNodes(&goAheadStack, &fixCreditIndexStack, tInfo,
-                                   cAfterGraph->cv, gapOfGlobalRootMemID);
+  goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   stepOfPropagation = 0;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  goAheadProcessOfCurrentTrieNodes(&goAheadStack, &fixCreditIndexStack, tInfo,
-                                   cAfterGraph->cv, gapOfGlobalRootMemID);
+  goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (triePropagationIsContinued(&goAheadStack, tInfo, stepOfPropagation)) {
     stepOfPropagation++;
     triePropagateInner(trie, &BFSStack, &initializeConvertedVerticesStack,
-                       &goAheadStack, &fixCreditIndexStack, tInfo,
-                       stepOfPropagation, cAfterGraph->cv,
-                       gapOfGlobalRootMemID);
+                       &goAheadStack, tInfo, stepOfPropagation,
+                       hash_generator(cAfterGraph->cv, gapOfGlobalRootMemID,
+                                      &fixCreditIndexStack));
   }
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool verticesAreCompletelySorted =
@@ -1544,7 +1505,7 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   initializeConvertedVertices(&BFSStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  fixCreditIndex(&fixCreditIndexStack, cAfterGraph->cv, gapOfGlobalRootMemID);
+  fixCreditIndex(&fixCreditIndexStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   //実際のSLIMでは起きない操作
   initializeReferencesFromConvertedVerticesToInheritedVertices(
