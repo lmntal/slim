@@ -12,6 +12,7 @@
 struct ConvertedGraph;
 struct InheritedVertex;
 struct TrieBody;
+struct TerminationConditionInfo;
 
 typedef struct _CanonicalLabel {
   Hash first;
@@ -57,6 +58,31 @@ struct TrieBody {
     isInfinitedDepth = false;
     isPushedIntoGoAheadStack = false;
   }
+
+  ~TrieBody() {
+    delete (this->inheritedVertices);
+    for (auto &v : *this->children)
+      delete v.second;
+    delete this->children;
+  }
+
+  void clearDescendants() {
+    for (auto &v : *this->children)
+      delete (v.second);
+    this->children->clear();
+  }
+
+  void makeTrieMinimumInner(TerminationConditionInfo *tInfo,
+                            int stepOfPropagation);
+
+  void collectDescendantConvertedVertices(TrieBody *descendantBody);
+
+  void makeTerminationConditionMemoInner(OmegaArray *distributionMemo,
+                                         OmegaArray *increaseMemo);
+
+  void pushInftyDepthTrieNodesIntoGoAheadStackInner(
+      std::stack<TrieBody *> *goAheadStack, TerminationConditionInfo *tInfo,
+      int targetDepth);
 };
 
 struct TerminationConditionInfo {
