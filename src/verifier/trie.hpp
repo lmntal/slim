@@ -140,6 +140,12 @@ struct InheritedVertex {
     }
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
   }
+
+  ~InheritedVertex() {
+    delete (hashString);
+    freeStack(conventionalPropagationMemo);
+    freeDisjointSetForest(equivalenceClassOfIsomorphism);
+  }
 };
 
 struct Trie {
