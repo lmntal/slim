@@ -731,7 +731,6 @@ wrapAfterConvertedVertexInInheritedVertex(ConvertedGraphVertex *cVertex,
   debug_log << cVertex << std::endl;
   convertedGraphVertexDump(cVertex);
 
-  cVertex->correspondingVertexInTrie = iVertex;
   iVertex->ownerNode = NULL;
   iVertex->ownerList = nullptr;
   iVertex->ownerCell = vertex_list::iterator();
@@ -759,13 +758,14 @@ void addInheritedVerticesToTrie(
     debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     debug_log << targetCVertex << std::endl;
     // convertedGraphVertexDump(targetCVertex);
-    InheritedVertex *targetIVertex = wrapAfterConvertedVertexInInheritedVertex(
-        targetCVertex, gapOfGlobalRootMemID);
+    trie->body->inheritedVertices->push_front(*wrapAfterConvertedVertexInInheritedVertex(
+        targetCVertex, gapOfGlobalRootMemID));
+    InheritedVertex *targetIVertex = &slim::element::get<InheritedVertex>(trie->body->inheritedVertices->front());
     std::cout << *(targetIVertex) << std::endl;
     debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     std::cout<< *(targetIVertex) << std::endl;
     debug_log << *(targetCVertex->correspondingVertexInTrie) << std::endl;
-    trie->body->inheritedVertices->push_front(*targetIVertex);
+    targetCVertex->correspondingVertexInTrie = targetIVertex;
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
     targetCVertex->isVisitedInBFS = TRUE;
