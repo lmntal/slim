@@ -602,18 +602,11 @@ wrapAfterConvertedVertexInInheritedVertex(ConvertedGraphVertex *cVertex,
   iVertex->hashString = new HashString();
   iVertex->isPushedIntoFixCreditIndex = FALSE;
   iVertex->beforeID = cVertex->ID - gapOfGlobalRootMemID;
-
-  debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-  debug_log << cVertex << std::endl;
-  convertedGraphVertexDump(cVertex);
-
   iVertex->ownerNode = NULL;
   iVertex->ownerList = nullptr;
   iVertex->ownerCell = vertex_list::iterator();
   iVertex->conventionalPropagationMemo = new std::vector<int>();
   iVertex->equivalenceClassOfIsomorphism = makeDisjointSetForest();
-  debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-  debug_log << iVertex << std::endl;
   return iVertex;
 }
 
@@ -623,31 +616,25 @@ void addInheritedVerticesToTrie(
     std::stack<TrieBody *> *goAheadStack, Graphinfo *cAfterGraph,
     int gapOfGlobalRootMemID) {
   if (!addedVertices->empty()) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, trie->body);
   }
 
   while (!addedVertices->empty()) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     ConvertedGraphVertex *targetCVertex =
         popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
-    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-    debug_log << targetCVertex << std::endl;
-    // convertedGraphVertexDump(targetCVertex);
-    trie->body->inheritedVertices->push_front(*wrapAfterConvertedVertexInInheritedVertex(
-        targetCVertex, gapOfGlobalRootMemID));
+    InheritedVertex * tmpVertex = wrapAfterConvertedVertexInInheritedVertex(targetCVertex, gapOfGlobalRootMemID);
+    trie->body->inheritedVertices->push_front(*tmpVertex);
     InheritedVertex *targetIVertex = &slim::element::get<InheritedVertex>(trie->body->inheritedVertices->front());
-    std::cout << *(targetIVertex) << std::endl;
-    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-    std::cout << *(targetIVertex) << std::endl;
-    debug_log << *(targetCVertex->correspondingVertexInTrie) << std::endl;
     targetCVertex->correspondingVertexInTrie = targetIVertex;
+
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
     targetCVertex->isVisitedInBFS = TRUE;
-    delete targetIVertex;
+    delete tmpVertex;
     pushStack(initializeConvertedVerticesStack, targetCVertex);
+
   }
+  std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
   std::cout << *(trie->body->inheritedVertices) << std::endl;
 
   return;
