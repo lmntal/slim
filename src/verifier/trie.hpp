@@ -3,6 +3,7 @@
 
 #include "collection.hpp"
 #include "diff_info.hpp"
+#include "element/element.h"
 #include "hash.hpp"
 #include "omegaArray.hpp"
 // #include"convertedgraph.hpp"
@@ -11,6 +12,28 @@
 struct ConvertedGraph;
 struct InheritedVertex;
 struct TrieBody;
+struct TerminationConditionInfo;
+
+typedef struct _CanonicalLabel {
+  Hash first;
+  int second;
+} CanonicalLabel;
+
+struct HashString {
+  int creditIndex;
+  std::vector<uint32_t *> *body;
+
+  HashString() {
+    creditIndex = 0;
+    body = new std::vector<uint32_t *>();
+  }
+
+  ~HashString() {
+    for (auto v : *this->body)
+      free(v);
+    delete (this->body);
+  }
+};
 
 constexpr auto CLASS_SENTINEL = slim::element::monostate();
 
@@ -35,6 +58,31 @@ struct TrieBody {
     isInfinitedDepth = false;
     isPushedIntoGoAheadStack = false;
   }
+
+  ~TrieBody() {
+    delete (this->inheritedVertices);
+    for (auto &v : *this->children)
+      delete v.second;
+    delete this->children;
+  }
+
+  void clearDescendants() {
+    for (auto &v : *this->children)
+      delete (v.second);
+    this->children->clear();
+  }
+
+  void makeTrieMinimumInner(TerminationConditionInfo *tInfo,
+                            int stepOfPropagation);
+
+  void collectDescendantConvertedVertices(TrieBody *descendantBody);
+
+  void makeTerminationConditionMemoInner(OmegaArray *distributionMemo,
+                                         OmegaArray *increaseMemo);
+
+  void pushInftyDepthTrieNodesIntoGoAheadStackInner(
+      std::stack<TrieBody *> *goAheadStack, TerminationConditionInfo *tInfo,
+      int targetDepth);
 };
 
 struct TerminationConditionInfo {
@@ -44,37 +92,6 @@ struct TerminationConditionInfo {
     distribution = new OmegaArray();
     increase = new OmegaArray();
   };
-};
-
-struct Trie {
-  TrieBody *body;
-  TerminationConditionInfo *info;
-  Trie() {
-    body = new TrieBody();
-    info = new TerminationConditionInfo();
-  };
-  // HashTable *trieLeavesTable;
-};
-
-typedef struct _CanonicalLabel {
-  Hash first;
-  int second;
-} CanonicalLabel;
-
-struct HashString {
-  int creditIndex;
-  std::vector<uint32_t *> *body;
-
-  HashString() {
-    creditIndex = 0;
-    body = new std::vector<uint32_t *>();
-  }
-
-  ~HashString() {
-    for (auto v : *this->body)
-      free(v);
-    delete (this->body);
-  }
 };
 
 struct InheritedVertex {
@@ -123,6 +140,48 @@ struct InheritedVertex {
     }
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
   }
+};
+
+struct Trie {
+  TrieBody *body;
+  TerminationConditionInfo *info;
+  Trie() {
+    body = new TrieBody();
+    info = new TerminationConditionInfo();
+  };
+  // HashTable *trieLeavesTable;
+
+  void makeConventionalPropagationListInner(TrieBody *body, vertex_list &list,
+                                            int stepOfPropagation) {
+    if (body->children->empty()) {
+      if (!list.empty()) {
+        list.push_front(CLASS_SENTINEL);
+      }
+
+      for (auto &v : *body->inheritedVertices) {
+        list.push_front(v);
+      }
+    } else {
+      for (auto &v : *body->children)
+        makeConventionalPropagationListInner(v.second, list, stepOfPropagation);
+    }
+    return;
+  }
+
+  vertex_list conventionalPropagationList(int stepOfPropagation) {
+    auto ret = vertex_list();
+    makeConventionalPropagationListInner(body, ret, stepOfPropagation);
+    return ret;
+  }
+
+  bool propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
+                 Graphinfo *cBeforeGraph, int gapOfGlobalRootMemID,
+                 int *stepOfPropagationPtr);
+
+  Trie *gen_tmp_trie_from_originaltrie_and_gi(Graphinfo *org_gi,
+                                              Graphinfo *tmp_gi);
+
+  void dump();
 };
 
 inline bool operator==(const InheritedVertex &iVertexA,
@@ -248,12 +307,6 @@ inline std::ostream &operator<<(std::ostream &os, const std::list<T> &list) {
 template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);
-Trie *makeTrie();
-void freeTrie(Trie *trie);
-Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
-                   Graphinfo *cBeforeGraph, int gapOfGlobalRootMemID,
-                   int *stepOfPropagationPtr);
-vertex_list *makeConventionalPropagationList(Trie *trie, int stepOfPropagation);
 vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel);
 void putLabelsToAdjacentVertices(vertex_list *pList,
                                  ConvertedGraph *cAfterGraph,
@@ -275,11 +328,8 @@ popInheritedVertexFromFixCreditIndexStackWithoutOverlap(S *fixCreditIndexStack);
 template <typename S>
 void fixCreditIndex(S *fixCreditIndexStack, ConvertedGraph *cAfterGraph,
                     int gapOfGlobalRootMemID);
-void terminationConditionInfoDumpExperimentFromTrie(Trie *trie);
 ConvertedGraphVertex *
 correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
                                     ConvertedGraph *cAfterGraph,
                                     int gapOfGlobalRootMemID);
-Trie *gen_tmp_trie_from_originaltrie_and_gi(Trie *org_trie, Graphinfo *org_gi,
-                                            Graphinfo *tmp_gi);
 #endif

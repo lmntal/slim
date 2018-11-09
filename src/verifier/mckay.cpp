@@ -135,10 +135,11 @@ Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
 
   auto &key = *preserveDPList;
   auto seniorDPList =
-      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(
-          key);
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(key);
 
-  if (seniorDPList == std::end(*discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
+  if (seniorDPList ==
+      std::end(
+          *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
 
     discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
         std::make_pair(key, preserveDPList));
@@ -234,15 +235,15 @@ Bool listMcKayInner(
       auto splitCell = std::next(iteratorCell, 1);
 
       if (isNewSplit(sentinelCell, splitCell)) {
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         stabilizer->splice(std::next(beginSentinel, 1), *stabilizer, splitCell);
 
         Bool isUsefulChild = listMcKayInner(
             stabilizer, cAfterGraph, gapOfGlobalRootMemID,
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         stabilizer->splice(std::next(iteratorCell, 1), *stabilizer, splitCell);
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         if (isFirstLoop) {
           isFirstLoop = FALSE;
           if (!isUsefulChild) {
@@ -296,10 +297,12 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
     /*
     CHECKER("########### candidates of canonical discrete refinement
     ###########\n");
-    std::cout << (*discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
+    std::cout <<
+    (*discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
     //*/
 
-    for (auto &v : *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
+    for (auto &v :
+         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
       freePreserveDiscreteProapgationList(v.second);
     delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
 
@@ -353,37 +356,34 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
   Bool verticesAreCompletelySorted =
-      triePropagate(trie, diffInfo, cAfterGraph, cBeforeGraph,
-                    gapOfGlobalRootMemID, &stepOfPropagation);
-  if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted &&false) {
+      trie->propagate(diffInfo, cAfterGraph, cBeforeGraph, gapOfGlobalRootMemID,
+                      &stepOfPropagation);
+  if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
     /* printf("%s:%d\n", __FUNCTION__, __LINE__); */
     return new vertex_list();
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
 
-    for(auto i = cAfterGraph->cv->atoms.begin(); i!=cAfterGraph->cv->atoms.end(); ++i) {
+    for (auto i = cAfterGraph->cv->atoms.begin();
+         i != cAfterGraph->cv->atoms.end(); ++i) {
       std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
     }
-    vertex_list *propagationListOfInheritedVertices =
-        makeConventionalPropagationList(trie, stepOfPropagation);
+    auto propagationList = trie->conventionalPropagationList(stepOfPropagation);
 
-    std::cout<< *propagationListOfInheritedVertices << std::endl;
+    std::cout << propagationList << std::endl;
     /*
        CHECKER("###### before list propagate ######\n");
 
     //*/
     /* printf("%s:%d\n", __FUNCTION__, __LINE__); */
-    //  std::cout << *propagationListOfInheritedVertices << std::endl;
+    //  std::cout << propagationList << std::endl;
     vertex_list *canonicalDiscreteRefinement =
-        listMcKay(propagationListOfInheritedVertices, cAfterGraph->cv,
-                  gapOfGlobalRootMemID);
+        listMcKay(&propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     /*
        CHECKER("###### after list propagate ######\n");
        std::cout << *canonicalDiscreteRefinement << std::endl;
     //*/
-
-    delete (propagationListOfInheritedVertices);
 
     return canonicalDiscreteRefinement;
   }

@@ -274,45 +274,6 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
   return;
 }
 
-int compareTrieLeaves(TrieBody *a, TrieBody *b) {
-  if (a == b) {
-    return 0;
-  } else if (a->key < b->key) {
-    return -1;
-  } else if (a->key > b->key) {
-    return 1;
-  } else {
-    int depthA = a->depth;
-    int depthB = b->depth;
-    HashString *hStringA =
-        slim::element::get<InheritedVertex>(a->inheritedVertices->front())
-            .hashString;
-    HashString *hStringB =
-        slim::element::get<InheritedVertex>(b->inheritedVertices->front())
-            .hashString;
-
-    int i;
-    for (i = 0;; i++) {
-      if (i >= depthA || i >= depthB) {
-        CHECKER("unexpected case\n");
-        exit(EXIT_FAILURE);
-      }
-
-      Hash hashA = *(*hStringA->body)[i];
-      Hash hashB = *(*hStringB->body)[i];
-
-      if (hashA < hashB) {
-        return -1;
-      } else if (hashA > hashB) {
-        return 1;
-      } else {
-        CHECKER("unexpected case\n");
-        exit(EXIT_FAILURE);
-      }
-    }
-  }
-}
-
 void freeInheritedVertex(InheritedVertex *iVertex) {
   delete (iVertex->hashString);
   freeStack(iVertex->conventionalPropagationMemo);
@@ -320,18 +281,6 @@ void freeInheritedVertex(InheritedVertex *iVertex) {
   free(iVertex);
 
   return;
-}
-
-TrieBody *makeTrieBody() {
-  TrieBody *ret = (TrieBody *)malloc(sizeof(TrieBody));
-  ret->inheritedVertices = new vertex_list();
-  ret->parent = NULL;
-  ret->children = new trie_body_map();
-  ret->depth = -1;
-  ret->isInfinitedDepth = FALSE;
-  ret->isPushedIntoGoAheadStack = FALSE;
-
-  return ret;
 }
 
 TerminationConditionInfo *makeTerminationConditionInfo() {
@@ -343,85 +292,10 @@ TerminationConditionInfo *makeTerminationConditionInfo() {
   return ret;
 }
 
-Trie *makeTrie() {
-  Trie *ret = (Trie *)malloc(sizeof(Trie));
-  ret->body = makeTrieBody();
-  ret->body->depth = -1;
-  ret->info = makeTerminationConditionInfo();
-
-  return ret;
-}
-
-void freeTrieInnerCaster(void *body);
-
-void freeTrieInner(TrieBody *body) {
-  delete (body->inheritedVertices);
-  for (auto &v : *body->children)
-    freeTrieInner(v.second);
-  delete body->children;
-  free(body);
-
-  return;
-}
-
-void freeTrieInnerCaster(void *body) {
-  freeTrieInner((TrieBody *)body);
-
-  return;
-}
-
-void freeTrieBody(TrieBody *body) {
-  freeTrieInner(body);
-
-  return;
-}
-
 void freeTerminationConditionInfo(TerminationConditionInfo *info) {
   freeOmegaArray(info->distribution);
   freeOmegaArray(info->increase);
   free(info);
-
-  return;
-}
-
-void freeTrie(Trie *trie) {
-  freeTrieInner(trie->body);
-  freeTerminationConditionInfo(trie->info);
-  free(trie);
-
-  return;
-}
-
-void deleteTrieBody(TrieBody *body) {
-  body->parent->children->erase(body->key);
-  freeTrieBody(body);
-
-  return;
-}
-
-void deleteTrieDescendantsAndItself(TrieBody *body);
-
-void deleteTrieDescendantsAndItselfCaster(void *body) {
-  deleteTrieDescendantsAndItself((TrieBody *)body);
-
-  return;
-}
-
-void deleteTrieDescendantsAndItself(TrieBody *body) {
-  if (body != NULL) {
-    for (auto &v : *body->children)
-      deleteTrieDescendantsAndItself(v.second);
-    delete body->children;
-    free(body);
-  }
-
-  return;
-}
-
-void deleteTrieDescendants(TrieBody *body) {
-  for (auto &v : *body->children)
-    deleteTrieDescendantsAndItself(v.second);
-  body->children->clear();
 
   return;
 }
@@ -497,7 +371,8 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
   } else if (currentNode->children->size() == 1) {
     TrieBody *parent = currentNode->parent;
 
-    deleteTrieBody(prevNode);
+    prevNode->parent->children->erase(prevNode->key);
+    delete (prevNode);
     goBackProcessInnerDoubleCommonPrefixVertices(
         target, brother, parent, currentNode, goAheadStack, tInfo, targetDepth);
   } else {
@@ -568,7 +443,8 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
         decrementOmegaArray(tInfo->increase, parent->depth);
       }
 
-      deleteTrieBody(currentNode);
+      currentNode->parent->children->erase(currentNode->key);
+      delete (currentNode);
 
       goBackProcessInnerSingleCommonPrefixVertex(ivertex, parent, goAheadStack,
                                                  tInfo, targetDepth);
@@ -632,7 +508,7 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << targetNode->depth << std::endl;
       auto key = gen.hash(&slim::element::get<InheritedVertex>(*tmpCell),
-                           targetNode->depth);
+                          targetNode->depth);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << key << std::endl;
       auto it = children->find(key);
@@ -643,7 +519,7 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
           incrementOmegaArray(tInfo->increase, targetNode->depth);
         }
         printf("%s:%d\n", __FUNCTION__, __LINE__);
-        nextNode = makeTrieBody();
+        nextNode = new TrieBody();
         children->insert(std::make_pair(key, nextNode));
         nextNode->key = key;
         nextNode->parent = targetNode;
@@ -763,7 +639,7 @@ void addInheritedVerticesToTrie(
     InheritedVertex *targetIVertex = &slim::element::get<InheritedVertex>(trie->body->inheritedVertices->front());
     std::cout << *(targetIVertex) << std::endl;
     debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-    std::cout<< *(targetIVertex) << std::endl;
+    std::cout << *(targetIVertex) << std::endl;
     debug_log << *(targetCVertex->correspondingVertexInTrie) << std::endl;
     targetCVertex->correspondingVertexInTrie = targetIVertex;
     targetIVertex->ownerList = trie->body->inheritedVertices;
@@ -820,38 +696,35 @@ Bool triePropagationIsContinued(S *goAheadStack,
          !isDescreteTrie(goAheadStack, tInfo, step);
 }
 
-void collectDescendantConvertedVertices(TrieBody *ancestorBody,
-                                        TrieBody *descendantBody);
+void TrieBody::pushInftyDepthTrieNodesIntoGoAheadStackInner(
+    std::stack<TrieBody *> *goAheadStack, TerminationConditionInfo *tInfo,
+    int targetDepth) {
+  if (this->depth == targetDepth) {
+    if (!this->isPushedIntoGoAheadStack) {
+      for (auto &v : *this->children)
+        this->collectDescendantConvertedVertices(v.second);
+      this->clearDescendants();
+      this->isInfinitedDepth = FALSE;
 
-void pushInftyDepthTrieNodesIntoGoAheadStackInner(
-    TrieBody *body, std::stack<TrieBody *> *goAheadStack,
-    TerminationConditionInfo *tInfo, int targetDepth) {
-  if (body->depth == targetDepth) {
-    if (!body->isPushedIntoGoAheadStack) {
-      for (auto &v : *body->children)
-        collectDescendantConvertedVertices(body, v.second);
-      deleteTrieDescendants(body);
-      body->isInfinitedDepth = FALSE;
+      if (!isSingletonList(this->inheritedVertices)) {
+        pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, this);
 
-      if (!isSingletonList(body->inheritedVertices)) {
-        pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, body);
-
-        for (auto &v : *body->inheritedVertices) {
+        for (auto &v : *this->inheritedVertices) {
           decrementOmegaArray(tInfo->distribution, OMEGA);
         }
       }
     }
   } else {
-    for (auto &v : *body->children)
-      pushInftyDepthTrieNodesIntoGoAheadStackInner(v.second, goAheadStack,
-                                                   tInfo, targetDepth);
+    for (auto &v : *this->children)
+      v.second->pushInftyDepthTrieNodesIntoGoAheadStackInner(
+          goAheadStack, tInfo, targetDepth);
   }
 }
 
 void pushInftyDepthTrieNodesIntoGoAheadStack(
     Trie *trie, std::stack<TrieBody *> *goAheadStack, int targetDepth) {
-  pushInftyDepthTrieNodesIntoGoAheadStackInner(trie->body, goAheadStack,
-                                               trie->info, targetDepth);
+  trie->body->pushInftyDepthTrieNodesIntoGoAheadStackInner(
+      goAheadStack, trie->info, targetDepth);
 
   return;
 }
@@ -879,46 +752,45 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
   return;
 }
 
-void collectDescendantConvertedVertices(TrieBody *ancestorBody,
-                                        TrieBody *descendantBody) {
+void TrieBody::collectDescendantConvertedVertices(TrieBody *descendantBody) {
   if (descendantBody->children->empty()) {
     while (!descendantBody->inheritedVertices->empty()) {
       auto targetCell = std::begin(*descendantBody->inheritedVertices);
-      ancestorBody->inheritedVertices->splice(
-          std::begin(*ancestorBody->inheritedVertices),
-          *descendantBody->inheritedVertices, targetCell);
-      slim::element::get<InheritedVertex>(*targetCell).ownerNode = ancestorBody;
+      this->inheritedVertices->splice(std::begin(*this->inheritedVertices),
+                                      *descendantBody->inheritedVertices,
+                                      targetCell);
+      slim::element::get<InheritedVertex>(*targetCell).ownerNode = this;
       slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
-          ancestorBody->depth;
+          this->depth;
       slim::element::get<InheritedVertex>(*targetCell).canonicalLabel.first =
-          ancestorBody->key;
+          this->key;
     }
   } else {
     for (auto &v : *descendantBody->children)
-      collectDescendantConvertedVertices(ancestorBody, v.second);
+      collectDescendantConvertedVertices(v.second);
   }
 }
 
-void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
-                          int stepOfPropagation) {
-  if (body->depth == stepOfPropagation + 1) {
-    if (body->isPushedIntoGoAheadStack) {
-      for (auto &v : *body->inheritedVertices) {
+void TrieBody::makeTrieMinimumInner(TerminationConditionInfo *tInfo,
+                                    int stepOfPropagation) {
+  if (this->depth == stepOfPropagation + 1) {
+    if (this->isPushedIntoGoAheadStack) {
+      for (auto &v : *this->inheritedVertices) {
         incrementOmegaArray(tInfo->distribution, OMEGA);
-        slim::element::get<InheritedVertex>(v).canonicalLabel.first = body->key;
+        slim::element::get<InheritedVertex>(v).canonicalLabel.first = this->key;
       }
     }
 
-    if (!body->children->empty()) {
-      for (auto &v : *body->children)
-        collectDescendantConvertedVertices(body, v.second);
-      deleteTrieDescendants(body);
+    if (!this->children->empty()) {
+      for (auto &v : *this->children)
+        this->collectDescendantConvertedVertices(v.second);
+      this->clearDescendants();
     }
 
-    body->isInfinitedDepth = TRUE;
+    this->isInfinitedDepth = TRUE;
   } else {
-    for (auto &v : *body->children)
-      makeTrieMinimumInner(v.second, tInfo, stepOfPropagation);
+    for (auto &v : *this->children)
+      v.second->makeTrieMinimumInner(tInfo, stepOfPropagation);
   }
 
   return;
@@ -927,7 +799,7 @@ void makeTrieMinimumInner(TrieBody *body, TerminationConditionInfo *tInfo,
 void makeTrieMinimum(Trie *trie, int stepOfPropagation) {
   TerminationConditionInfo *tInfo = trie->info;
 
-  makeTrieMinimumInner(trie->body, tInfo, stepOfPropagation);
+  trie->body->makeTrieMinimumInner(tInfo, stepOfPropagation);
 
   while (tInfo->distribution->maxFiniteIndex > stepOfPropagation) {
     decrementOmegaArray(tInfo->distribution,
@@ -940,30 +812,6 @@ void makeTrieMinimum(Trie *trie, int stepOfPropagation) {
   }
 
   return;
-}
-
-void makeConventionalPropagationListInner(TrieBody *body, vertex_list *list,
-                                          int stepOfPropagation) {
-  if (body->children->empty()) {
-    if (!list->empty()) {
-      list->push_front(CLASS_SENTINEL);
-    }
-
-    for (auto &v : *body->inheritedVertices) {
-      list->push_front(v);
-    }
-  } else {
-    for (auto &v : *body->children)
-      makeConventionalPropagationListInner(v.second, list, stepOfPropagation);
-  }
-  return;
-}
-
-vertex_list *makeConventionalPropagationList(Trie *trie,
-                                             int stepOfPropagation) {
-  auto ret = new vertex_list();
-  makeConventionalPropagationListInner(trie->body, ret, stepOfPropagation);
-  return ret;
 }
 
 vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel) {
@@ -1228,7 +1076,7 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
   if (pList->empty()) {
     return;
   }
-  debug_log  << __FUNCTION__ << ":" << __LINE__ << std::endl;
+  debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
   int tmpLabel = 0;
 
   auto beginSentinel = std::end(*pList);
@@ -1236,7 +1084,8 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
   debug_log << __FUNCTION__ << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   do {
-    endSentinel = std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
+    endSentinel =
+        std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
 
     int tmpDegree = numStack(
         &correspondingVertexInConvertedGraph(
@@ -1248,23 +1097,23 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                                                *(std::next(beginSentinel, 1))),
                                            cAfterGraph, gapOfGlobalRootMemID)
                                            ->type;
-    std::cout<< *(std::next(beginSentinel, 1)) <<std::endl;
+    std::cout << *(std::next(beginSentinel, 1)) << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     int i;
     for (i = 0; i < tmpDegree; i++) {
       for (auto iteratorCell = std::next(beginSentinel, 1);
            iteratorCell != endSentinel;
            iteratorCell = std::next(iteratorCell, 1)) {
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         auto &tmpLink = correspondingVertexInConvertedGraph(
                             &slim::element::get<InheritedVertex>(*iteratorCell),
                             cAfterGraph, gapOfGlobalRootMemID)
                             ->links[i];
         ConvertedGraphVertex *adjacentVertex;
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         switch (tmpLink.attr) {
         case INTEGER_ATTR:
-	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+          printf("%s:%d\n", __FUNCTION__, __LINE__);
           writeStack(slim::element::get<InheritedVertex>(*(iteratorCell))
                          .conventionalPropagationMemo,
                      i, tmpLink.data.integer * 256 + INTEGER_ATTR);
@@ -1274,7 +1123,7 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
         // case STRING_ATTR:
         // break;
         case HYPER_LINK_ATTR:
-	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+          printf("%s:%d\n", __FUNCTION__, __LINE__);
           adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
               cAfterGraph, tmpLink.data.ID, convertedHyperLink);
           pushStack(adjacentVertex->correspondingVertexInTrie
@@ -1282,31 +1131,37 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                     tmpLabel * 256 + i);
           break;
         case GLOBAL_ROOT_MEM_ATTR:
-	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+          printf("%s:%d\n", __FUNCTION__, __LINE__);
           break;
         default:
           if (tmpLink.attr < 128) {
-	    printf("%s:%d\n", __FUNCTION__, __LINE__);
+            printf("%s:%d\n", __FUNCTION__, __LINE__);
             adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
                 cAfterGraph, tmpLink.data.ID, convertedAtom);
-	    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-	    debug_log << adjacentVertex << std::endl;
+            debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
+            debug_log << adjacentVertex << std::endl;
 
-	    convertedGraphVertexDump(adjacentVertex);
-	    std::cout<< adjacentVertex->correspondingVertexInTrie << std::endl;
-	    debug_log << "name" << ":" << adjacentVertex->correspondingVertexInTrie->name << std::endl;
-	    debug_log << "before_ID" << ":" << adjacentVertex->correspondingVertexInTrie->beforeID << std::endl;
+            convertedGraphVertexDump(adjacentVertex);
+            std::cout << adjacentVertex->correspondingVertexInTrie << std::endl;
+            debug_log << "name"
+                      << ":" << adjacentVertex->correspondingVertexInTrie->name
+                      << std::endl;
+            debug_log << "before_ID"
+                      << ":"
+                      << adjacentVertex->correspondingVertexInTrie->beforeID
+                      << std::endl;
             switch (tmpType) {
             case convertedAtom:
-	      printf("%s:%d\n", __FUNCTION__, __LINE__);
-	      std::cout<< *(adjacentVertex->correspondingVertexInTrie) << std::endl;
+              printf("%s:%d\n", __FUNCTION__, __LINE__);
+              std::cout << *(adjacentVertex->correspondingVertexInTrie)
+                        << std::endl;
               writeStack(adjacentVertex->correspondingVertexInTrie
                              ->conventionalPropagationMemo,
                          tmpLink.attr, tmpLabel * 256 + i);
-	      printf("%s:%d\n", __FUNCTION__, __LINE__);
+              printf("%s:%d\n", __FUNCTION__, __LINE__);
               break;
             case convertedHyperLink:
-	      printf("%s:%d\n", __FUNCTION__, __LINE__);
+              printf("%s:%d\n", __FUNCTION__, __LINE__);
               writeStack(adjacentVertex->correspondingVertexInTrie
                              ->conventionalPropagationMemo,
                          tmpLink.attr, tmpLabel * 256 + HYPER_LINK_ATTR);
@@ -1320,10 +1175,10 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
             CHECKER("unexpected vertex type\n");
             exit(EXIT_FAILURE);
           }
-	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+          printf("%s:%d\n", __FUNCTION__, __LINE__);
           break;
         }
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
       }
     }
 
@@ -1479,26 +1334,27 @@ void initializeReferencesFromConvertedVerticesToInheritedVertices(
   return;
 }
 
-Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
-                   Graphinfo *cBeforeGraph, int gapOfGlobalRootMemID,
-                   int *stepOfPropagationPtr) {
+bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
+                     Graphinfo *cBeforeGraph, int gapOfGlobalRootMemID,
+                     int *stepOfPropagationPtr) {
   std::stack<TrieBody *> goAheadStack;
   std::vector<ConvertedGraphVertex *> BFSStack;
   std::vector<ConvertedGraphVertex *> initializeConvertedVerticesStack;
   std::stack<InheritedVertex *> fixCreditIndexStack;
-  TerminationConditionInfo *tInfo = trie->info;
+  TerminationConditionInfo *tInfo = this->info;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  deleteInheritedVerticesFromTrie(trie, diffInfo->deletedVertices,
+  deleteInheritedVerticesFromTrie(this, diffInfo->deletedVertices,
                                   &goAheadStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  addInheritedVerticesToTrie(trie, diffInfo->addedVertices,
+  addInheritedVerticesToTrie(this, diffInfo->addedVertices,
                              &initializeConvertedVerticesStack, &goAheadStack,
                              cAfterGraph, gapOfGlobalRootMemID);
   auto hash_gen = hash_generator(cAfterGraph->cv, gapOfGlobalRootMemID,
                                  &fixCreditIndexStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
 
-  for(auto i = cAfterGraph->cv->atoms.begin(); i!=cAfterGraph->cv->atoms.end(); ++i) {
+  for (auto i = cAfterGraph->cv->atoms.begin();
+       i != cAfterGraph->cv->atoms.end(); ++i) {
     convertedGraphVertexDump(i->second);
     debug_log << i->second << std::endl;
     // std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
@@ -1521,7 +1377,7 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (triePropagationIsContinued(&goAheadStack, tInfo, stepOfPropagation)) {
     stepOfPropagation++;
-    triePropagateInner(trie, &BFSStack, &initializeConvertedVerticesStack,
+    triePropagateInner(this, &BFSStack, &initializeConvertedVerticesStack,
                        &goAheadStack, tInfo, stepOfPropagation,
                        hash_generator(cAfterGraph->cv, gapOfGlobalRootMemID,
                                       &fixCreditIndexStack));
@@ -1529,11 +1385,11 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool verticesAreCompletelySorted =
       isDescreteTrie(&goAheadStack, tInfo, stepOfPropagation) ||
-      isEmptyTrie(trie);
+      isEmptyTrie(this);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (!verticesAreCompletelySorted) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    makeTrieMinimum(trie, stepOfPropagation);
+    makeTrieMinimum(this, stepOfPropagation);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     while (!goAheadStack.empty()) {
       popTrieBodyFromGoAheadStackWithoutOverlap(&goAheadStack);
@@ -1552,7 +1408,7 @@ Bool triePropagate(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   *stepOfPropagationPtr = stepOfPropagation;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  trieDump(trie);
+  this->dump();
   return verticesAreCompletelySorted;
 }
 
@@ -1594,29 +1450,6 @@ void inheritedVertexDump(InheritedVertex *iVertex) {
 
 #include <iostream>
 
-void trieDumpInner(TrieBody *body) {
-  if (body->isPushedIntoGoAheadStack) {
-    fprintf(stdout, "\x1b[33m");
-  }
-
-  spacePrinter(body->depth);
-  fprintf(stdout, "KEY:");
-  fprintf(stdout, "%08X", body->key);
-  fprintf(stdout, "\n");
-
-  spacePrinter(body->depth);
-  fprintf(stdout, "VERTICES:");
-  std::cout << *body->inheritedVertices << "\n";
-
-  if (body->isPushedIntoGoAheadStack) {
-    fprintf(stdout, "\x1b[39m");
-  }
-
-  std::cout << *body->children;
-
-  return;
-}
-
 void terminationConditionInfoDump(TerminationConditionInfo *tInfo) {
   fprintf(stdout, "DISTRIBUTION:"), omegaArrayDump(tInfo->distribution),
       fprintf(stdout, "\n");
@@ -1626,30 +1459,29 @@ void terminationConditionInfoDump(TerminationConditionInfo *tInfo) {
   return;
 }
 
-void makeTerminationConditionMemoInner(TrieBody *tBody,
-                                       OmegaArray *distributionMemo,
-                                       OmegaArray *increaseMemo) {
-  if (!tBody->isPushedIntoGoAheadStack) {
-    if (isSingletonList(tBody->inheritedVertices)) {
-      incrementOmegaArray(distributionMemo, tBody->depth);
+void TrieBody::makeTerminationConditionMemoInner(OmegaArray *distributionMemo,
+                                                 OmegaArray *increaseMemo) {
+  if (!this->isPushedIntoGoAheadStack) {
+    if (isSingletonList(this->inheritedVertices)) {
+      incrementOmegaArray(distributionMemo, this->depth);
     } else {
-      for (auto iterator = std::begin(*tBody->inheritedVertices);
-           iterator != std::end(*tBody->inheritedVertices);
+      for (auto iterator = std::begin(*this->inheritedVertices);
+           iterator != std::end(*this->inheritedVertices);
            iterator = std::next(iterator, 1)) {
         incrementOmegaArray(distributionMemo, OMEGA);
       }
     }
   }
 
-  if (tBody->depth != 0) {
-    incrementOmegaArray(increaseMemo, tBody->depth - 1);
+  if (this->depth != 0) {
+    incrementOmegaArray(increaseMemo, this->depth - 1);
   }
 
-  for (auto &v : *tBody->children)
-    makeTerminationConditionMemoInner(v.second, distributionMemo, increaseMemo);
+  for (auto &v : *this->children)
+    v.second->makeTerminationConditionMemoInner(distributionMemo, increaseMemo);
 
-  if (!tBody->children->empty()) {
-    decrementOmegaArray(increaseMemo, tBody->depth);
+  if (!this->children->empty()) {
+    decrementOmegaArray(increaseMemo, this->depth);
   }
 
   return;
@@ -1658,32 +1490,50 @@ void makeTerminationConditionMemoInner(TrieBody *tBody,
 void makeTerminationConditionMemo(Trie *trie, OmegaArray *distributionMemo,
                                   OmegaArray *increaseMemo) {
   for (auto &v : *trie->body->children)
-    makeTerminationConditionMemoInner(v.second, distributionMemo, increaseMemo);
+    v.second->makeTerminationConditionMemoInner(distributionMemo, increaseMemo);
 
   return;
 }
 
-void trieBodyDump(TrieBody *body) {
-  for(auto i = body->children->begin(); i!= body->children->end(); ++i) {
-    trieBodyDump(i->second);
+inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
+  for (auto i : *body.children)
+    os << *i.second;
+  if (body.isPushedIntoGoAheadStack)
+    os << "\x1b[33m";
+
+  for (int i = 0; i < body.depth; i++)
+    os << "    ";
+  os << "KEY:";
+  os << "%08X" << body.key;
+  os << "\n";
+
+  for (int i = 0; i < body.depth; i++)
+    os << "    ";
+  os << "VERTICES:";
+  os << *body.inheritedVertices << "\n";
+
+  if (body.isPushedIntoGoAheadStack) {
+    os << "\x1b[39m";
   }
-  trieDumpInner(body);
+
+  os << *body.children;
+  return os;
 }
 
-void trieDump(Trie *trie) {
+void Trie::dump() {
   OmegaArray *distributionMemo = makeOmegaArray();
   OmegaArray *increaseMemo = makeOmegaArray();
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
-  terminationConditionInfoDump(trie->info);
-  
-  trieBodyDump(trie->body);
-  std::cout << *trie->body->children << std::endl;
+  terminationConditionInfoDump(this->info);
 
-  makeTerminationConditionMemo(trie, distributionMemo, increaseMemo);
+  std::cout << this->body;
+  std::cout << *this->body->children << std::endl;
 
-  if (!isEqualOmegaArray(distributionMemo, trie->info->distribution) ||
-      !isEqualOmegaArray(increaseMemo, trie->info->increase)) {
+  makeTerminationConditionMemo(this, distributionMemo, increaseMemo);
+
+  if (!isEqualOmegaArray(distributionMemo, this->info->distribution) ||
+      !isEqualOmegaArray(increaseMemo, this->info->increase)) {
     fprintf(
         stderr,
         "WRONG TerminationConditionInfo "
@@ -1729,12 +1579,12 @@ void terminationConditionInfoDumpExperimentFromTrie(Trie *trie) {
 
   return;
 }
-Trie *gen_tmp_trie_from_originaltrie_and_gi(Trie *org_trie, Graphinfo *org_gi,
-                                            Graphinfo *tmp_gi) {
+Trie *Trie::gen_tmp_trie_from_originaltrie_and_gi(Graphinfo *org_gi,
+                                                  Graphinfo *tmp_gi) {
   Trie *trie = new Trie();
-  trieDump(org_trie);
+  this->dump();
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  std::cout << *org_trie->body->inheritedVertices << "\n";
+  std::cout << *this->body->inheritedVertices << "\n";
   printf("\n");
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   return trie;

@@ -151,7 +151,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   init_s->graphinfo = init;
   vertex_list* l = trieMcKay(init_s->trie, diff, init, empty);
   std::cout<< (*l) <<std::endl;
-  trieDump(init_s->trie);
+  init_s->trie->dump();
   /*
     ===== Diffiso ====
    */
@@ -276,7 +276,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   /*
     ===== Diffiso ====
    */
-  // trieDump(parent_trie);
+  // parent_trie->dump();
   /*
     ===== Diffiso ====
    */
@@ -453,12 +453,12 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       // Graphinfo *child_gi = new Graphinfo(src_succ_m);
       // convertedGraphDump(parent_graphinfo->cv);
 
-      // Trie * tmp_trie = gen_tmp_trie_from_originaltrie_and_gi(org_trie, org_gi, parent_graphinfo);
-      // trieDump(tmp_trie);
+      // Trie * tmp_trie = org_trie->gen_tmp_trie_from_originaltrie_and_gi(org_gi, parent_graphinfo);
+      // tmp_trie->dump();
       // DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
       // di->diffInfoDump();
       // trieMcKay(tmp_trie, di, parent_graphinfo, child_gi);
-      // trieDump(tmp_trie);
+      // tmp_trie->dump();
     }
 #ifdef DIFFISO_GEN
     if(!diff_gen_finish) {
