@@ -7,6 +7,8 @@
 #include "json.hpp"
 #include "util.hpp"
 
+#include <iostream>
+
 struct DiffInfo {
   std::vector<ConvertedGraphVertex *> *deletedVertices;
   std::vector<ConvertedGraphVertex *> *addedVertices;
@@ -15,11 +17,14 @@ struct DiffInfo {
   void diffInfoDump() {
     printf("****DIFF INFO****\n");
     fprintf(stdout, "+++deletedVertices:\n\n");
-    dump(*deletedVertices, convertedGraphVertexDump);
+    for (int i = 0; i < deletedVertices->size(); i++)
+      std::cout << i << ":" << *deletedVertices->at(i);
     fprintf(stdout, "+++addedVertices:\n\n");
-    dump(*addedVertices, convertedGraphVertexDump);
+    for (int i = 0; i < addedVertices->size(); i++)
+      std::cout << i << ":" << *addedVertices->at(i);
     fprintf(stdout, "+++relinkedVertices:\n\n");
-    dump(*relinkedVertices, convertedGraphVertexDump);
+    for (int i = 0; i < relinkedVertices->size(); i++)
+      std::cout << i << ":" << *relinkedVertices->at(i);
     printf("*****************\n");
     return;
   }

@@ -40,9 +40,11 @@
 #define LMN_CONVERTEDGRAPH_HPP
 #include "collection.hpp"
 #include "json.hpp"
+#include <algorithm>
 #include <map>
 #include <vector>
-#include <algorithm>
+#include <ostream>
+
 #define NAME_LENGTH 256
 #define INTEGER_ATTR 128
 #define DOUBLE_ATTR 129
@@ -339,14 +341,14 @@ public:
     for (auto v : hyperlinks)
       delete v.second;
   }
+
+  ConvertedGraphVertex *at(const InheritedVertex &iVertex, int gapOfGlobalRootMemID);
+  ConvertedGraphVertex *at(int ID, ConvertedGraphVertexType type);
+  void clearReferencesFromConvertedVerticesToInheritedVertices();
 };
 
-void convertedGraphDump(ConvertedGraph *cGraph);
 bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
-                        std::map<int, int> &iso_m);
-void LMNtalLinkDump(LMNtalLink *link);
-void convertedGraphVertexDump(ConvertedGraphVertex *cVertex);
-void convertedGraphVertexDumpCaster(void *const &cVertex);
+                        const std::map<int, int> &iso_m);
 template <typename S>
 void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
     S *stack, ConvertedGraphVertex *cVertex) {
@@ -368,4 +370,50 @@ void checkRelink(
     ConvertedGraphVertex *beforeCAtom, ConvertedGraphVertex *afterCAtom,
     std::map<size_t, ConvertedGraphVertex *> &afterConvertedHyperLinks,
     std::vector<ConvertedGraphVertex *> *relinkedVertices);
+
+inline std::ostream &operator<<(std::ostream &os, const LMNtalLink &link) {
+  return os << "<" << link.attr << "," << link.data.ID << ">";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const ConvertedGraphVertex &cVertex) {
+  int i;
+
+  if (cVertex.type == convertedAtom) {
+    os << "type:ATOM\n";
+  } else if (cVertex.type == convertedHyperLink) {
+    os << "type:HYPERLINK\n";
+  } else if (cVertex.type == convertedInProxy or
+             cVertex.type == convertedOutProxy) {
+    os << "type:PROXY\n";
+  }
+
+  os << "ID:" << cVertex.ID << "\n";
+  os << "name:" << cVertex.name << "\n";
+
+  os << "links:";
+  for (i = 0; i < cVertex.links.size(); i++) {
+    if (i != 0) {
+      os << ",";
+    }
+    os << cVertex.links[i];
+  }
+  os << "\n";
+  return os;
+}
+
+inline std::ostream &operator<<(std::ostream &os, const ConvertedGraph &cGraph) {
+  os << "CONVERTED ATOMS:\n";
+  for (auto &kv : cGraph.atoms) {
+    os << kv.first << ":";
+    os << kv.second;
+    os << "\n";
+  }
+  os << "CONVERTED HYPERLINKS:\n";
+  for (auto &kv : cGraph.hyperlinks) {
+    os << kv.first << ":";
+    os << kv.second;
+    os << "\n";
+  }
+  return os;
+}
 #endif
