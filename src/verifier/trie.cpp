@@ -1068,7 +1068,6 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
 
   auto beginSentinel = std::end(*pList);
   auto endSentinel = beginSentinel;
-  debug_log << __FUNCTION__ << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   do {
     endSentinel =
@@ -1084,26 +1083,32 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                                                *(std::next(beginSentinel, 1))),
                                            cAfterGraph, gapOfGlobalRootMemID)
                                            ->type;
-    std::cout << *(std::next(beginSentinel, 1)) << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *(std::next(beginSentinel, 1)) << std::endl;
+    std::cout << tmpDegree <<std::endl;
+
     int i;
     for (i = 0; i < tmpDegree; i++) {
       for (auto iteratorCell = std::next(beginSentinel, 1);
            iteratorCell != endSentinel;
            iteratorCell = std::next(iteratorCell, 1)) {
+
         printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << *(std::next(beginSentinel, 1)) << std::endl;
         auto &tmpLink = correspondingVertexInConvertedGraph(
                             &slim::element::get<InheritedVertex>(*iteratorCell),
                             cAfterGraph, gapOfGlobalRootMemID)
                             ->links[i];
         ConvertedGraphVertex *adjacentVertex;
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
+	std::cout << tmpLink.attr << std::endl;
+
         switch (tmpLink.attr) {
         case INTEGER_ATTR:
           printf("%s:%d\n", __FUNCTION__, __LINE__);
-          writeStack(slim::element::get<InheritedVertex>(*(iteratorCell))
+          pushStack(slim::element::get<InheritedVertex>(*(iteratorCell))
                          .conventionalPropagationMemo,
-                     i, tmpLink.data.integer * 256 + INTEGER_ATTR);
+                     tmpLink.data.integer * 256 + INTEGER_ATTR);
           break;
         // case DOUBLE_ATTR:
         // break;
@@ -1142,16 +1147,17 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
               printf("%s:%d\n", __FUNCTION__, __LINE__);
               std::cout << *(adjacentVertex->correspondingVertexInTrie)
                         << std::endl;
-              writeStack(adjacentVertex->correspondingVertexInTrie
+	      std::cout << "numStack(Memo) = " << numStack(adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo) << std::endl; 
+              pushStack(adjacentVertex->correspondingVertexInTrie
                              ->conventionalPropagationMemo,
-                         tmpLink.attr, tmpLabel * 256 + i);
+                         tmpLabel * 256 + i);
               printf("%s:%d\n", __FUNCTION__, __LINE__);
               break;
             case convertedHyperLink:
               printf("%s:%d\n", __FUNCTION__, __LINE__);
-              writeStack(adjacentVertex->correspondingVertexInTrie
+              pushStack(adjacentVertex->correspondingVertexInTrie
                              ->conventionalPropagationMemo,
-                         tmpLink.attr, tmpLabel * 256 + HYPER_LINK_ATTR);
+                         tmpLabel * 256 + HYPER_LINK_ATTR);
               break;
             default:
               CHECKER("unexpected vertex type\n");

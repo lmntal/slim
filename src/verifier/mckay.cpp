@@ -278,7 +278,8 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     classifyConventionalPropagationListWithAttribute(
         propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
+    std::cout << *propagationListOfInheritedVertices << std::endl;
     /*
     CHECKER("###### after attribute classifying ######\n");
     std::cout << *propagationListOfInheritedVertices << std::endl;
@@ -369,7 +370,7 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
       std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
     }
     auto propagationList = trie->conventionalPropagationList(stepOfPropagation);
-
+    std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
     std::cout << propagationList << std::endl;
     /*
        CHECKER("###### before list propagate ######\n");
