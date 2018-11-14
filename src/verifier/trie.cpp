@@ -409,8 +409,8 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
         currentNode->depth;
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
   } else if (currentNode->children->size() == 1 &&
-             isSingletonList(
-                 currentNode->children->begin()->second->inheritedVertices)) {
+             
+                 currentNode->children->begin()->second->inheritedVertices->size() == 1) {
     TrieBody *childNode = (TrieBody *)currentNode->children->begin()->second;
     auto brother = std::begin(*childNode->inheritedVertices);
 
@@ -448,7 +448,7 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
 
       goBackProcessInnerSingleCommonPrefixVertex(ivertex, parent, goAheadStack,
                                                  tInfo, targetDepth);
-    } else if (isSingletonList(currentNode->inheritedVertices)) {
+    } else if (currentNode->inheritedVertices->size() == 1) {
       auto brother = std::begin(*currentNode->inheritedVertices);
       TrieBody *parent = currentNode->parent;
 
@@ -494,7 +494,7 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
   auto inheritedVerticesList = targetNode->inheritedVertices;
   auto children = targetNode->children;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  if (isSingletonList(inheritedVerticesList) && children->empty() &&
+  if (inheritedVerticesList->size() == 1 && children->empty() &&
       targetNode->depth != -1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     incrementOmegaArray(tInfo->distribution, targetNode->depth);
@@ -675,7 +675,7 @@ void TrieBody::pushInftyDepthTrieNodesIntoGoAheadStackInner(
       this->clearDescendants();
       this->isInfinitedDepth = FALSE;
 
-      if (!isSingletonList(this->inheritedVertices)) {
+      if (inheritedVertices->size() != 1) {
         pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, this);
 
         for (auto &v : *this->inheritedVertices) {
@@ -1388,7 +1388,7 @@ void terminationConditionInfoDump(TerminationConditionInfo *tInfo) {
 void TrieBody::makeTerminationConditionMemoInner(OmegaArray *distributionMemo,
                                                  OmegaArray *increaseMemo) {
   if (!this->isPushedIntoGoAheadStack) {
-    if (isSingletonList(this->inheritedVertices)) {
+    if (inheritedVertices->size() != 1) {
       incrementOmegaArray(distributionMemo, this->depth);
     } else {
       for (auto iterator = std::begin(*this->inheritedVertices);

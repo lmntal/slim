@@ -54,17 +54,6 @@ template <typename T> struct unbound_vector {
   iterator end() noexcept { return vec.end(); }
   const_iterator end() const noexcept { return vec.end(); }
 
-  void dump(void dumper(T value)) {
-    for (int i = 0; i < this->size(); i++) {
-      if (!this->at(i))
-        continue;
-
-      fprintf(stdout, "%d:", i);
-      dumper(this->at(i));
-      printf("\n");
-    }
-  }
-
   T read(int index) const {
     if (0 <= index && index < vec.size())
       return vec.at(index);
@@ -79,21 +68,7 @@ template <typename T> struct unbound_vector {
   }
 };
 
-template <typename T>
-void dump(const std::vector<T> &stack, void valueDump(T)) {
-  for (int i = 0; i < stack.size(); i++) {
-    fprintf(stdout, "%d:", i);
-    valueDump(stack[i]);
-    fprintf(stdout, "\n");
-  }
-}
-
 typedef intptr_t CollectionInt;
-
-template <typename List> inline bool isSingletonList(List *list) {
-  return std::begin(*list) != std::end(*list) &&
-         std::next(std::begin(*list), 1) == std::end(*list);
-}
 
 template <typename K, typename V>
 inline std::ostream &operator<<(std::ostream &os,
