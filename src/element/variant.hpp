@@ -242,15 +242,12 @@ constexpr bool holds_alternative(const variant<Types...> &v) noexcept {
 
 struct monostate {};
 
-constexpr bool operator<(monostate, monostate) noexcept { return false; }
-constexpr bool operator>(monostate, monostate) noexcept { return false; }
-constexpr bool operator<=(monostate, monostate) noexcept { return true; }
-constexpr bool operator>=(monostate, monostate) noexcept { return true; }
-constexpr bool operator==(monostate, monostate) noexcept { return true; }
-constexpr bool operator!=(monostate, monostate) noexcept { return false; }
-
-} // namespace element
-} // namespace slim
+constexpr bool operator<(const monostate &, const monostate &) noexcept { return false; }
+constexpr bool operator>(const monostate &, const monostate &) noexcept { return false; }
+constexpr bool operator<=(const monostate &, const monostate &) noexcept { return true; }
+constexpr bool operator>=(const monostate &, const monostate &) noexcept { return true; }
+constexpr bool operator==(const monostate &, const monostate &) noexcept { return true; }
+constexpr bool operator!=(const monostate &, const monostate &) noexcept { return false; }
 
 template <class... Types>
 constexpr bool operator==(const slim::element::variant<Types...> &v,
@@ -287,5 +284,8 @@ constexpr bool operator<(const slim::element::variant<Types...> &v,
           slim::element::visit(
               typename slim::element::variant<Types...>::comparator(v), w));
 }
+
+} // namespace element
+} // namespace slim
 
 #endif /* SLIM_ELEMENT_VARINT_HPP */
