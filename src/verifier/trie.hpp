@@ -132,18 +132,15 @@ struct InheritedVertex {
     this->ownerNode = iVertex.ownerNode;
     this->ownerList = iVertex.ownerList;
     this->ownerCell = iVertex.ownerCell;
-    this->conventionalPropagationMemo = new std::vector<int>();
-    int i;
-    for (i = 0; i < numStack(iVertex.conventionalPropagationMemo); i++) {
-      int tmp = readStack(iVertex.conventionalPropagationMemo, i);
-      writeStack(this->conventionalPropagationMemo, i, tmp);
-    }
+    this->conventionalPropagationMemo =
+        new std::vector<int>(iVertex.conventionalPropagationMemo->begin(),
+                             iVertex.conventionalPropagationMemo->end());
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
   }
 
   ~InheritedVertex() {
     delete (hashString);
-    freeStack(conventionalPropagationMemo);
+    delete (conventionalPropagationMemo);
     freeDisjointSetForest(equivalenceClassOfIsomorphism);
   }
 };
@@ -200,22 +197,22 @@ inline bool operator==(const InheritedVertex &iVertexA,
     return false;
   } else if (strcmp(iVertexA.name, iVertexB.name) > 0) {
     return false;
-  } else if (numStack(iVertexA.conventionalPropagationMemo) <
-             numStack(iVertexB.conventionalPropagationMemo)) {
+  } else if (iVertexA.conventionalPropagationMemo->size() <
+             iVertexB.conventionalPropagationMemo->size()) {
     return false;
-  } else if (numStack(iVertexA.conventionalPropagationMemo) >
-             numStack(iVertexB.conventionalPropagationMemo)) {
+  } else if (iVertexA.conventionalPropagationMemo->size() >
+             iVertexB.conventionalPropagationMemo->size()) {
     return false;
   } else {
-    int degree = numStack(iVertexA.conventionalPropagationMemo);
+    int degree = iVertexA.conventionalPropagationMemo->size();
     int i;
-    std::vector<int> *iStackA = iVertexA.conventionalPropagationMemo;
-    std::vector<int> *iStackB = iVertexB.conventionalPropagationMemo;
+    auto &iStackA = *iVertexA.conventionalPropagationMemo;
+    auto &iStackB = *iVertexB.conventionalPropagationMemo;
 
     for (i = 0; i < degree; i++) {
-      if (readStack(iStackA, i) < readStack(iStackB, i)) {
+      if (iStackA[i] < iStackB[i]) {
         return false;
-      } else if (readStack(iStackA, i) > readStack(iStackB, i)) {
+      } else if (iStackA[i] > iStackB[i]) {
         return false;
       }
     }
@@ -234,22 +231,22 @@ inline bool operator<(const InheritedVertex &iVertexA,
     return true;
   } else if (strcmp(iVertexA.name, iVertexB.name) > 0) {
     return false;
-  } else if (numStack(iVertexA.conventionalPropagationMemo) <
-             numStack(iVertexB.conventionalPropagationMemo)) {
+  } else if (iVertexA.conventionalPropagationMemo->size() <
+             iVertexB.conventionalPropagationMemo->size()) {
     return true;
-  } else if (numStack(iVertexA.conventionalPropagationMemo) >
-             numStack(iVertexB.conventionalPropagationMemo)) {
+  } else if (iVertexA.conventionalPropagationMemo->size() >
+             iVertexB.conventionalPropagationMemo->size()) {
     return false;
   } else {
-    int degree = numStack(iVertexA.conventionalPropagationMemo);
+    int degree = iVertexA.conventionalPropagationMemo->size();
     int i;
-    std::vector<int> *iStackA = iVertexA.conventionalPropagationMemo;
-    std::vector<int> *iStackB = iVertexB.conventionalPropagationMemo;
+    auto &iStackA = iVertexA.conventionalPropagationMemo;
+    auto &iStackB = iVertexB.conventionalPropagationMemo;
 
     for (i = 0; i < degree; i++) {
-      if (readStack(iStackA, i) < readStack(iStackB, i)) {
+      if (iStackA[i] < iStackB[i]) {
         return true;
-      } else if (readStack(iStackA, i) > readStack(iStackB, i)) {
+      } else if (iStackA[i] > iStackB[i]) {
         return false;
       }
     }

@@ -44,7 +44,6 @@
 #include <map>
 #include <vector>
 #include <ostream>
-
 #define NAME_LENGTH 256
 #define INTEGER_ATTR 128
 #define DOUBLE_ATTR 129
@@ -349,20 +348,20 @@ public:
 
 bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
                         const std::map<int, int> &iso_m);
-template <typename S>
-void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-    S *stack, ConvertedGraphVertex *cVertex) {
-  if (cVertex != NULL) {
-    if (!cVertex->isPushedIntoDiffInfoStack) {
-      pushStack(stack, cVertex);
-      cVertex->isPushedIntoDiffInfoStack = true;
-    }
-  }
+inline void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+    std::vector<ConvertedGraphVertex *> *stack, ConvertedGraphVertex *cVertex) {
+  if (!cVertex)
+    return;
+  if (cVertex->isPushedIntoDiffInfoStack)
+    return;
+
+  stack->push_back(cVertex);
+  cVertex->isPushedIntoDiffInfoStack = true;
 }
-template <typename S>
-ConvertedGraphVertex *
-popConvertedVertexFromDiffInfoStackWithoutOverlap(S *stack) {
-  ConvertedGraphVertex *ret = (ConvertedGraphVertex *)popStack(stack);
+inline ConvertedGraphVertex *popConvertedVertexFromDiffInfoStackWithoutOverlap(
+    std::vector<ConvertedGraphVertex *> *stack) {
+  ConvertedGraphVertex *ret = stack->back();
+  stack->pop_back();
   ret->isPushedIntoDiffInfoStack = false;
   return ret;
 }

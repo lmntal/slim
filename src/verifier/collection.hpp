@@ -79,38 +79,6 @@ template <typename T> struct unbound_vector {
   }
 };
 
-template <typename T> void freeStack(std::stack<T> *stack) { delete stack; }
-template <typename T> void freeStack(std::vector<T> *stack) { delete stack; }
-template <typename T> T popStack(std::vector<T> *stack) {
-  auto ret = stack->back();
-  stack->pop_back();
-  return ret;
-}
-template <typename T> T popStack(std::stack<T> *stack) {
-  auto ret = stack->top();
-  stack->pop();
-  return ret;
-}
-template <typename T, typename U>
-void pushStack(std::vector<T> *stack, U value) {
-  stack->push_back(value);
-}
-template <typename T, typename U>
-void pushStack(std::stack<T> *stack, U value) {
-  stack->push(value);
-}
-template <typename T> int numStack(T *stack) { return stack->size(); }
-template <typename T> T readStack(std::vector<T> *stack, int index) {
-  return stack->at(index);
-}
-template <typename T>
-void writeStack(std::vector<T> *stack, int index, T value) {
-  (*stack)[index] = value;
-}
-template <typename T, typename U> void swapStack(T *source, U *target) {
-  source->swap(*target);
-}
-
 template <typename T>
 void dump(const std::vector<T> &stack, void valueDump(T)) {
   for (int i = 0; i < stack.size(); i++) {

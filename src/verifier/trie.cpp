@@ -72,7 +72,7 @@ struct hash_generator {
     switch (cVertex->type) {
     case convertedAtom:
       ret = OFFSET_BASIS;
-      for (i = 0; i < numStack(&cVertex->links); i++) {
+      for (i = 0; i < cVertex->links.size(); i++) {
         ret *= FNV_PRIME;
         ret ^= hash(&cVertex->links[i], index - 1);
       }
@@ -82,7 +82,7 @@ struct hash_generator {
     case convertedHyperLink:
       sum = ADD_INIT;
       mul = MUL_INIT;
-      for (i = 0; i < numStack(&cVertex->links); i++) {
+      for (i = 0; i < cVertex->links.size(); i++) {
         tmp = hash(&cVertex->links[i], index - 1);
         sum += tmp;
         mul *= (tmp * 2 + 1);
@@ -183,18 +183,53 @@ void fixCreditIndex(std::stack<InheritedVertex *> *fixCreditIndexStack) {
   }
 }
 
-template <typename S1, typename S2>
-void getNextDistanceConvertedVertices(S1 BFSStack,
-                                      S2 initializeConvertedVerticesStack,
-                                      ConvertedGraph *cAfterGraph) {
+ConvertedGraphVertex *
+getConvertedVertexFromGraphAndIDAndType(ConvertedGraph *cGraph, int ID,
+                                        ConvertedGraphVertexType type) {
+  switch (type) {
+  case convertedAtom:
+    return cGraph->atoms[ID];
+  case convertedHyperLink:
+    return cGraph->hyperlinks[ID];
+  default:
+    CHECKER("unexpected vertex type\n");
+    exit(EXIT_FAILURE);
+    break;
+  }
+}
+
+ConvertedGraphVertex *
+correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
+                                    ConvertedGraph *cAfterGraph,
+                                    int gapOfGlobalRootMemID) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  S1 nextBFSStack = new std::vector<ConvertedGraphVertex *>();
+  int afterID = iVertex->beforeID + gapOfGlobalRootMemID;
+  switch (iVertex->type) {
+  case convertedAtom:
+    return cAfterGraph->atoms[afterID];
+  case convertedHyperLink:
+    return cAfterGraph->hyperlinks[afterID];
+    break;
+  default:
+    CHECKER("unexpected vertex type\n");
+    exit(EXIT_FAILURE);
+    break;
+  }
+}
+
+void getNextDistanceConvertedVertices(
+    std::vector<ConvertedGraphVertex *> *BFSStack,
+    std::vector<ConvertedGraphVertex *> *initializeConvertedVerticesStack,
+    ConvertedGraph *cAfterGraph) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  auto nextBFSStack = new std::vector<ConvertedGraphVertex *>();
 
   while (!BFSStack->empty()) {
-    ConvertedGraphVertex *cVertex = (ConvertedGraphVertex *)popStack(BFSStack);
+    ConvertedGraphVertex *cVertex = BFSStack->back();
+    BFSStack->pop_back();
 
     int i;
-    for (i = 0; i < numStack(&cVertex->links); i++) {
+    for (i = 0; i < cVertex->links.size(); i++) {
       auto &link = cVertex->links[i];
       ConvertedGraphVertex *adjacentVertex;
 
@@ -208,7 +243,7 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
       case HYPER_LINK_ATTR:
         adjacentVertex = cAfterGraph->hyperlinks[link.data.ID];
         if (!adjacentVertex->isVisitedInBFS) {
-          pushStack(nextBFSStack, adjacentVertex);
+          nextBFSStack->push_back(adjacentVertex);
           adjacentVertex->isVisitedInBFS = TRUE;
         }
         break;
@@ -218,7 +253,7 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
         if (link.attr < 128) {
           adjacentVertex = cAfterGraph->atoms[link.data.ID];
           if (!adjacentVertex->isVisitedInBFS) {
-            pushStack(nextBFSStack, adjacentVertex);
+            nextBFSStack->push_back(adjacentVertex);
             adjacentVertex->isVisitedInBFS = TRUE;
           }
         } else {
@@ -229,12 +264,21 @@ void getNextDistanceConvertedVertices(S1 BFSStack,
       }
     }
 
-    pushStack(initializeConvertedVerticesStack, cVertex);
+    initializeConvertedVerticesStack->push_back(cVertex);
   }
 
-  swapStack(nextBFSStack, BFSStack);
-  freeStack(nextBFSStack);
+  nextBFSStack->swap(*BFSStack);
+  delete (nextBFSStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  return;
+}
+
+void freeInheritedVertex(InheritedVertex *iVertex) {
+  delete (iVertex->hashString);
+  delete (iVertex->conventionalPropagationMemo);
+  freeDisjointSetForest(iVertex->equivalenceClassOfIsomorphism);
+  free(iVertex);
+
   return;
 }
 
@@ -268,9 +312,10 @@ void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body) {
   return;
 }
 
-template <typename S>
-TrieBody *popTrieBodyFromGoAheadStackWithoutOverlap(S *stack) {
-  TrieBody *ret = popStack(stack);
+TrieBody *
+popTrieBodyFromGoAheadStackWithoutOverlap(std::stack<TrieBody *> *stack) {
+  TrieBody *ret = stack->top();
+  stack->pop();
 
   ret->isPushedIntoGoAheadStack = FALSE;
 
@@ -434,8 +479,8 @@ void goBackProcessOfCurrentConvertedVertices(
     TerminationConditionInfo *tInfo, int targetDepth) {
   int i;
 
-  for (i = 0; i < numStack(BFSStack); i++) {
-    ConvertedGraphVertex *cVertex = readStack(BFSStack, i);
+  for (i = 0; i < BFSStack->size(); i++) {
+    ConvertedGraphVertex *cVertex = BFSStack->at(i);
     InheritedVertex *iVertex = cVertex->correspondingVertexInTrie;
     TrieBody *currentNode = iVertex->ownerNode;
     goBackProcess(*iVertex, currentNode, goAheadStack, tInfo, targetDepth);
@@ -521,7 +566,7 @@ void goAheadProcessOfCurrentTrieNodes(std::stack<TrieBody *> *goAheadStack,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
-  swapStack(&nextGoAheadStack, goAheadStack);
+  nextGoAheadStack.swap(*goAheadStack);
 }
 
 template <typename S1, typename S2>
@@ -569,7 +614,7 @@ void addInheritedVerticesToTrie(
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
     targetCVertex->isVisitedInBFS = TRUE;
-    pushStack(initializeConvertedVerticesStack, targetCVertex);
+    initializeConvertedVerticesStack->push_back(targetCVertex);
   }
   std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
   std::cout << *(trie->body->inheritedVertices) << std::endl;
@@ -590,11 +635,11 @@ void moveInheritedRelinkedVerticesToBFSStack(
   return;
 }
 
-template <typename S>
-void initializeConvertedVertices(S *initializeConvertedVerticesStack) {
+void initializeConvertedVertices(
+    std::vector<ConvertedGraphVertex *> *initializeConvertedVerticesStack) {
   while (!initializeConvertedVerticesStack->empty()) {
-    ConvertedGraphVertex *cVertex =
-        (ConvertedGraphVertex *)popStack(initializeConvertedVerticesStack);
+    ConvertedGraphVertex *cVertex = initializeConvertedVerticesStack->back();
+    initializeConvertedVerticesStack->pop_back();
     cVertex->isVisitedInBFS = FALSE;
   }
 
@@ -845,10 +890,10 @@ Bool classifyConventionalPropagationListWithDegreeInner(
     auto tmpCell = std::next(beginSentinel, 1);
 
     int tmpPriority =
-        numStack(&cAfterGraph
-                      ->at(slim::element::get<InheritedVertex>(*tmpCell),
-                           gapOfGlobalRootMemID)
-                      ->links);
+        correspondingVertexInConvertedGraph(
+                      &slim::element::get<InheritedVertex>(*tmpCell),
+                      cAfterGraph, gapOfGlobalRootMemID)
+                      ->links.size();
     cellPQueue->emplace(tmpPriority,
                         &slim::element::get<InheritedVertex>(*tmpCell));
     list.erase(tmpCell);
@@ -1011,17 +1056,16 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
     endSentinel =
         std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
 
-    int tmpDegree = numStack(&cAfterGraph
-                                  ->at(slim::element::get<InheritedVertex>(
-                                           *std::next(beginSentinel, 1)),
-                                       gapOfGlobalRootMemID)
-                                  ->links);
-    ConvertedGraphVertexType tmpType =
-        cAfterGraph
-            ->at(slim::element::get<InheritedVertex>(
-                     *(std::next(beginSentinel, 1))),
-                 gapOfGlobalRootMemID)
-            ->type;
+    int tmpDegree = 
+        correspondingVertexInConvertedGraph(
+             &slim::element::get<InheritedVertex>(*std::next(beginSentinel, 1)),
+             cAfterGraph, gapOfGlobalRootMemID)
+             ->links.size();
+    ConvertedGraphVertexType tmpType = correspondingVertexInConvertedGraph(
+                                           &slim::element::get<InheritedVertex>(
+                                               *(std::next(beginSentinel, 1))),
+                                           cAfterGraph, gapOfGlobalRootMemID)
+                                           ->type;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *(std::next(beginSentinel, 1)) << std::endl;
     std::cout << tmpDegree << std::endl;
@@ -1033,11 +1077,11 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
            iteratorCell = std::next(iteratorCell, 1)) {
 
         printf("%s:%d\n", __FUNCTION__, __LINE__);
-        auto &tmpLink =
-            cAfterGraph
-                ->at(slim::element::get<InheritedVertex>(*iteratorCell),
-                     gapOfGlobalRootMemID)
-                ->links[i];
+        std::cout << *(std::next(beginSentinel, 1)) << std::endl;
+        auto &tmpLink = correspondingVertexInConvertedGraph(
+                            &slim::element::get<InheritedVertex>(*iteratorCell),
+                            cAfterGraph, gapOfGlobalRootMemID)
+                            ->links[i];
         ConvertedGraphVertex *adjacentVertex;
         std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
         std::cout << tmpLink.attr << std::endl;
@@ -1045,9 +1089,9 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
         switch (tmpLink.attr) {
         case INTEGER_ATTR:
           printf("%s:%d\n", __FUNCTION__, __LINE__);
-          pushStack(slim::element::get<InheritedVertex>(*(iteratorCell))
-                        .conventionalPropagationMemo,
-                    tmpLink.data.integer * 256 + INTEGER_ATTR);
+          slim::element::get<InheritedVertex>(*(iteratorCell))
+              .conventionalPropagationMemo->push_back(
+                  tmpLink.data.integer * 256 + INTEGER_ATTR);
           break;
         // case DOUBLE_ATTR:
         // break;
@@ -1055,10 +1099,10 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
         // break;
         case HYPER_LINK_ATTR:
           printf("%s:%d\n", __FUNCTION__, __LINE__);
-          adjacentVertex = cAfterGraph->at(tmpLink.data.ID, convertedHyperLink);
-          pushStack(adjacentVertex->correspondingVertexInTrie
-                        ->conventionalPropagationMemo,
-                    tmpLabel * 256 + i);
+          adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
+              cAfterGraph, tmpLink.data.ID, convertedHyperLink);
+          adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo
+              ->push_back(tmpLabel * 256 + i);
           break;
         case GLOBAL_ROOT_MEM_ATTR:
           printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -1085,19 +1129,18 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
               std::cout << *(adjacentVertex->correspondingVertexInTrie)
                         << std::endl;
               std::cout << "numStack(Memo) = "
-                        << numStack(adjacentVertex->correspondingVertexInTrie
-                                        ->conventionalPropagationMemo)
+                        << adjacentVertex->correspondingVertexInTrie
+                                        ->conventionalPropagationMemo->size()
                         << std::endl;
-              pushStack(adjacentVertex->correspondingVertexInTrie
-                            ->conventionalPropagationMemo,
-                        tmpLabel * 256 + i);
+              adjacentVertex->correspondingVertexInTrie
+                  ->conventionalPropagationMemo->push_back(tmpLabel * 256 + i);
               printf("%s:%d\n", __FUNCTION__, __LINE__);
               break;
             case convertedHyperLink:
               printf("%s:%d\n", __FUNCTION__, __LINE__);
-              pushStack(adjacentVertex->correspondingVertexInTrie
-                            ->conventionalPropagationMemo,
-                        tmpLabel * 256 + HYPER_LINK_ATTR);
+              adjacentVertex->correspondingVertexInTrie
+                  ->conventionalPropagationMemo->push_back(tmpLabel * 256 +
+                                                           HYPER_LINK_ATTR);
               break;
             default:
               CHECKER("unexpected vertex type\n");
@@ -1129,8 +1172,10 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
 
-    int tmpPriority = popStack(slim::element::get<InheritedVertex>(*tmpCell)
-                                   .conventionalPropagationMemo);
+    auto &memo = *slim::element::get<InheritedVertex>(*tmpCell)
+                      .conventionalPropagationMemo;
+    int tmpPriority = memo.back();
+    memo.pop_back();
     cellPQueue->emplace(tmpPriority,
                         &slim::element::get<InheritedVertex>(*tmpCell));
   }
@@ -1147,11 +1192,10 @@ Bool classifyConventionalPropagationListWithAdjacentLabelsInner(
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   Bool isRefined = FALSE;
 
-  int degree = numStack(&cAfterGraph
-                             ->at(slim::element::get<InheritedVertex>(
-                                      *(std::next(beginSentinel, 1))),
-                                  gapOfGlobalRootMemID)
-                             ->links);
+  int degree = correspondingVertexInConvertedGraph(
+           &slim::element::get<InheritedVertex>(*(std::next(beginSentinel, 1))),
+           cAfterGraph, gapOfGlobalRootMemID)
+           ->links.size();
 
   int i;
   for (i = 0; i < degree; i++) {
