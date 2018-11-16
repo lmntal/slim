@@ -65,7 +65,7 @@ enum {
   TAG_RULESET_UNIQ = 0xb,
   TAG_INT_DATA = 0xc,
   TAG_DBL_DATA = 0xd,
-  TAG_STR_DATA = 0xe,
+  TAG_SP_ATOM_DATA = 0xe,
   TAG_HLINK = 0xf,
 };
 
@@ -194,6 +194,11 @@ public:
     return is_valid();
   }
 
+  int push(const std::vector<uint8_t> &bytes) {
+    uint64_t size = bytes.size();
+    return push((uint8_t *)&size, sizeof(size) * TAG_IN_BYTE) && push(bytes.data(), size * TAG_IN_BYTE);
+  }
+
   /* データアトムをバイト列へ書き込む. まずTAG_INT_DATA or
    * TAG_DBL_DATAを書き込んでから, 4bitずつ値を書き込んでいく.
    * ハイパーリンクの処理を追加 @rev.461 */
@@ -207,12 +212,11 @@ public:
     case LMN_HL_ATTR:
       return push_hlink(atom, log);
     case LMN_SP_ATOM_ATTR:
-      if (lmn_is_string(atom, attr)) {
-        lmn_interned_str id = lmn_intern(lmn_string_c_str(LMN_STRING(atom)));
-        return push(TAG_STR_DATA) && push((const BYTE *)&id, BS_STR_ID_SIZE);
-      } /*
-      else
-        FALLTHROUGH  */
+      if (sp_atom_encoder(atom)) {
+        auto bytes = sp_atom_encoder(atom)(atom);
+        auto type = LMN_SP_ATOM_TYPE(atom);
+        return push(TAG_SP_ATOM_DATA) && push(&type, sizeof(type) * TAG_IN_BYTE) && push(bytes);
+      }
     default:
       lmn_fatal("no implementations");
       break;

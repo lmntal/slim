@@ -69,6 +69,8 @@ typedef BOOL (*f_eq)(void *, void *);
 typedef void (*f_free)(void *);
 typedef void (*f_dump)(void *, LmnPortRef);
 typedef BOOL (*f_is_ground)(void *);
+typedef std::vector<uint8_t> (*f_encode)(void *);
+typedef void *(*f_decode)(std::vector<uint8_t> const &);
 
 struct SpecialAtomCallback {
   lmn_interned_str name;
@@ -77,6 +79,8 @@ struct SpecialAtomCallback {
   f_dump dump;
   f_eq eq;
   f_is_ground is_ground;
+  f_encode encode;
+  f_decode decode;
 };
 
 void sp_atom_init(void);
@@ -86,6 +90,9 @@ void sp_atom_finalize(void);
 int lmn_sp_atom_register(const char *name, /* move owner */
                          f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
                          f_is_ground f_is_ground);
+int lmn_sp_atom_register(const char *name, /* move owner */
+                         f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
+                         f_is_ground f_is_ground, f_encode encoder, f_decode decoder);
 
 struct SpecialAtomCallback *sp_atom_get_callback(int id);
 
@@ -103,6 +110,12 @@ struct SpecialAtomCallback *sp_atom_get_callback(int id);
   (LMN_SP_ATOM_TYPE(ATOM1) == LMN_SP_ATOM_TYPE(ATOM2) &&                       \
    sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM1))                               \
        ->eq((void *)(ATOM1), (void *)(ATOM2)))
+static inline f_encode sp_atom_encoder(void *atom) {
+  return sp_atom_get_callback(LMN_SP_ATOM_TYPE(atom))->encode;
+}
+static inline f_decode sp_atom_decoder(LmnByte type) {
+  return sp_atom_get_callback(type)->decode;
+}
 
 /* @} */
 
