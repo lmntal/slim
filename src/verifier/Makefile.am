@@ -48,7 +48,6 @@ liblmn_verifier_a_SOURCES =                              \
 	convertedgraph.cpp	   diff_info.hpp		\
 	omegaArray.hpp		   mckay.hpp			\
 	mckay.cpp		   trie.cpp			\
-	omegaArray.cpp						\
 	mem_encode/decoder.cpp     mem_encode/binstr.cpp
 
 

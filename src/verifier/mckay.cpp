@@ -51,22 +51,22 @@ Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
     return LT;
   } else if (strcmp(iVertexA->name, iVertexB->name) > 0) {
     return GT;
-  } else if (numStack(iVertexA->conventionalPropagationMemo) <
-             numStack(iVertexB->conventionalPropagationMemo)) {
+  } else if (iVertexA->conventionalPropagationMemo->size() <
+             iVertexB->conventionalPropagationMemo->size()) {
     return LT;
-  } else if (numStack(iVertexA->conventionalPropagationMemo) >
-             numStack(iVertexB->conventionalPropagationMemo)) {
+  } else if (iVertexA->conventionalPropagationMemo->size() >
+             iVertexB->conventionalPropagationMemo->size()) {
     return GT;
   } else {
-    int degree = numStack(iVertexA->conventionalPropagationMemo);
+    int degree = iVertexA->conventionalPropagationMemo->size();
     int i;
-    std::vector<int> *iStackA = iVertexA->conventionalPropagationMemo;
-    std::vector<int> *iStackB = iVertexB->conventionalPropagationMemo;
+    auto &iStackA = *iVertexA->conventionalPropagationMemo;
+    auto &iStackB = *iVertexB->conventionalPropagationMemo;
 
     for (i = 0; i < degree; i++) {
-      if (readStack(iStackA, i) < readStack(iStackB, i)) {
+      if (iStackA[i] < iStackB[i]) {
         return LT;
-      } else if (readStack(iStackA, i) > readStack(iStackB, i)) {
+      } else if (iStackA[i] > iStackB[i]) {
         return GT;
       }
     }
@@ -100,7 +100,7 @@ void initializeInheritedVertexAdjacentLabelsCaster(void *iVertex) {
 void freeInheritedVertexOfPreserveDiscretePropagationList(
     InheritedVertex *iVertex) {
   if (iVertex != nullptr) {
-    freeStack(iVertex->conventionalPropagationMemo);
+    delete (iVertex->conventionalPropagationMemo);
     free(iVertex);
   }
 
@@ -110,7 +110,7 @@ void freeInheritedVertexOfPreserveDiscretePropagationList(
 void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
   for (auto &v : *pdpList) {
     if (slim::element::holds_alternative<InheritedVertex>(v)) {
-      freeStack(
+      delete (
           slim::element::get<InheritedVertex>(v).conventionalPropagationMemo);
     }
   }
