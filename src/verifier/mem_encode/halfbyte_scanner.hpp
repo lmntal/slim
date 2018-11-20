@@ -258,6 +258,22 @@ public:
     return res;
   }
 
+  LmnByte scan_sp_atom_type() {
+    LMN_ASSERT(sizeof(LmnByte) == 1);
+    auto res = binstr_get_byte(bs, index);
+    index += sizeof(LmnByte) * TAG_IN_BYTE;
+    return res;
+  }
+
+  std::vector<uint8_t> scan_bytes() {
+    uint64_t size = binstr_get_uint64(bs, index);
+    index += sizeof(uint64_t) * TAG_IN_BYTE;
+    std::vector<uint8_t> bytes(size);
+    for (int i = 0; i < size; i++, index += TAG_IN_BYTE)
+      bytes[i] = binstr_get_byte(bs, index);
+    return bytes;
+  }
+
   void unput_tag() { index--; }
 };
 

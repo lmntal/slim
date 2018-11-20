@@ -64,5 +64,6 @@
 #include "exception.hpp"
 #include "variant.hpp"
 #include "conditional_ostream.hpp"
+#include "optional.hpp"
 
 #endif /* LMN_ELEMENT_H */
