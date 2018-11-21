@@ -50,7 +50,8 @@
 #endif
 #include "state.h"
 #include "state.hpp"
-
+#include <iostream>
+int succ_num_mc_gv=0;
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
@@ -131,6 +132,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
    */
   profile_statespace(wp);
   mc_dump(wp);
+  std::cout << "Succ Num=" << succ_num_mc_gv << std::endl;
   lmn_workergroup_free(wp);
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_clean();
@@ -212,7 +214,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   } else {
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
-
+  succ_num_mc_gv+=mc_react_cxt_expanded_num(rc);
   if (mc_react_cxt_expanded_num(rc) == 0) {
     /* sを最終状態集合として記録 */
     statespace_add_end_state(ss, s);
