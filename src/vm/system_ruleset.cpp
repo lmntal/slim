@@ -39,7 +39,7 @@
 #include "functor.h"
 #include "lmntal.h"
 #include "memstack.h"
-#include "react_context.h"
+#include "react_context.hpp"
 #include "symbol.h"
 #include "membrane.hpp"
 #include "atomlist.hpp"

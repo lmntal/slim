@@ -53,7 +53,7 @@ struct HyperLink;
 #include "element/element.h"
 #include "functor.h"
 #include "membrane.h"
-#include "react_context.h"
+#include "react_context.hpp"
 
 /* ----------------------------------------------------------------------- *
  *  hyperlink system                                                       *

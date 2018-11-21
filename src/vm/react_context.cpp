@@ -37,7 +37,7 @@
  * $Id$
  */
 
-#include "react_context.h"
+#include "react_context.hpp"
 
 #include "hyperlink.h"
 #include "memstack.h"
@@ -49,14 +49,13 @@
 #endif
 #include "rule.hpp"
 
-#include "react_context.hpp"
-//struct LmnRegister {
+// struct LmnRegister {
 //  LmnWord wt;
 //  LmnByte at;
 //  LmnByte tt;
 //};
 
-//struct LmnReactCxt {
+// struct LmnReactCxt {
 //  LmnMembraneRef
 //      global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
 //  LmnRegisterArray work_arry; /* ルール適用レジスタ */
@@ -80,7 +79,6 @@
 //#endif
 //};
 
-
 LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx) {
   return (LmnRegisterRef)array + idx;
 }
@@ -99,10 +97,10 @@ void lmn_register_copy(LmnRegisterArray to, LmnRegisterArray from,
 
 void lmn_register_free(LmnRegisterArray v) { LMN_FREE(v); }
 
-void lmn_register_extend(LmnReactCxtRef rc, unsigned int new_size) {
+void lmn_register_extend(slim::vm::RuleContext *rc, unsigned int new_size) {
   new_size = round2up(new_size);
   rc->work_array = (LmnRegisterArray)LMN_REALLOC(struct LmnRegister,
-                                                rc->work_array, new_size);
+                                                 rc->work_array, new_size);
   memset((LmnRegisterRef)rc->work_array + warray_size(rc), 0,
          sizeof(struct LmnRegister) * (new_size - warray_size(rc)));
   warray_size_set(rc, new_size);
@@ -118,64 +116,72 @@ BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
   return (cxt->mode & mode) == mode;
 }
 
-unsigned int warray_size(LmnReactCxtRef cxt) { return cxt->warray_cap; }
+unsigned int warray_size(slim::vm::RuleContext *cxt) { return cxt->warray_cap; }
 
-void warray_size_set(LmnReactCxtRef cxt, unsigned int n) { cxt->warray_cap = n; }
+void warray_size_set(slim::vm::RuleContext *cxt, unsigned int n) {
+  cxt->warray_cap = n;
+}
 
-unsigned int warray_use_size(LmnReactCxtRef cxt) { return cxt->warray_num; }
-void warray_use_size_set(LmnReactCxtRef cxt, unsigned int n) {
+unsigned int warray_use_size(slim::vm::RuleContext *cxt) {
+  return cxt->warray_num;
+}
+void warray_use_size_set(slim::vm::RuleContext *cxt, unsigned int n) {
   cxt->warray_num = n;
 }
 
-unsigned int warray_cur_size(LmnReactCxtRef cxt) { return cxt->warray_cur; }
-void warray_cur_size_set(LmnReactCxtRef cxt, unsigned int n) {
+unsigned int warray_cur_size(slim::vm::RuleContext *cxt) {
+  return cxt->warray_cur;
+}
+void warray_cur_size_set(slim::vm::RuleContext *cxt, unsigned int n) {
   cxt->warray_cur = n;
 }
 
-void warray_cur_update(LmnReactCxtRef cxt, unsigned int i) {
+void warray_cur_update(slim::vm::RuleContext *cxt, unsigned int i) {
   if (warray_cur_size(cxt) <= i) {
     warray_cur_size_set(cxt, i + 1);
   }
 }
 
-LmnRegisterArray rc_warray(LmnReactCxtRef cxt) { return cxt->work_array; }
+LmnRegisterArray rc_warray(slim::vm::RuleContext *cxt) {
+  return cxt->work_array;
+}
 
-void rc_warray_set(LmnReactCxtRef cxt, LmnRegisterArray array) {
+void rc_warray_set(slim::vm::RuleContext *cxt, LmnRegisterArray array) {
   cxt->work_array = array;
 }
 
-LmnWord wt(LmnReactCxtRef cxt, unsigned int i) {
+LmnWord wt(slim::vm::RuleContext *cxt, unsigned int i) {
   return lmn_register_array_get(cxt->work_array, i)->register_wt();
 }
 
-void wt_set(LmnReactCxtRef cxt, unsigned int i, LmnWord o) {
+void wt_set(slim::vm::RuleContext *cxt, unsigned int i, LmnWord o) {
   LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
   r__->register_set_wt(o);
   warray_cur_update(cxt, i);
 }
 
-LmnByte at(LmnReactCxtRef cxt, unsigned int i) {
+LmnByte at(slim::vm::RuleContext *cxt, unsigned int i) {
   return lmn_register_array_get(cxt->work_array, i)->register_at();
 }
 
-void at_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o) {
+void at_set(slim::vm::RuleContext *cxt, unsigned int i, LmnByte o) {
   LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
   r__->register_set_at(o);
   warray_cur_update(cxt, i);
 }
 
-LmnByte tt(LmnReactCxtRef cxt, unsigned int i) {
+LmnByte tt(slim::vm::RuleContext *cxt, unsigned int i) {
   return lmn_register_array_get(cxt->work_array, i)->register_tt();
 }
 
-void tt_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o) {
+void tt_set(slim::vm::RuleContext *cxt, unsigned int i, LmnByte o) {
   LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
   r__->register_set_tt(o);
   warray_cur_update(cxt, i);
 }
 
-void warray_set(LmnReactCxtRef cxt, unsigned int i, LmnWord w, LmnByte a,
-               LmnByte t) {
+void warray_set(slim::vm::RuleContext *cxt, unsigned int i, LmnWord w,
+                LmnByte a, LmnByte t) {
   LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
   r__->register_set_wt(w);
   r__->register_set_at(a);

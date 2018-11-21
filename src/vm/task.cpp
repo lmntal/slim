@@ -334,10 +334,6 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   return ok;
 }
 
-/* an extenstion rule applier, @see ext/atomic.c */
-BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
-                          LmnRuleSetRef rs);
-
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
  *  戻り値:
  *   通常実行では, 書換えに成功した場合にTRUE,
@@ -592,7 +588,7 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
 /* static void print_wt(void); */
 
 /* mem != NULL ならば memにUNIFYを追加、そうでなければUNIFYは膜に所属しない */
-HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem,
+HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
                           const Vector *links) {
   unsigned int i, j;
   HashSet *retset;
@@ -761,7 +757,7 @@ bool findatom_through_hyperlink(LmnReactCxtRef rc, LmnRuleRef rule,
   }
 }
 
-BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
+BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
   LmnInstrOp op;
 
   while (TRUE) {

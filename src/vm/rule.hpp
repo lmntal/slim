@@ -44,7 +44,7 @@
 #include <set>
 
 #include "membrane.h"
-#include "react_context.h"
+#include "react_context.hpp"
 
 typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
 

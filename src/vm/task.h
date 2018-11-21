@@ -48,7 +48,7 @@
 #include "element/element.h"
 #include "lmntal.h"
 #include "membrane.h"
-#include "react_context.h"
+#include "react_context.hpp"
 
 /* 中間命令で出現するデータ構造
  * LINK_LIST    リンクオブジェクトのリスト
@@ -86,7 +86,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
 void memstack_push(LmnMembraneRef mem);
 BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 extern struct Vector user_system_rulesets; /* system ruleset defined by user */
-HashSet *insertconnectors(LmnReactCxtRef rc, LmnMembraneRef mem,
+HashSet *insertconnectors(slim::vm::RuleContext * rc, LmnMembraneRef mem,
                           const Vector *links);
 
 Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v);
