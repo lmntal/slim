@@ -126,8 +126,6 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
 
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef ruleset);
-static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                       LmnRuleSetRef rs);
 static inline void react_initial_rulesets(LmnReactCxtRef rc,
                                           LmnMembraneRef mem);
 static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
@@ -327,7 +325,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   /* 通常実行では, 適用が発生しなかった場合にシステムルールの適用を行う
    * ndではokはFALSEなので, system_rulesetが適用される. */
-  ok = ok || react_ruleset_inner(rc, cur_mem, system_ruleset);
+  ok = ok || react_ruleset(rc, cur_mem, system_ruleset);
 
 #ifdef USE_FIRSTCLASS_RULE
   lmn_rc_execute_insertion_events(rc);
@@ -348,29 +346,6 @@ BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
  */
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs) {
-  BOOL result;
-
-  if (RC_IS_ATOMIC_STEP(rc)) {
-    /* atomic_step時: atomic stepが複数ある場合,
-     *               atomic適用中のrulesetとそうでないものを区別する必要がある
-     */
-    if (rs->is_atomic()) {
-      result = react_ruleset_inner(rc, mem, rs);
-    } else {
-      result = FALSE;
-    }
-  } else if (rs->atomic == ATOMIC_NONE) {
-    result = react_ruleset_inner(rc, mem, rs);
-  } else {
-    result = react_ruleset_atomic(rc, mem, rs);
-  }
-
-  return result;
-}
-
-/**  @see react_ruleset (task.c)  */
-static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                       LmnRuleSetRef rs) {
   for (auto r : *rs) {
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
@@ -1169,15 +1144,8 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           warray_cur_size_set(rc, warray_cur_org);
         }
 
-        /* アトミック実行の際にProcess Idのリセットを一旦撤回するために
-           現在の Process ID と戻すべき Process ID を記録しておく */
-        RC_SET_PROC_NEXT_ID(rc, env_next_id());
-        RC_SET_PROC_ORG_ID(rc, org_next_id);
-
         if (!RC_GET_MODE(rc, REACT_ND_MERGE_STS))
           env_set_next_id(org_next_id);
-        /* 反応中の膜も記録しておく */
-        RC_SET_CUR_MEM(rc, cur_mem);
 
         return FALSE; /* matching backtrack! */
       } else if (RC_GET_MODE(rc, REACT_PROPERTY)) {
@@ -3782,10 +3750,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
       for (i = 0; i < v->num; i++) {
         auto cp = new LmnRuleSet(*(LmnRuleSetRef)vec_get(v, i));
         lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);
-        if (RC_GET_MODE(rc, REACT_ATOMIC)) {
-          /* atomic step中にatomic setをコピーした場合のため */
-          cp->invalidate_atomic();
-        }
       }
       break;
     }

@@ -61,7 +61,6 @@ LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx);
 #define REACT_STAND_ALONE (0x01U << 2) /* 非決定実行: 状態は展開しない */
 #define REACT_PROPERTY                                                         \
   (0x01U << 3) /* LTLモデル検査: 性質ルールのマッチングのみ */
-#define REACT_ATOMIC (0x01U << 4) /* Atomic Step中: インタリーブの抑制 */
 #define REACT_ND_MERGE_STS                                                                                                         \
   (0x01U << 5 | REACT_ND)           /* 非決定実行:                                                                            \
                                        別々の状態のグローバルルート膜がマージされ得る（react_rule_nd用） \
@@ -98,15 +97,6 @@ unsigned int RC_TRACE_NUM_INC(LmnReactCxtRef cxt);
 
 LmnMembraneRef RC_GROOT_MEM(LmnReactCxtRef cxt);
 void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem);
-void RC_START_ATOMIC_STEP(LmnReactCxtRef cxt, LmnRulesetId id);
-BOOL RC_IS_ATOMIC_STEP(LmnReactCxtRef cxt);
-void RC_FINISH_ATOMIC_STEP(LmnReactCxtRef cxt);
-ProcessID RC_PROC_ORG_ID(LmnReactCxtRef cxt);
-void RC_SET_PROC_ORG_ID(LmnReactCxtRef cxt, ProcessID id);
-ProcessID RC_PROC_NEXT_ID(LmnReactCxtRef cxt);
-void RC_SET_PROC_NEXT_ID(LmnReactCxtRef cxt, ProcessID id);
-LmnMembraneRef RC_CUR_MEM(LmnReactCxtRef cxt);
-void RC_SET_CUR_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem);
 
 SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt);
 void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc);

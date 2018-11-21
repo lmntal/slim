@@ -187,9 +187,6 @@
     for (i = 0; i < v->num; i++) {                                             \
       LmnRuleSetRef cp = new LmnRuleSet(*((LmnRuleSetRef)vec_get(v, i)));       \
       lmn_mem_add_ruleset((LmnMembraneRef)wt(rc, destmemi), cp);               \
-      if (RC_GET_MODE(rc, REACT_ATOMIC)) {                                     \
-        cp->invalidate_atomic();                                     \
-      }                                                                        \
     }                                                                          \
   } while (0)
 

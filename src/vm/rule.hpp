@@ -156,13 +156,6 @@ public:
   }
 };
 
-enum AtomicType {
-  ATOMIC_NONE = 0,
-  ATOMIC_ALL_EXHAUSTIVE,
-  ATOMIC_SIMULATION,
-  ATOMIC_SYNC_STEP,
-};
-
 /* structure of RuleSet */
 class LmnRuleSet {
   bool is_copied;
@@ -171,23 +164,18 @@ class LmnRuleSet {
   std::vector<LmnRule *> rules;
 
   bool ruleset_cp_is_need_object() const {
-    return has_unique() || (atomic != ATOMIC_NONE);
+    return has_unique();
   }
 
 public:
   LmnRulesetId id;
-  AtomicType
-      atomic; /* 本ルールセットの適用をatomicに実行するか否かを示すフラグ */
-  bool is_atomic_valid; /* atomic step中であることを主張するフラグ */
 
   LmnRuleSet(LmnRulesetId id, int init_size)
-      : id(id), atomic(ATOMIC_NONE), is_atomic_valid(false), is_copied(false),
+      : id(id), is_copied(false),
         has_uniqrule(false), is_0step(false) {}
 
   LmnRuleSet(const LmnRuleSet &rs) : LmnRuleSet(rs.id, rs.rules.capacity()) {
     is_copied = true;
-    atomic = rs.atomic;
-    is_atomic_valid = rs.is_atomic_valid;
     is_0step = rs.is_0step;
 
     /* ルール単位のオブジェクト複製 */
@@ -259,12 +247,9 @@ public:
     return ret;
   }
 
-  void validate_atomic() { is_atomic_valid = true; }
-  void invalidate_atomic() { is_atomic_valid = false; }
   void validate_zerostep() { is_0step = true; }
   bool is_zerostep() const { return is_0step; }
 
-  bool is_atomic() const { return is_atomic_valid; }
   bool is_copy() const { return is_copied; }
   bool has_unique() const { return has_uniqrule; }
 

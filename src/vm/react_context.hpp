@@ -40,42 +40,36 @@
 
 #ifndef LMN_REACT_CONTEXT_HPP
 #define LMN_REACT_CONTEXT_HPP
-	struct LmnRegister {
-		LmnWord wt;
-		LmnByte at;
-		LmnByte tt;
-		LmnWord register_wt() { return this->wt; }
-		LmnByte register_at() { return this->at; }
-		LmnByte register_tt() { return this->tt; }
-		void register_set_wt(LmnWord wt) { this->wt = wt; }
-		void register_set_at(LmnByte at) { this->at = at; }
-		void register_set_tt(LmnByte tt) { this->tt = tt; }
+struct LmnRegister {
+  LmnWord wt;
+  LmnByte at;
+  LmnByte tt;
+  LmnWord register_wt() { return this->wt; }
+  LmnByte register_at() { return this->at; }
+  LmnByte register_tt() { return this->tt; }
+  void register_set_wt(LmnWord wt) { this->wt = wt; }
+  void register_set_at(LmnByte at) { this->at = at; }
+  void register_set_tt(LmnByte tt) { this->tt = tt; }
+};
 
-
-
-	};
-	struct LmnReactCxt {
-	  LmnMembraneRef
-	      global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
-	  LmnRegisterArray work_array; /* ルール適用レジスタ */
-	  unsigned int warray_cur;     /* work_arrayの現在の使用サイズ */
-	  unsigned int warray_num; /* work_arrayの最大使用サイズ(SPEC命令指定) */
-	  unsigned int warray_cap; /* work_arrayのキャパシティ */
-	  unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
-	  LmnRulesetId
-	      atomic_id; /* atomic step中: atomic set id(signed int), default:-1 */
-	  ProcessID proc_org_id; /* atomic step終了時に Process ID をこの値に復帰 */
-	  ProcessID proc_next_id; /* atomic step継続時に Process ID をこの値に設定 */
-	  LmnMembraneRef cur_mem; /* atomic step継続時に現在膜をこの値に設定 */
-	  BYTE mode;
-	  BOOL flag;                     /* mode以外に指定するフラグ */
-	  void *v;                       /* 各mode毎に固有の持ち物 */
-	  SimpleHashtbl *hl_sameproccxt; /* findatom
-	                                    時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
-	                                  */
-	#ifdef USE_FIRSTCLASS_RULE
-	  Vector *insertion_events;
-	#endif
-	};
+struct LmnReactCxt {
+  LmnMembraneRef
+      global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
+  LmnRegisterArray work_array; /* ルール適用レジスタ */
+  unsigned int warray_cur;     /* work_arrayの現在の使用サイズ */
+  unsigned int warray_num; /* work_arrayの最大使用サイズ(SPEC命令指定) */
+  unsigned int warray_cap; /* work_arrayのキャパシティ */
+  unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
+  
+  BYTE mode;
+  void *v;   /* 各mode毎に固有の持ち物 */
+  SimpleHashtbl *
+      hl_sameproccxt; /* findatom
+                         時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
+                       */
+#ifdef USE_FIRSTCLASS_RULE
+  Vector *insertion_events;
+#endif
+};
 
 #endif

@@ -192,32 +192,6 @@ void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
   cxt->global_root = mem;
 }
 
-void RC_START_ATOMIC_STEP(LmnReactCxtRef cxt, LmnRulesetId id) {
-  cxt->atomic_id = id;
-}
-
-BOOL RC_IS_ATOMIC_STEP(LmnReactCxtRef cxt) { return cxt->atomic_id >= 0; }
-
-void RC_FINISH_ATOMIC_STEP(LmnReactCxtRef cxt) { cxt->atomic_id = -1; }
-
-ProcessID RC_PROC_ORG_ID(LmnReactCxtRef cxt) { return cxt->proc_org_id; }
-
-void RC_SET_PROC_ORG_ID(LmnReactCxtRef cxt, ProcessID id) {
-  cxt->proc_org_id = id;
-}
-
-ProcessID RC_PROC_NEXT_ID(LmnReactCxtRef cxt) { return cxt->proc_next_id; }
-
-void RC_SET_PROC_NEXT_ID(LmnReactCxtRef cxt, ProcessID id) {
-  cxt->proc_next_id = id;
-}
-
-LmnMembraneRef RC_CUR_MEM(LmnReactCxtRef cxt) { return cxt->cur_mem; }
-
-void RC_SET_CUR_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
-  cxt->cur_mem = mem;
-}
-
 SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt) { return cxt->hl_sameproccxt; }
 
 void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc) {
@@ -242,14 +216,12 @@ void react_context_dealloc(LmnReactCxtRef cxt) { LMN_FREE(cxt); }
 
 void react_context_init(LmnReactCxtRef rc, BYTE mode) {
   rc->mode = mode;
-  rc->flag = 0x00U;
   rc->global_root = NULL;
   rc->v = NULL;
   rc->work_array = lmn_register_make(warray_DEF_SIZE);
   rc->warray_cur = 0;
   rc->warray_num = 0;
   rc->warray_cap = warray_DEF_SIZE;
-  rc->atomic_id = -1;
   rc->hl_sameproccxt = NULL;
   rc->trace_num = 0;
 #ifdef USE_FIRSTCLASS_RULE
@@ -259,13 +231,11 @@ void react_context_init(LmnReactCxtRef rc, BYTE mode) {
 
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) {
   to->mode = from->mode;
-  to->flag = from->flag;
   to->global_root = from->global_root;
   to->v = from->v;
   to->warray_cur = from->warray_cur;
   to->warray_num = from->warray_num;
   to->warray_cap = from->warray_cap;
-  to->atomic_id = from->atomic_id;
 #ifdef USE_FIRSTCLASS_RULE
   vec_free(to->insertion_events);
   to->insertion_events = vec_copy(from->insertion_events);
