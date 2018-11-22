@@ -116,10 +116,10 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
 void dpor_env_init(void);
 void dpor_env_destroy(void);
 
-void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc,
-                             LmnRegisterArray v);
-BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc,
-                             LmnRegisterArray v);
+void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d,
+                             LmnReactCxtRef rc);
+BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
+                             LmnReactCxtRef rc);
 
 void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f);
 

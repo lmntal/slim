@@ -76,7 +76,7 @@ struct McPorData {
   Vector *
       ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
                         */
-  LmnReactCxtRef rc;
+  std::unique_ptr<LmnReactCxt> rc;
   unsigned long next_strans_id;
   BOOL flags;
 } mc_por;
@@ -156,7 +156,7 @@ void init_por_vars() {
   mc_por.queue = new_queue();
   mc_por.ample_candidate = vec_make(POR_VEC_SIZE);
   mc_por.next_strans_id = POR_ID_INITIALIZER; /* 0は使用しない */
-  mc_por.rc = NULL;
+  mc_por.rc = nullptr;
   mc_por.flags = 0x00U;
 }
 
@@ -166,15 +166,14 @@ void free_por_vars() {
   q_free(mc_por.queue);
   vec_free(mc_por.ample_candidate);
   if (mc_por.rc) {
-    mc_react_cxt_destroy(mc_por.rc);
+    mc_por.rc = nullptr;
   }
 }
 
 void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                        Vector *new_s, BOOL f) {
   if (!mc_por.rc) {
-    mc_por.rc = react_context_alloc();
-    mc_react_cxt_init(mc_por.rc);
+    mc_por.rc = std::unique_ptr<LmnReactCxt>(new MCReactContext);
     mc_por.flags = f;
     mc_unset_por(mc_por.flags);
     mc_set_trans(mc_por.flags);
@@ -242,7 +241,7 @@ static void finalize_ample(BOOL org_f) {
              (LmnWord)org_f);
   queue_clear(mc_por.queue);
   vec_clear(mc_por.ample_candidate);
-  RC_CLEAR_DATA(mc_por.rc);
+  RC_CLEAR_DATA(mc_por.rc.get());
   mc_por.root = NULL;
 }
 
@@ -563,10 +562,10 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   /* >>>>>>>>>>>>>>>>>>>> Step 1. <<<<<<<<<<<<<<<<<<<< */
   if (!is_por_expanded(s)) {
-    por_gen_successors(s, mc_por.rc, a, psyms);
-    por_store_successors(s, mc_por.rc, TRUE);
+    por_gen_successors(s, mc_por.rc.get(), a, psyms);
+    por_store_successors(s, mc_por.rc.get(), TRUE);
 
-    RC_CLEAR_DATA(mc_por.rc);
+    RC_CLEAR_DATA(mc_por.rc.get());
     set_por_expanded(s);
   }
 
@@ -590,10 +589,10 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
     if (!is_por_expanded(succ_s)) {
       /* ssから可能な遷移および遷移先状態をすべて求める．
        * ただしこの段階では，ssからの各遷移に付与されたIDは仮のものである． */
-      por_gen_successors(succ_s, mc_por.rc, a, psyms);
-      por_store_successors(succ_s, mc_por.rc,
+      por_gen_successors(succ_s, mc_por.rc.get(), a, psyms);
+      por_store_successors(succ_s, mc_por.rc.get(),
                            FALSE); /* 2step目の遷移のIDはテーブルに登録しない */
-      RC_CLEAR_DATA(mc_por.rc);
+      RC_CLEAR_DATA(mc_por.rc.get());
       set_por_expanded(succ_s);
     }
   }

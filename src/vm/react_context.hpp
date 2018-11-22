@@ -41,12 +41,15 @@
 #ifndef LMN_REACT_CONTEXT_HPP
 #define LMN_REACT_CONTEXT_HPP
 
-typedef struct LmnRegister *LmnRegisterRef;
-typedef struct __LmnRegisterArray *LmnRegisterArray;
+#include <cstdint>
 
-typedef struct LmnReactCxt *LmnReactCxtRef;
+typedef struct LmnRegister *LmnRegisterRef;
+
+struct LmnReactCxt;
+using LmnReactCxtRef = LmnReactCxt *;
 
 #include "element/element.h"
+#include "hyperlink.h"
 #include "lmntal.h"
 #include "memstack.h"
 #include "rule.h"
@@ -66,7 +69,7 @@ struct LmnRegister {
   void register_set_tt(LmnByte tt) { this->tt = tt; }
 };
 
-LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx);
+using LmnRegisterArray = std::vector<LmnRegister>;
 
 namespace slim {
 namespace vm {
@@ -76,29 +79,39 @@ namespace vm {
  */
 struct RuleContext {
   LmnRegisterArray work_array; /* ルール適用レジスタ */
-  unsigned int warray_cur;     /* work_arrayの現在の使用サイズ */
-  unsigned int warray_num; /* work_arrayの最大使用サイズ(SPEC命令指定) */
-  unsigned int warray_cap; /* work_arrayのキャパシティ */
   SimpleHashtbl *
       hl_sameproccxt; /* findatom
                          時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
                        */
 
+  RuleContext() { work_array = LmnRegisterArray(1024); }
+  virtual ~RuleContext() {}
+
+  RuleContext &operator=(const RuleContext &cxt) {
+    this->work_array = cxt.work_array;
+    return *this;
+  }
+
 #ifdef USE_FIRSTCLASS_RULE
   Vector *insertion_events;
 #endif
+
+  size_t capacity() const { return work_array.size(); }
+  void warray_set(LmnRegisterArray &&array) { work_array = std::move(array); }
+  void resize(size_t s) { work_array.resize(s); }
+
+  LmnRegister &reg(unsigned int i) {
+    return work_array.at(i);
+  }
+
+  LmnWord &wt(unsigned int i) { return reg(i).wt; }
+  LmnByte &at(unsigned int i) { return reg(i).at; }
+  LmnByte &tt(unsigned int i) { return reg(i).tt; }
 };
 } // namespace vm
 } // namespace slim
 
-struct LmnReactCxt : slim::vm::RuleContext {
-  LmnMembrane
-      *global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
-  unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
-
-  BYTE mode;
-  void *v; /* 各mode毎に固有の持ち物 */
-};
+void lmn_sameproccxt_clear(LmnReactCxtRef rc);
 
 #define REACT_MEM_ORIENTED (0x01U) /* 膜主導テスト */
 #define REACT_ND (0x01U << 1)      /* 非決定実行: 状態の展開 */
@@ -112,30 +125,83 @@ struct LmnReactCxt : slim::vm::RuleContext {
                                      */
 #define REACT_ZEROSTEP (0x01U << 6) /**< 0step rule application */
 
+struct LmnReactCxt : slim::vm::RuleContext {
+  LmnMembrane
+      *global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
+  unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
+
+  BYTE mode;
+  void *v; /* 各mode毎に固有の持ち物 */
+
+  constexpr static size_t warray_DEF_SIZE = 1024U;
+
+  LmnReactCxt() {}
+  LmnReactCxt(BYTE mode) {
+    this->mode = mode;
+    global_root = NULL;
+    v = NULL;
+    hl_sameproccxt = NULL;
+    trace_num = 0;
+#ifdef USE_FIRSTCLASS_RULE
+    insertion_events = vec_make(4);
+#endif
+  }
+
+  LmnReactCxt &operator=(const LmnReactCxt &from) {
+    this->RuleContext::operator=(from);
+    this->mode = from.mode;
+    this->global_root = from.global_root;
+    this->v = from.v;
+#ifdef USE_FIRSTCLASS_RULE
+    vec_free(this->insertion_events);
+    this->insertion_events = vec_copy(from.insertion_events);
+#endif
+    return *this;
+  }
+
+  virtual ~LmnReactCxt() {
+    if (hl_sameproccxt) {
+      lmn_sameproccxt_clear(this);
+    }
+#ifdef USE_FIRSTCLASS_RULE
+    if (this->insertion_events) {
+      vec_free(this->insertion_events);
+    }
+#endif
+  }
+};
+
+/*----------------------------------------------------------------------
+ * Mem React Context
+ */
+
+LmnMemStack lmn_memstack_make(void);
+void lmn_memstack_free(LmnMemStack memstack);
+
+struct MemReactCxtData {
+  LmnMemStack memstack; /* 膜主導実行時に使用 */
+};
+
+LmnMemStack RC_MEMSTACK(LmnReactCxtRef cxt);
+void RC_MEMSTACK_SET(LmnReactCxtRef cxt, LmnMemStack s);
+
+struct MemReactContext : LmnReactCxt {
+  MemReactContext() : LmnReactCxt(REACT_MEM_ORIENTED) {
+    struct MemReactCxtData *v = new MemReactCxtData;
+    this->v = v;
+    RC_MEMSTACK_SET(this, lmn_memstack_make());
+  }
+
+  ~MemReactContext() {
+    lmn_memstack_free(RC_MEMSTACK(this));
+    delete ((MemReactCxtData *)this->v);
+  }
+};
+
 BYTE RC_MODE(LmnReactCxtRef cxt);
 void RC_SET_MODE(LmnReactCxtRef cxt, BYTE mode);
 void RC_ADD_MODE(LmnReactCxtRef cxt, BYTE mode);
 BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode);
-
-unsigned int warray_size(slim::vm::RuleContext *cxt);
-void warray_size_set(slim::vm::RuleContext *cxt, unsigned int n);
-unsigned int warray_use_size(slim::vm::RuleContext *cxt);
-void warray_use_size_set(slim::vm::RuleContext *cxt, unsigned int n);
-unsigned int warray_cur_size(slim::vm::RuleContext *cxt);
-void warray_cur_size_set(slim::vm::RuleContext *cxt, unsigned int n);
-void warray_cur_update(slim::vm::RuleContext *cxt, unsigned int i);
-
-#define warray_DEF_SIZE (1024U)
-LmnRegisterArray rc_warray(slim::vm::RuleContext *cxt);
-void rc_warray_set(slim::vm::RuleContext *cxt, LmnRegisterArray arry);
-LmnWord wt(slim::vm::RuleContext *cxt, unsigned int i);
-void wt_set(slim::vm::RuleContext *cxt, unsigned int i, LmnWord o);
-LmnByte at(slim::vm::RuleContext *cxt, unsigned int i);
-void at_set(slim::vm::RuleContext *cxt, unsigned int i, LmnByte o);
-LmnByte tt(slim::vm::RuleContext *cxt, unsigned int i);
-void tt_set(slim::vm::RuleContext *cxt, unsigned int i, LmnByte o);
-void warray_set(slim::vm::RuleContext *cxt, unsigned int i, LmnWord w,
-                LmnByte a, LmnByte t);
 
 unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt);
 unsigned int RC_TRACE_NUM_INC(LmnReactCxtRef cxt);
@@ -150,11 +216,6 @@ struct McReactCxtData *RC_ND_DATA(LmnReactCxtRef cxt);
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc);
 
-LmnRegisterArray lmn_register_make(unsigned int size);
-void lmn_register_copy(LmnRegisterArray to, LmnRegisterArray from,
-                       unsigned int size);
-void lmn_register_free(LmnRegisterArray v);
-void lmn_register_extend(slim::vm::RuleContext *rc, unsigned int new_size);
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from);
 
 #ifdef USE_FIRSTCLASS_RULE
@@ -254,28 +315,34 @@ struct McReactCxtData {
     RC_ND_SET_ORG_SUCC_NUM(RC, 0);                                             \
   } while (0)
 
-/*----------------------------------------------------------------------
- * Mem React Context
- */
-struct MemReactCxtData {
-  LmnMemStack memstack; /* 膜主導実行時に使用 */
+McReactCxtData *mc_react_data_make();
+void mc_react_data_free(struct McReactCxtData *v);
+
+struct MCReactContext : LmnReactCxt {
+  MCReactContext() : LmnReactCxt(REACT_ND) {
+    struct McReactCxtData *v = mc_react_data_make();
+    this->v = v;
+
+    if (v->mem_deltas) {
+      RC_MC_SET_DMEM(this);
+    }
+
+    if (lmn_env.enable_por_old) {
+      RC_MC_SET_DPOR_NAIVE(this);
+    } else if (lmn_env.enable_por) {
+      RC_MC_SET_DPOR(this);
+    }
+
+    if (lmn_env.d_compress) {
+      RC_MC_SET_D(this);
+    }
+  }
+
+  ~MCReactContext() {
+    mc_react_data_free(RC_ND_DATA(this));
+  }
 };
 
-LmnMemStack RC_MEMSTACK(LmnReactCxtRef cxt);
-void RC_MEMSTACK_SET(LmnReactCxtRef cxt, LmnMemStack s);
-
-LmnReactCxtRef react_context_alloc();
-void react_context_dealloc(LmnReactCxtRef cxt);
-void react_context_init(LmnReactCxtRef rc, BYTE mode);
-void react_context_destroy(LmnReactCxtRef rc);
-void stand_alone_react_cxt_init(LmnReactCxtRef cxt);
-void stand_alone_react_cxt_destroy(LmnReactCxtRef cxt);
-void property_react_cxt_init(LmnReactCxtRef cxt);
-void property_react_cxt_destroy(LmnReactCxtRef cxt);
-void mem_react_cxt_init(LmnReactCxtRef cxt);
-void mem_react_cxt_destroy(LmnReactCxtRef cxt);
-void mc_react_cxt_init(LmnReactCxtRef cxt);
-void mc_react_cxt_destroy(LmnReactCxtRef cxt);
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
                                LmnRuleRef rule);
 void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,

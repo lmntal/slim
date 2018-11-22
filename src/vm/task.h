@@ -89,7 +89,7 @@ extern struct Vector user_system_rulesets; /* system ruleset defined by user */
 HashSet *insertconnectors(slim::vm::RuleContext * rc, LmnMembraneRef mem,
                           const Vector *links);
 
-Vector *links_from_idxs(const Vector *link_idxs, LmnRegisterArray v);
+Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef v);
 void free_links(Vector *links);
 
 /* @} */
