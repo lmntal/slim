@@ -76,10 +76,12 @@ struct McPorData {
   Vector *
       ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
                         */
-  std::unique_ptr<LmnReactCxt> rc;
+  std::unique_ptr<MCReactContext> rc;
   unsigned long next_strans_id;
   BOOL flags;
 } mc_por;
+
+namespace c14 = slim::element;
 
 /** Macros
  */
@@ -173,7 +175,7 @@ void free_por_vars() {
 void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                        Vector *new_s, BOOL f) {
   if (!mc_por.rc) {
-    mc_por.rc = std::unique_ptr<LmnReactCxt>(new MCReactContext);
+    mc_por.rc = c14::make_unique<MCReactContext>();
     mc_por.flags = f;
     mc_unset_por(mc_por.flags);
     mc_set_trans(mc_por.flags);

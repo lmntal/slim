@@ -45,9 +45,11 @@
 #include "mc_generator.h"
 #include "runtime_status.h"
 #include "state.h"
+#include "state.hpp"
 #include "statespace.h"
 #include <limits.h>
-#include "state.hpp"
+
+namespace c14 = slim::element;
 
 /** -------------------------------------
  *  MC object
@@ -100,7 +102,7 @@ LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags) {
   LmnWorker *w = lmn_worker_make_minimal();
   w->states = ss;
   w->id = id;
-  w->cxt = new LmnReactCxt();
+  w->cxt = c14::make_unique<MCReactContext>();
   worker_flags_set(w, flags);
   worker_set_active(w);
   worker_set_white(w);
@@ -108,10 +110,7 @@ LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags) {
   return w;
 }
 
-void lmn_worker_free(LmnWorker *w) {
-  delete (w->cxt);
-  delete (w);
-}
+void lmn_worker_free(LmnWorker *w) { delete (w); }
 
 /* Verification start */
 static void lmn_worker_start(void *arg) {
@@ -124,7 +123,7 @@ static void lmn_worker_start(void *arg) {
   id = worker_id(w);
   worker_TLS_init(id);
 
-  new (worker_rc(w)) MCReactContext;
+  worker_rc(w) = c14::make_unique<MCReactContext>();
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
     StateSpaceRef ss = worker_states(w);

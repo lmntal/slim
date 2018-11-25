@@ -141,6 +141,8 @@ void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
   dmem_interpret(rc, rule, instr);
 }
 
+namespace c14 = slim::element;
+
 /** 通常実行時の入口.
  *  インタタラクティブ実行時の処理フローは以下の通り[yueno]
  *    1. 後始末     normal_cleaningフラグがたっている時
@@ -151,10 +153,10 @@ void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
  */
 void lmn_run(Vector *start_rulesets) {
   static LmnMembraneRef mem;
-  static LmnReactCxtRef mrc = NULL;
+  static std::unique_ptr<MemReactContext> mrc = nullptr;
 
   if (!mrc)
-    mrc = new MemReactContext();
+    mrc = c14::make_unique<MemReactContext>();
 
 #ifdef USE_FIRSTCLASS_RULE
   first_class_rule_tbl_init();
@@ -173,18 +175,17 @@ void lmn_run(Vector *start_rulesets) {
   if (lmn_env.normal_cleaning) {
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
-    delete mrc;
     mrc = nullptr;
     lmn_env.normal_cleaning = FALSE;
   }
 
   /* interactive : (normal_remain時でnormal_remaining=ON)以外の場合は初期化 */
   if (!lmn_env.normal_remain && !lmn_env.normal_remaining) {
-    new (mrc) MemReactContext;
+    mrc = c14::make_unique<MemReactContext>();
     mem = lmn_mem_make();
-    RC_SET_GROOT_MEM(mrc, mem);
+    RC_SET_GROOT_MEM(mrc.get(), mem);
   }
-  lmn_memstack_push(RC_MEMSTACK(mrc), mem);
+  lmn_memstack_push(RC_MEMSTACK((MemReactContext *)mrc.get()), mem);
 
   // normal parallel mode init
   if (lmn_env.enable_parallel && !lmn_env.nd) {
@@ -198,17 +199,17 @@ void lmn_run(Vector *start_rulesets) {
   }
 
   react_start_rulesets(mem, start_rulesets);
-  lmn_memstack_reconstruct(RC_MEMSTACK(mrc), mem);
+  lmn_memstack_reconstruct(RC_MEMSTACK((MemReactContext *)mrc.get()), mem);
 
   if (lmn_env.trace) {
     if (lmn_env.output_format != JSON)
-      fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(mrc));
+      fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(mrc.get()));
     lmn_dump_cell_stdout(mem);
     if (lmn_env.show_hyperlink)
       lmn_hyperlink_print(mem);
   }
 
-  mem_oriented_loop(mrc, mem);
+  mem_oriented_loop(mrc.get(), mem);
 
   /** PROFILE FINISH */
   if (lmn_env.profile_level >= 1) {
@@ -242,7 +243,6 @@ void lmn_run(Vector *start_rulesets) {
     lmn_env.normal_remaining = FALSE;
     lmn_mem_drop(mem);
     lmn_mem_free(mem);
-    delete (mrc);
     mrc = nullptr;
   }
   if (env_proc_id_pool()) {
@@ -252,7 +252,7 @@ void lmn_run(Vector *start_rulesets) {
 
 /** 膜スタックに基づいた通常実行 */
 static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem) {
-  LmnMemStack memstack = RC_MEMSTACK(rc);
+  LmnMemStack memstack = RC_MEMSTACK((MemReactContext *)rc);
 
   while (!lmn_memstack_isempty(memstack)) {
     LmnMembraneRef mem = lmn_memstack_peek(memstack);
@@ -271,7 +271,7 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   BOOL reacted = FALSE;
   BYTE mode = RC_MODE(rc);
 
-  RC_ADD_MODE(rc, REACT_ZEROSTEP);
+  rc->is_zerostep = true;
   do {
     reacted = FALSE;
     for (int i = 0; i < vec_num(rulesets); i++) {
@@ -281,7 +281,7 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
       reacted |= react_ruleset(rc, cur_mem, rs);
     }
   } while (reacted);
-  RC_SET_MODE(rc, mode);
+  rc->is_zerostep = false;
 }
 
 /**
@@ -386,12 +386,12 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
     rule_wall_time_finish();
 
   /* 適用に成功したら0step実行に入る。既に入っていれば何もしない */
-  if (result && !RC_GET_MODE(rc, REACT_ZEROSTEP))
+  if (result && !rc->is_zerostep)
     react_zerostep_rulesets(rc, mem);
 
   profile_finish_trial();
 
-  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED) && !rc->is_zerostep) {
     if (lmn_env.trace && result) {
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         lmn_dump_mem_stdout(RC_GROOT_MEM(rc));
@@ -945,7 +945,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
        *
        * CONTRACT: COMMIT命令に到達したルールはマッチング検査に成功している
        */
-      if (RC_GET_MODE(rc, REACT_ND) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && !rc->is_zerostep) {
         ProcessID org_next_id = env_next_id();
         LmnMembraneRef cur_mem = NULL;
 
@@ -1078,7 +1078,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
           rc->warray_set(std::move(tmp));
         }
 
-        if (!RC_GET_MODE(rc, REACT_ND_MERGE_STS))
+        if (!rc->keep_process_id_in_nd_mode)
           env_set_next_id(org_next_id);
 
         return FALSE; /* matching backtrack! */
@@ -1122,7 +1122,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
       LmnInstrVar atomi, memi, findatomid;
       LmnLinkAttr attr;
 
-      if (RC_GET_MODE(rc, REACT_ND) && !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && !rc->is_zerostep) {
         lmn_fatal(
             "This mode:exhaustive search can't use instruction:FindAtom2");
       }
@@ -1405,8 +1405,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
         return FALSE;
       }
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) &&
-          !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
         LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NMEMS);
         interpret(rc, rule, instr);
@@ -1423,8 +1422,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
       if (vec_num(lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(memi))))
         return FALSE;
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) &&
-          !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
         LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NORULES);
         interpret(rc, rule, instr);
@@ -1470,8 +1468,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
         return FALSE;
       }
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) &&
-          !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
         LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NATOMS);
         interpret(rc, rule, instr);
@@ -1491,8 +1488,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
         return FALSE;
       }
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) &&
-          !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
         LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NATOMS);
         interpret(rc, rule, instr);
@@ -2133,7 +2129,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
       rc->tt(newmemi) = TT_MEM;
       lmn_mem_set_active(mp, TRUE);
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-        lmn_memstack_push(RC_MEMSTACK(rc), mp);
+        lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), mp);
       }
       break;
     }
@@ -2190,8 +2186,8 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
 
       mp = (LmnMembraneRef)rc->wt(memi);
       lmn_mem_free(mp);
-      if (RC_GET_MODE(rc, REACT_ZEROSTEP)) {
-        lmn_memstack_delete(RC_MEMSTACK(rc), mp);
+      if (rc->is_zerostep) {
+        lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), mp);
       }
       break;
     }
@@ -2210,14 +2206,15 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
     case INSTR_ENQUEUEMEM: {
       LmnInstrVar memi;
       READ_VAL(LmnInstrVar, instr, memi);
-      //      if (RC_GET_MODE(rc, REACT_ND) && !RC_GET_MODE(rc, REACT_ZEROSTEP))
+      //      if (RC_GET_MODE(rc, REACT_ND) && !rc->is_zerostep)
       //      {
       //        lmn_mem_activate_ancestors((LmnMembraneRef)rc->wt( memi)); /* MC
       //        */
       //      }
       //      else
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-        lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembraneRef)rc->wt(memi));
+        lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc),
+                          (LmnMembraneRef)rc->wt(memi));
       }
       break;
     }
@@ -2380,8 +2377,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
       srcvec = links_from_idxs((Vector *)rc->wt(srclisti), rc);
       avovec = links_from_idxs((Vector *)rc->wt(avolisti), rc);
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) &&
-          !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
         ProcessTableRef atoms;
         ProcessTableRef hlinks;
         hlinks = NULL;
@@ -3204,8 +3200,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
         return FALSE;
       }
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) &&
-          !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
         LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_STABLE);
         interpret(rc, rule, instr);
@@ -3886,8 +3881,7 @@ BOOL interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr instr) {
       if (!lmn_mem_nfreelinks((LmnMembraneRef)rc->wt(memi), count))
         return FALSE;
 
-      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) &&
-          !RC_GET_MODE(rc, REACT_ZEROSTEP)) {
+      if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
         LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NFLINKS);
         interpret(rc, rule, instr);
@@ -4433,7 +4427,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       rc->tt(newmemi) = TT_OTHER;
       lmn_mem_set_active(mp, TRUE);
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-        lmn_memstack_push(RC_MEMSTACK(rc), mp);
+        lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), mp);
       }
       break;
     }
@@ -4506,7 +4500,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
     }
     case INSTR_ENQUEUEMEM: {
       SKIP_VAL(LmnInstrVar, instr);
-      //      if (RC_GET_MODE(rc, REACT_ND) && !RC_GET_MODE(rc, REACT_ZEROSTEP))
+      //      if (RC_GET_MODE(rc, REACT_ND) && !rc->is_zerostep)
       //      {
       //        lmn_mem_activate_ancestors((LmnMembraneRef)rc->wt( memi)); /* MC
       //        */
@@ -4516,8 +4510,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
        * 通常実行用dmemはテスト用やinteractive実行用として作っておいてもよさそう
        */
       //      if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-      //        lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembraneRef)rc->wt(
-      //        memi)); /* 通常実行時 */
+      //        lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc),
+      //        (LmnMembraneRef)rc->wt( memi)); /* 通常実行時 */
       //      }
       break;
     }

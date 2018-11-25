@@ -337,7 +337,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     rc->tt($0) = TT_MEM;
     lmn_mem_set_active(mp, TRUE);
     if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-      lmn_memstack_push(RC_MEMSTACK(rc), mp);
+      lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), mp);
     }
   }
 
@@ -362,7 +362,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #enqueuemem LmnInstrVar
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_push(RC_MEMSTACK(rc), (LmnMembraneRef)rc->wt($0)); /* 通常実行時 */
+    lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), (LmnMembraneRef)rc->wt($0)); /* 通常実行時 */
   }
 
 #unlockmem LmnInstrVar

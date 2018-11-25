@@ -73,7 +73,7 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef
       }
 
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-        lmn_memstack_delete(RC_MEMSTACK(rc), m);
+        lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), m);
       }
       lmn_mem_delete_mem(mem, m);
 

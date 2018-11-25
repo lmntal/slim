@@ -87,7 +87,7 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
                   ent -> remove(i0);
                   ent -> remove(i1);
                   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-                    lmn_memstack_push(RC_MEMSTACK(rc), m0);
+                    lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), m0);
                   }
                   return TRUE;
                 }

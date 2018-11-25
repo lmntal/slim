@@ -81,10 +81,6 @@
 
 BYTE RC_MODE(LmnReactCxtRef cxt) { return cxt->mode; }
 
-void RC_SET_MODE(LmnReactCxtRef cxt, BYTE mode) { cxt->mode = mode; }
-
-void RC_ADD_MODE(LmnReactCxtRef cxt, BYTE mode) { cxt->mode |= mode; }
-
 BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
   return (cxt->mode & mode) == mode;
 }
@@ -111,62 +107,42 @@ BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
          hashtbl_contains(RC_HLINK_SPC(rc), (HashKeyType)atomi);
 }
 
-struct McReactCxtData *RC_ND_DATA(LmnReactCxtRef cxt) {
-  return (McReactCxtData *)cxt->v;
+struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt) {
+  return &cxt->data;
 }
 
-void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) {
-  *to = *from;
-}
+void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
 
 /*----------------------------------------------------------------------
  * Mem React Context
  */
 
-LmnMemStack RC_MEMSTACK(LmnReactCxtRef cxt) {
-  return ((struct MemReactCxtData *)cxt->v)->memstack;
-}
+LmnMemStack RC_MEMSTACK(MemReactContext *cxt) { return cxt->memstack; }
 
-void RC_MEMSTACK_SET(LmnReactCxtRef cxt, LmnMemStack s) {
-  ((struct MemReactCxtData *)cxt->v)->memstack = s;
-}
+void RC_MEMSTACK_SET(MemReactContext *cxt, LmnMemStack s) { cxt->memstack = s; }
 
 /*----------------------------------------------------------------------
  * ND React Context
  */
 
-McReactCxtData *mc_react_data_make() {
-  struct McReactCxtData *v = LMN_MALLOC(struct McReactCxtData);
-  v->succ_tbl = st_init_ptrtable();
-  v->roots = vec_make(32);
-  v->rules = vec_make(32);
-  v->props = vec_make(8);
-  v->mem_deltas = NULL;
-  v->mem_delta_tmp = NULL;
-  v->opt_mode = 0x00U;
-  v->org_succ_num = 0;
-  v->d_cur = 0;
+McReactCxtData::McReactCxtData() {
+  succ_tbl = st_init_ptrtable();
+  roots = vec_make(32);
+  rules = vec_make(32);
+  props = vec_make(8);
+  mem_deltas = NULL;
+  mem_delta_tmp = NULL;
+  opt_mode = 0x00U;
+  org_succ_num = 0;
+  d_cur = 0;
 
   if (lmn_env.delta_mem) {
-    v->mem_deltas = vec_make(32);
+    mem_deltas = vec_make(32);
   }
 
   if (lmn_env.enable_por && !lmn_env.enable_por_old) {
-    v->por = DPOR_DATA();
+    por = DPOR_DATA();
   }
-
-  return v;
-}
-
-void mc_react_data_free(struct McReactCxtData *v) {
-  st_free_table(v->succ_tbl);
-  vec_free(v->roots);
-  vec_free(v->rules);
-  vec_free(v->props);
-  if (v->mem_deltas) {
-    vec_free(v->mem_deltas);
-  }
-  LMN_FREE(v);
 }
 
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,

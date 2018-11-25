@@ -100,9 +100,7 @@ struct RuleContext {
   void warray_set(LmnRegisterArray &&array) { work_array = std::move(array); }
   void resize(size_t s) { work_array.resize(s); }
 
-  LmnRegister &reg(unsigned int i) {
-    return work_array.at(i);
-  }
+  LmnRegister &reg(unsigned int i) { return work_array.at(i); }
 
   LmnWord &wt(unsigned int i) { return reg(i).wt; }
   LmnByte &at(unsigned int i) { return reg(i).at; }
@@ -118,28 +116,24 @@ void lmn_sameproccxt_clear(LmnReactCxtRef rc);
 #define REACT_STAND_ALONE (0x01U << 2) /* 非決定実行: 状態は展開しない */
 #define REACT_PROPERTY                                                         \
   (0x01U << 3) /* LTLモデル検査: 性質ルールのマッチングのみ */
-#define REACT_ND_MERGE_STS                                                                                                         \
-  (0x01U << 5 |                                                                                                                    \
-   REACT_ND)                        /* 非決定実行:                                                                            \
-                                       別々の状態のグローバルルート膜がマージされ得る（react_rule_nd用） \
-                                     */
-#define REACT_ZEROSTEP (0x01U << 6) /**< 0step rule application */
 
 struct LmnReactCxt : slim::vm::RuleContext {
   LmnMembrane
       *global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
   unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
-
   BYTE mode;
-  void *v; /* 各mode毎に固有の持ち物 */
+  bool is_zerostep;
+  /* 非決定実行:
+   * 別々の状態のグローバルルート膜がマージされ得る（react_rule_nd用）*/
+  bool keep_process_id_in_nd_mode;
 
   constexpr static size_t warray_DEF_SIZE = 1024U;
 
-  LmnReactCxt() {}
-  LmnReactCxt(BYTE mode) {
+  LmnReactCxt() : is_zerostep(false), keep_process_id_in_nd_mode(false) {}
+  LmnReactCxt(BYTE mode)
+      : is_zerostep(false), keep_process_id_in_nd_mode(false) {
     this->mode = mode;
     global_root = NULL;
-    v = NULL;
     hl_sameproccxt = NULL;
     trace_num = 0;
 #ifdef USE_FIRSTCLASS_RULE
@@ -151,7 +145,6 @@ struct LmnReactCxt : slim::vm::RuleContext {
     this->RuleContext::operator=(from);
     this->mode = from.mode;
     this->global_root = from.global_root;
-    this->v = from.v;
 #ifdef USE_FIRSTCLASS_RULE
     vec_free(this->insertion_events);
     this->insertion_events = vec_copy(from.insertion_events);
@@ -178,29 +171,22 @@ struct LmnReactCxt : slim::vm::RuleContext {
 LmnMemStack lmn_memstack_make(void);
 void lmn_memstack_free(LmnMemStack memstack);
 
-struct MemReactCxtData {
-  LmnMemStack memstack; /* 膜主導実行時に使用 */
-};
+struct MemReactContext;
 
-LmnMemStack RC_MEMSTACK(LmnReactCxtRef cxt);
-void RC_MEMSTACK_SET(LmnReactCxtRef cxt, LmnMemStack s);
+LmnMemStack RC_MEMSTACK(MemReactContext *cxt);
+void RC_MEMSTACK_SET(MemReactContext *cxt, LmnMemStack s);
 
 struct MemReactContext : LmnReactCxt {
   MemReactContext() : LmnReactCxt(REACT_MEM_ORIENTED) {
-    struct MemReactCxtData *v = new MemReactCxtData;
-    this->v = v;
     RC_MEMSTACK_SET(this, lmn_memstack_make());
   }
 
-  ~MemReactContext() {
-    lmn_memstack_free(RC_MEMSTACK(this));
-    delete ((MemReactCxtData *)this->v);
-  }
+  ~MemReactContext() { lmn_memstack_free(RC_MEMSTACK(this)); }
+
+  LmnMemStack memstack; /* 膜主導実行時に使用 */
 };
 
 BYTE RC_MODE(LmnReactCxtRef cxt);
-void RC_SET_MODE(LmnReactCxtRef cxt, BYTE mode);
-void RC_ADD_MODE(LmnReactCxtRef cxt, BYTE mode);
 BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode);
 
 unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt);
@@ -212,7 +198,8 @@ void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem);
 SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt);
 void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc);
 
-struct McReactCxtData *RC_ND_DATA(LmnReactCxtRef cxt);
+struct MCReactContext;
+struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt);
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc);
 
@@ -251,6 +238,18 @@ struct McReactCxtData {
   BYTE d_cur;
   unsigned int org_succ_num;
   McDporData *por;
+
+  McReactCxtData();
+
+  ~McReactCxtData() {
+    st_free_table(succ_tbl);
+    vec_free(roots);
+    vec_free(rules);
+    vec_free(props);
+    if (mem_deltas) {
+      vec_free(mem_deltas);
+    }
+  }
 };
 
 #define RC_MC_DREC_MAX (3)
@@ -260,7 +259,7 @@ struct McReactCxtData {
 #define RC_MC_DPOR_NAIVE_MASK (0x01U << 2)
 #define RC_MC_D_MASK (0x01U << 3)
 
-#define RC_MC_OPT_FLAG(RC) ((RC_ND_DATA(RC))->opt_mode)
+#define RC_MC_OPT_FLAG(RC) ((RC_ND_DATA((MCReactContext *)RC))->opt_mode)
 #define RC_MC_USE_DMEM(RC) (RC_MC_OPT_FLAG(RC) & RC_MC_DMEM_MASK)
 #define RC_MC_SET_DMEM(RC) (RC_MC_OPT_FLAG(RC) |= RC_MC_DMEM_MASK)
 #define RC_MC_UNSET_DMEM(RC) (RC_MC_OPT_FLAG(RC) &= (~RC_MC_DMEM_MASK))
@@ -276,17 +275,21 @@ struct McReactCxtData {
 #define RC_MC_UNSET_D(RC) (RC_MC_OPT_FLAG(RC) &= (~RC_MC_D_MASK))
 
 //#define RC_ND_DATA(RC)                  ((struct McReactCxtData *)(RC)->v)
-#define RC_SUCC_TBL(RC) ((RC_ND_DATA(RC))->succ_tbl)
-#define RC_EXPANDED(RC) ((RC_ND_DATA(RC))->roots)
-#define RC_EXPANDED_RULES(RC) ((RC_ND_DATA(RC))->rules)
-#define RC_EXPANDED_PROPS(RC) ((RC_ND_DATA(RC))->props)
-#define RC_MEM_DELTAS(RC) ((RC_ND_DATA(RC))->mem_deltas)
-#define RC_ND_SET_MEM_DELTA_ROOT(RC, D) ((RC_ND_DATA(RC))->mem_delta_tmp = (D))
-#define RC_ND_MEM_DELTA_ROOT(RC) ((RC_ND_DATA(RC))->mem_delta_tmp)
-#define RC_ND_ORG_SUCC_NUM(RC) ((RC_ND_DATA(RC))->org_succ_num)
-#define RC_ND_SET_ORG_SUCC_NUM(RC, N) ((RC_ND_DATA(RC))->org_succ_num = (N))
-#define RC_POR_DATA(RC) ((RC_ND_DATA(RC))->por)
-#define RC_D_CUR(RC) ((RC_ND_DATA(RC))->d_cur)
+#define RC_SUCC_TBL(RC) ((RC_ND_DATA((MCReactContext *)RC))->succ_tbl)
+#define RC_EXPANDED(RC) ((RC_ND_DATA((MCReactContext *)RC))->roots)
+#define RC_EXPANDED_RULES(RC) ((RC_ND_DATA((MCReactContext *)RC))->rules)
+#define RC_EXPANDED_PROPS(RC) ((RC_ND_DATA((MCReactContext *)RC))->props)
+#define RC_MEM_DELTAS(RC) ((RC_ND_DATA((MCReactContext *)RC))->mem_deltas)
+#define RC_ND_SET_MEM_DELTA_ROOT(RC, D)                                        \
+  ((RC_ND_DATA((MCReactContext *)RC))->mem_delta_tmp = (D))
+#define RC_ND_MEM_DELTA_ROOT(RC)                                               \
+  ((RC_ND_DATA((MCReactContext *)RC))->mem_delta_tmp)
+#define RC_ND_ORG_SUCC_NUM(RC)                                                 \
+  ((RC_ND_DATA((MCReactContext *)RC))->org_succ_num)
+#define RC_ND_SET_ORG_SUCC_NUM(RC, N)                                          \
+  ((RC_ND_DATA((MCReactContext *)RC))->org_succ_num = (N))
+#define RC_POR_DATA(RC) ((RC_ND_DATA((MCReactContext *)RC))->por)
+#define RC_D_CUR(RC) ((RC_ND_DATA((MCReactContext *)RC))->d_cur)
 #define RC_D_COND(RC) (RC_D_CUR(RC) > 0)
 #define RC_D_PROGRESS(RC)                                                      \
   do {                                                                         \
@@ -315,15 +318,9 @@ struct McReactCxtData {
     RC_ND_SET_ORG_SUCC_NUM(RC, 0);                                             \
   } while (0)
 
-McReactCxtData *mc_react_data_make();
-void mc_react_data_free(struct McReactCxtData *v);
-
 struct MCReactContext : LmnReactCxt {
   MCReactContext() : LmnReactCxt(REACT_ND) {
-    struct McReactCxtData *v = mc_react_data_make();
-    this->v = v;
-
-    if (v->mem_deltas) {
+    if (data.mem_deltas) {
       RC_MC_SET_DMEM(this);
     }
 
@@ -338,9 +335,7 @@ struct MCReactContext : LmnReactCxt {
     }
   }
 
-  ~MCReactContext() {
-    mc_react_data_free(RC_ND_DATA(this));
-  }
+  McReactCxtData data;
 };
 
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
