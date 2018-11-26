@@ -79,8 +79,6 @@
 //#endif
 //};
 
-BYTE RC_MODE(LmnReactCxtRef cxt) { return cxt->mode; }
-
 BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
   return (cxt->mode & mode) == mode;
 }

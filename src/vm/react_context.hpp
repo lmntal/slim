@@ -186,7 +186,6 @@ struct MemReactContext : LmnReactCxt {
   LmnMemStack memstack; /* 膜主導実行時に使用 */
 };
 
-BYTE RC_MODE(LmnReactCxtRef cxt);
 BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode);
 
 unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt);
