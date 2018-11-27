@@ -93,7 +93,7 @@ void proposition_free(PropositionRef p) {
   LMN_FREE(p->head);
   LMN_FREE(p->guard);
   LMN_FREE(p->body);
-  delete(p->rule);
+  delete (p->rule);
   LMN_FREE(p);
 }
 
@@ -153,7 +153,8 @@ int propsym_parse(FILE *in, AutomataRef a, PVector *definitions) {
   // r = propsymparse(scanner, a, definitions);
   // propsymlex_destroy(scanner);
 
-  return propsymparse(&scanner, a, definitions);;
+  return propsymparse(&scanner, a, definitions);
+  ;
 }
 
 /* 正常に処理された場合は0，エラーが起きた場合は0以外を返す。*/
@@ -171,18 +172,15 @@ PropositionRef propsym_get_proposition(SymbolDefinitionRef s) {
 }
 
 BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
-  LmnReactCxtRef rc = react_context_alloc();
+  LmnReactCxt rc(REACT_PROPERTY);
   BOOL b;
 
   if (!prop)
     return FALSE;
 
-  property_react_cxt_init(rc);
-  RC_SET_GROOT_MEM(rc, mem);
-  b = react_rule(rc, mem, proposition_get_rule(prop));
-  property_react_cxt_destroy(rc);
+  RC_SET_GROOT_MEM(&rc, mem);
+  b = react_rule(&rc, mem, proposition_get_rule(prop));
 
-  react_context_dealloc(rc);
   return b;
 }
 

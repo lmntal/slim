@@ -121,7 +121,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
   lmn_mem_delete_atom(m, in, in_attr);
-  lmn_memstack_delete(RC_MEMSTACK(rc), m);
+  lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), m);
   lmn_mem_remove_mem(mem, m);
 
   State *new_s = new State(m, 0, TRUE);

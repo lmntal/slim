@@ -64,7 +64,7 @@ void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
   }
 
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_delete(RC_MEMSTACK(rc), mem);
+    lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), mem);
   }
   //lmn_mem_delete_mem(parent, mem); //< may cause memory error
   lmn_mem_remove_mem(parent, mem);

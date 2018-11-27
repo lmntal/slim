@@ -45,9 +45,11 @@
 #include "mc_generator.h"
 #include "runtime_status.h"
 #include "state.h"
+#include "state.hpp"
 #include "statespace.h"
 #include <limits.h>
-#include "state.hpp"
+
+namespace c14 = slim::element;
 
 /** -------------------------------------
  *  MC object
@@ -72,7 +74,7 @@ static void worker_set_env(LmnWorker *w);
 
 /* まっさらなLmnWorkerオブジェクトをmallocして返す */
 inline LmnWorker *lmn_worker_make_minimal() {
-  LmnWorker *w = LMN_MALLOC(LmnWorker);
+  LmnWorker *w = new (LmnWorker);
 
   w->id = 0;
   w->f_safe = 0x00U;
@@ -100,7 +102,7 @@ LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags) {
   LmnWorker *w = lmn_worker_make_minimal();
   w->states = ss;
   w->id = id;
-  w->cxt = react_context_alloc();
+  w->cxt = c14::make_unique<MCReactContext>();
   worker_flags_set(w, flags);
   worker_set_active(w);
   worker_set_white(w);
@@ -108,10 +110,7 @@ LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags) {
   return w;
 }
 
-void lmn_worker_free(LmnWorker *w) {
-  react_context_dealloc(w->cxt);
-  LMN_FREE(w);
-}
+void lmn_worker_free(LmnWorker *w) { delete (w); }
 
 /* Verification start */
 static void lmn_worker_start(void *arg) {
@@ -124,7 +123,7 @@ static void lmn_worker_start(void *arg) {
   id = worker_id(w);
   worker_TLS_init(id);
 
-  mc_react_cxt_init(worker_rc(w));
+  worker_rc(w) = c14::make_unique<MCReactContext>();
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
     StateSpaceRef ss = worker_states(w);
@@ -146,7 +145,6 @@ static void lmn_worker_start(void *arg) {
 
   if (lmn_env.profile_level >= 1)
     profile_finish_exec_thread();
-  mc_react_cxt_destroy(worker_rc(w));
   worker_TLS_finalize();
 }
 

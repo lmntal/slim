@@ -97,10 +97,10 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
       /* dmemインタプリタ(body命令)を書かないとだめだ */
       lmn_fatal("translater mode, delta-membrane execution is not supported.");
     } else {
-      LmnRegisterArray v, tmp;
+      LmnRegisterArray tmp;
       ProcessTableRef copymap;
       LmnMembraneRef tmp_global_root;
-      unsigned int i, warray_size_org, warray_use_org;
+      unsigned int i;
 
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
@@ -108,25 +108,22 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
       }
 #endif
 
-      warray_size_org = warray_size(rc);
-      warray_use_org = warray_use_size(rc);
       tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
 
       /** 変数配列および属性配列のコピー */
-      v = lmn_register_make(warray_size_org);
+      auto v = LmnRegisterArray(rc->capacity());
 
       /** copymapの情報を基に変数配列を書換える */
-      for (i = 0; i < warray_use_org; i++) {
+      for (i = 0; i < rc->capacity(); i++) {
         LmnWord t;
-        LmnRegisterRef r = lmn_register_array_get(v, i);
-        r->register_set_at(at(rc, i));
-        r->register_set_tt(tt(rc, i));
+        LmnRegisterRef r = &v.at(i);
+        r->register_set_at(rc->at(i));
+        r->register_set_tt(rc->tt(i));
         if (r->register_tt() == TT_ATOM) {
           if (LMN_ATTR_IS_DATA(r->register_at())) {
-            r->register_set_wt(
-                (LmnWord)lmn_copy_data_atom(
-                       (LmnAtom)wt(rc, i), (LmnLinkAttr)r->register_at()));
-          } else if (proc_tbl_get_by_atom(copymap, (LmnSymbolAtomRef)wt(rc, i),
+            r->register_set_wt((LmnWord)lmn_copy_data_atom(
+                (LmnAtom)rc->wt(i), (LmnLinkAttr)r->register_at()));
+          } else if (proc_tbl_get_by_atom(copymap, (LmnSymbolAtomRef)rc->wt(i),
                                           &t)) {
             r->register_set_wt((LmnWord)t);
           } else {
@@ -134,9 +131,9 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
             lmn_fatal("implementation error");
           }
         } else if (r->register_tt() == TT_MEM) {
-          if (wt(rc, i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
+          if (rc->wt(i) == (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
             r->register_set_wt((LmnWord)tmp_global_root);
-          } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)wt(rc, i),
+          } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)rc->wt(i),
                                          &t)) {
             r->register_set_wt((LmnWord)t);
           } else {
@@ -144,14 +141,14 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
             lmn_fatal("implementation error");
           }
         } else { /* TT_OTHER */
-          r->register_set_wt(wt(rc, i));
+          r->register_set_wt(rc->wt(i));
         }
       }
       proc_tbl_free(copymap);
 
       /** SWAP */
-      tmp = rc_warray(rc);
-      rc_warray_set(rc, v);
+      tmp = std::move(rc->work_array);
+      rc->warray_set(std::move(v));
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
@@ -160,7 +157,7 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
 
       /* 処理中の変数を外へ持ち出す */
       *ptmp_global_root = tmp_global_root;
-      *p_v_tmp = tmp;
+      *p_v_tmp = std::move(tmp);
     }
   }
 }
@@ -168,62 +165,44 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
 BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
                             lmn_interned_str rule_name, LmnLineNum line_num,
                             LmnMembraneRef *ptmp_global_root,
-                            LmnRegisterArray *p_v_tmp,
-                            unsigned int warray_use_org,
-                            unsigned int warray_size_org) {
-  if (RC_GET_MODE(rc, REACT_ND)) {
-    /* 処理中の変数を外から持ち込む */
-    LmnMembraneRef tmp_global_root;
-    LmnRegisterArray v;
+                            LmnRegisterArray *p_v_tmp) {
+  if (!RC_GET_MODE(rc, REACT_ND))
+    return true;
 
-    tmp_global_root = *ptmp_global_root;
-    v = *p_v_tmp;
+  /* 処理中の変数を外から持ち込む */
+  LmnMembraneRef tmp_global_root;
+  LmnRegisterArray v;
 
-    mc_react_cxt_add_expanded(rc, tmp_global_root,
-                              rule); /* このruleはNULLではまずい気がする */
+  tmp_global_root = *ptmp_global_root;
+  v = std::move(*p_v_tmp);
 
-    rule->undo_history();
+  mc_react_cxt_add_expanded(rc, tmp_global_root,
+                            rule); /* このruleはNULLではまずい気がする */
 
-    /* 変数配列および属性配列を元に戻す */
+  rule->undo_history();
 
-    lmn_register_free(rc_warray(rc));
-    rc_warray_set(rc, v);
-    warray_size_set(rc, warray_size_org);
-    warray_use_size_set(rc, warray_use_org);
+  /* 変数配列および属性配列を元に戻す */
 
-    return FALSE;
-  } else {
-    return TRUE;
-  }
+  rc->warray_set(std::move(v));
+
+  return false;
 }
 
 BOOL tr_instr_jump(LmnTranslated f, LmnReactCxtRef rc,
                    LmnMembraneRef thisisrootmembutnotused, LmnRuleRef rule,
                    int newid_num, const int *newid) {
-  LmnRegisterArray v, tmp;
-  unsigned int org_use, org_size;
-  BOOL ret;
-  int i;
-
-  org_use = warray_use_size(rc);
-  org_size = warray_size(rc);
-  v = lmn_register_make(org_size);
-  for (i = 0; i < newid_num; i++) {
-    LmnRegisterRef r = lmn_register_array_get(v, i);
-    r->register_set_wt(wt(rc, newid[i]));
-    r->register_set_at(at(rc, newid[i]));
-    r->register_set_tt(tt(rc, newid[i]));
+  auto v =
+      LmnRegisterArray(rc->capacity());
+  for (int i = 0; i < newid_num; i++) {
+    v.at(i) = rc->reg(newid[i]);
   }
 
-  tmp = rc_warray(rc);
-  rc_warray_set(rc, v);
+  auto tmp = std::move(rc->work_array);
+  rc->warray_set(std::move(v));
 
-  ret = (*f)(rc, thisisrootmembutnotused, rule);
+  auto ret = (*f)(rc, thisisrootmembutnotused, rule);
 
-  lmn_register_free(rc_warray(rc));
-  rc_warray_set(rc, tmp);
-  warray_size_set(rc, org_size);
-  warray_use_size_set(rc, org_use);
+  rc->warray_set(std::move(tmp));
 
   return ret;
 }
@@ -455,8 +434,7 @@ static void translate_ruleset(LmnRuleSetRef ruleset, const char *header) {
     translate_rule(ruleset->get_rule(i), buf);
     rule_names[i] = translating_rule_name;
   }
-  fprintf(OUT, "struct trans_rule %s_rules[%lu] = {", header,
-          ruleset->size());
+  fprintf(OUT, "struct trans_rule %s_rules[%lu] = {", header, ruleset->size());
 
   for (int i = 0; i < ruleset->size(); i++) {
     if (i != 0)
@@ -629,20 +607,18 @@ static void print_trans_rulesets(const char *filename) {
   /* ruleset0番は存在しないが数合わせに出力 */
   fprintf(OUT, "  {0,0},\n");
   /* ruleset1番はtableに登録されていないがsystemrulesetなので出力 */
-  fprintf(OUT, "  {%lu,trans_%s_1_rules},\n",
-          system_ruleset->size(), filename);
+  fprintf(OUT, "  {%lu,trans_%s_1_rules},\n", system_ruleset->size(), filename);
   /* ruleset2番,3番はinitial ruleset, initial system ruleset */
-  fprintf(OUT, "  {%lu,trans_%s_2_rules},\n",
-          initial_ruleset->size(), filename);
-  fprintf(OUT, "  {%lu,trans_%s_3_rules},\n",
-          initial_system_ruleset->size(), filename);
+  fprintf(OUT, "  {%lu,trans_%s_2_rules},\n", initial_ruleset->size(),
+          filename);
+  fprintf(OUT, "  {%lu,trans_%s_3_rules},\n", initial_system_ruleset->size(),
+          filename);
   /* 以降は普通のrulesetなので出力(どれが初期データルールかはload時に拾う) */
   for (i = FIRST_ID_OF_NORMAL_RULESET; i < count; i++) {
     LmnRuleSetRef rs = LmnRuleSetTable::at(i);
     LMN_ASSERT(rs); /* countで数えているからNULLにあたることはないはず */
 
-    fprintf(OUT, "  {%lu,trans_%s_%d_rules}", rs->size(), filename,
-            i);
+    fprintf(OUT, "  {%lu,trans_%s_%d_rules}", rs->size(), filename, i);
     if (i != count - 1) {
       fprintf(OUT, ",");
     }

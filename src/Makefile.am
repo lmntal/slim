@@ -68,7 +68,6 @@ slim_SOURCES =                                                     \
 	ext/init_exts.cpp                                                  \
 	ext/integer.cpp                                                    \
 	ext/float.cpp                                                      \
-	ext/atomic.cpp                                                   \
 	ext/nlmem.cpp                                                      \
 	ext/io.cpp                                                         \
 	ext/array.cpp			ext/array.h                      \

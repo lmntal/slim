@@ -50,6 +50,8 @@
 #include "element/element.h"
 #include "statespace.h"
 
+#include <memory>
+
 #if defined(HAVE_ATOMIC_SUB) && defined(HAVE_BUILTIN_MBARRIER)
 #//define OPT_WORKERS_SYNC /* とってもbuggyなのでcomment out */
 #endif
@@ -163,7 +165,7 @@ struct LmnWorker {
   BOOL (*check)(struct LmnWorker *); /* 終了検知関数 */
 
   StateSpaceRef states; /* Pointer to StateSpace */
-  LmnReactCxtRef cxt;   /* ReactContext Object */
+  std::unique_ptr<MCReactContext> cxt;   /* ReactContext Object */
   LmnWorker *next;      /* Pointer to Neighbor Worker */
   LmnWorkerGroup *group;
 
