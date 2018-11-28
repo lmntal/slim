@@ -39,6 +39,9 @@
 #ifndef LMN_ATOM_H
 #define LMN_ATOM_H
 
+struct ProcessTbl;
+struct LmnMembrane;
+
 /**
  * @ingroup VM
  * @defgroup Atom
@@ -92,13 +95,6 @@ typedef LmnWord LmnDataAtomRef;
  */
 typedef struct LmnAtomData *LmnSymbolAtomRef;
 
-#include "element/element.h"
-#include "functor.h"
-#include "hyperlink.h"
-#include "process_table.h"
-#include "special_atom.h"
-#include "symbol.h"
-
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */
 
@@ -108,6 +104,30 @@ typedef struct LmnAtomData *LmnSymbolAtomRef;
 
 #define LMN_ATOM(X) ((LmnAtom)(X))
 #define LMN_SATOM(X) ((LmnSAtom)(X))
+
+/**
+ * @brief link attributes of primitive data type
+ *
+ * low 7 bits of link attribute <br>
+ * ハイパーリンクアトム (⊂ extended atom ⊂ data atom ⊂ unary) <br>
+ * ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意
+ */
+enum LmnLinkAttribute {
+  LMN_INT_ATTR = LMN_ATTR_FLAG | 0x00U,     /**< integer literal */
+  LMN_DBL_ATTR = LMN_ATTR_FLAG | 0x01U,     /**< double literal */
+  LMN_SP_ATOM_ATTR = LMN_ATTR_FLAG | 0x03U, /**< special atom */
+  LMN_STRING_ATTR = LMN_SP_ATOM_ATTR,       /**< string literal */
+  LMN_CONST_STR_ATTR =
+      LMN_ATTR_FLAG | 0x04U, /**< @deprecated constant string literal */
+  LMN_CONST_DBL_ATTR =
+      LMN_ATTR_FLAG | 0x05U, /**< @deprecated constant double literal */
+  LMN_HL_ATTR = LMN_ATTR_FLAG | 0x0aU /**< exclamation atom */
+};
+
+#include "element/element.h"
+#include "functor.h"
+#include "special_atom.h"
+#include "symbol.h"
 
 /**
  * @brief アトムリストからATOMのprevアトムを取得する.
@@ -261,12 +281,12 @@ BOOL LMN_SATOM_IS_PROXY(LmnSymbolAtomRef ATOM);
  * @brief get the membrane of a proxy
  * @memberof LmnSymbolAtom
  */
-LmnMembraneRef LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM);
+LmnMembrane *LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM);
 /**
  * @brief set the membrane of a proxy
  * @memberof LmnSymbolAtom
  */
-void LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembraneRef X);
+void LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembrane *X);
 /**
  * @brief check whether a functor is a proxy functor.
  * @memberof LmnFunctor
@@ -304,25 +324,6 @@ BOOL LMN_ATTR_IS_EX(LmnLinkAttr ATTR);
  * @memberof LmnFunctor
  */
 BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC);
-
-/**
- * @brief link attributes of primitive data type
- *
- * low 7 bits of link attribute <br>
- * ハイパーリンクアトム (⊂ extended atom ⊂ data atom ⊂ unary) <br>
- * ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意
- */
-enum LmnLinkAttribute {
-  LMN_INT_ATTR = LMN_ATTR_FLAG | 0x00U,     /**< integer literal */
-  LMN_DBL_ATTR = LMN_ATTR_FLAG | 0x01U,     /**< double literal */
-  LMN_SP_ATOM_ATTR = LMN_ATTR_FLAG | 0x03U, /**< special atom */
-  LMN_STRING_ATTR = LMN_SP_ATOM_ATTR,       /**< string literal */
-  LMN_CONST_STR_ATTR =
-      LMN_ATTR_FLAG | 0x04U, /**< @deprecated constant string literal */
-  LMN_CONST_DBL_ATTR =
-      LMN_ATTR_FLAG | 0x05U, /**< @deprecated constant double literal */
-  LMN_HL_ATTR = LMN_ATTR_FLAG | 0x0aU /**< exclamation atom */
-};
 
 /**
  * @brief create a new symbol atom.
@@ -382,7 +383,7 @@ BOOL lmn_eq_func(LmnAtomRef atom0, LmnLinkAttr attr0, LmnAtomRef atom1,
  * on its user callback.
  */
 BOOL lmn_data_atom_is_ground(LmnDataAtomRef atom, LmnLinkAttr attr,
-                             ProcessTableRef *hlinks);
+                             ProcessTbl **hlinks);
 /**
  * @brief check whether two data atoms equal.
  * @memberof LmnDataAtom

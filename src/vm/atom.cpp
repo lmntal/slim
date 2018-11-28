@@ -39,6 +39,8 @@
 #include "atom.h"
 #include <stddef.h>
 
+#include "hyperlink.h"
+
 struct LmnAtomData {
   LmnSymbolAtomRef prev;
   LmnSymbolAtomRef next;

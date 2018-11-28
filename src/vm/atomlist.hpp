@@ -42,8 +42,10 @@
 #include <iterator>
 
 struct SimpleHashtbl;
-LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst);
-LmnSymbolAtomRef lmn_atomlist_end(AtomListEntryRef lst);
+struct AtomListEntry;
+
+LmnSymbolAtomRef atomlist_head(AtomListEntry *lst);
+LmnSymbolAtomRef lmn_atomlist_end(AtomListEntry *lst);
 
 struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
@@ -119,6 +121,12 @@ struct AtomListEntry {
     const AtomListEntry *a_ent;
 
   public:
+    using difference_type = intptr_t;
+    using value_type = LmnSymbolAtomRef;
+    using pointer = LmnSymbolAtomRef *;
+    using reference = LmnSymbolAtomRef &;
+    using iterator_category = typename std::bidirectional_iterator_tag;
+
     const_iterator(const AtomListEntry *ent, LmnSymbolAtomRef index) {
       a_ent = ent;
       a_index = index;
@@ -129,27 +137,72 @@ struct AtomListEntry {
       return *this;
     };
     const_iterator operator++(int) {
-      const_iterator ret = *this;
-      a_index = LMN_SATOM_GET_NEXT_RAW(a_index);
+      auto ret = *this;
+      ++ret;
       return ret;
     };
-    LmnSymbolAtomRef operator*() { return this->a_index; };
-    bool operator!=(const const_iterator &itr) {
+    const_iterator operator--() {
+      a_index = LMN_SATOM_GET_PREV(a_index);
+      return *this;
+    }
+    const_iterator operator--(int i) {
+      auto ret = *this;
+      ++ret;
+      return ret;
+    }
+    LmnSymbolAtomRef &operator*() { return this->a_index; };
+    const LmnSymbolAtomRef &operator*() const { return this->a_index; };
+
+    bool operator!=(const const_iterator &itr) const {
       return this->a_ent != itr.a_ent || this->a_index != itr.a_index;
     };
-    bool operator==(const const_iterator &itr) { return !(*this != itr); };
+    bool operator==(const const_iterator &itr) const {
+      return !(*this != itr);
+    };
   };
   const_iterator begin() const { return const_iterator(this, head); }
   const_iterator end() const {
     return const_iterator(this, reinterpret_cast<LmnSymbolAtomRef>(
                                     const_cast<AtomListEntry *>(this)));
   }
+
+  const_iterator insert(int findatomid, LmnSymbolAtomRef record) {
+    hashtbl_put(this->record, findatomid, (HashKeyType)record);
+    auto start_atom = atomlist_head(this);
+    /* 履歴アトムを挿入する */
+    LMN_SATOM_SET_NEXT((LmnSymbolAtomRef)this, record);
+    LMN_SATOM_SET_PREV(record, (LmnSymbolAtomRef)this);
+    LMN_SATOM_SET_NEXT(record, start_atom);
+    LMN_SATOM_SET_PREV(start_atom, record);
+    return const_iterator(this, record);
+  }
+
+  const_iterator find_record(int findatomid) {
+    if (this->record) {
+      return const_iterator(this, (LmnSymbolAtomRef)hashtbl_get_default(
+                                      this->record, findatomid, 0));
+    } else {
+      this->record = hashtbl_make(4);
+      return end();
+    }
+  }
+
+  void splice(const_iterator position, AtomListEntry &x, const_iterator i) {
+    LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(*i), LMN_SATOM_GET_PREV(*i));
+    LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(*i), LMN_SATOM_GET_NEXT_RAW(*i));
+
+    auto next = std::next(position, 1);
+    LMN_SATOM_SET_NEXT(*position, *i);
+    LMN_SATOM_SET_PREV(*i, *position);
+    LMN_SATOM_SET_NEXT(*i, *next);
+    LMN_SATOM_SET_PREV(*next, *i);
+  }
 };
 
-void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem);
-void move_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem);
+void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembrane *mem);
+void move_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembrane *mem);
 void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
-                            LmnMembraneRef mem);
+                            LmnMembrane *mem);
 
 #define EACH_ATOMLIST_WITH_FUNC(MEM, ENT, F, CODE)                             \
   do {                                                                         \

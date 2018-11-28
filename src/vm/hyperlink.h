@@ -50,6 +50,9 @@
 
 struct HyperLink;
 
+#include <limits>
+
+#include "atom.h"
 #include "element/element.h"
 #include "functor.h"
 #include "membrane.h"
@@ -138,45 +141,161 @@ void lmn_hyperlink_print(LmnMembraneRef gr);
  * ----------------------------------------------------------------------- */
 
 /* 同名型付きプロセス文脈を持つ引数ごとに生成される */
-typedef struct ProcCxt {
+struct ProcCxt {
+  ProcCxt(int atomi, int arg, ProcCxt *original)
+      : atomi(atomi), arg(arg), start(nullptr), original_(original) {}
+  ProcCxt(int atomi, int arg)
+      : atomi(atomi), arg(arg), start(nullptr), original_(nullptr) {}
+
+  bool is_clone() const { return original_ && original_->atomi != atomi; }
+
+  bool is_argument_of(LmnSymbolAtomRef atom, int i) {
+    auto linked_attr = LMN_SATOM_GET_ATTR(atom, i);
+    if (!LMN_ATTR_IS_HL(linked_attr))
+      return false;
+
+    auto linked_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
+    auto linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
+
+    if (original_ && !lmn_hyperlink_eq_hl(linked_hl, original_->start))
+      return false;
+
+    return true;
+  }
+
+  void match(LmnSymbolAtomRef atom, int i) {
+    auto linked_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
+    auto linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
+    start = linked_hl;
+  }
+
+  ProcCxt *original() { return original_; }
+
+  HyperLink *start;
+
+private:
   int atomi;
   int arg;
-  HyperLink *start;
-  struct ProcCxt *original;
-} ProcCxt;
-
-#define LMN_PC_ATOMI(PC) ((PC)->atomi)
-#define LMN_PC_START(PC) ((PC)->start)
-#define LMN_PC_ORI(PC) ((PC)->original)
-#define LMN_PC_IS_ORI(PC) (LMN_PC_ORI(PC) == NULL)
+  ProcCxt *original_;
+};
 
 /* 同名型付きプロセス文脈を持つアトムごとに生成される */
-typedef struct SameProcCxt {
-  int atomi;       /* findatom の結果を格納するwt[atomi] のatomi */
-  int length;      /* wt[atomi] に格納するアトムのarity */
-  void **proccxts; /* 長さlength のProcCxt 配列 */
+struct SameProcCxt {
+
+  SameProcCxt(int length) : start_attr(0), proccxts(length) {}
+
+  ~SameProcCxt() {
+    for (auto pc : proccxts)
+      delete pc;
+  }
+
+  void add_proccxt_if_absent(int atomi, int arg) {
+    if (!proccxts[arg]) {
+      proccxts[arg] = new ProcCxt(atomi, arg, nullptr);
+    }
+  }
+
+  void add_proccxt_if_absent(int atomi, int arg, const SameProcCxt &spc,
+                             int arg2) {
+    if (!proccxts[arg]) {
+      proccxts[arg] = new ProcCxt(atomi, arg, spc.proccxts[arg2]);
+    }
+  }
+
+  // いい名前が見つかったら変える
+  bool is_clone(int n) {
+    for (int i = 0; i < n; i++) {
+      auto pc = proccxts[i];
+      if (pc && pc->is_clone()) { /* clone proccxtを持つ */
+        return true;              /* hyperlinkからfindatomを行なう */
+      }
+    }
+
+    return false;
+  }
+
+  /** 探索の始点となる引数を決定する
+   * 候補が複数ある場合は、もっとも選択肢の少ない(element_numが小さい)hyperlinkがマッチする引数を探索の始点とする
+   */
+  HyperLink *start() {
+    HyperLink *start_hl = NULL;
+    int element_num = std::numeric_limits<int>::max();
+    int start_arity = 0;
+
+    /* バックトラックしてきた場合はspc->treeの中身は初期化されていないため、ここで初期化
+     */
+    this->tree.clear();
+
+    for (int i = 0; i < proccxts.size(); i++) {
+      auto pc = this->proccxts[i];
+
+      if (!pc)
+        continue;
+      if (!pc->original())
+        continue;
+
+      auto hl = pc->original()->start;
+      pc->start = hl;
+      //      /* オリジナル側で探索始点のハイパーリンクが指定されていない
+      //       *
+      //       または探索始点のハイパーリンクの要素数が0（どちらも起こり得ないはず）*/
+      //      if (!hl) return FALSE;
+      //      if (!(element_num = lmn_hyperlink_element_num(hl))) return
+      //      FALSE;
+
+      int tmp_num = lmn_hyperlink_element_num(hl);
+      if (element_num > tmp_num) {
+        element_num = tmp_num;
+        start_hl = hl;
+        start_arity = i;
+      }
+    }
+
+    this->start_attr = start_arity;
+    return start_hl;
+  }
+
+  /* オリジナル側のatom が持つ全ての引数に対して以下の処理を行なう
+   * a. 通常の引数
+   *   何もしない
+   * b. 同名型付きプロセス文脈を持つ引数
+   *   clone側での探索の始点となるhyperlinkをspcに保持させる
+   */
+
+  /* clone側のatomが持つ全ての引数に対して以下の処理を行なう
+   * a. 通常の引数
+   *   何もしない
+   * b. 同名型付きプロセス文脈を持つ引数
+   *   b-1. original側の引数である場合
+   *     clone側での探索の始点となるhyperlinkをspcに保持させる
+   *   b-2. clone側の引数である場合
+   *     original側で探索の始点として指定されていたhyperlinkに対応していることを確認する
+   */
+
+  bool is_consistent_with(LmnSymbolAtomRef atom) {
+    for (int i = 0; i < proccxts.size(); i++) {
+      if (proccxts[i] && !proccxts[i]->is_argument_of(atom, i))
+        return false;
+    }
+
+    return true;
+  }
+
+  void match(LmnSymbolAtomRef atom) {
+    for (int i = 0; i < proccxts.size(); i++)
+      if (proccxts[i])
+        proccxts[i]->match(atom, i);
+  }
+
+  std::vector<ProcCxt *> proccxts; /* 長さlength のProcCxt 配列 */
 
   /* findatom 内で使用される一時領域 */
-  Vector *tree; /* HyperLink tree */
+  std::vector<HyperLink *> tree; /* HyperLink tree */
   LmnLinkAttr start_attr;
-
-} SameProcCxt;
-
-#define LMN_SPC_TREE(SPC) ((SPC)->tree)
-#define LMN_SPC_SATTR(SPC) ((SPC)->start_attr)
-#define LMN_SPC_PC(SPC, I) ((SPC)->proccxts[(I)])
+};
 
 void lmn_sameproccxt_init(LmnReactCxtRef rc);
 void lmn_sameproccxt_clear(LmnReactCxtRef rc);
-SameProcCxt *lmn_sameproccxt_spc_make(int atomi, int length);
-ProcCxt *lmn_sameproccxt_pc_make(int atomi, int arg, ProcCxt *original);
-BOOL lmn_sameproccxt_from_clone(SameProcCxt *spc, int n);
-HyperLink *lmn_sameproccxt_start(SameProcCxt *spc, int atom_arity);
-BOOL lmn_sameproccxt_all_pc_check_original(SameProcCxt *spc,
-                                           LmnSymbolAtomRef atom,
-                                           int atom_arity);
-BOOL lmn_sameproccxt_all_pc_check_clone(SameProcCxt *spc, LmnSymbolAtomRef atom,
-                                        int atom_arity);
 void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl);
 
 /* ハイパーリンクhlのハッシュ値を返す. */
