@@ -234,6 +234,48 @@ void lmn_mem_relink_atom_args(LmnMembraneRef mem, LmnAtomRef atom0,
                               LmnLinkAttr attr0, int pos0, LmnAtomRef atom1,
                               LmnLinkAttr attr1, int pos1);
 
+namespace slim {
+namespace vm {
+struct membrane_iterator {
+  using difference_type = intptr_t;
+  using value_type = LmnMembrane;
+  using pointer = LmnMembrane *;
+  using reference = LmnMembrane &;
+  using iterator_category = typename std::input_iterator_tag;
+
+  membrane_iterator() : mem_(nullptr) {}
+  membrane_iterator(LmnMembrane *mem) : mem_(mem) {}
+  membrane_iterator(const membrane_iterator &i)
+      : mem_(i.mem_) {}
+
+  reference operator*() { return *mem_; }
+  membrane_iterator &operator++() {
+    mem_ = lmn_mem_next(mem_);
+    return *this;
+  }
+  pointer operator->() { return mem_; }
+  membrane_iterator operator++(int i_) {
+    auto i = *this;
+    ++i;
+    return i;
+  }
+
+  bool operator==(const membrane_iterator &i) const { return i.mem_ == mem_; }
+  bool operator!=(const membrane_iterator &i) const { return !(i == *this); }
+private:
+  LmnMembrane *mem_;
+};
+
+struct membrane_children {
+  LmnMembrane *mem;
+  membrane_children(LmnMembrane *mem) : mem(mem) {}
+  membrane_iterator begin() const { return membrane_iterator(lmn_mem_child_head(mem)); }
+  membrane_iterator end() const { return membrane_iterator(); }
+};
+
+} // namespace vm
+} // namespace slim
+
 /* @} */
 
 #endif /* LMN_MEMBRANE_H */
