@@ -74,22 +74,27 @@ void *normal_thread(void *arg) {
     EACH_ATOM_THREAD_OPT(
         atom, thread_data->atomlist_ent, thread_data->id, active_thread,
         thread_data->next_atom, ({
+          slim::vm::interpreter it(thread_data->rc, thread_data->rule,
+                                   thread_instr);
           thread_data->rc->reg(thread_data->atomi) = {
               (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
           if (rc_hlink_opt(thread_data->atomi, thread_data->rc)) {
             spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_data->rc),
                                              (HashKeyType)thread_data->atomi);
-            if (lmn_sameproccxt_all_pc_check_clone(
-                    spc,
-                    (LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi),
-                    thread_data->atom_arity) &&
-                interpret(thread_data->rc, thread_data->rule, thread_instr)) {
-              thread_data->judge = TRUE;
-              thread_data->profile->findatom_num++;
-              break;
+            if (spc->is_consistent_with((LmnSymbolAtomRef)thread_data->rc->wt(
+                    thread_data->atomi))) {
+              spc->match(
+                  (LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi));
+              if (it.interpret(thread_data->rc, thread_data->rule,
+                               thread_instr)) {
+                thread_data->judge = TRUE;
+                thread_data->profile->findatom_num++;
+                break;
+              }
             }
           } else {
-            if (interpret(thread_data->rc, thread_data->rule, thread_instr)) {
+            if (it.interpret(thread_data->rc, thread_data->rule,
+                             thread_instr)) {
               thread_data->judge = TRUE;
               thread_data->profile->findatom_num++;
               break;
@@ -123,8 +128,8 @@ void normal_parallel_init(void) {
   for (i = 0; i < lmn_env.core_num; i++) {
     thread_info[i] = LMN_MALLOC(arginfo);
     thread_info[i]->rc = new LmnReactCxt();
-    thread_info[i]->rc->warray_set(LmnRegisterArray(
-        thread_info[i]->rc->capacity()));
+    thread_info[i]->rc->warray_set(
+        LmnRegisterArray(thread_info[i]->rc->capacity()));
     RC_SET_HLINK_SPC(thread_info[i]->rc, NULL);
     thread_info[i]->register_size = LmnReactCxt::warray_DEF_SIZE;
     thread_info[i]->id = i;
