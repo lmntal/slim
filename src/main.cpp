@@ -737,6 +737,7 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
 }
 
 int main(int argc, char *argv[]) {
+  printf("%s(%d): \n", __func__, __LINE__);
   int optid;
   slim_init(&optid, argc, argv);
 
