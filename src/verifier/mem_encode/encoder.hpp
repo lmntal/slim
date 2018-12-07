@@ -411,7 +411,7 @@ struct encoder {
     e.dump_mem_atoms(mem, *bsp, visitlog); /* 1. アトムから */
     e.dump_mems(mem, *bsp, visitlog);      /* 2. 子膜から */
     e.write_rulesets(mem, *bsp);           /* 3. 最後にルール */
-
+    
     return e.binary_string();
   }
 

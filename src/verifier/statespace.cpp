@@ -832,6 +832,7 @@ static State *statetable_insert(StateTable *st, State *ins)
     /* case: empty bucket */
     if (!str) {
       /* strがNULL --> 即ち未使用バケットの場合 */
+      lmn_dump_mem_stdout(ins->state_mem());
       compress = statetable_compress_state(st, ins, compress);
       ENTER__CRITICAL_SECTION(st_ins_empty, st->lock, ewlock_acquire_write,
                               bucket, NULL, st->tbl[bucket]);

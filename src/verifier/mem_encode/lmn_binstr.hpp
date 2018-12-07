@@ -38,7 +38,7 @@
 #define SLIM_VERIFIER_MEM_ENCODE_LMN_BINSTR_HPP
 
 #include <cstdint>
-
+#include <iostream>
 typedef struct LmnBinStr *LmnBinStrRef;
 
 /* 最終的なエンコード結果を表すバイナリストリング */
@@ -49,6 +49,12 @@ struct LmnBinStr {
               */
   unsigned int len; /* 確保したbyte型の数(列の長さ) */
   uint8_t *v;          /* 1byte(8bit)の可変列へのポインタ */
+  void dump_binstr() {
+    for(int i=0; i<len; i++) {
+      printf("<%02x>", v[i]);
+    }
+    std::cout << std::endl;
+  }
 };
 
 #endif /* SLIM_VERIFIER_MEM_ENCODE_BINSTR_HPP */

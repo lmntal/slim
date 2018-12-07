@@ -357,6 +357,9 @@ struct State {                /* Total:72(36)byte */
       ret = this->state_binstr();
     } else if (this->state_mem()) {
       ret = lmn_mem_to_binstr(this->state_mem());
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      ret->dump_binstr();
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       if (this->s_is_d() && this->state_D_ref()) {
         LmnBinStrRef dif;
         dif = state_binstr_D_compress(ret, this->state_D_ref());
