@@ -306,6 +306,7 @@ void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body) {
     if (!body->isPushedIntoGoAheadStack) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       stack->push(body);
+      debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
       body->isPushedIntoGoAheadStack = TRUE;
     }
   }
@@ -600,12 +601,15 @@ void addInheritedVerticesToTrie(
   if (!addedVertices->empty()) {
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, trie->body);
   }
-
+  debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
   while (!addedVertices->empty()) {
+    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     ConvertedGraphVertex *targetCVertex =
         popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
+    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     trie->body->inheritedVertices->push_front(
         InheritedVertex(targetCVertex, gapOfGlobalRootMemID));
+    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     InheritedVertex *targetIVertex = &slim::element::get<InheritedVertex>(
         trie->body->inheritedVertices->front());
     debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
