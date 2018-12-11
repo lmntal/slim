@@ -2,10 +2,10 @@
 
 {module(mesh).
 
-//Ret=mesh.new(N):-Ret=neu(N).
-
+Ret=mesh.new(N):-Ret=neu(N).
 Ret=neu(N):-Ret=new(N).
 
+/*
 Ret=mesh.new(NMAX,MMAX):-int(NMAX),int(MMAX)|
 Ret=U0,'.'(L0),meshd(D0,NMAX,MMAX,1,0),meshr(R0,NMAX,MMAX,0,1),'.'(U0,L0,D0,R0).
 
@@ -32,5 +32,5 @@ meshd(D,NMD,MMD,ND,MD),meshr(R,NMR,MMR,NR,MR):-ND=:=NR,MD=:=MR,MInc=MR+1,ND=:=NM
 
 meshd(D,NMD,MMD,ND,MD),meshr(R,NMR,MMR,NR,MR):-int(NMR),int(MMR),ND=:=NR,MD=:=MR,ND=:=NMD-1,MD=:=MMD-1|
 '.'(D,R,DG,RG),'.'(DG),'.'(RG).
-
+*/
 }
