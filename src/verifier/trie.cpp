@@ -606,6 +606,9 @@ void addInheritedVerticesToTrie(
     debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     ConvertedGraphVertex *targetCVertex =
         popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
+    trie->body->inheritedVertices->push_front(CLASS_SENTINEL);
+    debug_log << trie->body->inheritedVertices << std::endl;
+    debug_log << *(trie->body->inheritedVertices) << std::endl;
     debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     trie->body->inheritedVertices->push_front(
         InheritedVertex(targetCVertex, gapOfGlobalRootMemID));

@@ -116,13 +116,15 @@ struct InheritedVertex {
     isPushedIntoFixCreditIndex = false;
     beforeID = cVertex->ID - gapOfGlobalRootMemID;
     cVertex->correspondingVertexInTrie = this;
+    printf("%s:%d:this=%p\n", __FUNCTION__, __LINE__, this);
     ownerNode = NULL;
     ownerList = nullptr;
     conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
   };
-
+ 
   InheritedVertex(const InheritedVertex &iVertex) {
+    printf("%s:%d:iVertex=%p\n", __FUNCTION__, __LINE__, &iVertex);
     this->type = iVertex.type;
     strcpy(this->name, iVertex.name);
     this->canonicalLabel = iVertex.canonicalLabel;
@@ -136,12 +138,17 @@ struct InheritedVertex {
         new std::vector<int>(iVertex.conventionalPropagationMemo->begin(),
                              iVertex.conventionalPropagationMemo->end());
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
+    printf("%s:%d:this=%p\n", __FUNCTION__, __LINE__, this);
   }
 
   ~InheritedVertex() {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (hashString);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (conventionalPropagationMemo);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     freeDisjointSetForest(equivalenceClassOfIsomorphism);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };
 
