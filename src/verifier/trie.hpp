@@ -28,6 +28,16 @@ struct HashString {
     body = new std::vector<uint32_t *>();
   }
 
+  HashString(const HashString &h) {
+    this->creditIndex = h.creditIndex;
+    this->body = new std::vector<uint32_t *>();
+    for (auto v = h.body->begin(); v!=h.body->end(); ++v) {
+      uint32_t *x = new uint32_t;
+      *x = **v;
+      this->body->push_back(x);
+    }
+  }
+
   ~HashString() {
     for (auto v : *this->body)
       free(v);
@@ -121,12 +131,12 @@ struct InheritedVertex {
     conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
   };
-
+ 
   InheritedVertex(const InheritedVertex &iVertex) {
     this->type = iVertex.type;
     strcpy(this->name, iVertex.name);
     this->canonicalLabel = iVertex.canonicalLabel;
-    this->hashString = iVertex.hashString;
+    this->hashString = new HashString(*iVertex.hashString);
     this->isPushedIntoFixCreditIndex = iVertex.isPushedIntoFixCreditIndex;
     this->beforeID = iVertex.beforeID;
     this->ownerNode = iVertex.ownerNode;
