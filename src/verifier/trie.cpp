@@ -1454,10 +1454,11 @@ void Trie::dump() {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
   terminationConditionInfoDump(this->info);
-
-  std::cout << this->body;
-  std::cout << *this->body->children << std::endl;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << *(this->body);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << *(this->body->children) << std::endl;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   makeTerminationConditionMemo(this, distributionMemo, increaseMemo);
 
   if (*distributionMemo != *info->distribution ||
