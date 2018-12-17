@@ -28,6 +28,16 @@ struct HashString {
     body = new std::vector<uint32_t *>();
   }
 
+  HashString(const HashString &h) {
+    this->creditIndex = h.creditIndex;
+    this->body = new std::vector<uint32_t *>();
+    for (auto v = h.body->begin(); v!=h.body->end(); ++v) {
+      uint32_t *x = new uint32_t;
+      *x = **v;
+      this->body->push_back(x);
+    }
+  }
+
   ~HashString() {
     for (auto v : *this->body)
       free(v);
@@ -116,7 +126,6 @@ struct InheritedVertex {
     isPushedIntoFixCreditIndex = false;
     beforeID = cVertex->ID - gapOfGlobalRootMemID;
     cVertex->correspondingVertexInTrie = this;
-    printf("%s:%d:this=%p\n", __FUNCTION__, __LINE__, this);
     ownerNode = NULL;
     ownerList = nullptr;
     conventionalPropagationMemo = new std::vector<int>();
@@ -124,11 +133,10 @@ struct InheritedVertex {
   };
  
   InheritedVertex(const InheritedVertex &iVertex) {
-    printf("%s:%d:iVertex=%p\n", __FUNCTION__, __LINE__, &iVertex);
     this->type = iVertex.type;
     strcpy(this->name, iVertex.name);
     this->canonicalLabel = iVertex.canonicalLabel;
-    this->hashString = iVertex.hashString;
+    this->hashString = new HashString(*iVertex.hashString);
     this->isPushedIntoFixCreditIndex = iVertex.isPushedIntoFixCreditIndex;
     this->beforeID = iVertex.beforeID;
     this->ownerNode = iVertex.ownerNode;
@@ -138,17 +146,12 @@ struct InheritedVertex {
         new std::vector<int>(iVertex.conventionalPropagationMemo->begin(),
                              iVertex.conventionalPropagationMemo->end());
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
-    printf("%s:%d:this=%p\n", __FUNCTION__, __LINE__, this);
   }
 
   ~InheritedVertex() {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (hashString);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (conventionalPropagationMemo);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     freeDisjointSetForest(equivalenceClassOfIsomorphism);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };
 

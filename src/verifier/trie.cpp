@@ -601,30 +601,19 @@ void addInheritedVerticesToTrie(
   if (!addedVertices->empty()) {
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, trie->body);
   }
-  debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
   while (!addedVertices->empty()) {
-    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     ConvertedGraphVertex *targetCVertex =
         popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
-    trie->body->inheritedVertices->push_front(CLASS_SENTINEL);
-    debug_log << trie->body->inheritedVertices << std::endl;
-    debug_log << *(trie->body->inheritedVertices) << std::endl;
-    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     trie->body->inheritedVertices->push_front(
         InheritedVertex(targetCVertex, gapOfGlobalRootMemID));
-    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
     InheritedVertex *targetIVertex = &slim::element::get<InheritedVertex>(
         trie->body->inheritedVertices->front());
-    debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-    debug_log << targetCVertex << std::endl;
-    // std::cout << (*targetCVertex);
     targetCVertex->correspondingVertexInTrie = targetIVertex;
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
     targetCVertex->isVisitedInBFS = TRUE;
     initializeConvertedVerticesStack->push_back(targetCVertex);
   }
-  std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
   std::cout << *(trie->body->inheritedVertices) << std::endl;
 
   return;
