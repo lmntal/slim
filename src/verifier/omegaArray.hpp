@@ -38,12 +38,14 @@ inline c17::variant<int, c17::monostate> maxIndex(const OmegaArray &body) {
 
 inline std::ostream &operator<<(std::ostream &os, OmegaArray &body) {
   os << "[";
+  if(body.begin()!=body.end()) {
+    for (auto it = body.begin(); it != std::prev(body.end()); ++it) {
+      os << it->second << ",";
+    }
+    os << " 0, 0, 0,...," << std::prev(body.end())->second << "]";
+  } else
+    os << " 0, 0, 0,...,0" << "]";
 
-  for (auto it = body.begin(); it != std::prev(body.end()); ++it) {
-    os << it->second << ",";
-  }
-
-  os << " 0, 0, 0,...," << std::prev(body.end())->second << "]";
 
   return os;
 }
