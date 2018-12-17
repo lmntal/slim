@@ -653,7 +653,15 @@ Bool isDescreteTrie(S *goAheadStack, TerminationConditionInfo *tInfo,
 }
 
 Bool isRefinedTrie(TerminationConditionInfo *tInfo, int step) {
-  return tInfo->increase->at(step) != 0;
+  printf("%s:%d:step=%d\n", __FUNCTION__, __LINE__, step);
+  int v;
+  try {
+    v = tInfo->increase->at(step);
+  }
+  catch(std::out_of_range&) {
+    v = 0;
+  }
+  return v != 0;
 }
 
 template <typename S>
