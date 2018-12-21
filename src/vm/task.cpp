@@ -39,6 +39,8 @@
 #include "task.h"
 #include "ccallback.h"
 #include "dumper.h"
+#include "interpret/false_driven_enumerator.hpp"
+#include "interpret/interpreter.hpp"
 #include "memstack.h"
 #include "normal_thread.h"
 #include "special_atom.h"
@@ -643,77 +645,6 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
   return retset;
 }
 
-template <typename InputIterator, typename value_type>
-struct false_driven_enumerator_impl;
-
-template <typename InputIterator>
-struct false_driven_enumerator_impl<InputIterator, LmnRegister> {
-  size_t reg_idx;
-  InputIterator begin;
-  InputIterator end;
-  LmnRuleInstr instr;
-  slim::vm::interpreter &interpreter;
-
-  false_driven_enumerator_impl(slim::vm::interpreter &interpreter,
-                               LmnRuleInstr instr, size_t reg_idx,
-                               InputIterator begin, InputIterator end)
-      : interpreter(interpreter), instr(instr), reg_idx(reg_idx), begin(begin),
-        end(end) {}
-
-  bool operator()(bool result) {
-    if (result)
-      return true;
-    if (begin == end)
-      return false;
-    interpreter.instr = instr;
-    interpreter.rc->reg(reg_idx) = *(begin++);
-    interpreter.push_stackframe(
-        false_driven_enumerator_impl(interpreter, instr, reg_idx, begin, end));
-    return interpreter.run();
-  }
-};
-
-template <typename InputIterator>
-struct false_driven_enumerator_impl<InputIterator,
-                                    std::function<LmnRegister(void)>> {
-  size_t reg_idx;
-  InputIterator begin;
-  InputIterator end;
-  LmnRuleInstr instr;
-  slim::vm::interpreter &interpreter;
-
-  false_driven_enumerator_impl(slim::vm::interpreter &interpreter,
-                               LmnRuleInstr instr, size_t reg_idx,
-                               InputIterator begin, InputIterator end)
-      : interpreter(interpreter), instr(instr), reg_idx(reg_idx), begin(begin),
-        end(end) {}
-
-  bool operator()(bool result) {
-    if (result)
-      return true;
-    if (begin == end)
-      return false;
-    interpreter.instr = instr;
-    interpreter.rc->reg(reg_idx) = (*(begin++))();
-    interpreter.push_stackframe(
-        false_driven_enumerator_impl(interpreter, instr, reg_idx, begin, end));
-    return interpreter.run();
-  }
-};
-
-template <typename Iterator>
-using false_driven_enumerator =
-    false_driven_enumerator_impl<Iterator, typename Iterator::value_type>;
-
-template <typename InputIterator, typename... Args>
-false_driven_enumerator<InputIterator>
-make_false_driven_enumerator(slim::vm::interpreter &iter, LmnRuleInstr instr,
-                             size_t reg_idx, InputIterator begin,
-                             InputIterator end) {
-  return false_driven_enumerator<InputIterator>(iter, instr, reg_idx, begin,
-                                                end);
-}
-
 bool slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
                                      LmnRuleInstr instr, LmnMembrane *mem,
                                      LmnFunctor f, size_t reg) {
@@ -727,17 +658,13 @@ bool slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   if (iter == end)
     return false;
 
-  auto v = new std::vector<LmnRegister>();
-  std::transform(iter, end, std::back_inserter(*v), [](LmnSymbolAtomRef atom) {
+  auto v = std::vector<LmnRegister>();
+  std::transform(iter, end, std::back_inserter(v), [](LmnSymbolAtomRef atom) {
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
-  this->push_stackframe([=](bool result) {
-    delete v;
-    return result;
-  });
   this->push_stackframe(
-      make_false_driven_enumerator(*this, instr, reg, v->begin(), v->end()));
+      make_false_driven_enumerator(*this, instr, reg, std::move(v)));
 
   return false;
 }
@@ -756,9 +683,9 @@ bool slim::vm::interpreter::findatom_original_hyperlink(
       [=](LmnSymbolAtomRef atom) {
         return !spc->is_consistent_with((LmnSymbolAtomRef)atom);
       });
-  auto v = new std::vector<std::function<LmnRegister(void)>>();
+  auto v = std::vector<std::function<LmnRegister(void)>>();
   std::transform(
-      filtered.begin(), filtered.end(), std::back_inserter(*v),
+      filtered.begin(), filtered.end(), std::back_inserter(v),
       [=](LmnSymbolAtomRef atom) {
         return [=]() {
           spc->match(atom);
@@ -766,12 +693,8 @@ bool slim::vm::interpreter::findatom_original_hyperlink(
         };
       });
 
-  this->push_stackframe([=](bool result) {
-    delete v;
-    return result;
-  });
   this->push_stackframe(
-      make_false_driven_enumerator(*this, instr, reg, v->begin(), v->end()));
+      make_false_driven_enumerator(*this, instr, reg, std::move(v)));
 
   return false;
 }
@@ -824,9 +747,9 @@ bool slim::vm::interpreter::findatom_clone_hyperlink(
                LMN_HL_MEM(lmn_hyperlink_at_to_hl(linked_pc)) != mem ||
                !spc->is_consistent_with(hl_atom);
       });
-  auto v = new std::vector<std::function<LmnRegister(void)>>();
+  std::vector<std::function<LmnRegister(void)>> v;
   std::transform(
-      filtered.begin(), filtered.end(), std::back_inserter(*v),
+      filtered.begin(), filtered.end(), std::back_inserter(v),
       [=](HyperLink *h) {
         return [=]() {
           auto atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(h->atom, 0);
@@ -835,12 +758,8 @@ bool slim::vm::interpreter::findatom_clone_hyperlink(
         };
       });
 
-  this->push_stackframe([=](bool result) {
-    delete v;
-    return result;
-  });
   this->push_stackframe(
-      make_false_driven_enumerator(*this, instr, reg, v->begin(), v->end()));
+      make_false_driven_enumerator(*this, instr, reg, std::move(v)));
 
   return false;
 }
@@ -1376,9 +1295,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           [=](const AtomListEntry::const_iterator &atom) {
             return LMN_SATOM_GET_FUNCTOR(*atom) == LMN_RESUME_FUNCTOR;
           });
-      auto candidates = new std::vector<std::function<LmnRegister(void)>>;
+      std::vector<std::function<LmnRegister(void)>> candidates;
       std::transform(
-          filtered.begin(), filtered.end(), std::back_inserter(*candidates),
+          filtered.begin(), filtered.end(), std::back_inserter(candidates),
           [=](const AtomListEntry::const_iterator &it) {
             return [=]() {
               atomlist_ent->splice(std::prev(it, 1), *atomlist_ent, record);
@@ -1387,30 +1306,22 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             };
           });
 
-      this->push_stackframe([=](bool result) {
-        delete candidates;
-        return result;
-      });
       this->push_stackframe(make_false_driven_enumerator(
-          *this, instr, atomi, candidates->begin(), candidates->end()));
+          *this, instr, atomi, std::move(candidates)));
 
       /* 現在のfindatom2の実装にはバグがある（cf.
        * 言語班Wikifindatom2議論）。
        * バグを回避するために、履歴アトムの後ろのアトムすべてからのマッチングに失敗した場合、
        * 履歴アトムの前のアトムに対してマッチングを試みる */
-      auto v = new std::vector<LmnRegister>();
+      auto v = std::vector<LmnRegister>();
       std::transform(
-          atomlist_ent->begin(), start_atom, std::back_inserter(*v),
+          atomlist_ent->begin(), start_atom, std::back_inserter(v),
           [=](LmnSymbolAtomRef atom) {
             return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
           });
 
-      this->push_stackframe([=](bool result) {
-        delete v;
-        return result;
-      });
-      this->push_stackframe(make_false_driven_enumerator(*this, instr, atomi,
-                                                         v->begin(), v->end()));
+      this->push_stackframe(
+          make_false_driven_enumerator(*this, instr, atomi, std::move(v)));
 
       return false;
     }
@@ -1469,7 +1380,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           rc->reg(atomi) = {(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
           if (rc_hlink_opt(atomi, rc)) {
             auto spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc),
-                                             (HashKeyType)atomi);
+                                                  (HashKeyType)atomi);
 
             if (spc->is_consistent_with((LmnSymbolAtomRef)rc->wt(atomi))) {
               spc->match((LmnSymbolAtomRef)rc->wt(atomi));
@@ -1577,16 +1488,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     auto filtered = slim::element::make_range_remove_if(
         children.begin(), children.end(),
         [=](LmnMembrane &m) { return LMN_MEM_NAME_ID(&m) != memn; });
-    auto v = new std::vector<LmnRegister>();
+    std::vector<LmnRegister> v;
     for (auto &m : filtered)
-      v->push_back(LmnRegister({(LmnWord)&m, 0, TT_MEM}));
+      v.push_back(LmnRegister({(LmnWord)&m, 0, TT_MEM}));
 
-    this->push_stackframe([=](bool result) {
-      delete v;
-      return result;
-    });
     this->push_stackframe(
-        make_false_driven_enumerator(*this, instr, mem1, v->begin(), v->end()));
+        make_false_driven_enumerator(*this, instr, mem1, std::move(v)));
     return false;
   }
   case INSTR_NMEMS: {
@@ -2201,8 +2108,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       } else {
         HyperLink *hl = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)hlAtom);
         auto v = lmn_hyperlink_get_elements(hl);
-        auto regs = new std::vector<LmnRegister>(v.size());
-        std::transform(v.begin(), v.end(), std::back_inserter(*regs),
+        auto regs = std::vector<LmnRegister>();
+        std::transform(v.begin(), v.end(), std::back_inserter(regs),
                        [](HyperLink *h) -> LmnRegister {
                          auto child_hlAtom = h->atom;
                          auto linked_atom = LMN_SATOM_GET_LINK(child_hlAtom, 0);
@@ -2210,12 +2117,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                                  LMN_SATOM_GET_ATTR(child_hlAtom, 0), TT_ATOM};
                        });
 
-        this->push_stackframe([=](bool result) {
-          delete regs;
-          return result;
-        });
-        this->push_stackframe(make_false_driven_enumerator(
-            *this, instr, linki, regs->begin(), regs->end()));
+        this->push_stackframe(
+            make_false_driven_enumerator(*this, instr, linki, std::move(regs)));
         return false;
       }
       break;
