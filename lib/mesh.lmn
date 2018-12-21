@@ -1,70 +1,71 @@
 /*mesh library*/
 
 {module(mesh).
+/* 
+test
+	Ret=mesh.new(X,Y):-Ret=newnew(X,Y).
+	Ret=mesh.newindex(X,Y):-Ret=newindexnexindex(X,Y).
+*/
 
-//new
-{'$callback'(zerostep).
-Ret=new(Imax,Jmax):-int(Imax),int(Jmax)|{meshnew.
-	Ret=mesh((Hne,Tne),(Hwe,Twe),(Hse,Tse),(Hee,Tee)),
-		Hne=[north(0,Imax,Jmax)|Tne],
-		Hwe=[west(0,Imax,Jmax)|Twe],
-		Hse=[south(0,Jmax)|Tse],
-		Hee=[east(0,Imax)|Tee].
+/*
+	{'$callback'(zerostep).
+	Ret=mesh.new(Imax,Jmax):-int(Imax),int(Jmax)|{meshnew.
+		Ret=mesh((Hne,Tne),(Hwe,Twe),(Hse,Tse),(Hee,Tee)),
+			Hne=[north(0,Imax,Jmax)|Tne],
+			Hwe=[west(0,Imax,Jmax)|Twe],
+			Hse=[south(0,Jmax)|Tse],
+			Hee=[east(0,Imax)|Tee].
+	
+		{'$callback'(zerostep).
+
+			Hne=[north(J,Imax,Jmax)|Tne]:-J+1<Jmax,Jinc=J+1,int(Imax)|Hne=[nij(0,J,Imax),north(Jinc,Imax,Jmax)|Tne].
+			Hne=[north(J,Imax,Jmax)|Tne]:-J+1>=Jmax|Hne=[nij(0,J,Imax)|Tne].
+			
+			Hwe=[west(I,Imax,Jmax)|Twe]:-I+1<Imax,Iinc=I+1,int(Jmax)|Hwe=[wij(I,0,Jmax),west(Iinc,Imax,Jmax)|Twe].
+			Hwe=[west(I,Imax,Jmax)|Twe]:-I+1>=Imax|Hwe=[wij(I,0,Jmax)|Twe].
+	
+			nij(In,Jn,Imax,Nij),wij(Iw,Jw,Jmax,Wij):-In=:=Iw,Jn=:=Jw,In<Imax,Jn<Jmax,Iinc=In+1,Jinc=Jn+1|
+			'.'(Nij,Wij,Sij,Eij),nij(Iinc,Jn,Imax,Sij),wij(Iw,Jinc,Jmax,Eij).
+			
+			nij(In,Jn,Imax,Nij),Hse=[south(J,Jmax)|Tse]:-In=:=Imax,Jn=J,J+1<Jmax,Jinc=J+1|Hse=[Nij,south(Jinc,Jmax)|Tse].
+			nij(In,Jn,Imax,Nij),Hse=[south(J,Jmax)|Tse]:-In=:=Imax,Jn=J,J+1>=Jmax,Jinc=J+1|Hse=[Nij|Tse].
+
+			wij(Iw,Jw,Jmax,Wij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1<Imax,Iinc=I+1|Hee=[Wij,east(Iinc,Imax)|Tee].
+			wij(Iw,Jw,Jmax,Wij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1>=Imax,Iinc=I+1|Hee=[Wij|Tee].
+		}.
+	}.
+
+	{meshnew,$p,@rule}/:-$p.
+	}.
+
 
 	{'$callback'(zerostep).
-		//north-edge
-		Hne=[north(J,Imax,Jmax)|Tne]:-J+1<Jmax,Jinc=J+1,int(Imax)|Hne=[nij(0,J,Imax),north(Jinc,Imax,Jmax)|Tne].
-		Hne=[north(J,Imax,Jmax)|Tne]:-J+1>=Jmax|Hne=[nij(0,J,Imax)|Tne].
-		//west-edge
-		Hwe=[west(I,Imax,Jmax)|Twe]:-I+1<Imax,Iinc=I+1,int(Jmax)|Hwe=[wij(I,0,Jmax),west(Iinc,Imax,Jmax)|Twe].
-		Hwe=[west(I,Imax,Jmax)|Twe]:-I+1>=Imax|Hwe=[wij(I,0,Jmax)|Twe].
+	Ret=mesh.newindex(Imax,Jmax):-int(Imax),int(Jmax)|{meshnewindex.
+		Ret=mesh((Hne,Tne),(Hwe,Twe),(Hse,Tse),(Hee,Tee)),
+			Hne=[north(0,Imax,Jmax)|Tne],
+			Hwe=[west(0,Imax,Jmax)|Twe],
+			Hse=[south(0,Jmax)|Tse],
+			Hee=[east(0,Imax)|Tee].
+	
+		{'$callback'(zerostep).
+			Hne=[north(J,Imax,Jmax)|Tne]:-J+1<Jmax,Jinc=J+1,int(Imax)|Hne=[nij(0,J,Imax),north(Jinc,Imax,Jmax)|Tne].
+			Hne=[north(J,Imax,Jmax)|Tne]:-J+1>=Jmax|Hne=[nij(0,J,Imax)|Tne].
+	
+			Hwe=[west(I,Imax,Jmax)|Twe]:-I+1<Imax,Iinc=I+1,int(Jmax)|Hwe=[wij(I,0,Jmax),west(Iinc,Imax,Jmax)|Twe].
+			Hwe=[west(I,Imax,Jmax)|Twe]:-I+1>=Imax|Hwe=[wij(I,0,Jmax)|Twe].
+	
+			nij(In,Jn,Imax,Nij),wij(Iw,Jw,Jmax,Wij):-In=:=Iw,Jn=:=Jw,In<Imax,Jn<Jmax,Iinc=In+1,Jinc=Jn+1|
+				'.'(Nij,Wij,Sij,Eij,In,Jn),nij(Iinc,Jn,Imax,Sij),wij(Iw,Jinc,Jmax,Eij).
+			
+			nij(In,Jn,Imax,Sij),Hse=[south(J,Jmax)|Tse]:-In=:=Imax,Jn=J,J+1<Jmax,Jinc=J+1|Hse=[Sij,south(Jinc,Jmax)|Tse].
+			nij(In,Jn,Imax,Sij),Hse=[south(J,Jmax)|Tse]:-In=:=Imax,Jn=J,J+1>=Jmax,Jinc=J+1|Hse=[Sij|Tse].
 
-		nij(In,Jn,Imax,Nij),wij(Iw,Jw,Jmax,Wij):-In=:=Iw,Jn=:=Jw,In<Imax,Jn<Jmax,Iinc=In+1,Jinc=Jn+1|
-		'.'(Nij,Wij,Sij,Eij),nij(Iinc,Jn,Imax,Sij),wij(Iw,Jinc,Jmax,Eij).
-		//south-edge
-		nij(In,Jn,Imax,Nij),Hse=[south(J,Jmax)|Tse]:-In=:=Imax,Jn=J,J+1<Jmax,Jinc=J+1|Hse=[Nij,south(Jinc,Jmax)|Tse].
-		nij(In,Jn,Imax,Nij),Hse=[south(J,Jmax)|Tse]:-In=:=Imax,Jn=J,J+1>=Jmax,Jinc=J+1|Hse=[Nij|Tse].
-		//east-edge
-		wij(Iw,Jw,Jmax,Wij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1<Imax,Iinc=I+1|Hee=[Wij,east(Iinc,Imax)|Tee].
-		wij(Iw,Jw,Jmax,Wij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1>=Imax,Iinc=I+1|Hee=[Wij|Tee].
+			wij(Iw,Jw,Jmax,Eij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1<Imax,Iinc=I+1|Hee=[Eij,east(Iinc,Imax)|Tee].
+			wij(Iw,Jw,Jmax,Eij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1>=Imax,Iinc=I+1|Hee=[Eij|Tee].
+		}.
 	}.
-}.
-
-{meshnew,$p,@rule}/:-$p.
-}.
-
-
-//newindex
-{'$callback'(zerostep).
-Ret=newindex(Imax,Jmax):-int(Imax),int(Jmax)|{meshnewindex.
-	Ret=mesh((Hne,Tne),(Hwe,Twe),(Hse,Tse),(Hee,Tee)),
-		Hne=[north(0,Imax,Jmax)|Tne],
-		Hwe=[west(0,Imax,Jmax)|Twe],
-		Hse=[south(0,Jmax)|Tse],
-		Hee=[east(0,Imax)|Tee].
-
-	{'$callback'(zerostep).
-		//north-edge
-		Hne=[north(J,Imax,Jmax)|Tne]:-J+1<Jmax,Jinc=J+1,int(Imax)|Hne=[nij(0,J,Imax),north(Jinc,Imax,Jmax)|Tne].
-		Hne=[north(J,Imax,Jmax)|Tne]:-J+1>=Jmax|Hne=[nij(0,J,Imax)|Tne].
-
-		//west-egde
-		Hwe=[west(I,Imax,Jmax)|Twe]:-I+1<Imax,Iinc=I+1,int(Jmax)|Hwe=[wij(I,0,Jmax),west(Iinc,Imax,Jmax)|Twe].
-		Hwe=[west(I,Imax,Jmax)|Twe]:-I+1>=Imax|Hwe=[wij(I,0,Jmax)|Twe].
-
-		nij(In,Jn,Imax,Nij),wij(Iw,Jw,Jmax,Wij):-In=:=Iw,Jn=:=Jw,In<Imax,Jn<Jmax,Iinc=In+1,Jinc=Jn+1|
-			'.'(Nij,Wij,Sij,Eij,In,Jn),nij(Iinc,Jn,Imax,Sij),wij(Iw,Jinc,Jmax,Eij).
-		
-		//south-edge
-		nij(In,Jn,Imax,Sij),Hse=[south(J,Jmax)|Tse]:-In=:=Imax,Jn=J,J+1<Jmax,Jinc=J+1|Hse=[Sij,south(Jinc,Jmax)|Tse].
-		nij(In,Jn,Imax,Sij),Hse=[south(J,Jmax)|Tse]:-In=:=Imax,Jn=J,J+1>=Jmax,Jinc=J+1|Hse=[Sij|Tse].
-
-		//east-edge
-		wij(Iw,Jw,Jmax,Eij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1<Imax,Iinc=I+1|Hee=[Eij,east(Iinc,Imax)|Tee].
-		wij(Iw,Jw,Jmax,Eij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1>=Imax,Iinc=I+1|Hee=[Eij|Tee].
+	
+	{meshnewindex,$p,@rule}/:-$p.
 	}.
+*/
 }.
-
-{meshnewindex,$p,@rule}/:-$p.
-}.
-
