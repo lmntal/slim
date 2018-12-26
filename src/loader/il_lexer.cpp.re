@@ -120,7 +120,7 @@ start:
     dstr = "\"" [^"]* "\"";
 
     "\x00" { return _EOF; }
-    blank+ { goto start; }
+    blank { goto start; }
 
     '-'?digit+ {
       string s = get_token();
