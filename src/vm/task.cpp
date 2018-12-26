@@ -645,18 +645,18 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
   return retset;
 }
 
-bool slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
+void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
                                      LmnRuleInstr instr, LmnMembrane *mem,
                                      LmnFunctor f, size_t reg) {
   auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
 
   if (!atomlist_ent)
-    return false;
+    return;
 
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end)
-    return false;
+    return;
 
   auto v = std::vector<LmnRegister>();
   std::transform(iter, end, std::back_inserter(v), [](LmnSymbolAtomRef atom) {
@@ -665,18 +665,16 @@ bool slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 
   this->push_stackframe(
       make_false_driven_enumerator(*this, instr, reg, std::move(v)));
-
-  return false;
 }
 
 /** find atom with a hyperlink occurred in the current rule for the first time.
  */
-bool slim::vm::interpreter::findatom_original_hyperlink(
+void slim::vm::interpreter::findatom_original_hyperlink(
     LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr, SameProcCxt *spc,
     LmnMembrane *mem, LmnFunctor f, size_t reg) {
   auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
   if (!atomlist_ent)
-    return false;
+    return;
 
   auto filtered = slim::element::make_range_remove_if(
       std::begin(*atomlist_ent), std::end(*atomlist_ent),
@@ -695,8 +693,6 @@ bool slim::vm::interpreter::findatom_original_hyperlink(
 
   this->push_stackframe(
       make_false_driven_enumerator(*this, instr, reg, std::move(v)));
-
-  return false;
 }
 
 void lmn_hyperlink_get_elements(std::vector<HyperLink *> &tree,
@@ -710,7 +706,7 @@ void lmn_hyperlink_get_elements(std::vector<HyperLink *> &tree,
 }
 
 /** find atom with a hyperlink occurred again in the current rule. */
-bool slim::vm::interpreter::findatom_clone_hyperlink(
+void slim::vm::interpreter::findatom_clone_hyperlink(
     LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr, SameProcCxt *spc,
     LmnMembrane *mem, LmnFunctor f, size_t reg) {
   /* 探索の始点となるhyperlinkと同じ集合に含まれるhyperlink群を
@@ -721,7 +717,7 @@ bool slim::vm::interpreter::findatom_clone_hyperlink(
   lmn_hyperlink_get_elements(spc->tree, h);
   auto element_num = spc->tree.size() - 1;
   if (element_num <= 0)
-    return false;
+    return;
 
   std::vector<HyperLink *> children;
   for (int i = 0; i < element_num; i++)
@@ -732,7 +728,7 @@ bool slim::vm::interpreter::findatom_clone_hyperlink(
    * ---------------------------------------------------------- */
 
   if (!lmn_mem_get_atomlist(mem, LMN_HL_FUNC))
-    return false;
+    return;
 
   auto filtered = slim::element::make_range_remove_if(
       children.begin(), children.end(), [=](HyperLink *h) {
@@ -760,21 +756,19 @@ bool slim::vm::interpreter::findatom_clone_hyperlink(
 
   this->push_stackframe(
       make_false_driven_enumerator(*this, instr, reg, std::move(v)));
-
-  return false;
 }
 
 /** hyperlinkの接続関係からfindatom */
-bool slim::vm::interpreter::findatom_through_hyperlink(
+void slim::vm::interpreter::findatom_through_hyperlink(
     LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr, SameProcCxt *spc,
     LmnMembrane *mem, LmnFunctor f, size_t reg) {
   auto atom_arity = LMN_FUNCTOR_ARITY(f);
 
   /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
   if (spc->is_clone(atom_arity)) {
-    return findatom_clone_hyperlink(rc, rule, instr, spc, mem, f, reg);
+    findatom_clone_hyperlink(rc, rule, instr, spc, mem, f, reg);
   } else {
-    return findatom_original_hyperlink(rc, rule, instr, spc, mem, f, reg);
+    findatom_original_hyperlink(rc, rule, instr, spc, mem, f, reg);
   }
 }
 
@@ -1246,13 +1240,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         lmn_sameproccxt_init(rc);
       auto spc =
           (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
-      return findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
+      findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
+    } else {
+      findatom(rc, rule, instr, mem, f, atomi);
     }
 
-    if (!findatom(rc, rule, instr, mem, f, atomi))
-      return false;
-
-    break;
+    return false; // false driven loop
   }
   case INSTR_FINDATOM2: {
     LmnInstrVar atomi, memi, findatomid;

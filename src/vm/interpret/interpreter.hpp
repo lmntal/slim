@@ -67,17 +67,17 @@ struct interpreter {
   bool interpret(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr);
   bool exec_command(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr &instr,
                     bool &stop);
-  bool findatom(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr,
+  void findatom(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr,
                 LmnMembrane *mem, LmnFunctor f, size_t reg);
-  bool findatom_original_hyperlink(LmnReactCxt *rc, LmnRule *rule,
+  void findatom_original_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                    LmnRuleInstr instr, SameProcCxt *spc,
                                    LmnMembrane *mem, LmnFunctor f,
                                    size_t reg);
-  bool findatom_clone_hyperlink(LmnReactCxt *rc, LmnRule *rule,
+  void findatom_clone_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                 LmnRuleInstr instr, SameProcCxt *spc,
                                 LmnMembrane *mem, LmnFunctor f,
                                 size_t reg);
-  bool findatom_through_hyperlink(LmnReactCxt *rc, LmnRule *rule,
+  void findatom_through_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                   LmnRuleInstr instr, SameProcCxt *spc,
                                   LmnMembrane *mem, LmnFunctor f,
                                   size_t reg);
