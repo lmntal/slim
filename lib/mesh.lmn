@@ -7,16 +7,12 @@ test
 	Ret=mesh.newindex(X,Y):-Ret=newindexnexindex(X,Y).
 */
 
-/*
-	{'$callback'(zerostep).
 	Ret=mesh.new(Imax,Jmax):-int(Imax),int(Jmax)|{meshnew.
-		Ret=mesh((Hne,Tne),(Hwe,Twe),(Hse,Tse),(Hee,Tee)),
+		Ret=mesh('.'(Hne,Tne),'.'(Hwe,Twe),'.'(Hse,Tse),'.'(Hee,Tee)),
 			Hne=[north(0,Imax,Jmax)|Tne],
 			Hwe=[west(0,Imax,Jmax)|Twe],
 			Hse=[south(0,Jmax)|Tse],
 			Hee=[east(0,Imax)|Tee].
-	
-		{'$callback'(zerostep).
 
 			Hne=[north(J,Imax,Jmax)|Tne]:-J+1<Jmax,Jinc=J+1,int(Imax)|Hne=[nij(0,J,Imax),north(Jinc,Imax,Jmax)|Tne].
 			Hne=[north(J,Imax,Jmax)|Tne]:-J+1>=Jmax|Hne=[nij(0,J,Imax)|Tne].
@@ -33,13 +29,9 @@ test
 			wij(Iw,Jw,Jmax,Wij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1<Imax,Iinc=I+1|Hee=[Wij,east(Iinc,Imax)|Tee].
 			wij(Iw,Jw,Jmax,Wij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1>=Imax,Iinc=I+1|Hee=[Wij|Tee].
 		}.
-	}.
-
 	{meshnew,$p,@rule}/:-$p.
-	}.
 
 
-	{'$callback'(zerostep).
 	Ret=mesh.newindex(Imax,Jmax):-int(Imax),int(Jmax)|{meshnewindex.
 		Ret=mesh((Hne,Tne),(Hwe,Twe),(Hse,Tse),(Hee,Tee)),
 			Hne=[north(0,Imax,Jmax)|Tne],
@@ -47,7 +39,6 @@ test
 			Hse=[south(0,Jmax)|Tse],
 			Hee=[east(0,Imax)|Tee].
 	
-		{'$callback'(zerostep).
 			Hne=[north(J,Imax,Jmax)|Tne]:-J+1<Jmax,Jinc=J+1,int(Imax)|Hne=[nij(0,J,Imax),north(Jinc,Imax,Jmax)|Tne].
 			Hne=[north(J,Imax,Jmax)|Tne]:-J+1>=Jmax|Hne=[nij(0,J,Imax)|Tne].
 	
@@ -62,10 +53,7 @@ test
 
 			wij(Iw,Jw,Jmax,Eij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1<Imax,Iinc=I+1|Hee=[Eij,east(Iinc,Imax)|Tee].
 			wij(Iw,Jw,Jmax,Eij),Hee=[east(I,Imax)|Tee]:-Jw=:=Jmax,Iw=I,I+1>=Imax,Iinc=I+1|Hee=[Eij|Tee].
-		}.
 	}.
-	
+
 	{meshnewindex,$p,@rule}/:-$p.
-	}.
-*/
 }.
