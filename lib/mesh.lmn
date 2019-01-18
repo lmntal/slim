@@ -33,7 +33,7 @@ test
 
 
 	Ret=mesh.newindex(Imax,Jmax):-int(Imax),int(Jmax)|{meshnewindex.
-		Ret=mesh((Hne,Tne),(Hwe,Twe),(Hse,Tse),(Hee,Tee)),
+		Ret=mesh('.'(Hne,Tne),'.'(Hwe,Twe),'.'(Hse,Tse),'.'(Hee,Tee)),
 			Hne=[north(0,Imax,Jmax)|Tne],
 			Hwe=[west(0,Imax,Jmax)|Twe],
 			Hse=[south(0,Jmax)|Tse],
@@ -56,4 +56,29 @@ test
 	}.
 
 	{meshnewindex,$p,@rule}/:-$p.
+/*
+	Ret=mesh.joinrow(Join1,Join2):-ground(Join1),ground(Join2)|{join(Join1,Join2,Ret).meshjoin.
+		Ret=join(JOIN1,JOIN2),
+		JOIN1=mesh('.'(Hne1,Tne1),'.'(Hwe1,Twe1),'.'(Hse1,Tse1),'.'(Hee1,Tee1)),
+		JOIN2=mesh('.'(Hne2,Tne2),'.'(Hwe2,Twe2),'.'(Hse2,Tse2),'.'(Hee2,Tee2)):-
+			Tne1=Hne2,Tse1=Hse2,zipper(Hee1,Hwe2),zipend(Tee1),zipend(Twe2),
+			Ret=mesh('.'(Hne1,Tne2),'.'(Hwe1,Twe1),'.'(Hse1,Tse2),'.'(Hee2,Tee2)).
+
+		zipper([E1|T1],[W2|T2]):-E1=W2,zipper(T1,T2).
+		zipper(zipend,zipend):-.
+		}.
+
+	Ret=mesh.joincol(Join1,Join2):-ground(Join1),ground(Join2)|{join(Join1,Join2,Ret).meshjoin.
+		Ret=join(JOIN1,JOIN2),
+		JOIN1=mesh('.'(Hne1,Tne1),'.'(Hwe1,Twe1),'.'(Hse1,Tse1),'.'(Hee1,Tee1)),
+		JOIN2=mesh('.'(Hne2,Tne2),'.'(Hwe2,Twe2),'.'(Hse2,Tse2),'.'(Hee2,Tee2)):-
+			Twe1=Hwe2,Tee1=Hee2,zipper(Hse1,Hne2),zipend(Tse1),zipend(Tne2),
+			Ret=mesh('.'(Hne1,Tne1),'.'(Hwe1,Twe2),'.'(Hse2,Tse2),'.'(Hee1,Tee2)).
+
+		zipper([S1|T1],[N2|T2]):-S1=N2,zipper(T1,T2).
+		zipper(zipend,zipend):-.
+		}.
+
+	{meshjoin,$p,@rule}/:-$p.
+*/
 }.
