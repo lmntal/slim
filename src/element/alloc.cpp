@@ -155,3 +155,28 @@ void *lmn_realloc(void *p, size_t num) {
 }
 
 void lmn_free(void *p) { free(p); }
+
+void* operator new(std::size_t num) {
+  return lmn_malloc(num);
+}
+
+void* operator new[](std::size_t num) {
+  return lmn_malloc(num);
+}
+
+void operator delete(void* p) noexcept {
+  lmn_free(p);
+}
+
+void operator delete[](void* p) noexcept {
+  lmn_free(p);
+}
+
+void operator delete(void* p, std::size_t num) noexcept {
+  lmn_free(p);
+}
+
+void operator delete[](void* p, std::size_t num) noexcept {
+  lmn_free(p);
+}
+
