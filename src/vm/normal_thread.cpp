@@ -38,6 +38,7 @@
  */
 
 #include "normal_thread.h"
+#include "interpret/interpreter.hpp"
 
 #include "verifier/runtime_status.h"
 

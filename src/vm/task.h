@@ -94,50 +94,6 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef v);
 void free_links(Vector *links);
 
-namespace slim {
-namespace vm {
-struct interpreter {
-  LmnReactCxt *rc;
-  LmnRule *rule;
-  LmnRuleInstr instr;
-
-  struct stack_frame {
-    std::function<bool(bool)> callback;
-
-    template <typename F>
-    stack_frame(const F &callback)
-        : callback(callback) {}
-  };
-  interpreter(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr) : rc(rc), rule(rule), instr(instr) {
-  }
-
-  bool interpret(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr);
-  bool exec_command(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleInstr &instr,
-                    bool &stop);
-  bool findatom(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr,
-                LmnMembrane *mem, LmnFunctor f, size_t reg);
-  bool findatom_original_hyperlink(LmnReactCxtRef rc, LmnRuleRef rule,
-                                   LmnRuleInstr instr, SameProcCxt *spc,
-                                   LmnMembrane *mem, LmnFunctor f,
-                                   size_t reg);
-  bool findatom_clone_hyperlink(LmnReactCxtRef rc, LmnRuleRef rule,
-                                LmnRuleInstr instr, SameProcCxt *spc,
-                                LmnMembrane *mem, LmnFunctor f,
-                                size_t reg);
-  bool findatom_through_hyperlink(LmnReactCxtRef rc, LmnRuleRef rule,
-                                  LmnRuleInstr instr, SameProcCxt *spc,
-                                  LmnMembrane *mem, LmnFunctor f,
-                                  size_t reg);
-  bool run();
-  template <typename... Args> void push_stackframe(Args... args) {
-    callstack.emplace_back(std::forward<Args>(args)...);
-  }
-
-  std::vector<stack_frame> callstack;
-};
-} // namespace vm
-} // namespace slim
-
 /* @} */
 
 #endif
