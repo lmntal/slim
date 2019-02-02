@@ -117,7 +117,7 @@ start:
     blank = [ \t\n\r];
 
     sstr = "'"  [^']* "'";
-    dstr = "\"" [^"]* "\"";
+    dstr = "\"" ([^"]|"\\\"")* "\"";
 
     "\x00" { return _EOF; }
     blank { goto start; }

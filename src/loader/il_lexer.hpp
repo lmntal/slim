@@ -52,7 +52,7 @@ class lexer;
 
 namespace il {
 class lexer {
-  static const size_t SIZE = 256;
+  static const size_t SIZE = 512;
   st_table_t ruleset_id_tbl;
   std::unique_ptr<slim::element::re2c::buffer> buffer;
 
