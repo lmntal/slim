@@ -44,6 +44,7 @@
 #include "mhash.h"
 #include "state_defs.h"
 #include "runtime_status.h"
+#include "state.h"
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
  *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ

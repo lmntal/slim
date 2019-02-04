@@ -40,6 +40,7 @@
 #include "state.h"
 #include "vm/vm.h"
 #include "state.hpp"
+#include "statespace.h"
 
 struct RuleProfiler {
   LmnRulesetId ref_rs_id;

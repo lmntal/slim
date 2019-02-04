@@ -310,12 +310,9 @@ void owcty_env_set(LmnWorker *w) {
   }
 }
 
-static inline void statetable_enqueue_f(State *s, LmnWord _q) {
-  enqueue((Queue *)_q, (LmnWord)s);
-}
-
 void statetable_to_state_queue(StateTable *st, Queue *q) {
-  statetable_foreach(st, (void (*)(ANYARGS))statetable_enqueue_f, (LmnWord)q);
+  for (auto &ptr : *st)
+    enqueue(q, (LmnWord)ptr);
 }
 
 static void owcty_env_init(LmnWorker *w) {

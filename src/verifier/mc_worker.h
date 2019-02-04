@@ -48,7 +48,9 @@
 
 #include "../lmntal.h"
 #include "element/element.h"
-#include "statespace.h"
+#include "automata.h"
+
+struct StateSpace;
 
 #include <memory>
 
