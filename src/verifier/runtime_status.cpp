@@ -440,7 +440,7 @@ void profile_statespace(LmnWorkerGroup *wp) {
       mc_profiler2_init(&lmn_prof.lv2[i]);
     }
     statespace_foreach(worker_states(w), (void (*)(ANYARGS))profile_state_f,
-                       (LmnWord)worker_states(w), DEFAULT_ARGS);
+                       (LmnWord)worker_states(w));
 
     if (lmn_env.tree_compress) {
       MCProfiler2 *p = &lmn_prof.lv2[lmn_OMP_get_my_id()];

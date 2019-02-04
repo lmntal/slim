@@ -100,45 +100,32 @@ struct StateSpace {
 #define statespace_set_rehasher(SS) ((SS)->tbl_type |= SS_REHASHER_MASK)
 #define statespace_unset_rehasher(SS) ((SS)->tbl_type &= (~SS_REHASHER_MASK))
 
-struct StateTable {
-  BOOL use_rehasher;
-  BYTE thread_num;
-  struct statespace_type *type;
-  State **tbl;
-  unsigned long cap;
-  unsigned long cap_density;
-  unsigned long *num;
-  unsigned long *num_dummy;
-  EWLock *lock;
-  StateTable *rehash_tbl; /* rehashした際に登録するテーブル */
-};
-
-#define DEFAULT_ARGS (LmnWord) NULL
+struct StateTable;
 
 /** -----------
  *  StateTable
  */
 
+void statetable_foreach(StateTable *st, void (*func)(ANYARGS));
+void statetable_foreach(StateTable *st, void (*func)(ANYARGS), LmnWord _arg1);
 void statetable_foreach(StateTable *st, void (*func)(ANYARGS), LmnWord _arg1,
                         LmnWord _arg2);
-void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func)(ANYARGS),
-                                 LmnWord _arg1, LmnWord _arg2, int nthreads);
-void statetable_format_states(StateTable *st);
+// void statetable_format_states(StateTable *st);
 
-void statetable_set_lock(StateTable *st, EWLock *lock);
-void statetable_set_rehasher(StateTable *st);
-BOOL statetable_use_rehasher(StateTable *st);
-unsigned long statetable_num_by_me(StateTable *st);
-unsigned long statetable_num(StateTable *st);
-unsigned long statetable_cap(StateTable *st);
-unsigned long statetable_cap_density(StateTable *st);
-void statetable_num_add(StateTable *st, unsigned long n);
-void statetable_num_sub(StateTable *st, unsigned long n);
-void statetable_dummy_add(StateTable *st, unsigned long n);
-void statetable_dummy_sub(StateTable *st, unsigned long n);
-void statetable_set_rehash_tbl(StateTable *st, StateTable *rehash_tbl);
-StateTable *statetable_rehash_tbl(StateTable *st);
-unsigned long statetable_space(StateTable *tbl);
+// void statetable_set_lock(StateTable *st, EWLock *lock);
+// void statetable_set_rehasher(StateTable *st);
+// BOOL statetable_use_rehasher(StateTable *st);
+// unsigned long statetable_num_by_me(StateTable *st);
+// unsigned long statetable_num(StateTable *st);
+// unsigned long statetable_cap(StateTable *st);
+// unsigned long statetable_cap_density(StateTable *st);
+// void statetable_num_add(StateTable *st, unsigned long n);
+// void statetable_num_sub(StateTable *st, unsigned long n);
+// void statetable_dummy_add(StateTable *st, unsigned long n);
+// void statetable_dummy_sub(StateTable *st, unsigned long n);
+// void statetable_set_rehash_tbl(StateTable *st, StateTable *rehash_tbl);
+// StateTable *statetable_rehash_tbl(StateTable *st);
+// unsigned long statetable_space(StateTable *tbl);
 
 /** -----------
  *  StateSpace
@@ -152,10 +139,7 @@ void statespace_add_direct(StateSpaceRef ss, State *s);
 State *statespace_insert(StateSpaceRef ss, State *s);
 State *statespace_insert_delta(StateSpaceRef ss, State *s,
                                struct MemDeltaRoot *d);
-void statespace_foreach(StateSpaceRef ss, void (*func)(ANYARGS), LmnWord _arg1,
-                        LmnWord _arg2);
-void statespace_foreach_parallel(StateSpaceRef ss, void (*func)(ANYARGS),
-                                 LmnWord _arg1, LmnWord _arg2, int nPE);
+void statespace_foreach(StateSpaceRef ss, void (*func)(ANYARGS), LmnWord _arg1);
 void statespace_format_states(StateSpaceRef ss);
 void statespace_clear(StateSpaceRef ss);
 void statespace_ends_dumper(StateSpaceRef ss);

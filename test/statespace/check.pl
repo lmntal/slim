@@ -18,7 +18,7 @@ $count = 1;
 print $count . ".." . (($#ARGV + 1) / 3) . "\n";
 for (my $i = 0; $i <= $#ARGV; $i += 3) {
 	$filename = $ARGV[$i];
-	$flags = "--nd --hl";
+	$flags = "--nd --hl --use-Ncore=4";
 	$check_run = $lmntal_runtime . " " . $flags . " " . $filename . ".il";
 	$checked = `$check_run`;
 
