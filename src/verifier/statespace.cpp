@@ -168,52 +168,53 @@ static void statetable_resize(StateTable *st, unsigned long old_cap) {
     profile_countup(PROFILE_COUNT__HASH_RESIZE_TRIAL);
   }
 #endif
-  ENTER__CRITICAL_SECTION(resize, st->lock, ewlock_reject_enter,
-                          env_my_thread_id(), old_cap, st->cap);
-  {
-    unsigned long i, new_cap, bucket;
-    State *ptr, *next, **new_tbl;
+  if (st->cap == old_cap) {
+    slim::element::ewmutex mutex(slim::element::ewmutex::exclusive_enter,
+                                 st->lock, env_my_thread_id());
+    std::lock_guard<slim::element::ewmutex> lk(mutex);
+    if (st->cap == old_cap) {
+      unsigned long i, new_cap, bucket;
+      State *ptr, *next, **new_tbl;
 
-    new_cap = table_new_size(old_cap);
-    new_tbl = LMN_NALLOC(State *, new_cap);
+      new_cap = table_new_size(old_cap);
+      new_tbl = LMN_NALLOC(State *, new_cap);
 
-    for (i = 0; i < new_cap; i++) {
-      new_tbl[i] = NULL;
-    }
-
-    for (i = 0; i < old_cap; i++) {
-      ptr = st->tbl[i];
-      while (ptr) {
-        next = ptr->next;
-        bucket = state_hash(ptr) % new_cap;
-        ptr->next = new_tbl[bucket];
-        if (ptr->is_dummy() && ptr->is_expanded() && !ptr->is_encoded()) {
-          /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要
-           * (resize中に,
-           * 展開済み状態へのデータアクセスは発生しないよう設計している) */
-          ptr->free_binstr();
-          if (ptr->s_is_d()) {
-            ptr->s_unset_d();
-          }
-        }
-        new_tbl[bucket] = ptr;
-        ptr = next;
+      for (i = 0; i < new_cap; i++) {
+        new_tbl[i] = NULL;
       }
-    }
 
-    LMN_FREE(st->tbl);
-    st->tbl = new_tbl;
-    st->cap = new_cap;
-    st->cap_density = new_cap / st->thread_num;
+      for (i = 0; i < old_cap; i++) {
+        ptr = st->tbl[i];
+        while (ptr) {
+          next = ptr->next;
+          bucket = state_hash(ptr) % new_cap;
+          ptr->next = new_tbl[bucket];
+          if (ptr->is_dummy() && ptr->is_expanded() && !ptr->is_encoded()) {
+            /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要
+             * (resize中に,
+             * 展開済み状態へのデータアクセスは発生しないよう設計している) */
+            ptr->free_binstr();
+            if (ptr->s_is_d()) {
+              ptr->s_unset_d();
+            }
+          }
+          new_tbl[bucket] = ptr;
+          ptr = next;
+        }
+      }
+
+      LMN_FREE(st->tbl);
+      st->tbl = new_tbl;
+      st->cap = new_cap;
+      st->cap_density = new_cap / st->thread_num;
 
 #ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
-      profile_countup(PROFILE_COUNT__HASH_RESIZE_APPLY);
-    }
+      if (lmn_env.profile_level >= 3) {
+        profile_countup(PROFILE_COUNT__HASH_RESIZE_APPLY);
+      }
 #endif
+    }
   }
-  EXIT___CRITICAL_SECTION(resize, st->lock, ewlock_permit_enter,
-                          env_my_thread_id());
 }
 
 void statetable_set_lock(StateTable *st, EWLock *lock) { st->lock = lock; }
@@ -702,9 +703,7 @@ static inline void statetable_clear(StateTable *st) {
   }
 }
 
-static void state_free(State *s) {
-  delete(s);
-}
+static void state_free(State *s) { delete (s); }
 
 static void statetable_free(StateTable *st, int nPEs) {
   if (st) {
@@ -820,22 +819,25 @@ static State *statetable_insert(StateTable *st, State *ins)
   }
 
   ret = NULL;
-  START__CRITICAL_SECTION(st->lock, ewlock_acquire_enter, env_my_thread_id());
-  {
-    State *str;
-    unsigned long bucket, hash;
+  slim::element::ewmutex outer_mutex(slim::element::ewmutex::enter, st->lock,
+                                     env_my_thread_id());
+  std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
+  State *str;
+  unsigned long bucket, hash;
 
-    hash = state_hash(ins);
-    bucket = hash % statetable_cap(st);
-    str = st->tbl[bucket];
+  hash = state_hash(ins);
+  bucket = hash % statetable_cap(st);
+  str = st->tbl[bucket];
 
-    /* case: empty bucket */
-    if (!str) {
-      /* strがNULL --> 即ち未使用バケットの場合 */
-      compress = statetable_compress_state(st, ins, compress);
-      ENTER__CRITICAL_SECTION(st_ins_empty, st->lock, ewlock_acquire_write,
-                              bucket, NULL, st->tbl[bucket]);
-      {
+  /* case: empty bucket */
+  if (!str) {
+    /* strがNULL --> 即ち未使用バケットの場合 */
+    compress = statetable_compress_state(st, ins, compress);
+    if (!st->tbl[bucket]) {
+      slim::element::ewmutex mutex(slim::element::ewmutex::write, st->lock,
+                                   bucket);
+      std::lock_guard<slim::element::ewmutex> lk(mutex);
+      if (!st->tbl[bucket]) {
         state_set_compress_for_table(ins, compress);
         statetable_num_add(st, 1);
         if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
@@ -847,50 +849,111 @@ static State *statetable_insert(StateTable *st, State *ins)
         st->tbl[bucket] = ins;
         ret = ins;
       }
-      EXIT___CRITICAL_SECTION(st_ins_empty, st->lock, ewlock_release_write,
-                              bucket);
-
-      if (!ret) {
-        /* 他のスレッドが先にバケットを埋めた場合, retがNULL
-         * insert先strを再設定し, case: non-empty backetへ飛ぶ */
-        str = st->tbl[bucket];
-#ifdef PROFILE
-        if (lmn_env.profile_level >= 3) {
-          profile_countup(PROFILE_COUNT__HASH_FAIL_TO_INSERT);
-        }
-#endif
-      }
     }
 
-    /* case: non-empty bucket */
-    while (!ret) {
+    if (!ret) {
+      /* 他のスレッドが先にバケットを埋めた場合, retがNULL
+       * insert先strを再設定し, case: non-empty backetへ飛ぶ */
+      str = st->tbl[bucket];
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
-        profile_countup(PROFILE_COUNT__HASH_CONFLICT_ENTRY);
+        profile_countup(PROFILE_COUNT__HASH_FAIL_TO_INSERT);
       }
 #endif
+    }
+  }
 
-      if (hash == state_hash(str)) {
-        /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
-        if (lmn_env.hash_compaction) {
-          if (str->is_dummy() && str->is_encoded()) {
-            /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
-             */
-            ret = state_get_parent(str);
-          } else {
-            ret = str;
-          }
-          break;
-        }
+  /* case: non-empty bucket */
+  while (!ret) {
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_countup(PROFILE_COUNT__HASH_CONFLICT_ENTRY);
+    }
+#endif
 
-        if (statetable_use_rehasher(st) && str->is_dummy() && !str->is_encoded() &&
-            lmn_env.tree_compress == FALSE) {
-          /* A. オリジナルテーブルにおいて, dummy状態が比較対象
-           * 　 --> memidテーブル側の探索へ切り替える.
-           *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
-           *     直接dummy状態上のメモリを比較対象とするとスレッドセーフでなくなる)
+    if (hash == state_hash(str)) {
+      /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
+      if (lmn_env.hash_compaction) {
+        if (str->is_dummy() && str->is_encoded()) {
+          /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
            */
+          ret = state_get_parent(str);
+        } else {
+          ret = str;
+        }
+        break;
+      }
 
+      if (statetable_use_rehasher(st) && str->is_dummy() &&
+          !str->is_encoded() && lmn_env.tree_compress == FALSE) {
+        /* A. オリジナルテーブルにおいて, dummy状態が比較対象
+         * 　 --> memidテーブル側の探索へ切り替える.
+         *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
+         *     直接dummy状態上のメモリを比較対象とするとスレッドセーフでなくなる)
+         */
+
+        if (ins->is_binstr_user()) {
+          ins->free_binstr();
+        } else if (compress) {
+          lmn_binstr_free(compress);
+        }
+        ins->s_unset_d();
+        ins->calc_mem_encode();
+        /*compress = NULL;*/
+
+#ifndef PROFILE
+        ret = statetable_insert(statetable_rehash_tbl(st), ins);
+#else
+        ret = statetable_insert(statetable_rehash_tbl(st), ins, col);
+#endif
+        break;
+      } else if (!STATE_EQUAL(st, ins, str)) {
+        /** B. memidテーブルへのlookupの場合,
+         *     もしくはオリジナルテーブルへのlookupで非dummy状態と等価な場合
+         */
+        if (str->is_dummy() && str->is_encoded()) {
+          /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
+           */
+          ret = state_get_parent(str);
+        } else {
+          ret = str;
+        }
+        LMN_ASSERT(ret);
+        break;
+      } else if (str->is_encoded()) {
+        /** C. memidテーブルへのlookupでハッシュ値が衝突した場合.
+         * (同形成判定結果が偽) */
+#ifdef PROFILE
+        if (lmn_env.profile_level >= 3) {
+          profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
+        }
+#endif
+      } else {
+        /** D.
+         * オリジナルテーブルへのlookupで非dummy状態とハッシュ値が衝突した場合.
+         */
+        LMN_ASSERT(!str->is_encoded());
+#ifdef PROFILE
+        (*col)++;
+        if (lmn_env.profile_level >= 3) {
+          profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
+        }
+#endif
+        if (statetable_use_rehasher(st) && lmn_env.tree_compress == FALSE) {
+          if (state_get_parent(ins) == str) {
+            /* 1step遷移した状態insの親状態とでハッシュ値が衝突している場合:
+             *  + 状態insだけでなくその親状態もrehashする.
+             *  + ただし, encodeした親状態をmemidテーブルへ突っ込んだ後,
+             *    親状態の従来のバイト列の破棄は実施しない.
+             *    これは,
+             * 他のスレッドによる状態比較処理が本スレッドの処理と競合した際に,
+             *    本スレッドが立てるdummyフラグを他のスレッドが見逃す恐れがあるため
+             */
+            statetable_memid_rehash(str, st);
+            str->set_dummy();
+          }
+
+          /* 比較元をencode */
           if (ins->is_binstr_user()) {
             ins->free_binstr();
           } else if (compress) {
@@ -898,104 +961,44 @@ static State *statetable_insert(StateTable *st, State *ins)
           }
           ins->s_unset_d();
           ins->calc_mem_encode();
-          /*compress = NULL;*/
 
 #ifndef PROFILE
           ret = statetable_insert(statetable_rehash_tbl(st), ins);
 #else
           ret = statetable_insert(statetable_rehash_tbl(st), ins, col);
 #endif
-          break;
-        } else if (!STATE_EQUAL(st, ins, str)) {
-          /** B. memidテーブルへのlookupの場合,
-           *     もしくはオリジナルテーブルへのlookupで非dummy状態と等価な場合
-           */
-          if (str->is_dummy() && str->is_encoded()) {
-            /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
-             */
-            ret = state_get_parent(str);
-          } else {
-            ret = str;
-          }
+
           LMN_ASSERT(ret);
           break;
-        } else if (str->is_encoded()) {
-          /** C. memidテーブルへのlookupでハッシュ値が衝突した場合.
-           * (同形成判定結果が偽) */
-#ifdef PROFILE
-          if (lmn_env.profile_level >= 3) {
-            profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
-          }
-#endif
-        } else {
-          /** D.
-           * オリジナルテーブルへのlookupで非dummy状態とハッシュ値が衝突した場合.
-           */
-          LMN_ASSERT(!str->is_encoded());
-#ifdef PROFILE
-          (*col)++;
-          if (lmn_env.profile_level >= 3) {
-            profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
-          }
-#endif
-          if (statetable_use_rehasher(st) && lmn_env.tree_compress == FALSE) {
-            if (state_get_parent(ins) == str) {
-              /* 1step遷移した状態insの親状態とでハッシュ値が衝突している場合:
-               *  + 状態insだけでなくその親状態もrehashする.
-               *  + ただし, encodeした親状態をmemidテーブルへ突っ込んだ後,
-               *    親状態の従来のバイト列の破棄は実施しない.
-               *    これは,
-               * 他のスレッドによる状態比較処理が本スレッドの処理と競合した際に,
-               *    本スレッドが立てるdummyフラグを他のスレッドが見逃す恐れがあるため
-               */
-              statetable_memid_rehash(str, st);
-              str->set_dummy();
-            }
-
-            /* 比較元をencode */
-            if (ins->is_binstr_user()) {
-              ins->free_binstr();
-            } else if (compress) {
-              lmn_binstr_free(compress);
-            }
-            ins->s_unset_d();
-            ins->calc_mem_encode();
-
-#ifndef PROFILE
-            ret = statetable_insert(statetable_rehash_tbl(st), ins);
-#else
-            ret = statetable_insert(statetable_rehash_tbl(st), ins, col);
-#endif
-
-            LMN_ASSERT(ret);
-            break;
-          }
         }
-        /* >>>>>>> ハッシュ値が等しい状態に対する処理ここまで <<<<<<<< */
       }
+      /* >>>>>>> ハッシュ値が等しい状態に対する処理ここまで <<<<<<<< */
+    }
 
-      /** エントリリストへの状態追加操作:
-       * 逐次
-       *   1. 各エントリ(状態)に対して, ハッシュ値と状態の比較を行う.
-       *   2. 等価な状態を発見した場合, その状態へのアドレスを返す.
-       *   3. リスト末尾へ到達した場合, バイト列が未計算ならば計算する.
-       *   4. 計算したバイト列を状態に設定した後にリスト末尾に状態を追加する,
-       *      (追加した状態のアドレスを返す.)
-       * 並列処理への拡張
-       *   4. (逐次版の手順4は実施しない)
-       *      ロックを確保後,
-       * 末尾エントリのnextアドレス(追加予定位置)がNULLであるか否かを検査
-       *   5. NULLでない(他のスレッドが追加した)ならば, ロックを開放し,
-       *      処理1(リスト走査)へcontinue.
-       *   6. NULLならば,
-       * 計算したバイト列を状態に設定してからリスト末尾に状態を追加する.
-       *      (追加した状態のアドレスを返す.)
-       */
-      if (!str->next) { /* リスト末尾の場合 */
-        compress = statetable_compress_state(st, ins, compress);
-        ENTER__CRITICAL_SECTION(st_ins_list, st->lock, ewlock_acquire_write,
-                                bucket, NULL, str->next);
-        {
+    /** エントリリストへの状態追加操作:
+     * 逐次
+     *   1. 各エントリ(状態)に対して, ハッシュ値と状態の比較を行う.
+     *   2. 等価な状態を発見した場合, その状態へのアドレスを返す.
+     *   3. リスト末尾へ到達した場合, バイト列が未計算ならば計算する.
+     *   4. 計算したバイト列を状態に設定した後にリスト末尾に状態を追加する,
+     *      (追加した状態のアドレスを返す.)
+     * 並列処理への拡張
+     *   4. (逐次版の手順4は実施しない)
+     *      ロックを確保後,
+     * 末尾エントリのnextアドレス(追加予定位置)がNULLであるか否かを検査
+     *   5. NULLでない(他のスレッドが追加した)ならば, ロックを開放し,
+     *      処理1(リスト走査)へcontinue.
+     *   6. NULLならば,
+     * 計算したバイト列を状態に設定してからリスト末尾に状態を追加する.
+     *      (追加した状態のアドレスを返す.)
+     */
+    if (!str->next) { /* リスト末尾の場合 */
+      compress = statetable_compress_state(st, ins, compress);
+      slim::element::ewmutex mutex(slim::element::ewmutex::write, st->lock,
+                                   bucket);
+      if (!str->next) {
+        std::lock_guard<slim::element::ewmutex> lk(mutex);
+        if (!str->next) {
           statetable_num_add(st, 1);
           state_set_compress_for_table(ins, compress);
           if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
@@ -1007,20 +1010,17 @@ static State *statetable_insert(StateTable *st, State *ins)
           str->next = ins;
           ret = ins;
         }
-        EXIT___CRITICAL_SECTION(st_ins_list, st->lock, ewlock_release_write,
-                                bucket);
-
-#ifdef PROFILE
-        if (!ret && lmn_env.profile_level >= 3) {
-          profile_countup(PROFILE_COUNT__HASH_FAIL_TO_INSERT);
-        }
-#endif
       }
 
-      str = str->next; /* リストを辿る */
+#ifdef PROFILE
+      if (!ret && lmn_env.profile_level >= 3) {
+        profile_countup(PROFILE_COUNT__HASH_FAIL_TO_INSERT);
+      }
+#endif
     }
+
+    str = str->next; /* リストを辿る */
   }
-  FINISH_CRITICAL_SECTION(st->lock, ewlock_release_enter, env_my_thread_id());
 
   if (ret != ins) {
     /* 別のスレッドの割込みで追加に失敗した場合, 計算したバイト列を破棄する.*/
@@ -1036,28 +1036,32 @@ static State *statetable_insert(StateTable *st, State *ins)
 
 /* 重複検査なしに状態sを状態表stに登録する */
 static void statetable_add_direct(StateTable *st, State *s) {
-  START__CRITICAL_SECTION(st->lock, ewlock_acquire_enter, env_my_thread_id());
-  {
-    LmnBinStrRef compress;
-    State *ptr;
-    unsigned long bucket;
-    BOOL inserted;
+  slim::element::ewmutex outer_mutex(slim::element::ewmutex::enter, st->lock,
+                                     env_my_thread_id());
+  std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
 
-    if (s->is_binstr_user()) {
-      compress = s->state_binstr();
-    } else {
-      compress = NULL;
-    }
+  LmnBinStrRef compress;
+  State *ptr;
+  unsigned long bucket;
+  BOOL inserted;
 
-    bucket = state_hash(s) % statetable_cap(st);
-    ptr = st->tbl[bucket];
-    inserted = FALSE;
+  if (s->is_binstr_user()) {
+    compress = s->state_binstr();
+  } else {
+    compress = NULL;
+  }
 
-    if (!ptr) { /* empty */
-      compress = statetable_compress_state(st, s, compress);
-      ENTER__CRITICAL_SECTION(st_add_empty, st->lock, ewlock_acquire_write,
-                              bucket, NULL, st->tbl[bucket]);
-      {
+  bucket = state_hash(s) % statetable_cap(st);
+  ptr = st->tbl[bucket];
+  inserted = FALSE;
+
+  if (!ptr) { /* empty */
+    compress = statetable_compress_state(st, s, compress);
+    if (!st->tbl[bucket]) {
+      slim::element::ewmutex mutex(slim::element::ewmutex::write, st->lock,
+                                   bucket);
+      std::lock_guard<slim::element::ewmutex> lk(mutex);
+      if (!st->tbl[bucket]) {
         state_set_compress_for_table(s, compress);
         statetable_num_add(st, 1);
         if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
@@ -1069,30 +1073,28 @@ static void statetable_add_direct(StateTable *st, State *s) {
         st->tbl[bucket] = s;
         inserted = TRUE;
       }
-      EXIT___CRITICAL_SECTION(st_add_empty, st->lock, ewlock_release_write,
-                              bucket);
-      if (!inserted)
-        ptr = st->tbl[bucket];
     }
+    if (!inserted)
+      ptr = st->tbl[bucket];
+  }
 
-    while (!inserted) {
-      if (!ptr->next) { /* リスト末尾の場合 */
-        compress = statetable_compress_state(st, s, compress);
-        ENTER__CRITICAL_SECTION(st_add_list, st->lock, ewlock_acquire_write,
-                                bucket, NULL, ptr->next);
-        {
+  while (!inserted) {
+    if (!ptr->next) { /* リスト末尾の場合 */
+      compress = statetable_compress_state(st, s, compress);
+      if (!ptr->next) {
+        slim::element::ewmutex mutex(slim::element::ewmutex::write, st->lock,
+                                     bucket);
+        std::lock_guard<slim::element::ewmutex> lk(mutex);
+        if (!ptr->next) {
           inserted = TRUE;
           statetable_num_add(st, 1);
           state_set_compress_for_table(s, compress);
           ptr->next = s;
         }
-        EXIT___CRITICAL_SECTION(st_add_list, st->lock, ewlock_release_write,
-                                bucket);
       }
-      ptr = ptr->next;
     }
+    ptr = ptr->next;
   }
-  FINISH_CRITICAL_SECTION(st->lock, ewlock_release_enter, env_my_thread_id());
 }
 
 /* 高階関数  */
