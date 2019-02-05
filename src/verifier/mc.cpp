@@ -149,8 +149,9 @@ static void mc_dump(LmnWorkerGroup *wp) {
     }
 
     /* 2. 反例パス or 最終状態集合の出力 */
+    auto out = statespace_output(ss);
     if (wp->do_search) {
-      mc_dump_all_errors(wp, ss->out);
+      mc_dump_all_errors(wp, out);
     } else if (lmn_env.end_dump && lmn_env.mc_dump_format == CUI) {
       /* とりあえず最終状態集合の出力はCUI限定。(LaViTに受付フォーマットがない)
        */
@@ -159,20 +160,20 @@ static void mc_dump(LmnWorkerGroup *wp) {
 
     /* CUIモードの場合状態数などのデータも標準出力 */
     if (lmn_env.mc_dump_format == CUI) {
-      fprintf(ss->out, "\'# of States\'(stored)   = %lu.\n",
+      fprintf(out, "\'# of States\'(stored)   = %lu.\n",
               statespace_num(ss));
-      fprintf(ss->out, "\'# of States\'(end)      = %lu.\n",
+      fprintf(out, "\'# of States\'(end)      = %lu.\n",
               statespace_end_num(ss));
       if (wp->do_search) {
-        fprintf(ss->out, "\'# of States\'(invalid)  = %lu.\n",
+        fprintf(out, "\'# of States\'(invalid)  = %lu.\n",
                 mc_invalids_get_num(wp));
       }
 #ifdef KWBT_OPT
       if (lmn_env.opt_mode != OPT_NONE) {
         if (!workers_opt_end_state(wp)) {
-          fprintf(ss->out, "\'# can't solve the problem\'.\n");
+          fprintf(out, "\'# can't solve the problem\'.\n");
         } else {
-          fprintf(ss->out, "\'# optimized cost\'      = %lu.\n",
+          fprintf(out, "\'# optimized cost\'      = %lu.\n",
                   workers_opt_cost(wp));
         }
       }
@@ -754,15 +755,16 @@ static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
    *       オリジナルテーブル側のdummy状態に対応するmemid状態を探索して引っ張ってくる必要がある
    */
 
-  fprintf(ss->out, "%lu::", state_format_id(s, ss->is_formated));
+  auto out = statespace_output(ss);
+  fprintf(out, "%lu::", state_format_id(s, statespace_is_formated(ss)));
   for (i = 0; i < vec_num(succs); i++) {
     State *succ = (State *)vec_get(succs, i);
     if (succ) {
-      fprintf(ss->out, "%s%lu", (i > 0) ? ", " : "",
-              state_format_id(succ, ss->is_formated));
+      fprintf(out, "%s%lu", (i > 0) ? ", " : "",
+              state_format_id(succ, statespace_is_formated(ss)));
     }
   }
-  fprintf(ss->out, "\n");
+  fprintf(out, "\n");
 
   return ST_CONTINUE;
 }
@@ -778,28 +780,29 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
 
   for (i = 0; i < vec_num(v); i++) {
     State *s;
+    auto out = statespace_output(ss);
 
     if (lmn_env.sp_dump_format != LMN_SYNTAX) {
       const char *m;
       s = (State *)vec_get(v, i);
       m = (s == seed) ? "*" : " ";
-      fprintf(ss->out, "%s%2lu::%s", m, state_format_id(s, ss->is_formated),
+      fprintf(out, "%s%2lu::%s", m, state_format_id(s, statespace_is_formated(ss)),
               automata_state_name(statespace_automata(ss),
                                   state_property_state(s)));
-      state_print_mem(s, (LmnWord)ss->out);
+      state_print_mem(s, (LmnWord)out);
     } else {
       s = (State *)vec_get(v, i);
-      fprintf(ss->out, "path%lu_%s", state_format_id(s, ss->is_formated),
+      fprintf(out, "path%lu_%s", state_format_id(s, statespace_is_formated(ss)),
               automata_state_name(statespace_automata(ss),
                                   state_property_state(s)));
-      state_print_mem(s, (LmnWord)ss->out);
-      fprintf(ss->out, ".\n");
+      state_print_mem(s, (LmnWord)out);
+      fprintf(out, ".\n");
 
-      fprintf(ss->out, "path%lu_%s", state_format_id(s, ss->is_formated),
+      fprintf(out, "path%lu_%s", state_format_id(s, statespace_is_formated(ss)),
               automata_state_name(statespace_automata(ss),
                                   state_property_state(s)));
-      state_print_mem(s, (LmnWord)ss->out);
-      fprintf(ss->out, ":- ");
+      state_print_mem(s, (LmnWord)out);
+      fprintf(out, ":- ");
     }
   }
 }

@@ -51,6 +51,49 @@
 #include "state.hpp"
 #include "vm/vm.h"
 
+struct StateSpace {
+  BYTE tbl_type; /* なんらかの特殊操作を行うためのフラグフィールド */
+  BOOL is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
+  /* 2bytes alignment */
+  unsigned int thread_num; /* 本テーブルの操作スレッド数 */
+
+  FILE *out;          /* dump先 */
+  State *init_state;  /* 初期状態 */
+  Vector *end_states; /* 最終状態の集合 */
+  StateTable *tbl; /* mhash値をkeyに, 状態のアドレスを登録する状態管理表 */
+  StateTable
+      *memid_tbl; /* memid_hashをkeyに, 状態のアドレスを登録する状態管理表 */
+  StateTable *acc_tbl;
+  StateTable *acc_memid_tbl;
+
+  AutomataRef property_automata; /* Never Clainへのポインタ */
+  Vector *propsyms;              /* 命題記号定義へのポインタ */
+
+#ifdef PROFILE
+  HashSet memid_hashes; /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
+#endif
+};
+
+FILE *statespace_output(StateSpace *SS) {
+  return SS->out;
+}
+bool statespace_is_formated(StateSpace *SS) {
+  return SS->is_formated;
+}
+bool statespace_use_memenc(StateSpace *SS){ return ((SS)->tbl_type & SS_MEMID_MASK); }
+void statespace_set_memenc(StateSpace *SS) { ((SS)->tbl_type |= SS_MEMID_MASK); }
+void statespace_set_rehasher(StateSpace *SS) { ((SS)->tbl_type |= SS_REHASHER_MASK); }
+
+bool statespace_has_property(StateSpace *SS) {
+  return (SS)->property_automata;
+}
+AutomataRef statespace_automata(StateSpace *SS) {
+  return (SS)->property_automata;
+}
+Vector *statespace_propsyms(StateSpace *SS) {
+  return ((SS)->propsyms);
+}
+
 #define TABLE_DEFAULT_MAX_DENSITY                                              \
   (5U) /* 1バケットあたりの平均長がこの値を越えた場合にresizeする */
 #define MEM_EQ_FAIL_THRESHOLD                                                  \

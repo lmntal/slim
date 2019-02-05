@@ -63,43 +63,21 @@ struct statespace_type {
   LmnBinStrRef (*compress)(State *); /* 状態sの圧縮バイト列を計算して返す関数 */
 };
 
-struct StateSpace {
-  BYTE tbl_type; /* なんらかの特殊操作を行うためのフラグフィールド */
-  BOOL is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
-  /* 2bytes alignment */
-  unsigned int thread_num; /* 本テーブルの操作スレッド数 */
+struct StateSpace;
 
-  FILE *out;          /* dump先 */
-  State *init_state;  /* 初期状態 */
-  Vector *end_states; /* 最終状態の集合 */
-  StateTable *tbl; /* mhash値をkeyに, 状態のアドレスを登録する状態管理表 */
-  StateTable
-      *memid_tbl; /* memid_hashをkeyに, 状態のアドレスを登録する状態管理表 */
-  StateTable *acc_tbl;
-  StateTable *acc_memid_tbl;
-
-  AutomataRef property_automata; /* Never Clainへのポインタ */
-  Vector *propsyms;              /* 命題記号定義へのポインタ */
-
-#ifdef PROFILE
-  HashSet memid_hashes; /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
-#endif
-};
-
-#define statespace_has_property(SS) ((SS)->property_automata)
-#define statespace_automata(SS) ((SS)->property_automata)
-#define statespace_propsyms(SS) ((SS)->propsyms)
+FILE *statespace_output(StateSpace *SS);
+bool statespace_is_formated(StateSpace *SS);
+bool statespace_has_property(StateSpace *SS);
+AutomataRef statespace_automata(StateSpace *SS);
+Vector *statespace_propsyms(StateSpace *SS);
 
 /* the member "tbl_type" in struct StateSpace */
 #define SS_MEMID_MASK (0x01U)
 #define SS_REHASHER_MASK (0x01U << 1)
 
-#define statespace_use_memenc(SS) ((SS)->tbl_type & SS_MEMID_MASK)
-#define statespace_set_memenc(SS) ((SS)->tbl_type |= SS_MEMID_MASK)
-#define statespace_unset_memenc(SS) ((SS)->tbl_type &= (~SS_MEMID_MASK))
-#define statespace_use_rehasher(SS) ((SS)->tbl_type & SS_REHASHER_MASK)
-#define statespace_set_rehasher(SS) ((SS)->tbl_type |= SS_REHASHER_MASK)
-#define statespace_unset_rehasher(SS) ((SS)->tbl_type &= (~SS_REHASHER_MASK))
+bool statespace_use_memenc(StateSpace *SS);
+void statespace_set_memenc(StateSpace *SS);
+void statespace_set_rehasher(StateSpace *SS);
 
 struct StateTable {
   /* TODO: テーブルの初期サイズはいくつが適当か.
@@ -120,25 +98,19 @@ struct StateTable {
 
     memset(this->tbl, 0x00, cap_ * (sizeof(State *)));
   }
-  unsigned long all_num() const;
-  unsigned long num_by_me() const;
-  unsigned long space() const;
+
   unsigned long cap() const { return cap_; }
-  void resize(unsigned long);
-  void num_increment();
-  void num_dummy_increment();
-  unsigned long num_dummy(size_t idx) { return num_dummy_[idx]; }
+  unsigned long num_by_me() const;
+  unsigned long all_num() const;
+  unsigned long num_dummy(size_t idx) const { return num_dummy_[idx]; }
   unsigned long cap_density() const { return cap_density_; }
-  void set_rehasher() { use_rehasher_ = true; }
-  bool use_rehasher() const;
-  LmnBinStrRef compress_state(State *s, LmnBinStrRef bs);
+  unsigned long space() const;
+  void resize(unsigned long);
   State *insert(State *ins, unsigned long *col = nullptr);
   void add_direct(State *s);
   void format_states();
-  StateTable *rehash_table();
   void set_rehash_table(StateTable *);
   void set_lock(EWLock *);
-  void memid_rehash(State *s);
   void memid_rehash(unsigned long hash) {
     for (int i = 0; i < this->cap(); i++) {
       auto ptr = this->tbl[i];
@@ -152,7 +124,17 @@ struct StateTable {
       }
     }
   }
+private:
+  void num_increment();
+  void num_dummy_increment();
+  void set_rehasher() { use_rehasher_ = true; }
+  bool use_rehasher() const;
+  LmnBinStrRef compress_state(State *s, LmnBinStrRef bs);
 
+  void memid_rehash(State *s);
+  StateTable *rehash_table();
+
+public:
   class iterator {
     StateTable *table;
     size_t table_index;
@@ -210,27 +192,6 @@ private:
   EWLock *lock;
   StateTable *rehash_tbl_; /* rehashした際に登録するテーブル */
 };
-
-/** -----------
- *  StateTable
- */
-
-// void statetable_format_states(StateTable *st);
-
-// void statetable_set_lock(StateTable *st, EWLock *lock);
-// void statetable_set_rehasher(StateTable *st);
-// BOOL statetable_use_rehasher(StateTable *st);
-// unsigned long statetable_num_by_me(StateTable *st);
-// unsigned long statetable_num(StateTable *st);
-// unsigned long statetable_cap(StateTable *st);
-// unsigned long statetable_cap_density(StateTable *st);
-// void statetable_num_add(StateTable *st, unsigned long n);
-// void statetable_num_sub(StateTable *st, unsigned long n);
-// void statetable_dummy_add(StateTable *st, unsigned long n);
-// void statetable_dummy_sub(StateTable *st, unsigned long n);
-// void statetable_set_rehash_tbl(StateTable *st, StateTable *rehash_tbl);
-// StateTable *statetable_rehash_tbl(StateTable *st);
-// unsigned long statetable_space(StateTable *tbl);
 
 /** -----------
  *  StateSpace

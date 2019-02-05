@@ -419,7 +419,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
      * バイナリストリング以外のデータはオリジナル側(parent)に記録している. */
     State *target = !s->is_dummy() ? s : state_get_parent(s);
     if (owner) {
-      print_id = state_format_id(target, owner->is_formated);
+      print_id = state_format_id(target, statespace_is_formated(owner));
     } else {
       print_id = state_format_id(target, FALSE);
     }
@@ -536,7 +536,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
     break;
   }
 
-  formated = owner ? owner->is_formated : FALSE;
+  formated = owner ? statespace_is_formated(owner) : FALSE;
   if (!need_id_foreach_trans) {
     fprintf(f, "%lu%s", state_format_id(s, formated), state_separator);
   }
@@ -596,12 +596,12 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   case Dir_DOT: {
     if (state_is_accept(a, s) || state_is_end(a, s)) {
       fprintf(f, "  %lu [peripheries = 2]\n",
-              state_format_id(s, owner->is_formated));
+              state_format_id(s, statespace_is_formated(owner)));
     }
     break;
   }
   case LaViT:
-    fprintf(f, "%lu::", state_format_id(s, owner->is_formated));
+    fprintf(f, "%lu::", state_format_id(s, statespace_is_formated(owner)));
     fprintf(f, "%s\n", automata_state_name(a, state_property_state(s)));
   case FSM:
   case CUI: /* 状態のグローバルルート膜の膜名としてdump済 */
