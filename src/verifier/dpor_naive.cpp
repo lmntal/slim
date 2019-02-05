@@ -259,8 +259,8 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
   por_store_successors(s, rc, TRUE);
 
   /* sから2stepの状態空間を立ち上げ, 遷移間の独立性情報テーブルを展開 */
-  if (!independency_check(s, statespace_automata(ss),
-                          statespace_propsyms(ss))) {
+  if (!independency_check(s, ss->automata(),
+                          ss->prop_symbols())) {
     return FALSE;
   }
 
@@ -280,7 +280,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
       set_ample(transition_next_state(t));
       vec_push(mc_por.ample_candidate, (vec_data_t)transition_id(t));
       //      if (check_C2(s) && check_C3(ss, s, rc, new_s, org_f)) {
-      if (check_C1(s, statespace_automata(ss), statespace_propsyms(ss)) &&
+      if (check_C1(s, ss->automata(), ss->prop_symbols()) &&
           check_C2(s)) {
         break;
       } else {
@@ -310,7 +310,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
     //    if (vec_num(mc_por.ample_candidate) == state_succ_num(s) ||
     //        !check_C2(s) || !check_C3(ss, s, rc, new_s, org_f)) {
     if (vec_num(mc_por.ample_candidate) == s->successor_num ||
-        !check_C1(s, statespace_automata(ss), statespace_propsyms(ss)) ||
+        !check_C1(s, ss->automata(), ss->prop_symbols()) ||
         !check_C2(s)) {
       return FALSE;
     }
@@ -322,7 +322,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
    * ここからは，sから始まるfull-stateグラフを対象にこれがC1を
    * 満足しているか否かチェックしていく．
    ******************************************************************/
-  // if (!check_C1(s, statespace_automata(ss), statespace_propsyms(ss))) {
+  // if (!check_C1(s, ss->automata(), ss->prop_symbols())) {
   if (!check_C3(ss, s, rc, new_s, org_f)) {
     /* C1〜C3をすべて満足するample(s)が決定不能のため，C0に従いen(s)を返して終了する
      */
@@ -405,7 +405,7 @@ static inline State *por_state_insert_statespace(StateSpaceRef ss,
   LmnMembraneRef succ_m;
 
   succ_m = succ_s->state_mem();
-  t = statespace_insert(ss, succ_s);
+  t = ss->insert(succ_s);
 
   set_inserted(t);
   if (t == succ_s) {

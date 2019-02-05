@@ -327,7 +327,7 @@ void profile_total_space_update(StateSpaceRef ss) {
       sum += p->spaces[i].space.cur;
   }
 
-  sum += statespace_space(ss);
+  sum += ss->space();
   profile_peakcounter_set_v(&(p->spaces[PROFILE_SPACE__TOTAL].space), sum);
 }
 
@@ -419,8 +419,8 @@ void profile_finish_exec() {
 
 void profile_statespace(LmnWorkerGroup *wp) {
   LmnWorker *w = workers_get_worker(wp, LMN_PRIMARY_ID);
-  lmn_prof.state_num_stored = statespace_num(worker_states(w));
-  lmn_prof.state_num_end = statespace_end_num(worker_states(w));
+  lmn_prof.state_num_stored = worker_states(w)->num();
+  lmn_prof.state_num_end = worker_states(w)->num_raw();
 
   if (lmn_env.profile_level >= 3 && lmn_env.tree_compress) {
     profile_add_space(PROFILE_SPACE__STATE_BINSTR,
@@ -440,8 +440,8 @@ void profile_statespace(LmnWorkerGroup *wp) {
     for (i = 0; i < lmn_prof.thread_num; i++) {
       mc_profiler2_init(&lmn_prof.lv2[i]);
     }
-    statespace_foreach(worker_states(w), (void (*)(ANYARGS))profile_state_f,
-                       (LmnWord)worker_states(w));
+    for (auto ptr : worker_states(w)->all_states())
+      profile_state_f(ptr, (LmnWord)worker_states(w));
 
     if (lmn_env.tree_compress) {
       MCProfiler2 *p = &lmn_prof.lv2[lmn_OMP_get_my_id()];
@@ -453,7 +453,7 @@ void profile_statespace(LmnWorkerGroup *wp) {
     }
     LMN_FREE(lmn_prof.lv2);
 
-    total->statespace_space = statespace_space(worker_states(w));
+    total->statespace_space = worker_states(w)->space();
     lmn_prof.lv2 = total;
   }
 }
@@ -487,8 +487,8 @@ static void profile_state_f(State *s, LmnWord arg) {
   p->transition_num += succ_num;
 
   if (!(s->is_encoded() && s->is_dummy())) {
-    if (statespace_has_property(ss)) {
-      AutomataRef a = statespace_automata(ss);
+    if (ss->has_property()) {
+      AutomataRef a = ss->automata();
       if (state_is_accept(a, s)) {
         p->accept_num++;
       }

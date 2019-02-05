@@ -51,48 +51,74 @@
 #include "state.hpp"
 #include "vm/vm.h"
 
-struct StateSpace {
-  BYTE tbl_type; /* なんらかの特殊操作を行うためのフラグフィールド */
-  BOOL is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
-  /* 2bytes alignment */
-  unsigned int thread_num; /* 本テーブルの操作スレッド数 */
+void StateSpace::make_table() {
+  if (lmn_env.mem_enc) {
+    this->set_memenc();
+    this->memid_tbl = new StateTable(this->thread_num);
+    if (this->thread_num > 1) {
+      this->memid_tbl->set_lock(ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM));
+    }
 
-  FILE *out;          /* dump先 */
-  State *init_state;  /* 初期状態 */
-  Vector *end_states; /* 最終状態の集合 */
-  StateTable *tbl; /* mhash値をkeyに, 状態のアドレスを登録する状態管理表 */
-  StateTable
-      *memid_tbl; /* memid_hashをkeyに, 状態のアドレスを登録する状態管理表 */
-  StateTable *acc_tbl;
-  StateTable *acc_memid_tbl;
+    if (this->has_property()) {
+      this->acc_memid_tbl = new StateTable(this->thread_num);
+      if (this->thread_num > 1) {
+        this->acc_memid_tbl->set_lock(
+            ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM));
+      }
+    }
+  } else {
+    this->tbl = new StateTable(this->thread_num);
 
-  AutomataRef property_automata; /* Never Clainへのポインタ */
-  Vector *propsyms;              /* 命題記号定義へのポインタ */
+    if (this->has_property()) {
+      this->acc_tbl = new StateTable(this->thread_num);
+    }
 
+    if (lmn_env.optimize_hash) {
+      this->set_rehasher();
+      this->memid_tbl = new StateTable(this->thread_num);
+      this->tbl->set_rehash_table(this->memid_tbl);
+      if (this->acc_tbl) {
+        this->acc_memid_tbl = new StateTable(this->thread_num);
+        this->acc_tbl->set_rehash_table(
+            this->acc_memid_tbl);
+      }
+    }
+
+    if (this->thread_num > 1) {
+      this->tbl->set_lock(
+          ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM));
+
+      if (this->acc_tbl) {
+        this->acc_tbl->set_lock(
+            ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM));
+      }
+      if (this->memid_tbl) {
+        this->memid_tbl->set_lock(
+            ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM));
+      }
+      if (this->acc_memid_tbl) {
+        this->acc_memid_tbl->set_lock(
+            ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM));
+      }
+    }
+  }
 #ifdef PROFILE
-  HashSet memid_hashes; /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
+  if (lmn_env.optimize_hash_old) {
+    if (!this->memid_tbl) {
+      this->memid_tbl = new StateTable(this->thread_num);
+    }
+    if (this->acc_tbl) {
+      this->acc_memid_tbl = new StateTable(this->thread_num);
+    }
+    hashset_init(&this->memid_hashes, 128);
+  }
 #endif
-};
+}
 
-FILE *statespace_output(StateSpace *SS) {
-  return SS->out;
-}
-bool statespace_is_formated(StateSpace *SS) {
-  return SS->is_formated;
-}
-bool statespace_use_memenc(StateSpace *SS){ return ((SS)->tbl_type & SS_MEMID_MASK); }
-void statespace_set_memenc(StateSpace *SS) { ((SS)->tbl_type |= SS_MEMID_MASK); }
-void statespace_set_rehasher(StateSpace *SS) { ((SS)->tbl_type |= SS_REHASHER_MASK); }
-
-bool statespace_has_property(StateSpace *SS) {
-  return (SS)->property_automata;
-}
 AutomataRef statespace_automata(StateSpace *SS) {
   return (SS)->property_automata;
 }
-Vector *statespace_propsyms(StateSpace *SS) {
-  return ((SS)->propsyms);
-}
+Vector *statespace_propsyms(StateSpace *SS) { return ((SS)->propsyms); }
 
 #define TABLE_DEFAULT_MAX_DENSITY                                              \
   (5U) /* 1バケットあたりの平均長がこの値を越えた場合にresizeする */
@@ -121,14 +147,6 @@ LmnBinStrRef StateTable::compress_state(State *s, LmnBinStrRef bs) {
     bs = (*((this)->type->compress))(s);
   }
   return bs;
-}
-
-/* 既に計算済のバイナリストリングbsを状態sに登録する.
- * statetable_{insert/add_direct}内の排他制御ブロック内で呼び出す. */
-static inline void state_set_compress_for_table(State *s, LmnBinStrRef bs) {
-  if (!s->is_encoded() && bs) {
-    s->state_set_binstr(bs);
-  }
 }
 
 /** Global Vars
@@ -257,158 +275,49 @@ unsigned long StateTable::space() const {
 
 /** StateSpace
  */
-static inline StateSpaceRef statespace_make_minimal() {
-  struct StateSpace *ss = LMN_MALLOC(struct StateSpace);
-  ss->tbl_type = 0x00U;
-  ss->is_formated = FALSE;
-  ss->thread_num = 1;
-  ss->out = stdout; /* TOFIX: LmnPortで書き直したいところ */
-  ss->init_state = NULL;
-  ss->end_states = NULL;
-  ss->tbl = NULL;
-  ss->memid_tbl = NULL;
-  ss->acc_tbl = NULL;
-  ss->acc_memid_tbl = NULL;
-  ss->property_automata = NULL;
-  ss->propsyms = NULL;
-  return ss;
-}
-
-static inline void statespace_make_table(StateSpaceRef ss) {
-  if (lmn_env.mem_enc) {
-    statespace_set_memenc(ss);
-    ss->memid_tbl = new StateTable(ss->thread_num);
-    if (ss->thread_num > 1) {
-      ss->memid_tbl->set_lock(ewlock_make(ss->thread_num, DEFAULT_WLOCK_NUM));
-    }
-
-    if (statespace_has_property(ss)) {
-      ss->acc_memid_tbl = new StateTable(ss->thread_num);
-      if (ss->thread_num > 1) {
-        statespace_accept_memid_tbl(ss)->set_lock(
-            ewlock_make(ss->thread_num, DEFAULT_WLOCK_NUM));
-      }
-    }
-  } else {
-    ss->tbl = new StateTable(ss->thread_num);
-
-    if (statespace_has_property(ss)) {
-      ss->acc_tbl = new StateTable(ss->thread_num);
-    }
-
-    if (lmn_env.optimize_hash) {
-      statespace_set_rehasher(ss);
-      ss->memid_tbl = new StateTable(ss->thread_num);
-      statespace_tbl(ss)->set_rehash_table(statespace_memid_tbl(ss));
-      if (statespace_accept_tbl(ss)) {
-        ss->acc_memid_tbl = new StateTable(ss->thread_num);
-        statespace_accept_tbl(ss)->set_rehash_table(
-            statespace_accept_memid_tbl(ss));
-      }
-    }
-
-    if (ss->thread_num > 1) {
-      statespace_tbl(ss)->set_lock(
-          ewlock_make(ss->thread_num, DEFAULT_WLOCK_NUM));
-
-      if (statespace_accept_tbl(ss)) {
-        statespace_accept_tbl(ss)->set_lock(
-            ewlock_make(ss->thread_num, DEFAULT_WLOCK_NUM));
-      }
-      if (statespace_memid_tbl(ss)) {
-        statespace_memid_tbl(ss)->set_lock(
-            ewlock_make(ss->thread_num, DEFAULT_WLOCK_NUM));
-      }
-      if (statespace_accept_memid_tbl(ss)) {
-        statespace_accept_memid_tbl(ss)->set_lock(
-            ewlock_make(ss->thread_num, DEFAULT_WLOCK_NUM));
-      }
-    }
-  }
-#ifdef PROFILE
-  if (lmn_env.optimize_hash_old) {
-    if (!statespace_memid_tbl(ss)) {
-      ss->memid_tbl = new StateTable(ss->thread_num);
-    }
-    if (statespace_accept_tbl(ss)) {
-      ss->acc_memid_tbl = new StateTable(ss->thread_num);
-    }
-    hashset_init(&ss->memid_hashes, 128);
-  }
-#endif
-}
-
-StateSpaceRef statespace_make(AutomataRef a, Vector *psyms) {
-  struct StateSpace *ss;
-  ss = statespace_make_minimal();
-  ss->end_states = vec_make(64);
-  ss->property_automata = a;
-  ss->propsyms = psyms;
-  statespace_make_table(ss);
-  return ss;
+StateSpace::StateSpace() {
+  tbl_type = 0x00U;
+  is_formated = FALSE;
+  thread_num = 1;
+  out = stdout; /* TOFIX: LmnPortで書き直したいところ */
+  init_state = NULL;
+  end_states = NULL;
+  tbl = NULL;
+  memid_tbl = NULL;
+  acc_tbl = NULL;
+  acc_memid_tbl = NULL;
+  property_automata = NULL;
+  propsyms = NULL;
 }
 
 /* for parallel model checker mode */
 StateSpaceRef statespace_make_for_parallel(int thread_num, AutomataRef a,
                                            Vector *psyms) {
-  unsigned int i;
-  struct StateSpace *ss;
-
-  ss = statespace_make_minimal();
-  ss->thread_num = thread_num;
-  ss->property_automata = a;
-  ss->propsyms = psyms;
-  ss->end_states = LMN_NALLOC(struct Vector, thread_num);
-  for (i = 0; i < ss->thread_num; i++) {
-    vec_init(&ss->end_states[i], 48);
-  }
-
-  statespace_make_table(ss);
-  return ss;
+  return new StateSpace(thread_num, a, psyms);
 }
 
-void statespace_clear(StateSpaceRef ss) {
-  unsigned int i;
-  for (i = 0; i < ss->thread_num; i++) {
-    vec_clear(&ss->end_states[i]);
-  }
-
-  ss->init_state = NULL;
-  if (statespace_tbl(ss))
-    statespace_tbl(ss)->clear();
-  if (statespace_memid_tbl(ss))
-    statespace_memid_tbl(ss)->clear();
-  if (statespace_accept_tbl(ss))
-    statespace_accept_tbl(ss)->clear();
-  if (statespace_accept_memid_tbl(ss))
-    statespace_accept_memid_tbl(ss)->clear();
-}
-
-void statespace_free(StateSpaceRef ss) {
+StateSpace::~StateSpace() {
   /* MEMO: openmpで並列freeすると, tcmallocがsegmentation faultする. */
   // int nPEs = ss->thread_num;
-  int nPEs = 1;
-  delete statespace_tbl(ss);
-  delete statespace_memid_tbl(ss);
-  delete statespace_accept_tbl(ss);
-  delete statespace_accept_memid_tbl(ss);
+  delete this->tbl;
+  delete this->memid_tbl;
+  delete this->acc_tbl;
+  delete this->acc_memid_tbl;
 
-  if (ss->thread_num > 1) {
-    unsigned int i;
-    for (i = 0; i < ss->thread_num; i++) {
-      vec_destroy(&ss->end_states[i]);
+  if (this->thread_num > 1) {
+    for (int i = 0; i < this->thread_num; i++) {
+      vec_destroy(&this->end_states[i]);
     }
-    LMN_FREE(ss->end_states);
+    LMN_FREE(this->end_states);
   } else {
-    vec_free(ss->end_states);
+    vec_free(this->end_states);
   }
 
 #ifdef PROFILE
   if (lmn_env.optimize_hash_old) {
-    hashset_destroy(&ss->memid_hashes);
+    hashset_destroy(&this->memid_hashes);
   }
 #endif
-  LMN_FREE(ss);
 }
 
 /* **既に状態管理表stに追加済みの状態s**(およびsに対応する階層グラフ構造)と
@@ -441,19 +350,14 @@ void StateTable::memid_rehash(State *s) {
 #ifdef PROFILE
 
 /* 膜のIDを計算するハッシュ値(mhash)を追加する */
-void statespace_add_memid_hash(StateSpaceRef states, unsigned long hash) {
+void StateSpace::add_memid_hash(unsigned long hash) {
   State *ptr;
   StateTable *org;
   unsigned long i;
 
-  org = states->tbl;
-  hashset_add(&states->memid_hashes, hash);
+  org = this->tbl;
+  hashset_add(&this->memid_hashes, hash);
   org->memid_rehash(hash);
-}
-
-/* hashが膜のIDを計算しているハッシュならば真、そうでなければ偽を返す */
-inline BOOL statespace_is_memid_hash(StateSpaceRef states, unsigned long hash) {
-  return hashset_contains(&states->memid_hashes, hash);
 }
 #endif
 
@@ -464,7 +368,7 @@ inline BOOL statespace_is_memid_hash(StateSpaceRef states, unsigned long hash) {
  * 本関数の呼び出し側でs_memのメモリ管理を行う必要がある.
  * なお, 既にsのバイナリストリングを計算済みの場合,
  * バイナリストリングへのエンコード処理はskipするため, s_memはNULLで構わない. */
-State *statespace_insert(StateSpaceRef ss, State *s) {
+State *StateSpace::insert(State *s) {
   StateTable *insert_dst;
   State *ret;
   BOOL is_accept;
@@ -475,29 +379,29 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
   hashv = state_hash(s);
 #endif
 
-  is_accept = statespace_has_property(ss) &&
-              state_is_accept(statespace_automata(ss), s);
+  is_accept = this->has_property() &&
+              state_is_accept(this->automata(), s);
 
   if (s->is_encoded()) {
     /* already calculated canonical binary strings */
     if (is_accept) {
-      insert_dst = statespace_accept_memid_tbl(ss);
+      insert_dst = this->acc_memid_tbl;
     } else {
-      insert_dst = statespace_memid_tbl(ss);
+      insert_dst = this->memid_tbl;
     }
   } else {
     /* default */
     if (is_accept) {
-      insert_dst = statespace_accept_tbl(ss);
+      insert_dst = this->acc_tbl;
     } else {
-      insert_dst = statespace_tbl(ss);
+      insert_dst = this->tbl;
     }
 #ifdef PROFILE
-    if (lmn_env.optimize_hash_old && statespace_is_memid_hash(ss, hashv) &&
+    if (lmn_env.optimize_hash_old && this->is_memid_hash(hashv) &&
         lmn_env.tree_compress == FALSE) {
       s->calc_mem_encode();
-      insert_dst = is_accept ? statespace_accept_memid_tbl(ss)
-                             : statespace_memid_tbl(ss);
+      insert_dst = is_accept ? this->acc_memid_tbl
+                             : this->memid_tbl;
     }
 #endif
   }
@@ -508,7 +412,7 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
   ret = insert_dst->insert(s, &col);
   if (lmn_env.optimize_hash_old && col >= MEM_EQ_FAIL_THRESHOLD &&
       lmn_env.tree_compress == FALSE) {
-    statespace_add_memid_hash(ss, hashv);
+    this->add_memid_hash(hashv);
   }
 #endif
 
@@ -519,9 +423,9 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
      * memidテーブルが定数サイズになってしまう. 判定を適切に行うため,
      * テーブルへのポインタを切り替える */
     if (is_accept) {
-      insert_dst = statespace_accept_memid_tbl(ss);
+      insert_dst = this->acc_memid_tbl;
     } else {
-      insert_dst = statespace_memid_tbl(ss);
+      insert_dst = this->memid_tbl;
     }
   }
 
@@ -546,8 +450,7 @@ State *statespace_insert(StateSpaceRef ss, State *s) {
  * 差分オブジェクトdが刺しており(d->mem),
  *   d->memをTLSとして扱う前提が守られていれば, d->memに対する操作は全てMT-safe
  */
-State *statespace_insert_delta(StateSpaceRef ss, State *s,
-                               struct MemDeltaRoot *d) {
+State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
   State *ret;
 
   /* d->mem (parentに対応する階層グラフ構造)を,
@@ -556,7 +459,7 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
   s->state_set_mem(DMEM_ROOT_MEM(d));
 
   /* Xを基に, ハッシュ値/mem_idなどの状態データを計算する */
-  s->state_calc_hash(s->state_mem(), statespace_use_memenc(ss));
+  s->state_calc_hash(s->state_mem(), this->use_memenc());
 
   /* 既にバイナリストリング計算済みとなるcanonical membrane使用時は,
    * この時点でdelta-stringを計算する */
@@ -564,7 +467,7 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
     s->calc_binstr_delta();
   }
 
-  ret = statespace_insert(ss, s);
+  ret = this->insert(s);
 
   /* X(sに対応する階層グラフ構造)をparentに対応する階層グラフ構造に戻す */
   dmem_root_revert(d);
@@ -579,13 +482,13 @@ State *statespace_insert_delta(StateSpaceRef ss, State *s,
 }
 
 /* 重複検査や排他制御なしに状態sを状態表ssに登録する */
-void statespace_add_direct(StateSpaceRef ss, State *s) {
+void StateSpace::add_direct(State *s) {
   StateTable *add_dst;
 
   if (s->is_encoded()) {
-    add_dst = statespace_memid_tbl(ss);
+    add_dst = this->memid_tbl;
   } else {
-    add_dst = statespace_tbl(ss);
+    add_dst = this->tbl;
   }
 
   add_dst->add_direct(s);
@@ -596,20 +499,22 @@ void statespace_add_direct(StateSpaceRef ss, State *s) {
 }
 
 /* 高階関数 */
-void statespace_foreach(StateSpaceRef ss, void (*func)(ANYARGS),
-                        LmnWord _arg1) {
-  if (statespace_tbl(ss))
-    for (auto &ptr : *statespace_tbl(ss))
-      func(ptr, _arg1);
-  if (statespace_memid_tbl(ss))
-    for (auto &ptr : *statespace_memid_tbl(ss))
-      func(ptr, _arg1);
-  if (statespace_accept_tbl(ss))
-    for (auto &ptr : *statespace_accept_tbl(ss))
-      func(ptr, _arg1);
-  if (statespace_accept_memid_tbl(ss))
-    for (auto &ptr : *statespace_accept_memid_tbl(ss))
-      func(ptr, _arg1);
+std::vector<State *> StateSpace::all_states() const {
+  std::vector<State *> result;
+  if (this->tbl)
+    std::copy(this->tbl->begin(), this->tbl->end(),
+              std::back_inserter(result));
+  if (this->memid_tbl)
+    std::copy(this->memid_tbl->begin(),
+              this->memid_tbl->end(), std::back_inserter(result));
+  if (this->acc_tbl)
+    std::copy(this->acc_tbl->begin(),
+              this->acc_tbl->end(), std::back_inserter(result));
+  if (this->acc_memid_tbl)
+    std::copy(this->acc_memid_tbl->begin(),
+              this->acc_memid_tbl->end(),
+              std::back_inserter(result));
+  return result;
 }
 
 /*----------------------------------------------------------------------
@@ -1034,51 +939,49 @@ void StateTable::add_direct(State *s) {
 }
 
 /* 初期状態を追加する MT-UNSAFE */
-void statespace_set_init_state(StateSpaceRef ss, State *init_state,
-                               BOOL enable_binstr) {
-  ss->init_state = init_state;
-  statespace_add_direct(ss, init_state);
+void StateSpace::set_init_state(State *init_state, BOOL enable_binstr) {
+  this->init_state = init_state;
+  this->add_direct(init_state);
   if (enable_binstr) {
     init_state->free_mem();
   }
 }
 
-/* 初期状態を返す */
-State *statespace_init_state(StateSpaceRef ss) { return ss->init_state; }
-
 /* 状態数を返す */
-unsigned long statespace_num(StateSpaceRef ss) {
-  return (statespace_num_raw(ss) - statespace_dummy_num(ss));
+
+unsigned long StateSpace::num() {
+  return (this->num_raw() - this->dummy_num());
 }
 
 /* dummyの状態数を含む, 管理している状態数を返す */
-unsigned long statespace_num_raw(StateSpaceRef ss) {
-  return (statespace_tbl(ss) ? statespace_tbl(ss)->all_num() : 0) +
-         (statespace_memid_tbl(ss) ? statespace_memid_tbl(ss)->all_num() : 0) +
-         (statespace_accept_tbl(ss) ? statespace_accept_tbl(ss)->all_num()
-                                    : 0) +
-         (statespace_accept_memid_tbl(ss)
-              ? statespace_accept_memid_tbl(ss)->all_num()
+unsigned long StateSpace::num_raw() {
+  return (this->tbl ? this->tbl->all_num() : 0) +
+         (this->memid_tbl ? this->memid_tbl->all_num()
+                                     : 0) +
+         (this->acc_tbl ? this->acc_tbl->all_num()
+                                      : 0) +
+         (this->acc_memid_tbl
+              ? this->acc_memid_tbl->all_num()
               : 0);
 }
 
 /* memidテーブルに追加されているdummy状態数を返す */
-unsigned long statespace_dummy_num(StateSpaceRef ss) {
+unsigned long StateSpace::dummy_num() {
   StateTable *tbl;
   unsigned long ret;
   unsigned int i;
 
   ret = 0UL;
-  tbl = statespace_memid_tbl(ss);
+  tbl = this->memid_tbl;
   if (tbl) {
-    for (i = 0; i < ss->thread_num; i++) {
+    for (i = 0; i < this->thread_num; i++) {
       ret += tbl->num_dummy(i);
     }
   }
 
-  tbl = statespace_accept_memid_tbl(ss);
+  tbl = this->acc_memid_tbl;
   if (tbl) {
-    for (i = 0; i < ss->thread_num; i++) {
+    for (i = 0; i < this->thread_num; i++) {
       ret += tbl->num_dummy(i);
     }
   }
@@ -1086,62 +989,49 @@ unsigned long statespace_dummy_num(StateSpaceRef ss) {
 }
 
 /* 最終状態数を返す */
-unsigned long statespace_end_num(StateSpaceRef ss) {
-  if (ss->thread_num > 1) {
+unsigned long StateSpace::num_of_ends() const {
+  if (this->thread_num > 1) {
     unsigned long sum = 0;
     unsigned int i;
-    for (i = 0; i < ss->thread_num; i++) {
-      sum += vec_num(&ss->end_states[i]);
+    for (i = 0; i < this->thread_num; i++) {
+      sum += vec_num(&this->end_states[i]);
     }
     return sum;
 
   } else {
-    return vec_num(ss->end_states);
+    return vec_num(this->end_states);
   }
 }
 
 /* 状態空間に**すでに含まれている**状態sを最終状態として登録する */
-void statespace_add_end_state(StateSpaceRef ss, State *s) {
+void StateSpace::mark_as_end(State *s) {
   LMN_ASSERT(env_my_thread_id() < env_threads_num());
-  if (ss->thread_num > 1)
-    vec_push(&ss->end_states[env_my_thread_id()], (vec_data_t)s);
+  if (this->thread_num > 1)
+    vec_push(&this->end_states[env_my_thread_id()], (vec_data_t)s);
   else
-    vec_push(ss->end_states, (vec_data_t)s);
+    vec_push(this->end_states, (vec_data_t)s);
 }
 
-/* 最終状態のベクタを返す */
-const Vector *statespace_end_states(StateSpaceRef ss) { return ss->end_states; }
-
-StateTable *statespace_tbl(StateSpaceRef ss) { return ss->tbl; }
-
-StateTable *statespace_memid_tbl(StateSpaceRef ss) { return ss->memid_tbl; }
-
-StateTable *statespace_accept_tbl(StateSpaceRef ss) { return ss->acc_tbl; }
-
-StateTable *statespace_accept_memid_tbl(StateSpaceRef ss) {
-  return ss->acc_memid_tbl;
-}
-
-unsigned long statespace_space(StateSpaceRef ss) {
+unsigned long StateSpace::space() {
   unsigned long ret = sizeof(struct StateSpace);
-  if (statespace_tbl(ss)) {
-    ret += statespace_tbl(ss)->space();
+  if (this->tbl) {
+    ret += this->tbl->space();
   }
-  if (statespace_memid_tbl(ss)) {
-    ret += statespace_memid_tbl(ss)->space();
+  if (this->memid_tbl) {
+    ret += this->memid_tbl->space();
   }
-  if (statespace_accept_tbl(ss)) {
-    ret += statespace_accept_tbl(ss)->space();
+  if (this->acc_tbl) {
+    ret += this->acc_tbl->space();
   }
-  if (statespace_accept_memid_tbl(ss)) {
-    ret += statespace_accept_memid_tbl(ss)->space();
+  if (this->acc_memid_tbl) {
+    ret += this->acc_memid_tbl->space();
   }
-  if (ss->thread_num > 1) {
+  if (this->thread_num > 1) {
     unsigned int i;
-    for (i = 0; i < ss->thread_num; i++)
-      ret += vec_space(&ss->end_states[i]);
+    for (i = 0; i < this->thread_num; i++)
+      ret += vec_space(&this->end_states[i]);
   } else {
-    ret += vec_space(ss->end_states);
+    ret += vec_space(this->end_states);
   }
   return ret;
 }
@@ -1149,22 +1039,18 @@ unsigned long statespace_space(StateSpaceRef ss) {
 /** Printer et al
  */
 
-static void statespace_dump_all_transitions(StateSpaceRef ss);
-static void statespace_dump_all_labels(StateSpaceRef ss);
-static void statespace_dump_all_states(StateSpaceRef ss);
-
-void statespace_ends_dumper(StateSpaceRef ss) {
+void StateSpace::dump_ends() {
   const Vector *ends;
   unsigned int i;
 
-  ends = statespace_end_states(ss);
-  if (ss->thread_num > 1) {
+  ends = this->end_states;
+  if (this->thread_num > 1) {
     Vector *end_i;
     unsigned int j;
-    for (i = 0; i < ss->thread_num; i++) {
+    for (i = 0; i < this->thread_num; i++) {
       end_i = (Vector *)(&ends[i]);
       for (j = 0; j < vec_num(end_i); j++) {
-        state_print_mem((State *)vec_get(end_i, j), (LmnWord)ss->out);
+        state_print_mem((State *)vec_get(end_i, j), (LmnWord)this->out);
         if (lmn_env.sp_dump_format == LMN_SYNTAX) {
           printf(".\n");
         }
@@ -1172,7 +1058,7 @@ void statespace_ends_dumper(StateSpaceRef ss) {
     }
   } else {
     for (i = 0; i < vec_num(ends); i++) {
-      state_print_mem((State *)vec_get(ends, i), (LmnWord)ss->out);
+      state_print_mem((State *)vec_get(ends, i), (LmnWord)this->out);
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         printf(".\n");
       }
@@ -1180,19 +1066,19 @@ void statespace_ends_dumper(StateSpaceRef ss) {
   }
 }
 
-void statespace_dumper(StateSpaceRef ss) {
-  State *init = statespace_init_state(ss);
+void StateSpace::dump() {
+  State *init = this->initial_state();
   switch (lmn_env.mc_dump_format) {
   case Dir_DOT:
-    fprintf(ss->out, "digraph StateTransition {\n");
-    fprintf(ss->out, "  node [shape = circle];\n");
-    fprintf(ss->out,
+    fprintf(this->out, "digraph StateTransition {\n");
+    fprintf(this->out, "  node [shape = circle];\n");
+    fprintf(this->out,
             "  %lu [style=filled, color = \"#ADD8E6\", shape = Msquare];\n",
-            state_format_id(init, ss->is_formated));
-    statespace_dump_all_states(ss);
-    statespace_dump_all_transitions(ss);
-    statespace_dump_all_labels(ss);
-    fprintf(ss->out, "}\n");
+            state_format_id(init, this->is_formated));
+    this->dump_all_states();
+    this->dump_all_transitions();
+    this->dump_all_labels();
+    fprintf(this->out, "}\n");
     break;
   case FSM:
     /* TODO: under construction..
@@ -1202,89 +1088,89 @@ void statespace_dumper(StateSpaceRef ss) {
      *   現状ではとりあえず状態データを空にして状態遷移グラフを出力する */
     // statespace_print_state_data
     // statespace_print_state_vector
-    fprintf(ss->out, "Under_Constructions(2) Binay \"Yes\" \"No\"\n");
-    fprintf(ss->out, "---\n");
-    statespace_dump_all_states(ss);
-    fprintf(ss->out, "---\n");
-    statespace_dump_all_transitions(ss);
+    fprintf(this->out, "Under_Constructions(2) Binay \"Yes\" \"No\"\n");
+    fprintf(this->out, "---\n");
+    this->dump_all_states();
+    fprintf(this->out, "---\n");
+    this->dump_all_transitions();
     break;
   case LaViT: /* FALL THROUGH */
   default:
     if (lmn_env.sp_dump_format != INCREMENTAL) {
-      fprintf(ss->out, "States\n");
-      statespace_dump_all_states(ss);
+      fprintf(this->out, "States\n");
+      this->dump_all_states();
     }
-    fprintf(ss->out, "\n");
-    fprintf(ss->out, "Transitions\n");
-    fprintf(ss->out, "init:%lu\n", state_format_id(init, ss->is_formated));
-    statespace_dump_all_transitions(ss);
-    fprintf(ss->out, "\n");
+    fprintf(this->out, "\n");
+    fprintf(this->out, "Transitions\n");
+    fprintf(this->out, "init:%lu\n", state_format_id(init, this->is_formated));
+    this->dump_all_transitions();
+    fprintf(this->out, "\n");
 
-    if (statespace_has_property(ss) && lmn_env.mc_dump_format == LaViT) {
-      fprintf(ss->out, "Labels\n");
-      statespace_dump_all_labels(ss);
-      fprintf(ss->out, "\n");
+    if (this->has_property() && lmn_env.mc_dump_format == LaViT) {
+      fprintf(this->out, "Labels\n");
+      this->dump_all_labels();
+      fprintf(this->out, "\n");
     }
 
     break;
   }
 }
 
-static void statespace_dump_all_states(StateSpaceRef ss) {
-  if (statespace_tbl(ss))
-    for (auto &ptr : *statespace_tbl(ss))
+void StateSpace::dump_all_states() {
+  if (this->tbl)
+    for (auto &ptr : *this->tbl)
     dump_state_data(ptr ,
-                     (LmnWord)ss->out, (LmnWord)ss);
-  if (statespace_memid_tbl(ss))
-    for (auto &ptr : *statespace_memid_tbl(ss))
-                     dump_state_data(ptr , (LmnWord)ss->out,
-                     (LmnWord)ss);
-  if (statespace_accept_tbl(ss))
-    for (auto &ptr : *statespace_accept_tbl(ss))
-                     dump_state_data(ptr , (LmnWord)ss->out,
-                     (LmnWord)ss);
-  if (statespace_accept_memid_tbl(ss))
-    for (auto &ptr : *statespace_accept_memid_tbl(ss))
-                     dump_state_data(ptr , (LmnWord)ss->out,
-                     (LmnWord)ss);
+                     (LmnWord)this->out, (LmnWord)this);
+  if (this->memid_tbl)
+    for (auto &ptr : *this->memid_tbl)
+                     dump_state_data(ptr , (LmnWord)this->out,
+                     (LmnWord)this);
+  if (this->acc_tbl)
+    for (auto &ptr : *this->acc_tbl)
+                     dump_state_data(ptr , (LmnWord)this->out,
+                     (LmnWord)this);
+  if (this->acc_memid_tbl)
+    for (auto &ptr : *this->acc_memid_tbl)
+                     dump_state_data(ptr , (LmnWord)this->out,
+                     (LmnWord)this);
 }
 
-static void statespace_dump_all_transitions(StateSpaceRef ss) {
-  if (statespace_tbl(ss))
-    for (auto &ptr : *statespace_tbl(ss))
+void StateSpace::dump_all_transitions() {
+  if (this->tbl)
+    for (auto &ptr : *this->tbl)
                      state_print_transition(ptr ,
-                     (LmnWord)ss->out, (LmnWord)ss);
-  if (statespace_memid_tbl(ss))
-    for (auto &ptr : *statespace_memid_tbl(ss))
+                     (LmnWord)this->out, (LmnWord)this);
+  if (this->memid_tbl)
+    for (auto &ptr : *this->memid_tbl)
                      state_print_transition(ptr ,
-                     (LmnWord)ss->out, (LmnWord)ss);
-  if (statespace_accept_tbl(ss))
-    for (auto &ptr : *statespace_accept_tbl(ss))
+                     (LmnWord)this->out, (LmnWord)this);
+  if (this->acc_tbl)
+    for (auto &ptr : *this->acc_tbl)
                      state_print_transition(ptr ,
-                     (LmnWord)ss->out, (LmnWord)ss);
-  if (statespace_accept_memid_tbl(ss))
-    for (auto &ptr : *statespace_accept_memid_tbl(ss))
+                     (LmnWord)this->out, (LmnWord)this);
+  if (this->acc_memid_tbl)
+    for (auto &ptr : *this->acc_memid_tbl)
                      state_print_transition(ptr ,
-                     (LmnWord)ss->out, (LmnWord)ss);
+                     (LmnWord)this->out, (LmnWord)this);
 }
 
-static void statespace_dump_all_labels(StateSpaceRef ss) {
-  if (statespace_tbl(ss))
-    for (auto &ptr : *statespace_tbl(ss))
+void StateSpace::dump_all_labels() {
+  if (this->tbl)
+    for (auto &ptr : *this->tbl)
     state_print_label(ptr ,
-                     (LmnWord)ss->out, (LmnWord)ss);
-  if (statespace_memid_tbl(ss))
-    for (auto &ptr : *statespace_memid_tbl(ss))
-                     state_print_label(ptr , (LmnWord)ss->out,
-                     (LmnWord)ss);
-  if (statespace_accept_tbl(ss))
-    for (auto &ptr : *statespace_accept_tbl(ss))
-                     state_print_label(ptr , (LmnWord)ss->out,
-                     (LmnWord)ss);
-  if (statespace_accept_memid_tbl(ss))
-    for (auto &ptr : *statespace_accept_memid_tbl(ss))
-                     state_print_label(ptr , (LmnWord)ss->out,
-                     (LmnWord)ss);
+                     (LmnWord)this->out, (LmnWord)this);
+  if (this->memid_tbl)
+    for (auto &ptr : *this->memid_tbl)
+                     state_print_label(ptr , (LmnWord)this->out,
+                     (LmnWord)this);
+  if (this->acc_tbl)
+    for (auto &ptr : *this->acc_tbl)
+                     state_print_label(ptr , (LmnWord)this->out,
+                     (LmnWord)this);
+  if (this->acc_memid_tbl)
+    for (auto &ptr : *this->acc_memid_tbl)
+                     state_print_label(ptr , (LmnWord)this->out,
+                     (LmnWord)this);
 }
 
 /* 注: 出力用に, リンクリストの先頭の状態のIDで,
@@ -1293,15 +1179,15 @@ static void statespace_dump_all_labels(StateSpaceRef ss) {
  * 状態数分の配列をmallocしてから処理するものであったが, これによるlarge
  * mallocがメモリswapを発生させていた. この方式は, メモリswapをさせない, かつ,
  * ある程度の整列結果を得ることを目的としている) */
-void statespace_format_states(StateSpaceRef ss) {
+void StateSpace::format_states() {
 #ifndef __CYGWIN__
   /* cygwinテスト時に, ボトルネックになっていた */
-  if (!ss->is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
-    if (statespace_tbl(ss)) statespace_tbl(ss)->format_states();
-    if (statespace_memid_tbl(ss)) statespace_memid_tbl(ss)->format_states();
-    if (statespace_accept_tbl(ss)) statespace_accept_tbl(ss)->format_states();
-    if (statespace_accept_memid_tbl(ss)) statespace_accept_memid_tbl(ss)->format_states();
-    ss->is_formated = TRUE;
+  if (!this->is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
+    if (this->tbl) this->tbl->format_states();
+    if (this->memid_tbl) this->memid_tbl->format_states();
+    if (this->acc_tbl) this->acc_tbl->format_states();
+    if (this->acc_memid_tbl) this->acc_memid_tbl->format_states();
+    this->is_formated = TRUE;
   }
 #endif
 }

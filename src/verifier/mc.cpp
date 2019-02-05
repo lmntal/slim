@@ -106,13 +106,13 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   p_label = a ? automata_get_init_state(a) : DEFAULT_STATE_ID;
   mem = lmn_mem_copy(world_mem_org);
-  init_s = new State(mem, p_label, statespace_use_memenc(states));
+  init_s = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
 #endif
-  statespace_set_init_state(states, init_s, lmn_env.enable_compress_mem);
+  states->set_init_state(init_s, lmn_env.enable_compress_mem);
 
   /** START
    */
@@ -141,29 +141,29 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 static void mc_dump(LmnWorkerGroup *wp) {
   StateSpaceRef ss = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   if (lmn_env.dump) {
-    statespace_format_states(ss);
+    ss->format_states();
 
     /* 1. 状態遷移グラフの標準出力 */
     if (lmn_env.trace) {
-      statespace_dumper(ss);
+      ss->dump();
     }
 
     /* 2. 反例パス or 最終状態集合の出力 */
-    auto out = statespace_output(ss);
+    auto out = ss->output();
     if (wp->do_search) {
       mc_dump_all_errors(wp, out);
     } else if (lmn_env.end_dump && lmn_env.mc_dump_format == CUI) {
       /* とりあえず最終状態集合の出力はCUI限定。(LaViTに受付フォーマットがない)
        */
-      statespace_ends_dumper(ss);
+      ss->dump_ends();
     }
 
     /* CUIモードの場合状態数などのデータも標準出力 */
     if (lmn_env.mc_dump_format == CUI) {
       fprintf(out, "\'# of States\'(stored)   = %lu.\n",
-              statespace_num(ss));
+              ss->num());
       fprintf(out, "\'# of States\'(end)      = %lu.\n",
-              statespace_end_num(ss));
+              ss->num_of_ends());
       if (wp->do_search) {
         fprintf(out, "\'# of States\'(invalid)  = %lu.\n",
                 mc_invalids_get_num(wp));
@@ -181,7 +181,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
     }
   }
 
-  if (statespace_has_property(ss))
+  if (ss->has_property())
     lmn_prof.has_property = TRUE;
   if (workers_have_error(wp))
     lmn_prof.found_err = TRUE;
@@ -216,7 +216,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   if (mc_react_cxt_expanded_num(rc) == 0) {
     /* sを最終状態集合として記録 */
-    statespace_add_end_state(ss, s);
+    ss->mark_as_end(s);
   } else if (mc_enable_por(f) && !s->s_is_reduced()) {
     /* POR: 遷移先状態集合:en(s)からample(s)を計算する.
      * 呼び出し先で, mc_store_successorsに相当する処理を済ませる */
@@ -316,16 +316,16 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     /* 状態空間に状態src_succを記録 */
     if (RC_MC_USE_DMEM(rc)) { /* --delta-mem */
       MemDeltaRoot *d = (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);
-      succ = statespace_insert_delta(ss, src_succ, d);
+      succ = ss->insert_delta(src_succ, d);
       src_succ_m = NULL;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
       if (src_succ->s_is_d())
         src_succ->calc_binstr_delta();
-      succ = statespace_insert(ss, src_succ);
+      succ = ss->insert(src_succ);
       src_succ_m = NULL;
     } else {                            /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
-      succ = statespace_insert(ss, src_succ);
+      succ = ss->insert(src_succ);
     }
 
     if (succ == src_succ) {
@@ -755,13 +755,13 @@ static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
    *       オリジナルテーブル側のdummy状態に対応するmemid状態を探索して引っ張ってくる必要がある
    */
 
-  auto out = statespace_output(ss);
-  fprintf(out, "%lu::", state_format_id(s, statespace_is_formated(ss)));
+  auto out = ss->output();
+  fprintf(out, "%lu::", state_format_id(s, ss->is_formatted()));
   for (i = 0; i < vec_num(succs); i++) {
     State *succ = (State *)vec_get(succs, i);
     if (succ) {
       fprintf(out, "%s%lu", (i > 0) ? ", " : "",
-              state_format_id(succ, statespace_is_formated(ss)));
+              state_format_id(succ, ss->is_formatted()));
     }
   }
   fprintf(out, "\n");
@@ -780,26 +780,26 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
 
   for (i = 0; i < vec_num(v); i++) {
     State *s;
-    auto out = statespace_output(ss);
+    auto out = ss->output();
 
     if (lmn_env.sp_dump_format != LMN_SYNTAX) {
       const char *m;
       s = (State *)vec_get(v, i);
       m = (s == seed) ? "*" : " ";
-      fprintf(out, "%s%2lu::%s", m, state_format_id(s, statespace_is_formated(ss)),
-              automata_state_name(statespace_automata(ss),
+      fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
+              automata_state_name(ss->automata(),
                                   state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
     } else {
       s = (State *)vec_get(v, i);
-      fprintf(out, "path%lu_%s", state_format_id(s, statespace_is_formated(ss)),
-              automata_state_name(statespace_automata(ss),
+      fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
+              automata_state_name(ss->automata(),
                                   state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
       fprintf(out, ".\n");
 
-      fprintf(out, "path%lu_%s", state_format_id(s, statespace_is_formated(ss)),
-              automata_state_name(statespace_automata(ss),
+      fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
+              automata_state_name(ss->automata(),
                                   state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
       fprintf(out, ":- ");
@@ -850,7 +850,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
             mc_print_vec_states(ss, path, NULL);
             fprintf(f, "\n");
           } else { /* ハッシュ表に追加 */
-            mc_store_invalids_graph(statespace_automata(ss), invalids_graph,
+            mc_store_invalids_graph(ss->automata(), invalids_graph,
                                     path);
           }
           vec_free(path);
@@ -886,9 +886,9 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
             fprintf(f, "\n");
           } else {
             LMN_ASSERT(invalids_graph);
-            mc_store_invalids_graph(statespace_automata(ss), invalids_graph,
+            mc_store_invalids_graph(ss->automata(), invalids_graph,
                                     path);
-            mc_store_invalids_graph(statespace_automata(ss), invalids_graph,
+            mc_store_invalids_graph(ss->automata(), invalids_graph,
                                     cycle);
           }
 
