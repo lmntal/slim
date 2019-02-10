@@ -540,6 +540,14 @@ static inline unsigned long env_next_id() {
 
 #endif
 
-/* cldoc:end-category() */
+namespace slim {
+namespace config {
+#ifdef PROFILE
+static constexpr bool profile = true;
+#else
+static constexpr bool profile = false;
+#endif
+}
+}
 
 #endif /* LMNTAL_H */

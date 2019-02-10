@@ -42,6 +42,7 @@
 #include "mc_worker.h"
 #include "state.h"
 #include "state.hpp"
+#include "state_table.hpp"
 
 #ifdef PROFILE
 #include "runtime_status.h"

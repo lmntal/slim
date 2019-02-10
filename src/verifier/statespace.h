@@ -44,24 +44,12 @@
 #ifndef LMN_STATESPACE_H
 #define LMN_STATESPACE_H
 
-/**
- * @ingroup  Verifier
- * @defgroup StateSpace
- * @{
- */
 
 #include "../lmntal.h"
-#include "automata.h"
-#include "delta_membrane.h"
 #include "element/element.h"
-#include "mem_encode.h"
-#include "state.hpp"
-#include "tree_compress.h"
 
-struct statespace_type {
-  int (*compare)(State *, State *); /* 状態の等価性判定を行う関数 */
-  LmnBinStrRef (*compress)(State *); /* 状態sの圧縮バイト列を計算して返す関数 */
-};
+#include "state.hpp"
+
 
 /* the member "tbl_type" in struct StateSpace */
 #define SS_MEMID_MASK (0x01U)
@@ -151,130 +139,5 @@ struct StateSpace {
   HashSet memid_hashes; /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
 #endif
 };
-
-struct StateTable {
-  /* TODO: テーブルの初期サイズはいくつが適当か.
-   * (固定サイズにしているモデル検査器は多い) */
-  static constexpr size_t TABLE_DEFAULT_INIT_SIZE = 1U << 15;
-  StateTable(int thread_num)
-      : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE) {}
-  StateTable(int thread_num, unsigned long size);
-  ~StateTable();
-
-  void clear() {
-    unsigned long i;
-
-    for (i = 0; i < this->thread_num; i++) {
-      this->num[i] = 0;
-      this->num_dummy_[i] = 0;
-    }
-
-    memset(this->tbl, 0x00, cap_ * (sizeof(State *)));
-  }
-
-  unsigned long cap() const { return cap_; }
-  unsigned long num_by_me() const;
-  unsigned long all_num() const;
-  unsigned long num_dummy(size_t idx) const { return num_dummy_[idx]; }
-  unsigned long cap_density() const { return cap_density_; }
-  unsigned long space() const;
-  void resize(unsigned long);
-  State *insert(State *ins, unsigned long *col = nullptr);
-  void add_direct(State *s);
-  void format_states();
-  void set_rehash_table(StateTable *);
-  void set_lock(EWLock *);
-  void memid_rehash(unsigned long hash) {
-    for (int i = 0; i < this->cap(); i++) {
-      auto ptr = this->tbl[i];
-
-      while (ptr) {
-        State *next = ptr->next;
-        if (state_hash(ptr) == hash) { /* statespace_mem_encode_f */
-          this->memid_rehash(ptr);
-        }
-        ptr = next;
-      }
-    }
-  }
-
-private:
-  void num_increment();
-  void num_dummy_increment();
-  void set_rehasher() { use_rehasher_ = true; }
-  bool use_rehasher() const;
-  LmnBinStrRef compress_state(State *s, LmnBinStrRef bs);
-
-  void memid_rehash(State *s);
-  StateTable *rehash_table();
-
-  /* 既に計算済のバイナリストリングbsを状態sに登録する.
-   * statetable_{insert/add_direct}内の排他制御ブロック内で呼び出す. */
-  static void state_set_compress_for_table(State *s, LmnBinStrRef bs) {
-    if (!s->is_encoded() && bs) {
-      s->state_set_binstr(bs);
-    }
-  }
-
-public:
-  class iterator {
-    StateTable *table;
-    size_t table_index;
-    State *ptr;
-    State *next;
-
-  public:
-    using difference_type = intptr_t;
-    using value_type = State *;
-    using pointer = State **;
-    using reference = State *&;
-    using iterator_category = typename std::input_iterator_tag;
-
-    iterator() : ptr(nullptr) {}
-    iterator(StateTable *t)
-        : table(t), table_index(0), ptr(table->tbl[table_index]) {
-      while (!ptr && table_index + 1 < table->cap())
-        ptr = table->tbl[++table_index];
-      if (ptr)
-        next = ptr->next;
-    };
-    iterator(const iterator &itr)
-        : table(itr.table), table_index(itr.table_index), ptr(itr.ptr) {}
-
-    iterator &operator++() {
-      ptr = next;
-      while (!ptr && table_index + 1 < table->cap())
-        ptr = table->tbl[++table_index];
-      if (ptr)
-        next = ptr->next;
-      return *this;
-    }
-    iterator operator++(int) {
-      auto ret = *this;
-      ++ret;
-      return ret;
-    }
-    State *&operator*() { return ptr; };
-
-    bool operator==(const iterator &itr) const { return ptr == itr.ptr; };
-    bool operator!=(const iterator &itr) const { return !(*this == itr); };
-  };
-  iterator begin() { return iterator(this); }
-  iterator end() { return iterator(); }
-
-private:
-  BYTE thread_num;
-  BOOL use_rehasher_;
-  struct statespace_type *type;
-  unsigned long *num;
-  unsigned long cap_;
-  unsigned long *num_dummy_;
-  unsigned long cap_density_;
-  State **tbl;
-  EWLock *lock;
-  StateTable *rehash_tbl_; /* rehashした際に登録するテーブル */
-};
-
-/* @} */
 
 #endif
