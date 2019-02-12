@@ -61,26 +61,25 @@ struct StateTable {
    * (固定サイズにしているモデル検査器は多い) */
   static constexpr size_t TABLE_DEFAULT_INIT_SIZE = 1U << 15;
   StateTable(int thread_num)
-      : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE) {}
-  StateTable(int thread_num, unsigned long size);
+      : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE, nullptr) {}
+  StateTable(int thread_num, StateTable *rehash_tbl)
+      : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE, rehash_tbl) {}
+  StateTable(int thread_num, unsigned long size, StateTable *rehash_tbl);
   ~StateTable();
 
   void clear() {
-    unsigned long i;
-
-    for (i = 0; i < this->thread_num; i++) {
-      this->num[i] = 0;
-      this->num_dummy_[i] = 0;
-    }
-
-    memset(this->tbl, 0x00, cap_ * (sizeof(State *)));
+  	std::fill(num.begin(), num.end(), 0);
+  	std::fill(num_dummy_.begin(), num_dummy_.end(), 0);
+  	std::fill(tbl.begin(), tbl.end(), nullptr);
   }
 
   unsigned long cap() const { return cap_; }
-  unsigned long num_by_me() const;
-  unsigned long all_num() const;
+  unsigned long num_by_me() const { return this->num[env_my_thread_id()]; }
+  unsigned long all_num() const {
+    return std::accumulate(std::begin(num), std::end(num), 0);
+  }
   unsigned long all_num_dummy() const {
-  	return std::accumulate(num_dummy_, num_dummy_ + thread_num, 0);
+    return std::accumulate(num_dummy_.begin(), num_dummy_.end(), 0);
   }
   unsigned long cap_density() const { return cap_density_; }
   unsigned long space() const;
@@ -88,19 +87,15 @@ struct StateTable {
   State *insert(State *ins, unsigned long *col = nullptr);
   void add_direct(State *s);
   void format_states();
-  void set_rehash_table(StateTable *);
-  void set_lock(EWLock *);
   void memid_rehash(unsigned long hash);
 
 private:
-  void num_increment();
-  void num_dummy_increment();
-  void set_rehasher() { use_rehasher_ = true; }
-  bool use_rehasher() const;
+  void num_increment() { num[env_my_thread_id()]++; }
+  void num_dummy_increment() { num_dummy_[env_my_thread_id()]++; }
+  bool use_rehasher() const { return rehash_tbl_; }
   LmnBinStr *compress_state(State *s, LmnBinStr *bs);
 
   void memid_rehash(State *s);
-  StateTable *rehash_table();
 
 public:
   class iterator {
@@ -152,11 +147,11 @@ private:
   uint8_t thread_num;
   bool use_rehasher_;
   struct statespace_type *type;
-  unsigned long *num;
+  std::vector<unsigned long> num;
   unsigned long cap_;
-  unsigned long *num_dummy_;
+  std::vector<unsigned long> num_dummy_;
   unsigned long cap_density_;
-  State **tbl;
+  std::vector<State *> tbl;
   EWLock *lock;
   StateTable *rehash_tbl_; /* rehashした際に登録するテーブル */
 };

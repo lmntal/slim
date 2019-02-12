@@ -300,10 +300,10 @@ struct LmnEnv {
   BOOL tree_compress;
   unsigned int tree_compress_table_size;
 
-#ifdef PROFILE
+// #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;
-#endif
+// #endif
 
 #ifdef DEBUG
   BOOL debug_isomor;

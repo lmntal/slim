@@ -67,6 +67,10 @@ static inline int statetable_cmp_state_id_gr_f(const void *a_, const void *b_) {
   }
 }
 
+bool states_lt(const State *a, const State *b) {
+  return statetable_cmp_state_id_gr_f(&a, &b) < 0;
+}
+
 static inline void statetable_issue_state_id_f(State *s) {
   static unsigned long id = 1;
   state_set_format_id(s, id++);
@@ -101,42 +105,38 @@ struct statespace_type type_state_tree_compress = {
 struct statespace_type type_state_default = {state_cmp, state_calc_mem_dummy};
 
 /* Table of prime numbers 2^n+a, 2<=n<=30. */
-static unsigned long primes[] = {8192 + 27,       131072 + 29,
-                                 1048576 + 7,     4194304 + 15,
-                                 16777216 + 43,   67108864 + 15,
-                                 268435456 + 3,   536870912 + 11,
-                                 1073741824 + 85, 0};
+static constexpr unsigned long primes[] = {8192 + 27,       131072 + 29,
+                                           1048576 + 7,     4194304 + 15,
+                                           16777216 + 43,   67108864 + 15,
+                                           268435456 + 3,   536870912 + 11,
+                                           1073741824 + 85, 0};
 
 static inline unsigned long table_new_size(unsigned long old_size) {
-  unsigned long i, n;
-
-  n = (unsigned long)(sizeof(primes) / sizeof(primes[0]));
-  for (i = 0; i < n; i++) {
-    if (primes[i] > old_size) {
-      return primes[i];
+  for (auto p : primes) {
+    if (p > old_size) {
+      return p;
     }
   }
-  lmn_fatal("Size of StateSpace exceeded the limiting value");
+  throw "Size of StateSpace exceeded the limiting value";
   return 0; /* exception */
 }
 
 /* テーブルのサイズを1段階拡張する */
 void StateTable::resize(unsigned long old_cap) {
-#ifdef PROFILE
-  if (lmn_env.profile_level >= 3) {
+  if (slim::config::profile && lmn_env.profile_level >= 3) {
     profile_countup(PROFILE_COUNT__HASH_RESIZE_TRIAL);
   }
-#endif
+
   if (this->cap() == old_cap) {
     slim::element::ewmutex mutex(slim::element::ewmutex::exclusive_enter,
                                  this->lock, env_my_thread_id());
     std::lock_guard<slim::element::ewmutex> lk(mutex);
     if (this->cap() == old_cap) {
       unsigned long i, new_cap, bucket;
-      State *ptr, *next, **new_tbl;
+      State *ptr, *next;
 
       new_cap = table_new_size(old_cap);
-      new_tbl = LMN_NALLOC(State *, new_cap);
+      auto new_tbl = std::vector<State *>(new_cap);
 
       for (i = 0; i < new_cap; i++) {
         new_tbl[i] = NULL;
@@ -162,59 +162,26 @@ void StateTable::resize(unsigned long old_cap) {
         }
       }
 
-      LMN_FREE(this->tbl);
       this->tbl = new_tbl;
       this->cap_ = new_cap;
       this->cap_density_ = new_cap / this->thread_num;
 
-#ifdef PROFILE
-      if (lmn_env.profile_level >= 3) {
+      if (slim::config::profile && lmn_env.profile_level >= 3) {
         profile_countup(PROFILE_COUNT__HASH_RESIZE_APPLY);
       }
-#endif
     }
   }
 }
 
-void StateTable::set_lock(EWLock *lock) { this->lock = lock; }
-
-bool StateTable::use_rehasher() const { return use_rehasher_; }
-
-unsigned long StateTable::num_by_me() const {
-  return this->num[env_my_thread_id()];
-}
-
-unsigned long StateTable::all_num() const {
-  unsigned long ret = 0;
-  unsigned int i;
-  for (i = 0; i < this->thread_num; i++) {
-    ret += this->num[i];
-  }
-  return ret;
-}
-
-void StateTable::num_increment() { num[env_my_thread_id()]++; }
-
-void StateTable::num_dummy_increment() { num_dummy_[env_my_thread_id()]++; }
-
-void StateTable::set_rehash_table(StateTable *rehash_tbl) {
-  this->rehash_tbl_ = rehash_tbl;
-  this->set_rehasher();
-}
-
-StateTable *StateTable::rehash_table() { return this->rehash_tbl_; }
-
 unsigned long StateTable::space() const {
-  return sizeof(struct StateTable) +
-         (num ? thread_num * sizeof(unsigned long) : 0) +
-         (num_dummy_ ? thread_num * sizeof(unsigned long) : 0) +
+  return sizeof(struct StateTable) + num.capacity() * sizeof(unsigned long) +
+         num_dummy_.capacity() * sizeof(unsigned long) +
          (cap_ * sizeof(State *)) + lmn_ewlock_space(lock);
 }
 
 /* CAUTION: MT-Unsafe */
 void StateTable::format_states() {
-  qsort(this->tbl, this->cap(), sizeof(struct State *),
-        statetable_cmp_state_id_gr_f);
+  std::sort(tbl.begin(), tbl.end(), states_lt);
   for (auto &ptr : *this)
     statetable_issue_state_id_f(ptr);
 }
@@ -233,8 +200,8 @@ void StateTable::memid_rehash(unsigned long hash) {
   }
 }
 
-StateTable::StateTable(int thread_num, unsigned long size) {
-  unsigned long i;
+StateTable::StateTable(int thread_num, unsigned long size,
+                       StateTable *rehash_tbl) {
   this->thread_num = thread_num;
 
   if (lmn_env.enable_compress_mem) {
@@ -251,22 +218,15 @@ StateTable::StateTable(int thread_num, unsigned long size) {
 
   this->use_rehasher_ = FALSE;
   size = table_new_size(size);
-  this->tbl = LMN_NALLOC(State *, size);
+  this->tbl = std::vector<State *>(size, nullptr);
   this->cap_ = size;
   this->cap_density_ = size / thread_num;
-  this->num = LMN_NALLOC(unsigned long, thread_num);
-  this->num_dummy_ = LMN_NALLOC(unsigned long, thread_num);
+  this->num = std::vector<unsigned long>(thread_num, 0);
+  this->num_dummy_ = std::vector<unsigned long>(thread_num, 0);
   this->lock = (this->thread_num > 1)
                    ? ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM)
                    : nullptr;
-  this->rehash_tbl_ = NULL;
-
-  memset(this->tbl, 0x00, size * (sizeof(State *)));
-
-  for (i = 0; i < thread_num; i++) {
-    this->num[i] = 0UL;
-    this->num_dummy_[i] = 0UL;
-  }
+  this->rehash_tbl_ = rehash_tbl;
 }
 
 StateTable::~StateTable() {
@@ -276,9 +236,6 @@ StateTable::~StateTable() {
   if (this->lock) {
     ewlock_free(this->lock);
   }
-  delete (this->num_dummy_);
-  delete (this->num);
-  delete (this->tbl);
 }
 
 /* statetable_insert: 状態sが状態空間stに既出ならばその状態を,
@@ -363,26 +320,16 @@ StateTable::~StateTable() {
  * 冗長なバイト列を破棄する.
  */
 State *StateTable::insert(State *ins, unsigned long *col) {
-  State *ret;
-  LmnBinStrRef compress;
+  auto compress = ins->state_binstr();
+  State *ret = nullptr;
 
-  if (ins->is_binstr_user()) {
-    /* 既に状態insがバイナリストリングを保持している場合 */
-    compress = ins->state_binstr();
-  } else {
-    compress = NULL;
-  }
-
-  ret = NULL;
   slim::element::ewmutex outer_mutex(slim::element::ewmutex::enter, this->lock,
                                      env_my_thread_id());
   std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
-  State *str;
-  unsigned long bucket, hash;
 
-  hash = state_hash(ins);
-  bucket = hash % this->cap();
-  str = this->tbl[bucket];
+  auto hash = state_hash(ins);
+  auto bucket = hash % this->cap();
+  auto str = this->tbl[bucket];
 
   /* case: empty bucket */
   if (!str) {
@@ -410,37 +357,30 @@ State *StateTable::insert(State *ins, unsigned long *col) {
       /* 他のスレッドが先にバケットを埋めた場合, retがNULL
        * insert先strを再設定し, case: non-empty backetへ飛ぶ */
       str = this->tbl[bucket];
-#ifdef PROFILE
-      if (lmn_env.profile_level >= 3) {
+      if (slim::config::profile && lmn_env.profile_level >= 3) {
         profile_countup(PROFILE_COUNT__HASH_FAIL_TO_INSERT);
       }
-#endif
     }
   }
 
   /* case: non-empty bucket */
   while (!ret) {
-#ifdef PROFILE
-    if (lmn_env.profile_level >= 3) {
+    if (slim::config::profile && lmn_env.profile_level >= 3) {
       profile_countup(PROFILE_COUNT__HASH_CONFLICT_ENTRY);
     }
-#endif
 
     if (hash == state_hash(str)) {
       /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
       if (lmn_env.hash_compaction) {
-        if (str->is_dummy() && str->is_encoded()) {
-          /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
-           */
-          ret = state_get_parent(str);
-        } else {
-          ret = str;
-        }
+        /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
+         */
+        ret = (str->is_dummy() && str->is_encoded()) ? state_get_parent(str)
+                                                     : str;
         break;
       }
 
       if (this->use_rehasher() && str->is_dummy() && !str->is_encoded() &&
-          lmn_env.tree_compress == FALSE) {
+          !lmn_env.tree_compress) {
         /* A. オリジナルテーブルにおいて, dummy状態が比較対象
          * 　 --> memidテーブル側の探索へ切り替える.
          *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
@@ -456,11 +396,10 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         ins->calc_mem_encode();
         /*compress = NULL;*/
 
-#ifndef PROFILE
-        ret = this->rehash_table()->insert(ins);
-#else
-        ret = this->rehash_table()->insert(ins, col);
-#endif
+        if (slim::config::profile)
+          ret = this->rehash_tbl_->insert(ins, col);
+        else
+          ret = this->rehash_tbl_->insert(ins);
         break;
       } else if (!STATE_EQUAL(this, ins, str)) {
         /** B. memidテーブルへのlookupの場合,
@@ -478,23 +417,21 @@ State *StateTable::insert(State *ins, unsigned long *col) {
       } else if (str->is_encoded()) {
         /** C. memidテーブルへのlookupでハッシュ値が衝突した場合.
          * (同形成判定結果が偽) */
-#ifdef PROFILE
-        if (lmn_env.profile_level >= 3) {
+        if (slim::config::profile && lmn_env.profile_level >= 3) {
           profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
         }
-#endif
       } else {
         /** D.
          * オリジナルテーブルへのlookupで非dummy状態とハッシュ値が衝突した場合.
          */
         LMN_ASSERT(!str->is_encoded());
-#ifdef PROFILE
-        (*col)++;
-        if (lmn_env.profile_level >= 3) {
-          profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
+        if (slim::config::profile) {
+          (*col)++;
+          if (lmn_env.profile_level >= 3) {
+            profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
+          }
         }
-#endif
-        if (this->use_rehasher() && lmn_env.tree_compress == FALSE) {
+        if (this->use_rehasher() && !lmn_env.tree_compress) {
           if (state_get_parent(ins) == str) {
             /* 1step遷移した状態insの親状態とでハッシュ値が衝突している場合:
              *  + 状態insだけでなくその親状態もrehashする.
@@ -517,11 +454,10 @@ State *StateTable::insert(State *ins, unsigned long *col) {
           ins->s_unset_d();
           ins->calc_mem_encode();
 
-#ifndef PROFILE
-          ret = this->rehash_table()->insert(ins);
-#else
-          ret = this->rehash_table()->insert(ins, col);
-#endif
+          if (slim::config::profile)
+            ret = this->rehash_tbl_->insert(ins, col);
+          else
+            ret = this->rehash_tbl_->insert(ins);
 
           LMN_ASSERT(ret);
           break;
@@ -567,11 +503,9 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         }
       }
 
-#ifdef PROFILE
-      if (!ret && lmn_env.profile_level >= 3) {
+      if (slim::config::profile && !ret && lmn_env.profile_level >= 3) {
         profile_countup(PROFILE_COUNT__HASH_FAIL_TO_INSERT);
       }
-#endif
     }
 
     str = str->next; /* リストを辿る */
@@ -595,63 +529,49 @@ void StateTable::add_direct(State *s) {
                                      env_my_thread_id());
   std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
 
-  LmnBinStrRef compress;
-  State *ptr;
-  unsigned long bucket;
-  BOOL inserted;
+  auto compress = s->state_binstr();
+  auto bucket = state_hash(s) % this->cap();
 
-  if (s->is_binstr_user()) {
-    compress = s->state_binstr();
-  } else {
-    compress = NULL;
+  auto ptr = this->tbl[bucket];
+  if (!ptr) {
+    compress = this->compress_state(s, compress);
+    slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock,
+                                 bucket);
+    std::lock_guard<slim::element::ewmutex> lk(mutex);
+    if (!this->tbl[bucket]) {
+    	/* add to the tail of an empty bucket */
+      state_set_compress_for_table(s, compress);
+      this->num_increment();
+      if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
+        tcd_set_byte_length(&s->tcd, s->state_binstr()->len);
+        auto ref = lmn_bscomp_tree_encode(s->state_binstr());
+        tcd_set_root_ref(&s->tcd, ref);
+      }
+      this->tbl[bucket] = s;
+      return;
+    }
+
+    ptr = this->tbl[bucket];
   }
 
-  bucket = state_hash(s) % this->cap();
-  ptr = this->tbl[bucket];
-  inserted = FALSE;
-
-  if (!ptr) { /* empty */
-    compress = this->compress_state(s, compress);
-    if (!this->tbl[bucket]) {
+  /* add to the tail of a bucket */
+  while (true) {
+    if (!ptr->next) { /* リスト末尾の場合 */
+      compress = this->compress_state(s, compress);
       slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock,
                                    bucket);
       std::lock_guard<slim::element::ewmutex> lk(mutex);
-      if (!this->tbl[bucket]) {
-        state_set_compress_for_table(s, compress);
-        this->num_increment();
-        if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
-          TreeNodeID ref;
-          tcd_set_byte_length(&s->tcd, s->state_binstr()->len);
-          ref = lmn_bscomp_tree_encode(s->state_binstr());
-          tcd_set_root_ref(&s->tcd, ref);
-        }
-        this->tbl[bucket] = s;
-        inserted = TRUE;
-      }
-    }
-    if (!inserted)
-      ptr = this->tbl[bucket];
-  }
-
-  while (!inserted) {
-    if (!ptr->next) { /* リスト末尾の場合 */
-      compress = this->compress_state(s, compress);
+      
       if (!ptr->next) {
-        slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock,
-                                     bucket);
-        std::lock_guard<slim::element::ewmutex> lk(mutex);
-        if (!ptr->next) {
-          inserted = TRUE;
-          this->num_increment();
-          state_set_compress_for_table(s, compress);
-          ptr->next = s;
-        }
+        this->num_increment();
+        state_set_compress_for_table(s, compress);
+        ptr->next = s;
+        break;
       }
     }
     ptr = ptr->next;
   }
 }
-
 
 /* **既に状態管理表stに追加済みの状態s**(およびsに対応する階層グラフ構造)と
  * 等価な状態を新たに生成し,
@@ -659,11 +579,8 @@ void StateTable::add_direct(State *s) {
  * ここで新たに生成する状態は,
  * sに対応する階層グラフ構造対して一意なバイナリストリングを持つ. */
 void StateTable::memid_rehash(State *s) {
-  State *new_s;
-  LmnMembraneRef m;
-
-  new_s = new State();
-  m = lmn_binstr_decode(s->state_binstr());
+  auto new_s = new State();
+  auto m = lmn_binstr_decode(s->state_binstr());
   new_s->state_name = s->state_name;
   new_s->state_set_binstr(lmn_mem_encode(m));
   new_s->hash = binstr_hash(new_s->state_binstr());
@@ -672,10 +589,10 @@ void StateTable::memid_rehash(State *s) {
   new_s->set_expanded();
   new_s->set_dummy();
 
-  this->rehash_table()->add_direct(
-      new_s); /* dummy stateのparentをoriginalとして扱う */
+  /* dummy stateのparentをoriginalとして扱う */
+  this->rehash_tbl_->add_direct(new_s);
   state_set_parent(new_s, s);
-  this->rehash_table()->num_dummy_increment();
+  this->rehash_tbl_->num_dummy_increment();
 
   lmn_mem_free_rec(m);
 }

@@ -311,8 +311,8 @@ void owcty_env_set(LmnWorker *w) {
   }
 }
 
-void statetable_to_state_queue(StateTable *st, Queue *q) {
-  for (auto &ptr : *st)
+void statetable_to_state_queue(StateTable &st, Queue *q) {
+  for (auto &ptr : st)
     enqueue(q, (LmnWord)ptr);
 }
 
