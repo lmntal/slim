@@ -60,6 +60,9 @@ struct StateTable {
   /* TODO: テーブルの初期サイズはいくつが適当か.
    * (固定サイズにしているモデル検査器は多い) */
   static constexpr size_t TABLE_DEFAULT_INIT_SIZE = 1U << 15;
+  /* 1バケットあたりの平均長がこの値を越えた場合にresizeする */
+  static constexpr size_t TABLE_DEFAULT_MAX_DENSITY = 5U;
+
   StateTable(int thread_num)
       : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE, nullptr) {}
   StateTable(int thread_num, StateTable *rehash_tbl)
@@ -68,9 +71,9 @@ struct StateTable {
   ~StateTable();
 
   void clear() {
-  	std::fill(num.begin(), num.end(), 0);
-  	std::fill(num_dummy_.begin(), num_dummy_.end(), 0);
-  	std::fill(tbl.begin(), tbl.end(), nullptr);
+    std::fill(num.begin(), num.end(), 0);
+    std::fill(num_dummy_.begin(), num_dummy_.end(), 0);
+    std::fill(tbl.begin(), tbl.end(), nullptr);
   }
 
   unsigned long cap() const { return cap_; }
@@ -88,6 +91,14 @@ struct StateTable {
   void add_direct(State *s);
   void format_states();
   void memid_rehash(unsigned long hash);
+  bool need_resize() const {
+    return ((num_by_me() / cap_density()) > TABLE_DEFAULT_MAX_DENSITY);
+  }
+  void resize_if_needed() {
+    if (this->need_resize()) {
+      this->resize(this->cap());
+    }
+  }
 
 private:
   void num_increment() { num[env_my_thread_id()]++; }

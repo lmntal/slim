@@ -86,10 +86,8 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
     this->property_automata = a;
     this->propsyms = psyms;
     this->end_states = std::vector<std::vector<State *>>(thread_num);
-
     this->make_table();
   }
-  ~StateSpace();
 
   void add_memid_hash(unsigned long hash);
   State *insert(State *s);
@@ -110,8 +108,8 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
   State *initial_state() { return init_state; }
   void mark_as_end(State *);
 
-  StateTable &accept_tbl() { return *acc_tbl; }
-  StateTable &accept_memid_tbl() { return *acc_memid_tbl; }
+  StateTable &accept_tbl() { return *mhash_table.acc; }
+  StateTable &accept_memid_tbl() { return *memid_table.acc; }
 
   void make_table();
 
@@ -139,12 +137,20 @@ private:
   AutomataRef property_automata; /* Never Clainへのポインタ */
   Vector *propsyms;              /* 命題記号定義へのポインタ */
 
-  std::unique_ptr<StateTable>
-      tbl; /* mhash値をkeyに, 状態のアドレスを登録する状態管理表 */
-  std::unique_ptr<StateTable>
-      memid_tbl; /* memid_hashをkeyに, 状態のアドレスを登録する状態管理表 */
-  std::unique_ptr<StateTable> acc_tbl;
-  std::unique_ptr<StateTable> acc_memid_tbl;
+  /* それぞれ全状態と受理状態を管理する表の組 */
+  struct TablePair {
+    std::unique_ptr<StateTable> tbl;
+    std::unique_ptr<StateTable> acc;
+  };
+
+  void make_table_pair(TablePair &t);
+  void make_table_pair(TablePair &t, TablePair &rehasher);
+
+  /* mhash値をkeyに, 状態のアドレスを登録する状態管理表 */
+  TablePair mhash_table;
+  /* memid_hashをkeyに, 状態のアドレスを登録する状態管理表 */
+  TablePair memid_table;
+
   std::vector<std::vector<State *>> end_states; /* 最終状態の集合 */
 
   std::unique_ptr<StateTable> &insert_destination(State *s, unsigned long hashv);

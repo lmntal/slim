@@ -132,21 +132,14 @@ void StateTable::resize(unsigned long old_cap) {
                                  this->lock, env_my_thread_id());
     std::lock_guard<slim::element::ewmutex> lk(mutex);
     if (this->cap() == old_cap) {
-      unsigned long i, new_cap, bucket;
-      State *ptr, *next;
+      auto new_cap = table_new_size(old_cap);
+      auto new_tbl = std::vector<State *>(new_cap, nullptr);
 
-      new_cap = table_new_size(old_cap);
-      auto new_tbl = std::vector<State *>(new_cap);
-
-      for (i = 0; i < new_cap; i++) {
-        new_tbl[i] = NULL;
-      }
-
-      for (i = 0; i < old_cap; i++) {
-        ptr = this->tbl[i];
+      for (int i = 0; i < old_cap; i++) {
+        auto ptr = this->tbl[i];
         while (ptr) {
-          next = ptr->next;
-          bucket = state_hash(ptr) % new_cap;
+          auto next = ptr->next;
+          auto bucket = state_hash(ptr) % new_cap;
           ptr->next = new_tbl[bucket];
           if (ptr->is_dummy() && ptr->is_expanded() && !ptr->is_encoded()) {
             /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要

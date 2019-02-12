@@ -54,52 +54,36 @@
 
 namespace c14 = slim::element;
 
+void StateSpace::make_table_pair(TablePair &t) {
+  t.tbl = c14::make_unique<StateTable>(this->thread_num);
+  if (this->has_property())
+    t.acc = c14::make_unique<StateTable>(this->thread_num);
+}
+
+void StateSpace::make_table_pair(TablePair &t, TablePair &rehasher) {
+  t.tbl = c14::make_unique<StateTable>(this->thread_num, rehasher.tbl.get());
+  if (this->has_property())
+    t.acc = c14::make_unique<StateTable>(this->thread_num, rehasher.acc.get());
+}
+
 void StateSpace::make_table() {
   if (lmn_env.mem_enc) {
     this->set_memenc();
-    this->memid_tbl = c14::make_unique<StateTable>(this->thread_num);
-
-    if (this->has_property()) {
-      this->acc_memid_tbl = c14::make_unique<StateTable>(this->thread_num);
-    }
+    make_table_pair(memid_table);
   } else if (lmn_env.optimize_hash) {
     this->set_rehasher();
-    this->memid_tbl = c14::make_unique<StateTable>(this->thread_num);
-    if (has_property())
-      this->acc_memid_tbl = c14::make_unique<StateTable>(this->thread_num);
-
-    this->tbl = c14::make_unique<StateTable>(this->thread_num, memid_tbl.get());
-    if (this->has_property()) {
-      this->acc_tbl =
-          c14::make_unique<StateTable>(this->thread_num, acc_memid_tbl.get());
-    }
+    make_table_pair(memid_table);
+    make_table_pair(mhash_table, memid_table);
   } else {
-    this->tbl = c14::make_unique<StateTable>(this->thread_num);
-    if (this->has_property()) {
-      this->acc_tbl = c14::make_unique<StateTable>(this->thread_num);
-    }
-  }
+    make_table_pair(mhash_table);
 
-  if (slim::config::profile && lmn_env.optimize_hash_old) {
-    if (!this->memid_tbl) {
-      this->memid_tbl = c14::make_unique<StateTable>(this->thread_num);
-    }
-    if (this->acc_tbl) {
-      this->acc_memid_tbl = c14::make_unique<StateTable>(this->thread_num);
-    }
+    if (slim::config::profile && lmn_env.optimize_hash_old)
+      make_table_pair(memid_table);
   }
 }
 
-#define TABLE_DEFAULT_MAX_DENSITY                                              \
-  (5U) /* 1バケットあたりの平均長がこの値を越えた場合にresizeする */
 #define MEM_EQ_FAIL_THRESHOLD                                                  \
   (2U) /* 膜の同型性判定にこの回数以上失敗すると膜のエンコードを行う */
-
-/** Macros
- */
-
-#define need_resize(EntryNum, Capacity)                                        \
-  (((EntryNum) / (Capacity)) > TABLE_DEFAULT_MAX_DENSITY)
 
 /** StateSpace
  */
@@ -109,57 +93,45 @@ StateSpace::StateSpace() {
   thread_num = 1;
   out = stdout; /* TOFIX: LmnPortで書き直したいところ */
   init_state = NULL;
-  tbl = NULL;
-  memid_tbl = NULL;
-  acc_tbl = NULL;
-  acc_memid_tbl = NULL;
   property_automata = NULL;
   propsyms = NULL;
-}
-
-StateSpace::~StateSpace() {
-  /* MEMO: openmpで並列freeすると, tcmallocがsegmentation faultする. */
-  // int nPEs = ss->thread_num;
 }
 
 /* 膜のIDを計算するハッシュ値(mhash)を追加する */
 void StateSpace::add_memid_hash(unsigned long hash) {
   add_hash(hash);
-  this->tbl->memid_rehash(hash);
+  this->mhash_table.tbl->memid_rehash(hash);
 }
 
 std::unique_ptr<StateTable> &
 StateSpace::insert_destination(State *s, unsigned long hashv) {
-  bool is_accept = this->has_property() && state_is_accept(this->automata(), s);
-  if (s->is_encoded()) {
-    /* already calculated canonical binary strings */
-    return is_accept ? this->acc_memid_tbl : this->memid_tbl;
-  } else {
-    /* default */
-    return is_accept ? this->acc_tbl : this->tbl;
+  if (s->is_encoded()) /* already calculated canonical binary strings */
+    return state_is_accept(automata(), s) ? this->memid_table.acc
+                                          : this->memid_table.tbl;
 
-    if (slim::config::profile && lmn_env.optimize_hash_old &&
-        !lmn_env.tree_compress && contains_hash(hashv)) {
-      return is_accept ? this->acc_memid_tbl : this->memid_tbl;
-    }
-  }
+  if (slim::config::profile && lmn_env.optimize_hash_old &&
+      !lmn_env.tree_compress && contains_hash(hashv))
+    return state_is_accept(automata(), s) ? this->memid_table.acc
+                                          : this->memid_table.tbl;
+
+  /* default */
+  return state_is_accept(automata(), s) ? this->mhash_table.acc
+                                        : this->mhash_table.tbl;
 }
 
 std::unique_ptr<StateTable> &
 StateSpace::resize_destination(std::unique_ptr<StateTable> &def, State *ret,
                                State *s) {
-  if (ret->is_encoded()) {
-    /* rehasherが機能した場合, 通常のテーブルを入り口に,
-     * memidテーブルにエントリが追加されている
-     * なにも考慮せずにテーブル拡張の判定を行ってしまうと,
-     * memidテーブルが定数サイズになってしまう. 判定を適切に行うため,
-     * テーブルへのポインタを切り替える */
-    bool is_accept =
-        this->has_property() && state_is_accept(this->automata(), s);
-    return (is_accept) ? this->acc_memid_tbl : this->memid_tbl;
-  } else {
-    return def;
-  }
+  /* rehasherが機能した場合, 通常のテーブルを入り口に,
+   * memidテーブルにエントリが追加されている
+   * なにも考慮せずにテーブル拡張の判定を行ってしまうと,
+   * memidテーブルが定数サイズになってしまう. 判定を適切に行うため,
+   * テーブルへのポインタを切り替える */
+  if (ret->is_encoded())
+    return (state_is_accept(this->automata(), s)) ? this->memid_table.acc
+                                                  : this->memid_table.tbl;
+
+  return def;
 }
 
 /* 状態sが状態空間ssに既出ならばその状態を, 新規ならばs自身を返す.
@@ -176,26 +148,23 @@ State *StateSpace::insert(State *s) {
 
   auto &insert_dst = insert_destination(s, hashv);
   if (slim::config::profile && lmn_env.optimize_hash_old &&
-      !lmn_env.tree_compress && !s->is_expanded() &&
-      contains_hash(hashv)) {
+      !lmn_env.tree_compress && !s->is_expanded() && contains_hash(hashv)) {
     s->calc_mem_encode();
   }
 
-  if (!slim::config::profile) {
-    ret = insert_dst->insert(s);
-  } else {
+  if (slim::config::profile) {
     ret = insert_dst->insert(s, &col);
-    if (lmn_env.optimize_hash_old && col >= MEM_EQ_FAIL_THRESHOLD &&
-        !lmn_env.tree_compress) {
-      this->add_memid_hash(hashv);
-    }
+  } else {
+    ret = insert_dst->insert(s);
+  }
+
+  if (slim::config::profile && lmn_env.optimize_hash_old &&
+      !lmn_env.tree_compress && col >= MEM_EQ_FAIL_THRESHOLD) {
+    this->add_memid_hash(hashv);
   }
 
   auto &resize_tbl = resize_destination(insert_dst, ret, s);
-  if (need_resize(resize_tbl->num_by_me(),
-                  resize_tbl->cap_density())) { /* tableのresize処理 */
-    resize_tbl->resize(resize_tbl->cap());
-  }
+  resize_tbl->resize_if_needed();
 
   return ret;
 }
@@ -246,26 +215,26 @@ State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
 
 /* 重複検査や排他制御なしに状態sを状態表ssに登録する */
 void StateSpace::add_direct(State *s) {
-  auto &add_dst = (s->is_encoded()) ? this->memid_tbl : this->tbl;
+  auto &add_dst =
+      (s->is_encoded()) ? this->memid_table.tbl : this->mhash_table.tbl;
   add_dst->add_direct(s);
-  if (need_resize(add_dst->num_by_me(), add_dst->cap_density())) {
-    add_dst->resize(add_dst->cap());
-  }
+  add_dst->resize_if_needed();
 }
 
 /* 高階関数 */
 std::vector<State *> StateSpace::all_states() const {
   std::vector<State *> result;
-  if (this->tbl)
-    std::copy(this->tbl->begin(), this->tbl->end(), std::back_inserter(result));
-  if (this->memid_tbl)
-    std::copy(this->memid_tbl->begin(), this->memid_tbl->end(),
+  if (this->mhash_table.tbl)
+    std::copy(this->mhash_table.tbl->begin(), this->mhash_table.tbl->end(),
               std::back_inserter(result));
-  if (this->acc_tbl)
-    std::copy(this->acc_tbl->begin(), this->acc_tbl->end(),
+  if (this->memid_table.tbl)
+    std::copy(this->memid_table.tbl->begin(), this->memid_table.tbl->end(),
               std::back_inserter(result));
-  if (this->acc_memid_tbl)
-    std::copy(this->acc_memid_tbl->begin(), this->acc_memid_tbl->end(),
+  if (this->mhash_table.acc)
+    std::copy(this->mhash_table.acc->begin(), this->mhash_table.acc->end(),
+              std::back_inserter(result));
+  if (this->memid_table.acc)
+    std::copy(this->memid_table.acc->begin(), this->memid_table.acc->end(),
               std::back_inserter(result));
   return result;
 }
@@ -287,10 +256,10 @@ unsigned long StateSpace::num() const {
 
 /* dummyの状態数を含む, 管理している状態数を返す */
 unsigned long StateSpace::num_raw() const {
-  return (this->tbl ? this->tbl->all_num() : 0) +
-         (this->memid_tbl ? this->memid_tbl->all_num() : 0) +
-         (this->acc_tbl ? this->acc_tbl->all_num() : 0) +
-         (this->acc_memid_tbl ? this->acc_memid_tbl->all_num() : 0);
+  return (this->mhash_table.tbl ? this->mhash_table.tbl->all_num() : 0) +
+         (this->memid_table.tbl ? this->memid_table.tbl->all_num() : 0) +
+         (this->mhash_table.acc ? this->mhash_table.acc->all_num() : 0) +
+         (this->memid_table.acc ? this->memid_table.acc->all_num() : 0);
 }
 
 /* memidテーブルに追加されているdummy状態数を返す */
@@ -300,14 +269,11 @@ unsigned long StateSpace::dummy_num() const {
   unsigned int i;
 
   ret = 0UL;
-  tbl = this->memid_tbl.get();
-  if (tbl) {
-    ret += tbl->all_num_dummy();
+  if (this->memid_table.tbl) {
+    ret += this->memid_table.tbl->all_num_dummy();
   }
-
-  tbl = this->acc_memid_tbl.get();
-  if (tbl) {
-    ret += tbl->all_num_dummy();
+  if (this->memid_table.acc) {
+    ret += this->memid_table.acc->all_num_dummy();
   }
   return ret;
 }
@@ -331,17 +297,17 @@ void StateSpace::mark_as_end(State *s) {
 
 unsigned long StateSpace::space() const {
   unsigned long ret = sizeof(struct StateSpace);
-  if (this->tbl) {
-    ret += this->tbl->space();
+  if (this->mhash_table.tbl) {
+    ret += this->mhash_table.tbl->space();
   }
-  if (this->memid_tbl) {
-    ret += this->memid_tbl->space();
+  if (this->memid_table.tbl) {
+    ret += this->memid_table.tbl->space();
   }
-  if (this->acc_tbl) {
-    ret += this->acc_tbl->space();
+  if (this->mhash_table.acc) {
+    ret += this->mhash_table.acc->space();
   }
-  if (this->acc_memid_tbl) {
-    ret += this->acc_memid_tbl->space();
+  if (this->memid_table.acc) {
+    ret += this->memid_table.acc->space();
   }
   for (const auto &e : end_states)
     ret += e.capacity() * sizeof(e.front());
@@ -413,51 +379,51 @@ void StateSpace::dump() const {
 }
 
 void StateSpace::dump_all_states() const {
-  if (this->tbl)
-    for (auto &ptr : *this->tbl)
+  if (this->mhash_table.tbl)
+    for (auto &ptr : *this->mhash_table.tbl)
       dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->memid_tbl)
-    for (auto &ptr : *this->memid_tbl)
+  if (this->memid_table.tbl)
+    for (auto &ptr : *this->memid_table.tbl)
       dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->acc_tbl)
-    for (auto &ptr : *this->acc_tbl)
+  if (this->mhash_table.acc)
+    for (auto &ptr : *this->mhash_table.acc)
       dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->acc_memid_tbl)
-    for (auto &ptr : *this->acc_memid_tbl)
+  if (this->memid_table.acc)
+    for (auto &ptr : *this->memid_table.acc)
       dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
 }
 
 void StateSpace::dump_all_transitions() const {
-  if (this->tbl)
-    for (auto &ptr : *this->tbl)
+  if (this->mhash_table.tbl)
+    for (auto &ptr : *this->mhash_table.tbl)
       state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->memid_tbl)
-    for (auto &ptr : *this->memid_tbl)
+  if (this->memid_table.tbl)
+    for (auto &ptr : *this->memid_table.tbl)
       state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->acc_tbl)
-    for (auto &ptr : *this->acc_tbl)
+  if (this->mhash_table.acc)
+    for (auto &ptr : *this->mhash_table.acc)
       state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->acc_memid_tbl)
-    for (auto &ptr : *this->acc_memid_tbl)
+  if (this->memid_table.acc)
+    for (auto &ptr : *this->memid_table.acc)
                      state_print_transition(ptr ,
                      (LmnWord)this->out, (LmnWord)this);
 }
 
 void StateSpace::dump_all_labels()const {
-  if (this->tbl)
-    for (auto &ptr : *this->tbl)
+  if (this->mhash_table.tbl)
+    for (auto &ptr : *this->mhash_table.tbl)
     state_print_label(ptr ,
                      (LmnWord)this->out, (LmnWord)this);
-  if (this->memid_tbl)
-    for (auto &ptr : *this->memid_tbl)
+  if (this->memid_table.tbl)
+    for (auto &ptr : *this->memid_table.tbl)
                      state_print_label(ptr , (LmnWord)this->out,
                      (LmnWord)this);
-  if (this->acc_tbl)
-    for (auto &ptr : *this->acc_tbl)
+  if (this->mhash_table.acc)
+    for (auto &ptr : *this->mhash_table.acc)
                      state_print_label(ptr , (LmnWord)this->out,
                      (LmnWord)this);
-  if (this->acc_memid_tbl)
-    for (auto &ptr : *this->acc_memid_tbl)
+  if (this->memid_table.acc)
+    for (auto &ptr : *this->memid_table.acc)
                      state_print_label(ptr , (LmnWord)this->out,
                      (LmnWord)this);
 }
@@ -472,10 +438,10 @@ void StateSpace::format_states() {
 #ifndef __CYGWIN__
   /* cygwinテスト時に, ボトルネックになっていた */
   if (!this->is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
-    if (this->tbl) this->tbl->format_states();
-    if (this->memid_tbl) this->memid_tbl->format_states();
-    if (this->acc_tbl) this->acc_tbl->format_states();
-    if (this->acc_memid_tbl) this->acc_memid_tbl->format_states();
+    if (this->mhash_table.tbl) this->mhash_table.tbl->format_states();
+    if (this->memid_table.tbl) this->memid_table.tbl->format_states();
+    if (this->mhash_table.acc) this->mhash_table.acc->format_states();
+    if (this->memid_table.acc) this->memid_table.acc->format_states();
     this->is_formated = TRUE;
   }
 #endif
