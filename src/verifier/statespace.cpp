@@ -66,12 +66,16 @@ void StateSpace::make_table_pair(TablePair &t, TablePair &rehasher) {
     t.acc = c14::make_unique<StateTable>(this->thread_num, rehasher.acc.get());
 }
 
-void StateSpace::make_table() {
+/** StateSpace
+ */
+StateSpace::StateSpace(int thread_num, AutomataRef a, Vector *psyms)
+    : using_memenc(false), is_formated(false), thread_num(thread_num), out(stdout),
+      init_state(nullptr), property_automata(a), propsyms(psyms),
+      end_states(thread_num) {
   if (lmn_env.mem_enc) {
-    this->set_memenc();
+    using_memenc = true;
     make_table_pair(memid_table);
   } else if (lmn_env.optimize_hash) {
-    this->set_rehasher();
     make_table_pair(memid_table);
     make_table_pair(mhash_table, memid_table);
   } else {
@@ -82,20 +86,7 @@ void StateSpace::make_table() {
   }
 }
 
-#define MEM_EQ_FAIL_THRESHOLD                                                  \
-  (2U) /* 膜の同型性判定にこの回数以上失敗すると膜のエンコードを行う */
-
-/** StateSpace
- */
-StateSpace::StateSpace() {
-  tbl_type = 0x00U;
-  is_formated = FALSE;
-  thread_num = 1;
-  out = stdout; /* TOFIX: LmnPortで書き直したいところ */
-  init_state = NULL;
-  property_automata = NULL;
-  propsyms = NULL;
-}
+StateSpace::~StateSpace() {}
 
 /* 膜のIDを計算するハッシュ値(mhash)を追加する */
 void StateSpace::add_memid_hash(unsigned long hash) {
@@ -240,12 +231,9 @@ std::vector<State *> StateSpace::all_states() const {
 }
 
 /* 初期状態を追加する MT-UNSAFE */
-void StateSpace::set_init_state(State *init_state, BOOL enable_binstr) {
+void StateSpace::set_init_state(State *init_state) {
   this->init_state = init_state;
   this->add_direct(init_state);
-  if (enable_binstr) {
-    init_state->free_mem();
-  }
 }
 
 /* 状態数を返す */
@@ -405,8 +393,7 @@ void StateSpace::dump_all_transitions() const {
       state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
   if (this->memid_table.acc)
     for (auto &ptr : *this->memid_table.acc)
-                     state_print_transition(ptr ,
-                     (LmnWord)this->out, (LmnWord)this);
+      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
 }
 
 void StateSpace::dump_all_labels()const {

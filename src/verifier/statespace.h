@@ -52,10 +52,6 @@
 #include <memory>
 #include <set>
 
-/* the member "tbl_type" in struct StateSpace */
-#define SS_MEMID_MASK (0x01U)
-#define SS_REHASHER_MASK (0x01U << 1)
-
 struct MemIdHashSkeleton {
   void add_hash(unsigned long hash) {}
   bool contains_hash(unsigned long hash) { return false; }
@@ -73,34 +69,20 @@ struct MemIdHash {
 
 struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
                                             MemIdHashSkeleton>::type {
-  StateSpace();
-  StateSpace(AutomataRef a, Vector *psyms) : StateSpace() {
-    this->end_states = std::vector<std::vector<State *>>(thread_num);
-    this->property_automata = a;
-    this->propsyms = psyms;
-    this->make_table();
-  }
-  /* for parallel model checker mode */
-  StateSpace(int thread_num, AutomataRef a, Vector *psyms) : StateSpace() {
-    this->thread_num = thread_num;
-    this->property_automata = a;
-    this->propsyms = psyms;
-    this->end_states = std::vector<std::vector<State *>>(thread_num);
-    this->make_table();
-  }
+  /* 膜の同型性判定にこの回数以上失敗すると膜のエンコードを行う */
+  static constexpr unsigned int MEM_EQ_FAIL_THRESHOLD = 2U;
+
+  StateSpace(int thread_num, AutomataRef a, Vector *psyms);
+  StateSpace(AutomataRef a, Vector *psyms) : StateSpace(1, a, psyms){};
+  ~StateSpace();
 
   void add_memid_hash(unsigned long hash);
   State *insert(State *s);
   State *insert_delta(State *s, struct MemDeltaRoot *d);
   void add_direct(State *s);
-  void set_init_state(State *init_state, BOOL enable_binstr);
-  void dump() const;
-  void dump_all_states() const;
-  void dump_all_transitions() const;
-  void dump_all_labels() const;
+  void set_init_state(State *init_state);
   void format_states();
   unsigned long space() const;
-  void dump_ends() const;
   unsigned long num() const;
   unsigned long num_raw() const;
   unsigned long dummy_num() const;
@@ -111,23 +93,25 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
   StateTable &accept_tbl() { return *mhash_table.acc; }
   StateTable &accept_memid_tbl() { return *memid_table.acc; }
 
-  void make_table();
-
-  bool use_memenc() const { return ((this)->tbl_type & SS_MEMID_MASK); }
-  void set_memenc() { ((this)->tbl_type |= SS_MEMID_MASK); }
-  void set_rehasher() { ((this)->tbl_type |= SS_REHASHER_MASK); }
+  bool use_memenc() const { return using_memenc; }
   bool is_formatted() const { return this->is_formated; }
   bool has_property() const { return this->property_automata; }
   AutomataRef automata() { return this->property_automata; }
   Vector *prop_symbols() { return this->propsyms; }
 
   FILE *output() { return out; }
+  void dump() const;
+  void dump_ends() const;
 
   std::vector<State *> all_states() const;
 
 private:
-  BYTE tbl_type; /* なんらかの特殊操作を行うためのフラグフィールド */
-  BOOL is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
+  void dump_all_states() const;
+  void dump_all_transitions() const;
+  void dump_all_labels() const;
+
+  bool using_memenc;
+  bool is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
   /* 2bytes alignment */
   unsigned int thread_num; /* 本テーブルの操作スレッド数 */
 
