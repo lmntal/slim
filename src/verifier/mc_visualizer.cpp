@@ -104,8 +104,8 @@ void dump_dot_loop(State *s, AutomataRef *a, int *colors, int depth) {
 
 void dump_dot(StateSpaceRef ss, int worker_num) {
   int *colors;
-  State *root = statespace_init_state(ss);
-  AutomataRef a = statespace_automata(ss);
+  State *root = ss->initial_state();
+  AutomataRef a = ss->automata();
 
   colors = (int *)malloc(sizeof(int) * worker_num);
   calc_colors(worker_num, &colors);

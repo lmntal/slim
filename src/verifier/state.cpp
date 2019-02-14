@@ -419,7 +419,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
      * バイナリストリング以外のデータはオリジナル側(parent)に記録している. */
     State *target = !s->is_dummy() ? s : state_get_parent(s);
     if (owner) {
-      print_id = state_format_id(target, owner->is_formated);
+      print_id = state_format_id(target, owner->is_formatted());
     } else {
       print_id = state_format_id(target, FALSE);
     }
@@ -443,15 +443,15 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     }
     break;
   case CUI: {
-    BOOL has_property = owner && statespace_has_property(owner);
+    BOOL has_property = owner && owner->has_property();
 #ifdef KWBT_OPT
     fprintf(f, "%lu::%lu::%s", print_id, cost,
-            has_property ? automata_state_name(statespace_automata(owner),
+            has_property ? automata_state_name(owner->automata(),
                                                state_property_state(s))
                          : "");
 #else
     fprintf(f, "%lu::%s", print_id,
-            has_property ? automata_state_name(statespace_automata(owner),
+            has_property ? automata_state_name(owner->automata(),
                                                state_property_state(s))
                          : "");
 #endif
@@ -536,7 +536,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
     break;
   }
 
-  formated = owner ? owner->is_formated : FALSE;
+  formated = owner ? owner->is_formatted() : FALSE;
   if (!need_id_foreach_trans) {
     fprintf(f, "%lu%s", state_format_id(s, formated), state_separator);
   }
@@ -585,23 +585,23 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   StateSpaceRef owner;
 
   owner = (StateSpaceRef)_owner;
-  if (!statespace_has_property(owner) || (s->is_dummy() && s->is_encoded())) {
+  if (!owner->has_property() || (s->is_dummy() && s->is_encoded())) {
     return;
   }
 
-  a = statespace_automata(owner);
+  a = owner->automata();
   f = (FILE *)_fp;
 
   switch (lmn_env.mc_dump_format) {
   case Dir_DOT: {
     if (state_is_accept(a, s) || state_is_end(a, s)) {
       fprintf(f, "  %lu [peripheries = 2]\n",
-              state_format_id(s, owner->is_formated));
+              state_format_id(s, owner->is_formatted()));
     }
     break;
   }
   case LaViT:
-    fprintf(f, "%lu::", state_format_id(s, owner->is_formated));
+    fprintf(f, "%lu::", state_format_id(s, owner->is_formatted()));
     fprintf(f, "%s\n", automata_state_name(a, state_property_state(s)));
   case FSM:
   case CUI: /* 状態のグローバルルート膜の膜名としてdump済 */

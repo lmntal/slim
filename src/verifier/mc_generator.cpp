@@ -314,18 +314,18 @@ void mcdfs_start(LmnWorker *w) {
 
   /*
   if(WORKER_FOR_INIT_STATE(w, s)) {
-    s = statespace_init_state(ss);
+    s = ss->initial_state();
   } else {
     s = NULL;
   }
   */
-  s = statespace_init_state(ss);
+  s = ss->initial_state();
 
   if (!worker_on_parallel(w)) { /* DFS */
     {
       put_stack(&DFS_WORKER_STACK(w), s);
-      dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, statespace_automata(ss),
-               statespace_propsyms(ss));
+      dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
+               ss->prop_symbols());
     }
   } else {
     while (!wp->mc_exit) {
@@ -343,7 +343,7 @@ void mcdfs_start(LmnWorker *w) {
           {
             put_stack(&DFS_WORKER_STACK(w), s);
             mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                       statespace_automata(ss), statespace_propsyms(ss));
+                       ss->automata(), ss->prop_symbols());
             s = NULL;
             vec_clear(&DFS_WORKER_STACK(w));
           }
@@ -384,7 +384,7 @@ void dfs_start(LmnWorker *w) {
   vec_init(&new_ss, 32);
 
   if (WORKER_FOR_INIT_STATE(w, s)) {
-    s = statespace_init_state(ss);
+    s = ss->initial_state();
   } else {
     s = NULL;
   }
@@ -393,14 +393,14 @@ void dfs_start(LmnWorker *w) {
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       push_deq(&DFS_WORKER_DEQUE(w), s, TRUE);
-      costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss, statespace_automata(ss),
-                      statespace_propsyms(ss));
+      costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss, ss->automata(),
+                      ss->prop_symbols());
     } else
 #endif
     {
       put_stack(&DFS_WORKER_STACK(w), s);
-      dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, statespace_automata(ss),
-               statespace_propsyms(ss));
+      dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
+               ss->prop_symbols());
     }
   } else { /* Stack-Slicing */
     while (!wp->mc_exit) {
@@ -438,7 +438,7 @@ void dfs_start(LmnWorker *w) {
           if (lmn_env.opt_mode != OPT_NONE) {
             push_deq(&DFS_WORKER_DEQUE(w), s, TRUE);
             costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss,
-                            statespace_automata(ss), statespace_propsyms(ss));
+                            ss->automata(), ss->prop_symbols());
             s = NULL;
             deq_clear(&DFS_WORKER_DEQUE(w));
           } else
@@ -447,10 +447,10 @@ void dfs_start(LmnWorker *w) {
             put_stack(&DFS_WORKER_STACK(w), s);
             if (worker_use_mapndfs(w))
               mapdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                          statespace_automata(ss), statespace_propsyms(ss));
+                          ss->automata(), ss->prop_symbols());
             else
               dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                       statespace_automata(ss), statespace_propsyms(ss));
+                       ss->automata(), ss->prop_symbols());
             s = NULL;
             vec_clear(&DFS_WORKER_STACK(w));
           }
@@ -932,7 +932,7 @@ void bfs_start(LmnWorker *w) {
 
   if (!worker_on_parallel(w) ||
       worker_id(w) == 0) { /* 重複して初期状態をenqしないようにするための条件 */
-    enqueue(BFS_WORKER_Q_CUR(w), (LmnWord)statespace_init_state(ss));
+    enqueue(BFS_WORKER_Q_CUR(w), (LmnWord)ss->initial_state());
   }
 
   /* start bfs  */
@@ -940,7 +940,7 @@ void bfs_start(LmnWorker *w) {
     /** >>>> 逐次 >>>> */
     while (!wp->mc_exit) {
       /* 1step展開 */
-      bfs_loop(w, new_ss, statespace_automata(ss), statespace_propsyms(ss));
+      bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
 
       if (BLEDGE_COND(w))
         bledge_start(w);
@@ -959,7 +959,7 @@ void bfs_start(LmnWorker *w) {
       if (!is_empty_queue(BFS_WORKER_Q_CUR(w))) {
         EXECUTE_PROFILE_START();
         worker_set_active(w);
-        bfs_loop(w, new_ss, statespace_automata(ss), statespace_propsyms(ss));
+        bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
         worker_set_idle(w);
 
         vec_clear(new_ss);
@@ -979,7 +979,7 @@ void bfs_start(LmnWorker *w) {
       if (!is_empty_queue(BFS_WORKER_Q_CUR(w))) {
         /**/ EXECUTE_PROFILE_START();
         worker_set_active(w);
-        bfs_loop(w, new_ss, statespace_automata(ss), statespace_propsyms(ss));
+        bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
         worker_set_idle(w);
         vec_clear(new_ss);
         /**/ EXECUTE_PROFILE_FINISH();

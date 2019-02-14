@@ -155,3 +155,7 @@ void ewlock_permit_enter(EWLock *lock, mtx_data_t my_id) {
     lmn_mutex_unlock(&(lock->elock[i]));
   }
 }
+
+constexpr slim::element::ewmutex::ewmutex_tag slim::element::ewmutex::write;
+constexpr slim::element::ewmutex::ewmutex_tag slim::element::ewmutex::enter;
+constexpr slim::element::ewmutex::ewmutex_tag slim::element::ewmutex::exclusive_enter;

@@ -44,138 +44,101 @@
 #ifndef LMN_STATESPACE_H
 #define LMN_STATESPACE_H
 
-/**
- * @ingroup  Verifier
- * @defgroup StateSpace
- * @{
- */
-
 #include "../lmntal.h"
-#include "automata.h"
-#include "delta_membrane.h"
 #include "element/element.h"
-#include "mem_encode.h"
-#include "tree_compress.h"
 
-struct statespace_type {
-  int (*compare)(State *, State *); /* 状態の等価性判定を行う関数 */
-  LmnBinStrRef (*compress)(State *); /* 状態sの圧縮バイト列を計算して返す関数 */
+#include "state.hpp"
+
+#include <memory>
+#include <set>
+
+struct MemIdHashSkeleton {
+  void add_hash(unsigned long hash) {}
+  bool contains_hash(unsigned long hash) { return false; }
 };
 
-struct StateSpace {
-  BYTE tbl_type; /* なんらかの特殊操作を行うためのフラグフィールド */
-  BOOL is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
+struct MemIdHash {
+  std::set<unsigned long> memid_hashes;
+
+  void add_hash(unsigned long hash) { memid_hashes.insert(hash); }
+  /* hashが膜のIDを計算しているハッシュならば真、そうでなければ偽を返す */
+  bool contains_hash(unsigned long hash) {
+    return memid_hashes.find(hash) != memid_hashes.end();
+  }
+};
+
+struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
+                                            MemIdHashSkeleton>::type {
+  /* 膜の同型性判定にこの回数以上失敗すると膜のエンコードを行う */
+  static constexpr unsigned int MEM_EQ_FAIL_THRESHOLD = 2U;
+
+  StateSpace(int thread_num, AutomataRef a, Vector *psyms);
+  StateSpace(AutomataRef a, Vector *psyms) : StateSpace(1, a, psyms){};
+  ~StateSpace();
+
+  void add_memid_hash(unsigned long hash);
+  State *insert(State *s);
+  State *insert_delta(State *s, struct MemDeltaRoot *d);
+  void add_direct(State *s);
+  void set_init_state(State *init_state);
+  void format_states();
+  unsigned long space() const;
+  unsigned long num() const;
+  unsigned long num_raw() const;
+  unsigned long dummy_num() const;
+  unsigned long num_of_ends() const;
+  State *initial_state() { return init_state; }
+  void mark_as_end(State *);
+
+  StateTable &accept_tbl() { return *mhash_table.acc; }
+  StateTable &accept_memid_tbl() { return *memid_table.acc; }
+
+  bool use_memenc() const { return using_memenc; }
+  bool is_formatted() const { return this->is_formated; }
+  bool has_property() const { return this->property_automata; }
+  AutomataRef automata() { return this->property_automata; }
+  Vector *prop_symbols() { return this->propsyms; }
+
+  FILE *output() { return out; }
+  void dump() const;
+  void dump_ends() const;
+
+  std::vector<State *> all_states() const;
+
+private:
+  void dump_all_states() const;
+  void dump_all_transitions() const;
+  void dump_all_labels() const;
+
+  bool using_memenc;
+  bool is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
   /* 2bytes alignment */
   unsigned int thread_num; /* 本テーブルの操作スレッド数 */
 
-  FILE *out;          /* dump先 */
-  State *init_state;  /* 初期状態 */
-  Vector *end_states; /* 最終状態の集合 */
-  StateTable *tbl; /* mhash値をkeyに, 状態のアドレスを登録する状態管理表 */
-  StateTable
-      *memid_tbl; /* memid_hashをkeyに, 状態のアドレスを登録する状態管理表 */
-  StateTable *acc_tbl;
-  StateTable *acc_memid_tbl;
+  FILE *out;         /* dump先 */
+  State *init_state; /* 初期状態 */
 
   AutomataRef property_automata; /* Never Clainへのポインタ */
   Vector *propsyms;              /* 命題記号定義へのポインタ */
 
-#ifdef PROFILE
-  HashSet memid_hashes; /* 膜のIDで同型性の判定を行うハッシュ値(mhash)のSet */
-#endif
+  /* それぞれ全状態と受理状態を管理する表の組 */
+  struct TablePair {
+    std::unique_ptr<StateTable> tbl;
+    std::unique_ptr<StateTable> acc;
+  };
+
+  void make_table_pair(TablePair &t);
+  void make_table_pair(TablePair &t, TablePair &rehasher);
+
+  /* mhash値をkeyに, 状態のアドレスを登録する状態管理表 */
+  TablePair mhash_table;
+  /* memid_hashをkeyに, 状態のアドレスを登録する状態管理表 */
+  TablePair memid_table;
+
+  std::vector<std::vector<State *>> end_states; /* 最終状態の集合 */
+
+  std::unique_ptr<StateTable> &insert_destination(State *s, unsigned long hashv);
+  std::unique_ptr<StateTable> &resize_destination(std::unique_ptr<StateTable> &def, State *ret, State *s);
 };
-
-#define statespace_has_property(SS) ((SS)->property_automata)
-#define statespace_automata(SS) ((SS)->property_automata)
-#define statespace_propsyms(SS) ((SS)->propsyms)
-
-/* the member "tbl_type" in struct StateSpace */
-#define SS_MEMID_MASK (0x01U)
-#define SS_REHASHER_MASK (0x01U << 1)
-
-#define statespace_use_memenc(SS) ((SS)->tbl_type & SS_MEMID_MASK)
-#define statespace_set_memenc(SS) ((SS)->tbl_type |= SS_MEMID_MASK)
-#define statespace_unset_memenc(SS) ((SS)->tbl_type &= (~SS_MEMID_MASK))
-#define statespace_use_rehasher(SS) ((SS)->tbl_type & SS_REHASHER_MASK)
-#define statespace_set_rehasher(SS) ((SS)->tbl_type |= SS_REHASHER_MASK)
-#define statespace_unset_rehasher(SS) ((SS)->tbl_type &= (~SS_REHASHER_MASK))
-
-struct StateTable {
-  BOOL use_rehasher;
-  BYTE thread_num;
-  struct statespace_type *type;
-  State **tbl;
-  unsigned long cap;
-  unsigned long cap_density;
-  unsigned long *num;
-  unsigned long *num_dummy;
-  EWLock *lock;
-  StateTable *rehash_tbl; /* rehashした際に登録するテーブル */
-};
-
-#define DEFAULT_ARGS (LmnWord) NULL
-
-/** -----------
- *  StateTable
- */
-
-void statetable_foreach(StateTable *st, void (*func)(ANYARGS), LmnWord _arg1,
-                        LmnWord _arg2);
-void statetable_foreach_parallel(StateTable *st, void (*mt_safe_func)(ANYARGS),
-                                 LmnWord _arg1, LmnWord _arg2, int nthreads);
-void statetable_format_states(StateTable *st);
-
-void statetable_set_lock(StateTable *st, EWLock *lock);
-void statetable_set_rehasher(StateTable *st);
-BOOL statetable_use_rehasher(StateTable *st);
-unsigned long statetable_num_by_me(StateTable *st);
-unsigned long statetable_num(StateTable *st);
-unsigned long statetable_cap(StateTable *st);
-unsigned long statetable_cap_density(StateTable *st);
-void statetable_num_add(StateTable *st, unsigned long n);
-void statetable_num_sub(StateTable *st, unsigned long n);
-void statetable_dummy_add(StateTable *st, unsigned long n);
-void statetable_dummy_sub(StateTable *st, unsigned long n);
-void statetable_set_rehash_tbl(StateTable *st, StateTable *rehash_tbl);
-StateTable *statetable_rehash_tbl(StateTable *st);
-unsigned long statetable_space(StateTable *tbl);
-
-/** -----------
- *  StateSpace
- */
-
-StateSpaceRef statespace_make(AutomataRef a, Vector *psyms);
-StateSpaceRef statespace_make_for_parallel(int thread_num, AutomataRef a,
-                                           Vector *psyms);
-void statespace_free(StateSpaceRef ss);
-void statespace_add_direct(StateSpaceRef ss, State *s);
-State *statespace_insert(StateSpaceRef ss, State *s);
-State *statespace_insert_delta(StateSpaceRef ss, State *s,
-                               struct MemDeltaRoot *d);
-void statespace_foreach(StateSpaceRef ss, void (*func)(ANYARGS), LmnWord _arg1,
-                        LmnWord _arg2);
-void statespace_foreach_parallel(StateSpaceRef ss, void (*func)(ANYARGS),
-                                 LmnWord _arg1, LmnWord _arg2, int nPE);
-void statespace_format_states(StateSpaceRef ss);
-void statespace_clear(StateSpaceRef ss);
-void statespace_ends_dumper(StateSpaceRef ss);
-void statespace_dumper(StateSpaceRef ss);
-
-unsigned long statespace_num_raw(StateSpaceRef ss);
-unsigned long statespace_num(StateSpaceRef ss);
-unsigned long statespace_dummy_num(StateSpaceRef ss);
-unsigned long statespace_end_num(StateSpaceRef ss);
-State *statespace_init_state(StateSpaceRef ss);
-void statespace_set_init_state(StateSpaceRef ss, State *init_state,
-                               BOOL enable_compact);
-void statespace_add_end_state(StateSpaceRef ss, State *s);
-const Vector *statespace_end_states(StateSpaceRef ss);
-StateTable *statespace_tbl(StateSpaceRef ss);
-StateTable *statespace_memid_tbl(StateSpaceRef ss);
-StateTable *statespace_accept_tbl(StateSpaceRef ss);
-StateTable *statespace_accept_memid_tbl(StateSpaceRef ss);
-unsigned long statespace_space(StateSpaceRef ss);
-
-/* @} */
 
 #endif

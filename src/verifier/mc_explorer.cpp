@@ -42,6 +42,7 @@
 #include "mc_worker.h"
 #include "state.h"
 #include "state.hpp"
+#include "state_table.hpp"
 
 #ifdef PROFILE
 #include "runtime_status.h"
@@ -310,19 +311,15 @@ void owcty_env_set(LmnWorker *w) {
   }
 }
 
-static inline void statetable_enqueue_f(State *s, LmnWord _q) {
-  enqueue((Queue *)_q, (LmnWord)s);
-}
-
-void statetable_to_state_queue(StateTable *st, Queue *q) {
-  statetable_foreach(st, (void (*)(ANYARGS))statetable_enqueue_f, (LmnWord)q,
-                     DEFAULT_ARGS);
+void statetable_to_state_queue(StateTable &st, Queue *q) {
+  for (auto &ptr : st)
+    enqueue(q, (LmnWord)ptr);
 }
 
 static void owcty_env_init(LmnWorker *w) {
-  statetable_to_state_queue(statespace_accept_tbl(worker_states(w)),
+  statetable_to_state_queue(worker_states(w)->accept_tbl(),
                             OWCTY_WORKER_AQ1(w));
-  statetable_to_state_queue(statespace_accept_memid_tbl(worker_states(w)),
+  statetable_to_state_queue(worker_states(w)->accept_memid_tbl(),
                             OWCTY_WORKER_AQ2(w));
 
   MC_DEBUG(printf("acceptance queue init, num=%lu\n",
@@ -371,7 +368,7 @@ void owcty_start(LmnWorker *w) {
   }
 
   if (!is_empty_queue(OWCTY_WORKER_AQ1(w))) {
-    owcty_found_accepting_cycle(w, statespace_automata(worker_states(w)));
+    owcty_found_accepting_cycle(w, worker_states(w)->automata());
   }
 }
 
@@ -417,7 +414,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
     s = (State *)dequeue(primary);
     if (!s) {
       continue;
-    } else if (STATE_PROP_SCC_N(w, s, statespace_automata(ss)) ||
+    } else if (STATE_PROP_SCC_N(w, s, ss->automata()) ||
                smap_is_deleted(s) || (MAP_COND(w) && !s->map)) {
       /* A. 性質オートマトン上でSCCを跨ぐ遷移ならば受理サイクルを形成しない
        * B. 既に削除マーキング済
@@ -431,11 +428,11 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
     for (i = 0, cnt = 0; i < s->successor_num; i++) {
       State *succ = state_succ_state(s, i);
 
-      if (TRANS_BETWEEN_DIFF_SCCs(w, s, succ, statespace_automata(ss)))
+      if (TRANS_BETWEEN_DIFF_SCCs(w, s, succ, ss->automata()))
         continue;
 
       if (!owcty_traversed_owner_is_me(succ, set_flag, is_up)) {
-        if (state_is_accept(statespace_automata(ss), succ) &&
+        if (state_is_accept(ss->automata(), succ) &&
             !smap_is_deleted(succ)) {
           enqueue(secondary, (LmnWord)succ);
           cnt++;
@@ -604,7 +601,7 @@ void map_start(LmnWorker *w, State *u) {
     backward_elimination(w, u);
   }
 
-  a = statespace_automata(worker_states(w));
+  a = worker_states(w)->automata();
 
   do {
     State *propag;
@@ -890,7 +887,7 @@ static BOOL bledge_path_accepting(Vector *v, AutomataRef a) {
 }
 
 static BOOL bledge_explorer_accepting_cycle(LmnWorker *w, State *u, State *v) {
-  AutomataRef a = statespace_automata(worker_states(w));
+  AutomataRef a = worker_states(w)->automata();
   return state_to_state_path(v, u, BLE_WORKER_SEARCH_VEC(w),
                              BLE_WORKER_PATH_VEC(w), BLE_WORKER_HASHSET(w)) &&
          bledge_path_accepting(BLE_WORKER_PATH_VEC(w), a);

@@ -783,7 +783,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       src_t = NULL;
     }
 
-    succ = statespace_insert_delta(ss, src_succ, succ_d);
+    succ = ss->insert_delta(src_succ, succ_d);
     if (succ == src_succ) {
       state_id_issue(succ);
       if (mc_is_dump(f))
@@ -840,7 +840,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         src_t = NULL;
       }
 
-      succ = statespace_insert_delta(ss, src_succ, succ_d);
+      succ = ss->insert_delta(src_succ, succ_d);
       if (succ == src_succ) {
         state_id_issue(succ);
         if (mc_is_dump(f))
@@ -895,7 +895,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       src_succ->state_set_mem(DMEM_ROOT_MEM(succ_d));
       src_succ->state_calc_hash(
           src_succ->state_mem(),
-          statespace_use_memenc(ss)); /* それを元にハッシュ値やmem_idを計算 */
+          ss->use_memenc()); /* それを元にハッシュ値やmem_idを計算 */
       if (!src_succ->is_encoded()) {
         src_succ->state_set_binstr(state_calc_mem_dump(src_succ));
       }
@@ -1032,7 +1032,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       parent->succ_add((succ_data_t)t);
 
       s_mem = s->state_mem();
-      ret = statespace_insert(ss, s);
+      ret = ss->insert(s);
       if (ret == s) {
         s->s_set_reduced();
         lmn_mem_free_rec(s_mem);
@@ -1051,10 +1051,10 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       unsigned int i;
 
       s = (State *)vec_pop(search);
-      p_s = MC_GET_PROPERTY(s, statespace_automata(ss));
+      p_s = MC_GET_PROPERTY(s, ss->automata());
 
       s->s_set_reduced();
-      mc_expand(ss, s, p_s, &rc, new_ss, statespace_propsyms(ss), f);
+      mc_expand(ss, s, p_s, &rc, new_ss, ss->prop_symbols(), f);
 
       for (i = 0; i < s->successor_num; i++) {
         TransitionRef succ_t = transition(s, i);

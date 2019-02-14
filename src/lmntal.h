@@ -300,10 +300,10 @@ struct LmnEnv {
   BOOL tree_compress;
   unsigned int tree_compress_table_size;
 
-#ifdef PROFILE
+// #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;
-#endif
+// #endif
 
 #ifdef DEBUG
   BOOL debug_isomor;
@@ -540,6 +540,14 @@ static inline unsigned long env_next_id() {
 
 #endif
 
-/* cldoc:end-category() */
+namespace slim {
+namespace config {
+#ifdef PROFILE
+static constexpr bool profile = true;
+#else
+static constexpr bool profile = false;
+#endif
+}
+}
 
 #endif /* LMNTAL_H */

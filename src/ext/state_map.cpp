@@ -53,13 +53,13 @@ static LmnStateMapRef lmn_make_state_map(LmnMembraneRef mem)
 {
   LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
   LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
-  s->states = statespace_make(NULL, NULL);
+  s->states = new StateSpace(NULL, NULL);
   return s;
 }
 
 void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
 {
-  statespace_free(((LmnStateMapRef)state_map)->states);
+  delete (((LmnStateMapRef)state_map)->states);
   LMN_FREE(state_map);
 }
 
@@ -125,7 +125,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_mem_remove_mem(mem, m);
 
   State *new_s = new State(m, 0, TRUE);
-  State *succ = statespace_insert(ss, new_s);
+  State *succ = ss->insert(new_s);
 
   if (succ == new_s) { /* new state */
     state_id_issue(succ);

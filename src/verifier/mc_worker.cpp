@@ -127,7 +127,7 @@ static void lmn_worker_start(void *arg) {
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
     StateSpaceRef ss = worker_states(w);
-    dump_state_data(statespace_init_state(ss), (LmnWord)ss->out, (LmnWord)NULL);
+    dump_state_data(ss->initial_state(), (LmnWord)ss->output(), (LmnWord)NULL);
   }
 
   if (lmn_env.profile_level >= 1)
@@ -475,8 +475,8 @@ static void workers_gen(LmnWorkerGroup *owner, unsigned int worker_num,
 
     if (i == 0) {
       states = worker_num > 1
-                   ? statespace_make_for_parallel(worker_num, a, psyms)
-                   : statespace_make(a, psyms);
+                   ? new StateSpace(worker_num, a, psyms)
+                   : new StateSpace(a, psyms);
     } else {
       states = worker_states(workers_get_worker(owner, 0));
     }
@@ -510,7 +510,7 @@ static void workers_free(LmnWorker **pool, unsigned int worker_num) {
     }
 
     if (i == 0) {
-      statespace_free(worker_states(w));
+      delete (worker_states(w));
     }
 
     worker_finalize(w);
