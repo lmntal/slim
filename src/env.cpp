@@ -40,6 +40,8 @@
 #include "lmntal.h"
 #include "verifier/runtime_status.h"
 
+#include <climits>
+
 struct Vector *lmn_id_pool;
 struct LmnEnv lmn_env;
 struct LmnProfiler lmn_prof;

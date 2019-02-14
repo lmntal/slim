@@ -120,7 +120,7 @@ public:
     using value_type = State *;
     using pointer = State **;
     using reference = State *&;
-    using iterator_category = typename std::input_iterator_tag;
+    typedef typename std::input_iterator_tag iterator_category;
 
     iterator() : ptr(nullptr) {}
     iterator(const iterator &itr)

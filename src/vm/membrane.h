@@ -241,7 +241,7 @@ struct membrane_iterator {
   using value_type = LmnMembrane;
   using pointer = LmnMembrane *;
   using reference = LmnMembrane &;
-  using iterator_category = typename std::input_iterator_tag;
+  typedef typename std::input_iterator_tag iterator_category;
 
   membrane_iterator() : mem_(nullptr) {}
   membrane_iterator(LmnMembrane *mem) : mem_(mem) {}

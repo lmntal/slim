@@ -40,6 +40,9 @@
 #include "state.h"
 #include "state.hpp"
 
+#include <mutex>
+#include <algorithm>
+
 #define STATE_EQUAL(Tbl, Check, Stored)                                        \
   (state_hash(Check) == state_hash(Stored) &&                                  \
    ((Tbl)->type->compare)(Check, Stored))

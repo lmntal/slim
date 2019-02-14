@@ -125,7 +125,7 @@ struct AtomListEntry {
     using value_type = LmnSymbolAtomRef;
     using pointer = LmnSymbolAtomRef *;
     using reference = LmnSymbolAtomRef &;
-    using iterator_category = typename std::bidirectional_iterator_tag;
+    typedef typename std::bidirectional_iterator_tag iterator_category;
 
     const_iterator(const AtomListEntry *ent, LmnSymbolAtomRef index) {
       a_ent = ent;
