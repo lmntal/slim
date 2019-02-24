@@ -1424,6 +1424,7 @@ void makeTerminationConditionMemo(Trie *trie, OmegaArray *distributionMemo,
 }
 
 inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   for (auto i : *body.children)
     os << *i.second;
   if (body.isPushedIntoGoAheadStack)
@@ -1432,7 +1433,8 @@ inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
   for (int i = 0; i < body.depth; i++)
     os << "    ";
   os << "KEY:";
-  os << "%08X" << body.key;
+  // os << "%08X" << body.key;
+  os << body.key;
   os << "\n";
 
   for (int i = 0; i < body.depth; i++)
