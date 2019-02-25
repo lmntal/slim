@@ -36,15 +36,17 @@
  * $Id: il_parser.y,v 1.9 2008/09/29 05:23:40 taisuke Exp $
  */
 
+%language "c++"
+
 %{
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
 #include "syntax.hpp"
 #include "element/element.h"
 #include "il_lexer.hpp"
+
+namespace c14 = slim::element;
 %}
 
-%pure-parser
 %locations
 %parse-param {il::lexer* scanner}
 %parse-param {std::unique_ptr<IL> * ret_il}
@@ -52,151 +54,126 @@
 /* ローカルのルールセットIDからグローバルなIDへのテーブル */
 %lex-param {il::lexer* scanner}
 
-%union {              /* define stack type */
-  il::Functor *functor;
-  IL *il;
-  InstBlock *inst_block;
-  il::InstrArg *arg;
-  Instruction *instruction;
-  Rule *rule;
-  RuleSet *ruleset;
-  double _float;
-  int _int;
-  lmn_interned_str id;
-  lmn_interned_str str;
-  std::vector<lmn_interned_str> *inline_list;
-  std::vector<std::shared_ptr<il::InstrArg>> *args;
-  std::vector<std::shared_ptr<il::InstrArg>> *inst_vars;
-  std::vector<std::shared_ptr<Instruction>> *instructions;
-  std::vector<std::shared_ptr<Rule>> *rules;
-  std::vector<std::shared_ptr<RuleSet>> *rulesets;
-  std::vector<std::shared_ptr<Module>> *module_list;
-}
-
-%token <_int> INT
-%token <_float> FLOAT
-%token <id> ID
-%token <_int> INST_NAME
-%token <_int> LABEL
-%token <str> DQUOTED_STRING
-%token <str> SQUOTED_STRING
-%token <_int> RULESET_ID
+%define api.value.type variant
+%token <int> INT
+%token <double> FLOAT
+%token <lmn_interned_str> ID
+%token <LmnInstruction> INST_NAME
+%token <int> LABEL
+%token <lmn_interned_str> DQUOTED_STRING
+%token <lmn_interned_str> SQUOTED_STRING
+%token <int> RULESET_ID
 %token COMMA PERIOD COLON UNDERBAR LBRACE RBRACE LBRACKET RBRACKET
 %token INSIDE_PROXY OUTSIDE_PROXY
 %token KW_COMPILED_RULESET KW_COMPILED_SYSTEM_RULESET KW_COMPILED_UNIQ_RULE KW_COMPILED_RULE KW_ATOMMATCH KW_MEMMATCH
 %token KW_GUARD KW_BODY KW_INLINE KW_MODULE
 
-%token <_int> INST_TK_LOOP
-%token <_int> INST_TK_RUN
-%token <_int> INST_TK_NOT
-%token <_int> INST_TK_GROUP
-%token <_int> INST_TK_BRANCH
+%token <LmnInstruction> INST_TK_LOOP
+%token <LmnInstruction> INST_TK_RUN
+%token <LmnInstruction> INST_TK_NOT
+%token <LmnInstruction> INST_TK_GROUP
+%token <LmnInstruction> INST_TK_BRANCH
 
 %token _EOF 0
 
 %start start
-%type <il> world
-%type <module_list> module_def;
-%type <module_list> modules;
-%type <rulesets> ruleSetList
-%type <ruleset> ruleSet
-%type <rule> rule
-%type <inst_block> atommatch
-%type <inst_block> memmatch
-%type <inst_block> guard
-%type <inst_block> body
-%type <instruction> instruction
-%type <instructions> instructions
-%type <rules> ruleList
-%type <_int> label
-%type <arg> arg
-%type <functor> functor
-%type <inst_vars> var_list;
-%type <inst_vars> var_list_;
-%type <arg> var_list_arg;
-%type <args> args
-%type <args> args_
-%type <args> inst_list_arg
-%type <inline_list> inlines;
+%type <IL *> world
+%type <std::vector<Module>> module_def;
+%type <std::vector<Module>> modules;
+%type <std::vector<RuleSet>> ruleSetList
+%type <RuleSet> ruleSet
+%type <Rule> rule
+%type <InstBlock> atommatch
+%type <InstBlock> memmatch
+%type <InstBlock> guard
+%type <InstBlock> body
+%type <Instruction> instruction
+%type <std::vector<Instruction>> instructions
+%type <std::vector<Rule>> ruleList
+%type <int> label
+%type <std::unique_ptr<il::InstrArg>> arg
+%type <std::unique_ptr<il::Functor>> functor
+%type <std::vector<std::unique_ptr<il::InstrArg>>> var_list;
+%type <std::vector<std::unique_ptr<il::InstrArg>>> var_list_;
+%type <std::unique_ptr<il::InstrArg>> var_list_arg;
+%type <std::vector<std::unique_ptr<il::InstrArg>>> args
+%type <std::vector<std::unique_ptr<il::InstrArg>>> args_
+%type <std::vector<std::unique_ptr<il::InstrArg>>> inst_list_arg
+%type <std::vector<lmn_interned_str>> inlines;
 
-%{
-#include "il_lexer.hpp"
-int illex(YYSTYPE *yylval, YYLTYPE *yyloc, il::lexer *lexer);
-void ilerror (YYLTYPE*, il::lexer*, std::unique_ptr<IL>*, std::unique_ptr<Rule>*, const char *);
-%}
 
 %% /* Grammar rules and actions follow.  */
 
 start:
   world _EOF { *ret_il = std::unique_ptr<IL>($1); }   /* 中間言語全体のパース */
-| rule { *ret_rule = std::unique_ptr<Rule>($1); }  /* ルールのみの入力をパース */
+| rule { *ret_rule = std::unique_ptr<Rule>(new Rule(std::move($1))); }  /* ルールのみの入力をパース */
 ;
 
 world:
-  ruleSetList { $$ = new IL(std::move(*$1)); }
-| ruleSetList module_def { $$ = new IL(std::move(*$1), std::move(*$2)); }
-| ruleSetList module_def KW_INLINE inlines { $$ = new IL(std::move(*$1), std::move(*$2), std::move(*$4)); }
-| ruleSetList KW_INLINE inlines { $$ = new IL(std::move(*$1), std::move(*$3)); }
+  ruleSetList { $$ = new IL(std::move($1)); }
+| ruleSetList module_def { $$ = new IL(std::move($1), std::move($2)); }
+| ruleSetList module_def KW_INLINE inlines { $$ = new IL(std::move($1), std::move($2), std::move($4)); }
+| ruleSetList KW_INLINE inlines { $$ = new IL(std::move($1), std::move($3)); }
 ;
 
 module_def:
-KW_MODULE modules { $$ = $2; }
+  KW_MODULE modules { $$ = std::move($2); }
 ;
 
 modules:
- /*empty*/ { $$ = new std::vector<std::shared_ptr<Module>>; }
-| modules SQUOTED_STRING LBRACE  RBRACE { $$ = $1; } /* この場合もある */
+  /*empty*/ { $$ = std::vector<Module>(); }
+| modules SQUOTED_STRING LBRACE  RBRACE { $$ = std::move($1); } /* この場合もある */
 | modules SQUOTED_STRING LBRACE RULESET_ID RBRACE {
-  $1->push_back(std::shared_ptr<Module>(new Module($2, $4)));
-  $$ = $1;
+  $1.emplace_back($2, $4);
+  $$ = std::move($1);
 }
 ;
 
 inlines:
-  /*empty*/ { $$ = new std::vector<lmn_interned_str>; }
-| inlines DQUOTED_STRING { $1->push_back($2); $$ = $1; }
+  /*empty*/ { $$ = std::vector<lmn_interned_str>(); }
+| inlines DQUOTED_STRING { $1.push_back($2); $$ = std::move($1); }
 ;
 
 ruleSetList:
-ruleSet { $$ = new std::vector<std::shared_ptr<RuleSet>>; $$->push_back(std::shared_ptr<RuleSet>($1)); }
-| ruleSetList ruleSet { $1->push_back(std::shared_ptr<RuleSet>($2)); $$ = $1; }
+  ruleSet { $$.push_back(std::move($1)); }
+| ruleSetList ruleSet { $1.push_back(std::move($2)); $$ = std::move($1); }
 ;
 
 ruleSet:
-  KW_COMPILED_SYSTEM_RULESET RULESET_ID ruleList { $$ = new RuleSet($2, std::move(*$3), TRUE); }
-| KW_COMPILED_RULESET RULESET_ID ruleList { $$ = new RuleSet($2, std::move(*$3), FALSE); }
+  KW_COMPILED_SYSTEM_RULESET RULESET_ID ruleList { $$ = RuleSet($2, std::move($3), TRUE); }
+| KW_COMPILED_RULESET RULESET_ID ruleList { $$ = RuleSet($2, std::move($3), FALSE); }
 ;
 
 ruleList:
-  rule { $$ = new std::vector<std::shared_ptr<Rule>>; $$->push_back(std::shared_ptr<Rule>($1)); }
-| ruleList rule { $1->push_back(std::shared_ptr<Rule>($2)); $$ = $1; }
+  rule { $$.push_back(std::move($1)); }
+| ruleList rule { $1.push_back(std::move($2)); $$ = std::move($1); }
 ;
 
 rule:
   KW_COMPILED_UNIQ_RULE atommatch memmatch guard body {
-    $$ = new Rule(TRUE, std::move(*$2), std::move(*$3), std::move(*$4), std::move(*$5));
+    $$ = Rule(true, std::move($2), std::move($3), std::move($4), std::move($5));
   }
 | KW_COMPILED_RULE atommatch memmatch guard body {
-    $$ = new Rule(FALSE, std::move(*$2), std::move(*$3), std::move(*$4), std::move(*$5));
+    $$ = Rule(false, std::move($2), std::move($3), std::move($4), std::move($5));
   }
 ;
 
 atommatch:
-KW_ATOMMATCH COLON instructions { $$ = new InstBlock(std::move(*$3)); }
+  KW_ATOMMATCH COLON instructions { $$ = InstBlock(std::move($3)); }
 ;
 
 memmatch:
-  KW_MEMMATCH COLON instructions { $$ = new InstBlock(std::move(*$3)); }
+  KW_MEMMATCH COLON instructions { $$ = InstBlock(std::move($3)); }
 ;
 
 guard:
-/* empty */ { $$ = new InstBlock(); }
-|  KW_GUARD COLON label COLON instructions { $$ = new InstBlock($3, std::move(*$5)); }
+  /* empty */ { $$ = InstBlock(); }
+| KW_GUARD COLON label COLON instructions { $$ = InstBlock($3, std::move($5)); }
 ;
 
 body:
-/* empty */ { $$ = new InstBlock(); }
-|  KW_BODY COLON label COLON instructions { $$ = new InstBlock($3, std::move(*$5)); }
+  /* empty */ { $$ = InstBlock(); }
+| KW_BODY COLON label COLON instructions { $$ = InstBlock($3, std::move($5)); }
 ;
 
 label:
@@ -204,94 +181,93 @@ label:
 ;
 
 instructions:
-  /* empty */ { $$ = new std::vector<std::shared_ptr<Instruction>>; }
-| instructions instruction { $1->push_back(std::shared_ptr<Instruction>($2)); $$ = $1; }
+  /* empty */ { $$ = std::vector<Instruction>(); }
+| instructions instruction { $1.push_back(std::move($2)); $$ = std::move($1); }
 ;
 
 instruction:
- INST_NAME LBRACKET args RBRACKET {
+  INST_NAME LBRACKET args RBRACKET {
   if ($1 == INSTR_COMMIT) {
     /* COMMITの第二引数を変数番号ではなく行番号とする */
-    auto line_num_arg = dynamic_cast<il::instr_arg::var *>($3->at(1).get());
-    $3->at(1) = std::make_shared<il::instr_arg::lineno>(line_num_arg->value);
+    auto line_num_arg = dynamic_cast<il::instr_arg::var *>($3.at(1).get());
+    $3.at(1) = c14::make_unique<il::instr_arg::lineno>(line_num_arg->value);
   }
   
-  $$ = new Instruction((LmnInstruction)$1, std::move(*$3));
+  $$ = Instruction($1, std::move($3));
 }
   /* 変数のリストと命令のリストがreduce/reduce コンフリクトを起こすので別に扱う */
-|  INST_TK_LOOP LBRACKET inst_list_arg RBRACKET { $$ = new Instruction((LmnInstruction)$1, std::move(*$3)); }
-|  INST_TK_RUN LBRACKET inst_list_arg RBRACKET { $$ = new Instruction((LmnInstruction)$1, std::move(*$3)); }
-|  INST_TK_NOT LBRACKET inst_list_arg RBRACKET { $$ = new Instruction((LmnInstruction)$1, std::move(*$3)); }
-|  INST_TK_GROUP LBRACKET inst_list_arg RBRACKET { $$ = new Instruction((LmnInstruction)$1, std::move(*$3)); }
-|  INST_TK_BRANCH LBRACKET inst_list_arg RBRACKET { $$ = new Instruction((LmnInstruction)$1, std::move(*$3)); }
+| INST_TK_LOOP LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
+| INST_TK_RUN LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
+| INST_TK_NOT LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
+| INST_TK_GROUP LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
+| INST_TK_BRANCH LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
 ;
 
 arg:
-  INT { $$ = new il::instr_arg::var($1); }
-| functor { $$ = new il::instr_arg::functor(std::shared_ptr<il::Functor>($1)); }
-| RULESET_ID { $$ = new il::instr_arg::ruleset($1); }
-| DQUOTED_STRING { $$ = new il::instr_arg::string($1); }
-| label { $$ = new il::instr_arg::label($1); }
-| var_list_arg { $$ = $1; }
+  INT { $$ = c14::make_unique<il::instr_arg::var>($1); }
+| functor { $$ = c14::make_unique<il::instr_arg::functor>(std::move($1)); }
+| RULESET_ID { $$ = c14::make_unique<il::instr_arg::ruleset>($1); }
+| DQUOTED_STRING { $$ = c14::make_unique<il::instr_arg::string>($1); }
+| label { $$ = c14::make_unique<il::instr_arg::label>($1); }
+| var_list_arg { $$ = std::move($1); }
 ;
 
 args:
-/*empty*/ { $$ = new std::vector<std::shared_ptr<il::InstrArg>>; }
-// | args_ arg { $1->push_back(std::shared_ptr<il::InstrArg>($2)); $$ = $$ = $1; }
-| args_ arg { $1->push_back(std::shared_ptr<il::InstrArg>($2)); $$ = $1; }
+  /* empty */ { $$ = std::vector<std::unique_ptr<il::InstrArg>>(); }
+| args_ arg { $1.push_back(std::unique_ptr<il::InstrArg>(std::move($2))); $$ = std::move($1); }
 ;
 
 args_:
-/*empty*/ { $$ = new std::vector<std::shared_ptr<il::InstrArg>>; }
-| args_ arg COMMA { $1->push_back(std::shared_ptr<il::InstrArg>($2)) ; $$ = $1; }
+  /* empty */ { $$ = std::vector<std::unique_ptr<il::InstrArg>>(); }
+| args_ arg COMMA { $1.push_back(std::unique_ptr<il::InstrArg>(std::move($2))) ; $$ = std::move($1); }
 ;
 
 var_list_arg:
-LBRACKET var_list RBRACKET { $$ = new il::instr_arg::var_list(std::move(*$2)); }
+  LBRACKET var_list RBRACKET { $$ = c14::make_unique<il::instr_arg::var_list>(std::move($2)); }
 ;
 
 var_list:
-/*empty*/  { $$ = new std::vector<std::shared_ptr<il::InstrArg>>; }
-| var_list_ INT { $1->push_back(std::make_shared<il::instr_arg::var>($2)); $$ = $1; }
-| var_list_ functor { $1->push_back(std::make_shared<il::instr_arg::functor>(std::shared_ptr<il::Functor>($2))); $$ = $1; }
+  /* empty */  { $$ = std::vector<std::unique_ptr<il::InstrArg>>(); }
+| var_list_ INT { $1.push_back(c14::make_unique<il::instr_arg::var>(std::move($2))); $$ = std::move($1); }
+| var_list_ functor { $1.push_back(c14::make_unique<il::instr_arg::functor>(std::move($2))); $$ = std::move($1); }
 ;
 
 var_list_:
-/*empty*/ { $$ = new std::vector<std::shared_ptr<il::InstrArg>>; }
-| var_list_ INT COMMA { $1->push_back(std::make_shared<il::instr_arg::var>($2)); $$ = $1; }
-| var_list_ functor COMMA { $1->push_back(std::make_shared<il::instr_arg::functor>(std::shared_ptr<il::Functor>($2))); $$ = $1; }
+  /* empty */ { $$ = std::vector<std::unique_ptr<il::InstrArg>>(); }
+| var_list_ INT COMMA { $1.push_back(c14::make_unique<il::instr_arg::var>(std::move($2))); $$ = std::move($1); }
+| var_list_ functor COMMA { $1.push_back(c14::make_unique<il::instr_arg::functor>(std::move($2))); $$ = std::move($1); }
 ;
 
 inst_list_arg:
-LBRACKET instructions RBRACKET {
-  auto l = new std::vector<std::shared_ptr<il::InstrArg>>;
-  l->push_back(std::make_shared<il::instr_arg::inst_list>(std::move(*$2)));
-  $$ = l;
-}
+  LBRACKET instructions RBRACKET {
+    $$ = std::vector<std::unique_ptr<il::InstrArg>>();
+    $$.push_back(c14::make_unique<il::instr_arg::inst_list>(std::move($2)));
+  }
 ;
 
 functor:
-  INSIDE_PROXY { $$ = new il::functor::in_proxy; }
-| OUTSIDE_PROXY { $$ = new il::functor::out_proxy; }
-| SQUOTED_STRING UNDERBAR INT {$$ = new il::functor::symbol($1, $3); }
-| DQUOTED_STRING UNDERBAR INT {$$ = new il::functor::string($1); }
+  INSIDE_PROXY { $$ = c14::make_unique<il::functor::in_proxy>(); }
+| OUTSIDE_PROXY { $$ = c14::make_unique<il::functor::out_proxy>(); }
+| SQUOTED_STRING UNDERBAR INT { $$ = c14::make_unique<il::functor::symbol>($1, $3); }
+| DQUOTED_STRING UNDERBAR INT { $$ = c14::make_unique<il::functor::string>($1); }
 | SQUOTED_STRING PERIOD SQUOTED_STRING UNDERBAR INT {
-    $$ = new il::functor::symbol($1, $3, $5);
+    $$ = c14::make_unique<il::functor::symbol>($1, $3, $5);
   }
 | INT UNDERBAR INT {
-    $$ = new il::functor::integer((long)$1);
+    $$ = c14::make_unique<il::functor::integer>((long)$1);
   }
 | FLOAT UNDERBAR INT {
-    $$ = new il::functor::real($1);
+    $$ = c14::make_unique<il::functor::real>($1);
   }
 ;
 
 %%
 
+#include <iostream>
 
 /* Called by yyparse on error.  */
-void ilerror (YYLTYPE *loc, il::lexer* scanner, std::unique_ptr<IL>*il, std::unique_ptr<Rule>*rule, const char *s)
+void il::parser::error (const il::parser::location_type &loc, std::string const &s)
 {
-  fprintf (stderr, "il parser: error %s line: %d\n", s, scanner->lineno());
+  std::cerr << "il parser error: " << s << std::endl;
   exit(1);
 }

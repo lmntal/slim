@@ -122,8 +122,8 @@ struct lineno : interface {
   void visit(ByteEncoder &) const;
 };
 struct functor : interface {
-  shared_ptr<il::Functor> value;
-  functor(shared_ptr<il::Functor> value) : value(value) {}
+  std::unique_ptr<il::Functor> value;
+  functor(std::unique_ptr<il::Functor> &&value) : value(std::move(value)) {}
   void visit(ByteEncoder &) const;
 };
 struct ruleset : interface {
@@ -132,13 +132,13 @@ struct ruleset : interface {
   void visit(ByteEncoder &) const;
 };
 struct var_list : interface {
-  vector<shared_ptr<interface>> value;
-  var_list(vector<shared_ptr<interface>> &&value) : value(std::move(value)) {}
+  std::vector<std::unique_ptr<interface>> value;
+  var_list(std::vector<std::unique_ptr<interface>> &&value) : value(std::move(value)) {}
   void visit(ByteEncoder &) const;
 };
 struct inst_list : interface {
-  vector<shared_ptr<Instruction>> value;
-  inst_list(vector<shared_ptr<Instruction>> &&value)
+  std::vector<Instruction> value;
+  inst_list(std::vector<Instruction> &&value)
       : value(std::move(value)) {}
   void visit(ByteEncoder &) const;
 };
@@ -149,29 +149,29 @@ using InstrArg = instr_arg::interface;
 
 struct Instruction {
   LmnInstruction id;
-  std::vector<std::shared_ptr<il::InstrArg>> args;
+  std::vector<std::unique_ptr<il::InstrArg>> args;
 
+  Instruction() : id(INSTR_DUMMY), args() {}
   Instruction(LmnInstruction id,
-              std::vector<std::shared_ptr<il::InstrArg>> &&args)
+              std::vector<std::unique_ptr<il::InstrArg>> &&args)
       : id(id), args(std::move(args)) {}
-
-  Instruction(Instruction &&) noexcept = default;
 };
 static_assert(std::is_nothrow_move_constructible<Instruction>::value == true,
               "");
 
 struct InstBlock {
   int label;
-  std::vector<std::shared_ptr<Instruction>> instrs;
+  std::vector<Instruction> instrs;
 
   InstBlock(int label,
-            std::vector<std::shared_ptr<Instruction>> &&instrs) noexcept
+            std::vector<Instruction> &&instrs) noexcept
       : label(label), instrs(std::move(instrs)) {}
-  InstBlock(std::vector<std::shared_ptr<Instruction>> &&instrs) noexcept
+  InstBlock(std::vector<Instruction> &&instrs) noexcept
       : label(0), instrs(std::move(instrs)) {}
   InstBlock() noexcept : label(0) {}
   InstBlock(InstBlock &&) noexcept = default;
   InstBlock(const InstBlock &ib) noexcept = delete;
+  InstBlock &operator=(InstBlock &&) = default;
 
   ~InstBlock() noexcept = default;
 
@@ -181,19 +181,21 @@ struct InstBlock {
 static_assert(std::is_nothrow_move_constructible<InstBlock>::value == true, "");
 
 struct Rule {
-  const BOOL hasuniq;
-  const lmn_interned_str name;
+  BOOL hasuniq;
+  lmn_interned_str name;
   InstBlock amatch;
   InstBlock mmatch;
   InstBlock guard;
   InstBlock body;
 
+  Rule() {}
   Rule(BOOL hasuniq, InstBlock &&amatch, InstBlock &&mmatch, InstBlock &&guard,
        InstBlock &&body)
       : hasuniq(hasuniq), name(ANONYMOUS), amatch(std::move(amatch)),
         mmatch(std::move(mmatch)), guard(std::move(guard)),
         body(std::move(body)) {}
   Rule(Rule &&) noexcept = default;
+  Rule &operator=(Rule &&) = default;
 
   ~Rule() noexcept = default;
 };
@@ -202,12 +204,14 @@ static_assert(std::is_nothrow_move_constructible<Rule>::value == true, "");
 struct RuleSet {
   BOOL is_system_ruleset;
   int id;
-  std::vector<std::shared_ptr<Rule>> rules;
+  std::vector<Rule> rules;
 
-  RuleSet(int id, std::vector<std::shared_ptr<Rule>> &&rules,
+  RuleSet() {}
+  RuleSet(int id, std::vector<Rule> &&rules,
           BOOL is_system_ruleset)
       : id(id), rules(std::move(rules)), is_system_ruleset(is_system_ruleset) {}
   RuleSet(RuleSet &&) noexcept = default;
+  RuleSet &operator=(RuleSet &&) = default;
 
   ~RuleSet() noexcept = default;
 };
@@ -222,22 +226,22 @@ struct Module {
 };
 
 struct IL {
-  std::vector<std::shared_ptr<RuleSet>> rulesets;
-  std::vector<std::shared_ptr<Module>> modules;
+  std::vector<RuleSet> rulesets;
+  std::vector<Module> modules;
   std::vector<lmn_interned_str> inlines;
 
-  IL(std::vector<std::shared_ptr<RuleSet>> &&rulesets,
-     std::vector<std::shared_ptr<Module>> &&module_list,
+  IL(std::vector<RuleSet> &&rulesets,
+     std::vector<Module> &&module_list,
      std::vector<lmn_interned_str> &&inline_list)
       : rulesets(std::move(rulesets)), modules(std::move(module_list)),
         inlines(std::move(inline_list)) {}
-  IL(std::vector<std::shared_ptr<RuleSet>> &&rulesets,
-     std::vector<std::shared_ptr<Module>> &&module_list)
+  IL(std::vector<RuleSet> &&rulesets,
+     std::vector<Module> &&module_list)
       : rulesets(std::move(rulesets)), modules(std::move(module_list)) {}
-  IL(std::vector<std::shared_ptr<RuleSet>> &&rulesets,
+  IL(std::vector<RuleSet> &&rulesets,
      std::vector<lmn_interned_str> &&inline_list)
       : rulesets(std::move(rulesets)), inlines(std::move(inline_list)) {}
-  IL(std::vector<std::shared_ptr<RuleSet>> &&rulesets)
+  IL(std::vector<RuleSet> &&rulesets)
       : rulesets(std::move(rulesets)) {}
 
   IL(IL &&) noexcept = default;

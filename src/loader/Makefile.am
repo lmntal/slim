@@ -38,4 +38,4 @@ il_lexer.cpp: il_lexer.cpp.re
 	$(RE2C) -o il_lexer.cpp il_lexer.cpp.re
 
 .ypp.cpp:
-	$(YACC) $(YFLAGS) $(AM_YFLAGS) $<
+	$(BISON) $(YFLAGS) $(AM_YFLAGS) $<

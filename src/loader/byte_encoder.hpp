@@ -105,19 +105,18 @@ private:
     byte_seq = LMN_REALLOC(BYTE, byte_seq, cap);
   }
 
-  void load(std::shared_ptr<Instruction> inst) {
-    write_forward<LmnInstrOp>(inst->id);
-    auto arg_num = inst->args.size();
+  void load(const Instruction &inst) {
+    write_forward<LmnInstrOp>(inst.id);
+    auto arg_num = inst.args.size();
 
     /* REMOVEATOMは引数の数が2と3の場合がある。第三引数の
        ファンクタは無視する */
-    if (inst->id == INSTR_REMOVEATOM && arg_num == 3) {
+    if (inst.id == INSTR_REMOVEATOM && arg_num == 3) {
       arg_num = 2;
     }
 
-    for (int i = 0; i < arg_num; i++) {
-      load(inst->args[i]);
-    }
+    for (int i = 0; i < arg_num; i++)
+      inst.args[i]->visit(*this);
   }
 
   void load(std::shared_ptr<il::InstrArg> arg) { arg->visit(*this); }

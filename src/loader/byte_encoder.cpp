@@ -79,7 +79,7 @@ void ByteEncoder::load(const il::instr_arg::string &arg) {
 void ByteEncoder::load(const il::instr_arg::lineno &arg) {
   write_forward<LmnLineNum>(arg.value);
 }
-void ByteEncoder::load(const il::instr_arg::functor &arg) { load(arg.value); }
+void ByteEncoder::load(const il::instr_arg::functor &arg) { arg.value->visit(*this); }
 void ByteEncoder::load(const il::instr_arg::ruleset &arg) {
   write_forward<LmnRulesetId>(arg.value);
 }
@@ -87,9 +87,8 @@ void ByteEncoder::load(const il::instr_arg::var_list &arg) {
   auto &var_list = arg.value;
 
   write_forward<LmnInstrVar>(var_list.size());
-  for (auto &v : var_list) {
-    load(v);
-  }
+  for (auto &v : var_list)
+    v->visit(*this);
 }
 void ByteEncoder::load(const il::instr_arg::inst_list &arg) {
   /* 命令列の長さを求めるため、開始位置を記録する */

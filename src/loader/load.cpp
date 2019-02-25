@@ -69,9 +69,6 @@ void build_cmd(char *buf, char *file_name);
 
 using loader_error = slim::loader::exception;
 
-int ilparse(il::lexer *scanner, std::unique_ptr<IL> *il,
-            std::unique_ptr<Rule> *rule);
-
 /*
  *  Instruction Format
  *
@@ -125,7 +122,7 @@ static LmnRuleSetRef load_ruleset(const RuleSet &rs) {
   auto runtime_ruleset = new LmnRuleSet(rs.id, 10);
 
   for (auto &r : rs.rules)
-    runtime_ruleset->put(load_rule(*r));
+    runtime_ruleset->put(load_rule(r));
 
   LmnRuleSetTable::add(runtime_ruleset, rs.id);
 
@@ -144,7 +141,7 @@ static LmnRuleSetRef load_il(const IL &il) {
   auto &rulesets = il.rulesets;
   first_ruleset = NULL;
   for (int i = rulesets.size() - 1; i >= 0; i--) {
-    first_ruleset = load_ruleset(*rulesets.at(i));
+    first_ruleset = load_ruleset(rulesets.at(i));
   }
 
   if (!first_ruleset)
@@ -152,7 +149,7 @@ static LmnRuleSetRef load_il(const IL &il) {
 
   /* load module list */
   for (auto &m : il.modules)
-    lmn_set_module(m->name_id, LmnRuleSetTable::at(m->ruleset_id));
+    lmn_set_module(m.name_id, LmnRuleSetTable::at(m.ruleset_id));
 
   return first_ruleset;
 }
@@ -268,8 +265,9 @@ using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
 LmnRuleSetRef load(file_ptr in) {
   std::unique_ptr<IL> il;
   il::lexer scanner(std::move(in));
+  il::parser parser(&scanner, &il, nullptr);
 
-  if (ilparse(&scanner, &il, NULL))
+  if (parser.parse())
     throw loader_error("failed in parsing il files");
 
   return load_il(*il);
@@ -278,8 +276,9 @@ LmnRuleSetRef load(file_ptr in) {
 LmnRuleSetRef load(const std::string &file_path) {
   std::unique_ptr<IL> il;
   il::lexer scanner(file_path);
+  il::parser parser(&scanner, &il, nullptr);
 
-  if (ilparse(&scanner, &il, NULL))
+  if (parser.parse())
     throw loader_error("failed in parsing il files");
 
   return load_il(*il);
@@ -396,7 +395,9 @@ void load_il_files(const char *path_string) {
 std::unique_ptr<Rule> il_parse_rule(file_ptr in) {
   il::lexer scanner(std::move(in));
   std::unique_ptr<Rule> rule;
-  if (ilparse(&scanner, NULL, &rule))
+  il::parser parser(&scanner, nullptr, &rule);
+
+  if (parser.parse())
     throw loader_error("failed in parsing il files");
   return rule;
 }
