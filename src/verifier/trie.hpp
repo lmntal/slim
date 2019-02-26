@@ -29,6 +29,7 @@ struct HashString {
   }
 
   HashString(const HashString &h) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->creditIndex = h.creditIndex;
     this->body = new std::vector<uint32_t *>();
     for (auto v = h.body->begin(); v!=h.body->end(); ++v) {
@@ -36,12 +37,17 @@ struct HashString {
       *x = **v;
       this->body->push_back(x);
     }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   ~HashString() {
-    for (auto v : *this->body)
-      free(v);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    for (auto v = body->begin(); v!=body->end(); ++v) {
+      delete *v;
+    }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (this->body);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };
 
@@ -118,6 +124,7 @@ struct InheritedVertex {
   DisjointSetForest *equivalenceClassOfIsomorphism;
 
   InheritedVertex(ConvertedGraphVertex *cVertex, int gapOfGlobalRootMemID) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     type = cVertex->type;
     strcpy(name, cVertex->name);
     canonicalLabel.first = 0;
@@ -130,13 +137,21 @@ struct InheritedVertex {
     ownerList = nullptr;
     conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   };
  
   InheritedVertex(const InheritedVertex &iVertex) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->type = iVertex.type;
     strcpy(this->name, iVertex.name);
     this->canonicalLabel = iVertex.canonicalLabel;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    printf("%p\n", iVertex.hashString);
+    HashString &h = *iVertex.hashString;
+    printf("%d\n", h.creditIndex);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->hashString = new HashString(*iVertex.hashString);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->isPushedIntoFixCreditIndex = iVertex.isPushedIntoFixCreditIndex;
     this->beforeID = iVertex.beforeID;
     this->ownerNode = iVertex.ownerNode;
@@ -146,12 +161,16 @@ struct InheritedVertex {
         new std::vector<int>(iVertex.conventionalPropagationMemo->begin(),
                              iVertex.conventionalPropagationMemo->end());
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   ~InheritedVertex() {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (hashString);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (conventionalPropagationMemo);
-    freeDisjointSetForest(equivalenceClassOfIsomorphism);
+    // freeDisjointSetForest(equivalenceClassOfIsomorphism);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };
 
