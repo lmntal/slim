@@ -169,7 +169,7 @@ struct InheritedVertex {
     delete (hashString);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (conventionalPropagationMemo);
-    freeDisjointSetForest(equivalenceClassOfIsomorphism);
+    // freeDisjointSetForest(equivalenceClassOfIsomorphism);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };

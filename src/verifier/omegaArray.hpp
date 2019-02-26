@@ -25,6 +25,7 @@ inline void move_to_omega_larger_than(OmegaArray &body, int index) {
 }
 
 inline void clear_finite_larger_than(OmegaArray &body, int index) {
+  if (body.empty()) return;
   body.erase(body.upper_bound(index), std::prev(body.end()));
 }
 
