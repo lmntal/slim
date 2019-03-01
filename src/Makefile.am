@@ -33,10 +33,12 @@ slim_LDFLAGS += -L../
 slim_DEPENDENCIES += ../libjvm.a
 endif
 
+if ENABLE_GPERFTOOLS
+slim_LDADD += -ltcmalloc
+else
 if ENABLE_TCMALLOC
-slim_LDADD += -ltcmalloc_minimal_in_slim
-slim_LDFLAGS += -L../third_party/google-perftools-1.8.3/.libs
-slim_DEPENDENCIES += ../third_party/google-perftools-1.8.3/.libs/libtcmalloc_minimal_in_slim.a
+slim_LDADD += -ltcmalloc_minimal
+endif
 endif
 
 if ENABLE_CUNIT
