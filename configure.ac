@@ -32,11 +32,19 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 CFLAGS="-O -std=c11 -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
 CXXFLAGS="-O2 -std=c++11 -mmmx -msse $CXXFLAGS"
 
+case "$host" in
+  *-*-darwin* | *-*-ios*)
+    # we first check if clang is installed, because gcc is an alias of clang in macOS.
+    cxx_compilers="clang++ g++"
+    c_compilers="clang gcc";;
+  * ) ;;
+esac
+
 AC_LANG(C++)
-AC_PROG_CXX
-AC_PROG_CC
+AC_PROG_CXX([$cxx_compilers])
+AC_PROG_CC([$c_compilers])
 AM_PROG_CC_C_O
-AC_PROG_CC_C89
+AC_PROG_CC_STDC
 AC_PROG_CPP
 AC_PROG_YACC
 AC_PROG_LEX
@@ -58,18 +66,13 @@ default_enable_debug=no
 default_enable_gprof=no
 default_enable_profile=no
 default_enable_jni=no
-default_enable_tcmalloc=yes
+default_enable_tcmalloc=no
+default_enable_gperftools=no
 default_enable_minmax=no
 default_enable_cunit=no
 default_enable_firstclass_rule=no
 default_minimal_state=no
 default_cunit_home="/usr/local"
-
-case "$host" in
-   *-*-darwin* | *-*-ios*) default_enable_tcmalloc=no;;
-   *-mingw*) default_enable_tcmalloc=no;;
-   *-cygwin*) default_enable_tcmalloc=no;;
-esac
 
 # developer mode : 開発時にはこのオプションを付けるようにする
 AC_ARG_ENABLE([devel],
@@ -105,9 +108,15 @@ AC_ARG_ENABLE([jni],
 
 AC_ARG_ENABLE([tcmalloc],
               [AS_HELP_STRING([--enable-tcmalloc],
-                              [turn on using google perftools tcmalloc (linux only)])],
+                              [use only tcmalloc in google perftools (default no)])],
               [],
               [enable_tcmalloc="$default_enable_tcmalloc"])
+
+AC_ARG_ENABLE([gperftools],
+              [AS_HELP_STRING([--enable-gperftools],
+                              [use google perftools (default no)])],
+              [],
+              [enable_gperftools="$default_enable_gperftools"])
 
 AC_ARG_ENABLE([opt_minmax],
               [AS_HELP_STRING([--enable-opt-minmax],
@@ -140,8 +149,6 @@ if test "$enable_devel" = "yes"; then
             [enable devel])
   if test "$GCC" = "yes"; then
     CFLAGS=$CFLAGS "-ggdb -Wchar-subscripts -Wmissing-declarations -Wredundant-decls -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wcast-align -Wsign-compare -Winline"
-# 現状コンパイルできないのでコメントアウト
-#  CFLAGS="-std=c89 -pedantic $CFLAGS"
   fi
 else
   AC_MSG_RESULT([enable devel: no])
@@ -184,11 +191,24 @@ else
 fi
 
 # tcmalloc
-if test "$enable_tcmalloc" = "no"; then
-  AC_MSG_RESULT([enable tcmalloc: no])
-else
+if test "$enable_tcmalloc" = "yes" -o "$enable_gperftools" = "yes"; then
+  enable_tcmalloc=yes
   AC_MSG_RESULT([enable tcmalloc: yes])
   AC_DEFINE([HAVE_TCMALLOC], 1, [enable tcmalloc])
+  if test "$GCC" = "yes"; then
+    CFLAGS="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free $CFLAGS"
+    CXXFLAGS="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free $CXXFLAGS"
+  fi
+else
+  AC_MSG_RESULT([enable tcmalloc: no])
+fi
+
+# gperftools
+if test "$enable_gperftools" = "yes"; then
+  AC_MSG_RESULT([enable gperftools: yes])
+  AC_DEFINE([HAVE_GPERFTOOLS], 1, [enable gperftools])
+else
+  AC_MSG_RESULT([enable gperftools: no])
 fi
 
 # opt minmax mode by kawabata master thesis
@@ -227,6 +247,7 @@ fi
 
 AM_CONDITIONAL(ENABLE_JNI,      test "$enable_jni" = "yes")
 AM_CONDITIONAL(ENABLE_TCMALLOC, test "$enable_tcmalloc" = "yes")
+AM_CONDITIONAL(ENABLE_GPERFTOOLS, test "$enable_gperftools" = "yes")
 AM_CONDITIONAL(ENABLE_CUNIT, test "$enable_cunit" = "yes")
 AM_WITH_DMALLOC
 
@@ -298,6 +319,11 @@ AC_HEADER_TIME
 # AC_CHECK_HEADERS(pty.h util.h libutil.h sys/loadavg.h)
 AC_CHECK_HEADERS(sched.h syscall.h)
 AC_CHECK_HEADERS(omp.h)
+
+if test "$enable_tcmalloc" = "yes"; then
+  AC_CHECK_HEADERS(gperftools/tcmalloc.h,,
+    [AC_MSG_ERROR([gperftools not installed!])])
+fi
 
 # Checks for library functions.
 AC_CHECK_FUNC([strchr])
@@ -503,70 +529,6 @@ fi
 AC_DEFINE_UNQUOTED(HAVE_PROCESSOR_ELEMENTS, ${pe_num},
                    [Define to Enable Processor Elements on your environment.])
 AC_MSG_RESULT(${pe_num})
-
-# ---------------------------------------------------------------------
-# for tcmalloc
-#
-
-# Export the version information (for tc_version and friends)
-TC_VERSION_MAJOR=`expr "$PACKAGE_VERSION" : '\([[0-9]]*\)'`
-TC_VERSION_MINOR=`expr "$PACKAGE_VERSION" : '[[0-9]]*\.\([[0-9]]*\)'`
-TC_VERSION_PATCH=`expr "$PACKAGE_VERSION" : '[[0-9]]*\.[[0-9]]*\(.*\)$'`
-AC_SUBST(TC_VERSION_MAJOR)
-AC_SUBST(TC_VERSION_MINOR)
-AC_SUBST(TC_VERSION_PATCH)
-AC_SUBST(PACKAGE_STRING)
-
-# The user can choose not to compile in the heap-profiler, the
-# heap-checker, or the cpu-profiler.  There's also the possibility
-# for a 'fully minimal' compile, which leaves out the stacktrace
-# code as well.  By default, we include all of these that the
-# target system supports.
-#default_enable_cpu_profiler=yes
-#default_enable_heap_profiler=yes
-#default_enable_heap_checker=yes
-#default_enable_debugalloc=yes
-#default_enable_minimal=no
-need_nanosleep=yes   # Used later, to decide if to run ACX_NANOSLEEP
-case "$host" in
-   *-mingw*) default_enable_minimal=yes; default_enable_debugalloc=no;
-             need_nanosleep=no;;
-   *-cygwin*) default_enable_heap_checker=no; default_enable_cpu_profiler=no;;
-   *-freebsd*) default_enable_heap_checker=no;;
-   *-darwin*) default_enable_heap_checker=no;;
-esac
-
-#AC_ARG_ENABLE([cpu-profiler],
-#              [AS_HELP_STRING([--disable-cpu-profiler],
-#                              [do not build the cpu profiler])],
-#              [],
-#              [enable_cpu_profiler="$default_enable_cpu_profiler"])
-#AC_ARG_ENABLE([heap-profiler],
-#              [AS_HELP_STRING([--disable-heap-profiler],
-#                              [do not build the heap profiler])],
-#              [],
-#              [enable_heap_profiler="$default_enable_heap_profiler"])
-#AC_ARG_ENABLE([heap-checker],
-#              [AS_HELP_STRING([--disable-heap-checker],
-#                              [do not build the heap checker])],
-#              [],
-#              [enable_heap_checker="$default_enable_heap_checker"])
-#AC_ARG_ENABLE([debugalloc],
-#              [AS_HELP_STRING([--disable-debugalloc],
-#                              [do not build versions of libs with debugalloc])],
-#              [],
-#              [enable_debugalloc="$default_enable_debugalloc"])
-#AC_ARG_ENABLE([minimal],
-#              [AS_HELP_STRING([--enable-minimal],
-#                              [build only tcmalloc-minimal (and maybe tcmalloc-minimal-debug)])],
-#              [],
-#              [enable_minimal="$default_enable_minimal"])
-#if test "$enable_minimal" = yes; then
-  enable_cpu_profiler=no
-  enable_heap_profiler=no
-  enable_heap_checker=no
-#fi
-enable_debugalloc=no
 
 
 # Check if we have an objcopy installed that supports -W
@@ -904,8 +866,5 @@ AC_OUTPUT(Makefile \
           test/library_check/Makefile \
           third_party/Makefile \
           third_party/zdelta-2.1/Makefile \
-          third_party/google-perftools-1.8.3/Makefile \
-          third_party/google-perftools-1.8.3/src/google/tcmalloc.h \
-          third_party/google-perftools-1.8.3/src/windows/google/tcmalloc.h \
           doc/Makefile \
           doc/slim.1)
