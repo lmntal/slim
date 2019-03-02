@@ -64,10 +64,10 @@ public:
   ~lexer();
 
   int lineno() const { return 0; }
-  int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
+  int lex(il::parser::semantic_type *yylval, il::parser::location_type *yyloc);
 };
 } // namespace il
 
-int illex(YYSTYPE *yylval, YYLTYPE *yyloc, il::lexer *lexer);
+int illex(il::parser::semantic_type *yylval, il::parser::location_type *yyloc, il::lexer *lexer);
 
 #endif /* IL_LEXER_HPP */

@@ -37,7 +37,9 @@ case "$host" in
     # we first check if clang is installed, because gcc is an alias of clang in macOS.
     cxx_compilers="clang++ g++"
     c_compilers="clang gcc";;
-  * ) ;;
+  * )
+    cxx_compilers="g++"
+    c_compilers="gcc";;
 esac
 
 AC_LANG(C++)
@@ -47,6 +49,7 @@ AM_PROG_CC_C_O
 AC_PROG_CC_STDC
 AC_PROG_CPP
 AC_PROG_YACC
+AC_PROG_BISON([3.0])
 AC_PROG_LEX
 AM_PROG_LEX
 AC_PROG_RANLIB

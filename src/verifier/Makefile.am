@@ -54,4 +54,4 @@ propsym_lexer.cpp: propsym_lexer.cpp.re
 
 
 .ypp.cpp:
-	$(YACC) $(YFLAGS) $(AM_YFLAGS) $<
+	$(BISON) $(YFLAGS) $(AM_YFLAGS) $<
