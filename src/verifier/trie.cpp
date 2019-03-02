@@ -1433,8 +1433,7 @@ inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
   for (int i = 0; i < body.depth; i++)
     os << "    ";
   os << "KEY:";
-  // os << "%08X" << body.key;
-  os << body.key;
+  os << std::hex << body.key;
   os << "\n";
 
   for (int i = 0; i < body.depth; i++)
@@ -1456,11 +1455,8 @@ void Trie::dump() {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
   terminationConditionInfoDump(this->info);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << *(this->body);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << *(this->body->children) << std::endl;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   makeTerminationConditionMemo(this, distributionMemo, increaseMemo);
 
   if (*distributionMemo != *info->distribution ||
