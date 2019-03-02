@@ -38,12 +38,14 @@
 #ifndef BYTE_ENCODER_HPP
 #define BYTE_ENCODER_HPP
 
-#include <map>
+#include "syntax.hpp"
 
 #include "lmntal.h"
 #include "vm/vm.h"
 
-#include "syntax.hpp"
+#include <map>
+
+namespace c17 = slim::element;
 
 /* 構文木の読み込み時に使うデータ。各ルールの解析じに作成し，解析後に破
    棄する。ラベルは各ルールにローカルなものとして処理している */
@@ -64,7 +66,8 @@ public:
   }
 
 private:
-  ByteEncoder(const Rule &rule) : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)), rule(rule) {
+  ByteEncoder(const Rule &rule)
+      : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)), rule(rule) {
     /* load(rule.amatch); */
     load(rule.mmatch);
     load(rule.guard);
@@ -73,7 +76,8 @@ private:
   }
 
   std::unique_ptr<LmnRule> create_rule() {
-    return std::unique_ptr<LmnRule>(new LmnRule(byte_seq, cap, ANONYMOUS, rule.hasuniq));
+    return std::unique_ptr<LmnRule>(
+        new LmnRule(byte_seq, cap, ANONYMOUS, rule.hasuniq));
   }
 
   void load(const InstBlock &ib) {
@@ -105,6 +109,14 @@ private:
     byte_seq = LMN_REALLOC(BYTE, byte_seq, cap);
   }
 
+  struct loader {
+    ByteEncoder &enc;
+    loader(ByteEncoder &enc) : enc(enc) {}
+    template <typename T> void operator()(T &&v) {
+      enc.load(std::forward<T>(v));
+    }
+  };
+
   void load(const Instruction &inst) {
     write_forward<LmnInstrOp>(inst.id);
     auto arg_num = inst.args.size();
@@ -116,12 +128,8 @@ private:
     }
 
     for (int i = 0; i < arg_num; i++)
-      inst.args[i]->visit(*this);
+      c17::visit(loader(*this), inst.args[i]);
   }
-
-  void load(std::shared_ptr<il::InstrArg> arg) { arg->visit(*this); }
-
-  void load(std::shared_ptr<il::Functor> functor) { functor->visit(*this); }
 
   /* 現在の位置に書き込TYPE型のデータを書き込む */
   template <typename T> void write(T value) { write_at<T>(value, loc); }
@@ -142,23 +150,77 @@ private:
     *(T *)(byte_seq + loc) = (value);
   }
 
-public:
-  void load(const il::functor::symbol &functor);
-  void load(const il::functor::integer &functor);
-  void load(const il::functor::real &functor);
-  void load(const il::functor::string &functor);
-  void load(const il::functor::in_proxy &functor);
-  void load(const il::functor::out_proxy &functor);
-  void load(const il::functor::unify &functor);
+  void load(const c17::monostate &){};
+  void load(const il::functor::symbol &functor) {
+    write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
+    write_forward<LmnFunctor>(functor.value);
+  }
+  void load(const il::functor::integer &functor) {
+    write_forward<LmnLinkAttr>(LMN_INT_ATTR);
+    write_forward<long>(functor.value);
+  }
+  void load(const il::functor::real &functor) {
+    write_forward<LmnLinkAttr>(LMN_DBL_ATTR);
+    write_forward<double>(functor.value);
+  }
+  void load(const il::functor::string &functor) {
+    write_forward<LmnLinkAttr>(LMN_STRING_ATTR);
+    write_forward<lmn_interned_str>(functor.value);
+  }
+  void load(const il::functor::in_proxy &functor) {
+    write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
+    write_forward<LmnFunctor>(LMN_IN_PROXY_FUNCTOR);
+  }
+  void load(const il::functor::out_proxy &functor) {
+    write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
+    write_forward<LmnFunctor>(LMN_OUT_PROXY_FUNCTOR);
+  }
+  void load(const il::functor::unify &functor) {
+    write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
+    write_forward<LmnFunctor>(LMN_UNIFY_FUNCTOR);
+  }
 
-  void load(const il::instr_arg::var &arg);
-  void load(const il::instr_arg::label &arg);
-  void load(const il::instr_arg::string &arg);
-  void load(const il::instr_arg::lineno &arg);
-  void load(const il::instr_arg::functor &arg);
-  void load(const il::instr_arg::ruleset &arg);
-  void load(const il::instr_arg::var_list &arg);
-  void load(const il::instr_arg::inst_list &arg);
+  void load(const il::instr_arg::var &arg) {
+    write_forward<LmnInstrVar>(arg.value);
+  }
+  void load(const il::instr_arg::label &arg) {
+    loc_label_ref[loc] = arg.value;
+    move_by<LmnJumpOffset>();
+  }
+  void load(const il::instr_arg::string &arg) {
+    write_forward<lmn_interned_str>(arg.value);
+  }
+  void load(const il::instr_arg::lineno &arg) {
+    write_forward<LmnLineNum>(arg.value);
+  }
+  void load(const il::instr_arg::functor &arg) {
+    c17::visit(loader(*this), arg.value);
+  }
+  void load(const il::instr_arg::ruleset &arg) {
+    write_forward<LmnRulesetId>(arg.value);
+  }
+  void load(const il::instr_arg::var_list &arg) {
+    auto &var_list = arg.value;
+
+    write_forward<LmnInstrVar>(var_list.size());
+    for (auto &v : var_list)
+      c17::visit(loader(*this), v);
+  }
+  void load(const il::instr_arg::inst_list &arg) {
+    /* 命令列の長さを求めるため、開始位置を記録する */
+    /* INSTR_NOTでサブ命令列の長さを知る必要がある */
+    auto start = loc;
+    move_by<LmnSubInstrSize>();
+
+    for (auto &inst : arg.value)
+      load(inst);
+
+    /* startの位置に現在の位置との差を書き込む */
+    auto t = loc;
+    loc = start;
+    write<LmnSubInstrSize>(t - (start + sizeof(LmnSubInstrSize)));
+    loc = t;
+  }
 };
 
 #endif /* BYTE_ENCODER_HPP */

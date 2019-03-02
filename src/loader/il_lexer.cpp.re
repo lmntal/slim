@@ -124,11 +124,11 @@ start:
 
     '-'?digit+ {
       string s = get_token();
-      yylval->emplace<int>(s.empty() ? 0 : stol(s));
+      yylval->as<int>() = s.empty() ? 0 : stol(s);
       return parser::token::INT;
     }
     '-'?digit+"."digit+ {
-      yylval->emplace<double>(stod(get_token()));
+      yylval->as<double>() = stod(get_token());
       return parser::token::FLOAT;
     }
     '@' digit+ {
@@ -141,16 +141,16 @@ start:
         id_global = LmnRuleSetTable::gen_id();
         st_insert(ruleset_id_tbl, id_local, id_global);
       }
-      yylval->emplace<int>((int)id_global);
+      yylval->as<int>() = (int)id_global;
       return parser::token::RULESET_ID;
     }
 
     "null" { // name of anonymous membrane
-       yylval->emplace<lmn_interned_str>(ANONYMOUS);
+       yylval->as<lmn_interned_str>() = ANONYMOUS;
        return parser::token::DQUOTED_STRING;
      }
     'L'digit+ {
-      yylval->emplace<int>(stol(get_token().substr(1)));
+      yylval->as<int>() = stol(get_token().substr(1));
       return parser::token::LABEL;
     }
     ','                    { return parser::token::COMMA; }
@@ -175,7 +175,7 @@ start:
     "Module"             { return parser::token::KW_MODULE; }
 
     [a-z2]+ {
-      yylval->emplace<int>(get_instr_id(get_token().c_str()));
+      yylval->as<int>() = get_instr_id(get_token().c_str());
       // 変数のリストと命令のリストは構文解析では判別不可能なので
       // 命令のリストを持つ中間語命令を特別に扱う
       // Lists of variables and lists of instructions cannot be
@@ -197,14 +197,14 @@ start:
     dstr {
       auto t = get_token();
       auto t2 = unescape_c_str(t.substr(1, t.size() - 2));
-      yylval->emplace<lmn_interned_str>(lmn_intern(t2.c_str()));
+      yylval->as<lmn_interned_str>() = lmn_intern(t2.c_str());
       return parser::token::DQUOTED_STRING;
     }
 
     sstr {
       auto t = get_token();
       auto t2 = unescape_c_str(t.substr(1, t.size() - 2));
-      yylval->emplace<lmn_interned_str>(lmn_intern(t2.c_str()));
+      yylval->as<lmn_interned_str>() = lmn_intern(t2.c_str());
       return parser::token::SQUOTED_STRING;
     }
   */

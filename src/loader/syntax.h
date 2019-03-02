@@ -43,26 +43,4 @@
 #warning 'syntax.h' is deprecated. Use 'syntax.hpp' instead.
 #endif
 
-#include "element/element.h"
-#include "lmntal.h"
-#include "vm/vm.h"
-
-/**
- * @ingroup  Loader
- * @defgroup Syntax
- * @{
- */
-
-/* Rule */
-
-typedef struct Rule *RuleRef;
-
-/* Root of the IL syntax tree */
-
-typedef struct IL *ILRef;
-
-void stx_rule_free(RuleRef rule);
-
-/* @} */
-
 #endif

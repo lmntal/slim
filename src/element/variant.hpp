@@ -48,7 +48,7 @@ namespace element {
 template <typename...> struct variant_storage_info;
 
 template <typename T, typename... Types>
-struct variant_storage_info<T, Types...> : variant_storage_info<Types...> {
+struct variant_storage_info<T, Types...> {
   using base_type = variant_storage_info<Types...>;
   static constexpr auto size =
       (base_type::size > sizeof(T)) ? base_type::size : sizeof(T);
@@ -211,10 +211,10 @@ template <typename... Types> struct variant {
     index_ = rhs.index();
     return *this;
   }
-  template <typename T> variant &operator=(T &&t) {
+  template <typename... Ts> variant &operator=(const variant<Ts...> &rhs) {
     visit(deleter(), *this);
-    variant_store<T, Types...>(&storage_, std::forward<T>(t));
-    index_ = variant_type_index<T, Types...>();
+    visit(loader(&storage_), rhs);
+    index_ = rhs.index();
     return *this;
   }
 

@@ -45,6 +45,7 @@
 #include "il_lexer.hpp"
 
 namespace c14 = slim::element;
+namespace c17 = slim::element;
 %}
 
 %locations
@@ -91,14 +92,14 @@ namespace c14 = slim::element;
 %type <std::vector<Instruction>> instructions
 %type <std::vector<Rule>> ruleList
 %type <int> label
-%type <std::unique_ptr<il::InstrArg>> arg
-%type <std::unique_ptr<il::Functor>> functor
-%type <std::vector<std::unique_ptr<il::InstrArg>>> var_list;
-%type <std::vector<std::unique_ptr<il::InstrArg>>> var_list_;
-%type <std::unique_ptr<il::InstrArg>> var_list_arg;
-%type <std::vector<std::unique_ptr<il::InstrArg>>> args
-%type <std::vector<std::unique_ptr<il::InstrArg>>> args_
-%type <std::vector<std::unique_ptr<il::InstrArg>>> inst_list_arg
+%type <il::InstrArg> arg
+%type <il::Functor> functor
+%type <std::vector<il::InstrArg>> var_list;
+%type <std::vector<il::InstrArg>> var_list_;
+%type <il::InstrArg> var_list_arg;
+%type <std::vector<il::InstrArg>> args
+%type <std::vector<il::InstrArg>> args_
+%type <std::vector<il::InstrArg>> inst_list_arg
 %type <std::vector<lmn_interned_str>> inlines;
 
 
@@ -189,8 +190,8 @@ instruction:
   INST_NAME LBRACKET args RBRACKET {
   if ($1 == INSTR_COMMIT) {
     /* COMMITの第二引数を変数番号ではなく行番号とする */
-    auto line_num_arg = dynamic_cast<il::instr_arg::var *>($3.at(1).get());
-    $3.at(1) = c14::make_unique<il::instr_arg::lineno>(line_num_arg->value);
+    auto &line_num_arg = c17::get<il::instr_arg::lineno>($3.at(1));
+    $3.at(1) = il::instr_arg::lineno(line_num_arg.value);
   }
   
   $$ = Instruction($1, std::move($3));
@@ -204,60 +205,60 @@ instruction:
 ;
 
 arg:
-  INT { $$ = c14::make_unique<il::instr_arg::var>($1); }
-| functor { $$ = c14::make_unique<il::instr_arg::functor>(std::move($1)); }
-| RULESET_ID { $$ = c14::make_unique<il::instr_arg::ruleset>($1); }
-| DQUOTED_STRING { $$ = c14::make_unique<il::instr_arg::string>($1); }
-| label { $$ = c14::make_unique<il::instr_arg::label>($1); }
+  INT { $$ = il::instr_arg::var($1); }
+| functor { $$ = il::instr_arg::functor(std::move($1)); }
+| RULESET_ID { $$ = il::instr_arg::ruleset($1); }
+| DQUOTED_STRING { $$ = il::instr_arg::string($1); }
+| label { $$ = il::instr_arg::label($1); }
 | var_list_arg { $$ = std::move($1); }
 ;
 
 args:
-  /* empty */ { $$ = std::vector<std::unique_ptr<il::InstrArg>>(); }
-| args_ arg { $1.push_back(std::unique_ptr<il::InstrArg>(std::move($2))); $$ = std::move($1); }
+  /* empty */ { $$ = std::vector<il::InstrArg>(); }
+| args_ arg { $1.push_back(il::InstrArg(std::move($2))); $$ = std::move($1); }
 ;
 
 args_:
-  /* empty */ { $$ = std::vector<std::unique_ptr<il::InstrArg>>(); }
-| args_ arg COMMA { $1.push_back(std::unique_ptr<il::InstrArg>(std::move($2))) ; $$ = std::move($1); }
+  /* empty */ { $$ = std::vector<il::InstrArg>(); }
+| args_ arg COMMA { $1.push_back(il::InstrArg(std::move($2))) ; $$ = std::move($1); }
 ;
 
 var_list_arg:
-  LBRACKET var_list RBRACKET { $$ = c14::make_unique<il::instr_arg::var_list>(std::move($2)); }
+  LBRACKET var_list RBRACKET { $$ = il::instr_arg::var_list(std::move($2)); }
 ;
 
 var_list:
-  /* empty */  { $$ = std::vector<std::unique_ptr<il::InstrArg>>(); }
-| var_list_ INT { $1.push_back(c14::make_unique<il::instr_arg::var>(std::move($2))); $$ = std::move($1); }
-| var_list_ functor { $1.push_back(c14::make_unique<il::instr_arg::functor>(std::move($2))); $$ = std::move($1); }
+  /* empty */  { $$ = std::vector<il::InstrArg>(); }
+| var_list_ INT { $1.push_back(il::instr_arg::var(std::move($2))); $$ = std::move($1); }
+| var_list_ functor { $1.push_back(il::instr_arg::functor(std::move($2))); $$ = std::move($1); }
 ;
 
 var_list_:
-  /* empty */ { $$ = std::vector<std::unique_ptr<il::InstrArg>>(); }
-| var_list_ INT COMMA { $1.push_back(c14::make_unique<il::instr_arg::var>(std::move($2))); $$ = std::move($1); }
-| var_list_ functor COMMA { $1.push_back(c14::make_unique<il::instr_arg::functor>(std::move($2))); $$ = std::move($1); }
+  /* empty */ { $$ = std::vector<il::InstrArg>(); }
+| var_list_ INT COMMA { $1.push_back(il::instr_arg::var(std::move($2))); $$ = std::move($1); }
+| var_list_ functor COMMA { $1.push_back(il::instr_arg::functor(std::move($2))); $$ = std::move($1); }
 ;
 
 inst_list_arg:
   LBRACKET instructions RBRACKET {
-    $$ = std::vector<std::unique_ptr<il::InstrArg>>();
-    $$.push_back(c14::make_unique<il::instr_arg::inst_list>(std::move($2)));
+    $$ = std::vector<il::InstrArg>();
+    $$.push_back(il::instr_arg::inst_list(std::move($2)));
   }
 ;
 
 functor:
-  INSIDE_PROXY { $$ = c14::make_unique<il::functor::in_proxy>(); }
-| OUTSIDE_PROXY { $$ = c14::make_unique<il::functor::out_proxy>(); }
-| SQUOTED_STRING UNDERBAR INT { $$ = c14::make_unique<il::functor::symbol>($1, $3); }
-| DQUOTED_STRING UNDERBAR INT { $$ = c14::make_unique<il::functor::string>($1); }
+  INSIDE_PROXY { $$ = il::functor::in_proxy(); }
+| OUTSIDE_PROXY { $$ = il::functor::out_proxy(); }
+| SQUOTED_STRING UNDERBAR INT { $$ = il::functor::symbol($1, $3); }
+| DQUOTED_STRING UNDERBAR INT { $$ = il::functor::string($1); }
 | SQUOTED_STRING PERIOD SQUOTED_STRING UNDERBAR INT {
-    $$ = c14::make_unique<il::functor::symbol>($1, $3, $5);
+    $$ = il::functor::symbol($1, $3, $5);
   }
 | INT UNDERBAR INT {
-    $$ = c14::make_unique<il::functor::integer>((long)$1);
+    $$ = il::functor::integer((long)$1);
   }
 | FLOAT UNDERBAR INT {
-    $$ = c14::make_unique<il::functor::real>($1);
+    $$ = il::functor::real($1);
   }
 ;
 
