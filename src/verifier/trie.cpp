@@ -5,7 +5,7 @@
 #include <stack>
 #include <tuple>
 #include <vector>
-
+#include <iomanip>
 slim::element::conditional_ostream debug_log(std::cout);
 
 struct hash_generator {
@@ -1424,28 +1424,28 @@ void makeTerminationConditionMemo(Trie *trie, OmegaArray *distributionMemo,
 }
 
 inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  for (auto i : *body.children)
-    os << *i.second;
-  if (body.isPushedIntoGoAheadStack)
-    os << "\x1b[33m";
+  if(body.depth!=-1) {
+    if (body.isPushedIntoGoAheadStack)
+      os << "\x1b[33m";
 
-  for (int i = 0; i < body.depth; i++)
-    os << "    ";
-  os << "KEY:";
-  os << std::hex << body.key;
-  os << "\n";
+    for (int i = 0; i < body.depth; i++)
+      os << "    ";
+    os << "KEY:";
+    os <<std::uppercase<<std::setw(8)<<std::setfill('0')<< std::hex << body.key;
+    os << "\n";
 
-  for (int i = 0; i < body.depth; i++)
-    os << "    ";
-  os << "VERTICES:";
-  os << *body.inheritedVertices << "\n";
+    for (int i = 0; i < body.depth; i++)
+      os << "    ";
+    os << "VERTICES:";
+    os << *body.inheritedVertices << "\n";
 
-  if (body.isPushedIntoGoAheadStack) {
-    os << "\x1b[39m";
+    if (body.isPushedIntoGoAheadStack) {
+      os << "\x1b[39m";
+    }
   }
-
-  os << *body.children;
+  for (auto i : *body.children) {
+    os << *i.second;
+  }
   return os;
 }
 
@@ -1456,7 +1456,6 @@ void Trie::dump() {
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
   terminationConditionInfoDump(this->info);
   std::cout << *(this->body);
-  std::cout << *(this->body->children) << std::endl;
   makeTerminationConditionMemo(this, distributionMemo, increaseMemo);
 
   if (*distributionMemo != *info->distribution ||
