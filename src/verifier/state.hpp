@@ -494,7 +494,7 @@ struct State {                /* Total:72(36)byte */
 
     LmnBinStrRef ref = this->state_D_ref()->reconstruct_binstr();
     LmnBinStrRef ret = lmn_bscomp_d_decode(ref, this->state_binstr());
-    LMN_ASSERT(this->state_D_ref(this));
+    LMN_ASSERT(this->state_D_ref());
 
     if (this->state_D_ref()->s_is_d())
       lmn_binstr_free(ref);

@@ -182,7 +182,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
     /* s1がcheckなのでmem, s2がstored(ハッシュ表に記録済み)なのでbinstrを保持 */
 
     /* データ構造の構築 */
-    s2_mem = lmn_binstr_decode(s2->->state_binstr());
+    s2_mem = lmn_binstr_decode(s2->state_binstr());
     s1_mid = lmn_mem_encode(s1->state_mem());
     s2_mid = lmn_mem_encode(s2_mem);
 
@@ -227,7 +227,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
       fprintf(f, "============================================================="
                  "=======================\n");
 
-      lmn_binstr_dump(s2->->state_binstr());
+      //      lmn_binstr_dump(s2->state_binstr());
       lmn_dump_mem_stdout(s1->state_mem());
 
       lmn_binstr_free(s1_bs);
