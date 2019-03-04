@@ -848,9 +848,7 @@ Bool classifyConventionalPropagationList(
   do {
     endSentinel =
         std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
-    if (endSentinel == pList->end()) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-    }
+    if (endSentinel == pList->end()) printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (classifyConventionalPropagationListInner(
             *pList, beginSentinel, endSentinel, cAfterGraph,
@@ -870,7 +868,7 @@ Bool classifyConventionalPropagationListWithTypeInner(
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   // std::cout<<(*beginSentinel)<<std::endl;
   // std::cout<<(*endSentinel)<<std::endl;
-  // std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
+  std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
     std::cout << (*tmpCell) << std::endl;
