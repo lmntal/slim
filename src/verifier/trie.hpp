@@ -343,7 +343,7 @@ vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel);
 void putLabelsToAdjacentVertices(vertex_list *pList,
                                  ConvertedGraph *cAfterGraph,
                                  int gapOfGlobalRootMemID);
-Bool classifyConventionalPropagationListWithAttribute(
+void classifyConventionalPropagationListWithAttribute(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
 Bool getStableRefinementOfConventionalPropagationList(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);

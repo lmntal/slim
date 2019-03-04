@@ -370,7 +370,7 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
       std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
     }
     auto propagationList = trie->conventionalPropagationList(stepOfPropagation);
-    std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << propagationList << std::endl;
     /*
        CHECKER("###### before list propagate ######\n");

@@ -1025,23 +1025,18 @@ Bool classifyConventionalPropagationListWithName(vertex_list *pList,
   return isRefined;
 }
 
-Bool classifyConventionalPropagationListWithAttribute(
+void classifyConventionalPropagationListWithAttribute(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  Bool isRefined = FALSE;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  isRefined = classifyConventionalPropagationListWithType(
-                  pList, cAfterGraph, gapOfGlobalRootMemID) ||
-              isRefined;
+  classifyConventionalPropagationListWithType(pList, cAfterGraph, gapOfGlobalRootMemID);
+
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  isRefined = classifyConventionalPropagationListWithDegree(
-                  pList, cAfterGraph, gapOfGlobalRootMemID) ||
-              isRefined;
+  classifyConventionalPropagationListWithDegree(pList, cAfterGraph, gapOfGlobalRootMemID);
+
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  isRefined = classifyConventionalPropagationListWithName(
-                  pList, cAfterGraph, gapOfGlobalRootMemID) ||
-              isRefined;
+  classifyConventionalPropagationListWithName(pList, cAfterGraph, gapOfGlobalRootMemID);
+
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  return isRefined;
 }
 
 void putLabelsToAdjacentVertices(vertex_list *pList,
