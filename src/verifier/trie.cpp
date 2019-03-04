@@ -815,11 +815,14 @@ bool putClassesWithPriority(vertex_list &list,
     std::tie(priority, vert) = cellPQueue->top();
     std::cout << (*vert) << std::endl;
     cellPQueue->pop();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (priority < prev_priority) {
       list.insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
       isRefined = true;
     }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     list.insert(std::next(beginSentinel, 1), *vert);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::tie(prev_priority, prev_vert) = std::tie(priority, vert);
   }
 
