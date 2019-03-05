@@ -26,7 +26,7 @@ struct hash_generator {
     if (index < 0) {
       return 0;
     } else if (index < hashString->creditIndex) {
-      return *(*hashString->body)[index];
+      return (*hashString->body)[index];
     } else if (index == 0) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       Hash tmp = initialHashValue(cGraph->at(*iVertex, gapOfGlobalRootMemID));
@@ -34,12 +34,12 @@ struct hash_generator {
       if (hashString->body->size() > 0) {
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         auto old = hashString->body->at(index);
-        if (old != NULL) {
-          free(old);
-        }
+        //  if (old != NULL) {
+        //   free(old);
+        // }
       }
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      hashString->body->push_back(new uint32_t(tmp));
+      hashString->body->push_back(uint32_t(tmp));
       hashString->creditIndex = 1;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       fixCreditIndexStack->push(iVertex);
@@ -52,10 +52,10 @@ struct hash_generator {
           hash(cGraph->at(*iVertex, gapOfGlobalRootMemID), index);
       Hash newMyHash = (FNV_PRIME * prevMyHash) ^ adjacentHash;
       auto old = hashString->body->at(index);
-      (*hashString->body)[index] = new uint32_t(newMyHash);
-      if (old != NULL) {
-        free(old);
-      }
+      (*hashString->body)[index] = uint32_t(newMyHash);
+      // if (old != NULL) {
+      //   free(old);
+      // }
       hashString->creditIndex = index + 1;
       fixCreditIndexStack->push(iVertex);
       iVertex->isPushedIntoFixCreditIndex = true;
@@ -809,17 +809,24 @@ bool putClassesWithPriority(vertex_list &list,
   int prev_priority;
   InheritedVertex *prev_vert;
   std::tie(prev_priority, prev_vert) = cellPQueue->top();
+  std::cout << *prev_vert << std::endl;
   while (!cellPQueue->empty()) {
     int priority;
     InheritedVertex *vert;
     std::tie(priority, vert) = cellPQueue->top();
-    std::cout << (*vert) << std::endl;
     cellPQueue->pop();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (priority < prev_priority) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       list.insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
       isRefined = true;
     }
-    list.insert(std::next(beginSentinel, 1), *vert);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << list << std::endl;
+    // list.insert(list.begin(), *vert);
+    // list.insert(std::next(beginSentinel, 1), *vert);
+    std::cout << list << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::tie(prev_priority, prev_vert) = std::tie(priority, vert);
   }
 
@@ -845,9 +852,7 @@ Bool classifyConventionalPropagationList(
   do {
     endSentinel =
         std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
-    if (endSentinel == pList->end()) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-    }
+    if (endSentinel == pList->end()) printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (classifyConventionalPropagationListInner(
             *pList, beginSentinel, endSentinel, cAfterGraph,
@@ -865,13 +870,13 @@ Bool classifyConventionalPropagationListWithTypeInner(
     vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // std::cout<<(*beginSentinel)<<std::endl;
-  // std::cout<<(*endSentinel)<<std::endl;
-  // std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
+  std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
     std::cout << (*tmpCell) << std::endl;
     list.erase(tmpCell);
+    std::cout << (*tmpCell) << std::endl;
+    std::cout << list << std::endl;
     int tmpPriority = slim::element::get<InheritedVertex>(*tmpCell).type;
     cellPQueue->emplace(tmpPriority,
                         &slim::element::get<InheritedVertex>(*tmpCell));
@@ -1022,23 +1027,18 @@ Bool classifyConventionalPropagationListWithName(vertex_list *pList,
   return isRefined;
 }
 
-Bool classifyConventionalPropagationListWithAttribute(
+void classifyConventionalPropagationListWithAttribute(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  Bool isRefined = FALSE;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  isRefined = classifyConventionalPropagationListWithType(
-                  pList, cAfterGraph, gapOfGlobalRootMemID) ||
-              isRefined;
+  classifyConventionalPropagationListWithType(pList, cAfterGraph, gapOfGlobalRootMemID);
+
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  isRefined = classifyConventionalPropagationListWithDegree(
-                  pList, cAfterGraph, gapOfGlobalRootMemID) ||
-              isRefined;
+  classifyConventionalPropagationListWithDegree(pList, cAfterGraph, gapOfGlobalRootMemID);
+
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  isRefined = classifyConventionalPropagationListWithName(
-                  pList, cAfterGraph, gapOfGlobalRootMemID) ||
-              isRefined;
+  classifyConventionalPropagationListWithName(pList, cAfterGraph, gapOfGlobalRootMemID);
+
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  return isRefined;
 }
 
 void putLabelsToAdjacentVertices(vertex_list *pList,
