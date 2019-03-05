@@ -21,33 +21,26 @@ typedef struct _CanonicalLabel {
 
 struct HashString {
   int creditIndex;
-  std::vector<uint32_t *> *body;
+  std::vector<uint32_t> *body;
 
   HashString() {
     creditIndex = 0;
-    body = new std::vector<uint32_t *>();
+    body = new std::vector<uint32_t>();
   }
 
   HashString(const HashString &h) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->creditIndex = h.creditIndex;
-    this->body = new std::vector<uint32_t *>();
+    this->body = new std::vector<uint32_t>();
     for (auto v = h.body->begin(); v!=h.body->end(); ++v) {
-      uint32_t *x = new uint32_t;
-      *x = **v;
-      this->body->push_back(x);
+      this->body->push_back(*v);
     }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   ~HashString() {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    for (auto v = body->begin(); v!=body->end(); ++v) {
-      delete *v;
-    }
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     delete (this->body);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };
 
@@ -146,12 +139,7 @@ struct InheritedVertex {
     strcpy(this->name, iVertex.name);
     this->canonicalLabel = iVertex.canonicalLabel;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    printf("%p\n", iVertex.hashString);
-    HashString &h = *iVertex.hashString;
-    printf("%d\n", h.creditIndex);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->hashString = new HashString(*iVertex.hashString);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->isPushedIntoFixCreditIndex = iVertex.isPushedIntoFixCreditIndex;
     this->beforeID = iVertex.beforeID;
     this->ownerNode = iVertex.ownerNode;
@@ -191,6 +179,7 @@ struct Trie {
       }
 
       for (auto &v : *body->inheritedVertices) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         list.push_front(v);
       }
     } else {
