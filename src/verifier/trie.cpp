@@ -876,12 +876,14 @@ Bool classifyConventionalPropagationListWithTypeInner(
     int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout<<(*(std::next(beginSentinel, 1)))<<std::endl;
-  std::cout << *slim::element::get<InheritedVertex>(*(std::next(beginSentinel, 1))).hashString << std::endl;
+
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
     std::cout << (*tmpCell) << std::endl;
+    std::cout << *slim::element::get<InheritedVertex>(*tmpCell).hashString << std::endl;
     list.erase(tmpCell);
     std::cout << (*tmpCell) << std::endl;
+    // std::cout << *slim::element::get<InheritedVertex>(*tmpCell).hashString << std::endl;
     std::cout << list << std::endl;
     int tmpPriority = slim::element::get<InheritedVertex>(*tmpCell).type;
     cellPQueue->emplace(tmpPriority,
