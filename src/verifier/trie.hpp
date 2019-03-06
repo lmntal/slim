@@ -31,9 +31,14 @@ struct HashString {
   HashString(const HashString &h) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->creditIndex = h.creditIndex;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->body = new std::vector<uint32_t>();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto v = h.body->begin(); v!=h.body->end(); ++v) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *v << std::endl;
       this->body->push_back(*v);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
@@ -297,6 +302,15 @@ inline std::ostream &operator<<(std::ostream &os,
   os << "BEFORE_ID=" << iVertex.beforeID << ",";
   os << "NAME:\"" << iVertex.name << "\"";
 
+  os << ">";
+  return os;
+}
+
+inline std::ostream &operator<<(std::ostream &os, const HashString &h) {
+  os << "<" << h.creditIndex << ": ";
+  for (auto &x : *h.body) {
+    os << x << ", ";
+  }
   os << ">";
   return os;
 }
