@@ -482,7 +482,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       rev_iso[i->second]=i->first;
     }
     dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
-    dif->diffInfoDump();
+    // dif->diffInfoDump();
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
