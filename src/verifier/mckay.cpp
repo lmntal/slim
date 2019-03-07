@@ -274,6 +274,11 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
     initializeDisjointSetForestsOfPropagationList(propagationListOfInheritedVertices);
     auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels = new discrete_propagation_lists();
 
+    vertex_vec *propagationVecOfInheritedVertices = new vertex_vec();
+    for (auto it = propagationListOfInheritedVertices->begin(); it != propagationListOfInheritedVertices->end(); ++it) {
+      propagationVecOfInheritedVertices->push_back(*it);
+    }
+
     std::cout << "+++++ start classify +++++" << std::endl;
     classifyConventionalPropagationListWithAttribute(propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID);
 
