@@ -341,6 +341,19 @@ inline std::ostream &operator<<(std::ostream &os, const std::list<T> &list) {
   return os;
 }
 
+template <typename T>
+inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec) {
+  os << "[";
+  for(auto it = vec.begin(); it != vec.end(); ++it) {
+    os << (*it);
+    if(std::next(it, 1) != vec.end()) {
+      os << ",";
+    }
+  }
+  os << "]";
+  return os;
+}
+
 template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);

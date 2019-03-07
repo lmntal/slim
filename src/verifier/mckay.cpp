@@ -278,6 +278,8 @@ vertex_list *listMcKay(vertex_list *propagationListOfInheritedVertices,
     for (auto it = propagationListOfInheritedVertices->begin(); it != propagationListOfInheritedVertices->end(); ++it) {
       propagationVecOfInheritedVertices->push_back(*it);
     }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *propagationVecOfInheritedVertices << std::endl;
 
     std::cout << "+++++ start classify +++++" << std::endl;
     classifyConventionalPropagationListWithAttribute(propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID);
