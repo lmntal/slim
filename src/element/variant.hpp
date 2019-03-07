@@ -211,9 +211,6 @@ template <typename... Types> struct variant {
     index_ = rhs.index();
     return *this;
   }
-  template <typename T> variant &operator=(T &&rhs) {
-    return this->operator=(variant(std::forward<T>(rhs)));
-  }
 
   ~variant() { visit(deleter(), *this); }
 
