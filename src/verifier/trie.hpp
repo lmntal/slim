@@ -362,7 +362,7 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                                  ConvertedGraph *cAfterGraph,
                                  int gapOfGlobalRootMemID);
 void classifyConventionalPropagationListWithAttribute(
-    vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
+    vertex_vec *pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
 Bool getStableRefinementOfConventionalPropagationList(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
 void inheritedVertexDump(InheritedVertex *iVertex);
