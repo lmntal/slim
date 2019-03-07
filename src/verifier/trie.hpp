@@ -49,8 +49,6 @@ struct HashString {
   }
 };
 
-constexpr auto CLASS_SENTINEL = slim::element::monostate();
-
 using vertex_list = std::list<
   slim::element::variant<slim::element::monostate, InheritedVertex>>;
 using trie_body_map = std::map<uint32_t, TrieBody *>;
@@ -168,6 +166,8 @@ struct InheritedVertex {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };
+
+const slim::element::variant<slim::element::monostate, InheritedVertex> CLASS_SENTINEL = slim::element::monostate();
 
 struct Trie {
   TrieBody *body;

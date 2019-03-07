@@ -13,7 +13,8 @@ namespace c17 = slim::element;
 using OmegaArray = std::map<c17::variant<int, c17::monostate>, int>;
 
 namespace omega_array {
-constexpr c17::monostate OMEGA;
+using index_type = c17::variant<int, c17::monostate>;
+const index_type OMEGA = c17::monostate();
 
 inline void move_to_omega_larger_than(OmegaArray &body, int index) {
   int sum = 0;
@@ -29,7 +30,7 @@ inline void clear_finite_larger_than(OmegaArray &body, int index) {
   body.erase(body.upper_bound(index), std::prev(body.end()));
 }
 
-inline c17::variant<int, c17::monostate> maxIndex(const OmegaArray &body) {
+inline index_type maxIndex(const OmegaArray &body) {
   for (auto it = body.rbegin(); it != body.rend(); ++it)
     if (it->second != 0)
       return it->first;

@@ -654,7 +654,7 @@ Bool isEmptyTrie(Trie *trie) { return trie->body->children->empty(); }
 template <typename S>
 Bool isDescreteTrie(S *goAheadStack, TerminationConditionInfo *tInfo,
                     int depth) {
-  return omega_array::maxIndex(*tInfo->distribution) == depth &&
+  return omega_array::maxIndex(*tInfo->distribution) == omega_array::index_type(depth) &&
          goAheadStack->empty();
 }
 
@@ -716,7 +716,7 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
                         TerminationConditionInfo *tInfo, int stepOfPropagation,
                         hash_generator data) {
   if (omega_array::maxIndex(*tInfo->distribution) == omega_array::OMEGA &&
-      omega_array::maxIndex(*tInfo->increase) == stepOfPropagation - 1) {
+      omega_array::maxIndex(*tInfo->increase) == omega_array::index_type(stepOfPropagation - 1)) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushInftyDepthTrieNodesIntoGoAheadStack(trie, goAheadStack,
                                             stepOfPropagation);
@@ -868,7 +868,7 @@ Bool classifyConventionalPropagationList(
     // std::sort(begin_it, end_it, compareInheritedVerticesWithType);
     // std::cout << *pVec << std::endl;
     // break;
-  } while(end_it != std::end(*pVec));
+  } while(end_it != *std::end(*pVec));
   // auto cellPQueue = vertex_queue();
   // auto endSentinel = std::end(*pList);
   // auto beginSentinel = endSentinel;
