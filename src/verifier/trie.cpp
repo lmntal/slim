@@ -879,15 +879,19 @@ Bool classifyConventionalPropagationListWithTypeInner(
 
   while (std::next(beginSentinel, 1) != endSentinel) {
     auto tmpCell = std::next(beginSentinel, 1);
+    int tmpPriority = slim::element::get<InheritedVertex>(*tmpCell).type;
+    // cellPQueue->emplace(tmpPriority,
+    //                     &slim::element::get<InheritedVertex>(*tmpCell));
     std::cout << (*tmpCell) << std::endl;
+    std::cout << tmpPriority << std::endl;
     std::cout << *slim::element::get<InheritedVertex>(*tmpCell).hashString << std::endl;
     list.erase(tmpCell);
-    std::cout << (*tmpCell) << std::endl;
+    // std::cout << (*tmpCell) << std::endl;
     // std::cout << *slim::element::get<InheritedVertex>(*tmpCell).hashString << std::endl;
-    std::cout << list << std::endl;
-    int tmpPriority = slim::element::get<InheritedVertex>(*tmpCell).type;
-    cellPQueue->emplace(tmpPriority,
-                        &slim::element::get<InheritedVertex>(*tmpCell));
+    // std::cout << list << std::endl;
+
+    // std::cout << (*tmpCell) << std::endl;
+    // std::cout << *slim::element::get<InheritedVertex>(*tmpCell).hashString << std::endl;
   }
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool isRefined =

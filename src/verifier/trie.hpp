@@ -52,8 +52,10 @@ struct HashString {
 constexpr auto CLASS_SENTINEL = slim::element::monostate();
 
 using vertex_list = std::list<
-    slim::element::variant<slim::element::monostate, InheritedVertex>>;
+  slim::element::variant<slim::element::monostate, InheritedVertex>>;
 using trie_body_map = std::map<uint32_t, TrieBody *>;
+using vertex_vec = std::vector<
+  slim::element::variant<slim::element::monostate, InheritedVertex>>;
 
 struct TrieBody {
   uint32_t key;
