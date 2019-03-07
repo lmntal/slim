@@ -843,32 +843,26 @@ using classifier = bool(const slim::element::variant<slim::element::monostate, I
 
 bool compareInheritedVerticesWithType (const slim::element::variant<slim::element::monostate, InheritedVertex> &x,
 				       const slim::element::variant<slim::element::monostate, InheritedVertex> &y) {
-  // int xx = slim::element::get<InheritedVertex>(x).type;
-  // int yy = slim::element::get<InheritedVertex>(y).type;
-  // bool ret = (xx>yy)?true:false;
-  // return ret;
-  return true;
+  //return slim::element::get<InheritedVertex>(x).type > slim::element::get<InheritedVertex>(y).type;
+  return false;
 }
 
 Bool classifyConventionalPropagationList(
     vertex_vec *pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
     classifier classifyConventionalPropagationListInner) {
-
-
-  //  std::sort(pVec->begin(), pVec->end(), compareInheritedVerticesWithType);
-
   if (pVec->empty())
     return FALSE;
 
   Bool isRefined = FALSE;
-  auto begin_it = *pVec->begin();
-  auto end_it = *pVec->end();
-  do {
-    // end_it = std::find(begin_it, end_it, CLASS_SENTINEL);
-    // std::sort(begin_it, end_it, compareInheritedVerticesWithType);
-    // std::cout << *pVec << std::endl;
-    // break;
-  } while(end_it != *std::end(*pVec));
+  auto begin_it = pVec->begin();
+  auto end_it = pVec->end();
+
+  // do {
+  //   end_it = std::find(begin_it, end_it, CLASS_SENTINEL);
+  //   std::sort(begin_it, end_it, compareInheritedVerticesWithType);
+  //   std::cout << *pVec << std::endl;
+  //   break;
+  // } while(end_it != std::end(*pVec));
   // auto cellPQueue = vertex_queue();
   // auto endSentinel = std::end(*pList);
   // auto beginSentinel = endSentinel;
@@ -1063,8 +1057,16 @@ Bool classifyConventionalPropagationListWithName(vertex_vec *pVec,
 void classifyConventionalPropagationListWithAttribute(
     vertex_vec *pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // classifyConventionalPropagationListWithType(pVec, cAfterGraph, gapOfGlobalRootMemID);
+  std::cout << slim::element::get<InheritedVertex>(*pVec->begin()) << std::endl;
+  std::cout << slim::element::get<InheritedVertex>(*pVec->begin()).type << std::endl;
+  if(compareInheritedVerticesWithType(*pVec->begin(), *std::next(pVec->begin(), 1)))
+    std::cout << "TRUE" << std::endl;
+  else
+    std::cout << "FALSE" << std::endl;
   std::sort(pVec->begin(), pVec->end(), compareInheritedVerticesWithType);
+  std::cout << *pVec << std::endl;
+  // classifyConventionalPropagationListWithType(pVec, cAfterGraph, gapOfGlobalRootMemID);
+
   // std::cout << "+++++  after classify type +++++" << std::endl;
   // std::cout << *pList << std::endl;
 
