@@ -1002,11 +1002,11 @@ Bool classifyConventionalPropagationListWithName(vertex_vec *pVec,
 }
 
 void classifyConventionalPropagationListWithAttribute(
-    vertex_vec *pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  classifyConventionalPropagationListWithType(pVec, cAfterGraph, gapOfGlobalRootMemID, compareInheritedVerticesWithType);
-  std::cout << "+++++  after classify type +++++" << std::endl;
-  std::cout << *pVec << std::endl;
+    vertex_vec &pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // classifyConventionalPropagationListWithType(pVec, cAfterGraph, gapOfGlobalRootMemID, compareInheritedVerticesWithType);
+  // std::cout << "+++++  after classify type +++++" << std::endl;
+  // std::cout << *pVec << std::endl;
 
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // classifyConventionalPropagationListWithDegree(pList, cAfterGraph, gapOfGlobalRootMemID);
