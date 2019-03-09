@@ -103,56 +103,56 @@ void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
   delete pdpList;
 }
 
-Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
+bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     discrete_propagation_lists
         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
     vertex_list *dpList, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID) {
-  Bool isExisting;
+  bool isExisting = true;
+  return isExisting;
+  // putLabelsToAdjacentVertices(dpList, cAfterGraph, gapOfGlobalRootMemID);
+  // vertex_list *preserveDPList = new vertex_list();
+  // for (auto &v : *dpList)
+  //   preserveDPList->push_back(v);
+  // for (auto &v : *dpList)
+  //   initializeInheritedVertexAdjacentLabels(
+  //       &slim::element::get<InheritedVertex>(v));
 
-  putLabelsToAdjacentVertices(dpList, cAfterGraph, gapOfGlobalRootMemID);
-  vertex_list *preserveDPList = new vertex_list();
-  for (auto &v : *dpList)
-    preserveDPList->push_back(v);
-  for (auto &v : *dpList)
-    initializeInheritedVertexAdjacentLabels(
-        &slim::element::get<InheritedVertex>(v));
+  // auto &key = *preserveDPList;
+  // auto seniorDPList =
+  //     discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(key);
 
-  auto &key = *preserveDPList;
-  auto seniorDPList =
-      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(key);
+  // if (seniorDPList ==
+  //     std::end(
+  //         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
 
-  if (seniorDPList ==
-      std::end(
-          *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
+  //   discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
+  //       std::make_pair(key, preserveDPList));
+  //   isExisting = FALSE;
+  //   return isExisting;
+  // } else {
+  //   auto iteratorCell = std::begin(*preserveDPList);
+  //   auto iteratorCellSenior = std::begin(*seniorDPList->second);
 
-    discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
-        std::make_pair(key, preserveDPList));
-    isExisting = FALSE;
-    return isExisting;
-  } else {
-    auto iteratorCell = std::begin(*preserveDPList);
-    auto iteratorCellSenior = std::begin(*seniorDPList->second);
+  //   while (iteratorCell != std::end(*preserveDPList)) {
+  //     if (*iteratorCell != CLASS_SENTINEL) {
+  //       auto &iVertex = slim::element::get<InheritedVertex>(*iteratorCell);
+  //       auto &iVertexSenior =
+  //           slim::element::get<InheritedVertex>(*iteratorCellSenior);
 
-    while (iteratorCell != std::end(*preserveDPList)) {
-      if (*iteratorCell != CLASS_SENTINEL) {
-        auto &iVertex = slim::element::get<InheritedVertex>(*iteratorCell);
-        auto &iVertexSenior =
-            slim::element::get<InheritedVertex>(*iteratorCellSenior);
+  //       unionDisjointSetForest(iVertex.equivalenceClassOfIsomorphism,
+  //                              iVertexSenior.equivalenceClassOfIsomorphism);
+  //     }
 
-        unionDisjointSetForest(iVertex.equivalenceClassOfIsomorphism,
-                               iVertexSenior.equivalenceClassOfIsomorphism);
-      }
+  //     iteratorCell = std::next(iteratorCell, 1);
+  //     iteratorCellSenior = std::next(iteratorCellSenior, 1);
+  //   }
 
-      iteratorCell = std::next(iteratorCell, 1);
-      iteratorCellSenior = std::next(iteratorCellSenior, 1);
-    }
+  //   freePreserveDiscreteProapgationList(preserveDPList);
 
-    freePreserveDiscreteProapgationList(preserveDPList);
-
-    isExisting = TRUE;
-    return isExisting;
-  }
+  //   isExisting = TRUE;
+  //   return isExisting;
+  // }
 }
 
 void discretePropagationListDump(vertex_list *dpList) {

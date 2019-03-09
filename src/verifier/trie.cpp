@@ -995,128 +995,89 @@ void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int
   classify(l, [&](const InheritedVertex &x){return std::string((cAfterGraph->at(x, gapOfGlobalRootMemID)->name));});
 }
 
-void putLabelsToAdjacentVertices(vertex_list *pList,
+void putLabelsToAdjacentVertices(propagation_list &pList,
                                  ConvertedGraph *cAfterGraph,
                                  int gapOfGlobalRootMemID) {
-  if (pList->empty()) {
+  if (pList.empty()) {
     return;
   }
-  debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-  int tmpLabel = 0;
+  // int tmpLabel = 0;
 
-  auto beginSentinel = std::end(*pList);
-  auto endSentinel = beginSentinel;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  do {
-    endSentinel =
-        std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
+  // auto beginSentinel = pList.end();
+  // auto endSentinel = beginSentinel;
+  // do {
+  //   endSentinel =
+  //       std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
 
-    int tmpDegree =
-        correspondingVertexInConvertedGraph(
-            &slim::element::get<InheritedVertex>(*std::next(beginSentinel, 1)),
-            cAfterGraph, gapOfGlobalRootMemID)
-            ->links.size();
-    ConvertedGraphVertexType tmpType = correspondingVertexInConvertedGraph(
-                                           &slim::element::get<InheritedVertex>(
-                                               *(std::next(beginSentinel, 1))),
-                                           cAfterGraph, gapOfGlobalRootMemID)
-                                           ->type;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout << *(std::next(beginSentinel, 1)) << std::endl;
-    std::cout << tmpDegree << std::endl;
+  //   int tmpDegree =
+  //       correspondingVertexInConvertedGraph(
+  //           &slim::element::get<InheritedVertex>(*std::next(beginSentinel, 1)),
+  //           cAfterGraph, gapOfGlobalRootMemID)
+  //           ->links.size();
+  //   ConvertedGraphVertexType tmpType = correspondingVertexInConvertedGraph(
+  //                                          &slim::element::get<InheritedVertex>(
+  //                                              *(std::next(beginSentinel, 1))),
+  //                                          cAfterGraph, gapOfGlobalRootMemID)
+  //                                          ->type;
 
-    int i;
-    for (i = 0; i < tmpDegree; i++) {
-      for (auto iteratorCell = std::next(beginSentinel, 1);
-           iteratorCell != endSentinel;
-           iteratorCell = std::next(iteratorCell, 1)) {
+  //   for (int i = 0; i < tmpDegree; i++) {
+  //     for (auto iteratorCell = std::next(beginSentinel, 1);
+  //          iteratorCell != endSentinel;
+  //          iteratorCell = std::next(iteratorCell, 1)) {
+  //       auto &tmpLink = correspondingVertexInConvertedGraph(
+  //                           &slim::element::get<InheritedVertex>(*iteratorCell),
+  //                           cAfterGraph, gapOfGlobalRootMemID)
+  //                           ->links[i];
+  //       ConvertedGraphVertex *adjacentVertex;
 
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
-        std::cout << *(std::next(beginSentinel, 1)) << std::endl;
-        auto &tmpLink = correspondingVertexInConvertedGraph(
-                            &slim::element::get<InheritedVertex>(*iteratorCell),
-                            cAfterGraph, gapOfGlobalRootMemID)
-                            ->links[i];
-        ConvertedGraphVertex *adjacentVertex;
-        std::cout << __FUNCTION__ << ":" << __LINE__ << std::endl;
-        std::cout << tmpLink.attr << std::endl;
+  //       switch (tmpLink.attr) {
+  //       case INTEGER_ATTR:
+  //         printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //         slim::element::get<InheritedVertex>(*(iteratorCell))
+  //             .conventionalPropagationMemo->push_back(
+  //                 tmpLink.data.integer * 256 + INTEGER_ATTR);
+  //         break;
+  //       case HYPER_LINK_ATTR:
+  //         printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //         adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
+  //             cAfterGraph, tmpLink.data.ID, convertedHyperLink);
+  //         adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo
+  //             ->push_back(tmpLabel * 256 + i);
+  //         break;
+  //       case GLOBAL_ROOT_MEM_ATTR:
+  //         printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //         break;
+  //       default:
+  //         if (tmpLink.attr < 128) {
+  //           adjacentVertex = cAfterGraph->at(tmpLink.data.ID, convertedAtom);
+  //           switch (tmpType) {
+  //           case convertedAtom:
+  //             adjacentVertex->correspondingVertexInTrie
+  //                 ->conventionalPropagationMemo->push_back(tmpLabel * 256 + i);
+  //             break;
+  //           case convertedHyperLink:
+  //             adjacentVertex->correspondingVertexInTrie
+  //                 ->conventionalPropagationMemo->push_back(tmpLabel * 256 +
+  //                                                          HYPER_LINK_ATTR);
+  //             break;
+  //           default:
+  //             CHECKER("unexpected vertex type\n");
+  //             exit(EXIT_FAILURE);
+  //             break;
+  //           }
+  //         } else {
+  //           CHECKER("unexpected vertex type\n");
+  //           exit(EXIT_FAILURE);
+  //         }
+  //         break;
+  //       }
+  //     }
+  //   }
 
-        switch (tmpLink.attr) {
-        case INTEGER_ATTR:
-          printf("%s:%d\n", __FUNCTION__, __LINE__);
-          slim::element::get<InheritedVertex>(*(iteratorCell))
-              .conventionalPropagationMemo->push_back(
-                  tmpLink.data.integer * 256 + INTEGER_ATTR);
-          break;
-        // case DOUBLE_ATTR:
-        // break;
-        // case STRING_ATTR:
-        // break;
-        case HYPER_LINK_ATTR:
-          printf("%s:%d\n", __FUNCTION__, __LINE__);
-          adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
-              cAfterGraph, tmpLink.data.ID, convertedHyperLink);
-          adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo
-              ->push_back(tmpLabel * 256 + i);
-          break;
-        case GLOBAL_ROOT_MEM_ATTR:
-          printf("%s:%d\n", __FUNCTION__, __LINE__);
-          break;
-        default:
-          if (tmpLink.attr < 128) {
-            printf("%s:%d\n", __FUNCTION__, __LINE__);
-            adjacentVertex = cAfterGraph->at(tmpLink.data.ID, convertedAtom);
-            debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
-            debug_log << adjacentVertex << std::endl;
-
-            std::cout << (*adjacentVertex);
-            std::cout << adjacentVertex->correspondingVertexInTrie << std::endl;
-            debug_log << "name"
-                      << ":" << adjacentVertex->correspondingVertexInTrie->name
-                      << std::endl;
-            debug_log << "before_ID"
-                      << ":"
-                      << adjacentVertex->correspondingVertexInTrie->beforeID
-                      << std::endl;
-            switch (tmpType) {
-            case convertedAtom:
-              printf("%s:%d\n", __FUNCTION__, __LINE__);
-              std::cout << *(adjacentVertex->correspondingVertexInTrie)
-                        << std::endl;
-              std::cout << "numStack(Memo) = "
-                        << adjacentVertex->correspondingVertexInTrie
-                               ->conventionalPropagationMemo->size()
-                        << std::endl;
-              adjacentVertex->correspondingVertexInTrie
-                  ->conventionalPropagationMemo->push_back(tmpLabel * 256 + i);
-              printf("%s:%d\n", __FUNCTION__, __LINE__);
-              break;
-            case convertedHyperLink:
-              printf("%s:%d\n", __FUNCTION__, __LINE__);
-              adjacentVertex->correspondingVertexInTrie
-                  ->conventionalPropagationMemo->push_back(tmpLabel * 256 +
-                                                           HYPER_LINK_ATTR);
-              break;
-            default:
-              CHECKER("unexpected vertex type\n");
-              exit(EXIT_FAILURE);
-              break;
-            }
-          } else {
-            CHECKER("unexpected vertex type\n");
-            exit(EXIT_FAILURE);
-          }
-          printf("%s:%d\n", __FUNCTION__, __LINE__);
-          break;
-        }
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
-      }
-    }
-
-    tmpLabel++;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    beginSentinel = endSentinel;
-  } while (endSentinel != std::end(*pList));
+  //   tmpLabel++;
+  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //   beginSentinel = endSentinel;
+  // } while (endSentinel != std::end(*pList));
 
   return;
 }
@@ -1186,8 +1147,7 @@ bool refineConventionalPropagationListByPropagation(propagation_list &pList,
                                                     ConvertedGraph *cAfterGraph,
                                                     int gapOfGlobalRootMemID) {
   Bool isRefined = false;
-
-  // putLabelsToAdjacentVertices(pList, cAfterGraph, gapOfGlobalRootMemID);
+  putLabelsToAdjacentVertices(pList, cAfterGraph, gapOfGlobalRootMemID);
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // isRefined = classifyConventionalPropagationListWithAdjacentLabels(
   //                 pList, cAfterGraph, gapOfGlobalRootMemID) ||
