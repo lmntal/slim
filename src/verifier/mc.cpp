@@ -149,8 +149,8 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   diff->diffInfoDump();
   init_s->trie = new Trie();
   init_s->graphinfo = init;
-  vertex_list* l = trieMcKay(init_s->trie, diff, init, empty);
-  std::cout<< (*l) <<std::endl;
+  auto l = trieMcKay(init_s->trie, diff, init, empty);
+  std::cout<< l <<std::endl;
   init_s->trie->dump();
   /*
     ===== Diffiso ====
