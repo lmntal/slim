@@ -362,7 +362,7 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
          i != cAfterGraph->cv->atoms.end(); ++i)
       std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
 
-    auto propagationList = trie->conventionalPropagationList(stepOfPropagation);
+    auto propagationList = trie->conventionalPropagationList();
 
     std::cout << "###### before list propagate ######" << std::endl;
     std::cout << propagationList << std::endl;

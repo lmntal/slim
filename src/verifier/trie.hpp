@@ -173,8 +173,7 @@ struct Trie {
   };
   // HashTable *trieLeavesTable;
 
-  void makeConventionalPropagationListInner(TrieBody *body, vertex_list &list,
-                                            int stepOfPropagation) {
+  void makeConventionalPropagationListInner(TrieBody *body, vertex_list &list) {
     if (body->children->empty()) {
       if (!list.empty()) {
         list.push_front(CLASS_SENTINEL);
@@ -186,14 +185,14 @@ struct Trie {
       }
     } else {
       for (auto &v : *body->children)
-        makeConventionalPropagationListInner(v.second, list, stepOfPropagation);
+        makeConventionalPropagationListInner(v.second, list);
     }
     return;
   }
 
-  vertex_list conventionalPropagationList(int stepOfPropagation) {
+  vertex_list conventionalPropagationList() {
     auto ret = vertex_list();
-    makeConventionalPropagationListInner(body, ret, stepOfPropagation);
+    makeConventionalPropagationListInner(body, ret);
     return ret;
   }
 
