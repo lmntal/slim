@@ -1182,11 +1182,10 @@ Bool classifyConventionalPropagationListWithAdjacentLabels(
   return true;
 }
 
-Bool refineConventionalPropagationListByPropagation(vertex_list *pList,
+bool refineConventionalPropagationListByPropagation(propagation_list &pList,
                                                     ConvertedGraph *cAfterGraph,
                                                     int gapOfGlobalRootMemID) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  Bool isRefined = FALSE;
+  Bool isRefined = false;
 
   // putLabelsToAdjacentVertices(pList, cAfterGraph, gapOfGlobalRootMemID);
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -1194,18 +1193,6 @@ Bool refineConventionalPropagationListByPropagation(vertex_list *pList,
   //                 pList, cAfterGraph, gapOfGlobalRootMemID) ||
   //             isRefined;
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  return isRefined;
-}
-
-Bool getStableRefinementOfConventionalPropagationList(
-    vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  Bool isRefined = FALSE;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  while (refineConventionalPropagationListByPropagation(pList, cAfterGraph,
-                                                        gapOfGlobalRootMemID)) {
-    isRefined = TRUE;
-  }
-
   return isRefined;
 }
 

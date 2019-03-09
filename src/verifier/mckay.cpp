@@ -186,11 +186,11 @@ bool listMcKayInner(
     discrete_propagation_lists
         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
   bool isUsefulBranch = true;
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // auto stabilizer = new vertex_list(*propagationListOfInheritedVertices);
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // getStableRefinementOfConventionalPropagationList(stabilizer, cAfterGraph,
-  //                                                  gapOfGlobalRootMemID);
+  auto stabilizer = propagation_list(propagationListOfInheritedVertices);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  while (refineConventionalPropagationListByPropagation(stabilizer, cAfterGraph,
+                                                        gapOfGlobalRootMemID)) {
+  }
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // /*
   // CHECKER("###### after stable refinement ######\n");
