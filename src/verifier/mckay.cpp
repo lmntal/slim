@@ -247,35 +247,41 @@ Bool listMcKayInner(
   return isUsefulBranch;
 }
 
-propagation_list listMcKay(propagation_list &propagationList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
+propagation_list listMcKay(propagation_list &propagationList,
+                           ConvertedGraph *cAfterGraph,
+                           int gapOfGlobalRootMemID) {
   propagation_list canonicalDiscreteRefinement;
   if (propagationList.empty()) {
     canonicalDiscreteRefinement = propagation_list(propagationList);
     return canonicalDiscreteRefinement;
   } else {
-    auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels = new discrete_propagation_lists();
+    auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels =
+        new discrete_propagation_lists();
 
     std::cout << "+++++ start classify +++++" << std::endl;
     classifyWithAttribute(propagationList, cAfterGraph, gapOfGlobalRootMemID);
     std::cout << "###### after attribute classifying ######" << std::endl;
     std::cout << propagationList << std::endl;
+    listMcKayInner(
+        propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID,
+        discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
 
-  //   listMcKayInner(
-  //       propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID,
-  //       discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
+    //   vertex_list *canonicalDiscreteRefinement = new vertex_list();
+    //   for (auto &v :
+    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()->second)
+    //     canonicalDiscreteRefinement->push_back(v);
 
-  //   vertex_list *canonicalDiscreteRefinement = new vertex_list();
-  //   for (auto &v : *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()->second)
-  //     canonicalDiscreteRefinement->push_back(v);
+    //   std::cout << "########### candidates of canonical discrete
+    //   refinement###########" << std::endl; std::cout <<
+    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels <<
+    //   std::endl;;
 
-  //   std::cout << "########### candidates of canonical discrete refinement###########" << std::endl;
-  //   std::cout << *discretePropagationListsOfInheritedVerticesWithAdjacentLabels << std::endl;;
+    //   for (auto &v :
+    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
+    //     freePreserveDiscreteProapgationList(v.second);
+    //   delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
 
-  //   for (auto &v : *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
-  //     freePreserveDiscreteProapgationList(v.second);
-  //   delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
-
-  //   return canonicalDiscreteRefinement;
+    //   return canonicalDiscreteRefinement;
   }
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   return canonicalDiscreteRefinement;
@@ -320,7 +326,8 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
   return isValid;
 }
 
-propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph) {
+propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
+                           Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph) {
   int gapOfGlobalRootMemID =
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
@@ -339,7 +346,8 @@ propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGrap
     std::cout << "###### before list propagate ######" << std::endl;
     std::cout << propagationList << std::endl;
 
-    auto canonicalDiscreteRefinement = listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
+    auto canonicalDiscreteRefinement =
+        listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
 
     std::cout << "###### after list propagate ######" << std::endl;
     std::cout << canonicalDiscreteRefinement << std::endl;
