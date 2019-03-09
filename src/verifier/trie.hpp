@@ -173,7 +173,8 @@ struct Trie {
   };
   // HashTable *trieLeavesTable;
 
-  void makeConventionalPropagationListInner(TrieBody *body,  std::list<std::list<InheritedVertex>> &list) {
+
+  void conventionalPropagationList(TrieBody *body,  std::list<std::list<InheritedVertex>> &list) {
     if (body->children->empty()) {
       std::list<InheritedVertex> l;
       for (auto &v : *body->inheritedVertices) {
@@ -182,14 +183,8 @@ struct Trie {
       list.push_back(l);
     } else {
       for (auto &v : *body->children)
-        makeConventionalPropagationListInner(v.second, list);
+        conventionalPropagationList(v.second, list);
     }
-  }
-
-  std::list<std::list<InheritedVertex>> conventionalPropagationList() {
-    std::list<std::list<InheritedVertex>> l;
-    makeConventionalPropagationListInner(body, l);
-    return l;
   }
 
   bool propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
