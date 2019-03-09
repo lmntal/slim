@@ -363,15 +363,15 @@ vertex_list *trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph,
       std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
 
     auto propagationList = trie->conventionalPropagationList();
-
     std::cout << "###### before list propagate ######" << std::endl;
     std::cout << propagationList << std::endl;
 
-    vertex_list *canonicalDiscreteRefinement =
-        listMcKay(&propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
+    vertex_list *canonicalDiscreteRefinement = new vertex_list();
+    // vertex_list *canonicalDiscreteRefinement =
+    //     listMcKay(&propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
 
-    std::cout << "###### after list propagate ######" << std::endl;
-    std::cout << *canonicalDiscreteRefinement << std::endl;
+    // std::cout << "###### after list propagate ######" << std::endl;
+    // std::cout << *canonicalDiscreteRefinement << std::endl;
 
     return canonicalDiscreteRefinement;
   }
