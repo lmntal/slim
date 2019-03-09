@@ -199,7 +199,7 @@ getConvertedVertexFromGraphAndIDAndType(ConvertedGraph *cGraph, int ID,
 }
 
 ConvertedGraphVertex *
-correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
+correspondingVertexInConvertedGraph(const InheritedVertex *iVertex,
                                     ConvertedGraph *cAfterGraph,
                                     int gapOfGlobalRootMemID) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -838,35 +838,20 @@ bool putClassesWithPriority(vertex_list &list,
   return isRefined;
 }
 
-using classifier = bool(const slim::element::variant<slim::element::monostate, InheritedVertex>&,
-			const slim::element::variant<slim::element::monostate, InheritedVertex>&);
-
-bool compareInheritedVerticesWithType (const slim::element::variant<slim::element::monostate, InheritedVertex> &x,
-				       const slim::element::variant<slim::element::monostate, InheritedVertex> &y) {
-  return slim::element::get<InheritedVertex>(x).type > slim::element::get<InheritedVertex>(y).type;
-}
-
-Bool classifyConventionalPropagationListWithType(
-    vertex_vec *pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
-    classifier classifyConventionalPropagationListInner) {
-  if (pVec->empty())
-    return FALSE;
-
-  Bool isRefined = FALSE;
-  auto begin_it = pVec->begin();
-  auto end_it = pVec->end();
-
-  do {
-    end_it = std::find(begin_it, end_it, CLASS_SENTINEL);
-    std::sort(begin_it, end_it, classifyConventionalPropagationListInner);
-    for(; std::next(begin_it, 1) != end_it; ++begin_it) {
-      if(slim::element::get<InheritedVertex>(*begin_it).type > slim::element::get<InheritedVertex>(*std::next(begin_it, 1)).type) {
-	begin_it = pVec->insert(std::next(begin_it, 1), CLASS_SENTINEL);
-	end_it = pVec->end();
+template<typename T>
+void classify(propagation_list &l, T score) {
+  for(auto i = l.begin(); i != l.end(); ++i) {
+    i->sort([&](const InheritedVertex &x, const InheritedVertex &y){return score(x) > score(y);});
+    for(auto j = i->begin(); std::next(j, 1) != i->end() and i->size() != 1; ++j) {
+      if (score(*j) > score(*std::next(j, 1))) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::list<InheritedVertex> ll;
+	ll.splice(ll.end(), *i, i->begin(), std::next(j, 1));
+	l.insert(i, ll);
+	j = i->end();
       }
     }
-  } while(end_it != std::end(*pVec));
-  return isRefined;
+  }
 }
 
 Bool classifyConventionalPropagationListWithDegreeInner(
@@ -1001,20 +986,13 @@ Bool classifyConventionalPropagationListWithName(vertex_vec *pVec,
   return true;
 }
 
-void classifyConventionalPropagationListWithAttribute(
-    vertex_vec &pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // classifyConventionalPropagationListWithType(pVec, cAfterGraph, gapOfGlobalRootMemID, compareInheritedVerticesWithType);
-  // std::cout << "+++++  after classify type +++++" << std::endl;
-  // std::cout << *pVec << std::endl;
-
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // classifyConventionalPropagationListWithDegree(pList, cAfterGraph, gapOfGlobalRootMemID);
-
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // classifyConventionalPropagationListWithName(pList, cAfterGraph, gapOfGlobalRootMemID);
-
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
+  classify(l, [](const InheritedVertex &x){return x.type;});
+  std::cout << "+++++  after classify type +++++" << std::endl;
+  std::cout << l << std::endl;
+  classify(l, [&](const InheritedVertex &x){return correspondingVertexInConvertedGraph(&x, cAfterGraph, gapOfGlobalRootMemID)->links.size();});
+  classify(l, [&](const InheritedVertex &x){return strlen(cAfterGraph->at(x,gapOfGlobalRootMemID)->name);});
+  classify(l, [&](const InheritedVertex &x){return std::string((cAfterGraph->at(x, gapOfGlobalRootMemID)->name));});
 }
 
 void putLabelsToAdjacentVertices(vertex_list *pList,

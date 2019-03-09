@@ -2,21 +2,6 @@
 #include "trie.hpp"
 
 #include <iostream>
-
-template <typename List>
-
-void initializeDisjointSetForestsOfPropagationList(List *pList) {
-  for (auto iteratorCell = std::begin(*pList); iteratorCell != std::end(*pList);
-       iteratorCell = std::next(iteratorCell, 1)) {
-    if (*iteratorCell != CLASS_SENTINEL) {
-      auto &iVertex = slim::element::get<InheritedVertex>(*iteratorCell);
-      initializeDisjointSetForest(iVertex.equivalenceClassOfIsomorphism);
-    }
-  }
-
-  return;
-}
-
 vertex_list::iterator firstNonTrivialCell(vertex_list *pList) {
   auto beginSentinel = std::begin(*pList);
   auto endSentinel = beginSentinel;
@@ -262,27 +247,18 @@ Bool listMcKayInner(
   return isUsefulBranch;
 }
 
-std::list<std::list<InheritedVertex>> listMcKay(std::list<std::list<InheritedVertex>> &propagationListOfInheritedVertices, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  std::list<std::list<InheritedVertex>> canonicalDiscreteRefinement;
-  if (propagationListOfInheritedVertices.empty()) {
-    canonicalDiscreteRefinement = std::list<std::list<InheritedVertex>>(propagationListOfInheritedVertices);
+propagation_list listMcKay(propagation_list &propagationList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
+  propagation_list canonicalDiscreteRefinement;
+  if (propagationList.empty()) {
+    canonicalDiscreteRefinement = propagation_list(propagationList);
     return canonicalDiscreteRefinement;
   } else {
-    // initializeDisjointSetForestsOfPropagationList(propagationListOfInheritedVertices);
-  //   auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels = new discrete_propagation_lists();
+    auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels = new discrete_propagation_lists();
 
-  //   vertex_vec propagationVecOfInheritedVertices;
-  //   for (auto it = propagationListOfInheritedVertices->begin(); it != propagationListOfInheritedVertices->end(); ++it) {
-  //     propagationVecOfInheritedVertices.push_back(*it);
-  //   }
-  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //   std::cout << propagationVecOfInheritedVertices << std::endl;
-
-  //   std::cout << "+++++ start classify +++++" << std::endl;
-  //   classifyConventionalPropagationListWithAttribute(propagationVecOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID);
-
-  //   std::cout << "###### after attribute classifying ######" << std::endl;
-  //   std::cout << *propagationListOfInheritedVertices << std::endl;
+    std::cout << "+++++ start classify +++++" << std::endl;
+    classifyWithAttribute(propagationList, cAfterGraph, gapOfGlobalRootMemID);
+    std::cout << "###### after attribute classifying ######" << std::endl;
+    std::cout << propagationList << std::endl;
 
   //   listMcKayInner(
   //       propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID,
@@ -344,7 +320,7 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
   return isValid;
 }
 
-std::list<std::list<InheritedVertex>> trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph) {
+propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph) {
   int gapOfGlobalRootMemID =
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
@@ -352,13 +328,13 @@ std::list<std::list<InheritedVertex>> trieMcKay(Trie *trie, DiffInfo *diffInfo, 
       trie->propagate(diffInfo, cAfterGraph, cBeforeGraph, gapOfGlobalRootMemID,
                       &stepOfPropagation);
   if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
-    return std::list<std::list<InheritedVertex>>();
+    return propagation_list();
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto i = cAfterGraph->cv->atoms.begin();
          i != cAfterGraph->cv->atoms.end(); ++i)
       std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
-    std::list<std::list<InheritedVertex>> propagationList;
+    propagation_list propagationList;
     trie->conventionalPropagationList(trie->body, propagationList);
     std::cout << "###### before list propagate ######" << std::endl;
     std::cout << propagationList << std::endl;

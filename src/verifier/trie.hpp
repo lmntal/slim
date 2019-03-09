@@ -49,7 +49,7 @@ using vertex_list = std::list<
 using trie_body_map = std::map<uint32_t, TrieBody *>;
 using vertex_vec = std::vector<
   slim::element::variant<slim::element::monostate, InheritedVertex>>;
-
+using propagation_list = std::list<std::list<InheritedVertex>>;
 struct TrieBody {
   uint32_t key;
   vertex_list *inheritedVertices;
@@ -174,7 +174,7 @@ struct Trie {
   // HashTable *trieLeavesTable;
 
 
-  void conventionalPropagationList(TrieBody *body,  std::list<std::list<InheritedVertex>> &list) {
+  void conventionalPropagationList(TrieBody *body,  propagation_list &list) {
     if (body->children->empty()) {
       std::list<InheritedVertex> l;
       for (auto &v : *body->inheritedVertices) {
@@ -346,8 +346,7 @@ vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel);
 void putLabelsToAdjacentVertices(vertex_list *pList,
                                  ConvertedGraph *cAfterGraph,
                                  int gapOfGlobalRootMemID);
-void classifyConventionalPropagationListWithAttribute(
-    vertex_vec &pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
+void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
 Bool getStableRefinementOfConventionalPropagationList(
     vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
 void inheritedVertexDump(InheritedVertex *iVertex);
@@ -364,7 +363,7 @@ template <typename S>
 void fixCreditIndex(S *fixCreditIndexStack, ConvertedGraph *cAfterGraph,
                     int gapOfGlobalRootMemID);
 ConvertedGraphVertex *
-correspondingVertexInConvertedGraph(InheritedVertex *iVertex,
+correspondingVertexInConvertedGraph(const InheritedVertex *iVertex,
                                     ConvertedGraph *cAfterGraph,
                                     int gapOfGlobalRootMemID);
 #endif
