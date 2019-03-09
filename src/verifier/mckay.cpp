@@ -180,69 +180,69 @@ Bool isNewSplit(vertex_list::iterator sentinelCell,
   return TRUE;
 }
 
-Bool listMcKayInner(
-    vertex_list *propagationListOfInheritedVertices,
+bool listMcKayInner(
+    propagation_list &propagationListOfInheritedVertices,
     ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
     discrete_propagation_lists
         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
-  Bool isUsefulBranch = TRUE;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  auto stabilizer = new vertex_list(*propagationListOfInheritedVertices);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  getStableRefinementOfConventionalPropagationList(stabilizer, cAfterGraph,
-                                                   gapOfGlobalRootMemID);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  /*
-  CHECKER("###### after stable refinement ######\n");
-  std::cout << *stabilizer << std::endl;
-  //*/
+  bool isUsefulBranch = true;
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // auto stabilizer = new vertex_list(*propagationListOfInheritedVertices);
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // getStableRefinementOfConventionalPropagationList(stabilizer, cAfterGraph,
+  //                                                  gapOfGlobalRootMemID);
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // /*
+  // CHECKER("###### after stable refinement ######\n");
+  // std::cout << *stabilizer << std::endl;
+  // //*/
 
-  auto beginSentinel = firstNonTrivialCell(stabilizer);
+  // auto beginSentinel = firstNonTrivialCell(stabilizer);
 
-  if (beginSentinel == std::end(*stabilizer)) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    isUsefulBranch =
-        !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
-            discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
-            stabilizer, cAfterGraph, gapOfGlobalRootMemID);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-  } else {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    Bool isFirstLoop = TRUE;
+  // if (beginSentinel == std::end(*stabilizer)) {
+  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //   isUsefulBranch =
+  //       !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
+  //           discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
+  //           stabilizer, cAfterGraph, gapOfGlobalRootMemID);
+  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // } else {
+  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //   Bool isFirstLoop = TRUE;
 
-    auto endSentinel = getNextSentinel(beginSentinel);
-    auto sentinelCell =
-        stabilizer->insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
+  //   auto endSentinel = getNextSentinel(beginSentinel);
+  //   auto sentinelCell =
+  //       stabilizer->insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
 
-    for (auto iteratorCell = sentinelCell;
-         std::next(iteratorCell, 1) != endSentinel;
-         iteratorCell = std::next(iteratorCell, 1)) {
-      auto splitCell = std::next(iteratorCell, 1);
+  //   for (auto iteratorCell = sentinelCell;
+  //        std::next(iteratorCell, 1) != endSentinel;
+  //        iteratorCell = std::next(iteratorCell, 1)) {
+  //     auto splitCell = std::next(iteratorCell, 1);
 
-      if (isNewSplit(sentinelCell, splitCell)) {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
-        stabilizer->splice(std::next(beginSentinel, 1), *stabilizer, splitCell);
+  //     if (isNewSplit(sentinelCell, splitCell)) {
+  //       printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //       stabilizer->splice(std::next(beginSentinel, 1), *stabilizer, splitCell);
 
-        Bool isUsefulChild = listMcKayInner(
-            stabilizer, cAfterGraph, gapOfGlobalRootMemID,
-            discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
-        stabilizer->splice(std::next(iteratorCell, 1), *stabilizer, splitCell);
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
-        if (isFirstLoop) {
-          isFirstLoop = FALSE;
-          if (!isUsefulChild) {
-            isUsefulBranch = FALSE;
-            break;
-          } else {
-            isUsefulBranch = TRUE;
-          }
-        }
-      }
-    }
-  }
+  //       Bool isUsefulChild = listMcKayInner(
+  //           stabilizer, cAfterGraph, gapOfGlobalRootMemID,
+  //           discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
+  //       printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //       stabilizer->splice(std::next(iteratorCell, 1), *stabilizer, splitCell);
+  //       printf("%s:%d\n", __FUNCTION__, __LINE__);
+  //       if (isFirstLoop) {
+  //         isFirstLoop = FALSE;
+  //         if (!isUsefulChild) {
+  //           isUsefulBranch = FALSE;
+  //           break;
+  //         } else {
+  //           isUsefulBranch = TRUE;
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
-  delete (stabilizer);
+  // delete (stabilizer);
 
   return isUsefulBranch;
 }
@@ -263,7 +263,7 @@ propagation_list listMcKay(propagation_list &propagationList,
     std::cout << "###### after attribute classifying ######" << std::endl;
     std::cout << propagationList << std::endl;
     listMcKayInner(
-        propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID,
+        propagationList, cAfterGraph, gapOfGlobalRootMemID,
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
 
     //   vertex_list *canonicalDiscreteRefinement = new vertex_list();
