@@ -66,22 +66,6 @@ Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCa
       (InheritedVertex *)iVertexA, (InheritedVertex *)iVertexB);
 }
 
-void initializeInheritedVertexAdjacentLabels(InheritedVertex *iVertex) {
-  if (iVertex == nullptr) {
-    return;
-  } else {
-    iVertex->conventionalPropagationMemo->clear();
-
-    return;
-  }
-}
-
-void initializeInheritedVertexAdjacentLabelsCaster(void *iVertex) {
-  initializeInheritedVertexAdjacentLabels((InheritedVertex *)iVertex);
-
-  return;
-}
-
 void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
   for (auto &v : *pdpList) {
     if (slim::element::holds_alternative<InheritedVertex>(v)) {
