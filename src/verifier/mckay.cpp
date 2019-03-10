@@ -82,16 +82,6 @@ void initializeInheritedVertexAdjacentLabelsCaster(void *iVertex) {
   return;
 }
 
-void freeInheritedVertexOfPreserveDiscretePropagationList(
-    InheritedVertex *iVertex) {
-  if (iVertex != nullptr) {
-    delete (iVertex->conventionalPropagationMemo);
-    free(iVertex);
-  }
-
-  return;
-}
-
 void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
   for (auto &v : *pdpList) {
     if (slim::element::holds_alternative<InheritedVertex>(v)) {
