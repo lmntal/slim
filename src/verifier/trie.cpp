@@ -273,15 +273,6 @@ void getNextDistanceConvertedVertices(
   return;
 }
 
-void freeInheritedVertex(InheritedVertex *iVertex) {
-  delete (iVertex->hashString);
-  delete (iVertex->conventionalPropagationMemo);
-  freeDisjointSetForest(iVertex->equivalenceClassOfIsomorphism);
-  free(iVertex);
-
-  return;
-}
-
 TerminationConditionInfo *makeTerminationConditionInfo() {
   TerminationConditionInfo *ret =
       (TerminationConditionInfo *)malloc(sizeof(TerminationConditionInfo));
