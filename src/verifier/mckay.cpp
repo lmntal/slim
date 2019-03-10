@@ -18,54 +18,6 @@ vertex_list::iterator firstNonTrivialCell(vertex_list *pList) {
   return std::end(*pList);
 }
 
-Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
-    InheritedVertex *iVertexA, InheritedVertex *iVertexB) {
-  if (iVertexA == nullptr && iVertexB == nullptr) {
-    return EQ;
-  } else if (iVertexA == nullptr && iVertexB != nullptr) {
-    CHECKER("CLASS_SENTINEL is invalid\n");
-    exit(EXIT_FAILURE);
-  } else if (iVertexA != nullptr && iVertexB == nullptr) {
-    CHECKER("CLASS_SENTINEL is invalid\n");
-    exit(EXIT_FAILURE);
-  } else if (iVertexA->type < iVertexB->type) {
-    return LT;
-  } else if (iVertexA->type > iVertexB->type) {
-    return GT;
-  } else if (strcmp(iVertexA->name, iVertexB->name) < 0) {
-    return LT;
-  } else if (strcmp(iVertexA->name, iVertexB->name) > 0) {
-    return GT;
-  } else if (iVertexA->conventionalPropagationMemo->size() <
-             iVertexB->conventionalPropagationMemo->size()) {
-    return LT;
-  } else if (iVertexA->conventionalPropagationMemo->size() >
-             iVertexB->conventionalPropagationMemo->size()) {
-    return GT;
-  } else {
-    int degree = iVertexA->conventionalPropagationMemo->size();
-    int i;
-    auto &iStackA = *iVertexA->conventionalPropagationMemo;
-    auto &iStackB = *iVertexB->conventionalPropagationMemo;
-
-    for (i = 0; i < degree; i++) {
-      if (iStackA[i] < iStackB[i]) {
-        return LT;
-      } else if (iStackA[i] > iStackB[i]) {
-        return GT;
-      }
-    }
-
-    return EQ;
-  }
-}
-
-Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster(
-    void *iVertexA, void *iVertexB) {
-  return compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
-      (InheritedVertex *)iVertexA, (InheritedVertex *)iVertexB);
-}
-
 void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
   for (auto &v : *pdpList) {
     if (slim::element::holds_alternative<InheritedVertex>(v)) {
