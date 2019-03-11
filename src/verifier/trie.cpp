@@ -899,8 +899,11 @@ std::map<int, std::vector<int>> putLabelsToAdjacentVertices(propagation_list &pL
 }
 
 void refineConventionalPropagationListByPropagation(propagation_list &pList) {
-  auto labels = putLabelsToAdjacentVertices(pList);
-  while (classify(pList, [&](const ConvertedGraphVertex *v){ return labels[v->ID]; }));
+  bool refined = false;
+  do {
+    auto labels = putLabelsToAdjacentVertices(pList);
+    refined = classify(pList, [&](const ConvertedGraphVertex *v){ return labels[v->ID]; });
+  } while (refined);
 }
 
 void assureReferenceFromConvertedVerticesToInheritedVertices(
