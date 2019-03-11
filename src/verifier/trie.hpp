@@ -296,6 +296,25 @@ inline std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
+inline std::ostream &operator<<(std::ostream &os, const ConvertedGraphVertex* c) {
+  os << "<";
+  switch (c->type) {
+  case convertedAtom:
+    os << "SYMBOLATOM,";
+    break;
+  case convertedHyperLink:
+    os << "HYPERLINK,";
+    break;
+  default:
+    throw("This is unexpected vertex type");
+    break;
+  }
+  os << "ID=" << c->ID;
+  os << "NAME:\"" << c->name << "\"";
+  os << ">";
+  return os;
+}
+
 inline std::ostream &operator<<(std::ostream &os, const HashString &h) {
   os << "<" << h.creditIndex << ": ";
   for (auto &x : *h.body) {
