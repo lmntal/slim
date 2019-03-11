@@ -851,91 +851,51 @@ void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int
   classify(l, [](const ConvertedGraphVertex *x){return std::string(x->name);});
 }
 
-void putLabelsToAdjacentVertices(propagation_list &pList,
+std::map<int, std::vector<int>> putLabelsToAdjacentVertices(propagation_list &pList,
                                  ConvertedGraph *cAfterGraph,
                                  int gapOfGlobalRootMemID) {
+  std::map<int, std::vector<int>> id_to_adjacent_labels;
   if (pList.empty()) {
-    return;
+    return id_to_adjacent_labels;
   }
-  // int tmpLabel = 0;
-
-  // auto beginSentinel = pList.end();
-  // auto endSentinel = beginSentinel;
-  // do {
-  //   endSentinel =
-  //       std::find(next(beginSentinel, 1), std::end(*pList), CLASS_SENTINEL);
-
-  //   int tmpDegree =
-  //       correspondingVertexInConvertedGraph(
-  //           &slim::element::get<InheritedVertex>(*std::next(beginSentinel, 1)),
-  //           cAfterGraph, gapOfGlobalRootMemID)
-  //           ->links.size();
-  //   ConvertedGraphVertexType tmpType = correspondingVertexInConvertedGraph(
-  //                                          &slim::element::get<InheritedVertex>(
-  //                                              *(std::next(beginSentinel, 1))),
-  //                                          cAfterGraph, gapOfGlobalRootMemID)
-  //                                          ->type;
-
-  //   for (int i = 0; i < tmpDegree; i++) {
-  //     for (auto iteratorCell = std::next(beginSentinel, 1);
-  //          iteratorCell != endSentinel;
-  //          iteratorCell = std::next(iteratorCell, 1)) {
-  //       auto &tmpLink = correspondingVertexInConvertedGraph(
-  //                           &slim::element::get<InheritedVertex>(*iteratorCell),
-  //                           cAfterGraph, gapOfGlobalRootMemID)
-  //                           ->links[i];
-  //       ConvertedGraphVertex *adjacentVertex;
-
-  //       switch (tmpLink.attr) {
-  //       case INTEGER_ATTR:
-  //         printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //         slim::element::get<InheritedVertex>(*(iteratorCell))
-  //             .conventionalPropagationMemo->push_back(
-  //                 tmpLink.data.integer * 256 + INTEGER_ATTR);
-  //         break;
-  //       case HYPER_LINK_ATTR:
-  //         printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //         adjacentVertex = getConvertedVertexFromGraphAndIDAndType(
-  //             cAfterGraph, tmpLink.data.ID, convertedHyperLink);
-  //         adjacentVertex->correspondingVertexInTrie->conventionalPropagationMemo
-  //             ->push_back(tmpLabel * 256 + i);
-  //         break;
-  //       case GLOBAL_ROOT_MEM_ATTR:
-  //         printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //         break;
-  //       default:
-  //         if (tmpLink.attr < 128) {
-  //           adjacentVertex = cAfterGraph->at(tmpLink.data.ID, convertedAtom);
-  //           switch (tmpType) {
-  //           case convertedAtom:
-  //             adjacentVertex->correspondingVertexInTrie
-  //                 ->conventionalPropagationMemo->push_back(tmpLabel * 256 + i);
-  //             break;
-  //           case convertedHyperLink:
-  //             adjacentVertex->correspondingVertexInTrie
-  //                 ->conventionalPropagationMemo->push_back(tmpLabel * 256 +
-  //                                                          HYPER_LINK_ATTR);
-  //             break;
-  //           default:
-  //             CHECKER("unexpected vertex type\n");
-  //             exit(EXIT_FAILURE);
-  //             break;
-  //           }
-  //         } else {
-  //           CHECKER("unexpected vertex type\n");
-  //           exit(EXIT_FAILURE);
-  //         }
-  //         break;
-  //       }
-  //     }
-  //   }
-
-  //   tmpLabel++;
-  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //   beginSentinel = endSentinel;
-  // } while (endSentinel != std::end(*pList));
-
-  return;
+  int tmpLabel = 0;
+  for(auto &list : pList) {	// loop of classes
+    for(auto vertex : list) {	// loop of vertices
+      for(int link_index = 0; link_index < vertex->links.size(); link_index++) { // loop of links
+	auto tmpType = vertex->type;
+	auto &tmpLink = vertex->links[link_index];
+	switch (tmpLink.attr) {
+	case INTEGER_ATTR:
+	  id_to_adjacent_labels[vertex->ID].push_back(tmpLink.data.integer * 256 + INTEGER_ATTR);
+	  break;
+	case HYPER_LINK_ATTR:
+	  id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 + link_index);
+	  break;
+	case GLOBAL_ROOT_MEM_ATTR:
+	  break;
+	default:
+	  if (tmpLink.attr < 128) {
+	    switch(tmpType) {
+	    case convertedAtom:
+	      id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 + link_index);
+	      break;
+	    case convertedHyperLink:
+	      id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 + HYPER_LINK_ATTR);
+	      break;
+	    default:
+	      throw("unexpected vertex type");
+	      break;
+	    }
+	  } else {
+	    throw("unexpected vertex type");
+	  }
+	  break;
+	}
+      }
+    }
+    tmpLabel++;
+  }
+  return id_to_adjacent_labels;
 }
 
 Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
