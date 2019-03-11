@@ -49,7 +49,7 @@ using vertex_list = std::list<
 using trie_body_map = std::map<uint32_t, TrieBody *>;
 using vertex_vec = std::vector<
   slim::element::variant<slim::element::monostate, InheritedVertex>>;
-using propagation_list = std::list<std::list<InheritedVertex>>;
+using propagation_list = std::list<std::list<ConvertedGraphVertex*>>;
 struct TrieBody {
   uint32_t key;
   vertex_list *inheritedVertices;
@@ -115,6 +115,7 @@ struct InheritedVertex {
   vertex_list::iterator ownerCell;
   std::vector<int> *conventionalPropagationMemo;
   DisjointSetForest *equivalenceClassOfIsomorphism;
+  ConvertedGraphVertex *correspondingVertex;
 
   InheritedVertex(ConvertedGraphVertex *cVertex, int gapOfGlobalRootMemID) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -130,6 +131,7 @@ struct InheritedVertex {
     ownerList = nullptr;
     conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
+    correspondingVertex = cVertex;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   };
  
@@ -149,6 +151,7 @@ struct InheritedVertex {
         new std::vector<int>(iVertex.conventionalPropagationMemo->begin(),
                              iVertex.conventionalPropagationMemo->end());
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
+    this->correspondingVertex = iVertex.correspondingVertex;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
@@ -176,9 +179,9 @@ struct Trie {
 
   void conventionalPropagationList(TrieBody *body,  propagation_list &list) {
     if (body->children->empty()) {
-      std::list<InheritedVertex> l;
+      std::list<ConvertedGraphVertex*> l;
       for (auto &v : *body->inheritedVertices) {
-        l.push_back(slim::element::get<InheritedVertex>(v));
+        l.push_back(slim::element::get<InheritedVertex>(v).correspondingVertex);
       }
       list.push_back(l);
     } else {

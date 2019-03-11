@@ -832,11 +832,10 @@ bool putClassesWithPriority(vertex_list &list,
 template<typename T>
 void classify(propagation_list &l, T score) {
   for(auto i = l.begin(); i != l.end(); ++i) {
-    i->sort([&](const InheritedVertex &x, const InheritedVertex &y){return score(x) > score(y);});
+    i->sort([&](const ConvertedGraphVertex *x, const ConvertedGraphVertex *y){return score(x) > score(y);});
     for(auto j = i->begin(); std::next(j, 1) != i->end() and i->size() != 1; ++j) {
       if (score(*j) > score(*std::next(j, 1))) {
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	std::list<InheritedVertex> ll;
+	std::list<ConvertedGraphVertex*> ll;
 	ll.splice(ll.end(), *i, i->begin(), std::next(j, 1));
 	l.insert(i, ll);
 	j = i->end();
@@ -846,12 +845,10 @@ void classify(propagation_list &l, T score) {
 }
 
 void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  classify(l, [](const InheritedVertex &x){return x.type;});
-  std::cout << "+++++  after classify type +++++" << std::endl;
-  std::cout << l << std::endl;
-  classify(l, [&](const InheritedVertex &x){return correspondingVertexInConvertedGraph(&x, cAfterGraph, gapOfGlobalRootMemID)->links.size();});
-  classify(l, [&](const InheritedVertex &x){return strlen(cAfterGraph->at(x,gapOfGlobalRootMemID)->name);});
-  classify(l, [&](const InheritedVertex &x){return std::string((cAfterGraph->at(x, gapOfGlobalRootMemID)->name));});
+  classify(l, [](const ConvertedGraphVertex *x){return x->type;});
+  classify(l, [](const ConvertedGraphVertex *x){return x->links.size();});
+  classify(l, [](const ConvertedGraphVertex *x){return strlen(x->name);});
+  classify(l, [](const ConvertedGraphVertex *x){return std::string(x->name);});
 }
 
 void putLabelsToAdjacentVertices(propagation_list &pList,
