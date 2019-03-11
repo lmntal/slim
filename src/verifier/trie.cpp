@@ -829,19 +829,24 @@ bool putClassesWithPriority(vertex_list &list,
   return isRefined;
 }
 
-template<typename T>
-void classify(propagation_list &l, T score) {
-  for(auto i = l.begin(); i != l.end(); ++i) {
-    i->sort([&](const ConvertedGraphVertex *x, const ConvertedGraphVertex *y){return score(x) > score(y);});
-    for(auto j = i->begin(); std::next(j, 1) != i->end() and i->size() != 1; ++j) {
+template <typename T> bool classify(propagation_list &l, T score) {
+  bool changed = false;
+  for (auto i = l.begin(); i != l.end(); ++i) {
+    i->sort([&](const ConvertedGraphVertex *x, const ConvertedGraphVertex *y) {
+      return score(x) > score(y);
+    });
+    for (auto j = i->begin(); std::next(j, 1) != i->end() and i->size() != 1;
+         ++j) {
       if (score(*j) > score(*std::next(j, 1))) {
-	std::list<ConvertedGraphVertex*> ll;
-	ll.splice(ll.end(), *i, i->begin(), std::next(j, 1));
-	l.insert(i, ll);
-	j = i->end();
+        std::list<ConvertedGraphVertex *> ll;
+        ll.splice(ll.end(), *i, i->begin(), std::next(j, 1));
+        l.insert(i, ll);
+        j = i->end();
+        changed = true;
       }
     }
   }
+  return changed;
 }
 
 void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
@@ -851,11 +856,11 @@ void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int
   classify(l, [](const ConvertedGraphVertex *x){return std::string(x->name);});
 }
 
-void putLabelsToAdjacentVertices(propagation_list &pList,
-                                 ConvertedGraph *cAfterGraph,
-                                 int gapOfGlobalRootMemID) {
+using adjacent_labels = std::vector<int>;
+
+std::map<const ConvertedGraphVertex *, adjacent_labels> putLabelsToAdjacentVertices(propagation_list &pList) {
   if (pList.empty()) {
-    return;
+    return {};
   }
   // int tmpLabel = 0;
 
@@ -935,81 +940,12 @@ void putLabelsToAdjacentVertices(propagation_list &pList,
   //   beginSentinel = endSentinel;
   // } while (endSentinel != std::end(*pList));
 
-  return;
+  return {};
 }
 
-Bool classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
-    vertex_list &list, vertex_list::iterator beginSentinel,
-    vertex_list::iterator endSentinel, vertex_queue *cellPQueue) {
-  while (std::next(beginSentinel, 1) != endSentinel) {
-    auto tmpCell = std::next(beginSentinel, 1);
-
-    auto &memo = *slim::element::get<InheritedVertex>(*tmpCell)
-                      .conventionalPropagationMemo;
-    int tmpPriority = memo.back();
-    memo.pop_back();
-    cellPQueue->emplace(tmpPriority,
-                        &slim::element::get<InheritedVertex>(*tmpCell));
-  }
-
-  Bool isRefined =
-      putClassesWithPriority(list, beginSentinel, endSentinel, cellPQueue);
-
-  return isRefined;
-}
-
-Bool classifyConventionalPropagationListWithAdjacentLabelsInner(
-    vertex_list &list, vertex_list::iterator beginSentinel,
-    vertex_list::iterator endSentinel, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID, vertex_queue *cellPQueue) {
-  Bool isRefined = FALSE;
-
-  int degree =
-      correspondingVertexInConvertedGraph(
-          &slim::element::get<InheritedVertex>(*(std::next(beginSentinel, 1))),
-          cAfterGraph, gapOfGlobalRootMemID)
-          ->links.size();
-
-  int i;
-  for (i = 0; i < degree; i++) {
-    auto innerEndSentinel = beginSentinel;
-    auto innerBeginSentinel = beginSentinel;
-
-    do {
-      innerEndSentinel =
-          std::find(innerBeginSentinel, std::end(list), CLASS_SENTINEL);
-
-      isRefined =
-          classifyConventionalPropagationListWithAdjacentLabelsInnerInner(
-              list, innerBeginSentinel, innerEndSentinel, cellPQueue) ||
-          isRefined;
-
-      innerBeginSentinel = innerEndSentinel;
-    } while (innerEndSentinel != endSentinel);
-  }
-
-  return isRefined;
-}
-
-Bool classifyConventionalPropagationListWithAdjacentLabels(
-    vertex_vec *pVec, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  // return classifyConventionalPropagationList(
-  //     pVec, cAfterGraph, gapOfGlobalRootMemID,
-  //     classifyConventionalPropagationListWithAdjacentLabelsInner);
-  return true;
-}
-
-bool refineConventionalPropagationListByPropagation(propagation_list &pList,
-                                                    ConvertedGraph *cAfterGraph,
-                                                    int gapOfGlobalRootMemID) {
-  Bool isRefined = false;
-  putLabelsToAdjacentVertices(pList, cAfterGraph, gapOfGlobalRootMemID);
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // isRefined = classifyConventionalPropagationListWithAdjacentLabels(
-  //                 pList, cAfterGraph, gapOfGlobalRootMemID) ||
-  //             isRefined;
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  return isRefined;
+void refineConventionalPropagationListByPropagation(propagation_list &pList) {
+  auto labels = putLabelsToAdjacentVertices(pList);
+  while (classify(pList, [&](const ConvertedGraphVertex *v){ return labels[v]; }));
 }
 
 void assureReferenceFromConvertedVerticesToInheritedVertices(

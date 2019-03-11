@@ -350,9 +350,7 @@ void putLabelsToAdjacentVertices(vertex_list *pList,
                                  ConvertedGraph *cAfterGraph,
                                  int gapOfGlobalRootMemID);
 void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
-bool refineConventionalPropagationListByPropagation(propagation_list &pList,
-                                                    ConvertedGraph *cAfterGraph,
-                                                    int gapOfGlobalRootMemI);
+void refineConventionalPropagationListByPropagation(propagation_list &pList);
 void inheritedVertexDump(InheritedVertex *iVertex);
 void terminationConditionInfoDump(TerminationConditionInfo *tInfo);
 void trieDump(Trie *trie);

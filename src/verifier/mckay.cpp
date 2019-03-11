@@ -114,9 +114,7 @@ bool listMcKayInner(
   bool isUsefulBranch = true;
   auto stabilizer = propagation_list(propagationListOfInheritedVertices);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  while (refineConventionalPropagationListByPropagation(stabilizer, cAfterGraph,
-                                                        gapOfGlobalRootMemID)) {
-  }
+  refineConventionalPropagationListByPropagation(stabilizer);
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // /*
   // CHECKER("###### after stable refinement ######\n");
