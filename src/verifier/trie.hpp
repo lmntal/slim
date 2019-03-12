@@ -365,9 +365,7 @@ template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);
 vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel);
-void putLabelsToAdjacentVertices(vertex_list *pList,
-                                 ConvertedGraph *cAfterGraph,
-                                 int gapOfGlobalRootMemID);
+std::map<int, std::vector<int>> putLabelsToAdjacentVertices(propagation_list &pList);
 void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
 void refineConventionalPropagationListByPropagation(propagation_list &pList);
 void inheritedVertexDump(InheritedVertex *iVertex);

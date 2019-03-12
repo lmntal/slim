@@ -2,20 +2,14 @@
 #include "trie.hpp"
 
 #include <iostream>
-vertex_list::iterator firstNonTrivialCell(vertex_list *pList) {
-  auto beginSentinel = std::begin(*pList);
-  auto endSentinel = beginSentinel;
+propagation_list::iterator firstNonTrivialCell(propagation_list &pList) {
 
-  do {
-    endSentinel = getNextSentinel(beginSentinel);
-
-    if (std::next(beginSentinel, 2) != endSentinel) {
-      return beginSentinel;
+  for(auto it = pList.begin(); it != pList.end(); ++it) {
+    if(it->size() > 1) {
+      return it;
     }
-    beginSentinel = endSentinel;
-  } while (endSentinel != std::end(*pList));
-
-  return std::end(*pList);
+  }
+  return pList.end();
 }
 
 void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
@@ -32,17 +26,12 @@ void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
 bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     discrete_propagation_lists
         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
-    vertex_list *dpList, ConvertedGraph *cAfterGraph,
+    propagation_list &dpList, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID) {
   bool isExisting = true;
-  return isExisting;
-  // putLabelsToAdjacentVertices(dpList, cAfterGraph, gapOfGlobalRootMemID);
-  // vertex_list *preserveDPList = new vertex_list();
-  // for (auto &v : *dpList)
-  //   preserveDPList->push_back(v);
-  // for (auto &v : *dpList)
-  //   initializeInheritedVertexAdjacentLabels(
-  //       &slim::element::get<InheritedVertex>(v));
+
+  putLabelsToAdjacentVertices(dpList);
+  propagation_list *preserveDPList = new propagation_list(dpList);
 
   // auto &key = *preserveDPList;
   // auto seniorDPList =
@@ -79,6 +68,7 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
   //   isExisting = TRUE;
   //   return isExisting;
   // }
+  return isExisting;
 }
 
 void discretePropagationListDump(vertex_list *dpList) {
@@ -115,22 +105,20 @@ bool listMcKayInner(
   auto stabilizer = propagation_list(propagationListOfInheritedVertices);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   refineConventionalPropagationListByPropagation(stabilizer);
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // /*
-  // CHECKER("###### after stable refinement ######\n");
-  // std::cout << *stabilizer << std::endl;
-  // //*/
 
-  // auto beginSentinel = firstNonTrivialCell(stabilizer);
+  std::cout << "###### after stable refinement ######" << std::endl;
+  std::cout << stabilizer << std::endl;
 
-  // if (beginSentinel == std::end(*stabilizer)) {
-  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //   isUsefulBranch =
-  //       !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
-  //           discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
-  //           stabilizer, cAfterGraph, gapOfGlobalRootMemID);
-  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // } else {
+
+  auto beginSentinel = firstNonTrivialCell(stabilizer);
+
+  if (beginSentinel == stabilizer.end()) {
+    isUsefulBranch =
+        !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
+            discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
+            stabilizer, cAfterGraph, gapOfGlobalRootMemID);
+  }
+  // else {
   //   printf("%s:%d\n", __FUNCTION__, __LINE__);
   //   Bool isFirstLoop = TRUE;
 
