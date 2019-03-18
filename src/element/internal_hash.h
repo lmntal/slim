@@ -98,7 +98,6 @@ typedef struct HashSetItrator {
   unsigned int i;
 } HashSetIterator;
 
-void hashset_destroy(HashSet *set);
 HashSetIterator hashset_iterator(HashSet *set);
 void hashsetiter_next(HashSetIterator *it);
 #define hashset_num(HT) (HT)->num

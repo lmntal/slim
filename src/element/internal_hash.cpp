@@ -202,8 +202,6 @@ HashSet::HashSet(unsigned int init_size) {
   memset(this->tbl, 0xffU, sizeof(HashKeyType) * this->cap);
 }
 
-void hashset_destroy(HashSet *set) { LMN_FREE(set->tbl); }
-
 HashSet::~HashSet() {
   LMN_FREE(this->tbl);
 }
