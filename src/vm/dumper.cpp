@@ -985,7 +985,7 @@ static void lmn_dump_link_json(LmnSymbolAtomRef atom, int index) {
     case LMN_SP_ATOM_ATTR:
     case LMN_CONST_STR_ATTR:
       fprintf(stdout, "\"data\":\"\\\"%s\\\"\"",
-              lmn_string_c_str((LmnStringRef)data));
+              ((LmnStringRef)data)->c_str());
       break;
     case LMN_HL_ATTR: {
       LmnSymbolAtomRef a = (LmnSymbolAtomRef)data;

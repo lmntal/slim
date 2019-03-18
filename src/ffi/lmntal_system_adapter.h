@@ -53,7 +53,7 @@
 #include <cstdio>
 
 std::unique_ptr<FILE, decltype(&fclose)> lmntal_compile_file(const char *filename);
-std::unique_ptr<FILE, decltype(&fclose)> lmntal_compile_rule_str(char *rule_str);
+std::unique_ptr<FILE, decltype(&fclose)> lmntal_compile_rule_str(const char *rule_str);
 
 /* @} */
 

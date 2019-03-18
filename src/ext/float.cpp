@@ -56,7 +56,7 @@ void float_of_string(LmnReactCxtRef rc,
 {
   char *t;
   LmnAtomRef d;
-  const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
+  const char *s = reinterpret_cast<LmnString *>(a0)->c_str();
   t = NULL;
   d = (LmnAtomRef)lmn_create_double_atom(strtod(s, &t));
   if (t == NULL || s == t) {

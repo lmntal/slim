@@ -432,7 +432,7 @@ mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr) {
   case LMN_SP_ATOM_ATTR:
     /* TODO: スペシャルアトムを定義する際にハッシュ値計算用関数も定義させる */
     if (lmn_is_string(atom, attr)) {
-      return (mhash_t)lmn_string_hash(LMN_STRING(atom));
+      return (mhash_t)reinterpret_cast<LmnString *>(atom)->hash();
     } else {
       LMN_ASSERT(FALSE); /* under constructions */
       return 1;

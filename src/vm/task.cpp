@@ -500,7 +500,7 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
     case LMN_STRING_ATTR: {                                                    \
       lmn_interned_str s;                                                      \
       READ_VAL(lmn_interned_str, instr, s);                                    \
-      (dest) = (LmnAtomRef)lmn_string_make(lmn_id_to_name(s));                 \
+      (dest) = (LmnAtomRef)new LmnString(lmn_id_to_name(s));                 \
       break;                                                                   \
     }                                                                          \
     default:                                                                   \
@@ -554,9 +554,9 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
       lmn_interned_str s;                                                      \
       LmnStringRef str1;                                                       \
       READ_VAL(lmn_interned_str, instr, s);                                    \
-      str1 = lmn_string_make(lmn_id_to_name(s));                               \
-      (result) = lmn_string_eq(str1, (LmnStringRef)(x));                       \
-      lmn_string_free(str1);                                                   \
+      str1 = new LmnString(lmn_id_to_name(s));                               \
+      (result) = *str1 == *(LmnStringRef)(x);                       \
+      delete (str1);                                                   \
       break;                                                                   \
     }                                                                          \
     default:                                                                   \
@@ -2596,7 +2596,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       port_put_raw_s(port, ":");
     }
 
-    id = lmn_intern((char *)lmn_string_c_str((LmnStringRef)port->data));
+    id = lmn_intern(((LmnStringRef)port->data)->c_str());
     lmn_port_free(port);
 
     if (sh)
