@@ -206,7 +206,7 @@ redo:
   fprintf(stderr, "load factor : %10.3lf\n",
           (double)tree_db_node_count(this) / (this->mask + 1));
   fprintf(stderr, "memory      : %7llu MB\n",
-          (uint64_t)tree_space(this) / 1024 / 1024);
+          (uint64_t)this->space() / 1024 / 1024);
   exit(EXIT_FAILURE);
 }
 
@@ -310,10 +310,10 @@ LmnBinStrRef TreeDatabase::get(TreeNodeID ref, int len) {
   return bs;
 }
 
-uint64_t tree_space(TreeDatabaseRef treedb) {
+uint64_t TreeDatabase::space(void) {
   uint64_t memory = 0;
   memory += sizeof(struct TreeDatabase);
-  memory += treedb->node_count * sizeof(struct TreeNode);
-  memory += (treedb->mask + 1) * sizeof(TreeNodeRef);
+  memory += this->node_count * sizeof(struct TreeNode);
+  memory += (this->mask + 1) * sizeof(TreeNodeRef);
   return memory;
 }

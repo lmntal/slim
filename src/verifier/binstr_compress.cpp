@@ -353,7 +353,7 @@ BOOL lmn_bscomp_tree_clean() {
     node_count = tree_db_node_count(treedb);
     table_size = treedb->mask + 1;
     load_factor = (double)node_count / (treedb->mask + 1);
-    memory = (uint64_t)tree_space(treedb) / 1024 / 1024;
+    memory = (uint64_t)treedb->space() / 1024 / 1024;
 #endif
     treedb->free();
     treedb = NULL;
@@ -362,7 +362,7 @@ BOOL lmn_bscomp_tree_clean() {
   return FALSE;
 }
 
-unsigned long lmn_bscomp_tree_space() { return tree_space(treedb); }
+unsigned long lmn_bscomp_tree_space() { return treedb->space(); }
 
 TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
   BOOL found;
