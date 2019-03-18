@@ -502,7 +502,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
    *   (c.f. "The Spin Model Checker" pp.130-131)
    */
 
-  for (i = 0; i < atmstate_transition_num(p_s); i++) {
+  for (i = 0; i < p_s->get_transition_num(); i++) {
     AutomataTransitionRef p_t = atmstate_get_transition(p_s, i);
     if (eval_formula(mem, propsyms, atm_transition_get_formula(p_t))) {
       BYTE p_nxt_l = atm_transition_next(p_t);

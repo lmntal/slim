@@ -210,8 +210,8 @@ void AutomataState::add_transition(AutomataTransitionRef t) {
 
 atmstate_id_t AutomataState::get_id() { return this->id; }
 
-unsigned int atmstate_transition_num(AutomataStateRef s) {
-  return vec_num(&s->transitions);
+unsigned int AutomataState::get_transition_num() {
+  return vec_num(&this->transitions);
 }
 
 AutomataTransitionRef atmstate_get_transition(AutomataStateRef s,
@@ -322,7 +322,7 @@ void print_property_automata(AutomataRef a) {
 
     s = a->get_state(i);
     fprintf(stdout, "%lu::", (unsigned long)s->get_id());
-    m = atmstate_transition_num(s);
+    m = s->get_transition_num();
     for (j = 0; j < m; j++) {
       fprintf(stdout, "%lu",
               (unsigned long)
@@ -342,7 +342,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
                                    AutomataStateRef s) {
   unsigned long i, n;
 
-  n = atmstate_transition_num(s);
+  n = s->get_transition_num();
   for (i = 0; i < n; i++) {
     AutomataStateRef succ = a->get_state(
         (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
@@ -372,7 +372,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
 
 static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
   unsigned long i, n;
-  n = atmstate_transition_num(s);
+  n = s->get_transition_num();
   for (i = 0; i < n; i++) {
     AutomataStateRef succ = a->get_state(
         (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
