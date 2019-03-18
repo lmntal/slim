@@ -64,11 +64,11 @@ struct TreeNodeStr;
 
 struct TreeDatabase {
   TreeDatabase(size_t size);
+  ~TreeDatabase();
   TreeNodeRef *nodes;
   uint64_t node_count;
   size_t mask;
-  void clear(void);
-  void free(void);
+  void clear();
   TreeNodeElement tree_find_or_put_rec(TreeNodeStr* str, int start, int end, BOOL *found);
   TreeNodeID tree_find_or_put(LmnBinStrRef bs, BOOL *found);
   BOOL table_find_or_put(TreeNodeElement left,

@@ -355,7 +355,7 @@ BOOL lmn_bscomp_tree_clean() {
     load_factor = (double)node_count / (treedb->mask + 1);
     memory = (uint64_t)treedb->space() / 1024 / 1024;
 #endif
-    treedb->free();
+    delete treedb;
     treedb = NULL;
     return TRUE;
   }

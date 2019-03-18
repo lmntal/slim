@@ -227,10 +227,9 @@ void TreeDatabase::clear(void){
   }
 }
 
-void TreeDatabase::free(void) {
+TreeDatabase::~TreeDatabase(void) {
   this->clear();
   LMN_FREE(this->nodes);
-  LMN_FREE(this);
   return;
 }
 
