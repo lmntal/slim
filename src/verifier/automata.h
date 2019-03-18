@@ -85,8 +85,6 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* automata */
-atmstate_id_t automata_state_scc_id(AutomataRef a, atmstate_id_t id);
-const char *automata_state_scc_name(AutomataRef a, atmstate_id_t id);
 AutomataStateRef automata_get_state(AutomataRef a, BYTE state_id);
 void automata_set_init_state(AutomataRef a, atmstate_id_t id);
 atmstate_id_t automata_get_init_state(AutomataRef a);

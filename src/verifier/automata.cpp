@@ -156,14 +156,6 @@ const char *Automata::state_name(atmstate_id_t id) {
   }
 }
 
-atmstate_id_t automata_state_scc_id(AutomataRef a, atmstate_id_t id) {
-  return atmscc_id(atmstate_scc(automata_get_state(a, id)));
-}
-
-const char *automata_state_scc_name(AutomataRef a, atmstate_id_t id) {
-  return atmscc_name(atmstate_scc(automata_get_state(a, id)));
-}
-
 void automata_add_state(AutomataRef a, AutomataStateRef s) {
   if (vec_num(&a->states) <= s->id) {
     vec_resize(&a->states, s->id + 1, (vec_data_t)0);
