@@ -52,8 +52,7 @@
  * @todo
  *   メモリアクセス違反が起きないように膜のメモリを解放できるような仕様にする。
  */
-void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
-{
+void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem) {
   LmnMembraneRef parent = lmn_mem_parent(mem);
 
   /* ルールセットに0step属性をつけて親膜に移動 */
@@ -64,13 +63,12 @@ void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem)
   }
 
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), mem);
+    lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), mem);
   }
-  //lmn_mem_delete_mem(parent, mem); //< may cause memory error
+  // lmn_mem_delete_mem(parent, mem); //< may cause memory error
   lmn_mem_remove_mem(parent, mem);
 }
 
-void init_zerostep(void)
-{
+void init_zerostep(void) {
   lmn_register_c_fun("zerostep", (void *)cb_zerostep, 0);
 }
