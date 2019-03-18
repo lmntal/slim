@@ -60,11 +60,17 @@ typedef TreeNodeElement TreeNodeUnit;
 
 typedef struct TreeDatabase *TreeDatabaseRef;
 typedef struct TreeNode *TreeNodeRef;
+struct TreeNodeStr;
 
 struct TreeDatabase {
+  TreeDatabase(size_t size);
   TreeNodeRef *nodes;
   uint64_t node_count;
   size_t mask;
+  void clear(void);
+  void free(void);
+  TreeNodeElement tree_find_or_put_rec(TreeNodeStr* str, int start, int end, BOOL *found);
+  TreeNodeID tree_find_or_put(LmnBinStrRef bs, BOOL *found);
 };
 
 struct TreeNode {
@@ -72,12 +78,7 @@ struct TreeNode {
   TreeNodeElement right;
 };
 
-TreeDatabaseRef tree_make(size_t size);
-void tree_free(TreeDatabaseRef treedb);
-void tree_clear(TreeDatabaseRef treedb);
 LmnBinStrRef tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len);
-TreeNodeID tree_find_or_put(TreeDatabaseRef treedb, LmnBinStrRef bs,
-                            BOOL *found);
 uint64_t tree_space(TreeDatabaseRef treedb);
 
 #define tree_db_node_count(db) (db->node_count)
