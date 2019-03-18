@@ -247,7 +247,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
            hashsetiter_next(&it)) {
         HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
-          hashset_add(parent->children, (HashKeyType)tmp);
+          parent->children->add((HashKeyType)tmp);
           hashset_delete(children, (HashKeyType)tmp);
           tmp->parent = parent;
         }
@@ -284,7 +284,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
            hashsetiter_next(&it)) {
         HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
-          hashset_add(newroot->children, (HashKeyType)tmp);
+          newroot->children->add((HashKeyType)tmp);
           hashset_delete(children, (HashKeyType)tmp);
           tmp->parent = newroot;
         }
@@ -351,7 +351,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
 
       /* 新親(root)に対する処理 */
       hl->parent = root;
-      hashset_add(root->children, (HashKeyType)hl);
+      root->children->add((HashKeyType)hl);
     }
   }
 }
@@ -400,7 +400,7 @@ HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child,
   if (!parent->children) {
     parent->children = new HashSet(2);
   }
-  hashset_add(parent->children, (HashKeyType)child);
+  parent->children->add((HashKeyType)child);
   parent->rank = parent->rank + child->rank + 1;
   parent->attrAtom = attrAtom;
   parent->attr = attr;

@@ -637,7 +637,7 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 
         lmn_newlink_in_symbols(a1, t1, eq, 0);
         lmn_newlink_in_symbols(a2, t2, eq, 1);
-        hashset_add(retset, (HashKeyType)eq);
+        retset->add((HashKeyType)eq);
       }
     }
   }

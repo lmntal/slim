@@ -209,8 +209,8 @@ void hashset_free(HashSet *set) {
   LMN_FREE(set);
 }
 
-int hashset_contains(HashSet *set, HashKeyType key) {
-  return *hashset_get_p(set, key, EMPTY_KEY) != EMPTY_KEY;
+int HashSet::contains(HashKeyType key) {
+  return *hashset_get_p(this, key, EMPTY_KEY) != EMPTY_KEY;
 }
 
 static void hashset_extend(HashSet *set) {
@@ -237,17 +237,17 @@ static void hashset_extend(HashSet *set) {
   LMN_FREE(tbl);
 }
 
-void hashset_add(HashSet *set, HashKeyType key) {
+void HashSet::add(HashKeyType key) {
   HashKeyType *entry;
   LMN_ASSERT(key < DELETED_KEY);
 
-  entry = hashset_get_p(set, key, DELETED_KEY);
+  entry = hashset_get_p(this, key, DELETED_KEY);
   if (*entry == EMPTY_KEY || *entry == DELETED_KEY) {
-    set->num++;
+    this->num++;
     *entry = key;
   }
-  if (set->num > set->cap * LOAD_FACTOR) {
-    hashset_extend(set);
+  if (this->num > this->cap * LOAD_FACTOR) {
+    hashset_extend(this);
   }
 }
 
