@@ -155,7 +155,7 @@ void init_por_vars() {
   mc_por.root = NULL;
   mc_por.strans_independency = st_init_numtable();
   mc_por.states = st_init_statetable();
-  mc_por.queue = new_queue();
+  mc_por.queue = new Queue();
   mc_por.ample_candidate = vec_make(POR_VEC_SIZE);
   mc_por.next_strans_id = POR_ID_INITIALIZER; /* 0は使用しない */
   mc_por.rc = nullptr;

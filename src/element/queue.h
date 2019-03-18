@@ -62,6 +62,7 @@ struct Node {
 };
 
 struct Queue {
+  Queue();
   Node *head;
   Node *tail;
   BOOL lock;

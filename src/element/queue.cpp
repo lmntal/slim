@@ -80,6 +80,16 @@ Queue *make_parallel_queue(BOOL lock_type) {
  *       ○ → NULL
  *    sentinel
  */
+
+Queue::Queue(void) {
+  Node *sentinel = new Node(0);
+  this->head = sentinel;
+  this->tail = sentinel;
+  this->lock = FALSE;
+  this->enq_num = 0UL;
+  this->deq_num = 0UL;
+}
+
 Queue *new_queue(void) {
   Queue *q = LMN_MALLOC(Queue);
   Node *sentinel = new Node(0);

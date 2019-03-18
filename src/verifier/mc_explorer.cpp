@@ -270,8 +270,8 @@ void owcty_worker_init(LmnWorker *w) {
       mc->accepts1 = make_parallel_queue(LMN_Q_MRMW);
       mc->accepts2 = make_parallel_queue(LMN_Q_MRMW);
     } else {
-      mc->accepts1 = new_queue();
-      mc->accepts2 = new_queue();
+      mc->accepts1 = new Queue();
+      mc->accepts2 = new Queue();
     }
   } else {
     LmnWorker *primary = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
@@ -556,8 +556,8 @@ void map_worker_init(LmnWorker *w) {
       mc->propagate = make_parallel_queue(LMN_Q_MRMW);
       mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
     } else {
-      mc->propagate = new_queue();
-      mc->waitingSeed = new_queue();
+      mc->propagate = new Queue();
+      mc->waitingSeed = new Queue();
     }
   } else {
     LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
@@ -850,7 +850,7 @@ void bledge_worker_init(LmnWorker *w) {
     if (workers_entried_num(worker_group(w)) > 1) {
       mc->layer = make_parallel_queue(LMN_Q_MRMW);
     } else {
-      mc->layer = new_queue();
+      mc->layer = new Queue();
     }
   } else {
     mc->layer =
@@ -1006,8 +1006,8 @@ void mapndfs_worker_init(LmnWorker *w) {
       mc->propagate = make_parallel_queue(LMN_Q_MRMW);
       mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
     } else {
-      mc->propagate = new_queue();
-      mc->waitingSeed = new_queue();
+      mc->propagate = new Queue();
+      mc->waitingSeed = new Queue();
     }
   } else {
     LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
@@ -1168,8 +1168,8 @@ void mcndfs_worker_init(LmnWorker *w) {
       mc->propagate = make_parallel_queue(LMN_Q_MRMW);
       mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
     } else {
-      mc->propagate = new_queue();
-      mc->waitingSeed = new_queue();
+      mc->propagate = new Queue();
+      mc->waitingSeed = new Queue();
     }
   } else {
     LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);

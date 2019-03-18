@@ -158,7 +158,7 @@ void dfs_worker_init(LmnWorker *w) {
       vec_init(&mc->stack, mc->cutoff_depth + 1);
 
     if (lmn_env.core_num == 1) {
-      mc->q = new_queue();
+      mc->q = new Queue();
     } else if (worker_on_dynamic_lb(w)) {
       if (worker_use_mapndfs(w))
         mc->q = make_parallel_queue(LMN_Q_MRMW);
@@ -868,8 +868,8 @@ void bfs_worker_init(LmnWorker *w) {
   McExpandBFS *mc = LMN_MALLOC(McExpandBFS);
 
   if (!worker_on_parallel(w)) {
-    mc->cur = new_queue();
-    mc->nxt = new_queue();
+    mc->cur = new Queue();
+    mc->nxt = new Queue();
   }
   /* MT */
   else if (worker_id(w) == 0) {
