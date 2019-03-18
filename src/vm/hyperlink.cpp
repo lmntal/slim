@@ -201,7 +201,7 @@ void lmn_hyperlink_delete(LmnSymbolAtomRef at) {
       parent->children->delete_entry((HashKeyType)hl);
       hyperlink_rank_calc(parent, -1);
       if (parent->rank == 0) {
-        hashset_free(parent->children);
+        delete parent->children;
         parent->children = NULL;
       }
     }
@@ -237,7 +237,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
     //    parent->rank--;
     hyperlink_rank_calc(parent, -1);
     if (parent->rank == 0) {
-      hashset_free(parent->children);
+      delete parent->children;
       parent->children = NULL;
     }
 
@@ -291,14 +291,14 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
 
       newroot->rank = parent->rank - 1;
       if (newroot->rank == 0) {
-        hashset_free(newroot->children);
+        delete newroot->children;
         newroot->children = NULL;
       }
     }
   }
 
   if (children) {
-    hashset_free(children);
+    delete children;
   }
   LMN_FREE(hl);
 }
@@ -344,7 +344,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
       }
 
       if (hashset_num(old_parent_children) == 0) {
-        hashset_free(old_parent_children);
+        delete old_parent_children;
         old_parent->children = NULL;
       }
 

@@ -930,7 +930,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     /* EFFICIENCY: 解放のための再帰 */
     this->push_stackframe([=](bool result) {
-      hashset_free(hashset);
+      delete hashset;
       return result;
     });
 
@@ -959,7 +959,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     /* EFFICIENCY: 解放のための再帰 */
     this->push_stackframe([=](bool result) {
-      hashset_free(hashset);
+      delete hashset;
       return result;
     });
 
@@ -4226,7 +4226,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       /* EFFICIENCY: 解放のための再帰 */
       if (dmem_interpret(rc, rule, instr)) {
-        hashset_free((HashSet *)rc->wt(seti));
+        delete (HashSet *)rc->wt(seti);
         return TRUE;
       } else {
         LMN_ASSERT(0);
@@ -4257,7 +4257,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       /* EFFICIENCY: 解放のための再帰 */
       if (dmem_interpret(rc, rule, instr)) {
-        hashset_free((HashSet *)rc->wt(seti));
+        delete (HashSet *)rc->wt(seti);
         return TRUE;
       } else {
         LMN_ASSERT(0);

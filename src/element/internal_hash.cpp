@@ -204,9 +204,12 @@ HashSet::HashSet(unsigned int init_size) {
 
 void hashset_destroy(HashSet *set) { LMN_FREE(set->tbl); }
 
+HashSet::~HashSet() {
+  LMN_FREE(this->tbl);
+}
+
 void hashset_free(HashSet *set) {
-  hashset_destroy(set);
-  LMN_FREE(set);
+  delete set;
 }
 
 int HashSet::contains(HashKeyType key) {

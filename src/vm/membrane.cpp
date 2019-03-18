@@ -1919,7 +1919,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
   }
 
   vec_free(stack);
-  hashset_free(root);
+  delete root;
   if (guard)
     hashtbl_free(guard);
 
@@ -1928,7 +1928,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
     *atoms = visited;
     return TRUE;
   } else {
-    hashset_free(visited);
+    delete visited;
     *atoms = NULL;
     return FALSE;
   }

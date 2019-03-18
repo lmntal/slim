@@ -87,6 +87,7 @@ struct HashSet {
   unsigned int cap, num;
 
   HashSet(unsigned int init_size);
+  ~HashSet();
   int contains(HashKeyType key);
   void add(HashKeyType key);
   void delete_entry(HashKeyType key);
@@ -97,7 +98,6 @@ typedef struct HashSetItrator {
   unsigned int i;
 } HashSetIterator;
 
-void hashset_free(HashSet *set);
 void hashset_destroy(HashSet *set);
 HashSetIterator hashset_iterator(HashSet *set);
 void hashsetiter_next(HashSetIterator *it);
