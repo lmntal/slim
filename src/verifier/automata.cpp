@@ -222,8 +222,8 @@ BOOL AutomataState::get_is_accept() { return this->is_accept; }
 
 BOOL AutomataState::get_is_end() { return this->is_end; }
 
-void inline atmstate_set_scc(AutomataStateRef s, AutomataSCC *scc) {
-  s->scc = scc;
+void inline AutomataState::set_scc(AutomataSCC *scc) {
+  this->scc = scc;
 }
 
 BYTE atmstate_scc_type(AutomataStateRef s) {
@@ -354,7 +354,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
   if (!atmstate_scc(s)) { /* entering 2nd dfs */
     AutomataSCC *scc = atmscc_make();
     atmscc_issue_id(scc);
-    atmstate_set_scc(s, scc);
+    s->set_scc(scc);
     vec_push(&a->sccs, (vec_data_t)scc);
     if (s->get_is_end()) {
       atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
@@ -382,7 +382,7 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
            atmscc_type(scc) == SCC_TYPE_NON_ACCEPT)) {
         atmscc_set_type(scc, SCC_TYPE_PARTIALLY);
       }
-      atmstate_set_scc(succ, scc);
+      succ->set_scc(scc);
       automata_analysis_dfs2(a, succ);
     }
   }
