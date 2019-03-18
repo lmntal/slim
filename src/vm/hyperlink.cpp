@@ -276,7 +276,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       newroot->parent = newroot;
 
       if (!newroot->children) {
-        newroot->children = new HashSet(hashset_num(children));
+        newroot->children = new HashSet(children->num);
       }
 
       for (it = hashset_iterator(children); !hashsetiter_isend(&it);
@@ -343,7 +343,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
         ((HyperLink *)vec_get(children, j))->rank -= sub_rank;
       }
 
-      if (hashset_num(old_parent_children) == 0) {
+      if (old_parent_children->num == 0) {
         delete old_parent_children;
         old_parent->children = NULL;
       }

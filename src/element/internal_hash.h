@@ -100,8 +100,6 @@ typedef struct HashSetItrator {
 
 HashSetIterator hashset_iterator(HashSet *set);
 void hashsetiter_next(HashSetIterator *it);
-#define hashset_num(HT) (HT)->num
-
 #define hashsetiter_entry(I) ((I)->set->tbl[(I)->i])
 #define hashsetiter_isend(I) ((I)->i >= (I)->set->cap)
 

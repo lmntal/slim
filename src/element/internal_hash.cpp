@@ -206,10 +206,6 @@ HashSet::~HashSet() {
   LMN_FREE(this->tbl);
 }
 
-void hashset_free(HashSet *set) {
-  delete set;
-}
-
 int HashSet::contains(HashKeyType key) {
   return *hashset_get_p(this, key, EMPTY_KEY) != EMPTY_KEY;
 }
