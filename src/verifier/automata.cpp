@@ -62,6 +62,8 @@ struct Automata {
   st_table_t id_to_state_name;
   st_table_t prop_to_id;
   Vector sccs;
+
+  Automata(void);
 };
 
 struct AutomataState {
@@ -86,18 +88,18 @@ struct AutomataSCC {
  * automata
  */
 
+Automata::Automata() {
+  vec_init(&this->states, 32);
+  vec_init(&this->sccs, 4);
+  this->state_name_to_id = st_init_strtable();
+  this->id_to_state_name = st_init_numtable();
+  this->prop_to_id = st_init_strtable();
+  this->prop_num = 0;
+  this->init_state = 0; /* デフォルトでは最初の状態が初期状態 */
+}
+
 AutomataRef automata_make() {
-  AutomataRef a = LMN_MALLOC(struct Automata);
-
-  vec_init(&a->states, 32);
-  vec_init(&a->sccs, 4);
-  a->state_name_to_id = st_init_strtable();
-  a->id_to_state_name = st_init_numtable();
-  a->prop_to_id = st_init_strtable();
-  a->prop_num = 0;
-  a->init_state = 0; /* デフォルトでは最初の状態が初期状態 */
-
-  return a;
+  return new Automata();
 }
 
 void automata_free(AutomataRef a) {
@@ -459,7 +461,7 @@ int ncparse(nc::lexer *, AutomataRef);
 static int nc_parse(FILE *in, AutomataRef *automata) {
   nc::lexer scanner(in);
 
-  *automata = automata_make();
+  *automata = new Automata();
 
   return ncparse(&scanner, *automata);
 }

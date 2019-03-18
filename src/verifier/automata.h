@@ -68,7 +68,6 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* automata */
-AutomataRef automata_make(void);
 void automata_free(AutomataRef a);
 atmstate_id_t automata_state_id(AutomataRef a, char *state_name);
 const char *automata_state_name(AutomataRef a, atmstate_id_t id);
