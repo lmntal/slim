@@ -161,14 +161,14 @@ AutomataStateRef Automata::get_state(BYTE state_id) {
   return (AutomataStateRef)vec_get(&this->states, state_id);
 }
 
+atmstate_id_t Automata::get_init_state() { return this->init_state; }
+
 void automata_add_state(AutomataRef a, AutomataStateRef s) {
   if (vec_num(&a->states) <= s->id) {
     vec_resize(&a->states, s->id + 1, (vec_data_t)0);
   }
   vec_set(&a->states, s->id, (vec_data_t)s);
 }
-
-atmstate_id_t automata_get_init_state(AutomataRef a) { return a->init_state; }
 
 void automata_set_init_state(AutomataRef a, atmstate_id_t id) {
   a->init_state = id;
@@ -255,7 +255,7 @@ void automata_analysis(AutomataRef a) {
   BYTE *on_stack_list;
 
   LMN_ASSERT(vec_num(&a->states) > 0);
-  init_s = a->get_state((unsigned int)automata_get_init_state(a));
+  init_s = a->get_state((unsigned int)a->get_init_state());
   on_stack_list = LMN_CALLOC(BYTE, vec_num(&a->states));
   on_stack_list[(unsigned int)atmstate_id(init_s)] = 0xffU;
 
@@ -327,7 +327,7 @@ void print_property_automata(AutomataRef a) {
   }
 
   fprintf(stdout, "\nTransitions\n");
-  init = a->get_state((unsigned int)automata_get_init_state(a));
+  init = a->get_state((unsigned int)a->get_init_state());
   fprintf(stdout, "init:%lu\n", (unsigned long)atmstate_id(init));
   for (i = 0; i < n; i++) {
     AutomataStateRef s;

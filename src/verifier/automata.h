@@ -73,6 +73,7 @@ struct Automata {
   atmstate_id_t state_id(const char *);
   const char *state_name(atmstate_id_t);
   AutomataStateRef get_state(BYTE);
+  atmstate_id_t get_init_state();
 };
 
 /* Propositional Logic Formula */
@@ -87,7 +88,6 @@ enum SCC_ACCEPTING_TYPE {
 
 /* automata */
 void automata_set_init_state(AutomataRef a, atmstate_id_t id);
-atmstate_id_t automata_get_init_state(AutomataRef a);
 unsigned int automata_propsym_to_id(AutomataRef a, char *prop_name);
 AutomataStateRef atmstate_make(unsigned int id, BOOL is_accept_state,
                                BOOL is_end_state);

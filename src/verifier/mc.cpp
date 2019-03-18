@@ -104,7 +104,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   }
   wp = lmn_workergroup_make(a, psyms, thread_num);
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
-  p_label = a ? automata_get_init_state(a) : DEFAULT_STATE_ID;
+  p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
   mem = lmn_mem_copy(world_mem_org);
   init_s = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
