@@ -64,6 +64,7 @@ struct Automata {
   Vector sccs;
 
   Automata(void);
+  ~Automata(void);
 };
 
 struct AutomataState {
@@ -98,38 +99,33 @@ Automata::Automata() {
   this->init_state = 0; /* デフォルトでは最初の状態が初期状態 */
 }
 
-AutomataRef automata_make() {
-  return new Automata();
-}
-
-void automata_free(AutomataRef a) {
+Automata::~Automata() {
   unsigned int i;
 
   /* free key strings */
-  st_foreach(a->state_name_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
-  st_free_table(a->state_name_to_id);
+  st_foreach(this->state_name_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
+  st_free_table(this->state_name_to_id);
 
   /* free value strings */
-  st_foreach(a->id_to_state_name, (st_iter_func)free_val_str_f, (st_data_t)0);
-  st_free_table(a->id_to_state_name);
+  st_foreach(this->id_to_state_name, (st_iter_func)free_val_str_f, (st_data_t)0);
+  st_free_table(this->id_to_state_name);
 
   /* free key strings */
-  st_foreach(a->prop_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
-  st_free_table(a->prop_to_id);
+  st_foreach(this->prop_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
+  st_free_table(this->prop_to_id);
 
   /* free states */
-  for (i = 0; i < vec_num(&a->states); i++) {
-    atmstate_free((AutomataStateRef)vec_get(&a->states, i));
+  for (i = 0; i < vec_num(&this->states); i++) {
+    atmstate_free((AutomataStateRef)vec_get(&this->states, i));
   }
 
   /* free sccs */
-  for (i = 0; i < vec_num(&a->sccs); i++) {
-    atmscc_free((AutomataSCC *)vec_get(&a->sccs, i));
+  for (i = 0; i < vec_num(&this->sccs); i++) {
+    atmscc_free((AutomataSCC *)vec_get(&this->sccs, i));
   }
 
-  vec_destroy(&a->states);
-  vec_destroy(&a->sccs);
-  LMN_FREE(a);
+  vec_destroy(&this->states);
+  vec_destroy(&this->sccs);
 }
 
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_) {
