@@ -44,7 +44,6 @@
 
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
-static void atmstate_free(AutomataStateRef s);
 static void atm_transition_free(AutomataTransitionRef t);
 static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
                                    AutomataStateRef s);
@@ -94,7 +93,7 @@ Automata::~Automata() {
 
   /* free states */
   for (i = 0; i < vec_num(&this->states); i++) {
-    atmstate_free((AutomataStateRef)vec_get(&this->states, i));
+    delete (AutomataStateRef)vec_get(&this->states, i);
   }
 
   /* free sccs */
@@ -196,14 +195,13 @@ AutomataState::AutomataState(unsigned int id, BOOL is_accept_state,
   this->scc = NULL;
 }
 
-static void atmstate_free(AutomataStateRef s) {
+AutomataState::~AutomataState() {
   unsigned int i;
 
-  for (i = 0; i < vec_num(&s->transitions); i++) {
-    atm_transition_free((AutomataTransitionRef)vec_get(&s->transitions, i));
+  for (i = 0; i < vec_num(&this->transitions); i++) {
+    atm_transition_free((AutomataTransitionRef)vec_get(&this->transitions, i));
   }
-  vec_destroy(&s->transitions);
-  LMN_FREE(s);
+  vec_destroy(&this->transitions);
 }
 
 void atmstate_add_transition(AutomataStateRef s, AutomataTransitionRef t) {

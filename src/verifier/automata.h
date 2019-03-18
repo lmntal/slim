@@ -90,6 +90,7 @@ struct AutomataState {
   AutomataSCC *scc;
 
   AutomataState(unsigned int, BOOL, BOOL);
+  ~AutomataState();
 };
 
 /* Propositional Logic Formula */
