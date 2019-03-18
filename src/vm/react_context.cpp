@@ -115,9 +115,9 @@ void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
  * Mem React Context
  */
 
-LmnMemStack RC_MEMSTACK(MemReactContext *cxt) { return cxt->memstack; }
+LmnMemStack MemReactContext::MEMSTACK() { return this->memstack; }
 
-void RC_MEMSTACK_SET(MemReactContext *cxt, LmnMemStack s) { cxt->memstack = s; }
+void MemReactContext::MEMSTACK_SET(LmnMemStack s) { this->memstack = s; }
 
 /*----------------------------------------------------------------------
  * ND React Context

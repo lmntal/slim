@@ -36,17 +36,16 @@
  * $Id: system_ruleset.c,v 1.8 2008/09/29 05:23:40 taisuke Exp $
  */
 
+#include "atomlist.hpp"
 #include "functor.h"
 #include "lmntal.h"
+#include "membrane.hpp"
 #include "memstack.h"
 #include "react_context.hpp"
-#include "symbol.h"
-#include "membrane.hpp"
-#include "atomlist.hpp"
 #include "rule.hpp"
+#include "symbol.h"
 
 /* prototypes */
-
 
 /* delete out proxies connected each other */
 static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
@@ -79,15 +78,15 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
                 m1 = LMN_PROXY_GET_MEM(i1);
 
                 if (m0 == m1) {
-                  ent -> remove(o0); /* for efficiency */
-                  ent -> remove(o1);
+                  ent->remove(o0); /* for efficiency */
+                  ent->remove(o1);
                   lmn_delete_atom(o0);
                   lmn_delete_atom(o1);
                   lmn_mem_unify_atom_args(m0, i0, 1, i1, 1);
-                  ent -> remove(i0);
-                  ent -> remove(i1);
+                  ent->remove(i0);
+                  ent->remove(i1);
                   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-                    lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), m0);
+                    lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), m0);
                   }
                   return TRUE;
                 }
@@ -120,13 +119,13 @@ static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
               if (LMN_SATOM_GET_FUNCTOR(i1) == LMN_IN_PROXY_FUNCTOR) {
                 LmnSymbolAtomRef o1 =
                     (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(i1, 0);
-                ent -> remove(o0);
-                ent -> remove(o1);
+                ent->remove(o0);
+                ent->remove(o1);
                 lmn_delete_atom(o0);
                 lmn_delete_atom(o1);
                 lmn_mem_unify_atom_args(mem, o0, 1, o1, 1);
-                ent -> remove(i0);
-                ent -> remove(i1);
+                ent->remove(i0);
+                ent->remove(i1);
                 return TRUE;
               }
             }));
@@ -227,9 +226,7 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 /* -------------------------------------------------------------- */
 
 void init_default_system_ruleset() {
-  lmn_add_system_rule(
-      new LmnRule(delete_redundant_outproxies, ANONYMOUS));
-  lmn_add_system_rule(
-      new LmnRule(delete_redundant_inproxies, ANONYMOUS));
+  lmn_add_system_rule(new LmnRule(delete_redundant_outproxies, ANONYMOUS));
+  lmn_add_system_rule(new LmnRule(delete_redundant_inproxies, ANONYMOUS));
   lmn_add_system_rule(new LmnRule(mem_eq, ANONYMOUS));
 }

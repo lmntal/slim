@@ -37,12 +37,12 @@
  */
 
 #include "dumper.h"
+#include "atomlist.hpp"
 #include "ccallback.h"
 #include "memstack.h"
+#include "rule.hpp"
 #include "symbol.h"
 #include <ctype.h>
-#include "rule.hpp"
-#include "atomlist.hpp"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -448,7 +448,6 @@ static BOOL dump_symbol_atom(LmnPortRef port, LmnSymbolAtomRef atom,
 static BOOL dump_atom_args(LmnPortRef port, LmnSymbolAtomRef atom,
                            SimpleHashtbl *ht, struct DumpState *s,
                            int call_depth) {
-
   int i;
   int limit = LMN_SATOM_GET_LINK_NUM(atom);
 
@@ -1083,7 +1082,7 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_newlink(mem, a0, t0, 0, a2, t2, LMN_ATTR_GET_VALUE(t2));
 
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), m);
+    lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
   }
   lmn_mem_delete_mem(lmn_mem_parent(m), m);
 }
