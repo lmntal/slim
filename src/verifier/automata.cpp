@@ -156,16 +156,16 @@ const char *Automata::state_name(atmstate_id_t id) {
   }
 }
 
+AutomataStateRef Automata::get_state(BYTE state_id) {
+  LMN_ASSERT(vec_get(&this->states, state_id) != 0);
+  return (AutomataStateRef)vec_get(&this->states, state_id);
+}
+
 void automata_add_state(AutomataRef a, AutomataStateRef s) {
   if (vec_num(&a->states) <= s->id) {
     vec_resize(&a->states, s->id + 1, (vec_data_t)0);
   }
   vec_set(&a->states, s->id, (vec_data_t)s);
-}
-
-AutomataStateRef automata_get_state(AutomataRef a, BYTE state_id) {
-  LMN_ASSERT(vec_get(&a->states, state_id) != 0);
-  return (AutomataStateRef)vec_get(&a->states, state_id);
 }
 
 atmstate_id_t automata_get_init_state(AutomataRef a) { return a->init_state; }
@@ -255,7 +255,7 @@ void automata_analysis(AutomataRef a) {
   BYTE *on_stack_list;
 
   LMN_ASSERT(vec_num(&a->states) > 0);
-  init_s = automata_get_state(a, (unsigned int)automata_get_init_state(a));
+  init_s = a->get_state((unsigned int)automata_get_init_state(a));
   on_stack_list = LMN_CALLOC(BYTE, vec_num(&a->states));
   on_stack_list[(unsigned int)atmstate_id(init_s)] = 0xffU;
 
@@ -320,26 +320,26 @@ void print_property_automata(AutomataRef a) {
   n = vec_num(&(a->states));
 
   for (i = 0; i < n; i++) {
-    AutomataStateRef s = automata_get_state(a, i);
+    AutomataStateRef s = a->get_state(i);
     fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
             (unsigned long)atmstate_id(s), a->state_name(i),
             atmscc_id(atmstate_scc(s)), atmscc_name(atmstate_scc(s)));
   }
 
   fprintf(stdout, "\nTransitions\n");
-  init = automata_get_state(a, (unsigned int)automata_get_init_state(a));
+  init = a->get_state((unsigned int)automata_get_init_state(a));
   fprintf(stdout, "init:%lu\n", (unsigned long)atmstate_id(init));
   for (i = 0; i < n; i++) {
     AutomataStateRef s;
     unsigned long j, m;
 
-    s = automata_get_state(a, i);
+    s = a->get_state(i);
     fprintf(stdout, "%lu::", (unsigned long)atmstate_id(s));
     m = atmstate_transition_num(s);
     for (j = 0; j < m; j++) {
       fprintf(stdout, "%lu",
               (unsigned long)atmstate_id(
-                  automata_get_state(a, (unsigned int)atm_transition_next(
+                  a->get_state((unsigned int)atm_transition_next(
                                             atmstate_get_transition(s, j)))));
       if (j + 1 < m)
         fprintf(stdout, ",");
@@ -357,8 +357,8 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
 
   n = atmstate_transition_num(s);
   for (i = 0; i < n; i++) {
-    AutomataStateRef succ = automata_get_state(
-        a, (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
+    AutomataStateRef succ = a->get_state(
+        (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
     if (!on_stack_list[(unsigned int)atmstate_id(succ)]) {
       on_stack_list[(unsigned int)atmstate_id(succ)] = 0xffU;
       automata_analysis_dfs1(a, on_stack_list, succ);
@@ -387,8 +387,8 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
   unsigned long i, n;
   n = atmstate_transition_num(s);
   for (i = 0; i < n; i++) {
-    AutomataStateRef succ = automata_get_state(
-        a, (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
+    AutomataStateRef succ = a->get_state(
+        (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
     if (!atmstate_scc(succ)) {
       AutomataSCC *scc = atmstate_scc(s);
       if ((!atmstate_is_accept(succ) && atmscc_type(scc) == SCC_TYPE_FULLY) ||

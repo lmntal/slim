@@ -729,7 +729,7 @@ BOOL state_succ_contains(State *s, State *t) {
  * 性質オートマトンaが存在しない場合は直ちに偽を返す. */
 BOOL state_is_accept(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_is_accept(automata_get_state(a, state_property_state(s)));
+    return atmstate_is_accept(a->get_state(state_property_state(s)));
   } else {
     return FALSE;
   }
@@ -740,7 +740,7 @@ BOOL state_is_accept(AutomataRef a, State *s) {
  * TOFIX: rename (end --> invalid end) */
 BOOL state_is_end(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_is_end(automata_get_state(a, state_property_state(s)));
+    return atmstate_is_end(a->get_state(state_property_state(s)));
   } else {
     return FALSE;
   }
@@ -753,7 +753,7 @@ BOOL state_is_end(AutomataRef a, State *s) {
  */
 BYTE state_scc_id(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_scc_type(automata_get_state(a, state_property_state(s)));
+    return atmstate_scc_type(a->get_state(state_property_state(s)));
   } else {
     return FALSE;
   }
