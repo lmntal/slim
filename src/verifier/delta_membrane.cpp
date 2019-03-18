@@ -873,7 +873,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
   atommap = proc_tbl_make_with_size(64);
   vec_init(&stack, 16);
   d = dmem_root_get_mem_delta(root_d, mem);
-  *ret_dstlovec = vec_make(16);
+  *ret_dstlovec = new Vector(16);
 
   /* 根をスタックに積む。スタックにはリンクオブジェクトではなくアトムを積むため、
    * ここで根の先のアトムをコピーしスタックに積む必要がある */
@@ -2018,7 +2018,7 @@ static void dmem_add_child_mem(struct MemDelta *d, LmnMembraneRef parent,
 static void dmem_add_ruleset(struct MemDelta *d, LmnMembraneRef m,
                              LmnRuleSetRef ruleset) {
   if (!d->new_rulesets) {
-    d->new_rulesets = vec_make(16);
+    d->new_rulesets = new Vector(16);
   }
   vec_push(d->new_rulesets, (vec_data_t)ruleset);
 }
@@ -2166,7 +2166,7 @@ static inline void dmem_copy_rules(struct MemDelta *d, LmnMembraneRef dest,
   int i;
 
   if (!d->new_rulesets) {
-    d->new_rulesets = vec_make(16);
+    d->new_rulesets = new Vector(16);
   }
 
   for (i = 0; i < lmn_mem_ruleset_num(src); i++) {

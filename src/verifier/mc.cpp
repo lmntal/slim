@@ -678,7 +678,7 @@ static Vector *mc_gen_invalids_path(State *seed) {
   Vector *path;
   State *pred;
 
-  path = vec_make(32);
+  path = new Vector(32);
   pred = seed;
 
   while (pred) { /* 初期頂点のparentはNULL */
@@ -703,7 +703,7 @@ static Vector *mc_gen_invalids_path(State *seed) {
         vec_push(succs, (vec_data_t)SUCC);                                     \
       }                                                                        \
     } else {                                                                   \
-      succs = vec_make(2);                                                     \
+      succs = new Vector(2);                                                     \
       vec_push(succs, (vec_data_t)SUCC);                                       \
       st_insert(G, (st_data_t)(S_KEY), (st_data_t)succs);                      \
     }                                                                          \

@@ -129,8 +129,8 @@ struct McSearchNDFS {
 
 void ndfs_worker_init(LmnWorker *w) {
   McSearchNDFS *mc = LMN_MALLOC(McSearchNDFS);
-  mc->open = vec_make(1024);
-  mc->path = vec_make(512);
+  mc->open = new Vector(1024);
+  mc->path = new Vector(512);
   NDFS_WORKER_OBJ_SET(w, mc);
 }
 
@@ -178,7 +178,7 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(vec_num(cycle_path)) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
@@ -499,7 +499,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
             Vector *v;
             unsigned int i;
 
-            v = vec_make(vec_num(&path));
+            v = new Vector(vec_num(&path));
             for (i = 0; i < vec_num(&path); i++) {
               State *tmp = (State *)vec_get(&path, i);
              tmp->set_on_cycle();
@@ -793,7 +793,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
       Vector *v;
       unsigned int i;
 
-      v = vec_make(vec_num(&path));
+      v = new Vector(vec_num(&path));
       for (i = 0; i < vec_num(&path); i++) {
         State *tmp = (State *)vec_get(&path, i);
        tmp->set_on_cycle();
@@ -857,8 +857,8 @@ void bledge_worker_init(LmnWorker *w) {
         BLE_WORKER_LAYER_Q(workers_get_worker(worker_group(w), LMN_PRIMARY_ID));
   }
 
-  mc->path = vec_make(32);
-  mc->search = vec_make(64);
+  mc->path = new Vector(32);
+  mc->search = new Vector(64);
   mc->traversed = st_init_ptrtable();
 
   BLE_WORKER_OBJ_SET(w, mc);
@@ -940,7 +940,7 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
   wp->error_exist = TRUE;
 
   gen_counter_example = lmn_env.dump;
-  v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(vec_num(cycle_path)) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
@@ -997,8 +997,8 @@ struct McSearchMAPNDFS {
 
 void mapndfs_worker_init(LmnWorker *w) {
   McSearchMAPNDFS *mc = LMN_MALLOC(McSearchMAPNDFS);
-  mc->open = vec_make(1024);
-  mc->path = vec_make(512);
+  mc->open = new Vector(1024);
+  mc->path = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
@@ -1094,7 +1094,7 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(vec_num(cycle_path)) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
@@ -1159,8 +1159,8 @@ static void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
 
 void mcndfs_worker_init(LmnWorker *w) {
   McSearchMAPNDFS *mc = LMN_MALLOC(McSearchMAPNDFS);
-  mc->open = vec_make(1024);
-  mc->path = vec_make(512);
+  mc->open = new Vector(1024);
+  mc->path = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
@@ -1251,7 +1251,7 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(vec_num(cycle_path)) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {

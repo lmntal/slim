@@ -49,9 +49,28 @@
 #include <vector>
 #include "util.h"
 
+static inline Vector *vec_init(Vector *vec, unsigned int init_size);
+
 struct Vector {
   LmnWord *tbl;
   unsigned int num, cap;
+  Vector(){
+  }
+  Vector(unsigned int init_size){
+    LMN_ASSERT(init_size > 0);
+//    Vector *vec = LMN_MALLOC(Vector);
+    vec_init(this, init_size);
+  }
+  template <class T> Vector(const std::vector<T> &v){
+    static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
+                "vector elements must be scalars.");
+//    auto res = new Vector(v.size());
+    LMN_ASSERT(v.size() > 0);
+    vec_init(this, v.size());
+    memcpy(this->tbl, v.data(), sizeof(T) * v.size());
+    this->num = v.size();
+//    return res;
+  }
 };
 
 typedef struct Vector *PVector;
@@ -61,8 +80,7 @@ typedef LmnWord vec_data_t;
 #define vec_num(V) ((V)->num)
 #define vec_is_empty(V) ((V)->num == 0)
 
-static inline Vector *vec_init(Vector *vec, unsigned int init_size);
-static inline Vector *vec_make(unsigned int init_size);
+//static inline Vector *vec_make(unsigned int init_size);
 static inline void vec_push(Vector *vec, LmnWord keyp);
 static inline LmnWord vec_pop(Vector *vec);
 static inline LmnWord vec_peek(const Vector *vec);
@@ -91,11 +109,12 @@ static inline Vector *vec_init(Vector *vec, unsigned int init_size) {
 }
 
 /* make */
-static inline Vector *vec_make(unsigned int init_size) {
-  LMN_ASSERT(init_size > 0);
-  Vector *vec = LMN_MALLOC(Vector);
-  return vec_init(vec, init_size);
-}
+//static inline Vector *vec_make(unsigned int init_size) {
+////  LMN_ASSERT(init_size > 0);
+////  Vector *vec = LMN_MALLOC(Vector);
+////  return vec_init(vec, init_size);
+//  return new Vector(init_size);
+//}
 
 /* extend (static) */
 static inline void vec_extend(Vector *vec) {
@@ -174,14 +193,14 @@ static inline unsigned long vec_space(Vector *v) {
   return sizeof(struct Vector) + vec_space_inner(v);
 }
 
-template <class T> Vector *vec_make(const std::vector<T> &v) {
-  static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
-                "vector elements must be scalars.");
-  auto res = vec_make(v.size());
-  memcpy(res->tbl, v.data(), sizeof(T) * v.size());
-  res->num = v.size();
-  return res;
-}
+//template <class T> Vector *vec_make(const std::vector<T> &v) {
+//  static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
+//                "vector elements must be scalars.");
+//  auto res = new Vector(v.size());
+//  memcpy(res->tbl, v.data(), sizeof(T) * v.size());
+//  res->num = v.size();
+//  return res;
+//}
 
 namespace slim {
 namespace element {

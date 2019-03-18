@@ -735,7 +735,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     Vector *fresh = NULL;
 
     if (n > 0) {
-      fresh = vec_make(n);
+      fresh = new Vector(n);
       start = worker_id(w) % n;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, (start + i) % n);
@@ -928,7 +928,7 @@ void bfs_start(LmnWorker *w) {
   wp = worker_group(w);
   d = 1;
   d_lim = lmn_env.depth_limits; /* ローカル変数に */
-  new_ss = vec_make(32);
+  new_ss = new Vector(32);
 
   if (!worker_on_parallel(w) ||
       worker_id(w) == 0) { /* 重複して初期状態をenqしないようにするための条件 */

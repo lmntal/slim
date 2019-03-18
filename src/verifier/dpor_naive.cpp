@@ -156,7 +156,7 @@ void init_por_vars() {
   mc_por.strans_independency = st_init_numtable();
   mc_por.states = st_init_statetable();
   mc_por.queue = new_queue();
-  mc_por.ample_candidate = vec_make(POR_VEC_SIZE);
+  mc_por.ample_candidate = new Vector(POR_VEC_SIZE);
   mc_por.next_strans_id = POR_ID_INITIALIZER; /* 0は使用しない */
   mc_por.rc = nullptr;
   mc_por.flags = 0x00U;
@@ -518,7 +518,7 @@ static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
       st_data_t t = 0;
       if (!st_lookup(mc_por.strans_independency, (st_data_t)assign_id,
                      (st_data_t *)&t)) {
-        Vector *v = vec_make(1);
+        Vector *v = new Vector(1);
         st_add_direct(mc_por.strans_independency, (st_data_t)assign_id,
                       (st_data_t)v);
       } else {
@@ -685,7 +685,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
       t = 0;
       if (!st_lookup(mc_por.strans_independency, (st_data_t)id,
                      (st_data_t *)&t)) {
-        Vector *v = vec_make(1);
+        Vector *v = new Vector(1);
         st_add_direct(mc_por.strans_independency, (st_data_t)id, (st_data_t)v);
       } /* else 独立な遷移 */
     }

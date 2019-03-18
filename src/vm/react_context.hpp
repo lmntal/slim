@@ -137,7 +137,7 @@ struct LmnReactCxt : slim::vm::RuleContext {
     hl_sameproccxt = NULL;
     trace_num = 0;
 #ifdef USE_FIRSTCLASS_RULE
-    insertion_events = vec_make(4);
+    insertion_events = new Vector(4);
 #endif
   }
 

@@ -83,7 +83,7 @@ void integer_set(LmnReactCxtRef rc,
 
   start  = (long long)a0;
   end    = (long long)a1;
-  srcvec = vec_make(16);
+  srcvec = new Vector(16);
   vec_push(srcvec, (LmnWord)LinkObj_make(a2, t2));
 
   for (i = 0, n = start; n <= end; i++, n++) {

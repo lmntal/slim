@@ -390,7 +390,7 @@ const BYTE *translate_instructions(const BYTE *p, Vector *jump_points,
 }
 
 static void translate_rule(LmnRuleRef rule, const char *header) {
-  Vector *jump_points = vec_make(4);
+  Vector *jump_points = new Vector(4);
   int i;
 
   vec_push(jump_points, (LmnWord)rule->inst_seq);

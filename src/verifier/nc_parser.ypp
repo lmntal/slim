@@ -103,7 +103,7 @@ never_claim:
 ;
 
 states:
-/* empty */ { $$ = vec_make(32); }
+/* empty */ { $$ = new Vector(32); }
 | states state  { vec_push($1, (vec_data_t)$2); $$ = $1; }
 ;
 
@@ -139,7 +139,7 @@ state:
 ;
 
 transitions:
-  /* empty */ { $$ = vec_make(32); }
+  /* empty */ { $$ = new Vector(32); }
 | transitions transition { vec_push($1, (vec_data_t)$2); $$ = $1; }
 ;
 

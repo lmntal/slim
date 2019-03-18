@@ -486,8 +486,8 @@ static void workers_gen(LmnWorkerGroup *owner, unsigned int worker_num,
     w->group = owner;
 
     if (owner->do_search) {
-      w->invalid_seeds = vec_make(4);
-      w->cycles = vec_make(4);
+      w->invalid_seeds = new Vector(4);
+      w->cycles = new Vector(4);
     }
 
     /* アルゴリズムの割り当てと初期化 */

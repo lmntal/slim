@@ -125,9 +125,9 @@ void RC_MEMSTACK_SET(MemReactContext *cxt, LmnMemStack s) { cxt->memstack = s; }
 
 McReactCxtData::McReactCxtData() {
   succ_tbl = st_init_ptrtable();
-  roots = vec_make(32);
-  rules = vec_make(32);
-  props = vec_make(8);
+  roots = new Vector(32);
+  rules = new Vector(32);
+  props = new Vector(8);
   mem_deltas = NULL;
   mem_delta_tmp = NULL;
   opt_mode = 0x00U;
@@ -135,7 +135,7 @@ McReactCxtData::McReactCxtData() {
   d_cur = 0;
 
   if (lmn_env.delta_mem) {
-    mem_deltas = vec_make(32);
+    mem_deltas = new Vector(32);
   }
 
   if (lmn_env.enable_por && !lmn_env.enable_por_old) {

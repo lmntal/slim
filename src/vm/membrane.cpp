@@ -167,7 +167,7 @@ LmnMembraneRef lmn_mem_make(void) {
   lmn_mem_set_id(mem, env_gen_next_id());
 
 #ifdef USE_FIRSTCLASS_RULE
-  mem->firstclass_rulesets = vec_make(4);
+  mem->firstclass_rulesets = new Vector(4);
 #endif
 
   return mem;
@@ -1175,7 +1175,7 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
       proc_tbl_put_new_hlink(
           hlinkmap, lmn_hyperlink_get_root(hl),
           (LmnWord)(lmn_hyperlink_at_to_hl(copied_root_hlAtom)));
-      Vector *hl_childs = vec_make(16);
+      Vector *hl_childs = new Vector(16);
       lmn_hyperlink_get_elements(hl_childs, hl);
       element_num = vec_num(hl_childs) - 1;
       for (j = 0; j < element_num;
@@ -1252,8 +1252,8 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, Vector **ret_dstlovec,
 
   atommap = proc_tbl_make_with_size(64);
   hlinkmap = proc_tbl_make_with_size(64);
-  stack = vec_make(16);
-  *ret_dstlovec = vec_make(16);
+  stack = new Vector(16);
+  *ret_dstlovec = new Vector(16);
 
   /* 根をスタックに積む.
    * スタックにはリンクオブジェクトではなくアトムを積むため,
@@ -1593,7 +1593,7 @@ BOOL ground_atoms(
 
   *natoms = 0;
   *atoms = proc_tbl_make_with_size(64);
-  unsearched_link_stack = vec_make(16);
+  unsearched_link_stack = new Vector(16);
   reached_root_count = 1;
   // found_ground_symbol_atoms = proc_tbl_make_with_size(64);
   result = TRUE;
@@ -1682,7 +1682,7 @@ BOOL ground_atoms(
             if (flg_search_hl) {
               proc_tbl_put_new_hlink(*hlinks, lmn_hyperlink_get_root(hl),
                                      (LmnWord)hl);
-              hl_childs = vec_make(16);
+              hl_childs = new Vector(16);
 
               lmn_hyperlink_get_elements(hl_childs, hl);
               element_num = vec_num(hl_childs) - 1;
@@ -1826,7 +1826,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
   HashSet *visited = hashset_make(16);
   SimpleHashtbl *guard = NULL;
   HashSet *root = hashset_make(16);
-  Vector *stack = vec_make(16);
+  Vector *stack = new Vector(16);
   unsigned int i;
   unsigned int n;            /* 到達したアトムの数 */
   unsigned int n_root_data;  /* 根にあるデータアトムの数 */
@@ -2757,8 +2757,8 @@ static inline BOOL mem_equals_children(LmnMembraneRef mem1, LmnMembraneRef mem2,
                             */
     BOOL matched;
 
-    v_mems_children1 = vec_make(child_n);
-    v_mems_children2 = vec_make(child_n);
+    v_mems_children1 = new Vector(child_n);
+    v_mems_children2 = new Vector(child_n);
     memset(v_mems_children1->tbl, 0,
            sizeof(vec_data_t) * vec_cap(v_mems_children1));
     memset(v_mems_children2->tbl, 0,
@@ -2852,7 +2852,7 @@ static void mem_mk_sorted_children(Vector *vec) {
       num_descendants_max = n;
     }
   }
-  v_mems_tmp = vec_make(vec_num(vec));
+  v_mems_tmp = new Vector(vec_num(vec));
   for (n = 0; n <= num_descendants_max; n++) {
     for (i = 0; i < vec_num(vec); i++) {
       if (n == lmn_mem_count_descendants((LmnMembraneRef)vec_get(vec, i))) {
@@ -2913,8 +2913,8 @@ static inline BOOL mem_equals_molecules(LmnMembraneRef mem1,
 
     /* 以降、未走査／走査済アトムを管理するvectorの初期化 */
 
-    v_atoms_not_checked1 = vec_make(atom_n);
-    v_atoms_not_checked2 = vec_make(atom_n);
+    v_atoms_not_checked1 = new Vector(atom_n);
+    v_atoms_not_checked2 = new Vector(atom_n);
     memset(v_atoms_not_checked1->tbl, 0,
            sizeof(vec_data_t) * vec_cap(v_atoms_not_checked1));
     memset(v_atoms_not_checked2->tbl, 0,
@@ -2956,8 +2956,8 @@ static inline BOOL mem_equals_molecules(LmnMembraneRef mem1,
 
     LMN_ASSERT(vec_num(v_atoms_not_checked1) == vec_num(v_atoms_not_checked2));
 
-    v_log1 = vec_make(atom_n);
-    v_log2 = vec_make(atom_n);
+    v_log1 = new Vector(atom_n);
+    v_log2 = new Vector(atom_n);
 
     ret = mem_equals_molecules_inner(v_log1, v_atoms_not_checked1, v_log2,
                                      v_atoms_not_checked2, current_depth);
@@ -3268,7 +3268,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
                  */
   unsigned int i, j;
 
-  vec = vec_make(1);
+  vec = new Vector(1);
   memset(vec->tbl, 0, sizeof(atomvec_data *) * vec->cap);
   anum_max = 0;
 
@@ -3277,7 +3277,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
 
                             ad = LMN_MALLOC(atomvec_data);
                             ad->fid = f;
-                            ad->atom_ptrs = vec_make(1);
+                            ad->atom_ptrs = new Vector(1);
 
                             /* 本膜直下のアトムの内、ファンクタがfであるもののアドレスをベクターatom_ptrs内に整理する。
                              * 後でソートする関係で、最も多くのアトムのアドレスを管理する構造体(atomvec_data)内のアトム数を求めている。
@@ -3300,7 +3300,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
 
   /* sort */
   if (anum_max > 0) {
-    v_tmp = vec_make(vec_num(vec));
+    v_tmp = new Vector(vec_num(vec));
 
     for (i = 1; i <= anum_max; i++) {
       for (j = 0; j < vec_num(vec); j++) {

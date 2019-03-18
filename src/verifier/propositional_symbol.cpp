@@ -188,7 +188,7 @@ BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
  * propositional symbol definitions
  */
 
-PropSyms propsyms_make() { return vec_make(32); }
+PropSyms propsyms_make() { return new Vector(32); }
 
 unsigned int propsyms_num(PropSyms props) { return vec_num(props); }
 

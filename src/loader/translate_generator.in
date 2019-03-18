@@ -528,7 +528,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #newlist LmnInstrVar
   {
-    Vector *listvec = vec_make(16);
+    Vector *listvec = new Vector(16);
     rc->reg($0) = {(LmnWord)listvec, 0, TT_OTHER};
 #__echo_t
     {
@@ -606,7 +606,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     free_links(srcvec);
 
     /* 返り値の作成 */
-    retvec = vec_make(2);
+    retvec = new Vector(2);
     vec_push(retvec, (LmnWord)dstlovec);
     vec_push(retvec, (LmnWord)atommap);
     rc->reg($0) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};

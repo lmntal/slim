@@ -349,12 +349,12 @@ static void contextC1_expand_RHS(McDporData *mc, ContextC1Ref c,
 
 static McDporData *dpor_data_make() {
   McDporData *d = LMN_MALLOC(McDporData);
-  d->wt_gatoms = vec_make(4);
+  d->wt_gatoms = new Vector(4);
   d->wt_flags = proc_tbl_make();
-  d->ample_cand = vec_make(8);
+  d->ample_cand = new Vector(8);
   d->nxt_tr_id = 0;
   d->delta_tbl = st_init_ptrtable();
-  d->free_deltas = vec_make(32);
+  d->free_deltas = new Vector(32);
   return d;
 }
 
@@ -872,7 +872,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 #ifdef DEBUG
   else if (lmn_env.show_reduced_graph) {
     if (!reduced_stack) {
-      reduced_stack = vec_make(512);
+      reduced_stack = new Vector(512);
     }
     for (i = 0; i < vec_num(contextC1_set); i++) {
       State *src_succ;
@@ -1018,8 +1018,8 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
     f = 0x00U;
     mc_set_compress(f);
     mc_set_trans(f);
-    new_ss = vec_make(32);
-    search = vec_make(128);
+    new_ss = new Vector(32);
+    search = new Vector(128);
 
     while (!vec_is_empty(reduced_stack)) {
       State *s, *parent, *ret, tmp_s;

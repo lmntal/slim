@@ -106,7 +106,7 @@ Vector *vec_copy(Vector *vec) {
   int i;
   Vector *new_vec;
 
-  new_vec = vec_make(vec->num > 0 ? vec->num : 1);
+  new_vec = new Vector(vec->num > 0 ? vec->num : 1);
 
   for (i = 0; i < vec_num(vec); i++) {
     new_vec->tbl[i] = vec->tbl[i];

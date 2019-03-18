@@ -41,7 +41,7 @@
 
 Vector *sp_atom_callback_tbl;
 
-void sp_atom_init() { sp_atom_callback_tbl = vec_make(64); }
+void sp_atom_init() { sp_atom_callback_tbl = new Vector(64); }
 
 void sp_atom_finalize() {
   int i;

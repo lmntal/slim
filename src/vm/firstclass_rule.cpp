@@ -362,7 +362,7 @@ string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
-  Vector *link_connections = vec_make(10);
+  Vector *link_connections = new Vector(10);
 
   LmnStringRef head =
       string_of_template_membrane(link_connections, h_mem, imply);

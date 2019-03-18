@@ -41,7 +41,7 @@
 
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
 
-LmnMemStack lmn_memstack_make() { return vec_make(64); }
+LmnMemStack lmn_memstack_make() { return new Vector(64); }
 
 void lmn_memstack_free(LmnMemStack memstack) { vec_free(memstack); }
 

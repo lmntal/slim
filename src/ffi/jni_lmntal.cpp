@@ -352,7 +352,7 @@ static void _run(file_ptr fp)
   LmnRuleSetRef t;
 
   t = load(std::move(fp));
-  start_rulesets = vec_make(2);
+  start_rulesets = new Vector(2);
 
   vec_push(start_rulesets, (vec_data_t)t);
 

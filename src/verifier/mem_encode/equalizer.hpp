@@ -76,7 +76,7 @@ struct equalizer_base {
     (*i_bs) += BS_RULESET_NUM_SIZE;
 
     /* TODO: on-the-flyにできるはず */
-    auto rulesets = vec_make(rs_num + 1);
+    auto rulesets = new Vector(rs_num + 1);
     binstr_decoder dec(bs->v, bs->len, *i_bs);
     dec.decode_rulesets(rs_num, rulesets);
     *i_bs = dec.scanner.location();

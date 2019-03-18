@@ -172,7 +172,7 @@ void lmn_run(Vector *start_rulesets) {
    * もし通常実行の並列化を考えるならばIDを再利用するためのMT-Safeな機構が必要
    */
   if (!env_proc_id_pool()) {
-    env_set_proc_id_pool(vec_make(64));
+    env_set_proc_id_pool(new Vector(64));
   }
 
   /* interactive: normal_cleaningフラグがONの場合は後始末 */
@@ -778,8 +778,8 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec,
                   const std::vector<LmnFunctor> &attr_functors,
                   const std::vector<LmnWord> &attr_dataAtoms,
                   const std::vector<LmnLinkAttr> &attr_dataAtom_attrs) {
-  auto v1 = vec_make(attr_dataAtoms.size());
-  auto v2 = vec_make(attr_dataAtom_attrs.size());
+  auto v1 = new Vector(attr_dataAtoms.size());
+  auto v2 = new Vector(attr_dataAtom_attrs.size());
   auto p1 = proc_tbl_make_with_size(attr_functors.size());
 
   for (auto &v : attr_dataAtoms)
@@ -2933,7 +2933,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     free_links(srcvec);
 
     /* 返り値の作成 */
-    retvec = vec_make(2);
+    retvec = new Vector(2);
     vec_push(retvec, (LmnWord)dstlovec);
     vec_push(retvec, (LmnWord)atommap);
     rc->reg(dstlist) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
@@ -3182,7 +3182,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   }
   case INSTR_NEWLIST: {
     LmnInstrVar listi;
-    Vector *listvec = vec_make(16);
+    Vector *listvec = new Vector(16);
     READ_VAL(LmnInstrVar, instr, listi);
     rc->reg(listi) = {(LmnWord)listvec, 0, TT_OTHER};
 
@@ -4583,7 +4583,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       free_links(srcvec);
 
       /* 返り値の作成 */
-      retvec = vec_make(2);
+      retvec = new Vector(2);
       vec_push(retvec, (LmnWord)dstlovec);
       vec_push(retvec, (LmnWord)atommap);
       rc->reg(dstlist) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
@@ -4626,7 +4626,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
     }
     case INSTR_NEWLIST: {
       LmnInstrVar listi;
-      Vector *listvec = vec_make(16);
+      Vector *listvec = new Vector(16);
       READ_VAL(LmnInstrVar, instr, listi);
       rc->reg(listi) = {(LmnWord)listvec, 0, TT_OTHER};
 
@@ -4988,7 +4988,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
 Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
   unsigned long i;
-  Vector *vec = vec_make(16);
+  Vector *vec = new Vector(16);
 
   /* リンクオブジェクトのベクタを構築 */
   for (i = 0; i < vec_num(link_idxs); i++) {
