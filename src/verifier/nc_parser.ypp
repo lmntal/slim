@@ -93,7 +93,7 @@ never_claim:
     AutomataStateRef s;
 
     s = (AutomataStateRef)vec_get(states, 0);
-    automata->set_init_state(atmstate_id(s));
+    automata->set_init_state(s->get_id());
     for (i = 0; i < vec_num(states); i++) {
       automata->add_state((AutomataStateRef)vec_get(states, i));
     }

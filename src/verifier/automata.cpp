@@ -208,7 +208,7 @@ void AutomataState::add_transition(AutomataTransitionRef t) {
   vec_push(&this->transitions, (vec_data_t)t);
 }
 
-atmstate_id_t atmstate_id(AutomataStateRef s) { return s->id; }
+atmstate_id_t AutomataState::get_id() { return this->id; }
 
 unsigned int atmstate_transition_num(AutomataStateRef s) {
   return vec_num(&s->transitions);
@@ -244,7 +244,7 @@ void automata_analysis(AutomataRef a) {
   LMN_ASSERT(vec_num(&a->states) > 0);
   init_s = a->get_state((unsigned int)a->get_init_state());
   on_stack_list = LMN_CALLOC(BYTE, vec_num(&a->states));
-  on_stack_list[(unsigned int)atmstate_id(init_s)] = 0xffU;
+  on_stack_list[(unsigned int)init_s->get_id()] = 0xffU;
 
   automata_analysis_dfs1(a, on_stack_list, init_s);
   LMN_FREE(on_stack_list);
@@ -309,25 +309,25 @@ void print_property_automata(AutomataRef a) {
   for (i = 0; i < n; i++) {
     AutomataStateRef s = a->get_state(i);
     fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
-            (unsigned long)atmstate_id(s), a->state_name(i),
+            (unsigned long)s->get_id(), a->state_name(i),
             atmscc_id(atmstate_scc(s)), atmscc_name(atmstate_scc(s)));
   }
 
   fprintf(stdout, "\nTransitions\n");
   init = a->get_state((unsigned int)a->get_init_state());
-  fprintf(stdout, "init:%lu\n", (unsigned long)atmstate_id(init));
+  fprintf(stdout, "init:%lu\n", (unsigned long)init->get_id());
   for (i = 0; i < n; i++) {
     AutomataStateRef s;
     unsigned long j, m;
 
     s = a->get_state(i);
-    fprintf(stdout, "%lu::", (unsigned long)atmstate_id(s));
+    fprintf(stdout, "%lu::", (unsigned long)s->get_id());
     m = atmstate_transition_num(s);
     for (j = 0; j < m; j++) {
       fprintf(stdout, "%lu",
-              (unsigned long)atmstate_id(
+              (unsigned long)
                   a->get_state((unsigned int)atm_transition_next(
-                                            atmstate_get_transition(s, j)))));
+                                       atmstate_get_transition(s, j)))->get_id());
       if (j + 1 < m)
         fprintf(stdout, ",");
     }
@@ -346,8 +346,8 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
   for (i = 0; i < n; i++) {
     AutomataStateRef succ = a->get_state(
         (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
-    if (!on_stack_list[(unsigned int)atmstate_id(succ)]) {
-      on_stack_list[(unsigned int)atmstate_id(succ)] = 0xffU;
+    if (!on_stack_list[(unsigned int)succ->get_id()]) {
+      on_stack_list[(unsigned int)succ->get_id()] = 0xffU;
       automata_analysis_dfs1(a, on_stack_list, succ);
     }
   }
