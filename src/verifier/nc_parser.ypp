@@ -117,7 +117,7 @@ state:
     cur = automata->state_id($1);
     s = new AutomataState(cur, is_accept_state, 0);
     for (i = 0; i < vec_num($4); i++) {
-      atmstate_add_transition(s, (AutomataTransitionRef)vec_get($4, i));
+      s->add_transition((AutomataTransitionRef)vec_get($4, i));
     }
     $$ = s;
 
@@ -132,7 +132,7 @@ state:
     if (strstr($1, "accept") != NULL) is_accept_state = TRUE;
     cur = automata->state_id($1);
     s = new AutomataState(cur, is_accept_state, 1);
-    atmstate_add_transition(s, atm_transition_make(cur, true_node_make()));
+    s->add_transition(atm_transition_make(cur, true_node_make()));
     $$ = s;
     free($1);
   }

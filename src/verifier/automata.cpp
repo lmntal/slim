@@ -204,8 +204,8 @@ AutomataState::~AutomataState() {
   vec_destroy(&this->transitions);
 }
 
-void atmstate_add_transition(AutomataStateRef s, AutomataTransitionRef t) {
-  vec_push(&s->transitions, (vec_data_t)t);
+void AutomataState::add_transition(AutomataTransitionRef t) {
+  vec_push(&this->transitions, (vec_data_t)t);
 }
 
 atmstate_id_t atmstate_id(AutomataStateRef s) { return s->id; }
