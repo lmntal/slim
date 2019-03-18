@@ -73,6 +73,7 @@ struct TreeDatabase {
   TreeNodeID tree_find_or_put(LmnBinStrRef bs, BOOL *found);
   BOOL table_find_or_put(TreeNodeElement left,
                        TreeNodeElement right, TreeNodeID *ref);
+  LmnBinStrRef get(TreeNodeID ref, int len);
 };
 
 struct TreeNode {
@@ -80,7 +81,6 @@ struct TreeNode {
   TreeNodeElement right;
 };
 
-LmnBinStrRef tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len);
 uint64_t tree_space(TreeDatabaseRef treedb);
 
 #define tree_db_node_count(db) (db->node_count)

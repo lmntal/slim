@@ -113,7 +113,7 @@ void test_tree_002()
     string->v[i] = i + 1;
 
   ref = treedb->tree_find_or_put(string, &found);
-  ret = tree_get(treedb, ref, string->len);
+  ret = treedb->get(treedb, ref, string->len);
 
   CU_ASSERT(binstr_compare(string, ret) == 0);
 
@@ -138,7 +138,7 @@ void test_tree_003()
       bs->v[j] = (rand() % 0xFF);
 
     ref = treedb->tree_find_or_put(bs, &found);
-    bs_ret = tree_get(treedb, ref, bs->len);
+    bs_ret = treedb->get(treedb, ref, bs->len);
     CU_ASSERT(binstr_compare(bs, bs_ret) == 0);
     lmn_binstr_free(bs);
     lmn_binstr_free(bs_ret);

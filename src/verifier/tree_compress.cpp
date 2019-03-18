@@ -295,7 +295,7 @@ void tree_get_rec(TreeDatabaseRef treedb, TreeNodeElement elem, int start,
   }
 }
 
-LmnBinStrRef tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len) {
+LmnBinStrRef TreeDatabase::get(TreeNodeID ref, int len) {
   LmnBinStrRef bs = binstr_make(len);
   struct TreeNodeStr str;
   int real_len = ((len + 1) / TAG_IN_BYTE);
@@ -306,7 +306,7 @@ LmnBinStrRef tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len) {
   if (str.extra > 0)
     str.len += 1;
   // printf("node_count: %d, extra:%d\n", str.len, str.extra);
-  tree_get_rec(treedb, ref, 0, str.len * TREE_UNIT_SIZE - 1, &str);
+  tree_get_rec(this, ref, 0, str.len * TREE_UNIT_SIZE - 1, &str);
   return bs;
 }
 

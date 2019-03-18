@@ -400,7 +400,7 @@ LmnBinStrRef lmn_bscomp_tree_decode(TreeNodeID ref, int len) {
     profile_start_timer(PROFILE_TIME__TREE_UNCOMPRESS);
   }
 #endif
-  bs = tree_get(treedb, ref, len);
+  bs = treedb->get(ref, len);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_add_space(PROFILE_SPACE__STATE_BINSTR, lmn_binstr_space(bs));
