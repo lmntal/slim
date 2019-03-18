@@ -53,20 +53,6 @@ static inline unsigned int atmscc_id(AutomataSCC *s);
 static inline BYTE atmscc_type(AutomataSCC *s);
 static inline void atmscc_set_type(AutomataSCC *s, BYTE type);
 
-struct Automata {
-  /*   atmstate_id_t init_state; */
-  atmstate_id_t init_state;
-  unsigned int prop_num;
-  Vector states; /* Vector of AutomataState */
-  st_table_t state_name_to_id;
-  st_table_t id_to_state_name;
-  st_table_t prop_to_id;
-  Vector sccs;
-
-  Automata(void);
-  ~Automata(void);
-};
-
 struct AutomataState {
   atmstate_id_t id;
   BOOL is_accept;
@@ -138,10 +124,10 @@ static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_) {
   return ST_CONTINUE;
 }
 
-atmstate_id_t automata_state_id(AutomataRef a, char *state_name) {
+atmstate_id_t Automata::state_id(const char *state_name) {
   st_data_t id;
 
-  if (st_lookup(a->state_name_to_id, (st_data_t)state_name, &id)) {
+  if (st_lookup(this->state_name_to_id, (st_data_t)state_name, &id)) {
     return id;
   } else {
     /* 0から順にIDを付ける */
@@ -149,12 +135,12 @@ atmstate_id_t automata_state_id(AutomataRef a, char *state_name) {
     char *str1;
     int new_id;
 
-    new_id = st_num(a->state_name_to_id);
+    new_id = st_num(this->state_name_to_id);
     str0 = strdup(state_name);
     str1 = strdup(state_name);
 
-    st_add_direct(a->state_name_to_id, (st_data_t)str0, (st_data_t)new_id);
-    st_add_direct(a->id_to_state_name, (st_data_t)new_id, (st_data_t)str1);
+    st_add_direct(this->state_name_to_id, (st_data_t)str0, (st_data_t)new_id);
+    st_add_direct(this->id_to_state_name, (st_data_t)new_id, (st_data_t)str1);
     return new_id;
   }
 }

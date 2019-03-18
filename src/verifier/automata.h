@@ -57,6 +57,22 @@ typedef struct AutomataSCC AutomataSCC;
 
 typedef BYTE atmstate_id_t; /* 性質ラベル(状態)数は256個まで */
 
+/* automata.cppに定義されていたが、nc_parser.yppがコンパイルできないため移動 */
+struct Automata {
+  /*   atmstate_id_t init_state; */
+  atmstate_id_t init_state;
+  unsigned int prop_num;
+  Vector states; /* Vector of AutomataState */
+  st_table_t state_name_to_id;
+  st_table_t id_to_state_name;
+  st_table_t prop_to_id;
+  Vector sccs;
+
+  Automata(void);
+  ~Automata(void);
+  atmstate_id_t state_id(const char *);
+};
+
 /* Propositional Logic Formula */
 typedef struct PLFormula *PLFormulaRef;
 
@@ -68,7 +84,6 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* automata */
-atmstate_id_t automata_state_id(AutomataRef a, char *state_name);
 const char *automata_state_name(AutomataRef a, atmstate_id_t id);
 atmstate_id_t automata_state_scc_id(AutomataRef a, atmstate_id_t id);
 const char *automata_state_scc_name(AutomataRef a, atmstate_id_t id);
