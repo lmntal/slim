@@ -195,13 +195,6 @@ void hashtbliter_next(HashIterator *iter) {
 }
 
 /* HashSet <HashKeyType> */
-void hashset_init(HashSet *set, unsigned int init_size) {
-  set->num = 0;
-  set->cap = round2up(init_size);
-  set->tbl = (HashKeyType *)malloc(sizeof(HashKeyType) * set->cap);
-  memset(set->tbl, 0xffU, sizeof(HashKeyType) * set->cap);
-}
-
 HashSet::HashSet(unsigned int init_size) {
   this->num = 0;
   this->cap = round2up(init_size);

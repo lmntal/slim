@@ -94,7 +94,6 @@ typedef struct HashSetItrator {
   unsigned int i;
 } HashSetIterator;
 
-void hashset_init(HashSet *set, unsigned int init_size);
 int hashset_contains(HashSet *set, HashKeyType key);
 void hashset_add(HashSet *set, HashKeyType key);
 void hashset_clear(HashSet *set);
