@@ -261,7 +261,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
    }
 %   break;
 % case LMN_STRING_ATTR:
-    rc->wt($0) = (LmnWord)lmn_string_make(lmn_id_to_name(TR_GSID($2_string_data)));
+    rc->wt($0) = (LmnWord)new LmnString(lmn_id_to_name(TR_GSID($2_string_data)));
 %   break;
 % default:
     rc->wt($0) = (LmnWord)lmn_new_atom(TR_GFID($2_functor_data));
@@ -412,9 +412,9 @@ BOOL interpret_generated(LmnReactCxtRef rc,
         if (lmn_get_double(rc->wt($0)) != $1_double_data) $f;
 %       break;
 %     case LMN_STRING_ATTR: {
-        LmnStringRef s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
-        if(! lmn_string_eq(s, (LmnStringRef)rc->wt($0))) $f;
-        lmn_string_free(s);
+        LmnStringRef s = new LmnString(lmn_id_to_name(TR_GSID($1_string_data)));
+        if( *s != *(LmnStringRef)rc->wt($0)) $f;
+        delete (s);
 %       fprintf(stderr, "string attr is not implemented.");
 %       break;
 %     }
@@ -442,9 +442,9 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 %       fprintf(stderr, "double attr is not implemented.");
 %       break;
 %     case LMN_STRING_ATTR: {
-        LmnStringRef s = lmn_string_make(lmn_id_to_name(TR_GSID($1_string_data)));
-        if(lmn_string_eq(s, (LmnStringRef)rc->wt($0))) $f;
-        lmn_string_free(s);
+        LmnStringRef s = new LmnString(lmn_id_to_name(TR_GSID($1_string_data)));
+        if(*s == *(LmnStringRef)rc->wt($0)) $f;
+        delete (s);
 %       fprintf(stderr, "string attr is not implemented.");
 %       break;
 %     }
