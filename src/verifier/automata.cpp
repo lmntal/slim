@@ -226,8 +226,8 @@ void inline AutomataState::set_scc(AutomataSCC *scc) {
   this->scc = scc;
 }
 
-BYTE atmstate_scc_type(AutomataStateRef s) {
-  return atmscc_type(atmstate_scc(s));
+BYTE AutomataState::scc_type() {
+  return atmscc_type(atmstate_scc(this));
 }
 
 AutomataSCC inline *atmstate_scc(AutomataStateRef s) { return s->scc; }

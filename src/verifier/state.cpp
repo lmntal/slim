@@ -753,7 +753,7 @@ BOOL state_is_end(AutomataRef a, State *s) {
  */
 BYTE state_scc_id(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_scc_type(a->get_state(state_property_state(s)));
+    return a->get_state(state_property_state(s))->scc_type();
   } else {
     return FALSE;
   }
