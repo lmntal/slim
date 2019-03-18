@@ -53,14 +53,6 @@ static inline unsigned int atmscc_id(AutomataSCC *s);
 static inline BYTE atmscc_type(AutomataSCC *s);
 static inline void atmscc_set_type(AutomataSCC *s, BYTE type);
 
-struct AutomataState {
-  atmstate_id_t id;
-  BOOL is_accept;
-  BOOL is_end;
-  Vector transitions; /* Vector of Successors (AutomataTransition) */
-  AutomataSCC *scc;
-};
-
 struct AutomataTransition {
   unsigned int next;
   PLFormulaRef f; /* 実際は命題論理式 */
@@ -195,16 +187,13 @@ unsigned int Automata::propsym_to_id(char *prop_name) {
  * state
  */
 
-AutomataStateRef atmstate_make(unsigned int id, BOOL is_accept_state,
+AutomataState::AutomataState(unsigned int id, BOOL is_accept_state,
                                BOOL is_end_state) {
-  AutomataStateRef s = LMN_MALLOC(struct AutomataState);
-
-  vec_init(&s->transitions, 16);
-  s->id = id;
-  s->is_accept = is_accept_state;
-  s->is_end = is_end_state;
-  s->scc = NULL;
-  return s;
+  vec_init(&this->transitions, 16);
+  this->id = id;
+  this->is_accept = is_accept_state;
+  this->is_end = is_end_state;
+  this->scc = NULL;
 }
 
 static void atmstate_free(AutomataStateRef s) {

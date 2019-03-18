@@ -57,7 +57,10 @@ typedef struct AutomataSCC AutomataSCC;
 
 typedef BYTE atmstate_id_t; /* 性質ラベル(状態)数は256個まで */
 
-/* automata.cppに定義されていたが、nc_parser.yppがコンパイルできないため移動 */
+/*
+ * automata.cppに定義されていたが、nc_parser.yppがコンパイルできないため移動
+ * Automata, AutomataState
+ */
 struct Automata {
   /*   atmstate_id_t init_state; */
   atmstate_id_t init_state;
@@ -79,6 +82,16 @@ struct Automata {
   unsigned int propsym_to_id(char *prop_name);
 };
 
+struct AutomataState {
+  atmstate_id_t id;
+  BOOL is_accept;
+  BOOL is_end;
+  Vector transitions; /* Vector of Successors (AutomataTransition) */
+  AutomataSCC *scc;
+
+  AutomataState(unsigned int, BOOL, BOOL);
+};
+
 /* Propositional Logic Formula */
 typedef struct PLFormula *PLFormulaRef;
 
@@ -88,10 +101,6 @@ enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_PARTIALLY = 2U, /* 構成するサイクルが非受理サイクルも含む */
   SCC_TYPE_NON_ACCEPT = 3U, /* 受理サイクルを含まない */
 };
-
-/* automata */
-AutomataStateRef atmstate_make(unsigned int id, BOOL is_accept_state,
-                               BOOL is_end_state);
 
 /* state of automata */
 void atmstate_add_transition(AutomataStateRef s, AutomataTransitionRef t);
