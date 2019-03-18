@@ -169,11 +169,11 @@ TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
   return node;
 }
 
-BOOL table_find_or_put(TreeDatabaseRef treedb, TreeNodeElement left,
+BOOL TreeDatabase::table_find_or_put(TreeNodeElement left,
                        TreeNodeElement right, TreeNodeID *ref) {
   int count, i;
-  uint64_t mask = treedb->mask;
-  TreeNodeRef *table = treedb->nodes;
+  uint64_t mask = this->mask;
+  TreeNodeRef *table = this->nodes;
   uint64_t offset;
 redo:
   offset = (hash_node(left, right) & mask);
@@ -185,11 +185,11 @@ redo:
       if (table[(offset + i) & mask] == 0) {
         TreeNodeRef node = tree_node_make(left, right);
         if (atomic_compare_and_swap(&table[(offset + i) & mask], 0, node)) {
-          atomic_fetch_and_inc(&treedb->node_count);
+          atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
           return FALSE;
         } else {
-          free(node);
+          std::free(node);
           goto redo;
         }
       } else if (tree_node_equal(table[(offset + i) & mask], left, right)) {
@@ -201,12 +201,12 @@ redo:
     count++;
   }
   fprintf(stderr, "error full table\n");
-  fprintf(stderr, "node count  : %10llu\n", treedb->node_count);
-  fprintf(stderr, "table size  : %10lu\n", (treedb->mask + 1));
+  fprintf(stderr, "node count  : %10llu\n", this->node_count);
+  fprintf(stderr, "table size  : %10lu\n", (this->mask + 1));
   fprintf(stderr, "load factor : %10.3lf\n",
-          (double)tree_db_node_count(treedb) / (treedb->mask + 1));
+          (double)tree_db_node_count(this) / (this->mask + 1));
   fprintf(stderr, "memory      : %7llu MB\n",
-          (uint64_t)tree_space(treedb) / 1024 / 1024);
+          (uint64_t)tree_space(this) / 1024 / 1024);
   exit(EXIT_FAILURE);
 }
 
@@ -248,11 +248,11 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   TreeNodeElement right =
       this->tree_find_or_put_rec(str, start + split + 1, end, found);
   if ((end - start + 1) == str->len) {
-    BOOL _found = table_find_or_put(this, left, right, &ref);
+    BOOL _found = this->table_find_or_put(left, right, &ref);
     if (found)
       (*found) = _found;
   } else {
-    table_find_or_put(this, left, right, &ref);
+    this->table_find_or_put(left, right, &ref);
   }
   return ref;
 }
