@@ -42,24 +42,17 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 
+static int state_map_atom_type;
+
 struct LmnStateMap {
   LMN_SP_ATOM_HEADER;
   StateSpaceRef states;
+  LmnStateMap(LmnMembraneRef mem) {
+    LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
+    this->states = new StateSpace(NULL, NULL);
+  };
+  ~LmnStateMap() { delete (this->states); };
 };
-
-static int state_map_atom_type;
-
-static LmnStateMapRef lmn_make_state_map(LmnMembraneRef mem) {
-  LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
-  LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
-  s->states = new StateSpace(NULL, NULL);
-  return s;
-}
-
-void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem) {
-  delete (((LmnStateMapRef)state_map)->states);
-  LMN_FREE(state_map);
-}
 
 /*----------------------------------------------------------------------
  * Callbacks
@@ -69,9 +62,10 @@ void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem) {
  * 生成
  * -a0 Map
  */
+
 void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
-  LmnStateMapRef atom = lmn_make_state_map(mem);
+  LmnStateMapRef atom = new LmnStateMap(mem);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   LMN_SP_ATOM_SET_TYPE(atom, state_map_atom_type);
   lmn_mem_push_atom(mem, atom, attr);
@@ -82,9 +76,10 @@ void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * 解放
  * +a0 Map
  */
+
 void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
-  lmn_state_map_free((LmnStateMapRef)a0, mem);
+  delete (LmnStateMapRef)a0, mem;
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
