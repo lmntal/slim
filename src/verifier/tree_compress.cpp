@@ -216,7 +216,7 @@ TreeDatabase::TreeDatabase(size_t size){
   this->node_count = 0;
 }
 
-void TreeDatabase::clear(void){
+void TreeDatabase::clear(){
   int i;
   this->node_count = 0;
   for (i = 0; i < this->mask + 1; i++) {
@@ -227,7 +227,7 @@ void TreeDatabase::clear(void){
   }
 }
 
-TreeDatabase::~TreeDatabase(void) {
+TreeDatabase::~TreeDatabase() {
   this->clear();
   LMN_FREE(this->nodes);
   return;
