@@ -307,7 +307,7 @@ static inline struct MemDelta *dmem_root_get_mem_delta(struct MemDeltaRoot *d,
   else {
     struct MemDelta *mem_delta = mem_delta_make(d, m, d->next_id);
     proc_tbl_put_mem(d->proc_tbl, m, (LmnWord)mem_delta);
-    sproc_tbl_set_mem_flag(d->flag_tbl, m, TAG_DELTA_MEM);
+    d->flag_tbl->tbl_set_mem_flag(m, TAG_DELTA_MEM);
     vec_push(&d->mem_deltas, (vec_data_t)mem_delta);
     return mem_delta;
   }
@@ -315,7 +315,7 @@ static inline struct MemDelta *dmem_root_get_mem_delta(struct MemDeltaRoot *d,
 
 static inline BOOL dmem_root_is_delta_mem(struct MemDeltaRoot *d,
                                           LmnMembraneRef m) {
-  return sproc_tbl_get_flag_by_mem(d->flag_tbl, m, TAG_DELTA_MEM);
+  return d->flag_tbl->tbl_get_flag_by_mem(m, TAG_DELTA_MEM);
 }
 
 static inline BOOL dmem_root_is_new_mem(struct MemDeltaRoot *d,
@@ -1504,7 +1504,7 @@ LmnMembraneRef dmem_root_new_mem(struct MemDeltaRoot *d) {
 
   m = lmn_mem_make();
   proc_tbl_put_mem(d->proc_tbl, m, (LmnWord)new_mem_info_make(m));
-  sproc_tbl_set_mem_flag(d->flag_tbl, m, TAG_NEW_MEM);
+  d->flag_tbl->tbl_set_mem_flag(m, TAG_NEW_MEM);
   vec_push(&d->new_mems, (vec_data_t)m);
   return m;
 }
@@ -1683,7 +1683,7 @@ LmnSymbolAtomRef dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f) {
 
   if (LMN_SATOM_ID(atom) == 0) LMN_SATOM_SET_ID(atom, env_gen_next_id());
 
-  sproc_tbl_set_atom_flag(d->flag_tbl, atom, TAG_NEW_ATOM);
+  d->flag_tbl->tbl_set_atom_flag(atom, TAG_NEW_ATOM);
   return atom;
 }
 
@@ -1695,7 +1695,7 @@ static inline LmnSymbolAtomRef dmem_root_copy_satom(struct MemDeltaRoot *d,
 
   if (LMN_SATOM_ID(atom) == 0) LMN_SATOM_SET_ID(new_atom, env_gen_next_id());
 
-  sproc_tbl_set_atom_flag(d->flag_tbl, new_atom, TAG_NEW_ATOM);
+  d->flag_tbl->tbl_set_atom_flag(new_atom, TAG_NEW_ATOM);
 
   return new_atom;
 }
@@ -1747,16 +1747,15 @@ LmnAtomRef dmem_root_copy_atom(struct MemDeltaRoot *d, LmnAtomRef atom,
   } else { /* symbol atom */
     new_atom = lmn_copy_satom((LmnSymbolAtomRef)atom);
     LMN_SATOM_SET_ID((LmnSymbolAtomRef)new_atom, env_gen_next_id());
-    sproc_tbl_set_atom_flag(d->flag_tbl, (LmnSymbolAtomRef)new_atom,
-                            TAG_NEW_ATOM);
+    d->flag_tbl->tbl_set_atom_flag((LmnSymbolAtomRef)new_atom, TAG_NEW_ATOM);
     return new_atom;
   }
 }
 
 static inline void dmem_root_free_satom(struct MemDeltaRoot *d,
                                         LmnSymbolAtomRef atom) {
-  sproc_tbl_set_atom_flag(d->flag_tbl, dmem_root_modified_atom(d, atom),
-                          TAG_DEL_ATOM);
+  d->flag_tbl->tbl_set_atom_flag(dmem_root_modified_atom(d, atom),
+                                 TAG_DEL_ATOM);
 }
 
 void dmem_root_free_atom(struct MemDeltaRoot *d, LmnAtomRef atom,
@@ -1768,7 +1767,7 @@ void dmem_root_free_atom(struct MemDeltaRoot *d, LmnAtomRef atom,
 
 static inline BOOL dmem_root_is_freed_atom(struct MemDeltaRoot *d,
                                            LmnSymbolAtomRef a) {
-  return sproc_tbl_get_flag_by_atom(d->flag_tbl, a, TAG_DEL_ATOM);
+  return d->flag_tbl->tbl_get_flag_by_atom(a, TAG_DEL_ATOM);
 }
 
 static inline LmnSymbolAtomRef dmem_root_modified_atom(struct MemDeltaRoot *d,
@@ -1789,7 +1788,7 @@ static inline BOOL dmem_root_is_new_atom(struct MemDeltaRoot *d,
 
 static inline BOOL dmem_root_is_modified_atom(struct MemDeltaRoot *d,
                                               LmnSymbolAtomRef a) {
-  return sproc_tbl_get_flag_by_atom(d->flag_tbl, a, TAG_MODIFIED_ATOM);
+  return d->flag_tbl->tbl_get_flag_by_atom(a, TAG_MODIFIED_ATOM);
 }
 
 static inline LmnMembraneRef dmem_root_atom_mem(struct MemDeltaRoot *d,
@@ -1868,7 +1867,7 @@ static inline void dmem_remove_symbol_atom(struct MemDelta *d, LmnMembraneRef m,
   /* if (dmem_is_new_atom(d, m, atom)) { */
   /*   sproc_tbl_unset_atom_flag(d->flag_tbl, atom, TAG_NEW_ATOM); */
   /* } else { */
-  /*   sproc_tbl_set_atom_flag(d->flag_tbl, atom, TAG_DEL_ATOM); */
+  /*   d->flag_tbl->tbl_set_atom_flag(atom, TAG_DEL_ATOM); */
   /* } */
 
   vec_push(&d->del_atoms, (vec_data_t)atom);
@@ -1929,7 +1928,7 @@ static inline LmnSymbolAtomRef dmem_modify_atom(struct MemDelta *d,
 
     /* new_atomとsrcの対応をproc_tblに保存しておく */
     proc_tbl_put_atom(d->root_d->proc_tbl, src, LMN_ATOM(new_atom));
-    sproc_tbl_set_atom_flag(d->root_d->flag_tbl, src, TAG_MODIFIED_ATOM);
+    d->root_d->flag_tbl->tbl_set_atom_flag(src, TAG_MODIFIED_ATOM);
 
     vec_push(&d->root_d->modified_atoms, (vec_data_t)src);
     vec_push(&d->root_d->modified_atoms, (vec_data_t)new_atom);
