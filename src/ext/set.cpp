@@ -48,6 +48,7 @@ struct LmnSet{
   LMN_SP_ATOM_HEADER;
   st_table_t tbl;		/* hash table */
   LmnSet(struct st_hash_type *ht);
+  ~LmnSet();
 };
 
 /**
@@ -201,7 +202,6 @@ static int set_atom_type; /* special atom type */
  * @memberof LmnSet
  * @private
  */
-
 LmnSet::LmnSet(struct st_hash_type *ht) {
   LMN_SP_ATOM_SET_TYPE(this, set_atom_type);
   this->tbl = st_init_table(ht);
@@ -215,9 +215,8 @@ int inner_set_free(st_data_t, st_data_t, st_data_t);
  * @memberof LmnSet
  * @private
  */
-void lmn_set_free(LmnSetRef set)
-{
-  st_table_t tbl = set->tbl;
+LmnSet::~LmnSet() {
+  st_table_t tbl = this->tbl;
   if(tbl->type != &type_id_hash)
     st_foreach(tbl, (st_iter_func)inner_set_free, (st_data_t)tbl->type);
   st_free_table(tbl);
@@ -252,7 +251,7 @@ void cb_set_free(LmnReactCxtRef rc,
 		 LmnMembraneRef mem,
 		 LmnAtomRef a0, LmnLinkAttr t0)
 {
-  lmn_set_free((LmnSetRef)a0);
+  delete (LmnSetRef)a0;
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
@@ -533,7 +532,7 @@ void cb_set_union(LmnReactCxtRef rc,
   lmn_mem_newlink(mem,
 		  a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  a2, t2, LMN_ATTR_GET_VALUE(t2));
-  lmn_set_free((LmnSetRef)a0);
+  delete (LmnSetRef)a0;
 }
 
 /**
@@ -577,7 +576,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_intersect, (st_data_t)a1);
-  lmn_set_free((LmnSetRef)a1);
+  delete (LmnSetRef)a1;
   if(st_num(tbl) > 0) {
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
@@ -587,7 +586,7 @@ void cb_set_intersect(LmnReactCxtRef rc,
     lmn_mem_newlink(mem,
   		    a2, t2, LMN_ATTR_GET_VALUE(t2),
   		    empty_set, LMN_ATTR_MAKE_LINK(0), 0);
-    lmn_set_free((LmnSetRef)a0);
+    delete (LmnSetRef)a0;
   }
 }
 
@@ -629,7 +628,7 @@ void cb_set_diff(LmnReactCxtRef rc,
 {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_diff, (st_data_t)a1);
-  lmn_set_free((LmnSetRef)a1);
+  delete (LmnSetRef)a1;
   if(st_num(tbl) > 0) {
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
@@ -639,7 +638,7 @@ void cb_set_diff(LmnReactCxtRef rc,
     lmn_mem_newlink(mem,
 		    a2, t2, LMN_ATTR_GET_VALUE(t2),
 		    (LmnAtomRef)empty_set, LMN_ATTR_MAKE_LINK(0), 0);
-    lmn_set_free((LmnSetRef)a0);
+    delete (LmnSetRef)a0;
   }
 }
 
