@@ -72,6 +72,7 @@ struct Automata {
   ~Automata(void);
   atmstate_id_t state_id(const char *);
   const char *state_name(atmstate_id_t);
+  void add_state(AutomataStateRef);
   AutomataStateRef get_state(BYTE);
   atmstate_id_t get_init_state();
   void set_init_state(atmstate_id_t);
@@ -94,7 +95,6 @@ AutomataStateRef atmstate_make(unsigned int id, BOOL is_accept_state,
 
 /* state of automata */
 void atmstate_add_transition(AutomataStateRef s, AutomataTransitionRef t);
-void automata_add_state(AutomataRef a, AutomataStateRef s);
 atmstate_id_t atmstate_id(AutomataStateRef s);
 unsigned int atmstate_transition_num(AutomataStateRef s);
 AutomataTransitionRef atmstate_get_transition(AutomataStateRef s,

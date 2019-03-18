@@ -156,6 +156,13 @@ const char *Automata::state_name(atmstate_id_t id) {
   }
 }
 
+void Automata::add_state(AutomataStateRef s) {
+  if (vec_num(&this->states) <= s->id) {
+    vec_resize(&this->states, s->id + 1, (vec_data_t)0);
+  }
+  vec_set(&this->states, s->id, (vec_data_t)s);
+}
+
 AutomataStateRef Automata::get_state(BYTE state_id) {
   LMN_ASSERT(vec_get(&this->states, state_id) != 0);
   return (AutomataStateRef)vec_get(&this->states, state_id);
@@ -182,13 +189,6 @@ unsigned int Automata::propsym_to_id(char *prop_name) {
     st_add_direct(this->prop_to_id, (st_data_t)str, (st_data_t)new_id);
     return new_id;
   }
-}
-
-void automata_add_state(AutomataRef a, AutomataStateRef s) {
-  if (vec_num(&a->states) <= s->id) {
-    vec_resize(&a->states, s->id + 1, (vec_data_t)0);
-  }
-  vec_set(&a->states, s->id, (vec_data_t)s);
 }
 
 /*----------------------------------------------------------------------
