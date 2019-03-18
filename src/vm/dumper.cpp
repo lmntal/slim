@@ -55,6 +55,7 @@ struct AtomRec {
 
 struct DumpState {
   int link_num;
+  DumpState();
 };
 
 /* 文字からエスケープキャラクタへの対応表 */
@@ -121,7 +122,8 @@ static void atomrec_tbl_destroy(SimpleHashtbl *ht) {
   hashtbl_destroy(ht);
 }
 
-static void dump_state_init(struct DumpState *s) { s->link_num = 0; }
+// static void dump_state_init(struct DumpState *s) { ; }
+DumpState::DumpState() { link_num = 0; }
 
 static BOOL is_direct_printable(LmnFunctor f) {
   const char *s;
@@ -692,9 +694,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
 
 static void lmn_dump_cell_nonewline(LmnPortRef port, LmnMembraneRef mem) {
   SimpleHashtbl ht;
-  struct DumpState s;
-
-  dump_state_init(&s);
+  DumpState s;
 
   hashtbl_init(&ht, 128);
   lmn_dump_cell_internal(port, mem, &ht, &s);
@@ -941,10 +941,9 @@ static void dump_dot_cell(LmnMembraneRef mem, SimpleHashtbl *ht, int *data_id,
 
 void lmn_dump_dot(LmnMembraneRef mem) {
   int cluster_id = 0, data_id = 0;
-  struct DumpState s;
+  DumpState s;
   SimpleHashtbl ht;
 
-  dump_state_init(&s);
   hashtbl_init(&ht, 128);
 
   fprintf(stdout, "// This is an auto generated file by SLIM\n\n"
@@ -1109,7 +1108,6 @@ void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr) {
   struct DumpState s;
   SimpleHashtbl ht;
 
-  dump_state_init(&s);
   hashtbl_init(&ht, 0);
   dump_atom(port, atom, &ht, attr, &s, 0);
   atomrec_tbl_destroy(&ht);
