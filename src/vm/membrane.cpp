@@ -1823,9 +1823,9 @@ returning:
 /* 前の実装.しばらく残しておく */
 BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
                       unsigned long *natoms) {
-  HashSet *visited = hashset_make(16);
+  HashSet *visited = new HashSet(16);
   SimpleHashtbl *guard = NULL;
-  HashSet *root = hashset_make(16);
+  HashSet *root = new HashSet(16);
   Vector *stack = vec_make(16);
   unsigned int i;
   unsigned int n;            /* 到達したアトムの数 */

@@ -82,17 +82,18 @@ void hashtbliter_next(HashIterator *iter);
 #define hashtbliter_isend(I) ((I)->i >= (I)->ht->cap)
 
 /* HashSet */
-typedef struct HashSet {
+struct HashSet {
   HashKeyType *tbl;
   unsigned int cap, num;
-} HashSet;
+
+  HashSet(unsigned int init_size);
+};
 
 typedef struct HashSetItrator {
   HashSet *set;
   unsigned int i;
 } HashSetIterator;
 
-HashSet *hashset_make(unsigned int init_size);
 void hashset_init(HashSet *set, unsigned int init_size);
 int hashset_contains(HashSet *set, HashKeyType key);
 void hashset_add(HashSet *set, HashKeyType key);

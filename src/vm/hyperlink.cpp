@@ -277,7 +277,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       newroot->parent = newroot;
 
       if (!newroot->children) {
-        newroot->children = hashset_make(hashset_num(children));
+        newroot->children = new HashSet(hashset_num(children));
       }
 
       for (it = hashset_iterator(children); !hashsetiter_isend(&it);
@@ -398,7 +398,7 @@ HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child,
                            LmnAtomRef attrAtom, LmnLinkAttr attr) {
   child->parent = parent;
   if (!parent->children) {
-    parent->children = hashset_make(2);
+    parent->children = new HashSet(2);
   }
   hashset_add(parent->children, (HashKeyType)child);
   parent->rank = parent->rank + child->rank + 1;

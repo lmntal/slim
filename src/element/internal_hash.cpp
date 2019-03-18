@@ -202,10 +202,11 @@ void hashset_init(HashSet *set, unsigned int init_size) {
   memset(set->tbl, 0xffU, sizeof(HashKeyType) * set->cap);
 }
 
-HashSet *hashset_make(unsigned int init_size) {
-  HashSet *hs = (HashSet *)malloc(sizeof(HashSet));
-  hashset_init(hs, init_size);
-  return hs;
+HashSet::HashSet(unsigned int init_size) {
+  this->num = 0;
+  this->cap = round2up(init_size);
+  this->tbl = (HashKeyType *)malloc(sizeof(HashKeyType) * this->cap);
+  memset(this->tbl, 0xffU, sizeof(HashKeyType) * this->cap);
 }
 
 void hashset_destroy(HashSet *set) { LMN_FREE(set->tbl); }

@@ -596,7 +596,7 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
   /* EFFICIENCY: retsetがHash Setである意味は?　ベクタでいいのでは？
    * 中間命令でセットを使うように書かれている */
 
-  retset = hashset_make(8);
+  retset = new HashSet(8);
   for (i = 0; i < links->num; i++) {
     LmnWord linkid1 = vec_get(links, i);
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid1)))
