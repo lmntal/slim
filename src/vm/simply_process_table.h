@@ -81,8 +81,6 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
  * Function Prototypes
  */
 
-void sproc_tbl_free(SimplyProcessTableRef p);
-
 void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value);
 void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom,
                         BYTE value);

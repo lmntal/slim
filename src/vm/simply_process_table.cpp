@@ -37,8 +37,6 @@
 
 #include "simply_process_table.h"
 
-void sproc_tbl_free(SimplyProcessTableRef p) { delete p; }
-
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
 void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value) {
   p->put(key, value);

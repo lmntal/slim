@@ -265,7 +265,7 @@ void dmem_root_free(struct MemDeltaRoot *p) {
   vec_destroy(&p->mem_deltas);
   vec_destroy(&p->modified_atoms);
   proc_tbl_free(p->owner_tbl);
-  sproc_tbl_free(p->flag_tbl);
+  delete p->flag_tbl;
 
   for (i = 0; i < vec_num(&p->new_mems); i++) {
     LmnWord t;
