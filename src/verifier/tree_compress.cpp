@@ -273,7 +273,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
   return ref;
 }
 
-void tree_get_rec(TreeDatabaseRef treedb, TreeNodeElement elem, int start,
+void TreeDatabase::get_rec(TreeNodeElement elem, int start,
                   int end, TreeNodeStrRef dst) {
   int k = end - start + 1;
   if (k <= TREE_UNIT_SIZE) {
@@ -284,13 +284,13 @@ void tree_get_rec(TreeDatabaseRef treedb, TreeNodeElement elem, int start,
     // printf("%d-%d len:%d\n", start, end, dst->len * TREE_UNIT_SIZE);
     // printf("elem:%llu, copy_len: %d\n", elem, copy_len);
     memcpy((BYTE *)dst->nodes + start, &elem, sizeof(BYTE) * copy_len);
-  } else if (treedb->nodes[elem & treedb->mask] != NULL) {
-    TreeNodeRef node = treedb->nodes[elem & treedb->mask];
+  } else if (this->nodes[elem & this->mask] != NULL) {
+    TreeNodeRef node = this->nodes[elem & this->mask];
     int split = ((end - start) / TREE_UNIT_SIZE) / 2;
     // printf("Split: %d\n", split);
-    tree_get_rec(treedb, node->left, start, start + (split * TREE_UNIT_SIZE),
+    this->get_rec(node->left, start, start + (split * TREE_UNIT_SIZE),
                  dst);
-    tree_get_rec(treedb, node->right, start + ((split + 1) * TREE_UNIT_SIZE),
+    this->get_rec(node->right, start + ((split + 1) * TREE_UNIT_SIZE),
                  end, dst);
   }
 }
@@ -306,7 +306,7 @@ LmnBinStrRef TreeDatabase::get(TreeNodeID ref, int len) {
   if (str.extra > 0)
     str.len += 1;
   // printf("node_count: %d, extra:%d\n", str.len, str.extra);
-  tree_get_rec(this, ref, 0, str.len * TREE_UNIT_SIZE - 1, &str);
+  this->get_rec(ref, 0, str.len * TREE_UNIT_SIZE - 1, &str);
   return bs;
 }
 

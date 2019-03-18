@@ -74,6 +74,7 @@ struct TreeDatabase {
   BOOL table_find_or_put(TreeNodeElement left,
                        TreeNodeElement right, TreeNodeID *ref);
   LmnBinStrRef get(TreeNodeID ref, int len);
+  void get_rec(TreeNodeElement elem, int start, int end, TreeNodeStr* dst);
   uint64_t space(void);
 };
 
