@@ -218,7 +218,7 @@ AutomataTransitionRef AutomataState::get_transition(unsigned int index) {
   return (AutomataTransitionRef)vec_get(&this->transitions, index);
 }
 
-BOOL atmstate_is_accept(AutomataStateRef s) { return s->is_accept; }
+BOOL AutomataState::get_is_accept() { return this->is_accept; }
 
 BOOL atmstate_is_end(AutomataStateRef s) { return s->is_end; }
 
@@ -359,7 +359,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
     if (atmstate_is_end(s)) {
       atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
     } else {
-      if (atmstate_is_accept(s)) {
+      if (s->get_is_accept()) {
         atmscc_set_type(scc, SCC_TYPE_FULLY);
       } else {
         atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
@@ -377,8 +377,8 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
         (unsigned int)atm_transition_next(s->get_transition(i)));
     if (!atmstate_scc(succ)) {
       AutomataSCC *scc = atmstate_scc(s);
-      if ((!atmstate_is_accept(succ) && atmscc_type(scc) == SCC_TYPE_FULLY) ||
-          (atmstate_is_accept(succ) &&
+      if ((!succ->get_is_accept() && atmscc_type(scc) == SCC_TYPE_FULLY) ||
+          (succ->get_is_accept() &&
            atmscc_type(scc) == SCC_TYPE_NON_ACCEPT)) {
         atmscc_set_type(scc, SCC_TYPE_PARTIALLY);
       }

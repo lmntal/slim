@@ -729,7 +729,7 @@ BOOL state_succ_contains(State *s, State *t) {
  * 性質オートマトンaが存在しない場合は直ちに偽を返す. */
 BOOL state_is_accept(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_is_accept(a->get_state(state_property_state(s)));
+    return a->get_state(state_property_state(s))->get_is_accept();
   } else {
     return FALSE;
   }
