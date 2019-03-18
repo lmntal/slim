@@ -163,15 +163,15 @@ AutomataStateRef Automata::get_state(BYTE state_id) {
 
 atmstate_id_t Automata::get_init_state() { return this->init_state; }
 
+void Automata::set_init_state(atmstate_id_t id) {
+  this->init_state = id;
+}
+
 void automata_add_state(AutomataRef a, AutomataStateRef s) {
   if (vec_num(&a->states) <= s->id) {
     vec_resize(&a->states, s->id + 1, (vec_data_t)0);
   }
   vec_set(&a->states, s->id, (vec_data_t)s);
-}
-
-void automata_set_init_state(AutomataRef a, atmstate_id_t id) {
-  a->init_state = id;
 }
 
 unsigned int automata_propsym_to_id(AutomataRef a, char *prop_name) {
