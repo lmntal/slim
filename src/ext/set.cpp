@@ -47,6 +47,7 @@
 struct LmnSet{
   LMN_SP_ATOM_HEADER;
   st_table_t tbl;		/* hash table */
+  LmnSet(struct st_hash_type *ht);
 };
 
 /**
@@ -200,12 +201,10 @@ static int set_atom_type; /* special atom type */
  * @memberof LmnSet
  * @private
  */
-static LmnSetRef lmn_set_make(struct st_hash_type *ht)
-{
-  LmnSetRef s = LMN_MALLOC(struct LmnSet);
-  LMN_SP_ATOM_SET_TYPE(s, set_atom_type);
-  s->tbl = st_init_table(ht);
-  return s;
+
+LmnSet::LmnSet(struct st_hash_type *ht) {
+  LMN_SP_ATOM_SET_TYPE(this, set_atom_type);
+  this->tbl = st_init_table(ht);
 }
 
 /* cb_set_free内で使用する関数のプロトタイプ宣言 */
@@ -278,11 +277,11 @@ void cb_set_insert(LmnReactCxtRef rc,
     lmn_mem_delete_atom(mem, a0, t0);
     t0 = LMN_SP_ATOM_ATTR;
     if(LMN_INT_ATTR == t1)
-      a0 = (LmnAtomRef)lmn_set_make(&type_id_hash);
+      a0 = (LmnAtomRef)new LmnSet(&type_id_hash);
     else if(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1) == LMN_OUT_PROXY_FUNCTOR)
-      a0 = (LmnAtomRef)lmn_set_make(&type_mem_hash);
+      a0 = (LmnAtomRef)new LmnSet(&type_mem_hash);
     else
-      a0 = (LmnAtomRef)lmn_set_make(&type_tuple_hash);
+      a0 = (LmnAtomRef)new LmnSet(&type_tuple_hash);
   }
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   LmnAtomRef v = (tbl->type == &type_mem_hash) ? LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0)) : a1;
@@ -445,10 +444,10 @@ void cb_set_copy(LmnReactCxtRef rc,
   LmnLinkAttr at = LMN_SP_ATOM_ATTR;
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   if(tbl->type == &type_id_hash) {
-    s = lmn_set_make(tbl->type);
+    s = new LmnSet(tbl->type);
     s->tbl = st_copy(tbl);
   } else {
-    s = lmn_set_make(tbl->type);
+    s = new LmnSet(tbl->type);
     st_foreach(tbl, (st_iter_func)inner_set_copy, (st_data_t)s);
   }
   lmn_mem_push_atom(mem, (LmnAtomRef)s, at);
