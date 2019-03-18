@@ -214,9 +214,8 @@ unsigned int AutomataState::get_transition_num() {
   return vec_num(&this->transitions);
 }
 
-AutomataTransitionRef atmstate_get_transition(AutomataStateRef s,
-                                              unsigned int index) {
-  return (AutomataTransitionRef)vec_get(&s->transitions, index);
+AutomataTransitionRef AutomataState::get_transition(unsigned int index) {
+  return (AutomataTransitionRef)vec_get(&this->transitions, index);
 }
 
 BOOL atmstate_is_accept(AutomataStateRef s) { return s->is_accept; }
@@ -327,7 +326,7 @@ void print_property_automata(AutomataRef a) {
       fprintf(stdout, "%lu",
               (unsigned long)
                   a->get_state((unsigned int)atm_transition_next(
-                                       atmstate_get_transition(s, j)))->get_id());
+                                       s->get_transition(j)))->get_id());
       if (j + 1 < m)
         fprintf(stdout, ",");
     }
@@ -345,7 +344,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
   n = s->get_transition_num();
   for (i = 0; i < n; i++) {
     AutomataStateRef succ = a->get_state(
-        (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
+        (unsigned int)atm_transition_next(s->get_transition(i)));
     if (!on_stack_list[(unsigned int)succ->get_id()]) {
       on_stack_list[(unsigned int)succ->get_id()] = 0xffU;
       automata_analysis_dfs1(a, on_stack_list, succ);
@@ -375,7 +374,7 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
   n = s->get_transition_num();
   for (i = 0; i < n; i++) {
     AutomataStateRef succ = a->get_state(
-        (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
+        (unsigned int)atm_transition_next(s->get_transition(i)));
     if (!atmstate_scc(succ)) {
       AutomataSCC *scc = atmstate_scc(s);
       if ((!atmstate_is_accept(succ) && atmscc_type(scc) == SCC_TYPE_FULLY) ||

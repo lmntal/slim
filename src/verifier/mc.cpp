@@ -503,7 +503,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
    */
 
   for (i = 0; i < p_s->get_transition_num(); i++) {
-    AutomataTransitionRef p_t = atmstate_get_transition(p_s, i);
+    AutomataTransitionRef p_t = p_s->get_transition(i);
     if (eval_formula(mem, propsyms, atm_transition_get_formula(p_t))) {
       BYTE p_nxt_l = atm_transition_next(p_t);
       vec_push(RC_EXPANDED_PROPS(rc), (vec_data_t)p_nxt_l);
