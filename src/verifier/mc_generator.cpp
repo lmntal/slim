@@ -148,14 +148,14 @@ void dfs_worker_init(LmnWorker *w) {
       deq_init(&mc->deq, 8192);
     } else
 #endif
-      vec_init(&mc->stack, 8192);
+      mc->stack.init(8192);
   } else {
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       deq_init(&mc->deq, mc->cutoff_depth + 1);
     } else
 #endif
-      vec_init(&mc->stack, mc->cutoff_depth + 1);
+      mc->stack.init(mc->cutoff_depth + 1);
 
     if (lmn_env.core_num == 1) {
       mc->q = new_queue();
@@ -310,7 +310,7 @@ void mcdfs_start(LmnWorker *w) {
 
   ss = worker_states(w);
   wp = worker_group(w);
-  vec_init(&new_ss, 32);
+  new_ss.init(32);
 
   /*
   if(WORKER_FOR_INIT_STATE(w, s)) {
@@ -381,7 +381,7 @@ void dfs_start(LmnWorker *w) {
 
   ss = worker_states(w);
   wp = worker_group(w);
-  vec_init(&new_ss, 32);
+  new_ss.init(32);
 
   if (WORKER_FOR_INIT_STATE(w, s)) {
     s = ss->initial_state();
@@ -654,7 +654,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     if (s->s_is_cyan(worker_id(w))) {
       if (state_is_accept(a, s)) {
         Vector red_states;
-        vec_init(&red_states, 8192);
+        red_states.init(8192);
 
         // launch red dfs
         mcndfs_start(w, s, &red_states);

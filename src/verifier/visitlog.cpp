@@ -66,7 +66,7 @@ struct VisitLog {
 static inline struct Checkpoint *checkpoint_make() {
   struct Checkpoint *p = LMN_MALLOC(struct Checkpoint);
 
-  vec_init(&p->elements, PROC_TBL_DEFAULT_SIZE);
+  p->elements.init(PROC_TBL_DEFAULT_SIZE);
   p->n_data_atom = 0;
   return p;
 }
@@ -85,7 +85,7 @@ void visitlog_init_with_size(VisitLogRef p, unsigned long tbl_size) {
   /*   printf("size = %lu\n", tbl_size); */
   p->ref_n = VISITLOG_INIT_N;
   p->element_num = 0;
-  vec_init(&p->checkpoints, PROC_TBL_DEFAULT_SIZE);
+  p->checkpoints.init(PROC_TBL_DEFAULT_SIZE);
 }
 
 VisitLogRef visitlog_create() { return LMN_CALLOC(struct VisitLog, 1); }

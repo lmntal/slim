@@ -133,7 +133,7 @@ static ContextC1Ref contextC1_lookup(st_table_t dst_tbl, ContextC1Ref src) {
   /* TODO: O(n * m), n:出現した遷移数, m:遷移が持つプロセス数.
    *       遷移の等価性を検査するためのハッシュ関数が必要 */
 
-  vec_init(&tmp, st_num(dst_tbl) + 1);
+  tmp.init(st_num(dst_tbl) + 1);
   st_get_entries_value(dst_tbl, &tmp);
 
   ret = src;
@@ -562,7 +562,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
 
   MCReactContext rc;
   cur = DMEM_ROOT_MEM(c->d);
-  vec_init(&nxt_checked_ids, 4);
+  nxt_checked_ids.init(4);
   RC_SET_GROOT_MEM(&rc, cur);
 
   POR_DEBUG({
@@ -634,7 +634,7 @@ static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxtRef rc,
   unsigned int i;
   BOOL ret;
 
-  vec_init(&checked_ids, 16);
+  checked_ids.init(16);
 
   ret = TRUE;
   POR_DEBUG({
@@ -924,8 +924,8 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
   } else {
     Vector v_key, v_val;
 
-    vec_init(&v_key, 32);
-    vec_init(&v_val, 32);
+    v_key.init(32);
+    v_val.init(32);
     st_get_entries_key(d->delta_tbl, &v_key);
     st_get_entries_value(d->delta_tbl, &v_val);
     dpor_dependency_check(d, &v_key, d->ample_cand);

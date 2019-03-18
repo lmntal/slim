@@ -72,7 +72,7 @@ void vec_resize(Vector *vec, unsigned int size, vec_data_t val) {
   unsigned int i;
 
   while (size > vec->cap) {
-    vec_extend(vec);
+    vec->extend();
   }
 
   /* 追加された項目を val に設定 */

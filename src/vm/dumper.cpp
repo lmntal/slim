@@ -597,7 +597,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   /*   if (hashtbl_contains(ht, (HashKeyType)mem)) return; */
 
   for (i = 0; i < PRI_NUM; i++) {
-    vec_init(&pred_atoms[i], 16);
+    pred_atoms[i].init(16);
   }
 
   /* 優先順位に応じて起点となるアトムを振り分ける */

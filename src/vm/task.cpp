@@ -698,7 +698,7 @@ void slim::vm::interpreter::findatom_original_hyperlink(
 void lmn_hyperlink_get_elements(std::vector<HyperLink *> &tree,
                                 HyperLink *start_hl) {
   Vector vec;
-  vec_init(&vec, 1);
+  vec.init(1);
   lmn_hyperlink_get_elements(&vec, start_hl);
   for (int i = 0; i < vec_num(&vec); i++)
     tree.push_back((HyperLink *)vec_get(&vec, i));
@@ -854,7 +854,7 @@ read_unary_atoms_indirect(LmnReactCxt *rc, LmnRuleInstr &instr) {
 std::vector<HyperLink *> lmn_hyperlink_get_elements(HyperLink *start_hl) {
   std::vector<HyperLink *> vec;
   Vector tree;
-  vec_init(&tree, 32);
+  tree.init(32);
   lmn_hyperlink_get_elements(&tree, start_hl);
   for (int i = 0; i < vec_num(&tree) - 1; i++)
     vec.push_back((HyperLink *)vec_get(&tree, i));
@@ -916,7 +916,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, seti);
     READ_VAL(LmnInstrVar, instr, list_num);
 
-    vec_init(&links, list_num + 1);
+    links.init(list_num + 1);
     for (i = 0; i < list_num; i++) {
       LmnInstrVar t;
       READ_VAL(LmnInstrVar, instr, t);
@@ -944,7 +944,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, seti);
     READ_VAL(LmnInstrVar, instr, list_num);
 
-    vec_init(&links, list_num + 1);
+    links.init(list_num + 1);
 
     for (i = 0; i < list_num; i++) {
       READ_VAL(LmnInstrVar, instr, enti);
@@ -2878,8 +2878,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       ProcessTableRef attr_functors;
       Vector attr_dataAtoms;
       Vector attr_dataAtom_attrs;
-      vec_init(&attr_dataAtoms, 16);
-      vec_init(&attr_dataAtom_attrs, 16);
+      attr_dataAtoms.init(16);
+      attr_dataAtom_attrs.init(16);
       attr_functors = proc_tbl_make_with_size(16);
       LmnInstrVar i = 0, n;
 
@@ -2973,8 +2973,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       ProcessTableRef attr_functors;
       Vector attr_dataAtoms;
       Vector attr_dataAtom_attrs;
-      vec_init(&attr_dataAtoms, 16);
-      vec_init(&attr_dataAtom_attrs, 16);
+      attr_dataAtoms.init(16);
+      attr_dataAtom_attrs.init(16);
       attr_functors = proc_tbl_make_with_size(16);
       LmnInstrVar i = 0, n;
 
@@ -4213,7 +4213,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, seti);
       READ_VAL(LmnInstrVar, instr, list_num);
 
-      vec_init(&links, list_num + 1);
+      links.init(list_num + 1);
       for (i = 0; i < list_num; i++) {
         LmnInstrVar t;
         READ_VAL(LmnInstrVar, instr, t);
@@ -4241,7 +4241,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, seti);
       READ_VAL(LmnInstrVar, instr, list_num);
 
-      vec_init(&links, list_num + 1);
+      links.init(list_num + 1);
 
       for (i = 0; i < list_num; i++) {
         READ_VAL(LmnInstrVar, instr, enti);

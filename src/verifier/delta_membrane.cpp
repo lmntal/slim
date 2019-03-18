@@ -147,8 +147,8 @@ static struct NewMemInfo *new_mem_info_make(LmnMembraneRef mem) {
   struct NewMemInfo *p = LMN_MALLOC(struct NewMemInfo);
 
   p->mem = mem;
-  vec_init(&p->new_child_mems, 16);
-  vec_init(&p->removed_child_mems, 16);
+  p->new_child_mems.init(16);
+  p->removed_child_mems.init(16);
   return p;
 }
 
@@ -240,9 +240,9 @@ struct MemDeltaRoot *dmem_root_make(LmnMembraneRef root_mem, LmnRuleRef rule,
   p->committed = FALSE;
   p->applied_rule = rule;
   p->proc_tbl = proc_tbl_make_with_size(size);
-  vec_init(&p->new_mems, 16);
-  vec_init(&p->mem_deltas, 16);
-  vec_init(&p->modified_atoms, 32);
+  p->new_mems.init(16);
+  p->mem_deltas.init(16);
+  p->modified_atoms.init(32);
   p->owner_tbl = proc_tbl_make_with_size(size);
   p->flag_tbl = sproc_tbl_make_with_size(size);
 
@@ -871,7 +871,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
   atommap = proc_tbl_make_with_size(64);
   t = 0UL; /* 警告されるので.. */
   atommap = proc_tbl_make_with_size(64);
-  vec_init(&stack, 16);
+  stack.init(16);
   d = dmem_root_get_mem_delta(root_d, mem);
   *ret_dstlovec = new Vector(16);
 
@@ -1230,7 +1230,7 @@ void dmem_root_remove_toplevel_proxies(struct MemDeltaRoot *root_d,
     d = dmem_root_get_mem_delta(root_d, mem);
     /*   printf("before remove toplevel proxy "); lmn_dump_mem_stdout(mem); */
 
-    vec_init(&remove_list, 16);
+    remove_list.init(16);
 
     DMEM_EACH_FUNC_ATOM(d, mem, LMN_OUT_PROXY_FUNCTOR, outside, {
       LmnSymbolAtomRef a0;
@@ -1293,8 +1293,8 @@ void dmem_root_remove_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem) {
     /* printf("remove proxies mem = %p\n", mem); */
     /* lmn_dump_mem_dev(mem); */
 
-    vec_init(&remove_list, 16);
-    vec_init(&change_list, 16);
+    remove_list.init(16);
+    change_list.init(16);
 
     DMEM_EACH_FUNC_ATOM(d, mem, LMN_OUT_PROXY_FUNCTOR, opxy, {
       LmnSymbolAtomRef a0 =
@@ -1384,8 +1384,8 @@ void dmem_root_insert_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
   /* printf("insert proxies parent = %p child_mem = %p(delta=%p)\n", mem,
    * child_mem, child_d); */
 
-  vec_init(&remove_list, 16);
-  vec_init(&change_list, 16); /* inside proxy にするアトム */
+  remove_list.init(16);
+  change_list.init(16); /* inside proxy にするアトム */
 
   DMEM_EACH_FUNC_ATOM(
       child_d, child_mem, LMN_STAR_PROXY_FUNCTOR, star, ({
@@ -1469,7 +1469,7 @@ void dmem_root_remove_temporary_proxies(struct MemDeltaRoot *root_d,
   else
     d = dmem_root_get_mem_delta(root_d, mem);
 
-  vec_init(&remove_list, 16);
+  remove_list.init(16);
 
   DMEM_EACH_FUNC_ATOM(d, mem, LMN_STAR_PROXY_FUNCTOR, star, {
     outside = dmem_root_modified_atom(
@@ -1827,17 +1827,17 @@ static struct MemDelta *mem_delta_make(struct MemDeltaRoot *root_d,
    * 配列をメモリ上に4本確保しているため,
    * キャッシュ効率を考慮した改良ができるはず. */
 
-  vec_init(&p->new_atoms, 16);
-  vec_init(&p->del_atoms, 16);
+  p->new_atoms.init(16);
+  p->del_atoms.init(16);
 
-  vec_init(&p->del_mems, 16);
-  vec_init(&p->new_mems, 16);
+  p->del_mems.init(16);
+  p->new_mems.init(16);
 
   p->new_rulesets = NULL;
   p->org_rulesets = NULL;
   p->ruleset_removed = FALSE;
 
-  vec_init(&p->new_proxies, 16);
+  p->new_proxies.init(16);
 
   p->max_functor = lmn_mem_max_functor(m);
 

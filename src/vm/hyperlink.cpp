@@ -374,7 +374,7 @@ HyperLink *lmn_hyperlink_get_root(HyperLink *hl) {
     }
   } else {
     Vector children;
-    vec_init(&children, lmn_hyperlink_element_num(parent_hl));
+    children.init(lmn_hyperlink_element_num(parent_hl));
 
     while (parent_hl != current_hl) {
       vec_push(&children, (LmnWord)current_hl);

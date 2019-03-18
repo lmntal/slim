@@ -347,7 +347,7 @@ TransitionRef transition_make(State *s, lmn_interned_str rule_name) {
   t->s = s;
   t->id = 0;
   transition_set_cost(t, 0);
-  vec_init(&t->rule_names, 4);
+  t->rule_names.init(4);
   vec_push(&t->rule_names, rule_name);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {

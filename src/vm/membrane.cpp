@@ -163,7 +163,7 @@ LmnMembraneRef lmn_mem_make(void) {
   mem->name = ANONYMOUS;
   mem->id = 0UL;
   mem->atomset = LMN_CALLOC(struct AtomListEntry *, mem->atomset_size);
-  vec_init(&mem->rulesets, 1);
+  mem->rulesets.init(1);
   lmn_mem_set_id(mem, env_gen_next_id());
 
 #ifdef USE_FIRSTCLASS_RULE
@@ -679,9 +679,9 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
 
   ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
 
-  vec_init(&remove_list_p, 16); /* parent用 */
-  vec_init(&remove_list_m, 16); /* mem用 */
-  vec_init(&change_list, 16);
+  remove_list_p.init(16); /* parent用 */
+  remove_list_m.init(16); /* mem用 */
+  change_list.init(16);
 
   if (ent) {
     LmnSymbolAtomRef ipxy;
@@ -768,8 +768,8 @@ void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem) {
   if (!ent)
     return;
 
-  vec_init(&remove_list, 16);
-  vec_init(&change_list, 16); /* inside proxy にするアトム */
+  remove_list.init(16);
+  change_list.init(16); /* inside proxy にするアトム */
 
   EACH_ATOM(star, ent, ({
               oldstar = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(star, 0);
@@ -826,7 +826,7 @@ void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem) {
   if (!ent)
     return;
 
-  vec_init(&remove_list, 16);
+  remove_list.init(16);
 
   EACH_ATOM(star, ent, ({
               outside = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(star, 0);
@@ -861,7 +861,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
   if (!ent)
     return;
 
-  vec_init(&remove_list, 16);
+  remove_list.init(16);
 
   EACH_ATOM(
       outside, ent, ({
@@ -1388,8 +1388,8 @@ BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec) {
 
   hashtbl_init(&map, 256);
 
-  vec_init(&stack1, 16);
-  vec_init(&stack2, 16);
+  stack1.init(16);
+  stack2.init(16);
 
   /* startはstackにつまれるので処理中に壊されるためコピー */
   start1 = LinkObj_make(((LinkObjRef)vec_get(srcvec, 0))->ap,

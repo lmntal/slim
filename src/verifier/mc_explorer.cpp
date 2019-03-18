@@ -486,8 +486,8 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
     if (lmn_env.dump) {
       Vector search, path;
 
-      vec_init(&search, 64);
-      vec_init(&path, 32);
+      search.init(64);
+      path.init(32);
       while (!is_empty_queue(OWCTY_WORKER_AQ1(w))) {
         State *seed = (State *)dequeue(OWCTY_WORKER_AQ1(w));
 
@@ -781,8 +781,8 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
     Vector search, path;
     st_table_t traversed;
 
-    vec_init(&search, 64);
-    vec_init(&path, 32);
+    search.init(64);
+    path.init(32);
     if (worker_use_weak_map(w)) {
       traversed = st_init_ptrtable();
     } else {

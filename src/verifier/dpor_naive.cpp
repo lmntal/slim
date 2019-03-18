@@ -1045,7 +1045,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
   if (s->successor_num > 0) {
     struct Vector tmp;
     unsigned int i;
-    vec_init(&tmp, 32);
+    tmp.init(32);
 
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef succ_t;

@@ -89,8 +89,8 @@ struct AutomataSCC {
 AutomataRef automata_make() {
   AutomataRef a = LMN_MALLOC(struct Automata);
 
-  vec_init(&a->states, 32);
-  vec_init(&a->sccs, 4);
+  a->states.init(32);
+  a->sccs.init(4);
   a->state_name_to_id = st_init_strtable();
   a->id_to_state_name = st_init_numtable();
   a->prop_to_id = st_init_strtable();
@@ -223,7 +223,7 @@ AutomataStateRef atmstate_make(unsigned int id, BOOL is_accept_state,
                                BOOL is_end_state) {
   AutomataStateRef s = LMN_MALLOC(struct AutomataState);
 
-  vec_init(&s->transitions, 16);
+  s->transitions.init(16);
   s->id = id;
   s->is_accept = is_accept_state;
   s->is_end = is_end_state;
