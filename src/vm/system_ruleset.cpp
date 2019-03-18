@@ -61,13 +61,13 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
   EACH_ATOM(o0, ent, ({
               LmnSymbolAtomRef o1;
 
-              if (LMN_SATOM_GET_FUNCTOR(o0) == LMN_RESUME_FUNCTOR)
+              if (o0->get_functor() == LMN_RESUME_FUNCTOR)
                 continue;
 
               if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(o0, 1)))
                 return FALSE;
               o1 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(o0, 1);
-              if (LMN_SATOM_GET_FUNCTOR(o1) == LMN_OUT_PROXY_FUNCTOR) {
+              if (o1->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
                 LmnSymbolAtomRef i0;
                 LmnSymbolAtomRef i1;
                 LmnMembraneRef m0;
@@ -109,7 +109,7 @@ static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
   EACH_ATOM(o0, ent, ({
               LmnSymbolAtomRef i0, i1;
 
-              if (LMN_SATOM_GET_FUNCTOR(o0) == LMN_RESUME_FUNCTOR)
+              if (o0->get_functor() == LMN_RESUME_FUNCTOR)
                 continue;
 
               i0 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(o0, 0);
@@ -117,7 +117,7 @@ static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
               if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(i0, 1)))
                 return FALSE;
               i1 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(i0, 1);
-              if (LMN_SATOM_GET_FUNCTOR(i1) == LMN_IN_PROXY_FUNCTOR) {
+              if (i1->get_functor() == LMN_IN_PROXY_FUNCTOR) {
                 LmnSymbolAtomRef o1 =
                     (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(i1, 0);
                 ent -> remove(o0);
@@ -152,7 +152,7 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
                 return FALSE;
 
               out0 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(op, 0);
-              if (LMN_SATOM_GET_FUNCTOR(out0) != LMN_OUT_PROXY_FUNCTOR) {
+              if (out0->get_functor() != LMN_OUT_PROXY_FUNCTOR) {
                 return FALSE;
               }
 
@@ -163,7 +163,7 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
               }
 
               out1 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(op, 1);
-              if (LMN_SATOM_GET_FUNCTOR(out1) != LMN_OUT_PROXY_FUNCTOR) {
+              if (out1->get_functor() != LMN_OUT_PROXY_FUNCTOR) {
                 return FALSE;
               }
 

@@ -279,7 +279,7 @@ void cb_set_insert(LmnReactCxtRef rc,
     t0 = LMN_SP_ATOM_ATTR;
     if(LMN_INT_ATTR == t1)
       a0 = (LmnAtomRef)lmn_set_make(&type_id_hash);
-    else if(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1) == LMN_OUT_PROXY_FUNCTOR)
+    else if(((LmnSymbolAtomRef)a1)->get_functor() == LMN_OUT_PROXY_FUNCTOR)
       a0 = (LmnAtomRef)lmn_set_make(&type_mem_hash);
     else
       a0 = (LmnAtomRef)lmn_set_make(&type_tuple_hash);

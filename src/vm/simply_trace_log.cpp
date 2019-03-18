@@ -80,7 +80,7 @@ void simplylog_free(SimplyLog s) { delete s; }
 void simplylog_put(SimplyLog l, LmnWord key) { l->visit(key); }
 
 void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom) {
-  simplylog_put(l, LMN_SATOM_ID(atom));
+  simplylog_put(l, atom->get_id());
 }
 
 void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) {

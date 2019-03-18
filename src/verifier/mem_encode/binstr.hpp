@@ -154,7 +154,7 @@ public:
 
   int push_atom(LmnSymbolAtomRef a) {
     /* ファンクタの最大値からファンクタの値を引いて、大小を反転させる */
-    LmnFunctor f = (LmnFunctor)FUNCTOR_MAX - LMN_SATOM_GET_FUNCTOR(a);
+    LmnFunctor f = (LmnFunctor)FUNCTOR_MAX - a->get_functor();
 
     return push(TAG_ATOM_START) && push((const BYTE *)&f, BS_FUNCTOR_SIZE);
   }

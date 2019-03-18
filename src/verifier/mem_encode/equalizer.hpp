@@ -300,7 +300,7 @@ private:
     /* アトムatomがファンクタfのアトムでない場合,
      * 既にチェック済みのアトムの場合, FALSEを返す */
 
-    if (f != LMN_SATOM_GET_FUNCTOR(satom))
+    if (f != satom->get_functor())
       return FALSE;
 
     if (!tracelog_put_atom(log, satom, *i_ref, mem))
@@ -325,7 +325,7 @@ private:
       return false;
 
     auto satom = reinterpret_cast<LmnSymbolAtomRef>(atom);
-    if (LMN_SATOM_GET_FUNCTOR(satom) != LMN_OUT_PROXY_FUNCTOR)
+    if (satom->get_functor() != LMN_OUT_PROXY_FUNCTOR)
       return false;
 
     /* 子膜側のinside proxyアトムを取得 */
@@ -469,8 +469,7 @@ private:
       auto f = binstr_get_functor(bs->v, *i_bs); /* functorを持ってくる */
       *i_bs += BS_FUNCTOR_SIZE;
       if (LMN_ATTR_IS_DATA(LMN_HL_ATTRATOM_ATTR(hl_root)) ||
-          f != LMN_SATOM_GET_FUNCTOR(
-                   (LmnSymbolAtomRef)LMN_HL_ATTRATOM(hl_root))) {
+          f != ((LmnSymbolAtomRef)LMN_HL_ATTRATOM(hl_root))->get_functor()) {
         return FALSE;
       }
     } break;
@@ -516,7 +515,7 @@ private:
   BOOL mem_eq_enc_escape_mem(int *i_bs, LmnMembraneRef mem, LmnAtomRef atom,
                              LmnLinkAttr attr, int *i_ref) {
     if (LMN_ATTR_IS_DATA(attr) ||
-        LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) != LMN_IN_PROXY_FUNCTOR)
+        ((LmnSymbolAtomRef)atom)->get_functor() != LMN_IN_PROXY_FUNCTOR)
       return false;
 
     auto out = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
@@ -542,7 +541,7 @@ private:
   BOOL mem_eq_enc_mem_ref(int *i_bs, LmnAtomRef atom, LmnLinkAttr attr,
                           int *i_ref, unsigned int ref) {
     if (LMN_ATTR_IS_DATA(attr) ||
-        LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) != LMN_OUT_PROXY_FUNCTOR)
+        ((LmnSymbolAtomRef)atom)->get_functor() != LMN_OUT_PROXY_FUNCTOR)
       return false;
 
     auto in = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
@@ -772,7 +771,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     /* アトムatomがファンクタfのアトムでない場合,
      * 既にチェック済みのアトムの場合, FALSEを返す */
 
-    if (f != LMN_SATOM_GET_FUNCTOR(satom))
+    if (f != satom->get_functor())
       return FALSE;
     if (!visitlog_put_atom(log, satom))
       return FALSE;
@@ -806,7 +805,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
       return false;
 
     auto satom = reinterpret_cast<LmnSymbolAtomRef>(atom);
-    if (LMN_SATOM_GET_FUNCTOR(satom) != LMN_OUT_PROXY_FUNCTOR)
+    if (satom->get_functor() != LMN_OUT_PROXY_FUNCTOR)
       return false;
 
     /* 子膜側のinside proxyアトムを取得 */
@@ -972,7 +971,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
                           LmnLinkAttr attr, BsDecodeLog *ref_log, int *i_ref,
                           unsigned int ref, VisitLog *log) {
     if (LMN_ATTR_IS_DATA(attr) ||
-        LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) != LMN_OUT_PROXY_FUNCTOR)
+        ((LmnSymbolAtomRef)atom)->get_functor() != LMN_OUT_PROXY_FUNCTOR)
       return false;
 
     auto in = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
@@ -1016,7 +1015,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
                                     LmnLinkAttr attr, BsDecodeLog *ref_log,
                                     int *i_ref, VisitLog *log) {
     if (LMN_ATTR_IS_DATA(attr) ||
-        LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) != LMN_IN_PROXY_FUNCTOR)
+        ((LmnSymbolAtomRef)atom)->get_functor() != LMN_IN_PROXY_FUNCTOR)
       return false;
 
     auto out = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);

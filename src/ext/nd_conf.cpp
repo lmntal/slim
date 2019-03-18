@@ -58,7 +58,7 @@ void cb_set_functor_priority(LmnReactCxtRef rc,
                              LmnAtomRef a2, LmnLinkAttr t2)
 {
   set_functor_priority(lmn_functor_intern(ANONYMOUS,
-                                          LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1)),
+                                          LMN_FUNCTOR_NAME_ID(((LmnSymbolAtomRef)a1)->get_functor()),
                                           (LmnWord)a2),
                        (LmnWord)a0);
   lmn_mem_delete_atom(mem, a0, t0);

@@ -92,15 +92,15 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
   LmnSymbolAtomRef dst_atom =
       (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, link_p);
 
-  if (LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_IN_PROXY_FUNCTOR) {
+  if (dst_atom->get_functor() == LMN_IN_PROXY_FUNCTOR) {
     LmnSymbolAtomRef out_proxy =
         (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(dst_atom, 0);
     LmnSymbolAtomRef atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(out_proxy, 1);
-    int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
+    int arity = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
     for (int i = 0; i < arity; i++) {
       LmnSymbolAtomRef linked_atom =
           (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
-      if (LMN_SATOM_GET_FUNCTOR(linked_atom) == LMN_OUT_PROXY_FUNCTOR) {
+      if (linked_atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
         LmnSymbolAtomRef in_proxy =
             (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(linked_atom, 0);
         if (satom == LMN_SATOM_GET_LINK(in_proxy, 1)) {
@@ -108,14 +108,14 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
         }
       }
     }
-  } else if (LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_OUT_PROXY_FUNCTOR) {
+  } else if (dst_atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
     LmnSymbolAtomRef in_proxy =
         (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(dst_atom, 0);
     LmnSymbolAtomRef atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in_proxy, 1);
     return linkconnection_push(link_connections, atom, 0, NULL);
   }
 
-  int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(dst_atom));
+  int arity = LMN_FUNCTOR_GET_LINK_NUM(dst_atom->get_functor());
   for (int i = 0; i < arity; i++) {
     if (satom == LMN_SATOM_GET_LINK(dst_atom, i)) {
       return linkconnection_push(link_connections, dst_atom, i, NULL);
@@ -159,9 +159,9 @@ LmnStringRef string_of_template_membrane(Vector *link_connections,
         EACH_ATOM(
             satom, ent, ({
               int arity =
-                  LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
+                  LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
               const char *atom_name = lmn_id_to_name(
-                  LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+                  LMN_FUNCTOR_NAME_ID(satom->get_functor()));
 
               if (f == LMN_UNARY_PLUS_FUNCTOR) {
                 LmnSymbolAtomRef in_proxy =
@@ -269,8 +269,8 @@ LmnStringRef string_of_template_membrane(Vector *link_connections,
 LmnStringRef string_of_guard_op(LmnSymbolAtomRef satom) {
   LmnStringRef result = lmn_string_make_empty();
   const char *atom_name =
-      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
-  int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
+      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(satom->get_functor()));
+  int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
   LmnLinkAttr attr;
   if (arity == 1)
     lmn_string_push_raw_s(result, atom_name);
@@ -320,7 +320,7 @@ LmnStringRef string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
         LmnSymbolAtomRef satom;
         EACH_ATOM(satom, ent, ({
                     const char *atom_name = lmn_id_to_name(
-                        LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+                        LMN_FUNCTOR_NAME_ID(satom->get_functor()));
 
                     if (f == LMN_UNARY_PLUS_FUNCTOR) {
                       LmnSymbolAtomRef in_proxy =
@@ -337,7 +337,7 @@ LmnStringRef string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
                             (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
                         const char *typed_pc_atom_name =
                             lmn_id_to_name(LMN_FUNCTOR_NAME_ID(
-                                LMN_SATOM_GET_FUNCTOR(typed_pc_atom)));
+                                typed_pc_atom->get_functor()));
                         lmn_string_push_raw_s(result, constraint_name[i]);
                         lmn_string_push_raw_s(result, "(");
                         lmn_string_push_raw_s(result, typed_pc_atom_name);

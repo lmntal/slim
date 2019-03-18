@@ -129,60 +129,72 @@ enum LmnLinkAttribute {
 #include "special_atom.h"
 #include "symbol.h"
 
-/**
- * @brief アトムリストからATOMのprevアトムを取得する.
- *        アトムリストから履歴アトムを読み飛ばさないので,
- * 呼び出し側で適宜なんとかする
- * @memberof LmnSymbolAtom
- */
-LmnSymbolAtomRef LMN_SATOM_GET_PREV(LmnSymbolAtomRef atom);
-/**
- * @brief アトムリストからATOMのprevアトムを設定する.
- *        アトムリストから履歴アトムを読み飛ばさないので,
- * 呼び出し側で適宜なんとかする
- * @memberof LmnSymbolAtom
- */
-void LMN_SATOM_SET_PREV(LmnSymbolAtomRef atom, LmnSymbolAtomRef prev);
-/**
- * @brief アトムリストからATOMのnextアトムを取得する.
- *        アトムリストから履歴アトムを読み飛ばさないので,
- * 呼び出し側で適宜なんとかする
- * @memberof LmnSymbolAtom
- */
-LmnSymbolAtomRef LMN_SATOM_GET_NEXT_RAW(LmnSymbolAtomRef atom);
-/**
- * @brief アトムリストからATOMのnextアトムを設定する.
- *        アトムリストから履歴アトムを読み飛ばさないので,
- * 呼び出し側で適宜なんとかする
- * @memberof LmnSymbolAtom
- */
-void LMN_SATOM_SET_NEXT(LmnSymbolAtomRef atom, LmnSymbolAtomRef next);
+struct LmnAtomData {
+  LmnSymbolAtomRef prev;
+  LmnSymbolAtomRef next;
+  LmnWord procId;
+  union {
+    struct {
+      LmnFunctor functor;
+      LmnLinkAttr attr[0];
+    };
+    LmnAtomRef links[0];
+  };
+  /**
+   * @brief アトムリストからATOMのprevアトムを取得する.
+   *        アトムリストから履歴アトムを読み飛ばさないので,
+   * 呼び出し側で適宜なんとかする
+   * @memberof LmnSymbolAtom
+   */
+  LmnSymbolAtomRef get_prev() const;
+  /**
+   * @brief アトムリストからATOMのprevアトムを設定する.
+   *        アトムリストから履歴アトムを読み飛ばさないので,
+   * 呼び出し側で適宜なんとかする
+   * @memberof LmnSymbolAtom
+   */
+  void set_prev(LmnSymbolAtomRef prev);
+  /**
+   * @brief アトムリストからATOMのnextアトムを取得する.
+   *        アトムリストから履歴アトムを読み飛ばさないので,
+   * 呼び出し側で適宜なんとかする
+   * @memberof LmnSymbolAtom
+   */
+  LmnSymbolAtomRef get_next() const;
+  /**
+   * @brief アトムリストからATOMのnextアトムを設定する.
+   *        アトムリストから履歴アトムを読み飛ばさないので,
+   * 呼び出し側で適宜なんとかする
+   * @memberof LmnSymbolAtom
+   */
+  void set_next(LmnSymbolAtomRef next);
+  /** ファンクタIDの取得/設定,
+   * ファンクタIDからリンク数の取得のユーティリティ
+   * （プロキシはリンク1本分余分にデータ領域があるので分岐する）
+   */
 
-/* ファンクタIDの取得/設定,
- * ファンクタIDからリンク数の取得のユーティリティ（プロキシはリンク1本分余分にデータ領域があるので分岐する）
- */
+  /**
+   * @brief アトムATOMのプロセスIDを取得
+   * @memberof LmnSymbolAtom
+   */
+  LmnWord get_id() const;
+  /**
+   * @brief アトムATOMのプロセスIDを設定
+   * @memberof LmnSymbolAtom
+   */
+  void set_id(LmnWord id);
+  /**
+   * @brief ファンクタIDの取得
+   * @memberof LmnSymbolAtom
+   */
+  LmnFunctor get_functor() const;
+  /**
+   * @brief ファンクタIDの設定
+   * @memberof LmnSymbolAtom
+   */
+  void set_functor(LmnFunctor func);
+};
 
-/**
- * @brief アトムATOMのプロセスIDを取得
- * @memberof LmnSymbolAtom
- */
-LmnWord LMN_SATOM_ID(LmnSymbolAtomRef atom);
-/**
- * @brief アトムATOMのプロセスIDを設定
- * @memberof LmnSymbolAtom
- */
-void LMN_SATOM_SET_ID(LmnSymbolAtomRef atom, LmnWord id);
-
-/**
- * @brief ファンクタIDの取得
- * @memberof LmnSymbolAtom
- */
-LmnFunctor LMN_SATOM_GET_FUNCTOR(LmnSymbolAtomRef atom);
-/**
- * @brief ファンクタIDの設定
- * @memberof LmnSymbolAtom
- */
-void LMN_SATOM_SET_FUNCTOR(LmnSymbolAtomRef atom, LmnFunctor func);
 /**
  * @brief 価数の取得
  * @memberof LmnSymbolAtom

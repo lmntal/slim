@@ -107,7 +107,7 @@ typedef struct HyperLink {
 #define LMN_HL_ATOM_ROOT_ATOM(ATOM)                                            \
   lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(ATOM)))
 
-#define LMN_IS_HL(ATOM) (LMN_FUNC_IS_HL(LMN_SATOM_GET_FUNCTOR(ATOM)))
+#define LMN_IS_HL(ATOM) (LMN_FUNC_IS_HL((ATOM)->get_functor()))
 #define LMN_FUNC_IS_HL(FUNC) ((FUNC) == LMN_HL_FUNC)
 #define LMN_ATTR_IS_HL(ATTR) ((ATTR) == LMN_HL_ATTR)
 

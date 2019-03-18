@@ -109,7 +109,7 @@ LmnSymbolAtomRef lmn_hyperlink_new() {
   LmnSymbolAtomRef atom;
 
   atom = lmn_new_atom(LMN_HL_FUNC);
-  LMN_SATOM_SET_ID(atom, hyperlink_new_id());
+  atom->set_id(hyperlink_new_id());
   lmn_hyperlink_make(atom);
 
   return atom;

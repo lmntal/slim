@@ -217,7 +217,7 @@ struct encoder {
     }
 
     auto satom = reinterpret_cast<LmnSymbolAtomRef>(atom);
-    auto f = LMN_SATOM_GET_FUNCTOR(satom);
+    auto f = satom->get_functor();
     if (f == LMN_OUT_PROXY_FUNCTOR) {
       /* outside proxyの場合, inside proxy側の膜をwrite_memで書き込む */
       auto in = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
@@ -284,7 +284,7 @@ struct encoder {
         continue;
 
       /* 最適化: 最小のファンクタ以外は試す必要なし */
-      if (last_valid_i >= 0 && LMN_SATOM_GET_FUNCTOR(atom) != first_func)
+      if (last_valid_i >= 0 && atom->get_functor() != first_func)
         break;
 
       if (visitlog_get_atom(visited, atom, NULL))
@@ -297,7 +297,7 @@ struct encoder {
       if (new_bsptr.is_valid()) {
         /* atomからたどった分子が書き込みに成功したので、last_validに記憶する */
         if (last_valid_i < 0) {
-          first_func = LMN_SATOM_GET_FUNCTOR(atom);
+          first_func = atom->get_functor();
         } else {
           checkpoint_free(last_valid_checkpoint);
         }

@@ -216,7 +216,7 @@ static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
     t = mhash_data(atom, attr);
     (*sum) += t;
     (*mul) *= t;
-  } else if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) !=
+  } else if (((LmnSymbolAtomRef)atom)->get_functor() !=
                  LMN_IN_PROXY_FUNCTOR &&
              proc_tbl_put_new_atom(ctx, (LmnSymbolAtomRef)atom, 1)) {
     /* シンボルアトムの場合:
@@ -228,7 +228,7 @@ static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
     (*sum) += t;
     (*mul) *= t;
 
-    if (LMN_IS_SYMBOL_FUNCTOR(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom))) {
+    if (LMN_IS_SYMBOL_FUNCTOR(((LmnSymbolAtomRef)atom)->get_functor())) {
       const int arity = LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)atom);
       int i_arg;
 
@@ -269,7 +269,7 @@ static mhash_t mhash_unit(LmnAtomRef atom, LmnLinkAttr attr,
      *   slim内のデータアトムはatom以外に接続先アトムを持たない仕様にしているため,
      *   深さDに到達していようがいまいがトレースを打ち切る. */
     return mhash_data(atom, attr);
-  } else if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) ==
+  } else if (((LmnSymbolAtomRef)atom)->get_functor() ==
              LMN_OUT_PROXY_FUNCTOR) {
     /* 4. OutSideProxyアトムの(子膜に入る)場合 */
     LmnSymbolAtomRef in_proxy =
@@ -285,7 +285,7 @@ static mhash_t mhash_unit(LmnAtomRef atom, LmnLinkAttr attr,
       return memunit(LMN_PROXY_GET_MEM(in_proxy), in_proxy, calc_mem, ctx,
                      depth);
     }
-  } else if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) ==
+  } else if (((LmnSymbolAtomRef)atom)->get_functor() ==
              LMN_IN_PROXY_FUNCTOR) {
     /* 2. InSideProxyアトムの(親膜に抜ける)場合
      *   プロキシアトムのハッシュ値を返してトレースを打ち切る. */
@@ -394,7 +394,7 @@ static inline mhash_t memlink(LmnSymbolAtomRef in_proxy,
     atom = LMN_SATOM_GET_LINK(in_proxy, 1);
     attr = LMN_SATOM_GET_ATTR(in_proxy, 1);
     if (LMN_ATTR_IS_DATA(attr) ||
-        LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom) != LMN_OUT_PROXY_FUNCTOR)
+        ((LmnSymbolAtomRef)atom)->get_functor() != LMN_OUT_PROXY_FUNCTOR)
       break;
     in_proxy = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
   }
@@ -412,7 +412,7 @@ static inline mhash_t memlink(LmnSymbolAtomRef in_proxy,
 /* 非データアトムatomのハッシュ値を返す. */
 static inline mhash_t mhash_symbol(LmnSymbolAtomRef atom) {
   /* ファンクタの種類を示す整数IDを返す */
-  return LMN_SATOM_GET_FUNCTOR(atom);
+  return atom->get_functor();
 }
 
 /* データアトムatomのハッシュ値を返す. */

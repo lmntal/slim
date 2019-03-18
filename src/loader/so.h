@@ -240,8 +240,8 @@
           attr, TT_OTHER};                                                     \
     } else { /* symbol atom */                                                 \
       rc->reg(funci) = {                                                       \
-          (LmnWord)LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)LMN_SATOM_GET_LINK( \
-              (LmnSymbolAtomRef)rc->wt(atomi), pos)),                          \
+          (LmnWord)((LmnSymbolAtomRef)LMN_SATOM_GET_LINK( \
+              (LmnSymbolAtomRef)rc->wt(atomi), pos))->get_functor(),                          \
           attr, TT_OTHER};                                                     \
     }                                                                          \
   } while (0)

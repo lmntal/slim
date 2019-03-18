@@ -41,49 +41,42 @@
 
 #include "hyperlink.h"
 
-struct LmnAtomData {
-  LmnSymbolAtomRef prev;
-  LmnSymbolAtomRef next;
-  LmnWord procId;
-  union {
-    struct {
-      LmnFunctor functor;
-      LmnLinkAttr attr[0];
-    };
-    LmnAtomRef links[0];
-  };
-};
-
-LmnSymbolAtomRef LMN_SATOM_GET_PREV(LmnSymbolAtomRef atom) {
-  return atom->prev;
-}
-void LMN_SATOM_SET_PREV(LmnSymbolAtomRef atom, LmnSymbolAtomRef prev) {
-  atom->prev = prev;
-}
-LmnSymbolAtomRef LMN_SATOM_GET_NEXT_RAW(LmnSymbolAtomRef atom) {
-  return atom->next;
-}
-void LMN_SATOM_SET_NEXT(LmnSymbolAtomRef atom, LmnSymbolAtomRef next) {
-  atom->next = next;
+LmnSymbolAtomRef LmnAtomData::get_prev() const{
+  return this->prev;
 }
 
-LmnWord LMN_SATOM_ID(LmnSymbolAtomRef atom) { return atom->procId; }
-void LMN_SATOM_SET_ID(LmnSymbolAtomRef atom, LmnWord id) { atom->procId = id; }
-
-LmnFunctor LMN_SATOM_GET_FUNCTOR(LmnSymbolAtomRef atom) {
-  return atom->functor;
+void LmnAtomData::set_prev(LmnSymbolAtomRef prev) {
+  this->prev = prev;
 }
-void LMN_SATOM_SET_FUNCTOR(LmnSymbolAtomRef atom, LmnFunctor func) {
-  atom->functor = func;
+
+LmnSymbolAtomRef LmnAtomData::get_next() const{
+  return this->next;
+}
+void LmnAtomData::set_next(LmnSymbolAtomRef next) {
+  this->next = next;
+}
+
+LmnWord LmnAtomData::get_id() const {
+  return this->procId;
+}
+void LmnAtomData::set_id(LmnWord id){
+  this->procId = id;
+}
+
+LmnFunctor LmnAtomData::get_functor() const{
+  return this->functor;
+}
+void LmnAtomData::set_functor(LmnFunctor func) {
+  this->functor = func;
 }
 int LMN_SATOM_GET_ARITY(LmnSymbolAtomRef atom) {
-  return LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(atom));
+  return LMN_FUNCTOR_ARITY(atom->get_functor());
 }
 int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor func) {
   return LMN_FUNCTOR_ARITY(func) - (LMN_IS_PROXY_FUNCTOR(func) ? 1U : 0U);
 }
 int LMN_SATOM_GET_LINK_NUM(LmnSymbolAtomRef atom) {
-  return LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
+  return LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
 }
 
 /* リンク番号のタグのワード数。ファンクタと同じワードにある分も数える */
@@ -118,7 +111,7 @@ size_t LMN_SATOM_SIZE(int arity) {
 }
 
 BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC) {
-  return LMN_ATTR_IS_DATA(ATTR) ? FALSE : LMN_SATOM_GET_FUNCTOR(ATOM) == FUNC;
+  return LMN_ATTR_IS_DATA(ATTR) ? FALSE : ATOM->get_functor() == FUNC;
 }
 
 BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr) { return attr & ~LMN_ATTR_MASK; }
@@ -135,7 +128,7 @@ void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X) {
 /////
 
 BOOL LMN_SATOM_IS_PROXY(LmnSymbolAtomRef ATOM) {
-  return LMN_IS_PROXY_FUNCTOR(LMN_SATOM_GET_FUNCTOR(ATOM));
+  return LMN_IS_PROXY_FUNCTOR(ATOM->get_functor());
 }
 LmnMembraneRef LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM) {
   return (LmnMembraneRef)LMN_SATOM_GET_LINK(PROXY_ATM, 2);
@@ -154,7 +147,7 @@ BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC) {
 /////
 
 const char *LMN_SATOM_STR(LmnSymbolAtomRef ATOM) {
-  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(ATOM)));
+  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(ATOM->get_functor()));
 }
 const char *LMN_FUNCTOR_STR(LmnFunctor F) {
   return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(F));
@@ -186,12 +179,12 @@ LmnSymbolAtomRef lmn_copy_satom(LmnSymbolAtomRef atom) {
   LmnSymbolAtomRef newatom;
   LmnFunctor f;
 
-  f = LMN_SATOM_GET_FUNCTOR(atom);
+  f = atom->get_functor();
   newatom = lmn_new_atom(f);
 
   memcpy((void *)newatom, (void *)atom, LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
 
-  LMN_SATOM_SET_ID(newatom, 0);
+  newatom->set_id(0);
   return newatom;
 }
 
@@ -205,7 +198,7 @@ LmnDataAtomRef lmn_copy_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr) {
     return (LmnDataAtomRef)SP_ATOM_COPY(atom);
   case LMN_HL_ATTR: {
     LmnSymbolAtomRef copyatom = lmn_copy_satom((LmnSymbolAtomRef)atom);
-    LMN_SATOM_SET_ID(copyatom, 0);
+    copyatom->set_id(0);
 
     lmn_hyperlink_copy(copyatom, (LmnSymbolAtomRef)atom);
     return (LmnDataAtomRef)copyatom;
@@ -223,7 +216,7 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom,
   LmnSymbolAtomRef newatom;
   unsigned int i, arity = LMN_SATOM_GET_LINK_NUM(atom);
 
-  f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom);
+  f = ((LmnSymbolAtomRef)atom)->get_functor();
   newatom = lmn_new_atom(f);
 
   LMN_ASSERT(newatom != atom);
@@ -254,7 +247,7 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom,
     }
   }
 
-  LMN_SATOM_SET_ID(newatom, 0);
+  newatom->set_id(0);
 
   return newatom;
 }
@@ -294,7 +287,7 @@ void lmn_free_atom(LmnAtomRef atom, LmnLinkAttr attr) {
 /* シンボルアトムとリンクで接続しているデータアトムを解放する */
 void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom) {
   unsigned int i;
-  unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
+  unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
   /* free linked data atoms */
   for (i = 0; i < end; i++) {
     if (LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, i))) {
@@ -303,7 +296,7 @@ void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom) {
     }
   }
 
-  if (LMN_FUNC_IS_HL(LMN_SATOM_GET_FUNCTOR(atom))) {
+  if (LMN_FUNC_IS_HL(atom->get_functor())) {
     lmn_hyperlink_delete(atom);
   }
 
@@ -327,8 +320,8 @@ BOOL lmn_eq_func(LmnAtomRef atom0, LmnLinkAttr attr0, LmnAtomRef atom1,
     return lmn_hyperlink_eq((LmnSymbolAtomRef)atom0, attr0,
                             (LmnSymbolAtomRef)atom1, attr1);
   default: /* symbol atom */
-    return LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom0) ==
-           LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)atom1);
+    return ((LmnSymbolAtomRef)atom0)->get_functor() ==
+           ((LmnSymbolAtomRef)atom1)->get_functor();
   }
 }
 

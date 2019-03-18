@@ -161,7 +161,7 @@ static int contextC1_expand_gatoms_LHS_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   //  LmnWord key;
 
   c = (ContextC1Ref)_arg;
-  //  key = LMN_SATOM_ID((LmnSAtom)_v);
+  //  key = ((LmnSAtom)_v)->get_id();
 
   if (!proc_tbl_get(c->LHS_procs, _k, NULL)) {
     proc_tbl_put(c->LHS_procs, _k, LHS_DEFAULT);
@@ -182,7 +182,7 @@ static void contextC1_expand_LHS(McDporData *d, ContextC1Ref c,
     LmnRegisterRef r = &v.at(i);
 
     if (r->register_tt() == TT_ATOM && !LMN_ATTR_IS_DATA(r->register_at())) {
-      key = LMN_SATOM_ID((LmnSymbolAtomRef)r->register_wt());
+      key = ((LmnSymbolAtomRef)r->register_wt())->get_id();
     } else if (r->register_tt() == TT_MEM) {
       key = lmn_mem_id((LmnMembraneRef)r->register_wt());
       if (i == 0) {
@@ -289,8 +289,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
   /* アトムが削除されるなら, そのアトムが左辺に出現した遷移に依存する */
   for (i = 0; i < vec_num(&d->del_atoms); i++) {
     LmnSymbolAtomRef a = (LmnSymbolAtomRef)vec_get(&d->del_atoms, i);
-    contextC1_RHS_tbl_put(c->RHS_procs, LMN_SATOM_ID(a), OP_DEP_EXISTS);
-    if (LMN_SATOM_GET_FUNCTOR(a) == LMN_IN_PROXY_FUNCTOR) {
+    contextC1_RHS_tbl_put(c->RHS_procs, a->get_id(), OP_DEP_EXISTS);
+    if (a->get_functor() == LMN_IN_PROXY_FUNCTOR) {
       need_flink_check = TRUE;
     }
   }

@@ -52,7 +52,7 @@ void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value) {
 
 void sproc_tbl_put_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom,
                         BYTE value) {
-  sproc_tbl_put(p, LMN_SATOM_ID(atom), value);
+  sproc_tbl_put(p, atom->get_id(), value);
 }
 
 void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembraneRef mem,
@@ -63,7 +63,7 @@ void sproc_tbl_put_mem(SimplyProcessTableRef p, LmnMembraneRef mem,
 void sproc_tbl_unput(SimplyProcessTableRef p, LmnWord key) { p->unput(key); }
 
 void sproc_tbl_unput_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom) {
-  sproc_tbl_unput(p, LMN_SATOM_ID(atom));
+  sproc_tbl_unput(p, atom->get_id());
 }
 
 void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembraneRef mem) {
@@ -80,7 +80,7 @@ int sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value) {
 
 int sproc_tbl_get_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom,
                           BYTE *value) {
-  return sproc_tbl_get(p, LMN_SATOM_ID(atom), value);
+  return sproc_tbl_get(p, atom->get_id(), value);
 }
 
 int sproc_tbl_get_by_mem(SimplyProcessTableRef p, LmnMembraneRef mem,
@@ -93,7 +93,7 @@ BOOL sproc_tbl_contains(SimplyProcessTableRef p, LmnWord key) {
 }
 
 BOOL sproc_tbl_contains_atom(SimplyProcessTableRef p, LmnSymbolAtomRef atom) {
-  return sproc_tbl_contains(p, LMN_SATOM_ID(atom));
+  return sproc_tbl_contains(p, atom->get_id());
 }
 
 BOOL sproc_tbl_contains_mem(SimplyProcessTableRef p, LmnMembraneRef mem) {
@@ -104,13 +104,11 @@ BOOL sproc_tbl_get_flag(SimplyProcessTableRef p, LmnWord key, BYTE flag) {
   return p->get_flag(key, flag);
 }
 
-BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef key,
-                                LmnWord flag) {
-  return sproc_tbl_get_flag(p, LMN_SATOM_ID(key), flag);
+BOOL sproc_tbl_get_flag_by_atom(SimplyProcessTableRef p, LmnSymbolAtomRef key, LmnWord flag) {
+  return sproc_tbl_get_flag(p, key->get_id(), flag);
 }
 
-BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembraneRef key,
-                               LmnWord flag) {
+BOOL sproc_tbl_get_flag_by_mem(SimplyProcessTableRef p, LmnMembraneRef key, LmnWord flag) {
   return sproc_tbl_get_flag(p, lmn_mem_id(key), flag);
 }
 
@@ -124,7 +122,7 @@ void sproc_tbl_set_flag(SimplyProcessTableRef p, LmnWord key, LmnWord flag) {
 
 void sproc_tbl_set_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key,
                              LmnWord flag) {
-  sproc_tbl_set_flag(p, LMN_SATOM_ID(key), flag);
+  sproc_tbl_set_flag(p, key->get_id(), flag);
 }
 
 void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key,
@@ -134,7 +132,7 @@ void sproc_tbl_set_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key,
 
 void sproc_tbl_unset_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key,
                                LmnWord flag) {
-  sproc_tbl_unset_flag(p, LMN_SATOM_ID(key), flag);
+  sproc_tbl_unset_flag(p, key->get_id(), flag);
 }
 
 void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key,

@@ -56,7 +56,7 @@ void nlmem_copy(LmnReactCxtRef rc,
   lmn_interned_str copy_tag_name;
   LmnFunctor copy_tag_func;
 
-  copy_tag_name = LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1));
+  copy_tag_name = LMN_FUNCTOR_NAME_ID(((LmnSymbolAtomRef)a1)->get_functor());
   copy_tag_func = lmn_functor_intern(ANONYMOUS, copy_tag_name, 3);
   org_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
   trg_mem = lmn_mem_make();
@@ -100,11 +100,11 @@ void nlmem_kill(LmnReactCxtRef rc,
                 LmnAtomRef a0, LmnLinkAttr t0,
                 LmnAtomRef a1, LmnLinkAttr t1)
 {
-  LmnFunctor kill_tag_func = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1);
+  LmnFunctor kill_tag_func = ((LmnSymbolAtomRef)a1)->get_functor();
   LmnSymbolAtomRef org_in;
   LmnMembraneRef org_mem;
 
-  if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a0) != LMN_OUT_PROXY_FUNCTOR) {
+  if (((LmnSymbolAtomRef)a0)->get_functor() != LMN_OUT_PROXY_FUNCTOR) {
     fprintf(stderr, "NLMEM.C, nlmem_kill: first argument must be a membrane");
     return;
   }

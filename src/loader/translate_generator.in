@@ -180,8 +180,8 @@ BOOL interpret_generated(LmnReactCxtRef rc,
         /* EACH_ATOMを使うとループ内コード中でコンマが使えない場合が出てくる */
         for(atom = atomlist_head(atomlist_ent);
             atom != lmn_atomlist_end(atomlist_ent);
-            atom = LMN_SATOM_GET_NEXT_RAW(atom)){
-          if(LMN_SATOM_GET_FUNCTOR(atom) != LMN_RESUME_FUNCTOR){
+            atom = atom->get_next()){
+          if(atom->get_functor() != LMN_RESUME_FUNCTOR){
             rc->wt($0) = (LmnWord)atom;
             rc->tt($0) = TT_ATOM;
 #__echo_t
@@ -426,7 +426,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 % } else {
     if(LMN_ATTR_IS_DATA(rc->at($0)) ||
-       LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(rc->wt($0))) != TR_GFID($1_functor_data)) $f;
+       ((LmnSymbolAtomRef)(rc->wt($0)))->get_functor() != TR_GFID($1_functor_data)) $f;
 % }
 
 #notfunc LmnInstrVar $functor
@@ -454,7 +454,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 % } else {
     if(! (LMN_ATTR_IS_DATA(rc->at($0)) ||
-          LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(rc->wt($0))) != TR_GFID($1_functor_data))) $f;
+          ((LmnSymbolAtomRef)(rc->wt($0)))->get_functor() != TR_GFID($1_functor_data))) $f;
 % }
 
 #isground LmnInstrVar LmnInstrVar LmnInstrVar
@@ -779,7 +779,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if(LMN_ATTR_IS_DATA(rc->at($1))){
     rc->wt($0) = (LmnWord)rc->wt($1);
   }else{
-    rc->wt($0) = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt($1));
+    rc->wt($0) = ((LmnSymbolAtomRef)rc->wt($1))->get_functor();
   }
   rc->at($0) = rc->at($1);
   rc->tt($0) = TT_OTHER;
