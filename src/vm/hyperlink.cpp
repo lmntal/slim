@@ -198,7 +198,7 @@ void lmn_hyperlink_delete(LmnSymbolAtomRef at) {
 
     parent = hl->parent;
     if (parent != hl) {
-      hashset_delete(parent->children, (HashKeyType)hl);
+      parent->children->delete_entry((HashKeyType)hl);
       hyperlink_rank_calc(parent, -1);
       if (parent->rank == 0) {
         hashset_free(parent->children);
@@ -233,7 +233,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
      *   子がいない -> そのまま削除
      */
 
-    hashset_delete(parent->children, (HashKeyType)hl);
+    parent->children->delete_entry((HashKeyType)hl);
     //    parent->rank--;
     hyperlink_rank_calc(parent, -1);
     if (parent->rank == 0) {
@@ -248,7 +248,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
         HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
           parent->children->add((HashKeyType)tmp);
-          hashset_delete(children, (HashKeyType)tmp);
+          children->delete_entry((HashKeyType)tmp);
           tmp->parent = parent;
         }
       }
@@ -272,8 +272,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       }
 
       /* 新rootが決定 */
-      hashset_delete(children,
-                     (HashKeyType)newroot); /* rootの子表から新rootを除去 */
+      children->delete_entry((HashKeyType)newroot); /* rootの子表から新rootを除去 */
       newroot->parent = newroot;
 
       if (!newroot->children) {
@@ -285,7 +284,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
         HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
           newroot->children->add((HashKeyType)tmp);
-          hashset_delete(children, (HashKeyType)tmp);
+          children->delete_entry((HashKeyType)tmp);
           tmp->parent = newroot;
         }
       }
@@ -338,7 +337,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
 
       /* 旧親に対する処理 */
       old_parent_children = old_parent->children;
-      hashset_delete(old_parent_children, (HashKeyType)hl);
+      old_parent_children->delete_entry((HashKeyType)hl);
       sub_rank = hl->rank + 1;
       for (j = i + 1; j < n; j++) {
         ((HyperLink *)vec_get(children, j))->rank -= sub_rank;

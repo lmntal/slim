@@ -251,6 +251,19 @@ void HashSet::add(HashKeyType key) {
   }
 }
 
+void HashSet::delete_entry(HashKeyType key) {
+  HashKeyType *entry;
+  LMN_ASSERT(key < DELETED_KEY);
+
+  entry = hashset_get_p(this, key, EMPTY_KEY);
+  if (*entry != EMPTY_KEY) {
+    this->num--;
+    *entry = DELETED_KEY;
+  }
+  /* EFFICIENCY: hashset_reduce() が必要 */
+}
+
+
 void hashset_delete(HashSet *set, HashKeyType key) {
   HashKeyType *entry;
   LMN_ASSERT(key < DELETED_KEY);
