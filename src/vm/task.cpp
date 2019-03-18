@@ -596,7 +596,7 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
   /* EFFICIENCY: retsetがHash Setである意味は?　ベクタでいいのでは？
    * 中間命令でセットを使うように書かれている */
 
-  retset = hashset_make(8);
+  retset = new HashSet(8);
   for (i = 0; i < links->num; i++) {
     LmnWord linkid1 = vec_get(links, i);
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid1)))
@@ -637,7 +637,7 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 
         lmn_newlink_in_symbols(a1, t1, eq, 0);
         lmn_newlink_in_symbols(a2, t2, eq, 1);
-        hashset_add(retset, (HashKeyType)eq);
+        retset->add((HashKeyType)eq);
       }
     }
   }
@@ -930,7 +930,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     /* EFFICIENCY: 解放のための再帰 */
     this->push_stackframe([=](bool result) {
-      hashset_free(hashset);
+      delete hashset;
       return result;
     });
 
@@ -959,7 +959,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     /* EFFICIENCY: 解放のための再帰 */
     this->push_stackframe([=](bool result) {
-      hashset_free(hashset);
+      delete hashset;
       return result;
     });
 
@@ -4226,7 +4226,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       /* EFFICIENCY: 解放のための再帰 */
       if (dmem_interpret(rc, rule, instr)) {
-        hashset_free((HashSet *)rc->wt(seti));
+        delete (HashSet *)rc->wt(seti);
         return TRUE;
       } else {
         LMN_ASSERT(0);
@@ -4257,7 +4257,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       /* EFFICIENCY: 解放のための再帰 */
       if (dmem_interpret(rc, rule, instr)) {
-        hashset_free((HashSet *)rc->wt(seti));
+        delete (HashSet *)rc->wt(seti);
         return TRUE;
       } else {
         LMN_ASSERT(0);

@@ -1823,9 +1823,9 @@ returning:
 /* 前の実装.しばらく残しておく */
 BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
                       unsigned long *natoms) {
-  HashSet *visited = hashset_make(16);
+  HashSet *visited = new HashSet(16);
   SimpleHashtbl *guard = NULL;
-  HashSet *root = hashset_make(16);
+  HashSet *root = new HashSet(16);
   Vector *stack = vec_make(16);
   unsigned int i;
   unsigned int n;            /* 到達したアトムの数 */
@@ -1857,8 +1857,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
       continue;
     }
 
-    hashset_add(
-        root, (HashKeyType)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)l->ap, l->pos));
+    root->add((HashKeyType)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)l->ap, l->pos));
     if (vec_num(stack) == 0) {
       vec_push(stack, (LmnWord)l->ap);
     }
@@ -1882,13 +1881,13 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
           ok = FALSE;
           break;
         }
-        if (hashset_contains(visited, (HashKeyType)src_atom))
+        if (visited->contains((HashKeyType)src_atom))
           continue;
-        if (hashset_contains(root, (HashKeyType)src_atom)) {
+        if (root->contains((HashKeyType)src_atom)) {
           n_reach_root++;
           continue;
         }
-        hashset_add(visited, (HashKeyType)src_atom);
+        visited->add((HashKeyType)src_atom);
         n++;
         for (i = 0; i < LMN_SATOM_GET_ARITY(src_atom); i++) {
           LmnAtomRef next_src = LMN_SATOM_GET_LINK(src_atom, i);
@@ -1920,7 +1919,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
   }
 
   vec_free(stack);
-  hashset_free(root);
+  delete root;
   if (guard)
     hashtbl_free(guard);
 
@@ -1929,7 +1928,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
     *atoms = visited;
     return TRUE;
   } else {
-    hashset_free(visited);
+    delete visited;
     *atoms = NULL;
     return FALSE;
   }

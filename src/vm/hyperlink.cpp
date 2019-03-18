@@ -198,10 +198,10 @@ void lmn_hyperlink_delete(LmnSymbolAtomRef at) {
 
     parent = hl->parent;
     if (parent != hl) {
-      hashset_delete(parent->children, (HashKeyType)hl);
+      parent->children->delete_entry((HashKeyType)hl);
       hyperlink_rank_calc(parent, -1);
       if (parent->rank == 0) {
-        hashset_free(parent->children);
+        delete parent->children;
         parent->children = NULL;
       }
     }
@@ -233,11 +233,11 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
      *   子がいない -> そのまま削除
      */
 
-    hashset_delete(parent->children, (HashKeyType)hl);
+    parent->children->delete_entry((HashKeyType)hl);
     //    parent->rank--;
     hyperlink_rank_calc(parent, -1);
     if (parent->rank == 0) {
-      hashset_free(parent->children);
+      delete parent->children;
       parent->children = NULL;
     }
 
@@ -247,8 +247,8 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
            hashsetiter_next(&it)) {
         HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
-          hashset_add(parent->children, (HashKeyType)tmp);
-          hashset_delete(children, (HashKeyType)tmp);
+          parent->children->add((HashKeyType)tmp);
+          children->delete_entry((HashKeyType)tmp);
           tmp->parent = parent;
         }
       }
@@ -272,34 +272,33 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       }
 
       /* 新rootが決定 */
-      hashset_delete(children,
-                     (HashKeyType)newroot); /* rootの子表から新rootを除去 */
+      children->delete_entry((HashKeyType)newroot); /* rootの子表から新rootを除去 */
       newroot->parent = newroot;
 
       if (!newroot->children) {
-        newroot->children = hashset_make(hashset_num(children));
+        newroot->children = new HashSet(children->num);
       }
 
       for (it = hashset_iterator(children); !hashsetiter_isend(&it);
            hashsetiter_next(&it)) {
         HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
-          hashset_add(newroot->children, (HashKeyType)tmp);
-          hashset_delete(children, (HashKeyType)tmp);
+          newroot->children->add((HashKeyType)tmp);
+          children->delete_entry((HashKeyType)tmp);
           tmp->parent = newroot;
         }
       }
 
       newroot->rank = parent->rank - 1;
       if (newroot->rank == 0) {
-        hashset_free(newroot->children);
+        delete newroot->children;
         newroot->children = NULL;
       }
     }
   }
 
   if (children) {
-    hashset_free(children);
+    delete children;
   }
   LMN_FREE(hl);
 }
@@ -338,20 +337,20 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
 
       /* 旧親に対する処理 */
       old_parent_children = old_parent->children;
-      hashset_delete(old_parent_children, (HashKeyType)hl);
+      old_parent_children->delete_entry((HashKeyType)hl);
       sub_rank = hl->rank + 1;
       for (j = i + 1; j < n; j++) {
         ((HyperLink *)vec_get(children, j))->rank -= sub_rank;
       }
 
-      if (hashset_num(old_parent_children) == 0) {
-        hashset_free(old_parent_children);
+      if (old_parent_children->num == 0) {
+        delete old_parent_children;
         old_parent->children = NULL;
       }
 
       /* 新親(root)に対する処理 */
       hl->parent = root;
-      hashset_add(root->children, (HashKeyType)hl);
+      root->children->add((HashKeyType)hl);
     }
   }
 }
@@ -398,9 +397,9 @@ HyperLink *hyperlink_unify(HyperLink *parent, HyperLink *child,
                            LmnAtomRef attrAtom, LmnLinkAttr attr) {
   child->parent = parent;
   if (!parent->children) {
-    parent->children = hashset_make(2);
+    parent->children = new HashSet(2);
   }
-  hashset_add(parent->children, (HashKeyType)child);
+  parent->children->add((HashKeyType)child);
   parent->rank = parent->rank + child->rank + 1;
   parent->attrAtom = attrAtom;
   parent->attr = attr;
