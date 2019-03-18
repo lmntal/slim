@@ -336,8 +336,8 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     rc->wt($0) = (LmnWord)mp;
     rc->tt($0) = TT_MEM;
     lmn_mem_set_active(mp, TRUE);
-    if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-      lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), mp);
+    if ((rc, REACT_MEM_ORIENTED)->GET_MODE()) {
+      lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
     }
   }
 
@@ -361,8 +361,8 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   lmn_mem_add_child_mem((LmnMembraneRef)rc->wt($0), (LmnMembraneRef)rc->wt($1));
 
 #enqueuemem LmnInstrVar
-  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), (LmnMembraneRef)rc->wt($0)); /* 通常実行時 */
+  if ((rc, REACT_MEM_ORIENTED)->GET_MODE()) {
+    lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), (LmnMembraneRef)rc->wt($0)); /* 通常実行時 */
   }
 
 #unlockmem LmnInstrVar
