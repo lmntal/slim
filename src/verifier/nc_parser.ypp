@@ -169,7 +169,7 @@ propositional_term:
 
 propositional_factor:
   LPAREN propositional_exp RPAREN { $$ = $2; }
-| SYMBOL { $$ = sym_node_make(automata_propsym_to_id(automata, $1)); free($1); }
+| SYMBOL { $$ = sym_node_make(automata->propsym_to_id($1)); free($1); }
 | KW_TRUE { $$ = true_node_make(); }
 | KW_FALSE { $$ = false_node_make(); }
 ;

@@ -167,28 +167,28 @@ void Automata::set_init_state(atmstate_id_t id) {
   this->init_state = id;
 }
 
-void automata_add_state(AutomataRef a, AutomataStateRef s) {
-  if (vec_num(&a->states) <= s->id) {
-    vec_resize(&a->states, s->id + 1, (vec_data_t)0);
-  }
-  vec_set(&a->states, s->id, (vec_data_t)s);
-}
-
-unsigned int automata_propsym_to_id(AutomataRef a, char *prop_name) {
+unsigned int Automata::propsym_to_id(char *prop_name) {
   st_data_t id;
 
-  if (st_lookup(a->prop_to_id, (st_data_t)prop_name, &id)) {
+  if (st_lookup(this->prop_to_id, (st_data_t)prop_name, &id)) {
     return id;
   } else {
     unsigned int new_id;
     char *str;
 
     /* 0から順にIDを付ける */
-    new_id = st_num(a->prop_to_id);
+    new_id = st_num(this->prop_to_id);
     str = strdup(prop_name);
-    st_add_direct(a->prop_to_id, (st_data_t)str, (st_data_t)new_id);
+    st_add_direct(this->prop_to_id, (st_data_t)str, (st_data_t)new_id);
     return new_id;
   }
+}
+
+void automata_add_state(AutomataRef a, AutomataStateRef s) {
+  if (vec_num(&a->states) <= s->id) {
+    vec_resize(&a->states, s->id + 1, (vec_data_t)0);
+  }
+  vec_set(&a->states, s->id, (vec_data_t)s);
 }
 
 /*----------------------------------------------------------------------
