@@ -82,8 +82,6 @@
 
 static void hashtbl_extend(SimpleHashtbl *ht);
 static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key);
-static inline HashKeyType *hashset_get_p(HashSet *set, HashKeyType key,
-                                         unsigned long dummy_key);
 
 /* HashMap <HashKeyType, HashValueType> */
 void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size) {
@@ -207,7 +205,7 @@ HashSet::~HashSet() {
 }
 
 int HashSet::contains(HashKeyType key) {
-  return *hashset_get_p(this, key, EMPTY_KEY) != EMPTY_KEY;
+  return *this->get_p(key, EMPTY_KEY) != EMPTY_KEY;
 }
 
 static void hashset_extend(HashSet *set) {
@@ -227,7 +225,7 @@ static void hashset_extend(HashSet *set) {
 
   for (i = 0; i < cap; i++) {
     if (tbl[i] != EMPTY_KEY) {
-      entry = hashset_get_p(set, tbl[i], DELETED_KEY); /* 新しいindex */
+      entry = set->get_p(tbl[i], DELETED_KEY); /* 新しいindex */
       *entry = tbl[i];
     }
   }
@@ -238,7 +236,7 @@ void HashSet::add(HashKeyType key) {
   HashKeyType *entry;
   LMN_ASSERT(key < DELETED_KEY);
 
-  entry = hashset_get_p(this, key, DELETED_KEY);
+  entry = this->get_p(key, DELETED_KEY);
   if (*entry == EMPTY_KEY || *entry == DELETED_KEY) {
     this->num++;
     *entry = key;
@@ -252,22 +250,9 @@ void HashSet::delete_entry(HashKeyType key) {
   HashKeyType *entry;
   LMN_ASSERT(key < DELETED_KEY);
 
-  entry = hashset_get_p(this, key, EMPTY_KEY);
+  entry = this->get_p(key, EMPTY_KEY);
   if (*entry != EMPTY_KEY) {
     this->num--;
-    *entry = DELETED_KEY;
-  }
-  /* EFFICIENCY: hashset_reduce() が必要 */
-}
-
-
-void hashset_delete(HashSet *set, HashKeyType key) {
-  HashKeyType *entry;
-  LMN_ASSERT(key < DELETED_KEY);
-
-  entry = hashset_get_p(set, key, EMPTY_KEY);
-  if (*entry != EMPTY_KEY) {
-    set->num--;
     *entry = DELETED_KEY;
   }
   /* EFFICIENCY: hashset_reduce() が必要 */
@@ -288,14 +273,13 @@ void hashsetiter_next(HashSetIterator *it) {
     ;
 }
 
-static inline HashKeyType *hashset_get_p(HashSet *set, HashKeyType key,
-                                         unsigned long dummykey) {
+HashKeyType * HashSet::get_p(HashKeyType key, unsigned long dummykey) {
   HashKeyType probe;
-  HashKeyType increment = (key | 1) & (set->cap - 1);
+  HashKeyType increment = (key | 1) & (this->cap - 1);
 
-  for (probe = INT_HASH(key) & (set->cap - 1);
-       set->tbl[probe] < dummykey && set->tbl[probe] != key;
-       probe = (probe + increment) & (set->cap - 1)) {
+  for (probe = INT_HASH(key) & (this->cap - 1);
+       this->tbl[probe] < dummykey && this->tbl[probe] != key;
+       probe = (probe + increment) & (this->cap - 1)) {
   }
-  return &set->tbl[probe];
+  return &(this->tbl[probe]);
 }

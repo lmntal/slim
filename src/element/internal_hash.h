@@ -91,6 +91,7 @@ struct HashSet {
   int contains(HashKeyType key);
   void add(HashKeyType key);
   void delete_entry(HashKeyType key);
+  HashKeyType *get_p(HashKeyType key, unsigned long dummykey);
 };
 
 typedef struct HashSetItrator {
