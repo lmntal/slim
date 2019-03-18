@@ -251,10 +251,6 @@ void HashSet::add(HashKeyType key) {
   }
 }
 
-void hashset_clear(HashSet *set) {
-  memset(set->tbl, 0xffU, sizeof(HashKeyType) * set->cap);
-}
-
 void hashset_delete(HashSet *set, HashKeyType key) {
   HashKeyType *entry;
   LMN_ASSERT(key < DELETED_KEY);

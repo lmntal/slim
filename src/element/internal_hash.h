@@ -96,7 +96,6 @@ typedef struct HashSetItrator {
   unsigned int i;
 } HashSetIterator;
 
-void hashset_clear(HashSet *set);
 void hashset_delete(HashSet *set, HashKeyType key);
 void hashset_free(HashSet *set);
 void hashset_destroy(HashSet *set);
