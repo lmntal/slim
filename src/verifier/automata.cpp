@@ -220,7 +220,7 @@ AutomataTransitionRef AutomataState::get_transition(unsigned int index) {
 
 BOOL AutomataState::get_is_accept() { return this->is_accept; }
 
-BOOL atmstate_is_end(AutomataStateRef s) { return s->is_end; }
+BOOL AutomataState::get_is_end() { return this->is_end; }
 
 void inline atmstate_set_scc(AutomataStateRef s, AutomataSCC *scc) {
   s->scc = scc;
@@ -356,7 +356,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
     atmscc_issue_id(scc);
     atmstate_set_scc(s, scc);
     vec_push(&a->sccs, (vec_data_t)scc);
-    if (atmstate_is_end(s)) {
+    if (s->get_is_end()) {
       atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
     } else {
       if (s->get_is_accept()) {

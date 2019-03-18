@@ -96,6 +96,7 @@ struct AutomataState {
   unsigned int get_transition_num();
   AutomataTransitionRef get_transition(unsigned int index);
   BOOL get_is_accept();
+  BOOL get_is_end();
 };
 
 /* Propositional Logic Formula */
@@ -109,7 +110,6 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* state of automata */
-BOOL atmstate_is_end(AutomataStateRef s);
 void atmstate_set_scc(AutomataStateRef s, AutomataSCC *scc);
 BYTE atmstate_scc_type(AutomataStateRef s);
 AutomataSCC *atmstate_scc(AutomataStateRef s);

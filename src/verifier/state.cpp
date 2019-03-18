@@ -740,7 +740,7 @@ BOOL state_is_accept(AutomataRef a, State *s) {
  * TOFIX: rename (end --> invalid end) */
 BOOL state_is_end(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_is_end(a->get_state(state_property_state(s)));
+    return a->get_state(state_property_state(s))->get_is_end();
   } else {
     return FALSE;
   }

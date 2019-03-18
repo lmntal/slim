@@ -808,7 +808,7 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
 
 /* 各LmnWorkerに登録した反例を出力する.
  * 登録された反例は頂点のみであり,
- * 登録された頂点が, atmstate_is_endの場合, safety
+ * 登録された頂点が, AutomataState::is_endの場合, safety
  * その他の場合は, その頂点を起点にしたサイクルパスにon_cycle_flagが立っている
  */
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
