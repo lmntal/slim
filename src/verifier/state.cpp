@@ -446,12 +446,12 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     BOOL has_property = owner && owner->has_property();
 #ifdef KWBT_OPT
     fprintf(f, "%lu::%lu::%s", print_id, cost,
-            has_property ? automata_state_name(owner->automata(),
+            has_property ? owner->automata()->state_name(
                                                state_property_state(s))
                          : "");
 #else
     fprintf(f, "%lu::%s", print_id,
-            has_property ? automata_state_name(owner->automata(),
+            has_property ? owner->automata()->state_name(
                                                state_property_state(s))
                          : "");
 #endif
@@ -602,7 +602,7 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   }
   case LaViT:
     fprintf(f, "%lu::", state_format_id(s, owner->is_formatted()));
-    fprintf(f, "%s\n", automata_state_name(a, state_property_state(s)));
+    fprintf(f, "%s\n", a->state_name(state_property_state(s)));
   case FSM:
   case CUI: /* 状態のグローバルルート膜の膜名としてdump済 */
     break;

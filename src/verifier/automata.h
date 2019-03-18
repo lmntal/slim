@@ -71,6 +71,7 @@ struct Automata {
   Automata(void);
   ~Automata(void);
   atmstate_id_t state_id(const char *);
+  const char *state_name(atmstate_id_t);
 };
 
 /* Propositional Logic Formula */
@@ -84,7 +85,6 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* automata */
-const char *automata_state_name(AutomataRef a, atmstate_id_t id);
 atmstate_id_t automata_state_scc_id(AutomataRef a, atmstate_id_t id);
 const char *automata_state_scc_name(AutomataRef a, atmstate_id_t id);
 AutomataStateRef automata_get_state(AutomataRef a, BYTE state_id);

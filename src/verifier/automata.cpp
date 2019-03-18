@@ -145,10 +145,10 @@ atmstate_id_t Automata::state_id(const char *state_name) {
   }
 }
 
-const char *automata_state_name(AutomataRef a, atmstate_id_t id) {
+const char *Automata::state_name(atmstate_id_t id) {
   char *name;
 
-  if (st_lookup(a->id_to_state_name, (st_data_t)(int)id, (st_data_t *)&name)) {
+  if (st_lookup(this->id_to_state_name, (st_data_t)(int)id, (st_data_t *)&name)) {
     return name;
   } else {
     lmn_fatal("implementation error\n");
@@ -330,7 +330,7 @@ void print_property_automata(AutomataRef a) {
   for (i = 0; i < n; i++) {
     AutomataStateRef s = automata_get_state(a, i);
     fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
-            (unsigned long)atmstate_id(s), automata_state_name(a, i),
+            (unsigned long)atmstate_id(s), a->state_name(i),
             atmscc_id(atmstate_scc(s)), atmscc_name(atmstate_scc(s)));
   }
 

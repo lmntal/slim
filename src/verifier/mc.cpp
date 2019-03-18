@@ -789,20 +789,17 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
       s = (State *)vec_get(v, i);
       m = (s == seed) ? "*" : " ";
       fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
-              automata_state_name(ss->automata(),
-                                  state_property_state(s)));
+              ss->automata()->state_name(state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
     } else {
       s = (State *)vec_get(v, i);
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
-              automata_state_name(ss->automata(),
-                                  state_property_state(s)));
+              ss->automata()->state_name(state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
       fprintf(out, ".\n");
 
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
-              automata_state_name(ss->automata(),
-                                  state_property_state(s)));
+              ss->automata()->state_name(state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
       fprintf(out, ":- ");
     }
