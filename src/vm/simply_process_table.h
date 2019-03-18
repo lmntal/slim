@@ -38,7 +38,6 @@
 #ifndef LMN_SIMPLY_PROCESS_TABLE_H
 #define LMN_SIMPLY_PROCESS_TABLE_H
 
-
 /* --------------
  *  SimpleProcTbl
  *  プロセスIDをkeyにしたBYTEサイズテーブル
@@ -82,8 +81,6 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
  * Function Prototypes
  */
 
-SimplyProcessTableRef sproc_tbl_make_with_size(unsigned long size);
-SimplyProcessTableRef sproc_tbl_make(void);
 void sproc_tbl_free(SimplyProcessTableRef p);
 
 void sproc_tbl_put(SimplyProcessTableRef p, LmnWord key, BYTE value);
@@ -116,6 +113,5 @@ void sproc_tbl_unset_atom_flag(SimplyProcessTableRef p, LmnSymbolAtomRef key,
                                LmnWord flag);
 void sproc_tbl_unset_mem_flag(SimplyProcessTableRef p, LmnMembraneRef key,
                               LmnWord flag);
-
 
 #endif /* LMN_SIMPLY_PROCESS_TABLE_H */

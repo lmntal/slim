@@ -37,12 +37,6 @@
 
 #include "simply_process_table.h"
 
-SimplyProcessTableRef sproc_tbl_make(void) { return new SimpleProcessTable(); }
-
-SimplyProcessTableRef sproc_tbl_make_with_size(unsigned long size) {
-  return new SimpleProcessTable(size);
-}
-
 void sproc_tbl_free(SimplyProcessTableRef p) { delete p; }
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
@@ -73,8 +67,7 @@ void sproc_tbl_unput_mem(SimplyProcessTableRef p, LmnMembraneRef mem) {
 int sproc_tbl_get(SimplyProcessTableRef p, LmnWord key, BYTE *value) {
   BYTE v;
   bool res = p->get(key, &v);
-  if (value)
-    *value = v;
+  if (value) *value = v;
   return res;
 }
 
