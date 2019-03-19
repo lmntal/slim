@@ -195,6 +195,13 @@ int inner_set_free(st_data_t, st_data_t, st_data_t);
  * @memberof LmnSet
  * @private
  */
+void lmn_set_free(LmnSetRef set) {
+  st_table_t tbl = set->tbl;
+  if (tbl->type != &type_id_hash)
+    st_foreach(tbl, (st_iter_func)inner_set_free, (st_data_t)tbl->type);
+  st_free_table(tbl);
+}
+
 LmnSet::~LmnSet() {
   st_table_t tbl = this->tbl;
   if (tbl->type != &type_id_hash)
@@ -229,7 +236,7 @@ int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg) {
 void cb_set_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                  LmnLinkAttr t0) {
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
-  delete (LmnSetRef)a0;
+  lmn_set_free((LmnSetRef)a0);
 }
 
 /*
@@ -488,7 +495,7 @@ void cb_set_union(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
              (st_data_t)a1);
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a2, t2,
                   LMN_ATTR_GET_VALUE(t2));
-  delete (LmnSetRef)a0;
+  lmn_set_free((LmnSetRef)a0);
 }
 
 /**
@@ -528,8 +535,7 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnAtomRef a2, LmnLinkAttr t2) {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_intersect, (st_data_t)a1);
-  LmnSetRef tmp = (LmnSetRef)a1;
-  delete (LmnSetRef)a1;
+  lmn_set_free((LmnSetRef)a1);
   if (st_num(tbl) > 0) {
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a0, t0,
                     LMN_ATTR_GET_VALUE(t0));
@@ -538,8 +544,7 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
         mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
-    if (a0 != tmp)
-      delete (LmnSetRef)a0;
+    lmn_set_free((LmnSetRef)a0);
   }
 }
 
@@ -578,8 +583,7 @@ void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                  LmnLinkAttr t2) {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_diff, (st_data_t)a1);
-  LmnSetRef tmp = (LmnSetRef)a1;
-  delete (LmnSetRef)a1;
+  lmn_set_free((LmnSetRef)a1);
   if (st_num(tbl) > 0) {
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a0, t0,
                     LMN_ATTR_GET_VALUE(t0));
@@ -588,8 +592,7 @@ void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
         mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), (LmnAtomRef)empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
-    if (a0 != tmp)
-      delete (LmnSetRef)a0;
+    lmn_set_free((LmnSetRef)a0);
   }
 }
 
