@@ -87,7 +87,7 @@ Proposition::~Proposition() {
   delete (this->rule);
 }
 
-LmnRuleRef proposition_get_rule(PropositionRef p) { return p->rule; }
+LmnRuleRef Proposition::get_rule() { return this->rule; }
 
 static char *rule_str_for_compile(const char *head, const char *guard,
                                   const char *body) {
