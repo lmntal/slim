@@ -49,30 +49,31 @@
 #define Q_DEQ 0
 #define Q_ENQ 1
 
-inline static void q_lock(Queue *q, BOOL rw);
-inline static void q_unlock(Queue *q, BOOL rw);
-
-Queue *make_parallel_queue(BOOL lock_type) {
-  Queue *q = new_queue();
+/*parallel_queue*/
+Queue::Queue(BOOL lock_type) {
+  Node *sentinel = new Node(0);
+  this->head = sentinel;
+  this->tail = sentinel;
+  this->enq_num = 0UL;
+  this->deq_num = 0UL;
 
   switch (lock_type) {
   case LMN_Q_SRSW:
     break;
   case LMN_Q_MRMW:
-    lmn_mutex_init(&(q->deq_mtx));
+    lmn_mutex_init(&(this->deq_mtx));
     /* fall through */
   case LMN_Q_SRMW:
-    lmn_mutex_init(&(q->enq_mtx));
+    lmn_mutex_init(&(this->enq_mtx));
     break;
   case LMN_Q_MRSW:
-    lmn_mutex_init(&(q->deq_mtx));
+    lmn_mutex_init(&(this->deq_mtx));
     break;
   default:
     lmn_fatal("unexpected");
     break;
   }
-  q->lock = lock_type;
-  return q;
+  this->qlock = lock_type;
 }
 
 /*  {head, tail}
@@ -80,115 +81,115 @@ Queue *make_parallel_queue(BOOL lock_type) {
  *       ○ → NULL
  *    sentinel
  */
-Queue *new_queue(void) {
-  Queue *q = LMN_MALLOC(Queue);
+
+Queue::Queue(void) {
   Node *sentinel = new Node(0);
-  q->head = sentinel;
-  q->tail = sentinel;
-  q->lock = FALSE;
-  q->enq_num = 0UL;
-  q->deq_num = 0UL;
-  return q;
+  this->head = sentinel;
+  this->tail = sentinel;
+  this->qlock = FALSE;
+  this->enq_num = 0UL;
+  this->deq_num = 0UL;
 }
 
-void q_free(Queue *q) {
+Queue::~Queue() {
   Node *n, *m;
-  for (n = q->head; n; n = m) {
+  for (n = this->head; n; n = m) {
     m = n->next;
     delete n;
   }
 
-  switch (q->lock) {
+  switch (this->qlock) {
   case LMN_Q_MRMW:
-    lmn_mutex_destroy(&(q->deq_mtx));
+    lmn_mutex_destroy(&(this->deq_mtx));
     /* FALL THROUGH */
   case LMN_Q_SRMW:
-    lmn_mutex_destroy(&(q->enq_mtx));
+    lmn_mutex_destroy(&(this->enq_mtx));
     break;
   case LMN_Q_MRSW:
-    lmn_mutex_destroy(&(q->deq_mtx));
+    lmn_mutex_destroy(&(this->deq_mtx));
     break;
   default:
     /* nothing to do */
     break;
   }
-  LMN_FREE(q);
 }
+
 
 /*{tail, last}
  *     ↓
  *   ..○→NULL
  */
 
-void enqueue(Queue *q, LmnWord v) {
+void Queue::enqueue(LmnWord v) {
   Node *last, *node;
-  if (q->lock) {
-    q_lock(q, Q_ENQ);
-    /*q_lock(q, Q_DEQ);*/
+  if (this->qlock) {
+    this->lock(Q_ENQ);
+    /*this->lock(Q_DEQ);*/
   }
-  last = q->tail;
+  last = this->tail;
   node = new Node(v);
   last->next = node;
-  q->tail = node;
-  q->enq_num++;
+  this->tail = node;
+  this->enq_num++;
 
-  if (q->lock) {
-    /*q_unlock(q, Q_DEQ);*/
-    q_unlock(q, Q_ENQ);
+  if (this->qlock) {
+    /*this->unlock(Q_DEQ);*/
+    this->unlock(Q_ENQ);
   }
 }
 
-void enqueue_push_head(Queue *q, LmnWord v) {
+void Queue::enqueue_push_head(LmnWord v) {
   Node *head, *node;
-  if (q->lock) {
-    q_lock(q, Q_ENQ);
-    q_lock(q, Q_DEQ);
+  if (this->qlock) {
+    this->lock(Q_ENQ);
+    this->lock(Q_DEQ);
   }
-  head = q->head;
+  head = this->head;
   node = new Node(v);
   node->next = head->next;
   head->next = node;
   // q->tail = node;
-  q->enq_num++;
+  this->enq_num++;
 
-  if (q->lock) {
-    q_unlock(q, Q_DEQ);
-    q_unlock(q, Q_ENQ);
+  if (this->qlock) {
+    this->unlock(Q_DEQ);
+    this->unlock(Q_ENQ);
   }
 }
 
 /* Queueから要素をdequeueする.
  * Queueが空の場合, 0を返す */
-LmnWord dequeue(Queue *q) {
+LmnWord Queue::dequeue() {
   LmnWord ret = 0;
-  if (q->lock) {
-    q_lock(q, Q_DEQ);
-    /*q_lock(q,Q_ENQ);*/
+  if (this->qlock) {
+    this->lock(Q_DEQ);
+    /*this->lock(Q_ENQ);*/
   }
-  if (!is_empty_queue(q)) {
+  if (!this->is_empty()) {
     Node *sentinel, *next;
-    sentinel = q->head;
+    sentinel = this->head;
     next = sentinel->next;
     if (next) {
       ret = next->v;
       next->v = 0;
-      q->head = next;
+      this->head = next;
       free(sentinel);
-      q->deq_num++;
+      this->deq_num++;
     }
   }
-  if (q->lock) {
-    /*q_unlock(q, Q_ENQ);*/
-    q_unlock(q, Q_DEQ);
+  if (this->qlock) {
+    /*this->unlock(Q_ENQ);*/
+    this->unlock(Q_DEQ);
   }
   return ret;
 }
 
-/* キューqが空なら真を返す.*/
-BOOL is_empty_queue(Queue *q) {
-  return (q->head == q->tail) && (q->enq_num == q->deq_num);
-}
 
+
+/* キューqが空なら真を返す.*/
+BOOL Queue::is_empty() {
+  return (this->head == this->tail) && (this->enq_num == this->deq_num);
+}
 /** ----
  *  static functions
  */
@@ -200,21 +201,21 @@ Node::Node(LmnWord v) {
 
 Node::~Node() {};
 
-static inline void q_lock(Queue *q, BOOL is_enq) {
+void Queue::lock(BOOL is_enq) {
   if (is_enq) { /* for enqueue */
-    switch (q->lock) {
+    switch (this->qlock) {
     case LMN_Q_MRMW:
     case LMN_Q_SRMW:
-      lmn_mutex_lock(&(q->enq_mtx));
+      lmn_mutex_lock(&(this->enq_mtx));
       break;
     default:
       break;
     }
   } else { /* for dequeue */
-    switch (q->lock) {
+    switch (this->qlock) {
     case LMN_Q_MRMW:
     case LMN_Q_MRSW:
-      lmn_mutex_lock(&(q->deq_mtx));
+      lmn_mutex_lock(&(this->deq_mtx));
       break;
     default:
       break;
@@ -222,26 +223,35 @@ static inline void q_lock(Queue *q, BOOL is_enq) {
   }
 }
 
-static inline void q_unlock(Queue *q, BOOL is_enq) {
+void Queue::unlock(BOOL is_enq) {
   if (is_enq) { /* for enqueue */
-    switch (q->lock) {
+    switch (this->qlock) {
     case LMN_Q_MRMW:
     case LMN_Q_SRMW:
-      lmn_mutex_unlock(&(q->enq_mtx));
+      lmn_mutex_unlock(&(this->enq_mtx));
       break;
     default:
       break;
     }
   } else { /* for dequeue */
-    switch (q->lock) {
+    switch (this->qlock) {
     case LMN_Q_MRMW:
     case LMN_Q_MRSW:
-      lmn_mutex_unlock(&(q->deq_mtx));
+      lmn_mutex_unlock(&(this->deq_mtx));
       break;
     default:
       break;
     }
   }
+}
+
+void Queue::clear() {
+  while (this->dequeue())
+    ;
+}
+
+unsigned long Queue::entry_num() {
+  return this->enq_num - this->deq_num;
 }
 
 /**=====================
