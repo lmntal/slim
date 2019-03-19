@@ -62,12 +62,26 @@ struct Node {
 };
 
 struct Queue {
+  Queue();
+  Queue(BOOL lock_type);
+  ~Queue();
   Node *head;
   Node *tail;
-  BOOL lock;
+  BOOL qlock;
   unsigned long enq_num, deq_num;
   pthread_mutex_t enq_mtx, deq_mtx;
+  void enqueue(LmnWord v);
+  void enqueue_push_head(LmnWord v);
+  LmnWord dequeue();
+  BOOL is_empty();
+  void lock(BOOL is_enq);
+  void unlock(BOOL is_enq);
+  void clear();
+  unsigned long entry_num();
+
 };
+
+
 
 /* single dequeue(reader), single enqueue(writer) */
 #define LMN_Q_SRSW 0
@@ -77,23 +91,6 @@ struct Queue {
 #define LMN_Q_MRSW 2
 /* multiple dequeue(reader), multiple enqueue(writer) */
 #define LMN_Q_MRMW 4
-
-Queue *new_queue(void);
-Queue *make_parallel_queue(BOOL lock_type);
-void q_free(Queue *q);
-BOOL is_empty_queue(Queue *q);
-void enqueue(Queue *q, LmnWord v);
-void enqueue_push_head(Queue *q, LmnWord v);
-LmnWord dequeue(Queue *q);
-
-static inline unsigned long queue_entry_num(Queue *q) {
-  return q->enq_num - q->deq_num;
-}
-
-static inline void queue_clear(Queue *q) {
-  while (dequeue(q))
-    ;
-}
 
 /** ==========
  *  DeQue (KaWaBaTa code)

@@ -155,7 +155,7 @@ void init_por_vars() {
   mc_por.root = NULL;
   mc_por.strans_independency = st_init_numtable();
   mc_por.states = st_init_statetable();
-  mc_por.queue = new_queue();
+  mc_por.queue = new Queue();
   mc_por.ample_candidate = vec_make(POR_VEC_SIZE);
   mc_por.next_strans_id = POR_ID_INITIALIZER; /* 0は使用しない */
   mc_por.rc = nullptr;
@@ -165,7 +165,7 @@ void init_por_vars() {
 void free_por_vars() {
   st_free_table(mc_por.states);
   st_free_table(mc_por.strans_independency);
-  q_free(mc_por.queue);
+  delete mc_por.queue;
   vec_free(mc_por.ample_candidate);
   if (mc_por.rc) {
     mc_por.rc = nullptr;
@@ -241,7 +241,7 @@ static void finalize_ample(BOOL org_f) {
              (st_data_t)0);
   st_foreach(mc_por.states, (st_iter_func)destroy_tmp_state_graph,
              (LmnWord)org_f);
-  queue_clear(mc_por.queue);
+  mc_por.queue->clear();
   vec_clear(mc_por.ample_candidate);
   RC_CLEAR_DATA(mc_por.rc.get());
   mc_por.root = NULL;
@@ -718,12 +718,12 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
     TransitionRef t = transition(s, i);
     if (!vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
       /* sで可能かつample(s)の候補に含まれない遷移をスタック上に乗せる */
-      enqueue(mc_por.queue, (vec_data_t)t);
+      mc_por.queue->enqueue((vec_data_t)t);
     }
   }
 
-  while (!is_empty_queue(mc_por.queue)) {
-    TransitionRef succ_t = (TransitionRef)dequeue(mc_por.queue);
+  while (!mc_por.queue->is_empty()) {
+    TransitionRef succ_t = (TransitionRef)mc_por.queue->dequeue();
     if (!is_independent_of_ample(succ_t)) {
       /* Fに反する経路Pが検出されたので偽を返して終了する */
       POR_DEBUG({
@@ -745,7 +745,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
           if (!vec_contains(mc_por.ample_candidate,
                             (vec_data_t)transition_id(succ_succ_t))) {
             /* ample(s)内に含まれない遷移はさらにチェックする必要がある */
-            enqueue(mc_por.queue, (LmnWord)succ_succ_t);
+            mc_por.queue->enqueue((LmnWord)succ_succ_t);
           }
         }
       }

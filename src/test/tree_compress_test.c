@@ -57,7 +57,7 @@ int test_tree_clean()
 {
 
   if (treedb != NULL) {
-    treedb->free();
+    tree_free(treedb);
     treedb = NULL;
   }
   return 0;
