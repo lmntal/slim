@@ -229,7 +229,7 @@ int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg) {
 void cb_set_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                  LmnLinkAttr t0) {
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
-  delete (LmnSetRef)a0;
+  // delete (LmnSetRef)a0;
 }
 
 /*
