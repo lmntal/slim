@@ -72,7 +72,7 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
 
   bool contains(key_type key) { return ProcessTable<BYTE>::contains(key); }
 
-  bool contains(LmnSymbolAtomRef atom) { return contains(LMN_SATOM_ID(atom)); }
+  bool contains(LmnSymbolAtomRef atom) { return contains(atom->get_id()); }
 
   bool contains(LmnMembraneRef mem) { return contains(lmn_mem_id(mem)); }
   void tbl_put(LmnWord key, BYTE value);

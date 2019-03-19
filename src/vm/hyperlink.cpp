@@ -85,8 +85,8 @@ void lmn_hyperlink_make(LmnSymbolAtomRef at) {
   hl->attrAtom = 0;
   hl->attr = 0;
 
-  LMN_SATOM_SET_LINK(at, 1, hl);
-  LMN_SATOM_SET_ATTR(at, 1, 0);
+  at->set_link(1, hl);
+  at->set_attr(1, 0);
 
   //  hashtbl_put(at_hl, (HashKeyType)at, (HashValueType)hl);
   //  printf("lmn_hyperlink_make %p -> %p\n", hl, LMN_SATOM(hl->atom));
@@ -109,7 +109,7 @@ LmnSymbolAtomRef lmn_hyperlink_new() {
   LmnSymbolAtomRef atom;
 
   atom = lmn_new_atom(LMN_HL_FUNC);
-  LMN_SATOM_SET_ID(atom, hyperlink_new_id());
+  atom->set_id(hyperlink_new_id());
   lmn_hyperlink_make(atom);
 
   return atom;
@@ -147,8 +147,8 @@ void hyperlink_swap_atom(HyperLink *hl1, HyperLink *hl2) {
   hl1->atom = hl2->atom;
   hl2->atom = t_atom;
 
-  LMN_SATOM_SET_LINK(hl1->atom, 1, hl1);
-  LMN_SATOM_SET_LINK(hl2->atom, 1, hl2);
+  hl1->atom->set_link(1, hl1);
+  hl2->atom->set_link(1, hl2);
 
   t_mem = hl1->mem;
   hl1->mem = hl2->mem;
@@ -439,7 +439,7 @@ HyperLink *lmn_hyperlink_unify(HyperLink *hl1, HyperLink *hl2,
 
 /* '!'アトムのポインタ --> 対応するHyperLink 構造体のポインタ */
 HyperLink *lmn_hyperlink_at_to_hl(LmnSymbolAtomRef at) {
-  return (HyperLink *)LMN_SATOM_GET_LINK(at, 1);
+  return (HyperLink *)at->get_link(1);
 }
 
 /* HyperLink 構造体のポインタ --> 対応する'!'アトムのポインタ */
@@ -516,11 +516,10 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element) {
                 }
 
                 /* linked with */
-                if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0)) &&
-                    LMN_SATOM_GET_LINK(atom, 0)) {
+                if (!LMN_ATTR_IS_DATA(atom->get_attr(0)) &&
+                    atom->get_link(0)) {
                   fprintf(f, " %13s",
-                          LMN_SATOM_STR(
-                              (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 0)));
+                          ((LmnSymbolAtomRef)atom->get_link(0))->str());
                 } else {
                   fprintf(f, " %13s", "---");
                 }
@@ -665,9 +664,9 @@ void hyperlink_print_old() {
   //          printf(" %9s", "root");
   //
   //        /* linked with */
-  //        if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0)) &&
-  //        LMN_SATOM_GET_LINK(atom, 0))
-  //          printf(" %13s", LMN_SATOM_STR(LMN_SATOM_GET_LINK(atom, 0)));
+  //        if (!LMN_ATTR_IS_DATA(atom->get_attr(0)) &&
+  //        atom->get_link(0))
+  //          printf(" %13s", atom->get_link(0)->str());
   //        else
   //          printf(" %13s", "---");
   //

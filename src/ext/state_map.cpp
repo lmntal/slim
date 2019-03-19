@@ -90,21 +90,21 @@ void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * -a2 ID
  * -a3 Map
  */
-void cb_state_map_id_find(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                          LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
-                          LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3,
-                          LmnLinkAttr t3) {
-  LmnMembraneRef m = LMN_PROXY_GET_MEM(
-      (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0));
+void cb_state_map_id_find(LmnReactCxtRef rc,
+                          LmnMembraneRef mem,
+                          LmnAtomRef a0, LmnLinkAttr t0,
+                          LmnAtomRef a1, LmnLinkAttr t1,
+                          LmnAtomRef a2, LmnLinkAttr t2,
+                          LmnAtomRef a3, LmnLinkAttr t3)
+{
+  LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
   StateSpaceRef ss = ((LmnStateMapRef)a0)->states;
   LmnSymbolAtomRef out = (LmnSymbolAtomRef)a1;
-  LmnSymbolAtomRef in =
-      (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a1, 0);
-  LmnLinkAttr in_attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)a1, 0);
+  LmnSymbolAtomRef in = (LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0);
+  LmnLinkAttr in_attr = ((LmnSymbolAtomRef)a1)->get_attr(0);
 
-  LmnSymbolAtomRef at =
-      lmn_mem_newatom(m, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
-  LmnSymbolAtomRef plus = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in, 1);
+  LmnSymbolAtomRef at = lmn_mem_newatom(m, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
+  LmnSymbolAtomRef plus = (LmnSymbolAtomRef)in->get_link(1);
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
   lmn_mem_delete_atom(m, in, in_attr);
@@ -157,7 +157,7 @@ void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
     at_atom = atomlist_head(ent);
   });
 
-  LmnSymbolAtomRef plus = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(at_atom, 0);
+  LmnSymbolAtomRef plus = (LmnSymbolAtomRef)at_atom->get_link(0);
   lmn_mem_delete_atom(new_mem, at_atom, 0);
 
   LmnSymbolAtomRef in = lmn_mem_newatom(new_mem, LMN_IN_PROXY_FUNCTOR);

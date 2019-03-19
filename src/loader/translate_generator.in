@@ -180,8 +180,8 @@ BOOL interpret_generated(LmnReactCxtRef rc,
         /* EACH_ATOMを使うとループ内コード中でコンマが使えない場合が出てくる */
         for(atom = atomlist_head(atomlist_ent);
             atom != lmn_atomlist_end(atomlist_ent);
-            atom = LMN_SATOM_GET_NEXT_RAW(atom)){
-          if(LMN_SATOM_GET_FUNCTOR(atom) != LMN_RESUME_FUNCTOR){
+            atom = atom->get_next()){
+          if(atom->get_functor() != LMN_RESUME_FUNCTOR){
             rc->wt($0) = (LmnWord)atom;
             rc->tt($0) = TT_ATOM;
 #__echo_t
@@ -292,7 +292,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #getlink LmnInstrVar LmnInstrVar LmnInstrVar
 # /* リンク先の取得をせずにリンク元の情報を格納しておく。
 #    リンク元が格納されていることを示すため最下位のビットを立てる */
-  rc->reg($0) = {(LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt($1), $2), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt($1), $2), TT_ATOM};
+  rc->reg($0) = {(LmnWord)((LmnSymbolAtomRef)rc->wt($1))->get_link($2), ((LmnSymbolAtomRef)rc->wt($1))->get_attr($2), TT_ATOM};
 
 #unify LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   lmn_mem_unify_atom_args((LmnMembraneRef)rc->wt($4), (LmnSymbolAtomRef)(rc->wt($0)), $1, (LmnSymbolAtomRef)(rc->wt($2)), $3);
@@ -387,17 +387,17 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #recursiveunlock LmnInstrVar
 
 #derefatom LmnInstrVar LmnInstrVar LmnInstrVar
-  rc->reg($0) = {(LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt($1), $2), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt($1), $2), TT_ATOM};
+  rc->reg($0) = {(LmnWord)((LmnSymbolAtomRef)rc->wt($1))->get_link($2), ((LmnSymbolAtomRef)rc->wt($1))->get_attr($2), TT_ATOM};
 
 #deref LmnInstrVar LmnInstrVar LmnInstrVar LmnInstrVar
   {
-    LmnByte attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt($1), $2);
+    LmnByte attr = ((LmnSymbolAtomRef)rc->wt($1))->get_attr($2);
     if (LMN_ATTR_IS_DATA(attr)) {
       if ($3 != 0) $f;
     } else {
       if (attr != $3) $f;
     }
-    rc->reg($0) = {(LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt($1), $2), attr, TT_ATOM};
+    rc->reg($0) = {(LmnWord)((LmnSymbolAtomRef)rc->wt($1))->get_link($2), attr, TT_ATOM};
   }
 
 #func LmnInstrVar $functor
@@ -426,7 +426,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 % } else {
     if(LMN_ATTR_IS_DATA(rc->at($0)) ||
-       LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(rc->wt($0))) != TR_GFID($1_functor_data)) $f;
+       ((LmnSymbolAtomRef)(rc->wt($0)))->get_functor() != TR_GFID($1_functor_data)) $f;
 % }
 
 #notfunc LmnInstrVar $functor
@@ -454,7 +454,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 % } else {
     if(! (LMN_ATTR_IS_DATA(rc->at($0)) ||
-          LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(rc->wt($0))) != TR_GFID($1_functor_data))) $f;
+          ((LmnSymbolAtomRef)(rc->wt($0)))->get_functor() != TR_GFID($1_functor_data))) $f;
 % }
 
 #isground LmnInstrVar LmnInstrVar LmnInstrVar
@@ -485,7 +485,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     default:
       break;
     }
-  } else if (LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)rc->wt($0)) != 1){
+  } else if (((LmnSymbolAtomRef)rc->wt($0))->get_arity() != 1){
     $f;
   }
 
@@ -779,7 +779,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if(LMN_ATTR_IS_DATA(rc->at($1))){
     rc->wt($0) = (LmnWord)rc->wt($1);
   }else{
-    rc->wt($0) = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt($1));
+    rc->wt($0) = ((LmnSymbolAtomRef)rc->wt($1))->get_functor();
   }
   rc->at($0) = rc->at($1);
   rc->tt($0) = TT_OTHER;

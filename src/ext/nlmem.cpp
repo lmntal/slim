@@ -50,11 +50,9 @@ void nlmem_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_interned_str copy_tag_name;
   LmnFunctor copy_tag_func;
 
-  copy_tag_name =
-      LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1));
+  copy_tag_name = LMN_FUNCTOR_NAME_ID(((LmnSymbolAtomRef)a1)->get_functor());
   copy_tag_func = lmn_functor_intern(ANONYMOUS, copy_tag_name, 3);
-  org_mem = LMN_PROXY_GET_MEM(
-      (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
+  org_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a0)->get_link(0));
   trg_mem = lmn_mem_make();
   atom_map = lmn_mem_copy_cells(trg_mem, org_mem);
   lmn_mem_add_child_mem(mem, trg_mem);
@@ -68,40 +66,44 @@ void nlmem_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
       LmnWord t = 0;
 
       EACH_ATOM(org_in, ent, ({
-                  /* タグアトムを作り、リンクの接続を行う */
-                  proc_tbl_get_by_atom(atom_map, org_in, &t);
-                  trg_in = (LmnSymbolAtomRef)(t);
-                  org_out = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK(org_in, 0));
-                  trg_out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
-                  lmn_newlink_in_symbols(trg_in, 0, trg_out, 0);
-                  tag_atom = lmn_mem_newatom(mem, copy_tag_func);
-                  lmn_relink_symbols(tag_atom, 2, org_out, 1);
-                  lmn_newlink_in_symbols(tag_atom, 0, org_out, 1);
-                  lmn_newlink_in_symbols(tag_atom, 1, trg_out, 1);
-                }));
+        /* タグアトムを作り、リンクの接続を行う */
+        proc_tbl_get_by_atom(atom_map, org_in, &t);
+        trg_in = (LmnSymbolAtomRef)(t);
+        org_out = (LmnSymbolAtomRef)(org_in->get_link(0));
+        trg_out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+        lmn_newlink_in_symbols(trg_in, 0, trg_out, 0);
+        tag_atom = lmn_mem_newatom(mem, copy_tag_func);
+        lmn_relink_symbols(tag_atom, 2, org_out, 1);
+        lmn_newlink_in_symbols(tag_atom, 0, org_out, 1);
+        lmn_newlink_in_symbols(tag_atom, 1, trg_out, 1);
+      }));
     }
 
     proc_tbl_free(atom_map);
     lmn_mem_delete_atom(mem, a1, t1);
     /* 第一引数に接続されたタグアトムと第三引数を接続する */
-    lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 1),
-                    LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)a0, 1), 2);
+    lmn_mem_newlink(mem,
+                    a2, t2, LMN_ATTR_GET_VALUE(t2),
+                    ((LmnSymbolAtomRef)a0)->get_link(1), ((LmnSymbolAtomRef)a0)->get_attr(1),
+                    2);
   }
 }
 
-void nlmem_kill(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1) {
-  LmnFunctor kill_tag_func = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a1);
+void nlmem_kill(LmnReactCxtRef rc,
+                LmnMembraneRef mem,
+                LmnAtomRef a0, LmnLinkAttr t0,
+                LmnAtomRef a1, LmnLinkAttr t1)
+{
+  LmnFunctor kill_tag_func = ((LmnSymbolAtomRef)a1)->get_functor();
   LmnSymbolAtomRef org_in;
   LmnMembraneRef org_mem;
 
-  if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a0) != LMN_OUT_PROXY_FUNCTOR) {
+  if (((LmnSymbolAtomRef)a0)->get_functor() != LMN_OUT_PROXY_FUNCTOR) {
     fprintf(stderr, "NLMEM.C, nlmem_kill: first argument must be a membrane");
     return;
   }
 
-  org_in = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
+  org_in = (LmnSymbolAtomRef)(((LmnSymbolAtomRef)a0)->get_link(0));
   org_mem = LMN_PROXY_GET_MEM(org_in);
   {
     AtomListEntryRef ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
@@ -112,14 +114,13 @@ void nlmem_kill(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
       LmnSymbolAtomRef tag_atom;
 
       EACH_ATOM(in, ent, ({
-                  if (in == org_in)
-                    continue;
-                  out = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK(in, 0));
-                  out_attr = LMN_SATOM_GET_ATTR(in, 0);
-                  tag_atom = lmn_mem_newatom(mem, kill_tag_func);
-                  lmn_relink_symbols(tag_atom, 0, out, 1);
-                  lmn_mem_delete_atom(mem, out, out_attr);
-                }));
+        if (in == org_in) continue;
+        out = (LmnSymbolAtomRef)(in->get_link(0));
+        out_attr = in->get_attr(0);
+        tag_atom = lmn_mem_newatom(mem, kill_tag_func);
+        lmn_relink_symbols(tag_atom, 0, out, 1);
+        lmn_mem_delete_atom(mem, out, out_attr);
+      }));
     }
   }
 

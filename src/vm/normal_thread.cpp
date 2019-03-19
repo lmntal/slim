@@ -220,7 +220,7 @@ void normal_parallel_prof_dump(FILE *f) {
 BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f) {
   if (!atom)
     return FALSE;
-  if (LMN_SATOM_GET_FUNCTOR(atom) != f)
+  if (atom->get_functor() != f)
     return FALSE;
   return TRUE;
 }

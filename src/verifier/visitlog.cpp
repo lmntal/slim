@@ -181,7 +181,7 @@ int visitlog_put(VisitLogRef visitlog, LmnWord p) {
 
 /* ログにアトムを追加し, 正の値を返す. すでにアトムが存在した場合は0を返す */
 int visitlog_put_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom) {
-  return visitlog_put(visitlog, LMN_SATOM_ID(atom));
+  return visitlog_put(visitlog, atom->get_id());
 }
 
 /* ログに膜を追加し, 正の値を返す. すでに膜が存在した場合は0を返す */

@@ -43,7 +43,7 @@ void SimpleProcessTable::tbl_put(LmnWord key, BYTE value) {
 }
 
 void SimpleProcessTable::tbl_put_atom(LmnSymbolAtomRef atom, BYTE value) {
-  tbl_put(LMN_SATOM_ID(atom), value);
+  tbl_put(atom->get_id(), value);
 }
 
 void SimpleProcessTable::tbl_put_mem(LmnMembraneRef mem, BYTE value) {
@@ -53,7 +53,7 @@ void SimpleProcessTable::tbl_put_mem(LmnMembraneRef mem, BYTE value) {
 void SimpleProcessTable::tbl_unput(LmnWord key) { this->unput(key); }
 
 void SimpleProcessTable::tbl_unput_atom(LmnSymbolAtomRef atom) {
-  tbl_unput(LMN_SATOM_ID(atom));
+  tbl_unput(atom->get_id());
 }
 
 void SimpleProcessTable::tbl_unput_mem(LmnMembraneRef mem) {
@@ -68,7 +68,7 @@ int SimpleProcessTable::tbl_get(LmnWord key, BYTE *value) {
 }
 
 int SimpleProcessTable::tbl_get_by_atom(LmnSymbolAtomRef atom, BYTE *value) {
-  return tbl_get(LMN_SATOM_ID(atom), value);
+  return tbl_get(atom->get_id(), value);
 }
 
 int SimpleProcessTable::tbl_get_by_mem(LmnMembraneRef mem, BYTE *value) {
@@ -80,7 +80,7 @@ bool SimpleProcessTable::tbl_contains(LmnWord key) {
 }
 
 bool SimpleProcessTable::tbl_contains_atom(LmnSymbolAtomRef atom) {
-  return tbl_contains(LMN_SATOM_ID(atom));
+  return tbl_contains(atom->get_id());
 }
 
 bool SimpleProcessTable::tbl_contains_mem(LmnMembraneRef mem) {
@@ -93,7 +93,7 @@ bool SimpleProcessTable::tbl_get_flag(LmnWord key, BYTE flag) {
 
 bool SimpleProcessTable::tbl_get_flag_by_atom(LmnSymbolAtomRef key,
                                               LmnWord flag) {
-  return tbl_get_flag(LMN_SATOM_ID(key), flag);
+  return tbl_get_flag(key->get_id(), flag);
 }
 
 bool SimpleProcessTable::tbl_get_flag_by_mem(LmnMembraneRef key, LmnWord flag) {
@@ -109,7 +109,7 @@ void SimpleProcessTable::tbl_set_flag(LmnWord key, LmnWord flag) {
 }
 
 void SimpleProcessTable::tbl_set_atom_flag(LmnSymbolAtomRef key, LmnWord flag) {
-  tbl_set_flag(LMN_SATOM_ID(key), flag);
+  tbl_set_flag(key->get_id(), flag);
 }
 
 void SimpleProcessTable::tbl_set_mem_flag(LmnMembraneRef key, LmnWord flag) {
@@ -118,7 +118,7 @@ void SimpleProcessTable::tbl_set_mem_flag(LmnMembraneRef key, LmnWord flag) {
 
 void SimpleProcessTable::tbl_unset_atom_flag(LmnSymbolAtomRef key,
                                              LmnWord flag) {
-  tbl_unset_flag(LMN_SATOM_ID(key), flag);
+  tbl_unset_flag(key->get_id(), flag);
 }
 
 void SimpleProcessTable::tbl_unset_mem_flag(LmnMembraneRef key, LmnWord flag) {

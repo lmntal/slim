@@ -47,8 +47,8 @@ void cb_react_rule(LmnReactCxtRef rc,
                    LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
                    LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
-  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rule_mem_proxy, 0));
-  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)graph_mem_proxy, 0));
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
+  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0));
   LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(lmn_mem_get_rulesets(rule_mem), 0);
   auto r = rs->get_rule(0);
   MemReactContext tmp_rc;
@@ -116,12 +116,12 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
                          LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
                          LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
-  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rule_mem_proxy, 0));
-  LmnAtomRef in_mem = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)graph_mem_proxy, 0);
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
+  LmnAtomRef in_mem = ((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0);
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in_mem);
 
-  lmn_mem_delete_atom(graph_mem, LMN_SATOM_GET_LINK((LmnSymbolAtomRef)in_mem, 1), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)in_mem, 1));
-  lmn_mem_delete_atom(graph_mem, in_mem, LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)graph_mem_proxy, 0));
+  lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in_mem)->get_link(1), ((LmnSymbolAtomRef)in_mem)->get_attr(1));
+  lmn_mem_delete_atom(graph_mem, in_mem, ((LmnSymbolAtomRef)graph_mem_proxy)->get_attr(0));
 
   LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int pos = 0;

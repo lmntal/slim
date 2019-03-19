@@ -357,7 +357,7 @@ LmnStringRef port_read_token(LmnPortRef port) {
 
 /* 文字はunaryアトムで表現している */
 int port_putc(LmnPortRef port, LmnSAtom unary_atom) {
-  return port_put_raw_s(port, LMN_SATOM_STR((LmnSymbolAtomRef)unary_atom));
+  return port_put_raw_s(port, ((LmnSymbolAtomRef)unary_atom)->str());
 }
 
 /* Cの文字をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
