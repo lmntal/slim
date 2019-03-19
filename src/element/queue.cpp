@@ -53,7 +53,7 @@ inline static void q_lock(Queue *q, BOOL rw);
 inline static void q_unlock(Queue *q, BOOL rw);
 
 Queue *make_parallel_queue(BOOL lock_type) {
-  Queue *q = new_queue();
+  Queue *q = new Queue();
 
   switch (lock_type) {
   case LMN_Q_SRSW:
@@ -90,40 +90,29 @@ Queue::Queue(void) {
   this->deq_num = 0UL;
 }
 
-Queue *new_queue(void) {
-  Queue *q = LMN_MALLOC(Queue);
-  Node *sentinel = new Node(0);
-  q->head = sentinel;
-  q->tail = sentinel;
-  q->lock = FALSE;
-  q->enq_num = 0UL;
-  q->deq_num = 0UL;
-  return q;
-}
-
-void q_free(Queue *q) {
+Queue::~Queue() {
   Node *n, *m;
-  for (n = q->head; n; n = m) {
+  for (n = this->head; n; n = m) {
     m = n->next;
     delete n;
   }
 
-  switch (q->lock) {
+  switch (this->lock) {
   case LMN_Q_MRMW:
-    lmn_mutex_destroy(&(q->deq_mtx));
+    lmn_mutex_destroy(&(this->deq_mtx));
     /* FALL THROUGH */
   case LMN_Q_SRMW:
-    lmn_mutex_destroy(&(q->enq_mtx));
+    lmn_mutex_destroy(&(this->enq_mtx));
     break;
   case LMN_Q_MRSW:
-    lmn_mutex_destroy(&(q->deq_mtx));
+    lmn_mutex_destroy(&(this->deq_mtx));
     break;
   default:
     /* nothing to do */
     break;
   }
-  LMN_FREE(q);
 }
+
 
 /*{tail, last}
  *     ↓

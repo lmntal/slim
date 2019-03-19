@@ -175,7 +175,7 @@ void dfs_worker_init(LmnWorker *w) {
 /* LmnWorkerのDFS固有データを破棄する */
 void dfs_worker_finalize(LmnWorker *w) {
   if (worker_on_parallel(w)) {
-    q_free(DFS_WORKER_QUEUE(w));
+    delete DFS_WORKER_QUEUE(w);
   }
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE) {
@@ -888,12 +888,12 @@ void bfs_worker_init(LmnWorker *w) {
 void bfs_worker_finalize(LmnWorker *w) {
   McExpandBFS *mc = (McExpandBFS *)BFS_WORKER_OBJ(w);
   if (!worker_on_parallel(w)) {
-    q_free(mc->cur);
-    q_free(mc->nxt);
+    delete mc->cur;
+    delete mc->nxt;
   } else if (worker_id(w) == 0) {
-    q_free(mc->cur);
+    delete mc->cur;
     if (worker_use_lsync(w))
-      q_free(mc->nxt);
+      delete mc->nxt;
   }
   LMN_FREE(mc);
 }

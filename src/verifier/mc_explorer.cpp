@@ -288,8 +288,8 @@ void owcty_worker_init(LmnWorker *w) {
 
 void owcty_worker_finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(OWCTY_WORKER_AQ1(w));
-    q_free(OWCTY_WORKER_AQ2(w));
+    delete OWCTY_WORKER_AQ1(w);
+    delete OWCTY_WORKER_AQ2(w);
   }
   st_free_table(OWCTY_WORKER_HASHSET(w));
   LMN_FREE(OWCTY_WORKER_OBJ(w));
@@ -572,8 +572,8 @@ void map_worker_init(LmnWorker *w) {
 
 void map_worker_finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(MAP_WORKER_PROPAG_G(w));
-    q_free(MAP_WORKER_DEL_G(w));
+    delete MAP_WORKER_PROPAG_G(w);
+    delete MAP_WORKER_DEL_G(w);
   }
   st_free_table(MAP_WORKER_HASHSET(w));
   LMN_FREE(MAP_WORKER_OBJ(w));
@@ -866,7 +866,7 @@ void bledge_worker_init(LmnWorker *w) {
 
 void bledge_worker_finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(BLE_WORKER_LAYER_Q(w));
+    delete BLE_WORKER_LAYER_Q(w);
   }
   vec_free(BLE_WORKER_PATH_VEC(w));
   vec_free(BLE_WORKER_SEARCH_VEC(w));
@@ -1026,8 +1026,8 @@ void mapndfs_worker_finalize(LmnWorker *w) {
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(MAP_WORKER_PROPAG_G(w));
-    q_free(MAP_WORKER_DEL_G(w));
+    delete MAP_WORKER_PROPAG_G(w);
+    delete MAP_WORKER_DEL_G(w);
   }
   if (MAP_WORKER_HASHSET(w))
     st_free_table(MAP_WORKER_HASHSET(w));
@@ -1188,8 +1188,8 @@ void mcndfs_worker_finalize(LmnWorker *w) {
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(MAP_WORKER_PROPAG_G(w));
-    q_free(MAP_WORKER_DEL_G(w));
+    delete MAP_WORKER_PROPAG_G(w);
+    delete MAP_WORKER_DEL_G(w);
   }
   if (MAP_WORKER_HASHSET(w))
     st_free_table(MAP_WORKER_HASHSET(w));

@@ -165,7 +165,7 @@ void init_por_vars() {
 void free_por_vars() {
   st_free_table(mc_por.states);
   st_free_table(mc_por.strans_independency);
-  q_free(mc_por.queue);
+  delete mc_por.queue;
   vec_free(mc_por.ample_candidate);
   if (mc_por.rc) {
     mc_por.rc = nullptr;

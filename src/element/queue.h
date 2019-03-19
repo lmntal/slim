@@ -63,6 +63,7 @@ struct Node {
 
 struct Queue {
   Queue();
+  ~Queue();
   Node *head;
   Node *tail;
   BOOL lock;
@@ -79,9 +80,8 @@ struct Queue {
 /* multiple dequeue(reader), multiple enqueue(writer) */
 #define LMN_Q_MRMW 4
 
-Queue *new_queue(void);
+
 Queue *make_parallel_queue(BOOL lock_type);
-void q_free(Queue *q);
 BOOL is_empty_queue(Queue *q);
 void enqueue(Queue *q, LmnWord v);
 void enqueue_push_head(Queue *q, LmnWord v);
