@@ -9,6 +9,7 @@
 # Libraries
 *.lib
 *.a
+share/*
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -23,6 +24,7 @@
 *.i*86
 *.x86_64
 *.hex
+bin/*
 
 # misc
 GPATH

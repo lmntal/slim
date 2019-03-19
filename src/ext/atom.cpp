@@ -126,7 +126,7 @@ void cb_atom_functor(LmnReactCxtRef rc,
 		  s, LMN_SP_ATOM_ATTR, 0);
 
   lmn_mem_push_atom(mem, s, LMN_SP_ATOM_ATTR);
-  long n = LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)a0);
+  long n = ((LmnSymbolAtomRef)a0)->get_arity();
   lmn_mem_newlink(mem,
       a2, t2, LMN_ATTR_GET_VALUE(t2),
       (LmnAtomRef)n, LMN_INT_ATTR, 0);
@@ -167,9 +167,9 @@ void cb_atom_swap(LmnReactCxtRef rc,
   if ((unsigned long)a1 >= LMN_FUNCTOR_ARITY(((LmnSymbolAtomRef)a0)->get_functor()))
     lmn_fatal("atom.swap index out of range.");
 
-  self  = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, t0);
-  ap1   = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, (LmnWord)a1);
-  attr1 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)a0, (LmnWord)a1);
+  self  = ((LmnSymbolAtomRef)a0)->get_link(t0);
+  ap1   = ((LmnSymbolAtomRef)a0)->get_link((LmnWord)a1);
+  attr1 = ((LmnSymbolAtomRef)a0)->get_attr((LmnWord)a1);
 
   //  lmn_relink_symbols(a2, t2, ap1, attr1);  //works fine
   //  lmn_relink_symbols(a0, a1, self, 3);  // works fine

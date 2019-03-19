@@ -58,7 +58,7 @@ void nlmem_copy(LmnReactCxtRef rc,
 
   copy_tag_name = LMN_FUNCTOR_NAME_ID(((LmnSymbolAtomRef)a1)->get_functor());
   copy_tag_func = lmn_functor_intern(ANONYMOUS, copy_tag_name, 3);
-  org_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
+  org_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a0)->get_link(0));
   trg_mem = lmn_mem_make();
   atom_map = lmn_mem_copy_cells(trg_mem, org_mem);
   lmn_mem_add_child_mem(mem, trg_mem);
@@ -75,7 +75,7 @@ void nlmem_copy(LmnReactCxtRef rc,
         /* タグアトムを作り、リンクの接続を行う */
         proc_tbl_get_by_atom(atom_map, org_in, &t);
         trg_in = (LmnSymbolAtomRef)(t);
-        org_out = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK(org_in, 0));
+        org_out = (LmnSymbolAtomRef)(org_in->get_link(0));
         trg_out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
         lmn_newlink_in_symbols(trg_in, 0, trg_out, 0);
         tag_atom = lmn_mem_newatom(mem, copy_tag_func);
@@ -90,7 +90,7 @@ void nlmem_copy(LmnReactCxtRef rc,
     /* 第一引数に接続されたタグアトムと第三引数を接続する */
     lmn_mem_newlink(mem,
                     a2, t2, LMN_ATTR_GET_VALUE(t2),
-                    LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 1), LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)a0, 1),
+                    ((LmnSymbolAtomRef)a0)->get_link(1), ((LmnSymbolAtomRef)a0)->get_attr(1),
                     2);
   }
 }
@@ -109,7 +109,7 @@ void nlmem_kill(LmnReactCxtRef rc,
     return;
   }
 
-  org_in = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, 0));
+  org_in = (LmnSymbolAtomRef)(((LmnSymbolAtomRef)a0)->get_link(0));
   org_mem = LMN_PROXY_GET_MEM(org_in);
   {
     AtomListEntryRef ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
@@ -121,8 +121,8 @@ void nlmem_kill(LmnReactCxtRef rc,
 
       EACH_ATOM(in, ent, ({
         if (in == org_in) continue;
-        out = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK(in, 0));
-        out_attr = LMN_SATOM_GET_ATTR(in, 0);
+        out = (LmnSymbolAtomRef)(in->get_link(0));
+        out_attr = in->get_attr(0);
         tag_atom = lmn_mem_newatom(mem, kill_tag_func);
         lmn_relink_symbols(tag_atom, 0, out, 1);
         lmn_mem_delete_atom(mem, out, out_attr);

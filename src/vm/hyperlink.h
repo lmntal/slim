@@ -150,11 +150,11 @@ struct ProcCxt {
   bool is_clone() const { return original_ && original_->atomi != atomi; }
 
   bool is_argument_of(LmnSymbolAtomRef atom, int i) {
-    auto linked_attr = LMN_SATOM_GET_ATTR(atom, i);
+    auto linked_attr = atom->get_attr(i);
     if (!LMN_ATTR_IS_HL(linked_attr))
       return false;
 
-    auto linked_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
+    auto linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
     auto linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
 
     if (original_ && !lmn_hyperlink_eq_hl(linked_hl, original_->start))
@@ -164,7 +164,7 @@ struct ProcCxt {
   }
 
   void match(LmnSymbolAtomRef atom, int i) {
-    auto linked_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
+    auto linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
     auto linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
     start = linked_hl;
   }

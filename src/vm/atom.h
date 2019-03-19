@@ -193,45 +193,49 @@ struct LmnAtomData {
    * @memberof LmnSymbolAtom
    */
   void set_functor(LmnFunctor func);
+  /**
+   * @brief 価数の取得
+   * @memberof LmnSymbolAtom
+   */
+  int get_arity() const;
+  /**
+   * @brief リンク本数の取得
+   * @memberof LmnSymbolAtom
+   */
+  int get_link_num() const;
+
+  /* アトムATOMのN番目のリンク属性/リンクデータを取得 */
+  /**
+   * @brief アトムATOMのN番目のリンク属性を取得
+   * @memberof LmnSymbolAtom
+   */
+  LmnLinkAttr get_attr(int n) const;
+  /**
+   * @brief アトムATOMのN番目のリンク属性を設定
+   * @memberof LmnSymbolAtom
+   */
+  void set_attr(int n, LmnLinkAttr attr);
+  /**
+   * @brief アトムATOMのN番目のリンク情報を取得
+   * @memberof LmnSymbolAtom
+   */
+  LmnAtomRef get_link(int n) const;
+  /**
+   * @brief アトムATOMのN番目のリンク属性を設定
+   * @memberof LmnSymbolAtom
+   */
+  void set_link(int n, LmnAtomRef v);
 };
 
-/**
- * @brief 価数の取得
- * @memberof LmnSymbolAtom
- */
-int LMN_SATOM_GET_ARITY(LmnSymbolAtomRef atom);
 /**
  * @brief ファンクタから価数を取得する
  * @memberof LmnSymbolAtom
  */
 int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor atom);
-/**
- * @brief リンク本数の取得
- * @memberof LmnSymbolAtom
- */
-int LMN_SATOM_GET_LINK_NUM(LmnSymbolAtomRef atom);
 
-/* アトムATOMのN番目のリンク属性/リンクデータを取得 */
-/**
- * @brief アトムATOMのN番目のリンク属性を取得
- * @memberof LmnSymbolAtom
- */
-LmnLinkAttr LMN_SATOM_GET_ATTR(LmnSymbolAtomRef atom, int n);
-/**
- * @brief アトムATOMのN番目のリンク属性を設定
- * @memberof LmnSymbolAtom
- */
-void LMN_SATOM_SET_ATTR(LmnSymbolAtomRef atom, int n, LmnLinkAttr attr);
-/**
- * @brief アトムATOMのN番目のリンク情報を取得
- * @memberof LmnSymbolAtom
- */
-LmnAtomRef LMN_SATOM_GET_LINK(LmnSymbolAtomRef atom, int n);
-/**
- * @brief アトムATOMのN番目のリンク属性を設定
- * @memberof LmnSymbolAtom
- */
-void LMN_SATOM_SET_LINK(LmnSymbolAtomRef atom, int n, LmnAtomRef v);
+/* リンク番号のタグのワード数。ファンクタと同じワードにある分も数える */
+int LMN_ATTR_WORDS(int arity);
+
 /**
  * @brief ハイパーリンクアトムATOMにリンクを設定する
  * @memberof LmnSymbolAtom

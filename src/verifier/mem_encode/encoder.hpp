@@ -175,7 +175,7 @@ struct encoder {
       auto ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
       if (ent) {
         for (auto in : *ent) {
-          if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(in, 1)) ||
+          if (!LMN_ATTR_IS_DATA(in->get_attr(1)) ||
               visitlog_get_atom(visited, in, NULL)) {
             continue;
           }
@@ -183,11 +183,11 @@ struct encoder {
            * [DATA ATOM]-0--1-[in]-0--|--0-[out]-1--..
            * -------------------------+
            */
-          bsp.push_escape_mem_data(LMN_SATOM_GET_LINK(in, 1),
-                                   LMN_SATOM_GET_ATTR(in, 1), visited);
-          auto out = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in, 0);
-          write_mol(LMN_SATOM_GET_LINK(out, 1), LMN_SATOM_GET_ATTR(out, 1),
-                    LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(out, 1)), bsp,
+          bsp.push_escape_mem_data(in->get_link(1),
+                                   in->get_attr(1), visited);
+          auto out = (LmnSymbolAtomRef)in->get_link(0);
+          write_mol(out->get_link(1), out->get_attr(1),
+                    LMN_ATTR_GET_VALUE(out->get_attr(1)), bsp,
                     visited, is_id);
         };
       }
@@ -220,26 +220,26 @@ struct encoder {
     auto f = satom->get_functor();
     if (f == LMN_OUT_PROXY_FUNCTOR) {
       /* outside proxyの場合, inside proxy側の膜をwrite_memで書き込む */
-      auto in = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
+      auto in = (LmnSymbolAtomRef)satom->get_link(0);
       auto in_mem = LMN_PROXY_GET_MEM(in);
       if (visitlog_get_atom(visited, in, NULL)) {
         visitlog_put_atom(visited, in);
       }
-      write_mem(in_mem, LMN_SATOM_GET_LINK(in, 1), LMN_SATOM_GET_ATTR(in, 1),
-                LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(in, 1)), bsp, visited,
+      write_mem(in_mem, in->get_link(1), in->get_attr(1),
+                LMN_ATTR_GET_VALUE(in->get_attr(1)), bsp, visited,
                 is_id);
     } else if (f == LMN_IN_PROXY_FUNCTOR) {
       /* inside proxyの場合, 親膜へ抜ける旨を示すタグTAG_ESCAPE_MEMを書き込む.
        * その後, outside proxyから分子のトレース(write_mol)を引き続き実行する */
-      auto out = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
+      auto out = (LmnSymbolAtomRef)satom->get_link(0);
       bsp.push_escape_mem();
 
       if (visitlog_get_atom(visited, satom, NULL)) {
         visitlog_put_atom(visited, satom);
       }
 
-      write_mol(LMN_SATOM_GET_LINK(out, 1), LMN_SATOM_GET_ATTR(out, 1),
-                LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(out, 1)), bsp, visited,
+      write_mol(out->get_link(1), out->get_attr(1),
+                LMN_ATTR_GET_VALUE(out->get_attr(1)), bsp, visited,
                 is_id);
     } else if (!visitlog_get_atom(visited, satom, &n_visited)) {
       /* 未訪問のシンボルアトムの場合 */
@@ -254,9 +254,9 @@ struct encoder {
           bsp.push_from();
           continue;
         }
-        write_mol(LMN_SATOM_GET_LINK(satom, i_arg),
-                  LMN_SATOM_GET_ATTR(satom, i_arg),
-                  LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(satom, i_arg)), bsp,
+        write_mol(satom->get_link(i_arg),
+                  satom->get_attr(i_arg),
+                  LMN_ATTR_GET_VALUE(satom->get_attr(i_arg)), bsp,
                   visited, is_id);
       }
     } else {

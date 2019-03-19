@@ -229,7 +229,7 @@ static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
     (*mul) *= t;
 
     if (LMN_IS_SYMBOL_FUNCTOR(((LmnSymbolAtomRef)atom)->get_functor())) {
-      const int arity = LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)atom);
+      const int arity = ((LmnSymbolAtomRef)atom)->get_arity();
       int i_arg;
 
       for (i_arg = 0; i_arg < arity; i_arg++) {
@@ -237,8 +237,8 @@ static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
         if (i_arg == i_parent)
           continue;
 
-        to_attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)atom, i_arg);
-        do_molecule(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, i_arg), to_attr,
+        to_attr = ((LmnSymbolAtomRef)atom)->get_attr(i_arg);
+        do_molecule(((LmnSymbolAtomRef)atom)->get_link(i_arg), to_attr,
                     calc_mem, ctx, LMN_ATTR_GET_VALUE(to_attr), sum, mul);
       }
     }
@@ -273,7 +273,7 @@ static mhash_t mhash_unit(LmnAtomRef atom, LmnLinkAttr attr,
              LMN_OUT_PROXY_FUNCTOR) {
     /* 4. OutSideProxyアトムの(子膜に入る)場合 */
     LmnSymbolAtomRef in_proxy =
-        (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)(atom), 0));
+        (LmnSymbolAtomRef)(((LmnSymbolAtomRef)(atom))->get_link(0));
     if (depth == mhash_depth) {
       /* 深さDに到達した場合
        *   子膜のハッシュ値とリンク接続値を掛け合わせた値を計算してトレースを打ち切る.
@@ -301,7 +301,7 @@ static mhash_t mhash_unit(LmnAtomRef atom, LmnLinkAttr attr,
      *   atomのハッシュ値を掛け合わせ, 再帰的に深さDまでトレースする. */
     mhash_t hash;
     int i_arg;
-    const int arity = LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)atom);
+    const int arity = ((LmnSymbolAtomRef)atom)->get_arity();
     const int i_from = (depth == 0) ? -1 : (int)LMN_ATTR_GET_VALUE(attr);
 
     hash = mhash_symbol((LmnSymbolAtomRef)atom);
@@ -313,8 +313,8 @@ static mhash_t mhash_unit(LmnAtomRef atom, LmnLinkAttr attr,
        *       再帰的にCを掛けているので、係数が重なる危険性がある */
       hash = MHASH_C * hash +
              MHASH_E *
-                 mhash_unit(LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, i_arg),
-                            LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)atom, i_arg),
+                 mhash_unit(((LmnSymbolAtomRef)atom)->get_link(i_arg),
+                            ((LmnSymbolAtomRef)atom)->get_attr(i_arg),
                             calc_mem, ctx, depth + 1);
     }
 
@@ -360,9 +360,9 @@ static inline mhash_t memunit(LmnMembraneRef child_mem,
                * ------------------------------------------------------------------+
                */
 
-              out_proxy = (LmnSymbolAtomRef)(LMN_SATOM_GET_LINK(in_proxy, 0));
-              tmp = mhash_unit(LMN_SATOM_GET_LINK(out_proxy, 1),
-                               LMN_SATOM_GET_ATTR(out_proxy, 1), calc_mem, ctx,
+              out_proxy = (LmnSymbolAtomRef)(in_proxy->get_link(0));
+              tmp = mhash_unit(out_proxy->get_link(1),
+                               out_proxy->get_attr(1), calc_mem, ctx,
                                depth + 1);
               tmp *= child_h ^ memlink(in_proxy, calc_mem, ctx);
               hash += tmp;
@@ -391,12 +391,12 @@ static inline mhash_t memlink(LmnSymbolAtomRef in_proxy,
     hash = MHASH_B * hash +
            mhash_membrane(LMN_PROXY_GET_MEM(in_proxy), calc_mem, ctx);
 
-    atom = LMN_SATOM_GET_LINK(in_proxy, 1);
-    attr = LMN_SATOM_GET_ATTR(in_proxy, 1);
+    atom = in_proxy->get_link(1);
+    attr = in_proxy->get_attr(1);
     if (LMN_ATTR_IS_DATA(attr) ||
         ((LmnSymbolAtomRef)atom)->get_functor() != LMN_OUT_PROXY_FUNCTOR)
       break;
-    in_proxy = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0);
+    in_proxy = (LmnSymbolAtomRef)((LmnSymbolAtomRef)atom)->get_link(0);
   }
 
   if (LMN_ATTR_IS_DATA(attr)) {
