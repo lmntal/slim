@@ -303,7 +303,7 @@ private:
     if (f != satom->get_functor())
       return FALSE;
 
-    if (!tracelog_put_atom(log, satom, *i_ref, mem))
+    if (!log->visit(satom, *i_ref, mem))
       return FALSE;
 
     (*i_ref)++;
@@ -341,7 +341,7 @@ private:
     }
 
     tracelog_put_mem(log, in_mem, *i_ref);
-    tracelog_put_atom(log, in, TLOG_MATCHED_ID_NONE, in_mem);
+    log->visit(in, TLOG_MATCHED_ID_NONE, in_mem);
     (*i_ref)++;
 
     /* 1. mem_eq_enc_mol : 引き続き子膜側へ踏み込んで連結分子をトレース
@@ -519,7 +519,7 @@ private:
       return false;
 
     auto out = ((LmnSymbolAtomRef)atom)->get_link(0);
-    tracelog_put_atom(log, (LmnSymbolAtomRef)atom, TLOG_MATCHED_ID_NONE,
+    log->visit((LmnSymbolAtomRef)atom, TLOG_MATCHED_ID_NONE,
                       LMN_PROXY_GET_MEM((LmnSymbolAtomRef)atom));
     return mem_eq_enc_mol(i_bs, lmn_mem_parent(mem),
                           ((LmnSymbolAtomRef)out)->get_link(1),
@@ -546,7 +546,7 @@ private:
 
     auto in = ((LmnSymbolAtomRef)atom)->get_link(0);
     auto in_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
-    tracelog_put_atom(log, (LmnSymbolAtomRef)in, TLOG_MATCHED_ID_NONE, in_mem);
+    log->visit((LmnSymbolAtomRef)in, TLOG_MATCHED_ID_NONE, in_mem);
     if (ref != tracelog_get_memMatched(log, in_mem))
       return false;
 

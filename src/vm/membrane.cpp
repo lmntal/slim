@@ -2567,7 +2567,7 @@ mem_isomor_trace_proxies(LmnAtomRef cur1, LmnMembraneRef mem1, TraceLogRef log1,
       return FALSE;
     } else {
       /* in1は互いに未訪問であるため, トレースする必要がある */
-      tracelog_put_atom(log1, (LmnSymbolAtomRef)in1,
+      log1->visit((LmnSymbolAtomRef)in1,
                         ((LmnSymbolAtomRef)in2)->get_id(),
                         LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in1));
       simplylog_put_atom(log2, (LmnSymbolAtomRef)in2);
@@ -2634,7 +2634,7 @@ static inline int mem_isomor_trace_symbols(LmnAtomRef cur1, LmnMembraneRef mem1,
                                            SimplyLog log2) {
   int to_i, global_ret;
 
-  tracelog_put_atom(log1, (LmnSymbolAtomRef)cur1,
+  log1->visit((LmnSymbolAtomRef)cur1,
                     ((LmnSymbolAtomRef)cur2)->get_id(), mem1);
   simplylog_put_atom(log2, (LmnSymbolAtomRef)cur2);
 

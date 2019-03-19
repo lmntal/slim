@@ -176,6 +176,9 @@ private:
   }
 
 public:
+/* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
+ * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
+ */
   bool visit(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
     return this->visit(atom->get_id(), TraceData::options::TRAVERSED_ATOM,
                        atom2_id, owner);

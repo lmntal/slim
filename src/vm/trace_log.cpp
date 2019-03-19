@@ -43,14 +43,6 @@ template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
  * Tracker
  */
 
-/* ログlに, 所属膜owner1のアトムatom1への訪問を記録する.
- * atom1にマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
- */
-int tracelog_put_atom(TraceLogRef l, LmnSymbolAtomRef atom1, LmnWord atom2_id,
-                      LmnMembraneRef owner1) {
-  return l->visit(atom1, atom2_id, owner1);
-}
-
 /* ログlに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
  * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
 int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id) {
