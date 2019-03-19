@@ -38,17 +38,9 @@
  */
 #include "runtime_status.h"
 #include "state.h"
-#include "vm/vm.h"
 #include "state.hpp"
 #include "statespace.h"
-
-struct RuleProfiler {
-  LmnRulesetId ref_rs_id;
-  unsigned long apply;
-  unsigned long backtrack;
-  TimeProfiler trial;
-  LmnRuleRef src;
-};
+#include "vm/vm.h"
 
 void ruleprofiler_incr_backtrack(struct RuleProfiler *p) { p->backtrack++; }
 void ruleprofiler_add_backtrack(struct RuleProfiler *p, int num) {
@@ -342,8 +334,9 @@ void profile_add_space(int type, unsigned long size) {
 }
 
 void profile_remove_space(int type, unsigned long size) {
-  if (lmn_prof.valid) { /* finalize処理で現在のメモリ使用量が不明になってしまうので..
-                         */
+  if (lmn_prof
+          .valid) { /* finalize処理で現在のメモリ使用量が不明になってしまうので..
+                     */
     MemoryProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].spaces[type]);
     profile_peakcounter_pop(&p->num, 1);
     profile_peakcounter_pop(&p->space, size);

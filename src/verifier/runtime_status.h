@@ -73,10 +73,11 @@ enum PROFILE_SPACE {
 };
 
 enum PROFILE_TIME {
-  PROFILE_TIME__ACTIVE_FOR_IDLE_PROF = 0, /* アイドルCPU時間を計測するためのトータルアクティブCPU時間
-                                             (並列処理用) */
-  PROFILE_TIME__STATE_HASH_MEM,           /* 膜のハッシュ関数 */
-  PROFILE_TIME__STATE_HASH_MID,           /* 膜のIDのハッシュ関数 */
+  PROFILE_TIME__ACTIVE_FOR_IDLE_PROF =
+      0, /* アイドルCPU時間を計測するためのトータルアクティブCPU時間
+            (並列処理用) */
+  PROFILE_TIME__STATE_HASH_MEM, /* 膜のハッシュ関数 */
+  PROFILE_TIME__STATE_HASH_MID, /* 膜のIDのハッシュ関数 */
   PROFILE_TIME__STATE_COMPARE_MEQ, /* グラフ同型性判定による状態の等価性判定 */
   PROFILE_TIME__STATE_COMPARE_MID, /* 膜のID比較による状態の等価性判定 */
   PROFILE_TIME__STATE_COPY,           /* 膜の複製(INSTR_COMMITを除く) */
@@ -141,6 +142,14 @@ struct MCProfiler3 {
   MemoryProfiler spaces[PSPACE_TAIL]; /* メモリ使用量の調査 */
   unsigned long
       counters[PCOUNT_TAIL]; /* カウンタ群, 主に状態管理票の調査に使う */
+};
+
+struct RuleProfiler {
+  LmnRulesetId ref_rs_id;
+  unsigned long apply;
+  unsigned long backtrack;
+  TimeProfiler trial;
+  LmnRuleRef src;
 };
 
 struct LmnProfiler {
