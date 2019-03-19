@@ -42,7 +42,6 @@
 #include "statespace.h"
 #include "vm/vm.h"
 
-static void mc_profiler3_init(MCProfiler3 *p);
 static void mc_profiler3_destroy(MCProfiler3 *p);
 static void mc_profiler3_makeup_report(MCProfiler3 *total);
 static void profile_state_f(State *s, LmnWord arg);
@@ -121,52 +120,42 @@ void MCProfiler2::makeup_report() {
   }
 }
 
-static void mc_profiler3_init(MCProfiler3 *p) {
-  unsigned int i;
-
-  /* for spaces */
-  for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
-    p->spaces[i] = MemoryProfiler();
-  }
-  /* for timers */
-  for (i = 0; i < ARY_SIZEOF(p->times); i++) {
-    p->times[i] = TimeProfiler();
-  }
-  /* for counters */
-  for (i = 0; i < ARY_SIZEOF(p->counters); i++) {
-    p->counters[i] = 0;
-  }
+MCProfiler3::MCProfiler3() {
+  for (int i = 0; i < ARY_SIZEOF(spaces); i++)
+    spaces[i] = MemoryProfiler();
+  for (int i = 0; i < ARY_SIZEOF(times); i++)
+    times[i] = TimeProfiler();
+  for (int i = 0; i < ARY_SIZEOF(counters); i++)
+    counters[i] = 0;
 }
 
-static void mc_profiler3_destroy(MCProfiler3 *p) { unsigned int i; }
-
-static void mc_profiler3_makeup_report(MCProfiler3 *total) {
+static void mc_profiler3_makeup_report(MCProfiler3 &total) {
   unsigned int data_i, th_id;
 
-  for (data_i = 0; data_i < ARY_SIZEOF(total->times); data_i++) {
+  for (data_i = 0; data_i < ARY_SIZEOF(total.times); data_i++) {
     for (th_id = 0; th_id < lmn_prof.thread_num; th_id++) {
-      TimeProfiler *p = &(lmn_prof.lv3[th_id].times[data_i]);
-      total->times[data_i].called_num += p->called_num;
-      total->times[data_i].total_time += p->total_time;
+      TimeProfiler &p = lmn_prof.lv3[th_id].times[data_i];
+      total.times[data_i].called_num += p.called_num;
+      total.times[data_i].total_time += p.total_time;
     }
-    if (total->times[data_i].total_time > 0.0) {
-      total->times[data_i].total_time /= lmn_prof.thread_num;
-    }
-  }
-
-  for (data_i = 0; data_i < ARY_SIZEOF(total->counters); data_i++) {
-    for (th_id = 0; th_id < lmn_prof.thread_num; th_id++) {
-      total->counters[data_i] += lmn_prof.lv3[th_id].counters[data_i];
+    if (total.times[data_i].total_time > 0.0) {
+      total.times[data_i].total_time /= lmn_prof.thread_num;
     }
   }
 
-  for (data_i = 0; data_i < ARY_SIZEOF(total->spaces); data_i++) {
+  for (data_i = 0; data_i < ARY_SIZEOF(total.counters); data_i++) {
     for (th_id = 0; th_id < lmn_prof.thread_num; th_id++) {
-      MCProfiler3 *p = &lmn_prof.lv3[th_id];
-      total->spaces[data_i].space.cur += p->spaces[data_i].space.cur;
-      total->spaces[data_i].space.peak += p->spaces[data_i].space.peak;
-      total->spaces[data_i].num.cur += p->spaces[data_i].space.cur;
-      total->spaces[data_i].num.peak += p->spaces[data_i].num.peak;
+      total.counters[data_i] += lmn_prof.lv3[th_id].counters[data_i];
+    }
+  }
+
+  for (data_i = 0; data_i < ARY_SIZEOF(total.spaces); data_i++) {
+    for (th_id = 0; th_id < lmn_prof.thread_num; th_id++) {
+      MCProfiler3 &p = lmn_prof.lv3[th_id];
+      total.spaces[data_i].space.cur += p.spaces[data_i].space.cur;
+      total.spaces[data_i].space.peak += p.spaces[data_i].space.peak;
+      total.spaces[data_i].num.cur += p.spaces[data_i].space.cur;
+      total.spaces[data_i].num.peak += p.spaces[data_i].num.peak;
     }
   }
 }
@@ -217,7 +206,7 @@ void lmn_profiler_init(unsigned int nthreads) {
     if (lmn_env.profile_level >= 3) {
       lmn_prof.lv3 = LMN_NALLOC(MCProfiler3, nthreads);
       for (i = 0; i < nthreads; i++) {
-        mc_profiler3_init(&lmn_prof.lv3[i]);
+        lmn_prof.lv3[i] = MCProfiler3();
       }
     }
   } else if (lmn_env.profile_level >= 2) {
@@ -237,9 +226,6 @@ void lmn_profiler_finalize() {
 
   if (lmn_prof.lv3) {
     unsigned int i;
-    for (i = 0; i < lmn_prof.thread_num; i++) {
-      mc_profiler3_destroy(&lmn_prof.lv3[i]);
-    }
     LMN_FREE(lmn_prof.lv3);
   }
 
@@ -815,8 +801,8 @@ void dump_profile_data(FILE *f) {
            */
         }
 
-        mc_profiler3_init(&total);
-        mc_profiler3_makeup_report(&total);
+        total = MCProfiler3();
+        mc_profiler3_makeup_report(total);
         total_time = 0.0;
 
         total.times[PROFILE_TIME__TRANS_RULE].total_time -=

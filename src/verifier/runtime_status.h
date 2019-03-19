@@ -138,6 +138,7 @@ struct MCProfiler2 {
       membrane_space;
   st_table_t hashes;
   MCProfiler2();
+  ~MCProfiler2(){};
   void destroy();
   void makeup_report();
 };
@@ -147,6 +148,8 @@ struct MCProfiler3 {
   MemoryProfiler spaces[PSPACE_TAIL]; /* メモリ使用量の調査 */
   unsigned long
       counters[PCOUNT_TAIL]; /* カウンタ群, 主に状態管理票の調査に使う */
+  MCProfiler3();
+  ~MCProfiler3(){};
 };
 
 struct RuleProfiler {
