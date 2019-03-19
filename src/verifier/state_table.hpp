@@ -122,11 +122,11 @@ public:
     using reference = State *&;
     typedef typename std::input_iterator_tag iterator_category;
 
-    iterator() : ptr(nullptr) {}
+    iterator() : ptr(nullptr), next(nullptr) {}
     iterator(const iterator &itr)
-        : table(itr.table), table_index(itr.table_index), ptr(itr.ptr) {}
+        : table(itr.table), table_index(itr.table_index), ptr(itr.ptr), next(nullptr) {}
     iterator(StateTable *t)
-        : table(t), table_index(0), ptr(table->tbl[table_index]) {
+        : table(t), table_index(0), ptr(table->tbl[table_index]), next(nullptr) {
       while (!ptr && table_index + 1 < table->cap())
         ptr = table->tbl[++table_index];
       if (ptr)
