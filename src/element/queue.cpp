@@ -258,9 +258,16 @@ unsigned long Queue::entry_num() {
  *  DeQue
  */
 
+void Deque::init(unsigned int init_size) {
+  this->tbl = LMN_NALLOC(LmnWord, init_size);
+  this->head = 0;
+  this->tail = 1;
+  this->cap = init_size;
+}
+
 Deque::Deque(unsigned int init_size) {
   LMN_ASSERT(init_size > 0);
-  deq_init(this, init_size);
+  this->init(init_size);
 }
 
 

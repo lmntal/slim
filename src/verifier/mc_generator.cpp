@@ -145,14 +145,14 @@ void dfs_worker_init(LmnWorker *w) {
   if (!worker_on_parallel(w)) {
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
-      deq_init(&mc->deq, 8192);
+      &mc->deq->init(8192);
     } else
 #endif
       vec_init(&mc->stack, 8192);
   } else {
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
-      deq_init(&mc->deq, mc->cutoff_depth + 1);
+      &mc->deq->init(mc->cutoff_depth + 1);
     } else
 #endif
       vec_init(&mc->stack, mc->cutoff_depth + 1);

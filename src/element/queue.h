@@ -98,6 +98,7 @@ struct Queue {
 
 struct Deque {
   Deque(unsigned int init_size);
+  void init(unsigned int init_size);
   LmnWord *tbl;
   unsigned int head, tail, cap;
 };
@@ -115,7 +116,6 @@ typedef LmnWord deq_data_t;
 #define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
-static inline void deq_init(Deque *deq, unsigned int init_size);
 static inline void deq_push_head(Deque *deq, LmnWord keyp);
 static inline void deq_push_tail(Deque *deq, LmnWord keyp);
 static inline LmnWord deq_pop_head(Deque *deq);
@@ -136,14 +136,6 @@ Deque *deq_copy(Deque *deq);
 void deq_reverse(Deque *deq);
 void deq_resize(Deque *deq, unsigned int size, deq_data_t val);
 void deq_sort(const Deque *deq, int (*compare)(const void *, const void *));
-
-/* init */
-static inline void deq_init(Deque *deq, unsigned int init_size) {
-  deq->tbl = LMN_NALLOC(LmnWord, init_size);
-  deq->head = 0;
-  deq->tail = 1;
-  deq->cap = init_size;
-}
 
 /* extend (static) */
 static inline void deq_extend(Deque *deq) {
