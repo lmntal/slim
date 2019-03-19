@@ -50,6 +50,7 @@
 #include "lmntal.h"
 #include "mc_worker.h"
 #include "vm/vm.h"
+#include <vector>
 
 typedef struct MCProfiler2 MCProfiler2;
 typedef struct MCProfiler3 MCProfiler3;
@@ -186,7 +187,8 @@ struct LmnProfiler {
 
   /* for profile level2
    * 実行終了後(開放前)にStateSpace内の各状態から情報収集する */
-  MCProfiler2 *lv2;
+  std::vector<MCProfiler2> lv2;
+  MCProfiler2 total_lv2;
 
   /* for profile level3 (configure --enable-profile)
    * 実行中に, 詳細に各状態から情報収集する.

@@ -238,7 +238,6 @@ void lmn_profiler_init(unsigned int nthreads) {
   }
   lmn_prof.state_num_stored = 0;
   lmn_prof.state_num_end = 0;
-  lmn_prof.lv2 = NULL;
   lmn_prof.lv3 = NULL;
   lmn_prof.prules = NULL;
   lmn_prof.cur = NULL;
@@ -260,10 +259,11 @@ void lmn_profiler_finalize() {
   LMN_FREE(lmn_prof.end_cpu_time_main);
   LMN_FREE(lmn_prof.thread_cpu_time_main);
 
-  if (lmn_prof.lv2) {
-    lmn_prof.lv2->destroy();
+  for (auto it = lmn_prof.lv2.begin(); it != lmn_prof.lv2.end(); it++) {
+    it->destroy();
   }
-  LMN_FREE(lmn_prof.lv2);
+  lmn_prof.total_lv2.destroy();
+
   if (lmn_prof.lv3) {
     unsigned int i;
     for (i = 0; i < lmn_prof.thread_num; i++) {
@@ -412,92 +412,76 @@ void profile_statespace(LmnWorkerGroup *wp) {
     profile_total_space_update(worker_states(w));
   }
   if (lmn_env.profile_level >= 2) {
-    MCProfiler2 *total;
-    unsigned int i;
-
-    total = LMN_MALLOC(MCProfiler2);
-    total->hashes = NULL;
-
-    lmn_prof.lv2 = LMN_NALLOC(MCProfiler2, lmn_prof.thread_num);
-    for (i = 0; i < lmn_prof.thread_num; i++) {
-      lmn_prof.lv2[i] = MCProfiler2();
-    }
+    lmn_prof.total_lv2.hashes = NULL;
+    for (unsigned int i = 0; i < lmn_prof.thread_num; i++)
+      lmn_prof.lv2.push_back(MCProfiler2());
     for (auto ptr : worker_states(w)->all_states())
       profile_state_f(ptr, (LmnWord)worker_states(w));
-
     if (lmn_env.tree_compress) {
-      MCProfiler2 *p = &lmn_prof.lv2[lmn_OMP_get_my_id()];
-      p->binstr_space += lmn_bscomp_tree_space();
+      lmn_prof.lv2[lmn_OMP_get_my_id()].binstr_space += lmn_bscomp_tree_space();
     }
-    total->makeup_report();
-    for (i = 0; i < lmn_prof.thread_num; i++) {
-      lmn_prof.lv2[i].destroy();
-    }
-    LMN_FREE(lmn_prof.lv2);
-
-    total->statespace_space = worker_states(w)->space();
-    lmn_prof.lv2 = total;
+    lmn_prof.total_lv2.makeup_report();
+    lmn_prof.total_lv2.statespace_space = worker_states(w)->space();
   }
 }
 
 static void profile_state_f(State *s, LmnWord arg) {
-  MCProfiler2 *p;
+  MCProfiler2 &p = lmn_prof.lv2[lmn_OMP_get_my_id()];
   StateSpaceRef ss;
   unsigned int succ_num;
 
-  p = &lmn_prof.lv2[lmn_OMP_get_my_id()];
   ss = (StateSpaceRef)arg;
   succ_num = s->successor_num;
 
   /* メモリ */
-  p->state_space += sizeof(State);
+  p.state_space += sizeof(State);
   if (!s->is_binstr_user() && s->state_mem()) {
-    p->membrane_space += lmn_mem_root_space(s->state_mem());
+    p.membrane_space += lmn_mem_root_space(s->state_mem());
   } else if (s->is_binstr_user() && s->state_binstr()) {
-    p->binstr_space += lmn_binstr_space(s->state_binstr());
+    p.binstr_space += lmn_binstr_space(s->state_binstr());
   }
 
-  p->transition_space += succ_num * sizeof(succ_data_t); /* # of pointer*/
+  p.transition_space += succ_num * sizeof(succ_data_t); /* # of pointer*/
   if (lmn_env.show_transition) {
     unsigned int i;
     for (i = 0; i < succ_num; i++) {
-      p->transition_space += transition_space(transition(s, i));
+      p.transition_space += transition_space(transition(s, i));
     }
   }
 
   /* 遷移数 */
-  p->transition_num += succ_num;
+  p.transition_num += succ_num;
 
   if (!(s->is_encoded() && s->is_dummy())) {
     if (ss->has_property()) {
       AutomataRef a = ss->automata();
       if (state_is_accept(a, s)) {
-        p->accept_num++;
+        p.accept_num++;
       }
       if (state_is_end(a, s)) {
-        p->invalid_end_num++;
+        p.invalid_end_num++;
       }
     }
   }
 
   /* ハッシュ値の種類数 */
-  if (!st_contains(p->hashes, (st_data_t)state_hash(s))) {
-    st_insert(p->hashes, (st_data_t)state_hash(s), 0);
+  if (!st_contains(p.hashes, (st_data_t)state_hash(s))) {
+    st_insert(p.hashes, (st_data_t)state_hash(s), 0);
 
     if (s->is_encoded()) {
-      p->midhash_num++;
+      p.midhash_num++;
       if (s->is_dummy()) {
-        p->rehashed_num++;
+        p.rehashed_num++;
       }
     } else {
-      p->mhash_num++;
+      p.mhash_num++;
     }
   }
 
   if (!s->next) {
     /* 同じハッシュ値は同じリストにのみ存在するので,
      * リストが切り替わったらクリア */
-    st_clear(p->hashes);
+    st_clear(p.hashes);
   }
 }
 
@@ -612,13 +596,15 @@ void dump_profile_data(FILE *f) {
   tmp_total_wall_time_main =
       lmn_prof.end_wall_time_main - lmn_prof.start_wall_time_main;
 
-  if (lmn_prof.lv2) {
-    tmp_total_mem =
-        (double)(lmn_prof.lv2->state_space + lmn_prof.lv2->transition_space +
-                 lmn_prof.lv2->binstr_space + lmn_prof.lv2->membrane_space +
-                 lmn_prof.lv2->statespace_space);
-    total_hash_num = lmn_prof.lv2->mhash_num + lmn_prof.lv2->midhash_num -
-                     lmn_prof.lv2->rehashed_num;
+  if (lmn_env.profile_level >= 2) {
+    tmp_total_mem = (double)(lmn_prof.total_lv2.state_space +
+                             lmn_prof.total_lv2.transition_space +
+                             lmn_prof.total_lv2.binstr_space +
+                             lmn_prof.total_lv2.membrane_space +
+                             lmn_prof.total_lv2.statespace_space);
+    total_hash_num = lmn_prof.total_lv2.mhash_num +
+                     lmn_prof.total_lv2.midhash_num -
+                     lmn_prof.total_lv2.rehashed_num;
   } else {
     tmp_total_mem = 0;
     total_hash_num = 0;
@@ -630,27 +616,27 @@ void dump_profile_data(FILE *f) {
           f, "%lf\t%lf\t%lf\t%lu\t%lu\t%lu\t%lu\t%lf\t%lf\t%lf\t%lf\t%lf\t%s\n",
           tmp_total_wall_time, tmp_total_wall_time_main,
           tmp_total_cpu_time_main, lmn_prof.state_num_stored,
-          lmn_prof.lv2->transition_num, lmn_prof.state_num_end, total_hash_num,
-          tmp_total_mem / 1024 / 1024,
-          (double)lmn_prof.lv2->state_space / 1024 / 1024,
+          lmn_prof.total_lv2.transition_num, lmn_prof.state_num_end,
+          total_hash_num, tmp_total_mem / 1024 / 1024,
+          (double)lmn_prof.total_lv2.state_space / 1024 / 1024,
           lmn_env.enable_compress_mem
-              ? (double)lmn_prof.lv2->binstr_space / 1024 / 1024
-              : (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
-          (double)lmn_prof.lv2->transition_space / 1024 / 1024,
-          (double)lmn_prof.lv2->statespace_space / 1024 / 1024,
+              ? (double)lmn_prof.total_lv2.binstr_space / 1024 / 1024
+              : (double)lmn_prof.total_lv2.membrane_space / 1024 / 1024,
+          (double)lmn_prof.total_lv2.transition_space / 1024 / 1024,
+          (double)lmn_prof.total_lv2.statespace_space / 1024 / 1024,
           lmn_prof.found_err ? "FOUND" : "NOT FOUND");
     } else {
       fprintf(f, "%lf\t%lf\t%lf\t%lu\t%lu\t%lu\t%lu\t%lf\t%lf\t%lf\t%lf\t%lf\n",
               tmp_total_wall_time, tmp_total_wall_time_main,
               tmp_total_cpu_time_main, lmn_prof.state_num_stored,
-              lmn_prof.lv2->transition_num, lmn_prof.state_num_end,
+              lmn_prof.total_lv2.transition_num, lmn_prof.state_num_end,
               total_hash_num, tmp_total_mem / 1024 / 1024,
-              (double)lmn_prof.lv2->state_space / 1024 / 1024,
+              (double)lmn_prof.total_lv2.state_space / 1024 / 1024,
               lmn_env.enable_compress_mem
-                  ? (double)lmn_prof.lv2->binstr_space / 1024 / 1024
-                  : (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
-              (double)lmn_prof.lv2->transition_space / 1024 / 1024,
-              (double)lmn_prof.lv2->statespace_space / 1024 / 1024);
+                  ? (double)lmn_prof.total_lv2.binstr_space / 1024 / 1024
+                  : (double)lmn_prof.total_lv2.membrane_space / 1024 / 1024,
+              (double)lmn_prof.total_lv2.transition_space / 1024 / 1024,
+              (double)lmn_prof.total_lv2.statespace_space / 1024 / 1024);
     }
     return;
   }
@@ -790,14 +776,14 @@ void dump_profile_data(FILE *f) {
       fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored",
               lmn_prof.state_num_stored);
       fprintf(f, "%-18s%10s  : %15lu\n", " ", "Successors",
-              lmn_prof.lv2->transition_num);
+              lmn_prof.total_lv2.transition_num);
       fprintf(f, "%-18s%10s  : %15lu\n", " ", "Terminates",
               lmn_prof.state_num_end);
       if (lmn_prof.has_property) {
         fprintf(f, "%-10s%18s  : %15lu\n", " ", "Accepted",
-                lmn_prof.lv2->accept_num);
+                lmn_prof.total_lv2.accept_num);
         fprintf(f, "%-10s%18s  : %15lu\n", " ", "Invalid Ends",
-                lmn_prof.lv2->invalid_end_num);
+                lmn_prof.total_lv2.invalid_end_num);
         fprintf(f, "%-10s%18s  : %15s\n", " ", "Accepting Cycle",
                 lmn_prof.found_err ? "FOUND" : "NOT FOUND");
       }
@@ -806,11 +792,11 @@ void dump_profile_data(FILE *f) {
       fprintf(f, "%-20s%8s  : %15lu\n", "# of Hash Values", "Total",
               total_hash_num);
       fprintf(f, "%-6s%22s  : %15lu\n", " ", "Default -  M_Hash",
-              lmn_prof.lv2->mhash_num);
+              lmn_prof.total_lv2.mhash_num);
       fprintf(f, "%-6s%22s  : %15lu\n", " ", "ReHashed -  M_Hash",
-              lmn_prof.lv2->rehashed_num);
+              lmn_prof.total_lv2.rehashed_num);
       fprintf(f, "%-6s%22s  : %15lu\n", " ", "Optimized - BS_Hash",
-              lmn_prof.lv2->midhash_num);
+              lmn_prof.total_lv2.midhash_num);
       fprintf(f,
               "------------------------------------------------------------\n");
       fprintf(f, "%-16s%12s    %12s %12s\n", "Memory Usage ", "",
@@ -819,25 +805,27 @@ void dump_profile_data(FILE *f) {
               tmp_total_mem / 1024 / 1024,
               tmp_total_mem / lmn_prof.state_num_stored);
       fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Descriptors",
-              (double)lmn_prof.lv2->state_space / 1024 / 1024,
-              (double)lmn_prof.lv2->state_space / lmn_prof.state_num_stored);
+              (double)lmn_prof.total_lv2.state_space / 1024 / 1024,
+              (double)lmn_prof.total_lv2.state_space /
+                  lmn_prof.state_num_stored);
       if (lmn_env.enable_compress_mem) {
         fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Binary Strings",
-                (double)lmn_prof.lv2->binstr_space / 1024 / 1024,
-                (double)lmn_prof.lv2->binstr_space / lmn_prof.state_num_stored);
+                (double)lmn_prof.total_lv2.binstr_space / 1024 / 1024,
+                (double)lmn_prof.total_lv2.binstr_space /
+                    lmn_prof.state_num_stored);
       } else {
         fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Membranes",
-                (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
-                (double)lmn_prof.lv2->membrane_space /
+                (double)lmn_prof.total_lv2.membrane_space / 1024 / 1024,
+                (double)lmn_prof.total_lv2.membrane_space /
                     lmn_prof.state_num_stored);
       }
       fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Transitions",
-              (double)lmn_prof.lv2->transition_space / 1024 / 1024,
-              (double)lmn_prof.lv2->transition_space /
+              (double)lmn_prof.total_lv2.transition_space / 1024 / 1024,
+              (double)lmn_prof.total_lv2.transition_space /
                   lmn_prof.state_num_stored);
       fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "StateSpace",
-              (double)lmn_prof.lv2->statespace_space / 1024 / 1024,
-              (double)lmn_prof.lv2->statespace_space /
+              (double)lmn_prof.total_lv2.statespace_space / 1024 / 1024,
+              (double)lmn_prof.total_lv2.statespace_space /
                   lmn_prof.state_num_stored);
       fprintf(f,
               "============================================================\n");
