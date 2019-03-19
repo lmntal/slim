@@ -446,12 +446,12 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     BOOL has_property = owner && owner->has_property();
 #ifdef KWBT_OPT
     fprintf(f, "%lu::%lu::%s", print_id, cost,
-            has_property ? automata_state_name(owner->automata(),
+            has_property ? owner->automata()->state_name(
                                                state_property_state(s))
                          : "");
 #else
     fprintf(f, "%lu::%s", print_id,
-            has_property ? automata_state_name(owner->automata(),
+            has_property ? owner->automata()->state_name(
                                                state_property_state(s))
                          : "");
 #endif
@@ -602,7 +602,7 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   }
   case LaViT:
     fprintf(f, "%lu::", state_format_id(s, owner->is_formatted()));
-    fprintf(f, "%s\n", automata_state_name(a, state_property_state(s)));
+    fprintf(f, "%s\n", a->state_name(state_property_state(s)));
   case FSM:
   case CUI: /* 状態のグローバルルート膜の膜名としてdump済 */
     break;
@@ -729,7 +729,7 @@ BOOL state_succ_contains(State *s, State *t) {
  * 性質オートマトンaが存在しない場合は直ちに偽を返す. */
 BOOL state_is_accept(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_is_accept(automata_get_state(a, state_property_state(s)));
+    return a->get_state(state_property_state(s))->get_is_accept();
   } else {
     return FALSE;
   }
@@ -740,7 +740,7 @@ BOOL state_is_accept(AutomataRef a, State *s) {
  * TOFIX: rename (end --> invalid end) */
 BOOL state_is_end(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_is_end(automata_get_state(a, state_property_state(s)));
+    return a->get_state(state_property_state(s))->get_is_end();
   } else {
     return FALSE;
   }
@@ -753,7 +753,7 @@ BOOL state_is_end(AutomataRef a, State *s) {
  */
 BYTE state_scc_id(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_scc_type(automata_get_state(a, state_property_state(s)));
+    return a->get_state(state_property_state(s))->scc_type();
   } else {
     return FALSE;
   }

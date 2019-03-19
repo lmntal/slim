@@ -501,7 +501,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       }
       pop_stack(stack);
       continue;
-    } else if (!worker_ltl_none(w) && atmstate_is_end(p_s)) {
+    } else if (!worker_ltl_none(w) && p_s->get_is_end()) {
       mc_found_invalid_state(worker_group(w), s);
       pop_stack(stack);
       continue;
@@ -574,7 +574,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
         pop_stack(stack);
         continue;
       }
-    } else if (!worker_ltl_none(w) && atmstate_is_end(p_s)) {
+    } else if (!worker_ltl_none(w) && p_s->get_is_end()) {
       mc_found_invalid_state(worker_group(w), s);
       pop_stack(stack);
       continue;
@@ -784,7 +784,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
     if ((lmn_env.opt_mode == OPT_MINIMIZE &&
          workers_opt_cost(worker_group(w)) < state_cost(s)) ||
         (s->is_expanded() && !s->s_is_update()) ||
-        (!worker_ltl_none(w) && atmstate_is_end(p_s))) {
+        (!worker_ltl_none(w) && p_s->get_is_end())) {
       pop_deq(deq, TRUE);
       continue;
     }
@@ -1023,7 +1023,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
     if (s->is_expanded()) {
       continue;
     } else if (!worker_ltl_none(w) &&
-               atmstate_is_end(p_s)) { /* safety property analysis */
+               p_s->get_is_end()) { /* safety property analysis */
       mc_found_invalid_state(wp, s);
       continue;
     }

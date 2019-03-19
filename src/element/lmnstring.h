@@ -40,33 +40,47 @@
 #ifndef LMN_STRING_H
 #define LMN_STRING_H
 
-/* cldoc:begin-category(Lmntal::String) */
+#include "lmntal.h"
+#include "util.h"
+
+#include <string>
 
 typedef struct LmnString *LmnStringRef;
+struct LmnString : LmnSPAtomHeader {
+  static int string_atom_type;
+  std::string str;
 
-#include "lmntal.h"
+  LmnString() : LmnSPAtomHeader(string_atom_type) {}
+  LmnString(const char *s) : str(s), LmnSPAtomHeader(string_atom_type) {}
+  LmnString(const std::string s) : str(s), LmnSPAtomHeader(string_atom_type) {}
 
-#define LMN_STRING(obj) ((struct LmnString *)(obj))
+  const char *c_str() const { return str.c_str(); }
+  unsigned long hash() const {
+    return lmn_byte_hash((const unsigned char *)str.c_str(), str.size() + 1);
+  }
+  template <typename T> void push_back(T &&s) {
+    str.push_back(std::forward<T>(s));
+  }
+  template <typename T> void append(T &&s) { str.append(std::forward<T>(s)); }
+
+  template <typename T>
+  auto operator[](T &&idx) const -> decltype(str[std::forward<T>(idx)]) {
+    return str[std::forward<T>(idx)];
+  }
+
+  size_t size() const { return str.size(); }
+
+  friend bool operator==(const LmnString &s1, const LmnString &s2);
+};
+
+inline bool operator==(const LmnString &s1, const LmnString &s2) {
+  return s1.str == s2.str;
+}
+inline bool operator!=(const LmnString &s1, const LmnString &s2) {
+  return !(s1 == s2);
+}
 
 void string_init(void);
 void string_finalize(void);
-
-LmnStringRef lmn_string_make(const char *s);
-LmnStringRef lmn_string_make_empty(void);
-void lmn_string_free(LmnStringRef s);
-BOOL lmn_string_eq(LmnStringRef s1, LmnStringRef s2);
-LmnStringRef lmn_string_copy(LmnStringRef s);
-unsigned long lmn_string_hash(LmnStringRef atom);
-const char *lmn_string_c_str(LmnStringRef atom);
-void lmn_string_push(LmnStringRef dst, const LmnStringRef src);
-void lmn_string_push_raw_c(LmnStringRef s, int c);
-void lmn_string_push_raw_s(LmnStringRef dst, const char *src);
-void lmn_string_pop(LmnStringRef s);
-int lmn_string_last(LmnStringRef s);
-int lmn_string_get(LmnStringRef s, int i);
-void lmn_string_set_raw_c(LmnStringRef s, int c, int i);
-unsigned long lmn_string_len(LmnStringRef s);
-
-/* cldoc:end-category() */
 
 #endif

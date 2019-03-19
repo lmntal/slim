@@ -49,8 +49,6 @@
 #define Q_DEQ 0
 #define Q_ENQ 1
 
-inline static Node *node_make(LmnWord v);
-inline static void node_free(Node *node);
 inline static void q_lock(Queue *q, BOOL rw);
 inline static void q_unlock(Queue *q, BOOL rw);
 
@@ -84,7 +82,7 @@ Queue *make_parallel_queue(BOOL lock_type) {
  */
 Queue *new_queue(void) {
   Queue *q = LMN_MALLOC(Queue);
-  Node *sentinel = node_make(0);
+  Node *sentinel = new Node(0);
   q->head = sentinel;
   q->tail = sentinel;
   q->lock = FALSE;
@@ -97,7 +95,7 @@ void q_free(Queue *q) {
   Node *n, *m;
   for (n = q->head; n; n = m) {
     m = n->next;
-    node_free(n);
+    delete n;
   }
 
   switch (q->lock) {
@@ -129,7 +127,7 @@ void enqueue(Queue *q, LmnWord v) {
     /*q_lock(q, Q_DEQ);*/
   }
   last = q->tail;
-  node = node_make(v);
+  node = new Node(v);
   last->next = node;
   q->tail = node;
   q->enq_num++;
@@ -147,7 +145,7 @@ void enqueue_push_head(Queue *q, LmnWord v) {
     q_lock(q, Q_DEQ);
   }
   head = q->head;
-  node = node_make(v);
+  node = new Node(v);
   node->next = head->next;
   head->next = node;
   // q->tail = node;
@@ -195,14 +193,12 @@ BOOL is_empty_queue(Queue *q) {
  *  static functions
  */
 
-static inline Node *node_make(LmnWord v) {
-  Node *n = LMN_MALLOC(Node);
-  n->v = v;
-  n->next = NULL;
-  return n;
+Node::Node(LmnWord v) {
+  this->v = v;
+  this->next = NULL;
 }
 
-static inline void node_free(Node *node) { LMN_FREE(node); }
+Node::~Node() {};
 
 static inline void q_lock(Queue *q, BOOL is_enq) {
   if (is_enq) { /* for enqueue */

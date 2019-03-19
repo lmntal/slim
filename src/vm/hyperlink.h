@@ -107,7 +107,7 @@ typedef struct HyperLink {
 #define LMN_HL_ATOM_ROOT_ATOM(ATOM)                                            \
   lmn_hyperlink_hl_to_at(lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(ATOM)))
 
-#define LMN_IS_HL(ATOM) (LMN_FUNC_IS_HL(LMN_SATOM_GET_FUNCTOR(ATOM)))
+#define LMN_IS_HL(ATOM) (LMN_FUNC_IS_HL((ATOM)->get_functor()))
 #define LMN_FUNC_IS_HL(FUNC) ((FUNC) == LMN_HL_FUNC)
 #define LMN_ATTR_IS_HL(ATTR) ((ATTR) == LMN_HL_ATTR)
 
@@ -150,21 +150,22 @@ struct ProcCxt {
   bool is_clone() const { return original_ && original_->atomi != atomi; }
 
   bool is_argument_of(LmnSymbolAtomRef atom, int i) {
-    auto linked_attr = LMN_SATOM_GET_ATTR(atom, i);
+    auto linked_attr = atom->get_attr(i);
     if (!LMN_ATTR_IS_HL(linked_attr))
       return false;
 
-    auto linked_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
+    auto linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
     auto linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
 
-    if (original_ && !lmn_hyperlink_eq_hl(linked_hl, original_->start))
+    if (original_ && original_->start && !lmn_hyperlink_eq_hl(linked_hl, original_->start)) {
       return false;
+    }
 
     return true;
   }
 
   void match(LmnSymbolAtomRef atom, int i) {
-    auto linked_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
+    auto linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
     auto linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
     start = linked_hl;
   }
@@ -191,7 +192,7 @@ struct SameProcCxt {
 
   void add_proccxt_if_absent(int atomi, int arg) {
     if (!proccxts[arg]) {
-      proccxts[arg] = new ProcCxt(atomi, arg, nullptr);
+      proccxts[arg] = new ProcCxt(atomi, arg);
     }
   }
 
@@ -227,15 +228,13 @@ struct SameProcCxt {
     this->tree.clear();
 
     for (int i = 0; i < proccxts.size(); i++) {
-      auto pc = this->proccxts[i];
-
-      if (!pc)
+      if (!proccxts[i])
         continue;
-      if (!pc->original())
+      if (!proccxts[i]->original())
         continue;
 
-      auto hl = pc->original()->start;
-      pc->start = hl;
+      auto hl = proccxts[i]->original()->start;
+      proccxts[i]->start = hl;
       //      /* オリジナル側で探索始点のハイパーリンクが指定されていない
       //       *
       //       または探索始点のハイパーリンクの要素数が0（どちらも起こり得ないはず）*/

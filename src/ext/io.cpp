@@ -70,7 +70,7 @@ void cb_print_line_with_port(LmnReactCxtRef rc,
                              LmnAtomRef a1, LmnLinkAttr t1,
                              LmnAtomRef a2, LmnLinkAttr t2)
 {
-  port_puts(LMN_PORT(a0), LMN_STRING(a1));
+  port_puts(LMN_PORT(a0), reinterpret_cast<LmnString *>(a1));
   port_put_raw_s(LMN_PORT(a0), "\n");
 
   lmn_mem_newlink(mem,
@@ -133,7 +133,7 @@ void cb_print_line_with_port(LmnReactCxtRef rc,
 //     else if (*(p-1) == '\n' || *(p-1)=='\r') p -= 1;
 //     *p = '\0';
 // 
-//     a = lmn_string_make(s);
+//     a = new LmnString(s);
 //     LMN_FREE(s);
 //     lmn_mem_push_atom(mem, LMN_ATOM(a), LMN_STRING_ATTR);
 // 

@@ -189,7 +189,7 @@ void lmn_run(Vector *start_rulesets) {
     mem = lmn_mem_make();
     RC_SET_GROOT_MEM(mrc.get(), mem);
   }
-  lmn_memstack_push(RC_MEMSTACK((MemReactContext *)mrc.get()), mem);
+  lmn_memstack_push(((MemReactContext *)mrc.get())->MEMSTACK(), mem);
 
   // normal parallel mode init
   if (lmn_env.enable_parallel && !lmn_env.nd) {
@@ -203,7 +203,7 @@ void lmn_run(Vector *start_rulesets) {
   }
 
   react_start_rulesets(mem, start_rulesets);
-  lmn_memstack_reconstruct(RC_MEMSTACK((MemReactContext *)mrc.get()), mem);
+  lmn_memstack_reconstruct(((MemReactContext *)mrc.get())->MEMSTACK(), mem);
 
   if (lmn_env.trace) {
     if (lmn_env.output_format != JSON)
@@ -256,7 +256,7 @@ void lmn_run(Vector *start_rulesets) {
 
 /** 膜スタックに基づいた通常実行 */
 static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem) {
-  LmnMemStack memstack = RC_MEMSTACK((MemReactContext *)rc);
+  LmnMemStack memstack = ((MemReactContext *)rc)->MEMSTACK();
 
   while (!lmn_memstack_isempty(memstack)) {
     LmnMembraneRef mem = lmn_memstack_peek(memstack);
@@ -500,7 +500,7 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
     case LMN_STRING_ATTR: {                                                    \
       lmn_interned_str s;                                                      \
       READ_VAL(lmn_interned_str, instr, s);                                    \
-      (dest) = (LmnAtomRef)lmn_string_make(lmn_id_to_name(s));                 \
+      (dest) = (LmnAtomRef)new LmnString(lmn_id_to_name(s));                 \
       break;                                                                   \
     }                                                                          \
     default:                                                                   \
@@ -554,9 +554,9 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
       lmn_interned_str s;                                                      \
       LmnStringRef str1;                                                       \
       READ_VAL(lmn_interned_str, instr, s);                                    \
-      str1 = lmn_string_make(lmn_id_to_name(s));                               \
-      (result) = lmn_string_eq(str1, (LmnStringRef)(x));                       \
-      lmn_string_free(str1);                                                   \
+      str1 = new LmnString(lmn_id_to_name(s));                               \
+      (result) = *str1 == *(LmnStringRef)(x);                       \
+      delete (str1);                                                   \
       break;                                                                   \
     }                                                                          \
     default:                                                                   \
@@ -596,7 +596,7 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
   /* EFFICIENCY: retsetがHash Setである意味は?　ベクタでいいのでは？
    * 中間命令でセットを使うように書かれている */
 
-  retset = hashset_make(8);
+  retset = new HashSet(8);
   for (i = 0; i < links->num; i++) {
     LmnWord linkid1 = vec_get(links, i);
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid1)))
@@ -607,11 +607,9 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
         continue;
       /* is buddy? */
       if (LINKED_ATOM(linkid2) ==
-              LMN_SATOM_GET_LINK((LmnSymbolAtomRef)LINKED_ATOM(linkid1),
-                                 LINKED_ATTR(linkid1)) &&
+              ((LmnSymbolAtomRef)LINKED_ATOM(linkid1))->get_link(LINKED_ATTR(linkid1)) &&
           LINKED_ATTR(linkid2) ==
-              LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(linkid1),
-                                 LINKED_ATTR(linkid1))) {
+              ((LmnSymbolAtomRef)LINKED_ATOM(linkid1))->get_attr(LINKED_ATTR(linkid1))) {
         /* '='アトムをはさむ */
         LmnSymbolAtomRef eq;
         LmnSymbolAtomRef a1, a2;
@@ -623,8 +621,8 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
           eq = lmn_new_atom(LMN_UNIFY_FUNCTOR);
         }
 
-        if (LMN_SATOM_ID(eq) == 0) {
-          LMN_SATOM_SET_ID(eq, env_gen_next_id());
+        if (eq->get_id() == 0) {
+          eq->set_id(env_gen_next_id());
         }
 
         /* リンクがリンクの元を持つ場合、あらかじめリンク先の取得をしていなければならない。
@@ -637,7 +635,7 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 
         lmn_newlink_in_symbols(a1, t1, eq, 0);
         lmn_newlink_in_symbols(a2, t2, eq, 1);
-        hashset_add(retset, (HashKeyType)eq);
+        retset->add((HashKeyType)eq);
       }
     }
   }
@@ -679,7 +677,7 @@ void slim::vm::interpreter::findatom_original_hyperlink(
   auto filtered = slim::element::make_range_remove_if(
       std::begin(*atomlist_ent), std::end(*atomlist_ent),
       [=](LmnSymbolAtomRef atom) {
-        return !spc->is_consistent_with((LmnSymbolAtomRef)atom);
+        return !spc->is_consistent_with(atom);
       });
   auto v = std::vector<std::function<LmnRegister(void)>>();
   std::transform(
@@ -733,13 +731,13 @@ void slim::vm::interpreter::findatom_clone_hyperlink(
   auto filtered = slim::element::make_range_remove_if(
       children.begin(), children.end(), [=](HyperLink *h) {
         auto linked_pc = h->atom;
-        auto hl_atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(linked_pc, 0);
+        auto hl_atom = (LmnSymbolAtomRef)linked_pc->get_link(0);
         /*    本来findatomするはずだったファンクタと一致しているか
          * || hyperlinkアトムの接続先の引数が正しいか
          * || 本来findatomするはずだったアトムと所属膜が一致しているか
          */
-        return LMN_SATOM_GET_FUNCTOR(hl_atom) != f ||
-               spc->start_attr != LMN_SATOM_GET_ATTR(linked_pc, 0) ||
+        return hl_atom->get_functor() != f ||
+               spc->start_attr != linked_pc->get_attr(0) ||
                LMN_HL_MEM(lmn_hyperlink_at_to_hl(linked_pc)) != mem ||
                !spc->is_consistent_with(hl_atom);
       });
@@ -748,7 +746,7 @@ void slim::vm::interpreter::findatom_clone_hyperlink(
       filtered.begin(), filtered.end(), std::back_inserter(v),
       [=](HyperLink *h) {
         return [=]() {
-          auto atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(h->atom, 0);
+          auto atom = (LmnSymbolAtomRef)h->atom->get_link(0);
           spc->match(atom);
           return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
         };
@@ -845,7 +843,7 @@ read_unary_atoms_indirect(LmnReactCxt *rc, LmnRuleInstr &instr) {
     if (LMN_ATTR_IS_DATA(rc->at(ai))) {
       args.push_back(std::make_pair(rc->at(ai), (LmnAtomRef)rc->wt(ai)));
     } else {
-      args.push_back(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt(ai)));
+      args.push_back(((LmnSymbolAtomRef)rc->wt(ai))->get_functor());
     }
   }
   return args;
@@ -930,7 +928,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     /* EFFICIENCY: 解放のための再帰 */
     this->push_stackframe([=](bool result) {
-      hashset_free(hashset);
+      delete hashset;
       return result;
     });
 
@@ -959,7 +957,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     /* EFFICIENCY: 解放のための再帰 */
     this->push_stackframe([=](bool result) {
-      hashset_free(hashset);
+      delete hashset;
       return result;
     });
 
@@ -1286,7 +1284,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       auto filtered = slim::element::make_range_remove_if(
           its.begin(), its.end(),
           [=](const AtomListEntry::const_iterator &atom) {
-            return LMN_SATOM_GET_FUNCTOR(*atom) == LMN_RESUME_FUNCTOR;
+            return (*atom)->get_functor() == LMN_RESUME_FUNCTOR;
           });
       std::vector<std::function<LmnRegister(void)>> candidates;
       std::transform(
@@ -1396,7 +1394,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       lmn_env.findatom_parallel_mode = TRUE;
       for (ip = 0, atom = atomlist_head(atomlist_ent); ip < active_thread;
-           atom = LMN_SATOM_GET_NEXT_RAW(atom), ip++) {
+           atom = atom->get_next(), ip++) {
         // pthread create
         if (lmn_env.find_atom_parallel)
           break;
@@ -1458,7 +1456,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     LMN_ASSERT(!LMN_ATTR_IS_DATA(rc->at(atomi)));
     LMN_ASSERT(LMN_IS_PROXY_FUNCTOR(
-        LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(wt(rc, atomi)))));
+        ((LmnSymbolAtomRef)(wt(rc, atomi)))->get_functor()));
     //      LMN_ASSERT(((LmnMembraneRef)wt(rc, memi))->parent);
 
     m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)rc->wt(atomi));
@@ -1628,16 +1626,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                                 (LmnAtomRef)rc->wt(link1), rc->at(link1),
                                 LINKED_ATOM(link2), attr2);
       } else { /* 1 is data */
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link2),
-                           LMN_ATTR_GET_VALUE(attr2), LINKED_ATOM(link1));
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link2),
-                           LMN_ATTR_GET_VALUE(attr2), attr1);
+        ((LmnSymbolAtomRef)LINKED_ATOM(link2))->set_link(LMN_ATTR_GET_VALUE(attr2), LINKED_ATOM(link1));
+        ((LmnSymbolAtomRef)LINKED_ATOM(link2))->set_attr( LMN_ATTR_GET_VALUE(attr2), attr1);
       }
     } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 2 is data */
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link1),
-                         LMN_ATTR_GET_VALUE(attr1), LINKED_ATOM(link2));
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link1),
-                         LMN_ATTR_GET_VALUE(attr1), attr2);
+      ((LmnSymbolAtomRef)LINKED_ATOM(link1))->set_link(LMN_ATTR_GET_VALUE(attr1), LINKED_ATOM(link2));
+      ((LmnSymbolAtomRef)LINKED_ATOM(link1))->set_attr(LMN_ATTR_GET_VALUE(attr1), attr2);
     } else { /* 1, 2 are symbol atom */
 
       if (LMN_ATTR_IS_EX(attr1)) {
@@ -1656,14 +1650,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                             (LmnSymbolAtomRef)LINKED_ATOM(link1), attr1, attr1,
                             (LmnSymbolAtomRef)LINKED_ATOM(link2), attr2, 0);
       } else {
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link1),
-                           LMN_ATTR_GET_VALUE(attr1), LINKED_ATOM(link2));
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(link2),
-                           LMN_ATTR_GET_VALUE(attr2), LINKED_ATOM(link1));
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link1),
-                           LMN_ATTR_GET_VALUE(attr1), attr2);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(link2),
-                           LMN_ATTR_GET_VALUE(attr2), attr1);
+        ((LmnSymbolAtomRef)LINKED_ATOM(link1))->set_link(LMN_ATTR_GET_VALUE(attr1), LINKED_ATOM(link2));
+        ((LmnSymbolAtomRef)LINKED_ATOM(link2))->set_link(LMN_ATTR_GET_VALUE(attr2), LINKED_ATOM(link1));
+        ((LmnSymbolAtomRef)LINKED_ATOM(link1))->set_attr(LMN_ATTR_GET_VALUE(attr1), attr2);
+        ((LmnSymbolAtomRef)LINKED_ATOM(link2))->set_attr(LMN_ATTR_GET_VALUE(attr2), attr1);
       }
     }
     break;
@@ -1693,9 +1683,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, pos2);
     READ_VAL(LmnInstrVar, instr, memi);
 
-    ap = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt(atom2),
-                                              pos2);
-    attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2);
+    ap = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos2);
+    attr = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos2);
 
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1)) &&
         LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
@@ -1706,19 +1695,19 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1))) {
       /* hlink属性ではない通常のデータアトムatom1とシンボルアトムatom2の接続.
        */
-      LMN_SATOM_SET_LINK(ap, attr, (LmnAtomRef)rc->wt(atom1));
-      LMN_SATOM_SET_ATTR(ap, attr, rc->at(atom1));
+      ap->set_link(attr, (LmnAtomRef)rc->wt(atom1));
+      ap->set_attr(attr, rc->at(atom1));
     } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
       /* hlink属性ではない通常のデータアトムatom2とシンボルアトムatom1の接続
        */
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom1), pos1, ap);
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1, attr);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr);
     } else if (!LMN_ATTR_IS_EX(rc->at(atom1)) && !LMN_ATTR_IS_EX(attr)) {
       /* シンボルアトム同士の接続 */
-      LMN_SATOM_SET_LINK(ap, attr, (LmnAtomRef)rc->wt(atom1));
-      LMN_SATOM_SET_ATTR(ap, attr, pos1);
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom1), pos1, ap);
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1, attr);
+      ap->set_link(attr, (LmnAtomRef)rc->wt(atom1));
+      ap->set_attr(attr, pos1);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr);
     } else if (LMN_ATTR_IS_EX(rc->at(atom1))) {
       lmn_newlink_with_ex((LmnMembraneRef)rc->wt(memi),
                           (LmnSymbolAtomRef)rc->wt(atom1), rc->at(atom1), pos1,
@@ -1751,28 +1740,24 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 #endif
     } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1))) {
       //(D,S)
-      ap2 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(
-          (LmnSymbolAtomRef)rc->wt(atom2), pos2);
-      attr2 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2);
-      LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)rc->wt(atom1));
-      LMN_SATOM_SET_ATTR(ap2, attr2, rc->at(atom1));
+      ap2 = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos2);
+      attr2 = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos2);
+      ap2->set_link(attr2, (LmnAtomRef)rc->wt(atom1));
+      ap2->set_attr(attr2, rc->at(atom1));
       break;
     } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom2))) {
       //(S,D)
-      ap1 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(
-          (LmnSymbolAtomRef)rc->wt(atom1), pos1);
-      attr1 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1);
-      LMN_SATOM_SET_LINK(ap1, attr1, (LmnAtomRef)rc->wt(atom2));
-      LMN_SATOM_SET_ATTR(ap1, attr1, rc->at(atom2));
+      ap1 = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom1))->get_link(pos1);
+      attr1 = ((LmnSymbolAtomRef)rc->wt(atom1))->get_attr(pos1);
+      ap1->set_link(attr1, (LmnAtomRef)rc->wt(atom2));
+      ap1->set_attr(attr1, rc->at(atom2));
       break;
     }
     //(S,S)
-    ap1 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt(atom1),
-                                               pos1);
-    ap2 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt(atom2),
-                                               pos2);
-    attr1 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1);
-    attr2 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2);
+    ap1 = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom1))->get_link(pos1);
+    ap2 = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos2);
+    attr1 = ((LmnSymbolAtomRef)rc->wt(atom1))->get_attr(pos1);
+    attr2 = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos2);
 
     if ((LmnSymbolAtomRef)rc->wt(atom1) == ap2 &&
         (LmnSymbolAtomRef)rc->wt(atom2) == ap1 && attr1 == pos2 &&
@@ -1784,48 +1769,47 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       //(-D,-D)
 
       /* データアトムap2とシンボルアトムatom1 */
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom1), pos1, ap2);
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1, attr2);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap2);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr2);
 
       /* データアトムap1とシンボルアトムatom2 */
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom2), pos2, ap1);
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2, attr1);
+      ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, ap1);
+      ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, attr1);
 
     } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) {
       //(-D,-S)
 
       /* データアトムap1とシンボルアトムatom2 */
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom2), pos2, ap1);
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2, attr1);
+      ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, ap1);
+      ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, attr1);
 
       /* シンボルアトムatom1とシンボルアトムap2 */
       if (ap2 != NULL) {
-        LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)rc->wt(atom1));
-        LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom1), pos1, ap2);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1, attr2);
+        ap2->set_link(attr2, (LmnAtomRef)rc->wt(atom1));
+        ap2->set_attr(attr2, pos1);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap2);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr2);
       } else {
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom1), pos1, 0);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, 0);
       }
 
     } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) {
       //(-S,-D)
 
       /* データアトムap2とシンボルアトムatom1 */
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom1), pos1, ap2);
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1, attr2);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap2);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr2);
 
       /* シンボルアトムatom2とシンボルアトムap1 */
       if (ap1 != NULL) {
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom2), pos2, ap1);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2,
-                           LMN_ATTR_GET_VALUE(attr1));
-        LMN_SATOM_SET_LINK(ap1, attr1, (LmnAtomRef)rc->wt(atom2));
-        LMN_SATOM_SET_ATTR(ap1, attr1, pos2);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, ap1);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, LMN_ATTR_GET_VALUE(attr1));
+        ap1->set_link(attr1, (LmnAtomRef)rc->wt(atom2));
+        ap1->set_attr(attr1, pos2);
       } else {
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom2), pos2, 0);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, 0);
       }
 
     } else {
@@ -1833,26 +1817,24 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       /* シンボルアトムatom2とシンボルアトムap1 */
       if (ap1 != NULL) {
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom2), pos2, ap1);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2,
-                           LMN_ATTR_GET_VALUE(attr1));
-        LMN_SATOM_SET_LINK(ap1, attr1, (LmnAtomRef)rc->wt(atom2));
-        LMN_SATOM_SET_ATTR(ap1, attr1, pos2);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, ap1);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, LMN_ATTR_GET_VALUE(attr1));
+        ap1->set_link(attr1, (LmnAtomRef)rc->wt(atom2));
+        ap1->set_attr(attr1, pos2);
       } else {
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom2), pos2, 0);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos2, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, 0);
       }
 
       /* シンボルアトムatom1とシンボルアトムap2 */
       if (ap2 != NULL) {
-        LMN_SATOM_SET_LINK(ap2, attr2, (LmnAtomRef)rc->wt(atom1));
-        LMN_SATOM_SET_ATTR(ap2, attr2, pos1);
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)(LmnSymbolAtomRef)rc->wt(atom1),
-                           pos1, ap2);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1, attr2);
+        ap2->set_link(attr2, (LmnAtomRef)rc->wt(atom1));
+        ap2->set_attr(attr2, pos1);
+        ((LmnSymbolAtomRef)(LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap2);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr2);
       } else {
-        LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atom1), pos1, 0);
-        LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atom1), pos1, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, 0);
       }
     }
 
@@ -1868,10 +1850,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     /*       READ_VAL(LmnInstrVar, instr, pos1); */
     /*       READ_VAL(LmnInstrVar, instr, atom2); */
     /*       READ_VAL(LmnInstrVar, instr, pos2); */
-    /*       ap1 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom1), pos1)); */
-    /*       ap2 = LMN_SATOM(LMN_SATOM_GET_LINK(wt(rc, atom2), pos2)); */
-    /*       attr1 = LMN_SATOM_GET_ATTR(wt(rc, atom1), pos1); */
-    /*       attr2 = LMN_SATOM_GET_ATTR(wt(rc, atom2), pos2); */
+    /*       ap1 = LMN_SATOM(wt(rc, atom1)->get_link(pos1)); */
+    /*       ap2 = LMN_SATOM(wt(rc, atom2)->get_link(pos2)); */
+    /*       attr1 = (wt(rc, atom1))->get_attr(pos1); */
+    /*       attr2 = (wt(rc, atom2))->get_attr(pos2); */
     /*       if ((LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1)) &&
      * LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) */
     /*           || (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom2)) &&
@@ -1887,77 +1869,77 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     /*       }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom2))){ */
     /*         /\* データアトムatom2とシンボルアトムap1 *\/ */
     /*      if(ap1 != NULL){ */
-    /*        LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2)); */
-    /*        LMN_SATOM_SET_ATTR(ap1, attr1, pos2); */
+    /*        ap1->set_link(attr1, wt(rc, atom2)); */
+    /*        ap1->set_attr(attr1, pos2); */
     /*      } */
     /*         if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1))){ */
     /*           /\* データアトムatom1とシンボルアトムap2 *\/ */
     /*        if(ap2 != NULL){ */
-    /*          LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*          LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+    /*          ap2->set_link(attr2, wt(rc, atom1)); */
+    /*          ap2->set_attr(attr2, pos1); */
     /*        } */
     /*         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
     /*           /\* データアトムap2とシンボルアトムatom1 *\/ */
-    /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-    /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, ap2); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1, attr2); */
     /*         }else { */
     /*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
     /*      ////// */
     /*              if(ap2 != NULL){ */
-    /*                      LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*                      LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
-    /*                      LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*                      ap2->set_link(attr2, wt(rc, atom1)); */
+    /*                      ap2->set_attr(attr2, pos1); */
+    /*                      (LMN_SATOM(wt(rc, atom1)))->set_link(pos1,
      * ap2); */
-    /*                      LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*                      (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1,
      * attr2); */
     /*              }else{ */
-    /*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, 0);
      */
-    /*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1, 0);
      */
     /*              } */
     /*      ////// */
-    /*           /\*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*           LMN_SATOM_SET_ATTR(ap2, attr2, rc->at(atom1)); */
-    /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-    /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);*\/
+    /*           /\*ap2->set_link(attr2, wt(rc, atom1)); */
+    /*           ap2->set_attr(attr2, rc->at(atom1)); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, ap2); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1, attr2);*\/
      */
     /*         } */
     /*       } */
     /*       else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)){ */
     /*         /\* データアトムap1とシンボルアトムatom2 *\/ */
-    /*         LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1); */
-    /*         LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, attr1); */
+    /*         (LMN_SATOM(wt(rc, atom2)))->set_link(pos2, ap1); */
+    /*         (LMN_SATOM(wt(rc, atom2)))->set_attr(pos2, attr1); */
     /*         if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1))){ */
     /*           /\* データアトムatom1とシンボルアトムap2 *\/ */
-    /*           LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*           LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+    /*           ap2->set_link(attr2, wt(rc, atom1)); */
+    /*           ap2->set_attr(attr2, pos1); */
     /*         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
     /*           /\* データアトムap2とシンボルアトムatom1 *\/ */
-    /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-    /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, ap2); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1, attr2); */
     /*         }else if (!LMN_ATTR_IS_EX(rc->at(atom1)) &&
      * !LMN_ATTR_IS_EX(attr2)){ */
     /*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
     /*      ////// */
     /*              if(ap2 != NULL){ */
-    /*                      LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*                      LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
-    /*                      LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*                      ap2->set_link(attr2, wt(rc, atom1)); */
+    /*                      ap2->set_attr(attr2, pos1); */
+    /*                      (LMN_SATOM(wt(rc, atom1)))->set_link(pos1,
      * ap2); */
-    /*                      LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*                      (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1,
      * attr2); */
     /*              }else{ */
-    /*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, 0);
      */
-    /*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1, 0);
      */
     /*              } */
     /*      ////// */
-    /*           /\*LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*           LMN_SATOM_SET_ATTR(ap2, attr2, rc->at(atom1)); */
-    /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-    /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, attr2);*\/
+    /*           /\*ap2->set_link(attr2, wt(rc, atom1)); */
+    /*           ap2->set_attr(attr2, rc->at(atom1)); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, ap2); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1, attr2);*\/
      */
     /*         } */
     /*       } */
@@ -1967,40 +1949,40 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     /*         /\* シンボルアトムatom2とシンボルアトムap1 *\/ */
 
     /*         if(ap1 != NULL){ */
-    /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, ap1); */
-    /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2,
+    /*           (LMN_SATOM(wt(rc, atom2)))->set_link(pos2, ap1); */
+    /*           (LMN_SATOM(wt(rc, atom2)))->set_attr(pos2,
      * LMN_ATTR_GET_VALUE(attr1)); */
-    /*           LMN_SATOM_SET_LINK(ap1, attr1, wt(rc, atom2)); */
-    /*           LMN_SATOM_SET_ATTR(ap1, attr1, pos2); */
+    /*           ap1->set_link(attr1, wt(rc, atom2)); */
+    /*           ap1->set_attr(attr1, pos2); */
     /*         }else{ */
-    /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom2)), pos2, 0); */
-    /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom2)), pos2, 0); */
+    /*           (LMN_SATOM(wt(rc, atom2)))->set_link(pos2, 0); */
+    /*           (LMN_SATOM(wt(rc, atom2)))->set_attr(pos2, 0); */
     /*         } */
     /*      if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1))){ */
     /*           /\* データアトムatom1とシンボルアトムap2 *\/ */
-    /*           LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*           LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
+    /*           ap2->set_link(attr2, wt(rc, atom1)); */
+    /*           ap2->set_attr(attr2, pos1); */
     /*         }else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
     /*           /\* データアトムap2とシンボルアトムatom1 *\/ */
-    /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2); */
-    /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, ap2); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1,
      * LMN_ATTR_GET_VALUE(attr2)); */
     /*         }else { */
     /*           /\* シンボルアトムatom1とシンボルアトムap2 *\/ */
     /*      ////// */
     /*              if(ap2 != NULL){ */
-    /*                      LMN_SATOM_SET_LINK(ap2, LMN_ATTR_GET_VALUE(attr2),
+    /*                      ap2->set_link(LMN_ATTR_GET_VALUE(attr2),
      * wt(rc, atom1)); */
-    /*                      LMN_SATOM_SET_ATTR(ap2, LMN_ATTR_GET_VALUE(attr2),
+    /*                      ap2->set_attr(LMN_ATTR_GET_VALUE(attr2),
      * pos1); */
-    /*                      LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*                      (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1,
      * ap2); */
-    /*                      LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*                      (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1,
      * LMN_ATTR_GET_VALUE(attr2)); */
     /*              }else{ */
-    /*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, 0);
      */
-    /*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1, 0);
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1, 0);
      */
     /*              } */
     /*      ////// */
@@ -2008,26 +1990,26 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     /*         if(ap2){ */
     /*              if(LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1))){ */
     /*                // データアトムatom1とシンボルアトムap2  */
-    /*                LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*                LMN_SATOM_SET_ATTR(ap2, attr2, rc->at(atom1)); */
+    /*                ap2->set_link(attr2, wt(rc, atom1)); */
+    /*                ap2->set_attr(attr2, rc->at(atom1)); */
     /*              }else if(LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)){ */
     /*                // データアトムap2とシンボルアトムatom1  */
-    /*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, ap2);
      */
-    /*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1,
      * attr2); */
     /*              }else{ */
     /*                // シンボルアトムatom1とシンボルアトムap2  */
-    /*                LMN_SATOM_SET_LINK(ap2, attr2, wt(rc, atom1)); */
-    /*                LMN_SATOM_SET_ATTR(ap2, attr2, pos1); */
-    /*                LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, ap2);
+    /*                ap2->set_link(attr2, wt(rc, atom1)); */
+    /*                ap2->set_attr(attr2, pos1); */
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, ap2);
      */
-    /*                LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,
+    /*                (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1,
      * attr2); */
     /*              } */
     /*         }else{ */
-    /*           LMN_SATOM_SET_LINK(LMN_SATOM(wt(rc, atom1)), pos1, 0); */
-    /*           LMN_SATOM_SET_ATTR(LMN_SATOM(wt(rc, atom1)), pos1,0); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_link(pos1, 0); */
+    /*           (LMN_SATOM(wt(rc, atom1)))->set_attr(pos1, 0); */
     /*         }*\/ */
     /*       } */
     /*       } */
@@ -2046,24 +2028,16 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       fprintf(stderr, "Two data atoms are connected each other.\n");
 #endif
     } else if (LMN_ATTR_IS_DATA(rc->at(atomi))) {
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(linki),
-                         LINKED_ATTR(linki), (LmnAtomRef)rc->wt(atomi));
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(linki),
-                         LINKED_ATTR(linki), rc->at(atomi));
+      ((LmnSymbolAtomRef)LINKED_ATOM(linki))->set_link(LINKED_ATTR(linki), (LmnAtomRef)rc->wt(atomi));
+      ((LmnSymbolAtomRef)LINKED_ATOM(linki))->set_attr(LINKED_ATTR(linki), rc->at(atomi));
     } else if (LMN_ATTR_IS_DATA(LINKED_ATTR(linki))) {
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atomi), posi,
-                         LINKED_ATOM(linki));
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atomi), posi,
-                         LINKED_ATTR(linki));
+      ((LmnSymbolAtomRef)rc->wt(atomi))->set_link(posi, LINKED_ATOM(linki));
+      ((LmnSymbolAtomRef)rc->wt(atomi))->set_attr(posi, LINKED_ATTR(linki));
     } else {
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atomi), posi,
-                         LINKED_ATOM(linki));
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)rc->wt(atomi), posi,
-                         LINKED_ATTR(linki));
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)LINKED_ATOM(linki),
-                         LINKED_ATTR(linki), (LmnAtomRef)rc->wt(atomi));
-      LMN_SATOM_SET_ATTR((LmnSymbolAtomRef)LINKED_ATOM(linki),
-                         LINKED_ATTR(linki), posi);
+      ((LmnSymbolAtomRef)rc->wt(atomi))->set_link(posi, LINKED_ATOM(linki));
+      ((LmnSymbolAtomRef)rc->wt(atomi))->set_attr(posi, LINKED_ATTR(linki));
+      ((LmnSymbolAtomRef)LINKED_ATOM(linki))->set_link(LINKED_ATTR(linki), (LmnAtomRef)rc->wt(atomi));
+      ((LmnSymbolAtomRef)LINKED_ATOM(linki))->set_attr(LINKED_ATTR(linki), posi);
     }
 
     break;
@@ -2078,8 +2052,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
      * リンク元が格納されていることを示すため最下位のビットを立てる */
 
     rc->reg(linki) = {
-        (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt(atomi), posi),
-        LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atomi), posi), TT_ATOM};
+        (LmnWord)((LmnSymbolAtomRef)rc->wt(atomi))->get_link(posi),
+        ((LmnSymbolAtomRef)rc->wt(atomi))->get_attr(posi), TT_ATOM};
 
     break;
   }
@@ -2093,9 +2067,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, posi);
 
       LmnAtomRef hlAtom =
-          LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt(atomi), posi);
+          ((LmnSymbolAtomRef)rc->wt(atomi))->get_link(posi);
       LmnLinkAttr attr =
-          LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atomi), posi);
+          ((LmnSymbolAtomRef)rc->wt(atomi))->get_attr(posi);
       if (attr != LMN_HL_ATTR) {
         return FALSE;
       } else {
@@ -2105,9 +2079,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         std::transform(v.begin(), v.end(), std::back_inserter(regs),
                        [](HyperLink *h) -> LmnRegister {
                          auto child_hlAtom = h->atom;
-                         auto linked_atom = LMN_SATOM_GET_LINK(child_hlAtom, 0);
+                         auto linked_atom = child_hlAtom->get_link(0);
                          return {(LmnWord)linked_atom,
-                                 LMN_SATOM_GET_ATTR(child_hlAtom, 0), TT_ATOM};
+                                 child_hlAtom->get_attr(0), TT_ATOM};
                        });
 
         this->push_stackframe(
@@ -2160,7 +2134,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar atomi, memi;
     LmnMembraneRef mem = (LmnMembraneRef)rc->wt(memi);
     LmnSymbolAtomRef sa = (LmnSymbolAtomRef)rc->wt(atomi);
-    LmnFunctor f = LMN_SATOM_GET_FUNCTOR(sa);
+    LmnFunctor f = sa->get_functor();
     AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnInstrVar, instr, memi);
@@ -2204,7 +2178,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, link);
 
     if (!LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atomi))) {
-      LMN_SATOM_SET_LINK((LmnSymbolAtomRef)rc->wt(atomi), link, NULL);
+      ((LmnSymbolAtomRef)rc->wt(atomi))->set_link(link, NULL);
     }
 
     break;
@@ -2223,7 +2197,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     rc->tt(newmemi) = TT_MEM;
     lmn_mem_set_active(mp, TRUE);
     if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-      lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), mp);
+      lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
     }
     break;
   }
@@ -2281,7 +2255,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     mp = (LmnMembraneRef)rc->wt(memi);
     lmn_mem_free(mp);
     if (rc->is_zerostep) {
-      lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), mp);
+      lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), mp);
     }
     break;
   }
@@ -2302,7 +2276,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
 
     if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-      lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc),
+      lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(),
                         (LmnMembraneRef)rc->wt(memi));
     }
     break;
@@ -2353,9 +2327,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atom2);
     READ_VAL(LmnInstrVar, instr, posi);
 
-    rc->reg(atom1) = {(LmnWord)LMN_SATOM(LMN_SATOM_GET_LINK(
-                          (LmnSymbolAtomRef)rc->wt(atom2), posi)),
-                      LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), posi),
+    rc->reg(atom1) = {(LmnWord)LMN_SATOM((
+                          (LmnSymbolAtomRef)rc->wt(atom2))->get_link( posi)),
+                      ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(posi),
                       TT_ATOM};
     break;
   }
@@ -2368,7 +2342,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, pos1);
     READ_VAL(LmnInstrVar, instr, pos2);
 
-    attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atom2), pos1);
+    attr = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos1);
     LMN_ASSERT(!LMN_ATTR_IS_DATA(rc->at(atom2)));
     if (LMN_ATTR_IS_DATA(attr)) {
       if (pos2 != 0)
@@ -2378,7 +2352,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         return FALSE;
     }
     rc->reg(atom1) = {
-        (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt(atom2), pos1),
+        (LmnWord)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos1),
         attr, TT_ATOM};
     break;
   }
@@ -2401,7 +2375,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           return FALSE;
       } else { /* symbol atom */
         READ_VAL(LmnFunctor, instr, f);
-        if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt(atomi)) != f) {
+        if (((LmnSymbolAtomRef)rc->wt(atomi))->get_functor() != f) {
           return FALSE;
         }
         if (rc_hlink_opt(atomi, rc)) {
@@ -2437,7 +2411,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         }
       } else { /* symbol atom */
         READ_VAL(LmnFunctor, instr, f);
-        if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt(atomi)) == f)
+        if (((LmnSymbolAtomRef)rc->wt(atomi))->get_functor() == f)
           return FALSE;
       }
     } else if (LMN_ATTR_IS_DATA(attr)) {
@@ -2596,7 +2570,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       port_put_raw_s(port, ":");
     }
 
-    id = lmn_intern((char *)lmn_string_c_str((LmnStringRef)port->data));
+    id = lmn_intern(((LmnStringRef)port->data)->c_str());
     lmn_port_free(port);
 
     if (sh)
@@ -2633,7 +2607,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         READ_VAL(LmnFunctor, instr, f);
         ap = lmn_new_atom(f);
         attr = 0; //シンボルアトムということを表す。値に意味はない。
-        if (LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)ap) > 1) {
+        if (((LmnSymbolAtomRef)ap)->get_arity() > 1) {
           lmn_fatal("hyperlink's attribute takes only an unary atom");
         }
       }
@@ -2651,7 +2625,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       ap = lmn_copy_atom((LmnAtomRef)rc->wt(atomi2), rc->at(atomi2));
       attr = rc->at(atomi2);
       if (!LMN_ATTR_IS_DATA(rc->at(atomi2)) &&
-          LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)ap) > 1) {
+          ((LmnSymbolAtomRef)ap)->get_arity() > 1) {
         lmn_fatal("hyperlink's attribute takes only an unary atom");
       }
       rc->reg(atomi) = {(LmnWord)lmn_hyperlink_new_with_attr(ap, attr),
@@ -2718,8 +2692,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     atom = (LmnSymbolAtomRef)rc->wt(atomi);
 
-    attr1 = LMN_SATOM_GET_ATTR(atom, 0);
-    attr2 = LMN_SATOM_GET_ATTR(atom, 1);
+    attr1 = atom->get_attr(0);
+    attr2 = atom->get_attr(1);
 
     /* >< の両辺のアトムがハイパーリンクであれば併合 */
     if (LMN_ATTR_IS_HL(attr1) && LMN_ATTR_IS_HL(attr2)) {
@@ -2728,22 +2702,22 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       HyperLink *hl1, *hl2;
 
       m = (LmnMembraneRef)rc->wt(memi);
-      atom1 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 0);
-      atom2 = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 1);
+      atom1 = (LmnSymbolAtomRef)atom->get_link(0);
+      atom2 = (LmnSymbolAtomRef)atom->get_link(1);
 
       hl1 = lmn_hyperlink_at_to_hl(atom1);
       hl2 = lmn_hyperlink_at_to_hl(atom2);
 
-      if (LMN_SATOM_GET_ARITY(atom) ==
+      if (atom->get_arity() ==
           2) { //二引数の場合は一つ目のハイパーリンクの属性を継承する
         lmn_hyperlink_unify(hl1, hl2, LMN_HL_ATTRATOM(hl1),
                             LMN_HL_ATTRATOM_ATTR(hl1));
-      } else if (LMN_SATOM_GET_ARITY(atom) ==
+      } else if (atom->get_arity() ==
                  3) { //三引数の場合は三引数目を併合後の属性とする
         LmnAtom attrAtom;
-        attrAtom = LMN_ATOM(LMN_SATOM_GET_LINK(atom, 2));
+        attrAtom = LMN_ATOM(atom->get_link(2));
         lmn_hyperlink_unify(hl1, hl2, (LmnAtomRef)attrAtom,
-                            LMN_SATOM_GET_ATTR(atom, 2));
+                            atom->get_attr(2));
       } else {
         lmn_fatal("too many arguments to >< atom");
       }
@@ -2895,7 +2869,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             vec_push(&attr_dataAtoms, rc->wt(ai));
           } else {
             LmnFunctor f;
-            f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt(ai));
+            f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
             proc_tbl_put(attr_functors, f, f);
           }
         }
@@ -2991,7 +2965,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             vec_push(&attr_dataAtoms, rc->wt(ai));
           } else {
             LmnFunctor f;
-            f = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt(ai));
+            f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
             proc_tbl_put(attr_functors, f, f);
           }
         }
@@ -3062,7 +3036,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       default:
         break;
       }
-    } else if (LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)rc->wt(atomi)) != 1)
+    } else if (((LmnSymbolAtomRef)rc->wt(atomi))->get_arity() != 1)
       return FALSE;
     break;
   }
@@ -3609,7 +3583,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     } else {
 
       rc->reg(funci) = {
-          (LmnWord)LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt(atomi)),
+          (LmnWord)((LmnSymbolAtomRef)rc->wt(atomi))->get_functor(),
           rc->at(atomi), TT_OTHER};
     }
     break;
@@ -3688,10 +3662,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_mem_unify_symbol_atom_args(copy, 0, copy, 1);
       /* mem がないので仕方なく直接アトムリストをつなぎ変える.
        * UNIFYアトムはnatomに含まれないので大丈夫 */
-      LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(copy),
-                         LMN_SATOM_GET_PREV(copy));
-      LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(copy),
-                         LMN_SATOM_GET_NEXT_RAW(copy));
+      copy->get_next()->set_prev(copy->get_prev());
+      copy->get_prev()->set_next(copy->get_next());
 
       lmn_delete_atom(copy);
     }
@@ -3714,15 +3686,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnLinkAttr, instr, pos);
 
-    attr = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atomi), pos);
+    attr = ((LmnSymbolAtomRef)rc->wt(atomi))->get_attr(pos);
     if (LMN_ATTR_IS_DATA(attr)) {
       rc->reg(funci) = {
-          (LmnWord)LMN_SATOM_GET_LINK((LmnSymbolAtomRef)rc->wt(atomi), pos),
+          (LmnWord)((LmnSymbolAtomRef)rc->wt(atomi))->get_link(pos),
           attr, TT_OTHER};
     } else { /* symbol atom */
       rc->reg(funci) = {
-          LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(
-              (LmnSymbolAtomRef)rc->wt(atomi), pos)),
+          ((LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atomi))->get_link(pos))->get_functor(),
           attr, TT_OTHER};
     }
     break;
@@ -3909,7 +3880,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atomi);
     LMN_ASSERT(!LMN_ATTR_IS_DATA(rc->at(atomi)));
     LMN_ASSERT(LMN_IS_PROXY_FUNCTOR(
-        LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt(atomi))));
+        ((LmnSymbolAtomRef)rc->wt(atomi))->get_functor()));
 
     if (LMN_PROXY_GET_MEM((LmnSymbolAtomRef)rc->wt(atomi)) !=
         (LmnMembraneRef)rc->wt(memi))
@@ -4020,11 +3991,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     atom = (LmnSymbolAtomRef)rc->wt(atomi);
 
-    if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0))) {
-      LmnSymbolAtomRef f_name = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 0);
+    if (!LMN_ATTR_IS_DATA(atom->get_attr(0))) {
+      LmnSymbolAtomRef f_name = (LmnSymbolAtomRef)atom->get_link(0);
       lmn_interned_str name =
-          LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(f_name));
-      int arity = LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(atom));
+          LMN_FUNCTOR_NAME_ID(f_name->get_functor());
+      int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
 
       c = get_ccallback(name);
       if (!c)
@@ -4040,8 +4011,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
          be called in callback functions
       lmn_mem_delete_atom((LmnMembraneRef)rc->wt( memi), rc->wt( atomi),
       rc->at(atomi)); lmn_mem_delete_atom((LmnMembraneRef)rc->wt( memi),
-                          LMN_SATOM_GET_LINK(atom, 0),
-                          LMN_SATOM_GET_ATTR(atom, 0));
+                          atom->get_link(0),
+                          atom->get_attr(0));
       */
 
       switch (arity) {
@@ -4050,38 +4021,38 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         break;
       case 2:
         ((callback_1)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
-                           LMN_SATOM_GET_LINK(atom, 1),
-                           LMN_SATOM_GET_ATTR(atom, 1));
+                           atom->get_link(1),
+                           atom->get_attr(1));
         break;
       case 3:
         ((callback_2)c->f)(
-            rc, (LmnMembraneRef)rc->wt(memi), LMN_SATOM_GET_LINK(atom, 1),
-            LMN_SATOM_GET_ATTR(atom, 1), LMN_SATOM_GET_LINK(atom, 2),
-            LMN_SATOM_GET_ATTR(atom, 2));
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2),
+            atom->get_attr(2));
         break;
       case 4:
         ((callback_3)c->f)(
-            rc, (LmnMembraneRef)rc->wt(memi), LMN_SATOM_GET_LINK(atom, 1),
-            LMN_SATOM_GET_ATTR(atom, 1), LMN_SATOM_GET_LINK(atom, 2),
-            LMN_SATOM_GET_ATTR(atom, 2), LMN_SATOM_GET_LINK(atom, 3),
-            LMN_SATOM_GET_ATTR(atom, 3));
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2),
+            atom->get_attr(2), atom->get_link(3),
+            atom->get_attr(3));
         break;
       case 5:
         ((callback_4)c->f)(
-            rc, (LmnMembraneRef)rc->wt(memi), LMN_SATOM_GET_LINK(atom, 1),
-            LMN_SATOM_GET_ATTR(atom, 1), LMN_SATOM_GET_LINK(atom, 2),
-            LMN_SATOM_GET_ATTR(atom, 2), LMN_SATOM_GET_LINK(atom, 3),
-            LMN_SATOM_GET_ATTR(atom, 3), LMN_SATOM_GET_LINK(atom, 4),
-            LMN_SATOM_GET_ATTR(atom, 4));
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2),
+            atom->get_attr(2), atom->get_link(3),
+            atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4));
         break;
       case 6:
         ((callback_5)c->f)(
-            rc, (LmnMembraneRef)rc->wt(memi), LMN_SATOM_GET_LINK(atom, 1),
-            LMN_SATOM_GET_ATTR(atom, 1), LMN_SATOM_GET_LINK(atom, 2),
-            LMN_SATOM_GET_ATTR(atom, 2), LMN_SATOM_GET_LINK(atom, 3),
-            LMN_SATOM_GET_ATTR(atom, 3), LMN_SATOM_GET_LINK(atom, 4),
-            LMN_SATOM_GET_ATTR(atom, 4), LMN_SATOM_GET_LINK(atom, 5),
-            LMN_SATOM_GET_ATTR(atom, 5));
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2),
+            atom->get_attr(2), atom->get_link(3),
+            atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5),
+            atom->get_attr(5));
         break;
       default:
         printf("EXTERNAL FUNCTION: too many arguments\n");
@@ -4091,8 +4062,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_mem_delete_atom((LmnMembraneRef)rc->wt(memi),
                           (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
       lmn_mem_delete_atom((LmnMembraneRef)rc->wt(memi),
-                          LMN_SATOM_GET_LINK((LmnSymbolAtomRef)atom, 0),
-                          LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)atom, 0));
+                          ((LmnSymbolAtomRef)atom)->get_link(0),
+                          ((LmnSymbolAtomRef)atom)->get_attr(0));
     }
 
     break;
@@ -4226,7 +4197,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       /* EFFICIENCY: 解放のための再帰 */
       if (dmem_interpret(rc, rule, instr)) {
-        hashset_free((HashSet *)rc->wt(seti));
+        delete (HashSet *)rc->wt(seti);
         return TRUE;
       } else {
         LMN_ASSERT(0);
@@ -4257,7 +4228,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       /* EFFICIENCY: 解放のための再帰 */
       if (dmem_interpret(rc, rule, instr)) {
-        hashset_free((HashSet *)rc->wt(seti));
+        delete (HashSet *)rc->wt(seti);
         return TRUE;
       } else {
         LMN_ASSERT(0);
@@ -4386,7 +4357,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       rc->wt(linki) = (LmnWord)dmem_root_get_link(
           RC_ND_MEM_DELTA_ROOT(rc), (LmnSymbolAtomRef)rc->wt(atomi), posi);
       rc->at(linki) =
-          (LmnWord)LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)rc->wt(atomi), posi);
+          (LmnWord)((LmnSymbolAtomRef)rc->wt(atomi))->get_attr(posi);
       rc->tt(linki) = TT_OTHER;
       break;
     }
@@ -4434,7 +4405,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       rc->tt(newmemi) = TT_OTHER;
       lmn_mem_set_active(mp, TRUE);
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-        lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc), mp);
+        lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
       }
       break;
     }
@@ -4517,7 +4488,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
        * 通常実行用dmemはテスト用やinteractive実行用として作っておいてもよさそう
        */
       //      if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-      //        lmn_memstack_push(RC_MEMSTACK((MemReactContext *)rc),
+      //        lmn_memstack_push(((MemReactContext*)rc) -> MEMSTACK(),
       //        (LmnMembraneRef)rc->wt( memi)); /* 通常実行時 */
       //      }
       break;
@@ -4734,7 +4705,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
            double はポインタのコピーで十分なはず */
         rc->wt(funci) = rc->wt(atomi);
       } else {
-        rc->wt(funci) = LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)rc->wt(atomi));
+        rc->wt(funci) = ((LmnSymbolAtomRef)rc->wt(atomi))->get_functor();
       }
       rc->at(funci) = rc->at(atomi);
       rc->tt(funci) = TT_OTHER;
@@ -4766,7 +4737,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, memi);
       dmem_root_remove_proxies(RC_ND_MEM_DELTA_ROOT(rc),
-                               (LmnMembraneRef)rc->wt( memi));
+                               (LmnMembraneRef)rc->wt(memi));
       break;
     }
     case INSTR_INSERTPROXIES: {
@@ -4775,8 +4746,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, parentmemi);
       READ_VAL(LmnInstrVar, instr, childmemi);
       dmem_root_insert_proxies(RC_ND_MEM_DELTA_ROOT(rc),
-                               (LmnMembraneRef)rc->wt( parentmemi),
-                               (LmnMembraneRef)rc->wt( childmemi));
+                               (LmnMembraneRef)rc->wt(parentmemi),
+                               (LmnMembraneRef)rc->wt(childmemi));
       break;
     }
     case INSTR_DELETECONNECTORS: {
@@ -4787,8 +4758,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, srcset);
       READ_VAL(LmnInstrVar, instr, srcmap);
 
-      delset = (HashSet *)rc->wt( srcset);
-      delmap = (ProcessTableRef)rc->wt( srcmap);
+      delset = (HashSet *)rc->wt(srcset);
+      delmap = (ProcessTableRef)rc->wt(srcmap);
 
       for (it = hashset_iterator(delset); !hashsetiter_isend(&it);
            hashsetiter_next(&it)) {
@@ -4815,7 +4786,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, memi);
       dmem_root_remove_toplevel_proxies(RC_ND_MEM_DELTA_ROOT(rc),
-                                        (LmnMembraneRef)rc->wt( memi));
+                                        (LmnMembraneRef)rc->wt(memi));
       break;
     }
     case INSTR_ADDATOM: {
@@ -4824,8 +4795,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
       dmem_root_push_atom(RC_ND_MEM_DELTA_ROOT(rc),
-                          (LmnMembraneRef)rc->wt( memi),
-                          (LmnAtomRef)rc->wt( atomi), rc->at(atomi));
+                          (LmnMembraneRef)rc->wt(memi),
+                          (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
       break;
     }
     case INSTR_MOVECELLS: {
@@ -4833,10 +4804,10 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
-      LMN_ASSERT(rc->wt( destmemi) != rc->wt( srcmemi));
+      LMN_ASSERT(rc->wt(destmemi) != rc->wt(srcmemi));
       dmem_root_move_cells(RC_ND_MEM_DELTA_ROOT(rc),
-                           (LmnMembraneRef)rc->wt( destmemi),
-                           (LmnMembraneRef)rc->wt( srcmemi));
+                           (LmnMembraneRef)rc->wt(destmemi),
+                           (LmnMembraneRef)rc->wt(srcmemi));
       break;
     }
     case INSTR_REMOVETEMPORARYPROXIES: {
@@ -4844,7 +4815,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, memi);
       dmem_root_remove_temporary_proxies(RC_ND_MEM_DELTA_ROOT(rc),
-                                         (LmnMembraneRef)rc->wt( memi));
+                                         (LmnMembraneRef)rc->wt(memi));
       break;
     }
     case INSTR_COPYCELLS: {
@@ -4854,8 +4825,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
       dmem_root_copy_cells(RC_ND_MEM_DELTA_ROOT(rc),
-                           (LmnMembraneRef)rc->wt( destmemi),
-                           (LmnMembraneRef)rc->wt( srcmemi));
+                           (LmnMembraneRef)rc->wt(destmemi),
+                           (LmnMembraneRef)rc->wt(srcmemi));
       rc->tt(mapi) = TT_OTHER;
       break;
     }
@@ -4868,12 +4839,12 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       rc->at(destlinki) = LINKED_ATTR(srclinki);
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {
-        rc->wt( destlinki) = (LmnWord)LINKED_ATOM(srclinki);
+        rc->wt(destlinki) = (LmnWord)LINKED_ATOM(srclinki);
       } else { /* symbol atom */
-        ProcessTableRef ht = (ProcessTableRef)rc->wt( tbli);
-        LmnWord w = rc->wt( destlinki);
+        ProcessTableRef ht = (ProcessTableRef)rc->wt(tbli);
+        LmnWord w = rc->wt(destlinki);
         proc_tbl_get_by_atom(ht, (LmnSymbolAtomRef)LINKED_ATOM(srclinki), &w);
-        rc->wt( destlinki) = w;
+        rc->wt(destlinki) = w;
       }
       break;
     }
@@ -4882,8 +4853,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, memi);
       dmem_root_clear_ruleset(RC_ND_MEM_DELTA_ROOT(rc),
-                              (LmnMembraneRef)rc->wt( memi));
-      vec_clear(lmn_mem_get_rulesets((LmnMembraneRef)rc->wt( memi)));
+                              (LmnMembraneRef)rc->wt(memi));
+      vec_clear(lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(memi)));
 
       break;
     }
@@ -4891,7 +4862,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       LmnInstrVar memi;
 
       READ_VAL(LmnInstrVar, instr, memi);
-      dmem_root_drop(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembraneRef)rc->wt( memi));
+      dmem_root_drop(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembraneRef)rc->wt(memi));
       break;
     }
     case INSTR_LOOP: {
@@ -4911,13 +4882,13 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
 
-      atom = (LmnSymbolAtomRef)rc->wt( atomi);
+      atom = (LmnSymbolAtomRef)rc->wt(atomi);
 
-      if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(atom, 0))) {
-        LmnSymbolAtomRef f_name = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 0);
+      if (!LMN_ATTR_IS_DATA(atom->get_attr(0))) {
+        LmnSymbolAtomRef f_name = (LmnSymbolAtomRef)atom->get_link(0);
         lmn_interned_str name =
-            LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(f_name));
-        int arity = LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(atom));
+            LMN_FUNCTOR_NAME_ID(f_name->get_functor());
+        int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
 
         c = get_ccallback(name);
         if (!c)
@@ -4929,41 +4900,41 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
           break;
         }
 
-        lmn_mem_delete_atom((LmnMembraneRef)rc->wt( memi),
-                            (LmnAtomRef)rc->wt( atomi), rc->at(atomi));
-        lmn_mem_delete_atom((LmnMembraneRef)rc->wt( memi),
-                            LMN_SATOM_GET_LINK(atom, 0),
-                            LMN_SATOM_GET_ATTR(atom, 0));
+        lmn_mem_delete_atom((LmnMembraneRef)rc->wt(memi),
+                            (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
+        lmn_mem_delete_atom((LmnMembraneRef)rc->wt(memi),
+                            atom->get_link(0),
+                            atom->get_attr(0));
 
         switch (arity) {
         case 1:
-          ((callback_0)c->f)(rc, (LmnMembraneRef)rc->wt( memi));
+          ((callback_0)c->f)(rc, (LmnMembraneRef)rc->wt(memi));
           break;
         case 2:
-          ((callback_1)c->f)(rc, (LmnMembraneRef)rc->wt( memi),
-                             LMN_SATOM_GET_LINK(atom, 1),
-                             LMN_SATOM_GET_ATTR(atom, 1));
+          ((callback_1)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+                             atom->get_link(1),
+                             atom->get_attr(1));
           break;
         case 3:
           ((callback_2)c->f)(
-              rc, (LmnMembraneRef)rc->wt( memi), LMN_SATOM_GET_LINK(atom, 1),
-              LMN_SATOM_GET_ATTR(atom, 1), LMN_SATOM_GET_LINK(atom, 2),
-              LMN_SATOM_GET_ATTR(atom, 2));
+              rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+              atom->get_attr(1), atom->get_link(2),
+              atom->get_attr(2));
           break;
         case 4:
           ((callback_3)c->f)(
-              rc, (LmnMembraneRef)rc->wt( memi), LMN_SATOM_GET_LINK(atom, 1),
-              LMN_SATOM_GET_ATTR(atom, 1), LMN_SATOM_GET_LINK(atom, 2),
-              LMN_SATOM_GET_ATTR(atom, 2), LMN_SATOM_GET_LINK(atom, 3),
-              LMN_SATOM_GET_ATTR(atom, 3));
+              rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+              atom->get_attr(1), atom->get_link(2),
+              atom->get_attr(2), atom->get_link(3),
+              atom->get_attr(3));
           break;
         case 5:
           ((callback_4)c->f)(
-              rc, (LmnMembraneRef)rc->wt( memi), LMN_SATOM_GET_LINK(atom, 1),
-              LMN_SATOM_GET_ATTR(atom, 1), LMN_SATOM_GET_LINK(atom, 2),
-              LMN_SATOM_GET_ATTR(atom, 2), LMN_SATOM_GET_LINK(atom, 3),
-              LMN_SATOM_GET_ATTR(atom, 3), LMN_SATOM_GET_LINK(atom, 4),
-              LMN_SATOM_GET_ATTR(atom, 4));
+              rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+              atom->get_attr(1), atom->get_link(2),
+              atom->get_attr(2), atom->get_link(3),
+              atom->get_attr(3), atom->get_link(4),
+              atom->get_attr(4));
           break;
         default:
           printf("EXTERNAL FUNCTION: too many arguments\n");
@@ -4993,8 +4964,7 @@ Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
   /* リンクオブジェクトのベクタを構築 */
   for (i = 0; i < vec_num(link_idxs); i++) {
     vec_data_t t = vec_get(link_idxs, i);
-    LinkObjRef l =
-        LinkObj_make((LmnAtomRef)rc->wt(t), rc->at(t));
+    LinkObjRef l = LinkObj_make((LmnAtomRef)rc->wt(t), rc->at(t));
     vec_push(vec, (LmnWord)l);
   }
   return vec;

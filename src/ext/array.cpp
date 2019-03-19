@@ -96,7 +96,7 @@ static LmnArrayRef make_array(LmnMembraneRef mem, LmnWord size, LmnAtomRef init_
       break;
     case LMN_STRING_ATTR:
       for (i = 0; i < size; i++) {
-        LMN_ARRAY_DATA(a)[i] = lmn_string_copy(LMN_STRING(init_value));
+        LMN_ARRAY_DATA(a)[i] = new LmnString(*reinterpret_cast<LmnString *>(init_value));
         // copied, could be shared
       }
       break;
@@ -139,7 +139,7 @@ void lmn_array_free(LmnArrayRef array, LmnMembraneRef mem)
         break;
       case LMN_STRING_ATTR:
         for (i = 0; i < LMN_ARRAY_SIZE(array); i++) {
-          lmn_string_free(LMN_STRING(LMN_ARRAY_DATA(array)[i]));
+          delete (reinterpret_cast<LmnString *>(LMN_ARRAY_DATA(array)[i]));
         }
         break;
       case LMN_HL_ATTR:
@@ -296,7 +296,7 @@ void cb_array_get(LmnReactCxtRef rc,
         ai = lmn_copy_atom(LMN_ARRAY_DATA(a0)[i], LMN_HL_ATTR);
         break;
       default: /* must be LMN_STRINGL_ATTR) */
-        ai = lmn_string_copy(LMN_STRING(LMN_ARRAY_DATA(a0)[i]));
+        ai = new LmnString(*reinterpret_cast<LmnString *>(LMN_ARRAY_DATA(a0)[i]));
         break;
     }
 
@@ -342,7 +342,7 @@ void cb_array_put(LmnReactCxtRef rc,
           lmn_free_atom(LMN_ARRAY_DATA(a0)[a1], LMN_DBL_ATTR);
           break;
         case LMN_STRING_ATTR:
-          lmn_string_free(LMN_STRING(LMN_ARRAY_DATA(a0)[a1]));
+          delete (reinterpret_cast<LmnString *>(LMN_ARRAY_DATA(a0)[a1]));
           break;
         case LMN_HL_ATTR:
           lmn_mem_remove_atom(mem, (LmnAtomRef)LMN_ARRAY_DATA(a0)[a1], LMN_HL_ATTR);

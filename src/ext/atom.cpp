@@ -47,7 +47,7 @@ static LmnSymbolAtomRef lmn_make_atom(LmnMembraneRef mem, LmnAtomRef s, LmnWord 
 {
   LmnSymbolAtomRef a = lmn_mem_newatom(mem,
          lmn_functor_intern(ANONYMOUS, 
-			    lmn_intern(lmn_string_c_str(LMN_STRING(s))),
+			    lmn_intern(reinterpret_cast<LmnString *>(s)->c_str()),
 			    size));
   for (LmnWord k = 0; k < (int)size-1; k++) {
     lmn_mem_newlink(mem,
@@ -121,12 +121,12 @@ void cb_atom_functor(LmnReactCxtRef rc,
   if (LMN_ATTR_IS_DATA(t0)) 
     lmn_fatal("atom.functor cannot be applied to non-symbol atoms\
  (numbers, strings, ...).");
-  LmnStringRef s = lmn_string_make(LMN_SATOM_STR((LmnSymbolAtomRef)a0));
+  LmnStringRef s = new LmnString(((LmnSymbolAtomRef)a0)->str());
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  s, LMN_SP_ATOM_ATTR, 0);
 
   lmn_mem_push_atom(mem, s, LMN_SP_ATOM_ATTR);
-  long n = LMN_SATOM_GET_ARITY((LmnSymbolAtomRef)a0);
+  long n = ((LmnSymbolAtomRef)a0)->get_arity();
   lmn_mem_newlink(mem,
       a2, t2, LMN_ATTR_GET_VALUE(t2),
       (LmnAtomRef)n, LMN_INT_ATTR, 0);
@@ -164,12 +164,12 @@ void cb_atom_swap(LmnReactCxtRef rc,
   if (LMN_ATTR_IS_DATA(t3)) 
     lmn_fatal("Arg 3 of atom.swap cannot be non-symbol atoms (numbers, strings, ...).");
 
-  if ((unsigned long)a1 >= LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)a0)))
+  if ((unsigned long)a1 >= LMN_FUNCTOR_ARITY(((LmnSymbolAtomRef)a0)->get_functor()))
     lmn_fatal("atom.swap index out of range.");
 
-  self  = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, t0);
-  ap1   = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)a0, (LmnWord)a1);
-  attr1 = LMN_SATOM_GET_ATTR((LmnSymbolAtomRef)a0, (LmnWord)a1);
+  self  = ((LmnSymbolAtomRef)a0)->get_link(t0);
+  ap1   = ((LmnSymbolAtomRef)a0)->get_link((LmnWord)a1);
+  attr1 = ((LmnSymbolAtomRef)a0)->get_attr((LmnWord)a1);
 
   //  lmn_relink_symbols(a2, t2, ap1, attr1);  //works fine
   //  lmn_relink_symbols(a0, a1, self, 3);  // works fine

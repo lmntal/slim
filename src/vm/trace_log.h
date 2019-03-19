@@ -174,7 +174,7 @@ private:
 
 public:
   bool visit(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
-    return this->visit(LMN_SATOM_ID(atom), TraceData::options::TRAVERSED_ATOM,
+    return this->visit(atom->get_id(), TraceData::options::TRAVERSED_ATOM,
                        atom2_id, owner);
   }
 

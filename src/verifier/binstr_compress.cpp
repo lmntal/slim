@@ -341,7 +341,7 @@ void lmn_bscomp_tree_profile(FILE *f) {
 
 BOOL lmn_bscomp_tree_init() {
   if (treedb == NULL) {
-    treedb = tree_make(2ULL << lmn_env.tree_compress_table_size);
+    treedb = new TreeDatabase(2ULL << lmn_env.tree_compress_table_size);
     return TRUE;
   }
   return FALSE;
@@ -353,16 +353,16 @@ BOOL lmn_bscomp_tree_clean() {
     node_count = tree_db_node_count(treedb);
     table_size = treedb->mask + 1;
     load_factor = (double)node_count / (treedb->mask + 1);
-    memory = (uint64_t)tree_space(treedb) / 1024 / 1024;
+    memory = (uint64_t)treedb->space() / 1024 / 1024;
 #endif
-    tree_free(treedb);
+    delete treedb;
     treedb = NULL;
     return TRUE;
   }
   return FALSE;
 }
 
-unsigned long lmn_bscomp_tree_space() { return tree_space(treedb); }
+unsigned long lmn_bscomp_tree_space() { return treedb->space(); }
 
 TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
   BOOL found;
@@ -376,7 +376,7 @@ TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
 #endif
   LMN_ASSERT(treedb);
   LMN_ASSERT(str);
-  ref = tree_find_or_put(treedb, str, &found);
+  ref = treedb->tree_find_or_put(str, &found);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     unsigned long old_space, dif_space;
@@ -400,7 +400,7 @@ LmnBinStrRef lmn_bscomp_tree_decode(TreeNodeID ref, int len) {
     profile_start_timer(PROFILE_TIME__TREE_UNCOMPRESS);
   }
 #endif
-  bs = tree_get(treedb, ref, len);
+  bs = treedb->get(ref, len);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_add_space(PROFILE_SPACE__STATE_BINSTR, lmn_binstr_space(bs));
