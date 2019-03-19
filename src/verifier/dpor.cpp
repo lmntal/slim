@@ -374,9 +374,9 @@ static void dpor_data_free(McDporData *d) {
 }
 
 static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
-  vec_clear(d->wt_gatoms);
+  d->wt_gatoms->clear();
   proc_tbl_clear(d->wt_flags);
-  vec_clear(d->ample_cand);
+  d->ample_cand->clear();
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_clear(d->delta_tbl);
 
@@ -385,9 +385,9 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
     dmem_root_free(delt);
   }
 
-  vec_clear(RC_MEM_DELTAS(rc));
+  RC_MEM_DELTAS(rc)->clear();
 
-  vec_clear(d->free_deltas);
+  d->free_deltas->clear();
   d->nxt_tr_id = 0;
 }
 
@@ -1058,7 +1058,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
 
       for (i = 0; i < s->successor_num; i++) {
         TransitionRef succ_t = transition(s, i);
-        vec_clear(&succ_t->rule_names);
+        succ_t->rule_names.clear();
         transition_add_rule(succ_t, lmn_intern("reduced"), 0U);
       }
 
@@ -1066,7 +1066,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
         search->push(new_ss->get(i));
       }
 
-      vec_clear(new_ss);
+      new_ss->clear();
     }
 
     lmn_env.enable_por = org_por;

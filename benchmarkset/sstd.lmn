@@ -20,7 +20,7 @@
       if((s = (State *)dequeue(SS_THREAD_WQUEUE(th)))) {
         my_stack->push((LmnWord)s);
         ss_nd_loop(th, my_stack);                // line(6)
-        vec_clear(my_stack);
+        my_stack->clear();
       }
     }
   }

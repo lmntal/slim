@@ -4854,7 +4854,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
       dmem_root_clear_ruleset(RC_ND_MEM_DELTA_ROOT(rc),
                               (LmnMembraneRef)rc->wt(memi));
-      vec_clear(lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(memi)));
+      lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(memi))->clear();
 
       break;
     }

@@ -133,6 +133,10 @@ struct Vector {
   LmnWord last(){
     return tbl[num-1];
   }
+/* pop all elements from vec */
+  void clear(){
+    num = 0;
+  }
 };
 
 typedef struct Vector *PVector;
@@ -142,7 +146,6 @@ typedef LmnWord vec_data_t;
 #define vec_num(V) ((V)->num)
 #define vec_is_empty(V) ((V)->num == 0)
 
-static inline void vec_clear(Vector *vec);
 static inline void vec_destroy(Vector *vec);
 static inline void vec_free(Vector *vec);
 static inline unsigned long vec_space(Vector *v);
@@ -154,8 +157,6 @@ void vec_reverse(Vector *vec);
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
-/* pop all elements from vec */
-static inline void vec_clear(Vector *vec) { vec->num = 0; }
 
 /* destroy */
 static inline void vec_destroy(Vector *vec) { LMN_FREE(vec->tbl); }

@@ -345,9 +345,9 @@ void mcdfs_start(LmnWorker *w) {
             mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
                        ss->automata(), ss->prop_symbols());
             s = NULL;
-            vec_clear(&DFS_WORKER_STACK(w));
+            DFS_WORKER_STACK(w).clear();
           }
-          vec_clear(&new_ss);
+          new_ss.clear();
 
           EXECUTE_PROFILE_FINISH();
         }
@@ -452,9 +452,9 @@ void dfs_start(LmnWorker *w) {
               dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
                        ss->automata(), ss->prop_symbols());
             s = NULL;
-            vec_clear(&DFS_WORKER_STACK(w));
+            DFS_WORKER_STACK(w).clear();
           }
-          vec_clear(&new_ss);
+          new_ss.clear();
 
           EXECUTE_PROFILE_FINISH();
         }
@@ -546,7 +546,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       }
     }
 
-    vec_clear(new_ss);
+    new_ss->clear();
   }
 }
 
@@ -630,7 +630,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       }
     }
 
-    vec_clear(new_ss);
+    new_ss->clear();
   }
 }
 
@@ -834,7 +834,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       }
     }
 
-    vec_clear(new_ss);
+    new_ss->clear();
   }
 }
 
@@ -962,7 +962,7 @@ void bfs_start(LmnWorker *w) {
         bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
         worker_set_idle(w);
 
-        vec_clear(new_ss);
+        new_ss->clear();
         EXECUTE_PROFILE_FINISH();
       } else {
         worker_set_idle(w);
@@ -981,7 +981,7 @@ void bfs_start(LmnWorker *w) {
         worker_set_active(w);
         bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
         worker_set_idle(w);
-        vec_clear(new_ss);
+        new_ss->clear();
         /**/ EXECUTE_PROFILE_FINISH();
       }
 
@@ -1049,6 +1049,6 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
       }
     }
 
-    vec_clear(new_ss);
+    new_ss->clear();
   }
 }

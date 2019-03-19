@@ -299,9 +299,9 @@ struct McReactCxtData {
   do {                                                                         \
     RC_SET_GROOT_MEM(RC, NULL);                                                \
     st_clear(RC_SUCC_TBL(RC));                                                 \
-    vec_clear(RC_EXPANDED_RULES(RC));                                          \
-    vec_clear(RC_EXPANDED(RC));                                                \
-    vec_clear(RC_EXPANDED_PROPS(RC));                                          \
+    RC_EXPANDED_RULES(RC)->clear();                                          \
+    RC_EXPANDED(RC)->clear();                                                \
+    RC_EXPANDED_PROPS(RC)->clear();                                          \
     if (RC_MC_USE_DMEM(RC)) {                                                  \
       unsigned int _fr_;                                                       \
       for (_fr_ = 0;                                                           \
@@ -311,7 +311,7 @@ struct McReactCxtData {
         if (_d_)                                                               \
           dmem_root_free(_d_);                                                 \
       }                                                                        \
-      vec_clear(RC_MEM_DELTAS(RC));                                            \
+      RC_MEM_DELTAS(RC)->clear();                                            \
     }                                                                          \
     RC_ND_SET_ORG_SUCC_NUM(RC, 0);                                             \
   } while (0)

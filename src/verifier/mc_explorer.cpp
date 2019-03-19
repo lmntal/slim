@@ -123,8 +123,8 @@ struct McSearchNDFS {
 #define NDFS_WORKER_PATH_VEC(W) (NDFS_WORKER_OBJ(W)->path)
 #define NDFS_WORKER_OBJ_CLEAR(W)                                               \
   do {                                                                         \
-    vec_clear(NDFS_WORKER_OPEN_VEC(W));                                        \
-    vec_clear(NDFS_WORKER_PATH_VEC(W));                                        \
+    NDFS_WORKER_OPEN_VEC(W)->clear();                                        \
+    NDFS_WORKER_PATH_VEC(W)->clear();                                        \
   } while (0)
 
 void ndfs_worker_init(LmnWorker *w) {
@@ -509,8 +509,8 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
             mc_found_invalid_path(wp, v);
           }
           st_clear(OWCTY_WORKER_HASHSET(w));
-          vec_clear(&search);
-          vec_clear(&path);
+          search.clear();
+          path.clear();
         }
       }
 
@@ -915,8 +915,8 @@ void bledge_start(LmnWorker *w) {
         }
 
         st_clear(BLE_WORKER_HASHSET(w));
-        vec_clear(BLE_WORKER_PATH_VEC(w));
-        vec_clear(BLE_WORKER_SEARCH_VEC(w));
+        BLE_WORKER_PATH_VEC(w)->clear();
+        BLE_WORKER_SEARCH_VEC(w)->clear();
       }
     }
   }
@@ -991,8 +991,8 @@ struct McSearchMAPNDFS {
 #define MAPNDFS_WORKER_PATH_VEC(W) (MAPNDFS_WORKER_OBJ(W)->path)
 #define MAPNDFS_WORKER_OBJ_CLEAR(W)                                            \
   do {                                                                         \
-    vec_clear(MAPNDFS_WORKER_OPEN_VEC(W));                                     \
-    vec_clear(MAPNDFS_WORKER_PATH_VEC(W));                                     \
+    MAPNDFS_WORKER_OPEN_VEC(W)->clear();                                     \
+    MAPNDFS_WORKER_PATH_VEC(W)->clear();                                     \
   } while (0)
 
 void mapndfs_worker_init(LmnWorker *w) {

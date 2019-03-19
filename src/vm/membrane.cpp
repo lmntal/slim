@@ -2848,7 +2848,7 @@ static void mem_mk_sorted_children(Vector *vec) {
       }
     }
   }
-  vec_clear(vec);
+  vec->clear();
   while (!vec_is_empty(v_mems_tmp)) {
     vec->push(v_mems_tmp->pop());
   }
@@ -2994,8 +2994,8 @@ static inline BOOL mem_equals_molecules_inner(Vector *v_log1,
       LmnSymbolAtomRef a2 = (LmnSymbolAtomRef)v_atoms_not_checked2->get(i - 1);
       /* 膜2内から根a1に対応するアトムの候補を取得 (注:ここの実装にVector.pop()は使用不可!!) */
 
-      vec_clear(v_log1);
-      vec_clear(v_log2);
+      v_log1->clear();
+      v_log2->clear();
       memset(v_log1->tbl, 0, sizeof(vec_data_t) * vec_cap(v_log1));
       memset(v_log2->tbl, 0, sizeof(vec_data_t) * vec_cap(v_log2));
 
@@ -3291,7 +3291,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
         }
       }
     }
-    vec_clear(vec);
+    vec->clear();
     /* 構造体内のアトム数が「多い順」にソート */
     while (!vec_is_empty(v_tmp)) {
       vec->push(v_tmp->pop());
@@ -3539,7 +3539,7 @@ void lmn_mem_clearrules(LmnMembraneRef src) {
       delete rs;
     }
   }
-  vec_clear(&src->rulesets);
+  src->rulesets.clear();
 }
 
 /* シンボルアトムatom0と、シンボルorデータアトムatom1の間にリンクを張る。*/

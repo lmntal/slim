@@ -2178,7 +2178,7 @@ static void dmem_commit(struct MemDelta *d) {
     d->org_rulesets = vec_copy(lmn_mem_get_rulesets(d->mem));
 
     if (d->ruleset_removed) {
-      vec_clear(lmn_mem_get_rulesets(d->mem));
+      lmn_mem_get_rulesets(d->mem)->clear();
     }
 
     if (d->new_rulesets) {
@@ -2224,7 +2224,7 @@ static void dmem_revert(struct MemDelta *d) {
   lmn_mem_data_atom_sub(d->mem, d->data_atom_diff);
 
   if (d->ruleset_removed || d->new_rulesets) {
-    vec_clear(lmn_mem_get_rulesets(d->mem));
+    lmn_mem_get_rulesets(d->mem)->clear();
     for (i = 0; i < vec_num(d->org_rulesets); i++) {
       lmn_mem_add_ruleset(d->mem, (LmnRuleSetRef)d->org_rulesets->get(i));
     }

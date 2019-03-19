@@ -242,7 +242,7 @@ static void finalize_ample(BOOL org_f) {
   st_foreach(mc_por.states, (st_iter_func)destroy_tmp_state_graph,
              (LmnWord)org_f);
   queue_clear(mc_por.queue);
-  vec_clear(mc_por.ample_candidate);
+  mc_por.ample_candidate->clear();
   RC_CLEAR_DATA(mc_por.rc.get());
   mc_por.root = NULL;
 }
@@ -287,7 +287,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         /* 選択した遷移はC2もしくはC3のいずれかに反したため，次の候補を検査する
          */
         unset_ample(transition_next_state(t));
-        vec_clear(mc_por.ample_candidate);
+        mc_por.ample_candidate->clear();
       }
     }
 
