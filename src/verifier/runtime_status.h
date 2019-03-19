@@ -135,6 +135,7 @@ struct MCProfiler2 {
   unsigned long statespace_space, transition_space, state_space, binstr_space,
       membrane_space;
   st_table_t hashes;
+  MCProfiler2();
 };
 
 struct MCProfiler3 {

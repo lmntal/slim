@@ -42,7 +42,6 @@
 #include "statespace.h"
 #include "vm/vm.h"
 
-static void mc_profiler2_init(MCProfiler2 *p);
 static void mc_profiler2_destroy(MCProfiler2 *p);
 static void mc_profiler2_makeup_report(MCProfiler2 *total);
 static void mc_profiler3_init(MCProfiler3 *p);
@@ -96,19 +95,19 @@ static int comp_prule_id_greater_f(const void *a_, const void *b_) {
 /** ----------------------------
  *  MC Profiler
  */
-static void mc_profiler2_init(MCProfiler2 *p) {
-  p->accept_num = 0;
-  p->invalid_end_num = 0;
-  p->mhash_num = 0;
-  p->rehashed_num = 0;
-  p->midhash_num = 0;
-  p->transition_num = 0;
-  p->statespace_space = 0;
-  p->transition_space = 0;
-  p->state_space = 0;
-  p->binstr_space = 0;
-  p->membrane_space = 0;
-  p->hashes = st_init_numtable();
+MCProfiler2::MCProfiler2() {
+  this->accept_num = 0;
+  this->invalid_end_num = 0;
+  this->mhash_num = 0;
+  this->rehashed_num = 0;
+  this->midhash_num = 0;
+  this->transition_num = 0;
+  this->statespace_space = 0;
+  this->transition_space = 0;
+  this->state_space = 0;
+  this->binstr_space = 0;
+  this->membrane_space = 0;
+  this->hashes = st_init_numtable();
 }
 
 static void mc_profiler2_destroy(MCProfiler2 *p) {
@@ -425,7 +424,7 @@ void profile_statespace(LmnWorkerGroup *wp) {
 
     lmn_prof.lv2 = LMN_NALLOC(MCProfiler2, lmn_prof.thread_num);
     for (i = 0; i < lmn_prof.thread_num; i++) {
-      mc_profiler2_init(&lmn_prof.lv2[i]);
+      lmn_prof.lv2[i] = MCProfiler2();
     }
     for (auto ptr : worker_states(w)->all_states())
       profile_state_f(ptr, (LmnWord)worker_states(w));
