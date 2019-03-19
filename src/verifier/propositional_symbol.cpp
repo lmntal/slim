@@ -109,6 +109,19 @@ static char *rule_str_for_compile(const char *head, const char *guard,
   return buf;
 }
 
+BOOL Proposition::eval(LmnMembraneRef mem) {
+  LmnReactCxt rc(REACT_PROPERTY);
+  BOOL b;
+
+  if (!this)
+    return FALSE;
+
+  RC_SET_GROOT_MEM(&rc, mem);
+  b = react_rule(&rc, mem, this->get_rule());
+
+  return b;
+}
+
 /*----------------------------------------------------------------------
  * propositional symbol definition
  */
@@ -159,19 +172,6 @@ void propsym_dump(SymbolDefinitionRef s) {
 
 PropositionRef propsym_get_proposition(SymbolDefinitionRef s) {
   return s ? s->prop : NULL;
-}
-
-BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
-  LmnReactCxt rc(REACT_PROPERTY);
-  BOOL b;
-
-  if (!prop)
-    return FALSE;
-
-  RC_SET_GROOT_MEM(&rc, mem);
-  b = react_rule(&rc, mem, proposition_get_rule(prop));
-
-  return b;
 }
 
 /*----------------------------------------------------------------------

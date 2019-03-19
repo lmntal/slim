@@ -75,9 +75,8 @@ struct Proposition {
   Proposition(const char *, const char *, const char *body);
   ~Proposition();
   LmnRuleRef get_rule();
+  BOOL eval(LmnMembraneRef);
 };
-
-BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem);
 
 /* propositional symbol definitions */
 

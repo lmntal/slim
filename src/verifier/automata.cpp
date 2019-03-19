@@ -503,8 +503,7 @@ BOOL eval_formula(LmnMembraneRef mem, Vector *prop_defs, PLFormulaRef f) {
   case N_FALSE:
     return FALSE;
   case N_SYMBOL:
-    return proposition_eval(
-        propsym_get_proposition(propsyms_get(prop_defs, f->sym_id)), mem);
+    return propsym_get_proposition(propsyms_get(prop_defs, f->sym_id))->eval(mem);
   default:
     lmn_fatal("implementation error");
   }
