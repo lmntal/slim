@@ -73,6 +73,7 @@ struct Queue {
   void enqueue_push_head(LmnWord v);
   LmnWord dequeue();
   BOOL is_empty();
+  void q_lock(BOOL is_enq);
 
 };
 
