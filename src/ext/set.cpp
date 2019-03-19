@@ -488,7 +488,7 @@ void cb_set_union(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
              (st_data_t)a1);
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a2, t2,
                   LMN_ATTR_GET_VALUE(t2));
-  // delete (LmnSetRef)a0;
+  delete (LmnSetRef)a0;
 }
 
 /**
