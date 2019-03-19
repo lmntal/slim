@@ -228,10 +228,10 @@ void time_profiler_finish(TimeProfiler *p);
 #ifdef PROFILE
 #define profile_backtrack()                                                    \
   if (lmn_prof.cur && !lmn_env.findatom_parallel_mode)                         \
-  (lmn_prof.cur->ruleprofiler_incr_backtrack())
+  (lmn_prof.cur->incr_backtrack())
 #define profile_backtrack_add(NUM)                                             \
   if (lmn_prof.cur)                                                            \
-  (lmn_prof.cur->ruleprofiler_add_backtrack(NUM))
+  (lmn_prof.cur->add_backtrack(NUM))
 #define profile_start_trial()                                                  \
   if (lmn_prof.cur)                                                            \
   time_profiler_start(lmn_prof.cur->get_trial_address())
@@ -240,7 +240,7 @@ void time_profiler_finish(TimeProfiler *p);
   time_profiler_finish(lmn_prof.cur->get_trial_address())
 #define profile_apply()                                                        \
   if (lmn_prof.cur)                                                            \
-  (lmn_prof.cur->ruleprofiler_incr_apply())
+  (lmn_prof.cur->incr_apply())
 #else
 #define profile_backtrack()
 #define profile_backtrack_add(NUM)
