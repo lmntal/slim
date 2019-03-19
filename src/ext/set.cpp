@@ -537,7 +537,7 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
         mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
-    // delete (LmnSetRef)a0;
+    delete (LmnSetRef)a0;
   }
 }
 
