@@ -227,10 +227,10 @@ void inline AutomataState::set_scc(AutomataSCC *scc) {
 }
 
 BYTE AutomataState::scc_type() {
-  return atmscc_type(atmstate_scc(this));
+  return atmscc_type(this->get_scc());
 }
 
-AutomataSCC inline *atmstate_scc(AutomataStateRef s) { return s->scc; }
+AutomataSCC inline *AutomataState::get_scc() { return this->scc; }
 
 /*----------------------------------------------------------------------
  * SCC analysis for property automata
@@ -309,7 +309,7 @@ void print_property_automata(AutomataRef a) {
     AutomataStateRef s = a->get_state(i);
     fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
             (unsigned long)s->get_id(), a->state_name(i),
-            atmscc_id(atmstate_scc(s)), atmscc_name(atmstate_scc(s)));
+            atmscc_id(s->get_scc()), atmscc_name(s->get_scc()));
   }
 
   fprintf(stdout, "\nTransitions\n");
@@ -351,7 +351,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
     }
   }
 
-  if (!atmstate_scc(s)) { /* entering 2nd dfs */
+  if (!s->get_scc()) { /* entering 2nd dfs */
     AutomataSCC *scc = atmscc_make();
     atmscc_issue_id(scc);
     s->set_scc(scc);
@@ -375,8 +375,8 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
   for (i = 0; i < n; i++) {
     AutomataStateRef succ = a->get_state(
         (unsigned int)atm_transition_next(s->get_transition(i)));
-    if (!atmstate_scc(succ)) {
-      AutomataSCC *scc = atmstate_scc(s);
+    if (!succ->get_scc()) {
+      AutomataSCC *scc = s->get_scc();
       if ((!succ->get_is_accept() && atmscc_type(scc) == SCC_TYPE_FULLY) ||
           (succ->get_is_accept() &&
            atmscc_type(scc) == SCC_TYPE_NON_ACCEPT)) {
