@@ -71,6 +71,7 @@ struct Queue {
   pthread_mutex_t enq_mtx, deq_mtx;
   void enqueue(LmnWord v);
   void enqueue_push_head(LmnWord v);
+  LmnWord dequeue();
 
 };
 
@@ -86,14 +87,12 @@ struct Queue {
 
 Queue *make_parallel_queue(BOOL lock_type);
 BOOL is_empty_queue(Queue *q);
-LmnWord dequeue(Queue *q);
-
 static inline unsigned long queue_entry_num(Queue *q) {
   return q->enq_num - q->deq_num;
 }
 
 static inline void queue_clear(Queue *q) {
-  while (dequeue(q))
+  while (q->dequeue())
     ;
 }
 

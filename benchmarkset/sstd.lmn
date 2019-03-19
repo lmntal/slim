@@ -17,7 +17,7 @@
     }
     else {
       THREAD_SET_ACTIVE(th);                     // line(5)
-      if((s = (State *)dequeue(SS_THREAD_WQUEUE(th)))) {
+      if((s = (State *)SS_THREAD_WQUEUE(th)->dequeue())) {
         vec_push(my_stack, (LmnWord)s);
         ss_nd_loop(th, my_stack);                // line(6)
         vec_clear(my_stack);

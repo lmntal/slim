@@ -158,30 +158,32 @@ void Queue::enqueue_push_head(LmnWord v) {
 
 /* Queueから要素をdequeueする.
  * Queueが空の場合, 0を返す */
-LmnWord dequeue(Queue *q) {
+LmnWord Queue::dequeue() {
   LmnWord ret = 0;
-  if (q->lock) {
-    q_lock(q, Q_DEQ);
-    /*q_lock(q,Q_ENQ);*/
+  if (this->lock) {
+    q_lock(this, Q_DEQ);
+    /*q_lock(this,Q_ENQ);*/
   }
-  if (!is_empty_queue(q)) {
+  if (!is_empty_queue(this)) {
     Node *sentinel, *next;
-    sentinel = q->head;
+    sentinel = this->head;
     next = sentinel->next;
     if (next) {
       ret = next->v;
       next->v = 0;
-      q->head = next;
+      this->head = next;
       free(sentinel);
-      q->deq_num++;
+      this->deq_num++;
     }
   }
-  if (q->lock) {
+  if (this->lock) {
     /*q_unlock(q, Q_ENQ);*/
-    q_unlock(q, Q_DEQ);
+    q_unlock(this, Q_DEQ);
   }
   return ret;
 }
+
+
 
 /* キューqが空なら真を返す.*/
 BOOL is_empty_queue(Queue *q) {

@@ -411,7 +411,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
     State *s;
     unsigned int i, cnt;
 
-    s = (State *)dequeue(primary);
+    s = (State *)primary->dequeue();
     if (!s) {
       continue;
     } else if (STATE_PROP_SCC_N(w, s, ss->automata()) ||
@@ -489,7 +489,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
       vec_init(&search, 64);
       vec_init(&path, 32);
       while (!is_empty_queue(OWCTY_WORKER_AQ1(w))) {
-        State *seed = (State *)dequeue(OWCTY_WORKER_AQ1(w));
+        State *seed = (State *)OWCTY_WORKER_AQ1(w)->dequeue();
 
         if (state_is_end(a, seed)) {
           mc_found_invalid_state(wp, seed);
@@ -616,7 +616,7 @@ void map_start(LmnWorker *w, State *u) {
     if (worker_use_weak_map(w)) {
       u = NULL;
     } else {
-      u = (State *)dequeue(MAP_WORKER_PROPAG_G(w));
+      u = (State *)MAP_WORKER_PROPAG_G(w)->dequeue();
     }
   } while (u);
 
@@ -630,7 +630,7 @@ void map_iteration_start(LmnWorker *w) {
   lmn_workers_synchronization(w, NULL);
 
   while (!is_empty_queue(MAP_WORKER_DEL_G(w))) {
-    State *seed = (State *)dequeue(MAP_WORKER_DEL_G(w));
+    State *seed = (State *)MAP_WORKER_DEL_G(w)->dequeue();
     if (seed && !smap_is_not_delete(seed)) {
       smap_set_deleted(seed);
       map_start(w, seed);
@@ -902,7 +902,7 @@ void bledge_start(LmnWorker *w) {
     State *u;
     unsigned int i;
 
-    if (!(u = (State *)dequeue(BLE_WORKER_LAYER_Q(w))))
+    if (!(u = (State *)BLE_WORKER_LAYER_Q(w)->dequeue()))
       continue;
     for (i = 0; i < u->successor_num; i++) {
       State *v = state_succ_state(u, i);

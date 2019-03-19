@@ -211,7 +211,7 @@ static inline LmnWord dfs_work_stealing(LmnWorker *w) {
     if (worker_is_active(dst) && !is_empty_queue(DFS_WORKER_QUEUE(dst))) {
       worker_set_active(w);
       worker_set_stealer(w);
-      return dequeue(DFS_WORKER_QUEUE(dst));
+      return DFS_WORKER_QUEUE(dst)->dequeue();
     } else {
       dst = worker_next(dst);
     }
@@ -261,7 +261,7 @@ static inline LmnWord mapdfs_work_stealing(LmnWorker *w) {
     if (worker_is_active(dst) && !is_empty_queue(DFS_WORKER_QUEUE(dst))) {
       worker_set_active(w);
       worker_set_stealer(w);
-      return dequeue(DFS_WORKER_QUEUE(dst));
+      return DFS_WORKER_QUEUE(dst)->dequeue();
     } else {
       dst = worker_next_generator(dst);
     }
@@ -338,7 +338,7 @@ void mcdfs_start(LmnWorker *w) {
         */
       } else {
         // worker_set_active(w);
-        if (s || (s = (State *)dequeue(DFS_WORKER_QUEUE(w)))) {
+        if (s || (s = (State *)DFS_WORKER_QUEUE(w)->dequeue())) {
           EXECUTE_PROFILE_START();
           {
             put_stack(&DFS_WORKER_STACK(w), s);
@@ -432,7 +432,7 @@ void dfs_start(LmnWorker *w) {
                  queue_entry_num(DFS_WORKER_QUEUE(w)));
         }
 #endif
-        if (s || (s = (State *)dequeue(DFS_WORKER_QUEUE(w)))) {
+        if (s || (s = (State *)DFS_WORKER_QUEUE(w)->dequeue())) {
           EXECUTE_PROFILE_START();
 #ifdef KWBT_OPT
           if (lmn_env.opt_mode != OPT_NONE) {
@@ -1014,7 +1014,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
     if (workers_are_exit(wp))
       return;
 
-    s = (State *)dequeue(BFS_WORKER_Q_CUR(w));
+    s = (State *)BFS_WORKER_Q_CUR(w)->dequeue();
 
     if (!s)
       return; /* dequeueはNULLを返すことがある */
