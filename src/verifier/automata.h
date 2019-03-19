@@ -110,6 +110,7 @@ struct AutomataTransition {
   PLFormulaRef f; /* 実際は命題論理式 */
 
   AutomataTransition(unsigned int next, PLFormulaRef f);
+  ~AutomataTransition();
 };
 
 enum SCC_ACCEPTING_TYPE {
