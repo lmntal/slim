@@ -326,10 +326,10 @@ static void owcty_env_init(LmnWorker *w) {
                   OWCTY_WORKER_AQ1(w)->entry_num()));
 }
 
-struct DegreeCnt {
-  unsigned int in, out;
-  LmnWord *ins, *outs;
-};
+// struct DegreeCnt {
+//   unsigned int in, out;
+//   LmnWord *ins, *outs;
+// };
 
 void owcty_start(LmnWorker *w) {
   /* st_tableにも, elock, wlockを組込む. */

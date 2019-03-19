@@ -590,7 +590,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
   if (mc_use_delta(f)) {
     /* 差分構造が存在しないstruct MemDeltaRootを登録する. */
-    mc_react_cxt_add_mem_delta(rc, dmem_root_make(mem, NULL, 0), NULL);
+    mc_react_cxt_add_mem_delta(rc, new MemDeltaRoot(mem, NULL, 0), NULL);
     new_s = new State();
   } else {
     /* 遷移元状態sをdeep copyする.

@@ -132,7 +132,7 @@ typedef int16_t LmnRulesetId;
 typedef uint32_t LmnSubInstrSize;
 
 // typedef struct LmnMembrane LmnMembrane;
-typedef struct DeltaMembrane DeltaMembrane;
+// typedef struct DeltaMembrane DeltaMembrane;
 
 #if LMN_WORD_BYTES == 4
 #define LMN_WORD_SHIFT 2

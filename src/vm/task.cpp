@@ -1081,7 +1081,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         /** >>>>>>>> enable delta-membrane <<<<<<< **/
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         struct MemDeltaRoot *d =
-            dmem_root_make(RC_GROOT_MEM(rc), rule, env_next_id());
+            new MemDeltaRoot(RC_GROOT_MEM(rc), rule, env_next_id());
         RC_ND_SET_MEM_DELTA_ROOT(rc, d);
 
         /* dmem_commit/revertとの整合性を保つため,
@@ -1097,7 +1097,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
         if (RC_MC_USE_DPOR(rc)) {
           if (!dpor_transition_gen_RHS(RC_POR_DATA(rc), d, rc)) {
-            dmem_root_free(d);
+            delete d;
           } else {
             mc_react_cxt_add_mem_delta(rc, d, rule);
           }
@@ -4252,7 +4252,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         ap = (LmnAtomRef)dmem_root_new_atom(RC_ND_MEM_DELTA_ROOT(rc), f);
       }
 
-      dmem_root_push_atom(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
                           (LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
 
       rc->reg(atomi) = {
@@ -4271,7 +4271,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                                                      (LmnAtomRef)rc->wt(atom2),
                                                      rc->at(atom2)),
                         rc->at(atom2), TT_OTHER};
-      dmem_root_push_atom(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
                           (LmnMembraneRef)rc->wt(memi),
                           (LmnAtomRef)rc->wt(atom1), rc->at(atom1));
       break;
@@ -4329,7 +4329,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, pos2);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      dmem_root_newlink(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembraneRef)rc->wt(memi),
+      RC_ND_MEM_DELTA_ROOT(rc)->newlink((LmnMembraneRef)rc->wt(memi),
                         (LmnAtomRef)rc->wt(atom1), rc->at(atom1), pos1,
                         (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
       break;
@@ -4424,7 +4424,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      dmem_root_remove_atom(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->remove_atom(
                             (LmnMembraneRef)rc->wt(memi),
                             (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
       break;
@@ -4794,7 +4794,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
-      dmem_root_push_atom(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
                           (LmnMembraneRef)rc->wt(memi),
                           (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
       break;

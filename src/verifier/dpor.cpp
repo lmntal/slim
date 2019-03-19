@@ -367,7 +367,7 @@ static void dpor_data_free(McDporData *d) {
   st_free_table(d->delta_tbl);
   for (i = 0; i < vec_num(d->free_deltas); i++) {
     MemDeltaRoot *delt = (MemDeltaRoot *)vec_get(d->free_deltas, i);
-    dmem_root_free(delt);
+    delete delt;
   }
   vec_free(d->free_deltas);
   LMN_FREE(d);
@@ -382,7 +382,7 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
 
   while (!vec_is_empty(d->free_deltas)) {
     MemDeltaRoot *delt = (MemDeltaRoot *)vec_pop(d->free_deltas);
-    dmem_root_free(delt);
+    delete delt;
   }
 
   vec_clear(RC_MEM_DELTAS(rc));
