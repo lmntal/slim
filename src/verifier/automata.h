@@ -80,6 +80,7 @@ struct Automata {
   atmstate_id_t get_init_state();
   void set_init_state(atmstate_id_t);
   unsigned int propsym_to_id(char *prop_name);
+  void analysis();
 };
 
 struct AutomataState {
@@ -122,9 +123,7 @@ enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_NON_ACCEPT = 3U, /* 受理サイクルを含まない */
 };
 
-
 /* SCC analysis of automata */
-void automata_analysis(AutomataRef a);
 AutomataSCC *atmscc_make(void);
 void atmscc_free(AutomataSCC *s);
 const char *atmscc_name(AutomataSCC *s);

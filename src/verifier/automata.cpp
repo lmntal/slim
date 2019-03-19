@@ -230,16 +230,16 @@ AutomataSCC inline *AutomataState::get_scc() { return this->scc; }
  * SCC analysis for property automata
  */
 /* 処理系にロードした性質オートマトンaを解析し, SCC IDなどを追加する */
-void automata_analysis(AutomataRef a) {
+void Automata::analysis() {
   AutomataStateRef init_s;
   BYTE *on_stack_list;
 
-  LMN_ASSERT(vec_num(&a->states) > 0);
-  init_s = a->get_state((unsigned int)a->get_init_state());
-  on_stack_list = LMN_CALLOC(BYTE, vec_num(&a->states));
+  LMN_ASSERT(vec_num(&this->states) > 0);
+  init_s = this->get_state((unsigned int)this->get_init_state());
+  on_stack_list = LMN_CALLOC(BYTE, vec_num(&this->states));
   on_stack_list[(unsigned int)init_s->get_id()] = 0xffU;
 
-  automata_analysis_dfs1(a, on_stack_list, init_s);
+  automata_analysis_dfs1(this, on_stack_list, init_s);
   LMN_FREE(on_stack_list);
 }
 
