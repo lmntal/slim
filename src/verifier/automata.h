@@ -58,7 +58,6 @@ typedef struct AutomataSCC AutomataSCC;
 typedef BYTE atmstate_id_t; /* 性質ラベル(状態)数は256個まで */
 
 struct Automata {
-  /*   atmstate_id_t init_state; */
   atmstate_id_t init_state;
   unsigned int prop_num;
   Vector states; /* Vector of AutomataState */
