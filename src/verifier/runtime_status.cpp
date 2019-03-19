@@ -42,7 +42,6 @@
 #include "statespace.h"
 #include "vm/vm.h"
 
-static void mc_profiler2_destroy(MCProfiler2 *p);
 static void mc_profiler2_makeup_report(MCProfiler2 *total);
 static void mc_profiler3_init(MCProfiler3 *p);
 static void mc_profiler3_destroy(MCProfiler3 *p);
@@ -110,9 +109,9 @@ MCProfiler2::MCProfiler2() {
   this->hashes = st_init_numtable();
 }
 
-static void mc_profiler2_destroy(MCProfiler2 *p) {
-  if (p->hashes) {
-    st_free_table(p->hashes);
+void MCProfiler2::destroy() {
+  if (this->hashes) {
+    st_free_table(this->hashes);
   }
 }
 
@@ -265,7 +264,7 @@ void lmn_profiler_finalize() {
   LMN_FREE(lmn_prof.thread_cpu_time_main);
 
   if (lmn_prof.lv2) {
-    mc_profiler2_destroy(lmn_prof.lv2);
+    lmn_prof.lv2->destroy();
   }
   LMN_FREE(lmn_prof.lv2);
   if (lmn_prof.lv3) {
@@ -435,7 +434,7 @@ void profile_statespace(LmnWorkerGroup *wp) {
     }
     mc_profiler2_makeup_report(total);
     for (i = 0; i < lmn_prof.thread_num; i++) {
-      mc_profiler2_destroy(&lmn_prof.lv2[i]);
+      (&(lmn_prof.lv2[i]))->destroy();
     }
     LMN_FREE(lmn_prof.lv2);
 

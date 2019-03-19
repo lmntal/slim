@@ -136,6 +136,7 @@ struct MCProfiler2 {
       membrane_space;
   st_table_t hashes;
   MCProfiler2();
+  void destroy();
 };
 
 struct MCProfiler3 {
