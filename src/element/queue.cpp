@@ -49,8 +49,6 @@
 #define Q_DEQ 0
 #define Q_ENQ 1
 
-inline static void q_unlock(Queue *q, BOOL rw);
-
 Queue *make_parallel_queue(BOOL lock_type) {
   Queue *q = new Queue();
 
@@ -131,8 +129,8 @@ void Queue::enqueue(LmnWord v) {
   this->enq_num++;
 
   if (this->lock) {
-    /*q_unlock(q, Q_DEQ);*/
-    q_unlock(this, Q_ENQ);
+    /*this->q_unlock(Q_DEQ);*/
+    this->q_unlock(Q_ENQ);
   }
 }
 
@@ -150,8 +148,8 @@ void Queue::enqueue_push_head(LmnWord v) {
   this->enq_num++;
 
   if (this->lock) {
-    q_unlock(this, Q_DEQ);
-    q_unlock(this, Q_ENQ);
+    this->q_unlock(Q_DEQ);
+    this->q_unlock(Q_ENQ);
   }
 }
 
@@ -176,8 +174,8 @@ LmnWord Queue::dequeue() {
     }
   }
   if (this->lock) {
-    /*q_unlock(q, Q_ENQ);*/
-    q_unlock(this, Q_DEQ);
+    /*this->q_unlock(Q_ENQ);*/
+    this->q_unlock(Q_DEQ);
   }
   return ret;
 }
@@ -221,21 +219,21 @@ void Queue::q_lock(BOOL is_enq) {
   }
 }
 
-static inline void q_unlock(Queue *q, BOOL is_enq) {
+void Queue::q_unlock(BOOL is_enq) {
   if (is_enq) { /* for enqueue */
-    switch (q->lock) {
+    switch (this->lock) {
     case LMN_Q_MRMW:
     case LMN_Q_SRMW:
-      lmn_mutex_unlock(&(q->enq_mtx));
+      lmn_mutex_unlock(&(this->enq_mtx));
       break;
     default:
       break;
     }
   } else { /* for dequeue */
-    switch (q->lock) {
+    switch (this->lock) {
     case LMN_Q_MRMW:
     case LMN_Q_MRSW:
-      lmn_mutex_unlock(&(q->deq_mtx));
+      lmn_mutex_unlock(&(this->deq_mtx));
       break;
     default:
       break;

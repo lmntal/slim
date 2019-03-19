@@ -74,6 +74,7 @@ struct Queue {
   LmnWord dequeue();
   BOOL is_empty();
   void q_lock(BOOL is_enq);
+  void q_unlock(BOOL is_enq);
 
 };
 
