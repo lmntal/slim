@@ -332,12 +332,17 @@ LmnWord Deque::peek_tail()const {
   return this->tbl[DEQ_DEC(x, this->cap)];
 }
 
+/* peek (no assertion) */
+LmnWord Deque::get(unsigned int i)const {
+  return this->tbl[i];
+}
+
 /* contains */
 BOOL deq_contains(const Deque *deq, LmnWord keyp) {
   unsigned int i = deq->tail;
   while (i != deq->head) {
     DEQ_DEC(i, deq->cap);
-    if (deq_get(deq, i) == (LmnWord)keyp) {
+    if (deq->get(i) == (LmnWord)keyp) {
       return TRUE;
     }
   }
@@ -353,7 +358,7 @@ Deque *deq_copy(Deque *deq) {
 
   while (i != deq->head) {
     DEQ_DEC(i, deq->cap);
-    new_deq->tbl[i] = deq_get(deq, i);
+    new_deq->tbl[i] = deq->get(i);
   }
 
   new_deq->head = deq->head;
