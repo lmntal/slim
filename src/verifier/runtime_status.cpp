@@ -42,13 +42,6 @@
 #include "statespace.h"
 #include "vm/vm.h"
 
-void ruleprofiler_incr_backtrack(struct RuleProfiler *p) { p->backtrack++; }
-void ruleprofiler_add_backtrack(struct RuleProfiler *p, int num) {
-  p->backtrack += num;
-}
-void ruleprofiler_incr_apply(struct RuleProfiler *p) { p->apply++; }
-TimeProfiler *ruleprofiler_trial(struct RuleProfiler *p) { return &p->trial; }
-
 static void mc_profiler2_init(MCProfiler2 *p);
 static void mc_profiler2_destroy(MCProfiler2 *p);
 static void mc_profiler2_makeup_report(MCProfiler2 *total);
@@ -69,25 +62,26 @@ static const char *profile_time_id_to_name(int type);
 /** ----------------------------
  *  Rule Profiler
  */
-RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRuleRef src) {
-  RuleProfiler *p = LMN_MALLOC(RuleProfiler);
-  time_profiler_init(&p->trial);
-  p->src = src;
-  p->backtrack = 0;
-  p->apply = 0;
-  p->ref_rs_id = id;
-
-  return p;
+RuleProfiler::RuleProfiler(LmnRulesetId id, LmnRuleRef src) {
+  time_profiler_init(this->get_trial_address());
+  this->src = src;
+  this->backtrack = 0;
+  this->apply = 0;
+  this->ref_rs_id = id;
 }
 
-void rule_profiler_free(RuleProfiler *p) {
-  time_profiler_destroy(&p->trial);
-  LMN_FREE(p);
+RuleProfiler::~RuleProfiler() {
+  time_profiler_destroy(this->get_trial_address());
 }
+
+void RuleProfiler::incr_backtrack() { this->backtrack++; }
+void RuleProfiler::add_backtrack(int num) { this->backtrack += num; }
+void RuleProfiler::incr_apply() { this->apply++; }
+TimeProfiler *RuleProfiler::get_trial_address() { return &trial; }
 
 static int rule_profiler_free_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
   RuleProfiler *p = (RuleProfiler *)_v;
-  rule_profiler_free(p);
+  delete p;
   return ST_CONTINUE;
 }
 
@@ -376,7 +370,7 @@ void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r) {
   if (st_lookup(lmn_prof.prules, (st_data_t)r, &t)) {
     lmn_prof.cur = (RuleProfiler *)t;
   } else {
-    RuleProfiler *p = rule_profiler_make(src->id, r);
+    RuleProfiler *p = new RuleProfiler(src->id, r);
     lmn_prof.cur = p;
     st_add_direct(lmn_prof.prules, (st_data_t)r, (st_data_t)p);
   }
@@ -732,8 +726,8 @@ void dump_profile_data(FILE *f) {
         struct Vector v;
         unsigned int i;
 
-        r_total = rule_profiler_make(ANONYMOUS, NULL);
-        r_others = rule_profiler_make(ANONYMOUS, NULL);
+        r_total = new RuleProfiler(ANONYMOUS, NULL);
+        r_others = new RuleProfiler(ANONYMOUS, NULL);
 
         vec_init(&v, st_num(lmn_prof.prules));
         st_get_entries_value(lmn_prof.prules, &v);
@@ -777,7 +771,7 @@ void dump_profile_data(FILE *f) {
                 r_total->trial.total_time / 1e-6);
 
         vec_destroy(&v);
-        rule_profiler_free(r_others);
+        delete r_others;
         fprintf(
             f,
             "============================================================\n");

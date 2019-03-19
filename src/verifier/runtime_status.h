@@ -150,6 +150,12 @@ struct RuleProfiler {
   unsigned long backtrack;
   TimeProfiler trial;
   LmnRuleRef src;
+  RuleProfiler(LmnRulesetId id, LmnRuleRef src);
+  ~RuleProfiler();
+  void incr_backtrack();
+  void add_backtrack(int num);
+  void incr_apply();
+  TimeProfiler *get_trial_address();
 };
 
 struct LmnProfiler {
@@ -188,10 +194,6 @@ struct LmnProfiler {
 };
 
 /* RuleProfiler Interface */
-void ruleprofiler_incr_backtrack(struct RuleProfiler *p);
-void ruleprofiler_add_backtrack(struct RuleProfiler *p, int num);
-void ruleprofiler_incr_apply(struct RuleProfiler *p);
-TimeProfiler *ruleprofiler_trial(struct RuleProfiler *p);
 
 extern struct LmnProfiler lmn_prof;
 
@@ -221,19 +223,19 @@ void time_profiler_finish(TimeProfiler *p);
 #ifdef PROFILE
 #define profile_backtrack()                                                    \
   if (lmn_prof.cur && !lmn_env.findatom_parallel_mode)                         \
-  (ruleprofiler_incr_backtrack(lmn_prof.cur))
+  (lmn_prof.cur->ruleprofiler_incr_backtrack())
 #define profile_backtrack_add(NUM)                                             \
   if (lmn_prof.cur)                                                            \
-  (ruleprofiler_add_backtrack(lmn_prof.cur, NUM))
+  (lmn_prof.cur->ruleprofiler_add_backtrack(NUM))
 #define profile_start_trial()                                                  \
   if (lmn_prof.cur)                                                            \
-  time_profiler_start(ruleprofiler_trial(lmn_prof.cur))
+  time_profiler_start(lmn_prof.cur->get_trial_address())
 #define profile_finish_trial()                                                 \
   if (lmn_prof.cur)                                                            \
-  time_profiler_finish(ruleprofiler_trial(lmn_prof.cur))
+  time_profiler_finish(lmn_prof.cur->get_trial_address())
 #define profile_apply()                                                        \
   if (lmn_prof.cur)                                                            \
-  (ruleprofiler_incr_apply(lmn_prof.cur))
+  (lmn_prof.cur->ruleprofiler_incr_apply())
 #else
 #define profile_backtrack()
 #define profile_backtrack_add(NUM)
