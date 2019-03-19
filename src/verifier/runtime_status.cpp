@@ -47,8 +47,6 @@ static void mc_profiler3_destroy(MCProfiler3 *p);
 static void mc_profiler3_makeup_report(MCProfiler3 *total);
 static inline void memory_profiler_init(MemoryProfiler *p);
 static inline void memory_profiler_destroy(MemoryProfiler *p);
-static inline void peak_counter_init(PeakCounter *p);
-static inline void peak_counter_destroy(PeakCounter *p) LMN_UNUSED;
 static void profile_state_f(State *s, LmnWord arg);
 static const char *profile_space_id_to_name(int type);
 static const char *profile_counter_id_to_name(int type);
@@ -188,18 +186,16 @@ TimeProfiler::TimeProfiler() {
 }
 
 static inline void memory_profiler_init(MemoryProfiler *p) {
-  peak_counter_init(&p->num);
-  peak_counter_init(&p->space);
+  p->num = PeakCounter();
+  p->space = PeakCounter();
 }
 
 static inline void memory_profiler_destroy(MemoryProfiler *c) {}
 
-static inline void peak_counter_init(PeakCounter *p) {
-  p->cur = 0;
-  p->peak = 0;
+PeakCounter::PeakCounter() {
+  cur = 0;
+  peak = 0;
 }
-
-static inline void peak_counter_destroy(PeakCounter *p) {}
 
 void lmn_profiler_init(unsigned int nthreads) {
   unsigned int i;
@@ -325,18 +321,15 @@ void TimeProfiler::start() {
 void TimeProfiler::finish() { total_time += get_cpu_time() - tmp_start; }
 
 void profile_start_timer(int type) {
-  TimeProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].times[type]);
-  p->start();
+  lmn_prof.lv3[env_my_thread_id()].times[type].start();
 }
 
 void profile_finish_timer(int type) {
-  TimeProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].times[type]);
-  p->finish();
+  lmn_prof.lv3[env_my_thread_id()].times[type].finish();
 }
 
 void profile_countup(int type) {
-  MCProfiler3 *p = &lmn_prof.lv3[env_my_thread_id()];
-  p->counters[type]++;
+  lmn_prof.lv3[env_my_thread_id()].counters[type]++;
 }
 
 void profile_count_add(int type, unsigned long num) {

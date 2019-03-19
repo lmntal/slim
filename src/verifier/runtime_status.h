@@ -110,6 +110,8 @@ enum PROFILE_HTABLE_COUNT {
 struct PeakCounter {
   long cur;  /* 現在の数 */
   long peak; /* ピーク値 */
+  PeakCounter();
+  ~PeakCounter(){};
 };
 
 struct MemoryProfiler {
