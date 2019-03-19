@@ -900,8 +900,8 @@ void bfs_worker_finalize(LmnWorker *w) {
 
 /* BFS Queueが空の場合に真を返す */
 BOOL bfs_worker_check(LmnWorker *w) {
-  return is_empty_queue(BFS_WORKER_Q_CUR(w)) &&
-         is_empty_queue(BFS_WORKER_Q_NXT(w));
+  return BFS_WORKER_Q_CUR(w)->is_empty() &&
+         BFS_WORKER_Q_NXT(w)->is_empty();
 }
 
 /* WorkerにBFSを割り当てる */
@@ -945,7 +945,7 @@ void bfs_start(LmnWorker *w) {
       if (BLEDGE_COND(w))
         bledge_start(w);
 
-      if (d_lim < ++d || is_empty_queue(BFS_WORKER_Q_NXT(w))) {
+      if (d_lim < ++d || BFS_WORKER_Q_NXT(w)->is_empty()) {
         /* 次のLayerが空の場合は探索終了 */
         /* 指定した制限の深さに到達した場合も探索を打ち切る */
         break;
@@ -956,7 +956,7 @@ void bfs_start(LmnWorker *w) {
   } else if (!worker_use_lsync(w)) {
     /** >>>> 並列(Layer非同期) >>>> */
     while (!wp->mc_exit) {
-      if (!is_empty_queue(BFS_WORKER_Q_CUR(w))) {
+      if (!BFS_WORKER_Q_CUR(w)->is_empty()) {
         EXECUTE_PROFILE_START();
         worker_set_active(w);
         bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
@@ -976,7 +976,7 @@ void bfs_start(LmnWorker *w) {
     /** >>>> 並列(Layer同期) >>>> */
     worker_set_idle(w);
     while (TRUE) {
-      if (!is_empty_queue(BFS_WORKER_Q_CUR(w))) {
+      if (!BFS_WORKER_Q_CUR(w)->is_empty()) {
         /**/ EXECUTE_PROFILE_START();
         worker_set_active(w);
         bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
@@ -1005,8 +1005,8 @@ void bfs_start(LmnWorker *w) {
 static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
                             Vector *psyms) {
   LmnWorkerGroup *wp = worker_group(w);
-  while (!is_empty_queue(
-      BFS_WORKER_Q_CUR(w))) { /* # of states@current layer > 0 */
+  while (!BFS_WORKER_Q_CUR(w)->is_empty()) {
+                 /* # of states@current layer > 0 */
     State *s;
     AutomataStateRef p_s;
     unsigned int i;

@@ -87,7 +87,6 @@ struct Queue {
 
 
 Queue *make_parallel_queue(BOOL lock_type);
-BOOL is_empty_queue(Queue *q);
 static inline unsigned long queue_entry_num(Queue *q) {
   return q->enq_num - q->deq_num;
 }

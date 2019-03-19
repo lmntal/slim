@@ -189,11 +189,6 @@ LmnWord Queue::dequeue() {
 BOOL Queue::is_empty() {
   return (this->head == this->tail) && (this->enq_num == this->deq_num);
 }
-
-BOOL is_empty_queue(Queue *q) {
-  return (q->head == q->tail) && (q->enq_num == q->deq_num);
-}
-
 /** ----
  *  static functions
  */
