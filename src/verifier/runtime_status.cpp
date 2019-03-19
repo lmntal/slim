@@ -115,23 +115,25 @@ void MCProfiler2::destroy() {
   }
 }
 
-static void mc_profiler2_makeup_report(MCProfiler2 *total) {
-  unsigned int i;
-  memset(total, 0U, sizeof(struct MCProfiler2));
-  for (i = 0; i < lmn_prof.thread_num; i++) {
-    MCProfiler2 *p = &lmn_prof.lv2[i];
-    total->accept_num += p->accept_num;
-    total->invalid_end_num += p->invalid_end_num;
-    total->mhash_num += p->mhash_num;
-    total->rehashed_num += p->rehashed_num;
-    total->midhash_num += p->midhash_num;
-    total->transition_num += p->transition_num;
-    total->statespace_space += p->statespace_space;
-    total->transition_space += p->transition_space;
-    total->state_space += p->state_space;
-    total->binstr_space += p->binstr_space;
-    total->membrane_space += p->membrane_space;
+void MCProfiler2::makeup_report() {
+  memset(this, 0U, sizeof(struct MCProfiler2));
+  for (unsigned int i = 0; i < lmn_prof.thread_num; i++) {
+    this->accept_num += lmn_prof.lv2[i].accept_num;
+    this->invalid_end_num += lmn_prof.lv2[i].invalid_end_num;
+    this->mhash_num += lmn_prof.lv2[i].mhash_num;
+    this->rehashed_num += lmn_prof.lv2[i].rehashed_num;
+    this->midhash_num += lmn_prof.lv2[i].midhash_num;
+    this->transition_num += lmn_prof.lv2[i].transition_num;
+    this->statespace_space += lmn_prof.lv2[i].statespace_space;
+    this->transition_space += lmn_prof.lv2[i].transition_space;
+    this->state_space += lmn_prof.lv2[i].state_space;
+    this->binstr_space += lmn_prof.lv2[i].binstr_space;
+    this->membrane_space += lmn_prof.lv2[i].membrane_space;
   }
+}
+
+static void mc_profiler2_makeup_report(MCProfiler2 *total) {
+  total->makeup_report();
 }
 
 static void mc_profiler3_init(MCProfiler3 *p) {

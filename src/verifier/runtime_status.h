@@ -137,6 +137,7 @@ struct MCProfiler2 {
   st_table_t hashes;
   MCProfiler2();
   void destroy();
+  void makeup_report();
 };
 
 struct MCProfiler3 {
