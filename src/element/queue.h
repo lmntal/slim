@@ -69,6 +69,8 @@ struct Queue {
   BOOL lock;
   unsigned long enq_num, deq_num;
   pthread_mutex_t enq_mtx, deq_mtx;
+  void enqueue(LmnWord v);
+
 };
 
 /* single dequeue(reader), single enqueue(writer) */
@@ -83,7 +85,6 @@ struct Queue {
 
 Queue *make_parallel_queue(BOOL lock_type);
 BOOL is_empty_queue(Queue *q);
-void enqueue(Queue *q, LmnWord v);
 void enqueue_push_head(Queue *q, LmnWord v);
 LmnWord dequeue(Queue *q);
 

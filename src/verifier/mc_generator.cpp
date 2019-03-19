@@ -230,7 +230,7 @@ static inline void dfs_handoff_all_task(LmnWorker *me, Vector *expands) {
 
   n = vec_num(expands);
   for (i = 0; i < n; i++) {
-    enqueue(DFS_WORKER_QUEUE(rn), vec_get(expands, i));
+    DFS_WORKER_QUEUE(rn)->enqueue(vec_get(expands, i));
   }
 
   ADD_OPEN_PROFILE(sizeof(Node) * n);
@@ -242,7 +242,7 @@ static inline void dfs_handoff_task(LmnWorker *me, LmnWord task) {
   if (worker_id(me) > worker_id(rn)) {
     worker_set_black(me);
   }
-  enqueue(DFS_WORKER_QUEUE(rn), task);
+  DFS_WORKER_QUEUE(rn)->enqueue(task);
 
   ADD_OPEN_PROFILE(sizeof(Node));
 }
@@ -281,7 +281,7 @@ static inline void mapdfs_handoff_all_task(LmnWorker *me, Vector *expands) {
 
   n = vec_num(expands);
   for (i = 0; i < n; i++) {
-    enqueue(DFS_WORKER_QUEUE(rn), vec_get(expands, i));
+    DFS_WORKER_QUEUE(rn)->enqueue(vec_get(expands, i));
     // enqueue_push_head(DFS_WORKER_QUEUE(rn), vec_get(expands, i));
   }
 
@@ -295,7 +295,7 @@ static inline void mcdfs_handoff_task(LmnWorker *me, LmnWord task) {
   if (worker_id(me) > worker_id(rn)) {
     worker_set_black(me);
   }
-  enqueue(DFS_WORKER_QUEUE(rn), task);
+  DFS_WORKER_QUEUE(rn)->enqueue(task);
   // enqueue_push_head(DFS_WORKER_QUEUE(rn), task);
 
   ADD_OPEN_PROFILE(sizeof(Node));
@@ -932,7 +932,7 @@ void bfs_start(LmnWorker *w) {
 
   if (!worker_on_parallel(w) ||
       worker_id(w) == 0) { /* 重複して初期状態をenqしないようにするための条件 */
-    enqueue(BFS_WORKER_Q_CUR(w), (LmnWord)ss->initial_state());
+    BFS_WORKER_Q_CUR(w)->enqueue((LmnWord)ss->initial_state());
   }
 
   /* start bfs  */
@@ -1045,7 +1045,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
     } else {
       /* 展開した状態をnext layer queueに登録する */
       for (i = 0; i < vec_num(new_ss); i++) {
-        enqueue(BFS_WORKER_Q_NXT(w), (LmnWord)vec_get(new_ss, i));
+        BFS_WORKER_Q_NXT(w)->enqueue((LmnWord)vec_get(new_ss, i));
       }
     }
 

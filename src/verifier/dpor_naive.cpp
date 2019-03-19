@@ -718,7 +718,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
     TransitionRef t = transition(s, i);
     if (!vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
       /* sで可能かつample(s)の候補に含まれない遷移をスタック上に乗せる */
-      enqueue(mc_por.queue, (vec_data_t)t);
+      mc_por.queue->enqueue((vec_data_t)t);
     }
   }
 
@@ -745,7 +745,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
           if (!vec_contains(mc_por.ample_candidate,
                             (vec_data_t)transition_id(succ_succ_t))) {
             /* ample(s)内に含まれない遷移はさらにチェックする必要がある */
-            enqueue(mc_por.queue, (LmnWord)succ_succ_t);
+            mc_por.queue->enqueue((LmnWord)succ_succ_t);
           }
         }
       }

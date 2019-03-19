@@ -313,7 +313,7 @@ void owcty_env_set(LmnWorker *w) {
 
 void statetable_to_state_queue(StateTable &st, Queue *q) {
   for (auto &ptr : st)
-    enqueue(q, (LmnWord)ptr);
+    q->enqueue((LmnWord)ptr);
 }
 
 static void owcty_env_init(LmnWorker *w) {
@@ -434,7 +434,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
       if (!owcty_traversed_owner_is_me(succ, set_flag, is_up)) {
         if (state_is_accept(ss->automata(), succ) &&
             !smap_is_deleted(succ)) {
-          enqueue(secondary, (LmnWord)succ);
+          secondary->enqueue((LmnWord)succ);
           cnt++;
         }
       } else {
@@ -653,7 +653,7 @@ static State *map_ordering_propagate_state(LmnWorker *w, State *u,
     if (!worker_use_weak_map(w)) {
       if (propag == u) {
         smap_unset_not_delete(u);
-        enqueue(MAP_WORKER_DEL_G(w), (LmnWord)u);
+        MAP_WORKER_DEL_G(w)->enqueue((LmnWord)u);
       } else {
         smap_set_not_delete(u);
         smap_unset_deleted(u);
@@ -674,7 +674,7 @@ static void map_propagate(LmnWorker *w, State *s, State *t, State *propag,
   } else if (propag == map_ordering(propag, t->map, a)) {
     if (map_entry_state(t, propag, a) && !worker_use_weak_map(w) &&
         t->is_expanded()) {
-      enqueue(MAP_WORKER_PROPAG_G(w), (LmnWord)t);
+      MAP_WORKER_PROPAG_G(w)->enqueue((LmnWord)t);
     }
   }
 }
@@ -926,7 +926,7 @@ void bledge_start(LmnWorker *w) {
 
 void bledge_store_layer(LmnWorker *w, State *s) {
   if (s->successor_num > 0) {
-    enqueue(BLE_WORKER_LAYER_Q(w), (LmnWord)s);
+    BLE_WORKER_LAYER_Q(w)->enqueue((LmnWord)s);
   }
 }
 

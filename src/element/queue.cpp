@@ -119,21 +119,21 @@ Queue::~Queue() {
  *   ..○→NULL
  */
 
-void enqueue(Queue *q, LmnWord v) {
+void Queue::enqueue(LmnWord v) {
   Node *last, *node;
-  if (q->lock) {
-    q_lock(q, Q_ENQ);
+  if (this->lock) {
+    q_lock(this, Q_ENQ);
     /*q_lock(q, Q_DEQ);*/
   }
-  last = q->tail;
+  last = this->tail;
   node = new Node(v);
   last->next = node;
-  q->tail = node;
-  q->enq_num++;
+  this->tail = node;
+  this->enq_num++;
 
-  if (q->lock) {
+  if (this->lock) {
     /*q_unlock(q, Q_DEQ);*/
-    q_unlock(q, Q_ENQ);
+    q_unlock(this, Q_ENQ);
   }
 }
 
