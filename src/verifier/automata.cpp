@@ -394,8 +394,8 @@ AutomataTransition::~AutomataTransition () {
 
 atmstate_id_t AutomataTransition::get_next() { return this->next; }
 
-PLFormulaRef atm_transition_get_formula(AutomataTransitionRef t) {
-  return t->f;
+PLFormulaRef AutomataTransition::get_formula() {
+  return this->f;
 }
 
 /*----------------------------------------------------------------------

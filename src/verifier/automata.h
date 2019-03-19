@@ -112,6 +112,7 @@ struct AutomataTransition {
   AutomataTransition(atmstate_id_t next, PLFormulaRef f);
   ~AutomataTransition();
   atmstate_id_t get_next();
+  PLFormulaRef get_formula();
 };
 
 enum SCC_ACCEPTING_TYPE {
@@ -121,9 +122,6 @@ enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_NON_ACCEPT = 3U, /* 受理サイクルを含まない */
 };
 
-/* transition of automata */
-
-PLFormulaRef atm_transition_get_formula(AutomataTransitionRef t);
 
 /* SCC analysis of automata */
 void automata_analysis(AutomataRef a);
