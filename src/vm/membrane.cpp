@@ -2078,13 +2078,13 @@ BOOL lmn_mem_equals(LmnMembraneRef mem1, LmnMembraneRef mem2) {
 #endif
 
   // 非TIME-OPTではTraceLogのストラクチャでトレースすることができない（実装してない）
-  TraceLogRef log1 = tracelog_make();
+  TraceLogRef log1 = new TraceLog();
   SimplyLog log2 = simplylog_make();
 
   t = mem_equals_rec(mem1, log1, mem2, log2, CHECKED_MEM_DEPTH);
 
   simplylog_free(log2);
-  tracelog_free(log1);
+  delete log1;
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {

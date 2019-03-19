@@ -39,18 +39,6 @@
 
 template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
 
-/*------------
- * TraceLog
- */
-
-TraceLogRef tracelog_make(void) { return new TraceLog(); }
-
-TraceLogRef tracelog_make_with_size(unsigned long size) {
-  return new TraceLog(size);
-}
-
-void tracelog_free(TraceLogRef l) { delete l; }
-
 /*----------------
  * Tracker
  */

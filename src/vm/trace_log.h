@@ -128,7 +128,7 @@ struct TraceLog : ProcessTable<TraceData> {
 
   TraceLog(unsigned long size) : ProcessTable<TraceData>(size) {}
   TraceLog() : ProcessTable<TraceData>() {}
-
+  ~TraceLog(){}
   unsigned int traversed_proc_count(LmnMembraneRef owner) {
     return this->contains(lmn_mem_id(owner))
                ? (*this)[lmn_mem_id(owner)].traversed_proc
@@ -213,10 +213,6 @@ typedef struct TraceLog *TraceLogRef;
 /**
  * Function ProtoTypes
  */
-
-TraceLogRef tracelog_make(void);
-TraceLogRef tracelog_make_with_size(unsigned long size);
-void tracelog_free(TraceLogRef trc);
 
 BOOL tracelog_eq_traversed_proc_num(TraceLogRef l, LmnMembraneRef owner,
                                     AtomListEntryRef in_ent,
