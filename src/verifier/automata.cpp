@@ -140,7 +140,7 @@ void Automata::add_state(AutomataStateRef s) {
   if (vec_num(&this->states) <= s->id) {
     vec_resize(&this->states, s->id + 1, (vec_data_t)0);
   }
-  vec_set(&this->states, s->id, (vec_data_t)s);
+  this->states.set(s->id, (vec_data_t)s);
 }
 
 AutomataStateRef Automata::get_state(atmstate_id_t state_id) {

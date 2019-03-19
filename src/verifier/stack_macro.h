@@ -4,7 +4,7 @@
 #ifdef PROFILE
 #define pop_stack(List)                                                        \
   do {                                                                         \
-    State *pop = (State *)vec_pop(List);                                       \
+    State *pop = (State *)List->pop();                                       \
     if (pop->is_on_stack())                                                      \
      pop->unset_on_stack();                                                     \
     if (lmn_env.profile_level >= 3) {                                          \
@@ -59,7 +59,7 @@
 #define ADD_OPEN_PROFILE(M)
 #define pop_stack(List)                                                        \
   do {                                                                         \
-    State *pop = (State *)vec_pop(List);                                       \
+    State *pop = (State *)List->pop();                                       \
     if (pop->is_on_stack())                                                      \
      pop->unset_on_stack();                                                     \
   } while (0)

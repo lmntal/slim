@@ -457,9 +457,9 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     tmp = 0;
     if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
       st_add_direct(succ_tbl, (st_data_t)succ, (st_data_t)src_t);
-      vec_set(RC_EXPANDED(rc), succ_i, (vec_data_t)src_t);
+      RC_EXPANDED(rc)->set(succ_i, (vec_data_t)src_t);
       if (RC_MC_USE_DMEM(rc)) {
-        vec_set(RC_MEM_DELTAS(rc), succ_i, vec_get(RC_MEM_DELTAS(rc), i));
+        RC_MEM_DELTAS(rc)->set(succ_i, vec_get(RC_MEM_DELTAS(rc), i));
       }
       succ_i++;
     } else {

@@ -489,7 +489,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       break;
 
     /** 展開元の状態の取得 */
-    s = (State *)vec_peek(stack);
+    s = (State *)stack->peek();
     p_s = MC_GET_PROPERTY(s, a);
     if (s->is_expanded()) {
       if (NDFS_COND(w, s, p_s)) {
@@ -562,7 +562,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       break;
 
     /** 展開元の状態の取得 */
-    s = (State *)vec_peek(stack);
+    s = (State *)stack->peek();
     p_s = MC_GET_PROPERTY(s, a);
     if (s->is_expanded()) {
       if (MAPNDFS_COND(w, s, p_s)) {
@@ -647,7 +647,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       break;
 
     /** 展開元の状態の取得 */
-    s = (State *)vec_peek(stack);
+    s = (State *)stack->peek();
     p_s = MC_GET_PROPERTY(s, a);
 
     // backtrack

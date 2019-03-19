@@ -364,7 +364,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
        * succに対応する遷移insを登録) */
       st_add_direct(RC_SUCC_TBL(rc), (st_data_t)succ, ins);
       /* 遷移先情報を記録する一時領域(in ReactCxt)を更新 */
-      vec_set(RC_EXPANDED(rc), succ_i++, ins);
+      RC_EXPANDED(rc)->set(succ_i++, ins);
     } else if (s->has_trans_obj()) {
       /* succへの遷移が多重辺かつTransitionオブジェクトを利用する場合 */
       /* src_tは状態生成時に張り付けたルール名なので, 0番にしか要素はないはず */
@@ -471,7 +471,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     if (mc_use_delta(f)) {
       expanded_roots->push(data);
     } else {
-      vec_set(expanded_roots, i, data);
+      expanded_roots->set(i, data);
     }
   }
 
@@ -724,8 +724,8 @@ static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v) {
     MC_INSERT_INVALIDS(g, s1, s2);
   }
 
-  if (state_is_end(a, (State *)vec_peek(v))) {
-    State *s = (State *)vec_peek(v);
+  if (state_is_end(a, (State *)v->peek())) {
+    State *s = (State *)v->peek();
     MC_INSERT_INVALIDS(g, s, NULL);
   }
 }
@@ -878,7 +878,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
                    (vec_data_t)seed); /* seed to seedのパスを取得するため */
 
           if (cui_dump) {
-            vec_pop(path); /* cycle Vectorとpath
+            path->pop(); /* cycle Vectorとpath
                               Vectorでseedが重複して積まれているため */
             mc_print_vec_states(ss, path, NULL);
             mc_print_vec_states(ss, cycle, seed);

@@ -156,11 +156,11 @@ void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
 }
 
 LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
-  vec_pop(RC_EXPANDED_RULES(cxt));
+  RC_EXPANDED_RULES(cxt)->pop();
   if (RC_MC_USE_DMEM(cxt)) {
-    return vec_pop(RC_MEM_DELTAS(cxt));
+    return RC_MEM_DELTAS(cxt)->pop();
   } else {
-    return vec_pop(RC_EXPANDED(cxt));
+    return RC_EXPANDED(cxt)->pop();
   }
 }
 
@@ -205,7 +205,7 @@ void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
 void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom,
                           LmnMembraneRef *mem) {
   LMN_ASSERT(lmn_rc_has_insertion(rc));
-  LRCInsertEventRef e = (LRCInsertEventRef)vec_pop(rc->insertion_events);
+  LRCInsertEventRef e = (LRCInsertEventRef)rc->insertion_events->pop();
   *satom = e->satom;
   *mem = e->mem;
   LMN_FREE(e);

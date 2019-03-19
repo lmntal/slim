@@ -389,7 +389,7 @@ void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
     /* move successors forward */
     for (int j = i; j < vec_num(mem_rulesets) - 1; j++) {
       LmnRuleSetRef next = (LmnRuleSetRef)vec_get(mem_rulesets, j + 1);
-      vec_set(mem_rulesets, j, (vec_data_t)next);
+      mem_rulesets->set(j, (vec_data_t)next);
     }
 
     mem_rulesets->num--;

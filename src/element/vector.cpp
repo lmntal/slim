@@ -38,23 +38,6 @@
 
 #include "vector.h"
 
-/* pop Nth element */
-LmnWord vec_pop_n(Vector *vec, unsigned int n) {
-  unsigned int i;
-  LmnWord ret;
-
-  LMN_ASSERT(vec->num > 0 && n >= 0 && n < vec->num);
-
-  if (vec->num <= vec->cap / 2) {
-    vec_reduce(vec);
-  }
-  ret = vec_get(vec, n);
-  for (i = n; i < vec->num - 1; ++i) {
-    vec_set(vec, i, vec_get(vec, i + 1));
-  }
-  vec->num--;
-  return ret;
-}
 
 /* contains */
 BOOL vec_contains(const Vector *vec, LmnWord keyp) {
@@ -95,8 +78,8 @@ void vec_reverse(Vector *vec) {
 
   while (r < l) {
     vec_data_t tmp = vec->tbl[r];
-    vec_set(vec, r, vec->tbl[l]);
-    vec_set(vec, l, tmp);
+    vec->set(r, vec->tbl[l]);
+    vec->set(l, tmp);
     r++;
     l--;
   }

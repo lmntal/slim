@@ -909,7 +909,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
   }
 
   while (vec_num(&stack) > 0) {
-    LmnSymbolAtomRef src_atom = (LmnSymbolAtomRef)vec_pop(&stack);
+    LmnSymbolAtomRef src_atom = (LmnSymbolAtomRef)stack.pop();
     LmnSymbolAtomRef copied;
 
     proc_tbl_get_by_atom(atommap, src_atom, &t);

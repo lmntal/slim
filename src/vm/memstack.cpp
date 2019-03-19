@@ -55,7 +55,7 @@ void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem) {
 }
 
 LmnMembraneRef lmn_memstack_pop(LmnMemStack memstack) {
-  LmnMembraneRef m = (LmnMembraneRef)vec_pop(memstack);
+  LmnMembraneRef m = (LmnMembraneRef)memstack->pop();
   lmn_mem_set_active(m, FALSE);
   return m;
 }
@@ -75,12 +75,12 @@ void lmn_memstack_delete(LmnMemStack memstack, LmnMembraneRef mem) {
     if ((LmnMembraneRef)vec_get(memstack, i) == mem) {
       /* 空いた分後ろの要素を前にを詰める */
       for (j = i + 1; j < n; j++) {
-        vec_set(memstack, j - 1, vec_get(memstack, j));
+        memstack->set(j - 1, vec_get(memstack, j));
       }
       break;
     }
   }
-  vec_pop(memstack);
+  memstack->pop();
 }
 
 void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem) {

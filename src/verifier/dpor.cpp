@@ -381,7 +381,7 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
   st_clear(d->delta_tbl);
 
   while (!vec_is_empty(d->free_deltas)) {
-    MemDeltaRoot *delt = (MemDeltaRoot *)vec_pop(d->free_deltas);
+    MemDeltaRoot *delt = (MemDeltaRoot *)d->free_deltas->pop();
     dmem_root_free(delt);
   }
 
@@ -796,7 +796,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (s->has_trans_obj()) {
         transition_set_state(src_t, succ);
       } else {
-        vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
+        RC_EXPANDED(rc)->set(i, (vec_data_t)succ);
       }
     }
 
@@ -808,7 +808,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
       st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
       st_add_direct(succ_tbl, (st_data_t)succ, ins);
-      vec_set(RC_EXPANDED(rc), succ_i++, ins);
+      RC_EXPANDED(rc)->set(succ_i++, ins);
     } else {
       if (s->has_trans_obj()) {
         transition_free(src_t);
@@ -853,7 +853,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         if (s->has_trans_obj()) {
           transition_set_state(src_t, succ);
         } else {
-          vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
+          RC_EXPANDED(rc)->set(i, (vec_data_t)succ);
         }
       }
 
@@ -861,7 +861,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
         st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
         st_add_direct(succ_tbl, (st_data_t)succ, ins);
-        vec_set(RC_EXPANDED(rc), succ_i++, ins);
+        RC_EXPANDED(rc)->set(succ_i++, ins);
       } else {
         if (s->has_trans_obj()) {
           transition_free(src_t);
@@ -1026,7 +1026,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       TransitionRef t;
       LmnMembraneRef s_mem;
 
-      t = (TransitionRef)vec_pop(reduced_stack);
+      t = (TransitionRef)reduced_stack->pop();
       s = transition_next_state(t);
       parent = state_get_parent(s);
       parent->succ_add((succ_data_t)t);
@@ -1050,7 +1050,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       AutomataStateRef p_s;
       unsigned int i;
 
-      s = (State *)vec_pop(search);
+      s = (State *)search->pop();
       p_s = MC_GET_PROPERTY(s, ss->automata());
 
       s->s_set_reduced();
@@ -1115,8 +1115,8 @@ void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms) {
 }
 
 void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms) {
-  if (vec_peek(d->wt_gatoms) == (vec_data_t)atoms) {
-    vec_pop(d->wt_gatoms);
+  if (d->wt_gatoms->peek() == (vec_data_t)atoms) {
+    d->wt_gatoms->pop();
   } else {
     /* pushした順にpopされるので, ここに来ることはまずないが念のため書いておく
      */
@@ -1124,7 +1124,7 @@ void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms) {
     for (i = 0; i < vec_num(d->wt_gatoms); i++) {
       vec_data_t t = vec_get(d->wt_gatoms, i);
       if (t == (vec_data_t)atoms) {
-        vec_pop_n(d->wt_gatoms, i);
+        d->wt_gatoms->pop_n(i);
       }
     }
   }

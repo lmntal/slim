@@ -208,5 +208,5 @@ void propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef) {
   if (vec_num(props) <= id) {
     vec_resize(props, id + 1, (vec_data_t)NULL);
   }
-  vec_set(props, id, (vec_data_t)symdef);
+  props->set(id, (vec_data_t)symdef);
 }

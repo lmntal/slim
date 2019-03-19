@@ -49,6 +49,8 @@
 #include <vector>
 #include "util.h"
 
+static inline LmnWord vec_get(const Vector *vec, unsigned int index);
+
 struct Vector {
   LmnWord *tbl;
   unsigned int num, cap;
@@ -82,6 +84,49 @@ struct Vector {
     (tbl)[num] = keyp;
     num++;
   }
+  void reduce(){
+    cap /= 2;
+    tbl = LMN_REALLOC(LmnWord, tbl, cap);
+  }
+  LmnWord pop(){
+    LmnWord ret;
+    LMN_ASSERT(num > 0);
+    /* Stackとして利用する場合, reallocが頻繁に発生してしまう.
+     * Stackなのでサイズの増減は頻繁に発生するものだが,
+     * 頻繁なreallocはパフォーマンスに影響する.
+     * >>とりあえず<< サイズの下限値を設ける. LmnStackなる構造を別に作るべきかも.
+     * (gocho) */
+    if (num <= cap / 2 && cap > 1024) {
+      reduce();
+    }
+    ret = vec_get(this, (num - 1));
+    num--;
+    return ret;
+  }
+  //pop Nth element
+  LmnWord pop_n(unsigned int n){
+    unsigned int i;
+    LmnWord ret;
+
+    LMN_ASSERT(num > 0 && n >= 0 && n < num);
+
+    if (num <= cap / 2) {
+      reduce();
+    }
+    ret = vec_get(this, n);
+    for (i = n; i < num - 1; ++i) {
+      set(i, vec_get(this, i + 1));
+    }
+    num--;
+    return ret;
+  }
+  LmnWord peek(){
+    return vec_get(this, num - 1);
+  }
+  void set(unsigned int index, LmnWord keyp){
+    LMN_ASSERT(index < cap);
+    tbl[index] = keyp;    
+  }
 };
 
 typedef struct Vector *PVector;
@@ -91,10 +136,6 @@ typedef LmnWord vec_data_t;
 #define vec_num(V) ((V)->num)
 #define vec_is_empty(V) ((V)->num == 0)
 
-static inline LmnWord vec_pop(Vector *vec);
-static inline LmnWord vec_peek(const Vector *vec);
-static inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp);
-static inline LmnWord vec_get(const Vector *vec, unsigned int index);
 static inline LmnWord vec_last(Vector *vec);
 static inline void vec_clear(Vector *vec);
 static inline void vec_destroy(Vector *vec);
@@ -102,49 +143,12 @@ static inline void vec_free(Vector *vec);
 static inline unsigned long vec_space(Vector *v);
 static inline unsigned long vec_space_inner(Vector *v);
 
-LmnWord vec_pop_n(Vector *vec, unsigned int n);
 BOOL vec_contains(const Vector *vec, LmnWord keyp);
 Vector *vec_copy(Vector *vec);
 void vec_reverse(Vector *vec);
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
-
-
-
-/* reduce (static) */
-static inline void vec_reduce(Vector *vec) {
-  vec->cap /= 2;
-  vec->tbl = LMN_REALLOC(LmnWord, vec->tbl, vec->cap);
-}
-
-/* pop */
-static inline LmnWord vec_pop(Vector *vec) {
-  LmnWord ret;
-  LMN_ASSERT(vec->num > 0);
-  /* Stackとして利用する場合, reallocが頻繁に発生してしまう.
-   * Stackなのでサイズの増減は頻繁に発生するものだが,
-   * 頻繁なreallocはパフォーマンスに影響する.
-   * >>とりあえず<< サイズの下限値を設ける. LmnStackなる構造を別に作るべきかも.
-   * (gocho) */
-  if (vec->num <= vec->cap / 2 && vec->cap > 1024) {
-    vec_reduce(vec);
-  }
-  ret = vec_get(vec, (vec->num - 1));
-  vec->num--;
-  return ret;
-}
-
-/* peek */
-static inline LmnWord vec_peek(const Vector *vec) {
-  return vec_get(vec, vec->num - 1);
-}
-
-/* set */
-static inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp) {
-  LMN_ASSERT(index < vec->cap);
-  (vec->tbl)[index] = keyp;
-}
 
 /* get */
 static inline LmnWord vec_get(const Vector *vec, unsigned int index) {

@@ -75,11 +75,11 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
     State *s;
     unsigned int i;
 
-    s = (State *)vec_peek(search);
+    s = (State *)search->peek();
     if (st_contains(traversed, (st_data_t)s)) {
-      State *s_pop = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
-        vec_pop(path);
+      State *s_pop = (State *)search->pop();
+      if (vec_num(path) > 0 && (State *)path->peek() == s_pop) {
+        path->pop();
       }
     } else {
       st_add_direct(traversed, (st_data_t)s, (st_data_t)s);
@@ -199,13 +199,13 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
 
 static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
   while (vec_num(search) > 0) {
-    State *s = (State *)vec_peek(search);
+    State *s = (State *)search->peek();
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
-      State *s_pop = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
-        vec_pop(path);
+      State *s_pop = (State *)search->pop();
+      if (vec_num(path) > 0 && (State *)path->peek() == s_pop) {
+        path->pop();
       }
     } else {
       unsigned int i;
@@ -1115,13 +1115,13 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
 
 static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
   while (vec_num(search) > 0) {
-    State *s = (State *)vec_peek(search);
+    State *s = (State *)search->peek();
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
-      State *s_pop = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
-        vec_pop(path);
+      State *s_pop = (State *)search->pop();
+      if (vec_num(path) > 0 && (State *)path->peek() == s_pop) {
+        path->pop();
       }
     } else {
       unsigned int i;
@@ -1277,12 +1277,12 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
   BOOL contained;
 
   while (vec_num(search) > 0) {
-    State *s = (State *)vec_peek(search);
+    State *s = (State *)search->peek();
 
     if (s->is_snd()) {
-      t = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == t) {
-        vec_pop(path);
+      t = (State *)search->pop();
+      if (vec_num(path) > 0 && (State *)path->peek() == t) {
+        path->pop();
       }
       continue;
     }
@@ -1313,9 +1313,9 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
 #if 0
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
-      State *s_pop = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
-        vec_pop(path);
+      State *s_pop = (State *)search->pop();
+      if (vec_num(path) > 0 && (State *)path->peek() == s_pop) {
+        path->pop();
       }
     }
     else {

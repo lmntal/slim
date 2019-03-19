@@ -116,7 +116,7 @@ struct Checkpoint *visitlog_pop_checkpoint(VisitLogRef visitlog) {
   int i;
   struct Checkpoint *checkpoint;
 
-  checkpoint = (struct Checkpoint *)vec_pop(&visitlog->checkpoints);
+  checkpoint = (struct Checkpoint *)visitlog->checkpoints.pop();
   for (i = 0; i < vec_num(&checkpoint->elements); i++) {
     proc_tbl_unput(visitlog->tbl, vec_get(&checkpoint->elements, i));
     visitlog->element_num--;
@@ -135,7 +135,7 @@ void visitlog_revert_checkpoint(VisitLogRef visitlog) {
 /* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
 void visitlog_commit_checkpoint(VisitLogRef visitlog) {
   struct Checkpoint *last =
-      (struct Checkpoint *)vec_pop(&visitlog->checkpoints);
+      (struct Checkpoint *)visitlog->checkpoints.pop();
 
   if (vec_num(&visitlog->checkpoints) > 0) {
     int i;
