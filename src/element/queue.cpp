@@ -392,19 +392,19 @@ BOOL Deque::contains(LmnWord keyp)const {
   return FALSE;
 }
 
-Deque *deq_copy(Deque *deq) {
+Deque *Deque::copy() {
   unsigned int i;
   Deque *new_deq;
 
-  i = deq->tail;
-  new_deq = new Deque(deq->num() > 0 ? deq->num() : 1);
+  i = this->tail;
+  new_deq = new Deque(this->num() > 0 ? this->num() : 1);
 
-  while (i != deq->head) {
-    DEQ_DEC(i, deq->cap);
-    new_deq->tbl[i] = deq->get(i);
+  while (i != this->head) {
+    DEQ_DEC(i, this->cap);
+    new_deq->tbl[i] = this->get(i);
   }
 
-  new_deq->head = deq->head;
-  new_deq->head = deq->tail;
+  new_deq->head = this->head;
+  new_deq->head = this->tail;
   return new_deq;
 }

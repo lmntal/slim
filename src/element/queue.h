@@ -118,6 +118,7 @@ struct Deque {
   unsigned long space_inner();
   void print();
   BOOL contains(LmnWord keyp)const;
+  Deque *copy();
 };
 
 typedef struct Deque Deque;
@@ -127,7 +128,6 @@ typedef LmnWord deq_data_t;
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
 LmnWord deq_pop_n(Deque *deq, unsigned int n);
-Deque *deq_copy(Deque *deq);
 void deq_reverse(Deque *deq);
 void deq_resize(Deque *deq, unsigned int size, deq_data_t val);
 void deq_sort(const Deque *deq, int (*compare)(const void *, const void *));
