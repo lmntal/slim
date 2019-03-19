@@ -23,6 +23,24 @@ tap_producer = {
       }.
     }.
 
+    test_case = {
+      name = "hyperlink case 2".
+
+      init = {
+        main.
+      }.
+
+      ruleset = {
+          main :- leq(!A, !B).
+          leq(!X, !X) :- ng.
+          leq(!X, !Y) :- X \= Y | ok.
+      }.
+
+      stable = {
+        ok.
+      }.
+    }.
+
     // ルールセットは等価性判定を行えないので削除
     teardown = { rules({@p}) :- . }
   }.

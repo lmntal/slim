@@ -677,7 +677,7 @@ void slim::vm::interpreter::findatom_original_hyperlink(
   auto filtered = slim::element::make_range_remove_if(
       std::begin(*atomlist_ent), std::end(*atomlist_ent),
       [=](LmnSymbolAtomRef atom) {
-        return !spc->is_consistent_with((LmnSymbolAtomRef)atom);
+        return !spc->is_consistent_with(atom);
       });
   auto v = std::vector<std::function<LmnRegister(void)>>();
   std::transform(
