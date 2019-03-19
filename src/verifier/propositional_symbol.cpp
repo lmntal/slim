@@ -52,29 +52,21 @@ struct SymbolDefinition {
   PropositionRef prop;
 };
 
-struct Proposition {
-  char *head;
-  char *guard;
-  char *body;
-  LmnRuleRef rule;
-};
-
 static char *rule_str_for_compile(const char *head, const char *guard,
                                   const char *body);
 static int propsym_parse(FILE *in, AutomataRef a, PVector *definitions);
 
-PropositionRef proposition_make(const char *head, const char *guard,
+Proposition::Proposition(const char *head, const char *guard,
                                 const char *body) {
-  PropositionRef p = LMN_MALLOC(struct Proposition);
   char *rule_str;
   BYTE optimization_level_org;
 
   optimization_level_org = lmn_env.optimization_level;
   lmn_env.optimization_level = OPTIMIZE_LEVEL_MAX;
 
-  p->head = strdup(head);
-  p->guard = (guard == NULL ? strdup("") : strdup(guard));
-  p->body = (body == NULL ? strdup("") : strdup(body));
+  this->head = strdup(head);
+  this->guard = (guard == NULL ? strdup("") : strdup(guard));
+  this->body = (body == NULL ? strdup("") : strdup(body));
 
   rule_str = rule_str_for_compile(head, guard, body);
 
@@ -84,9 +76,8 @@ PropositionRef proposition_make(const char *head, const char *guard,
   lmn_env.optimization_level = optimization_level_org;
 
   auto rule = load_rule(*il_parse_rule(std::move(fp)));
-  p->rule = rule.get();
+  this->rule = rule.get();
   rule.release();
-  return p;
 }
 
 void proposition_free(PropositionRef p) {

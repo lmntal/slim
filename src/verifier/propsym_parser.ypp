@@ -90,32 +90,32 @@ definition:
    LINE_TERM { $$ = NULL; }
 |  SYMBOL EQUAL HEAD LINE_TERM {
     $$ = propsym_make(automata->propsym_to_id($1),
-                      proposition_make($3, NULL, NULL));
+                      new Proposition($3, NULL, NULL));
     LMN_FREE($1);
     LMN_FREE($3);
   }
 |  SYMBOL EQUAL HEAD RULE_SEP LINE_TERM {
     $$ = propsym_make(automata->propsym_to_id($1),
-                      proposition_make($3, NULL, NULL));
+                      new Proposition($3, NULL, NULL));
     LMN_FREE($1);
     LMN_FREE($3);
   }
 | SYMBOL EQUAL HEAD RULE_SEP GUARD LINE_TERM {
     $$ = propsym_make(automata->propsym_to_id($1),
-                      proposition_make($3, $5, NULL));
+                      new Proposition($3, $5, NULL));
     LMN_FREE($1);
     LMN_FREE($3);
     LMN_FREE($5);
   }
 | SYMBOL EQUAL HEAD RULE_SEP VERT LINE_TERM {
     $$ = propsym_make(automata->propsym_to_id($1),
-                      proposition_make($3, NULL, NULL));
+                      new Proposition($3, NULL, NULL));
     LMN_FREE($1);
     LMN_FREE($3);
   }
 | SYMBOL EQUAL HEAD RULE_SEP GUARD VERT LINE_TERM {
     $$ = propsym_make(automata->propsym_to_id($1),
-                      proposition_make($3, $5, NULL));
+                      new Proposition($3, $5, NULL));
     LMN_FREE($1);
     LMN_FREE($3);
     LMN_FREE($5);
