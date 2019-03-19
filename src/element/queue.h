@@ -53,11 +53,12 @@
 #include "../lmntal.h"
 #include "lmntal_thread.h"
 
-typedef struct Node Node;
 typedef struct Queue Queue;
 struct Node {
   LmnWord v;
   Node *next;
+  Node(LmnWord v);
+  ~Node();
 };
 
 struct Queue {

@@ -155,9 +155,10 @@ typedef long long __int64;
 
 struct LmnSPAtomHeader {
   LmnByte type;
-};
 
-typedef struct LmnSPAtomHeader LmnSpAtom;
+  LmnSPAtomHeader() {}
+  LmnSPAtomHeader(LmnByte type) : type(type) {}
+};
 
 /* スペシャルアトムは構造体の最初の要素としてに必ずこのヘッダを含めなけ
    ればならない */

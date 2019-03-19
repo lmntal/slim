@@ -47,7 +47,7 @@ static LmnSymbolAtomRef lmn_make_atom(LmnMembraneRef mem, LmnAtomRef s, LmnWord 
 {
   LmnSymbolAtomRef a = lmn_mem_newatom(mem,
          lmn_functor_intern(ANONYMOUS, 
-			    lmn_intern(lmn_string_c_str(LMN_STRING(s))),
+			    lmn_intern(reinterpret_cast<LmnString *>(s)->c_str()),
 			    size));
   for (LmnWord k = 0; k < (int)size-1; k++) {
     lmn_mem_newlink(mem,
@@ -121,7 +121,7 @@ void cb_atom_functor(LmnReactCxtRef rc,
   if (LMN_ATTR_IS_DATA(t0)) 
     lmn_fatal("atom.functor cannot be applied to non-symbol atoms\
  (numbers, strings, ...).");
-  LmnStringRef s = lmn_string_make(LMN_SATOM_STR((LmnSymbolAtomRef)a0));
+  LmnStringRef s = new LmnString(LMN_SATOM_STR((LmnSymbolAtomRef)a0));
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  s, LMN_SP_ATOM_ATTR, 0);
 

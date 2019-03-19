@@ -37,12 +37,12 @@
  */
 
 #include "dumper.h"
+#include "atomlist.hpp"
 #include "ccallback.h"
 #include "memstack.h"
+#include "rule.hpp"
 #include "symbol.h"
 #include <ctype.h>
-#include "rule.hpp"
-#include "atomlist.hpp"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -55,6 +55,7 @@ struct AtomRec {
 
 struct DumpState {
   int link_num;
+  DumpState();
 };
 
 /* 文字からエスケープキャラクタへの対応表 */
@@ -121,7 +122,8 @@ static void atomrec_tbl_destroy(SimpleHashtbl *ht) {
   hashtbl_destroy(ht);
 }
 
-static void dump_state_init(struct DumpState *s) { s->link_num = 0; }
+// static void dump_state_init(struct DumpState *s) { ; }
+DumpState::DumpState() { link_num = 0; }
 
 static BOOL is_direct_printable(LmnFunctor f) {
   const char *s;
@@ -446,7 +448,6 @@ static BOOL dump_symbol_atom(LmnPortRef port, LmnSymbolAtomRef atom,
 static BOOL dump_atom_args(LmnPortRef port, LmnSymbolAtomRef atom,
                            SimpleHashtbl *ht, struct DumpState *s,
                            int call_depth) {
-
   int i;
   int limit = atom->get_link_num();
 
@@ -688,9 +689,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
 
 static void lmn_dump_cell_nonewline(LmnPortRef port, LmnMembraneRef mem) {
   SimpleHashtbl ht;
-  struct DumpState s;
-
-  dump_state_init(&s);
+  DumpState s;
 
   hashtbl_init(&ht, 128);
   lmn_dump_cell_internal(port, mem, &ht, &s);
@@ -935,10 +934,9 @@ static void dump_dot_cell(LmnMembraneRef mem, SimpleHashtbl *ht, int *data_id,
 
 void lmn_dump_dot(LmnMembraneRef mem) {
   int cluster_id = 0, data_id = 0;
-  struct DumpState s;
+  DumpState s;
   SimpleHashtbl ht;
 
-  dump_state_init(&s);
   hashtbl_init(&ht, 128);
 
   fprintf(stdout, "// This is an auto generated file by SLIM\n\n"
@@ -979,7 +977,7 @@ static void lmn_dump_link_json(LmnSymbolAtomRef atom, int index) {
     case LMN_SP_ATOM_ATTR:
     case LMN_CONST_STR_ATTR:
       fprintf(stdout, "\"data\":\"\\\"%s\\\"\"",
-              lmn_string_c_str((LmnStringRef)data));
+              ((LmnStringRef)data)->c_str());
       break;
     case LMN_HL_ATTR: {
       LmnSymbolAtomRef a = (LmnSymbolAtomRef)data;
@@ -1076,7 +1074,7 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_newlink(mem, a0, t0, 0, a2, t2, LMN_ATTR_GET_VALUE(t2));
 
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), m);
+    lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
   }
   lmn_mem_delete_mem(lmn_mem_parent(m), m);
 }
@@ -1103,7 +1101,6 @@ void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr) {
   struct DumpState s;
   SimpleHashtbl ht;
 
-  dump_state_init(&s);
   hashtbl_init(&ht, 0);
   dump_atom(port, atom, &ht, attr, &s, 0);
   atomrec_tbl_destroy(&ht);

@@ -81,7 +81,6 @@ typedef int AtomListIter;
 #define atomlist_iter_get_entry(Mem, Iter) lmn_mem_get_atomlist(Mem, Iter)
 #define atomlist_iter_get_functor(Iter) (Iter)
 
-
 /* ルールセットadd_rsをルールセット配列src_vへ追加する.
  * グラフ同型性判定処理などのために整数IDの昇順を維持するよう追加する. */
 void lmn_mem_add_ruleset_sort(Vector *src_v, LmnRuleSetRef add_rs) {
@@ -935,7 +934,7 @@ lmn_mem_copy_with_map_inner(LmnMembraneRef src, ProcessTableRef *ret_copymap,
   }
 
   for (i = 0; i < src->rulesets.num; i++) {
-    vec_push(&new_mem->rulesets, (LmnWord)new LmnRuleSet(*(
+    vec_push(&new_mem->rulesets, (LmnWord) new LmnRuleSet(*(
                                      LmnRuleSetRef)vec_get(&src->rulesets, i)));
   }
   *ret_copymap = copymap;
@@ -985,7 +984,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
     new_mem->name = m->name;
     /* copy rulesets */
     for (i = 0; i < m->rulesets.num; i++) {
-      vec_push(&new_mem->rulesets, (LmnWord)new LmnRuleSet(*(
+      vec_push(&new_mem->rulesets, (LmnWord) new LmnRuleSet(*(
                                        LmnRuleSetRef)vec_get(&m->rulesets, i)));
     }
   }
@@ -1821,9 +1820,9 @@ returning:
 /* 前の実装.しばらく残しておく */
 BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
                       unsigned long *natoms) {
-  HashSet *visited = hashset_make(16);
+  HashSet *visited = new HashSet(16);
   SimpleHashtbl *guard = NULL;
-  HashSet *root = hashset_make(16);
+  HashSet *root = new HashSet(16);
   Vector *stack = vec_make(16);
   unsigned int i;
   unsigned int n;            /* 到達したアトムの数 */
@@ -1855,8 +1854,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
       continue;
     }
 
-    hashset_add(
-        root, (HashKeyType)((LmnSymbolAtomRef)l->ap)->get_link(l->pos));
+    root->add((HashKeyType)((LmnSymbolAtomRef)l->ap)->get_link(l->pos));
     if (vec_num(stack) == 0) {
       vec_push(stack, (LmnWord)l->ap);
     }
@@ -1880,13 +1878,13 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
           ok = FALSE;
           break;
         }
-        if (hashset_contains(visited, (HashKeyType)src_atom))
+        if (visited->contains((HashKeyType)src_atom))
           continue;
-        if (hashset_contains(root, (HashKeyType)src_atom)) {
+        if (root->contains((HashKeyType)src_atom)) {
           n_reach_root++;
           continue;
         }
-        hashset_add(visited, (HashKeyType)src_atom);
+        visited->add((HashKeyType)src_atom);
         n++;
         for (i = 0; i < src_atom->get_arity(); i++) {
           LmnAtomRef next_src = src_atom->get_link(i);
@@ -1918,7 +1916,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
   }
 
   vec_free(stack);
-  hashset_free(root);
+  delete root;
   if (guard)
     hashtbl_free(guard);
 
@@ -1927,7 +1925,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
     *atoms = visited;
     return TRUE;
   } else {
-    hashset_free(visited);
+    delete visited;
     *atoms = NULL;
     return FALSE;
   }
@@ -2194,26 +2192,127 @@ static BOOL mem_equals_atomlists(LmnMembraneRef mem1, LmnMembraneRef mem2) {
 #define ISOMOR_PHASE_CHILD (1U)
 #define ISOMOR_PHASE_END (2U)
 
-typedef struct MemIsomorIter MemIsomorIter;
 struct MemIsomorIter {
   BYTE phase;
   AtomListIter pos;
   LmnMembraneRef mem;
   LmnSymbolAtomRef atom;
   LmnMembraneRef child;
+  MemIsomorIter(LmnMembraneRef mem);
+  ~MemIsomorIter();
+  inline LmnSymbolAtomRef atom_traversed();
+  inline LmnMembraneRef child_traversed();
+  inline BOOL is_root_atom(LmnSymbolAtomRef atom);
 };
+
+MemIsomorIter::MemIsomorIter(LmnMembraneRef mem) {
+  this->pos = atomlist_iter_initializer(mem->atomset);
+  this->phase = ISOMOR_PHASE_ATOM;
+  this->mem = mem;
+  this->atom = NULL;
+  this->child = NULL;
+}
+
+MemIsomorIter::~MemIsomorIter() {}
+/* イテレータiterに記録した情報を基に,
+ * 前回訪問したアトムiter->atomから次に訪問するアトムを求めて返し,
+ * ない場合はNULL返す.
+ *
+ * 出力: iter->pos, iter->atom (iter->memはRead Only) */
+inline LmnSymbolAtomRef MemIsomorIter::atom_traversed() {
+  BOOL changed_lists;
+
+  if (this->phase != ISOMOR_PHASE_ATOM) {
+    return NULL;
+  }
+
+  changed_lists = FALSE;
+  for (; atomlist_iter_condition(this->mem, this->pos);
+       atomlist_iter_next(this->pos), changed_lists = TRUE, this->atom = NULL)
+  /* OUTER LOOP */
+  {
+    AtomListEntry *ent;
+    LmnFunctor f;
+    f = atomlist_iter_get_functor(this->pos);
+    ent = atomlist_iter_get_entry(this->mem, this->pos);
+
+    if (!ent || ent->is_empty() || f == LMN_OUT_PROXY_FUNCTOR) {
+      /* アトムリストが空の場合, 次の候補リストを取得する.
+       * outside proxyは候補としない */
+      continue; /* OUTER LOOP */
+    } else {
+      BOOL cur_is_tail;
+
+      if (changed_lists || !this->atom) {
+        /* 走査先のアトムリストが変更された場合 or
+         * イテレータアトムが未設定の場合: リストの先頭アトムをcurとする */
+        this->atom = atomlist_head(ent);
+      } else if (this->atom == lmn_atomlist_end(ent)) {
+        /* 一応, 想定外 */
+        continue;
+      } else {
+        /* 既にイテレータアトムが設定されている場合は,
+         * リストから次のアトムを確保する */
+        this->atom = this->atom->get_next();
+        if (this->atom == lmn_atomlist_end(ent)) {
+          /* 結果, curが末尾に到達したならば次のアトムリストを求める. */
+          continue; /* OUTER LOOP */
+        }
+      }
+
+      /* リストを辿り, 根の候補とするアトムを求める */
+      cur_is_tail = FALSE;
+      while (!is_root_atom(this->atom)) { /* INNER LOOP */
+        /* Resumeアトムを読み飛ばす */
+        this->atom = this->atom->get_next();
+
+        if (this->atom == lmn_atomlist_end(ent)) {
+          /* tailに到達してしまった場合はフラグを立ててからループを抜ける */
+          cur_is_tail = TRUE;
+          break; /* INNER LOOP */
+        }
+      } /* INNER LOOP END */
+
+      if (!cur_is_tail) {
+        /* atomlistentryのtailへの到達以外でループを抜けた場合:
+         *   アトムへの参照取得に成功したのでループを抜ける */
+        break; /* OUTER LOOP */
+      }
+    }
+  } /* OUTER LOOP END */
+
+  if (this->atom) {
+    return this->atom;
+  } else {
+    this->phase = ISOMOR_PHASE_CHILD;
+    return NULL;
+  }
+}
+
+inline LmnMembraneRef MemIsomorIter::child_traversed() {
+  if (this->phase != ISOMOR_PHASE_CHILD) {
+    return NULL;
+  } else {
+    if (!this->child) {
+      this->child = lmn_mem_child_head(this->mem);
+    } else {
+      this->child = lmn_mem_next(this->child);
+    }
+
+    if (!this->child) {
+      this->phase = ISOMOR_PHASE_END;
+      return NULL;
+    } else {
+      return this->child;
+    }
+  }
+}
 
 static inline BOOL mem_equals_molecules(LmnMembraneRef mem1,
                                         LmnMembraneRef mem2, int current_depth);
 static inline BOOL mem_equals_children(LmnMembraneRef mem1, LmnMembraneRef mem2,
                                        int current_depth);
 
-static inline void memIsomorIter_init(MemIsomorIter *ma_iter,
-                                      LmnMembraneRef mem);
-static inline void memIsomorIter_destroy(MemIsomorIter *iter);
-static inline LmnSymbolAtomRef
-memIsomorIter_atom_traversed(MemIsomorIter *iter);
-static inline LmnMembraneRef memIsomorIter_child_traversed(MemIsomorIter *iter);
 static BOOL mem_isomor_mols(LmnMembraneRef mem1, TraceLogRef log1,
                             LmnMembraneRef mem2, SimplyLog log2,
                             MemIsomorIter *iter);
@@ -2233,30 +2332,16 @@ static BOOL mem_equals_isomorphism(LmnMembraneRef mem1, TraceLogRef log1,
   ret = /* Step 3.1 */ mem_equals_molecules(mem1, mem2, current_depth) &&
         /* Step 3.2 */ mem_equals_children(mem1, mem2, current_depth);
 #else
-  MemIsomorIter iter;
-
-  memIsomorIter_init(&iter, mem1);
+  MemIsomorIter iter = MemIsomorIter(mem1);
   ret = /* Step 3.X */ mem_isomor_mols(mem1, log1, mem2, log2, &iter);
-  memIsomorIter_destroy(&iter);
 #endif
 
   return ret;
 }
 
-static inline void memIsomorIter_init(MemIsomorIter *ma_iter,
-                                      LmnMembraneRef mem) {
-  ma_iter->pos = atomlist_iter_initializer(mem->atomset);
-  ma_iter->phase = ISOMOR_PHASE_ATOM;
-  ma_iter->mem = mem;
-  ma_iter->atom = NULL;
-  ma_iter->child = NULL;
-}
-
-static inline void memIsomorIter_destroy(MemIsomorIter *iter) {}
-
-static inline BOOL memIsomorIter_is_root_atom(LmnSymbolAtomRef atom) {
+inline BOOL MemIsomorIter::is_root_atom(LmnSymbolAtomRef atom) {
   LmnFunctor f;
-  f = (atom)->get_functor();
+  f = atom->get_functor();
   if (f == LMN_RESUME_FUNCTOR || f == LMN_OUT_PROXY_FUNCTOR ||
       (f == LMN_IN_PROXY_FUNCTOR &&
        !LMN_ATTR_IS_DATA(atom->get_attr(1)))) {
@@ -2265,102 +2350,6 @@ static inline BOOL memIsomorIter_is_root_atom(LmnSymbolAtomRef atom) {
   }
 
   return TRUE;
-}
-
-/* イテレータiterに記録した情報を基に,
- * 前回訪問したアトムiter->atomから次に訪問するアトムを求めて返し,
- * ない場合はNULL返す.
- *
- * 出力: iter->pos, iter->atom (iter->memはRead Only) */
-static inline LmnSymbolAtomRef
-memIsomorIter_atom_traversed(MemIsomorIter *iter) {
-  BOOL changed_lists;
-
-  if (iter->phase != ISOMOR_PHASE_ATOM) {
-    return NULL;
-  }
-
-  changed_lists = FALSE;
-  for (; atomlist_iter_condition(iter->mem, iter->pos);
-       atomlist_iter_next(iter->pos), changed_lists = TRUE, iter->atom = NULL)
-  /* OUTER LOOP */
-  {
-    AtomListEntry *ent;
-    LmnFunctor f;
-    f = atomlist_iter_get_functor(iter->pos);
-    ent = atomlist_iter_get_entry(iter->mem, iter->pos);
-
-    if (!ent || ent->is_empty() || f == LMN_OUT_PROXY_FUNCTOR) {
-      /* アトムリストが空の場合, 次の候補リストを取得する.
-       * outside proxyは候補としない */
-      continue; /* OUTER LOOP */
-    } else {
-      BOOL cur_is_tail;
-
-      if (changed_lists || !iter->atom) {
-        /* 走査先のアトムリストが変更された場合 or
-         * イテレータアトムが未設定の場合: リストの先頭アトムをcurとする */
-        iter->atom = atomlist_head(ent);
-      } else if (iter->atom == lmn_atomlist_end(ent)) {
-        /* 一応, 想定外 */
-        continue;
-      } else {
-        /* 既にイテレータアトムが設定されている場合は,
-         * リストから次のアトムを確保する */
-        iter->atom = iter->atom->get_next();
-        if (iter->atom == lmn_atomlist_end(ent)) {
-          /* 結果, curが末尾に到達したならば次のアトムリストを求める. */
-          continue; /* OUTER LOOP */
-        }
-      }
-
-      /* リストを辿り, 根の候補とするアトムを求める */
-      cur_is_tail = FALSE;
-      while (!memIsomorIter_is_root_atom(iter->atom)) { /* INNER LOOP */
-        /* Resumeアトムを読み飛ばす */
-        iter->atom = iter->atom->get_next();
-
-        if (iter->atom == lmn_atomlist_end(ent)) {
-          /* tailに到達してしまった場合はフラグを立ててからループを抜ける */
-          cur_is_tail = TRUE;
-          break; /* INNER LOOP */
-        }
-      } /* INNER LOOP END */
-
-      if (!cur_is_tail) {
-        /* atomlistentryのtailへの到達以外でループを抜けた場合:
-         *   アトムへの参照取得に成功したのでループを抜ける */
-        break; /* OUTER LOOP */
-      }
-    }
-  } /* OUTER LOOP END */
-
-  if (iter->atom) {
-    return iter->atom;
-  } else {
-    iter->phase = ISOMOR_PHASE_CHILD;
-    return NULL;
-  }
-}
-
-static inline LmnMembraneRef
-memIsomorIter_child_traversed(MemIsomorIter *iter) {
-  if (iter->phase != ISOMOR_PHASE_CHILD) {
-    return NULL;
-  } else {
-    if (!iter->child) {
-      iter->child = lmn_mem_child_head(iter->mem);
-    } else {
-      iter->child = lmn_mem_next(iter->child);
-    }
-
-    if (!iter->child) {
-      iter->phase = ISOMOR_PHASE_END;
-      return NULL;
-    } else {
-      return iter->child;
-    }
-  }
 }
 
 #define MEM_ISOMOR_FIRST_TRACE (-1)
@@ -2385,7 +2374,7 @@ static BOOL mem_isomor_mols(LmnMembraneRef mem1, TraceLogRef log1,
 
   /* アトム起点の探索のための根を取得 */
   do {
-    root1 = memIsomorIter_atom_traversed(iter);
+    root1 = iter->atom_traversed();
     /* 未トレースのアトムが現れるか,
      * 末尾(NULL)に到達するまで根の候補探索を繰り返す. */
   } while (root1 && tracelog_contains_atom(log1, root1));
@@ -2396,7 +2385,7 @@ static BOOL mem_isomor_mols(LmnMembraneRef mem1, TraceLogRef log1,
   } else {
     LmnMembraneRef child;
     do {
-      child = memIsomorIter_child_traversed(iter);
+      child = iter->child_traversed();
     } while (child && tracelog_contains_mem(log1, child));
 
     if (child) {
@@ -2423,7 +2412,6 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
                                         LmnMembraneRef mem2, SimplyLog log2,
                                         MemIsomorIter *iter,
                                         LmnSymbolAtomRef root1) {
-  MemIsomorIter current; /* for keeping current state (snap shot) */
   AtomListEntry *ent2;
   LmnSymbolAtomRef root2;
   LmnFunctor f;
@@ -2432,7 +2420,9 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
   ent2 = lmn_mem_get_atomlist(mem2, f);
   if (!ent2)
     return FALSE;
-  current = (*iter); /* shallow copy */
+
+  /* for keeping current state (snap shot) */
+  MemIsomorIter current = (*iter); /* shallow copy */
 
   EACH_ATOM(root2, ent2, ({
               if (simplylog_contains_atom(log2, root2))
@@ -3499,7 +3489,6 @@ void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom,
     mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)atom);
   }
 }
-
 
 void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem) {
   //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda

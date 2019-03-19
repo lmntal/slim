@@ -39,18 +39,12 @@
 
 #include "../lmntal.h"
 #include "element/element.h"
-#include "vm/vm.h"
 #include "verifier/verifier.h"
+#include "vm/vm.h"
 
-
-
-
-void nlmem_copy(LmnReactCxtRef rc,
-                LmnMembraneRef mem,
-                LmnAtomRef a0, LmnLinkAttr t0,
-                LmnAtomRef a1, LmnLinkAttr t1,
-                LmnAtomRef a2, LmnLinkAttr t2)
-{
+void nlmem_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
+                LmnLinkAttr t2) {
   LmnMembraneRef org_mem, trg_mem;
   ProcessTableRef atom_map;
   lmn_interned_str copy_tag_name;
@@ -131,15 +125,14 @@ void nlmem_kill(LmnReactCxtRef rc,
   }
 
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), org_mem);
+    lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), org_mem);
   }
   lmn_mem_delete_mem(mem, org_mem);
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
-void init_nlmem(void)
-{
+void init_nlmem(void) {
   lmn_register_c_fun("nlmem_copy", (void *)nlmem_copy, 3);
   lmn_register_c_fun("nlmem_kill", (void *)nlmem_kill, 2);
 }

@@ -159,7 +159,7 @@ void integer_of_string(LmnReactCxtRef rc,
 {
   long n;
   char *t;
-  const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
+  const char *s = reinterpret_cast<LmnString *>(a0)->c_str();
   t = NULL;
   n = strtol(s, &t, 10);
   if (t == NULL || s == t) {

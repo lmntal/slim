@@ -82,8 +82,6 @@
 
 static void hashtbl_extend(SimpleHashtbl *ht);
 static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key);
-static inline HashKeyType *hashset_get_p(HashSet *set, HashKeyType key,
-                                         unsigned long dummy_key);
 
 /* HashMap <HashKeyType, HashValueType> */
 void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size) {
@@ -195,28 +193,19 @@ void hashtbliter_next(HashIterator *iter) {
 }
 
 /* HashSet <HashKeyType> */
-void hashset_init(HashSet *set, unsigned int init_size) {
-  set->num = 0;
-  set->cap = round2up(init_size);
-  set->tbl = (HashKeyType *)malloc(sizeof(HashKeyType) * set->cap);
-  memset(set->tbl, 0xffU, sizeof(HashKeyType) * set->cap);
+HashSet::HashSet(unsigned int init_size) {
+  this->num = 0;
+  this->cap = round2up(init_size);
+  this->tbl = (HashKeyType *)malloc(sizeof(HashKeyType) * this->cap);
+  memset(this->tbl, 0xffU, sizeof(HashKeyType) * this->cap);
 }
 
-HashSet *hashset_make(unsigned int init_size) {
-  HashSet *hs = (HashSet *)malloc(sizeof(HashSet));
-  hashset_init(hs, init_size);
-  return hs;
+HashSet::~HashSet() {
+  LMN_FREE(this->tbl);
 }
 
-void hashset_destroy(HashSet *set) { LMN_FREE(set->tbl); }
-
-void hashset_free(HashSet *set) {
-  hashset_destroy(set);
-  LMN_FREE(set);
-}
-
-int hashset_contains(HashSet *set, HashKeyType key) {
-  return *hashset_get_p(set, key, EMPTY_KEY) != EMPTY_KEY;
+int HashSet::contains(HashKeyType key) {
+  return *this->get_p(key, EMPTY_KEY) != EMPTY_KEY;
 }
 
 static void hashset_extend(HashSet *set) {
@@ -236,38 +225,34 @@ static void hashset_extend(HashSet *set) {
 
   for (i = 0; i < cap; i++) {
     if (tbl[i] != EMPTY_KEY) {
-      entry = hashset_get_p(set, tbl[i], DELETED_KEY); /* 新しいindex */
+      entry = set->get_p(tbl[i], DELETED_KEY); /* 新しいindex */
       *entry = tbl[i];
     }
   }
   LMN_FREE(tbl);
 }
 
-void hashset_add(HashSet *set, HashKeyType key) {
+void HashSet::add(HashKeyType key) {
   HashKeyType *entry;
   LMN_ASSERT(key < DELETED_KEY);
 
-  entry = hashset_get_p(set, key, DELETED_KEY);
+  entry = this->get_p(key, DELETED_KEY);
   if (*entry == EMPTY_KEY || *entry == DELETED_KEY) {
-    set->num++;
+    this->num++;
     *entry = key;
   }
-  if (set->num > set->cap * LOAD_FACTOR) {
-    hashset_extend(set);
+  if (this->num > this->cap * LOAD_FACTOR) {
+    hashset_extend(this);
   }
 }
 
-void hashset_clear(HashSet *set) {
-  memset(set->tbl, 0xffU, sizeof(HashKeyType) * set->cap);
-}
-
-void hashset_delete(HashSet *set, HashKeyType key) {
+void HashSet::delete_entry(HashKeyType key) {
   HashKeyType *entry;
   LMN_ASSERT(key < DELETED_KEY);
 
-  entry = hashset_get_p(set, key, EMPTY_KEY);
+  entry = this->get_p(key, EMPTY_KEY);
   if (*entry != EMPTY_KEY) {
-    set->num--;
+    this->num--;
     *entry = DELETED_KEY;
   }
   /* EFFICIENCY: hashset_reduce() が必要 */
@@ -288,14 +273,13 @@ void hashsetiter_next(HashSetIterator *it) {
     ;
 }
 
-static inline HashKeyType *hashset_get_p(HashSet *set, HashKeyType key,
-                                         unsigned long dummykey) {
+HashKeyType * HashSet::get_p(HashKeyType key, unsigned long dummykey) {
   HashKeyType probe;
-  HashKeyType increment = (key | 1) & (set->cap - 1);
+  HashKeyType increment = (key | 1) & (this->cap - 1);
 
-  for (probe = INT_HASH(key) & (set->cap - 1);
-       set->tbl[probe] < dummykey && set->tbl[probe] != key;
-       probe = (probe + increment) & (set->cap - 1)) {
+  for (probe = INT_HASH(key) & (this->cap - 1);
+       this->tbl[probe] < dummykey && this->tbl[probe] != key;
+       probe = (probe + increment) & (this->cap - 1)) {
   }
-  return &set->tbl[probe];
+  return &(this->tbl[probe]);
 }

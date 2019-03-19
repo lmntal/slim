@@ -62,12 +62,12 @@ static struct NewMemInfo *dmem_root_get_new_mem_info(struct MemDeltaRoot *d,
                                                      LmnMembraneRef m);
 static LmnMembraneRef dmem_root_get_parent(struct MemDeltaRoot *root_d,
                                            LmnMembraneRef m);
-static inline LmnSymbolAtomRef
-dmem_root_copy_satom_with_data(struct MemDeltaRoot *d, LmnSymbolAtomRef atom);
+static inline LmnSymbolAtomRef dmem_root_copy_satom_with_data(
+    struct MemDeltaRoot *d, LmnSymbolAtomRef atom);
 static inline LmnSymbolAtomRef dmem_root_copy_satom(struct MemDeltaRoot *d,
                                                     LmnSymbolAtomRef atom);
-static inline LmnSymbolAtomRef
-dmem_root_copy_eqatom_with_data(LmnSymbolAtomRef atom);
+static inline LmnSymbolAtomRef dmem_root_copy_eqatom_with_data(
+    LmnSymbolAtomRef atom);
 static inline void dmem_root_commit_atom(struct MemDeltaRoot *d,
                                          LmnSymbolAtomRef src,
                                          LmnSymbolAtomRef atom);
@@ -109,8 +109,9 @@ static inline void dmem_remove_symbol_atom(struct MemDelta *d, LmnMembraneRef m,
 static void dmem_link_data_atoms(struct MemDelta *d, LmnMembraneRef m,
                                  LmnDataAtomRef d0, LmnLinkAttr attr0,
                                  LmnDataAtomRef d1, LmnLinkAttr attr1);
-static inline LmnSymbolAtomRef
-dmem_modify_atom(struct MemDelta *d, LmnMembraneRef mem, LmnSymbolAtomRef src);
+static inline LmnSymbolAtomRef dmem_modify_atom(struct MemDelta *d,
+                                                LmnMembraneRef mem,
+                                                LmnSymbolAtomRef src);
 static inline void dmem_modify_link(struct MemDelta *d, LmnMembraneRef m,
                                     LmnSymbolAtomRef atom, int i, LmnAtomRef l,
                                     LmnLinkAttr attr);
@@ -191,40 +192,40 @@ static void new_mem_info_free(struct NewMemInfo *p) {
     }                                                                          \
   } while (0)
 
-#define DMEM_ALL_ATOMS(D, MEM, V, CODE)                                        \
-  do {                                                                         \
-    if (!(D)) {                                                                \
-      ALL_ATOMS(MEM, V, CODE);                                                 \
-    } else {                                                                   \
-      int __i, i_atomlist;                                                     \
-      for (i_atomlist = 0; i_atomlist <= (D)->max_functor; i_atomlist++) {     \
-        DMEM_ORG_EACH_FUNC_ATOM(D, MEM, i_atomlist, V, CODE);                  \
-      }                                                                        \
-      for (__i = 0; __i < vec_num(&(D)->new_atoms); __i++) {                   \
-        (V) = (LmnSymbolAtomRef)vec_get(&(D)->new_atoms, __i);                 \
-        if (!dmem_is_removed_atom((D), (MEM), (V))) {                          \
-          (CODE);                                                              \
-        }                                                                      \
-      }                                                                        \
-    }                                                                          \
+#define DMEM_ALL_ATOMS(D, MEM, V, CODE)                                    \
+  do {                                                                     \
+    if (!(D)) {                                                            \
+      ALL_ATOMS(MEM, V, CODE);                                             \
+    } else {                                                               \
+      int __i, i_atomlist;                                                 \
+      for (i_atomlist = 0; i_atomlist <= (D)->max_functor; i_atomlist++) { \
+        DMEM_ORG_EACH_FUNC_ATOM(D, MEM, i_atomlist, V, CODE);              \
+      }                                                                    \
+      for (__i = 0; __i < vec_num(&(D)->new_atoms); __i++) {               \
+        (V) = (LmnSymbolAtomRef)vec_get(&(D)->new_atoms, __i);             \
+        if (!dmem_is_removed_atom((D), (MEM), (V))) {                      \
+          (CODE);                                                          \
+        }                                                                  \
+      }                                                                    \
+    }                                                                      \
   } while (0)
 
-#define DMEM_ALL_MEMS(D, MEM, V, CODE)                                         \
-  do {                                                                         \
-    unsigned int i;                                                            \
-    LmnMembraneRef __next;                                                     \
-    for ((V) = lmn_mem_child_head(MEM); (V); (V) = __next) {                   \
-      __next = lmn_mem_next(V);                                                \
-      if (!(D) || !dmem_is_removed_mem((D), (MEM), (V))) {                     \
-        (CODE);                                                                \
-      }                                                                        \
-    }                                                                          \
-    if ((D)) {                                                                 \
-      for (i = 0; i < vec_num(&(D)->new_mems); i++) {                          \
-        (V) = (LmnMembraneRef)vec_get(&(D)->new_mems, i);                      \
-        (CODE);                                                                \
-      }                                                                        \
-    }                                                                          \
+#define DMEM_ALL_MEMS(D, MEM, V, CODE)                       \
+  do {                                                       \
+    unsigned int i;                                          \
+    LmnMembraneRef __next;                                   \
+    for ((V) = lmn_mem_child_head(MEM); (V); (V) = __next) { \
+      __next = lmn_mem_next(V);                              \
+      if (!(D) || !dmem_is_removed_mem((D), (MEM), (V))) {   \
+        (CODE);                                              \
+      }                                                      \
+    }                                                        \
+    if ((D)) {                                               \
+      for (i = 0; i < vec_num(&(D)->new_mems); i++) {        \
+        (V) = (LmnMembraneRef)vec_get(&(D)->new_mems, i);    \
+        (CODE);                                              \
+      }                                                      \
+    }                                                        \
   } while (0)
 
 struct MemDeltaRoot *dmem_root_make(LmnMembraneRef root_mem, LmnRuleRef rule,
@@ -244,7 +245,7 @@ struct MemDeltaRoot *dmem_root_make(LmnMembraneRef root_mem, LmnRuleRef rule,
   vec_init(&p->mem_deltas, 16);
   vec_init(&p->modified_atoms, 32);
   p->owner_tbl = proc_tbl_make_with_size(size);
-  p->flag_tbl = sproc_tbl_make_with_size(size);
+  p->flag_tbl = new SimpleProcessTable(size);
 
   /* add an appried history for constraint handling rules */
   p->applied_history = rule ? rule->latest_history() : ANONYMOUS;
@@ -264,7 +265,7 @@ void dmem_root_free(struct MemDeltaRoot *p) {
   vec_destroy(&p->mem_deltas);
   vec_destroy(&p->modified_atoms);
   proc_tbl_free(p->owner_tbl);
-  sproc_tbl_free(p->flag_tbl);
+  delete p->flag_tbl;
 
   for (i = 0; i < vec_num(&p->new_mems); i++) {
     LmnWord t;
@@ -306,7 +307,7 @@ static inline struct MemDelta *dmem_root_get_mem_delta(struct MemDeltaRoot *d,
   else {
     struct MemDelta *mem_delta = mem_delta_make(d, m, d->next_id);
     proc_tbl_put_mem(d->proc_tbl, m, (LmnWord)mem_delta);
-    sproc_tbl_set_mem_flag(d->flag_tbl, m, TAG_DELTA_MEM);
+    d->flag_tbl->tbl_set_mem_flag(m, TAG_DELTA_MEM);
     vec_push(&d->mem_deltas, (vec_data_t)mem_delta);
     return mem_delta;
   }
@@ -314,7 +315,7 @@ static inline struct MemDelta *dmem_root_get_mem_delta(struct MemDeltaRoot *d,
 
 static inline BOOL dmem_root_is_delta_mem(struct MemDeltaRoot *d,
                                           LmnMembraneRef m) {
-  return sproc_tbl_get_flag_by_mem(d->flag_tbl, m, TAG_DELTA_MEM);
+  return d->flag_tbl->tbl_get_flag_by_mem(m, TAG_DELTA_MEM);
 }
 
 static inline BOOL dmem_root_is_new_mem(struct MemDeltaRoot *d,
@@ -644,8 +645,7 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d, struct MemDelta *d,
             srcatom); /* プロキシ操作命令等で既にmodifyされている場合のために */
 
         /* すでにコピー済みなら次の候補へ */
-        if (proc_tbl_get_by_atom(atoms, srcatom, NULL))
-          continue;
+        if (proc_tbl_get_by_atom(atoms, srcatom, NULL)) continue;
 
         f = srcatom->get_functor();
         newatom = dmem_root_copy_satom_with_data(root_d, srcatom);
@@ -670,7 +670,6 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d, struct MemDelta *d,
             srcinside =
                 (LmnSymbolAtomRef)(dmem_root_get_link(root_d, srcatom, 0));
             if (proc_tbl_get_by_atom(atoms, srcinside, &t)) {
-
               newinside = (LmnSymbolAtomRef)(t);
 
               /* 必ず子膜につながっているはず */
@@ -1188,10 +1187,8 @@ void dmem_root_remove_mem(struct MemDeltaRoot *root_d, LmnMembraneRef parent,
     struct MemDelta *d = dmem_root_get_mem_delta(root_d, parent);
 
 #ifdef DEBUG
-    if (dmem_root_is_new_mem(root_d, child))
-      lmn_fatal("unexpected");
-    if (dmem_is_removed_mem(d, parent, child))
-      lmn_fatal("unexpected");
+    if (dmem_root_is_new_mem(root_d, child)) lmn_fatal("unexpected");
+    if (dmem_is_removed_mem(d, parent, child)) lmn_fatal("unexpected");
 #endif
     vec_push(&d->del_mems, (vec_data_t)child);
   }
@@ -1378,8 +1375,7 @@ void dmem_root_insert_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
       child_d, child_mem, LMN_STAR_PROXY_FUNCTOR, star, ({
         /* スタープロキシは新規アトムのはず */
         oldstar = (LmnSymbolAtomRef)(dmem_root_get_link(root_d, star, 0));
-        if (child_d)
-          oldstar = dmem_modify_atom(child_d, child_mem, oldstar);
+        if (child_d) oldstar = dmem_modify_atom(child_d, child_mem, oldstar);
         if (LMN_PROXY_GET_MEM(oldstar) == child_mem) { /* (1) */
           if (!vec_contains(&remove_list, (LmnWord)star)) {
             if (child_d)
@@ -1495,7 +1491,7 @@ LmnMembraneRef dmem_root_new_mem(struct MemDeltaRoot *d) {
 
   m = lmn_mem_make();
   proc_tbl_put_mem(d->proc_tbl, m, (LmnWord)new_mem_info_make(m));
-  sproc_tbl_set_mem_flag(d->flag_tbl, m, TAG_NEW_MEM);
+  d->flag_tbl->tbl_set_mem_flag(m, TAG_NEW_MEM);
   vec_push(&d->new_mems, (vec_data_t)m);
   return m;
 }
@@ -1505,8 +1501,7 @@ static struct NewMemInfo *dmem_root_get_new_mem_info(struct MemDeltaRoot *d,
   LmnWord t = 0;
 
 #ifdef DEBUG
-  if (!dmem_root_is_new_mem(d, m))
-    lmn_fatal("unexpected");
+  if (!dmem_root_is_new_mem(d, m)) lmn_fatal("unexpected");
 #endif
   proc_tbl_get_by_mem(d->proc_tbl, m, &t);
   return (struct NewMemInfo *)t;
@@ -1532,10 +1527,8 @@ static LmnSymbolAtomRef dmem_root_alter_functor(struct MemDeltaRoot *root_d,
       LmnSymbolAtomRef a0;
 
 #ifdef DEBUG
-      if (LMN_PROXY_GET_MEM(atom) != mem)
-        lmn_fatal("unexpected");
-      if (dmem_root_is_modified_atom(root_d, atom))
-        lmn_fatal("unexpected");
+      if (LMN_PROXY_GET_MEM(atom) != mem) lmn_fatal("unexpected");
+      if (dmem_root_is_modified_atom(root_d, atom)) lmn_fatal("unexpected");
 #endif
       new_atom->set_functor(f);
       dmem_remove_symbol_atom(d, mem, atom);
@@ -1546,8 +1539,7 @@ static LmnSymbolAtomRef dmem_root_alter_functor(struct MemDeltaRoot *root_d,
       if (LMN_PROXY_GET_MEM(a0) != mem) {
         LmnMembraneRef m2 = LMN_PROXY_GET_MEM(a0);
 #ifdef DEBUG
-        if (dmem_root_is_new_mem(root_d, m2))
-          lmn_fatal("unexpected");
+        if (dmem_root_is_new_mem(root_d, m2)) lmn_fatal("unexpected");
 #endif
         a0 = dmem_modify_atom(dmem_root_get_mem_delta(root_d, m2), m2, a0);
       } else {
@@ -1681,7 +1673,7 @@ LmnSymbolAtomRef dmem_root_new_atom(struct MemDeltaRoot *d, LmnFunctor f) {
   if (atom->get_id() == 0)
     atom->set_id(env_gen_next_id());
 
-  sproc_tbl_set_atom_flag(d->flag_tbl, atom, TAG_NEW_ATOM);
+  d->flag_tbl->tbl_set_atom_flag(atom, TAG_NEW_ATOM);
   return atom;
 }
 
@@ -1694,13 +1686,13 @@ static inline LmnSymbolAtomRef dmem_root_copy_satom(struct MemDeltaRoot *d,
   if (atom->get_id() == 0)
     new_atom->set_id(env_gen_next_id());
 
-  sproc_tbl_set_atom_flag(d->flag_tbl, new_atom, TAG_NEW_ATOM);
+  d->flag_tbl->tbl_set_atom_flag(new_atom, TAG_NEW_ATOM);
 
   return new_atom;
 }
 
-static inline LmnSymbolAtomRef
-dmem_root_copy_satom_with_data(struct MemDeltaRoot *d, LmnSymbolAtomRef atom) {
+static inline LmnSymbolAtomRef dmem_root_copy_satom_with_data(
+    struct MemDeltaRoot *d, LmnSymbolAtomRef atom) {
   LmnSymbolAtomRef new_atom = dmem_root_copy_satom(d, atom);
   unsigned int i, arity = atom->get_link_num();
 
@@ -1717,8 +1709,8 @@ dmem_root_copy_satom_with_data(struct MemDeltaRoot *d, LmnSymbolAtomRef atom) {
 }
 
 /* '='アトムのコピー用。ルール適用中に消されるので差分に含めないようにする */
-static inline LmnSymbolAtomRef
-dmem_root_copy_eqatom_with_data(LmnSymbolAtomRef atom) {
+static inline LmnSymbolAtomRef dmem_root_copy_eqatom_with_data(
+    LmnSymbolAtomRef atom) {
   LmnSymbolAtomRef new_eqatom;
   unsigned int i, arity;
 
@@ -1746,16 +1738,15 @@ LmnAtomRef dmem_root_copy_atom(struct MemDeltaRoot *d, LmnAtomRef atom,
   } else { /* symbol atom */
     new_atom = lmn_copy_satom((LmnSymbolAtomRef)atom);
     ((LmnSymbolAtomRef)new_atom)->set_id(env_gen_next_id());
-    sproc_tbl_set_atom_flag(d->flag_tbl, (LmnSymbolAtomRef)new_atom,
-                            TAG_NEW_ATOM);
+    d->flag_tbl->tbl_set_atom_flag((LmnSymbolAtomRef)new_atom, TAG_NEW_ATOM);
     return new_atom;
   }
 }
 
 static inline void dmem_root_free_satom(struct MemDeltaRoot *d,
                                         LmnSymbolAtomRef atom) {
-  sproc_tbl_set_atom_flag(d->flag_tbl, dmem_root_modified_atom(d, atom),
-                          TAG_DEL_ATOM);
+  d->flag_tbl->tbl_set_atom_flag(dmem_root_modified_atom(d, atom),
+                                 TAG_DEL_ATOM);
 }
 
 void dmem_root_free_atom(struct MemDeltaRoot *d, LmnAtomRef atom,
@@ -1767,7 +1758,7 @@ void dmem_root_free_atom(struct MemDeltaRoot *d, LmnAtomRef atom,
 
 static inline BOOL dmem_root_is_freed_atom(struct MemDeltaRoot *d,
                                            LmnSymbolAtomRef a) {
-  return sproc_tbl_get_flag_by_atom(d->flag_tbl, a, TAG_DEL_ATOM);
+  return d->flag_tbl->tbl_get_flag_by_atom(a, TAG_DEL_ATOM);
 }
 
 static inline LmnSymbolAtomRef dmem_root_modified_atom(struct MemDeltaRoot *d,
@@ -1788,7 +1779,7 @@ static inline BOOL dmem_root_is_new_atom(struct MemDeltaRoot *d,
 
 static inline BOOL dmem_root_is_modified_atom(struct MemDeltaRoot *d,
                                               LmnSymbolAtomRef a) {
-  return sproc_tbl_get_flag_by_atom(d->flag_tbl, a, TAG_MODIFIED_ATOM);
+  return d->flag_tbl->tbl_get_flag_by_atom(a, TAG_MODIFIED_ATOM);
 }
 
 static inline LmnMembraneRef dmem_root_atom_mem(struct MemDeltaRoot *d,
@@ -1849,8 +1840,7 @@ static void mem_delta_free(struct MemDelta *p) {
   }
   vec_destroy(&p->new_atoms);
 
-  if (p->new_rulesets)
-    vec_free(p->new_rulesets);
+  if (p->new_rulesets) vec_free(p->new_rulesets);
 
   vec_destroy(&p->new_proxies);
 
@@ -1862,15 +1852,13 @@ LmnMembraneRef dmem_mem(struct MemDelta *d) { return d->mem; }
 static inline void dmem_remove_symbol_atom(struct MemDelta *d, LmnMembraneRef m,
                                            LmnSymbolAtomRef atom) {
 #ifdef DEBUG
-  if (dmem_root_is_modified_atom(d->root_d, atom))
-    lmn_fatal("unexpected");
-  if (dmem_is_removed_atom(d, m, atom))
-    lmn_fatal("unexpected");
+  if (dmem_root_is_modified_atom(d->root_d, atom)) lmn_fatal("unexpected");
+  if (dmem_is_removed_atom(d, m, atom)) lmn_fatal("unexpected");
 #endif
   /* if (dmem_is_new_atom(d, m, atom)) { */
   /*   sproc_tbl_unset_atom_flag(d->flag_tbl, atom, TAG_NEW_ATOM); */
   /* } else { */
-  /*   sproc_tbl_set_atom_flag(d->flag_tbl, atom, TAG_DEL_ATOM); */
+  /*   d->flag_tbl->tbl_set_atom_flag(atom, TAG_DEL_ATOM); */
   /* } */
 
   vec_push(&d->del_atoms, (vec_data_t)atom);
@@ -1903,8 +1891,9 @@ static inline BOOL dmem_is_new_atom(struct MemDelta *d, LmnMembraneRef m,
          (LmnMembraneRef)t == m;
 }
 
-static inline LmnSymbolAtomRef
-dmem_modify_atom(struct MemDelta *d, LmnMembraneRef mem, LmnSymbolAtomRef src) {
+static inline LmnSymbolAtomRef dmem_modify_atom(struct MemDelta *d,
+                                                LmnMembraneRef mem,
+                                                LmnSymbolAtomRef src) {
   LmnSymbolAtomRef new_atom;
 
   if (dmem_root_is_modified_atom(d->root_d, src)) {
@@ -1930,7 +1919,7 @@ dmem_modify_atom(struct MemDelta *d, LmnMembraneRef mem, LmnSymbolAtomRef src) {
 
     /* new_atomとsrcの対応をproc_tblに保存しておく */
     proc_tbl_put_atom(d->root_d->proc_tbl, src, LMN_ATOM(new_atom));
-    sproc_tbl_set_atom_flag(d->root_d->flag_tbl, src, TAG_MODIFIED_ATOM);
+    d->root_d->flag_tbl->tbl_set_atom_flag(src, TAG_MODIFIED_ATOM);
 
     vec_push(&d->root_d->modified_atoms, (vec_data_t)src);
     vec_push(&d->root_d->modified_atoms, (vec_data_t)new_atom);
@@ -1978,13 +1967,10 @@ static inline void dmem_put_symbol_atom(struct MemDelta *d, LmnMembraneRef m,
     atom->set_id(env_gen_next_id());
   }
 
-  if (f > d->max_functor)
-    d->max_functor = f;
+  if (f > d->max_functor) d->max_functor = f;
 #ifdef DEBUG
-  if (dmem_is_removed_atom(d, m, atom))
-    lmn_fatal("unexpected");
-  if (!dmem_root_is_new_atom(d->root_d, atom))
-    lmn_fatal("unexpected");
+  if (dmem_is_removed_atom(d, m, atom)) lmn_fatal("unexpected");
+  if (!dmem_root_is_new_atom(d->root_d, atom)) lmn_fatal("unexpected");
 #endif
   vec_push(&d->new_atoms, (vec_data_t)atom);
   proc_tbl_put_atom(d->root_d->owner_tbl, atom,

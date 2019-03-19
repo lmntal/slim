@@ -173,17 +173,16 @@ void lmn_memstack_free(LmnMemStack memstack);
 
 struct MemReactContext;
 
-LmnMemStack RC_MEMSTACK(MemReactContext *cxt);
-void RC_MEMSTACK_SET(MemReactContext *cxt, LmnMemStack s);
-
-struct MemReactContext : LmnReactCxt {
-  MemReactContext() : LmnReactCxt(REACT_MEM_ORIENTED) {
-    RC_MEMSTACK_SET(this, lmn_memstack_make());
-  }
-
-  ~MemReactContext() { lmn_memstack_free(RC_MEMSTACK(this)); }
-
+class MemReactContext : public LmnReactCxt {
   LmnMemStack memstack; /* 膜主導実行時に使用 */
+public:
+  ~MemReactContext() { lmn_memstack_free(MEMSTACK()); }
+
+  MemReactContext() : LmnReactCxt(REACT_MEM_ORIENTED) {
+    MEMSTACK_SET(lmn_memstack_make());
+  }
+  LmnMemStack MEMSTACK();
+  void MEMSTACK_SET(LmnMemStack s);
 };
 
 BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode);
@@ -349,6 +348,5 @@ LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i);
 unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt);
 
 unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt);
-
 
 #endif

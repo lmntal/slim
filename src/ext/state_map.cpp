@@ -39,29 +39,20 @@
 
 #include "state_map.h"
 #include "set.h"
-#include "vm/vm.h"
 #include "verifier/verifier.h"
+#include "vm/vm.h"
+
+static int state_map_atom_type;
 
 struct LmnStateMap {
   LMN_SP_ATOM_HEADER;
   StateSpaceRef states;
+  LmnStateMap(LmnMembraneRef mem) {
+    LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
+    this->states = new StateSpace(NULL, NULL);
+  };
+  ~LmnStateMap() { delete (this->states); };
 };
-
-static int state_map_atom_type;
-
-static LmnStateMapRef lmn_make_state_map(LmnMembraneRef mem)
-{
-  LmnStateMapRef s = LMN_MALLOC(struct LmnStateMap);
-  LMN_SP_ATOM_SET_TYPE(s, state_map_atom_type);
-  s->states = new StateSpace(NULL, NULL);
-  return s;
-}
-
-void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
-{
-  delete (((LmnStateMapRef)state_map)->states);
-  LMN_FREE(state_map);
-}
 
 /*----------------------------------------------------------------------
  * Callbacks
@@ -71,28 +62,24 @@ void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
  * 生成
  * -a0 Map
  */
-void cb_state_map_init(LmnReactCxtRef rc,
-                       LmnMembraneRef mem,
-                       LmnAtomRef a0, LmnLinkAttr t0)
-{
-  LmnStateMapRef atom = lmn_make_state_map(mem);
+
+void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                       LmnLinkAttr t0) {
+  LmnStateMapRef atom = new LmnStateMap(mem);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   LMN_SP_ATOM_SET_TYPE(atom, state_map_atom_type);
   lmn_mem_push_atom(mem, atom, attr);
-  lmn_mem_newlink(mem,
-                  a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  atom, attr, 0);
+  lmn_mem_newlink(mem, a0, t0, LMN_ATTR_GET_VALUE(t0), atom, attr, 0);
 }
 
 /*
  * 解放
  * +a0 Map
  */
-void cb_state_map_free(LmnReactCxtRef rc,
-                       LmnMembraneRef mem,
-                       LmnAtomRef a0, LmnLinkAttr t0)
-{
-  lmn_state_map_free((LmnStateMapRef)a0, mem);
+
+void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                       LmnLinkAttr t0) {
+  delete (LmnStateMapRef)a0, mem;
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
@@ -121,7 +108,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
   lmn_mem_delete_atom(m, in, in_attr);
-  lmn_memstack_delete(RC_MEMSTACK((MemReactContext *)rc), m);
+  lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
   lmn_mem_remove_mem(mem, m);
 
   State *new_s = new State(m, 0, TRUE);
@@ -130,17 +117,14 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   if (succ == new_s) { /* new state */
     state_id_issue(succ);
   } else {
-    delete(new_s);
+    delete (new_s);
   }
 
   lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
-  lmn_mem_newlink(mem,
-                  a2, t2, LMN_ATTR_GET_VALUE(t2),
-                  succ, LMN_INT_ATTR, 0);
+  lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), succ, LMN_INT_ATTR, 0);
 
-  lmn_mem_newlink(mem,
-                  a0, t0, LMN_ATTR_GET_VALUE(t0),
-                  a3, t3, LMN_ATTR_GET_VALUE(t3));
+  lmn_mem_newlink(mem, a0, t0, LMN_ATTR_GET_VALUE(t0), a3, t3,
+                  LMN_ATTR_GET_VALUE(t3));
 
   lmn_mem_delete_atom(mem, a1, t1);
 }
@@ -152,13 +136,10 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
  * -a2 状態
  * -a3 Map
  */
-void cb_state_map_state_find(LmnReactCxtRef rc,
-           LmnMembraneRef mem,
-           LmnAtomRef a0, LmnLinkAttr t0,
-           LmnAtomRef a1, LmnLinkAttr t1,
-           LmnAtomRef a2, LmnLinkAttr t2,
-           LmnAtomRef a3, LmnLinkAttr t3)
-{
+void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
+                             LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                             LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2,
+                             LmnAtomRef a3, LmnLinkAttr t3) {
   State *s = (State *)a1;
   st_data_t entry;
 
@@ -169,7 +150,8 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
   LmnFunctor f;
   LmnSymbolAtomRef at_atom;
   EACH_ATOMLIST_WITH_FUNC(new_mem, ent, f, {
-    if (f != at_functor) continue;
+    if (f != at_functor)
+      continue;
 
     LMN_ASSERT(ent->n == 1);
     at_atom = atomlist_head(ent);
@@ -184,13 +166,11 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
   lmn_newlink_in_symbols(plus, 0, in, 1);
   lmn_newlink_in_symbols(in, 0, out, 0);
 
-  lmn_mem_newlink(mem,
-      a2, t2, LMN_ATTR_GET_VALUE(t2),
-      out, LMN_ATTR_MAKE_LINK(1), 1);
+  lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), out,
+                  LMN_ATTR_MAKE_LINK(1), 1);
 
-  lmn_mem_newlink(mem,
-      a0, t0, LMN_ATTR_GET_VALUE(t1),
-      a3, t3, LMN_ATTR_GET_VALUE(t3));
+  lmn_mem_newlink(mem, a0, t0, LMN_ATTR_GET_VALUE(t1), a3, t3,
+                  LMN_ATTR_GET_VALUE(t3));
 
   lmn_mem_add_child_mem(mem, new_mem);
 }
@@ -199,40 +179,25 @@ void cb_state_map_state_find(LmnReactCxtRef rc,
  * Initialization
  */
 
-void *sp_cb_state_map_copy(void *data)
-{
-  return data;
-}
+void *sp_cb_state_map_copy(void *data) { return data; }
 
-void sp_cb_state_map_free(void *data)
-{
-}
+void sp_cb_state_map_free(void *data) {}
 
-unsigned char sp_cb_state_map_eq(void *_p1, void *_p2)
-{
-  return 0;
-}
+unsigned char sp_cb_state_map_eq(void *_p1, void *_p2) { return 0; }
 
-void sp_cb_state_map_dump(void *state_map, LmnPortRef port)
-{
+void sp_cb_state_map_dump(void *state_map, LmnPortRef port) {
   port_put_raw_s(port, "<state_map>");
 }
 
-unsigned char sp_cb_state_map_is_ground(void *data)
-{
-  return 1;
-}
+unsigned char sp_cb_state_map_is_ground(void *data) { return 1; }
 
-void init_state_map(void)
-{
-  state_map_atom_type = lmn_sp_atom_register("state_map",
-                                         sp_cb_state_map_copy,
-                                         sp_cb_state_map_free,
-                                         sp_cb_state_map_eq,
-                                         sp_cb_state_map_dump,
-                                         sp_cb_state_map_is_ground);
+void init_state_map(void) {
+  state_map_atom_type = lmn_sp_atom_register(
+      "state_map", sp_cb_state_map_copy, sp_cb_state_map_free,
+      sp_cb_state_map_eq, sp_cb_state_map_dump, sp_cb_state_map_is_ground);
   lmn_register_c_fun("cb_state_map_init", (void *)cb_state_map_init, 1);
   lmn_register_c_fun("cb_state_map_free", (void *)cb_state_map_free, 1);
   lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
-  lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find, 4);
+  lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find,
+                     4);
 }
