@@ -362,12 +362,30 @@ void Deque::clear() {
   this->tail = 1;
 }
 
+unsigned long Deque::space_inner() {
+  return this->cap * sizeof(deq_data_t);
+}
+
+unsigned long Deque::space() {
+  return sizeof(struct Deque) + this->space_inner();
+}
+
+void Deque::print() {
+  unsigned int i;
+  FILE *f = stdout;
+  fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", this->cap, this->head,
+          this->tail, this->num());
+  for (i = 0; i < this->cap; i++)
+    fprintf(f, "%lu, ", this->tbl[i]);
+  fprintf(f, "]\n");
+}
+
 /* contains */
-BOOL deq_contains(const Deque *deq, LmnWord keyp) {
-  unsigned int i = deq->tail;
-  while (i != deq->head) {
-    DEQ_DEC(i, deq->cap);
-    if (deq->get(i) == (LmnWord)keyp) {
+BOOL Deque::contains(LmnWord keyp)const {
+  unsigned int i = this->tail;
+  while (i != this->head) {
+    DEQ_DEC(i, this->cap);
+    if (this->get(i) == (LmnWord)keyp) {
       return TRUE;
     }
   }

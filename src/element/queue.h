@@ -97,6 +97,8 @@ struct Queue {
  */
 
 struct Deque {
+  LmnWord *tbl;
+  unsigned int head, tail, cap;
   Deque(unsigned int init_size);
   ~Deque();
   void init(unsigned int init_size);
@@ -112,8 +114,10 @@ struct Deque {
   LmnWord get(unsigned int i)const;
   void clear();
   void destroy();
-  LmnWord *tbl;
-  unsigned int head, tail, cap;
+  unsigned long space();
+  unsigned long space_inner();
+  void print();
+  BOOL contains(LmnWord keyp)const;
 };
 
 typedef struct Deque Deque;
@@ -122,34 +126,11 @@ typedef LmnWord deq_data_t;
 #define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
-static inline unsigned long deq_space(Deque *deq);
-static inline unsigned long deq_space_inner(Deque *deq);
-static inline void deq_print(Deque *deq);
-
 LmnWord deq_pop_n(Deque *deq, unsigned int n);
-BOOL deq_contains(const Deque *deq, LmnWord keyp);
 Deque *deq_copy(Deque *deq);
 void deq_reverse(Deque *deq);
 void deq_resize(Deque *deq, unsigned int size, deq_data_t val);
 void deq_sort(const Deque *deq, int (*compare)(const void *, const void *));
-
-static inline unsigned long deq_space_inner(Deque *deq) {
-  return deq->cap * sizeof(deq_data_t);
-}
-
-static inline unsigned long deq_space(Deque *deq) {
-  return sizeof(struct Deque) + deq_space_inner(deq);
-}
-
-static inline void deq_print(Deque *deq) {
-  unsigned int i;
-  FILE *f = stdout;
-  fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", deq->cap, deq->head,
-          deq->tail, deq->num());
-  for (i = 0; i < deq->cap; i++)
-    fprintf(f, "%lu, ", deq->tbl[i]);
-  fprintf(f, "]\n");
-}
 
 /* @} */
 
