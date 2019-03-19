@@ -62,7 +62,7 @@
 #endif
 
 #define MC_GET_PROPERTY(S, A)                                                  \
-  ((A) ? automata_get_state(A, state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
+  ((A) ? A->get_state(state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
 
 BOOL mc_vec_states_valid(Vector *v);
 

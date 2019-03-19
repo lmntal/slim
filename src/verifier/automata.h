@@ -57,8 +57,69 @@ typedef struct AutomataSCC AutomataSCC;
 
 typedef BYTE atmstate_id_t; /* 性質ラベル(状態)数は256個まで */
 
+struct Automata {
+  atmstate_id_t init_state;
+  unsigned int prop_num;
+  Vector states; /* Vector of AutomataState */
+  st_table_t state_name_to_id;
+  st_table_t id_to_state_name;
+  st_table_t prop_to_id;
+  Vector sccs;
+
+  Automata(void);
+  ~Automata(void);
+  atmstate_id_t state_id(const char *);
+  const char *state_name(atmstate_id_t);
+  void add_state(AutomataStateRef);
+  AutomataStateRef get_state(atmstate_id_t);
+  atmstate_id_t get_init_state();
+  void set_init_state(atmstate_id_t);
+  unsigned int propsym_to_id(char *prop_name);
+  void analysis();
+  void print_property();
+};
+
+struct AutomataState {
+  atmstate_id_t id;
+  BOOL is_accept;
+  BOOL is_end;
+  Vector transitions; /* Vector of Successors (AutomataTransition) */
+  AutomataSCC *scc;
+
+  AutomataState(unsigned int, BOOL, BOOL);
+  ~AutomataState();
+  void add_transition(AutomataTransitionRef t);
+  atmstate_id_t get_id();
+  unsigned int get_transition_num();
+  AutomataTransitionRef get_transition(unsigned int index);
+  BOOL get_is_accept();
+  BOOL get_is_end();
+  void set_scc(AutomataSCC *scc);
+  BYTE scc_type();
+  AutomataSCC *get_scc();
+};
+
 /* Propositional Logic Formula */
 typedef struct PLFormula *PLFormulaRef;
+
+struct AutomataTransition {
+  atmstate_id_t next;
+  PLFormulaRef f; /* 実際は命題論理式 */
+
+  AutomataTransition(atmstate_id_t next, PLFormulaRef f);
+  ~AutomataTransition();
+  atmstate_id_t get_next();
+  PLFormulaRef get_formula();
+};
+
+struct AutomataSCC {
+  unsigned int id;
+  BYTE type;
+
+  AutomataSCC();
+  ~AutomataSCC();
+  const char *get_name();
+};
 
 enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_UNKNOWN = 0U,
@@ -66,46 +127,6 @@ enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_PARTIALLY = 2U, /* 構成するサイクルが非受理サイクルも含む */
   SCC_TYPE_NON_ACCEPT = 3U, /* 受理サイクルを含まない */
 };
-
-/* automata */
-AutomataRef automata_make(void);
-void automata_free(AutomataRef a);
-atmstate_id_t automata_state_id(AutomataRef a, char *state_name);
-const char *automata_state_name(AutomataRef a, atmstate_id_t id);
-atmstate_id_t automata_state_scc_id(AutomataRef a, atmstate_id_t id);
-const char *automata_state_scc_name(AutomataRef a, atmstate_id_t id);
-AutomataStateRef automata_get_state(AutomataRef a, BYTE state_id);
-void automata_set_init_state(AutomataRef a, atmstate_id_t id);
-atmstate_id_t automata_get_init_state(AutomataRef a);
-unsigned int automata_propsym_to_id(AutomataRef a, char *prop_name);
-AutomataStateRef atmstate_make(unsigned int id, BOOL is_accept_state,
-                               BOOL is_end_state);
-
-/* state of automata */
-void atmstate_add_transition(AutomataStateRef s, AutomataTransitionRef t);
-void automata_add_state(AutomataRef a, AutomataStateRef s);
-atmstate_id_t atmstate_id(AutomataStateRef s);
-unsigned int atmstate_transition_num(AutomataStateRef s);
-AutomataTransitionRef atmstate_get_transition(AutomataStateRef s,
-                                              unsigned int index);
-BOOL atmstate_is_accept(AutomataStateRef s);
-BOOL atmstate_is_end(AutomataStateRef s);
-void atmstate_set_scc(AutomataStateRef s, AutomataSCC *scc);
-BYTE atmstate_scc_type(AutomataStateRef s);
-AutomataSCC *atmstate_scc(AutomataStateRef s);
-
-/* transition of automata */
-
-AutomataTransitionRef atm_transition_make(unsigned int next, PLFormulaRef f);
-BYTE atm_transition_next(AutomataTransitionRef t);
-PLFormulaRef atm_transition_get_formula(AutomataTransitionRef t);
-
-/* SCC analysis of automata */
-void automata_analysis(AutomataRef a);
-AutomataSCC *atmscc_make(void);
-void atmscc_free(AutomataSCC *s);
-const char *atmscc_name(AutomataSCC *s);
-void print_property_automata(AutomataRef a);
 
 /* propositional Logic Formula */
 PLFormulaRef true_node_make(void);
