@@ -350,20 +350,19 @@ void MemDeltaRoot::move_satom(LmnWord key, LmnWord dest) {
 }
 
 /* destが移動先、srcが移動元 */
-void dmem_root_move_cells(struct MemDeltaRoot *d, LmnMembraneRef destmem,
-                          LmnMembraneRef srcmem) {
-  if (d->is_new_mem(destmem) && d->is_new_mem(srcmem)) {
+void MemDeltaRoot::move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
+  if (this->is_new_mem(destmem) && this->is_new_mem(srcmem)) {
     /* 移動先・移動元ともに新規膜 */
     lmn_mem_move_cells(destmem, srcmem);
   } else {
-    ProcessTableRef atoms = dmem_root_copy_cells(d, destmem, srcmem);
-    if (!d->is_new_mem(srcmem)) {
+    ProcessTableRef atoms = this->copy_cells(destmem, srcmem);
+    if (!this->is_new_mem(srcmem)) {
       /* 移動先が既存膜 */
       /* printf("move cells\n"); */
       /* printf("src mem :" ); lmn_dump_mem_dev(srcmem); */
       /* printf("dest mem: "); lmn_dump_mem_dev(destmem); */
-      dmem_drop(d->get_mem_delta(srcmem), srcmem);
-      modify_free_link(d, destmem);
+      dmem_drop(this->get_mem_delta(srcmem), srcmem);
+      modify_free_link(this, destmem);
     } else {
       lmn_fatal("unexpected");
     }
@@ -371,36 +370,34 @@ void dmem_root_move_cells(struct MemDeltaRoot *d, LmnMembraneRef destmem,
     proc_tbl_foreach(atoms, [](LmnWord _k, LmnWord _v, LmnWord _arg){
       ((struct MemDeltaRoot *)_arg)->move_satom(_k, _v);
       return 1;
-    }, (LmnWord)d);
+    }, (LmnWord)this);
     proc_tbl_free(atoms);
   }
 }
 
-ProcessTableRef dmem_root_copy_cells(struct MemDeltaRoot *d,
-                                     LmnMembraneRef destmem,
-                                     LmnMembraneRef srcmem) {
-  if (d->is_new_mem(destmem) && d->is_new_mem(srcmem)) {
+ProcessTableRef MemDeltaRoot::copy_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
+  if (this->is_new_mem(destmem) && this->is_new_mem(srcmem)) {
     return lmn_mem_copy_cells(destmem, srcmem);
   } else {
     ProcessTableRef atoms = proc_tbl_make_with_size(64);
     /* /\*d*\/ if (d->is_new_mem(srcmem)) lmn_fatal("unexpected"); */
-    if (d->is_new_mem(destmem)) {
+    if (this->is_new_mem(destmem)) {
       /* 移動先が新規膜 */
-      dmem_copy_cells(d, NULL, destmem, d->get_mem_delta(srcmem),
+      this->copy_cells(NULL, destmem, this->get_mem_delta(srcmem),
                       srcmem, atoms);
-    } else if (d->is_new_mem(srcmem)) {
+    } else if (this->is_new_mem(srcmem)) {
       /* 移動元が新規膜 */
-      dmem_copy_cells(d, d->get_mem_delta(destmem), destmem, NULL,
+      this->copy_cells(this->get_mem_delta(destmem), destmem, NULL,
                       srcmem, atoms);
     } else {
-      dmem_copy_cells(d, d->get_mem_delta(destmem), destmem,
-                      d->get_mem_delta(srcmem), srcmem, atoms);
+      this->copy_cells(this->get_mem_delta(destmem), destmem,
+                      this->get_mem_delta(srcmem), srcmem, atoms);
     }
     return atoms;
   }
 }
 
-static void dmem_copy_cells(struct MemDeltaRoot *root_d, struct MemDelta *d,
+void MemDeltaRoot::copy_cells(struct MemDelta *d,
                             LmnMembraneRef destmem, struct MemDelta *d2,
                             LmnMembraneRef srcmem, ProcessTableRef atoms) {
   LmnMembraneRef m;
@@ -414,18 +411,18 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d, struct MemDelta *d,
   /* copy child mems */
   DMEM_ALL_MEMS(d2, srcmem, m, {
     /* binstr_comparef("child mem = %p\n", m); */
-    LmnMembraneRef new_mem = dmem_root_new_mem(root_d);
+    LmnMembraneRef new_mem = dmem_root_new_mem(this);
     /* 子膜はマッチングに使われないので、そのままコピーしていいはず */
-    if (root_d->is_delta_mem(m)) {
-      dmem_copy_cells(root_d, NULL, new_mem, root_d->get_mem_delta(m),
+    if (this->is_delta_mem(m)) {
+      this->copy_cells(NULL, new_mem, this->get_mem_delta(m),
                       m, atoms);
     } else
-      dmem_copy_cells(root_d, NULL, new_mem, NULL, m, atoms);
+      this->copy_cells(NULL, new_mem, NULL, m, atoms);
 
     if (d)
       dmem_add_child_mem(d, destmem, new_mem);
     else
-      dmem_root_add_child_mem(root_d, destmem, new_mem);
+      dmem_root_add_child_mem(this, destmem, new_mem);
 
     proc_tbl_put_mem(atoms, m, (LmnWord)new_mem);
     /* copy name */
@@ -448,14 +445,14 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d, struct MemDelta *d,
         LmnSymbolAtomRef newatom;
         unsigned int start, end;
         srcatom = dmem_root_modified_atom(
-            root_d,
+            this,
             srcatom); /* プロキシ操作命令等で既にmodifyされている場合のために */
 
         /* すでにコピー済みなら次の候補へ */
         if (proc_tbl_get_by_atom(atoms, srcatom, NULL)) continue;
 
         f = srcatom->get_functor();
-        newatom = dmem_root_copy_satom_with_data(root_d, srcatom);
+        newatom = dmem_root_copy_satom_with_data(this, srcatom);
         if (d)
           dmem_put_symbol_atom(d, destmem, newatom);
         else
@@ -475,7 +472,7 @@ static void dmem_copy_cells(struct MemDeltaRoot *root_d, struct MemDelta *d,
             LmnSymbolAtomRef newinside;
 
             srcinside =
-                (LmnSymbolAtomRef)(dmem_root_get_link(root_d, srcatom, 0));
+                (LmnSymbolAtomRef)(dmem_root_get_link(this, srcatom, 0));
             if (proc_tbl_get_by_atom(atoms, srcinside, &t)) {
               newinside = (LmnSymbolAtomRef)(t);
 

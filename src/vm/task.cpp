@@ -4805,8 +4805,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
       LMN_ASSERT(rc->wt(destmemi) != rc->wt(srcmemi));
-      dmem_root_move_cells(RC_ND_MEM_DELTA_ROOT(rc),
-                           (LmnMembraneRef)rc->wt(destmemi),
+      RC_ND_MEM_DELTA_ROOT(rc)->move_cells((LmnMembraneRef)rc->wt(destmemi),
                            (LmnMembraneRef)rc->wt(srcmemi));
       break;
     }
@@ -4824,7 +4823,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, mapi);
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
-      dmem_root_copy_cells(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->copy_cells(
                            (LmnMembraneRef)rc->wt(destmemi),
                            (LmnMembraneRef)rc->wt(srcmemi));
       rc->tt(mapi) = TT_OTHER;

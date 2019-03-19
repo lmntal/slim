@@ -147,11 +147,6 @@ void dmem_root_add_child_mem(struct MemDeltaRoot *d, LmnMembraneRef parent,
                              LmnMembraneRef child);
 void dmem_root_remove_mem(struct MemDeltaRoot *d, LmnMembraneRef parent,
                           LmnMembraneRef child);
-void dmem_root_move_cells(struct MemDeltaRoot *d, LmnMembraneRef destmem,
-                          LmnMembraneRef srcmem);
-ProcessTableRef dmem_root_copy_cells(struct MemDeltaRoot *d,
-                                     LmnMembraneRef destmem,
-                                     LmnMembraneRef srcmem);
 void dmem_root_clear_ruleset(struct MemDeltaRoot *d, LmnMembraneRef m);
 void dmem_root_copy_rules(struct MemDeltaRoot *root_d, LmnMembraneRef dest,
                           LmnMembraneRef src);
@@ -243,9 +238,6 @@ static inline void dmem_modify_link(struct MemDelta *d, LmnMembraneRef m,
                                     LmnSymbolAtomRef atom, int i, LmnAtomRef l,
                                     LmnLinkAttr attr);
 
-static void dmem_copy_cells(struct MemDeltaRoot *root_d, struct MemDelta *d,
-                            LmnMembraneRef destmem, struct MemDelta *d2,
-                            LmnMembraneRef srcmem, ProcessTableRef atoms);
 static void dmem_add_ruleset(struct MemDelta *d, LmnMembraneRef m,
                              LmnRuleSetRef ruleset);
 static inline void dmem_clear_ruleset(struct MemDelta *d, LmnMembraneRef m);
@@ -318,6 +310,11 @@ struct MemDeltaRoot {
                       LmnAtomRef atom1, LmnLinkAttr attr1, int pos1,
                       LmnAtomRef atom2, LmnLinkAttr attr2, int pos2);
   void move_satom(LmnWord key, LmnWord dest);
+  void move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem);
+  ProcessTableRef copy_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem);
+  void copy_cells(struct MemDelta *d,
+                            LmnMembraneRef destmem, struct MemDelta *d2,
+                            LmnMembraneRef srcmem, ProcessTableRef atoms);
 };
 
 struct MemDelta {
