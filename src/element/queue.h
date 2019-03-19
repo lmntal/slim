@@ -96,6 +96,12 @@ struct Queue {
  *  DeQue (KaWaBaTa code)
  */
 
+typedef struct Deque Deque;
+typedef LmnWord deq_data_t;
+
+#define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
+#define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
+
 struct Deque {
   LmnWord *tbl;
   unsigned int head, tail, cap;
@@ -120,18 +126,6 @@ struct Deque {
   BOOL contains(LmnWord keyp)const;
   Deque *copy();
 };
-
-typedef struct Deque Deque;
-typedef LmnWord deq_data_t;
-
-#define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
-#define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
-
-LmnWord deq_pop_n(Deque *deq, unsigned int n);
-void deq_reverse(Deque *deq);
-void deq_resize(Deque *deq, unsigned int size, deq_data_t val);
-void deq_sort(const Deque *deq, int (*compare)(const void *, const void *));
-
 /* @} */
 
 #endif
