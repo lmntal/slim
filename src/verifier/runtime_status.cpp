@@ -42,7 +42,6 @@
 #include "statespace.h"
 #include "vm/vm.h"
 
-static void mc_profiler2_makeup_report(MCProfiler2 *total);
 static void mc_profiler3_init(MCProfiler3 *p);
 static void mc_profiler3_destroy(MCProfiler3 *p);
 static void mc_profiler3_makeup_report(MCProfiler3 *total);
@@ -130,10 +129,6 @@ void MCProfiler2::makeup_report() {
     this->binstr_space += lmn_prof.lv2[i].binstr_space;
     this->membrane_space += lmn_prof.lv2[i].membrane_space;
   }
-}
-
-static void mc_profiler2_makeup_report(MCProfiler2 *total) {
-  total->makeup_report();
 }
 
 static void mc_profiler3_init(MCProfiler3 *p) {
@@ -434,7 +429,7 @@ void profile_statespace(LmnWorkerGroup *wp) {
       MCProfiler2 *p = &lmn_prof.lv2[lmn_OMP_get_my_id()];
       p->binstr_space += lmn_bscomp_tree_space();
     }
-    mc_profiler2_makeup_report(total);
+    total->makeup_report();
     for (i = 0; i < lmn_prof.thread_num; i++) {
       lmn_prof.lv2[i].destroy();
     }
