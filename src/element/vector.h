@@ -56,26 +56,31 @@ struct Vector {
   }
   Vector(unsigned int init_size){
     LMN_ASSERT(init_size > 0);
-    this->init(init_size);
+    init(init_size);
   }
   template <class T> Vector(const std::vector<T> &v){
     static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
                 "vector elements must be scalars.");
     LMN_ASSERT(v.size() > 0);
-    this->init(v.size());
-    memcpy(this->tbl, v.data(), sizeof(T) * v.size());
-    this->num = v.size();
-//    return res;
+    init(v.size());
+    memcpy(tbl, v.data(), sizeof(T) * v.size());
+    num = v.size();
   }
   void *init(unsigned int init_size){
-    this->tbl = LMN_NALLOC(LmnWord, init_size);
-    this->num = 0;
-    this->cap = init_size;
-//    return this;
+    tbl = LMN_NALLOC(LmnWord, init_size);
+    num = 0;
+    cap = init_size;
   }
   void extend(){
-    this->cap *= 2;
-    this->tbl = LMN_REALLOC(LmnWord, this->tbl, this->cap);
+    cap *= 2;
+    tbl = LMN_REALLOC(LmnWord, tbl, cap);
+  }
+  void push(LmnWord keyp){
+    if (num == cap) {
+      extend();
+    }
+    (tbl)[num] = keyp;
+    num++;
   }
 };
 
@@ -86,7 +91,6 @@ typedef LmnWord vec_data_t;
 #define vec_num(V) ((V)->num)
 #define vec_is_empty(V) ((V)->num == 0)
 
-static inline void vec_push(Vector *vec, LmnWord keyp);
 static inline LmnWord vec_pop(Vector *vec);
 static inline LmnWord vec_peek(const Vector *vec);
 static inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp);
@@ -107,14 +111,6 @@ void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
 
 
-/* push */
-static inline void vec_push(Vector *vec, LmnWord keyp) {
-  if (vec->num == vec->cap) {
-    vec->extend();
-  }
-  (vec->tbl)[vec->num] = keyp;
-  vec->num++;
-}
 
 /* reduce (static) */
 static inline void vec_reduce(Vector *vec) {

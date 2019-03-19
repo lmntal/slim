@@ -232,7 +232,7 @@ AutomataState::~AutomataState() {
 }
 
 void AutomataState::add_transition(AutomataTransitionRef t) {
-  vec_push(&this->transitions, (vec_data_t)t);
+  this->transitions.push((vec_data_t)t);
 }
 
 atmstate_id_t AutomataState::get_id() { return this->id; }
@@ -338,7 +338,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
     AutomataSCC *scc = new AutomataSCC();
     atmscc_issue_id(scc);
     s->set_scc(scc);
-    vec_push(&a->sccs, (vec_data_t)scc);
+    a->sccs.push((vec_data_t)scc);
     if (s->get_is_end()) {
       atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
     } else {

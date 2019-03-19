@@ -145,14 +145,14 @@ McReactCxtData::McReactCxtData() {
 
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
                                LmnRuleRef rule) {
-  vec_push(RC_EXPANDED(cxt), (vec_data_t)mem);
-  vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
+  RC_EXPANDED(cxt)->push((vec_data_t)mem);
+  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
 void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule) {
-  vec_push(RC_MEM_DELTAS(cxt), (vec_data_t)d);
-  vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
+  RC_MEM_DELTAS(cxt)->push((vec_data_t)d);
+  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
 LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
@@ -200,7 +200,7 @@ void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
   LRCInsertEventRef e = LMN_MALLOC(struct LRCInsertEvent);
   e->satom = satom;
   e->mem = mem;
-  vec_push(rc->insertion_events, (LmnWord)e);
+  rc->insertion_events->push((LmnWord)e);
 }
 void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom,
                           LmnMembraneRef *mem) {

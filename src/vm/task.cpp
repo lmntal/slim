@@ -781,9 +781,9 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec,
   auto p1 = proc_tbl_make_with_size(attr_functors.size());
 
   for (auto &v : attr_dataAtoms)
-    vec_push(v1, v);
+    v1->push(v);
   for (auto &v : attr_dataAtom_attrs)
-    vec_push(v2, v);
+    v2->push(v);
   for (auto &p : attr_functors)
     proc_tbl_put(p1, p, p);
 
@@ -918,7 +918,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     for (i = 0; i < list_num; i++) {
       LmnInstrVar t;
       READ_VAL(LmnInstrVar, instr, t);
-      vec_push(&links, (LmnWord)t);
+      links.push((LmnWord)t);
     }
 
     auto hashset = insertconnectors(rc, NULL, &links);
@@ -946,7 +946,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     for (i = 0; i < list_num; i++) {
       READ_VAL(LmnInstrVar, instr, enti);
-      vec_push(&links, (LmnWord)enti);
+      links.push((LmnWord)enti);
     }
 
     READ_VAL(LmnInstrVar, instr, memi);
@@ -2865,8 +2865,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         for (; n--; i++) {
           READ_VAL(LmnInstrVar, instr, ai);
           if (LMN_ATTR_IS_DATA(rc->at(ai))) {
-            vec_push(&attr_dataAtom_attrs, rc->at(ai));
-            vec_push(&attr_dataAtoms, rc->wt(ai));
+            attr_dataAtom_attrs.push(rc->at(ai));
+            attr_dataAtoms.push(rc->wt(ai));
           } else {
             LmnFunctor f;
             f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
@@ -2881,9 +2881,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           READ_VAL(LmnLinkAttr, instr, attr);
           if (LMN_ATTR_IS_DATA(attr)) {
             LmnAtomRef at;
-            vec_push(&attr_dataAtom_attrs, attr);
+            attr_dataAtom_attrs.push(attr);
             READ_DATA_ATOM(at, attr);
-            vec_push(&attr_dataAtoms, (LmnWord)at);
+            attr_dataAtoms.push((LmnWord)at);
           } else {
             LmnFunctor f;
             READ_VAL(LmnFunctor, instr, f);
@@ -2908,8 +2908,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     /* 返り値の作成 */
     retvec = new Vector(2);
-    vec_push(retvec, (LmnWord)dstlovec);
-    vec_push(retvec, (LmnWord)atommap);
+    retvec->push((LmnWord)dstlovec);
+    retvec->push((LmnWord)atommap);
     rc->reg(dstlist) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
 
     this->push_stackframe([=](bool result) {
@@ -2961,8 +2961,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         for (; n--; i++) {
           READ_VAL(LmnInstrVar, instr, ai);
           if (LMN_ATTR_IS_DATA(rc->at(ai))) {
-            vec_push(&attr_dataAtom_attrs, rc->at(ai));
-            vec_push(&attr_dataAtoms, rc->wt(ai));
+            attr_dataAtom_attrs.push(rc->at(ai));
+            attr_dataAtoms.push(rc->wt(ai));
           } else {
             LmnFunctor f;
             f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
@@ -2978,9 +2978,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           READ_VAL(LmnLinkAttr, instr, attr);
           if (LMN_ATTR_IS_DATA(attr)) {
             LmnAtomRef at;
-            vec_push(&attr_dataAtom_attrs, attr);
+            attr_dataAtom_attrs.push(attr);
             READ_DATA_ATOM(at, attr);
-            vec_push(&attr_dataAtoms, (LmnWord)at);
+            attr_dataAtoms.push((LmnWord)at);
           } else {
             LmnFunctor f;
             READ_VAL(LmnFunctor, instr, f);
@@ -3171,7 +3171,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar listi, linki;
     READ_VAL(LmnInstrVar, instr, listi);
     READ_VAL(LmnInstrVar, instr, linki);
-    vec_push((Vector *)rc->wt(listi), linki);
+    ((Vector *)rc->wt(listi))->push(linki);
 
     break;
   }
@@ -4188,7 +4188,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       for (i = 0; i < list_num; i++) {
         LmnInstrVar t;
         READ_VAL(LmnInstrVar, instr, t);
-        vec_push(&links, (LmnWord)t);
+        links.push((LmnWord)t);
       }
 
       rc->reg(seti) = {(LmnWord)insertconnectors(rc, NULL, &links), 0,
@@ -4216,7 +4216,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       for (i = 0; i < list_num; i++) {
         READ_VAL(LmnInstrVar, instr, enti);
-        vec_push(&links, (LmnWord)enti);
+        links.push((LmnWord)enti);
       }
 
       READ_VAL(LmnInstrVar, instr, memi);
@@ -4555,8 +4555,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       /* 返り値の作成 */
       retvec = new Vector(2);
-      vec_push(retvec, (LmnWord)dstlovec);
-      vec_push(retvec, (LmnWord)atommap);
+      retvec->push((LmnWord)dstlovec);
+      retvec->push((LmnWord)atommap);
       rc->reg(dstlist) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
 
       /* 解放のための再帰。ベクタを解放するための中間語命令がない */
@@ -4614,7 +4614,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       LmnInstrVar listi, linki;
       READ_VAL(LmnInstrVar, instr, listi);
       READ_VAL(LmnInstrVar, instr, linki);
-      vec_push((Vector *)rc->wt(listi), linki);
+      ((Vector *)rc->wt(listi))->push(linki);
       break;
     }
     case INSTR_GETFROMLIST: {
@@ -4965,7 +4965,7 @@ Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
   for (i = 0; i < vec_num(link_idxs); i++) {
     vec_data_t t = vec_get(link_idxs, i);
     LinkObjRef l = LinkObj_make((LmnAtomRef)rc->wt(t), rc->at(t));
-    vec_push(vec, (LmnWord)l);
+    vec->push((LmnWord)l);
   }
   return vec;
 }

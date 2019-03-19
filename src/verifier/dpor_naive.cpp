@@ -278,7 +278,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
       set_ample(transition_next_state(t));
-      vec_push(mc_por.ample_candidate, (vec_data_t)transition_id(t));
+      mc_por.ample_candidate->push((vec_data_t)transition_id(t));
       //      if (check_C2(s) && check_C3(ss, s, rc, new_s, org_f)) {
       if (check_C1(s, ss->automata(), ss->prop_symbols()) &&
           check_C2(s)) {
@@ -416,7 +416,7 @@ static inline State *por_state_insert_statespace(StateSpaceRef ss,
     if (succ_m)
       lmn_mem_free_rec(succ_m);
     if (new_ss)
-      vec_push(new_ss, (vec_data_t)succ_s);
+      new_ss->push((vec_data_t)succ_s);
   } else {
     transition_set_state(succ_t, t);
   }
@@ -914,8 +914,8 @@ static BOOL push_independent_strans_to_table(unsigned long i1,
             }
           }
         });
-        vec_push((Vector *)v1, (vec_data_t)i2);
-        vec_push((Vector *)v2, (vec_data_t)i1);
+        ((Vector *)v1)->push((vec_data_t)i2);
+        ((Vector *)v2)->push((vec_data_t)i1);
       } else {
         /* 万が一ここに入った場合は，i1のエントリーが存在するにも関わらず，これと独立なi2のエントリーが
          * 存在しないことになり，独立性情報テーブルの対称性が崩れてしまっていることになる．
@@ -1023,7 +1023,7 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
       if (is_dependent) {
         need_to_push_id_key = TRUE;
         if (!vec_contains(mc_por.ample_candidate, (vec_data_t)checked_id)) {
-          vec_push(mc_por.ample_candidate, (vec_data_t)checked_id);
+          mc_por.ample_candidate->push((vec_data_t)checked_id);
           set_ample(transition_next_state(check));
         }
       }
@@ -1031,7 +1031,7 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
 
     if (need_to_push_id_key &&
         !vec_contains(mc_por.ample_candidate, (vec_data_t)id_key)) {
-      vec_push(mc_por.ample_candidate, (vec_data_t)id_key);
+      mc_por.ample_candidate->push((vec_data_t)id_key);
       set_ample(transition_next_state(trans_key));
     }
 
@@ -1056,7 +1056,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
 
       if (is_inserted(succ_s) && is_outside_exist(succ_s)) {
         /* C3 check時, 探索空間への追加に成功してしまっていた場合 */
-        vec_push(&tmp, (vec_data_t)succ_t);
+        tmp.push((vec_data_t)succ_t);
       } else if (!vec_contains(mc_por.ample_candidate,
                                (vec_data_t)transition_id(succ_t))) {
         /* amplesetに含まれない遷移は除去 */
@@ -1067,7 +1067,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
         if (!is_inserted(succ_s)) {
           por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
         }
-        vec_push(&tmp, (vec_data_t)succ_t);
+        tmp.push((vec_data_t)succ_t);
       }
     }
 

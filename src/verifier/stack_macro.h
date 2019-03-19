@@ -16,7 +16,7 @@
     if (lmn_env.profile_level >= 3) {                                          \
       profile_add_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));            \
     }                                                                          \
-    vec_push((List), (vec_data_t)(St));                                        \
+    (List)->push((vec_data_t)(St));                                        \
   } while (0)
 #define pop_deq(Deq, Dir)                                                      \
   do {                                                                         \
@@ -63,7 +63,7 @@
     if (pop->is_on_stack())                                                      \
      pop->unset_on_stack();                                                     \
   } while (0)
-#define put_stack(List, St) vec_push((List), (vec_data_t)(St))
+#define put_stack(List, St) (List)->push((vec_data_t)(St))
 #define pop_deq(Deq, Dir)                                                      \
   do {                                                                         \
     if (Dir) {                                                                 \

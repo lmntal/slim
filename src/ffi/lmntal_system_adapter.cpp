@@ -69,7 +69,7 @@ static FILE *run_lmntal_system(int dummy, ... );
 
 void add_arg(Vector *args, const char *arg)
 {
-  vec_push(args, (vec_data_t)LMN_CALLOC(char, strlen(arg) + 1));
+  args->push((vec_data_t)LMN_CALLOC(char, strlen(arg) + 1));
   sprintf((char *)vec_get(args, vec_num(args)-1), "%s", arg);
 }
 
@@ -109,7 +109,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
   }
 
   /* 最後の要素は0で終端する */
-  vec_push(args, 0);
+  args->push(0);
   { /* vectorの要素をコピー */
     unsigned int i;
     *ret_args = LMN_CALLOC(char *, vec_num(args));

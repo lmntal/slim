@@ -647,13 +647,13 @@ void st_print(st_table_t st) {
 
 static int st_key_push_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
   Vector *v = (Vector *)_arg;
-  vec_push(v, (vec_data_t)_key);
+  v->push((vec_data_t)_key);
   return ST_CONTINUE;
 }
 
 static int st_value_push_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
   Vector *v = (Vector *)_arg;
-  vec_push(v, (vec_data_t)_v);
+  v->push((vec_data_t)_v);
   return ST_CONTINUE;
 }
 

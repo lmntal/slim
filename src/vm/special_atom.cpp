@@ -63,7 +63,7 @@ int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
   c->encode = nullptr;
   c->decode = nullptr;
 
-  vec_push(sp_atom_callback_tbl, (LmnWord)c);
+  sp_atom_callback_tbl->push((LmnWord)c);
   return vec_num(sp_atom_callback_tbl) - 1;
 }
 
@@ -78,7 +78,7 @@ int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
   c->encode = encoder;
   c->decode = decoder;
 
-  vec_push(sp_atom_callback_tbl, (LmnWord)c);
+  sp_atom_callback_tbl->push((LmnWord)c);
   return vec_num(sp_atom_callback_tbl) - 1;
 }
 

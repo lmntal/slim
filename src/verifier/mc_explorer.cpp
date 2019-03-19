@@ -69,7 +69,7 @@
  * ただし, 既にon_cycle_flagが立っている状態はpathに含まない. */
 static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
                                 Vector *path, st_table_t traversed) {
-  vec_push(search, (vec_data_t)seed);
+  search->push((vec_data_t)seed);
 
   while (vec_num(search) > 0) {
     State *s;
@@ -83,7 +83,7 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
       }
     } else {
       st_add_direct(traversed, (st_data_t)s, (st_data_t)s);
-      vec_push(path, (vec_data_t)s);
+      path->push((vec_data_t)s);
 
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
@@ -93,7 +93,7 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
         else if (succ == goal) {
           return TRUE;
         } else {
-          vec_push(search, (vec_data_t)succ);
+          search->push((vec_data_t)succ);
         }
       }
     }
@@ -154,7 +154,7 @@ void ndfs_start(LmnWorker *w, State *seed) {
   START_CYCLE_SEARCH();
 
   has_error = FALSE;
-  vec_push(NDFS_WORKER_OPEN_VEC(w), (vec_data_t)seed);
+  NDFS_WORKER_OPEN_VEC(w)->push((vec_data_t)seed);
   has_error = ndfs_loop(seed, NDFS_WORKER_OPEN_VEC(w), NDFS_WORKER_PATH_VEC(w));
 
   FINISH_CYCLE_SEARCH();
@@ -186,7 +186,7 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
    s->set_on_cycle();
 
     if (gen_counter_example)
-      vec_push(v, (vec_data_t)s);
+      v->push((vec_data_t)s);
   }
 
   /* サイクルを登録 */
@@ -209,7 +209,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
       }
     } else {
       unsigned int i;
-      vec_push(path, (vec_data_t)s);
+      path->push((vec_data_t)s);
      s->set_snd();
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
@@ -222,7 +222,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
         } else {
-          vec_push(search, (vec_data_t)succ);
+          search->push((vec_data_t)succ);
         }
       }
     }
@@ -503,7 +503,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
             for (i = 0; i < vec_num(&path); i++) {
               State *tmp = (State *)vec_get(&path, i);
              tmp->set_on_cycle();
-              vec_push(v, (vec_data_t)tmp);
+              v->push((vec_data_t)tmp);
             }
 
             mc_found_invalid_path(wp, v);
@@ -797,7 +797,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
       for (i = 0; i < vec_num(&path); i++) {
         State *tmp = (State *)vec_get(&path, i);
        tmp->set_on_cycle();
-        vec_push(v, (vec_data_t)tmp);
+        v->push((vec_data_t)tmp);
       }
       mc_found_invalid_path(wp, v);
     }
@@ -910,7 +910,7 @@ void bledge_start(LmnWorker *w) {
       if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v] */
         if (!u->is_on_cycle() && !v->is_on_cycle() &&
             bledge_explorer_accepting_cycle(w, u, v)) {
-          vec_push(BLE_WORKER_PATH_VEC(w), (vec_data_t)u);
+          BLE_WORKER_PATH_VEC(w)->push((vec_data_t)u);
           bledge_found_accepting_cycle(w, BLE_WORKER_PATH_VEC(w));
         }
 
@@ -947,7 +947,7 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
     State *s = (State *)vec_get(cycle_path, i);
    s->set_on_cycle();
     if (gen_counter_example)
-      vec_push(v, (vec_data_t)s);
+      v->push((vec_data_t)s);
   }
 
   /* サイクルを登録 */
@@ -1068,7 +1068,7 @@ void mapndfs_start(LmnWorker *w, State *seed) {
   START_CYCLE_SEARCH();
 
   has_error = FALSE;
-  vec_push(MAPNDFS_WORKER_OPEN_VEC(w), (vec_data_t)seed);
+  MAPNDFS_WORKER_OPEN_VEC(w)->push((vec_data_t)seed);
   has_error = mapndfs_loop(seed, MAPNDFS_WORKER_OPEN_VEC(w),
                            MAPNDFS_WORKER_PATH_VEC(w));
 
@@ -1102,7 +1102,7 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
    s->set_on_cycle();
 
     if (gen_counter_example)
-      vec_push(v, (vec_data_t)s);
+      v->push((vec_data_t)s);
   }
 
   /* サイクルを登録 */
@@ -1125,7 +1125,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
       }
     } else {
       unsigned int i;
-      vec_push(path, (vec_data_t)s);
+      path->push((vec_data_t)s);
      s->set_snd();
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
@@ -1138,7 +1138,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
         } else {
-          vec_push(search, (vec_data_t)succ);
+          search->push((vec_data_t)succ);
         }
       }
     }
@@ -1225,7 +1225,7 @@ void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states) {
   START_CYCLE_SEARCH();
 
   has_error = FALSE;
-  vec_push(MAPNDFS_WORKER_OPEN_VEC(w), (vec_data_t)seed);
+  MAPNDFS_WORKER_OPEN_VEC(w)->push((vec_data_t)seed);
   has_error = mcndfs_loop(w, seed, MAPNDFS_WORKER_OPEN_VEC(w),
                           MAPNDFS_WORKER_PATH_VEC(w), red_states);
 
@@ -1259,7 +1259,7 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
    s->set_on_cycle();
 
     if (gen_counter_example)
-      vec_push(v, (vec_data_t)s);
+      v->push((vec_data_t)s);
   }
 
   /* サイクルを登録 */
@@ -1320,7 +1320,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     }
     else {
       unsigned int i;
-      vec_push(path, (vec_data_t)s);
+      path->push((vec_data_t)s);
      s->set_snd();
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
@@ -1332,7 +1332,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
         } else if (s->s_is_cyan(worker_id(w))/*succ == seed*/ /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る */
         } else {
-          vec_push(search, (vec_data_t)succ);
+          search->push((vec_data_t)succ);
         }
       }
     }

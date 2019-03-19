@@ -107,7 +107,7 @@ void visitlog_destroy(struct VisitLog *p) {
 
 /* チェックポイントを設定する。 */
 void visitlog_set_checkpoint(VisitLogRef visitlog) {
-  vec_push(&visitlog->checkpoints, (vec_data_t)checkpoint_make());
+  visitlog->checkpoints.push((vec_data_t)checkpoint_make());
 }
 
 /* もっとも最近のチェックポイントを返し、ログの状態をチェックポイントが設定された時点にもどす
@@ -143,7 +143,7 @@ void visitlog_commit_checkpoint(VisitLogRef visitlog) {
         (struct Checkpoint *)vec_last(&visitlog->checkpoints);
 
     for (i = 0; i < vec_num(&last->elements); i++) {
-      vec_push(&new_last->elements, vec_get(&last->elements, i));
+      new_last->elements.push(vec_get(&last->elements, i));
     }
     new_last->n_data_atom += last->n_data_atom;
   }
@@ -155,7 +155,7 @@ void visitlog_commit_checkpoint(VisitLogRef visitlog) {
 void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp) {
   int i;
 
-  vec_push(&visitlog->checkpoints, (vec_data_t)cp);
+  visitlog->checkpoints.push((vec_data_t)cp);
   for (i = 0; i < vec_num(&cp->elements); i++) {
     proc_tbl_put(visitlog->tbl, vec_get(&cp->elements, i), visitlog->ref_n++);
     visitlog->element_num++;
@@ -170,7 +170,7 @@ int visitlog_put(VisitLogRef visitlog, LmnWord p) {
     if (vec_num(&visitlog->checkpoints) > 0) {
       CheckpointRef checkpoint =
           (CheckpointRef)vec_last(&visitlog->checkpoints);
-      vec_push(&checkpoint->elements, p);
+      checkpoint->elements.push(p);
     }
     visitlog->element_num++;
     return 1;

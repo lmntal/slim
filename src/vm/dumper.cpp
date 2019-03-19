@@ -611,11 +611,11 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
               if (atom->get_functor() == LMN_RESUME_FUNCTOR)
                 continue;
               if (f == LMN_IN_PROXY_FUNCTOR || f == LMN_OUT_PROXY_FUNCTOR) {
-                vec_push(&pred_atoms[PROXY], (LmnWord)atom);
+                pred_atoms[PROXY].push((LmnWord)atom);
               }
               /* 0 argument atom */
               else if (arity == 0) {
-                vec_push(&pred_atoms[P0], (LmnWord)atom);
+                pred_atoms[P0].push((LmnWord)atom);
               }
               /* 1 argument, link to the last argument */
               else if (arity == 1 && f != LMN_NIL_FUNCTOR &&
@@ -623,7 +623,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
                         (int)LMN_ATTR_GET_VALUE(atom->get_attr(0)) ==
                             ((LmnSymbolAtomRef)atom->get_link(0))->get_arity() -
                                 1)) {
-                vec_push(&pred_atoms[P1], (LmnWord)atom);
+                pred_atoms[P1].push((LmnWord)atom);
               }
               /* link to the last argument */
               else if (arity > 1 &&
@@ -632,9 +632,9 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
                             atom->get_attr(arity - 1)) ==
                             ((LmnSymbolAtomRef)atom->get_link(arity - 1))->get_arity() -
                                 1)) {
-                vec_push(&pred_atoms[P2], (LmnWord)atom);
+                pred_atoms[P2].push((LmnWord)atom);
               } else {
-                vec_push(&pred_atoms[P3], (LmnWord)atom);
+                pred_atoms[P3].push((LmnWord)atom);
               }
             }));
       }));

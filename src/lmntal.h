@@ -477,7 +477,7 @@ void lmn_stream_destroy(void);
 #define env_set_proc_id_pool(V) (lmn_id_pool = (V))
 #define env_return_id(N)                                                       \
   if (lmn_id_pool)                                                             \
-  vec_push(lmn_id_pool, (vec_data_t)(N))
+  lmn_id_pool->push((vec_data_t)(N))
 
 #if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
 #define env_gen_state_id() (lmn_tls.state_id += lmn_tls.thread_num)

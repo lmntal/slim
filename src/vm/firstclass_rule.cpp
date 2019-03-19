@@ -60,7 +60,7 @@ int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom,
   c->hl = hl;
   c->link_pos = link_p;
   c->link_name = link_name;
-  vec_push(link_connections, (vec_data_t)c);
+  link_connections->push((vec_data_t)c);
   return link_name;
 }
 

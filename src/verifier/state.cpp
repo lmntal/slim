@@ -348,7 +348,7 @@ TransitionRef transition_make(State *s, lmn_interned_str rule_name) {
   t->id = 0;
   transition_set_cost(t, 0);
   t->rule_names.init(4);
-  vec_push(&t->rule_names, rule_name);
+  t->rule_names.push(rule_name);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_add_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
@@ -376,7 +376,7 @@ void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
     }
 #endif
 
-    vec_push(&t->rule_names, rule_name);
+    t->rule_names.push(rule_name);
 
 #ifdef KWBT_OPT
     if (((lmn_env.opt_mode == OPT_MINIMIZE) && t->cost > cost) ||
@@ -817,7 +817,7 @@ void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
   if ((f && state_cost(s) > cost) || (!f && state_cost(s) < cost)) {
     state_set_cost(s, cost, pre);
     if (s->is_expanded() && new_ss)
-      vec_push(new_ss, (vec_data_t)s);
+      new_ss->push((vec_data_t)s);
     s->s_set_update();
   }
   if (env_threads_num() >= 2)

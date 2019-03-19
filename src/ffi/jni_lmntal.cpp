@@ -354,7 +354,7 @@ static void _run(file_ptr fp)
   t = load(std::move(fp));
   start_rulesets = new Vector(2);
 
-  vec_push(start_rulesets, (vec_data_t)t);
+  start_rulesets->push((vec_data_t)t);
 
   /* まともな入力ファイルが無ければ抜ける */
   if(vec_is_empty(start_rulesets)){

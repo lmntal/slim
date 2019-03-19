@@ -221,7 +221,7 @@ int vec_inserted_index(Vector *v, LmnWord w) {
     if (vec_get(v, i) == w)
       return i;
   }
-  vec_push(v, w);
+  v->push(w);
   return vec_num(v) - 1;
 }
 
@@ -393,7 +393,7 @@ static void translate_rule(LmnRuleRef rule, const char *header) {
   Vector *jump_points = new Vector(4);
   int i;
 
-  vec_push(jump_points, (LmnWord)rule->inst_seq);
+  jump_points->push((LmnWord)rule->inst_seq);
 
   for (i = 0; i < vec_num(jump_points) /*変換中にjump_pointsは増えていく*/;
        i++) {

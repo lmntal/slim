@@ -337,7 +337,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         lmn_mem_free_rec(src_succ_m);
       }
       if (new_ss)
-        vec_push(new_ss, (vec_data_t)succ);
+        new_ss->push((vec_data_t)succ);
       if (mc_is_dump(f))
         dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
     } else {
@@ -469,7 +469,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
      * 通常時は, expanded_rootsのi番目のデータを
      *           Successor MembraneからSuccessor Stateへ設定し直す */
     if (mc_use_delta(f)) {
-      vec_push(expanded_roots, data);
+      expanded_roots->push(data);
     } else {
       vec_set(expanded_roots, i, data);
     }
@@ -506,7 +506,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
     AutomataTransitionRef p_t = p_s->get_transition(i);
     if (eval_formula(mem, propsyms, p_t->get_formula())) {
       BYTE p_nxt_l = p_t->get_next();
-      vec_push(RC_EXPANDED_PROPS(rc), (vec_data_t)p_nxt_l);
+      RC_EXPANDED_PROPS(rc)->push((vec_data_t)p_nxt_l);
     }
   }
 
@@ -551,13 +551,13 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
       } else {
         data = (vec_data_t)new_s;
       }
-      vec_push(RC_EXPANDED(rc), data);
+      RC_EXPANDED(rc)->push(data);
 
       /* 差分オブジェクトは状態展開時のみの一時データなので,
        * 効率化のためにポインタcopyのみにしている(deep copyしない)
        * !! 開放処理は要注意 (r435でdebug) !! */
       if (RC_MC_USE_DMEM(rc)) {
-        vec_push(RC_MEM_DELTAS(rc), vec_get(RC_MEM_DELTAS(rc), j));
+        RC_MEM_DELTAS(rc)->push(vec_get(RC_MEM_DELTAS(rc), j));
       }
     }
   }
@@ -607,7 +607,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
   } else {
     data = (vec_data_t)new_s;
   }
-  vec_push(RC_EXPANDED(rc), data);
+  RC_EXPANDED(rc)->push(data);
 }
 
 static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
@@ -638,7 +638,7 @@ void mc_found_invalid_state(LmnWorkerGroup *wp, State *s) {
   workers_found_error(wp);
   if (s) {
     LmnWorker *w = workers_get_my_worker(wp);
-    vec_push(worker_invalid_seeds(w), (vec_data_t)s);
+    worker_invalid_seeds(w)->push((vec_data_t)s);
   }
 
   if (!wp->do_exhaustive) {
@@ -653,7 +653,7 @@ void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v) {
 
   if (v) {
     LmnWorker *w = workers_get_my_worker(wp);
-    vec_push(worker_cycles(w), (vec_data_t)v);
+    worker_cycles(w)->push((vec_data_t)v);
   }
 
   if (!wp->do_exhaustive) {
@@ -682,7 +682,7 @@ static Vector *mc_gen_invalids_path(State *seed) {
   pred = seed;
 
   while (pred) { /* 初期頂点のparentはNULL */
-    vec_push(path, (vec_data_t)pred);
+    path->push((vec_data_t)pred);
     pred = state_get_parent(pred);
   }
 
@@ -700,11 +700,11 @@ static Vector *mc_gen_invalids_path(State *seed) {
     if (st_lookup(G, (st_data_t)(S_KEY), &t)) {                                \
       succs = (Vector *)t;                                                     \
       if (!vec_contains(succs, (vec_data_t)SUCC)) {                            \
-        vec_push(succs, (vec_data_t)SUCC);                                     \
+        succs->push((vec_data_t)SUCC);                                     \
       }                                                                        \
     } else {                                                                   \
       succs = new Vector(2);                                                     \
-      vec_push(succs, (vec_data_t)SUCC);                                       \
+      succs->push((vec_data_t)SUCC);                                       \
       st_insert(G, (st_data_t)(S_KEY), (st_data_t)succs);                      \
     }                                                                          \
   } while (0)
@@ -874,7 +874,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
           seed = (State *)vec_get(cycle, 0);
           path = mc_gen_invalids_path(seed);
 
-          vec_push(cycle,
+          cycle->push(
                    (vec_data_t)seed); /* seed to seedのパスを取得するため */
 
           if (cui_dump) {

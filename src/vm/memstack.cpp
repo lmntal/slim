@@ -50,7 +50,7 @@ BOOL lmn_memstack_isempty(LmnMemStack memstack) {
 }
 
 void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem) {
-  vec_push(memstack, (LmnWord)mem);
+  memstack->push((LmnWord)mem);
   lmn_mem_set_active(mem, TRUE);
 }
 

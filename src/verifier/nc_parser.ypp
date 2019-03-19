@@ -104,7 +104,7 @@ never_claim:
 
 states:
 /* empty */ { $$ = new Vector(32); }
-| states state  { vec_push($1, (vec_data_t)$2); $$ = $1; }
+| states state  { $1->push((vec_data_t)$2); $$ = $1; }
 ;
 
 state:
@@ -140,7 +140,7 @@ state:
 
 transitions:
   /* empty */ { $$ = new Vector(32); }
-| transitions transition { vec_push($1, (vec_data_t)$2); $$ = $1; }
+| transitions transition { $1->push((vec_data_t)$2); $$ = $1; }
 ;
 
 transition:

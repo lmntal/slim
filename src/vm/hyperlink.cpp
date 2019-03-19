@@ -376,7 +376,7 @@ HyperLink *lmn_hyperlink_get_root(HyperLink *hl) {
     children.init(lmn_hyperlink_element_num(parent_hl));
 
     while (parent_hl != current_hl) {
-      vec_push(&children, (LmnWord)current_hl);
+      children.push((LmnWord)current_hl);
       current_hl = parent_hl;
       parent_hl = current_hl->parent;
     }
@@ -816,7 +816,7 @@ void hyperlink_get_children_without(Vector *tree, HyperLink *root,
     }
 
     if (hl != without) {
-      vec_push(tree, (LmnWord)hl);
+      tree->push((LmnWord)hl);
     }
   }
 }
@@ -829,8 +829,8 @@ void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl) {
   if (root->rank > 0)
     hyperlink_get_children_without(tree, root, start_hl);
   if (root != start_hl)
-    vec_push(tree, (LmnWord)root);
-  vec_push(tree, (LmnWord)start_hl);
+    tree->push((LmnWord)root);
+  tree->push((LmnWord)start_hl);
 }
 
 /* ハイパーリンクhlのハッシュ値を返す. */

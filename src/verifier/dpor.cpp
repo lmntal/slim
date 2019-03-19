@@ -509,10 +509,10 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
       if (contextC1s_are_depend(r, l)) {
         if (ret) {
           if (!vec_contains(ret, (vec_data_t)r)) {
-            vec_push(ret, (vec_data_t)r);
+            ret->push((vec_data_t)r);
           }
           if (!vec_contains(ret, (vec_data_t)l)) {
-            vec_push(ret, (vec_data_t)l);
+            ret->push((vec_data_t)l);
           }
         }
 
@@ -609,7 +609,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
           dmem_root_commit(succ_c->d);
           ret = dpor_explore_subgraph(mc, succ_c, &nxt_checked_ids);
           dmem_root_revert(succ_c->d);
-          vec_push(&nxt_checked_ids,
+          nxt_checked_ids.push(
                    succ_c->id); /* next stepに合流性の情報を渡す */
           succ_c->is_on_path = FALSE;
           mc->cur_depth--;
@@ -651,7 +651,7 @@ static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxtRef rc,
       c->is_on_path = TRUE;
       dmem_root_commit(c->d);
       ret = dpor_explore_subgraph(d, c, &checked_ids);
-      vec_push(&checked_ids, c->id);
+      checked_ids.push(c->id);
       dmem_root_revert(c->d);
       c->is_on_path = FALSE;
       if (!ret)
@@ -706,7 +706,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc)
     return FALSE;
   } else {
     st_add_direct(mc->delta_tbl, (st_data_t)d, (st_data_t)c);
-    vec_push(mc->free_deltas, (vec_data_t)d);
+    mc->free_deltas->push((vec_data_t)d);
     return TRUE;
   }
 }
@@ -789,7 +789,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (mc_is_dump(f))
         dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
       if (new_ss) {
-        vec_push(new_ss, (vec_data_t)succ);
+        new_ss->push((vec_data_t)succ);
       }
     } else {
       delete (src_succ);
@@ -846,7 +846,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         if (mc_is_dump(f))
           dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
         if (new_ss) {
-          vec_push(new_ss, (vec_data_t)succ);
+          new_ss->push((vec_data_t)succ);
         }
       } else {
         delete (src_succ);
@@ -899,7 +899,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (!src_succ->is_encoded()) {
         src_succ->state_set_binstr(state_calc_mem_dump(src_succ));
       }
-      vec_push(reduced_stack, (vec_data_t)src_t);
+      reduced_stack->push((vec_data_t)src_t);
       dmem_root_revert(succ_d); /* 元に戻す */
     }
   }
@@ -949,7 +949,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         } else {
           lmn_fatal("unexpected");
         }
-        vec_push(d->ample_cand, (vec_data_t)c);
+        d->ample_cand->push((vec_data_t)c);
       }
 
       if (vec_num(d->ample_cand) == mc_react_cxt_succ_num_org(rc)) {
@@ -1036,7 +1036,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       if (ret == s) {
         s->s_set_reduced();
         lmn_mem_free_rec(s_mem);
-        vec_push(search, (vec_data_t)s);
+        search->push((vec_data_t)s);
       } else {
         transition_set_state(t, ret);
         delete (s);
@@ -1063,7 +1063,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       }
 
       for (i = 0; i < vec_num(new_ss); i++) {
-        vec_push(search, vec_get(new_ss, i));
+        search->push(vec_get(new_ss, i));
       }
 
       vec_clear(new_ss);
@@ -1111,7 +1111,7 @@ void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
 }
 
 void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms) {
-  vec_push(d->wt_gatoms, (vec_data_t)atoms);
+  d->wt_gatoms->push((vec_data_t)atoms);
 }
 
 void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms) {

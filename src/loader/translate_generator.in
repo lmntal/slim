@@ -553,7 +553,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   *finishflag = 0;
 
 #addtolist LmnInstrVar LmnInstrVar
-  vec_push((Vector *)rc->wt($0), $1);
+  ((Vector *)rc->wt($0))->push($1);
 
 #getfromlist LmnInstrVar LmnInstrVar LmnInstrVar
   switch (rc->at($1)) {
@@ -607,8 +607,8 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
     /* 返り値の作成 */
     retvec = new Vector(2);
-    vec_push(retvec, (LmnWord)dstlovec);
-    vec_push(retvec, (LmnWord)atommap);
+    retvec->push((LmnWord)dstlovec);
+    retvec->push((LmnWord)atommap);
     rc->reg($0) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
 #__echo_t
     {
