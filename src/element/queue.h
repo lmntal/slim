@@ -104,6 +104,8 @@ struct Deque {
   void push_tail(LmnWord keyp);
   LmnWord pop_head();
   LmnWord pop_tail();
+  LmnWord peek_head()const;
+  LmnWord peek_tail()const;
   LmnWord *tbl;
   unsigned int head, tail, cap;
 };
@@ -121,8 +123,6 @@ typedef LmnWord deq_data_t;
 #define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
-static inline LmnWord deq_peek_head(const Deque *deq);
-static inline LmnWord deq_peek_tail(const Deque *deq);
 static inline LmnWord deq_get(const Deque *deq, unsigned int i);
 static inline void deq_clear(Deque *deq);
 static inline void deq_destroy(Deque *deq);
@@ -137,17 +137,6 @@ Deque *deq_copy(Deque *deq);
 void deq_reverse(Deque *deq);
 void deq_resize(Deque *deq, unsigned int size, deq_data_t val);
 void deq_sort(const Deque *deq, int (*compare)(const void *, const void *));
-
-/* peek */
-static inline LmnWord deq_peek_head(const Deque *deq) {
-  unsigned int x = deq->head;
-  return deq->tbl[DEQ_INC(x, deq->cap)];
-}
-
-static inline LmnWord deq_peek_tail(const Deque *deq) {
-  unsigned int x = deq->tail;
-  return deq->tbl[DEQ_DEC(x, deq->cap)];
-}
 
 /* peak (no assertion) */
 static inline LmnWord deq_get(const Deque *deq, unsigned int i) {

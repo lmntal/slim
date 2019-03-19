@@ -320,6 +320,18 @@ LmnWord Deque::pop_tail() {
   return this->tbl[this->tail];
 }
 
+/* peek */
+LmnWord Deque::peek_head()const {
+  unsigned int x = this->head;
+  return this->tbl[DEQ_INC(x, this->cap)];
+}
+
+/* */
+LmnWord Deque::peek_tail()const {
+  unsigned int x = this->tail;
+  return this->tbl[DEQ_DEC(x, this->cap)];
+}
+
 /* contains */
 BOOL deq_contains(const Deque *deq, LmnWord keyp) {
   unsigned int i = deq->tail;

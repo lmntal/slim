@@ -778,7 +778,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       break;
 
     /** 展開元の状態の取得 */
-    s = (State *)deq_peek_tail(deq);
+    s = (State *)(deq->peek_tail());
     p_s = MC_GET_PROPERTY(s, a);
 
     if ((lmn_env.opt_mode == OPT_MINIMIZE &&
