@@ -2397,8 +2397,8 @@ static BOOL mem_isomor_mols(LmnMembraneRef mem1, TraceLogRef log1,
        *   比較済プロセス数と所持プロセス数を比較し, 対応漏れがないか検査する.
        */
 
-      return tracelog_eq_traversed_proc_num(
-          log1, mem1, lmn_mem_get_atomlist(mem1, LMN_IN_PROXY_FUNCTOR), NULL);
+      return log1->eq_traversed_proc_num(
+          mem1, lmn_mem_get_atomlist(mem1, LMN_IN_PROXY_FUNCTOR), NULL);
     }
   }
 }

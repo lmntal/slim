@@ -133,8 +133,8 @@ private:
     if (!rule_flag && lmn_mem_ruleset_num(mem) != 0)
       return false;
 
-    return tracelog_eq_traversed_proc_num(
-        log, mem, lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR),
+    return log->eq_traversed_proc_num(
+        mem, lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR),
         lmn_mem_get_atomlist(mem, LMN_EXCLAMATION_FUNCTOR));
   }
 

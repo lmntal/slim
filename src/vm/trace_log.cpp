@@ -43,14 +43,6 @@ template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
  * Tracker
  */
 
-/* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside
- * proxies) の数が 膜ownerのそれと一致しているか否かを返す */
-BOOL tracelog_eq_traversed_proc_num(TraceLogRef l, LmnMembraneRef owner,
-                                    AtomListEntryRef in_ent,
-                                    AtomListEntryRef avoid) {
-  return l->eq_traversed_proc_num(owner, in_ent, avoid);
-}
-
 /* ログlに, 所属膜owner1のアトムatom1への訪問を記録する.
  * atom1にマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
  */

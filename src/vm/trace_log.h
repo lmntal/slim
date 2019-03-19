@@ -134,6 +134,9 @@ struct TraceLog : ProcessTable<TraceData> {
                ? (*this)[lmn_mem_id(owner)].traversed_proc
                : 0;
   }
+
+/* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside
+ * proxies) の数が 膜ownerのそれと一致しているか否かを返す */
   bool eq_traversed_proc_num(LmnMembraneRef owner, AtomListEntryRef in_ent,
                              AtomListEntryRef avoid) {
     size_t s1 = in_ent ? in_ent->size() : 0;
@@ -214,9 +217,6 @@ typedef struct TraceLog *TraceLogRef;
  * Function ProtoTypes
  */
 
-BOOL tracelog_eq_traversed_proc_num(TraceLogRef l, LmnMembraneRef owner,
-                                    AtomListEntryRef in_ent,
-                                    AtomListEntryRef avoid);
 int tracelog_put_atom(TraceLogRef l, LmnSymbolAtomRef atom1, LmnWord atom2_id,
                       LmnMembraneRef owner1);
 int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id);
