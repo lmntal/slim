@@ -55,25 +55,6 @@ typedef struct LmnPort *LmnPortRef;
 #include "../lmntal.h"
 #include "lmnstring.h"
 
-struct LmnPort {
-  LMN_SP_ATOM_HEADER;
-
-  BOOL direction;
-  LmnByte type; /* LMN_PORT_{FILE|ISTR|OST|PROC} */
-  BOOL closed;  /* TRUE if this port is closed */
-  BOOL error;   /* error has occurred */
-  BOOL owner;   /* TRUE if this port owns underlying
-                   file pointer */
-  lmn_interned_str name;
-
-  void *data; /* used internally */
-};
-
-struct IStrPortData {
-  LmnStringRef s;
-  int i;
-};
-
 #define LMN_PORT(obj) ((LmnPortRef)(obj))
 
 typedef enum LmnPortDirection {
@@ -88,6 +69,27 @@ typedef enum LmnPortType {
   /*   LMN_PORT_PROC /\* virtual port *\/ */
 } LmnPortType;
 
+struct LmnPort {
+  LMN_SP_ATOM_HEADER;
+
+  BOOL direction;
+  LmnByte type; /* LMN_PORT_{FILE|ISTR|OST|PROC} */
+  BOOL closed;  /* TRUE if this port is closed */
+  BOOL error;   /* error has occurred */
+  BOOL owner;   /* TRUE if this port owns underlying
+                   file pointer */
+  lmn_interned_str name;
+
+  void *data; /* used internally */
+
+  LmnPort(LmnPortDirection, LmnPortType, const char *);
+};
+
+struct IStrPortData {
+  LmnStringRef s;
+  int i;
+};
+
 void port_init(void);
 void port_finalize(void);
 
@@ -98,8 +100,6 @@ LmnPortRef lmn_stderr_port(void);
 LmnPortRef lmn_make_input_string_port(LmnStringRef s);
 LmnPortRef lmn_make_output_string_port();
 
-LmnPortRef lmn_make_port(LmnPortDirection dir, LmnPortType type,
-                         const char *name);
 void lmn_port_free(LmnPortRef port);
 void lmn_port_close(LmnPortRef port);
 BOOL lmn_port_closed(LmnPortRef port_atom);

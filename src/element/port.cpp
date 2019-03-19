@@ -58,23 +58,11 @@ static LmnPortRef port_copy_sub(LmnPortRef port);
 /*
  * Internal Constructor.
  */
-static LmnPortRef make_port(LmnPortDirection dir, LmnPortType type,
-                            const char *name) {
-  struct LmnPort *port = LMN_MALLOC(struct LmnPort);
-  LMN_SP_ATOM_SET_TYPE(port, port_atom_type);
-  port->direction = dir;
-  port->type = type;
-  port->closed = FALSE;
-  port->error = FALSE;
-  port->name = lmn_intern(name);
-  port->data = NULL;
-  port->owner = TRUE;
-  return port;
-}
-
-LmnPortRef lmn_make_port(LmnPortDirection dir, LmnPortType type,
-                         const char *name) {
-  return make_port(dir, type, name);
+LmnPort::LmnPort(LmnPortDirection dir, LmnPortType type,
+                         const char *name) :
+    direction(dir), type(type), closed(closed), error(FALSE),
+    name(lmn_intern(name)), data(NULL), owner(TRUE) {
+  LMN_SP_ATOM_SET_TYPE(this, port_atom_type);
 }
 
 void lmn_port_free(LmnPortRef port) {
@@ -136,7 +124,7 @@ LmnPortRef lmn_stderr_port() { return lmn_port_copy(lmn_stderr, FALSE); }
 
 LmnPortRef lmn_make_file_port(FILE *file, const char *name,
                               LmnPortDirection dir, BOOL owner) {
-  LmnPortRef port = make_port(dir, LMN_PORT_FILE, name);
+  LmnPortRef port = new LmnPort(dir, LMN_PORT_FILE, name);
 
   port->data = file;
   port->owner = owner;
@@ -147,7 +135,7 @@ LmnPortRef lmn_make_file_port(FILE *file, const char *name,
 /* 入力文字列ポートを作成する。引数sの解放の責任は個の関数が持つ */
 LmnPortRef lmn_make_input_string_port(LmnStringRef s) {
   LmnPortRef port =
-      make_port(LMN_PORT_INPUT, LMN_PORT_ISTR, "input string port");
+      new LmnPort(LMN_PORT_INPUT, LMN_PORT_ISTR, "input string port");
   struct IStrPortData *d = LMN_MALLOC(struct IStrPortData);
 
   d->s = s;
@@ -160,7 +148,7 @@ LmnPortRef lmn_make_input_string_port(LmnStringRef s) {
 
 LmnPortRef lmn_make_output_string_port() {
   LmnPortRef port =
-      make_port(LMN_PORT_OUTPUT, LMN_PORT_OSTR, "output string port");
+      new LmnPort(LMN_PORT_OUTPUT, LMN_PORT_OSTR, "output string port");
 
   port->data = new LmnString();
   port->owner = TRUE;
