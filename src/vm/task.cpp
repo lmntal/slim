@@ -4302,18 +4302,18 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(link1))) {
         if (LMN_ATTR_IS_DATA(LINKED_ATTR(link2))) { /* 1, 2 are data */
-          dmem_root_link_data_atoms(
-              RC_ND_MEM_DELTA_ROOT(rc), (LmnMembraneRef)rc->wt(mem),
+          RC_ND_MEM_DELTA_ROOT(rc)->link_data_atoms(
+              (LmnMembraneRef)rc->wt(mem),
               (LmnDataAtomRef)LINKED_ATOM(link1), LINKED_ATTR(link1),
               (LmnDataAtomRef)LINKED_ATOM(link2), LINKED_ATTR(link2));
         } else { /* 1 is data */
-          dmem_root_unify_links(RC_ND_MEM_DELTA_ROOT(rc),
+          RC_ND_MEM_DELTA_ROOT(rc)->unify_links(
                                 (LmnMembraneRef)rc->wt(mem), LINKED_ATOM(link2),
                                 LINKED_ATTR(link2), LINKED_ATOM(link1),
                                 LINKED_ATTR(link1));
         }
       } else { /* 2 is data or 1, 2 are symbol atom */
-        dmem_root_unify_links(RC_ND_MEM_DELTA_ROOT(rc),
+        RC_ND_MEM_DELTA_ROOT(rc)->unify_links(
                               (LmnMembraneRef)rc->wt(mem), LINKED_ATOM(link1),
                               LINKED_ATTR(link1), LINKED_ATOM(link2),
                               LINKED_ATTR(link2));
@@ -4343,7 +4343,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, pos2);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      dmem_root_relink(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembraneRef)rc->wt(memi),
+      RC_ND_MEM_DELTA_ROOT(rc)->relink((LmnMembraneRef)rc->wt(memi),
                        (LmnAtomRef)rc->wt(atom1), rc->at(atom1), pos1,
                        (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
       break;
@@ -4370,7 +4370,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, pos2);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      dmem_root_unify_atom_args(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->unify_atom_args(
                                 (LmnMembraneRef)rc->wt(memi),
                                 (LmnSymbolAtomRef)rc->wt(atom1), pos1,
                                 (LmnSymbolAtomRef)rc->wt(atom2), pos2);

@@ -145,18 +145,6 @@ LmnMembraneRef dmem_root_new_mem(struct MemDeltaRoot *d);
 void dmem_root_add_new_mem(struct MemDeltaRoot *d, LmnMembraneRef m);
 void dmem_root_add_child_mem(struct MemDeltaRoot *d, LmnMembraneRef parent,
                              LmnMembraneRef child);
-void dmem_root_link_data_atoms(struct MemDeltaRoot *d, LmnMembraneRef m,
-                               LmnDataAtomRef d1, LmnLinkAttr attr1,
-                               LmnDataAtomRef d2, LmnLinkAttr attr2);
-void dmem_root_unify_atom_args(struct MemDeltaRoot *d, LmnMembraneRef m,
-                               LmnSymbolAtomRef atom1, int pos1,
-                               LmnSymbolAtomRef atom2, int pos2);
-void dmem_root_unify_links(struct MemDeltaRoot *d, LmnMembraneRef m,
-                           LmnAtomRef atom1, LmnLinkAttr attr1,
-                           LmnAtomRef atom2, LmnLinkAttr attr2);
-void dmem_root_relink(struct MemDeltaRoot *d, LmnMembraneRef m,
-                      LmnAtomRef atom1, LmnLinkAttr attr1, int pos1,
-                      LmnAtomRef atom2, LmnLinkAttr attr2, int pos2);
 void dmem_root_remove_mem(struct MemDeltaRoot *d, LmnMembraneRef parent,
                           LmnMembraneRef child);
 void dmem_root_move_cells(struct MemDeltaRoot *d, LmnMembraneRef destmem,
@@ -317,7 +305,19 @@ struct MemDeltaRoot {
   void newlink(LmnMembraneRef m,
                        LmnAtomRef atom0, LmnLinkAttr attr0, int pos0,
                        LmnAtomRef atom1, LmnLinkAttr attr1, int pos1);
-
+  void link_data_atoms(LmnMembraneRef m,
+                               LmnDataAtomRef d1, LmnLinkAttr attr1,
+                               LmnDataAtomRef d2, LmnLinkAttr attr2);
+  void unify_atom_args(LmnMembraneRef m,
+                               LmnSymbolAtomRef atom1, int pos1,
+                               LmnSymbolAtomRef atom2, int pos2);
+  void unify_links(LmnMembraneRef m,
+                           LmnAtomRef atom1, LmnLinkAttr attr1,
+                           LmnAtomRef atom2, LmnLinkAttr attr2);
+  void relink(LmnMembraneRef m,
+                      LmnAtomRef atom1, LmnLinkAttr attr1, int pos1,
+                      LmnAtomRef atom2, LmnLinkAttr attr2, int pos2);
+  void move_satom(LmnWord key, LmnWord dest);
 };
 
 struct MemDelta {
