@@ -719,9 +719,9 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
         return;
       } else {
         if (lmn_env.prop_scc_driven)
-          automata_analysis(automata);
+          automata->analysis();
         if (lmn_env.property_dump) {
-          print_property_automata(automata);
+          automata->print_property();
           return;
         }
       }
@@ -730,7 +730,7 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
     run_mc(vec_make(start_rulesets), automata, prop_defs);
 
     if (!ret) {
-      automata_free(automata);
+      delete automata;
       propsyms_free(prop_defs);
     }
   }

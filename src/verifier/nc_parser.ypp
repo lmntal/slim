@@ -93,9 +93,9 @@ never_claim:
     AutomataStateRef s;
 
     s = (AutomataStateRef)vec_get(states, 0);
-    automata_set_init_state(automata, atmstate_id(s));
+    automata->set_init_state(s->get_id());
     for (i = 0; i < vec_num(states); i++) {
-      automata_add_state(automata, (AutomataStateRef)vec_get(states, i));
+      automata->add_state((AutomataStateRef)vec_get(states, i));
     }
     free($1);
     vec_free(states);
@@ -114,10 +114,10 @@ state:
     BOOL is_accept_state = FALSE;
 
     if (strstr($1, "accept") != NULL) is_accept_state = TRUE;
-    cur = automata_state_id(automata, $1);
-    s = atmstate_make(cur, is_accept_state, 0);
+    cur = automata->state_id($1);
+    s = new AutomataState(cur, is_accept_state, 0);
     for (i = 0; i < vec_num($4); i++) {
-      atmstate_add_transition(s, (AutomataTransitionRef)vec_get($4, i));
+      s->add_transition((AutomataTransitionRef)vec_get($4, i));
     }
     $$ = s;
 
@@ -130,9 +130,9 @@ state:
     BOOL is_accept_state = FALSE;
 
     if (strstr($1, "accept") != NULL) is_accept_state = TRUE;
-    cur = automata_state_id(automata, $1);
-    s = atmstate_make(cur, is_accept_state, 1);
-    atmstate_add_transition(s, atm_transition_make(cur, true_node_make()));
+    cur = automata->state_id($1);
+    s = new AutomataState(cur, is_accept_state, 1);
+    s->add_transition(new AutomataTransition(cur, true_node_make()));
     $$ = s;
     free($1);
   }
@@ -145,15 +145,15 @@ transitions:
 
 transition:
   COLON_COLON propositional_exp IMPLICATION next {
-    $$ = atm_transition_make($4, $2);
+    $$ = new AutomataTransition($4, $2);
   }
 | COLON_COLON LPAREN NUMBER RPAREN IMPLICATION next {
-    $$ = atm_transition_make($6, true_node_make());
+    $$ = new AutomataTransition($6, true_node_make());
   }
 ;
 
 next:
-  KW_GOTO SYMBOL { $$ = automata_state_id(automata, $2); free($2); }
+  KW_GOTO SYMBOL { $$ = automata->state_id($2); free($2); }
 ;
 
 propositional_exp:
@@ -169,7 +169,7 @@ propositional_term:
 
 propositional_factor:
   LPAREN propositional_exp RPAREN { $$ = $2; }
-| SYMBOL { $$ = sym_node_make(automata_propsym_to_id(automata, $1)); free($1); }
+| SYMBOL { $$ = sym_node_make(automata->propsym_to_id($1)); free($1); }
 | KW_TRUE { $$ = true_node_make(); }
 | KW_FALSE { $$ = false_node_make(); }
 ;
