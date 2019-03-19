@@ -282,7 +282,7 @@ static inline void mapdfs_handoff_all_task(LmnWorker *me, Vector *expands) {
   n = vec_num(expands);
   for (i = 0; i < n; i++) {
     DFS_WORKER_QUEUE(rn)->enqueue(vec_get(expands, i));
-    // enqueue_push_head(DFS_WORKER_QUEUE(rn), vec_get(expands, i));
+    // DFS_WORKER_QUEUE(rn)->enqueue_push_head(vec_get(expands, i));
   }
 
   ADD_OPEN_PROFILE(sizeof(Node) * n);
@@ -296,7 +296,7 @@ static inline void mcdfs_handoff_task(LmnWorker *me, LmnWord task) {
     worker_set_black(me);
   }
   DFS_WORKER_QUEUE(rn)->enqueue(task);
-  // enqueue_push_head(DFS_WORKER_QUEUE(rn), task);
+  // DFS_WORKER_QUEUE(rn)->enqueue_push_head(task);
 
   ADD_OPEN_PROFILE(sizeof(Node));
 }

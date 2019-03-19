@@ -137,22 +137,22 @@ void Queue::enqueue(LmnWord v) {
   }
 }
 
-void enqueue_push_head(Queue *q, LmnWord v) {
+void Queue::enqueue_push_head(LmnWord v) {
   Node *head, *node;
-  if (q->lock) {
-    q_lock(q, Q_ENQ);
-    q_lock(q, Q_DEQ);
+  if (this->lock) {
+    q_lock(this, Q_ENQ);
+    q_lock(this, Q_DEQ);
   }
-  head = q->head;
+  head = this->head;
   node = new Node(v);
   node->next = head->next;
   head->next = node;
   // q->tail = node;
-  q->enq_num++;
+  this->enq_num++;
 
-  if (q->lock) {
-    q_unlock(q, Q_DEQ);
-    q_unlock(q, Q_ENQ);
+  if (this->lock) {
+    q_unlock(this, Q_DEQ);
+    q_unlock(this, Q_ENQ);
   }
 }
 
