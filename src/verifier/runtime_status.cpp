@@ -45,8 +45,6 @@
 static void mc_profiler3_init(MCProfiler3 *p);
 static void mc_profiler3_destroy(MCProfiler3 *p);
 static void mc_profiler3_makeup_report(MCProfiler3 *total);
-static inline void time_profiler_init(TimeProfiler *p);
-static inline void time_profiler_destroy(TimeProfiler *p);
 static inline void memory_profiler_init(MemoryProfiler *p);
 static inline void memory_profiler_destroy(MemoryProfiler *p);
 static inline void peak_counter_init(PeakCounter *p);
@@ -60,15 +58,11 @@ static const char *profile_time_id_to_name(int type);
  *  Rule Profiler
  */
 RuleProfiler::RuleProfiler(LmnRulesetId id, LmnRuleRef src) {
-  time_profiler_init(this->get_trial_address());
+  this->trial = TimeProfiler();
   this->src = src;
   this->backtrack = 0;
   this->apply = 0;
   this->ref_rs_id = id;
-}
-
-RuleProfiler::~RuleProfiler() {
-  time_profiler_destroy(this->get_trial_address());
 }
 
 void RuleProfiler::incr_backtrack() { this->backtrack++; }
@@ -140,7 +134,7 @@ static void mc_profiler3_init(MCProfiler3 *p) {
   }
   /* for timers */
   for (i = 0; i < ARY_SIZEOF(p->times); i++) {
-    time_profiler_init(&p->times[i]);
+    p->times[i] = TimeProfiler();
   }
   /* for counters */
   for (i = 0; i < ARY_SIZEOF(p->counters); i++) {
@@ -153,9 +147,6 @@ static void mc_profiler3_destroy(MCProfiler3 *p) {
 
   for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
     memory_profiler_destroy(&p->spaces[i]);
-  }
-  for (i = 0; i < ARY_SIZEOF(p->times); i++) {
-    time_profiler_destroy(&p->times[i]);
   }
 }
 
@@ -187,20 +178,14 @@ static void mc_profiler3_makeup_report(MCProfiler3 *total) {
       total->spaces[data_i].num.cur += p->spaces[data_i].space.cur;
       total->spaces[data_i].num.peak += p->spaces[data_i].num.peak;
     }
-    // total->spaces[data_i].space.cur  /= lmn_prof.thread_num;
-    // total->spaces[data_i].space.peak /= lmn_prof.thread_num;
-    // total->spaces[data_i].num.cur    /= lmn_prof.thread_num;
-    // total->spaces[data_i].num.peak   /= lmn_prof.thread_num;
   }
 }
 
-static inline void time_profiler_init(TimeProfiler *p) {
-  p->called_num = 0;
-  p->total_time = 0.0;
-  p->tmp_start = 0;
+TimeProfiler::TimeProfiler() {
+  this->called_num = 0;
+  this->total_time = 0.0;
+  this->tmp_start = 0;
 }
-
-static inline void time_profiler_destroy(TimeProfiler *p) {}
 
 static inline void memory_profiler_init(MemoryProfiler *p) {
   peak_counter_init(&p->num);
@@ -332,23 +317,21 @@ void profile_remove_space(int type, unsigned long size) {
   }
 }
 
-void time_profiler_start(TimeProfiler *p) {
-  p->called_num++;
-  p->tmp_start = get_cpu_time();
+void TimeProfiler::start() {
+  called_num++;
+  tmp_start = get_cpu_time();
 }
 
-void time_profiler_finish(TimeProfiler *p) {
-  p->total_time += get_cpu_time() - p->tmp_start;
-}
+void TimeProfiler::finish() { total_time += get_cpu_time() - tmp_start; }
 
 void profile_start_timer(int type) {
   TimeProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].times[type]);
-  time_profiler_start(p);
+  p->start();
 }
 
 void profile_finish_timer(int type) {
   TimeProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].times[type]);
-  time_profiler_finish(p);
+  p->finish();
 }
 
 void profile_countup(int type) {

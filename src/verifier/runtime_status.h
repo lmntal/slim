@@ -52,13 +52,6 @@
 #include "vm/vm.h"
 #include <vector>
 
-typedef struct MCProfiler2 MCProfiler2;
-typedef struct MCProfiler3 MCProfiler3;
-typedef struct MemoryProfiler MemoryProfiler;
-typedef struct TimeProfiler TimeProfiler;
-typedef struct RuleProfiler RuleProfiler;
-typedef struct PeakCounter PeakCounter;
-
 enum PROFILE_SPACE {
   PROFILE_SPACE__TOTAL,          /* トータル */
   PROFILE_SPACE__STATE_BINSTR,   /* バイナリストリング */
@@ -128,6 +121,10 @@ struct TimeProfiler {
   unsigned long called_num; /* # of calls */
   double total_time;        /* total time */
   double tmp_start;
+  TimeProfiler();
+  ~TimeProfiler(){};
+  void start();
+  void finish();
 };
 
 struct MCProfiler2 {
@@ -155,7 +152,7 @@ struct RuleProfiler {
   TimeProfiler trial;
   LmnRuleRef src;
   RuleProfiler(LmnRulesetId id, LmnRuleRef src);
-  ~RuleProfiler();
+  ~RuleProfiler(){};
   void incr_backtrack();
   void add_backtrack(int num);
   void incr_apply();
@@ -222,9 +219,6 @@ void profile_countup(int type);
 void profile_peakcounter_pop(PeakCounter *p, unsigned long size);
 void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r);
 
-void time_profiler_start(TimeProfiler *p);
-void time_profiler_finish(TimeProfiler *p);
-
 #ifdef PROFILE
 #define profile_backtrack()                                                    \
   if (lmn_prof.cur && !lmn_env.findatom_parallel_mode)                         \
@@ -234,10 +228,10 @@ void time_profiler_finish(TimeProfiler *p);
   (lmn_prof.cur->add_backtrack(NUM))
 #define profile_start_trial()                                                  \
   if (lmn_prof.cur)                                                            \
-  time_profiler_start(lmn_prof.cur->get_trial_address())
+  lmn_prof.cur->get_trial_address()->start()
 #define profile_finish_trial()                                                 \
   if (lmn_prof.cur)                                                            \
-  time_profiler_finish(lmn_prof.cur->get_trial_address())
+  lmn_prof.cur->get_trial_address()->finish()
 #define profile_apply()                                                        \
   if (lmn_prof.cur)                                                            \
   (lmn_prof.cur->incr_apply())
