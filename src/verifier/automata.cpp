@@ -148,7 +148,7 @@ void Automata::add_state(AutomataStateRef s) {
   vec_set(&this->states, s->id, (vec_data_t)s);
 }
 
-AutomataStateRef Automata::get_state(BYTE state_id) {
+AutomataStateRef Automata::get_state(atmstate_id_t state_id) {
   LMN_ASSERT(vec_get(&this->states, state_id) != 0);
   return (AutomataStateRef)vec_get(&this->states, state_id);
 }
@@ -319,8 +319,7 @@ void print_property_automata(AutomataRef a) {
     for (j = 0; j < m; j++) {
       fprintf(stdout, "%lu",
               (unsigned long)
-                  a->get_state((unsigned int)atm_transition_next(
-                                       s->get_transition(j)))->get_id());
+                  a->get_state(s->get_transition(j)->get_next())->get_id());
       if (j + 1 < m)
         fprintf(stdout, ",");
     }
@@ -338,7 +337,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
   n = s->get_transition_num();
   for (i = 0; i < n; i++) {
     AutomataStateRef succ = a->get_state(
-        (unsigned int)atm_transition_next(s->get_transition(i)));
+        s->get_transition(i)->get_next());
     if (!on_stack_list[(unsigned int)succ->get_id()]) {
       on_stack_list[(unsigned int)succ->get_id()] = 0xffU;
       automata_analysis_dfs1(a, on_stack_list, succ);
@@ -368,7 +367,7 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
   n = s->get_transition_num();
   for (i = 0; i < n; i++) {
     AutomataStateRef succ = a->get_state(
-        (unsigned int)atm_transition_next(s->get_transition(i)));
+        s->get_transition(i)->get_next());
     if (!succ->get_scc()) {
       AutomataSCC *scc = s->get_scc();
       if ((!succ->get_is_accept() && atmscc_type(scc) == SCC_TYPE_FULLY) ||
@@ -386,14 +385,14 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
  * transition
  */
 
-AutomataTransition::AutomataTransition(unsigned int next, PLFormulaRef f)
+AutomataTransition::AutomataTransition(atmstate_id_t next, PLFormulaRef f)
   : next(next), f(f) {}
 
 AutomataTransition::~AutomataTransition () {
   free_formula(this->f);
 }
 
-BYTE atm_transition_next(AutomataTransitionRef t) { return t->next; }
+atmstate_id_t AutomataTransition::get_next() { return this->next; }
 
 PLFormulaRef atm_transition_get_formula(AutomataTransitionRef t) {
   return t->f;

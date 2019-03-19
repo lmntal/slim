@@ -76,7 +76,7 @@ struct Automata {
   atmstate_id_t state_id(const char *);
   const char *state_name(atmstate_id_t);
   void add_state(AutomataStateRef);
-  AutomataStateRef get_state(BYTE);
+  AutomataStateRef get_state(atmstate_id_t);
   atmstate_id_t get_init_state();
   void set_init_state(atmstate_id_t);
   unsigned int propsym_to_id(char *prop_name);
@@ -106,11 +106,12 @@ struct AutomataState {
 typedef struct PLFormula *PLFormulaRef;
 
 struct AutomataTransition {
-  unsigned int next;
+  atmstate_id_t next;
   PLFormulaRef f; /* 実際は命題論理式 */
 
-  AutomataTransition(unsigned int next, PLFormulaRef f);
+  AutomataTransition(atmstate_id_t next, PLFormulaRef f);
   ~AutomataTransition();
+  atmstate_id_t get_next();
 };
 
 enum SCC_ACCEPTING_TYPE {
@@ -122,7 +123,6 @@ enum SCC_ACCEPTING_TYPE {
 
 /* transition of automata */
 
-BYTE atm_transition_next(AutomataTransitionRef t);
 PLFormulaRef atm_transition_get_formula(AutomataTransitionRef t);
 
 /* SCC analysis of automata */
