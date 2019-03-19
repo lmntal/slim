@@ -166,14 +166,14 @@ public:
     auto hl_root =
         lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
 
-    if (visitlog_get_hlink(log, hl_root, &ref)) {
+    if (log->get_hlink(hl_root, &ref)) {
       return push(TAG_VISITED_ATOMHLINK) &&
              push((BYTE *)&ref, BS_PROC_REF_SIZE);
     }
 
     auto hl_num = lmn_hyperlink_element_num(hl_root);
 
-    visitlog_put_hlink(log, hl_root); /* 訪問済みにした */
+    log->put_hlink(hl_root); /* 訪問済みにした */
     push(TAG_HLINK);
     push((const BYTE *)&hl_num, BS_HLINK_NUM_SIZE);
 
