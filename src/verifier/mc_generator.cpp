@@ -95,7 +95,7 @@
 #define DFS_HANDOFF_COND_STATIC(W, Stack)                                      \
   (vec_num(Stack) >= DFS_CUTOFF_DEPTH(W))
 #define DFS_HANDOFF_COND_STATIC_DEQ(W, Deq)                                    \
-  (deq_num(Deq) >= DFS_CUTOFF_DEPTH(W))
+  (Deq->num() >= DFS_CUTOFF_DEPTH(W))
 
 /* DFS Stackを動的に分割するためのWork Sharingの条件 */
 #define DFS_HANDOFF_COND_DYNAMIC(I, N, W)                                      \
@@ -145,14 +145,14 @@ void dfs_worker_init(LmnWorker *w) {
   if (!worker_on_parallel(w)) {
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
-      deq_init(&mc->deq, 8192);
+      &mc->deq->init(8192);
     } else
 #endif
       vec_init(&mc->stack, 8192);
   } else {
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
-      deq_init(&mc->deq, mc->cutoff_depth + 1);
+      &mc->deq->init(mc->cutoff_depth + 1);
     } else
 #endif
       vec_init(&mc->stack, mc->cutoff_depth + 1);
@@ -179,7 +179,7 @@ void dfs_worker_finalize(LmnWorker *w) {
   }
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE) {
-    deq_destroy(&DFS_WORKER_DEQUE(w));
+    &DFS_WORKER_DEQUE(w)->destroy();
   } else
 #endif
     vec_destroy(&DFS_WORKER_STACK(w));
@@ -440,7 +440,7 @@ void dfs_start(LmnWorker *w) {
             costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss,
                             ss->automata(), ss->prop_symbols());
             s = NULL;
-            deq_clear(&DFS_WORKER_DEQUE(w));
+            &DFS_WORKER_DEQUE(w)->clear();
           } else
 #endif
           {
@@ -769,7 +769,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
  *   C++ template関数として記述するなど, 保守性向上のための修正が必要 */
 void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
                      Vector *psyms) {
-  while (!deq_is_empty(deq)) {
+  while (!deq->is_empty()) {
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n;
@@ -778,7 +778,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       break;
 
     /** 展開元の状態の取得 */
-    s = (State *)deq_peek_tail(deq);
+    s = (State *)(deq->peek_tail());
     p_s = MC_GET_PROPERTY(s, a);
 
     if ((lmn_env.opt_mode == OPT_MINIMIZE &&
