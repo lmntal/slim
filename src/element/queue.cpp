@@ -49,27 +49,31 @@
 #define Q_DEQ 0
 #define Q_ENQ 1
 
-Queue *make_parallel_queue(BOOL lock_type) {
-  Queue *q = new Queue();
+/*parallel_queue*/
+Queue::Queue(BOOL lock_type) {
+  Node *sentinel = new Node(0);
+  this->head = sentinel;
+  this->tail = sentinel;
+  this->enq_num = 0UL;
+  this->deq_num = 0UL;
 
   switch (lock_type) {
   case LMN_Q_SRSW:
     break;
   case LMN_Q_MRMW:
-    lmn_mutex_init(&(q->deq_mtx));
+    lmn_mutex_init(&(this->deq_mtx));
     /* fall through */
   case LMN_Q_SRMW:
-    lmn_mutex_init(&(q->enq_mtx));
+    lmn_mutex_init(&(this->enq_mtx));
     break;
   case LMN_Q_MRSW:
-    lmn_mutex_init(&(q->deq_mtx));
+    lmn_mutex_init(&(this->deq_mtx));
     break;
   default:
     lmn_fatal("unexpected");
     break;
   }
-  q->lock = lock_type;
-  return q;
+  this->qlock = lock_type;
 }
 
 /*  {head, tail}
@@ -82,7 +86,7 @@ Queue::Queue(void) {
   Node *sentinel = new Node(0);
   this->head = sentinel;
   this->tail = sentinel;
-  this->lock = FALSE;
+  this->qlock = FALSE;
   this->enq_num = 0UL;
   this->deq_num = 0UL;
 }
@@ -94,7 +98,7 @@ Queue::~Queue() {
     delete n;
   }
 
-  switch (this->lock) {
+  switch (this->qlock) {
   case LMN_Q_MRMW:
     lmn_mutex_destroy(&(this->deq_mtx));
     /* FALL THROUGH */
@@ -118,9 +122,9 @@ Queue::~Queue() {
 
 void Queue::enqueue(LmnWord v) {
   Node *last, *node;
-  if (this->lock) {
-    this->q_lock(Q_ENQ);
-    /*this->q_lock(Q_DEQ);*/
+  if (this->qlock) {
+    this->lock(Q_ENQ);
+    /*this->lock(Q_DEQ);*/
   }
   last = this->tail;
   node = new Node(v);
@@ -128,17 +132,17 @@ void Queue::enqueue(LmnWord v) {
   this->tail = node;
   this->enq_num++;
 
-  if (this->lock) {
-    /*this->q_unlock(Q_DEQ);*/
-    this->q_unlock(Q_ENQ);
+  if (this->qlock) {
+    /*this->unlock(Q_DEQ);*/
+    this->unlock(Q_ENQ);
   }
 }
 
 void Queue::enqueue_push_head(LmnWord v) {
   Node *head, *node;
-  if (this->lock) {
-    this->q_lock(Q_ENQ);
-    this->q_lock(Q_DEQ);
+  if (this->qlock) {
+    this->lock(Q_ENQ);
+    this->lock(Q_DEQ);
   }
   head = this->head;
   node = new Node(v);
@@ -147,9 +151,9 @@ void Queue::enqueue_push_head(LmnWord v) {
   // q->tail = node;
   this->enq_num++;
 
-  if (this->lock) {
-    this->q_unlock(Q_DEQ);
-    this->q_unlock(Q_ENQ);
+  if (this->qlock) {
+    this->unlock(Q_DEQ);
+    this->unlock(Q_ENQ);
   }
 }
 
@@ -157,9 +161,9 @@ void Queue::enqueue_push_head(LmnWord v) {
  * Queueが空の場合, 0を返す */
 LmnWord Queue::dequeue() {
   LmnWord ret = 0;
-  if (this->lock) {
-    this->q_lock(Q_DEQ);
-    /*this->q_lock(Q_ENQ);*/
+  if (this->qlock) {
+    this->lock(Q_DEQ);
+    /*this->lock(Q_ENQ);*/
   }
   if (!this->is_empty()) {
     Node *sentinel, *next;
@@ -173,9 +177,9 @@ LmnWord Queue::dequeue() {
       this->deq_num++;
     }
   }
-  if (this->lock) {
-    /*this->q_unlock(Q_ENQ);*/
-    this->q_unlock(Q_DEQ);
+  if (this->qlock) {
+    /*this->unlock(Q_ENQ);*/
+    this->unlock(Q_DEQ);
   }
   return ret;
 }
@@ -197,9 +201,9 @@ Node::Node(LmnWord v) {
 
 Node::~Node() {};
 
-void Queue::q_lock(BOOL is_enq) {
+void Queue::lock(BOOL is_enq) {
   if (is_enq) { /* for enqueue */
-    switch (this->lock) {
+    switch (this->qlock) {
     case LMN_Q_MRMW:
     case LMN_Q_SRMW:
       lmn_mutex_lock(&(this->enq_mtx));
@@ -208,7 +212,7 @@ void Queue::q_lock(BOOL is_enq) {
       break;
     }
   } else { /* for dequeue */
-    switch (this->lock) {
+    switch (this->qlock) {
     case LMN_Q_MRMW:
     case LMN_Q_MRSW:
       lmn_mutex_lock(&(this->deq_mtx));
@@ -219,9 +223,9 @@ void Queue::q_lock(BOOL is_enq) {
   }
 }
 
-void Queue::q_unlock(BOOL is_enq) {
+void Queue::unlock(BOOL is_enq) {
   if (is_enq) { /* for enqueue */
-    switch (this->lock) {
+    switch (this->qlock) {
     case LMN_Q_MRMW:
     case LMN_Q_SRMW:
       lmn_mutex_unlock(&(this->enq_mtx));
@@ -230,7 +234,7 @@ void Queue::q_unlock(BOOL is_enq) {
       break;
     }
   } else { /* for dequeue */
-    switch (this->lock) {
+    switch (this->qlock) {
     case LMN_Q_MRMW:
     case LMN_Q_MRSW:
       lmn_mutex_unlock(&(this->deq_mtx));
@@ -241,12 +245,12 @@ void Queue::q_unlock(BOOL is_enq) {
   }
 }
 
-void Queue::q_clear() {
+void Queue::clear() {
   while (this->dequeue())
     ;
 }
 
-unsigned long Queue::q_entry_num() {
+unsigned long Queue::entry_num() {
   return this->enq_num - this->deq_num;
 }
 

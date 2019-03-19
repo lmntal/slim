@@ -267,8 +267,8 @@ void owcty_worker_init(LmnWorker *w) {
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->accepts1 = make_parallel_queue(LMN_Q_MRMW);
-      mc->accepts2 = make_parallel_queue(LMN_Q_MRMW);
+      mc->accepts1 = new Queue(LMN_Q_MRMW);
+      mc->accepts2 = new Queue(LMN_Q_MRMW);
     } else {
       mc->accepts1 = new Queue();
       mc->accepts2 = new Queue();
@@ -323,7 +323,7 @@ static void owcty_env_init(LmnWorker *w) {
                             OWCTY_WORKER_AQ2(w));
 
   MC_DEBUG(printf("acceptance queue init, num=%lu\n",
-                  OWCTY_WORKER_AQ1(w)->q_entry_num()));
+                  OWCTY_WORKER_AQ1(w)->entry_num()));
 }
 
 struct DegreeCnt {
@@ -374,7 +374,7 @@ void owcty_start(LmnWorker *w) {
 
 static inline void owcty_report_midterm(LmnWorker *w) {
   McSearchOWCTY *mc = OWCTY_WORKER_OBJ(w);
-  mc->old = mc->accepts2->q_entry_num();
+  mc->old = mc->accepts2->entry_num();
 }
 
 /* owctyアルゴリズムの停止を判定した場合, mc_exitフラグを真にする.
@@ -387,10 +387,10 @@ static inline void owcty_termination_detection(LmnWorker *w) {
   mc = OWCTY_WORKER_OBJ(w);
   mc->iteration++;
   MC_DEBUG(fprintf(stderr, "iter%3lu[S=%10lu, old=%10lu]  %s", mc->iteration,
-                   mc->accepts1->q_entry_num(), mc->old,
+                   mc->accepts1->entry_num(), mc->old,
                    (mc->iteration % 3 == 0) ? "\n" : ""));
 
-  q_num = mc->accepts1->q_entry_num();
+  q_num = mc->accepts1->entry_num();
   if (q_num == 0 || q_num == mc->old) {
     MC_DEBUG(fprintf(stderr, "\n"));
     worker_group(w)->mc_exit = TRUE;
@@ -553,8 +553,8 @@ void map_worker_init(LmnWorker *w) {
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->propagate = make_parallel_queue(LMN_Q_MRMW);
-      mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
+      mc->propagate = new Queue(LMN_Q_MRMW);
+      mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
       mc->propagate = new Queue();
       mc->waitingSeed = new Queue();
@@ -848,7 +848,7 @@ void bledge_worker_init(LmnWorker *w) {
   McSearchBLE *mc = LMN_MALLOC(McSearchBLE);
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->layer = make_parallel_queue(LMN_Q_MRMW);
+      mc->layer = new Queue(LMN_Q_MRMW);
     } else {
       mc->layer = new Queue();
     }
@@ -1003,8 +1003,8 @@ void mapndfs_worker_init(LmnWorker *w) {
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->propagate = make_parallel_queue(LMN_Q_MRMW);
-      mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
+      mc->propagate = new Queue(LMN_Q_MRMW);
+      mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
       mc->propagate = new Queue();
       mc->waitingSeed = new Queue();
@@ -1165,8 +1165,8 @@ void mcndfs_worker_init(LmnWorker *w) {
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->propagate = make_parallel_queue(LMN_Q_MRMW);
-      mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
+      mc->propagate = new Queue(LMN_Q_MRMW);
+      mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
       mc->propagate = new Queue();
       mc->waitingSeed = new Queue();

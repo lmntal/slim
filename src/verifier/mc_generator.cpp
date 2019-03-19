@@ -161,11 +161,11 @@ void dfs_worker_init(LmnWorker *w) {
       mc->q = new Queue();
     } else if (worker_on_dynamic_lb(w)) {
       if (worker_use_mapndfs(w))
-        mc->q = make_parallel_queue(LMN_Q_MRMW);
+        mc->q = new Queue(LMN_Q_MRMW);
       else
-        mc->q = make_parallel_queue(LMN_Q_MRSW);
+        mc->q = new Queue(LMN_Q_MRSW);
     } else {
-      mc->q = make_parallel_queue(LMN_Q_SRSW);
+      mc->q = new Queue(LMN_Q_SRSW);
     }
   }
 
@@ -429,7 +429,7 @@ void dfs_start(LmnWorker *w) {
         if (!DFS_WORKER_QUEUE(w)->is_empty() &&
             !((Queue *)DFS_WORKER_QUEUE(w))->head->next) {
           printf("%d : queue is not empty? %d\n", worker_id(w),
-                 DFS_WORKER_QUEUE(w)->q_entry_num());
+                 DFS_WORKER_QUEUE(w)->entry_num());
         }
 #endif
         if (s || (s = (State *)DFS_WORKER_QUEUE(w)->dequeue())) {
@@ -873,8 +873,8 @@ void bfs_worker_init(LmnWorker *w) {
   }
   /* MT */
   else if (worker_id(w) == 0) {
-    mc->cur = make_parallel_queue(LMN_Q_MRMW);
-    mc->nxt = worker_use_lsync(w) ? make_parallel_queue(LMN_Q_MRMW) : mc->cur;
+    mc->cur = new Queue(LMN_Q_MRMW);
+    mc->nxt = worker_use_lsync(w) ? new Queue(LMN_Q_MRMW) : mc->cur;
   } else {
     /* Layer Queueは全スレッドで共有 */
     mc->cur = BFS_WORKER_Q_CUR(workers_get_worker(worker_group(w), 0));
