@@ -45,8 +45,6 @@
 static void mc_profiler3_init(MCProfiler3 *p);
 static void mc_profiler3_destroy(MCProfiler3 *p);
 static void mc_profiler3_makeup_report(MCProfiler3 *total);
-static inline void memory_profiler_init(MemoryProfiler *p);
-static inline void memory_profiler_destroy(MemoryProfiler *p);
 static void profile_state_f(State *s, LmnWord arg);
 static const char *profile_space_id_to_name(int type);
 static const char *profile_counter_id_to_name(int type);
@@ -128,7 +126,7 @@ static void mc_profiler3_init(MCProfiler3 *p) {
 
   /* for spaces */
   for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
-    memory_profiler_init(&p->spaces[i]);
+    p->spaces[i] = MemoryProfiler();
   }
   /* for timers */
   for (i = 0; i < ARY_SIZEOF(p->times); i++) {
@@ -140,13 +138,7 @@ static void mc_profiler3_init(MCProfiler3 *p) {
   }
 }
 
-static void mc_profiler3_destroy(MCProfiler3 *p) {
-  unsigned int i;
-
-  for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
-    memory_profiler_destroy(&p->spaces[i]);
-  }
-}
+static void mc_profiler3_destroy(MCProfiler3 *p) { unsigned int i; }
 
 static void mc_profiler3_makeup_report(MCProfiler3 *total) {
   unsigned int data_i, th_id;
@@ -185,12 +177,10 @@ TimeProfiler::TimeProfiler() {
   this->tmp_start = 0;
 }
 
-static inline void memory_profiler_init(MemoryProfiler *p) {
-  p->num = PeakCounter();
-  p->space = PeakCounter();
+MemoryProfiler::MemoryProfiler() {
+  num = PeakCounter();
+  space = PeakCounter();
 }
-
-static inline void memory_profiler_destroy(MemoryProfiler *c) {}
 
 PeakCounter::PeakCounter() {
   cur = 0;

@@ -117,6 +117,8 @@ struct PeakCounter {
 struct MemoryProfiler {
   PeakCounter num;   /* オブジェクト数 */
   PeakCounter space; /* 利用メモリ量 */
+  MemoryProfiler();
+  ~MemoryProfiler(){};
 };
 
 struct TimeProfiler {
