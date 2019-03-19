@@ -87,7 +87,7 @@ Automata::~Automata() {
 
   /* free sccs */
   for (i = 0; i < vec_num(&this->sccs); i++) {
-    atmscc_free((AutomataSCC *)vec_get(&this->sccs, i));
+    delete (AutomataSCC *)vec_get(&this->sccs, i);
   }
 
   vec_destroy(&this->states);
@@ -263,7 +263,7 @@ const char *atmscc_name(AutomataSCC *s) {
 
 AutomataSCC::AutomataSCC() : id(0), type(SCC_TYPE_UNKNOWN) {}
 
-void atmscc_free(AutomataSCC *m) { LMN_FREE(m); }
+AutomataSCC::~AutomataSCC() {}
 
 /** CAUTION: MT-Unsafe */
 static inline void atmscc_issue_id(AutomataSCC *s) {

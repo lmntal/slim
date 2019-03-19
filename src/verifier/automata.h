@@ -117,6 +117,7 @@ struct AutomataSCC {
   BYTE type;
 
   AutomataSCC();
+  ~AutomataSCC();
 };
 
 enum SCC_ACCEPTING_TYPE {
@@ -127,7 +128,6 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* SCC analysis of automata */
-void atmscc_free(AutomataSCC *s);
 const char *atmscc_name(AutomataSCC *s);
 void print_property_automata(AutomataRef a);
 
