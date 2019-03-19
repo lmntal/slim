@@ -166,7 +166,7 @@ void normal_parallel_free(void) {
   lmn_env.enable_parallel = TRUE;
   lmn_free(thread_info);
   lmn_free(findthread);
-  deq_free(temp);
+  delete temp;
 }
 
 void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule,

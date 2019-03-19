@@ -274,7 +274,10 @@ Deque::Deque(unsigned int init_size) {
 /* destroy */
 void Deque::destroy() { LMN_FREE(this->tbl); }
 
-
+/* free */
+Deque::~Deque() {
+  this->destroy();
+}
 
 /* extend (static) */
 void Deque::extend() {
