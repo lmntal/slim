@@ -271,6 +271,11 @@ Deque::Deque(unsigned int init_size) {
   this->init(init_size);
 }
 
+/* destroy */
+void Deque::destroy() { LMN_FREE(this->tbl); }
+
+
+
 /* extend (static) */
 void Deque::extend() {
   unsigned int old = this->cap;
@@ -342,6 +347,7 @@ void Deque::clear() {
   this->head = 0;
   this->tail = 1;
 }
+
 
 /* contains */
 BOOL deq_contains(const Deque *deq, LmnWord keyp) {

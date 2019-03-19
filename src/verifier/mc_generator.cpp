@@ -179,7 +179,7 @@ void dfs_worker_finalize(LmnWorker *w) {
   }
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE) {
-    deq_destroy(&DFS_WORKER_DEQUE(w));
+    &DFS_WORKER_DEQUE(w)->destroy();
   } else
 #endif
     vec_destroy(&DFS_WORKER_STACK(w));
