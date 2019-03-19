@@ -1365,7 +1365,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       normal_parallel_flag = TRUE;
 
       while (!deq_is_empty(temp)) {
-        ip = (int)deq_pop_head(temp);
+        ip = (int)(temp->pop_head());
         atom = (LmnSymbolAtomRef)thread_info[ip]->rc->wt(atomi);
         if (check_exist(atom, f)) {
           rc->reg(atomi) = {(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};

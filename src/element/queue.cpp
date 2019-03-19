@@ -303,6 +303,22 @@ void Deque::push_tail(LmnWord keyp) {
   DEQ_INC(this->tail, this->cap);
 }
 
+/* pop */
+LmnWord Deque::pop_head() {
+  LmnWord ret;
+  LMN_ASSERT(deq_num(this) > 0);
+
+  DEQ_INC(this->head, this->cap);
+  ret = this->tbl[this->head];
+  return ret;
+}
+
+/* */
+LmnWord Deque::pop_tail() {
+  LMN_ASSERT(deq_num(this) > 0);
+  DEQ_DEC(this->tail, this->cap);
+  return this->tbl[this->tail];
+}
 
 /* contains */
 BOOL deq_contains(const Deque *deq, LmnWord keyp) {

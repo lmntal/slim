@@ -21,9 +21,9 @@
 #define pop_deq(Deq, Dir)                                                      \
   do {                                                                         \
     if (Dir) {                                                                 \
-      deq_pop_tail(Deq);                                                       \
+      Deq->pop_tail();                                                       \
     } else {                                                                   \
-      deq_pop_head(Deq);                                                       \
+      Deq->pop_head();                                                       \
     }                                                                          \
     if (lmn_env.profile_level >= 3) {                                          \
       profile_remove_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));         \
@@ -67,9 +67,9 @@
 #define pop_deq(Deq, Dir)                                                      \
   do {                                                                         \
     if (Dir) {                                                                 \
-      deq_pop_tail(Deq);                                                       \
+      Deq->pop_tail();                                                       \
     } else {                                                                   \
-      (State *)deq_pop_head(Deq);                                              \
+      (State *)(Deq->pop_head());                                              \
     }                                                                          \
   } while (0)
 #define push_deq(List, St, Dir)                                                \
