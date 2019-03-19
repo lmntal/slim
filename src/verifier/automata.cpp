@@ -51,11 +51,6 @@ static inline unsigned int atmscc_id(AutomataSCC *s);
 static inline BYTE atmscc_type(AutomataSCC *s);
 static inline void atmscc_set_type(AutomataSCC *s, BYTE type);
 
-struct AutomataSCC {
-  unsigned int id;
-  BYTE type;
-};
-
 /*----------------------------------------------------------------------
  * automata
  */
@@ -266,12 +261,7 @@ const char *atmscc_name(AutomataSCC *s) {
   return ret;
 }
 
-AutomataSCC *atmscc_make() {
-  AutomataSCC *m = LMN_MALLOC(AutomataSCC);
-  m->id = 0;
-  m->type = SCC_TYPE_UNKNOWN;
-  return m;
-}
+AutomataSCC::AutomataSCC() : id(0), type(SCC_TYPE_UNKNOWN) {}
 
 void atmscc_free(AutomataSCC *m) { LMN_FREE(m); }
 
@@ -345,7 +335,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
   }
 
   if (!s->get_scc()) { /* entering 2nd dfs */
-    AutomataSCC *scc = atmscc_make();
+    AutomataSCC *scc = new AutomataSCC();
     atmscc_issue_id(scc);
     s->set_scc(scc);
     vec_push(&a->sccs, (vec_data_t)scc);

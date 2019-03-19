@@ -57,10 +57,6 @@ typedef struct AutomataSCC AutomataSCC;
 
 typedef BYTE atmstate_id_t; /* 性質ラベル(状態)数は256個まで */
 
-/*
- * automata.cppに定義されていたが、nc_parser.yppがコンパイルできないため移動
- * Automata, AutomataState, AutomataTransition
- */
 struct Automata {
   /*   atmstate_id_t init_state; */
   atmstate_id_t init_state;
@@ -116,6 +112,13 @@ struct AutomataTransition {
   PLFormulaRef get_formula();
 };
 
+struct AutomataSCC {
+  unsigned int id;
+  BYTE type;
+
+  AutomataSCC();
+};
+
 enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_UNKNOWN = 0U,
   SCC_TYPE_FULLY = 1U, /* 構成するサイクルが全て受理サイクル */
@@ -124,7 +127,6 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* SCC analysis of automata */
-AutomataSCC *atmscc_make(void);
 void atmscc_free(AutomataSCC *s);
 const char *atmscc_name(AutomataSCC *s);
 void print_property_automata(AutomataRef a);
