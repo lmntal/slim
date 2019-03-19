@@ -166,7 +166,7 @@ public:
     auto hl_root =
         lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
 
-    if (visitlog_get_hlink(log, hl_root, &ref)) {
+    if (log->get_hlink(hl_root, &ref)) {
       return push(TAG_VISITED_ATOMHLINK) &&
              push((BYTE *)&ref, BS_PROC_REF_SIZE);
     }

@@ -206,17 +206,28 @@ struct VisitLog {
     }
     this->element_num++;
   }
+
+  /* ログに記録されたアトムatomに対応する値をvalueに設定し, 正の値を返す.
+   * ログにatomが存在しない場合は, 0を返す. */
+  int get_atom(LmnSymbolAtomRef atom,
+                        LmnWord *value) {
+    return proc_tbl_get_by_atom(this->tbl, atom, value);
+  }
+  /* ログに記録された膜memに対応する値をvalueに設定, 正の値を返す.
+   * ログにmemが存在しない場合は, 0を返す. */
+  int get_mem(LmnMembraneRef mem, LmnWord *value) {
+    return proc_tbl_get_by_mem(this->tbl, mem, value);
+  }
+  /* ログに記録されたhlに対応する値をvalueに設定し, 正の値を返す.
+   * ログにhlが存在しない場合は, 0を返す. */
+  int get_hlink(HyperLink *hl, LmnWord *value) {
+    return proc_tbl_get_by_hlink(this->tbl, hl, value);
+  }
+  /* visitlogに記録した要素（膜、アトム）の数を返す */
+  int get_element_num() {
+    return this->element_num;
+  }
 };
-
-/**
- * Function ProtoTypes
- */
-
-int visitlog_get_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom,
-                      LmnWord *value);
-int visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value);
-int visitlog_get_hlink(VisitLogRef visitlog, HyperLink *hl, LmnWord *value);
-int visitlog_element_num(VisitLogRef visitlog);
 
 /* @} */
 

@@ -35,25 +35,3 @@
  *
  */
 #include "visitlog.h"
-
-/* ログに記録されたアトムatomに対応する値をvalueに設定し, 正の値を返す.
- * ログにatomが存在しない場合は, 0を返す. */
-int visitlog_get_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom,
-                      LmnWord *value) {
-  return proc_tbl_get_by_atom(visitlog->tbl, atom, value);
-}
-
-/* ログに記録された膜memに対応する値をvalueに設定, 正の値を返す.
- * ログにmemが存在しない場合は, 0を返す. */
-int visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value) {
-  return proc_tbl_get_by_mem(visitlog->tbl, mem, value);
-}
-
-/* ログに記録されたhlに対応する値をvalueに設定し, 正の値を返す.
- * ログにhlが存在しない場合は, 0を返す. */
-int visitlog_get_hlink(VisitLogRef visitlog, HyperLink *hl, LmnWord *value) {
-  return proc_tbl_get_by_hlink(visitlog->tbl, hl, value);
-}
-
-/* visitlogに記録した要素（膜、アトム）の数を返す */
-int visitlog_element_num(VisitLogRef visitlog) { return visitlog->element_num; }

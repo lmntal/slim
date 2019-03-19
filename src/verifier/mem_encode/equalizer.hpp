@@ -573,11 +573,11 @@ private:
 
 template <> struct equalizer<VisitLog> : public equalizer_base {
   bool log_contains(VisitLog *log, LmnSymbolAtomRef atom) {
-    return visitlog_get_atom(log, atom, NULL);
+    return log->get_atom(atom, NULL);
   }
 
   bool log_contains(VisitLog *log, LmnMembraneRef atom) {
-    return visitlog_get_mem(log, atom, NULL);
+    return log->get_mem(atom, NULL);
   }
 
   void log_set_backtrack_point(VisitLog *log) { log->set_checkpoint(); }
