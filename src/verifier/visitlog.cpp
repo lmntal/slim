@@ -98,7 +98,7 @@ void visitlog_destroy(struct VisitLog *p) {
   proc_tbl_free(p->tbl);
 
   for (i = 0; i < vec_num(&p->checkpoints); i++) {
-    vec_free((Vector *)vec_get(&p->checkpoints, i));
+    vec_free((Vector *)p->checkpoints.get(i));
   }
   vec_destroy(&p->checkpoints);
 
@@ -118,7 +118,7 @@ struct Checkpoint *visitlog_pop_checkpoint(VisitLogRef visitlog) {
 
   checkpoint = (struct Checkpoint *)visitlog->checkpoints.pop();
   for (i = 0; i < vec_num(&checkpoint->elements); i++) {
-    proc_tbl_unput(visitlog->tbl, vec_get(&checkpoint->elements, i));
+    proc_tbl_unput(visitlog->tbl, checkpoint->elements.get(i));
     visitlog->element_num--;
     visitlog->ref_n--;
   }
@@ -140,10 +140,10 @@ void visitlog_commit_checkpoint(VisitLogRef visitlog) {
   if (vec_num(&visitlog->checkpoints) > 0) {
     int i;
     struct Checkpoint *new_last =
-        (struct Checkpoint *)vec_last(&visitlog->checkpoints);
+        (struct Checkpoint *)visitlog->checkpoints.last();
 
     for (i = 0; i < vec_num(&last->elements); i++) {
-      new_last->elements.push(vec_get(&last->elements, i));
+      new_last->elements.push(last->elements.get(i));
     }
     new_last->n_data_atom += last->n_data_atom;
   }
@@ -157,7 +157,7 @@ void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp) {
 
   visitlog->checkpoints.push((vec_data_t)cp);
   for (i = 0; i < vec_num(&cp->elements); i++) {
-    proc_tbl_put(visitlog->tbl, vec_get(&cp->elements, i), visitlog->ref_n++);
+    proc_tbl_put(visitlog->tbl, cp->elements.get(i), visitlog->ref_n++);
     visitlog->element_num++;
   }
   visitlog->element_num += cp->n_data_atom;
@@ -169,7 +169,7 @@ int visitlog_put(VisitLogRef visitlog, LmnWord p) {
   if (proc_tbl_put_new(visitlog->tbl, p, visitlog->ref_n++)) {
     if (vec_num(&visitlog->checkpoints) > 0) {
       CheckpointRef checkpoint =
-          (CheckpointRef)vec_last(&visitlog->checkpoints);
+          (CheckpointRef)visitlog->checkpoints.last();
       checkpoint->elements.push(p);
     }
     visitlog->element_num++;
@@ -201,7 +201,7 @@ int visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl) {
 void visitlog_put_data(VisitLogRef visitlog) {
   if (vec_num(&visitlog->checkpoints) > 0) {
     struct Checkpoint *checkpoint =
-        (struct Checkpoint *)vec_last(&visitlog->checkpoints);
+        (struct Checkpoint *)visitlog->checkpoints.last();
     checkpoint->n_data_atom++;
   }
   visitlog->element_num++;

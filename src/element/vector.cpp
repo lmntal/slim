@@ -43,7 +43,7 @@
 BOOL vec_contains(const Vector *vec, LmnWord keyp) {
   unsigned int i = 0;
   while (i < vec_num(vec)) {
-    if (vec_get(vec, i++) == (LmnWord)keyp) {
+    if (vec->get(i++) == (LmnWord)keyp) {
       return TRUE;
     }
   }

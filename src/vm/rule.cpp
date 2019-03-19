@@ -64,8 +64,8 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
   unsigned int un2 = 0;
   for (unsigned int i = 0; i < vec_num(rs_v1); i++) {
     LmnRuleSetRef rs1, rs2;
-    rs1 = (LmnRuleSetRef)vec_get(rs_v1, i);
-    rs2 = (LmnRuleSetRef)vec_get(rs_v2, i);
+    rs1 = (LmnRuleSetRef)rs_v1->get(i);
+    rs2 = (LmnRuleSetRef)rs_v2->get(i);
 
     /* 異なるidであれば等価ではない */
     if (rs1->id != rs2->id)
@@ -93,9 +93,9 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
 
   for (unsigned int i = 0; i < vec_num(rs_v1); i++) {
     is_ok = false;
-    LmnRuleSetRef rs1 = (LmnRuleSetRef)vec_get(rs_v1, i);
+    LmnRuleSetRef rs1 = (LmnRuleSetRef)rs_v1->get(i);
     for (unsigned int j = 0; j < vec_num(rs_v1); j++) {
-      LmnRuleSetRef rs2 = (LmnRuleSetRef)vec_get(rs_v2, i);
+      LmnRuleSetRef rs2 = (LmnRuleSetRef)rs_v2->get(i);
       if (rs1->id < rs2->id) /* 比較打ち切り */
         break;               /* INNER LOOP */
 

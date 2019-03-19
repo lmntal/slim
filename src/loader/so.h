@@ -177,7 +177,7 @@
     struct Vector *v;                                                          \
     v = lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(srcmemi));                 \
     for (i = 0; i < v->num; i++) {                                             \
-      LmnRuleSetRef cp = new LmnRuleSet(*((LmnRuleSetRef)vec_get(v, i)));      \
+      LmnRuleSetRef cp = new LmnRuleSet(*((LmnRuleSetRef)v->get(i)));      \
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);               \
     }                                                                          \
   } while (0)

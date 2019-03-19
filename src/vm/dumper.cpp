@@ -537,7 +537,7 @@ static void dump_ruleset(LmnPortRef port, struct Vector *v) {
     LmnRuleSetRef rs;
     char *s;
 
-    rs = (LmnRuleSetRef)vec_get(v, i);
+    rs = (LmnRuleSetRef)v->get(i);
     s = int_to_str(rs->id);
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       if (i > 0) {
@@ -642,7 +642,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   if (!lmn_env.show_proxy) {
     /* assign link to proxies */
     for (i = 0; i < pred_atoms[PROXY].num; i++) {
-      assign_link_to_proxy((LmnSymbolAtomRef)vec_get(&pred_atoms[PROXY], i), ht,
+      assign_link_to_proxy((LmnSymbolAtomRef)pred_atoms[PROXY].get(i), ht,
                            s);
     }
   }
@@ -650,7 +650,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   { /* dump atoms */
     for (i = 0; i < PRI_NUM; i++) {
       for (j = 0; j < pred_atoms[i].num; j++) {
-        LmnSymbolAtomRef atom = (LmnSymbolAtomRef)vec_get(&pred_atoms[i], j);
+        LmnSymbolAtomRef atom = (LmnSymbolAtomRef)pred_atoms[i].get(j);
         if (dump_toplevel_atom(port, atom, ht, s)) {
           /* TODO アトムの出力の後には常に ". "が入ってしまう.
              アトムの間に ", "を挟んだ方が見栄えが良い */
@@ -826,7 +826,7 @@ static void dump_ruleset_dev(struct Vector *v) {
   unsigned int i;
   fprintf(stdout, "ruleset[");
   for (i = 0; i < v->num; i++) {
-    fprintf(stdout, "%d ", ((LmnRuleSetRef)vec_get(v, i))->id);
+    fprintf(stdout, "%d ", ((LmnRuleSetRef)v->get(i))->id);
   }
   fprintf(stdout, "]\n");
 }

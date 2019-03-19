@@ -438,15 +438,15 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     MemDeltaRoot *d;
 
     if (s->has_trans_obj()) {
-      src_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
+      src_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
       src_succ = transition_next_state(src_t);
     } else {
-      src_succ = (State *)vec_get(RC_EXPANDED(rc), i);
+      src_succ = (State *)RC_EXPANDED(rc)->get(i);
       src_t = transition_make(
-          src_succ, (lmn_interned_str)vec_get(RC_EXPANDED_RULES(rc), i));
+          src_succ, (lmn_interned_str)RC_EXPANDED_RULES(rc)->get(i));
     }
 
-    d = RC_MC_USE_DMEM(rc) ? (MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i)
+    d = RC_MC_USE_DMEM(rc) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
                            : NULL;
     succ = por_state_insert(src_succ, d);
     if (succ != src_succ) {
@@ -459,7 +459,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
       st_add_direct(succ_tbl, (st_data_t)succ, (st_data_t)src_t);
       RC_EXPANDED(rc)->set(succ_i, (vec_data_t)src_t);
       if (RC_MC_USE_DMEM(rc)) {
-        RC_MEM_DELTAS(rc)->set(succ_i, vec_get(RC_MEM_DELTAS(rc), i));
+        RC_MEM_DELTAS(rc)->set(succ_i, RC_MEM_DELTAS(rc)->get(i));
       }
       succ_i++;
     } else {
@@ -854,7 +854,7 @@ static BOOL is_independent_of_ample(TransitionRef strans) {
     unsigned long id;
     st_data_t vec_independency;
 
-    id = (unsigned long)vec_get(mc_por.ample_candidate, i);
+    id = (unsigned long)mc_por.ample_candidate->get(i);
     vec_independency = 0;
     if (st_lookup(mc_por.strans_independency, (st_data_t)id,
                   (st_data_t *)&vec_independency)) {
@@ -893,7 +893,7 @@ static BOOL push_independent_strans_to_table(unsigned long i1,
 
     is_new_id = TRUE;
     for (k = 0; k < vec_num((Vector *)v1); k++) {
-      if ((unsigned long)vec_get((Vector *)v1, k) == i2) {
+      if ((unsigned long)((Vector *)v1)->get(k) == i2) {
         /* [i1]--> ... i2 ...
          * のようになっているため，(i1,i2)∈Iなる情報は独立性情報テーブル内に
          * 既に反映されている旨のフラグを立てる */
@@ -908,7 +908,7 @@ static BOOL push_independent_strans_to_table(unsigned long i1,
         POR_DEBUG({
           unsigned int _k;
           for (_k = 0; _k < vec_num((Vector *)v2); _k++) {
-            if ((unsigned long)vec_get((Vector *)v2, _k) == i1) {
+            if ((unsigned long)((Vector *)v2)->get(_k) == i1) {
               /* is_new_idが真であることと矛盾する */
               LMN_ASSERT(FALSE);
             }
@@ -1014,7 +1014,7 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
 
       for (k = 0; k < vec_num(ids_independent_of_id_key); k++) {
         if (checked_id ==
-            (unsigned long)vec_get(ids_independent_of_id_key, k)) {
+            (unsigned long)ids_independent_of_id_key->get(k)) {
           is_dependent = FALSE;
           break;
         }
@@ -1119,7 +1119,7 @@ int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a) {
 
   fprintf(stdout, "[%lu]-->", id);
   for (i = 0; i < vec_num(v); i++) {
-    fprintf(stdout, " %lu", (unsigned long)vec_get(v, i));
+    fprintf(stdout, " %lu", (unsigned long)v->get(i));
   }
   fprintf(stdout, "\n");
 
@@ -1131,7 +1131,7 @@ void dump__ample_candidate() {
   unsigned int i;
   fprintf(stdout, "ample:");
   for (i = 0; i < vec_num(mc_por.ample_candidate); ++i) {
-    fprintf(stdout, " %lu", (unsigned long)vec_get(mc_por.ample_candidate, i));
+    fprintf(stdout, " %lu", (unsigned long)mc_por.ample_candidate->get(i));
   }
   fprintf(stdout, "\n");
 }

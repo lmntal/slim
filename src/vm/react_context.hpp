@@ -307,7 +307,7 @@ struct McReactCxtData {
       for (_fr_ = 0;                                                           \
            _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < vec_num(RC_MEM_DELTAS(RC)); \
            _fr_++) {                                                           \
-        MemDeltaRoot *_d_ = (MemDeltaRoot *)vec_get(RC_MEM_DELTAS(RC), _fr_);  \
+        MemDeltaRoot *_d_ = (MemDeltaRoot *)RC_MEM_DELTAS(RC)->get(_fr_);  \
         if (_d_)                                                               \
           dmem_root_free(_d_);                                                 \
       }                                                                        \

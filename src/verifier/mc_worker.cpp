@@ -504,7 +504,7 @@ static void workers_free(LmnWorker **pool, unsigned int worker_num) {
       vec_free(w->invalid_seeds);
 
       for (j = 0; j < vec_num(w->cycles); j++) {
-        vec_free((Vector *)vec_get(w->cycles, j));
+        vec_free((Vector *)w->cycles->get(j));
       }
       vec_free(w->cycles);
     }

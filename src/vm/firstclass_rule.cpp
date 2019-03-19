@@ -73,7 +73,7 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
 
     for (int i = 0; i < vec_num(link_connections); i++) {
       struct LinkConnection *c =
-          (struct LinkConnection *)vec_get(link_connections, i);
+          (struct LinkConnection *)link_connections->get(i);
       if (c->hl && lmn_hyperlink_eq_hl(p_hl, c->hl)) {
         return c->link_name;
       }
@@ -83,7 +83,7 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
 
   for (int i = 0; i < vec_num(link_connections); i++) {
     struct LinkConnection *c =
-        (struct LinkConnection *)vec_get(link_connections, i);
+        (struct LinkConnection *)link_connections->get(i);
     if (c->atom == satom && c->link_pos == link_p) {
       return c->link_name;
     }
@@ -366,7 +366,7 @@ string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
   result += ".";
 
   for (int i = 0; i < vec_num(link_connections); i++)
-    LMN_FREE(vec_get(link_connections, i));
+    LMN_FREE(link_connections->get(i));
   vec_free(link_connections);
 
   return result;
@@ -382,13 +382,13 @@ void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
   Vector *mem_rulesets = lmn_mem_get_rulesets(mem);
 
   for (int i = 0; i < vec_num(mem_rulesets); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem_rulesets, i);
+    LmnRuleSetRef rs = (LmnRuleSetRef)mem_rulesets->get(i);
     if (rs->id != del_id)
       continue;
 
     /* move successors forward */
     for (int j = i; j < vec_num(mem_rulesets) - 1; j++) {
-      LmnRuleSetRef next = (LmnRuleSetRef)vec_get(mem_rulesets, j + 1);
+      LmnRuleSetRef next = (LmnRuleSetRef)mem_rulesets->get(j + 1);
       mem_rulesets->set(j, (vec_data_t)next);
     }
 

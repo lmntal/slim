@@ -82,12 +82,12 @@ Automata::~Automata() {
 
   /* free states */
   for (i = 0; i < vec_num(&this->states); i++) {
-    delete (AutomataStateRef)vec_get(&this->states, i);
+    delete (AutomataStateRef)this->states.get(i);
   }
 
   /* free sccs */
   for (i = 0; i < vec_num(&this->sccs); i++) {
-    delete (AutomataSCC *)vec_get(&this->sccs, i);
+    delete (AutomataSCC *)this->sccs.get(i);
   }
 
   vec_destroy(&this->states);
@@ -144,8 +144,8 @@ void Automata::add_state(AutomataStateRef s) {
 }
 
 AutomataStateRef Automata::get_state(atmstate_id_t state_id) {
-  LMN_ASSERT(vec_get(&this->states, state_id) != 0);
-  return (AutomataStateRef)vec_get(&this->states, state_id);
+  LMN_ASSERT(this->states.get(state_id) != 0);
+  return (AutomataStateRef)this->states.get(state_id);
 }
 
 atmstate_id_t Automata::get_init_state() { return this->init_state; }
@@ -226,7 +226,7 @@ AutomataState::~AutomataState() {
   unsigned int i;
 
   for (i = 0; i < vec_num(&this->transitions); i++) {
-    delete (AutomataTransitionRef)vec_get(&this->transitions, i);
+    delete (AutomataTransitionRef)this->transitions.get(i);
   }
   vec_destroy(&this->transitions);
 }
@@ -242,7 +242,7 @@ unsigned int AutomataState::get_transition_num() {
 }
 
 AutomataTransitionRef AutomataState::get_transition(unsigned int index) {
-  return (AutomataTransitionRef)vec_get(&this->transitions, index);
+  return (AutomataTransitionRef)this->transitions.get(index);
 }
 
 BOOL AutomataState::get_is_accept() { return this->is_accept; }

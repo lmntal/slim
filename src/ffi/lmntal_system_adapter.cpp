@@ -70,7 +70,7 @@ static FILE *run_lmntal_system(int dummy, ... );
 void add_arg(Vector *args, const char *arg)
 {
   args->push((vec_data_t)LMN_CALLOC(char, strlen(arg) + 1));
-  sprintf((char *)vec_get(args, vec_num(args)-1), "%s", arg);
+  sprintf((char *)args->get(vec_num(args)-1), "%s", arg);
 }
 
 /* LMNtal systemを呼ぶためのコマンドと引数を構築する。
@@ -114,7 +114,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
     unsigned int i;
     *ret_args = LMN_CALLOC(char *, vec_num(args));
     for (i = 0; i < vec_num(args); i++) {
-      (*ret_args)[i] = (char *)vec_get(args, i);
+      (*ret_args)[i] = (char *)args->get(i);
     }
   }
 

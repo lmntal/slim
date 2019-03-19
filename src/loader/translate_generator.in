@@ -558,7 +558,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #getfromlist LmnInstrVar LmnInstrVar LmnInstrVar
   switch (rc->at($1)) {
     case LIST_AND_MAP:
-      rc->wt($0) = vec_get((Vector *)rc->wt($1), (unsigned int)$2);
+      rc->wt($0) = ((Vector *)rc->wt($1))->get((unsigned int)$2);
       rc->tt($0) = TT_OTHER;
       if ($2 == 0){
         rc->at($0) = LINK_LIST;
@@ -570,7 +570,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
       break;
     case LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
-      LinkObjRef lo = (LinkObjRef)vec_get((Vector *)rc->wt($1), (unsigned int)$2);
+      LinkObjRef lo = (LinkObjRef)((Vector *)rc->wt($1))->get((unsigned int)$2);
       rc->reg($0) = {(LmnWord)LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM};
       break;
     }

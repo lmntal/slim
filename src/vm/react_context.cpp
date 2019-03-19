@@ -166,9 +166,9 @@ LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
 
 LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i) {
   if (RC_MC_USE_DMEM(cxt)) {
-    return vec_get(RC_MEM_DELTAS(cxt), i);
+    return RC_MEM_DELTAS(cxt)->get(i);
   } else {
-    return vec_get(RC_EXPANDED(cxt), i);
+    return RC_EXPANDED(cxt)->get(i);
   }
 }
 

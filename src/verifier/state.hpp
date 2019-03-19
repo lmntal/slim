@@ -281,7 +281,7 @@ struct State {                /* Total:72(36)byte */
       successor_num = vec_num(v);
       successors = LMN_NALLOC(succ_data_t, successor_num);
       for (i = 0; i < successor_num; i++) {
-	successors[i] = (succ_data_t)vec_get(v, i);
+	successors[i] = (succ_data_t)v->get(i);
       }
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {

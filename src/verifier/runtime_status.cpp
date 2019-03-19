@@ -753,7 +753,7 @@ void dump_profile_data(FILE *f) {
                 "[# Ap.]", "[# Ba.]", "[CPU U.(usec)]\n");
 
         for (i = 0; i < vec_num(&v); i++) {
-          RuleProfiler *rp = (RuleProfiler *)vec_get(&v, i);
+          RuleProfiler *rp = (RuleProfiler *)v.get(i);
           if (rp->trial.called_num > 0) {
             if (rp->src->name == ANONYMOUS) {
               /* 一度もマッチングに成功しなかったルールはまとめる */

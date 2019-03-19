@@ -182,7 +182,7 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
-    State *s = (State *)vec_get(cycle_path, i);
+    State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
     if (gen_counter_example)
@@ -501,7 +501,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
 
             v = new Vector(vec_num(&path));
             for (i = 0; i < vec_num(&path); i++) {
-              State *tmp = (State *)vec_get(&path, i);
+              State *tmp = (State *)path.get(i);
              tmp->set_on_cycle();
               v->push((vec_data_t)tmp);
             }
@@ -795,7 +795,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
 
       v = new Vector(vec_num(&path));
       for (i = 0; i < vec_num(&path); i++) {
-        State *tmp = (State *)vec_get(&path, i);
+        State *tmp = (State *)path.get(i);
        tmp->set_on_cycle();
         v->push((vec_data_t)tmp);
       }
@@ -878,7 +878,7 @@ static BOOL bledge_path_accepting(Vector *v, AutomataRef a) {
   unsigned int i;
 
   for (i = 0; i < vec_num(v); i++) {
-    State *t = (State *)vec_get(v, i);
+    State *t = (State *)v->get(i);
     if (state_is_accept(a, t))
       return TRUE;
   }
@@ -944,7 +944,7 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
-    State *s = (State *)vec_get(cycle_path, i);
+    State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
     if (gen_counter_example)
       v->push((vec_data_t)s);
@@ -1098,7 +1098,7 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
-    State *s = (State *)vec_get(cycle_path, i);
+    State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
     if (gen_counter_example)
@@ -1255,7 +1255,7 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < vec_num(cycle_path); i++) {
-    State *s = (State *)vec_get(cycle_path, i);
+    State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
     if (gen_counter_example)
@@ -1299,7 +1299,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
         m = vec_num(red_states);
         contained = FALSE;
         for (j = 0; j < m; j++) {
-          t = (State *)vec_get(red_states, j);
+          t = (State *)red_states->get(j);
           if (state_id(t) == state_id(succ)) {
             contained = TRUE;
             break;

@@ -47,7 +47,7 @@ void sp_atom_finalize() {
   int i;
 
   for (i = 0; i < vec_num(sp_atom_callback_tbl); i++) {
-    LMN_FREE(vec_get(sp_atom_callback_tbl, i));
+    LMN_FREE(sp_atom_callback_tbl->get(i));
   }
   vec_free(sp_atom_callback_tbl);
 }
@@ -84,5 +84,5 @@ int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
 
 struct SpecialAtomCallback *sp_atom_get_callback(int id) {
   LMN_ASSERT(vec_num(sp_atom_callback_tbl) > id);
-  return (struct SpecialAtomCallback *)vec_get(sp_atom_callback_tbl, id);
+  return (struct SpecialAtomCallback *)sp_atom_callback_tbl->get(id);
 }

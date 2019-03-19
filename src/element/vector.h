@@ -49,7 +49,6 @@
 #include <vector>
 #include "util.h"
 
-static inline LmnWord vec_get(const Vector *vec, unsigned int index);
 
 struct Vector {
   LmnWord *tbl;
@@ -99,7 +98,7 @@ struct Vector {
     if (num <= cap / 2 && cap > 1024) {
       reduce();
     }
-    ret = vec_get(this, (num - 1));
+    ret = get(num - 1);
     num--;
     return ret;
   }
@@ -113,19 +112,26 @@ struct Vector {
     if (num <= cap / 2) {
       reduce();
     }
-    ret = vec_get(this, n);
+    ret = get(n);
     for (i = n; i < num - 1; ++i) {
-      set(i, vec_get(this, i + 1));
+      set(i, get(i + 1));
     }
     num--;
     return ret;
   }
   LmnWord peek(){
-    return vec_get(this, num - 1);
+    return get(num - 1);
   }
   void set(unsigned int index, LmnWord keyp){
     LMN_ASSERT(index < cap);
     tbl[index] = keyp;    
+  }
+  LmnWord get(unsigned int index) const {
+    LMN_ASSERT(index < num);
+    return (tbl[index]);
+  }
+  LmnWord last(){
+    return tbl[num-1];
   }
 };
 
@@ -136,7 +142,6 @@ typedef LmnWord vec_data_t;
 #define vec_num(V) ((V)->num)
 #define vec_is_empty(V) ((V)->num == 0)
 
-static inline LmnWord vec_last(Vector *vec);
 static inline void vec_clear(Vector *vec);
 static inline void vec_destroy(Vector *vec);
 static inline void vec_free(Vector *vec);
@@ -148,15 +153,6 @@ Vector *vec_copy(Vector *vec);
 void vec_reverse(Vector *vec);
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
-
-
-/* get */
-static inline LmnWord vec_get(const Vector *vec, unsigned int index) {
-  LMN_ASSERT(index < vec->num);
-  return (vec->tbl[index]);
-}
-
-static inline LmnWord vec_last(Vector *vec) { return vec->tbl[vec->num - 1]; }
 
 /* pop all elements from vec */
 static inline void vec_clear(Vector *vec) { vec->num = 0; }

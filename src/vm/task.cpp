@@ -278,7 +278,7 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   do {
     reacted = FALSE;
     for (int i = 0; i < vec_num(rulesets); i++) {
-      LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
+      LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
       if (!rs->is_zerostep())
         continue;
       reacted |= react_ruleset(rc, cur_mem, rs);
@@ -309,7 +309,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   /* ルールセットの適用 */
   for (i = 0; i < vec_num(rulesets); i++) {
-    if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)vec_get(rulesets, i))) {
+    if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)rulesets->get(i))) {
       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
        */
       ok = TRUE;
@@ -321,7 +321,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   for (i = 0; i < vec_num(lmn_mem_firstclass_rulesets(cur_mem)); i++) {
     if (react_ruleset(
             rc, cur_mem,
-            (LmnRuleSetRef)vec_get(lmn_mem_firstclass_rulesets(cur_mem), i))) {
+            (LmnRuleSetRef)lmn_mem_firstclass_rulesets(cur_mem)->get(i))) {
       ok = TRUE;
       break;
     }
@@ -437,7 +437,7 @@ void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
   RC_SET_GROOT_MEM(&rc, mem);
 
   for (i = 0; i < vec_num(rulesets); i++) {
-    react_ruleset(&rc, mem, (LmnRuleSetRef)vec_get(rulesets, i));
+    react_ruleset(&rc, mem, (LmnRuleSetRef)rulesets->get(i));
   }
   react_initial_rulesets(&rc, mem);
   react_zerostep_recursive(&rc, mem);
@@ -598,11 +598,11 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 
   retset = new HashSet(8);
   for (i = 0; i < links->num; i++) {
-    LmnWord linkid1 = vec_get(links, i);
+    LmnWord linkid1 = links->get(i);
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid1)))
       continue;
     for (j = i + 1; j < links->num; j++) {
-      LmnWord linkid2 = vec_get(links, j);
+      LmnWord linkid2 = links->get(j);
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid2)))
         continue;
       /* is buddy? */
@@ -699,7 +699,7 @@ void lmn_hyperlink_get_elements(std::vector<HyperLink *> &tree,
   vec.init(1);
   lmn_hyperlink_get_elements(&vec, start_hl);
   for (int i = 0; i < vec_num(&vec); i++)
-    tree.push_back((HyperLink *)vec_get(&vec, i));
+    tree.push_back((HyperLink *)vec.get(i));
   vec_destroy(&vec);
 }
 
@@ -855,7 +855,7 @@ std::vector<HyperLink *> lmn_hyperlink_get_elements(HyperLink *start_hl) {
   tree.init(32);
   lmn_hyperlink_get_elements(&tree, start_hl);
   for (int i = 0; i < vec_num(&tree) - 1; i++)
-    vec.push_back((HyperLink *)vec_get(&tree, i));
+    vec.push_back((HyperLink *)tree.get(i));
   vec_destroy(&tree);
   return vec;
 }
@@ -2532,21 +2532,21 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, n);
       srcvec = (Vector *)rc->wt(n);
-      attr = (LmnLinkAttr)rc->at(vec_get(srcvec, 0));
+      attr = (LmnLinkAttr)rc->at(srcvec->get(0));
 
       /** 識別子の生成 **/
       /* 引数に直接データアトムが接続されている場合 */
       if (LMN_ATTR_IS_DATA(attr)) {
         switch (attr) {
         case LMN_INT_ATTR: {
-          char *s = int_to_str(rc->wt(vec_get(srcvec, 0)));
+          char *s = int_to_str(rc->wt(srcvec->get(0)));
           port_put_raw_s(port, s);
           LMN_FREE(s);
           break;
         }
         case LMN_DBL_ATTR: {
           char buf[64];
-          sprintf(buf, "%f", lmn_get_double(rc->wt(vec_get(srcvec, 0))));
+          sprintf(buf, "%f", lmn_get_double(rc->wt(srcvec->get(0))));
           port_put_raw_s(port, buf);
           break;
         }
@@ -2555,17 +2555,17 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           port_put_raw_s(port, EXCLAMATION_NAME);
           sprintf(buf, "%lx",
                   LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(
-                      (LmnSymbolAtomRef)rc->wt(vec_get(srcvec, 0)))));
+                      (LmnSymbolAtomRef)rc->wt(srcvec->get(0)))));
           port_put_raw_s(port, buf);
           break;
         }
         default: /* int, double, hlink 以外はとりあえず今まで通り */
-          lmn_dump_atom(port, (LmnAtomRef)rc->wt(vec_get(srcvec, 0)),
-                        (LmnLinkAttr)rc->at(vec_get(srcvec, 0)));
+          lmn_dump_atom(port, (LmnAtomRef)rc->wt(srcvec->get(0)),
+                        (LmnLinkAttr)rc->at(srcvec->get(0)));
         }
       } else { /* symbol atom */
-        lmn_dump_atom(port, (LmnAtomRef)rc->wt(vec_get(srcvec, 0)),
-                      (LmnLinkAttr)rc->at(vec_get(srcvec, 0)));
+        lmn_dump_atom(port, (LmnAtomRef)rc->wt(srcvec->get(0)),
+                      (LmnLinkAttr)rc->at(srcvec->get(0)));
       }
       port_put_raw_s(port, ":");
     }
@@ -3184,10 +3184,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     switch (rc->at(listi)) {
     case LIST_AND_MAP:
       if (posi == 0) {
-        rc->reg(dsti) = {vec_get((Vector *)rc->wt(listi), (unsigned int)posi),
+        rc->reg(dsti) = {((Vector *)rc->wt(listi))->get((unsigned int)posi),
                          LINK_LIST, TT_OTHER};
       } else if (posi == 1) {
-        rc->reg(dsti) = {vec_get((Vector *)rc->wt(listi), (unsigned int)posi),
+        rc->reg(dsti) = {((Vector *)rc->wt(listi))->get((unsigned int)posi),
                          MAP, TT_OTHER};
       } else {
         lmn_fatal("unexpected attribute @instr_getfromlist");
@@ -3196,7 +3196,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     case LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
       LinkObjRef lo =
-          (LinkObjRef)vec_get((Vector *)rc->wt(listi), (unsigned int)posi);
+          (LinkObjRef)((Vector *)rc->wt(listi))->get((unsigned int)posi);
       rc->reg(dsti) = {(LmnWord)LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM};
       break;
     }
@@ -3617,7 +3617,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, srcmemi);
     v = lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(srcmemi));
     for (i = 0; i < v->num; i++) {
-      auto cp = new LmnRuleSet(*(LmnRuleSetRef)vec_get(v, i));
+      auto cp = new LmnRuleSet(*(LmnRuleSetRef)v->get(i));
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);
     }
     break;
@@ -4627,10 +4627,10 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       case LIST_AND_MAP:
 
         if (posi == 0) {
-          rc->reg(dsti) = {vec_get((Vector *)rc->wt(listi), (unsigned int)posi),
+          rc->reg(dsti) = {((Vector *)rc->wt(listi))->get((unsigned int)posi),
                            LINK_LIST, TT_OTHER};
         } else if (posi == 1) {
-          rc->reg(dsti) = {vec_get((Vector *)rc->wt(listi), (unsigned int)posi),
+          rc->reg(dsti) = {((Vector *)rc->wt(listi))->get((unsigned int)posi),
                            MAP, TT_OTHER};
         } else {
           LMN_ASSERT(0);
@@ -4639,7 +4639,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       case LINK_LIST: /* LinkObjをfreeするのはここ？ */
       {
         LinkObjRef lo =
-            (LinkObjRef)vec_get((Vector *)rc->wt(listi), (unsigned int)posi);
+            (LinkObjRef)((Vector *)rc->wt(listi))->get((unsigned int)posi);
         rc->wt(dsti) = (LmnWord)LinkObjGetAtom(lo);
         rc->at(dsti) = LinkObjGetPos(lo);
         break;
@@ -4963,7 +4963,7 @@ Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
 
   /* リンクオブジェクトのベクタを構築 */
   for (i = 0; i < vec_num(link_idxs); i++) {
-    vec_data_t t = vec_get(link_idxs, i);
+    vec_data_t t = link_idxs->get(i);
     LinkObjRef l = LinkObj_make((LmnAtomRef)rc->wt(t), rc->at(t));
     vec->push((LmnWord)l);
   }
@@ -4974,7 +4974,7 @@ void free_links(Vector *links) {
   unsigned long i;
 
   for (i = 0; i < vec_num(links); i++) {
-    LMN_FREE(vec_get(links, i));
+    LMN_FREE(links->get(i));
   }
   vec_free(links);
 }

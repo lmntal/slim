@@ -193,13 +193,13 @@ PropSyms propsyms_make() { return new Vector(32); }
 unsigned int propsyms_num(PropSyms props) { return vec_num(props); }
 
 SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i) {
-  return (SymbolDefinitionRef)vec_get(props, i);
+  return (SymbolDefinitionRef)props->get(i);
 }
 
 void propsyms_free(PropSyms props) {
   unsigned int i;
   for (i = 0; i < vec_num(props); i++) {
-    propsym_free((SymbolDefinitionRef)vec_get(props, i));
+    propsym_free((SymbolDefinitionRef)props->get(i));
   }
   vec_free(props);
 }

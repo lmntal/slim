@@ -218,7 +218,7 @@ Vector vec_const_temporary_from_array(int size, const LmnWord *w) {
 int vec_inserted_index(Vector *v, LmnWord w) {
   int i;
   for (i = 0; i < vec_num(v); i++) {
-    if (vec_get(v, i) == w)
+    if (v->get(i) == w)
       return i;
   }
   v->push(w);
@@ -397,7 +397,7 @@ static void translate_rule(LmnRuleRef rule, const char *header) {
 
   for (i = 0; i < vec_num(jump_points) /*変換中にjump_pointsは増えていく*/;
        i++) {
-    BYTE *p = (BYTE *)vec_get(jump_points, i);
+    BYTE *p = (BYTE *)jump_points->get(i);
     fprintf(OUT,
             "BOOL %s_%d(LmnReactCxt* rc, LmnMembraneRef "
             "thisisrootmembutnotused, LmnRule rule)\n",

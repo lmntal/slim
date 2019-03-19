@@ -304,9 +304,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     if (!s->has_trans_obj()) {
       /* Transitionオブジェクトを利用しない場合 */
       src_t = NULL;
-      src_succ = (State *)vec_get(RC_EXPANDED(rc), i);
+      src_succ = (State *)RC_EXPANDED(rc)->get(i);
     } else {
-      src_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
+      src_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
       src_succ = transition_next_state(src_t);
     }
 
@@ -317,7 +317,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
     /* 状態空間に状態src_succを記録 */
     if (RC_MC_USE_DMEM(rc)) { /* --delta-mem */
-      MemDeltaRoot *d = (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);
+      MemDeltaRoot *d = (struct MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i);
       succ = ss->insert_delta(src_succ, d);
       src_succ_m = NULL;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
@@ -450,7 +450,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     if (mc_use_delta(f)) {
       news = new State();
     } else {
-      news = new State((LmnMembraneRef)vec_get(expanded_roots, i), state_name,
+      news = new State((LmnMembraneRef)expanded_roots->get(i), state_name,
                         mc_use_canonical(f));
     }
 
@@ -458,7 +458,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     state_set_parent(news, src);
     if (mc_has_trans(f)) {
       lmn_interned_str nid;
-      nid = ((LmnRuleRef)vec_get(expanded_rules, i))->name;
+      nid = ((LmnRuleRef)expanded_rules->get(i))->name;
       data = (vec_data_t)transition_make(news, nid);
      src->set_trans_obj();
     } else {
@@ -513,7 +513,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
   if (vec_is_empty(RC_EXPANDED_PROPS(rc))) {
     return;
   } else {
-    BYTE first_prop = (BYTE)vec_get(RC_EXPANDED_PROPS(rc), 0);
+    BYTE first_prop = (BYTE)RC_EXPANDED_PROPS(rc)->get(0);
     mc_gen_successors(s, mem, first_prop, rc, f);
     if (mc_react_cxt_expanded_num(rc) == 0) {
       stutter_extension(s, mem, first_prop, rc, f);
@@ -523,18 +523,18 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
   /* 階層グラフ構造は等価だが性質ラベルの異なる状態を生成する.　*/
   RC_ND_SET_ORG_SUCC_NUM(rc, mc_react_cxt_expanded_num(rc));
   for (i = 1; i < vec_num(RC_EXPANDED_PROPS(rc)); i++) {
-    BYTE p_nxt_l = (BYTE)vec_get(RC_EXPANDED_PROPS(rc), i);
+    BYTE p_nxt_l = (BYTE)RC_EXPANDED_PROPS(rc)->get(i);
     for (j = 0; j < RC_ND_ORG_SUCC_NUM(rc); j++) {
       TransitionRef src_succ_t;
       State *src_succ_s, *new_s;
       vec_data_t data;
 
       if (mc_has_trans(f)) {
-        src_succ_t = (TransitionRef)vec_get(RC_EXPANDED(rc), j);
+        src_succ_t = (TransitionRef)RC_EXPANDED(rc)->get(j);
         src_succ_s = transition_next_state(src_succ_t);
       } else {
         src_succ_t = NULL;
-        src_succ_s = (State *)vec_get(RC_EXPANDED(rc), j);
+        src_succ_s = (State *)RC_EXPANDED(rc)->get(j);
       }
 
       new_s = src_succ_s->duplicate(NULL);
@@ -557,7 +557,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
        * 効率化のためにポインタcopyのみにしている(deep copyしない)
        * !! 開放処理は要注意 (r435でdebug) !! */
       if (RC_MC_USE_DMEM(rc)) {
-        RC_MEM_DELTAS(rc)->push(vec_get(RC_MEM_DELTAS(rc), j));
+        RC_MEM_DELTAS(rc)->push(RC_MEM_DELTAS(rc)->get(j));
       }
     }
   }
@@ -718,8 +718,8 @@ static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v) {
 
     State *s1, *s2;
 
-    s1 = (State *)vec_get(v, i);
-    s2 = (State *)vec_get(v, j);
+    s1 = (State *)v->get(i);
+    s2 = (State *)v->get(j);
 
     MC_INSERT_INVALIDS(g, s1, s2);
   }
@@ -734,8 +734,8 @@ BOOL mc_vec_states_valid(Vector *v) {
   unsigned int i, j;
   for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
     State *s, *t;
-    s = (State *)vec_get(v, i);
-    t = (State *)vec_get(v, j);
+    s = (State *)v->get(i);
+    t = (State *)v->get(j);
     if (!state_succ_contains(s, t))
       return FALSE;
   }
@@ -760,7 +760,7 @@ static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
   auto out = ss->output();
   fprintf(out, "%lu::", state_format_id(s, ss->is_formatted()));
   for (i = 0; i < vec_num(succs); i++) {
-    State *succ = (State *)vec_get(succs, i);
+    State *succ = (State *)succs->get(i);
     if (succ) {
       fprintf(out, "%s%lu", (i > 0) ? ", " : "",
               state_format_id(succ, ss->is_formatted()));
@@ -786,13 +786,13 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
 
     if (lmn_env.sp_dump_format != LMN_SYNTAX) {
       const char *m;
-      s = (State *)vec_get(v, i);
+      s = (State *)v->get(i);
       m = (s == seed) ? "*" : " ";
       fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
     } else {
-      s = (State *)vec_get(v, i);
+      s = (State *)v->get(i);
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
@@ -843,7 +843,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
         ss = worker_states(w);
 
         for (j = 0; j < vec_num(v); j++) {
-          Vector *path = mc_gen_invalids_path((State *)vec_get(v, j));
+          Vector *path = mc_gen_invalids_path((State *)v->get(j));
 
           if (cui_dump) { /* 出力 */
             mc_print_vec_states(ss, path, NULL);
@@ -870,8 +870,8 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
           Vector *cycle, *path;
           State *seed;
 
-          cycle = (Vector *)vec_get(v, j);
-          seed = (State *)vec_get(cycle, 0);
+          cycle = (Vector *)v->get(j);
+          seed = (State *)cycle->get(0);
           path = mc_gen_invalids_path(seed);
 
           cycle->push(

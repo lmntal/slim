@@ -456,7 +456,7 @@ static mhash_t mhash_rulesets(Vector *rulesets) {
 
   hash = 1;
   for (i = 0; i < vec_num(rulesets); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
+    LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
     hash *= rs->id;
 
     if (rs->has_unique()) {

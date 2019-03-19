@@ -328,7 +328,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
   for (i = 0; i < n; i++) {
     HyperLink *hl, *old_parent;
 
-    hl = (HyperLink *)vec_get(children, i);
+    hl = (HyperLink *)children->get(i);
     old_parent = hl->parent;
 
     if (old_parent != root) {
@@ -340,7 +340,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
       old_parent_children->delete_entry((HashKeyType)hl);
       sub_rank = hl->rank + 1;
       for (j = i + 1; j < n; j++) {
-        ((HyperLink *)vec_get(children, j))->rank -= sub_rank;
+        ((HyperLink *)children->get(j))->rank -= sub_rank;
       }
 
       if (old_parent_children->num == 0) {

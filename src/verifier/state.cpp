@@ -833,7 +833,7 @@ void transition_set_id(TransitionRef t, unsigned long id) { t->id = id; }
 int transition_rule_num(TransitionRef t) { return vec_num(&t->rule_names); }
 
 lmn_interned_str transition_rule(TransitionRef t, int idx) {
-  return vec_get(&t->rule_names, idx);
+  return t->rule_names.get(idx);
 }
 
 State *transition_next_state(TransitionRef t) { return t->s; }
