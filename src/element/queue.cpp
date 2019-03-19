@@ -337,6 +337,12 @@ LmnWord Deque::get(unsigned int i)const {
   return this->tbl[i];
 }
 
+/* pop all elements from deq */
+void Deque::clear() {
+  this->head = 0;
+  this->tail = 1;
+}
+
 /* contains */
 BOOL deq_contains(const Deque *deq, LmnWord keyp) {
   unsigned int i = deq->tail;

@@ -440,7 +440,7 @@ void dfs_start(LmnWorker *w) {
             costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss,
                             ss->automata(), ss->prop_symbols());
             s = NULL;
-            deq_clear(&DFS_WORKER_DEQUE(w));
+            &DFS_WORKER_DEQUE(w)->clear();
           } else
 #endif
           {
