@@ -132,7 +132,7 @@ state:
     if (strstr($1, "accept") != NULL) is_accept_state = TRUE;
     cur = automata->state_id($1);
     s = new AutomataState(cur, is_accept_state, 1);
-    s->add_transition(atm_transition_make(cur, true_node_make()));
+    s->add_transition(new AutomataTransition(cur, true_node_make()));
     $$ = s;
     free($1);
   }
@@ -145,10 +145,10 @@ transitions:
 
 transition:
   COLON_COLON propositional_exp IMPLICATION next {
-    $$ = atm_transition_make($4, $2);
+    $$ = new AutomataTransition($4, $2);
   }
 | COLON_COLON LPAREN NUMBER RPAREN IMPLICATION next {
-    $$ = atm_transition_make($6, true_node_make());
+    $$ = new AutomataTransition($6, true_node_make());
   }
 ;
 

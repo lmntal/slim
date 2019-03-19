@@ -52,11 +52,6 @@ static inline unsigned int atmscc_id(AutomataSCC *s);
 static inline BYTE atmscc_type(AutomataSCC *s);
 static inline void atmscc_set_type(AutomataSCC *s, BYTE type);
 
-struct AutomataTransition {
-  unsigned int next;
-  PLFormulaRef f; /* 実際は命題論理式 */
-};
-
 struct AutomataSCC {
   unsigned int id;
   BYTE type;
@@ -392,13 +387,8 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
  * transition
  */
 
-AutomataTransitionRef atm_transition_make(unsigned int next, PLFormulaRef f) {
-  AutomataTransitionRef t = LMN_MALLOC(struct AutomataTransition);
-
-  t->next = next;
-  t->f = f;
-  return t;
-}
+AutomataTransition::AutomataTransition(unsigned int next, PLFormulaRef f)
+  : next(next), f(f) {}
 
 void atm_transition_free(AutomataTransitionRef t) {
   free_formula(t->f);
