@@ -721,7 +721,7 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
         if (lmn_env.prop_scc_driven)
           automata->analysis();
         if (lmn_env.property_dump) {
-          print_property_automata(automata);
+          automata->print_property();
           return;
         }
       }

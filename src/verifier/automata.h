@@ -77,6 +77,7 @@ struct Automata {
   void set_init_state(atmstate_id_t);
   unsigned int propsym_to_id(char *prop_name);
   void analysis();
+  void print_property();
 };
 
 struct AutomataState {
@@ -127,9 +128,6 @@ enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_PARTIALLY = 2U, /* 構成するサイクルが非受理サイクルも含む */
   SCC_TYPE_NON_ACCEPT = 3U, /* 受理サイクルを含まない */
 };
-
-/* SCC analysis of automata */
-void print_property_automata(AutomataRef a);
 
 /* propositional Logic Formula */
 PLFormulaRef true_node_make(void);

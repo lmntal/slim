@@ -171,6 +171,44 @@ unsigned int Automata::propsym_to_id(char *prop_name) {
   }
 }
 
+/* for debug only
+ * 通常の状態遷移グラフと同様の形式で性質オートマトンを出力する.
+ * そのままlavitに喰わせて解析することが目的 */
+void Automata::print_property() {
+  AutomataStateRef init;
+  unsigned long i, n;
+
+  fprintf(stdout, "States\n");
+  n = vec_num(&(this->states));
+
+  for (i = 0; i < n; i++) {
+    AutomataStateRef s = this->get_state(i);
+    fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
+            (unsigned long)s->get_id(), this->state_name(i),
+            atmscc_id(s->get_scc()), s->get_scc()->get_name());
+  }
+
+  fprintf(stdout, "\nTransitions\n");
+  init = this->get_state((unsigned int)this->get_init_state());
+  fprintf(stdout, "init:%lu\n", (unsigned long)init->get_id());
+  for (i = 0; i < n; i++) {
+    AutomataStateRef s;
+    unsigned long j, m;
+
+    s = this->get_state(i);
+    fprintf(stdout, "%lu::", (unsigned long)s->get_id());
+    m = s->get_transition_num();
+    for (j = 0; j < m; j++) {
+      fprintf(stdout, "%lu",
+              (unsigned long)
+                  this->get_state(s->get_transition(j)->get_next())->get_id());
+      if (j + 1 < m)
+        fprintf(stdout, ",");
+    }
+    fprintf(stdout, "\n");
+  }
+}
+
 /*----------------------------------------------------------------------
  * state
  */
@@ -277,44 +315,6 @@ static inline BYTE atmscc_type(AutomataSCC *s) { return s->type; }
 
 static inline void atmscc_set_type(AutomataSCC *s, BYTE type) {
   s->type = type;
-}
-
-/* for debug only
- * 通常の状態遷移グラフと同様の形式で性質オートマトンを出力する.
- * そのままlavitに喰わせて解析することが目的 */
-void print_property_automata(AutomataRef a) {
-  AutomataStateRef init;
-  unsigned long i, n;
-
-  fprintf(stdout, "States\n");
-  n = vec_num(&(a->states));
-
-  for (i = 0; i < n; i++) {
-    AutomataStateRef s = a->get_state(i);
-    fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
-            (unsigned long)s->get_id(), a->state_name(i),
-            atmscc_id(s->get_scc()), atmscc_name(s->get_scc()));
-  }
-
-  fprintf(stdout, "\nTransitions\n");
-  init = a->get_state((unsigned int)a->get_init_state());
-  fprintf(stdout, "init:%lu\n", (unsigned long)init->get_id());
-  for (i = 0; i < n; i++) {
-    AutomataStateRef s;
-    unsigned long j, m;
-
-    s = a->get_state(i);
-    fprintf(stdout, "%lu::", (unsigned long)s->get_id());
-    m = s->get_transition_num();
-    for (j = 0; j < m; j++) {
-      fprintf(stdout, "%lu",
-              (unsigned long)
-                  a->get_state(s->get_transition(j)->get_next())->get_id());
-      if (j + 1 < m)
-        fprintf(stdout, ",");
-    }
-    fprintf(stdout, "\n");
-  }
 }
 
 /* dfs postorder順を求め, postorder順に2nd DFSを行う.
