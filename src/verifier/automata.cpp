@@ -239,9 +239,9 @@ void Automata::analysis() {
 }
 
 /* for debug */
-const char *atmscc_name(AutomataSCC *s) {
+const char *AutomataSCC::get_name() {
   const char *ret = NULL;
-  switch (atmscc_type(s)) {
+  switch (atmscc_type(this)) {
   case SCC_TYPE_UNKNOWN:
     ret = "Still_UnKnown.";
     break;

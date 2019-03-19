@@ -118,6 +118,7 @@ struct AutomataSCC {
 
   AutomataSCC();
   ~AutomataSCC();
+  const char *get_name();
 };
 
 enum SCC_ACCEPTING_TYPE {
@@ -128,7 +129,6 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* SCC analysis of automata */
-const char *atmscc_name(AutomataSCC *s);
 void print_property_automata(AutomataRef a);
 
 /* propositional Logic Formula */
