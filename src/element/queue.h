@@ -75,6 +75,8 @@ struct Queue {
   BOOL is_empty();
   void q_lock(BOOL is_enq);
   void q_unlock(BOOL is_enq);
+  void q_clear();
+  unsigned long q_entry_num();
 
 };
 
@@ -89,14 +91,6 @@ struct Queue {
 
 
 Queue *make_parallel_queue(BOOL lock_type);
-static inline unsigned long queue_entry_num(Queue *q) {
-  return q->enq_num - q->deq_num;
-}
-
-static inline void queue_clear(Queue *q) {
-  while (q->dequeue())
-    ;
-}
 
 /** ==========
  *  DeQue (KaWaBaTa code)

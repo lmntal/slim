@@ -429,7 +429,7 @@ void dfs_start(LmnWorker *w) {
         if (!DFS_WORKER_QUEUE(w)->is_empty() &&
             !((Queue *)DFS_WORKER_QUEUE(w))->head->next) {
           printf("%d : queue is not empty? %d\n", worker_id(w),
-                 queue_entry_num(DFS_WORKER_QUEUE(w)));
+                 DFS_WORKER_QUEUE(w)->q_entry_num());
         }
 #endif
         if (s || (s = (State *)DFS_WORKER_QUEUE(w)->dequeue())) {

@@ -323,7 +323,7 @@ static void owcty_env_init(LmnWorker *w) {
                             OWCTY_WORKER_AQ2(w));
 
   MC_DEBUG(printf("acceptance queue init, num=%lu\n",
-                  queue_entry_num(OWCTY_WORKER_AQ1(w))));
+                  OWCTY_WORKER_AQ1(w)->q_entry_num()));
 }
 
 struct DegreeCnt {
@@ -374,7 +374,7 @@ void owcty_start(LmnWorker *w) {
 
 static inline void owcty_report_midterm(LmnWorker *w) {
   McSearchOWCTY *mc = OWCTY_WORKER_OBJ(w);
-  mc->old = queue_entry_num(mc->accepts2);
+  mc->old = mc->accepts2->q_entry_num();
 }
 
 /* owctyアルゴリズムの停止を判定した場合, mc_exitフラグを真にする.
@@ -387,10 +387,10 @@ static inline void owcty_termination_detection(LmnWorker *w) {
   mc = OWCTY_WORKER_OBJ(w);
   mc->iteration++;
   MC_DEBUG(fprintf(stderr, "iter%3lu[S=%10lu, old=%10lu]  %s", mc->iteration,
-                   queue_entry_num(mc->accepts1), mc->old,
+                   mc->accepts1->q_entry_num(), mc->old,
                    (mc->iteration % 3 == 0) ? "\n" : ""));
 
-  q_num = queue_entry_num(mc->accepts1);
+  q_num = mc->accepts1->q_entry_num();
   if (q_num == 0 || q_num == mc->old) {
     MC_DEBUG(fprintf(stderr, "\n"));
     worker_group(w)->mc_exit = TRUE;

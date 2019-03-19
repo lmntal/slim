@@ -241,6 +241,15 @@ void Queue::q_unlock(BOOL is_enq) {
   }
 }
 
+void Queue::q_clear() {
+  while (this->dequeue())
+    ;
+}
+
+unsigned long Queue::q_entry_num() {
+  return this->enq_num - this->deq_num;
+}
+
 /**=====================
  *  DeQue
  */

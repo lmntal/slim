@@ -241,7 +241,7 @@ static void finalize_ample(BOOL org_f) {
              (st_data_t)0);
   st_foreach(mc_por.states, (st_iter_func)destroy_tmp_state_graph,
              (LmnWord)org_f);
-  queue_clear(mc_por.queue);
+  mc_por.queue->q_clear();
   vec_clear(mc_por.ample_candidate);
   RC_CLEAR_DATA(mc_por.rc.get());
   mc_por.root = NULL;
