@@ -83,6 +83,7 @@ struct LmnPort {
   void *data; /* used internally */
 
   LmnPort(LmnPortDirection, LmnPortType, const char *);
+  ~LmnPort();
 };
 
 struct IStrPortData {
@@ -100,7 +101,6 @@ LmnPortRef lmn_stderr_port(void);
 LmnPortRef lmn_make_input_string_port(LmnStringRef s);
 LmnPortRef lmn_make_output_string_port();
 
-void lmn_port_free(LmnPortRef port);
 void lmn_port_close(LmnPortRef port);
 BOOL lmn_port_closed(LmnPortRef port_atom);
 BOOL lmn_port_error_occurred(LmnPortRef port_atom);

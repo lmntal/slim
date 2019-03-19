@@ -706,7 +706,7 @@ void lmn_dump_cell_stdout(LmnMembraneRef mem) {
   LmnPortRef port = lmn_stdout_port();
   lmn_dump_cell(mem, port);
   port_put_raw_s(port, "\n");
-  lmn_port_free(port);
+  delete port;
 }
 
 void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port) {
@@ -733,7 +733,7 @@ void lmn_dump_mem_stdout(LmnMembraneRef mem) {
   LmnPortRef port = lmn_stdout_port();
   lmn_dump_mem(mem, port);
   port_put_raw_s(port, "\n");
-  lmn_port_free(port);
+  delete port;
 }
 
 /* print membrane structure */

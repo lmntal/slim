@@ -65,22 +65,21 @@ LmnPort::LmnPort(LmnPortDirection dir, LmnPortType type,
   LMN_SP_ATOM_SET_TYPE(this, port_atom_type);
 }
 
-void lmn_port_free(LmnPortRef port) {
-  if (port->owner) {
-    switch (LMN_PORT_TYPE(port)) {
+LmnPort::~LmnPort() {
+  if (this->owner) {
+    switch (LMN_PORT_TYPE(this)) {
     case LMN_PORT_FILE:
       break;
     case LMN_PORT_OSTR:
-      delete ((LmnStringRef)LMN_PORT_DATA(port));
+      delete (LmnStringRef)LMN_PORT_DATA(this);
       break;
     case LMN_PORT_ISTR:
-      lmn_port_close(port);
+      lmn_port_close(this);
       break;
     default:
       lmn_fatal("not implemented");
     }
   }
-  LMN_FREE(port);
 }
 
 /* ownerが真の場合、生成したポートがオーナーとなる。ただし、portがオー
@@ -423,7 +422,7 @@ void cb_port_close(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  */
 void cb_port_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                   LmnLinkAttr t0) {
-  lmn_port_free(LMN_PORT(a0));
+  delete LMN_PORT(a0);
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
@@ -696,7 +695,7 @@ void *sp_cb_port_copy(void *data) {
   return lmn_port_copy(LMN_PORT(data), TRUE);
 }
 
-void sp_cb_port_free(void *data) { lmn_port_free(LMN_PORT(data)); }
+void sp_cb_port_free(void *data) { delete LMN_PORT(data); }
 
 /* てきとーに定義した */
 BOOL sp_cb_port_eq(void *_p1, void *_p2) { return FALSE; }
@@ -739,7 +738,7 @@ void port_init() {
 }
 
 void port_finalize() {
-  lmn_port_free(lmn_stdin);
-  lmn_port_free(lmn_stdout);
-  lmn_port_free(lmn_stderr);
+  delete lmn_stdin;
+  delete lmn_stdout;
+  delete lmn_stderr;
 }

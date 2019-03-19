@@ -2597,7 +2597,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 
     id = lmn_intern(((LmnStringRef)port->data)->c_str());
-    lmn_port_free(port);
+    delete port;
 
     if (sh)
       lmn_env.show_hyperlink = TRUE;
