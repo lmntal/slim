@@ -267,7 +267,7 @@ void lmn_profiler_finalize() {
   if (lmn_prof.lv2) {
     mc_profiler2_destroy(lmn_prof.lv2);
   }
-
+  LMN_FREE(lmn_prof.lv2);
   if (lmn_prof.lv3) {
     unsigned int i;
     for (i = 0; i < lmn_prof.thread_num; i++) {
