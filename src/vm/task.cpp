@@ -2381,8 +2381,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         if (rc_hlink_opt(atomi, rc)) {
           auto spc = ((SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc),
                                                  (HashKeyType)atomi));
-          if (!spc->is_consistent_with((LmnSymbolAtomRef)rc->wt(atomi)))
-            return FALSE;
+
+          auto atom = (LmnSymbolAtomRef)rc->wt(atomi);
+          for (int i = 0; i < spc->proccxts.size(); i++) {
+            if (spc->proccxts[i]) {
+              if (spc->proccxts[i]->is_argument_of(atom, i)) {
+                auto linked_hl = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom->get_link(i));
+                spc->proccxts[i]->start = linked_hl;
+              } else {
+                return false;
+              }
+            }
+          }
         }
       }
     } else { /* LMN_ATTR_IS_DATA(rc->at(atomi)) != LMN_ATTR_IS_DATA(attr) */
