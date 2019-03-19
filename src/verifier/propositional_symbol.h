@@ -73,9 +73,9 @@ struct Proposition {
   LmnRuleRef rule;
 
   Proposition(const char *, const char *, const char *body);
+  ~Proposition();
 };
 
-void proposition_free(PropositionRef p);
 LmnRuleRef proposition_get_rule(PropositionRef p);
 BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem);
 

@@ -80,12 +80,11 @@ Proposition::Proposition(const char *head, const char *guard,
   rule.release();
 }
 
-void proposition_free(PropositionRef p) {
-  LMN_FREE(p->head);
-  LMN_FREE(p->guard);
-  LMN_FREE(p->body);
-  delete (p->rule);
-  LMN_FREE(p);
+Proposition::~Proposition() {
+  delete (this->head);
+  delete (this->guard);
+  delete (this->body);
+  delete (this->rule);
 }
 
 LmnRuleRef proposition_get_rule(PropositionRef p) { return p->rule; }
@@ -124,7 +123,7 @@ SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p) {
 
 void propsym_free(SymbolDefinitionRef s) {
   if (s) {
-    proposition_free(s->prop);
+    delete s->prop;
     LMN_FREE(s);
   }
 }
