@@ -279,6 +279,17 @@ Deque::~Deque() {
   this->destroy();
 }
 
+/* num */
+int Deque::num(){                                                             
+  return this->tail > this->head ? 
+    this->tail - this->head - 1 : this->cap - this->head + this->tail - 1;
+}
+
+/* is_empty */
+BOOL Deque::is_empty() {
+  return (this->num() == 0);
+}
+
 /* extend (static) */
 void Deque::extend() {
   unsigned int old = this->cap;
@@ -295,7 +306,7 @@ void Deque::extend() {
 
 /* push */
 void Deque::push_head(LmnWord keyp) {
-  if (deq_num(this) == this->cap - 1) {
+  if (this->num() == this->cap - 1) {
     this->extend();
   }
   (this->tbl)[this->head] = keyp;
@@ -304,7 +315,7 @@ void Deque::push_head(LmnWord keyp) {
 
 /*  */
 void Deque::push_tail(LmnWord keyp) {
-  if (deq_num(this) == this->cap - 1) {
+  if (this->num() == this->cap - 1) {
     this->extend();
   }
   (this->tbl)[this->tail] = keyp;
@@ -314,7 +325,7 @@ void Deque::push_tail(LmnWord keyp) {
 /* pop */
 LmnWord Deque::pop_head() {
   LmnWord ret;
-  LMN_ASSERT(deq_num(this) > 0);
+  LMN_ASSERT(this->num() > 0);
 
   DEQ_INC(this->head, this->cap);
   ret = this->tbl[this->head];
@@ -323,7 +334,7 @@ LmnWord Deque::pop_head() {
 
 /* */
 LmnWord Deque::pop_tail() {
-  LMN_ASSERT(deq_num(this) > 0);
+  LMN_ASSERT(this->num() > 0);
   DEQ_DEC(this->tail, this->cap);
   return this->tbl[this->tail];
 }
@@ -351,7 +362,6 @@ void Deque::clear() {
   this->tail = 1;
 }
 
-
 /* contains */
 BOOL deq_contains(const Deque *deq, LmnWord keyp) {
   unsigned int i = deq->tail;
@@ -369,7 +379,7 @@ Deque *deq_copy(Deque *deq) {
   Deque *new_deq;
 
   i = deq->tail;
-  new_deq = new Deque(deq_num(deq) > 0 ? deq_num(deq) : 1);
+  new_deq = new Deque(deq->num() > 0 ? deq->num() : 1);
 
   while (i != deq->head) {
     DEQ_DEC(i, deq->cap);

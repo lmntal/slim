@@ -100,6 +100,8 @@ struct Deque {
   Deque(unsigned int init_size);
   ~Deque();
   void init(unsigned int init_size);
+  int num();
+  BOOL is_empty();
   void extend();
   void push_head(LmnWord keyp);
   void push_tail(LmnWord keyp);
@@ -117,10 +119,6 @@ struct Deque {
 typedef struct Deque Deque;
 typedef LmnWord deq_data_t;
 
-#define deq_num(V)                                                             \
-  ((V)->tail > (V)->head ? (V)->tail - (V)->head - 1                           \
-                         : (V)->cap - (V)->head + (V)->tail - 1)
-#define deq_is_empty(V) (deq_num(V) == 0)
 #define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
@@ -147,7 +145,7 @@ static inline void deq_print(Deque *deq) {
   unsigned int i;
   FILE *f = stdout;
   fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", deq->cap, deq->head,
-          deq->tail, deq_num(deq));
+          deq->tail, deq->num());
   for (i = 0; i < deq->cap; i++)
     fprintf(f, "%lu, ", deq->tbl[i]);
   fprintf(f, "]\n");
