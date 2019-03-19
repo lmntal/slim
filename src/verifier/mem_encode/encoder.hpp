@@ -99,7 +99,7 @@ struct encoder {
 
       BinStrCursor new_bsptr = bsp;
 
-      visitlog_set_checkpoint(visited);
+      visited->set_checkpoint();
 
       write_mem(m, 0, -1, -1, new_bsptr, visited, TRUE);
 
@@ -109,10 +109,10 @@ struct encoder {
           delete last_valid_checkpoint;
         }
         last_valid_bsp = new_bsptr;
-        last_valid_checkpoint = visitlog_pop_checkpoint(visited);
+        last_valid_checkpoint = visited->pop_checkpoint();
         last_valid = true;
       } else {
-        visitlog_revert_checkpoint(visited);
+        visited->revert_checkpoint();
       }
     }
 
@@ -123,9 +123,9 @@ struct encoder {
 
       if (last_valid_bsp.is_valid()) {
         bsp = last_valid_bsp;
-        visitlog_commit_checkpoint(visited);
+        visited->commit_checkpoint();
       } else {
-        visitlog_revert_checkpoint(visited);
+        visited->revert_checkpoint();
       }
     }
   }
@@ -291,7 +291,7 @@ struct encoder {
         continue;
 
       BinStrCursor new_bsptr = bsp;
-      visitlog_set_checkpoint(visited);
+      visited->set_checkpoint();
 
       write_mol(atom, LMN_ATTR_MAKE_LINK(0), -1, new_bsptr, visited, TRUE);
       if (new_bsptr.is_valid()) {
@@ -303,10 +303,10 @@ struct encoder {
         }
 
         last_valid_bsp = new_bsptr;
-        last_valid_checkpoint = visitlog_pop_checkpoint(visited);
+        last_valid_checkpoint = visited->pop_checkpoint();
         last_valid_i = i;
       } else {
-        visitlog_revert_checkpoint(visited);
+        visited->revert_checkpoint();
       }
     }
 
@@ -320,9 +320,9 @@ struct encoder {
 
       if (last_valid_bsp.is_valid()) {
         bsp = last_valid_bsp;
-        visitlog_commit_checkpoint(visited);
+        visited->commit_checkpoint();
       } else {
-        visitlog_revert_checkpoint(visited);
+        visited->revert_checkpoint();
       }
     }
   }
@@ -420,13 +420,13 @@ struct encoder {
   BinStr binstr;
   std::unique_ptr<BinStrCursor> cur;
 
-  encoder(LmnMembraneRef mem, bool direct, unsigned int tbl_size = 0) : root_mem(mem), visit_log(visitlog_create()) {
+  encoder(LmnMembraneRef mem, bool direct, unsigned int tbl_size = 0) : root_mem(mem), visit_log(new VisitLog()) {
     cur = direct ? binstr.head_direct() : binstr.head();
-    visitlog_init_with_size(visit_log, tbl_size);
+    visit_log->init_with_size(tbl_size);
   }
 
   ~encoder() {
-    visitlog_destroy(visit_log);
+    delete visit_log;
   }
 
   LmnBinStr *binary_string() {

@@ -36,88 +36,15 @@
  */
 #include "visitlog.h"
 
-void visitlog_init_with_size(VisitLogRef p, unsigned long tbl_size) {
-  if (tbl_size != 0) {
-    p->tbl = proc_tbl_make_with_size(tbl_size);
-  } else {
-    p->tbl = proc_tbl_make();
-  }
-  /*   printf("size = %lu\n", tbl_size); */
-  p->ref_n = VISITLOG_INIT_N;
-  p->element_num = 0;
-  vec_init(&p->checkpoints, PROC_TBL_DEFAULT_SIZE);
-}
 
-VisitLogRef visitlog_create() { return LMN_CALLOC(struct VisitLog, 1); }
-
-void visitlog_init(struct VisitLog *p) { visitlog_init_with_size(p, 0); }
-
-void visitlog_destroy(struct VisitLog *p) {
-  int i;
-
-  proc_tbl_free(p->tbl);
-
-  for (i = 0; i < vec_num(&p->checkpoints); i++) {
-    vec_free((Vector *)vec_get(&p->checkpoints, i));
-  }
-  vec_destroy(&p->checkpoints);
-
-  LMN_FREE(p);
-}
-
-/* チェックポイントを設定する。 */
-void visitlog_set_checkpoint(VisitLogRef visitlog) {
-  vec_push(&visitlog->checkpoints, (vec_data_t)new Checkpoint());
-}
-
-/* もっとも最近のチェックポイントを返し、ログの状態をチェックポイントが設定された時点にもどす
- */
-struct Checkpoint *visitlog_pop_checkpoint(VisitLogRef visitlog) {
-  int i;
-  struct Checkpoint *checkpoint;
-
-  checkpoint = (struct Checkpoint *)vec_pop(&visitlog->checkpoints);
-  for (i = 0; i < vec_num(&checkpoint->elements); i++) {
-    proc_tbl_unput(visitlog->tbl, vec_get(&checkpoint->elements, i));
-    visitlog->element_num--;
-    visitlog->ref_n--;
-  }
-  visitlog->element_num -= checkpoint->n_data_atom;
-  return checkpoint;
-}
-
-/* もっとも最近のチェックポイントを消し、ログの状態をチェックポイントが設定された時点にもどす
- */
-void visitlog_revert_checkpoint(VisitLogRef visitlog) {
-  delete visitlog_pop_checkpoint(visitlog);
-}
-
-/* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
-void visitlog_commit_checkpoint(VisitLogRef visitlog) {
-  struct Checkpoint *last =
-      (struct Checkpoint *)vec_pop(&visitlog->checkpoints);
-
-  if (vec_num(&visitlog->checkpoints) > 0) {
-    int i;
-    struct Checkpoint *new_last =
-        (struct Checkpoint *)vec_last(&visitlog->checkpoints);
-
-    for (i = 0; i < vec_num(&last->elements); i++) {
-      vec_push(&new_last->elements, vec_get(&last->elements, i));
-    }
-    new_last->n_data_atom += last->n_data_atom;
-  }
-
-  delete last;
-}
 
 /* チェックポイントをログに追加する */
 void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp) {
   int i;
 
-  vec_push(&visitlog->checkpoints, (vec_data_t)cp);
-  for (i = 0; i < vec_num(&cp->elements); i++) {
-    proc_tbl_put(visitlog->tbl, vec_get(&cp->elements, i), visitlog->ref_n++);
+  vec_push(visitlog->checkpoints, (vec_data_t)cp);
+  for (i = 0; i < vec_num(cp->elements); i++) {
+    proc_tbl_put(visitlog->tbl, vec_get(cp->elements, i), visitlog->ref_n++);
     visitlog->element_num++;
   }
   visitlog->element_num += cp->n_data_atom;
@@ -127,10 +54,10 @@ void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp) {
  * 通常この関数ではなくput_atom, put_memを使用する. */
 int visitlog_put(VisitLogRef visitlog, LmnWord p) {
   if (proc_tbl_put_new(visitlog->tbl, p, visitlog->ref_n++)) {
-    if (vec_num(&visitlog->checkpoints) > 0) {
+    if (vec_num(visitlog->checkpoints) > 0) {
       CheckpointRef checkpoint =
-          (CheckpointRef)vec_last(&visitlog->checkpoints);
-      vec_push(&checkpoint->elements, p);
+          (CheckpointRef)vec_last(visitlog->checkpoints);
+      vec_push(checkpoint->elements, p);
     }
     visitlog->element_num++;
     return 1;
@@ -159,9 +86,9 @@ int visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl) {
  * （引数がログしか無いことから分かるように,
  * 単に訪問したアトムを数えるために使用する） */
 void visitlog_put_data(VisitLogRef visitlog) {
-  if (vec_num(&visitlog->checkpoints) > 0) {
+  if (vec_num(visitlog->checkpoints) > 0) {
     struct Checkpoint *checkpoint =
-        (struct Checkpoint *)vec_last(&visitlog->checkpoints);
+        (struct Checkpoint *)vec_last(visitlog->checkpoints);
     checkpoint->n_data_atom++;
   }
   visitlog->element_num++;

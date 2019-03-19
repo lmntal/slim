@@ -580,11 +580,11 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     return visitlog_get_mem(log, atom, NULL);
   }
 
-  void log_set_backtrack_point(VisitLog *log) { visitlog_set_checkpoint(log); }
+  void log_set_backtrack_point(VisitLog *log) { log->set_checkpoint(); }
 
-  void log_continue_trace(VisitLog *log) { visitlog_commit_checkpoint(log); }
+  void log_continue_trace(VisitLog *log) { log->commit_checkpoint(); }
 
-  void log_backtrack(VisitLog *log) { visitlog_revert_checkpoint(log); }
+  void log_backtrack(VisitLog *log) { log->revert_checkpoint(); }
 
   /* TAG_MEM_ENDが出たときに,
    * 対象の膜に対して訪問したプロセス数が等しい場合に真を返す. 訪問プロセスは,
