@@ -99,6 +99,8 @@ struct Queue {
 struct Deque {
   Deque(unsigned int init_size);
   void init(unsigned int init_size);
+  void extend();
+  void push_head(LmnWord keyp);
   LmnWord *tbl;
   unsigned int head, tail, cap;
 };
@@ -116,7 +118,6 @@ typedef LmnWord deq_data_t;
 #define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
-static inline void deq_push_head(Deque *deq, LmnWord keyp);
 static inline void deq_push_tail(Deque *deq, LmnWord keyp);
 static inline LmnWord deq_pop_head(Deque *deq);
 static inline LmnWord deq_pop_tail(Deque *deq);
@@ -137,33 +138,10 @@ void deq_reverse(Deque *deq);
 void deq_resize(Deque *deq, unsigned int size, deq_data_t val);
 void deq_sort(const Deque *deq, int (*compare)(const void *, const void *));
 
-/* extend (static) */
-static inline void deq_extend(Deque *deq) {
-  unsigned int old = deq->cap;
-  deq->cap *= 2;
-  deq->tbl = LMN_REALLOC(LmnWord, deq->tbl, deq->cap);
-  if (deq->tail <= deq->head) {
-    unsigned int i;
-    for (i = 0; i < deq->tail; i++) {
-      deq->tbl[i + old] = deq->tbl[i];
-    }
-    deq->tail = old + deq->tail;
-  }
-}
-
-/* push */
-static inline void deq_push_head(Deque *deq, LmnWord keyp) {
-  if (deq_num(deq) == deq->cap - 1) {
-    deq_extend(deq);
-  }
-  (deq->tbl)[deq->head] = keyp;
-  DEQ_DEC(deq->head, deq->cap);
-}
-
 /*  */
 static inline void deq_push_tail(Deque *deq, LmnWord keyp) {
   if (deq_num(deq) == deq->cap - 1) {
-    deq_extend(deq);
+    deq->extend();
   }
   (deq->tbl)[deq_tail(deq)] = keyp;
   DEQ_INC(deq->tail, deq->cap);

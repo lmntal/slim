@@ -37,7 +37,7 @@
     if (Dir) {                                                                 \
       deq_push_tail((List), (vec_data_t)(St));                                 \
     } else {                                                                   \
-      deq_push_head((List), (vec_data_t)(St));                                 \
+      (List)->push_head((vec_data_t)(St));                                 \
     }                                                                          \
   } while (0)
 #define EXECUTE_PROFILE_START()                                                \
@@ -77,7 +77,7 @@
     if (Dir) {                                                                 \
       deq_push_tail((List), (vec_data_t)(St));                                 \
     } else {                                                                   \
-      deq_push_head((List), (vec_data_t)(St));                                 \
+      (List)->push_head((vec_data_t)(St));                                 \
     }                                                                          \
   } while (0)
 

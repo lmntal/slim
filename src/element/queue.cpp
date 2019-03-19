@@ -258,6 +258,7 @@ unsigned long Queue::entry_num() {
  *  DeQue
  */
 
+/*init*/
 void Deque::init(unsigned int init_size) {
   this->tbl = LMN_NALLOC(LmnWord, init_size);
   this->head = 0;
@@ -270,6 +271,28 @@ Deque::Deque(unsigned int init_size) {
   this->init(init_size);
 }
 
+/* extend (static) */
+void Deque::extend() {
+  unsigned int old = this->cap;
+  this->cap *= 2;
+  this->tbl = LMN_REALLOC(LmnWord, this->tbl, this->cap);
+  if (this->tail <= this->head) {
+    unsigned int i;
+    for (i = 0; i < this->tail; i++) {
+      this->tbl[i + old] = this->tbl[i];
+    }
+    this->tail = old + this->tail;
+  }
+}
+
+/* push */
+void Deque::push_head(LmnWord keyp) {
+  if (deq_num(this) == this->cap - 1) {
+    this->extend();
+  }
+  (this->tbl)[this->head] = keyp;
+  DEQ_DEC(this->head, this->cap);
+}
 
 /* contains */
 BOOL deq_contains(const Deque *deq, LmnWord keyp) {

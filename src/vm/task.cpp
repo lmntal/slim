@@ -1426,7 +1426,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           continue;
         }
         if (thread_info[ip2]->judge) {
-          deq_push_head(temp, ip2);
+          temp->push_head(ip2);
         }
       }
 
