@@ -39,7 +39,7 @@ liblmn_verifier_a_SOURCES =                              \
 	statespace.cpp             statespace.h                  \
 	state_table.cpp            \
 	tree_compress.cpp          tree_compress.h               \
-	visitlog.cpp               visitlog.h                    \
+	visitlog.h                 \
 	stack_macro.h              \
 	mem_encode/decoder.cpp     mem_encode/binstr.cpp
 
