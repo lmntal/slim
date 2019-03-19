@@ -35,46 +35,6 @@
  *
  */
 #include "visitlog.h"
-#ifndef PROC_TBL_DEFAULT_SIZE
-#define PROC_TBL_DEFAULT_SIZE 128U
-#endif
-
-#ifndef PROC_TBL_BUCKETS_SIZE
-#define PROC_TBL_BUCKETS_SIZE (1 << 12) // heuristics
-#endif
-
-/* VisitLogに記録された変更のスナップショット */
-struct Checkpoint {
-  int n_data_atom;
-  Vector elements;
-};
-
-/* 訪問済みのアトムや膜の記録 */
-struct VisitLog {
-  ProcessTableRef tbl; /* プロセスIDをkeyにした訪問表 */
-  int ref_n, /* バイト列から読み出したプロセスに再訪問が発生した場合のための参照番号割当カウンタ
-              */
-      element_num;    /* 訪問したプロセス数のカウンタ */
-  Vector checkpoints; /* Checkpointオブジェクトの配列 */
-};
-
-/*----------------------------------------------------------------------
- * VisitLog: アトムや膜への訪問の記録
- */
-
-/* VisitLogのログ変更の記録 */
-static inline struct Checkpoint *checkpoint_make() {
-  struct Checkpoint *p = LMN_MALLOC(struct Checkpoint);
-
-  vec_init(&p->elements, PROC_TBL_DEFAULT_SIZE);
-  p->n_data_atom = 0;
-  return p;
-}
-
-void checkpoint_free(struct Checkpoint *cp) {
-  vec_destroy(&cp->elements);
-  LMN_FREE(cp);
-}
 
 void visitlog_init_with_size(VisitLogRef p, unsigned long tbl_size) {
   if (tbl_size != 0) {
@@ -107,7 +67,7 @@ void visitlog_destroy(struct VisitLog *p) {
 
 /* チェックポイントを設定する。 */
 void visitlog_set_checkpoint(VisitLogRef visitlog) {
-  vec_push(&visitlog->checkpoints, (vec_data_t)checkpoint_make());
+  vec_push(&visitlog->checkpoints, (vec_data_t)new Checkpoint());
 }
 
 /* もっとも最近のチェックポイントを返し、ログの状態をチェックポイントが設定された時点にもどす
@@ -129,7 +89,7 @@ struct Checkpoint *visitlog_pop_checkpoint(VisitLogRef visitlog) {
 /* もっとも最近のチェックポイントを消し、ログの状態をチェックポイントが設定された時点にもどす
  */
 void visitlog_revert_checkpoint(VisitLogRef visitlog) {
-  checkpoint_free(visitlog_pop_checkpoint(visitlog));
+  delete visitlog_pop_checkpoint(visitlog);
 }
 
 /* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
@@ -148,7 +108,7 @@ void visitlog_commit_checkpoint(VisitLogRef visitlog) {
     new_last->n_data_atom += last->n_data_atom;
   }
 
-  checkpoint_free(last);
+  delete last;
 }
 
 /* チェックポイントをログに追加する */

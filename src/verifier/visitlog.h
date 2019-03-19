@@ -51,6 +51,14 @@
 
 #define VISITLOG_INIT_N (1)
 
+#ifndef PROC_TBL_DEFAULT_SIZE
+#define PROC_TBL_DEFAULT_SIZE 128U
+#endif
+
+#ifndef PROC_TBL_BUCKETS_SIZE
+#define PROC_TBL_BUCKETS_SIZE (1 << 12) // heuristics
+#endif
+
 /*----------------------------------------------------------------------
  * Visit Log
  */
@@ -65,11 +73,32 @@
 typedef struct VisitLog *VisitLogRef;
 typedef struct Checkpoint *CheckpointRef;
 
+/* VisitLogに記録された変更のスナップショット */
+struct Checkpoint {
+  int n_data_atom;
+  Vector elements;
+  Checkpoint() {
+    vec_init(&this->elements, PROC_TBL_DEFAULT_SIZE);
+    this->n_data_atom = 0;
+  }
+
+  ~Checkpoint() {
+    vec_destroy(&this->elements);
+  }
+};
+
+/* 訪問済みのアトムや膜の記録 */
+struct VisitLog {
+  ProcessTableRef tbl; /* プロセスIDをkeyにした訪問表 */
+  int ref_n, /* バイト列から読み出したプロセスに再訪問が発生した場合のための参照番号割当カウンタ
+              */
+      element_num;    /* 訪問したプロセス数のカウンタ */
+  Vector checkpoints; /* Checkpointオブジェクトの配列 */
+};
+
 /**
  * Function ProtoTypes
  */
-
-void checkpoint_free(CheckpointRef cp);
 
 VisitLogRef visitlog_create();
 void visitlog_init_with_size(VisitLogRef p, unsigned long tbl_size);
@@ -93,4 +122,4 @@ int visitlog_element_num(VisitLogRef visitlog);
 
 /* @} */
 
-#endif
+#endif /** LMN_VISITLOG_H */

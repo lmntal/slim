@@ -106,7 +106,7 @@ struct encoder {
       if (new_bsptr.is_valid()) {
         /* mからたどった分子が書き込みに成功したので、last_validに記憶する */
         if (last_valid) {
-          checkpoint_free(last_valid_checkpoint);
+          delete last_valid_checkpoint;
         }
         last_valid_bsp = new_bsptr;
         last_valid_checkpoint = visitlog_pop_checkpoint(visited);
@@ -299,7 +299,7 @@ struct encoder {
         if (last_valid_i < 0) {
           first_func = atom->get_functor();
         } else {
-          checkpoint_free(last_valid_checkpoint);
+          delete last_valid_checkpoint;
         }
 
         last_valid_bsp = new_bsptr;
