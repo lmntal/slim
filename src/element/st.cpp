@@ -8,8 +8,6 @@
 #include "vector.h"
 #include "verifier/verifier.h"
 
-typedef struct st_table_entry st_table_entry;
-
 struct st_table_entry {
   unsigned long hash;
   st_data_t key;
@@ -167,7 +165,7 @@ st_table_t st_init_ptrtable_with_size(int size) {
 }
 
 void st_free_table(st_table_t table) {
-  register st_table_entry *ptr, *next;
+  st_table_entry *ptr, *next;
   int i;
 
   for (i = 0; i < table->num_bins; i++) {
@@ -231,9 +229,9 @@ unsigned long st_table_space(st_table_t tbl) {
 
 /* キーがkeyであるテーブルの値をvalueに設定する。
  * キーが見つからなければ0を返し，見つかれば1を返す。*/
-int st_lookup(st_table_t table, register st_data_t key, st_data_t *value) {
+int st_lookup(st_table_t table, st_data_t key, st_data_t *value) {
   unsigned long hash_val, bin_pos;
-  register st_table_entry *ptr;
+  st_table_entry *ptr;
 
   hash_val = do_hash((void *)key, table);
   FIND_ENTRY(table, ptr, hash_val, bin_pos);
@@ -249,10 +247,10 @@ int st_lookup(st_table_t table, register st_data_t key, st_data_t *value) {
 
 /* キーがkeyであるテーブルの値をvalueに設定する。
  * キーが見つからなければ0を返し，見つかれば1を返す。*/
-int st_lookup_with_col(st_table_t table, register st_data_t key,
-                       st_data_t *value, long *n_col) {
+int st_lookup_with_col(st_table_t table, st_data_t key, st_data_t *value,
+                       long *n_col) {
   unsigned long hash_val, bin_pos;
-  register st_table_entry *ptr;
+  st_table_entry *ptr;
 
   *n_col = 0;
   hash_val = do_hash((void *)key, table);
@@ -283,10 +281,10 @@ int st_contains(st_table_t table, st_data_t key) {
     table->num_entries++;                                                      \
   } while (0)
 
-static inline int st_insert_inner(register st_table_t table,
-                                  register st_data_t key, st_data_t value) {
+static inline int st_insert_inner(st_table_t table, st_data_t key,
+                                  st_data_t value) {
   unsigned long hash_val, bin_pos;
-  register st_table_entry *ptr;
+  st_table_entry *ptr;
 
   hash_val = do_hash((void *)key, table);
   FIND_ENTRY(table, ptr, hash_val, bin_pos);
@@ -304,8 +302,7 @@ static inline int st_insert_inner(register st_table_t table,
  * エントリが存在した場合は, エントリの値のみを更新し,
  * キーは元々のものを更新しない. エントリが存在しなかった場合に0,
  * エントリが存在した場合には1以上の整数を返す. */
-int st_insert(register st_table_t table, register st_data_t key,
-              st_data_t value) {
+int st_insert(st_table_t table, st_data_t key, st_data_t value) {
   int ret = st_insert_inner(table, key, value);
   if (!ret && (table->num_entries / table->num_bins) > ST_DEFAULT_MAX_DENSITY) {
     rehash(table);
@@ -313,11 +310,10 @@ int st_insert(register st_table_t table, register st_data_t key,
   return ret;
 }
 
-static inline int st_insert_safe_inner(register st_table_t table,
-                                       register st_data_t key,
+static inline int st_insert_safe_inner(st_table_t table, st_data_t key,
                                        st_data_t value) {
   unsigned long hash_val, bin_pos;
-  register st_table_entry *ptr;
+  st_table_entry *ptr;
 
   hash_val = do_hash((void *)key, table);
   FIND_ENTRY(table, ptr, hash_val, bin_pos);
@@ -332,8 +328,7 @@ static inline int st_insert_safe_inner(register st_table_t table,
 
 /* ハッシュ表に新たなエントリーを追加し正の値を返す.
  * エントリが存在した場合は, テーブルを変更せずに、0を返す. */
-int st_insert_safe(register st_table_t table, register st_data_t key,
-                   st_data_t value) {
+int st_insert_safe(st_table_t table, st_data_t key, st_data_t value) {
   int ret = st_insert_safe_inner(table, key, value);
   if (ret && (table->num_entries / table->num_bins) > ST_DEFAULT_MAX_DENSITY) {
     rehash(table);
@@ -358,8 +353,8 @@ void st_add_direct(st_table_t table, st_data_t key, st_data_t value) {
   }
 }
 
-static void rehash(register st_table_t table) {
-  register st_table_entry *ptr, *next, **new_bins;
+static void rehash(st_table_t table) {
+  st_table_entry *ptr, *next, **new_bins;
   int i, old_num_bins = table->num_bins, new_num_bins;
   unsigned long hash_val;
 
@@ -420,11 +415,10 @@ st_table_t st_copy(st_table_t old_table) {
 /* ハッシュ表tableのキーkeyのデータを削除する.
  * keyに対応するデータが存在しなかった場合は0を返し,
  * keyに対応するデータが存在する場合は, valueに値をセットした後, 正数を返す. */
-int st_delete(register st_table_t table, register st_data_t key,
-              st_data_t *value) {
+int st_delete(st_table_t table, st_data_t key, st_data_t *value) {
   unsigned long hash_val;
   st_table_entry *tmp;
-  register st_table_entry *ptr;
+  st_table_entry *ptr;
 
   hash_val = do_hash_bin((void *)key, table);
   ptr = table->bins[hash_val];
@@ -457,10 +451,10 @@ int st_delete(register st_table_t table, register st_data_t key,
   return 0;
 }
 
-int st_delete_safe(register st_table_t table, register st_data_t *key,
-                   st_data_t *value, st_data_t never) {
+int st_delete_safe(st_table_t table, st_data_t *key, st_data_t *value,
+                   st_data_t never) {
   unsigned long hash_val;
-  register st_table_entry *ptr;
+  st_table_entry *ptr;
 
   hash_val = do_hash_bin((void *)*key, table);
   ptr = table->bins[hash_val];
@@ -782,8 +776,8 @@ int st_equals(st_table_t st1, st_table_t st2) {
  */
 #define FNV_32_PRIME 0x01000193
 
-long st_strhash(register const char *string) {
-  register unsigned long hval = FNV1_32A_INIT;
+long st_strhash(const char *string) {
+  unsigned long hval = FNV1_32A_INIT;
 
   /*
    * FNV-1a hash each octet in the buffer
