@@ -528,7 +528,7 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnAtomRef a2, LmnLinkAttr t2) {
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_intersect, (st_data_t)a1);
-  // delete (LmnSetRef)a1;
+  delete (LmnSetRef)a1;
   if (st_num(tbl) > 0) {
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a0, t0,
                     LMN_ATTR_GET_VALUE(t0));
