@@ -258,6 +258,12 @@ unsigned long Queue::entry_num() {
  *  DeQue
  */
 
+Deque::Deque(unsigned int init_size) {
+  LMN_ASSERT(init_size > 0);
+  deq_init(this, init_size);
+}
+
+
 /* contains */
 BOOL deq_contains(const Deque *deq, LmnWord keyp) {
   unsigned int i = deq->tail;
@@ -275,7 +281,7 @@ Deque *deq_copy(Deque *deq) {
   Deque *new_deq;
 
   i = deq->tail;
-  new_deq = deq_make(deq_num(deq) > 0 ? deq_num(deq) : 1);
+  new_deq = new Deque(deq_num(deq) > 0 ? deq_num(deq) : 1);
 
   while (i != deq->head) {
     DEQ_DEC(i, deq->cap);

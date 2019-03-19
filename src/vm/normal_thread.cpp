@@ -145,7 +145,7 @@ void normal_parallel_init(void) {
   for (i = 0; i < lmn_env.core_num; i++) {
     lmn_thread_create(&findthread[i], normal_thread, &(thread_info[i]->id));
   }
-  temp = deq_make(1);
+  temp = new Deque(1);
   walltime = 0;
   success_temp_check = 0;
   fail_temp_check = 0;
