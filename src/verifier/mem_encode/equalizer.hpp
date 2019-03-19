@@ -773,7 +773,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
 
     if (f != satom->get_functor())
       return FALSE;
-    if (!visitlog_put_atom(log, satom))
+    if (!log->put_atom(satom))
       return FALSE;
     ref_log[*i_ref].v = (LmnWord)atom;
     ref_log[*i_ref].type = BS_LOG_TYPE_ATOM;
@@ -820,7 +820,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
       }
     }
 
-    visitlog_put_mem(log, in_mem);
+    log->put_mem(in_mem);
     ref_log[*i_ref].v = (LmnWord)in_mem;
     ref_log[*i_ref].type = BS_LOG_TYPE_MEM;
     (*i_ref)++;
@@ -835,7 +835,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
 
   BOOL mem_eq_enc_mem(LmnBinStrRef bs, int *i_bs, LmnMembraneRef mem,
                       BsDecodeLog *ref_log, int *i_ref, VisitLog *log) {
-    if (!visitlog_put_mem(log, mem))
+    if (!log->put_mem(mem))
       return FALSE;
     ref_log[*i_ref].v = (LmnWord)mem;
     ref_log[*i_ref].type = BS_LOG_TYPE_MEM;
@@ -861,7 +861,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
       (*i_bs) += BS_INT_SIZE;
 
       if ((attr == LMN_INT_ATTR) && (n == (LmnWord)atom)) {
-        visitlog_put_data(log);
+        log->put_data();
         return TRUE;
       }
     } else if (tag == TAG_DBL_DATA) {
@@ -870,7 +870,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
 
       if ((attr == LMN_DBL_ATTR) &&
           (n == lmn_get_double((LmnDataAtomRef)atom))) {
-        visitlog_put_data(log);
+        log->put_data();
         return TRUE;
       }
     } else if (tag == TAG_SP_ATOM_DATA) {
@@ -880,7 +880,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
       auto n = sp_atom_decoder(type)(bytes);
       *i_bs = scanner.location();
       if (attr == LMN_SP_ATOM_ATTR && SP_ATOM_EQ(n, atom)) {
-        visitlog_put_data(log);
+        log->put_data();
         return true;
       }
     } else {
@@ -999,7 +999,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     auto hl_root =
         lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
 
-    visitlog_put_data(log);
+    log->put_data();
     return lmn_hyperlink_eq_hl((HyperLink *)ref_log[ref].v, hl_root);
   }
 
@@ -1041,7 +1041,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     if (lmn_hyperlink_element_num(hl_root) != bs_hl_num)
       return false;
 
-    if (!visitlog_put_hlink(log, hl_root))
+    if (!log->put_hlink(hl_root))
       return false;
     ref_log[*i_ref].v = (LmnWord)hl_root;
     ref_log[*i_ref].type = BS_LOG_TYPE_HLINK;

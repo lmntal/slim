@@ -173,7 +173,7 @@ public:
 
     auto hl_num = lmn_hyperlink_element_num(hl_root);
 
-    visitlog_put_hlink(log, hl_root); /* 訪問済みにした */
+    log->put_hlink(hl_root); /* 訪問済みにした */
     push(TAG_HLINK);
     push((const BYTE *)&hl_num, BS_HLINK_NUM_SIZE);
 

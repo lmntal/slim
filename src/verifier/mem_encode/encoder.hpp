@@ -118,7 +118,7 @@ struct encoder {
 
     if (last_valid) {
       /* 書き込みに成功した分子をログに記録して、次の分子に進む */
-      visitlog_push_checkpoint(visited, last_valid_checkpoint);
+      visited->push_checkpoint(last_valid_checkpoint);
       write_mems(mem, last_valid_bsp, visited);
 
       if (last_valid_bsp.is_valid()) {
@@ -150,7 +150,7 @@ struct encoder {
       return;
     }
 
-    visitlog_put_mem(visited, mem);
+    visited->put_mem(mem);
     bsp.push_start_mem(LMN_MEM_NAME_ID(mem));
 
     if (!bsp.is_valid())
@@ -223,7 +223,7 @@ struct encoder {
       auto in = (LmnSymbolAtomRef)satom->get_link(0);
       auto in_mem = LMN_PROXY_GET_MEM(in);
       if (visitlog_get_atom(visited, in, NULL)) {
-        visitlog_put_atom(visited, in);
+        visited->put_atom(in);
       }
       write_mem(in_mem, in->get_link(1), in->get_attr(1),
                 LMN_ATTR_GET_VALUE(in->get_attr(1)), bsp, visited,
@@ -235,7 +235,7 @@ struct encoder {
       bsp.push_escape_mem();
 
       if (visitlog_get_atom(visited, satom, NULL)) {
-        visitlog_put_atom(visited, satom);
+        visited->put_atom(satom);
       }
 
       write_mol(out->get_link(1), out->get_attr(1),
@@ -243,7 +243,7 @@ struct encoder {
                 is_id);
     } else if (!visitlog_get_atom(visited, satom, &n_visited)) {
       /* 未訪問のシンボルアトムの場合 */
-      visitlog_put_atom(visited, satom);
+      visited->put_atom(satom);
       bsp.push_atom(satom);
       if (!bsp.is_valid())
         return;
@@ -314,7 +314,7 @@ struct encoder {
       /* 書き込みに成功した分子をログに記録して、次の分子に進む */
       auto t = atoms[last_valid_i];
       atoms[last_valid_i] = 0;
-      visitlog_push_checkpoint(visited, last_valid_checkpoint);
+      visited->push_checkpoint(last_valid_checkpoint);
       write_mols(atoms, last_valid_bsp, visited);
       atoms[last_valid_i] = t;
 

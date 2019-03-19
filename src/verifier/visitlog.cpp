@@ -36,64 +36,6 @@
  */
 #include "visitlog.h"
 
-
-
-/* チェックポイントをログに追加する */
-void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp) {
-  int i;
-
-  vec_push(visitlog->checkpoints, (vec_data_t)cp);
-  for (i = 0; i < vec_num(cp->elements); i++) {
-    proc_tbl_put(visitlog->tbl, vec_get(cp->elements, i), visitlog->ref_n++);
-    visitlog->element_num++;
-  }
-  visitlog->element_num += cp->n_data_atom;
-}
-
-/* ログにpを追加し, 正の値を返す. すでにpが存在した場合は0を返す.
- * 通常この関数ではなくput_atom, put_memを使用する. */
-int visitlog_put(VisitLogRef visitlog, LmnWord p) {
-  if (proc_tbl_put_new(visitlog->tbl, p, visitlog->ref_n++)) {
-    if (vec_num(visitlog->checkpoints) > 0) {
-      CheckpointRef checkpoint =
-          (CheckpointRef)vec_last(visitlog->checkpoints);
-      vec_push(checkpoint->elements, p);
-    }
-    visitlog->element_num++;
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-/* ログにアトムを追加し, 正の値を返す. すでにアトムが存在した場合は0を返す */
-int visitlog_put_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom) {
-  return visitlog_put(visitlog, atom->get_id());
-}
-
-/* ログに膜を追加し, 正の値を返す. すでに膜が存在した場合は0を返す */
-int visitlog_put_mem(VisitLogRef visitlog, LmnMembraneRef mem) {
-  return visitlog_put(visitlog, lmn_mem_id(mem));
-}
-
-/* ログにハイパーリンクを追加し, 正の値を返す.
- * すでにハイパーリンクが存在した場合は0を返す */
-int visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl) {
-  return visitlog_put(visitlog, LMN_HL_ID(hl));
-}
-
-/* ログにデータアトムを追加する.
- * （引数がログしか無いことから分かるように,
- * 単に訪問したアトムを数えるために使用する） */
-void visitlog_put_data(VisitLogRef visitlog) {
-  if (vec_num(visitlog->checkpoints) > 0) {
-    struct Checkpoint *checkpoint =
-        (struct Checkpoint *)vec_last(visitlog->checkpoints);
-    checkpoint->n_data_atom++;
-  }
-  visitlog->element_num++;
-}
-
 /* ログに記録されたアトムatomに対応する値をvalueに設定し, 正の値を返す.
  * ログにatomが存在しない場合は, 0を返す. */
 int visitlog_get_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom,
