@@ -529,7 +529,7 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_intersect, (st_data_t)a1);
   LmnSetRef tmp = (LmnSetRef)a1;
-  delete (LmnSetRef)a1;
+  // delete (LmnSetRef)a1;
   if (st_num(tbl) > 0) {
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a0, t0,
                     LMN_ATTR_GET_VALUE(t0));
@@ -538,8 +538,8 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
         mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
-    if (a0 != tmp)
-      delete (LmnSetRef)a0;
+    // if (a0 != tmp)
+    // delete (LmnSetRef)a0;
   }
 }
 
@@ -579,7 +579,7 @@ void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   st_table_t tbl = ((LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_diff, (st_data_t)a1);
   LmnSetRef tmp = (LmnSetRef)a1;
-  delete (LmnSetRef)a1;
+  // delete (LmnSetRef)a1;
   if (st_num(tbl) > 0) {
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a0, t0,
                     LMN_ATTR_GET_VALUE(t0));
@@ -588,8 +588,8 @@ void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
         mem, lmn_functor_intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), (LmnAtomRef)empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
-    if (a0 != tmp)
-      delete (LmnSetRef)a0;
+    // if (a0 != tmp)
+    // delete (LmnSetRef)a0;
   }
 }
 
