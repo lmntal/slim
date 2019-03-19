@@ -307,7 +307,7 @@ void Deque::push_tail(LmnWord keyp) {
   if (deq_num(this) == this->cap - 1) {
     this->extend();
   }
-  (this->tbl)[deq_tail(this)] = keyp;
+  (this->tbl)[this->tail] = keyp;
   DEQ_INC(this->tail, this->cap);
 }
 

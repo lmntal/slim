@@ -117,9 +117,6 @@ struct Deque {
 typedef struct Deque Deque;
 typedef LmnWord deq_data_t;
 
-#define deq_cap(V) ((V)->cap)
-#define deq_head(V) ((V)->head)
-#define deq_tail(V) ((V)->tail)
 #define deq_num(V)                                                             \
   ((V)->tail > (V)->head ? (V)->tail - (V)->head - 1                           \
                          : (V)->cap - (V)->head + (V)->tail - 1)
@@ -139,7 +136,7 @@ void deq_resize(Deque *deq, unsigned int size, deq_data_t val);
 void deq_sort(const Deque *deq, int (*compare)(const void *, const void *));
 
 static inline unsigned long deq_space_inner(Deque *deq) {
-  return deq_cap(deq) * sizeof(deq_data_t);
+  return deq->cap * sizeof(deq_data_t);
 }
 
 static inline unsigned long deq_space(Deque *deq) {
