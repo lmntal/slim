@@ -1038,8 +1038,8 @@ static inline void dmem_root_commit_atom(struct MemDeltaRoot *d,
   int i;
   int arity = src->get_link_num();
 
-  /* printf("commit atom %s %p -> %p\n", LMN_SATOM_STR(src), src, atm); */
-  /* printf("%s(", LMN_SATOM_STR(atm)); */
+  /* printf("commit atom %s %p -> %p\n", src->str(), src, atm); */
+  /* printf("%s(", atm->str()); */
   /* for (i = 0; i < arity; i++) { */
   /*   if (i>0) printf(","); */
   /*   printf("%p", LMN_SATOM(atm->get_link(i))); */
@@ -1143,7 +1143,7 @@ static inline void dmem_root_revert_atom(struct MemDeltaRoot *d,
   int i;
   int arity = src->get_link_num();
 
-  /* printf("revert atom: %s %p -> %p\n", LMN_SATOM_STR(src), atom, src); */
+  /* printf("revert atom: %s %p -> %p\n", src->str(), atom, src); */
 
   for (i = 0; i < arity; i++) {
     LmnLinkAttr attr = src->get_attr(i);
@@ -1283,7 +1283,7 @@ void dmem_root_remove_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem) {
     DMEM_EACH_FUNC_ATOM(d, mem, LMN_OUT_PROXY_FUNCTOR, opxy, {
       LmnSymbolAtomRef a0 =
           (LmnSymbolAtomRef)(dmem_root_get_link(root_d, opxy, 0));
-      /* printf("a0 = %s %p, parent = %p, mem = %p\n", LMN_SATOM_STR(a0), a0,
+      /* printf("a0 = %s %p, parent = %p, mem = %p\n", a0->str(), a0,
        * dmem_root_get_parent(root_d, LMN_PROXY_GET_MEM(a0)), mem); */
       if (dmem_root_get_parent(root_d, LMN_PROXY_GET_MEM(a0)) !=
               mem && /* opxyのリンク先が子膜でない場合 */
@@ -1419,7 +1419,7 @@ void dmem_root_insert_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
 
   for (i = 0; i < vec_num(&remove_list); i++) {
     /* printf("insert proxy remove atom %s %p\n",
-     * LMN_SATOM_STR(LMN_SATOM(vec_get(&remove_list, i))),
+     * LMN_SATOM(vec_get(&remove_list, i))->str(),
      * LMN_SATOM(vec_get(&remove_list, i))); */
     LmnSymbolAtomRef a = (LmnSymbolAtomRef)(vec_get(&remove_list, i));
     if (parent_d)
@@ -1588,7 +1588,7 @@ static void dmem_dump(struct MemDelta *d) {
   /*   LmnSymbolAtomRef src = LMN_SATOM(vec_get(&d->modified_atoms, i)); */
   /*   LmnSymbolAtomRef new = LMN_SATOM(vec_get(&d->modified_atoms, i+1)); */
 
-  /*   printf("modify %s %p -> %p\n", LMN_SATOM_STR(src), src, new); */
+  /*   printf("modify %s %p -> %p\n", src->str(), src, new); */
   /* } */
 
   for (i = 0; i < vec_num(&d->new_atoms); i++) {
@@ -1598,7 +1598,7 @@ static void dmem_dump(struct MemDelta *d) {
 
     printf("new atom mem= %p, %p ", d->mem, a);
 
-    printf("%s(", LMN_SATOM_STR(a));
+    printf("%s(", a->str());
     for (j = 0; j < arity; j++) {
       if (j > 0)
         printf(",");
@@ -1609,7 +1609,7 @@ static void dmem_dump(struct MemDelta *d) {
 
   for (i = 0; i < vec_num(&d->del_atoms); i++) {
     printf("del atom %s %p\n",
-           LMN_SATOM_STR((LmnSymbolAtomRef)(vec_get(&d->del_atoms, i))),
+           ((LmnSymbolAtomRef)(vec_get(&d->del_atoms, i)))->str(),
            (LmnSymbolAtomRef)(vec_get(&d->del_atoms, i)));
   }
 

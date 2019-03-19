@@ -424,7 +424,7 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
   /* ':-'_3アトムがプロキシにつながっていなければ中止 */
   for (int j = 0; j < 3; j++) {
     LmnSymbolAtomRef pa = (LmnSymbolAtomRef)imply->get_link(j);
-    if (!LMN_SATOM_IS_PROXY(pa))
+    if (!pa->is_proxy())
       return NULL;
   }
 

@@ -1767,7 +1767,7 @@ BOOL ground_atoms(
       }
 
       /* lがプロキシを指していれば */
-      if (LMN_SATOM_IS_PROXY((LmnSymbolAtomRef)l_ap)) {
+      if (((LmnSymbolAtomRef)l_ap)->is_proxy()) {
         result = FALSE;
         goto returning;
       }
@@ -1874,7 +1874,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
     if (n_root_data == 0) {
       while (vec_num(stack) > 0) {
         LmnSymbolAtomRef src_atom = (LmnSymbolAtomRef)vec_pop(stack);
-        if (LMN_SATOM_IS_PROXY(src_atom)) {
+        if (src_atom->is_proxy()) {
           ok = FALSE;
           break;
         }

@@ -121,7 +121,7 @@ void cb_atom_functor(LmnReactCxtRef rc,
   if (LMN_ATTR_IS_DATA(t0)) 
     lmn_fatal("atom.functor cannot be applied to non-symbol atoms\
  (numbers, strings, ...).");
-  LmnStringRef s = new LmnString(LMN_SATOM_STR((LmnSymbolAtomRef)a0));
+  LmnStringRef s = new LmnString(((LmnSymbolAtomRef)a0)->str());
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1),
 		  s, LMN_SP_ATOM_ATTR, 0);
 

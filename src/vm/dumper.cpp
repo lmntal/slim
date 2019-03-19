@@ -877,7 +877,7 @@ static void dump_dot_cell(LmnMembraneRef mem, SimpleHashtbl *ht, int *data_id,
                                 LmnLinkAttr attr = atom->get_attr(i);
                                 if (LMN_ATTR_IS_DATA(attr)) {
                                   fprintf(stdout, "%lu [label = \"",
-                                          (LmnWord)LMN_SATOM_PLINK(atom, i));
+                                          (LmnWord)atom->get_plink(i));
                                   dump_data_atom(
                                       out, atom->get_link(i), attr);
                                   fprintf(stdout, "\", shape = box];\n");
@@ -904,7 +904,7 @@ static void dump_dot_cell(LmnMembraneRef mem, SimpleHashtbl *ht, int *data_id,
                   continue;
                 fprintf(stdout, "%lu -- ", (LmnWord)atom);
                 if (LMN_ATTR_IS_DATA(attr)) {
-                  fprintf(stdout, " %lu", (LmnWord)LMN_SATOM_PLINK(atom, i));
+                  fprintf(stdout, " %lu", (LmnWord)atom->get_plink(i));
                   (*data_id)++;
                 } else { /* symbol atom */
                   struct AtomRec *ar;
@@ -1001,7 +1001,7 @@ static void lmn_dump_atom_json(LmnSymbolAtomRef atom) {
   int arity;
   fprintf(stdout, "{");
   fprintf(stdout, "\"id\":%d,", (int)atom->get_id());
-  fprintf(stdout, "\"name\":\"%s\",", LMN_SATOM_STR(atom));
+  fprintf(stdout, "\"name\":\"%s\",", atom->str());
   fprintf(stdout, "\"links\":[");
   {
     BOOL needs_comma = FALSE;

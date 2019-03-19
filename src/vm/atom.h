@@ -93,7 +93,7 @@ typedef LmnWord LmnDataAtomRef;
  *     But, incompletely-specified.
  *
  */
-typedef struct LmnAtomData *LmnSymbolAtomRef;
+typedef struct LmnSymbolAtom *LmnSymbolAtomRef;
 
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */
@@ -129,7 +129,7 @@ enum LmnLinkAttribute {
 #include "special_atom.h"
 #include "symbol.h"
 
-struct LmnAtomData {
+struct LmnSymbolAtom {
   LmnSymbolAtomRef prev;
   LmnSymbolAtomRef next;
   LmnWord procId;
@@ -225,6 +225,24 @@ struct LmnAtomData {
    * @memberof LmnSymbolAtom
    */
   void set_link(int n, LmnAtomRef v);
+
+  /**
+   * @brief アトムATOMのN番目のリンク情報のフィールドへのポインタを取得する
+   * @memberof LmnSymbolAtom
+   */
+  const LmnAtomRef *get_plink(int n) const;
+
+  /**
+   * @brief check whether an atom is a proxy atom.
+   * @memberof LmnSymbolAtom
+   */
+  BOOL is_proxy() const;
+
+  /**
+   * @brief get a string representation of a symbol atom.
+   * @memberof LmnSymbolAtom
+   */
+  const char *str() const;
 };
 
 /**
@@ -241,12 +259,6 @@ int LMN_ATTR_WORDS(int arity);
  * @memberof LmnSymbolAtom
  */
 void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v);
-
-/**
- * @brief アトムATOMのN番目のリンク情報のフィールドへのポインタを取得する
- * @memberof LmnSymbolAtom
- */
-const LmnAtomRef *LMN_SATOM_PLINK(LmnSymbolAtomRef atom, int n);
 
 /**
  * @brief アトムのサイズを取得する
@@ -289,11 +301,6 @@ int LMN_ATTR_GET_VALUE(int X);
 void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X);
 
 /**
- * @brief check whether an atom is a proxy atom.
- * @memberof LmnSymbolAtom
- */
-BOOL LMN_SATOM_IS_PROXY(LmnSymbolAtomRef ATOM);
-/**
  * @brief get the membrane of a proxy
  * @memberof LmnSymbolAtom
  */
@@ -314,11 +321,6 @@ BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC);
  */
 BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC);
 
-/**
- * @brief get a string representation of a symbol atom.
- * @memberof LmnSymbolAtom
- */
-const char *LMN_SATOM_STR(LmnSymbolAtomRef ATOM);
 /**
  * @brief get a string representation of a functor.
  * @memberof LmnFunctor

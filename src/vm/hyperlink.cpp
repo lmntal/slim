@@ -519,8 +519,7 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element) {
                 if (!LMN_ATTR_IS_DATA(atom->get_attr(0)) &&
                     atom->get_link(0)) {
                   fprintf(f, " %13s",
-                          LMN_SATOM_STR(
-                              (LmnSymbolAtomRef)atom->get_link(0)));
+                          ((LmnSymbolAtomRef)atom->get_link(0))->str());
                 } else {
                   fprintf(f, " %13s", "---");
                 }
@@ -667,7 +666,7 @@ void hyperlink_print_old() {
   //        /* linked with */
   //        if (!LMN_ATTR_IS_DATA(atom->get_attr(0)) &&
   //        atom->get_link(0))
-  //          printf(" %13s", LMN_SATOM_STR(atom->get_link(0)));
+  //          printf(" %13s", atom->get_link(0)->str());
   //        else
   //          printf(" %13s", "---");
   //

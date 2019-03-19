@@ -41,52 +41,69 @@
 
 #include "hyperlink.h"
 
-LmnSymbolAtomRef LmnAtomData::get_prev() const{
+LmnSymbolAtomRef LmnSymbolAtom::get_prev() const{
   return this->prev;
 }
 
-void LmnAtomData::set_prev(LmnSymbolAtomRef prev) {
+void LmnSymbolAtom::set_prev(LmnSymbolAtomRef prev) {
   this->prev = prev;
 }
 
-LmnSymbolAtomRef LmnAtomData::get_next() const{
+LmnSymbolAtomRef LmnSymbolAtom::get_next() const{
   return this->next;
 }
-void LmnAtomData::set_next(LmnSymbolAtomRef next) {
+void LmnSymbolAtom::set_next(LmnSymbolAtomRef next) {
   this->next = next;
 }
 
-LmnWord LmnAtomData::get_id() const {
+LmnWord LmnSymbolAtom::get_id() const {
   return this->procId;
 }
-void LmnAtomData::set_id(LmnWord id){
+void LmnSymbolAtom::set_id(LmnWord id){
   this->procId = id;
 }
 
-LmnFunctor LmnAtomData::get_functor() const{
+LmnFunctor LmnSymbolAtom::get_functor() const{
   return this->functor;
 }
-void LmnAtomData::set_functor(LmnFunctor func) {
+void LmnSymbolAtom::set_functor(LmnFunctor func) {
   this->functor = func;
 }
-int LmnAtomData::get_arity() const{
+int LmnSymbolAtom::get_arity() const{
   return LMN_FUNCTOR_ARITY(this->get_functor());
 }
-int LmnAtomData::get_link_num() const{
+int LmnSymbolAtom::get_link_num() const{
   return LMN_FUNCTOR_GET_LINK_NUM(this->get_functor());
 }
-LmnLinkAttr LmnAtomData::get_attr(int n) const{
+LmnLinkAttr LmnSymbolAtom::get_attr(int n) const{
   return this->attr[n];
 }
 /* set link attribute value. Tag is not changed. */
-void LmnAtomData::set_attr(int n, LmnLinkAttr attr) {
+void LmnSymbolAtom::set_attr(int n, LmnLinkAttr attr) {
   this->attr[n] = attr;
 }
-LmnAtomRef LmnAtomData::get_link(int n) const{
+LmnAtomRef LmnSymbolAtom::get_link(int n) const{
   return this->links[LMN_ATTR_WORDS(this->get_arity()) + n];
 }
-void LmnAtomData::set_link(int n, LmnAtomRef v) {
+void LmnSymbolAtom::set_link(int n, LmnAtomRef v) {
   this->links[LMN_ATTR_WORDS(this->get_arity()) + n] = v;
+}
+
+const LmnAtomRef *LmnSymbolAtom::get_plink(int n) const{
+  return &this->links[LMN_ATTR_WORDS(this->get_arity()) + n];
+}
+
+BOOL LmnSymbolAtom::is_proxy() const{
+  return LMN_IS_PROXY_FUNCTOR(this->get_functor());
+}
+
+const char *LmnSymbolAtom::str() const {
+  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(this->get_functor()));
+}
+
+size_t LMN_SATOM_SIZE(int arity) {
+  return offsetof(struct LmnSymbolAtom, links) +
+         (LMN_ATTR_WORDS(arity) + arity) * LMN_WORD_BYTES;
 }
 
 int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor func) {
@@ -97,17 +114,8 @@ int LMN_ATTR_WORDS(int arity) {
   return 1 + ((arity + sizeof(LmnFunctor) - 1) >> LMN_WORD_SHIFT);
 }
 
-const LmnAtomRef *LMN_SATOM_PLINK(LmnSymbolAtomRef atom, int n) {
-  return &atom->links[LMN_ATTR_WORDS(atom->get_arity()) + n];
-}
-
 void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v) {
   atom->set_link(0, v);
-}
-
-size_t LMN_SATOM_SIZE(int arity) {
-  return offsetof(struct LmnAtomData, links) +
-         (LMN_ATTR_WORDS(arity) + arity) * LMN_WORD_BYTES;
 }
 
 BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC) {
@@ -127,9 +135,6 @@ void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X) {
 
 /////
 
-BOOL LMN_SATOM_IS_PROXY(LmnSymbolAtomRef ATOM) {
-  return LMN_IS_PROXY_FUNCTOR(ATOM->get_functor());
-}
 LmnMembraneRef LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM) {
   return (LmnMembraneRef)PROXY_ATM->get_link(2);
 }
@@ -146,9 +151,6 @@ BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC) {
 
 /////
 
-const char *LMN_SATOM_STR(LmnSymbolAtomRef ATOM) {
-  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(ATOM->get_functor()));
-}
 const char *LMN_FUNCTOR_STR(LmnFunctor F) {
   return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(F));
 }
