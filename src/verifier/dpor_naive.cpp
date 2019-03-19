@@ -722,7 +722,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
     }
   }
 
-  while (!is_empty_queue(mc_por.queue)) {
+  while (!mc_por.queue->is_empty()) {
     TransitionRef succ_t = (TransitionRef)mc_por.queue->dequeue();
     if (!is_independent_of_ample(succ_t)) {
       /* Fに反する経路Pが検出されたので偽を返して終了する */

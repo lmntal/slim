@@ -367,7 +367,7 @@ void owcty_start(LmnWorker *w) {
     FINISH_CYCLE_SEARCH();
   }
 
-  if (!is_empty_queue(OWCTY_WORKER_AQ1(w))) {
+  if (!OWCTY_WORKER_AQ1(w)->is_empty()) {
     owcty_found_accepting_cycle(w, worker_states(w)->automata());
   }
 }
@@ -407,7 +407,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
                                       Queue *secondary, BOOL set_flag,
                                       BOOL is_up) {
   StateSpaceRef ss = worker_states(w);
-  while (!is_empty_queue(primary)) {
+  while (!primary->is_empty()) {
     State *s;
     unsigned int i, cnt;
 
@@ -488,7 +488,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
 
       vec_init(&search, 64);
       vec_init(&path, 32);
-      while (!is_empty_queue(OWCTY_WORKER_AQ1(w))) {
+      while (!OWCTY_WORKER_AQ1(w)->is_empty()) {
         State *seed = (State *)OWCTY_WORKER_AQ1(w)->dequeue();
 
         if (state_is_end(a, seed)) {
@@ -629,7 +629,7 @@ void map_start(LmnWorker *w, State *u) {
 void map_iteration_start(LmnWorker *w) {
   lmn_workers_synchronization(w, NULL);
 
-  while (!is_empty_queue(MAP_WORKER_DEL_G(w))) {
+  while (!MAP_WORKER_DEL_G(w)->is_empty()) {
     State *seed = (State *)MAP_WORKER_DEL_G(w)->dequeue();
     if (seed && !smap_is_not_delete(seed)) {
       smap_set_deleted(seed);
@@ -898,7 +898,7 @@ void bledge_start(LmnWorker *w) {
 
   START_CYCLE_SEARCH();
 
-  while (!is_empty_queue(BLE_WORKER_LAYER_Q(w))) {
+  while (!BLE_WORKER_LAYER_Q(w)->is_empty()) {
     State *u;
     unsigned int i;
 

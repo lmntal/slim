@@ -164,7 +164,7 @@ LmnWord Queue::dequeue() {
     q_lock(this, Q_DEQ);
     /*q_lock(this,Q_ENQ);*/
   }
-  if (!is_empty_queue(this)) {
+  if (!this->is_empty()) {
     Node *sentinel, *next;
     sentinel = this->head;
     next = sentinel->next;
@@ -186,6 +186,10 @@ LmnWord Queue::dequeue() {
 
 
 /* キューqが空なら真を返す.*/
+BOOL Queue::is_empty() {
+  return (this->head == this->tail) && (this->enq_num == this->deq_num);
+}
+
 BOOL is_empty_queue(Queue *q) {
   return (q->head == q->tail) && (q->enq_num == q->deq_num);
 }

@@ -188,7 +188,7 @@ void dfs_worker_finalize(LmnWorker *w) {
 
 /* DFS Worker Queueが空の場合に真を返す */
 BOOL dfs_worker_check(LmnWorker *w) {
-  return DFS_WORKER_QUEUE(w) ? is_empty_queue(DFS_WORKER_QUEUE(w)) : TRUE;
+  return DFS_WORKER_QUEUE(w) ? DFS_WORKER_QUEUE(w)->is_empty() : TRUE;
 }
 
 /* WorkerにDFSを割り当てる */
@@ -208,7 +208,7 @@ static inline LmnWord dfs_work_stealing(LmnWorker *w) {
   dst = worker_next(w);
 
   while (w != dst) {
-    if (worker_is_active(dst) && !is_empty_queue(DFS_WORKER_QUEUE(dst))) {
+    if (worker_is_active(dst) && !DFS_WORKER_QUEUE(dst)->is_empty()) {
       worker_set_active(w);
       worker_set_stealer(w);
       return DFS_WORKER_QUEUE(dst)->dequeue();
@@ -258,7 +258,7 @@ static inline LmnWord mapdfs_work_stealing(LmnWorker *w) {
   dst = worker_next_generator(w);
 
   while (w != dst) {
-    if (worker_is_active(dst) && !is_empty_queue(DFS_WORKER_QUEUE(dst))) {
+    if (worker_is_active(dst) && !DFS_WORKER_QUEUE(dst)->is_empty()) {
       worker_set_active(w);
       worker_set_stealer(w);
       return DFS_WORKER_QUEUE(dst)->dequeue();
@@ -329,7 +329,7 @@ void mcdfs_start(LmnWorker *w) {
     }
   } else {
     while (!wp->mc_exit) {
-      if (!s && is_empty_queue(DFS_WORKER_QUEUE(w))) {
+      if (!s && DFS_WORKER_QUEUE(w)->is_empty()) {
         break;
         /*
         if (lmn_workers_termination_detection_for_rings(w)) {
@@ -404,7 +404,7 @@ void dfs_start(LmnWorker *w) {
     }
   } else { /* Stack-Slicing */
     while (!wp->mc_exit) {
-      if (!s && is_empty_queue(DFS_WORKER_QUEUE(w))) {
+      if (!s && DFS_WORKER_QUEUE(w)->is_empty()) {
         worker_set_idle(w);
         if (lmn_workers_termination_detection_for_rings(w)) {
           /* termination is detected! */
@@ -426,7 +426,7 @@ void dfs_start(LmnWorker *w) {
       } else {
         worker_set_active(w);
 #ifdef DEBUG
-        if (!is_empty_queue(DFS_WORKER_QUEUE(w)) &&
+        if (!DFS_WORKER_QUEUE(w)->is_empty() &&
             !((Queue *)DFS_WORKER_QUEUE(w))->head->next) {
           printf("%d : queue is not empty? %d\n", worker_id(w),
                  queue_entry_num(DFS_WORKER_QUEUE(w)));
