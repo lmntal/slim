@@ -434,7 +434,7 @@ void profile_statespace(LmnWorkerGroup *wp) {
     }
     mc_profiler2_makeup_report(total);
     for (i = 0; i < lmn_prof.thread_num; i++) {
-      (&(lmn_prof.lv2[i]))->destroy();
+      lmn_prof.lv2[i].destroy();
     }
     LMN_FREE(lmn_prof.lv2);
 
