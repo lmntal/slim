@@ -118,7 +118,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
     }
   }
 
-  vec_free(args);
+  delete args;
 }
 
 /* LMNtalソースコードのファイルを中間言語にコンパイルし結果のストリームを返す*/

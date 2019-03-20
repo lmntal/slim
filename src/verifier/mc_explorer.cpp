@@ -135,8 +135,8 @@ void ndfs_worker_init(LmnWorker *w) {
 }
 
 void ndfs_worker_finalize(LmnWorker *w) {
-  vec_free(NDFS_WORKER_OPEN_VEC(w));
-  vec_free(NDFS_WORKER_PATH_VEC(w));
+  delete NDFS_WORKER_OPEN_VEC(w);
+  delete NDFS_WORKER_PATH_VEC(w);
   LMN_FREE(NDFS_WORKER_OBJ(w));
 }
 
@@ -868,8 +868,8 @@ void bledge_worker_finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     q_free(BLE_WORKER_LAYER_Q(w));
   }
-  vec_free(BLE_WORKER_PATH_VEC(w));
-  vec_free(BLE_WORKER_SEARCH_VEC(w));
+  delete BLE_WORKER_PATH_VEC(w);
+  delete BLE_WORKER_SEARCH_VEC(w);
   st_free_table(BLE_WORKER_HASHSET(w));
 }
 
@@ -1021,8 +1021,8 @@ void mapndfs_worker_init(LmnWorker *w) {
 }
 
 void mapndfs_worker_finalize(LmnWorker *w) {
-  vec_free(MAPNDFS_WORKER_OPEN_VEC(w));
-  vec_free(MAPNDFS_WORKER_PATH_VEC(w));
+  delete MAPNDFS_WORKER_OPEN_VEC(w);
+  delete MAPNDFS_WORKER_PATH_VEC(w);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
@@ -1183,8 +1183,8 @@ void mcndfs_worker_init(LmnWorker *w) {
 }
 
 void mcndfs_worker_finalize(LmnWorker *w) {
-  vec_free(MAPNDFS_WORKER_OPEN_VEC(w));
-  vec_free(MAPNDFS_WORKER_PATH_VEC(w));
+  delete MAPNDFS_WORKER_OPEN_VEC(w);
+  delete MAPNDFS_WORKER_PATH_VEC(w);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {

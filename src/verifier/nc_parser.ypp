@@ -98,7 +98,7 @@ never_claim:
       automata->add_state((AutomataStateRef)states->get(i));
     }
     free($1);
-    vec_free(states);
+    delete states;
   }
 ;
 
@@ -122,7 +122,7 @@ state:
     $$ = s;
 
     free($1);
-    vec_free($4);
+    delete $4;
   }
 | SYMBOL COLON KW_SKIP {
     AutomataStateRef s;

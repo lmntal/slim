@@ -999,7 +999,7 @@ void bfs_start(LmnWorker *w) {
     }
   }
 
-  vec_free(new_ss);
+  delete new_ss;
 }
 
 static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,

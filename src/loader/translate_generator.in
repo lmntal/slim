@@ -540,11 +540,11 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 #__format_t
   label_success_$a:
-    vec_free(listvec);
+    delete listvec;
     $s;
     lmn_fatal("translate recursive error\n");
   label_fail_$a:
-    vec_free(listvec);
+    delete listvec;
     $f;
     lmn_fatal("translate recursive error\n");
 #__format
@@ -619,7 +619,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #__format_t
   label_always_$a:
     free_links(dstlovec);
-    vec_free(retvec);
+    delete retvec;
     $s;
     lmn_fatal("translate recursive error\n");
 #__format

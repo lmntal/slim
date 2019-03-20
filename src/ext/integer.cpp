@@ -99,7 +99,7 @@ void integer_set(LmnReactCxtRef rc,
     lmn_mem_push_atom(mem, (LmnAtomRef)n, LMN_INT_ATTR);
 
     for (int j = 0; j < vec_num(dstlovec); j++) LMN_FREE(dstlovec->get(j));
-    vec_free(dstlovec);
+    delete dstlovec;
     proc_tbl_free(atommap);
   }
 
@@ -109,7 +109,7 @@ void integer_set(LmnReactCxtRef rc,
   lmn_mem_delete_ground(mem, srcvec);
 
   for (i = 0; i < vec_num(srcvec); i++) LMN_FREE(srcvec->get(i));
-  vec_free(srcvec);
+  delete srcvec;
 }
 
 

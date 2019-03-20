@@ -1838,7 +1838,7 @@ static void mem_delta_free(struct MemDelta *p) {
   }
   p->new_atoms.destroy();
 
-  if (p->new_rulesets) vec_free(p->new_rulesets);
+  if (p->new_rulesets) delete p->new_rulesets;
 
   p->new_proxies.destroy();
 
@@ -2229,7 +2229,7 @@ static void dmem_revert(struct MemDelta *d) {
       lmn_mem_add_ruleset(d->mem, (LmnRuleSetRef)d->org_rulesets->get(i));
     }
 
-    vec_free(d->org_rulesets);
+    delete d->org_rulesets;
     d->org_rulesets = NULL;
   }
 

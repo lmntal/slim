@@ -246,7 +246,7 @@ void lmn_mem_free(LmnMembraneRef mem) {
   lmn_mem_rulesets_destroy(&mem->rulesets);
   env_return_id(lmn_mem_id(mem));
 #ifdef USE_FIRSTCLASS_RULE
-  vec_free(mem->firstclass_rulesets);
+  delete mem->firstclass_rulesets;
 #endif
   LMN_FREE(mem->atomset);
   LMN_FREE(mem);
@@ -1217,7 +1217,7 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
           }
         }
       }
-      vec_free(hl_childs);
+      delete hl_childs;
     } else { //既にハイパーリンクをコピーしていればunify
       lmn_hyperlink_unify(lmn_hyperlink_at_to_hl(copied_root_hlAtom),
                           (HyperLink *)t, LMN_HL_ATTRATOM((HyperLink *)t),
@@ -1349,7 +1349,7 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, Vector **ret_dstlovec,
     }
   }
 
-  vec_free(stack);
+  delete stack;
   *ret_atommap = atommap;
   if (ret_hlinkmap != NULL) {
     *ret_hlinkmap = hlinkmap;
@@ -1726,7 +1726,7 @@ BOOL ground_atoms(
                     unsearched_link_stack->pop();
                 }
               }
-              vec_free(hl_childs);
+              delete hl_childs;
             }
           }
         }
@@ -1799,7 +1799,7 @@ returning:
   for (i = 0; i < vec_num(unsearched_link_stack); i++) {
     LMN_FREE(unsearched_link_stack->get(i));
   }
-  vec_free(unsearched_link_stack);
+  delete unsearched_link_stack;
 
   if (result) {
     //*atoms = found_ground_symbol_atoms;
@@ -1915,7 +1915,7 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
     }
   }
 
-  vec_free(stack);
+  delete stack;
   delete root;
   if (guard)
     hashtbl_free(guard);
@@ -2748,9 +2748,9 @@ static inline BOOL mem_equals_children(LmnMembraneRef mem1, LmnMembraneRef mem2,
     v_mems_children1 = new Vector(child_n);
     v_mems_children2 = new Vector(child_n);
     memset(v_mems_children1->tbl, 0,
-           sizeof(vec_data_t) * vec_cap(v_mems_children1));
+           sizeof(vec_data_t) * (v_mems_children1->get_cap()));
     memset(v_mems_children2->tbl, 0,
-           sizeof(vec_data_t) * vec_cap(v_mems_children2));
+           sizeof(vec_data_t) * (v_mems_children2->get_cap()));
 
     matched = TRUE;
 
@@ -2777,8 +2777,8 @@ static inline BOOL mem_equals_children(LmnMembraneRef mem1, LmnMembraneRef mem2,
                                           current_depth);
     }
 
-    vec_free(v_mems_children1);
-    vec_free(v_mems_children2);
+    delete v_mems_children1;
+    delete v_mems_children2;
 
     return matched;
   }
@@ -2852,7 +2852,7 @@ static void mem_mk_sorted_children(Vector *vec) {
   while (!vec_is_empty(v_mems_tmp)) {
     vec->push(v_mems_tmp->pop());
   }
-  vec_free(v_mems_tmp);
+  delete v_mems_tmp;
 }
 
 /** -------------------
@@ -2904,9 +2904,9 @@ static inline BOOL mem_equals_molecules(LmnMembraneRef mem1,
     v_atoms_not_checked1 = new Vector(atom_n);
     v_atoms_not_checked2 = new Vector(atom_n);
     memset(v_atoms_not_checked1->tbl, 0,
-           sizeof(vec_data_t) * vec_cap(v_atoms_not_checked1));
+           sizeof(vec_data_t) * (v_atoms_not_checked1->get_cap()));
     memset(v_atoms_not_checked2->tbl, 0,
-           sizeof(vec_data_t) * vec_cap(v_atoms_not_checked2));
+           sizeof(vec_data_t) * (v_atoms_not_checked2->get_cap()));
 
     {
       Vector *atomvec_mem1, *atomvec_mem2;
@@ -2945,10 +2945,10 @@ static inline BOOL mem_equals_molecules(LmnMembraneRef mem1,
 
     ret = mem_equals_molecules_inner(v_log1, v_atoms_not_checked1, v_log2,
                                      v_atoms_not_checked2, current_depth);
-    vec_free(v_log1);
-    vec_free(v_log2);
-    vec_free(v_atoms_not_checked1);
-    vec_free(v_atoms_not_checked2);
+    delete v_log1;
+    delete v_log2;
+    delete v_atoms_not_checked1;
+    delete v_atoms_not_checked2;
 
     return ret;
   }
@@ -2961,11 +2961,11 @@ static void free_atomvec_data(Vector *vec) {
   for (i = 0; i < vec_num(vec); ++i) {
     atomvec_data *ad = (atomvec_data *)vec->get(i);
     if (ad) {
-      vec_free(ad->atom_ptrs);
+      delete ad->atom_ptrs;
       LMN_FREE(ad);
     }
   }
-  vec_free(vec);
+  delete vec;
 }
 
 static BOOL mem_trace_links(LmnSymbolAtomRef a1, LmnSymbolAtomRef a2,
@@ -2996,8 +2996,8 @@ static inline BOOL mem_equals_molecules_inner(Vector *v_log1,
 
       v_log1->clear();
       v_log2->clear();
-      memset(v_log1->tbl, 0, sizeof(vec_data_t) * vec_cap(v_log1));
-      memset(v_log2->tbl, 0, sizeof(vec_data_t) * vec_cap(v_log2));
+      memset(v_log1->tbl, 0, sizeof(vec_data_t) * (v_log1->get_cap()));
+      memset(v_log2->tbl, 0, sizeof(vec_data_t) * (v_log2->get_cap()));
 
       /* a2が本当にa1に対応するアトムであるか否かを実際にグラフ構造をトレースして確認する。
        * a2とa1とが1:1に対応する場合に限って matched に真が返り、
@@ -3272,7 +3272,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
                             /* ファンクタfを持つアトムが本膜内に1つも存在しない場合、このファンクタのために割いたメモリーの領域を解放する。
                              * これを怠るとメモリリークが起こるので注意!! */
                             if (vec_is_empty(ad->atom_ptrs)) {
-                              vec_free(ad->atom_ptrs);
+                              delete ad->atom_ptrs;
                               LMN_FREE(ad);
                             } else {
                               vec->push((vec_data_t)ad);
@@ -3296,7 +3296,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
     while (!vec_is_empty(v_tmp)) {
       vec->push(v_tmp->pop());
     }
-    vec_free(v_tmp);
+    delete v_tmp;
   }
 
   return vec;

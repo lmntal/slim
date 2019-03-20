@@ -360,16 +360,16 @@ static McDporData *dpor_data_make() {
 
 static void dpor_data_free(McDporData *d) {
   unsigned int i;
-  vec_free(d->wt_gatoms);
+  delete d->wt_gatoms;
   proc_tbl_free(d->wt_flags);
-  vec_free(d->ample_cand);
+  delete d->ample_cand;
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_free_table(d->delta_tbl);
   for (i = 0; i < vec_num(d->free_deltas); i++) {
     MemDeltaRoot *delt = (MemDeltaRoot *)d->free_deltas->get(i);
     dmem_root_free(delt);
   }
-  vec_free(d->free_deltas);
+  delete d->free_deltas;
   LMN_FREE(d);
 }
 
@@ -1073,9 +1073,9 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
     lmn_env.enable_por_old = org_old;
     lmn_env.delta_mem = org_del;
 
-    vec_free(reduced_stack);
-    vec_free(new_ss);
-    vec_free(search);
+    delete reduced_stack;
+    delete new_ss;
+    delete search;
   }
 }
 

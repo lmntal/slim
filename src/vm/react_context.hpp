@@ -146,7 +146,7 @@ struct LmnReactCxt : slim::vm::RuleContext {
     this->mode = from.mode;
     this->global_root = from.global_root;
 #ifdef USE_FIRSTCLASS_RULE
-    vec_free(this->insertion_events);
+    delete this->insertion_events;
     this->insertion_events = vec_copy(from.insertion_events);
 #endif
     return *this;
@@ -158,7 +158,7 @@ struct LmnReactCxt : slim::vm::RuleContext {
     }
 #ifdef USE_FIRSTCLASS_RULE
     if (this->insertion_events) {
-      vec_free(this->insertion_events);
+      delete this->insertion_events;
     }
 #endif
   }
@@ -241,11 +241,11 @@ struct McReactCxtData {
 
   ~McReactCxtData() {
     st_free_table(succ_tbl);
-    vec_free(roots);
-    vec_free(rules);
-    vec_free(props);
+    delete roots;
+    delete rules;
+    delete props;
     if (mem_deltas) {
-      vec_free(mem_deltas);
+      delete mem_deltas;
     }
   }
 };

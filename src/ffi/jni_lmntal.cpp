@@ -368,7 +368,7 @@ static void _run(file_ptr fp)
     lmn_run(start_rulesets);
   }
 
-  vec_free(start_rulesets);
+  delete start_rulesets;
 }
 
 static void show_help()

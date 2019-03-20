@@ -49,7 +49,7 @@ void sp_atom_finalize() {
   for (i = 0; i < vec_num(sp_atom_callback_tbl); i++) {
     LMN_FREE(sp_atom_callback_tbl->get(i));
   }
-  vec_free(sp_atom_callback_tbl);
+  delete sp_atom_callback_tbl;
 }
 
 int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,

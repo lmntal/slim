@@ -773,7 +773,7 @@ static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
 
 int mc_free_succ_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
   Vector *v = (Vector *)_v;
-  vec_free(v);
+  delete v;
   return ST_CONTINUE;
 }
 
@@ -852,7 +852,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
             mc_store_invalids_graph(ss->automata(), invalids_graph,
                                     path);
           }
-          vec_free(path);
+          delete path;
         }
       }
 
@@ -891,7 +891,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
                                     cycle);
           }
 
-          vec_free(path);
+          delete path;
         }
       }
 

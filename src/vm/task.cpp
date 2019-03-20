@@ -250,7 +250,7 @@ void lmn_run(Vector *start_rulesets) {
     mrc = nullptr;
   }
   if (env_proc_id_pool()) {
-    vec_free(env_proc_id_pool());
+    delete env_proc_id_pool();
   }
 }
 
@@ -792,8 +792,8 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec,
   auto result = ground_atoms(srcvec, avovec, &a, natoms, &h, &p1, v1, v2);
   atoms = std::unique_ptr<ProcessTbl>(a);
   hlinks = std::unique_ptr<ProcessTbl>(h);
-  vec_free(v1);
-  vec_free(v2);
+  delete v1;
+  delete v2;
   proc_tbl_free(p1);
   return result;
 }
@@ -2914,7 +2914,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     this->push_stackframe([=](bool result) {
       free_links(dstlovec);
-      vec_free(retvec);
+      delete retvec;
       LMN_ASSERT(result);
       return result;
     });
@@ -3162,7 +3162,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     /* 解放のための再帰 */
     this->push_stackframe([=](bool result) {
-      vec_free(listvec);
+      delete listvec;
       return result;
     });
     break;
@@ -4563,7 +4563,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       dmem_interpret(rc, rule, instr);
 
       free_links(dstlovec);
-      vec_free(retvec);
+      delete retvec;
 
       return TRUE; /* COPYGROUNDはボディに出現する */
     }
@@ -4602,10 +4602,10 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       rc->reg(listi) = {(LmnWord)listvec, 0, TT_OTHER};
 
       if (dmem_interpret(rc, rule, instr)) {
-        vec_free(listvec);
+        delete listvec;
         return TRUE;
       } else {
-        vec_free(listvec);
+        delete listvec;
         return FALSE;
       }
       break;
@@ -4976,5 +4976,5 @@ void free_links(Vector *links) {
   for (i = 0; i < vec_num(links); i++) {
     LMN_FREE(links->get(i));
   }
-  vec_free(links);
+  delete links;
 }

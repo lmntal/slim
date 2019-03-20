@@ -98,7 +98,7 @@ void visitlog_destroy(struct VisitLog *p) {
   proc_tbl_free(p->tbl);
 
   for (i = 0; i < vec_num(&p->checkpoints); i++) {
-    vec_free((Vector *)p->checkpoints.get(i));
+    delete (Vector *)p->checkpoints.get(i);
   }
   p->checkpoints.destroy();
 

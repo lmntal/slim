@@ -212,7 +212,7 @@ Vector vec_const_temporary_from_array(int size, const LmnWord *w) {
   v.num = size;
   v.cap = size;
   v.tbl = (LmnWord *)w;
-  return v; /* コピーして返す tblはwをそのまま使うのでvec_freeしてはいけない */
+  return v; /* コピーして返す tblはwをそのまま使うのでdelete Vectorしてはいけない */
 }
 
 int vec_inserted_index(Vector *v, LmnWord w) {

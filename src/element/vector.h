@@ -68,6 +68,11 @@ struct Vector {
     memcpy(tbl, v.data(), sizeof(T) * v.size());
     num = v.size();
   }
+  ~Vector(){
+    if(tbl != NULL){
+      LMN_FREE(tbl);
+    }
+  }
   void *init(unsigned int init_size){
     tbl = LMN_NALLOC(LmnWord, init_size);
     num = 0;
@@ -76,6 +81,15 @@ struct Vector {
   void extend(){
     cap *= 2;
     tbl = LMN_REALLOC(LmnWord, tbl, cap);
+  }
+  unsigned int get_num() const{
+    return num;
+  }
+  unsigned int get_cap() const{
+    return cap;
+  }
+  bool is_empty() const{
+    return num==0;
   }
   void push(LmnWord keyp){
     if (num == cap) {
@@ -142,21 +156,15 @@ struct Vector {
     LMN_FREE(tbl);
     tbl = (LmnWord *)NULL;
   }
-  ~Vector(){
-    if(tbl != NULL){
-      LMN_FREE(tbl);
-    }
-  }
 };
 
 typedef struct Vector *PVector;
 typedef LmnWord vec_data_t;
 
-#define vec_cap(V) ((V)->cap)
-#define vec_num(V) ((V)->num)
-#define vec_is_empty(V) ((V)->num == 0)
 
-static inline void vec_free(Vector *vec);
+#define vec_num(V) ((V)->get_num())
+#define vec_is_empty(V) ((V)->is_empty())
+
 static inline unsigned long vec_space(Vector *v);
 static inline unsigned long vec_space_inner(Vector *v);
 
@@ -168,13 +176,9 @@ void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
 
 
-/* free */
-static inline void vec_free(Vector *vec) {
-  delete vec;
-}
 
 static inline unsigned long vec_space_inner(Vector *v) {
-  return vec_cap(v) * sizeof(vec_data_t);
+  return (v->get_cap()) * sizeof(vec_data_t);
 }
 
 static inline unsigned long vec_space(Vector *v) {

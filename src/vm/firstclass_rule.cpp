@@ -367,7 +367,7 @@ string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
 
   for (int i = 0; i < vec_num(link_connections); i++)
     LMN_FREE(link_connections->get(i));
-  vec_free(link_connections);
+  delete link_connections;
 
   return result;
 }

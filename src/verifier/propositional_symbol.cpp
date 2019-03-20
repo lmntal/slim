@@ -201,7 +201,7 @@ void propsyms_free(PropSyms props) {
   for (i = 0; i < vec_num(props); i++) {
     propsym_free((SymbolDefinitionRef)props->get(i));
   }
-  vec_free(props);
+  delete props;
 }
 
 void propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef) {

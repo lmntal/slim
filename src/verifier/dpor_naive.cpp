@@ -166,7 +166,7 @@ void free_por_vars() {
   st_free_table(mc_por.states);
   st_free_table(mc_por.strans_independency);
   q_free(mc_por.queue);
-  vec_free(mc_por.ample_candidate);
+  delete mc_por.ample_candidate;
   if (mc_por.rc) {
     mc_por.rc = nullptr;
   }
@@ -202,7 +202,7 @@ void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 }
 
 static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a) {
-  vec_free((Vector *)vec);
+  delete (Vector *)vec;
   return ST_DELETE;
 }
 
