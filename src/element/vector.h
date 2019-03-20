@@ -137,6 +137,10 @@ struct Vector {
   void clear(){
     num = 0;
   }
+  void destroy(){
+    LMN_FREE(tbl);
+    tbl = NULL;
+  }
 };
 
 typedef struct Vector *PVector;
@@ -159,7 +163,7 @@ void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
 
 /* destroy */
-static inline void vec_destroy(Vector *vec) { LMN_FREE(vec->tbl); }
+static inline void vec_destroy(Vector *vec) { vec->destroy(); }
 
 /* free */
 static inline void vec_free(Vector *vec) {

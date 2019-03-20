@@ -154,8 +154,8 @@ static struct NewMemInfo *new_mem_info_make(LmnMembraneRef mem) {
 }
 
 static void new_mem_info_free(struct NewMemInfo *p) {
-  vec_destroy(&p->new_child_mems);
-  vec_destroy(&p->removed_child_mems);
+  p->new_child_mems.destroy();
+  p->removed_child_mems.destroy();
   LMN_FREE(p);
 }
 
@@ -262,8 +262,8 @@ void dmem_root_free(struct MemDeltaRoot *p) {
   for (i = 0; i < vec_num(&p->mem_deltas); i++) {
     mem_delta_free((struct MemDelta *)p->mem_deltas.get(i));
   }
-  vec_destroy(&p->mem_deltas);
-  vec_destroy(&p->modified_atoms);
+  p->mem_deltas.destroy();
+  p->modified_atoms.destroy();
   proc_tbl_free(p->owner_tbl);
   delete p->flag_tbl;
 
@@ -284,7 +284,7 @@ void dmem_root_free(struct MemDeltaRoot *p) {
     }
   }
 
-  vec_destroy(&p->new_mems);
+  p->new_mems.destroy();
   proc_tbl_free(p->proc_tbl);
 
   LMN_FREE(p);
@@ -946,7 +946,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
     }
   }
 
-  vec_destroy(&stack);
+  stack.destroy();
   *ret_atommap = atommap;
 }
 
@@ -1244,7 +1244,7 @@ void dmem_root_remove_toplevel_proxies(struct MemDeltaRoot *root_d,
       dmem_remove_symbol_atom(d, mem, a);
       dmem_root_free_satom(root_d, a);
     }
-    vec_destroy(&remove_list);
+    remove_list.destroy();
 
     /*   printf("after remove toplevel proxy "); lmn_dump_mem_stdout(mem); */
   }
@@ -1322,7 +1322,7 @@ void dmem_root_remove_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem) {
       dmem_remove_symbol_atom(d, mem, a);
       dmem_root_free_satom(root_d, a);
     }
-    vec_destroy(&remove_list);
+    remove_list.destroy();
 
     /* add inside proxy to change list */
     DMEM_EACH_FUNC_ATOM(d, mem, LMN_IN_PROXY_FUNCTOR, a, {
@@ -1339,7 +1339,7 @@ void dmem_root_remove_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem) {
             LMN_STAR_PROXY_FUNCTOR);
       }
     }
-    vec_destroy(&change_list);
+    change_list.destroy();
     /*   printf("after remove proxy "); lmn_dump_mem_stdout(mem); */
     /* printf("after remove proxies : "); */
     /* lmn_dump_mem_dev(mem); */
@@ -1413,7 +1413,7 @@ void dmem_root_insert_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
                             (LmnSymbolAtomRef)(change_list.get(i)),
                             LMN_IN_PROXY_FUNCTOR);
   }
-  vec_destroy(&change_list);
+  change_list.destroy();
 
   for (i = 0; i < vec_num(&remove_list); i++) {
     /* printf("insert proxy remove atom %s %p\n",
@@ -1427,7 +1427,7 @@ void dmem_root_insert_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
     dmem_root_free_satom(root_d, a);
     /*    lmn_delete_atom(LMN_SATOM(remove_list.get(i))); */
   }
-  vec_destroy(&remove_list);
+  remove_list.destroy();
   /* printf("after insert proxy "); lmn_dump_mem_stdout(root_d->root_mem); */
   /* printf("end insert proxies\n"); */
 }
@@ -1475,7 +1475,7 @@ void dmem_root_remove_temporary_proxies(struct MemDeltaRoot *root_d,
     }
   }
 
-  vec_destroy(&remove_list);
+  remove_list.destroy();
 }
 
 void dmem_root_clear_ruleset(struct MemDeltaRoot *d, LmnMembraneRef m) {
@@ -1828,19 +1828,19 @@ static struct MemDelta *mem_delta_make(struct MemDeltaRoot *root_d,
 static void mem_delta_free(struct MemDelta *p) {
   int i;
 
-  vec_destroy(&p->del_mems);
-  vec_destroy(&p->new_mems);
-  vec_destroy(&p->del_atoms);
+  p->del_mems.destroy();
+  p->new_mems.destroy();
+  p->del_atoms.destroy();
 
   for (i = 0; i < vec_num(&p->new_atoms); i++) {
     free_symbol_atom_with_buddy_data(
         (LmnSymbolAtomRef)(p->new_atoms.get(i)));
   }
-  vec_destroy(&p->new_atoms);
+  p->new_atoms.destroy();
 
   if (p->new_rulesets) vec_free(p->new_rulesets);
 
-  vec_destroy(&p->new_proxies);
+  p->new_proxies.destroy();
 
   LMN_FREE(p);
 }

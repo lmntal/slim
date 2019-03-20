@@ -783,7 +783,7 @@ void dump_profile_data(FILE *f) {
                 r_total->trial.called_num, r_total->apply, r_total->backtrack,
                 r_total->trial.total_time / 1e-6);
 
-        vec_destroy(&v);
+        v.destroy();
         rule_profiler_free(r_others);
         fprintf(
             f,

@@ -1075,7 +1075,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
     s->successors = NULL;
     s->successor_num = 0;
     s->succ_set(&tmp);
-    vec_destroy(&tmp);
+    tmp.destroy();
   }
 }
 

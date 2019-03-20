@@ -700,7 +700,7 @@ void lmn_hyperlink_get_elements(std::vector<HyperLink *> &tree,
   lmn_hyperlink_get_elements(&vec, start_hl);
   for (int i = 0; i < vec_num(&vec); i++)
     tree.push_back((HyperLink *)vec.get(i));
-  vec_destroy(&vec);
+  vec.destroy();
 }
 
 /** find atom with a hyperlink occurred again in the current rule. */
@@ -856,7 +856,7 @@ std::vector<HyperLink *> lmn_hyperlink_get_elements(HyperLink *start_hl) {
   lmn_hyperlink_get_elements(&tree, start_hl);
   for (int i = 0; i < vec_num(&tree) - 1; i++)
     vec.push_back((HyperLink *)tree.get(i));
-  vec_destroy(&tree);
+  tree.destroy();
   return vec;
 }
 
@@ -924,7 +924,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     auto hashset = insertconnectors(rc, NULL, &links);
     rc->reg(seti) = {(LmnWord)hashset, 0, TT_OTHER};
 
-    vec_destroy(&links);
+    links.destroy();
 
     /* EFFICIENCY: 解放のための再帰 */
     this->push_stackframe([=](bool result) {
@@ -953,7 +953,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     auto hashset = insertconnectors(rc, (LmnMembraneRef)rc->wt(memi), &links);
     rc->reg(seti) = {(LmnWord)hashset, 0, TT_OTHER};
 
-    vec_destroy(&links);
+    links.destroy();
 
     /* EFFICIENCY: 解放のための再帰 */
     this->push_stackframe([=](bool result) {
@@ -3005,8 +3005,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         break;
       }
       proc_tbl_free(attr_functors);
-      vec_destroy(&attr_dataAtoms);
-      vec_destroy(&attr_dataAtom_attrs);
+      attr_dataAtoms.destroy();
+      attr_dataAtom_attrs.destroy();
       break;
     }
     case INSTR_REMOVEGROUND:
@@ -4193,7 +4193,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       rc->reg(seti) = {(LmnWord)insertconnectors(rc, NULL, &links), 0,
                        TT_OTHER};
-      vec_destroy(&links);
+      links.destroy();
 
       /* EFFICIENCY: 解放のための再帰 */
       if (dmem_interpret(rc, rule, instr)) {
@@ -4224,7 +4224,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       rc->reg(seti) = {
           (LmnWord)insertconnectors(rc, (LmnMembraneRef)rc->wt(memi), &links),
           0, TT_OTHER};
-      vec_destroy(&links);
+      links.destroy();
 
       /* EFFICIENCY: 解放のための再帰 */
       if (dmem_interpret(rc, rule, instr)) {

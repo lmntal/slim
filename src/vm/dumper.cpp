@@ -660,7 +660,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
     }
   }
   for (i = 0; i < PRI_NUM; i++) {
-    vec_destroy(&pred_atoms[i]);
+    pred_atoms[i].destroy();
   }
 
   { /* dump chidren */

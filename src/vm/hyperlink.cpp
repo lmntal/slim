@@ -386,7 +386,7 @@ HyperLink *lmn_hyperlink_get_root(HyperLink *hl) {
                                  &children); /* parent_hlはrootになっている */
     }
 
-    vec_destroy(&children);
+    children.destroy();
   }
 
   return parent_hl;

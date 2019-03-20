@@ -297,7 +297,7 @@ void lmn_mem_rulesets_destroy(Vector *rulesets) {
       delete rs;
     }
   }
-  vec_destroy(rulesets);
+  rulesets->destroy();
 }
 
 void move_symbol_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
@@ -734,13 +734,13 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
                            (LmnSymbolAtomRef)remove_list_p.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list_p.get(i));
   }
-  vec_destroy(&remove_list_p);
+  remove_list_p.destroy();
 
   for (i = 0; i < vec_num(&remove_list_m); i++) {
     mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list_m.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list_m.get(i));
   }
-  vec_destroy(&remove_list_m);
+  remove_list_m.destroy();
 
   /* change to star proxy */
   for (i = 0; i < change_list.num; i++) {
@@ -748,7 +748,7 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
                   (LmnSymbolAtomRef)change_list.get(i),
                   LMN_STAR_PROXY_FUNCTOR);
   }
-  vec_destroy(&change_list);
+  change_list.destroy();
 }
 
 /* cf. Java処理系 */
@@ -800,13 +800,13 @@ void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem) {
     alter_functor(child_mem, (LmnSymbolAtomRef)change_list.get(i),
                   LMN_IN_PROXY_FUNCTOR);
   }
-  vec_destroy(&change_list);
+  change_list.destroy();
 
   for (i = 0; i < vec_num(&remove_list); i++) {
     mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list.get(i));
   }
-  vec_destroy(&remove_list);
+  remove_list.destroy();
 }
 
 /* cf. Java処理系 */
@@ -840,7 +840,7 @@ void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem) {
     lmn_delete_atom((LmnSymbolAtomRef)remove_list.get(i));
   }
 
-  vec_destroy(&remove_list);
+  remove_list.destroy();
 }
 
 /* cf. Java処理系 */
@@ -888,7 +888,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
     mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list.get(i));
   }
-  vec_destroy(&remove_list);
+  remove_list.destroy();
 }
 
 LmnMembraneRef lmn_mem_copy(LmnMembraneRef src) {
@@ -1513,8 +1513,8 @@ CMPGROUND_BREAK:
     LMN_FREE((LinkObjRef)stack1.get(i));
   for (i = 0; i < vec_num(&stack2); i++)
     LMN_FREE((LinkObjRef)stack2.get(i));
-  vec_destroy(&stack1);
-  vec_destroy(&stack2);
+  stack1.destroy();
+  stack2.destroy();
   hashtbl_destroy(&map);
 
   return ret_flag;

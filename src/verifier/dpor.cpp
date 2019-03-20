@@ -150,7 +150,7 @@ static ContextC1Ref contextC1_lookup(st_table_t dst_tbl, ContextC1Ref src) {
     }
   }
 
-  vec_destroy(&tmp);
+  tmp.destroy();
   return ret;
 }
 
@@ -575,7 +575,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
 
   if (dpor_explored_cycle(mc, c, &rc)) {
     POR_DEBUG(printf("detected cycle\n"));
-    vec_destroy(&nxt_checked_ids);
+    nxt_checked_ids.destroy();
     return ret;
   }
 
@@ -623,7 +623,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
     ret = FALSE;
   }
 
-  vec_destroy(&nxt_checked_ids);
+  nxt_checked_ids.destroy();
 
   return ret;
 }
@@ -659,7 +659,7 @@ static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxtRef rc,
     }
   }
 
-  vec_destroy(&checked_ids);
+  checked_ids.destroy();
   return ret;
 }
 
@@ -972,8 +972,8 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         }
       }
 
-      vec_destroy(&v_key);
-      vec_destroy(&v_val);
+      v_key.destroy();
+      v_val.destroy();
 #ifdef DEBUG
       /* 独立な遷移に"indep", 依存遷移に"depends"と名前をつける */
     } else {

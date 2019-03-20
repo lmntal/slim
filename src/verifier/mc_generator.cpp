@@ -182,7 +182,7 @@ void dfs_worker_finalize(LmnWorker *w) {
     deq_destroy(&DFS_WORKER_DEQUE(w));
   } else
 #endif
-    vec_destroy(&DFS_WORKER_STACK(w));
+    DFS_WORKER_STACK(w).destroy();
   LMN_FREE(DFS_WORKER_OBJ(w));
 }
 
@@ -363,7 +363,7 @@ void mcdfs_start(LmnWorker *w) {
     }
   }
 
-  vec_destroy(&new_ss);
+  new_ss.destroy();
 }
 #endif
 
@@ -473,7 +473,7 @@ void dfs_start(LmnWorker *w) {
   }
 #endif
 
-  vec_destroy(&new_ss);
+  new_ss.destroy();
 }
 
 static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,

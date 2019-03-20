@@ -363,7 +363,7 @@ void transition_free(TransitionRef t) {
     profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
   }
 #endif
-  vec_destroy(&t->rule_names);
+  t->rule_names.destroy();
   LMN_FREE(t);
 }
 

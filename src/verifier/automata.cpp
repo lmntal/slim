@@ -90,8 +90,8 @@ Automata::~Automata() {
     delete (AutomataSCC *)this->sccs.get(i);
   }
 
-  vec_destroy(&this->states);
-  vec_destroy(&this->sccs);
+  this->states.destroy();
+  this->sccs.destroy();
 }
 
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_) {
@@ -228,7 +228,7 @@ AutomataState::~AutomataState() {
   for (i = 0; i < vec_num(&this->transitions); i++) {
     delete (AutomataTransitionRef)this->transitions.get(i);
   }
-  vec_destroy(&this->transitions);
+  this->transitions.destroy();
 }
 
 void AutomataState::add_transition(AutomataTransitionRef t) {

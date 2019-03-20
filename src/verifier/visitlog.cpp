@@ -72,7 +72,7 @@ static inline struct Checkpoint *checkpoint_make() {
 }
 
 void checkpoint_free(struct Checkpoint *cp) {
-  vec_destroy(&cp->elements);
+  cp->elements.destroy();
   LMN_FREE(cp);
 }
 
@@ -100,7 +100,7 @@ void visitlog_destroy(struct VisitLog *p) {
   for (i = 0; i < vec_num(&p->checkpoints); i++) {
     vec_free((Vector *)p->checkpoints.get(i));
   }
-  vec_destroy(&p->checkpoints);
+  p->checkpoints.destroy();
 
   LMN_FREE(p);
 }

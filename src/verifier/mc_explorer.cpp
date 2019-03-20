@@ -514,8 +514,8 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
         }
       }
 
-      vec_destroy(&search);
-      vec_destroy(&path);
+      search.destroy();
+      path.destroy();
     }
   }
 }
@@ -807,8 +807,8 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
     } else {
       st_clear(MAP_WORKER_HASHSET(w));
     }
-    vec_destroy(&search);
-    vec_destroy(&path);
+    search.destroy();
+    path.destroy();
   }
 }
 
