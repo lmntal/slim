@@ -648,7 +648,7 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
                                      LmnRuleInstr instr, LmnMembrane *mem,
                                      LmnFunctor f, size_t reg) {
-  auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
+  auto atomlist_ent = mem->get_atomlist(f);
 
   if (!atomlist_ent)
     return;
@@ -672,7 +672,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 void slim::vm::interpreter::findatom_original_hyperlink(
     LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr, SameProcCxt *spc,
     LmnMembrane *mem, LmnFunctor f, size_t reg) {
-  auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
+  auto atomlist_ent = mem->get_atomlist(f);
   if (!atomlist_ent)
     return;
 
@@ -727,7 +727,7 @@ void slim::vm::interpreter::findatom_clone_hyperlink(
    * この時点で探索の始点とすべきハイパーリンクの情報がspc内に格納されている
    * ---------------------------------------------------------- */
 
-  if (!lmn_mem_get_atomlist(mem, LMN_HL_FUNC))
+  if (!mem->get_atomlist(LMN_HL_FUNC))
     return;
 
   auto filtered = slim::element::make_range_remove_if(
@@ -1267,7 +1267,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       AtomListEntry::const_iterator start_atom(nullptr, nullptr);
 
       READ_VAL(LmnFunctor, instr, f);
-      atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)rc->wt(memi), f);
+      atomlist_ent = ((LmnMembraneRef)rc->wt(memi))->get_atomlist(f);
       if (!atomlist_ent)
         return false;
 
@@ -1355,7 +1355,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
               "Can't use hyperlink searching in parallel-runtime mode.\n");
         }
       }
-      auto atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)rc->wt(memi), f);
+      auto atomlist_ent = ((LmnMembraneRef)rc->wt(memi))->get_atomlist(f);
       if (atomlist_ent)
         return false;
       ///
@@ -2161,7 +2161,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnMembraneRef mem = (LmnMembraneRef)rc->wt(memi);
     LmnSymbolAtomRef sa = (LmnSymbolAtomRef)rc->wt(atomi);
     LmnFunctor f = LMN_SATOM_GET_FUNCTOR(sa);
-    AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+    AtomListEntry *ent = mem->get_atomlist(f);
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnInstrVar, instr, memi);
     ent->move_atom_to_atomlist_tail(sa);

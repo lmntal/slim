@@ -489,7 +489,7 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element) {
   f = stdout;
   result = FALSE;
   WIDTH = 22;
-  if ((atomlist = lmn_mem_get_atomlist(mem, LMN_HL_FUNC))) {
+  if ((atomlist = mem->get_atomlist(LMN_HL_FUNC))) {
     EACH_ATOM(atom, atomlist, ({
                 result = TRUE;
 

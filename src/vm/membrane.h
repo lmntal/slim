@@ -134,7 +134,6 @@ void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
 void lmn_mem_remove_mem(LmnMembraneRef parent, LmnMembraneRef mem);
 void lmn_mem_free_rec(LmnMembraneRef mem);
 void lmn_mem_delete_mem(LmnMembraneRef parent, LmnMembraneRef mem);
-AtomListEntryRef lmn_mem_get_atomlist(LmnMembraneRef mem, LmnFunctor f);
 void lmn_mem_activate_ancestors(LmnMembraneRef mem);
 BOOL lmn_mem_nmems(LmnMembraneRef mem, unsigned int count);
 int lmn_mem_child_mem_num(LmnMembraneRef mem);

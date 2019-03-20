@@ -78,7 +78,7 @@ typedef int AtomListIter;
 #define atomlist_iter_initializer(AS) (0)
 #define atomlist_iter_condition(Mem, Iter) ((Iter) < Mem->mem_max_functor())
 #define atomlist_iter_next(Iter) ((Iter)++)
-#define atomlist_iter_get_entry(Mem, Iter) lmn_mem_get_atomlist(Mem, Iter)
+#define atomlist_iter_get_entry(Mem, Iter) Mem->get_atomlist(Iter)
 #define atomlist_iter_get_functor(Iter) (Iter)
 
 
@@ -238,7 +238,7 @@ void lmn_mem_rulesets_destroy(Vector *rulesets) {
 
 void move_symbol_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+  AtomListEntry *ent = mem->get_atomlist(f);
 
   LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
   LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
@@ -251,7 +251,7 @@ void move_symbol_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
 
 void move_symbol_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem) {
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+  AtomListEntry *ent = mem->get_atomlist(f);
 
   LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
   LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
@@ -264,7 +264,7 @@ void move_symbol_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem) {
 void move_symbol_atomlist_to_atomlist_tail(LmnSymbolAtomRef a,
                                            LmnMembraneRef mem) {
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+  AtomListEntry *ent = mem->get_atomlist(f);
 
   if (a != ent->head) {
     LMN_SATOM_SET_NEXT(ent->tail, ent->head);
@@ -278,7 +278,7 @@ void move_symbol_atomlist_to_atomlist_tail(LmnSymbolAtomRef a,
 void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                                    LmnMembraneRef mem) {
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(a);
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+  AtomListEntry *ent = mem->get_atomlist(f);
 
   if (ent->tail == a1)
     ent->tail = LMN_SATOM_GET_PREV(a1);
@@ -305,7 +305,7 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
     LMN_SATOM_SET_ID(atom, env_gen_next_id());
   }
 
-  as = lmn_mem_get_atomlist(mem, f);
+  as = mem->get_atomlist(f);
   if (!as) { /* 本膜内に初めてアトムatomがPUSHされた場合 */
     LMN_ASSERT(
         mem->atomset); /* interpreter側で値がオーバーフローすると発生するので,
@@ -612,7 +612,7 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
   AtomListEntry *ent;
   unsigned int i;
 
-  ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+  ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
 
   vec_init(&remove_list_p, 16); /* parent用 */
   vec_init(&remove_list_m, 16); /* mem用 */
@@ -698,7 +698,7 @@ void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem) {
   unsigned int i;
   Vector remove_list, change_list;
   LmnSymbolAtomRef star, oldstar;
-  AtomListEntry *ent = lmn_mem_get_atomlist(child_mem, LMN_STAR_PROXY_FUNCTOR);
+  AtomListEntry *ent = child_mem->get_atomlist(LMN_STAR_PROXY_FUNCTOR);
 
   if (!ent)
     return;
@@ -756,7 +756,7 @@ void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem) {
   unsigned int i;
   Vector remove_list;
   LmnSymbolAtomRef star, outside;
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_STAR_PROXY_FUNCTOR);
+  AtomListEntry *ent = mem->get_atomlist(LMN_STAR_PROXY_FUNCTOR);
 
   if (!ent)
     return;
@@ -792,7 +792,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
   LmnSymbolAtomRef outside;
   unsigned int i;
 
-  ent = lmn_mem_get_atomlist(mem, LMN_OUT_PROXY_FUNCTOR);
+  ent = mem->get_atomlist(LMN_OUT_PROXY_FUNCTOR);
   if (!ent)
     return;
 
@@ -2112,7 +2112,7 @@ static BOOL mem_equals_atomlists(LmnMembraneRef mem1, LmnMembraneRef mem2) {
   LmnFunctor f;
 
   EACH_ATOMLIST_WITH_FUNC(mem1, ent1, f, ({
-                            AtomListEntry *ent2 = lmn_mem_get_atomlist(mem2, f);
+                            AtomListEntry *ent2 = mem2->get_atomlist(f);
                             size_t s1 = ent1 ? ent1->size() : 0;
                             size_t s2 = ent2 ? ent2->size() : 0;
                             if (s1 != s2) {
@@ -2346,7 +2346,7 @@ static BOOL mem_isomor_mols(LmnMembraneRef mem1, TraceLogRef log1,
        */
 
       return tracelog_eq_traversed_proc_num(
-          log1, mem1, lmn_mem_get_atomlist(mem1, LMN_IN_PROXY_FUNCTOR), NULL);
+          log1, mem1, mem1->get_atomlist(LMN_IN_PROXY_FUNCTOR), NULL);
     }
   }
 }
@@ -2366,7 +2366,7 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
   LmnFunctor f;
 
   f = LMN_SATOM_GET_FUNCTOR(root1);
-  ent2 = lmn_mem_get_atomlist(mem2, f);
+  ent2 = mem2->get_atomlist(f);
   if (!ent2)
     return FALSE;
   current = (*iter); /* shallow copy */
@@ -3309,13 +3309,6 @@ void lmn_mem_delete_mem(LmnMembraneRef parent, LmnMembraneRef mem) {
   lmn_mem_free_rec(mem);
 }
 
-AtomListEntry *lmn_mem_get_atomlist(LmnMembraneRef mem, LmnFunctor f) {
-  if ((f < mem->atomset_size) && mem->atomset[f]) {
-    return mem->atomset[f];
-  } else {
-    return NULL;
-  }
-}
 
 /* 自身を含めた全ての先祖膜を起こす */
 void lmn_mem_activate_ancestors(LmnMembraneRef mem) {
@@ -3374,7 +3367,7 @@ unsigned int lmn_mem_count_descendants(LmnMembraneRef mem) {
 
 /* return TRUE if # of freelinks in mem is equal to count */
 BOOL lmn_mem_nfreelinks(LmnMembraneRef mem, unsigned int count) {
-  AtomListEntry *ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+  AtomListEntry *ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
   if (!ent) {
     return count == 0;
   } else {
@@ -3390,7 +3383,7 @@ void lmn_mem_remove_data_atom(LmnMembraneRef mem, LmnDataAtomRef atom,
 void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
   LmnFunctor f = LMN_SATOM_GET_FUNCTOR(atom);
   {
-    AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+    AtomListEntry *ent = mem->get_atomlist(f);
     ent->remove(atom);
   }
 

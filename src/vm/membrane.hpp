@@ -176,6 +176,13 @@ struct LmnMembrane {
     }
     this->child_head = newmem;
   }
+  AtomListEntry *get_atomlist(LmnFunctor f){
+    if ((f < this->atomset_size) && this->atomset[f]) {
+      return this->atomset[f];
+    } else {
+      return NULL;
+    }
+  }
 };
 
 #endif

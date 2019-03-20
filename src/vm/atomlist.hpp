@@ -57,8 +57,10 @@ struct AtomListEntry {
   }
 
   void set_empty() {
-    reinterpret_cast<LmnSymbolAtomRef>(this)->set_prev(reinterpret_cast<LmnSymbolAtomRef>(this));
-    reinterpret_cast<LmnSymbolAtomRef>(this)->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
+    LMN_SATOM_SET_PREV(reinterpret_cast<LmnSymbolAtomRef>(this),
+                       reinterpret_cast<LmnSymbolAtomRef>(this));
+    LMN_SATOM_SET_NEXT(reinterpret_cast<LmnSymbolAtomRef>(this),
+                       reinterpret_cast<LmnSymbolAtomRef>(this));
     this->n = 0;
   }
 
@@ -66,16 +68,16 @@ struct AtomListEntry {
    * ただし, リストのつなぎ変えだけを行い,
    * 膜からのアトムAのdeleteやatomのfreeはしない */
   void remove(LmnSymbolAtomRef a) {
-    a->get_next()->set_prev(a->get_prev());
-    a->get_prev()->set_next(a->get_next());
+    LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
+    LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
     this->n -= 1;
   }
 
   /* アトムリストALの末尾にアトムAを追加する. */
   void push(LmnSymbolAtomRef a) {
-    a->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
-    a->set_prev(this->tail);
-    this->tail->set_next(a);
+    LMN_SATOM_SET_NEXT(a, reinterpret_cast<LmnSymbolAtomRef>(this));
+    LMN_SATOM_SET_PREV(a, this->tail);
+    LMN_SATOM_SET_NEXT(this->tail, a);
     this->tail = a;
     this->n += 1;
   }
@@ -86,9 +88,9 @@ struct AtomListEntry {
     if (e2->is_empty())
       return;
 
-    this->tail->set_next(e2->head);
-    e2->head->set_prev(this->tail);
-    e2->tail->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
+    LMN_SATOM_SET_NEXT(this->tail, e2->head);
+    LMN_SATOM_SET_PREV(e2->head, this->tail);
+    LMN_SATOM_SET_NEXT(e2->tail, reinterpret_cast<LmnSymbolAtomRef>(this));
     this->tail = e2->tail;
     this->n += e2->size();
     e2->set_empty();
@@ -109,9 +111,9 @@ struct AtomListEntry {
   }
 
   void move_atom_to_atomlist_tail(LmnSymbolAtomRef a) {
-    a->get_next()->set_prev(a->get_prev());
-    a->get_prev()->set_next(a->get_next());
-    this->tail->set_next(a);
+    LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(a), LMN_SATOM_GET_PREV(a));
+    LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(a), LMN_SATOM_GET_NEXT_RAW(a));
+    LMN_SATOM_SET_NEXT(this->tail, a);
   }
 
   class const_iterator {
@@ -131,7 +133,7 @@ struct AtomListEntry {
     };
 
     const_iterator &operator++() {
-      a_index = a_index->get_next();
+      a_index = LMN_SATOM_GET_NEXT_RAW(a_index);
       return *this;
     };
     const_iterator operator++(int) {
@@ -140,7 +142,7 @@ struct AtomListEntry {
       return ret;
     };
     const_iterator operator--() {
-      a_index = a_index->get_prev();
+      a_index = LMN_SATOM_GET_PREV(a_index);
       return *this;
     }
     const_iterator operator--(int i) {
@@ -168,10 +170,10 @@ struct AtomListEntry {
     hashtbl_put(this->record, findatomid, (HashKeyType)record);
     auto start_atom = atomlist_head(this);
     /* 履歴アトムを挿入する */
-    ((LmnSymbolAtomRef)this)->set_next(record);
-    record->set_prev((LmnSymbolAtomRef)this);
-    record->set_next(start_atom);
-    start_atom->set_prev(record);
+    LMN_SATOM_SET_NEXT((LmnSymbolAtomRef)this, record);
+    LMN_SATOM_SET_PREV(record, (LmnSymbolAtomRef)this);
+    LMN_SATOM_SET_NEXT(record, start_atom);
+    LMN_SATOM_SET_PREV(start_atom, record);
     return const_iterator(this, record);
   }
 
@@ -186,14 +188,14 @@ struct AtomListEntry {
   }
 
   void splice(const_iterator position, AtomListEntry &x, const_iterator i) {
-    (*i)->get_next()->set_prev((*i)->get_prev());
-    (*i)->get_prev()->set_next((*i)->get_next());
+    LMN_SATOM_SET_PREV(LMN_SATOM_GET_NEXT_RAW(*i), LMN_SATOM_GET_PREV(*i));
+    LMN_SATOM_SET_NEXT(LMN_SATOM_GET_PREV(*i), LMN_SATOM_GET_NEXT_RAW(*i));
 
     auto next = std::next(position, 1);
-    (*position)->set_next(*i);
-    (*i)->set_prev(*position);
-    (*i)->set_next(*next);
-    (*next)->set_prev(*i);
+    LMN_SATOM_SET_NEXT(*position, *i);
+    LMN_SATOM_SET_PREV(*i, *position);
+    LMN_SATOM_SET_NEXT(*i, *next);
+    LMN_SATOM_SET_PREV(*next, *i);
   }
 };
 
@@ -225,7 +227,7 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
   if ((ENT)) {                                                                 \
     for (auto iter_ : *(ENT)) {                                                \
       (V) = iter_;                                                             \
-      if (((LmnSymbolAtomRef)(V))->get_functor() !=                      \
+      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=                      \
           LMN_RESUME_FUNCTOR) {                                                \
         (CODE);                                                                \
       }                                                                        \
@@ -237,7 +239,7 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
   if ((ENT)) {                                                                 \
     for (auto iter_ : *(ENT)) {                                                \
       (V) = iter_;                                                             \
-      if (((LmnSymbolAtomRef)(V))->get_functor() !=                      \
+      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=                      \
               LMN_RESUME_FUNCTOR &&                                            \
           id == 0) {                                                           \
         (CODE);                                                                \
@@ -258,13 +260,13 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
       (V) = (START);                                                           \
     }                                                                          \
     for (; (V) != lmn_atomlist_end((ENT)) || flag;                             \
-         (V) = ((LmnSymbolAtomRef)(V))->get_next()) {                \
+         (V) = LMN_SATOM_GET_NEXT_RAW((LmnSymbolAtomRef)(V))) {                \
       if ((V) == lmn_atomlist_end((ENT))) {                                    \
         (V) = atomlist_head((ENT));                                            \
         id = (ID);                                                             \
         flag--;                                                                \
       }                                                                        \
-      if (((LmnSymbolAtomRef)(V))->get_functor() !=                      \
+      if (LMN_SATOM_GET_FUNCTOR((LmnSymbolAtomRef)(V)) !=                      \
               LMN_RESUME_FUNCTOR &&                                            \
           id == 0) {                                                           \
         (CODE);                                                                \
@@ -276,13 +278,13 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
 
 #define EACH_FUNC_ATOM(MEM, F, V, CODE)                                        \
   do {                                                                         \
-    AtomListEntry *__ent = lmn_mem_get_atomlist((MEM), (F));                   \
+    AtomListEntry *__ent = (MEM)->get_atomlist((F));			\
     if (__ent) {                                                               \
       for (auto iter_ : *__ent)                                                \
         ;                                                                      \
       {                                                                        \
         (V) = iter_;                                                           \
-        if ((V)->get_functor() != LMN_RESUME_FUNCTOR) {                \
+        if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR) {                \
           (CODE);                                                              \
         }                                                                      \
       }                                                                        \
@@ -294,7 +296,7 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
     for (auto ent_ : (MEM)->atom_lists()) {                                    \
       for (auto iter_ : *ent_.second) {                                        \
         (V) = iter_;                                                           \
-        if ((V)->get_functor() != LMN_RESUME_FUNCTOR) {                \
+        if (LMN_SATOM_GET_FUNCTOR((V)) != LMN_RESUME_FUNCTOR) {                \
           (CODE);                                                              \
         }                                                                      \
       }                                                                        \
