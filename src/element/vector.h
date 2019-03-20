@@ -76,7 +76,7 @@ struct Vector {
       LMN_FREE(tbl);
     }
   }
-  void *init(unsigned int init_size){
+  void init(unsigned int init_size){
     tbl = LMN_NALLOC(LmnWord, init_size);
     num = 0;
     cap = init_size;
