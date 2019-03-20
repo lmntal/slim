@@ -125,9 +125,9 @@ private:
   bool log_contains(TraceLog *log, LmnMembraneRef atom) {
     return tracelog_contains_mem(log, atom);
   }
-  void log_set_backtrack_point(TraceLog *log) { tracelog_set_btpoint(log); }
-  void log_continue_trace(TraceLog *log) { tracelog_continue_trace(log); }
-  void log_backtrack(TraceLog *log) { tracelog_backtrack(log); }
+  void log_set_backtrack_point(TraceLog *log) { log->set_btpoint(); }
+  void log_continue_trace(TraceLog *log) { log->continue_trace(); }
+  void log_backtrack(TraceLog *log) { log->backtrack(); }
 
   BOOL mem_eq_enc_end(LmnMembraneRef mem, BOOL rule_flag) {
     if (!rule_flag && lmn_mem_ruleset_num(mem) != 0)

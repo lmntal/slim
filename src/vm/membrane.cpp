@@ -2427,7 +2427,7 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
   EACH_ATOM(root2, ent2, ({
               if (simplylog_contains_atom(log2, root2))
                 continue;
-              tracelog_set_btpoint(log1);
+              log1->set_btpoint();
               simplylog_set_btpoint(log2);
 
               /* compare a molecule of root1 with a molecule of root2 */
@@ -2435,14 +2435,14 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
                                        MEM_ISOMOR_FIRST_TRACE,
                                        (LmnAtomRef)root2, mem2, log2)) {
               case MEM_ISOMOR_MATCH_WITHOUT_MEM: {
-                tracelog_continue_trace(log1);
+                log1->continue_trace();
                 simplylog_continue_trace(log2);
                 return mem_isomor_mols(mem1, log1, mem2, log2, iter);
               }
               case MEM_ISOMOR_MATCH_WITHIN_MEM:
                 /* keep this backtrack point */
                 if (mem_isomor_mols(mem1, log1, mem2, log2, iter)) {
-                  tracelog_continue_trace(log1);
+                  log1->continue_trace();
                   simplylog_continue_trace(log2);
                   return TRUE;
                 } /*
@@ -2454,7 +2454,7 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
               }
 
               (*iter) = current;
-              tracelog_backtrack(log1);
+              log1->backtrack();
               simplylog_backtrack(log2);
             }));
 
@@ -2472,14 +2472,14 @@ static inline BOOL mem_isomor_mol_mems(LmnMembraneRef mem1, TraceLogRef log1,
     if (simplylog_contains_mem(log2, root2))
       continue;
     else {
-      tracelog_set_btpoint(log1);
+      log1->set_btpoint();
       simplylog_set_btpoint(log2);
       if (!mem_equals_rec(root1, log1, root2, log2, CHECKED_MEM_DEPTH) ||
           !mem_isomor_mols(mem1, log1, mem2, log2, iter)) {
-        tracelog_backtrack(log1);
+        log1->backtrack();
         simplylog_backtrack(log2);
       } else {
-        tracelog_continue_trace(log1);
+        log1->continue_trace();
         simplylog_continue_trace(log2);
         return TRUE;
       }

@@ -42,7 +42,6 @@ template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
 /*----------------
  * Tracker
  */
-void tracelog_unput(TraceLogRef l, LmnWord key) { l->leave(key); }
 
 BOOL tracelog_contains(TraceLogRef l, LmnWord key) { return l->contains(key); }
 
@@ -81,9 +80,3 @@ BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key) {
   l->get(key, &d);
   return d.flag;
 }
-
-void tracelog_backtrack(TraceLogRef l) { l->backtrack(); }
-
-void tracelog_set_btpoint(TraceLogRef l) { l->set_btpoint(); }
-
-void tracelog_continue_trace(TraceLogRef l) { l->continue_trace(); }
