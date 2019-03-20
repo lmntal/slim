@@ -54,7 +54,7 @@ struct encoder {
     std::vector<LmnSymbolAtomRef> atoms;
 
     for (auto func : mem_functors(mem)) {
-      auto ent = lmn_mem_get_atomlist(mem, func);
+      auto ent = mem->get_atomlist(func);
       for (auto a : *ent) {
         atoms.push_back(a);
       }
@@ -67,7 +67,7 @@ struct encoder {
   std::vector<LmnFunctor> mem_functors(LmnMembraneRef mem) {
     std::vector<LmnFunctor> v;
     for (int i = mem->mem_max_functor() - 1; i >= 0; i--) {
-      if (lmn_mem_get_atomlist(mem, i) && !LMN_IS_PROXY_FUNCTOR(i)) {
+      if (mem->get_atomlist(i) && !LMN_IS_PROXY_FUNCTOR(i)) {
         v.push_back(i);
       }
     }
@@ -172,7 +172,7 @@ struct encoder {
       /* 膜memに存在するデータアトムを起点にしたinside
        * proxyアトムをちゃんと書き込んでおく */
 
-      auto ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+      auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
       if (ent) {
         for (auto in : *ent) {
           if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(in, 1)) ||

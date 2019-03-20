@@ -134,8 +134,8 @@ private:
       return false;
 
     return tracelog_eq_traversed_proc_num(
-        log, mem, lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR),
-        lmn_mem_get_atomlist(mem, LMN_EXCLAMATION_FUNCTOR));
+        log, mem, mem->get_atomlist(LMN_IN_PROXY_FUNCTOR),
+        mem->get_atomlist(LMN_EXCLAMATION_FUNCTOR));
   }
 
   int mem_eq_enc_mols(int *i_bs, LmnMembraneRef mem, int *i_ref) {
@@ -149,7 +149,7 @@ private:
         auto f = binstr_get_functor(bs->v, *i_bs);
 
         /* 1. 読み出したファンクタのエントリリストを取得する */
-        auto ent = lmn_mem_get_atomlist(mem, f);
+        auto ent = mem->get_atomlist(f);
         if (!ent)
           return FALSE;
 
@@ -217,7 +217,7 @@ private:
       case TAG_ESCAPE_MEM_DATA: {
         auto sub_tag = BS_GET(bs->v, *i_bs);
         (*i_bs)++;
-        auto ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+        auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
         if (!ent)
           return FALSE;
 
@@ -608,7 +608,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
         auto ok = FALSE;
 
         /* 1. 読み出したファンクタのエントリリストを取得する */
-        auto ent = lmn_mem_get_atomlist(mem, f);
+        auto ent = mem->get_atomlist(f);
         if (!ent)
           return FALSE;
 
@@ -680,7 +680,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
         auto sub_tag = BS_GET(bs->v, *i_bs);
         (*i_bs)++;
         auto ok = FALSE;
-        auto ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+        auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
         if (!ent)
           return FALSE;
 
