@@ -164,18 +164,11 @@ struct Vector {
   }
 };
 
-static inline unsigned long vec_space(Vector *v);
-
 BOOL vec_contains(const Vector *vec, LmnWord keyp);
 Vector *vec_copy(Vector *vec);
 void vec_reverse(Vector *vec);
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
-
-
-static inline unsigned long vec_space(Vector *v) {
-  return sizeof(struct Vector) + v->space_inner();
-}
 
 
 namespace slim {
