@@ -162,7 +162,7 @@ static void new_mem_info_free(struct NewMemInfo *p) {
 
 #define DMEM_ORG_EACH_FUNC_ATOM(D, MEM, F, V, CODE)                            \
   do {                                                                         \
-    AtomListEntryRef __ent = lmn_mem_get_atomlist((MEM), (F));                 \
+    AtomListEntryRef __ent = ((MEM))->get_atomlist((F));		\
     LmnSymbolAtomRef __next;                                                   \
     if (__ent) {                                                               \
       for ((V) = atomlist_head(__ent); (V) != lmn_atomlist_end(__ent);         \

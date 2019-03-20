@@ -340,7 +340,7 @@ static inline mhash_t memunit(LmnMembraneRef child_mem,
   LmnSymbolAtomRef in_proxy, out_proxy;
 
   hash = 0;
-  insides = lmn_mem_get_atomlist(child_mem, LMN_IN_PROXY_FUNCTOR);
+  insides = child_mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
   child_h = mhash_membrane(child_mem, calc_mem, ctx);
 
   LMN_ASSERT(insides);
