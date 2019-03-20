@@ -70,44 +70,9 @@ LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos);
  */
 
 extern struct st_hash_type type_memhash;
-
-lmn_interned_str LMN_MEM_NAME_ID(LmnMembraneRef m);
 const char *LMN_MEM_NAME(LmnMembraneRef m);
-LmnMembraneRef lmn_mem_parent(LmnMembraneRef m);
-void lmn_mem_set_parent(LmnMembraneRef m, LmnMembraneRef parent);
-
-BOOL lmn_mem_is_active(LmnMembraneRef m);
-unsigned int lmn_mem_max_functor(LmnMembraneRef m);
-void lmn_mem_set_name(LmnMembraneRef m, lmn_interned_str name);
-void lmn_mem_set_active(LmnMembraneRef m, BOOL is_activated);
-struct Vector *lmn_mem_get_rulesets(LmnMembraneRef m);
-int lmn_mem_ruleset_num(LmnMembraneRef m);
 LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i);
-unsigned int lmn_mem_symb_atom_num(LmnMembraneRef m);
-void lmn_mem_symb_atom_set(LmnMembraneRef m, unsigned int n);
-unsigned int lmn_mem_data_atom_num(LmnMembraneRef m);
-void lmn_mem_data_atom_set(LmnMembraneRef m, unsigned int n);
-unsigned int lmn_mem_atom_num(LmnMembraneRef m);
-BOOL lmn_mem_natoms(LmnMembraneRef m, unsigned int n);
-void lmn_mem_natoms_copy(LmnMembraneRef m, LmnMembraneRef n);
-void lmn_mem_symb_atom_add(LmnMembraneRef m, int n);
-void lmn_mem_symb_atom_sub(LmnMembraneRef m, int n);
-void lmn_mem_symb_atom_inc(LmnMembraneRef m);
-void lmn_mem_symb_atom_dec(LmnMembraneRef m);
 
-void lmn_mem_data_atom_add(LmnMembraneRef m, int n);
-void lmn_mem_data_atom_sub(LmnMembraneRef m, int n);
-void lmn_mem_data_atom_inc(LmnMembraneRef m);
-void lmn_mem_data_atom_dec(LmnMembraneRef m);
-
-LmnMembraneRef lmn_mem_child_head(LmnMembraneRef m);
-LmnMembraneRef lmn_mem_next(LmnMembraneRef m);
-LmnMembraneRef lmn_mem_prev(LmnMembraneRef m);
-ProcessID lmn_mem_id(LmnMembraneRef m);
-void lmn_mem_set_id(LmnMembraneRef m, ProcessID n);
-
-LmnMembraneRef lmn_mem_make(void);
-void lmn_mem_free(LmnMembraneRef mem);
 void lmn_mem_rulesets_destroy(Vector *rulesets);
 void lmn_mem_drop(LmnMembraneRef mem);
 void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
@@ -173,7 +138,6 @@ AtomListEntryRef lmn_mem_get_atomlist(LmnMembraneRef mem, LmnFunctor f);
 void lmn_mem_activate_ancestors(LmnMembraneRef mem);
 BOOL lmn_mem_nmems(LmnMembraneRef mem, unsigned int count);
 int lmn_mem_child_mem_num(LmnMembraneRef mem);
-void lmn_mem_add_child_mem(LmnMembraneRef parentmem, LmnMembraneRef newmem);
 LmnSymbolAtomRef lmn_mem_newatom(LmnMembraneRef mem, LmnFunctor f);
 unsigned int lmn_mem_count_children(LmnMembraneRef mem);
 unsigned int lmn_mem_count_descendants(LmnMembraneRef mem);
@@ -250,7 +214,7 @@ struct membrane_iterator {
 
   reference operator*() { return *mem_; }
   membrane_iterator &operator++() {
-    mem_ = lmn_mem_next(mem_);
+    mem_ = mem_->mem_next();
     return *this;
   }
   pointer operator->() { return mem_; }
@@ -269,7 +233,7 @@ private:
 struct membrane_children {
   LmnMembrane *mem;
   membrane_children(LmnMembrane *mem) : mem(mem) {}
-  membrane_iterator begin() const { return membrane_iterator(lmn_mem_child_head(mem)); }
+  membrane_iterator begin() const { return membrane_iterator(mem->mem_child_head()); }
   membrane_iterator end() const { return membrane_iterator(); }
 };
 

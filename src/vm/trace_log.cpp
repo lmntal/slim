@@ -91,11 +91,11 @@ void tracelog_unput(TraceLogRef l, LmnWord key) { l->leave(key); }
 BOOL tracelog_contains(TraceLogRef l, LmnWord key) { return l->contains(key); }
 
 BOOL tracelog_contains_atom(TraceLogRef l, LmnSymbolAtomRef atom) {
-  return l->contains(atom->get_id());
+  return l->contains(LMN_SATOM_ID(atom));
 }
 
 BOOL tracelog_contains_mem(TraceLogRef l, LmnMembraneRef mem) {
-  return l->contains(lmn_mem_id(mem));
+  return l->contains(mem->mem_id());
 }
 
 BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) {
@@ -109,11 +109,11 @@ LmnWord tracelog_get_matched(TraceLogRef l, LmnWord key) {
 }
 
 LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSymbolAtomRef atom) {
-  return tracelog_get_matched(l, atom->get_id());
+  return tracelog_get_matched(l, LMN_SATOM_ID(atom));
 }
 
 LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembraneRef mem) {
-  return tracelog_get_matched(l, lmn_mem_id(mem));
+  return tracelog_get_matched(l, mem->mem_id());
 }
 
 LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) {

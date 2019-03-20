@@ -44,11 +44,11 @@ namespace slim {
 template <> ProcessID process_id<LmnWord>(LmnWord id) { return id; }
 
 template <> ProcessID process_id<LmnSymbolAtomRef>(LmnSymbolAtomRef atom) {
-  return atom->get_id();
+  return LMN_SATOM_ID(atom);
 }
 
 template <> ProcessID process_id<LmnMembraneRef>(LmnMembraneRef mem) {
-  return lmn_mem_id(mem);
+  return mem->mem_id();
 }
 
 template <> ProcessID process_id<HyperLink *>(HyperLink *hl) {
