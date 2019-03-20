@@ -78,11 +78,11 @@ struct Checkpoint {
   int n_data_atom;
   Vector elements;
   Checkpoint():n_data_atom(0) {
-    vec_init(&this->elements, PROC_TBL_DEFAULT_SIZE);
+    this->elements.init(PROC_TBL_DEFAULT_SIZE);
   }
 
   ~Checkpoint() {
-    vec_destroy(&this->elements);
+    this->elements.destroy();
   }
 };
 
@@ -98,10 +98,10 @@ struct VisitLog {
   ~VisitLog(){
     proc_tbl_free(this->tbl);
 
-    for (int i = 0; i < vec_num(&this->checkpoints); i++) {
-      vec_free((Vector *)vec_get(&this->checkpoints, i));
+    for (int i = 0; i < this->checkpoints.get_num(); i++) {
+      delete (Vector *)this->checkpoints.get(i);
     }
-    vec_destroy(&this->checkpoints);
+    this->checkpoints.destroy();
   }
 
   void init() { this->init_with_size(0); }
@@ -114,12 +114,12 @@ struct VisitLog {
     /*   printf("size = %lu\n", tbl_size); */
     this->ref_n = VISITLOG_INIT_N;
     this->element_num = 0;
-    vec_init(&this->checkpoints, PROC_TBL_DEFAULT_SIZE);
+    this->checkpoints.init(PROC_TBL_DEFAULT_SIZE);
   }
 
   /* チェックポイントを設定する。 */
   void set_checkpoint() {
-    vec_push(&this->checkpoints, (vec_data_t) new Checkpoint());
+    this->checkpoints.push((vec_data_t) new Checkpoint());
   }
 
   /* もっとも最近のチェックポイントを返し、ログの状態をチェックポイントが設定された時点にもどす */
@@ -127,9 +127,9 @@ struct VisitLog {
     int i;
     struct Checkpoint *checkpoint;
 
-    checkpoint = (struct Checkpoint *)vec_pop(&this->checkpoints);
-    for (i = 0; i < vec_num(&checkpoint->elements); i++) {
-      proc_tbl_unput(this->tbl, vec_get(&checkpoint->elements, i));
+    checkpoint = (struct Checkpoint *)this->checkpoints.pop();
+    for (i = 0; i < checkpoint->elements.get_num(); i++) {
+      proc_tbl_unput(this->tbl, checkpoint->elements.get(i));
       this->element_num--;
       this->ref_n--;
     }
@@ -143,15 +143,15 @@ struct VisitLog {
   /* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
   void commit_checkpoint() {
     struct Checkpoint *last =
-        (struct Checkpoint *)vec_pop(&this->checkpoints);
+        (struct Checkpoint *)this->checkpoints.pop();
 
-    if (vec_num(&this->checkpoints) > 0) {
+    if (this->checkpoints.get_num() > 0) {
       int i;
       struct Checkpoint *new_last =
-          (struct Checkpoint *)vec_last(&this->checkpoints);
+          (struct Checkpoint *)this->checkpoints.last();
 
-      for (i = 0; i < vec_num(&last->elements); i++) {
-        vec_push(&new_last->elements, vec_get(&last->elements, i));
+      for (i = 0; i < last->elements.get_num(); i++) {
+        new_last->elements.push(last->elements.get(i));
       }
       new_last->n_data_atom += last->n_data_atom;
     }
@@ -159,9 +159,9 @@ struct VisitLog {
   }
   /* チェックポイントをログに追加する */
   void push_checkpoint(struct Checkpoint *cp) {
-    vec_push(&this->checkpoints, (vec_data_t)cp);
-    for (int i = 0; i < vec_num(&cp->elements); i++) {
-      proc_tbl_put(this->tbl, vec_get(&cp->elements, i), this->ref_n++);
+    this->checkpoints.push((vec_data_t)cp);
+    for (int i = 0; i < cp->elements.get_num(); i++) {
+      proc_tbl_put(this->tbl, cp->elements.get(i), this->ref_n++);
       this->element_num++;
     }
     this->element_num += cp->n_data_atom;
@@ -171,10 +171,10 @@ struct VisitLog {
    * 通常この関数ではなくput_atom, put_memを使用する. */
   int put(LmnWord p) {
     if (proc_tbl_put_new(this->tbl, p, this->ref_n++)) {
-      if (vec_num(&this->checkpoints) > 0) {
+      if (this->checkpoints.get_num() > 0) {
         CheckpointRef checkpoint =
-            (CheckpointRef)vec_last(&this->checkpoints);
-        vec_push(&checkpoint->elements, p);
+            (CheckpointRef)this->checkpoints.last();
+        checkpoint->elements.push(p);
       }
       this->element_num++;
       return 1;
@@ -199,9 +199,9 @@ struct VisitLog {
    * （引数がログしか無いことから分かるように,
    * 単に訪問したアトムを数えるために使用する） */
   void put_data() {
-    if (vec_num(&this->checkpoints) > 0) {
+    if (this->checkpoints.get_num() > 0) {
       struct Checkpoint *checkpoint =
-          (struct Checkpoint *)vec_last(&this->checkpoints);
+          (struct Checkpoint *)this->checkpoints.last();
       checkpoint->n_data_atom++;
     }
     this->element_num++;

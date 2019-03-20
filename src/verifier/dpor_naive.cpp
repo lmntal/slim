@@ -165,13 +165,8 @@ void init_por_vars() {
 void free_por_vars() {
   st_free_table(mc_por.states);
   st_free_table(mc_por.strans_independency);
-<<<<<<< HEAD
-  q_free(mc_por.queue);
-  delete mc_por.ample_candidate;
-=======
   delete mc_por.queue;
-  vec_free(mc_por.ample_candidate);
->>>>>>> 417d6a2191fd67dc9488e8b4acc49feee7f05a18
+  delete mc_por.ample_candidate;
   if (mc_por.rc) {
     mc_por.rc = nullptr;
   }
@@ -246,13 +241,8 @@ static void finalize_ample(BOOL org_f) {
              (st_data_t)0);
   st_foreach(mc_por.states, (st_iter_func)destroy_tmp_state_graph,
              (LmnWord)org_f);
-<<<<<<< HEAD
-  queue_clear(mc_por.queue);
-  mc_por.ample_candidate->clear();
-=======
   mc_por.queue->clear();
-  vec_clear(mc_por.ample_candidate);
->>>>>>> 417d6a2191fd67dc9488e8b4acc49feee7f05a18
+  mc_por.ample_candidate->clear();
   RC_CLEAR_DATA(mc_por.rc.get());
   mc_por.root = NULL;
 }
