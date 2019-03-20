@@ -602,7 +602,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
 
 /* 処理系内部の初期化処理 */
 static void init_internal(void) {
-  lmn_profiler_init(lmn_env.core_num);
+  lmn_prof = LmnProfiler(lmn_env.core_num);
   sym_tbl_init();
   lmn_functor_tbl_init();
   init_rules();
@@ -662,8 +662,8 @@ static inline void slim_finalize(void) {
   lmn_stream_destroy();
 }
 
-static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, int optid, int argc,
-                                   char **argv) {
+static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets,
+                                   int optid, int argc, char **argv) {
   int i;
 
   /** load input files */
@@ -673,15 +673,15 @@ static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, i
 
     try {
       if (!strcmp("-", f)) { /* 標準入力からの読込み */
-        t = load(std::unique_ptr<FILE, decltype(&fclose)>(stdin, [](FILE *) -> int { return 0; }));
+        t = load(std::unique_ptr<FILE, decltype(&fclose)>(
+            stdin, [](FILE *) -> int { return 0; }));
         start_rulesets.push_back(t);
       } else {
         t = load_file(f);
         if (t)
           start_rulesets.push_back(t);
       }
-    }
-    catch (const slim::loader::exception &e) {
+    } catch (const slim::loader::exception &e) {
       fprintf(stderr, "loader error: %s\n", e.what());
       return 0;
     }

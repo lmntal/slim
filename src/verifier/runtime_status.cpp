@@ -176,41 +176,43 @@ PeakCounter::PeakCounter() {
   peak = 0;
 }
 
-void lmn_profiler_init(unsigned int nthreads) {
-  unsigned int i;
-
-  lmn_prof.valid = FALSE;
-  lmn_prof.has_property = FALSE;
-  lmn_prof.found_err = FALSE;
-
-  lmn_prof.thread_num = nthreads;
-  lmn_prof.start_wall_time = 0.0;
-  lmn_prof.end_wall_time = 0.0;
-  lmn_prof.start_cpu_time = 0.0;
-  lmn_prof.end_cpu_time = 0.0;
-  lmn_prof.start_wall_time_main = 0.0;
-  lmn_prof.end_wall_time_main = 0.0;
-  lmn_prof.start_cpu_time_main = LMN_NALLOC(double, nthreads);
-  lmn_prof.end_cpu_time_main = LMN_NALLOC(double, nthreads);
-  lmn_prof.thread_cpu_time_main = LMN_NALLOC(double, nthreads);
-  for (i = 0; i < nthreads; i++) {
-    lmn_prof.thread_cpu_time_main[i] = 0.0;
+LmnProfiler::LmnProfiler(unsigned int thread_num) {
+  this->valid = false;
+  this->has_property = false;
+  this->found_err = false;
+  this->thread_num = thread_num;
+  this->start_wall_time = 0.0;
+  this->end_wall_time = 0.0;
+  this->start_cpu_time = 0.0;
+  this->end_cpu_time = 0.0;
+  this->start_wall_time_main = 0.0;
+  this->end_wall_time_main = 0.0;
+  this->start_cpu_time_main = LMN_NALLOC(double, thread_num);
+  this->end_cpu_time_main = LMN_NALLOC(double, thread_num);
+  this->thread_cpu_time_main = LMN_NALLOC(double, thread_num);
+  for (int i = 0; i < thread_num; i++) {
+    this->thread_cpu_time_main[i] = 0.0;
   }
-  lmn_prof.state_num_stored = 0;
-  lmn_prof.state_num_end = 0;
-  lmn_prof.lv3 = NULL;
-  lmn_prof.prules = NULL;
-  lmn_prof.cur = NULL;
+  this->state_num_stored = 0;
+  this->state_num_end = 0;
+  this->lv3 = NULL;
+  this->prules = NULL;
+  this->cur = NULL;
 
   if (lmn_env.nd) {
     if (lmn_env.profile_level >= 3) {
-      lmn_prof.lv3 = LMN_NALLOC(MCProfiler3, nthreads);
-      for (i = 0; i < nthreads; i++) {
-        lmn_prof.lv3[i] = MCProfiler3();
+      this->lv3 = LMN_NALLOC(MCProfiler3, thread_num);
+      for (int i = 0; i < thread_num; i++) {
+        this->lv3[i] = MCProfiler3();
       }
     }
+    if (lmn_env.profile_level >= 2) {
+      this->total_lv2 = MCProfiler2();
+      for (unsigned int i = 0; i < this->thread_num; i++)
+        this->lv2.push_back(MCProfiler2());
+    }
   } else if (lmn_env.profile_level >= 2) {
-    lmn_prof.prules = st_init_ptrtable();
+    this->prules = st_init_ptrtable();
   }
 }
 
@@ -218,11 +220,6 @@ void lmn_profiler_finalize() {
   LMN_FREE(lmn_prof.start_cpu_time_main);
   LMN_FREE(lmn_prof.end_cpu_time_main);
   LMN_FREE(lmn_prof.thread_cpu_time_main);
-
-  for (auto it = lmn_prof.lv2.begin(); it != lmn_prof.lv2.end(); it++) {
-    it->destroy();
-  }
-  lmn_prof.total_lv2.destroy();
 
   if (lmn_prof.lv3) {
     unsigned int i;
@@ -361,9 +358,6 @@ void profile_statespace(LmnWorkerGroup *wp) {
     profile_total_space_update(worker_states(w));
   }
   if (lmn_env.profile_level >= 2) {
-    lmn_prof.total_lv2.hashes = NULL;
-    for (unsigned int i = 0; i < lmn_prof.thread_num; i++)
-      lmn_prof.lv2.push_back(MCProfiler2());
     for (auto ptr : worker_states(w)->all_states())
       profile_state_f(ptr, (LmnWord)worker_states(w));
     if (lmn_env.tree_compress) {
@@ -378,7 +372,6 @@ static void profile_state_f(State *s, LmnWord arg) {
   MCProfiler2 &p = lmn_prof.lv2[lmn_OMP_get_my_id()];
   StateSpaceRef ss;
   unsigned int succ_num;
-
   ss = (StateSpaceRef)arg;
   succ_num = s->successor_num;
 

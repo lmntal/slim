@@ -44,7 +44,7 @@
 
 struct Vector *lmn_id_pool;
 struct LmnEnv lmn_env;
-struct LmnProfiler lmn_prof;
+LmnProfiler lmn_prof;
 LMN_TLS_TYPE(LmnTLS) lmn_tls;
 
 static void env_init(void);
@@ -66,7 +66,8 @@ static inline void lmn_TLS_init(LmnTLS *p, unsigned int thread_id) {
   p->proc_next_id = 1UL;
 }
 
-static inline void lmn_TLS_destroy(LmnTLS *p) { /* nothing now */ }
+static inline void lmn_TLS_destroy(LmnTLS *p) { /* nothing now */
+}
 
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) LMN_UNUSED;
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) {

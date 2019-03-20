@@ -141,7 +141,6 @@ struct MCProfiler2 {
       membrane_space;
   st_table_t hashes;
   MCProfiler2();
-  ~MCProfiler2(){};
   void destroy();
   void makeup_report();
 };
@@ -201,13 +200,15 @@ struct LmnProfiler {
    * 実行中に, 詳細に各状態から情報収集する.
    * (実行性能に影響するためベンチマークテストの際には使用しない) */
   MCProfiler3 *lv3; /* for verifier only */
-  struct RuleProfiler *cur;
+  RuleProfiler *cur;
   st_table_t prules; /* Set of Rule Profiler */
+  LmnProfiler(unsigned int thread_num);
+  LmnProfiler(){};
 };
 
 /* RuleProfiler Interface */
 
-extern struct LmnProfiler lmn_prof;
+extern LmnProfiler lmn_prof;
 
 void lmn_profiler_init(unsigned int threads_num);
 void lmn_profiler_finalize(void);
