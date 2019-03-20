@@ -236,56 +236,53 @@ void lmn_profiler_finalize() {
   }
 }
 
-void profile_peakcounter_add(PeakCounter *p, unsigned long size) {
-  p->cur += size;
-  if (p->cur > p->peak) {
-    p->peak = p->cur;
+void PeakCounter::incr(unsigned long x) {
+  cur += x;
+  if (cur > peak) {
+    peak = cur;
   }
 }
 
-void profile_peakcounter_set_v(PeakCounter *p, unsigned long size) {
-  p->cur = size;
-  if (p->cur > p->peak) {
-    p->peak = p->cur;
+void PeakCounter::set(unsigned long x) {
+  cur = x;
+  if (cur > peak) {
+    peak = cur;
   }
 }
 
 void profile_total_space_update(StateSpaceRef ss) {
   unsigned long sum;
-  MCProfiler3 *p;
+  MCProfiler3 &p = lmn_prof.lv3[env_my_thread_id()];
   unsigned int i;
 
-  p = &(lmn_prof.lv3[env_my_thread_id()]);
   sum = 0;
-  for (i = 0; i < ARY_SIZEOF(p->spaces); i++) {
+  for (i = 0; i < ARY_SIZEOF(p.spaces); i++) {
     if (i == PROFILE_SPACE__TOTAL || i == PROFILE_SPACE__REDUCED_MEMSET ||
         i == PROFILE_SPACE__REDUCED_BINSTR)
       continue;
     else
-      sum += p->spaces[i].space.cur;
+      sum += p.spaces[i].space.cur;
   }
 
   sum += ss->space();
-  profile_peakcounter_set_v(&(p->spaces[PROFILE_SPACE__TOTAL].space), sum);
+  p.spaces[PROFILE_SPACE__TOTAL].space.set(sum);
 }
 
-void profile_peakcounter_pop(PeakCounter *p, unsigned long size) {
-  p->cur -= size;
-}
+void PeakCounter::decr(unsigned long x) { cur -= x; }
 
 void profile_add_space(int type, unsigned long size) {
-  MemoryProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].spaces[type]);
-  profile_peakcounter_add(&p->num, 1);
-  profile_peakcounter_add(&p->space, size);
+  MemoryProfiler &p = lmn_prof.lv3[env_my_thread_id()].spaces[type];
+  p.num.incr(1);
+  p.space.incr(size);
 }
 
 void profile_remove_space(int type, unsigned long size) {
   if (lmn_prof
           .valid) { /* finalize処理で現在のメモリ使用量が不明になってしまうので..
                      */
-    MemoryProfiler *p = &(lmn_prof.lv3[env_my_thread_id()].spaces[type]);
-    profile_peakcounter_pop(&p->num, 1);
-    profile_peakcounter_pop(&p->space, size);
+    MemoryProfiler &p = lmn_prof.lv3[env_my_thread_id()].spaces[type];
+    p.num.decr(1);
+    p.space.decr(size);
   }
 }
 

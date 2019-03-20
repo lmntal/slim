@@ -112,6 +112,9 @@ struct PeakCounter {
   long peak; /* ピーク値 */
   PeakCounter();
   ~PeakCounter(){};
+  void incr(unsigned long x);
+  void set(unsigned long x);
+  void decr(unsigned long x);
 };
 
 struct MemoryProfiler {
