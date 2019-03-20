@@ -112,7 +112,7 @@ int tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1)
  */
 LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m)
 {
-  AtomListEntryRef plus_atom_list = lmn_mem_get_atomlist(m, LMN_UNARY_PLUS_FUNCTOR);
+  AtomListEntryRef plus_atom_list = m->get_atomlist(LMN_UNARY_PLUS_FUNCTOR);
   LMN_ASSERT(plus_atom_list != NULL);
   LmnAtomRef plus = (LmnAtomRef)atomlist_head(plus_atom_list);
   LmnAtomRef in = LMN_SATOM_GET_LINK((LmnSymbolAtomRef)plus, 0);
@@ -396,7 +396,7 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj)
 		    (LmnAtomRef)key, LMN_INT_ATTR, 0);
     lmn_mem_push_atom(itl->mem, (LmnAtomRef)key, LMN_INT_ATTR);
   } else if(itl->ht == &type_mem_hash) {
-    AtomListEntryRef in_atom_list = lmn_mem_get_atomlist((LmnMembraneRef)key, LMN_IN_PROXY_FUNCTOR);
+    AtomListEntryRef in_atom_list = ((LmnMembraneRef)key)->get_atomlist(LMN_IN_PROXY_FUNCTOR);
     LMN_ASSERT(in_atom_list != NULL);
     LmnAtomRef in = (LmnAtomRef)atomlist_head(in_atom_list);
     LmnAtomRef out = lmn_mem_newatom(itl->mem, LMN_OUT_PROXY_FUNCTOR);
