@@ -128,7 +128,6 @@ struct TraceLog : ProcessTable<TraceData> {
 
   TraceLog(unsigned long size) : ProcessTable<TraceData>(size) {}
   TraceLog() : ProcessTable<TraceData>() {}
-  ~TraceLog();
   unsigned int traversed_proc_count(LmnMembraneRef owner) {
     return this->contains(lmn_mem_id(owner))
                ? (*this)[lmn_mem_id(owner)].traversed_proc

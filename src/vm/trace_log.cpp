@@ -43,8 +43,6 @@ template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
  * Tracker
  */
 
-TraceLog::~TraceLog(){}
-
 BOOL tracelog_contains(TraceLogRef l, LmnWord key) { return l->contains(key); }
 
 BOOL tracelog_contains_atom(TraceLogRef l, LmnSymbolAtomRef atom) {
