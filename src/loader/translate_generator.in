@@ -172,7 +172,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 %   lmn_fatal("I can not find data atoms.");
 % } else {
     {
-      AtomListEntryRef atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)rc->wt($1), TR_GFID($2_functor_data));
+      AtomListEntryRef atomlist_ent = ((LmnMembraneRef)rc->wt($1))->get_atomlist(TR_GFID($2_functor_data));
       LmnSymbolAtomRef atom;
 
       if (atomlist_ent) {

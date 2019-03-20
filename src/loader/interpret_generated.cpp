@@ -88,7 +88,7 @@ case INSTR_FINDATOM:{
     lmn_fatal("I can not find data atoms.");
   } else {
     {
-      AtomListEntryRef atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)rc->wt(targ1), TR_GFID(targ2.functor_data));
+      AtomListEntryRef atomlist_ent = ((LmnMembraneRef)rc->wt(targ1))->get_atomlist(TR_GFID(targ2.functor_data));
       LmnSymbolAtomRef atom;
       if (atomlist_ent) {
         rc->at(targ0) = LMN_ATTR_MAKE_LINK(0);
