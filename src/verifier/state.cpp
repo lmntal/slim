@@ -185,7 +185,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
     s1_mid = lmn_mem_encode(s1->state_mem());
     s2_mid = lmn_mem_encode(s2_mem);
 
-    org_check = (state_equals_with_compress(s0, s2) !=
+    org_check = (state_equals_with_compress(s1, s2) !=
                  0); /* A. slim本来のグラフ同型成判定手続き */
     mid_check = (binstr_compare(s1_mid, s2_mid) ==
                  0); /* B. 互いに一意エンコードしたグラフの比較手続き */
@@ -213,7 +213,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
               "s1.BS (calc)", "s1.MID (calc)");
       fprintf(f, "-------------------------------------------------------------"
                  "-----------------------\n");
-      fprintf(f, "%-19s | %18s | %18s | %18s\n", "s2.Mem (calc)",
+      fprintf(f, "%-18s | %18s | %18s | %18s\n", "s2.Mem (calc)",
               CMP_STR(sp1_check), CMP_STR(sp2_check), CMP_STR(sp3_check));
       fprintf(f, "-------------------------------------------------------------"
                  "-----------------------\n");
@@ -226,7 +226,6 @@ int state_cmp_with_compress(State *s1, State *s2) {
       fprintf(f, "============================================================="
                  "=======================\n");
 
-      lmn_binstr_dump(s2->state_binstr());
       lmn_dump_mem_stdout(s1->state_mem());
 
       lmn_binstr_free(s1_bs);
