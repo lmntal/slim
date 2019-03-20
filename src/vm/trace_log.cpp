@@ -46,7 +46,7 @@ template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
 /* ログlに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
  * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
 int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id) {
-  return l->visit(mem1, mem2_id);
+  return l->visit_mem(mem1, mem2_id);
 }
 
 /* ログlに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.

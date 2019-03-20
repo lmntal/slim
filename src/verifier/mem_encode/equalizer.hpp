@@ -112,7 +112,7 @@ template <> struct equalizer<TraceLog> : public equalizer_base {
       : bs(bs), i_bs_(0), i_bs(&i_bs_), mem(mem), i_ref_(VISITLOG_INIT_N),
         i_ref(&i_ref_),
         log(new TraceLog) {
-    tracelog_put_mem(log, mem, TLOG_MATCHED_ID_NONE);
+    log->visit_mem(mem, TLOG_MATCHED_ID_NONE);
   }
   ~equalizer() { delete log; }
 
@@ -303,7 +303,7 @@ private:
     if (f != satom->get_functor())
       return FALSE;
 
-    if (!log->visit(satom, *i_ref, mem))
+    if (!log->visit_atom(satom, *i_ref, mem))
       return FALSE;
 
     (*i_ref)++;
@@ -340,8 +340,8 @@ private:
       }
     }
 
-    tracelog_put_mem(log, in_mem, *i_ref);
-    log->visit(in, TLOG_MATCHED_ID_NONE, in_mem);
+    log->visit_mem(in_mem, *i_ref);
+    log->visit_atom(in, TLOG_MATCHED_ID_NONE, in_mem);
     (*i_ref)++;
 
     /* 1. mem_eq_enc_mol : 引き続き子膜側へ踏み込んで連結分子をトレース
@@ -353,7 +353,7 @@ private:
   }
 
   BOOL mem_eq_enc_mem(int *i_bs, LmnMembraneRef mem, int *i_ref) {
-    if (!tracelog_put_mem(log, mem, *i_ref))
+    if (!log->visit_mem(mem, *i_ref))
       return FALSE;
     (*i_ref)++;
 
@@ -519,7 +519,7 @@ private:
       return false;
 
     auto out = ((LmnSymbolAtomRef)atom)->get_link(0);
-    log->visit((LmnSymbolAtomRef)atom, TLOG_MATCHED_ID_NONE,
+    log->visit_atom((LmnSymbolAtomRef)atom, TLOG_MATCHED_ID_NONE,
                       LMN_PROXY_GET_MEM((LmnSymbolAtomRef)atom));
     return mem_eq_enc_mol(i_bs, lmn_mem_parent(mem),
                           ((LmnSymbolAtomRef)out)->get_link(1),
@@ -546,7 +546,7 @@ private:
 
     auto in = ((LmnSymbolAtomRef)atom)->get_link(0);
     auto in_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
-    log->visit((LmnSymbolAtomRef)in, TLOG_MATCHED_ID_NONE, in_mem);
+    log->visit_atom((LmnSymbolAtomRef)in, TLOG_MATCHED_ID_NONE, in_mem);
     if (ref != tracelog_get_memMatched(log, in_mem))
       return false;
 

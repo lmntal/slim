@@ -179,12 +179,15 @@ public:
 /* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
  * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
  */
-  bool visit(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
+
+  bool visit_atom(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
     return this->visit(atom->get_id(), TraceData::options::TRAVERSED_ATOM,
                        atom2_id, owner);
   }
 
-  bool visit(LmnMembraneRef mem1, LmnWord mem2_id) {
+/* ログに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
+ * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
+  bool visit_mem(LmnMembraneRef mem1, LmnWord mem2_id) {
     return this->visit(lmn_mem_id(mem1), TraceData::options::TRAVERSED_MEM,
                        mem2_id, lmn_mem_parent(mem1));
   }
