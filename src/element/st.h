@@ -17,8 +17,8 @@
  * @{
  */
 
-#include <stddef.h>
 #include <iterator>
+#include <stddef.h>
 #include <utility>
 
 #ifndef _
@@ -40,9 +40,12 @@ typedef long (*st_hash_func)(void *);
 typedef int (*st_iter_func)(ANYARGS);
 
 struct st_hash_type {
-  int (*compare)(void *, void *); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数
-                                   */
-  long (*hash)(void *);           /* ハッシュ関数 */
+  int (*compare)(
+      void *,
+      void
+          *); /* 対象の2つのエントリー(st_table_entry)が同じチェインに属するならば偽、そうでなければ真を返す関数
+               */
+  long (*hash)(void *); /* ハッシュ関数 */
 };
 
 /* num_bins = 5, num_entries = 3 なる struct st_table_entry **bins の例
@@ -56,11 +59,12 @@ struct st_hash_type {
  */
 struct st_table {
   struct st_hash_type *type;
-  unsigned long num_bins;    /* ハッシュ表のサイズ(スロット数) */
-  unsigned long num_entries; /* ハッシュ表に放り込まれた要素の個数
-                      (各スロットは同一のハッシュ値を持つ要素を格納する(Linked)リスト構造(struct
-                      st_table_entry *)を持ち、
-                       同じリスト内に放り込まれた各要素は別個にカウントする) */
+  unsigned long num_bins; /* ハッシュ表のサイズ(スロット数) */
+  unsigned long
+      num_entries; /* ハッシュ表に放り込まれた要素の個数
+            (各スロットは同一のハッシュ値を持つ要素を格納する(Linked)リスト構造(struct
+            st_table_entry *)を持ち、
+             同じリスト内に放り込まれた各要素は別個にカウントする) */
   struct st_table_entry **bins; /* チェイン法に基づくハッシュ表本体 */
 };
 
@@ -87,9 +91,8 @@ st_table_t st_init_strtable(void);
 st_table_t st_init_strtable_with_size(int size);
 st_table_t st_init_ptrtable(void);
 st_table_t st_init_ptrtable_with_size(int size);
-int st_delete(register st_table_t tbl, register st_data_t key,
-              st_data_t *value);
-int st_delete_safe(register st_table_t tbl, st_data_t *key, st_data_t *value,
+int st_delete(st_table_t tbl, st_data_t key, st_data_t *value);
+int st_delete_safe(st_table_t tbl, st_data_t *key, st_data_t *value,
                    st_data_t never);
 int st_insert(st_table_t tbl, st_data_t key, st_data_t value);
 int st_insert_safe(st_table_t tbl, st_data_t key, st_data_t value);
@@ -155,7 +158,9 @@ public:
   bool operator==(const st_iterator &a) { return ptr == a.ptr; }
 };
 
-inline st_iterator begin(const st_table_t &table) { return (table) ? st_iterator(table) : st_iterator(); }
+inline st_iterator begin(const st_table_t &table) {
+  return (table) ? st_iterator(table) : st_iterator();
+}
 inline st_iterator end(const st_table_t &table) { return st_iterator(); }
 
 /* @} */

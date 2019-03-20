@@ -267,11 +267,11 @@ void owcty_worker_init(LmnWorker *w) {
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->accepts1 = make_parallel_queue(LMN_Q_MRMW);
-      mc->accepts2 = make_parallel_queue(LMN_Q_MRMW);
+      mc->accepts1 = new Queue(LMN_Q_MRMW);
+      mc->accepts2 = new Queue(LMN_Q_MRMW);
     } else {
-      mc->accepts1 = new_queue();
-      mc->accepts2 = new_queue();
+      mc->accepts1 = new Queue();
+      mc->accepts2 = new Queue();
     }
   } else {
     LmnWorker *primary = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
@@ -288,8 +288,8 @@ void owcty_worker_init(LmnWorker *w) {
 
 void owcty_worker_finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(OWCTY_WORKER_AQ1(w));
-    q_free(OWCTY_WORKER_AQ2(w));
+    delete OWCTY_WORKER_AQ1(w);
+    delete OWCTY_WORKER_AQ2(w);
   }
   st_free_table(OWCTY_WORKER_HASHSET(w));
   LMN_FREE(OWCTY_WORKER_OBJ(w));
@@ -313,7 +313,7 @@ void owcty_env_set(LmnWorker *w) {
 
 void statetable_to_state_queue(StateTable &st, Queue *q) {
   for (auto &ptr : st)
-    enqueue(q, (LmnWord)ptr);
+    q->enqueue((LmnWord)ptr);
 }
 
 static void owcty_env_init(LmnWorker *w) {
@@ -323,7 +323,7 @@ static void owcty_env_init(LmnWorker *w) {
                             OWCTY_WORKER_AQ2(w));
 
   MC_DEBUG(printf("acceptance queue init, num=%lu\n",
-                  queue_entry_num(OWCTY_WORKER_AQ1(w))));
+                  OWCTY_WORKER_AQ1(w)->entry_num()));
 }
 
 struct DegreeCnt {
@@ -367,14 +367,14 @@ void owcty_start(LmnWorker *w) {
     FINISH_CYCLE_SEARCH();
   }
 
-  if (!is_empty_queue(OWCTY_WORKER_AQ1(w))) {
+  if (!OWCTY_WORKER_AQ1(w)->is_empty()) {
     owcty_found_accepting_cycle(w, worker_states(w)->automata());
   }
 }
 
 static inline void owcty_report_midterm(LmnWorker *w) {
   McSearchOWCTY *mc = OWCTY_WORKER_OBJ(w);
-  mc->old = queue_entry_num(mc->accepts2);
+  mc->old = mc->accepts2->entry_num();
 }
 
 /* owctyアルゴリズムの停止を判定した場合, mc_exitフラグを真にする.
@@ -387,10 +387,10 @@ static inline void owcty_termination_detection(LmnWorker *w) {
   mc = OWCTY_WORKER_OBJ(w);
   mc->iteration++;
   MC_DEBUG(fprintf(stderr, "iter%3lu[S=%10lu, old=%10lu]  %s", mc->iteration,
-                   queue_entry_num(mc->accepts1), mc->old,
+                   mc->accepts1->entry_num(), mc->old,
                    (mc->iteration % 3 == 0) ? "\n" : ""));
 
-  q_num = queue_entry_num(mc->accepts1);
+  q_num = mc->accepts1->entry_num();
   if (q_num == 0 || q_num == mc->old) {
     MC_DEBUG(fprintf(stderr, "\n"));
     worker_group(w)->mc_exit = TRUE;
@@ -407,11 +407,11 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
                                       Queue *secondary, BOOL set_flag,
                                       BOOL is_up) {
   StateSpaceRef ss = worker_states(w);
-  while (!is_empty_queue(primary)) {
+  while (!primary->is_empty()) {
     State *s;
     unsigned int i, cnt;
 
-    s = (State *)dequeue(primary);
+    s = (State *)primary->dequeue();
     if (!s) {
       continue;
     } else if (STATE_PROP_SCC_N(w, s, ss->automata()) ||
@@ -434,7 +434,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
       if (!owcty_traversed_owner_is_me(succ, set_flag, is_up)) {
         if (state_is_accept(ss->automata(), succ) &&
             !smap_is_deleted(succ)) {
-          enqueue(secondary, (LmnWord)succ);
+          secondary->enqueue((LmnWord)succ);
           cnt++;
         }
       } else {
@@ -488,8 +488,8 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
 
       search.init(64);
       path.init(32);
-      while (!is_empty_queue(OWCTY_WORKER_AQ1(w))) {
-        State *seed = (State *)dequeue(OWCTY_WORKER_AQ1(w));
+      while (!OWCTY_WORKER_AQ1(w)->is_empty()) {
+        State *seed = (State *)OWCTY_WORKER_AQ1(w)->dequeue();
 
         if (state_is_end(a, seed)) {
           mc_found_invalid_state(wp, seed);
@@ -553,11 +553,11 @@ void map_worker_init(LmnWorker *w) {
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->propagate = make_parallel_queue(LMN_Q_MRMW);
-      mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
+      mc->propagate = new Queue(LMN_Q_MRMW);
+      mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
-      mc->propagate = new_queue();
-      mc->waitingSeed = new_queue();
+      mc->propagate = new Queue();
+      mc->waitingSeed = new Queue();
     }
   } else {
     LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
@@ -572,8 +572,8 @@ void map_worker_init(LmnWorker *w) {
 
 void map_worker_finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(MAP_WORKER_PROPAG_G(w));
-    q_free(MAP_WORKER_DEL_G(w));
+    delete MAP_WORKER_PROPAG_G(w);
+    delete MAP_WORKER_DEL_G(w);
   }
   st_free_table(MAP_WORKER_HASHSET(w));
   LMN_FREE(MAP_WORKER_OBJ(w));
@@ -616,7 +616,7 @@ void map_start(LmnWorker *w, State *u) {
     if (worker_use_weak_map(w)) {
       u = NULL;
     } else {
-      u = (State *)dequeue(MAP_WORKER_PROPAG_G(w));
+      u = (State *)MAP_WORKER_PROPAG_G(w)->dequeue();
     }
   } while (u);
 
@@ -629,8 +629,8 @@ void map_start(LmnWorker *w, State *u) {
 void map_iteration_start(LmnWorker *w) {
   lmn_workers_synchronization(w, NULL);
 
-  while (!is_empty_queue(MAP_WORKER_DEL_G(w))) {
-    State *seed = (State *)dequeue(MAP_WORKER_DEL_G(w));
+  while (!MAP_WORKER_DEL_G(w)->is_empty()) {
+    State *seed = (State *)MAP_WORKER_DEL_G(w)->dequeue();
     if (seed && !smap_is_not_delete(seed)) {
       smap_set_deleted(seed);
       map_start(w, seed);
@@ -653,7 +653,7 @@ static State *map_ordering_propagate_state(LmnWorker *w, State *u,
     if (!worker_use_weak_map(w)) {
       if (propag == u) {
         smap_unset_not_delete(u);
-        enqueue(MAP_WORKER_DEL_G(w), (LmnWord)u);
+        MAP_WORKER_DEL_G(w)->enqueue((LmnWord)u);
       } else {
         smap_set_not_delete(u);
         smap_unset_deleted(u);
@@ -674,7 +674,7 @@ static void map_propagate(LmnWorker *w, State *s, State *t, State *propag,
   } else if (propag == map_ordering(propag, t->map, a)) {
     if (map_entry_state(t, propag, a) && !worker_use_weak_map(w) &&
         t->is_expanded()) {
-      enqueue(MAP_WORKER_PROPAG_G(w), (LmnWord)t);
+      MAP_WORKER_PROPAG_G(w)->enqueue((LmnWord)t);
     }
   }
 }
@@ -848,9 +848,9 @@ void bledge_worker_init(LmnWorker *w) {
   McSearchBLE *mc = LMN_MALLOC(McSearchBLE);
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->layer = make_parallel_queue(LMN_Q_MRMW);
+      mc->layer = new Queue(LMN_Q_MRMW);
     } else {
-      mc->layer = new_queue();
+      mc->layer = new Queue();
     }
   } else {
     mc->layer =
@@ -866,7 +866,7 @@ void bledge_worker_init(LmnWorker *w) {
 
 void bledge_worker_finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(BLE_WORKER_LAYER_Q(w));
+    delete BLE_WORKER_LAYER_Q(w);
   }
   delete BLE_WORKER_PATH_VEC(w);
   delete BLE_WORKER_SEARCH_VEC(w);
@@ -898,11 +898,11 @@ void bledge_start(LmnWorker *w) {
 
   START_CYCLE_SEARCH();
 
-  while (!is_empty_queue(BLE_WORKER_LAYER_Q(w))) {
+  while (!BLE_WORKER_LAYER_Q(w)->is_empty()) {
     State *u;
     unsigned int i;
 
-    if (!(u = (State *)dequeue(BLE_WORKER_LAYER_Q(w))))
+    if (!(u = (State *)BLE_WORKER_LAYER_Q(w)->dequeue()))
       continue;
     for (i = 0; i < u->successor_num; i++) {
       State *v = state_succ_state(u, i);
@@ -926,7 +926,7 @@ void bledge_start(LmnWorker *w) {
 
 void bledge_store_layer(LmnWorker *w, State *s) {
   if (s->successor_num > 0) {
-    enqueue(BLE_WORKER_LAYER_Q(w), (LmnWord)s);
+    BLE_WORKER_LAYER_Q(w)->enqueue((LmnWord)s);
   }
 }
 
@@ -1003,11 +1003,11 @@ void mapndfs_worker_init(LmnWorker *w) {
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->propagate = make_parallel_queue(LMN_Q_MRMW);
-      mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
+      mc->propagate = new Queue(LMN_Q_MRMW);
+      mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
-      mc->propagate = new_queue();
-      mc->waitingSeed = new_queue();
+      mc->propagate = new Queue();
+      mc->waitingSeed = new Queue();
     }
   } else {
     LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
@@ -1026,8 +1026,8 @@ void mapndfs_worker_finalize(LmnWorker *w) {
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(MAP_WORKER_PROPAG_G(w));
-    q_free(MAP_WORKER_DEL_G(w));
+    delete MAP_WORKER_PROPAG_G(w);
+    delete MAP_WORKER_DEL_G(w);
   }
   if (MAP_WORKER_HASHSET(w))
     st_free_table(MAP_WORKER_HASHSET(w));
@@ -1165,11 +1165,11 @@ void mcndfs_worker_init(LmnWorker *w) {
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (workers_entried_num(worker_group(w)) > 1) {
-      mc->propagate = make_parallel_queue(LMN_Q_MRMW);
-      mc->waitingSeed = make_parallel_queue(LMN_Q_MRMW);
+      mc->propagate = new Queue(LMN_Q_MRMW);
+      mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
-      mc->propagate = new_queue();
-      mc->waitingSeed = new_queue();
+      mc->propagate = new Queue();
+      mc->waitingSeed = new Queue();
     }
   } else {
     LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
@@ -1188,8 +1188,8 @@ void mcndfs_worker_finalize(LmnWorker *w) {
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    q_free(MAP_WORKER_PROPAG_G(w));
-    q_free(MAP_WORKER_DEL_G(w));
+    delete MAP_WORKER_PROPAG_G(w);
+    delete MAP_WORKER_DEL_G(w);
   }
   if (MAP_WORKER_HASHSET(w))
     st_free_table(MAP_WORKER_HASHSET(w));

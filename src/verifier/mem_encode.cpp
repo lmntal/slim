@@ -394,7 +394,7 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem,
   equalizer<VisitLog> e;
   auto t = e.mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, log)
            /* memに未訪問のプロセスが存在する場合, FALSE */
-           && visitlog_element_num(log) == process_num(mem);
+           && log->get_element_num() == process_num(mem);
   visitlog_free(log);
   LMN_FREE(ref_log);
 #endif
