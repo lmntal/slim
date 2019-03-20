@@ -81,7 +81,7 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
                                     LmnMembraneRef src_graph, Vector *rulesets,
                                     LmnSymbolAtomRef *head, int *pos)
 {
-  for (int i = 0; i < vec_num(rulesets); i++) {
+  for (int i = 0; i < rulesets->get_num(); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
 
     for (auto r : *rs) {
@@ -89,7 +89,7 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
       RC_SET_GROOT_MEM(&rc, src_graph);
       rc.keep_process_id_in_nd_mode = true;
       react_rule(&rc, src_graph, r);
-      int n_of_results = vec_num(RC_EXPANDED(&rc));
+      int n_of_results = RC_EXPANDED(&rc)->get_num();
 
       for (int k = n_of_results - 1; k >= 0; k--) {
         LmnSymbolAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);

@@ -190,7 +190,7 @@ BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
 
 PropSyms propsyms_make() { return new Vector(32); }
 
-unsigned int propsyms_num(PropSyms props) { return vec_num(props); }
+unsigned int propsyms_num(PropSyms props) { return props->get_num(); }
 
 SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i) {
   return (SymbolDefinitionRef)props->get(i);
@@ -198,14 +198,14 @@ SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i) {
 
 void propsyms_free(PropSyms props) {
   unsigned int i;
-  for (i = 0; i < vec_num(props); i++) {
+  for (i = 0; i < props->get_num(); i++) {
     propsym_free((SymbolDefinitionRef)props->get(i));
   }
   delete props;
 }
 
 void propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef) {
-  if (vec_num(props) <= id) {
+  if (props->get_num() <= id) {
     vec_resize(props, id + 1, (vec_data_t)NULL);
   }
   props->set(id, (vec_data_t)symdef);

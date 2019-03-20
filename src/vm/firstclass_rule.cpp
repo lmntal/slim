@@ -54,7 +54,7 @@ struct LinkConnection {
 
 int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom,
                         int link_p, HyperLink *hl) {
-  int link_name = vec_num(link_connections);
+  int link_name = link_connections->get_num();
   struct LinkConnection *c = LMN_MALLOC(struct LinkConnection);
   c->atom = satom;
   c->hl = hl;
@@ -71,7 +71,7 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
         (LmnSymbolAtomRef)satom->get_link(link_p));
     HyperLink *p_hl = hll->parent;
 
-    for (int i = 0; i < vec_num(link_connections); i++) {
+    for (int i = 0; i < link_connections->get_num(); i++) {
       struct LinkConnection *c =
           (struct LinkConnection *)link_connections->get(i);
       if (c->hl && lmn_hyperlink_eq_hl(p_hl, c->hl)) {
@@ -81,7 +81,7 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
     return linkconnection_push(link_connections, NULL, -1, p_hl);
   }
 
-  for (int i = 0; i < vec_num(link_connections); i++) {
+  for (int i = 0; i < link_connections->get_num(); i++) {
     struct LinkConnection *c =
         (struct LinkConnection *)link_connections->get(i);
     if (c->atom == satom && c->link_pos == link_p) {
@@ -365,7 +365,7 @@ string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
   result += body;
   result += ".";
 
-  for (int i = 0; i < vec_num(link_connections); i++)
+  for (int i = 0; i < link_connections->get_num(); i++)
     LMN_FREE(link_connections->get(i));
   delete link_connections;
 
@@ -381,13 +381,13 @@ LmnMembraneRef get_mem_linked_atom(LmnSymbolAtomRef target_atom, int link_n) {
 void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
   Vector *mem_rulesets = lmn_mem_get_rulesets(mem);
 
-  for (int i = 0; i < vec_num(mem_rulesets); i++) {
+  for (int i = 0; i < mem_rulesets->get_num(); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)mem_rulesets->get(i);
     if (rs->id != del_id)
       continue;
 
     /* move successors forward */
-    for (int j = i; j < vec_num(mem_rulesets) - 1; j++) {
+    for (int j = i; j < mem_rulesets->get_num() - 1; j++) {
       LmnRuleSetRef next = (LmnRuleSetRef)mem_rulesets->get(j + 1);
       mem_rulesets->set(j, (vec_data_t)next);
     }

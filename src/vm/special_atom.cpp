@@ -46,7 +46,7 @@ void sp_atom_init() { sp_atom_callback_tbl = new Vector(64); }
 void sp_atom_finalize() {
   int i;
 
-  for (i = 0; i < vec_num(sp_atom_callback_tbl); i++) {
+  for (i = 0; i < sp_atom_callback_tbl->get_num(); i++) {
     LMN_FREE(sp_atom_callback_tbl->get(i));
   }
   delete sp_atom_callback_tbl;
@@ -64,7 +64,7 @@ int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
   c->decode = nullptr;
 
   sp_atom_callback_tbl->push((LmnWord)c);
-  return vec_num(sp_atom_callback_tbl) - 1;
+  return sp_atom_callback_tbl->get_num() - 1;
 }
 
 int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
@@ -79,10 +79,10 @@ int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
   c->decode = decoder;
 
   sp_atom_callback_tbl->push((LmnWord)c);
-  return vec_num(sp_atom_callback_tbl) - 1;
+  return sp_atom_callback_tbl->get_num() - 1;
 }
 
 struct SpecialAtomCallback *sp_atom_get_callback(int id) {
-  LMN_ASSERT(vec_num(sp_atom_callback_tbl) > id);
+  LMN_ASSERT(sp_atom_callback_tbl->get_num() > id);
   return (struct SpecialAtomCallback *)sp_atom_callback_tbl->get(id);
 }

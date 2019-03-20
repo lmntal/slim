@@ -246,7 +246,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if (!lmn_mem_nmems((LmnMembraneRef)rc->wt($0), $1)) $f;
 
 #norules LmnInstrVar
-  if (vec_num(lmn_mem_get_rulesets((LmnMembraneRef)rc->wt($0)))) $f;
+  if (lmn_mem_get_rulesets((LmnMembraneRef)rc->wt($0))->get_num()) $f;
 
 #newatom LmnInstrVar LmnInstrVar $functor
 % switch(targ2_attr){

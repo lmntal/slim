@@ -533,7 +533,7 @@ void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs) { dump_rule(port, rs); }
 static void dump_ruleset(LmnPortRef port, struct Vector *v) {
   unsigned int i;
 
-  for (i = 0; i < vec_num(v); i++) {
+  for (i = 0; i < v->get_num(); i++) {
     LmnRuleSetRef rs;
     char *s;
 

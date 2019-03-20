@@ -522,7 +522,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 
   /* 階層グラフ構造は等価だが性質ラベルの異なる状態を生成する.　*/
   RC_ND_SET_ORG_SUCC_NUM(rc, mc_react_cxt_expanded_num(rc));
-  for (i = 1; i < vec_num(RC_EXPANDED_PROPS(rc)); i++) {
+  for (i = 1; i < RC_EXPANDED_PROPS(rc)->get_num(); i++) {
     BYTE p_nxt_l = (BYTE)RC_EXPANDED_PROPS(rc)->get(i);
     for (j = 0; j < RC_ND_ORG_SUCC_NUM(rc); j++) {
       TransitionRef src_succ_t;
@@ -667,7 +667,7 @@ unsigned long mc_invalids_get_num(LmnWorkerGroup *wp) {
 
   ret = 0;
   for (i = 0; i < wp->worker_num; i++) {
-    ret += vec_num(worker_invalid_seeds(workers_get_worker(wp, i)));
+    ret += worker_invalid_seeds(workers_get_worker(wp, i))->get_num();
   }
 
   return ret;
@@ -714,7 +714,7 @@ static Vector *mc_gen_invalids_path(State *seed) {
 static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v) {
   unsigned int i, j;
 
-  for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
+  for (i = 0, j = 1; i < v->get_num() && j < v->get_num(); i++, j++) {
 
     State *s1, *s2;
 
@@ -732,7 +732,7 @@ static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v) {
 
 BOOL mc_vec_states_valid(Vector *v) {
   unsigned int i, j;
-  for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
+  for (i = 0, j = 1; i < v->get_num() && j < v->get_num(); i++, j++) {
     State *s, *t;
     s = (State *)v->get(i);
     t = (State *)v->get(j);
@@ -759,7 +759,7 @@ static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
 
   auto out = ss->output();
   fprintf(out, "%lu::", state_format_id(s, ss->is_formatted()));
-  for (i = 0; i < vec_num(succs); i++) {
+  for (i = 0; i < succs->get_num(); i++) {
     State *succ = (State *)succs->get(i);
     if (succ) {
       fprintf(out, "%s%lu", (i > 0) ? ", " : "",
@@ -780,7 +780,7 @@ int mc_free_succ_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
 void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
   unsigned int i;
 
-  for (i = 0; i < vec_num(v); i++) {
+  for (i = 0; i < v->get_num(); i++) {
     State *s;
     auto out = ss->output();
 
@@ -842,7 +842,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
         v = worker_invalid_seeds(w);
         ss = worker_states(w);
 
-        for (j = 0; j < vec_num(v); j++) {
+        for (j = 0; j < v->get_num(); j++) {
           Vector *path = mc_gen_invalids_path((State *)v->get(j));
 
           if (cui_dump) { /* 出力 */
@@ -866,7 +866,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
         v = worker_cycles(w);
         ss = worker_states(w);
 
-        for (j = 0; j < vec_num(v); j++) {
+        for (j = 0; j < v->get_num(); j++) {
           Vector *cycle, *path;
           State *seed;
 

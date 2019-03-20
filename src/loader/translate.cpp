@@ -217,12 +217,12 @@ Vector vec_const_temporary_from_array(int size, const LmnWord *w) {
 
 int vec_inserted_index(Vector *v, LmnWord w) {
   int i;
-  for (i = 0; i < vec_num(v); i++) {
+  for (i = 0; i < v->get_num(); i++) {
     if (v->get(i) == w)
       return i;
   }
   v->push(w);
-  return vec_num(v) - 1;
+  return v->get_num() - 1;
 }
 
 char *automalloc_sprintf(const char *format, ...) {
@@ -395,7 +395,7 @@ static void translate_rule(LmnRuleRef rule, const char *header) {
 
   jump_points->push((LmnWord)rule->inst_seq);
 
-  for (i = 0; i < vec_num(jump_points) /*変換中にjump_pointsは増えていく*/;
+  for (i = 0; i < jump_points->get_num() /*変換中にjump_pointsは増えていく*/;
        i++) {
     BYTE *p = (BYTE *)jump_points->get(i);
     fprintf(OUT,

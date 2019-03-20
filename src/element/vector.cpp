@@ -42,7 +42,7 @@
 /* contains */
 BOOL vec_contains(const Vector *vec, LmnWord keyp) {
   unsigned int i = 0;
-  while (i < vec_num(vec)) {
+  while (i < vec->get_num()) {
     if (vec->get(i++) == (LmnWord)keyp) {
       return TRUE;
     }
@@ -74,7 +74,7 @@ void vec_reverse(Vector *vec) {
   unsigned int r, l;
 
   r = 0;
-  l = vec_num(vec) - 1;
+  l = vec->get_num() - 1;
 
   while (r < l) {
     vec_data_t tmp = vec->tbl[r];
@@ -91,7 +91,7 @@ Vector *vec_copy(Vector *vec) {
 
   new_vec = new Vector(vec->num > 0 ? vec->num : 1);
 
-  for (i = 0; i < vec_num(vec); i++) {
+  for (i = 0; i < vec->get_num(); i++) {
     new_vec->tbl[i] = vec->tbl[i];
   }
   new_vec->num = vec->num;

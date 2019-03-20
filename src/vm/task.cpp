@@ -277,7 +277,7 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   rc->is_zerostep = true;
   do {
     reacted = FALSE;
-    for (int i = 0; i < vec_num(rulesets); i++) {
+    for (int i = 0; i < rulesets->get_num(); i++) {
       LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
       if (!rs->is_zerostep())
         continue;
@@ -308,7 +308,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   BOOL ok = FALSE;
 
   /* ルールセットの適用 */
-  for (i = 0; i < vec_num(rulesets); i++) {
+  for (i = 0; i < rulesets->get_num(); i++) {
     if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)rulesets->get(i))) {
       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
        */
@@ -318,7 +318,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   }
 
 #ifdef USE_FIRSTCLASS_RULE
-  for (i = 0; i < vec_num(lmn_mem_firstclass_rulesets(cur_mem)); i++) {
+  for (i = 0; i < lmn_mem_firstclass_rulesets(cur_mem)->get_num(); i++) {
     if (react_ruleset(
             rc, cur_mem,
             (LmnRuleSetRef)lmn_mem_firstclass_rulesets(cur_mem)->get(i))) {
@@ -436,7 +436,7 @@ void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
 
   RC_SET_GROOT_MEM(&rc, mem);
 
-  for (i = 0; i < vec_num(rulesets); i++) {
+  for (i = 0; i < rulesets->get_num(); i++) {
     react_ruleset(&rc, mem, (LmnRuleSetRef)rulesets->get(i));
   }
   react_initial_rulesets(&rc, mem);
@@ -698,7 +698,7 @@ void lmn_hyperlink_get_elements(std::vector<HyperLink *> &tree,
   Vector vec;
   vec.init(1);
   lmn_hyperlink_get_elements(&vec, start_hl);
-  for (int i = 0; i < vec_num(&vec); i++)
+  for (int i = 0; i < vec.get_num(); i++)
     tree.push_back((HyperLink *)vec.get(i));
   vec.destroy();
 }
@@ -854,7 +854,7 @@ std::vector<HyperLink *> lmn_hyperlink_get_elements(HyperLink *start_hl) {
   Vector tree;
   tree.init(32);
   lmn_hyperlink_get_elements(&tree, start_hl);
-  for (int i = 0; i < vec_num(&tree) - 1; i++)
+  for (int i = 0; i < tree.get_num() - 1; i++)
     vec.push_back((HyperLink *)tree.get(i));
   tree.destroy();
   return vec;
@@ -1512,7 +1512,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    if (vec_num(lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(memi))))
+    if (lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(memi))->get_num())
       return FALSE;
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
@@ -4962,7 +4962,7 @@ Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
   Vector *vec = new Vector(16);
 
   /* リンクオブジェクトのベクタを構築 */
-  for (i = 0; i < vec_num(link_idxs); i++) {
+  for (i = 0; i < link_idxs->get_num(); i++) {
     vec_data_t t = link_idxs->get(i);
     LinkObjRef l = LinkObj_make((LmnAtomRef)rc->wt(t), rc->at(t));
     vec->push((LmnWord)l);
@@ -4973,7 +4973,7 @@ Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
 void free_links(Vector *links) {
   unsigned long i;
 
-  for (i = 0; i < vec_num(links); i++) {
+  for (i = 0; i < links->get_num(); i++) {
     LMN_FREE(links->get(i));
   }
   delete links;

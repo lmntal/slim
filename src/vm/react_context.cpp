@@ -177,8 +177,8 @@ unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
 }
 
 unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
-  return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
-                             : vec_num(RC_EXPANDED(cxt));
+  return RC_MC_USE_DMEM(cxt) ? RC_MEM_DELTAS(cxt)->get_num()
+                             : RC_EXPANDED(cxt)->get_num();
 }
 
 ///// first-class rulesets

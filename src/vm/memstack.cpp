@@ -46,7 +46,7 @@ LmnMemStack lmn_memstack_make() { return new Vector(64); }
 void lmn_memstack_free(LmnMemStack memstack) { delete memstack; }
 
 BOOL lmn_memstack_isempty(LmnMemStack memstack) {
-  return vec_num(memstack) == 0;
+  return memstack->get_num() == 0;
 }
 
 void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem) {
@@ -61,7 +61,7 @@ LmnMembraneRef lmn_memstack_pop(LmnMemStack memstack) {
 }
 
 LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack) {
-  return (LmnMembraneRef)memstack->get(vec_num(memstack) - 1);
+  return (LmnMembraneRef)memstack->get(memstack->get_num() - 1);
 }
 
 /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
@@ -69,7 +69,7 @@ LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack) {
    うために、この手続きが必要になる。外部の機能を使わない通常の実行時に
    はこの手続きは必要ない*/
 void lmn_memstack_delete(LmnMemStack memstack, LmnMembraneRef mem) {
-  long i, j, n = (long)vec_num(memstack);
+  long i, j, n = (long)memstack->get_num();
 
   for (i = n - 1; i >= 0; i--) {
     if ((LmnMembraneRef)memstack->get(i) == mem) {

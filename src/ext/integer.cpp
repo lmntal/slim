@@ -98,7 +98,7 @@ void integer_set(LmnReactCxtRef rc,
                     LinkObjGetAtom(l), t2, LMN_ATTR_GET_VALUE(LinkObjGetPos(l)));
     lmn_mem_push_atom(mem, (LmnAtomRef)n, LMN_INT_ATTR);
 
-    for (int j = 0; j < vec_num(dstlovec); j++) LMN_FREE(dstlovec->get(j));
+    for (int j = 0; j < dstlovec->get_num(); j++) LMN_FREE(dstlovec->get(j));
     delete dstlovec;
     proc_tbl_free(atommap);
   }
@@ -108,7 +108,7 @@ void integer_set(LmnReactCxtRef rc,
 
   lmn_mem_delete_ground(mem, srcvec);
 
-  for (i = 0; i < vec_num(srcvec); i++) LMN_FREE(srcvec->get(i));
+  for (i = 0; i < srcvec->get_num(); i++) LMN_FREE(srcvec->get(i));
   delete srcvec;
 }
 

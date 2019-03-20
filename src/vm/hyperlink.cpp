@@ -324,7 +324,7 @@ void lmn_hyperlink_copy(LmnSymbolAtomRef newatom, LmnSymbolAtomRef oriatom) {
 void hyperlink_path_compression(HyperLink *root, Vector *children) {
   int i, n;
 
-  n = vec_num(children);
+  n = children->get_num();
   for (i = 0; i < n; i++) {
     HyperLink *hl, *old_parent;
 

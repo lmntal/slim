@@ -97,7 +97,7 @@ void visitlog_destroy(struct VisitLog *p) {
 
   proc_tbl_free(p->tbl);
 
-  for (i = 0; i < vec_num(&p->checkpoints); i++) {
+  for (i = 0; i < p->checkpoints.get_num(); i++) {
     delete (Vector *)p->checkpoints.get(i);
   }
   p->checkpoints.destroy();
@@ -117,7 +117,7 @@ struct Checkpoint *visitlog_pop_checkpoint(VisitLogRef visitlog) {
   struct Checkpoint *checkpoint;
 
   checkpoint = (struct Checkpoint *)visitlog->checkpoints.pop();
-  for (i = 0; i < vec_num(&checkpoint->elements); i++) {
+  for (i = 0; i < checkpoint->elements.get_num(); i++) {
     proc_tbl_unput(visitlog->tbl, checkpoint->elements.get(i));
     visitlog->element_num--;
     visitlog->ref_n--;
@@ -137,12 +137,12 @@ void visitlog_commit_checkpoint(VisitLogRef visitlog) {
   struct Checkpoint *last =
       (struct Checkpoint *)visitlog->checkpoints.pop();
 
-  if (vec_num(&visitlog->checkpoints) > 0) {
+  if (visitlog->checkpoints.get_num() > 0) {
     int i;
     struct Checkpoint *new_last =
         (struct Checkpoint *)visitlog->checkpoints.last();
 
-    for (i = 0; i < vec_num(&last->elements); i++) {
+    for (i = 0; i < last->elements.get_num(); i++) {
       new_last->elements.push(last->elements.get(i));
     }
     new_last->n_data_atom += last->n_data_atom;
@@ -156,7 +156,7 @@ void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp) {
   int i;
 
   visitlog->checkpoints.push((vec_data_t)cp);
-  for (i = 0; i < vec_num(&cp->elements); i++) {
+  for (i = 0; i < cp->elements.get_num(); i++) {
     proc_tbl_put(visitlog->tbl, cp->elements.get(i), visitlog->ref_n++);
     visitlog->element_num++;
   }
@@ -167,7 +167,7 @@ void visitlog_push_checkpoint(VisitLogRef visitlog, struct Checkpoint *cp) {
  * 通常この関数ではなくput_atom, put_memを使用する. */
 int visitlog_put(VisitLogRef visitlog, LmnWord p) {
   if (proc_tbl_put_new(visitlog->tbl, p, visitlog->ref_n++)) {
-    if (vec_num(&visitlog->checkpoints) > 0) {
+    if (visitlog->checkpoints.get_num() > 0) {
       CheckpointRef checkpoint =
           (CheckpointRef)visitlog->checkpoints.last();
       checkpoint->elements.push(p);
@@ -199,7 +199,7 @@ int visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl) {
  * （引数がログしか無いことから分かるように,
  * 単に訪問したアトムを数えるために使用する） */
 void visitlog_put_data(VisitLogRef visitlog) {
-  if (vec_num(&visitlog->checkpoints) > 0) {
+  if (visitlog->checkpoints.get_num() > 0) {
     struct Checkpoint *checkpoint =
         (struct Checkpoint *)visitlog->checkpoints.last();
     checkpoint->n_data_atom++;

@@ -830,7 +830,7 @@ unsigned long transition_id(TransitionRef t) { return t->id; }
 /* 遷移tに整数ID idを割り当てる. */
 void transition_set_id(TransitionRef t, unsigned long id) { t->id = id; }
 
-int transition_rule_num(TransitionRef t) { return vec_num(&t->rule_names); }
+int transition_rule_num(TransitionRef t) { return t->rule_names.get_num(); }
 
 lmn_interned_str transition_rule(TransitionRef t, int idx) {
   return t->rule_names.get(idx);

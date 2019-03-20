@@ -55,14 +55,14 @@ void destroy_rules(void);
 /* 2つの(Vector *)rulesetsが等価であるか判定, 等価の場合に真を返す.
  * Vectorはルールセットの整数IDで整列済みであることが前提 */
 BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
-  unsigned int n = vec_num(rs_v1);
-  if (vec_num(rs_v1) != vec_num(rs_v2))
+  unsigned int n = rs_v1->get_num();
+  if (rs_v1->get_num() != rs_v2->get_num())
     return false;
 
   /* ルールセットの種類の比較 (IDで昇順に並べておくコードに依存) */
   unsigned int un1 = 0;
   unsigned int un2 = 0;
-  for (unsigned int i = 0; i < vec_num(rs_v1); i++) {
+  for (unsigned int i = 0; i < rs_v1->get_num(); i++) {
     LmnRuleSetRef rs1, rs2;
     rs1 = (LmnRuleSetRef)rs_v1->get(i);
     rs2 = (LmnRuleSetRef)rs_v2->get(i);
@@ -84,17 +84,17 @@ BOOL lmn_rulesets_equals(Vector *rs_v1, Vector *rs_v2) {
     return true;
 
   /* ---uniq制約がある場合の処理--- */
-  LMN_ASSERT(vec_num(rs_v1) > 0);
+  LMN_ASSERT(rs_v1->get_num() > 0);
   BOOL *rs2v_matched;
   bool is_ok;
 
-  rs2v_matched = LMN_NALLOC(BOOL, vec_num(rs_v1));
-  memset(rs2v_matched, 0U, sizeof(BOOL) * vec_num(rs_v1));
+  rs2v_matched = LMN_NALLOC(BOOL, rs_v1->get_num());
+  memset(rs2v_matched, 0U, sizeof(BOOL) * rs_v1->get_num());
 
-  for (unsigned int i = 0; i < vec_num(rs_v1); i++) {
+  for (unsigned int i = 0; i < rs_v1->get_num(); i++) {
     is_ok = false;
     LmnRuleSetRef rs1 = (LmnRuleSetRef)rs_v1->get(i);
-    for (unsigned int j = 0; j < vec_num(rs_v1); j++) {
+    for (unsigned int j = 0; j < rs_v1->get_num(); j++) {
       LmnRuleSetRef rs2 = (LmnRuleSetRef)rs_v2->get(i);
       if (rs1->id < rs2->id) /* 比較打ち切り */
         break;               /* INNER LOOP */

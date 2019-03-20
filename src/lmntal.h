@@ -488,7 +488,7 @@ void lmn_stream_destroy(void);
 #define env_reset_proc_ids() (lmn_tls.proc_next_id = 1U)
 #define env_set_next_id(N) (lmn_tls.proc_next_id = (N))
 #define env_gen_next_id()                                                      \
-  ((lmn_id_pool && vec_num(lmn_id_pool) > 0) ? lmn_id_pool->pop()            \
+  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
                                              : lmn_tls.proc_next_id++)
 #define env_next_id() (lmn_tls.proc_next_id)
 #
@@ -530,7 +530,7 @@ static inline void env_set_next_id(unsigned long n) {
 }
 #
 #define env_gen_next_id()                                                      \
-  ((lmn_id_pool && vec_num(lmn_id_pool) > 0)                                   \
+  ((lmn_id_pool && lmn_id_pool->get_num() > 0)                                   \
        ? lmn_id_pool->pop()                                                  \
        : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
 

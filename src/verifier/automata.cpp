@@ -81,12 +81,12 @@ Automata::~Automata() {
   st_free_table(this->prop_to_id);
 
   /* free states */
-  for (i = 0; i < vec_num(&this->states); i++) {
+  for (i = 0; i < this->states.get_num(); i++) {
     delete (AutomataStateRef)this->states.get(i);
   }
 
   /* free sccs */
-  for (i = 0; i < vec_num(&this->sccs); i++) {
+  for (i = 0; i < this->sccs.get_num(); i++) {
     delete (AutomataSCC *)this->sccs.get(i);
   }
 
@@ -137,7 +137,7 @@ const char *Automata::state_name(atmstate_id_t id) {
 }
 
 void Automata::add_state(AutomataStateRef s) {
-  if (vec_num(&this->states) <= s->id) {
+  if (this->states.get_num() <= s->id) {
     vec_resize(&this->states, s->id + 1, (vec_data_t)0);
   }
   this->states.set(s->id, (vec_data_t)s);
@@ -179,7 +179,7 @@ void Automata::print_property() {
   unsigned long i, n;
 
   fprintf(stdout, "States\n");
-  n = vec_num(&(this->states));
+  n = this->states.get_num();
 
   for (i = 0; i < n; i++) {
     AutomataStateRef s = this->get_state(i);
@@ -225,7 +225,7 @@ AutomataState::AutomataState(unsigned int id, BOOL is_accept_state,
 AutomataState::~AutomataState() {
   unsigned int i;
 
-  for (i = 0; i < vec_num(&this->transitions); i++) {
+  for (i = 0; i < this->transitions.get_num(); i++) {
     delete (AutomataTransitionRef)this->transitions.get(i);
   }
   this->transitions.destroy();
@@ -238,7 +238,7 @@ void AutomataState::add_transition(AutomataTransitionRef t) {
 atmstate_id_t AutomataState::get_id() { return this->id; }
 
 unsigned int AutomataState::get_transition_num() {
-  return vec_num(&this->transitions);
+  return this->transitions.get_num();
 }
 
 AutomataTransitionRef AutomataState::get_transition(unsigned int index) {
@@ -267,9 +267,9 @@ void Automata::analysis() {
   AutomataStateRef init_s;
   BYTE *on_stack_list;
 
-  LMN_ASSERT(vec_num(&this->states) > 0);
+  LMN_ASSERT(this->states.get_num() > 0);
   init_s = this->get_state((unsigned int)this->get_init_state());
-  on_stack_list = LMN_CALLOC(BYTE, vec_num(&this->states));
+  on_stack_list = LMN_CALLOC(BYTE, this->states.get_num());
   on_stack_list[(unsigned int)init_s->get_id()] = 0xffU;
 
   automata_analysis_dfs1(this, on_stack_list, init_s);

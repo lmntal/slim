@@ -307,9 +307,9 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
      *   C0〜C3をすべて満足するようなen(s)の真部分集合は存在しないことになるため，
      *   C0に従い，en(s)を返して終了する．
      */
-    //    if (vec_num(mc_por.ample_candidate) == state_succ_num(s) ||
+    //    if (mc_por.ample_candidate->get_num() == state_succ_num(s) ||
     //        !check_C2(s) || !check_C3(ss, s, rc, new_s, org_f)) {
-    if (vec_num(mc_por.ample_candidate) == s->successor_num ||
+    if (mc_por.ample_candidate->get_num() == s->successor_num ||
         !check_C1(s, ss->automata(), ss->prop_symbols()) ||
         !check_C2(s)) {
       return FALSE;
@@ -850,7 +850,7 @@ static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 static BOOL is_independent_of_ample(TransitionRef strans) {
   unsigned int i;
 
-  for (i = 0; i < vec_num(mc_por.ample_candidate); i++) {
+  for (i = 0; i < mc_por.ample_candidate->get_num(); i++) {
     unsigned long id;
     st_data_t vec_independency;
 
@@ -892,7 +892,7 @@ static BOOL push_independent_strans_to_table(unsigned long i1,
     BOOL is_new_id;
 
     is_new_id = TRUE;
-    for (k = 0; k < vec_num((Vector *)v1); k++) {
+    for (k = 0; k < ((Vector *)v1)->get_num(); k++) {
       if ((unsigned long)((Vector *)v1)->get(k) == i2) {
         /* [i1]--> ... i2 ...
          * のようになっているため，(i1,i2)∈Iなる情報は独立性情報テーブル内に
@@ -907,7 +907,7 @@ static BOOL push_independent_strans_to_table(unsigned long i1,
                     (st_data_t *)&v2)) {
         POR_DEBUG({
           unsigned int _k;
-          for (_k = 0; _k < vec_num((Vector *)v2); _k++) {
+          for (_k = 0; _k < ((Vector *)v2)->get_num(); _k++) {
             if ((unsigned long)((Vector *)v2)->get(_k) == i1) {
               /* is_new_idが真であることと矛盾する */
               LMN_ASSERT(FALSE);
@@ -1012,7 +1012,7 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
       checked_id = transition_id(check);
       is_dependent = TRUE;
 
-      for (k = 0; k < vec_num(ids_independent_of_id_key); k++) {
+      for (k = 0; k < ids_independent_of_id_key->get_num(); k++) {
         if (checked_id ==
             (unsigned long)ids_independent_of_id_key->get(k)) {
           is_dependent = FALSE;
@@ -1118,7 +1118,7 @@ int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a) {
   id = (unsigned long)key;
 
   fprintf(stdout, "[%lu]-->", id);
-  for (i = 0; i < vec_num(v); i++) {
+  for (i = 0; i < v->get_num(); i++) {
     fprintf(stdout, " %lu", (unsigned long)v->get(i));
   }
   fprintf(stdout, "\n");
@@ -1130,7 +1130,7 @@ int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a) {
 void dump__ample_candidate() {
   unsigned int i;
   fprintf(stdout, "ample:");
-  for (i = 0; i < vec_num(mc_por.ample_candidate); ++i) {
+  for (i = 0; i < mc_por.ample_candidate->get_num(); ++i) {
     fprintf(stdout, " %lu", (unsigned long)mc_por.ample_candidate->get(i));
   }
   fprintf(stdout, "\n");

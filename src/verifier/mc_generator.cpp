@@ -93,7 +93,7 @@
 
 /* DFS Stackを静的に分割する条件 */
 #define DFS_HANDOFF_COND_STATIC(W, Stack)                                      \
-  (vec_num(Stack) >= DFS_CUTOFF_DEPTH(W))
+  (Stack->get_num() >= DFS_CUTOFF_DEPTH(W))
 #define DFS_HANDOFF_COND_STATIC_DEQ(W, Deq)                                    \
   (deq_num(Deq) >= DFS_CUTOFF_DEPTH(W))
 
@@ -228,7 +228,7 @@ static inline void dfs_handoff_all_task(LmnWorker *me, Vector *expands) {
     worker_set_black(me);
   }
 
-  n = vec_num(expands);
+  n = expands->get_num();
   for (i = 0; i < n; i++) {
     enqueue(DFS_WORKER_QUEUE(rn), expands->get(i));
   }
@@ -279,7 +279,7 @@ static inline void mapdfs_handoff_all_task(LmnWorker *me, Vector *expands) {
     worker_set_black(me);
   }
 
-  n = vec_num(expands);
+  n = expands->get_num();
   for (i = 0; i < n; i++) {
     enqueue(DFS_WORKER_QUEUE(rn), expands->get(i));
     // enqueue_push_head(DFS_WORKER_QUEUE(rn), expands->get(i));
@@ -533,7 +533,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       if (DFS_HANDOFF_COND_STATIC(w, stack)) {
         dfs_handoff_all_task(w, new_ss);
       } else {
-        n = vec_num(new_ss);
+        n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
@@ -617,7 +617,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       if (DFS_HANDOFF_COND_STATIC(w, stack) /*|| worker_is_explorer(w)*/) {
         mapdfs_handoff_all_task(w, new_ss);
       } else {
-        n = vec_num(new_ss);
+        n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
@@ -663,7 +663,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
         START_REPAIR_PHASE();
         do {
           repaired = TRUE;
-          n = vec_num(&red_states);
+          n = red_states.get_num();
           for (i = 0; i < n; i++) {
             State *r = (State *)red_states.get(i);
 
@@ -679,7 +679,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
         FINISH_REPAIR_PHASE();
 
         // set red
-        n = vec_num(&red_states);
+        n = red_states.get_num();
         for (i = 0; i < n; i++) {
           State *r = (State *)red_states.get(i);
           r->s_set_red();
@@ -751,7 +751,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
     // freshな状態をスタックの上位に持ってくる
     if (fresh) {
-      n = vec_num(fresh);
+      n = fresh->get_num();
       if (n > 0) {
         for (i = 0; i < n; i++) {
           State *fs = (State *)fresh->get(i);
@@ -817,7 +817,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       if (DFS_HANDOFF_COND_STATIC_DEQ(w, deq)) {
         dfs_handoff_all_task(w, new_ss);
       } else {
-        n = vec_num(new_ss);
+        n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
@@ -1044,7 +1044,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
       }
     } else {
       /* 展開した状態をnext layer queueに登録する */
-      for (i = 0; i < vec_num(new_ss); i++) {
+      for (i = 0; i < new_ss->get_num(); i++) {
         enqueue(BFS_WORKER_Q_NXT(w), (LmnWord)new_ss->get(i));
       }
     }

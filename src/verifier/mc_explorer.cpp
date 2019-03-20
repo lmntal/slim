@@ -71,14 +71,14 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
                                 Vector *path, st_table_t traversed) {
   search->push((vec_data_t)seed);
 
-  while (vec_num(search) > 0) {
+  while (search->get_num() > 0) {
     State *s;
     unsigned int i;
 
     s = (State *)search->peek();
     if (st_contains(traversed, (st_data_t)s)) {
       State *s_pop = (State *)search->pop();
-      if (vec_num(path) > 0 && (State *)path->peek() == s_pop) {
+      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
         path->pop();
       }
     } else {
@@ -178,10 +178,10 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < vec_num(cycle_path); i++) {
+  for (i = 0; i < cycle_path->get_num(); i++) {
     State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
@@ -198,13 +198,13 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
 }
 
 static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
-  while (vec_num(search) > 0) {
+  while (search->get_num() > 0) {
     State *s = (State *)search->peek();
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)search->pop();
-      if (vec_num(path) > 0 && (State *)path->peek() == s_pop) {
+      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
         path->pop();
       }
     } else {
@@ -499,8 +499,8 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
             Vector *v;
             unsigned int i;
 
-            v = new Vector(vec_num(&path));
-            for (i = 0; i < vec_num(&path); i++) {
+            v = new Vector(path.get_num());
+            for (i = 0; i < path.get_num(); i++) {
               State *tmp = (State *)path.get(i);
              tmp->set_on_cycle();
               v->push((vec_data_t)tmp);
@@ -793,8 +793,8 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
       Vector *v;
       unsigned int i;
 
-      v = new Vector(vec_num(&path));
-      for (i = 0; i < vec_num(&path); i++) {
+      v = new Vector(path.get_num());
+      for (i = 0; i < path.get_num(); i++) {
         State *tmp = (State *)path.get(i);
        tmp->set_on_cycle();
         v->push((vec_data_t)tmp);
@@ -877,7 +877,7 @@ void bledge_worker_finalize(LmnWorker *w) {
 static BOOL bledge_path_accepting(Vector *v, AutomataRef a) {
   unsigned int i;
 
-  for (i = 0; i < vec_num(v); i++) {
+  for (i = 0; i < v->get_num(); i++) {
     State *t = (State *)v->get(i);
     if (state_is_accept(a, t))
       return TRUE;
@@ -940,10 +940,10 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
   wp->error_exist = TRUE;
 
   gen_counter_example = lmn_env.dump;
-  v = gen_counter_example ? new Vector(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < vec_num(cycle_path); i++) {
+  for (i = 0; i < cycle_path->get_num(); i++) {
     State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
     if (gen_counter_example)
@@ -1094,10 +1094,10 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < vec_num(cycle_path); i++) {
+  for (i = 0; i < cycle_path->get_num(); i++) {
     State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
@@ -1114,13 +1114,13 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
 }
 
 static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
-  while (vec_num(search) > 0) {
+  while (search->get_num() > 0) {
     State *s = (State *)search->peek();
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)search->pop();
-      if (vec_num(path) > 0 && (State *)path->peek() == s_pop) {
+      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
         path->pop();
       }
     } else {
@@ -1251,10 +1251,10 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < vec_num(cycle_path); i++) {
+  for (i = 0; i < cycle_path->get_num(); i++) {
     State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
@@ -1276,12 +1276,12 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
   State *t, *succ;
   BOOL contained;
 
-  while (vec_num(search) > 0) {
+  while (search->get_num() > 0) {
     State *s = (State *)search->peek();
 
     if (s->is_snd()) {
       t = (State *)search->pop();
-      if (vec_num(path) > 0 && (State *)path->peek() == t) {
+      if (path->get_num() > 0 && (State *)path->peek() == t) {
         path->pop();
       }
       continue;
@@ -1296,7 +1296,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
       if (succ->s_is_cyan(worker_id(w))) {
         return TRUE;
       } else if (!succ->s_is_red()) {
-        m = vec_num(red_states);
+        m = red_states->get_num();
         contained = FALSE;
         for (j = 0; j < m; j++) {
           t = (State *)red_states->get(j);
@@ -1314,7 +1314,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
       State *s_pop = (State *)search->pop();
-      if (vec_num(path) > 0 && (State *)path->peek() == s_pop) {
+      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
         path->pop();
       }
     }

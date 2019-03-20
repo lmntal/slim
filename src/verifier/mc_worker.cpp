@@ -503,7 +503,7 @@ static void workers_free(LmnWorker **pool, unsigned int worker_num) {
     if (worker_group(w)->do_search) {
       delete w->invalid_seeds;
 
-      for (j = 0; j < vec_num(w->cycles); j++) {
+      for (j = 0; j < w->cycles->get_num(); j++) {
         delete (Vector *)w->cycles->get(j);
       }
       delete w->cycles;

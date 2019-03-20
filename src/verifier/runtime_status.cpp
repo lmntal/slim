@@ -752,7 +752,7 @@ void dump_profile_data(FILE *f) {
         fprintf(f, "%4s %8s : %9s %9s %9s %12s", "[id]", "[name]", "[# Tr.]",
                 "[# Ap.]", "[# Ba.]", "[CPU U.(usec)]\n");
 
-        for (i = 0; i < vec_num(&v); i++) {
+        for (i = 0; i < v.get_num(); i++) {
           RuleProfiler *rp = (RuleProfiler *)v.get(i);
           if (rp->trial.called_num > 0) {
             if (rp->src->name == ANONYMOUS) {

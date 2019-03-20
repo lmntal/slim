@@ -94,7 +94,7 @@ never_claim:
 
     s = (AutomataStateRef)states->get(0);
     automata->set_init_state(s->get_id());
-    for (i = 0; i < vec_num(states); i++) {
+    for (i = 0; i < states->get_num(); i++) {
       automata->add_state((AutomataStateRef)states->get(i));
     }
     free($1);
@@ -116,7 +116,7 @@ state:
     if (strstr($1, "accept") != NULL) is_accept_state = TRUE;
     cur = automata->state_id($1);
     s = new AutomataState(cur, is_accept_state, 0);
-    for (i = 0; i < vec_num($4); i++) {
+    for (i = 0; i < $4->get_num(); i++) {
       s->add_transition((AutomataTransitionRef)$4->get(i));
     }
     $$ = s;

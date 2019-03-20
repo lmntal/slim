@@ -161,8 +161,6 @@ struct Vector {
 typedef struct Vector *PVector;
 typedef LmnWord vec_data_t;
 
-
-#define vec_num(V) ((V)->get_num())
 #define vec_is_empty(V) ((V)->is_empty())
 
 static inline unsigned long vec_space(Vector *v);
