@@ -276,7 +276,7 @@ struct State {                /* Total:72(36)byte */
   }
 
   void succ_set(Vector *v) {
-    if (!vec_is_empty(v) && !successors) {
+    if (!v->is_empty() && !successors) {
       unsigned int i;
       successor_num = v->get_num();
       successors = LMN_NALLOC(succ_data_t, successor_num);

@@ -5,7 +5,7 @@
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
- *   Redistribution and use in source and binary forms, with or without
+ *   Redistribution and use in source and binary forms, with or without4
  *   modification, are permitted provided that the following conditions are
  *   met:
  *
@@ -510,7 +510,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
     }
   }
 
-  if (vec_is_empty(RC_EXPANDED_PROPS(rc))) {
+  if (RC_EXPANDED_PROPS(rc)->is_empty()) {
     return;
   } else {
     BYTE first_prop = (BYTE)RC_EXPANDED_PROPS(rc)->get(0);

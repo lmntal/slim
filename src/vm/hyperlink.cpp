@@ -381,7 +381,7 @@ HyperLink *lmn_hyperlink_get_root(HyperLink *hl) {
       parent_hl = current_hl->parent;
     }
 
-    if (!vec_is_empty(&children)) {
+    if (!children.is_empty()) {
       hyperlink_path_compression(parent_hl,
                                  &children); /* parent_hlはrootになっている */
     }

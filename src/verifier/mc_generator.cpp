@@ -478,7 +478,7 @@ void dfs_start(LmnWorker *w) {
 
 static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                             AutomataRef a, Vector *psyms) {
-  while (!vec_is_empty(stack)) {
+  while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n;
@@ -553,7 +553,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 /* MAP+NDFS : 基本的にndfs_loopと同じ。安定したら合併させます。 */
 static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                                AutomataRef a, Vector *psyms) {
-  while (!vec_is_empty(stack)) {
+  while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n;
@@ -637,7 +637,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 #ifndef MINIMAL_STATE
 static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                               AutomataRef a, Vector *psyms) {
-  while (!vec_is_empty(stack)) {
+  while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n, start;

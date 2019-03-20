@@ -357,7 +357,7 @@ static void _run(file_ptr fp)
   start_rulesets->push((vec_data_t)t);
 
   /* まともな入力ファイルが無ければ抜ける */
-  if(vec_is_empty(start_rulesets)){
+  if(start_rulesets->is_empty()){
     fprintf(stderr, "bad script.\n");
     return;
   }

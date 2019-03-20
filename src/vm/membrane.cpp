@@ -1298,7 +1298,7 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, Vector **ret_dstlovec,
     (*ret_dstlovec)->push((vec_data_t)LinkObj_make(cpatom, l->pos));
   }
 
-  while (!vec_is_empty(stack)) {
+  while (!stack->is_empty()) {
     LmnSymbolAtomRef src_atom, copied;
 
     src_atom = (LmnSymbolAtomRef)stack->pop();
@@ -1407,7 +1407,7 @@ BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec) {
     LMN_FREE(start2);
   }
 
-  while (!vec_is_empty(&stack1)) { /* main loop: start */
+  while (!stack1.is_empty()) { /* main loop: start */
     LinkObjRef l1, l2;
     BOOL contains1, contains2;
 
@@ -1606,7 +1606,7 @@ BOOL ground_atoms(
     unsearched_link_stack->push((LmnWord)LinkObj_make(l->ap, l->pos));
   }
 
-  while (!vec_is_empty(unsearched_link_stack)) {
+  while (!unsearched_link_stack->is_empty()) {
     LinkObjRef l;
     LmnAtomRef l_ap;
     LmnLinkAttr l_pos;
@@ -2792,7 +2792,7 @@ static inline BOOL mem_equals_children_inner(Vector *v_mems_children1,
 
   /* 子膜を起点とする走査 */
   matched = TRUE;
-  while (matched && !vec_is_empty(v_mems_children1)) {
+  while (matched && !v_mems_children1->is_empty()) {
     LmnMembraneRef cm1 = (LmnMembraneRef)v_mems_children1->pop();
 
     /* fprintf(stderr, "\t-- start to test a descendant membrane --\n\t\t# of
@@ -2849,7 +2849,7 @@ static void mem_mk_sorted_children(Vector *vec) {
     }
   }
   vec->clear();
-  while (!vec_is_empty(v_mems_tmp)) {
+  while (!v_mems_tmp->is_empty()) {
     vec->push(v_mems_tmp->pop());
   }
   delete v_mems_tmp;
@@ -2978,7 +2978,7 @@ static inline BOOL mem_equals_molecules_inner(Vector *v_log1,
                                               Vector *v_atoms_not_checked2,
                                               int current_depth) {
   BOOL matched = TRUE;
-  while (matched && !vec_is_empty(v_atoms_not_checked1)) {
+  while (matched && !v_atoms_not_checked1->is_empty()) {
     LmnSymbolAtomRef a1;
     int i, j, k;
 
@@ -3271,7 +3271,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
                                       }));
                             /* ファンクタfを持つアトムが本膜内に1つも存在しない場合、このファンクタのために割いたメモリーの領域を解放する。
                              * これを怠るとメモリリークが起こるので注意!! */
-                            if (vec_is_empty(ad->atom_ptrs)) {
+                            if (ad->atom_ptrs->is_empty()) {
                               delete ad->atom_ptrs;
                               LMN_FREE(ad);
                             } else {
@@ -3293,7 +3293,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
     }
     vec->clear();
     /* 構造体内のアトム数が「多い順」にソート */
-    while (!vec_is_empty(v_tmp)) {
+    while (!v_tmp->is_empty()) {
       vec->push(v_tmp->pop());
     }
     delete v_tmp;

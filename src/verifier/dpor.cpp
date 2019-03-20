@@ -267,7 +267,7 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
     need_act_check = TRUE;
   }
 
-  if (!vec_is_empty(&d->new_proxies)) {
+  if (!d->new_proxies.is_empty()) {
     contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NFLINKS);
     need_act_check = TRUE;
   }
@@ -380,7 +380,7 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_clear(d->delta_tbl);
 
-  while (!vec_is_empty(d->free_deltas)) {
+  while (!d->free_deltas->is_empty()) {
     MemDeltaRoot *delt = (MemDeltaRoot *)d->free_deltas->pop();
     dmem_root_free(delt);
   }
@@ -1021,7 +1021,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
     new_ss = new Vector(32);
     search = new Vector(128);
 
-    while (!vec_is_empty(reduced_stack)) {
+    while (!reduced_stack->is_empty()) {
       State *s, *parent, *ret, tmp_s;
       TransitionRef t;
       LmnMembraneRef s_mem;
@@ -1045,7 +1045,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       tmp_s.free_mem();
     }
 
-    while (!vec_is_empty(search)) {
+    while (!search->is_empty()) {
       State *s;
       AutomataStateRef p_s;
       unsigned int i;

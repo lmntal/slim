@@ -191,7 +191,7 @@ typedef struct LRCInsertEvent *LRCInsertEventRef;
 
 #ifdef USE_FIRSTCLASS_RULE
 BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
-  return !vec_is_empty(rc->insertion_events);
+  return !rc->insertion_events->is_empty();
 }
 
 void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
