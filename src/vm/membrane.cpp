@@ -424,7 +424,7 @@ unsigned long lmn_mem_space(LmnMembraneRef mem) {
                 }));
 
   /* ruleset */
-  ret += vec_space_inner(&mem->rulesets);
+  ret += mem->rulesets.space_inner();
   for (i = 0; i < mem->rulesets.get_num(); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)mem->rulesets.get(i);
     if (rs->is_copy()) {
@@ -743,7 +743,7 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
   remove_list_m.destroy();
 
   /* change to star proxy */
-  for (i = 0; i < change_list.num; i++) {
+  for (i = 0; i < change_list.get_num(); i++) {
     alter_functor(LMN_PROXY_GET_MEM((LmnSymbolAtomRef)change_list.get(i)),
                   (LmnSymbolAtomRef)change_list.get(i),
                   LMN_STAR_PROXY_FUNCTOR);
@@ -835,7 +835,7 @@ void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem) {
               }
             }));
 
-  for (i = 0; i < remove_list.num; i++) {
+  for (i = 0; i < remove_list.get_num(); i++) {
     mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list.get(i));
   }
@@ -884,7 +884,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
         }
       }));
 
-  for (i = 0; i < remove_list.num; i++) {
+  for (i = 0; i < remove_list.get_num(); i++) {
     mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list.get(i));
   }

@@ -50,6 +50,9 @@
 #include "util.h"
 
 
+typedef struct Vector *PVector;
+typedef LmnWord vec_data_t;
+
 struct Vector {
   LmnWord *tbl;
   unsigned int num, cap;
@@ -156,13 +159,12 @@ struct Vector {
     LMN_FREE(tbl);
     tbl = (LmnWord *)NULL;
   }
+  unsigned long space_inner(){
+    return get_cap() * sizeof(vec_data_t);
+  }
 };
 
-typedef struct Vector *PVector;
-typedef LmnWord vec_data_t;
-
 static inline unsigned long vec_space(Vector *v);
-static inline unsigned long vec_space_inner(Vector *v);
 
 BOOL vec_contains(const Vector *vec, LmnWord keyp);
 Vector *vec_copy(Vector *vec);
@@ -171,14 +173,8 @@ void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
 
-
-
-static inline unsigned long vec_space_inner(Vector *v) {
-  return (v->get_cap()) * sizeof(vec_data_t);
-}
-
 static inline unsigned long vec_space(Vector *v) {
-  return sizeof(struct Vector) + vec_space_inner(v);
+  return sizeof(struct Vector) + v->space_inner();
 }
 
 

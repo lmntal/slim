@@ -337,7 +337,7 @@ LmnBinStrRef state_calc_mem_dummy(State *s) {
 unsigned long transition_space(TransitionRef t) {
   unsigned long ret;
   ret = sizeof(struct Transition);
-  ret += vec_space_inner(&t->rule_names);
+  ret += t->rule_names.space_inner();
   return ret;
 }
 

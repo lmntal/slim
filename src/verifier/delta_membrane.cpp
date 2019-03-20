@@ -1238,7 +1238,7 @@ void dmem_root_remove_toplevel_proxies(struct MemDeltaRoot *root_d,
       }
     });
 
-    for (i = 0; i < remove_list.num; i++) {
+    for (i = 0; i < remove_list.get_num(); i++) {
       LmnSymbolAtomRef a = dmem_root_modified_atom(
           d->root_d, (LmnSymbolAtomRef)(remove_list.get(i)));
       dmem_remove_symbol_atom(d, mem, a);
@@ -1331,7 +1331,7 @@ void dmem_root_remove_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem) {
     });
 
     { /* change to star proxy */
-      for (i = 0; i < change_list.num; i++) {
+      for (i = 0; i < change_list.get_num(); i++) {
         dmem_root_alter_functor(
             root_d, mem,
             dmem_root_modified_atom(
@@ -1464,7 +1464,7 @@ void dmem_root_remove_temporary_proxies(struct MemDeltaRoot *root_d,
       remove_list.push((LmnWord)outside);
     }
   });
-  for (i = 0; i < remove_list.num; i++) {
+  for (i = 0; i < remove_list.get_num(); i++) {
     LmnSymbolAtomRef a = dmem_root_modified_atom(
         root_d, (LmnSymbolAtomRef)(remove_list.get(i)));
     if (d)
