@@ -128,7 +128,7 @@ struct TraceLog : ProcessTable<TraceData> {
 
   TraceLog(unsigned long size) : ProcessTable<TraceData>(size) {}
   TraceLog() : ProcessTable<TraceData>() {}
-  ~TraceLog(){}
+  ~TraceLog();
   unsigned int traversed_proc_count(LmnMembraneRef owner) {
     return this->contains(lmn_mem_id(owner))
                ? (*this)[lmn_mem_id(owner)].traversed_proc
@@ -244,6 +244,5 @@ void tracelog_backtrack(TraceLogRef l);
 void tracelog_set_btpoint(TraceLogRef l);
 void tracelog_continue_trace(TraceLogRef l);
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
-
 
 #endif /* LMN_TRACE_LOG_H */
