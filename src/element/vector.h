@@ -54,6 +54,7 @@ struct Vector {
   LmnWord *tbl;
   unsigned int num, cap;
   Vector(){
+    tbl = (LmnWord *)NULL;
   }
   Vector(unsigned int init_size){
     LMN_ASSERT(init_size > 0);
@@ -139,7 +140,12 @@ struct Vector {
   }
   void destroy(){
     LMN_FREE(tbl);
-    tbl = NULL;
+    tbl = (LmnWord *)NULL;
+  }
+  ~Vector(){
+    if(tbl != NULL){
+      LMN_FREE(tbl);
+    }
   }
 };
 
@@ -164,8 +170,7 @@ void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
 /* free */
 static inline void vec_free(Vector *vec) {
-  LMN_FREE(vec->tbl);
-  LMN_FREE(vec);
+  delete vec;
 }
 
 static inline unsigned long vec_space_inner(Vector *v) {
