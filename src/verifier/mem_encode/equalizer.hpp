@@ -506,7 +506,7 @@ private:
       break;
     }
 
-    tracelog_put_hlink(log, hl_root, *i_ref);
+    log->visit_hlink(hl_root, *i_ref);
     (*i_ref)++;
 
     return true;

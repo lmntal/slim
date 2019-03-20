@@ -179,7 +179,6 @@ public:
 /* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
  * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
  */
-
   bool visit_atom(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
     return this->visit(atom->get_id(), TraceData::options::TRAVERSED_ATOM,
                        atom2_id, owner);
@@ -192,7 +191,12 @@ public:
                        mem2_id, lmn_mem_parent(mem1));
   }
 
-  bool visit(HyperLink *hl1, LmnWord hl2_id) {
+/* ログに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.
+ * (ハイパーグラフ構造には所属膜の概念がなく,
+ * 膜オブジェクトからの参照もできないため, 所属膜に対する一切の操作は不要)
+ * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
+ */
+  bool visit_hlink(HyperLink *hl1, LmnWord hl2_id) {
     return this->visit(LMN_HL_ID(hl1), TraceData::options::TRAVERSED_HLINK,
                        hl2_id, NULL);
   }

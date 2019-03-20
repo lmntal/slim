@@ -42,22 +42,6 @@ template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
 /*----------------
  * Tracker
  */
-
-/* ログlに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
- * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
-int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id) {
-  return l->visit_mem(mem1, mem2_id);
-}
-
-/* ログlに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.
- * (ハイパーグラフ構造には所属膜の概念がなく,
- * 膜オブジェクトからの参照もできないため, 所属膜に対する一切の操作は不要)
- * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
- */
-int tracelog_put_hlink(TraceLogRef l, HyperLink *hl1, LmnWord hl2_id) {
-  return l->visit(hl1, hl2_id);
-}
-
 void tracelog_unput(TraceLogRef l, LmnWord key) { l->leave(key); }
 
 BOOL tracelog_contains(TraceLogRef l, LmnWord key) { return l->contains(key); }
