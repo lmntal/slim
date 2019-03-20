@@ -71,7 +71,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   }
 
   if (!lmn_env.nd_remain && !lmn_env.nd_remaining) {
-    mem = lmn_mem_make();
+    mem = new LmnMembrane();
   }
 
   react_start_rulesets(mem, start_rulesets);
@@ -84,7 +84,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   } else {
     lmn_env.nd_remaining = FALSE;
     lmn_mem_drop(mem);
-    lmn_mem_free(mem);
+    delete mem;
   }
 }
 
@@ -104,7 +104,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   }
   wp = lmn_workergroup_make(a, psyms, thread_num);
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
-  p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
+  p_label = a ? automata_get_init_state(a) : DEFAULT_STATE_ID;
   mem = lmn_mem_copy(world_mem_org);
   init_s = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
@@ -401,19 +401,19 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   BOOL ret_flag = FALSE;
 
-  for (; cur_mem; cur_mem = lmn_mem_next(cur_mem)) {
+  for (; cur_mem; cur_mem = cur_mem->mem_next()) {
     unsigned long org_num = mc_react_cxt_expanded_num(rc);
 
     /* 代表子膜に対して再帰する */
-    if (mc_expand_inner(rc, lmn_mem_child_head(cur_mem))) {
+    if (mc_expand_inner(rc, cur_mem->mem_child_head())) {
       ret_flag = TRUE;
     }
-    if (lmn_mem_is_active(cur_mem)) {
+    if (cur_mem->is_active()) {
       react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
     if (org_num == mc_react_cxt_expanded_num(rc)) {
-      lmn_mem_set_active(cur_mem, FALSE);
+      cur_mem->set_active(FALSE);
     }
   }
 
@@ -502,10 +502,10 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
    *   (c.f. "The Spin Model Checker" pp.130-131)
    */
 
-  for (i = 0; i < p_s->get_transition_num(); i++) {
-    AutomataTransitionRef p_t = p_s->get_transition(i);
-    if (eval_formula(mem, propsyms, p_t->get_formula())) {
-      BYTE p_nxt_l = p_t->get_next();
+  for (i = 0; i < atmstate_transition_num(p_s); i++) {
+    AutomataTransitionRef p_t = atmstate_get_transition(p_s, i);
+    if (eval_formula(mem, propsyms, atm_transition_get_formula(p_t))) {
+      BYTE p_nxt_l = atm_transition_next(p_t);
       vec_push(RC_EXPANDED_PROPS(rc), (vec_data_t)p_nxt_l);
     }
   }
@@ -789,17 +789,20 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
       s = (State *)vec_get(v, i);
       m = (s == seed) ? "*" : " ";
       fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
-              ss->automata()->state_name(state_property_state(s)));
+              automata_state_name(ss->automata(),
+                                  state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
     } else {
       s = (State *)vec_get(v, i);
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
-              ss->automata()->state_name(state_property_state(s)));
+              automata_state_name(ss->automata(),
+                                  state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
       fprintf(out, ".\n");
 
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
-              ss->automata()->state_name(state_property_state(s)));
+              automata_state_name(ss->automata(),
+                                  state_property_state(s)));
       state_print_mem(s, (LmnWord)out);
       fprintf(out, ":- ");
     }
@@ -808,7 +811,7 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
 
 /* 各LmnWorkerに登録した反例を出力する.
  * 登録された反例は頂点のみであり,
- * 登録された頂点が, AutomataState::is_endの場合, safety
+ * 登録された頂点が, atmstate_is_endの場合, safety
  * その他の場合は, その頂点を起点にしたサイクルパスにon_cycle_flagが立っている
  */
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {

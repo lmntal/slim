@@ -306,9 +306,9 @@ static LmnMembraneRef lmn_binstr_decode_sub(const LmnBinStrRef bs) {
    *   8bit列を, binary stringの長さ * TAG_IN_BYTE(== 2)だけ確保(少し多めになる)
    *   logは, 復元したプロセスへのポインタを持ち,
    * 出現(nvisited)順に先頭から積んでいく */
-  auto groot = lmn_mem_make();
+  auto groot = new LmnMembrane();
 
-  lmn_mem_set_active(groot, TRUE); /* globalだから恒真 */
+  groot->set_active(TRUE); /* globalだから恒真 */
   binstr_decoder dec(bs->v, bs->len);
   dec.decode_cell(groot, NULL, 0);
 
@@ -394,7 +394,7 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem,
   equalizer<VisitLog> e;
   auto t = e.mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, log)
            /* memに未訪問のプロセスが存在する場合, FALSE */
-           && log->get_element_num() == process_num(mem);
+           && visitlog_element_num(log) == process_num(mem);
   visitlog_free(log);
   LMN_FREE(ref_log);
 #endif
