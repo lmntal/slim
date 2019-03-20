@@ -66,7 +66,7 @@ struct encoder {
   /* 膜にあるアトムのファンクタを降順で返す */
   std::vector<LmnFunctor> mem_functors(LmnMembraneRef mem) {
     std::vector<LmnFunctor> v;
-    for (int i = lmn_mem_max_functor(mem) - 1; i >= 0; i--) {
+    for (int i = mem->mem_max_functor() - 1; i >= 0; i--) {
       if (lmn_mem_get_atomlist(mem, i) && !LMN_IS_PROXY_FUNCTOR(i)) {
         v.push_back(i);
       }
@@ -93,39 +93,39 @@ struct encoder {
       return;
 
     bool last_valid = false;
-    for (auto m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
-      if (visited->get_mem(m, NULL))
+    for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
+      if (visitlog_get_mem(visited, m, NULL))
         continue;
 
       BinStrCursor new_bsptr = bsp;
 
-      visited->set_checkpoint();
+      visitlog_set_checkpoint(visited);
 
       write_mem(m, 0, -1, -1, new_bsptr, visited, TRUE);
 
       if (new_bsptr.is_valid()) {
         /* mからたどった分子が書き込みに成功したので、last_validに記憶する */
         if (last_valid) {
-          delete last_valid_checkpoint;
+          checkpoint_free(last_valid_checkpoint);
         }
         last_valid_bsp = new_bsptr;
-        last_valid_checkpoint = visited->pop_checkpoint();
+        last_valid_checkpoint = visitlog_pop_checkpoint(visited);
         last_valid = true;
       } else {
-        visited->revert_checkpoint();
+        visitlog_revert_checkpoint(visited);
       }
     }
 
     if (last_valid) {
       /* 書き込みに成功した分子をログに記録して、次の分子に進む */
-      visited->push_checkpoint(last_valid_checkpoint);
+      visitlog_push_checkpoint(visited, last_valid_checkpoint);
       write_mems(mem, last_valid_bsp, visited);
 
       if (last_valid_bsp.is_valid()) {
         bsp = last_valid_bsp;
-        visited->commit_checkpoint();
+        visitlog_commit_checkpoint(visited);
       } else {
-        visited->revert_checkpoint();
+        visitlog_revert_checkpoint(visited);
       }
     }
   }
@@ -141,7 +141,7 @@ struct encoder {
       return;
 
     /* 訪問済み */
-    if (visited->get_mem(mem, &n_visited)) {
+    if (visitlog_get_mem(visited, mem, &n_visited)) {
       bsp.push_visited_mem(n_visited);
 
       if (from_atom) { /* 引き続きアトムをたどる */
@@ -150,8 +150,8 @@ struct encoder {
       return;
     }
 
-    visited->put_mem(mem);
-    bsp.push_start_mem(LMN_MEM_NAME_ID(mem));
+    visitlog_put_mem(visited, mem);
+    bsp.push_start_mem(mem->NAME_ID());
 
     if (!bsp.is_valid())
       return;
@@ -175,19 +175,19 @@ struct encoder {
       auto ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
       if (ent) {
         for (auto in : *ent) {
-          if (!LMN_ATTR_IS_DATA(in->get_attr(1)) ||
-              visited->get_atom(in, NULL)) {
+          if (!LMN_ATTR_IS_DATA(LMN_SATOM_GET_ATTR(in, 1)) ||
+              visitlog_get_atom(visited, in, NULL)) {
             continue;
           }
           /* -------------------------+
            * [DATA ATOM]-0--1-[in]-0--|--0-[out]-1--..
            * -------------------------+
            */
-          bsp.push_escape_mem_data(in->get_link(1),
-                                   in->get_attr(1), visited);
-          auto out = (LmnSymbolAtomRef)in->get_link(0);
-          write_mol(out->get_link(1), out->get_attr(1),
-                    LMN_ATTR_GET_VALUE(out->get_attr(1)), bsp,
+          bsp.push_escape_mem_data(LMN_SATOM_GET_LINK(in, 1),
+                                   LMN_SATOM_GET_ATTR(in, 1), visited);
+          auto out = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in, 0);
+          write_mol(LMN_SATOM_GET_LINK(out, 1), LMN_SATOM_GET_ATTR(out, 1),
+                    LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(out, 1)), bsp,
                     visited, is_id);
         };
       }
@@ -217,33 +217,33 @@ struct encoder {
     }
 
     auto satom = reinterpret_cast<LmnSymbolAtomRef>(atom);
-    auto f = satom->get_functor();
+    auto f = LMN_SATOM_GET_FUNCTOR(satom);
     if (f == LMN_OUT_PROXY_FUNCTOR) {
       /* outside proxyの場合, inside proxy側の膜をwrite_memで書き込む */
-      auto in = (LmnSymbolAtomRef)satom->get_link(0);
+      auto in = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
       auto in_mem = LMN_PROXY_GET_MEM(in);
-      if (visited->get_atom(in, NULL)) {
-        visited->put_atom(in);
+      if (visitlog_get_atom(visited, in, NULL)) {
+        visitlog_put_atom(visited, in);
       }
-      write_mem(in_mem, in->get_link(1), in->get_attr(1),
-                LMN_ATTR_GET_VALUE(in->get_attr(1)), bsp, visited,
+      write_mem(in_mem, LMN_SATOM_GET_LINK(in, 1), LMN_SATOM_GET_ATTR(in, 1),
+                LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(in, 1)), bsp, visited,
                 is_id);
     } else if (f == LMN_IN_PROXY_FUNCTOR) {
       /* inside proxyの場合, 親膜へ抜ける旨を示すタグTAG_ESCAPE_MEMを書き込む.
        * その後, outside proxyから分子のトレース(write_mol)を引き続き実行する */
-      auto out = (LmnSymbolAtomRef)satom->get_link(0);
+      auto out = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
       bsp.push_escape_mem();
 
-      if (visited->get_atom(satom, NULL)) {
-        visited->put_atom(satom);
+      if (visitlog_get_atom(visited, satom, NULL)) {
+        visitlog_put_atom(visited, satom);
       }
 
-      write_mol(out->get_link(1), out->get_attr(1),
-                LMN_ATTR_GET_VALUE(out->get_attr(1)), bsp, visited,
+      write_mol(LMN_SATOM_GET_LINK(out, 1), LMN_SATOM_GET_ATTR(out, 1),
+                LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(out, 1)), bsp, visited,
                 is_id);
-    } else if (!visited->get_atom(satom, &n_visited)) {
+    } else if (!visitlog_get_atom(visited, satom, &n_visited)) {
       /* 未訪問のシンボルアトムの場合 */
-      visited->put_atom(satom);
+      visitlog_put_atom(visited, satom);
       bsp.push_atom(satom);
       if (!bsp.is_valid())
         return;
@@ -254,9 +254,9 @@ struct encoder {
           bsp.push_from();
           continue;
         }
-        write_mol(satom->get_link(i_arg),
-                  satom->get_attr(i_arg),
-                  LMN_ATTR_GET_VALUE(satom->get_attr(i_arg)), bsp,
+        write_mol(LMN_SATOM_GET_LINK(satom, i_arg),
+                  LMN_SATOM_GET_ATTR(satom, i_arg),
+                  LMN_ATTR_GET_VALUE(LMN_SATOM_GET_ATTR(satom, i_arg)), bsp,
                   visited, is_id);
       }
     } else {
@@ -284,29 +284,29 @@ struct encoder {
         continue;
 
       /* 最適化: 最小のファンクタ以外は試す必要なし */
-      if (last_valid_i >= 0 && atom->get_functor() != first_func)
+      if (last_valid_i >= 0 && LMN_SATOM_GET_FUNCTOR(atom) != first_func)
         break;
 
-      if (visited->get_atom(atom, NULL))
+      if (visitlog_get_atom(visited, atom, NULL))
         continue;
 
       BinStrCursor new_bsptr = bsp;
-      visited->set_checkpoint();
+      visitlog_set_checkpoint(visited);
 
       write_mol(atom, LMN_ATTR_MAKE_LINK(0), -1, new_bsptr, visited, TRUE);
       if (new_bsptr.is_valid()) {
         /* atomからたどった分子が書き込みに成功したので、last_validに記憶する */
         if (last_valid_i < 0) {
-          first_func = atom->get_functor();
+          first_func = LMN_SATOM_GET_FUNCTOR(atom);
         } else {
-          delete last_valid_checkpoint;
+          checkpoint_free(last_valid_checkpoint);
         }
 
         last_valid_bsp = new_bsptr;
-        last_valid_checkpoint = visited->pop_checkpoint();
+        last_valid_checkpoint = visitlog_pop_checkpoint(visited);
         last_valid_i = i;
       } else {
-        visited->revert_checkpoint();
+        visitlog_revert_checkpoint(visited);
       }
     }
 
@@ -314,22 +314,22 @@ struct encoder {
       /* 書き込みに成功した分子をログに記録して、次の分子に進む */
       auto t = atoms[last_valid_i];
       atoms[last_valid_i] = 0;
-      visited->push_checkpoint(last_valid_checkpoint);
+      visitlog_push_checkpoint(visited, last_valid_checkpoint);
       write_mols(atoms, last_valid_bsp, visited);
       atoms[last_valid_i] = t;
 
       if (last_valid_bsp.is_valid()) {
         bsp = last_valid_bsp;
-        visited->commit_checkpoint();
+        visitlog_commit_checkpoint(visited);
       } else {
-        visited->revert_checkpoint();
+        visitlog_revert_checkpoint(visited);
       }
     }
   }
 
   void write_rulesets(LmnMembraneRef mem, BinStrCursor &bsp) {
     /* ルールセットがルールセットIDでソートされていることに基づいたコード */
-    auto n = lmn_mem_ruleset_num(mem);
+    auto n = mem->ruleset_num();
     if (n == 0)
       return;
 
@@ -369,7 +369,7 @@ struct encoder {
                  VisitLogRef visited) {
     /* atoms中の未訪問のアトムを起点とする分子を、それぞれ試みる */
     for (auto atom : atoms) {
-      if (visited->get_atom(atom, NULL) || LMN_IS_HL(atom))
+      if (visitlog_get_atom(visited, atom, NULL) || LMN_IS_HL(atom))
         continue;
 
       write_mol((LmnAtomRef)atom, LMN_ATTR_MAKE_LINK(0), -1, bsp, visited,
@@ -382,8 +382,8 @@ struct encoder {
    */
   void dump_mems(LmnMembraneRef mem, BinStrCursor &bsp,
                         VisitLogRef visited) {
-    for (auto m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
-      if (!visited->get_mem(m, NULL)) {
+    for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
+      if (!visitlog_get_mem(visited, m, NULL)) {
         write_mem(m, 0, -1, -1, bsp, visited, FALSE);
       }
     }
@@ -420,13 +420,13 @@ struct encoder {
   BinStr binstr;
   std::unique_ptr<BinStrCursor> cur;
 
-  encoder(LmnMembraneRef mem, bool direct, unsigned int tbl_size = 0) : root_mem(mem), visit_log(new VisitLog()) {
+  encoder(LmnMembraneRef mem, bool direct, unsigned int tbl_size = 0) : root_mem(mem), visit_log(visitlog_create()) {
     cur = direct ? binstr.head_direct() : binstr.head();
-    visit_log->init_with_size(tbl_size);
+    visitlog_init_with_size(visit_log, tbl_size);
   }
 
   ~encoder() {
-    delete visit_log;
+    visitlog_destroy(visit_log);
   }
 
   LmnBinStr *binary_string() {
