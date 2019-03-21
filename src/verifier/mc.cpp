@@ -686,7 +686,7 @@ static Vector *mc_gen_invalids_path(State *seed) {
     pred = state_get_parent(pred);
   }
 
-  vec_reverse(path);
+  path->reverse();
 
   return path;
 }

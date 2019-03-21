@@ -56,19 +56,3 @@ void vec_resize(Vector *vec, unsigned int size, vec_data_t val) {
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *)) {
   qsort(vec->tbl, vec->num, sizeof(vec_data_t), compare);
 }
-
-/* Vectorに詰んだ要素を逆順に並べ直す */
-void vec_reverse(Vector *vec) {
-  unsigned int r, l;
-
-  r = 0;
-  l = vec->get_num() - 1;
-
-  while (r < l) {
-    vec_data_t tmp = vec->tbl[r];
-    vec->set(r, vec->tbl[l]);
-    vec->set(l, tmp);
-    r++;
-    l--;
-  }
-}

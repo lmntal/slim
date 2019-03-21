@@ -180,9 +180,22 @@ struct Vector {
     }
     return FALSE;
   }
+  void reverse(){ /* Vectorに詰んだ要素を逆順に並べ直す */
+    unsigned int r, l;
+
+    r = 0;
+    l = get_num() - 1;
+
+    while (r < l) {
+      vec_data_t tmp = tbl[r];
+      set(r, tbl[l]);
+      set(l, tmp);
+      r++;
+      l--;
+    }
+  }
 };
 
-void vec_reverse(Vector *vec);
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
