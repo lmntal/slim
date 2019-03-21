@@ -5,9 +5,9 @@
 #include "hash.hpp"
 #include "trie.hpp"
 
-#include <vector>
-#include <map>
 #include <list>
+#include <map>
+#include <vector>
 
 struct CanonicalAdjacencyInformation {
   Hash hash;
@@ -22,11 +22,11 @@ struct CanonicalAdjacencyList {
 };
 
 using discrete_propagation_lists =
-    std::map<vertex_list, vertex_list *>;
-using key_collection =
-    std::map<vertex_list, CollectionInt>;
+    std::map<propagation_list, propagation_list *>;
+using key_collection = std::map<vertex_list, CollectionInt>;
 
-propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo, Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph);
+propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
+                           Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph);
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
     InheritedVertex *iVertexA, InheritedVertex *iVertexB);
 void freePreserveDiscreteProapgationList(vertex_list *pdpList);

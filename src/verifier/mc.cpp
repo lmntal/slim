@@ -39,16 +39,16 @@
 #include "mc.h"
 #include "binstr_compress.h"
 #include "delta_membrane.h"
+#include "diff_info.hpp"
 #include "dpor.h"
+#include "graphinfo.hpp"
 #include "ltl2ba_adapter.h"
 #include "mc_worker.h"
+#include "mckay.hpp"
 #include "mhash.h"
 #include "propositional_symbol.h"
 #include "runtime_status.h"
-#include "mckay.hpp"
 #include "trie.hpp"
-#include "graphinfo.hpp"
-#include "diff_info.hpp"
 #include <iostream>
 #ifdef DEBUG
 #include "vm/dumper.h"
@@ -56,10 +56,10 @@
 #include "state.h"
 #include "state.hpp"
 // #define DIFFISO_GEN
-bool diff_gen_finish=false;
-std::map<int,int> iso_m;
-extern Graphinfo * parent_graphinfo;
-extern std::map<int,int> id_to_id_at_commit;
+bool diff_gen_finish = false;
+std::map<int, int> iso_m;
+extern Graphinfo *parent_graphinfo;
+extern std::map<int, int> id_to_id_at_commit;
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
@@ -150,12 +150,11 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   init_s->trie = new Trie();
   init_s->graphinfo = init;
   auto l = trieMcKay(init_s->trie, diff, init, empty);
-  std::cout<< l <<std::endl;
+  // std::cout << l << std::endl;
   init_s->trie->dump();
   /*
     ===== Diffiso ====
    */
-
 
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
@@ -235,8 +234,6 @@ static void mc_dump(LmnWorkerGroup *wp) {
     lmn_prof.found_err = TRUE;
 }
 
-
-
 std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   std::map<int, int> ret_m;
 
@@ -245,14 +242,15 @@ std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   //   printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
   // }
   // printf("===id_to_id_at_commit===\n");
-  // for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
+  // for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++)
+  // {
   //   printf("%d %d\n", it->first, it->second);
   // }
 
-  for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
+  for (auto it = bs->pos_to_id.begin(); it != bs->pos_to_id.end(); it++) {
     auto itr = id_to_id_at_commit.find(it->second.second);
-    if(itr!=id_to_id_at_commit.end()) {
-      ret_m[it->second.first]=itr->second;
+    if (itr != id_to_id_at_commit.end()) {
+      ret_m[it->second.first] = itr->second;
     }
   }
   return ret_m;
@@ -287,7 +285,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   LmnBinStrRef bs = s->state_binstr();
 
 #ifdef DIFFISO_GEN
-  if(!diff_gen_finish) {
+  if (!diff_gen_finish) {
     printf("Succ number Information\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
@@ -299,20 +297,17 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
 #ifdef DIFFISO_GEN
-  if(!diff_gen_finish) {
+  if (!diff_gen_finish) {
     printf("%d\n", mc_react_cxt_expanded_num(rc));
     printf("Parent Graph\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout<<parent_graphinfo->json_string<<std::endl;
+    std::cout << parent_graphinfo->json_string << std::endl;
   }
 
 #endif
 
-
-
-
   if (mc_react_cxt_expanded_num(rc) == 0) {
-    diff_gen_finish=true;
+    diff_gen_finish = true;
     /* sを最終状態集合として記録 */
     statespace_add_end_state(ss, s);
   } else if (mc_enable_por(f) && !s->s_is_reduced()) {
@@ -331,7 +326,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     // for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
     //   printf("%d %d\n", it->first, it->second);
     // }
-    if(!check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
+    if (!check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       exit(1);
     }
@@ -408,7 +403,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   succ_i = 0;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
 #ifdef DIFFISO_GEN
-    if(!diff_gen_finish)
+    if (!diff_gen_finish)
       printf("Child Graph\n");
 #endif
     TransitionRef src_t;
@@ -440,35 +435,34 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         src_succ->calc_binstr_delta();
       succ = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
-    } else {                            /* default */
+    } else {                              /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ = statespace_insert(ss, src_succ);
     }
 
-
-  /*
-    ===== Diffiso ====
-   */
-    if(!diff_gen_finish) {
+    /*
+      ===== Diffiso ====
+     */
+    if (!diff_gen_finish) {
       // Graphinfo *child_gi = new Graphinfo(src_succ_m);
       // convertedGraphDump(parent_graphinfo->cv);
 
-      // Trie * tmp_trie = org_trie->gen_tmp_trie_from_originaltrie_and_gi(org_gi, parent_graphinfo);
-      // tmp_trie->dump();
-      // DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
-      // di->diffInfoDump();
+      // Trie * tmp_trie =
+      // org_trie->gen_tmp_trie_from_originaltrie_and_gi(org_gi,
+      // parent_graphinfo); tmp_trie->dump(); DiffInfo *di = new
+      // DiffInfo(parent_graphinfo, child_gi); di->diffInfoDump();
       // trieMcKay(tmp_trie, di, parent_graphinfo, child_gi);
       // tmp_trie->dump();
     }
 #ifdef DIFFISO_GEN
-    if(!diff_gen_finish) {
+    if (!diff_gen_finish) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       lmn_dump_mem_stdout(src_succ_m);
     }
 #endif
-  /*
-    ===== Diffiso ====
-   */
+    /*
+      ===== Diffiso ====
+     */
 
     src_succ->graphinfo = new Graphinfo(src_succ_m);
     // printf("===org===\n");
@@ -478,8 +472,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
     // dif->diffInfoDump();
     std::map<int, int> rev_iso;
-    for(auto i = iso_m.begin(); i!=iso_m.end(); ++i) {
-      rev_iso[i->second]=i->first;
+    for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
+      rev_iso[i->second] = i->first;
     }
     dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
     // dif->diffInfoDump();
@@ -495,7 +489,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
     } else {
       /* contains */
-      delete(src_succ);
+      delete (src_succ);
       if (s->has_trans_obj()) {
         /* Transitionオブジェクトが指すサクセッサを検出した等価な状態の方へ設定し直す
          */
@@ -529,15 +523,15 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     */
   }
 #ifdef DIFFISO_GEN
-  if(!diff_gen_finish){
+  if (!diff_gen_finish) {
     printf("Parent State ID\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("%d\n", s->state_id);
-    for(i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+    for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
       printf("Child State ID\n");
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       printf("%d\n", ((State *)vec_get(RC_EXPANDED(rc), i))->state_id);
-    }    
+    }
   }
 #endif
   st_clear(RC_SUCC_TBL(rc));
@@ -615,7 +609,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       news = new State();
     } else {
       news = new State((LmnMembraneRef)vec_get(expanded_roots, i), state_name,
-                        mc_use_canonical(f));
+                       mc_use_canonical(f));
     }
 
     state_set_property_state(news, state_name);
@@ -624,7 +618,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       lmn_interned_str nid;
       nid = ((LmnRuleRef)vec_get(expanded_rules, i))->name;
       data = (vec_data_t)transition_make(news, nid);
-     src->set_trans_obj();
+      src->set_trans_obj();
     } else {
       data = (vec_data_t)news;
     }
@@ -711,7 +705,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 #ifdef KWBT_OPT
         transition_set_cost((Transition)data, transition_cost(src_succ_t));
 #endif
-       s->set_trans_obj();
+        s->set_trans_obj();
       } else {
         data = (vec_data_t)new_s;
       }
@@ -767,7 +761,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
   if (mc_has_trans(f)) {
     data = (vec_data_t)transition_make(new_s, lmn_intern("ε"));
-   s->set_trans_obj();
+    s->set_trans_obj();
   } else {
     data = (vec_data_t)new_s;
   }

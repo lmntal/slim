@@ -4,8 +4,8 @@
 #include <iostream>
 propagation_list::iterator firstNonTrivialCell(propagation_list &pList) {
 
-  for(auto it = pList.begin(); it != pList.end(); ++it) {
-    if(it->size() > 1) {
+  for (auto it = pList.begin(); it != pList.end(); ++it) {
+    if (it->size() > 1) {
       return it;
     }
   }
@@ -29,23 +29,23 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     propagation_list &dpList, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID) {
   bool isExisting = true;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   putLabelsToAdjacentVertices(dpList);
   propagation_list *preserveDPList = new propagation_list(dpList);
 
-  // auto &key = *preserveDPList;
-  // auto seniorDPList =
-  //     discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(key);
+  auto &key = *preserveDPList;
+  auto seniorDPList =
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(key);
 
-  // if (seniorDPList ==
-  //     std::end(
-  //         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
-
-  //   discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
-  //       std::make_pair(key, preserveDPList));
-  //   isExisting = FALSE;
-  //   return isExisting;
-  // } else {
+  if (seniorDPList ==
+      std::end(
+          *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
+        std::make_pair(key, preserveDPList));
+    isExisting = false;
+    return isExisting;
+  } // else {
   //   auto iteratorCell = std::begin(*preserveDPList);
   //   auto iteratorCellSenior = std::begin(*seniorDPList->second);
 
@@ -109,7 +109,6 @@ bool listMcKayInner(
   std::cout << "###### after stable refinement ######" << std::endl;
   std::cout << stabilizer << std::endl;
 
-
   auto beginSentinel = firstNonTrivialCell(stabilizer);
 
   if (beginSentinel == stabilizer.end()) {
@@ -133,15 +132,16 @@ bool listMcKayInner(
 
   //     if (isNewSplit(sentinelCell, splitCell)) {
   //       printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //       stabilizer->splice(std::next(beginSentinel, 1), *stabilizer, splitCell);
+  //       stabilizer->splice(std::next(beginSentinel, 1), *stabilizer,
+  //       splitCell);
 
   //       Bool isUsefulChild = listMcKayInner(
   //           stabilizer, cAfterGraph, gapOfGlobalRootMemID,
   //           discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
   //       printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //       stabilizer->splice(std::next(iteratorCell, 1), *stabilizer, splitCell);
-  //       printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //       if (isFirstLoop) {
+  //       stabilizer->splice(std::next(iteratorCell, 1), *stabilizer,
+  //       splitCell); printf("%s:%d\n", __FUNCTION__, __LINE__); if
+  //       (isFirstLoop) {
   //         isFirstLoop = FALSE;
   //         if (!isUsefulChild) {
   //           isUsefulBranch = FALSE;
@@ -178,25 +178,28 @@ propagation_list listMcKay(propagation_list &propagationList,
         propagationList, cAfterGraph, gapOfGlobalRootMemID,
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
 
-    //   vertex_list *canonicalDiscreteRefinement = new vertex_list();
-    //   for (auto &v :
-    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()->second)
-    //     canonicalDiscreteRefinement->push_back(v);
+    propagation_list canonicalDiscreteRefinement = propagation_list();
+    for (auto &v :
+         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()
+              ->second)
+      canonicalDiscreteRefinement.push_back(v);
 
-    //   std::cout << "########### candidates of canonical discrete
-    //   refinement###########" << std::endl; std::cout <<
-    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels <<
-    //   std::endl;;
+    std::cout
+        << "########### candidates of canonical discrete refinement########## #"
+        << std::endl;
+    std::cout << *discretePropagationListsOfInheritedVerticesWithAdjacentLabels
+              << std::endl;
+    ;
 
     //   for (auto &v :
     //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
     //     freePreserveDiscreteProapgationList(v.second);
     //   delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
 
-    //   return canonicalDiscreteRefinement;
+    return canonicalDiscreteRefinement;
   }
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  return canonicalDiscreteRefinement;
+  // return canonicalDiscreteRefinement;
 }
 
 Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
