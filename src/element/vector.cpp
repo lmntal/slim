@@ -72,16 +72,3 @@ void vec_reverse(Vector *vec) {
     l--;
   }
 }
-
-Vector *vec_copy(Vector *vec) {
-  int i;
-  Vector *new_vec;
-
-  new_vec = new Vector(vec->num > 0 ? vec->num : 1);
-
-  for (i = 0; i < vec->get_num(); i++) {
-    new_vec->tbl[i] = vec->tbl[i];
-  }
-  new_vec->num = vec->num;
-  return new_vec;
-}

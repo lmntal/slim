@@ -71,6 +71,15 @@ struct Vector {
     memcpy(tbl, v.data(), sizeof(T) * v.size());
     num = v.size();
   }
+  Vector(const Vector &vec){
+    int i;
+    init(vec.get_num() > 0 ? vec.get_num() : 1);
+
+    for (i = 0; i < vec.get_num(); i++) {
+      this->tbl[i] = vec.tbl[i];
+    }
+    this->num = vec.get_num();
+  }
   ~Vector(){
     if(tbl != NULL){
       LMN_FREE(tbl);
@@ -173,7 +182,6 @@ struct Vector {
   }
 };
 
-Vector *vec_copy(Vector *vec);
 void vec_reverse(Vector *vec);
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));

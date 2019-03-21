@@ -147,7 +147,7 @@ struct LmnReactCxt : slim::vm::RuleContext {
     this->global_root = from.global_root;
 #ifdef USE_FIRSTCLASS_RULE
     delete this->insertion_events;
-    this->insertion_events = vec_copy(from.insertion_events);
+    this->insertion_events = new Vector(*from.insertion_events);
 #endif
     return *this;
   }
