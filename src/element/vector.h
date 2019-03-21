@@ -137,7 +137,7 @@ struct Vector {
     num--;
     return ret;
   }
-  LmnWord peek(){
+  LmnWord peek() const{
     return get(num - 1);
   }
   void set(unsigned int index, LmnWord keyp){
@@ -148,7 +148,7 @@ struct Vector {
     LMN_ASSERT(index < num);
     return (tbl[index]);
   }
-  LmnWord last(){
+  LmnWord last() const{
     return tbl[num-1];
   }
 /* pop all elements from vec */
@@ -159,29 +159,37 @@ struct Vector {
     LMN_FREE(tbl);
     tbl = (LmnWord *)NULL;
   }
-  unsigned long space_inner(){
+  unsigned long space_inner() const{
     return get_cap() * sizeof(vec_data_t);
+  }
+  BOOL contains(LmnWord keyp) const{
+    unsigned int i = 0;
+    while (i < get_num()) {
+      if (get(i++) == keyp) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 };
 
-BOOL vec_contains(const Vector *vec, LmnWord keyp);
 Vector *vec_copy(Vector *vec);
 void vec_reverse(Vector *vec);
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
 void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
 
 
-namespace slim {
-namespace element {
-template <class T> std::vector<T> make_vector(Vector *v) {
-  if (!v)
-    return std::vector<T>();
-  return std::vector<T>(
-      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
-      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
-}
-}
-}
+//namespace slim {
+//namespace element {
+//template <class T> std::vector<T> make_vector(Vector *v) {
+//  if (!v)
+//    return std::vector<T>();
+//  return std::vector<T>(
+//      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
+//      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
+//}
+//}
+//}
 
 /* @} */
 

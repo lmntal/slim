@@ -508,10 +508,10 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
 
       if (contextC1s_are_depend(r, l)) {
         if (ret) {
-          if (!vec_contains(ret, (vec_data_t)r)) {
+          if (!ret->contains((vec_data_t)r)) {
             ret->push((vec_data_t)r);
           }
-          if (!vec_contains(ret, (vec_data_t)l)) {
+          if (!ret->contains((vec_data_t)l)) {
             ret->push((vec_data_t)l);
           }
         }
@@ -594,7 +594,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
       if (st_lookup(mc->delta_tbl, (st_data_t)succ_d, &t)) {
         ContextC1Ref succ_c = (ContextC1Ref)t;
 
-        if (vec_contains(cur_checked_ids, (vec_data_t)succ_c->id)) {
+        if (cur_checked_ids->contains((vec_data_t)succ_c->id)) {
           /* 1step前で既に訪問済み
            * つまり、合流しているため、skip */
           POR_DEBUG(printf("Tr%u, contains\n", succ_c->id));
@@ -687,7 +687,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc)
     dpor_contextC1_dump_eachR(c);
   });
 
-  if (ret != c && !vec_contains(RC_MEM_DELTAS(rc), (vec_data_t)ret->d)) {
+  if (ret != c && !RC_MEM_DELTAS(rc)->contains((vec_data_t)ret->d)) {
     POR_DEBUG({
       printf("detected same trans id=%u\n", ret->id);
       printf("aborted trans_id=%u\n", c->id);
@@ -696,7 +696,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc)
     });
 
     if (!ret->is_ample_cand) {
-      if (!vec_contains(RC_MEM_DELTAS(rc), (vec_data_t)ret->d)) {
+      if (!RC_MEM_DELTAS(rc)->contains((vec_data_t)ret->d)) {
         POR_DEBUG(printf("push succ\n\n"));
         mc_react_cxt_add_mem_delta(rc, ret->d, NULL);
       }

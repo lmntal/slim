@@ -38,18 +38,6 @@
 
 #include "vector.h"
 
-
-/* contains */
-BOOL vec_contains(const Vector *vec, LmnWord keyp) {
-  unsigned int i = 0;
-  while (i < vec->get_num()) {
-    if (vec->get(i++) == (LmnWord)keyp) {
-      return TRUE;
-    }
-  }
-  return FALSE;
-}
-
 /* ベクタのサイズを size に変更し、新規に追加された項目を val に設定する*/
 void vec_resize(Vector *vec, unsigned int size, vec_data_t val) {
   unsigned int i;

@@ -772,7 +772,7 @@ void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem) {
   EACH_ATOM(star, ent, ({
               oldstar = (LmnSymbolAtomRef)star->get_link(0);
               if (LMN_PROXY_GET_MEM(oldstar) == child_mem) { /* (1) */
-                if (!vec_contains(&remove_list, (LmnWord)star)) {
+                if (!remove_list.contains((LmnWord)star)) {
                   lmn_mem_unify_atom_args(child_mem, star, 1, oldstar, 1);
                   remove_list.push((LmnWord)star);
                   remove_list.push((LmnWord)oldstar);
@@ -828,7 +828,7 @@ void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem) {
 
   EACH_ATOM(star, ent, ({
               outside = (LmnSymbolAtomRef)star->get_link(0);
-              if (!vec_contains(&remove_list, (LmnWord)star)) {
+              if (!remove_list.contains((LmnWord)star)) {
                 lmn_mem_unify_atom_args(mem, star, 1, outside, 1);
                 remove_list.push((LmnWord)star);
                 remove_list.push((LmnWord)outside);
@@ -873,7 +873,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
                   (LmnSymbolAtomRef)a1->get_link(0);
               if (LMN_PROXY_GET_MEM(a10) &&
                   LMN_PROXY_GET_MEM(a10)->parent != mem) {
-                if (!vec_contains(&remove_list, (LmnWord)outside)) {
+                if (!remove_list.contains((LmnWord)outside)) {
                   lmn_mem_unify_atom_args(mem, outside, 0, a1, 0);
                   remove_list.push((LmnWord)outside);
                   remove_list.push((LmnWord)a1);
@@ -3154,15 +3154,15 @@ static BOOL mem_trace_links(LmnSymbolAtomRef a1, LmnSymbolAtomRef a2,
       l1 = (LmnSymbolAtomRef)a1->get_link(i);
       l2 = (LmnSymbolAtomRef)a2->get_link(i);
 
-      if ((vec_contains(v_log1, (LmnWord)l1) !=
-           vec_contains(v_log2, (LmnWord)l2))) {
+      if ((v_log1->contains((LmnWord)l1) !=
+           v_log2->contains((LmnWord)l2))) {
         /* 片方の膜においては、これまでのトレースで通過済みのアトムに還ってきた
          * (i.e. 分子内に環状の構造(= 閉路)が存在した)
          * ものの、もう片方の膜では同様の閉路が確認できず、構造の不一致が認められたために偽を返す
          */
         return FALSE;
-      } else if (vec_contains(v_log1, (LmnWord)l1) &&
-                 vec_contains(v_log2, (LmnWord)l2)) {
+      } else if (v_log1->contains((LmnWord)l1) &&
+                 v_log2->contains((LmnWord)l2)) {
         /* 膜1、2内の対応する分子が共に閉路を形成した場合は、第(i+1)リンクの接続先のチェックに移る
          */
         continue;

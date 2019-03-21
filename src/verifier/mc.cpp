@@ -699,7 +699,7 @@ static Vector *mc_gen_invalids_path(State *seed) {
     t = 0;                                                                     \
     if (st_lookup(G, (st_data_t)(S_KEY), &t)) {                                \
       succs = (Vector *)t;                                                     \
-      if (!vec_contains(succs, (vec_data_t)SUCC)) {                            \
+      if (!succs->contains((vec_data_t)SUCC)) {                            \
         succs->push((vec_data_t)SUCC);                                     \
       }                                                                        \
     } else {                                                                   \

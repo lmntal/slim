@@ -716,7 +716,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
 
   for (i = 0; i < s->successor_num; i++) {
     TransitionRef t = transition(s, i);
-    if (!vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
+    if (!mc_por.ample_candidate->contains((vec_data_t)transition_id(t))) {
       /* sで可能かつample(s)の候補に含まれない遷移をスタック上に乗せる */
       mc_por.queue->enqueue((vec_data_t)t);
     }
@@ -742,7 +742,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
         independency_check(succ_s, a, psyms);
         for (i = 0; i < succ_s->successor_num; i++) {
           TransitionRef succ_succ_t = transition(succ_s, i);
-          if (!vec_contains(mc_por.ample_candidate,
+          if (!mc_por.ample_candidate->contains(
                             (vec_data_t)transition_id(succ_succ_t))) {
             /* ample(s)内に含まれない遷移はさらにチェックする必要がある */
             mc_por.queue->enqueue((LmnWord)succ_succ_t);
@@ -769,7 +769,7 @@ static BOOL check_C2(State *s) {
     unsigned int i;
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
-      if (vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
+      if (mc_por.ample_candidate->contains((vec_data_t)transition_id(t))) {
         /* TODO: 設計と実装 */
         return FALSE;
       }
@@ -827,7 +827,7 @@ static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     succ_t = transition(s, i);
     succ_s = transition_next_state(succ_t);
 
-    if (!vec_contains(mc_por.ample_candidate,
+    if (!mc_por.ample_candidate->contains(
                       (vec_data_t)transition_id(succ_t))) {
       continue;
     }
@@ -858,7 +858,7 @@ static BOOL is_independent_of_ample(TransitionRef strans) {
     vec_independency = 0;
     if (st_lookup(mc_por.strans_independency, (st_data_t)id,
                   (st_data_t *)&vec_independency)) {
-      if (!vec_contains((Vector *)vec_independency,
+      if (!((Vector *)vec_independency)->contains(
                         (vec_data_t)transition_id(strans))) {
         return FALSE;
       }
@@ -1022,7 +1022,7 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
 
       if (is_dependent) {
         need_to_push_id_key = TRUE;
-        if (!vec_contains(mc_por.ample_candidate, (vec_data_t)checked_id)) {
+        if (!mc_por.ample_candidate->contains((vec_data_t)checked_id)) {
           mc_por.ample_candidate->push((vec_data_t)checked_id);
           set_ample(transition_next_state(check));
         }
@@ -1030,7 +1030,7 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
     }
 
     if (need_to_push_id_key &&
-        !vec_contains(mc_por.ample_candidate, (vec_data_t)id_key)) {
+        !mc_por.ample_candidate->contains((vec_data_t)id_key)) {
       mc_por.ample_candidate->push((vec_data_t)id_key);
       set_ample(transition_next_state(trans_key));
     }
@@ -1057,7 +1057,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
       if (is_inserted(succ_s) && is_outside_exist(succ_s)) {
         /* C3 check時, 探索空間への追加に成功してしまっていた場合 */
         tmp.push((vec_data_t)succ_t);
-      } else if (!vec_contains(mc_por.ample_candidate,
+      } else if (!mc_por.ample_candidate->contains(
                                (vec_data_t)transition_id(succ_t))) {
         /* amplesetに含まれない遷移は除去 */
         transition_free(succ_t);
