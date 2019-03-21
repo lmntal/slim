@@ -1227,7 +1227,7 @@ void dmem_root_remove_toplevel_proxies(struct MemDeltaRoot *root_d,
                 (LmnSymbolAtomRef)(dmem_root_get_link(root_d, a1, 0));
             if (LMN_PROXY_GET_MEM(a10) &&
                 dmem_root_get_parent(root_d, LMN_PROXY_GET_MEM(a10)) != mem) {
-              if (!vec_contains(&remove_list, (LmnWord)outside)) {
+              if (!remove_list.contains((LmnWord)outside)) {
                 dmem_unify_atom_args(d, mem, outside, 0, a1, 0);
                 remove_list.push((LmnWord)outside);
                 remove_list.push((LmnWord)a1);
@@ -1302,7 +1302,7 @@ void dmem_root_remove_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem) {
               lmn_mem_parent(LMN_PROXY_GET_MEM(
                   (LmnSymbolAtomRef)dmem_root_get_link(root_d, a1, 0))) !=
                   mem) { /* (3) */
-            if (!vec_contains(&remove_list, (LmnWord)opxy)) {
+            if (!remove_list.contains((LmnWord)opxy)) {
               dmem_unify_atom_args(d, mem, opxy, 0, a1, 0);
               remove_list.push((LmnWord)opxy);
               remove_list.push((LmnWord)a1);
@@ -1375,7 +1375,7 @@ void dmem_root_insert_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
         oldstar = (LmnSymbolAtomRef)(dmem_root_get_link(root_d, star, 0));
         if (child_d) oldstar = dmem_modify_atom(child_d, child_mem, oldstar);
         if (LMN_PROXY_GET_MEM(oldstar) == child_mem) { /* (1) */
-          if (!vec_contains(&remove_list, (LmnWord)star)) {
+          if (!remove_list.contains((LmnWord)star)) {
             if (child_d)
               dmem_unify_atom_args(child_d, child_mem, star, 1, oldstar, 1);
             else
@@ -1455,7 +1455,7 @@ void dmem_root_remove_temporary_proxies(struct MemDeltaRoot *root_d,
   DMEM_EACH_FUNC_ATOM(d, mem, LMN_STAR_PROXY_FUNCTOR, star, {
     outside = dmem_root_modified_atom(
         root_d, (LmnSymbolAtomRef)(star->get_link(0)));
-    if (!vec_contains(&remove_list, (LmnWord)star)) {
+    if (!remove_list.contains((LmnWord)star)) {
       if (d)
         dmem_unify_atom_args(d, mem, star, 1, outside, 1);
       else
@@ -2175,7 +2175,7 @@ static void dmem_commit(struct MemDelta *d) {
   lmn_mem_data_atom_add(d->mem, d->data_atom_diff);
 
   if (d->ruleset_removed || d->new_rulesets) {
-    d->org_rulesets = vec_copy(lmn_mem_get_rulesets(d->mem));
+    d->org_rulesets = new Vector(*lmn_mem_get_rulesets(d->mem));
 
     if (d->ruleset_removed) {
       lmn_mem_get_rulesets(d->mem)->clear();

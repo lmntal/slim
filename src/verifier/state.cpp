@@ -362,7 +362,7 @@ void transition_free(TransitionRef t) {
 
 void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
                          LmnCost cost) {
-  if (rule_name != ANONYMOUS || !vec_contains(&t->rule_names, rule_name)) {
+  if (rule_name != ANONYMOUS || !t->rule_names.contains(rule_name)) {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
