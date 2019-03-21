@@ -138,7 +138,7 @@ const char *Automata::state_name(atmstate_id_t id) {
 
 void Automata::add_state(AutomataStateRef s) {
   if (this->states.get_num() <= s->id) {
-    vec_resize(&this->states, s->id + 1, (vec_data_t)0);
+    this->states.resize(s->id + 1, (vec_data_t)0);
   }
   this->states.set(s->id, (vec_data_t)s);
 }

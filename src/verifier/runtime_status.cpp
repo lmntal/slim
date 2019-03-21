@@ -744,7 +744,7 @@ void dump_profile_data(FILE *f) {
 
         v.init(st_num(lmn_prof.prules));
         st_get_entries_value(lmn_prof.prules, &v);
-        vec_sort(&v, comp_prule_id_greater_f);
+        v.sort(comp_prule_id_greater_f);
 
         fprintf(
             f,

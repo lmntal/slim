@@ -194,10 +194,24 @@ struct Vector {
       l--;
     }
   }
-};
+  void resize(unsigned int size, vec_data_t val){ 
+  /* ベクタのサイズを size に変更し、新規に追加された項目を val に設定する*/
+    unsigned int i;
 
-void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
-void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
+    while (size > cap) {
+      extend();
+    }
+
+    /* 追加された項目を val に設定 */
+    for (i = num; i < size; i++) {
+      tbl[i] = val;
+    }
+    num = size;
+  }
+  void sort(int (*compare)(const void *, const void *)){
+    qsort(tbl, num, sizeof(vec_data_t), compare);
+  }
+};
 
 
 //namespace slim {

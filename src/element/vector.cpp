@@ -38,21 +38,3 @@
 
 #include "vector.h"
 
-/* ベクタのサイズを size に変更し、新規に追加された項目を val に設定する*/
-void vec_resize(Vector *vec, unsigned int size, vec_data_t val) {
-  unsigned int i;
-
-  while (size > vec->cap) {
-    vec->extend();
-  }
-
-  /* 追加された項目を val に設定 */
-  for (i = vec->num; i < size; i++) {
-    vec->tbl[i] = val;
-  }
-  vec->num = size;
-}
-
-void vec_sort(const Vector *vec, int (*compare)(const void *, const void *)) {
-  qsort(vec->tbl, vec->num, sizeof(vec_data_t), compare);
-}

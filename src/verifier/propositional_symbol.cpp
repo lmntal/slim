@@ -206,7 +206,7 @@ void propsyms_free(PropSyms props) {
 
 void propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef) {
   if (props->get_num() <= id) {
-    vec_resize(props, id + 1, (vec_data_t)NULL);
+    props->resize(id + 1, (vec_data_t)NULL);
   }
   props->set(id, (vec_data_t)symdef);
 }
