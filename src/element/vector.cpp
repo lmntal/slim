@@ -40,19 +40,11 @@
 
 
 Vector::Vector(){
-  tbl = (LmnWord *)NULL;
+  this->tbl = (LmnWord *)NULL;
 }
 Vector::Vector(unsigned int init_size){
   LMN_ASSERT(init_size > 0);
-  init(init_size);
-}
-template <class T> Vector::Vector(const std::vector<T> &v){
-  static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
-              "vector elements must be scalars.");
-  LMN_ASSERT(v.size() > 0);
-  init(v.size());
-  memcpy(tbl, v.data(), sizeof(T) * v.size());
-  num = v.size();
+  this->init(init_size);
 }
 Vector::Vector(const Vector &vec){
   int i;
@@ -64,99 +56,99 @@ Vector::Vector(const Vector &vec){
   this->num = vec.get_num();
 }
 Vector::~Vector(){
-  if(tbl != NULL){
-    LMN_FREE(tbl);
+  if(this->tbl != NULL){
+    LMN_FREE(this->tbl);
   }
 }
 void Vector::init(unsigned int init_size){
-  tbl = LMN_NALLOC(LmnWord, init_size);
-  num = 0;
-  cap = init_size;
+  this->tbl = LMN_NALLOC(LmnWord, init_size);
+  this->num = 0;
+  this->cap = init_size;
 }
 void Vector::extend(){
-  cap *= 2;
-  tbl = LMN_REALLOC(LmnWord, tbl, cap);
+  this->cap *= 2;
+  this->tbl = LMN_REALLOC(LmnWord, this->tbl, this->cap);
 }
 unsigned int Vector::get_num() const{
-  return num;
+  return this->num;
 }
 unsigned int Vector::get_cap() const{
-  return cap;
+  return this->cap;
 }
 bool Vector::is_empty() const{
-  return num==0;
+  return this->num==0;
 }
 void Vector::push(LmnWord keyp){
-  if (num == cap) {
-    extend();
+  if (this->num == this->cap) {
+    this->extend();
   }
-  (tbl)[num] = keyp;
-  num++;
+  (this->tbl)[this->num] = keyp;
+  this->num++;
 }
 void Vector::reduce(){
-  cap /= 2;
-  tbl = LMN_REALLOC(LmnWord, tbl, cap);
+  this->cap /= 2;
+  this->tbl = LMN_REALLOC(LmnWord, this->tbl, this->cap);
 }
 LmnWord Vector::pop(){
   LmnWord ret;
-  LMN_ASSERT(num > 0);
+  LMN_ASSERT(this->num > 0);
   /* Stackとして利用する場合, reallocが頻繁に発生してしまう.
    * Stackなのでサイズの増減は頻繁に発生するものだが,
    * 頻繁なreallocはパフォーマンスに影響する.
    * >>とりあえず<< サイズの下限値を設ける. LmnStackなる構造を別に作るべきかも.
    * (gocho) */
-  if (num <= cap / 2 && cap > 1024) {
-    reduce();
+  if (this->num <= this->cap / 2 && this->cap > 1024) {
+    this->reduce();
   }
-  ret = get(num - 1);
-  num--;
+  ret = this->get(this->num - 1);
+  this->num--;
   return ret;
 }
 //pop Nth element
 LmnWord Vector::pop_n(unsigned int n){
   unsigned int i;
   LmnWord ret;
-  LMN_ASSERT(num > 0 && n >= 0 && n < num);
+  LMN_ASSERT(this->num > 0 && n >= 0 && n < this->num);
 
-  if (num <= cap / 2) {
-    reduce();
+  if (this->num <= this->cap / 2) {
+    this->reduce();
   }
-  ret = get(n);
-  for (i = n; i < num - 1; ++i) {
-    set(i, get(i + 1));
+  ret = this->get(n);
+  for (i = n; i < this->num - 1; ++i) {
+    this->set(i, get(i + 1));
   }
-  num--;
+  this->num--;
   return ret;
 }
 LmnWord Vector::peek() const{
-  return get(num - 1);
+  return this->get(this->num - 1);
 }
 void Vector::set(unsigned int index, LmnWord keyp){
-  LMN_ASSERT(index < cap);
-  tbl[index] = keyp;    
+  LMN_ASSERT(index < this->cap);
+  this->tbl[index] = keyp;    
 }
 LmnWord Vector::get(unsigned int index) const {
-  LMN_ASSERT(index < num);
-  return (tbl[index]);
+  LMN_ASSERT(index < this->num);
+  return (this->tbl[index]);
 }
 LmnWord Vector::last() const{
-  return tbl[num-1];
+  return this->tbl[this->num-1];
 }
 /* pop all elements from vec */
 void Vector::clear(){
-  num = 0;
+  this->num = 0;
 }
 void Vector::destroy(){
-  LMN_FREE(tbl);
-  tbl = (LmnWord *)NULL;
+  LMN_FREE(this->tbl);
+  this->tbl = (LmnWord *)NULL;
 }
-unsigned long space_inner() const{
-  return get_cap() * sizeof(vec_data_t);
+unsigned long Vector::space_inner() const{
+  return this->cap * sizeof(vec_data_t);
 }
 BOOL Vector::contains(LmnWord keyp) const{
   unsigned int i = 0;
-  while (i < get_num()) {
-    if (get(i++) == keyp) {
+  while (i < this->num) {
+    if (this->get(i++) == keyp) {
       return TRUE;
     }
   }
@@ -165,11 +157,11 @@ BOOL Vector::contains(LmnWord keyp) const{
 void Vector::reverse(){ /* Vectorに詰んだ要素を逆順に並べ直す */
   unsigned int r, l;
   r = 0;
-  l = get_num() - 1;
+  l = this->num - 1;
 
   while (r < l) {
-    vec_data_t tmp = tbl[r];
-    set(r, tbl[l]);
+    vec_data_t tmp = this->tbl[r];
+    set(r, this->tbl[l]);
     set(l, tmp);
     r++;
     l--;
@@ -178,15 +170,15 @@ void Vector::reverse(){ /* Vectorに詰んだ要素を逆順に並べ直す */
 void Vector::resize(unsigned int size, vec_data_t val){ 
 /* ベクタのサイズを size に変更し、新規に追加された項目を val に設定する*/
   unsigned int i;
-  while (size > cap) {
-    extend();
+  while (size > this->cap) {
+    this->extend();
   }
    /* 追加された項目を val に設定 */
-  for (i = num; i < size; i++) {
-    tbl[i] = val;
+  for (i = this->num; i < size; i++) {
+    this->tbl[i] = val;
   }
-  num = size;
+  this->num = size;
 }
 void Vector::sort(int (*compare)(const void *, const void *)){
-  qsort(tbl, num, sizeof(vec_data_t), compare);
+  qsort(this->tbl, this->num, sizeof(vec_data_t), compare);
 }
