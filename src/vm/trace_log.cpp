@@ -37,7 +37,7 @@
 
 #include "trace_log.h"
 
-template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
+//template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
 
 /*----------------
  * Tracker
