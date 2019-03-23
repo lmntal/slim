@@ -166,7 +166,8 @@ propagation_list listMcKay(propagation_list &propagationList,
     canonicalDiscreteRefinement = propagation_list(propagationList);
     return canonicalDiscreteRefinement;
   } else {
-    discrete_propagation_lists discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
+    discrete_propagation_lists
+        discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
 
     std::cout << "+++++ start classify +++++" << std::endl;
     classifyWithAttribute(propagationList, cAfterGraph, gapOfGlobalRootMemID);
@@ -183,9 +184,11 @@ propagation_list listMcKay(propagation_list &propagationList,
       canonicalDiscreteRefinement.push_back(v);
 
     // std::cout
-    //     << "########### candidates of canonical discrete refinement########## #"
+    //     << "########### candidates of canonical discrete refinement##########
+    //     #"
     //     << std::endl;
-    // std::cout << discretePropagationListsOfInheritedVerticesWithAdjacentLabels
+    // std::cout <<
+    // discretePropagationListsOfInheritedVerticesWithAdjacentLabels
     //           << std::endl;
     ;
 
