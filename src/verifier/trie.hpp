@@ -6,7 +6,6 @@
 #include "element/element.h"
 #include "hash.hpp"
 #include "omegaArray.hpp"
-// #include"convertedgraph.hpp"
 #include <list>
 
 struct ConvertedGraph;
@@ -32,7 +31,7 @@ struct HashString {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->creditIndex = h.creditIndex;
     this->body = new std::vector<uint32_t>();
-    for (auto v = h.body->begin(); v!=h.body->end(); ++v) {
+    for (auto v = h.body->begin(); v != h.body->end(); ++v) {
       this->body->push_back(*v);
     }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -45,11 +44,69 @@ struct HashString {
 };
 
 using vertex_list = std::list<
-  slim::element::variant<slim::element::monostate, InheritedVertex>>;
+    slim::element::variant<slim::element::monostate, InheritedVertex>>;
 using trie_body_map = std::map<uint32_t, TrieBody *>;
 using vertex_vec = std::vector<
-  slim::element::variant<slim::element::monostate, InheritedVertex>>;
-using propagation_list = std::list<std::list<ConvertedGraphVertex*>>;
+    slim::element::variant<slim::element::monostate, InheritedVertex>>;
+using propagation_list = std::list<std::list<ConvertedGraphVertex *>>;
+std::map<int, std::vector<int>>
+putLabelsToAdjacentVertices(const propagation_list &pList);
+
+inline bool
+converted_graph_vertex_cmp(const ConvertedGraphVertex *lhs,
+                           const ConvertedGraphVertex *rhs,
+                           const std::map<int, std::vector<int>> &l_m,
+                           const std::map<int, std::vector<int>> &r_m) {
+  if (lhs->type < rhs->type) {
+    return true;
+  } else if (lhs->type > rhs->type) {
+    return false;
+  } else if (strcmp(lhs->name, rhs->name) < 0) {
+    return true;
+  } else if (strcmp(lhs->name, rhs->name) > 0) {
+    return false;
+  } else if (l_m.at(lhs->ID).size() < r_m.at(rhs->ID).size()) {
+    return true;
+  } else if (l_m.at(lhs->ID).size() > r_m.at(rhs->ID).size()) {
+    return false;
+  } else {
+    auto l_it = l_m.at(lhs->ID).begin();
+    auto r_it = r_m.at(rhs->ID).begin();
+    for (; l_it != l_m.at(lhs->ID).end() and r_it != r_m.at(rhs->ID).end();
+         l_it++, r_it++) {
+      if (*l_it < *r_it) {
+        return true;
+      } else if (*l_it > *r_it) {
+        return false;
+      }
+    }
+    return false;
+  }
+}
+struct PropagationListCmp {
+  bool operator()(const propagation_list &lhs,
+                  const propagation_list &rhs) const {
+    auto l_m = putLabelsToAdjacentVertices(lhs);
+    auto r_m = putLabelsToAdjacentVertices(rhs);
+    auto it_l = lhs.begin();
+    auto it_r = rhs.begin();
+    for (; it_l != lhs.end() and it_r != rhs.end(); it_l++, it_r++) {
+      if (it_l->size() != 1 or it_r->size() != 1)
+        throw("propagation list is'nt discrete");
+      if (converted_graph_vertex_cmp(it_l->front(), it_r->front(), l_m, r_m))
+        return true;
+      else if (converted_graph_vertex_cmp(it_r->front(), it_l->front(), l_m,
+                                          r_m))
+        return false;
+    }
+    if (it_l == lhs.end() and it_r != rhs.end())
+      return true;
+    else
+      return false;
+    return true;
+  }
+};
+
 struct TrieBody {
   uint32_t key;
   vertex_list *inheritedVertices;
@@ -134,7 +191,7 @@ struct InheritedVertex {
     correspondingVertex = cVertex;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   };
- 
+
   InheritedVertex(const InheritedVertex &iVertex) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->type = iVertex.type;
@@ -165,7 +222,8 @@ struct InheritedVertex {
   }
 };
 
-const slim::element::variant<slim::element::monostate, InheritedVertex> CLASS_SENTINEL = slim::element::monostate();
+const slim::element::variant<slim::element::monostate, InheritedVertex>
+    CLASS_SENTINEL = slim::element::monostate();
 
 struct Trie {
   TrieBody *body;
@@ -176,10 +234,9 @@ struct Trie {
   };
   // HashTable *trieLeavesTable;
 
-
-  void conventionalPropagationList(TrieBody *body,  propagation_list &list) {
+  void conventionalPropagationList(TrieBody *body, propagation_list &list) {
     if (body->children->empty()) {
-      std::list<ConvertedGraphVertex*> l;
+      std::list<ConvertedGraphVertex *> l;
       for (auto &v : *body->inheritedVertices) {
         l.push_back(slim::element::get<InheritedVertex>(v).correspondingVertex);
       }
@@ -296,7 +353,8 @@ inline std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
-inline std::ostream &operator<<(std::ostream &os, const ConvertedGraphVertex* c) {
+inline std::ostream &operator<<(std::ostream &os,
+                                const ConvertedGraphVertex *c) {
   os << "<";
   switch (c->type) {
   case convertedAtom:
@@ -351,9 +409,9 @@ inline std::ostream &operator<<(std::ostream &os, const std::list<T> &list) {
 template <typename T>
 inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec) {
   os << "[";
-  for(auto it = vec.begin(); it != vec.end(); ++it) {
+  for (auto it = vec.begin(); it != vec.end(); ++it) {
     os << (*it);
-    if(std::next(it, 1) != vec.end()) {
+    if (std::next(it, 1) != vec.end()) {
       os << ",";
     }
   }
@@ -365,8 +423,8 @@ template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);
 vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel);
-std::map<int, std::vector<int>> putLabelsToAdjacentVertices(propagation_list &pList);
-void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
+void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph,
+                           int gapOfGlobalRootMemID);
 void refineConventionalPropagationListByPropagation(propagation_list &pList);
 void inheritedVertexDump(InheritedVertex *iVertex);
 void terminationConditionInfoDump(TerminationConditionInfo *tInfo);

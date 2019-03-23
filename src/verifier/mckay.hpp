@@ -22,7 +22,7 @@ struct CanonicalAdjacencyList {
 };
 
 using discrete_propagation_lists =
-    std::map<propagation_list, propagation_list *>;
+  std::map<propagation_list, propagation_list *, PropagationListCmp>;
 using key_collection = std::map<vertex_list, CollectionInt>;
 
 propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,

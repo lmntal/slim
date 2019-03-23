@@ -1,11 +1,11 @@
 #include "trie.hpp"
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <stack>
 #include <tuple>
 #include <vector>
-#include <iomanip>
 slim::element::conditional_ostream debug_log(std::cout);
 
 struct hash_generator {
@@ -645,7 +645,8 @@ Bool isEmptyTrie(Trie *trie) { return trie->body->children->empty(); }
 template <typename S>
 Bool isDescreteTrie(S *goAheadStack, TerminationConditionInfo *tInfo,
                     int depth) {
-  return omega_array::maxIndex(*tInfo->distribution) == omega_array::index_type(depth) &&
+  return omega_array::maxIndex(*tInfo->distribution) ==
+             omega_array::index_type(depth) &&
          goAheadStack->empty();
 }
 
@@ -654,8 +655,7 @@ Bool isRefinedTrie(TerminationConditionInfo *tInfo, int step) {
   int v;
   try {
     v = tInfo->increase->at(step);
-  }
-  catch(std::out_of_range&) {
+  } catch (std::out_of_range &) {
     v = 0;
   }
   return v != 0;
@@ -707,7 +707,8 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
                         TerminationConditionInfo *tInfo, int stepOfPropagation,
                         hash_generator data) {
   if (omega_array::maxIndex(*tInfo->distribution) == omega_array::OMEGA &&
-      omega_array::maxIndex(*tInfo->increase) == omega_array::index_type(stepOfPropagation - 1)) {
+      omega_array::maxIndex(*tInfo->increase) ==
+          omega_array::index_type(stepOfPropagation - 1)) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushInftyDepthTrieNodesIntoGoAheadStack(trie, goAheadStack,
                                             stepOfPropagation);
@@ -849,48 +850,56 @@ template <typename T> bool classify(propagation_list &l, T score) {
   return changed;
 }
 
-void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID) {
-  classify(l, [](const ConvertedGraphVertex *x){return x->type;});
-  classify(l, [](const ConvertedGraphVertex *x){return x->links.size();});
-  classify(l, [](const ConvertedGraphVertex *x){return strlen(x->name);});
-  classify(l, [](const ConvertedGraphVertex *x){return std::string(x->name);});
+void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph,
+                           int gapOfGlobalRootMemID) {
+  classify(l, [](const ConvertedGraphVertex *x) { return x->type; });
+  classify(l, [](const ConvertedGraphVertex *x) { return x->links.size(); });
+  classify(l, [](const ConvertedGraphVertex *x) { return strlen(x->name); });
+  classify(l,
+           [](const ConvertedGraphVertex *x) { return std::string(x->name); });
 }
 
-std::map<int, std::vector<int>> putLabelsToAdjacentVertices(propagation_list &pList) {
+std::map<int, std::vector<int>>
+putLabelsToAdjacentVertices(const propagation_list &pList) {
   std::map<int, std::vector<int>> id_to_adjacent_labels;
   int tmpLabel = 0;
-  for(auto &list : pList) {	// loop of classes
-    for(auto vertex : list) {	// loop of vertices
-      for(int link_index = 0; link_index < vertex->links.size(); link_index++) { // loop of links
-	auto tmpType = vertex->type;
-	auto &tmpLink = vertex->links[link_index];
-	switch (tmpLink.attr) {
-	case INTEGER_ATTR:
-	  id_to_adjacent_labels[vertex->ID].push_back(tmpLink.data.integer * 256 + INTEGER_ATTR);
-	  break;
-	case HYPER_LINK_ATTR:
-	  id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 + link_index);
-	  break;
-	case GLOBAL_ROOT_MEM_ATTR:
-	  break;
-	default:
-	  if (tmpLink.attr < 128) {
-	    switch(tmpType) {
-	    case convertedAtom:
-	      id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 + link_index);
-	      break;
-	    case convertedHyperLink:
-	      id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 + HYPER_LINK_ATTR);
-	      break;
-	    default:
-	      throw("unexpected vertex type");
-	      break;
-	    }
-	  } else {
-	    throw("unexpected vertex type");
-	  }
-	  break;
-	}
+  for (auto &list : pList) {   // loop of classes
+    for (auto vertex : list) { // loop of vertices
+      for (int link_index = 0; link_index < vertex->links.size();
+           link_index++) { // loop of links
+        auto tmpType = vertex->type;
+        auto &tmpLink = vertex->links[link_index];
+        switch (tmpLink.attr) {
+        case INTEGER_ATTR:
+          id_to_adjacent_labels[vertex->ID].push_back(
+              tmpLink.data.integer * 256 + INTEGER_ATTR);
+          break;
+        case HYPER_LINK_ATTR:
+          id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
+                                                           link_index);
+          break;
+        case GLOBAL_ROOT_MEM_ATTR:
+          break;
+        default:
+          if (tmpLink.attr < 128) {
+            switch (tmpType) {
+            case convertedAtom:
+              id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
+                                                               link_index);
+              break;
+            case convertedHyperLink:
+              id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
+                                                               HYPER_LINK_ATTR);
+              break;
+            default:
+              throw("unexpected vertex type");
+              break;
+            }
+          } else {
+            throw("unexpected vertex type");
+          }
+          break;
+        }
       }
     }
     tmpLabel++;
@@ -902,7 +911,8 @@ void refineConventionalPropagationListByPropagation(propagation_list &pList) {
   bool refined = false;
   do {
     auto labels = putLabelsToAdjacentVertices(pList);
-    refined = classify(pList, [&](const ConvertedGraphVertex *v){ return labels[v->ID]; });
+    refined = classify(
+        pList, [&](const ConvertedGraphVertex *v) { return labels[v->ID]; });
   } while (refined);
 }
 
@@ -1076,14 +1086,15 @@ void makeTerminationConditionMemo(Trie *trie, OmegaArray *distributionMemo,
 }
 
 inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
-  if(body.depth!=-1) {
+  if (body.depth != -1) {
     if (body.isPushedIntoGoAheadStack)
       os << "\x1b[33m";
 
     for (int i = 0; i < body.depth; i++)
       os << "    ";
     os << "KEY:";
-    os <<std::uppercase<<std::setw(8)<<std::setfill('0')<< std::hex << body.key;
+    os << std::uppercase << std::setw(8) << std::setfill('0') << std::hex
+       << body.key;
     os << "\n";
 
     for (int i = 0; i < body.depth; i++)

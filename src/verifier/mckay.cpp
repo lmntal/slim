@@ -25,7 +25,7 @@ void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
 
 bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     discrete_propagation_lists
-        *discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
+        &discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
     propagation_list &dpList, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID) {
   bool isExisting = true;
@@ -35,13 +35,12 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
 
   auto &key = *preserveDPList;
   auto seniorDPList =
-      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(key);
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels.find(key);
 
   if (seniorDPList ==
-      std::end(
-          *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels.end()) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
+    discretePropagationListsOfInheritedVerticesWithAdjacentLabels.insert(
         std::make_pair(key, preserveDPList));
     isExisting = false;
     return isExisting;
@@ -100,7 +99,7 @@ bool listMcKayInner(
     propagation_list &propagationListOfInheritedVertices,
     ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
     discrete_propagation_lists
-        *discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
+        &discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
   bool isUsefulBranch = true;
   auto stabilizer = propagation_list(propagationListOfInheritedVertices);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -167,8 +166,7 @@ propagation_list listMcKay(propagation_list &propagationList,
     canonicalDiscreteRefinement = propagation_list(propagationList);
     return canonicalDiscreteRefinement;
   } else {
-    auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels =
-        new discrete_propagation_lists();
+    discrete_propagation_lists discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
 
     std::cout << "+++++ start classify +++++" << std::endl;
     classifyWithAttribute(propagationList, cAfterGraph, gapOfGlobalRootMemID);
@@ -180,15 +178,15 @@ propagation_list listMcKay(propagation_list &propagationList,
 
     propagation_list canonicalDiscreteRefinement = propagation_list();
     for (auto &v :
-         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()
+         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels.begin()
               ->second)
       canonicalDiscreteRefinement.push_back(v);
 
-    std::cout
-        << "########### candidates of canonical discrete refinement########## #"
-        << std::endl;
-    std::cout << *discretePropagationListsOfInheritedVerticesWithAdjacentLabels
-              << std::endl;
+    // std::cout
+    //     << "########### candidates of canonical discrete refinement########## #"
+    //     << std::endl;
+    // std::cout << discretePropagationListsOfInheritedVerticesWithAdjacentLabels
+    //           << std::endl;
     ;
 
     //   for (auto &v :
