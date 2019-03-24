@@ -39,6 +39,12 @@
 
 template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
 
+template <typename T>
+const T ProcessTable<T>::unused = std::numeric_limits<T>::max();
+
+template class ProcessTable<unsigned char>;
+template class ProcessTable<unsigned long>;
+
 /*----------------
  * Tracker
  */
