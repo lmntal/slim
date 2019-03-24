@@ -55,7 +55,7 @@
 
 #define LMN_EXTERN extern
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUG__) || defined(__clang__)
 #define LMN_UNUSED __attribute__((unused))
 #else
 #define LMN_UNUSED
@@ -301,10 +301,10 @@ struct LmnEnv {
   BOOL tree_compress;
   unsigned int tree_compress_table_size;
 
-// #ifdef PROFILE
+  // #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;
-// #endif
+  // #endif
 
 #ifdef DEBUG
   BOOL debug_isomor;
@@ -548,7 +548,7 @@ static constexpr bool profile = true;
 #else
 static constexpr bool profile = false;
 #endif
-}
-}
+} // namespace config
+} // namespace slim
 
 #endif /* LMNTAL_H */
