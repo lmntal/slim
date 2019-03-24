@@ -128,12 +128,14 @@ struct TraceLog : ProcessTable<TraceData> {
 
   TraceLog(unsigned long size) : ProcessTable<TraceData>(size) {}
   TraceLog() : ProcessTable<TraceData>() {}
-
   unsigned int traversed_proc_count(LmnMembraneRef owner) {
     return this->contains(lmn_mem_id(owner))
                ? (*this)[lmn_mem_id(owner)].traversed_proc
                : 0;
   }
+
+/* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside
+ * proxies) の数が 膜ownerのそれと一致しているか否かを返す */
   bool eq_traversed_proc_num(LmnMembraneRef owner, AtomListEntryRef in_ent,
                              AtomListEntryRef avoid) {
     size_t s1 = in_ent ? in_ent->size() : 0;
@@ -173,17 +175,27 @@ private:
   }
 
 public:
-  bool visit(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
+/* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
+ * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
+ */
+  bool visit_atom(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
     return this->visit(atom->get_id(), TraceData::options::TRAVERSED_ATOM,
                        atom2_id, owner);
   }
 
-  bool visit(LmnMembraneRef mem1, LmnWord mem2_id) {
+/* ログに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
+ * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
+  bool visit_mem(LmnMembraneRef mem1, LmnWord mem2_id) {
     return this->visit(lmn_mem_id(mem1), TraceData::options::TRAVERSED_MEM,
                        mem2_id, lmn_mem_parent(mem1));
   }
 
-  bool visit(HyperLink *hl1, LmnWord hl2_id) {
+/* ログに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.
+ * (ハイパーグラフ構造には所属膜の概念がなく,
+ * 膜オブジェクトからの参照もできないため, 所属膜に対する一切の操作は不要)
+ * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
+ */
+  bool visit_hlink(HyperLink *hl1, LmnWord hl2_id) {
     return this->visit(LMN_HL_ID(hl1), TraceData::options::TRAVERSED_HLINK,
                        hl2_id, NULL);
   }
@@ -214,13 +226,6 @@ typedef struct TraceLog *TraceLogRef;
  * Function ProtoTypes
  */
 
-TraceLogRef tracelog_make(void);
-TraceLogRef tracelog_make_with_size(unsigned long size);
-void tracelog_free(TraceLogRef trc);
-
-BOOL tracelog_eq_traversed_proc_num(TraceLogRef l, LmnMembraneRef owner,
-                                    AtomListEntryRef in_ent,
-                                    AtomListEntryRef avoid);
 int tracelog_put_atom(TraceLogRef l, LmnSymbolAtomRef atom1, LmnWord atom2_id,
                       LmnMembraneRef owner1);
 int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id);
@@ -238,6 +243,5 @@ void tracelog_backtrack(TraceLogRef l);
 void tracelog_set_btpoint(TraceLogRef l);
 void tracelog_continue_trace(TraceLogRef l);
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
-
 
 #endif /* LMN_TRACE_LOG_H */

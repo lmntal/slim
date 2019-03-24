@@ -2078,13 +2078,13 @@ BOOL lmn_mem_equals(LmnMembraneRef mem1, LmnMembraneRef mem2) {
 #endif
 
   // 非TIME-OPTではTraceLogのストラクチャでトレースすることができない（実装してない）
-  TraceLogRef log1 = tracelog_make();
+  TraceLogRef log1 = new TraceLog();
   SimplyLog log2 = simplylog_make();
 
   t = mem_equals_rec(mem1, log1, mem2, log2, CHECKED_MEM_DEPTH);
 
   simplylog_free(log2);
-  tracelog_free(log1);
+  delete log1;
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -2118,7 +2118,7 @@ static BOOL mem_equals_rec(LmnMembraneRef mem1, TraceLogRef log1,
     return FALSE;
   }
 
-  tracelog_put_mem(log1, mem1, lmn_mem_id(mem2));
+  log1->visit_mem(mem1, lmn_mem_id(mem2));
   simplylog_put_mem(log2, mem2);
 #endif
 
@@ -2397,8 +2397,8 @@ static BOOL mem_isomor_mols(LmnMembraneRef mem1, TraceLogRef log1,
        *   比較済プロセス数と所持プロセス数を比較し, 対応漏れがないか検査する.
        */
 
-      return tracelog_eq_traversed_proc_num(
-          log1, mem1, lmn_mem_get_atomlist(mem1, LMN_IN_PROXY_FUNCTOR), NULL);
+      return log1->eq_traversed_proc_num(
+          mem1, lmn_mem_get_atomlist(mem1, LMN_IN_PROXY_FUNCTOR), NULL);
     }
   }
 }
@@ -2427,7 +2427,7 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
   EACH_ATOM(root2, ent2, ({
               if (simplylog_contains_atom(log2, root2))
                 continue;
-              tracelog_set_btpoint(log1);
+              log1->set_btpoint();
               simplylog_set_btpoint(log2);
 
               /* compare a molecule of root1 with a molecule of root2 */
@@ -2435,14 +2435,14 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
                                        MEM_ISOMOR_FIRST_TRACE,
                                        (LmnAtomRef)root2, mem2, log2)) {
               case MEM_ISOMOR_MATCH_WITHOUT_MEM: {
-                tracelog_continue_trace(log1);
+                log1->continue_trace();
                 simplylog_continue_trace(log2);
                 return mem_isomor_mols(mem1, log1, mem2, log2, iter);
               }
               case MEM_ISOMOR_MATCH_WITHIN_MEM:
                 /* keep this backtrack point */
                 if (mem_isomor_mols(mem1, log1, mem2, log2, iter)) {
-                  tracelog_continue_trace(log1);
+                  log1->continue_trace();
                   simplylog_continue_trace(log2);
                   return TRUE;
                 } /*
@@ -2454,7 +2454,7 @@ static inline BOOL mem_isomor_mol_atoms(LmnMembraneRef mem1, TraceLogRef log1,
               }
 
               (*iter) = current;
-              tracelog_backtrack(log1);
+              log1->backtrack();
               simplylog_backtrack(log2);
             }));
 
@@ -2472,14 +2472,14 @@ static inline BOOL mem_isomor_mol_mems(LmnMembraneRef mem1, TraceLogRef log1,
     if (simplylog_contains_mem(log2, root2))
       continue;
     else {
-      tracelog_set_btpoint(log1);
+      log1->set_btpoint();
       simplylog_set_btpoint(log2);
       if (!mem_equals_rec(root1, log1, root2, log2, CHECKED_MEM_DEPTH) ||
           !mem_isomor_mols(mem1, log1, mem2, log2, iter)) {
-        tracelog_backtrack(log1);
+        log1->backtrack();
         simplylog_backtrack(log2);
       } else {
-        tracelog_continue_trace(log1);
+        log1->continue_trace();
         simplylog_continue_trace(log2);
         return TRUE;
       }
@@ -2567,7 +2567,7 @@ mem_isomor_trace_proxies(LmnAtomRef cur1, LmnMembraneRef mem1, TraceLogRef log1,
       return FALSE;
     } else {
       /* in1は互いに未訪問であるため, トレースする必要がある */
-      tracelog_put_atom(log1, (LmnSymbolAtomRef)in1,
+      log1->visit_atom((LmnSymbolAtomRef)in1,
                         ((LmnSymbolAtomRef)in2)->get_id(),
                         LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in1));
       simplylog_put_atom(log2, (LmnSymbolAtomRef)in2);
@@ -2634,7 +2634,7 @@ static inline int mem_isomor_trace_symbols(LmnAtomRef cur1, LmnMembraneRef mem1,
                                            SimplyLog log2) {
   int to_i, global_ret;
 
-  tracelog_put_atom(log1, (LmnSymbolAtomRef)cur1,
+  log1->visit_atom((LmnSymbolAtomRef)cur1,
                     ((LmnSymbolAtomRef)cur2)->get_id(), mem1);
   simplylog_put_atom(log2, (LmnSymbolAtomRef)cur2);
 
