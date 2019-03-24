@@ -38,7 +38,6 @@
 #ifndef LMN_TRACE_LOG_H
 #define LMN_TRACE_LOG_H
 
-
 #include "element/element.h"
 #include "membrane.h"
 /*----------------------------------------------------------------------
@@ -58,11 +57,10 @@
  * 訪問済みテーブルの状態をバックトラックさせるためのデータ構造
  */
 
-
+#include "atomlist.hpp"
+#include "membrane.hpp"
 #include "process_table.hpp"
 #include <stack>
-#include "membrane.hpp"
-#include "atomlist.hpp"
 
 class LogTracker {
   std::stack<ProcessID> traced_ids;
@@ -134,15 +132,15 @@ struct TraceLog : ProcessTable<TraceData> {
                : 0;
   }
 
-/* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside
- * proxies) の数が 膜ownerのそれと一致しているか否かを返す */
+  /* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside
+   * proxies) の数が 膜ownerのそれと一致しているか否かを返す */
   bool eq_traversed_proc_num(LmnMembraneRef owner, AtomListEntryRef in_ent,
                              AtomListEntryRef avoid) {
     size_t s1 = in_ent ? in_ent->size() : 0;
     size_t s2 = avoid ? avoid->size() : 0;
     return traversed_proc_count(owner) ==
-           (lmn_mem_symb_atom_num(owner) + lmn_mem_child_mem_num(owner) +
-            s1 - s2);
+           (lmn_mem_symb_atom_num(owner) + lmn_mem_child_mem_num(owner) + s1 -
+            s2);
   }
 
 private:
@@ -175,26 +173,28 @@ private:
   }
 
 public:
-/* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
- * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
- */
-  bool visit_atom(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
+  /* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
+   * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
+   */
+  bool visit_atom(LmnSymbolAtomRef atom, LmnWord atom2_id,
+                  LmnMembraneRef owner) {
     return this->visit(atom->get_id(), TraceData::options::TRAVERSED_ATOM,
                        atom2_id, owner);
   }
 
-/* ログに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
- * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
+  /* ログに, 膜mem1への訪問を記録する.
+   * (所属膜はmem1のメンバから参照するため不要)
+   * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
   bool visit_mem(LmnMembraneRef mem1, LmnWord mem2_id) {
     return this->visit(lmn_mem_id(mem1), TraceData::options::TRAVERSED_MEM,
                        mem2_id, lmn_mem_parent(mem1));
   }
 
-/* ログに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.
- * (ハイパーグラフ構造には所属膜の概念がなく,
- * 膜オブジェクトからの参照もできないため, 所属膜に対する一切の操作は不要)
- * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
- */
+  /* ログに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.
+   * (ハイパーグラフ構造には所属膜の概念がなく,
+   * 膜オブジェクトからの参照もできないため, 所属膜に対する一切の操作は不要)
+   * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
+   */
   bool visit_hlink(HyperLink *hl1, LmnWord hl2_id) {
     return this->visit(LMN_HL_ID(hl1), TraceData::options::TRAVERSED_HLINK,
                        hl2_id, NULL);
@@ -243,5 +243,8 @@ void tracelog_backtrack(TraceLogRef l);
 void tracelog_set_btpoint(TraceLogRef l);
 void tracelog_continue_trace(TraceLogRef l);
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
+
+// workaround to avoid multiple definition error on g++
+extern template ProcessTable<TraceData>;
 
 #endif /* LMN_TRACE_LOG_H */

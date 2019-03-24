@@ -269,4 +269,7 @@ private:
 template <typename T>
 const LmnWord ProcessTable<T>::not_found = std::numeric_limits<LmnWord>::max();
 
+template <typename T>
+const T ProcessTable<T>::unused = std::numeric_limits<T>::max();
+
 #endif /* PROCESS_TABLE_HPP */
