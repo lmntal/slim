@@ -39,6 +39,9 @@
 
 template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
 
+// workaround to avoid multiple definition error on g++
+extern template class ProcessTable<TraceData>;
+
 /*----------------
  * Tracker
  */

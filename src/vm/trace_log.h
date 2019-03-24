@@ -244,7 +244,4 @@ void tracelog_set_btpoint(TraceLogRef l);
 void tracelog_continue_trace(TraceLogRef l);
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
 
-// workaround to avoid multiple definition error on g++
-extern template ProcessTable<TraceData>;
-
 #endif /* LMN_TRACE_LOG_H */
