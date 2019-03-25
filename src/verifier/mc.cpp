@@ -379,13 +379,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
   st_clear(RC_SUCC_TBL(rc));
 
-  RC_EXPANDED(rc)->num = succ_i; /* 危険なコード. いつか直すかも. */
-  RC_EXPANDED_RULES(rc)->num = succ_i;
+  RC_EXPANDED(rc)->set_num(succ_i); /* 危険なコード. いつか直すかも. */
+  RC_EXPANDED_RULES(rc)->set_num(succ_i);
   /*  上記につられて以下のコードを記述すると実行時エラーになる. (r436でdebug)
    *  RC_MEM_DELTASはmc_store_successors終了後に, struct
    * MemDeltaRootの開放処理を行うため要素数に手を加えてはならない. */
   //  if (RC_MC_USE_DMEM(rc)) {
-  //    RC_MEM_DELTAS(rc)->num = succ_i;
+  //    RC_MEM_DELTAS(rc)->set_num(succ_i);
   //  }
 
   state_D_progress(s, rc);

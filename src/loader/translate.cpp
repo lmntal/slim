@@ -209,8 +209,8 @@ BOOL tr_instr_jump(LmnTranslated f, LmnReactCxtRef rc,
 
 Vector vec_const_temporary_from_array(int size, const LmnWord *w) {
   Vector v;
-  v.num = size;
-  v.cap = size;
+  v.set_num(size);
+  v.set_cap(size);
   v.tbl = (LmnWord *)w;
   return v; /* コピーして返す tblはwをそのまま使うのでdelete Vectorしてはいけない */
 }

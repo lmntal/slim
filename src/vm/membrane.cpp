@@ -933,7 +933,7 @@ lmn_mem_copy_with_map_inner(LmnMembraneRef src, ProcessTableRef *ret_copymap,
     copymap = lmn_mem_copy_cells(new_mem, src);
   }
 
-  for (i = 0; i < src->rulesets.num; i++) {
+  for (i = 0; i < src->rulesets.get_num(); i++) {
     new_mem->rulesets.push((LmnWord) new LmnRuleSet(*(
                                      LmnRuleSetRef)src->rulesets.get(i)));
   }
@@ -983,7 +983,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
     /* copy name */
     new_mem->name = m->name;
     /* copy rulesets */
-    for (i = 0; i < m->rulesets.num; i++) {
+    for (i = 0; i < m->rulesets.get_num(); i++) {
       new_mem->rulesets.push((LmnWord) new LmnRuleSet(*(
                                        LmnRuleSetRef)m->rulesets.get(i)));
     }
@@ -1416,7 +1416,7 @@ BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec) {
     contains1 = FALSE;
     contains2 = FALSE;
 
-    for (i = 0; i < srcvec->num; i++) {
+    for (i = 0; i < srcvec->get_num(); i++) {
       LinkObjRef lobj = (LinkObjRef)srcvec->get(i);
       if (l1->ap == ((LmnSymbolAtomRef)lobj->ap)->get_link(lobj->pos) &&
           l1->pos ==
@@ -1425,7 +1425,7 @@ BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec) {
         break;
       }
     }
-    for (j = 0; j < dstvec->num; j++) {
+    for (j = 0; j < dstvec->get_num(); j++) {
       LinkObjRef lobj = (LinkObjRef)dstvec->get(j);
       if (l2->ap == ((LmnSymbolAtomRef)lobj->ap)->get_link(lobj->pos) &&
           l2->pos ==
@@ -3250,7 +3250,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
   unsigned int i, j;
 
   vec = new Vector(1);
-  memset(vec->tbl, 0, sizeof(atomvec_data *) * vec->cap);
+  memset(vec->tbl, 0, sizeof(atomvec_data *) * vec->get_cap());
   anum_max = 0;
 
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({

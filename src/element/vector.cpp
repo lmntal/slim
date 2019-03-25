@@ -72,8 +72,14 @@ void Vector::extend(){
 unsigned int Vector::get_num() const{
   return this->num;
 }
+void Vector::set_num(unsigned int n){
+  this->num = n;
+}
 unsigned int Vector::get_cap() const{
   return this->cap;
+}
+void Vector::set_cap(unsigned int c){
+  this->cap = c;
 }
 bool Vector::is_empty() const{
   return this->num==0;

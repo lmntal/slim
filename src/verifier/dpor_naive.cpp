@@ -469,10 +469,10 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     }
   }
 
-  RC_EXPANDED(rc)->num = succ_i;
-  RC_EXPANDED_RULES(rc)->num = succ_i;
+  RC_EXPANDED(rc)->set_num(succ_i);
+  RC_EXPANDED_RULES(rc)->set_num(succ_i);
   if (RC_MC_USE_DMEM(rc)) {
-    RC_MEM_DELTAS(rc)->num = succ_i;
+    RC_MEM_DELTAS(rc)->set_num(succ_i);
   }
 
   if (!s->has_trans_obj()) {

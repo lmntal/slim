@@ -55,7 +55,9 @@ typedef LmnWord vec_data_t;
 
 struct Vector {
   LmnWord *tbl;
+private:
   unsigned int num, cap;
+public:
   Vector();
   Vector(unsigned int init_size);
   template <class T> Vector(const std::vector<T> &v);
@@ -64,7 +66,9 @@ struct Vector {
   void init(unsigned int init_size);
   void extend();
   unsigned int get_num() const;
+  void set_num(unsigned int n);
   unsigned int get_cap() const;
+  void set_cap(unsigned int c);
   bool is_empty() const;
   void push(LmnWord keyp);
   void reduce();
