@@ -334,7 +334,7 @@ struct LmnEnv {
   char *ltl_exp;
 
 //member methods
-  void init();
+  LmnEnv();
 };
 
 /*----------------------------------------------------------------------

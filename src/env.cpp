@@ -107,7 +107,7 @@ void env_my_TLS_finalize() {
 }
 
 void lmn_stream_init() {
-  lmn_env.init();
+//  lmn_env.init();
 
   lmn_id_pool = NULL;
 #if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
@@ -134,7 +134,7 @@ void lmn_stream_destroy() {
 }
 
 /* lmn_env構造体の初期化 */
-void LmnEnv::init() {
+LmnEnv::LmnEnv() {
   trace = FALSE;
   this->show_proxy = FALSE;
   this->show_chr = FALSE;
