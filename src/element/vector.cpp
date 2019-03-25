@@ -81,6 +81,9 @@ unsigned int Vector::get_cap() const{
 void Vector::set_cap(unsigned int c){
   this->cap = c;
 }
+void Vector::memset_tbl(int ch, std::size_t count){
+  memset(this->tbl,ch,count);
+}
 bool Vector::is_empty() const{
   return this->num==0;
 }
@@ -132,6 +135,9 @@ LmnWord Vector::peek() const{
 void Vector::set(unsigned int index, LmnWord keyp){
   LMN_ASSERT(index < this->cap);
   this->tbl[index] = keyp;    
+}
+void Vector::set_list(LmnWord *w){
+  this->tbl = w;
 }
 LmnWord Vector::get(unsigned int index) const {
   LMN_ASSERT(index < this->num);

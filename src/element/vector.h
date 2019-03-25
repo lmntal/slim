@@ -53,9 +53,8 @@
 typedef struct Vector *PVector;
 typedef LmnWord vec_data_t;
 
-struct Vector {
+class Vector {
   LmnWord *tbl;
-private:
   unsigned int num, cap;
 public:
   Vector();
@@ -69,6 +68,7 @@ public:
   void set_num(unsigned int n);
   unsigned int get_cap() const;
   void set_cap(unsigned int c);
+  void memset_tbl(int ch, std::size_t count);
   bool is_empty() const;
   void push(LmnWord keyp);
   void reduce();
@@ -77,6 +77,7 @@ public:
   LmnWord pop_n(unsigned int n);
   LmnWord peek() const;
   void set(unsigned int index, LmnWord keyp);
+  void set_list(LmnWord *w);
   LmnWord get(unsigned int index) const;
   LmnWord last() const;
 /* pop all elements from vec */

@@ -2747,9 +2747,9 @@ static inline BOOL mem_equals_children(LmnMembraneRef mem1, LmnMembraneRef mem2,
 
     v_mems_children1 = new Vector(child_n);
     v_mems_children2 = new Vector(child_n);
-    memset(v_mems_children1->tbl, 0,
+    v_mems_children1->memset_tbl(0,
            sizeof(vec_data_t) * (v_mems_children1->get_cap()));
-    memset(v_mems_children2->tbl, 0,
+    v_mems_children2->memset_tbl(0,
            sizeof(vec_data_t) * (v_mems_children2->get_cap()));
 
     matched = TRUE;
@@ -2903,9 +2903,9 @@ static inline BOOL mem_equals_molecules(LmnMembraneRef mem1,
 
     v_atoms_not_checked1 = new Vector(atom_n);
     v_atoms_not_checked2 = new Vector(atom_n);
-    memset(v_atoms_not_checked1->tbl, 0,
+    v_atoms_not_checked1->memset_tbl(0,
            sizeof(vec_data_t) * (v_atoms_not_checked1->get_cap()));
-    memset(v_atoms_not_checked2->tbl, 0,
+    v_atoms_not_checked2->memset_tbl(0,
            sizeof(vec_data_t) * (v_atoms_not_checked2->get_cap()));
 
     {
@@ -2996,8 +2996,8 @@ static inline BOOL mem_equals_molecules_inner(Vector *v_log1,
 
       v_log1->clear();
       v_log2->clear();
-      memset(v_log1->tbl, 0, sizeof(vec_data_t) * (v_log1->get_cap()));
-      memset(v_log2->tbl, 0, sizeof(vec_data_t) * (v_log2->get_cap()));
+      v_log1->memset_tbl(0, sizeof(vec_data_t) * (v_log1->get_cap()));
+      v_log2->memset_tbl(0, sizeof(vec_data_t) * (v_log2->get_cap()));
 
       /* a2が本当にa1に対応するアトムであるか否かを実際にグラフ構造をトレースして確認する。
        * a2とa1とが1:1に対応する場合に限って matched に真が返り、
@@ -3250,7 +3250,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
   unsigned int i, j;
 
   vec = new Vector(1);
-  memset(vec->tbl, 0, sizeof(atomvec_data *) * vec->get_cap());
+  vec->memset_tbl(0, sizeof(atomvec_data *) * vec->get_cap());
   anum_max = 0;
 
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
