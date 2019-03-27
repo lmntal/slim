@@ -367,7 +367,7 @@ static void dpor_data_free(McDporData *d) {
   st_free_table(d->delta_tbl);
   for (i = 0; i < d->free_deltas->get_num(); i++) {
     MemDeltaRoot *delt = (MemDeltaRoot *)d->free_deltas->get(i);
-    dmem_root_free(delt);
+    delete delt;
   }
   delete d->free_deltas;
   LMN_FREE(d);
@@ -382,7 +382,7 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
 
   while (!d->free_deltas->is_empty()) {
     MemDeltaRoot *delt = (MemDeltaRoot *)d->free_deltas->pop();
-    dmem_root_free(delt);
+    delete delt;
   }
 
   RC_MEM_DELTAS(rc)->clear();

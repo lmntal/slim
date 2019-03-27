@@ -1079,7 +1079,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         /** >>>>>>>> enable delta-membrane <<<<<<< **/
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         struct MemDeltaRoot *d =
-            dmem_root_make(RC_GROOT_MEM(rc), rule, env_next_id());
+            new MemDeltaRoot(RC_GROOT_MEM(rc), rule, env_next_id());
         RC_ND_SET_MEM_DELTA_ROOT(rc, d);
 
         /* dmem_commit/revertとの整合性を保つため,
@@ -1095,7 +1095,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
         if (RC_MC_USE_DPOR(rc)) {
           if (!dpor_transition_gen_RHS(RC_POR_DATA(rc), d, rc)) {
-            dmem_root_free(d);
+            delete d;
           } else {
             mc_react_cxt_add_mem_delta(rc, d, rule);
           }
@@ -4266,7 +4266,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         ap = (LmnAtomRef)dmem_root_new_atom(RC_ND_MEM_DELTA_ROOT(rc), f);
       }
 
-      dmem_root_push_atom(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
                           (LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
 
       rc->reg(atomi) = {
@@ -4285,7 +4285,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                                                      (LmnAtomRef)rc->wt(atom2),
                                                      rc->at(atom2)),
                         rc->at(atom2), TT_OTHER};
-      dmem_root_push_atom(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
                           (LmnMembraneRef)rc->wt(memi),
                           (LmnAtomRef)rc->wt(atom1), rc->at(atom1));
       break;
@@ -4316,18 +4316,18 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(link1))) {
         if (LMN_ATTR_IS_DATA(LINKED_ATTR(link2))) { /* 1, 2 are data */
-          dmem_root_link_data_atoms(
-              RC_ND_MEM_DELTA_ROOT(rc), (LmnMembraneRef)rc->wt(mem),
+          RC_ND_MEM_DELTA_ROOT(rc)->link_data_atoms(
+              (LmnMembraneRef)rc->wt(mem),
               (LmnDataAtomRef)LINKED_ATOM(link1), LINKED_ATTR(link1),
               (LmnDataAtomRef)LINKED_ATOM(link2), LINKED_ATTR(link2));
         } else { /* 1 is data */
-          dmem_root_unify_links(RC_ND_MEM_DELTA_ROOT(rc),
+          RC_ND_MEM_DELTA_ROOT(rc)->unify_links(
                                 (LmnMembraneRef)rc->wt(mem), LINKED_ATOM(link2),
                                 LINKED_ATTR(link2), LINKED_ATOM(link1),
                                 LINKED_ATTR(link1));
         }
       } else { /* 2 is data or 1, 2 are symbol atom */
-        dmem_root_unify_links(RC_ND_MEM_DELTA_ROOT(rc),
+        RC_ND_MEM_DELTA_ROOT(rc)->unify_links(
                               (LmnMembraneRef)rc->wt(mem), LINKED_ATOM(link1),
                               LINKED_ATTR(link1), LINKED_ATOM(link2),
                               LINKED_ATTR(link2));
@@ -4343,7 +4343,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, pos2);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      dmem_root_newlink(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembraneRef)rc->wt(memi),
+      RC_ND_MEM_DELTA_ROOT(rc)->newlink((LmnMembraneRef)rc->wt(memi),
                         (LmnAtomRef)rc->wt(atom1), rc->at(atom1), pos1,
                         (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
       break;
@@ -4357,7 +4357,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, pos2);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      dmem_root_relink(RC_ND_MEM_DELTA_ROOT(rc), (LmnMembraneRef)rc->wt(memi),
+      RC_ND_MEM_DELTA_ROOT(rc)->relink((LmnMembraneRef)rc->wt(memi),
                        (LmnAtomRef)rc->wt(atom1), rc->at(atom1), pos1,
                        (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
       break;
@@ -4384,7 +4384,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, pos2);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      dmem_root_unify_atom_args(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->unify_atom_args(
                                 (LmnMembraneRef)rc->wt(memi),
                                 (LmnSymbolAtomRef)rc->wt(atom1), pos1,
                                 (LmnSymbolAtomRef)rc->wt(atom2), pos2);
@@ -4438,7 +4438,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      dmem_root_remove_atom(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->remove_atom(
                             (LmnMembraneRef)rc->wt(memi),
                             (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
       break;
@@ -4808,7 +4808,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
-      dmem_root_push_atom(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
                           (LmnMembraneRef)rc->wt(memi),
                           (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
       break;
@@ -4819,8 +4819,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
       LMN_ASSERT(rc->wt(destmemi) != rc->wt(srcmemi));
-      dmem_root_move_cells(RC_ND_MEM_DELTA_ROOT(rc),
-                           (LmnMembraneRef)rc->wt(destmemi),
+      RC_ND_MEM_DELTA_ROOT(rc)->move_cells((LmnMembraneRef)rc->wt(destmemi),
                            (LmnMembraneRef)rc->wt(srcmemi));
       break;
     }
@@ -4838,7 +4837,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, mapi);
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
-      dmem_root_copy_cells(RC_ND_MEM_DELTA_ROOT(rc),
+      RC_ND_MEM_DELTA_ROOT(rc)->copy_cells(
                            (LmnMembraneRef)rc->wt(destmemi),
                            (LmnMembraneRef)rc->wt(srcmemi));
       rc->tt(mapi) = TT_OTHER;

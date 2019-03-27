@@ -279,7 +279,7 @@ LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem) {
 LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d) {
   dmem_root_commit(d);
   auto ret_bs =
-      lmn_mem_encode_sub(dmem_root_get_root_mem(d), dmem_root_get_next_id(d));
+      lmn_mem_encode_sub(d->get_root_mem(), d->get_next_id());
   dmem_root_revert(d);
 
   return ret_bs;
@@ -421,7 +421,7 @@ BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem) {
 /* 膜のダンプ or エンコードと、膜の同型性判定を行う */
 BOOL lmn_mem_equals_enc_delta(LmnBinStrRef bs, struct MemDeltaRoot *d) {
   dmem_root_commit(d);
-  auto t = lmn_mem_equals_enc(bs, dmem_root_get_root_mem(d));
+  auto t = lmn_mem_equals_enc(bs, d->get_root_mem());
   dmem_root_revert(d);
 
   return t;

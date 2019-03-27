@@ -84,18 +84,17 @@ using namespace slim::element::re2c;
 using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
 /*!max:re2c*/
 
-lexer::lexer(file_ptr in) : ruleset_id_tbl(st_init_numtable()) {
+lexer::lexer(file_ptr in) {
   buffer = std::unique_ptr<cfstream_buffer>(
       new cfstream_buffer(std::move(in), YYMAXFILL, SIZE));
 }
 
-lexer::lexer(const std::string &file_path)
-    : ruleset_id_tbl(st_init_numtable()) {
+lexer::lexer(const std::string &file_path){
   buffer =
       std::unique_ptr<file_buffer>(new file_buffer(file_path, YYMAXFILL, SIZE));
 }
 
-lexer::~lexer() { st_free_table(ruleset_id_tbl); }
+lexer::~lexer() {}
 
 std::string lexer::get_token() const {
   return std::string(buffer->parsed_pos, buffer->YYCURSOR - buffer->parsed_pos);
@@ -134,12 +133,12 @@ start:
     '@' digit+ {
       // この時点でVM内で一意のルールセットIDに変換する
       // Convert input text into ruleset ID unique in the VM
-      st_data_t id_local = stol(get_token().substr(1));
-      st_data_t id_global;
+      unsigned long id_local = stol(get_token().substr(1));
+      unsigned long id_global = ruleset_id_tbl.find(id_local)->second;
 
-      if (!st_lookup(ruleset_id_tbl, id_local, &id_global)) {
+      if (!ruleset_id_tbl.count(id_local)) {
         id_global = LmnRuleSetTable::gen_id();
-        st_insert(ruleset_id_tbl, id_local, id_global);
+        ruleset_id_tbl.insert(std::make_pair(id_local, id_global));
       }
       yylval->as<int>() = (int)id_global;
       return parser::token::RULESET_ID;

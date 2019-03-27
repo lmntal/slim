@@ -309,7 +309,7 @@ struct McReactCxtData {
            _fr_++) {                                                           \
         MemDeltaRoot *_d_ = (MemDeltaRoot *)RC_MEM_DELTAS(RC)->get(_fr_);  \
         if (_d_)                                                               \
-          dmem_root_free(_d_);                                                 \
+          delete (_d_);                                                 \
       }                                                                        \
       RC_MEM_DELTAS(RC)->clear();                                            \
     }                                                                          \
