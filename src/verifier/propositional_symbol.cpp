@@ -188,25 +188,25 @@ BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
  * propositional symbol definitions
  */
 
-PropSyms propsyms_make() { return vec_make(32); }
+PropSyms propsyms_make() { return new Vector(32); }
 
-unsigned int propsyms_num(PropSyms props) { return vec_num(props); }
+unsigned int propsyms_num(PropSyms props) { return props->get_num(); }
 
 SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i) {
-  return (SymbolDefinitionRef)vec_get(props, i);
+  return (SymbolDefinitionRef)props->get(i);
 }
 
 void propsyms_free(PropSyms props) {
   unsigned int i;
-  for (i = 0; i < vec_num(props); i++) {
-    propsym_free((SymbolDefinitionRef)vec_get(props, i));
+  for (i = 0; i < props->get_num(); i++) {
+    propsym_free((SymbolDefinitionRef)props->get(i));
   }
-  vec_free(props);
+  delete props;
 }
 
 void propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef) {
-  if (vec_num(props) <= id) {
-    vec_resize(props, id + 1, (vec_data_t)NULL);
+  if (props->get_num() <= id) {
+    props->resize(id + 1, (vec_data_t)NULL);
   }
-  vec_set(props, id, (vec_data_t)symdef);
+  props->set(id, (vec_data_t)symdef);
 }

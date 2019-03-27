@@ -533,11 +533,11 @@ void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs) { dump_rule(port, rs); }
 static void dump_ruleset(LmnPortRef port, struct Vector *v) {
   unsigned int i;
 
-  for (i = 0; i < vec_num(v); i++) {
+  for (i = 0; i < v->get_num(); i++) {
     LmnRuleSetRef rs;
     char *s;
 
-    rs = (LmnRuleSetRef)vec_get(v, i);
+    rs = (LmnRuleSetRef)v->get(i);
     s = int_to_str(rs->id);
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       if (i > 0) {
@@ -596,7 +596,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   /*   if (hashtbl_contains(ht, (HashKeyType)mem)) return; */
 
   for (i = 0; i < PRI_NUM; i++) {
-    vec_init(&pred_atoms[i], 16);
+    pred_atoms[i].init(16);
   }
 
   /* 優先順位に応じて起点となるアトムを振り分ける */
@@ -611,11 +611,11 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
               if (atom->get_functor() == LMN_RESUME_FUNCTOR)
                 continue;
               if (f == LMN_IN_PROXY_FUNCTOR || f == LMN_OUT_PROXY_FUNCTOR) {
-                vec_push(&pred_atoms[PROXY], (LmnWord)atom);
+                pred_atoms[PROXY].push((LmnWord)atom);
               }
               /* 0 argument atom */
               else if (arity == 0) {
-                vec_push(&pred_atoms[P0], (LmnWord)atom);
+                pred_atoms[P0].push((LmnWord)atom);
               }
               /* 1 argument, link to the last argument */
               else if (arity == 1 && f != LMN_NIL_FUNCTOR &&
@@ -623,7 +623,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
                         (int)LMN_ATTR_GET_VALUE(atom->get_attr(0)) ==
                             ((LmnSymbolAtomRef)atom->get_link(0))->get_arity() -
                                 1)) {
-                vec_push(&pred_atoms[P1], (LmnWord)atom);
+                pred_atoms[P1].push((LmnWord)atom);
               }
               /* link to the last argument */
               else if (arity > 1 &&
@@ -632,9 +632,9 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
                             atom->get_attr(arity - 1)) ==
                             ((LmnSymbolAtomRef)atom->get_link(arity - 1))->get_arity() -
                                 1)) {
-                vec_push(&pred_atoms[P2], (LmnWord)atom);
+                pred_atoms[P2].push((LmnWord)atom);
               } else {
-                vec_push(&pred_atoms[P3], (LmnWord)atom);
+                pred_atoms[P3].push((LmnWord)atom);
               }
             }));
       }));
@@ -642,7 +642,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   if (!lmn_env.show_proxy) {
     /* assign link to proxies */
     for (i = 0; i < pred_atoms[PROXY].num; i++) {
-      assign_link_to_proxy((LmnSymbolAtomRef)vec_get(&pred_atoms[PROXY], i), ht,
+      assign_link_to_proxy((LmnSymbolAtomRef)pred_atoms[PROXY].get(i), ht,
                            s);
     }
   }
@@ -650,7 +650,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   { /* dump atoms */
     for (i = 0; i < PRI_NUM; i++) {
       for (j = 0; j < pred_atoms[i].num; j++) {
-        LmnSymbolAtomRef atom = (LmnSymbolAtomRef)vec_get(&pred_atoms[i], j);
+        LmnSymbolAtomRef atom = (LmnSymbolAtomRef)pred_atoms[i].get(j);
         if (dump_toplevel_atom(port, atom, ht, s)) {
           /* TODO アトムの出力の後には常に ". "が入ってしまう.
              アトムの間に ", "を挟んだ方が見栄えが良い */
@@ -660,7 +660,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
     }
   }
   for (i = 0; i < PRI_NUM; i++) {
-    vec_destroy(&pred_atoms[i]);
+    pred_atoms[i].destroy();
   }
 
   { /* dump chidren */
@@ -826,7 +826,7 @@ static void dump_ruleset_dev(struct Vector *v) {
   unsigned int i;
   fprintf(stdout, "ruleset[");
   for (i = 0; i < v->num; i++) {
-    fprintf(stdout, "%d ", ((LmnRuleSetRef)vec_get(v, i))->id);
+    fprintf(stdout, "%d ", ((LmnRuleSetRef)v->get(i))->id);
   }
   fprintf(stdout, "]\n");
 }

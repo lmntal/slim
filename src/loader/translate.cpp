@@ -212,17 +212,17 @@ Vector vec_const_temporary_from_array(int size, const LmnWord *w) {
   v.num = size;
   v.cap = size;
   v.tbl = (LmnWord *)w;
-  return v; /* コピーして返す tblはwをそのまま使うのでvec_freeしてはいけない */
+  return v; /* コピーして返す tblはwをそのまま使うのでdelete Vectorしてはいけない */
 }
 
 int vec_inserted_index(Vector *v, LmnWord w) {
   int i;
-  for (i = 0; i < vec_num(v); i++) {
-    if (vec_get(v, i) == w)
+  for (i = 0; i < v->get_num(); i++) {
+    if (v->get(i) == w)
       return i;
   }
-  vec_push(v, w);
-  return vec_num(v) - 1;
+  v->push(w);
+  return v->get_num() - 1;
 }
 
 char *automalloc_sprintf(const char *format, ...) {
@@ -390,14 +390,14 @@ const BYTE *translate_instructions(const BYTE *p, Vector *jump_points,
 }
 
 static void translate_rule(LmnRuleRef rule, const char *header) {
-  Vector *jump_points = vec_make(4);
+  Vector *jump_points = new Vector(4);
   int i;
 
-  vec_push(jump_points, (LmnWord)rule->inst_seq);
+  jump_points->push((LmnWord)rule->inst_seq);
 
-  for (i = 0; i < vec_num(jump_points) /*変換中にjump_pointsは増えていく*/;
+  for (i = 0; i < jump_points->get_num() /*変換中にjump_pointsは増えていく*/;
        i++) {
-    BYTE *p = (BYTE *)vec_get(jump_points, i);
+    BYTE *p = (BYTE *)jump_points->get(i);
     fprintf(OUT,
             "BOOL %s_%d(LmnReactCxt* rc, LmnMembraneRef "
             "thisisrootmembutnotused, LmnRule rule)\n",

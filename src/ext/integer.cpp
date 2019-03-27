@@ -83,8 +83,8 @@ void integer_set(LmnReactCxtRef rc,
 
   start  = (long long)a0;
   end    = (long long)a1;
-  srcvec = vec_make(16);
-  vec_push(srcvec, (LmnWord)LinkObj_make(a2, t2));
+  srcvec = new Vector(16);
+  srcvec->push((LmnWord)LinkObj_make(a2, t2));
 
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector *dstlovec;
@@ -93,13 +93,13 @@ void integer_set(LmnReactCxtRef rc,
 
     lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap);
 
-    l = (LinkObjRef)vec_get(dstlovec, 0);
+    l = (LinkObjRef)dstlovec->get(0);
     lmn_mem_newlink(mem, (LmnAtomRef)n, LMN_INT_ATTR, 0,
                     LinkObjGetAtom(l), t2, LMN_ATTR_GET_VALUE(LinkObjGetPos(l)));
     lmn_mem_push_atom(mem, (LmnAtomRef)n, LMN_INT_ATTR);
 
-    for (int j = 0; j < vec_num(dstlovec); j++) LMN_FREE(vec_get(dstlovec, j));
-    vec_free(dstlovec);
+    for (int j = 0; j < dstlovec->get_num(); j++) LMN_FREE(dstlovec->get(j));
+    delete dstlovec;
     proc_tbl_free(atommap);
   }
 
@@ -108,8 +108,8 @@ void integer_set(LmnReactCxtRef rc,
 
   lmn_mem_delete_ground(mem, srcvec);
 
-  for (i = 0; i < vec_num(srcvec); i++) LMN_FREE(vec_get(srcvec, i));
-  vec_free(srcvec);
+  for (i = 0; i < srcvec->get_num(); i++) LMN_FREE(srcvec->get(i));
+  delete srcvec;
 }
 
 

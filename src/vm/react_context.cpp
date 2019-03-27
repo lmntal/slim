@@ -125,9 +125,9 @@ void MemReactContext::MEMSTACK_SET(LmnMemStack s) { this->memstack = s; }
 
 McReactCxtData::McReactCxtData() {
   succ_tbl = st_init_ptrtable();
-  roots = vec_make(32);
-  rules = vec_make(32);
-  props = vec_make(8);
+  roots = new Vector(32);
+  rules = new Vector(32);
+  props = new Vector(8);
   mem_deltas = NULL;
   mem_delta_tmp = NULL;
   opt_mode = 0x00U;
@@ -135,7 +135,7 @@ McReactCxtData::McReactCxtData() {
   d_cur = 0;
 
   if (lmn_env.delta_mem) {
-    mem_deltas = vec_make(32);
+    mem_deltas = new Vector(32);
   }
 
   if (lmn_env.enable_por && !lmn_env.enable_por_old) {
@@ -145,30 +145,30 @@ McReactCxtData::McReactCxtData() {
 
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
                                LmnRuleRef rule) {
-  vec_push(RC_EXPANDED(cxt), (vec_data_t)mem);
-  vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
+  RC_EXPANDED(cxt)->push((vec_data_t)mem);
+  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
 void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule) {
-  vec_push(RC_MEM_DELTAS(cxt), (vec_data_t)d);
-  vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
+  RC_MEM_DELTAS(cxt)->push((vec_data_t)d);
+  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
 LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
-  vec_pop(RC_EXPANDED_RULES(cxt));
+  RC_EXPANDED_RULES(cxt)->pop();
   if (RC_MC_USE_DMEM(cxt)) {
-    return vec_pop(RC_MEM_DELTAS(cxt));
+    return RC_MEM_DELTAS(cxt)->pop();
   } else {
-    return vec_pop(RC_EXPANDED(cxt));
+    return RC_EXPANDED(cxt)->pop();
   }
 }
 
 LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i) {
   if (RC_MC_USE_DMEM(cxt)) {
-    return vec_get(RC_MEM_DELTAS(cxt), i);
+    return RC_MEM_DELTAS(cxt)->get(i);
   } else {
-    return vec_get(RC_EXPANDED(cxt), i);
+    return RC_EXPANDED(cxt)->get(i);
   }
 }
 
@@ -177,8 +177,8 @@ unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
 }
 
 unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
-  return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
-                             : vec_num(RC_EXPANDED(cxt));
+  return RC_MC_USE_DMEM(cxt) ? RC_MEM_DELTAS(cxt)->get_num()
+                             : RC_EXPANDED(cxt)->get_num();
 }
 
 ///// first-class rulesets
@@ -191,7 +191,7 @@ typedef struct LRCInsertEvent *LRCInsertEventRef;
 
 #ifdef USE_FIRSTCLASS_RULE
 BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
-  return !vec_is_empty(rc->insertion_events);
+  return !rc->insertion_events->is_empty();
 }
 
 void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
@@ -200,12 +200,12 @@ void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
   LRCInsertEventRef e = LMN_MALLOC(struct LRCInsertEvent);
   e->satom = satom;
   e->mem = mem;
-  vec_push(rc->insertion_events, (LmnWord)e);
+  rc->insertion_events->push((LmnWord)e);
 }
 void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom,
                           LmnMembraneRef *mem) {
   LMN_ASSERT(lmn_rc_has_insertion(rc));
-  LRCInsertEventRef e = (LRCInsertEventRef)vec_pop(rc->insertion_events);
+  LRCInsertEventRef e = (LRCInsertEventRef)rc->insertion_events->pop();
   *satom = e->satom;
   *mem = e->mem;
   LMN_FREE(e);

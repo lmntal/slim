@@ -324,11 +324,11 @@ void lmn_hyperlink_copy(LmnSymbolAtomRef newatom, LmnSymbolAtomRef oriatom) {
 void hyperlink_path_compression(HyperLink *root, Vector *children) {
   int i, n;
 
-  n = vec_num(children);
+  n = children->get_num();
   for (i = 0; i < n; i++) {
     HyperLink *hl, *old_parent;
 
-    hl = (HyperLink *)vec_get(children, i);
+    hl = (HyperLink *)children->get(i);
     old_parent = hl->parent;
 
     if (old_parent != root) {
@@ -340,7 +340,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
       old_parent_children->delete_entry((HashKeyType)hl);
       sub_rank = hl->rank + 1;
       for (j = i + 1; j < n; j++) {
-        ((HyperLink *)vec_get(children, j))->rank -= sub_rank;
+        ((HyperLink *)children->get(j))->rank -= sub_rank;
       }
 
       if (old_parent_children->num == 0) {
@@ -373,20 +373,20 @@ HyperLink *lmn_hyperlink_get_root(HyperLink *hl) {
     }
   } else {
     Vector children;
-    vec_init(&children, lmn_hyperlink_element_num(parent_hl));
+    children.init(lmn_hyperlink_element_num(parent_hl));
 
     while (parent_hl != current_hl) {
-      vec_push(&children, (LmnWord)current_hl);
+      children.push((LmnWord)current_hl);
       current_hl = parent_hl;
       parent_hl = current_hl->parent;
     }
 
-    if (!vec_is_empty(&children)) {
+    if (!children.is_empty()) {
       hyperlink_path_compression(parent_hl,
                                  &children); /* parent_hlはrootになっている */
     }
 
-    vec_destroy(&children);
+    children.destroy();
   }
 
   return parent_hl;
@@ -816,7 +816,7 @@ void hyperlink_get_children_without(Vector *tree, HyperLink *root,
     }
 
     if (hl != without) {
-      vec_push(tree, (LmnWord)hl);
+      tree->push((LmnWord)hl);
     }
   }
 }
@@ -829,8 +829,8 @@ void lmn_hyperlink_get_elements(Vector *tree, HyperLink *start_hl) {
   if (root->rank > 0)
     hyperlink_get_children_without(tree, root, start_hl);
   if (root != start_hl)
-    vec_push(tree, (LmnWord)root);
-  vec_push(tree, (LmnWord)start_hl);
+    tree->push((LmnWord)root);
+  tree->push((LmnWord)start_hl);
 }
 
 /* ハイパーリンクhlのハッシュ値を返す. */

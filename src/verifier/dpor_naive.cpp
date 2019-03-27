@@ -156,7 +156,7 @@ void init_por_vars() {
   mc_por.strans_independency = st_init_numtable();
   mc_por.states = st_init_statetable();
   mc_por.queue = new Queue();
-  mc_por.ample_candidate = vec_make(POR_VEC_SIZE);
+  mc_por.ample_candidate = new Vector(POR_VEC_SIZE);
   mc_por.next_strans_id = POR_ID_INITIALIZER; /* 0は使用しない */
   mc_por.rc = nullptr;
   mc_por.flags = 0x00U;
@@ -166,7 +166,7 @@ void free_por_vars() {
   st_free_table(mc_por.states);
   st_free_table(mc_por.strans_independency);
   delete mc_por.queue;
-  vec_free(mc_por.ample_candidate);
+  delete mc_por.ample_candidate;
   if (mc_por.rc) {
     mc_por.rc = nullptr;
   }
@@ -202,7 +202,7 @@ void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 }
 
 static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a) {
-  vec_free((Vector *)vec);
+  delete (Vector *)vec;
   return ST_DELETE;
 }
 
@@ -242,7 +242,7 @@ static void finalize_ample(BOOL org_f) {
   st_foreach(mc_por.states, (st_iter_func)destroy_tmp_state_graph,
              (LmnWord)org_f);
   mc_por.queue->clear();
-  vec_clear(mc_por.ample_candidate);
+  mc_por.ample_candidate->clear();
   RC_CLEAR_DATA(mc_por.rc.get());
   mc_por.root = NULL;
 }
@@ -273,12 +273,12 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
 
   /* ここでample_candidateが空の場合は，sで可能なすべての遷移が互いに独立であることになるので，
    * その中でC2，C3を共に満足する1本をample_candidateの要素とする */
-  if (vec_is_empty(mc_por.ample_candidate)) {
+  if (mc_por.ample_candidate->is_empty()) {
     unsigned int i;
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
       set_ample(transition_next_state(t));
-      vec_push(mc_por.ample_candidate, (vec_data_t)transition_id(t));
+      mc_por.ample_candidate->push((vec_data_t)transition_id(t));
       //      if (check_C2(s) && check_C3(ss, s, rc, new_s, org_f)) {
       if (check_C1(s, ss->automata(), ss->prop_symbols()) &&
           check_C2(s)) {
@@ -287,13 +287,13 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         /* 選択した遷移はC2もしくはC3のいずれかに反したため，次の候補を検査する
          */
         unset_ample(transition_next_state(t));
-        vec_clear(mc_por.ample_candidate);
+        mc_por.ample_candidate->clear();
       }
     }
 
     /* sにおいてC1を満たす遷移は存在したものの
      * さらにC2もC3も満たすものが1本も存在しない場合はen(s)を返して終了する */
-    if (vec_is_empty(mc_por.ample_candidate)) {
+    if (mc_por.ample_candidate->is_empty()) {
       return FALSE;
     }
   } else {
@@ -307,9 +307,9 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
      *   C0〜C3をすべて満足するようなen(s)の真部分集合は存在しないことになるため，
      *   C0に従い，en(s)を返して終了する．
      */
-    //    if (vec_num(mc_por.ample_candidate) == state_succ_num(s) ||
+    //    if (mc_por.ample_candidate->get_num() == state_succ_num(s) ||
     //        !check_C2(s) || !check_C3(ss, s, rc, new_s, org_f)) {
-    if (vec_num(mc_por.ample_candidate) == s->successor_num ||
+    if (mc_por.ample_candidate->get_num() == s->successor_num ||
         !check_C1(s, ss->automata(), ss->prop_symbols()) ||
         !check_C2(s)) {
       return FALSE;
@@ -416,7 +416,7 @@ static inline State *por_state_insert_statespace(StateSpaceRef ss,
     if (succ_m)
       lmn_mem_free_rec(succ_m);
     if (new_ss)
-      vec_push(new_ss, (vec_data_t)succ_s);
+      new_ss->push((vec_data_t)succ_s);
   } else {
     transition_set_state(succ_t, t);
   }
@@ -438,15 +438,15 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     MemDeltaRoot *d;
 
     if (s->has_trans_obj()) {
-      src_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
+      src_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
       src_succ = transition_next_state(src_t);
     } else {
-      src_succ = (State *)vec_get(RC_EXPANDED(rc), i);
+      src_succ = (State *)RC_EXPANDED(rc)->get(i);
       src_t = transition_make(
-          src_succ, (lmn_interned_str)vec_get(RC_EXPANDED_RULES(rc), i));
+          src_succ, (lmn_interned_str)RC_EXPANDED_RULES(rc)->get(i));
     }
 
-    d = RC_MC_USE_DMEM(rc) ? (MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i)
+    d = RC_MC_USE_DMEM(rc) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
                            : NULL;
     succ = por_state_insert(src_succ, d);
     if (succ != src_succ) {
@@ -457,9 +457,9 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     tmp = 0;
     if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
       st_add_direct(succ_tbl, (st_data_t)succ, (st_data_t)src_t);
-      vec_set(RC_EXPANDED(rc), succ_i, (vec_data_t)src_t);
+      RC_EXPANDED(rc)->set(succ_i, (vec_data_t)src_t);
       if (RC_MC_USE_DMEM(rc)) {
-        vec_set(RC_MEM_DELTAS(rc), succ_i, vec_get(RC_MEM_DELTAS(rc), i));
+        RC_MEM_DELTAS(rc)->set(succ_i, RC_MEM_DELTAS(rc)->get(i));
       }
       succ_i++;
     } else {
@@ -518,7 +518,7 @@ static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
       st_data_t t = 0;
       if (!st_lookup(mc_por.strans_independency, (st_data_t)assign_id,
                      (st_data_t *)&t)) {
-        Vector *v = vec_make(1);
+        Vector *v = new Vector(1);
         st_add_direct(mc_por.strans_independency, (st_data_t)assign_id,
                       (st_data_t)v);
       } else {
@@ -685,7 +685,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
       t = 0;
       if (!st_lookup(mc_por.strans_independency, (st_data_t)id,
                      (st_data_t *)&t)) {
-        Vector *v = vec_make(1);
+        Vector *v = new Vector(1);
         st_add_direct(mc_por.strans_independency, (st_data_t)id, (st_data_t)v);
       } /* else 独立な遷移 */
     }
@@ -716,7 +716,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
 
   for (i = 0; i < s->successor_num; i++) {
     TransitionRef t = transition(s, i);
-    if (!vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
+    if (!mc_por.ample_candidate->contains((vec_data_t)transition_id(t))) {
       /* sで可能かつample(s)の候補に含まれない遷移をスタック上に乗せる */
       mc_por.queue->enqueue((vec_data_t)t);
     }
@@ -742,7 +742,7 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
         independency_check(succ_s, a, psyms);
         for (i = 0; i < succ_s->successor_num; i++) {
           TransitionRef succ_succ_t = transition(succ_s, i);
-          if (!vec_contains(mc_por.ample_candidate,
+          if (!mc_por.ample_candidate->contains(
                             (vec_data_t)transition_id(succ_succ_t))) {
             /* ample(s)内に含まれない遷移はさらにチェックする必要がある */
             mc_por.queue->enqueue((LmnWord)succ_succ_t);
@@ -769,7 +769,7 @@ static BOOL check_C2(State *s) {
     unsigned int i;
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
-      if (vec_contains(mc_por.ample_candidate, (vec_data_t)transition_id(t))) {
+      if (mc_por.ample_candidate->contains((vec_data_t)transition_id(t))) {
         /* TODO: 設計と実装 */
         return FALSE;
       }
@@ -827,7 +827,7 @@ static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     succ_t = transition(s, i);
     succ_s = transition_next_state(succ_t);
 
-    if (!vec_contains(mc_por.ample_candidate,
+    if (!mc_por.ample_candidate->contains(
                       (vec_data_t)transition_id(succ_t))) {
       continue;
     }
@@ -850,15 +850,15 @@ static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 static BOOL is_independent_of_ample(TransitionRef strans) {
   unsigned int i;
 
-  for (i = 0; i < vec_num(mc_por.ample_candidate); i++) {
+  for (i = 0; i < mc_por.ample_candidate->get_num(); i++) {
     unsigned long id;
     st_data_t vec_independency;
 
-    id = (unsigned long)vec_get(mc_por.ample_candidate, i);
+    id = (unsigned long)mc_por.ample_candidate->get(i);
     vec_independency = 0;
     if (st_lookup(mc_por.strans_independency, (st_data_t)id,
                   (st_data_t *)&vec_independency)) {
-      if (!vec_contains((Vector *)vec_independency,
+      if (!((Vector *)vec_independency)->contains(
                         (vec_data_t)transition_id(strans))) {
         return FALSE;
       }
@@ -892,8 +892,8 @@ static BOOL push_independent_strans_to_table(unsigned long i1,
     BOOL is_new_id;
 
     is_new_id = TRUE;
-    for (k = 0; k < vec_num((Vector *)v1); k++) {
-      if ((unsigned long)vec_get((Vector *)v1, k) == i2) {
+    for (k = 0; k < ((Vector *)v1)->get_num(); k++) {
+      if ((unsigned long)((Vector *)v1)->get(k) == i2) {
         /* [i1]--> ... i2 ...
          * のようになっているため，(i1,i2)∈Iなる情報は独立性情報テーブル内に
          * 既に反映されている旨のフラグを立てる */
@@ -907,15 +907,15 @@ static BOOL push_independent_strans_to_table(unsigned long i1,
                     (st_data_t *)&v2)) {
         POR_DEBUG({
           unsigned int _k;
-          for (_k = 0; _k < vec_num((Vector *)v2); _k++) {
-            if ((unsigned long)vec_get((Vector *)v2, _k) == i1) {
+          for (_k = 0; _k < ((Vector *)v2)->get_num(); _k++) {
+            if ((unsigned long)((Vector *)v2)->get(_k) == i1) {
               /* is_new_idが真であることと矛盾する */
               LMN_ASSERT(FALSE);
             }
           }
         });
-        vec_push((Vector *)v1, (vec_data_t)i2);
-        vec_push((Vector *)v2, (vec_data_t)i1);
+        ((Vector *)v1)->push((vec_data_t)i2);
+        ((Vector *)v2)->push((vec_data_t)i1);
       } else {
         /* 万が一ここに入った場合は，i1のエントリーが存在するにも関わらず，これと独立なi2のエントリーが
          * 存在しないことになり，独立性情報テーブルの対称性が崩れてしまっていることになる．
@@ -1012,9 +1012,9 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
       checked_id = transition_id(check);
       is_dependent = TRUE;
 
-      for (k = 0; k < vec_num(ids_independent_of_id_key); k++) {
+      for (k = 0; k < ids_independent_of_id_key->get_num(); k++) {
         if (checked_id ==
-            (unsigned long)vec_get(ids_independent_of_id_key, k)) {
+            (unsigned long)ids_independent_of_id_key->get(k)) {
           is_dependent = FALSE;
           break;
         }
@@ -1022,16 +1022,16 @@ static int build_ample_satisfying_lemma(st_data_t key, st_data_t val,
 
       if (is_dependent) {
         need_to_push_id_key = TRUE;
-        if (!vec_contains(mc_por.ample_candidate, (vec_data_t)checked_id)) {
-          vec_push(mc_por.ample_candidate, (vec_data_t)checked_id);
+        if (!mc_por.ample_candidate->contains((vec_data_t)checked_id)) {
+          mc_por.ample_candidate->push((vec_data_t)checked_id);
           set_ample(transition_next_state(check));
         }
       }
     }
 
     if (need_to_push_id_key &&
-        !vec_contains(mc_por.ample_candidate, (vec_data_t)id_key)) {
-      vec_push(mc_por.ample_candidate, (vec_data_t)id_key);
+        !mc_por.ample_candidate->contains((vec_data_t)id_key)) {
+      mc_por.ample_candidate->push((vec_data_t)id_key);
       set_ample(transition_next_state(trans_key));
     }
 
@@ -1045,7 +1045,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
   if (s->successor_num > 0) {
     struct Vector tmp;
     unsigned int i;
-    vec_init(&tmp, 32);
+    tmp.init(32);
 
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef succ_t;
@@ -1056,8 +1056,8 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
 
       if (is_inserted(succ_s) && is_outside_exist(succ_s)) {
         /* C3 check時, 探索空間への追加に成功してしまっていた場合 */
-        vec_push(&tmp, (vec_data_t)succ_t);
-      } else if (!vec_contains(mc_por.ample_candidate,
+        tmp.push((vec_data_t)succ_t);
+      } else if (!mc_por.ample_candidate->contains(
                                (vec_data_t)transition_id(succ_t))) {
         /* amplesetに含まれない遷移は除去 */
         transition_free(succ_t);
@@ -1067,7 +1067,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
         if (!is_inserted(succ_s)) {
           por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
         }
-        vec_push(&tmp, (vec_data_t)succ_t);
+        tmp.push((vec_data_t)succ_t);
       }
     }
 
@@ -1075,7 +1075,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
     s->successors = NULL;
     s->successor_num = 0;
     s->succ_set(&tmp);
-    vec_destroy(&tmp);
+    tmp.destroy();
   }
 }
 
@@ -1118,8 +1118,8 @@ int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a) {
   id = (unsigned long)key;
 
   fprintf(stdout, "[%lu]-->", id);
-  for (i = 0; i < vec_num(v); i++) {
-    fprintf(stdout, " %lu", (unsigned long)vec_get(v, i));
+  for (i = 0; i < v->get_num(); i++) {
+    fprintf(stdout, " %lu", (unsigned long)v->get(i));
   }
   fprintf(stdout, "\n");
 
@@ -1130,8 +1130,8 @@ int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a) {
 void dump__ample_candidate() {
   unsigned int i;
   fprintf(stdout, "ample:");
-  for (i = 0; i < vec_num(mc_por.ample_candidate); ++i) {
-    fprintf(stdout, " %lu", (unsigned long)vec_get(mc_por.ample_candidate, i));
+  for (i = 0; i < mc_por.ample_candidate->get_num(); ++i) {
+    fprintf(stdout, " %lu", (unsigned long)mc_por.ample_candidate->get(i));
   }
   fprintf(stdout, "\n");
 }

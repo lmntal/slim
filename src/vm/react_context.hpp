@@ -137,7 +137,7 @@ struct LmnReactCxt : slim::vm::RuleContext {
     hl_sameproccxt = NULL;
     trace_num = 0;
 #ifdef USE_FIRSTCLASS_RULE
-    insertion_events = vec_make(4);
+    insertion_events = new Vector(4);
 #endif
   }
 
@@ -146,8 +146,8 @@ struct LmnReactCxt : slim::vm::RuleContext {
     this->mode = from.mode;
     this->global_root = from.global_root;
 #ifdef USE_FIRSTCLASS_RULE
-    vec_free(this->insertion_events);
-    this->insertion_events = vec_copy(from.insertion_events);
+    delete this->insertion_events;
+    this->insertion_events = new Vector(*from.insertion_events);
 #endif
     return *this;
   }
@@ -158,7 +158,7 @@ struct LmnReactCxt : slim::vm::RuleContext {
     }
 #ifdef USE_FIRSTCLASS_RULE
     if (this->insertion_events) {
-      vec_free(this->insertion_events);
+      delete this->insertion_events;
     }
 #endif
   }
@@ -241,11 +241,11 @@ struct McReactCxtData {
 
   ~McReactCxtData() {
     st_free_table(succ_tbl);
-    vec_free(roots);
-    vec_free(rules);
-    vec_free(props);
+    delete roots;
+    delete rules;
+    delete props;
     if (mem_deltas) {
-      vec_free(mem_deltas);
+      delete mem_deltas;
     }
   }
 };
@@ -299,19 +299,19 @@ struct McReactCxtData {
   do {                                                                         \
     RC_SET_GROOT_MEM(RC, NULL);                                                \
     st_clear(RC_SUCC_TBL(RC));                                                 \
-    vec_clear(RC_EXPANDED_RULES(RC));                                          \
-    vec_clear(RC_EXPANDED(RC));                                                \
-    vec_clear(RC_EXPANDED_PROPS(RC));                                          \
+    RC_EXPANDED_RULES(RC)->clear();                                          \
+    RC_EXPANDED(RC)->clear();                                                \
+    RC_EXPANDED_PROPS(RC)->clear();                                          \
     if (RC_MC_USE_DMEM(RC)) {                                                  \
       unsigned int _fr_;                                                       \
       for (_fr_ = 0;                                                           \
-           _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < vec_num(RC_MEM_DELTAS(RC)); \
+           _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < RC_MEM_DELTAS(RC)->get_num(); \
            _fr_++) {                                                           \
-        MemDeltaRoot *_d_ = (MemDeltaRoot *)vec_get(RC_MEM_DELTAS(RC), _fr_);  \
+        MemDeltaRoot *_d_ = (MemDeltaRoot *)RC_MEM_DELTAS(RC)->get(_fr_);  \
         if (_d_)                                                               \
           delete (_d_);                                                 \
       }                                                                        \
-      vec_clear(RC_MEM_DELTAS(RC));                                            \
+      RC_MEM_DELTAS(RC)->clear();                                            \
     }                                                                          \
     RC_ND_SET_ORG_SUCC_NUM(RC, 0);                                             \
   } while (0)

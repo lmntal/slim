@@ -41,27 +41,27 @@
 
 static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
 
-LmnMemStack lmn_memstack_make() { return vec_make(64); }
+LmnMemStack lmn_memstack_make() { return new Vector(64); }
 
-void lmn_memstack_free(LmnMemStack memstack) { vec_free(memstack); }
+void lmn_memstack_free(LmnMemStack memstack) { delete memstack; }
 
 BOOL lmn_memstack_isempty(LmnMemStack memstack) {
-  return vec_num(memstack) == 0;
+  return memstack->get_num() == 0;
 }
 
 void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem) {
-  vec_push(memstack, (LmnWord)mem);
+  memstack->push((LmnWord)mem);
   lmn_mem_set_active(mem, TRUE);
 }
 
 LmnMembraneRef lmn_memstack_pop(LmnMemStack memstack) {
-  LmnMembraneRef m = (LmnMembraneRef)vec_pop(memstack);
+  LmnMembraneRef m = (LmnMembraneRef)memstack->pop();
   lmn_mem_set_active(m, FALSE);
   return m;
 }
 
 LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack) {
-  return (LmnMembraneRef)vec_get(memstack, vec_num(memstack) - 1);
+  return (LmnMembraneRef)memstack->get(memstack->get_num() - 1);
 }
 
 /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
@@ -69,18 +69,18 @@ LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack) {
    うために、この手続きが必要になる。外部の機能を使わない通常の実行時に
    はこの手続きは必要ない*/
 void lmn_memstack_delete(LmnMemStack memstack, LmnMembraneRef mem) {
-  long i, j, n = (long)vec_num(memstack);
+  long i, j, n = (long)memstack->get_num();
 
   for (i = n - 1; i >= 0; i--) {
-    if ((LmnMembraneRef)vec_get(memstack, i) == mem) {
+    if ((LmnMembraneRef)memstack->get(i) == mem) {
       /* 空いた分後ろの要素を前にを詰める */
       for (j = i + 1; j < n; j++) {
-        vec_set(memstack, j - 1, vec_get(memstack, j));
+        memstack->set(j - 1, memstack->get(j));
       }
       break;
     }
   }
-  vec_pop(memstack);
+  memstack->pop();
 }
 
 void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem) {

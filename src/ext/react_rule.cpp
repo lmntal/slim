@@ -49,7 +49,7 @@ void cb_react_rule(LmnReactCxtRef rc,
 {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0));
-  LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(lmn_mem_get_rulesets(rule_mem), 0);
+  LmnRuleSetRef rs = (LmnRuleSetRef)lmn_mem_get_rulesets(rule_mem)->get(0);
   auto r = rs->get_rule(0);
   MemReactContext tmp_rc;
 
@@ -81,19 +81,19 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
                                     LmnMembraneRef src_graph, Vector *rulesets,
                                     LmnSymbolAtomRef *head, int *pos)
 {
-  for (int i = 0; i < vec_num(rulesets); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(rulesets, i);
+  for (int i = 0; i < rulesets->get_num(); i++) {
+    LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
 
     for (auto r : *rs) {
       MCReactContext rc;
       RC_SET_GROOT_MEM(&rc, src_graph);
       rc.keep_process_id_in_nd_mode = true;
       react_rule(&rc, src_graph, r);
-      int n_of_results = vec_num(RC_EXPANDED(&rc));
+      int n_of_results = RC_EXPANDED(&rc)->get_num();
 
       for (int k = n_of_results - 1; k >= 0; k--) {
         LmnSymbolAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
-        LmnMembraneRef m = (LmnMembraneRef)vec_get(RC_EXPANDED(&rc), k);
+        LmnMembraneRef m = (LmnMembraneRef)RC_EXPANDED(&rc)->get(k);
         LmnSymbolAtomRef in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
         LmnSymbolAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
         LmnSymbolAtomRef plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);

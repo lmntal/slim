@@ -74,8 +74,8 @@
     int __i;                                                                   \
     DMEM_ORG_EACH_FUNC_ATOM(D, MEM, F, V, CODE);                               \
     if ((D)) {                                                                 \
-      for (__i = 0; __i < vec_num(&(D)->new_proxies); __i++) {                 \
-        (V) = (LmnSymbolAtomRef)vec_get(&(D)->new_proxies, __i);               \
+      for (__i = 0; __i < (D)->new_proxies.get_num(); __i++) {                 \
+        (V) = (LmnSymbolAtomRef)(D)->new_proxies.get(__i);               \
         if ((V)->get_functor() == F &&                                   \
             !dmem_is_removed_atom((D), (MEM), (V))) {                          \
           (CODE);                                                              \
@@ -93,8 +93,8 @@
       for (i_atomlist = 0; i_atomlist <= (D)->max_functor; i_atomlist++) { \
         DMEM_ORG_EACH_FUNC_ATOM(D, MEM, i_atomlist, V, CODE);              \
       }                                                                    \
-      for (__i = 0; __i < vec_num(&(D)->new_atoms); __i++) {               \
-        (V) = (LmnSymbolAtomRef)vec_get(&(D)->new_atoms, __i);             \
+      for (__i = 0; __i < (D)->new_atoms.get_num(); __i++) {               \
+        (V) = (LmnSymbolAtomRef)(D)->new_atoms.get(__i);             \
         if (!dmem_is_removed_atom((D), (MEM), (V))) {                      \
           (CODE);                                                          \
         }                                                                  \
@@ -113,8 +113,8 @@
       }                                                      \
     }                                                        \
     if ((D)) {                                               \
-      for (i = 0; i < vec_num(&(D)->new_mems); i++) {        \
-        (V) = (LmnMembraneRef)vec_get(&(D)->new_mems, i);    \
+      for (i = 0; i < (D)->new_mems.get_num(); i++) {        \
+        (V) = (LmnMembraneRef)(D)->new_mems.get(i);          \
         (CODE);                                              \
       }                                                      \
     }                                                        \

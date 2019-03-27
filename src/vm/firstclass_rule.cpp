@@ -54,13 +54,13 @@ struct LinkConnection {
 
 int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom,
                         int link_p, HyperLink *hl) {
-  int link_name = vec_num(link_connections);
+  int link_name = link_connections->get_num();
   struct LinkConnection *c = LMN_MALLOC(struct LinkConnection);
   c->atom = satom;
   c->hl = hl;
   c->link_pos = link_p;
   c->link_name = link_name;
-  vec_push(link_connections, (vec_data_t)c);
+  link_connections->push((vec_data_t)c);
   return link_name;
 }
 
@@ -71,9 +71,9 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
         (LmnSymbolAtomRef)satom->get_link(link_p));
     HyperLink *p_hl = hll->parent;
 
-    for (int i = 0; i < vec_num(link_connections); i++) {
+    for (int i = 0; i < link_connections->get_num(); i++) {
       struct LinkConnection *c =
-          (struct LinkConnection *)vec_get(link_connections, i);
+          (struct LinkConnection *)link_connections->get(i);
       if (c->hl && lmn_hyperlink_eq_hl(p_hl, c->hl)) {
         return c->link_name;
       }
@@ -81,9 +81,9 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
     return linkconnection_push(link_connections, NULL, -1, p_hl);
   }
 
-  for (int i = 0; i < vec_num(link_connections); i++) {
+  for (int i = 0; i < link_connections->get_num(); i++) {
     struct LinkConnection *c =
-        (struct LinkConnection *)vec_get(link_connections, i);
+        (struct LinkConnection *)link_connections->get(i);
     if (c->atom == satom && c->link_pos == link_p) {
       return c->link_name;
     }
@@ -351,7 +351,7 @@ string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
-  Vector *link_connections = vec_make(10);
+  Vector *link_connections = new Vector(10);
 
   auto head = string_of_template_membrane(link_connections, h_mem, imply);
   auto guard = string_of_guard_mem(g_mem, imply);
@@ -365,9 +365,9 @@ string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
   result += body;
   result += ".";
 
-  for (int i = 0; i < vec_num(link_connections); i++)
-    LMN_FREE(vec_get(link_connections, i));
-  vec_free(link_connections);
+  for (int i = 0; i < link_connections->get_num(); i++)
+    LMN_FREE(link_connections->get(i));
+  delete link_connections;
 
   return result;
 }
@@ -381,15 +381,15 @@ LmnMembraneRef get_mem_linked_atom(LmnSymbolAtomRef target_atom, int link_n) {
 void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
   Vector *mem_rulesets = lmn_mem_get_rulesets(mem);
 
-  for (int i = 0; i < vec_num(mem_rulesets); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem_rulesets, i);
+  for (int i = 0; i < mem_rulesets->get_num(); i++) {
+    LmnRuleSetRef rs = (LmnRuleSetRef)mem_rulesets->get(i);
     if (rs->id != del_id)
       continue;
 
     /* move successors forward */
-    for (int j = i; j < vec_num(mem_rulesets) - 1; j++) {
-      LmnRuleSetRef next = (LmnRuleSetRef)vec_get(mem_rulesets, j + 1);
-      vec_set(mem_rulesets, j, (vec_data_t)next);
+    for (int j = i; j < mem_rulesets->get_num() - 1; j++) {
+      LmnRuleSetRef next = (LmnRuleSetRef)mem_rulesets->get(j + 1);
+      mem_rulesets->set(j, (vec_data_t)next);
     }
 
     mem_rulesets->num--;

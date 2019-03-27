@@ -69,21 +69,21 @@
  * ただし, 既にon_cycle_flagが立っている状態はpathに含まない. */
 static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
                                 Vector *path, st_table_t traversed) {
-  vec_push(search, (vec_data_t)seed);
+  search->push((vec_data_t)seed);
 
-  while (vec_num(search) > 0) {
+  while (search->get_num() > 0) {
     State *s;
     unsigned int i;
 
-    s = (State *)vec_peek(search);
+    s = (State *)search->peek();
     if (st_contains(traversed, (st_data_t)s)) {
-      State *s_pop = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
-        vec_pop(path);
+      State *s_pop = (State *)search->pop();
+      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
+        path->pop();
       }
     } else {
       st_add_direct(traversed, (st_data_t)s, (st_data_t)s);
-      vec_push(path, (vec_data_t)s);
+      path->push((vec_data_t)s);
 
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
@@ -93,7 +93,7 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
         else if (succ == goal) {
           return TRUE;
         } else {
-          vec_push(search, (vec_data_t)succ);
+          search->push((vec_data_t)succ);
         }
       }
     }
@@ -123,20 +123,20 @@ struct McSearchNDFS {
 #define NDFS_WORKER_PATH_VEC(W) (NDFS_WORKER_OBJ(W)->path)
 #define NDFS_WORKER_OBJ_CLEAR(W)                                               \
   do {                                                                         \
-    vec_clear(NDFS_WORKER_OPEN_VEC(W));                                        \
-    vec_clear(NDFS_WORKER_PATH_VEC(W));                                        \
+    NDFS_WORKER_OPEN_VEC(W)->clear();                                        \
+    NDFS_WORKER_PATH_VEC(W)->clear();                                        \
   } while (0)
 
 void ndfs_worker_init(LmnWorker *w) {
   McSearchNDFS *mc = LMN_MALLOC(McSearchNDFS);
-  mc->open = vec_make(1024);
-  mc->path = vec_make(512);
+  mc->open = new Vector(1024);
+  mc->path = new Vector(512);
   NDFS_WORKER_OBJ_SET(w, mc);
 }
 
 void ndfs_worker_finalize(LmnWorker *w) {
-  vec_free(NDFS_WORKER_OPEN_VEC(w));
-  vec_free(NDFS_WORKER_PATH_VEC(w));
+  delete NDFS_WORKER_OPEN_VEC(w);
+  delete NDFS_WORKER_PATH_VEC(w);
   LMN_FREE(NDFS_WORKER_OBJ(w));
 }
 
@@ -154,7 +154,7 @@ void ndfs_start(LmnWorker *w, State *seed) {
   START_CYCLE_SEARCH();
 
   has_error = FALSE;
-  vec_push(NDFS_WORKER_OPEN_VEC(w), (vec_data_t)seed);
+  NDFS_WORKER_OPEN_VEC(w)->push((vec_data_t)seed);
   has_error = ndfs_loop(seed, NDFS_WORKER_OPEN_VEC(w), NDFS_WORKER_PATH_VEC(w));
 
   FINISH_CYCLE_SEARCH();
@@ -178,15 +178,15 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < vec_num(cycle_path); i++) {
-    State *s = (State *)vec_get(cycle_path, i);
+  for (i = 0; i < cycle_path->get_num(); i++) {
+    State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
     if (gen_counter_example)
-      vec_push(v, (vec_data_t)s);
+      v->push((vec_data_t)s);
   }
 
   /* サイクルを登録 */
@@ -198,18 +198,18 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
 }
 
 static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
-  while (vec_num(search) > 0) {
-    State *s = (State *)vec_peek(search);
+  while (search->get_num() > 0) {
+    State *s = (State *)search->peek();
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
-      State *s_pop = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
-        vec_pop(path);
+      State *s_pop = (State *)search->pop();
+      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
+        path->pop();
       }
     } else {
       unsigned int i;
-      vec_push(path, (vec_data_t)s);
+      path->push((vec_data_t)s);
      s->set_snd();
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
@@ -222,7 +222,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
         } else {
-          vec_push(search, (vec_data_t)succ);
+          search->push((vec_data_t)succ);
         }
       }
     }
@@ -486,8 +486,8 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
     if (lmn_env.dump) {
       Vector search, path;
 
-      vec_init(&search, 64);
-      vec_init(&path, 32);
+      search.init(64);
+      path.init(32);
       while (!OWCTY_WORKER_AQ1(w)->is_empty()) {
         State *seed = (State *)OWCTY_WORKER_AQ1(w)->dequeue();
 
@@ -499,23 +499,23 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
             Vector *v;
             unsigned int i;
 
-            v = vec_make(vec_num(&path));
-            for (i = 0; i < vec_num(&path); i++) {
-              State *tmp = (State *)vec_get(&path, i);
+            v = new Vector(path.get_num());
+            for (i = 0; i < path.get_num(); i++) {
+              State *tmp = (State *)path.get(i);
              tmp->set_on_cycle();
-              vec_push(v, (vec_data_t)tmp);
+              v->push((vec_data_t)tmp);
             }
 
             mc_found_invalid_path(wp, v);
           }
           st_clear(OWCTY_WORKER_HASHSET(w));
-          vec_clear(&search);
-          vec_clear(&path);
+          search.clear();
+          path.clear();
         }
       }
 
-      vec_destroy(&search);
-      vec_destroy(&path);
+      search.destroy();
+      path.destroy();
     }
   }
 }
@@ -781,8 +781,8 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
     Vector search, path;
     st_table_t traversed;
 
-    vec_init(&search, 64);
-    vec_init(&path, 32);
+    search.init(64);
+    path.init(32);
     if (worker_use_weak_map(w)) {
       traversed = st_init_ptrtable();
     } else {
@@ -793,11 +793,11 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
       Vector *v;
       unsigned int i;
 
-      v = vec_make(vec_num(&path));
-      for (i = 0; i < vec_num(&path); i++) {
-        State *tmp = (State *)vec_get(&path, i);
+      v = new Vector(path.get_num());
+      for (i = 0; i < path.get_num(); i++) {
+        State *tmp = (State *)path.get(i);
        tmp->set_on_cycle();
-        vec_push(v, (vec_data_t)tmp);
+        v->push((vec_data_t)tmp);
       }
       mc_found_invalid_path(wp, v);
     }
@@ -807,8 +807,8 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
     } else {
       st_clear(MAP_WORKER_HASHSET(w));
     }
-    vec_destroy(&search);
-    vec_destroy(&path);
+    search.destroy();
+    path.destroy();
   }
 }
 
@@ -857,8 +857,8 @@ void bledge_worker_init(LmnWorker *w) {
         BLE_WORKER_LAYER_Q(workers_get_worker(worker_group(w), LMN_PRIMARY_ID));
   }
 
-  mc->path = vec_make(32);
-  mc->search = vec_make(64);
+  mc->path = new Vector(32);
+  mc->search = new Vector(64);
   mc->traversed = st_init_ptrtable();
 
   BLE_WORKER_OBJ_SET(w, mc);
@@ -868,8 +868,8 @@ void bledge_worker_finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     delete BLE_WORKER_LAYER_Q(w);
   }
-  vec_free(BLE_WORKER_PATH_VEC(w));
-  vec_free(BLE_WORKER_SEARCH_VEC(w));
+  delete BLE_WORKER_PATH_VEC(w);
+  delete BLE_WORKER_SEARCH_VEC(w);
   st_free_table(BLE_WORKER_HASHSET(w));
 }
 
@@ -877,8 +877,8 @@ void bledge_worker_finalize(LmnWorker *w) {
 static BOOL bledge_path_accepting(Vector *v, AutomataRef a) {
   unsigned int i;
 
-  for (i = 0; i < vec_num(v); i++) {
-    State *t = (State *)vec_get(v, i);
+  for (i = 0; i < v->get_num(); i++) {
+    State *t = (State *)v->get(i);
     if (state_is_accept(a, t))
       return TRUE;
   }
@@ -910,13 +910,13 @@ void bledge_start(LmnWorker *w) {
       if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v] */
         if (!u->is_on_cycle() && !v->is_on_cycle() &&
             bledge_explorer_accepting_cycle(w, u, v)) {
-          vec_push(BLE_WORKER_PATH_VEC(w), (vec_data_t)u);
+          BLE_WORKER_PATH_VEC(w)->push((vec_data_t)u);
           bledge_found_accepting_cycle(w, BLE_WORKER_PATH_VEC(w));
         }
 
         st_clear(BLE_WORKER_HASHSET(w));
-        vec_clear(BLE_WORKER_PATH_VEC(w));
-        vec_clear(BLE_WORKER_SEARCH_VEC(w));
+        BLE_WORKER_PATH_VEC(w)->clear();
+        BLE_WORKER_SEARCH_VEC(w)->clear();
       }
     }
   }
@@ -940,14 +940,14 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
   wp->error_exist = TRUE;
 
   gen_counter_example = lmn_env.dump;
-  v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < vec_num(cycle_path); i++) {
-    State *s = (State *)vec_get(cycle_path, i);
+  for (i = 0; i < cycle_path->get_num(); i++) {
+    State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
     if (gen_counter_example)
-      vec_push(v, (vec_data_t)s);
+      v->push((vec_data_t)s);
   }
 
   /* サイクルを登録 */
@@ -991,14 +991,14 @@ struct McSearchMAPNDFS {
 #define MAPNDFS_WORKER_PATH_VEC(W) (MAPNDFS_WORKER_OBJ(W)->path)
 #define MAPNDFS_WORKER_OBJ_CLEAR(W)                                            \
   do {                                                                         \
-    vec_clear(MAPNDFS_WORKER_OPEN_VEC(W));                                     \
-    vec_clear(MAPNDFS_WORKER_PATH_VEC(W));                                     \
+    MAPNDFS_WORKER_OPEN_VEC(W)->clear();                                     \
+    MAPNDFS_WORKER_PATH_VEC(W)->clear();                                     \
   } while (0)
 
 void mapndfs_worker_init(LmnWorker *w) {
   McSearchMAPNDFS *mc = LMN_MALLOC(McSearchMAPNDFS);
-  mc->open = vec_make(1024);
-  mc->path = vec_make(512);
+  mc->open = new Vector(1024);
+  mc->path = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
@@ -1021,8 +1021,8 @@ void mapndfs_worker_init(LmnWorker *w) {
 }
 
 void mapndfs_worker_finalize(LmnWorker *w) {
-  vec_free(MAPNDFS_WORKER_OPEN_VEC(w));
-  vec_free(MAPNDFS_WORKER_PATH_VEC(w));
+  delete MAPNDFS_WORKER_OPEN_VEC(w);
+  delete MAPNDFS_WORKER_PATH_VEC(w);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
@@ -1068,7 +1068,7 @@ void mapndfs_start(LmnWorker *w, State *seed) {
   START_CYCLE_SEARCH();
 
   has_error = FALSE;
-  vec_push(MAPNDFS_WORKER_OPEN_VEC(w), (vec_data_t)seed);
+  MAPNDFS_WORKER_OPEN_VEC(w)->push((vec_data_t)seed);
   has_error = mapndfs_loop(seed, MAPNDFS_WORKER_OPEN_VEC(w),
                            MAPNDFS_WORKER_PATH_VEC(w));
 
@@ -1094,15 +1094,15 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < vec_num(cycle_path); i++) {
-    State *s = (State *)vec_get(cycle_path, i);
+  for (i = 0; i < cycle_path->get_num(); i++) {
+    State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
     if (gen_counter_example)
-      vec_push(v, (vec_data_t)s);
+      v->push((vec_data_t)s);
   }
 
   /* サイクルを登録 */
@@ -1114,18 +1114,18 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
 }
 
 static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
-  while (vec_num(search) > 0) {
-    State *s = (State *)vec_peek(search);
+  while (search->get_num() > 0) {
+    State *s = (State *)search->peek();
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
-      State *s_pop = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
-        vec_pop(path);
+      State *s_pop = (State *)search->pop();
+      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
+        path->pop();
       }
     } else {
       unsigned int i;
-      vec_push(path, (vec_data_t)s);
+      path->push((vec_data_t)s);
      s->set_snd();
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
@@ -1138,7 +1138,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
         } else {
-          vec_push(search, (vec_data_t)succ);
+          search->push((vec_data_t)succ);
         }
       }
     }
@@ -1159,8 +1159,8 @@ static void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
 
 void mcndfs_worker_init(LmnWorker *w) {
   McSearchMAPNDFS *mc = LMN_MALLOC(McSearchMAPNDFS);
-  mc->open = vec_make(1024);
-  mc->path = vec_make(512);
+  mc->open = new Vector(1024);
+  mc->path = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
@@ -1183,8 +1183,8 @@ void mcndfs_worker_init(LmnWorker *w) {
 }
 
 void mcndfs_worker_finalize(LmnWorker *w) {
-  vec_free(MAPNDFS_WORKER_OPEN_VEC(w));
-  vec_free(MAPNDFS_WORKER_PATH_VEC(w));
+  delete MAPNDFS_WORKER_OPEN_VEC(w);
+  delete MAPNDFS_WORKER_PATH_VEC(w);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
@@ -1225,7 +1225,7 @@ void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states) {
   START_CYCLE_SEARCH();
 
   has_error = FALSE;
-  vec_push(MAPNDFS_WORKER_OPEN_VEC(w), (vec_data_t)seed);
+  MAPNDFS_WORKER_OPEN_VEC(w)->push((vec_data_t)seed);
   has_error = mcndfs_loop(w, seed, MAPNDFS_WORKER_OPEN_VEC(w),
                           MAPNDFS_WORKER_PATH_VEC(w), red_states);
 
@@ -1251,15 +1251,15 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? vec_make(vec_num(cycle_path)) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < vec_num(cycle_path); i++) {
-    State *s = (State *)vec_get(cycle_path, i);
+  for (i = 0; i < cycle_path->get_num(); i++) {
+    State *s = (State *)cycle_path->get(i);
    s->set_on_cycle();
 
     if (gen_counter_example)
-      vec_push(v, (vec_data_t)s);
+      v->push((vec_data_t)s);
   }
 
   /* サイクルを登録 */
@@ -1276,13 +1276,13 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
   State *t, *succ;
   BOOL contained;
 
-  while (vec_num(search) > 0) {
-    State *s = (State *)vec_peek(search);
+  while (search->get_num() > 0) {
+    State *s = (State *)search->peek();
 
     if (s->is_snd()) {
-      t = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == t) {
-        vec_pop(path);
+      t = (State *)search->pop();
+      if (path->get_num() > 0 && (State *)path->peek() == t) {
+        path->pop();
       }
       continue;
     }
@@ -1296,10 +1296,10 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
       if (succ->s_is_cyan(worker_id(w))) {
         return TRUE;
       } else if (!succ->s_is_red()) {
-        m = vec_num(red_states);
+        m = red_states->get_num();
         contained = FALSE;
         for (j = 0; j < m; j++) {
-          t = (State *)vec_get(red_states, j);
+          t = (State *)red_states->get(j);
           if (state_id(t) == state_id(succ)) {
             contained = TRUE;
             break;
@@ -1313,14 +1313,14 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
 #if 0
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
-      State *s_pop = (State *)vec_pop(search);
-      if (vec_num(path) > 0 && (State *)vec_peek(path) == s_pop) {
-        vec_pop(path);
+      State *s_pop = (State *)search->pop();
+      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
+        path->pop();
       }
     }
     else {
       unsigned int i;
-      vec_push(path, (vec_data_t)s);
+      path->push((vec_data_t)s);
      s->set_snd();
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
@@ -1332,7 +1332,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
         } else if (s->s_is_cyan(worker_id(w))/*succ == seed*/ /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る */
         } else {
-          vec_push(search, (vec_data_t)succ);
+          search->push((vec_data_t)succ);
         }
       }
     }

@@ -93,7 +93,7 @@
 
 /* DFS Stackを静的に分割する条件 */
 #define DFS_HANDOFF_COND_STATIC(W, Stack)                                      \
-  (vec_num(Stack) >= DFS_CUTOFF_DEPTH(W))
+  (Stack->get_num() >= DFS_CUTOFF_DEPTH(W))
 #define DFS_HANDOFF_COND_STATIC_DEQ(W, Deq)                                    \
   (Deq->num() >= DFS_CUTOFF_DEPTH(W))
 
@@ -148,14 +148,14 @@ void dfs_worker_init(LmnWorker *w) {
       &mc->deq->init(8192);
     } else
 #endif
-      vec_init(&mc->stack, 8192);
+      mc->stack.init(8192);
   } else {
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       &mc->deq->init(mc->cutoff_depth + 1);
     } else
 #endif
-      vec_init(&mc->stack, mc->cutoff_depth + 1);
+      mc->stack.init(mc->cutoff_depth + 1);
 
     if (lmn_env.core_num == 1) {
       mc->q = new Queue();
@@ -182,7 +182,7 @@ void dfs_worker_finalize(LmnWorker *w) {
     &DFS_WORKER_DEQUE(w)->destroy();
   } else
 #endif
-    vec_destroy(&DFS_WORKER_STACK(w));
+    DFS_WORKER_STACK(w).destroy();
   LMN_FREE(DFS_WORKER_OBJ(w));
 }
 
@@ -228,9 +228,9 @@ static inline void dfs_handoff_all_task(LmnWorker *me, Vector *expands) {
     worker_set_black(me);
   }
 
-  n = vec_num(expands);
+  n = expands->get_num();
   for (i = 0; i < n; i++) {
-    DFS_WORKER_QUEUE(rn)->enqueue(vec_get(expands, i));
+    DFS_WORKER_QUEUE(rn)->enqueue(expands->get(i));
   }
 
   ADD_OPEN_PROFILE(sizeof(Node) * n);
@@ -279,10 +279,10 @@ static inline void mapdfs_handoff_all_task(LmnWorker *me, Vector *expands) {
     worker_set_black(me);
   }
 
-  n = vec_num(expands);
+  n = expands->get_num();
   for (i = 0; i < n; i++) {
-    DFS_WORKER_QUEUE(rn)->enqueue(vec_get(expands, i));
-    // DFS_WORKER_QUEUE(rn)->enqueue_push_head(vec_get(expands, i));
+    DFS_WORKER_QUEUE(rn)->enqueue(expands->get(i));
+    // DFS_WORKER_QUEUE(rn)->enqueue_push_head(expands->get(i));
   }
 
   ADD_OPEN_PROFILE(sizeof(Node) * n);
@@ -310,7 +310,7 @@ void mcdfs_start(LmnWorker *w) {
 
   ss = worker_states(w);
   wp = worker_group(w);
-  vec_init(&new_ss, 32);
+  new_ss.init(32);
 
   /*
   if(WORKER_FOR_INIT_STATE(w, s)) {
@@ -345,9 +345,9 @@ void mcdfs_start(LmnWorker *w) {
             mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
                        ss->automata(), ss->prop_symbols());
             s = NULL;
-            vec_clear(&DFS_WORKER_STACK(w));
+            DFS_WORKER_STACK(w).clear();
           }
-          vec_clear(&new_ss);
+          new_ss.clear();
 
           EXECUTE_PROFILE_FINISH();
         }
@@ -363,7 +363,7 @@ void mcdfs_start(LmnWorker *w) {
     }
   }
 
-  vec_destroy(&new_ss);
+  new_ss.destroy();
 }
 #endif
 
@@ -381,7 +381,7 @@ void dfs_start(LmnWorker *w) {
 
   ss = worker_states(w);
   wp = worker_group(w);
-  vec_init(&new_ss, 32);
+  new_ss.init(32);
 
   if (WORKER_FOR_INIT_STATE(w, s)) {
     s = ss->initial_state();
@@ -452,9 +452,9 @@ void dfs_start(LmnWorker *w) {
               dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
                        ss->automata(), ss->prop_symbols());
             s = NULL;
-            vec_clear(&DFS_WORKER_STACK(w));
+            DFS_WORKER_STACK(w).clear();
           }
-          vec_clear(&new_ss);
+          new_ss.clear();
 
           EXECUTE_PROFILE_FINISH();
         }
@@ -473,12 +473,12 @@ void dfs_start(LmnWorker *w) {
   }
 #endif
 
-  vec_destroy(&new_ss);
+  new_ss.destroy();
 }
 
 static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                             AutomataRef a, Vector *psyms) {
-  while (!vec_is_empty(stack)) {
+  while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n;
@@ -489,7 +489,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       break;
 
     /** 展開元の状態の取得 */
-    s = (State *)vec_peek(stack);
+    s = (State *)stack->peek();
     p_s = MC_GET_PROPERTY(s, a);
     if (s->is_expanded()) {
       if (NDFS_COND(w, s, p_s)) {
@@ -533,9 +533,9 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       if (DFS_HANDOFF_COND_STATIC(w, stack)) {
         dfs_handoff_all_task(w, new_ss);
       } else {
-        n = vec_num(new_ss);
+        n = new_ss->get_num();
         for (i = 0; i < n; i++) {
-          State *new_s = (State *)vec_get(new_ss, i);
+          State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING(stack, w, i, n)) {
             dfs_handoff_task(w, (LmnWord)new_s);
@@ -546,14 +546,14 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       }
     }
 
-    vec_clear(new_ss);
+    new_ss->clear();
   }
 }
 
 /* MAP+NDFS : 基本的にndfs_loopと同じ。安定したら合併させます。 */
 static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                                AutomataRef a, Vector *psyms) {
-  while (!vec_is_empty(stack)) {
+  while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n;
@@ -562,7 +562,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       break;
 
     /** 展開元の状態の取得 */
-    s = (State *)vec_peek(stack);
+    s = (State *)stack->peek();
     p_s = MC_GET_PROPERTY(s, a);
     if (s->is_expanded()) {
       if (MAPNDFS_COND(w, s, p_s)) {
@@ -617,9 +617,9 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       if (DFS_HANDOFF_COND_STATIC(w, stack) /*|| worker_is_explorer(w)*/) {
         mapdfs_handoff_all_task(w, new_ss);
       } else {
-        n = vec_num(new_ss);
+        n = new_ss->get_num();
         for (i = 0; i < n; i++) {
-          State *new_s = (State *)vec_get(new_ss, i);
+          State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING(stack, w, i, n)) {
             mcdfs_handoff_task(w, (LmnWord)new_s);
@@ -630,14 +630,14 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       }
     }
 
-    vec_clear(new_ss);
+    new_ss->clear();
   }
 }
 
 #ifndef MINIMAL_STATE
 static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                               AutomataRef a, Vector *psyms) {
-  while (!vec_is_empty(stack)) {
+  while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n, start;
@@ -647,14 +647,14 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
       break;
 
     /** 展開元の状態の取得 */
-    s = (State *)vec_peek(stack);
+    s = (State *)stack->peek();
     p_s = MC_GET_PROPERTY(s, a);
 
     // backtrack
     if (s->s_is_cyan(worker_id(w))) {
       if (state_is_accept(a, s)) {
         Vector red_states;
-        vec_init(&red_states, 8192);
+        red_states.init(8192);
 
         // launch red dfs
         mcndfs_start(w, s, &red_states);
@@ -663,9 +663,9 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
         START_REPAIR_PHASE();
         do {
           repaired = TRUE;
-          n = vec_num(&red_states);
+          n = red_states.get_num();
           for (i = 0; i < n; i++) {
-            State *r = (State *)vec_get(&red_states, i);
+            State *r = (State *)red_states.get(i);
 
             if (state_id(r) != state_id(s) && state_is_accept(a, r)) {
               if (!r->s_is_red()) {
@@ -679,9 +679,9 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
         FINISH_REPAIR_PHASE();
 
         // set red
-        n = vec_num(&red_states);
+        n = red_states.get_num();
         for (i = 0; i < n; i++) {
-          State *r = (State *)vec_get(&red_states, i);
+          State *r = (State *)red_states.get(i);
           r->s_set_red();
         }
       }
@@ -735,7 +735,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     Vector *fresh = NULL;
 
     if (n > 0) {
-      fresh = vec_make(n);
+      fresh = new Vector(n);
       start = worker_id(w) % n;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, (start + i) % n);
@@ -751,10 +751,10 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
     // freshな状態をスタックの上位に持ってくる
     if (fresh) {
-      n = vec_num(fresh);
+      n = fresh->get_num();
       if (n > 0) {
         for (i = 0; i < n; i++) {
-          State *fs = (State *)vec_get(fresh, i);
+          State *fs = (State *)fresh->get(i);
           fs->s_unset_fresh();
           put_stack(stack, fs);
         }
@@ -817,9 +817,9 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       if (DFS_HANDOFF_COND_STATIC_DEQ(w, deq)) {
         dfs_handoff_all_task(w, new_ss);
       } else {
-        n = vec_num(new_ss);
+        n = new_ss->get_num();
         for (i = 0; i < n; i++) {
-          State *new_s = (State *)vec_get(new_ss, i);
+          State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING_DEQ(deq, w, i, n)) {
             dfs_handoff_task(w, (LmnWord)new_s);
@@ -834,7 +834,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       }
     }
 
-    vec_clear(new_ss);
+    new_ss->clear();
   }
 }
 
@@ -928,7 +928,7 @@ void bfs_start(LmnWorker *w) {
   wp = worker_group(w);
   d = 1;
   d_lim = lmn_env.depth_limits; /* ローカル変数に */
-  new_ss = vec_make(32);
+  new_ss = new Vector(32);
 
   if (!worker_on_parallel(w) ||
       worker_id(w) == 0) { /* 重複して初期状態をenqしないようにするための条件 */
@@ -962,7 +962,7 @@ void bfs_start(LmnWorker *w) {
         bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
         worker_set_idle(w);
 
-        vec_clear(new_ss);
+        new_ss->clear();
         EXECUTE_PROFILE_FINISH();
       } else {
         worker_set_idle(w);
@@ -981,7 +981,7 @@ void bfs_start(LmnWorker *w) {
         worker_set_active(w);
         bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
         worker_set_idle(w);
-        vec_clear(new_ss);
+        new_ss->clear();
         /**/ EXECUTE_PROFILE_FINISH();
       }
 
@@ -999,7 +999,7 @@ void bfs_start(LmnWorker *w) {
     }
   }
 
-  vec_free(new_ss);
+  delete new_ss;
 }
 
 static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
@@ -1044,11 +1044,11 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
       }
     } else {
       /* 展開した状態をnext layer queueに登録する */
-      for (i = 0; i < vec_num(new_ss); i++) {
-        BFS_WORKER_Q_NXT(w)->enqueue((LmnWord)vec_get(new_ss, i));
+      for (i = 0; i < new_ss->get_num(); i++) {
+        BFS_WORKER_Q_NXT(w)->enqueue((LmnWord)new_ss->get(i));
       }
     }
 
-    vec_clear(new_ss);
+    new_ss->clear();
   }
 }

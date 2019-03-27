@@ -246,7 +246,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if (!lmn_mem_nmems((LmnMembraneRef)rc->wt($0), $1)) $f;
 
 #norules LmnInstrVar
-  if (vec_num(lmn_mem_get_rulesets((LmnMembraneRef)rc->wt($0)))) $f;
+  if (lmn_mem_get_rulesets((LmnMembraneRef)rc->wt($0))->get_num()) $f;
 
 #newatom LmnInstrVar LmnInstrVar $functor
 % switch(targ2_attr){
@@ -528,7 +528,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #newlist LmnInstrVar
   {
-    Vector *listvec = vec_make(16);
+    Vector *listvec = new Vector(16);
     rc->reg($0) = {(LmnWord)listvec, 0, TT_OTHER};
 #__echo_t
     {
@@ -540,11 +540,11 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 #__format_t
   label_success_$a:
-    vec_free(listvec);
+    delete listvec;
     $s;
     lmn_fatal("translate recursive error\n");
   label_fail_$a:
-    vec_free(listvec);
+    delete listvec;
     $f;
     lmn_fatal("translate recursive error\n");
 #__format
@@ -553,12 +553,12 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   *finishflag = 0;
 
 #addtolist LmnInstrVar LmnInstrVar
-  vec_push((Vector *)rc->wt($0), $1);
+  ((Vector *)rc->wt($0))->push($1);
 
 #getfromlist LmnInstrVar LmnInstrVar LmnInstrVar
   switch (rc->at($1)) {
     case LIST_AND_MAP:
-      rc->wt($0) = vec_get((Vector *)rc->wt($1), (unsigned int)$2);
+      rc->wt($0) = ((Vector *)rc->wt($1))->get((unsigned int)$2);
       rc->tt($0) = TT_OTHER;
       if ($2 == 0){
         rc->at($0) = LINK_LIST;
@@ -570,7 +570,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
       break;
     case LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
-      LinkObjRef lo = (LinkObjRef)vec_get((Vector *)rc->wt($1), (unsigned int)$2);
+      LinkObjRef lo = (LinkObjRef)((Vector *)rc->wt($1))->get((unsigned int)$2);
       rc->reg($0) = {(LmnWord)LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM};
       break;
     }
@@ -606,9 +606,9 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     free_links(srcvec);
 
     /* 返り値の作成 */
-    retvec = vec_make(2);
-    vec_push(retvec, (LmnWord)dstlovec);
-    vec_push(retvec, (LmnWord)atommap);
+    retvec = new Vector(2);
+    retvec->push((LmnWord)dstlovec);
+    retvec->push((LmnWord)atommap);
     rc->reg($0) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
 #__echo_t
     {
@@ -619,7 +619,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #__format_t
   label_always_$a:
     free_links(dstlovec);
-    vec_free(retvec);
+    delete retvec;
     $s;
     lmn_fatal("translate recursive error\n");
 #__format
@@ -887,7 +887,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   TR_INSTR_LOOKUPLINK(rc, $0, $1, $2);
 
 #clearrules LmnInstrVar
-  vec_clear(lmn_mem_get_rulesets((LmnMembraneRef)rc->wt($0)));
+  lmn_mem_get_rulesets((LmnMembraneRef)rc->wt($0))->clear();
 
 #dropmem LmnInstrVar
   lmn_mem_drop((LmnMembraneRef)rc->wt($0));

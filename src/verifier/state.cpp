@@ -92,7 +92,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
 /* 膜memを用いて状態sのハッシュ値を計算する.
  * canonicalをTRUEで入力した場合, バイナリストリングの設定まで行う */
 
-
 /**
  * 引数としてあたえられたStateが等しいかどうかを判定する
  */
@@ -182,7 +181,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
     /* s1がcheckなのでmem, s2がstored(ハッシュ表に記録済み)なのでbinstrを保持 */
 
     /* データ構造の構築 */
-    s2_mem = lmn_binstr_decode(s2->->state_binstr());
+    s2_mem = lmn_binstr_decode(s2->state_binstr());
     s1_mid = lmn_mem_encode(s1->state_mem());
     s2_mid = lmn_mem_encode(s2_mem);
 
@@ -227,7 +226,6 @@ int state_cmp_with_compress(State *s1, State *s2) {
       fprintf(f, "============================================================="
                  "=======================\n");
 
-      lmn_binstr_dump(s2->->state_binstr());
       lmn_dump_mem_stdout(s1->state_mem());
 
       lmn_binstr_free(s1_bs);
@@ -290,7 +288,6 @@ int state_cmp_with_tree(State *s1, State *s2) {
 
 int state_cmp(State *s1, State *s2) { return !state_equals(s1, s2); }
 
-
 /* バイナリストリングorgと状態ref_sのバイナリストリングとの差分バイナリストリングを返す.
  * orgのメモリ管理は呼出し側で行う. */
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
@@ -311,17 +308,13 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
   return dif;
 }
 
-LmnBinStrRef state_calc_mem_dump(State *s) {
-  return s->mem_dump();
-}
-
+LmnBinStrRef state_calc_mem_dump(State *s) { return s->mem_dump(); }
 
 /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
  * 状態sはread only */
 LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
   return s->mem_dump_with_z();
 }
-
 
 /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
  * sのフラグを操作する. */
@@ -337,7 +330,7 @@ LmnBinStrRef state_calc_mem_dummy(State *s) {
 unsigned long transition_space(TransitionRef t) {
   unsigned long ret;
   ret = sizeof(struct Transition);
-  ret += vec_space_inner(&t->rule_names);
+  ret += t->rule_names.space_inner();
   return ret;
 }
 
@@ -347,8 +340,8 @@ TransitionRef transition_make(State *s, lmn_interned_str rule_name) {
   t->s = s;
   t->id = 0;
   transition_set_cost(t, 0);
-  vec_init(&t->rule_names, 4);
-  vec_push(&t->rule_names, rule_name);
+  t->rule_names.init(4);
+  t->rule_names.push(rule_name);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_add_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
@@ -363,20 +356,20 @@ void transition_free(TransitionRef t) {
     profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
   }
 #endif
-  vec_destroy(&t->rule_names);
+  t->rule_names.destroy();
   LMN_FREE(t);
 }
 
 void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
                          LmnCost cost) {
-  if (rule_name != ANONYMOUS || !vec_contains(&t->rule_names, rule_name)) {
+  if (rule_name != ANONYMOUS || !t->rule_names.contains(rule_name)) {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
     }
 #endif
 
-    vec_push(&t->rule_names, rule_name);
+    t->rule_names.push(rule_name);
 
 #ifdef KWBT_OPT
     if (((lmn_env.opt_mode == OPT_MINIMIZE) && t->cost > cost) ||
@@ -446,14 +439,14 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     BOOL has_property = owner && owner->has_property();
 #ifdef KWBT_OPT
     fprintf(f, "%lu::%lu::%s", print_id, cost,
-            has_property ? owner->automata()->state_name(
-                                               state_property_state(s))
-                         : "");
+            has_property
+                ? owner->automata()->state_name(state_property_state(s))
+                : "");
 #else
     fprintf(f, "%lu::%s", print_id,
-            has_property ? owner->automata()->state_name(
-                                               state_property_state(s))
-                         : "");
+            has_property
+                ? owner->automata()->state_name(state_property_state(s))
+                : "");
 #endif
     state_print_mem(s, _fp);
     break;
@@ -615,9 +608,7 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
 /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
  * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
  * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
-LmnMembraneRef state_restore_mem(State *s) {
-  return s->restore_membrane();
-}
+LmnMembraneRef state_restore_mem(State *s) { return s->restore_membrane(); }
 
 /* 状態sに割り当てた整数IDを返す. */
 unsigned long state_id(State *s) { return s->state_id; }
@@ -665,12 +656,9 @@ unsigned long state_hash(State *s) {
   return s->hash * (state_property_state(s) + 1);
 }
 
-
-
 /* 状態sに階層グラフ構造memを割り当てる.
  * sに対してバイナリストリングBを割り当てている場合は,
  * Bのメモリ管理は呼出し側で行う*/
-
 
 /* 状態sが参照する階層グラフ構造用の領域をクリアする.
  * 階層グラフ構造の参照を持たない場合は, なにもしない. */
@@ -679,7 +667,6 @@ void state_unset_mem(State *s) {
     s->state_set_mem(NULL);
   }
 }
-
 
 /* 状態sに対応する階層グラフ構造からエンコードしたバイナリストリングbsを,
  * sに割り当てる　*/
@@ -700,7 +687,6 @@ State *state_get_parent(State *s) { return s->parent; }
 void state_set_parent(State *s, State *parent) { s->parent = parent; }
 
 /* 状態sから遷移可能な状態数を返す. */
-
 
 /* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
 State *state_succ_state(State *s, int idx) {
@@ -817,7 +803,7 @@ void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
   if ((f && state_cost(s) > cost) || (!f && state_cost(s) < cost)) {
     state_set_cost(s, cost, pre);
     if (s->is_expanded() && new_ss)
-      vec_push(new_ss, (vec_data_t)s);
+      new_ss->push((vec_data_t)s);
     s->s_set_update();
   }
   if (env_threads_num() >= 2)
@@ -830,10 +816,10 @@ unsigned long transition_id(TransitionRef t) { return t->id; }
 /* 遷移tに整数ID idを割り当てる. */
 void transition_set_id(TransitionRef t, unsigned long id) { t->id = id; }
 
-int transition_rule_num(TransitionRef t) { return vec_num(&t->rule_names); }
+int transition_rule_num(TransitionRef t) { return t->rule_names.get_num(); }
 
 lmn_interned_str transition_rule(TransitionRef t, int idx) {
-  return vec_get(&t->rule_names, idx);
+  return t->rule_names.get(idx);
 }
 
 State *transition_next_state(TransitionRef t) { return t->s; }

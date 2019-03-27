@@ -742,9 +742,9 @@ void dump_profile_data(FILE *f) {
         r_total = rule_profiler_make(ANONYMOUS, NULL);
         r_others = rule_profiler_make(ANONYMOUS, NULL);
 
-        vec_init(&v, st_num(lmn_prof.prules));
+        v.init(st_num(lmn_prof.prules));
         st_get_entries_value(lmn_prof.prules, &v);
-        vec_sort(&v, comp_prule_id_greater_f);
+        v.sort(comp_prule_id_greater_f);
 
         fprintf(
             f,
@@ -752,8 +752,8 @@ void dump_profile_data(FILE *f) {
         fprintf(f, "%4s %8s : %9s %9s %9s %12s", "[id]", "[name]", "[# Tr.]",
                 "[# Ap.]", "[# Ba.]", "[CPU U.(usec)]\n");
 
-        for (i = 0; i < vec_num(&v); i++) {
-          RuleProfiler *rp = (RuleProfiler *)vec_get(&v, i);
+        for (i = 0; i < v.get_num(); i++) {
+          RuleProfiler *rp = (RuleProfiler *)v.get(i);
           if (rp->trial.called_num > 0) {
             if (rp->src->name == ANONYMOUS) {
               /* 一度もマッチングに成功しなかったルールはまとめる */
@@ -783,7 +783,7 @@ void dump_profile_data(FILE *f) {
                 r_total->trial.called_num, r_total->apply, r_total->backtrack,
                 r_total->trial.total_time / 1e-6);
 
-        vec_destroy(&v);
+        v.destroy();
         rule_profiler_free(r_others);
         fprintf(
             f,

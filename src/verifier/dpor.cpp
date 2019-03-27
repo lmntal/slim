@@ -133,12 +133,12 @@ static ContextC1Ref contextC1_lookup(st_table_t dst_tbl, ContextC1Ref src) {
   /* TODO: O(n * m), n:出現した遷移数, m:遷移が持つプロセス数.
    *       遷移の等価性を検査するためのハッシュ関数が必要 */
 
-  vec_init(&tmp, st_num(dst_tbl) + 1);
+  tmp.init(st_num(dst_tbl) + 1);
   st_get_entries_value(dst_tbl, &tmp);
 
   ret = src;
-  for (i = 0; i < vec_num(&tmp); i++) {
-    ContextC1Ref dst = (ContextC1Ref)vec_get(&tmp, i);
+  for (i = 0; i < tmp.get_num(); i++) {
+    ContextC1Ref dst = (ContextC1Ref)tmp.get(i);
     /*
     POR_DEBUG(printf("compare, id%u(Ln%lu,Rn%lu), id%u(Ln%lu,Rn%lu)\n",
         src->id, src->LHS_procs->n, src->RHS_procs->n,
@@ -150,7 +150,7 @@ static ContextC1Ref contextC1_lookup(st_table_t dst_tbl, ContextC1Ref src) {
     }
   }
 
-  vec_destroy(&tmp);
+  tmp.destroy();
   return ret;
 }
 
@@ -202,8 +202,8 @@ static void contextC1_expand_LHS(McDporData *d, ContextC1Ref c,
     proc_tbl_put(c->LHS_procs, key, (LmnWord)flag);
   }
 
-  for (i = 0; i < vec_num(d->wt_gatoms); i++) {
-    ProcessTableRef g_atoms = (ProcessTableRef)vec_get(d->wt_gatoms, i);
+  for (i = 0; i < d->wt_gatoms->get_num(); i++) {
+    ProcessTableRef g_atoms = (ProcessTableRef)d->wt_gatoms->get(i);
     proc_tbl_foreach(g_atoms, contextC1_expand_gatoms_LHS_f, (LmnWord)c);
   }
 }
@@ -248,9 +248,9 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
 
   /* アトムの数が変化した場合,
    * memに対するnatoms命令が左辺に出現した遷移に依存する */
-  if (vec_num(&d->new_atoms) > 0 || vec_num(&d->del_atoms) > 0 ||
+  if (d->new_atoms.get_num() > 0 || d->del_atoms.get_num() > 0 ||
       d->data_atom_diff != 0) {
-    int n = vec_num(&d->new_atoms) + d->data_atom_diff - vec_num(&d->del_atoms);
+    int n = d->new_atoms.get_num() + d->data_atom_diff - d->del_atoms.get_num();
     if (lmn_mem_atom_num(mem) != n) {
       contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NATOMS);
     }
@@ -259,15 +259,15 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
 
   /* 子膜の数が変化した場合, memに対するnmems命令が左辺に出現した遷移に依存する
    */
-  if (vec_num(&d->new_mems) > 0 || vec_num(&d->del_mems) > 0) {
-    int n = vec_num(&d->new_mems) - vec_num(&d->del_mems);
+  if (d->new_mems.get_num() > 0 || d->del_mems.get_num() > 0) {
+    int n = d->new_mems.get_num() - d->del_mems.get_num();
     if (lmn_mem_child_mem_num(mem) != n) {
       contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NMEMS);
     }
     need_act_check = TRUE;
   }
 
-  if (!vec_is_empty(&d->new_proxies)) {
+  if (!d->new_proxies.is_empty()) {
     contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NFLINKS);
     need_act_check = TRUE;
   }
@@ -287,8 +287,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
   }
 
   /* アトムが削除されるなら, そのアトムが左辺に出現した遷移に依存する */
-  for (i = 0; i < vec_num(&d->del_atoms); i++) {
-    LmnSymbolAtomRef a = (LmnSymbolAtomRef)vec_get(&d->del_atoms, i);
+  for (i = 0; i < d->del_atoms.get_num(); i++) {
+    LmnSymbolAtomRef a = (LmnSymbolAtomRef)d->del_atoms.get(i);
     contextC1_RHS_tbl_put(c->RHS_procs, a->get_id(), OP_DEP_EXISTS);
     if (a->get_functor() == LMN_IN_PROXY_FUNCTOR) {
       need_flink_check = TRUE;
@@ -302,8 +302,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
   }
 
   /* 子膜が削除されるなら, その膜が左辺に出現した遷移に依存する */
-  for (i = 0; i < vec_num(&d->del_mems); i++) {
-    LmnMembraneRef m = (LmnMembraneRef)vec_get(&d->del_mems, i);
+  for (i = 0; i < d->del_mems.get_num(); i++) {
+    LmnMembraneRef m = (LmnMembraneRef)d->del_mems.get(i);
     contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(m), OP_DEP_EXISTS);
   }
 
@@ -329,9 +329,9 @@ static void contextC1_expand_RHS(McDporData *mc, ContextC1Ref c,
                                  MemDeltaRoot *d) {
   unsigned int i;
   /* 修正の加えられる膜に対する操作 */
-  for (i = 0; i < vec_num(&d->mem_deltas); i++) {
+  for (i = 0; i < d->mem_deltas.get_num(); i++) {
     contextC1_expand_RHS_inner(c,
-                               (struct MemDelta *)vec_get(&d->mem_deltas, i));
+                               (struct MemDelta *)d->mem_deltas.get(i));
   }
 
   /* リンクの繋ぎ替えは考慮しなくてよいはず.
@@ -339,55 +339,55 @@ static void contextC1_expand_RHS(McDporData *mc, ContextC1Ref c,
    *    繋ぎ替え元のアトムは既にstruct
    * MemDeltaのdel_atomsに含まれているので計算済み */
   /*
-  for (i = 0; i < vec_num(&d->modified_atoms); i += 2) {
+  for (i = 0; i < d->modified_atoms.get_num(); i += 2) {
     LmnSAtom src, new;
-    src = LMN_SATOM(vec_get(&d->modified_atoms, i));
-    new = LMN_SATOM(vec_get(&d->modified_atoms, i+1));
+    src = LMN_SATOM(d->modified_atoms.get(i));
+    new = LMN_SATOM(d->modified_atoms.get(i+1));
   }
    */
 }
 
 static McDporData *dpor_data_make() {
   McDporData *d = LMN_MALLOC(McDporData);
-  d->wt_gatoms = vec_make(4);
+  d->wt_gatoms = new Vector(4);
   d->wt_flags = proc_tbl_make();
-  d->ample_cand = vec_make(8);
+  d->ample_cand = new Vector(8);
   d->nxt_tr_id = 0;
   d->delta_tbl = st_init_ptrtable();
-  d->free_deltas = vec_make(32);
+  d->free_deltas = new Vector(32);
   return d;
 }
 
 static void dpor_data_free(McDporData *d) {
   unsigned int i;
-  vec_free(d->wt_gatoms);
+  delete d->wt_gatoms;
   proc_tbl_free(d->wt_flags);
-  vec_free(d->ample_cand);
+  delete d->ample_cand;
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_free_table(d->delta_tbl);
-  for (i = 0; i < vec_num(d->free_deltas); i++) {
-    MemDeltaRoot *delt = (MemDeltaRoot *)vec_get(d->free_deltas, i);
+  for (i = 0; i < d->free_deltas->get_num(); i++) {
+    MemDeltaRoot *delt = (MemDeltaRoot *)d->free_deltas->get(i);
     delete delt;
   }
-  vec_free(d->free_deltas);
+  delete d->free_deltas;
   LMN_FREE(d);
 }
 
 static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
-  vec_clear(d->wt_gatoms);
+  d->wt_gatoms->clear();
   proc_tbl_clear(d->wt_flags);
-  vec_clear(d->ample_cand);
+  d->ample_cand->clear();
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_clear(d->delta_tbl);
 
-  while (!vec_is_empty(d->free_deltas)) {
-    MemDeltaRoot *delt = (MemDeltaRoot *)vec_pop(d->free_deltas);
+  while (!d->free_deltas->is_empty()) {
+    MemDeltaRoot *delt = (MemDeltaRoot *)d->free_deltas->pop();
     delete delt;
   }
 
-  vec_clear(RC_MEM_DELTAS(rc));
+  RC_MEM_DELTAS(rc)->clear();
 
-  vec_clear(d->free_deltas);
+  d->free_deltas->clear();
   d->nxt_tr_id = 0;
 }
 
@@ -472,7 +472,7 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
   unsigned int i, j;
   BOOL need_ample_check, ok;
 
-  if (vec_num(d->ample_cand) > 0) {
+  if (d->ample_cand->get_num() > 0) {
     need_ample_check = TRUE;
   } else {
     need_ample_check = FALSE;
@@ -481,25 +481,25 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
   ok = TRUE;
 
   /* i番目のRHSとj番目のLHSの依存性をチェックし, 依存する組合せをretへpush */
-  for (i = 0; i < vec_num(src); i++) {
+  for (i = 0; i < src->get_num(); i++) {
     ContextC1Ref r;
     MemDeltaRoot *delta_r;
     st_data_t t;
 
-    delta_r = (MemDeltaRoot *)vec_get(src, i);
+    delta_r = (MemDeltaRoot *)src->get(i);
     if (st_lookup(d->delta_tbl, (st_data_t)delta_r, &t)) {
       r = (ContextC1Ref)t;
     } else {
       lmn_fatal("implementation error");
     }
 
-    for (j = 0; j < vec_num(src); j++) {
+    for (j = 0; j < src->get_num(); j++) {
       ContextC1Ref l;
       MemDeltaRoot *delta_l;
 
       if (j == i)
         continue;
-      delta_l = (MemDeltaRoot *)vec_get(src, j);
+      delta_l = (MemDeltaRoot *)src->get(j);
       if (st_lookup(d->delta_tbl, (st_data_t)delta_l, &t)) {
         l = (ContextC1Ref)t;
       } else {
@@ -508,11 +508,11 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
 
       if (contextC1s_are_depend(r, l)) {
         if (ret) {
-          if (!vec_contains(ret, (vec_data_t)r)) {
-            vec_push(ret, (vec_data_t)r);
+          if (!ret->contains((vec_data_t)r)) {
+            ret->push((vec_data_t)r);
           }
-          if (!vec_contains(ret, (vec_data_t)l)) {
-            vec_push(ret, (vec_data_t)l);
+          if (!ret->contains((vec_data_t)l)) {
+            ret->push((vec_data_t)l);
           }
         }
 
@@ -521,8 +521,8 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
     }
 
     if (need_ample_check && !r->is_ample_cand) {
-      for (j = 0; j < vec_num(d->ample_cand); j++) {
-        if (contextC1s_are_depend(r, (ContextC1Ref)vec_get(d->ample_cand, j))) {
+      for (j = 0; j < d->ample_cand->get_num(); j++) {
+        if (contextC1s_are_depend(r, (ContextC1Ref)d->ample_cand->get(j))) {
           ok = FALSE;
         }
       }
@@ -538,8 +538,8 @@ static inline BOOL dpor_explored_cycle(McDporData *mc, ContextC1Ref c,
   MemDeltaRoot *d;
   unsigned int i;
 
-  for (i = 0; i < vec_num(RC_MEM_DELTAS(rc)); i++) {
-    d = (MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);
+  for (i = 0; i < RC_MEM_DELTAS(rc)->get_num(); i++) {
+    d = (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i);
     if (st_lookup(mc->delta_tbl, (st_data_t)d, &t)) {
       ContextC1Ref succ = (ContextC1Ref)t;
       if (succ->is_on_path) {
@@ -562,7 +562,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
 
   MCReactContext rc;
   cur = DMEM_ROOT_MEM(c->d);
-  vec_init(&nxt_checked_ids, 4);
+  nxt_checked_ids.init(4);
   RC_SET_GROOT_MEM(&rc, cur);
 
   POR_DEBUG({
@@ -575,14 +575,14 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
 
   if (dpor_explored_cycle(mc, c, &rc)) {
     POR_DEBUG(printf("detected cycle\n"));
-    vec_destroy(&nxt_checked_ids);
+    nxt_checked_ids.destroy();
     return ret;
   }
 
   if (dpor_dependency_check(mc, RC_MEM_DELTAS(&rc), NULL) &&
       mc->cur_depth < 200) {
 
-    for (i = 0; i < vec_num(RC_MEM_DELTAS(&rc)); i++) {
+    for (i = 0; i < RC_MEM_DELTAS(&rc)->get_num(); i++) {
       MemDeltaRoot *succ_d;
       st_data_t t;
 
@@ -590,11 +590,11 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
         break;
 
       /* succ_dを生成した際に, 等価な遷移と置換されている */
-      succ_d = (MemDeltaRoot *)vec_get(RC_MEM_DELTAS(&rc), i);
+      succ_d = (MemDeltaRoot *)RC_MEM_DELTAS(&rc)->get(i);
       if (st_lookup(mc->delta_tbl, (st_data_t)succ_d, &t)) {
         ContextC1Ref succ_c = (ContextC1Ref)t;
 
-        if (vec_contains(cur_checked_ids, (vec_data_t)succ_c->id)) {
+        if (cur_checked_ids->contains((vec_data_t)succ_c->id)) {
           /* 1step前で既に訪問済み
            * つまり、合流しているため、skip */
           POR_DEBUG(printf("Tr%u, contains\n", succ_c->id));
@@ -609,7 +609,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
           dmem_root_commit(succ_c->d);
           ret = dpor_explore_subgraph(mc, succ_c, &nxt_checked_ids);
           dmem_root_revert(succ_c->d);
-          vec_push(&nxt_checked_ids,
+          nxt_checked_ids.push(
                    succ_c->id); /* next stepに合流性の情報を渡す */
           succ_c->is_on_path = FALSE;
           mc->cur_depth--;
@@ -623,7 +623,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
     ret = FALSE;
   }
 
-  vec_destroy(&nxt_checked_ids);
+  nxt_checked_ids.destroy();
 
   return ret;
 }
@@ -634,24 +634,24 @@ static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxtRef rc,
   unsigned int i;
   BOOL ret;
 
-  vec_init(&checked_ids, 16);
+  checked_ids.init(16);
 
   ret = TRUE;
   POR_DEBUG({
     unsigned int _i;
-    for (_i = 0; _i < vec_num(d->ample_cand); _i++) {
-      ContextC1Ref _c_ = (ContextC1Ref)vec_get(d->ample_cand, _i);
+    for (_i = 0; _i < d->ample_cand->get_num(); _i++) {
+      ContextC1Ref _c_ = (ContextC1Ref)d->ample_cand->get(_i);
       printf("AMP[id=%u, delta=%lu]\n", _c_->id, (LmnWord)_c_->d);
     }
   });
-  for (i = 0; i < vec_num(working_set); i++) {
-    ContextC1Ref c = (ContextC1Ref)vec_get(working_set, i);
+  for (i = 0; i < working_set->get_num(); i++) {
+    ContextC1Ref c = (ContextC1Ref)working_set->get(i);
     if (!c->is_ample_cand) {
       d->cur_depth = 0;
       c->is_on_path = TRUE;
       dmem_root_commit(c->d);
       ret = dpor_explore_subgraph(d, c, &checked_ids);
-      vec_push(&checked_ids, c->id);
+      checked_ids.push(c->id);
       dmem_root_revert(c->d);
       c->is_on_path = FALSE;
       if (!ret)
@@ -659,7 +659,7 @@ static BOOL dpor_satisfied_C1(McDporData *d, LmnReactCxtRef rc,
     }
   }
 
-  vec_destroy(&checked_ids);
+  checked_ids.destroy();
   return ret;
 }
 
@@ -687,7 +687,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc)
     dpor_contextC1_dump_eachR(c);
   });
 
-  if (ret != c && !vec_contains(RC_MEM_DELTAS(rc), (vec_data_t)ret->d)) {
+  if (ret != c && !RC_MEM_DELTAS(rc)->contains((vec_data_t)ret->d)) {
     POR_DEBUG({
       printf("detected same trans id=%u\n", ret->id);
       printf("aborted trans_id=%u\n", c->id);
@@ -696,7 +696,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc)
     });
 
     if (!ret->is_ample_cand) {
-      if (!vec_contains(RC_MEM_DELTAS(rc), (vec_data_t)ret->d)) {
+      if (!RC_MEM_DELTAS(rc)->contains((vec_data_t)ret->d)) {
         POR_DEBUG(printf("push succ\n\n"));
         mc_react_cxt_add_mem_delta(rc, ret->d, NULL);
       }
@@ -706,7 +706,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc)
     return FALSE;
   } else {
     st_add_direct(mc->delta_tbl, (st_data_t)d, (st_data_t)c);
-    vec_push(mc->free_deltas, (vec_data_t)d);
+    mc->free_deltas->push((vec_data_t)d);
     return TRUE;
   }
 }
@@ -752,27 +752,27 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
   succ_i = 0;
   succ_tbl = RC_SUCC_TBL(rc);
 
-  for (i = 0; i < vec_num(RC_EXPANDED(rc)); i++) { /* ごめんなさいort */
+  for (i = 0; i < RC_EXPANDED(rc)->get_num(); i++) { /* ごめんなさいort */
     State *succ_s;
     if (s->has_trans_obj()) {
-      TransitionRef succ_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
+      TransitionRef succ_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
       succ_s = transition_next_state(succ_t);
       transition_free(succ_t);
     } else {
-      succ_s = (State *)vec_get(RC_EXPANDED(rc), i);
+      succ_s = (State *)RC_EXPANDED(rc)->get(i);
     }
     delete (succ_s);
   }
 
   satisfied_C3 = TRUE;
-  for (i = 0; i < vec_num(ample_set); i++) {
+  for (i = 0; i < ample_set->get_num(); i++) {
     TransitionRef src_t;
     st_data_t tmp;
     State *src_succ, *succ;
     MemDeltaRoot *succ_d;
     ContextC1Ref succ_c;
 
-    succ_c = (ContextC1Ref)vec_get(ample_set, i);
+    succ_c = (ContextC1Ref)ample_set->get(i);
     succ_d = succ_c->d;
     src_succ = new State();
     state_set_parent(src_succ, s);
@@ -789,14 +789,14 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (mc_is_dump(f))
         dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
       if (new_ss) {
-        vec_push(new_ss, (vec_data_t)succ);
+        new_ss->push((vec_data_t)succ);
       }
     } else {
       delete (src_succ);
       if (s->has_trans_obj()) {
         transition_set_state(src_t, succ);
       } else {
-        vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
+        RC_EXPANDED(rc)->set(i, (vec_data_t)succ);
       }
     }
 
@@ -808,7 +808,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
       st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
       st_add_direct(succ_tbl, (st_data_t)succ, ins);
-      vec_set(RC_EXPANDED(rc), succ_i++, ins);
+      RC_EXPANDED(rc)->set(succ_i++, ins);
     } else {
       if (s->has_trans_obj()) {
         transition_free(src_t);
@@ -818,14 +818,14 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
   if (!satisfied_C3) {
     /* ample set以外の遷移も展開する */
-    for (i = 0; i < vec_num(contextC1_set); i++) {
+    for (i = 0; i < contextC1_set->get_num(); i++) {
       TransitionRef src_t;
       st_data_t tmp;
       State *src_succ, *succ;
       MemDeltaRoot *succ_d;
       ContextC1Ref succ_c;
 
-      succ_c = (ContextC1Ref)vec_get(contextC1_set, i);
+      succ_c = (ContextC1Ref)contextC1_set->get(i);
 
       if (succ_c->is_ample_cand)
         continue; /* さっき登録した */
@@ -846,14 +846,14 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         if (mc_is_dump(f))
           dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
         if (new_ss) {
-          vec_push(new_ss, (vec_data_t)succ);
+          new_ss->push((vec_data_t)succ);
         }
       } else {
         delete (src_succ);
         if (s->has_trans_obj()) {
           transition_set_state(src_t, succ);
         } else {
-          vec_set(RC_EXPANDED(rc), i, (vec_data_t)succ);
+          RC_EXPANDED(rc)->set(i, (vec_data_t)succ);
         }
       }
 
@@ -861,7 +861,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
         st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
         st_add_direct(succ_tbl, (st_data_t)succ, ins);
-        vec_set(RC_EXPANDED(rc), succ_i++, ins);
+        RC_EXPANDED(rc)->set(succ_i++, ins);
       } else {
         if (s->has_trans_obj()) {
           transition_free(src_t);
@@ -872,15 +872,15 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 #ifdef DEBUG
   else if (lmn_env.show_reduced_graph) {
     if (!reduced_stack) {
-      reduced_stack = vec_make(512);
+      reduced_stack = new Vector(512);
     }
-    for (i = 0; i < vec_num(contextC1_set); i++) {
+    for (i = 0; i < contextC1_set->get_num(); i++) {
       State *src_succ;
       MemDeltaRoot *succ_d;
       ContextC1Ref succ_c;
       TransitionRef src_t;
 
-      succ_c = (ContextC1Ref)vec_get(contextC1_set, i);
+      succ_c = (ContextC1Ref)contextC1_set->get(i);
 
       if (succ_c->is_ample_cand)
         continue; /* さっき登録した */
@@ -899,7 +899,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (!src_succ->is_encoded()) {
         src_succ->state_set_binstr(state_calc_mem_dump(src_succ));
       }
-      vec_push(reduced_stack, (vec_data_t)src_t);
+      reduced_stack->push((vec_data_t)src_t);
       dmem_root_revert(succ_d); /* 元に戻す */
     }
   }
@@ -924,8 +924,8 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
   } else {
     Vector v_key, v_val;
 
-    vec_init(&v_key, 32);
-    vec_init(&v_val, 32);
+    v_key.init(32);
+    v_val.init(32);
     st_get_entries_key(d->delta_tbl, &v_key);
     st_get_entries_value(d->delta_tbl, &v_val);
     dpor_dependency_check(d, &v_key, d->ample_cand);
@@ -939,27 +939,27 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
 #ifdef DEBUG
     if (!lmn_env.debug_por_dep) {
 #endif
-      if (vec_num(d->ample_cand) == 0) {
+      if (d->ample_cand->is_empty()) {
         ContextC1Ref c;
         st_data_t t;
-        if (st_lookup(d->delta_tbl, (st_data_t)vec_get(RC_MEM_DELTAS(rc), 0),
+        if (st_lookup(d->delta_tbl, (st_data_t)RC_MEM_DELTAS(rc)->get(0),
                       &t)) {
           c = (ContextC1Ref)t;
           c->is_ample_cand = TRUE; /* だいじ */
         } else {
           lmn_fatal("unexpected");
         }
-        vec_push(d->ample_cand, (vec_data_t)c);
+        d->ample_cand->push((vec_data_t)c);
       }
 
-      if (vec_num(d->ample_cand) == mc_react_cxt_succ_num_org(rc)) {
+      if (d->ample_cand->get_num() == mc_react_cxt_succ_num_org(rc)) {
         POR_DEBUG(printf("@@ ample cand == succ num\n"));
         mc_store_successors(ss, s, rc, new_s, flag);
       } else {
 
         unsigned int i;
-        for (i = 0; i < vec_num(d->ample_cand); i++) {
-          ((ContextC1Ref)vec_get(d->ample_cand, i))->is_ample_cand = TRUE;
+        for (i = 0; i < d->ample_cand->get_num(); i++) {
+          ((ContextC1Ref)d->ample_cand->get(i))->is_ample_cand = TRUE;
         }
 
         if (!dpor_satisfied_C1(d, rc, &v_val)) {
@@ -972,8 +972,8 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         }
       }
 
-      vec_destroy(&v_key);
-      vec_destroy(&v_val);
+      v_key.destroy();
+      v_val.destroy();
 #ifdef DEBUG
       /* 独立な遷移に"indep", 依存遷移に"depends"と名前をつける */
     } else {
@@ -983,8 +983,8 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         State *succ;
         lmn_interned_str name = lmn_intern("ind");
 
-        for (j = 0; j < vec_num(d->ample_cand); j++) {
-          ContextC1Ref c = (ContextC1Ref)vec_get(d->ample_cand, j);
+        for (j = 0; j < d->ample_cand->get_num(); j++) {
+          ContextC1Ref c = (ContextC1Ref)d->ample_cand->get(j);
           if (c->id == i) {
             name = lmn_intern("dep");
             break;
@@ -1018,15 +1018,15 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
     f = 0x00U;
     mc_set_compress(f);
     mc_set_trans(f);
-    new_ss = vec_make(32);
-    search = vec_make(128);
+    new_ss = new Vector(32);
+    search = new Vector(128);
 
-    while (!vec_is_empty(reduced_stack)) {
+    while (!reduced_stack->is_empty()) {
       State *s, *parent, *ret, tmp_s;
       TransitionRef t;
       LmnMembraneRef s_mem;
 
-      t = (TransitionRef)vec_pop(reduced_stack);
+      t = (TransitionRef)reduced_stack->pop();
       s = transition_next_state(t);
       parent = state_get_parent(s);
       parent->succ_add((succ_data_t)t);
@@ -1036,7 +1036,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       if (ret == s) {
         s->s_set_reduced();
         lmn_mem_free_rec(s_mem);
-        vec_push(search, (vec_data_t)s);
+        search->push((vec_data_t)s);
       } else {
         transition_set_state(t, ret);
         delete (s);
@@ -1045,12 +1045,12 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       tmp_s.free_mem();
     }
 
-    while (!vec_is_empty(search)) {
+    while (!search->is_empty()) {
       State *s;
       AutomataStateRef p_s;
       unsigned int i;
 
-      s = (State *)vec_pop(search);
+      s = (State *)search->pop();
       p_s = MC_GET_PROPERTY(s, ss->automata());
 
       s->s_set_reduced();
@@ -1058,24 +1058,24 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
 
       for (i = 0; i < s->successor_num; i++) {
         TransitionRef succ_t = transition(s, i);
-        vec_clear(&succ_t->rule_names);
+        succ_t->rule_names.clear();
         transition_add_rule(succ_t, lmn_intern("reduced"), 0U);
       }
 
-      for (i = 0; i < vec_num(new_ss); i++) {
-        vec_push(search, vec_get(new_ss, i));
+      for (i = 0; i < new_ss->get_num(); i++) {
+        search->push(new_ss->get(i));
       }
 
-      vec_clear(new_ss);
+      new_ss->clear();
     }
 
     lmn_env.enable_por = org_por;
     lmn_env.enable_por_old = org_old;
     lmn_env.delta_mem = org_del;
 
-    vec_free(reduced_stack);
-    vec_free(new_ss);
-    vec_free(search);
+    delete reduced_stack;
+    delete new_ss;
+    delete search;
   }
 }
 
@@ -1111,20 +1111,20 @@ void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
 }
 
 void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms) {
-  vec_push(d->wt_gatoms, (vec_data_t)atoms);
+  d->wt_gatoms->push((vec_data_t)atoms);
 }
 
 void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms) {
-  if (vec_peek(d->wt_gatoms) == (vec_data_t)atoms) {
-    vec_pop(d->wt_gatoms);
+  if (d->wt_gatoms->peek() == (vec_data_t)atoms) {
+    d->wt_gatoms->pop();
   } else {
     /* pushした順にpopされるので, ここに来ることはまずないが念のため書いておく
      */
     unsigned int i;
-    for (i = 0; i < vec_num(d->wt_gatoms); i++) {
-      vec_data_t t = vec_get(d->wt_gatoms, i);
+    for (i = 0; i < d->wt_gatoms->get_num(); i++) {
+      vec_data_t t = d->wt_gatoms->get(i);
       if (t == (vec_data_t)atoms) {
-        vec_pop_n(d->wt_gatoms, i);
+        d->wt_gatoms->pop_n(i);
       }
     }
   }
@@ -1220,7 +1220,7 @@ static inline void dpor_RHS_flags_dump(BYTE f) {
 int dpor_dependency_tbl_dump(McDporData *d) {
   unsigned int i, n;
 
-  n = vec_num(d->ample_cand);
+  n = d->ample_cand->get_num();
   if (n == 0) {
     printf("Tr all independent\n");
   } else {
