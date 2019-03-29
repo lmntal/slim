@@ -393,7 +393,7 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
 
 void dpor_env_init(void) {
   if (lmn_env.enable_por_old) {
-    init_por_vars();
+    mc_por.init_por_vars();//called only once  --by sumiya 2019/03/29
   } else {
     unsigned int i, n;
     n = lmn_env.core_num;
@@ -406,7 +406,7 @@ void dpor_env_init(void) {
 
 void dpor_env_destroy(void) {
   if (lmn_env.enable_por_old) {
-    free_por_vars();
+    mc_por.free_por_vars();//called only once  --by sumiya 2019/03/29
   } else {
     unsigned int i, n;
     n = lmn_env.core_num;

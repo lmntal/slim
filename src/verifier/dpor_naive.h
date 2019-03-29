@@ -49,10 +49,33 @@
 #include "element/element.h"
 #include "statespace.h"
 
+struct McPorData {
+	State *root;
+	st_table_t
+	    strans_independency; 	/* 独立性情報テーブル:
+                            	*   構造体StateTransitionのidをキーとし
+                            	*   bins[id]は高々1個のエントリー(Vector)を持つ．
+                            	*   Vectorには,
+                            	* キーであるidの遷移と独立関係にある遷移idが積まれる.
+                            	*/
+	st_table_t
+	    states; /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
+	Queue *queue; /* C1のチェックにあたってstate graphを展開する際に使用 */
+	Vector *
+	    ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
+                        */
+	std::unique_ptr<MCReactContext> rc;
+	unsigned long next_strans_id;
+	BOOL flags;
+	McPorData();
+	void init_por_vars();
+	void free_por_vars();
+};
+static McPorData mc_por;
+
 void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                        Vector *new_s, BOOL flag);
-void init_por_vars(void);
-void free_por_vars(void);
+//void McPorData::init_por_vars();
 
 /* @} */
 

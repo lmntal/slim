@@ -61,25 +61,7 @@
  * Equivalent保証)が未実装. Rev.108よりReduction率がなぜか弱い.
  */
 
-struct McPorData {
-  State *root;
-  st_table_t
-      strans_independency; /* 独立性情報テーブル:
-                            *   構造体StateTransitionのidをキーとし
-                            *   bins[id]は高々1個のエントリー(Vector)を持つ．
-                            *   Vectorには,
-                            * キーであるidの遷移と独立関係にある遷移idが積まれる.
-                            */
-  st_table_t
-      states; /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
-  Queue *queue; /* C1のチェックにあたってstate graphを展開するする際に使用 */
-  Vector *
-      ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
-                        */
-  std::unique_ptr<MCReactContext> rc;
-  unsigned long next_strans_id;
-  BOOL flags;
-} mc_por;
+
 
 namespace c14 = slim::element;
 
@@ -148,27 +130,31 @@ int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a);
 void dump__ample_candidate(void);
 int dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a);
 
+
+McPorData::McPorData(){// aete nanimo nashi
+}
+
 /**
  * PORの変数やデータ構造の初期化を行う
  */
-void init_por_vars() {
-  mc_por.root = NULL;
-  mc_por.strans_independency = st_init_numtable();
-  mc_por.states = st_init_statetable();
-  mc_por.queue = new Queue();
-  mc_por.ample_candidate = new Vector(POR_VEC_SIZE);
-  mc_por.next_strans_id = POR_ID_INITIALIZER; /* 0は使用しない */
-  mc_por.rc = nullptr;
-  mc_por.flags = 0x00U;
+void McPorData::init_por_vars() {// instance tsukurareta toki shokika niha joken aru rashi --sumiya
+  root = NULL;
+  strans_independency = st_init_numtable();
+  states = st_init_statetable();
+  queue = new Queue();
+  ample_candidate = new Vector(POR_VEC_SIZE);
+  next_strans_id = POR_ID_INITIALIZER; /* 0は使用しない */
+  rc = nullptr;
+  flags = 0x00U;
 }
 
-void free_por_vars() {
-  st_free_table(mc_por.states);
-  st_free_table(mc_por.strans_independency);
-  delete mc_por.queue;
-  delete mc_por.ample_candidate;
-  if (mc_por.rc) {
-    mc_por.rc = nullptr;
+void McPorData::free_por_vars() {
+  st_free_table(states);
+  st_free_table(strans_independency);
+  delete queue;
+  delete ample_candidate;
+  if (rc) {
+    rc = nullptr;
   }
 }
 
