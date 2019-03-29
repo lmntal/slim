@@ -113,12 +113,28 @@ struct AutomataTransition {
 };
 
 struct AutomataSCC {
+private:
   unsigned int id;
   BYTE type;
-
+  static unsigned int unsafe_id_counter;
+public:
   AutomataSCC();
   ~AutomataSCC();
   const char *get_name();
+/** CAUTION: MT-Unsafe */
+  void issue_id(){
+  	id = unsafe_id_counter++;
+	//Is it checked by test cases? by sumiya
+  }
+  unsigned int get_id(){
+  	return id;
+  }
+  BYTE get_type(){
+  	return type;
+  }
+  void set_type(BYTE t){
+  	type = t;
+  }
 };
 
 enum SCC_ACCEPTING_TYPE {
