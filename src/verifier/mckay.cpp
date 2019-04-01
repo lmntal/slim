@@ -115,46 +115,21 @@ bool listMcKayInner(
         !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
             stabilizer, cAfterGraph, gapOfGlobalRootMemID);
+  } else {
+    for (auto i = 0; i < beginSentinel->size(); i++) {
+      auto new_l = stabilizer.emplace(beginSentinel,
+                                      std::list<ConvertedGraphVertex *>());
+      new_l->splice(new_l->begin(), *beginSentinel,
+                    std::next(beginSentinel->begin(), i),
+                    std::next(std::next(beginSentinel->begin(), i)));
+      listMcKayInner(
+          stabilizer, cAfterGraph, gapOfGlobalRootMemID,
+          discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
+      beginSentinel->splice(std::next(beginSentinel->begin(), i), *new_l,
+                            new_l->begin(), std::next(new_l->begin()));
+      stabilizer.erase(new_l);
+    }
   }
-  // else {
-  //   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //   Bool isFirstLoop = TRUE;
-
-  //   auto endSentinel = getNextSentinel(beginSentinel);
-  //   auto sentinelCell =
-  //       stabilizer->insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
-
-  //   for (auto iteratorCell = sentinelCell;
-  //        std::next(iteratorCell, 1) != endSentinel;
-  //        iteratorCell = std::next(iteratorCell, 1)) {
-  //     auto splitCell = std::next(iteratorCell, 1);
-
-  //     if (isNewSplit(sentinelCell, splitCell)) {
-  //       printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //       stabilizer->splice(std::next(beginSentinel, 1), *stabilizer,
-  //       splitCell);
-
-  //       Bool isUsefulChild = listMcKayInner(
-  //           stabilizer, cAfterGraph, gapOfGlobalRootMemID,
-  //           discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
-  //       printf("%s:%d\n", __FUNCTION__, __LINE__);
-  //       stabilizer->splice(std::next(iteratorCell, 1), *stabilizer,
-  //       splitCell); printf("%s:%d\n", __FUNCTION__, __LINE__); if
-  //       (isFirstLoop) {
-  //         isFirstLoop = FALSE;
-  //         if (!isUsefulChild) {
-  //           isUsefulBranch = FALSE;
-  //           break;
-  //         } else {
-  //           isUsefulBranch = TRUE;
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-
-  // delete (stabilizer);
-
   return isUsefulBranch;
 }
 
