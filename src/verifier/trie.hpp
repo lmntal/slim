@@ -65,22 +65,28 @@ converted_graph_vertex_cmp(const ConvertedGraphVertex *lhs,
     return true;
   } else if (strcmp(lhs->name, rhs->name) > 0) {
     return false;
-  } else if (l_m.at(lhs->ID).size() < r_m.at(rhs->ID).size()) {
-    return true;
-  } else if (l_m.at(lhs->ID).size() > r_m.at(rhs->ID).size()) {
-    return false;
   } else {
-    auto l_it = l_m.at(lhs->ID).begin();
-    auto r_it = r_m.at(rhs->ID).begin();
-    for (; l_it != l_m.at(lhs->ID).end() and r_it != r_m.at(rhs->ID).end();
-         l_it++, r_it++) {
-      if (*l_it < *r_it) {
-        return true;
-      } else if (*l_it > *r_it) {
-        return false;
+    auto l_key = l_m.find(lhs->ID);
+    auto r_key = r_m.find(rhs->ID);
+    if (l_key == l_m.end() and r_key == r_m.end()) {
+      return false;
+    } else if (l_key == l_m.end() and r_key != r_m.end()) {
+      return true;
+    } else if (l_key != l_m.end() and r_key == r_m.end()) {
+      return false;
+    } else {
+      auto l_it = l_m.at(lhs->ID).begin();
+      auto r_it = r_m.at(rhs->ID).begin();
+      for (; l_it != l_m.at(lhs->ID).end() and r_it != r_m.at(rhs->ID).end();
+           l_it++, r_it++) {
+        if (*l_it < *r_it) {
+          return true;
+        } else if (*l_it > *r_it) {
+          return false;
+        }
       }
+      return false;
     }
-    return false;
   }
 }
 struct PropagationListCmp {

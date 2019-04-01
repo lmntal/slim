@@ -34,17 +34,23 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
   propagation_list *preserveDPList = new propagation_list(dpList);
 
   auto &key = *preserveDPList;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   auto seniorDPList =
       discretePropagationListsOfInheritedVerticesWithAdjacentLabels.find(key);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (seniorDPList ==
       discretePropagationListsOfInheritedVerticesWithAdjacentLabels.end()) {
+    std::cout << "NEW" << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     discretePropagationListsOfInheritedVerticesWithAdjacentLabels.insert(
         std::make_pair(key, preserveDPList));
     isExisting = false;
     return isExisting;
-  } // else {
+  } else {
+    std::cout << "EXIST" << std::endl;
+  }
+
+  // else {
   //   auto iteratorCell = std::begin(*preserveDPList);
   //   auto iteratorCellSenior = std::begin(*seniorDPList->second);
 
