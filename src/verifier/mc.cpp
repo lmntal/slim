@@ -441,6 +441,30 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ_m = NULL;
     } else {                              /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
+
+      /*
+        ===== Diffiso ====
+       */
+      src_succ->graphinfo = new Graphinfo(src_succ_m);
+      printf("===org===\n");
+      std::cout << *s->graphinfo->cv << std::endl;
+      printf("===succ===\n");
+      std::cout << *src_succ->graphinfo->cv << std::endl;
+      DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
+      std::map<int, int> rev_iso;
+      for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
+        rev_iso[i->second] = i->first;
+      }
+      dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
+      dif->diffInfoDump();
+      if(s->trie) {
+	s->trie->dump();
+	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo);
+      }
+
+      /*
+        ==================
+       */
       succ = statespace_insert(ss, src_succ);
     }
 
@@ -465,22 +489,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     }
 #endif
     /*
-      ===== Diffiso ====
+      =================
      */
 
-    src_succ->graphinfo = new Graphinfo(src_succ_m);
-    printf("===org===\n");
-    std::cout << *s->graphinfo->cv << std::endl;
-    printf("===succ===\n");
-    std::cout << *src_succ->graphinfo->cv << std::endl;
-    DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
-    // dif->diffInfoDump();
-    std::map<int, int> rev_iso;
-    for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
-      rev_iso[i->second] = i->first;
-    }
-    dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
-    dif->diffInfoDump();
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
