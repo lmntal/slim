@@ -246,9 +246,6 @@ propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
     auto canonicalDiscreteRefinement =
         listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
 
-    std::cout << "###### after list propagate ######" << std::endl;
-    std::cout << canonicalDiscreteRefinement << std::endl;
-
     return canonicalDiscreteRefinement;
   }
 }

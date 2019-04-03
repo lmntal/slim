@@ -149,9 +149,10 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   diff->diffInfoDump();
   init_s->trie = new Trie();
   init_s->graphinfo = init;
-  auto l = trieMcKay(init_s->trie, diff, init, empty);
-  // std::cout << l << std::endl;
+  init_s->canonical_label = trieMcKay(init_s->trie, diff, init, empty);
+  std::cout << init_s->canonical_label << std::endl;
   init_s->trie->dump();
+  delete diff;
   /*
     ===== Diffiso ====
    */
@@ -279,6 +280,9 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     ===== Diffiso ====
    */
   /** restore : 膜の復元 */
+
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << s->canonical_label << std::endl;
   mem = state_restore_mem(s);
   // lmn_dump_mem_dev(mem);
 
@@ -465,10 +469,10 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
      */
 
     src_succ->graphinfo = new Graphinfo(src_succ_m);
-    // printf("===org===\n");
-    // convertedGraphDump(s->graphinfo->cv);
-    // printf("===succ===\n");
-    // convertedGraphDump(src_succ->graphinfo->cv);
+    printf("===org===\n");
+    std::cout << *s->graphinfo->cv << std::endl;
+    printf("===succ===\n");
+    std::cout << *src_succ->graphinfo->cv << std::endl;
     DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
     // dif->diffInfoDump();
     std::map<int, int> rev_iso;
@@ -476,7 +480,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       rev_iso[i->second] = i->first;
     }
     dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
-    // dif->diffInfoDump();
+    dif->diffInfoDump();
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
