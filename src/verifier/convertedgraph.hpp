@@ -404,13 +404,13 @@ inline std::ostream &operator<<(std::ostream &os, const ConvertedGraph &cGraph) 
   os << "CONVERTED ATOMS:\n";
   for (auto &kv : cGraph.atoms) {
     os << kv.first << ":";
-    os << kv.second;
+    os << *kv.second;
     os << "\n";
   }
   os << "CONVERTED HYPERLINKS:\n";
   for (auto &kv : cGraph.hyperlinks) {
     os << kv.first << ":";
-    os << kv.second;
+    os << *kv.second;
     os << "\n";
   }
   return os;
