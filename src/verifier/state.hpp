@@ -109,6 +109,7 @@ struct State {                /* Total:72(36)byte */
   State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
   Graphinfo *graphinfo;
   Trie *trie;
+  propagation_list canonical_label;
 #ifndef MINIMAL_STATE
   BYTE *
       local_flags; /*  8(4)byte:
@@ -549,7 +550,9 @@ public:
     state_expand_lock_init();
 #endif
     s_set_fresh();
-
+    graphinfo=nullptr;
+    trie=nullptr;
+    canonical_label=std::list<std::list<ConvertedGraphVertex*>>();
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
