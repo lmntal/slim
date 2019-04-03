@@ -71,7 +71,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   }
 
   if (!lmn_env.nd_remain && !lmn_env.nd_remaining) {
-    mem = lmn_mem_make();
+    mem = new LmnMembrane();
   }
 
   react_start_rulesets(mem, start_rulesets);
@@ -84,7 +84,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   } else {
     lmn_env.nd_remaining = FALSE;
     lmn_mem_drop(mem);
-    lmn_mem_free(mem);
+    delete mem;
   }
 }
 
@@ -401,19 +401,19 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   BOOL ret_flag = FALSE;
 
-  for (; cur_mem; cur_mem = lmn_mem_next(cur_mem)) {
+  for (; cur_mem; cur_mem = cur_mem->mem_next()) {
     unsigned long org_num = mc_react_cxt_expanded_num(rc);
 
     /* 代表子膜に対して再帰する */
-    if (mc_expand_inner(rc, lmn_mem_child_head(cur_mem))) {
+    if (mc_expand_inner(rc, cur_mem->mem_child_head())) {
       ret_flag = TRUE;
     }
-    if (lmn_mem_is_active(cur_mem)) {
+    if (cur_mem->is_active()) {
       react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
     if (org_num == mc_react_cxt_expanded_num(rc)) {
-      lmn_mem_set_active(cur_mem, FALSE);
+      cur_mem->set_active(FALSE);
     }
   }
 

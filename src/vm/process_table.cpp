@@ -48,7 +48,7 @@ template <> ProcessID process_id<LmnSymbolAtomRef>(LmnSymbolAtomRef atom) {
 }
 
 template <> ProcessID process_id<LmnMembraneRef>(LmnMembraneRef mem) {
-  return lmn_mem_id(mem);
+  return mem->mem_id();
 }
 
 template <> ProcessID process_id<HyperLink *>(HyperLink *hl) {

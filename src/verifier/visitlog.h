@@ -188,7 +188,7 @@ struct VisitLog {
   }
   /* ログに膜を追加し, 正の値を返す. すでに膜が存在した場合は0を返す */
   int put_mem(LmnMembraneRef mem) {
-    return this->put(lmn_mem_id(mem));
+    return this->put(mem->mem_id());
   }
   /* ログにハイパーリンクを追加し, 正の値を返す.
    * すでにハイパーリンクが存在した場合は0を返す */

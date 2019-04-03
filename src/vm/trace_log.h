@@ -129,8 +129,8 @@ struct TraceLog : ProcessTable<TraceData> {
   TraceLog(unsigned long size) : ProcessTable<TraceData>(size) {}
   TraceLog() : ProcessTable<TraceData>() {}
   unsigned int traversed_proc_count(LmnMembraneRef owner) {
-    return this->contains(lmn_mem_id(owner))
-               ? (*this)[lmn_mem_id(owner)].traversed_proc
+    return this->contains(owner->mem_id())
+               ? (*this)[owner->mem_id()].traversed_proc
                : 0;
   }
 
@@ -141,7 +141,7 @@ struct TraceLog : ProcessTable<TraceData> {
     size_t s1 = in_ent ? in_ent->size() : 0;
     size_t s2 = avoid ? avoid->size() : 0;
     return traversed_proc_count(owner) ==
-           (lmn_mem_symb_atom_num(owner) + lmn_mem_child_mem_num(owner) +
+           (owner->symb_atom_num() + lmn_mem_child_mem_num(owner) +
             s1 - s2);
   }
 
@@ -159,12 +159,12 @@ private:
     TraceData value = {flag, 0, 0, matched_id};
 
     if (owner) {
-      value.owner_id = lmn_mem_id(owner);
+      value.owner_id = owner->mem_id();
 
       TraceData dat;
-      this->get(lmn_mem_id(owner), &dat);
+      this->get(owner->mem_id(), &dat);
       dat.traversed_proc++;
-      this->put(lmn_mem_id(owner), dat);
+      this->put(owner->mem_id(), dat);
     }
 
     this->put(key, value);
@@ -186,8 +186,8 @@ public:
 /* ログに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
  * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
   bool visit_mem(LmnMembraneRef mem1, LmnWord mem2_id) {
-    return this->visit(lmn_mem_id(mem1), TraceData::options::TRAVERSED_MEM,
-                       mem2_id, lmn_mem_parent(mem1));
+    return this->visit(mem1->mem_id(), TraceData::options::TRAVERSED_MEM,
+                       mem2_id, mem1->mem_parent());
   }
 
 /* ログに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.

@@ -51,21 +51,21 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
   LmnMembraneRef m, next;
   BOOL ok = FALSE;
 
-  for (m = lmn_mem_child_head(mem); m; m = next) {
-    next = lmn_mem_next(m);
-    if ((LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_RULESET_MEM_NAME) ||
-         LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) &&
-        lmn_mem_nfreelinks(m, 0) && lmn_mem_atom_num(m) == 0 &&
+  for (m = mem->mem_child_head(); m; m = next) {
+    next = m->mem_next();
+    if ((m->NAME_ID() == lmn_intern(INITIAL_RULESET_MEM_NAME) ||
+         m->NAME_ID() == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) &&
+        lmn_mem_nfreelinks(m, 0) && m->atom_num() == 0 &&
         lmn_mem_child_mem_num(m) == 0) {
       int i, j;
 
-      for (i = 0; i < lmn_mem_ruleset_num(m); i++) {
+      for (i = 0; i < m->ruleset_num(); i++) {
         LmnRuleSetRef rs = lmn_mem_get_ruleset(m, i);
 
         for (auto r : *rs) {
-          if (LMN_MEM_NAME_ID(m) == lmn_intern(INITIAL_RULESET_MEM_NAME)) {
+          if (m->NAME_ID() == lmn_intern(INITIAL_RULESET_MEM_NAME)) {
             lmn_add_initial_rule(new LmnRule(*r));
-          } else if (LMN_MEM_NAME_ID(m) ==
+          } else if (m->NAME_ID() ==
                      lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) {
             lmn_add_initial_system_rule(new LmnRule(*r));
           }

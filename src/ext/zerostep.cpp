@@ -53,10 +53,10 @@
  *   メモリアクセス違反が起きないように膜のメモリを解放できるような仕様にする。
  */
 void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem) {
-  LmnMembraneRef parent = lmn_mem_parent(mem);
+  LmnMembraneRef parent = mem->mem_parent();
 
   /* ルールセットに0step属性をつけて親膜に移動 */
-  for (int i = 0; i < lmn_mem_ruleset_num(mem); i++) {
+  for (int i = 0; i < mem->ruleset_num(); i++) {
     LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
     rs->validate_zerostep();
     lmn_mem_add_ruleset(parent, new LmnRuleSet(*rs));

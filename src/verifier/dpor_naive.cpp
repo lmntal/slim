@@ -353,7 +353,7 @@ static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
   if (mc_use_compress(mc_por.flags)) {
     if (!s->state_mem()) { /* compact-stack */
       lmn_mem_drop(mem);
-      lmn_mem_free(mem);
+      delete mem;
     } else {
       s->free_mem();
     }

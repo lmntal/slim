@@ -184,7 +184,7 @@ static void contextC1_expand_LHS(McDporData *d, ContextC1Ref c,
     if (r->register_tt() == TT_ATOM && !LMN_ATTR_IS_DATA(r->register_at())) {
       key = ((LmnSymbolAtomRef)r->register_wt())->get_id();
     } else if (r->register_tt() == TT_MEM) {
-      key = lmn_mem_id((LmnMembraneRef)r->register_wt());
+      key = ((LmnMembraneRef)r->register_wt())->mem_id();
       if (i == 0) {
         dpor_LHS_flag_add(d, key, LHS_MEM_GROOT);
       }
@@ -251,8 +251,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
   if (d->new_atoms.get_num() > 0 || d->del_atoms.get_num() > 0 ||
       d->data_atom_diff != 0) {
     int n = d->new_atoms.get_num() + d->data_atom_diff - d->del_atoms.get_num();
-    if (lmn_mem_atom_num(mem) != n) {
-      contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NATOMS);
+    if (mem->atom_num() != n) {
+      contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NATOMS);
     }
     need_act_check = TRUE;
   }
@@ -262,27 +262,27 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
   if (d->new_mems.get_num() > 0 || d->del_mems.get_num() > 0) {
     int n = d->new_mems.get_num() - d->del_mems.get_num();
     if (lmn_mem_child_mem_num(mem) != n) {
-      contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NMEMS);
+      contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NMEMS);
     }
     need_act_check = TRUE;
   }
 
   if (!d->new_proxies.is_empty()) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NFLINKS);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NFLINKS);
     need_act_check = TRUE;
   }
 
   /* ルールセットが消滅(clearrules)する場合, memが左辺に出現する遷移に依存する
    */
   if (d->ruleset_removed) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_EXISTS);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_EXISTS);
     need_act_check = TRUE;
   }
 
   /* 新たなルールセットが追加される場合,
    * memに対するnorules命令が左辺に出現する遷移に依存する */
   if (d->new_rulesets) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NORULES);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NORULES);
     need_act_check = TRUE;
   }
 
@@ -297,20 +297,20 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
 
   /* inside proxyアトムが削除されていた場合 */
   if (need_flink_check) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NFLINKS);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NFLINKS);
     need_act_check = TRUE;
   }
 
   /* 子膜が削除されるなら, その膜が左辺に出現した遷移に依存する */
   for (i = 0; i < d->del_mems.get_num(); i++) {
     LmnMembraneRef m = (LmnMembraneRef)d->del_mems.get(i);
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(m), OP_DEP_EXISTS);
+    contextC1_RHS_tbl_put(c->RHS_procs, m->mem_id(), OP_DEP_EXISTS);
   }
 
   /* 膜名が変更された場合,
    * その膜をanymem等で走査した遷移(つまりwt[0]以外のTT_MEM)に依存する */
   if (d->org_name != d->new_name) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem),
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(),
                           OP_DEP_EXISTS_EX_GROOT);
     need_act_check = TRUE;
   }
@@ -319,8 +319,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
    * 辿れる限りの所属膜に対するSTABLE判定に依存する */
   if (need_act_check) {
     while (mem) {
-      contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_STABLE);
-      mem = lmn_mem_parent(mem);
+      contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_STABLE);
+      mem = mem->mem_parent();
     }
   }
 }

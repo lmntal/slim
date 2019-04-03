@@ -86,7 +86,7 @@ MemDeltaRoot::~MemDeltaRoot() {
 
       delete new_mem_info;
       lmn_mem_drop(mem);
-      lmn_mem_free(mem);
+      delete mem;
     } else {
       lmn_fatal("unexpected");
     }
@@ -134,7 +134,7 @@ BOOL MemDeltaRoot::is_delta_mem(LmnMembraneRef m) const{
 }
 
 BOOL MemDeltaRoot::is_new_mem(LmnMembraneRef m) const{
-  return lmn_mem_id(m) >= this->new_proc_id_lower_limit;
+  return m->mem_id() >= this->new_proc_id_lower_limit;
 }
 
 /* 膜mにアトムatomを追加 */
@@ -426,15 +426,15 @@ void MemDeltaRoot::copy_cells(struct MemDelta *d,
 
     proc_tbl_put_mem(atoms, m, (LmnWord)new_mem);
     /* copy name */
-    lmn_mem_set_name(new_mem, LMN_MEM_NAME_ID(m));
+    new_mem->set_name(m->NAME_ID());
     /* copy rulesets */
-    for (i = 0; i < lmn_mem_get_rulesets(m)->get_num(); i++) {
+    for (i = 0; i < m->get_rulesets()->get_num(); i++) {
       if (d)
         dmem_add_ruleset(d, new_mem,
-                         (LmnRuleSetRef)lmn_mem_get_rulesets(m)->get(i));
+                         (LmnRuleSetRef)m->get_rulesets()->get(i));
       else
         lmn_mem_add_ruleset(new_mem,
-                            (LmnRuleSetRef)lmn_mem_get_rulesets(m)->get(i));
+                            (LmnRuleSetRef)m->get_rulesets()->get(i));
     }
   });
 
@@ -796,8 +796,7 @@ void dmem_root_commit(struct MemDeltaRoot *d) {
             mem, (LmnMembraneRef)new_mem_info->removed_child_mems.get(j));
       }
       for (j = 0; j < new_mem_info->new_child_mems.get_num(); j++) {
-        lmn_mem_add_child_mem(
-            mem, (LmnMembraneRef)new_mem_info->new_child_mems.get(j));
+        mem->add_child_mem((LmnMembraneRef)new_mem_info->new_child_mems.get(j));
       }
     } else {
       lmn_fatal("unexpected");
@@ -893,8 +892,7 @@ void dmem_root_revert(struct MemDeltaRoot *d) {
             mem, (LmnMembraneRef)new_mem_info->new_child_mems.get(j));
       }
       for (j = new_mem_info->removed_child_mems.get_num() - 1; j >= 0; j--) {
-        lmn_mem_add_child_mem(
-            mem, (LmnMembraneRef)new_mem_info->removed_child_mems.get(j));
+        mem->add_child_mem((LmnMembraneRef)new_mem_info->removed_child_mems.get(j));
       }
     } else {
       lmn_fatal("unexpected");
@@ -962,7 +960,7 @@ static inline void dmem_root_revert_atom(struct MemDeltaRoot *d,
 void dmem_root_add_child_mem(struct MemDeltaRoot *d, LmnMembraneRef parent,
                              LmnMembraneRef child) {
   if (d->is_new_mem(child)) { /* 追加する方が新しい膜 */
-    lmn_mem_set_parent(child, parent);
+    child->set_parent(parent);
   } else { /* そうじゃない場合 */
     d->get_mem_delta(child)->new_parent = parent;
   }
@@ -978,7 +976,7 @@ void dmem_root_add_child_mem(struct MemDeltaRoot *d, LmnMembraneRef parent,
 void dmem_root_remove_mem(struct MemDeltaRoot *root_d, LmnMembraneRef parent,
                           LmnMembraneRef child) {
   if (root_d->is_new_mem(child)) {
-    lmn_mem_set_parent(child, NULL);
+    child->set_parent(NULL);
   } else {
     root_d->get_mem_delta(child)->new_parent = NULL;
   }
@@ -1103,8 +1101,7 @@ void dmem_root_remove_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem) {
           remove_list.push((LmnWord)a1);
         } else {
           if (f1 == LMN_OUT_PROXY_FUNCTOR &&
-              lmn_mem_parent(LMN_PROXY_GET_MEM(
-                  (LmnSymbolAtomRef)dmem_root_get_link(root_d, a1, 0))) !=
+              (LMN_PROXY_GET_MEM((LmnSymbolAtomRef)dmem_root_get_link(root_d, a1, 0)))->mem_parent() !=
                   mem) { /* (3) */
             if (!remove_list.contains((LmnWord)opxy)) {
               dmem_unify_atom_args(d, mem, opxy, 0, a1, 0);
@@ -1291,7 +1288,7 @@ void dmem_root_clear_ruleset(struct MemDeltaRoot *d, LmnMembraneRef m) {
 LmnMembraneRef dmem_root_new_mem(struct MemDeltaRoot *d) {
   LmnMembraneRef m;
 
-  m = lmn_mem_make();
+  m = new LmnMembrane();
   proc_tbl_put_mem(d->proc_tbl, m, (LmnWord)new NewMemInfo(m));
   d->flag_tbl->tbl_set_mem_flag(m, TAG_NEW_MEM);
   d->new_mems.push((vec_data_t)m);
@@ -1431,12 +1428,12 @@ static void dmem_dump(struct MemDelta *d) {
 static LmnMembraneRef dmem_root_get_parent(struct MemDeltaRoot *root_d,
                                            LmnMembraneRef m) {
   if (root_d->is_new_mem(m))
-    return lmn_mem_parent(m);
+    return m->mem_parent();
   else if (root_d->is_delta_mem(m)) {
     struct MemDelta *d = root_d->get_mem_delta(m);
     return d->new_parent;
   } else {
-    return lmn_mem_parent(m);
+    return m->mem_parent();
   }
 }
 
@@ -1454,7 +1451,7 @@ void dmem_root_drop(struct MemDeltaRoot *root_d, LmnMembraneRef m) {
 void dmem_root_set_mem_name(struct MemDeltaRoot *root_d, LmnMembraneRef m,
                             lmn_interned_str name) {
   if (root_d->is_new_mem(m))
-    lmn_mem_set_name(m, name);
+    m->set_name(name);
   else {
     root_d->get_mem_delta(m)->new_name = name;
   }
@@ -1619,13 +1616,13 @@ static struct MemDelta *mem_delta_make(struct MemDeltaRoot *root_d,
 
   p->new_proxies.init(16);
 
-  p->max_functor = lmn_mem_max_functor(m);
+  p->max_functor = m->mem_max_functor();
 
   p->data_atom_diff = 0;
 
-  p->new_parent = lmn_mem_parent(m);
+  p->new_parent = m->mem_parent();
 
-  p->org_name = p->new_name = LMN_MEM_NAME_ID(m);
+  p->org_name = p->new_name = m->NAME_ID();
   return p;
 }
 
@@ -1819,7 +1816,7 @@ static void dmem_drop(struct MemDelta *d, LmnMembraneRef mem) {
   LmnSymbolAtomRef a;
 
   /* drop and free child mems */
-  m = lmn_mem_child_head(mem);
+  m = mem->mem_child_head();
   DMEM_ALL_MEMS(d, mem, m, { dmem_root_remove_mem(d->root_d, mem, m); });
   /* mem->child_head = NULL; */
 
@@ -1940,7 +1937,7 @@ static inline void dmem_copy_rules(struct MemDelta *d, LmnMembraneRef dest,
     d->new_rulesets = new Vector(16);
   }
 
-  for (i = 0; i < lmn_mem_ruleset_num(src); i++) {
+  for (i = 0; i < src->ruleset_num(); i++) {
     d->new_rulesets->push((vec_data_t)lmn_mem_get_ruleset(src, i));
   }
 }
@@ -1970,19 +1967,19 @@ static void dmem_commit(struct MemDelta *d) {
     /* printf("commit new mem: %p\n", (LmnMembraneRef)d->new_mems.get(i));
      */
     /* lmn_dump_cell_stdout((LmnMembraneRef)d->new_mems.get(i)); */
-    lmn_mem_add_child_mem(d->mem, (LmnMembraneRef)d->new_mems.get(i));
+    (d->mem)->add_child_mem((LmnMembraneRef)d->new_mems.get(i));
     //    n++;
   }
 
   //  printf("child num = %d\n", n);
 
-  lmn_mem_data_atom_add(d->mem, d->data_atom_diff);
+  (d->mem)->data_atom_add(d->data_atom_diff);
 
   if (d->ruleset_removed || d->new_rulesets) {
-    d->org_rulesets = new Vector(*lmn_mem_get_rulesets(d->mem));
+    d->org_rulesets = new Vector(*(d->mem)->get_rulesets());
 
     if (d->ruleset_removed) {
-      lmn_mem_get_rulesets(d->mem)->clear();
+      (d->mem)->get_rulesets()->clear();
     }
 
     if (d->new_rulesets) {
@@ -1992,7 +1989,7 @@ static void dmem_commit(struct MemDelta *d) {
     }
   }
 
-  lmn_mem_set_name(d->mem, d->new_name);
+  (d->mem)->set_name(d->new_name);
 }
 
 static inline void dmem_commit_delete_mem(struct MemDelta *d) {
@@ -2022,13 +2019,13 @@ static void dmem_revert(struct MemDelta *d) {
   //  }
 
   for (i = 0; i < d->del_mems.get_num(); i++) {
-    lmn_mem_add_child_mem(d->mem, (LmnMembraneRef)d->del_mems.get(i));
+    (d->mem)->add_child_mem((LmnMembraneRef)d->del_mems.get(i));
   }
 
-  lmn_mem_data_atom_sub(d->mem, d->data_atom_diff);
+  (d->mem)->data_atom_sub(d->data_atom_diff);
 
   if (d->ruleset_removed || d->new_rulesets) {
-    lmn_mem_get_rulesets(d->mem)->clear();
+    (d->mem)->get_rulesets()->clear();
     for (i = 0; i < d->org_rulesets->get_num(); i++) {
       lmn_mem_add_ruleset(d->mem, (LmnRuleSetRef)d->org_rulesets->get(i));
     }
@@ -2037,7 +2034,7 @@ static void dmem_revert(struct MemDelta *d) {
     d->org_rulesets = NULL;
   }
 
-  lmn_mem_set_name(d->mem, d->org_name);
+  (d->mem)->set_name(d->org_name);
 }
 
 static inline void dmem_revert_new_mem(struct MemDelta *d) {

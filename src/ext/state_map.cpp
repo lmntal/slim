@@ -172,7 +172,7 @@ void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
   lmn_mem_newlink(mem, a0, t0, LMN_ATTR_GET_VALUE(t1), a3, t3,
                   LMN_ATTR_GET_VALUE(t3));
 
-  lmn_mem_add_child_mem(mem, new_mem);
+  mem->add_child_mem(new_mem);
 }
 
 /*----------------------------------------------------------------------

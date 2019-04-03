@@ -56,7 +56,7 @@ struct equalizer_base {
   /* TAG_RULESETS */
   BOOL mem_eq_enc_rulesets(LmnBinStrRef bs, int *i_bs, LmnMembraneRef mem) {
     auto n = binstr_get_ruleset_num(bs->v, *i_bs);
-    if (n != lmn_mem_ruleset_num(mem))
+    if (n != mem->ruleset_num())
       return FALSE;
 
     (*i_bs) += BS_RULESET_NUM_SIZE;
@@ -71,7 +71,7 @@ struct equalizer_base {
   BOOL mem_eq_enc_rulesets_uniq(LmnBinStrRef bs, int *i_bs,
                                 LmnMembraneRef mem) {
     auto rs_num = binstr_get_ruleset_num(bs->v, *i_bs);
-    if (rs_num != lmn_mem_ruleset_num(mem))
+    if (rs_num != mem->ruleset_num())
       return FALSE;
     (*i_bs) += BS_RULESET_NUM_SIZE;
 
@@ -81,7 +81,7 @@ struct equalizer_base {
     dec.decode_rulesets(rs_num, rulesets);
     *i_bs = dec.scanner.location();
 
-    auto result = lmn_rulesets_equals(rulesets, lmn_mem_get_rulesets(mem));
+    auto result = lmn_rulesets_equals(rulesets, mem->get_rulesets());
 
     lmn_mem_rulesets_destroy(rulesets);
     LMN_FREE(rulesets);
@@ -130,12 +130,12 @@ private:
   void log_backtrack(TraceLog *log) { log->backtrack(); }
 
   BOOL mem_eq_enc_end(LmnMembraneRef mem, BOOL rule_flag) {
-    if (!rule_flag && lmn_mem_ruleset_num(mem) != 0)
+    if (!rule_flag && mem->ruleset_num() != 0)
       return false;
 
     return log->eq_traversed_proc_num(
-        mem, lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR),
-        lmn_mem_get_atomlist(mem, LMN_EXCLAMATION_FUNCTOR));
+        mem,mem->get_atomlist(LMN_IN_PROXY_FUNCTOR),
+        mem->get_atomlist(LMN_EXCLAMATION_FUNCTOR));
   }
 
   int mem_eq_enc_mols(int *i_bs, LmnMembraneRef mem, int *i_ref) {
@@ -149,7 +149,7 @@ private:
         auto f = binstr_get_functor(bs->v, *i_bs);
 
         /* 1. 読み出したファンクタのエントリリストを取得する */
-        auto ent = lmn_mem_get_atomlist(mem, f);
+        auto ent = mem->get_atomlist(f);
         if (!ent)
           return FALSE;
 
@@ -189,9 +189,9 @@ private:
           (*i_bs) += BS_MEM_NAME_SIZE;
         }
 
-        for (auto m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+        for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
           /* 1. 未チェックの子膜を選択する. 同時に膜名チェックを行う */
-          if (LMN_MEM_NAME_ID(m) != mem_name || log_contains(log, m))
+          if (m->NAME_ID() != mem_name || log_contains(log, m))
             continue;
           log_set_backtrack_point(log);
 
@@ -217,7 +217,7 @@ private:
       case TAG_ESCAPE_MEM_DATA: {
         auto sub_tag = BS_GET(bs->v, *i_bs);
         (*i_bs)++;
-        auto ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+        auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
         if (!ent)
           return FALSE;
 
@@ -261,7 +261,7 @@ private:
       case TAG_MEM_END:
         return mem_eq_enc_end(mem, rule_flag);
       case TAG_RULESET1:
-        if ((lmn_mem_ruleset_num(mem) != 1) ||
+        if ((mem->ruleset_num() != 1) ||
             !mem_eq_enc_ruleset(bs, i_bs, lmn_mem_get_ruleset(mem, 0))) {
           return FALSE;
         }
@@ -335,7 +335,7 @@ private:
     if (is_named) {
       const lmn_interned_str mem_name = binstr_get_mem_name(bs->v, *i_bs);
       (*i_bs) += BS_MEM_NAME_SIZE;
-      if (mem_name != LMN_MEM_NAME_ID(in_mem)) {
+      if (mem_name != in_mem->NAME_ID()) {
         return FALSE;
       }
     }
@@ -521,7 +521,7 @@ private:
     auto out = ((LmnSymbolAtomRef)atom)->get_link(0);
     log->visit_atom((LmnSymbolAtomRef)atom, TLOG_MATCHED_ID_NONE,
                       LMN_PROXY_GET_MEM((LmnSymbolAtomRef)atom));
-    return mem_eq_enc_mol(i_bs, lmn_mem_parent(mem),
+    return mem_eq_enc_mol(i_bs, mem->mem_parent(),
                           ((LmnSymbolAtomRef)out)->get_link(1),
                           ((LmnSymbolAtomRef)out)->get_attr(1), i_ref);
   }
@@ -590,7 +590,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
    * 対象の膜に対して訪問したプロセス数が等しい場合に真を返す. 訪問プロセスは,
    * シンボルアトム(except proxies), 子膜, inside proxies */
   BOOL mem_eq_enc_end(LmnMembraneRef mem, BOOL rule_flag, VisitLog *log) {
-    return rule_flag || lmn_mem_ruleset_num(mem) == 0;
+    return rule_flag || mem->ruleset_num() == 0;
   }
 
   /* 膜memに対するトレースを初めて行う際に呼び出す. */
@@ -607,7 +607,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
         auto ok = FALSE;
 
         /* 1. 読み出したファンクタのエントリリストを取得する */
-        auto ent = lmn_mem_get_atomlist(mem, f);
+        auto ent = mem->get_atomlist(f);
         if (!ent)
           return FALSE;
 
@@ -649,9 +649,9 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
         }
 
         auto ok = FALSE;
-        for (auto m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+        for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
           /* 1. 未チェックの子膜を選択する. 同時に膜名チェックを行う */
-          if (LMN_MEM_NAME_ID(m) != mem_name || log_contains(log, m))
+          if (m->NAME_ID() != mem_name || log_contains(log, m))
             continue;
           log_set_backtrack_point(log);
 
@@ -679,7 +679,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
         auto sub_tag = BS_GET(bs->v, *i_bs);
         (*i_bs)++;
         auto ok = FALSE;
-        auto ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+        auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
         if (!ent)
           return FALSE;
 
@@ -725,7 +725,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
       case TAG_MEM_END:
         return mem_eq_enc_end(mem, rule_flag, log);
       case TAG_RULESET1:
-        if ((lmn_mem_ruleset_num(mem) != 1) ||
+        if ((mem->ruleset_num() != 1) ||
             !mem_eq_enc_ruleset(bs, i_bs, lmn_mem_get_ruleset(mem, 0))) {
           return FALSE;
         }
@@ -815,7 +815,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     if (is_named) {
       const lmn_interned_str mem_name = binstr_get_mem_name(bs->v, *i_bs);
       (*i_bs) += BS_MEM_NAME_SIZE;
-      if (mem_name != LMN_MEM_NAME_ID(in_mem)) {
+      if (mem_name != in_mem->NAME_ID()) {
         return FALSE;
       }
     }
@@ -1019,7 +1019,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
       return false;
 
     auto out =((LmnSymbolAtomRef)atom)->get_link(0);
-    return mem_eq_enc_mol(bs, i_bs, lmn_mem_parent(mem),
+    return mem_eq_enc_mol(bs, i_bs, mem->mem_parent(),
                           ((LmnSymbolAtomRef)out)->get_link(1),
                           ((LmnSymbolAtomRef)out)->get_attr(1), ref_log,
                           i_ref, log);
@@ -1055,7 +1055,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     if (mem == NULL)
       return 0;
 
-    auto n = lmn_mem_atom_num(mem) + lmn_mem_child_mem_num(mem);
+    auto n = mem->atom_num() + lmn_mem_child_mem_num(mem);
 
     for (auto m = mem->child_head; m; m = m->next) {
       n += process_num(m);

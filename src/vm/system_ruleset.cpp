@@ -53,7 +53,7 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
   AtomListEntryRef ent;
   LmnSymbolAtomRef o0;
 
-  ent = lmn_mem_get_atomlist(mem, LMN_OUT_PROXY_FUNCTOR);
+  ent = mem->get_atomlist(LMN_OUT_PROXY_FUNCTOR);
   if (!ent)
     return FALSE;
 
@@ -101,7 +101,7 @@ static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
   AtomListEntryRef ent;
   LmnSymbolAtomRef o0;
 
-  ent = lmn_mem_get_atomlist(mem, LMN_OUT_PROXY_FUNCTOR);
+  ent = mem->get_atomlist(LMN_OUT_PROXY_FUNCTOR);
   if (!ent)
     return FALSE;
 
@@ -136,7 +136,7 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   AtomListEntryRef ent;
   LmnSymbolAtomRef op;
 
-  ent = lmn_mem_get_atomlist(mem, LMN_MEM_EQ_FUNCTOR);
+  ent = mem->get_atomlist(LMN_MEM_EQ_FUNCTOR);
   if (!ent)
     return FALSE;
 

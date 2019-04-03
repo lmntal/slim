@@ -149,16 +149,16 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
 
     { /** 2. membranes */
       LmnMembraneRef child_mem;
-      for (child_mem = lmn_mem_child_head(mem); child_mem;
-           child_mem = lmn_mem_next(child_mem)) {
+      for (child_mem = mem->mem_child_head(); child_mem;
+           child_mem = child_mem->mem_next()) {
         mhash_t tmp = mhash_membrane(child_mem, NULL, ctx);
         hash_sum += tmp;
         hash_mul *= tmp;
       }
 
       /* hiroto論文にない膜名の情報を追加. TODO: こんなんで大丈夫かな. */
-      hash_sum += (LMN_MEM_NAME_ID(mem) + 1);
-      hash_mul *= (LMN_MEM_NAME_ID(mem) + 1);
+      hash_sum += (mem->NAME_ID() + 1);
+      hash_mul *= (mem->NAME_ID() + 1);
     }
 
     { /** 3. rulesets */
@@ -171,7 +171,7 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
        *  ルールセットの束のハッシュ値は, 状態間で変化がほとんどない.
        * 使い回しできれば速くなる.*/
 
-      tmp = mhash_rulesets(lmn_mem_get_rulesets(mem));
+      tmp = mhash_rulesets(mem->get_rulesets());
       hash_sum += tmp;
       hash_mul *= tmp;
     }
@@ -340,7 +340,7 @@ static inline mhash_t memunit(LmnMembraneRef child_mem,
   LmnSymbolAtomRef in_proxy, out_proxy;
 
   hash = 0;
-  insides = lmn_mem_get_atomlist(child_mem, LMN_IN_PROXY_FUNCTOR);
+  insides = child_mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
   child_h = mhash_membrane(child_mem, calc_mem, ctx);
 
   LMN_ASSERT(insides);

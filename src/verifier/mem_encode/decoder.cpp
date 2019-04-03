@@ -55,7 +55,7 @@ int binstr_decoder::decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
         lmn_mem_add_ruleset(mem, LmnRuleSetTable::at(scanner.scan_ruleset()));
     } else if (tag == TAG_RULESET_UNIQ) {
       auto rs_num = scanner.scan_ruleset_num();
-      decode_rulesets(rs_num, lmn_mem_get_rulesets(mem));
+      decode_rulesets(rs_num, mem->get_rulesets());
     } else {
       scanner.unput_tag();
       /* 最初の要素は膜の外からアトムをたどって来た可能性がある */
@@ -107,10 +107,10 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     mem_name = scanner.scan_mem_name();
     /* FALL THROUGH */
   case TAG_MEM_START: {
-    auto new_mem = lmn_mem_make();
-    lmn_mem_set_name(new_mem, mem_name);
-    lmn_mem_set_active(new_mem, TRUE);
-    lmn_mem_add_child_mem(mem, new_mem);
+    auto new_mem = new LmnMembrane();
+    new_mem->set_name(mem_name);
+    new_mem->set_active(TRUE);
+    mem->add_child_mem(new_mem);
 
     log[(nvisit)].v = (LmnWord)new_mem;
     log[(nvisit)].type = BS_LOG_TYPE_MEM;
@@ -133,7 +133,7 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     LmnLinkAttr n_attr;
 
     auto in = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
-    auto out = lmn_mem_newatom(lmn_mem_parent(mem), LMN_OUT_PROXY_FUNCTOR);
+    auto out = lmn_mem_newatom(mem->mem_parent(), LMN_OUT_PROXY_FUNCTOR);
     auto sub_tag = scanner.scan_tag();
 
     if (sub_tag == TAG_INT_DATA) {
@@ -161,10 +161,10 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     in->set_link(1, (LmnAtomRef)n);
     in->set_attr(1, n_attr);
     lmn_mem_push_atom(mem, (LmnAtomRef)n, n_attr);
-    return decode_mol(lmn_mem_parent(mem), out, 1);
+    return decode_mol(mem->mem_parent(), out, 1);
   }
   case TAG_ESCAPE_MEM: {
-    LmnMembraneRef parent = lmn_mem_parent(mem);
+    LmnMembraneRef parent = mem->mem_parent();
     if (from_atom) {
       auto in = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
       auto out = lmn_mem_newatom(parent, LMN_OUT_PROXY_FUNCTOR);

@@ -49,7 +49,7 @@ void cb_react_rule(LmnReactCxtRef rc,
 {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0));
-  LmnRuleSetRef rs = (LmnRuleSetRef)lmn_mem_get_rulesets(rule_mem)->get(0);
+  LmnRuleSetRef rs = (LmnRuleSetRef)rule_mem->get_rulesets()->get(0);
   auto r = rs->get_rule(0);
   MemReactContext tmp_rc;
 
@@ -97,7 +97,7 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
         LmnSymbolAtomRef in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
         LmnSymbolAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
         LmnSymbolAtomRef plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
-        lmn_mem_add_child_mem(mem, m);
+        mem->add_child_mem(m);
         lmn_newlink_in_symbols(in, 0, out, 0);
         lmn_newlink_in_symbols(in, 1, plus, 0);
         lmn_newlink_in_symbols(out, 1, cons, 0);
@@ -126,7 +126,7 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
   LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int pos = 0;
 
-  Vector *rulesets = lmn_mem_get_rulesets(rule_mem);
+  Vector *rulesets = rule_mem->get_rulesets();
   apply_rules_in_rulesets(mem, graph_mem, rulesets, &head, &pos);
 
 #ifdef USE_FIRSTCLASS_RULE
