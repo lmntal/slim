@@ -161,46 +161,12 @@ struct DiffInfo {
         }
       }
     }
-
-    // for (int i = begin; i < end; i++) {
-    //   const auto &before_hl = before_hyperlinks.find(i);
-    //   const auto &after_hl = after_hyperlinks.find(i);
-    //   if (before_hl != before_hyperlinks.end() && after_hl ==
-    //   after_hyperlinks.end()) {
-    //     pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-    //                                                        before_hl->second);
-    //   } else if (before_hl == before_hyperlinks.end() && after_hl !=
-    //   after_hyperlinks.end()) {
-    //     pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-    //                                                        after_hl->second);
-    //   }
-    // }
-
-    // for (int i = begin; i < end; i++) {
-    //   const auto &before_atom = before_atoms.find(i);
-    //   const auto &after_atom = after_atoms.find(i);
-    //   if (before_atom != before_atoms.end() && after_atom ==
-    //   after_atoms.end()) {
-    //     pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-    //                                                        before_atom->second);
-    //     checkRelink(before_atom->second, after_atom->second,
-    //     after_hyperlinks,
-    //                 relinkedVertices);
-    //   } else if (before_atom == before_atoms.end() && after_atom !=
-    //   after_atoms.end()) {
-    //     pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-    //                                                        after_atom->second);
-    //     checkRelink(before_atom->second, after_atom->second,
-    //     after_hyperlinks,
-    //                 relinkedVertices);
-    //   } else if (before_atom != before_atoms.end() && after_atom !=
-    //   after_atoms.end()) {
-    //     checkRelink(before_atom->second, after_atom->second,
-    //     after_hyperlinks,
-    //                 relinkedVertices);
-    //   }
-    // }
   }
+  ~DiffInfo() {
+    delete deletedVertices;
+    delete addedVertices;
+    delete relinkedVertices;
+  };
 };
 
 void freeDiff();
