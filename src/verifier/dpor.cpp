@@ -917,7 +917,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
   McDporData *d = RC_POR_DATA(rc);
 
   if (RC_MC_USE_DPOR_NAIVE(rc)) {
-    por_calc_ampleset(ss, s, rc, new_s, flag);
+    mc_por.por_calc_ampleset(ss, s, rc, new_s, flag);
     return;
   } else if (mc_react_cxt_succ_num_org(rc) <= 1 || !RC_MC_USE_DMEM(rc)) {
     mc_store_successors(ss, s, rc, new_s, flag);

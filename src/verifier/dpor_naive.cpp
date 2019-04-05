@@ -109,7 +109,6 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
 static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
                                Vector *psyms);
 static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);
-static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);
 static BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
 static BOOL check_C1(State *s, AutomataRef a, Vector *psyms);
 static BOOL check_C2(State *s);
@@ -158,15 +157,15 @@ void McPorData::free_por_vars() {
   }
 }
 
-void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
+void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                        Vector *new_s, BOOL f) {
-  if (!mc_por.rc) {
-    mc_por.rc = c14::make_unique<MCReactContext>();
-    mc_por.flags = f;
-    mc_unset_por(mc_por.flags);
-    mc_set_trans(mc_por.flags);
-    mc_unset_dump(mc_por.flags);
-    POR_DEBUG(mc_set_dump(mc_por.flags));
+  if (!this->rc) {
+    this->rc = c14::make_unique<MCReactContext>();
+    this->flags = f;
+    mc_unset_por(this->flags);
+    mc_set_trans(this->flags);
+    mc_unset_dump(this->flags);
+    POR_DEBUG(mc_set_dump(this.flags));
   }
 
   if (mc_react_cxt_expanded_num(rc) <= 1) {
@@ -175,7 +174,7 @@ void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     return;
   }
 
-  mc_por.root = s;
+  this->root = s;
   if (ample(ss, s, rc, new_s, f)) {
     /* C0〜C3をすべて満たすen(s)の真部分集合ample(s)が決定 */
     push_ample_to_expanded(ss, s, rc, new_s, f);
@@ -187,7 +186,7 @@ void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   finalize_ample(f);
 }
 
-static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a) {
+int McPorData::independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a) {
   delete (Vector *)vec;
   return ST_DELETE;
 }
@@ -223,7 +222,7 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a) {
 
 static void finalize_ample(BOOL org_f) {
   mc_por.next_strans_id = POR_ID_INITIALIZER;
-  st_foreach(mc_por.strans_independency, (st_iter_func)independency_vec_free,
+  st_foreach(mc_por.strans_independency, (st_iter_func)&McPorData::independency_vec_free,
              (st_data_t)0);
   st_foreach(mc_por.states, (st_iter_func)destroy_tmp_state_graph,
              (LmnWord)org_f);

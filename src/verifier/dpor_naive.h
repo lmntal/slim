@@ -70,11 +70,15 @@ struct McPorData {
 	McPorData();
 	void init_por_vars();
 	void free_por_vars();
+	void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL flag);
+
+	int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);
+
 };
 static McPorData mc_por;
 
-void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
-                       Vector *new_s, BOOL flag);
+//void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
+//                       Vector *new_s, BOOL flag);
 //void McPorData::init_por_vars();
 
 /* @} */
