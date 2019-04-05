@@ -49,7 +49,7 @@
 #include "element/element.h"
 #include "statespace.h"
 
-struct McPorData {
+class McPorData {
 	State *root;
 	st_table_t
 	    strans_independency; 	/* 独立性情報テーブル:
@@ -67,18 +67,27 @@ struct McPorData {
 	std::unique_ptr<MCReactContext> rc;
 	unsigned long next_strans_id;
 	BOOL flags;
-	McPorData();
-	void init_por_vars();//public
-	void free_por_vars();//public
-	void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL flag);//public
-	static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);//public
-	static int destroy_tmp_state_graph(State *s, LmnWord _a);//public
-	void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a, Vector *psyms);//called by only independency check
-	void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);//called by only independency check
-	State *por_state_insert_statespace(StateSpaceRef ss, TransitionRef succ_t, State *succ_s, Vector *new_ss, BOOL org_f);
-private:
+
+	void set_independency_checked(State *s);
+	void unset_independency_checked(State *s);
+	bool is_independency_checked(State *s);
+
+	void set_ample(State *s);
+	void unset_ample(State *s);
+	bool is_ample(State *s);
+	void set_por_expanded(State *s);
+	void unset_por_expanded(State *s);
+	bool is_por_expanded(State *s);
+	void set_inserted(State *s);
+	void unset_inserted(State *s);
+	bool is_inserted(State *s);
+	void set_outside_exist(State *s);
+	void unset_outside_exist(State *s);
+	bool is_outside_exist(State *s);
+
 	void finalize_ample(BOOL arg_f);
 	State *por_state_insert(State *succ, struct MemDeltaRoot *d);
+	State *por_state_insert_statespace(StateSpaceRef ss, TransitionRef succ_t, State *succ_s, Vector *new_ss, BOOL org_f);
 	void por_store_successors_inner(State *s, LmnReactCxtRef rc);//doesn't touch mc_por, but someone might input that's member variable
 	BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL org_f);
 	BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
@@ -86,6 +95,25 @@ private:
 	BOOL check_C2(State *s);
 	BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
 	BOOL C3_cycle_proviso_satisfied(State *suss, State *t);
+	BOOL is_independent_of_ample(TransitionRef strans);
+	BOOL push_independent_strans_to_table(unsigned long i1, unsigned long i2);
+	void push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
+	BOOL push_succstates_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
+	/* for debug only */
+	int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a);
+	void dump__ample_candidate();
+	int dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a);
+
+public:
+	McPorData();
+	void init_por_vars();//public
+	void free_por_vars();//public
+	void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL flag);//public
+	int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);//public
+	int destroy_tmp_state_graph(State *s, LmnWord _a);//public
+	void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a, Vector *psyms);//called by only independency check
+	void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);//called by only independency check
+	int build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_data_t current_state);//public
 
 };
 static McPorData mc_por;
