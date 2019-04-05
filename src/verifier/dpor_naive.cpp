@@ -103,12 +103,8 @@ bool is_outside_exist(State *s) { return s->flags3 & POR_OUTSIDE_MASK; }
 /** ProtoTypes
  */
 static int destroy_tmp_state_graph(State *s, LmnWord _d);
-static void finalize_ample(BOOL org_f);
 static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
                   BOOL org_f);
-static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
-                               Vector *psyms);
-static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);
 static BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
 static BOOL check_C1(State *s, AutomataRef a, Vector *psyms);
 static BOOL check_C2(State *s);
@@ -183,7 +179,7 @@ void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     push_succstates_to_expanded(ss, s, rc, new_s, f);
   }
 
-  finalize_ample(f);
+  mc_por.finalize_ample(f);
 }
 
 int McPorData::independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a) {
@@ -192,7 +188,7 @@ int McPorData::independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a) 
 }
 
 /* PORのために一時的に構築した状態空間上の頂点を削除する. */
-static int destroy_tmp_state_graph(State *s, LmnWord _a) {
+int McPorData::destroy_tmp_state_graph(State *s, LmnWord _a) {
   if (s != mc_por.root) {
     if (is_outside_exist(s)) {
       /* 展開元の状態から1stepで遷移可能な頂点(rootのサクセサ)が状態空間に追加されている場合
@@ -220,16 +216,16 @@ static int destroy_tmp_state_graph(State *s, LmnWord _a) {
   return ST_DELETE;
 }
 
-static void finalize_ample(BOOL org_f) {
-  mc_por.next_strans_id = POR_ID_INITIALIZER;
-  st_foreach(mc_por.strans_independency, (st_iter_func)&McPorData::independency_vec_free,
+void McPorData::finalize_ample(BOOL org_f) {
+  next_strans_id = POR_ID_INITIALIZER;
+  st_foreach(strans_independency, (st_iter_func)&McPorData::independency_vec_free,
              (st_data_t)0);
-  st_foreach(mc_por.states, (st_iter_func)destroy_tmp_state_graph,
+  st_foreach(states, (st_iter_func)destroy_tmp_state_graph,
              (LmnWord)org_f);
-  mc_por.queue->clear();
-  mc_por.ample_candidate->clear();
-  RC_CLEAR_DATA(mc_por.rc.get());
-  mc_por.root = NULL;
+  queue->clear();
+  ample_candidate->clear();
+  RC_CLEAR_DATA(rc.get());
+  root = NULL;
 }
 
 /* 状態sとsから遷移可能な状態集合をrcとして入力し,
@@ -241,7 +237,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
   set_por_expanded(s);
   st_add_direct(mc_por.states, (st_data_t)s, (st_data_t)s);
 
-  por_store_successors(s, rc, TRUE);
+  mc_por.por_store_successors(s, rc, TRUE);
 
   /* sから2stepの状態空間を立ち上げ, 遷移間の独立性情報テーブルを展開 */
   if (!independency_check(s, ss->automata(),
@@ -324,18 +320,18 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
   return TRUE;
 }
 
-static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
+void McPorData::por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
                                Vector *psyms) {
   LmnMembraneRef mem;
   mem = state_restore_mem(s);
   if (a) {
     AutomataStateRef p_s = MC_GET_PROPERTY(s, a);
-    mc_gen_successors_with_property(s, mem, p_s, rc, psyms, mc_por.flags);
+    mc_gen_successors_with_property(s, mem, p_s, rc, psyms, this->flags);
   } else {
-    mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, mc_por.flags);
+    mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, this->flags);
   }
 
-  if (mc_use_compress(mc_por.flags)) {
+  if (mc_use_compress(this->flags)) {
     if (!s->state_mem()) { /* compact-stack */
       lmn_mem_drop(mem);
       lmn_mem_free(mem);
@@ -345,7 +341,7 @@ static void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
   }
 }
 
-static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
+inline State *McPorData::por_state_insert(State *succ, struct MemDeltaRoot *d) {
   State *ret;
   st_data_t t;
   LmnMembraneRef tmp_m;
@@ -360,11 +356,11 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
   }
 
   t = 0;
-  if (st_lookup(mc_por.states, (st_data_t)succ, (st_data_t *)&t)) {
+  if (st_lookup(this->states, (st_data_t)succ, (st_data_t *)&t)) {
     ret = (State *)t;
   } else {
     LmnBinStrRef bs;
-    st_add_direct(mc_por.states, (st_data_t)succ, (st_data_t)succ);
+    st_add_direct(this->states, (st_data_t)succ, (st_data_t)succ);
     if (!succ->is_encoded()) {
       bs = succ->mem_dump();
       succ->state_set_binstr(bs);
@@ -409,7 +405,7 @@ static inline State *por_state_insert_statespace(StateSpaceRef ss,
   return t;
 }
 
-static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
+inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
   st_table_t succ_tbl;
   unsigned int i, succ_i;
 
@@ -433,7 +429,7 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
 
     d = RC_MC_USE_DMEM(rc) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
                            : NULL;
-    succ = por_state_insert(src_succ, d);
+    succ = this->por_state_insert(src_succ, d);
     if (succ != src_succ) {
      delete(src_succ);
       transition_set_state(src_t, succ);
@@ -480,10 +476,10 @@ static inline void por_store_successors_inner(State *s, LmnReactCxtRef rc) {
  * サクセッサに対する遷移オブジェクトが存在しない場合はこの時点でmallocを行う.
  * 入力したis_storeが真である場合は,
  * IDの発行と同時に独立性情報テーブルの拡張を行う */
-static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
+void McPorData::por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
   unsigned int i;
 
-  por_store_successors_inner(s, rc);
+  this->por_store_successors_inner(s, rc);
   for (i = 0; i < s->successor_num; i++) {
     TransitionRef succ_t;
     unsigned long assign_id = 0;
@@ -491,7 +487,7 @@ static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
     /* 1. transitionに仮idを設定 */
     succ_t = transition(s, i);
     if (transition_id(succ_t) == 0) {
-      assign_id = mc_por.next_strans_id++;
+      assign_id = this->next_strans_id++;
       transition_set_id(succ_t, assign_id);
     }
 
@@ -501,10 +497,10 @@ static void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
     /* 2. 独立性情報テーブルに仮idを登録 */
     if (is_store) {
       st_data_t t = 0;
-      if (!st_lookup(mc_por.strans_independency, (st_data_t)assign_id,
+      if (!st_lookup(this->strans_independency, (st_data_t)assign_id,
                      (st_data_t *)&t)) {
         Vector *v = new Vector(1);
-        st_add_direct(mc_por.strans_independency, (st_data_t)assign_id,
+        st_add_direct(this->strans_independency, (st_data_t)assign_id,
                       (st_data_t)v);
       } else {
         lmn_fatal("transition id: illegal assignment");
@@ -549,8 +545,8 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   /* >>>>>>>>>>>>>>>>>>>> Step 1. <<<<<<<<<<<<<<<<<<<< */
   if (!is_por_expanded(s)) {
-    por_gen_successors(s, mc_por.rc.get(), a, psyms);
-    por_store_successors(s, mc_por.rc.get(), TRUE);
+    mc_por.por_gen_successors(s, mc_por.rc.get(), a, psyms);
+    mc_por.por_store_successors(s, mc_por.rc.get(), TRUE);
 
     RC_CLEAR_DATA(mc_por.rc.get());
     set_por_expanded(s);
@@ -576,8 +572,8 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
     if (!is_por_expanded(succ_s)) {
       /* ssから可能な遷移および遷移先状態をすべて求める．
        * ただしこの段階では，ssからの各遷移に付与されたIDは仮のものである． */
-      por_gen_successors(succ_s, mc_por.rc.get(), a, psyms);
-      por_store_successors(succ_s, mc_por.rc.get(),
+      mc_por.por_gen_successors(succ_s, mc_por.rc.get(), a, psyms);
+      mc_por.por_store_successors(succ_s, mc_por.rc.get(),
                            FALSE); /* 2step目の遷移のIDはテーブルに登録しない */
       RC_CLEAR_DATA(mc_por.rc.get());
       set_por_expanded(succ_s);
@@ -591,7 +587,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
   });
 
   /* sを起点とする遷移同士で独立な関係にあるものを調べ，独立性情報テーブルを更新する．
-   * "por_gen_successors"した際に付けられた仮のIDは独立性有りと判定された際，
+   * "mc_por.por_gen_successors"した際に付けられた仮のIDは独立性有りと判定された際，
    * 対応するsを起点とする遷移に付与されているIDで書換えられる． */
   // por_successor_comb_foreach(s, por_update_independency_tbl);
   for (i = 0; i < s->successor_num - 1; i++) {

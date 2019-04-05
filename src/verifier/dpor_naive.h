@@ -68,11 +68,17 @@ struct McPorData {
 	unsigned long next_strans_id;
 	BOOL flags;
 	McPorData();
-	void init_por_vars();
-	void free_por_vars();
-	void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL flag);
-
-	int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);
+	void init_por_vars();//public
+	void free_por_vars();//public
+	void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL flag);//public
+	static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);//public
+	static int destroy_tmp_state_graph(State *s, LmnWord _a);//public
+	void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a, Vector *psyms);
+	void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);
+private:
+	void finalize_ample(BOOL arg_f);
+	State *por_state_insert(State *succ, struct MemDeltaRoot *d);
+	void por_store_successors_inner(State *s, LmnReactCxtRef rc);
 
 };
 static McPorData mc_por;
