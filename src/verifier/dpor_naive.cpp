@@ -102,11 +102,7 @@ bool is_outside_exist(State *s) { return s->flags3 & POR_OUTSIDE_MASK; }
 
 /** ProtoTypes
  */
-static BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
-static BOOL check_C1(State *s, AutomataRef a, Vector *psyms);
-static BOOL check_C2(State *s);
-static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
-                     Vector *new_ss, BOOL f);
+
 static BOOL is_independent_of_ample(TransitionRef strans);
 static BOOL push_independent_strans_to_table(unsigned long i1,
                                              unsigned long i2);
@@ -538,16 +534,16 @@ void McPorData::por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store)
  *   独立性情報テーブル（independency_table）内に情報がPUSHし,
  *   正常に独立性情報テーブルの拡張できたならばTRUEを返す．
  */
-static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
+BOOL McPorData::independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   unsigned int i, j;
 
   /* >>>>>>>>>>>>>>>>>>>> Step 1. <<<<<<<<<<<<<<<<<<<< */
   if (!is_por_expanded(s)) {
-    mc_por.por_gen_successors(s, mc_por.rc.get(), a, psyms);
-    mc_por.por_store_successors(s, mc_por.rc.get(), TRUE);
+    por_gen_successors(s, rc.get(), a, psyms);
+    por_store_successors(s, rc.get(), TRUE);
 
-    RC_CLEAR_DATA(mc_por.rc.get());
+    RC_CLEAR_DATA(rc.get());
     set_por_expanded(s);
   }
 
@@ -571,22 +567,22 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
     if (!is_por_expanded(succ_s)) {
       /* ssから可能な遷移および遷移先状態をすべて求める．
        * ただしこの段階では，ssからの各遷移に付与されたIDは仮のものである． */
-      mc_por.por_gen_successors(succ_s, mc_por.rc.get(), a, psyms);
-      mc_por.por_store_successors(succ_s, mc_por.rc.get(),
+      por_gen_successors(succ_s, rc.get(), a, psyms);
+      por_store_successors(succ_s, rc.get(),
                            FALSE); /* 2step目の遷移のIDはテーブルに登録しない */
-      RC_CLEAR_DATA(mc_por.rc.get());
+      RC_CLEAR_DATA(rc.get());
       set_por_expanded(succ_s);
     }
   }
 
   POR_DEBUG({
     printf("\nbefore\n");
-    st_foreach(mc_por.states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+    st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
     printf("\n");
   });
 
   /* sを起点とする遷移同士で独立な関係にあるものを調べ，独立性情報テーブルを更新する．
-   * "mc_por.por_gen_successors"した際に付けられた仮のIDは独立性有りと判定された際，
+   * "por_gen_successors"した際に付けられた仮のIDは独立性有りと判定された際，
    * 対応するsを起点とする遷移に付与されているIDで書換えられる． */
   // por_successor_comb_foreach(s, por_update_independency_tbl);
   for (i = 0; i < s->successor_num - 1; i++) {
@@ -643,7 +639,7 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   POR_DEBUG({
     printf("after\n");
-    st_foreach(mc_por.states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+    st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
     printf("\n");
   });
 
@@ -663,10 +659,10 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
 
       id = transition_id(transition(ss, j));
       t = 0;
-      if (!st_lookup(mc_por.strans_independency, (st_data_t)id,
+      if (!st_lookup(strans_independency, (st_data_t)id,
                      (st_data_t *)&t)) {
         Vector *v = new Vector(1);
-        st_add_direct(mc_por.strans_independency, (st_data_t)id, (st_data_t)v);
+        st_add_direct(strans_independency, (st_data_t)id, (st_data_t)v);
       } /* else 独立な遷移 */
     }
   }
@@ -691,27 +687,27 @@ static BOOL independency_check(State *s, AutomataRef a, Vector *psyms) {
  * このC1の検査は，sを起点とするstate
  * graph(の中で必要な部分)をBFSで構築しながら進めていく．
  */
-static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
+BOOL McPorData::check_C1(State *s, AutomataRef a, Vector *psyms) {
   unsigned int i;
 
   for (i = 0; i < s->successor_num; i++) {
     TransitionRef t = transition(s, i);
-    if (!mc_por.ample_candidate->contains((vec_data_t)transition_id(t))) {
+    if (!ample_candidate->contains((vec_data_t)transition_id(t))) {
       /* sで可能かつample(s)の候補に含まれない遷移をスタック上に乗せる */
       mc_por.queue->enqueue((vec_data_t)t);
     }
   }
 
-  while (!mc_por.queue->is_empty()) {
-    TransitionRef succ_t = (TransitionRef)mc_por.queue->dequeue();
+  while (!queue->is_empty()) {
+    TransitionRef succ_t = (TransitionRef)queue->dequeue();
     if (!is_independent_of_ample(succ_t)) {
       /* Fに反する経路Pが検出されたので偽を返して終了する */
       POR_DEBUG({
         printf("   λ.. C1 violate_id::%lu\n", transition_id(succ_t));
-        st_foreach(mc_por.strans_independency, (st_iter_func)dump__strans_independency,
+        st_foreach(strans_independency, (st_iter_func)dump__strans_independency,
                    (st_data_t)0);
         dump__ample_candidate();
-        st_foreach(mc_por.states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+        st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
         printf("\n");
       });
       return FALSE;
@@ -719,13 +715,13 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
       State *succ_s = transition_next_state(succ_t);
       //      if (!is_independency_checked(succ_s) && !succ_s->is_expanded()) {
       if (!is_independency_checked(succ_s)) {
-        independency_check(succ_s, a, psyms);
+        mc_por.independency_check(succ_s, a, psyms);
         for (i = 0; i < succ_s->successor_num; i++) {
           TransitionRef succ_succ_t = transition(succ_s, i);
-          if (!mc_por.ample_candidate->contains(
+          if (!ample_candidate->contains(
                             (vec_data_t)transition_id(succ_succ_t))) {
             /* ample(s)内に含まれない遷移はさらにチェックする必要がある */
-            mc_por.queue->enqueue((LmnWord)succ_succ_t);
+            queue->enqueue((LmnWord)succ_succ_t);
           }
         }
       }
@@ -744,12 +740,12 @@ static BOOL check_C1(State *s, AutomataRef a, Vector *psyms) {
  * 注) 本検査はLTLモデル検査実行時のみ有意義であるため，
  * 　　そうでない場合(非決定実行の場合)は無条件に真を返すようにする．
  */
-static BOOL check_C2(State *s) {
+BOOL McPorData::check_C2(State *s) {
   if (lmn_env.ltl) {
     unsigned int i;
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
-      if (mc_por.ample_candidate->contains((vec_data_t)transition_id(t))) {
+      if (ample_candidate->contains((vec_data_t)transition_id(t))) {
         /* TODO: 設計と実装 */
         return FALSE;
       }
@@ -762,14 +758,14 @@ static BOOL check_C2(State *s) {
  * 状態空間が返した頂点t(登録に成功していた場合はsucc,
  * 等価状態がいた場合はその状態)を 入力として受け, Cycle Ignoring
  * Problemのための検査結果を返す. */
-static inline BOOL C3_cycle_proviso_satisfied(State *succ, State *t) {
+inline BOOL McPorData::C3_cycle_proviso_satisfied(State *succ, State *t) {
   if (succ == t) {
     /* General Visited Proviso:
      *  既存状態への再訪問でない(新規状態への遷移)なら閉路形成を行う遷移ではない.
      *  Hash-Based分割と併用するとサクセッサの情報を取得するための通信で遅くなる.
      */
     return TRUE;
-  } else if (t == mc_por.root) {
+  } else if (t == root) {
     /* self-loop detection */
     return FALSE;
   } else if (t->is_on_stack()) {
@@ -793,7 +789,7 @@ static inline BOOL C3_cycle_proviso_satisfied(State *succ, State *t) {
  * sで可能な遷移の内，ample_candidate内に含まれるIDを持つものによって
  * 行き着くStateがStack上に乗っているならば偽を返す(不完全な閉路形成の禁止)
  */
-static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
+BOOL McPorData::check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                      Vector *new_ss, BOOL f) {
   unsigned int i;
 
@@ -807,14 +803,14 @@ static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     succ_t = transition(s, i);
     succ_s = transition_next_state(succ_t);
 
-    if (!mc_por.ample_candidate->contains(
+    if (!ample_candidate->contains(
                       (vec_data_t)transition_id(succ_t))) {
       continue;
     }
 
     /* POR用の状態空間ではなく,
      * 本来の状態空間に対して等価性検査をしかけ, 新規であれば追加してしまう */
-    t = mc_por.por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
+    t = por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
 
     if (!C3_cycle_proviso_satisfied(succ_s, t)) {
       return FALSE;

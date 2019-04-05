@@ -75,13 +75,17 @@ struct McPorData {
 	static int destroy_tmp_state_graph(State *s, LmnWord _a);//public
 	void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a, Vector *psyms);//called by only independency check
 	void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);//called by only independency check
-
+	State *por_state_insert_statespace(StateSpaceRef ss, TransitionRef succ_t, State *succ_s, Vector *new_ss, BOOL org_f);
 private:
 	void finalize_ample(BOOL arg_f);
 	State *por_state_insert(State *succ, struct MemDeltaRoot *d);
-	State *por_state_insert_statespace(StateSpaceRef ss, TransitionRef succ_t State *succ_s, Vector *new_ss, BOOL org_f);
 	void por_store_successors_inner(State *s, LmnReactCxtRef rc);//doesn't touch mc_por, but someone might input that's member variable
 	BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL org_f);
+	BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
+	BOOL check_C1(State *s, AutomataRef a, Vector *psyms);
+	BOOL check_C2(State *s);
+	BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
+	BOOL C3_cycle_proviso_satisfied(State *suss, State *t);
 
 };
 static McPorData mc_por;
