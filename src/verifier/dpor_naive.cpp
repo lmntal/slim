@@ -102,7 +102,6 @@ bool is_outside_exist(State *s) { return s->flags3 & POR_OUTSIDE_MASK; }
 
 /** ProtoTypes
  */
-static int destroy_tmp_state_graph(State *s, LmnWord _d);
 static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
                   BOOL org_f);
 static BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
@@ -220,7 +219,7 @@ void McPorData::finalize_ample(BOOL org_f) {
   next_strans_id = POR_ID_INITIALIZER;
   st_foreach(strans_independency, (st_iter_func)&McPorData::independency_vec_free,
              (st_data_t)0);
-  st_foreach(states, (st_iter_func)destroy_tmp_state_graph,
+  st_foreach(states, (st_iter_func)&McPorData::destroy_tmp_state_graph,
              (LmnWord)org_f);
   queue->clear();
   ample_candidate->clear();
