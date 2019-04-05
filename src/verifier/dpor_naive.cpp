@@ -102,8 +102,6 @@ bool is_outside_exist(State *s) { return s->flags3 & POR_OUTSIDE_MASK; }
 
 /** ProtoTypes
  */
-static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
-                  BOOL org_f);
 static BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
 static BOOL check_C1(State *s, AutomataRef a, Vector *psyms);
 static BOOL check_C2(State *s);
@@ -230,13 +228,14 @@ void McPorData::finalize_ample(BOOL org_f) {
 /* 状態sとsから遷移可能な状態集合をrcとして入力し,
  * reduced state graphに必要なサクセッサを状態空間ssとsに登録する.
  * ample(s)=en(s)の場合にFALSEを返す. */
-static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
+
+BOOL McPorData::ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
                   BOOL org_f) {
   set_ample(s);
   set_por_expanded(s);
-  st_add_direct(mc_por.states, (st_data_t)s, (st_data_t)s);
+  st_add_direct(states, (st_data_t)s, (st_data_t)s);
 
-  mc_por.por_store_successors(s, rc, TRUE);
+  por_store_successors(s, rc, TRUE);
 
   /* sから2stepの状態空間を立ち上げ, 遷移間の独立性情報テーブルを展開 */
   if (!independency_check(s, ss->automata(),
@@ -248,17 +247,17 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
    * -- C1から導かれるLemmaを満たすような，sで可能な遷移の集合を求める．
    * -- この処理では，sにおいてC1を満足するためには絶対にample(s)内に
    *    含めておかなくてはならない遷移の集合をample_candidate内にPUSHする. */
-  st_foreach(mc_por.strans_independency,
+  st_foreach(strans_independency,
              (st_iter_func)build_ample_satisfying_lemma, (st_data_t)s);
 
   /* ここでample_candidateが空の場合は，sで可能なすべての遷移が互いに独立であることになるので，
    * その中でC2，C3を共に満足する1本をample_candidateの要素とする */
-  if (mc_por.ample_candidate->is_empty()) {
+  if (ample_candidate->is_empty()) {
     unsigned int i;
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
       set_ample(transition_next_state(t));
-      mc_por.ample_candidate->push((vec_data_t)transition_id(t));
+      ample_candidate->push((vec_data_t)transition_id(t));
       //      if (check_C2(s) && check_C3(ss, s, rc, new_s, org_f)) {
       if (check_C1(s, ss->automata(), ss->prop_symbols()) &&
           check_C2(s)) {
@@ -267,13 +266,13 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
         /* 選択した遷移はC2もしくはC3のいずれかに反したため，次の候補を検査する
          */
         unset_ample(transition_next_state(t));
-        mc_por.ample_candidate->clear();
+        ample_candidate->clear();
       }
     }
 
     /* sにおいてC1を満たす遷移は存在したものの
      * さらにC2もC3も満たすものが1本も存在しない場合はen(s)を返して終了する */
-    if (mc_por.ample_candidate->is_empty()) {
+    if (ample_candidate->is_empty()) {
       return FALSE;
     }
   } else {
@@ -289,7 +288,7 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
      */
     //    if (mc_por.ample_candidate->get_num() == state_succ_num(s) ||
     //        !check_C2(s) || !check_C3(ss, s, rc, new_s, org_f)) {
-    if (mc_por.ample_candidate->get_num() == s->successor_num ||
+    if (ample_candidate->get_num() == s->successor_num ||
         !check_C1(s, ss->automata(), ss->prop_symbols()) ||
         !check_C2(s)) {
       return FALSE;
@@ -311,13 +310,14 @@ static BOOL ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
 
   POR_DEBUG({
     printf("*** C1--3 ok! ample set calculated\n");
-    st_foreach(mc_por.strans_independency, (st_iter_func)dump__strans_independency,
+    st_foreach(strans_independency, (st_iter_func)dump__strans_independency,
                (st_data_t)0);
     dump__ample_candidate();
   });
 
   return TRUE;
 }
+
 
 void McPorData::por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
                                Vector *psyms) {
@@ -377,7 +377,7 @@ inline State *McPorData::por_state_insert(State *succ, struct MemDeltaRoot *d) {
   return ret;
 }
 
-static inline State *por_state_insert_statespace(StateSpaceRef ss,
+inline State *McPorData::por_state_insert_statespace(StateSpaceRef ss,
                                                  TransitionRef succ_t,
                                                  State *succ_s, Vector *new_ss,
                                                  BOOL org_f) {
@@ -814,7 +814,7 @@ static BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
     /* POR用の状態空間ではなく,
      * 本来の状態空間に対して等価性検査をしかけ, 新規であれば追加してしまう */
-    t = por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
+    t = mc_por.por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
 
     if (!C3_cycle_proviso_satisfied(succ_s, t)) {
       return FALSE;
@@ -1045,7 +1045,7 @@ static void push_ample_to_expanded(StateSpaceRef ss, State *s,
         /* 探索空間へ追加していない(しているがcontainsの場合) /\
          * amplesetに含める遷移 */
         if (!is_inserted(succ_s)) {
-          por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
+          mc_por.por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
         }
         tmp.push((vec_data_t)succ_t);
       }
@@ -1080,7 +1080,7 @@ static BOOL push_succstates_to_expanded(StateSpaceRef ss, State *s,
       succ_s = transition_next_state(succ_t);
 
       if (!is_inserted(succ_s)) {
-        por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
+        mc_por.por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
       }
     }
   }
