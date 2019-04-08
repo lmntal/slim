@@ -791,16 +791,16 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   TR_INSTR_COPYRULES(rc, $0, $1);
 
 #removeproxies LmnInstrVar
-  lmn_mem_remove_proxies((LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($0))->remove_proxies();
 
 #insertproxies LmnInstrVar LmnInstrVar
-  lmn_mem_insert_proxies((LmnMembraneRef)rc->wt($0), (LmnMembraneRef)rc->wt($1));
+  ((LmnMembraneRef)rc->wt($0))->insert_proxies((LmnMembraneRef)rc->wt($1));
 
 #deleteconnectors LmnInstrVar LmnInstrVar
   TR_INSTR_DELETECONNECTORS($0, $1);
 
 #removetoplevelproxies LmnInstrVar
-  lmn_mem_remove_toplevel_proxies((LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($0))->remove_toplevel_proxies();
 
 #dereffunc LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_DEREFFUNC(rc, $0, $1, $2);
@@ -871,10 +871,10 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   lmn_mem_push_atom((LmnMembraneRef)rc->wt($0), (LmnAtomRef)rc->wt($1), rc->at($1));
 
 #movecells LmnInstrVar LmnInstrVar
-  lmn_mem_move_cells((LmnMembraneRef)rc->wt($0), (LmnMembraneRef)rc->wt($1));
+  ((LmnMembraneRef)rc->wt($0))->move_cells((LmnMembraneRef)rc->wt($1));
 
 #removetemporaryproxies LmnInstrVar
-  lmn_mem_remove_temporary_proxies((LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($0))->remove_temporary_proxies();
 
 #nfreelinks LmnInstrVar LmnInstrVar
   if (!lmn_mem_nfreelinks((LmnMembraneRef)rc->wt($0), $1)) $f;
@@ -890,7 +890,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   ((LmnMembraneRef)rc->wt($0))->get_rulesets()->clear();
 
 #dropmem LmnInstrVar
-  lmn_mem_drop((LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($0))->drop();
 
 #testmem LmnInstrVar LmnInstrVar
   if (LMN_PROXY_GET_MEM((LmnSymbolAtomRef)rc->wt($1)) != (LmnMembraneRef)rc->wt($0)) $f;

@@ -85,7 +85,7 @@ MemDeltaRoot::~MemDeltaRoot() {
       new_mem_info = (struct NewMemInfo *)t;
 
       delete new_mem_info;
-      lmn_mem_drop(mem);
+      mem->drop();
       delete mem;
     } else {
       lmn_fatal("unexpected");
@@ -353,7 +353,7 @@ void MemDeltaRoot::move_satom(LmnWord key, LmnWord dest) {
 void MemDeltaRoot::move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
   if (this->is_new_mem(destmem) && this->is_new_mem(srcmem)) {
     /* 移動先・移動元ともに新規膜 */
-    lmn_mem_move_cells(destmem, srcmem);
+    destmem->move_cells(srcmem);
   } else {
     ProcessTableRef atoms = this->copy_cells(destmem, srcmem);
     if (!this->is_new_mem(srcmem)) {
@@ -1004,7 +1004,7 @@ void dmem_root_remove_mem(struct MemDeltaRoot *root_d, LmnMembraneRef parent,
 void dmem_root_remove_toplevel_proxies(struct MemDeltaRoot *root_d,
                                        LmnMembraneRef mem) {
   if (root_d->is_new_mem(mem)) {
-    lmn_mem_remove_toplevel_proxies(mem);
+    mem->remove_toplevel_proxies();
   } else {
     Vector remove_list;
     LmnSymbolAtomRef outside;
@@ -1063,7 +1063,7 @@ void dmem_root_remove_proxies(struct MemDeltaRoot *root_d, LmnMembraneRef mem) {
    */
   if (root_d->is_new_mem(mem)) {
     /* printf("remove proxies new mem\n"); */
-    lmn_mem_remove_proxies(mem);
+    mem->remove_proxies();
   } else {
     unsigned int i;
     Vector remove_list, change_list;
@@ -1443,7 +1443,7 @@ BOOL dmem_root_is_committed(struct MemDeltaRoot *root_d) {
 
 void dmem_root_drop(struct MemDeltaRoot *root_d, LmnMembraneRef m) {
   if (root_d->is_new_mem(m))
-    lmn_mem_drop(m);
+    m->drop();
   else
     dmem_drop(root_d->get_mem_delta(m), m);
 }

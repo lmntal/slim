@@ -1022,7 +1022,7 @@ static void lmn_dump_mem_json(LmnMembraneRef mem) {
 
   fprintf(stdout, "{");
   fprintf(stdout, "\"id\":%d,", (int)mem->mem_id());
-  fprintf(stdout, "\"name\":\"%s\",", LMN_MEM_NAME(mem));
+  fprintf(stdout, "\"name\":\"%s\",", mem->MEM_NAME());
   fprintf(stdout, "\"atoms\":[");
   {
     AtomListEntryRef ent;

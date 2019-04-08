@@ -428,7 +428,7 @@ int inner_set_copy(st_data_t key, st_data_t rec, st_data_t arg) {
   st_table_t tbl = ((LmnSetRef)arg)->tbl;
   st_data_t val =
       (tbl->type == &type_mem_hash)
-          ? (st_data_t)lmn_mem_copy((LmnMembraneRef)key)
+    ? (st_data_t)((LmnMembraneRef)key)->copy()
           : (st_data_t)lmn_copy_satom_with_data((LmnSymbolAtomRef)key, FALSE);
   st_insert(tbl, val, val);
   return ST_CONTINUE;

@@ -167,11 +167,9 @@ LmnMembrane::LmnMembrane(){
 #endif
 
 }
-
-const char *LMN_MEM_NAME(LmnMembraneRef m) {
-  return LMN_SYMBOL_STR(m->NAME_ID());
+const char *LmnMembrane::MEM_NAME() {
+  return LMN_SYMBOL_STR(this->NAME_ID());
 }
-
 LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i) {
   return (LmnRuleSetRef)m->get_rulesets()->get(i);
 }
@@ -195,21 +193,21 @@ LmnMembrane::~LmnMembrane(){
 
 /* 膜mem内のアトム, 子膜のメモリを解放する.
  * 子膜が存在する場合は, その子膜に再帰する. */
-void lmn_mem_drop(LmnMembraneRef mem) {
+void LmnMembrane::drop() {
   AtomListEntry *ent;
   LmnMembraneRef m, n;
 
   /* drop and free child mems */
-  m = mem->child_head;
+  m = this->child_head;
   while (m) {
     n = m;
     m = m->next;
     lmn_mem_free_rec(n);
   }
-  mem->child_head = NULL;
+  this->child_head = NULL;
 
   EACH_ATOMLIST(
-      mem, ent, ({
+      this, ent, ({
         LmnSymbolAtomRef a;
         a = atomlist_head(ent);
         if (LMN_IS_HL(a)) {
@@ -223,8 +221,8 @@ void lmn_mem_drop(LmnMembraneRef mem) {
         ent->set_empty();
       }));
 
-  mem->atom_symb_num = 0U;
-  mem->atom_data_num = 0U;
+  this->atom_symb_num = 0U;
+  this->atom_data_num = 0U;
 }
 
 /* ルールセット配列rulesetsを解放する */
@@ -240,7 +238,6 @@ void lmn_mem_rulesets_destroy(Vector *rulesets) {
   }
   rulesets->destroy();
 }
-
 void move_symbol_atom_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
   LmnFunctor f = a->get_functor();
   AtomListEntry *ent = mem->get_atomlist(f);
@@ -342,17 +339,16 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
 
   as->push(atom);
 }
-
-unsigned long lmn_mem_space(LmnMembraneRef mem) {
+unsigned long LmnMembrane::space() {
   AtomListEntry *ent;
   unsigned long ret;
   unsigned int i;
 
   ret = 0;
   ret += sizeof(struct LmnMembrane);
-  ret += sizeof(struct AtomListEntry *) * mem->atomset_size;
+  ret += sizeof(struct AtomListEntry *) * this->atomset_size;
   /* atomset */
-  EACH_ATOMLIST(mem, ent, ({
+  EACH_ATOMLIST(this, ent, ({
                   LmnSymbolAtomRef atom;
                   ret += sizeof(struct AtomListEntry);
                   if (ent->record) {
@@ -365,9 +361,9 @@ unsigned long lmn_mem_space(LmnMembraneRef mem) {
                 }));
 
   /* ruleset */
-  ret += mem->rulesets.space_inner();
-  for (i = 0; i < mem->rulesets.get_num(); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)mem->rulesets.get(i);
+  ret += this->rulesets.space_inner();
+  for (i = 0; i < this->rulesets.get_num(); i++) {
+    LmnRuleSetRef rs = (LmnRuleSetRef)this->rulesets.get(i);
     if (rs->is_copy()) {
       ret += rs->space();
     }
@@ -375,14 +371,13 @@ unsigned long lmn_mem_space(LmnMembraneRef mem) {
 
   return ret;
 }
-
-unsigned long lmn_mem_root_space(LmnMembraneRef src) {
+unsigned long LmnMembrane::root_space() {
   unsigned long ret;
   LmnMembraneRef ptr;
 
-  ret = lmn_mem_space(src);
-  for (ptr = src->child_head; ptr != NULL; ptr = ptr->next) {
-    ret += lmn_mem_root_space(ptr);
+  ret = this->space();
+  for (ptr = this->child_head; ptr != NULL; ptr = ptr->next) {
+    ret += ptr->root_space();
   }
 
   return ret;
@@ -546,13 +541,12 @@ void lmn_mem_relink_atom_args(LmnMembraneRef mem, LmnAtomRef atom0,
       ((LmnSymbolAtomRef)atom1)->get_link(pos1),
       ((LmnSymbolAtomRef)atom1)->get_attr(pos1));
 }
-
-void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
+void LmnMembrane::move_cells(LmnMembraneRef srcmem) {
   AtomListEntry *srcent;
   LmnMembraneRef m, next;
   int dst_data_atom_n, src_data_atom_n;
 
-  dst_data_atom_n = destmem->data_atom_num();
+  dst_data_atom_n = this->data_atom_num();
   src_data_atom_n = srcmem->data_atom_num();
 
   /* move atoms */
@@ -568,7 +562,7 @@ void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
           if (a->get_functor() == LMN_COLON_MINUS_FUNCTOR) {
             LmnRuleSetRef rs = firstclass_ruleset_lookup(a);
             lmn_mem_remove_firstclass_ruleset(srcmem, rs);
-            lmn_mem_add_firstclass_ruleset(destmem, rs);
+            lmn_mem_add_firstclass_ruleset(this, rs);
           }
 #endif
 
@@ -576,11 +570,11 @@ void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
             int i, arity;
 
             mem_remove_symbol_atom(srcmem, a);
-            mem_push_symbol_atom(destmem, a);
+            mem_push_symbol_atom(this, a);
             arity = a->get_link_num();
             for (i = 0; i < arity; i++) {
               if (LMN_ATTR_IS_DATA_WITHOUT_EX(a->get_attr(i))) {
-                lmn_mem_push_atom(destmem, a->get_link(i),
+                lmn_mem_push_atom(this, a->get_link(i),
                                   a->get_attr(i));
               }
             }
@@ -592,11 +586,11 @@ void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
   for (m = srcmem->child_head; m; m = next) {
     next = m->next;
     lmn_mem_remove_mem(srcmem, m);
-    destmem->add_child_mem(m);
+    this->add_child_mem(m);
   }
 
-  if (src_data_atom_n > destmem->data_atom_num() - dst_data_atom_n) {
-    destmem->data_atom_set(dst_data_atom_n + src_data_atom_n);
+  if (src_data_atom_n > this->data_atom_num() - dst_data_atom_n) {
+    this->data_atom_set(dst_data_atom_n + src_data_atom_n);
   }
 }
 
@@ -611,12 +605,12 @@ void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
  *
  * 2011/01/23  処理を変更 meguro
  */
-void lmn_mem_remove_proxies(LmnMembraneRef mem) {
+void LmnMembrane::remove_proxies() {
   struct Vector remove_list_p, remove_list_m, change_list;
   AtomListEntry *ent;
   unsigned int i;
 
-  ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
+  ent = this->get_atomlist(LMN_IN_PROXY_FUNCTOR);
 
   remove_list_p.init(16); /* parent用 */
   remove_list_m.init(16); /* mem用 */
@@ -635,7 +629,7 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
 
                   if (f0 == LMN_STAR_PROXY_FUNCTOR) {
                     /* -$*-$in- → ----- */
-                    lmn_mem_unify_atom_args(mem, a0, 0, ipxy, 0);
+                    lmn_mem_unify_atom_args(this, a0, 0, ipxy, 0);
                     remove_list_m.push((LmnWord)a0);
                     remove_list_m.push((LmnWord)ipxy);
                   } else {
@@ -659,7 +653,7 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
                     f2 = a2->get_functor();
 
                     if (f2 == LMN_STAR_PROXY_FUNCTOR) {
-                      lmn_mem_unify_atom_args(mem->parent, a1, 0, a2, 0);
+                      lmn_mem_unify_atom_args(this->parent, a1, 0, a2, 0);
                       remove_list_p.push((LmnWord)a1);
                       remove_list_p.push((LmnWord)a2);
                     } else {
@@ -671,14 +665,14 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
   }
 
   for (i = 0; i < remove_list_p.get_num(); i++) {
-    mem_remove_symbol_atom(mem->parent,
+    mem_remove_symbol_atom(this->parent,
                            (LmnSymbolAtomRef)remove_list_p.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list_p.get(i));
   }
   remove_list_p.destroy();
 
   for (i = 0; i < remove_list_m.get_num(); i++) {
-    mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list_m.get(i));
+    mem_remove_symbol_atom(this, (LmnSymbolAtomRef)remove_list_m.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list_m.get(i));
   }
   remove_list_m.destroy();
@@ -698,7 +692,7 @@ void lmn_mem_remove_proxies(LmnMembraneRef mem) {
  * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
  * HashSetを使うようにする
  */
-void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem) {
+void LmnMembrane::insert_proxies(LmnMembraneRef child_mem) {
   unsigned int i;
   Vector remove_list, change_list;
   LmnSymbolAtomRef star, oldstar;
@@ -721,16 +715,16 @@ void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem) {
               } else {
                 change_list.push((LmnWord)star);
 
-                if (LMN_PROXY_GET_MEM(oldstar) == mem) { /* (2) */
-                  alter_functor(mem, oldstar, LMN_OUT_PROXY_FUNCTOR);
+                if (LMN_PROXY_GET_MEM(oldstar) == this) { /* (2) */
+                  alter_functor(this, oldstar, LMN_OUT_PROXY_FUNCTOR);
                   lmn_newlink_in_symbols(star, 0, oldstar, 0);
                 } else { /* (3) */
                   LmnSymbolAtomRef outside =
-                      lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+                      lmn_mem_newatom(this, LMN_OUT_PROXY_FUNCTOR);
                   LmnSymbolAtomRef newstar =
-                      lmn_mem_newatom(mem, LMN_STAR_PROXY_FUNCTOR);
+                      lmn_mem_newatom(this, LMN_STAR_PROXY_FUNCTOR);
                   lmn_newlink_in_symbols(outside, 1, newstar, 1);
-                  lmn_mem_relink_atom_args(mem, newstar, LMN_ATTR_MAKE_LINK(0),
+                  lmn_mem_relink_atom_args(this, newstar, LMN_ATTR_MAKE_LINK(0),
                                            0, star, LMN_ATTR_MAKE_LINK(0), 0);
                   lmn_newlink_in_symbols(star, 0, outside, 0);
                 }
@@ -744,7 +738,7 @@ void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem) {
   change_list.destroy();
 
   for (i = 0; i < remove_list.get_num(); i++) {
-    mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list.get(i));
+    mem_remove_symbol_atom(this, (LmnSymbolAtomRef)remove_list.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list.get(i));
   }
   remove_list.destroy();
@@ -756,11 +750,11 @@ void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem) {
  * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
  * HashSetを使うようにする
  */
-void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem) {
+void LmnMembrane::remove_temporary_proxies() {
   unsigned int i;
   Vector remove_list;
   LmnSymbolAtomRef star, outside;
-  AtomListEntry *ent = mem->get_atomlist(LMN_STAR_PROXY_FUNCTOR);
+  AtomListEntry *ent = this->get_atomlist(LMN_STAR_PROXY_FUNCTOR);
 
   if (!ent)
     return;
@@ -770,14 +764,14 @@ void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem) {
   EACH_ATOM(star, ent, ({
               outside = (LmnSymbolAtomRef)star->get_link(0);
               if (!remove_list.contains((LmnWord)star)) {
-                lmn_mem_unify_atom_args(mem, star, 1, outside, 1);
+                lmn_mem_unify_atom_args(this, star, 1, outside, 1);
                 remove_list.push((LmnWord)star);
                 remove_list.push((LmnWord)outside);
               }
             }));
 
   for (i = 0; i < remove_list.get_num(); i++) {
-    mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list.get(i));
+    mem_remove_symbol_atom(this, (LmnSymbolAtomRef)remove_list.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list.get(i));
   }
 
@@ -790,13 +784,13 @@ void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem) {
  * とても非効率なので，以前のREMOVEタグを使った実装に戻すか
  * HashSetを使うようにする
  */
-void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
+void LmnMembrane::remove_toplevel_proxies() {
   Vector remove_list;
   AtomListEntry *ent;
   LmnSymbolAtomRef outside;
   unsigned int i;
 
-  ent = mem->get_atomlist(LMN_OUT_PROXY_FUNCTOR);
+  ent = this->get_atomlist(LMN_OUT_PROXY_FUNCTOR);
   if (!ent)
     return;
 
@@ -805,7 +799,7 @@ void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
   EACH_ATOM(
       outside, ent, ({
         LmnSymbolAtomRef a0 = (LmnSymbolAtomRef)outside->get_link(0);
-        if (LMN_PROXY_GET_MEM(a0) && LMN_PROXY_GET_MEM(a0)->parent != mem) {
+        if (LMN_PROXY_GET_MEM(a0) && LMN_PROXY_GET_MEM(a0)->parent != this) {
           if (!LMN_ATTR_IS_DATA(outside->get_attr(1))) {
             LmnSymbolAtomRef a1 =
                 (LmnSymbolAtomRef)outside->get_link(1);
@@ -813,9 +807,9 @@ void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
               LmnSymbolAtomRef a10 =
                   (LmnSymbolAtomRef)a1->get_link(0);
               if (LMN_PROXY_GET_MEM(a10) &&
-                  LMN_PROXY_GET_MEM(a10)->parent != mem) {
+                  LMN_PROXY_GET_MEM(a10)->parent != this) {
                 if (!remove_list.contains((LmnWord)outside)) {
-                  lmn_mem_unify_atom_args(mem, outside, 0, a1, 0);
+                  lmn_mem_unify_atom_args(this, outside, 0, a1, 0);
                   remove_list.push((LmnWord)outside);
                   remove_list.push((LmnWord)a1);
                 }
@@ -826,26 +820,24 @@ void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem) {
       }));
 
   for (i = 0; i < remove_list.get_num(); i++) {
-    mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)remove_list.get(i));
+    mem_remove_symbol_atom(this, (LmnSymbolAtomRef)remove_list.get(i));
     lmn_delete_atom((LmnSymbolAtomRef)remove_list.get(i));
   }
   remove_list.destroy();
 }
-
-LmnMembraneRef lmn_mem_copy(LmnMembraneRef src) {
+LmnMembraneRef LmnMembrane::copy() {
   ProcessTableRef copymap;
   LmnMembraneRef copied;
 
-  copied = lmn_mem_copy_with_map(src, &copymap);
+  copied = lmn_mem_copy_with_map(this,&copymap);
   proc_tbl_free(copymap);
   return copied;
 }
-
-LmnMembraneRef lmn_mem_copy_ex(LmnMembraneRef src) {
+LmnMembraneRef LmnMembrane::copy_ex() {
   ProcessTableRef copymap;
   LmnMembraneRef copied;
 
-  copied = lmn_mem_copy_with_map_ex(src, &copymap);
+  copied = lmn_mem_copy_with_map_ex(this, &copymap);
   proc_tbl_free(copymap);
   return copied;
 }
@@ -3286,7 +3278,7 @@ void lmn_mem_remove_mem(LmnMembraneRef parent, LmnMembraneRef mem) {
 
 /* 膜mem以下全ての階層のメモリを破棄する */
 void lmn_mem_free_rec(LmnMembraneRef mem) {
-  lmn_mem_drop(mem);
+  mem->drop();
   delete mem;
 }
 

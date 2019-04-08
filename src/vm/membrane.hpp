@@ -183,6 +183,18 @@ struct LmnMembrane {
       return NULL;
     }
   }
+  const char *MEM_NAME();
+  void drop();
+  unsigned long space();
+  unsigned long root_space();
+  void move_cells(LmnMembraneRef srcmem);
+  void remove_proxies();
+  void insert_proxies(LmnMembraneRef child_mem);
+  void remove_temporary_proxies();
+  void remove_toplevel_proxies();
+  LmnMembraneRef copy();
+  LmnMembraneRef copy_ex();
+  //まだリファクタリングしていない
 };
 
 #endif

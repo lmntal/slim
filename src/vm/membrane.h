@@ -71,35 +71,24 @@ LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos);
 
 extern struct st_hash_type type_memhash;
 
-const char *LMN_MEM_NAME(LmnMembraneRef m);
 
 LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i);
 
 
 void lmn_mem_rulesets_destroy(Vector *rulesets);
-void lmn_mem_drop(LmnMembraneRef mem);
 void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
 void lmn_mem_add_ruleset_sort(Vector *rulesets, LmnRuleSetRef ruleset);
 
-unsigned long lmn_mem_root_space(LmnMembraneRef mem);
-unsigned long lmn_mem_space(LmnMembraneRef mem);
 BOOL lmn_mem_equals(LmnMembraneRef mem1, LmnMembraneRef mem2);
 
-void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem);
 LmnMembraneRef lmn_mem_copy_with_map_ex(LmnMembraneRef srcmem,
                                         ProcessTableRef *copymap);
 LmnMembraneRef lmn_mem_copy_with_map(LmnMembraneRef srcmem,
                                      ProcessTableRef *copymap);
-LmnMembraneRef lmn_mem_copy(LmnMembraneRef srcmem);
-LmnMembraneRef lmn_mem_copy_ex(LmnMembraneRef src);
 
 ProcessTableRef lmn_mem_copy_cells_ex(LmnMembraneRef dest, LmnMembraneRef src,
                                       BOOL hl_nd);
 ProcessTableRef lmn_mem_copy_cells(LmnMembraneRef dest, LmnMembraneRef srcmem);
-void lmn_mem_remove_proxies(LmnMembraneRef mem);
-void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem);
-void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem);
-void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem);
 
 BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec);
 BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);

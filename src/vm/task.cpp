@@ -177,7 +177,7 @@ void lmn_run(Vector *start_rulesets) {
 
   /* interactive: normal_cleaningフラグがONの場合は後始末 */
   if (lmn_env.normal_cleaning) {
-    lmn_mem_drop(mem);
+    mem->drop();
     delete mem;
     mrc = nullptr;
     lmn_env.normal_cleaning = FALSE;
@@ -245,7 +245,7 @@ void lmn_run(Vector *start_rulesets) {
     lmn_env.normal_remaining = TRUE;
   } else {
     lmn_env.normal_remaining = FALSE;
-    lmn_mem_drop(mem);
+    mem->drop();
     delete mem;
     mrc = nullptr;
   }
@@ -3645,7 +3645,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_remove_proxies((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->remove_proxies();
     break;
   }
   case INSTR_INSERTPROXIES: {
@@ -3653,8 +3653,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     READ_VAL(LmnInstrVar, instr, parentmemi);
     READ_VAL(LmnInstrVar, instr, childmemi);
-    lmn_mem_insert_proxies((LmnMembraneRef)rc->wt(parentmemi),
-                           (LmnMembraneRef)rc->wt(childmemi));
+    ((LmnMembraneRef)rc->wt(parentmemi))->insert_proxies((LmnMembraneRef)rc->wt(childmemi));
     break;
   }
   case INSTR_DELETECONNECTORS: {
@@ -3694,7 +3693,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_remove_toplevel_proxies((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->remove_toplevel_proxies();
     break;
   }
   case INSTR_DEREFFUNC: {
@@ -3817,15 +3816,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, destmemi);
     READ_VAL(LmnInstrVar, instr, srcmemi);
     LMN_ASSERT(rc->wt(destmemi) != rc->wt(srcmemi));
-    lmn_mem_move_cells((LmnMembraneRef)rc->wt(destmemi),
-                       (LmnMembraneRef)rc->wt(srcmemi));
+    ((LmnMembraneRef)rc->wt(destmemi))->move_cells((LmnMembraneRef)rc->wt(srcmemi));
     break;
   }
   case INSTR_REMOVETEMPORARYPROXIES: {
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_remove_temporary_proxies((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->remove_temporary_proxies();
     break;
   }
   case INSTR_NFREELINKS: {
@@ -3890,7 +3888,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_drop((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->drop();
     break;
   }
   case INSTR_TESTMEM: {

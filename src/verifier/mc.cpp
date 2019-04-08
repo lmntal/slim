@@ -83,7 +83,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     lmn_env.nd_remaining = TRUE;
   } else {
     lmn_env.nd_remaining = FALSE;
-    lmn_mem_drop(mem);
+    mem->drop();
     delete mem;
   }
 }
@@ -105,7 +105,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   wp = lmn_workergroup_make(a, psyms, thread_num);
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
-  mem = lmn_mem_copy(world_mem_org);
+  mem = world_mem_org->copy();
   init_s = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT
@@ -232,7 +232,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     /** free   : 遷移先を求めた状態sからLMNtalプロセスを開放 */
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__REDUCED_MEMSET, lmn_mem_space(mem));
+      profile_add_space(PROFILE_SPACE__REDUCED_MEMSET, mem->space());
     }
 #endif
     lmn_mem_free_rec(mem);
