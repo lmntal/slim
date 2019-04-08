@@ -173,7 +173,7 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   BOOL gen_counter_example;
 
   wp = worker_group(w);
-  workers_found_error(wp);
+  wp->workers_found_error();
 
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
@@ -193,7 +193,7 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   if (gen_counter_example) {
     mc_found_invalid_path(wp, v);
   } else if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+    wp->workers_set_exit();
   }
 }
 
@@ -343,7 +343,7 @@ void owcty_start(LmnWorker *w) {
 
   lmn_workers_synchronization(w, owcty_env_init);
 
-  while (!worker_group(w)->mc_exit) {
+  while (!worker_group(w)->workers_are_exit()) {
     START_CYCLE_SEARCH();
 
     /* OWCTYはReachabilityの結果から不動点への到達を判定するため,
@@ -393,7 +393,7 @@ static inline void owcty_termination_detection(LmnWorker *w) {
   q_num = mc->accepts1->entry_num();
   if (q_num == 0 || q_num == mc->old) {
     MC_DEBUG(fprintf(stderr, "\n"));
-    worker_group(w)->mc_exit = TRUE;
+    worker_group(w)->workers_set_exit();
   }
 }
 
@@ -481,7 +481,7 @@ static inline BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag,
 static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     LmnWorkerGroup *wp = worker_group(w);
-    wp->error_exist = TRUE;
+    wp->workers_found_error();
 
     if (lmn_env.dump) {
       Vector search, path;
@@ -770,9 +770,9 @@ void backward_elimination(LmnWorker *w, State *s) {
 static void map_found_accepting_cycle(LmnWorker *w, State *s) {
   LmnWorkerGroup *wp = worker_group(w);
 
-  workers_found_error(wp);
+  wp->workers_found_error();
   if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+    wp->workers_set_exit();
   }
 
   if (lmn_env.dump && !s->is_on_cycle()) {
@@ -937,7 +937,7 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
   BOOL gen_counter_example;
 
   wp = worker_group(w);
-  wp->error_exist = TRUE;
+  wp->workers_found_error();
 
   gen_counter_example = lmn_env.dump;
   v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
@@ -954,7 +954,7 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
   if (gen_counter_example) {
     mc_found_invalid_path(wp, v);
   } else if (!wp->do_exhaustive) {
-    wp->mc_exit = TRUE;
+    wp->workers_set_exit();
   }
 }
 
@@ -1089,7 +1089,7 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   BOOL gen_counter_example;
 
   wp = worker_group(w);
-  workers_found_error(wp);
+  wp->workers_found_error();
 
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
@@ -1109,7 +1109,7 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   if (gen_counter_example) {
     mc_found_invalid_path(wp, v);
   } else if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+    wp->workers_set_exit();
   }
 }
 
@@ -1246,7 +1246,7 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   BOOL gen_counter_example;
 
   wp = worker_group(w);
-  workers_found_error(wp);
+  wp->workers_found_error();
 
   gen_counter_example = lmn_env.dump;
  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
@@ -1266,7 +1266,7 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   if (gen_counter_example) {
     mc_found_invalid_path(wp, v);
   } else if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+    wp->workers_set_exit();
   }
 }
 

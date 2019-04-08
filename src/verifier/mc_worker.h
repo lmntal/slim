@@ -80,7 +80,7 @@ struct LmnWorkerGroup {
   BOOL do_search;     /* 反例の探索を行う場合に真 */
   BOOL
       do_exhaustive; /* 反例を1つ見つけた場合に探索を!!打ち切らない場合!!に真 */
-
+private:
   BOOL do_para_algo; /* 並列アルゴリズムを使用する場合に真 */
   volatile BOOL mc_exit; /* 反例の発見により探索を打ち切る場合に真 */
   BOOL error_exist; /* 反例が存在する場合に真 */
@@ -90,24 +90,41 @@ struct LmnWorkerGroup {
                          * wlock: 各状態のコストアップデート用 */
 
   FILE *out; /* 出力先 */
+
+public:
+
+
+  BOOL workers_are_exit();
+  void workers_set_exit();
+  void workers_unset_exit();
+  BOOL workers_have_error();
+  void workers_found_error();
+  void workers_unfound_error();
+  BOOL workers_get_do_palgorithm();
+  void workers_set_do_palgorithm();
+  void workers_unset_do_palgorithm();
+  FILE workers_out();
+
+  State *workers_get_opt_end_state();
+  void workers_set_opt_end_state(State *s);
+  EWLock *workers_get_ewlock();
+  void workers_set_ewlock(EWLock *e);
+  void workers_opt_end_lock();
+  void workers_opt_end_unlock();
+  void workers_state_lock(mtx_data_t id);
+  void workers_state_unlock(mtx_data_t id);
+
 };
 
-#define workers_are_exit(WP) ((WP)->mc_exit)
-#define workers_set_exit(WP) ((WP)->mc_exit = TRUE)
-#define workers_have_error(WP) ((WP)->error_exist)
-#define workers_found_error(WP) ((WP)->error_exist = TRUE)
-#define workers_format_states(WP)    ((WP)->is_format_states))
-#define workers_prop_atm(WP) ((WP)->property_automata)
-#define workers_prop_sym(WP) ((WP)->propsyms)
-#define workers_do_palgorithm(WP) ((WP)->do_para_algo)
-#define workers_out(WP) ((WP)->out)
+//#define workers_do_palgorithm(WP) ((WP)->do_para_algo)
+//#define workers_out(WP) ((WP)->out)
 
-#define workers_opt_end_state(WP) ((WP)->opt_end_state)
-#define workers_ewlock(WP) ((WP)->ewlock)
-#define workers_opt_end_lock(WP) (ewlock_acquire_enter((WP)->ewlock, 0U))
-#define workers_opt_end_unlock(WP) (ewlock_release_enter((WP)->ewlock, 0U))
-#define workers_state_lock(WP, id) (ewlock_acquire_write((WP)->ewlock, id))
-#define workers_state_unlock(WP, id) (ewlock_release_write((WP)->ewlock, id))
+//#define workers_opt_end_state(WP) ((WP)->opt_end_state)
+//#define workers_ewlock(WP) ((WP)->ewlock)
+//#define workers_opt_end_lock(WP) (ewlock_acquire_enter((WP)->ewlock, 0U))
+//#define workers_opt_end_unlock(WP) (ewlock_release_enter((WP)->ewlock, 0U))
+//#define workers_state_lock(WP, id) (ewlock_acquire_write((WP)->ewlock, id))
+//#define workers_state_unlock(WP, id) (ewlock_release_write((WP)->ewlock, id))
 
 #define workers_are_terminated(WP) ((WP)->terminated)
 #define workers_set_terminated(WP) ((WP)->terminated = TRUE)

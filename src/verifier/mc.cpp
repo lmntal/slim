@@ -172,7 +172,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
       }
 #ifdef KWBT_OPT
       if (lmn_env.opt_mode != OPT_NONE) {
-        if (!workers_opt_end_state(wp)) {
+        if (!wp->workers_get_opt_end_state()) {
           fprintf(out, "\'# can't solve the problem\'.\n");
         } else {
           fprintf(out, "\'# optimized cost\'      = %lu.\n",
@@ -185,7 +185,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
 
   if (ss->has_property())
     lmn_prof.has_property = TRUE;
-  if (workers_have_error(wp))
+  if (wp->workers_have_error())
     lmn_prof.found_err = TRUE;
 }
 
@@ -635,21 +635,21 @@ static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
 /* エラーを示す頂点を登録する.
  * MT-Unsafe, but ok */
 void mc_found_invalid_state(LmnWorkerGroup *wp, State *s) {
-  workers_found_error(wp);
+  wp->workers_found_error();
   if (s) {
     LmnWorker *w = workers_get_my_worker(wp);
     worker_invalid_seeds(w)->push((vec_data_t)s);
   }
 
   if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+    wp->workers_set_exit();
   }
 }
 
 /* エラーを示すサイクルパスを載せたVectorを登録する.
  * MT-Unsafe, but ok  */
 void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v) {
-  workers_found_error(wp);
+  wp->workers_found_error();
 
   if (v) {
     LmnWorker *w = workers_get_my_worker(wp);
@@ -657,7 +657,7 @@ void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v) {
   }
 
   if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+    wp->workers_set_exit();
   }
 }
 
@@ -812,7 +812,7 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
  * その他の場合は, その頂点を起点にしたサイクルパスにon_cycle_flagが立っている
  */
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
-  if (!wp->error_exist) {
+  if (!wp->workers_have_error()) {
     fprintf(f, "%s\n",
             lmn_env.mc_dump_format == CUI
                 ? "No Accepting Cycle (or Invalid State) exists."

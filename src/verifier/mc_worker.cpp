@@ -134,7 +134,7 @@ static void lmn_worker_start(void *arg) {
     profile_start_exec_thread();
   worker_start(w);
 
-  if (!workers_are_exit(wp) && !workers_have_error(wp)) {
+  if (!wp->workers_are_exit() && !wp->workers_have_error()) {
     if (worker_use_owcty(w)) {
       owcty_start(w);
     } else if (worker_use_map(w) && !worker_use_weak_map(w)) {
@@ -168,10 +168,81 @@ static void worker_TLS_finalize() { env_my_TLS_finalize(); }
  *  Worker Group
  */
 
+BOOL LmnWorkerGroup::workers_are_exit(){
+  return mc_exit;
+}
+
+void LmnWorkerGroup::workers_set_exit(){
+  mc_exit = TRUE;
+}
+
+void LmnWorkerGroup::workers_unset_exit(){
+  mc_exit = FALSE;
+}
+
+BOOL LmnWorkerGroup::workers_have_error(){
+  return error_exist;
+}
+
+void LmnWorkerGroup::workers_found_error(){
+  error_exist = TRUE;
+}
+
+void LmnWorkerGroup::workers_unfound_error(){
+  error_exist = FALSE;
+}
+
+BOOL LmnWorkerGroup::workers_get_do_palgorithm(){
+  return do_para_algo;
+}
+
+void LmnWorkerGroup::workers_set_do_palgorithm(){
+  do_para_algo = TRUE;
+}
+
+void LmnWorkerGroup::workers_unset_do_palgorithm(){
+  do_para_algo = FALSE;
+}
+
+State *LmnWorkerGroup::workers_get_opt_end_state(){
+  return opt_end_state;
+}
+
+void LmnWorkerGroup::workers_set_opt_end_state(State *s){
+  opt_end_state = s;
+}
+
+EWLock *LmnWorkerGroup::workers_get_ewlock(){
+  return ewlock;
+}
+
+void LmnWorkerGroup::workers_set_ewlock(EWLock *e){
+  ewlock = e;
+}
+
+void LmnWorkerGroup::workers_opt_end_lock(){
+  ewlock_acquire_enter(ewlock, 0U);
+}
+
+void LmnWorkerGroup::workers_opt_end_unlock(){
+  ewlock_release_enter(ewlock, 0U);
+}
+
+void LmnWorkerGroup::workers_state_lock(mtx_data_t id){
+  ewlock_acquire_write(ewlock, id);
+}
+
+void LmnWorkerGroup::workers_state_unlock(mtx_data_t id){
+  ewlock_release_write(ewlock, id);
+}
+
+
 static void workers_gen(LmnWorkerGroup *owner, unsigned int w_num,
                         AutomataRef a, Vector *psyms, BOOL flags);
 static void workers_free(LmnWorker **w, unsigned int w_num);
 static void workers_ring_alignment(LmnWorkerGroup *wp);
+
+
 
 /* 実行時オプションが増えたため,
  * Worker起動以前のこの時点で,
@@ -290,7 +361,7 @@ static BOOL workers_flags_init(LmnWorkerGroup *wp, AutomataRef property_a) {
     }
 
     if (lmn_env.enable_parallel) {
-      wp->do_para_algo = TRUE;
+      wp->workers_set_do_palgorithm();
     }
   }
 
@@ -323,18 +394,18 @@ LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms,
 
   wp->do_search = FALSE;
   wp->do_exhaustive = FALSE;
-  wp->do_para_algo = FALSE;
-  wp->mc_exit = FALSE;
-  wp->error_exist = FALSE;
+  wp->workers_unset_do_palgorithm();
+  wp->workers_unset_exit();
+  wp->workers_unfound_error();
 
-  wp->opt_end_state = NULL;
+  wp->workers_set_opt_end_state(NULL);
 
 #ifdef KWBT_OPT
   if (thread_num >= 2 && lmn_env.opt_mode != OPT_NONE) {
-    wp->ewlock = ewlock_make(1U, DEFAULT_WLOCK_NUM);
+    wp->workers_set_ewlock(ewlock_make(1U, DEFAULT_WLOCK_NUM));
   } else
 #endif
-    wp->ewlock = NULL;
+    wp->workers_set_ewlock(NULL);
 
   flags = workers_flags_init(wp, a);
 #ifdef OPT_WORKERS_SYNC
@@ -355,8 +426,8 @@ void lmn_workergroup_free(LmnWorkerGroup *wp) {
 #endif
   workers_free(wp->workers, workers_entried_num(wp));
 
-  if (wp->ewlock) {
-    ewlock_free(wp->ewlock);
+  if (wp->workers_get_ewlock()) {
+    ewlock_free(wp->workers_get_ewlock());
   }
   LMN_FREE(wp);
 }
@@ -587,7 +658,7 @@ static void worker_set_env(LmnWorker *w) {
 
 LmnCost workers_opt_cost(LmnWorkerGroup *wp) {
   LmnCost cost;
-  State *opt = workers_opt_end_state(wp);
+  State *opt = wp->workers_get_opt_end_state();
   if (!opt) {
     cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
   } else {
@@ -601,11 +672,11 @@ LmnCost workers_opt_cost(LmnWorkerGroup *wp) {
  * f==false: maximize */
 void lmn_update_opt_cost(LmnWorkerGroup *wp, State *new_s, BOOL f) {
   if (env_threads_num() >= 2)
-    workers_opt_end_lock(wp);
+    wp->workers_opt_end_lock();
   if ((f && workers_opt_cost(wp) > state_cost(new_s)) ||
       (!f && workers_opt_cost(wp) < state_cost(new_s))) {
-    workers_opt_end_state(wp) = new_s;
+    wp->workers_set_opt_end_state(new_s);
   }
   if (env_threads_num() >= 2)
-    workers_opt_end_unlock(wp);
+    wp->workers_opt_end_unlock();
 }
