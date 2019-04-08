@@ -359,7 +359,7 @@ void mcdfs_start(LmnWorker *w) {
   // fflush(stdout);
   if (lmn_env.enable_visualize) {
     if (worker_id(w) == 0) {
-      dump_dot(ss, wp->worker_num);
+      dump_dot(ss, wp->workers_get_entried_num());
     }
   }
 
@@ -468,7 +468,7 @@ void dfs_start(LmnWorker *w) {
 #ifndef MINIMAL_STATE
   if (lmn_env.enable_visualize) {
     if (worker_id(w) == 0) {
-      dump_dot(ss, wp->worker_num);
+      dump_dot(ss, wp->workers_get_entried_num());
     }
   }
 #endif
@@ -695,7 +695,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
     // cyan flag用の領域を確保
     if (!s->local_flags) {
-      n = workers_entried_num((worker_group(w)));
+      n = worker_group(w)->workers_get_entried_num();
       s->local_flags = LMN_NALLOC(BYTE, n);
       memset(s->local_flags, 0, sizeof(BYTE) * n);
     }

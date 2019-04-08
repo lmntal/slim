@@ -152,7 +152,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
 
     /* 2. 反例パス or 最終状態集合の出力 */
     auto out = ss->output();
-    if (wp->do_search) {
+    if (wp->workers_are_do_search()) {
       mc_dump_all_errors(wp, out);
     } else if (lmn_env.end_dump && lmn_env.mc_dump_format == CUI) {
       /* とりあえず最終状態集合の出力はCUI限定。(LaViTに受付フォーマットがない)
@@ -166,7 +166,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
               ss->num());
       fprintf(out, "\'# of States\'(end)      = %lu.\n",
               ss->num_of_ends());
-      if (wp->do_search) {
+      if (wp->workers_are_do_search()) {
         fprintf(out, "\'# of States\'(invalid)  = %lu.\n",
                 mc_invalids_get_num(wp));
       }
@@ -641,7 +641,7 @@ void mc_found_invalid_state(LmnWorkerGroup *wp, State *s) {
     worker_invalid_seeds(w)->push((vec_data_t)s);
   }
 
-  if (!wp->do_exhaustive) {
+  if (!wp->workers_are_do_exhaustive()) {
     wp->workers_set_exit();
   }
 }
@@ -656,7 +656,7 @@ void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v) {
     worker_cycles(w)->push((vec_data_t)v);
   }
 
-  if (!wp->do_exhaustive) {
+  if (!wp->workers_are_do_exhaustive()) {
     wp->workers_set_exit();
   }
 }
@@ -666,7 +666,7 @@ unsigned long mc_invalids_get_num(LmnWorkerGroup *wp) {
   unsigned int i;
 
   ret = 0;
-  for (i = 0; i < wp->worker_num; i++) {
+  for (i = 0; i < wp->workers_get_entried_num(); i++) {
     ret += worker_invalid_seeds(workers_get_worker(wp, i))->get_num();
   }
 
@@ -833,7 +833,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
       invalids_graph = cui_dump ? NULL : st_init_ptrtable();
 
       /* state property */
-      for (i = 0; i < workers_entried_num(wp); i++) {
+      for (i = 0; i < wp->workers_get_entried_num(); i++) {
         LmnWorker *w;
         Vector *v;
         StateSpaceRef ss;
@@ -857,7 +857,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
       }
 
       /* path property */
-      for (i = 0; i < workers_entried_num(wp); i++) {
+      for (i = 0; i < wp->workers_get_entried_num(); i++) {
         LmnWorker *w;
         Vector *v;
         StateSpaceRef ss;

@@ -168,7 +168,7 @@ static void worker_TLS_finalize() { env_my_TLS_finalize(); }
  *  Worker Group
  */
 
-BOOL LmnWorkerGroup::workers_are_exit(){
+volatile BOOL LmnWorkerGroup::workers_are_exit(){
   return mc_exit;
 }
 
@@ -236,10 +236,140 @@ void LmnWorkerGroup::workers_state_unlock(mtx_data_t id){
   ewlock_release_write(ewlock, id);
 }
 
+BOOL LmnWorkerGroup::workers_are_terminated(){
+  return terminated;
+}
 
-static void workers_gen(LmnWorkerGroup *owner, unsigned int w_num,
-                        AutomataRef a, Vector *psyms, BOOL flags);
-static void workers_free(LmnWorker **w, unsigned int w_num);
+void LmnWorkerGroup::workers_set_terminated(){
+  terminated = TRUE;
+}
+
+void LmnWorkerGroup::workers_unset_terminated(){
+  terminated = FALSE;
+}
+
+volatile BOOL LmnWorkerGroup::workers_are_stop(){
+  return stop;
+}
+
+void LmnWorkerGroup::workers_set_stop(){
+  stop = TRUE;
+}
+
+void LmnWorkerGroup::workers_unset_stop(){
+  stop = FALSE;
+}
+
+BOOL LmnWorkerGroup::workers_are_do_search(){
+  return do_search;
+}
+
+void LmnWorkerGroup::workers_set_do_search(){
+  do_search = TRUE;
+}
+
+void LmnWorkerGroup::workers_unset_do_search(){
+  do_search = FALSE;
+}
+
+BOOL LmnWorkerGroup::workers_are_do_exhaustive(){
+  return do_exhaustive;
+}
+
+void LmnWorkerGroup::workers_set_do_exhaustive(){
+  do_exhaustive = TRUE;
+}
+
+void LmnWorkerGroup::workers_unset_do_exhaustive(){
+  do_exhaustive = FALSE;
+}
+
+unsigned int LmnWorkerGroup::workers_get_entried_num(){
+  return worker_num;
+}
+
+void LmnWorkerGroup::workers_set_entried_num(unsigned int i){
+  worker_num = i;
+}
+#ifdef OPT_WORKERS_SYNC 
+volatile unsigned int LmnWorkerGroup::workers_synchronizer(){
+  return synchronizer;
+}
+
+void LmnWorkerGroup::workers_set_synchronizer(unsigned int i){
+  synchronizer = i;
+}
+#else
+lmn_barrier_t *LmnWorkerGroup::workers_synchronizer(){
+  return &synchronizer;
+}
+
+void LmnWorkerGroup::workers_set_synchronizer(lmn_barrier_t t){
+  synchronizer = t;
+}
+#endif
+
+LmnWorker *LmnWorkerGroup::workers_get_entry(unsigned int i){
+  return workers[i];
+}
+
+void LmnWorkerGroup::workers_set_entry(unsigned int i, LmnWorker *w){
+  workers[i] = w;
+}
+
+void LmnWorkerGroup::workers_free(unsigned int worker_num) {
+  unsigned int i, j;
+  for (i = 0; i < worker_num; i++) {
+    LmnWorker *w = workers[i];
+    if (worker_group(w)->workers_are_do_search()) {
+      delete w->invalid_seeds;
+
+      for (j = 0; j < w->cycles->get_num(); j++) {
+        delete (Vector *)w->cycles->get(j);
+      }
+      delete w->cycles;
+    }
+
+    if (i == 0) {
+      delete (worker_states(w));
+    }
+
+    worker_finalize(w);
+    lmn_worker_free(w);
+  }
+  LMN_FREE(workers);
+}
+
+void LmnWorkerGroup::workers_gen(unsigned int worker_num, AutomataRef a, Vector *psyms, BOOL flags) {
+  unsigned int i;
+  workers = LMN_NALLOC(LmnWorker *, worker_num);
+  for (i = 0; i < worker_num; i++) {
+    LmnWorker *w;
+    StateSpaceRef states;
+
+    if (i == 0) {
+      states = worker_num > 1
+                   ? new StateSpace(worker_num, a, psyms)
+                   : new StateSpace(a, psyms);
+    } else {
+      states = worker_states(workers_get_worker(this, 0));
+    }
+
+    w = lmn_worker_make(states, i, flags);
+    workers_set_entry(i,w);
+    w->group = this;
+
+    if (workers_are_do_search()) {
+      w->invalid_seeds = new Vector(4);
+      w->cycles = new Vector(4);
+    }
+
+    /* アルゴリズムの割り当てと初期化 */
+    worker_set_env(w);
+    worker_init(w);
+  }
+}
+
 static void workers_ring_alignment(LmnWorkerGroup *wp);
 
 
@@ -351,13 +481,13 @@ static BOOL workers_flags_init(LmnWorkerGroup *wp, AutomataRef property_a) {
     if (!property_a) {
       lmn_env.ltl = FALSE;
       lmn_env.ltl_all = FALSE;
-      wp->do_search = FALSE;
-      wp->do_exhaustive = FALSE;
+      wp->workers_unset_do_search();
+      wp->workers_unset_do_exhaustive();
     } else {
       if (lmn_env.ltl_all) {
-        wp->do_exhaustive = TRUE;
+        wp->workers_set_do_exhaustive();
       }
-      wp->do_search = TRUE;
+      wp->workers_set_do_search();
     }
 
     if (lmn_env.enable_parallel) {
@@ -388,12 +518,12 @@ LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms,
   wp = LMN_MALLOC(LmnWorkerGroup);
 
   /* worker pool の構築と初期設定 */
-  wp->terminated = FALSE;
-  wp->worker_num = thread_num;
-  wp->stop = FALSE;
+  wp->workers_unset_terminated();
+  wp->workers_set_entried_num(thread_num);
+  wp->workers_unset_stop();
 
-  wp->do_search = FALSE;
-  wp->do_exhaustive = FALSE;
+  wp->workers_unset_do_search();
+  wp->workers_unset_do_exhaustive();
   wp->workers_unset_do_palgorithm();
   wp->workers_unset_exit();
   wp->workers_unfound_error();
@@ -409,11 +539,11 @@ LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms,
 
   flags = workers_flags_init(wp, a);
 #ifdef OPT_WORKERS_SYNC
-  wp->synchronizer = thread_num;
+  wp->workers_set_synchronizer(thread_num);
 #else
-  lmn_barrier_init(&wp->synchronizer, workers_entried_num(wp));
+  lmn_barrier_init(wp->workers_synchronizer(), wp->workers_get_entried_num());
 #endif
-  workers_gen(wp, workers_entried_num(wp), a, psyms, flags);
+  wp->workers_gen(wp->workers_get_entried_num(), a, psyms, flags);
   workers_ring_alignment(wp);
 
   return wp;
@@ -422,9 +552,9 @@ LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms,
 /* 後始末 */
 void lmn_workergroup_free(LmnWorkerGroup *wp) {
 #ifndef OPT_WORKERS_SYNC
-  lmn_barrier_destroy(&workers_synchronizer(wp));
+  lmn_barrier_destroy(wp->workers_synchronizer());
 #endif
-  workers_free(wp->workers, workers_entried_num(wp));
+  wp->workers_free(wp->workers_get_entried_num());
 
   if (wp->workers_get_ewlock()) {
     ewlock_free(wp->workers_get_ewlock());
@@ -436,7 +566,7 @@ void lmn_workergroup_free(LmnWorkerGroup *wp) {
 void launch_lmn_workers(LmnWorkerGroup *wp) {
   unsigned long i, core_num;
 
-  core_num = workers_entried_num(wp);
+  core_num = wp->workers_get_entried_num();
   for (i = 0; i < core_num; i++) { /** start */
     if (i == LMN_PRIMARY_ID)
       continue;
@@ -481,12 +611,12 @@ BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root) {
    * Worker(id==LMN_PRIMARY_ID)が判定した検知結果をグローバル変数に書込む.
    * 他のWorkerはグローバル変数に書き込まれた終了フラグを読み出す. */
   wp = worker_group(root);
-  if (worker_id(root) == LMN_PRIMARY_ID && !workers_are_terminated(wp)) {
+  if (worker_id(root) == LMN_PRIMARY_ID && !wp->workers_are_terminated()) {
     int i, n;
     BOOL ret;
 
     ret = TRUE;
-    n = workers_entried_num(wp);
+    n = wp->workers_get_entried_num();
     for (i = 0; i < n; i++) {
       LmnWorker *w = workers_get_worker(wp, i);
       ret = ret && TERMINATION_CONDITION(w);
@@ -502,10 +632,10 @@ BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root) {
       if (!ret)
         return FALSE;
     }
-    workers_set_terminated(wp);
+    wp->workers_set_terminated();
   }
 
-  return workers_are_terminated(wp);
+  return wp->workers_are_terminated();
 }
 
 /* 全てのWorkerオブジェクトで同期を取り, Primary Workerが関数funcを実行する.
@@ -513,11 +643,11 @@ BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root) {
 void lmn_workers_synchronization(LmnWorker *me, void (*func)(LmnWorker *w)) {
   LmnWorkerGroup *wp = worker_group(me);
 
-  lmn_barrier_wait(&workers_synchronizer(wp));
+  lmn_barrier_wait(wp->workers_synchronizer());
   if (worker_id(me) == LMN_PRIMARY_ID && func) {
     (*func)(me);
   }
-  lmn_barrier_wait(&workers_synchronizer(wp));
+  lmn_barrier_wait(wp->workers_synchronizer());
 }
 
 /* 呼び出したスレッドのTLS IDに応じたLmnWorkerオブジェクトをWorkerPoolから返す
@@ -529,70 +659,18 @@ LmnWorker *workers_get_my_worker(LmnWorkerGroup *wp) {
 
 /* WorkerPoolのid番目のLmnWorkerオブジェクトを返す */
 LmnWorker *workers_get_worker(LmnWorkerGroup *wp, unsigned long id) {
-  if (id >= workers_entried_num(wp)) {
+  if (id >= wp->workers_get_entried_num()) {
     return NULL;
   } else {
-    return workers_get_entry(wp, id);
+    return wp->workers_get_entry(id);
   }
 }
 
-static void workers_gen(LmnWorkerGroup *owner, unsigned int worker_num,
-                        AutomataRef a, Vector *psyms, BOOL flags) {
-  unsigned int i;
-  owner->workers = LMN_NALLOC(LmnWorker *, worker_num);
-  for (i = 0; i < worker_num; i++) {
-    LmnWorker *w;
-    StateSpaceRef states;
 
-    if (i == 0) {
-      states = worker_num > 1
-                   ? new StateSpace(worker_num, a, psyms)
-                   : new StateSpace(a, psyms);
-    } else {
-      states = worker_states(workers_get_worker(owner, 0));
-    }
-
-    w = lmn_worker_make(states, i, flags);
-    owner->workers[i] = w;
-    w->group = owner;
-
-    if (owner->do_search) {
-      w->invalid_seeds = new Vector(4);
-      w->cycles = new Vector(4);
-    }
-
-    /* アルゴリズムの割り当てと初期化 */
-    worker_set_env(w);
-    worker_init(w);
-  }
-}
-
-static void workers_free(LmnWorker **pool, unsigned int worker_num) {
-  unsigned int i, j;
-  for (i = 0; i < worker_num; i++) {
-    LmnWorker *w = pool[i];
-    if (worker_group(w)->do_search) {
-      delete w->invalid_seeds;
-
-      for (j = 0; j < w->cycles->get_num(); j++) {
-        delete (Vector *)w->cycles->get(j);
-      }
-      delete w->cycles;
-    }
-
-    if (i == 0) {
-      delete (worker_states(w));
-    }
-
-    worker_finalize(w);
-    lmn_worker_free(w);
-  }
-  LMN_FREE(pool);
-}
 
 static void workers_ring_alignment(LmnWorkerGroup *wp) {
   unsigned int i, n;
-  n = workers_entried_num(wp);
+  n = wp->workers_get_entried_num();
   for (i = 0; i < n; i++) {
     LmnWorker *w, *next;
     w = workers_get_worker(wp, i);

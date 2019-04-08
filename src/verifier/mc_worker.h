@@ -67,20 +67,27 @@ typedef struct LmnWorker LmnWorker;
  */
 
 struct LmnWorkerGroup {
+private:
   unsigned int worker_num; /* 参加Worker数 */
   /* 4bytes alignment (64-bit processor) */
   LmnWorker **workers; /* 参加Worker */
+public:
 #ifdef OPT_WORKERS_SYNC
   volatile unsigned int synchronizer;
+  volatile unsigned int workers_synchronizer();
+  void workers_set_synchronizer(unsigned int i);
 #else
   lmn_barrier_t synchronizer; /* 待ち合わせ用オブジェクト */
+  lmn_barrier_t *workers_synchronizer(); //koredato private ni dekinai by sumiya
+  void workers_set_synchronizer(lmn_barrier_t);
 #endif
+
+private:
   BOOL terminated;    /* 終了した場合に真 */
   volatile BOOL stop; /* 待ち合わせ中に真 */
   BOOL do_search;     /* 反例の探索を行う場合に真 */
   BOOL
       do_exhaustive; /* 反例を1つ見つけた場合に探索を!!打ち切らない場合!!に真 */
-private:
   BOOL do_para_algo; /* 並列アルゴリズムを使用する場合に真 */
   volatile BOOL mc_exit; /* 反例の発見により探索を打ち切る場合に真 */
   BOOL error_exist; /* 反例が存在する場合に真 */
@@ -94,7 +101,7 @@ private:
 public:
 
 
-  BOOL workers_are_exit();
+  volatile BOOL workers_are_exit();
   void workers_set_exit();
   void workers_unset_exit();
   BOOL workers_have_error();
@@ -114,6 +121,33 @@ public:
   void workers_state_lock(mtx_data_t id);
   void workers_state_unlock(mtx_data_t id);
 
+  BOOL workers_are_terminated();
+  void workers_set_terminated();
+  void workers_unset_terminated();
+
+  volatile BOOL workers_are_stop();
+  void workers_set_stop();
+  void workers_unset_stop();
+
+  BOOL workers_are_do_search();
+  void workers_set_do_search();
+  void workers_unset_do_search();
+
+  BOOL workers_are_do_exhaustive();
+  void workers_set_do_exhaustive();
+  void workers_unset_do_exhaustive();
+
+  unsigned int workers_get_entried_num();
+  void workers_set_entried_num(unsigned int i);
+
+  LmnWorker *workers_get_entry(unsigned int i);
+  void workers_set_entry(unsigned int i, LmnWorker *w);
+
+  void workers_free(unsigned int w_num);
+
+  void workers_gen(unsigned int w_num, AutomataRef a, Vector *psyms, BOOL flags);//private?
+
+
 };
 
 //#define workers_do_palgorithm(WP) ((WP)->do_para_algo)
@@ -126,12 +160,12 @@ public:
 //#define workers_state_lock(WP, id) (ewlock_acquire_write((WP)->ewlock, id))
 //#define workers_state_unlock(WP, id) (ewlock_release_write((WP)->ewlock, id))
 
-#define workers_are_terminated(WP) ((WP)->terminated)
-#define workers_set_terminated(WP) ((WP)->terminated = TRUE)
-#define workers_entried_num(WP) ((WP)->worker_num)
-#define workers_synchronizer(WP) ((WP)->synchronizer)
-#define workers_get_entry(WP, I) ((WP)->workers[(I)])
-#define workers_set_entry(WP, I, W) ((WP)->workers[(I)] = (W))
+//#define workers_are_terminated(WP) ((WP)->terminated)
+//#define workers_set_terminated(WP) ((WP)->terminated = TRUE)
+//#define workers_entried_num(WP) ((WP)->worker_num)
+//#define workers_synchronizer(WP) ((WP)->synchronizer)//there are 2 types of synchronizer
+//#define workers_get_entry(WP, I) ((WP)->workers[(I)])
+//#define workers_set_entry(WP, I, W) ((WP)->workers[(I)] = (W))
 
 /**
  *  Objects for Model Checking

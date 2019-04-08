@@ -192,7 +192,7 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   /* サイクルを登録 */
   if (gen_counter_example) {
     mc_found_invalid_path(wp, v);
-  } else if (!wp->do_exhaustive) {
+  } else if (!wp->workers_are_do_exhaustive()) {
     wp->workers_set_exit();
   }
 }
@@ -266,7 +266,7 @@ void owcty_worker_init(LmnWorker *w) {
   /* 全ワーカでオブジェクトを共有 */
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    if (workers_entried_num(worker_group(w)) > 1) {
+    if (worker_group(w)->workers_get_entried_num() > 1) {
       mc->accepts1 = new Queue(LMN_Q_MRMW);
       mc->accepts2 = new Queue(LMN_Q_MRMW);
     } else {
@@ -552,7 +552,7 @@ void map_worker_init(LmnWorker *w) {
   McSearchMAP *mc = LMN_MALLOC(McSearchMAP);
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    if (workers_entried_num(worker_group(w)) > 1) {
+    if (worker_group(w)->workers_get_entried_num() > 1) {
       mc->propagate = new Queue(LMN_Q_MRMW);
       mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
@@ -771,7 +771,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
   LmnWorkerGroup *wp = worker_group(w);
 
   wp->workers_found_error();
-  if (!wp->do_exhaustive) {
+  if (!wp->workers_are_do_exhaustive()) {
     wp->workers_set_exit();
   }
 
@@ -847,7 +847,7 @@ void bledge_env_set(LmnWorker *w) {
 void bledge_worker_init(LmnWorker *w) {
   McSearchBLE *mc = LMN_MALLOC(McSearchBLE);
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    if (workers_entried_num(worker_group(w)) > 1) {
+    if (worker_group(w)->workers_get_entried_num() > 1) {
       mc->layer = new Queue(LMN_Q_MRMW);
     } else {
       mc->layer = new Queue();
@@ -953,7 +953,7 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
   /* サイクルを登録 */
   if (gen_counter_example) {
     mc_found_invalid_path(wp, v);
-  } else if (!wp->do_exhaustive) {
+  } else if (!wp->workers_are_do_exhaustive()) {
     wp->workers_set_exit();
   }
 }
@@ -1002,7 +1002,7 @@ void mapndfs_worker_init(LmnWorker *w) {
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    if (workers_entried_num(worker_group(w)) > 1) {
+    if (worker_group(w)->workers_get_entried_num() > 1) {
       mc->propagate = new Queue(LMN_Q_MRMW);
       mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
@@ -1108,7 +1108,7 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   /* サイクルを登録 */
   if (gen_counter_example) {
     mc_found_invalid_path(wp, v);
-  } else if (!wp->do_exhaustive) {
+  } else if (!wp->workers_are_do_exhaustive()) {
     wp->workers_set_exit();
   }
 }
@@ -1164,7 +1164,7 @@ void mcndfs_worker_init(LmnWorker *w) {
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
-    if (workers_entried_num(worker_group(w)) > 1) {
+    if (worker_group(w)->workers_get_entried_num() > 1) {
       mc->propagate = new Queue(LMN_Q_MRMW);
       mc->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
@@ -1265,7 +1265,7 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   /* サイクルを登録 */
   if (gen_counter_example) {
     mc_found_invalid_path(wp, v);
-  } else if (!wp->do_exhaustive) {
+  } else if (!wp->workers_are_do_exhaustive()) {
     wp->workers_set_exit();
   }
 }
