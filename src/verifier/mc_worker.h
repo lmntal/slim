@@ -145,9 +145,11 @@ public:
   void workers_set_entry(unsigned int i, LmnWorker *w);
 
   void workers_free(unsigned int w_num);
-
   void workers_gen(unsigned int w_num, AutomataRef a, Vector *psyms, BOOL flags);//private?
-
+  void launch_lmn_workers();
+  BOOL termination_detection(int id);
+  void lmn_workers_synchronization(int id, void (*func)(LmnWorker *w));
+  LmnWorker *workers_get_my_worker(); 
 
 };
 
@@ -446,10 +448,7 @@ static inline BOOL worker_check(LmnWorker *w) {
 
 /** ProtoTypes
  */
-LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms,
-                                     int thread_num);
 void lmn_workergroup_free(LmnWorkerGroup *wg);
-void launch_lmn_workers(LmnWorkerGroup *wg);
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root);
 void lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
 LmnWorker *lmn_worker_make_minimal(void);

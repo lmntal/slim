@@ -118,7 +118,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 
   /** START
    */
-  launch_lmn_workers(wp);
+  wp->launch_lmn_workers();
 
 #ifdef DEBUG
   if (lmn_env.show_reduced_graph && lmn_env.enable_por &&
@@ -637,7 +637,7 @@ static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
 void mc_found_invalid_state(LmnWorkerGroup *wp, State *s) {
   wp->workers_found_error();
   if (s) {
-    LmnWorker *w = workers_get_my_worker(wp);
+    LmnWorker *w = wp->workers_get_my_worker();
     worker_invalid_seeds(w)->push((vec_data_t)s);
   }
 
@@ -652,7 +652,7 @@ void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v) {
   wp->workers_found_error();
 
   if (v) {
-    LmnWorker *w = workers_get_my_worker(wp);
+    LmnWorker *w = wp->workers_get_my_worker();
     worker_cycles(w)->push((vec_data_t)v);
   }
 

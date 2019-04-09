@@ -560,28 +560,28 @@ static BOOL workers_flags_init(LmnWorkerGroup *wp, AutomataRef property_a) {// t
 
 
 /* スレッドの起動 (MT-unsafe) */
-void launch_lmn_workers(LmnWorkerGroup *wp) {
+void LmnWorkerGroup::launch_lmn_workers(){
   unsigned long i, core_num;
 
-  core_num = wp->workers_get_entried_num();
+  core_num = workers_get_entried_num();
   for (i = 0; i < core_num; i++) { /** start */
     if (i == LMN_PRIMARY_ID)
       continue;
-    lmn_thread_create(&worker_pid(workers_get_worker(wp, i)), lmn_worker_start,
-                      workers_get_worker(wp, i));
+    lmn_thread_create(&worker_pid(workers_get_worker(this, i)), lmn_worker_start,
+                      workers_get_worker(this, i));
   }
   if (lmn_env.profile_level >= 1)
     profile_start_exec();
 
-  lmn_worker_start((void *)workers_get_worker(wp, LMN_PRIMARY_ID));
+  lmn_worker_start((void *)workers_get_worker(this, LMN_PRIMARY_ID));
 
   if (lmn_env.profile_level >= 1)
     profile_finish_exec();
   for (i = 0; i < core_num; i++) {
     if (i == LMN_PRIMARY_ID)
       continue;
-    lmn_thread_join(worker_pid(workers_get_worker(wp, i)));
-  }
+    lmn_thread_join(worker_pid(workers_get_worker(this, i)));
+  }	
 }
 
 #define TERMINATION_CONDITION(W)                                               \
@@ -589,7 +589,8 @@ void launch_lmn_workers(LmnWorkerGroup *wp) {
 
 /* 全てのWorkerオブジェクトが実行を停止している場合に真を返す. */
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root) {
-  LmnWorkerGroup *wp;
+  //when someone calls this function, the group which root is included is unknown
+  //so this function should be a LmnWorker member method. But after finding the group, LmnWorkerGroup should handle.
   /** 概要:
    *  LmnWorkerは論理的に輪を形成しており, フラグチェックを輪に沿って実施する.
    *  is_activeかどうかをチェックする他にis_stealer, is_whiteもチェックする.
@@ -607,15 +608,19 @@ BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root) {
   /* Primary
    * Worker(id==LMN_PRIMARY_ID)が判定した検知結果をグローバル変数に書込む.
    * 他のWorkerはグローバル変数に書き込まれた終了フラグを読み出す. */
-  wp = worker_group(root);
-  if (worker_id(root) == LMN_PRIMARY_ID && !wp->workers_are_terminated()) {
+  return worker_group(root)->termination_detection(worker_id(root));
+  //this is all.
+}
+
+BOOL LmnWorkerGroup::termination_detection(int id){
+  if (id == LMN_PRIMARY_ID && !workers_are_terminated()) {
     int i, n;
     BOOL ret;
 
     ret = TRUE;
-    n = wp->workers_get_entried_num();
+    n = workers_get_entried_num();
     for (i = 0; i < n; i++) {
-      LmnWorker *w = workers_get_worker(wp, i);
+      LmnWorker *w = workers_get_worker(this, i);
       ret = ret && TERMINATION_CONDITION(w);
       worker_set_white(w);
       if (!ret)
@@ -623,39 +628,48 @@ BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root) {
     }
 
     for (i = 0; i < n; i++) {
-      LmnWorker *w = workers_get_worker(wp, i);
+      LmnWorker *w = workers_get_worker(this, i);
       ret = ret && !worker_is_stealer(w);
       worker_unset_stealer(w);
       if (!ret)
         return FALSE;
     }
-    wp->workers_set_terminated();
+    workers_set_terminated();
   }
 
-  return wp->workers_are_terminated();
+  return workers_are_terminated();
 }
 
 /* 全てのWorkerオブジェクトで同期を取り, Primary Workerが関数funcを実行する.
  * 全てのWorkerがbarrierに到達したとき処理を再開する. */
 void lmn_workers_synchronization(LmnWorker *me, void (*func)(LmnWorker *w)) {
-  LmnWorkerGroup *wp = worker_group(me);
+//  LmnWorkerGroup *wp = worker_group(me);
+//
+//  lmn_barrier_wait(wp->workers_synchronizer());
+//  if (worker_id(me) == LMN_PRIMARY_ID && func) {
+//    (*func)(me);
+//  }
+//  lmn_barrier_wait(wp->workers_synchronizer());
+  worker_group(me)->lmn_workers_synchronization(worker_id(me), (*func));
+}
 
-  lmn_barrier_wait(wp->workers_synchronizer());
-  if (worker_id(me) == LMN_PRIMARY_ID && func) {
-    (*func)(me);
+void LmnWorkerGroup::lmn_workers_synchronization(int id, void (*func)(LmnWorker *w)){
+  lmn_barrier_wait(workers_synchronizer());
+  if(id == LMN_PRIMARY_ID && func){
+    (*func)(workers_get_worker(this, id));
   }
-  lmn_barrier_wait(wp->workers_synchronizer());
+  lmn_barrier_wait(workers_synchronizer());
 }
 
 /* 呼び出したスレッドのTLS IDに応じたLmnWorkerオブジェクトをWorkerPoolから返す
  */
-LmnWorker *workers_get_my_worker(LmnWorkerGroup *wp) {
+LmnWorker *LmnWorkerGroup::workers_get_my_worker() {
   /* >>>>>>>> worker_TLS_init以前に使用してはならない <<<<<<< */
-  return workers_get_worker(wp, env_my_thread_id());
+  return workers_get_worker(this, env_my_thread_id());
 }
 
 /* WorkerPoolのid番目のLmnWorkerオブジェクトを返す */
-LmnWorker *workers_get_worker(LmnWorkerGroup *wp, unsigned long id) {
+LmnWorker *workers_get_worker(LmnWorkerGroup *wp, unsigned long id) {//this should be a member function of LmnWorkerGroup
   if (id >= wp->workers_get_entried_num()) {
     return NULL;
   } else {
