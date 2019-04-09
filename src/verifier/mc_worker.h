@@ -99,7 +99,8 @@ private:
   FILE *out; /* 出力先 */
 
 public:
-
+  LmnWorkerGroup();
+  LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num);
 
   volatile BOOL workers_are_exit();
   void workers_set_exit();

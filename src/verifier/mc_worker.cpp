@@ -167,6 +167,55 @@ static void worker_TLS_finalize() { env_my_TLS_finalize(); }
 /** -----------------------------------------------------------
  *  Worker Group
  */
+static BOOL workers_flags_init(LmnWorkerGroup *wp, AutomataRef property_a);
+static void workers_ring_alignment(LmnWorkerGroup *wp);
+
+LmnWorkerGroup::LmnWorkerGroup(){}
+LmnWorkerGroup::LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num){
+
+  BOOL flags;
+  /* worker pool の構築と初期設定 */
+  workers_unset_terminated();
+  workers_set_entried_num(thread_num);
+  workers_unset_stop();
+
+  workers_unset_do_search();
+  workers_unset_do_exhaustive();
+  workers_unset_do_palgorithm();
+  workers_unset_exit();
+  workers_unfound_error();
+
+  workers_set_opt_end_state(NULL);
+
+#ifdef KWBT_OPT
+  if (thread_num >= 2 && lmn_env.opt_mode != OPT_NONE) {
+    workers_set_ewlock(ewlock_make(1U, DEFAULT_WLOCK_NUM));
+  } else
+#endif
+    workers_set_ewlock(NULL);
+
+  flags = workers_flags_init(this, a);
+#ifdef OPT_WORKERS_SYNC
+  workers_set_synchronizer(thread_num);
+#else
+  lmn_barrier_init(workers_synchronizer(), workers_get_entried_num());
+#endif
+  workers_gen(workers_get_entried_num(), a, psyms, flags);
+  workers_ring_alignment(this);
+}
+
+/* 後始末 */
+void lmn_workergroup_free(LmnWorkerGroup *wp) {
+#ifndef OPT_WORKERS_SYNC
+  lmn_barrier_destroy(wp->workers_synchronizer());
+#endif
+  wp->workers_free(wp->workers_get_entried_num());
+
+  if (wp->workers_get_ewlock()) {
+    ewlock_free(wp->workers_get_ewlock());
+  }
+  LMN_FREE(wp);
+}
 
 volatile BOOL LmnWorkerGroup::workers_are_exit(){
   return mc_exit;
@@ -370,7 +419,6 @@ void LmnWorkerGroup::workers_gen(unsigned int worker_num, AutomataRef a, Vector 
   }
 }
 
-static void workers_ring_alignment(LmnWorkerGroup *wp);
 
 
 
@@ -378,8 +426,8 @@ static void workers_ring_alignment(LmnWorkerGroup *wp);
  * Worker起動以前のこの時点で,
  * 組み合わせをサポートしていないオプションの整合性を取るなどを行う.
  * 実際に使用するオプションフラグを, lmn_env構造体からworker構造体にコピーする.
- */
-static BOOL workers_flags_init(LmnWorkerGroup *wp, AutomataRef property_a) {
+ */ 
+static BOOL workers_flags_init(LmnWorkerGroup *wp, AutomataRef property_a) {// this should be in LmnEnv class
   BOOL flags = 0x00U;
 
   /* === 1. 出力フォーマット === */
@@ -510,57 +558,6 @@ static BOOL workers_flags_init(LmnWorkerGroup *wp, AutomataRef property_a) {
   return flags;
 }
 
-LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms,
-                                     int thread_num) {
-  LmnWorkerGroup *wp;
-  BOOL flags;
-
-  wp = LMN_MALLOC(LmnWorkerGroup);
-
-  /* worker pool の構築と初期設定 */
-  wp->workers_unset_terminated();
-  wp->workers_set_entried_num(thread_num);
-  wp->workers_unset_stop();
-
-  wp->workers_unset_do_search();
-  wp->workers_unset_do_exhaustive();
-  wp->workers_unset_do_palgorithm();
-  wp->workers_unset_exit();
-  wp->workers_unfound_error();
-
-  wp->workers_set_opt_end_state(NULL);
-
-#ifdef KWBT_OPT
-  if (thread_num >= 2 && lmn_env.opt_mode != OPT_NONE) {
-    wp->workers_set_ewlock(ewlock_make(1U, DEFAULT_WLOCK_NUM));
-  } else
-#endif
-    wp->workers_set_ewlock(NULL);
-
-  flags = workers_flags_init(wp, a);
-#ifdef OPT_WORKERS_SYNC
-  wp->workers_set_synchronizer(thread_num);
-#else
-  lmn_barrier_init(wp->workers_synchronizer(), wp->workers_get_entried_num());
-#endif
-  wp->workers_gen(wp->workers_get_entried_num(), a, psyms, flags);
-  workers_ring_alignment(wp);
-
-  return wp;
-}
-
-/* 後始末 */
-void lmn_workergroup_free(LmnWorkerGroup *wp) {
-#ifndef OPT_WORKERS_SYNC
-  lmn_barrier_destroy(wp->workers_synchronizer());
-#endif
-  wp->workers_free(wp->workers_get_entried_num());
-
-  if (wp->workers_get_ewlock()) {
-    ewlock_free(wp->workers_get_ewlock());
-  }
-  LMN_FREE(wp);
-}
 
 /* スレッドの起動 (MT-unsafe) */
 void launch_lmn_workers(LmnWorkerGroup *wp) {

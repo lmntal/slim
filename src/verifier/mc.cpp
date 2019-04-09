@@ -102,7 +102,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_init();
   }
-  wp = lmn_workergroup_make(a, psyms, thread_num);
+  wp = new LmnWorkerGroup(a, psyms, thread_num);
   states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
   mem = lmn_mem_copy(world_mem_org);
