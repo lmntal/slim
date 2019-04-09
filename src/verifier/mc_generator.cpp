@@ -782,7 +782,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
     p_s = MC_GET_PROPERTY(s, a);
 
     if ((lmn_env.opt_mode == OPT_MINIMIZE &&
-         workers_opt_cost(worker_group(w)) < state_cost(s)) ||
+         worker_group(w)->opt_cost() < state_cost(s)) ||
         (s->is_expanded() && !s->s_is_update()) ||
         (!worker_ltl_none(w) && p_s->get_is_end())) {
       pop_deq(deq, TRUE);
@@ -799,7 +799,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
     }
 
     if (state_is_accept(a, s)) {
-      lmn_update_opt_cost(worker_group(w), s,
+      worker_group(w)->update_opt_cost(s,
                           (lmn_env.opt_mode == OPT_MINIMIZE));
     }
 
@@ -877,8 +877,8 @@ void bfs_worker_init(LmnWorker *w) {
     mc->nxt = worker_use_lsync(w) ? new Queue(LMN_Q_MRMW) : mc->cur;
   } else {
     /* Layer Queueは全スレッドで共有 */
-    mc->cur = BFS_WORKER_Q_CUR(workers_get_worker(worker_group(w), 0));
-    mc->nxt = BFS_WORKER_Q_NXT(workers_get_worker(worker_group(w), 0));
+    mc->cur = BFS_WORKER_Q_CUR(worker_group(w)->get_worker(0));
+    mc->nxt = BFS_WORKER_Q_NXT(worker_group(w)->get_worker(0));
   }
 
   BFS_WORKER_OBJ_SET(w, mc);

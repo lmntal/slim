@@ -274,7 +274,7 @@ void owcty_worker_init(LmnWorker *w) {
       mc->accepts2 = new Queue();
     }
   } else {
-    LmnWorker *primary = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
+    LmnWorker *primary = worker_group(w)->get_worker(LMN_PRIMARY_ID);
     mc->accepts1 = OWCTY_WORKER_AQ1(primary);
     mc->accepts2 = OWCTY_WORKER_AQ2(primary);
   }
@@ -560,7 +560,7 @@ void map_worker_init(LmnWorker *w) {
       mc->waitingSeed = new Queue();
     }
   } else {
-    LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
+    LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
     mc->propagate = MAP_WORKER_PROPAG_G(prim);
     mc->waitingSeed = MAP_WORKER_DEL_G(prim);
   }
@@ -854,7 +854,7 @@ void bledge_worker_init(LmnWorker *w) {
     }
   } else {
     mc->layer =
-        BLE_WORKER_LAYER_Q(workers_get_worker(worker_group(w), LMN_PRIMARY_ID));
+        BLE_WORKER_LAYER_Q(worker_group(w)->get_worker(LMN_PRIMARY_ID));
   }
 
   mc->path = new Vector(32);
@@ -1010,7 +1010,7 @@ void mapndfs_worker_init(LmnWorker *w) {
       mc->waitingSeed = new Queue();
     }
   } else {
-    LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
+    LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
     mc->propagate = MAP_WORKER_PROPAG_G(prim);
     mc->waitingSeed = MAP_WORKER_DEL_G(prim);
   }
@@ -1172,7 +1172,7 @@ void mcndfs_worker_init(LmnWorker *w) {
       mc->waitingSeed = new Queue();
     }
   } else {
-    LmnWorker *prim = workers_get_worker(worker_group(w), LMN_PRIMARY_ID);
+    LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
     mc->propagate = MAP_WORKER_PROPAG_G(prim);
     mc->waitingSeed = MAP_WORKER_DEL_G(prim);
   }

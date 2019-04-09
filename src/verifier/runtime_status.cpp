@@ -418,7 +418,7 @@ void profile_finish_exec() {
 }
 
 void profile_statespace(LmnWorkerGroup *wp) {
-  LmnWorker *w = workers_get_worker(wp, LMN_PRIMARY_ID);
+  LmnWorker *w = wp->get_worker(LMN_PRIMARY_ID);
   lmn_prof.state_num_stored = worker_states(w)->num();
   lmn_prof.state_num_end = worker_states(w)->num_raw();
 

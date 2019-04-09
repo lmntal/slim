@@ -103,7 +103,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
     lmn_bscomp_tree_init();
   }
   wp = new LmnWorkerGroup(a, psyms, thread_num);
-  states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
+  states = worker_states(wp->get_worker(LMN_PRIMARY_ID));
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
   mem = lmn_mem_copy(world_mem_org);
   init_s = new State(mem, p_label, states->use_memenc());
@@ -133,7 +133,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
    */
   profile_statespace(wp);
   mc_dump(wp);
-  lmn_workergroup_free(wp);
+  delete wp;
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_clean();
   }
@@ -141,7 +141,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 
 /* 後始末と出力周りを担当 */
 static void mc_dump(LmnWorkerGroup *wp) {
-  StateSpaceRef ss = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
+  StateSpaceRef ss = worker_states(wp->get_worker(LMN_PRIMARY_ID));
   if (lmn_env.dump) {
     ss->format_states();
 
@@ -176,7 +176,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
           fprintf(out, "\'# can't solve the problem\'.\n");
         } else {
           fprintf(out, "\'# optimized cost\'      = %lu.\n",
-                  workers_opt_cost(wp));
+                  wp->opt_cost());
         }
       }
 #endif
@@ -667,7 +667,7 @@ unsigned long mc_invalids_get_num(LmnWorkerGroup *wp) {
 
   ret = 0;
   for (i = 0; i < wp->workers_get_entried_num(); i++) {
-    ret += worker_invalid_seeds(workers_get_worker(wp, i))->get_num();
+    ret += worker_invalid_seeds(wp->get_worker(i))->get_num();
   }
 
   return ret;
@@ -838,7 +838,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
         Vector *v;
         StateSpaceRef ss;
 
-        w = workers_get_worker(wp, i);
+        w = wp->get_worker(i);
         v = worker_invalid_seeds(w);
         ss = worker_states(w);
 
@@ -862,7 +862,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
         Vector *v;
         StateSpaceRef ss;
 
-        w = workers_get_worker(wp, i);
+        w = wp->get_worker(i);
         v = worker_cycles(w);
         ss = worker_states(w);
 
@@ -897,7 +897,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
 
       if (!cui_dump) {
         StateSpaceRef represent =
-            worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
+            worker_states(wp->get_worker(LMN_PRIMARY_ID));
         st_foreach(invalids_graph, (st_iter_func)mc_dump_invalids_f,
                    (st_data_t)represent);
         st_foreach(invalids_graph, (st_iter_func)mc_free_succ_vec_f,

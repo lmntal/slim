@@ -66,23 +66,11 @@ typedef struct LmnWorker LmnWorker;
  *  Worker Group
  */
 
-struct LmnWorkerGroup {
-private:
+class LmnWorkerGroup {
   unsigned int worker_num; /* 参加Worker数 */
   /* 4bytes alignment (64-bit processor) */
   LmnWorker **workers; /* 参加Worker */
-public:
-#ifdef OPT_WORKERS_SYNC
-  volatile unsigned int synchronizer;
-  volatile unsigned int workers_synchronizer();
-  void workers_set_synchronizer(unsigned int i);
-#else
-  lmn_barrier_t synchronizer; /* 待ち合わせ用オブジェクト */
-  lmn_barrier_t *workers_synchronizer(); //koredato private ni dekinai by sumiya
-  void workers_set_synchronizer(lmn_barrier_t);
-#endif
 
-private:
   BOOL terminated;    /* 終了した場合に真 */
   volatile BOOL stop; /* 待ち合わせ中に真 */
   BOOL do_search;     /* 反例の探索を行う場合に真 */
@@ -97,11 +85,29 @@ private:
                          * wlock: 各状態のコストアップデート用 */
 
   FILE *out; /* 出力先 */
+ 
+  LmnWorkerGroup(const LmnWorkerGroup &lwg);
+  LmnWorker *workers_get_entry(unsigned int i);
+  void workers_set_entry(unsigned int i, LmnWorker *w);
+  void workers_free(unsigned int w_num);
+  void workers_gen(unsigned int w_num, AutomataRef a, Vector *psyms, BOOL flags);//private?
+  BOOL flags_init(AutomataRef property_a);
+  void ring_alignment();
 
 public:
+#ifdef OPT_WORKERS_SYNC
+  volatile unsigned int synchronizer;
+  volatile unsigned int workers_synchronizer();
+  void workers_set_synchronizer(unsigned int i);
+#else
+  lmn_barrier_t synchronizer; /* 待ち合わせ用オブジェクト */
+  lmn_barrier_t *workers_synchronizer(); //koredato private ni dekinai by sumiya
+  void workers_set_synchronizer(lmn_barrier_t);
+#endif
+
   LmnWorkerGroup();
   LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num);
-
+  ~LmnWorkerGroup();
   volatile BOOL workers_are_exit();
   void workers_set_exit();
   void workers_unset_exit();
@@ -141,34 +147,15 @@ public:
   unsigned int workers_get_entried_num();
   void workers_set_entried_num(unsigned int i);
 
-  LmnWorker *workers_get_entry(unsigned int i);
-  void workers_set_entry(unsigned int i, LmnWorker *w);
-
-  void workers_free(unsigned int w_num);
-  void workers_gen(unsigned int w_num, AutomataRef a, Vector *psyms, BOOL flags);//private?
-  void launch_lmn_workers();
-  BOOL termination_detection(int id);
-  void lmn_workers_synchronization(int id, void (*func)(LmnWorker *w));
+  LmnWorker *get_worker(unsigned long id);
   LmnWorker *workers_get_my_worker(); 
+  void launch_lmn_workers();
+  LmnCost opt_cost();
+  void update_opt_cost(State *new_s, BOOL f);
+  BOOL termination_detection(int id);
+  void lmn_workers_synchronization(unsigned long id, void (*func)(LmnWorker *w));
 
 };
-
-//#define workers_do_palgorithm(WP) ((WP)->do_para_algo)
-//#define workers_out(WP) ((WP)->out)
-
-//#define workers_opt_end_state(WP) ((WP)->opt_end_state)
-//#define workers_ewlock(WP) ((WP)->ewlock)
-//#define workers_opt_end_lock(WP) (ewlock_acquire_enter((WP)->ewlock, 0U))
-//#define workers_opt_end_unlock(WP) (ewlock_release_enter((WP)->ewlock, 0U))
-//#define workers_state_lock(WP, id) (ewlock_acquire_write((WP)->ewlock, id))
-//#define workers_state_unlock(WP, id) (ewlock_release_write((WP)->ewlock, id))
-
-//#define workers_are_terminated(WP) ((WP)->terminated)
-//#define workers_set_terminated(WP) ((WP)->terminated = TRUE)
-//#define workers_entried_num(WP) ((WP)->worker_num)
-//#define workers_synchronizer(WP) ((WP)->synchronizer)//there are 2 types of synchronizer
-//#define workers_get_entry(WP, I) ((WP)->workers[(I)])
-//#define workers_set_entry(WP, I, W) ((WP)->workers[(I)] = (W))
 
 /**
  *  Objects for Model Checking
@@ -448,18 +435,11 @@ static inline BOOL worker_check(LmnWorker *w) {
 
 /** ProtoTypes
  */
-void lmn_workergroup_free(LmnWorkerGroup *wg);
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root);
 void lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
 LmnWorker *lmn_worker_make_minimal(void);
 LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags);
 void lmn_worker_free(LmnWorker *w);
-
-LmnWorker *workers_get_worker(LmnWorkerGroup *wp, unsigned long id);
-LmnWorker *workers_get_my_worker(LmnWorkerGroup *wp);
-
-LmnCost workers_opt_cost(LmnWorkerGroup *wp);
-void lmn_update_opt_cost(LmnWorkerGroup *wp, State *new_s, BOOL f);
 
 LmnWorker *worker_next_generator(LmnWorker *w);
 
