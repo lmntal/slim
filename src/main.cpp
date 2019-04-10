@@ -616,7 +616,7 @@ static void init_internal(void) {
     mem_isom_init();
     /*    ext_init(); */
     sp_atom_init();
-    ccallback_init();
+    CCallback::ccallback_init();
     init_builtin_extensions();
 
     dumper_init();
@@ -648,7 +648,7 @@ static inline void slim_finalize(void) {
       dpor_env_destroy();
     mem_isom_finalize();
     /*    ext_finalize(); */
-    ccallback_finalize();
+    CCallback::ccallback_finalize();
     sp_atom_finalize();
     free_atom_memory_pools();
     finalize_so_handles();

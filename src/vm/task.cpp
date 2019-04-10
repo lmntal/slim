@@ -4017,7 +4017,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_interned_str name = LMN_FUNCTOR_NAME_ID(f_name->get_functor());
       int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
 
-      c = get_ccallback(name);
+      c = CCallback::get_ccallback(name);
       if (!c)
         break;
 
@@ -4902,7 +4902,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         lmn_interned_str name = LMN_FUNCTOR_NAME_ID(f_name->get_functor());
         int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
 
-        c = get_ccallback(name);
+        c = CCallback::get_ccallback(name);
         if (!c)
           break;
 

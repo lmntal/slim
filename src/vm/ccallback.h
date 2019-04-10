@@ -47,34 +47,40 @@
  */
 
 #include "lmntal.h"
+#include "element/element.h"
+#include "symbol.h"
 
 /* LMNtalから呼ばれるCのコールバック */
 struct CCallback {
   void *f;
   int arity;
+  static st_table_t ccallback_tbl;
+  static int free_v(st_data_t key, st_data_t v, st_data_t _t);
+public:
+  CCallback();
+  static void ccallback_init();
+  /**
+   * @brief initialize ccallback module.
+   */
+  static const struct CCallback *get_ccallback(lmn_interned_str name);
+  /**
+   * @brief register a function as a callback.
+   *
+   * @param name a callmack name used in LMNtal.
+   * @param f a function that has a spacific signature (see \ref callback ).
+   * @param arity the number of arguments of the callback.
+   */
+  static void lmn_register_c_fun(const char *name, void *f, int arity);
+  /**
+   * @brief get a function with its name.
+   */
+  /**
+   * @brief finalize ccallback module.
+   */
+  static void ccallback_finalize(void);
 };
 
-/**
- * @brief initialize ccallback module.
- */
-void ccallback_init(void);
-/**
- * @brief finalize ccallback module.
- */
-void ccallback_finalize(void);
-/**
- * @brief register a function as a callback.
- *
- * @param name a callmack name used in LMNtal.
- * @param f a function that has a spacific signature (see \ref callback ).
- * @param arity the number of arguments of the callback.
- */
-void lmn_register_c_fun(const char *name, void *f, int arity);
-/**
- * @brief get a function with its name.
- */
-const struct CCallback *get_ccallback(lmn_interned_str name);
 
 /* @} */
-
+  void lmn_register_c_fun(const char *name, void *f, int arity);
 #endif
