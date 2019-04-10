@@ -51,13 +51,18 @@
 #include "symbol.h"
 
 /* LMNtalから呼ばれるCのコールバック */
-struct CCallback {
+class CCallback {
   void *f;
   int arity;
   static st_table_t ccallback_tbl;
   static int free_v(st_data_t key, st_data_t v, st_data_t _t);
+  CCallback(CCallback *);
 public:
   CCallback();
+  ~CCallback();
+  int get_arity() const;
+  void *get_f() const;
+
   static void ccallback_init();
   /**
    * @brief initialize ccallback module.
@@ -81,6 +86,4 @@ public:
 };
 
 
-/* @} */
-  void lmn_register_c_fun(const char *name, void *f, int arity);
 #endif

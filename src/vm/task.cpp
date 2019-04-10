@@ -4021,7 +4021,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       if (!c)
         break;
 
-      if (arity - 1 != c->arity) {
+      if (arity - 1 != c->get_arity()) {
         fprintf(stderr, "EXTERNAL FUNC: invalid arity - %s\n",
                 LMN_SYMBOL_STR(name));
         break;
@@ -4037,32 +4037,32 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       switch (arity) {
       case 1:
-        ((callback_0)c->f)(rc, (LmnMembraneRef)rc->wt(memi));
+        ((callback_0)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi));
         break;
       case 2:
-        ((callback_1)c->f)(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+        ((callback_1)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
                            atom->get_attr(1));
         break;
       case 3:
-        ((callback_2)c->f)(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+        ((callback_2)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
                            atom->get_attr(1), atom->get_link(2),
                            atom->get_attr(2));
         break;
       case 4:
-        ((callback_3)c->f)(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+        ((callback_3)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
                            atom->get_attr(1), atom->get_link(2),
                            atom->get_attr(2), atom->get_link(3),
                            atom->get_attr(3));
         break;
       case 5:
-        ((callback_4)c->f)(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+        ((callback_4)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
                            atom->get_attr(1), atom->get_link(2),
                            atom->get_attr(2), atom->get_link(3),
                            atom->get_attr(3), atom->get_link(4),
                            atom->get_attr(4));
         break;
       case 6:
-        ((callback_5)c->f)(
+        ((callback_5)c->get_f())(
             rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
             atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
             atom->get_link(3), atom->get_attr(3), atom->get_link(4),
@@ -4906,7 +4906,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         if (!c)
           break;
 
-        if (arity - 1 != c->arity) {
+        if (arity - 1 != c->get_arity()) {
           fprintf(stderr, "EXTERNAL FUNC: invalid arity - %s\n",
                   LMN_SYMBOL_STR(name));
           break;
@@ -4919,25 +4919,25 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
         switch (arity) {
         case 1:
-          ((callback_0)c->f)(rc, (LmnMembraneRef)rc->wt(memi));
+          ((callback_0)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi));
           break;
         case 2:
-          ((callback_1)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+          ((callback_1)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
                              atom->get_link(1), atom->get_attr(1));
           break;
         case 3:
-          ((callback_2)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+          ((callback_2)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
                              atom->get_link(1), atom->get_attr(1),
                              atom->get_link(2), atom->get_attr(2));
           break;
         case 4:
-          ((callback_3)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+          ((callback_3)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
                              atom->get_link(1), atom->get_attr(1),
                              atom->get_link(2), atom->get_attr(2),
                              atom->get_link(3), atom->get_attr(3));
           break;
         case 5:
-          ((callback_4)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+          ((callback_4)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
                              atom->get_link(1), atom->get_attr(1),
                              atom->get_link(2), atom->get_attr(2),
                              atom->get_link(3), atom->get_attr(3),

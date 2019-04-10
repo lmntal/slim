@@ -442,11 +442,11 @@ void init_array() {
       "array", LmnArray::sp_cb_array_copy, LmnArray::sp_cb_array_free,
       LmnArray::sp_cb_array_eq, LmnArray::sp_cb_array_dump,
       LmnArray::sp_cb_array_is_ground);
-  lmn_register_c_fun("cb_array_free", (void *)LmnArray::cb_array_free, 1);
-  lmn_register_c_fun("cb_array_new", (void *)LmnArray::cb_array_new, 3);
-  lmn_register_c_fun("cb_array_size", (void *)LmnArray::cb_array_size, 3);
-  lmn_register_c_fun("cb_array_get", (void *)LmnArray::cb_array_get, 4);
-  lmn_register_c_fun("cb_array_put", (void *)LmnArray::cb_array_put, 4);
+  CCallback::lmn_register_c_fun("cb_array_free", (void *)LmnArray::cb_array_free, 1);
+  CCallback::lmn_register_c_fun("cb_array_new", (void *)LmnArray::cb_array_new, 3);
+  CCallback::lmn_register_c_fun("cb_array_size", (void *)LmnArray::cb_array_size, 3);
+  CCallback::lmn_register_c_fun("cb_array_get", (void *)LmnArray::cb_array_get, 4);
+  CCallback::lmn_register_c_fun("cb_array_put", (void *)LmnArray::cb_array_put, 4);
 }
 
 /*

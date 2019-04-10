@@ -181,10 +181,10 @@ void integer_of_string(LmnReactCxtRef rc,
 
 void init_integer(void)
 {
-  lmn_register_c_fun("integer_set", (void *)integer_set, 3);
-  lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
-  lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
-  lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
+  CCallback::lmn_register_c_fun("integer_set", (void *)integer_set, 3);
+  CCallback::lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
+  CCallback::lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
+  CCallback::lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
 
   srand((unsigned)time(NULL));
 }

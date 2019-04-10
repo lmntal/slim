@@ -1080,7 +1080,7 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 }
 
 void dumper_init() {
-  lmn_register_c_fun("cb_dump_mem", (void *)cb_dump_mem, 3);
+  CCallback::lmn_register_c_fun("cb_dump_mem", (void *)cb_dump_mem, 3);
 }
 
 void dumper_finalize() {}

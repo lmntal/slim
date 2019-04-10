@@ -195,9 +195,9 @@ void init_state_map(void) {
   state_map_atom_type = lmn_sp_atom_register(
       "state_map", sp_cb_state_map_copy, sp_cb_state_map_free,
       sp_cb_state_map_eq, sp_cb_state_map_dump, sp_cb_state_map_is_ground);
-  lmn_register_c_fun("cb_state_map_init", (void *)cb_state_map_init, 1);
-  lmn_register_c_fun("cb_state_map_free", (void *)cb_state_map_free, 1);
-  lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
-  lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find,
+  CCallback::lmn_register_c_fun("cb_state_map_init", (void *)cb_state_map_init, 1);
+  CCallback::lmn_register_c_fun("cb_state_map_free", (void *)cb_state_map_free, 1);
+  CCallback::lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
+  CCallback::lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find,
                      4);
 }

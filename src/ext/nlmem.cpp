@@ -133,6 +133,6 @@ void nlmem_kill(LmnReactCxtRef rc,
 }
 
 void init_nlmem(void) {
-  lmn_register_c_fun("nlmem_copy", (void *)nlmem_copy, 3);
-  lmn_register_c_fun("nlmem_kill", (void *)nlmem_kill, 2);
+  CCallback::lmn_register_c_fun("nlmem_copy", (void *)nlmem_copy, 3);
+  CCallback::lmn_register_c_fun("nlmem_kill", (void *)nlmem_kill, 2);
 }
