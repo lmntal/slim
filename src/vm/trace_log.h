@@ -141,7 +141,7 @@ struct TraceLog : ProcessTable<TraceData> {
     size_t s1 = in_ent ? in_ent->size() : 0;
     size_t s2 = avoid ? avoid->size() : 0;
     return traversed_proc_count(owner) ==
-           (owner->symb_atom_num() + lmn_mem_child_mem_num(owner) +
+      (owner->symb_atom_num() + owner->child_mem_num() +
             s1 - s2);
   }
 

@@ -55,8 +55,8 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
     next = m->mem_next();
     if ((m->NAME_ID() == lmn_intern(INITIAL_RULESET_MEM_NAME) ||
          m->NAME_ID() == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) &&
-        lmn_mem_nfreelinks(m, 0) && m->atom_num() == 0 &&
-        lmn_mem_child_mem_num(m) == 0) {
+        m->nfreelinks(0) && m->atom_num() == 0 &&
+	m->child_mem_num() == 0) {
       int i, j;
 
       for (i = 0; i < m->ruleset_num(); i++) {
@@ -75,7 +75,7 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
         lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
       }
-      lmn_mem_delete_mem(mem, m);
+      mem->delete_mem(m);
 
       ok = TRUE;
     }

@@ -127,7 +127,7 @@ void nlmem_kill(LmnReactCxtRef rc,
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), org_mem);
   }
-  lmn_mem_delete_mem(mem, org_mem);
+  mem->delete_mem(org_mem);
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
 }

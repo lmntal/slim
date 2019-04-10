@@ -394,7 +394,7 @@ static BOOL dump_proxy(LmnPortRef port, LmnSymbolAtomRef atom,
       if (!LMN_ATTR_IS_DATA(in->get_attr(1)) &&
           ((LmnSymbolAtomRef)in->get_link(1))->get_functor() == LMN_UNARY_PLUS_FUNCTOR) {
         LmnMembraneRef mem = LMN_PROXY_GET_MEM(in);
-        if (lmn_mem_nfreelinks(mem, 1)) {
+        if (mem->nfreelinks(1)) {
           get_atomrec(ht, (LmnSymbolAtomRef)in->get_link(1))->done =
               TRUE;
           lmn_dump_mem_internal(port, mem, ht, s);
@@ -1076,7 +1076,7 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
   }
-  lmn_mem_delete_mem(m->mem_parent(), m);
+  (m->mem_parent())->delete_mem(m);
 }
 
 void dumper_init() {

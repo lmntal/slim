@@ -391,7 +391,7 @@ static inline State *por_state_insert(State *succ, struct MemDeltaRoot *d) {
   if (d) {
     dmem_root_revert(d);
   } else if (ret == succ && tmp_m) {
-    lmn_mem_free_rec(tmp_m);
+    tmp_m->free_rec();
   }
 
   return ret;
@@ -414,7 +414,7 @@ static inline State *por_state_insert_statespace(StateSpaceRef ss,
     if (mc_is_dump(org_f))
       dump_state_data(succ_s, (LmnWord)stdout, (LmnWord)NULL);
     if (succ_m)
-      lmn_mem_free_rec(succ_m);
+      succ_m->free_rec();
     if (new_ss)
       new_ss->push((vec_data_t)succ_s);
   } else {

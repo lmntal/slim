@@ -66,7 +66,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
 
   if (lmn_env.nd_cleaning) {
     /* nd_cleaning状態の場合は、グローバルルート膜の解放を行う */
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
     lmn_env.nd_cleaning = FALSE;
   }
 
@@ -75,7 +75,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   }
 
   react_start_rulesets(mem, start_rulesets);
-  lmn_mem_activate_ancestors(mem);
+  mem->activate_ancestors();
 
   do_mc(mem, a, psyms, lmn_env.core_num);
 
@@ -128,7 +128,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 #endif
 
   if (lmn_env.mem_enc == FALSE)
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
   /** FINALIZE
    */
   profile_statespace(wp);
@@ -235,7 +235,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
       profile_add_space(PROFILE_SPACE__REDUCED_MEMSET, mem->space());
     }
 #endif
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
     if (s->is_binstr_user() &&
         (lmn_env.hash_compaction || lmn_env.tree_compress)) {
       s->free_binstr();
@@ -334,7 +334,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       /* new state */
       state_id_issue(succ);
       if (mc_use_compress(f) && src_succ_m) {
-        lmn_mem_free_rec(src_succ_m);
+	src_succ_m->free_rec();
       }
       if (new_ss)
         new_ss->push((vec_data_t)succ);

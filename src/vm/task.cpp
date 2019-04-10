@@ -318,10 +318,10 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   }
 
 #ifdef USE_FIRSTCLASS_RULE
-  for (i = 0; i < lmn_mem_firstclass_rulesets(cur_mem)->get_num(); i++) {
+  for (i = 0; i < (cur_mem->firstclass_rulesets())->get_num(); i++) {
     if (react_ruleset(
             rc, cur_mem,
-            (LmnRuleSetRef)lmn_mem_firstclass_rulesets(cur_mem)->get(i))) {
+            (LmnRuleSetRef)(cur_mem->firstclass_rulesets())->get(i))) {
       ok = TRUE;
       break;
     }
@@ -1491,7 +1491,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, nmems);
 
-    if (!lmn_mem_nmems((LmnMembraneRef)rc->wt(memi), nmems)) {
+    if (!((LmnMembraneRef)rc->wt(memi))->nmems(nmems)) {
       return FALSE;
     }
 
@@ -2253,8 +2253,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, parenti);
 
-    lmn_mem_remove_mem((LmnMembraneRef)rc->wt(parenti),
-                       (LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(parenti))->remove_mem((LmnMembraneRef)rc->wt(memi));
     break;
   }
   case INSTR_FREEMEM: {
@@ -3029,7 +3028,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       break;
     }
     case INSTR_REMOVEGROUND:
-      lmn_mem_remove_ground((LmnMembraneRef)rc->wt(memi), srcvec);
+      ((LmnMembraneRef)rc->wt(memi))->remove_ground(srcvec);
       break;
     case INSTR_FREEGROUND:
       lmn_mem_free_ground(srcvec);
@@ -3832,7 +3831,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, count);
 
-    if (!lmn_mem_nfreelinks((LmnMembraneRef)rc->wt(memi), count))
+    if (!((LmnMembraneRef)rc->wt(memi))->nfreelinks(count))
       return FALSE;
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
@@ -3881,7 +3880,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_clearrules((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->clearrules();
     break;
   }
   case INSTR_DROPMEM: {

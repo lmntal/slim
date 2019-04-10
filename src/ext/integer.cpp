@@ -106,7 +106,7 @@ void integer_set(LmnReactCxtRef rc,
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
 
-  lmn_mem_delete_ground(mem, srcvec);
+  mem->delete_ground(srcvec);
 
   for (i = 0; i < srcvec->get_num(); i++) LMN_FREE(srcvec->get(i));
   delete srcvec;

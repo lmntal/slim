@@ -261,7 +261,7 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
    */
   if (d->new_mems.get_num() > 0 || d->del_mems.get_num() > 0) {
     int n = d->new_mems.get_num() - d->del_mems.get_num();
-    if (lmn_mem_child_mem_num(mem) != n) {
+    if (mem->child_mem_num() != n) {
       contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NMEMS);
     }
     need_act_check = TRUE;
@@ -1035,7 +1035,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       ret = ss->insert(s);
       if (ret == s) {
         s->s_set_reduced();
-        lmn_mem_free_rec(s_mem);
+        s_mem->free_rec();
         search->push((vec_data_t)s);
       } else {
         transition_set_state(t, ret);

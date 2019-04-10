@@ -195,6 +195,22 @@ struct LmnMembrane {
   LmnMembraneRef copy();
   LmnMembraneRef copy_ex();
   //まだリファクタリングしていない
+  void remove_ground(Vector *srcvec);
+  void delete_ground(Vector *srcvec);
+  BOOL equals(LmnMembraneRef mem2);
+  void remove_mem(LmnMembraneRef mem);
+  void free_rec();
+  void delete_mem(LmnMembraneRef mem);
+  void activate_ancestors();
+  BOOL nmems(unsigned int count);
+  int child_mem_num();
+  unsigned int count_children();
+  unsigned int count_descendants();
+  BOOL nfreelinks(unsigned int count);
+  void copy_rules(LmnMembraneRef src);
+  void clearrules();
+  Vector *firstclass_rulesets();
+  
 };
 
 #endif

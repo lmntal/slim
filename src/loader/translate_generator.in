@@ -243,7 +243,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   *finishflag = 0;
 
 #nmems LmnInstrVar LmnInstrVar
-  if (!lmn_mem_nmems((LmnMembraneRef)rc->wt($0), $1)) $f;
+  if (!((LmnMembraneRef)rc->wt($0))->nmems($1)) $f;
 
 #norules LmnInstrVar
   if (((LmnMembraneRef)rc->wt($0))->get_rulesets()->get_num()) $f;
@@ -352,7 +352,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   lmn_free_atom((LmnAtomRef)rc->wt($0), rc->at($0));
 
 #removemem LmnInstrVar LmnInstrVar
-  lmn_mem_remove_mem((LmnMembraneRef)rc->wt($1), (LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($1))->remove_mem((LmnMembraneRef)rc->wt($0));
 
 #freemem LmnInstrVar
   delete (LmnMembraneRef)rc->wt($0);
@@ -630,7 +630,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #removeground LmnInstrVar LmnInstrVar
   {
     Vector *srcvec = links_from_idxs((Vector*)rc->wt($0), rc);
-    lmn_mem_remove_ground((LmnMembraneRef)rc->wt($1), srcvec);
+    ((LmnMembraneRef)rc->wt($1))->remove_ground(srcvec);
     free_links(srcvec);
   }
 
@@ -877,7 +877,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   ((LmnMembraneRef)rc->wt($0))->remove_temporary_proxies();
 
 #nfreelinks LmnInstrVar LmnInstrVar
-  if (!lmn_mem_nfreelinks((LmnMembraneRef)rc->wt($0), $1)) $f;
+  if (!((LmnMembraneRef)rc->wt($0))->nfreelinks($1)) $f;
 
 #copycells LmnInstrVar LmnInstrVar LmnInstrVar
   rc->wt($0) = (LmnWord)lmn_mem_copy_cells((LmnMembraneRef)rc->wt($1), (LmnMembraneRef)rc->wt($2));

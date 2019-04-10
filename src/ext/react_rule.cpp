@@ -130,7 +130,7 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
   apply_rules_in_rulesets(mem, graph_mem, rulesets, &head, &pos);
 
 #ifdef USE_FIRSTCLASS_RULE
-  Vector *fstclass_rules = lmn_mem_firstclass_rulesets(rule_mem);
+  Vector *fstclass_rules = rule_mem->firstclass_rulesets();
   apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
 
@@ -138,7 +138,7 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
                   react_judge_atom, react_judge_link_attr,
                   LMN_ATTR_GET_VALUE(react_judge_link_attr));
 
-  lmn_mem_remove_mem(mem, graph_mem);
+  mem->remove_mem(graph_mem);
 
   lmn_mem_newlink(mem,
                   return_rule_mem_proxy, return_rule_mem_proxy_link_attr,

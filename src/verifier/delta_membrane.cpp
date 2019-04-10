@@ -792,8 +792,7 @@ void dmem_root_commit(struct MemDeltaRoot *d) {
       new_mem_info = (struct NewMemInfo *)t;
 
       for (j = 0; j < new_mem_info->removed_child_mems.get_num(); j++) {
-        lmn_mem_remove_mem(
-            mem, (LmnMembraneRef)new_mem_info->removed_child_mems.get(j));
+        mem->remove_mem((LmnMembraneRef)new_mem_info->removed_child_mems.get(j));
       }
       for (j = 0; j < new_mem_info->new_child_mems.get_num(); j++) {
         mem->add_child_mem((LmnMembraneRef)new_mem_info->new_child_mems.get(j));
@@ -888,8 +887,7 @@ void dmem_root_revert(struct MemDeltaRoot *d) {
       new_mem_info = (struct NewMemInfo *)t;
 
       for (j = new_mem_info->new_child_mems.get_num() - 1; j >= 0; j--) {
-        lmn_mem_remove_mem(
-            mem, (LmnMembraneRef)new_mem_info->new_child_mems.get(j));
+        mem->remove_mem((LmnMembraneRef)new_mem_info->new_child_mems.get(j));
       }
       for (j = new_mem_info->removed_child_mems.get_num() - 1; j >= 0; j--) {
         mem->add_child_mem((LmnMembraneRef)new_mem_info->removed_child_mems.get(j));
@@ -1460,7 +1458,7 @@ void dmem_root_set_mem_name(struct MemDeltaRoot *root_d, LmnMembraneRef m,
 void dmem_root_copy_rules(struct MemDeltaRoot *root_d, LmnMembraneRef dest,
                           LmnMembraneRef src) {
   if (root_d->is_new_mem(dest))
-    lmn_mem_copy_rules(dest, src);
+    dest->copy_rules(src);
   else {
     dmem_copy_rules(root_d->get_mem_delta(dest), dest, src);
   }
@@ -1996,7 +1994,7 @@ static inline void dmem_commit_delete_mem(struct MemDelta *d) {
   int i;
   /* Membrane */
   for (i = 0; i < d->del_mems.get_num(); i++) {
-    lmn_mem_remove_mem(d->mem, (LmnMembraneRef)d->del_mems.get(i));
+    (d->mem)->remove_mem((LmnMembraneRef)d->del_mems.get(i));
   }
 }
 
@@ -2041,6 +2039,6 @@ static inline void dmem_revert_new_mem(struct MemDelta *d) {
   int i;
   /* Membrane */
   for (i = 0; i < d->new_mems.get_num(); i++) {
-    lmn_mem_remove_mem(d->mem, (LmnMembraneRef)d->new_mems.get(i));
+    (d->mem)->remove_mem((LmnMembraneRef)d->new_mems.get(i));
   }
 }

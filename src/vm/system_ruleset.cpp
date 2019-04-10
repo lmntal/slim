@@ -189,7 +189,7 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
               ret->set_link(LMN_ATTR_GET_VALUE(ret_attr), temp1);
               ret->set_attr(LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
 
-              if (lmn_mem_equals(mem0, mem1)) {
+              if ((mem0)->equals(mem1)) {
                 result_atom = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
               } else {
                 result_atom = lmn_mem_newatom(mem, LMN_FALSE_FUNCTOR);

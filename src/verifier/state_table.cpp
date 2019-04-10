@@ -590,5 +590,5 @@ void StateTable::memid_rehash(State *s) {
   state_set_parent(new_s, s);
   this->rehash_tbl_->num_dummy_increment();
 
-  lmn_mem_free_rec(m);
+  m->free_rec();
 }

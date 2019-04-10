@@ -321,7 +321,7 @@ struct State {                /* Total:72(36)byte */
                              (this->state_mem())->space());
       }
 #endif
-      lmn_mem_free_rec(this->state_mem());
+      (this->state_mem())->free_rec();
       this->state_set_mem(NULL);
     }
   }
@@ -436,7 +436,7 @@ struct State {                /* Total:72(36)byte */
         m = lmn_binstr_decode(this->state_binstr());
         mid = lmn_mem_encode(m);
         this->free_binstr();
-        lmn_mem_free_rec(m);
+        m->free_rec();
       } else {
         lmn_fatal("unexpected.");
       }
@@ -567,7 +567,7 @@ public:
     state_calc_hash(mem, do_encode);
 
     if (is_encoded()) {
-      lmn_mem_free_rec(mem);
+      mem->free_rec();
     }
 #ifdef PROFILE
     else if (lmn_env.profile_level >= 3) {

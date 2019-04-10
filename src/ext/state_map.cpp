@@ -109,7 +109,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
 
   lmn_mem_delete_atom(m, in, in_attr);
   lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
-  lmn_mem_remove_mem(mem, m);
+  mem->remove_mem(m);
 
   State *new_s = new State(m, 0, TRUE);
   State *succ = ss->insert(new_s);

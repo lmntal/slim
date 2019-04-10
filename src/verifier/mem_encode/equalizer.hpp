@@ -1055,7 +1055,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     if (mem == NULL)
       return 0;
 
-    auto n = mem->atom_num() + lmn_mem_child_mem_num(mem);
+    auto n = mem->atom_num() + mem->child_mem_num();
 
     for (auto m = mem->child_head; m; m = m->next) {
       n += process_num(m);

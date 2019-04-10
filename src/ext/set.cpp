@@ -216,7 +216,7 @@ LmnSet::~LmnSet() {
  */
 int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg) {
   if (arg == (st_data_t)&type_mem_hash)
-    lmn_mem_free_rec((LmnMembraneRef)key);
+    ((LmnMembraneRef)key)->free_rec();
   else
     free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
@@ -272,7 +272,7 @@ void cb_set_insert(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   } else {
     lmn_mem_remove_atom(mem, a1, t1);
     if (tbl->type == &type_mem_hash)
-      lmn_mem_remove_mem(mem, (LmnMembraneRef)v);
+      mem->remove_mem((LmnMembraneRef)v);
   }
   lmn_mem_newlink(mem, a0, t0, LMN_ATTR_GET_VALUE(t0), a2, t2,
                   LMN_ATTR_GET_VALUE(t2));
@@ -305,7 +305,7 @@ void cb_set_find(LmnReactCxtRef *rc, LmnMembraneRef mem, LmnAtomRef a0,
                   LMN_ATTR_MAKE_LINK(0), 0);
   lmn_mem_delete_atom(mem, a1, t1);
   if (tbl->type == &type_mem_hash)
-    lmn_mem_delete_mem(mem, (LmnMembraneRef)key);
+    mem->delete_mem((LmnMembraneRef)key);
 }
 
 /* inner_set_to_listで使用するためだけの構造体 */
@@ -455,8 +455,8 @@ void cb_set_erase(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   } else if(tbl->type == &type_mem_hash) {
     LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
     if(st_delete(tbl, (st_data_t)m, &entry))
-      lmn_mem_free_rec((LmnMembraneRef)entry);
-    lmn_mem_delete_mem(mem, m);
+      ((LmnMembraneRef)entry)->free_rec();
+    mem->delete_mem(m);
   } else if (tbl->type == &type_tuple_hash) {
     if (st_delete(tbl, (st_data_t)a1, &entry))
       free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)entry);
@@ -551,7 +551,7 @@ int inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg) {
   if (found)
     return ST_CONTINUE;
   if (tbl->type == &type_mem_hash)
-    lmn_mem_free_rec((LmnMembraneRef)key);
+    ((LmnMembraneRef)key)->free_rec();
   else if (tbl->type == &type_tuple_hash)
     free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
@@ -599,7 +599,7 @@ int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg) {
   if (!found)
     return ST_CONTINUE;
   if (tbl->type == &type_mem_hash)
-    lmn_mem_free_rec((LmnMembraneRef)key);
+    ((LmnMembraneRef)key)->free_rec();
   else if (tbl->type == &type_tuple_hash)
     free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
