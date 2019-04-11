@@ -160,9 +160,11 @@ LmnBinStrRef binstr_make(unsigned int len) {
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }
-TreeNode::TreeNode(TreeNodeElement left, TreeNodeElement right) {
-  this->left = left;
-  this->right = right;
+TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
+  TreeNodeRef node=LMN_MALLOC(struct TreeNode);
+  node->left = left;
+  node->right = right;
+  return node;
 }
 
 BOOL TreeDatabase::table_find_or_put(TreeNodeElement left,
@@ -179,7 +181,7 @@ redo:
     // Walk Cache line
     for (i = 0; i < TREE_CACHE_LINE; i++) {
       if (table[(offset + i) & mask] == 0) {
-        TreeNodeRef node = new TreeNode(left, right);
+        TreeNodeRef node = tree_node_make(left, right);
         if (atomic_compare_and_swap(&table[(offset + i) & mask], 0, node)) {
           atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
