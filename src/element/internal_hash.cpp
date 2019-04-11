@@ -98,7 +98,6 @@ SimpleHashtbl *hashtbl_make(unsigned int init_size) {
 }
 
 void hashtbl_destroy(SimpleHashtbl *ht) { LMN_FREE(ht->tbl); }
-
 void hashtbl_free(SimpleHashtbl *ht) {
   hashtbl_destroy(ht);
   LMN_FREE(ht);

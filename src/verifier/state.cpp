@@ -60,10 +60,10 @@ LmnCost state_cost(State *S) {
 }
 
 void state_cost_lock(EWLock *EWLOCK, mtx_data_t ID) {
-  (ewlock_acquire_write(EWLOCK, ID));
+  (EWLOCK->acquire_write(ID));
 }
 void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
-  (ewlock_release_write(EWLOCK, ID));
+  (EWLOCK->release_write(ID));
 }
 
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,

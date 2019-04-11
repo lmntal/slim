@@ -104,10 +104,10 @@ struct LmnWorkerGroup {
 
 #define workers_opt_end_state(WP) ((WP)->opt_end_state)
 #define workers_ewlock(WP) ((WP)->ewlock)
-#define workers_opt_end_lock(WP) (ewlock_acquire_enter((WP)->ewlock, 0U))
-#define workers_opt_end_unlock(WP) (ewlock_release_enter((WP)->ewlock, 0U))
-#define workers_state_lock(WP, id) (ewlock_acquire_write((WP)->ewlock, id))
-#define workers_state_unlock(WP, id) (ewlock_release_write((WP)->ewlock, id))
+#define workers_opt_end_lock(WP) (((WP)->ewlock)->acquire_enter(0U))
+#define workers_opt_end_unlock(WP) (((WP)->ewlock)->release_enter(0U))
+#define workers_state_lock(WP, id) (((WP)->ewlock)->acquire_write(id))
+#define workers_state_unlock(WP, id) (((WP)->ewlock)->release_write(id))
 
 #define workers_are_terminated(WP) ((WP)->terminated)
 #define workers_set_terminated(WP) ((WP)->terminated = TRUE)

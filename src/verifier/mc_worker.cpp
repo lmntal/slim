@@ -331,7 +331,7 @@ LmnWorkerGroup *lmn_workergroup_make(AutomataRef a, Vector *psyms,
 
 #ifdef KWBT_OPT
   if (thread_num >= 2 && lmn_env.opt_mode != OPT_NONE) {
-    wp->ewlock = ewlock_make(1U, DEFAULT_WLOCK_NUM);
+    wp->ewlock = new EWLock(1U, DEFAULT_WLOCK_NUM);
   } else
 #endif
     wp->ewlock = NULL;
@@ -356,7 +356,7 @@ void lmn_workergroup_free(LmnWorkerGroup *wp) {
   workers_free(wp->workers, workers_entried_num(wp));
 
   if (wp->ewlock) {
-    ewlock_free(wp->ewlock);
+    delete wp->ewlock;
   }
   LMN_FREE(wp);
 }

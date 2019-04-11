@@ -57,7 +57,7 @@ typedef struct HashEntry {
 typedef struct SimpleHashtbl {
   struct HashEntry *tbl;
   unsigned int cap, num;
-} SimpleHashtbl;
+}SimpleHashtbl;
 
 typedef struct HashIterator {
   SimpleHashtbl *ht;
