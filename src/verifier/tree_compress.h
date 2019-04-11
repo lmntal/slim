@@ -81,6 +81,7 @@ struct TreeDatabase {
 struct TreeNode {
   TreeNodeElement left;
   TreeNodeElement right;
+  TreeNode(TreeNodeElement left,TreeNodeElement right);
 };
 
 #define tree_db_node_count(db) (db->node_count)

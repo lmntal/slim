@@ -136,7 +136,6 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   // printf("start :0x%14llx\n", ret);
   return ret;
 }
-
 uint64_t hash_node(TreeNodeElement left, TreeNodeElement right) {
   struct TreeNode node = {.left = left, .right = right};
   return murmurhash64(&node, 16, 0x5bd1e995);
@@ -161,12 +160,9 @@ LmnBinStrRef binstr_make(unsigned int len) {
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }
-
-TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
-  TreeNodeRef node = LMN_MALLOC(struct TreeNode);
-  node->left = left;
-  node->right = right;
-  return node;
+TreeNode::TreeNode(TreeNodeElement left, TreeNodeElement right) {
+  this->left = left;
+  this->right = right;
 }
 
 BOOL TreeDatabase::table_find_or_put(TreeNodeElement left,
@@ -183,7 +179,7 @@ redo:
     // Walk Cache line
     for (i = 0; i < TREE_CACHE_LINE; i++) {
       if (table[(offset + i) & mask] == 0) {
-        TreeNodeRef node = tree_node_make(left, right);
+        TreeNodeRef node = new TreeNode(left, right);
         if (atomic_compare_and_swap(&table[(offset + i) & mask], 0, node)) {
           atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
