@@ -81,7 +81,7 @@ struct PredefinedFunctor predefined_functors[] = {
 #endif
 };
 
-struct LmnFunctorTable lmn_functor_table;
+LmnFunctorTable lmn_functor_table;
 
 /* prototypes */
 
@@ -128,15 +128,15 @@ void lmn_functor_printer(LmnFunctor f) {
 }
 #endif
 
-void lmn_functor_tbl_init() {
+void LmnFunctorTable::lmn_functor_tbl_init() {
   int i;
   const int predefined_size = ARY_SIZEOF(predefined_functors);
 
   functor_id_tbl = st_init_table(&type_functorhash);
 
-  lmn_functor_table.size = predefined_size;
-  lmn_functor_table.entry = LMN_NALLOC(LmnFunctorEntry, lmn_functor_table.size);
-  lmn_functor_table.next_id = predefined_size;
+  size = predefined_size;
+  entry = LMN_NALLOC(LmnFunctorEntry, lmn_functor_table.size);
+  next_id = predefined_size;
 
   /* 予約されたファンクタを順番に登録していく */
   for (i = 0; i < predefined_size; i++) {
@@ -151,10 +151,10 @@ int functor_entry_free(LmnFunctorEntry *e) {
   return ST_DELETE;
 }
 
-void lmn_functor_tbl_destroy() {
+void LmnFunctorTable::lmn_functor_tbl_destroy() {
   st_foreach(functor_id_tbl, (st_iter_func)functor_entry_free, 0);
   st_free_table(functor_id_tbl);
-  LMN_FREE(lmn_functor_table.entry);
+  LMN_FREE(entry);
 }
 
 const LmnFunctorEntry *lmn_id_to_functor(int functor_id) {

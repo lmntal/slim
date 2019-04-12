@@ -604,7 +604,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
 static void init_internal(void) {
   lmn_profiler_init(lmn_env.core_num);
   sym_tbl_init();
-  lmn_functor_tbl_init();
+  lmn_functor_table.lmn_functor_tbl_init();
   init_rules();
 
   if (!lmn_env.translate) {
@@ -656,7 +656,7 @@ static inline void slim_finalize(void) {
 
   lmn_profiler_finalize();
   destroy_rules();
-  lmn_functor_tbl_destroy();
+  lmn_functor_table.lmn_functor_tbl_destroy();
   sym_tbl_destroy();
 
   lmn_stream_destroy();

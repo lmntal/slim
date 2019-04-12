@@ -49,11 +49,27 @@
 
 /* Functor Information */
 
-typedef struct LmnFunctorTable {
+class LmnFunctorTable {
+public:
   unsigned int size;
   unsigned int next_id;
   struct LmnFunctorEntry *entry;
-} LmnFunctorTable;
+
+  /* アクセスを高速にするためにマクロにする */
+  #define LMN_FUNCTOR_NAME_ID(F) (lmn_functor_table.entry[(F)].name)
+  #define LMN_FUNCTOR_ARITY(F) (lmn_functor_table.entry[(F)].arity)
+  #define LMN_FUNCTOR_MODULE_ID(F) (lmn_functor_table.entry[(F)].module)  
+
+  #ifdef DEBUG
+  void lmn_functor_tbl_print(void);
+  void lmn_functor_printer(LmnFunctor f);
+  #endif
+private:
+public:
+  void lmn_register_predefined_functor(void);//not found
+  void lmn_functor_tbl_init(void);
+  void lmn_functor_tbl_destroy(void);
+};
 
 typedef struct LmnFunctorEntry {
   BOOL special;
@@ -62,23 +78,12 @@ typedef struct LmnFunctorEntry {
   LmnArity arity;
 } LmnFunctorEntry;
 
-extern struct LmnFunctorTable lmn_functor_table;
+extern LmnFunctorTable lmn_functor_table;
 
 #define FUNCTOR_MAX ((1 << (8 * sizeof(LmnFunctor))) - 1)
 
-/* アクセスを高速にするためにマクロにする */
-#define LMN_FUNCTOR_NAME_ID(F) (lmn_functor_table.entry[(F)].name)
-#define LMN_FUNCTOR_ARITY(F) (lmn_functor_table.entry[(F)].arity)
-#define LMN_FUNCTOR_MODULE_ID(F) (lmn_functor_table.entry[(F)].module)
 
-#ifdef DEBUG
-void lmn_functor_tbl_print(void);
-void lmn_functor_printer(LmnFunctor f);
-#endif
 
-void lmn_register_predefined_functor(void);
-void lmn_functor_tbl_init(void);
-void lmn_functor_tbl_destroy(void);
 LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name,
                               int arity);
 
