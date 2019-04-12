@@ -72,9 +72,9 @@ struct string {
 struct symbol {
   lmn_interned_str value;
   symbol(lmn_interned_str name, int arity)
-      : value(lmn_functor_intern(ANONYMOUS, name, arity)) {}
+      : value(lmn_functor_table.lmn_functor_intern(ANONYMOUS, name, arity)) {}
   symbol(lmn_interned_str module, lmn_interned_str name, int arity)
-      : value(lmn_functor_intern(module, name, arity)) {}
+      : value(lmn_functor_table.lmn_functor_intern(module, name, arity)) {}
 };
 } // namespace functor
 

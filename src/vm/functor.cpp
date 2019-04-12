@@ -85,11 +85,6 @@ LmnFunctorTable lmn_functor_table;
 
 /* prototypes */
 
-static LmnFunctor functor_intern(BOOL special, lmn_interned_str module,
-                                 lmn_interned_str name, int arity);
-static void register_functor(int id, BOOL special, lmn_interned_str module,
-                             lmn_interned_str name, int arity);
-
 int functor_entry_free(LmnFunctorEntry *e);
 const LmnFunctorEntry *lmn_id_to_functor(int functor_id);
 
@@ -166,7 +161,7 @@ const LmnFunctorEntry *lmn_id_to_functor(int functor_id) {
     return NULL;
 }
 
-static void register_functor(int id, BOOL special, lmn_interned_str module,
+void LmnFunctorTable::register_functor(int id, BOOL special, lmn_interned_str module,
                              lmn_interned_str name, int arity) {
   struct LmnFunctorEntry *entry = LMN_MALLOC(struct LmnFunctorEntry);
 
@@ -177,11 +172,11 @@ static void register_functor(int id, BOOL special, lmn_interned_str module,
 
   st_insert(functor_id_tbl, (st_data_t)entry, (st_data_t)id);
   /* idの位置にファンクタのデータをコピー */
-  lmn_functor_table.entry[id] = *entry;
+  this->entry[id] = *entry;
 }
 
 /* ファンクタのIDを返す */
-static LmnFunctor functor_intern(BOOL special, lmn_interned_str module,
+LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module,
                                  lmn_interned_str name, int arity) {
   st_data_t id;
   LmnFunctorEntry entry;
@@ -198,16 +193,16 @@ static LmnFunctor functor_intern(BOOL special, lmn_interned_str module,
     struct LmnFunctorEntry *new_entry;
 
     /* 必要ならばサイズを拡張 */
-    while (lmn_functor_table.next_id >= lmn_functor_table.size) {
-      lmn_functor_table.size *= 2;
-      lmn_functor_table.entry = LMN_REALLOC(
-          LmnFunctorEntry, lmn_functor_table.entry, lmn_functor_table.size);
+    while (this->next_id >= this->size) {
+      this->size *= 2;
+      this->entry = LMN_REALLOC(
+          LmnFunctorEntry, this->entry, this->size);
     }
 
     /* idはデータを格納する配列のインデックス */
-    id = lmn_functor_table.next_id++;
+    id = this->next_id++;
     /* idの位置にファンクタのデータをコピー */
-    lmn_functor_table.entry[id] = entry;
+    this->entry[id] = entry;
 
     /* ファンクタとIDの対応をテーブルに格納する */
     new_entry = LMN_MALLOC(struct LmnFunctorEntry);
@@ -218,7 +213,7 @@ static LmnFunctor functor_intern(BOOL special, lmn_interned_str module,
   }
 }
 
-LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name,
+LmnFunctor LmnFunctorTable::lmn_functor_intern(lmn_interned_str module, lmn_interned_str name,
                               int arity) {
   return functor_intern(FALSE, module, name, arity);
 }

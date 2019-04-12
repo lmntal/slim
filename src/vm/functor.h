@@ -65,10 +65,16 @@ public:
   void lmn_functor_printer(LmnFunctor f);
   #endif
 private:
+  LmnFunctor functor_intern(BOOL special, lmn_interned_str module,
+                                 lmn_interned_str name, int arity);
 public:
   void lmn_register_predefined_functor(void);//not found
   void lmn_functor_tbl_init(void);
   void lmn_functor_tbl_destroy(void);
+  LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name,
+                              int arity);
+  void register_functor(int id, BOOL special, lmn_interned_str module,
+                             lmn_interned_str name, int arity);
 };
 
 typedef struct LmnFunctorEntry {
@@ -84,8 +90,6 @@ extern LmnFunctorTable lmn_functor_table;
 
 
 
-LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name,
-                              int arity);
 
 /* predefined functors */
 

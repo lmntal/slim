@@ -60,7 +60,7 @@ void float_of_string(LmnReactCxtRef rc,
   t = NULL;
   d = (LmnAtomRef)lmn_create_double_atom(strtod(s, &t));
   if (t == NULL || s == t) {
-    LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
+    LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_table.lmn_functor_intern(ANONYMOUS,
                                                          lmn_intern("fail"),
                                                          1));
     lmn_mem_newlink(mem,

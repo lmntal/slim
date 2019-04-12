@@ -57,7 +57,7 @@ void cb_set_functor_priority(LmnReactCxtRef rc,
                              LmnAtomRef a1, LmnLinkAttr t1,
                              LmnAtomRef a2, LmnLinkAttr t2)
 {
-  set_functor_priority(lmn_functor_intern(ANONYMOUS,
+  set_functor_priority(lmn_functor_table.lmn_functor_intern(ANONYMOUS,
                                           LMN_FUNCTOR_NAME_ID(((LmnSymbolAtomRef)a1)->get_functor()),
                                           (LmnWord)a2),
                        (LmnWord)a0);

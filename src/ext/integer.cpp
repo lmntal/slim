@@ -163,7 +163,7 @@ void integer_of_string(LmnReactCxtRef rc,
   t = NULL;
   n = strtol(s, &t, 10);
   if (t == NULL || s == t) {
-    LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
+    LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_table.lmn_functor_intern(ANONYMOUS,
                                                          lmn_intern("fail"),
                                                          1));
     lmn_mem_newlink(mem,
