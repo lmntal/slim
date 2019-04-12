@@ -83,20 +83,28 @@ struct PredefinedFunctor predefined_functors[] = {
 
 LmnFunctorTable lmn_functor_table;
 
-/* prototypes */
+  LmnFunctorEntry *LmnFunctorTable::get_entry(unsigned int f){
+    return &entry[f];
+  }
 
+  unsigned int LmnFunctorTable::get_size(){
+    return size;
+  }
+
+  unsigned int LmnFunctorTable::get_next_id(){
+    return next_id;
+  }
 /* ファンクタの比較 */
-static int functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y) {
+int LmnFunctorTable::functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y) {
   return !(x->module == y->module && x->name == y->name &&
            x->arity == y->arity);
 }
-
-static long functor_hash(LmnFunctorEntry *x) {
+long LmnFunctorTable::functor_hash(LmnFunctorEntry *x) {
   return x->module * 31 * 31 + x->name * 31 + x->arity;
 }
 
-static struct st_hash_type type_functorhash = {(st_cmp_func)functor_cmp,
-                                               (st_hash_func)functor_hash};
+static struct st_hash_type type_functorhash = {(st_cmp_func)LmnFunctorTable::functor_cmp,
+                                               (st_hash_func)LmnFunctorTable::functor_hash};
 
 st_table_t
     functor_id_tbl; /* ファンクタ構造体からIDへの対応を要素に持つのテーブル */
