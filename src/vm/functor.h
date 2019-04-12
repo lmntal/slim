@@ -67,6 +67,8 @@ public:
 private:
   LmnFunctor functor_intern(BOOL special, lmn_interned_str module,
                                  lmn_interned_str name, int arity);
+  LmnFunctorEntry *lmn_id_to_functor(int functor_id) const;
+
 public:
   void lmn_register_predefined_functor(void);//not found
   void lmn_functor_tbl_init(void);
@@ -75,6 +77,8 @@ public:
                               int arity);
   void register_functor(int id, BOOL special, lmn_interned_str module,
                              lmn_interned_str name, int arity);
+  static int functor_entry_free(LmnFunctorEntry *e);
+
 };
 
 typedef struct LmnFunctorEntry {

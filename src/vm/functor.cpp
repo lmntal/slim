@@ -85,9 +85,6 @@ LmnFunctorTable lmn_functor_table;
 
 /* prototypes */
 
-int functor_entry_free(LmnFunctorEntry *e);
-const LmnFunctorEntry *lmn_id_to_functor(int functor_id);
-
 /* ファンクタの比較 */
 static int functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y) {
   return !(x->module == y->module && x->name == y->name &&
@@ -107,9 +104,9 @@ st_table_t
 /* for debug */
 #ifdef DEBUG
 
-void lmn_functor_tbl_print() {
+void LmnFunctorTable::lmn_functor_tbl_print() {
   int i, n;
-  fprintf(stdout, "next_id==%u\n", lmn_functor_table.next_id);
+  fprintf(stdout, "next_id==%u\n", next_id);
   n = lmn_functor_table.size;
   for (i = 0; i < n; i++) {
     fprintf(stdout, "entry[%2d]== %s_%d\n", i,
@@ -117,7 +114,7 @@ void lmn_functor_tbl_print() {
   }
 }
 
-void lmn_functor_printer(LmnFunctor f) {
+void LmnFunctorTable::lmn_functor_printer(LmnFunctor f) {
   fprintf(stdout, "fid=%d[ %s_%d ]\n", f,
           lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)), LMN_FUNCTOR_ARITY(f));
 }
@@ -130,7 +127,7 @@ void LmnFunctorTable::lmn_functor_tbl_init() {
   functor_id_tbl = st_init_table(&type_functorhash);
 
   size = predefined_size;
-  entry = LMN_NALLOC(LmnFunctorEntry, lmn_functor_table.size);
+  entry = LMN_NALLOC(LmnFunctorEntry, size);
   next_id = predefined_size;
 
   /* 予約されたファンクタを順番に登録していく */
@@ -141,18 +138,18 @@ void LmnFunctorTable::lmn_functor_tbl_init() {
   }
 }
 
-int functor_entry_free(LmnFunctorEntry *e) {
+int LmnFunctorTable::functor_entry_free(LmnFunctorEntry *e) {
   LMN_FREE(e);
   return ST_DELETE;
 }
 
 void LmnFunctorTable::lmn_functor_tbl_destroy() {
-  st_foreach(functor_id_tbl, (st_iter_func)functor_entry_free, 0);
+  st_foreach(functor_id_tbl, (st_iter_func)&LmnFunctorTable::functor_entry_free, 0);
   st_free_table(functor_id_tbl);
   LMN_FREE(entry);
 }
 
-const LmnFunctorEntry *lmn_id_to_functor(int functor_id) {
+LmnFunctorEntry *LmnFunctorTable::lmn_id_to_functor(int functor_id) const{
   LmnFunctorEntry *entry;
 
   if (st_lookup(functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry))
