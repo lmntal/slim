@@ -994,7 +994,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
                            !hashsetiter_isend(&it); hashsetiter_next(&it)) {
                         HyperLink *hl = (HyperLink *)hashsetiter_entry(&it);
                         if (proc_tbl_get_by_hlink(atoms, hl, &t)) {
-                          hyperlink_unify(newhl, (HyperLink *)t, ori_attr_atom,
+                          newhl->unify((HyperLink *)t, ori_attr_atom,
                                           ori_attr);
                         }
                       }
@@ -1003,7 +1003,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
                     /* 親への接続 */
                     if (orihl->parent &&
                         proc_tbl_get_by_hlink(atoms, orihl->parent, &t)) {
-                      hyperlink_unify((HyperLink *)t, newhl, ori_attr_atom,
+                      ((HyperLink *)t)->unify(newhl, ori_attr_atom,
                                       ori_attr);
                     }
                     proc_tbl_put_new_hlink(atoms, orihl, (LmnWord)newhl);
@@ -1096,14 +1096,14 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
 
   if (flg_search_hl) {
     if (!proc_tbl_get_by_hlink(
-            hlinkmap, lmn_hyperlink_get_root(hl),
+            hlinkmap, hl->get_root(),
             &t)) { //同じハイパーリンクが接続されたアトムがスタックに積まれてる場合がある
       int j, element_num;
       proc_tbl_put_new_hlink(
-          hlinkmap, lmn_hyperlink_get_root(hl),
+          hlinkmap, hl->get_root(),
           (LmnWord)(lmn_hyperlink_at_to_hl(copied_root_hlAtom)));
       Vector *hl_childs = new Vector(16);
-      lmn_hyperlink_get_elements(hl_childs, hl);
+      hl->get_elements(hl_childs);
       element_num = hl_childs->get_num() - 1;
       for (j = 0; j < element_num;
            j++) { //ハイパーリンクにつながるすべての接続先を探索
@@ -1148,12 +1148,11 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
       }
       delete hl_childs;
     } else { //既にハイパーリンクをコピーしていればunify
-      lmn_hyperlink_unify(lmn_hyperlink_at_to_hl(copied_root_hlAtom),
-                          (HyperLink *)t, LMN_HL_ATTRATOM((HyperLink *)t),
+      (lmn_hyperlink_at_to_hl(copied_root_hlAtom))->lmn_unify((HyperLink *)t, LMN_HL_ATTRATOM((HyperLink *)t),
                           LMN_HL_ATTRATOM_ATTR((HyperLink *)t));
     }
   } else {
-    lmn_hyperlink_unify(hl, lmn_hyperlink_at_to_hl(copied_root_hlAtom),
+    hl->lmn_unify(lmn_hyperlink_at_to_hl(copied_root_hlAtom),
                         LMN_HL_ATTRATOM(hl), LMN_HL_ATTRATOM_ATTR(hl));
   }
   lmn_mem_push_atom(mem, copied_root_hlAtom, LMN_HL_ATTR);
@@ -1553,7 +1552,7 @@ BOOL ground_atoms(
         if (l_pos == LMN_HL_ATTR) {
           hl = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)l_ap);
           if (hlinks != NULL &&
-              !proc_tbl_get_by_hlink(*hlinks, lmn_hyperlink_get_root(hl),
+              !proc_tbl_get_by_hlink(*hlinks, hl->get_root(),
                                      NULL)) {
             BOOL flg_search_hl = FALSE;
             BOOL continue_flag = FALSE;
@@ -1606,11 +1605,11 @@ BOOL ground_atoms(
             }
 
             if (flg_search_hl) {
-              proc_tbl_put_new_hlink(*hlinks, lmn_hyperlink_get_root(hl),
+              proc_tbl_put_new_hlink(*hlinks, hl->get_root(),
                                      (LmnWord)hl);
               hl_childs = new Vector(16);
 
-              lmn_hyperlink_get_elements(hl_childs, hl);
+              hl->get_elements(hl_childs);
               element_num = hl_childs->get_num() - 1;
               mem = hl->mem;
               for (i = 0; i < element_num; i++) {

@@ -446,11 +446,11 @@ private:
     /* 比較先属性がハイパーリンクアトムかチェック */
 
     auto hl_root =
-        lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+      (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
     auto bs_hl_num = binstr_get_ref_num(bs->v, *i_bs);
     (*i_bs) += BS_HLINK_NUM_SIZE;
 
-    if (lmn_hyperlink_element_num(hl_root) != bs_hl_num)
+    if (hl_root->element_num() != bs_hl_num)
       return false;
 
     if (tracelog_contains_hlink(log, hl_root))
@@ -566,7 +566,7 @@ private:
       return FALSE; /* 比較先属性がハイパーリンクアトムでなければ偽 */
 
     auto hl_root =
-        lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+      (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
     return ref == tracelog_get_hlinkMatched(log, hl_root);
   }
 };
@@ -997,10 +997,10 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
       return FALSE; /* 比較先属性がハイパーリンクアトムでなければ偽 */
 
     auto hl_root =
-        lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+      (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
 
     log->put_data();
-    return lmn_hyperlink_eq_hl((HyperLink *)ref_log[ref].v, hl_root);
+    return ((HyperLink *)ref_log[ref].v)->eq_hl(hl_root);
   }
 
   /* inside proxyアトムatomからのトレース (トレース中に親膜へ抜ける場合)
@@ -1034,11 +1034,11 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     /* 比較先属性がハイパーリンクアトムかチェック */
 
     auto hl_root =
-        lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+      (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
     auto bs_hl_num = binstr_get_ref_num(bs->v, *i_bs);
     (*i_bs) += BS_HLINK_NUM_SIZE;
 
-    if (lmn_hyperlink_element_num(hl_root) != bs_hl_num)
+    if (hl_root->element_num() != bs_hl_num)
       return false;
 
     if (!log->put_hlink(hl_root))

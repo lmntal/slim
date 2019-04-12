@@ -695,7 +695,7 @@ void lmn_hyperlink_get_elements(std::vector<HyperLink *> &tree,
                                 HyperLink *start_hl) {
   Vector vec;
   vec.init(1);
-  lmn_hyperlink_get_elements(&vec, start_hl);
+  start_hl->get_elements(&vec);
   for (int i = 0; i < vec.get_num(); i++)
     tree.push_back((HyperLink *)vec.get(i));
   vec.destroy();
@@ -710,7 +710,7 @@ void slim::vm::interpreter::findatom_clone_hyperlink(
    * (Vector*)LMN_SPC_TREE(spc)の最後に格納されているHyperLinkは
    * 探索の対象外なので要素数を-1する */
   HyperLink *h = spc->start();
-  lmn_hyperlink_get_elements(spc->tree, h);
+  lmn_hyperlink_get_elements(spc->tree,h);
   auto element_num = spc->tree.size() - 1;
   if (element_num <= 0)
     return;
@@ -851,7 +851,7 @@ std::vector<HyperLink *> lmn_hyperlink_get_elements(HyperLink *start_hl) {
   std::vector<HyperLink *> vec;
   Vector tree;
   tree.init(32);
-  lmn_hyperlink_get_elements(&tree, start_hl);
+  start_hl->get_elements(&tree);
   for (int i = 0; i < tree.get_num() - 1; i++)
     vec.push_back((HyperLink *)tree.get(i));
   tree.destroy();
@@ -1144,7 +1144,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                         lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(i)),
                         &t)) {
                   r->register_set_wt(
-                      (LmnWord)lmn_hyperlink_hl_to_at((HyperLink *)t));
+				     (LmnWord)((HyperLink *)t)->hl_to_at());
                 } else {
                   r->register_set_wt(
                       (LmnWord)rc->wt(i)); /* new_hlink命令等の場合 */
@@ -2696,8 +2696,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atomi);
 
     rc->reg(dstatomi) = {
-        (LmnWord)lmn_hyperlink_element_num(
-            lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(atomi))),
+        (LmnWord)(
+		  lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(atomi)))->element_num(),
         LMN_INT_ATTR, TT_OTHER};
     break;
   }
@@ -2729,13 +2729,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       if (atom->get_arity() ==
           2) { //二引数の場合は一つ目のハイパーリンクの属性を継承する
-        lmn_hyperlink_unify(hl1, hl2, LMN_HL_ATTRATOM(hl1),
+        hl1->lmn_unify(hl2, LMN_HL_ATTRATOM(hl1),
                             LMN_HL_ATTRATOM_ATTR(hl1));
       } else if (atom->get_arity() ==
                  3) { //三引数の場合は三引数目を併合後の属性とする
         LmnAtom attrAtom;
         attrAtom = LMN_ATOM(atom->get_link(2));
-        lmn_hyperlink_unify(hl1, hl2, (LmnAtomRef)attrAtom, atom->get_attr(2));
+        hl1->lmn_unify(hl2, (LmnAtomRef)attrAtom, atom->get_attr(2));
       } else {
         lmn_fatal("too many arguments to >< atom");
       }
@@ -3757,9 +3757,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         return FALSE;
       break;
     case LMN_HL_ATTR:
-      if (!lmn_hyperlink_eq_hl(
-              lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)),
-              lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
+      if (!(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)))->eq_hl(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
         return FALSE;
       break;
     default:
@@ -3787,9 +3785,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           return FALSE;
         break;
       case LMN_HL_ATTR:
-        if (lmn_hyperlink_eq_hl(
-                lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)),
-                lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
+        if ((lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)))->eq_hl(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
           return FALSE;
         break;
       default:

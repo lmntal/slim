@@ -787,9 +787,9 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
       fprintf(stdout,
               " link[HLobj, Addr:%p, HL_ID:%2lu, ROOT_HL_ID:%2lu, "
               "Owner!Addr:%p, Owner'!'ID:%2lu], ",
-              h, LMN_HL_ID(h), LMN_HL_ID(lmn_hyperlink_get_root(h)),
-              lmn_hyperlink_hl_to_at(h),
-              lmn_hyperlink_hl_to_at(h)->get_id());
+              h, LMN_HL_ID(h), LMN_HL_ID(h->get_root()),
+              h->hl_to_at(),
+              (h->hl_to_at())->get_id());
     } else if (!LMN_ATTR_IS_DATA(attr)) { /* symbol atom */
       fprintf(stdout, " link[%5d, Addr:%p,    ID:%2lu], ",
               LMN_ATTR_GET_VALUE(attr), atom->get_link(i),

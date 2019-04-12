@@ -195,22 +195,21 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
       LmnFunctor f = scanner.scan_functor();
       ;
       LmnSymbolAtomRef atom = lmn_new_atom(f);
-      lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom), atom, 0);
+      (lmn_hyperlink_at_to_hl(hl_atom))->put_attr(atom, 0);
     } break;
     case TAG_INT_DATA: {
       long n = scanner.scan_integer();
-      lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom), (LmnAtomRef)n,
-                             LMN_INT_ATTR);
+      (lmn_hyperlink_at_to_hl(hl_atom))->put_attr((LmnAtomRef)n, LMN_INT_ATTR);
     } break;
     case TAG_DBL_DATA: {
       LmnAtomRef n = (LmnAtomRef)lmn_create_double_atom(scanner.scan_double());
-      lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom), n, LMN_DBL_ATTR);
+      (lmn_hyperlink_at_to_hl(hl_atom))->put_attr(n, LMN_DBL_ATTR);
     } break;
     case TAG_SP_ATOM_DATA: {
       auto type = scanner.scan_sp_atom_type();
       auto bytes = scanner.scan_bytes();
       auto atom = sp_atom_decoder(type)(bytes);
-      lmn_hyperlink_put_attr(lmn_hyperlink_at_to_hl(hl_atom), atom, LMN_SP_ATOM_ATTR);
+      (lmn_hyperlink_at_to_hl(hl_atom))->put_attr(atom, LMN_SP_ATOM_ATTR);
     } break;
     default:
       printf("tag = %d\n", tag);

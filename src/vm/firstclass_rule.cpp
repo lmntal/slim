@@ -74,7 +74,7 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
     for (int i = 0; i < link_connections->get_num(); i++) {
       struct LinkConnection *c =
           (struct LinkConnection *)link_connections->get(i);
-      if (c->hl && lmn_hyperlink_eq_hl(p_hl, c->hl)) {
+      if (c->hl && p_hl->eq_hl(c->hl)) {
         return c->link_name;
       }
     }

@@ -438,8 +438,7 @@ mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr) {
       return 1;
     }
   case LMN_HL_ATTR:
-    return (mhash_t)lmn_hyperlink_hash(
-        lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+    return (mhash_t)(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->hash();
   default:
     LMN_ASSERT(FALSE);
     return 0;
