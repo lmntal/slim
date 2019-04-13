@@ -905,7 +905,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
   }
 #endif
 
-  RC_EXPANDED(rc)->num = succ_i;
+  RC_EXPANDED(rc)->set_num(succ_i);
   s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
   st_clear(RC_SUCC_TBL(rc));
 }

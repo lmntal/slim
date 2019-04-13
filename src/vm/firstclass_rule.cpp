@@ -392,7 +392,8 @@ void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
       mem_rulesets->set(j, (vec_data_t)next);
     }
 
-    mem_rulesets->num--;
+//    mem_rulesets->num--;
+    mem_rulesets->set_num(mem_rulesets->get_num()-1);
     break;
   }
 }

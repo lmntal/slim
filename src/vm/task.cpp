@@ -597,11 +597,11 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
    * 中間命令でセットを使うように書かれている */
 
   retset = new HashSet(8);
-  for (i = 0; i < links->num; i++) {
+  for (i = 0; i < links->get_num(); i++) {
     LmnWord linkid1 = links->get(i);
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid1)))
       continue;
-    for (j = i + 1; j < links->num; j++) {
+    for (j = i + 1; j < links->get_num(); j++) {
       LmnWord linkid2 = links->get(j);
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid2)))
         continue;
@@ -3636,7 +3636,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, destmemi);
     READ_VAL(LmnInstrVar, instr, srcmemi);
     v = lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(srcmemi));
-    for (i = 0; i < v->num; i++) {
+    for (i = 0; i < v->get_num(); i++) {
       auto cp = new LmnRuleSet(*(LmnRuleSetRef)v->get(i));
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);
     }
