@@ -47,9 +47,6 @@ static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
                                    AutomataStateRef s);
 static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s);
-//static inline unsigned int atmscc_id(AutomataSCC *s);
-//static inline BYTE atmscc_type(AutomataSCC *s);
-//static inline void atmscc_set_type(AutomataSCC *s, BYTE type);
 
 /*----------------------------------------------------------------------
  * automata
@@ -305,11 +302,6 @@ AutomataSCC::AutomataSCC() : id(0), type(SCC_TYPE_UNKNOWN) {}
 AutomataSCC::~AutomataSCC() {}
 
 
-//static inline BYTE atmscc_type(AutomataSCC *s) { return s->type; }
-
-//static inline void atmscc_set_type(AutomataSCC *s, BYTE type) {
-//  s->type = type;
-//}
 
 /* dfs postorder順を求め, postorder順に2nd DFSを行う.
  * 性質頂点に, SCC-TYPEを割り当てる.
