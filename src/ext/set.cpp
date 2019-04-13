@@ -649,13 +649,13 @@ void init_set(void) {
       lmn_sp_atom_register("set", sp_cb_set_copy, sp_cb_set_free, sp_cb_set_eq,
                            sp_cb_set_dump, sp_cb_set_is_ground);
 
-  lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
-  lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
-  lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
-  lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 2);
-  lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
-  lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
-  lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
-  lmn_register_c_fun("cb_set_intersect", (void *)cb_set_intersect, 3);
-  lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 3);
+  CCallback::lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
+  CCallback::lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
+  CCallback::lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
+  CCallback::lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 2);
+  CCallback::lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
+  CCallback::lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
+  CCallback::lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
+  CCallback::lmn_register_c_fun("cb_set_intersect", (void *)cb_set_intersect, 3);
+  CCallback::lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 3);
 }

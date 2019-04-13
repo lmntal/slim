@@ -732,22 +732,22 @@ void port_init() {
   lmn_stdout = lmn_make_file_port(stdout, "stdout", LMN_PORT_OUTPUT, TRUE);
   lmn_stderr = lmn_make_file_port(stderr, "stderr", LMN_PORT_OUTPUT, TRUE);
 
-  lmn_register_c_fun("cb_port_stdin", (void *)cb_stdin_port, 1);
-  lmn_register_c_fun("cb_port_stdout", (void *)cb_stdout_port, 1);
-  lmn_register_c_fun("cb_port_stderr", (void *)cb_stderr_port, 1);
-  lmn_register_c_fun("cb_port_getc", (void *)cb_port_getc, 3);
-  lmn_register_c_fun("cb_port_get_byte", (void *)cb_port_get_byte, 3);
-  lmn_register_c_fun("cb_port_unget_byte", (void *)cb_port_unget_byte, 3);
-  lmn_register_c_fun("cb_port_putc", (void *)cb_port_putc, 3);
-  lmn_register_c_fun("cb_port_put_byte", (void *)cb_port_put_byte, 3);
-  lmn_register_c_fun("cb_port_puts", (void *)cb_port_puts, 3);
-  lmn_register_c_fun("cb_port_read_line", (void *)cb_port_read_line, 3);
-  lmn_register_c_fun("cb_port_read_token", (void *)cb_port_read_token, 3);
-  lmn_register_c_fun("cb_make_output_string", (void *)cb_make_output_string, 1);
-  lmn_register_c_fun("cb_make_input_string", (void *)cb_make_input_string, 2);
-  lmn_register_c_fun("cb_port_output_string", (void *)cb_port_output_string, 3);
-  lmn_register_c_fun("cb_port_close", (void *)cb_port_close, 2);
-  lmn_register_c_fun("cb_port_free", (void *)cb_port_free, 1);
+  CCallback::lmn_register_c_fun("cb_port_stdin", (void *)cb_stdin_port, 1);
+  CCallback::lmn_register_c_fun("cb_port_stdout", (void *)cb_stdout_port, 1);
+  CCallback::lmn_register_c_fun("cb_port_stderr", (void *)cb_stderr_port, 1);
+  CCallback::lmn_register_c_fun("cb_port_getc", (void *)cb_port_getc, 3);
+  CCallback::lmn_register_c_fun("cb_port_get_byte", (void *)cb_port_get_byte, 3);
+  CCallback::lmn_register_c_fun("cb_port_unget_byte", (void *)cb_port_unget_byte, 3);
+  CCallback::lmn_register_c_fun("cb_port_putc", (void *)cb_port_putc, 3);
+  CCallback::lmn_register_c_fun("cb_port_put_byte", (void *)cb_port_put_byte, 3);
+  CCallback::lmn_register_c_fun("cb_port_puts", (void *)cb_port_puts, 3);
+  CCallback::lmn_register_c_fun("cb_port_read_line", (void *)cb_port_read_line, 3);
+  CCallback::lmn_register_c_fun("cb_port_read_token", (void *)cb_port_read_token, 3);
+  CCallback::lmn_register_c_fun("cb_make_output_string", (void *)cb_make_output_string, 1);
+  CCallback::lmn_register_c_fun("cb_make_input_string", (void *)cb_make_input_string, 2);
+  CCallback::lmn_register_c_fun("cb_port_output_string", (void *)cb_port_output_string, 3);
+  CCallback::lmn_register_c_fun("cb_port_close", (void *)cb_port_close, 2);
+  CCallback::lmn_register_c_fun("cb_port_free", (void *)cb_port_free, 1);
 }
 
 void port_finalize() {

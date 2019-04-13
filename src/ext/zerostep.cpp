@@ -70,5 +70,5 @@ void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem) {
 }
 
 void init_zerostep(void) {
-  lmn_register_c_fun("zerostep", (void *)cb_zerostep, 0);
+  CCallback::lmn_register_c_fun("zerostep", (void *)cb_zerostep, 0);
 }
