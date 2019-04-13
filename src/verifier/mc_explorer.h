@@ -61,11 +61,11 @@
 
 #define MCNDFS_COND(W, SYST_S, PROP_S) (PROP_S->get_is_accept())
 
-#define OWCTY_COND(W) (worker_use_owcty(W) && !w->group->mc_exit)
+#define OWCTY_COND(W) (worker_use_owcty(W) && !w->group->workers_are_exit())
 
-#define MAP_COND(W) (worker_use_map(W) && !w->group->mc_exit)
+#define MAP_COND(W) (worker_use_map(W) && !w->group->workers_are_exit())
 
-#define BLEDGE_COND(W) (worker_use_ble(W) && !w->group->mc_exit)
+#define BLEDGE_COND(W) (worker_use_ble(W) && !w->group->workers_are_exit())
 
 #define MC_MAP_MASK (0x01U)
 #define MC_MAP2_MASK (0x01U << 1)
