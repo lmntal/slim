@@ -65,7 +65,7 @@ BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) {
 
 LmnWord tracelog_get_matched(TraceLogRef l, LmnWord key) {
   TraceData d;
-  l->get(key, &d);
+  l->table.get(key, &d);
   return d.matched;
 }
 
@@ -83,6 +83,6 @@ LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) {
 
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key) {
   TraceData d;
-  l->get(key, &d);
+  l->table.get(key, &d);
   return d.flag;
 }
