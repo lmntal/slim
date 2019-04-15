@@ -104,8 +104,9 @@ class McPorData {
 	void dump__ample_candidate();
 	int dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a);
 
-public:
 	McPorData();
+public:
+	static McPorData mc_por;
 	void init_por_vars();//public
 	void free_por_vars();//public
 	void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL flag);//public
@@ -116,7 +117,7 @@ public:
 	static int build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_data_t current_state);//public
 
 };
-extern McPorData mc_por;
+//extern McPorData mc_por;
 
 //void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 //                       Vector *new_s, BOOL flag);

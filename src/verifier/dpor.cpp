@@ -393,7 +393,7 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
 
 void dpor_env_init(void) {
   if (lmn_env.enable_por_old) {
-    mc_por.init_por_vars();//called only once  --by sumiya 2019/03/29
+    McPorData::mc_por.init_por_vars();//called only once  --by sumiya 2019/03/29
   } else {
     unsigned int i, n;
     n = lmn_env.core_num;
@@ -406,7 +406,7 @@ void dpor_env_init(void) {
 
 void dpor_env_destroy(void) {
   if (lmn_env.enable_por_old) {
-    mc_por.free_por_vars();//called only once  --by sumiya 2019/03/29
+    McPorData::mc_por.free_por_vars();//called only once  --by sumiya 2019/03/29
   } else {
     unsigned int i, n;
     n = lmn_env.core_num;
@@ -917,7 +917,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
   McDporData *d = RC_POR_DATA(rc);
 
   if (RC_MC_USE_DPOR_NAIVE(rc)) {
-    mc_por.por_calc_ampleset(ss, s, rc, new_s, flag);
+    McPorData::mc_por.por_calc_ampleset(ss, s, rc, new_s, flag);
     return;
   } else if (mc_react_cxt_succ_num_org(rc) <= 1 || !RC_MC_USE_DMEM(rc)) {
     mc_store_successors(ss, s, rc, new_s, flag);
