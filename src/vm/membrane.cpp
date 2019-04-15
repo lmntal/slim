@@ -1036,10 +1036,18 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
 struct LinkObj {
   LmnAtomRef ap;
   LmnLinkAttr pos;
+  LinkObj(LmnAtomRef ap,LmnLinkAttr pos);
+  LmnAtomRef GetAtom();
+  LmnLinkAttr GetPos();
 };
-
+LmnAtomRef LinkObj::GetAtom() { return this->ap; }
 LmnAtomRef LinkObjGetAtom(LinkObjRef o) { return o->ap; }
+LmnLinkAttr LinkObj::GetPos() { return this->pos; }
 LmnLinkAttr LinkObjGetPos(LinkObjRef o) { return o->pos; }
+LinkObj::LinkObj(LmnAtomRef ap, LmnLinkAttr pos) {
+  this->ap = ap;
+  this->pos = pos;
+}
 LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos) {
   LinkObjRef ret = LMN_MALLOC(struct LinkObj);
   ret->ap = ap;
@@ -1223,7 +1231,7 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, Vector **ret_dstlovec,
         ((LmnSymbolAtomRef)cpatom)->set_link(l->pos, 0);
       }
     }
-    (*ret_dstlovec)->push((vec_data_t)LinkObj_make(cpatom, l->pos));
+    (*ret_dstlovec)->push((vec_data_t)new LinkObj(cpatom, l->pos));
   }
 
   while (!stack->is_empty()) {
@@ -1317,9 +1325,9 @@ BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec) {
   stack2.init(16);
 
   /* startはstackにつまれるので処理中に壊されるためコピー */
-  start1 = LinkObj_make(((LinkObjRef)srcvec->get(0))->ap,
+  start1 = new LinkObj(((LinkObjRef)srcvec->get(0))->ap,
                         ((LinkObjRef)srcvec->get(0))->pos);
-  start2 = LinkObj_make(((LinkObjRef)dstvec->get(0))->ap,
+  start2 = new LinkObj(((LinkObjRef)dstvec->get(0))->ap,
                         ((LinkObjRef)dstvec->get(0))->pos);
 
   if (!LMN_ATTR_IS_DATA(start1->pos) && !LMN_ATTR_IS_DATA(start2->pos)) {
@@ -1410,10 +1418,10 @@ BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec) {
         continue;
       if (!LMN_ATTR_IS_DATA(((LmnSymbolAtomRef)l1->ap)->get_attr(i)) &&
           !LMN_ATTR_IS_DATA(((LmnSymbolAtomRef)l1->ap)->get_attr(i))) {
-        n1 = LinkObj_make(((LmnSymbolAtomRef)l1->ap)->get_link(i),
+        n1 = new LinkObj(((LmnSymbolAtomRef)l1->ap)->get_link(i),
                           LMN_ATTR_GET_VALUE(
                               ((LmnSymbolAtomRef)l1->ap)->get_attr(i)));
-        n2 = LinkObj_make(((LmnSymbolAtomRef)l2->ap)->get_link(i),
+        n2 = new LinkObj(((LmnSymbolAtomRef)l2->ap)->get_link(i),
                           LMN_ATTR_GET_VALUE(
                               ((LmnSymbolAtomRef)l2->ap)->get_attr(i)));
         stack1.push((LmnWord)n1);
@@ -1531,7 +1539,7 @@ BOOL ground_atoms(
   /* groundはつながったグラフなので1つの根からだけたどればよい */
   {
     LinkObjRef l = (LinkObjRef)srcvec->get(0);
-    unsearched_link_stack->push((LmnWord)LinkObj_make(l->ap, l->pos));
+    unsearched_link_stack->push((LmnWord)new LinkObj(l->ap, l->pos));
   }
 
   while (!unsearched_link_stack->is_empty()) {
@@ -1625,7 +1633,7 @@ BOOL ground_atoms(
                 LmnAtomRef linked_hlAtom = hlAtom->get_link(0);
                 LmnLinkAttr linked_attr = hlAtom->get_attr(0);
                 unsearched_link_stack->push(
-                         (LmnWord)LinkObj_make(hlAtom->get_link(0),
+                         (LmnWord)new LinkObj(hlAtom->get_link(0),
                                                hlAtom->get_attr(0)));
                 if (!LMN_ATTR_IS_DATA(linked_attr)) {
                   int j;
@@ -1713,7 +1721,7 @@ BOOL ground_atoms(
         if (i == l_pos)
           continue;
         unsearched_link_stack->push(
-                 (LmnWord)LinkObj_make(
+                 (LmnWord)new LinkObj(
                      ((LmnSymbolAtomRef)l_ap)->get_link(i),
                      ((LmnSymbolAtomRef)l_ap)->get_attr(i)));
       }
