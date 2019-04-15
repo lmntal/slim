@@ -78,5 +78,5 @@ void float_of_string(LmnReactCxtRef rc,
 
 void init_float(void)
 {
-  lmn_register_c_fun("float_of_string", (void *)float_of_string, 2);
+  CCallback::lmn_register_c_fun("float_of_string", (void *)float_of_string, 2);
 }

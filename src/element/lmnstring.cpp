@@ -216,12 +216,12 @@ void string_init() {
       sp_cb_string_dump, sp_cb_string_is_ground, sp_cb_string_encode,
       sp_cb_string_decode);
 
-  lmn_register_c_fun("string_make", (void *)cb_string_make, 2);
-  lmn_register_c_fun("string_concat", (void *)cb_string_concat, 3);
-  lmn_register_c_fun("string_length", (void *)cb_string_length, 2);
-  lmn_register_c_fun("string_reverse", (void *)cb_string_reverse, 2);
-  lmn_register_c_fun("string_substr", (void *)cb_string_substr, 4);
-  lmn_register_c_fun("string_substr_right", (void *)cb_string_substr_right, 3);
+  CCallback::lmn_register_c_fun("string_make", (void *)cb_string_make, 2);
+  CCallback::lmn_register_c_fun("string_concat", (void *)cb_string_concat, 3);
+  CCallback::lmn_register_c_fun("string_length", (void *)cb_string_length, 2);
+  CCallback::lmn_register_c_fun("string_reverse", (void *)cb_string_reverse, 2);
+  CCallback::lmn_register_c_fun("string_substr", (void *)cb_string_substr, 4);
+  CCallback::lmn_register_c_fun("string_substr_right", (void *)cb_string_substr_right, 3);
 }
 
 void string_finalize() {}

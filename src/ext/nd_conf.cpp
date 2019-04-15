@@ -68,6 +68,6 @@ void cb_set_functor_priority(LmnReactCxtRef rc,
 
 void init_nd_conf(void)
 {
-  lmn_register_c_fun("set_functor_priority", (void *)cb_set_functor_priority, 3);
+  CCallback::lmn_register_c_fun("set_functor_priority", (void *)cb_set_functor_priority, 3);
 }
 

@@ -597,11 +597,11 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
    * 中間命令でセットを使うように書かれている */
 
   retset = new HashSet(8);
-  for (i = 0; i < links->num; i++) {
+  for (i = 0; i < links->get_num(); i++) {
     LmnWord linkid1 = links->get(i);
     if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid1)))
       continue;
-    for (j = i + 1; j < links->num; j++) {
+    for (j = i + 1; j < links->get_num(); j++) {
       LmnWord linkid2 = links->get(j);
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(linkid2)))
         continue;
@@ -3634,7 +3634,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, destmemi);
     READ_VAL(LmnInstrVar, instr, srcmemi);
     v = ((LmnMembraneRef)rc->wt(srcmemi))->get_rulesets();
-    for (i = 0; i < v->num; i++) {
+    for (i = 0; i < v->get_num(); i++) {
       auto cp = new LmnRuleSet(*(LmnRuleSetRef)v->get(i));
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);
     }
@@ -4009,11 +4009,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_interned_str name = LMN_FUNCTOR_NAME_ID(f_name->get_functor());
       int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
 
-      c = get_ccallback(name);
+      c = CCallback::get_ccallback(name);
       if (!c)
         break;
 
-      if (arity - 1 != c->arity) {
+      if (arity - 1 != c->get_arity()) {
         fprintf(stderr, "EXTERNAL FUNC: invalid arity - %s\n",
                 LMN_SYMBOL_STR(name));
         break;
@@ -4029,32 +4029,32 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       switch (arity) {
       case 1:
-        ((callback_0)c->f)(rc, (LmnMembraneRef)rc->wt(memi));
+        ((callback_0)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi));
         break;
       case 2:
-        ((callback_1)c->f)(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+        ((callback_1)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
                            atom->get_attr(1));
         break;
       case 3:
-        ((callback_2)c->f)(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+        ((callback_2)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
                            atom->get_attr(1), atom->get_link(2),
                            atom->get_attr(2));
         break;
       case 4:
-        ((callback_3)c->f)(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+        ((callback_3)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
                            atom->get_attr(1), atom->get_link(2),
                            atom->get_attr(2), atom->get_link(3),
                            atom->get_attr(3));
         break;
       case 5:
-        ((callback_4)c->f)(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+        ((callback_4)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
                            atom->get_attr(1), atom->get_link(2),
                            atom->get_attr(2), atom->get_link(3),
                            atom->get_attr(3), atom->get_link(4),
                            atom->get_attr(4));
         break;
       case 6:
-        ((callback_5)c->f)(
+        ((callback_5)c->get_f())(
             rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
             atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
             atom->get_link(3), atom->get_attr(3), atom->get_link(4),
@@ -4894,11 +4894,11 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         lmn_interned_str name = LMN_FUNCTOR_NAME_ID(f_name->get_functor());
         int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
 
-        c = get_ccallback(name);
+        c = CCallback::get_ccallback(name);
         if (!c)
           break;
 
-        if (arity - 1 != c->arity) {
+        if (arity - 1 != c->get_arity()) {
           fprintf(stderr, "EXTERNAL FUNC: invalid arity - %s\n",
                   LMN_SYMBOL_STR(name));
           break;
@@ -4911,25 +4911,25 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
         switch (arity) {
         case 1:
-          ((callback_0)c->f)(rc, (LmnMembraneRef)rc->wt(memi));
+          ((callback_0)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi));
           break;
         case 2:
-          ((callback_1)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+          ((callback_1)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
                              atom->get_link(1), atom->get_attr(1));
           break;
         case 3:
-          ((callback_2)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+          ((callback_2)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
                              atom->get_link(1), atom->get_attr(1),
                              atom->get_link(2), atom->get_attr(2));
           break;
         case 4:
-          ((callback_3)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+          ((callback_3)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
                              atom->get_link(1), atom->get_attr(1),
                              atom->get_link(2), atom->get_attr(2),
                              atom->get_link(3), atom->get_attr(3));
           break;
         case 5:
-          ((callback_4)c->f)(rc, (LmnMembraneRef)rc->wt(memi),
+          ((callback_4)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
                              atom->get_link(1), atom->get_attr(1),
                              atom->get_link(2), atom->get_attr(2),
                              atom->get_link(3), atom->get_attr(3),

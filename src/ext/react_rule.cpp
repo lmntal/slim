@@ -153,6 +153,6 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
 
 void init_react_rule(void)
 {
-  lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
-  lmn_register_c_fun("cb_react_ruleset_nd", (void *)cb_react_ruleset_nd, 4);
+  CCallback::lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
+  CCallback::lmn_register_c_fun("cb_react_ruleset_nd", (void *)cb_react_ruleset_nd, 4);
 }
