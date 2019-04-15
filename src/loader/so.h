@@ -176,7 +176,7 @@
     unsigned int i;                                                            \
     struct Vector *v;                                                          \
     v = ((LmnMembraneRef)rc->wt(srcmemi))->get_rulesets(); \
-    for (i = 0; i < v->num; i++) {                                             \
+    for (i = 0; i < v->get_num(); i++) {				\
       LmnRuleSetRef cp = new LmnRuleSet(*((LmnRuleSetRef)v->get(i)));      \
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);               \
     }                                                                          \
