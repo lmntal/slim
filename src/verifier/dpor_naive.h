@@ -83,7 +83,7 @@ class McPorData {
 	bool is_inserted(State *s);
 	void set_outside_exist(State *s);
 	void unset_outside_exist(State *s);
-	bool is_outside_exist(State *s);
+	static bool is_outside_exist(State *s);
 
 	void finalize_ample(BOOL arg_f);
 	State *por_state_insert(State *succ, struct MemDeltaRoot *d);
@@ -109,14 +109,14 @@ public:
 	void init_por_vars();//public
 	void free_por_vars();//public
 	void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s, BOOL flag);//public
-	int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);//public
-	int destroy_tmp_state_graph(State *s, LmnWord _a);//public
+	static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);//public
+	static int destroy_tmp_state_graph(State *s, LmnWord _a);//public
 	void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a, Vector *psyms);//called by only independency check
 	void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);//called by only independency check
 	int build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_data_t current_state);//public
 
 };
-static McPorData mc_por;
+extern McPorData mc_por;
 
 //void por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 //                       Vector *new_s, BOOL flag);

@@ -100,6 +100,8 @@ void McPorData::set_outside_exist(State *s) { s->flags3 |= POR_OUTSIDE_MASK; }
 void McPorData::unset_outside_exist(State *s) { s->flags3 &= ~POR_OUTSIDE_MASK; }
 bool McPorData::is_outside_exist(State *s) { return s->flags3 & POR_OUTSIDE_MASK; }
 
+McPorData mc_por;
+
 McPorData::McPorData(){// aete nanimo nashi
 }
 
