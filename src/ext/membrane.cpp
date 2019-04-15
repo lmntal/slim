@@ -109,7 +109,7 @@ void cb_mem_equals(LmnReactCxtRef rc,
 
 void init_membrane(void)
 {
-  lmn_register_c_fun("cb_mhash", (void *)cb_mhash, 3);
-  lmn_register_c_fun("cb_mem_equals", (void *)cb_mem_equals, 5);
+  CCallback::lmn_register_c_fun("cb_mhash", (void *)cb_mhash, 3);
+  CCallback::lmn_register_c_fun("cb_mem_equals", (void *)cb_mem_equals, 5);
 }
 

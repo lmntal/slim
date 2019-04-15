@@ -102,8 +102,8 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_init();
   }
-  wp = lmn_workergroup_make(a, psyms, thread_num);
-  states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
+  wp = new LmnWorkerGroup(a, psyms, thread_num);
+  states = worker_states(wp->get_worker(LMN_PRIMARY_ID));
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
   mem = world_mem_org->copy();
   init_s = new State(mem, p_label, states->use_memenc());
@@ -118,7 +118,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 
   /** START
    */
-  launch_lmn_workers(wp);
+  wp->launch_lmn_workers();
 
 #ifdef DEBUG
   if (lmn_env.show_reduced_graph && lmn_env.enable_por &&
@@ -133,7 +133,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
    */
   profile_statespace(wp);
   mc_dump(wp);
-  lmn_workergroup_free(wp);
+  delete wp;
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_clean();
   }
@@ -141,7 +141,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 
 /* 後始末と出力周りを担当 */
 static void mc_dump(LmnWorkerGroup *wp) {
-  StateSpaceRef ss = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
+  StateSpaceRef ss = worker_states(wp->get_worker(LMN_PRIMARY_ID));
   if (lmn_env.dump) {
     ss->format_states();
 
@@ -152,7 +152,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
 
     /* 2. 反例パス or 最終状態集合の出力 */
     auto out = ss->output();
-    if (wp->do_search) {
+    if (wp->workers_are_do_search()) {
       mc_dump_all_errors(wp, out);
     } else if (lmn_env.end_dump && lmn_env.mc_dump_format == CUI) {
       /* とりあえず最終状態集合の出力はCUI限定。(LaViTに受付フォーマットがない)
@@ -166,17 +166,17 @@ static void mc_dump(LmnWorkerGroup *wp) {
               ss->num());
       fprintf(out, "\'# of States\'(end)      = %lu.\n",
               ss->num_of_ends());
-      if (wp->do_search) {
+      if (wp->workers_are_do_search()) {
         fprintf(out, "\'# of States\'(invalid)  = %lu.\n",
                 mc_invalids_get_num(wp));
       }
 #ifdef KWBT_OPT
       if (lmn_env.opt_mode != OPT_NONE) {
-        if (!workers_opt_end_state(wp)) {
+        if (!wp->workers_get_opt_end_state()) {
           fprintf(out, "\'# can't solve the problem\'.\n");
         } else {
           fprintf(out, "\'# optimized cost\'      = %lu.\n",
-                  workers_opt_cost(wp));
+                  wp->opt_cost());
         }
       }
 #endif
@@ -185,7 +185,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
 
   if (ss->has_property())
     lmn_prof.has_property = TRUE;
-  if (workers_have_error(wp))
+  if (wp->workers_have_error())
     lmn_prof.found_err = TRUE;
 }
 
@@ -379,13 +379,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
   st_clear(RC_SUCC_TBL(rc));
 
-  RC_EXPANDED(rc)->num = succ_i; /* 危険なコード. いつか直すかも. */
-  RC_EXPANDED_RULES(rc)->num = succ_i;
+  RC_EXPANDED(rc)->set_num(succ_i); /* 危険なコード. いつか直すかも. */
+  RC_EXPANDED_RULES(rc)->set_num(succ_i);
   /*  上記につられて以下のコードを記述すると実行時エラーになる. (r436でdebug)
    *  RC_MEM_DELTASはmc_store_successors終了後に, struct
    * MemDeltaRootの開放処理を行うため要素数に手を加えてはならない. */
   //  if (RC_MC_USE_DMEM(rc)) {
-  //    RC_MEM_DELTAS(rc)->num = succ_i;
+  //    RC_MEM_DELTAS(rc)->set_num(succ_i);
   //  }
 
   state_D_progress(s, rc);
@@ -635,29 +635,29 @@ static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
 /* エラーを示す頂点を登録する.
  * MT-Unsafe, but ok */
 void mc_found_invalid_state(LmnWorkerGroup *wp, State *s) {
-  workers_found_error(wp);
+  wp->workers_found_error();
   if (s) {
-    LmnWorker *w = workers_get_my_worker(wp);
+    LmnWorker *w = wp->workers_get_my_worker();
     worker_invalid_seeds(w)->push((vec_data_t)s);
   }
 
-  if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+  if (!wp->workers_are_do_exhaustive()) {
+    wp->workers_set_exit();
   }
 }
 
 /* エラーを示すサイクルパスを載せたVectorを登録する.
  * MT-Unsafe, but ok  */
 void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v) {
-  workers_found_error(wp);
+  wp->workers_found_error();
 
   if (v) {
-    LmnWorker *w = workers_get_my_worker(wp);
+    LmnWorker *w = wp->workers_get_my_worker();
     worker_cycles(w)->push((vec_data_t)v);
   }
 
-  if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+  if (!wp->workers_are_do_exhaustive()) {
+    wp->workers_set_exit();
   }
 }
 
@@ -666,8 +666,8 @@ unsigned long mc_invalids_get_num(LmnWorkerGroup *wp) {
   unsigned int i;
 
   ret = 0;
-  for (i = 0; i < wp->worker_num; i++) {
-    ret += worker_invalid_seeds(workers_get_worker(wp, i))->get_num();
+  for (i = 0; i < wp->workers_get_entried_num(); i++) {
+    ret += worker_invalid_seeds(wp->get_worker(i))->get_num();
   }
 
   return ret;
@@ -812,7 +812,7 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
  * その他の場合は, その頂点を起点にしたサイクルパスにon_cycle_flagが立っている
  */
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
-  if (!wp->error_exist) {
+  if (!wp->workers_have_error()) {
     fprintf(f, "%s\n",
             lmn_env.mc_dump_format == CUI
                 ? "No Accepting Cycle (or Invalid State) exists."
@@ -833,12 +833,12 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
       invalids_graph = cui_dump ? NULL : st_init_ptrtable();
 
       /* state property */
-      for (i = 0; i < workers_entried_num(wp); i++) {
+      for (i = 0; i < wp->workers_get_entried_num(); i++) {
         LmnWorker *w;
         Vector *v;
         StateSpaceRef ss;
 
-        w = workers_get_worker(wp, i);
+        w = wp->get_worker(i);
         v = worker_invalid_seeds(w);
         ss = worker_states(w);
 
@@ -857,12 +857,12 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
       }
 
       /* path property */
-      for (i = 0; i < workers_entried_num(wp); i++) {
+      for (i = 0; i < wp->workers_get_entried_num(); i++) {
         LmnWorker *w;
         Vector *v;
         StateSpaceRef ss;
 
-        w = workers_get_worker(wp, i);
+        w = wp->get_worker(i);
         v = worker_cycles(w);
         ss = worker_states(w);
 
@@ -897,7 +897,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
 
       if (!cui_dump) {
         StateSpaceRef represent =
-            worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
+            worker_states(wp->get_worker(LMN_PRIMARY_ID));
         st_foreach(invalids_graph, (st_iter_func)mc_dump_invalids_f,
                    (st_data_t)represent);
         st_foreach(invalids_graph, (st_iter_func)mc_free_succ_vec_f,
