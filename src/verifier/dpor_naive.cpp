@@ -101,7 +101,7 @@ void McPorData::unset_outside_exist(State *s) { s->flags3 &= ~POR_OUTSIDE_MASK; 
 bool McPorData::is_outside_exist(State *s) { return s->flags3 & POR_OUTSIDE_MASK; }
 
 McPorData mc_por;
-
+Vector *McPorData::ample_candidate;
 McPorData::McPorData(){// aete nanimo nashi
 }
 

@@ -61,7 +61,7 @@ class McPorData {
 	st_table_t
 	    states; /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
 	Queue *queue; /* C1のチェックにあたってstate graphを展開する際に使用 */
-	Vector *
+	static Vector *
 	    ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
                         */
 	std::unique_ptr<MCReactContext> rc;
@@ -72,17 +72,17 @@ class McPorData {
 	void unset_independency_checked(State *s);
 	bool is_independency_checked(State *s);
 
-	void set_ample(State *s);
-	void unset_ample(State *s);
-	bool is_ample(State *s);
-	void set_por_expanded(State *s);
-	void unset_por_expanded(State *s);
-	bool is_por_expanded(State *s);
-	void set_inserted(State *s);
-	void unset_inserted(State *s);
-	bool is_inserted(State *s);
-	void set_outside_exist(State *s);
-	void unset_outside_exist(State *s);
+	static void set_ample(State *s);
+	static void unset_ample(State *s);
+	static bool is_ample(State *s);
+	static void set_por_expanded(State *s);
+	static void unset_por_expanded(State *s);
+	static bool is_por_expanded(State *s);
+	static void set_inserted(State *s);
+	static void unset_inserted(State *s);
+	static bool is_inserted(State *s);
+	static void set_outside_exist(State *s);
+	static void unset_outside_exist(State *s);
 	static bool is_outside_exist(State *s);
 
 	void finalize_ample(BOOL arg_f);
@@ -113,7 +113,7 @@ public:
 	static int destroy_tmp_state_graph(State *s, LmnWord _a);//public
 	void por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a, Vector *psyms);//called by only independency check
 	void por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store);//called by only independency check
-	int build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_data_t current_state);//public
+	static int build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_data_t current_state);//public
 
 };
 extern McPorData mc_por;
