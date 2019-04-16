@@ -50,29 +50,25 @@ typedef struct ProcessTbl *ProcessTableRef;
 struct ProcessTbl : ProcessTable<LmnWord> {
   ProcessTbl(unsigned long size) : ProcessTable<LmnWord>(size){};
   ProcessTbl() : ProcessTable<LmnWord>(){};
+  void tbl_clear();
+  int tbl_foreach(int (*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg);
+  BOOL tbl_eq(ProcessTableRef b);
+  void proc_tbl_put(LmnWord key, LmnWord value);
+  void proc_tbl_put_atom(LmnSymbolAtomRef atom, LmnWord value);
+  void proc_tbl_put_mem(LmnMembraneRef mem, LmnWord value);
+  void put_new_hlink(struct HyperLink *hl, LmnWord value);
+  int put_new(LmnWord key, LmnWord value);
+  int put_new_atom(LmnSymbolAtomRef atom, LmnWord value);
+  int put_new_mem(LmnMembraneRef mem, LmnWord value);
+  void proc_tbl_unput(LmnWord key);
+  void unput_atom(LmnSymbolAtomRef atom);
 };
 
 /**
  * Function ProtoTypes
  */
 
-void proc_tbl_clear(ProcessTableRef p);
-int proc_tbl_foreach(ProcessTableRef p,
-                     int (*func)(LmnWord key, LmnWord val, LmnWord arg),
-                     LmnWord arg);
-BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b);
 
-void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value);
-void proc_tbl_put_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord value);
-void proc_tbl_put_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
-int proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value);
-int proc_tbl_put_new_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
-                          LmnWord value);
-int proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value);
-void proc_tbl_put_new_hlink(ProcessTableRef p, struct HyperLink *hl,
-                            LmnWord value);
-void proc_tbl_unput(ProcessTableRef p, LmnWord key);
-void proc_tbl_unput_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem);
 int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value);
 int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom,

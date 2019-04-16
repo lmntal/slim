@@ -119,8 +119,8 @@ static int contextC1_free_f(st_data_t _k, st_data_t _v, st_data_t _arg) {
 }
 
 static BOOL contextC1s_eq(ContextC1Ref a, ContextC1Ref b) {
-  return proc_tbl_eq(a->LHS_procs, b->LHS_procs) &&
-         proc_tbl_eq(a->RHS_procs, b->RHS_procs);
+  return (a->LHS_procs)->tbl_eq(b->LHS_procs) &&
+    (a->RHS_procs)->tbl_eq(b->RHS_procs);
 }
 
 /* 既出の遷移か否かを判定する.
@@ -164,7 +164,7 @@ static int contextC1_expand_gatoms_LHS_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   //  key = ((LmnSAtom)_v)->get_id();
 
   if (!proc_tbl_get(c->LHS_procs, _k, NULL)) {
-    proc_tbl_put(c->LHS_procs, _k, LHS_DEFAULT);
+    (c->LHS_procs)->proc_tbl_put(_k, LHS_DEFAULT);
   }
 
   return 1;
@@ -199,12 +199,12 @@ static void contextC1_expand_LHS(McDporData *d, ContextC1Ref c,
       flag = LHS_DEFAULT;
     }
 
-    proc_tbl_put(c->LHS_procs, key, (LmnWord)flag);
+    (c->LHS_procs)->proc_tbl_put(key, (LmnWord)flag);
   }
 
   for (i = 0; i < d->wt_gatoms->get_num(); i++) {
     ProcessTableRef g_atoms = (ProcessTableRef)d->wt_gatoms->get(i);
-    proc_tbl_foreach(g_atoms, contextC1_expand_gatoms_LHS_f, (LmnWord)c);
+    g_atoms->tbl_foreach(contextC1_expand_gatoms_LHS_f, (LmnWord)c);
   }
 }
 
@@ -220,7 +220,7 @@ static inline void contextC1_RHS_tbl_put(ProcessTableRef p, LmnWord key,
   }
 
   RHS_OP_SET(op, set);
-  proc_tbl_put(p, key, (LmnWord)op);
+  p->proc_tbl_put(key, (LmnWord)op);
 }
 
 static inline void contextC1_RHS_tbl_unput(ProcessTableRef p, LmnWord key,
@@ -231,7 +231,7 @@ static inline void contextC1_RHS_tbl_unput(ProcessTableRef p, LmnWord key,
   if (proc_tbl_get(p, key, &t)) {
     BYTE op = (BYTE)t;
     RHS_OP_UNSET(op, unset);
-    proc_tbl_put(p, key, op);
+    p->proc_tbl_put(key, op);
   }
 }
 
@@ -375,7 +375,7 @@ static void dpor_data_free(McDporData *d) {
 
 static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
   d->wt_gatoms->clear();
-  proc_tbl_clear(d->wt_flags);
+  (d->wt_flags)->tbl_clear();
   d->ample_cand->clear();
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_clear(d->delta_tbl);
@@ -1091,7 +1091,7 @@ void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f) {
   }
 
   LHS_FL_SET(flags, set_f);
-  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
+  (d->wt_flags)->proc_tbl_put(proc_id, (LmnWord)flags);
 }
 
 void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
@@ -1107,7 +1107,7 @@ void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
   }
 
   LHS_FL_UNSET(flags, unset_f);
-  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
+  (d->wt_flags)->proc_tbl_put(proc_id, (LmnWord)flags);
 }
 
 void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms) {
@@ -1162,7 +1162,7 @@ static int dpor_LHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   id = (unsigned int)_k;
 
   printf("LHS[id%u, delta%u]:: ", c->id, id);
-  proc_tbl_foreach(c->LHS_procs, dpor_LHS_dump_f, 0);
+  (c->LHS_procs)->tbl_foreach(dpor_LHS_dump_f, 0);
   printf("\n");
 
   return ST_CONTINUE;
@@ -1184,7 +1184,7 @@ static int dpor_RHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   id = (unsigned int)_k;
 
   printf("RHS[id%u, delta%u]:: ", c->id, id);
-  proc_tbl_foreach(c->RHS_procs, dpor_RHS_dump_f, 0);
+  (c->RHS_procs)->tbl_foreach(dpor_RHS_dump_f, 0);
   printf("\n");
 
   return ST_CONTINUE;

@@ -122,7 +122,7 @@ struct MemDelta *MemDeltaRoot::get_mem_delta(LmnMembraneRef m){
     return (struct MemDelta *)t;
   else {
     struct MemDelta *mem_delta = mem_delta_make(this, m, this->next_id);
-    proc_tbl_put_mem(this->proc_tbl, m, (LmnWord)mem_delta);
+    (this->proc_tbl)->proc_tbl_put_mem(m, (LmnWord)mem_delta);
     this->flag_tbl->tbl_set_mem_flag(m, TAG_DELTA_MEM);
     this->mem_deltas.push((vec_data_t)mem_delta);
     return mem_delta;
@@ -346,7 +346,7 @@ void MemDeltaRoot::relink(LmnMembraneRef m,
 }
 
 void MemDeltaRoot::move_satom(LmnWord key, LmnWord dest) {
-  proc_tbl_put_new(this->proc_tbl, key, dest);
+  (this->proc_tbl)->put_new(key, dest);
 }
 
 /* destが移動先、srcが移動元 */
@@ -367,7 +367,7 @@ void MemDeltaRoot::move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
       lmn_fatal("unexpected");
     }
     /* relink命令等のために移動先と移動元のアトムを対応付ける必要がある */
-    proc_tbl_foreach(atoms, [](LmnWord _k, LmnWord _v, LmnWord _arg){
+    atoms->tbl_foreach([](LmnWord _k, LmnWord _v, LmnWord _arg){
       ((struct MemDeltaRoot *)_arg)->move_satom(_k, _v);
       return 1;
     }, (LmnWord)this);
@@ -424,7 +424,7 @@ void MemDeltaRoot::copy_cells(struct MemDelta *d,
     else
       dmem_root_add_child_mem(this, destmem, new_mem);
 
-    proc_tbl_put_mem(atoms, m, (LmnWord)new_mem);
+    atoms->proc_tbl_put_mem(m, (LmnWord)new_mem);
     /* copy name */
     new_mem->set_name(m->NAME_ID());
     /* copy rulesets */
@@ -457,7 +457,7 @@ void MemDeltaRoot::copy_cells(struct MemDelta *d,
           dmem_put_symbol_atom(d, destmem, newatom);
         else
           mem_push_symbol_atom(destmem, newatom);
-        proc_tbl_put_atom(atoms, srcatom, (LmnWord)newatom);
+        atoms->proc_tbl_put_atom(srcatom, (LmnWord)newatom);
         start = 0;
         end = srcatom->get_arity();
 
@@ -605,7 +605,7 @@ int dmem_root_remove_symbol_atom_with_buddy_data_dmem_f(LmnWord _k, LmnWord _v,
 
   //  dmem_remove_symbol_atom(d, m, atom);
   d->del_atoms.push((vec_data_t)atom);
-  proc_tbl_put_atom(d->root_d->owner_tbl, atom, 0);
+  (d->root_d->owner_tbl)->proc_tbl_put_atom(atom, 0);
   return 1;
 }
 
@@ -617,7 +617,7 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
   ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
 
   /* memは既存膜のはず */
-  proc_tbl_foreach(atoms, dmem_root_remove_symbol_atom_with_buddy_data_dmem_f,
+  atoms->tbl_foreach(dmem_root_remove_symbol_atom_with_buddy_data_dmem_f,
                    (LmnWord)root_d->get_mem_delta(mem));
 
   /* atomsはシンボルアトムしか含まないので、
@@ -647,7 +647,7 @@ void dmem_root_free_ground(struct MemDeltaRoot *root_d, Vector *srcvec) {
 
   ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
 
-  proc_tbl_foreach(atoms, dmem_root_free_satom_f, (LmnWord)root_d);
+  atoms->tbl_foreach(dmem_root_free_satom_f, (LmnWord)root_d);
   delete atoms;
 }
 
@@ -699,7 +699,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
         }
       }
 
-      proc_tbl_put_atom(atommap, (LmnSymbolAtomRef)(LinkObjGetAtom(l)),
+      atommap->proc_tbl_put_atom((LmnSymbolAtomRef)(LinkObjGetAtom(l)),
                         (LmnWord)cpatom);
       /* 根のリンクのリンクポインタを0に設定する */
       cpatom->set_link(LinkObjGetPos(l), 0);
@@ -742,7 +742,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
           } else {
             mem_push_symbol_atom(mem, next_copied);
           }
-          proc_tbl_put_atom(atommap, next_src, (LmnWord)next_copied);
+          atommap->proc_tbl_put_atom(next_src, (LmnWord)next_copied);
           stack.push((LmnWord)next_src);
         }
         copied->set_link(i, next_copied);
@@ -968,7 +968,7 @@ void dmem_root_add_child_mem(struct MemDeltaRoot *d, LmnMembraneRef parent,
     dmem_add_child_mem(d->get_mem_delta(parent), parent, child);
   }
 
-  proc_tbl_put_mem(d->owner_tbl, child, (LmnWord)parent);
+  (d->owner_tbl)->proc_tbl_put_mem(child, (LmnWord)parent);
 }
 
 void dmem_root_remove_mem(struct MemDeltaRoot *root_d, LmnMembraneRef parent,
@@ -990,7 +990,7 @@ void dmem_root_remove_mem(struct MemDeltaRoot *root_d, LmnMembraneRef parent,
 #endif
     d->del_mems.push((vec_data_t)child);
   }
-  proc_tbl_put_mem(root_d->owner_tbl, child, 0);
+  (root_d->owner_tbl)->proc_tbl_put_mem(child, 0);
 }
 
 /* cf. Java処理系 */
@@ -1287,7 +1287,7 @@ LmnMembraneRef dmem_root_new_mem(struct MemDeltaRoot *d) {
   LmnMembraneRef m;
 
   m = new LmnMembrane();
-  proc_tbl_put_mem(d->proc_tbl, m, (LmnWord)new NewMemInfo(m));
+  (d->proc_tbl)->proc_tbl_put_mem(m, (LmnWord)new NewMemInfo(m));
   d->flag_tbl->tbl_set_mem_flag(m, TAG_NEW_MEM);
   d->new_mems.push((vec_data_t)m);
   return m;
@@ -1659,7 +1659,7 @@ static inline void dmem_remove_symbol_atom(struct MemDelta *d, LmnMembraneRef m,
   /* } */
 
   d->del_atoms.push((vec_data_t)atom);
-  proc_tbl_put_atom(d->root_d->owner_tbl, atom, 0);
+  (d->root_d->owner_tbl)->proc_tbl_put_atom(atom, 0);
 }
 
 static inline void dmem_remove_atom(struct MemDelta *d, LmnMembraneRef m,
@@ -1715,7 +1715,7 @@ static inline LmnSymbolAtomRef dmem_modify_atom(struct MemDelta *d,
     }
 
     /* new_atomとsrcの対応をproc_tblに保存しておく */
-    proc_tbl_put_atom(d->root_d->proc_tbl, src, LMN_ATOM(new_atom));
+    (d->root_d->proc_tbl)->proc_tbl_put_atom(src, LMN_ATOM(new_atom));
     d->root_d->flag_tbl->tbl_set_atom_flag(src, TAG_MODIFIED_ATOM);
 
     d->root_d->modified_atoms.push((vec_data_t)src);
@@ -1770,7 +1770,7 @@ static inline void dmem_put_symbol_atom(struct MemDelta *d, LmnMembraneRef m,
   if (!dmem_root_is_new_atom(d->root_d, atom)) lmn_fatal("unexpected");
 #endif
   d->new_atoms.push((vec_data_t)atom);
-  proc_tbl_put_atom(d->root_d->owner_tbl, atom,
+  (d->root_d->owner_tbl)->proc_tbl_put_atom(atom,
                     (LmnWord)m); /* IDをkeyにした配列へ投げる */
   /* sproc_tbl_unset_atom_flag(d->flag_tbl, atom, TAG_DEL_ATOM); */
 

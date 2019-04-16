@@ -783,7 +783,7 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec,
   for (auto &v : attr_dataAtom_attrs)
     v2->push(v);
   for (auto &p : attr_functors)
-    proc_tbl_put(p1, p, p);
+    p1->proc_tbl_put(p, p);
 
   auto a = atoms.get();
   auto h = hlinks.get();
@@ -2888,7 +2888,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             LmnFunctor f;
             f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
-            proc_tbl_put(attr_functors, f, f);
+            attr_functors->proc_tbl_put(f, f);
           }
         }
         break;
@@ -2905,7 +2905,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             LmnFunctor f;
             READ_VAL(LmnFunctor, instr, f);
-            proc_tbl_put(attr_functors, f, f);
+            attr_functors->proc_tbl_put(f, f);
           }
         }
         break;
@@ -2984,7 +2984,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             LmnFunctor f;
             f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
-            proc_tbl_put(attr_functors, f, f);
+            attr_functors->proc_tbl_put(f, f);
           }
         }
         break;
@@ -3002,7 +3002,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             LmnFunctor f;
             READ_VAL(LmnFunctor, instr, f);
-            proc_tbl_put(attr_functors, f, f);
+            attr_functors->proc_tbl_put(f, f);
           }
         }
         break;

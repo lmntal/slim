@@ -178,7 +178,7 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
 
     /* finalzie */
     ret = hash_sum ^ hash_mul;
-    proc_tbl_put_mem(ctx, mem, ret);
+    ctx->proc_tbl_put_mem(mem, ret);
     return ret;
   }
 }
@@ -218,7 +218,7 @@ static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
     (*mul) *= t;
   } else if (((LmnSymbolAtomRef)atom)->get_functor() !=
                  LMN_IN_PROXY_FUNCTOR &&
-             proc_tbl_put_new_atom(ctx, (LmnSymbolAtomRef)atom, 1)) {
+             ctx->put_new_atom((LmnSymbolAtomRef)atom, 1)) {
     /* シンボルアトムの場合:
      *  (連結分子計算は膜の外部に出て行かないものとしているため,
      * proxyならば打切り)

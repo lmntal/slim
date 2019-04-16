@@ -908,7 +908,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
     lmn_mem_copy_cells_sub(new_mem, m, atoms, hl_nd);
     destmem->add_child_mem(new_mem);
 
-    proc_tbl_put_mem(atoms, m, (LmnWord)new_mem);
+    atoms->proc_tbl_put_mem(m, (LmnWord)new_mem);
     /* copy name */
     new_mem->name = m->name;
     /* copy rulesets */
@@ -939,7 +939,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
               f = srcatom->get_functor();
               newatom = lmn_mem_newatom(destmem, f);
 
-              proc_tbl_put_atom(atoms, srcatom, (LmnWord)newatom);
+              atoms->proc_tbl_put_atom(srcatom, (LmnWord)newatom);
 
               start = 0;
               end = srcatom->get_arity();
@@ -1006,7 +1006,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
                       ((HyperLink *)t)->unify(newhl, ori_attr_atom,
                                       ori_attr);
                     }
-                    proc_tbl_put_new_hlink(atoms, orihl, (LmnWord)newhl);
+                    atoms->put_new_hlink(orihl, (LmnWord)newhl);
                   } else {
                     newargatom =
                         (LmnAtomRef)lmn_copy_data_atom((LmnDataAtomRef)a, attr);
@@ -1107,8 +1107,8 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
             hlinkmap, hl->get_root(),
             &t)) { //同じハイパーリンクが接続されたアトムがスタックに積まれてる場合がある
       int j, element_num;
-      proc_tbl_put_new_hlink(
-          hlinkmap, hl->get_root(),
+      hlinkmap->put_new_hlink(
+          hl->get_root(),
           (LmnWord)(lmn_hyperlink_at_to_hl(copied_root_hlAtom)));
       Vector *hl_childs = new Vector(16);
       hl->get_elements(hl_childs);
@@ -1144,7 +1144,7 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
             // push しなくてよい（はず）
             //            lmn_mem_push_atom(mem, copied_hlAtom, LMN_HL_ATTR);
             mem_push_symbol_atom(mem, copied_linked_hlAtom);
-            proc_tbl_put_atom(atommap, linked_hlAtom,
+            atommap->proc_tbl_put_atom(linked_hlAtom,
                               (LmnWord)copied_linked_hlAtom);
             stack->push((LmnWord)linked_hlAtom);
           } else { //つまり既にスタックに積まれている場合
@@ -1220,7 +1220,7 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, Vector **ret_dstlovec,
         }
 
         mem_push_symbol_atom(mem, (LmnSymbolAtomRef)cpatom);
-        proc_tbl_put_atom(atommap, (LmnSymbolAtomRef)l->ap, (LmnWord)cpatom);
+        atommap->proc_tbl_put_atom((LmnSymbolAtomRef)l->ap, (LmnWord)cpatom);
 
         /* 根のリンクのリンクポインタを0に設定する */
         ((LmnSymbolAtomRef)cpatom)->set_link(l->pos, 0);
@@ -1274,7 +1274,7 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, Vector **ret_dstlovec,
                 lmn_copy_satom_with_data((LmnSymbolAtomRef)next_src, FALSE);
           }
           mem_push_symbol_atom(mem, (LmnSymbolAtomRef)next_copied);
-          proc_tbl_put_atom(atommap, (LmnSymbolAtomRef)next_src,
+          atommap->proc_tbl_put_atom((LmnSymbolAtomRef)next_src,
                             (LmnWord)next_copied);
           stack->push((LmnWord)next_src);
         } else {
@@ -1613,7 +1613,7 @@ BOOL ground_atoms(
             }
 
             if (flg_search_hl) {
-              proc_tbl_put_new_hlink(*hlinks, hl->get_root(),
+              (*hlinks)->put_new_hlink(hl->get_root(),
                                      (LmnWord)hl);
               hl_childs = new Vector(16);
 
@@ -1714,7 +1714,7 @@ BOOL ground_atoms(
       }
 
       /* lはシンボルアトムで初出のアトムを指すため,その先を探索する必要がある */
-      proc_tbl_put_atom(*atoms, (LmnSymbolAtomRef)l_ap, (LmnWord)l_ap);
+      (*atoms)->proc_tbl_put_atom((LmnSymbolAtomRef)l_ap, (LmnWord)l_ap);
       (*natoms)++;
 
       for (i = 0; i < ((LmnSymbolAtomRef)l_ap)->get_arity(); i++) {
@@ -1878,7 +1878,7 @@ void LmnMembrane::remove_ground(Vector *srcvec) {
   unsigned long i, t;
 
   ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
-  proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f,
+  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f,
                    (LmnWord)this);
 
   /* atomsはシンボルアトムしか含まないので、
@@ -1903,7 +1903,7 @@ void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec,
 
   ground_atoms(srcvec, NULL, &atoms, &t, &hlinks, attr_sym, attr_data,
                attr_data_at);
-  proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f,
+  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f,
                    (LmnWord)mem);
 
   /* atomsはシンボルアトムしか含まないので、
@@ -1929,7 +1929,7 @@ void lmn_mem_free_ground(Vector *srcvec) {
   unsigned long i, t;
 
   if (ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL)) {
-    proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+    atoms->tbl_foreach(free_symbol_atom_with_buddy_data_f, (LmnWord)0);
     delete atoms;
   }
 
@@ -1951,7 +1951,7 @@ void lmn_mem_free_hlground(Vector *srcvec, ProcessTableRef *attr_sym,
   hlinks = NULL;
   if (ground_atoms(srcvec, NULL, &atoms, &t, &hlinks, attr_sym, attr_data,
                    attr_data_at)) {
-    proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+    atoms->tbl_foreach(free_symbol_atom_with_buddy_data_f, (LmnWord)0);
     delete atoms;
   }
 
@@ -1971,9 +1971,9 @@ void LmnMembrane::delete_ground(Vector *srcvec) {
     fprintf(stderr, "remove ground false\n");
   }
 
-  proc_tbl_foreach(atoms, mem_remove_symbol_atom_with_buddy_data_f,
+  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f,
                    (LmnWord)this);
-  proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+  atoms->tbl_foreach(free_symbol_atom_with_buddy_data_f, (LmnWord)0);
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続している場合の処理をする */
