@@ -691,7 +691,7 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
             (LmnSymbolAtomRef)LinkObjGetAtom(l));
       } else {
         cpatom = (LmnSymbolAtomRef)dmem_root_copy_satom_with_data(
-            root_d, (LmnSymbolAtomRef)LinkObjGetAtom(l));
+								  root_d, (LmnSymbolAtomRef)LinkObjGetAtom(l));
         if (d) {
           dmem_put_symbol_atom(d, mem, cpatom);
         } else {
