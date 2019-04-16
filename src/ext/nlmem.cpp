@@ -79,7 +79,7 @@ void nlmem_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
       }));
     }
 
-    proc_tbl_free(atom_map);
+    delete atom_map;
     lmn_mem_delete_atom(mem, a1, t1);
     /* 第一引数に接続されたタグアトムと第三引数を接続する */
     lmn_mem_newlink(mem,

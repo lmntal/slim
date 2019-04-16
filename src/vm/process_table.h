@@ -56,9 +56,6 @@ struct ProcessTbl : ProcessTable<LmnWord> {
  * Function ProtoTypes
  */
 
-ProcessTableRef proc_tbl_make_with_size(unsigned long size);
-ProcessTableRef proc_tbl_make(void);
-void proc_tbl_free(ProcessTableRef p);
 void proc_tbl_clear(ProcessTableRef p);
 int proc_tbl_foreach(ProcessTableRef p,
                      int (*func)(LmnWord key, LmnWord val, LmnWord arg),

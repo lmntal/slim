@@ -100,7 +100,7 @@ void integer_set(LmnReactCxtRef rc,
 
     for (int j = 0; j < dstlovec->get_num(); j++) LMN_FREE(dstlovec->get(j));
     delete dstlovec;
-    proc_tbl_free(atommap);
+    delete atommap;
   }
 
   lmn_mem_delete_atom(mem, a0, t0);

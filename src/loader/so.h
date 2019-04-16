@@ -221,7 +221,7 @@
     }                                                                          \
                                                                                \
     if (delmap)                                                                \
-      proc_tbl_free(delmap);                                                   \
+      delete delmap;                                                   \
   } while (0)
 
 #define TR_INSTR_DEREFFUNC(rc, funci, atomi, pos)                              \

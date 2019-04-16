@@ -144,7 +144,7 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
           r->register_set_wt(rc->wt(i));
         }
       }
-      proc_tbl_free(copymap);
+      delete copymap;
 
       /** SWAP */
       tmp = std::move(rc->work_array);

@@ -79,7 +79,7 @@ mhash_t mhash(LmnMembraneRef mem) {
 }
 
 static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size) {
-  ProcessTableRef c = proc_tbl_make_with_size(tbl_size);
+  ProcessTableRef c = new ProcessTbl(tbl_size);
   mhash_t t;
 
 #ifdef PROFILE
@@ -88,7 +88,7 @@ static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size) {
 #endif
 
   t = mhash_membrane(mem, NULL, c);
-  proc_tbl_free(c);
+  delete c;
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3)

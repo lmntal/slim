@@ -96,7 +96,7 @@ struct VisitLog {
 
   VisitLog():tbl(0),ref_n(0),element_num(0){}
   ~VisitLog(){
-    proc_tbl_free(this->tbl);
+    delete this->tbl;
 
     for (int i = 0; i < this->checkpoints.get_num(); i++) {
       delete (Vector *)this->checkpoints.get(i);
@@ -107,9 +107,9 @@ struct VisitLog {
   void init() { this->init_with_size(0); }
   void init_with_size(unsigned long tbl_size) {
     if (tbl_size != 0) {
-      this->tbl = proc_tbl_make_with_size(tbl_size);
+      this->tbl = new ProcessTbl(tbl_size);
     } else {
-      this->tbl = proc_tbl_make();
+      this->tbl = new ProcessTbl();
     }
     /*   printf("size = %lu\n", tbl_size); */
     this->ref_n = VISITLOG_INIT_N;

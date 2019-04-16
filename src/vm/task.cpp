@@ -776,7 +776,7 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec,
                   const std::vector<LmnLinkAttr> &attr_dataAtom_attrs) {
   auto v1 = new Vector(attr_dataAtoms.size());
   auto v2 = new Vector(attr_dataAtom_attrs.size());
-  auto p1 = proc_tbl_make_with_size(attr_functors.size());
+  auto p1 = new ProcessTbl(attr_functors.size());
 
   for (auto &v : attr_dataAtoms)
     v1->push(v);
@@ -792,7 +792,7 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec,
   hlinks = std::unique_ptr<ProcessTbl>(h);
   delete v1;
   delete v2;
-  proc_tbl_free(p1);
+  delete p1;
   return result;
 }
 
@@ -1177,7 +1177,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             r->register_set_wt(rc->wt(i));
           }
         }
-        proc_tbl_free(copymap);
+        delete copymap;
 
         /** 変数配列および属性配列をコピーと入れ換え, コピー側を書き換える */
         auto tmp = new std::vector<LmnRegister>(std::move(rc->work_array));
@@ -2506,7 +2506,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       this->push_stackframe([=](bool result) {
         dpor_LHS_remove_ground_atoms(RC_POR_DATA(rc), addr);
-        proc_tbl_free(addr);
+        delete addr;
         return false;
       });
     }
@@ -2872,7 +2872,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       Vector attr_dataAtom_attrs;
       attr_dataAtoms.init(16);
       attr_dataAtom_attrs.init(16);
-      attr_functors = proc_tbl_make_with_size(16);
+      attr_functors = new ProcessTbl(16);
       LmnInstrVar i = 0, n;
 
       READ_VAL(LmnInstrVar, instr, n);
@@ -2967,7 +2967,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       Vector attr_dataAtom_attrs;
       attr_dataAtoms.init(16);
       attr_dataAtom_attrs.init(16);
-      attr_functors = proc_tbl_make_with_size(16);
+      attr_functors = new ProcessTbl(16);
       LmnInstrVar i = 0, n;
 
       READ_VAL(LmnInstrVar, instr, n);
@@ -3022,7 +3022,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             &attr_functors, &attr_dataAtoms, &attr_dataAtom_attrs);
         break;
       }
-      proc_tbl_free(attr_functors);
+      delete attr_functors;
       attr_dataAtoms.destroy();
       attr_dataAtom_attrs.destroy();
       break;
@@ -3685,7 +3685,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_delete_atom(copy);
     }
 
-    proc_tbl_free(delmap);
+    delete delmap;
     break;
   }
   case INSTR_REMOVETOPLEVELPROXIES: {
@@ -4784,7 +4784,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       }
 
       if (delmap)
-        proc_tbl_free(delmap);
+        delete delmap;
       break;
     }
     case INSTR_REMOVETOPLEVELPROXIES: {

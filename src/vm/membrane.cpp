@@ -830,7 +830,7 @@ LmnMembraneRef LmnMembrane::copy() {
   LmnMembraneRef copied;
 
   copied = lmn_mem_copy_with_map(this,&copymap);
-  proc_tbl_free(copymap);
+  delete copymap;
   return copied;
 }
 LmnMembraneRef LmnMembrane::copy_ex() {
@@ -838,7 +838,7 @@ LmnMembraneRef LmnMembrane::copy_ex() {
   LmnMembraneRef copied;
 
   copied = lmn_mem_copy_with_map_ex(this, &copymap);
-  proc_tbl_free(copymap);
+  delete copymap;
   return copied;
 }
 static inline LmnMembraneRef lmn_mem_copy_with_map_inner(LmnMembraneRef src, ProcessTableRef *ret_copymap, BOOL hl_nd) {
@@ -883,7 +883,7 @@ LmnMembraneRef lmn_mem_copy_with_map(LmnMembraneRef src,
 
 ProcessTableRef lmn_mem_copy_cells_ex(LmnMembraneRef dst, LmnMembraneRef src,
                                       BOOL hl_nd) {
-  ProcessTableRef atoms = proc_tbl_make_with_size(64);
+  ProcessTableRef atoms = new ProcessTbl(64);
   lmn_mem_copy_cells_sub(dst, src, atoms, hl_nd);
   return atoms;
 }
@@ -1183,8 +1183,8 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, Vector **ret_dstlovec,
   unsigned int i;
   LmnWord t = 0;
 
-  atommap = proc_tbl_make_with_size(64);
-  hlinkmap = proc_tbl_make_with_size(64);
+  atommap = new ProcessTbl(64);
+  hlinkmap = new ProcessTbl(64);
   stack = new Vector(16);
   *ret_dstlovec = new Vector(16);
 
@@ -1466,7 +1466,7 @@ BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms) {
   b = ground_atoms(srcvec, avovec, &atoms, natoms, NULL, NULL, NULL, NULL);
 
   if (b) {
-    proc_tbl_free(atoms);
+    delete atoms;
   }
 
   return b;
@@ -1484,8 +1484,8 @@ BOOL lmn_mem_is_hlground(Vector *srcvec, Vector *avovec, unsigned long *natoms,
                    attr_dataAtoms, attr_dataAtom_attrs);
 
   if (b) {
-    proc_tbl_free(atoms);
-    proc_tbl_free(hlinks);
+    delete atoms;
+    delete hlinks;
   }
 
   return b;
@@ -1525,7 +1525,7 @@ BOOL ground_atoms(
   int element_num;
 
   *natoms = 0;
-  *atoms = proc_tbl_make_with_size(64);
+  *atoms = new ProcessTbl(64);
   unsearched_link_stack = new Vector(16);
   reached_root_count = 1;
   // found_ground_symbol_atoms = proc_tbl_make_with_size(64);
@@ -1533,7 +1533,7 @@ BOOL ground_atoms(
   // count_of_ground_atoms = 0;
 
   if (hlinks != NULL) {
-    *hlinks = proc_tbl_make_with_size(64);
+    *hlinks = new ProcessTbl(64);
   }
 
   /* groundはつながったグラフなので1つの根からだけたどればよい */
@@ -1742,10 +1742,10 @@ returning:
     //*natoms += count_of_ground_atoms;
   } else {
     if (hlinks != NULL) {
-      proc_tbl_free(*hlinks);
+      delete *hlinks;
       *hlinks = NULL;
     }
-    proc_tbl_free(*atoms);
+    delete *atoms;
     *atoms = NULL;
     *natoms = 0;
   }
@@ -1891,7 +1891,7 @@ void LmnMembrane::remove_ground(Vector *srcvec) {
       mem_remove_symbol_atom(this, (LmnSymbolAtomRef)l->ap);
     }
   }
-  proc_tbl_free(atoms);
+  delete atoms;
 }
 
 void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec,
@@ -1916,7 +1916,7 @@ void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec,
       mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)l->ap);
     }
   }
-  proc_tbl_free(atoms);
+  delete atoms;
 }
 
 int free_symbol_atom_with_buddy_data_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
@@ -1930,7 +1930,7 @@ void lmn_mem_free_ground(Vector *srcvec) {
 
   if (ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL)) {
     proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
-    proc_tbl_free(atoms);
+    delete atoms;
   }
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
@@ -1952,7 +1952,7 @@ void lmn_mem_free_hlground(Vector *srcvec, ProcessTableRef *attr_sym,
   if (ground_atoms(srcvec, NULL, &atoms, &t, &hlinks, attr_sym, attr_data,
                    attr_data_at)) {
     proc_tbl_foreach(atoms, free_symbol_atom_with_buddy_data_f, (LmnWord)0);
-    proc_tbl_free(atoms);
+    delete atoms;
   }
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
@@ -1985,7 +1985,7 @@ void LmnMembrane::delete_ground(Vector *srcvec) {
     }
   }
 
-  proc_tbl_free(atoms);
+  delete atoms;
 }
 
 /** ===========================

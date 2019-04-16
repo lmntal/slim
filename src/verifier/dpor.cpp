@@ -99,8 +99,8 @@ struct ContextC2 {
 static ContextC1Ref contextC1_make(MemDeltaRoot *d, unsigned int id) {
   ContextC1Ref c = LMN_MALLOC(struct ContextC1);
   c->d = d;
-  c->LHS_procs = proc_tbl_make_with_size(32);
-  c->RHS_procs = proc_tbl_make_with_size(32);
+  c->LHS_procs = new ProcessTbl(32);
+  c->RHS_procs = new ProcessTbl(32);
   c->is_on_path = FALSE;
   c->is_ample_cand = FALSE;
   c->id = id;
@@ -108,8 +108,8 @@ static ContextC1Ref contextC1_make(MemDeltaRoot *d, unsigned int id) {
 }
 
 static inline void contextC1_free(ContextC1Ref c) {
-  proc_tbl_free(c->LHS_procs);
-  proc_tbl_free(c->RHS_procs);
+  delete c->LHS_procs;
+  delete c->RHS_procs;
   LMN_FREE(c);
 }
 
@@ -350,7 +350,7 @@ static void contextC1_expand_RHS(McDporData *mc, ContextC1Ref c,
 static McDporData *dpor_data_make() {
   McDporData *d = LMN_MALLOC(McDporData);
   d->wt_gatoms = new Vector(4);
-  d->wt_flags = proc_tbl_make();
+  d->wt_flags = new ProcessTbl();
   d->ample_cand = new Vector(8);
   d->nxt_tr_id = 0;
   d->delta_tbl = st_init_ptrtable();
@@ -361,7 +361,7 @@ static McDporData *dpor_data_make() {
 static void dpor_data_free(McDporData *d) {
   unsigned int i;
   delete d->wt_gatoms;
-  proc_tbl_free(d->wt_flags);
+  delete d->wt_flags;
   delete d->ample_cand;
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_free_table(d->delta_tbl);

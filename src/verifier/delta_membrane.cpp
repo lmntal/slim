@@ -50,11 +50,11 @@ MemDeltaRoot::MemDeltaRoot(LmnMembraneRef root_mem, LmnRuleRef rule, unsigned lo
   this->root_mem = root_mem;
   this->committed = FALSE;
   this->applied_rule = rule;
-  this->proc_tbl = proc_tbl_make_with_size(size);
+  this->proc_tbl = new ProcessTbl(size);
   this->new_mems.init(16);
   this->mem_deltas.init(16);
   this->modified_atoms.init(32);
-  this->owner_tbl = proc_tbl_make_with_size(size);
+  this->owner_tbl = new ProcessTbl(size);
   this->flag_tbl = new SimpleProcessTable(size);
 
   /* add an appried history for constraint handling rules */
@@ -72,7 +72,7 @@ MemDeltaRoot::~MemDeltaRoot() {
   }
   this->mem_deltas.destroy();
   this->modified_atoms.destroy();
-  proc_tbl_free(this->owner_tbl);
+  delete this->owner_tbl;
   delete this->flag_tbl;
 
   for (i = 0; i < this->new_mems.get_num(); i++) {
@@ -93,7 +93,7 @@ MemDeltaRoot::~MemDeltaRoot() {
   }
 
   this->new_mems.destroy();
-  proc_tbl_free(this->proc_tbl);
+  delete this->proc_tbl;
 }
 
 NewMemInfo::NewMemInfo(LmnMembraneRef mem) {
@@ -371,7 +371,7 @@ void MemDeltaRoot::move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
       ((struct MemDeltaRoot *)_arg)->move_satom(_k, _v);
       return 1;
     }, (LmnWord)this);
-    proc_tbl_free(atoms);
+    delete atoms;
   }
 }
 
@@ -379,7 +379,7 @@ ProcessTableRef MemDeltaRoot::copy_cells(LmnMembraneRef destmem, LmnMembraneRef 
   if (this->is_new_mem(destmem) && this->is_new_mem(srcmem)) {
     return lmn_mem_copy_cells(destmem, srcmem);
   } else {
-    ProcessTableRef atoms = proc_tbl_make_with_size(64);
+    ProcessTableRef atoms = new ProcessTbl(64);
     /* /\*d*\/ if (d->is_new_mem(srcmem)) lmn_fatal("unexpected"); */
     if (this->is_new_mem(destmem)) {
       /* 移動先が新規膜 */
@@ -633,7 +633,7 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
     }
   }
 
-  proc_tbl_free(atoms);
+  delete atoms;
 }
 
 int dmem_root_free_satom_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
@@ -648,7 +648,7 @@ void dmem_root_free_ground(struct MemDeltaRoot *root_d, Vector *srcvec) {
   ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
 
   proc_tbl_foreach(atoms, dmem_root_free_satom_f, (LmnWord)root_d);
-  proc_tbl_free(atoms);
+  delete atoms;
 }
 
 void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
@@ -660,9 +660,9 @@ void dmem_root_copy_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem,
   struct MemDelta *d;
   unsigned int i;
 
-  atommap = proc_tbl_make_with_size(64);
+  atommap = new ProcessTbl(64);
   t = 0UL; /* 警告されるので.. */
-  atommap = proc_tbl_make_with_size(64);
+  atommap = new ProcessTbl(64);
   stack.init(16);
   d = root_d->get_mem_delta(mem);
   *ret_dstlovec = new Vector(16);

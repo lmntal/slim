@@ -56,13 +56,8 @@ template <> ProcessID process_id<HyperLink *>(HyperLink *hl) {
 }
 } // namespace slim
 
-ProcessTableRef proc_tbl_make(void) { return new ProcessTbl(); }
 
-ProcessTableRef proc_tbl_make_with_size(unsigned long size) {
-  return new ProcessTbl(size);
-}
 
-void proc_tbl_free(ProcessTableRef p) { delete p; }
 
 void proc_tbl_clear(ProcessTableRef p) { p->clear(); }
 
