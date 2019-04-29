@@ -1,0 +1,18 @@
+clang
+%c -std=c11
+%cpp -std=c++11
+-pthread
+
+# Includes
+-I.
+-I./element/re2c
+-I./element
+-I./ext
+-I./ffi
+-I./loader
+-I./test
+-I./verifier
+-I./verifier/mem_encode
+-I./vm
+-I./vm/interpret
+
