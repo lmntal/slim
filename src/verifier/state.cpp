@@ -387,8 +387,7 @@ void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
 
 /** Printer
  * ownerはNULLでもok */
-void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
-  FILE *f;
+void StateDumper::dump_state_data(State *s, FILE *_fp, const StateSpace *_owner) {
   StateSpaceRef owner;
   unsigned long print_id;
 #ifdef KWBT_OPT
@@ -403,7 +402,6 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
   if (s->is_dummy() && !s->is_encoded())
     return;
 
-  f = (FILE *)_fp;
   owner = (StateSpaceRef)_owner;
   {
     /* この時点で状態は, ノーマル || (dummyフラグが立っている &&
@@ -419,13 +417,13 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
 
   switch (lmn_env.mc_dump_format) {
   case LaViT:
-    fprintf(f, "%lu::", print_id);
+    fprintf(_fp, "%lu::", print_id);
     state_print_mem(s, _fp);
     break;
   case Dir_DOT:
     if (s->successor_num == 0) {
       fprintf(
-          f,
+          _fp,
           "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n",
           print_id);
     }
@@ -433,12 +431,12 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
   case CUI: {
     BOOL has_property = owner && owner->has_property();
 #ifdef KWBT_OPT
-    fprintf(f, "%lu::%lu::%s", print_id, cost,
+    fprintf(_fp, "%lu::%lu::%s", print_id, cost,
             has_property
                 ? owner->automata()->state_name(state_property_state(s))
                 : "");
 #else
-    fprintf(f, "%lu::%s", print_id,
+    fprintf(_fp, "%lu::%s", print_id,
             has_property
                 ? owner->automata()->state_name(state_property_state(s))
                 : "");
@@ -452,7 +450,7 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
   }
 }
 
-void state_print_mem(State *s, LmnWord _fp) {
+void StateDumper::state_print_mem(State *s, FILE *_fp) {
   LmnMembraneRef mem;
   ProcessID org_next_id;
 
@@ -476,7 +474,7 @@ void state_print_mem(State *s, LmnWord _fp) {
 }
 
 /* TODO: 美しさ */
-void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
+void StateDumper::state_print_transition(State *s, FILE *_fp, const StateSpace *_owner) {
   FILE *f;
   StateSpaceRef owner;
   unsigned int i;
@@ -561,7 +559,7 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
   }
 }
 
-void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
+void StateDumper::state_print_label(State *s, FILE *_fp, const StateSpace *_owner) {
   AutomataRef a;
   FILE *f;
   StateSpaceRef owner;

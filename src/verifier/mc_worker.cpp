@@ -127,7 +127,7 @@ static void lmn_worker_start(void *arg) {
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
     StateSpaceRef ss = worker_states(w);
-    dump_state_data(ss->initial_state(), (LmnWord)ss->output(), (LmnWord)NULL);
+    StateDumper().dump_state_data(ss->initial_state(), ss->output(), nullptr);
   }
 
   if (lmn_env.profile_level >= 1)

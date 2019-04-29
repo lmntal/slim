@@ -69,8 +69,8 @@ void StateSpace::make_table_pair(TablePair &t, TablePair &rehasher) {
 /** StateSpace
  */
 StateSpace::StateSpace(int thread_num, AutomataRef a, Vector *psyms)
-    : using_memenc(false), is_formated(false), thread_num(thread_num), out(stdout),
-      init_state(nullptr), property_automata(a), propsyms(psyms),
+    : using_memenc(false), is_formated(false), thread_num(thread_num),
+      out(stdout), init_state(nullptr), property_automata(a), propsyms(psyms),
       end_states(thread_num) {
   if (lmn_env.mem_enc) {
     using_memenc = true;
@@ -308,7 +308,7 @@ unsigned long StateSpace::space() const {
 void StateSpace::dump_ends() const {
   for (const auto &end_i : end_states) {
     for (const auto &p : end_i) {
-      state_print_mem(p, (LmnWord)this->out);
+      StateDumper().state_print_mem(p, this->out);
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         printf(".\n");
       }
@@ -355,50 +355,49 @@ void StateSpace::dump() const {
 void StateSpace::dump_all_states() const {
   if (this->mhash_table.tbl)
     for (auto &ptr : *this->mhash_table.tbl)
-      dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
+      StateDumper().dump_state_data(ptr, this->out, this);
   if (this->memid_table.tbl)
     for (auto &ptr : *this->memid_table.tbl)
-      dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
+      StateDumper().dump_state_data(ptr, this->out, this);
   if (this->mhash_table.acc)
     for (auto &ptr : *this->mhash_table.acc)
-      dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
+      StateDumper().dump_state_data(ptr, this->out, this);
   if (this->memid_table.acc)
     for (auto &ptr : *this->memid_table.acc)
-      dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
+      StateDumper().dump_state_data(ptr, this->out, this);
 }
 
 void StateSpace::dump_all_transitions() const {
   if (this->mhash_table.tbl)
     for (auto &ptr : *this->mhash_table.tbl)
-      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
+      StateDumper().state_print_transition(ptr, this->out, this);
   if (this->memid_table.tbl)
     for (auto &ptr : *this->memid_table.tbl)
-      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
+      StateDumper().state_print_transition(ptr, this->out, this);
   if (this->mhash_table.acc)
     for (auto &ptr : *this->mhash_table.acc)
-      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
+      StateDumper().state_print_transition(ptr, this->out, this);
   if (this->memid_table.acc)
     for (auto &ptr : *this->memid_table.acc)
-      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
+      StateDumper().state_print_transition(ptr, this->out, this);
 }
 
-void StateSpace::dump_all_labels()const {
+void StateSpace::dump_all_labels() const {
   if (this->mhash_table.tbl)
     for (auto &ptr : *this->mhash_table.tbl)
-    state_print_label(ptr ,
-                     (LmnWord)this->out, (LmnWord)this);
+      StateDumper().state_print_label(ptr, this->out, this);
   if (this->memid_table.tbl)
     for (auto &ptr : *this->memid_table.tbl)
-                     state_print_label(ptr , (LmnWord)this->out,
-                     (LmnWord)this);
+                     StateDumper().state_print_label(ptr , this->out,
+                     this);
   if (this->mhash_table.acc)
     for (auto &ptr : *this->mhash_table.acc)
-                     state_print_label(ptr , (LmnWord)this->out,
-                     (LmnWord)this);
+                     StateDumper().state_print_label(ptr , this->out,
+                     this);
   if (this->memid_table.acc)
     for (auto &ptr : *this->memid_table.acc)
-                     state_print_label(ptr , (LmnWord)this->out,
-                     (LmnWord)this);
+                     StateDumper().state_print_label(ptr , this->out,
+                     this);
 }
 
 /* 注: 出力用に, リンクリストの先頭の状態のIDで,

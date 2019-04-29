@@ -167,11 +167,14 @@ void transition_set_cost(TransitionRef t, LmnCost cost);
  *  Printer
  */
 
-void dump_state_data(State *s, LmnWord _fp, LmnWord _owner);
-void state_print_mem(State *s, LmnWord _fp);
-void state_print_transition(State *s, LmnWord _fp, LmnWord _owner);
-void state_print_label(State *s, LmnWord _fp, LmnWord _owner);
-void state_print_error_path(State *s, LmnWord _fp);
+class StateDumper {
+public:
+  void dump_state_data(State *s, FILE *_fp, const StateSpace *_owner);
+  void state_print_mem(State *s, FILE *_fp);
+  void state_print_transition(State *s, FILE *_fp, const StateSpace *_owner);
+  void state_print_label(State *s, FILE *_fp, const StateSpace *_owner);
+  void state_print_error_path(State *s, FILE *_fp);
+};
 
 /** -------
  *  inline functions
