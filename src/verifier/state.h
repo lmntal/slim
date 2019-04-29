@@ -174,6 +174,11 @@ public:
   void state_print_transition(State *s, FILE *_fp, const StateSpace *_owner);
   void state_print_label(State *s, FILE *_fp, const StateSpace *_owner);
   void state_print_error_path(State *s, FILE *_fp);
+
+private:
+  MCdumpFormat dump_format() const {
+    return lmn_env.mc_dump_format;
+  }
 };
 
 /** -------

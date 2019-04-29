@@ -415,7 +415,7 @@ void StateDumper::dump_state_data(State *s, FILE *_fp, const StateSpace *_owner)
     }
   }
 
-  switch (lmn_env.mc_dump_format) {
+  switch (dump_format()) {
   case LaViT:
     fprintf(_fp, "%lu::", print_id);
     state_print_mem(s, _fp);
@@ -495,7 +495,7 @@ void StateDumper::state_print_transition(State *s, FILE *_fp, const StateSpace *
   owner = (StateSpaceRef)_owner;
 
   need_id_foreach_trans = TRUE;
-  switch (lmn_env.mc_dump_format) {
+  switch (dump_format()) {
   case DOT:
     state_separator = " -> ";
     trans_separator = NULL;
@@ -572,7 +572,7 @@ void StateDumper::state_print_label(State *s, FILE *_fp, const StateSpace *_owne
   a = owner->automata();
   f = (FILE *)_fp;
 
-  switch (lmn_env.mc_dump_format) {
+  switch (dump_format()) {
   case Dir_DOT: {
     if (state_is_accept(a, s) || state_is_end(a, s)) {
       fprintf(f, "  %lu [peripheries = 2]\n",
