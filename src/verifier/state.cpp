@@ -422,10 +422,6 @@ void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
     fprintf(f, "%lu::", print_id);
     state_print_mem(s, _fp);
     break;
-  case FSM:
-    /* under constructions.. */
-    fprintf(f, "1\n");
-    break;
   case Dir_DOT:
     if (s->successor_num == 0) {
       fprintf(
@@ -508,12 +504,6 @@ void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
     label_begin = " [ label = \"";
     label_end = "\" ];";
     break;
-  case FSM:
-    state_separator = " ";
-    trans_separator = NULL;
-    label_begin = " \"";
-    label_end = "\"";
-    break;
   case LaViT: /* FALLTHROUGH: CUIモードと共通 */
   case CUI:
     state_separator =
@@ -595,7 +585,6 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
   case LaViT:
     fprintf(f, "%lu::", state_format_id(s, owner->is_formatted()));
     fprintf(f, "%s\n", a->state_name(state_property_state(s)));
-  case FSM:
   case CUI: /* 状態のグローバルルート膜の膜名としてdump済 */
     break;
   default:

@@ -330,20 +330,6 @@ void StateSpace::dump() const {
     this->dump_all_labels();
     fprintf(this->out, "}\n");
     break;
-  case FSM:
-    /* TODO: under construction..
-     *   一般的なLTS状態表現方法であるFSM形式.
-     *   変数集合/State Vectorに分けて出力する必要がある.
-     *   階層グラフ構造をどのように出力すべきか要検討.
-     *   現状ではとりあえず状態データを空にして状態遷移グラフを出力する */
-    // statespace_print_state_data
-    // statespace_print_state_vector
-    fprintf(this->out, "Under_Constructions(2) Binay \"Yes\" \"No\"\n");
-    fprintf(this->out, "---\n");
-    this->dump_all_states();
-    fprintf(this->out, "---\n");
-    this->dump_all_transitions();
-    break;
   case LaViT: /* FALL THROUGH */
   default:
     if (lmn_env.sp_dump_format != INCREMENTAL) {

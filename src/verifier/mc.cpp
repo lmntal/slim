@@ -910,11 +910,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
 
     case Dir_DOT: /* TODO:
                      反例パスをサブグラフとして指定させたら分かりやすくなりそう
-                   */
-    case FSM: /* TODO: 未定. ltsviewはdotファイルを読み出せるので廃止しても良い
-               */
-      fprintf(f, "under constructions..\n");
-      break;
+                   */;
     default:
       lmn_fatal("unexpected.");
       break;

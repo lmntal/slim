@@ -170,7 +170,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"show-hl", 0, 0, 1007},
                                   {"use-builtin-rule", 0, 0, 1008},
                                   {"dump-dot", 0, 0, 1100},
-                                  {"dump-fsm", 0, 0, 1101},
+                                  // {"dump-fsm", 0, 0, 1101},
                                   {"dump-lavit", 0, 0, 1102},
                                   {"dump-inc", 0, 0, 1103},
                                   {"dump-lmn", 0, 0, 1104},
@@ -300,9 +300,6 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 1100:
       lmn_env.output_format = DOT;
       lmn_env.mc_dump_format = Dir_DOT;
-      break;
-    case 1101:
-      lmn_env.mc_dump_format = FSM;
       break;
     case 1102:
       lmn_env.mc_dump_format = LaViT;
