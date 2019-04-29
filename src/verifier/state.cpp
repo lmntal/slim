@@ -51,6 +51,8 @@
 #endif
 #include "state.hpp"
 
+namespace c14 = slim::element;
+
 LmnCost state_cost(State *S) {
 #ifdef KWBT_OPT
   return ((S)->cost);
@@ -385,9 +387,29 @@ void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
   }
 }
 
+std::unique_ptr<StateDumper> StateDumper::from_env() {
+  switch (lmn_env.mc_dump_format) {
+  case MCdumpFormat::CUI:
+    return c14::make_unique<state_dumper::CUI>();
+  case MCdumpFormat::LaViT:
+    return c14::make_unique<state_dumper::LaViT>();
+  case MCdumpFormat::Dir_DOT:
+    return c14::make_unique<state_dumper::Dir_DOT>();
+  case MCdumpFormat::LMN_FSM_GRAPH:
+    return c14::make_unique<state_dumper::LMN_FSM_GRAPH>();
+  case MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE:
+    return c14::make_unique<state_dumper::LMN_FSM_GRAPH_MEM_NODE>();
+  case MCdumpFormat::LMN_FSM_GRAPH_HL_NODE:
+    return c14::make_unique<state_dumper::LMN_FSM_GRAPH_HL_NODE>();
+  default:
+    throw std::runtime_error("invalid mc dump format.");
+  }
+}
+
 /** Printer
  * ownerはNULLでもok */
-void StateDumper::dump_state_data(State *s, FILE *_fp, const StateSpace *_owner) {
+void StateDumper::dump_state_data(State *s, FILE *_fp,
+                                  const StateSpace *_owner) {
   StateSpaceRef owner;
   unsigned long print_id;
 #ifdef KWBT_OPT
@@ -474,7 +496,8 @@ void StateDumper::state_print_mem(State *s, FILE *_fp) {
 }
 
 /* TODO: 美しさ */
-void StateDumper::state_print_transition(State *s, FILE *_fp, const StateSpace *_owner) {
+void StateDumper::state_print_transition(State *s, FILE *_fp,
+                                         const StateSpace *_owner) {
   FILE *f;
   StateSpaceRef owner;
   unsigned int i;
@@ -559,7 +582,8 @@ void StateDumper::state_print_transition(State *s, FILE *_fp, const StateSpace *
   }
 }
 
-void StateDumper::state_print_label(State *s, FILE *_fp, const StateSpace *_owner) {
+void StateDumper::state_print_label(State *s, FILE *_fp,
+                                    const StateSpace *_owner) {
   AutomataRef a;
   FILE *f;
   StateSpaceRef owner;

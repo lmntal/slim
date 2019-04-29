@@ -787,7 +787,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     if (succ == src_succ) {
       state_id_issue(succ);
       if (mc_is_dump(f))
-        StateDumper().dump_state_data(succ, stdout, nullptr);
+        StateDumper::from_env()->dump_state_data(succ, stdout, nullptr);
       if (new_ss) {
         new_ss->push((vec_data_t)succ);
       }
@@ -844,7 +844,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (succ == src_succ) {
         state_id_issue(succ);
         if (mc_is_dump(f))
-          StateDumper().dump_state_data(succ, stdout, nullptr);
+          StateDumper::from_env()->dump_state_data(succ, stdout, nullptr);
         if (new_ss) {
           new_ss->push((vec_data_t)succ);
         }

@@ -306,9 +306,10 @@ unsigned long StateSpace::space() const {
  */
 
 void StateSpace::dump_ends() const {
+  auto dumper = StateDumper::from_env();
   for (const auto &end_i : end_states) {
     for (const auto &p : end_i) {
-      StateDumper().state_print_mem(p, this->out);
+      dumper->state_print_mem(p, this->out);
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         printf(".\n");
       }
@@ -353,50 +354,53 @@ void StateSpace::dump() const {
 }
 
 void StateSpace::dump_all_states() const {
+  auto dumper = StateDumper::from_env();
   if (this->mhash_table.tbl)
     for (auto &ptr : *this->mhash_table.tbl)
-      StateDumper().dump_state_data(ptr, this->out, this);
+      dumper->dump_state_data(ptr, this->out, this);
   if (this->memid_table.tbl)
     for (auto &ptr : *this->memid_table.tbl)
-      StateDumper().dump_state_data(ptr, this->out, this);
+      dumper->dump_state_data(ptr, this->out, this);
   if (this->mhash_table.acc)
     for (auto &ptr : *this->mhash_table.acc)
-      StateDumper().dump_state_data(ptr, this->out, this);
+      dumper->dump_state_data(ptr, this->out, this);
   if (this->memid_table.acc)
     for (auto &ptr : *this->memid_table.acc)
-      StateDumper().dump_state_data(ptr, this->out, this);
+      dumper->dump_state_data(ptr, this->out, this);
 }
 
 void StateSpace::dump_all_transitions() const {
+  auto dumper = StateDumper::from_env();
   if (this->mhash_table.tbl)
     for (auto &ptr : *this->mhash_table.tbl)
-      StateDumper().state_print_transition(ptr, this->out, this);
+      dumper->state_print_transition(ptr, this->out, this);
   if (this->memid_table.tbl)
     for (auto &ptr : *this->memid_table.tbl)
-      StateDumper().state_print_transition(ptr, this->out, this);
+      dumper->state_print_transition(ptr, this->out, this);
   if (this->mhash_table.acc)
     for (auto &ptr : *this->mhash_table.acc)
-      StateDumper().state_print_transition(ptr, this->out, this);
+      dumper->state_print_transition(ptr, this->out, this);
   if (this->memid_table.acc)
     for (auto &ptr : *this->memid_table.acc)
-      StateDumper().state_print_transition(ptr, this->out, this);
+      dumper->state_print_transition(ptr, this->out, this);
 }
 
 void StateSpace::dump_all_labels() const {
+  auto dumper = StateDumper::from_env();
   if (this->mhash_table.tbl)
     for (auto &ptr : *this->mhash_table.tbl)
-      StateDumper().state_print_label(ptr, this->out, this);
+      dumper->state_print_label(ptr, this->out, this);
   if (this->memid_table.tbl)
     for (auto &ptr : *this->memid_table.tbl)
-                     StateDumper().state_print_label(ptr , this->out,
+                     dumper->state_print_label(ptr , this->out,
                      this);
   if (this->mhash_table.acc)
     for (auto &ptr : *this->mhash_table.acc)
-                     StateDumper().state_print_label(ptr , this->out,
+                     dumper->state_print_label(ptr , this->out,
                      this);
   if (this->memid_table.acc)
     for (auto &ptr : *this->memid_table.acc)
-                     StateDumper().state_print_label(ptr , this->out,
+                     dumper->state_print_label(ptr , this->out,
                      this);
 }
 

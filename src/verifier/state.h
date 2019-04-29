@@ -55,6 +55,8 @@
 #include "tree_compress.h"
 #include "vm/vm.h"
 
+#include <memory>
+
 /** ------------
  *  State
  */
@@ -169,17 +171,50 @@ void transition_set_cost(TransitionRef t, LmnCost cost);
 
 class StateDumper {
 public:
+  virtual ~StateDumper() {}
+
   void dump_state_data(State *s, FILE *_fp, const StateSpace *_owner);
   void state_print_mem(State *s, FILE *_fp);
   void state_print_transition(State *s, FILE *_fp, const StateSpace *_owner);
   void state_print_label(State *s, FILE *_fp, const StateSpace *_owner);
   void state_print_error_path(State *s, FILE *_fp);
 
+  static std::unique_ptr<StateDumper> from_env();
+
+protected:
+  StateDumper() {}
+
 private:
-  MCdumpFormat dump_format() const {
+  virtual MCdumpFormat dump_format() const {
     return lmn_env.mc_dump_format;
   }
 };
+
+namespace state_dumper {
+class CUI : public StateDumper {
+  MCdumpFormat dump_format() const { return MCdumpFormat::CUI; }
+};
+
+class LaViT : public StateDumper {
+  MCdumpFormat dump_format() const { return MCdumpFormat::LaViT; }
+};
+
+class Dir_DOT : public StateDumper {
+  MCdumpFormat dump_format() const { return MCdumpFormat::Dir_DOT; }
+};
+
+class LMN_FSM_GRAPH : public StateDumper {
+  MCdumpFormat dump_format() const { return MCdumpFormat::LMN_FSM_GRAPH; }
+};
+
+class LMN_FSM_GRAPH_MEM_NODE : public StateDumper {
+  MCdumpFormat dump_format() const { return MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE; }
+};
+
+class LMN_FSM_GRAPH_HL_NODE : public StateDumper {
+  MCdumpFormat dump_format() const { return MCdumpFormat::LMN_FSM_GRAPH_HL_NODE; }
+};
+}
 
 /** -------
  *  inline functions
