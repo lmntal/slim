@@ -4040,26 +4040,26 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         ((callback_0)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi));
         break;
       case 2:
-        ((callback_1)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
-                           atom->get_attr(1));
+        ((callback_1)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
+                                 atom->get_link(1), atom->get_attr(1));
         break;
       case 3:
-        ((callback_2)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
-                           atom->get_attr(1), atom->get_link(2),
-                           atom->get_attr(2));
+        ((callback_2)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
+                                 atom->get_link(1), atom->get_attr(1),
+                                 atom->get_link(2), atom->get_attr(2));
         break;
       case 4:
-        ((callback_3)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
-                           atom->get_attr(1), atom->get_link(2),
-                           atom->get_attr(2), atom->get_link(3),
-                           atom->get_attr(3));
+        ((callback_3)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
+                                 atom->get_link(1), atom->get_attr(1),
+                                 atom->get_link(2), atom->get_attr(2),
+                                 atom->get_link(3), atom->get_attr(3));
         break;
       case 5:
-        ((callback_4)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
-                           atom->get_attr(1), atom->get_link(2),
-                           atom->get_attr(2), atom->get_link(3),
-                           atom->get_attr(3), atom->get_link(4),
-                           atom->get_attr(4));
+        ((callback_4)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
+                                 atom->get_link(1), atom->get_attr(1),
+                                 atom->get_link(2), atom->get_attr(2),
+                                 atom->get_link(3), atom->get_attr(3),
+                                 atom->get_link(4), atom->get_attr(4));
         break;
       case 6:
         ((callback_5)c->get_f())(
@@ -4266,8 +4266,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         ap = (LmnAtomRef)dmem_root_new_atom(RC_ND_MEM_DELTA_ROOT(rc), f);
       }
 
-      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
-                          (LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom((LmnMembraneRef)rc->wt(memi),
+                                          (LmnAtomRef)ap, attr);
 
       rc->reg(atomi) = {
           (LmnWord)ap, attr,
@@ -4285,9 +4285,9 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                                                      (LmnAtomRef)rc->wt(atom2),
                                                      rc->at(atom2)),
                         rc->at(atom2), TT_OTHER};
-      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
-                          (LmnMembraneRef)rc->wt(memi),
-                          (LmnAtomRef)rc->wt(atom1), rc->at(atom1));
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom((LmnMembraneRef)rc->wt(memi),
+                                          (LmnAtomRef)rc->wt(atom1),
+                                          rc->at(atom1));
       break;
     }
     case INSTR_ALLOCLINK: {
@@ -4317,20 +4317,18 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       if (LMN_ATTR_IS_DATA(LINKED_ATTR(link1))) {
         if (LMN_ATTR_IS_DATA(LINKED_ATTR(link2))) { /* 1, 2 are data */
           RC_ND_MEM_DELTA_ROOT(rc)->link_data_atoms(
-              (LmnMembraneRef)rc->wt(mem),
-              (LmnDataAtomRef)LINKED_ATOM(link1), LINKED_ATTR(link1),
-              (LmnDataAtomRef)LINKED_ATOM(link2), LINKED_ATTR(link2));
+              (LmnMembraneRef)rc->wt(mem), (LmnDataAtomRef)LINKED_ATOM(link1),
+              LINKED_ATTR(link1), (LmnDataAtomRef)LINKED_ATOM(link2),
+              LINKED_ATTR(link2));
         } else { /* 1 is data */
           RC_ND_MEM_DELTA_ROOT(rc)->unify_links(
-                                (LmnMembraneRef)rc->wt(mem), LINKED_ATOM(link2),
-                                LINKED_ATTR(link2), LINKED_ATOM(link1),
-                                LINKED_ATTR(link1));
+              (LmnMembraneRef)rc->wt(mem), LINKED_ATOM(link2),
+              LINKED_ATTR(link2), LINKED_ATOM(link1), LINKED_ATTR(link1));
         }
       } else { /* 2 is data or 1, 2 are symbol atom */
         RC_ND_MEM_DELTA_ROOT(rc)->unify_links(
-                              (LmnMembraneRef)rc->wt(mem), LINKED_ATOM(link1),
-                              LINKED_ATTR(link1), LINKED_ATOM(link2),
-                              LINKED_ATTR(link2));
+            (LmnMembraneRef)rc->wt(mem), LINKED_ATOM(link1), LINKED_ATTR(link1),
+            LINKED_ATOM(link2), LINKED_ATTR(link2));
       }
       break;
     }
@@ -4343,9 +4341,9 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, pos2);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      RC_ND_MEM_DELTA_ROOT(rc)->newlink((LmnMembraneRef)rc->wt(memi),
-                        (LmnAtomRef)rc->wt(atom1), rc->at(atom1), pos1,
-                        (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
+      RC_ND_MEM_DELTA_ROOT(rc)->newlink(
+          (LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
+          rc->at(atom1), pos1, (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
       break;
     }
     case INSTR_RELINK: {
@@ -4357,9 +4355,9 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, pos2);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      RC_ND_MEM_DELTA_ROOT(rc)->relink((LmnMembraneRef)rc->wt(memi),
-                       (LmnAtomRef)rc->wt(atom1), rc->at(atom1), pos1,
-                       (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
+      RC_ND_MEM_DELTA_ROOT(rc)->relink(
+          (LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
+          rc->at(atom1), pos1, (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
       break;
     }
     case INSTR_GETLINK: {
@@ -4385,9 +4383,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
 
       RC_ND_MEM_DELTA_ROOT(rc)->unify_atom_args(
-                                (LmnMembraneRef)rc->wt(memi),
-                                (LmnSymbolAtomRef)rc->wt(atom1), pos1,
-                                (LmnSymbolAtomRef)rc->wt(atom2), pos2);
+          (LmnMembraneRef)rc->wt(memi), (LmnSymbolAtomRef)rc->wt(atom1), pos1,
+          (LmnSymbolAtomRef)rc->wt(atom2), pos2);
       break;
     }
     case INSTR_PROCEED:
@@ -4438,9 +4435,9 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
 
-      RC_ND_MEM_DELTA_ROOT(rc)->remove_atom(
-                            (LmnMembraneRef)rc->wt(memi),
-                            (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
+      RC_ND_MEM_DELTA_ROOT(rc)->remove_atom((LmnMembraneRef)rc->wt(memi),
+                                            (LmnAtomRef)rc->wt(atomi),
+                                            rc->at(atomi));
       break;
     }
     case INSTR_FREEATOM: {
@@ -4808,9 +4805,9 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnInstrVar, instr, atomi);
-      RC_ND_MEM_DELTA_ROOT(rc)->push_atom(
-                          (LmnMembraneRef)rc->wt(memi),
-                          (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
+      RC_ND_MEM_DELTA_ROOT(rc)->push_atom((LmnMembraneRef)rc->wt(memi),
+                                          (LmnAtomRef)rc->wt(atomi),
+                                          rc->at(atomi));
       break;
     }
     case INSTR_MOVECELLS: {
@@ -4820,7 +4817,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, srcmemi);
       LMN_ASSERT(rc->wt(destmemi) != rc->wt(srcmemi));
       RC_ND_MEM_DELTA_ROOT(rc)->move_cells((LmnMembraneRef)rc->wt(destmemi),
-                           (LmnMembraneRef)rc->wt(srcmemi));
+                                           (LmnMembraneRef)rc->wt(srcmemi));
       break;
     }
     case INSTR_REMOVETEMPORARYPROXIES: {
@@ -4837,9 +4834,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, mapi);
       READ_VAL(LmnInstrVar, instr, destmemi);
       READ_VAL(LmnInstrVar, instr, srcmemi);
-      RC_ND_MEM_DELTA_ROOT(rc)->copy_cells(
-                           (LmnMembraneRef)rc->wt(destmemi),
-                           (LmnMembraneRef)rc->wt(srcmemi));
+      RC_ND_MEM_DELTA_ROOT(rc)->copy_cells((LmnMembraneRef)rc->wt(destmemi),
+                                           (LmnMembraneRef)rc->wt(srcmemi));
       rc->tt(mapi) = TT_OTHER;
       break;
     }
@@ -4923,25 +4919,25 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
           break;
         case 2:
           ((callback_1)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
-                             atom->get_link(1), atom->get_attr(1));
+                                   atom->get_link(1), atom->get_attr(1));
           break;
         case 3:
           ((callback_2)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
-                             atom->get_link(1), atom->get_attr(1),
-                             atom->get_link(2), atom->get_attr(2));
+                                   atom->get_link(1), atom->get_attr(1),
+                                   atom->get_link(2), atom->get_attr(2));
           break;
         case 4:
           ((callback_3)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
-                             atom->get_link(1), atom->get_attr(1),
-                             atom->get_link(2), atom->get_attr(2),
-                             atom->get_link(3), atom->get_attr(3));
+                                   atom->get_link(1), atom->get_attr(1),
+                                   atom->get_link(2), atom->get_attr(2),
+                                   atom->get_link(3), atom->get_attr(3));
           break;
         case 5:
           ((callback_4)c->get_f())(rc, (LmnMembraneRef)rc->wt(memi),
-                             atom->get_link(1), atom->get_attr(1),
-                             atom->get_link(2), atom->get_attr(2),
-                             atom->get_link(3), atom->get_attr(3),
-                             atom->get_link(4), atom->get_attr(4));
+                                   atom->get_link(1), atom->get_attr(1),
+                                   atom->get_link(2), atom->get_attr(2),
+                                   atom->get_link(3), atom->get_attr(3),
+                                   atom->get_link(4), atom->get_attr(4));
           break;
         default:
           printf("EXTERNAL FUNCTION: too many arguments\n");
