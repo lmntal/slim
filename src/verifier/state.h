@@ -185,22 +185,74 @@ protected:
   StateDumper() {}
 
 private:
-  virtual MCdumpFormat dump_format() const {
-    return lmn_env.mc_dump_format;
+  virtual MCdumpFormat dump_format() const { return lmn_env.mc_dump_format; }
+  virtual bool need_id_foreach_trans() const {
+    throw std::runtime_error("unexpected.");
   }
+  virtual std::string state_separator() const {
+    throw std::runtime_error("unexpected.");
+  }
+  virtual std::string trans_separator() const {
+    throw std::runtime_error("unexpected.");
+  }
+  virtual std::string label_begin() const {
+    throw std::runtime_error("unexpected.");
+  }
+  virtual std::string label_end() const {
+    throw std::runtime_error("unexpected.");
+  }
+
+  virtual void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
+                               StateSpace *owner) {
+    throw std::runtime_error("unexpected");
+  }
+  virtual void print_state_label(FILE *_fp, State *s, StateSpace *owner) {
+    throw std::runtime_error("unexpected");
+  }
+  virtual void print_mem(FILE *_fp, LmnMembrane *mem);
 };
 
 namespace state_dumper {
 class CUI : public StateDumper {
   MCdumpFormat dump_format() const { return MCdumpFormat::CUI; }
+  bool need_id_foreach_trans() const { return false; }
+  /* なぜかspaceが混ざるとlavitは読み込むことができない */
+  std::string state_separator() const { return "::"; }
+  std::string trans_separator() const { return ","; }
+  std::string label_begin() const { return "("; }
+  std::string label_end() const { return ")"; }
+
+  void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
+                       StateSpace *owner) override;
+  void print_state_label(FILE *_fp, State *s, StateSpace *owner) override;
 };
 
 class LaViT : public StateDumper {
   MCdumpFormat dump_format() const { return MCdumpFormat::LaViT; }
+  bool need_id_foreach_trans() const { return false; }
+  /* なぜかspaceが混ざるとlavitは読み込むことができない */
+  std::string state_separator() const { return "::"; }
+  std::string trans_separator() const { return ","; }
+  std::string label_begin() const { return "("; }
+  std::string label_end() const { return ")"; }
+
+  void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
+                       StateSpace *owner) override;
+  void print_state_label(FILE *_fp, State *s, StateSpace *owner) override;
+  void print_mem(FILE *_fp, LmnMembrane *mem);
 };
 
 class Dir_DOT : public StateDumper {
   MCdumpFormat dump_format() const { return MCdumpFormat::Dir_DOT; }
+  bool need_id_foreach_trans() const { return true; }
+  std::string state_separator() const { return " -> "; }
+  std::string trans_separator() const { return ""; }
+  std::string label_begin() const { return " [ label = \""; }
+  std::string label_end() const { return "\" ];"; }
+
+  void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
+                       StateSpace *owner) override;
+  void print_state_label(FILE *_fp, State *s, StateSpace *owner) override;
 };
 
 class LMN_FSM_GRAPH : public StateDumper {
@@ -208,13 +260,17 @@ class LMN_FSM_GRAPH : public StateDumper {
 };
 
 class LMN_FSM_GRAPH_MEM_NODE : public StateDumper {
-  MCdumpFormat dump_format() const { return MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE; }
+  MCdumpFormat dump_format() const {
+    return MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE;
+  }
 };
 
 class LMN_FSM_GRAPH_HL_NODE : public StateDumper {
-  MCdumpFormat dump_format() const { return MCdumpFormat::LMN_FSM_GRAPH_HL_NODE; }
+  MCdumpFormat dump_format() const {
+    return MCdumpFormat::LMN_FSM_GRAPH_HL_NODE;
+  }
 };
-}
+} // namespace state_dumper
 
 /** -------
  *  inline functions
