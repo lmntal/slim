@@ -4,8 +4,8 @@
 # Java LMNtal system checker on Perl #
 #                                    #
 ######################################
-# AUTHOR : kudo
-# LAST UPDATE : 2006/05/22
+# AUTHOR : kudo, saito
+# LAST UPDATE : 2019/04/29
 
 # This is LMNtal system checker.
 
@@ -18,8 +18,12 @@ $count = 1;
 print $count . ".." . (($#ARGV + 1) / 3) . "\n";
 for (my $i = 0; $i <= $#ARGV; $i += 3) {
 	$filename = $ARGV[$i];
-	$flags = "--nd --hl --use-Ncore=4";
-	$check_run = $lmntal_runtime . " " . $flags . " " . $filename . ".il";
+	$flags_fixed = "--nd --hl";
+	$flags_option = "--use-Ncore=4";
+	if (exists($ENV{SLIM_FLAG})) {
+		$flags_option = $ENV{SLIM_FLAG};
+	}
+	$check_run = $lmntal_runtime . " " . $flags_fixed . " " . $flags_option . " " . $filename . ".il";
 	$checked = `$check_run`;
 
 	$checked =~ /\(stored\)\s+=\s+(\d+)/;
