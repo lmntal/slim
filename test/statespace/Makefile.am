@@ -10,6 +10,8 @@ check_DATA = \
 	testsuite/basic/nd.il \
 	testsuite/basic/nd2.il \
 	testsuite/hyperlink/cycle.il \
+	testsuite/hyperlink/mc-hl.il \
+	testsuite/hyperlink/lambda_nd-hl7.il \
 	../../benchmarkset/phi.il \
 	../../benchmarkset/phiM.il \
 	../../benchmarkset/bakery.il\
