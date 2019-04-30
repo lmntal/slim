@@ -175,6 +175,8 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"dump-inc", 0, 0, 1103},
                                   {"dump-lmn", 0, 0, 1104},
                                   {"dump-json", 0, 0, 1105},
+                                  {"dump-fsm-lmn-detail", 0, 0, 1106},
+                                  {"dump-fsm-hl", 0, 0, 1107},
                                   {"interactive", 0, 0, 1200},
                                   {"translate", 0, 0, 1300},
                                   {"hl", 0, 0, 1350},
@@ -315,6 +317,12 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1105:
       lmn_env.output_format = JSON;
+      break;
+    case 1106:
+      lmn_env.mc_dump_format = LMN_FSM_GRAPH;
+      break;
+    case 1107:
+      lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
       break;
     case 1200: /* jni interactive mode */
 #ifdef HAVE_JNI_H

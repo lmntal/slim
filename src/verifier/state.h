@@ -260,10 +260,6 @@ class Dir_DOT : public StateDumper {
   void print_state_label(FILE *_fp, State *s, StateSpace *owner) override;
 };
 
-class LMN_FSM_GRAPH : public StateDumper {
-  MCdumpFormat dump_format() const { return MCdumpFormat::LMN_FSM_GRAPH; }
-};
-
 class LMN_FSM_GRAPH_MEM_NODE : public StateDumper {
   MCdumpFormat dump_format() const override {
     return MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE;
@@ -275,15 +271,24 @@ class LMN_FSM_GRAPH_MEM_NODE : public StateDumper {
   std::string label_end() const override { return ""; }
 
   void dump(FILE *fp, StateSpace *ss) override;
-  void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
-                       StateSpace *owner) override;
-  void print_state_label(FILE *_fp, State *s, StateSpace *owner) override;
+  virtual void dump(FILE *fp, State *s) {}
+};
+
+class LMN_FSM_GRAPH : public LMN_FSM_GRAPH_MEM_NODE {
+  void dump(FILE *fp, State *s) override;
 };
 
 class LMN_FSM_GRAPH_HL_NODE : public StateDumper {
   MCdumpFormat dump_format() const override {
     return MCdumpFormat::LMN_FSM_GRAPH_HL_NODE;
   }
+  bool need_id_foreach_trans() const override { return true; }
+  std::string state_separator() const override { return ""; }
+  std::string trans_separator() const override { return ""; }
+  std::string label_begin() const override { return ""; }
+  std::string label_end() const override { return ""; }
+
+  void dump(FILE *fp, StateSpace *ss) override;
 };
 } // namespace state_dumper
 

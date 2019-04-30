@@ -464,6 +464,8 @@ void LMN_FSM_GRAPH_MEM_NODE::dump(FILE *_fp, StateSpace *ss) {
     auto src_id = state_format_id(s, formatted);
     fprintf(_fp, "{");
 
+    dump(_fp, s);
+
     if (s->successors) {
       for (int i = 0; i < s->successor_num; i++) {
         auto dst_id = state_format_id(state_succ_state(s, i), formatted);
@@ -488,6 +490,42 @@ void LMN_FSM_GRAPH_MEM_NODE::dump(FILE *_fp, StateSpace *ss) {
     fprintf(_fp, "}.\n");
   }
   fprintf(_fp, "\n");
+}
+
+void LMN_FSM_GRAPH::dump(FILE *fp, State *s) {
+  auto org_next_id = env_next_id();
+  auto mem = s->restore_membrane_inner(FALSE);
+  env_set_next_id(org_next_id);
+
+  print_mem(fp, mem);
+  fprintf(fp, ". ");
+
+  if (s->is_binstr_user()) {
+    lmn_mem_free_rec(mem);
+  }
+}
+
+void LMN_FSM_GRAPH_HL_NODE::dump(FILE *fp, StateSpace *ss) {
+  auto states = ss->all_states();
+  auto formatted = ss ? ss->is_formatted() : FALSE;
+  for (auto &s : states) {
+    if (s->is_dummy() && !s->is_encoded())
+      continue;
+
+    auto src_id = state_format_id(s, formatted);
+
+    if (s->successors) {
+      for (int i = 0; i < s->successor_num; i++) {
+        auto dst_id = state_format_id(state_succ_state(s, i), formatted);
+        if (i > 0)
+          fprintf(fp, ",");
+        fprintf(fp, "to(!H%lu,!H%lu)", src_id, dst_id);
+      }
+      if (s->successor_num > 0 && s != states.back())
+        fprintf(fp, ",\n");
+    }
+  }
+  fprintf(fp, ".\n");
 }
 } // namespace state_dumper
 
@@ -636,12 +674,6 @@ void Dir_DOT::print_state_label(FILE *_fp, State *s, StateSpace *owner) {
             state_format_id(s, owner->is_formatted()));
   }
 }
-
-void LMN_FSM_GRAPH_MEM_NODE::dump_state_data(FILE *_fp, State *s,
-                                             unsigned long print_id,
-                                             StateSpace *owner) {}
-void LMN_FSM_GRAPH_MEM_NODE::print_state_label(FILE *_fp, State *s,
-                                               StateSpace *owner) {}
 } // namespace state_dumper
 
 void StateDumper::state_print_label(State *s, FILE *_fp,
