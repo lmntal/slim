@@ -178,7 +178,6 @@ public:
   void state_print_mem(State *s, FILE *_fp);
   void state_print_transition(State *s, FILE *_fp, const StateSpace *_owner);
   void state_print_label(State *s, FILE *_fp, const StateSpace *_owner);
-  void state_print_error_path(State *s, FILE *_fp);
 
   static std::unique_ptr<StateDumper> from_env();
   virtual void print_mem(FILE *_fp, LmnMembrane *mem);

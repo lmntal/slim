@@ -410,15 +410,18 @@ std::unique_ptr<StateDumper> StateDumper::from_env() {
 
 namespace state_dumper {
 void CUI::dump(FILE *fp, StateSpace *ss) {
+  auto states = ss->all_states();
   if (lmn_env.sp_dump_format != INCREMENTAL) {
     fprintf(fp, "States\n");
-    ss->dump_all_states();
+    for (auto &s : states)
+      this->StateDumper::dump_state_data(s, fp, ss);
   }
   fprintf(fp, "\n");
   fprintf(fp, "Transitions\n");
   fprintf(fp, "init:%lu\n",
           state_format_id(ss->initial_state(), ss->is_formatted()));
-  ss->dump_all_transitions();
+  for (auto &s : states)
+    this->state_print_transition(s, fp, ss);
   fprintf(fp, "\n");
 }
 
@@ -427,27 +430,35 @@ void Dir_DOT::dump(FILE *fp, StateSpace *ss) {
   fprintf(fp, "  node [shape = circle];\n");
   fprintf(fp, "  %lu [style=filled, color = \"#ADD8E6\", shape = Msquare];\n",
           state_format_id(ss->initial_state(), ss->is_formatted()));
-  ss->dump_all_states();
-  ss->dump_all_transitions();
-  ss->dump_all_labels();
+  auto states = ss->all_states();
+  for (auto &s : states)
+    this->StateDumper::dump_state_data(s, fp, ss);
+  for (auto &s : states)
+    this->state_print_transition(s, fp, ss);
+  for (auto &s : states)
+    this->state_print_label(s, fp, ss);
   fprintf(fp, "}\n");
 }
 
 void LaViT::dump(FILE *fp, StateSpace *ss) {
+  auto states = ss->all_states();
   if (lmn_env.sp_dump_format != INCREMENTAL) {
     fprintf(fp, "States\n");
-    ss->dump_all_states();
+    for (auto &s : states)
+      this->StateDumper::dump_state_data(s, fp, ss);
   }
   fprintf(fp, "\n");
   fprintf(fp, "Transitions\n");
   fprintf(fp, "init:%lu\n",
           state_format_id(ss->initial_state(), ss->is_formatted()));
-  ss->dump_all_transitions();
+  for (auto &s : states)
+    this->state_print_transition(s, fp, ss);
   fprintf(fp, "\n");
 
   if (ss->has_property()) {
     fprintf(fp, "Labels\n");
-    ss->dump_all_labels();
+    for (auto &s : states)
+      this->state_print_label(s, fp, ss);
     fprintf(fp, "\n");
   }
 }
@@ -626,15 +637,13 @@ namespace state_dumper {
 void CUI::dump_state_data(FILE *_fp, State *s, unsigned long print_id,
                           StateSpace *owner) {
   BOOL has_property = owner && owner->has_property();
+  fprintf(_fp, "%lu::", print_id);
 #ifdef KWBT_OPT
-  fprintf(_fp, "%lu::%lu::%s", print_id, cost,
-          has_property ? owner->automata()->state_name(state_property_state(s))
-                       : "");
-#else
-  fprintf(_fp, "%lu::%s", print_id,
-          has_property ? owner->automata()->state_name(state_property_state(s))
-                       : "");
+  fprintf(_fp, "%lu::", cost);
 #endif
+  fprintf(_fp, "%s",
+          has_property ? owner->automata()->state_name(state_property_state(s))
+                       : "");
   state_print_mem(s, _fp);
 }
 

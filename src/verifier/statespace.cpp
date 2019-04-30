@@ -310,66 +310,14 @@ void StateSpace::dump_ends() const {
   for (const auto &end_i : end_states) {
     for (const auto &p : end_i) {
       dumper->state_print_mem(p, this->out);
-      if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+      if (lmn_env.sp_dump_format == LMN_SYNTAX)
         printf(".\n");
-      }
     }
   }
 }
 
 void StateSpace::dump() {
   StateDumper::from_env()->dump(this->out, this);
-}
-
-void StateSpace::dump_all_states() const {
-  auto dumper = StateDumper::from_env();
-  if (this->mhash_table.tbl)
-    for (auto &ptr : *this->mhash_table.tbl)
-      dumper->dump_state_data(ptr, this->out, this);
-  if (this->memid_table.tbl)
-    for (auto &ptr : *this->memid_table.tbl)
-      dumper->dump_state_data(ptr, this->out, this);
-  if (this->mhash_table.acc)
-    for (auto &ptr : *this->mhash_table.acc)
-      dumper->dump_state_data(ptr, this->out, this);
-  if (this->memid_table.acc)
-    for (auto &ptr : *this->memid_table.acc)
-      dumper->dump_state_data(ptr, this->out, this);
-}
-
-void StateSpace::dump_all_transitions() const {
-  auto dumper = StateDumper::from_env();
-  if (this->mhash_table.tbl)
-    for (auto &ptr : *this->mhash_table.tbl)
-      dumper->state_print_transition(ptr, this->out, this);
-  if (this->memid_table.tbl)
-    for (auto &ptr : *this->memid_table.tbl)
-      dumper->state_print_transition(ptr, this->out, this);
-  if (this->mhash_table.acc)
-    for (auto &ptr : *this->mhash_table.acc)
-      dumper->state_print_transition(ptr, this->out, this);
-  if (this->memid_table.acc)
-    for (auto &ptr : *this->memid_table.acc)
-      dumper->state_print_transition(ptr, this->out, this);
-}
-
-void StateSpace::dump_all_labels() const {
-  auto dumper = StateDumper::from_env();
-  if (this->mhash_table.tbl)
-    for (auto &ptr : *this->mhash_table.tbl)
-      dumper->state_print_label(ptr, this->out, this);
-  if (this->memid_table.tbl)
-    for (auto &ptr : *this->memid_table.tbl)
-                     dumper->state_print_label(ptr , this->out,
-                     this);
-  if (this->mhash_table.acc)
-    for (auto &ptr : *this->mhash_table.acc)
-                     dumper->state_print_label(ptr , this->out,
-                     this);
-  if (this->memid_table.acc)
-    for (auto &ptr : *this->memid_table.acc)
-                     dumper->state_print_label(ptr , this->out,
-                     this);
 }
 
 /* 注: 出力用に, リンクリストの先頭の状態のIDで,

@@ -116,10 +116,6 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
   }
 
 private:
-  void dump_all_states() const;
-  void dump_all_transitions() const;
-  void dump_all_labels() const;
-
   bool using_memenc;
   bool is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
   /* 2bytes alignment */
@@ -149,11 +145,6 @@ private:
 
   std::unique_ptr<StateTable> &insert_destination(State *s, unsigned long hashv);
   std::unique_ptr<StateTable> &resize_destination(std::unique_ptr<StateTable> &def, State *ret, State *s);
-
-  friend class StateDumper;
-  friend class state_dumper::CUI;
-  friend class state_dumper::LaViT;
-  friend class state_dumper::Dir_DOT;
 };
 
 #endif
