@@ -201,11 +201,11 @@ redo:
     count++;
   }
   fprintf(stderr, "error full table\n");
-  fprintf(stderr, "node count  : %10llu\n", this->node_count);
+  fprintf(stderr, "node count  : %10lu\n", this->node_count);
   fprintf(stderr, "table size  : %10lu\n", (this->mask + 1));
   fprintf(stderr, "load factor : %10.3lf\n",
           (double)tree_db_node_count(this) / (this->mask + 1));
-  fprintf(stderr, "memory      : %7llu MB\n",
+  fprintf(stderr, "memory      : %7lu MB\n",
           (uint64_t)this->space() / 1024 / 1024);
   exit(EXIT_FAILURE);
 }

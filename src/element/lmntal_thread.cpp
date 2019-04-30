@@ -40,8 +40,10 @@
 /** @author Masato Gocho
  *  common thread library
  */
-
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include "lmntal_thread.h"
 #include "error.h"
 #include "util.h"

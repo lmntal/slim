@@ -10,7 +10,7 @@ AC_CANONICAL_TARGET
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE([subdir-objects -Wno-portability])
 AM_SILENT_RULES([no])
 
 TCMALLOC_SO_VERSION=2:2:2
@@ -538,7 +538,7 @@ AC_MSG_RESULT(${pe_num})
 AC_CHECK_TOOL([OBJCOPY], [objcopy], [])
 AS_IF([test -n "$OBJCOPY"], [dnl
   AC_CACHE_CHECK([if $OBJCOPY supports -W], gpt_cv_objcopy_weaken, [dnl
-    AC_LINK_IFELSE([void foo() {} int main() {return 0;}], [dnl
+    AC_LINK_IFELSE([AC_LANG_SOURCE([void foo() {} int main() {return 0;}])], [dnl
       AS_IF(["$OBJCOPY" -W foo conftest$ac_exeext /dev/null],
             [gpt_cv_objcopy_weaken=yes], [gpt_cv_objcopy_weaken=no])],
     [gpt_cv_objcopy_weaken=no])])],
