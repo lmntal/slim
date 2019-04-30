@@ -408,6 +408,89 @@ std::unique_ptr<StateDumper> StateDumper::from_env() {
   }
 }
 
+namespace state_dumper {
+void CUI::dump(FILE *fp, StateSpace *ss) {
+  if (lmn_env.sp_dump_format != INCREMENTAL) {
+    fprintf(fp, "States\n");
+    ss->dump_all_states();
+  }
+  fprintf(fp, "\n");
+  fprintf(fp, "Transitions\n");
+  fprintf(fp, "init:%lu\n",
+          state_format_id(ss->initial_state(), ss->is_formatted()));
+  ss->dump_all_transitions();
+  fprintf(fp, "\n");
+}
+
+void Dir_DOT::dump(FILE *fp, StateSpace *ss) {
+  fprintf(fp, "digraph StateTransition {\n");
+  fprintf(fp, "  node [shape = circle];\n");
+  fprintf(fp, "  %lu [style=filled, color = \"#ADD8E6\", shape = Msquare];\n",
+          state_format_id(ss->initial_state(), ss->is_formatted()));
+  ss->dump_all_states();
+  ss->dump_all_transitions();
+  ss->dump_all_labels();
+  fprintf(fp, "}\n");
+}
+
+void LaViT::dump(FILE *fp, StateSpace *ss) {
+  if (lmn_env.sp_dump_format != INCREMENTAL) {
+    fprintf(fp, "States\n");
+    ss->dump_all_states();
+  }
+  fprintf(fp, "\n");
+  fprintf(fp, "Transitions\n");
+  fprintf(fp, "init:%lu\n",
+          state_format_id(ss->initial_state(), ss->is_formatted()));
+  ss->dump_all_transitions();
+  fprintf(fp, "\n");
+
+  if (ss->has_property()) {
+    fprintf(fp, "Labels\n");
+    ss->dump_all_labels();
+    fprintf(fp, "\n");
+  }
+}
+
+void LMN_FSM_GRAPH_MEM_NODE::dump(FILE *_fp, StateSpace *ss) {
+  auto states = ss->all_states();
+  auto predecessor = ss->predecessor();
+
+  auto formatted = ss ? ss->is_formatted() : FALSE;
+  for (auto &s : states) {
+    if (s->is_dummy() && !s->is_encoded())
+      continue;
+
+    auto src_id = state_format_id(s, formatted);
+    fprintf(_fp, "{");
+
+    if (s->successors) {
+      for (int i = 0; i < s->successor_num; i++) {
+        auto dst_id = state_format_id(state_succ_state(s, i), formatted);
+        if (i > 0)
+          fprintf(_fp, ",");
+        fprintf(_fp, "+L%lu_%lu", src_id, dst_id);
+      }
+    }
+
+    auto &ps = predecessor[s];
+
+    if (s->successors && s->successor_num > 0 && !ps.empty())
+      fprintf(_fp, ",");
+
+    for (int i = 0; i < ps.size(); i++) {
+      auto dst_id = state_format_id(ps[i], formatted);
+      if (i > 0)
+        fprintf(_fp, ",");
+      fprintf(_fp, "-L%lu_%lu", dst_id, src_id);
+    }
+
+    fprintf(_fp, "}.\n");
+  }
+  fprintf(_fp, "\n");
+}
+} // namespace state_dumper
+
 /** Printer
  * ownerはNULLでもok */
 void StateDumper::dump_state_data(State *s, FILE *_fp,
@@ -553,6 +636,12 @@ void Dir_DOT::print_state_label(FILE *_fp, State *s, StateSpace *owner) {
             state_format_id(s, owner->is_formatted()));
   }
 }
+
+void LMN_FSM_GRAPH_MEM_NODE::dump_state_data(FILE *_fp, State *s,
+                                             unsigned long print_id,
+                                             StateSpace *owner) {}
+void LMN_FSM_GRAPH_MEM_NODE::print_state_label(FILE *_fp, State *s,
+                                               StateSpace *owner) {}
 } // namespace state_dumper
 
 void StateDumper::state_print_label(State *s, FILE *_fp,

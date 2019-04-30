@@ -317,40 +317,8 @@ void StateSpace::dump_ends() const {
   }
 }
 
-void StateSpace::dump() const {
-  State *init = init_state;
-  switch (lmn_env.mc_dump_format) {
-  case Dir_DOT:
-    fprintf(this->out, "digraph StateTransition {\n");
-    fprintf(this->out, "  node [shape = circle];\n");
-    fprintf(this->out,
-            "  %lu [style=filled, color = \"#ADD8E6\", shape = Msquare];\n",
-            state_format_id(init, this->is_formated));
-    this->dump_all_states();
-    this->dump_all_transitions();
-    this->dump_all_labels();
-    fprintf(this->out, "}\n");
-    break;
-  case LaViT: /* FALL THROUGH */
-  default:
-    if (lmn_env.sp_dump_format != INCREMENTAL) {
-      fprintf(this->out, "States\n");
-      this->dump_all_states();
-    }
-    fprintf(this->out, "\n");
-    fprintf(this->out, "Transitions\n");
-    fprintf(this->out, "init:%lu\n", state_format_id(init, this->is_formated));
-    this->dump_all_transitions();
-    fprintf(this->out, "\n");
-
-    if (this->has_property() && lmn_env.mc_dump_format == LaViT) {
-      fprintf(this->out, "Labels\n");
-      this->dump_all_labels();
-      fprintf(this->out, "\n");
-    }
-
-    break;
-  }
+void StateSpace::dump() {
+  StateDumper::from_env()->dump(this->out, this);
 }
 
 void StateSpace::dump_all_states() const {
