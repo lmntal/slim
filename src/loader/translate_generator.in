@@ -38,7 +38,7 @@
 
 #__echo
  #include "translate.hpp"
- #include "syntax.h"
+ #include "syntax.hpp"
  #include "arch.h"
  #include "vm/vm.h"
  #include "element/element.h"
