@@ -1,0 +1,11 @@
+extern size_t memory_count_statespace;
+extern size_t memory_count_statedesc;
+extern size_t memory_count_binarystring;
+extern size_t memory_count_transition;
+extern size_t memory_count_no_comp;
+extern size_t memory_count_vectorunit;
+extern size_t memory_count_ref;
+extern size_t tree_database_max_depth;
+extern size_t treevalue;
+extern size_t nodecount;
+extern size_t sharenode;

@@ -44,16 +44,28 @@
 #include "loader/loader.h"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
+#include"memory_count.h"
 #include <ctype.h>
 #include <getopt.h>
 #include <unistd.h>
+#include<iostream>
 /* #include "ext.h" */
 #include "verifier/runtime_status.h"
 
 #ifdef USE_CUNIT
 #include "test/unit_test.h"
 #endif
-
+size_t memory_count_statespace=0;
+size_t memory_count_statedesc=0;
+size_t memory_count_binarystring=0;
+size_t memory_count_transition=0;
+size_t memory_count_no_comp=0;
+size_t memory_count_vectorunit=0;
+size_t memory_count_ref=0;
+size_t tree_database_max_depth=0;
+size_t treevalue=0;
+size_t nodecount=0;
+size_t sharenode=0;
 #include <vector>
 
 void install_builtin_extensions(void);
@@ -781,7 +793,19 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
+  printf("memory usage in state descriptors is %ld Bytes\n",memory_count_statedesc);
+  printf("memory usage in binary string is %ld Bytes\n",memory_count_binarystring);
+  printf("memory usage in transition is %ld Bytes\n",memory_count_transition);
+  printf("memory usage in statespace is %ld Bytes\n",memory_count_statespace);
+  printf("total memory usage is %ld bytes\n",memory_count_statespace+memory_count_statedesc+memory_count_binarystring+memory_count_transition);
+  printf("memory usage of no comp is %ld bytes\n",memory_count_no_comp+memory_count_statedesc+memory_count_transition+memory_count_statespace);
+  printf("tree database of vector unit used %ld bytes\n",memory_count_vectorunit);
+  printf("default binary string is %ld bytes\n",memory_count_no_comp);
+  printf("memory usage of tree database references is %ld bytes\n",memory_count_binarystring-memory_count_ref);
+  printf("max depth of tree database is %ld\n",tree_database_max_depth);
+  printf("treevalue is %ld\n",treevalue);
+  printf("nodecount is %ld\n",nodecount);
+  printf("sharenode is %ld\n",sharenode);
   slim_finalize();
   return 0;
 }
