@@ -41,6 +41,7 @@
  *  Parallel Recursive State Compression for Free
  */
 #include "tree_compress.h"
+#include "../memory_count.h"
 #include <math.h>
 
 #define atomic_fetch_and_inc(t) __sync_fetch_and_add(t, 1)
@@ -51,7 +52,14 @@
 #define TREE_UNIT_SIZE 8
 #define TREE_THRESHOLD 10
 #define TREE_CACHE_LINE 8
-
+bool check_l=false;
+bool check_r=false;
+int vecunitlen=0;
+int vecunitlen_l=0;
+int vecunitlen_r=0;
+int vecunitlenal_l=TREE_UNIT_SIZE;
+int vecunitlenal_r=TREE_UNIT_SIZE;
+int depth=0;
 typedef struct TreeNodeStr *TreeNodeStrRef;
 
 struct TreeNodeStr {
@@ -133,6 +141,8 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   // printf("copy_len :%d\n", copy_len);
   memcpy(&ret, ((BYTE *)str->nodes + (start * TREE_UNIT_SIZE)),
          sizeof(BYTE) * copy_len);
+  memory_count_no_comp+=copy_len;
+  vecunitlen=copy_len;
   // printf("start :0x%14llx\n", ret);
   return ret;
 }
@@ -164,6 +174,7 @@ LmnBinStrRef binstr_make(unsigned int len) {
 
 TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
   TreeNodeRef node = LMN_MALLOC(struct TreeNode);
+  memory_count_binarystring+=sizeof(struct TreeNode);
   node->left = left;
   node->right = right;
   return node;
@@ -187,6 +198,25 @@ redo:
         if (atomic_compare_and_swap(&table[(offset + i) & mask], 0, node)) {
           atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
+	  if(check_l==true){
+	    if(check_r==true){
+	      memory_count_vectorunit+=vecunitlen_l+vecunitlen_r;
+	      memory_count_ref+=vecunitlenal_l+vecunitlenal_r;
+	      treevalue+=pow(2,depth-1)*2*TREE_UNIT_SIZE;
+	    }else{
+	      memory_count_vectorunit+=vecunitlen_l;
+	      memory_count_ref+=vecunitlenal_l;
+	      treevalue+=pow(2,depth-1)*TREE_UNIT_SIZE;
+	    }
+	  }else if(check_r==true){
+	    memory_count_vectorunit+=vecunitlen_r;
+	    memory_count_ref+=vecunitlenal_r;
+	    treevalue+=pow(2,depth-1)*TREE_UNIT_SIZE;
+	  }
+	  check_l=false;
+	  check_r=false;
+	  vecunitlen=0;
+	  depth--;
           return FALSE;
         } else {
           std::free(node);
@@ -194,6 +224,11 @@ redo:
         }
       } else if (tree_node_equal(table[(offset + i) & mask], left, right)) {
         *ref = (offset + i) & mask;
+	sharenode++;
+	check_l=false;
+	check_r=false;
+	vecunitlen=0;
+	depth--;
         return TRUE;
       }
     }
@@ -211,7 +246,9 @@ redo:
 }
 
 TreeDatabase::TreeDatabase(size_t size){
+  memory_count_binarystring+=sizeof(struct TreeDatabase);
   this->nodes = LMN_CALLOC(TreeNodeRef, size);
+  memory_count_binarystring+=sizeof(TreeNodeRef)*size;
   this->mask = size - 1;
   this->node_count = 0;
 }
@@ -241,11 +278,26 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   if ((end - start + 1) <= 1) {
     return vector_unit(str, start, end);
   }
+  depth++;
+  if(depth>tree_database_max_depth){
+    tree_database_max_depth=depth;
+  }
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
       this->tree_find_or_put_rec(str, start, start + split, found);
+  vecunitlen_l=vecunitlen;
   TreeNodeElement right =
       this->tree_find_or_put_rec(str, start + split + 1, end, found);
+  vecunitlen_r=vecunitlen;
+  nodecount++;
+  if((split+1)<=1){
+    check_l=true;
+    //printf("check_l is true\n");
+  }
+  if((end-(start+split+1)+1)<=1){
+    check_r=true;
+    //printf("check_r is true\n");
+  }
   if ((end - start + 1) == str->len) {
     BOOL _found = this->table_find_or_put(left, right, &ref);
     if (found)

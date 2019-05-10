@@ -45,6 +45,7 @@
 #include "state.h"
 #include "state_defs.h"
 #include "vm/vm.h"
+#include "../memory_count.h"
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
  *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
@@ -267,6 +268,7 @@ struct State {                /* Total:72(36)byte */
       unsigned int i;
       successor_num = v->get_num();
       successors = LMN_NALLOC(succ_data_t, successor_num);
+      memory_count_transition+=sizeof(succ_data_t)*successor_num;
       for (i = 0; i < successor_num; i++) {
         successors[i] = (succ_data_t)v->get(i);
       }

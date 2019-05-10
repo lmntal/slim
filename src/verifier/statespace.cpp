@@ -51,7 +51,7 @@
 #include "state.hpp"
 #include "state_table.hpp"
 #include "vm/vm.h"
-
+#include "../memory_count.h"
 namespace c14 = slim::element;
 
 void StateSpace::make_table_pair(TablePair &t) {

@@ -39,7 +39,7 @@
 
 #include "state.h"
 #include "state.hpp"
-
+#include "../memory_count.h"
 #include <mutex>
 #include <algorithm>
 
@@ -215,6 +215,7 @@ StateTable::StateTable(int thread_num, unsigned long size,
   this->use_rehasher_ = FALSE;
   size = table_new_size(size);
   this->tbl = std::vector<State *>(size, nullptr);
+  memory_count_statespace+=sizeof(State *)*size;
   this->cap_ = size;
   this->cap_density_ = size / thread_num;
   this->num = std::vector<unsigned long>(thread_num, 0);
