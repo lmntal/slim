@@ -71,7 +71,6 @@ slim_SOURCES =                                                     \
 	ext/integer.cpp                                                    \
 	ext/float.cpp                                                      \
 	ext/nlmem.cpp                                                      \
-	ext/io.cpp                                                         \
 	ext/array.cpp			ext/array.h                      \
 	ext/atom.cpp                                                     \
 	ext/react_rule.cpp                                               \
