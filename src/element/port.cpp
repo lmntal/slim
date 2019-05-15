@@ -304,7 +304,7 @@ LmnStringRef port_read_line(LmnPortRef port) {
   return s;
 }
 
-/* ポートから空白または改行で区切られたトークンを読み込み、
+/* ポートから空白またはタブまたは改行で区切られたトークンを読み込み、
    読み込んだ文字列を返す。ファイルの終わりに達
    していたり，エラーが起きた場合はNULLを返す */
 LmnStringRef port_read_token(LmnPortRef port) {
@@ -320,7 +320,7 @@ LmnStringRef port_read_token(LmnPortRef port) {
   for (;;) {
     if (c0 == EOF)
       break;
-    if (c0 == ' ' || c0 == '\n') {
+    if (c0 == ' ' || c0 == '\t' || c0 == '\n') {
       c0 = port_get_raw_c(port);
     } else if (c0 == '\r') {
       c1 = port_get_raw_c(port);
@@ -340,7 +340,7 @@ LmnStringRef port_read_token(LmnPortRef port) {
   for (;;) {
     if (c0 == EOF)
       return s;
-    if (c0 == ' ' || c0 == '\n')
+    if (c0 == ' ' || c0 == '\t' || c0 == '\n')
       break;
     if (c0 == '\r') {
       c1 = port_get_raw_c(port);

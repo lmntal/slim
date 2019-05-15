@@ -56,6 +56,7 @@ io.unread_byte(Port, C, RetPort) :- int(C), class(Port, "port") |
 
 H=io.stdin :- '$callback'('cb_port_stdin', H).
 H=io.stdout :- '$callback'('cb_port_stdout', H).
+H=io.stderr :- '$callback'('cb_port_stderr', H).
 
 io.close_port(Port, RetPort) :- class(Port, "port") |
     '$callback'('cb_port_close', Port, RetPort).
@@ -63,6 +64,10 @@ io.close_port(Port, RetPort) :- class(Port, "port") |
 io.free_port(Port) :- class(Port, "port") |
     '$callback'('cb_port_free', Port).
 
+io.print_unary(Port, C, RetPort) :- unary(C), class(Port, "port") |
+    '$callback'('cb_port_putc', Port, C, RetPort).
+
+/* print_char is the same as print_unary */
 io.print_char(Port, C, RetPort) :- unary(C), class(Port, "port") |
     '$callback'('cb_port_putc', Port, C, RetPort).
 
@@ -73,23 +78,25 @@ io.print(Port, S, RetPort) :- string(S), class(Port, "port") |
     '$callback'('cb_port_puts', Port, S, RetPort).
 
 io.print_newline(Port, RetPort) :- class(Port, "port") |
-    '$callback'('cb_print_newline_with_port', Port, RetPort).
+    '$callback'('cb_port_puts', Port, "\n", RetPort).
 
 io.print_line(Port, S, RetPort) :- string(S), class(Port, "port") |
-    '$callback'('cb_print_line_with_port', Port, S, RetPort).
+    '$callback'('cb_port_puts', Port, S, Port1),
+    io.print_newline(Port1, RetPort).
 
+/*
 io.print_newline(Port, [], RetPort):-class(Port, "port") |
     '$callback'('cb_print_newline_with_port', Port, RetPort).
 
 io.print_newline(Port,[H|T],RetPort):- unary(H),class(Port, "port")|
-'$callback'('cb_port_putc', Port, H, X), io.print_newline(X,T,RetPort).
+    '$callback'('cb_port_putc', Port, H, X), io.print_newline(X,T,RetPort).
 
 io.print_line(Port, [], RetPort):-class(Port, "port") |
     Port=RetPort.
 
 io.print_line(Port,[H|T],RetPort):- unary(H),class(Port, "port")|
-'$callback'('cb_port_putc', Port, H, X), io.print_line(X,T,RetPort).
-
+    '$callback'('cb_port_putc', Port, H, X), io.print_line(X,T,RetPort).
+*/
 
 io.print_mem(Port, {$p[], @p}, RetPort) :- class(Port, "port") |
     '$callback'('cb_dump_mem', Port, {$p[], @p}, RetPort).
