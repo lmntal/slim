@@ -66,6 +66,7 @@ size_t tree_database_max_depth=0;
 size_t treevalue=0;
 size_t nodecount=0;
 size_t sharenode=0;
+size_t nodeintree=0;
 #include <vector>
 
 void install_builtin_extensions(void);
@@ -801,11 +802,12 @@ int main(int argc, char *argv[]) {
   printf("memory usage of no comp is %ld bytes\n",memory_count_no_comp+memory_count_statedesc+memory_count_transition+memory_count_statespace);
   printf("tree database of vector unit used %ld bytes\n",memory_count_vectorunit);
   printf("default binary string is %ld bytes\n",memory_count_no_comp);
-  printf("memory usage of tree database references is %ld bytes\n",memory_count_binarystring-memory_count_ref);
+  printf("memory usage of tree database references is %ld bytes\n",memory_count_ref);
   printf("max depth of tree database is %ld\n",tree_database_max_depth);
   printf("treevalue is %ld\n",treevalue);
   printf("nodecount is %ld\n",nodecount);
   printf("sharenode is %ld\n",sharenode);
+  printf("nodeintree is %ld\n",nodeintree);
   slim_finalize();
   return 0;
 }

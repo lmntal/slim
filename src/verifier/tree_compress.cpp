@@ -201,22 +201,25 @@ redo:
 	  if(check_l==true){
 	    if(check_r==true){
 	      memory_count_vectorunit+=vecunitlen_l+vecunitlen_r;
-	      memory_count_ref+=vecunitlenal_l+vecunitlenal_r;
+	      //memory_count_ref+=vecunitlenal_l+vecunitlenal_r;
 	      treevalue+=pow(2,depth-1)*2*TREE_UNIT_SIZE;
 	    }else{
 	      memory_count_vectorunit+=vecunitlen_l;
-	      memory_count_ref+=vecunitlenal_l;
+	      memory_count_ref+=8;
 	      treevalue+=pow(2,depth-1)*TREE_UNIT_SIZE;
 	    }
 	  }else if(check_r==true){
 	    memory_count_vectorunit+=vecunitlen_r;
-	    memory_count_ref+=vecunitlenal_r;
+	    memory_count_ref+=8;
 	    treevalue+=pow(2,depth-1)*TREE_UNIT_SIZE;
+	  }else{
+	    memory_count_ref+=16;
 	  }
 	  check_l=false;
 	  check_r=false;
 	  vecunitlen=0;
 	  depth--;
+	  nodeintree++;
           return FALSE;
         } else {
           std::free(node);
