@@ -55,7 +55,7 @@ module(time).
 /*
  * H = time.gettime:
  *
- * H is bound to time elapsed since the program was launched.
+ * H is bound to the CPU time of the thread/process
  */
 H = time.gettime :- '$callback'('gettime', H).
 
