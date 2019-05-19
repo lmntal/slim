@@ -39,6 +39,7 @@
 
 #include "element/element.h"
 #include "vm/vm.h"
+#include <stdio.h>
 
 /*
  * Internal Constructor
@@ -49,7 +50,7 @@ static LmnSymbolAtomRef lmn_make_atom(LmnMembraneRef mem, LmnAtomRef s, LmnWord 
          lmn_functor_intern(ANONYMOUS, 
 			    lmn_intern(reinterpret_cast<LmnString *>(s)->c_str()),
 			    size));
-  for (LmnWord k = 0; k < (int)size-1; k++) {
+  for (int k = 0; k < (int)size-1; k++) {
     lmn_mem_newlink(mem,
                     a, LMN_ATTR_MAKE_LINK(0), k,
                     0, LMN_INT_ATTR, 0);
@@ -92,10 +93,10 @@ void cb_atom_new(LmnReactCxtRef rc,
     lmn_mem_delete_atom(mem, a0, t0);
   } else if (a1 == 0) {
     atom = lmn_make_atom(mem, a0, a1);
-    res = lmn_mem_newatom(mem,lmn_functor_intern(ANONYMOUS, lmn_intern("nullary"), 1));
+    res = lmn_mem_newatom(mem,lmn_functor_intern(ANONYMOUS, lmn_intern("none"), 1));
     lmn_mem_newlink(mem,
-      a2, t2, LMN_ATTR_GET_VALUE(t2),
-      res, LMN_ATTR_MAKE_LINK(0), 0);
+                    a2, t2, LMN_ATTR_GET_VALUE(t2),
+                    res, LMN_ATTR_MAKE_LINK(0), 0);
     lmn_mem_delete_atom(mem, a1_, t1);
     lmn_mem_delete_atom(mem, a0, t0);
   } else {
@@ -164,7 +165,9 @@ void cb_atom_swap(LmnReactCxtRef rc,
   if (LMN_ATTR_IS_DATA(t3)) 
     lmn_fatal("Arg 3 of atom.swap cannot be non-symbol atoms (numbers, strings, ...).");
 
-  if ((unsigned long)a1 >= LMN_FUNCTOR_ARITY(((LmnSymbolAtomRef)a0)->get_functor()))
+  printf("cb_atom_swap arity: %d\n", LMN_FUNCTOR_ARITY(((LmnSymbolAtomRef)a0)->get_functor()));
+
+  if ((unsigned long)a1 >= LMN_FUNCTOR_ARITY(((LmnSymbolAtomRef)a0)->get_functor()) - 1)
     lmn_fatal("atom.swap index out of range.");
 
   self  = ((LmnSymbolAtomRef)a0)->get_link(t0);
