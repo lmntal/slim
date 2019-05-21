@@ -46,10 +46,10 @@
  * @{
  */
 
-#include "../lmntal.h"
 #include "automata.h"
 #include "binstr_compress.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "mem_encode.h"
 #include "state_defs.h"
 #include "tree_compress.h"
@@ -164,132 +164,6 @@ void transition_set_state(TransitionRef t, State *s);
 TransitionRef transition(State *s, unsigned int i);
 LmnCost transition_cost(TransitionRef t);
 void transition_set_cost(TransitionRef t, LmnCost cost);
-
-/** ------------
- *  Printer
- */
-
-class StateDumper {
-public:
-  virtual ~StateDumper() {}
-
-  virtual void dump(FILE *_fp, StateSpace *ss) {}
-  void dump_state_data(State *s, FILE *_fp, const StateSpace *_owner);
-  void state_print_mem(State *s, FILE *_fp);
-  void state_print_transition(State *s, FILE *_fp, const StateSpace *_owner);
-  void state_print_label(State *s, FILE *_fp, const StateSpace *_owner);
-
-  static std::unique_ptr<StateDumper> from_env();
-  virtual void print_mem(FILE *_fp, LmnMembrane *mem);
-
-protected:
-  // use factory method instead.
-  StateDumper() {}
-
-private:
-  virtual MCdumpFormat dump_format() const { return lmn_env.mc_dump_format; }
-  virtual bool need_id_foreach_trans() const {
-    throw std::runtime_error("unexpected.");
-  }
-  virtual std::string state_separator() const {
-    throw std::runtime_error("unexpected.");
-  }
-  virtual std::string trans_separator() const {
-    throw std::runtime_error("unexpected.");
-  }
-  virtual std::string label_begin() const {
-    throw std::runtime_error("unexpected.");
-  }
-  virtual std::string label_end() const {
-    throw std::runtime_error("unexpected.");
-  }
-
-  virtual void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
-                               StateSpace *owner) {
-    throw std::runtime_error("unexpected");
-  }
-  virtual void print_state_label(FILE *_fp, State *s, StateSpace *owner) {
-    throw std::runtime_error("unexpected");
-  }
-};
-
-namespace state_dumper {
-class CUI : public StateDumper {
-  MCdumpFormat dump_format() const override { return MCdumpFormat::CUI; }
-  bool need_id_foreach_trans() const override { return false; }
-  /* なぜかspaceが混ざるとlavitは読み込むことができない */
-  std::string state_separator() const override { return "::"; }
-  std::string trans_separator() const override { return ","; }
-  std::string label_begin() const override { return "("; }
-  std::string label_end() const override { return ")"; }
-
-  void dump(FILE *fp, StateSpace *ss) override;
-  void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
-                       StateSpace *owner) override;
-  void print_state_label(FILE *_fp, State *s, StateSpace *owner) override;
-};
-
-class LaViT : public StateDumper {
-  MCdumpFormat dump_format() const override { return MCdumpFormat::LaViT; }
-  bool need_id_foreach_trans() const override { return false; }
-  /* なぜかspaceが混ざるとlavitは読み込むことができない */
-  std::string state_separator() const override { return "::"; }
-  std::string trans_separator() const override { return ","; }
-  std::string label_begin() const override { return "("; }
-  std::string label_end() const override { return ")"; }
-
-  void dump(FILE *fp, StateSpace *ss) override;
-  void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
-                       StateSpace *owner) override;
-  void print_state_label(FILE *_fp, State *s, StateSpace *owner) override;
-  void print_mem(FILE *_fp, LmnMembrane *mem) override;
-};
-
-class Dir_DOT : public StateDumper {
-  MCdumpFormat dump_format() const override { return MCdumpFormat::Dir_DOT; }
-  bool need_id_foreach_trans() const override { return true; }
-  std::string state_separator() const override { return " -> "; }
-  std::string trans_separator() const override { return ""; }
-  std::string label_begin() const override { return " [ label = \""; }
-  std::string label_end() const override { return "\" ];"; }
-
-  void dump(FILE *fp, StateSpace *ss) override;
-  void dump_state_data(FILE *_fp, State *s, unsigned long print_id,
-                       StateSpace *owner) override;
-  void print_state_label(FILE *_fp, State *s, StateSpace *owner) override;
-};
-
-class LMN_FSM_GRAPH_MEM_NODE : public StateDumper {
-  MCdumpFormat dump_format() const override {
-    return MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE;
-  }
-  bool need_id_foreach_trans() const override { return true; }
-  std::string state_separator() const override { return ""; }
-  std::string trans_separator() const override { return ""; }
-  std::string label_begin() const override { return ""; }
-  std::string label_end() const override { return ""; }
-
-  void dump(FILE *fp, StateSpace *ss) override;
-  virtual void dump(FILE *fp, State *s) {}
-};
-
-class LMN_FSM_GRAPH : public LMN_FSM_GRAPH_MEM_NODE {
-  void dump(FILE *fp, State *s) override;
-};
-
-class LMN_FSM_GRAPH_HL_NODE : public StateDumper {
-  MCdumpFormat dump_format() const override {
-    return MCdumpFormat::LMN_FSM_GRAPH_HL_NODE;
-  }
-  bool need_id_foreach_trans() const override { return true; }
-  std::string state_separator() const override { return ""; }
-  std::string trans_separator() const override { return ""; }
-  std::string label_begin() const override { return ""; }
-  std::string label_end() const override { return ""; }
-
-  void dump(FILE *fp, StateSpace *ss) override;
-};
-} // namespace state_dumper
 
 /** -------
  *  inline functions

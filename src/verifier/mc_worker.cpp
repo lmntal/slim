@@ -47,6 +47,7 @@
 #include "state.h"
 #include "state.hpp"
 #include "statespace.h"
+#include "state_dumper.h"
 #include <limits.h>
 
 namespace c14 = slim::element;
@@ -127,7 +128,7 @@ static void lmn_worker_start(void *arg) {
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
     StateSpaceRef ss = worker_states(w);
-    StateDumper::from_env()->dump_state_data(ss->initial_state(), ss->output(), nullptr);
+    StateDumper::from_env(ss->output())->dump(ss->initial_state());
   }
 
   if (lmn_env.profile_level >= 1)

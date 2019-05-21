@@ -44,6 +44,8 @@
 
 #include "lmntal.h"
 
+#include <cstdlib>
+
 /* Error */
 #ifdef DEBUG
 #define lmn_fatal(Msg)                                                         \

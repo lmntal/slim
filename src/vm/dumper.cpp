@@ -44,6 +44,9 @@
 #include "symbol.h"
 #include <ctype.h>
 
+#include <ios>
+#include <ostream>
+
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
 
@@ -704,8 +707,8 @@ void lmn_dump_cell_stdout(LmnMembraneRef mem) {
   lmn_port_free(port);
 }
 
-void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port) {
-  switch (lmn_env.output_format) {
+void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port, OutputFormat format) {
+  switch (format) {
   case DEFAULT:
     lmn_dump_cell_nonewline(port, mem);
     break;
@@ -722,6 +725,10 @@ void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port) {
     lmn_fatal("unexpected.");
     exit(EXIT_FAILURE);
   }
+}
+
+void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port) {
+  lmn_dump_cell(mem, port, lmn_env.output_format);
 }
 
 void lmn_dump_mem_stdout(LmnMembraneRef mem) {
@@ -1104,4 +1111,56 @@ void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr) {
   hashtbl_init(&ht, 0);
   dump_atom(port, atom, &ht, attr, &s, 0);
   atomrec_tbl_destroy(&ht);
+}
+
+namespace slim {
+static int output_format_index = std::ios_base::xalloc();
+
+namespace format {
+std::ostream &env(std::ostream &os) {
+  os.iword(output_format_index) = 0;
+  return os;
+}
+
+std::ostream &lmntal(std::ostream &os) {
+  os.iword(output_format_index) = OutputFormat::DEFAULT;
+  return os;
+}
+
+std::ostream &verbal(std::ostream &os) {
+  os.iword(output_format_index) = OutputFormat::DEV;
+  return os;
+}
+
+std::ostream &dot(std::ostream &os) {
+  os.iword(output_format_index) = OutputFormat::DOT;
+  return os;
+}
+
+std::ostream &json(std::ostream &os) {
+  os.iword(output_format_index) = OutputFormat::JSON;
+  return os;
+}
+}
+
+// TODO: portを使わないようにする
+std::string to_string(const LmnMembrane *mem, OutputFormat format) {
+  auto port = lmn_make_output_string_port();
+  lmn_dump_cell(const_cast<LmnMembrane *>(mem), port, format);
+  auto str = std::unique_ptr<LmnString>(lmn_port_output_string(port));
+  lmn_port_free(port);
+  return str->str;
+}
+
+std::string to_string(const LmnMembrane *mem) {
+  return to_string(mem, lmn_env.output_format);
+}
+
+// TODO: incrementalに作る
+void dump_mem(std::ostream &os, const LmnMembrane *mem) {
+  if (os.iword(output_format_index) == 0)
+    os << to_string(mem);
+  else
+    os << to_string(mem, (OutputFormat)os.iword(output_format_index));
+}
 }

@@ -51,6 +51,7 @@
 #include "state.hpp"
 #include "state_table.hpp"
 #include "vm/vm.h"
+#include "state_dumper.h"
 
 namespace c14 = slim::element;
 
@@ -306,10 +307,10 @@ unsigned long StateSpace::space() const {
  */
 
 void StateSpace::dump_ends() const {
-  auto dumper = StateDumper::from_env();
+  auto dumper = StateDumper::from_env(this->out);
   for (const auto &end_i : end_states) {
     for (const auto &p : end_i) {
-      dumper->state_print_mem(p, this->out);
+      dumper->state_print_mem(p);
       if (lmn_env.sp_dump_format == LMN_SYNTAX)
         printf(".\n");
     }
@@ -317,7 +318,7 @@ void StateSpace::dump_ends() const {
 }
 
 void StateSpace::dump() {
-  StateDumper::from_env()->dump(this->out, this);
+  StateDumper::from_env(this->out)->dump(this);
 }
 
 /* 注: 出力用に, リンクリストの先頭の状態のIDで,

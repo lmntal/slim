@@ -50,6 +50,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -339,7 +340,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       if (new_ss)
         new_ss->push((vec_data_t)succ);
       if (mc_is_dump(f))
-        StateDumper::from_env()->dump_state_data(succ, stdout, nullptr);
+        StateDumper::from_env(stdout)->dump(succ);
     } else {
       /* contains */
       delete(src_succ);
@@ -790,17 +791,17 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
       m = (s == seed) ? "*" : " ";
       fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      StateDumper::from_env()->state_print_mem(s, out);
+      StateDumper::from_env(out)->state_print_mem(s);
     } else {
       s = (State *)v->get(i);
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      StateDumper::from_env()->state_print_mem(s, out);
+      StateDumper::from_env(out)->state_print_mem(s);
       fprintf(out, ".\n");
 
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      StateDumper::from_env()->state_print_mem(s, out);
+      StateDumper::from_env(out)->state_print_mem(s);
       fprintf(out, ":- ");
     }
   }

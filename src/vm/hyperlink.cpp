@@ -645,14 +645,18 @@ int hyperlink_print_get_place(int num) {
   return place;
 }
 
-/* グローバルルート膜から順に辿って、存在する全てのhyperlink を出力する */
 void lmn_hyperlink_print(LmnMembraneRef gr) {
+  lmn_hyperlink_print(stdout, gr);
+}
+
+/* グローバルルート膜から順に辿って、存在する全てのhyperlink を出力する */
+void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr) {
   FILE *f;
   int WIDTH, group, element, place_g, place_e;
   char tail_g[8], tail_e[14];
   BOOL flag;
 
-  f = stdout;
+  f = fp;
   element = 0;
   group = 0;
   flag = FALSE;
