@@ -108,7 +108,7 @@ S = string.compress([C|Cs], O0) :-
   S = string.compress(Cs, O).
 
 /**
- * string.explode(+List, -String)
+ * string.explode(+String, -List)
  *
  * 文字列を文字コードのリストに変換
  * @example H=string.explode("ABCDE") ==> H=[65,66,67,68,69]

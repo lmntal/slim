@@ -1,5 +1,5 @@
 /*
- * array2D.lmn - Array module
+ * deque.lmn - Deque (Double-ended queue) module
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
@@ -37,49 +37,79 @@
 
 /*
 NAME
-	Array module
+	Deque (Double-ended queue) module
 
 SYNOPSIS
+	r=pop_front(push_back(push_back(deque.new, abc),123),v1).
+	==>
+	v1(abc), r(deque.new([123|Q],Q))
 
-	array2D.new(M,N,InitialValue,NewArray)
-        array2D.free(Array)
-        array2D.size(Array,N,NewArray)
-	array2D.get(Array,I,J,Old,NewArray)
-	array2D.put(Array,I,J,New,NewArray)
+	r=deque.of_list([1,2,3]) ==> r(deque.new([1,2,3|Q],Q))
+
+DESCRIPTION
+	Deque implemented as a difference list.         
 
 AUTHOR
-
+	Koji Hara
 	Kazunori Ueda
 
 HISTORY
-
-	2013/09/02 original
-
-COMMENTS
-  
-        Array elements must be integers, floating-point numbers,
-	strings or hyperlinks.  Elements of other types are not allowed.
-        Also, all elements of an array must be of the same type.
+	2004/05/17(Mon)
+        2019-05-25(Sat) switched from queue to deque
 */
 
 {
-  module(array2D).
+module(deque).
 
-  Res = array2D.new(M,N, InitVal) :- MN = M*N |
-    Res = array2D(M, N, '$callback'('cb_array_new', MN, InitVal)).
+/**
+ * new(-Q)
+ * Creates an empty queue and binds it to Q.
+ * 
+ */
+Q = deque.new :- Q = deque.new(Front,Back), Front = Back.
 
-  array2D.free(array2D(M, N, A)) :- class(A, "array"), int(M), int(N) |
-    '$callback'('cb_array_free', A).
+/**
+ * is_empty(+Q0,-Res,-Q)
+ * 
+ */
+Q = is_empty(deque.new(F,F), Res) :- Res = true, Q = deque.new(F,F).
+Q = is_empty(deque.new([X|F],B), Res) :- Res = false, Q = deque.new([X|F],B).
 
-  array2D.size(array2D(M, N, A), S, Anew) :-
-    class(A, "array"), int(M), int(N) |
-    S = (M, N), Anew = array2D(M, N, A). 
+/**
+ * deque.push_front(+Q0,+X,-Q) -- insert X at front
+ * 
+ */
+Q = push_front(deque.new(F,B), X) :- Q = deque.new([X|F],B).
 
-  array2D.get(array2D(M, N, A), I, J, Ai, Anew) :-
-    class(A, "array"), Index = N*I+J, int(M) |
-    Anew = array2D(M, N, '$callback'('cb_array_get', A, Index, Ai)).
+/**
+ * deque.pop_front(+Q0,-X,-Q) -- remove the first element
+ * The queue must be non-empty.
+ *
+ */
+Q = pop_front(deque.new([X|F],B), R) :- R = X, Q = deque.new(F,B).
 
-  array2D.put(array2D(M, N, A), I, J, Ai, Anew) :-
-    class(A, "array"), Index = N*I+J, int(M) |
-    Anew = array2D(M, N, '$callback'('cb_array_put', A, Index, Ai)).
-}.
+/**
+ * deque.push_back(+Q0,+X,-Q) -- insert X at back
+ * 
+ */
+Q = push_back(deque.new(F,B0), X) :- B0 = [X|B], Q = deque.new(F,B).
+
+/**
+ * deque.pop_back(+Q0,-X,-Q) -- remove the last element
+ * The queue must be non-empty.
+ *
+ */
+Q = pop_back(deque.new(F,B0), R), B = [X|B0] :- R = X, Q = deque.new(F,B). 
+
+/**
+ * deque.of_list(+L,-Q)
+ *
+ */
+Q = deque.of_list(L) :- Q = deque.of_list_s0(L, deque.new).
+
+Q = deque.of_list_s0([], Q0) :- Q = Q0.
+Q = deque.of_list_s0([X|L], Q0) :-
+    Q = deque.of_list_s0(L, push_back(Q0,X)).
+
+}
+
