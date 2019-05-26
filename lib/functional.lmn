@@ -230,17 +230,17 @@ RET = find(LAMBDA, [HD|TL]) :-
  * The first list LT consists of all elements in LIST
  * which satisfy the predicate LAMBDA.
  * The second list LF is the rest.
- * Finally, returns tuple(LT,LF).
+ * Finally, returns (LT,LF).
  *
- * @example ret = partition(lambda(X, X>0), [1,2,-1,3,-2]) ==> ret = tuple([1,2,3], [-1,-2])
+ * @example ret = partition(lambda(X, X>0), [1,2,-1,3,-2]) ==> ret = ([1,2,3], [-1,-2])
  */
 PartitionNil @@
-RET = partition(LAMBDA, []) :- ground(LAMBDA) | RET = tuple([], []).
+RET = partition(LAMBDA, []) :- ground(LAMBDA) | RET = ([], []).
 PartitionCons @@
 RET = partition(LAMBDA, [HD|TL]) :-
   ground(LAMBDA) | RET = partition_cons(LAMBDA, HD, partition(LAMBDA, TL)).
-RET = partition_cons(LAMBDA, HD, tuple(LT,LF)) :-
+RET = partition_cons(LAMBDA, HD, (LT,LF)) :-
   ground(HD), ground(LT), ground(LF) |
   RET = if(apply(LAMBDA, HD), THEN, ELSE),
-  {THEN = tuple([HD|LT], LF)}, {ELSE = tuple(LT, [HD|LF])}.
+  {THEN = ([HD|LT], LF)}, {ELSE = (LT, [HD|LF])}.
 }.
