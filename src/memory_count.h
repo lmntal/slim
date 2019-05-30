@@ -10,3 +10,4 @@ extern size_t treevalue;
 extern size_t nodecount;
 extern size_t sharenode;
 extern size_t nodeintree;
+extern size_t maxtreenodeid;

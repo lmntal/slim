@@ -49,6 +49,7 @@
 #include <getopt.h>
 #include <unistd.h>
 #include<iostream>
+#include<fstream>
 /* #include "ext.h" */
 #include "verifier/runtime_status.h"
 
@@ -67,6 +68,8 @@ size_t treevalue=0;
 size_t nodecount=0;
 size_t sharenode=0;
 size_t nodeintree=0;
+size_t maxtreenodeid=0;
+using namespace std;
 #include <vector>
 
 void install_builtin_extensions(void);
@@ -808,6 +811,7 @@ int main(int argc, char *argv[]) {
   printf("nodecount is %ld\n",nodecount);
   printf("sharenode is %ld\n",sharenode);
   printf("nodeintree is %ld\n",nodeintree);
+  printf("maxtreenodeid is %x\n",maxtreenodeid);
   slim_finalize();
   return 0;
 }

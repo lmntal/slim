@@ -43,7 +43,8 @@
 #include "tree_compress.h"
 #include "../memory_count.h"
 #include <math.h>
-
+#include<fstream>
+using namespace std;
 #define atomic_fetch_and_inc(t) __sync_fetch_and_add(t, 1)
 #define atomic_fetch_and_dec(t) __sync_fetch_and_sub(t, 1)
 #define atomic_compare_and_swap(t, old, new)                                   \
@@ -198,6 +199,10 @@ redo:
         if (atomic_compare_and_swap(&table[(offset + i) & mask], 0, node)) {
           atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
+	  //printf("a unit is put in hashtable no %x in depth %d\n",(offset+i)&mask,depth);
+	  if((offset+i)&mask>maxtreenodeid){
+	    maxtreenodeid=(offset+i)&mask;
+	  }
 	  if(check_l==true){
 	    if(check_r==true){
 	      memory_count_vectorunit+=vecunitlen_l+vecunitlen_r;
@@ -227,6 +232,7 @@ redo:
         }
       } else if (tree_node_equal(table[(offset + i) & mask], left, right)) {
         *ref = (offset + i) & mask;
+	//printf("a unit is shared in hashtable no %x in depth %d\n",(offset+i)&mask,depth);
 	sharenode++;
 	check_l=false;
 	check_r=false;
@@ -274,11 +280,11 @@ TreeDatabase::~TreeDatabase() {
 }
 
 TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
-                                     int start, int end, BOOL *found) {
+						   int start, int end, BOOL *found) {
   int split;
   TreeNodeID ref;
-
   if ((end - start + 1) <= 1) {
+    //printf("depth is %d\n",depth);
     return vector_unit(str, start, end);
   }
   depth++;
@@ -287,10 +293,18 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   }
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
-      this->tree_find_or_put_rec(str, start, start + split, found);
+    this->tree_find_or_put_rec(str, start, start + split, found);
+  //printf("left ref is %x\n",left);
+  if(left>maxtreenodeid){
+    maxtreenodeid=left;
+  }
   vecunitlen_l=vecunitlen;
   TreeNodeElement right =
-      this->tree_find_or_put_rec(str, start + split + 1, end, found);
+    this->tree_find_or_put_rec(str, start + split + 1, end, found);
+  //printf("right ref is %x\n",right);
+  if(right>maxtreenodeid){
+    maxtreenodeid=right;
+  }
   vecunitlen_r=vecunitlen;
   nodecount++;
   if((split+1)<=1){
@@ -308,6 +322,10 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   } else {
     this->table_find_or_put(left, right, &ref);
   }
+  ofstream outputfile("treedatabase.dot",std::ios::app);
+  outputfile<<"\""<<ref<<"\" -> \""<<left<<"\";"<<"\n";
+  outputfile<<"\""<<ref<<"\" -> \""<<right<<"\";"<<"\n";
+  outputfile.close();
   return ref;
 }
 
