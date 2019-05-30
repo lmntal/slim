@@ -323,8 +323,8 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
     this->table_find_or_put(left, right, &ref);
   }
   ofstream outputfile("treedatabase.dot",std::ios::app);
-  outputfile<<"\""<<ref<<"\" -> \""<<left<<"\";"<<"\n";
-  outputfile<<"\""<<ref<<"\" -> \""<<right<<"\";"<<"\n";
+  outputfile<<"\""<<std::hex<<ref<<"\" -> \""<<std::hex<<left<<"\";"<<"\n";
+  outputfile<<"\""<<std::hex<<ref<<"\" -> \""<<std::hex<<right<<"\";"<<"\n";
   outputfile.close();
   return ref;
 }

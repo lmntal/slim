@@ -754,6 +754,9 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
 
 int main(int argc, char *argv[]) {
   int optid;
+  ofstream outputfile("treedatabase.dot",std::ios::app);
+  outputfile<<"strict digraph g{"<<"\n";
+  outputfile.close();
   slim_init(&optid, argc, argv);
 
   if (lmn_env.run_test) {
@@ -812,6 +815,9 @@ int main(int argc, char *argv[]) {
   printf("sharenode is %ld\n",sharenode);
   printf("nodeintree is %ld\n",nodeintree);
   printf("maxtreenodeid is %x\n",maxtreenodeid);
+  ofstream putfile("treedatabase.dot",std::ios::app);
+  putfile<<"}"<<"\n";
+  putfile.close();
   slim_finalize();
   return 0;
 }
