@@ -754,7 +754,7 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
 
 int main(int argc, char *argv[]) {
   int optid;
-  ofstream outputfile("treedatabase.dot",std::ios::app);
+  ofstream outputfile("treedatabase.dot");
   outputfile<<"strict digraph g{"<<"\n";
   outputfile.close();
   slim_init(&optid, argc, argv);
