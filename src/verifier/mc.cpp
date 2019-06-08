@@ -459,7 +459,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       dif->diffInfoDump();
       if(s->trie) {
 	s->trie->dump();
-	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo);
+	//trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo);
       }
 
       /*

@@ -20,12 +20,16 @@ struct hash_generator {
 
   Hash hash(InheritedVertex *iVertex, int index) {
     HashString *hashString = iVertex->hashString;
-    debug_log << __FUNCTION__ << ":" << __LINE__ << *iVertex << std::endl;
-    debug_log << index << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << "index=" << index<< std::endl;
+    std::cout << "iVertex:" << *iVertex << std::endl;
+    std::cout << "hashString:" << *hashString << std::endl;
+
 
     if (index < 0) {
       return 0;
     } else if (index < hashString->creditIndex) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       return (*hashString->body)[index];
     } else if (index == 0) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -47,18 +51,38 @@ struct hash_generator {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       return tmp;
     } else {
+
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "index=" << index<< std::endl;
       Hash prevMyHash = hash(iVertex, index - 1);
+      std::cout << "prevMyHash=" << prevMyHash << std::endl;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "index=" << index<< std::endl;
+      ConvertedGraphVertex *cv = iVertex->correspondingVertex;
+      std::cout << *cv << std::endl;
       Hash adjacentHash =
-          hash(cGraph->at(*iVertex, gapOfGlobalRootMemID), index);
+          hash(cv, index);
+      std::cout << "adjacentHash=" << adjacentHash << std::endl;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "index=" << index<< std::endl;
       Hash newMyHash = (FNV_PRIME * prevMyHash) ^ adjacentHash;
-      auto old = hashString->body->at(index);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "newMyHash=" << newMyHash << std::endl;
+      std::cout << "hashString=" <<*hashString<< std::endl;
+      std::cout << "index=" << index << std::endl;
+      //auto old = hashString->body->at(index);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       (*hashString->body)[index] = uint32_t(newMyHash);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       // if (old != NULL) {
       //   free(old);
       // }
       hashString->creditIndex = index + 1;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       fixCreditIndexStack->push(iVertex);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       iVertex->isPushedIntoFixCreditIndex = true;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       return newMyHash;
     }
   }
@@ -487,6 +511,8 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
   auto inheritedVerticesList = targetNode->inheritedVertices;
   auto children = targetNode->children;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "--inheritedVerticesList--" << std::endl;
+  std::cout << *inheritedVerticesList << std::endl;
   if (inheritedVerticesList->size() == 1 && children->empty() &&
       targetNode->depth != -1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -989,11 +1015,14 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   int stepOfPropagation = -1;
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  this->dump();
   stepOfPropagation = 0;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  this->dump();
   while (triePropagationIsContinued(&goAheadStack, tInfo, stepOfPropagation)) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     stepOfPropagation++;
     triePropagateInner(this, &BFSStack, &initializeConvertedVerticesStack,
                        &goAheadStack, tInfo, stepOfPropagation,
