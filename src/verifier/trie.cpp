@@ -526,8 +526,10 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
       auto tmpCell = std::begin(*inheritedVerticesList);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << targetNode->depth << std::endl;
+      std::cout << *gen.cGraph << std::endl;
       auto key = gen.hash(&slim::element::get<InheritedVertex>(*tmpCell),
                           targetNode->depth);
+      std::cout << *gen.cGraph << std::endl;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << key << std::endl;
       auto it = children->find(key);
@@ -575,7 +577,8 @@ void goAheadProcessOfCurrentTrieNodes(std::stack<TrieBody *> *goAheadStack,
                                       TerminationConditionInfo *tInfo,
                                       hash_generator gen) {
   auto nextGoAheadStack = std::stack<TrieBody *>();
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << *gen.cGraph << std::endl;
   while (!goAheadStack->empty()) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *targetNode =
@@ -597,8 +600,8 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
     // std::cout << *targetCVertex;
 
     InheritedVertex *targetIVertex = targetCVertex->correspondingVertexInTrie;
-
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout <<"targetIVertex: "<< *targetIVertex << std::endl;
     auto targetCell = targetIVertex->ownerCell;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *currentNode = targetIVertex->ownerNode;
@@ -987,6 +990,8 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   std::stack<InheritedVertex *> fixCreditIndexStack;
   TerminationConditionInfo *tInfo = this->info;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << *cAfterGraph->cv << std::endl;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   deleteInheritedVerticesFromTrie(this, diffInfo->deletedVertices,
                                   &goAheadStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -1003,7 +1008,8 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
     debug_log << i->second << std::endl;
     // std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
   }
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << *cAfterGraph->cv << std::endl;
   //実際のSLIMでは起きない操作
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   assureReferenceFromConvertedVerticesToInheritedVertices(
@@ -1015,12 +1021,17 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   int stepOfPropagation = -1;
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << *cAfterGraph->cv << std::endl;
+  std::cout << *hash_gen.cGraph << std::endl;
   this->dump();
+  std::cout << *hash_gen.cGraph << std::endl;
   stepOfPropagation = 0;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
+  std::cout << *cAfterGraph->cv << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   this->dump();
+  std::cout << *cAfterGraph->cv << std::endl;
   while (triePropagationIsContinued(&goAheadStack, tInfo, stepOfPropagation)) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     stepOfPropagation++;
@@ -1055,6 +1066,7 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   *stepOfPropagationPtr = stepOfPropagation;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   this->dump();
+  std::cout << *cAfterGraph->cv << std::endl;
   return verticesAreCompletelySorted;
 }
 
@@ -1146,8 +1158,10 @@ void Trie::dump() {
   OmegaArray *increaseMemo = new OmegaArray();
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+  std::ios::fmtflags flagsSaved = std::cout.flags();
   terminationConditionInfoDump(this->info);
   std::cout << *(this->body);
+  std::cout.flags(flagsSaved);
   makeTerminationConditionMemo(this, distributionMemo, increaseMemo);
 
   /*

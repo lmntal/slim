@@ -143,16 +143,21 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   Graphinfo *init = new Graphinfo(mem);
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // lmn_dump_mem_dev(mem);
-  // convertedGraphDump(init->cv);
 
+
+  std::cout << *init->cv << std::endl;
   DiffInfo *diff = new DiffInfo(init);
   diff->diffInfoDump();
   init_s->trie = new Trie();
   init_s->graphinfo = init;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  printf("%s:%d:graphinfo_address:%p\n", __FUNCTION__, __LINE__, init);
+  printf("%s:%d:cv_address:%p\n", __FUNCTION__, __LINE__, init->cv);
   init_s->canonical_label = trieMcKay(init_s->trie, diff, init, empty);
   std::cout << init_s->canonical_label << std::endl;
   init_s->trie->dump();
   delete diff;
+  std::cout << *init->cv << std::endl;
   /*
     ===== Diffiso ====
    */
@@ -447,6 +452,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
        */
       src_succ->graphinfo = new Graphinfo(src_succ_m);
       printf("===org===\n");
+      printf("graphinfo_address:%p\n", s->graphinfo);
+      printf("cv_address:%p\n", s->graphinfo->cv);
       std::cout << *s->graphinfo->cv << std::endl;
       printf("===succ===\n");
       std::cout << *src_succ->graphinfo->cv << std::endl;
@@ -459,7 +466,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       dif->diffInfoDump();
       if(s->trie) {
 	s->trie->dump();
-	//trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo);
+	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo);
       }
 
       /*
