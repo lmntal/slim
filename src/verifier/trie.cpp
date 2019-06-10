@@ -37,7 +37,7 @@ struct hash_generator {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       if (hashString->body->size() > 0) {
         printf("%s:%d\n", __FUNCTION__, __LINE__);
-        auto old = hashString->body->at(index);
+        // auto old = hashString->body->at(index);
         //  if (old != NULL) {
         //   free(old);
         // }
@@ -161,7 +161,7 @@ struct hash_generator {
   Hash initialHashValue(ConvertedGraphVertex *cVertex) {
     Hash ret = OFFSET_BASIS;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout << cVertex;
+    std::cout << *cVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     ret *= FNV_PRIME;
     ret ^= cVertex->type;
@@ -344,19 +344,26 @@ void goBackProcessInnerManyCommonPrefixVertices(InheritedVertex &target,
                                                 S *goAheadStack,
                                                 TerminationConditionInfo *tInfo,
                                                 int targetDepth) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   auto targetCell = target.ownerCell;
   if (targetDepth == currentNode->depth) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *target.ownerList,
         targetCell);
     slim::element::get<InheritedVertex>(*targetCell).ownerNode = currentNode;
     slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
         currentNode->depth;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     goBackProcessInnerManyCommonPrefixVertices(
         target, currentNode->parent, goAheadStack, tInfo, targetDepth);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
 }
 
 template <typename S>
@@ -364,9 +371,11 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     InheritedVertex &target, InheritedVertex &brother, TrieBody *currentNode,
     TrieBody *prevNode, S *goAheadStack, TerminationConditionInfo *tInfo,
     int targetDepth) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   auto targetCell = target.ownerCell;
   auto brotherCell = brother.ownerCell;
   if (targetDepth == currentNode->depth) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *target.ownerList,
         targetCell);
@@ -382,30 +391,37 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     (*tInfo->distribution)[prevNode->depth]++;
     slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
         prevNode->key;
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else if (currentNode->children->size() == 1) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *parent = currentNode->parent;
 
     prevNode->parent->children->erase(prevNode->key);
     delete (prevNode);
     goBackProcessInnerDoubleCommonPrefixVertices(
         target, brother, parent, currentNode, goAheadStack, tInfo, targetDepth);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *parent = currentNode->parent;
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     prevNode->inheritedVertices->splice(
         std::begin(*prevNode->inheritedVertices), *brother.ownerList,
         brotherCell);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
     slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex =
         prevNode->depth;
     (*tInfo->distribution)[prevNode->depth]++;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
         prevNode->key;
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     goBackProcessInnerManyCommonPrefixVertices(target, parent, goAheadStack,
                                                tInfo, targetDepth);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 }
 
@@ -451,43 +467,52 @@ template <typename S>
 void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
                    S *goAheadStack, TerminationConditionInfo *tInfo,
                    int targetDepth) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (targetDepth < currentNode->depth) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (currentNode->inheritedVertices->empty()) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       TrieBody *parent = currentNode->parent;
 
       (*tInfo->distribution)[currentNode->depth]--;
       if (parent->depth >= 0 && parent->children->size() != 1) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         (*tInfo->increase)[parent->depth]--;
       }
-
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       currentNode->parent->children->erase(currentNode->key);
       delete (currentNode);
 
       goBackProcessInnerSingleCommonPrefixVertex(ivertex, parent, goAheadStack,
                                                  tInfo, targetDepth);
     } else if (currentNode->inheritedVertices->size() == 1) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       auto brother = std::begin(*currentNode->inheritedVertices);
       TrieBody *parent = currentNode->parent;
-
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       (*tInfo->distribution)[omega_array::OMEGA]--;
       (*tInfo->distribution)[omega_array::OMEGA]--;
-
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       goBackProcessInnerDoubleCommonPrefixVertices(
           ivertex, slim::element::get<InheritedVertex>(*brother), parent,
           currentNode, goAheadStack, tInfo, targetDepth);
     } else {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       TrieBody *parent = currentNode->parent;
 
       (*tInfo->distribution)[omega_array::OMEGA]--;
-
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       goBackProcessInnerManyCommonPrefixVertices(ivertex, parent, goAheadStack,
                                                  tInfo, targetDepth);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
   } else {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     currentNode->inheritedVertices->splice(
         std::begin(*currentNode->inheritedVertices), *ivertex.ownerList,
         ivertex.ownerCell);
   }
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
 }
 
 template <typename S1>
@@ -601,15 +626,19 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
 
     InheritedVertex *targetIVertex = targetCVertex->correspondingVertexInTrie;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout <<"targetIVertex: "<< *targetIVertex << std::endl;
+    std::cout << "targetCVertex:" << *targetCVertex << std::endl;
+    std::cout << "targetIVertex: "<< *targetIVertex << std::endl;
     auto targetCell = targetIVertex->ownerCell;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *currentNode = targetIVertex->ownerNode;
 
     goBackProcess(*targetIVertex, currentNode, goAheadStack, trie->info, -1);
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    trie->dump();
     targetIVertex->ownerList->erase(targetIVertex->ownerCell);
-    delete targetIVertex;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    trie->dump();
+    //delete targetIVertex;
   }
 }
 
@@ -641,6 +670,7 @@ void addInheritedVerticesToTrie(
     initializeConvertedVerticesStack->push_back(targetCVertex);
   }
   std::cout << *(trie->body->inheritedVertices) << std::endl;
+  
 
   return;
 }
@@ -998,6 +1028,7 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   addInheritedVerticesToTrie(this, diffInfo->addedVertices,
                              &initializeConvertedVerticesStack, &goAheadStack,
                              cAfterGraph, gapOfGlobalRootMemID);
+  this->dump();
   auto hash_gen = hash_generator(cAfterGraph->cv, gapOfGlobalRootMemID,
                                  &fixCreditIndexStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -1034,6 +1065,7 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   std::cout << *cAfterGraph->cv << std::endl;
   while (triePropagationIsContinued(&goAheadStack, tInfo, stepOfPropagation)) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    this->dump();
     stepOfPropagation++;
     triePropagateInner(this, &BFSStack, &initializeConvertedVerticesStack,
                        &goAheadStack, tInfo, stepOfPropagation,
@@ -1041,6 +1073,7 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
                                       &fixCreditIndexStack));
   }
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  this->dump();
   Bool verticesAreCompletelySorted =
       isDescreteTrie(&goAheadStack, tInfo, stepOfPropagation) ||
       isEmptyTrie(this);
@@ -1128,8 +1161,8 @@ void makeTerminationConditionMemo(Trie *trie, OmegaArray *distributionMemo,
 
 inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
   if (body.depth != -1) {
-    if (body.isPushedIntoGoAheadStack)
-      os << "\x1b[33m";
+    // if (body.isPushedIntoGoAheadStack)
+    //   os << "\x1b[33m";
 
     for (int i = 0; i < body.depth; i++)
       os << "    ";
@@ -1143,9 +1176,9 @@ inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
     os << "VERTICES:";
     os << *body.inheritedVertices << "\n";
 
-    if (body.isPushedIntoGoAheadStack) {
-      os << "\x1b[39m";
-    }
+    // if (body.isPushedIntoGoAheadStack) {
+    //   os << "\x1b[39m";
+    // }
   }
   for (auto i : *body.children) {
     os << *i.second;
