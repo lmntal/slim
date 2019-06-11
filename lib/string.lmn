@@ -160,7 +160,14 @@ S = string.join(Glue, [A,B|X]) :- string(Glue) |
 
 /**
  * string.replace(+Str, +SubStr, +ReplacementStr, -Ret)
+ * 
+ * 文字列Str中の全てのSubStrをReplacementStrで置き換える
+ * @param +Str 元の文字列
+ * @param +SubStr 置き換えたい文字列
+ * @param +ReplacementStr 置き換え後の文字列
+ * @param -Res 結果(文字列)
  */
-Ret = string.replace(S, Sub, Rep) :- string(S), string(Sub), string(Rep) | '$callback'('string_replace', S, Sub, Rep, Ret).
+Ret = string.replace(S, Sub, Rep) :- string(S), string(Sub), string(Rep) |
+    '$callback'('string_replace', S, Sub, Rep, Ret).
 
 }.
