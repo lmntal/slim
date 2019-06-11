@@ -128,6 +128,32 @@ void cb_string_reverse(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a0, t0, 0);
 }
 
+
+void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
+                      LmnAtomRef a2, LmnLinkAttr t2,
+                      LmnAtomRef a3, LmnLinkAttr t3) {
+  LmnStringRef ret;
+
+  std::string ret_str = reinterpret_cast<LmnString *>(a0)->str;
+  std::string sub_str = reinterpret_cast<LmnString *>(a1)->str;
+  std::string rep_str = reinterpret_cast<LmnString *>(a2)->str;
+
+  std::string::size_type pos = 0;
+  while(pos = ret_str.find(sub_str, pos), pos != std::string::npos) {
+    ret_str.replace(pos, sub_str.length(), rep_str);
+    pos += rep_str.length();
+  }
+
+  ret = new LmnString(ret_str);
+  lmn_mem_push_atom(mem, ret, LMN_SP_ATOM_ATTR);
+  LINK_STR(mem, a3, t3, ret);
+
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, a1, t1);
+  lmn_mem_delete_atom(mem, a2, t2);
+}
+
 void cb_string_substr(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnLinkAttr t0, LmnAtomRef begin_, LmnLinkAttr t1,
                       LmnAtomRef end_, LmnLinkAttr t2, LmnAtomRef a3,
@@ -222,6 +248,7 @@ void string_init() {
   CCallback::lmn_register_c_fun("string_reverse", (void *)cb_string_reverse, 2);
   CCallback::lmn_register_c_fun("string_substr", (void *)cb_string_substr, 4);
   CCallback::lmn_register_c_fun("string_substr_right", (void *)cb_string_substr_right, 3);
+  CCallback::lmn_register_c_fun("string_replace", (void *)cb_string_replace, 4);
 }
 
 void string_finalize() {}

@@ -157,4 +157,10 @@ S = string.join(Glue, [A]) :- string(Glue) | S = A.
 S = string.join(Glue, [A,B|X]) :- string(Glue) |
     S = string.concat(A, string.concat(Glue, string.join(Glue, [B|X]))).
 
+
+/**
+ * string.replace(+Str, +SubStr, +ReplacementStr, -Ret)
+ */
+Ret = string.relace(S, Sub, Rep) :- string(S), string(Sub), string(Rep) | '$callback'('string_replace', S, Sub, Rep, Ret).
+
 }.
