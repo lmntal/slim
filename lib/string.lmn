@@ -161,6 +161,6 @@ S = string.join(Glue, [A,B|X]) :- string(Glue) |
 /**
  * string.replace(+Str, +SubStr, +ReplacementStr, -Ret)
  */
-Ret = string.relace(S, Sub, Rep) :- string(S), string(Sub), string(Rep) | '$callback'('string_replace', S, Sub, Rep, Ret).
+Ret = string.replace(S, Sub, Rep) :- string(S), string(Sub), string(Rep) | '$callback'('string_replace', S, Sub, Rep, Ret).
 
 }.
