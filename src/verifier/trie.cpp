@@ -541,13 +541,20 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
   if (inheritedVerticesList->size() == 1 && children->empty() &&
       targetNode->depth != -1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    printf("-------goAhead(SINGLETONE)-------\n");
+    std::cout << "DEPTH:" << targetNode->depth << std::endl;
+    terminationConditionInfoDump(tInfo);
     (*tInfo->distribution)[targetNode->depth]++;
+    printf("-------goAhead(SINGLETONE)-------\n");
+    terminationConditionInfoDump(tInfo);
     slim::element::get<InheritedVertex>(inheritedVerticesList->front())
         .canonicalLabel.first = targetNode->key;
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     while (!inheritedVerticesList->empty()) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+      printf("-------goAhead-------\n");
+      terminationConditionInfoDump(tInfo);
       auto tmpCell = std::begin(*inheritedVerticesList);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << targetNode->depth << std::endl;
@@ -775,9 +782,11 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   goBackProcessOfCurrentConvertedVertices(BFSStack, goAheadStack, tInfo,
                                           stepOfPropagation);
+  std::cout << "----goBack(" << stepOfPropagation << ")----"<< std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   goAheadProcessOfCurrentTrieNodes(goAheadStack, tInfo, data);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "----goAhead(" << stepOfPropagation << ")----"<< std::endl;
   getNextDistanceConvertedVertices(BFSStack, initializeConvertedVerticesStack,
                                    data.cGraph);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
