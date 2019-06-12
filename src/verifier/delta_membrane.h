@@ -55,7 +55,7 @@
 
 #define DMEM_ORG_EACH_FUNC_ATOM(D, MEM, F, V, CODE)                            \
   do {                                                                         \
-    AtomListEntryRef __ent = lmn_mem_get_atomlist((MEM), (F));                 \
+    AtomListEntryRef __ent = (MEM)->get_atomlist((F));		\
     LmnSymbolAtomRef __next;                                                   \
     if (__ent) {                                                               \
       for ((V) = atomlist_head(__ent); (V) != lmn_atomlist_end(__ent);         \
@@ -106,8 +106,8 @@
   do {                                                       \
     unsigned int i;                                          \
     LmnMembraneRef __next;                                   \
-    for ((V) = lmn_mem_child_head(MEM); (V); (V) = __next) { \
-      __next = lmn_mem_next(V);                              \
+    for ((V) = MEM->mem_child_head(); (V); (V) = __next) { \
+      __next = V->mem_next();                              \
       if (!(D) || !dmem_is_removed_mem((D), (MEM), (V))) {   \
         (CODE);                                              \
       }                                                      \

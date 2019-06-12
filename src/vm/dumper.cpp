@@ -394,7 +394,7 @@ static BOOL dump_proxy(LmnPortRef port, LmnSymbolAtomRef atom,
       if (!LMN_ATTR_IS_DATA(in->get_attr(1)) &&
           ((LmnSymbolAtomRef)in->get_link(1))->get_functor() == LMN_UNARY_PLUS_FUNCTOR) {
         LmnMembraneRef mem = LMN_PROXY_GET_MEM(in);
-        if (lmn_mem_nfreelinks(mem, 1)) {
+        if (mem->nfreelinks(1)) {
           get_atomrec(ht, (LmnSymbolAtomRef)in->get_link(1))->done =
               TRUE;
           lmn_dump_mem_internal(port, mem, ht, s);
@@ -572,8 +572,8 @@ static BOOL lmn_dump_mem_internal(LmnPortRef port, LmnMembraneRef mem,
 
   hashtbl_put(ht, (HashKeyType)mem, (HashValueType)0);
 
-  if (LMN_MEM_NAME_ID(mem) != ANONYMOUS) {
-    port_put_raw_s(port, lmn_id_to_name(LMN_MEM_NAME_ID(mem)));
+  if (mem->NAME_ID() != ANONYMOUS) {
+    port_put_raw_s(port, lmn_id_to_name(mem->NAME_ID()));
   }
   port_put_raw_s(port, "{");
   lmn_dump_cell_internal(port, mem, ht, s);
@@ -666,13 +666,13 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   { /* dump chidren */
     LmnMembraneRef m;
     BOOL dumped = FALSE;
-    for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+    for (m = mem->mem_child_head(); m; m = m->mem_next()) {
       if (lmn_dump_mem_internal(port, m, ht, s)) {
         dumped = TRUE;
       }
       /* 一回でも出力したことがあって、かつ次回が出力可能ならカンマを打つ */
-      if (dumped && lmn_mem_next(m) &&
-          !hashtbl_contains(ht, (HashKeyType)(lmn_mem_next(m)))) {
+      if (dumped && m->mem_next() &&
+          !hashtbl_contains(ht, (HashKeyType)(m->mem_next()))) {
         port_put_raw_s(port, ", ");
       }
     }
@@ -683,7 +683,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   }
 
   if (lmn_env.show_ruleset) {
-    dump_ruleset(port, lmn_mem_get_rulesets(mem));
+    dump_ruleset(port, mem->get_rulesets());
   }
 }
 
@@ -787,9 +787,9 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
       fprintf(stdout,
               " link[HLobj, Addr:%p, HL_ID:%2lu, ROOT_HL_ID:%2lu, "
               "Owner!Addr:%p, Owner'!'ID:%2lu], ",
-              h, LMN_HL_ID(h), LMN_HL_ID(lmn_hyperlink_get_root(h)),
-              lmn_hyperlink_hl_to_at(h),
-              lmn_hyperlink_hl_to_at(h)->get_id());
+              h, LMN_HL_ID(h), LMN_HL_ID(h->get_root()),
+              h->hl_to_at(),
+              (h->hl_to_at())->get_id());
     } else if (!LMN_ATTR_IS_DATA(attr)) { /* symbol atom */
       fprintf(stdout, " link[%5d, Addr:%p,    ID:%2lu], ",
               LMN_ATTR_GET_VALUE(attr), atom->get_link(i),
@@ -837,17 +837,17 @@ void lmn_dump_mem_dev(LmnMembraneRef mem) {
     return;
 
   fprintf(stdout, "{\n");
-  fprintf(stdout, "Mem[%u], Addr[%p], ID[%lu]\n", LMN_MEM_NAME_ID(mem), mem,
-          lmn_mem_id(mem));
+  fprintf(stdout, "Mem[%u], Addr[%p], ID[%lu]\n", mem->NAME_ID(), mem,
+          mem->mem_id());
   EACH_ATOMLIST(mem, ent, ({
                   LmnSymbolAtomRef atom;
                   EACH_ATOM(atom, ent, ({ dump_atom_dev(atom); }));
                 }));
 
-  dump_ruleset_dev(lmn_mem_get_rulesets(mem));
-  lmn_dump_mem_dev(lmn_mem_child_head(mem));
+  dump_ruleset_dev(mem->get_rulesets());
+  lmn_dump_mem_dev(mem->mem_child_head());
   fprintf(stdout, "}\n");
-  lmn_dump_mem_dev(lmn_mem_next(mem));
+  lmn_dump_mem_dev(mem->mem_next());
 }
 
 /*----------------------------------------------------------------------
@@ -924,7 +924,7 @@ static void dump_dot_cell(LmnMembraneRef mem, SimpleHashtbl *ht, int *data_id,
       }));
 
   /* dump chidren */
-  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+  for (m = mem->mem_child_head(); m; m = m->mem_next()) {
     fprintf(stdout, "subgraph cluster%d {\n", *cluster_id);
     (*cluster_id)++;
     dump_dot_cell(m, ht, data_id, cluster_id);
@@ -1021,8 +1021,8 @@ static void lmn_dump_mem_json(LmnMembraneRef mem) {
     return;
 
   fprintf(stdout, "{");
-  fprintf(stdout, "\"id\":%d,", (int)lmn_mem_id(mem));
-  fprintf(stdout, "\"name\":\"%s\",", LMN_MEM_NAME(mem));
+  fprintf(stdout, "\"id\":%d,", (int)mem->mem_id());
+  fprintf(stdout, "\"name\":\"%s\",", mem->MEM_NAME());
   fprintf(stdout, "\"atoms\":[");
   {
     AtomListEntryRef ent;
@@ -1046,7 +1046,7 @@ static void lmn_dump_mem_json(LmnMembraneRef mem) {
   {
     LmnMembraneRef m;
     BOOL needs_comma = FALSE;
-    for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+    for (m = mem->mem_child_head(); m; m = m->mem_next()) {
       if (needs_comma)
         fprintf(stdout, ",");
       needs_comma = TRUE;
@@ -1076,7 +1076,7 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
   }
-  lmn_mem_delete_mem(lmn_mem_parent(m), m);
+  (m->mem_parent())->delete_mem(m);
 }
 
 void dumper_init() {

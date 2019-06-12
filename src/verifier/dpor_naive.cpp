@@ -311,8 +311,8 @@ void McPorData::por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
 
   if (mc_use_compress(this->flags)) {
     if (!s->state_mem()) { /* compact-stack */
-      lmn_mem_drop(mem);
-      lmn_mem_free(mem);
+      mem->drop();
+      delete mem;
     } else {
       s->free_mem();
     }
@@ -350,7 +350,7 @@ inline State *McPorData::por_state_insert(State *succ, struct MemDeltaRoot *d) {
   if (d) {
     dmem_root_revert(d);
   } else if (ret == succ && tmp_m) {
-    lmn_mem_free_rec(tmp_m);
+    tmp_m->free_rec();
   }
 
   return ret;
@@ -373,7 +373,7 @@ inline State *McPorData::por_state_insert_statespace(StateSpaceRef ss,
     if (mc_is_dump(org_f))
       dump_state_data(succ_s, (LmnWord)stdout, (LmnWord)NULL);
     if (succ_m)
-      lmn_mem_free_rec(succ_m);
+      succ_m->free_rec();
     if (new_ss)
       new_ss->push((vec_data_t)succ_s);
   } else {

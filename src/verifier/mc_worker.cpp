@@ -560,6 +560,7 @@ BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) {// this should be in Lm
 }
 
 
+
 /* スレッドの起動 (MT-unsafe) */
 void LmnWorkerGroup::launch_lmn_workers(){
   unsigned long i, core_num;

@@ -54,7 +54,7 @@ struct encoder {
     std::vector<LmnSymbolAtomRef> atoms;
 
     for (auto func : mem_functors(mem)) {
-      auto ent = lmn_mem_get_atomlist(mem, func);
+      auto ent = mem->get_atomlist(func);
       for (auto a : *ent) {
         atoms.push_back(a);
       }
@@ -66,8 +66,8 @@ struct encoder {
   /* 膜にあるアトムのファンクタを降順で返す */
   std::vector<LmnFunctor> mem_functors(LmnMembraneRef mem) {
     std::vector<LmnFunctor> v;
-    for (int i = lmn_mem_max_functor(mem) - 1; i >= 0; i--) {
-      if (lmn_mem_get_atomlist(mem, i) && !LMN_IS_PROXY_FUNCTOR(i)) {
+    for (int i = mem->mem_max_functor() - 1; i >= 0; i--) {
+      if (mem->get_atomlist(i) && !LMN_IS_PROXY_FUNCTOR(i)) {
         v.push_back(i);
       }
     }
@@ -93,7 +93,7 @@ struct encoder {
       return;
 
     bool last_valid = false;
-    for (auto m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+    for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
       if (visited->get_mem(m, NULL))
         continue;
 
@@ -151,7 +151,7 @@ struct encoder {
     }
 
     visited->put_mem(mem);
-    bsp.push_start_mem(LMN_MEM_NAME_ID(mem));
+    bsp.push_start_mem(mem->NAME_ID());
 
     if (!bsp.is_valid())
       return;
@@ -172,7 +172,7 @@ struct encoder {
       /* 膜memに存在するデータアトムを起点にしたinside
        * proxyアトムをちゃんと書き込んでおく */
 
-      auto ent = lmn_mem_get_atomlist(mem, LMN_IN_PROXY_FUNCTOR);
+      auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
       if (ent) {
         for (auto in : *ent) {
           if (!LMN_ATTR_IS_DATA(in->get_attr(1)) ||
@@ -329,7 +329,7 @@ struct encoder {
 
   void write_rulesets(LmnMembraneRef mem, BinStrCursor &bsp) {
     /* ルールセットがルールセットIDでソートされていることに基づいたコード */
-    auto n = lmn_mem_ruleset_num(mem);
+    auto n = mem->ruleset_num();
     if (n == 0)
       return;
 
@@ -382,7 +382,7 @@ struct encoder {
    */
   void dump_mems(LmnMembraneRef mem, BinStrCursor &bsp,
                         VisitLogRef visited) {
-    for (auto m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+    for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
       if (!visited->get_mem(m, NULL)) {
         write_mem(m, 0, -1, -1, bsp, visited, FALSE);
       }
