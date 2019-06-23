@@ -468,6 +468,7 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
                    S *goAheadStack, TerminationConditionInfo *tInfo,
                    int targetDepth) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "currentNode->depth:" << currentNode->depth << std::endl;
   if (targetDepth < currentNode->depth) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (currentNode->inheritedVertices->empty()) {
@@ -636,9 +637,25 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
     std::cout << "targetCVertex:" << *targetCVertex << std::endl;
     std::cout << "targetIVertex: "<< *targetIVertex << std::endl;
     auto targetCell = targetIVertex->ownerCell;
+    // targetIVertex->ownerList->erase(targetIVertex->ownerCell);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    for(auto it = targetIVertex->ownerList->begin(); it != targetIVertex->ownerList->end(); ++it) {
+      std::cout << *it << std::endl;
+    }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *targetIVertex->ownerNode->inheritedVertices << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *targetIVertex->ownerList << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    if (targetIVertex->ownerNode->inheritedVertices->empty()) {
+      std::cout << "EMPTY" << std::endl;
+    } else {
+      std::cout << "NOT EMPTY" << std::endl;
+    }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *currentNode = targetIVertex->ownerNode;
-
+    // std::cout << "--OWNER-NODE--" << std::endl;
+    // std::cout << *currentNode << std::endl;
     goBackProcess(*targetIVertex, currentNode, goAheadStack, trie->info, -1);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
@@ -670,7 +687,9 @@ void addInheritedVerticesToTrie(
     InheritedVertex *targetIVertex = &slim::element::get<InheritedVertex>(
         trie->body->inheritedVertices->front());
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     targetCVertex->correspondingVertexInTrie = targetIVertex;
+    //targetIVertex->ownerNode = trie->body;
     targetIVertex->ownerList = trie->body->inheritedVertices;
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
     targetCVertex->isVisitedInBFS = TRUE;
