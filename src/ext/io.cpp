@@ -112,7 +112,7 @@ void cb_print_line_with_port(LmnReactCxtRef rc,
 //   }
 // 
 //   if (ferror(stdin)) {/* error */
-//    LmnSAtom atom = lmn_new_atom(lmn_functor_table.lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
+//    LmnSAtom atom = lmn_new_atom(lmn_functor_table.intern(ANONYMOUS, lmn_intern("error"), 1));
 //     lmn_mem_newlink(mem,
 //                     a0, t0, LMN_ATTR_GET_VALUE(t0),
 //                     LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), 0);
@@ -120,7 +120,7 @@ void cb_print_line_with_port(LmnReactCxtRef rc,
 //     if (s) LMN_FREE(s);
 //   }
 //   else if (feof(stdin) && s == NULL) { /* eof */
-//     LmnSAtom atom = lmn_new_atom(lmn_functor_table.lmn_functor_intern(ANONYMOUS, lmn_intern("eof"), 1));
+//     LmnSAtom atom = lmn_new_atom(lmn_functor_table.intern(ANONYMOUS, lmn_intern("eof"), 1));
 //     lmn_mem_newlink(mem,
 //                     a0, t0, LMN_ATTR_GET_VALUE(t0),
 //                     LMN_ATOM(atom), LMN_ATTR_MAKE_LINK(0), 0);

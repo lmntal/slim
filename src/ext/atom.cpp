@@ -46,7 +46,7 @@
 static LmnSymbolAtomRef lmn_make_atom(LmnMembraneRef mem, LmnAtomRef s, LmnWord size)
 {
   LmnSymbolAtomRef a = lmn_mem_newatom(mem,
-         lmn_functor_table.lmn_functor_intern(ANONYMOUS, 
+         lmn_functor_table.intern(ANONYMOUS,
 			    lmn_intern(reinterpret_cast<LmnString *>(s)->c_str()),
 			    size));
   for (LmnWord k = 0; k < (int)size-1; k++) {
@@ -81,7 +81,7 @@ void cb_atom_new(LmnReactCxtRef rc,
   LmnWord a1 = (LmnWord)a1_; /**< a1 is assumed to be an integer data atom */
   if (a1 > 0 && a1 <= 127) {
     atom = lmn_make_atom(mem, a0, a1);
-    res = lmn_mem_newatom(mem,lmn_functor_table.lmn_functor_intern(ANONYMOUS, lmn_intern("some"), 2));
+    res = lmn_mem_newatom(mem,lmn_functor_table.intern(ANONYMOUS, lmn_intern("some"), 2));
     lmn_mem_newlink(mem,
 		    atom, LMN_ATTR_MAKE_LINK(0), a1-1,
 		    res, LMN_ATTR_MAKE_LINK(0), 0);
@@ -92,7 +92,7 @@ void cb_atom_new(LmnReactCxtRef rc,
     lmn_mem_delete_atom(mem, a0, t0);
   } else if (a1 == 0) {
     atom = lmn_make_atom(mem, a0, a1);
-    res = lmn_mem_newatom(mem,lmn_functor_table.lmn_functor_intern(ANONYMOUS, lmn_intern("nullary"), 1));
+    res = lmn_mem_newatom(mem,lmn_functor_table.intern(ANONYMOUS, lmn_intern("nullary"), 1));
     lmn_mem_newlink(mem,
       a2, t2, LMN_ATTR_GET_VALUE(t2),
       res, LMN_ATTR_MAKE_LINK(0), 0);

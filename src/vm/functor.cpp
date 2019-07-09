@@ -218,7 +218,7 @@ LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module
   }
 }
 
-LmnFunctor LmnFunctorTable::lmn_functor_intern(lmn_interned_str module, lmn_interned_str name,
+LmnFunctor LmnFunctorTable::intern(lmn_interned_str module, lmn_interned_str name,
                               int arity) {
   return functor_intern(FALSE, module, name, arity);
 }
