@@ -112,7 +112,7 @@ st_table_t
 /* for debug */
 #ifdef DEBUG
 
-void LmnFunctorTable::lmn_functor_tbl_print() {
+void LmnFunctorTable::print() {
   int i, n;
   fprintf(stdout, "next_id==%u\n", next_id);
   n = lmn_functor_table.size;
@@ -122,7 +122,7 @@ void LmnFunctorTable::lmn_functor_tbl_print() {
   }
 }
 
-void LmnFunctorTable::lmn_functor_printer(LmnFunctor f) {
+void LmnFunctorTable::functor_printer(LmnFunctor f) {
   fprintf(stdout, "fid=%d[ %s_%d ]\n", f,
           lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)), LMN_FUNCTOR_ARITY(f));
 }

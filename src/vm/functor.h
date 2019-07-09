@@ -85,8 +85,8 @@ public:
   unsigned int get_next_id();
 
   #ifdef DEBUG
-  void lmn_functor_tbl_print(void);
-  void lmn_functor_printer(LmnFunctor f);
+  void print(void);
+  void functor_printer(LmnFunctor f);
   #endif
 
 };
