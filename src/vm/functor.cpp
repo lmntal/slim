@@ -81,7 +81,7 @@ struct PredefinedFunctor predefined_functors[] = {
 #endif
 };
 
-LmnFunctorTable lmn_functor_table;
+LmnFunctorTable * lmn_functor_table;
 
   LmnFunctorEntry *LmnFunctorTable::get_entry(unsigned int f){
     return &entry[f];
@@ -106,16 +106,13 @@ long LmnFunctorTable::functor_hash(LmnFunctorEntry *x) {
 static struct st_hash_type type_functorhash = {(st_cmp_func)LmnFunctorTable::functor_cmp,
                                                (st_hash_func)LmnFunctorTable::functor_hash};
 
-st_table_t
-    functor_id_tbl; /* ファンクタ構造体からIDへの対応を要素に持つのテーブル */
-
 /* for debug */
 #ifdef DEBUG
 
 void LmnFunctorTable::print() {
   int i, n;
   fprintf(stdout, "next_id==%u\n", next_id);
-  n = lmn_functor_table.size;
+  n = this.size;
   for (i = 0; i < n; i++) {
     fprintf(stdout, "entry[%2d]== %s_%d\n", i,
             lmn_id_to_name(LMN_FUNCTOR_NAME_ID(i)), LMN_FUNCTOR_ARITY(i));
@@ -128,15 +125,15 @@ void LmnFunctorTable::functor_printer(LmnFunctor f) {
 }
 #endif
 
-void LmnFunctorTable::lmn_functor_tbl_init() {
+LmnFunctorTable::LmnFunctorTable() {
   int i;
   const int predefined_size = ARY_SIZEOF(predefined_functors);
 
-  functor_id_tbl = st_init_table(&type_functorhash);
+  this->functor_id_tbl = st_init_table(&type_functorhash);
 
-  size = predefined_size;
-  entry = LMN_NALLOC(LmnFunctorEntry, size);
-  next_id = predefined_size;
+  this->size = predefined_size;
+  this->entry = LMN_NALLOC(LmnFunctorEntry, size);
+  this->next_id = predefined_size;
 
   /* 予約されたファンクタを順番に登録していく */
   for (i = 0; i < predefined_size; i++) {
@@ -151,16 +148,16 @@ int LmnFunctorTable::functor_entry_free(LmnFunctorEntry *e) {
   return ST_DELETE;
 }
 
-void LmnFunctorTable::lmn_functor_tbl_destroy() {
-  st_foreach(functor_id_tbl, (st_iter_func)&LmnFunctorTable::functor_entry_free, 0);
-  st_free_table(functor_id_tbl);
+LmnFunctorTable::~LmnFunctorTable() {
+  st_foreach(this->functor_id_tbl, (st_iter_func)&LmnFunctorTable::functor_entry_free, 0);
+  st_free_table(this->functor_id_tbl);
   LMN_FREE(entry);
 }
 
 LmnFunctorEntry *LmnFunctorTable::lmn_id_to_functor(int functor_id) const{
   LmnFunctorEntry *entry;
 
-  if (st_lookup(functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry))
+  if (st_lookup(this->functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry))
     return entry;
   else
     return NULL;
@@ -175,7 +172,7 @@ void LmnFunctorTable::register_functor(int id, BOOL special, lmn_interned_str mo
   entry->name = name;
   entry->arity = arity;
 
-  st_insert(functor_id_tbl, (st_data_t)entry, (st_data_t)id);
+  st_insert(this->functor_id_tbl, (st_data_t)entry, (st_data_t)id);
   /* idの位置にファンクタのデータをコピー */
   this->entry[id] = *entry;
 }
@@ -192,7 +189,7 @@ LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module
   entry.arity = arity;
 
   /* すでにテーブル内にあるならそれを返す */
-  if (st_lookup(functor_id_tbl, (st_data_t)&entry, &id))
+  if (st_lookup(this->functor_id_tbl, (st_data_t)&entry, &id))
     return id;
   else {
     struct LmnFunctorEntry *new_entry;
@@ -212,7 +209,7 @@ LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module
     /* ファンクタとIDの対応をテーブルに格納する */
     new_entry = LMN_MALLOC(struct LmnFunctorEntry);
     *new_entry = entry;
-    st_insert(functor_id_tbl, (st_data_t)new_entry, (st_data_t)id);
+    st_insert(this->functor_id_tbl, (st_data_t)new_entry, (st_data_t)id);
 
     return id;
   }

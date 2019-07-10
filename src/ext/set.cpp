@@ -117,7 +117,7 @@ LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m) {
   lmn_delete_atom((LmnSymbolAtomRef)in);
 
   LmnAtomRef at =
-      lmn_mem_newatom(m, lmn_functor_table.intern(ANONYMOUS, lmn_intern("@"), 1));
+      lmn_mem_newatom(m, lmn_functor_table->intern(ANONYMOUS, lmn_intern("@"), 1));
   lmn_newlink_in_symbols((LmnSymbolAtomRef)plus, 0, (LmnSymbolAtomRef)at, 0);
 
   LmnBinStrRef s = lmn_mem_encode(m);
@@ -298,7 +298,7 @@ void cb_set_find(LmnReactCxtRef *rc, LmnMembraneRef mem, LmnAtomRef a0,
   st_data_t entry;
   int res = st_lookup(tbl, (st_data_t)key, &entry);
   lmn_interned_str s = (res) ? lmn_intern("some") : lmn_intern("none");
-  LmnAtomRef result = lmn_mem_newatom(mem, lmn_functor_table.intern(ANONYMOUS, s, 1));
+  LmnAtomRef result = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, s, 1));
   lmn_mem_newlink(mem, a0, t0, LMN_ATTR_GET_VALUE(t0), a3, t3,
                   LMN_ATTR_GET_VALUE(t3));
   lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), result,
@@ -533,7 +533,7 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                     LMN_ATTR_GET_VALUE(t0));
   } else {
     LmnAtomRef empty_set = lmn_mem_newatom(
-        mem, lmn_functor_table.intern(ANONYMOUS, lmn_intern("set_empty"), 1));
+        mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
     lmn_set_free((LmnSetRef)a0);
@@ -581,7 +581,7 @@ void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                     LMN_ATTR_GET_VALUE(t0));
   } else {
     LmnAtomRef empty_set = lmn_mem_newatom(
-        mem, lmn_functor_table.intern(ANONYMOUS, lmn_intern("set_empty"), 1));
+        mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), (LmnAtomRef)empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
     lmn_set_free((LmnSetRef)a0);

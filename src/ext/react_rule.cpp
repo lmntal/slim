@@ -55,7 +55,7 @@ void cb_react_rule(LmnReactCxtRef rc,
 
   int reacted = react_rule(&tmp_rc, graph_mem, r);
   lmn_interned_str str = (reacted) ? lmn_intern("success") : lmn_intern("fail");
-  LmnSymbolAtomRef result = lmn_mem_newatom(mem, lmn_functor_table.intern(ANONYMOUS, str, 2));
+  LmnSymbolAtomRef result = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, str, 2));
 
   lmn_mem_newlink(mem,
                   result, LMN_ATTR_MAKE_LINK(0), 0,
