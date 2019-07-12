@@ -20,26 +20,22 @@ typedef struct _CanonicalLabel {
 
 struct HashString {
   int creditIndex;
-  std::vector<uint32_t> *body;
+  std::vector<uint32_t> body;
 
   HashString() {
     creditIndex = 0;
-    body = new std::vector<uint32_t>();
   }
 
   HashString(const HashString &h) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->creditIndex = h.creditIndex;
-    this->body = new std::vector<uint32_t>();
-    for (auto v = h.body->begin(); v != h.body->end(); ++v) {
-      this->body->push_back(*v);
+    for (auto v = h.body.begin(); v != h.body.end(); ++v) {
+      this->body.push_back(*v);
     }
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   ~HashString() {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete (this->body);
   }
 };
 
@@ -220,9 +216,9 @@ struct InheritedVertex {
 
   ~InheritedVertex() {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete (hashString);
+    // delete (hashString);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete (conventionalPropagationMemo);
+    // delete (conventionalPropagationMemo);
     // freeDisjointSetForest(equivalenceClassOfIsomorphism);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
@@ -381,7 +377,7 @@ inline std::ostream &operator<<(std::ostream &os,
 
 inline std::ostream &operator<<(std::ostream &os, const HashString &h) {
   os << "<" << h.creditIndex << ": ";
-  for (auto &x : *h.body) {
+  for (auto &x : h.body) {
     os << x << ", ";
   }
   os << ">";

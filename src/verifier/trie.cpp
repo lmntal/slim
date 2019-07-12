@@ -30,12 +30,12 @@ struct hash_generator {
       return 0;
     } else if (index < hashString->creditIndex) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      return (*hashString->body)[index];
+      return (hashString->body)[index];
     } else if (index == 0) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       Hash tmp = initialHashValue(cGraph->at(*iVertex, gapOfGlobalRootMemID));
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      if (hashString->body->size() > 0) {
+      if (hashString->body.size() > 0) {
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         // auto old = hashString->body->at(index);
         //  if (old != NULL) {
@@ -43,7 +43,7 @@ struct hash_generator {
         // }
       }
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      hashString->body->push_back(uint32_t(tmp));
+      hashString->body.push_back(uint32_t(tmp));
       hashString->creditIndex = 1;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       fixCreditIndexStack->push(iVertex);
@@ -70,9 +70,9 @@ struct hash_generator {
       std::cout << "newMyHash=" << newMyHash << std::endl;
       std::cout << "hashString=" <<*hashString<< std::endl;
       std::cout << "index=" << index << std::endl;
-      //auto old = hashString->body->at(index);
+      //auto old = hashString->body.at(index);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      (*hashString->body)[index] = uint32_t(newMyHash);
+      (hashString->body)[index] = uint32_t(newMyHash);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       // if (old != NULL) {
       //   free(old);
@@ -685,6 +685,7 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
     } else {
       std::cout << "NOT EMPTY" << std::endl;
     }
+
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *currentNode = targetIVertex->ownerNode;
     // std::cout << "--OWNER-NODE--" << std::endl;
@@ -693,7 +694,8 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
     tmp_delete_lst->splice(std::begin(*tmp_delete_lst), *targetIVertex->ownerList, targetCell);
     //targetIVertex->ownerList->erase(targetCell);
     goBackProcess(*targetIVertex, currentNode, goAheadStack, trie->info, -1, tmp_delete_lst, true);
-    //delete targetIVertex;    
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    delete targetIVertex;    
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
     //targetIVertex->ownerList->erase(targetIVertex->ownerCell);
