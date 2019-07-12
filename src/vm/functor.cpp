@@ -115,13 +115,13 @@ void LmnFunctorTable::print() {
   n = this.size;
   for (i = 0; i < n; i++) {
     fprintf(stdout, "entry[%2d]== %s_%d\n", i,
-            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(i)), LMN_FUNCTOR_ARITY(i));
+            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, i)), LMN_FUNCTOR_ARITY(lmn_functor_table, i));
   }
 }
 
 void LmnFunctorTable::functor_printer(LmnFunctor f) {
   fprintf(stdout, "fid=%d[ %s_%d ]\n", f,
-          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)), LMN_FUNCTOR_ARITY(f));
+          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)), LMN_FUNCTOR_ARITY(lmn_functor_table, f));
 }
 #endif
 

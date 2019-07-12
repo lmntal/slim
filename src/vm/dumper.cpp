@@ -156,14 +156,14 @@ static struct AtomRec *get_atomrec(SimpleHashtbl *ht, LmnSymbolAtomRef atom) {
 
 static void dump_atomname(LmnPortRef port, LmnFunctor f) {
   /* dump module name */
-  if (LMN_FUNCTOR_MODULE_ID(f) != ANONYMOUS) {
-    port_put_raw_s(port, lmn_id_to_name(LMN_FUNCTOR_MODULE_ID(f)));
+  if (LMN_FUNCTOR_MODULE_ID(lmn_functor_table, f) != ANONYMOUS) {
+    port_put_raw_s(port, lmn_id_to_name(LMN_FUNCTOR_MODULE_ID(lmn_functor_table, f)));
     port_put_raw_s(port, ".");
   }
 
   /* dump atom name */
   {
-    const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
+    const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f));
 
     if (is_direct_printable(f)) {
       port_put_raw_s(port, atom_name);
@@ -417,7 +417,7 @@ static BOOL dump_symbol_atom(LmnPortRef port, LmnSymbolAtomRef atom,
   struct AtomRec *t;
 
   f = atom->get_functor();
-  arity = LMN_FUNCTOR_ARITY(f);
+  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
   if (LMN_IS_PROXY_FUNCTOR(f))
     arity--;
 
@@ -436,7 +436,7 @@ static BOOL dump_symbol_atom(LmnPortRef port, LmnSymbolAtomRef atom,
 
   if (call_depth == 0 &&
       (f == LMN_UNARY_PLUS_FUNCTOR || f == LMN_UNARY_MINUS_FUNCTOR)) {
-    port_put_raw_s(port, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)));
+    port_put_raw_s(port, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)));
     return dump_atom(port, atom->get_link(0), ht,
                      atom->get_attr(0), s, 1);
   }
@@ -760,11 +760,11 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
   unsigned int i;
 
   f = atom->get_functor();
-  arity = LMN_FUNCTOR_ARITY(f);
+  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
   esc_code_add(CODE__FORECOLOR_LIGHTBLUE);
   fprintf(stdout, "Func[%3u], Name[%5s], A[%2u], Addr[%p], ID[%2lu], ", f,
-          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)), arity, atom,
+          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)), arity, atom,
           atom->get_id());
 
   if (LMN_FUNC_IS_HL(f)) {

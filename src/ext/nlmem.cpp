@@ -50,7 +50,7 @@ void nlmem_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_interned_str copy_tag_name;
   LmnFunctor copy_tag_func;
 
-  copy_tag_name = LMN_FUNCTOR_NAME_ID(((LmnSymbolAtomRef)a1)->get_functor());
+  copy_tag_name = LMN_FUNCTOR_NAME_ID(lmn_functor_table, ((LmnSymbolAtomRef)a1)->get_functor());
   copy_tag_func = lmn_functor_table->intern(ANONYMOUS, copy_tag_name, 3);
   org_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a0)->get_link(0));
   trg_mem = lmn_mem_make();

@@ -80,10 +80,6 @@ public:
                              lmn_interned_str name, int arity);
   static int functor_entry_free(LmnFunctorEntry *e);
 
-  #define LMN_FUNCTOR_NAME_ID(F) (lmn_functor_table->get_entry(F)->name)
-  #define LMN_FUNCTOR_ARITY(F) (lmn_functor_table->get_entry(F)->arity)
-  #define LMN_FUNCTOR_MODULE_ID(F) (lmn_functor_table->get_entry(F)->module)
-
   LmnFunctorEntry *get_entry(unsigned int f);
   unsigned int get_size();
   unsigned int get_next_id();
@@ -94,6 +90,10 @@ public:
   #endif
 
 };
+
+#define LMN_FUNCTOR_NAME_ID(T,F) (T->get_entry(F)->name)
+#define LMN_FUNCTOR_ARITY(T,F) (T->get_entry(F)->arity)
+#define LMN_FUNCTOR_MODULE_ID(T,F) (T->get_entry(F)->module)
 
 extern LmnFunctorTable *lmn_functor_table;
 

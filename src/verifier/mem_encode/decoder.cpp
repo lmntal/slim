@@ -302,10 +302,10 @@ int binstr_decoder::decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
   log[(nvisit)].type = BS_LOG_TYPE_ATOM;
   (nvisit)++;
 
-  for (auto i = 0; i < LMN_FUNCTOR_ARITY(f); i++)
+  for (auto i = 0; i < LMN_FUNCTOR_ARITY(lmn_functor_table, f); i++)
     atom->set_link(i, 0);
 
-  for (auto i = 0; i < LMN_FUNCTOR_ARITY(f); i++) {
+  for (auto i = 0; i < LMN_FUNCTOR_ARITY(lmn_functor_table, f); i++) {
     unsigned int tag = scanner.scan_tag();
 
     if (tag == TAG_FROM) {

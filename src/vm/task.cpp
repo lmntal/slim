@@ -758,7 +758,7 @@ void slim::vm::interpreter::findatom_clone_hyperlink(
 void slim::vm::interpreter::findatom_through_hyperlink(
     LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr, SameProcCxt *spc,
     LmnMembrane *mem, LmnFunctor f, size_t reg) {
-  auto atom_arity = LMN_FUNCTOR_ARITY(f);
+  auto atom_arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
   /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
   if (spc->is_clone(atom_arity)) {
@@ -1335,7 +1335,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       READ_VAL(LmnFunctor, instr, f);
 
-      auto atom_arity = LMN_FUNCTOR_ARITY(f);
+      auto atom_arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
       if (rc_hlink_opt(atomi, rc)) {
         SameProcCxt *spc;
@@ -4014,8 +4014,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     if (!LMN_ATTR_IS_DATA(atom->get_attr(0))) {
       LmnSymbolAtomRef f_name = (LmnSymbolAtomRef)atom->get_link(0);
-      lmn_interned_str name = LMN_FUNCTOR_NAME_ID(f_name->get_functor());
-      int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
+      lmn_interned_str name = LMN_FUNCTOR_NAME_ID(lmn_functor_table, f_name->get_functor());
+      int arity = LMN_FUNCTOR_ARITY(lmn_functor_table, atom->get_functor());
 
       c = get_ccallback(name);
       if (!c)
@@ -4899,8 +4899,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       if (!LMN_ATTR_IS_DATA(atom->get_attr(0))) {
         LmnSymbolAtomRef f_name = (LmnSymbolAtomRef)atom->get_link(0);
-        lmn_interned_str name = LMN_FUNCTOR_NAME_ID(f_name->get_functor());
-        int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
+        lmn_interned_str name = LMN_FUNCTOR_NAME_ID(lmn_functor_table, f_name->get_functor());
+        int arity = LMN_FUNCTOR_ARITY(lmn_functor_table, atom->get_functor());
 
         c = get_ccallback(name);
         if (!c)

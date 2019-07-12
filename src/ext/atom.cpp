@@ -164,7 +164,7 @@ void cb_atom_swap(LmnReactCxtRef rc,
   if (LMN_ATTR_IS_DATA(t3)) 
     lmn_fatal("Arg 3 of atom.swap cannot be non-symbol atoms (numbers, strings, ...).");
 
-  if ((unsigned long)a1 >= LMN_FUNCTOR_ARITY(((LmnSymbolAtomRef)a0)->get_functor()))
+  if ((unsigned long)a1 >= LMN_FUNCTOR_ARITY(lmn_functor_table, ((LmnSymbolAtomRef)a0)->get_functor()))
     lmn_fatal("atom.swap index out of range.");
 
   self  = ((LmnSymbolAtomRef)a0)->get_link(t0);
