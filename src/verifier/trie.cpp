@@ -713,6 +713,8 @@ void addInheritedVerticesToTrie(
     std::vector<ConvertedGraphVertex *> *initializeConvertedVerticesStack,
     std::stack<TrieBody *> *goAheadStack, Graphinfo *cAfterGraph,
     int gapOfGlobalRootMemID) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  trie->dump();
   if (!addedVertices->empty()) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, trie->body);
@@ -723,11 +725,18 @@ void addInheritedVerticesToTrie(
     ConvertedGraphVertex *targetCVertex =
         popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *targetCVertex << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    trie->dump();
     trie->body->inheritedVertices->push_front(
         InheritedVertex(targetCVertex, gapOfGlobalRootMemID));
+    std::cout << *(trie->body->inheritedVertices) << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    trie->dump();
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     InheritedVertex *targetIVertex = &slim::element::get<InheritedVertex>(
         trie->body->inheritedVertices->front());
+    std::cout << *targetIVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
 
     targetCVertex->correspondingVertexInTrie = targetIVertex;
@@ -736,6 +745,8 @@ void addInheritedVerticesToTrie(
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
     targetCVertex->isVisitedInBFS = TRUE;
     initializeConvertedVerticesStack->push_back(targetCVertex);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    trie->dump();
   }
   std::cout << *(trie->body->inheritedVertices) << std::endl;
   

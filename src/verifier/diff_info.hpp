@@ -162,6 +162,11 @@ struct DiffInfo {
       }
     }
   }
+  DiffInfo() {
+    deletedVertices = new std::vector<ConvertedGraphVertex *>();
+    addedVertices = new std::vector<ConvertedGraphVertex *>();
+    relinkedVertices = new std::vector<ConvertedGraphVertex *>();
+  }
   ~DiffInfo() {
     delete deletedVertices;
     delete addedVertices;

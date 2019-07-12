@@ -467,10 +467,33 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
 	std::cout << it->first << ", "<< it->second << std::endl;
       }
+      DiffInfo *rev_dif = new DiffInfo();
+      for(auto &v : *dif->addedVertices) {
+	rev_dif->deletedVertices->push_back(v);
+      }
+      for(auto &v : *dif->deletedVertices) {
+	rev_dif->addedVertices->push_back(v);
+      }
       if(s->trie) {
 	s->trie->dump();
 	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo);
 	s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv, rev_iso);
+	src_succ->trie = s->trie;
+	s->trie = nullptr;
+	
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	printf("===org===\n");
+	// printf("graphinfo_address:%p\n", src_succ->graphinfo);
+	// printf("cv_address:%p\n", s->graphinfo->cv);
+	std::cout << *src_succ->graphinfo->cv << std::endl;
+	printf("===succ===\n");
+	std::cout << *s->graphinfo->cv << std::endl;
+	rev_dif->diffInfoDump();
+	std::cout << "=======START REVERSE=======" << std::endl;
+	trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	s->trie->dump();
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
       }
 
       /*
