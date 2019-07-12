@@ -693,14 +693,15 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
     vertex_list *tmp_delete_lst = new vertex_list();
     tmp_delete_lst->splice(std::begin(*tmp_delete_lst), *targetIVertex->ownerList, targetCell);
     //targetIVertex->ownerList->erase(targetCell);
+
     goBackProcess(*targetIVertex, currentNode, goAheadStack, trie->info, -1, tmp_delete_lst, true);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete targetIVertex;    
+    delete targetIVertex;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
     //targetIVertex->ownerList->erase(targetIVertex->ownerCell);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout << *targetCell << std::endl;
+    //std::cout << *targetCell << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
 

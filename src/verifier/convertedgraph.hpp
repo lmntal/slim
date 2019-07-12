@@ -344,6 +344,7 @@ public:
   ConvertedGraphVertex *at(const InheritedVertex &iVertex, int gapOfGlobalRootMemID);
   ConvertedGraphVertex *at(int ID, ConvertedGraphVertexType type);
   void clearReferencesFromConvertedVerticesToInheritedVertices();
+  void moveReferencesToAfterCG(ConvertedGraph *cg, std::map<int, int> &iso);
 };
 
 bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,

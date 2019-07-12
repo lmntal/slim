@@ -464,9 +464,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       }
       dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
       dif->diffInfoDump();
+      for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
+	std::cout << it->first << ", "<< it->second << std::endl;
+      }
       if(s->trie) {
 	s->trie->dump();
 	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo);
+	s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv, rev_iso);
       }
 
       /*

@@ -239,12 +239,14 @@ ConvertedGraphVertex *ConvertedGraph::at(int ID,
   }
 }
 
-void ConvertedGraph::
-    clearReferencesFromConvertedVerticesToInheritedVertices() {
+void ConvertedGraph::clearReferencesFromConvertedVerticesToInheritedVertices() {
   for (auto &v : this->atoms) {
     auto cBeforeVertex = v.second;
-    if (!cBeforeVertex) {
-      cBeforeVertex->correspondingVertexInTrie = nullptr;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // std::cout << *cBeforeVertex << std::endl;
+    if (cBeforeVertex->correspondingVertexInTrie != nullptr) {
+      std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
+      // cBeforeVertex->correspondingVertexInTrie = nullptr;
     }
   }
 
@@ -252,6 +254,26 @@ void ConvertedGraph::
     auto cBeforeVertex = v.second;
     if (!cBeforeVertex) {
       cBeforeVertex->correspondingVertexInTrie = nullptr;
+    }
+  }
+}
+
+void ConvertedGraph::moveReferencesToAfterCG(ConvertedGraph *cg,
+                                             std::map<int, int> &iso) {
+  for (auto &v : this->atoms) {
+    auto cBeforeVertex = v.second;
+    if (cBeforeVertex->correspondingVertexInTrie != nullptr) {
+      auto cAfterVertex = cg->at(iso[v.first], convertedAtom);
+      if (cAfterVertex->correspondingVertexInTrie == nullptr) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << "NULLPTR" << std::endl;
+	std::cout << *cAfterVertex << std::endl;
+      }
+      cAfterVertex->correspondingVertexInTrie = cBeforeVertex->correspondingVertexInTrie;
+      cBeforeVertex->correspondingVertexInTrie = nullptr;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *cAfterVertex << std::endl;
+      std::cout << *cAfterVertex->correspondingVertexInTrie << std::endl;
     }
   }
 }
