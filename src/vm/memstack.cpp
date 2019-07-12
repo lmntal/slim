@@ -51,12 +51,12 @@ BOOL lmn_memstack_isempty(LmnMemStack memstack) {
 
 void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem) {
   memstack->push((LmnWord)mem);
-  lmn_mem_set_active(mem, TRUE);
+  mem->set_active(TRUE);
 }
 
 LmnMembraneRef lmn_memstack_pop(LmnMemStack memstack) {
   LmnMembraneRef m = (LmnMembraneRef)memstack->pop();
-  lmn_mem_set_active(m, FALSE);
+  m->set_active(FALSE);
   return m;
 }
 
@@ -94,7 +94,7 @@ static void memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem) {
 
   /* 親膜を子膜よりも先に積む */
   lmn_memstack_push(memstack, mem);
-  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+  for (m = mem->mem_child_head(); m; m = m->mem_next()) {
     memstack_reconstruct(memstack, m);
   }
 }

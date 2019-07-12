@@ -40,8 +40,10 @@
 /** @author Masato Gocho
  *  common thread library
  */
-
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include "lmntal_thread.h"
 #include "error.h"
 #include "util.h"
@@ -76,31 +78,42 @@ void thread_yield_CPU() { sched_yield(); }
  */
 
 /* TODO: stripeの粒度を呼出側で指定できた方が汎用的だと思う */
-EWLock *ewlock_make(unsigned int e_num, unsigned int w_num) {
-  EWLock *lock;
+*EWLock::EWLock(unsigned int e_num, unsigned int w_num) {
   unsigned int i;
   w_num = round2up(w_num);
+  this->elock_used = NULL;
+  this->elock_num = e_num;
+  this->elock = NULL;
+  this->wlock_num = w_num;
+  this->wlock = NULL;
 
-  lock = LMN_MALLOC(EWLock);
-  lock->elock_used = NULL;
-  lock->elock_num = e_num;
-  lock->elock = NULL;
-  lock->wlock_num = w_num;
-  lock->wlock = NULL;
-
-  lock->elock = LMN_NALLOC(lmn_mutex_t, e_num);
+  this->elock = LMN_NALLOC(lmn_mutex_t, e_num);
   for (i = 0; i < e_num; i++) {
-    lmn_mutex_init(&(lock->elock[i]));
+    lmn_mutex_init(&(this->elock[i]));
   }
 
-  lock->wlock = LMN_NALLOC(pthread_mutex_t, w_num);
+  this->wlock = LMN_NALLOC(pthread_mutex_t, w_num);
   for (i = 0; i < w_num; i++) {
-    lmn_mutex_init_onthefly(lock->wlock[i]);
+    lmn_mutex_init_onthefly(this->wlock[i]);
   }
-
-  return lock;
 }
+EWLock::~EWLock() {
+  unsigned long i, e_num, w_num;
 
+  e_num = this->elock_num;
+  w_num = this->wlock_num;
+
+  for (i = 0; i < e_num; i++) {
+    lmn_mutex_destroy(&(this->elock[i]));
+  }
+  LMN_FREE(this->elock);
+
+  for (i = 0; i < w_num; i++) {
+    lmn_mutex_destroy(&(this->wlock[i]));
+  }
+  LMN_FREE(this->wlock);
+  LMN_FREE(this);
+}
 void ewlock_free(EWLock *lock) {
   unsigned long i, e_num, w_num;
 
@@ -118,22 +131,34 @@ void ewlock_free(EWLock *lock) {
   LMN_FREE(lock->wlock);
   LMN_FREE(lock);
 }
-
+void EWLock::acquire_write(mtx_data_t id) {
+  unsigned long idx = id & (this->wlock_num - 1);
+  lmn_mutex_lock(&(this->wlock[idx]));
+}
 void ewlock_acquire_write(EWLock *lock, mtx_data_t id) {
   unsigned long idx = id & (lock->wlock_num - 1);
   lmn_mutex_lock(&(lock->wlock[idx]));
 }
-
+void EWLock::release_write(mtx_data_t id) {
+  unsigned long idx = id & (this->wlock_num - 1);
+  lmn_mutex_unlock(&(this->wlock[idx]));
+}
 void ewlock_release_write(EWLock *lock, mtx_data_t id) {
   unsigned long idx = id & (lock->wlock_num - 1);
   lmn_mutex_unlock(&(lock->wlock[idx]));
 }
-
+void EWLock::acquire_enter(mtx_data_t id) {
+  id = id >= this->elock_num ? id % this->elock_num : id;
+  lmn_mutex_lock(&(this->elock[id]));
+}
 void ewlock_acquire_enter(EWLock *lock, mtx_data_t id) {
   id = id >= lock->elock_num ? id % lock->elock_num : id;
   lmn_mutex_lock(&(lock->elock[id]));
 }
-
+void EWLock::release_enter(mtx_data_t id) {
+  id = id >= this->elock_num ? id % this->elock_num : id;
+  lmn_mutex_unlock(&(this->elock[id]));
+}
 void ewlock_release_enter(EWLock *lock, mtx_data_t id) {
   id = id >= lock->elock_num ? id % lock->elock_num : id;
   lmn_mutex_unlock(&(lock->elock[id]));
@@ -142,13 +167,24 @@ void ewlock_release_enter(EWLock *lock, mtx_data_t id) {
 /* lockが持つelockを昇順に確保していく.
  * 呼びたしスレッドがelockを既に確保していた場合の処理は未定義
  * (単にskipするだけでもよいような) */
+void EWLock::reject_enter(mtx_data_t my_id) {
+  unsigned long i, n = this->elock_num;
+  for (i = 0; i < n; i++) {
+    lmn_mutex_lock(&(this->elock[i]));
+  }
+}
 void ewlock_reject_enter(EWLock *lock, mtx_data_t my_id) {
   unsigned long i, n = lock->elock_num;
   for (i = 0; i < n; i++) {
     lmn_mutex_lock(&(lock->elock[i]));
   }
 }
-
+void EWLock::permit_enter(mtx_data_t my_id) {
+  unsigned long i, n = this->elock_num;
+  for (i = 0; i < n; i++) {
+    lmn_mutex_unlock(&(this->elock[i]));
+  }
+}
 void ewlock_permit_enter(EWLock *lock, mtx_data_t my_id) {
   unsigned long i, n = lock->elock_num;
   for (i = 0; i < n; i++) {

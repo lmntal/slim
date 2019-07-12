@@ -100,13 +100,13 @@ void integer_set(LmnReactCxtRef rc,
 
     for (int j = 0; j < dstlovec->get_num(); j++) LMN_FREE(dstlovec->get(j));
     delete dstlovec;
-    proc_tbl_free(atommap);
+    delete atommap;
   }
 
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
 
-  lmn_mem_delete_ground(mem, srcvec);
+  mem->delete_ground(srcvec);
 
   for (i = 0; i < srcvec->get_num(); i++) LMN_FREE(srcvec->get(i));
   delete srcvec;
@@ -181,10 +181,10 @@ void integer_of_string(LmnReactCxtRef rc,
 
 void init_integer(void)
 {
-  lmn_register_c_fun("integer_set", (void *)integer_set, 3);
-  lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
-  lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
-  lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
+  CCallback::lmn_register_c_fun("integer_set", (void *)integer_set, 3);
+  CCallback::lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
+  CCallback::lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
+  CCallback::lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
 
   srand((unsigned)time(NULL));
 }

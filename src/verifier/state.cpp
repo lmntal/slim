@@ -60,10 +60,10 @@ LmnCost state_cost(State *S) {
 }
 
 void state_cost_lock(EWLock *EWLOCK, mtx_data_t ID) {
-  (ewlock_acquire_write(EWLOCK, ID));
+  (EWLOCK->acquire_write(ID));
 }
 void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
-  (ewlock_release_write(EWLOCK, ID));
+  (EWLOCK->release_write(ID));
 }
 
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
@@ -137,7 +137,7 @@ static int state_equals_with_compress(State *check, State *stored) {
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
     LmnMembraneRef mem = lmn_binstr_decode(bs1);
     t = check->state_name == stored->state_name && lmn_mem_equals_enc(bs2, mem);
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
   } else {
     lmn_fatal("implementation error");
   }
@@ -156,7 +156,7 @@ static int state_equals(State *s1, State *s2) {
   }
 #endif
   return s1->state_name == s2->state_name && s1->hash == s2->hash &&
-         lmn_mem_equals(s1->state_mem(), s2->state_mem());
+    (s1->state_mem())->equals(s2->state_mem());
 }
 
 /**
@@ -189,8 +189,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
                  0); /* A. slim本来のグラフ同型成判定手続き */
     mid_check = (binstr_compare(s1_mid, s2_mid) ==
                  0); /* B. 互いに一意エンコードしたグラフの比較手続き */
-    meq_check = (lmn_mem_equals(s1->state_mem(),
-                                s2_mem)); /* C. 膜同士のグラフ同型性判定 */
+    meq_check = ((s1->state_mem())->equals(s2_mem)); /* C. 膜同士のグラフ同型性判定 */
 
     /* A, B, Cが同じ判定結果を返す場合はokだが.. */
     if (org_check != mid_check || org_check != meq_check ||
@@ -202,7 +201,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
       f = stdout;
       s1_bs = lmn_mem_to_binstr(s1->state_mem());
 
-      sp1_check = (lmn_mem_equals(s1->state_mem(), s2_mem) != 0);
+      sp1_check = ((s1->state_mem())->equals(s2_mem) != 0);
       sp2_check = (lmn_mem_equals_enc(s1_bs, s2_mem) != 0);
       sp3_check = (lmn_mem_equals_enc(s1_mid, s2_mem) != 0);
       sp4_check = (lmn_mem_equals_enc(s2_mid, s1->state_mem()) != 0);
@@ -232,7 +231,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
       lmn_fatal("graph isomorphism procedure has invalid implementations");
     }
 
-    lmn_mem_free_rec(s2_mem);
+    s2_mem->free_rec();
 
     lmn_binstr_free(s1_mid);
     lmn_binstr_free(s2_mid);
@@ -273,7 +272,7 @@ static int state_equals_with_tree(State *check, State *stored) {
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
     LmnMembraneRef mem = lmn_binstr_decode(bs1);
     t = check->state_name == stored->state_name && lmn_mem_equals_enc(bs2, mem);
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
   } else {
     lmn_fatal("implementation error");
   }
@@ -476,7 +475,7 @@ void state_print_mem(State *s, LmnWord _fp) {
   }
 
   if (s->is_binstr_user()) {
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
   }
 }
 

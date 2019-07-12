@@ -65,40 +65,40 @@ HISTORY
 module(queue).
 
 /**
- * new : unit -> Queue
+ * new(Q) : unit -> Queue
  * 
  */
 H=queue.new :- H=queue.new(Head, Tail), Head=Tail.
 
 /**
- * is_empty
+ * is_empty(Q,B)
  * 
  */
 H=is_empty(queue.new(Head, Head), Return) :- H=queue.new(Head, Head), Return=true.
 H=is_empty(queue.new('.'(Obj, Head2), Tail), Return) :- H=queue.new('.'(Obj, Head2), Tail), Return=false.
 
 /**
- * unshift
+ * unshift(Q0,X,Q) -- insert an element at front
  * 
  */
 H=unshift(queue.new(Head, Tail), Obj) :- H=queue.new('.'(Obj, Head), Tail).
 
 /**
- * shift
+ * shift(Q0,X,Q) -- remove the first element
  * 
  */
 H=shift(queue.new('.'(Obj, Head), Tail), Return) :- H=queue.new(Head, Tail), Return=Obj.
 H=shift(queue.new(Head, Head), Return) :- H=queue.new(Head, Head), Return=nil.
 
 /**
- * push
+ * push(Q0,X,Q) -- insert an element at back
  * 
  */
 H=push(queue.new(Head, Tail), Obj) :- H=queue.new(Head, Tail2), '.'(Obj, Tail2, Tail).
 
 
 /**
- * pop
+ * pop(Q0,X,Q) -- remove the last element
  * 
  */
 H=pop(queue.new(Head, Tail), Return), '.'(Obj, Tail, Tail2) :- H=queue.new(Head, Tail2), Return=Obj.

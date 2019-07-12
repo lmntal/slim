@@ -47,9 +47,6 @@ static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
                                    AutomataStateRef s);
 static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s);
-static inline unsigned int atmscc_id(AutomataSCC *s);
-static inline BYTE atmscc_type(AutomataSCC *s);
-static inline void atmscc_set_type(AutomataSCC *s, BYTE type);
 
 /*----------------------------------------------------------------------
  * automata
@@ -185,7 +182,7 @@ void Automata::print_property() {
     AutomataStateRef s = this->get_state(i);
     fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
             (unsigned long)s->get_id(), this->state_name(i),
-            atmscc_id(s->get_scc()), s->get_scc()->get_name());
+            s->get_scc()->get_id(), s->get_scc()->get_name());
   }
 
   fprintf(stdout, "\nTransitions\n");
@@ -254,7 +251,7 @@ void inline AutomataState::set_scc(AutomataSCC *scc) {
 }
 
 BYTE AutomataState::scc_type() {
-  return atmscc_type(this->get_scc());
+  return this->get_scc()->get_type();
 }
 
 AutomataSCC inline *AutomataState::get_scc() { return this->scc; }
@@ -262,6 +259,7 @@ AutomataSCC inline *AutomataState::get_scc() { return this->scc; }
 /*----------------------------------------------------------------------
  * SCC analysis for property automata
  */
+unsigned int AutomataSCC::unsafe_id_counter = 0;
 /* 処理系にロードした性質オートマトンaを解析し, SCC IDなどを追加する */
 void Automata::analysis() {
   AutomataStateRef init_s;
@@ -279,7 +277,7 @@ void Automata::analysis() {
 /* for debug */
 const char *AutomataSCC::get_name() {
   const char *ret = NULL;
-  switch (atmscc_type(this)) {
+  switch (this->get_type()) {
   case SCC_TYPE_UNKNOWN:
     ret = "Still_UnKnown.";
     break;
@@ -303,19 +301,7 @@ AutomataSCC::AutomataSCC() : id(0), type(SCC_TYPE_UNKNOWN) {}
 
 AutomataSCC::~AutomataSCC() {}
 
-/** CAUTION: MT-Unsafe */
-static inline void atmscc_issue_id(AutomataSCC *s) {
-  static unsigned int unsafe_id_counter = 0;
-  s->id = unsafe_id_counter++;
-}
 
-static inline unsigned int atmscc_id(AutomataSCC *s) { return s->id; }
-
-static inline BYTE atmscc_type(AutomataSCC *s) { return s->type; }
-
-static inline void atmscc_set_type(AutomataSCC *s, BYTE type) {
-  s->type = type;
-}
 
 /* dfs postorder順を求め, postorder順に2nd DFSを行う.
  * 性質頂点に, SCC-TYPEを割り当てる.
@@ -336,16 +322,16 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
 
   if (!s->get_scc()) { /* entering 2nd dfs */
     AutomataSCC *scc = new AutomataSCC();
-    atmscc_issue_id(scc);
+    scc->issue_id();
     s->set_scc(scc);
     a->sccs.push((vec_data_t)scc);
     if (s->get_is_end()) {
-      atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
+      scc->set_type(SCC_TYPE_NON_ACCEPT);
     } else {
       if (s->get_is_accept()) {
-        atmscc_set_type(scc, SCC_TYPE_FULLY);
+        scc->set_type(SCC_TYPE_FULLY);
       } else {
-        atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
+        scc->set_type(SCC_TYPE_NON_ACCEPT);
       }
       automata_analysis_dfs2(a, s);
     }
@@ -360,10 +346,10 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
         s->get_transition(i)->get_next());
     if (!succ->get_scc()) {
       AutomataSCC *scc = s->get_scc();
-      if ((!succ->get_is_accept() && atmscc_type(scc) == SCC_TYPE_FULLY) ||
+      if ((!succ->get_is_accept() && scc->get_type() == SCC_TYPE_FULLY) ||
           (succ->get_is_accept() &&
-           atmscc_type(scc) == SCC_TYPE_NON_ACCEPT)) {
-        atmscc_set_type(scc, SCC_TYPE_PARTIALLY);
+           scc->get_type() == SCC_TYPE_NON_ACCEPT)) {
+        scc->set_type(SCC_TYPE_PARTIALLY);
       }
       succ->set_scc(scc);
       automata_analysis_dfs2(a, succ);

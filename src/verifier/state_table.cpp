@@ -220,7 +220,7 @@ StateTable::StateTable(int thread_num, unsigned long size,
   this->num = std::vector<unsigned long>(thread_num, 0);
   this->num_dummy_ = std::vector<unsigned long>(thread_num, 0);
   this->lock = (this->thread_num > 1)
-                   ? ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM)
+                   ? new EWLock(this->thread_num, DEFAULT_WLOCK_NUM)
                    : nullptr;
   this->rehash_tbl_ = rehash_tbl;
 }
@@ -590,5 +590,5 @@ void StateTable::memid_rehash(State *s) {
   state_set_parent(new_s, s);
   this->rehash_tbl_->num_dummy_increment();
 
-  lmn_mem_free_rec(m);
+  m->free_rec();
 }

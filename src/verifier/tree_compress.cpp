@@ -136,7 +136,6 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   // printf("start :0x%14llx\n", ret);
   return ret;
 }
-
 uint64_t hash_node(TreeNodeElement left, TreeNodeElement right) {
   struct TreeNode node = {.left = left, .right = right};
   return murmurhash64(&node, 16, 0x5bd1e995);
@@ -161,9 +160,8 @@ LmnBinStrRef binstr_make(unsigned int len) {
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }
-
 TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
-  TreeNodeRef node = LMN_MALLOC(struct TreeNode);
+  TreeNodeRef node=LMN_MALLOC(struct TreeNode);
   node->left = left;
   node->right = right;
   return node;
@@ -201,11 +199,11 @@ redo:
     count++;
   }
   fprintf(stderr, "error full table\n");
-  fprintf(stderr, "node count  : %10llu\n", this->node_count);
+  fprintf(stderr, "node count  : %10lu\n", this->node_count);
   fprintf(stderr, "table size  : %10lu\n", (this->mask + 1));
   fprintf(stderr, "load factor : %10.3lf\n",
           (double)tree_db_node_count(this) / (this->mask + 1));
-  fprintf(stderr, "memory      : %7llu MB\n",
+  fprintf(stderr, "memory      : %7lu MB\n",
           (uint64_t)this->space() / 1024 / 1024);
   exit(EXIT_FAILURE);
 }

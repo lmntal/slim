@@ -56,5 +56,5 @@ void gettime(LmnReactCxtRef rc,
 
 void init_time(void)
 {
-  lmn_register_c_fun("gettime", (void *)gettime, 1);
+  CCallback::lmn_register_c_fun("gettime", (void *)gettime, 1);
 }

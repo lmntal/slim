@@ -74,7 +74,7 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
     for (int i = 0; i < link_connections->get_num(); i++) {
       struct LinkConnection *c =
           (struct LinkConnection *)link_connections->get(i);
-      if (c->hl && lmn_hyperlink_eq_hl(p_hl, c->hl)) {
+      if (c->hl && p_hl->eq_hl(c->hl)) {
         return c->link_name;
       }
     }
@@ -246,7 +246,7 @@ std::string string_of_template_membrane(Vector *link_connections,
         }));
   }
 
-  for (LmnMembraneRef m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+  for (LmnMembraneRef m = mem->mem_child_head(); m; m = m->mem_next()) {
     auto s = string_of_template_membrane(link_connections, m, cm_atom);
     if (!s.empty() && s.back() == ',')
       s.pop_back();
@@ -379,7 +379,7 @@ LmnMembraneRef get_mem_linked_atom(LmnSymbolAtomRef target_atom, int link_n) {
 }
 
 void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
-  Vector *mem_rulesets = lmn_mem_get_rulesets(mem);
+  Vector *mem_rulesets = mem->get_rulesets();
 
   for (int i = 0; i < mem_rulesets->get_num(); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)mem_rulesets->get(i);
@@ -392,7 +392,8 @@ void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
       mem_rulesets->set(j, (vec_data_t)next);
     }
 
-    mem_rulesets->num--;
+//    mem_rulesets->num--;
+    mem_rulesets->set_num(mem_rulesets->get_num()-1);
     break;
   }
 }

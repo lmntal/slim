@@ -306,9 +306,9 @@ static LmnMembraneRef lmn_binstr_decode_sub(const LmnBinStrRef bs) {
    *   8bit列を, binary stringの長さ * TAG_IN_BYTE(== 2)だけ確保(少し多めになる)
    *   logは, 復元したプロセスへのポインタを持ち,
    * 出現(nvisited)順に先頭から積んでいく */
-  auto groot = lmn_mem_make();
+  auto groot = new LmnMembrane();
 
-  lmn_mem_set_active(groot, TRUE); /* globalだから恒真 */
+  groot->set_active(TRUE); /* globalだから恒真 */
   binstr_decoder dec(bs->v, bs->len);
   dec.decode_cell(groot, NULL, 0);
 

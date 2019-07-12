@@ -38,7 +38,7 @@
 
 #__echo
  #include "translate.hpp"
- #include "syntax.h"
+ #include "syntax.hpp"
  #include "arch.h"
  #include "vm/vm.h"
  #include "element/element.h"
@@ -172,7 +172,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 %   lmn_fatal("I can not find data atoms.");
 % } else {
     {
-      AtomListEntryRef atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)rc->wt($1), TR_GFID($2_functor_data));
+      AtomListEntryRef atomlist_ent = ((LmnMembraneRef)rc->wt($1))->get_atomlist(TR_GFID($2_functor_data));
       LmnSymbolAtomRef atom;
 
       if (atomlist_ent) {
@@ -211,14 +211,14 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #lockmem LmnInstrVar LmnInstrVar lmn_interned_str
   rc->reg($0) = {(LmnWord)LMN_PROXY_GET_MEM((LmnSymbolAtomRef)rc->wt($1)), 0, TT_MEM};
-  if(LMN_MEM_NAME_ID((LmnMembraneRef)rc->wt($0)) != TR_GSID($2)) $f;
+  if(((LmnMembraneRef)rc->wt($0))->NAME_ID() != TR_GSID($2)) $f;
 
 #anymem LmnInstrVar LmnInstrVar LmnInstrVar lmn_interned_str
   {
-    LmnMembraneRef mp = lmn_mem_child_head((LmnMembraneRef)rc->wt($1));
-    for (; mp; mp=lmn_mem_next(mp)) {
+    LmnMembraneRef mp = ((LmnMembraneRef)rc->wt($1))->mem_child_head();
+    for (; mp; mp=mp->mem_next()) {
       rc->reg($0) = {(LmnWord)mp, 0, TT_MEM};
-      if (LMN_MEM_NAME_ID(mp) == TR_GSID($3)){
+      if (mp->NAME_ID() == TR_GSID($3)){
 #__echo_t
         {
           char *buf_fail = automalloc_sprintf("goto label_fail_%p", op_address);
@@ -243,10 +243,10 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   *finishflag = 0;
 
 #nmems LmnInstrVar LmnInstrVar
-  if (!lmn_mem_nmems((LmnMembraneRef)rc->wt($0), $1)) $f;
+  if (!((LmnMembraneRef)rc->wt($0))->nmems($1)) $f;
 
 #norules LmnInstrVar
-  if (lmn_mem_get_rulesets((LmnMembraneRef)rc->wt($0))->get_num()) $f;
+  if (((LmnMembraneRef)rc->wt($0))->get_rulesets()->get_num()) $f;
 
 #newatom LmnInstrVar LmnInstrVar $functor
 % switch(targ2_attr){
@@ -272,10 +272,10 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   lmn_mem_push_atom((LmnMembraneRef)rc->wt($1), (LmnAtomRef)rc->wt($0), $2_attr);
 
 #natoms LmnInstrVar LmnInstrVar
-  if (!lmn_mem_natoms((LmnMembraneRef)rc->wt($0), $1)) $f;
+  if (!((LmnMembraneRef)rc->wt($0))->natoms($1)) $f;
 
 #natomsindirect LmnInstrVar LmnInstrVar
-  if (!lmn_mem_natoms((LmnMembraneRef)rc->wt($0), rc->wt($1))) $f;
+  if (!((LmnMembraneRef)rc->wt($0))->natoms(rc->wt($1))) $f;
 
 #alloclink LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_ALLOCLINK(rc, $0, $1, $2);
@@ -331,18 +331,18 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #newmem LmnInstrVar LmnInstrVar LmnInstrVar
   {
-    LmnMembraneRef mp = lmn_mem_make();
-    lmn_mem_add_child_mem((LmnMembraneRef)rc->wt($1), mp);
+    LmnMembraneRef mp = new LmnMembrane();
+    ((LmnMembraneRef)rc->wt($1))->add_child_mem(mp);
     rc->wt($0) = (LmnWord)mp;
     rc->tt($0) = TT_MEM;
-    lmn_mem_set_active(mp, TRUE);
+    mp->set_active(TRUE);
     if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
       lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
     }
   }
 
 #allocmem LmnInstrVar
-  rc->wt($0) = (LmnWord)lmn_mem_make();
+  rc->wt($0) = (LmnWord)new LmnMembrane();
   rc->tt($0) = TT_MEM;
 
 #removeatom LmnInstrVar LmnInstrVar
@@ -352,13 +352,13 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   lmn_free_atom((LmnAtomRef)rc->wt($0), rc->at($0));
 
 #removemem LmnInstrVar LmnInstrVar
-  lmn_mem_remove_mem((LmnMembraneRef)rc->wt($1), (LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($1))->remove_mem((LmnMembraneRef)rc->wt($0));
 
 #freemem LmnInstrVar
-  lmn_mem_free((LmnMembraneRef)rc->wt($0));
+  delete (LmnMembraneRef)rc->wt($0);
 
 #addmem LmnInstrVar LmnInstrVar
-  lmn_mem_add_child_mem((LmnMembraneRef)rc->wt($0), (LmnMembraneRef)rc->wt($1));
+  ((LmnMembraneRef)rc->wt($0))->add_child_mem((LmnMembraneRef)rc->wt($1));
 
 #enqueuemem LmnInstrVar
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
@@ -630,7 +630,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #removeground LmnInstrVar LmnInstrVar
   {
     Vector *srcvec = links_from_idxs((Vector*)rc->wt($0), rc);
-    lmn_mem_remove_ground((LmnMembraneRef)rc->wt($1), srcvec);
+    ((LmnMembraneRef)rc->wt($1))->remove_ground(srcvec);
     free_links(srcvec);
   }
 
@@ -642,7 +642,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   }
 
 #stable LmnInstrVar
-  if (lmn_mem_is_active((LmnMembraneRef)rc->wt($0))) $f;
+  if (((LmnMembraneRef)rc->wt($0))->is_active()) $f;
 
 #iadd LmnInstrVar LmnInstrVar LmnInstrVar
   rc->reg($0) = {(LmnWord)rc->wt($1) + (LmnWord)rc->wt($2), LMN_INT_ATTR, TT_ATOM};
@@ -785,22 +785,22 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   rc->tt($0) = TT_OTHER;
 
 #setmemname LmnInstrVar lmn_interned_str
-  lmn_mem_set_name((LmnMembraneRef)rc->wt($0), TR_GSID($1));
+  ((LmnMembraneRef)rc->wt($0))->set_name(TR_GSID($1));
 
 #copyrules LmnInstrVar LmnInstrVar
   TR_INSTR_COPYRULES(rc, $0, $1);
 
 #removeproxies LmnInstrVar
-  lmn_mem_remove_proxies((LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($0))->remove_proxies();
 
 #insertproxies LmnInstrVar LmnInstrVar
-  lmn_mem_insert_proxies((LmnMembraneRef)rc->wt($0), (LmnMembraneRef)rc->wt($1));
+  ((LmnMembraneRef)rc->wt($0))->insert_proxies((LmnMembraneRef)rc->wt($1));
 
 #deleteconnectors LmnInstrVar LmnInstrVar
   TR_INSTR_DELETECONNECTORS($0, $1);
 
 #removetoplevelproxies LmnInstrVar
-  lmn_mem_remove_toplevel_proxies((LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($0))->remove_toplevel_proxies();
 
 #dereffunc LmnInstrVar LmnInstrVar LmnInstrVar
   TR_INSTR_DEREFFUNC(rc, $0, $1, $2);
@@ -871,13 +871,13 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   lmn_mem_push_atom((LmnMembraneRef)rc->wt($0), (LmnAtomRef)rc->wt($1), rc->at($1));
 
 #movecells LmnInstrVar LmnInstrVar
-  lmn_mem_move_cells((LmnMembraneRef)rc->wt($0), (LmnMembraneRef)rc->wt($1));
+  ((LmnMembraneRef)rc->wt($0))->move_cells((LmnMembraneRef)rc->wt($1));
 
 #removetemporaryproxies LmnInstrVar
-  lmn_mem_remove_temporary_proxies((LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($0))->remove_temporary_proxies();
 
 #nfreelinks LmnInstrVar LmnInstrVar
-  if (!lmn_mem_nfreelinks((LmnMembraneRef)rc->wt($0), $1)) $f;
+  if (!((LmnMembraneRef)rc->wt($0))->nfreelinks($1)) $f;
 
 #copycells LmnInstrVar LmnInstrVar LmnInstrVar
   rc->wt($0) = (LmnWord)lmn_mem_copy_cells((LmnMembraneRef)rc->wt($1), (LmnMembraneRef)rc->wt($2));
@@ -887,10 +887,10 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   TR_INSTR_LOOKUPLINK(rc, $0, $1, $2);
 
 #clearrules LmnInstrVar
-  lmn_mem_get_rulesets((LmnMembraneRef)rc->wt($0))->clear();
+  ((LmnMembraneRef)rc->wt($0))->get_rulesets()->clear();
 
 #dropmem LmnInstrVar
-  lmn_mem_drop((LmnMembraneRef)rc->wt($0));
+  ((LmnMembraneRef)rc->wt($0))->drop();
 
 #testmem LmnInstrVar LmnInstrVar
   if (LMN_PROXY_GET_MEM((LmnSymbolAtomRef)rc->wt($1)) != (LmnMembraneRef)rc->wt($0)) $f;

@@ -50,15 +50,15 @@ functional.use :- if.use.
  *
  * Applies the argument ARG to the lambda expression LAMBDA.
  * LAMBDA is an atom lambda(X, F, PARENT),
- * whose X is the arguments and F is the function body.
+ * where X is the argument and F is the function body.
  * F must contain exactly one link X.
  *
  * @example ret = apply(lambda(X, [X]), 0) ==> ret = [0]
  */
 Apply @@
 RET = apply(lambda(X,F), ARG) :- RET = F, X = ARG.
-// Offers 2-ary lambda/apply for convenience.
-// 2-ary lambda expression 'RET = lambda(X,Y, F)' gets curried to
+// Offers binary lambda/apply for convenience.
+// binary lambda expression 'RET = lambda(X,Y, F)' gets curried to
 // 'RET = lambda(X, lambda(Y,F))' automatically.
 LambdaCurry @@
 RET = lambda(X,Y,F) :- RET = lambda(X, lambda(Y, F)).
@@ -97,7 +97,7 @@ RET = let(VAR, ARG, EXPR) :- RET = apply(lambda(VAR, EXPR), ARG).
 /**
  * RET = map(LAMBDA, LIST):
  *
- * Applies all elements of LIST to the 1-ary lambda expression LAMBDA,
+ * Applies all elements of LIST to the unary lambda expression LAMBDA,
  * and returns the consequent list.
  *
  * @example ret = map(lambda(X, X+1), [0,1,2]) ==> ret = [1,2,3]
@@ -111,8 +111,8 @@ RET = map(LAMBDA, [HD|TL]) :-
 /**
  * RET = fold_left(LAMBDA, INIT, LIST):
  *
- * Applies INIT and the head of LIST
- * to the 2-ary lambda expression LAMBDA.
+ * Applies the binary lambda expression LAMBDA
+ * to INIT and the head of LIST.
  * Repeats that iteratively, and returns the consequent value.
  *
  * @example ret = fold_left(lambda(X,Y, X-Y), 100, [1,2,3,4,5]) ==> ret = 85
@@ -140,7 +140,7 @@ RET = fold_right(LAMBDA, [HD|TL], INIT) :-
  * RET = filter(LAMBDA, LIST):
  *
  * From LIST, extracts all elements which satisfy
- * the predicate LAMBDA (1-ary lambda expression.)
+ * the predicate LAMBDA (unary lambda expression.)
  *
  * @example ret = filter(lambda(X, X>0), [-1,1,-2,2]) ==> ret = [1,2]
  */
@@ -156,7 +156,7 @@ RET = filter(LAMBDA, [HD|TL]) :-
  * RET = exists(LAMBDA, LIST)
  *
  * Returns true if LIST contains at least one element
- * which satisfies the predicate LAMBDA (1-ary lambda expression.)
+ * which satisfies the predicate LAMBDA (unary lambda expression.)
  * Otherwise, returns false.
  *
  * @example ret = exists(lambda(X, X>2), [1,2,3,4]) ==> ret = true.
@@ -176,7 +176,7 @@ RET = exists(LAMBDA, [HD|TL]) :-
  * RET = for_all(LAMBDA, LIST)
  *
  * Returns true if all elements of LIST satisfy
- * the predicate LAMBDA (1-ary lambda expression.)
+ * the predicate LAMBDA (unary lambda expression.)
  * Otherwise, returns false.
  *
  * @example ret = for_all(lambda(X, X>2), [3,4]) ==> ret = true.
@@ -230,17 +230,17 @@ RET = find(LAMBDA, [HD|TL]) :-
  * The first list LT consists of all elements in LIST
  * which satisfy the predicate LAMBDA.
  * The second list LF is the rest.
- * Finally, returns tuple(LT,LF).
+ * Finally, returns (LT,LF).
  *
- * @example ret = partition(lambda(X, X>0), [1,2,-1,3,-2]) ==> ret = tuple([1,2,3], [-1,-2])
+ * @example ret = partition(lambda(X, X>0), [1,2,-1,3,-2]) ==> ret = ([1,2,3], [-1,-2])
  */
 PartitionNil @@
-RET = partition(LAMBDA, []) :- ground(LAMBDA) | RET = tuple([], []).
+RET = partition(LAMBDA, []) :- ground(LAMBDA) | RET = ([], []).
 PartitionCons @@
 RET = partition(LAMBDA, [HD|TL]) :-
   ground(LAMBDA) | RET = partition_cons(LAMBDA, HD, partition(LAMBDA, TL)).
-RET = partition_cons(LAMBDA, HD, tuple(LT,LF)) :-
+RET = partition_cons(LAMBDA, HD, (LT,LF)) :-
   ground(HD), ground(LT), ground(LF) |
   RET = if(apply(LAMBDA, HD), THEN, ELSE),
-  {THEN = tuple([HD|LT], LF)}, {ELSE = tuple(LT, [HD|LF])}.
+  {THEN = ([HD|LT], LF)}, {ELSE = (LT, [HD|LF])}.
 }.

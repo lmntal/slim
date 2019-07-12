@@ -96,7 +96,7 @@ struct VisitLog {
 
   VisitLog():tbl(0),ref_n(0),element_num(0){}
   ~VisitLog(){
-    proc_tbl_free(this->tbl);
+    delete this->tbl;
 
     for (int i = 0; i < this->checkpoints.get_num(); i++) {
       delete (Vector *)this->checkpoints.get(i);
@@ -107,9 +107,9 @@ struct VisitLog {
   void init() { this->init_with_size(0); }
   void init_with_size(unsigned long tbl_size) {
     if (tbl_size != 0) {
-      this->tbl = proc_tbl_make_with_size(tbl_size);
+      this->tbl = new ProcessTbl(tbl_size);
     } else {
-      this->tbl = proc_tbl_make();
+      this->tbl = new ProcessTbl();
     }
     /*   printf("size = %lu\n", tbl_size); */
     this->ref_n = VISITLOG_INIT_N;
@@ -129,7 +129,7 @@ struct VisitLog {
 
     checkpoint = (struct Checkpoint *)this->checkpoints.pop();
     for (i = 0; i < checkpoint->elements.get_num(); i++) {
-      proc_tbl_unput(this->tbl, checkpoint->elements.get(i));
+      (this->tbl)->proc_tbl_unput(checkpoint->elements.get(i));
       this->element_num--;
       this->ref_n--;
     }
@@ -161,7 +161,7 @@ struct VisitLog {
   void push_checkpoint(struct Checkpoint *cp) {
     this->checkpoints.push((vec_data_t)cp);
     for (int i = 0; i < cp->elements.get_num(); i++) {
-      proc_tbl_put(this->tbl, cp->elements.get(i), this->ref_n++);
+      (this->tbl)->proc_tbl_put(cp->elements.get(i), this->ref_n++);
       this->element_num++;
     }
     this->element_num += cp->n_data_atom;
@@ -170,7 +170,7 @@ struct VisitLog {
   /* ログにpを追加し, 正の値を返す. すでにpが存在した場合は0を返す.
    * 通常この関数ではなくput_atom, put_memを使用する. */
   int put(LmnWord p) {
-    if (proc_tbl_put_new(this->tbl, p, this->ref_n++)) {
+    if ((this->tbl)->put_new(p, this->ref_n++)) {
       if (this->checkpoints.get_num() > 0) {
         CheckpointRef checkpoint =
             (CheckpointRef)this->checkpoints.last();
@@ -188,7 +188,7 @@ struct VisitLog {
   }
   /* ログに膜を追加し, 正の値を返す. すでに膜が存在した場合は0を返す */
   int put_mem(LmnMembraneRef mem) {
-    return this->put(lmn_mem_id(mem));
+    return this->put(mem->mem_id());
   }
   /* ログにハイパーリンクを追加し, 正の値を返す.
    * すでにハイパーリンクが存在した場合は0を返す */

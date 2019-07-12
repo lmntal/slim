@@ -418,7 +418,7 @@ void profile_finish_exec() {
 }
 
 void profile_statespace(LmnWorkerGroup *wp) {
-  LmnWorker *w = workers_get_worker(wp, LMN_PRIMARY_ID);
+  LmnWorker *w = wp->get_worker(LMN_PRIMARY_ID);
   lmn_prof.state_num_stored = worker_states(w)->num();
   lmn_prof.state_num_end = worker_states(w)->num_raw();
 
@@ -470,7 +470,7 @@ static void profile_state_f(State *s, LmnWord arg) {
   /* メモリ */
   p->state_space += sizeof(State);
   if (!s->is_binstr_user() && s->state_mem()) {
-    p->membrane_space += lmn_mem_root_space(s->state_mem());
+    p->membrane_space += (s->state_mem())->root_space();
   } else if (s->is_binstr_user() && s->state_binstr()) {
     p->binstr_space += lmn_binstr_space(s->state_binstr());
   }

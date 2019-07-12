@@ -56,7 +56,7 @@ BOOL tracelog_contains_atom(TraceLogRef l, LmnSymbolAtomRef atom) {
 }
 
 BOOL tracelog_contains_mem(TraceLogRef l, LmnMembraneRef mem) {
-  return l->contains(lmn_mem_id(mem));
+  return l->contains(mem->mem_id());
 }
 
 BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) {
@@ -74,7 +74,7 @@ LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSymbolAtomRef atom) {
 }
 
 LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembraneRef mem) {
-  return tracelog_get_matched(l, lmn_mem_id(mem));
+  return tracelog_get_matched(l, mem->mem_id());
 }
 
 LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) {

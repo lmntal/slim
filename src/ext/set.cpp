@@ -107,7 +107,7 @@ int tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1)
  */
 LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m) {
   AtomListEntryRef plus_atom_list =
-      lmn_mem_get_atomlist(m, LMN_UNARY_PLUS_FUNCTOR);
+      m->get_atomlist(LMN_UNARY_PLUS_FUNCTOR);
   LMN_ASSERT(plus_atom_list != NULL);
   LmnAtomRef plus = (LmnAtomRef)atomlist_head(plus_atom_list);
   LmnAtomRef in = ((LmnSymbolAtomRef)plus)->get_link(0);
@@ -216,7 +216,7 @@ LmnSet::~LmnSet() {
  */
 int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg) {
   if (arg == (st_data_t)&type_mem_hash)
-    lmn_mem_free_rec((LmnMembraneRef)key);
+    ((LmnMembraneRef)key)->free_rec();
   else
     free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
@@ -272,7 +272,7 @@ void cb_set_insert(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   } else {
     lmn_mem_remove_atom(mem, a1, t1);
     if (tbl->type == &type_mem_hash)
-      lmn_mem_remove_mem(mem, (LmnMembraneRef)v);
+      mem->remove_mem((LmnMembraneRef)v);
   }
   lmn_mem_newlink(mem, a0, t0, LMN_ATTR_GET_VALUE(t0), a2, t2,
                   LMN_ATTR_GET_VALUE(t2));
@@ -305,7 +305,7 @@ void cb_set_find(LmnReactCxtRef *rc, LmnMembraneRef mem, LmnAtomRef a0,
                   LMN_ATTR_MAKE_LINK(0), 0);
   lmn_mem_delete_atom(mem, a1, t1);
   if (tbl->type == &type_mem_hash)
-    lmn_mem_delete_mem(mem, (LmnMembraneRef)key);
+    mem->delete_mem((LmnMembraneRef)key);
 }
 
 /* inner_set_to_listで使用するためだけの構造体 */
@@ -363,14 +363,14 @@ int inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj) {
     lmn_mem_push_atom(itl->mem, (LmnAtomRef)key, LMN_INT_ATTR);
   } else if (itl->ht == &type_mem_hash) {
     AtomListEntryRef in_atom_list =
-        lmn_mem_get_atomlist((LmnMembraneRef)key, LMN_IN_PROXY_FUNCTOR);
+      ((LmnMembraneRef)key)->get_atomlist(LMN_IN_PROXY_FUNCTOR);
     LMN_ASSERT(in_atom_list != NULL);
     LmnAtomRef in = (LmnAtomRef)atomlist_head(in_atom_list);
     LmnAtomRef out = lmn_mem_newatom(itl->mem, LMN_OUT_PROXY_FUNCTOR);
     lmn_newlink_in_symbols((LmnSymbolAtomRef)in, 0, (LmnSymbolAtomRef)out, 0);
     lmn_mem_newlink(itl->mem, itl->cons, LMN_ATTR_MAKE_LINK(0), 0, out,
                     LMN_ATTR_MAKE_LINK(1), 1);
-    lmn_mem_add_child_mem(itl->mem, (LmnMembraneRef)key);
+    (itl->mem)->add_child_mem((LmnMembraneRef)key);
   } else if (itl->ht == &type_tuple_hash) {
     int i;
     lmn_mem_push_atom(itl->mem, (LmnAtomRef)key, LMN_ATTR_MAKE_LINK(3));
@@ -428,7 +428,7 @@ int inner_set_copy(st_data_t key, st_data_t rec, st_data_t arg) {
   st_table_t tbl = ((LmnSetRef)arg)->tbl;
   st_data_t val =
       (tbl->type == &type_mem_hash)
-          ? (st_data_t)lmn_mem_copy((LmnMembraneRef)key)
+    ? (st_data_t)((LmnMembraneRef)key)->copy()
           : (st_data_t)lmn_copy_satom_with_data((LmnSymbolAtomRef)key, FALSE);
   st_insert(tbl, val, val);
   return ST_CONTINUE;
@@ -455,8 +455,8 @@ void cb_set_erase(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   } else if(tbl->type == &type_mem_hash) {
     LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
     if(st_delete(tbl, (st_data_t)m, &entry))
-      lmn_mem_free_rec((LmnMembraneRef)entry);
-    lmn_mem_delete_mem(mem, m);
+      ((LmnMembraneRef)entry)->free_rec();
+    mem->delete_mem(m);
   } else if (tbl->type == &type_tuple_hash) {
     if (st_delete(tbl, (st_data_t)a1, &entry))
       free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)entry);
@@ -551,7 +551,7 @@ int inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg) {
   if (found)
     return ST_CONTINUE;
   if (tbl->type == &type_mem_hash)
-    lmn_mem_free_rec((LmnMembraneRef)key);
+    ((LmnMembraneRef)key)->free_rec();
   else if (tbl->type == &type_tuple_hash)
     free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
@@ -599,7 +599,7 @@ int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg) {
   if (!found)
     return ST_CONTINUE;
   if (tbl->type == &type_mem_hash)
-    lmn_mem_free_rec((LmnMembraneRef)key);
+    ((LmnMembraneRef)key)->free_rec();
   else if (tbl->type == &type_tuple_hash)
     free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
@@ -649,13 +649,13 @@ void init_set(void) {
       lmn_sp_atom_register("set", sp_cb_set_copy, sp_cb_set_free, sp_cb_set_eq,
                            sp_cb_set_dump, sp_cb_set_is_ground);
 
-  lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
-  lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
-  lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
-  lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 2);
-  lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
-  lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
-  lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
-  lmn_register_c_fun("cb_set_intersect", (void *)cb_set_intersect, 3);
-  lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 3);
+  CCallback::lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
+  CCallback::lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
+  CCallback::lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
+  CCallback::lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 2);
+  CCallback::lmn_register_c_fun("cb_set_copy", (void *)cb_set_copy, 3);
+  CCallback::lmn_register_c_fun("cb_set_erase", (void *)cb_set_erase, 3);
+  CCallback::lmn_register_c_fun("cb_set_union", (void *)cb_set_union, 3);
+  CCallback::lmn_register_c_fun("cb_set_intersect", (void *)cb_set_intersect, 3);
+  CCallback::lmn_register_c_fun("cb_set_diff", (void *)cb_set_diff, 3);
 }

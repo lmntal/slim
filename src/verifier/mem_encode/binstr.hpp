@@ -164,14 +164,14 @@ public:
 
     /* hyperlink構造を圧縮する際は, rootオブジェクトをバイト列に記録する. */
     auto hl_root =
-        lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+      (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
 
     if (log->get_hlink(hl_root, &ref)) {
       return push(TAG_VISITED_ATOMHLINK) &&
              push((BYTE *)&ref, BS_PROC_REF_SIZE);
     }
 
-    auto hl_num = lmn_hyperlink_element_num(hl_root);
+    auto hl_num = hl_root->element_num();
 
     log->put_hlink(hl_root); /* 訪問済みにした */
     push(TAG_HLINK);

@@ -41,9 +41,11 @@ NAME
 
 SYNOPSIS
 
-	array.new(Size,Array)
-	array.put(Array,Index,NewInt,NewArray)
-	array.get(Array,Index,OldInt,NewArray)
+	array2D.new(M,N,InitialValue,NewArray)
+        array2D.free(Array)
+        array2D.size(Array,N,NewArray)
+	array2D.get(Array,I,J,Old,NewArray)
+	array2D.put(Array,I,J,New,NewArray)
 
 AUTHOR
 
@@ -55,6 +57,9 @@ HISTORY
 
 COMMENTS
   
+        Array elements must be integers, floating-point numbers,
+	strings or hyperlinks.  Elements of other types are not allowed.
+        Also, all elements of an array must be of the same type.
 */
 
 {

@@ -139,7 +139,7 @@ public:
       throw filesystem_error(std::error_code(errno, std::system_category()),
                              name);
   }
-  ~directory_stream() {
+  ~directory_stream() throw() {
     if (closedir(dir))
       throw filesystem_error(std::error_code(errno, std::system_category()),
                              dirpath.string());

@@ -328,7 +328,7 @@ void mcdfs_start(LmnWorker *w) {
                ss->prop_symbols());
     }
   } else {
-    while (!wp->mc_exit) {
+    while (!wp->workers_are_exit()) {
       if (!s && DFS_WORKER_QUEUE(w)->is_empty()) {
         break;
         /*
@@ -359,7 +359,7 @@ void mcdfs_start(LmnWorker *w) {
   // fflush(stdout);
   if (lmn_env.enable_visualize) {
     if (worker_id(w) == 0) {
-      dump_dot(ss, wp->worker_num);
+      dump_dot(ss, wp->workers_get_entried_num());
     }
   }
 
@@ -403,7 +403,7 @@ void dfs_start(LmnWorker *w) {
                ss->prop_symbols());
     }
   } else { /* Stack-Slicing */
-    while (!wp->mc_exit) {
+    while (!wp->workers_are_exit()) {
       if (!s && DFS_WORKER_QUEUE(w)->is_empty()) {
         worker_set_idle(w);
         if (lmn_workers_termination_detection_for_rings(w)) {
@@ -420,7 +420,7 @@ void dfs_start(LmnWorker *w) {
             // explorerの仕事無くなったら終了
             printf("\n\n\nexplorer have no work\n\n\n");
 #endif
-            wp->mc_exit = TRUE;
+            wp->workers_set_exit();
           }
         }
       } else {
@@ -468,7 +468,7 @@ void dfs_start(LmnWorker *w) {
 #ifndef MINIMAL_STATE
   if (lmn_env.enable_visualize) {
     if (worker_id(w) == 0) {
-      dump_dot(ss, wp->worker_num);
+      dump_dot(ss, wp->workers_get_entried_num());
     }
   }
 #endif
@@ -485,7 +485,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
     if (!(worker_group(w)))
       break;
-    if (workers_are_exit(worker_group(w)))
+    if (worker_group(w)->workers_are_exit())
       break;
 
     /** 展開元の状態の取得 */
@@ -558,7 +558,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     AutomataStateRef p_s;
     unsigned int i, n;
 
-    if (workers_are_exit(worker_group(w)))
+    if (worker_group(w)->workers_are_exit())
       break;
 
     /** 展開元の状態の取得 */
@@ -643,7 +643,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     unsigned int i, n, start;
     BOOL repaired;
 
-    if (workers_are_exit(worker_group(w)))
+    if (worker_group(w)->workers_are_exit())
       break;
 
     /** 展開元の状態の取得 */
@@ -695,7 +695,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
     // cyan flag用の領域を確保
     if (!s->local_flags) {
-      n = workers_entried_num((worker_group(w)));
+      n = worker_group(w)->workers_get_entried_num();
       s->local_flags = LMN_NALLOC(BYTE, n);
       memset(s->local_flags, 0, sizeof(BYTE) * n);
     }
@@ -774,7 +774,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
     AutomataStateRef p_s;
     unsigned int i, n;
 
-    if (workers_are_exit(worker_group(w)))
+    if (worker_group(w)->workers_are_exit())
       break;
 
     /** 展開元の状態の取得 */
@@ -782,7 +782,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
     p_s = MC_GET_PROPERTY(s, a);
 
     if ((lmn_env.opt_mode == OPT_MINIMIZE &&
-         workers_opt_cost(worker_group(w)) < state_cost(s)) ||
+         worker_group(w)->opt_cost() < state_cost(s)) ||
         (s->is_expanded() && !s->s_is_update()) ||
         (!worker_ltl_none(w) && p_s->get_is_end())) {
       pop_deq(deq, TRUE);
@@ -793,13 +793,13 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
       /* サクセッサを展開 */
       mc_expand(worker_states(w), s, p_s, worker_rc(w).get(), new_ss, psyms,
                 worker_flags(w));
-      mc_update_cost(s, new_ss, workers_ewlock(worker_group(w)));
+      mc_update_cost(s, new_ss, worker_group(w)->workers_get_ewlock());
     } else if (s->s_is_update()) {
-      mc_update_cost(s, new_ss, workers_ewlock(worker_group(w)));
+      mc_update_cost(s, new_ss, worker_group(w)->workers_get_ewlock());
     }
 
     if (state_is_accept(a, s)) {
-      lmn_update_opt_cost(worker_group(w), s,
+      worker_group(w)->update_opt_cost(s,
                           (lmn_env.opt_mode == OPT_MINIMIZE));
     }
 
@@ -877,8 +877,8 @@ void bfs_worker_init(LmnWorker *w) {
     mc->nxt = worker_use_lsync(w) ? new Queue(LMN_Q_MRMW) : mc->cur;
   } else {
     /* Layer Queueは全スレッドで共有 */
-    mc->cur = BFS_WORKER_Q_CUR(workers_get_worker(worker_group(w), 0));
-    mc->nxt = BFS_WORKER_Q_NXT(workers_get_worker(worker_group(w), 0));
+    mc->cur = BFS_WORKER_Q_CUR(worker_group(w)->get_worker(0));
+    mc->nxt = BFS_WORKER_Q_NXT(worker_group(w)->get_worker(0));
   }
 
   BFS_WORKER_OBJ_SET(w, mc);
@@ -938,7 +938,7 @@ void bfs_start(LmnWorker *w) {
   /* start bfs  */
   if (!worker_on_parallel(w)) {
     /** >>>> 逐次 >>>> */
-    while (!wp->mc_exit) {
+    while (!wp->workers_are_exit()) {
       /* 1step展開 */
       bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
 
@@ -955,7 +955,7 @@ void bfs_start(LmnWorker *w) {
     }
   } else if (!worker_use_lsync(w)) {
     /** >>>> 並列(Layer非同期) >>>> */
-    while (!wp->mc_exit) {
+    while (!wp->workers_are_exit()) {
       if (!BFS_WORKER_Q_CUR(w)->is_empty()) {
         EXECUTE_PROFILE_START();
         worker_set_active(w);
@@ -992,7 +992,7 @@ void bfs_start(LmnWorker *w) {
       lmn_workers_synchronization(
           w,
           (void (*)(LmnWorker *))lmn_workers_termination_detection_for_rings);
-      if (d_lim < ++d || wp->mc_exit ||
+      if (d_lim < ++d || wp->workers_are_exit() ||
           lmn_workers_termination_detection_for_rings(w)) {
         break;
       }
@@ -1011,7 +1011,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
     AutomataStateRef p_s;
     unsigned int i;
 
-    if (workers_are_exit(wp))
+    if (wp->workers_are_exit())
       return;
 
     s = (State *)BFS_WORKER_Q_CUR(w)->dequeue();
@@ -1039,7 +1039,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
     if (s->successor_num == 0) {
       if (lmn_env.nd_search_end) {
         /* 最終状態探索モードの場合, 発見次第探索を打ち切る */
-        workers_set_exit(wp);
+        wp->workers_set_exit();
         return;
       }
     } else {
