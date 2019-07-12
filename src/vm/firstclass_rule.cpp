@@ -157,7 +157,7 @@ std::string string_of_template_membrane(Vector *link_connections,
         satom, ent, ({
           int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
           const char *atom_name =
-              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(satom->get_functor()));
+              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
           if (f == LMN_UNARY_PLUS_FUNCTOR) {
             LmnSymbolAtomRef in_proxy =
@@ -262,7 +262,7 @@ std::string string_of_template_membrane(Vector *link_connections,
 std::string string_of_guard_op(LmnSymbolAtomRef satom) {
   std::string result;
   const char *atom_name =
-      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(satom->get_functor()));
+      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
   int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
   LmnLinkAttr attr;
   if (arity == 1)
@@ -310,7 +310,7 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
     EACH_ATOM(
         satom, ent, ({
           const char *atom_name =
-              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(satom->get_functor()));
+              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
           if (f == LMN_UNARY_PLUS_FUNCTOR) {
             LmnSymbolAtomRef in_proxy =
@@ -326,7 +326,7 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
               LmnSymbolAtomRef typed_pc_atom =
                   (LmnSymbolAtomRef)satom->get_link(0);
               const char *typed_pc_atom_name = lmn_id_to_name(
-                  LMN_FUNCTOR_NAME_ID(typed_pc_atom->get_functor()));
+                  LMN_FUNCTOR_NAME_ID(lmn_functor_table, typed_pc_atom->get_functor()));
               result += constraint_name[i];
               result += "(";
               result += typed_pc_atom_name;

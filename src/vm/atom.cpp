@@ -70,7 +70,7 @@ void LmnSymbolAtom::set_functor(LmnFunctor func) {
   this->functor = func;
 }
 int LmnSymbolAtom::get_arity() const{
-  return LMN_FUNCTOR_ARITY(this->get_functor());
+  return LMN_FUNCTOR_ARITY(lmn_functor_table, this->get_functor());
 }
 int LmnSymbolAtom::get_link_num() const{
   return LMN_FUNCTOR_GET_LINK_NUM(this->get_functor());
@@ -98,7 +98,7 @@ BOOL LmnSymbolAtom::is_proxy() const{
 }
 
 const char *LmnSymbolAtom::str() const {
-  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(this->get_functor()));
+  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, this->get_functor()));
 }
 
 size_t LMN_SATOM_SIZE(int arity) {
@@ -107,7 +107,7 @@ size_t LMN_SATOM_SIZE(int arity) {
 }
 
 int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor func) {
-  return LMN_FUNCTOR_ARITY(func) - (LMN_IS_PROXY_FUNCTOR(func) ? 1U : 0U);
+  return LMN_FUNCTOR_ARITY(lmn_functor_table, func) - (LMN_IS_PROXY_FUNCTOR(func) ? 1U : 0U);
 }
 
 int LMN_ATTR_WORDS(int arity) {
@@ -152,7 +152,7 @@ BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC) {
 /////
 
 const char *LMN_FUNCTOR_STR(LmnFunctor F) {
-  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(F));
+  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, F));
 }
 
 /////
@@ -184,7 +184,7 @@ LmnSymbolAtomRef lmn_copy_satom(LmnSymbolAtomRef atom) {
   f = atom->get_functor();
   newatom = lmn_new_atom(f);
 
-  memcpy((void *)newatom, (void *)atom, LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
+  memcpy((void *)newatom, (void *)atom, LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(lmn_functor_table, f)));
 
   newatom->set_id(0);
   return newatom;
@@ -223,7 +223,7 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom,
 
   LMN_ASSERT(newatom != atom);
 
-  memcpy((void *)newatom, (void *)atom, LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(f)));
+  memcpy((void *)newatom, (void *)atom, LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(lmn_functor_table, f)));
   /* リンク先のデータアトムをコピーする */
   for (i = 0; i < arity; i++) {
     if (LMN_ATTR_IS_DATA(atom->get_attr(i))) {

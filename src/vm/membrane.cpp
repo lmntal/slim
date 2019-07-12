@@ -355,7 +355,7 @@ unsigned long LmnMembrane::space() {
                     ret += internal_hashtbl_space(ent->record);
                   }
                   EACH_ATOM(atom, ent, ({
-                              ret += LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(
+                              ret += LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(lmn_functor_table, 
                                   atom->get_functor()));
                             }));
                 }));
@@ -2574,7 +2574,7 @@ static inline int mem_isomor_trace_symbols(LmnAtomRef cur1, LmnMembraneRef mem1,
   global_ret = MEM_ISOMOR_MATCH_WITHOUT_MEM;
 
   /* リンク先を辿る */
-  for (to_i = 0; to_i < LMN_FUNCTOR_ARITY(f); to_i++) {
+  for (to_i = 0; to_i < LMN_FUNCTOR_ARITY(lmn_functor_table, f); to_i++) {
     LmnLinkAttr attr1, attr2;
     LmnAtomRef atom1, atom2;
 

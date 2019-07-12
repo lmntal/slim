@@ -309,7 +309,7 @@ private:
     (*i_ref)++;
 
     /* アトムatomの接続先を検査する */
-    for (auto i = 0; i < LMN_FUNCTOR_ARITY(f); i++) {
+    for (auto i = 0; i < LMN_FUNCTOR_ARITY(lmn_functor_table, f); i++) {
       if (!mem_eq_enc_mol(i_bs, mem, satom->get_link(i),
                           satom->get_attr(i), i_ref)) {
         return FALSE;
@@ -779,7 +779,7 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
     ref_log[*i_ref].type = BS_LOG_TYPE_ATOM;
 
     (*i_ref)++;
-    auto arity = LMN_FUNCTOR_ARITY(f);
+    auto arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
     /* アトムatomの接続先を検査する */
     for (auto i = 0; i < arity; i++) {

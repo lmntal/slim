@@ -103,7 +103,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   LmnSymbolAtomRef in = (LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0);
   LmnLinkAttr in_attr = ((LmnSymbolAtomRef)a1)->get_attr(0);
 
-  LmnSymbolAtomRef at = lmn_mem_newatom(m, lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1));
+  LmnSymbolAtomRef at = lmn_mem_newatom(m, lmn_functor_table->intern(ANONYMOUS, lmn_intern("@"), 1));
   LmnSymbolAtomRef plus = (LmnSymbolAtomRef)in->get_link(1);
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
@@ -144,7 +144,7 @@ void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
   st_data_t entry;
 
   LmnMembraneRef new_mem = s->duplicate_membrane();
-  LmnFunctor at_functor = lmn_functor_intern(ANONYMOUS, lmn_intern("@"), 1);
+  LmnFunctor at_functor = lmn_functor_table->intern(ANONYMOUS, lmn_intern("@"), 1);
 
   AtomListEntryRef ent;
   LmnFunctor f;
