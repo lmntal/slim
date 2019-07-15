@@ -40,6 +40,7 @@
 #include "state.h"
 #include "automata.h"
 #include "binstr_compress.h"
+#include "element/element.h"
 #include "mc.h"
 #include "mem_encode.h"
 #include "mhash.h"
@@ -50,6 +51,11 @@
 #include <limits.h>
 #endif
 #include "state.hpp"
+
+#include <cstring>
+#include <string>
+
+namespace c14 = slim::element;
 
 LmnCost state_cost(State *S) {
 #ifdef KWBT_OPT
@@ -225,7 +231,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
       fprintf(f, "============================================================="
                  "=======================\n");
 
-      lmn_dump_mem_stdout(s1->state_mem());
+      fprintf(f, "%s\n", slim::to_string_membrane(s1->state_mem()).c_str());
 
       lmn_binstr_free(s1_bs);
       lmn_fatal("graph isomorphism procedure has invalid implementations");
@@ -382,225 +388,6 @@ void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
       profile_add_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
     }
 #endif
-  }
-}
-
-/** Printer
- * ownerはNULLでもok */
-void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
-  FILE *f;
-  StateSpaceRef owner;
-  unsigned long print_id;
-#ifdef KWBT_OPT
-  LmnCost cost = lmn_env.opt_mode != OPT_NONE ? state_cost(s) : 0UL;
-#endif
-
-  /* Rehashが発生している場合,
-   * dummyフラグが真かつエンコード済みフラグが偽のStateオブジェクトが存在する.
-   * このようなStateオブジェクトのバイナリストリングは
-   * Rehashされた側のテーブルに存在するStateオブジェクトに登録されているためcontinueする.
-   */
-  if (s->is_dummy() && !s->is_encoded())
-    return;
-
-  f = (FILE *)_fp;
-  owner = (StateSpaceRef)_owner;
-  {
-    /* この時点で状態は, ノーマル || (dummyフラグが立っている &&
-     * エンコード済)である. dummyならば,
-     * バイナリストリング以外のデータはオリジナル側(parent)に記録している. */
-    State *target = !s->is_dummy() ? s : state_get_parent(s);
-    if (owner) {
-      print_id = state_format_id(target, owner->is_formatted());
-    } else {
-      print_id = state_format_id(target, FALSE);
-    }
-  }
-
-  switch (lmn_env.mc_dump_format) {
-  case LaViT:
-    fprintf(f, "%lu::", print_id);
-    state_print_mem(s, _fp);
-    break;
-  case FSM:
-    /* under constructions.. */
-    fprintf(f, "1\n");
-    break;
-  case Dir_DOT:
-    if (s->successor_num == 0) {
-      fprintf(
-          f,
-          "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n",
-          print_id);
-    }
-    break;
-  case CUI: {
-    BOOL has_property = owner && owner->has_property();
-#ifdef KWBT_OPT
-    fprintf(f, "%lu::%lu::%s", print_id, cost,
-            has_property
-                ? owner->automata()->state_name(state_property_state(s))
-                : "");
-#else
-    fprintf(f, "%lu::%s", print_id,
-            has_property
-                ? owner->automata()->state_name(state_property_state(s))
-                : "");
-#endif
-    state_print_mem(s, _fp);
-    break;
-  }
-  default:
-    lmn_fatal("unexpected");
-    break;
-  }
-}
-
-void state_print_mem(State *s, LmnWord _fp) {
-  LmnMembraneRef mem;
-  ProcessID org_next_id;
-
-  org_next_id = env_next_id();
-  mem = s->restore_membrane_inner(FALSE);
-  env_set_next_id(org_next_id);
-
-  //  fprintf((FILE *)_fp, "natoms=%lu :: hash=%16lu ::", lmn_mem_atom_num(mem),
-  //  s->hash);
-  if (lmn_env.mc_dump_format == LaViT) {
-    lmn_dump_cell_stdout(mem);
-  } else {
-    lmn_dump_mem_stdout(mem); /* TODO: グラフ構造の出力先をファイルポインタに */
-    if (lmn_env.show_hyperlink)
-      lmn_hyperlink_print(mem);
-  }
-
-  if (s->is_binstr_user()) {
-    mem->free_rec();
-  }
-}
-
-/* TODO: 美しさ */
-void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
-  FILE *f;
-  StateSpaceRef owner;
-  unsigned int i;
-
-  BOOL need_id_foreach_trans;
-  const char *state_separator, *trans_separator, *label_begin, *label_end;
-  BOOL formated;
-
-  /* Rehashが発生している場合,
-   * サクセッサへの情報は,
-   * RehashしたオリジナルのStateオブジェクトが保持しているため,
-   * dummyフラグが真かつエンコード済みの状態には遷移情報は載っていない.
-   * (エンコード済のバイナリストリングしか載っていない) */
-  if ((s->is_dummy() && s->is_encoded()))
-    return;
-
-  f = (FILE *)_fp;
-  owner = (StateSpaceRef)_owner;
-
-  need_id_foreach_trans = TRUE;
-  switch (lmn_env.mc_dump_format) {
-  case DOT:
-    state_separator = " -> ";
-    trans_separator = NULL;
-    label_begin = " [ label = \"";
-    label_end = "\" ];";
-    break;
-  case FSM:
-    state_separator = " ";
-    trans_separator = NULL;
-    label_begin = " \"";
-    label_end = "\"";
-    break;
-  case LaViT: /* FALLTHROUGH: CUIモードと共通 */
-  case CUI:
-    state_separator =
-        "::"; /* なぜかspaceが混ざるとlavitは読み込むことができない */
-    trans_separator = ",";
-    label_begin = "(";
-    label_end = ")";
-    need_id_foreach_trans = FALSE;
-    break;
-  default:
-    lmn_fatal("unexpected");
-    break;
-  }
-
-  formated = owner ? owner->is_formatted() : FALSE;
-  if (!need_id_foreach_trans) {
-    fprintf(f, "%lu%s", state_format_id(s, formated), state_separator);
-  }
-
-  if (s->successors) {
-    for (i = 0; i < s->successor_num; i++) { /* dump dst state's IDs */
-      if (need_id_foreach_trans) {
-        fprintf(f, "%lu%s", state_format_id(s, formated), state_separator);
-      } else if (i > 0) {
-        LMN_ASSERT(trans_separator);
-        fprintf(f, "%s", trans_separator);
-      }
-
-      /* MEMO: rehashが発生していても, successorポインタを辿る先は, オリジナル
-       */
-      fprintf(f, "%lu", state_format_id(state_succ_state(s, i), formated));
-
-      if (s->has_trans_obj()) {
-        TransitionRef t;
-        unsigned int j;
-
-        fprintf(f, "%s", label_begin);
-        t = transition(s, i);
-
-        for (j = 0; j < transition_rule_num(t); j++) {
-          if (j > 0)
-            fprintf(f, " "); /* ルール名の区切りは半角スペース1文字 */
-          fprintf(f, "%s", lmn_id_to_name(transition_rule(t, j)));
-        }
-        fprintf(f, "%s", label_end);
-      }
-
-      if (i + 1 < s->successor_num && need_id_foreach_trans) {
-        fprintf(f, "\n");
-      }
-    }
-    fprintf(f, "\n");
-  } else if (!need_id_foreach_trans) {
-    fprintf(f, "\n");
-  }
-}
-
-void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
-  AutomataRef a;
-  FILE *f;
-  StateSpaceRef owner;
-
-  owner = (StateSpaceRef)_owner;
-  if (!owner->has_property() || (s->is_dummy() && s->is_encoded())) {
-    return;
-  }
-
-  a = owner->automata();
-  f = (FILE *)_fp;
-
-  switch (lmn_env.mc_dump_format) {
-  case Dir_DOT: {
-    if (state_is_accept(a, s) || state_is_end(a, s)) {
-      fprintf(f, "  %lu [peripheries = 2]\n",
-              state_format_id(s, owner->is_formatted()));
-    }
-    break;
-  }
-  case LaViT:
-    fprintf(f, "%lu::", state_format_id(s, owner->is_formatted()));
-    fprintf(f, "%s\n", a->state_name(state_property_state(s)));
-  case FSM:
-  case CUI: /* 状態のグローバルルート膜の膜名としてdump済 */
-    break;
-  default:
-    lmn_fatal("unexpected");
-    break;
   }
 }
 

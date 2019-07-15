@@ -41,6 +41,7 @@ liblmn_verifier_a_SOURCES =                              \
 	tree_compress.cpp          tree_compress.h               \
 	visitlog.h                 \
 	stack_macro.h              \
+	state_dumper.cpp           \
 	mem_encode/decoder.cpp     mem_encode/binstr.cpp
 
 

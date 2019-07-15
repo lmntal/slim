@@ -170,11 +170,13 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"show-hl", 0, 0, 1007},
                                   {"use-builtin-rule", 0, 0, 1008},
                                   {"dump-dot", 0, 0, 1100},
-                                  {"dump-fsm", 0, 0, 1101},
+                                  {"dump-fsm-lmn", 0, 0, 1101},
                                   {"dump-lavit", 0, 0, 1102},
                                   {"dump-inc", 0, 0, 1103},
                                   {"dump-lmn", 0, 0, 1104},
                                   {"dump-json", 0, 0, 1105},
+                                  {"dump-fsm-lmn-detail", 0, 0, 1106},
+                                  {"dump-fsm-hl", 0, 0, 1107},
                                   {"interactive", 0, 0, 1200},
                                   {"translate", 0, 0, 1300},
                                   {"hl", 0, 0, 1350},
@@ -302,7 +304,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       lmn_env.mc_dump_format = Dir_DOT;
       break;
     case 1101:
-      lmn_env.mc_dump_format = FSM;
+      lmn_env.mc_dump_format = LMN_FSM_GRAPH_MEM_NODE;
       break;
     case 1102:
       lmn_env.mc_dump_format = LaViT;
@@ -315,6 +317,12 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1105:
       lmn_env.output_format = JSON;
+      break;
+    case 1106:
+      lmn_env.mc_dump_format = LMN_FSM_GRAPH;
+      break;
+    case 1107:
+      lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
       break;
     case 1200: /* jni interactive mode */
 #ifdef HAVE_JNI_H

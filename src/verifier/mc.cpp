@@ -50,6 +50,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -339,7 +340,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       if (new_ss)
         new_ss->push((vec_data_t)succ);
       if (mc_is_dump(f))
-        dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
+        StateDumper::from_env(stdout)->dump(succ);
     } else {
       /* contains */
       delete(src_succ);
@@ -790,17 +791,17 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
       m = (s == seed) ? "*" : " ";
       fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      state_print_mem(s, (LmnWord)out);
+      StateDumper::from_env(out)->state_print_mem(s);
     } else {
       s = (State *)v->get(i);
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      state_print_mem(s, (LmnWord)out);
+      StateDumper::from_env(out)->state_print_mem(s);
       fprintf(out, ".\n");
 
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      state_print_mem(s, (LmnWord)out);
+      StateDumper::from_env(out)->state_print_mem(s);
       fprintf(out, ":- ");
     }
   }
@@ -910,11 +911,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
 
     case Dir_DOT: /* TODO:
                      反例パスをサブグラフとして指定させたら分かりやすくなりそう
-                   */
-    case FSM: /* TODO: 未定. ltsviewはdotファイルを読み出せるので廃止しても良い
-               */
-      fprintf(f, "under constructions..\n");
-      break;
+                   */;
     default:
       lmn_fatal("unexpected.");
       break;

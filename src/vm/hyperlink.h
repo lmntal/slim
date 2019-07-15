@@ -137,6 +137,7 @@ HyperLink *lmn_hyperlink_at_to_hl(LmnSymbolAtomRef at);
 BOOL lmn_hyperlink_eq(LmnSymbolAtomRef atom1, LmnLinkAttr attr1,
                       LmnSymbolAtomRef atom2, LmnLinkAttr attr2);
 void lmn_hyperlink_print(LmnMembraneRef gr);
+void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr);
 
 /* ----------------------------------------------------------------------- *
  *  same proccess context (同名型付きプロセス文脈)                         *

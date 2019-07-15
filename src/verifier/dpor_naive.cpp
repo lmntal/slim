@@ -46,6 +46,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
 
 /* 概要:
  *   Sasaki P.O.RコードをRev.108から復刻した. (gocho Rev.422)
@@ -371,7 +372,7 @@ inline State *McPorData::por_state_insert_statespace(StateSpaceRef ss,
     set_outside_exist(t);
     state_id_issue(succ_s);
     if (mc_is_dump(org_f))
-      dump_state_data(succ_s, (LmnWord)stdout, (LmnWord)NULL);
+      StateDumper::from_env(stdout)->dump(succ_s);
     if (succ_m)
       succ_m->free_rec();
     if (new_ss)
@@ -440,8 +441,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
 
   if (s->successors) {
     printf("unexpected.\n");
-    dump_state_data((State *)(s->successors[0]), (LmnWord)stdout,
-                    (LmnWord)NULL);
+    StateDumper::from_env(stdout)->dump((State *)(s->successors[0]));
   }
 
   s->succ_set(RC_EXPANDED(rc));

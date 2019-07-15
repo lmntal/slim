@@ -51,6 +51,7 @@
 #include "state.hpp"
 #include "state_table.hpp"
 #include "vm/vm.h"
+#include "state_dumper.h"
 
 namespace c14 = slim::element;
 
@@ -69,8 +70,8 @@ void StateSpace::make_table_pair(TablePair &t, TablePair &rehasher) {
 /** StateSpace
  */
 StateSpace::StateSpace(int thread_num, AutomataRef a, Vector *psyms)
-    : using_memenc(false), is_formated(false), thread_num(thread_num), out(stdout),
-      init_state(nullptr), property_automata(a), propsyms(psyms),
+    : using_memenc(false), is_formated(false), thread_num(thread_num),
+      out(stdout), init_state(nullptr), property_automata(a), propsyms(psyms),
       end_states(thread_num) {
   if (lmn_env.mem_enc) {
     using_memenc = true;
@@ -306,113 +307,18 @@ unsigned long StateSpace::space() const {
  */
 
 void StateSpace::dump_ends() const {
+  auto dumper = StateDumper::from_env(this->out);
   for (const auto &end_i : end_states) {
     for (const auto &p : end_i) {
-      state_print_mem(p, (LmnWord)this->out);
-      if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+      dumper->state_print_mem(p);
+      if (lmn_env.sp_dump_format == LMN_SYNTAX)
         printf(".\n");
-      }
     }
   }
 }
 
-void StateSpace::dump() const {
-  State *init = init_state;
-  switch (lmn_env.mc_dump_format) {
-  case Dir_DOT:
-    fprintf(this->out, "digraph StateTransition {\n");
-    fprintf(this->out, "  node [shape = circle];\n");
-    fprintf(this->out,
-            "  %lu [style=filled, color = \"#ADD8E6\", shape = Msquare];\n",
-            state_format_id(init, this->is_formated));
-    this->dump_all_states();
-    this->dump_all_transitions();
-    this->dump_all_labels();
-    fprintf(this->out, "}\n");
-    break;
-  case FSM:
-    /* TODO: under construction..
-     *   一般的なLTS状態表現方法であるFSM形式.
-     *   変数集合/State Vectorに分けて出力する必要がある.
-     *   階層グラフ構造をどのように出力すべきか要検討.
-     *   現状ではとりあえず状態データを空にして状態遷移グラフを出力する */
-    // statespace_print_state_data
-    // statespace_print_state_vector
-    fprintf(this->out, "Under_Constructions(2) Binay \"Yes\" \"No\"\n");
-    fprintf(this->out, "---\n");
-    this->dump_all_states();
-    fprintf(this->out, "---\n");
-    this->dump_all_transitions();
-    break;
-  case LaViT: /* FALL THROUGH */
-  default:
-    if (lmn_env.sp_dump_format != INCREMENTAL) {
-      fprintf(this->out, "States\n");
-      this->dump_all_states();
-    }
-    fprintf(this->out, "\n");
-    fprintf(this->out, "Transitions\n");
-    fprintf(this->out, "init:%lu\n", state_format_id(init, this->is_formated));
-    this->dump_all_transitions();
-    fprintf(this->out, "\n");
-
-    if (this->has_property() && lmn_env.mc_dump_format == LaViT) {
-      fprintf(this->out, "Labels\n");
-      this->dump_all_labels();
-      fprintf(this->out, "\n");
-    }
-
-    break;
-  }
-}
-
-void StateSpace::dump_all_states() const {
-  if (this->mhash_table.tbl)
-    for (auto &ptr : *this->mhash_table.tbl)
-      dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->memid_table.tbl)
-    for (auto &ptr : *this->memid_table.tbl)
-      dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->mhash_table.acc)
-    for (auto &ptr : *this->mhash_table.acc)
-      dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->memid_table.acc)
-    for (auto &ptr : *this->memid_table.acc)
-      dump_state_data(ptr, (LmnWord)this->out, (LmnWord)this);
-}
-
-void StateSpace::dump_all_transitions() const {
-  if (this->mhash_table.tbl)
-    for (auto &ptr : *this->mhash_table.tbl)
-      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->memid_table.tbl)
-    for (auto &ptr : *this->memid_table.tbl)
-      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->mhash_table.acc)
-    for (auto &ptr : *this->mhash_table.acc)
-      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
-  if (this->memid_table.acc)
-    for (auto &ptr : *this->memid_table.acc)
-      state_print_transition(ptr, (LmnWord)this->out, (LmnWord)this);
-}
-
-void StateSpace::dump_all_labels()const {
-  if (this->mhash_table.tbl)
-    for (auto &ptr : *this->mhash_table.tbl)
-    state_print_label(ptr ,
-                     (LmnWord)this->out, (LmnWord)this);
-  if (this->memid_table.tbl)
-    for (auto &ptr : *this->memid_table.tbl)
-                     state_print_label(ptr , (LmnWord)this->out,
-                     (LmnWord)this);
-  if (this->mhash_table.acc)
-    for (auto &ptr : *this->mhash_table.acc)
-                     state_print_label(ptr , (LmnWord)this->out,
-                     (LmnWord)this);
-  if (this->memid_table.acc)
-    for (auto &ptr : *this->memid_table.acc)
-                     state_print_label(ptr , (LmnWord)this->out,
-                     (LmnWord)this);
+void StateSpace::dump() {
+  StateDumper::from_env(this->out)->dump(this);
 }
 
 /* 注: 出力用に, リンクリストの先頭の状態のIDで,
