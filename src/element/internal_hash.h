@@ -1,8 +1,8 @@
 /*
  * intrnal_hash.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -36,7 +36,6 @@
  * $Id: internal_hash.h,v 1.5 2008/10/16 18:06:34 sasaki Exp $
  */
 
-
 #ifndef INTERNAL_HASH_H
 #define INTERNAL_HASH_H
 
@@ -58,19 +57,17 @@ typedef struct HashEntry {
 typedef struct SimpleHashtbl {
   struct HashEntry *tbl;
   unsigned int cap, num;
-} SimpleHashtbl;
+}SimpleHashtbl;
 
 typedef struct HashIterator {
   SimpleHashtbl *ht;
   unsigned int i;
 } HashIterator;
 
-
 void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size);
 SimpleHashtbl *hashtbl_make(unsigned int init_size);
 HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key);
-HashValueType hashtbl_get_default(SimpleHashtbl *ht,
-                                  HashKeyType key,
+HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key,
                                   HashValueType default_value);
 int hashtbl_contains(SimpleHashtbl *ht, HashKeyType key);
 void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType val);
@@ -85,38 +82,33 @@ void hashtbliter_next(HashIterator *iter);
 #define hashtbliter_isend(I) ((I)->i >= (I)->ht->cap)
 
 /* HashSet */
-typedef struct HashSet {
-  HashKeyType* tbl;
+struct HashSet {
+  HashKeyType *tbl;
   unsigned int cap, num;
-} HashSet;
+
+  HashSet(unsigned int init_size);
+  ~HashSet();
+  int contains(HashKeyType key);
+  void add(HashKeyType key);
+  void delete_entry(HashKeyType key);
+  HashKeyType *get_p(HashKeyType key, unsigned long dummykey);
+};
 
 typedef struct HashSetItrator {
   HashSet *set;
   unsigned int i;
 } HashSetIterator;
 
-HashSet *hashset_make(unsigned int init_size);
-void hashset_init(HashSet *set, unsigned int init_size);
-int hashset_contains(HashSet *set, HashKeyType key);
-void hashset_add(HashSet *set, HashKeyType key);
-void hashset_clear(HashSet *set);
-void hashset_delete(HashSet *set, HashKeyType key);
-void hashset_free(HashSet *set);
-void hashset_destroy(HashSet *set);
 HashSetIterator hashset_iterator(HashSet *set);
 void hashsetiter_next(HashSetIterator *it);
-#define hashset_num(HT) (HT)->num
-
 #define hashsetiter_entry(I) ((I)->set->tbl[(I)->i])
 #define hashsetiter_isend(I) ((I)->i >= (I)->set->cap)
 
-inline static unsigned long internal_hashtbl_space_inner(SimpleHashtbl *ht)
-{
+inline static unsigned long internal_hashtbl_space_inner(SimpleHashtbl *ht) {
   return (sizeof(struct HashEntry) * ht->cap);
 }
 
-inline static unsigned long internal_hashtbl_space(SimpleHashtbl *ht)
-{
+inline static unsigned long internal_hashtbl_space(SimpleHashtbl *ht) {
   return sizeof(struct SimpleHashtbl) + internal_hashtbl_space_inner(ht);
 }
 

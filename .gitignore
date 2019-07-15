@@ -9,6 +9,7 @@
 # Libraries
 *.lib
 *.a
+share/*
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -23,6 +24,7 @@
 *.i*86
 *.x86_64
 *.hex
+bin/*
 
 # misc
 GPATH
@@ -32,6 +34,7 @@ TAGS
 gtags.conf
 *~
 \#*\#
+.vscode/*
 
 #mac 
 .DS_Store
@@ -43,6 +46,7 @@ Thumbs.db
 Makefile
 Makefile.in
 autom4te.cache/
+benchmarkset/*.il
 compile
 config.guess
 config.log
@@ -67,18 +71,13 @@ lib/*.il
 *.lo
 *.la
 src/arch.h
-src/loader/il_lexer.c
-src/loader/il_lexer.h
-src/loader/il_parser.c
-src/loader/il_parser.h
-src/loader/interpret_generated.c
-src/loader/translate_generated.c
 src/slim
-src/verifier/nc_lexer.*
-src/verifier/nc_parser.*
-src/verifier/nc_parser.h
-src/verifier/propsym_lexer.*
-src/verifier/propsym_parser.*
+src/verifier/nc_lexer.cpp
+src/verifier/nc_parser.cpp
+src/verifier/nc_parser.hpp
+src/verifier/propsym_lexer.cpp
+src/verifier/propsym_parser.cpp
+src/verifier/propsym_parser.hpp
 src/utility/.deps
 src/verifier/.deps
 third_party/google-perftools-1.8.3/.deps
@@ -89,3 +88,9 @@ test/**/*.log
 test/**/*.trs
 test/**/*.il
 .dirstamp
+il_lexer.cpp
+il_parser.cpp
+il_parser.hpp
+src/loader/interpret_generated.cpp
+src/loader/translate_generated.cpp
+third_party/google-perftools-1.8.3/test-suite.log

@@ -15,9 +15,12 @@ slim_LDFLAGS = -L./verifier                            \
                -L./vm                                  \
                -L./element                             \
                -L../third_party/zdelta-2.1
-slim_CFLAGS =  -I../third_party/zdelta-2.1             \
-               -DCOMMIT_ID=\"`git show -s --format=%h`\" \
-               -std=gnu99
+slim_CXXFLAGS = -std=c++11                             \
+               -I../third_party/zdelta-2.1             \
+               -DCOMMIT_ID=\"`git show -s --format=%h`\"
+slim_CFLAGS = -std=gnu99                               \
+              -I../third_party/zdelta-2.1              \
+              -DCOMMIT_ID=\"`git show -s --format=%h`\"
 
 slim_DEPENDENCIES = ./verifier/liblmn_verifier.a       \
                     ./vm/liblmn_vm.a                   \
@@ -30,10 +33,12 @@ slim_LDFLAGS += -L../
 slim_DEPENDENCIES += ../libjvm.a
 endif
 
+if ENABLE_GPERFTOOLS
+slim_LDADD += -ltcmalloc
+else
 if ENABLE_TCMALLOC
-slim_LDADD += -ltcmalloc_minimal_in_slim
-slim_LDFLAGS += -L../third_party/google-perftools-1.8.3/.libs
-slim_DEPENDENCIES += ../third_party/google-perftools-1.8.3/.libs/libtcmalloc_minimal_in_slim.a
+slim_LDADD += -ltcmalloc_minimal
+endif
 endif
 
 if ENABLE_CUNIT
@@ -58,26 +63,24 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER)
 # .yファイルは .lより先に書く
 # この一覧は、ファイルを手動で列挙するにはどうしたらいい？
 slim_SOURCES =                                                     \
-	main.c                          lmntal.h                         \
-	env.c                           arch.h                           \
+	main.cpp                          lmntal.h                         \
+	env.cpp                           arch.h                           \
 	\
 	lmntal_ext.h                                                     \
-	ext/init_exts.c                                                  \
-	ext/integer.c                                                    \
-	ext/float.c                                                      \
-	ext/atomic.c                                                     \
-	ext/nlmem.c                                                      \
-	ext/io.c                                                         \
-	ext/array.c			ext/array.h                      \
-	ext/atom.c                                                       \
-	ext/react_rule.c                                                 \
-	ext/initial_ruleset.c                                            \
-	ext/nd_conf.c							 \
-	ext/set.c			ext/set.h			 \
-	ext/state_map.c							 \
-	ext/membrane.c      ext/membrane.h       \
-	ext/zerostep.c \
-	ext/time.c
+	ext/init_exts.cpp                                                  \
+	ext/integer.cpp                                                    \
+	ext/float.cpp                                                      \
+	ext/nlmem.cpp                                                      \
+	ext/array.cpp			ext/array.h                      \
+	ext/atom.cpp                                                     \
+	ext/react_rule.cpp                                               \
+	ext/initial_ruleset.cpp                                          \
+	ext/nd_conf.cpp							 \
+	ext/set.cpp			ext/set.h			 \
+	ext/state_map.cpp						 \
+	ext/membrane.cpp      ext/membrane.h       \
+	ext/zerostep.cpp \
+	ext/time.cpp
 #	ext.h ext.c
 
 slim_OBJS =

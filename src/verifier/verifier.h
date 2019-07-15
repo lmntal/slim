@@ -61,5 +61,6 @@
 #include "state.h"
 #include "statespace.h"
 #include "tree_compress.h"
+#include "state.hpp"
 
 #endif /* LMN_VERIFIER_H */

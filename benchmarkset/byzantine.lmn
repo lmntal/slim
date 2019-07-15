@@ -14,7 +14,7 @@
 % PATTERN=b: shirei=true,  else=false
 
 gen_proc{
-  person(3, b).
+  person(4, a).
   person(X, a) :- int(X) | shirei(false), else(X, a), person(X).
   person(X, b) :- int(X) | shirei(true),  else(X, b), person(X).
   else(X, a) :- Y=X-1, Y>0 | else(Y, a), p{no(Y), valid(true), a(0), b(0)}.
@@ -23,7 +23,7 @@ gen_proc{
 gen_proc{$p[],@p, else(X, Y)}/ :- int(X), unary(Y) | $p[].
 
 
-//人�?,?????????
+//人数,反逆者の指定
 /*
 person(4).
 shirei(true).
@@ -32,25 +32,25 @@ p{ no(2),valid(false),a(0),b(0) }.
 p{ no(3),valid(true),a(0),b(0) }.
 */
 
-//??��???令�?決�?
+//指令の命令の決定
 
 shirei(true) :- shirei(true,a).
 shirei(true) :- shirei(true,b).
 
 
-//????��?
+//カウンタ
 
 i(1).
 
 
-//??��???令�???��(正常)
+//指令が命令を送信(正常)
 
 shirei(true,Cmd),i(I),p{ no(N),$p }
  :- I=:=N,II=I+1,unary(Cmd)
  | shirei(true,Cmd),i(II),p{ no(N),send(Cmd),ret(Cmd),$p }.
 
 
-//??��???令�???��(?????
+//指令が命令を送信(反逆者)
 
 shirei(false),i(I),p{ no(N),$p }
  :- I=:=N,II=I+1
@@ -60,21 +60,21 @@ shirei(false),i(I),p{ no(N),$p }
  | shirei(false),i(II),p{ no(N),send(b),ret(b),$p }.
 
 
-//????��?
+//カウンタ
 
 s(1,1).
 s(S1,S2) :- S1=:=S2,S2I=S2+1 | s(S1,S2I).
 s(S1,S2),person(P) :- S2=:=P,S1I=S1+1 | s(S1I,1),person(P).
 
 
-//??????�????��(正常)
+//副官が副官に送信(正常)
 
 p{ no(N1),send(Cmd),valid(true),$p1 },p{ no(N2),$p2 },s(M1,M2)
  :- N1=:=M1,N2=:=M2,M2I=M2+1,unary(Cmd)
  | p{ no(N1),send(Cmd),valid(true),$p1 },p{ no(N2),ret(Cmd),$p2 },s(M1,M2I).
 
 
-//??????�????��(?????
+//副官が副官に送信(反逆者)
 
 p{ no(N1),send(Cmd),valid(false),$p1 },p{ no(N2),$p2 },s(M1,M2)
  :- N1=:=M1,N2=:=M2,M2I=M2+1,unary(Cmd)
@@ -84,13 +84,13 @@ p{ no(N1),send(Cmd),valid(false),$p1 },p{ no(N2),$p2 },s(M1,M2)
  | p{ no(N1),send(Cmd),valid(false),$p1 },p{ no(N2),ret(b),$p2 },s(M1,M2I).
 
 
-//???
+//集計
 
 p{ ret(a),a(A),$p } :- AI=A+1 | p{ a(AI),$p }.
 p{ ret(b),b(B),$p } :- BI=B+1 | p{ b(BI),$p }.
 
 
-//�??決�????,?????���????????
+//多数決をとり,反逆者以外で集計する
 
 sumA(0),sumB(0).
 p{ no(N),valid(true),a(A),b(B),send(Cmd) },sumA(SA),person(P),s(S,1)

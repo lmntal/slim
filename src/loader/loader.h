@@ -1,8 +1,8 @@
 /*
  * loader.h
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -44,7 +44,9 @@
  */
 
 #include "load.h"
-#include "syntax.h"
-#include "translate.h"
+#include "syntax.hpp"
+
+#include "translate.hpp"
+#include "exception.hpp"
 
 #endif /* LMN_LOADER_H */

@@ -1,12 +1,11 @@
 noinst_LIBRARIES = liblmn_verifier.a
 
-AM_LFLAGS=-P $(patsubst %_lexer.l,%,$<)  \
-           --header-file=$(patsubst %.l,%.h,$<) -o $(patsubst %.l,%.c,$<)
-AM_YFLAGS=-d -p $(patsubst %_parser.y,%,$<) -o $(patsubst %.y,%.c,$<)
+
+AM_YFLAGS=-d -p $(patsubst %_parser.ypp,%,$<) -o $(patsubst %.ypp,%.cpp,$<)
 
 PARSERS = nc_parser nc_lexer propsym_parser propsym_lexer
-PARSER_HEADER = $(patsubst %, %.h, $(PARSERS))
-PARSER_SOURCE = $(patsubst %, %.c, $(PARSERS))
+PARSER_HEADER = nc_parser.hpp propsym_parser.hpp
+PARSER_SOURCE = nc_parser.cpp nc_lexer.cpp propsym_parser.cpp propsym_lexer.cpp
 
 BUILT_SOURCES = $(PARSER_SOURCE)
 CLEANFILES = $(PARSER_SOURCE) $(PARSER_HEADER)
@@ -19,33 +18,41 @@ liblmn_verifier_a_CFLAGS =                               \
         $(CFLAGS)
         
 liblmn_verifier_a_SOURCES =                              \
-	automata.c               automata.h                    \
-	binstr_compress.c        binstr_compress.h             \
-	delta_membrane.c         delta_membrane.h              \
-	dpor.c                   dpor.h                        \
-	dpor_naive.c             dpor_naive.h                  \
-	ltl2ba_adapter.c         ltl2ba_adapter.h              \
-	mc.c                     mc.h                          \
-	mc_explorer.c            mc_explorer.h                 \
-	mc_generator.c           mc_generator.h                \
-	mc_visualizer.c          mc_visualizer.h               \
-	mc_worker.c              mc_worker.h                   \
-	mem_encode.c             mem_encode.h                  \
-	mhash.c                  mhash.h                       \
-	nc_parser.y	             nc_lexer.l                    \
-	propositional_symbol.c   propositional_symbol.h        \
-	propsym_parser.y         propsym_lexer.l               \
-	runtime_status.c         runtime_status.h              \
-	state.c                  state.h                       \
-	statespace.c             statespace.h                  \
-	tree_compress.c          tree_compress.h               \
-	visitlog.c               visitlog.h                    \
-	stack_macro.h
+	automata.cpp               automata.h                    \
+	binstr_compress.cpp        binstr_compress.h             \
+	delta_membrane.cpp         delta_membrane.h              \
+	dpor.cpp                 dpor.h                        \
+	dpor_naive.cpp             dpor_naive.h                  \
+	ltl2ba_adapter.cpp         ltl2ba_adapter.h              \
+	mc.cpp                     mc.h                          \
+	mc_explorer.cpp            mc_explorer.h                 \
+	mc_generator.cpp           mc_generator.h                \
+	mc_visualizer.cpp          mc_visualizer.h               \
+	mc_worker.cpp              mc_worker.h                   \
+	mem_encode.cpp             mem_encode.h                  \
+	mhash.cpp                  mhash.h                       \
+	nc_parser.ypp	             nc_lexer.cpp                    \
+	propositional_symbol.cpp   propositional_symbol.h        \
+	propsym_parser.ypp         propsym_lexer.cpp               \
+	runtime_status.cpp         runtime_status.h              \
+	state.cpp                  state.h          state.hpp             \
+	statespace.cpp             statespace.h                  \
+	state_table.cpp            \
+	tree_compress.cpp          tree_compress.h               \
+	visitlog.h                 \
+	stack_macro.h              \
+	state_dumper.cpp           \
+	mem_encode/decoder.cpp     mem_encode/binstr.cpp
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)
 
-.l.c:
-	$(LEX) $(LFLAGS) $(AM_LFLAGS) $<
-.y.c:
-	$(YACC) $(YFLAGS) $(AM_YFLAGS) $<
+nc_lexer.cpp: nc_lexer.cpp.re
+	$(RE2C) -o nc_lexer.cpp nc_lexer.cpp.re
+
+propsym_lexer.cpp: propsym_lexer.cpp.re
+	$(RE2C) -c -o propsym_lexer.cpp propsym_lexer.cpp.re
+
+
+.ypp.cpp:
+	$(BISON) $(YFLAGS) $(AM_YFLAGS) $<

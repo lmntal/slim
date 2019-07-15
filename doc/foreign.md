@@ -93,19 +93,19 @@ SLIMは共有ライブラリを見つけると初期化処理を行う関数を�
 ファイル名は、Cのソースファイル名の拡張子を除いた部分で、例えばSILMは
 print.c というファイルならば init_aaa という関数を記述する。
 
-コールバック関数の登録には lmn_register_c_fun を使う。
+コールバック関数の登録には CCallback::lmn_register_c_fun を使う。
 
     /* name: 登録名
        f: 登録する関数へのポインタ
        arity: 登録する関数が受け取るリンクの数
     */ 
-    void lmn_register_c_fun(const char *name, void *f, int arity);
+    void CCallback::lmn_register_c_fun(const char *name, void *f, int arity);
 
 例えば、print.cのprint_any というリンクを一つ受け取るコールバック関数を
 printという名前で登録する場合、
 
     int init_print() {
-      lmn_register_c_fun("print", print_any, 1);
+      CCallback::lmn_register_c_fun("print", print_any, 1);
     }
 
 もちろんinit関数ではその他にプログラマが好きな初期化処理を書いてもいい。

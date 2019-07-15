@@ -48,13 +48,21 @@
  * @defgroup VM
  */
 
+
 #include "ccallback.h"
 #include "dumper.h"
-#include "instruction.h"
 #include "membrane.h"
 #include "memstack.h"
+#include "process_table.h"
+#include "rule.h"
+#include "simply_process_table.h"
+#include "simply_trace_log.h"
 #include "symbol.h"
 #include "task.h"
-#include "rule.h"
+#include "trace_log.h"
+
+#include "rule.hpp"
+#include "atomlist.hpp"
+#include "react_context.hpp"
 
 #endif /* LMN_VM_H */

@@ -1,3 +1,3 @@
 #!/bin/sh
 
-../../src/slim --use-builtin-rule ../../lib/unit_test.il testsuite/statespace/statespace.il
+../../src/slim -I../../lib testsuite/statespace/statespace.il

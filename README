@@ -17,9 +17,7 @@ The way to compile this package is:
 ```
 export LMNTAL_HOME=/path/to/devel # set path of compiler
 cd slim
-aclocal
-automake --add-missing
-autoreconf
+./autogen.sh
 ./configure
 make
 ```
@@ -60,7 +58,8 @@ lmntal --slimcode source.lmn > source.il
 - autoconf 2.69
 - g++
 - flex 2.5.35
-- bison 2.3
+- re2c 1.0.3
+- bison 3.0
 - ruby 1.9.3p547
 - libtool 2.2.6b
 - cunit

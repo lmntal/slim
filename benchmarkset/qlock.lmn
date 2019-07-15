@@ -13,7 +13,7 @@
 % property2: Strong Fairness -> property1
 
 init{
-  n(4).
+  n(7).
   init_ @@ n(N) :- N>0, N2=N-1 | 
            n(N2), p{cid(N2), mode=wait}.
 }.

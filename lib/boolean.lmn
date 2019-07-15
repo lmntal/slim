@@ -38,6 +38,7 @@
 
 {
   module(boolean).
+  boolean.use :- .
 
   %% logical not
   H=not(true) :- H=false.

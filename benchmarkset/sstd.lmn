@@ -9,7 +9,7 @@
 
 /*
   while (1) {
-    if (is_empty_queue(SS_THREAD_WQUEUE(th))) {  // line(1)
+    if (SS_THREAD_WQUEUE(th)->is_empty()) {  // line(1)
       THREAD_UNSET_ACTIVE(th);                   // line(2)
       if(token_termination_detection(th)) {      // line(3),  if th0 goto line(10)
         break;                                  
@@ -17,10 +17,10 @@
     }
     else {
       THREAD_SET_ACTIVE(th);                     // line(5)
-      if((s = (State *)dequeue(SS_THREAD_WQUEUE(th)))) {
-        vec_push(my_stack, (LmnWord)s);
+      if((s = (State *)SS_THREAD_WQUEUE(th)->dequeue())) {
+        my_stack->push((LmnWord)s);
         ss_nd_loop(th, my_stack);                // line(6)
-        vec_clear(my_stack);
+        my_stack->clear();
       }
     }
   }
@@ -49,7 +49,7 @@
 
 ss{
 proc_generator{
-  n=2.
+  n=4.
   isTerminated(0).
   _init0 @@ n(X) :- int(X), Y=X-1 |
             m(Y), th_num(X).
@@ -59,10 +59,10 @@ proc_generator{
 }.
 _init_end_ @@ proc_generator{$p, @p}/ :- $p.
 
-line1__Q_is_EMPTY___ @@ % if (is_empty_queue(SS_THREAD_WQUEUE(th))) {  // line(1)
+line1__Q_is_EMPTY___ @@ % if (SS_THREAD_WQUEUE(th)->is_empty()) {  // line(1)
   th{line(1), isEmptyQ(1), $p} :-
   th{line(2), isEmptyQ(1), $p}.
-line1__Q_is_NonEmpty @@ % if (is_empty_queue(SS_THREAD_WQUEUE(th))) {  // line(1)
+line1__Q_is_NonEmpty @@ % if (SS_THREAD_WQUEUE(th)->is_empty()) {  // line(1)
   th{line(1), isEmptyQ(0), $p} :-
   th{line(5), isEmptyQ(0), $p}.
 line2__TH_UNSET_ACTV @@ % THREAD_UNSET_ACTIVE(th);                   // line(2)

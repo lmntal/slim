@@ -1,8 +1,8 @@
 /*
  * element.h
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -47,6 +47,7 @@
 #include "error.h"
 #include "file_util.h"
 #include "internal_hash.h"
+#include "instruction.hpp"
 #include "lmnstring.h"
 #include "lmntal_thread.h"
 #include "memory_pool.h"
@@ -56,5 +57,14 @@
 #include "st.h"
 #include "util.h"
 #include "vector.h"
+#include "scope.hpp"
+#include "re2c/buffer.hpp"
+#include "re2c/cfstream_buffer.hpp"
+#include "re2c/file_buffer.hpp"
+#include "exception.hpp"
+#include "variant.hpp"
+#include "conditional_ostream.hpp"
+#include "optional.hpp"
+#include "range_remove_if.hpp"
 
 #endif /* LMN_ELEMENT_H */

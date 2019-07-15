@@ -53,99 +53,104 @@
  *  ASCII code for printer
  */
 enum ESC_CODE {
-  CODE__HIGH_LIGHT           =  0x01,
-  CODE__UNDER_LINE           =  0x04,
-  CODE__DASH_LINE            =  0x05,
-  CODE__REVERSAL             =  0x07,
-  CODE__FORECOLOR_BLACK      =  0x1e,
-  CODE__FORECOLOR_RED        =  0x1f,
-  CODE__FORECOLOR_GREEN      =  0x20,
-  CODE__FORECOLOR_YELLOW     =  0x21,
-  CODE__FORECOLOR_DEEPBLUE   =  0x22,
-  CODE__FORECOLOR_PURPLE     =  0x23,
-  CODE__FORECOLOR_LIGHTBLUE  =  0x24,
-  CODE__FORECOLOR_WHITE      =  0x25,
-  CODE__BACKCOLOR_BLACK      =  0x28,
-  CODE__BACKCOLOR_RED        =  0x29,
-  CODE__BACKCOLOR_GREEN      =  0x2a,
-  CODE__BACKCOLOR_YELLOW     =  0x2b,
-  CODE__BACKCOLOR_DEEPBLUE   =  0x2c,
-  CODE__BACKCOLOR_PURPLE     =  0x2d,
-  CODE__BACKCOLOR_LIGHTBLUE  =  0x2e,
-  CODE__BACKCOLOR_GRAY       =  0x2f,
+  CODE__HIGH_LIGHT = 0x01,
+  CODE__UNDER_LINE = 0x04,
+  CODE__DASH_LINE = 0x05,
+  CODE__REVERSAL = 0x07,
+  CODE__FORECOLOR_BLACK = 0x1e,
+  CODE__FORECOLOR_RED = 0x1f,
+  CODE__FORECOLOR_GREEN = 0x20,
+  CODE__FORECOLOR_YELLOW = 0x21,
+  CODE__FORECOLOR_DEEPBLUE = 0x22,
+  CODE__FORECOLOR_PURPLE = 0x23,
+  CODE__FORECOLOR_LIGHTBLUE = 0x24,
+  CODE__FORECOLOR_WHITE = 0x25,
+  CODE__BACKCOLOR_BLACK = 0x28,
+  CODE__BACKCOLOR_RED = 0x29,
+  CODE__BACKCOLOR_GREEN = 0x2a,
+  CODE__BACKCOLOR_YELLOW = 0x2b,
+  CODE__BACKCOLOR_DEEPBLUE = 0x2c,
+  CODE__BACKCOLOR_PURPLE = 0x2d,
+  CODE__BACKCOLOR_LIGHTBLUE = 0x2e,
+  CODE__BACKCOLOR_GRAY = 0x2f,
 };
 
-#define __ESC_START__  "\x1b["
-#define __ESC_END__    "m"
+#define __ESC_START__ "\x1b["
+#define __ESC_END__ "m"
 
-static inline void esc_code_clear(){
+static inline void esc_code_clear() {
   printf("%s%s", __ESC_START__, __ESC_END__);
   return;
 }
 
-static inline void esc_code_add(int code)
-{
+static inline void esc_code_add(int code) {
   printf("%s%d%s", __ESC_START__, code, __ESC_END__);
 }
 
-static inline void esc_code_clear_f(FILE *f){
-  fprintf(f,"%s%s", __ESC_START__, __ESC_END__);
+static inline void esc_code_clear_f(FILE *f) {
+  fprintf(f, "%s%s", __ESC_START__, __ESC_END__);
   return;
 }
 
-static inline void esc_code_add_f(FILE *f,int code)
-{
-  fprintf(f,"%s%d%s", __ESC_START__, code, __ESC_END__);
+static inline void esc_code_add_f(FILE *f, int code) {
+  fprintf(f, "%s%d%s", __ESC_START__, code, __ESC_END__);
 }
-
-
 
 /** ----------------------
  *  byte operation
  */
 
 /* See http://isthe.com/chongo/tech/comp/fnv/ */
-#if SIZEOF_LONG == 4
-#  define FNV_PRIME 16777619UL
-#  define FNV_BASIS 2166136261UL
-#elif SIZEOF_LONG == 8
-#  define FNV_PRIME  1099511628211UL
-#  define FNV_BASIS 14695981039346656037UL
-#else
-#  error "not supported"
-#endif
 
-static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
-  unsigned long hval;
+namespace fnv {
+template <size_t size = SIZEOF_LONG> constexpr unsigned long prime();
+
+template <> constexpr unsigned long prime<4>() {
+  return 16777619UL;
+};
+template <> constexpr unsigned long prime<8>() {
+  return 1099511628211UL;
+};
+
+template <size_t size = SIZEOF_LONG> constexpr unsigned long basis();
+template <> constexpr unsigned long basis<4>() {
+  return 2166136261UL;
+}
+template <> constexpr unsigned long basis<8>() {
+  return 14695981039346656037UL;
+}
+
+inline unsigned long hash(const unsigned char *str, long i) {
   /*
    * FNV-1a hash each octet in the buffer
    */
-  hval = FNV_BASIS;
+  auto hval = fnv::basis();
   while (--i >= 0) {
     /* xor the bottom with the current octet */
     hval ^= (unsigned int)str[i];
     /* multiply by the FNV magic prime mod 2^32 or 2^64 */
-    hval *= FNV_PRIME;
+    hval *= fnv::prime();
   }
 
   return hval;
+}
+} // namespace fnv
+
+static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
+  return fnv::hash(str, i);
 }
 
 /* 正: a ＞ b
  * ０: a = b
  * 負: a ＜ b */
 static inline int lmn_byte_cmp(const unsigned char *a, long alen,
-                               const unsigned char *b, long blen)
-{
+                               const unsigned char *b, long blen) {
   if (alen != blen) {
     return alen - blen;
   } else {
     return memcmp(a, b, alen);
   }
 }
-
-
-
 
 /** ----------------------
  *  else
@@ -169,6 +174,51 @@ static inline unsigned long round2up(unsigned long n) {
   }
   return v;
 }
+
+#include <iterator>
+#include <memory>
+
+namespace slim {
+namespace element {
+template <class T> class raw_pointer_iterator {
+  T *p;
+
+public:
+  using iterator_category = std::input_iterator_tag;
+  using value_type = T;
+  using difference_type = std::ptrdiff_t;
+  using pointer = T *;
+  using reference = T &;
+
+  raw_pointer_iterator(T *ptr) : p(ptr) {}
+  raw_pointer_iterator(const raw_pointer_iterator<T> &it) : p(it.p) {}
+  raw_pointer_iterator &operator=(const raw_pointer_iterator<T> &it) {
+    p = it.p;
+  }
+  ~raw_pointer_iterator() noexcept = default;
+
+  reference operator*() const { return *p; }
+  pointer operator->() const { return p; }
+  raw_pointer_iterator<T> &operator++() {
+    p++;
+    return *this;
+  }
+  raw_pointer_iterator<T> operator++(int i) {
+    auto it = *this;
+    ++(*this);
+    return it;
+  }
+
+  bool operator!=(const raw_pointer_iterator<T> &a) { return !(*this == a); }
+  bool operator==(const raw_pointer_iterator<T> &a) { return p == a.p; }
+};
+
+template <class T, class... Args>
+std::unique_ptr<T> make_unique(Args &&... args) {
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+} // namespace element
+} // namespace slim
 
 /* @} */
 

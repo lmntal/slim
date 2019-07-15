@@ -39,74 +39,77 @@
 
 /*
 NAME
-	Set module
+        Set module
 
 SYNOPSIS
-	
+        
 AUTHOR
-	Yutaro Tsunekawa
+        Yutaro Tsunekawa
 
 HISTORY
-	2017/05/03(Wed)
+        2017/05/03(Wed)
 */
 
 {
-    module(set).
+  module(set).
 
-    Ret = set.init :- Ret = set_empty.
+  Ret = set.init :- Ret = set_empty.
 
-    set.free(Set) :- class(Set, "set") |
-	'$callback'('cb_set_free', Set).
+  set.free(Set) :- class(Set, "set") |
+      '$callback'('cb_set_free', Set).
 
-    Ret = set.insert(Set, Val) :-
-	'$callback'('cb_set_insert', Set, Val, Ret).
+  Ret = set.insert(Set, Val) :- class(Set, "set") |
+      '$callback'('cb_set_insert', Set, Val, Ret).
+  Ret = set.insert(set_empty, Val) :-
+      '$callback'('cb_set_insert', set_empty, Val, Ret).
 
-    Ret = set.find(set_empty, Val, Res) :- ground(Val) | Ret = set_empty, Res = none.
 
-    Ret = set.find(set_empty, {$v[]}, Res) :- | Ret = set_empty, Res = none.
+  Ret = set.find(set_empty, Val, Res) :- ground(Val) | Ret = set_empty, Res = none.
 
-    Ret = set.find(Set, Val, Res) :- class(Set, "set") |
-    	'$callback'('cb_set_find', Set, Val, Res, Ret).
+  Ret = set.find(set_empty, {$v[]}, Res) :- | Ret = set_empty, Res = none.
 
-    Ret = set.to_list(set_empty) :- Ret = [].
+  Ret = set.find(Set, Val, Res) :- class(Set, "set") |
+      '$callback'('cb_set_find', Set, Val, Res, Ret).
 
-    Ret = set.to_list(Set) :- class(Set, "set") |
-	'$callback'('cb_set_to_list', Set, Ret).
+  Ret = set.to_list(set_empty) :- Ret = [].
 
-    Ret = set.copy(set_empty, S) :- Ret = set_empty, S = set_empty.
+  Ret = set.to_list(Set) :- class(Set, "set") |
+      '$callback'('cb_set_to_list', Set, Ret).
 
-    Ret = set.copy(S0, S1) :- class(S0, "set") |
-	'$callback'('cb_set_copy', S0, S1, Ret).
+  Ret = set.copy(set_empty, S) :- Ret = set_empty, S = set_empty.
 
-    Ret = set.erase(Set, Val) :- class(Set, "set") |
-	'$callback'('cb_set_erase', Set, Val, Ret).
+  Ret = set.copy(S0, S1) :- class(S0, "set") |
+      '$callback'('cb_set_copy', S0, S1, Ret).
 
-    Ret = set.erase(set_empty, $v) :- unary($v) |
-	Ret = set_empty.
+  Ret = set.erase(Set, Val) :- class(Set, "set") |
+      '$callback'('cb_set_erase', Set, Val, Ret).
 
-    Ret = set.union(Set0, Set1) :- class(Set0, "set"), class(Set1, "set") |
-	'$callback'('cb_set_union', Set0, Set1, Ret).
+  Ret = set.erase(set_empty, $v) :- unary($v) |
+      Ret = set_empty.
 
-    Ret = set.union(Set, set_empty) :- Ret = Set.
+  Ret = set.union(Set0, Set1) :- class(Set0, "set"), class(Set1, "set") |
+      '$callback'('cb_set_union', Set0, Set1, Ret).
 
-    Ret = set.union(set_empty, Set) :- Ret = Set.
+  Ret = set.union(Set, set_empty) :- Ret = Set.
 
-    Ret = set.intersect(Set0, Set1) :- class(Set0, "set"), class(Set1, "set") |
-    	'$callback'('cb_set_intersect', Set0, Set1, Ret).
+  Ret = set.union(set_empty, Set) :- Ret = Set.
 
-    Ret = set.intersect(Set, set_empty) :- Ret = set_empty, free(Set).
+  Ret = set.intersect(Set0, Set1) :- class(Set0, "set"), class(Set1, "set") |
+      '$callback'('cb_set_intersect', Set0, Set1, Ret).
 
-    Ret = set.intersect(set_empty, Set) :- Ret = set_empty, free(Set).
+  Ret = set.intersect(Set, set_empty) :- Ret = set_empty, free(Set).
 
-    Ret = set.diff(set_empty, set_empty) :-
-    	Ret = set_empty.
+  Ret = set.intersect(set_empty, Set) :- Ret = set_empty, free(Set).
 
-    Ret = set.diff(set_empty, S1) :- class(S1, "set") |
-    	Ret = set_empty.
+  Ret = set.diff(set_empty, set_empty) :-
+      Ret = set_empty.
 
-    Ret = set.diff(S0, set_empty) :- class(S0, "set") |
-	Ret = S0.
+  Ret = set.diff(set_empty, S1) :- class(S1, "set") |
+      Ret = set_empty.
 
-    Ret = set.diff(S0, S1) :- class(S0, "set"), class(S1, "set") |
-    	'$callback'('cb_set_diff', S0, S1, Ret).
+  Ret = set.diff(S0, set_empty) :- class(S0, "set") |
+      Ret = S0.
+
+  Ret = set.diff(S0, S1) :- class(S0, "set"), class(S1, "set") |
+      '$callback'('cb_set_diff', S0, S1, Ret).
 }
