@@ -109,6 +109,8 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
                       * in-proxyアトムはBS encode時の訪問順序に数えないため,
                       * in-proxyアトムへの対応としては0をセット */
 
+  TraceData() : flag(255), traversed_proc(0), owner_id(0), matched(0) {}
+  TraceData(BYTE flag, unsigned int traversed_proc, ProcessID owner_id, ProcessID matched) : flag(flag), traversed_proc(traversed_proc), owner_id(owner_id), matched(matched) {}
   bool operator==(const TraceData &a) const {
     return a.flag == flag && a.traversed_proc == traversed_proc &&
            a.owner_id == owner_id && a.matched == matched;
@@ -123,14 +125,17 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
   };
 };
 
-struct TraceLog : ProcessTable<TraceData> {
+struct TraceLog {
+  std::map<ProcessID, TraceData> table;
   LogTracker tracker;
 
-  TraceLog(unsigned long size) : ProcessTable<TraceData>(size) {}
-  TraceLog() : ProcessTable<TraceData>() {}
+  using key_type = ProcessTable<TraceData>::key_type;
+
+  TraceLog(unsigned long size) {}
+  TraceLog() {}
   unsigned int traversed_proc_count(LmnMembraneRef owner) {
-    return this->contains(owner->mem_id())
-               ? (*this)[owner->mem_id()].traversed_proc
+    return table.find(owner->mem_id()) != table.end()
+               ? table[owner->mem_id()].traversed_proc
                : 0;
   }
 
@@ -152,7 +157,7 @@ private:
    * 所属膜側のプロセス訪問カウンタを回す.
    */
   bool visit(LmnWord key, BYTE flag, LmnWord matched_id, LmnMembraneRef owner) {
-    if (this->contains(key)) {
+    if (table.find(key) != table.end()) {
       return false;
     }
 
@@ -160,14 +165,10 @@ private:
 
     if (owner) {
       value.owner_id = owner->mem_id();
-
-      TraceData dat;
-      this->get(owner->mem_id(), &dat);
-      dat.traversed_proc++;
-      this->put(owner->mem_id(), dat);
+      table[owner->mem_id()].traversed_proc++;
     }
 
-    this->put(key, value);
+    table[key] = value;
 
     tracker.trace(key);
 
@@ -201,14 +202,13 @@ public:
   }
 
   void leave(key_type key) {
-    const auto owner_id = (*this)[key].owner_id;
+    const auto owner_id = table[key].owner_id;
+    table[owner_id].traversed_proc--;
+    table.erase(key);
+  }
 
-    TraceData dat;
-    this->get(owner_id, &dat);
-    dat.traversed_proc--;
-    this->put(owner_id, dat);
-
-    this->unput(key);
+  bool contains(key_type key) const {
+    return table.find(key) != table.end();
   }
 
   void backtrack() { tracker.revert(this); }

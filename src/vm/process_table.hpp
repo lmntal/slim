@@ -103,9 +103,8 @@ public:
     return true;
   }
 
-  const value_type &operator[](key_type key) const {
-    if (!this->contains(key))
-      throw new std::out_of_range("accessed with invalid key");
+  value_type &operator[](key_type key) {
+    expand(key);
     return this->tbl[key / buckets_size][key % buckets_size];
   }
 
@@ -146,6 +145,8 @@ public:
     this->tbl[k / buckets_size][k % buckets_size] = unused;
   }
 
+  template <typename U> void erase(U key) { unput(key); }
+
   template <typename U> bool get(U key, value_type *value) {
     const auto k = slim::process_id(key);
     if (this->contains(k)) {
@@ -184,12 +185,12 @@ public:
   }
 
   class iterator : std::input_iterator_tag {
-    ProcessTable<value_type> *table;
+    const ProcessTable<value_type> *table;
     std::size_t bucket_idx, idx;
     std::pair<key_type, value_type> value;
 
   public:
-    iterator(ProcessTable<value_type> *table, std::size_t bucket_idx,
+    iterator(const ProcessTable<value_type> *table, std::size_t bucket_idx,
              std::size_t idx)
         : table(table), bucket_idx(bucket_idx), idx(idx),
           value(std::make_pair(bucket_idx * buckets_size + idx,
@@ -243,7 +244,15 @@ public:
     return end();
   }
 
-  iterator end() { return iterator(this, not_found, not_found); }
+  iterator end() const { return iterator(this, not_found, not_found); }
+
+  template <typename U> iterator find(U key) const {
+    const auto k = slim::process_id(key);
+    return (k < this->size && this->tbl[k / buckets_size] &&
+            this->tbl[k / buckets_size][k % buckets_size] != unused)
+               ? iterator(this, k / buckets_size, k % buckets_size)
+               : end();
+  }
 
 private:
   void expand(unsigned long n) {
