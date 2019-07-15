@@ -1,3 +1,0 @@
-a(X,Y), $x[X,Y] :- ground($x) | b(Z,W), $x[Z,W]. a(A,B),{t(A,B)}.       
-a(C,D),{t(C,D)}.   
-ok

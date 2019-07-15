@@ -1,3 +1,0 @@
-i($i) :- int($i) | yes. i('3').           
- yes.           
-ok

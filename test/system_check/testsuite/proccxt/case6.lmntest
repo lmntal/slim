@@ -1,4 +1,0 @@
-{{a(A,X)},b(B,X)},c(A,B),    ({{$p},$q} :- {$p,$q}). 
-{b(B,a(A))},c(A,B) 
-ok
-%% InsertProxies のテスト

@@ -1,3 +1,0 @@
-neq($i, $j) :- $i \= $j | yes. neq(10, 11). 
- yes. 
-ok

@@ -1,3 +1,0 @@
-sum($i,$j,$k)  :- $z=$i+$j+$k  | ans($z). sum(21,24,5). 
- ans(50) 
-ok

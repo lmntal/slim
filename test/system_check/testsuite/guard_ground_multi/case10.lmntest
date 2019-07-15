@@ -1,3 +1,0 @@
-a(X,Y,Z,W), $x[X,Y], $y[Z,W] :- $x \= $y | $x[A,B], $y[A,B]. a(M,M,N,N). 
- a(F,F,G,G). 
-ok

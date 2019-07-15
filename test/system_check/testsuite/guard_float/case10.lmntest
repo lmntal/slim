@@ -1,3 +1,0 @@
-smalleq($i,$j) :- $i =<. $j | yes. smalleq(9.567,20.332). 
- yes. 
-ok

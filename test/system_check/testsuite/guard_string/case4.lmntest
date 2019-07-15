@@ -1,3 +1,0 @@
-eq($s,$t) :- $s == $t | yes. eq("hello", "hell"). 
-yes. 
-ng

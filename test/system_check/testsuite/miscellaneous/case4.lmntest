@@ -1,3 +1,0 @@
-{ A=f(f(f(f(A)))) },  c,c,c, ( c,{X=f(Y),$p[X,Y]} :- { X=g(Y),$p[X,Y] } ). 
-{ f(g(g(g(A))),A) } 
-ok

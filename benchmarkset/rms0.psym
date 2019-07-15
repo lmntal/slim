@@ -1,1 +1,0 @@
-p= {$p,@p, schej{$s,@s,time(C),task{$t1, p(P1), mutex(0)}, mutex(0)}, ready{$r,@r, task{$t2, p(P2), mutex(1)}}} :- int(C), P1>P2 |

@@ -1,3 +1,0 @@
-a(X,Y,Z,W), $x[X,Y], $y[Z,W] :- $x = $y | b(A,B), $x[A,B]. a(t(A),A,t(B),B). 
- b(t(T),T).
-ok

@@ -1,3 +1,0 @@
-neq($i) :- $i \= 0 | yes. neq(0). 
- yes. 
-ng

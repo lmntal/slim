@@ -1,3 +1,0 @@
-small($i,$j)   :- $i < $j  | yes. small(6,40). 
- yes. 
-ok

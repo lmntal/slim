@@ -1,4 +1,0 @@
-{a(  X)},{b(X)},        ({$p},{$q} :-  $p,$q ). 
-a(b)   
-ok
-%% RemoveToplevelProxies のテスト

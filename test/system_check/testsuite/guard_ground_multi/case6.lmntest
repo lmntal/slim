@@ -1,3 +1,0 @@
-a(X,Y,Z,W), $x[X,Y,Z,W] :- ground($x) | b(A,B,C,D), $x[A,B,C,D]. a(m(M1,M2,M3),M1,M2,M3). 
-b(m(N1,N2,N3),N1,N2,N3). 
-ok

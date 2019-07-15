@@ -1,3 +1,0 @@
-{$p[A,B,C,D,E], f(A,B,C,D,E)} :- $p[L,L,M,M,N],g(N), $p[A,A,B,B,C],g(C).  {e(A),f(A,B,B,C,C)}. 
-g(e), g(e) 
-ok

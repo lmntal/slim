@@ -1,3 +1,0 @@
-{$p[X,Y,Z],f(X,$x),f(Y,$y),f(Z,$z)} :- int($x),int($y),int($z) | $p[V,V,W],g(W). {f(A,1),f(A,1),f(C,1),f(C,1)}. 
-f(g,1) 
-ok

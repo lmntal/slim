@@ -1,3 +1,0 @@
-s($s) :- string($s) | yes. s("hoge"), s(""). 
-yes, yes 
-ok

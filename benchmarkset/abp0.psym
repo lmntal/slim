@@ -1,2 +1,0 @@
-p= sender{exp(Msg,Bit), $s,@s} :- int(Msg), int(Bit) |
-q= sender{exp(Msg,Bit), ack(0,Ack), $s,@s} :- int(Msg), Bit=:=Ack |

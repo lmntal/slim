@@ -1,3 +1,0 @@
-a($x) :- ground($x) | b($x,$x,$x). a(m). a(t(t,t)). a(o(o(O),O)).  
- b(m,m,m), b(t(t,t),t(t,t),t(t,t)), b(o(o(O1),O1),o(o(O2),O2),o(o(O3),O3)). 
-ok

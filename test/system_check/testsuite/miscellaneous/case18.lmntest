@@ -1,3 +1,0 @@
-p(A,B,C,D,E) :- A=B,C=D,g(E).  e(A),p(A,B,B,C,C). 
-e(g)  
-ok

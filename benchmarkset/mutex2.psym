@@ -1,5 +1,0 @@
-r= p(rqst, 1)
-c= p(crit, 1)
-
-f1= p(rqst, X)
-f2= p(crit, 1)

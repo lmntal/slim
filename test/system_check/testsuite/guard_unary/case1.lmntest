@@ -1,3 +1,0 @@
-u($u) :- unary($u) | yes. u(a). u(longlonglonglonglongname). u(1). u("year"). u(2.2). 
-yes,yes,yes,yes,yes.
-ok

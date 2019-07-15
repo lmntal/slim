@@ -1,3 +1,0 @@
-{$p[X,Y],f(X,Y)}:-$p[Z,Z],$p[W,W].    {f(X,Y)},u(X,Y). 
-u(X,Y), {f(X,Y)} 
-ok

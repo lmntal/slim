@@ -1,1 +1,0 @@
-p= p{leader(L), id(I), $p}, p{leader(R), id(D), $q} :- L=:=I, R=:=D |

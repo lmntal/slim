@@ -1,3 +1,0 @@
-a($x), b($y) :- unary($y), $x = $y | c($x,$y). a(g(g)), b(g(g)), a(m), b(m). 
- c(m,m), a(g(g)), b(g(g)). 
-ok

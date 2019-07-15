@@ -1,3 +1,0 @@
-a($x) :- int($x),unary($x),ground($x) | b($x). a(3), a(g), a(t(t)). 
- b(3), a(g), a(t(t)). 
-ok

@@ -1,9 +1,0 @@
-{
-module(nd_conf).
-
-  nd_conf { atom_priority(L), $p[L], @p } :- nd_conf { atom_priority(1, L), $p[L], @p }.
-  nd_conf { atom_priority($n, []), $p, @p } :- int($n) | nd_conf { $p, @p }.
-  nd_conf { atom_priority($n, ['/'($name, $arity)|T]), $p[T], @p} :- $arity >= 0, unary($name), $m = $n + 1 |
-    '$callback'('set_functor_priority', $n, $name, $arity), nd_conf { atom_priority($m, T), $p[T], @p }.
-  nd_conf{@p} :- .
-}.

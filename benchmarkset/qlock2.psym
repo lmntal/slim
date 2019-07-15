@@ -1,5 +1,0 @@
-ncs= p{$p, cid(1)} :- \+($p=($q, mode(cirt))) |
-cs = p{$p, cid(1), mode=crit}
-
-f1 = p{$p, mode=wait, cid(C)} :- C=\=1 |
-f2 = p{$p, mode=rqst, cid(1)}

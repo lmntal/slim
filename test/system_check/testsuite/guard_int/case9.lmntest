@@ -1,3 +1,0 @@
-mod($i,$j)     :- $z=$i mod $j | ans($z). mod(100,3). 
- ans(1). 
-ok

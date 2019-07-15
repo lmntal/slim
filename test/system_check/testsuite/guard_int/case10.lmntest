@@ -1,3 +1,0 @@
-big($i,$j)     :- $i > $j  | yes. big(5,3).    
- yes. 
-ok

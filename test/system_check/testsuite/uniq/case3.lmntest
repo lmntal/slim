@@ -1,3 +1,0 @@
-a($x) :- ground($x), uniq($x) | b($x). a(m), a(m).  
- a(m), b(m).             
-ok

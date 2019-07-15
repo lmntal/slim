@@ -1,4 +1,0 @@
-p = isTerminated(1)
-q= th{line(0), isEmptyQ(0), $p}
-r= th{line(0), isActive(1), $p}
-s= th{line(0), isBlack(1), $p}

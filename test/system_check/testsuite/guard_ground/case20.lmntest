@@ -1,3 +1,0 @@
-a($x),b($y) :- ground($x), $x = $y  | c($x).  a(x(X1,Y1,y(W1,Z1))), X1=W1, Y1=Z1. b(x(X2,Y2,y(W2,Z2))), X2=W2,Y2=Z2. 
- c(x(X3,Y3,y(W3,Z3))), X3=W3, Y3=Z3. 
-ok

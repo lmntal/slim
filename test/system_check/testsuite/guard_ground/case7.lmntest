@@ -1,3 +1,0 @@
-a($x) :- ground($x) | b($x).  a(p(q(r(s(t(u(v(w(x(X1,X2,X3),W1)),X1)),X2)),X3),W1)). 
- b(p(q(r(s(t(u(v(w(x(Y1,Y2,Y3),Z1)),Y1)),Y2)),Y3),Z1)). 
-ok

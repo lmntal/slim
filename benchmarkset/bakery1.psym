@@ -1,2 +1,0 @@
-wait= p{state=wait, pid(0), $p}
-crit= p{state=cs,   pid(0), $p}

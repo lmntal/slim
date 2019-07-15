@@ -1,3 +1,0 @@
-a($x) :- ground($x) | b($x).  a(g(G,G)).          
- b(g(H,H))  
-ok

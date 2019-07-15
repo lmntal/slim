@@ -1,3 +1,0 @@
-append([1,2,3],[4,5],result). Z=append([],Y) :- Y=Z. Z=append([A|X],Y) :- Z=[A|append(X,Y)].
-result([1,2,3,4,5])
-ok

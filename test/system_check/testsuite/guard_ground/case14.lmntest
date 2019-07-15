@@ -1,3 +1,0 @@
-a($x),b($y) :- ground($x), ground($y) | c($x,$y). a(m),b(n). 
- c(m,n)   
-ok

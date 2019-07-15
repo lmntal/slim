@@ -1,3 +1,0 @@
-neq($s, $t) :- string($s), string($t), $s \= $t | yes. neq("hello", "hello"). 
-yes. 
-ng

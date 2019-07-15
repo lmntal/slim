@@ -1,3 +1,0 @@
-{$p[X,Y,Z],f(X),f(Y),f(Z)} :- $p[V,V,W],g(W).   {f(A),f(A),f(C),f(C)}. 
-f(g)  
-ok

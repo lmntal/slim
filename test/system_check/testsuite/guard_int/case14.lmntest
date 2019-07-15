@@ -1,3 +1,0 @@
-eq($i,$j) :- $i = $j | yes. eq(9, 9). 
- yes. 
-ok

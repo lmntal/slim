@@ -1,3 +1,0 @@
-u($u) :- unary($u) | yes. u(m(m)). 
- u(m(m)). 
-ok

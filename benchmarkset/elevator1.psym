@@ -1,5 +1,0 @@
-p= E=[(1,L0) |F], flr{+L0, p(1), $p}
-q= E=[(X,L0) |F], flr{+L0, p(1), $p} :- X=\=1 |
-
-f1= E=[(X,L0) |F], flr{+L0, $f, door(close), +L1}, elv{+L1, $e}
-f2= E=[(X,L0) |F], flr{+L0, $f, door(close), +L1}, elv{+L1, $e}

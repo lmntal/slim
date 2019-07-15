@@ -1,3 +1,0 @@
-a(X,Y), $x[X,Y] :- ground($x) | b(Z,W), $x[Z,W]. a(m(M),M).             
-b(m(N),N).         
-ok
