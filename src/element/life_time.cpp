@@ -1,7 +1,7 @@
 /*
- * element.h
+ * life_time.cpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,41 +32,14 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef LMN_ELEMENT_H
-#define LMN_ELEMENT_H
-
-/**
- * @defgroup Element
- */
-
-#include "clock.h"
-#include "error.h"
-#include "file_util.h"
-#include "internal_hash.h"
-#include "instruction.hpp"
-#include "lmnstring.h"
-#include "lmntal_thread.h"
-#include "memory_pool.h"
-#include "port.h"
-#include "process_util.h"
-#include "queue.h"
-#include "st.h"
-#include "util.h"
-#include "vector.h"
-#include "scope.hpp"
-#include "re2c/buffer.hpp"
-#include "re2c/cfstream_buffer.hpp"
-#include "re2c/file_buffer.hpp"
-#include "exception.hpp"
-#include "variant.hpp"
-#include "conditional_ostream.hpp"
-#include "optional.hpp"
-#include "range_remove_if.hpp"
-#include "stack_trace.hpp"
 #include "life_time.hpp"
 
-#endif /* LMN_ELEMENT_H */
+#ifdef DEBUG
+namespace slim {
+namespace element {
+LifetimeProfiler *LifetimeProfiler::instance_ = nullptr;
+}
+}
+#endif
