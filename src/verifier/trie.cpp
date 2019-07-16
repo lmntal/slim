@@ -630,6 +630,9 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
           tmpCell);
       slim::element::get<InheritedVertex>(*tmpCell).ownerList = nextNode->inheritedVertices;
       slim::element::get<InheritedVertex>(*tmpCell).ownerNode = nextNode;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "NEXTNODE:" << std::endl;
+      std::cout << *nextNode->inheritedVertices << std::endl;
       pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, nextNode);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
@@ -647,9 +650,13 @@ void goAheadProcessOfCurrentTrieNodes(std::stack<TrieBody *> *goAheadStack,
     TrieBody *targetNode =
         popTrieBodyFromGoAheadStackWithoutOverlap(goAheadStack);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << "targetNode:" << std::endl;
+    std::cout << *targetNode->inheritedVertices << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     goAheadProcess(targetNode, &nextGoAheadStack, tInfo, gen);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
+  std::cout << "nextGoAheadStack.size() = " << nextGoAheadStack.size() << std::endl;
 
   nextGoAheadStack.swap(*goAheadStack);
 }
@@ -664,11 +671,16 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
 
     InheritedVertex *targetIVertex = targetCVertex->correspondingVertexInTrie;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     std::cout << "targetCVertex:" << *targetCVertex << std::endl;
+    printf("targetIVertex pointer: %p\n", targetIVertex);
+    if (targetIVertex == nullptr)
+      std::cout << "targetIVertex is NULL!!" << std::endl;
     std::cout << "targetIVertex: "<< *targetIVertex << std::endl;
     auto targetCell = targetIVertex->ownerCell;
     // targetIVertex->ownerList->erase(targetIVertex->ownerCell);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    printf("targetIVertex->ownerList: %p\n", targetIVertex->ownerList);
     for(auto it = targetIVertex->ownerList->begin(); it != targetIVertex->ownerList->end(); ++it) {
       std::cout << *it << std::endl;
     }
@@ -696,7 +708,7 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
 
     goBackProcess(*targetIVertex, currentNode, goAheadStack, trie->info, -1, tmp_delete_lst, true);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete targetIVertex;
+    //delete targetIVertex;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
     //targetIVertex->ownerList->erase(targetIVertex->ownerCell);
@@ -704,6 +716,7 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
     //std::cout << *targetCell << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
+    delete tmp_delete_lst;
 
   }
 }
@@ -802,8 +815,22 @@ Bool isRefinedTrie(TerminationConditionInfo *tInfo, int step) {
 template <typename S>
 Bool triePropagationIsContinued(S *goAheadStack,
                                 TerminationConditionInfo *tInfo, int step) {
-  return isRefinedTrie(tInfo, step) &&
-         !isDescreteTrie(goAheadStack, tInfo, step);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  Bool r = isRefinedTrie(tInfo, step);
+  Bool d = isDescreteTrie(goAheadStack, tInfo, step);
+  std::cout << "ISREFINEDTRIE: " << r << std::endl;
+  std::cout << "ISDESCRETETRIE: " << d << std::endl;
+  return r && !d;
+  // if(r)
+  //   return r;
+
+  // if(!d)
+  //   return !d;
+  // else
+  //   return d;
+    
+  // return isRefinedTrie(tInfo, step) &&
+  //        !isDescreteTrie(goAheadStack, tInfo, step);
 }
 
 void TrieBody::pushInftyDepthTrieNodesIntoGoAheadStackInner(
@@ -852,8 +879,12 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
                                             stepOfPropagation);
   }
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "goAheadStack->size() = " << goAheadStack->size() << std::endl;
   goBackProcessOfCurrentConvertedVertices(BFSStack, goAheadStack, tInfo,
                                           stepOfPropagation);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "goAheadStack->size() = " << goAheadStack->size() << std::endl;
+
   std::cout << "----goBack(" << stepOfPropagation << ")----"<< std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   goAheadProcessOfCurrentTrieNodes(goAheadStack, tInfo, data);
@@ -873,6 +904,7 @@ void TrieBody::collectDescendantConvertedVertices(TrieBody *descendantBody) {
                                       *descendantBody->inheritedVertices,
                                       targetCell);
       slim::element::get<InheritedVertex>(*targetCell).ownerNode = this;
+      slim::element::get<InheritedVertex>(*targetCell).ownerList = this->inheritedVertices;
       slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
           this->depth;
       slim::element::get<InheritedVertex>(*targetCell).canonicalLabel.first =
@@ -912,6 +944,8 @@ void TrieBody::makeTrieMinimumInner(TerminationConditionInfo *tInfo,
 void makeTrieMinimum(Trie *trie, int stepOfPropagation) {
   TerminationConditionInfo *tInfo = trie->info;
   trie->body->makeTrieMinimumInner(tInfo, stepOfPropagation);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "stepOfPropagation = " << stepOfPropagation << std::endl;
   omega_array::move_to_omega_larger_than(*tInfo->distribution,
                                          stepOfPropagation);
   omega_array::clear_finite_larger_than(*tInfo->increase, stepOfPropagation);
@@ -1139,9 +1173,11 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   std::cout << *hash_gen.cGraph << std::endl;
   stepOfPropagation = 0;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "goAheadStack.size() = " << goAheadStack.size() << std::endl;
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
   std::cout << *cAfterGraph->cv << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "goAheadStack.size() = " << goAheadStack.size() << std::endl;
   this->dump();
   std::cout << *cAfterGraph->cv << std::endl;
   while (triePropagationIsContinued(&goAheadStack, tInfo, stepOfPropagation)) {

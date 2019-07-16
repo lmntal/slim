@@ -216,8 +216,9 @@ struct InheritedVertex {
 
   ~InheritedVertex() {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete (hashString);
-    delete (conventionalPropagationMemo);
+    printf("DELETE IVERTEX:%p\n", this);
+    // delete (hashString);
+    // delete (conventionalPropagationMemo);
     this->correspondingVertex->correspondingVertexInTrie = nullptr;
     // freeDisjointSetForest(equivalenceClassOfIsomorphism);
     printf("%s:%d\n", __FUNCTION__, __LINE__);

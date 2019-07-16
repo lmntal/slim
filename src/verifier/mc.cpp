@@ -410,7 +410,10 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   // printf("******************************************\n");
   /** 状態登録 */
   succ_i = 0;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << mc_react_cxt_expanded_num(rc) << std::endl;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
 #ifdef DIFFISO_GEN
     if (!diff_gen_finish)
       printf("Child Graph\n");
@@ -475,9 +478,14 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	rev_dif->addedVertices->push_back(v);
       }
       if(s->trie) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	s->trie->dump();
+	std::cout << "=======START APPLY=======" << std::endl;
 	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << "=======FINISH APPLY=======" << std::endl;
 	s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv, rev_iso);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	src_succ->trie = s->trie;
 	s->trie = nullptr;
 	
@@ -489,10 +497,22 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	printf("===succ===\n");
 	std::cout << *s->graphinfo->cv << std::endl;
 	rev_dif->diffInfoDump();
-	std::cout << "=======START REVERSE=======" << std::endl;
+	std::cout << "=======START REVERSE APPLY=======" << std::endl;
 	trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo);
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	s->trie = src_succ->trie;
 	s->trie->dump();
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << "=======FINISH REVERSE APPLY=======" << std::endl;
+	std::map<int, int> revrev;
+	for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
+	  revrev[it->second] = it->first;
+	}
+	src_succ->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv, revrev);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	for (auto &v : 	s->graphinfo->cv->atoms) {
+	  std::cout << *v.second->correspondingVertexInTrie << std::endl;
+	}
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
       }
 
@@ -570,6 +590,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     else succへの遷移が多重辺かつTransitionオブジェクトを利用しない場合
          then "辺"という構造を持たない(直接pointerで刺している)ので何もしない
     */
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 #ifdef DIFFISO_GEN
   if (!diff_gen_finish) {

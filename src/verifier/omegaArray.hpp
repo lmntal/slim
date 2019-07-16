@@ -27,7 +27,21 @@ inline void move_to_omega_larger_than(OmegaArray &body, int index) {
 
 inline void clear_finite_larger_than(OmegaArray &body, int index) {
   if (body.empty()) return;
-  body.erase(body.upper_bound(index), std::prev(body.end()));
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  for(auto &v : body) {
+    std::cout << v.first << ", " << v.second << std::endl;
+  }
+  std::cout << "body.upper_bound(index)->first = " << body.upper_bound(index)->first << std::endl;
+  std::cout << "std::prev(body.end())->first = " << std::prev(body.end())->first << std::endl;
+  auto start = body.upper_bound(index);
+  if(start == std::prev(body.end()))
+    body.erase(start);
+  else
+    body.erase(body.upper_bound(index), std::prev(body.end()));
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  for(auto &v : body) {
+    std::cout << v.first << ", " << v.second << std::endl;
+  }
 }
 
 inline int maxIndex(const OmegaArray &body) {

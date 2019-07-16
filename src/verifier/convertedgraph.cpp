@@ -262,13 +262,18 @@ void ConvertedGraph::moveReferencesToAfterCG(ConvertedGraph *cg,
                                              std::map<int, int> &iso) {
   for (auto &v : this->atoms) {
     auto cBeforeVertex = v.second;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (cBeforeVertex->correspondingVertexInTrie != nullptr) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       auto cAfterVertex = cg->at(iso[v.first], convertedAtom);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *cAfterVertex << std::endl;
       if (cAfterVertex->correspondingVertexInTrie == nullptr) {
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	std::cout << "NULLPTR" << std::endl;
 	std::cout << *cAfterVertex << std::endl;
       }
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       cAfterVertex->correspondingVertexInTrie = cBeforeVertex->correspondingVertexInTrie;
       cBeforeVertex->correspondingVertexInTrie = nullptr;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
