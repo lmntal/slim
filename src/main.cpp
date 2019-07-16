@@ -668,6 +668,7 @@ static inline void slim_finalize(void) {
   sym_tbl_destroy();
 
   lmn_stream_destroy();
+  slim::element::LifetimeProfiler::check_memory_leak();
 }
 
 static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, int optid, int argc,

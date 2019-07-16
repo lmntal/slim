@@ -322,6 +322,7 @@ AC_HEADER_TIME
 # AC_CHECK_HEADERS(pty.h util.h libutil.h sys/loadavg.h)
 AC_CHECK_HEADERS(sched.h syscall.h)
 AC_CHECK_HEADERS(omp.h)
+AC_CHECK_HEADERS(execinfo.h)
 
 if test "$enable_tcmalloc" = "yes"; then
   AC_CHECK_HEADERS(gperftools/tcmalloc.h,,
