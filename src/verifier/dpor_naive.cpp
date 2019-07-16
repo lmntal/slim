@@ -138,7 +138,7 @@ void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     mc_unset_por(this->flags);
     mc_set_trans(this->flags);
     mc_unset_dump(this->flags);
-    POR_DEBUG(mc_set_dump(this.flags));
+    POR_DEBUG(mc_set_dump(this->flags));
   }
 
   if (mc_react_cxt_expanded_num(rc) <= 1) {
