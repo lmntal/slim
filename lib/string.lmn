@@ -21,7 +21,8 @@ HISTORY
         2015-07-24(Fri)
                 some functions moved from str module
                 added compress and explode
-
+        2019-05-19(Sun)
+	        moved times and join from str
 */
 
 {
@@ -35,7 +36,7 @@ module(string).
  * @example H=string.from(-123)  ==>  H="-123"
  */
 
-H=string.from(X) :- unary(X) | '$callback'('string_make', X, H).
+H = string.from(X) :- unary(X) | '$callback'('string_make', X, H).
 
 /**
  * string.concat(+Str1, +Str2, -Res):
@@ -44,7 +45,7 @@ H=string.from(X) :- unary(X) | '$callback'('string_make', X, H).
  * @param +Str1,+Str2 文字列
  * @example H='^'("abc", "de")  ==>  H="abcde"
  */
-H=string.concat(S1, S2) :- string(S1), string(S2) |
+H = string.concat(S1, S2) :- string(S1), string(S2) |
     '$callback'('string_concat', S1, S2, H).
 
 /**
@@ -56,7 +57,7 @@ H=string.concat(S1, S2) :- string(S1), string(S2) |
  * @param -Res 結果(エラー時は空文字列)
  * @example H=string.substr("abc", 1) ==> H="bc"
  */
-H=string.substr(S,Begin) :- string(S), int(Begin) |
+H = string.substr(S,Begin) :- string(S), int(Begin) |
     '$callback'('string_substr_right', S, Begin, H).
 
 /**
@@ -69,7 +70,7 @@ H=string.substr(S,Begin) :- string(S), int(Begin) |
  * @param -Res 結果(エラー時は空文字列)
  * @example H=string.substr("abc", 1, 2) ==> H="b"
  */
-H=string.substr(S,Begin,End) :- string(S), int(Begin), int(End) |
+H = string.substr(S,Begin,End) :- string(S), int(Begin), int(End) |
     '$callback'('string_substr', S, Begin, End, H).
 
 /**
@@ -79,7 +80,7 @@ H=string.substr(S,Begin,End) :- string(S), int(Begin), int(End) |
  * @example H=string.length("hello")  ==>  H=5
  */
 //2007.07.02 inui
-H=string.length(Str) :- string(Str) | '$callback'('string_length', Str, H).
+H = string.length(Str) :- string(Str) | '$callback'('string_length', Str, H).
 	
 /**
  * string.reverse(+Str, -ReversedStr):
@@ -88,7 +89,7 @@ H=string.length(Str) :- string(Str) | '$callback'('string_length', Str, H).
  * @example H=string.length("hello")  ==>  H="olleh"
  */
 //2007.07.02 inui
-H=string.reverse(Str) :- string(Str) | '$callback'('string_reverse', Str, H).
+H = string.reverse(Str) :- string(Str) | '$callback'('string_reverse', Str, H).
 
 /**
  * string.compress(+List, -String)
@@ -107,7 +108,7 @@ S = string.compress([C|Cs], O0) :-
   S = string.compress(Cs, O).
 
 /**
- * string.explode(+List, -String)
+ * string.explode(+String, -List)
  *
  * 文字列を文字コードのリストに変換
  * @example H=string.explode("ABCDE") ==> H=[65,66,67,68,69]
@@ -122,5 +123,38 @@ L0 = string.explode(C0, I0) :- C0 =\= -1 |
   L0 = [C0|L], 
   io.read_byte(I0, I, C), 
   L = string.explode(C, I).
+
+/**
+ * string.times(+Str, +Times, -Res)
+ *
+ * 与えられた文字列を指定回数繰り返し連結した文字列を返します。
+ * @param +Str 繰り返す文字列
+ * @param +Times 繰り返す回数
+ * @param -Res 結果(文字列)
+ * @example r=string.times("ab", 5)  ==>  r="ababababab"
+ */
+Ret = string.times($str, $n) :- string($str), $n >= 0 |
+    Ret = string.times_sub($str, $n, "").
+
+Ret = string.times_sub($str, $n, Str1) :-
+    string($str), $n > 0, $n1 = $n - 1 |
+    Ret = string.times_sub($str, $n1, string.concat($str, Str1)).
+
+Ret = string.times_sub($str, $n, Str1) :-
+    string($str), $n == 0 | Ret = Str1.
+
+/**
+ * string.join(+Glue, +StrList, -Res):
+ *
+ * 与えられた文字列のリストを指定された結合子で結合した文字列を返す。 
+ * @param +Glue 結合子
+ * @param +StrList 文字列のリスト
+ * @param -Res 結果(文字列)
+ * @example H=join("_", ["1","2","3"])  ==>  H="1_2_3"
+ */
+S = string.join(Glue, []) :- string(Glue) | S = "". //2006.07.24 inui
+S = string.join(Glue, [A]) :- string(Glue) | S = A.
+S = string.join(Glue, [A,B|X]) :- string(Glue) |
+    S = string.concat(A, string.concat(Glue, string.join(Glue, [B|X]))).
 
 }.

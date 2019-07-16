@@ -35,8 +35,6 @@
  *
  */
 
-
-
 /*
 NAME
 	Integer module
@@ -47,46 +45,24 @@ AUTHOR
 	Koji Hara
 	Ken Sakurai
 	Atsushi Nakano
+	Kazunori Ueda
 
 HISTORY
 	2004/06/04(Fri)
-    2008/09/18(Sat) Javaのインラインを使用している部分を削除
+        2008/09/18(Sat) Javaのインラインを使用している部分を削除
+        2019/05/19(Sun) 機能整理
 */
 
 {
 module(integer).
 
 /*
- * H = abs(N):
+ * H = integer.abs(N):
  *
  * H is bound to abs(N)
  */
-H=integer.abs(N) :- int(N),N<0 | H=-1*N.
-H=integer.abs(N) :- int(N),N>=0 | H=N.
-
-/*
- * H = integer.gcd(M, N):
- *
- * H is bound to the gcd of M and N (not fast)
- */
-H = integer.gcd(M, N) :- M > N | H=integer.gcd(M-N, N).
-H = integer.gcd(M, N) :- N > M | H=integer.gcd(M, N-M).
-H = integer.gcd(M, N) :- N = M | H=M.
-
-/*
- * H = lcm(M, N):
- *
- * H is bound to the lcm of M and N (not fast)
- */
-H = integer.lcm(M, N) :- int(M),int(N) | H = M*N/integer.gcd(M, N).
-
-/*
- * H = integer.factorial(N):
- *
- * H is bound to the factorial of N
- */
-H = integer.factorial(N) :- N =< 1 | H = 1.
-H = integer.factorial(N) :- N >= 2 | H = N*integer.factorial(N-1).
+H = integer.abs(N) :- int(N), N<0, N1= -N | H = N1.
+H = integer.abs(N) :- int(N), N>=0 | H = N.
 
 /**
  * integer.set($a,$b,$g):
@@ -113,13 +89,12 @@ H = integer.rnd(N) :- int(N) | '$callback'('integer_rand', N, H).
  */
  integer.srnd(N) :- int(N) | '$callback'('integer_srand', N).
 
-
 /*
  * H = integer.of_str($s):
  * 
  * @param +$n 文字列
  * H is bound to the integer of string
  */
-H=integer.of_str(S) :- string(S) | '$callback'('integer_of_string', S, H).
+H = integer.of_str(S) :- string(S) | '$callback'('integer_of_string', S, H).
 
 }.

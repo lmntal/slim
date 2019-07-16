@@ -136,7 +136,6 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   // printf("start :0x%14llx\n", ret);
   return ret;
 }
-
 uint64_t hash_node(TreeNodeElement left, TreeNodeElement right) {
   struct TreeNode node = {.left = left, .right = right};
   return murmurhash64(&node, 16, 0x5bd1e995);
@@ -161,19 +160,18 @@ LmnBinStrRef binstr_make(unsigned int len) {
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }
-
 TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
-  TreeNodeRef node = LMN_MALLOC(struct TreeNode);
+  TreeNodeRef node=LMN_MALLOC(struct TreeNode);
   node->left = left;
   node->right = right;
   return node;
 }
 
-BOOL table_find_or_put(TreeDatabaseRef treedb, TreeNodeElement left,
+BOOL TreeDatabase::table_find_or_put(TreeNodeElement left,
                        TreeNodeElement right, TreeNodeID *ref) {
   int count, i;
-  uint64_t mask = treedb->mask;
-  TreeNodeRef *table = treedb->nodes;
+  uint64_t mask = this->mask;
+  TreeNodeRef *table = this->nodes;
   uint64_t offset;
 redo:
   offset = (hash_node(left, right) & mask);
@@ -185,11 +183,11 @@ redo:
       if (table[(offset + i) & mask] == 0) {
         TreeNodeRef node = tree_node_make(left, right);
         if (atomic_compare_and_swap(&table[(offset + i) & mask], 0, node)) {
-          atomic_fetch_and_inc(&treedb->node_count);
+          atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
           return FALSE;
         } else {
-          free(node);
+          std::free(node);
           goto redo;
         }
       } else if (tree_node_equal(table[(offset + i) & mask], left, right)) {
@@ -201,42 +199,39 @@ redo:
     count++;
   }
   fprintf(stderr, "error full table\n");
-  fprintf(stderr, "node count  : %10llu\n", treedb->node_count);
-  fprintf(stderr, "table size  : %10lu\n", (treedb->mask + 1));
+  fprintf(stderr, "node count  : %10lu\n", this->node_count);
+  fprintf(stderr, "table size  : %10lu\n", (this->mask + 1));
   fprintf(stderr, "load factor : %10.3lf\n",
-          (double)tree_db_node_count(treedb) / (treedb->mask + 1));
-  fprintf(stderr, "memory      : %7llu MB\n",
-          (uint64_t)tree_space(treedb) / 1024 / 1024);
+          (double)tree_db_node_count(this) / (this->mask + 1));
+  fprintf(stderr, "memory      : %7lu MB\n",
+          (uint64_t)this->space() / 1024 / 1024);
   exit(EXIT_FAILURE);
 }
 
-TreeDatabaseRef tree_make(size_t size) {
-  TreeDatabaseRef treedb = LMN_MALLOC(struct TreeDatabase);
-  treedb->nodes = LMN_CALLOC(TreeNodeRef, size);
-  treedb->mask = size - 1;
-  treedb->node_count = 0;
-  return treedb;
+TreeDatabase::TreeDatabase(size_t size){
+  this->nodes = LMN_CALLOC(TreeNodeRef, size);
+  this->mask = size - 1;
+  this->node_count = 0;
 }
 
-void tree_clear(TreeDatabaseRef treedb) {
+void TreeDatabase::clear(){
   int i;
-  treedb->node_count = 0;
-  for (i = 0; i < treedb->mask + 1; i++) {
-    if (treedb->nodes[i]) {
-      LMN_FREE(treedb->nodes[i]);
-      treedb->nodes[i] = NULL;
+  this->node_count = 0;
+  for (i = 0; i < this->mask + 1; i++) {
+    if (this->nodes[i]) {
+      LMN_FREE(this->nodes[i]);
+      this->nodes[i] = NULL;
     }
   }
 }
 
-void tree_free(TreeDatabaseRef treedb) {
-  tree_clear(treedb);
-  LMN_FREE(treedb->nodes);
-  LMN_FREE(treedb);
+TreeDatabase::~TreeDatabase() {
+  this->clear();
+  LMN_FREE(this->nodes);
   return;
 }
 
-TreeNodeElement tree_find_or_put_rec(TreeDatabaseRef treedb, TreeNodeStrRef str,
+TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
                                      int start, int end, BOOL *found) {
   int split;
   TreeNodeID ref;
@@ -246,20 +241,20 @@ TreeNodeElement tree_find_or_put_rec(TreeDatabaseRef treedb, TreeNodeStrRef str,
   }
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
-      tree_find_or_put_rec(treedb, str, start, start + split, found);
+      this->tree_find_or_put_rec(str, start, start + split, found);
   TreeNodeElement right =
-      tree_find_or_put_rec(treedb, str, start + split + 1, end, found);
+      this->tree_find_or_put_rec(str, start + split + 1, end, found);
   if ((end - start + 1) == str->len) {
-    BOOL _found = table_find_or_put(treedb, left, right, &ref);
+    BOOL _found = this->table_find_or_put(left, right, &ref);
     if (found)
       (*found) = _found;
   } else {
-    table_find_or_put(treedb, left, right, &ref);
+    this->table_find_or_put(left, right, &ref);
   }
   return ref;
 }
 
-TreeNodeID tree_find_or_put(TreeDatabaseRef treedb, LmnBinStrRef bs,
+TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
                             BOOL *found) {
   struct TreeNodeStr str;
   TreeNodeID ref;
@@ -271,11 +266,11 @@ TreeNodeID tree_find_or_put(TreeDatabaseRef treedb, LmnBinStrRef bs,
   if (str.extra > 0)
     str.len += 1;
   // printf("node_count: %d, extra:%d\n", str.len, str.extra);
-  ref = tree_find_or_put_rec(treedb, &str, 0, str.len - 1, found);
+  ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found);
   return ref;
 }
 
-void tree_get_rec(TreeDatabaseRef treedb, TreeNodeElement elem, int start,
+void TreeDatabase::get_rec(TreeNodeElement elem, int start,
                   int end, TreeNodeStrRef dst) {
   int k = end - start + 1;
   if (k <= TREE_UNIT_SIZE) {
@@ -286,18 +281,18 @@ void tree_get_rec(TreeDatabaseRef treedb, TreeNodeElement elem, int start,
     // printf("%d-%d len:%d\n", start, end, dst->len * TREE_UNIT_SIZE);
     // printf("elem:%llu, copy_len: %d\n", elem, copy_len);
     memcpy((BYTE *)dst->nodes + start, &elem, sizeof(BYTE) * copy_len);
-  } else if (treedb->nodes[elem & treedb->mask] != NULL) {
-    TreeNodeRef node = treedb->nodes[elem & treedb->mask];
+  } else if (this->nodes[elem & this->mask] != NULL) {
+    TreeNodeRef node = this->nodes[elem & this->mask];
     int split = ((end - start) / TREE_UNIT_SIZE) / 2;
     // printf("Split: %d\n", split);
-    tree_get_rec(treedb, node->left, start, start + (split * TREE_UNIT_SIZE),
+    this->get_rec(node->left, start, start + (split * TREE_UNIT_SIZE),
                  dst);
-    tree_get_rec(treedb, node->right, start + ((split + 1) * TREE_UNIT_SIZE),
+    this->get_rec(node->right, start + ((split + 1) * TREE_UNIT_SIZE),
                  end, dst);
   }
 }
 
-LmnBinStrRef tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len) {
+LmnBinStrRef TreeDatabase::get(TreeNodeID ref, int len) {
   LmnBinStrRef bs = binstr_make(len);
   struct TreeNodeStr str;
   int real_len = ((len + 1) / TAG_IN_BYTE);
@@ -308,14 +303,14 @@ LmnBinStrRef tree_get(TreeDatabaseRef treedb, TreeNodeID ref, int len) {
   if (str.extra > 0)
     str.len += 1;
   // printf("node_count: %d, extra:%d\n", str.len, str.extra);
-  tree_get_rec(treedb, ref, 0, str.len * TREE_UNIT_SIZE - 1, &str);
+  this->get_rec(ref, 0, str.len * TREE_UNIT_SIZE - 1, &str);
   return bs;
 }
 
-uint64_t tree_space(TreeDatabaseRef treedb) {
+uint64_t TreeDatabase::space(void) {
   uint64_t memory = 0;
   memory += sizeof(struct TreeDatabase);
-  memory += treedb->node_count * sizeof(struct TreeNode);
-  memory += (treedb->mask + 1) * sizeof(TreeNodeRef);
+  memory += this->node_count * sizeof(struct TreeNode);
+  memory += (this->mask + 1) * sizeof(TreeNodeRef);
   return memory;
 }

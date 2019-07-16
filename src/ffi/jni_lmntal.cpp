@@ -352,12 +352,12 @@ static void _run(file_ptr fp)
   LmnRuleSetRef t;
 
   t = load(std::move(fp));
-  start_rulesets = vec_make(2);
+  start_rulesets = new Vector(2);
 
-  vec_push(start_rulesets, (vec_data_t)t);
+  start_rulesets->push((vec_data_t)t);
 
   /* まともな入力ファイルが無ければ抜ける */
-  if(vec_is_empty(start_rulesets)){
+  if(start_rulesets->is_empty()){
     fprintf(stderr, "bad script.\n");
     return;
   }
@@ -368,7 +368,7 @@ static void _run(file_ptr fp)
     lmn_run(start_rulesets);
   }
 
-  vec_free(start_rulesets);
+  delete start_rulesets;
 }
 
 static void show_help()

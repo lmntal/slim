@@ -89,13 +89,13 @@ void test_tree_001()
   }
 
   for (i = 0; i < TEST_1_STR_COUNT; i++) {
-    tree_find_or_put(treedb, strings[i], &found);
+    treedb->tree_find_or_put(strings[i], &found);
   }
 
   for (i = 0; i < TEST_1_STR_COUNT; i++) {
     lmn_binstr_free(strings[i]);
   }
-  tree_clear(treedb);
+  treedb->clear();
 }
 
 #define TEST_2_STR_SIZE (8 * 4 + 4)
@@ -112,14 +112,14 @@ void test_tree_002()
   for (i = 0; i < TEST_2_STR_SIZE; i++)
     string->v[i] = i + 1;
 
-  ref = tree_find_or_put(treedb, string, &found);
-  ret = tree_get(treedb, ref, string->len);
+  ref = treedb->tree_find_or_put(string, &found);
+  ret = treedb->get(treedb, ref, string->len);
 
   CU_ASSERT(binstr_compare(string, ret) == 0);
 
   lmn_binstr_free(string);
   lmn_binstr_free(ret);
-  tree_clear(treedb);
+  treedb->clear();
 }
 
 void test_tree_003()
@@ -137,11 +137,11 @@ void test_tree_003()
     for (j = 0; j < size; j++)
       bs->v[j] = (rand() % 0xFF);
 
-    ref = tree_find_or_put(treedb, bs, &found);
-    bs_ret = tree_get(treedb, ref, bs->len);
+    ref = treedb->tree_find_or_put(bs, &found);
+    bs_ret = treedb->get(treedb, ref, bs->len);
     CU_ASSERT(binstr_compare(bs, bs_ret) == 0);
     lmn_binstr_free(bs);
     lmn_binstr_free(bs_ret);
   }
-  tree_clear(treedb);
+  treedb->clear();
 }

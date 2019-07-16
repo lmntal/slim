@@ -57,7 +57,7 @@ typedef struct HashEntry {
 typedef struct SimpleHashtbl {
   struct HashEntry *tbl;
   unsigned int cap, num;
-} SimpleHashtbl;
+}SimpleHashtbl;
 
 typedef struct HashIterator {
   SimpleHashtbl *ht;
@@ -82,28 +82,25 @@ void hashtbliter_next(HashIterator *iter);
 #define hashtbliter_isend(I) ((I)->i >= (I)->ht->cap)
 
 /* HashSet */
-typedef struct HashSet {
+struct HashSet {
   HashKeyType *tbl;
   unsigned int cap, num;
-} HashSet;
+
+  HashSet(unsigned int init_size);
+  ~HashSet();
+  int contains(HashKeyType key);
+  void add(HashKeyType key);
+  void delete_entry(HashKeyType key);
+  HashKeyType *get_p(HashKeyType key, unsigned long dummykey);
+};
 
 typedef struct HashSetItrator {
   HashSet *set;
   unsigned int i;
 } HashSetIterator;
 
-HashSet *hashset_make(unsigned int init_size);
-void hashset_init(HashSet *set, unsigned int init_size);
-int hashset_contains(HashSet *set, HashKeyType key);
-void hashset_add(HashSet *set, HashKeyType key);
-void hashset_clear(HashSet *set);
-void hashset_delete(HashSet *set, HashKeyType key);
-void hashset_free(HashSet *set);
-void hashset_destroy(HashSet *set);
 HashSetIterator hashset_iterator(HashSet *set);
 void hashsetiter_next(HashSetIterator *it);
-#define hashset_num(HT) (HT)->num
-
 #define hashsetiter_entry(I) ((I)->set->tbl[(I)->i])
 #define hashsetiter_isend(I) ((I)->i >= (I)->set->cap)
 

@@ -81,7 +81,7 @@ LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs);
 BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem);
 
 void lmn_binstr_free(LmnBinStrRef p);
-void lmn_binstr_dump(const LmnBinStrRef bs);
+//void lmn_binstr_dump(const LmnBinStrRef bs);
 unsigned long lmn_binstr_space(struct LmnBinStr *bs);
 LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem);
 LmnBinStrRef lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);

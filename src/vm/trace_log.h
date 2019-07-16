@@ -109,6 +109,8 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
                       * in-proxyアトムはBS encode時の訪問順序に数えないため,
                       * in-proxyアトムへの対応としては0をセット */
 
+  TraceData() : flag(255), traversed_proc(0), owner_id(0), matched(0) {}
+  TraceData(BYTE flag, unsigned int traversed_proc, ProcessID owner_id, ProcessID matched) : flag(flag), traversed_proc(traversed_proc), owner_id(owner_id), matched(matched) {}
   bool operator==(const TraceData &a) const {
     return a.flag == flag && a.traversed_proc == traversed_proc &&
            a.owner_id == owner_id && a.matched == matched;
@@ -123,23 +125,28 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
   };
 };
 
-struct TraceLog : ProcessTable<TraceData> {
+struct TraceLog {
+  std::map<ProcessID, TraceData> table;
   LogTracker tracker;
 
-  TraceLog(unsigned long size) : ProcessTable<TraceData>(size) {}
-  TraceLog() : ProcessTable<TraceData>() {}
+  using key_type = ProcessTable<TraceData>::key_type;
 
+  TraceLog(unsigned long size) {}
+  TraceLog() {}
   unsigned int traversed_proc_count(LmnMembraneRef owner) {
-    return this->contains(lmn_mem_id(owner))
-               ? (*this)[lmn_mem_id(owner)].traversed_proc
+    return table.find(owner->mem_id()) != table.end()
+               ? table[owner->mem_id()].traversed_proc
                : 0;
   }
+
+/* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside
+ * proxies) の数が 膜ownerのそれと一致しているか否かを返す */
   bool eq_traversed_proc_num(LmnMembraneRef owner, AtomListEntryRef in_ent,
                              AtomListEntryRef avoid) {
     size_t s1 = in_ent ? in_ent->size() : 0;
     size_t s2 = avoid ? avoid->size() : 0;
     return traversed_proc_count(owner) ==
-           (lmn_mem_symb_atom_num(owner) + lmn_mem_child_mem_num(owner) +
+      (owner->symb_atom_num() + owner->child_mem_num() +
             s1 - s2);
   }
 
@@ -150,22 +157,18 @@ private:
    * 所属膜側のプロセス訪問カウンタを回す.
    */
   bool visit(LmnWord key, BYTE flag, LmnWord matched_id, LmnMembraneRef owner) {
-    if (this->contains(key)) {
+    if (table.find(key) != table.end()) {
       return false;
     }
 
     TraceData value = {flag, 0, 0, matched_id};
 
     if (owner) {
-      value.owner_id = lmn_mem_id(owner);
-
-      TraceData dat;
-      this->get(lmn_mem_id(owner), &dat);
-      dat.traversed_proc++;
-      this->put(lmn_mem_id(owner), dat);
+      value.owner_id = owner->mem_id();
+      table[owner->mem_id()].traversed_proc++;
     }
 
-    this->put(key, value);
+    table[key] = value;
 
     tracker.trace(key);
 
@@ -173,30 +176,39 @@ private:
   }
 
 public:
-  bool visit(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
-    return this->visit(LMN_SATOM_ID(atom), TraceData::options::TRAVERSED_ATOM,
+/* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
+ * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
+ */
+  bool visit_atom(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
+    return this->visit(atom->get_id(), TraceData::options::TRAVERSED_ATOM,
                        atom2_id, owner);
   }
 
-  bool visit(LmnMembraneRef mem1, LmnWord mem2_id) {
-    return this->visit(lmn_mem_id(mem1), TraceData::options::TRAVERSED_MEM,
-                       mem2_id, lmn_mem_parent(mem1));
+/* ログに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
+ * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
+  bool visit_mem(LmnMembraneRef mem1, LmnWord mem2_id) {
+    return this->visit(mem1->mem_id(), TraceData::options::TRAVERSED_MEM,
+                       mem2_id, mem1->mem_parent());
   }
 
-  bool visit(HyperLink *hl1, LmnWord hl2_id) {
+/* ログに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.
+ * (ハイパーグラフ構造には所属膜の概念がなく,
+ * 膜オブジェクトからの参照もできないため, 所属膜に対する一切の操作は不要)
+ * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
+ */
+  bool visit_hlink(HyperLink *hl1, LmnWord hl2_id) {
     return this->visit(LMN_HL_ID(hl1), TraceData::options::TRAVERSED_HLINK,
                        hl2_id, NULL);
   }
 
   void leave(key_type key) {
-    const auto owner_id = (*this)[key].owner_id;
+    const auto owner_id = table[key].owner_id;
+    table[owner_id].traversed_proc--;
+    table.erase(key);
+  }
 
-    TraceData dat;
-    this->get(owner_id, &dat);
-    dat.traversed_proc--;
-    this->put(owner_id, dat);
-
-    this->unput(key);
+  bool contains(key_type key) const {
+    return table.find(key) != table.end();
   }
 
   void backtrack() { tracker.revert(this); }
@@ -214,13 +226,6 @@ typedef struct TraceLog *TraceLogRef;
  * Function ProtoTypes
  */
 
-TraceLogRef tracelog_make(void);
-TraceLogRef tracelog_make_with_size(unsigned long size);
-void tracelog_free(TraceLogRef trc);
-
-BOOL tracelog_eq_traversed_proc_num(TraceLogRef l, LmnMembraneRef owner,
-                                    AtomListEntryRef in_ent,
-                                    AtomListEntryRef avoid);
 int tracelog_put_atom(TraceLogRef l, LmnSymbolAtomRef atom1, LmnWord atom2_id,
                       LmnMembraneRef owner1);
 int tracelog_put_mem(TraceLogRef l, LmnMembraneRef mem1, LmnWord mem2_id);
@@ -238,6 +243,5 @@ void tracelog_backtrack(TraceLogRef l);
 void tracelog_set_btpoint(TraceLogRef l);
 void tracelog_continue_trace(TraceLogRef l);
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
-
 
 #endif /* LMN_TRACE_LOG_H */

@@ -49,151 +49,67 @@
 #include <vector>
 #include "util.h"
 
-struct Vector {
-  LmnWord *tbl;
-  unsigned int num, cap;
-};
 
 typedef struct Vector *PVector;
 typedef LmnWord vec_data_t;
 
-#define vec_cap(V) ((V)->cap)
-#define vec_num(V) ((V)->num)
-#define vec_is_empty(V) ((V)->num == 0)
-
-static inline Vector *vec_init(Vector *vec, unsigned int init_size);
-static inline Vector *vec_make(unsigned int init_size);
-static inline void vec_push(Vector *vec, LmnWord keyp);
-static inline LmnWord vec_pop(Vector *vec);
-static inline LmnWord vec_peek(const Vector *vec);
-static inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp);
-static inline LmnWord vec_get(const Vector *vec, unsigned int index);
-static inline LmnWord vec_last(Vector *vec);
-static inline void vec_clear(Vector *vec);
-static inline void vec_destroy(Vector *vec);
-static inline void vec_free(Vector *vec);
-static inline unsigned long vec_space(Vector *v);
-static inline unsigned long vec_space_inner(Vector *v);
-
-LmnWord vec_pop_n(Vector *vec, unsigned int n);
-BOOL vec_contains(const Vector *vec, LmnWord keyp);
-Vector *vec_copy(Vector *vec);
-void vec_reverse(Vector *vec);
-void vec_resize(Vector *vec, unsigned int size, vec_data_t val);
-void vec_sort(const Vector *vec, int (*compare)(const void *, const void *));
-
-/* init */
-static inline Vector *vec_init(Vector *vec, unsigned int init_size) {
-  vec->tbl = LMN_NALLOC(LmnWord, init_size);
-  vec->num = 0;
-  vec->cap = init_size;
-  return vec;
-}
-
-/* make */
-static inline Vector *vec_make(unsigned int init_size) {
-  LMN_ASSERT(init_size > 0);
-  Vector *vec = LMN_MALLOC(Vector);
-  return vec_init(vec, init_size);
-}
-
-/* extend (static) */
-static inline void vec_extend(Vector *vec) {
-  vec->cap *= 2;
-  vec->tbl = LMN_REALLOC(LmnWord, vec->tbl, vec->cap);
-}
-
-/* push */
-static inline void vec_push(Vector *vec, LmnWord keyp) {
-  if (vec->num == vec->cap) {
-    vec_extend(vec);
-  }
-  (vec->tbl)[vec->num] = keyp;
-  vec->num++;
-}
-
-/* reduce (static) */
-static inline void vec_reduce(Vector *vec) {
-  vec->cap /= 2;
-  vec->tbl = LMN_REALLOC(LmnWord, vec->tbl, vec->cap);
-}
-
-/* pop */
-static inline LmnWord vec_pop(Vector *vec) {
-  LmnWord ret;
-  LMN_ASSERT(vec->num > 0);
-  /* Stackとして利用する場合, reallocが頻繁に発生してしまう.
-   * Stackなのでサイズの増減は頻繁に発生するものだが,
-   * 頻繁なreallocはパフォーマンスに影響する.
-   * >>とりあえず<< サイズの下限値を設ける. LmnStackなる構造を別に作るべきかも.
-   * (gocho) */
-  if (vec->num <= vec->cap / 2 && vec->cap > 1024) {
-    vec_reduce(vec);
-  }
-  ret = vec_get(vec, (vec->num - 1));
-  vec->num--;
-  return ret;
-}
-
-/* peek */
-static inline LmnWord vec_peek(const Vector *vec) {
-  return vec_get(vec, vec->num - 1);
-}
-
-/* set */
-static inline void vec_set(Vector *vec, unsigned int index, LmnWord keyp) {
-  LMN_ASSERT(index < vec->cap);
-  (vec->tbl)[index] = keyp;
-}
-
-/* get */
-static inline LmnWord vec_get(const Vector *vec, unsigned int index) {
-  LMN_ASSERT(index < vec->num);
-  return (vec->tbl[index]);
-}
-
-static inline LmnWord vec_last(Vector *vec) { return vec->tbl[vec->num - 1]; }
-
+class Vector {
+  LmnWord *tbl;
+  unsigned int num, cap;
+public:
+  Vector();
+  Vector(unsigned int init_size);
+  template <class T> Vector(const std::vector<T> &v);
+  Vector(const Vector &vec);
+  ~Vector();
+  void init(unsigned int init_size);
+  void extend();
+  unsigned int get_num() const;
+  void set_num(unsigned int n);
+  unsigned int get_cap() const;
+  void set_cap(unsigned int c);
+  void memset_tbl(int ch, std::size_t count);
+  bool is_empty() const;
+  void push(LmnWord keyp);
+  void reduce();
+  LmnWord pop();
+  //pop Nth element
+  LmnWord pop_n(unsigned int n);
+  LmnWord peek() const;
+  void set(unsigned int index, LmnWord keyp);
+  void set_list(LmnWord *w);
+  LmnWord get(unsigned int index) const;
+  LmnWord last() const;
 /* pop all elements from vec */
-static inline void vec_clear(Vector *vec) { vec->num = 0; }
+  void clear();
+  void destroy();
+  unsigned long space_inner() const;
+  BOOL contains(LmnWord keyp) const;
+  void reverse();
+  void resize(unsigned int size, vec_data_t val);
+  void sort(int (*compare)(const void *, const void *));
+};
 
-/* destroy */
-static inline void vec_destroy(Vector *vec) { LMN_FREE(vec->tbl); }
-
-/* free */
-static inline void vec_free(Vector *vec) {
-  LMN_FREE(vec->tbl);
-  LMN_FREE(vec);
-}
-
-static inline unsigned long vec_space_inner(Vector *v) {
-  return vec_cap(v) * sizeof(vec_data_t);
-}
-
-static inline unsigned long vec_space(Vector *v) {
-  return sizeof(struct Vector) + vec_space_inner(v);
-}
-
-template <class T> Vector *vec_make(const std::vector<T> &v) {
+template <class T> Vector::Vector(const std::vector<T> &v){
   static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
-                "vector elements must be scalars.");
-  auto res = vec_make(v.size());
-  memcpy(res->tbl, v.data(), sizeof(T) * v.size());
-  res->num = v.size();
-  return res;
+              "vector elements must be scalars.");
+  LMN_ASSERT(v.size() > 0);
+  this->init(v.size());
+  memcpy(this->tbl, v.data(), sizeof(T) * v.size());
+  this->num = v.size();
 }
 
-namespace slim {
-namespace element {
-template <class T> std::vector<T> make_vector(Vector *v) {
-  if (!v)
-    return std::vector<T>();
-  return std::vector<T>(
-      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
-      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
-}
-}
-}
+//namespace slim {
+//namespace element {
+//template <class T> std::vector<T> make_vector(Vector *v) {
+//  if (!v)
+//    return std::vector<T>();
+//  return std::vector<T>(
+//      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
+//      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
+//}
+//}
+//}
 
 /* @} */
 

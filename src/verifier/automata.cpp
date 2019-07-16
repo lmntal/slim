@@ -44,90 +44,51 @@
 
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
-static void atmstate_free(AutomataStateRef s);
-static void atm_transition_free(AutomataTransitionRef t);
 static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
                                    AutomataStateRef s);
 static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s);
-static inline unsigned int atmscc_id(AutomataSCC *s);
-static inline BYTE atmscc_type(AutomataSCC *s);
-static inline void atmscc_set_type(AutomataSCC *s, BYTE type);
-
-struct Automata {
-  /*   atmstate_id_t init_state; */
-  atmstate_id_t init_state;
-  unsigned int prop_num;
-  Vector states; /* Vector of AutomataState */
-  st_table_t state_name_to_id;
-  st_table_t id_to_state_name;
-  st_table_t prop_to_id;
-  Vector sccs;
-};
-
-struct AutomataState {
-  atmstate_id_t id;
-  BOOL is_accept;
-  BOOL is_end;
-  Vector transitions; /* Vector of Successors (AutomataTransition) */
-  AutomataSCC *scc;
-};
-
-struct AutomataTransition {
-  unsigned int next;
-  PLFormulaRef f; /* 実際は命題論理式 */
-};
-
-struct AutomataSCC {
-  unsigned int id;
-  BYTE type;
-};
 
 /*----------------------------------------------------------------------
  * automata
  */
 
-AutomataRef automata_make() {
-  AutomataRef a = LMN_MALLOC(struct Automata);
-
-  vec_init(&a->states, 32);
-  vec_init(&a->sccs, 4);
-  a->state_name_to_id = st_init_strtable();
-  a->id_to_state_name = st_init_numtable();
-  a->prop_to_id = st_init_strtable();
-  a->prop_num = 0;
-  a->init_state = 0; /* デフォルトでは最初の状態が初期状態 */
-
-  return a;
+Automata::Automata() {
+  this->states.init(32);
+  this->sccs.init(4);
+  this->state_name_to_id = st_init_strtable();
+  this->id_to_state_name = st_init_numtable();
+  this->prop_to_id = st_init_strtable();
+  this->prop_num = 0;
+  this->init_state = 0; /* デフォルトでは最初の状態が初期状態 */
 }
 
-void automata_free(AutomataRef a) {
+Automata::~Automata() {
   unsigned int i;
 
   /* free key strings */
-  st_foreach(a->state_name_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
-  st_free_table(a->state_name_to_id);
+  st_foreach(this->state_name_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
+  st_free_table(this->state_name_to_id);
 
   /* free value strings */
-  st_foreach(a->id_to_state_name, (st_iter_func)free_val_str_f, (st_data_t)0);
-  st_free_table(a->id_to_state_name);
+  st_foreach(this->id_to_state_name, (st_iter_func)free_val_str_f, (st_data_t)0);
+  st_free_table(this->id_to_state_name);
 
   /* free key strings */
-  st_foreach(a->prop_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
-  st_free_table(a->prop_to_id);
+  st_foreach(this->prop_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
+  st_free_table(this->prop_to_id);
 
   /* free states */
-  for (i = 0; i < vec_num(&a->states); i++) {
-    atmstate_free((AutomataStateRef)vec_get(&a->states, i));
+  for (i = 0; i < this->states.get_num(); i++) {
+    delete (AutomataStateRef)this->states.get(i);
   }
 
   /* free sccs */
-  for (i = 0; i < vec_num(&a->sccs); i++) {
-    atmscc_free((AutomataSCC *)vec_get(&a->sccs, i));
+  for (i = 0; i < this->sccs.get_num(); i++) {
+    delete (AutomataSCC *)this->sccs.get(i);
   }
 
-  vec_destroy(&a->states);
-  vec_destroy(&a->sccs);
-  LMN_FREE(a);
+  this->states.destroy();
+  this->sccs.destroy();
 }
 
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_) {
@@ -140,10 +101,10 @@ static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_) {
   return ST_CONTINUE;
 }
 
-atmstate_id_t automata_state_id(AutomataRef a, char *state_name) {
+atmstate_id_t Automata::state_id(const char *state_name) {
   st_data_t id;
 
-  if (st_lookup(a->state_name_to_id, (st_data_t)state_name, &id)) {
+  if (st_lookup(this->state_name_to_id, (st_data_t)state_name, &id)) {
     return id;
   } else {
     /* 0から順にIDを付ける */
@@ -151,20 +112,20 @@ atmstate_id_t automata_state_id(AutomataRef a, char *state_name) {
     char *str1;
     int new_id;
 
-    new_id = st_num(a->state_name_to_id);
+    new_id = st_num(this->state_name_to_id);
     str0 = strdup(state_name);
     str1 = strdup(state_name);
 
-    st_add_direct(a->state_name_to_id, (st_data_t)str0, (st_data_t)new_id);
-    st_add_direct(a->id_to_state_name, (st_data_t)new_id, (st_data_t)str1);
+    st_add_direct(this->state_name_to_id, (st_data_t)str0, (st_data_t)new_id);
+    st_add_direct(this->id_to_state_name, (st_data_t)new_id, (st_data_t)str1);
     return new_id;
   }
 }
 
-const char *automata_state_name(AutomataRef a, atmstate_id_t id) {
+const char *Automata::state_name(atmstate_id_t id) {
   char *name;
 
-  if (st_lookup(a->id_to_state_name, (st_data_t)(int)id, (st_data_t *)&name)) {
+  if (st_lookup(this->id_to_state_name, (st_data_t)(int)id, (st_data_t *)&name)) {
     return name;
   } else {
     lmn_fatal("implementation error\n");
@@ -172,46 +133,76 @@ const char *automata_state_name(AutomataRef a, atmstate_id_t id) {
   }
 }
 
-atmstate_id_t automata_state_scc_id(AutomataRef a, atmstate_id_t id) {
-  return atmscc_id(atmstate_scc(automata_get_state(a, id)));
-}
-
-const char *automata_state_scc_name(AutomataRef a, atmstate_id_t id) {
-  return atmscc_name(atmstate_scc(automata_get_state(a, id)));
-}
-
-void automata_add_state(AutomataRef a, AutomataStateRef s) {
-  if (vec_num(&a->states) <= s->id) {
-    vec_resize(&a->states, s->id + 1, (vec_data_t)0);
+void Automata::add_state(AutomataStateRef s) {
+  if (this->states.get_num() <= s->id) {
+    this->states.resize(s->id + 1, (vec_data_t)0);
   }
-  vec_set(&a->states, s->id, (vec_data_t)s);
+  this->states.set(s->id, (vec_data_t)s);
 }
 
-AutomataStateRef automata_get_state(AutomataRef a, BYTE state_id) {
-  LMN_ASSERT(vec_get(&a->states, state_id) != 0);
-  return (AutomataStateRef)vec_get(&a->states, state_id);
+AutomataStateRef Automata::get_state(atmstate_id_t state_id) {
+  LMN_ASSERT(this->states.get(state_id) != 0);
+  return (AutomataStateRef)this->states.get(state_id);
 }
 
-atmstate_id_t automata_get_init_state(AutomataRef a) { return a->init_state; }
+atmstate_id_t Automata::get_init_state() { return this->init_state; }
 
-void automata_set_init_state(AutomataRef a, atmstate_id_t id) {
-  a->init_state = id;
+void Automata::set_init_state(atmstate_id_t id) {
+  this->init_state = id;
 }
 
-unsigned int automata_propsym_to_id(AutomataRef a, char *prop_name) {
+unsigned int Automata::propsym_to_id(char *prop_name) {
   st_data_t id;
 
-  if (st_lookup(a->prop_to_id, (st_data_t)prop_name, &id)) {
+  if (st_lookup(this->prop_to_id, (st_data_t)prop_name, &id)) {
     return id;
   } else {
     unsigned int new_id;
     char *str;
 
     /* 0から順にIDを付ける */
-    new_id = st_num(a->prop_to_id);
+    new_id = st_num(this->prop_to_id);
     str = strdup(prop_name);
-    st_add_direct(a->prop_to_id, (st_data_t)str, (st_data_t)new_id);
+    st_add_direct(this->prop_to_id, (st_data_t)str, (st_data_t)new_id);
     return new_id;
+  }
+}
+
+/* for debug only
+ * 通常の状態遷移グラフと同様の形式で性質オートマトンを出力する.
+ * そのままlavitに喰わせて解析することが目的 */
+void Automata::print_property() {
+  AutomataStateRef init;
+  unsigned long i, n;
+
+  fprintf(stdout, "States\n");
+  n = this->states.get_num();
+
+  for (i = 0; i < n; i++) {
+    AutomataStateRef s = this->get_state(i);
+    fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
+            (unsigned long)s->get_id(), this->state_name(i),
+            s->get_scc()->get_id(), s->get_scc()->get_name());
+  }
+
+  fprintf(stdout, "\nTransitions\n");
+  init = this->get_state((unsigned int)this->get_init_state());
+  fprintf(stdout, "init:%lu\n", (unsigned long)init->get_id());
+  for (i = 0; i < n; i++) {
+    AutomataStateRef s;
+    unsigned long j, m;
+
+    s = this->get_state(i);
+    fprintf(stdout, "%lu::", (unsigned long)s->get_id());
+    m = s->get_transition_num();
+    for (j = 0; j < m; j++) {
+      fprintf(stdout, "%lu",
+              (unsigned long)
+                  this->get_state(s->get_transition(j)->get_next())->get_id());
+      if (j + 1 < m)
+        fprintf(stdout, ",");
+    }
+    fprintf(stdout, "\n");
   }
 }
 
@@ -219,78 +210,74 @@ unsigned int automata_propsym_to_id(AutomataRef a, char *prop_name) {
  * state
  */
 
-AutomataStateRef atmstate_make(unsigned int id, BOOL is_accept_state,
+AutomataState::AutomataState(unsigned int id, BOOL is_accept_state,
                                BOOL is_end_state) {
-  AutomataStateRef s = LMN_MALLOC(struct AutomataState);
-
-  vec_init(&s->transitions, 16);
-  s->id = id;
-  s->is_accept = is_accept_state;
-  s->is_end = is_end_state;
-  s->scc = NULL;
-  return s;
+  this->transitions.init(16);
+  this->id = id;
+  this->is_accept = is_accept_state;
+  this->is_end = is_end_state;
+  this->scc = NULL;
 }
 
-static void atmstate_free(AutomataStateRef s) {
+AutomataState::~AutomataState() {
   unsigned int i;
 
-  for (i = 0; i < vec_num(&s->transitions); i++) {
-    atm_transition_free((AutomataTransitionRef)vec_get(&s->transitions, i));
+  for (i = 0; i < this->transitions.get_num(); i++) {
+    delete (AutomataTransitionRef)this->transitions.get(i);
   }
-  vec_destroy(&s->transitions);
-  LMN_FREE(s);
+  this->transitions.destroy();
 }
 
-void atmstate_add_transition(AutomataStateRef s, AutomataTransitionRef t) {
-  vec_push(&s->transitions, (vec_data_t)t);
+void AutomataState::add_transition(AutomataTransitionRef t) {
+  this->transitions.push((vec_data_t)t);
 }
 
-atmstate_id_t atmstate_id(AutomataStateRef s) { return s->id; }
+atmstate_id_t AutomataState::get_id() { return this->id; }
 
-unsigned int atmstate_transition_num(AutomataStateRef s) {
-  return vec_num(&s->transitions);
+unsigned int AutomataState::get_transition_num() {
+  return this->transitions.get_num();
 }
 
-AutomataTransitionRef atmstate_get_transition(AutomataStateRef s,
-                                              unsigned int index) {
-  return (AutomataTransitionRef)vec_get(&s->transitions, index);
+AutomataTransitionRef AutomataState::get_transition(unsigned int index) {
+  return (AutomataTransitionRef)this->transitions.get(index);
 }
 
-BOOL atmstate_is_accept(AutomataStateRef s) { return s->is_accept; }
+BOOL AutomataState::get_is_accept() { return this->is_accept; }
 
-BOOL atmstate_is_end(AutomataStateRef s) { return s->is_end; }
+BOOL AutomataState::get_is_end() { return this->is_end; }
 
-void inline atmstate_set_scc(AutomataStateRef s, AutomataSCC *scc) {
-  s->scc = scc;
+void inline AutomataState::set_scc(AutomataSCC *scc) {
+  this->scc = scc;
 }
 
-BYTE atmstate_scc_type(AutomataStateRef s) {
-  return atmscc_type(atmstate_scc(s));
+BYTE AutomataState::scc_type() {
+  return this->get_scc()->get_type();
 }
 
-AutomataSCC inline *atmstate_scc(AutomataStateRef s) { return s->scc; }
+AutomataSCC inline *AutomataState::get_scc() { return this->scc; }
 
 /*----------------------------------------------------------------------
  * SCC analysis for property automata
  */
+unsigned int AutomataSCC::unsafe_id_counter = 0;
 /* 処理系にロードした性質オートマトンaを解析し, SCC IDなどを追加する */
-void automata_analysis(AutomataRef a) {
+void Automata::analysis() {
   AutomataStateRef init_s;
   BYTE *on_stack_list;
 
-  LMN_ASSERT(vec_num(&a->states) > 0);
-  init_s = automata_get_state(a, (unsigned int)automata_get_init_state(a));
-  on_stack_list = LMN_CALLOC(BYTE, vec_num(&a->states));
-  on_stack_list[(unsigned int)atmstate_id(init_s)] = 0xffU;
+  LMN_ASSERT(this->states.get_num() > 0);
+  init_s = this->get_state((unsigned int)this->get_init_state());
+  on_stack_list = LMN_CALLOC(BYTE, this->states.get_num());
+  on_stack_list[(unsigned int)init_s->get_id()] = 0xffU;
 
-  automata_analysis_dfs1(a, on_stack_list, init_s);
+  automata_analysis_dfs1(this, on_stack_list, init_s);
   LMN_FREE(on_stack_list);
 }
 
 /* for debug */
-const char *atmscc_name(AutomataSCC *s) {
+const char *AutomataSCC::get_name() {
   const char *ret = NULL;
-  switch (atmscc_type(s)) {
+  switch (this->get_type()) {
   case SCC_TYPE_UNKNOWN:
     ret = "Still_UnKnown.";
     break;
@@ -310,67 +297,11 @@ const char *atmscc_name(AutomataSCC *s) {
   return ret;
 }
 
-AutomataSCC *atmscc_make() {
-  AutomataSCC *m = LMN_MALLOC(AutomataSCC);
-  m->id = 0;
-  m->type = SCC_TYPE_UNKNOWN;
-  return m;
-}
+AutomataSCC::AutomataSCC() : id(0), type(SCC_TYPE_UNKNOWN) {}
 
-void atmscc_free(AutomataSCC *m) { LMN_FREE(m); }
+AutomataSCC::~AutomataSCC() {}
 
-/** CAUTION: MT-Unsafe */
-static inline void atmscc_issue_id(AutomataSCC *s) {
-  static unsigned int unsafe_id_counter = 0;
-  s->id = unsafe_id_counter++;
-}
 
-static inline unsigned int atmscc_id(AutomataSCC *s) { return s->id; }
-
-static inline BYTE atmscc_type(AutomataSCC *s) { return s->type; }
-
-static inline void atmscc_set_type(AutomataSCC *s, BYTE type) {
-  s->type = type;
-}
-
-/* for debug only
- * 通常の状態遷移グラフと同様の形式で性質オートマトンを出力する.
- * そのままlavitに喰わせて解析することが目的 */
-void print_property_automata(AutomataRef a) {
-  AutomataStateRef init;
-  unsigned long i, n;
-
-  fprintf(stdout, "States\n");
-  n = vec_num(&(a->states));
-
-  for (i = 0; i < n; i++) {
-    AutomataStateRef s = automata_get_state(a, i);
-    fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",
-            (unsigned long)atmstate_id(s), automata_state_name(a, i),
-            atmscc_id(atmstate_scc(s)), atmscc_name(atmstate_scc(s)));
-  }
-
-  fprintf(stdout, "\nTransitions\n");
-  init = automata_get_state(a, (unsigned int)automata_get_init_state(a));
-  fprintf(stdout, "init:%lu\n", (unsigned long)atmstate_id(init));
-  for (i = 0; i < n; i++) {
-    AutomataStateRef s;
-    unsigned long j, m;
-
-    s = automata_get_state(a, i);
-    fprintf(stdout, "%lu::", (unsigned long)atmstate_id(s));
-    m = atmstate_transition_num(s);
-    for (j = 0; j < m; j++) {
-      fprintf(stdout, "%lu",
-              (unsigned long)atmstate_id(
-                  automata_get_state(a, (unsigned int)atm_transition_next(
-                                            atmstate_get_transition(s, j)))));
-      if (j + 1 < m)
-        fprintf(stdout, ",");
-    }
-    fprintf(stdout, "\n");
-  }
-}
 
 /* dfs postorder順を求め, postorder順に2nd DFSを行う.
  * 性質頂点に, SCC-TYPEを割り当てる.
@@ -379,28 +310,28 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
                                    AutomataStateRef s) {
   unsigned long i, n;
 
-  n = atmstate_transition_num(s);
+  n = s->get_transition_num();
   for (i = 0; i < n; i++) {
-    AutomataStateRef succ = automata_get_state(
-        a, (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
-    if (!on_stack_list[(unsigned int)atmstate_id(succ)]) {
-      on_stack_list[(unsigned int)atmstate_id(succ)] = 0xffU;
+    AutomataStateRef succ = a->get_state(
+        s->get_transition(i)->get_next());
+    if (!on_stack_list[(unsigned int)succ->get_id()]) {
+      on_stack_list[(unsigned int)succ->get_id()] = 0xffU;
       automata_analysis_dfs1(a, on_stack_list, succ);
     }
   }
 
-  if (!atmstate_scc(s)) { /* entering 2nd dfs */
-    AutomataSCC *scc = atmscc_make();
-    atmscc_issue_id(scc);
-    atmstate_set_scc(s, scc);
-    vec_push(&a->sccs, (vec_data_t)scc);
-    if (atmstate_is_end(s)) {
-      atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
+  if (!s->get_scc()) { /* entering 2nd dfs */
+    AutomataSCC *scc = new AutomataSCC();
+    scc->issue_id();
+    s->set_scc(scc);
+    a->sccs.push((vec_data_t)scc);
+    if (s->get_is_end()) {
+      scc->set_type(SCC_TYPE_NON_ACCEPT);
     } else {
-      if (atmstate_is_accept(s)) {
-        atmscc_set_type(scc, SCC_TYPE_FULLY);
+      if (s->get_is_accept()) {
+        scc->set_type(SCC_TYPE_FULLY);
       } else {
-        atmscc_set_type(scc, SCC_TYPE_NON_ACCEPT);
+        scc->set_type(SCC_TYPE_NON_ACCEPT);
       }
       automata_analysis_dfs2(a, s);
     }
@@ -409,18 +340,18 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
 
 static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
   unsigned long i, n;
-  n = atmstate_transition_num(s);
+  n = s->get_transition_num();
   for (i = 0; i < n; i++) {
-    AutomataStateRef succ = automata_get_state(
-        a, (unsigned int)atm_transition_next(atmstate_get_transition(s, i)));
-    if (!atmstate_scc(succ)) {
-      AutomataSCC *scc = atmstate_scc(s);
-      if ((!atmstate_is_accept(succ) && atmscc_type(scc) == SCC_TYPE_FULLY) ||
-          (atmstate_is_accept(succ) &&
-           atmscc_type(scc) == SCC_TYPE_NON_ACCEPT)) {
-        atmscc_set_type(scc, SCC_TYPE_PARTIALLY);
+    AutomataStateRef succ = a->get_state(
+        s->get_transition(i)->get_next());
+    if (!succ->get_scc()) {
+      AutomataSCC *scc = s->get_scc();
+      if ((!succ->get_is_accept() && scc->get_type() == SCC_TYPE_FULLY) ||
+          (succ->get_is_accept() &&
+           scc->get_type() == SCC_TYPE_NON_ACCEPT)) {
+        scc->set_type(SCC_TYPE_PARTIALLY);
       }
-      atmstate_set_scc(succ, scc);
+      succ->set_scc(scc);
       automata_analysis_dfs2(a, succ);
     }
   }
@@ -430,23 +361,17 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s) {
  * transition
  */
 
-AutomataTransitionRef atm_transition_make(unsigned int next, PLFormulaRef f) {
-  AutomataTransitionRef t = LMN_MALLOC(struct AutomataTransition);
+AutomataTransition::AutomataTransition(atmstate_id_t next, PLFormulaRef f)
+  : next(next), f(f) {}
 
-  t->next = next;
-  t->f = f;
-  return t;
+AutomataTransition::~AutomataTransition () {
+  free_formula(this->f);
 }
 
-void atm_transition_free(AutomataTransitionRef t) {
-  free_formula(t->f);
-  LMN_FREE(t);
-}
+atmstate_id_t AutomataTransition::get_next() { return this->next; }
 
-BYTE atm_transition_next(AutomataTransitionRef t) { return t->next; }
-
-PLFormulaRef atm_transition_get_formula(AutomataTransitionRef t) {
-  return t->f;
+PLFormulaRef AutomataTransition::get_formula() {
+  return this->f;
 }
 
 /*----------------------------------------------------------------------
@@ -459,7 +384,7 @@ int ncparse(nc::lexer *, AutomataRef);
 static int nc_parse(FILE *in, AutomataRef *automata) {
   nc::lexer scanner(in);
 
-  *automata = automata_make();
+  *automata = new Automata();
 
   return ncparse(&scanner, *automata);
 }

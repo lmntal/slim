@@ -19,93 +19,95 @@ HISTORY
 	2006/07/25(Tue)
 		string.join に空リストが渡されたら空文字列を返すようにした by inui
         2015-07-24(Fri)
-		string モジュールへの移行準備
+
+        2019-05-19(Sun)
+		string モジュールへ移行
 */
 
-{
-module(str).
+// {
+// module(str).
 
-str.use :- str.deprecated.
-str.deprecated :- please_use_module_string.
-please_use_module_string, please_use_module_string :-
-   please_use_module_string.
+// str.use :- str.deprecated.
+// str.deprecated :- please_use_module_string.
+// please_use_module_string, please_use_module_string :-
+//    please_use_module_string.
 
-H=str.from(X) :- unary(X) | '$callback'('string_make', X, H), str.deprecated.
+// H=str.from(X) :- unary(X) | '$callback'('string_make', X, H), str.deprecated.
 
-/**
- * str.times(+Str, +Times, -Res)
- *
- * 与えられた文字列を指定回数繰り返し連結した文字列を返します。
- * @param +Str 繰り返す文字列
- * @param +Times 繰り返す回数
- * @param -Res 結果(文字列)
- * @example r=str.times("ab", 5)  ==>  r="ababababab"
- */
-Ret = str.times($string, $times) :-
-    string($string), $times >= 0 |
-    Ret = str.times_sub($string, $times, ""), str.deprecated.
+// /**
+//  * str.times(+Str, +Times, -Res)
+//  *
+//  * 与えられた文字列を指定回数繰り返し連結した文字列を返します。
+//  * @param +Str 繰り返す文字列
+//  * @param +Times 繰り返す回数
+//  * @param -Res 結果(文字列)
+//  * @example r=str.times("ab", 5)  ==>  r="ababababab"
+//  */
+// Ret = str.times($string, $times) :-
+//     string($string), $times >= 0 |
+//     Ret = str.times_sub($string, $times, ""), str.deprecated.
 
-Ret = str.times_sub($string, $times, $gen_string) :-
-    string($string), string($gen_string), $times > 0, $next_times = $times - 1 |
-    Ret = str.times_sub($string, $next_times, X), X = str.concat($string, $gen_string).
+// Ret = str.times_sub($string, $times, $gen_string) :-
+//     string($string), string($gen_string), $times > 0, $next_times = $times - 1 |
+//     Ret = str.times_sub($string, $next_times, X), X = str.concat($string, $gen_string).
 
-Ret = str.times_sub($string, $times, $gen_string) :-
-    string($string), string($gen_string), $times == 0 |
-    Ret = $gen_string.
+// Ret = str.times_sub($string, $times, $gen_string) :-
+//     string($string), string($gen_string), $times == 0 |
+//     Ret = $gen_string.
 
-/**
- * str.concat(+Str1, +Str2, -Res):
- * 
- * 文字列を結合する。
- * @param +Str1,+Str2 文字列
- * @example H='^'("abc", "de")  ==>  H="abcde"
- */
-H=str.concat(S1, S2) :- string(S1), string(S2) |
-    '$callback'('string_concat', S1, S2, H), str.deprecated.
+// /**
+//  * str.concat(+Str1, +Str2, -Res):
+//  * 
+//  * 文字列を結合する。
+//  * @param +Str1,+Str2 文字列
+//  * @example H='^'("abc", "de")  ==>  H="abcde"
+//  */
+// H=str.concat(S1, S2) :- string(S1), string(S2) |
+//     '$callback'('string_concat', S1, S2, H), str.deprecated.
 
-/**
- * str.substr(+Str, +Begin, -Res):
- * 
- * 文字列の指定された開始位置から始まり終端までの部分文字列を返す
- * @param +Str 元の文字列
- * @param +Begin 開始位置
- * @param -Res 結果(エラー時は空文字列)
- * @example H=str.substr("abc", 1) ==> H="bc"
- */
-H=str.substr(S,Begin) :- string(S), int(Begin) |
-    '$callback'('string_substr_right', S, Begin, H), str.deprecated.
+// /**
+//  * str.substr(+Str, +Begin, -Res):
+//  * 
+//  * 文字列の指定された開始位置から始まり終端までの部分文字列を返す
+//  * @param +Str 元の文字列
+//  * @param +Begin 開始位置
+//  * @param -Res 結果(エラー時は空文字列)
+//  * @example H=str.substr("abc", 1) ==> H="bc"
+//  */
+// H=str.substr(S,Begin) :- string(S), int(Begin) |
+//     '$callback'('string_substr_right', S, Begin, H), str.deprecated.
 
-/**
- * str.substr(+Str, +Begin, +End, -Res):
- * 
- * 文字列の指定された開始位置から終了位置までの部分文字列を返す。
- * @param +Str 元の文字列
- * @param +Begin 開始位置
- * @param +End 終了位置
- * @param -Res 結果(エラー時は空文字列)
- * @example H=str.substr("abc", 1, 2) ==> H="b"
- */
-H=str.substr(S,Begin,End) :- string(S), int(Begin), int(End) |
-    '$callback'('string_substr', S, Begin, End, H), str.deprecated.
+// /**
+//  * str.substr(+Str, +Begin, +End, -Res):
+//  * 
+//  * 文字列の指定された開始位置から終了位置までの部分文字列を返す。
+//  * @param +Str 元の文字列
+//  * @param +Begin 開始位置
+//  * @param +End 終了位置
+//  * @param -Res 結果(エラー時は空文字列)
+//  * @example H=str.substr("abc", 1, 2) ==> H="b"
+//  */
+// H=str.substr(S,Begin,End) :- string(S), int(Begin), int(End) |
+//     '$callback'('string_substr', S, Begin, End, H), str.deprecated.
 
-/**
- * str.length(+Str, -Length):
- * 文字列を受け取って長さを返します
- * @example H=str.length("hello")  ==>  H=5
- */
-//2007.07.02 inui
-H=str.length(Str) :- string(Str) |
-    '$callback'('string_length', Str, H), str.deprecated.
+// /**
+//  * str.length(+Str, -Length):
+//  * 文字列を受け取って長さを返します
+//  * @example H=str.length("hello")  ==>  H=5
+//  */
+// //2007.07.02 inui
+// H=str.length(Str) :- string(Str) |
+//     '$callback'('string_length', Str, H), str.deprecated.
 	
-/**
- * str.reverse(+Str, -ReversedStr):
- * 文字列を受け取って反転させた文字列を返します
- * @example H=str.length("hello")  ==>  H="olleh"
- */
-//2007.07.02 inui
-H=str.reverse(Str) :- string(Str) |
-    '$callback'('string_reverse', Str, H), str.deprecated.
-}.
+// /**
+//  * str.reverse(+Str, -ReversedStr):
+//  * 文字列を受け取って反転させた文字列を返します
+//  * @example H=str.length("hello")  ==>  H="olleh"
+//  */
+// //2007.07.02 inui
+// H=str.reverse(Str) :- string(Str) |
+//     '$callback'('string_reverse', Str, H), str.deprecated.
+// }.
 
 // APIs that use inline Java code have been commented out.
 // /**

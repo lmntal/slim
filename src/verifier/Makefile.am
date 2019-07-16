@@ -37,8 +37,8 @@ liblmn_verifier_a_SOURCES =                              \
 	runtime_status.cpp         runtime_status.h              \
 	state.cpp                  state.h          state.hpp             \
 	statespace.cpp             statespace.h                  \
+	state_table.cpp            \
 	tree_compress.cpp          tree_compress.h               \
-	visitlog.cpp               visitlog.h                    \
 	stack_macro.h                                            \
 	convertedgraph.hpp	   graphinfo.hpp		\
 	json.hpp		   json.cpp			\
@@ -48,6 +48,7 @@ liblmn_verifier_a_SOURCES =                              \
 	convertedgraph.cpp	   diff_info.hpp		\
 	omegaArray.hpp		   mckay.hpp			\
 	mckay.cpp		   trie.cpp			\
+	state_dumper.cpp           \
 	mem_encode/decoder.cpp     mem_encode/binstr.cpp
 
 
@@ -62,4 +63,4 @@ propsym_lexer.cpp: propsym_lexer.cpp.re
 
 
 .ypp.cpp:
-	$(YACC) $(YFLAGS) $(AM_YFLAGS) $<
+	$(BISON) $(YFLAGS) $(AM_YFLAGS) $<

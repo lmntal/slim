@@ -97,6 +97,8 @@ LmnPortRef lmn_stderr_port(void);
 
 LmnPortRef lmn_make_input_string_port(LmnStringRef s);
 LmnPortRef lmn_make_output_string_port();
+/* 出力文字列ポートに書き込まれた文字列のコピー返す。 */
+LmnStringRef lmn_port_output_string(LmnPortRef ostr_port);
 
 LmnPortRef lmn_make_port(LmnPortDirection dir, LmnPortType type,
                          const char *name);

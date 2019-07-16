@@ -59,7 +59,7 @@ lmntal --slimcode source.lmn > source.il
 - g++
 - flex 2.5.35
 - re2c 1.0.3
-- bison 2.3
+- bison 3.0
 - ruby 1.9.3p547
 - libtool 2.2.6b
 - cunit

@@ -37,33 +37,3 @@
  */
 
 #include "syntax.hpp"
-
-#include "byte_encoder.hpp"
-
-namespace il {
-namespace functor {
-void in_proxy::visit(ByteEncoder &encoder) { encoder.load(*this); }
-void out_proxy::visit(ByteEncoder &encoder) { encoder.load(*this); }
-void unify::visit(ByteEncoder &encoder) { encoder.load(*this); }
-void integer::visit(ByteEncoder &encoder) { encoder.load(*this); }
-void real::visit(ByteEncoder &encoder) { encoder.load(*this); }
-void string::visit(ByteEncoder &encoder) { encoder.load(*this); }
-void symbol::visit(ByteEncoder &encoder) { encoder.load(*this); }
-} // namespace functor
-} // namespace il
-
-namespace il {
-namespace instr_arg {
-void var::visit(ByteEncoder &encoder) const { encoder.load(*this); }
-void label::visit(ByteEncoder &encoder) const { encoder.load(*this); }
-void string::visit(ByteEncoder &encoder) const { encoder.load(*this); }
-void lineno::visit(ByteEncoder &encoder) const { encoder.load(*this); }
-void functor::visit(ByteEncoder &encoder) const { encoder.load(*this); }
-void ruleset::visit(ByteEncoder &encoder) const { encoder.load(*this); }
-void var_list::visit(ByteEncoder &encoder) const { encoder.load(*this); }
-void inst_list::visit(ByteEncoder &encoder) const { encoder.load(*this); }
-} // namespace instr_arg
-} // namespace il
-
-
-void stx_rule_free(Rule *rule) { delete rule; }

@@ -279,7 +279,7 @@ LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem) {
 LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d) {
   dmem_root_commit(d);
   auto ret_bs =
-      lmn_mem_encode_sub(dmem_root_get_root_mem(d), dmem_root_get_next_id(d));
+      lmn_mem_encode_sub(d->get_root_mem(), d->get_next_id());
   dmem_root_revert(d);
 
   return ret_bs;
@@ -308,16 +308,15 @@ LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs) {
    * 出現(nvisited)順に先頭から積んでいく */
   auto target = is_comp_z(bs) ? lmn_bscomp_z_decode(bs) : bs;
 
-
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__MENC_RESTORE);
   }
 #endif
 
-  auto groot = lmn_mem_make();
+  auto groot = new LmnMembrane();
 
-  lmn_mem_set_active(groot, TRUE); /* globalだから恒真 */
+  groot->set_active(TRUE); /* globalだから恒真 */
   binstr_decoder dec(target->v, target->len, target->pos_to_id);
   dec.decode_cell(groot, NULL, 0);
 
@@ -391,7 +390,7 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem,
   equalizer<VisitLog> e;
   auto t = e.mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, log)
            /* memに未訪問のプロセスが存在する場合, FALSE */
-           && visitlog_element_num(log) == process_num(mem);
+           && log->get_element_num() == process_num(mem);
   visitlog_free(log);
   LMN_FREE(ref_log);
 #endif
@@ -418,7 +417,7 @@ BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem) {
 /* 膜のダンプ or エンコードと、膜の同型性判定を行う */
 BOOL lmn_mem_equals_enc_delta(LmnBinStrRef bs, struct MemDeltaRoot *d) {
   dmem_root_commit(d);
-  auto t = lmn_mem_equals_enc(bs, dmem_root_get_root_mem(d));
+  auto t = lmn_mem_equals_enc(bs, d->get_root_mem());
   dmem_root_revert(d);
 
   return t;

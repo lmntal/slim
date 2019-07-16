@@ -51,6 +51,14 @@
 
 #define VISITLOG_INIT_N (1)
 
+#ifndef PROC_TBL_DEFAULT_SIZE
+#define PROC_TBL_DEFAULT_SIZE 128U
+#endif
+
+#ifndef PROC_TBL_BUCKETS_SIZE
+#define PROC_TBL_BUCKETS_SIZE (1 << 12) // heuristics
+#endif
+
 /*----------------------------------------------------------------------
  * Visit Log
  */
@@ -65,32 +73,162 @@
 typedef struct VisitLog *VisitLogRef;
 typedef struct Checkpoint *CheckpointRef;
 
-/**
- * Function ProtoTypes
- */
+/* VisitLogに記録された変更のスナップショット */
+struct Checkpoint {
+  int n_data_atom;
+  Vector elements;
+  Checkpoint():n_data_atom(0) {
+    this->elements.init(PROC_TBL_DEFAULT_SIZE);
+  }
 
-void checkpoint_free(CheckpointRef cp);
+  ~Checkpoint() {
+    this->elements.destroy();
+  }
+};
 
-VisitLogRef visitlog_create();
-void visitlog_init_with_size(VisitLogRef p, unsigned long tbl_size);
-void visitlog_destroy(VisitLogRef p);
-void visitlog_set_checkpoint(VisitLogRef visitlog);
-CheckpointRef visitlog_pop_checkpoint(VisitLogRef visitlog);
-void visitlog_revert_checkpoint(VisitLogRef visitlog);
-void visitlog_commit_checkpoint(VisitLogRef visitlog);
-void visitlog_push_checkpoint(VisitLogRef visitlog, CheckpointRef cp);
+/* 訪問済みのアトムや膜の記録 */
+struct VisitLog {
+  ProcessTableRef tbl; /* プロセスIDをkeyにした訪問表 */
+  int ref_n, /* バイト列から読み出したプロセスに再訪問が発生した場合のための参照番号割当カウンタ
+              */
+      element_num;    /* 訪問したプロセス数のカウンタ */
+  Vector checkpoints; /* Checkpointオブジェクトの配列 */
 
-int visitlog_put(VisitLogRef visitlog, LmnWord p);
-int visitlog_put_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom);
-int visitlog_put_mem(VisitLogRef visitlog, LmnMembraneRef mem);
-int visitlog_put_hlink(VisitLogRef visitlog, HyperLink *hl);
-void visitlog_put_data(VisitLogRef visitlog);
-int visitlog_get_atom(VisitLogRef visitlog, LmnSymbolAtomRef atom,
-                      LmnWord *value);
-int visitlog_get_mem(VisitLogRef visitlog, LmnMembraneRef mem, LmnWord *value);
-int visitlog_get_hlink(VisitLogRef visitlog, HyperLink *hl, LmnWord *value);
-int visitlog_element_num(VisitLogRef visitlog);
+  VisitLog():tbl(0),ref_n(0),element_num(0){}
+  ~VisitLog(){
+    delete this->tbl;
+
+    for (int i = 0; i < this->checkpoints.get_num(); i++) {
+      delete (Vector *)this->checkpoints.get(i);
+    }
+    this->checkpoints.destroy();
+  }
+
+  void init() { this->init_with_size(0); }
+  void init_with_size(unsigned long tbl_size) {
+    if (tbl_size != 0) {
+      this->tbl = new ProcessTbl(tbl_size);
+    } else {
+      this->tbl = new ProcessTbl();
+    }
+    /*   printf("size = %lu\n", tbl_size); */
+    this->ref_n = VISITLOG_INIT_N;
+    this->element_num = 0;
+    this->checkpoints.init(PROC_TBL_DEFAULT_SIZE);
+  }
+
+  /* チェックポイントを設定する。 */
+  void set_checkpoint() {
+    this->checkpoints.push((vec_data_t) new Checkpoint());
+  }
+
+  /* もっとも最近のチェックポイントを返し、ログの状態をチェックポイントが設定された時点にもどす */
+  struct Checkpoint *pop_checkpoint() {
+    int i;
+    struct Checkpoint *checkpoint;
+
+    checkpoint = (struct Checkpoint *)this->checkpoints.pop();
+    for (i = 0; i < checkpoint->elements.get_num(); i++) {
+      (this->tbl)->proc_tbl_unput(checkpoint->elements.get(i));
+      this->element_num--;
+      this->ref_n--;
+    }
+    this->element_num -= checkpoint->n_data_atom;
+    return checkpoint;
+  }
+  /* もっとも最近のチェックポイントを消し、ログの状態をチェックポイントが設定された時点にもどす */
+  void revert_checkpoint() {
+    delete this->pop_checkpoint();
+  }
+  /* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
+  void commit_checkpoint() {
+    struct Checkpoint *last =
+        (struct Checkpoint *)this->checkpoints.pop();
+
+    if (this->checkpoints.get_num() > 0) {
+      int i;
+      struct Checkpoint *new_last =
+          (struct Checkpoint *)this->checkpoints.last();
+
+      for (i = 0; i < last->elements.get_num(); i++) {
+        new_last->elements.push(last->elements.get(i));
+      }
+      new_last->n_data_atom += last->n_data_atom;
+    }
+    delete last;
+  }
+  /* チェックポイントをログに追加する */
+  void push_checkpoint(struct Checkpoint *cp) {
+    this->checkpoints.push((vec_data_t)cp);
+    for (int i = 0; i < cp->elements.get_num(); i++) {
+      (this->tbl)->proc_tbl_put(cp->elements.get(i), this->ref_n++);
+      this->element_num++;
+    }
+    this->element_num += cp->n_data_atom;
+  }
+
+  /* ログにpを追加し, 正の値を返す. すでにpが存在した場合は0を返す.
+   * 通常この関数ではなくput_atom, put_memを使用する. */
+  int put(LmnWord p) {
+    if ((this->tbl)->put_new(p, this->ref_n++)) {
+      if (this->checkpoints.get_num() > 0) {
+        CheckpointRef checkpoint =
+            (CheckpointRef)this->checkpoints.last();
+        checkpoint->elements.push(p);
+      }
+      this->element_num++;
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+  /* ログにアトムを追加し, 正の値を返す. すでにアトムが存在した場合は0を返す */
+  int put_atom(LmnSymbolAtomRef atom) {
+    return this->put(atom->get_id());
+  }
+  /* ログに膜を追加し, 正の値を返す. すでに膜が存在した場合は0を返す */
+  int put_mem(LmnMembraneRef mem) {
+    return this->put(mem->mem_id());
+  }
+  /* ログにハイパーリンクを追加し, 正の値を返す.
+   * すでにハイパーリンクが存在した場合は0を返す */
+  int put_hlink(HyperLink *hl) {
+    return this->put(LMN_HL_ID(hl));
+  }
+  /* ログにデータアトムを追加する.
+   * （引数がログしか無いことから分かるように,
+   * 単に訪問したアトムを数えるために使用する） */
+  void put_data() {
+    if (this->checkpoints.get_num() > 0) {
+      struct Checkpoint *checkpoint =
+          (struct Checkpoint *)this->checkpoints.last();
+      checkpoint->n_data_atom++;
+    }
+    this->element_num++;
+  }
+
+  /* ログに記録されたアトムatomに対応する値をvalueに設定し, 正の値を返す.
+   * ログにatomが存在しない場合は, 0を返す. */
+  int get_atom(LmnSymbolAtomRef atom,
+                        LmnWord *value) {
+    return proc_tbl_get_by_atom(this->tbl, atom, value);
+  }
+  /* ログに記録された膜memに対応する値をvalueに設定, 正の値を返す.
+   * ログにmemが存在しない場合は, 0を返す. */
+  int get_mem(LmnMembraneRef mem, LmnWord *value) {
+    return proc_tbl_get_by_mem(this->tbl, mem, value);
+  }
+  /* ログに記録されたhlに対応する値をvalueに設定し, 正の値を返す.
+   * ログにhlが存在しない場合は, 0を返す. */
+  int get_hlink(HyperLink *hl, LmnWord *value) {
+    return proc_tbl_get_by_hlink(this->tbl, hl, value);
+  }
+  /* visitlogに記録した要素（膜、アトム）の数を返す */
+  int get_element_num() {
+    return this->element_num;
+  }
+};
 
 /* @} */
 
-#endif
+#endif /** LMN_VISITLOG_H */

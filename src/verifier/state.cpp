@@ -40,6 +40,7 @@
 #include "state.h"
 #include "automata.h"
 #include "binstr_compress.h"
+#include "element/element.h"
 #include "mc.h"
 #include "mem_encode.h"
 #include "mhash.h"
@@ -51,6 +52,11 @@
 #endif
 #include "state.hpp"
 
+#include <cstring>
+#include <string>
+
+namespace c14 = slim::element;
+
 LmnCost state_cost(State *S) {
 #ifdef KWBT_OPT
   return ((S)->cost);
@@ -60,10 +66,10 @@ LmnCost state_cost(State *S) {
 }
 
 void state_cost_lock(EWLock *EWLOCK, mtx_data_t ID) {
-  (ewlock_acquire_write(EWLOCK, ID));
+  (EWLOCK->acquire_write(ID));
 }
 void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
-  (ewlock_release_write(EWLOCK, ID));
+  (EWLOCK->release_write(ID));
 }
 
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
@@ -91,7 +97,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
 
 /* 膜memを用いて状態sのハッシュ値を計算する.
  * canonicalをTRUEで入力した場合, バイナリストリングの設定まで行う */
-
 
 /**
  * 引数としてあたえられたStateが等しいかどうかを判定する
@@ -138,7 +143,7 @@ static int state_equals_with_compress(State *check, State *stored) {
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
     LmnMembraneRef mem = lmn_binstr_decode(bs1);
     t = check->state_name == stored->state_name && lmn_mem_equals_enc(bs2, mem);
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
   } else {
     lmn_fatal("implementation error");
   }
@@ -157,7 +162,7 @@ static int state_equals(State *s1, State *s2) {
   }
 #endif
   return s1->state_name == s2->state_name && s1->hash == s2->hash &&
-         lmn_mem_equals(s1->state_mem(), s2->state_mem());
+    (s1->state_mem())->equals(s2->state_mem());
 }
 
 /**
@@ -190,8 +195,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
                  0); /* A. slim本来のグラフ同型成判定手続き */
     mid_check = (binstr_compare(s1_mid, s2_mid) ==
                  0); /* B. 互いに一意エンコードしたグラフの比較手続き */
-    meq_check = (lmn_mem_equals(s1->state_mem(),
-                                s2_mem)); /* C. 膜同士のグラフ同型性判定 */
+    meq_check = ((s1->state_mem())->equals(s2_mem)); /* C. 膜同士のグラフ同型性判定 */
 
     /* A, B, Cが同じ判定結果を返す場合はokだが.. */
     if (org_check != mid_check || org_check != meq_check ||
@@ -203,7 +207,7 @@ int state_cmp_with_compress(State *s1, State *s2) {
       f = stdout;
       s1_bs = lmn_mem_to_binstr(s1->state_mem());
 
-      sp1_check = (lmn_mem_equals(s1->state_mem(), s2_mem) != 0);
+      sp1_check = ((s1->state_mem())->equals(s2_mem) != 0);
       sp2_check = (lmn_mem_equals_enc(s1_bs, s2_mem) != 0);
       sp3_check = (lmn_mem_equals_enc(s1_mid, s2_mem) != 0);
       sp4_check = (lmn_mem_equals_enc(s2_mid, s1->state_mem()) != 0);
@@ -227,14 +231,13 @@ int state_cmp_with_compress(State *s1, State *s2) {
       fprintf(f, "============================================================="
                  "=======================\n");
 
-      //      lmn_binstr_dump(s2->state_binstr());
-      lmn_dump_mem_stdout(s1->state_mem());
+      fprintf(f, "%s\n", slim::to_string_membrane(s1->state_mem()).c_str());
 
       lmn_binstr_free(s1_bs);
       lmn_fatal("graph isomorphism procedure has invalid implementations");
     }
 
-    lmn_mem_free_rec(s2_mem);
+    s2_mem->free_rec();
 
     lmn_binstr_free(s1_mid);
     lmn_binstr_free(s2_mid);
@@ -275,7 +278,7 @@ static int state_equals_with_tree(State *check, State *stored) {
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
     LmnMembraneRef mem = lmn_binstr_decode(bs1);
     t = check->state_name == stored->state_name && lmn_mem_equals_enc(bs2, mem);
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
   } else {
     lmn_fatal("implementation error");
   }
@@ -289,7 +292,6 @@ int state_cmp_with_tree(State *s1, State *s2) {
 }
 
 int state_cmp(State *s1, State *s2) { return !state_equals(s1, s2); }
-
 
 /* バイナリストリングorgと状態ref_sのバイナリストリングとの差分バイナリストリングを返す.
  * orgのメモリ管理は呼出し側で行う. */
@@ -311,17 +313,13 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
   return dif;
 }
 
-LmnBinStrRef state_calc_mem_dump(State *s) {
-  return s->mem_dump();
-}
-
+LmnBinStrRef state_calc_mem_dump(State *s) { return s->mem_dump(); }
 
 /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
  * 状態sはread only */
 LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
   return s->mem_dump_with_z();
 }
-
 
 /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
  * sのフラグを操作する. */
@@ -337,7 +335,7 @@ LmnBinStrRef state_calc_mem_dummy(State *s) {
 unsigned long transition_space(TransitionRef t) {
   unsigned long ret;
   ret = sizeof(struct Transition);
-  ret += vec_space_inner(&t->rule_names);
+  ret += t->rule_names.space_inner();
   return ret;
 }
 
@@ -347,8 +345,8 @@ TransitionRef transition_make(State *s, lmn_interned_str rule_name) {
   t->s = s;
   t->id = 0;
   transition_set_cost(t, 0);
-  vec_init(&t->rule_names, 4);
-  vec_push(&t->rule_names, rule_name);
+  t->rule_names.init(4);
+  t->rule_names.push(rule_name);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_add_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
@@ -363,20 +361,20 @@ void transition_free(TransitionRef t) {
     profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
   }
 #endif
-  vec_destroy(&t->rule_names);
+  t->rule_names.destroy();
   LMN_FREE(t);
 }
 
 void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
                          LmnCost cost) {
-  if (rule_name != ANONYMOUS || !vec_contains(&t->rule_names, rule_name)) {
+  if (rule_name != ANONYMOUS || !t->rule_names.contains(rule_name)) {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
     }
 #endif
 
-    vec_push(&t->rule_names, rule_name);
+    t->rule_names.push(rule_name);
 
 #ifdef KWBT_OPT
     if (((lmn_env.opt_mode == OPT_MINIMIZE) && t->cost > cost) ||
@@ -393,231 +391,10 @@ void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
   }
 }
 
-/** Printer
- * ownerはNULLでもok */
-void dump_state_data(State *s, LmnWord _fp, LmnWord _owner) {
-  FILE *f;
-  StateSpaceRef owner;
-  unsigned long print_id;
-#ifdef KWBT_OPT
-  LmnCost cost = lmn_env.opt_mode != OPT_NONE ? state_cost(s) : 0UL;
-#endif
-
-  /* Rehashが発生している場合,
-   * dummyフラグが真かつエンコード済みフラグが偽のStateオブジェクトが存在する.
-   * このようなStateオブジェクトのバイナリストリングは
-   * Rehashされた側のテーブルに存在するStateオブジェクトに登録されているためcontinueする.
-   */
-  if (s->is_dummy() && !s->is_encoded())
-    return;
-
-  f = (FILE *)_fp;
-  owner = (StateSpaceRef)_owner;
-  {
-    /* この時点で状態は, ノーマル || (dummyフラグが立っている &&
-     * エンコード済)である. dummyならば,
-     * バイナリストリング以外のデータはオリジナル側(parent)に記録している. */
-    State *target = !s->is_dummy() ? s : state_get_parent(s);
-    if (owner) {
-      print_id = state_format_id(target, owner->is_formated);
-    } else {
-      print_id = state_format_id(target, FALSE);
-    }
-  }
-
-  switch (lmn_env.mc_dump_format) {
-  case LaViT:
-    fprintf(f, "%lu::", print_id);
-    state_print_mem(s, _fp);
-    break;
-  case FSM:
-    /* under constructions.. */
-    fprintf(f, "1\n");
-    break;
-  case Dir_DOT:
-    if (s->successor_num == 0) {
-      fprintf(
-          f,
-          "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n",
-          print_id);
-    }
-    break;
-  case CUI: {
-    BOOL has_property = owner && statespace_has_property(owner);
-#ifdef KWBT_OPT
-    fprintf(f, "%lu::%lu::%s", print_id, cost,
-            has_property ? automata_state_name(statespace_automata(owner),
-                                               state_property_state(s))
-                         : "");
-#else
-    fprintf(f, "%lu::%s", print_id,
-            has_property ? automata_state_name(statespace_automata(owner),
-                                               state_property_state(s))
-                         : "");
-#endif
-    state_print_mem(s, _fp);
-    break;
-  }
-  default:
-    lmn_fatal("unexpected");
-    break;
-  }
-}
-
-void state_print_mem(State *s, LmnWord _fp) {
-  LmnMembraneRef mem;
-  ProcessID org_next_id;
-
-  org_next_id = env_next_id();
-  mem = s->restore_membrane_inner(FALSE);
-  env_set_next_id(org_next_id);
-
-  //  fprintf((FILE *)_fp, "natoms=%lu :: hash=%16lu ::", lmn_mem_atom_num(mem),
-  //  s->hash);
-  if (lmn_env.mc_dump_format == LaViT) {
-    lmn_dump_cell_stdout(mem);
-  } else {
-    lmn_dump_mem_stdout(mem); /* TODO: グラフ構造の出力先をファイルポインタに */
-    if (lmn_env.show_hyperlink)
-      lmn_hyperlink_print(mem);
-  }
-
-  if (s->is_binstr_user()) {
-    lmn_mem_free_rec(mem);
-  }
-}
-
-/* TODO: 美しさ */
-void state_print_transition(State *s, LmnWord _fp, LmnWord _owner) {
-  FILE *f;
-  StateSpaceRef owner;
-  unsigned int i;
-
-  BOOL need_id_foreach_trans;
-  const char *state_separator, *trans_separator, *label_begin, *label_end;
-  BOOL formated;
-
-  /* Rehashが発生している場合,
-   * サクセッサへの情報は,
-   * RehashしたオリジナルのStateオブジェクトが保持しているため,
-   * dummyフラグが真かつエンコード済みの状態には遷移情報は載っていない.
-   * (エンコード済のバイナリストリングしか載っていない) */
-  if ((s->is_dummy() && s->is_encoded()))
-    return;
-
-  f = (FILE *)_fp;
-  owner = (StateSpaceRef)_owner;
-
-  need_id_foreach_trans = TRUE;
-  switch (lmn_env.mc_dump_format) {
-  case DOT:
-    state_separator = " -> ";
-    trans_separator = NULL;
-    label_begin = " [ label = \"";
-    label_end = "\" ];";
-    break;
-  case FSM:
-    state_separator = " ";
-    trans_separator = NULL;
-    label_begin = " \"";
-    label_end = "\"";
-    break;
-  case LaViT: /* FALLTHROUGH: CUIモードと共通 */
-  case CUI:
-    state_separator =
-        "::"; /* なぜかspaceが混ざるとlavitは読み込むことができない */
-    trans_separator = ",";
-    label_begin = "(";
-    label_end = ")";
-    need_id_foreach_trans = FALSE;
-    break;
-  default:
-    lmn_fatal("unexpected");
-    break;
-  }
-
-  formated = owner ? owner->is_formated : FALSE;
-  if (!need_id_foreach_trans) {
-    fprintf(f, "%lu%s", state_format_id(s, formated), state_separator);
-  }
-
-  if (s->successors) {
-    for (i = 0; i < s->successor_num; i++) { /* dump dst state's IDs */
-      if (need_id_foreach_trans) {
-        fprintf(f, "%lu%s", state_format_id(s, formated), state_separator);
-      } else if (i > 0) {
-        LMN_ASSERT(trans_separator);
-        fprintf(f, "%s", trans_separator);
-      }
-
-      /* MEMO: rehashが発生していても, successorポインタを辿る先は, オリジナル
-       */
-      fprintf(f, "%lu", state_format_id(state_succ_state(s, i), formated));
-
-      if (s->has_trans_obj()) {
-        TransitionRef t;
-        unsigned int j;
-
-        fprintf(f, "%s", label_begin);
-        t = transition(s, i);
-
-        for (j = 0; j < transition_rule_num(t); j++) {
-          if (j > 0)
-            fprintf(f, " "); /* ルール名の区切りは半角スペース1文字 */
-          fprintf(f, "%s", lmn_id_to_name(transition_rule(t, j)));
-        }
-        fprintf(f, "%s", label_end);
-      }
-
-      if (i + 1 < s->successor_num && need_id_foreach_trans) {
-        fprintf(f, "\n");
-      }
-    }
-    fprintf(f, "\n");
-  } else if (!need_id_foreach_trans) {
-    fprintf(f, "\n");
-  }
-}
-
-void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
-  AutomataRef a;
-  FILE *f;
-  StateSpaceRef owner;
-
-  owner = (StateSpaceRef)_owner;
-  if (!statespace_has_property(owner) || (s->is_dummy() && s->is_encoded())) {
-    return;
-  }
-
-  a = statespace_automata(owner);
-  f = (FILE *)_fp;
-
-  switch (lmn_env.mc_dump_format) {
-  case Dir_DOT: {
-    if (state_is_accept(a, s) || state_is_end(a, s)) {
-      fprintf(f, "  %lu [peripheries = 2]\n",
-              state_format_id(s, owner->is_formated));
-    }
-    break;
-  }
-  case LaViT:
-    fprintf(f, "%lu::", state_format_id(s, owner->is_formated));
-    fprintf(f, "%s\n", automata_state_name(a, state_property_state(s)));
-  case FSM:
-  case CUI: /* 状態のグローバルルート膜の膜名としてdump済 */
-    break;
-  default:
-    lmn_fatal("unexpected");
-    break;
-  }
-}
-
 /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
  * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
  * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
-LmnMembraneRef state_restore_mem(State *s) {
-  return s->restore_membrane();
-}
+LmnMembraneRef state_restore_mem(State *s) { return s->restore_membrane(); }
 
 /* 状態sに割り当てた整数IDを返す. */
 unsigned long state_id(State *s) { return s->state_id; }
@@ -665,12 +442,9 @@ unsigned long state_hash(State *s) {
   return s->hash * (state_property_state(s) + 1);
 }
 
-
-
 /* 状態sに階層グラフ構造memを割り当てる.
  * sに対してバイナリストリングBを割り当てている場合は,
  * Bのメモリ管理は呼出し側で行う*/
-
 
 /* 状態sが参照する階層グラフ構造用の領域をクリアする.
  * 階層グラフ構造の参照を持たない場合は, なにもしない. */
@@ -679,7 +453,6 @@ void state_unset_mem(State *s) {
     s->state_set_mem(NULL);
   }
 }
-
 
 /* 状態sに対応する階層グラフ構造からエンコードしたバイナリストリングbsを,
  * sに割り当てる　*/
@@ -700,7 +473,6 @@ State *state_get_parent(State *s) { return s->parent; }
 void state_set_parent(State *s, State *parent) { s->parent = parent; }
 
 /* 状態sから遷移可能な状態数を返す. */
-
 
 /* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
 State *state_succ_state(State *s, int idx) {
@@ -729,7 +501,7 @@ BOOL state_succ_contains(State *s, State *t) {
  * 性質オートマトンaが存在しない場合は直ちに偽を返す. */
 BOOL state_is_accept(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_is_accept(automata_get_state(a, state_property_state(s)));
+    return a->get_state(state_property_state(s))->get_is_accept();
   } else {
     return FALSE;
   }
@@ -740,7 +512,7 @@ BOOL state_is_accept(AutomataRef a, State *s) {
  * TOFIX: rename (end --> invalid end) */
 BOOL state_is_end(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_is_end(automata_get_state(a, state_property_state(s)));
+    return a->get_state(state_property_state(s))->get_is_end();
   } else {
     return FALSE;
   }
@@ -753,7 +525,7 @@ BOOL state_is_end(AutomataRef a, State *s) {
  */
 BYTE state_scc_id(AutomataRef a, State *s) {
   if (a) {
-    return atmstate_scc_type(automata_get_state(a, state_property_state(s)));
+    return a->get_state(state_property_state(s))->scc_type();
   } else {
     return FALSE;
   }
@@ -817,7 +589,7 @@ void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
   if ((f && state_cost(s) > cost) || (!f && state_cost(s) < cost)) {
     state_set_cost(s, cost, pre);
     if (s->is_expanded() && new_ss)
-      vec_push(new_ss, (vec_data_t)s);
+      new_ss->push((vec_data_t)s);
     s->s_set_update();
   }
   if (env_threads_num() >= 2)
@@ -830,10 +602,10 @@ unsigned long transition_id(TransitionRef t) { return t->id; }
 /* 遷移tに整数ID idを割り当てる. */
 void transition_set_id(TransitionRef t, unsigned long id) { t->id = id; }
 
-int transition_rule_num(TransitionRef t) { return vec_num(&t->rule_names); }
+int transition_rule_num(TransitionRef t) { return t->rule_names.get_num(); }
 
 lmn_interned_str transition_rule(TransitionRef t, int idx) {
-  return vec_get(&t->rule_names, idx);
+  return t->rule_names.get(idx);
 }
 
 State *transition_next_state(TransitionRef t) { return t->s; }

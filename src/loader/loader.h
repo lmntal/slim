@@ -44,7 +44,7 @@
  */
 
 #include "load.h"
-#include "syntax.h"
+#include "syntax.hpp"
 
 #include "translate.hpp"
 #include "exception.hpp"

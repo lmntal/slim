@@ -80,8 +80,8 @@ struct dumper {
       case TAG_ATOM_START: {
         LmnFunctor f = scanner.scan_functor();
         log[v_i] = {(LmnWord)f, BS_LOG_TYPE_ATOM};
-        printf("%s/%d_%d ", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)),
-               LMN_FUNCTOR_ARITY(f), v_i++);
+        printf("%s/%d_%d ", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)),
+               LMN_FUNCTOR_ARITY(lmn_functor_table, f), v_i++);
       } break;
       case TAG_NAMED_MEM_START: /* FALL THROUGH */
       case TAG_MEM_START: {
@@ -114,8 +114,8 @@ struct dumper {
         } break;
         case TAG_ATOM_START: {
           LmnFunctor f = scanner.scan_functor();
-          printf("%s/%d ", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)),
-                 LMN_FUNCTOR_ARITY(f));
+          printf("%s/%d ", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)),
+                 LMN_FUNCTOR_ARITY(lmn_functor_table, f));
         } break;
         case TAG_INT_DATA:
         case TAG_DBL_DATA:

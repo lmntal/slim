@@ -37,7 +37,7 @@
  * $Id$
  */
 
-#include "react_context.h"
+#include "react_context.hpp"
 
 #include "hyperlink.h"
 #include "memstack.h"
@@ -49,14 +49,13 @@
 #endif
 #include "rule.hpp"
 
-#include "react_context.hpp"
-//struct LmnRegister {
+// struct LmnRegister {
 //  LmnWord wt;
 //  LmnByte at;
 //  LmnByte tt;
 //};
 
-//struct LmnReactCxt {
+// struct LmnReactCxt {
 //  LmnMembraneRef
 //      global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
 //  LmnRegisterArray work_arry; /* ルール適用レジスタ */
@@ -80,107 +79,8 @@
 //#endif
 //};
 
-
-LmnRegisterRef lmn_register_array_get(LmnRegisterArray array, int idx) {
-  return (LmnRegisterRef)array + idx;
-}
-
-LmnRegisterArray lmn_register_make(unsigned int size) {
-  LmnRegisterArray v =
-      (LmnRegisterArray)LMN_NALLOC(struct LmnRegister, round2up(size));
-  memset(v, 0, sizeof(struct LmnRegister) * size);
-  return v;
-}
-
-void lmn_register_copy(LmnRegisterArray to, LmnRegisterArray from,
-                       unsigned int size) {
-  memcpy(to, from, sizeof(struct LmnRegister) * size);
-}
-
-void lmn_register_free(LmnRegisterArray v) { LMN_FREE(v); }
-
-void lmn_register_extend(LmnReactCxtRef rc, unsigned int new_size) {
-  new_size = round2up(new_size);
-  rc->work_array = (LmnRegisterArray)LMN_REALLOC(struct LmnRegister,
-                                                rc->work_array, new_size);
-  memset((LmnRegisterRef)rc->work_array + warray_size(rc), 0,
-         sizeof(struct LmnRegister) * (new_size - warray_size(rc)));
-  warray_size_set(rc, new_size);
-}
-
-BYTE RC_MODE(LmnReactCxtRef cxt) { return cxt->mode; }
-
-void RC_SET_MODE(LmnReactCxtRef cxt, BYTE mode) { cxt->mode = mode; }
-
-void RC_ADD_MODE(LmnReactCxtRef cxt, BYTE mode) { cxt->mode |= mode; }
-
 BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
   return (cxt->mode & mode) == mode;
-}
-
-unsigned int warray_size(LmnReactCxtRef cxt) { return cxt->warray_cap; }
-
-void warray_size_set(LmnReactCxtRef cxt, unsigned int n) { cxt->warray_cap = n; }
-
-unsigned int warray_use_size(LmnReactCxtRef cxt) { return cxt->warray_num; }
-void warray_use_size_set(LmnReactCxtRef cxt, unsigned int n) {
-  cxt->warray_num = n;
-}
-
-unsigned int warray_cur_size(LmnReactCxtRef cxt) { return cxt->warray_cur; }
-void warray_cur_size_set(LmnReactCxtRef cxt, unsigned int n) {
-  cxt->warray_cur = n;
-}
-
-void warray_cur_update(LmnReactCxtRef cxt, unsigned int i) {
-  if (warray_cur_size(cxt) <= i) {
-    warray_cur_size_set(cxt, i + 1);
-  }
-}
-
-LmnRegisterArray rc_warray(LmnReactCxtRef cxt) { return cxt->work_array; }
-
-void rc_warray_set(LmnReactCxtRef cxt, LmnRegisterArray array) {
-  cxt->work_array = array;
-}
-
-LmnWord wt(LmnReactCxtRef cxt, unsigned int i) {
-  return lmn_register_array_get(cxt->work_array, i)->register_wt();
-}
-
-void wt_set(LmnReactCxtRef cxt, unsigned int i, LmnWord o) {
-  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
-  r__->register_set_wt(o);
-  warray_cur_update(cxt, i);
-}
-
-LmnByte at(LmnReactCxtRef cxt, unsigned int i) {
-  return lmn_register_array_get(cxt->work_array, i)->register_at();
-}
-
-void at_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o) {
-  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
-  r__->register_set_at(o);
-  warray_cur_update(cxt, i);
-}
-
-LmnByte tt(LmnReactCxtRef cxt, unsigned int i) {
-  return lmn_register_array_get(cxt->work_array, i)->register_tt();
-}
-
-void tt_set(LmnReactCxtRef cxt, unsigned int i, LmnByte o) {
-  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
-  r__->register_set_tt(o);
-  warray_cur_update(cxt, i);
-}
-
-void warray_set(LmnReactCxtRef cxt, unsigned int i, LmnWord w, LmnByte a,
-               LmnByte t) {
-  LmnRegisterRef r__ = lmn_register_array_get(cxt->work_array, i);
-  r__->register_set_wt(w);
-  r__->register_set_at(a);
-  r__->register_set_tt(t);
-  warray_cur_update(cxt, i);
 }
 
 unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt) { return cxt->trace_num; }
@@ -190,32 +90,6 @@ LmnMembraneRef RC_GROOT_MEM(LmnReactCxtRef cxt) { return cxt->global_root; }
 
 void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
   cxt->global_root = mem;
-}
-
-void RC_START_ATOMIC_STEP(LmnReactCxtRef cxt, LmnRulesetId id) {
-  cxt->atomic_id = id;
-}
-
-BOOL RC_IS_ATOMIC_STEP(LmnReactCxtRef cxt) { return cxt->atomic_id >= 0; }
-
-void RC_FINISH_ATOMIC_STEP(LmnReactCxtRef cxt) { cxt->atomic_id = -1; }
-
-ProcessID RC_PROC_ORG_ID(LmnReactCxtRef cxt) { return cxt->proc_org_id; }
-
-void RC_SET_PROC_ORG_ID(LmnReactCxtRef cxt, ProcessID id) {
-  cxt->proc_org_id = id;
-}
-
-ProcessID RC_PROC_NEXT_ID(LmnReactCxtRef cxt) { return cxt->proc_next_id; }
-
-void RC_SET_PROC_NEXT_ID(LmnReactCxtRef cxt, ProcessID id) {
-  cxt->proc_next_id = id;
-}
-
-LmnMembraneRef RC_CUR_MEM(LmnReactCxtRef cxt) { return cxt->cur_mem; }
-
-void RC_SET_CUR_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
-  cxt->cur_mem = mem;
 }
 
 SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt) { return cxt->hl_sameproccxt; }
@@ -231,199 +105,70 @@ BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
          hashtbl_contains(RC_HLINK_SPC(rc), (HashKeyType)atomi);
 }
 
-struct McReactCxtData *RC_ND_DATA(LmnReactCxtRef cxt) {
-  return (McReactCxtData *)cxt->v;
+struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt) {
+  return &cxt->data;
 }
 
-LmnReactCxtRef react_context_alloc() {
-  return (LmnReactCxtRef)LMN_MALLOC(struct LmnReactCxt);
-}
-void react_context_dealloc(LmnReactCxtRef cxt) { LMN_FREE(cxt); }
-
-void react_context_init(LmnReactCxtRef rc, BYTE mode) {
-  rc->mode = mode;
-  rc->flag = 0x00U;
-  rc->global_root = NULL;
-  rc->v = NULL;
-  rc->work_array = lmn_register_make(warray_DEF_SIZE);
-  rc->warray_cur = 0;
-  rc->warray_num = 0;
-  rc->warray_cap = warray_DEF_SIZE;
-  rc->atomic_id = -1;
-  rc->hl_sameproccxt = NULL;
-  rc->trace_num = 0;
-#ifdef USE_FIRSTCLASS_RULE
-  rc->insertion_events = vec_make(4);
-#endif
-}
-
-void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) {
-  to->mode = from->mode;
-  to->flag = from->flag;
-  to->global_root = from->global_root;
-  to->v = from->v;
-  to->warray_cur = from->warray_cur;
-  to->warray_num = from->warray_num;
-  to->warray_cap = from->warray_cap;
-  to->atomic_id = from->atomic_id;
-#ifdef USE_FIRSTCLASS_RULE
-  vec_free(to->insertion_events);
-  to->insertion_events = vec_copy(from->insertion_events);
-#endif
-}
-
-void react_context_destroy(LmnReactCxtRef rc) {
-  if (RC_HLINK_SPC(rc)) {
-    lmn_sameproccxt_clear(rc);
-  }
-  if (rc->work_array) {
-    lmn_register_free(rc->work_array);
-  }
-#ifdef USE_FIRSTCLASS_RULE
-  if (rc->insertion_events) {
-    vec_free(rc->insertion_events);
-  }
-#endif
-}
-
-/*----------------------------------------------------------------------
- * Stand Alone React Context
- */
-
-void stand_alone_react_cxt_init(LmnReactCxtRef cxt) {
-  react_context_init(cxt, REACT_STAND_ALONE);
-}
-
-void stand_alone_react_cxt_destroy(LmnReactCxtRef cxt) {
-  react_context_destroy(cxt);
-}
-
-/*----------------------------------------------------------------------
- * Property React Context
- */
-
-void property_react_cxt_init(LmnReactCxtRef cxt) {
-  react_context_init(cxt, REACT_PROPERTY);
-}
-
-void property_react_cxt_destroy(LmnReactCxtRef cxt) {
-  react_context_destroy(cxt);
-}
+void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
 
 /*----------------------------------------------------------------------
  * Mem React Context
  */
 
-LmnMemStack RC_MEMSTACK(LmnReactCxtRef cxt) {
-  return ((struct MemReactCxtData *)cxt->v)->memstack;
-}
+LmnMemStack MemReactContext::MEMSTACK() { return this->memstack; }
 
-void RC_MEMSTACK_SET(LmnReactCxtRef cxt, LmnMemStack s) {
-  ((struct MemReactCxtData *)cxt->v)->memstack = s;
-}
-
-void mem_react_cxt_init(LmnReactCxtRef cxt) {
-  struct MemReactCxtData *v = LMN_MALLOC(struct MemReactCxtData);
-  react_context_init(cxt, REACT_MEM_ORIENTED);
-  cxt->v = v;
-  RC_MEMSTACK_SET(cxt, lmn_memstack_make());
-}
-
-void mem_react_cxt_destroy(LmnReactCxtRef cxt) {
-  lmn_memstack_free(RC_MEMSTACK(cxt));
-  LMN_FREE(cxt->v);
-  react_context_destroy(cxt);
-}
+void MemReactContext::MEMSTACK_SET(LmnMemStack s) { this->memstack = s; }
 
 /*----------------------------------------------------------------------
  * ND React Context
  */
 
-inline static struct McReactCxtData *mc_react_data_make() {
-  struct McReactCxtData *v = LMN_MALLOC(struct McReactCxtData);
-  v->succ_tbl = st_init_ptrtable();
-  v->roots = vec_make(32);
-  v->rules = vec_make(32);
-  v->props = vec_make(8);
-  v->mem_deltas = NULL;
-  v->mem_delta_tmp = NULL;
-  v->opt_mode = 0x00U;
-  v->org_succ_num = 0;
-  v->d_cur = 0;
+McReactCxtData::McReactCxtData() {
+  succ_tbl = st_init_ptrtable();
+  roots = new Vector(32);
+  rules = new Vector(32);
+  props = new Vector(8);
+  mem_deltas = NULL;
+  mem_delta_tmp = NULL;
+  opt_mode = 0x00U;
+  org_succ_num = 0;
+  d_cur = 0;
 
   if (lmn_env.delta_mem) {
-    v->mem_deltas = vec_make(32);
+    mem_deltas = new Vector(32);
   }
 
   if (lmn_env.enable_por && !lmn_env.enable_por_old) {
-    v->por = DPOR_DATA();
+    por = DPOR_DATA();
   }
-
-  return v;
-}
-
-inline static void mc_react_data_free(struct McReactCxtData *v) {
-  st_free_table(v->succ_tbl);
-  vec_free(v->roots);
-  vec_free(v->rules);
-  vec_free(v->props);
-  if (v->mem_deltas) {
-    vec_free(v->mem_deltas);
-  }
-  LMN_FREE(v);
-}
-
-void mc_react_cxt_init(LmnReactCxtRef rc) {
-  struct McReactCxtData *v = mc_react_data_make();
-  react_context_init(rc, REACT_ND);
-  rc->v = v;
-
-  if (v->mem_deltas) {
-    RC_MC_SET_DMEM(rc);
-  }
-
-  if (lmn_env.enable_por_old) {
-    RC_MC_SET_DPOR_NAIVE(rc);
-  } else if (lmn_env.enable_por) {
-    RC_MC_SET_DPOR(rc);
-  }
-
-  if (lmn_env.d_compress) {
-    RC_MC_SET_D(rc);
-  }
-}
-
-void mc_react_cxt_destroy(LmnReactCxtRef cxt) {
-  mc_react_data_free(RC_ND_DATA(cxt));
-  react_context_destroy(cxt);
 }
 
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
                                LmnRuleRef rule) {
-  vec_push(RC_EXPANDED(cxt), (vec_data_t)mem);
-  vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
+  RC_EXPANDED(cxt)->push((vec_data_t)mem);
+  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
 void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule) {
-  vec_push(RC_MEM_DELTAS(cxt), (vec_data_t)d);
-  vec_push(RC_EXPANDED_RULES(cxt), (vec_data_t)rule);
+  RC_MEM_DELTAS(cxt)->push((vec_data_t)d);
+  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
 LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
-  vec_pop(RC_EXPANDED_RULES(cxt));
+  RC_EXPANDED_RULES(cxt)->pop();
   if (RC_MC_USE_DMEM(cxt)) {
-    return vec_pop(RC_MEM_DELTAS(cxt));
+    return RC_MEM_DELTAS(cxt)->pop();
   } else {
-    return vec_pop(RC_EXPANDED(cxt));
+    return RC_EXPANDED(cxt)->pop();
   }
 }
 
 LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i) {
   if (RC_MC_USE_DMEM(cxt)) {
-    return vec_get(RC_MEM_DELTAS(cxt), i);
+    return RC_MEM_DELTAS(cxt)->get(i);
   } else {
-    return vec_get(RC_EXPANDED(cxt), i);
+    return RC_EXPANDED(cxt)->get(i);
   }
 }
 
@@ -432,8 +177,8 @@ unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
 }
 
 unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
-  return RC_MC_USE_DMEM(cxt) ? vec_num(RC_MEM_DELTAS(cxt))
-                             : vec_num(RC_EXPANDED(cxt));
+  return RC_MC_USE_DMEM(cxt) ? RC_MEM_DELTAS(cxt)->get_num()
+                             : RC_EXPANDED(cxt)->get_num();
 }
 
 ///// first-class rulesets
@@ -446,7 +191,7 @@ typedef struct LRCInsertEvent *LRCInsertEventRef;
 
 #ifdef USE_FIRSTCLASS_RULE
 BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
-  return !vec_is_empty(rc->insertion_events);
+  return !rc->insertion_events->is_empty();
 }
 
 void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
@@ -455,12 +200,12 @@ void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
   LRCInsertEventRef e = LMN_MALLOC(struct LRCInsertEvent);
   e->satom = satom;
   e->mem = mem;
-  vec_push(rc->insertion_events, (LmnWord)e);
+  rc->insertion_events->push((LmnWord)e);
 }
 void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom,
                           LmnMembraneRef *mem) {
   LMN_ASSERT(lmn_rc_has_insertion(rc));
-  LRCInsertEventRef e = (LRCInsertEventRef)vec_pop(rc->insertion_events);
+  LRCInsertEventRef e = (LRCInsertEventRef)rc->insertion_events->pop();
   *satom = e->satom;
   *mem = e->mem;
   LMN_FREE(e);

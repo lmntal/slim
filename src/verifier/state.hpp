@@ -42,10 +42,10 @@
 #include "trie.hpp"
 #include "lmntal.h"
 #include "mhash.h"
-#include "state_defs.h"
 #include "runtime_status.h"
+#include "state.h"
+#include "state_defs.h"
 #include "vm/vm.h"
-
 /** Flags (8bit)
  *  0000 0001  stack上に存在する頂点であることを示すフラグ (for nested dfs)
  *  0000 0010  受理サイクル探索において探索済みの頂点であることを示すフラグ
@@ -236,10 +236,10 @@ struct State {                /* Total:72(36)byte */
     }
 
     if (mem) {
-      dst->state_set_mem(lmn_mem_copy_ex(mem));
+      dst->state_set_mem(mem->copy_ex());
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
-        profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+        profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, mem->space());
       }
 #endif
     } else if (state_binstr()) {
@@ -258,7 +258,7 @@ struct State {                /* Total:72(36)byte */
 
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3 && mem) {
-      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, mem->space());
       profile_finish_timer(PROFILE_TIME__STATE_COPY);
     }
 #endif
@@ -266,17 +266,17 @@ struct State {                /* Total:72(36)byte */
   }
 
   void succ_set(Vector *v) {
-    if (!vec_is_empty(v) && !successors) {
+    if (!v->is_empty() && !successors) {
       unsigned int i;
-      successor_num = vec_num(v);
+      successor_num = v->get_num();
       successors = LMN_NALLOC(succ_data_t, successor_num);
       for (i = 0; i < successor_num; i++) {
-        successors[i] = (succ_data_t)vec_get(v, i);
+        successors[i] = (succ_data_t)v->get(i);
       }
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
-                          sizeof(succ_data_t) * vec_num(v));
+          sizeof(succ_data_t) * v->get_num());
         profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
       }
 #endif
@@ -321,10 +321,10 @@ struct State {                /* Total:72(36)byte */
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_remove_space(PROFILE_SPACE__STATE_MEMBRANE,
-                             lmn_mem_space(this->state_mem()));
+                             (this->state_mem())->space());
       }
 #endif
-      lmn_mem_free_rec(this->state_mem());
+      (this->state_mem())->free_rec();
       this->state_set_mem(NULL);
     }
   }
@@ -403,14 +403,14 @@ struct State {                /* Total:72(36)byte */
   LmnMembraneRef duplicate_membrane() {
     LmnMembraneRef ret = NULL;
     if (!this->is_binstr_user() && this->state_mem()) {
-      ret = lmn_mem_copy(this->state_mem());
+      ret = (this->state_mem())->copy();
     } else if (this->is_binstr_user() && this->state_binstr()) {
       ret = lmn_binstr_decode(this->state_binstr());
     }
 
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3 && ret) {
-      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(ret));
+      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, ret->space());
     }
 #endif
 
@@ -439,7 +439,7 @@ struct State {                /* Total:72(36)byte */
         m = lmn_binstr_decode(this->state_binstr());
         mid = lmn_mem_encode(m);
         this->free_binstr();
-        lmn_mem_free_rec(m);
+        m->free_rec();
       } else {
         lmn_fatal("unexpected.");
       }
@@ -550,9 +550,11 @@ public:
     state_expand_lock_init();
 #endif
     s_set_fresh();
+
     graphinfo=nullptr;
     trie=nullptr;
     canonical_label=std::list<std::list<ConvertedGraphVertex*>>();
+
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
@@ -570,13 +572,13 @@ public:
     state_set_mem(mem);
     state_name = property_label;
     state_calc_hash(mem, do_encode);
-    // convertedgraph = new ConvertedGraph(mem);
+
     if (is_encoded()) {
-      lmn_mem_free_rec(mem);
+      mem->free_rec();
     }
 #ifdef PROFILE
     else if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, mem->space());
     }
 #endif
   }
@@ -586,11 +588,7 @@ public:
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3)
         profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
-
-                            sizeof(succ_data_t) * this->successor_num);
-
-                             // sizeof(succ_data_t) * state_succ_num(s));
-
+                             sizeof(succ_data_t) * this->successor_num);
 #endif
       if (has_trans_obj()) {
         unsigned int i;

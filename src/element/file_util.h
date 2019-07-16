@@ -51,14 +51,14 @@ char *build_path(const char *dir, const char *component);
 char *basename_ext(const char *path);
 char *extension(const char *path);
 
-#include <string>
 #include "arch.h"
+#include <cstring>
 #include <dirent.h>
 #include <iterator>
+#include <memory>
+#include <string>
 #include <sys/stat.h>
 #include <system_error>
-#include <memory>
-#include <cstring>
 
 namespace slim {
 namespace element {
@@ -109,7 +109,8 @@ class directory_entry {
 
 public:
   directory_entry() : emp(true) {}
-  directory_entry(dirent ent, filesystem::path dirpath) : ent_(ent), emp(false) {
+  directory_entry(dirent ent, filesystem::path dirpath)
+      : ent_(ent), emp(false) {
     path_ = dirpath / std::string(ent_.d_name, strlen(ent_.d_name));
   }
 
@@ -138,7 +139,7 @@ public:
       throw filesystem_error(std::error_code(errno, std::system_category()),
                              name);
   }
-  ~directory_stream() {
+  ~directory_stream() throw() {
     if (closedir(dir))
       throw filesystem_error(std::error_code(errno, std::system_category()),
                              dirpath.string());
@@ -187,7 +188,8 @@ public:
   const directory_entry *operator->() const { return &ent; }
 
   directory_iterator &operator++() {
-    if (ent.empty()) return *this;
+    if (ent.empty())
+      return *this;
 
     dir->seek(next_loc);
     ent = dir->read();
@@ -197,7 +199,8 @@ public:
   }
 
   bool operator==(const directory_iterator &it) const {
-    return (ent.empty() && ent.empty() == it.ent.empty()) || (dir == it.dir && loc == it.loc);
+    return (ent.empty() && ent.empty() == it.ent.empty()) ||
+           (dir == it.dir && loc == it.loc);
   }
   bool operator!=(const directory_iterator &it) const {
     return !(*this == it);

@@ -40,6 +40,7 @@
 #include "state.h"
 #include "vm/vm.h"
 #include "state.hpp"
+#include "statespace.h"
 
 struct RuleProfiler {
   LmnRulesetId ref_rs_id;
@@ -326,7 +327,7 @@ void profile_total_space_update(StateSpaceRef ss) {
       sum += p->spaces[i].space.cur;
   }
 
-  sum += statespace_space(ss);
+  sum += ss->space();
   profile_peakcounter_set_v(&(p->spaces[PROFILE_SPACE__TOTAL].space), sum);
 }
 
@@ -417,9 +418,9 @@ void profile_finish_exec() {
 }
 
 void profile_statespace(LmnWorkerGroup *wp) {
-  LmnWorker *w = workers_get_worker(wp, LMN_PRIMARY_ID);
-  lmn_prof.state_num_stored = statespace_num(worker_states(w));
-  lmn_prof.state_num_end = statespace_end_num(worker_states(w));
+  LmnWorker *w = wp->get_worker(LMN_PRIMARY_ID);
+  lmn_prof.state_num_stored = worker_states(w)->num();
+  lmn_prof.state_num_end = worker_states(w)->num_raw();
 
   if (lmn_env.profile_level >= 3 && lmn_env.tree_compress) {
     profile_add_space(PROFILE_SPACE__STATE_BINSTR,
@@ -439,8 +440,8 @@ void profile_statespace(LmnWorkerGroup *wp) {
     for (i = 0; i < lmn_prof.thread_num; i++) {
       mc_profiler2_init(&lmn_prof.lv2[i]);
     }
-    statespace_foreach(worker_states(w), (void (*)(ANYARGS))profile_state_f,
-                       (LmnWord)worker_states(w), DEFAULT_ARGS);
+    for (auto ptr : worker_states(w)->all_states())
+      profile_state_f(ptr, (LmnWord)worker_states(w));
 
     if (lmn_env.tree_compress) {
       MCProfiler2 *p = &lmn_prof.lv2[lmn_OMP_get_my_id()];
@@ -452,7 +453,7 @@ void profile_statespace(LmnWorkerGroup *wp) {
     }
     LMN_FREE(lmn_prof.lv2);
 
-    total->statespace_space = statespace_space(worker_states(w));
+    total->statespace_space = worker_states(w)->space();
     lmn_prof.lv2 = total;
   }
 }
@@ -469,7 +470,7 @@ static void profile_state_f(State *s, LmnWord arg) {
   /* メモリ */
   p->state_space += sizeof(State);
   if (!s->is_binstr_user() && s->state_mem()) {
-    p->membrane_space += lmn_mem_root_space(s->state_mem());
+    p->membrane_space += (s->state_mem())->root_space();
   } else if (s->is_binstr_user() && s->state_binstr()) {
     p->binstr_space += lmn_binstr_space(s->state_binstr());
   }
@@ -486,8 +487,8 @@ static void profile_state_f(State *s, LmnWord arg) {
   p->transition_num += succ_num;
 
   if (!(s->is_encoded() && s->is_dummy())) {
-    if (statespace_has_property(ss)) {
-      AutomataRef a = statespace_automata(ss);
+    if (ss->has_property()) {
+      AutomataRef a = ss->automata();
       if (state_is_accept(a, s)) {
         p->accept_num++;
       }
@@ -741,9 +742,9 @@ void dump_profile_data(FILE *f) {
         r_total = rule_profiler_make(ANONYMOUS, NULL);
         r_others = rule_profiler_make(ANONYMOUS, NULL);
 
-        vec_init(&v, st_num(lmn_prof.prules));
+        v.init(st_num(lmn_prof.prules));
         st_get_entries_value(lmn_prof.prules, &v);
-        vec_sort(&v, comp_prule_id_greater_f);
+        v.sort(comp_prule_id_greater_f);
 
         fprintf(
             f,
@@ -751,8 +752,8 @@ void dump_profile_data(FILE *f) {
         fprintf(f, "%4s %8s : %9s %9s %9s %12s", "[id]", "[name]", "[# Tr.]",
                 "[# Ap.]", "[# Ba.]", "[CPU U.(usec)]\n");
 
-        for (i = 0; i < vec_num(&v); i++) {
-          RuleProfiler *rp = (RuleProfiler *)vec_get(&v, i);
+        for (i = 0; i < v.get_num(); i++) {
+          RuleProfiler *rp = (RuleProfiler *)v.get(i);
           if (rp->trial.called_num > 0) {
             if (rp->src->name == ANONYMOUS) {
               /* 一度もマッチングに成功しなかったルールはまとめる */
@@ -782,7 +783,7 @@ void dump_profile_data(FILE *f) {
                 r_total->trial.called_num, r_total->apply, r_total->backtrack,
                 r_total->trial.total_time / 1e-6);
 
-        vec_destroy(&v);
+        v.destroy();
         rule_profiler_free(r_others);
         fprintf(
             f,

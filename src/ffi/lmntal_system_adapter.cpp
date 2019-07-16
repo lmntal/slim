@@ -69,8 +69,8 @@ static FILE *run_lmntal_system(int dummy, ... );
 
 void add_arg(Vector *args, const char *arg)
 {
-  vec_push(args, (vec_data_t)LMN_CALLOC(char, strlen(arg) + 1));
-  sprintf((char *)vec_get(args, vec_num(args)-1), "%s", arg);
+  args->push((vec_data_t)LMN_CALLOC(char, strlen(arg) + 1));
+  sprintf((char *)args->get(args->get_num()-1), "%s", arg);
 }
 
 /* LMNtal systemを呼ぶためのコマンドと引数を構築する。
@@ -81,7 +81,7 @@ void add_arg(Vector *args, const char *arg)
 void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args) 
 {
   const char *lmntal_home = getenv(ENV_LMNTAL_HOME);
-  Vector *args = vec_make(16);
+  Vector *args = new Vector(16);
 
   *program = LMN_CALLOC(char,
                         strlen(lmntal_home) + strlen(LMNTAL_BIN_REL_PATH) + 1);
@@ -109,16 +109,16 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
   }
 
   /* 最後の要素は0で終端する */
-  vec_push(args, 0);
+  args->push(0);
   { /* vectorの要素をコピー */
     unsigned int i;
-    *ret_args = LMN_CALLOC(char *, vec_num(args));
-    for (i = 0; i < vec_num(args); i++) {
-      (*ret_args)[i] = (char *)vec_get(args, i);
+    *ret_args = LMN_CALLOC(char *, args->get_num());
+    for (i = 0; i < args->get_num(); i++) {
+      (*ret_args)[i] = (char *)args->get(i);
     }
   }
 
-  vec_free(args);
+  delete args;
 }
 
 /* LMNtalソースコードのファイルを中間言語にコンパイルし結果のストリームを返す*/
@@ -128,7 +128,7 @@ file_ptr lmntal_compile_file(const char *filename) {
 }
 
 /* LMNtalのルールを中間言語にコンパイルし結果のストリームを返す*/
-file_ptr lmntal_compile_rule_str(char *rule_str)
+file_ptr lmntal_compile_rule_str(const char *rule_str)
 {
   return file_ptr(run_lmntal_system(0, /*dummy*/
                            OPT_SLIM_CODE,

@@ -96,7 +96,7 @@ const int BS_HISTORY_NUM_SIZE = (BS_RULE_NUM_SIZE);
 const int BS_HISTORY_SIZE = (BS_STR_ID_SIZE);
 /* ハイパーリンクの接続個数. 同型性判定で使う */
 const int BS_HLINK_NUM_SIZE = (TAG_IN_BYTE * sizeof(LmnHlinkRank));
-} // namespace
+}  // namespace
 
 /*----------------------------------------------------------------------
  * Binary String Pointer
@@ -112,9 +112,8 @@ class BinStrCursor {
   bool valid;            /* TRUEで初期化 */
   bool direct; /* FALSEで初期化, directメソッドを用いた場合はTRUEで初期化 */
 
-
-public:
-  std::map<int, std::pair<int,int>> pos_to_id; /* positionとprocess IDの対応*/
+ public:
+  std::map<int, std::pair<int, int>> pos_to_id; /* positionとprocess IDの対応*/
 
   BinStrCursor() : binstr(nullptr), pos_(0), valid(false), direct(false) {}
 
@@ -126,8 +125,8 @@ public:
     pos_ = p.pos_;
     valid = p.valid;
     direct = p.direct;
-    for(auto it=p.pos_to_id.begin(); it!=p.pos_to_id.end(); it++) {
-      pos_to_id[it->first]=it->second;
+    for (auto it = p.pos_to_id.begin(); it != p.pos_to_id.end(); it++) {
+      pos_to_id[it->first] = it->second;
     }
     return p;
   }
@@ -149,9 +148,9 @@ public:
   bool push(BYTE v);
 
   bool push_start_mem(LmnMembraneRef mem) {
-    lmn_interned_str name=LMN_MEM_NAME_ID(mem);
-    std::pair<int,int> pa=std::make_pair(lmn_mem_id(mem), -1);
-    pos_to_id[pos_]=pa;
+    lmn_interned_str name = mem->NAME_ID();
+    std::pair<int, int> pa = std::make_pair(mem->mem_id(), -1);
+    pos_to_id[pos_] = pa;
     if (name == ANONYMOUS) {
       return push(TAG_MEM_START);
     } else {
@@ -163,11 +162,11 @@ public:
 
   int push_atom(LmnSymbolAtomRef a) {
     /* ファンクタの最大値からファンクタの値を引いて、大小を反転させる */
-    LmnFunctor f = (LmnFunctor)FUNCTOR_MAX - LMN_SATOM_GET_FUNCTOR(a);
-    std::pair<int,int> pa=std::make_pair(LMN_SATOM_ID(a), -1);
+    LmnFunctor f = (LmnFunctor)FUNCTOR_MAX - a->get_functor();
+    std::pair<int, int> pa = std::make_pair(a->get_id(), -1);
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
     // printf("%d %d\n", pos_, LMN_SATOM_ID(a));
-    pos_to_id[pos_]=pa;
+    pos_to_id[pos_] = pa;
     return push(TAG_ATOM_START) && push((const BYTE *)&f, BS_FUNCTOR_SIZE);
   }
 
@@ -175,25 +174,22 @@ public:
     LmnWord ref;
 
     /* hyperlink構造を圧縮する際は, rootオブジェクトをバイト列に記録する. */
-    auto hl_root =
-        lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+    auto hl_root = (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
 
-    if (visitlog_get_hlink(log, hl_root, &ref)) {
-      // printf("%s:%d\n", __FUNCTION__, __LINE__);
-      // printf("%d %d\n", pos_, LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)));
-      // std::pair<int,int> pa=std::make_pair(LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)), -1);
-      // pos_to_id[pos_]=pa;
+    if (log->get_hlink(hl_root, &ref)) {
       return push(TAG_VISITED_ATOMHLINK) &&
              push((BYTE *)&ref, BS_PROC_REF_SIZE);
     }
 
-    auto hl_num = lmn_hyperlink_element_num(hl_root);
+    auto hl_num = hl_root->element_num();
 
-    visitlog_put_hlink(log, hl_root); /* 訪問済みにした */
+    log->put_hlink(hl_root); /* 訪問済みにした */
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
-    // printf("%d %d\n", pos_, LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)));
-    std::pair<int,int> pa=std::make_pair(LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)), -1);
-    pos_to_id[pos_]=pa;
+    // printf("%d %d\n", pos_,
+    // LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)));
+    std::pair<int, int> pa = std::make_pair(
+        LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)atom)), -1);
+    pos_to_id[pos_] = pa;
     push(TAG_HLINK);
     push((const BYTE *)&hl_num, BS_HLINK_NUM_SIZE);
 
@@ -216,7 +212,8 @@ public:
 
   int push(const std::vector<uint8_t> &bytes) {
     uint64_t size = bytes.size();
-    return push((uint8_t *)&size, sizeof(size) * TAG_IN_BYTE) && push(bytes.data(), size * TAG_IN_BYTE);
+    return push((uint8_t *)&size, sizeof(size) * TAG_IN_BYTE) &&
+           push(bytes.data(), size * TAG_IN_BYTE);
   }
 
   /* データアトムをバイト列へ書き込む. まずTAG_INT_DATA or
@@ -224,22 +221,23 @@ public:
    * ハイパーリンクの処理を追加 @rev.461 */
   int push_data_atom(LmnAtomRef atom, LmnLinkAttr attr, VisitLogRef log) {
     switch (attr) {
-    case LMN_INT_ATTR:
-      return push(TAG_INT_DATA) && push((const BYTE *)&atom, BS_INT_SIZE);
-    case LMN_DBL_ATTR:
-      return push(TAG_DBL_DATA) &&
-             push((const BYTE *)LMN_GETREF_DOUBLE(atom), BS_DBL_SIZE);
-    case LMN_HL_ATTR:
-      return push_hlink(atom, log);
-    case LMN_SP_ATOM_ATTR:
-      if (sp_atom_encoder(atom)) {
-        auto bytes = sp_atom_encoder(atom)(atom);
-        auto type = LMN_SP_ATOM_TYPE(atom);
-        return push(TAG_SP_ATOM_DATA) && push(&type, sizeof(type) * TAG_IN_BYTE) && push(bytes);
-      }
-    default:
-      lmn_fatal("no implementations");
-      break;
+      case LMN_INT_ATTR:
+        return push(TAG_INT_DATA) && push((const BYTE *)&atom, BS_INT_SIZE);
+      case LMN_DBL_ATTR:
+        return push(TAG_DBL_DATA) &&
+               push((const BYTE *)LMN_GETREF_DOUBLE(atom), BS_DBL_SIZE);
+      case LMN_HL_ATTR:
+        return push_hlink(atom, log);
+      case LMN_SP_ATOM_ATTR:
+        if (sp_atom_encoder(atom)) {
+          auto bytes = sp_atom_encoder(atom)(atom);
+          auto type = LMN_SP_ATOM_TYPE(atom);
+          return push(TAG_SP_ATOM_DATA) &&
+                 push(&type, sizeof(type) * TAG_IN_BYTE) && push(bytes);
+        }
+      default:
+        lmn_fatal("no implementations");
+        break;
     }
     return 0;
   }
@@ -263,8 +261,7 @@ public:
   int push_from() { return push(TAG_FROM); }
 
   int push_start_rulesets(int n) {
-    if (n == 1)
-      return push(TAG_RULESET1);
+    if (n == 1) return push(TAG_RULESET1);
 
     return push(TAG_RULESET) && push((BYTE *)&n, BS_RULESET_NUM_SIZE);
   }
@@ -279,8 +276,7 @@ public:
 
     push((BYTE *)&his_num, BS_HISTORY_NUM_SIZE); /* write history num */
 
-    if (his_num == 0)
-      return;
+    if (his_num == 0) return;
 
     /* write each id of histories */
     /* 履歴表は, interned_idをkeyに, valueを0にしている */
@@ -311,12 +307,12 @@ using slim::element::make_unique;
 
 #define BS_TBL_SIZE (128)
 
-#define BS_SET(a, pos, v)                                                      \
-  (((pos)&1)                                                                   \
-       ? ((a)[(pos) >> 1] = ((a)[(pos) >> 1] & 0x0f) | ((v) << TAG_BIT_SIZE))  \
+#define BS_SET(a, pos, v)                                                     \
+  (((pos)&1)                                                                  \
+       ? ((a)[(pos) >> 1] = ((a)[(pos) >> 1] & 0x0f) | ((v) << TAG_BIT_SIZE)) \
        : ((a)[(pos) >> 1] = (v & 0x0f) | ((a)[(pos) >> 1] & 0xf0)))
-#define BS_GET(a, pos)                                                         \
-  (((pos)&1) ? ((a)[(pos) >> 1] & 0xf0) >> TAG_BIT_SIZE                        \
+#define BS_GET(a, pos)                                  \
+  (((pos)&1) ? ((a)[(pos) >> 1] & 0xf0) >> TAG_BIT_SIZE \
              : (a)[(pos) >> 1] & 0x0f)
 
 /* エンコード処理(計算中)に用いるバイナリストリング(作業領域) */
@@ -326,7 +322,7 @@ class BinStr {
                TAG_IN_BYTEで初期化) */
   int cur; /* 書き込み位置（4ビット単位）    : 次に書き込む位置(0で初期化) */
 
-public:
+ public:
   BinStr() {
     size = BS_TBL_SIZE * TAG_IN_BYTE;
     v = LMN_NALLOC(BYTE, size / TAG_IN_BYTE);
@@ -344,7 +340,7 @@ public:
     return make_unique<BinStrCursor>(this, true);
   }
 
-public:
+ public:
   /* bsの位置posにbの下位4ビットを書き込む。書き込みに成功した場合は真を
    返し、失敗した場合は偽を返す。*/
   bool write(BYTE b, int pos) {

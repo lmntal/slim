@@ -55,11 +55,14 @@
 #endif
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
+
 // #define DIFFISO_GEN
 bool diff_gen_finish = false;
 std::map<int, int> iso_m;
 extern Graphinfo *parent_graphinfo;
 extern std::map<int, int> id_to_id_at_commit;
+
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
@@ -75,16 +78,16 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
 
   if (lmn_env.nd_cleaning) {
     /* nd_cleaning状態の場合は、グローバルルート膜の解放を行う */
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
     lmn_env.nd_cleaning = FALSE;
   }
 
   if (!lmn_env.nd_remain && !lmn_env.nd_remaining) {
-    mem = lmn_mem_make();
+    mem = new LmnMembrane();
   }
 
   react_start_rulesets(mem, start_rulesets);
-  lmn_mem_activate_ancestors(mem);
+  mem->activate_ancestors();
 
   do_mc(mem, a, psyms, lmn_env.core_num);
 
@@ -92,8 +95,8 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     lmn_env.nd_remaining = TRUE;
   } else {
     lmn_env.nd_remaining = FALSE;
-    lmn_mem_drop(mem);
-    lmn_mem_free(mem);
+    mem->drop();
+    delete mem;
   }
 }
 
@@ -111,11 +114,11 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_init();
   }
-  wp = lmn_workergroup_make(a, psyms, thread_num);
-  states = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
-  p_label = a ? automata_get_init_state(a) : DEFAULT_STATE_ID;
-  mem = lmn_mem_copy(world_mem_org);
-  init_s = new State(mem, p_label, statespace_use_memenc(states));
+  wp = new LmnWorkerGroup(a, psyms, thread_num);
+  states = worker_states(wp->get_worker(LMN_PRIMARY_ID));
+  p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
+  mem = world_mem_org->copy();
+  init_s = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 
   /*
@@ -138,7 +141,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   printf("1\n");
 #endif
-  Graphinfo *empty = new Graphinfo(lmn_mem_make());
+  Graphinfo *empty = new Graphinfo(new LmnMembrane());
   // convertedGraphDump(empty->cv);
   Graphinfo *init = new Graphinfo(mem);
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -166,11 +169,13 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
 #endif
-  statespace_set_init_state(states, init_s, lmn_env.enable_compress_mem);
+  states->set_init_state(init_s);
+  if (lmn_env.enable_compress_mem)
+    init_s->free_mem();
 
   /** START
    */
-  launch_lmn_workers(wp);
+  wp->launch_lmn_workers();
 
 #ifdef DEBUG
   if (lmn_env.show_reduced_graph && lmn_env.enable_por &&
@@ -180,12 +185,12 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 #endif
 
   if (lmn_env.mem_enc == FALSE)
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
   /** FINALIZE
    */
   profile_statespace(wp);
   mc_dump(wp);
-  lmn_workergroup_free(wp);
+  delete wp;
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_clean();
   }
@@ -193,50 +198,51 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 
 /* 後始末と出力周りを担当 */
 static void mc_dump(LmnWorkerGroup *wp) {
-  StateSpaceRef ss = worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
+  StateSpaceRef ss = worker_states(wp->get_worker(LMN_PRIMARY_ID));
   if (lmn_env.dump) {
-    statespace_format_states(ss);
+    ss->format_states();
 
     /* 1. 状態遷移グラフの標準出力 */
     if (lmn_env.trace) {
-      statespace_dumper(ss);
+      ss->dump();
     }
 
     /* 2. 反例パス or 最終状態集合の出力 */
-    if (wp->do_search) {
-      mc_dump_all_errors(wp, ss->out);
+    auto out = ss->output();
+    if (wp->workers_are_do_search()) {
+      mc_dump_all_errors(wp, out);
     } else if (lmn_env.end_dump && lmn_env.mc_dump_format == CUI) {
       /* とりあえず最終状態集合の出力はCUI限定。(LaViTに受付フォーマットがない)
        */
-      statespace_ends_dumper(ss);
+      ss->dump_ends();
     }
 
     /* CUIモードの場合状態数などのデータも標準出力 */
     if (lmn_env.mc_dump_format == CUI) {
-      fprintf(ss->out, "\'# of States\'(stored)   = %lu.\n",
-              statespace_num(ss));
-      fprintf(ss->out, "\'# of States\'(end)      = %lu.\n",
-              statespace_end_num(ss));
-      if (wp->do_search) {
-        fprintf(ss->out, "\'# of States\'(invalid)  = %lu.\n",
+      fprintf(out, "\'# of States\'(stored)   = %lu.\n",
+              ss->num());
+      fprintf(out, "\'# of States\'(end)      = %lu.\n",
+              ss->num_of_ends());
+      if (wp->workers_are_do_search()) {
+        fprintf(out, "\'# of States\'(invalid)  = %lu.\n",
                 mc_invalids_get_num(wp));
       }
 #ifdef KWBT_OPT
       if (lmn_env.opt_mode != OPT_NONE) {
-        if (!workers_opt_end_state(wp)) {
-          fprintf(ss->out, "\'# can't solve the problem\'.\n");
+        if (!wp->workers_get_opt_end_state()) {
+          fprintf(out, "\'# can't solve the problem\'.\n");
         } else {
-          fprintf(ss->out, "\'# optimized cost\'      = %lu.\n",
-                  workers_opt_cost(wp));
+          fprintf(out, "\'# optimized cost\'      = %lu.\n",
+                  wp->opt_cost());
         }
       }
 #endif
     }
   }
 
-  if (statespace_has_property(ss))
+  if (ss->has_property())
     lmn_prof.has_property = TRUE;
-  if (workers_have_error(wp))
+  if (wp->workers_have_error())
     lmn_prof.found_err = TRUE;
 }
 
@@ -318,7 +324,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   if (mc_react_cxt_expanded_num(rc) == 0) {
     diff_gen_finish = true;
     /* sを最終状態集合として記録 */
-    statespace_add_end_state(ss, s);
+    ss->mark_as_end(s);
   } else if (mc_enable_por(f) && !s->s_is_reduced()) {
     /* POR: 遷移先状態集合:en(s)からample(s)を計算する.
      * 呼び出し先で, mc_store_successorsに相当する処理を済ませる */
@@ -346,10 +352,10 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     /** free   : 遷移先を求めた状態sからLMNtalプロセスを開放 */
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__REDUCED_MEMSET, lmn_mem_space(mem));
+      profile_add_space(PROFILE_SPACE__REDUCED_MEMSET, mem->space());
     }
 #endif
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
     if (s->is_binstr_user() &&
         (lmn_env.hash_compaction || lmn_env.tree_compress)) {
       s->free_binstr();
@@ -427,9 +433,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     if (!s->has_trans_obj()) {
       /* Transitionオブジェクトを利用しない場合 */
       src_t = NULL;
-      src_succ = (State *)vec_get(RC_EXPANDED(rc), i);
+      src_succ = (State *)RC_EXPANDED(rc)->get(i);
     } else {
-      src_t = (TransitionRef)vec_get(RC_EXPANDED(rc), i);
+      src_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
       src_succ = transition_next_state(src_t);
     }
 
@@ -439,17 +445,16 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     }
     /* 状態空間に状態src_succを記録 */
     if (RC_MC_USE_DMEM(rc)) { /* --delta-mem */
-      MemDeltaRoot *d = (struct MemDeltaRoot *)vec_get(RC_MEM_DELTAS(rc), i);
-      succ = statespace_insert_delta(ss, src_succ, d);
+      MemDeltaRoot *d = (struct MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i);
+      succ = ss->insert_delta(src_succ, d);
       src_succ_m = NULL;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
       if (src_succ->s_is_d())
         src_succ->calc_binstr_delta();
-      succ = statespace_insert(ss, src_succ);
+      succ = ss->insert(src_succ);
       src_succ_m = NULL;
     } else {                              /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
-
       /*
         ===== Diffiso ====
        */
@@ -519,7 +524,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       /*
         ==================
        */
-      succ = statespace_insert(ss, src_succ);
+      succ = ss->insert(src_succ);
     }
 
     /*
@@ -550,12 +555,12 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       /* new state */
       state_id_issue(succ);
       if (mc_use_compress(f) && src_succ_m) {
-        lmn_mem_free_rec(src_succ_m);
+	src_succ_m->free_rec();
       }
       if (new_ss)
-        vec_push(new_ss, (vec_data_t)succ);
+        new_ss->push((vec_data_t)succ);
       if (mc_is_dump(f))
-        dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
+        StateDumper::from_env(stdout)->dump(succ);
     } else {
       /* contains */
       delete (src_succ);
@@ -579,7 +584,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
        * succに対応する遷移insを登録) */
       st_add_direct(RC_SUCC_TBL(rc), (st_data_t)succ, ins);
       /* 遷移先情報を記録する一時領域(in ReactCxt)を更新 */
-      vec_set(RC_EXPANDED(rc), succ_i++, ins);
+      RC_EXPANDED(rc)->set(succ_i++, ins);
     } else if (s->has_trans_obj()) {
       /* succへの遷移が多重辺かつTransitionオブジェクトを利用する場合 */
       /* src_tは状態生成時に張り付けたルール名なので, 0番にしか要素はないはず */
@@ -606,13 +611,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 #endif
   st_clear(RC_SUCC_TBL(rc));
 
-  RC_EXPANDED(rc)->num = succ_i; /* 危険なコード. いつか直すかも. */
-  RC_EXPANDED_RULES(rc)->num = succ_i;
+  RC_EXPANDED(rc)->set_num(succ_i); /* 危険なコード. いつか直すかも. */
+  RC_EXPANDED_RULES(rc)->set_num(succ_i);
   /*  上記につられて以下のコードを記述すると実行時エラーになる. (r436でdebug)
    *  RC_MEM_DELTASはmc_store_successors終了後に, struct
    * MemDeltaRootの開放処理を行うため要素数に手を加えてはならない. */
   //  if (RC_MC_USE_DMEM(rc)) {
-  //    RC_MEM_DELTAS(rc)->num = succ_i;
+  //    RC_MEM_DELTAS(rc)->set_num(succ_i);
   //  }
 
   state_D_progress(s, rc);
@@ -629,19 +634,19 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   BOOL ret_flag = FALSE;
 
-  for (; cur_mem; cur_mem = lmn_mem_next(cur_mem)) {
+  for (; cur_mem; cur_mem = cur_mem->mem_next()) {
     unsigned long org_num = mc_react_cxt_expanded_num(rc);
 
     /* 代表子膜に対して再帰する */
-    if (mc_expand_inner(rc, lmn_mem_child_head(cur_mem))) {
+    if (mc_expand_inner(rc, cur_mem->mem_child_head())) {
       ret_flag = TRUE;
     }
-    if (lmn_mem_is_active(cur_mem)) {
+    if (cur_mem->is_active()) {
       react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
     if (org_num == mc_react_cxt_expanded_num(rc)) {
-      lmn_mem_set_active(cur_mem, FALSE);
+      cur_mem->set_active(FALSE);
     }
   }
 
@@ -678,15 +683,15 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     if (mc_use_delta(f)) {
       news = new State();
     } else {
-      news = new State((LmnMembraneRef)vec_get(expanded_roots, i), state_name,
-                       mc_use_canonical(f));
+      news = new State((LmnMembraneRef)expanded_roots->get(i), state_name,
+                        mc_use_canonical(f));
     }
 
     state_set_property_state(news, state_name);
     state_set_parent(news, src);
     if (mc_has_trans(f)) {
       lmn_interned_str nid;
-      nid = ((LmnRuleRef)vec_get(expanded_rules, i))->name;
+      nid = ((LmnRuleRef)expanded_rules->get(i))->name;
       data = (vec_data_t)transition_make(news, nid);
       src->set_trans_obj();
     } else {
@@ -697,9 +702,9 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
      * 通常時は, expanded_rootsのi番目のデータを
      *           Successor MembraneからSuccessor Stateへ設定し直す */
     if (mc_use_delta(f)) {
-      vec_push(expanded_roots, data);
+      expanded_roots->push(data);
     } else {
-      vec_set(expanded_roots, i, data);
+      expanded_roots->set(i, data);
     }
   }
 
@@ -730,18 +735,18 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
    *   (c.f. "The Spin Model Checker" pp.130-131)
    */
 
-  for (i = 0; i < atmstate_transition_num(p_s); i++) {
-    AutomataTransitionRef p_t = atmstate_get_transition(p_s, i);
-    if (eval_formula(mem, propsyms, atm_transition_get_formula(p_t))) {
-      BYTE p_nxt_l = atm_transition_next(p_t);
-      vec_push(RC_EXPANDED_PROPS(rc), (vec_data_t)p_nxt_l);
+  for (i = 0; i < p_s->get_transition_num(); i++) {
+    AutomataTransitionRef p_t = p_s->get_transition(i);
+    if (eval_formula(mem, propsyms, p_t->get_formula())) {
+      BYTE p_nxt_l = p_t->get_next();
+      RC_EXPANDED_PROPS(rc)->push((vec_data_t)p_nxt_l);
     }
   }
 
-  if (vec_is_empty(RC_EXPANDED_PROPS(rc))) {
+  if (RC_EXPANDED_PROPS(rc)->is_empty()) {
     return;
   } else {
-    BYTE first_prop = (BYTE)vec_get(RC_EXPANDED_PROPS(rc), 0);
+    BYTE first_prop = (BYTE)RC_EXPANDED_PROPS(rc)->get(0);
     mc_gen_successors(s, mem, first_prop, rc, f);
     if (mc_react_cxt_expanded_num(rc) == 0) {
       stutter_extension(s, mem, first_prop, rc, f);
@@ -750,19 +755,19 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 
   /* 階層グラフ構造は等価だが性質ラベルの異なる状態を生成する.　*/
   RC_ND_SET_ORG_SUCC_NUM(rc, mc_react_cxt_expanded_num(rc));
-  for (i = 1; i < vec_num(RC_EXPANDED_PROPS(rc)); i++) {
-    BYTE p_nxt_l = (BYTE)vec_get(RC_EXPANDED_PROPS(rc), i);
+  for (i = 1; i < RC_EXPANDED_PROPS(rc)->get_num(); i++) {
+    BYTE p_nxt_l = (BYTE)RC_EXPANDED_PROPS(rc)->get(i);
     for (j = 0; j < RC_ND_ORG_SUCC_NUM(rc); j++) {
       TransitionRef src_succ_t;
       State *src_succ_s, *new_s;
       vec_data_t data;
 
       if (mc_has_trans(f)) {
-        src_succ_t = (TransitionRef)vec_get(RC_EXPANDED(rc), j);
+        src_succ_t = (TransitionRef)RC_EXPANDED(rc)->get(j);
         src_succ_s = transition_next_state(src_succ_t);
       } else {
         src_succ_t = NULL;
-        src_succ_s = (State *)vec_get(RC_EXPANDED(rc), j);
+        src_succ_s = (State *)RC_EXPANDED(rc)->get(j);
       }
 
       new_s = src_succ_s->duplicate(NULL);
@@ -779,13 +784,13 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
       } else {
         data = (vec_data_t)new_s;
       }
-      vec_push(RC_EXPANDED(rc), data);
+      RC_EXPANDED(rc)->push(data);
 
       /* 差分オブジェクトは状態展開時のみの一時データなので,
        * 効率化のためにポインタcopyのみにしている(deep copyしない)
        * !! 開放処理は要注意 (r435でdebug) !! */
       if (RC_MC_USE_DMEM(rc)) {
-        vec_push(RC_MEM_DELTAS(rc), vec_get(RC_MEM_DELTAS(rc), j));
+        RC_MEM_DELTAS(rc)->push(RC_MEM_DELTAS(rc)->get(j));
       }
     }
   }
@@ -818,7 +823,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
   if (mc_use_delta(f)) {
     /* 差分構造が存在しないstruct MemDeltaRootを登録する. */
-    mc_react_cxt_add_mem_delta(rc, dmem_root_make(mem, NULL, 0), NULL);
+    mc_react_cxt_add_mem_delta(rc, new MemDeltaRoot(mem, NULL, 0), NULL);
     new_s = new State();
   } else {
     /* 遷移元状態sをdeep copyする.
@@ -835,7 +840,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
   } else {
     data = (vec_data_t)new_s;
   }
-  vec_push(RC_EXPANDED(rc), data);
+  RC_EXPANDED(rc)->push(data);
 }
 
 static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
@@ -863,29 +868,29 @@ static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
 /* エラーを示す頂点を登録する.
  * MT-Unsafe, but ok */
 void mc_found_invalid_state(LmnWorkerGroup *wp, State *s) {
-  workers_found_error(wp);
+  wp->workers_found_error();
   if (s) {
-    LmnWorker *w = workers_get_my_worker(wp);
-    vec_push(worker_invalid_seeds(w), (vec_data_t)s);
+    LmnWorker *w = wp->workers_get_my_worker();
+    worker_invalid_seeds(w)->push((vec_data_t)s);
   }
 
-  if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+  if (!wp->workers_are_do_exhaustive()) {
+    wp->workers_set_exit();
   }
 }
 
 /* エラーを示すサイクルパスを載せたVectorを登録する.
  * MT-Unsafe, but ok  */
 void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v) {
-  workers_found_error(wp);
+  wp->workers_found_error();
 
   if (v) {
-    LmnWorker *w = workers_get_my_worker(wp);
-    vec_push(worker_cycles(w), (vec_data_t)v);
+    LmnWorker *w = wp->workers_get_my_worker();
+    worker_cycles(w)->push((vec_data_t)v);
   }
 
-  if (!wp->do_exhaustive) {
-    workers_set_exit(wp);
+  if (!wp->workers_are_do_exhaustive()) {
+    wp->workers_set_exit();
   }
 }
 
@@ -894,8 +899,8 @@ unsigned long mc_invalids_get_num(LmnWorkerGroup *wp) {
   unsigned int i;
 
   ret = 0;
-  for (i = 0; i < wp->worker_num; i++) {
-    ret += vec_num(worker_invalid_seeds(workers_get_worker(wp, i)));
+  for (i = 0; i < wp->workers_get_entried_num(); i++) {
+    ret += worker_invalid_seeds(wp->get_worker(i))->get_num();
   }
 
   return ret;
@@ -906,15 +911,15 @@ static Vector *mc_gen_invalids_path(State *seed) {
   Vector *path;
   State *pred;
 
-  path = vec_make(32);
+  path = new Vector(32);
   pred = seed;
 
   while (pred) { /* 初期頂点のparentはNULL */
-    vec_push(path, (vec_data_t)pred);
+    path->push((vec_data_t)pred);
     pred = state_get_parent(pred);
   }
 
-  vec_reverse(path);
+  path->reverse();
 
   return path;
 }
@@ -927,12 +932,12 @@ static Vector *mc_gen_invalids_path(State *seed) {
     t = 0;                                                                     \
     if (st_lookup(G, (st_data_t)(S_KEY), &t)) {                                \
       succs = (Vector *)t;                                                     \
-      if (!vec_contains(succs, (vec_data_t)SUCC)) {                            \
-        vec_push(succs, (vec_data_t)SUCC);                                     \
+      if (!succs->contains((vec_data_t)SUCC)) {                            \
+        succs->push((vec_data_t)SUCC);                                     \
       }                                                                        \
     } else {                                                                   \
-      succs = vec_make(2);                                                     \
-      vec_push(succs, (vec_data_t)SUCC);                                       \
+      succs = new Vector(2);                                                     \
+      succs->push((vec_data_t)SUCC);                                       \
       st_insert(G, (st_data_t)(S_KEY), (st_data_t)succs);                      \
     }                                                                          \
   } while (0)
@@ -942,28 +947,28 @@ static Vector *mc_gen_invalids_path(State *seed) {
 static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v) {
   unsigned int i, j;
 
-  for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
+  for (i = 0, j = 1; i < v->get_num() && j < v->get_num(); i++, j++) {
 
     State *s1, *s2;
 
-    s1 = (State *)vec_get(v, i);
-    s2 = (State *)vec_get(v, j);
+    s1 = (State *)v->get(i);
+    s2 = (State *)v->get(j);
 
     MC_INSERT_INVALIDS(g, s1, s2);
   }
 
-  if (state_is_end(a, (State *)vec_peek(v))) {
-    State *s = (State *)vec_peek(v);
+  if (state_is_end(a, (State *)v->peek())) {
+    State *s = (State *)v->peek();
     MC_INSERT_INVALIDS(g, s, NULL);
   }
 }
 
 BOOL mc_vec_states_valid(Vector *v) {
   unsigned int i, j;
-  for (i = 0, j = 1; i < vec_num(v) && j < vec_num(v); i++, j++) {
+  for (i = 0, j = 1; i < v->get_num() && j < v->get_num(); i++, j++) {
     State *s, *t;
-    s = (State *)vec_get(v, i);
-    t = (State *)vec_get(v, j);
+    s = (State *)v->get(i);
+    t = (State *)v->get(j);
     if (!state_succ_contains(s, t))
       return FALSE;
   }
@@ -985,63 +990,62 @@ static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
    *       オリジナルテーブル側のdummy状態に対応するmemid状態を探索して引っ張ってくる必要がある
    */
 
-  fprintf(ss->out, "%lu::", state_format_id(s, ss->is_formated));
-  for (i = 0; i < vec_num(succs); i++) {
-    State *succ = (State *)vec_get(succs, i);
+  auto out = ss->output();
+  fprintf(out, "%lu::", state_format_id(s, ss->is_formatted()));
+  for (i = 0; i < succs->get_num(); i++) {
+    State *succ = (State *)succs->get(i);
     if (succ) {
-      fprintf(ss->out, "%s%lu", (i > 0) ? ", " : "",
-              state_format_id(succ, ss->is_formated));
+      fprintf(out, "%s%lu", (i > 0) ? ", " : "",
+              state_format_id(succ, ss->is_formatted()));
     }
   }
-  fprintf(ss->out, "\n");
+  fprintf(out, "\n");
 
   return ST_CONTINUE;
 }
 
 int mc_free_succ_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
   Vector *v = (Vector *)_v;
-  vec_free(v);
+  delete v;
   return ST_CONTINUE;
 }
 
 void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
   unsigned int i;
 
-  for (i = 0; i < vec_num(v); i++) {
+  for (i = 0; i < v->get_num(); i++) {
     State *s;
+    auto out = ss->output();
 
     if (lmn_env.sp_dump_format != LMN_SYNTAX) {
       const char *m;
-      s = (State *)vec_get(v, i);
+      s = (State *)v->get(i);
       m = (s == seed) ? "*" : " ";
-      fprintf(ss->out, "%s%2lu::%s", m, state_format_id(s, ss->is_formated),
-              automata_state_name(statespace_automata(ss),
-                                  state_property_state(s)));
-      state_print_mem(s, (LmnWord)ss->out);
+      fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
+              ss->automata()->state_name(state_property_state(s)));
+      StateDumper::from_env(out)->state_print_mem(s);
     } else {
-      s = (State *)vec_get(v, i);
-      fprintf(ss->out, "path%lu_%s", state_format_id(s, ss->is_formated),
-              automata_state_name(statespace_automata(ss),
-                                  state_property_state(s)));
-      state_print_mem(s, (LmnWord)ss->out);
-      fprintf(ss->out, ".\n");
+      s = (State *)v->get(i);
+      fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
+              ss->automata()->state_name(state_property_state(s)));
+      StateDumper::from_env(out)->state_print_mem(s);
+      fprintf(out, ".\n");
 
-      fprintf(ss->out, "path%lu_%s", state_format_id(s, ss->is_formated),
-              automata_state_name(statespace_automata(ss),
-                                  state_property_state(s)));
-      state_print_mem(s, (LmnWord)ss->out);
-      fprintf(ss->out, ":- ");
+      fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
+              ss->automata()->state_name(state_property_state(s)));
+      StateDumper::from_env(out)->state_print_mem(s);
+      fprintf(out, ":- ");
     }
   }
 }
 
 /* 各LmnWorkerに登録した反例を出力する.
  * 登録された反例は頂点のみであり,
- * 登録された頂点が, atmstate_is_endの場合, safety
+ * 登録された頂点が, AutomataState::is_endの場合, safety
  * その他の場合は, その頂点を起点にしたサイクルパスにon_cycle_flagが立っている
  */
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
-  if (!wp->error_exist) {
+  if (!wp->workers_have_error()) {
     fprintf(f, "%s\n",
             lmn_env.mc_dump_format == CUI
                 ? "No Accepting Cycle (or Invalid State) exists."
@@ -1062,71 +1066,71 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
       invalids_graph = cui_dump ? NULL : st_init_ptrtable();
 
       /* state property */
-      for (i = 0; i < workers_entried_num(wp); i++) {
+      for (i = 0; i < wp->workers_get_entried_num(); i++) {
         LmnWorker *w;
         Vector *v;
         StateSpaceRef ss;
 
-        w = workers_get_worker(wp, i);
+        w = wp->get_worker(i);
         v = worker_invalid_seeds(w);
         ss = worker_states(w);
 
-        for (j = 0; j < vec_num(v); j++) {
-          Vector *path = mc_gen_invalids_path((State *)vec_get(v, j));
+        for (j = 0; j < v->get_num(); j++) {
+          Vector *path = mc_gen_invalids_path((State *)v->get(j));
 
           if (cui_dump) { /* 出力 */
             mc_print_vec_states(ss, path, NULL);
             fprintf(f, "\n");
           } else { /* ハッシュ表に追加 */
-            mc_store_invalids_graph(statespace_automata(ss), invalids_graph,
+            mc_store_invalids_graph(ss->automata(), invalids_graph,
                                     path);
           }
-          vec_free(path);
+          delete path;
         }
       }
 
       /* path property */
-      for (i = 0; i < workers_entried_num(wp); i++) {
+      for (i = 0; i < wp->workers_get_entried_num(); i++) {
         LmnWorker *w;
         Vector *v;
         StateSpaceRef ss;
 
-        w = workers_get_worker(wp, i);
+        w = wp->get_worker(i);
         v = worker_cycles(w);
         ss = worker_states(w);
 
-        for (j = 0; j < vec_num(v); j++) {
+        for (j = 0; j < v->get_num(); j++) {
           Vector *cycle, *path;
           State *seed;
 
-          cycle = (Vector *)vec_get(v, j);
-          seed = (State *)vec_get(cycle, 0);
+          cycle = (Vector *)v->get(j);
+          seed = (State *)cycle->get(0);
           path = mc_gen_invalids_path(seed);
 
-          vec_push(cycle,
+          cycle->push(
                    (vec_data_t)seed); /* seed to seedのパスを取得するため */
 
           if (cui_dump) {
-            vec_pop(path); /* cycle Vectorとpath
+            path->pop(); /* cycle Vectorとpath
                               Vectorでseedが重複して積まれているため */
             mc_print_vec_states(ss, path, NULL);
             mc_print_vec_states(ss, cycle, seed);
             fprintf(f, "\n");
           } else {
             LMN_ASSERT(invalids_graph);
-            mc_store_invalids_graph(statespace_automata(ss), invalids_graph,
+            mc_store_invalids_graph(ss->automata(), invalids_graph,
                                     path);
-            mc_store_invalids_graph(statespace_automata(ss), invalids_graph,
+            mc_store_invalids_graph(ss->automata(), invalids_graph,
                                     cycle);
           }
 
-          vec_free(path);
+          delete path;
         }
       }
 
       if (!cui_dump) {
         StateSpaceRef represent =
-            worker_states(workers_get_worker(wp, LMN_PRIMARY_ID));
+            worker_states(wp->get_worker(LMN_PRIMARY_ID));
         st_foreach(invalids_graph, (st_iter_func)mc_dump_invalids_f,
                    (st_data_t)represent);
         st_foreach(invalids_graph, (st_iter_func)mc_free_succ_vec_f,
@@ -1139,11 +1143,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
 
     case Dir_DOT: /* TODO:
                      反例パスをサブグラフとして指定させたら分かりやすくなりそう
-                   */
-    case FSM: /* TODO: 未定. ltsviewはdotファイルを読み出せるので廃止しても良い
-               */
-      fprintf(f, "under constructions..\n");
-      break;
+                   */;
     default:
       lmn_fatal("unexpected.");
       break;

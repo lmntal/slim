@@ -170,11 +170,13 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"show-hl", 0, 0, 1007},
                                   {"use-builtin-rule", 0, 0, 1008},
                                   {"dump-dot", 0, 0, 1100},
-                                  {"dump-fsm", 0, 0, 1101},
+                                  {"dump-fsm-lmn", 0, 0, 1101},
                                   {"dump-lavit", 0, 0, 1102},
                                   {"dump-inc", 0, 0, 1103},
                                   {"dump-lmn", 0, 0, 1104},
                                   {"dump-json", 0, 0, 1105},
+                                  {"dump-fsm-lmn-detail", 0, 0, 1106},
+                                  {"dump-fsm-hl", 0, 0, 1107},
                                   {"interactive", 0, 0, 1200},
                                   {"translate", 0, 0, 1300},
                                   {"hl", 0, 0, 1350},
@@ -302,7 +304,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       lmn_env.mc_dump_format = Dir_DOT;
       break;
     case 1101:
-      lmn_env.mc_dump_format = FSM;
+      lmn_env.mc_dump_format = LMN_FSM_GRAPH_MEM_NODE;
       break;
     case 1102:
       lmn_env.mc_dump_format = LaViT;
@@ -315,6 +317,12 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1105:
       lmn_env.output_format = JSON;
+      break;
+    case 1106:
+      lmn_env.mc_dump_format = LMN_FSM_GRAPH;
+      break;
+    case 1107:
+      lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
       break;
     case 1200: /* jni interactive mode */
 #ifdef HAVE_JNI_H
@@ -604,7 +612,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
 static void init_internal(void) {
   lmn_profiler_init(lmn_env.core_num);
   sym_tbl_init();
-  lmn_functor_tbl_init();
+  lmn_functor_table = new LmnFunctorTable();
   init_rules();
 
   if (!lmn_env.translate) {
@@ -616,7 +624,7 @@ static void init_internal(void) {
     mem_isom_init();
     /*    ext_init(); */
     sp_atom_init();
-    ccallback_init();
+    CCallback::ccallback_init();
     init_builtin_extensions();
 
     dumper_init();
@@ -648,7 +656,7 @@ static inline void slim_finalize(void) {
       dpor_env_destroy();
     mem_isom_finalize();
     /*    ext_finalize(); */
-    ccallback_finalize();
+    CCallback::ccallback_finalize();
     sp_atom_finalize();
     free_atom_memory_pools();
     finalize_so_handles();
@@ -656,10 +664,11 @@ static inline void slim_finalize(void) {
 
   lmn_profiler_finalize();
   destroy_rules();
-  lmn_functor_tbl_destroy();
+  delete lmn_functor_table;
   sym_tbl_destroy();
 
   lmn_stream_destroy();
+  slim::element::LifetimeProfiler::check_memory_leak();
 }
 
 static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, int optid, int argc,
@@ -699,7 +708,7 @@ static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, i
 static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
   if (!lmn_env.nd) {
     /* プログラム実行 */
-    lmn_run(vec_make(start_rulesets));
+    lmn_run(new Vector(start_rulesets));
   } else {
     /* プログラム検証 */
     AutomataRef automata;
@@ -719,18 +728,18 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
         return;
       } else {
         if (lmn_env.prop_scc_driven)
-          automata_analysis(automata);
+          automata->analysis();
         if (lmn_env.property_dump) {
-          print_property_automata(automata);
+          automata->print_property();
           return;
         }
       }
     }
 
-    run_mc(vec_make(start_rulesets), automata, prop_defs);
+    run_mc(new Vector(start_rulesets), automata, prop_defs);
 
     if (!ret) {
-      automata_free(automata);
+      delete automata;
       propsyms_free(prop_defs);
     }
   }

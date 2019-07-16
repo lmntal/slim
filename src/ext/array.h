@@ -47,19 +47,55 @@
  * @ingroup  Ext
  * @struct LmnArray array.h "ext/array.h"
  */
+typedef struct LmnArray *LmnArrayRef;
 struct LmnArray {
   LMN_SP_ATOM_HEADER;
 
-  uint32_t size;     /* array size */ 
-  LmnLinkAttr type;  /* element type, currently either
-                        LMN_INT_ATTR | LMN_DBL_ATTR | LMN_STRING_ATTR */
-  BOOL    owner;     /* am I the owner of array data? */
-  LmnAtomRef *data;     /* array data */
+  // uint32_t size;    /* array size */
+  LmnLinkAttr type; /* element type, currently either
+                       LMN_INT_ATTR | LMN_DBL_ATTR | LMN_STRING_ATTR */
+  BOOL owner;       /* am I the owner of array data? */
+  // LmnAtomRef *data; /* array data */
+  std::vector<LmnAtomRef> *impl;
+
+private:
+  LmnArrayRef lmn_array_copy();
+  LmnArray(LmnMembraneRef mem, LmnWord size, LmnAtomRef init_value,
+           LmnLinkAttr init_type);
+
+public:
+  LmnArray(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0,
+           LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2);
+  ~LmnArray();
+  // callbacks cannot be methods
+  void init_array();
+  static void cb_array_new(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                           LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
+                           LmnAtomRef a2, LmnLinkAttr t2);
+  static void cb_array_free(LmnReactCxtRef rc, LmnMembraneRef mem,
+                            LmnAtomRef a0, LmnLinkAttr t0);
+  static void cb_array_size(LmnReactCxtRef rc, LmnMembraneRef mem,
+                            LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                            LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2);
+  static void cb_array_get(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                           LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
+                           LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3,
+                           LmnLinkAttr t3);
+  static void cb_array_put(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                           LmnLinkAttr t0, LmnAtomRef a1_, LmnLinkAttr t1,
+                           LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3,
+                           LmnLinkAttr t3);
+  static LmnArrayRef *sp_cb_array_new();
+  static void *sp_cb_array_copy(void *data);
+  static BOOL sp_cb_array_is_ground(void *data);
+  static void sp_cb_array_dump(void *array, LmnPortRef port);
+  static BOOL sp_cb_array_eq(void *_p1, void *_p2);
+  static void sp_cb_array_free(void *data);
 };
 
+static void sp_cb_string_dump(void *s, LmnPortRef port);
 typedef struct LmnArray *LmnArrayRef;
 
 #define LMN_ARRAY(obj) ((LmnArrayRef)(obj))
-
 
 #endif

@@ -55,7 +55,7 @@
 
 #define LMN_EXTERN extern
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUG__) || defined(__clang__)
 #define LMN_UNUSED __attribute__((unused))
 #else
 #define LMN_UNUSED
@@ -132,7 +132,7 @@ typedef int16_t LmnRulesetId;
 typedef uint32_t LmnSubInstrSize;
 
 // typedef struct LmnMembrane LmnMembrane;
-typedef struct DeltaMembrane DeltaMembrane;
+// typedef struct DeltaMembrane DeltaMembrane;
 
 #if LMN_WORD_BYTES == 4
 #define LMN_WORD_SHIFT 2
@@ -155,9 +155,10 @@ typedef long long __int64;
 
 struct LmnSPAtomHeader {
   LmnByte type;
-};
 
-typedef struct LmnSPAtomHeader LmnSpAtom;
+  LmnSPAtomHeader() {}
+  LmnSPAtomHeader(LmnByte type) : type(type) {}
+};
 
 /* スペシャルアトムは構造体の最初の要素としてに必ずこのヘッダを含めなけ
    ればならない */
@@ -218,8 +219,8 @@ LMN_EXTERN void lmn_free(void *p);
  */
 
 /* 階層グラフ構造の出力形式 */
-enum OutputFormat { DEFAULT, DEV, DOT, JSON };
-enum MCdumpFormat { CUI, LaViT, Dir_DOT, FSM };
+enum OutputFormat { DEFAULT = 1, DEV, DOT, JSON };
+enum MCdumpFormat { CUI, LaViT, Dir_DOT, LMN_FSM_GRAPH, LMN_FSM_GRAPH_MEM_NODE, LMN_FSM_GRAPH_HL_NODE };
 enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX };
 
 /* 最適化実行 */
@@ -300,10 +301,10 @@ struct LmnEnv {
   BOOL tree_compress;
   unsigned int tree_compress_table_size;
 
-#ifdef PROFILE
+  // #ifdef PROFILE
   BOOL optimize_hash_old;
   BOOL prof_no_memeq;
-#endif
+  // #endif
 
 #ifdef DEBUG
   BOOL debug_isomor;
@@ -331,6 +332,9 @@ struct LmnEnv {
   char *automata_file;        /* never claim file */
   char *propositional_symbol; /* file for propositional symbol definitions */
   char *ltl_exp;
+
+//member methods
+  LmnEnv();
 };
 
 /*----------------------------------------------------------------------
@@ -476,7 +480,7 @@ void lmn_stream_destroy(void);
 #define env_set_proc_id_pool(V) (lmn_id_pool = (V))
 #define env_return_id(N)                                                       \
   if (lmn_id_pool)                                                             \
-  vec_push(lmn_id_pool, (vec_data_t)(N))
+  lmn_id_pool->push((vec_data_t)(N))
 
 #if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
 #define env_gen_state_id() (lmn_tls.state_id += lmn_tls.thread_num)
@@ -487,7 +491,7 @@ void lmn_stream_destroy(void);
 #define env_reset_proc_ids() (lmn_tls.proc_next_id = 1U)
 #define env_set_next_id(N) (lmn_tls.proc_next_id = (N))
 #define env_gen_next_id()                                                      \
-  ((lmn_id_pool && vec_num(lmn_id_pool) > 0) ? vec_pop(lmn_id_pool)            \
+  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
                                              : lmn_tls.proc_next_id++)
 #define env_next_id() (lmn_tls.proc_next_id)
 #
@@ -529,8 +533,8 @@ static inline void env_set_next_id(unsigned long n) {
 }
 #
 #define env_gen_next_id()                                                      \
-  ((lmn_id_pool && vec_num(lmn_id_pool) > 0)                                   \
-       ? vec_pop(lmn_id_pool)                                                  \
+  ((lmn_id_pool && lmn_id_pool->get_num() > 0)                                   \
+       ? lmn_id_pool->pop()                                                  \
        : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
 
 static inline unsigned long env_next_id() {
@@ -540,6 +544,14 @@ static inline unsigned long env_next_id() {
 
 #endif
 
-/* cldoc:end-category() */
+namespace slim {
+namespace config {
+#ifdef PROFILE
+static constexpr bool profile = true;
+#else
+static constexpr bool profile = false;
+#endif
+} // namespace config
+} // namespace slim
 
 #endif /* LMNTAL_H */

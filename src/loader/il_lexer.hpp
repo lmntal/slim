@@ -52,8 +52,8 @@ class lexer;
 
 namespace il {
 class lexer {
-  static const size_t SIZE = 256;
-  st_table_t ruleset_id_tbl;
+  static const size_t SIZE = 512;
+  std::map<unsigned long, unsigned long> ruleset_id_tbl;
   std::unique_ptr<slim::element::re2c::buffer> buffer;
 
   std::string get_token() const;
@@ -64,10 +64,10 @@ public:
   ~lexer();
 
   int lineno() const { return 0; }
-  int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
+  int lex(il::parser::semantic_type *yylval, il::parser::location_type *yyloc);
 };
 } // namespace il
 
-int illex(YYSTYPE *yylval, YYLTYPE *yyloc, il::lexer *lexer);
+int illex(il::parser::semantic_type *yylval, il::parser::location_type *yyloc, il::lexer *lexer);
 
 #endif /* IL_LEXER_HPP */

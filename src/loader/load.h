@@ -45,7 +45,6 @@
  * @{
  */
 
-#include "syntax.h"
 #include "syntax.hpp"
 #include "vm/vm.h"
 

@@ -83,8 +83,8 @@ void integer_set(LmnReactCxtRef rc,
 
   start  = (long long)a0;
   end    = (long long)a1;
-  srcvec = vec_make(16);
-  vec_push(srcvec, (LmnWord)LinkObj_make(a2, t2));
+  srcvec = new Vector(16);
+  srcvec->push((LmnWord)LinkObj_make(a2, t2));
 
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector *dstlovec;
@@ -93,23 +93,23 @@ void integer_set(LmnReactCxtRef rc,
 
     lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap);
 
-    l = (LinkObjRef)vec_get(dstlovec, 0);
+    l = (LinkObjRef)dstlovec->get(0);
     lmn_mem_newlink(mem, (LmnAtomRef)n, LMN_INT_ATTR, 0,
                     LinkObjGetAtom(l), t2, LMN_ATTR_GET_VALUE(LinkObjGetPos(l)));
     lmn_mem_push_atom(mem, (LmnAtomRef)n, LMN_INT_ATTR);
 
-    for (int j = 0; j < vec_num(dstlovec); j++) LMN_FREE(vec_get(dstlovec, j));
-    vec_free(dstlovec);
-    proc_tbl_free(atommap);
+    for (int j = 0; j < dstlovec->get_num(); j++) LMN_FREE(dstlovec->get(j));
+    delete dstlovec;
+    delete atommap;
   }
 
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
 
-  lmn_mem_delete_ground(mem, srcvec);
+  mem->delete_ground(srcvec);
 
-  for (i = 0; i < vec_num(srcvec); i++) LMN_FREE(vec_get(srcvec, i));
-  vec_free(srcvec);
+  for (i = 0; i < srcvec->get_num(); i++) LMN_FREE(srcvec->get(i));
+  delete srcvec;
 }
 
 
@@ -159,11 +159,11 @@ void integer_of_string(LmnReactCxtRef rc,
 {
   long n;
   char *t;
-  const char *s = (const char *)lmn_string_c_str(LMN_STRING(a0));
+  const char *s = reinterpret_cast<LmnString *>(a0)->c_str();
   t = NULL;
   n = strtol(s, &t, 10);
   if (t == NULL || s == t) {
-    LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
+    LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS,
                                                          lmn_intern("fail"),
                                                          1));
     lmn_mem_newlink(mem,
@@ -181,10 +181,10 @@ void integer_of_string(LmnReactCxtRef rc,
 
 void init_integer(void)
 {
-  lmn_register_c_fun("integer_set", (void *)integer_set, 3);
-  lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
-  lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
-  lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
+  CCallback::lmn_register_c_fun("integer_set", (void *)integer_set, 3);
+  CCallback::lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
+  CCallback::lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
+  CCallback::lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
 
   srand((unsigned)time(NULL));
 }

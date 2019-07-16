@@ -54,70 +54,70 @@ struct LinkConnection {
 
 int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom,
                         int link_p, HyperLink *hl) {
-  int link_name = vec_num(link_connections);
+  int link_name = link_connections->get_num();
   struct LinkConnection *c = LMN_MALLOC(struct LinkConnection);
   c->atom = satom;
   c->hl = hl;
   c->link_pos = link_p;
   c->link_name = link_name;
-  vec_push(link_connections, (vec_data_t)c);
+  link_connections->push((vec_data_t)c);
   return link_name;
 }
 
 int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
                                int link_p) {
-  if (LMN_IS_HL((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, link_p))) {
+  if (LMN_IS_HL((LmnSymbolAtomRef)satom->get_link(link_p))) {
     HyperLink *hll = lmn_hyperlink_at_to_hl(
-        (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, link_p));
+        (LmnSymbolAtomRef)satom->get_link(link_p));
     HyperLink *p_hl = hll->parent;
 
-    for (int i = 0; i < vec_num(link_connections); i++) {
+    for (int i = 0; i < link_connections->get_num(); i++) {
       struct LinkConnection *c =
-          (struct LinkConnection *)vec_get(link_connections, i);
-      if (c->hl && lmn_hyperlink_eq_hl(p_hl, c->hl)) {
+          (struct LinkConnection *)link_connections->get(i);
+      if (c->hl && p_hl->eq_hl(c->hl)) {
         return c->link_name;
       }
     }
     return linkconnection_push(link_connections, NULL, -1, p_hl);
   }
 
-  for (int i = 0; i < vec_num(link_connections); i++) {
+  for (int i = 0; i < link_connections->get_num(); i++) {
     struct LinkConnection *c =
-        (struct LinkConnection *)vec_get(link_connections, i);
+        (struct LinkConnection *)link_connections->get(i);
     if (c->atom == satom && c->link_pos == link_p) {
       return c->link_name;
     }
   }
 
   LmnSymbolAtomRef dst_atom =
-      (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, link_p);
+      (LmnSymbolAtomRef)satom->get_link(link_p);
 
-  if (LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_IN_PROXY_FUNCTOR) {
+  if (dst_atom->get_functor() == LMN_IN_PROXY_FUNCTOR) {
     LmnSymbolAtomRef out_proxy =
-        (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(dst_atom, 0);
-    LmnSymbolAtomRef atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(out_proxy, 1);
-    int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(atom));
+        (LmnSymbolAtomRef)dst_atom->get_link(0);
+    LmnSymbolAtomRef atom = (LmnSymbolAtomRef)out_proxy->get_link(1);
+    int arity = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
     for (int i = 0; i < arity; i++) {
       LmnSymbolAtomRef linked_atom =
-          (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, i);
-      if (LMN_SATOM_GET_FUNCTOR(linked_atom) == LMN_OUT_PROXY_FUNCTOR) {
+          (LmnSymbolAtomRef)atom->get_link(i);
+      if (linked_atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
         LmnSymbolAtomRef in_proxy =
-            (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(linked_atom, 0);
-        if (satom == LMN_SATOM_GET_LINK(in_proxy, 1)) {
+            (LmnSymbolAtomRef)linked_atom->get_link(0);
+        if (satom == in_proxy->get_link(1)) {
           return linkconnection_push(link_connections, atom, i, NULL);
         }
       }
     }
-  } else if (LMN_SATOM_GET_FUNCTOR(dst_atom) == LMN_OUT_PROXY_FUNCTOR) {
+  } else if (dst_atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
     LmnSymbolAtomRef in_proxy =
-        (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(dst_atom, 0);
-    LmnSymbolAtomRef atom = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in_proxy, 1);
+        (LmnSymbolAtomRef)dst_atom->get_link(0);
+    LmnSymbolAtomRef atom = (LmnSymbolAtomRef)in_proxy->get_link(1);
     return linkconnection_push(link_connections, atom, 0, NULL);
   }
 
-  int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(dst_atom));
+  int arity = LMN_FUNCTOR_GET_LINK_NUM(dst_atom->get_functor());
   for (int i = 0; i < arity; i++) {
-    if (satom == LMN_SATOM_GET_LINK(dst_atom, i)) {
+    if (satom == dst_atom->get_link(i)) {
       return linkconnection_push(link_connections, dst_atom, i, NULL);
     }
   }
@@ -126,290 +126,274 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
   return -1;
 }
 
-LmnStringRef string_of_data_atom(LmnDataAtomRef data, LmnLinkAttr attr) {
-  LmnStringRef result = lmn_string_make_empty();
+std::string string_of_data_atom(LmnDataAtomRef data, LmnLinkAttr attr) {
   if (attr == LMN_INT_ATTR) {
-    char *s = int_to_str((long)data);
-    lmn_string_push_raw_s(result, s);
+    return std::to_string((long)data);
   } else if (attr == LMN_DBL_ATTR) {
-    char buf[64];
-    sprintf(buf, "%#g", lmn_get_double(data));
-    lmn_string_push_raw_s(result, buf);
+    return std::to_string(lmn_get_double(data));
   }
 
-  return result;
+  return "";
 }
 
-LmnStringRef string_of_template_membrane(Vector *link_connections,
-                                         LmnMembraneRef mem,
-                                         LmnSymbolAtomRef cm_atom) {
-  LmnStringRef result = lmn_string_make_empty();
+std::string string_of_template_membrane(Vector *link_connections,
+                                        LmnMembraneRef mem,
+                                        LmnSymbolAtomRef cm_atom) {
+  std::string result;
   AtomListEntryRef ent;
   LmnFunctor f;
   char istr[(int)(8 * sizeof(int) * 0.3010) + 2]; /* int型の桁数 + 1より長い */
 
-  EACH_ATOMLIST_WITH_FUNC(
-      mem, ent, f, ({
-        LmnSymbolAtomRef satom;
-        if (LMN_IS_EX_FUNCTOR(f))
-          continue;
-        if (LMN_IS_PROXY_FUNCTOR(f))
-          continue;
+  for (auto it : mem->atom_lists()) {
+    auto &ent = it.second;
+    auto &f = it.first;
+    LmnSymbolAtomRef satom;
+    if (LMN_IS_EX_FUNCTOR(f))
+      continue;
+    if (LMN_IS_PROXY_FUNCTOR(f))
+      continue;
 
-        EACH_ATOM(
-            satom, ent, ({
-              int arity =
-                  LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
-              const char *atom_name = lmn_id_to_name(
-                  LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+    EACH_ATOM(
+        satom, ent, ({
+          int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
+          const char *atom_name =
+              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
-              if (f == LMN_UNARY_PLUS_FUNCTOR) {
-                LmnSymbolAtomRef in_proxy =
-                    (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
-                LmnSymbolAtomRef out_proxy =
-                    (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in_proxy, 0);
-                if (cm_atom == LMN_SATOM_GET_LINK(out_proxy, 1))
-                  continue;
+          if (f == LMN_UNARY_PLUS_FUNCTOR) {
+            LmnSymbolAtomRef in_proxy =
+                (LmnSymbolAtomRef)satom->get_link(0);
+            LmnSymbolAtomRef out_proxy =
+                (LmnSymbolAtomRef)in_proxy->get_link(0);
+            if (cm_atom == out_proxy->get_link(1))
+              continue;
 
-                sprintf(istr, "%d",
-                        linkconnection_make_linkno(link_connections, satom, 0));
-                lmn_string_push_raw_s(result, atom_name);
-                lmn_string_push_raw_s(result, LINK_PREFIX);
-                lmn_string_push_raw_s(result, istr);
-              } else if (strcmp(atom_name, "==") == 0) {
-                lmn_string_push_raw_s(result, LINK_PREFIX);
-                sprintf(istr, "%d",
-                        linkconnection_make_linkno(link_connections, satom, 0));
-                lmn_string_push_raw_s(result, istr);
-                lmn_string_push_raw_s(result, "=");
-                lmn_string_push_raw_s(result, LINK_PREFIX);
-                sprintf(istr, "%d",
-                        linkconnection_make_linkno(link_connections, satom, 1));
-                lmn_string_push_raw_s(result, istr);
-              } else if (atom_name[0] == '@') {
-                lmn_string_push_raw_s(result, atom_name);
-              } else if (atom_name[0] == '$') {
-                lmn_string_push_raw_s(result, atom_name);
-                lmn_string_push_raw_c(result, '[');
+            sprintf(istr, "%d",
+                    linkconnection_make_linkno(link_connections, satom, 0));
+            result += atom_name;
+            result += LINK_PREFIX;
+            result += istr;
+          } else if (strcmp(atom_name, "==") == 0) {
+            result += LINK_PREFIX;
+            sprintf(istr, "%d",
+                    linkconnection_make_linkno(link_connections, satom, 0));
+            result += istr;
+            result += "=";
+            result += LINK_PREFIX;
+            sprintf(istr, "%d",
+                    linkconnection_make_linkno(link_connections, satom, 1));
+            result += istr;
+          } else if (atom_name[0] == '@') {
+            result += atom_name;
+          } else if (atom_name[0] == '$') {
+            result += atom_name;
+            result += '[';
 
-                for (int i = 0; i < arity; i++) {
-                  if (i > 0)
-                    lmn_string_push_raw_s(result, ",");
-                  lmn_string_push_raw_s(result, LINK_PREFIX);
+            for (int i = 0; i < arity; i++) {
+              if (i > 0)
+                result += ",";
+              result += LINK_PREFIX;
+              sprintf(istr, "%d",
+                      linkconnection_make_linkno(link_connections, satom, i));
+              result += istr;
+            }
+
+            result += ']';
+          } else {
+            if (strcmp(atom_name, ":-") == 0) {
+              result += "':-'";
+            } else if (strcmp(atom_name, ".") == 0) {
+              result += "'.'";
+            } else if (strcmp(atom_name, "[]") == 0) {
+              result += "'[]'";
+            } else {
+              result += atom_name;
+            }
+
+            if (arity > 0) {
+              result += "(";
+              for (int i = 0; i < arity; i++) {
+                LmnLinkAttr attr = satom->get_attr(i);
+                if (i > 0)
+                  result += ",";
+
+                if (LMN_ATTR_IS_DATA(attr) && LMN_HL_ATTR == attr) {
+                  result += LINK_PREFIX;
                   sprintf(
                       istr, "%d",
                       linkconnection_make_linkno(link_connections, satom, i));
-                  lmn_string_push_raw_s(result, istr);
-                }
-
-                lmn_string_push_raw_c(result, ']');
-              } else {
-                if (strcmp(atom_name, ":-") == 0) {
-                  lmn_string_push_raw_s(result, "':-'");
-                } else if (strcmp(atom_name, ".") == 0) {
-                  lmn_string_push_raw_s(result, "'.'");
-                } else if (strcmp(atom_name, "[]") == 0) {
-                  lmn_string_push_raw_s(result, "'[]'");
+                  result += istr;
+                } else if (LMN_ATTR_IS_DATA(attr) && LMN_INT_ATTR == attr) {
+                  LmnAtomRef data = satom->get_link(i);
+                  char *s = int_to_str((long)data);
+                  result += s;
+                } else if (LMN_ATTR_IS_DATA(attr) && LMN_DBL_ATTR == attr) {
+                  LmnAtomRef data = satom->get_link(i);
+                  char buf[64];
+                  sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data));
+                  result += buf;
                 } else {
-                  lmn_string_push_raw_s(result, atom_name);
-                }
-
-                if (arity > 0) {
-                  lmn_string_push_raw_s(result, "(");
-                  for (int i = 0; i < arity; i++) {
-                    LmnLinkAttr attr = LMN_SATOM_GET_ATTR(satom, i);
-                    if (i > 0)
-                      lmn_string_push_raw_s(result, ",");
-
-                    if (LMN_ATTR_IS_DATA(attr) && LMN_HL_ATTR == attr) {
-                      lmn_string_push_raw_s(result, LINK_PREFIX);
-                      sprintf(istr, "%d",
-                              linkconnection_make_linkno(link_connections,
-                                                         satom, i));
-                      lmn_string_push_raw_s(result, istr);
-                    } else if (LMN_ATTR_IS_DATA(attr) && LMN_INT_ATTR == attr) {
-                      LmnAtomRef data = LMN_SATOM_GET_LINK(satom, i);
-                      char *s = int_to_str((long)data);
-                      lmn_string_push_raw_s(result, s);
-                    } else if (LMN_ATTR_IS_DATA(attr) && LMN_DBL_ATTR == attr) {
-                      LmnAtomRef data = LMN_SATOM_GET_LINK(satom, i);
-                      char buf[64];
-                      sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data));
-                      lmn_string_push_raw_s(result, buf);
-                    } else {
-                      lmn_string_push_raw_s(result, LINK_PREFIX);
-                      sprintf(istr, "%d",
-                              linkconnection_make_linkno(link_connections,
-                                                         satom, i));
-                      lmn_string_push_raw_s(result, istr);
-                    }
-                  }
-                  lmn_string_push_raw_s(result, ")");
+                  result += LINK_PREFIX;
+                  sprintf(
+                      istr, "%d",
+                      linkconnection_make_linkno(link_connections, satom, i));
+                  result += istr;
                 }
               }
-              lmn_string_push_raw_s(result, ",");
-            }));
-      }));
+              result += ")";
+            }
+          }
+          result += ",";
+        }));
+  }
 
-  for (LmnMembraneRef m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
-    LmnStringRef s = string_of_template_membrane(link_connections, m, cm_atom);
-    if (lmn_string_last(s) == ',')
-      lmn_string_pop(s);
+  for (LmnMembraneRef m = mem->mem_child_head(); m; m = m->mem_next()) {
+    auto s = string_of_template_membrane(link_connections, m, cm_atom);
+    if (!s.empty() && s.back() == ',')
+      s.pop_back();
 
-    lmn_string_push_raw_s(result, "{");
-    lmn_string_push(result, s);
-    lmn_string_push_raw_s(result, "},");
-
-    lmn_string_free(s);
+    result += "{";
+    result += s;
+    result += "},";
   }
 
   return result;
 }
 
-LmnStringRef string_of_guard_op(LmnSymbolAtomRef satom) {
-  LmnStringRef result = lmn_string_make_empty();
+std::string string_of_guard_op(LmnSymbolAtomRef satom) {
+  std::string result;
   const char *atom_name =
-      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
-  int arity = LMN_FUNCTOR_GET_LINK_NUM(LMN_SATOM_GET_FUNCTOR(satom));
+      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
+  int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
   LmnLinkAttr attr;
   if (arity == 1)
-    lmn_string_push_raw_s(result, atom_name);
+    result += atom_name;
   else {
-    attr = LMN_SATOM_GET_ATTR(satom, 0);
+    attr = satom->get_attr(0);
     if (LMN_ATTR_IS_DATA(attr))
-      lmn_string_push(result,
-                      string_of_data_atom(
-                          (LmnDataAtomRef)LMN_SATOM_GET_LINK(satom, 0), attr));
+      result += string_of_data_atom(
+          (LmnDataAtomRef)satom->get_link(0), attr);
     else
-      lmn_string_push(
-          result,
-          string_of_guard_op((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0)));
+      result +=
+          string_of_guard_op((LmnSymbolAtomRef)satom->get_link(0));
 
     if (strcmp(":=", atom_name) == 0)
-      lmn_string_push_raw_s(result, "=");
+      result += "=";
     else
-      lmn_string_push_raw_s(result, atom_name);
+      result += atom_name;
 
-    attr = LMN_SATOM_GET_ATTR(satom, 1);
+    attr = satom->get_attr(1);
     if (LMN_ATTR_IS_DATA(attr))
-      lmn_string_push(result,
-                      string_of_data_atom(
-                          (LmnDataAtomRef)LMN_SATOM_GET_LINK(satom, 1), attr));
+      result += string_of_data_atom(
+          (LmnDataAtomRef)satom->get_link(1), attr);
     else
-      lmn_string_push(
-          result,
-          string_of_guard_op((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 1)));
+      result +=
+          string_of_guard_op((LmnSymbolAtomRef)satom->get_link(1));
   }
 
   return result;
 }
 
-LmnStringRef string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
-  LmnStringRef result;
+std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
   AtomListEntryRef ent;
   LmnFunctor f;
   const char *constraint_name[] = {"int",   "float", "ground",
                                    "unary", "hlink", "new"};
   const char *op_name[] = {"=:=", "=\\=", ">",  "<",   "=<",
                            ">=",  ":=",   "==", "\\=", "><"};
-  result = lmn_string_make_empty();
-  EACH_ATOMLIST_WITH_FUNC(
-      mem, ent, f, ({
-        if (LMN_IS_EX_FUNCTOR(f) || LMN_IS_PROXY_FUNCTOR(f))
-          continue;
-        LmnSymbolAtomRef satom;
-        EACH_ATOM(satom, ent, ({
-                    const char *atom_name = lmn_id_to_name(
-                        LMN_FUNCTOR_NAME_ID(LMN_SATOM_GET_FUNCTOR(satom)));
+  std::string result;
+  for (auto it : mem->atom_lists()) {
+    auto &ent = it.second;
+    auto &f = it.first;
+    if (LMN_IS_EX_FUNCTOR(f) || LMN_IS_PROXY_FUNCTOR(f))
+      continue;
+    LmnSymbolAtomRef satom;
+    EACH_ATOM(
+        satom, ent, ({
+          const char *atom_name =
+              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
-                    if (f == LMN_UNARY_PLUS_FUNCTOR) {
-                      LmnSymbolAtomRef in_proxy =
-                          (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
-                      LmnSymbolAtomRef out_proxy =
-                          (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(in_proxy, 0);
-                      if (cm_atom == LMN_SATOM_GET_LINK(out_proxy, 1))
-                        continue;
-                    } else {
-                      for (int i = 0; i < ARY_SIZEOF(constraint_name); i++) {
-                        if (strcmp(constraint_name[i], atom_name) != 0)
-                          continue;
-                        LmnSymbolAtomRef typed_pc_atom =
-                            (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(satom, 0);
-                        const char *typed_pc_atom_name =
-                            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(
-                                LMN_SATOM_GET_FUNCTOR(typed_pc_atom)));
-                        lmn_string_push_raw_s(result, constraint_name[i]);
-                        lmn_string_push_raw_s(result, "(");
-                        lmn_string_push_raw_s(result, typed_pc_atom_name);
-                        lmn_string_push_raw_s(result, "),");
-                      }
-                      for (int i = 0; i < ARY_SIZEOF(op_name); i++) {
-                        if (strcmp(op_name[i], atom_name) != 0)
-                          continue;
-                        lmn_string_push(result, string_of_guard_op(satom));
-                        lmn_string_push_raw_s(result, ",");
-                      }
-                    }
-                  }));
-      }));
+          if (f == LMN_UNARY_PLUS_FUNCTOR) {
+            LmnSymbolAtomRef in_proxy =
+                (LmnSymbolAtomRef)satom->get_link(0);
+            LmnSymbolAtomRef out_proxy =
+                (LmnSymbolAtomRef)in_proxy->get_link(0);
+            if (cm_atom == out_proxy->get_link(1))
+              continue;
+          } else {
+            for (int i = 0; i < ARY_SIZEOF(constraint_name); i++) {
+              if (strcmp(constraint_name[i], atom_name) != 0)
+                continue;
+              LmnSymbolAtomRef typed_pc_atom =
+                  (LmnSymbolAtomRef)satom->get_link(0);
+              const char *typed_pc_atom_name = lmn_id_to_name(
+                  LMN_FUNCTOR_NAME_ID(lmn_functor_table, typed_pc_atom->get_functor()));
+              result += constraint_name[i];
+              result += "(";
+              result += typed_pc_atom_name;
+              result += "),";
+            }
+            for (int i = 0; i < ARY_SIZEOF(op_name); i++) {
+              if (strcmp(op_name[i], atom_name) != 0)
+                continue;
+              result += string_of_guard_op(satom);
+              result += ",";
+            }
+          }
+        }));
+  }
 
   return result;
 }
 
-LmnStringRef
+std::string
 string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
                           LmnMembraneRef b_mem, LmnSymbolAtomRef imply)
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
-  Vector *link_connections = vec_make(10);
+  Vector *link_connections = new Vector(10);
 
-  LmnStringRef head =
-      string_of_template_membrane(link_connections, h_mem, imply);
-  LmnStringRef guard = string_of_guard_mem(g_mem, imply);
-  LmnStringRef body =
-      string_of_template_membrane(link_connections, b_mem, imply);
+  auto head = string_of_template_membrane(link_connections, h_mem, imply);
+  auto guard = string_of_guard_mem(g_mem, imply);
+  auto body = string_of_template_membrane(link_connections, b_mem, imply);
 
-  LmnStringRef result = lmn_string_make_empty();
-  lmn_string_push(result, head);
-  lmn_string_push_raw_s(result, ":-");
-  lmn_string_push(result, guard);
-  lmn_string_push_raw_s(result, "|");
-  lmn_string_push(result, body);
-  lmn_string_push_raw_s(result, ".");
+  std::string result;
+  result += head;
+  result += ":-";
+  result += guard;
+  result += "|";
+  result += body;
+  result += ".";
 
-  lmn_string_free(head);
-  lmn_string_free(guard);
-  lmn_string_free(body);
-
-  for (int i = 0; i < vec_num(link_connections); i++)
-    LMN_FREE(vec_get(link_connections, i));
-  vec_free(link_connections);
+  for (int i = 0; i < link_connections->get_num(); i++)
+    LMN_FREE(link_connections->get(i));
+  delete link_connections;
 
   return result;
 }
 
 LmnMembraneRef get_mem_linked_atom(LmnSymbolAtomRef target_atom, int link_n) {
   LmnSymbolAtomRef atom =
-      (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(target_atom, link_n);
-  return LMN_PROXY_GET_MEM((LmnSymbolAtomRef)LMN_SATOM_GET_LINK(atom, 0));
+      (LmnSymbolAtomRef)target_atom->get_link(link_n);
+  return LMN_PROXY_GET_MEM((LmnSymbolAtomRef)atom->get_link(0));
 }
 
 void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
-  Vector *mem_rulesets = lmn_mem_get_rulesets(mem);
+  Vector *mem_rulesets = mem->get_rulesets();
 
-  for (int i = 0; i < vec_num(mem_rulesets); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)vec_get(mem_rulesets, i);
+  for (int i = 0; i < mem_rulesets->get_num(); i++) {
+    LmnRuleSetRef rs = (LmnRuleSetRef)mem_rulesets->get(i);
     if (rs->id != del_id)
       continue;
 
     /* move successors forward */
-    for (int j = i; j < vec_num(mem_rulesets) - 1; j++) {
-      LmnRuleSetRef next = (LmnRuleSetRef)vec_get(mem_rulesets, j + 1);
-      vec_set(mem_rulesets, j, (vec_data_t)next);
+    for (int j = i; j < mem_rulesets->get_num() - 1; j++) {
+      LmnRuleSetRef next = (LmnRuleSetRef)mem_rulesets->get(j + 1);
+      mem_rulesets->set(j, (vec_data_t)next);
     }
 
-    mem_rulesets->num--;
+//    mem_rulesets->num--;
+    mem_rulesets->set_num(mem_rulesets->get_num()-1);
     break;
   }
 }
@@ -440,8 +424,8 @@ LmnRulesetId imply_to_rulesetid(LmnSymbolAtomRef imply) {
 LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
   /* ':-'_3アトムがプロキシにつながっていなければ中止 */
   for (int j = 0; j < 3; j++) {
-    LmnSymbolAtomRef pa = (LmnSymbolAtomRef)LMN_SATOM_GET_LINK(imply, j);
-    if (!LMN_SATOM_IS_PROXY(pa))
+    LmnSymbolAtomRef pa = (LmnSymbolAtomRef)imply->get_link(j);
+    if (!pa->is_proxy())
       return NULL;
   }
 
@@ -449,9 +433,8 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
   LmnMembraneRef head = get_mem_linked_atom(imply, 0);
   LmnMembraneRef guard = get_mem_linked_atom(imply, 1);
   LmnMembraneRef body = get_mem_linked_atom(imply, 2);
-  LmnStringRef rule_str = string_of_firstclass_rule(head, guard, body, imply);
-  auto compiled_rulesets = lmntal_compile_rule_str((char *)lmn_string_c_str(rule_str));
-  lmn_string_free(rule_str);
+  auto rule_str = string_of_firstclass_rule(head, guard, body, imply);
+  auto compiled_rulesets = lmntal_compile_rule_str(rule_str.c_str());
 
   /* コンパイルされたルールからルールセットを生成 */
   auto ruleAST = il_parse_rule(std::move(compiled_rulesets));

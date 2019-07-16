@@ -143,7 +143,7 @@ const BYTE *translate_instructions(const BYTE *p, Vector *jump_points,
 
 /* 出力ファイル内で一時的に使うconst vectorをconst LmnWord[]から作る
  * vectorの中を触るので注意 */
-/* この戻り値の要素を書き換えるのも配列を拡張するのもvec_freeするのもダメ */
+/* この戻り値の要素を書き換えるのも配列を拡張するのもdelete Vectorするのもダメ */
 Vector vec_const_temporary_from_array(int size, const LmnWord *w);
 
 /* vにwが含まれる場合そのindexを返す.

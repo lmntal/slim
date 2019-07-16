@@ -46,41 +46,61 @@
  */
 
 #include "lmntal.h"
+#include "element/element.h"
 
 /* Functor Information */
 
-typedef struct LmnFunctorTable {
-  unsigned int size;
-  unsigned int next_id;
-  struct LmnFunctorEntry *entry;
-} LmnFunctorTable;
-
-typedef struct LmnFunctorEntry {
+struct LmnFunctorEntry {
   BOOL special;
   lmn_interned_str module;
   lmn_interned_str name;
   LmnArity arity;
-} LmnFunctorEntry;
+};
 
-extern struct LmnFunctorTable lmn_functor_table;
+class LmnFunctorTable {
+
+  unsigned int size;
+  unsigned int next_id;
+  LmnFunctorEntry *entry;
+  st_table_t
+    functor_id_tbl; /* ファンクタ構造体からIDへの対応を要素に持つテーブル */
+
+  LmnFunctor functor_intern(BOOL special, lmn_interned_str module,
+                                 lmn_interned_str name, int arity);
+  LmnFunctorEntry *lmn_id_to_functor(int functor_id) const;
+public:
+  LmnFunctorTable();
+  ~LmnFunctorTable();
+  static int functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y);
+  static long functor_hash(LmnFunctorEntry *x);
+  void lmn_register_predefined_functor(void);//not found
+  LmnFunctor intern(lmn_interned_str module, lmn_interned_str name,
+                              int arity);
+  void register_functor(int id, BOOL special, lmn_interned_str module,
+                             lmn_interned_str name, int arity);
+  static int functor_entry_free(LmnFunctorEntry *e);
+
+  LmnFunctorEntry *get_entry(unsigned int f);
+  unsigned int get_size();
+  unsigned int get_next_id();
+
+  #ifdef DEBUG
+  void print(void);
+  void functor_printer(LmnFunctor f);
+  #endif
+
+};
+
+#define LMN_FUNCTOR_NAME_ID(T,F) (T->get_entry(F)->name)
+#define LMN_FUNCTOR_ARITY(T,F) (T->get_entry(F)->arity)
+#define LMN_FUNCTOR_MODULE_ID(T,F) (T->get_entry(F)->module)
+
+extern LmnFunctorTable *lmn_functor_table;
 
 #define FUNCTOR_MAX ((1 << (8 * sizeof(LmnFunctor))) - 1)
 
-/* アクセスを高速にするためにマクロにする */
-#define LMN_FUNCTOR_NAME_ID(F) (lmn_functor_table.entry[(F)].name)
-#define LMN_FUNCTOR_ARITY(F) (lmn_functor_table.entry[(F)].arity)
-#define LMN_FUNCTOR_MODULE_ID(F) (lmn_functor_table.entry[(F)].module)
 
-#ifdef DEBUG
-void lmn_functor_tbl_print(void);
-void lmn_functor_printer(LmnFunctor f);
-#endif
 
-void lmn_register_predefined_functor(void);
-void lmn_functor_tbl_init(void);
-void lmn_functor_tbl_destroy(void);
-LmnFunctor lmn_functor_intern(lmn_interned_str module, lmn_interned_str name,
-                              int arity);
 
 /* predefined functors */
 

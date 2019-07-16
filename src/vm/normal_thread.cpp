@@ -38,6 +38,7 @@
  */
 
 #include "normal_thread.h"
+#include "interpret/interpreter.hpp"
 
 #include "verifier/runtime_status.h"
 
@@ -74,22 +75,27 @@ void *normal_thread(void *arg) {
     EACH_ATOM_THREAD_OPT(
         atom, thread_data->atomlist_ent, thread_data->id, active_thread,
         thread_data->next_atom, ({
-          warray_set(thread_data->rc, thread_data->atomi, (LmnWord)atom,
-                    LMN_ATTR_MAKE_LINK(0), TT_ATOM);
+          slim::vm::interpreter it(thread_data->rc, thread_data->rule,
+                                   thread_instr);
+          thread_data->rc->reg(thread_data->atomi) = {
+              (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
           if (rc_hlink_opt(thread_data->atomi, thread_data->rc)) {
             spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_data->rc),
                                              (HashKeyType)thread_data->atomi);
-            if (lmn_sameproccxt_all_pc_check_clone(
-                    spc,
-                    (LmnSymbolAtomRef)wt(thread_data->rc, thread_data->atomi),
-                    thread_data->atom_arity) &&
-                interpret(thread_data->rc, thread_data->rule, thread_instr)) {
-              thread_data->judge = TRUE;
-              thread_data->profile->findatom_num++;
-              break;
+            if (spc->is_consistent_with((LmnSymbolAtomRef)thread_data->rc->wt(
+                    thread_data->atomi))) {
+              spc->match(
+                  (LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi));
+              if (it.interpret(thread_data->rc, thread_data->rule,
+                               thread_instr)) {
+                thread_data->judge = TRUE;
+                thread_data->profile->findatom_num++;
+                break;
+              }
             }
           } else {
-            if (interpret(thread_data->rc, thread_data->rule, thread_instr)) {
+            if (it.interpret(thread_data->rc, thread_data->rule,
+                             thread_instr)) {
               thread_data->judge = TRUE;
               thread_data->profile->findatom_num++;
               break;
@@ -122,10 +128,11 @@ void normal_parallel_init(void) {
   thread_info = LMN_NALLOC(arginfo *, lmn_env.core_num);
   for (i = 0; i < lmn_env.core_num; i++) {
     thread_info[i] = LMN_MALLOC(arginfo);
-    thread_info[i]->rc = react_context_alloc();
-    rc_warray_set(thread_info[i]->rc, lmn_register_make(warray_DEF_SIZE));
+    thread_info[i]->rc = new LmnReactCxt();
+    thread_info[i]->rc->warray_set(
+        LmnRegisterArray(thread_info[i]->rc->capacity()));
     RC_SET_HLINK_SPC(thread_info[i]->rc, NULL);
-    thread_info[i]->register_size = warray_DEF_SIZE;
+    thread_info[i]->register_size = LmnReactCxt::warray_DEF_SIZE;
     thread_info[i]->id = i;
     thread_info[i]->next_atom = NULL;
     thread_info[i]->exec_flag = 1;
@@ -138,7 +145,7 @@ void normal_parallel_init(void) {
   for (i = 0; i < lmn_env.core_num; i++) {
     lmn_thread_create(&findthread[i], normal_thread, &(thread_info[i]->id));
   }
-  temp = deq_make(1);
+  temp = new Deque(1);
   walltime = 0;
   success_temp_check = 0;
   fail_temp_check = 0;
@@ -152,15 +159,14 @@ void normal_parallel_free(void) {
     lmn_thread_join(findthread[i]);
     pthread_mutex_destroy(thread_info[i]->exec);
     lmn_free(thread_info[i]->exec);
-    lmn_register_free(rc_warray(thread_info[i]->rc));
-    react_context_dealloc(thread_info[i]->rc);
+    delete (thread_info[i]->rc);
     lmn_free(thread_info[i]->profile);
     lmn_free(thread_info[i]);
   }
   lmn_env.enable_parallel = TRUE;
   lmn_free(thread_info);
   lmn_free(findthread);
-  deq_free(temp);
+  delete temp;
 }
 
 void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule,
@@ -172,12 +178,11 @@ void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule,
   thread_info[id]->rule = rule;
   thread_info[id]->backtrack = 0;
   react_context_copy(thread_info[id]->rc, rc);
-  if (thread_info[id]->register_size < warray_use_size(rc)) {
-    lmn_register_extend(thread_info[id]->rc, warray_use_size(rc));
-    thread_info[id]->register_size = warray_use_size(rc);
+  if (thread_info[id]->register_size < rc->capacity()) {
+    thread_info[id]->rc->resize(rc->capacity());
+    thread_info[id]->register_size = rc->capacity();
   }
-  lmn_register_copy(rc_warray(thread_info[id]->rc), rc_warray(rc),
-                    warray_use_size(rc));
+  thread_info[id]->rc->work_array = rc->work_array,
   thread_info[id]->instr = instr;
   thread_info[id]->atomlist_ent = atomlist_ent;
   thread_info[id]->atom_arity = atom_arity;
@@ -215,7 +220,7 @@ void normal_parallel_prof_dump(FILE *f) {
 BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f) {
   if (!atom)
     return FALSE;
-  if (LMN_SATOM_GET_FUNCTOR(atom) != f)
+  if (atom->get_functor() != f)
     return FALSE;
   return TRUE;
 }

@@ -126,6 +126,14 @@ struct EWLock {
   lmn_mutex_t *elock;
   unsigned long wlock_num;
   lmn_mutex_t *wlock;
+  *EWLock(unsigned int e_num,unsigned int w_num);
+  ~EWLock();
+  void acquire_write(mtx_data_t id);
+  void release_write(mtx_data_t id);
+  void acquire_enter(mtx_data_t id);
+  void release_enter(mtx_data_t id);
+  void reject_enter(mtx_data_t my_id);
+  void permit_enter(mtx_data_t my_id);
 };
 
 #define lmn_ewlock_space(L)                                                    \
@@ -133,51 +141,8 @@ struct EWLock {
         : ((sizeof(L) + ((L)->elock_num * sizeof(lmn_mutex_t)) +               \
             ((L)->wlock_num * sizeof(lmn_mutex_t)))))
 
-/* TODO: ##は文字列の連結. 移植性はある？ */
-/** ENTER__CRITICAL_SECTIONとEXIT___CRITICAL_SECTIONは必ずペアで使用する.
- * CsName              :
- * 1つのクリティカルセクションに対してプログラマがつけるユニークな名前. LockPtr
- * : 排他制御を行うためのロックオブジェクトのアドレス LockFunc/UnLockFunc :
- * LockPtrおよびFuncArgを引数にした排他制御関数Lock/UnLockを呼ぶ. Fetch_v,
- * Fetch_ptr  : Fecth_ptrのアドレスが指す値とFecth_vの値が異なる場合,
- *                       クリティカルセクション内部の処理をスキップし,
- *                       組にしたEXIT___CRITICAL_SECTIONへjumpする.
- */
-#define ENTER__CRITICAL_SECTION(CsName, LockPtr, LockFunc, FuncArg, Fetch_v,   \
-                                Fetch_ptr)                                     \
-  do {                                                                         \
-    if (LockPtr) { /* if MT */                                                 \
-      if ((Fetch_v) != (Fetch_ptr)) {                                          \
-        goto CS_EXIT_NOTHING_TO_DO__##CsName;                                  \
-      } else {                                                                 \
-        LockFunc((LockPtr), (FuncArg));                                        \
-        if ((Fetch_v) != (Fetch_ptr)) {                                        \
-          goto CS_EXIT_WITH_UNLOCK__##CsName;                                  \
-        }                                                                      \
-      }                                                                        \
-    }                                                                          \
-  } while (0)
-
-#define EXIT___CRITICAL_SECTION(CsName, LockPtr, UnLockFunc, FuncArg)          \
-  CS_EXIT_WITH_UNLOCK__##CsName : if (LockPtr) {                               \
-    UnLockFunc((LockPtr), (FuncArg));                                          \
-  }                                                                            \
-  CS_EXIT_NOTHING_TO_DO__##CsName:
-
-/* simply */
-#define START__CRITICAL_SECTION(LockPtr, LockFunc, FuncArg)                    \
-  if (LockPtr) {                                                               \
-    LockFunc((LockPtr), (FuncArg));                                            \
-  }
-
-#define FINISH_CRITICAL_SECTION(LockPtr, UnLockFunc, FuncArg)                  \
-  if (LockPtr) {                                                               \
-    UnLockFunc((LockPtr), (FuncArg));                                          \
-  }
-
 #define DEFAULT_LOCK_ID 0
 
-EWLock *ewlock_make(unsigned int e_num, unsigned int w_num);
 void ewlock_free(EWLock *lock);
 void ewlock_acquire_write(EWLock *lock, unsigned long use_id);
 void ewlock_release_write(EWLock *lock, unsigned long use_id);
@@ -185,6 +150,41 @@ void ewlock_acquire_enter(EWLock *lock, unsigned long something);
 void ewlock_release_enter(EWLock *lock, unsigned long something);
 void ewlock_reject_enter(EWLock *lock, unsigned long something);
 void ewlock_permit_enter(EWLock *lock, unsigned long something);
+
+namespace slim {
+namespace element {
+/** std::lock_guard/std::unique_lockのためのEWLockのラッパー */
+struct ewmutex {
+private:
+  EWLock *lck;
+  unsigned long id;
+
+  struct ewmutex_tag {
+    void (*lock)(EWLock *, unsigned long);
+    void (*unlock)(EWLock *, unsigned long);
+  };
+  const ewmutex_tag tag;
+
+public:
+  static constexpr ewmutex_tag write{ewlock_acquire_write,
+                                     ewlock_release_write};
+  static constexpr ewmutex_tag enter {ewlock_acquire_enter, ewlock_release_enter};
+  static constexpr ewmutex_tag exclusive_enter {ewlock_reject_enter, ewlock_permit_enter};
+
+  ewmutex(ewmutex_tag tag, EWLock *lck, unsigned long id) : tag(tag), lck(lck), id(id) {}
+
+  void lock() {
+    if (lck)
+      tag.lock(lck, id);
+  }
+
+  void unlock() {
+    if (lck)
+      tag.unlock(lck, id);
+  }
+};
+}
+}
 
 /* @} */
 

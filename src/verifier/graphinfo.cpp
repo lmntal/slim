@@ -6,9 +6,9 @@ std::string mem_to_json(LmnMembraneRef mem) {
     return s;
   s += "{";
   s += "\"id\":";
-  s += std::to_string((int)lmn_mem_id(mem));
+  s += std::to_string((int)mem->mem_id());
   s += ",\"name\":\"";
-  s += LMN_MEM_NAME(mem);
+  s += mem->MEM_NAME();
   s += "\",";
   s += "\"atoms\":[";
   {
@@ -32,7 +32,7 @@ std::string mem_to_json(LmnMembraneRef mem) {
   s+="\"membranes\":[";
   LmnMembraneRef m;
   BOOL needs_comma = FALSE;
-  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+  for (m = mem->mem_child_head(); m; m = m->mem_next()) {
     if (needs_comma)
       s+=",";
     needs_comma = TRUE;
@@ -52,14 +52,14 @@ std::string atom_to_json(LmnSymbolAtomRef atom) {
   int arity;
   s += "{";
   s += "\"id\":";
-  s += std::to_string((int)LMN_SATOM_ID(atom));
+  s += std::to_string((int)atom->get_id());
   s += ",";
   s += "\"name\":\"";
-  s += LMN_SATOM_STR(atom);
+  s += atom->str();
   s += "\",";
   s += "\"links\":[";
   BOOL needs_comma = FALSE;
-  for (i = 0, arity = LMN_SATOM_GET_LINK_NUM(atom); i < arity; i++) {
+  for (i = 0, arity = atom->get_link_num(); i < arity; i++) {
     if (needs_comma)
       s += ",";
     needs_comma = TRUE;
@@ -74,8 +74,8 @@ std::string link_to_json(LmnSymbolAtomRef atom, int index) {
   LmnLinkAttr attr;
   void *data;
 
-  attr = LMN_SATOM_GET_ATTR(atom, index);
-  data = (void *)LMN_SATOM_GET_LINK(atom, index);
+  attr = atom->get_attr(index);
+  data = (void *)atom->get_link(index);
 
   s += "{";
   s += "\"attr\":";
@@ -96,7 +96,7 @@ std::string link_to_json(LmnSymbolAtomRef atom, int index) {
     case LMN_SP_ATOM_ATTR:
     case LMN_CONST_STR_ATTR:
       s += "\"data\":\"\\\"";
-      s += lmn_string_c_str((LmnStringRef)data);
+      s += ((LmnStringRef)data)->c_str();
       s += "\\\"\"";
       break;
     case LMN_HL_ATTR: {
@@ -112,7 +112,7 @@ std::string link_to_json(LmnSymbolAtomRef atom, int index) {
     LmnSymbolAtomRef a = (LmnSymbolAtomRef)data;
     if (a != NULL) {
       s += "\"data\":";
-      s += std::to_string((int)LMN_SATOM_ID(a));
+      s += std::to_string((int)a->get_id());
     }
   }
   s += "}";

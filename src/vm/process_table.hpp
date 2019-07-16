@@ -1,8 +1,8 @@
 /*
  * process_table.hpp
  *
- *   Copyright (c) 2018, Ueda Laboratory LMNtal Group <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -38,21 +38,19 @@
 #ifndef PROCESS_TABLE_HPP
 #define PROCESS_TABLE_HPP
 
-
+#include <iterator>
 #include <limits>
 #include <stdexcept>
-#include <iterator>
 #include <utility>
 
 #include "lmntal.h"
 
-
 namespace slim {
-  template<typename T> ProcessID process_id(T);
+template <typename T> ProcessID process_id(T);
 }
 
 /* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
-template<typename T> class ProcessTable {
+template <typename T> class ProcessTable {
 public:
   using key_type = ProcessID;
   using value_type = T;
@@ -69,7 +67,7 @@ private:
 
 public:
   ProcessTable(unsigned long size = 64) {
-    this->n    = 0;
+    this->n = 0;
     this->size = size ? size : 1;
     this->num_buckets = size / buckets_size + 1;
     this->tbl = LMN_CALLOC(value_type *, this->num_buckets);
@@ -83,41 +81,44 @@ public:
   }
 
   bool operator==(const ProcessTable<value_type> *b) {
-    if (this->n != b->n) return false;
-    
+    if (this->n != b->n)
+      return false;
+
     unsigned int a_checked = 0;
 
     for (int i = 0; i < this->num_buckets; i++) {
-      if (!this->tbl[i] && !b->tbl[i]) continue;
+      if (!this->tbl[i] && !b->tbl[i])
+        continue;
 
       for (int j = 0; j < buckets_size && a_checked < this->n; j++) {
         value_type va = (this->tbl[i]) ? this->tbl[i][j] : unused;
         value_type vb = (b->tbl[i]) ? b->tbl[i][j] : unused;
-        if (va != vb) return false;
-        if (va != unused) a_checked++;
+        if (va != vb)
+          return false;
+        if (va != unused)
+          a_checked++;
       }
     }
 
     return true;
   }
 
-  const value_type &operator[](key_type key) const {
-    if (!this->contains(key)) throw new std::out_of_range("accessed with invalid key");
+  value_type &operator[](key_type key) {
+    expand(key);
     return this->tbl[key / buckets_size][key % buckets_size];
   }
 
-  template<typename U>
-  bool contains(U key) const {
+  template <typename U> bool contains(U key) const {
     const auto k = slim::process_id(key);
     return k < this->size && this->tbl[k / buckets_size] &&
-      this->tbl[k / buckets_size][k % buckets_size] != unused;
+           this->tbl[k / buckets_size][k % buckets_size] != unused;
   }
 
-  template<typename U>
-  void put(U key_, value_type value) {
+  template <typename U> void put(U key_, value_type value) {
     const auto key = slim::process_id(key_);
 #ifdef DEBUG
-    if (value == unused) lmn_fatal("cannot put 'unused' value.");
+    if (value == unused)
+      lmn_fatal("cannot put 'unused' value.");
 #endif
     if (!this->contains(key)) {
       this->n++;
@@ -127,31 +128,34 @@ public:
   }
 
   /* テーブルにkeyを追加し, trueを返す. すでにpが存在した場合はfalseを返す. */
-  template<typename U>
-  bool put_if_absent(U key, value_type value) {
-    if (this->contains(key)) return false;
+  template <typename U> bool put_if_absent(U key, value_type value) {
+    if (this->contains(key))
+      return false;
     this->put(key, value);
     return true;
   }
 
-  template<typename U>
-  void unput(U key) {
+  template <typename U> void unput(U key) {
     const auto k = slim::process_id(key);
 #ifdef DEBUG
-    if (!this->contains(k)) throw new std::logic_error("attempted to unput an absent key.");
+    if (!this->contains(k))
+      throw new std::logic_error("attempted to unput an absent key.");
 #endif
     this->n--;
     this->tbl[k / buckets_size][k % buckets_size] = unused;
   }
 
-  template<typename U>
-  bool get(U key, value_type *value) {
+  template <typename U> void erase(U key) { unput(key); }
+
+  template <typename U> bool get(U key, value_type *value) {
     const auto k = slim::process_id(key);
     if (this->contains(k)) {
-      if (value) *value = (*this)[k];
+      if (value)
+        *value = (*this)[k];
       return true;
     } else {
-      if (value) *value = unused;
+      if (value)
+        *value = unused;
       return false;
     }
   }
@@ -164,13 +168,16 @@ public:
     }
   }
 
-  void foreach(int(*func)(key_type key, value_type val, LmnWord arg), LmnWord arg) {
+  void foreach (int (*func)(key_type key, value_type val, LmnWord arg),
+                LmnWord arg) {
     unsigned long n = 0;
 
     for (int i = 0; i < this->num_buckets; i++) {
-      if (!this->tbl[i]) continue;
+      if (!this->tbl[i])
+        continue;
       for (int j = 0; j < buckets_size && n < this->n; j++) {
-        if (this->tbl[i][j] == unused) continue;
+        if (this->tbl[i][j] == unused)
+          continue;
         func(i * buckets_size + j, this->tbl[i][j], arg);
         n++;
       }
@@ -178,29 +185,30 @@ public:
   }
 
   class iterator : std::input_iterator_tag {
-    ProcessTable<value_type> *table;
+    const ProcessTable<value_type> *table;
     std::size_t bucket_idx, idx;
     std::pair<key_type, value_type> value;
 
   public:
-    iterator(ProcessTable<value_type> *table, std::size_t bucket_idx, std::size_t idx) :
-      table(table), bucket_idx(bucket_idx), idx(idx),
-      value(std::make_pair(bucket_idx * buckets_size + idx, table->tbl[bucket_idx][idx])) {};
+    iterator(const ProcessTable<value_type> *table, std::size_t bucket_idx,
+             std::size_t idx)
+        : table(table), bucket_idx(bucket_idx), idx(idx),
+          value(std::make_pair(bucket_idx * buckets_size + idx,
+                               table->tbl[bucket_idx][idx])){};
 
-    const std::pair<key_type, value_type>& operator*() const {
-      return value;
-    }
+    const std::pair<key_type, value_type> &operator*() const { return value; }
 
-    const std::pair<key_type, value_type>* operator->() const {
-      return &value;
-    }
+    const std::pair<key_type, value_type> *operator->() const { return &value; }
 
     iterator &operator++() {
       for (; bucket_idx < table->num_buckets; bucket_idx++) {
-        if (!table->tbl[bucket_idx]) continue;
+        if (!table->tbl[bucket_idx])
+          continue;
         for (idx++; idx < buckets_size; idx++) {
-          if (table->tbl[bucket_idx][idx] == unused) continue;
-          value = std::make_pair(bucket_idx * buckets_size + idx, table->tbl[bucket_idx][idx]);
+          if (table->tbl[bucket_idx][idx] == unused)
+            continue;
+          value = std::make_pair(bucket_idx * buckets_size + idx,
+                                 table->tbl[bucket_idx][idx]);
           return *this;
         }
       }
@@ -219,49 +227,55 @@ public:
     bool operator==(const iterator &it) const {
       return table == it.table && bucket_idx == it.bucket_idx && idx == it.idx;
     }
-    bool operator!=(const iterator &it) const {
-      return !(*this == it);
-    }
+    bool operator!=(const iterator &it) const { return !(*this == it); }
   };
   friend iterator;
 
   iterator begin() {
     for (int i = 0; i < this->num_buckets; i++) {
-      if (!this->tbl[i]) continue;
+      if (!this->tbl[i])
+        continue;
       for (int j = 0; j < buckets_size; j++) {
-        if (this->tbl[i][j] == unused) continue;
+        if (this->tbl[i][j] == unused)
+          continue;
         return iterator(this, i, j);
       }
     }
     return end();
   }
 
-  iterator end() {
-    return iterator(this, not_found, not_found);
+  iterator end() const { return iterator(this, not_found, not_found); }
+
+  template <typename U> iterator find(U key) const {
+    const auto k = slim::process_id(key);
+    return (k < this->size && this->tbl[k / buckets_size] &&
+            this->tbl[k / buckets_size][k % buckets_size] != unused)
+               ? iterator(this, k / buckets_size, k % buckets_size)
+               : end();
   }
 
 private:
   void expand(unsigned long n) {
     unsigned int org_n = this->num_buckets;
-    while (this->size <= n) this->size *= 2;
+    while (this->size <= n)
+      this->size *= 2;
     this->num_buckets = this->size / buckets_size + 1;
     if (org_n < this->num_buckets) {
       this->tbl = LMN_REALLOC(value_type *, this->tbl, this->num_buckets);
-      memset(this->tbl + org_n, 0, sizeof(value_type *) * (this->num_buckets - org_n));
+      memset(this->tbl + org_n, 0,
+             sizeof(value_type *) * (this->num_buckets - org_n));
     }
 
     unsigned int b = n / buckets_size;
-    if (b < this->num_buckets && this->tbl[b]) return;
+    if (b < this->num_buckets && this->tbl[b])
+      return;
     this->tbl[b] = LMN_NALLOC(value_type, buckets_size);
     for (int i = 0; i < buckets_size; i++)
       this->tbl[b][i] = unused;
   }
 };
 
-template<typename T>
+template <typename T>
 const LmnWord ProcessTable<T>::not_found = std::numeric_limits<LmnWord>::max();
-template<typename T>
-const T ProcessTable<T>::unused = std::numeric_limits<T>::max();
-
 
 #endif /* PROCESS_TABLE_HPP */

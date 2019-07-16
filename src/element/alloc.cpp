@@ -64,15 +64,15 @@ void mpool_init() {
 LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
   LmnSymbolAtomRef ap;
   int arity, cid;
-  arity = LMN_FUNCTOR_ARITY(f);
+  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
   cid = env_my_thread_id();
 
   if (atom_memory_pools[arity][cid] == 0) {
     atom_memory_pools[arity][cid] = memory_pool_new(LMN_SATOM_SIZE(arity));
   }
   ap = (LmnSymbolAtomRef)memory_pool_malloc(atom_memory_pools[arity][cid]);
-  LMN_SATOM_SET_FUNCTOR(ap, f);
-  LMN_SATOM_SET_ID(ap, 0);
+  ap->set_functor(f);
+  ap->set_id(0);
 
   return ap;
 }
@@ -80,9 +80,9 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
 void lmn_delete_atom(LmnSymbolAtomRef ap) {
   int arity, cid;
 
-  env_return_id(LMN_SATOM_ID(ap));
+  env_return_id(ap->get_id());
 
-  arity = LMN_FUNCTOR_ARITY(LMN_SATOM_GET_FUNCTOR(ap));
+  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, ap->get_functor());
   cid = env_my_thread_id();
   memory_pool_free(atom_memory_pools[arity][cid], ap);
 }
@@ -155,3 +155,28 @@ void *lmn_realloc(void *p, size_t num) {
 }
 
 void lmn_free(void *p) { free(p); }
+
+void* operator new(std::size_t num) {
+  return lmn_malloc(num);
+}
+
+void* operator new[](std::size_t num) {
+  return lmn_malloc(num);
+}
+
+void operator delete(void* p) noexcept {
+  lmn_free(p);
+}
+
+void operator delete[](void* p) noexcept {
+  lmn_free(p);
+}
+
+void operator delete(void* p, std::size_t num) noexcept {
+  lmn_free(p);
+}
+
+void operator delete[](void* p, std::size_t num) noexcept {
+  lmn_free(p);
+}
+
