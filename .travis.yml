@@ -1,12 +1,23 @@
 language: cpp
-compiler:
-  - gcc
-  - clang
 matrix:
   include:
-  - env: DEBUG_FLAG=--enable-debug
-  - env: DEBUG_FLAG=
+  - if: NOT (branch = develop OR branch = master)
+    compiler: gcc
+    env: DEBUG_FLAG=--enable-debug
+  - if: NOT (branch = develop OR branch = master)
+    compiler: clang
+    env: DEBUG_FLAG=--enable-debug
+  - if: NOT (branch = develop OR branch = master)
+    compiler: gcc
+    env: DEBUG_FLAG=
+  - if: NOT (branch = develop OR branch = master)
+    compiler: clang
+    env: DEBUG_FLAG=
   - if: branch = develop OR branch = master
+    compiler: gcc
+    env: slim_CHECK_ND=yes
+  - if: branch = develop OR branch = master
+    compiler: clang
     env: slim_CHECK_ND=yes
 install:
   - git clone https://github.com/lmntal/lmntal-compiler.git
