@@ -110,6 +110,7 @@ struct State {                /* Total:72(36)byte */
   Graphinfo *graphinfo;
   Trie *trie;
   propagation_list canonical_label;
+  std::map<unsigned long, std::pair<std::map<int, int>, DiffInfo *>> diff_map;
 #ifndef MINIMAL_STATE
   BYTE *
       local_flags; /*  8(4)byte:

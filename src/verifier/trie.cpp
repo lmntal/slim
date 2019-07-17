@@ -380,8 +380,13 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     TrieBody *prevNode, S *goAheadStack, TerminationConditionInfo *tInfo,
     int targetDepth, vertex_list *tmp_delete_lst, bool del_f) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "CURRENTNODE-KEY: "  << std::uppercase << std::setw(8) << std::setfill('0') << std::hex << currentNode->key << std::endl;
   auto targetCell = target.ownerCell;
   auto brotherCell = brother.ownerCell;
+  std::cout << "targetCell: " << std::endl;
+  std::cout << *targetCell << std::endl;
+  std::cout << "brotherCell: " << std::endl;
+  std::cout << *brotherCell << std::endl;
   if (targetDepth == currentNode->depth) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (!del_f){
@@ -419,18 +424,32 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *parent = currentNode->parent;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    prevNode->inheritedVertices->splice(
-        std::begin(*prevNode->inheritedVertices), *brother.ownerList,
-        brotherCell);
-    brother.ownerList = prevNode->inheritedVertices;
+    std::cout << "*prevNode->inheritedVertices: " << std::endl;
+    std::cout << *prevNode->inheritedVertices << std::endl;
+    // std::cout << "*brother.ownerList" << std::endl;
+    // std::cout << *brother.ownerList << std::endl;
+    InheritedVertex brother_cp = InheritedVertex(brother);
+    std::cout << brother_cp << std::endl;
+    brother_cp.ownerNode = prevNode;
+    brother_cp.ownerList = prevNode->inheritedVertices;
+    brother_cp.hashString->creditIndex = prevNode->depth;
+    brother_cp.canonicalLabel.first = prevNode->key;
+    prevNode->inheritedVertices->push_front(brother_cp);
+    slim::element::get<InheritedVertex>(*std::begin(*prevNode->inheritedVertices)).ownerCell = std::begin(*prevNode->inheritedVertices);
+
+    // prevNode->inheritedVertices->splice(
+    //     std::begin(*prevNode->inheritedVertices), *brother.ownerList,
+    //     brotherCell);
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // brother.ownerList = prevNode->inheritedVertices;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
-    slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex =
-        prevNode->depth;
+    // slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
+    // slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex =
+    //     prevNode->depth;
     (*tInfo->distribution)[prevNode->depth]++;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
-        prevNode->key;
+    // slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
+    //     prevNode->key;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     goBackProcessInnerManyCommonPrefixVertices(target, parent, goAheadStack,
                                                tInfo, targetDepth, tmp_delete_lst, del_f);
@@ -447,6 +466,8 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
 						vertex_list *tmp_delete_lst,
 						bool del_f) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "CURRENTNODE-KEY: "  << std::uppercase << std::setw(8) << std::setfill('0') << std::hex << currentNode->key << std::endl;
+
   auto targetCell = ivertex.ownerCell;
   std::cout << *targetCell << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -465,6 +486,7 @@ void goBackProcessInnerSingleCommonPrefixVertex(InheritedVertex &ivertex,
 
              currentNode->children->begin()
                      ->second->inheritedVertices->size() == 1) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *childNode = (TrieBody *)currentNode->children->begin()->second;
     auto brother = std::begin(*childNode->inheritedVertices);
 
@@ -491,6 +513,8 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
 		   vertex_list *tmp_delete_lst,
 		   bool del_f) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "CURRENTNODE-KEY: "  << std::uppercase << std::setw(8) << std::setfill('0') << std::hex << currentNode->key << std::endl;
+
   std::cout << "currentNode->depth:" << currentNode->depth << std::endl;
   if (targetDepth < currentNode->depth) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -664,9 +688,12 @@ void goAheadProcessOfCurrentTrieNodes(std::stack<TrieBody *> *goAheadStack,
 template <typename S1, typename S2>
 void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
                                      S2 *goAheadStack) {
-  while (!deletedVertices->empty()) {
-    auto targetCVertex =
-        popConvertedVertexFromDiffInfoStackWithoutOverlap(deletedVertices);
+  auto rit = deletedVertices->rbegin();
+  while (rit != deletedVertices->rend()) {
+    auto targetCVertex = *rit;
+    targetCVertex->isPushedIntoDiffInfoStack = false;
+    rit++;
+    // popConvertedVertexFromDiffInfoStackWithoutOverlap(deletedVertices);
     // std::cout << *targetCVertex;
 
     InheritedVertex *targetIVertex = targetCVertex->correspondingVertexInTrie;
@@ -733,10 +760,13 @@ void addInheritedVerticesToTrie(
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, trie->body);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
-  while (!addedVertices->empty()) {
+  auto rit = addedVertices->rbegin();
+  while (rit != addedVertices->rend()) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    ConvertedGraphVertex *targetCVertex =
-        popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
+    ConvertedGraphVertex *targetCVertex = *rit;
+    targetCVertex->isPushedIntoDiffInfoStack = false;
+    rit++;
+    // popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *targetCVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -770,9 +800,12 @@ void addInheritedVerticesToTrie(
 template <typename S1, typename S2, typename S3>
 void moveInheritedRelinkedVerticesToBFSStack(
     S1 *relinkedVertices, S2 *initializeConvertedVerticesStack, S3 *BFSStack) {
-  while (!relinkedVertices->empty()) {
-    ConvertedGraphVertex *cVertex =
-        popConvertedVertexFromDiffInfoStackWithoutOverlap(relinkedVertices);
+  auto rit = relinkedVertices->rbegin();
+  while (rit != relinkedVertices->rend()) {
+    ConvertedGraphVertex *cVertex = *rit;
+    rit++;
+    cVertex->isPushedIntoDiffInfoStack = false;
+    // popConvertedVertexFromDiffInfoStackWithoutOverlap(relinkedVertices);
     BFSStack->push_back(cVertex);
     cVertex->isVisitedInBFS = TRUE;
   }

@@ -285,9 +285,37 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     ===== Diffiso ====
    */
   /** restore : 膜の復元 */
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "--CV--" << std::endl;
+  std::cout << *s->graphinfo->cv << std::endl;
+  if (s->parent == nullptr) {
+    std::cout << "parent is NULL!!" << std::endl;
+  } else {
+    std::cout << "parentID is " << s->parent->state_id << std::endl;
+    if(s->parent->trie) {
+      std::cout << "--Parent TRIE--" << std::endl;
+      s->parent->trie->dump();
+      std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id <<")"<< std::endl;
+      s->parent->diff_map[s->state_id].second->diffInfoDump();
+      trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second, s->graphinfo, s->parent->graphinfo);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      s->trie = s->parent->trie;
+      s->parent->trie = nullptr;
+      s->parent->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv, s->parent->diff_map[s->state_id].first);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+  }
 
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  std::cout << s->canonical_label << std::endl;
+  if (s->diff_map.size() != 0) {
+    for(auto &v : s->diff_map) {
+      std::cout << "(" << v.first << ")"<<std::endl;
+      v.second.second->diffInfoDump();
+    }
+  }
+
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // std::cout << s->canonical_label << std::endl;
   mem = state_restore_mem(s);
   // lmn_dump_mem_dev(mem);
 
@@ -405,6 +433,10 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                          Vector *new_ss, BOOL f) {
   unsigned int i, succ_i;
+  DiffInfo *dif;
+  DiffInfo *rev_dif;
+  std::map<int, int> rev_iso;
+  std::map<int, int> revrev;
   // printf("----------------------------------------\n");
 
   // printf("******************************************\n");
@@ -460,8 +492,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       std::cout << *s->graphinfo->cv << std::endl;
       printf("===succ===\n");
       std::cout << *src_succ->graphinfo->cv << std::endl;
-      DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
-      std::map<int, int> rev_iso;
+      dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
+
       for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
         rev_iso[i->second] = i->first;
       }
@@ -470,7 +502,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
 	std::cout << it->first << ", "<< it->second << std::endl;
       }
-      DiffInfo *rev_dif = new DiffInfo();
+      rev_dif = new DiffInfo();
       for(auto &v : *dif->addedVertices) {
 	rev_dif->deletedVertices->push_back(v);
       }
@@ -485,6 +517,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	std::cout << "=======FINISH APPLY=======" << std::endl;
 	s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv, rev_iso);
+	// s->graphinfo->id_map = rev_iso;
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	src_succ->trie = s->trie;
 	s->trie = nullptr;
@@ -513,6 +546,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	for (auto &v : 	s->graphinfo->cv->atoms) {
 	  std::cout << *v.second->correspondingVertexInTrie << std::endl;
 	}
+	s->trie = src_succ->trie;
+	src_succ->trie = nullptr;
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
       }
 
@@ -549,6 +584,10 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
+      std::pair<std::map<int, int>, DiffInfo*> p = std::make_pair(rev_iso, dif);
+      s->diff_map[succ->state_id] = p;
+      p = std::make_pair(revrev, rev_dif);
+      succ->diff_map[s->state_id] = p;
       if (mc_use_compress(f) && src_succ_m) {
         lmn_mem_free_rec(src_succ_m);
       }
