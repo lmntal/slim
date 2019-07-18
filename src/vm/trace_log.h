@@ -109,8 +109,6 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
                       * in-proxyアトムはBS encode時の訪問順序に数えないため,
                       * in-proxyアトムへの対応としては0をセット */
 
-  TraceData() : flag(255), traversed_proc(0), owner_id(0), matched(0) {}
-  TraceData(BYTE flag, unsigned int traversed_proc, ProcessID owner_id, ProcessID matched) : flag(flag), traversed_proc(traversed_proc), owner_id(owner_id), matched(matched) {}
   bool operator==(const TraceData &a) const {
     return a.flag == flag && a.traversed_proc == traversed_proc &&
            a.owner_id == owner_id && a.matched == matched;
@@ -126,7 +124,7 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
 };
 
 struct TraceLog {
-  std::map<ProcessID, TraceData> table;
+  ProcessTable<TraceData> table;
   LogTracker tracker;
 
   using key_type = ProcessTable<TraceData>::key_type;
