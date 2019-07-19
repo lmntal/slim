@@ -224,20 +224,21 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
 }
 
 propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
-                           Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph) {
+                           Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph,
+                           std::map<int, int> &id_map) {
   int gapOfGlobalRootMemID =
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
   Bool verticesAreCompletelySorted =
       trie->propagate(diffInfo, cAfterGraph, cBeforeGraph, gapOfGlobalRootMemID,
-                      &stepOfPropagation);
+                      &stepOfPropagation, id_map);
   if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
     return propagation_list();
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    for (auto i = cAfterGraph->cv->atoms.begin();
-         i != cAfterGraph->cv->atoms.end(); ++i)
-      std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
+    // for (auto i = cAfterGraph->cv->atoms.begin();
+    //      i != cAfterGraph->cv->atoms.end(); ++i)
+    //   std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
     propagation_list propagationList;
     trie->conventionalPropagationList(trie->body, propagationList);
     std::cout << "###### before list propagate ######" << std::endl;

@@ -252,7 +252,7 @@ struct Trie {
 
   bool propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
                  Graphinfo *cBeforeGraph, int gapOfGlobalRootMemID,
-                 int *stepOfPropagationPtr);
+                 int *stepOfPropagationPtr, std::map<int, int> &id_map);
 
   Trie *gen_tmp_trie_from_originaltrie_and_gi(Graphinfo *org_gi,
                                               Graphinfo *tmp_gi);

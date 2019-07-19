@@ -245,6 +245,7 @@ void ConvertedGraph::clearReferencesFromConvertedVerticesToInheritedVertices() {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     // std::cout << *cBeforeVertex << std::endl;
     if (cBeforeVertex->correspondingVertexInTrie != nullptr) {
+      // printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
       // cBeforeVertex->correspondingVertexInTrie = nullptr;
     }
@@ -274,8 +275,8 @@ void ConvertedGraph::moveReferencesToAfterCG(ConvertedGraph *cg,
 	std::cout << *cAfterVertex << std::endl;
       }
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      cAfterVertex->correspondingVertexInTrie = cBeforeVertex->correspondingVertexInTrie;
-      cBeforeVertex->correspondingVertexInTrie = nullptr;
+      // cAfterVertex->correspondingVertexInTrie = cBeforeVertex->correspondingVertexInTrie;
+      // cBeforeVertex->correspondingVertexInTrie = nullptr;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << *cAfterVertex << std::endl;
       std::cout << *cAfterVertex->correspondingVertexInTrie << std::endl;

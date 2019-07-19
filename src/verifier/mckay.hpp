@@ -22,11 +22,12 @@ struct CanonicalAdjacencyList {
 };
 
 using discrete_propagation_lists =
-  std::map<propagation_list, propagation_list *, PropagationListCmp>;
+    std::map<propagation_list, propagation_list *, PropagationListCmp>;
 using key_collection = std::map<vertex_list, CollectionInt>;
 
 propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
-                           Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph);
+                           Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph,
+                           std::map<int, int> &id_map);
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
     InheritedVertex *iVertexA, InheritedVertex *iVertexB);
 void freePreserveDiscreteProapgationList(vertex_list *pdpList);

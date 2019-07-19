@@ -125,7 +125,7 @@ struct ConvertedGraphVertex {
     strcpy(name, Name);
     isPushedIntoDiffInfoStack = FALSE;
     isVisitedInBFS = FALSE;
-    correspondingVertexInTrie = NULL;
+    correspondingVertexInTrie = nullptr;
   }
 
   ~ConvertedGraphVertex() {}
