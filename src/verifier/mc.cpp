@@ -495,14 +495,22 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       std::cout << *src_succ->graphinfo->cv << std::endl;
       dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
 
-      for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
-        rev_iso[i->second] = i->first;
-      }
+      // for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
+      //   rev_iso[i->second] = i->first;
+      // }
+      rev_iso = iso_m;
       dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
       dif->diffInfoDump();
+      std::cout << "-----------REVISO-----------" << std::endl;
       for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
 	std::cout << it->first << ", "<< it->second << std::endl;
       }
+      std::cout << "----------------------------" << std::endl;
+      for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
+	revrev[it->second] = it->first;
+      }
+
+
       rev_dif = new DiffInfo();
       for(auto &v : *dif->addedVertices) {
 	rev_dif->deletedVertices->push_back(v);
@@ -531,11 +539,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	printf("===succ===\n");
 	std::cout << *s->graphinfo->cv << std::endl;
 	rev_dif->diffInfoDump();
-	std::cout << "=======START REVERSE APPLY=======" << std::endl;
-	std::map<int, int> revrev;
-	for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
-	  revrev[it->second] = it->first;
+	std::cout << "-----------REVREV-----------" << std::endl;
+	for(auto &v : revrev) {
+	  std::cout << v.first << ", " << v.second << std::endl;
 	}
+	std::cout << "----------------------------" << std::endl;
+	std::cout << "=======START REVERSE APPLY=======" << std::endl;
+
 
 	trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo, revrev);
 	printf("%s:%d\n", __FUNCTION__, __LINE__);

@@ -1134,6 +1134,10 @@ void refineConventionalPropagationListByPropagation(propagation_list &pList) {
 void assureReferenceFromConvertedVerticesToInheritedVertices(
     ConvertedGraph *cAfterGraph, ConvertedGraph *cBeforeGraph,
     int gapOfGlobalRootMemID, std::map<int, int> &id_map) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  for (auto &v : id_map) {
+    std::cout << v.first << "-->" << v.second << std::endl;
+  }
   for (auto &v : cBeforeGraph->atoms) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     auto cBeforeVertex = v.second;
@@ -1146,7 +1150,7 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
       continue;
     auto cAfterVertex = it->second;
 
-    // std::cout << *cAfterVertex << std::endl;
+    std::cout << *cAfterVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (cAfterVertex->correspondingVertexInTrie == nullptr) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -1154,6 +1158,7 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
       cAfterVertex->correspondingVertexInTrie =
           cBeforeVertex->correspondingVertexInTrie;
       cBeforeVertex->correspondingVertexInTrie = nullptr;
+      cAfterVertex->correspondingVertexInTrie->beforeID = cBeforeVertex->ID;
     }
   }
   // for (auto &v : cAfterGraph->atoms) {
