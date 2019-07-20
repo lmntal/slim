@@ -56,10 +56,10 @@ public:
   using value_type = T;
 
   const static key_type not_found;
-  const static value_type unused;
   static constexpr std::size_t buckets_size = 1 << 12; // heuristics
 
 private:
+  const static value_type unused;
   unsigned long n;
   unsigned long size;
   unsigned long num_buckets;
@@ -147,19 +147,6 @@ public:
 
   template <typename U> void erase(U key) { unput(key); }
 
-  template <typename U> bool get(U key, value_type *value) {
-    const auto k = slim::process_id(key);
-    if (this->contains(k)) {
-      if (value)
-        *value = (*this)[k];
-      return true;
-    } else {
-      if (value)
-        *value = unused;
-      return false;
-    }
-  }
-
   void clear() {
     this->n = 0;
     for (int i = 0; i < this->num_buckets; i++) {
@@ -214,7 +201,6 @@ public:
       }
       bucket_idx = not_found;
       idx = not_found;
-      value = std::make_pair(not_found, unused);
       return *this;
     }
 

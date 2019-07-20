@@ -64,9 +64,7 @@ BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) {
 }
 
 LmnWord tracelog_get_matched(TraceLogRef l, LmnWord key) {
-  TraceData d;
-  l->table.get(key, &d);
-  return d.matched;
+  return l->table.contains(key) ? l->table[key].matched : 0;
 }
 
 LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSymbolAtomRef atom) {
@@ -82,7 +80,5 @@ LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) {
 }
 
 BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key) {
-  TraceData d;
-  l->table.get(key, &d);
-  return d.flag;
+  return l->table.contains(key) ? l->table[key].flag : 0;
 }
