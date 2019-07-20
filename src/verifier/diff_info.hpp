@@ -33,18 +33,36 @@ struct DiffInfo {
                                Graphinfo *org_gi) {
     std::vector<ConvertedGraphVertex *> *new_deletedVertices;
     new_deletedVertices = new std::vector<ConvertedGraphVertex *>();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    for (auto &v : iso_m) {
+      std::cout << v.first << " " << v.second << std::endl;
+    }
+    std::cout << *org_gi->cv << std::endl;
     for (auto i = deletedVertices->begin(); i != deletedVertices->end(); ++i) {
-      const auto &org_id = iso_m.find((*i)->ID);
-      if (org_id == iso_m.end())
-        continue;
+      std::cout << "deleteVertexID: " << (*i)->ID << std::endl;
+      // std::cout << "MAPED ID: " << iso_m[(*i)->ID]<< std::endl;
+	
+      // const auto &org_id = iso_m.find((*i)->ID);
+      // printf("%s:%d\n", __FUNCTION__, __LINE__);
+      // if (org_id == iso_m.end()) {
+      // 	printf("%s:%d\n", __FUNCTION__, __LINE__);
+      //   continue;
+      // }
 
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       if ((*i)->type == convertedAtom) {
-        const auto &org = org_gi->cv->atoms.find(org_id->second);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	// std::cout << "org_id->first: " << org_id->first << std::endl;
+	// std::cout << "org_id->second: " << org_id->second << std::endl;
+        const auto &org = org_gi->cv->atoms.find(iso_m[(*i)->ID]);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         if (org != org_gi->cv->atoms.end()) {
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
           new_deletedVertices->push_back(org->second);
         }
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
       } else if ((*i)->type == convertedHyperLink) {
-        const auto &org_hl = org_gi->cv->hyperlinks.find(org_id->second);
+        const auto &org_hl = org_gi->cv->hyperlinks.find(iso_m[(*i)->ID]);
         if (org_hl != org_gi->cv->hyperlinks.end()) {
           new_deletedVertices->push_back(org_hl->second);
         }

@@ -426,7 +426,17 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
   }
 #endif
 }
-
+void cg_trie_reference_check(ConvertedGraph *cg) {
+  std::cout << "----START REFERENCE CHECK----" << std::endl;
+  for (auto &v : cg->atoms) {
+    std::cout << "---------------" << std::endl;
+    std::cout << *v.second << std::endl;
+    std::cout << "--->" << std::endl;
+    std::cout << *v.second->correspondingVertexInTrie << std::endl;
+    std::cout << "---------------" << std::endl;
+  }
+  std::cout << "----FINISH REFERENCE CHECK----" << std::endl;
+}
 /** 生成した各Successor Stateが既出か否かを検査し,
  * 遷移元の状態sのサクセッサに設定する.
  *   + 多重辺を除去する.
@@ -445,7 +455,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   succ_i = 0;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << mc_react_cxt_expanded_num(rc) << std::endl;
+  std::cout << "======= START EXPANDED LOOP (" << s->state_id<< ")" << "======"<< std::endl;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+    std::cout << "---[" << i << "]---"<< std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
 #ifdef DIFFISO_GEN
     if (!diff_gen_finish)
@@ -494,16 +506,17 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       printf("===succ===\n");
       std::cout << *src_succ->graphinfo->cv << std::endl;
       dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
-
-      // for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
-      //   rev_iso[i->second] = i->first;
-      // }
-      rev_iso = iso_m;
+      std::cout << "========ORG DIFFINFO========" << std::endl;
+      dif->diffInfoDump();
+      std::cout << "============================" << std::endl;
+      for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
+        rev_iso[i->second] = i->first;
+      }
       dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
       dif->diffInfoDump();
-      std::cout << "-----------REVISO-----------" << std::endl;
-      for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
-	std::cout << it->first << ", "<< it->second << std::endl;
+      std::cout << "-----------ISO_M-----------" << std::endl;
+      for(auto &v : iso_m) {
+	std::cout << v.first << "-->" << v.second << std::endl;
       }
       std::cout << "----------------------------" << std::endl;
       for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
@@ -520,9 +533,10 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       }
       if(s->trie) {
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	cg_trie_reference_check(s->graphinfo->cv);
 	s->trie->dump();
 	std::cout << "=======START APPLY=======" << std::endl;
-	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, rev_iso);
+	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m);
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	std::cout << "=======FINISH APPLY=======" << std::endl;
 	// s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv, rev_iso);
@@ -544,10 +558,11 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	  std::cout << v.first << ", " << v.second << std::endl;
 	}
 	std::cout << "----------------------------" << std::endl;
+		cg_trie_reference_check(src_succ->graphinfo->cv);
 	std::cout << "=======START REVERSE APPLY=======" << std::endl;
 
 
-	trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo, revrev);
+	trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo, rev_iso);
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	s->trie = src_succ->trie;
 	s->trie->dump();
@@ -676,6 +691,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
   delete parent_graphinfo;
 }
+
+
 
 /*
  * 状態を展開する

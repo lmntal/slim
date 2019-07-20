@@ -1155,6 +1155,7 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
     if (cAfterVertex->correspondingVertexInTrie == nullptr) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << cAfterVertex << std::endl;
+      std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
       cAfterVertex->correspondingVertexInTrie =
           cBeforeVertex->correspondingVertexInTrie;
       cBeforeVertex->correspondingVertexInTrie = nullptr;
