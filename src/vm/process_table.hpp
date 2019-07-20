@@ -177,6 +177,7 @@ public:
     std::pair<key_type, value_type> value;
 
   public:
+    iterator(const ProcessTable<value_type> *table) : table(table), bucket_idx(not_found), idx(not_found) {} 
     iterator(const ProcessTable<value_type> *table, std::size_t bucket_idx,
              std::size_t idx)
         : table(table), bucket_idx(bucket_idx), idx(idx),
@@ -230,7 +231,7 @@ public:
     return end();
   }
 
-  iterator end() const { return iterator(this, not_found, not_found); }
+  iterator end() const { return iterator(this); }
 
   template <typename U> iterator find(U key) const {
     const auto k = slim::process_id(key);

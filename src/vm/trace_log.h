@@ -163,10 +163,13 @@ private:
 
     if (owner) {
       value.owner_id = owner->mem_id();
-      table[owner->mem_id()].traversed_proc++;
+      if (!table.contains(owner->mem_id()))
+        table.put(owner->mem_id(), {0, 1, 0, 0});
+      else
+        table[owner->mem_id()].traversed_proc++;
     }
 
-    table[key] = value;
+    table.put(key, value);
 
     tracker.trace(key);
 
@@ -200,8 +203,9 @@ public:
   }
 
   void leave(key_type key) {
-    const auto owner_id = table[key].owner_id;
-    table[owner_id].traversed_proc--;
+    const auto owner_id = table.contains(key) ? table[key].owner_id : 0;
+    if (table.contains(owner_id))
+      table[owner_id].traversed_proc--;
     table.erase(key);
   }
 
