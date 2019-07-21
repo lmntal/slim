@@ -429,6 +429,53 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 #endif
 }
 
+
+void back_trie_to_parent(State *s) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  if (s->parent == nullptr or s->succ_num_in_openlist != 0)
+    return ;
+  std::cout << "$$$$$$$$$ BACK TRIE TO PARENT("<< s->state_id <<") $$$$$$$$$$" << std::endl;
+  s->trie->dump();
+  std::cout << "CURRENT(" << s->state_id <<  ") CV" << std::endl;
+  std::cout << *s->graphinfo->cv << std::endl;
+  std::cout << "PARENT(" << s->parent->state_id << ") CV" << std::endl;
+  std::cout << *s->parent->graphinfo->cv << std::endl;
+  // std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id <<")"<< std::endl;
+  // s->parent->diff_map[s->state_id].second->diffInfoDump();
+  std::map<int, int> iso;
+  for (auto &v : s->parent->diff_map[s->state_id].first) {
+    iso[v.second] = v.first;
+  }
+  std::cout << "ID-MAP: (" << s->state_id << ")-->("<< s->parent->state_id << ")" << std::endl;
+  for (auto &v : iso) {
+    std::cout << v.first << "-->" << v.second << std::endl;
+  }
+
+  DiffInfo *rev_dif = new DiffInfo();
+  for (auto &v : *s->parent->diff_map[s->state_id].second->addedVertices) {
+    rev_dif->deletedVertices->push_back(v);
+  }
+  for (auto &v : *s->parent->diff_map[s->state_id].second->deletedVertices) {
+    rev_dif->addedVertices->push_back(v);
+  }
+  std::cout << "DIFF:("<< s->state_id << ")-->("<< s->parent->state_id<< ")" << std::endl;
+  rev_dif->diffInfoDump();
+  trieMcKay(s->trie, rev_dif, s->parent->graphinfo, s->graphinfo, iso);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  cg_trie_reference_check(s->parent->graphinfo->cv);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  s->parent->trie = s->trie;
+  s->trie = nullptr;
+  s->parent->trie->dump();
+  s->parent->succ_num_in_openlist--;
+  back_trie_to_parent(s->parent);
+  // std::cout << "ID-MAP: (" << s->parent->state_id << ")-->("<< s->state_id << ")" << std::endl;
+
+  // for (auto &v : s->parent->diff_map[s->state_id].first) {
+  //   std::cout << v.first << "-->" << v.second << std::endl;
+  // }
+}
+
 /** 生成した各Successor Stateが既出か否かを検査し,
  * 遷移元の状態sのサクセッサに設定する.
  *   + 多重辺を除去する.
@@ -608,6 +655,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
+      s->succ_num_in_openlist++;
       std::pair<std::map<int, int>, DiffInfo*> p = std::make_pair(iso_m, dif);
       s->diff_map[succ->state_id] = p;
       p = std::make_pair(rev_iso, rev_dif);
@@ -677,7 +725,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   //  if (RC_MC_USE_DMEM(rc)) {
   //    RC_MEM_DELTAS(rc)->num = succ_i;
   //  }
-
+  if(s->succ_num_in_openlist == 0)
+    back_trie_to_parent(s);
   state_D_progress(s, rc);
   s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
   delete parent_graphinfo;
@@ -713,6 +762,7 @@ BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   return ret_flag;
 }
 
+
 /** 膜memから1stepで遷移可能な膜を, state_nameと合わせて状態として生成し,
  *  TransitionをRC_EXPANDEDへセットする.
  *  生成された状態は重複（多重辺）を含む */
@@ -734,6 +784,11 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
   expanded_roots = RC_EXPANDED(rc); /* DeltaMembrane時は空 */
   expanded_rules = RC_EXPANDED_RULES(rc);
   n = mc_react_cxt_expanded_num(rc);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << n << std::endl;
+  if (n == 0) {
+    back_trie_to_parent(src);
+  }
 
   for (i = old; i < n; i++) {
     State *news;
