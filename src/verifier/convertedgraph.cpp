@@ -285,3 +285,35 @@ void ConvertedGraph::moveReferencesToAfterCG(ConvertedGraph *cg,
     }
   }
 }
+
+void cg_trie_reference_check(ConvertedGraph *cg) {
+  std::cout << "----START REFERENCE CHECK----" << std::endl;
+  bool f = true;
+  for (auto &v : cg->atoms) {
+    std::cout << "---------------" << std::endl;
+    printf("pointer:%p\n", v.second);
+    // std::cout << "pointer:" << v.second << std::endl;
+    std::cout << *v.second << std::endl;
+    std::cout << "--->" << std::endl;
+    printf("cvIT pointer:%p\n", v.second->correspondingVertexInTrie);
+    if (v.second->correspondingVertexInTrie == nullptr) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "NULLPTR!!!" << std::endl;
+    }
+
+    std::cout << *v.second->correspondingVertexInTrie << std::endl;
+    printf("cvITcv pointer:%p\n", v.second->correspondingVertexInTrie->correspondingVertex);
+    std::cout << *v.second->correspondingVertexInTrie->correspondingVertex << std::endl;
+    if (v.second->correspondingVertexInTrie->correspondingVertex != v.second) {
+
+      std::cout << "POINTER IS NOT CORRECT!!!" << std::endl;
+      f = false;
+
+    }
+
+    std::cout << "---------------" << std::endl;
+  }
+  if (!f)
+    exit(0);
+  std::cout << "----FINISH REFERENCE CHECK----" << std::endl;
+}

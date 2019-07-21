@@ -1282,6 +1282,8 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   assureReferenceFromConvertedVerticesToInheritedVertices(
       cAfterGraph->cv, cBeforeGraph->cv, gapOfGlobalRootMemID, id_map);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  cg_trie_reference_check(cAfterGraph->cv);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   moveInheritedRelinkedVerticesToBFSStack(
       diffInfo->relinkedVertices, &initializeConvertedVerticesStack, &BFSStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);

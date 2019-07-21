@@ -298,10 +298,12 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
       s->parent->trie->dump();
       std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id <<")"<< std::endl;
       s->parent->diff_map[s->state_id].second->diffInfoDump();
+      cg_trie_reference_check(s->parent->graphinfo->cv);
       trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second, s->graphinfo, s->parent->graphinfo, s->parent->diff_map[s->state_id].first);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       s->trie = s->parent->trie;
       s->parent->trie = nullptr;
+      cg_trie_reference_check(s->graphinfo->cv);
       // s->parent->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv, s->parent->diff_map[s->state_id].first);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
@@ -426,37 +428,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
   }
 #endif
 }
-void cg_trie_reference_check(ConvertedGraph *cg) {
-  std::cout << "----START REFERENCE CHECK----" << std::endl;
-  bool f = true;
-  for (auto &v : cg->atoms) {
-    std::cout << "---------------" << std::endl;
-    printf("pointer:%p\n", v.second);
-    // std::cout << "pointer:" << v.second << std::endl;
-    std::cout << *v.second << std::endl;
-    std::cout << "--->" << std::endl;
-    printf("cvIT pointer:%p\n", v.second->correspondingVertexInTrie);
-    if (v.second->correspondingVertexInTrie == nullptr) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-      std::cout << "NULLPTR!!!" << std::endl;
-    }
 
-    std::cout << *v.second->correspondingVertexInTrie << std::endl;
-    printf("cvITcv pointer:%p\n", v.second->correspondingVertexInTrie->correspondingVertex);
-    std::cout << *v.second->correspondingVertexInTrie->correspondingVertex << std::endl;
-    if (v.second->correspondingVertexInTrie->correspondingVertex != v.second) {
-
-      std::cout << "POINTER IS NOT CORRECT!!!" << std::endl;
-      f = false;
-
-    }
-
-    std::cout << "---------------" << std::endl;
-  }
-  if (!f)
-    exit(0);
-  std::cout << "----FINISH REFERENCE CHECK----" << std::endl;
-}
 /** 生成した各Successor Stateが既出か否かを検査し,
  * 遷移元の状態sのサクセッサに設定する.
  *   + 多重辺を除去する.
@@ -636,9 +608,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
-      std::pair<std::map<int, int>, DiffInfo*> p = std::make_pair(rev_iso, dif);
+      std::pair<std::map<int, int>, DiffInfo*> p = std::make_pair(iso_m, dif);
       s->diff_map[succ->state_id] = p;
-      p = std::make_pair(revrev, rev_dif);
+      p = std::make_pair(rev_iso, rev_dif);
       succ->diff_map[s->state_id] = p;
       if (mc_use_compress(f) && src_succ_m) {
         lmn_mem_free_rec(src_succ_m);

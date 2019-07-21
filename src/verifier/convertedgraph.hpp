@@ -349,6 +349,7 @@ public:
 
 bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
                         const std::map<int, int> &iso_m);
+void cg_trie_reference_check(ConvertedGraph *cg);
 inline void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
     std::vector<ConvertedGraphVertex *> *stack, ConvertedGraphVertex *cVertex) {
   if (!cVertex)
