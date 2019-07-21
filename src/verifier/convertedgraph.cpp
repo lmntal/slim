@@ -245,8 +245,10 @@ void ConvertedGraph::clearReferencesFromConvertedVerticesToInheritedVertices() {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     // std::cout << *cBeforeVertex << std::endl;
     if (cBeforeVertex->correspondingVertexInTrie != nullptr) {
-      // printf("%s:%d\n", __FUNCTION__, __LINE__);
-      std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      // std::cout << "^^^^^^^^^^^^^^^FIND PTR BUG^^^^^^^^^^^^^^^^^^^^" << std::endl;
+      std::cout << *cBeforeVertex << std::endl;
+      // std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
       // cBeforeVertex->correspondingVertexInTrie = nullptr;
     }
   }

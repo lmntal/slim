@@ -211,6 +211,7 @@ struct InheritedVertex {
                              iVertex.conventionalPropagationMemo->end());
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
     this->correspondingVertex = iVertex.correspondingVertex;
+    this->correspondingVertex->correspondingVertexInTrie = this;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
@@ -219,7 +220,7 @@ struct InheritedVertex {
     printf("DELETE IVERTEX:%p\n", this);
     // delete (hashString);
     // delete (conventionalPropagationMemo);
-    this->correspondingVertex->correspondingVertexInTrie = nullptr;
+    // this->correspondingVertex->correspondingVertexInTrie = nullptr;
     // freeDisjointSetForest(equivalenceClassOfIsomorphism);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
@@ -334,6 +335,7 @@ inline bool operator!=(const InheritedVertex &a, const InheritedVertex &b) {
 
 inline std::ostream &operator<<(std::ostream &os,
                                 const InheritedVertex &iVertex) {
+  printf("%p:", &iVertex);
   os << "<";
 
   switch (iVertex.type) {

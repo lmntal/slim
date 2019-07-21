@@ -428,13 +428,33 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 }
 void cg_trie_reference_check(ConvertedGraph *cg) {
   std::cout << "----START REFERENCE CHECK----" << std::endl;
+  bool f = true;
   for (auto &v : cg->atoms) {
     std::cout << "---------------" << std::endl;
+    printf("pointer:%p\n", v.second);
+    // std::cout << "pointer:" << v.second << std::endl;
     std::cout << *v.second << std::endl;
     std::cout << "--->" << std::endl;
+    printf("cvIT pointer:%p\n", v.second->correspondingVertexInTrie);
+    if (v.second->correspondingVertexInTrie == nullptr) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "NULLPTR!!!" << std::endl;
+    }
+
     std::cout << *v.second->correspondingVertexInTrie << std::endl;
+    printf("cvITcv pointer:%p\n", v.second->correspondingVertexInTrie->correspondingVertex);
+    std::cout << *v.second->correspondingVertexInTrie->correspondingVertex << std::endl;
+    if (v.second->correspondingVertexInTrie->correspondingVertex != v.second) {
+
+      std::cout << "POINTER IS NOT CORRECT!!!" << std::endl;
+      f = false;
+
+    }
+
     std::cout << "---------------" << std::endl;
   }
+  if (!f)
+    exit(0);
   std::cout << "----FINISH REFERENCE CHECK----" << std::endl;
 }
 /** 生成した各Successor Stateが既出か否かを検査し,
@@ -457,7 +477,6 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   std::cout << mc_react_cxt_expanded_num(rc) << std::endl;
   std::cout << "======= START EXPANDED LOOP (" << s->state_id<< ")" << "======"<< std::endl;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
-    std::cout << "---[" << i << "]---"<< std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
 #ifdef DIFFISO_GEN
     if (!diff_gen_finish)
@@ -535,10 +554,10 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	cg_trie_reference_check(s->graphinfo->cv);
 	s->trie->dump();
-	std::cout << "=======START APPLY=======" << std::endl;
+	std::cout << "=======START APPLY["<< i << "]" << "=======" << std::endl;
 	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m);
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	std::cout << "=======FINISH APPLY=======" << std::endl;
+	std::cout << "=======FINISH APPLY["<< i << "]" << "=======" << std::endl;
 	// s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv, rev_iso);
 	// s->graphinfo->id_map = rev_iso;
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -558,8 +577,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	  std::cout << v.first << ", " << v.second << std::endl;
 	}
 	std::cout << "----------------------------" << std::endl;
-		cg_trie_reference_check(src_succ->graphinfo->cv);
-	std::cout << "=======START REVERSE APPLY=======" << std::endl;
+	cg_trie_reference_check(src_succ->graphinfo->cv);
+	std::cout << "=======START REVERSE APPLY["<< i << "]" << "=======" << std::endl;
 
 
 	trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo, rev_iso);
@@ -567,7 +586,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	s->trie = src_succ->trie;
 	s->trie->dump();
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	std::cout << "=======FINISH REVERSE APPLY=======" << std::endl;
+	std::cout << "=======FINISH REVERSE APPLY["<< i << "]" << "=======" << std::endl;
 
 	// src_succ->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv, revrev);
 	printf("%s:%d\n", __FUNCTION__, __LINE__);

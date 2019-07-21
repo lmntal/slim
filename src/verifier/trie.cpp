@@ -426,6 +426,10 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     std::cout << *prevNode->inheritedVertices << std::endl;
     // std::cout << "*brother.ownerList" << std::endl;
     // std::cout << *brother.ownerList << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    if (brother.correspondingVertex->correspondingVertexInTrie== nullptr)
+      std::cout << "!!!!!!!!!!" << std::endl;
+    std::cout << *brother.correspondingVertex->correspondingVertexInTrie << std::endl;
     InheritedVertex brother_cp = InheritedVertex(brother);
     std::cout << brother_cp << std::endl;
     brother_cp.ownerNode = prevNode;
@@ -433,9 +437,18 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     brother_cp.hashString->creditIndex = prevNode->depth;
     brother_cp.canonicalLabel.first = prevNode->key;
     prevNode->inheritedVertices->push_front(brother_cp);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *brother_cp.correspondingVertex->correspondingVertexInTrie << std::endl;
     slim::element::get<InheritedVertex>(
         *std::begin(*prevNode->inheritedVertices))
         .ownerCell = std::begin(*prevNode->inheritedVertices);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *slim::element::get<InheritedVertex>(*std::begin(*prevNode->inheritedVertices)).correspondingVertex << std::endl;
+    if (slim::element::get<InheritedVertex>(*std::begin(*prevNode->inheritedVertices)).correspondingVertex->correspondingVertexInTrie == nullptr) {
+      std::cout << "!!!!!!!!!!!" << std::endl;
+    }
+    std::cout << *slim::element::get<InheritedVertex>(*std::begin(*prevNode->inheritedVertices)).correspondingVertex->correspondingVertexInTrie << std::endl;
+
 
     // prevNode->inheritedVertices->splice(
     //     std::begin(*prevNode->inheritedVertices), *brother.ownerList,
@@ -488,7 +501,16 @@ void goBackProcessInnerSingleCommonPrefixVertex(
                      ->second->inheritedVertices->size() == 1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *childNode = (TrieBody *)currentNode->children->begin()->second;
+    std::cout << *childNode->inheritedVertices << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << slim::element::get<InheritedVertex>(*std::begin(*childNode->inheritedVertices)).correspondingVertex->correspondingVertexInTrie << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     auto brother = std::begin(*childNode->inheritedVertices);
+    std::cout << slim::element::get<InheritedVertex>(*brother) << std::endl;
+    printf("%p\n", &slim::element::get<InheritedVertex>(*brother));
+    printf("%p\n", slim::element::get<InheritedVertex>(*brother).correspondingVertex);
+    std::cout << *slim::element::get<InheritedVertex>(*brother).correspondingVertex << std::endl;
+    std::cout << slim::element::get<InheritedVertex>(*brother).correspondingVertex->correspondingVertexInTrie << std::endl;
 
     (*tInfo->distribution)[childNode->depth]--;
 
@@ -789,7 +811,7 @@ void addInheritedVerticesToTrie(
         trie->body->inheritedVertices->front());
     std::cout << *targetIVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-
+    std::cout << *targetCVertex << std::endl;
     targetCVertex->correspondingVertexInTrie = targetIVertex;
     // targetIVertex->ownerNode = trie->body;
     targetIVertex->ownerList = trie->body->inheritedVertices;
@@ -822,12 +844,16 @@ void moveInheritedRelinkedVerticesToBFSStack(
 
 void initializeConvertedVertices(
     std::vector<ConvertedGraphVertex *> *initializeConvertedVerticesStack) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (!initializeConvertedVerticesStack->empty()) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     ConvertedGraphVertex *cVertex = initializeConvertedVerticesStack->back();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     initializeConvertedVerticesStack->pop_back();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     cVertex->isVisitedInBFS = FALSE;
   }
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return;
 }
 
@@ -1151,15 +1177,28 @@ void assureReferenceFromConvertedVerticesToInheritedVertices(
     auto cAfterVertex = it->second;
 
     std::cout << *cAfterVertex << std::endl;
+    std::cout << *cBeforeVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (cAfterVertex->correspondingVertexInTrie == nullptr) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      std::cout << cAfterVertex << std::endl;
+      std::cout << *cAfterVertex << std::endl;
+      if (cBeforeVertex->correspondingVertexInTrie == nullptr) {
+	std::cout << "!!!!!!!!!!" << std::endl;
+	printf("cBeforeVertex pointer:%p\n", cBeforeVertex);
+	std::cout << "cBeforeVertex pointer:" << cBeforeVertex << std::endl;
+      }
+
       std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
+      printf("cBeforeVertex->correspondingVertexInTrie pointer:%p\n", cBeforeVertex->correspondingVertexInTrie);
       cAfterVertex->correspondingVertexInTrie =
           cBeforeVertex->correspondingVertexInTrie;
+      cAfterVertex->correspondingVertexInTrie->correspondingVertex = cAfterVertex;
       cBeforeVertex->correspondingVertexInTrie = nullptr;
       cAfterVertex->correspondingVertexInTrie->beforeID = cBeforeVertex->ID;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      printf("cAfterV: %p\n", cAfterVertex);
+      printf("cAfterV->IV: %p\n", cAfterVertex->correspondingVertexInTrie);
+      printf("cAfterV->IV->CV: %p\n", cAfterVertex->correspondingVertexInTrie->correspondingVertex);
     }
   }
   // for (auto &v : cAfterGraph->atoms) {
@@ -1210,6 +1249,15 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << *cAfterGraph->cv << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  for (auto &v : cBeforeGraph->cv->atoms) {
+    std::cout << *v.second << std::endl;
+    printf("%p\n", v.second);
+    std::cout << "--->" << std::endl;
+    std::cout << *v.second->correspondingVertexInTrie << std::endl;
+    printf("%p\n", v.second->correspondingVertexInTrie);
+    printf("%p\n", v.second->correspondingVertexInTrie->correspondingVertex);
+    std::cout << *v.second->correspondingVertexInTrie->correspondingVertex << std::endl;
+  }
   deleteInheritedVerticesFromTrie(this, diffInfo->deletedVertices,
                                   &goAheadStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
