@@ -462,6 +462,9 @@ void back_trie_to_parent(State *s) {
   for (auto &v : *s->parent->diff_map[s->state_id].second->deletedVertices) {
     rev_dif->addedVertices->push_back(v);
   }
+  for (auto &v : *s->parent->diff_map[s->state_id].second->relinkedVertices) {
+    rev_dif->relinkedVertices->push_back(v);
+  }
   std::cout << "DIFF:(" << s->state_id << ")-->(" << s->parent->state_id << ")"
             << std::endl;
   rev_dif->diffInfoDump();
@@ -574,6 +577,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       }
       for (auto &v : *dif->deletedVertices) {
         rev_dif->addedVertices->push_back(v);
+      }
+      for (auto &v : *dif->relinkedVertices) {
+	rev_dif->relinkedVertices->push_back(v);
       }
       if (s->trie) {
         printf("%s:%d\n", __FUNCTION__, __LINE__);
