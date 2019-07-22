@@ -25,7 +25,7 @@ using discrete_propagation_lists =
     std::map<propagation_list, propagation_list *, PropagationListCmp>;
 using key_collection = std::map<vertex_list, CollectionInt>;
 
-propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
+std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
                            Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph,
                            std::map<int, int> &id_map);
 Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(

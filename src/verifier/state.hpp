@@ -109,7 +109,7 @@ struct State {                /* Total:72(36)byte */
   State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
   Graphinfo *graphinfo;
   Trie *trie;
-  propagation_list canonical_label;
+  std::vector<std::vector<std::string>> canonical_label;
   std::map<unsigned long, std::pair<std::map<int, int>, DiffInfo *>> diff_map;
   int succ_num_in_openlist;
 #ifndef MINIMAL_STATE
@@ -554,7 +554,7 @@ public:
     s_set_fresh();
     graphinfo=nullptr;
     trie=nullptr;
-    canonical_label=std::list<std::list<ConvertedGraphVertex*>>();
+    canonical_label=std::vector<std::vector<std::string>>();
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;

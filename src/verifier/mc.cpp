@@ -581,7 +581,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         s->trie->dump();
         std::cout << "=======START APPLY[" << i << "]"
                   << "=======" << std::endl;
-        trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m);
+        src_succ->canonical_label = trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m);
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         std::cout << "=======FINISH APPLY[" << i << "]"
                   << "=======" << std::endl;

@@ -222,9 +222,10 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
   return isValid;
 }
 
-propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
+std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
                            Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph,
                            std::map<int, int> &id_map) {
+  std::vector<std::vector<std::string>> canonical_label;
   int gapOfGlobalRootMemID =
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
@@ -232,7 +233,7 @@ propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
       trie->propagate(diffInfo, cAfterGraph, cBeforeGraph, gapOfGlobalRootMemID,
                       &stepOfPropagation, id_map);
   if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
-    return propagation_list();
+    return canonical_label;
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     // for (auto i = cAfterGraph->cv->atoms.begin();
@@ -245,12 +246,12 @@ propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
 
     auto canonicalDiscreteRefinement =
         listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
-    std::list<std::list<std::string>> canonical_label;
+
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto &v : canonicalDiscreteRefinement) {
       auto cv = v.begin();
       std::cout << (*cv)->name << std::endl;
-      std::list<std::string> l;
+      std::vector<std::string> l;
       l.push_back((*cv)->name);
       for (auto &link : (*cv)->links) {
 	std::cout << link << std::endl;
@@ -264,7 +265,7 @@ propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
 	  std::cout << "unexpected attr" << std::endl;
 	}
       }
-      canonical_label.push_front(l);
+      canonical_label.push_back(l);
     }
 
     std::cout << "!!CANONICAL LABEL!!" << std::endl;
@@ -279,6 +280,6 @@ propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
     std::cout << "]" << std::endl;
     std::cout << "!!!!!!!!!!!!!!!!!!!" << std::endl;
 
-    return canonicalDiscreteRefinement;
+    return canonical_label;
   }
 }
