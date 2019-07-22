@@ -171,8 +171,6 @@ propagation_list listMcKay(propagation_list &propagationList,
     // std::cout <<
     // discretePropagationListsOfInheritedVerticesWithAdjacentLabels
     //           << std::endl;
-    ;
-
     //   for (auto &v :
     //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
     //     freePreserveDiscreteProapgationList(v.second);

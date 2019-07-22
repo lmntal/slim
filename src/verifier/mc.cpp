@@ -144,7 +144,6 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // lmn_dump_mem_dev(mem);
 
-
   std::cout << *init->cv << std::endl;
   DiffInfo *diff = new DiffInfo(init);
   diff->diffInfoDump();
@@ -293,26 +292,30 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     std::cout << "parent is NULL!!" << std::endl;
   } else {
     std::cout << "parentID is " << s->parent->state_id << std::endl;
-    if(s->parent->trie) {
+    if (s->parent->trie) {
       std::cout << "--Parent TRIE--" << std::endl;
       s->parent->trie->dump();
-      std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id <<")"<< std::endl;
+      std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id
+                << ")" << std::endl;
       s->parent->diff_map[s->state_id].second->diffInfoDump();
       cg_trie_reference_check(s->parent->graphinfo->cv);
-      trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second, s->graphinfo, s->parent->graphinfo, s->parent->diff_map[s->state_id].first);
+      trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second,
+                s->graphinfo, s->parent->graphinfo,
+                s->parent->diff_map[s->state_id].first);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       s->trie = s->parent->trie;
       s->parent->trie = nullptr;
       cg_trie_reference_check(s->graphinfo->cv);
-      // s->parent->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv, s->parent->diff_map[s->state_id].first);
+      // s->parent->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv,
+      // s->parent->diff_map[s->state_id].first);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
   }
 
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (s->diff_map.size() != 0) {
-    for(auto &v : s->diff_map) {
-      std::cout << "(" << v.first << ")"<<std::endl;
+    for (auto &v : s->diff_map) {
+      std::cout << "(" << v.first << ")" << std::endl;
       v.second.second->diffInfoDump();
     }
   }
@@ -429,24 +432,25 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 #endif
 }
 
-
 void back_trie_to_parent(State *s) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (s->parent == nullptr or s->succ_num_in_openlist != 0)
-    return ;
-  std::cout << "$$$$$$$$$ BACK TRIE TO PARENT("<< s->state_id <<") $$$$$$$$$$" << std::endl;
+    return;
+  std::cout << "$$$$$$$$$ BACK TRIE TO PARENT(" << s->state_id << ") $$$$$$$$$$"
+            << std::endl;
   s->trie->dump();
-  std::cout << "CURRENT(" << s->state_id <<  ") CV" << std::endl;
+  std::cout << "CURRENT(" << s->state_id << ") CV" << std::endl;
   std::cout << *s->graphinfo->cv << std::endl;
   std::cout << "PARENT(" << s->parent->state_id << ") CV" << std::endl;
   std::cout << *s->parent->graphinfo->cv << std::endl;
-  // std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id <<")"<< std::endl;
-  // s->parent->diff_map[s->state_id].second->diffInfoDump();
+  // std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id
+  // <<")"<< std::endl; s->parent->diff_map[s->state_id].second->diffInfoDump();
   std::map<int, int> iso;
   for (auto &v : s->parent->diff_map[s->state_id].first) {
     iso[v.second] = v.first;
   }
-  std::cout << "ID-MAP: (" << s->state_id << ")-->("<< s->parent->state_id << ")" << std::endl;
+  std::cout << "ID-MAP: (" << s->state_id << ")-->(" << s->parent->state_id
+            << ")" << std::endl;
   for (auto &v : iso) {
     std::cout << v.first << "-->" << v.second << std::endl;
   }
@@ -458,7 +462,8 @@ void back_trie_to_parent(State *s) {
   for (auto &v : *s->parent->diff_map[s->state_id].second->deletedVertices) {
     rev_dif->addedVertices->push_back(v);
   }
-  std::cout << "DIFF:("<< s->state_id << ")-->("<< s->parent->state_id<< ")" << std::endl;
+  std::cout << "DIFF:(" << s->state_id << ")-->(" << s->parent->state_id << ")"
+            << std::endl;
   rev_dif->diffInfoDump();
   trieMcKay(s->trie, rev_dif, s->parent->graphinfo, s->graphinfo, iso);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -469,7 +474,8 @@ void back_trie_to_parent(State *s) {
   s->parent->trie->dump();
   s->parent->succ_num_in_openlist--;
   back_trie_to_parent(s->parent);
-  // std::cout << "ID-MAP: (" << s->parent->state_id << ")-->("<< s->state_id << ")" << std::endl;
+  // std::cout << "ID-MAP: (" << s->parent->state_id << ")-->("<< s->state_id <<
+  // ")" << std::endl;
 
   // for (auto &v : s->parent->diff_map[s->state_id].first) {
   //   std::cout << v.first << "-->" << v.second << std::endl;
@@ -494,7 +500,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   succ_i = 0;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << mc_react_cxt_expanded_num(rc) << std::endl;
-  std::cout << "======= START EXPANDED LOOP (" << s->state_id<< ")" << "======"<< std::endl;
+  std::cout << "======= START EXPANDED LOOP (" << s->state_id << ")"
+            << "======" << std::endl;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
 #ifdef DIFFISO_GEN
@@ -553,73 +560,77 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
       dif->diffInfoDump();
       std::cout << "-----------ISO_M-----------" << std::endl;
-      for(auto &v : iso_m) {
-	std::cout << v.first << "-->" << v.second << std::endl;
+      for (auto &v : iso_m) {
+        std::cout << v.first << "-->" << v.second << std::endl;
       }
       std::cout << "----------------------------" << std::endl;
-      for(auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
-	revrev[it->second] = it->first;
+      for (auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
+        revrev[it->second] = it->first;
       }
-
 
       rev_dif = new DiffInfo();
-      for(auto &v : *dif->addedVertices) {
-	rev_dif->deletedVertices->push_back(v);
+      for (auto &v : *dif->addedVertices) {
+        rev_dif->deletedVertices->push_back(v);
       }
-      for(auto &v : *dif->deletedVertices) {
-	rev_dif->addedVertices->push_back(v);
+      for (auto &v : *dif->deletedVertices) {
+        rev_dif->addedVertices->push_back(v);
       }
-      if(s->trie) {
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	cg_trie_reference_check(s->graphinfo->cv);
-	s->trie->dump();
-	std::cout << "=======START APPLY["<< i << "]" << "=======" << std::endl;
-	trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m);
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	std::cout << "=======FINISH APPLY["<< i << "]" << "=======" << std::endl;
-	// s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv, rev_iso);
-	// s->graphinfo->id_map = rev_iso;
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	src_succ->trie = s->trie;
-	s->trie = nullptr;
-	
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	printf("===org===\n");
-	// printf("graphinfo_address:%p\n", src_succ->graphinfo);
-	// printf("cv_address:%p\n", s->graphinfo->cv);
-	std::cout << *src_succ->graphinfo->cv << std::endl;
-	printf("===succ===\n");
-	std::cout << *s->graphinfo->cv << std::endl;
-	rev_dif->diffInfoDump();
-	std::cout << "-----------REVREV-----------" << std::endl;
-	for(auto &v : revrev) {
-	  std::cout << v.first << ", " << v.second << std::endl;
-	}
-	std::cout << "----------------------------" << std::endl;
-	cg_trie_reference_check(src_succ->graphinfo->cv);
-	std::cout << "=======START REVERSE APPLY["<< i << "]" << "=======" << std::endl;
+      if (s->trie) {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        cg_trie_reference_check(s->graphinfo->cv);
+        s->trie->dump();
+        std::cout << "=======START APPLY[" << i << "]"
+                  << "=======" << std::endl;
+        trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        std::cout << "=======FINISH APPLY[" << i << "]"
+                  << "=======" << std::endl;
+        // s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv,
+        // rev_iso); s->graphinfo->id_map = rev_iso;
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        src_succ->trie = s->trie;
+        s->trie = nullptr;
 
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("===org===\n");
+        // printf("graphinfo_address:%p\n", src_succ->graphinfo);
+        // printf("cv_address:%p\n", s->graphinfo->cv);
+        std::cout << *src_succ->graphinfo->cv << std::endl;
+        printf("===succ===\n");
+        std::cout << *s->graphinfo->cv << std::endl;
+        rev_dif->diffInfoDump();
+        std::cout << "-----------REVREV-----------" << std::endl;
+        for (auto &v : revrev) {
+          std::cout << v.first << ", " << v.second << std::endl;
+        }
+        std::cout << "----------------------------" << std::endl;
+        cg_trie_reference_check(src_succ->graphinfo->cv);
+        std::cout << "=======START REVERSE APPLY[" << i << "]"
+                  << "=======" << std::endl;
 
-	trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo, rev_iso);
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	s->trie = src_succ->trie;
-	s->trie->dump();
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	std::cout << "=======FINISH REVERSE APPLY["<< i << "]" << "=======" << std::endl;
+        trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo,
+                  rev_iso);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        s->trie = src_succ->trie;
+        s->trie->dump();
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        std::cout << "=======FINISH REVERSE APPLY[" << i << "]"
+                  << "=======" << std::endl;
 
-	// src_succ->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv, revrev);
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	for (auto &v : 	s->graphinfo->cv->atoms) {
-	  printf("%s:%d\n", __FUNCTION__, __LINE__);
-	  std::cout << v.first << std::endl;
-	  std::cout << *v.second << std::endl;
-	  if(v.second->correspondingVertexInTrie == nullptr)
-	    std::cout << "NULLPOINTER!" << std::endl;
-	  std::cout << *v.second->correspondingVertexInTrie << std::endl;
-	}
-	s->trie = src_succ->trie;
-	src_succ->trie = nullptr;
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        // src_succ->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv,
+        // revrev);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        for (auto &v : s->graphinfo->cv->atoms) {
+          printf("%s:%d\n", __FUNCTION__, __LINE__);
+          std::cout << v.first << std::endl;
+          std::cout << *v.second << std::endl;
+          if (v.second->correspondingVertexInTrie == nullptr)
+            std::cout << "NULLPOINTER!" << std::endl;
+          std::cout << *v.second->correspondingVertexInTrie << std::endl;
+        }
+        s->trie = src_succ->trie;
+        src_succ->trie = nullptr;
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
       }
 
       /*
@@ -656,7 +667,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       /* new state */
       state_id_issue(succ);
       s->succ_num_in_openlist++;
-      std::pair<std::map<int, int>, DiffInfo*> p = std::make_pair(iso_m, dif);
+      std::pair<std::map<int, int>, DiffInfo *> p = std::make_pair(iso_m, dif);
       s->diff_map[succ->state_id] = p;
       p = std::make_pair(rev_iso, rev_dif);
       succ->diff_map[s->state_id] = p;
@@ -725,14 +736,12 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   //  if (RC_MC_USE_DMEM(rc)) {
   //    RC_MEM_DELTAS(rc)->num = succ_i;
   //  }
-  if(s->succ_num_in_openlist == 0)
+  if (s->succ_num_in_openlist == 0)
     back_trie_to_parent(s);
   state_D_progress(s, rc);
   s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
   delete parent_graphinfo;
 }
-
-
 
 /*
  * 状態を展開する
@@ -761,7 +770,6 @@ BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   return ret_flag;
 }
-
 
 /** 膜memから1stepで遷移可能な膜を, state_nameと合わせて状態として生成し,
  *  TransitionをRC_EXPANDEDへセットする.
