@@ -2,6 +2,7 @@
 #include "trie.hpp"
 
 #include <iostream>
+#include <string>
 propagation_list::iterator firstNonTrivialCell(propagation_list &pList) {
 
   for (auto it = pList.begin(); it != pList.end(); ++it) {
@@ -244,6 +245,39 @@ propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
 
     auto canonicalDiscreteRefinement =
         listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
+    std::list<std::list<std::string>> canonical_label;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    for (auto &v : canonicalDiscreteRefinement) {
+      auto cv = v.begin();
+      std::cout << (*cv)->name << std::endl;
+      std::list<std::string> l;
+      l.push_back((*cv)->name);
+      for (auto &link : (*cv)->links) {
+	std::cout << link << std::endl;
+	auto &attr = link.attr;
+	if (attr == INTEGER_ATTR) {
+	  std::cout << link.data.integer << std::endl;
+	  l.push_back(std::to_string(link.data.integer));
+	} else if (attr == GLOBAL_ROOT_MEM_ATTR) {
+	  std::cout << "GR" << std::endl;
+	} else {
+	  std::cout << "unexpected attr" << std::endl;
+	}
+      }
+      canonical_label.push_front(l);
+    }
+
+    std::cout << "!!CANONICAL LABEL!!" << std::endl;
+    std::cout << "[";
+    for (auto &l : canonical_label) {
+      std::cout << "[";
+      for (auto &v : l) {
+	std::cout << v << ", ";
+      }
+      std::cout << "]";
+    }
+    std::cout << "]" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!" << std::endl;
 
     return canonicalDiscreteRefinement;
   }
