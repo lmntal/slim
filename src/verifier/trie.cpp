@@ -376,8 +376,10 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     TrieBody *prevNode, S *goAheadStack, TerminationConditionInfo *tInfo,
     int targetDepth, vertex_list *tmp_delete_lst, bool del_f) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::ios::fmtflags flagsSaved = std::cout.flags();
   std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
             << std::setfill('0') << std::hex << currentNode->key << std::endl;
+  std::cout.flags(flagsSaved);
   auto targetCell = target.ownerCell;
   auto brotherCell = brother.ownerCell;
   std::cout << "targetCell: " << std::endl;
@@ -487,9 +489,10 @@ void goBackProcessInnerSingleCommonPrefixVertex(
     TerminationConditionInfo *tInfo, int targetDepth,
     vertex_list *tmp_delete_lst, bool del_f) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::ios::fmtflags flagsSaved = std::cout.flags();
   std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
             << std::setfill('0') << std::hex << currentNode->key << std::endl;
-
+  std::cout.flags(flagsSaved);
   auto targetCell = ivertex.ownerCell;
   std::cout << *targetCell << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -551,8 +554,10 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
                    S *goAheadStack, TerminationConditionInfo *tInfo,
                    int targetDepth, vertex_list *tmp_delete_lst, bool del_f) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::ios::fmtflags flagsSaved = std::cout.flags();
   std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
             << std::setfill('0') << std::hex << currentNode->key << std::endl;
+  std::cout.flags(flagsSaved);
 
   std::cout << "currentNode->depth:" << currentNode->depth << std::endl;
   if (targetDepth < currentNode->depth) {
@@ -613,16 +618,25 @@ void goBackProcessOfCurrentConvertedVertices(
   int i;
 
   for (i = 0; i < BFSStack->size(); i++) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     ConvertedGraphVertex *cVertex = BFSStack->at(i);
+    std::cout << *cVertex << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     InheritedVertex *iVertex = cVertex->correspondingVertexInTrie;
+    std::cout << *iVertex << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     TrieBody *currentNode = iVertex->ownerNode;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     auto targetCell = iVertex->ownerCell;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     vertex_list *tmp_delete_lst = new vertex_list();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     tmp_delete_lst->splice(std::begin(*tmp_delete_lst), *iVertex->ownerList,
                            targetCell);
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     goBackProcess(*iVertex, currentNode, goAheadStack, tInfo, targetDepth,
                   tmp_delete_lst, false);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   return;
@@ -845,15 +859,36 @@ void addInheritedVerticesToTrie(
 
 template <typename S1, typename S2, typename S3>
 void moveInheritedRelinkedVerticesToBFSStack(
-    S1 *relinkedVertices, S2 *initializeConvertedVerticesStack, S3 *BFSStack) {
+					     S1 *relinkedVertices, S2 *initializeConvertedVerticesStack, S3 *BFSStack, ConvertedGraph *cv, std::map<int, int> &id_map) {
   auto rit = relinkedVertices->rbegin();
   while (rit != relinkedVertices->rend()) {
     ConvertedGraphVertex *cVertex = *rit;
     rit++;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *cVertex << std::endl;
+    std::cout << cVertex->ID << std::endl;
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // for (auto &v : id_map) {
+    //   std::cout << v.first << "-->" << v.second << std::endl;
+    // }
+    // auto it = cv->atoms.find(id_map[cVertex->ID]);
+    // if (it == cv->atoms.end()) {
+    //   printf("%s:%d\n", __FUNCTION__, __LINE__);
+    //   std::cout << "FIND BUG!!!!!!!!!!!" << std::endl;
+    //   exit(0);
+    // }
+    // auto cAfterVertex = it->second;
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+
+    // std::cout << *cAfterVertex << std::endl;
     cVertex->isPushedIntoDiffInfoStack = false;
     // popConvertedVertexFromDiffInfoStackWithoutOverlap(relinkedVertices);
     BFSStack->push_back(cVertex);
     cVertex->isVisitedInBFS = TRUE;
+    // cAfterVertex->isPushedIntoDiffInfoStack = false;
+    // // popConvertedVertexFromDiffInfoStackWithoutOverlap(relinkedVertices);
+    // BFSStack->push_back(cAfterVertex);
+    // cAfterVertex->isVisitedInBFS = TRUE;
   }
 
   return;
@@ -1279,9 +1314,22 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
     std::cout << *v.second->correspondingVertexInTrie->correspondingVertex
               << std::endl;
   }
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "--Before Graph--" << std::endl;
+  std::cout << *cBeforeGraph->cv << std::endl;
+  std::cout << "----------------" << std::endl;
+  std::cout << "--After Graph--" << std::endl;
+  std::cout << *cAfterGraph->cv << std::endl;
+  std::cout << "----------------" << std::endl;
   deleteInheritedVerticesFromTrie(this, diffInfo->deletedVertices,
                                   &goAheadStack);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "--Before Graph--" << std::endl;
+  std::cout << *cBeforeGraph->cv << std::endl;
+  std::cout << "----------------" << std::endl;
+  std::cout << "--After Graph--" << std::endl;
+  std::cout << *cAfterGraph->cv << std::endl;
+  std::cout << "----------------" << std::endl;
   addInheritedVerticesToTrie(this, diffInfo->addedVertices,
                              &initializeConvertedVerticesStack, &goAheadStack,
                              cAfterGraph, gapOfGlobalRootMemID);
@@ -1306,7 +1354,7 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   cg_trie_reference_check(cAfterGraph->cv);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   moveInheritedRelinkedVerticesToBFSStack(
-      diffInfo->relinkedVertices, &initializeConvertedVerticesStack, &BFSStack);
+					  diffInfo->relinkedVertices, &initializeConvertedVerticesStack, &BFSStack, cAfterGraph->cv, id_map);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   int stepOfPropagation = -1;
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
@@ -1428,8 +1476,10 @@ inline std::ostream &operator<<(std::ostream &os, const TrieBody &body) {
     for (int i = 0; i < body.depth; i++)
       os << "    ";
     os << "KEY:";
+    std::ios::fmtflags flagsSaved = std::cout.flags();
     os << std::uppercase << std::setw(8) << std::setfill('0') << std::hex
        << body.key;
+    std::cout.flags(flagsSaved);
     os << "\n";
 
     for (int i = 0; i < body.depth; i++)

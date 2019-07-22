@@ -463,7 +463,13 @@ void back_trie_to_parent(State *s) {
     rev_dif->addedVertices->push_back(v);
   }
   for (auto &v : *s->parent->diff_map[s->state_id].second->relinkedVertices) {
-    rev_dif->relinkedVertices->push_back(v);
+    auto it = s->parent->graphinfo->cv->atoms.find(iso[v->ID]);
+    if (it == s->parent->graphinfo->cv->atoms.end()) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "FIND BUG!!!!!!!!!!!" << std::endl;
+      exit(0);
+    }
+    rev_dif->relinkedVertices->push_back(it->second);
   }
   std::cout << "DIFF:(" << s->state_id << ")-->(" << s->parent->state_id << ")"
             << std::endl;
@@ -579,7 +585,22 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         rev_dif->addedVertices->push_back(v);
       }
       for (auto &v : *dif->relinkedVertices) {
-	rev_dif->relinkedVertices->push_back(v);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << *v << std::endl;
+	std::cout << rev_iso[v->ID] << std::endl;
+	auto it = s->graphinfo->cv->atoms.find(rev_iso[v->ID]);
+	if (it == s->graphinfo->cv->atoms.end()) {
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+	  std::cout << "FIND BUG!!!!!!!!!!!" << std::endl;
+	  std::cout << "---REVREV---" << std::endl;
+	  for (auto &x : rev_iso) {
+	    std::cout << x.first << "-->" << x.second << std::endl;
+	  }
+	  std::cout << "------------" << std::endl;
+	  exit(0);
+	}
+	std::cout << *it->second << std::endl;
+	rev_dif->relinkedVertices->push_back(it->second);
       }
       if (s->trie) {
         printf("%s:%d\n", __FUNCTION__, __LINE__);
