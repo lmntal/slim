@@ -223,8 +223,9 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
 }
 
 std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
-                           Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph,
-                           std::map<int, int> &id_map) {
+                                                Graphinfo *cAfterGraph,
+                                                Graphinfo *cBeforeGraph,
+                                                std::map<int, int> &id_map) {
   std::vector<std::vector<std::string>> canonical_label;
   int gapOfGlobalRootMemID =
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
@@ -254,16 +255,21 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
       std::vector<std::string> l;
       l.push_back((*cv)->name);
       for (auto &link : (*cv)->links) {
-	std::cout << link << std::endl;
-	auto &attr = link.attr;
-	if (attr == INTEGER_ATTR) {
-	  std::cout << link.data.integer << std::endl;
-	  l.push_back(std::to_string(link.data.integer));
-	} else if (attr == GLOBAL_ROOT_MEM_ATTR) {
-	  std::cout << "GR" << std::endl;
-	} else {
-	  std::cout << "unexpected attr" << std::endl;
-	}
+        std::cout << link << std::endl;
+        auto &attr = link.attr;
+        if (attr == INTEGER_ATTR) {
+          std::cout << link.data.integer << std::endl;
+          l.push_back(std::to_string(link.data.integer));
+        } else if (attr == GLOBAL_ROOT_MEM_ATTR) {
+          std::cout << "GR" << std::endl;
+        } else if (attr < 128) {
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+	  auto adjVertex = cAfterGraph->cv->atoms[link.data.ID];
+	  std::cout << *adjVertex << std::endl;
+	  l.push_back(adjVertex->name);
+        } else {
+          std::cout << "unexpected attr" << std::endl;
+        }
       }
       canonical_label.push_back(l);
     }
@@ -273,7 +279,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
     for (auto &l : canonical_label) {
       std::cout << "[";
       for (auto &v : l) {
-	std::cout << v << ", ";
+        std::cout << v << ", ";
       }
       std::cout << "]";
     }
