@@ -32,16 +32,26 @@ inline void clear_finite_larger_than(OmegaArray &body, int index) {
     std::cout << v.first << ", " << v.second << std::endl;
   }
   std::cout << "body.upper_bound(index)->first = " << body.upper_bound(index)->first << std::endl;
+  std::cout << "ub.second"  << body.upper_bound(index)->second << std::endl;
   std::cout << "std::prev(body.end())->first = " << std::prev(body.end())->first << std::endl;
+  std::cout << "prev.second" << std::prev(body.end())->second<< std::endl;
   auto start = body.upper_bound(index);
-  if(start == std::prev(body.end()))
+  if(start == body.end()) {
+    std::cout << "ENDDDDDDDDDD" << std::endl;
+  } else if(start == std::prev(body.end())) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     body.erase(start);
-  else
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+  } else {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     body.erase(body.upper_bound(index), std::prev(body.end()));
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  for(auto &v : body) {
-    std::cout << v.first << ", " << v.second << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  for (auto it = body.begin(); it != body.end(); ++it){
+    std::cout << it->first << ", " << it->second << std::endl;
+  }
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
 }
 
 inline int maxIndex(const OmegaArray &body) {

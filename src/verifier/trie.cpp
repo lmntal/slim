@@ -1037,26 +1037,37 @@ void TrieBody::collectDescendantConvertedVertices(TrieBody *descendantBody) {
 
 void TrieBody::makeTrieMinimumInner(TerminationConditionInfo *tInfo,
                                     int stepOfPropagation) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (this->depth == stepOfPropagation + 1) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (this->isPushedIntoGoAheadStack) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       for (auto &v : *this->inheritedVertices) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         (*tInfo->distribution)[omega_array::OMEGA]++;
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
         slim::element::get<InheritedVertex>(v).canonicalLabel.first = this->key;
       }
     }
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (!this->children->empty()) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       for (auto &v : *this->children)
         this->collectDescendantConvertedVertices(v.second);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
       this->clearDescendants();
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
-
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->isInfinitedDepth = TRUE;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto &v : *this->children)
       v.second->makeTrieMinimumInner(tInfo, stepOfPropagation);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return;
 }
 
@@ -1064,10 +1075,16 @@ void makeTrieMinimum(Trie *trie, int stepOfPropagation) {
   TerminationConditionInfo *tInfo = trie->info;
   trie->body->makeTrieMinimumInner(tInfo, stepOfPropagation);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+  trie->dump();
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "stepOfPropagation = " << stepOfPropagation << std::endl;
   omega_array::move_to_omega_larger_than(*tInfo->distribution,
                                          stepOfPropagation);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  trie->dump();
   omega_array::clear_finite_larger_than(*tInfo->increase, stepOfPropagation);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  trie->dump();
 }
 
 vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel) {
