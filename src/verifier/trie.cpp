@@ -843,11 +843,19 @@ void addInheritedVerticesToTrie(
     std::cout << *targetIVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *targetCVertex << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     targetCVertex->correspondingVertexInTrie = targetIVertex;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     // targetIVertex->ownerNode = trie->body;
     targetIVertex->ownerList = trie->body->inheritedVertices;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     targetCVertex->isVisitedInBFS = TRUE;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    for (auto &v : *initializeConvertedVerticesStack) {
+      std::cout << *v << std::endl;
+    }
     initializeConvertedVerticesStack->push_back(targetCVertex);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();

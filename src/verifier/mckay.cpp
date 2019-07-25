@@ -222,6 +222,15 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
   return isValid;
 }
 
+bool propagationList_is_discrete(propagation_list &p) {
+  bool f = true;
+  for (auto &list : p) {
+    if (list.size() != 1)
+      f = false;
+  }
+  return f;
+}
+
 std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
                                                 Graphinfo *cAfterGraph,
                                                 Graphinfo *cBeforeGraph,
@@ -244,9 +253,16 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
     trie->conventionalPropagationList(trie->body, propagationList);
     std::cout << "###### before list propagate ######" << std::endl;
     std::cout << propagationList << std::endl;
+    propagation_list canonicalDiscreteRefinement;
+    if (propagationList_is_discrete(propagationList)) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      canonicalDiscreteRefinement = propagationList;
+    } else {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      canonicalDiscreteRefinement = listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);      
+    }
 
-    auto canonicalDiscreteRefinement =
-        listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
+
 
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *cAfterGraph->cv << std::endl;
