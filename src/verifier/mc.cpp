@@ -619,7 +619,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         src_succ->trie = s->trie;
         s->trie = nullptr;
-
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	src_succ->trie->dump();
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         printf("===org===\n");
         // printf("graphinfo_address:%p\n", src_succ->graphinfo);

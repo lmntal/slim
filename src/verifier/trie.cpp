@@ -853,9 +853,9 @@ void addInheritedVerticesToTrie(
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     targetCVertex->isVisitedInBFS = TRUE;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    for (auto &v : *initializeConvertedVerticesStack) {
-      std::cout << *v << std::endl;
-    }
+    for (auto &v : *initializeConvertedVerticesStack)
+      std::cout << v << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     initializeConvertedVerticesStack->push_back(targetCVertex);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
