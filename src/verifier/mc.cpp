@@ -553,6 +553,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         ===== Diffiso ====
        */
       src_succ->graphinfo = new Graphinfo(src_succ_m);
+      std::cout << "===parent_graphinfo===" << std::endl;
+      std::cout << *parent_graphinfo->cv << std::endl;
       printf("===org===\n");
       printf("graphinfo_address:%p\n", s->graphinfo);
       printf("cv_address:%p\n", s->graphinfo->cv);

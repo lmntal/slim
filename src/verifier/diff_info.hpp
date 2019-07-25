@@ -102,27 +102,34 @@ struct DiffInfo {
          ++i) {
       const auto &after_hl = after_hyperlinks.find(i->first);
       if (after_hl == after_hyperlinks.end()) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-                                                           i->second);
+	deletedVertices->push_back(i->second);
+        // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
+        //                                                   i->second);
       }
     }
     for (auto i = after_hyperlinks.begin(); i != after_hyperlinks.end(); ++i) {
       const auto &before_hl = before_hyperlinks.find(i->first);
       if (before_hl == before_hyperlinks.end()) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-                                                           i->second);
+	addedVertices->push_back(i->second);
+        // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
+        //                                                   i->second);
       }
     }
     for (auto i = before_atoms.begin(); i != before_atoms.end(); ++i) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *i->second << std::endl;
       const auto &after_atom = after_atoms.find(i->first);
       if (after_atom == after_atoms.end()) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
-                                                           i->second);
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	deletedVertices->push_back(i->second);
+        // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
+        //                                                   i->second);
         for (auto &beforeLink : i->second->links) {
           if (!beforeLink.is_hyper())
             continue;
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-              relinkedVertices, after_hyperlinks[beforeLink.data.ID]);
+	  relinkedVertices->push_back(after_hyperlinks[beforeLink.data.ID]);
+          // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+	  // relinkedVertices, after_hyperlinks[beforeLink.data.ID]);
         }
       } else {
         assert(i->second->links.size() == after_atom->second->links.size());
@@ -132,16 +139,18 @@ struct DiffInfo {
 
           if (beforeLink == afterLink)
             continue;
-
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-              relinkedVertices, after_atom->second);
+	  relinkedVertices->push_back(after_atom->second);
+          // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+	  // relinkedVertices, after_atom->second);
           if (beforeLink.is_hyper()) {
-            pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-                relinkedVertices, after_hyperlinks[beforeLink.data.ID]);
+	    relinkedVertices->push_back(after_hyperlinks[beforeLink.data.ID]);
+            // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+	    // relinkedVertices, after_hyperlinks[beforeLink.data.ID]);
           }
           if (afterLink.is_hyper()) {
-            pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-                relinkedVertices, after_hyperlinks[afterLink.data.ID]);
+	    relinkedVertices->push_back(after_hyperlinks[afterLink.data.ID]);
+            // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+	    // relinkedVertices, after_hyperlinks[afterLink.data.ID]);
           }
         }
       }
@@ -149,13 +158,15 @@ struct DiffInfo {
     for (auto i = after_atoms.begin(); i != after_atoms.end(); ++i) {
       const auto &before_atom = before_atoms.find(i->first);
       if (before_atom == before_atoms.end()) {
-        pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
-                                                           i->second);
+	addedVertices->push_back(i->second);
+        // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(addedVertices,
+        //                                                   i->second);
         for (auto &afterLink : i->second->links) {
           if (!afterLink.is_hyper())
             continue;
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-              relinkedVertices, after_hyperlinks[afterLink.data.ID]);
+	  relinkedVertices->push_back(after_hyperlinks[afterLink.data.ID]);
+          // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+          //     relinkedVertices, after_hyperlinks[afterLink.data.ID]);
         }
       } else {
         assert(i->second->links.size() == before_atom->second->links.size());
@@ -166,15 +177,18 @@ struct DiffInfo {
           if (beforeLink == afterLink)
             continue;
 
-          pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,
-                                                             i->second);
+	  relinkedVertices->push_back(i->second);
+	  //pushConvertedVertexIntoDiffInfoStackWithoutOverlap(relinkedVertices,
+          //                                                   i->second);
           if (beforeLink.is_hyper()) {
-            pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-                relinkedVertices, after_hyperlinks[beforeLink.data.ID]);
+	    relinkedVertices->push_back(after_hyperlinks[beforeLink.data.ID]);
+            // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+	    // relinkedVertices, after_hyperlinks[beforeLink.data.ID]);
           }
           if (afterLink.is_hyper()) {
-            pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
-                relinkedVertices, after_hyperlinks[afterLink.data.ID]);
+	    relinkedVertices->push_back(after_hyperlinks[afterLink.data.ID]);
+            // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
+            //     relinkedVertices, after_hyperlinks[afterLink.data.ID]);
           }
         }
       }
