@@ -859,7 +859,8 @@ void addInheritedVerticesToTrie(
 
 template <typename S1, typename S2, typename S3>
 void moveInheritedRelinkedVerticesToBFSStack(
-					     S1 *relinkedVertices, S2 *initializeConvertedVerticesStack, S3 *BFSStack, ConvertedGraph *cv, std::map<int, int> &id_map) {
+    S1 *relinkedVertices, S2 *initializeConvertedVerticesStack, S3 *BFSStack,
+    ConvertedGraph *cv, std::map<int, int> &id_map) {
   auto rit = relinkedVertices->rbegin();
   while (rit != relinkedVertices->rend()) {
     ConvertedGraphVertex *cVertex = *rit;
@@ -1043,9 +1044,9 @@ void TrieBody::makeTrieMinimumInner(TerminationConditionInfo *tInfo,
     if (this->isPushedIntoGoAheadStack) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       for (auto &v : *this->inheritedVertices) {
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         (*tInfo->distribution)[omega_array::OMEGA]++;
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         slim::element::get<InheritedVertex>(v).canonicalLabel.first = this->key;
       }
     }
@@ -1173,10 +1174,14 @@ std::map<int, std::vector<int>>
 putLabelsToAdjacentVertices(const propagation_list &pList) {
   std::map<int, std::vector<int>> id_to_adjacent_labels;
   int tmpLabel = 0;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   for (auto &list : pList) {   // loop of classes
     for (auto vertex : list) { // loop of vertices
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *vertex << std::endl;
       for (int link_index = 0; link_index < vertex->links.size();
            link_index++) { // loop of links
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
         auto tmpType = vertex->type;
         auto &tmpLink = vertex->links[link_index];
         switch (tmpLink.attr) {
@@ -1192,11 +1197,31 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
           break;
         default:
           if (tmpLink.attr < 128) {
+            printf("%s:%d\n", __FUNCTION__, __LINE__);
             switch (tmpType) {
-            case convertedAtom:
+            case convertedAtom: {
+	      printf("%s:%d\n", __FUNCTION__, __LINE__);
+	      std::cout << tmpLink.data.ID << std::endl;
+	      for (auto &v : id_to_adjacent_labels[tmpLink.data.ID])
+		std::cout << v << std::endl;
+	      printf("%s:%d\n", __FUNCTION__, __LINE__);
+	      std::cout << tmpLabel << std::endl;
+	      std::cout << link_index << std::endl;
+	      std::cout << &id_to_adjacent_labels[tmpLink.data.ID] << std::endl;
+	      // id_to_adjacent_labels[tmpLink.data.ID].push_back(0);
+	      for (auto &v : id_to_adjacent_labels[tmpLink.data.ID])
+		std::cout << v << std::endl;
+	      std::cout << &id_to_adjacent_labels[tmpLink.data.ID] << std::endl;
+	      std::cout << tmpLabel*256 + link_index << std::endl;
+	      // id_to_adjacent_labels[tmpLink.data.ID].push_back(0);
               id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
                                                                link_index);
+	      printf("%s:%d\n", __FUNCTION__, __LINE__);
+
+
+	      printf("%s:%d\n", __FUNCTION__, __LINE__);
               break;
+            }
             case convertedHyperLink:
               id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
                                                                HYPER_LINK_ATTR);
@@ -1220,10 +1245,14 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
 void refineConventionalPropagationListByPropagation(propagation_list &pList) {
   bool refined = false;
   do {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     auto labels = putLabelsToAdjacentVertices(pList);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     refined = classify(
         pList, [&](const ConvertedGraphVertex *v) { return labels[v->ID]; });
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
   } while (refined);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
 }
 
 void assureReferenceFromConvertedVerticesToInheritedVertices(
@@ -1370,8 +1399,9 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   cg_trie_reference_check(cAfterGraph->cv);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
-  moveInheritedRelinkedVerticesToBFSStack(
-					  diffInfo->relinkedVertices, &initializeConvertedVerticesStack, &BFSStack, cAfterGraph->cv, id_map);
+  moveInheritedRelinkedVerticesToBFSStack(diffInfo->relinkedVertices,
+                                          &initializeConvertedVerticesStack,
+                                          &BFSStack, cAfterGraph->cv, id_map);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   int stepOfPropagation = -1;
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
