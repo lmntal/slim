@@ -37,7 +37,6 @@
 
 #include "trace_log.h"
 
-template <> const TraceData ProcessTable<TraceData>::unused = {0, 0, 0, 0};
 
 template <typename T>
 const T ProcessTable<T>::unused = std::numeric_limits<T>::max();
@@ -64,7 +63,7 @@ BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) {
 }
 
 LmnWord tracelog_get_matched(TraceLogRef l, LmnWord key) {
-  return l->table.contains(key) ? l->table[key].matched : 0;
+  return l->table.find(key) != l->table.end() ? l->table[key].matched : 0;
 }
 
 LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSymbolAtomRef atom) {
@@ -77,8 +76,4 @@ LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembraneRef mem) {
 
 LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) {
   return tracelog_get_matched(l, LMN_HL_ID(hl));
-}
-
-BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key) {
-  return l->table.contains(key) ? l->table[key].flag : 0;
 }
