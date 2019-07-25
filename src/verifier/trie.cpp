@@ -1426,6 +1426,7 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   this->dump();
   std::cout << *cAfterGraph->cv << std::endl;
+  cg_trie_reference_check(cAfterGraph->cv);
   return verticesAreCompletelySorted;
 }
 

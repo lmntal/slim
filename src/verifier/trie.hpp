@@ -242,6 +242,8 @@ struct Trie {
     if (body->children->empty()) {
       std::list<ConvertedGraphVertex *> l;
       for (auto &v : *body->inheritedVertices) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << *(slim::element::get<InheritedVertex>(v).correspondingVertex) << std::endl;
         l.push_back(slim::element::get<InheritedVertex>(v).correspondingVertex);
       }
       list.push_back(l);

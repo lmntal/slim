@@ -249,9 +249,12 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
         listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
 
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *cAfterGraph->cv << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto &v : canonicalDiscreteRefinement) {
       auto cv = v.begin();
-      std::cout << (*cv)->name << std::endl;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *(*cv) << std::endl;
       std::vector<std::string> l;
       l.push_back((*cv)->name);
       for (auto &link : (*cv)->links) {
