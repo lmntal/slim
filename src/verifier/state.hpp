@@ -112,6 +112,7 @@ struct State {                /* Total:72(36)byte */
   std::vector<std::vector<std::string>> canonical_label;
   std::map<unsigned long, std::pair<std::map<int, int>, DiffInfo *>> diff_map;
   int succ_num_in_openlist;
+  bool on_stack;
 #ifndef MINIMAL_STATE
   BYTE *
       local_flags; /*  8(4)byte:
@@ -555,6 +556,7 @@ public:
     graphinfo=nullptr;
     trie=nullptr;
     canonical_label=std::vector<std::vector<std::string>>();
+    on_stack = false;
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;

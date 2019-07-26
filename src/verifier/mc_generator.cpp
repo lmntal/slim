@@ -479,6 +479,7 @@ void dfs_start(LmnWorker *w) {
 static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                             AutomataRef a, Vector *psyms) {
   while (!vec_is_empty(stack)) {
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n;
@@ -520,12 +521,15 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     if (!worker_on_parallel(w)) { /* Nested-DFS:
                                      postorder順を求めるDFS(再度到達した未展開状態がStackに積み直される)
                                    */
-     s->set_on_stack();
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      s->set_on_stack();
       n = s->successor_num;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
 
-        if (!succ->is_expanded()) {
+        if (!succ->is_expanded() and !succ->on_stack) {
+      	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+	  succ->on_stack = true;
           put_stack(stack, succ);
         }
       }
