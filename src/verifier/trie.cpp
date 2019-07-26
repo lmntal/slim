@@ -32,7 +32,7 @@ struct hash_generator {
       return (hashString->body)[index];
     } else if (index == 0) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      Hash tmp = initialHashValue(cGraph->at(*iVertex, gapOfGlobalRootMemID));
+      Hash tmp = initialHashValue(iVertex->correspondingVertex);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       if (hashString->body.size() > 0) {
         printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -351,11 +351,15 @@ void goBackProcessInnerManyCommonPrefixVertices(
           std::begin(*tmp_delete_lst));
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       target.ownerList = currentNode->inheritedVertices;
+      target.ownerNode = currentNode;
+      target.hashString->creditIndex = currentNode->depth;
+      target.ownerCell = std::begin(*currentNode->inheritedVertices);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      slim::element::get<InheritedVertex>(*targetCell).ownerNode = currentNode;
+      // slim::element::get<InheritedVertex>(*targetCell).ownerNode =
+      // currentNode;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
-      slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
-          currentNode->depth;
+      // slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex
+      // = currentNode->depth;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -372,9 +376,10 @@ void goBackProcessInnerManyCommonPrefixVertices(
 
 template <typename S>
 void goBackProcessInnerDoubleCommonPrefixVertices(
-    InheritedVertex &target, InheritedVertex &brother, TrieBody *currentNode,
-    TrieBody *prevNode, S *goAheadStack, TerminationConditionInfo *tInfo,
-    int targetDepth, vertex_list *tmp_delete_lst, bool del_f) {
+    InheritedVertex &target, InheritedVertex &brother,
+    vertex_list *tmp_brother_lst, TrieBody *currentNode, TrieBody *prevNode,
+    S *goAheadStack, TerminationConditionInfo *tInfo, int targetDepth,
+    vertex_list *tmp_delete_lst, bool del_f) {
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::ios::fmtflags flagsSaved = std::cout.flags();
   std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
@@ -393,32 +398,53 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
           std::begin(*currentNode->inheritedVertices), *tmp_delete_lst,
           std::begin(*tmp_delete_lst));
       target.ownerList = currentNode->inheritedVertices;
-      slim::element::get<InheritedVertex>(*targetCell).ownerNode = currentNode;
-      slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
-          currentNode->depth;
+      target.ownerNode = currentNode;
+      target.ownerCell = std::begin(*currentNode->inheritedVertices);
+      target.hashString->creditIndex = currentNode->depth;
+      // slim::element::get<InheritedVertex>(*targetCell).ownerNode =
+      // currentNode;
+      // slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex
+      // = currentNode->depth;
     }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // InheritedVertex brother_cp = InheritedVertex(brother);
+    // brother_cp.ownerNode =
     prevNode->inheritedVertices->splice(
-        std::begin(*prevNode->inheritedVertices), *brother.ownerList,
-        brotherCell);
+        std::begin(*prevNode->inheritedVertices), *tmp_brother_lst,
+        std::begin(*tmp_brother_lst));
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     brother.ownerList = prevNode->inheritedVertices;
-    slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
-    slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex =
-        prevNode->depth;
+    brother.ownerCell = std::begin(*prevNode->inheritedVertices);
+    brother.ownerNode = prevNode;
+    brother.hashString->creditIndex = prevNode->depth;
+    brother.canonicalLabel.first = prevNode->key;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex
+    // = prevNode->depth;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     (*tInfo->distribution)[prevNode->depth]++;
-    slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
-        prevNode->key;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
+    // prevNode->key;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else if (currentNode->children->size() == 1) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    flagsSaved = std::cout.flags();
+    std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
+              << std::setfill('0') << std::hex << prevNode->key << std::endl;
+    std::cout.flags(flagsSaved);
+
     TrieBody *parent = currentNode->parent;
 
     prevNode->parent->children->erase(prevNode->key);
     delete (prevNode);
     goBackProcessInnerDoubleCommonPrefixVertices(
-        target, brother, parent, currentNode, goAheadStack, tInfo, targetDepth,
-        tmp_delete_lst, del_f);
+        target, brother, tmp_brother_lst, parent, currentNode, goAheadStack,
+        tInfo, targetDepth, tmp_delete_lst, del_f);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -433,20 +459,28 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
       std::cout << "!!!!!!!!!!" << std::endl;
     std::cout << *brother.correspondingVertex->correspondingVertexInTrie
               << std::endl;
-    InheritedVertex brother_cp = InheritedVertex(brother);
-    std::cout << brother_cp << std::endl;
-    brother_cp.ownerNode = prevNode;
-    brother_cp.ownerList = prevNode->inheritedVertices;
-    brother_cp.hashString->creditIndex = prevNode->depth;
-    brother_cp.canonicalLabel.first = prevNode->key;
-    prevNode->inheritedVertices->push_front(brother_cp);
+    prevNode->inheritedVertices->splice(
+        std::begin(*prevNode->inheritedVertices), *tmp_brother_lst,
+        std::begin(*tmp_brother_lst));
+    brother.ownerNode = prevNode;
+    brother.ownerList = prevNode->inheritedVertices;
+    brother.hashString->creditIndex = prevNode->depth;
+    brother.canonicalLabel.first = prevNode->key;
+    brother.ownerCell = std::begin(*prevNode->inheritedVertices);
+    // InheritedVertex brother_cp = InheritedVertex(brother);
+    // std::cout << brother_cp << std::endl;
+    // brother_cp.ownerNode = prevNode;
+    // brother_cp.ownerList = prevNode->inheritedVertices;
+    // brother_cp.hashString->creditIndex = prevNode->depth;
+    // brother_cp.canonicalLabel.first = prevNode->key;
+    // prevNode->inheritedVertices->push_front(brother_cp);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout << *brother_cp.correspondingVertex->correspondingVertexInTrie
-              << std::endl;
-    slim::element::get<InheritedVertex>(
-        *std::begin(*prevNode->inheritedVertices))
-        .ownerCell = std::begin(*prevNode->inheritedVertices);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // std::cout << *brother_cp.correspondingVertex->correspondingVertexInTrie
+    //           << std::endl;
+    // slim::element::get<InheritedVertex>(
+    //     *std::begin(*prevNode->inheritedVertices))
+    //     .ownerCell = std::begin(*prevNode->inheritedVertices);
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *slim::element::get<InheritedVertex>(
                       *std::begin(*prevNode->inheritedVertices))
                       .correspondingVertex
@@ -502,9 +536,14 @@ void goBackProcessInnerSingleCommonPrefixVertex(
           std::begin(*currentNode->inheritedVertices), *tmp_delete_lst,
           std::begin(*tmp_delete_lst));
       ivertex.ownerList = currentNode->inheritedVertices;
-      slim::element::get<InheritedVertex>(*targetCell).ownerNode = currentNode;
-      slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex =
-          currentNode->depth;
+      ivertex.ownerNode = currentNode;
+      ivertex.ownerCell = std::begin(*currentNode->inheritedVertices);
+      ivertex.hashString->creditIndex = currentNode->depth;
+
+      // slim::element::get<InheritedVertex>(*targetCell).ownerNode =
+      // currentNode;
+      // slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex
+      // = currentNode->depth;
       pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
     }
   } else if (currentNode->children->size() == 1 &&
@@ -531,12 +570,17 @@ void goBackProcessInnerSingleCommonPrefixVertex(
     std::cout << slim::element::get<InheritedVertex>(*brother)
                      .correspondingVertex->correspondingVertexInTrie
               << std::endl;
-
+    vertex_list *tmp_brother_lst = new vertex_list();
+    tmp_brother_lst->splice(std::begin(*tmp_brother_lst),
+                            *childNode->inheritedVertices,
+                            std::begin(*childNode->inheritedVertices));
     (*tInfo->distribution)[childNode->depth]--;
 
     goBackProcessInnerDoubleCommonPrefixVertices(
-        ivertex, slim::element::get<InheritedVertex>(*brother), currentNode,
-        childNode, goAheadStack, tInfo, targetDepth, tmp_delete_lst, del_f);
+        ivertex, slim::element::get<InheritedVertex>(*brother), tmp_brother_lst,
+        currentNode, childNode, goAheadStack, tInfo, targetDepth,
+        tmp_delete_lst, del_f);
+    delete tmp_brother_lst;
   } else {
     TrieBody *parent = currentNode->parent;
 
@@ -587,9 +631,15 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
       (*tInfo->distribution)[omega_array::OMEGA]--;
       (*tInfo->distribution)[omega_array::OMEGA]--;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+      vertex_list *tmp_brother_lst = new vertex_list();
+      tmp_brother_lst->splice(std::begin(*tmp_brother_lst),
+                              *currentNode->inheritedVertices,
+                              std::begin(*currentNode->inheritedVertices));
       goBackProcessInnerDoubleCommonPrefixVertices(
-          ivertex, slim::element::get<InheritedVertex>(*brother), parent,
-          currentNode, goAheadStack, tInfo, targetDepth, tmp_delete_lst, del_f);
+          ivertex, slim::element::get<InheritedVertex>(*brother),
+          tmp_brother_lst, parent, currentNode, goAheadStack, tInfo,
+          targetDepth, tmp_delete_lst, del_f);
+      delete tmp_brother_lst;
     } else {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       TrieBody *parent = currentNode->parent;
@@ -603,10 +653,15 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
     }
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    currentNode->inheritedVertices->splice(
-        std::begin(*currentNode->inheritedVertices), *tmp_delete_lst,
-        std::begin(*tmp_delete_lst));
-    ivertex.ownerList = currentNode->inheritedVertices;
+    if (!del_f) {
+      currentNode->inheritedVertices->splice(
+          std::begin(*currentNode->inheritedVertices), *tmp_delete_lst,
+          std::begin(*tmp_delete_lst));
+      ivertex.ownerList = currentNode->inheritedVertices;
+      ivertex.ownerNode = currentNode;
+      ivertex.ownerCell = std::begin(*currentNode->inheritedVertices);
+      ivertex.hashString->creditIndex = currentNode->depth;
+    }
   }
   printf("%s:%d\n", __FUNCTION__, __LINE__);
 }
@@ -636,6 +691,7 @@ void goBackProcessOfCurrentConvertedVertices(
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     goBackProcess(*iVertex, currentNode, goAheadStack, tInfo, targetDepth,
                   tmp_delete_lst, false);
+    delete tmp_delete_lst;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
@@ -1208,26 +1264,25 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
             printf("%s:%d\n", __FUNCTION__, __LINE__);
             switch (tmpType) {
             case convertedAtom: {
-	      printf("%s:%d\n", __FUNCTION__, __LINE__);
-	      std::cout << tmpLink.data.ID << std::endl;
-	      for (auto &v : id_to_adjacent_labels[tmpLink.data.ID])
-		std::cout << v << std::endl;
-	      printf("%s:%d\n", __FUNCTION__, __LINE__);
-	      std::cout << tmpLabel << std::endl;
-	      std::cout << link_index << std::endl;
-	      std::cout << &id_to_adjacent_labels[tmpLink.data.ID] << std::endl;
-	      // id_to_adjacent_labels[tmpLink.data.ID].push_back(0);
-	      for (auto &v : id_to_adjacent_labels[tmpLink.data.ID])
-		std::cout << v << std::endl;
-	      std::cout << &id_to_adjacent_labels[tmpLink.data.ID] << std::endl;
-	      std::cout << tmpLabel*256 + link_index << std::endl;
-	      // id_to_adjacent_labels[tmpLink.data.ID].push_back(0);
+              printf("%s:%d\n", __FUNCTION__, __LINE__);
+              std::cout << tmpLink.data.ID << std::endl;
+              for (auto &v : id_to_adjacent_labels[tmpLink.data.ID])
+                std::cout << v << std::endl;
+              printf("%s:%d\n", __FUNCTION__, __LINE__);
+              std::cout << tmpLabel << std::endl;
+              std::cout << link_index << std::endl;
+              std::cout << &id_to_adjacent_labels[tmpLink.data.ID] << std::endl;
+              // id_to_adjacent_labels[tmpLink.data.ID].push_back(0);
+              for (auto &v : id_to_adjacent_labels[tmpLink.data.ID])
+                std::cout << v << std::endl;
+              std::cout << &id_to_adjacent_labels[tmpLink.data.ID] << std::endl;
+              std::cout << tmpLabel * 256 + link_index << std::endl;
+              // id_to_adjacent_labels[tmpLink.data.ID].push_back(0);
               id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
                                                                link_index);
-	      printf("%s:%d\n", __FUNCTION__, __LINE__);
+              printf("%s:%d\n", __FUNCTION__, __LINE__);
 
-
-	      printf("%s:%d\n", __FUNCTION__, __LINE__);
+              printf("%s:%d\n", __FUNCTION__, __LINE__);
               break;
             }
             case convertedHyperLink:
