@@ -61,10 +61,10 @@ void SimpleProcessTable::tbl_unput_mem(LmnMembraneRef mem) {
 }
 
 int SimpleProcessTable::tbl_get(LmnWord key, BYTE *value) {
-  BYTE v;
-  bool res = this->get(key, &v);
-  if (value) *value = v;
-  return res;
+  if (!this->contains(key))
+    return false;
+  if (value) *value = (*this)[key];
+  return true;
 }
 
 int SimpleProcessTable::tbl_get_by_atom(LmnSymbolAtomRef atom, BYTE *value) {

@@ -117,26 +117,42 @@ void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem) {
  * keyがテーブルに存在しない場合は0を返す. 通常この間数ではなくget_by_atom,
  * get_by_memを使用する./ */
 int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value) {
-  return p->get(key, value);
+  if (!p->contains(key))
+    return false;
+
+  if (value) *value = (*p)[slim::process_id(key)];
+  return true;
 }
 
 /* テーブルのアトムatomに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにatomが存在しない場合は0を返す */
 int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
                          LmnWord *value) {
-  return p->get(atom, value);
+  if (!p->contains(atom))
+    return false;
+
+  if (value) *value = (*p)[slim::process_id(atom)];
+  return true;
 }
 
 /* テーブルの膜memに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにmemが存在しない場合は0を返す */
 int proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value) {
-  return p->get(mem, value);
+  if (!p->contains(mem))
+    return false;
+
+  if (value) *value = (*p)[slim::process_id(mem)];
+  return true;
 }
 
 /* テーブルのハイパーリンクhlに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにhlが存在しない場合は0を返す */
 int proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWord *value) {
-  return p->get(hl, value);
+  if (!p->contains(hl))
+    return false;
+
+  if (value) *value = (*p)[slim::process_id(hl)];
+  return true;
 }
 
 BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key) {

@@ -38,7 +38,6 @@
 #ifndef LMN_TRACE_LOG_H
 #define LMN_TRACE_LOG_H
 
-
 #include "element/element.h"
 #include "membrane.h"
 /*----------------------------------------------------------------------
@@ -58,11 +57,11 @@
  * 訪問済みテーブルの状態をバックトラックさせるためのデータ構造
  */
 
-
+#include "atomlist.hpp"
+#include "membrane.hpp"
 #include "process_table.hpp"
 #include <stack>
-#include "membrane.hpp"
-#include "atomlist.hpp"
+#include <unordered_map>
 
 class LogTracker {
   std::stack<ProcessID> traced_ids;
@@ -109,6 +108,12 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
                       * in-proxyアトムはBS encode時の訪問順序に数えないため,
                       * in-proxyアトムへの対応としては0をセット */
 
+  TraceData() : flag(0), traversed_proc(0), owner_id(0), matched(0) {}
+  TraceData(BYTE flag, unsigned int traversed_proc, ProcessID owner_id,
+            ProcessID matched)
+      : flag(flag), traversed_proc(traversed_proc), owner_id(owner_id),
+        matched(matched) {}
+
   bool operator==(const TraceData &a) const {
     return a.flag == flag && a.traversed_proc == traversed_proc &&
            a.owner_id == owner_id && a.matched == matched;
@@ -124,7 +129,7 @@ struct TraceData { /* 64bit: 24Bytes (32bit: 16Bytes) */
 };
 
 struct TraceLog {
-  ProcessTable<TraceData> table;
+  std::unordered_map<ProcessID, TraceData> table;
   LogTracker tracker;
 
   using key_type = ProcessTable<TraceData>::key_type;
@@ -137,15 +142,14 @@ struct TraceLog {
                : 0;
   }
 
-/* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside
- * proxies) の数が 膜ownerのそれと一致しているか否かを返す */
+  /* 膜ownerを対象として訪問済みにしたプロセス (シンボルアトム + 子膜 + inside
+   * proxies) の数が 膜ownerのそれと一致しているか否かを返す */
   bool eq_traversed_proc_num(LmnMembraneRef owner, AtomListEntryRef in_ent,
                              AtomListEntryRef avoid) {
     size_t s1 = in_ent ? in_ent->size() : 0;
     size_t s2 = avoid ? avoid->size() : 0;
     return traversed_proc_count(owner) ==
-      (owner->symb_atom_num() + owner->child_mem_num() +
-            s1 - s2);
+           (owner->symb_atom_num() + owner->child_mem_num() + s1 - s2);
   }
 
 private:
@@ -166,7 +170,7 @@ private:
       table[owner->mem_id()].traversed_proc++;
     }
 
-    table[key] = value;
+    table.insert(std::make_pair(key, value));
 
     tracker.trace(key);
 
@@ -174,26 +178,28 @@ private:
   }
 
 public:
-/* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
- * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
- */
-  bool visit_atom(LmnSymbolAtomRef atom, LmnWord atom2_id, LmnMembraneRef owner) {
+  /* ログに, 所属膜ownerのアトムatomへの訪問を記録する.
+   * atomにマッチしたアトムのプロセスIDもしくは訪問番号atom2_idを併せて記録する.
+   */
+  bool visit_atom(LmnSymbolAtomRef atom, LmnWord atom2_id,
+                  LmnMembraneRef owner) {
     return this->visit(atom->get_id(), TraceData::options::TRAVERSED_ATOM,
                        atom2_id, owner);
   }
 
-/* ログに, 膜mem1への訪問を記録する. (所属膜はmem1のメンバから参照するため不要)
- * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
+  /* ログに, 膜mem1への訪問を記録する.
+   * (所属膜はmem1のメンバから参照するため不要)
+   * mem1にマッチした膜のプロセスIDもしくは訪問番号mem2_idを併せて記録する */
   bool visit_mem(LmnMembraneRef mem1, LmnWord mem2_id) {
     return this->visit(mem1->mem_id(), TraceData::options::TRAVERSED_MEM,
                        mem2_id, mem1->mem_parent());
   }
 
-/* ログに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.
- * (ハイパーグラフ構造には所属膜の概念がなく,
- * 膜オブジェクトからの参照もできないため, 所属膜に対する一切の操作は不要)
- * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
- */
+  /* ログに, ハイパーグラフのルートオブジェクトhl1への訪問を記録する.
+   * (ハイパーグラフ構造には所属膜の概念がなく,
+   * 膜オブジェクトからの参照もできないため, 所属膜に対する一切の操作は不要)
+   * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
+   */
   bool visit_hlink(HyperLink *hl1, LmnWord hl2_id) {
     return this->visit(LMN_HL_ID(hl1), TraceData::options::TRAVERSED_HLINK,
                        hl2_id, NULL);
@@ -202,6 +208,8 @@ public:
   void leave(key_type key) {
     const auto owner_id = table[key].owner_id;
     table[owner_id].traversed_proc--;
+    if (table[owner_id] == TraceData())
+      table.erase(owner_id);
     table.erase(key);
   }
 
@@ -240,6 +248,5 @@ LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl);
 void tracelog_backtrack(TraceLogRef l);
 void tracelog_set_btpoint(TraceLogRef l);
 void tracelog_continue_trace(TraceLogRef l);
-BYTE tracelog_get_matchedFlag(TraceLogRef l, LmnWord key);
 
 #endif /* LMN_TRACE_LOG_H */
