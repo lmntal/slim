@@ -23,5 +23,6 @@ liblmn_elm_a_SOURCES =                              \
 	st.cpp st.h \
 	util.cpp util.h \
 	vector.cpp vector.h \
-	life_time.cpp
+	life_time.cpp \
+	json/value.cpp
 	

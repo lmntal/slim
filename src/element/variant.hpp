@@ -68,37 +68,37 @@ using variant_storage =
 
 template <typename T, typename U, typename... Types>
 static constexpr auto variant_type_index() -> typename std::enable_if<
-    std::is_same<typename std::decay<T>::type, U>::value, size_t>::type {
+    std::is_convertible<typename std::decay<T>::type, U>::value, size_t>::type {
   return 0;
 }
 
 template <typename T, typename U, typename... Types>
 static constexpr auto variant_type_index() -> typename std::enable_if<
-    !std::is_same<typename std::decay<T>::type, U>::value, size_t>::type {
+    !std::is_convertible<typename std::decay<T>::type, U>::value, size_t>::type {
   return 1 + variant_type_index<T, Types...>();
 }
 
 template <typename T, typename U, typename... Types>
 static auto variant_store(void *p, T &&t) -> typename std::enable_if<
-    std::is_same<U, typename std::decay<T>::type>::value>::type {
-  ::new (p) typename std::decay<T>::type(std::forward<U>(t));
+    std::is_convertible<typename std::decay<T>::type, U>::value>::type {
+  ::new (p) U(std::forward<T>(t));
 }
 
 template <typename T, typename U, typename... Types>
 static auto variant_store(void *p, T &&t) -> typename std::enable_if<
-    !std::is_same<U, typename std::decay<T>::type>::value>::type {
+    !std::is_convertible<typename std::decay<T>::type, U>::value>::type {
   variant_store<T, Types...>(p, std::forward<T>(t));
 }
 
 template <typename T, typename U, typename... Types>
 static auto variant_store(void *p, const T &t) -> typename std::enable_if<
-    std::is_same<U, typename std::decay<T>::type>::value>::type {
-  ::new (p) typename std::decay<T>::type(t);
+    std::is_convertible<typename std::decay<T>::type, U>::value>::type {
+  ::new (p) U(t);
 }
 
 template <typename T, typename U, typename... Types>
 static auto variant_store(void *p, const T &t) -> typename std::enable_if<
-    !std::is_same<U, typename std::decay<T>::type>::value>::type {
+    !std::is_convertible<typename std::decay<T>::type, U>::value>::type {
   variant_store<T, Types...>(p, t);
 }
 
@@ -218,7 +218,9 @@ template <typename... Types> struct variant {
     return *this;
   }
 
-  ~variant() { visit(deleter(), *this); }
+  ~variant() {
+    visit(deleter(), *this);
+  }
 
   size_t index() const { return index_; }
 

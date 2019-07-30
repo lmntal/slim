@@ -1,8 +1,9 @@
 /*
- * element.h
+ * exception.hpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
- * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
+ *   Copyright (c) 2019, Ueda Laboratory LMNtal Group
+ *                                          <lmntal@ueda.info.waseda.ac.jp>
+ *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -32,41 +33,31 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef LMN_ELEMENT_H
-#define LMN_ELEMENT_H
+#ifndef SLIM_ELEMENT_JSON_EXCEPTION_HPP
+#define SLIM_ELEMENT_JSON_EXCEPTION_HPP
 
-/**
- * @defgroup Element
- */
+#include <istream>
+#include <stdexcept>
+#include <string>
 
-#include "clock.h"
-#include "conditional_ostream.hpp"
-#include "error.h"
-#include "exception.hpp"
-#include "file_util.h"
-#include "instruction.hpp"
-#include "internal_hash.h"
-#include "life_time.hpp"
-#include "lmnstring.h"
-#include "lmntal_thread.h"
-#include "memory_pool.h"
-#include "optional.hpp"
-#include "port.h"
-#include "process_util.h"
-#include "queue.h"
-#include "range_remove_if.hpp"
-#include "re2c/buffer.hpp"
-#include "re2c/cfstream_buffer.hpp"
-#include "re2c/file_buffer.hpp"
-#include "scope.hpp"
-#include "st.h"
-#include "stack_trace.hpp"
-#include "util.h"
-#include "variant.hpp"
-#include "vector.h"
+namespace slim {
+namespace element {
+namespace json {
+struct parse_error {};
 
-#endif /* LMN_ELEMENT_H */
+struct overflow_error : parse_error, std::overflow_error {
+  overflow_error(std::istream::pos_type pos)
+      : std::overflow_error("occurred at " + std::to_string(pos)) {}
+};
+struct syntax_error : parse_error, std::runtime_error {
+  syntax_error(const std::string &what_arg, std::istream::pos_type pos)
+      : std::runtime_error(what_arg + "(at " + std::to_string(pos) + ")") {}
+};
+
+} // namespace json
+} // namespace element
+} // namespace slim
+
+#endif /* SLIM_ELEMENT_JSON_EXCEPTION_HPP */
