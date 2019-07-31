@@ -43,12 +43,11 @@
 #include <cstdint>
 #include <istream>
 #include <map>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <iostream>
 
 namespace slim {
 namespace element {
@@ -65,7 +64,8 @@ struct array;
 struct object;
 
 using value_type =
-    c17::variant<null, integer, real, string, boolean, array, object>;
+    c17::variant<null, integer, real, string, boolean, std::unique_ptr<array>,
+                 std::unique_ptr<object>>;
 
 struct null {
   operator std::nullptr_t() { return nullptr; }
@@ -102,15 +102,16 @@ struct array {
   std::vector<value_type> value;
 
   array() {}
-  array(const std::vector<value_type> &v) : value(v) {}
-  operator std::vector<value_type>() { return value; }
+  array(std::vector<value_type> &&v) : value(std::move(v)) {}
+  array(array &&v) : value(std::move(v.value)) {}
+  operator std::vector<value_type> &&() { return std::move(value); }
 };
 struct object {
   std::unordered_map<std::string, value_type> value;
 
   object() {}
-  object(const std::unordered_map<std::string, value_type> &v) : value(v) {}
-  operator std::unordered_map<std::string, value_type>() { return value; }
+  object(std::unordered_map<std::string, value_type> &&v) : value(std::move(v)) {}
+  operator std::unordered_map<std::string, value_type> &&() { return std::move(value); }
 };
 
 // throws json::syntax_error, json::overflow_error

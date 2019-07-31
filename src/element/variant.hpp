@@ -74,7 +74,8 @@ static constexpr auto variant_type_index() -> typename std::enable_if<
 
 template <typename T, typename U, typename... Types>
 static constexpr auto variant_type_index() -> typename std::enable_if<
-    !std::is_convertible<typename std::decay<T>::type, U>::value, size_t>::type {
+    !std::is_convertible<typename std::decay<T>::type, U>::value,
+    size_t>::type {
   return 1 + variant_type_index<T, Types...>();
 }
 
@@ -90,22 +91,14 @@ static auto variant_store(void *p, T &&t) -> typename std::enable_if<
   variant_store<T, Types...>(p, std::forward<T>(t));
 }
 
-template <typename T, typename U, typename... Types>
-static auto variant_store(void *p, const T &t) -> typename std::enable_if<
-    std::is_convertible<typename std::decay<T>::type, U>::value>::type {
-  ::new (p) U(t);
-}
-
-template <typename T, typename U, typename... Types>
-static auto variant_store(void *p, const T &t) -> typename std::enable_if<
-    !std::is_convertible<typename std::decay<T>::type, U>::value>::type {
-  variant_store<T, Types...>(p, t);
-}
-
 template <typename... Types> struct variant;
 
 template <typename T, typename... Types> T &get(variant<Types...> &v) {
   return *static_cast<T *>(static_cast<void *>(&v.storage_));
+}
+
+template <typename T, typename... Types> T &&get(variant<Types...> &&v) {
+  return std::move(*static_cast<T *>(static_cast<void *>(&v.storage_)));
 }
 
 template <typename T, typename... Types>
@@ -113,18 +106,16 @@ const T &get(const variant<Types...> &v) {
   return *static_cast<const T *>(static_cast<const void *>(&v.storage_));
 }
 
-template <size_t I, typename Variant>
+template <size_t I, typename Variant,
+          typename T_i = typename std::tuple_element<
+              I, typename std::decay<Variant>::type::type_tuple>::type>
 auto get(Variant &&v)
-    -> decltype(get<typename std::tuple_element<
-                    I, typename std::decay<Variant>::type::type_tuple>::type>(
-        std::forward<Variant>(v))) {
-  return get<typename std::tuple_element<
-      I, typename std::decay<Variant>::type::type_tuple>::type>(
-      std::forward<Variant>(v));
+    -> decltype(get<T_i>(std::forward<Variant>(v))) {
+  return get<T_i>(std::forward<Variant>(v));
 }
 
 template <size_t I, typename Visitor, typename Variant,
-          typename TypeTuple = typename std::decay<Variant>::type::type_tuple,
+          typename TypeTuple = typename std::remove_cv<typename std::decay<Variant>::type>::type::type_tuple,
           typename std::enable_if<(I == std::tuple_size<TypeTuple>::value - 1),
                                   std::nullptr_t>::type = nullptr>
 constexpr auto visit_impl(Visitor &&vis, Variant &&var)
@@ -133,7 +124,7 @@ constexpr auto visit_impl(Visitor &&vis, Variant &&var)
 }
 
 template <size_t I, typename Visitor, typename Variant,
-          typename TypeTuple = typename std::decay<Variant>::type::type_tuple,
+          typename TypeTuple = typename std::remove_cv<typename std::decay<Variant>::type>::type::type_tuple,
           typename std::enable_if<(I < std::tuple_size<TypeTuple>::value - 1),
                                   std::nullptr_t>::type = nullptr>
 constexpr auto visit_impl(Visitor &&vis, Variant &&var)
@@ -161,9 +152,6 @@ template <typename... Types> struct variant {
     loader(void *storage) : p(storage) {}
     template <typename T> void operator()(T &&t) {
       variant_store<T, Types...>(p, std::forward<T>(t));
-    }
-    template <typename T> void operator()(const T &t) {
-      variant_store<T, Types...>(p, t);
     }
   };
 
@@ -195,8 +183,8 @@ template <typename... Types> struct variant {
   }
 
   variant(variant &&other) noexcept {
-    visit(loader(&storage_), std::move(other));
     index_ = other.index();
+    visit(loader(&storage_), std::move(other));
   }
   template <typename T,
             typename std::enable_if<
@@ -206,21 +194,31 @@ template <typename... Types> struct variant {
     variant_store<T, Types...>(&storage_, std::forward<T>(t));
     index_ = variant_type_index<T, Types...>();
   }
+
   variant &operator=(const variant &rhs) {
+    visit(deleter(), *this);
     visit(loader(&storage_), rhs);
     index_ = rhs.index();
     return *this;
   }
-  template <typename... Ts> variant &operator=(const variant<Ts...> &rhs) {
+  variant &operator=(variant &&rhs) {
     visit(deleter(), *this);
-    visit(loader(&storage_), rhs);
     index_ = rhs.index();
+    visit(loader(&storage_), std::move(rhs));
+    return *this;
+  }
+  template <class T,
+            typename std::enable_if<
+                !std::is_same<variant, typename std::decay<T>::type>::value,
+                std::nullptr_t>::type = nullptr>
+  variant &operator=(T &&t) {
+    visit(deleter(), *this);
+    variant_store<T, Types...>(&storage_, std::forward<T>(t));
+    index_ = variant_type_index<T, Types...>();
     return *this;
   }
 
-  ~variant() {
-    visit(deleter(), *this);
-  }
+  ~variant() { visit(deleter(), *this); }
 
   size_t index() const { return index_; }
 

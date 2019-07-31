@@ -39,6 +39,8 @@
 
 #include "exception.hpp"
 
+#include "../util.h"
+
 #include <cmath>
 #include <cctype>
 #include <limits>
@@ -53,6 +55,9 @@ namespace json {
 
 // for variant
 namespace c17 = slim::element;
+
+// for make_unique
+namespace c14 = slim::element;
 
 using namespace slim::element;
 
@@ -131,7 +136,7 @@ std::istream &operator>>(std::istream &in, value_type &value) {
     int64_t integral_part = read_integral(in);
 
     if (in.peek() != '.') {
-      value = json::integer(integral_part);
+      value = std::move(json::integer(integral_part));
     } else {
       in.ignore();
 
@@ -207,9 +212,9 @@ std::istream &operator>>(std::istream &in, value_type &value) {
         throw json::syntax_error(
             "elements of an object must be key-value pair.", in.tellg());
 
-      json_t value;
-      in >> value;
-      m[c17::get<json::string>(key)] = value;
+      json_t v;
+      in >> v;
+      m[c17::get<json::string>(key)] = std::move(v);
 
       do {
         in.get(c);
@@ -225,13 +230,13 @@ std::istream &operator>>(std::istream &in, value_type &value) {
         throw json::syntax_error("expected ',' between key-value pairs.", in.tellg());
     }
 
-    value = json::object(m);
+    value = c14::make_unique<json::object>(std::move(m));
   } else if (c == '[') {
-    std::vector<json_t> v;
+    std::vector<json_t> vs;
     while (true) {
-      json_t value;
-      in >> value;
-      v.push_back(value);
+      json_t v;
+      in >> v;
+      vs.push_back(std::move(v));
 
       do {
         in.get(c);
@@ -247,7 +252,7 @@ std::istream &operator>>(std::istream &in, value_type &value) {
         throw json::syntax_error("expected ',' between elements.", in.tellg());
     }
 
-    value = json::array(v);
+    value = c14::make_unique<json::array>(std::move(vs));
   }
 
   return in;
@@ -267,19 +272,19 @@ struct pretty_printer {
   void operator()(const json::boolean &value) {
     os << (value.value ? "true" : "false");
   }
-  void operator()(const json::array &value) {
+  void operator()(const std::unique_ptr<json::array> &value) {
     os << "[";
-    for (size_t i = 0; i < value.value.size(); i++) {
+    for (size_t i = 0; i < value->value.size(); i++) {
       if (i > 0)
         os << ", ";
-      c17::visit(*this, value.value[i]);
+      c17::visit(*this, value->value[i]);
     }
     os << "]";
   }
-  void operator()(const json::object &value) {
+  void operator()(const std::unique_ptr<json::object> &value) {
     os << "{";
-    for (auto it = value.value.begin(); it != value.value.end(); ++it) {
-      if (it != value.value.begin())
+    for (auto it = value->value.begin(); it != value->value.end(); ++it) {
+      if (it != value->value.begin())
         os << ", ";
       os << "\"" << it->first << "\": ";
       c17::visit(*this, it->second);
