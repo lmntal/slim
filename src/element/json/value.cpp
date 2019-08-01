@@ -41,8 +41,8 @@
 
 #include "../util.h"
 
-#include <cmath>
 #include <cctype>
+#include <cmath>
 #include <limits>
 
 // TODO:
@@ -56,21 +56,16 @@ namespace json {
 // for variant
 namespace c17 = slim::element;
 
-// for make_unique
-namespace c14 = slim::element;
+namespace c14 = slim::element;  // for make_unique
 
 using namespace slim::element;
 
 namespace {
-constexpr bool is_sub_overflow_free(uint64_t a, uint64_t b) {
-  return a >= b;
-}
+constexpr bool is_sub_overflow_free(uint64_t a, uint64_t b) { return a >= b; }
 constexpr bool is_add_overflow_free(uint64_t a, uint64_t b) {
   return a <= std::numeric_limits<uint64_t>::max() - b;
 }
-constexpr bool is_div_overflow_free(uint64_t a, uint64_t b) {
-  return b != 0u;
-}
+constexpr bool is_div_overflow_free(uint64_t a, uint64_t b) { return b != 0u; }
 constexpr bool is_mul_overflow_free(uint64_t a, uint64_t b) {
   return is_div_overflow_free(std::numeric_limits<uint64_t>::max(), b) &&
          a <= std::numeric_limits<uint64_t>::max() / b;
@@ -114,7 +109,8 @@ int64_t read_integral(std::istream &in, int &digits) {
   // std::absをint64_tの最小値に適用するとint64_tで表せる範囲を超えてしまう.
   // int64_tの負値表現が2の補数であることは規格により保証されているため、
   // ビット演算を用いて無理やり正しい絶対値を求める.
-  uint64_t min_abs = (((uint64_t)std::numeric_limits<int64_t>::min() - 1) ^ (uint64_t)(~0));
+  uint64_t min_abs =
+      (((uint64_t)std::numeric_limits<int64_t>::min() - 1) ^ (uint64_t)(~0));
   if (sign < 0 && integral_part > min_abs)
     throw json::overflow_error(in.tellg());
 
@@ -142,7 +138,8 @@ std::istream &operator>>(std::istream &in, value_type &value) {
 
       // real number
       if (in.peek() == '-' || in.peek() == '+')
-        throw json::syntax_error("fractional part must not be signed.", in.tellg());
+        throw json::syntax_error("fractional part must not be signed.",
+                                 in.tellg());
 
       int digits;
       int64_t fractional_part = read_integral(in, digits);
@@ -197,59 +194,80 @@ std::istream &operator>>(std::istream &in, value_type &value) {
     value = json::string(s);
   } else if (c == '{') {
     std::unordered_map<std::string, json_t> m;
-    while (true) {
-      json_t key;
-      in >> key;
 
-      if (!c17::holds_alternative<json::string>(key))
-        throw json::syntax_error("a key of an object must be a string.", in.tellg());
+    // skip blanks
+    while (in && std::isspace(in.peek()))
+      in.ignore();
 
-      do {
-        in.get(c);
-      } while (in && std::isspace(c));
+    if (in.peek() == '}') {
+      in.ignore();
+    } else {
+      while (true) {
+        json_t key;
+        in >> key;
 
-      if (c != ':')
-        throw json::syntax_error(
-            "elements of an object must be key-value pair.", in.tellg());
+        if (!c17::holds_alternative<json::string>(key))
+          throw json::syntax_error("a key of an object must be a string.",
+                                   in.tellg());
 
-      json_t v;
-      in >> v;
-      m[c17::get<json::string>(key)] = std::move(v);
+        do {
+          in.get(c);
+        } while (in && std::isspace(c));
 
-      do {
-        in.get(c);
-      } while (in && std::isspace(c));
+        if (c != ':')
+          throw json::syntax_error(
+              "elements of an object must be key-value pair.", in.tellg());
 
-      if (c == '}')
-        break;
+        json_t v;
+        in >> v;
+        m[c17::get<json::string>(key)] = std::move(v);
 
-      if (!in)
-        throw json::syntax_error("unexpected end of file.", in.tellg());
+        do {
+          in.get(c);
+        } while (in && std::isspace(c));
 
-      if (c != ',')
-        throw json::syntax_error("expected ',' between key-value pairs.", in.tellg());
+        if (c == '}')
+          break;
+
+        if (!in)
+          throw json::syntax_error("unexpected end of file.", in.tellg());
+
+        if (c != ',')
+          throw json::syntax_error("expected ',' between key-value pairs.",
+                                   in.tellg());
+      }
     }
 
     value = c14::make_unique<json::object>(std::move(m));
   } else if (c == '[') {
     std::vector<json_t> vs;
-    while (true) {
-      json_t v;
-      in >> v;
-      vs.push_back(std::move(v));
 
-      do {
-        in.get(c);
-      } while (in && std::isspace(c));
+    // skip blanks
+    while (in && std::isspace(in.peek()))
+      in.ignore();
 
-      if (c == ']')
-        break;
+    if (in.peek() == ']') {
+      in.ignore();
+    } else {
+      while (true) {
+        json_t v;
+        in >> v;
+        vs.push_back(std::move(v));
 
-      if (!in)
-        throw json::syntax_error("unexpected end of file.", in.tellg());
+        do {
+          in.get(c);
+        } while (in && std::isspace(c));
 
-      if (c != ',')
-        throw json::syntax_error("expected ',' between elements.", in.tellg());
+        if (c == ']')
+          break;
+
+        if (!in)
+          throw json::syntax_error("unexpected end of file.", in.tellg());
+
+        if (c != ',')
+          throw json::syntax_error("expected ',' between elements.",
+                                   in.tellg());
+      }
     }
 
     value = c14::make_unique<json::array>(std::move(vs));

@@ -40,9 +40,12 @@
 
 #include "value.hpp"
 
+#include "../util.h"
+
 namespace slim {
 namespace element {
-namespace json {
+
+namespace c14 = slim::element; // for make_unique
 
 /**
  * Convert to JSON value.
@@ -54,44 +57,58 @@ namespace json {
  *   json::value(42)  -->  42
  *   std::vector<int> v = {1, 2, 3};
  *   json::value(v)   -->  [1, 2, 3]
+ *
+ * If you want to convert user-defined types, all you have to do is to define
+ * 'to_json' function.
+ *
+ * Example:
+ *   using namespace slim::element;
+ *   struct Point { int x, y; };
+ *   json_t to_json(const Point &p) {
+ *     return json::to_json(std::vector<int>({p.x, p.y}));
+ *   }
  */
 template <class T, typename std::enable_if<std::is_integral<T>::value &&
                                                !std::is_same<T, bool>::value,
                                            std::nullptr_t>::type = nullptr>
-inline json_t value(const T &v) {
+inline json_t to_json(const T &v) {
   return json::integer(v);
 }
 template <class T, typename std::enable_if<std::is_floating_point<T>::value,
                                            std::nullptr_t>::type = nullptr>
-inline json_t value(const T &v) {
+inline json_t to_json(const T &v) {
   return json::real(v);
 }
-inline json_t value(bool v) { return json::boolean(v); }
-inline json_t value(const std::string &v) { return json::string(v); }
-template <class T> inline json_t value(const std::vector<T> &v) {
-  array ary;
-  ary.value.reserve(v.size());
+inline json_t to_json(bool v) { return json::boolean(v); }
+inline json_t to_json(const std::string &v) { return json::string(v); }
+
+// begin, endが定義されており, 要素がjson::valueで変換可能なデータ構造
+template <class Container>
+inline auto to_json(const Container &v)
+    -> decltype(begin(v), end(v), to_json(*begin(v)), json_t()) {
+  std::vector<json_t> ary;
+  ary.reserve(v.size());
   for (auto &u : v)
-    ary.value.push_back(value(u));
-  return ary;
-}
-template <class T>
-inline json_t value(const std::unordered_map<std::string, T> &v) {
-  object res;
-  for (auto &p : v) {
-    res[p.first] = value(p.second);
-  }
-  return res;
-}
-template <class T> inline json_t value(const std::map<std::string, T> &v) {
-  object res;
-  for (auto &p : v) {
-    res[p.first] = value(p.second);
-  }
-  return res;
+    ary.push_back(to_json(u));
+  return c14::make_unique<array>(std::move(ary));
 }
 
-} // namespace json
+// begin, endが定義されており,
+// キーがstd::stringに変換可能で要素がjson::valueで変換可能なkey-value store
+template <
+    class Container,
+    typename std::enable_if<
+        std::is_convertible<typename Container::key_type, std::string>::value,
+        std::nullptr_t>::type = nullptr>
+inline auto to_json(const Container &v)
+    -> decltype(begin(v), end(v), to_json(begin(v)->second), json_t()) {
+  std::unordered_map<std::string, json_t> res;
+  for (auto &p : v) {
+    res[p.first] = to_json(p.second);
+  }
+  return c14::make_unique<object>(std::move(res));
+}
+
 } // namespace element
 } // namespace slim
 
