@@ -63,9 +63,43 @@ struct boolean;
 struct array;
 struct object;
 
-using value_type =
-    c17::variant<null, integer, real, string, boolean, std::unique_ptr<array>,
-                 std::unique_ptr<object>>;
+// smart pointer which deeply copies a pointed object.
+template <class T> struct value_ptr {
+  value_ptr() : ptr_(nullptr) {}
+  value_ptr(T *ptr) : ptr_(ptr) {}
+  ~value_ptr() { delete ptr_; }
+
+  // copy constructor
+  value_ptr(const value_ptr &ptr) : ptr_(new T(*ptr)) {}
+
+  // move constructor
+  value_ptr(value_ptr &&ptr) : ptr_(ptr.ptr_) { ptr.ptr_ = nullptr; }
+
+  T &operator*() { return *ptr_; }
+  const T &operator*() const { return *ptr_; }
+  T *operator->() { return ptr_; }
+  const T *operator->() const { return ptr_; }
+
+  // copy assignment operator
+  value_ptr &operator=(const value_ptr &ptr) {
+    delete ptr_;
+    ptr.ptr_ = new T(*ptr);
+    return *this;
+  }
+
+  // move assignment operator
+  value_ptr &operator=(value_ptr &&ptr) {
+    delete ptr_;
+    ptr.ptr_ = ptr.ptr_;
+    return *this;
+  }
+
+private:
+  T *ptr_;
+};
+
+using value_type = c17::variant<null, integer, real, string, boolean,
+                                value_ptr<array>, value_ptr<object>>;
 
 struct null {
   operator std::nullptr_t() { return nullptr; }
@@ -102,16 +136,18 @@ struct array {
   std::vector<value_type> value;
 
   array() {}
+  array(const std::vector<value_type> &v) : value(v) {}
   array(std::vector<value_type> &&v) : value(std::move(v)) {}
-  array(array &&v) : value(std::move(v.value)) {}
-  operator std::vector<value_type> &&() { return std::move(value); }
+  operator std::vector<value_type>() { return value; }
 };
 struct object {
   std::unordered_map<std::string, value_type> value;
 
   object() {}
-  object(std::unordered_map<std::string, value_type> &&v) : value(std::move(v)) {}
-  operator std::unordered_map<std::string, value_type> &&() { return std::move(value); }
+  object(const std::unordered_map<std::string, value_type> &v) : value(v) {}
+  object(std::unordered_map<std::string, value_type> &&v)
+      : value(std::move(v)) {}
+  operator std::unordered_map<std::string, value_type>() { return value; }
 };
 
 // throws json::syntax_error, json::overflow_error

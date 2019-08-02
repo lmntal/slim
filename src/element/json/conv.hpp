@@ -40,12 +40,8 @@
 
 #include "value.hpp"
 
-#include "../util.h"
-
 namespace slim {
 namespace element {
-
-namespace c14 = slim::element; // for make_unique
 
 /**
  * Convert to JSON value.
@@ -81,33 +77,30 @@ inline json_t to_json(const T &v) {
 }
 inline json_t to_json(bool v) { return json::boolean(v); }
 inline json_t to_json(const std::string &v) { return json::string(v); }
-
-// begin, endが定義されており, 要素がjson::valueで変換可能なデータ構造
-template <class Container>
-inline auto to_json(const Container &v)
-    -> decltype(begin(v), end(v), to_json(*begin(v)), json_t()) {
-  std::vector<json_t> ary;
-  ary.reserve(v.size());
+template <class T> inline json_t to_json(const std::vector<T> &v) {
+  json::value_ptr<json::array> ary(new json::array);
+  ary->value.reserve(v.size());
   for (auto &u : v)
-    ary.push_back(to_json(u));
-  return c14::make_unique<array>(std::move(ary));
+    ary->value.push_back(to_json(u));
+  return ary;
 }
-
-// begin, endが定義されており,
-// キーがstd::stringに変換可能で要素がjson::valueで変換可能なkey-value store
-template <
-    class Container,
-    typename std::enable_if<
-        std::is_convertible<typename Container::key_type, std::string>::value,
-        std::nullptr_t>::type = nullptr>
-inline auto to_json(const Container &v)
-    -> decltype(begin(v), end(v), to_json(begin(v)->second), json_t()) {
-  std::unordered_map<std::string, json_t> res;
+template <class T>
+inline json_t to_json(const std::unordered_map<std::string, T> &v) {
+  json::value_ptr<json::object> res(new json::object);
   for (auto &p : v) {
-    res[p.first] = to_json(p.second);
+    res->value[p.first] = to_json(p.second);
   }
-  return c14::make_unique<object>(std::move(res));
+  return res;
 }
+template <class T> inline json_t to_json(const std::map<std::string, T> &v) {
+  json::value_ptr<json::object> res(new json::object);
+  for (auto &p : v) {
+    res->value[p.first] = to_json(p.second);
+  }
+  return res;
+}
+inline json_t to_json(const json_t &v) { return v; }
+inline json_t to_json(json_t &&v) { return std::move(v); }
 
 } // namespace element
 } // namespace slim

@@ -238,7 +238,7 @@ std::istream &operator>>(std::istream &in, value_type &value) {
       }
     }
 
-    value = c14::make_unique<json::object>(std::move(m));
+    value = value_ptr<json::object>(new json::object(m));
   } else if (c == '[') {
     std::vector<json_t> vs;
 
@@ -270,7 +270,7 @@ std::istream &operator>>(std::istream &in, value_type &value) {
       }
     }
 
-    value = c14::make_unique<json::array>(std::move(vs));
+    value = value_ptr<json::array>(new json::array(vs));
   }
 
   return in;
@@ -290,7 +290,7 @@ struct pretty_printer {
   void operator()(const json::boolean &value) {
     os << (value.value ? "true" : "false");
   }
-  void operator()(const std::unique_ptr<json::array> &value) {
+  void operator()(const value_ptr<json::array> &value) {
     os << "[";
     for (size_t i = 0; i < value->value.size(); i++) {
       if (i > 0)
@@ -299,7 +299,7 @@ struct pretty_printer {
     }
     os << "]";
   }
-  void operator()(const std::unique_ptr<json::object> &value) {
+  void operator()(const value_ptr<json::object> &value) {
     os << "{";
     for (auto it = value->value.begin(); it != value->value.end(); ++it) {
       if (it != value->value.begin())
