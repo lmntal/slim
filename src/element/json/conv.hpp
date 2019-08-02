@@ -75,7 +75,11 @@ template <class T, typename std::enable_if<std::is_floating_point<T>::value,
 inline json_t to_json(const T &v) {
   return json::real(v);
 }
-inline json_t to_json(bool v) { return json::boolean(v); }
+template <class T, typename std::enable_if<std::is_same<T, bool>::value,
+                                           std::nullptr_t>::type = nullptr>
+inline json_t to_json(T v) {
+  return json::boolean(v);
+}
 inline json_t to_json(const std::string &v) { return json::string(v); }
 template <class T> inline json_t to_json(const std::vector<T> &v) {
   json::value_ptr<json::array> ary(new json::array);
