@@ -113,6 +113,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
 #endif
   states->set_init_state(init_s);
+  //printf("set_init_state\n");
   if (lmn_env.enable_compress_mem)
     init_s->free_mem();
 

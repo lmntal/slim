@@ -39,6 +39,9 @@
 #include "binstr_compress.h"
 #include "../third_party/zdelta-2.1/zdlib.h"
 #include "element/element.h"
+#include<iostream>
+#include<fstream>
+using namespace std;
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
@@ -377,6 +380,9 @@ TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
   LMN_ASSERT(treedb);
   LMN_ASSERT(str);
   ref = treedb->tree_find_or_put(str, &found);
+  //ofstream outputfile("treedatabase.dot",std::ios::app);
+  //outputfile<<"\""<<std::hex<<str<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
+  //outputfile.close();
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     unsigned long old_space, dif_space;

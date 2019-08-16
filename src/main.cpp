@@ -69,6 +69,8 @@ size_t nodecount=0;
 size_t sharenode=0;
 size_t nodeintree=0;
 size_t maxtreenodeid=0;
+size_t statenum=0;
+size_t minvectorunitid=0xffffffffffffffff;
 using namespace std;
 #include <vector>
 
@@ -814,7 +816,8 @@ int main(int argc, char *argv[]) {
   printf("nodecount is %ld\n",nodecount);
   printf("sharenode is %ld\n",sharenode);
   printf("nodeintree is %ld\n",nodeintree);
-  printf("maxtreenodeid is %x\n",maxtreenodeid);
+  printf("maxtreenodeid is %lx\n",maxtreenodeid);
+  printf("minvectorunitid is %lx\n",minvectorunitid);
   ofstream putfile("treedatabase.dot",std::ios::app);
   putfile<<"}"<<"\n";
   putfile.close();

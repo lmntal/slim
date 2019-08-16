@@ -42,7 +42,10 @@
 #include "../memory_count.h"
 #include <mutex>
 #include <algorithm>
-
+#include <iostream>
+#include <fstream>
+using namespace std;
+int state_db_num=1;
 #define STATE_EQUAL(Tbl, Check, Stored)                                        \
   (state_hash(Check) == state_hash(Stored) &&                                  \
    ((Tbl)->type->compare)(Check, Stored))
@@ -343,6 +346,15 @@ State *StateTable::insert(State *ins, unsigned long *col) {
           TreeNodeID ref;
           tcd_set_byte_length(&ins->tcd, ins->state_binstr()->len);
           ref = lmn_bscomp_tree_encode(ins->state_binstr());
+	  ofstream outputfile("treedatabase.dot",std::ios::app);
+	  //printf("state_db_num:%d\n", state_db_num);
+	  //lmn_dump_cell_stdout(state_restore_mem(ins));
+	  //outputfile<<"\""<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
+	  outputfile<<"\"num_"<<std::dec<<state_db_num<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
+	  outputfile.close();
+	  state_db_num++;
+	  //printf("first\n");
+	  //printf("binstr is %x\n",ins->state_binstr());
           tcd_set_root_ref(&ins->tcd, ref);
         }
         this->tbl[bucket] = ins;
@@ -365,7 +377,6 @@ State *StateTable::insert(State *ins, unsigned long *col) {
     if (slim::config::profile && lmn_env.profile_level >= 3) {
       profile_countup(PROFILE_COUNT__HASH_CONFLICT_ENTRY);
     }
-
     if (hash == state_hash(str)) {
       /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
       if (lmn_env.hash_compaction) {
@@ -383,7 +394,6 @@ State *StateTable::insert(State *ins, unsigned long *col) {
          *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
          *     直接dummy状態上のメモリを比較対象とするとスレッドセーフでなくなる)
          */
-
         if (ins->is_binstr_user()) {
           ins->free_binstr();
         } else if (compress) {
@@ -392,11 +402,14 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         ins->s_unset_d();
         ins->calc_mem_encode();
         /*compress = NULL;*/
-
-        if (slim::config::profile)
+        if (slim::config::profile){
           ret = this->rehash_tbl_->insert(ins, col);
-        else
+	  //printf("1st\n");
+	}
+        else{
           ret = this->rehash_tbl_->insert(ins);
+	  //printf("insert\n");
+	}
         break;
       } else if (!STATE_EQUAL(this, ins, str)) {
         /** B. memidテーブルへのlookupの場合,
@@ -451,11 +464,14 @@ State *StateTable::insert(State *ins, unsigned long *col) {
           ins->s_unset_d();
           ins->calc_mem_encode();
 
-          if (slim::config::profile)
+          if (slim::config::profile){
             ret = this->rehash_tbl_->insert(ins, col);
-          else
+	    //printf("2nd\n");
+	  }
+          else{
             ret = this->rehash_tbl_->insert(ins);
-
+	    //printf("insert\n");
+	  }
           LMN_ASSERT(ret);
           break;
         }
@@ -493,6 +509,7 @@ State *StateTable::insert(State *ins, unsigned long *col) {
             TreeNodeID ref;
             tcd_set_byte_length(&ins->tcd, ins->state_binstr()->len);
             ref = lmn_bscomp_tree_encode(ins->state_binstr());
+	    //printf("binstr is %x\n",ins->state_binstr());
             tcd_set_root_ref(&ins->tcd, ref);
           }
           str->next = ins;
@@ -516,7 +533,7 @@ State *StateTable::insert(State *ins, unsigned long *col) {
       // lmn_binstr_free(compress);
     }
   }
-
+  //printf("insert\n");
   return ret;
 }
 
@@ -542,6 +559,14 @@ void StateTable::add_direct(State *s) {
       if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
         tcd_set_byte_length(&s->tcd, s->state_binstr()->len);
         auto ref = lmn_bscomp_tree_encode(s->state_binstr());
+	ofstream output("treedatabase.dot",std::ios::app);
+	//printf("state_db_num:%d\n", state_db_num);
+	//lmn_dump_cell_stdout(state_restore_mem(s));
+	//output<<"\""<<std::hex<<s->state_binstr()<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
+	output<<"\"num_"<<std::dec<<state_db_num<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
+	output.close();
+	state_db_num++;
+	//printf("binstr is %x\n",s->state_binstr());
         tcd_set_root_ref(&s->tcd, ref);
       }
       this->tbl[bucket] = s;
@@ -588,6 +613,7 @@ void StateTable::memid_rehash(State *s) {
 
   /* dummy stateのparentをoriginalとして扱う */
   this->rehash_tbl_->add_direct(new_s);
+  //printf("add_direct\n");
   state_set_parent(new_s, s);
   this->rehash_tbl_->num_dummy_increment();
 

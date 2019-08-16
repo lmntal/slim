@@ -11,3 +11,5 @@ extern size_t nodecount;
 extern size_t sharenode;
 extern size_t nodeintree;
 extern size_t maxtreenodeid;
+extern size_t statenum;
+extern size_t minvectorunitid;

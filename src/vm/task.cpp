@@ -47,7 +47,7 @@
 #include "symbol.h"
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
-
+#include<iostream>
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
@@ -1272,6 +1272,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         start_atom = std::begin(*atomlist_ent);
         record =
             atomlist_ent->insert(findatomid, lmn_new_atom(LMN_RESUME_FUNCTOR));
+	printf("4th\n");
       } else {
         start_atom = std::next(record, 1);
       }

@@ -52,6 +52,7 @@
 #include "state_table.hpp"
 #include "vm/vm.h"
 #include "../memory_count.h"
+#include<iostream>
 namespace c14 = slim::element;
 
 void StateSpace::make_table_pair(TablePair &t) {
@@ -142,7 +143,6 @@ State *StateSpace::insert(State *s) {
       !lmn_env.tree_compress && !s->is_expanded() && contains_hash(hashv)) {
     s->calc_mem_encode();
   }
-
   if (slim::config::profile) {
     ret = insert_dst->insert(s, &col);
   } else {
@@ -209,6 +209,7 @@ void StateSpace::add_direct(State *s) {
   auto &add_dst =
       (s->is_encoded()) ? this->memid_table.tbl : this->mhash_table.tbl;
   add_dst->add_direct(s);
+  //printf("add_direct_rec\n");
   add_dst->resize_if_needed();
 }
 
@@ -234,6 +235,7 @@ std::vector<State *> StateSpace::all_states() const {
 void StateSpace::set_init_state(State *init_state) {
   this->init_state = init_state;
   this->add_direct(init_state);
+  //printf("add_direct\n");
 }
 
 /* 状態数を返す */

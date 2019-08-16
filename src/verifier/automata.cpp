@@ -41,7 +41,7 @@
 #include "propositional_symbol.h"
 #include "nc_lexer.hpp"
 #include "nc_parser.hpp"
-
+#include "../memory_count.h"
 static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list,
@@ -177,7 +177,7 @@ void Automata::print_property() {
 
   fprintf(stdout, "States\n");
   n = this->states.get_num();
-
+  statenum=n;
   for (i = 0; i < n; i++) {
     AutomataStateRef s = this->get_state(i);
     fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",

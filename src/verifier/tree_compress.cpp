@@ -145,6 +145,12 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   memory_count_no_comp+=copy_len;
   vecunitlen=copy_len;
   // printf("start :0x%14llx\n", ret);
+  if(ret>maxtreenodeid){
+    maxtreenodeid=ret;
+  }
+  if(ret<minvectorunitid){
+    minvectorunitid=ret;
+  }
   return ret;
 }
 
@@ -200,9 +206,6 @@ redo:
           atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
 	  //printf("a unit is put in hashtable no %x in depth %d\n",(offset+i)&mask,depth);
-	  if((offset+i)&mask>maxtreenodeid){
-	    maxtreenodeid=(offset+i)&mask;
-	  }
 	  if(check_l==true){
 	    if(check_r==true){
 	      memory_count_vectorunit+=vecunitlen_l+vecunitlen_r;
@@ -284,7 +287,6 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   int split;
   TreeNodeID ref;
   if ((end - start + 1) <= 1) {
-    //printf("depth is %d\n",depth);
     return vector_unit(str, start, end);
   }
   depth++;
@@ -294,26 +296,16 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
     this->tree_find_or_put_rec(str, start, start + split, found);
-  //printf("left ref is %x\n",left);
-  if(left>maxtreenodeid){
-    maxtreenodeid=left;
-  }
   vecunitlen_l=vecunitlen;
   TreeNodeElement right =
     this->tree_find_or_put_rec(str, start + split + 1, end, found);
-  //printf("right ref is %x\n",right);
-  if(right>maxtreenodeid){
-    maxtreenodeid=right;
-  }
   vecunitlen_r=vecunitlen;
   nodecount++;
   if((split+1)<=1){
     check_l=true;
-    //printf("check_l is true\n");
   }
   if((end-(start+split+1)+1)<=1){
     check_r=true;
-    //printf("check_r is true\n");
   }
   if ((end - start + 1) == str->len) {
     BOOL _found = this->table_find_or_put(left, right, &ref);
@@ -323,8 +315,8 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
     this->table_find_or_put(left, right, &ref);
   }
   ofstream outputfile("treedatabase.dot",std::ios::app);
-  outputfile<<"\""<<std::hex<<ref<<"\" -> \""<<std::hex<<left<<"\";"<<"\n";
-  outputfile<<"\""<<std::hex<<ref<<"\" -> \""<<std::hex<<right<<"\";"<<"\n";
+  outputfile<<"\""<<hex<<ref<<"\" -> \""<<hex<<left<<"\";"<<"\n";
+  outputfile<<"\""<<hex<<ref<<"\" -> \""<<hex<<right<<"\";"<<"\n";
   outputfile.close();
   return ref;
 }
