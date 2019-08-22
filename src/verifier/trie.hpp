@@ -198,7 +198,8 @@ struct InheritedVertex {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->type = iVertex.type;
     strcpy(this->name, iVertex.name);
-    this->canonicalLabel = iVertex.canonicalLabel;
+    this->canonicalLabel.first = iVertex.canonicalLabel.first;
+    this->canonicalLabel.second = iVertex.canonicalLabel.second;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->hashString = new HashString(*iVertex.hashString);
     this->isPushedIntoFixCreditIndex = iVertex.isPushedIntoFixCreditIndex;

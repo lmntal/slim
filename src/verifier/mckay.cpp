@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+
 propagation_list::iterator firstNonTrivialCell(propagation_list &pList) {
 
   for (auto it = pList.begin(); it != pList.end(); ++it) {
@@ -267,12 +268,24 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *cAfterGraph->cv << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::map<ConvertedGraphVertex *, int> m;
+    int counter = 0;
     for (auto &v : canonicalDiscreteRefinement) {
       auto cv = v.begin();
+      m[(*cv)] = counter;
+      counter++;
+    }
+    for (auto &v : canonicalDiscreteRefinement) {
+      auto cv = v.begin();
+
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << *(*cv) << std::endl;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << (*cv)->correspondingVertexInTrie->canonicalLabel.first << std::endl;
       std::vector<std::string> l;
-      l.push_back((*cv)->name);
+      std::string s = (*cv)->name +  std::to_string(m[*cv]);
+      std::cout << s << std::endl;
+      l.push_back(s);
       for (auto &link : (*cv)->links) {
         std::cout << link << std::endl;
         auto &attr = link.attr;
@@ -285,7 +298,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
 	  printf("%s:%d\n", __FUNCTION__, __LINE__);
 	  auto adjVertex = cAfterGraph->cv->atoms[link.data.ID];
 	  std::cout << *adjVertex << std::endl;
-	  l.push_back(adjVertex->name);
+	  l.push_back(adjVertex->name + std::to_string(m[adjVertex]));
         } else {
           std::cout << "unexpected attr" << std::endl;
         }

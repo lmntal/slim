@@ -155,6 +155,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   std::map<int, int> emp;
   init_s->canonical_label = trieMcKay(init_s->trie, diff, init, empty, emp);
   std::cout << init_s->canonical_label << std::endl;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   init_s->trie->dump();
   delete diff;
   std::cout << *init->cv << std::endl;
@@ -552,6 +553,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       /*
         ===== Diffiso ====
        */
+      std::cout << "==(succ)dump_mem==" << std::endl;
+      lmn_dump_mem_stdout(src_succ_m);
       src_succ->graphinfo = new Graphinfo(src_succ_m);
       std::cout << "===parent_graphinfo===" << std::endl;
       std::cout << *parent_graphinfo->cv << std::endl;

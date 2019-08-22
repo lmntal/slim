@@ -94,6 +94,31 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
 
 bool cmp_canonical_label(State *s0, State *s1) {
   std::cout << "^^^^^^^^^^^^^^ CHECK ISOMORPHISM ^^^^^^^^^^^^^^^" << std::endl;
+  std::cout << "s0:CANONICAL LABEL" << std::endl;
+  std::cout << "[";
+  for (auto &l : s0->canonical_label) {
+    std::cout << "[";
+    for (auto &v : l) {
+      std::cout << v << ", ";
+    }
+    std::cout << "]";
+  }
+  std::cout << "]" << std::endl;
+  std::cout << "---------------------" << std::endl;
+
+  std::cout << "s1:CANONICAL LABEL" << std::endl;
+  std::cout << "[";
+  for (auto &l : s1->canonical_label) {
+    std::cout << "[";
+    for (auto &v : l) {
+      std::cout << v << ", ";
+    }
+    std::cout << "]";
+  }
+  std::cout << "]" << std::endl;
+  std::cout << "---------------------" << std::endl;
+
+
   auto s0z = s0->canonical_label.size();
   auto s1z = s1->canonical_label.size();
   if (s0z != s1z) {
