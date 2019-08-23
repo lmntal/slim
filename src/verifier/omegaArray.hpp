@@ -44,7 +44,7 @@ inline void clear_finite_larger_than(OmegaArray &body, int index) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    body.erase(body.upper_bound(index), std::prev(body.end()));
+    body.erase(body.upper_bound(index), body.end());
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
   printf("%s:%d\n", __FUNCTION__, __LINE__);
