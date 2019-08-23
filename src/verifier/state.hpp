@@ -111,6 +111,7 @@ struct State {                /* Total:72(36)byte */
   Trie *trie;
   std::vector<std::vector<std::string>> canonical_label;
   std::map<unsigned long, std::pair<std::map<int, int>, DiffInfo *>> diff_map;
+  TerminationConditionInfo *tinfo;
   int succ_num_in_openlist;
   bool on_stack;
 #ifndef MINIMAL_STATE

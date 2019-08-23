@@ -480,6 +480,8 @@ void back_trie_to_parent(State *s) {
   cg_trie_reference_check(s->parent->graphinfo->cv);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   s->parent->trie = s->trie;
+  delete s->parent->trie->info;
+  s->parent->trie->info = new TerminationConditionInfo(*s->parent->tinfo);
   s->trie = nullptr;
   s->parent->trie->dump();
   s->parent->succ_num_in_openlist--;
@@ -512,6 +514,14 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   std::cout << mc_react_cxt_expanded_num(rc) << std::endl;
   std::cout << "======= START EXPANDED LOOP (" << s->state_id << ")"
             << "======" << std::endl;
+  std::cout << "--ORG TINFO--" << std::endl;
+  terminationConditionInfoDump(s->trie->info);
+  std::cout << "-------------" << std::endl;
+  TerminationConditionInfo *org_tinfo = new TerminationConditionInfo(*s->trie->info);
+  std::cout << "--CP TINFO--" << std::endl;
+  terminationConditionInfoDump(org_tinfo);
+  std::cout << "------------" << std::endl;
+  s->tinfo = new TerminationConditionInfo(*org_tinfo);
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
 #ifdef DIFFISO_GEN
@@ -662,6 +672,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
           std::cout << *v.second->correspondingVertexInTrie << std::endl;
         }
         s->trie = src_succ->trie;
+	delete s->trie->info;
+	s->trie->info = new TerminationConditionInfo(*org_tinfo);
         src_succ->trie = nullptr;
         printf("%s:%d\n", __FUNCTION__, __LINE__);
       }

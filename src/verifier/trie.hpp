@@ -172,6 +172,14 @@ struct TerminationConditionInfo {
     distribution = new OmegaArray();
     increase = new OmegaArray();
   };
+  TerminationConditionInfo(const TerminationConditionInfo &tinfo) {
+    this->distribution = new OmegaArray(*tinfo.distribution);
+    this->increase = new OmegaArray(*tinfo.increase);
+  }
+  ~TerminationConditionInfo() {
+    delete distribution;
+    delete increase;
+  }
 };
 
 struct InheritedVertex {
