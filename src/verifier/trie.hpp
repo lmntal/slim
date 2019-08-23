@@ -45,7 +45,7 @@ using trie_body_map = std::map<uint32_t, TrieBody *>;
 using vertex_vec = std::vector<
     slim::element::variant<slim::element::monostate, InheritedVertex>>;
 using propagation_list = std::list<std::list<ConvertedGraphVertex *>>;
-std::map<int, std::vector<int>>
+std::map<int, std::map<int, int>>
 putLabelsToAdjacentVertices(const propagation_list &pList);
 
 inline bool
@@ -88,8 +88,20 @@ converted_graph_vertex_cmp(const ConvertedGraphVertex *lhs,
 struct PropagationListCmp {
   bool operator()(const propagation_list &lhs,
                   const propagation_list &rhs) const {
-    auto l_m = putLabelsToAdjacentVertices(lhs);
-    auto r_m = putLabelsToAdjacentVertices(rhs);
+    auto l_mm = putLabelsToAdjacentVertices(lhs);
+    std::map<int, std::vector<int>> l_m;
+    for (auto &v : l_mm) {
+      for (auto &e : v.second) {
+	l_m[v.first].push_back(e.second);
+      }
+    }
+    auto r_mm = putLabelsToAdjacentVertices(rhs);
+    std::map<int, std::vector<int>> r_m;
+    for (auto &v : r_mm) {
+      for (auto &e : v.second) {
+	r_m[v.first].push_back(e.second);
+      }
+    }
     auto it_l = lhs.begin();
     auto it_r = rhs.begin();
     for (; it_l != lhs.end() and it_r != rhs.end(); it_l++, it_r++) {

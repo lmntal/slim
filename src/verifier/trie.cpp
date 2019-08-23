@@ -1234,9 +1234,9 @@ void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph,
            [](const ConvertedGraphVertex *x) { return std::string(x->name); });
 }
 
-std::map<int, std::vector<int>>
+std::map<int, std::map<int, int>>
 putLabelsToAdjacentVertices(const propagation_list &pList) {
-  std::map<int, std::vector<int>> id_to_adjacent_labels;
+  std::map<int, std::map<int, int>> id_to_adjacent_labels;
   int tmpLabel = 0;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   for (auto &list : pList) {   // loop of classes
@@ -1250,12 +1250,11 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
         auto &tmpLink = vertex->links[link_index];
         switch (tmpLink.attr) {
         case INTEGER_ATTR:
-          id_to_adjacent_labels[vertex->ID].push_back(
-              tmpLink.data.integer * 256 + INTEGER_ATTR);
+          id_to_adjacent_labels[vertex->ID][link_index] = 
+              tmpLink.data.integer * 256 + INTEGER_ATTR;
           break;
         case HYPER_LINK_ATTR:
-          id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
-                                                           link_index);
+          id_to_adjacent_labels[tmpLink.data.ID][link_index] = tmpLabel * 256 + link_index;
           break;
         case GLOBAL_ROOT_MEM_ATTR:
           break;
@@ -1266,28 +1265,16 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
             case convertedAtom: {
               printf("%s:%d\n", __FUNCTION__, __LINE__);
               std::cout << tmpLink.data.ID << std::endl;
-              for (auto &v : id_to_adjacent_labels[tmpLink.data.ID])
-                std::cout << v << std::endl;
               printf("%s:%d\n", __FUNCTION__, __LINE__);
               std::cout << tmpLabel << std::endl;
               std::cout << link_index << std::endl;
-              std::cout << &id_to_adjacent_labels[tmpLink.data.ID] << std::endl;
-              // id_to_adjacent_labels[tmpLink.data.ID].push_back(0);
-              for (auto &v : id_to_adjacent_labels[tmpLink.data.ID])
-                std::cout << v << std::endl;
-              std::cout << &id_to_adjacent_labels[tmpLink.data.ID] << std::endl;
               std::cout << tmpLabel * 256 + link_index << std::endl;
-              // id_to_adjacent_labels[tmpLink.data.ID].push_back(0);
-              id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
-                                                               link_index);
-              printf("%s:%d\n", __FUNCTION__, __LINE__);
-
+              id_to_adjacent_labels[tmpLink.data.ID][tmpLink.attr]= tmpLabel * 256 + link_index;
               printf("%s:%d\n", __FUNCTION__, __LINE__);
               break;
             }
             case convertedHyperLink:
-              id_to_adjacent_labels[tmpLink.data.ID].push_back(tmpLabel * 256 +
-                                                               HYPER_LINK_ATTR);
+              id_to_adjacent_labels[tmpLink.data.ID][tmpLink.attr] = tmpLabel * 256 + HYPER_LINK_ATTR;
               break;
             default:
               throw("unexpected vertex type");
@@ -1309,10 +1296,22 @@ void refineConventionalPropagationListByPropagation(propagation_list &pList) {
   bool refined = false;
   do {
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    auto labels = putLabelsToAdjacentVertices(pList);
+    auto labels_map = putLabelsToAdjacentVertices(pList);
+    std::map<int, std::vector<int>> labels;
+    for (auto &v : labels_map) {
+      for (auto &e : v.second) {
+	labels[v.first].push_back(e.second);
+      }
+    }
+    
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    for(auto &v : labels) {
+      std::cout << v.first << ":" << v.second << std::endl;
+    }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     refined = classify(
         pList, [&](const ConvertedGraphVertex *v) { return labels[v->ID]; });
+    std::cout << pList << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   } while (refined);
   printf("%s:%d\n", __FUNCTION__, __LINE__);

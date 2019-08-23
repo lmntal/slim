@@ -110,6 +110,9 @@ bool listMcKayInner(
         &discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
   bool isUsefulBranch = true;
   auto stabilizer = propagation_list(propagationListOfInheritedVertices);
+  std::cout << "###### before stabilizer ######" << std::endl;
+  std::cout << stabilizer << std::endl;
+
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   refineConventionalPropagationListByPropagation(stabilizer);
 
