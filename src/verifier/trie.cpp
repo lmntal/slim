@@ -20,67 +20,81 @@ struct hash_generator {
 
   Hash hash(InheritedVertex *iVertex, int index) {
     HashString *hashString = iVertex->hashString;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << "index=" << index << std::endl;
     std::cout << "iVertex:" << *iVertex << std::endl;
     std::cout << "hashString:" << *hashString << std::endl;
-
+#endif
     if (index < 0) {
       return 0;
     } else if (index < hashString->creditIndex) {
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
       return (hashString->body)[index];
     } else if (index == 0) {
+#ifdef DIFFISO_GEN
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
       Hash tmp = initialHashValue(iVertex->correspondingVertex);
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
       if (hashString->body.size() > 0) {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
         // auto old = hashString->body->at(index);
         //  if (old != NULL) {
         //   free(old);
         // }
       }
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
+
       hashString->body.push_back(uint32_t(tmp));
       hashString->creditIndex = 1;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
+
       fixCreditIndexStack->push(iVertex);
       iVertex->isPushedIntoFixCreditIndex = true;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
+
       return tmp;
     } else {
-
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << "index=" << index << std::endl;
+#endif
       Hash prevMyHash = hash(iVertex, index - 1);
+#ifdef DIFFISO_DEB
       std::cout << "prevMyHash=" << prevMyHash << std::endl;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << "index=" << index << std::endl;
+#endif
       ConvertedGraphVertex *cv = iVertex->correspondingVertex;
+#ifdef DIFFISO_DEB
       std::cout << *cv << std::endl;
+#endif
       Hash adjacentHash = hash(cv, index);
+#ifdef DIFFISO_DEB
       std::cout << "adjacentHash=" << adjacentHash << std::endl;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << "index=" << index << std::endl;
+#endif
       Hash newMyHash = (FNV_PRIME * prevMyHash) ^ adjacentHash;
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << "newMyHash=" << newMyHash << std::endl;
       std::cout << "hashString=" << *hashString << std::endl;
       std::cout << "index=" << index << std::endl;
       // auto old = hashString->body.at(index);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
       (hashString->body)[index] = uint32_t(newMyHash);
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       // if (old != NULL) {
       //   free(old);
       // }
+#endif
       hashString->creditIndex = index + 1;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       fixCreditIndexStack->push(iVertex);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       iVertex->isPushedIntoFixCreditIndex = true;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       return newMyHash;
     }
   }
@@ -158,9 +172,11 @@ struct hash_generator {
 
   Hash initialHashValue(ConvertedGraphVertex *cVertex) {
     Hash ret = OFFSET_BASIS;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *cVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     ret *= FNV_PRIME;
     ret ^= cVertex->type;
     ret *= FNV_PRIME;
@@ -224,7 +240,9 @@ ConvertedGraphVertex *
 correspondingVertexInConvertedGraph(const InheritedVertex *iVertex,
                                     ConvertedGraph *cAfterGraph,
                                     int gapOfGlobalRootMemID) {
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   int afterID = iVertex->beforeID + gapOfGlobalRootMemID;
   switch (iVertex->type) {
   case convertedAtom:
@@ -291,7 +309,9 @@ void getNextDistanceConvertedVertices(
 
   nextBFSStack->swap(*BFSStack);
   delete (nextBFSStack);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   return;
 }
 
@@ -341,37 +361,30 @@ void goBackProcessInnerManyCommonPrefixVertices(
     InheritedVertex &target, TrieBody *currentNode, S *goAheadStack,
     TerminationConditionInfo *tInfo, int targetDepth,
     vertex_list *tmp_delete_lst, bool del_f) {
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   auto targetCell = target.ownerCell;
   if (targetDepth == currentNode->depth) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (!del_f) {
       currentNode->inheritedVertices->splice(
           std::begin(*currentNode->inheritedVertices), *tmp_delete_lst,
           std::begin(*tmp_delete_lst));
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       target.ownerList = currentNode->inheritedVertices;
       target.ownerNode = currentNode;
       target.hashString->creditIndex = currentNode->depth;
       target.ownerCell = std::begin(*currentNode->inheritedVertices);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       // slim::element::get<InheritedVertex>(*targetCell).ownerNode =
       // currentNode;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       // slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex
       // = currentNode->depth;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
   } else {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     goBackProcessInnerManyCommonPrefixVertices(target, currentNode->parent,
                                                goAheadStack, tInfo, targetDepth,
                                                tmp_delete_lst, del_f);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
 }
 
 template <typename S>
@@ -380,19 +393,25 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     vertex_list *tmp_brother_lst, TrieBody *currentNode, TrieBody *prevNode,
     S *goAheadStack, TerminationConditionInfo *tInfo, int targetDepth,
     vertex_list *tmp_delete_lst, bool del_f) {
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::ios::fmtflags flagsSaved = std::cout.flags();
   std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
             << std::setfill('0') << std::hex << currentNode->key << std::endl;
   std::cout.flags(flagsSaved);
+#endif
   auto targetCell = target.ownerCell;
   auto brotherCell = brother.ownerCell;
+#ifdef DIFFISO_DEB
   std::cout << "targetCell: " << std::endl;
   std::cout << *targetCell << std::endl;
   std::cout << "brotherCell: " << std::endl;
   std::cout << *brotherCell << std::endl;
+#endif
   if (targetDepth == currentNode->depth) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     if (!del_f) {
       currentNode->inheritedVertices->splice(
           std::begin(*currentNode->inheritedVertices), *tmp_delete_lst,
@@ -406,38 +425,41 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
       // slim::element::get<InheritedVertex>(*targetCell).hashString->creditIndex
       // = currentNode->depth;
     }
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     // InheritedVertex brother_cp = InheritedVertex(brother);
     // brother_cp.ownerNode =
     prevNode->inheritedVertices->splice(
         std::begin(*prevNode->inheritedVertices), *tmp_brother_lst,
         std::begin(*tmp_brother_lst));
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     brother.ownerList = prevNode->inheritedVertices;
     brother.ownerCell = std::begin(*prevNode->inheritedVertices);
     brother.ownerNode = prevNode;
     brother.hashString->creditIndex = prevNode->depth;
     brother.canonicalLabel.first = prevNode->key;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     // slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     // slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex
     // = prevNode->depth;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     (*tInfo->distribution)[prevNode->depth]++;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     // slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
     // prevNode->key;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, currentNode);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
   } else if (currentNode->children->size() == 1) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     flagsSaved = std::cout.flags();
     std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
               << std::setfill('0') << std::hex << prevNode->key << std::endl;
     std::cout.flags(flagsSaved);
-
+#endif
     TrieBody *parent = currentNode->parent;
 
     prevNode->parent->children->erase(prevNode->key);
@@ -445,20 +467,28 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     goBackProcessInnerDoubleCommonPrefixVertices(
         target, brother, tmp_brother_lst, parent, currentNode, goAheadStack,
         tInfo, targetDepth, tmp_delete_lst, del_f);
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   } else {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     TrieBody *parent = currentNode->parent;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << "*prevNode->inheritedVertices: " << std::endl;
     std::cout << *prevNode->inheritedVertices << std::endl;
     // std::cout << "*brother.ownerList" << std::endl;
     // std::cout << *brother.ownerList << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     if (brother.correspondingVertex->correspondingVertexInTrie == nullptr)
       std::cout << "!!!!!!!!!!" << std::endl;
+#ifdef DIFFISO_DEB
     std::cout << *brother.correspondingVertex->correspondingVertexInTrie
               << std::endl;
+#endif
     prevNode->inheritedVertices->splice(
         std::begin(*prevNode->inheritedVertices), *tmp_brother_lst,
         std::begin(*tmp_brother_lst));
@@ -474,22 +504,24 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     // brother_cp.hashString->creditIndex = prevNode->depth;
     // brother_cp.canonicalLabel.first = prevNode->key;
     // prevNode->inheritedVertices->push_front(brother_cp);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     // std::cout << *brother_cp.correspondingVertex->correspondingVertexInTrie
     //           << std::endl;
     // slim::element::get<InheritedVertex>(
     //     *std::begin(*prevNode->inheritedVertices))
     //     .ownerCell = std::begin(*prevNode->inheritedVertices);
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
+#ifdef DIFFISO_DEB
     std::cout << *slim::element::get<InheritedVertex>(
                       *std::begin(*prevNode->inheritedVertices))
                       .correspondingVertex
               << std::endl;
+#endif
     if (slim::element::get<InheritedVertex>(
             *std::begin(*prevNode->inheritedVertices))
             .correspondingVertex->correspondingVertexInTrie == nullptr) {
-      std::cout << "!!!!!!!!!!!" << std::endl;
     }
+#ifdef DIFFISO_DEB
     std::cout << *slim::element::get<InheritedVertex>(
                       *std::begin(*prevNode->inheritedVertices))
                       .correspondingVertex->correspondingVertexInTrie
@@ -501,19 +533,17 @@ void goBackProcessInnerDoubleCommonPrefixVertices(
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
     // brother.ownerList = prevNode->inheritedVertices;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     // slim::element::get<InheritedVertex>(*brotherCell).ownerNode = prevNode;
     // slim::element::get<InheritedVertex>(*brotherCell).hashString->creditIndex
     // =
     //     prevNode->depth;
     (*tInfo->distribution)[prevNode->depth]++;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     // slim::element::get<InheritedVertex>(*brotherCell).canonicalLabel.first =
     //     prevNode->key;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     goBackProcessInnerManyCommonPrefixVertices(target, parent, goAheadStack,
                                                tInfo, targetDepth,
                                                tmp_delete_lst, del_f);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 }
 
@@ -522,14 +552,18 @@ void goBackProcessInnerSingleCommonPrefixVertex(
     InheritedVertex &ivertex, TrieBody *currentNode, S *goAheadStack,
     TerminationConditionInfo *tInfo, int targetDepth,
     vertex_list *tmp_delete_lst, bool del_f) {
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::ios::fmtflags flagsSaved = std::cout.flags();
   std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
             << std::setfill('0') << std::hex << currentNode->key << std::endl;
   std::cout.flags(flagsSaved);
+#endif
   auto targetCell = ivertex.ownerCell;
+#ifdef DIFFISO_DEB
   std::cout << *targetCell << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   if (targetDepth == currentNode->depth) {
     if (!del_f) {
       currentNode->inheritedVertices->splice(
@@ -550,8 +584,11 @@ void goBackProcessInnerSingleCommonPrefixVertex(
 
              currentNode->children->begin()
                      ->second->inheritedVertices->size() == 1) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     TrieBody *childNode = (TrieBody *)currentNode->children->begin()->second;
+#ifdef DIFFISO_DEB
     std::cout << *childNode->inheritedVertices << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << slim::element::get<InheritedVertex>(
@@ -559,7 +596,9 @@ void goBackProcessInnerSingleCommonPrefixVertex(
                      .correspondingVertex->correspondingVertexInTrie
               << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     auto brother = std::begin(*childNode->inheritedVertices);
+#ifdef DIFFISO_DEB
     std::cout << slim::element::get<InheritedVertex>(*brother) << std::endl;
     printf("%p\n", &slim::element::get<InheritedVertex>(*brother));
     printf("%p\n",
@@ -570,6 +609,7 @@ void goBackProcessInnerSingleCommonPrefixVertex(
     std::cout << slim::element::get<InheritedVertex>(*brother)
                      .correspondingVertex->correspondingVertexInTrie
               << std::endl;
+#endif
     vertex_list *tmp_brother_lst = new vertex_list();
     tmp_brother_lst->splice(std::begin(*tmp_brother_lst),
                             *childNode->inheritedVertices,
@@ -597,6 +637,7 @@ template <typename S>
 void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
                    S *goAheadStack, TerminationConditionInfo *tInfo,
                    int targetDepth, vertex_list *tmp_delete_lst, bool del_f) {
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::ios::fmtflags flagsSaved = std::cout.flags();
   std::cout << "CURRENTNODE-KEY: " << std::uppercase << std::setw(8)
@@ -604,33 +645,34 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
   std::cout.flags(flagsSaved);
 
   std::cout << "currentNode->depth:" << currentNode->depth << std::endl;
+#endif
   if (targetDepth < currentNode->depth) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     if (currentNode->inheritedVertices->empty()) {
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
       TrieBody *parent = currentNode->parent;
 
       (*tInfo->distribution)[currentNode->depth]--;
       if (parent->depth >= 0 && parent->children->size() != 1) {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
         (*tInfo->increase)[parent->depth]--;
       }
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       currentNode->parent->children->erase(currentNode->key);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       delete (currentNode);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       goBackProcessInnerSingleCommonPrefixVertex(ivertex, parent, goAheadStack,
                                                  tInfo, targetDepth,
                                                  tmp_delete_lst, del_f);
     } else if (currentNode->inheritedVertices->size() == 1) {
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
       auto brother = std::begin(*currentNode->inheritedVertices);
       TrieBody *parent = currentNode->parent;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       (*tInfo->distribution)[omega_array::OMEGA]--;
       (*tInfo->distribution)[omega_array::OMEGA]--;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       vertex_list *tmp_brother_lst = new vertex_list();
       tmp_brother_lst->splice(std::begin(*tmp_brother_lst),
                               *currentNode->inheritedVertices,
@@ -641,18 +683,20 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
           targetDepth, tmp_delete_lst, del_f);
       delete tmp_brother_lst;
     } else {
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
       TrieBody *parent = currentNode->parent;
 
       (*tInfo->distribution)[omega_array::OMEGA]--;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       goBackProcessInnerManyCommonPrefixVertices(ivertex, parent, goAheadStack,
                                                  tInfo, targetDepth,
                                                  tmp_delete_lst, del_f);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
   } else {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     if (!del_f) {
       currentNode->inheritedVertices->splice(
           std::begin(*currentNode->inheritedVertices), *tmp_delete_lst,
@@ -663,7 +707,9 @@ void goBackProcess(InheritedVertex &ivertex, TrieBody *currentNode,
       ivertex.hashString->creditIndex = currentNode->depth;
     }
   }
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
 }
 
 template <typename S1>
@@ -673,26 +719,34 @@ void goBackProcessOfCurrentConvertedVertices(
   int i;
 
   for (i = 0; i < BFSStack->size(); i++) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     ConvertedGraphVertex *cVertex = BFSStack->at(i);
+#ifdef DIFFISO_DEB
     std::cout << *cVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     InheritedVertex *iVertex = cVertex->correspondingVertexInTrie;
+#ifdef DIFFISO_DEB
     std::cout << *iVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     TrieBody *currentNode = iVertex->ownerNode;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     auto targetCell = iVertex->ownerCell;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     vertex_list *tmp_delete_lst = new vertex_list();
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     tmp_delete_lst->splice(std::begin(*tmp_delete_lst), *iVertex->ownerList,
                            targetCell);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     goBackProcess(*iVertex, currentNode, goAheadStack, tInfo, targetDepth,
                   tmp_delete_lst, false);
     delete tmp_delete_lst;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   return;
@@ -702,54 +756,63 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
                     TerminationConditionInfo *tInfo, hash_generator gen) {
   auto inheritedVerticesList = targetNode->inheritedVertices;
   auto children = targetNode->children;
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "--inheritedVerticesList--" << std::endl;
   std::cout << *inheritedVerticesList << std::endl;
+#endif
   if (inheritedVerticesList->size() == 1 && children->empty() &&
       targetNode->depth != -1) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("-------goAhead(SINGLETONE)-------\n");
     std::cout << "DEPTH:" << targetNode->depth << std::endl;
     terminationConditionInfoDump(tInfo);
+#endif
     (*tInfo->distribution)[targetNode->depth]++;
+#ifdef DIFFISO_DEB
     printf("-------goAhead(SINGLETONE)-------\n");
     terminationConditionInfoDump(tInfo);
+#endif
     slim::element::get<InheritedVertex>(inheritedVerticesList->front())
         .canonicalLabel.first = targetNode->key;
   } else {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     while (!inheritedVerticesList->empty()) {
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       printf("-------goAhead-------\n");
       terminationConditionInfoDump(tInfo);
+#endif
       auto tmpCell = std::begin(*inheritedVerticesList);
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << targetNode->depth << std::endl;
       std::cout << *gen.cGraph << std::endl;
+#endif
       auto key = gen.hash(&slim::element::get<InheritedVertex>(*tmpCell),
                           targetNode->depth);
+#ifdef DIFFISO_DEB
       std::cout << *gen.cGraph << std::endl;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << key << std::endl;
+#endif
       auto it = children->find(key);
       TrieBody *nextNode;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       if (it == std::end(*children)) {
         if (!children->empty()) {
           (*tInfo->increase)[targetNode->depth]++;
         }
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
         nextNode = new TrieBody();
         children->insert(std::make_pair(key, nextNode));
         nextNode->key = key;
         nextNode->parent = targetNode;
         nextNode->depth = targetNode->depth + 1;
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
       } else {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
         nextNode = it->second;
       }
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       if (!nextNode->isPushedIntoGoAheadStack &&
           !nextNode->inheritedVertices->empty()) {
         auto size = nextNode->inheritedVertices->size();
@@ -761,18 +824,18 @@ void goAheadProcess(TrieBody *targetNode, std::stack<TrieBody *> *goAheadStack,
           }
         }
       }
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       nextNode->inheritedVertices->splice(
           std::begin(*nextNode->inheritedVertices), *inheritedVerticesList,
           tmpCell);
       slim::element::get<InheritedVertex>(*tmpCell).ownerList =
           nextNode->inheritedVertices;
       slim::element::get<InheritedVertex>(*tmpCell).ownerNode = nextNode;
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << "NEXTNODE:" << std::endl;
       std::cout << *nextNode->inheritedVertices << std::endl;
+#endif
       pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, nextNode);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
   }
 }
@@ -781,22 +844,28 @@ void goAheadProcessOfCurrentTrieNodes(std::stack<TrieBody *> *goAheadStack,
                                       TerminationConditionInfo *tInfo,
                                       hash_generator gen) {
   auto nextGoAheadStack = std::stack<TrieBody *>();
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << *gen.cGraph << std::endl;
+#endif
   while (!goAheadStack->empty()) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     TrieBody *targetNode =
         popTrieBodyFromGoAheadStackWithoutOverlap(goAheadStack);
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << "targetNode:" << std::endl;
     std::cout << *targetNode->inheritedVertices << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     goAheadProcess(targetNode, &nextGoAheadStack, tInfo, gen);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
+#ifdef DIFFISO_DEB
   std::cout << "nextGoAheadStack.size() = " << nextGoAheadStack.size()
             << std::endl;
-
+#endif
   nextGoAheadStack.swap(*goAheadStack);
 }
 
@@ -812,15 +881,19 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
     // std::cout << *targetCVertex;
 
     InheritedVertex *targetIVertex = targetCVertex->correspondingVertexInTrie;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+#ifdef DIFFISO_DEB
 
     std::cout << "targetCVertex:" << *targetCVertex << std::endl;
     printf("targetIVertex pointer: %p\n", targetIVertex);
+
     if (targetIVertex == nullptr)
       std::cout << "targetIVertex is NULL!!" << std::endl;
+
     std::cout << "targetIVertex: " << *targetIVertex << std::endl;
+#endif
     auto targetCell = targetIVertex->ownerCell;
     // targetIVertex->ownerList->erase(targetIVertex->ownerCell);
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("targetIVertex->ownerList: %p\n", targetIVertex->ownerList);
     for (auto it = targetIVertex->ownerList->begin();
@@ -842,6 +915,7 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
     }
 
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     TrieBody *currentNode = targetIVertex->ownerNode;
     // std::cout << "--OWNER-NODE--" << std::endl;
     // std::cout << *currentNode << std::endl;
@@ -852,15 +926,14 @@ void deleteInheritedVerticesFromTrie(Trie *trie, S1 *deletedVertices,
 
     goBackProcess(*targetIVertex, currentNode, goAheadStack, trie->info, -1,
                   tmp_delete_lst, true);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     // delete targetIVertex;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
+#endif
     // targetIVertex->ownerList->erase(targetIVertex->ownerCell);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     // std::cout << *targetCell << std::endl;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    trie->dump();
     delete tmp_delete_lst;
   }
 }
@@ -870,54 +943,70 @@ void addInheritedVerticesToTrie(
     std::vector<ConvertedGraphVertex *> *initializeConvertedVerticesStack,
     std::stack<TrieBody *> *goAheadStack, Graphinfo *cAfterGraph,
     int gapOfGlobalRootMemID) {
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   trie->dump();
+#endif
   if (!addedVertices->empty()) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     pushTrieBodyIntoGoAheadStackWithoutOverlap(goAheadStack, trie->body);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
   auto rit = addedVertices->rbegin();
   while (rit != addedVertices->rend()) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     ConvertedGraphVertex *targetCVertex = *rit;
     targetCVertex->isPushedIntoDiffInfoStack = false;
     rit++;
     // popConvertedVertexFromDiffInfoStackWithoutOverlap(addedVertices);
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *targetCVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
+#endif
     trie->body->inheritedVertices->push_front(
         InheritedVertex(targetCVertex, gapOfGlobalRootMemID));
+#ifdef DIFFISO_DEB
     std::cout << *(trie->body->inheritedVertices) << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     InheritedVertex *targetIVertex = &slim::element::get<InheritedVertex>(
         trie->body->inheritedVertices->front());
+#ifdef DIFFISO_DEB
     std::cout << *targetIVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *targetCVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     targetCVertex->correspondingVertexInTrie = targetIVertex;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     // targetIVertex->ownerNode = trie->body;
+#endif
     targetIVertex->ownerList = trie->body->inheritedVertices;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     targetIVertex->ownerCell = std::begin(*trie->body->inheritedVertices);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     targetCVertex->isVisitedInBFS = TRUE;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto &v : *initializeConvertedVerticesStack)
       std::cout << v << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     initializeConvertedVerticesStack->push_back(targetCVertex);
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     trie->dump();
+#endif
   }
+#ifdef DIFFISO_DEB
   std::cout << *(trie->body->inheritedVertices) << std::endl;
-
+#endif
   return;
 }
 
@@ -961,16 +1050,11 @@ void moveInheritedRelinkedVerticesToBFSStack(
 
 void initializeConvertedVertices(
     std::vector<ConvertedGraphVertex *> *initializeConvertedVerticesStack) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   while (!initializeConvertedVerticesStack->empty()) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     ConvertedGraphVertex *cVertex = initializeConvertedVerticesStack->back();
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     initializeConvertedVerticesStack->pop_back();
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     cVertex->isVisitedInBFS = FALSE;
   }
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return;
 }
 
@@ -985,7 +1069,6 @@ Bool isDescreteTrie(S *goAheadStack, TerminationConditionInfo *tInfo,
 }
 
 Bool isRefinedTrie(TerminationConditionInfo *tInfo, int step) {
-  printf("%s:%d:step=%d\n", __FUNCTION__, __LINE__, step);
   int v;
   try {
     v = tInfo->increase->at(step);
@@ -998,11 +1081,12 @@ Bool isRefinedTrie(TerminationConditionInfo *tInfo, int step) {
 template <typename S>
 Bool triePropagationIsContinued(S *goAheadStack,
                                 TerminationConditionInfo *tInfo, int step) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   Bool r = isRefinedTrie(tInfo, step);
   Bool d = isDescreteTrie(goAheadStack, tInfo, step);
+#ifdef DIFFISO_DEB
   std::cout << "ISREFINEDTRIE: " << r << std::endl;
   std::cout << "ISDESCRETETRIE: " << d << std::endl;
+#endif
   return r && !d;
   // if(r)
   //   return r;
@@ -1057,25 +1141,32 @@ void triePropagateInner(Trie *trie, S1 *BFSStack,
   if (omega_array::maxIndex(*tInfo->distribution) == omega_array::OMEGA &&
       omega_array::maxIndex(*tInfo->increase) ==
           omega_array::index_type(stepOfPropagation - 1)) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     pushInftyDepthTrieNodesIntoGoAheadStack(trie, goAheadStack,
                                             stepOfPropagation);
   }
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "goAheadStack->size() = " << goAheadStack->size() << std::endl;
+#endif
   goBackProcessOfCurrentConvertedVertices(BFSStack, goAheadStack, tInfo,
                                           stepOfPropagation);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "goAheadStack->size() = " << goAheadStack->size() << std::endl;
 
   std::cout << "----goBack(" << stepOfPropagation << ")----" << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   goAheadProcessOfCurrentTrieNodes(goAheadStack, tInfo, data);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "----goAhead(" << stepOfPropagation << ")----" << std::endl;
+#endif
   getNextDistanceConvertedVertices(BFSStack, initializeConvertedVerticesStack,
                                    data.cGraph);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return;
 }
 
@@ -1102,54 +1193,46 @@ void TrieBody::collectDescendantConvertedVertices(TrieBody *descendantBody) {
 
 void TrieBody::makeTrieMinimumInner(TerminationConditionInfo *tInfo,
                                     int stepOfPropagation) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (this->depth == stepOfPropagation + 1) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (this->isPushedIntoGoAheadStack) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       for (auto &v : *this->inheritedVertices) {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
         (*tInfo->distribution)[omega_array::OMEGA]++;
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
         slim::element::get<InheritedVertex>(v).canonicalLabel.first = this->key;
       }
     }
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     if (!this->children->empty()) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       for (auto &v : *this->children)
         this->collectDescendantConvertedVertices(v.second);
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       this->clearDescendants();
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->isInfinitedDepth = TRUE;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto &v : *this->children)
       v.second->makeTrieMinimumInner(tInfo, stepOfPropagation);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   return;
 }
 
 void makeTrieMinimum(Trie *trie, int stepOfPropagation) {
   TerminationConditionInfo *tInfo = trie->info;
   trie->body->makeTrieMinimumInner(tInfo, stepOfPropagation);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   trie->dump();
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "stepOfPropagation = " << stepOfPropagation << std::endl;
+#endif
   omega_array::move_to_omega_larger_than(*tInfo->distribution,
                                          stepOfPropagation);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   trie->dump();
+#endif
   omega_array::clear_finite_larger_than(*tInfo->increase, stepOfPropagation);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   trie->dump();
+#endif
 }
 
 vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel) {
@@ -1166,44 +1249,6 @@ getNextSentinel(vertex_list &list, const vertex_list::iterator beginSentinel) {
 }
 
 using vertex_queue = std::priority_queue<std::pair<int, InheritedVertex *>>;
-
-bool putClassesWithPriority(vertex_list &list,
-                            vertex_list::iterator beginSentinel,
-                            vertex_list::iterator endSentinel,
-                            vertex_queue *cellPQueue) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  bool isRefined = false;
-  int prev_priority;
-  InheritedVertex *prev_vert;
-
-  std::tie(prev_priority, prev_vert) = cellPQueue->top();
-  std::cout << *prev_vert << std::endl;
-  while (!cellPQueue->empty()) {
-    int priority;
-    InheritedVertex *vert;
-    std::tie(priority, vert) = cellPQueue->top();
-    cellPQueue->pop();
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    if (priority < prev_priority) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
-      list.insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
-      isRefined = true;
-    }
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout << *vert << std::endl;
-    std::cout << *vert->hashString << std::endl;
-    InheritedVertex cvert = InheritedVertex(*vert);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout << list << std::endl;
-    // list.insert(list.begin(), *vert);
-    list.insert(std::next(beginSentinel, 1), *vert);
-    std::cout << list << std::endl;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::tie(prev_priority, prev_vert) = std::tie(priority, vert);
-  }
-
-  return isRefined;
-}
 
 template <typename T> bool classify(propagation_list &l, T score) {
   bool changed = false;
@@ -1238,14 +1283,20 @@ std::map<int, std::map<int, int>>
 putLabelsToAdjacentVertices(const propagation_list &pList) {
   std::map<int, std::map<int, int>> id_to_adjacent_labels;
   int tmpLabel = 0;
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   for (auto &list : pList) {   // loop of classes
     for (auto vertex : list) { // loop of vertices
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << *vertex << std::endl;
+#endif
       for (int link_index = 0; link_index < vertex->links.size();
            link_index++) { // loop of links
+#ifdef DIFFISO_DEB
         printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
         auto tmpType = vertex->type;
         auto &tmpLink = vertex->links[link_index];
         switch (tmpLink.attr) {
@@ -1260,17 +1311,20 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
           break;
         default:
           if (tmpLink.attr < 128) {
+#ifdef DIFFISO_DEB
             printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
             switch (tmpType) {
             case convertedAtom: {
+#ifdef DIFFISO_DEB
               printf("%s:%d\n", __FUNCTION__, __LINE__);
               std::cout << tmpLink.data.ID << std::endl;
               printf("%s:%d\n", __FUNCTION__, __LINE__);
               std::cout << tmpLabel << std::endl;
               std::cout << link_index << std::endl;
               std::cout << tmpLabel * 256 + link_index << std::endl;
+#endif
               id_to_adjacent_labels[tmpLink.data.ID][tmpLink.attr]= tmpLabel * 256 + link_index;
-              printf("%s:%d\n", __FUNCTION__, __LINE__);
               break;
             }
             case convertedHyperLink:
@@ -1295,7 +1349,9 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
 void refineConventionalPropagationListByPropagation(propagation_list &pList) {
   bool refined = false;
   do {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     auto labels_map = putLabelsToAdjacentVertices(pList);
     std::map<int, std::vector<int>> labels;
     for (auto &v : labels_map) {
@@ -1303,65 +1359,76 @@ void refineConventionalPropagationListByPropagation(propagation_list &pList) {
 	labels[v.first].push_back(e.second);
       }
     }
-    
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     for(auto &v : labels) {
       std::cout << v.first << ":" << v.second << std::endl;
     }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     refined = classify(
         pList, [&](const ConvertedGraphVertex *v) { return labels[v->ID]; });
+#ifdef DIFFISO_DEB
     std::cout << pList << std::endl;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   } while (refined);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
 }
 
 void assureReferenceFromConvertedVerticesToInheritedVertices(
     ConvertedGraph *cAfterGraph, ConvertedGraph *cBeforeGraph,
     int gapOfGlobalRootMemID, std::map<int, int> &id_map) {
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   for (auto &v : id_map) {
     std::cout << v.first << "-->" << v.second << std::endl;
   }
+#endif
   for (auto &v : cBeforeGraph->atoms) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     auto cBeforeVertex = v.second;
+#ifdef DIFFISO_DEB
     std::cout << v.first << std::endl;
     std::cout << id_map[v.first] << std::endl;
-
+#endif
     // auto &cAfterVertex = cAfterGraph->at(id_map[v.first], convertedAtom);
     auto it = cAfterGraph->atoms.find(id_map[v.first]);
     if (it == cAfterGraph->atoms.end())
       continue;
     auto cAfterVertex = it->second;
-
+#ifdef DIFFISO_DEB
     std::cout << *cAfterVertex << std::endl;
     std::cout << *cBeforeVertex << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     if (cAfterVertex->correspondingVertexInTrie == nullptr) {
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << *cAfterVertex << std::endl;
+#endif
       if (cBeforeVertex->correspondingVertexInTrie == nullptr) {
+#ifdef DIFFISO_DEB
         std::cout << "!!!!!!!!!!" << std::endl;
         printf("cBeforeVertex pointer:%p\n", cBeforeVertex);
         std::cout << "cBeforeVertex pointer:" << cBeforeVertex << std::endl;
+#endif
       }
-
+#ifdef DIFFISO_DEB
       std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
       printf("cBeforeVertex->correspondingVertexInTrie pointer:%p\n",
              cBeforeVertex->correspondingVertexInTrie);
+#endif
       cAfterVertex->correspondingVertexInTrie =
           cBeforeVertex->correspondingVertexInTrie;
       cAfterVertex->correspondingVertexInTrie->correspondingVertex =
           cAfterVertex;
       cBeforeVertex->correspondingVertexInTrie = nullptr;
       cAfterVertex->correspondingVertexInTrie->beforeID = cBeforeVertex->ID;
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       printf("cAfterV: %p\n", cAfterVertex);
       printf("cAfterV->IV: %p\n", cAfterVertex->correspondingVertexInTrie);
       printf("cAfterV->IV->CV: %p\n",
              cAfterVertex->correspondingVertexInTrie->correspondingVertex);
+#endif
     }
   }
   // for (auto &v : cAfterGraph->atoms) {
@@ -1409,6 +1476,7 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   std::vector<ConvertedGraphVertex *> initializeConvertedVerticesStack;
   std::stack<InheritedVertex *> fixCreditIndexStack;
   TerminationConditionInfo *tInfo = this->info;
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << *cAfterGraph->cv << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -1429,8 +1497,10 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   std::cout << "--After Graph--" << std::endl;
   std::cout << *cAfterGraph->cv << std::endl;
   std::cout << "----------------" << std::endl;
+#endif
   deleteInheritedVerticesFromTrie(this, diffInfo->deletedVertices,
                                   &goAheadStack);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "--Before Graph--" << std::endl;
   std::cout << *cBeforeGraph->cv << std::endl;
@@ -1438,14 +1508,16 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   std::cout << "--After Graph--" << std::endl;
   std::cout << *cAfterGraph->cv << std::endl;
   std::cout << "----------------" << std::endl;
+#endif
   addInheritedVerticesToTrie(this, diffInfo->addedVertices,
                              &initializeConvertedVerticesStack, &goAheadStack,
                              cAfterGraph, gapOfGlobalRootMemID);
+#ifdef DIFFISO_DEB
   this->dump();
+#endif
   auto hash_gen = hash_generator(cAfterGraph->cv, gapOfGlobalRootMemID,
                                  &fixCreditIndexStack);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-
+#ifdef DIFFISO_DEB
   for (auto i = cAfterGraph->cv->atoms.begin();
        i != cAfterGraph->cv->atoms.end(); ++i) {
     std::cout << *i->second;
@@ -1456,33 +1528,46 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   std::cout << *cAfterGraph->cv << std::endl;
   //実際のSLIMでは起きない操作
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   assureReferenceFromConvertedVerticesToInheritedVertices(
       cAfterGraph->cv, cBeforeGraph->cv, gapOfGlobalRootMemID, id_map);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   cg_trie_reference_check(cAfterGraph->cv);
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   moveInheritedRelinkedVerticesToBFSStack(diffInfo->relinkedVertices,
                                           &initializeConvertedVerticesStack,
                                           &BFSStack, cAfterGraph->cv, id_map);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   int stepOfPropagation = -1;
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << *cAfterGraph->cv << std::endl;
   std::cout << *hash_gen.cGraph << std::endl;
   this->dump();
   std::cout << *hash_gen.cGraph << std::endl;
+#endif
   stepOfPropagation = 0;
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "goAheadStack.size() = " << goAheadStack.size() << std::endl;
+#endif
   goAheadProcessOfCurrentTrieNodes(&goAheadStack, tInfo, hash_gen);
+#ifdef DIFFISO_DEB
   std::cout << *cAfterGraph->cv << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "goAheadStack.size() = " << goAheadStack.size() << std::endl;
   this->dump();
   std::cout << *cAfterGraph->cv << std::endl;
+#endif
   while (triePropagationIsContinued(&goAheadStack, tInfo, stepOfPropagation)) {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     this->dump();
     stepOfPropagation++;
     triePropagateInner(this, &BFSStack, &initializeConvertedVerticesStack,
@@ -1490,35 +1575,34 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
                        hash_generator(cAfterGraph->cv, gapOfGlobalRootMemID,
                                       &fixCreditIndexStack));
   }
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   this->dump();
+#endif
   Bool verticesAreCompletelySorted =
       isDescreteTrie(&goAheadStack, tInfo, stepOfPropagation) ||
       isEmptyTrie(this);
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   if (!verticesAreCompletelySorted) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     makeTrieMinimum(this, stepOfPropagation);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     while (!goAheadStack.empty()) {
       popTrieBodyFromGoAheadStackWithoutOverlap(&goAheadStack);
     }
   }
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   initializeConvertedVertices(&initializeConvertedVerticesStack);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   initializeConvertedVertices(&BFSStack);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   fixCreditIndex(&fixCreditIndexStack);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   //実際のSLIMでは起きない操作
   cBeforeGraph->cv->clearReferencesFromConvertedVerticesToInheritedVertices();
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   *stepOfPropagationPtr = stepOfPropagation;
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   this->dump();
   std::cout << *cAfterGraph->cv << std::endl;
   cg_trie_reference_check(cAfterGraph->cv);
+#endif
   return verticesAreCompletelySorted;
 }
 
