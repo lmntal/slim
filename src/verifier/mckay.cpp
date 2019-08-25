@@ -1,6 +1,6 @@
 #include "mckay.hpp"
 #include "trie.hpp"
-
+#include "runtime_status.h"
 #include <iostream>
 #include <string>
 
@@ -243,14 +243,34 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
                                                 Graphinfo *cAfterGraph,
                                                 Graphinfo *cBeforeGraph,
                                                 std::map<int, int> &id_map) {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__TRIEMCKAY);
+  }
+#endif
   std::vector<std::vector<std::string>> canonical_label;
   int gapOfGlobalRootMemID =
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__TRIEPROPAGATE);
+  }
+#endif
   Bool verticesAreCompletelySorted =
       trie->propagate(diffInfo, cAfterGraph, cBeforeGraph, gapOfGlobalRootMemID,
                       &stepOfPropagation, id_map);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3)   {
+    profile_finish_timer(PROFILE_TIME__TRIEPROPAGATE);
+  }
+#endif
   if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__TRIEMCKAY);
+    }
+#endif
     return canonical_label;
   } else {
 #ifdef DIFFISO_DEB
@@ -340,6 +360,11 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
     }
     std::cout << "]" << std::endl;
     std::cout << "!!!!!!!!!!!!!!!!!!!" << std::endl;
+#endif
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__TRIEMCKAY);
+    }
 #endif
     return canonical_label;
   }

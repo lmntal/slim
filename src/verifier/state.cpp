@@ -203,7 +203,18 @@ static int state_equals_with_compress(State *check, State *stored) {
     /* 同型性判定 */
     // t = check->state_name == stored->state_name &&
     //     lmn_mem_equals_enc(bs2, check->state_mem());
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_start_timer(PROFILE_TIME__STATE_COMPARE_CL);
+    }
+#endif
     t = cmp_canonical_label(check, stored);
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__STATE_COMPARE_CL);
+    }
+#endif
+    
     // t = false;
   } else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.

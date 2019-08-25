@@ -40,6 +40,7 @@
 #include "state.h"
 #include "vm/vm.h"
 #include "state.hpp"
+#include <iostream>
 
 struct RuleProfiler {
   LmnRulesetId ref_rs_id;
@@ -973,6 +974,15 @@ static const char *profile_time_id_to_name(int type) {
     break;
   case PROFILE_TIME__STATE_COMPARE_MEQ:
     ret = "state mem compare";
+    break;
+  case PROFILE_TIME__STATE_COMPARE_CL:
+    ret = "state cl compare";
+    break;
+  case PROFILE_TIME__TRIEMCKAY:
+    ret = "trie mckay";
+    break;
+  case PROFILE_TIME__TRIEPROPAGATE:
+    ret = "trie propagate";
     break;
   case PROFILE_TIME__STATE_COMPARE_MID:
     ret = "state binstr compare";
