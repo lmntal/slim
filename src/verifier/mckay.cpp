@@ -150,6 +150,11 @@ bool listMcKayInner(
 propagation_list listMcKay(propagation_list &propagationList,
                            ConvertedGraph *cAfterGraph,
                            int gapOfGlobalRootMemID) {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__LISTMCKAY);
+  }
+#endif
   propagation_list canonicalDiscreteRefinement;
   if (propagationList.empty()) {
     canonicalDiscreteRefinement = propagation_list(propagationList);
@@ -184,7 +189,11 @@ propagation_list listMcKay(propagation_list &propagationList,
     //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
     //     freePreserveDiscreteProapgationList(v.second);
     //   delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
-
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__LISTMCKAY);
+    }
+#endif
     return canonicalDiscreteRefinement;
   }
   // printf("%s:%d\n", __FUNCTION__, __LINE__);

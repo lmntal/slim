@@ -80,6 +80,7 @@ enum PROFILE_TIME {
   PROFILE_TIME__STATE_COMPARE_MEQ, /* グラフ同型性判定による状態の等価性判定 */
   PROFILE_TIME__STATE_COMPARE_CL,  /* canonical labelの比較 */
   PROFILE_TIME__TRIEMCKAY,	   /* trieMckay */
+  PROFILE_TIME__LISTMCKAY,
   PROFILE_TIME__TRIEPROPAGATE,	   /* triePropagate */
   PROFILE_TIME__STATE_COMPARE_MID, /* 膜のID比較による状態の等価性判定 */
   PROFILE_TIME__STATE_COPY,           /* 膜の複製(INSTR_COMMITを除く) */
