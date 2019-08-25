@@ -56,7 +56,7 @@
 #include "state.h"
 #include "state.hpp"
 // #define DIFFISO_GEN
-#define DIFFISO_DEB
+// #define DIFFISO_DEB
 bool diff_gen_finish = false;
 std::map<int, int> iso_m;
 extern Graphinfo *parent_graphinfo;
@@ -288,13 +288,18 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     ===== Diffiso ====
    */
   /** restore : 膜の復元 */
+
 #ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "--CV--" << std::endl;
   std::cout << *s->graphinfo->cv << std::endl;
+#endif
   if (s->parent == nullptr) {
+#ifdef DIFFISO_DEB
     std::cout << "parent is NULL!!" << std::endl;
+#endif
   } else {
+#ifdef DIFFISO_DEB
     std::cout << "parentID is " << s->parent->state_id << std::endl;
 #endif
     if (s->parent->trie) {
@@ -305,20 +310,24 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
                 << ")" << std::endl;
 #endif
       s->parent->diff_map[s->state_id].second->diffInfoDump();
+#ifdef DIFFISO_DEB
       cg_trie_reference_check(s->parent->graphinfo->cv);
+#endif
       trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second,
                 s->graphinfo, s->parent->graphinfo,
                 s->parent->diff_map[s->state_id].first);
       s->trie = s->parent->trie;
       s->parent->trie = nullptr;
+#ifdef DIFFISO_DEB
       cg_trie_reference_check(s->graphinfo->cv);
+#endif
       // s->parent->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv,
       // s->parent->diff_map[s->state_id].first);
     }
-#ifdef DIFFISO_DEB
+
   }
 
-
+#ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (s->diff_map.size() != 0) {
     for (auto &v : s->diff_map) {
@@ -353,8 +362,8 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << parent_graphinfo->json_string << std::endl;
   }
-
 #endif
+
 
   if (mc_react_cxt_expanded_num(rc) == 0) {
     diff_gen_finish = true;
