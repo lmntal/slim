@@ -352,16 +352,12 @@ bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
 void cg_trie_reference_check(ConvertedGraph *cg);
 inline void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
     std::vector<ConvertedGraphVertex *> *stack, ConvertedGraphVertex *cVertex) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (!cVertex) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     return;
   }
   if (cVertex->isPushedIntoDiffInfoStack) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     return;
   }
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   stack->push_back(cVertex);
   cVertex->isPushedIntoDiffInfoStack = true;
 }

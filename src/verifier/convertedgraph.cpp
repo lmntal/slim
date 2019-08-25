@@ -242,12 +242,14 @@ ConvertedGraphVertex *ConvertedGraph::at(int ID,
 void ConvertedGraph::clearReferencesFromConvertedVerticesToInheritedVertices() {
   for (auto &v : this->atoms) {
     auto cBeforeVertex = v.second;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
     // std::cout << *cBeforeVertex << std::endl;
     if (cBeforeVertex->correspondingVertexInTrie != nullptr) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
+
       // std::cout << "^^^^^^^^^^^^^^^FIND PTR BUG^^^^^^^^^^^^^^^^^^^^" << std::endl;
+#ifdef DIFFISO_DEB
       std::cout << *cBeforeVertex << std::endl;
+#endif
       // std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
       // cBeforeVertex->correspondingVertexInTrie = nullptr;
     }

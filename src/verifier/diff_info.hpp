@@ -33,12 +33,15 @@ struct DiffInfo {
                                Graphinfo *org_gi) {
     std::vector<ConvertedGraphVertex *> *new_deletedVertices;
     new_deletedVertices = new std::vector<ConvertedGraphVertex *>();
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     for (auto &v : iso_m) {
       std::cout << v.first << " " << v.second << std::endl;
     }
     std::cout << *org_gi->cv << std::endl;
+#endif
     for (auto i = deletedVertices->begin(); i != deletedVertices->end(); ++i) {
+#ifdef DIFFISO_DEB
       std::cout << "deleteVertexID: " << (*i)->ID << std::endl;
       // std::cout << "MAPED ID: " << iso_m[(*i)->ID]<< std::endl;
 
@@ -50,17 +53,18 @@ struct DiffInfo {
       // }
 
       printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
       if ((*i)->type == convertedAtom) {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
+
         // std::cout << "org_id->first: " << org_id->first << std::endl;
         // std::cout << "org_id->second: " << org_id->second << std::endl;
         const auto &org = org_gi->cv->atoms.find(iso_m[(*i)->ID]);
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
+
         if (org != org_gi->cv->atoms.end()) {
-          printf("%s:%d\n", __FUNCTION__, __LINE__);
+
           new_deletedVertices->push_back(org->second);
         }
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
+
       } else if ((*i)->type == convertedHyperLink) {
         const auto &org_hl = org_gi->cv->hyperlinks.find(iso_m[(*i)->ID]);
         if (org_hl != org_gi->cv->hyperlinks.end()) {
@@ -116,11 +120,15 @@ struct DiffInfo {
       }
     }
     for (auto i = before_atoms.begin(); i != before_atoms.end(); ++i) {
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << *i->second << std::endl;
+#endif
       const auto &after_atom = after_atoms.find(i->first);
       if (after_atom == after_atoms.end()) {
+#ifdef DIFFISO_DEB
         printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
         deletedVertices->push_back(i->second);
         // pushConvertedVertexIntoDiffInfoStackWithoutOverlap(deletedVertices,
         //                                                   i->second);

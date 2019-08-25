@@ -31,25 +31,26 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     propagation_list &dpList, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID) {
   bool isExisting = true;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   putLabelsToAdjacentVertices(dpList);
   propagation_list *preserveDPList = new propagation_list(dpList);
 
   auto &key = *preserveDPList;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+
   auto seniorDPList =
       discretePropagationListsOfInheritedVerticesWithAdjacentLabels.find(key);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+
   if (seniorDPList ==
       discretePropagationListsOfInheritedVerticesWithAdjacentLabels.end()) {
-    std::cout << "NEW" << std::endl;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+
+
     discretePropagationListsOfInheritedVerticesWithAdjacentLabels.insert(
         std::make_pair(key, preserveDPList));
     isExisting = false;
     return isExisting;
   } else {
+#ifdef DIFFISO_DEB
     std::cout << "EXIST" << std::endl;
+#endif
   }
 
   // else {
@@ -110,15 +111,17 @@ bool listMcKayInner(
         &discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
   bool isUsefulBranch = true;
   auto stabilizer = propagation_list(propagationListOfInheritedVertices);
+#ifdef DIFFISO_DEB
   std::cout << "###### before stabilizer ######" << std::endl;
   std::cout << stabilizer << std::endl;
 
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   refineConventionalPropagationListByPropagation(stabilizer);
-
+#ifdef DIFFISO_DEB
   std::cout << "###### after stable refinement ######" << std::endl;
   std::cout << stabilizer << std::endl;
-
+#endif
   auto beginSentinel = firstNonTrivialCell(stabilizer);
 
   if (beginSentinel == stabilizer.end()) {
@@ -154,11 +157,12 @@ propagation_list listMcKay(propagation_list &propagationList,
   } else {
     discrete_propagation_lists
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
-
+#ifdef DIFFISO_DEB
     std::cout << "+++++ start classify +++++" << std::endl;
     classifyWithAttribute(propagationList, cAfterGraph, gapOfGlobalRootMemID);
     std::cout << "###### after attribute classifying ######" << std::endl;
     std::cout << propagationList << std::endl;
+#endif
     listMcKayInner(
         propagationList, cAfterGraph, gapOfGlobalRootMemID,
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
@@ -249,28 +253,31 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
   if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
     return canonical_label;
   } else {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     // for (auto i = cAfterGraph->cv->atoms.begin();
     //      i != cAfterGraph->cv->atoms.end(); ++i)
     //   std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
     propagation_list propagationList;
     trie->conventionalPropagationList(trie->body, propagationList);
+#ifdef DIFFISO_DEB
     std::cout << "###### before list propagate ######" << std::endl;
     std::cout << propagationList << std::endl;
+#endif
     propagation_list canonicalDiscreteRefinement;
     if (propagationList_is_discrete(propagationList)) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       canonicalDiscreteRefinement = propagationList;
     } else {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       canonicalDiscreteRefinement = listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);      
     }
 
 
-
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *cAfterGraph->cv << std::endl;
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
     std::map<ConvertedGraphVertex *, int> m;
     int counter = 0;
     for (auto &v : canonicalDiscreteRefinement) {
@@ -280,27 +287,40 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
     }
     for (auto &v : canonicalDiscreteRefinement) {
       auto cv = v.begin();
-
+#ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << *(*cv) << std::endl;
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       std::cout << (*cv)->correspondingVertexInTrie->canonicalLabel.first << std::endl;
+#endif
       std::vector<std::string> l;
       std::string s = (*cv)->name +  std::to_string(m[*cv]);
+#ifdef DIFFISO_DEB
       std::cout << s << std::endl;
+#endif
       l.push_back(s);
       for (auto &link : (*cv)->links) {
+#ifdef DIFFISO_DEB
         std::cout << link << std::endl;
+#endif
         auto &attr = link.attr;
         if (attr == INTEGER_ATTR) {
+#ifdef DIFFISO_DEB
           std::cout << link.data.integer << std::endl;
+#endif
           l.push_back(std::to_string(link.data.integer));
         } else if (attr == GLOBAL_ROOT_MEM_ATTR) {
+#ifdef DIFFISO_DEB
           std::cout << "GR" << std::endl;
+#endif
         } else if (attr < 128) {
+#ifdef DIFFISO_DEB
 	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
 	  auto adjVertex = cAfterGraph->cv->atoms[link.data.ID];
+#ifdef DIFFISO_DEB
 	  std::cout << *adjVertex << std::endl;
+#endif
 	  l.push_back(adjVertex->name + std::to_string(m[adjVertex]));
         } else {
           std::cout << "unexpected attr" << std::endl;
@@ -308,7 +328,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
       }
       canonical_label.push_back(l);
     }
-
+#ifdef DIFFISO_DEB
     std::cout << "!!CANONICAL LABEL!!" << std::endl;
     std::cout << "[";
     for (auto &l : canonical_label) {
@@ -320,7 +340,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
     }
     std::cout << "]" << std::endl;
     std::cout << "!!!!!!!!!!!!!!!!!!!" << std::endl;
-
+#endif
     return canonical_label;
   }
 }

@@ -27,7 +27,6 @@ struct HashString {
   }
 
   HashString(const HashString &h) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->creditIndex = h.creditIndex;
     for (auto v = h.body.begin(); v != h.body.end(); ++v) {
       this->body.push_back(*v);
@@ -35,7 +34,6 @@ struct HashString {
   }
 
   ~HashString() {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 };
 
@@ -197,7 +195,6 @@ struct InheritedVertex {
   ConvertedGraphVertex *correspondingVertex;
 
   InheritedVertex(ConvertedGraphVertex *cVertex, int gapOfGlobalRootMemID) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     type = cVertex->type;
     strcpy(name, cVertex->name);
     canonicalLabel.first = 0;
@@ -211,16 +208,13 @@ struct InheritedVertex {
     conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
     correspondingVertex = cVertex;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   };
 
   InheritedVertex(const InheritedVertex &iVertex) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->type = iVertex.type;
     strcpy(this->name, iVertex.name);
     this->canonicalLabel.first = iVertex.canonicalLabel.first;
     this->canonicalLabel.second = iVertex.canonicalLabel.second;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->hashString = new HashString(*iVertex.hashString);
     this->isPushedIntoFixCreditIndex = iVertex.isPushedIntoFixCreditIndex;
     this->beforeID = iVertex.beforeID;
@@ -233,10 +227,10 @@ struct InheritedVertex {
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
     this->correspondingVertex = iVertex.correspondingVertex;
     this->correspondingVertex->correspondingVertexInTrie = this;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   ~InheritedVertex() {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("DELETE IVERTEX:%p\n", this);
     // delete (hashString);
@@ -244,6 +238,7 @@ struct InheritedVertex {
     // this->correspondingVertex->correspondingVertexInTrie = nullptr;
     // freeDisjointSetForest(equivalenceClassOfIsomorphism);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   }
 };
 
@@ -263,8 +258,10 @@ struct Trie {
     if (body->children->empty()) {
       std::list<ConvertedGraphVertex *> l;
       for (auto &v : *body->inheritedVertices) {
+#ifdef DIFFISO_DEB
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	std::cout << *(slim::element::get<InheritedVertex>(v).correspondingVertex) << std::endl;
+#endif
         l.push_back(slim::element::get<InheritedVertex>(v).correspondingVertex);
       }
       list.push_back(l);

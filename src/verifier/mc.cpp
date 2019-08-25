@@ -308,9 +308,9 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
       s->parent->trie->dump();
       std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id
                 << ")" << std::endl;
-#endif
+
       s->parent->diff_map[s->state_id].second->diffInfoDump();
-#ifdef DIFFISO_DEB
+
       cg_trie_reference_check(s->parent->graphinfo->cv);
 #endif
       trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second,
@@ -507,7 +507,9 @@ void back_trie_to_parent(State *s) {
   delete s->parent->trie->info;
   s->parent->trie->info = new TerminationConditionInfo(*s->parent->tinfo);
   s->trie = nullptr;
+#ifdef DIFFISO_DEB
   s->parent->trie->dump();
+#endif
   s->parent->succ_num_in_openlist--;
   back_trie_to_parent(s->parent);
   // std::cout << "ID-MAP: (" << s->parent->state_id << ")-->("<< s->state_id <<
@@ -798,7 +800,6 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     else succへの遷移が多重辺かつTransitionオブジェクトを利用しない場合
          then "辺"という構造を持たない(直接pointerで刺している)ので何もしない
     */
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 #ifdef DIFFISO_GEN
   if (!diff_gen_finish) {
@@ -878,8 +879,6 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
   expanded_roots = RC_EXPANDED(rc); /* DeltaMembrane時は空 */
   expanded_rules = RC_EXPANDED_RULES(rc);
   n = mc_react_cxt_expanded_num(rc);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  std::cout << n << std::endl;
   if (n == 0) {
     back_trie_to_parent(src);
   }

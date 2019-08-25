@@ -261,7 +261,6 @@ void getNextDistanceConvertedVertices(
     std::vector<ConvertedGraphVertex *> *BFSStack,
     std::vector<ConvertedGraphVertex *> *initializeConvertedVerticesStack,
     ConvertedGraph *cAfterGraph) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   auto nextBFSStack = new std::vector<ConvertedGraphVertex *>();
 
   while (!BFSStack->empty()) {
@@ -334,12 +333,9 @@ void freeTerminationConditionInfo(TerminationConditionInfo *info) {
 
 template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
   if (body != NULL) {
     if (!body->isPushedIntoGoAheadStack) {
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       stack->push(body);
-      debug_log << __FUNCTION__ << ":" << __LINE__ << std::endl;
       body->isPushedIntoGoAheadStack = TRUE;
     }
   }
@@ -1018,9 +1014,11 @@ void moveInheritedRelinkedVerticesToBFSStack(
   while (rit != relinkedVertices->rend()) {
     ConvertedGraphVertex *cVertex = *rit;
     rit++;
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     std::cout << *cVertex << std::endl;
     std::cout << cVertex->ID << std::endl;
+#endif
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
     // for (auto &v : id_map) {
     //   std::cout << v.first << "-->" << v.second << std::endl;
@@ -1567,8 +1565,9 @@ bool Trie::propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
   while (triePropagationIsContinued(&goAheadStack, tInfo, stepOfPropagation)) {
 #ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-#endif
     this->dump();
+#endif
+
     stepOfPropagation++;
     triePropagateInner(this, &BFSStack, &initializeConvertedVerticesStack,
                        &goAheadStack, tInfo, stepOfPropagation,

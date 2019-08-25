@@ -27,7 +27,7 @@ inline void move_to_omega_larger_than(OmegaArray &body, int index) {
 
 inline void clear_finite_larger_than(OmegaArray &body, int index) {
   if (body.empty()) return;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+#ifdef DIFFISO_DEB
   for(auto &v : body) {
     std::cout << v.first << ", " << v.second << std::endl;
   }
@@ -35,23 +35,23 @@ inline void clear_finite_larger_than(OmegaArray &body, int index) {
   std::cout << "ub.second"  << body.upper_bound(index)->second << std::endl;
   std::cout << "std::prev(body.end())->first = " << std::prev(body.end())->first << std::endl;
   std::cout << "prev.second" << std::prev(body.end())->second<< std::endl;
+#endif
   auto start = body.upper_bound(index);
   if(start == body.end()) {
+#ifdef DIFFISO_DEB
     std::cout << "ENDDDDDDDDDD" << std::endl;
+#endif
   } else if(start == std::prev(body.end())) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     body.erase(start);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   } else {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     body.erase(body.upper_bound(index), body.end());
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+#ifdef DIFFISO_DEB
   for (auto it = body.begin(); it != body.end(); ++it){
     std::cout << it->first << ", " << it->second << std::endl;
   }
   printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
 }
 
 inline int maxIndex(const OmegaArray &body) {

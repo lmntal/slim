@@ -93,6 +93,7 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
  * canonicalをTRUEで入力した場合, バイナリストリングの設定まで行う */
 
 bool cmp_canonical_label(State *s0, State *s1) {
+#ifdef DIFFISO_DEB
   std::cout << "^^^^^^^^^^^^^^ CHECK ISOMORPHISM ^^^^^^^^^^^^^^^" << std::endl;
   std::cout << "s0:CANONICAL LABEL" << std::endl;
   std::cout << "[";
@@ -117,14 +118,16 @@ bool cmp_canonical_label(State *s0, State *s1) {
   }
   std::cout << "]" << std::endl;
   std::cout << "---------------------" << std::endl;
-
+#endif
 
   auto s0z = s0->canonical_label.size();
   auto s1z = s1->canonical_label.size();
   if (s0z != s1z) {
+#ifdef DIFFISO_DEB
     std::cout << "               FALSE" << std::endl;
     std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
               << std::endl;
+#endif
     return false;
   }
 
@@ -134,23 +137,29 @@ bool cmp_canonical_label(State *s0, State *s1) {
     auto v0z = v0.size();
     auto v1z = v1.size();
     if (v0z != v1z) {
+#ifdef DIFFISO_DEB
       std::cout << "               FALSE" << std::endl;
       std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
                 << std::endl;
+#endif
       return false;
     }
 
     for (int j = 0; j < v0z; j++) {
       if (v0[j] != v1[j]) {
+#ifdef DIFFISO_DEB
         std::cout << "               FALSE" << std::endl;
         std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
                   << std::endl;
+#endif
         return false;
       }
     }
   }
+#ifdef DIFFISO_DEB
   std::cout << "               TRUE" << std::endl;
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+#endif
   return true;
 }
 
@@ -192,7 +201,6 @@ static int state_equals_with_compress(State *check, State *stored) {
         binstr_compare(bs1, bs2) == 0;
   } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     // t = check->state_name == stored->state_name &&
     //     lmn_mem_equals_enc(bs2, check->state_mem());
     t = cmp_canonical_label(check, stored);
