@@ -251,7 +251,7 @@ bool propagationList_is_discrete(propagation_list &p) {
 std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
                                                 Graphinfo *cAfterGraph,
                                                 Graphinfo *cBeforeGraph,
-                                                std::map<int, int> &id_map) {
+                                                std::map<int, int> &id_map, bool forward_f) {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__TRIEMCKAY);
@@ -262,7 +262,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
 #ifdef PROFILE
-  if (lmn_env.profile_level >= 3) {
+  if (lmn_env.profile_level >= 3 && forward_f) {
     profile_start_timer(PROFILE_TIME__TRIEPROPAGATE);
   }
 #endif
@@ -270,7 +270,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
       trie->propagate(diffInfo, cAfterGraph, cBeforeGraph, gapOfGlobalRootMemID,
                       &stepOfPropagation, id_map);
 #ifdef PROFILE
-  if (lmn_env.profile_level >= 3)   {
+  if (lmn_env.profile_level >= 3 && forward_f)   {
     profile_finish_timer(PROFILE_TIME__TRIEPROPAGATE);
   }
 #endif

@@ -895,7 +895,7 @@ void dump_profile_data(FILE *f) {
         fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
         for (i = 0; i < ARY_SIZEOF(total.times); i++) {
           total_time += total.times[i].total_time;
-          fprintf(f, "%-24s:%10lu%10.2lf%8.1lf\n", profile_time_id_to_name(i),
+          fprintf(f, "%-24s:%10lu:%10.10lf%8.1lf\n", profile_time_id_to_name(i),
                   total.times[i].called_num, total.times[i].total_time,
                   100.0 * total.times[i].total_time / tmp_total_cpu_time_main);
         }

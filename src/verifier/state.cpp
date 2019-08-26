@@ -169,7 +169,6 @@ bool cmp_canonical_label(State *s0, State *s1) {
 static int state_equals_with_compress(State *check, State *stored) {
   LmnBinStrRef bs1, bs2;
   int t;
-
 #ifdef PROFILE
   if (lmn_env.prof_no_memeq) {
     /* 本フラグが真の場合はグラフ同形成判定を行わず,
@@ -738,7 +737,8 @@ void state_set_property_state(State *s, BYTE label) { s->state_name = label; }
 /* 状態sに対応するハッシュ値を返す. */
 unsigned long state_hash(State *s) {
   /* state_property_stateは0の場合があるので+1する */
-  return s->hash * (state_property_state(s) + 1);
+  // return s->hash * (state_property_state(s) + 1);
+  return 10;
 }
 
 /* 状態sに階層グラフ構造memを割り当てる.

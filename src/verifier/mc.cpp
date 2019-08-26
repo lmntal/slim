@@ -154,7 +154,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   printf("%s:%d:cv_address:%p\n", __FUNCTION__, __LINE__, init->cv);
 #endif
   std::map<int, int> emp;
-  init_s->canonical_label = trieMcKay(init_s->trie, diff, init, empty, emp);
+  init_s->canonical_label = trieMcKay(init_s->trie, diff, init, empty, emp, false);
 #ifdef DIFFISO_DEB
   std::cout << init_s->canonical_label << std::endl;
   printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -288,7 +288,6 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     ===== Diffiso ====
    */
   /** restore : 膜の復元 */
-
 #ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "--CV--" << std::endl;
@@ -315,7 +314,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 #endif
       trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second,
                 s->graphinfo, s->parent->graphinfo,
-                s->parent->diff_map[s->state_id].first);
+                s->parent->diff_map[s->state_id].first, false);
       s->trie = s->parent->trie;
       s->parent->trie = nullptr;
 #ifdef DIFFISO_DEB
@@ -497,7 +496,7 @@ void back_trie_to_parent(State *s) {
             << std::endl;
   rev_dif->diffInfoDump();
 #endif
-  trieMcKay(s->trie, rev_dif, s->parent->graphinfo, s->graphinfo, iso);
+  trieMcKay(s->trie, rev_dif, s->parent->graphinfo, s->graphinfo, iso, false);
 #ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   cg_trie_reference_check(s->parent->graphinfo->cv);
@@ -663,7 +662,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         std::cout << "=======START APPLY[" << i << "]"
                   << "=======" << std::endl;
 #endif
-        src_succ->canonical_label = trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m);
+        src_succ->canonical_label = trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m, true);
 #ifdef DIFFISO_DEB	
         printf("%s:%d\n", __FUNCTION__, __LINE__);
         std::cout << "=======FINISH APPLY[" << i << "]"
@@ -695,7 +694,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                   << "=======" << std::endl;
 #endif 
         trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo,
-                  rev_iso);
+                  rev_iso, false);
         s->trie = src_succ->trie;
 #ifdef DIFFISO_DEB
         s->trie->dump();
