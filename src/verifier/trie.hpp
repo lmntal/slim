@@ -20,7 +20,7 @@ typedef struct _CanonicalLabel {
 
 struct HashString {
   int creditIndex;
-  std::vector<uint32_t> body;
+  std::map<int, uint32_t> body;
 
   HashString() {
     creditIndex = 0;
@@ -28,8 +28,8 @@ struct HashString {
 
   HashString(const HashString &h) {
     this->creditIndex = h.creditIndex;
-    for (auto v = h.body.begin(); v != h.body.end(); ++v) {
-      this->body.push_back(*v);
+    for (auto &v : h.body) {
+      this->body[v.first] = v.second;
     }
   }
 
@@ -401,7 +401,7 @@ inline std::ostream &operator<<(std::ostream &os,
 inline std::ostream &operator<<(std::ostream &os, const HashString &h) {
   os << "<" << h.creditIndex << ": ";
   for (auto &x : h.body) {
-    os << x << ", ";
+    os <<"<" <<x.first << ", "<<x.second<<">";
   }
   os << ">";
   return os;

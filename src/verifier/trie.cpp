@@ -48,7 +48,7 @@ struct hash_generator {
         // }
       }
 
-      hashString->body.push_back(uint32_t(tmp));
+      hashString->body[0] = uint32_t(tmp);
       hashString->creditIndex = 1;
 
       fixCreditIndexStack->push(iVertex);
