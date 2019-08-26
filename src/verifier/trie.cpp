@@ -86,7 +86,7 @@ struct hash_generator {
       // auto old = hashString->body.at(index);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
 #endif
-      (hashString->body).push_back(uint32_t(newMyHash));
+      (hashString->body)[index] = (uint32_t(newMyHash));
 #ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       // if (old != NULL) {
