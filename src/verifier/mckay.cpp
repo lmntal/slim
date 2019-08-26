@@ -3,7 +3,6 @@
 #include "runtime_status.h"
 #include <iostream>
 #include <string>
-
 propagation_list::iterator firstNonTrivialCell(propagation_list &pList) {
 
   for (auto it = pList.begin(); it != pList.end(); ++it) {
@@ -189,6 +188,9 @@ propagation_list listMcKay(propagation_list &propagationList,
     //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
     //     freePreserveDiscreteProapgationList(v.second);
     //   delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
+    for (auto &v : discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
+      delete v.second;
+    }
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
       profile_finish_timer(PROFILE_TIME__LISTMCKAY);

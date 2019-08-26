@@ -7,7 +7,7 @@
 #include <tuple>
 #include <vector>
 slim::element::conditional_ostream debug_log(std::cout);
-
+//#define DIFFISO_DEB
 struct hash_generator {
   ConvertedGraph *cGraph;
   int gapOfGlobalRootMemID;
@@ -25,6 +25,7 @@ struct hash_generator {
     std::cout << "index=" << index << std::endl;
     std::cout << "iVertex:" << *iVertex << std::endl;
     std::cout << "hashString:" << *hashString << std::endl;
+    std::cout << "hashString->creditIndex:"<< hashString->creditIndex << std::endl;
 #endif
     if (index < 0) {
       return 0;
@@ -85,7 +86,7 @@ struct hash_generator {
       // auto old = hashString->body.at(index);
       printf("%s:%d\n", __FUNCTION__, __LINE__);
 #endif
-      (hashString->body)[index] = uint32_t(newMyHash);
+      (hashString->body).push_back(uint32_t(newMyHash));
 #ifdef DIFFISO_DEB
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       // if (old != NULL) {
