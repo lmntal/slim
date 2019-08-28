@@ -662,8 +662,8 @@ void state_set_property_state(State *s, BYTE label) { s->state_name = label; }
 /* 状態sに対応するハッシュ値を返す. */
 unsigned long state_hash(State *s) {
   /* state_property_stateは0の場合があるので+1する */
-  // return s->hash * (state_property_state(s) + 1);
-  return 10;
+  return s->hash * (state_property_state(s) + 1);
+  // return 10;
 }
 
 
