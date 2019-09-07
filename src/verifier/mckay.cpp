@@ -264,7 +264,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
 #ifdef PROFILE
-  if (lmn_env.profile_level >= 3 && forward_f) {
+  if (lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__TRIEPROPAGATE);
   }
 #endif
@@ -272,7 +272,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
       trie->propagate(diffInfo, cAfterGraph, cBeforeGraph, gapOfGlobalRootMemID,
                       &stepOfPropagation, id_map);
 #ifdef PROFILE
-  if (lmn_env.profile_level >= 3 && forward_f)   {
+  if (lmn_env.profile_level >= 3)   {
     profile_finish_timer(PROFILE_TIME__TRIEPROPAGATE);
   }
 #endif

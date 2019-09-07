@@ -883,7 +883,7 @@ static State *statetable_insert(StateTable *st, State *ins)
         }
 
         if (statetable_use_rehasher(st) && str->is_dummy() && !str->is_encoded() &&
-            lmn_env.tree_compress == FALSE && false) {
+            lmn_env.tree_compress == FALSE) {
           /* A. オリジナルテーブルにおいて, dummy状態が比較対象
            * 　 --> memidテーブル側の探索へ切り替える.
            *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
