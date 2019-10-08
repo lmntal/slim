@@ -220,7 +220,7 @@ LMN_EXTERN void lmn_free(void *p);
 
 /* 階層グラフ構造の出力形式 */
 enum OutputFormat { DEFAULT = 1, DEV, DOT, JSON };
-enum MCdumpFormat { CUI, LaViT, Dir_DOT, LMN_FSM_GRAPH, LMN_FSM_GRAPH_MEM_NODE, LMN_FSM_GRAPH_HL_NODE };
+enum class MCdumpFormat { CUI, LaViT, Dir_DOT, LMN_FSM_GRAPH, LMN_FSM_GRAPH_MEM_NODE, LMN_FSM_GRAPH_HL_NODE, JSON };
 enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX };
 
 /* 最適化実行 */
@@ -550,6 +550,12 @@ namespace config {
 static constexpr bool profile = true;
 #else
 static constexpr bool profile = false;
+#endif
+
+#ifdef KWBT_OPT
+static constexpr bool kwbt_opt = true;
+#else
+static constexpr bool kwbt_opt = false;
 #endif
 } // namespace config
 } // namespace slim

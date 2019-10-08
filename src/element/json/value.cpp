@@ -56,7 +56,7 @@ namespace json {
 // for variant
 namespace c17 = slim::element;
 
-namespace c14 = slim::element;  // for make_unique
+namespace c14 = slim::element; // for make_unique
 
 using namespace slim::element;
 
@@ -277,9 +277,10 @@ std::istream &operator>>(std::istream &in, value_type &value) {
 }
 
 struct pretty_printer {
+  unsigned int indent;
   std::ostream &os;
 
-  pretty_printer(std::ostream &os) : os(os) {}
+  pretty_printer(std::ostream &os) : os(os), indent(0) {}
 
   void operator()(const json::null &value) { os << "null"; }
   void operator()(const json::integer &value) { os << value.value; }
@@ -292,22 +293,47 @@ struct pretty_printer {
   }
   void operator()(const value_ptr<json::array> &value) {
     os << "[";
+
+    indent++;
     for (size_t i = 0; i < value->value.size(); i++) {
       if (i > 0)
-        os << ", ";
+        os << ",";
+      os << "\n";
+      print_indent();
       c17::visit(*this, value->value[i]);
+    }
+    indent--;
+
+    if (!value->value.empty()) {
+      os << "\n";
+      print_indent();
     }
     os << "]";
   }
   void operator()(const value_ptr<json::object> &value) {
     os << "{";
+
+    indent++;
     for (auto it = value->value.begin(); it != value->value.end(); ++it) {
       if (it != value->value.begin())
-        os << ", ";
+        os << ",";
+      os << "\n";
+      print_indent();
       os << "\"" << it->first << "\": ";
       c17::visit(*this, it->second);
     }
+    indent--;
+
+    if (!value->value.empty()) {
+      os << "\n";
+      print_indent();
+    }
     os << "}";
+  }
+
+  void print_indent() {
+    for (int i = 0; i < indent; i++)
+      os << "  ";
   }
 };
 

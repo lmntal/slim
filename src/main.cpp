@@ -301,13 +301,13 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1100:
       lmn_env.output_format = DOT;
-      lmn_env.mc_dump_format = Dir_DOT;
+      lmn_env.mc_dump_format = MCdumpFormat::Dir_DOT;
       break;
     case 1101:
-      lmn_env.mc_dump_format = LMN_FSM_GRAPH_MEM_NODE;
+      lmn_env.mc_dump_format = MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE;
       break;
     case 1102:
-      lmn_env.mc_dump_format = LaViT;
+      lmn_env.mc_dump_format = MCdumpFormat::LaViT;
       break;
     case 1103:
       lmn_env.sp_dump_format = INCREMENTAL;
@@ -317,12 +317,13 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1105:
       lmn_env.output_format = JSON;
+      lmn_env.mc_dump_format = MCdumpFormat::JSON;
       break;
     case 1106:
-      lmn_env.mc_dump_format = LMN_FSM_GRAPH;
+      lmn_env.mc_dump_format = MCdumpFormat::LMN_FSM_GRAPH;
       break;
     case 1107:
-      lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
+      lmn_env.mc_dump_format = MCdumpFormat::LMN_FSM_GRAPH_HL_NODE;
       break;
     case 1200: /* jni interactive mode */
 #ifdef HAVE_JNI_H

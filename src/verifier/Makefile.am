@@ -42,8 +42,7 @@ liblmn_verifier_a_SOURCES =                              \
 	visitlog.h                 \
 	stack_macro.h              \
 	state_dumper.cpp           \
-	mem_encode/decoder.cpp     mem_encode/binstr.cpp \
-	json.cpp
+	mem_encode/decoder.cpp     mem_encode/binstr.cpp
 
 
 EXTRA_DIST = $(PARSER_SOURCE) $(PARSER_HEADER)

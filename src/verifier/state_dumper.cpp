@@ -38,6 +38,9 @@
 #include "state_dumper.h"
 
 #include "statespace.h"
+#include "json/statespace.hpp"
+
+#include <sstream>
 
 namespace state_dumper {
 class CUI : public StateDumper {
@@ -128,6 +131,25 @@ class LMN_FSM_GRAPH_HL_NODE : public StateDumper {
 
   void dump(StateSpace *ss) override;
 };
+
+class JSON : public StateDumper {
+  friend StateDumper;
+  using StateDumper::StateDumper;
+
+  void dump(StateSpace *ss) override {
+    std::stringstream os;
+    os << slim::verifier::json::to_json(*ss) << std::endl;
+    fprintf(_fp, "%s", os.str().c_str());
+  }
+
+  // 使わない
+  MCdumpFormat dump_format() const override { return MCdumpFormat::JSON; }
+  bool need_id_foreach_trans() const override { return true; }
+  std::string state_separator() const override { return ""; }
+  std::string trans_separator() const override { return ""; }
+  std::string label_begin() const override { return ""; }
+  std::string label_end() const override { return ""; }
+};
 } // namespace state_dumper
 
 StateDumper *StateDumper::from_env_ptr(FILE *fp) {
@@ -144,6 +166,8 @@ StateDumper *StateDumper::from_env_ptr(FILE *fp) {
     return new state_dumper::LMN_FSM_GRAPH_MEM_NODE(fp);
   case MCdumpFormat::LMN_FSM_GRAPH_HL_NODE:
     return new state_dumper::LMN_FSM_GRAPH_HL_NODE(fp);
+  case MCdumpFormat::JSON:
+    return new state_dumper::JSON(fp);
   default:
     throw std::runtime_error("invalid mc dump format.");
   }

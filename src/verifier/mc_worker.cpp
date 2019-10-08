@@ -443,7 +443,7 @@ BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) {// this should be in Lm
   if (lmn_env.sp_dump_format == INCREMENTAL) {
     mc_set_dump(flags);
     lmn_env.dump = TRUE;
-    if (lmn_env.mc_dump_format != CUI && lmn_env.mc_dump_format != LaViT) {
+    if (lmn_env.mc_dump_format != MCdumpFormat::CUI && lmn_env.mc_dump_format != MCdumpFormat::LaViT) {
       lmn_fatal("unsupported incremental output format");
     }
     fprintf(stdout, "States\n");

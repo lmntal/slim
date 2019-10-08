@@ -69,4 +69,8 @@
 #include "variant.hpp"
 #include "vector.h"
 
+#include "json/conv.hpp"
+#include "json/exception.hpp"
+#include "json/value.hpp"
+
 #endif /* LMN_ELEMENT_H */

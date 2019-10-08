@@ -98,8 +98,11 @@ private:
   T *ptr_;
 };
 
-using value_type = c17::variant<null, integer, real, string, boolean,
-                                value_ptr<array>, value_ptr<object>>;
+using array_t = value_ptr<array>;
+using object_t = value_ptr<object>;
+
+using value_type =
+    c17::variant<null, integer, real, string, boolean, array_t, object_t>;
 
 struct null {
   operator std::nullptr_t() { return nullptr; }
@@ -148,6 +151,8 @@ struct object {
   object(std::unordered_map<std::string, value_type> &&v)
       : value(std::move(v)) {}
   operator std::unordered_map<std::string, value_type>() { return value; }
+
+  value_type &operator[](const std::string &key) { return value[key]; }
 };
 
 // throws json::syntax_error, json::overflow_error
