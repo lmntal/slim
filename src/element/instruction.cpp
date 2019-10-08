@@ -120,6 +120,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_RELINK,
      {"relink", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_SWAPLINK, {"swaplink", {InstrVar, InstrVar, InstrVar, InstrVar}}},
+    {INSTR_SWAPLINK2, {"swaplink2", {InstrVar, InstrVar}}},
     {INSTR_UNIFY,
      {"unify", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_INHERITLINK,
