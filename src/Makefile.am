@@ -1,6 +1,6 @@
 SUBDIRS = verifier vm loader element ffi
 
-bin_PROGRAMS = slim
+bin_PROGRAMS = slim sscheck
 
 slim_LDADD =   -llmn_loader                            \
                -llmn_verifier                          \
@@ -87,3 +87,10 @@ slim_OBJS =
 
 arch.h ../lib/config.lmn: genconfig
 	$(SHELL) ./genconfig
+
+sscheck_SOURCES = ssc/main.cpp env.cpp
+
+sscheck_LDADD = ${slim_LDADD}
+sscheck_LDFLAGS = ${slim_LDFLAGS}
+sscheck_CXXFLAGS = -std=c++11 -DCOMMIT_ID=\"`git show -s --format=%h`\"
+sscheck_DEPENDENCIES = ./element/liblmn_elm.a

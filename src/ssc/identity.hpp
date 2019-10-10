@@ -1,9 +1,8 @@
 /*
- * exception.hpp
+ * identity.hpp
  *
  *   Copyright (c) 2019, Ueda Laboratory LMNtal Group
- *                                          <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -35,33 +34,50 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SLIM_ELEMENT_JSON_EXCEPTION_HPP
-#define SLIM_ELEMENT_JSON_EXCEPTION_HPP
+#ifndef SSC_IDENTITY_HPP
+#define SSC_IDENTITY_HPP
 
-#include <istream>
-#include <stdexcept>
-#include <string>
+#include "check_result.hpp"
+#include "state_space.hpp"
 
-namespace slim {
-namespace element {
-namespace json {
-struct parse_error {
-  virtual const char *what() const noexcept = 0;
-};
+#include <unordered_map>
 
-struct overflow_error : parse_error, std::overflow_error {
-  overflow_error(std::istream::pos_type pos)
-      : std::overflow_error("occurred at " + std::to_string(pos)) {}
-  const char *what() const noexcept { return std::overflow_error::what(); }
-};
-struct syntax_error : parse_error, std::runtime_error {
-  syntax_error(const std::string &what_arg, std::istream::pos_type pos)
-      : std::runtime_error(what_arg + "(at " + std::to_string(pos) + ")") {}
-  const char *what() const noexcept { return std::runtime_error::what(); }
-};
+namespace ssc {
 
-} // namespace json
-} // namespace element
-} // namespace slim
+// idが全く同じかどうかで等価性を判定する
+template <class Comparator>
+check_result identity_check(const slim::element::json_t &json1,
+                            const slim::element::json_t &json2,
+                            Comparator cmp) {
+  const state_space ss1(json1);
+  const state_space ss2(json2);
 
-#endif /* SLIM_ELEMENT_JSON_EXCEPTION_HPP */
+  if (ss1.states.size() != ss2.states.size())
+    return check_result::fail("number of states are different");
+
+  if (!cmp(ss1.states.at(ss1.init), ss2.states.at(ss2.init)))
+    return check_result::fail("initial states are different");
+
+  for (state_space::state_id_t id = 0; id < ss1.states.size(); id++) {
+    auto &s1 = ss1.states[id];
+    auto &s2 = ss2.states[id];
+    if (!cmp(s1, s2))
+      return check_result::fail("state " + ss1.id_to_key[id] + " and state " +
+                                ss2.id_to_key[id] + " are different");
+  }
+
+  if (ss1.transitions != ss2.transitions)
+    return check_result::fail("transition sets are different");
+
+  std::unordered_map<state_space::state_id_t, state_space::state_id_t>
+      isomorphism;
+  for (state_space::state_id_t id = 0; id < ss1.states.size(); id++) {
+    isomorphism[id] = id;
+  }
+
+  return check_result::success(isomorphism);
+}
+
+} // namespace ssc
+
+#endif /* SSC_IDENTITY_HPP */

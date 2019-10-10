@@ -240,9 +240,6 @@ constexpr bool operator>=(monostate, monostate) noexcept { return true; }
 constexpr bool operator==(monostate, monostate) noexcept { return true; }
 constexpr bool operator!=(monostate, monostate) noexcept { return false; }
 
-} // namespace element
-} // namespace slim
-
 template <class... Types>
 constexpr bool operator==(const slim::element::variant<Types...> &v,
                           const slim::element::variant<Types...> &w) {
@@ -251,7 +248,6 @@ constexpr bool operator==(const slim::element::variant<Types...> &v,
              : slim::element::visit(
                    typename slim::element::variant<Types...>::equalizer(v), w);
 }
-
 template <class... Types>
 constexpr bool operator!=(const slim::element::variant<Types...> &v,
                           const slim::element::variant<Types...> &w) {
@@ -266,5 +262,8 @@ constexpr bool operator<(const slim::element::variant<Types...> &v,
           slim::element::visit(
               typename slim::element::variant<Types...>::comparator(v), w));
 }
+
+} // namespace element
+} // namespace slim
 
 #endif /* SLIM_ELEMENT_VARINT_HPP */

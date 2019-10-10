@@ -1,9 +1,8 @@
 /*
- * exception.hpp
+ * check_result.hpp
  *
  *   Copyright (c) 2019, Ueda Laboratory LMNtal Group
- *                                          <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -35,33 +34,37 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SLIM_ELEMENT_JSON_EXCEPTION_HPP
-#define SLIM_ELEMENT_JSON_EXCEPTION_HPP
+#ifndef SSC_CHECK_RESULT_HPP
+#define SSC_CHECK_RESULT_HPP
 
-#include <istream>
-#include <stdexcept>
+#include "state_space.hpp"
+
 #include <string>
+#include <unordered_map>
 
-namespace slim {
-namespace element {
-namespace json {
-struct parse_error {
-  virtual const char *what() const noexcept = 0;
+namespace ssc {
+
+// 等価性判定結果を格納する
+// 失敗の場合は失敗理由を示す文字列、成功の場合は同型射
+struct check_result {
+  bool succeeded;
+  std::string reason;
+  std::unordered_map<state_space::state_id_t, state_space::state_id_t> morphism;
+
+  check_result() : succeeded(true) {}
+  check_result(bool s, const std::string &r) : succeeded(s), reason(r) {}
+  check_result(bool s, const state_space_homomorphism &r)
+      : succeeded(s), morphism(r) {}
+  static check_result success(const state_space_homomorphism &reason) {
+    return check_result(true, reason);
+  }
+  static check_result fail(const std::string &reason) {
+    return check_result(false, reason);
+  }
+
+  explicit operator bool() { return succeeded; }
 };
 
-struct overflow_error : parse_error, std::overflow_error {
-  overflow_error(std::istream::pos_type pos)
-      : std::overflow_error("occurred at " + std::to_string(pos)) {}
-  const char *what() const noexcept { return std::overflow_error::what(); }
-};
-struct syntax_error : parse_error, std::runtime_error {
-  syntax_error(const std::string &what_arg, std::istream::pos_type pos)
-      : std::runtime_error(what_arg + "(at " + std::to_string(pos) + ")") {}
-  const char *what() const noexcept { return std::runtime_error::what(); }
-};
+} // namespace ssc
 
-} // namespace json
-} // namespace element
-} // namespace slim
-
-#endif /* SLIM_ELEMENT_JSON_EXCEPTION_HPP */
+#endif /* SSC_CHECK_RESULT_HPP */

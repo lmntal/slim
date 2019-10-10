@@ -94,6 +94,10 @@ template <class T> struct value_ptr {
     return *this;
   }
 
+  bool operator==(const value_ptr &ptr) const {
+    return *ptr_ == *ptr.ptr_;
+  }
+
 private:
   T *ptr_;
 };
@@ -106,6 +110,8 @@ using value_type =
 
 struct null {
   operator std::nullptr_t() { return nullptr; }
+
+  bool operator==(const null &s) const { return true; }
 };
 
 struct integer {
@@ -114,6 +120,8 @@ struct integer {
   // 数値型は暗黙の型変換を行わない
   explicit constexpr integer(int64_t v) : value(v) {}
   operator int64_t() { return value; }
+
+  bool operator==(const integer &v) const { return value == v.value; }
 };
 struct real {
   double value;
@@ -121,6 +129,8 @@ struct real {
   // 数値型は暗黙の型変換は行わない
   explicit constexpr real(double v) : value(v) {}
   operator double() { return value; }
+
+  bool operator==(const real &v) const { return value == v.value; }
 };
 struct boolean {
   bool value;
@@ -128,12 +138,16 @@ struct boolean {
   // 数値型は暗黙の型変換は行わない
   constexpr explicit boolean(bool tf) : value(tf) {}
   operator bool() { return value; }
+
+  bool operator==(const boolean &v) const { return value == v.value; }
 };
 struct string {
   std::string value;
 
   string(const std::string &str) : value(str) {}
   operator std::string() { return value; }
+
+  bool operator==(const string &v) const { return value == v.value; }
 };
 struct array {
   std::vector<value_type> value;
@@ -142,6 +156,8 @@ struct array {
   array(const std::vector<value_type> &v) : value(v) {}
   array(std::vector<value_type> &&v) : value(std::move(v)) {}
   operator std::vector<value_type>() { return value; }
+
+  bool operator==(const array &v) const { return value == v.value; }
 };
 struct object {
   std::unordered_map<std::string, value_type> value;
@@ -153,6 +169,7 @@ struct object {
   operator std::unordered_map<std::string, value_type>() { return value; }
 
   value_type &operator[](const std::string &key) { return value[key]; }
+  bool operator==(const object &v) const { return value == v.value; }
 };
 
 // throws json::syntax_error, json::overflow_error
