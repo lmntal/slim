@@ -73,7 +73,7 @@ void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref) {
   memcpy(&tcd->root_ref, &ref, sizeof(TreeRootRef));
 }
 
-void tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref) {
+void tcd_get_root_ref(TreeCompressData *tcd, TreeNodeID *ref) {
   memcpy(ref, &tcd->root_ref, sizeof(TreeRootRef));
 }
 

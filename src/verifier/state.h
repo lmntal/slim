@@ -60,7 +60,7 @@
  */
 
 void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref);
-void tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref);
+void tcd_get_root_ref(TreeCompressData *tcd, TreeNodeID *ref);
 unsigned short tcd_get_byte_length(TreeCompressData *data);
 void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 

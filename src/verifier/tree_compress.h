@@ -54,7 +54,7 @@
 
 #define TREE_DB_DEFAULT_SIZE (1024 * 1024 * 128)
 
-typedef uint64_t TreeNodeElement;
+typedef uint32_t TreeNodeElement;
 typedef TreeNodeElement TreeNodeID;
 typedef TreeNodeElement TreeNodeUnit;
 
