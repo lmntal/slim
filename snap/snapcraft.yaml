@@ -16,6 +16,16 @@
     build:
       # See 'snapcraft plugins'
       plugin: autotools
+      build-packages:
+        - g++
+        - make
+        - automake
+        - autoconf
+        - flex
+        - bison
+        - ruby
+        - libtool
+        - cunit
   
   apps:
     lmntal-slim:
