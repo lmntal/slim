@@ -26,6 +26,7 @@
         - bison
         - ruby
         - libtool
+        - re2c
   
   apps:
     lmntal-slim:
