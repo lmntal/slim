@@ -26,7 +26,6 @@
         - bison
         - ruby
         - libtool
-        - cunit
   
   apps:
     lmntal-slim:
