@@ -17,6 +17,7 @@
       # See 'snapcraft plugins'
       plugin: autotools
       source: https://github.com/lmntal/slim
+      source-type: git
       build-packages:
         - g++
         - make
