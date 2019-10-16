@@ -16,6 +16,7 @@
     lmntal-slim:
       # See 'snapcraft plugins'
       plugin: autotools
+      install-via: prefix
       source: .
       build-environment:
         - LMNTAL_HOME: /snap/lmntal-compiler/current/lib/lmntal-compiler
