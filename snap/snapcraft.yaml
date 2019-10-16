@@ -13,10 +13,14 @@
   confinement: strict # use 'strict' once you have the right plugs and slots
 
   parts:
-    build:
+    lmntal-slim:
       # See 'snapcraft plugins'
       plugin: autotools
       source: .
+      build-environment:
+        - LMNTAL_HOME: /snap/lmntal-compiler/current/lib/lmntal-compiler
+      build-snaps:
+        - lmntal-compiler
       build-packages:
         - g++
         - make
@@ -27,7 +31,11 @@
         - ruby
         - libtool
         - re2c
+        - openjdk-8-jre
+      stage-packages:
+        - libgomp1
   
   apps:
     lmntal-slim:
-      command: bin/slim
+      command: slim
+      plugs: [home]
