@@ -3173,15 +3173,15 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_MOVEGROUND:
-    // dstmem, srclist, srcmem
     LmnInstrVar srclisti, srcmemi, dstmemi;
     Vector *srcvec;
     READ_VAL(LmnInstrVar, instr, dstmemi);
     READ_VAL(LmnInstrVar, instr, srclisti);
     READ_VAL(LmnInstrVar, instr, srcmemi);
+    LMN_ASSERT(rc->wt(dstmemi) != rc->wt(srcmemi));
     srcvec = links_from_idxs((Vector *)rc->wt(srclisti), rc);
 
-    // TODO: MOVEGROUNDの中身の実装
+    ((LmnMembraneRef)rc->wt(dstmemi))->move_ground(srcvec, (LmnMembraneRef)rc->wt(srcmemi));
 
     free_links(srcvec);
     break;

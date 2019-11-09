@@ -1894,6 +1894,10 @@ void LmnMembrane::remove_ground(Vector *srcvec) {
   delete atoms;
 }
 
+void LmnMembrane::move_ground(Vector *srcvec, LmnMembraneRef srcmem) {
+  // TODO: LmnMembrane::move_groundの中身の実装
+}
+
 void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec,
                              ProcessTableRef *attr_sym, Vector *attr_data,
                              Vector *attr_data_at) {
