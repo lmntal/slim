@@ -126,6 +126,8 @@ void lmn_mem_remove_data_atom(LmnMembraneRef mem, LmnDataAtomRef atom,
 void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
 void mem_remove_symbol_atom_with_buddy_data(LmnMembraneRef mem,
                                             LmnSymbolAtomRef atom);
+void mem_push_symbol_atom_with_buddy_data(LmnMembraneRef mem,
+                                            LmnSymbolAtomRef atom);
 void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
