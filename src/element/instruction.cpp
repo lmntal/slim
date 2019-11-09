@@ -186,6 +186,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_COPYHLGROUNDINDIRECT,
      {"copyhlgroundindirect", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
     {INSTR_COPYGROUND, {"copyground", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_MOVEGROUND, {"moveground", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_REMOVEGROUND, {"removeground", {InstrVar, InstrVar}}},
     {INSTR_REMOVEHLGROUND,
      {"removehlground", {InstrVar, InstrVar, InstrVarList}}},
