@@ -1894,8 +1894,34 @@ void LmnMembrane::remove_ground(Vector *srcvec) {
   delete atoms;
 }
 
+int mem_push_symbol_atom_with_buddy_data_f(LmnWord _k, LmnWord _v,
+                                             LmnWord _arg) {
+  mem_push_symbol_atom_with_buddy_data((LmnMembraneRef)_arg,
+                                         (LmnSymbolAtomRef)_v);
+  return 1;
+}
+
 void LmnMembrane::move_ground(Vector *srcvec, LmnMembraneRef srcmem) {
-  // TODO: LmnMembrane::move_groundの中身の実装
+  ProcessTableRef atoms;
+  unsigned long i, t;
+
+  ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL);
+  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)srcmem);
+  atoms->tbl_foreach(mem_push_symbol_atom_with_buddy_data_f, (LmnWord)this);
+
+  /* atomsはシンボルアトムしか含まないので、
+  * srcvecのリンクが直接データアトムに接続している場合の処理をする */
+  for (i = 0; i < srcvec->get_num(); i++) {
+    LinkObjRef l = (LinkObjRef)srcvec->get(i);
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos)) {
+      lmn_mem_remove_data_atom(srcmem, (LmnDataAtomRef)l->ap, l->pos);
+      lmn_mem_push_atom(this, (LmnAtomRef)l->ap, l->pos);
+    } else if (LMN_ATTR_IS_EX(l->pos)) {
+      mem_remove_symbol_atom(srcmem, (LmnSymbolAtomRef)l->ap);
+      mem_push_symbol_atom(this, (LmnSymbolAtomRef)l->ap);
+    }
+  }
+  delete atoms;
 }
 
 void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec,
@@ -3390,6 +3416,23 @@ void mem_remove_symbol_atom_with_buddy_data(LmnMembraneRef mem,
     }
   }
   mem_remove_symbol_atom(mem, atom);
+}
+
+/*
+膜memにアトムatomを追加する。
+atomの接続先データアトムが存在するならばそのデータアトムも追加する。
+*/
+void mem_push_symbol_atom_with_buddy_data(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
+  unsigned int i;
+  unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
+  for (i = 0; i < end; i++) {
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(atom->get_attr(i))) {
+      lmn_mem_push_atom(mem, (LmnAtomRef)atom->get_link(i),atom->get_attr(i));
+    } else if (LMN_ATTR_IS_HL(atom->get_attr(i))) {
+      mem_push_symbol_atom(mem, (LmnSymbolAtomRef)atom->get_link(i));
+    }
+  }
+  mem_push_symbol_atom(mem, (LmnSymbolAtomRef)atom);
 }
 
 void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom,
