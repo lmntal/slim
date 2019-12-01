@@ -98,6 +98,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_ALLOCATOMINDIRECT, {"allocatomindirect", {InstrVar, InstrVar}}},
     {INSTR_COPYATOM, {"copyatom", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_ADDATOM, {"addatom", {InstrVar, InstrVar}}},
+    {INSTR_MOVEATOM, {"moveatom", {InstrVar, InstrVar, InstrVar}}},
 
     {INSTR_REMOVEMEM, {"removemem", {InstrVar, InstrVar}}},
     {INSTR_NEWMEM, {"newmem", {InstrVar, InstrVar, InstrVar}}},

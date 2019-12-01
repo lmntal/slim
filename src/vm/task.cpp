@@ -3955,6 +3955,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                       rc->at(atomi));
     break;
   }
+  case INSTR_MOVEATOM: {
+    LmnInstrVar srcmemi, dstmemi, atomi;
+
+    READ_VAL(LmnInstrVar, instr, dstmemi);
+    READ_VAL(LmnInstrVar, instr, atomi);
+    READ_VAL(LmnInstrVar, instr, srcmemi);
+    lmn_mem_remove_atom((LmnMembraneRef)rc->wt(srcmemi), (LmnAtomRef)rc->wt(atomi),
+                        rc->at(atomi));
+    lmn_mem_push_atom((LmnMembraneRef)rc->wt(dstmemi), (LmnAtomRef)rc->wt(atomi),
+                      rc->at(atomi));
+    break;
+  }
   case INSTR_MOVECELLS: {
     LmnInstrVar destmemi, srcmemi;
 
