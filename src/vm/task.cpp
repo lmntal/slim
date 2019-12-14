@@ -834,10 +834,9 @@ bool findatom(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr,
   auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
 
   std::set<std::string> s;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  for(auto x:color_m) {
-    std::cout << x.first <<"-->"<<x.second << std::endl;
-  }
+  // for(auto x:color_m) {
+  //   std::cout << x.first <<"-->"<<x.second << std::endl;
+  // }
   if (!atomlist_ent)
     return false;
 
@@ -845,8 +844,8 @@ bool findatom(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr,
   reg.tt = TT_ATOM;
   for (auto atom : *atomlist_ent) {
     reg.wt = (LmnWord)atom;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout << LMN_SATOM_ID(atom) << std::endl;
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // std::cout << LMN_SATOM_ID(atom) << std::endl;
     if(RC_GET_MODE(rc, REACT_ND)) {
       if(s.find(color_m[LMN_SATOM_ID(atom)]) == s.end())
 	s.insert(color_m[LMN_SATOM_ID(atom)]);
@@ -1152,7 +1151,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
     }
     case INSTR_COMMIT: {
       lmn_interned_str rule_name;
-      printf("%s:%d\n", __FUNCTION__, __LINE__);
       READ_VAL(lmn_interned_str, instr, rule_name);
       SKIP_VAL(LmnLineNum, instr);
 
@@ -1238,7 +1236,7 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 #endif
 
 
-	  lmn_dump_mem_dev(RC_GROOT_MEM(rc));
+	  //lmn_dump_mem_dev(RC_GROOT_MEM(rc));
 
           warray_size_org = warray_size(rc);
           warray_use_org = warray_use_size(rc);
