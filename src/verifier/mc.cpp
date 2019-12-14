@@ -59,6 +59,7 @@
 // #define DIFFISO_DEB
 bool diff_gen_finish = false;
 std::map<int, int> iso_m;
+std::map<int, std::string> color_m;
 extern Graphinfo *parent_graphinfo;
 extern std::map<int, int> id_to_id_at_commit;
 /** =======================================
@@ -142,12 +143,13 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   Graphinfo *empty = new Graphinfo(lmn_mem_make());
   // convertedGraphDump(empty->cv);
   Graphinfo *init = new Graphinfo(mem);
-  // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  // lmn_dump_mem_dev(mem);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  lmn_dump_mem_dev(mem);
+  std::cout << *init->cv << std::endl;
   DiffInfo *diff = new DiffInfo(init);
   init_s->trie = new Trie();
   init_s->graphinfo = init;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
 #ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   printf("%s:%d:graphinfo_address:%p\n", __FUNCTION__, __LINE__, init);
@@ -288,6 +290,9 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     ===== Diffiso ====
    */
   /** restore : 膜の復元 */
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "--CV--" << std::endl;
+  std::cout << *s->graphinfo->cv << std::endl;
 #ifdef DIFFISO_DEB
   printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << "--CV--" << std::endl;
@@ -338,10 +343,25 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // std::cout << s->canonical_label << std::endl;
   mem = state_restore_mem(s);
-  // lmn_dump_mem_dev(mem);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  lmn_dump_mem_dev(mem);
+  
+  
   LmnBinStrRef bs = s->state_binstr();
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::map<int, int> id_to_id_map;
+  for(auto i = bs->pos_to_id.begin(); i != bs->pos_to_id.end(); i++) { 
+    id_to_id_map[i->second.first] = i->second.second;
+    std::cout << i->second.first << "--> "<<i->second.second << std::endl;
+  }
 
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  s->trie->dump();
+  color_m.clear();
+  s->trie->make_color_map(s->trie->body, color_m, id_to_id_map);
+  for(auto x:color_m) {
+    std::cout << x.first <<"-->"<<x.second << std::endl;
+  }
 #ifdef DIFFISO_GEN
   if (!diff_gen_finish) {
     printf("Succ number Information\n");
@@ -380,10 +400,11 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     // printf("===copy converted graph===\n");
     // convertedGraphDump(parent_graphinfo->cv);
     iso_m = make_iso_morphism(bs);
-    // printf("===iso_m===\n");
-    // for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
-    //   printf("%d %d\n", it->first, it->second);
-    // }
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    printf("===iso_m===\n");
+    for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
+      printf("%d %d\n", it->first, it->second);
+    }
 #ifdef DIFFISO_DEB
     if (!check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -594,6 +615,21 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
        */
       src_succ->graphinfo = new Graphinfo(src_succ_m);
       dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
+      std::cout << "==(succ)dump_mem==" << std::endl;
+      lmn_dump_mem_stdout(src_succ_m);
+
+      std::cout << "===parent_graphinfo===" << std::endl;
+      std::cout << *parent_graphinfo->cv << std::endl;
+      printf("===org===\n");
+      printf("graphinfo_address:%p\n", s->graphinfo);
+      printf("cv_address:%p\n", s->graphinfo->cv);
+      std::cout << *s->graphinfo->cv << std::endl;
+      printf("===succ===\n");
+      std::cout << *src_succ->graphinfo->cv << std::endl;
+
+      std::cout << "========ORG DIFFINFO========" << std::endl;
+      dif->diffInfoDump();
+      std::cout << "============================" << std::endl;
 #ifdef DIFFISO_DEB
       std::cout << "==(succ)dump_mem==" << std::endl;
       lmn_dump_mem_stdout(src_succ_m);
@@ -615,14 +651,14 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         rev_iso[i->second] = i->first;
       }
       dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
-#ifdef DIFFISO_DEB
-      dif->diffInfoDump();
+      //#ifdef DIFFISO_DEB
+      //dif->diffInfoDump();
       std::cout << "-----------ISO_M-----------" << std::endl;
       for (auto &v : iso_m) {
         std::cout << v.first << "-->" << v.second << std::endl;
       }
       std::cout << "----------------------------" << std::endl;
-#endif
+      //#endif
       for (auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
         revrev[it->second] = it->first;
       }
@@ -654,6 +690,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 	rev_dif->relinkedVertices->push_back(it->second);
       }
       if (s->trie) {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        s->trie->dump();
 
 #ifdef DIFFISO_DEB
         printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -846,6 +884,8 @@ BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
       ret_flag = TRUE;
     }
     if (lmn_mem_is_active(cur_mem)) {
+      // printf("%s:%d\n", __FUNCTION__, __LINE__);
+      // lmn_dump_mem_stdout(cur_mem);
       react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */

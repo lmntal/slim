@@ -253,6 +253,23 @@ struct Trie {
     info = new TerminationConditionInfo();
   };
   // HashTable *trieLeavesTable;
+  void make_color_map(TrieBody *body, std::map<int, std::string> &m, std::map<int, int> &id_to_id) {
+    if(body->children->empty()) {
+      for(auto &v : *body->inheritedVertices) {
+	std::string s="";
+	for(int i=0; i<slim::element::get<InheritedVertex>(v).hashString->creditIndex; i++) {
+	  s+=std::to_string(slim::element::get<InheritedVertex>(v).hashString->body[i]);
+	}
+	// for(auto &v : slim::element::get<InheritedVertex>(v).hashString->body) {
+	//   s+=std::to_string(v.second);
+	// }
+	m[id_to_id[slim::element::get<InheritedVertex>(v).correspondingVertex->ID]] = s;
+      }
+    } else {
+      for (auto &v : *body->children)
+	make_color_map(v.second, m, id_to_id);
+    }
+  }
 
   void conventionalPropagationList(TrieBody *body, propagation_list &list) {
     if (body->children->empty()) {
@@ -355,7 +372,12 @@ inline bool operator!=(const InheritedVertex &a, const InheritedVertex &b) {
 
 inline std::ostream &operator<<(std::ostream &os,
                                 const InheritedVertex &iVertex) {
-  printf("%p:", &iVertex);
+  for(int i=0; i<iVertex.hashString->creditIndex; i++) {
+    std::cout << iVertex.hashString->body[i] << " ";
+  }
+  // for(auto x:iVertex.hashString->body) {
+  //   std::cout << x.second<<" ";
+  // }
   os << "<";
 
   switch (iVertex.type) {
