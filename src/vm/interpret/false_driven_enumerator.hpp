@@ -41,89 +41,81 @@
 #include "interpreter.hpp"
 #include "verifier/runtime_status.h"
 
+
+/**
+ * 失敗駆動ループの候補を返すためのfunctional object
+ */
 template <typename InputIterator, typename value_type>
-struct false_driven_enumerator_impl;
+struct false_driven_enumerator_get_candidate;
 
 template <typename InputIterator>
-struct false_driven_enumerator_impl<InputIterator, LmnRegister> {
+struct false_driven_enumerator_get_candidate<InputIterator, LmnRegister> {
+  LmnRegister operator()(InputIterator &iter) { return (*iter); }
+};
+
+template <typename InputIterator>
+struct false_driven_enumerator_get_candidate<InputIterator,
+                                             std::function<LmnRegister(void)>> {
+  LmnRegister operator()(InputIterator &iter) { return (*iter)(); }
+};
+
+/**
+ * 失敗駆動ループの実装の
+ * スタックフレームがポップされるときに呼ばれるコールバックで
+ * 必要なら（失敗駆動ループするなら）次の候補をレジスタに設定し、スタックに積む
+ * これ単体では役に立たない！
+ */
+template <typename InputIterator> struct false_driven_enumerator {
+  using value_type = typename InputIterator::value_type;
   size_t reg_idx;
   InputIterator begin;
   InputIterator end;
   LmnRuleInstr instr;
-  slim::vm::interpreter &interpreter;
 
-  false_driven_enumerator_impl(slim::vm::interpreter &interpreter,
-                               LmnRuleInstr instr, size_t reg_idx,
-                               InputIterator begin, InputIterator end)
-      : interpreter(interpreter), instr(instr), reg_idx(reg_idx), begin(begin),
-        end(end) {}
+  /**
+   * コンストラクタ
+   *
+   * @param instr ループ時に再開する命令列のアドレス
+   * @param reg_idx 次の候補を設定するレジスタのインデックス
+   * @param begin 列挙する候補の最初の要素を指すイテレータ
+   * @param end 最終候補の次の要素を指すイテレータ
+   */
+  false_driven_enumerator(LmnRuleInstr instr, size_t reg_idx,
+                          InputIterator begin, InputIterator end)
+      : instr(instr), reg_idx(reg_idx), begin(begin), end(end) {}
 
-  bool operator()(bool result) {
+  bool operator()(slim::vm::interpreter &itr, bool result) {
+    // 成功ならループしないで終了
     if (result)
       return true;
-    if (begin == end)
+
+    // 候補がなくなったら終了
+    if (this->begin == this->end)
       return false;
-    interpreter.instr = instr;
-    interpreter.rc->reg(reg_idx) = *(begin++);
-    interpreter.push_stackframe(
-        false_driven_enumerator_impl(interpreter, instr, reg_idx, begin, end));
+
+    // 命令列の巻き戻し
+    itr.instr = this->instr;
+    // 次の候補の生成
+    itr.rc->reg(this->reg_idx) =
+        false_driven_enumerator_get_candidate<InputIterator, value_type>()(
+            this->begin);
+    ++this->begin;
+    // 次のループをスタックに積む
+    itr.push_stackframe(false_driven_enumerator(this->instr, this->reg_idx,
+                                                this->begin, this->end));
     profile_backtrack();
-    return interpreter.run();
+    return itr.run();
   }
 };
 
-template <typename InputIterator>
-struct false_driven_enumerator_impl<InputIterator,
-                                    std::function<LmnRegister(void)>> {
-  size_t reg_idx;
-  InputIterator begin;
-  InputIterator end;
-  LmnRuleInstr instr;
-  slim::vm::interpreter &interpreter;
-
-  false_driven_enumerator_impl(slim::vm::interpreter &interpreter,
-                               LmnRuleInstr instr, size_t reg_idx,
-                               InputIterator begin, InputIterator end)
-      : interpreter(interpreter), instr(instr), reg_idx(reg_idx), begin(begin),
-        end(end) {}
-
-  bool operator()(bool result) {
-    if (result)
-      return true;
-    if (begin == end)
-      return false;
-    interpreter.instr = instr;
-    interpreter.rc->reg(reg_idx) = (*(begin++))();
-    interpreter.push_stackframe(
-        false_driven_enumerator_impl(interpreter, instr, reg_idx, begin, end));
-    profile_backtrack();
-    return interpreter.run();
-  }
-};
-
-template <typename Iterator>
-using false_driven_enumerator =
-    false_driven_enumerator_impl<Iterator, typename Iterator::value_type>;
-
+/**
+ * 既存のイテレータから失敗駆動ループを作る
+ */
 template <typename InputIterator, typename... Args>
 false_driven_enumerator<InputIterator>
-make_false_driven_enumerator(slim::vm::interpreter &iter, LmnRuleInstr instr,
-                             size_t reg_idx, InputIterator begin,
-                             InputIterator end) {
-  return false_driven_enumerator<InputIterator>(iter, instr, reg_idx, begin,
-                                                end);
-}
-
-template <typename Container>
-false_driven_enumerator<typename Container::iterator>
-make_false_driven_enumerator(slim::vm::interpreter &iter, LmnRuleInstr instr,
-                             size_t reg_idx, Container &&values) {
-  auto p = new Container(std::move(values));
-  iter.push_stackframe([=](bool result) {
-    delete p;
-    return result;
-  });
-  return false_driven_enumerator<typename Container::iterator>(iter, instr, reg_idx, std::begin(*p), std::end(*p));
+make_false_driven_enumerator(slim::vm::interpreter &iter, LmnRuleInstr instr, size_t reg_idx,
+                             InputIterator begin, InputIterator end) {
+  return false_driven_enumerator<InputIterator>(instr, reg_idx, begin, end);
 }
 
 #endif /* SLIM_VM_INTERPRET_FALSE_DRIVEN_ENUMERATOR_HPP */
