@@ -70,7 +70,7 @@ private:
   int decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);
 
 public:
-  void decode_rulesets(int rs_num, Vector *rulesets);
+  void decode_rulesets(int rs_num, std::vector<LmnRuleSet *> *rulesets);
 };
 
 #endif

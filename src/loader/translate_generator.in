@@ -246,7 +246,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if (!((LmnMembraneRef)rc->wt($0))->nmems($1)) $f;
 
 #norules LmnInstrVar
-  if (((LmnMembraneRef)rc->wt($0))->get_rulesets()->get_num()) $f;
+  if (((LmnMembraneRef)rc->wt($0))->get_rulesets().size()) $f;
 
 #newatom LmnInstrVar LmnInstrVar $functor
 % switch(targ2_attr){
@@ -887,7 +887,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   TR_INSTR_LOOKUPLINK(rc, $0, $1, $2);
 
 #clearrules LmnInstrVar
-  ((LmnMembraneRef)rc->wt($0))->get_rulesets()->clear();
+  ((LmnMembraneRef)rc->wt($0))->clearrules();
 
 #dropmem LmnInstrVar
   ((LmnMembraneRef)rc->wt($0))->drop();

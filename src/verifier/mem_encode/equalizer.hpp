@@ -76,15 +76,14 @@ struct equalizer_base {
     (*i_bs) += BS_RULESET_NUM_SIZE;
 
     /* TODO: on-the-flyにできるはず */
-    auto rulesets = new Vector(rs_num + 1);
+    std::vector<LmnRuleSet *> rulesets;
     binstr_decoder dec(bs->v, bs->len, *i_bs);
-    dec.decode_rulesets(rs_num, rulesets);
+    dec.decode_rulesets(rs_num, &rulesets);
     *i_bs = dec.scanner.location();
 
     auto result = lmn_rulesets_equals(rulesets, mem->get_rulesets());
 
     lmn_mem_rulesets_destroy(rulesets);
-    LMN_FREE(rulesets);
 
     return result;
   }

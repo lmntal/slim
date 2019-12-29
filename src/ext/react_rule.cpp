@@ -49,7 +49,7 @@ void cb_react_rule(LmnReactCxtRef rc,
 {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0));
-  LmnRuleSetRef rs = (LmnRuleSetRef)rule_mem->get_rulesets()->get(0);
+  LmnRuleSetRef rs = rule_mem->get_rulesets()[0];
   auto r = rs->get_rule(0);
   MemReactContext tmp_rc;
 
@@ -77,13 +77,12 @@ void cb_react_rule(LmnReactCxtRef rc,
  *
  * the reacted graphs are added to {\c pos} of the list {\c head}.
  */
+template <typename C>
 static void apply_rules_in_rulesets(LmnMembraneRef mem,
-                                    LmnMembraneRef src_graph, Vector *rulesets,
+                                    LmnMembraneRef src_graph, C *rulesets,
                                     LmnSymbolAtomRef *head, int *pos)
 {
-  for (int i = 0; i < rulesets->get_num(); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
-
+  for (auto &rs : *rulesets) {
     for (auto r : *rs) {
       MCReactContext rc;
       RC_SET_GROOT_MEM(&rc, src_graph);
@@ -126,7 +125,7 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
   LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int pos = 0;
 
-  Vector *rulesets = rule_mem->get_rulesets();
+  auto rulesets = &rule_mem->get_rulesets();
   apply_rules_in_rulesets(mem, graph_mem, rulesets, &head, &pos);
 
 #ifdef USE_FIRSTCLASS_RULE
