@@ -54,11 +54,18 @@ struct interpreter {
   LmnRule *rule;
   LmnRuleInstr instr;
 
+  // stack frameのcallbackが返す値
+  // Trial: callbackをstackからpopしないで続ける
+  // Failure, Success: 命令列の結果を失敗/成功で上書きしてcallbackをstackからpopする
+  enum class command_result {
+    Trial, Failure, Success
+  };
+
   struct stack_frame {
     // called when this frame is popped out
-    std::function<bool(interpreter &, bool)> callback;
+    std::function<command_result(interpreter &, bool)> callback;
 
-    template <typename F> stack_frame(const F &callback) : callback(callback) {}
+    stack_frame(const std::function<command_result(interpreter &, bool)> &callback) : callback(callback) {}
   };
 
   interpreter(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr)
@@ -112,7 +119,7 @@ private:
     // ループ終了後に解放するためにコールバックをインタプリタのスタックに積む
     this->push_stackframe([=](slim::vm::interpreter &interpreter, bool result) {
       delete p;
-      return result;
+      return result ? command_result::Success : command_result::Failure;
     });
 
     auto e = make_false_driven_enumerator(*this, this->instr, reg_idx,

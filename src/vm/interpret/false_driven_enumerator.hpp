@@ -84,27 +84,28 @@ template <typename InputIterator> struct false_driven_enumerator {
                           InputIterator begin, InputIterator end)
       : instr(instr), reg_idx(reg_idx), begin(begin), end(end) {}
 
-  bool operator()(slim::vm::interpreter &itr, bool result) {
+  slim::vm::interpreter::command_result operator()(slim::vm::interpreter &itr, bool result) {
     // 成功ならループしないで終了
     if (result)
-      return true;
+      return slim::vm::interpreter::command_result::Success;
 
     // 候補がなくなったら終了
     if (this->begin == this->end)
-      return false;
+      return slim::vm::interpreter::command_result::Failure;
 
     // 命令列の巻き戻し
     itr.instr = this->instr;
-    // 次の候補の生成
+
+    // 候補を再設定
     itr.rc->reg(this->reg_idx) =
         false_driven_enumerator_get_candidate<InputIterator, value_type>()(
             this->begin);
+
+    // 次の候補の準備
     ++this->begin;
-    // 次のループをスタックに積む
-    itr.push_stackframe(false_driven_enumerator(this->instr, this->reg_idx,
-                                                this->begin, this->end));
+
     profile_backtrack();
-    return itr.run();
+    return slim::vm::interpreter::command_result::Trial;
   }
 };
 
