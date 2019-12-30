@@ -43,6 +43,7 @@
 #include "vm/vm.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace slim {
 namespace verifier {
@@ -52,27 +53,18 @@ struct encoder {
    * アトムはfunctor_idの降順 */
   std::vector<LmnSymbolAtomRef> mem_atoms(LmnMembraneRef mem) {
     std::vector<LmnSymbolAtomRef> atoms;
+    atoms.reserve(mem->symb_atom_num());
 
-    for (auto func : mem_functors(mem)) {
-      auto ent = mem->get_atomlist(func);
-      for (auto a : *ent) {
-        atoms.push_back(a);
+    for (int i = mem->mem_max_functor() - 1; i >= 0; i--) {
+      auto ent = mem->get_atomlist(i);
+      if (ent && !LMN_IS_PROXY_FUNCTOR(i)) {
+        for (auto a : *ent) {
+          atoms.push_back(a);
+        }
       }
     }
 
     return atoms;
-  }
-
-  /* 膜にあるアトムのファンクタを降順で返す */
-  std::vector<LmnFunctor> mem_functors(LmnMembraneRef mem) {
-    std::vector<LmnFunctor> v;
-    for (int i = mem->mem_max_functor() - 1; i >= 0; i--) {
-      if (mem->get_atomlist(i) && !LMN_IS_PROXY_FUNCTOR(i)) {
-        v.push_back(i);
-      }
-    }
-    std::sort(std::begin(v), std::end(v), std::greater<int>());
-    return v;
   }
 
   void write_mem_atoms(LmnMembraneRef mem, BinStrCursor &bsp,

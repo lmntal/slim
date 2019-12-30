@@ -205,33 +205,31 @@ LmnMembrane::~LmnMembrane(){
 /* 膜mem内のアトム, 子膜のメモリを解放する.
  * 子膜が存在する場合は, その子膜に再帰する. */
 void LmnMembrane::drop() {
-  AtomListEntry *ent;
-  LmnMembraneRef m, n;
+  LmnMembraneRef m;
 
   /* drop and free child mems */
   m = this->child_head;
   while (m) {
-    n = m;
+    auto n = m;
     m = m->next;
     n->free_rec();
   }
-  this->child_head = NULL;
+  this->child_head = nullptr;
 
-  EACH_ATOMLIST(
-      this, ent, ({
-        LmnSymbolAtomRef a;
-        a = atomlist_head(ent);
-        if (LMN_IS_HL(a)) {
-          continue; /* hyperlinkはbuddy symbol atomと一緒に削除されるため */
-        }
-        while (a != lmn_atomlist_end(ent)) {
-          LmnSymbolAtomRef b = a;
-          a = a->get_next();
-          free_symbol_atom_with_buddy_data(b);
-        }
-        ent->set_empty();
-      }));
-
+  
+  for (int i = 0; i < max_functor; i++) {
+    if (!atomset[i])
+      continue;
+    /* hyperlinkはbuddy symbol atomと一緒に削除されるため */
+    if (LMN_FUNC_IS_HL(i))
+      continue;
+    
+    for (auto a : *atomset[i]) {
+      free_symbol_atom_with_buddy_data(a);
+    }
+    
+    atomset[i]->set_empty();
+  }
   this->atom_symb_num = 0U;
   this->atom_data_num = 0U;
 }

@@ -104,22 +104,22 @@ struct LmnMembrane {
   const std::vector<LmnRuleSet *> &get_rulesets() const {
     return this->rulesets;
   }
-  size_t ruleset_num() {
+  size_t ruleset_num() const {
     return (this->get_rulesets()).size();
   }
-  unsigned int symb_atom_num() {
+  unsigned int symb_atom_num() const {
     return this->atom_symb_num;
   }
   void symb_atom_set(unsigned int n) {
     this->atom_symb_num = n;
   }
-  unsigned int data_atom_num() {
+  unsigned int data_atom_num() const {
     return this->atom_data_num;
   }
   void data_atom_set(unsigned int n) {
     this->atom_data_num = n;
   }
-  unsigned int atom_num() {
+  unsigned int atom_num() const {
     return this->symb_atom_num() + this->data_atom_num();
   }
   BOOL natoms(unsigned int n) {

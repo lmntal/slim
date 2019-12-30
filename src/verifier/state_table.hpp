@@ -110,7 +110,7 @@ private:
 
 public:
   class iterator {
-    StateTable *table;
+    StateTable &table;
     size_t table_index;
     State *ptr;
     State *next;
@@ -122,21 +122,21 @@ public:
     using reference = State *&;
     typedef typename std::input_iterator_tag iterator_category;
 
-    iterator() : ptr(nullptr), next(nullptr) {}
+    iterator(StateTable &t, State *ptr) : table(t), ptr(ptr), next(nullptr) {}
     iterator(const iterator &itr)
         : table(itr.table), table_index(itr.table_index), ptr(itr.ptr), next(nullptr) {}
-    iterator(StateTable *t)
-        : table(t), table_index(0), ptr(table->tbl[table_index]), next(nullptr) {
-      while (!ptr && table_index + 1 < table->cap())
-        ptr = table->tbl[++table_index];
+    iterator(StateTable &t)
+        : table(t), table_index(0), ptr(table.tbl[table_index]), next(nullptr) {
+      while (!ptr && table_index + 1 < table.cap())
+        ptr = table.tbl[++table_index];
       if (ptr)
         next = ptr->next;
     };
 
     iterator &operator++() {
       ptr = next;
-      while (!ptr && table_index + 1 < table->cap())
-        ptr = table->tbl[++table_index];
+      while (!ptr && table_index + 1 < table.cap())
+        ptr = table.tbl[++table_index];
       if (ptr)
         next = ptr->next;
       return *this;
@@ -151,8 +151,8 @@ public:
     bool operator==(const iterator &itr) const { return ptr == itr.ptr; };
     bool operator!=(const iterator &itr) const { return !(*this == itr); };
   };
-  iterator begin() { return iterator(this); }
-  iterator end() { return iterator(); }
+  iterator begin() { return iterator(*this); }
+  iterator end() { return iterator(*this, nullptr); }
 
 private:
   uint8_t thread_num;
