@@ -103,7 +103,7 @@ static inline mhash_t memunit(LmnMembraneRef mem,
                               LmnSymbolAtomRef from_in_proxy,
                               LmnMembraneRef calc_mem, ProcessTableRef ctx,
                               int depth);
-static mhash_t mhash_rulesets(Vector *rulesets);
+static mhash_t mhash_rulesets(const std::vector<LmnRuleSet *> &rulesets);
 
 /* 膜memのハッシュ値を返す.
  * 計算の根となる膜をcalc_memとして渡す.  */
@@ -449,13 +449,13 @@ mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr) {
  * 基本は, ルールセットIDを掛け合わせた値.
  * uniqルールセットの場合は, 更にuniqの適用履歴に一意な整数IDを掛け合わせる.
  * 即ち, 文字列とIDの対応テーブル(symbol table)の実装に依存している. */
-static mhash_t mhash_rulesets(Vector *rulesets) {
+static mhash_t mhash_rulesets(const std::vector<LmnRuleSet *> &rulesets) {
   mhash_t hash;
   int i, j;
 
   hash = 1;
-  for (i = 0; i < rulesets->get_num(); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
+  for (i = 0; i < rulesets.size(); i++) {
+    LmnRuleSetRef rs = rulesets[i];
     hash *= rs->id;
 
     if (rs->has_unique()) {

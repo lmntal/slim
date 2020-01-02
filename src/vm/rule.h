@@ -53,11 +53,13 @@ typedef struct LmnRuleSet *LmnRuleSetRef;
 #include "lmntal.h"
 #include "symbol.h"
 
+#include <vector>
+
 /*----------------------------------------------------------------------
  * Rule Set
  */
 
-BOOL lmn_rulesets_equals(Vector *rulesets1, Vector *rulesets2);
+bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rulesets1, const std::vector<LmnRuleSetRef> &rulesets2);
 
 /*----------------------------------------------------------------------
  * System Rule Set

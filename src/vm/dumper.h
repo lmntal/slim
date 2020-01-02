@@ -100,7 +100,7 @@ LMN_EXTERN void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs);
  * @brief print rules.
  * @deprecated
  */
-LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, Vector *v);
+LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, const std::vector<LmnRuleSet *> &v);
 /**
  * @brief print an atom and its connected ones.
  */

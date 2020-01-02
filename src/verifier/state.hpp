@@ -179,6 +179,9 @@ struct State {                /* Total:72(36)byte */
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
+  
+  unsigned int get_id() const { return state_id; }
+  
   LmnBinStrRef state_binstr() {
     if (is_binstr_user()) {
       return (LmnBinStrRef)data;

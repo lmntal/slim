@@ -55,7 +55,10 @@ int binstr_decoder::decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
         lmn_mem_add_ruleset(mem, LmnRuleSetTable::at(scanner.scan_ruleset()));
     } else if (tag == TAG_RULESET_UNIQ) {
       auto rs_num = scanner.scan_ruleset_num();
-      decode_rulesets(rs_num, mem->get_rulesets());
+      std::vector<LmnRuleSet *> rulesets;
+      decode_rulesets(rs_num, &rulesets);
+      for (auto &v : rulesets)
+        lmn_mem_add_ruleset(mem, v);
     } else {
       scanner.unput_tag();
       /* 最初の要素は膜の外からアトムをたどって来た可能性がある */
@@ -67,7 +70,7 @@ int binstr_decoder::decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
 }
 
 /* UNIQ制約を含むルールセットrulesetsを再構築する */
-void binstr_decoder::decode_rulesets(int rs_num, Vector *rulesets) {
+void binstr_decoder::decode_rulesets(int rs_num, std::vector<LmnRuleSet *> *rulesets) {
   for (auto i = 0; i < rs_num; i++) {
     auto rs = new LmnRuleSet(*LmnRuleSetTable::at(scanner.scan_ruleset()));
 

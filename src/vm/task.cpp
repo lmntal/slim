@@ -271,14 +271,14 @@ static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem) {
  * @brief 膜内の0stepルールセットを適用できるだけ適用する
  */
 void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
-  struct Vector *rulesets = cur_mem->get_rulesets();
+  auto &rulesets = cur_mem->get_rulesets();
   BOOL reacted = FALSE;
 
   rc->is_zerostep = true;
   do {
     reacted = FALSE;
-    for (int i = 0; i < rulesets->get_num(); i++) {
-      LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
+    for (int i = 0; i < rulesets.size(); i++) {
+      LmnRuleSetRef rs = rulesets[i];
       if (!rs->is_zerostep())
         continue;
       reacted |= react_ruleset(rc, cur_mem, rs);
@@ -303,13 +303,12 @@ void react_zerostep_recursive(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
  * @see expand_inner      (nd.c) */
 BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   unsigned int i;
-  struct Vector *rulesets =
-      cur_mem->get_rulesets(); /* 本膜のルールセットの集合 */
+  auto &rulesets = cur_mem->get_rulesets(); /* 本膜のルールセットの集合 */
   BOOL ok = FALSE;
 
   /* ルールセットの適用 */
-  for (i = 0; i < rulesets->get_num(); i++) {
-    if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)rulesets->get(i))) {
+  for (i = 0; i < rulesets.size(); i++) {
+    if (react_ruleset(rc, cur_mem, rulesets[i])) {
       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
        */
       ok = TRUE;
@@ -1583,7 +1582,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    if (((LmnMembraneRef)rc->wt(memi))->get_rulesets()->get_num())
+    if (!((LmnMembraneRef)rc->wt(memi))->get_rulesets().empty())
       return FALSE;
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
@@ -3702,13 +3701,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_COPYRULES: {
     LmnInstrVar destmemi, srcmemi;
     unsigned int i;
-    struct Vector *v;
 
     READ_VAL(LmnInstrVar, instr, destmemi);
     READ_VAL(LmnInstrVar, instr, srcmemi);
-    v = ((LmnMembraneRef)rc->wt(srcmemi))->get_rulesets();
-    for (i = 0; i < v->get_num(); i++) {
-      auto cp = new LmnRuleSet(*(LmnRuleSetRef)v->get(i));
+    auto &v = ((LmnMembraneRef)rc->wt(srcmemi))->get_rulesets();
+    for (auto &rs : v) {
+      auto cp = new LmnRuleSet(*rs);
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);
     }
     break;
@@ -4945,7 +4943,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
       dmem_root_clear_ruleset(RC_ND_MEM_DELTA_ROOT(rc),
                               (LmnMembraneRef)rc->wt(memi));
-      ((LmnMembraneRef)rc->wt(memi))->get_rulesets()->clear();
+      ((LmnMembraneRef)rc->wt(memi))->clearrules();
 
       break;
     }

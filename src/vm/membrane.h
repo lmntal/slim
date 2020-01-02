@@ -57,6 +57,8 @@ typedef struct LinkObj *LinkObjRef;
 #include "process_table.h"
 #include "rule.h"
 
+#include <vector>
+
 /** -----
  *  リンクオブジェクトの代替
  */
@@ -74,10 +76,10 @@ extern struct st_hash_type type_memhash;
 
 LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i);
 
-
+void lmn_mem_rulesets_destroy(const std::vector<LmnRuleSet *> &rulesets);
 void lmn_mem_rulesets_destroy(Vector *rulesets);
 void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
-void lmn_mem_add_ruleset_sort(Vector *rulesets, LmnRuleSetRef ruleset);
+void lmn_mem_add_ruleset_sort(std::vector<LmnRuleSet *> *rulesets, LmnRuleSetRef ruleset);
 
 
 LmnMembraneRef lmn_mem_copy_with_map_ex(LmnMembraneRef srcmem,

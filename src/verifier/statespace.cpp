@@ -347,8 +347,8 @@ void StateSpace::format_states() {
   /* cygwinテスト時に, ボトルネックになっていた */
   if (!this->is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
     if (this->mhash_table.tbl) this->mhash_table.tbl->format_states();
-    if (this->memid_table.tbl) this->memid_table.tbl->format_states();
     if (this->mhash_table.acc) this->mhash_table.acc->format_states();
+    if (this->memid_table.tbl) this->memid_table.tbl->format_states();
     if (this->memid_table.acc) this->memid_table.acc->format_states();
     this->is_formated = TRUE;
   }

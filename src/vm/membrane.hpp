@@ -47,8 +47,10 @@
 #include "../element/vector.h"
 
 #include <map>
+#include <vector>
 
 struct LmnMembrane;
+struct LmnRuleSet;
 typedef struct LmnMembrane *LmnMembraneRef;
 typedef struct AtomListEntry **AtomSet;
 
@@ -64,7 +66,7 @@ struct LmnMembrane {
   LmnMembraneRef parent;
   LmnMembraneRef child_head;
   LmnMembraneRef prev, next;
-  struct Vector rulesets;
+  std::vector<LmnRuleSet *> rulesets;
 #ifdef USE_FIRSTCLASS_RULE
   Vector *firstclass_rulesets;
 #endif
@@ -99,11 +101,11 @@ struct LmnMembrane {
   void set_active(BOOL is_activated) {
     this->is_activated = is_activated;
   }
-  struct Vector *get_rulesets() {
-    return &(this->rulesets);
+  const std::vector<LmnRuleSet *> &get_rulesets() const {
+    return this->rulesets;
   }
-  int ruleset_num() {
-    return (this->get_rulesets())->get_num();
+  size_t ruleset_num() {
+    return (this->get_rulesets()).size();
   }
   unsigned int symb_atom_num() {
     return this->atom_symb_num;
@@ -156,7 +158,7 @@ struct LmnMembrane {
   LmnMembraneRef mem_prev() {
     return this->prev;
   }
-  ProcessID mem_id() {
+  ProcessID mem_id() const {
     return this->id;
   }
   void set_id(ProcessID n) {
@@ -210,7 +212,7 @@ struct LmnMembrane {
   void copy_rules(LmnMembraneRef src);
   void clearrules();
   Vector *firstclass_rulesets();
-  
+  void delete_ruleset(LmnRulesetId del_id);
 };
 
 
