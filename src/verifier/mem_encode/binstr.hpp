@@ -128,7 +128,10 @@ public:
 
   int pos() const { return pos_; }
 
+private:
   void invalidate() { valid = false; }
+  
+public:
   bool is_valid() const { return valid; }
 
   /* ポインタpが指すバイナリストリングに、vからサイズsize分だけ書き込む.

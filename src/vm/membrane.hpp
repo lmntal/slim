@@ -185,6 +185,13 @@ struct LmnMembrane {
       return NULL;
     }
   }
+  const AtomListEntry *get_atomlist(LmnFunctor f) const {
+    if ((f < this->atomset_size) && this->atomset[f]) {
+      return this->atomset[f];
+    } else {
+      return NULL;
+    }
+  }
   const char *MEM_NAME();
   void drop();
   unsigned long space();
