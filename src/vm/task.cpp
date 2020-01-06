@@ -963,6 +963,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                                          bool &stop) {
   LmnInstrOp op;
   READ_VAL(LmnInstrOp, instr, op);
+  fprintf(stderr, "exec_command: %u\n", op);
   stop = true;
 
   if (lmn_env.find_atom_parallel)
@@ -2200,6 +2201,52 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnSubInstrSize subinstr_size;
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
     this->push_stackframe(exec_subinstructions_not(instr + subinstr_size));
+    break;
+  }
+  case INSTR_FORALL_PUSH: {
+    LmnInstrVar subgraph;
+    LmnSubInstrSize subinstr_forall_size, subinstr_exists_size;
+    auto instr_head = instr - op;
+    READ_VAL(LmnInstrVar, instr, subgraph);
+    fprintf(stderr, "forall\n");
+    fprintf(stderr, "  reg: %u\n", subgraph);
+    READ_VAL(LmnSubInstrSize, instr, subinstr_forall_size);
+    auto forall_head = instr;
+    this->instr += subinstr_forall_size;
+    READ_VAL(LmnSubInstrSize, instr, subinstr_exists_size);
+    auto exists_head = instr;
+    auto next = exists_head + subinstr_exists_size;
+    this->instr = forall_head;
+    fprintf(stderr, "  forall_instruction: %u\n", subinstr_forall_size);
+    fprintf(stderr, "  exists_instruction: %u\n", subinstr_exists_size);
+    this->push_stackframe([=](bool result) {
+        fprintf(stderr, "called (%d)\n", result);
+      if (result) {
+        this->instr = exists_head;
+        fprintf(stderr, "  exists\n");
+        // exists部の実行終了時の判定
+        this->push_stackframe([=](bool result) {
+          if (result) {
+            // forall_pushの頭に戻る
+            this->instr = forall_head;
+            return this->run();
+          } else {
+            return false;
+          }
+        });
+        return this->run();
+      }
+      // forall部のマッチングに失敗したら、その先へ進む
+      this->instr = next;
+      return this->run();
+    });
+    fprintf(stderr, "break;\n");
+    break;
+  }
+  case INSTR_FORALL_POP: {
+    LmnInstrVar subgraph;
+    READ_VAL(LmnInstrVar, instr, subgraph);
+    fprintf(stderr, "pop\n");
     break;
   }
   case INSTR_ENQUEUEATOM: {
@@ -4210,6 +4257,8 @@ bool slim::vm::interpreter::run() {
     do {
       result = exec_command(this->rc, this->rule, stop);
     } while (!stop);
+
+    fprintf(stderr, "----- callstack -----\n");
 
     // 成否がわかったのでstack frameに積まれているcallbackを消費する
     while (!this->callstack.empty()) {

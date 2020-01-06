@@ -72,6 +72,8 @@ namespace c17 = slim::element;
 %token <LmnInstruction> INST_TK_LOOP
 %token <LmnInstruction> INST_TK_RUN
 %token <LmnInstruction> INST_TK_NOT
+%token <LmnInstruction> INST_TK_FORALL_PUSH
+%token <LmnInstruction> INST_TK_FORALL_POP
 %token <LmnInstruction> INST_TK_GROUP
 %token <LmnInstruction> INST_TK_BRANCH
 
@@ -101,6 +103,9 @@ namespace c17 = slim::element;
 %type <std::vector<il::InstrArg>> args_
 %type <std::vector<il::InstrArg>> inst_list_arg
 %type <std::vector<lmn_interned_str>> inlines;
+%type <std::vector<il::InstrArg>> mixed_args;
+%type <std::vector<il::InstrArg>> mixed_args_;
+%type <il::InstrArg> inst_list;
 
 
 %% /* Grammar rules and actions follow.  */
@@ -200,8 +205,24 @@ instruction:
 | INST_TK_LOOP LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
 | INST_TK_RUN LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
 | INST_TK_NOT LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
+/* 今適当に書いてるので直す */
+| INST_TK_FORALL_PUSH LBRACKET mixed_args RBRACKET { $$ = Instruction($1, std::move($3)); }
+| INST_TK_FORALL_POP LBRACKET arg COMMA inst_list_arg RBRACKET { $$ = Instruction($1, std::move($5)); }
+/* ここまで */
 | INST_TK_GROUP LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
 | INST_TK_BRANCH LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
+;
+
+mixed_args:
+  /* empty */ { $$ = std::vector<il::InstrArg>(); }
+| mixed_args_ arg { $1.push_back(std::move($2)); $$ = std::move($1); }
+| mixed_args_ inst_list { $1.push_back(std::move($2)); $$ = std::move($1); }
+;
+
+mixed_args_:
+  /* empty */ { $$ = std::vector<il::InstrArg>(); }
+| mixed_args_ arg COMMA { $1.push_back(std::move($2)); $$ = std::move($1); }
+| mixed_args_ inst_list COMMA { $1.push_back(std::move($2)); $$ = std::move($1); }
 ;
 
 arg:
@@ -244,6 +265,10 @@ inst_list_arg:
     $$ = std::vector<il::InstrArg>();
     $$.push_back(il::instr_arg::inst_list(std::move($2)));
   }
+;
+
+inst_list:
+  LBRACKET instructions RBRACKET { fprintf(stderr, "instruction: %lu\n", $2.size()); $$ = il::instr_arg::inst_list(std::move($2)); }
 ;
 
 functor:

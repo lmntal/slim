@@ -166,6 +166,8 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_LOOP, {"loop", {InstrList}}},
     {INSTR_RUN, {"run", {InstrList}}},
     {INSTR_NOT, {"not", {InstrList}}},
+    {INSTR_FORALL_PUSH, {"forallpush", {InstrVar, InstrList, InstrList}}},
+    {INSTR_FORALL_POP, {"forallpop", {InstrVar, InstrList}}},
     {INSTR_INLINE, {"inline", {InstrVar, String, InstrVar}}},
     {INSTR_CALLBACK, {"callback", {InstrVar, InstrVar}}},
     {INSTR_UNIFYHLINKS, {"unifyhlinks", {InstrVar, InstrVar}}},

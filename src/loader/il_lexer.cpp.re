@@ -183,6 +183,8 @@ start:
       if (yylval->as<int>() == INSTR_LOOP) { return parser::token::INST_TK_LOOP; }
       if (yylval->as<int>() == INSTR_RUN) { return parser::token::INST_TK_RUN; }
       if (yylval->as<int>() == INSTR_NOT) { return parser::token::INST_TK_NOT; }
+      if (yylval->as<int>() == INSTR_FORALL_PUSH) { return parser::token::INST_TK_FORALL_PUSH; }
+      if (yylval->as<int>() == INSTR_FORALL_POP) { return parser::token::INST_TK_FORALL_POP; }
       if (yylval->as<int>() == INSTR_GROUP) { return parser::token::INST_TK_GROUP; }
       if (yylval->as<int>() == INSTR_BRANCH) { return parser::token::INST_TK_BRANCH; }
 

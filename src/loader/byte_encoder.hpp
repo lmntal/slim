@@ -120,6 +120,9 @@ private:
   void load(const Instruction &inst) {
     write_forward<LmnInstrOp>(inst.id);
     auto arg_num = inst.args.size();
+    if (inst.id == INSTR_FORALL_PUSH) {
+      fprintf(stderr, "load: forall_push(%lu)\n", arg_num);
+    }
 
     /* REMOVEATOMは引数の数が2と3の場合がある。第三引数の
        ファンクタは無視する */
@@ -209,16 +212,20 @@ private:
   void load(const il::instr_arg::inst_list &arg) {
     /* 命令列の長さを求めるため、開始位置を記録する */
     /* INSTR_NOTでサブ命令列の長さを知る必要がある */
+    fprintf(stderr, "load: inst_list(%lu)\n", arg.value.size());
     auto start = loc;
     move_by<LmnSubInstrSize>();
 
-    for (auto &inst : arg.value)
+    for (auto &inst : arg.value){
+      fprintf(stderr, "load instruction: ID=%u\n", inst.id);
       load(inst);
+    }
 
     /* startの位置に現在の位置との差を書き込む */
     auto t = loc;
     loc = start;
     write<LmnSubInstrSize>(t - (start + sizeof(LmnSubInstrSize)));
+    fprintf(stderr, "write: len=%lu\n", t - (start + sizeof(LmnSubInstrSize)));
     loc = t;
   }
 };
