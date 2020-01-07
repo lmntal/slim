@@ -903,6 +903,73 @@ struct exec_subinstructions_not {
   }
 };
 
+struct exec_subinstructions_forall_push {
+  bool executed;
+  LmnInstrVar reg;
+  LmnRuleInstr forall_head, exists_head, next_instr;
+
+  exec_subinstructions_forall_push(
+    LmnInstrVar reg, LmnRuleInstr forall_head, LmnRuleInstr exists_head, LmnRuleInstr next_instr);
+
+  slim::vm::interpreter::command_result
+  operator()(slim::vm::interpreter &interpreter, bool result);
+};
+
+struct exec_subinstructions_forall_push_exists {
+  bool executed;
+  LmnInstrVar reg;
+  LmnRuleInstr forall_head, exists_head, next_instr;
+
+  exec_subinstructions_forall_push_exists(
+    LmnInstrVar reg, LmnRuleInstr forall_head, LmnRuleInstr exists_head, LmnRuleInstr next_instr)
+      : executed(false), reg(reg), forall_head(forall_head), exists_head(exists_head), next_instr(next_instr) {}
+
+  slim::vm::interpreter::command_result
+  operator()(slim::vm::interpreter &interpreter, bool result) {
+    if (!executed) {
+      if (result) {
+        // forall_pushの頭に戻る
+        interpreter.instr = forall_head;
+        // TODO: 次のループ時に、forall部の最後の命令が失敗したと捉えられると最高
+        interpreter.push_stackframe(exec_subinstructions_forall_push(reg, forall_head, exists_head, next_instr));
+        return slim::vm::interpreter::command_result::Trial;
+      } else {
+        return slim::vm::interpreter::command_result::Failure;
+      }
+    } else {
+      return result ? slim::vm::interpreter::command_result::Success
+                    : slim::vm::interpreter::command_result::Failure;
+    }
+  }
+};
+
+exec_subinstructions_forall_push::exec_subinstructions_forall_push(
+    LmnInstrVar reg, LmnRuleInstr forall_head, LmnRuleInstr exists_head, LmnRuleInstr next_instr)
+      : executed(false), reg(reg), forall_head(forall_head), exists_head(exists_head), next_instr(next_instr) {}
+
+slim::vm::interpreter::command_result
+exec_subinstructions_forall_push::operator()(slim::vm::interpreter &interpreter, bool result) {
+  fprintf(stderr, "called exec_subinstructions_forall_push thread\n");
+  if (!executed) {
+    if (result) {
+      interpreter.instr = exists_head;
+      // TODO: exists部のみ、各箇所のneq判定が必要（制約のため。ただこれは後回し）
+      fprintf(stderr, "  exists\n");
+      // exists部の実行終了時の判定
+      interpreter.push_stackframe(exec_subinstructions_forall_push_exists(reg, forall_head, exists_head, next_instr));
+      return slim::vm::interpreter::command_result::Trial;
+    }
+
+    // forall部のマッチングに失敗したら、その先へ進む
+    interpreter.instr = next_instr;
+    executed = true;
+    return slim::vm::interpreter::command_result::Trial;
+  } else {
+    return result ? slim::vm::interpreter::command_result::Success
+                  : slim::vm::interpreter::command_result::Failure;
+  }
+}
+
 struct exec_subinstructions_group {
   bool executed;
   LmnRuleInstr next_instr;
@@ -2219,27 +2286,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     this->instr = forall_head;
     fprintf(stderr, "  forall_instruction: %u\n", subinstr_forall_size);
     fprintf(stderr, "  exists_instruction: %u\n", subinstr_exists_size);
-    this->push_stackframe([=](bool result) {
-        fprintf(stderr, "called (%d)\n", result);
-      if (result) {
-        this->instr = exists_head;
-        fprintf(stderr, "  exists\n");
-        // exists部の実行終了時の判定
-        this->push_stackframe([=](bool result) {
-          if (result) {
-            // forall_pushの頭に戻る
-            this->instr = forall_head;
-            return this->run();
-          } else {
-            return false;
-          }
-        });
-        return this->run();
-      }
-      // forall部のマッチングに失敗したら、その先へ進む
-      this->instr = next;
-      return this->run();
-    });
+    // TODO: headのレジスタを保存するために、this->rcを替える必要がある
+    this->push_stackframe(exec_subinstructions_forall_push(subgraph, forall_head, exists_head, next));
     fprintf(stderr, "break;\n");
     break;
   }
