@@ -3834,6 +3834,27 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     delete delmap;
     break;
   }
+  case INSTR_DELETECONNECTORSFROMORIG: {
+    LmnInstrVar srcset;
+    HashSet *delset;
+    HashSetIterator it;
+    READ_VAL(LmnInstrVar, instr, srcset);
+
+    delset = (HashSet *)rc->wt(srcset);
+
+    for (it = hashset_iterator(delset); !hashsetiter_isend(&it);
+         hashsetiter_next(&it)) {
+      LmnSymbolAtomRef orig;
+
+      orig = (LmnSymbolAtomRef)hashsetiter_entry(&it);
+
+      lmn_mem_unify_symbol_atom_args(orig, 0, orig, 1);
+
+      lmn_delete_atom(orig);
+    }
+
+    break;
+  }
   case INSTR_REMOVETOPLEVELPROXIES: {
     LmnInstrVar memi;
 

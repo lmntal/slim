@@ -148,6 +148,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_INSERTCONNECTORSINNULL,
      {"insertconnectorsinnull", {InstrVar, InstrVarList}}},
     {INSTR_DELETECONNECTORS, {"deleteconnectors", {InstrVar, InstrVar}}},
+    {INSTR_DELETECONNECTORSFROMORIG, {"deleteconnectorsfromorig", {InstrVar}}},
 
     {INSTR_REACT,
      {"react", {InstrVar, InstrVarList, InstrVarList, InstrVarList}}},
