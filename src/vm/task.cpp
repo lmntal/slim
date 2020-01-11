@@ -39,6 +39,7 @@
 #include "task.h"
 #include "ccallback.h"
 #include "dumper.h"
+#include "forall.hpp"
 #include "interpret/false_driven_enumerator.hpp"
 #include "interpret/interpreter.hpp"
 #include "memstack.h"
@@ -903,72 +904,37 @@ struct exec_subinstructions_not {
   }
 };
 
-struct exec_subinstructions_forall_push {
+struct exec_subinstructions_forallpop {
   bool executed;
-  LmnInstrVar reg;
-  LmnRuleInstr forall_head, exists_head, next_instr;
+  LmnRuleInstr next_instr, subinstr_head;
+  LmnForallRef forall;
 
-  exec_subinstructions_forall_push(
-    LmnInstrVar reg, LmnRuleInstr forall_head, LmnRuleInstr exists_head, LmnRuleInstr next_instr);
-
-  slim::vm::interpreter::command_result
-  operator()(slim::vm::interpreter &interpreter, bool result);
-};
-
-struct exec_subinstructions_forall_push_exists {
-  bool executed;
-  LmnInstrVar reg;
-  LmnRuleInstr forall_head, exists_head, next_instr;
-
-  exec_subinstructions_forall_push_exists(
-    LmnInstrVar reg, LmnRuleInstr forall_head, LmnRuleInstr exists_head, LmnRuleInstr next_instr)
-      : executed(false), reg(reg), forall_head(forall_head), exists_head(exists_head), next_instr(next_instr) {}
+  exec_subinstructions_forallpop(LmnForallRef forall, LmnRuleInstr subinstr_head, LmnRuleInstr next_instr)
+      : executed(false), forall(forall), subinstr_head(subinstr_head), next_instr(next_instr) {}
 
   slim::vm::interpreter::command_result
   operator()(slim::vm::interpreter &interpreter, bool result) {
     if (!executed) {
-      if (result) {
-        // forall_pushの頭に戻る
-        interpreter.instr = forall_head;
-        // TODO: 次のループ時に、forall部の最後の命令が失敗したと捉えられると最高
-        interpreter.push_stackframe(exec_subinstructions_forall_push(reg, forall_head, exists_head, next_instr));
+      if (forall->preserved_reg.size() > 0) {
+        auto registers = forall->preserved_reg.back();
+        forall->preserved_reg.pop_back();
+        for (auto reg_pair: registers) {
+          interpreter.rc->reg(reg_pair.first) = reg_pair.second;
+        }
+        interpreter.instr = subinstr_head;
         return slim::vm::interpreter::command_result::Trial;
-      } else {
-        return slim::vm::interpreter::command_result::Failure;
       }
+      else {
+        interpreter.instr = next_instr;
+        executed = true;
+      }
+      return slim::vm::interpreter::command_result::Trial;
     } else {
       return result ? slim::vm::interpreter::command_result::Success
                     : slim::vm::interpreter::command_result::Failure;
     }
   }
 };
-
-exec_subinstructions_forall_push::exec_subinstructions_forall_push(
-    LmnInstrVar reg, LmnRuleInstr forall_head, LmnRuleInstr exists_head, LmnRuleInstr next_instr)
-      : executed(false), reg(reg), forall_head(forall_head), exists_head(exists_head), next_instr(next_instr) {}
-
-slim::vm::interpreter::command_result
-exec_subinstructions_forall_push::operator()(slim::vm::interpreter &interpreter, bool result) {
-  fprintf(stderr, "called exec_subinstructions_forall_push thread\n");
-  if (!executed) {
-    if (result) {
-      interpreter.instr = exists_head;
-      // TODO: exists部のみ、各箇所のneq判定が必要（制約のため。ただこれは後回し）
-      fprintf(stderr, "  exists\n");
-      // exists部の実行終了時の判定
-      interpreter.push_stackframe(exec_subinstructions_forall_push_exists(reg, forall_head, exists_head, next_instr));
-      return slim::vm::interpreter::command_result::Trial;
-    }
-
-    // forall部のマッチングに失敗したら、その先へ進む
-    interpreter.instr = next_instr;
-    executed = true;
-    return slim::vm::interpreter::command_result::Trial;
-  } else {
-    return result ? slim::vm::interpreter::command_result::Success
-                  : slim::vm::interpreter::command_result::Failure;
-  }
-}
 
 struct exec_subinstructions_group {
   bool executed;
@@ -1030,7 +996,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                                          bool &stop) {
   LmnInstrOp op;
   READ_VAL(LmnInstrOp, instr, op);
-  fprintf(stderr, "exec_command: %u\n", op);
   stop = true;
 
   if (lmn_env.find_atom_parallel)
@@ -2264,6 +2229,25 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     return TRUE;
   case INSTR_STOP:
     return FALSE;
+  case INSTR_FORALL_COMMIT: {
+    LmnInstrVar forall_regmap;
+    READ_VAL(LmnInstrVar, instr, forall_regmap);
+    this->push_stackframe([=](interpreter &itr, bool result) {
+      if (result) {
+        return command_result::Failure;
+      } else {
+        return command_result::Success;
+      }
+    });
+    this->instr = ((LmnForall *)(this->rc->wt(forall_regmap)))->exists_instr;
+    break;
+  }
+  case INSTR_EXISTS_COMMIT: {
+    LmnInstrVar forall_regmap;
+    READ_VAL(LmnInstrVar, instr, forall_regmap);
+    ((LmnForallRef)(this->rc->wt(forall_regmap)))->push_registers(this->rc->work_array);
+    return true;
+  }
   case INSTR_NOT: {
     LmnSubInstrSize subinstr_size;
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
@@ -2271,31 +2255,36 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_FORALL_PUSH: {
-    LmnInstrVar subgraph;
+    LmnInstrVar forall_regmap;
     LmnSubInstrSize subinstr_forall_size, subinstr_exists_size;
     auto instr_head = instr - op;
-    READ_VAL(LmnInstrVar, instr, subgraph);
-    fprintf(stderr, "forall\n");
-    fprintf(stderr, "  reg: %u\n", subgraph);
+    READ_VAL(LmnInstrVar, instr, forall_regmap);
     READ_VAL(LmnSubInstrSize, instr, subinstr_forall_size);
     auto forall_head = instr;
     this->instr += subinstr_forall_size;
     READ_VAL(LmnSubInstrSize, instr, subinstr_exists_size);
     auto exists_head = instr;
     auto next = exists_head + subinstr_exists_size;
+    LmnForallRef forall;
+    forall = new LmnForall(exists_head);
+    this->rc->reg(forall_regmap) = {(LmnWord)(forall), 0, TT_OTHER};
+    forall->push_registers(this->rc->work_array);
+    this->push_stackframe(exec_subinstructions_not(next));
     this->instr = forall_head;
-    fprintf(stderr, "  forall_instruction: %u\n", subinstr_forall_size);
-    fprintf(stderr, "  exists_instruction: %u\n", subinstr_exists_size);
-    // TODO: headのレジスタを保存するために、this->rcを替える必要がある
-    this->push_stackframe(exec_subinstructions_forall_push(subgraph, forall_head, exists_head, next));
-    fprintf(stderr, "break;\n");
     break;
   }
   case INSTR_FORALL_POP: {
-    LmnInstrVar subgraph;
-    READ_VAL(LmnInstrVar, instr, subgraph);
-    fprintf(stderr, "pop\n");
-    break;
+    LmnInstrVar forall_regmap;
+    LmnSubInstrSize subinstr_size;
+    auto instr_head = instr - op;
+    READ_VAL(LmnInstrVar, instr, forall_regmap);
+    READ_VAL(LmnSubInstrSize, instr, subinstr_size);
+    auto subinstr_head = instr;
+    auto next = instr + subinstr_size;
+    this->instr = instr + subinstr_size;
+    LmnForallRef forall = (LmnForallRef)(this->rc->wt(forall_regmap));
+    this->push_stackframe(exec_subinstructions_forallpop(forall, subinstr_head, next));
+    return true;
   }
   case INSTR_ENQUEUEATOM: {
     SKIP_VAL(LmnInstrVar, instr);
@@ -4305,8 +4294,6 @@ bool slim::vm::interpreter::run() {
     do {
       result = exec_command(this->rc, this->rule, stop);
     } while (!stop);
-
-    fprintf(stderr, "----- callstack -----\n");
 
     // 成否がわかったのでstack frameに積まれているcallbackを消費する
     while (!this->callstack.empty()) {

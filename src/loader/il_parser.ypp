@@ -207,7 +207,7 @@ instruction:
 | INST_TK_NOT LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
 /* 今適当に書いてるので直す */
 | INST_TK_FORALL_PUSH LBRACKET mixed_args RBRACKET { $$ = Instruction($1, std::move($3)); }
-| INST_TK_FORALL_POP LBRACKET arg COMMA inst_list_arg RBRACKET { $$ = Instruction($1, std::move($5)); }
+| INST_TK_FORALL_POP LBRACKET mixed_args RBRACKET { $$ = Instruction($1, std::move($3)); }
 /* ここまで */
 | INST_TK_GROUP LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
 | INST_TK_BRANCH LBRACKET inst_list_arg RBRACKET { $$ = Instruction($1, std::move($3)); }
@@ -268,7 +268,7 @@ inst_list_arg:
 ;
 
 inst_list:
-  LBRACKET instructions RBRACKET { fprintf(stderr, "instruction: %lu\n", $2.size()); $$ = il::instr_arg::inst_list(std::move($2)); }
+  LBRACKET instructions RBRACKET { $$ = il::instr_arg::inst_list(std::move($2)); }
 ;
 
 functor:
