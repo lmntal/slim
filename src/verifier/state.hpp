@@ -587,9 +587,8 @@ public:
                              sizeof(succ_data_t) * this->successor_num);
 #endif
       if (has_trans_obj()) {
-        unsigned int i;
-        for (i = 0; i < successor_num; i++) {
-          transition_free(transition(this, i));
+        for (int i = 0; i < successor_num; i++) {
+          delete ((Transition *)this->successors[i]);
         }
       }
       LMN_FREE(successors);

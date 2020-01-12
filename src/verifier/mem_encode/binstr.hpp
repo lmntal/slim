@@ -128,7 +128,10 @@ public:
 
   int pos() const { return pos_; }
 
+private:
   void invalidate() { valid = false; }
+  
+public:
   bool is_valid() const { return valid; }
 
   /* ポインタpが指すバイナリストリングに、vからサイズsize分だけ書き込む.
@@ -377,13 +380,15 @@ public:
 
 private:
   void resize(int pos) {
+    int org_size = size;
     while (size <= pos) {
-      int org_size = size / TAG_IN_BYTE;
       size *= 2;
-      v = LMN_REALLOC(BYTE, v, size / TAG_IN_BYTE);
-      memset(v + org_size, 0x0U,
-             sizeof(BYTE) * ((size / TAG_IN_BYTE) - org_size));
     }
+    
+    if (org_size >= size)
+      return;
+    
+    v = LMN_REALLOC(BYTE, v, size / TAG_IN_BYTE);
   }
 };
 

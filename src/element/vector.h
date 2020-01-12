@@ -64,7 +64,9 @@ public:
   ~Vector();
   void init(unsigned int init_size);
   void extend();
-  unsigned int get_num() const;
+  unsigned int get_num() const{
+    return this->num;
+  }
   void set_num(unsigned int n);
   unsigned int get_cap() const;
   void set_cap(unsigned int c);
@@ -78,7 +80,10 @@ public:
   LmnWord peek() const;
   void set(unsigned int index, LmnWord keyp);
   void set_list(LmnWord *w);
-  LmnWord get(unsigned int index) const;
+  LmnWord get(unsigned int index) const {
+    LMN_ASSERT(index < this->num);
+    return (this->tbl[index]);
+  }
   LmnWord last() const;
 /* pop all elements from vec */
   void clear();

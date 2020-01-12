@@ -147,6 +147,15 @@ struct Transition {
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
+  
+  ~Transition() {
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
+    }
+#endif
+    this->rule_names.destroy();
+  }
 };
 
 TransitionRef transition_make(State *s, lmn_interned_str rule_name);

@@ -69,9 +69,6 @@ void Vector::extend(){
   this->cap *= 2;
   this->tbl = LMN_REALLOC(LmnWord, this->tbl, this->cap);
 }
-unsigned int Vector::get_num() const{
-  return this->num;
-}
 void Vector::set_num(unsigned int n){
   this->num = n;
 }
@@ -138,10 +135,6 @@ void Vector::set(unsigned int index, LmnWord keyp){
 }
 void Vector::set_list(LmnWord *w){
   this->tbl = w;
-}
-LmnWord Vector::get(unsigned int index) const {
-  LMN_ASSERT(index < this->num);
-  return (this->tbl[index]);
 }
 LmnWord Vector::last() const{
   return this->tbl[this->num-1];

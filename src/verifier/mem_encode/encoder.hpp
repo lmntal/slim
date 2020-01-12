@@ -43,44 +43,19 @@
 #include "vm/vm.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace slim {
 namespace verifier {
 namespace mem_encode {
-struct encoder {
-  /* 膜memに存在する全てのアトムへのポインタをVectorに積めて返す.
-   * アトムはfunctor_idの降順 */
-  std::vector<LmnSymbolAtomRef> mem_atoms(LmnMembraneRef mem) {
-    std::vector<LmnSymbolAtomRef> atoms;
-
-    for (auto func : mem_functors(mem)) {
-      auto ent = mem->get_atomlist(func);
-      for (auto a : *ent) {
-        atoms.push_back(a);
-      }
-    }
-
-    return atoms;
-  }
-
-  /* 膜にあるアトムのファンクタを降順で返す */
-  std::vector<LmnFunctor> mem_functors(LmnMembraneRef mem) {
-    std::vector<LmnFunctor> v;
-    for (int i = mem->mem_max_functor() - 1; i >= 0; i--) {
-      if (mem->get_atomlist(i) && !LMN_IS_PROXY_FUNCTOR(i)) {
-        v.push_back(i);
-      }
-    }
-    std::sort(std::begin(v), std::end(v), std::greater<int>());
-    return v;
-  }
-
+class encoder {
   void write_mem_atoms(LmnMembraneRef mem, BinStrCursor &bsp,
                        VisitLogRef visited) {
     if (!bsp.is_valid())
       return;
 
-    write_mols(mem_atoms(mem), bsp, visited);
+    auto v = symbol_atom_range(mem);
+    write_mols(v.begin(), v.end(), bsp, visited);
   }
 
   /* write_atomsの膜バージョン.
@@ -267,25 +242,18 @@ struct encoder {
 
   /* atomsに含まれるアトムを起点とする未訪問分子を、バイナリストリングが
      最小となるように書き込む */
-  void write_mols(std::vector<LmnSymbolAtomRef> atoms, BinStrCursor &bsp,
+  template <class Iterator>
+  void write_mols(Iterator begin, Iterator end, BinStrCursor &bsp,
                   VisitLogRef visited) {
-    BinStrCursor last_valid_bsp;
-    int last_valid_i = -1, first_func = 0;
-    CheckpointRef last_valid_checkpoint = NULL;
-
     if (!bsp.is_valid())
       return;
 
     /* atoms中の未訪問のアトムを起点とする分子を、それぞれ試みる */
-    for (int i = 0; i < atoms.size(); i++) {
-      LmnSymbolAtomRef atom = atoms[i];
+    for (auto it = begin; it != end; ++it) {
+      LmnSymbolAtomRef atom = *it;
 
-      if (!atom || LMN_IS_HL(atom))
+      if (LMN_IS_HL(atom))
         continue;
-
-      /* 最適化: 最小のファンクタ以外は試す必要なし */
-      if (last_valid_i >= 0 && atom->get_functor() != first_func)
-        break;
 
       if (visited->get_atom(atom, NULL))
         continue;
@@ -295,32 +263,16 @@ struct encoder {
 
       write_mol(atom, LMN_ATTR_MAKE_LINK(0), -1, new_bsptr, visited, TRUE);
       if (new_bsptr.is_valid()) {
-        /* atomからたどった分子が書き込みに成功したので、last_validに記憶する */
-        if (last_valid_i < 0) {
-          first_func = atom->get_functor();
+        /* atomからたどった分子が書き込みに成功したので次のアトムの書き込みを試みる */
+        write_mols(std::next(it), end, new_bsptr, visited);
+        
+        if (new_bsptr.is_valid()) {
+          bsp = new_bsptr;
+          visited->commit_checkpoint();
         } else {
-          delete last_valid_checkpoint;
+          visited->revert_checkpoint();
         }
-
-        last_valid_bsp = new_bsptr;
-        last_valid_checkpoint = visited->pop_checkpoint();
-        last_valid_i = i;
-      } else {
-        visited->revert_checkpoint();
-      }
-    }
-
-    if (last_valid_i >= 0) {
-      /* 書き込みに成功した分子をログに記録して、次の分子に進む */
-      auto t = atoms[last_valid_i];
-      atoms[last_valid_i] = 0;
-      visited->push_checkpoint(last_valid_checkpoint);
-      write_mols(atoms, last_valid_bsp, visited);
-      atoms[last_valid_i] = t;
-
-      if (last_valid_bsp.is_valid()) {
-        bsp = last_valid_bsp;
-        visited->commit_checkpoint();
+        break;
       } else {
         visited->revert_checkpoint();
       }
@@ -359,13 +311,14 @@ struct encoder {
    * 求めた列をdump_molsする */
   void dump_mem_atoms(LmnMembraneRef mem, BinStrCursor &bsp,
                       VisitLogRef visited) {
-    dump_mols(mem_atoms(mem), bsp, visited);
+    dump_mols(symbol_atom_range(mem), bsp, visited);
   }
 
   /* アトム列atomsから, visitedに未登録のアトムに対し, write_molを行う
    * つまり, mhash同様に, 各アトムを起点とした分子単位でエンコードを行っている
    */
-  void dump_mols(const std::vector<LmnSymbolAtomRef> &atoms, BinStrCursor &bsp,
+  template <typename Container>
+  void dump_mols(const Container &atoms, BinStrCursor &bsp,
                  VisitLogRef visited) {
     /* atoms中の未訪問のアトムを起点とする分子を、それぞれ試みる */
     for (auto atom : atoms) {
@@ -389,9 +342,10 @@ struct encoder {
     }
   }
 
+public:
   static LmnBinStr *encode(LmnMembraneRef mem, unsigned int tbl_size = 0 /* hint */) {
     encoder e(mem, false, tbl_size);
-    auto &visited = e.visit_log;
+    auto visited = &e.visit_log;
     auto &bs = e.binstr;
     auto &bsp = e.cur;
 
@@ -404,7 +358,7 @@ struct encoder {
 
   static LmnBinStr *dump(LmnMembraneRef mem, unsigned long tbl_size = 0 /* hint */) {
     encoder e(mem, true, tbl_size);
-    auto &visitlog = e.visit_log;
+    auto visitlog = &e.visit_log;
     auto &bs = e.binstr;
     auto &bsp = e.cur;
 
@@ -415,18 +369,16 @@ struct encoder {
     return e.binary_string();
   }
 
+private:
   LmnMembraneRef root_mem;
-  VisitLog *visit_log;
+  VisitLog visit_log;
   BinStr binstr;
   std::unique_ptr<BinStrCursor> cur;
 
-  encoder(LmnMembraneRef mem, bool direct, unsigned int tbl_size = 0) : root_mem(mem), visit_log(new VisitLog()) {
+public:
+  encoder(LmnMembraneRef mem, bool direct, unsigned int tbl_size = 0) : root_mem(mem), visit_log() {
     cur = direct ? binstr.head_direct() : binstr.head();
-    visit_log->init_with_size(tbl_size);
-  }
-
-  ~encoder() {
-    delete visit_log;
+    visit_log.init_with_size(tbl_size);
   }
 
   LmnBinStr *binary_string() {
