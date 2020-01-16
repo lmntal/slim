@@ -145,6 +145,8 @@ void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
   dmem_interpret(rc, rule, instr);
 }
 
+static LmnRegister rewrite_reg(LmnRegister, LmnReactCxtRef, ProcessTableRef, LmnMembraneRef);
+
 namespace c14 = slim::element;
 namespace c17 = slim::element;
 
@@ -904,6 +906,32 @@ struct exec_subinstructions_not {
   }
 };
 
+struct exec_subinstructions_forallpush {
+  bool executed;
+  LmnForallRef forall;
+  LmnRuleInstr next_instr;
+
+  exec_subinstructions_forallpush(LmnForallRef forall, LmnRuleInstr next_instr)
+      : executed(false), forall(forall), next_instr(next_instr) {}
+
+  slim::vm::interpreter::command_result
+  operator()(slim::vm::interpreter &interpreter, bool result) {
+    if (!executed) {
+      // サブ命令列で成功が返ったら失敗
+      if (result || forall->preserved_reg.size() == 0)
+        return slim::vm::interpreter::command_result::Failure;
+
+      // うまくいったので次の命令へ飛ぶ
+      interpreter.instr = next_instr;
+      executed = true;
+      return slim::vm::interpreter::command_result::Trial;
+    } else {
+      return result ? slim::vm::interpreter::command_result::Success
+                    : slim::vm::interpreter::command_result::Failure;
+    }
+  }
+};
+
 struct exec_subinstructions_forallpop {
   bool executed;
   LmnRuleInstr next_instr, subinstr_head;
@@ -922,13 +950,31 @@ struct exec_subinstructions_forallpop {
           interpreter.rc->reg(reg_pair.first) = reg_pair.second;
         }
         interpreter.instr = subinstr_head;
-        return slim::vm::interpreter::command_result::Trial;
       }
       else {
         interpreter.instr = next_instr;
         executed = true;
       }
       return slim::vm::interpreter::command_result::Trial;
+    } else {
+      return result ? slim::vm::interpreter::command_result::Success
+                    : slim::vm::interpreter::command_result::Failure;
+    }
+  }
+};
+
+struct exec_subinstructions_forallcommit {
+  bool executed;
+
+  exec_subinstructions_forallcommit()
+      : executed(false) {}
+
+  slim::vm::interpreter::command_result
+  operator()(slim::vm::interpreter &interpreter, bool result) {
+    if (!executed) {
+      executed = true;
+      return result ? slim::vm::interpreter::command_result::Failure
+                    : slim::vm::interpreter::command_result::Success;
     } else {
       return result ? slim::vm::interpreter::command_result::Success
                     : slim::vm::interpreter::command_result::Failure;
@@ -1237,51 +1283,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
         /** copymapの情報を基に変数配列を書換える */
         for (i = 0; i < rc->capacity(); i++) {
-          LmnWord t;
-          LmnRegisterRef r = &v.at(i);
-          r->register_set_at(rc->at(i));
-          r->register_set_tt(rc->tt(i));
-
-          if (r->register_tt() == TT_ATOM) {
-            if (LMN_ATTR_IS_DATA(r->register_at())) {
-              /* data-atom */
-              if (r->register_at() == LMN_HL_ATTR) {
-                if (proc_tbl_get_by_hlink(
-                        copymap,
-                        lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(i)),
-                        &t)) {
-                  r->register_set_wt((LmnWord)((HyperLink *)t)->hl_to_at());
-                } else {
-                  r->register_set_wt(
-                      (LmnWord)rc->wt(i)); /* new_hlink命令等の場合 */
-                }
-              } else {
-                r->register_set_wt((LmnWord)lmn_copy_data_atom(
-                    (LmnAtom)rc->wt(i), r->register_at()));
-              }
-            } else if (proc_tbl_get_by_atom(copymap,
-                                            (LmnSymbolAtomRef)rc->wt(i), &t)) {
-              /* symbol-atom */
-              r->register_set_wt((LmnWord)t);
-            } else {
-              t = 0;
-            }
-          } else if (r->register_tt() == TT_MEM) {
-            if (rc->wt(i) ==
-                (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
-              r->register_set_wt((LmnWord)tmp_global_root);
-            } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)rc->wt(i),
-                                           &t)) {
-              r->register_set_wt((LmnWord)t);
-            } else {
-              t = 0;
-              //              v[i].wt = wt(rc, i); //
-              //              allocmem命令の場合はTT_OTHERになっている(2014-05-08
-              //              ueda)
-            }
-          } else { /* TT_OTHER */
-            r->register_set_wt(rc->wt(i));
-          }
+          v.at(i) = rewrite_reg(rc->reg(i), rc, copymap, tmp_global_root);
         }
         delete copymap;
 
@@ -2232,13 +2234,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_FORALL_COMMIT: {
     LmnInstrVar forall_regmap;
     READ_VAL(LmnInstrVar, instr, forall_regmap);
-    this->push_stackframe([=](interpreter &itr, bool result) {
-      if (result) {
-        return command_result::Failure;
-      } else {
-        return command_result::Success;
-      }
-    });
+    this->push_stackframe(exec_subinstructions_forallcommit());
     this->instr = ((LmnForall *)(this->rc->wt(forall_regmap)))->exists_instr;
     break;
   }
@@ -2267,16 +2263,15 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     auto next = exists_head + subinstr_exists_size;
     LmnForallRef forall;
     forall = new LmnForall(exists_head);
-    this->rc->reg(forall_regmap) = {(LmnWord)(forall), 0, TT_OTHER};
+    this->rc->reg(forall_regmap) = {(LmnWord)forall, 0, TT_FORALL};
     forall->push_registers(this->rc->work_array);
-    this->push_stackframe(exec_subinstructions_not(next));
+    this->push_stackframe(exec_subinstructions_forallpush(forall, next));
     this->instr = forall_head;
     break;
   }
   case INSTR_FORALL_POP: {
     LmnInstrVar forall_regmap;
     LmnSubInstrSize subinstr_size;
-    auto instr_head = instr - op;
     READ_VAL(LmnInstrVar, instr, forall_regmap);
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
     auto subinstr_head = instr;
@@ -2285,6 +2280,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnForallRef forall = (LmnForallRef)(this->rc->wt(forall_regmap));
     this->push_stackframe(exec_subinstructions_forallpop(forall, subinstr_head, next));
     return true;
+  }
+  case INSTR_FREE_FORALL: {
+    LmnInstrVar forall_regmap;
+    READ_VAL(LmnInstrVar, instr, forall_regmap);
+    delete ((LmnForallRef)(this->rc->wt(forall_regmap)));
+    break;
   }
   case INSTR_ENQUEUEATOM: {
     SKIP_VAL(LmnInstrVar, instr);
@@ -5122,6 +5123,79 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
     /*     print_wt(); */
 #endif
   }
+}
+
+LmnRegister rewrite_reg(LmnRegister reg, LmnReactCxtRef rc, ProcessTableRef copymap, LmnMembraneRef tmp_global_root) {
+  LmnWord t;
+  LmnRegister *r;
+  r = (LmnRegister*)malloc(sizeof(LmnRegister));
+  r->register_set_at(reg.at);
+  r->register_set_tt(reg.tt);
+
+  if (r->register_tt() == TT_ATOM) {
+    if (LMN_ATTR_IS_DATA(r->register_at())) {
+      /* data-atom */
+      if (r->register_at() == LMN_HL_ATTR) {
+        if (proc_tbl_get_by_hlink(
+                copymap,
+                lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)reg.wt),
+                &t)) {
+          r->register_set_wt((LmnWord)((HyperLink *)t)->hl_to_at());
+        } else {
+          r->register_set_wt(
+              (LmnWord)reg.wt); /* new_hlink命令等の場合 */
+        }
+      } else {
+        r->register_set_wt((LmnWord)lmn_copy_data_atom(
+            (LmnAtom)reg.wt, r->register_at()));
+      }
+    } else if (proc_tbl_get_by_atom(copymap,
+                                    (LmnSymbolAtomRef)reg.wt, &t)) {
+      /* symbol-atom */
+      r->register_set_wt((LmnWord)t);
+    } else {
+      t = 0;
+    }
+  } else if (r->register_tt() == TT_MEM) {
+    if (reg.wt ==
+        (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
+      r->register_set_wt((LmnWord)tmp_global_root);
+    } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)reg.wt,
+                                    &t)) {
+      r->register_set_wt((LmnWord)t);
+    } else {
+      t = 0;
+      //              v[i].wt = wt(rc, i); //
+      //              allocmem命令の場合はTT_OTHERになっている(2014-05-08
+      //              ueda)
+    }
+  } else if (r->register_tt() == TT_FORALL) {
+    LmnForallRef fa = (LmnForallRef)reg.wt;
+    LmnForallRef newfa;
+    newfa = new LmnForall(fa->exists_instr);
+    newfa->changed_reg_indices = std::vector<size_t>(fa->changed_reg_indices);
+    newfa->initial_reg = LmnRegisterArray();
+    newfa->preserved_reg = std::vector<std::map<size_t, LmnRegister>>();
+    for (auto initreg: fa->initial_reg) {
+      if (initreg.wt == reg.wt) {
+        LmnRegister newfa_tmp = {(LmnWord)newfa, 0, TT_FORALL};
+        newfa->initial_reg.push_back(newfa_tmp);
+        continue;
+      }
+      newfa->initial_reg.push_back(rewrite_reg(initreg, rc, copymap, tmp_global_root));
+    }
+    for (auto elem: fa->preserved_reg) {
+      std::map<size_t, LmnRegister> map = std::map<size_t, LmnRegister>();
+      for (auto reginfo: elem) {
+        map.insert(std::pair<size_t, LmnRegister>(reginfo.first, rewrite_reg(reginfo.second, rc, copymap, tmp_global_root)));
+      }
+      newfa->preserved_reg.push_back(map);
+    }
+    r->register_set_wt((LmnWord)newfa);
+  } else { /* TT_OTHER */
+    r->register_set_wt(reg.wt);
+  }
+  return *r;
 }
 
 Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {

@@ -76,7 +76,8 @@
 enum {
   TT_OTHER = 0,
   TT_ATOM = 1, /* symbol atom  */
-  TT_MEM = 2   /* membrane */
+  TT_MEM = 2,   /* membrane */
+  TT_FORALL =3 /* LmnForall */
 };
 
 void task_init(void);

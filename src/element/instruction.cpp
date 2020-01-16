@@ -162,8 +162,9 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_SPEC, {"spec", {InstrVar, InstrVar}}},
     {INSTR_PROCEED, {"proceed", {}}},
     {INSTR_STOP, {"stop", {}}},
-    {INSTR_FORALL_COMMIT, {"forallcommit", {}}},
-    {INSTR_EXISTS_COMMIT, {"existscommit", {}}},
+    {INSTR_FORALL_COMMIT, {"forallcommit", {InstrVar}}},
+    {INSTR_EXISTS_COMMIT, {"existscommit", {InstrVar}}},
+    {INSTR_FREE_FORALL, {"freeforall", {InstrVar}}},
 
     {INSTR_LOOP, {"loop", {InstrList}}},
     {INSTR_RUN, {"run", {InstrList}}},
