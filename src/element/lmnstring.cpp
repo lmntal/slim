@@ -128,7 +128,6 @@ void cb_string_reverse(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a0, t0, 0);
 }
 
-
 void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
                       LmnAtomRef a2, LmnLinkAttr t2,
@@ -159,6 +158,20 @@ void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_delete_atom(mem, a2, t2);
+}
+
+void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
+                      LmnAtomRef a2, LmnLinkAttr t2) {
+  // TODO
+  LmnStringRef ret;
+
+  ret = new LmnString("not implemented");
+  lmn_mem_push_atom(mem, ret, LMN_SP_ATOM_ATTR);
+  LINK_STR(mem, a2, t2, ret);
+
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, a1, t1);
 }
 
 void cb_string_substr(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
@@ -256,6 +269,7 @@ void string_init() {
   CCallback::lmn_register_c_fun("string_substr", (void *)cb_string_substr, 4);
   CCallback::lmn_register_c_fun("string_substr_right", (void *)cb_string_substr_right, 3);
   CCallback::lmn_register_c_fun("string_replace", (void *)cb_string_replace, 4);
+  CCallback::lmn_register_c_fun("string_split", (void *)cb_string_split, 3);
 }
 
 void string_finalize() {}
