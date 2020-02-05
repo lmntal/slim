@@ -50,6 +50,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
+#include "../memory_count.h"
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -107,6 +108,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
   mem = lmn_mem_copy(world_mem_org);
   init_s = new State(mem, p_label, states->use_memenc());
+  //memory_count_statedesc+=sizeof(State);
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
@@ -300,7 +302,6 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     st_data_t tmp;
     State *src_succ, *succ;
     LmnMembraneRef src_succ_m;
-
     /* 状態sのi番目の遷移src_tと遷移先状態src_succを取得 */
     if (!s->has_trans_obj()) {
       /* Transitionオブジェクトを利用しない場合 */
@@ -344,6 +345,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     } else {
       /* contains */
       delete(src_succ);
+      //memory_count_statedesc-=sizeof(State);
       if (s->has_trans_obj()) {
         /* Transitionオブジェクトが指すサクセッサを検出した等価な状態の方へ設定し直す
          */
@@ -377,7 +379,6 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
          then "辺"という構造を持たない(直接pointerで刺している)ので何もしない
     */
   }
-
   st_clear(RC_SUCC_TBL(rc));
 
   RC_EXPANDED(rc)->set_num(succ_i); /* 危険なコード. いつか直すかも. */
@@ -453,6 +454,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     } else {
       news = new State((LmnMembraneRef)expanded_roots->get(i), state_name,
                         mc_use_canonical(f));
+      //memory_count_statedesc+=sizeof(State);
     }
 
     state_set_property_state(news, state_name);

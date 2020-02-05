@@ -218,7 +218,7 @@ StateTable::StateTable(int thread_num, unsigned long size,
   this->use_rehasher_ = FALSE;
   size = table_new_size(size);
   this->tbl = std::vector<State *>(size, nullptr);
-  memory_count_statespace+=sizeof(State *)*size;
+  //memory_count_statespace+=sizeof(State *)*size;
   this->cap_ = size;
   this->cap_density_ = size / thread_num;
   this->num = std::vector<unsigned long>(thread_num, 0);
@@ -320,6 +320,7 @@ StateTable::~StateTable() {
  * 冗長なバイト列を破棄する.
  */
 State *StateTable::insert(State *ins, unsigned long *col) {
+  //printf("insert\n");
   auto compress = ins->state_binstr();
   State *ret = nullptr;
 
@@ -343,15 +344,16 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         state_set_compress_for_table(ins, compress);
         this->num_increment();
         if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
+	  //printf("tree\n");
           TreeNodeID ref;
           tcd_set_byte_length(&ins->tcd, ins->state_binstr()->len);
           ref = lmn_bscomp_tree_encode(ins->state_binstr());
-	  ofstream outputfile("treedatabase.dot",std::ios::app);
+	  //ofstream outputfile("treedatabase.dot",std::ios::app);
 	  //printf("state_db_num:%d\n", state_db_num);
 	  //lmn_dump_cell_stdout(state_restore_mem(ins));
 	  //outputfile<<"\""<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
-	  outputfile<<"\"num_"<<std::dec<<state_db_num<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
-	  outputfile.close();
+	  //outputfile<<"\"num_"<<std::dec<<state_db_num<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
+	  //outputfile.close();
 	  state_db_num++;
 	  //printf("first\n");
 	  //printf("binstr is %x\n",ins->state_binstr());
@@ -371,7 +373,6 @@ State *StateTable::insert(State *ins, unsigned long *col) {
       }
     }
   }
-
   /* case: non-empty bucket */
   while (!ret) {
     if (slim::config::profile && lmn_env.profile_level >= 3) {
@@ -379,6 +380,7 @@ State *StateTable::insert(State *ins, unsigned long *col) {
     }
     if (hash == state_hash(str)) {
       /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
+      //printf("insert1\n");
       if (lmn_env.hash_compaction) {
         /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
          */
@@ -386,7 +388,6 @@ State *StateTable::insert(State *ins, unsigned long *col) {
                                                      : str;
         break;
       }
-
       if (this->use_rehasher() && str->is_dummy() && !str->is_encoded() &&
           !lmn_env.tree_compress) {
         /* A. オリジナルテーブルにおいて, dummy状態が比較対象
@@ -539,6 +540,7 @@ State *StateTable::insert(State *ins, unsigned long *col) {
 
 /* 重複検査なしに状態sを状態表stに登録する */
 void StateTable::add_direct(State *s) {
+  //printf("add\n");
   slim::element::ewmutex outer_mutex(slim::element::ewmutex::enter, this->lock,
                                      env_my_thread_id());
   std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
@@ -558,15 +560,16 @@ void StateTable::add_direct(State *s) {
       this->num_increment();
       if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
         tcd_set_byte_length(&s->tcd, s->state_binstr()->len);
-        auto ref = lmn_bscomp_tree_encode(s->state_binstr());
-	ofstream output("treedatabase.dot",std::ios::app);
+        TreeNodeID ref = lmn_bscomp_tree_encode(s->state_binstr());
+	//ofstream output("treedatabase.dot",std::ios::app);
 	//printf("state_db_num:%d\n", state_db_num);
 	//lmn_dump_cell_stdout(state_restore_mem(s));
 	//output<<"\""<<std::hex<<s->state_binstr()<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
-	output<<"\"num_"<<std::dec<<state_db_num<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
-	output.close();
+	//output<<"\"num_"<<std::dec<<state_db_num<<"\" -> \""<<std::hex<<ref<<"\";"<<"\n";
+	//output.close();
 	state_db_num++;
 	//printf("binstr is %x\n",s->state_binstr());
+	//printf("tree\n");
         tcd_set_root_ref(&s->tcd, ref);
       }
       this->tbl[bucket] = s;

@@ -65,18 +65,5 @@ lmntal --slimcode source.lmn > source.il
 - cunit
 
 
-///Tree Database描画ツール(by adachi-r)///
-
-このブランチ(treecomp_calculation)はメモリ使用量を自作カウンタで出力し、また、Graphviz、DOT言語を用いてTree Databaseの論理構造を描画するツールを実装したブランチです。
-
-使用方法：
-このブランチを用いてプログラムを実行する際は、以下の手順で行ってください。
-
-1. Tree Compressionを有効化し、非決定実行で行う(実行時コマンドに必ず--tree-compress=N(Nは自然数)、--ndを用いる)
-2. このプログラムを実行するとtreedatabase.dotファイルがsrcディレクトリ内に生成されるため、
-
-dot -T png treedatabase.dot -o (任意の名前).png
-
-と打つとグラフ構造が描画された画像(上記の場合はpngファイル。png以外の画像ファイルでも可)が生成される。
-
-なお、画像ファイルを生成するには、SLIMを実行するのに必要なソフトウェアに加え、Graphvizが必要となります。
+///Tree Database軽量化ブランチ(by adachi-r)///
+このブランチ(treecomp_32bit)は、TreeNodeElementを64ビットから32ビットに軽量化したブランチです。

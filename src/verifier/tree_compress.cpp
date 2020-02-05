@@ -50,17 +50,17 @@ using namespace std;
 #define atomic_compare_and_swap(t, old, new)                                   \
   __sync_bool_compare_and_swap(t, old, new)
 
-#define TREE_UNIT_SIZE 8
+#define TREE_UNIT_SIZE 4
 #define TREE_THRESHOLD 10
 #define TREE_CACHE_LINE 8
-bool check_l=false;
+/*bool check_l=false;
 bool check_r=false;
 int vecunitlen=0;
 int vecunitlen_l=0;
 int vecunitlen_r=0;
 int vecunitlenal_l=TREE_UNIT_SIZE;
 int vecunitlenal_r=TREE_UNIT_SIZE;
-int depth=0;
+int depth=0;*/
 typedef struct TreeNodeStr *TreeNodeStrRef;
 
 struct TreeNodeStr {
@@ -69,60 +69,52 @@ struct TreeNodeStr {
   int extra;
 };
 
-uint64_t murmurhash64(const void *key, int len, unsigned int seed) {
-  const uint64_t m = 0xc6a4a7935bd1e995;
-  const int r = 47;
+uint32_t murmurhash64(const void *key, int len, unsigned int seed) {
+  //const uint64_t m = 0xc6a4a7935bd1e995;
+  const unsigned int m = 0x5bd1e995;
+  const int r = 24;
 
-  uint64_t h = seed ^ (len * m);
+  unsigned int h = seed ^ len;
 
-  const uint64_t *data = (const uint64_t *)key;
-  const uint64_t *end = data + (len / 8);
-
-  while (data != end) {
-    uint64_t k = *data++;
+  const unsigned char *data = (const unsigned char *)key;
+  while (len>=4) {
+    uint32_t k = *(unsigned int *)data;
 
     k *= m;
     k ^= k >> r;
     k *= m;
-
-    h ^= k;
+    
     h *= m;
+    h ^= k;
+    data+=4;
+    len-=4;
   }
 
-  const unsigned char *data2 = (const unsigned char *)data;
 
-  switch (len & 7) {
-  case 7:
-    h ^= ((uint64_t)data2[6]) << 48;
-  case 6:
-    h ^= ((uint64_t)data2[5]) << 40;
-  case 5:
-    h ^= ((uint64_t)data2[4]) << 32;
-  case 4:
-    h ^= ((uint64_t)data2[3]) << 24;
+  switch (len) {
   case 3:
-    h ^= ((uint64_t)data2[2]) << 16;
+    h ^= data[2] << 16;
   case 2:
-    h ^= ((uint64_t)data2[1]) << 8;
+    h ^= data[1] << 8;
   case 1:
-    h ^= ((uint64_t)data2[0]);
+    h ^= data[0];
     h *= m;
   };
 
-  h ^= h >> r;
+  h ^= h >> 13;
   h *= m;
-  h ^= h >> r;
+  h ^= h >> 15;
 
   return h;
 }
 
-uint64_t mix64(uint64_t key) {
+uint32_t mix64(uint32_t key) {
   key = (~key) + (key << 21); // key = (key << 21) - key - 1;
-  key = key ^ (((int64_t)key) >> 24);
+  key = key ^ (((int32_t)key) >> 24);
   key = (key + (key << 3)) + (key << 8); // key * 265
-  key = key ^ (((int64_t)key) >> 14);
+  key = key ^ (((int32_t)key) >> 14);
   key = (key + (key << 2)) + (key << 4); // key * 21
-  key = key ^ (((int64_t)key) >> 28);
+  key = key ^ (((int32_t)key) >> 28);
   key = key + (key << 31);
   return key;
 }
@@ -133,7 +125,7 @@ int tree_get_split_position(int start, int end) {
 }
 
 TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
-  unsigned long long ret;
+  unsigned long ret;
   int copy_len = TREE_UNIT_SIZE;
   if (str->extra && end == str->len - 1) {
     copy_len = str->extra;
@@ -142,19 +134,19 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   // printf("copy_len :%d\n", copy_len);
   memcpy(&ret, ((BYTE *)str->nodes + (start * TREE_UNIT_SIZE)),
          sizeof(BYTE) * copy_len);
-  memory_count_no_comp+=copy_len;
-  vecunitlen=copy_len;
+  //memory_count_no_comp+=copy_len;
+  //vecunitlen=copy_len;
   // printf("start :0x%14llx\n", ret);
-  if(ret>maxtreenodeid){
+  /*if(ret>maxtreenodeid){
     maxtreenodeid=ret;
   }
   if(ret<minvectorunitid){
     minvectorunitid=ret;
-  }
+    }*/
   return ret;
 }
 
-uint64_t hash_node(TreeNodeElement left, TreeNodeElement right) {
+uint32_t hash_node(TreeNodeElement left, TreeNodeElement right) {
   struct TreeNode node = {.left = left, .right = right};
   return murmurhash64(&node, 16, 0x5bd1e995);
 }
@@ -181,7 +173,7 @@ LmnBinStrRef binstr_make(unsigned int len) {
 
 TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
   TreeNodeRef node = LMN_MALLOC(struct TreeNode);
-  memory_count_binarystring+=sizeof(struct TreeNode);
+  //memory_count_binarystring+=sizeof(struct TreeNode);
   node->left = left;
   node->right = right;
   return node;
@@ -190,9 +182,9 @@ TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
 BOOL TreeDatabase::table_find_or_put(TreeNodeElement left,
                        TreeNodeElement right, TreeNodeID *ref) {
   int count, i;
-  uint64_t mask = this->mask;
+  uint32_t mask = this->mask;
   TreeNodeRef *table = this->nodes;
-  uint64_t offset;
+  uint32_t offset;
 redo:
   offset = (hash_node(left, right) & mask);
   count = 0;
@@ -205,29 +197,27 @@ redo:
         if (atomic_compare_and_swap(&table[(offset + i) & mask], 0, node)) {
           atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
-	  //printf("a unit is put in hashtable no %x in depth %d\n",(offset+i)&mask,depth);
-	  if(check_l==true){
+	  /*if(check_l==true){
 	    if(check_r==true){
 	      memory_count_vectorunit+=vecunitlen_l+vecunitlen_r;
-	      //memory_count_ref+=vecunitlenal_l+vecunitlenal_r;
 	      treevalue+=pow(2,depth-1)*2*TREE_UNIT_SIZE;
 	    }else{
 	      memory_count_vectorunit+=vecunitlen_l;
-	      memory_count_ref+=8;
+	      memory_count_ref+=4;
 	      treevalue+=pow(2,depth-1)*TREE_UNIT_SIZE;
 	    }
 	  }else if(check_r==true){
 	    memory_count_vectorunit+=vecunitlen_r;
-	    memory_count_ref+=8;
+	    memory_count_ref+=4;
 	    treevalue+=pow(2,depth-1)*TREE_UNIT_SIZE;
 	  }else{
-	    memory_count_ref+=16;
+	    memory_count_ref+=8;
 	  }
 	  check_l=false;
 	  check_r=false;
 	  vecunitlen=0;
 	  depth--;
-	  nodeintree++;
+	  nodeintree++;*/
           return FALSE;
         } else {
           std::free(node);
@@ -236,13 +226,14 @@ redo:
       } else if (tree_node_equal(table[(offset + i) & mask], left, right)) {
         *ref = (offset + i) & mask;
 	//printf("a unit is shared in hashtable no %x in depth %d\n",(offset+i)&mask,depth);
-	sharenode++;
+	/*sharenode++;
 	check_l=false;
 	check_r=false;
 	vecunitlen=0;
-	depth--;
+	depth--;*/
         return TRUE;
       }
+      //conflict_count++;
     }
     offset = (mix64(offset) & mask);
     count++;
@@ -253,14 +244,14 @@ redo:
   fprintf(stderr, "load factor : %10.3lf\n",
           (double)tree_db_node_count(this) / (this->mask + 1));
   fprintf(stderr, "memory      : %7lu MB\n",
-          (uint64_t)this->space() / 1024 / 1024);
+          (uint32_t)this->space() / 1024 / 1024);
   exit(EXIT_FAILURE);
 }
 
 TreeDatabase::TreeDatabase(size_t size){
-  memory_count_binarystring+=sizeof(struct TreeDatabase);
+  //memory_count_binarystring+=sizeof(struct TreeDatabase);
   this->nodes = LMN_CALLOC(TreeNodeRef, size);
-  memory_count_binarystring+=sizeof(TreeNodeRef)*size;
+  //memory_count_binarystring+=sizeof(TreeNodeRef)*size;
   this->mask = size - 1;
   this->node_count = 0;
 }
@@ -289,24 +280,24 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   if ((end - start + 1) <= 1) {
     return vector_unit(str, start, end);
   }
-  depth++;
+  /*depth++;
   if(depth>tree_database_max_depth){
     tree_database_max_depth=depth;
-  }
+    }*/
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
     this->tree_find_or_put_rec(str, start, start + split, found);
-  vecunitlen_l=vecunitlen;
+  //vecunitlen_l=vecunitlen;
   TreeNodeElement right =
     this->tree_find_or_put_rec(str, start + split + 1, end, found);
-  vecunitlen_r=vecunitlen;
+  /*vecunitlen_r=vecunitlen;
   nodecount++;
   if((split+1)<=1){
     check_l=true;
   }
   if((end-(start+split+1)+1)<=1){
     check_r=true;
-  }
+    }*/
   if ((end - start + 1) == str->len) {
     BOOL _found = this->table_find_or_put(left, right, &ref);
     if (found)
@@ -314,10 +305,10 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   } else {
     this->table_find_or_put(left, right, &ref);
   }
-  ofstream outputfile("treedatabase.dot",std::ios::app);
-  outputfile<<"\""<<hex<<ref<<"\" -> \""<<hex<<left<<"\";"<<"\n";
-  outputfile<<"\""<<hex<<ref<<"\" -> \""<<hex<<right<<"\";"<<"\n";
-  outputfile.close();
+  //ofstream outputfile("treedatabase.dot",std::ios::app);
+  //outputfile<<"\""<<hex<<ref<<"\" -> \""<<hex<<left<<"\";"<<"\n";
+  //outputfile<<"\""<<hex<<ref<<"\" -> \""<<hex<<right<<"\";"<<"\n";
+  //outputfile.close();
   return ref;
 }
 
@@ -332,7 +323,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
 
   if (str.extra > 0)
     str.len += 1;
-  // printf("node_count: %d, extra:%d\n", str.len, str.extra);
+  //printf("node_count: %d, extra:%d\n", str.len, str.extra);
   ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found);
   return ref;
 }
@@ -374,8 +365,8 @@ LmnBinStrRef TreeDatabase::get(TreeNodeID ref, int len) {
   return bs;
 }
 
-uint64_t TreeDatabase::space(void) {
-  uint64_t memory = 0;
+uint32_t TreeDatabase::space(void) {
+  uint32_t memory = 0;
   memory += sizeof(struct TreeDatabase);
   memory += this->node_count * sizeof(struct TreeNode);
   memory += (this->mask + 1) * sizeof(TreeNodeRef);

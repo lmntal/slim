@@ -310,7 +310,6 @@ public:
   BinStr() {
     size = BS_TBL_SIZE * TAG_IN_BYTE;
     v = LMN_NALLOC(BYTE, size / TAG_IN_BYTE);
-    memory_count_statedesc+=sizeof(BYTE)*size/TAG_IN_BYTE;
     memset(v, 0x0U, sizeof(BYTE) * BS_TBL_SIZE);
     cur = 0;
   }

@@ -66,7 +66,7 @@ struct TreeDatabase {
   TreeDatabase(size_t size);
   ~TreeDatabase();
   TreeNodeRef *nodes;
-  uint64_t node_count;
+  uint32_t node_count;
   size_t mask;
   void clear();
   TreeNodeElement tree_find_or_put_rec(TreeNodeStr* str, int start, int end, BOOL *found);
@@ -75,7 +75,7 @@ struct TreeDatabase {
                        TreeNodeElement right, TreeNodeID *ref);
   LmnBinStrRef get(TreeNodeID ref, int len);
   void get_rec(TreeNodeElement elem, int start, int end, TreeNodeStr* dst);
-  uint64_t space(void);
+  uint32_t space(void);
 };
 
 struct TreeNode {

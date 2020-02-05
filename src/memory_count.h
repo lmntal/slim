@@ -13,3 +13,4 @@ extern size_t nodeintree;
 extern size_t maxtreenodeid;
 extern size_t statenum;
 extern size_t minvectorunitid;
+extern size_t conflict_count;

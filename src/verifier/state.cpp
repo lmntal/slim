@@ -69,7 +69,7 @@ void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
                                                    State *ref_s);
 
-void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref) {
+void tcd_set_root_ref(TreeCompressData *tcd, TreeNodeID ref) {
   memcpy(&tcd->root_ref, &ref, sizeof(TreeRootRef));
 }
 
@@ -319,7 +319,9 @@ LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
 /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
  * sのフラグを操作する. */
 LmnBinStrRef state_calc_mem_dump_with_tree(State *s) {
-  return s->mem_dump_with_tree();
+  LmnBinStrRef bins=s->mem_dump_with_tree();
+  //bins->dump_binstr();
+  return bins;
 }
 
 LmnBinStrRef state_calc_mem_dummy(State *s) {

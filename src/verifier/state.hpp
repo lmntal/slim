@@ -268,7 +268,7 @@ struct State {                /* Total:72(36)byte */
       unsigned int i;
       successor_num = v->get_num();
       successors = LMN_NALLOC(succ_data_t, successor_num);
-      memory_count_transition+=sizeof(succ_data_t)*successor_num;
+      //memory_count_transition+=sizeof(succ_data_t)*successor_num;
       for (i = 0; i < successor_num; i++) {
         successors[i] = (succ_data_t)v->get(i);
       }
@@ -346,6 +346,7 @@ struct State {                /* Total:72(36)byte */
       ret = this->state_binstr();
     } else if (this->state_mem()) {
       ret = lmn_mem_to_binstr(this->state_mem());
+      //ret->dump_binstr();/*バイト列出力用*/
       if (this->s_is_d() && this->state_D_ref()) {
         LmnBinStrRef dif;
         dif = state_binstr_D_compress(ret, this->state_D_ref());
@@ -366,12 +367,14 @@ struct State {                /* Total:72(36)byte */
   /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
    * sのフラグを操作する. */
   LmnBinStrRef mem_dump_with_tree() {
-    if (this->state_binstr()) /* 既にエンコード済みの場合は何もしない. */
+    if (this->state_binstr()){ /* 既にエンコード済みの場合は何もしない. */
+      //printf("encoded\n");
       return this->state_binstr();
-
-    if (this->state_mem())
+    }
+    if (this->state_mem()){
+      //printf("not encoded\n");
       return lmn_mem_to_binstr(this->state_mem());
-
+    }
     lmn_fatal("unexpected.");
     return NULL;
   }

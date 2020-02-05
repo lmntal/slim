@@ -56,7 +56,7 @@
 #ifdef USE_CUNIT
 #include "test/unit_test.h"
 #endif
-size_t memory_count_statespace=0;
+/*size_t memory_count_statespace=0;
 size_t memory_count_statedesc=0;
 size_t memory_count_binarystring=0;
 size_t memory_count_transition=0;
@@ -71,6 +71,7 @@ size_t nodeintree=0;
 size_t maxtreenodeid=0;
 size_t statenum=0;
 size_t minvectorunitid=0xffffffffffffffff;
+size_t conflict_count=0;*/
 using namespace std;
 #include <vector>
 
@@ -583,7 +584,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       if (size >= 15) {
         lmn_env.tree_compress_table_size = size;
       } else {
-        lmn_env.tree_compress_table_size = 15;
+        lmn_env.tree_compress_table_size = size;
       }
       break;
     }
@@ -756,9 +757,9 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
 
 int main(int argc, char *argv[]) {
   int optid;
-  ofstream outputfile("treedatabase.dot");
-  outputfile<<"strict digraph g{"<<"\n";
-  outputfile.close();
+  //ofstream outputfile("treedatabase.dot");
+  //outputfile<<"strict digraph g{"<<"\n";
+  //outputfile.close();
   slim_init(&optid, argc, argv);
 
   if (lmn_env.run_test) {
@@ -802,7 +803,7 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-  printf("memory usage in state descriptors is %ld Bytes\n",memory_count_statedesc);
+  /*printf("memory usage in state descriptors is %ld Bytes\n",memory_count_statedesc);
   printf("memory usage in binary string is %ld Bytes\n",memory_count_binarystring);
   printf("memory usage in transition is %ld Bytes\n",memory_count_transition);
   printf("memory usage in statespace is %ld Bytes\n",memory_count_statespace);
@@ -818,9 +819,10 @@ int main(int argc, char *argv[]) {
   printf("nodeintree is %ld\n",nodeintree);
   printf("maxtreenodeid is %lx\n",maxtreenodeid);
   printf("minvectorunitid is %lx\n",minvectorunitid);
-  ofstream putfile("treedatabase.dot",std::ios::app);
-  putfile<<"}"<<"\n";
-  putfile.close();
+  printf("conflict:%ld\n",conflict_count);*/
+  //ofstream putfile("treedatabase.dot",std::ios::app);
+  //putfile<<"}"<<"\n";
+  //putfile.close();
   slim_finalize();
   return 0;
 }

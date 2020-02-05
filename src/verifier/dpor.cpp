@@ -45,6 +45,7 @@
 #include "state.h"
 #include "state.hpp"
 #include "vm/vm.h"
+#include "../memory_count.h"
 
 /**
  * Dynamic Partial Order Reduction

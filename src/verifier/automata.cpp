@@ -177,7 +177,6 @@ void Automata::print_property() {
 
   fprintf(stdout, "States\n");
   n = this->states.get_num();
-  statenum=n;
   for (i = 0; i < n; i++) {
     AutomataStateRef s = this->get_state(i);
     fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n",

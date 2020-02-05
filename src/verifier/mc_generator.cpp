@@ -479,10 +479,10 @@ void dfs_start(LmnWorker *w) {
 static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                             AutomataRef a, Vector *psyms) {
   while (!stack->is_empty()) {
+    //無限ループする場所
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n;
-
     if (!(worker_group(w)))
       break;
     if (worker_group(w)->workers_are_exit())
@@ -520,7 +520,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     if (!worker_on_parallel(w)) { /* Nested-DFS:
                                      postorder順を求めるDFS(再度到達した未展開状態がStackに積み直される)
                                    */
-     s->set_on_stack();
+      s->set_on_stack();
       n = s->successor_num;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);

@@ -41,6 +41,7 @@
 #include "set.h"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
+#include "../memory_count.h"
 
 static int state_map_atom_type;
 

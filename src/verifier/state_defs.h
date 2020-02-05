@@ -58,7 +58,7 @@ typedef void *state_data_t;
 //  compress_mem;    /*  8(4)byte: 膜memをエンコードしたバイナリストリング */
 //}
 
-typedef BYTE TreeRootRef[6];
+typedef BYTE TreeRootRef[4];
 
 typedef struct TreeCompressData {
   TreeRootRef root_ref;
