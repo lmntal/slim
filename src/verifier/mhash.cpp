@@ -79,7 +79,7 @@ mhash_t mhash(LmnMembraneRef mem) {
 }
 
 static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size) {
-  ProcessTableRef c = proc_tbl_make_with_size(tbl_size);
+  ProcessTableRef c = new ProcessTbl(tbl_size);
   mhash_t t;
 
 #ifdef PROFILE
@@ -88,7 +88,7 @@ static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size) {
 #endif
 
   t = mhash_membrane(mem, NULL, c);
-  proc_tbl_free(c);
+  delete c;
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3)
@@ -103,7 +103,7 @@ static inline mhash_t memunit(LmnMembraneRef mem,
                               LmnSymbolAtomRef from_in_proxy,
                               LmnMembraneRef calc_mem, ProcessTableRef ctx,
                               int depth);
-static mhash_t mhash_rulesets(Vector *rulesets);
+static mhash_t mhash_rulesets(const std::vector<LmnRuleSet *> &rulesets);
 
 /* 膜memのハッシュ値を返す.
  * 計算の根となる膜をcalc_memとして渡す.  */
@@ -149,16 +149,16 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
 
     { /** 2. membranes */
       LmnMembraneRef child_mem;
-      for (child_mem = lmn_mem_child_head(mem); child_mem;
-           child_mem = lmn_mem_next(child_mem)) {
+      for (child_mem = mem->mem_child_head(); child_mem;
+           child_mem = child_mem->mem_next()) {
         mhash_t tmp = mhash_membrane(child_mem, NULL, ctx);
         hash_sum += tmp;
         hash_mul *= tmp;
       }
 
       /* hiroto論文にない膜名の情報を追加. TODO: こんなんで大丈夫かな. */
-      hash_sum += (LMN_MEM_NAME_ID(mem) + 1);
-      hash_mul *= (LMN_MEM_NAME_ID(mem) + 1);
+      hash_sum += (mem->NAME_ID() + 1);
+      hash_mul *= (mem->NAME_ID() + 1);
     }
 
     { /** 3. rulesets */
@@ -171,14 +171,14 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
        *  ルールセットの束のハッシュ値は, 状態間で変化がほとんどない.
        * 使い回しできれば速くなる.*/
 
-      tmp = mhash_rulesets(lmn_mem_get_rulesets(mem));
+      tmp = mhash_rulesets(mem->get_rulesets());
       hash_sum += tmp;
       hash_mul *= tmp;
     }
 
     /* finalzie */
     ret = hash_sum ^ hash_mul;
-    proc_tbl_put_mem(ctx, mem, ret);
+    ctx->proc_tbl_put_mem(mem, ret);
     return ret;
   }
 }
@@ -218,7 +218,7 @@ static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
     (*mul) *= t;
   } else if (((LmnSymbolAtomRef)atom)->get_functor() !=
                  LMN_IN_PROXY_FUNCTOR &&
-             proc_tbl_put_new_atom(ctx, (LmnSymbolAtomRef)atom, 1)) {
+             ctx->put_new_atom((LmnSymbolAtomRef)atom, 1)) {
     /* シンボルアトムの場合:
      *  (連結分子計算は膜の外部に出て行かないものとしているため,
      * proxyならば打切り)
@@ -340,7 +340,7 @@ static inline mhash_t memunit(LmnMembraneRef child_mem,
   LmnSymbolAtomRef in_proxy, out_proxy;
 
   hash = 0;
-  insides = lmn_mem_get_atomlist(child_mem, LMN_IN_PROXY_FUNCTOR);
+  insides = child_mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
   child_h = mhash_membrane(child_mem, calc_mem, ctx);
 
   LMN_ASSERT(insides);
@@ -438,8 +438,7 @@ mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr) {
       return 1;
     }
   case LMN_HL_ATTR:
-    return (mhash_t)lmn_hyperlink_hash(
-        lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+    return (mhash_t)(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->hash();
   default:
     LMN_ASSERT(FALSE);
     return 0;
@@ -450,13 +449,13 @@ mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr) {
  * 基本は, ルールセットIDを掛け合わせた値.
  * uniqルールセットの場合は, 更にuniqの適用履歴に一意な整数IDを掛け合わせる.
  * 即ち, 文字列とIDの対応テーブル(symbol table)の実装に依存している. */
-static mhash_t mhash_rulesets(Vector *rulesets) {
+static mhash_t mhash_rulesets(const std::vector<LmnRuleSet *> &rulesets) {
   mhash_t hash;
   int i, j;
 
   hash = 1;
-  for (i = 0; i < rulesets->get_num(); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
+  for (i = 0; i < rulesets.size(); i++) {
+    LmnRuleSetRef rs = rulesets[i];
     hash *= rs->id;
 
     if (rs->has_unique()) {

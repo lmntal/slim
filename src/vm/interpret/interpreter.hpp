@@ -54,42 +54,82 @@ struct interpreter {
   LmnRule *rule;
   LmnRuleInstr instr;
 
-  struct stack_frame {
-    std::function<bool(bool)> callback;
-
-    template <typename F>
-    stack_frame(const F &callback)
-        : callback(callback) {}
+  // stack frameのcallbackが返す値
+  // Trial: callbackをstackからpopしないで続ける
+  // Failure, Success: 命令列の結果を失敗/成功で上書きしてcallbackをstackからpopする
+  enum class command_result {
+    Trial, Failure, Success
   };
-  interpreter(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr) : rc(rc), rule(rule), instr(instr) {
-  }
+
+  struct stack_frame {
+    // called when this frame is popped out
+    std::function<command_result(interpreter &, bool)> callback;
+
+    stack_frame(const std::function<command_result(interpreter &, bool)> &callback) : callback(callback) {}
+  };
+
+  interpreter(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr)
+      : rc(rc), rule(rule), instr(instr) {}
 
   bool interpret(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr);
-  bool exec_command(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr &instr,
-                    bool &stop);
+  bool exec_command(LmnReactCxt *rc, LmnRule *rule, bool &stop);
   void findatom(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr,
                 LmnMembrane *mem, LmnFunctor f, size_t reg);
   void findatom_original_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                    LmnRuleInstr instr, SameProcCxt *spc,
-                                   LmnMembrane *mem, LmnFunctor f,
-                                   size_t reg);
+                                   LmnMembrane *mem, LmnFunctor f, size_t reg);
   void findatom_clone_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                 LmnRuleInstr instr, SameProcCxt *spc,
-                                LmnMembrane *mem, LmnFunctor f,
-                                size_t reg);
+                                LmnMembrane *mem, LmnFunctor f, size_t reg);
   void findatom_through_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                   LmnRuleInstr instr, SameProcCxt *spc,
-                                  LmnMembrane *mem, LmnFunctor f,
-                                  size_t reg);
+                                  LmnMembrane *mem, LmnFunctor f, size_t reg);
   bool run();
+
   template <typename... Args> void push_stackframe(Args... args) {
     callstack.emplace_back(std::forward<Args>(args)...);
+  }
+
+private:
+  /**
+   * 現在の命令アドレスを起点とする失敗駆動ループを開始する
+   *
+   * @param reg_idx 失敗駆動ループで列挙される要素が入るレジスタ番号
+   * @param values 失敗駆動ループで列挙される要素群
+   *
+   * @brief
+   *   この関数を呼び出した後に命令に失敗すると、reg_idx番のレジスタにvaluesの要素を設定した上で
+   *   この関数を呼び出した時点での命令からやり直す。このとき全ての命令に成功すると成功扱いでルー
+   *   プを終了する。あるいは、valuesの全ての要素を試した上で失敗すると失敗扱いで終了する。
+   *
+   *   この関数を呼び出した直後はreg_idxに値が設定されていないので必ず一度失敗する必要がある。（要検討）
+   *
+   *   この関数は失敗駆動ループのために必要なものをインタプリタのスタックに積む。
+   *   valuesはループ中に解放されないようにするために、ヒープ上にコピーあるいはムーブされて、
+   *   ループが終了した時点（成功or全て失敗）で解放される。
+   *
+   *   ヒント：失敗駆動ループはvaluesが返すイテレータの順番で要素を列挙する。
+   */
+  template <typename Container>
+  void false_driven_enumerate(size_t reg_idx, Container &&values) {
+    // ヒープ上にvaluesをコピーorムーブ
+    auto p = new
+        typename std::decay<Container>::type(std::forward<Container>(values));
+
+    // ループ終了後に解放するためにコールバックをインタプリタのスタックに積む
+    this->push_stackframe([=](slim::vm::interpreter &interpreter, bool result) {
+      delete p;
+      return result ? command_result::Success : command_result::Failure;
+    });
+
+    auto e = make_false_driven_enumerator(*this, this->instr, reg_idx,
+                                          std::begin(*p), std::end(*p));
+    this->push_stackframe(e);
   }
 
   std::vector<stack_frame> callstack;
 };
 } // namespace vm
 } // namespace slim
-
 
 #endif /* SLIM_VM_INTERPRETER_HPP */

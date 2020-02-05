@@ -100,13 +100,13 @@ void integer_set(LmnReactCxtRef rc,
 
     for (int j = 0; j < dstlovec->get_num(); j++) LMN_FREE(dstlovec->get(j));
     delete dstlovec;
-    proc_tbl_free(atommap);
+    delete atommap;
   }
 
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
 
-  lmn_mem_delete_ground(mem, srcvec);
+  mem->delete_ground(srcvec);
 
   for (i = 0; i < srcvec->get_num(); i++) LMN_FREE(srcvec->get(i));
   delete srcvec;
@@ -163,7 +163,7 @@ void integer_of_string(LmnReactCxtRef rc,
   t = NULL;
   n = strtol(s, &t, 10);
   if (t == NULL || s == t) {
-    LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_intern(ANONYMOUS,
+    LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS,
                                                          lmn_intern("fail"),
                                                          1));
     lmn_mem_newlink(mem,

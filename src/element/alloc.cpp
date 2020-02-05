@@ -64,7 +64,7 @@ void mpool_init() {
 LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
   LmnSymbolAtomRef ap;
   int arity, cid;
-  arity = LMN_FUNCTOR_ARITY(f);
+  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
   cid = env_my_thread_id();
 
   if (atom_memory_pools[arity][cid] == 0) {
@@ -82,7 +82,7 @@ void lmn_delete_atom(LmnSymbolAtomRef ap) {
 
   env_return_id(ap->get_id());
 
-  arity = LMN_FUNCTOR_ARITY(ap->get_functor());
+  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, ap->get_functor());
   cid = env_my_thread_id();
   memory_pool_free(atom_memory_pools[arity][cid], ap);
 }

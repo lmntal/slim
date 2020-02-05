@@ -1,8 +1,8 @@
 /*
- * nd_conf.c
+ * stack_trace.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *                                          <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,41 +33,46 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#include <stdio.h>
-#include "vm/vm.h"
-#include "verifier/verifier.h"
-void cb_set_functor_priority(LmnReactCxtRef rc,
-                             LmnMembraneRef mem,
-                             LmnAtomRef a0, LmnLinkAttr t0,
-                             LmnAtomRef a1, LmnLinkAttr t1,
-                             LmnAtomRef a2, LmnLinkAttr t2);
+#ifndef SLIM_ELEMENT_STACK_TRACE_H
+#define SLIM_ELEMENT_STACK_TRACE_H
 
-/* ポートa0から一行読み込む
- * +a0     : 優先度を表す整数
- * +a1     : アトム名のunaryアトム
- * +a2     : アリティの整数
- */
-void cb_set_functor_priority(LmnReactCxtRef rc,
-                             LmnMembraneRef mem,
-                             LmnAtomRef a0, LmnLinkAttr t0,
-                             LmnAtomRef a1, LmnLinkAttr t1,
-                             LmnAtomRef a2, LmnLinkAttr t2)
-{
-  set_functor_priority(lmn_functor_table->intern(ANONYMOUS,
-                             LMN_FUNCTOR_NAME_ID(lmn_functor_table, ((LmnSymbolAtomRef)a1)->get_functor()),
-                             (LmnWord)a2),
-                       (LmnWord)a0);
-  lmn_mem_delete_atom(mem, a0, t0);
-  lmn_mem_delete_atom(mem, a1, t1);
-  lmn_mem_delete_atom(mem, a2, t2);
+#include <vector>
+#include <string>
+
+namespace slim {
+namespace element {
+namespace stack_trace {
+
+#if defined(HAVE_EXECINFO_H) && HAVE_EXECINFO_H
+
+#include <execinfo.h>
+
+static constexpr size_t size = 32;
+
+inline std::vector<std::string> backtrace() {
+	void *addrs[size];
+	auto num_traces = backtrace(addrs, size);
+	auto symbols = backtrace_symbols(addrs, num_traces);
+	std::vector<std::string> res(num_traces);
+	for (int i = 0; i < num_traces; i++) {
+		res[i] = symbols[i];
+	}
+	free(symbols);
+	return res;
 }
 
-void init_nd_conf(void)
-{
-  CCallback::lmn_register_c_fun("set_functor_priority", (void *)cb_set_functor_priority, 3);
+#else
+
+inline std::vector<std::string> backtrace() {
+	return std::vector<std::string>({"can't create backtrace."});
 }
 
+#endif
+
+}
+}
+}
+
+#endif /* SLIM_ELEMENT_STACK_TRACE_H */

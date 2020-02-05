@@ -125,6 +125,7 @@ struct AtomListEntry {
     using reference = LmnSymbolAtomRef &;
     typedef typename std::bidirectional_iterator_tag iterator_category;
 
+    const_iterator() : a_ent(nullptr), a_index(nullptr) {}
     const_iterator(const AtomListEntry *ent, LmnSymbolAtomRef index) {
       a_ent = ent;
       a_index = index;
@@ -276,7 +277,7 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
 
 #define EACH_FUNC_ATOM(MEM, F, V, CODE)                                        \
   do {                                                                         \
-    AtomListEntry *__ent = lmn_mem_get_atomlist((MEM), (F));                   \
+    AtomListEntry *__ent = (MEM)->get_atomlist((F));			\
     if (__ent) {                                                               \
       for (auto iter_ : *__ent)                                                \
         ;                                                                      \

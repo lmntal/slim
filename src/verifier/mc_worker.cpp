@@ -47,6 +47,7 @@
 #include "state.h"
 #include "state.hpp"
 #include "statespace.h"
+#include "state_dumper.h"
 #include <limits.h>
 
 namespace c14 = slim::element;
@@ -127,7 +128,7 @@ static void lmn_worker_start(void *arg) {
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
     StateSpaceRef ss = worker_states(w);
-    dump_state_data(ss->initial_state(), (LmnWord)ss->output(), (LmnWord)NULL);
+    StateDumper::from_env(ss->output())->dump(ss->initial_state());
   }
 
   if (lmn_env.profile_level >= 1)
@@ -558,6 +559,7 @@ BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) {// this should be in Lm
 
   return flags;
 }
+
 
 
 /* スレッドの起動 (MT-unsafe) */

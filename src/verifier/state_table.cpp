@@ -55,23 +55,15 @@ static void state_set_compress_for_table(State *s, LmnBinStr *bs) {
   }
 }
 
-static inline int statetable_cmp_state_id_gr_f(const void *a_, const void *b_) {
-  State *p1, *p2;
-
-  p1 = *(State **)a_;
-  p2 = *(State **)b_;
-
-  if (p1 && p2) {
-    return state_id(p1) - state_id(p2);
-  } else if (p1 || p2) {
-    return p1 ? state_id(p1) : (-1 * state_id(p2));
-  } else {
-    return 1;
-  }
+static inline bool statetable_cmp_state_id_gr_f(const State *p1, const State *p2) {
+  if (p1 && p2)
+    return p1->get_id() < p2->get_id();
+  
+  return p1;
 }
 
 bool states_lt(const State *a, const State *b) {
-  return statetable_cmp_state_id_gr_f(&a, &b) < 0;
+  return statetable_cmp_state_id_gr_f(a, b);
 }
 
 static inline void statetable_issue_state_id_f(State *s) {
@@ -197,9 +189,8 @@ void StateTable::memid_rehash(unsigned long hash) {
 }
 
 StateTable::StateTable(int thread_num, unsigned long size,
-                       StateTable *rehash_tbl) {
-  this->thread_num = thread_num;
-
+                       StateTable *rehash_tbl) :
+  thread_num(thread_num), use_rehasher_(false), rehash_tbl_(rehash_tbl), num(thread_num, 0), num_dummy_(thread_num, 0) {
   if (lmn_env.enable_compress_mem) {
     if (lmn_env.z_compress) {
       this->type = &type_state_compress_z;
@@ -212,17 +203,13 @@ StateTable::StateTable(int thread_num, unsigned long size,
     this->type = &type_state_default;
   }
 
-  this->use_rehasher_ = FALSE;
   size = table_new_size(size);
   this->tbl = std::vector<State *>(size, nullptr);
   this->cap_ = size;
   this->cap_density_ = size / thread_num;
-  this->num = std::vector<unsigned long>(thread_num, 0);
-  this->num_dummy_ = std::vector<unsigned long>(thread_num, 0);
   this->lock = (this->thread_num > 1)
-                   ? ewlock_make(this->thread_num, DEFAULT_WLOCK_NUM)
+                   ? new EWLock(this->thread_num, DEFAULT_WLOCK_NUM)
                    : nullptr;
-  this->rehash_tbl_ = rehash_tbl;
 }
 
 StateTable::~StateTable() {
@@ -590,5 +577,5 @@ void StateTable::memid_rehash(State *s) {
   state_set_parent(new_s, s);
   this->rehash_tbl_->num_dummy_increment();
 
-  lmn_mem_free_rec(m);
+  m->free_rec();
 }

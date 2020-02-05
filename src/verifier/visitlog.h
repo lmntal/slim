@@ -49,6 +49,9 @@
 #include "vm/vm.h"
 #include <limits.h>
 
+#include <unordered_map>
+#include <vector>
+
 #define VISITLOG_INIT_N (1)
 
 #ifndef PROC_TBL_DEFAULT_SIZE
@@ -88,38 +91,31 @@ struct Checkpoint {
 
 /* 訪問済みのアトムや膜の記録 */
 struct VisitLog {
-  ProcessTableRef tbl; /* プロセスIDをkeyにした訪問表 */
+private:
+  std::unordered_map<ProcessID, int> tbl; /* プロセスIDをkeyにした訪問表 */
   int ref_n, /* バイト列から読み出したプロセスに再訪問が発生した場合のための参照番号割当カウンタ
               */
       element_num;    /* 訪問したプロセス数のカウンタ */
-  Vector checkpoints; /* Checkpointオブジェクトの配列 */
+  std::vector<Checkpoint *> checkpoints;
 
-  VisitLog():tbl(0),ref_n(0),element_num(0){}
+public:
+  VisitLog() : ref_n(0),element_num(0){}
   ~VisitLog(){
-    proc_tbl_free(this->tbl);
-
-    for (int i = 0; i < this->checkpoints.get_num(); i++) {
-      delete (Vector *)this->checkpoints.get(i);
-    }
-    this->checkpoints.destroy();
+    for (auto p : checkpoints)
+      delete p;
   }
 
   void init() { this->init_with_size(0); }
   void init_with_size(unsigned long tbl_size) {
-    if (tbl_size != 0) {
-      this->tbl = proc_tbl_make_with_size(tbl_size);
-    } else {
-      this->tbl = proc_tbl_make();
-    }
     /*   printf("size = %lu\n", tbl_size); */
     this->ref_n = VISITLOG_INIT_N;
     this->element_num = 0;
-    this->checkpoints.init(PROC_TBL_DEFAULT_SIZE);
+    this->checkpoints.reserve(PROC_TBL_DEFAULT_SIZE);
   }
 
   /* チェックポイントを設定する。 */
   void set_checkpoint() {
-    this->checkpoints.push((vec_data_t) new Checkpoint());
+    this->checkpoints.push_back(new Checkpoint());
   }
 
   /* もっとも最近のチェックポイントを返し、ログの状態をチェックポイントが設定された時点にもどす */
@@ -127,28 +123,29 @@ struct VisitLog {
     int i;
     struct Checkpoint *checkpoint;
 
-    checkpoint = (struct Checkpoint *)this->checkpoints.pop();
+    checkpoint = this->checkpoints.back();
+    this->checkpoints.pop_back();
     for (i = 0; i < checkpoint->elements.get_num(); i++) {
-      proc_tbl_unput(this->tbl, checkpoint->elements.get(i));
+      this->tbl.erase(checkpoint->elements.get(i));
       this->element_num--;
       this->ref_n--;
     }
     this->element_num -= checkpoint->n_data_atom;
     return checkpoint;
   }
+  
   /* もっとも最近のチェックポイントを消し、ログの状態をチェックポイントが設定された時点にもどす */
   void revert_checkpoint() {
     delete this->pop_checkpoint();
   }
   /* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
   void commit_checkpoint() {
-    struct Checkpoint *last =
-        (struct Checkpoint *)this->checkpoints.pop();
+    struct Checkpoint *last =this->checkpoints.back();
+    this->checkpoints.pop_back();
 
-    if (this->checkpoints.get_num() > 0) {
+    if (!this->checkpoints.empty()) {
       int i;
-      struct Checkpoint *new_last =
-          (struct Checkpoint *)this->checkpoints.last();
+      struct Checkpoint *new_last = this->checkpoints.back();
 
       for (i = 0; i < last->elements.get_num(); i++) {
         new_last->elements.push(last->elements.get(i));
@@ -159,9 +156,9 @@ struct VisitLog {
   }
   /* チェックポイントをログに追加する */
   void push_checkpoint(struct Checkpoint *cp) {
-    this->checkpoints.push((vec_data_t)cp);
+    this->checkpoints.push_back(cp);
     for (int i = 0; i < cp->elements.get_num(); i++) {
-      proc_tbl_put(this->tbl, cp->elements.get(i), this->ref_n++);
+      this->tbl[cp->elements.get(i)] = this->ref_n++;
       this->element_num++;
     }
     this->element_num += cp->n_data_atom;
@@ -170,17 +167,16 @@ struct VisitLog {
   /* ログにpを追加し, 正の値を返す. すでにpが存在した場合は0を返す.
    * 通常この関数ではなくput_atom, put_memを使用する. */
   int put(LmnWord p) {
-    if (proc_tbl_put_new(this->tbl, p, this->ref_n++)) {
-      if (this->checkpoints.get_num() > 0) {
-        CheckpointRef checkpoint =
-            (CheckpointRef)this->checkpoints.last();
-        checkpoint->elements.push(p);
-      }
-      this->element_num++;
-      return 1;
-    } else {
+    if (this->tbl.find(p) != this->tbl.end())
       return 0;
+    
+    this->tbl[p] = this->ref_n++;
+    if (!this->checkpoints.empty()) {
+      CheckpointRef checkpoint = this->checkpoints.back();
+      checkpoint->elements.push(p);
     }
+    this->element_num++;
+    return 1;
   }
   /* ログにアトムを追加し, 正の値を返す. すでにアトムが存在した場合は0を返す */
   int put_atom(LmnSymbolAtomRef atom) {
@@ -188,7 +184,7 @@ struct VisitLog {
   }
   /* ログに膜を追加し, 正の値を返す. すでに膜が存在した場合は0を返す */
   int put_mem(LmnMembraneRef mem) {
-    return this->put(lmn_mem_id(mem));
+    return this->put(mem->mem_id());
   }
   /* ログにハイパーリンクを追加し, 正の値を返す.
    * すでにハイパーリンクが存在した場合は0を返す */
@@ -199,9 +195,8 @@ struct VisitLog {
    * （引数がログしか無いことから分かるように,
    * 単に訪問したアトムを数えるために使用する） */
   void put_data() {
-    if (this->checkpoints.get_num() > 0) {
-      struct Checkpoint *checkpoint =
-          (struct Checkpoint *)this->checkpoints.last();
+    if (!this->checkpoints.empty()) {
+      struct Checkpoint *checkpoint = this->checkpoints.back();
       checkpoint->n_data_atom++;
     }
     this->element_num++;
@@ -211,17 +206,35 @@ struct VisitLog {
    * ログにatomが存在しない場合は, 0を返す. */
   int get_atom(LmnSymbolAtomRef atom,
                         LmnWord *value) {
-    return proc_tbl_get_by_atom(this->tbl, atom, value);
+    auto it = this->tbl.find(slim::process_id(atom));
+    if (it == this->tbl.end())
+      return 0;
+    
+    if (value)
+      *value = it->second;
+    return 1;
   }
   /* ログに記録された膜memに対応する値をvalueに設定, 正の値を返す.
    * ログにmemが存在しない場合は, 0を返す. */
   int get_mem(LmnMembraneRef mem, LmnWord *value) {
-    return proc_tbl_get_by_mem(this->tbl, mem, value);
+    auto it = this->tbl.find(slim::process_id(mem));
+    if (it == this->tbl.end())
+      return 0;
+    
+    if (value)
+      *value = it->second;
+    return 1;
   }
   /* ログに記録されたhlに対応する値をvalueに設定し, 正の値を返す.
    * ログにhlが存在しない場合は, 0を返す. */
   int get_hlink(HyperLink *hl, LmnWord *value) {
-    return proc_tbl_get_by_hlink(this->tbl, hl, value);
+    auto it = this->tbl.find(slim::process_id(hl));
+    if (it == this->tbl.end())
+      return 0;
+    
+    if (value)
+      *value = it->second;
+    return 1;
   }
   /* visitlogに記録した要素（膜、アトム）の数を返す */
   int get_element_num() {

@@ -48,7 +48,7 @@ template <> ProcessID process_id<LmnSymbolAtomRef>(LmnSymbolAtomRef atom) {
 }
 
 template <> ProcessID process_id<LmnMembraneRef>(LmnMembraneRef mem) {
-  return lmn_mem_id(mem);
+  return mem->mem_id();
 }
 
 template <> ProcessID process_id<HyperLink *>(HyperLink *hl) {
@@ -56,69 +56,56 @@ template <> ProcessID process_id<HyperLink *>(HyperLink *hl) {
 }
 } // namespace slim
 
-ProcessTableRef proc_tbl_make(void) { return new ProcessTbl(); }
 
-ProcessTableRef proc_tbl_make_with_size(unsigned long size) {
-  return new ProcessTbl(size);
-}
 
-void proc_tbl_free(ProcessTableRef p) { delete p; }
-
-void proc_tbl_clear(ProcessTableRef p) { p->clear(); }
-
-int proc_tbl_foreach(ProcessTableRef p,
-                     int (*func)(LmnWord key, LmnWord val, LmnWord arg),
-                     LmnWord arg) {
-  p->foreach (func, arg);
+void ProcessTbl::tbl_clear() { this->clear(); }
+int ProcessTbl::tbl_foreach(int (*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg) {
+  this->foreach (func, arg);
   return 0;
 }
-
-BOOL proc_tbl_eq(ProcessTableRef a, ProcessTableRef b) { return a == b; }
+BOOL ProcessTbl::tbl_eq(ProcessTableRef b) { return this == b; }
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
-void proc_tbl_put(ProcessTableRef p, LmnWord key, LmnWord value) {
-  p->put(key, value);
+void ProcessTbl::proc_tbl_put(LmnWord key, LmnWord value) {
+  this->put(key, value);
 }
 
 /* テーブルにアトムを追加 */
-void proc_tbl_put_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
-                       LmnWord value) {
-  p->put(atom, value);
+void ProcessTbl::proc_tbl_put_atom(LmnSymbolAtomRef atom, LmnWord value) {
+  this->put(atom, value);
 }
 
 /* テーブルに膜を追加 */
-void proc_tbl_put_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value) {
-  p->put(mem, value);
+void ProcessTbl::proc_tbl_put_mem(LmnMembraneRef mem, LmnWord value) {
+  this->put(mem, value);
 }
 
 /* テーブルにハイパーリンクを追加 */
-void proc_tbl_put_new_hlink(ProcessTableRef p, HyperLink *hl, LmnWord value) {
-  p->put(hl, value);
+void ProcessTbl::put_new_hlink(HyperLink *hl, LmnWord value) {
+  this->put(hl, value);
 }
-
-int proc_tbl_put_new(ProcessTableRef p, LmnWord key, LmnWord value) {
-  return p->put_if_absent(key, value);
+int ProcessTbl::put_new(LmnWord key, LmnWord value) {
+  return this->put_if_absent(key, value);
 }
 
 /* テーブルにアトムを追加し、正の値を返す。すでに同じアトムが存在した場合は0を返す
  */
-int proc_tbl_put_new_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
-                          LmnWord value) {
-  return p->put_if_absent(atom, value);
+int ProcessTbl::put_new_atom(LmnSymbolAtomRef atom, LmnWord value) {
+  return this->put_if_absent(atom, value);
 }
 
 /* テーブルに膜を追加し、正の値を返す。すでに同じ膜が存在した場合は0を返す */
-int proc_tbl_put_new_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord value) {
-  return p->put_if_absent(mem, value);
+int ProcessTbl::put_new_mem(LmnMembraneRef mem, LmnWord value) {
+  return this->put_if_absent(mem, value);
 }
 
 /* テーブルからkeyとそれに対応した値を削除する.
  * 通常この間数ではなくunput_atom, unput_memを使用する. */
-void proc_tbl_unput(ProcessTableRef p, LmnWord key) { p->unput(key); }
+void ProcessTbl::proc_tbl_unput(LmnWord key) { this->unput(key); }
 
 /* テーブルからアトムとそれに対応した値を削除する */
-void proc_tbl_unput_atom(ProcessTableRef p, LmnSymbolAtomRef atom) {
-  p->unput(atom);
+void ProcessTbl::unput_atom(LmnSymbolAtomRef atom) {
+  this->unput(atom);
 }
 
 /* テーブルから膜とそれに対応した値を削除する */
@@ -130,26 +117,42 @@ void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem) {
  * keyがテーブルに存在しない場合は0を返す. 通常この間数ではなくget_by_atom,
  * get_by_memを使用する./ */
 int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value) {
-  return p->get(key, value);
+  if (!p->contains(key))
+    return false;
+
+  if (value) *value = (*p)[slim::process_id(key)];
+  return true;
 }
 
 /* テーブルのアトムatomに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにatomが存在しない場合は0を返す */
 int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
                          LmnWord *value) {
-  return p->get(atom, value);
+  if (!p->contains(atom))
+    return false;
+
+  if (value) *value = (*p)[slim::process_id(atom)];
+  return true;
 }
 
 /* テーブルの膜memに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにmemが存在しない場合は0を返す */
 int proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value) {
-  return p->get(mem, value);
+  if (!p->contains(mem))
+    return false;
+
+  if (value) *value = (*p)[slim::process_id(mem)];
+  return true;
 }
 
 /* テーブルのハイパーリンクhlに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにhlが存在しない場合は0を返す */
 int proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWord *value) {
-  return p->get(hl, value);
+  if (!p->contains(hl))
+    return false;
+
+  if (value) *value = (*p)[slim::process_id(hl)];
+  return true;
 }
 
 BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key) {

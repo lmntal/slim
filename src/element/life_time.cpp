@@ -1,9 +1,8 @@
 /*
- * nd_conf.c
+ * life_time.cpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -33,41 +32,14 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#include <stdio.h>
-#include "vm/vm.h"
-#include "verifier/verifier.h"
-void cb_set_functor_priority(LmnReactCxtRef rc,
-                             LmnMembraneRef mem,
-                             LmnAtomRef a0, LmnLinkAttr t0,
-                             LmnAtomRef a1, LmnLinkAttr t1,
-                             LmnAtomRef a2, LmnLinkAttr t2);
+#include "life_time.hpp"
 
-/* ポートa0から一行読み込む
- * +a0     : 優先度を表す整数
- * +a1     : アトム名のunaryアトム
- * +a2     : アリティの整数
- */
-void cb_set_functor_priority(LmnReactCxtRef rc,
-                             LmnMembraneRef mem,
-                             LmnAtomRef a0, LmnLinkAttr t0,
-                             LmnAtomRef a1, LmnLinkAttr t1,
-                             LmnAtomRef a2, LmnLinkAttr t2)
-{
-  set_functor_priority(lmn_functor_table->intern(ANONYMOUS,
-                             LMN_FUNCTOR_NAME_ID(lmn_functor_table, ((LmnSymbolAtomRef)a1)->get_functor()),
-                             (LmnWord)a2),
-                       (LmnWord)a0);
-  lmn_mem_delete_atom(mem, a0, t0);
-  lmn_mem_delete_atom(mem, a1, t1);
-  lmn_mem_delete_atom(mem, a2, t2);
+#ifdef DEBUG
+namespace slim {
+namespace element {
+LifetimeProfiler *LifetimeProfiler::instance_ = nullptr;
 }
-
-void init_nd_conf(void)
-{
-  CCallback::lmn_register_c_fun("set_functor_priority", (void *)cb_set_functor_priority, 3);
 }
-
+#endif

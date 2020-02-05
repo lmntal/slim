@@ -50,15 +50,15 @@ void nlmem_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_interned_str copy_tag_name;
   LmnFunctor copy_tag_func;
 
-  copy_tag_name = LMN_FUNCTOR_NAME_ID(((LmnSymbolAtomRef)a1)->get_functor());
-  copy_tag_func = lmn_functor_intern(ANONYMOUS, copy_tag_name, 3);
+  copy_tag_name = LMN_FUNCTOR_NAME_ID(lmn_functor_table, ((LmnSymbolAtomRef)a1)->get_functor());
+  copy_tag_func = lmn_functor_table->intern(ANONYMOUS, copy_tag_name, 3);
   org_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a0)->get_link(0));
-  trg_mem = lmn_mem_make();
+  trg_mem = new LmnMembrane();
   atom_map = lmn_mem_copy_cells(trg_mem, org_mem);
-  lmn_mem_add_child_mem(mem, trg_mem);
+  mem->add_child_mem(trg_mem);
 
   {
-    AtomListEntryRef ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
+    AtomListEntryRef ent = org_mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
 
     if (ent) {
       LmnSymbolAtomRef org_in, org_out, trg_in, trg_out;
@@ -79,7 +79,7 @@ void nlmem_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
       }));
     }
 
-    proc_tbl_free(atom_map);
+    delete atom_map;
     lmn_mem_delete_atom(mem, a1, t1);
     /* 第一引数に接続されたタグアトムと第三引数を接続する */
     lmn_mem_newlink(mem,
@@ -106,7 +106,7 @@ void nlmem_kill(LmnReactCxtRef rc,
   org_in = (LmnSymbolAtomRef)(((LmnSymbolAtomRef)a0)->get_link(0));
   org_mem = LMN_PROXY_GET_MEM(org_in);
   {
-    AtomListEntryRef ent = lmn_mem_get_atomlist(org_mem, LMN_IN_PROXY_FUNCTOR);
+    AtomListEntryRef ent = org_mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
 
     if (ent) {
       LmnSymbolAtomRef in, out;
@@ -127,7 +127,7 @@ void nlmem_kill(LmnReactCxtRef rc,
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), org_mem);
   }
-  lmn_mem_delete_mem(mem, org_mem);
+  mem->delete_mem(org_mem);
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
 }

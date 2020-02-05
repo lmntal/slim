@@ -74,7 +74,7 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
     for (int i = 0; i < link_connections->get_num(); i++) {
       struct LinkConnection *c =
           (struct LinkConnection *)link_connections->get(i);
-      if (c->hl && lmn_hyperlink_eq_hl(p_hl, c->hl)) {
+      if (c->hl && p_hl->eq_hl(c->hl)) {
         return c->link_name;
       }
     }
@@ -157,7 +157,7 @@ std::string string_of_template_membrane(Vector *link_connections,
         satom, ent, ({
           int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
           const char *atom_name =
-              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(satom->get_functor()));
+              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
           if (f == LMN_UNARY_PLUS_FUNCTOR) {
             LmnSymbolAtomRef in_proxy =
@@ -246,7 +246,7 @@ std::string string_of_template_membrane(Vector *link_connections,
         }));
   }
 
-  for (LmnMembraneRef m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+  for (LmnMembraneRef m = mem->mem_child_head(); m; m = m->mem_next()) {
     auto s = string_of_template_membrane(link_connections, m, cm_atom);
     if (!s.empty() && s.back() == ',')
       s.pop_back();
@@ -262,7 +262,7 @@ std::string string_of_template_membrane(Vector *link_connections,
 std::string string_of_guard_op(LmnSymbolAtomRef satom) {
   std::string result;
   const char *atom_name =
-      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(satom->get_functor()));
+      lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
   int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
   LmnLinkAttr attr;
   if (arity == 1)
@@ -310,7 +310,7 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
     EACH_ATOM(
         satom, ent, ({
           const char *atom_name =
-              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(satom->get_functor()));
+              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
           if (f == LMN_UNARY_PLUS_FUNCTOR) {
             LmnSymbolAtomRef in_proxy =
@@ -326,7 +326,7 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
               LmnSymbolAtomRef typed_pc_atom =
                   (LmnSymbolAtomRef)satom->get_link(0);
               const char *typed_pc_atom_name = lmn_id_to_name(
-                  LMN_FUNCTOR_NAME_ID(typed_pc_atom->get_functor()));
+                  LMN_FUNCTOR_NAME_ID(lmn_functor_table, typed_pc_atom->get_functor()));
               result += constraint_name[i];
               result += "(";
               result += typed_pc_atom_name;
@@ -379,23 +379,7 @@ LmnMembraneRef get_mem_linked_atom(LmnSymbolAtomRef target_atom, int link_n) {
 }
 
 void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
-  Vector *mem_rulesets = lmn_mem_get_rulesets(mem);
-
-  for (int i = 0; i < mem_rulesets->get_num(); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)mem_rulesets->get(i);
-    if (rs->id != del_id)
-      continue;
-
-    /* move successors forward */
-    for (int j = i; j < mem_rulesets->get_num() - 1; j++) {
-      LmnRuleSetRef next = (LmnRuleSetRef)mem_rulesets->get(j + 1);
-      mem_rulesets->set(j, (vec_data_t)next);
-    }
-
-//    mem_rulesets->num--;
-    mem_rulesets->set_num(mem_rulesets->get_num()-1);
-    break;
-  }
+  mem->delete_ruleset(del_id);
 }
 
 st_table_t first_class_rule_tbl;

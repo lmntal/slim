@@ -84,7 +84,7 @@ void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom) {
 }
 
 void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) {
-  simplylog_put(l, lmn_mem_id(mem));
+  simplylog_put(l, mem->mem_id());
 }
 
 BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom) {

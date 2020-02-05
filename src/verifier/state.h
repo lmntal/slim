@@ -46,14 +46,16 @@
  * @{
  */
 
-#include "../lmntal.h"
 #include "automata.h"
 #include "binstr_compress.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "mem_encode.h"
 #include "state_defs.h"
 #include "tree_compress.h"
 #include "vm/vm.h"
+
+#include <memory>
 
 /** ------------
  *  State
@@ -145,6 +147,15 @@ struct Transition {
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
+  
+  ~Transition() {
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
+    }
+#endif
+    this->rule_names.destroy();
+  }
 };
 
 TransitionRef transition_make(State *s, lmn_interned_str rule_name);
@@ -162,16 +173,6 @@ void transition_set_state(TransitionRef t, State *s);
 TransitionRef transition(State *s, unsigned int i);
 LmnCost transition_cost(TransitionRef t);
 void transition_set_cost(TransitionRef t, LmnCost cost);
-
-/** ------------
- *  Printer
- */
-
-void dump_state_data(State *s, LmnWord _fp, LmnWord _owner);
-void state_print_mem(State *s, LmnWord _fp);
-void state_print_transition(State *s, LmnWord _fp, LmnWord _owner);
-void state_print_label(State *s, LmnWord _fp, LmnWord _owner);
-void state_print_error_path(State *s, LmnWord _fp);
 
 /** -------
  *  inline functions

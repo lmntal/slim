@@ -128,7 +128,10 @@ public:
 
   int pos() const { return pos_; }
 
+private:
   void invalidate() { valid = false; }
+  
+public:
   bool is_valid() const { return valid; }
 
   /* ポインタpが指すバイナリストリングに、vからサイズsize分だけ書き込む.
@@ -164,14 +167,14 @@ public:
 
     /* hyperlink構造を圧縮する際は, rootオブジェクトをバイト列に記録する. */
     auto hl_root =
-        lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom));
+      (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
 
     if (log->get_hlink(hl_root, &ref)) {
       return push(TAG_VISITED_ATOMHLINK) &&
              push((BYTE *)&ref, BS_PROC_REF_SIZE);
     }
 
-    auto hl_num = lmn_hyperlink_element_num(hl_root);
+    auto hl_num = hl_root->element_num();
 
     log->put_hlink(hl_root); /* 訪問済みにした */
     push(TAG_HLINK);
@@ -377,13 +380,15 @@ public:
 
 private:
   void resize(int pos) {
+    int org_size = size;
     while (size <= pos) {
-      int org_size = size / TAG_IN_BYTE;
       size *= 2;
-      v = LMN_REALLOC(BYTE, v, size / TAG_IN_BYTE);
-      memset(v + org_size, 0x0U,
-             sizeof(BYTE) * ((size / TAG_IN_BYTE) - org_size));
     }
+    
+    if (org_size >= size)
+      return;
+    
+    v = LMN_REALLOC(BYTE, v, size / TAG_IN_BYTE);
   }
 };
 

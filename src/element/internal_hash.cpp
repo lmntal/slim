@@ -90,7 +90,6 @@ void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size) {
   ht->tbl = (HashEntry *)malloc(sizeof(struct HashEntry) * ht->cap);
   memset(ht->tbl, 0xffU, sizeof(struct HashEntry) * ht->cap);
 }
-
 SimpleHashtbl *hashtbl_make(unsigned int init_size) {
   SimpleHashtbl *ht = (SimpleHashtbl *)malloc(sizeof(SimpleHashtbl));
   hashtbl_init(ht, init_size);
@@ -98,7 +97,6 @@ SimpleHashtbl *hashtbl_make(unsigned int init_size) {
 }
 
 void hashtbl_destroy(SimpleHashtbl *ht) { LMN_FREE(ht->tbl); }
-
 void hashtbl_free(SimpleHashtbl *ht) {
   hashtbl_destroy(ht);
   LMN_FREE(ht);

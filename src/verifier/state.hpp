@@ -179,6 +179,9 @@ struct State {                /* Total:72(36)byte */
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
+  
+  unsigned int get_id() const { return state_id; }
+  
   LmnBinStrRef state_binstr() {
     if (is_binstr_user()) {
       return (LmnBinStrRef)data;
@@ -233,10 +236,10 @@ struct State {                /* Total:72(36)byte */
     }
 
     if (mem) {
-      dst->state_set_mem(lmn_mem_copy_ex(mem));
+      dst->state_set_mem(mem->copy_ex());
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
-        profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+        profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, mem->space());
       }
 #endif
     } else if (state_binstr()) {
@@ -255,7 +258,7 @@ struct State {                /* Total:72(36)byte */
 
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3 && mem) {
-      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, mem->space());
       profile_finish_timer(PROFILE_TIME__STATE_COPY);
     }
 #endif
@@ -318,10 +321,10 @@ struct State {                /* Total:72(36)byte */
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_remove_space(PROFILE_SPACE__STATE_MEMBRANE,
-                             lmn_mem_space(this->state_mem()));
+                             (this->state_mem())->space());
       }
 #endif
-      lmn_mem_free_rec(this->state_mem());
+      (this->state_mem())->free_rec();
       this->state_set_mem(NULL);
     }
   }
@@ -400,14 +403,14 @@ struct State {                /* Total:72(36)byte */
   LmnMembraneRef duplicate_membrane() {
     LmnMembraneRef ret = NULL;
     if (!this->is_binstr_user() && this->state_mem()) {
-      ret = lmn_mem_copy(this->state_mem());
+      ret = (this->state_mem())->copy();
     } else if (this->is_binstr_user() && this->state_binstr()) {
       ret = lmn_binstr_decode(this->state_binstr());
     }
 
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3 && ret) {
-      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(ret));
+      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, ret->space());
     }
 #endif
 
@@ -436,7 +439,7 @@ struct State {                /* Total:72(36)byte */
         m = lmn_binstr_decode(this->state_binstr());
         mid = lmn_mem_encode(m);
         this->free_binstr();
-        lmn_mem_free_rec(m);
+        m->free_rec();
       } else {
         lmn_fatal("unexpected.");
       }
@@ -567,11 +570,11 @@ public:
     state_calc_hash(mem, do_encode);
 
     if (is_encoded()) {
-      lmn_mem_free_rec(mem);
+      mem->free_rec();
     }
 #ifdef PROFILE
     else if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, lmn_mem_space(mem));
+      profile_add_space(PROFILE_SPACE__STATE_MEMBRANE, mem->space());
     }
 #endif
   }
@@ -584,9 +587,8 @@ public:
                              sizeof(succ_data_t) * this->successor_num);
 #endif
       if (has_trans_obj()) {
-        unsigned int i;
-        for (i = 0; i < successor_num; i++) {
-          transition_free(transition(this, i));
+        for (int i = 0; i < successor_num; i++) {
+          delete ((Transition *)this->successors[i]);
         }
       }
       LMN_FREE(successors);

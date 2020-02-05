@@ -50,6 +50,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -66,16 +67,16 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
 
   if (lmn_env.nd_cleaning) {
     /* nd_cleaning状態の場合は、グローバルルート膜の解放を行う */
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
     lmn_env.nd_cleaning = FALSE;
   }
 
   if (!lmn_env.nd_remain && !lmn_env.nd_remaining) {
-    mem = lmn_mem_make();
+    mem = new LmnMembrane();
   }
 
   react_start_rulesets(mem, start_rulesets);
-  lmn_mem_activate_ancestors(mem);
+  mem->activate_ancestors();
 
   do_mc(mem, a, psyms, lmn_env.core_num);
 
@@ -83,8 +84,8 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     lmn_env.nd_remaining = TRUE;
   } else {
     lmn_env.nd_remaining = FALSE;
-    lmn_mem_drop(mem);
-    lmn_mem_free(mem);
+    mem->drop();
+    delete mem;
   }
 }
 
@@ -105,7 +106,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   wp = new LmnWorkerGroup(a, psyms, thread_num);
   states = worker_states(wp->get_worker(LMN_PRIMARY_ID));
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
-  mem = lmn_mem_copy(world_mem_org);
+  mem = world_mem_org->copy();
   init_s = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT
@@ -128,7 +129,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
 #endif
 
   if (lmn_env.mem_enc == FALSE)
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
   /** FINALIZE
    */
   profile_statespace(wp);
@@ -232,10 +233,10 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     /** free   : 遷移先を求めた状態sからLMNtalプロセスを開放 */
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
-      profile_add_space(PROFILE_SPACE__REDUCED_MEMSET, lmn_mem_space(mem));
+      profile_add_space(PROFILE_SPACE__REDUCED_MEMSET, mem->space());
     }
 #endif
-    lmn_mem_free_rec(mem);
+    mem->free_rec();
     if (s->is_binstr_user() &&
         (lmn_env.hash_compaction || lmn_env.tree_compress)) {
       s->free_binstr();
@@ -334,12 +335,12 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       /* new state */
       state_id_issue(succ);
       if (mc_use_compress(f) && src_succ_m) {
-        lmn_mem_free_rec(src_succ_m);
+	src_succ_m->free_rec();
       }
       if (new_ss)
         new_ss->push((vec_data_t)succ);
       if (mc_is_dump(f))
-        dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
+        StateDumper::from_env(stdout)->dump(succ);
     } else {
       /* contains */
       delete(src_succ);
@@ -401,19 +402,19 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   BOOL ret_flag = FALSE;
 
-  for (; cur_mem; cur_mem = lmn_mem_next(cur_mem)) {
+  for (; cur_mem; cur_mem = cur_mem->mem_next()) {
     unsigned long org_num = mc_react_cxt_expanded_num(rc);
 
     /* 代表子膜に対して再帰する */
-    if (mc_expand_inner(rc, lmn_mem_child_head(cur_mem))) {
+    if (mc_expand_inner(rc, cur_mem->mem_child_head())) {
       ret_flag = TRUE;
     }
-    if (lmn_mem_is_active(cur_mem)) {
+    if (cur_mem->is_active()) {
       react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
     if (org_num == mc_react_cxt_expanded_num(rc)) {
-      lmn_mem_set_active(cur_mem, FALSE);
+      cur_mem->set_active(FALSE);
     }
   }
 
@@ -790,17 +791,17 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
       m = (s == seed) ? "*" : " ";
       fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      state_print_mem(s, (LmnWord)out);
+      StateDumper::from_env(out)->state_print_mem(s);
     } else {
       s = (State *)v->get(i);
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      state_print_mem(s, (LmnWord)out);
+      StateDumper::from_env(out)->state_print_mem(s);
       fprintf(out, ".\n");
 
       fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
               ss->automata()->state_name(state_property_state(s)));
-      state_print_mem(s, (LmnWord)out);
+      StateDumper::from_env(out)->state_print_mem(s);
       fprintf(out, ":- ");
     }
   }
@@ -910,11 +911,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
 
     case Dir_DOT: /* TODO:
                      反例パスをサブグラフとして指定させたら分かりやすくなりそう
-                   */
-    case FSM: /* TODO: 未定. ltsviewはdotファイルを読み出せるので廃止しても良い
-               */
-      fprintf(f, "under constructions..\n");
-      break;
+                   */;
     default:
       lmn_fatal("unexpected.");
       break;

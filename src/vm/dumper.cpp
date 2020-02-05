@@ -44,6 +44,9 @@
 #include "symbol.h"
 #include <ctype.h>
 
+#include <ios>
+#include <ostream>
+
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
 
@@ -156,14 +159,14 @@ static struct AtomRec *get_atomrec(SimpleHashtbl *ht, LmnSymbolAtomRef atom) {
 
 static void dump_atomname(LmnPortRef port, LmnFunctor f) {
   /* dump module name */
-  if (LMN_FUNCTOR_MODULE_ID(f) != ANONYMOUS) {
-    port_put_raw_s(port, lmn_id_to_name(LMN_FUNCTOR_MODULE_ID(f)));
+  if (LMN_FUNCTOR_MODULE_ID(lmn_functor_table, f) != ANONYMOUS) {
+    port_put_raw_s(port, lmn_id_to_name(LMN_FUNCTOR_MODULE_ID(lmn_functor_table, f)));
     port_put_raw_s(port, ".");
   }
 
   /* dump atom name */
   {
-    const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f));
+    const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f));
 
     if (is_direct_printable(f)) {
       port_put_raw_s(port, atom_name);
@@ -394,7 +397,7 @@ static BOOL dump_proxy(LmnPortRef port, LmnSymbolAtomRef atom,
       if (!LMN_ATTR_IS_DATA(in->get_attr(1)) &&
           ((LmnSymbolAtomRef)in->get_link(1))->get_functor() == LMN_UNARY_PLUS_FUNCTOR) {
         LmnMembraneRef mem = LMN_PROXY_GET_MEM(in);
-        if (lmn_mem_nfreelinks(mem, 1)) {
+        if (mem->nfreelinks(1)) {
           get_atomrec(ht, (LmnSymbolAtomRef)in->get_link(1))->done =
               TRUE;
           lmn_dump_mem_internal(port, mem, ht, s);
@@ -417,7 +420,7 @@ static BOOL dump_symbol_atom(LmnPortRef port, LmnSymbolAtomRef atom,
   struct AtomRec *t;
 
   f = atom->get_functor();
-  arity = LMN_FUNCTOR_ARITY(f);
+  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
   if (LMN_IS_PROXY_FUNCTOR(f))
     arity--;
 
@@ -436,7 +439,7 @@ static BOOL dump_symbol_atom(LmnPortRef port, LmnSymbolAtomRef atom,
 
   if (call_depth == 0 &&
       (f == LMN_UNARY_PLUS_FUNCTOR || f == LMN_UNARY_MINUS_FUNCTOR)) {
-    port_put_raw_s(port, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)));
+    port_put_raw_s(port, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)));
     return dump_atom(port, atom->get_link(0), ht,
                      atom->get_attr(0), s, 1);
   }
@@ -530,14 +533,14 @@ static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
 /* for debug @seiji */
 void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs) { dump_rule(port, rs); }
 
-static void dump_ruleset(LmnPortRef port, struct Vector *v) {
+static void dump_ruleset(LmnPortRef port, const std::vector<LmnRuleSet *> &v) {
   unsigned int i;
 
-  for (i = 0; i < v->get_num(); i++) {
+  for (i = 0; i < v.size(); i++) {
     LmnRuleSetRef rs;
     char *s;
 
-    rs = (LmnRuleSetRef)v->get(i);
+    rs = v[i];
     s = int_to_str(rs->id);
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       if (i > 0) {
@@ -561,7 +564,7 @@ static void dump_ruleset(LmnPortRef port, struct Vector *v) {
 }
 
 /* for debug @seiji */
-void lmn_dump_ruleset(LmnPortRef port, struct Vector *v) {
+void lmn_dump_ruleset(LmnPortRef port, const std::vector<LmnRuleSet *> &v) {
   dump_ruleset(port, v);
 }
 
@@ -572,8 +575,8 @@ static BOOL lmn_dump_mem_internal(LmnPortRef port, LmnMembraneRef mem,
 
   hashtbl_put(ht, (HashKeyType)mem, (HashValueType)0);
 
-  if (LMN_MEM_NAME_ID(mem) != ANONYMOUS) {
-    port_put_raw_s(port, lmn_id_to_name(LMN_MEM_NAME_ID(mem)));
+  if (mem->NAME_ID() != ANONYMOUS) {
+    port_put_raw_s(port, lmn_id_to_name(mem->NAME_ID()));
   }
   port_put_raw_s(port, "{");
   lmn_dump_cell_internal(port, mem, ht, s);
@@ -666,13 +669,13 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   { /* dump chidren */
     LmnMembraneRef m;
     BOOL dumped = FALSE;
-    for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+    for (m = mem->mem_child_head(); m; m = m->mem_next()) {
       if (lmn_dump_mem_internal(port, m, ht, s)) {
         dumped = TRUE;
       }
       /* 一回でも出力したことがあって、かつ次回が出力可能ならカンマを打つ */
-      if (dumped && lmn_mem_next(m) &&
-          !hashtbl_contains(ht, (HashKeyType)(lmn_mem_next(m)))) {
+      if (dumped && m->mem_next() &&
+          !hashtbl_contains(ht, (HashKeyType)(m->mem_next()))) {
         port_put_raw_s(port, ", ");
       }
     }
@@ -683,7 +686,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
   }
 
   if (lmn_env.show_ruleset) {
-    dump_ruleset(port, lmn_mem_get_rulesets(mem));
+    dump_ruleset(port, mem->get_rulesets());
   }
 }
 
@@ -704,8 +707,8 @@ void lmn_dump_cell_stdout(LmnMembraneRef mem) {
   lmn_port_free(port);
 }
 
-void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port) {
-  switch (lmn_env.output_format) {
+void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port, OutputFormat format) {
+  switch (format) {
   case DEFAULT:
     lmn_dump_cell_nonewline(port, mem);
     break;
@@ -722,6 +725,10 @@ void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port) {
     lmn_fatal("unexpected.");
     exit(EXIT_FAILURE);
   }
+}
+
+void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port) {
+  lmn_dump_cell(mem, port, lmn_env.output_format);
 }
 
 void lmn_dump_mem_stdout(LmnMembraneRef mem) {
@@ -760,11 +767,11 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
   unsigned int i;
 
   f = atom->get_functor();
-  arity = LMN_FUNCTOR_ARITY(f);
+  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
   esc_code_add(CODE__FORECOLOR_LIGHTBLUE);
   fprintf(stdout, "Func[%3u], Name[%5s], A[%2u], Addr[%p], ID[%2lu], ", f,
-          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(f)), arity, atom,
+          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)), arity, atom,
           atom->get_id());
 
   if (LMN_FUNC_IS_HL(f)) {
@@ -787,9 +794,9 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
       fprintf(stdout,
               " link[HLobj, Addr:%p, HL_ID:%2lu, ROOT_HL_ID:%2lu, "
               "Owner!Addr:%p, Owner'!'ID:%2lu], ",
-              h, LMN_HL_ID(h), LMN_HL_ID(lmn_hyperlink_get_root(h)),
-              lmn_hyperlink_hl_to_at(h),
-              lmn_hyperlink_hl_to_at(h)->get_id());
+              h, LMN_HL_ID(h), LMN_HL_ID(h->get_root()),
+              h->hl_to_at(),
+              (h->hl_to_at())->get_id());
     } else if (!LMN_ATTR_IS_DATA(attr)) { /* symbol atom */
       fprintf(stdout, " link[%5d, Addr:%p,    ID:%2lu], ",
               LMN_ATTR_GET_VALUE(attr), atom->get_link(i),
@@ -822,11 +829,11 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
   fflush(stdout);
 }
 
-static void dump_ruleset_dev(struct Vector *v) {
+static void dump_ruleset_dev(const std::vector<LmnRuleSet *> &v) {
   unsigned int i;
   fprintf(stdout, "ruleset[");
-  for (i = 0; i < v->get_num(); i++) {
-    fprintf(stdout, "%d ", ((LmnRuleSetRef)v->get(i))->id);
+  for (i = 0; i < v.size(); i++) {
+    fprintf(stdout, "%d ", (v[i])->id);
   }
   fprintf(stdout, "]\n");
 }
@@ -837,17 +844,17 @@ void lmn_dump_mem_dev(LmnMembraneRef mem) {
     return;
 
   fprintf(stdout, "{\n");
-  fprintf(stdout, "Mem[%u], Addr[%p], ID[%lu]\n", LMN_MEM_NAME_ID(mem), mem,
-          lmn_mem_id(mem));
+  fprintf(stdout, "Mem[%u], Addr[%p], ID[%lu]\n", mem->NAME_ID(), mem,
+          mem->mem_id());
   EACH_ATOMLIST(mem, ent, ({
                   LmnSymbolAtomRef atom;
                   EACH_ATOM(atom, ent, ({ dump_atom_dev(atom); }));
                 }));
 
-  dump_ruleset_dev(lmn_mem_get_rulesets(mem));
-  lmn_dump_mem_dev(lmn_mem_child_head(mem));
+  dump_ruleset_dev(mem->get_rulesets());
+  lmn_dump_mem_dev(mem->mem_child_head());
   fprintf(stdout, "}\n");
-  lmn_dump_mem_dev(lmn_mem_next(mem));
+  lmn_dump_mem_dev(mem->mem_next());
 }
 
 /*----------------------------------------------------------------------
@@ -924,7 +931,7 @@ static void dump_dot_cell(LmnMembraneRef mem, SimpleHashtbl *ht, int *data_id,
       }));
 
   /* dump chidren */
-  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+  for (m = mem->mem_child_head(); m; m = m->mem_next()) {
     fprintf(stdout, "subgraph cluster%d {\n", *cluster_id);
     (*cluster_id)++;
     dump_dot_cell(m, ht, data_id, cluster_id);
@@ -1021,8 +1028,8 @@ static void lmn_dump_mem_json(LmnMembraneRef mem) {
     return;
 
   fprintf(stdout, "{");
-  fprintf(stdout, "\"id\":%d,", (int)lmn_mem_id(mem));
-  fprintf(stdout, "\"name\":\"%s\",", LMN_MEM_NAME(mem));
+  fprintf(stdout, "\"id\":%d,", (int)mem->mem_id());
+  fprintf(stdout, "\"name\":\"%s\",", mem->MEM_NAME());
   fprintf(stdout, "\"atoms\":[");
   {
     AtomListEntryRef ent;
@@ -1046,7 +1053,7 @@ static void lmn_dump_mem_json(LmnMembraneRef mem) {
   {
     LmnMembraneRef m;
     BOOL needs_comma = FALSE;
-    for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+    for (m = mem->mem_child_head(); m; m = m->mem_next()) {
       if (needs_comma)
         fprintf(stdout, ",");
       needs_comma = TRUE;
@@ -1076,7 +1083,7 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
     lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
   }
-  lmn_mem_delete_mem(lmn_mem_parent(m), m);
+  (m->mem_parent())->delete_mem(m);
 }
 
 void dumper_init() {
@@ -1104,4 +1111,56 @@ void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr) {
   hashtbl_init(&ht, 0);
   dump_atom(port, atom, &ht, attr, &s, 0);
   atomrec_tbl_destroy(&ht);
+}
+
+namespace slim {
+static int output_format_index = std::ios_base::xalloc();
+
+namespace format {
+std::ostream &env(std::ostream &os) {
+  os.iword(output_format_index) = 0;
+  return os;
+}
+
+std::ostream &lmntal(std::ostream &os) {
+  os.iword(output_format_index) = OutputFormat::DEFAULT;
+  return os;
+}
+
+std::ostream &verbal(std::ostream &os) {
+  os.iword(output_format_index) = OutputFormat::DEV;
+  return os;
+}
+
+std::ostream &dot(std::ostream &os) {
+  os.iword(output_format_index) = OutputFormat::DOT;
+  return os;
+}
+
+std::ostream &json(std::ostream &os) {
+  os.iword(output_format_index) = OutputFormat::JSON;
+  return os;
+}
+}
+
+// TODO: portを使わないようにする
+std::string to_string(const LmnMembrane *mem, OutputFormat format) {
+  auto port = lmn_make_output_string_port();
+  lmn_dump_cell(const_cast<LmnMembrane *>(mem), port, format);
+  auto str = std::unique_ptr<LmnString>(lmn_port_output_string(port));
+  lmn_port_free(port);
+  return str->str;
+}
+
+std::string to_string(const LmnMembrane *mem) {
+  return to_string(mem, lmn_env.output_format);
+}
+
+// TODO: incrementalに作る
+void dump_mem(std::ostream &os, const LmnMembrane *mem) {
+  if (os.iword(output_format_index) == 0)
+    os << to_string(mem);
+  else
+    os << to_string(mem, (OutputFormat)os.iword(output_format_index));
+}
 }

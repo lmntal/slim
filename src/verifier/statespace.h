@@ -100,16 +100,22 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
   Vector *prop_symbols() { return this->propsyms; }
 
   FILE *output() { return out; }
-  void dump() const;
+  void dump();
   void dump_ends() const;
 
   std::vector<State *> all_states() const;
+  std::map<State *, std::vector<State *>> predecessor() const {
+    std::map<State *, std::vector<State *>> predecessor;
+    for (auto &s : all_states()) {
+      if (!s->successors)
+        continue;
+      for (int i = 0; i < s->successor_num; i++)
+        predecessor[state_succ_state(s, i)].push_back(s);
+    }
+    return predecessor;
+  }
 
 private:
-  void dump_all_states() const;
-  void dump_all_transitions() const;
-  void dump_all_labels() const;
-
   bool using_memenc;
   bool is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
   /* 2bytes alignment */

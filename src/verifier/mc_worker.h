@@ -156,7 +156,6 @@ public:
   void lmn_workers_synchronization(unsigned long id, void (*func)(LmnWorker *w));
 
 };
-
 /**
  *  Objects for Model Checking
  */

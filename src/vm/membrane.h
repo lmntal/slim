@@ -57,6 +57,8 @@ typedef struct LinkObj *LinkObjRef;
 #include "process_table.h"
 #include "rule.h"
 
+#include <vector>
+
 /** -----
  *  リンクオブジェクトの代替
  */
@@ -71,67 +73,23 @@ LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos);
 
 extern struct st_hash_type type_memhash;
 
-lmn_interned_str LMN_MEM_NAME_ID(LmnMembraneRef m);
-const char *LMN_MEM_NAME(LmnMembraneRef m);
-LmnMembraneRef lmn_mem_parent(LmnMembraneRef m);
-void lmn_mem_set_parent(LmnMembraneRef m, LmnMembraneRef parent);
 
-BOOL lmn_mem_is_active(LmnMembraneRef m);
-unsigned int lmn_mem_max_functor(LmnMembraneRef m);
-void lmn_mem_set_name(LmnMembraneRef m, lmn_interned_str name);
-void lmn_mem_set_active(LmnMembraneRef m, BOOL is_activated);
-struct Vector *lmn_mem_get_rulesets(LmnMembraneRef m);
-int lmn_mem_ruleset_num(LmnMembraneRef m);
 LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i);
-unsigned int lmn_mem_symb_atom_num(LmnMembraneRef m);
-void lmn_mem_symb_atom_set(LmnMembraneRef m, unsigned int n);
-unsigned int lmn_mem_data_atom_num(LmnMembraneRef m);
-void lmn_mem_data_atom_set(LmnMembraneRef m, unsigned int n);
-unsigned int lmn_mem_atom_num(LmnMembraneRef m);
-BOOL lmn_mem_natoms(LmnMembraneRef m, unsigned int n);
-void lmn_mem_natoms_copy(LmnMembraneRef m, LmnMembraneRef n);
-void lmn_mem_symb_atom_add(LmnMembraneRef m, int n);
-void lmn_mem_symb_atom_sub(LmnMembraneRef m, int n);
-void lmn_mem_symb_atom_inc(LmnMembraneRef m);
-void lmn_mem_symb_atom_dec(LmnMembraneRef m);
 
-void lmn_mem_data_atom_add(LmnMembraneRef m, int n);
-void lmn_mem_data_atom_sub(LmnMembraneRef m, int n);
-void lmn_mem_data_atom_inc(LmnMembraneRef m);
-void lmn_mem_data_atom_dec(LmnMembraneRef m);
-
-LmnMembraneRef lmn_mem_child_head(LmnMembraneRef m);
-LmnMembraneRef lmn_mem_next(LmnMembraneRef m);
-LmnMembraneRef lmn_mem_prev(LmnMembraneRef m);
-ProcessID lmn_mem_id(LmnMembraneRef m);
-void lmn_mem_set_id(LmnMembraneRef m, ProcessID n);
-
-LmnMembraneRef lmn_mem_make(void);
-void lmn_mem_free(LmnMembraneRef mem);
+void lmn_mem_rulesets_destroy(const std::vector<LmnRuleSet *> &rulesets);
 void lmn_mem_rulesets_destroy(Vector *rulesets);
-void lmn_mem_drop(LmnMembraneRef mem);
 void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
-void lmn_mem_add_ruleset_sort(Vector *rulesets, LmnRuleSetRef ruleset);
+void lmn_mem_add_ruleset_sort(std::vector<LmnRuleSet *> *rulesets, LmnRuleSetRef ruleset);
 
-unsigned long lmn_mem_root_space(LmnMembraneRef mem);
-unsigned long lmn_mem_space(LmnMembraneRef mem);
-BOOL lmn_mem_equals(LmnMembraneRef mem1, LmnMembraneRef mem2);
 
-void lmn_mem_move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem);
 LmnMembraneRef lmn_mem_copy_with_map_ex(LmnMembraneRef srcmem,
                                         ProcessTableRef *copymap);
 LmnMembraneRef lmn_mem_copy_with_map(LmnMembraneRef srcmem,
                                      ProcessTableRef *copymap);
-LmnMembraneRef lmn_mem_copy(LmnMembraneRef srcmem);
-LmnMembraneRef lmn_mem_copy_ex(LmnMembraneRef src);
 
 ProcessTableRef lmn_mem_copy_cells_ex(LmnMembraneRef dest, LmnMembraneRef src,
                                       BOOL hl_nd);
 ProcessTableRef lmn_mem_copy_cells(LmnMembraneRef dest, LmnMembraneRef srcmem);
-void lmn_mem_remove_proxies(LmnMembraneRef mem);
-void lmn_mem_insert_proxies(LmnMembraneRef mem, LmnMembraneRef child_mem);
-void lmn_mem_remove_temporary_proxies(LmnMembraneRef mem);
-void lmn_mem_remove_toplevel_proxies(LmnMembraneRef mem);
 
 BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec);
 BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);
@@ -145,14 +103,12 @@ void lmn_mem_copy_hlground(LmnMembraneRef mem, Vector *srcvec,
                            ProcessTableRef *ret_hlinkmap,
                            ProcessTableRef *attr_functors,
                            Vector *attr_dataAtoms, Vector *attr_dataAtom_attrs);
-void lmn_mem_remove_ground(LmnMembraneRef mem, Vector *srcvec);
 void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec,
                              ProcessTableRef *attr_sym, Vector *attr_data,
                              Vector *attr_data_at);
 void lmn_mem_free_ground(Vector *srcvec);
 void lmn_mem_free_hlground(Vector *srcvec, ProcessTableRef *attr_sym,
                            Vector *attr_data, Vector *attr_data_at);
-void lmn_mem_delete_ground(LmnMembraneRef mem, Vector *srcvec);
 BOOL ground_atoms(Vector *srcvec, Vector *avovec, ProcessTableRef *atoms,
                   unsigned long *natoms, ProcessTableRef *hlinks,
                   ProcessTableRef *attr_functors, Vector *attr_dataAtoms,
@@ -166,18 +122,7 @@ void move_symbol_atomlist_to_atomlist_tail(LmnSymbolAtomRef a,
 void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                                    LmnMembraneRef mem);
 
-void lmn_mem_remove_mem(LmnMembraneRef parent, LmnMembraneRef mem);
-void lmn_mem_free_rec(LmnMembraneRef mem);
-void lmn_mem_delete_mem(LmnMembraneRef parent, LmnMembraneRef mem);
-AtomListEntryRef lmn_mem_get_atomlist(LmnMembraneRef mem, LmnFunctor f);
-void lmn_mem_activate_ancestors(LmnMembraneRef mem);
-BOOL lmn_mem_nmems(LmnMembraneRef mem, unsigned int count);
-int lmn_mem_child_mem_num(LmnMembraneRef mem);
-void lmn_mem_add_child_mem(LmnMembraneRef parentmem, LmnMembraneRef newmem);
 LmnSymbolAtomRef lmn_mem_newatom(LmnMembraneRef mem, LmnFunctor f);
-unsigned int lmn_mem_count_children(LmnMembraneRef mem);
-unsigned int lmn_mem_count_descendants(LmnMembraneRef mem);
-BOOL lmn_mem_nfreelinks(LmnMembraneRef mem, unsigned int count);
 void lmn_mem_remove_data_atom(LmnMembraneRef mem, LmnDataAtomRef atom,
                               LmnLinkAttr attr);
 void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
@@ -188,8 +133,6 @@ void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void alter_functor(LmnMembraneRef mem, LmnSymbolAtomRef atom, LmnFunctor f);
 void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset);
-void lmn_mem_copy_rules(LmnMembraneRef dest, LmnMembraneRef src);
-void lmn_mem_clearrules(LmnMembraneRef src);
 void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos,
                                   LmnAtomRef atom1, LmnLinkAttr attr);
 
@@ -199,7 +142,6 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos,
  *
  * @note you shouldn't modify the returned vector.
  */
-Vector *lmn_mem_firstclass_rulesets(LmnMembraneRef mem);
 /**
  * @brief Add a first-class ruleset to a membrane.
  *
@@ -250,7 +192,7 @@ struct membrane_iterator {
 
   reference operator*() { return *mem_; }
   membrane_iterator &operator++() {
-    mem_ = lmn_mem_next(mem_);
+    mem_ = mem_->mem_next();
     return *this;
   }
   pointer operator->() { return mem_; }
@@ -269,7 +211,7 @@ private:
 struct membrane_children {
   LmnMembrane *mem;
   membrane_children(LmnMembrane *mem) : mem(mem) {}
-  membrane_iterator begin() const { return membrane_iterator(lmn_mem_child_head(mem)); }
+  membrane_iterator begin() const { return membrane_iterator(mem->mem_child_head()); }
   membrane_iterator end() const { return membrane_iterator(); }
 };
 

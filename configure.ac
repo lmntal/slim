@@ -3,7 +3,7 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.3.1], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [2.4.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
@@ -322,6 +322,7 @@ AC_HEADER_TIME
 # AC_CHECK_HEADERS(pty.h util.h libutil.h sys/loadavg.h)
 AC_CHECK_HEADERS(sched.h syscall.h)
 AC_CHECK_HEADERS(omp.h)
+AC_CHECK_HEADERS(execinfo.h)
 
 if test "$enable_tcmalloc" = "yes"; then
   AC_CHECK_HEADERS(gperftools/tcmalloc.h,,

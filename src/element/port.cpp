@@ -492,7 +492,7 @@ void cb_port_getc(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
     sprintf(buf, "eof");
   else
     sprintf(buf, "%c", c);
-  a = lmn_new_atom(lmn_functor_intern(ANONYMOUS, lmn_intern(buf), 1));
+  a = lmn_new_atom(lmn_functor_table->intern(ANONYMOUS, lmn_intern(buf), 1));
   mem_push_symbol_atom(mem, (LmnSymbolAtomRef)a);
   lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a, LMN_ATTR_MAKE_LINK(0),
                   0);
@@ -692,7 +692,7 @@ void cb_port_output_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), s, LMN_STRING_ATTR, 0);
   } else {
     LmnSAtom a = lmn_mem_newatom(
-        mem, lmn_functor_intern(ANONYMOUS, lmn_intern("error"), 1));
+        mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("error"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a,
                     LMN_ATTR_MAKE_LINK(0), 0);
   }
@@ -722,7 +722,7 @@ void sp_cb_port_dump(void *data, LmnPortRef port) {
 BOOL sp_cp_port_is_ground(void *data) { return FALSE; }
 
 void port_init() {
-  eof_functor = lmn_functor_intern(ANONYMOUS, lmn_intern("eof"), 1);
+  eof_functor = lmn_functor_table->intern(ANONYMOUS, lmn_intern("eof"), 1);
 
   port_atom_type = lmn_sp_atom_register("port", sp_cb_port_copy,
                                         sp_cb_port_free, sp_cb_port_eq,

@@ -171,7 +171,7 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
           r->register_set_wt(rc->wt(i));
         }
       }
-      proc_tbl_free(copymap);
+      delete copymap;
 
       /** SWAP */
       tmp = std::move(rc->work_array);
@@ -565,7 +565,7 @@ static void print_trans_maindata(const char *filename)
   /* シンボルの配列 */
   fprintf(OUT, "  trans_%s_maindata_symbols, /*symboltable*/\n", filename);
   /* ファンクタの個数 */
-  fprintf(OUT, "  %d, /*count of functor*/\n", lmn_functor_table.next_id);
+  fprintf(OUT, "  %d, /*count of functor*/\n", lmn_functor_table->get_next_id());
   /* ファンクタの配列 */
   fprintf(OUT, "  trans_%s_maindata_functors, /*functortable*/\n", filename);
   /* ルールセットの個数 */
@@ -615,16 +615,16 @@ static void print_trans_symbols(const char *filename)
 static void print_trans_functors(const char *filename)
 {
   int i;
-  int count = lmn_functor_table.next_id;
+  int count = lmn_functor_table->get_next_id();
   /* idは0から, next_idが1なら既に1個登録済み => count==next_id */
 
   fprintf(OUT, "struct LmnFunctorEntry trans_%s_maindata_functors[%d] = {\n",
           filename, count);
   for (i = 0; i < count; ++i)
   {
-    fprintf(OUT, "  {%d, %d, %d, %d}", lmn_functor_table.entry[i].special,
-            lmn_functor_table.entry[i].module, lmn_functor_table.entry[i].name,
-            lmn_functor_table.entry[i].arity);
+    fprintf(OUT, "  {%d, %d, %d, %d}", lmn_functor_table->get_entry(i)->special,
+            lmn_functor_table->get_entry(i)->module, lmn_functor_table->get_entry(i)->name,
+            lmn_functor_table->get_entry(i)->arity);
     if (i != count - 1)
       fprintf(OUT, ",");
     fprintf(OUT, "\n");

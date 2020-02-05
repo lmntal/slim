@@ -126,6 +126,14 @@ struct EWLock {
   lmn_mutex_t *elock;
   unsigned long wlock_num;
   lmn_mutex_t *wlock;
+  *EWLock(unsigned int e_num,unsigned int w_num);
+  ~EWLock();
+  void acquire_write(mtx_data_t id);
+  void release_write(mtx_data_t id);
+  void acquire_enter(mtx_data_t id);
+  void release_enter(mtx_data_t id);
+  void reject_enter(mtx_data_t my_id);
+  void permit_enter(mtx_data_t my_id);
 };
 
 #define lmn_ewlock_space(L)                                                    \
@@ -135,7 +143,6 @@ struct EWLock {
 
 #define DEFAULT_LOCK_ID 0
 
-EWLock *ewlock_make(unsigned int e_num, unsigned int w_num);
 void ewlock_free(EWLock *lock);
 void ewlock_acquire_write(EWLock *lock, unsigned long use_id);
 void ewlock_release_write(EWLock *lock, unsigned long use_id);

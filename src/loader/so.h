@@ -174,10 +174,9 @@
 #define TR_INSTR_COPYRULES(rc, destmemi, srcmemi)                              \
   do {                                                                         \
     unsigned int i;                                                            \
-    struct Vector *v;                                                          \
-    v = lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(srcmemi));                 \
-    for (i = 0; i < v->get_num(); i++) {                                             \
-      LmnRuleSetRef cp = new LmnRuleSet(*((LmnRuleSetRef)v->get(i)));      \
+    auto &v = ((LmnMembraneRef)rc->wt(srcmemi))->get_rulesets(); \
+    for (i = 0; i < v.size(); i++) {				\
+      LmnRuleSetRef cp = new LmnRuleSet(*(v[i]));      \
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);               \
     }                                                                          \
   } while (0)
@@ -221,7 +220,7 @@
     }                                                                          \
                                                                                \
     if (delmap)                                                                \
-      proc_tbl_free(delmap);                                                   \
+      delete delmap;                                                   \
   } while (0)
 
 #define TR_INSTR_DEREFFUNC(rc, funci, atomi, pos)                              \

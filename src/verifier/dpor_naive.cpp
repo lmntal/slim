@@ -46,6 +46,7 @@
 #endif
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
 
 /* 概要:
  *   Sasaki P.O.RコードをRev.108から復刻した. (gocho Rev.422)
@@ -137,7 +138,7 @@ void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     mc_unset_por(this->flags);
     mc_set_trans(this->flags);
     mc_unset_dump(this->flags);
-    POR_DEBUG(mc_set_dump(this.flags));
+    POR_DEBUG(mc_set_dump(this->flags));
   }
 
   if (mc_react_cxt_expanded_num(rc) <= 1) {
@@ -311,8 +312,8 @@ void McPorData::por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
 
   if (mc_use_compress(this->flags)) {
     if (!s->state_mem()) { /* compact-stack */
-      lmn_mem_drop(mem);
-      lmn_mem_free(mem);
+      mem->drop();
+      delete mem;
     } else {
       s->free_mem();
     }
@@ -350,7 +351,7 @@ inline State *McPorData::por_state_insert(State *succ, struct MemDeltaRoot *d) {
   if (d) {
     dmem_root_revert(d);
   } else if (ret == succ && tmp_m) {
-    lmn_mem_free_rec(tmp_m);
+    tmp_m->free_rec();
   }
 
   return ret;
@@ -371,9 +372,9 @@ inline State *McPorData::por_state_insert_statespace(StateSpaceRef ss,
     set_outside_exist(t);
     state_id_issue(succ_s);
     if (mc_is_dump(org_f))
-      dump_state_data(succ_s, (LmnWord)stdout, (LmnWord)NULL);
+      StateDumper::from_env(stdout)->dump(succ_s);
     if (succ_m)
-      lmn_mem_free_rec(succ_m);
+      succ_m->free_rec();
     if (new_ss)
       new_ss->push((vec_data_t)succ_s);
   } else {
@@ -440,8 +441,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
 
   if (s->successors) {
     printf("unexpected.\n");
-    dump_state_data((State *)(s->successors[0]), (LmnWord)stdout,
-                    (LmnWord)NULL);
+    StateDumper::from_env(stdout)->dump((State *)(s->successors[0]));
   }
 
   s->succ_set(RC_EXPANDED(rc));

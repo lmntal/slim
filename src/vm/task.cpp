@@ -177,8 +177,8 @@ void lmn_run(Vector *start_rulesets) {
 
   /* interactive: normal_cleaningフラグがONの場合は後始末 */
   if (lmn_env.normal_cleaning) {
-    lmn_mem_drop(mem);
-    lmn_mem_free(mem);
+    mem->drop();
+    delete mem;
     mrc = nullptr;
     lmn_env.normal_cleaning = FALSE;
   }
@@ -186,7 +186,7 @@ void lmn_run(Vector *start_rulesets) {
   /* interactive : (normal_remain時でnormal_remaining=ON)以外の場合は初期化 */
   if (!lmn_env.normal_remain && !lmn_env.normal_remaining) {
     mrc = c14::make_unique<MemReactContext>();
-    mem = lmn_mem_make();
+    mem = new LmnMembrane();
     RC_SET_GROOT_MEM(mrc.get(), mem);
   }
   lmn_memstack_push(((MemReactContext *)mrc.get())->MEMSTACK(), mem);
@@ -245,8 +245,8 @@ void lmn_run(Vector *start_rulesets) {
     lmn_env.normal_remaining = TRUE;
   } else {
     lmn_env.normal_remaining = FALSE;
-    lmn_mem_drop(mem);
-    lmn_mem_free(mem);
+    mem->drop();
+    delete mem;
     mrc = nullptr;
   }
   if (env_proc_id_pool()) {
@@ -271,14 +271,14 @@ static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem) {
  * @brief 膜内の0stepルールセットを適用できるだけ適用する
  */
 void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
-  struct Vector *rulesets = lmn_mem_get_rulesets(cur_mem);
+  auto &rulesets = cur_mem->get_rulesets();
   BOOL reacted = FALSE;
 
   rc->is_zerostep = true;
   do {
     reacted = FALSE;
-    for (int i = 0; i < rulesets->get_num(); i++) {
-      LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
+    for (int i = 0; i < rulesets.size(); i++) {
+      LmnRuleSetRef rs = rulesets[i];
       if (!rs->is_zerostep())
         continue;
       reacted |= react_ruleset(rc, cur_mem, rs);
@@ -292,8 +292,8 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
  * @sa react_zerostep_rulesetsm
  */
 void react_zerostep_recursive(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
-  for (; cur_mem; cur_mem = lmn_mem_next(cur_mem)) {
-    react_zerostep_recursive(rc, lmn_mem_child_head(cur_mem));
+  for (; cur_mem; cur_mem = cur_mem->mem_next()) {
+    react_zerostep_recursive(rc, cur_mem->mem_child_head());
     react_zerostep_rulesets(rc, cur_mem);
   }
 }
@@ -303,13 +303,12 @@ void react_zerostep_recursive(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
  * @see expand_inner      (nd.c) */
 BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   unsigned int i;
-  struct Vector *rulesets =
-      lmn_mem_get_rulesets(cur_mem); /* 本膜のルールセットの集合 */
+  auto &rulesets = cur_mem->get_rulesets(); /* 本膜のルールセットの集合 */
   BOOL ok = FALSE;
 
   /* ルールセットの適用 */
-  for (i = 0; i < rulesets->get_num(); i++) {
-    if (react_ruleset(rc, cur_mem, (LmnRuleSetRef)rulesets->get(i))) {
+  for (i = 0; i < rulesets.size(); i++) {
+    if (react_ruleset(rc, cur_mem, rulesets[i])) {
       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
        */
       ok = TRUE;
@@ -318,10 +317,10 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   }
 
 #ifdef USE_FIRSTCLASS_RULE
-  for (i = 0; i < lmn_mem_firstclass_rulesets(cur_mem)->get_num(); i++) {
+  for (i = 0; i < (cur_mem->firstclass_rulesets())->get_num(); i++) {
     if (react_ruleset(
             rc, cur_mem,
-            (LmnRuleSetRef)lmn_mem_firstclass_rulesets(cur_mem)->get(i))) {
+            (LmnRuleSetRef)(cur_mem->firstclass_rulesets())->get(i))) {
       ok = TRUE;
       break;
     }
@@ -472,7 +471,7 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
                                      LmnMembraneRef mem) {
   LmnMembraneRef m;
 
-  for (m = lmn_mem_child_head(mem); m; m = lmn_mem_next(m)) {
+  for (m = mem->mem_child_head(); m; m = m->mem_next()) {
     if (react_ruleset_in_all_mem(rc, rs, m))
       return TRUE;
   }
@@ -646,7 +645,7 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
                                      LmnRuleInstr instr, LmnMembrane *mem,
                                      LmnFunctor f, size_t reg) {
-  auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
+  auto atomlist_ent = mem->get_atomlist(f);
 
   if (!atomlist_ent)
     return;
@@ -661,8 +660,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
-  this->push_stackframe(
-      make_false_driven_enumerator(*this, instr, reg, std::move(v)));
+  this->false_driven_enumerate(reg, std::move(v));
 }
 
 /** find atom with a hyperlink occurred in the current rule for the first time.
@@ -670,7 +668,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 void slim::vm::interpreter::findatom_original_hyperlink(
     LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr, SameProcCxt *spc,
     LmnMembrane *mem, LmnFunctor f, size_t reg) {
-  auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
+  auto atomlist_ent = mem->get_atomlist(f);
   if (!atomlist_ent)
     return;
 
@@ -687,15 +685,14 @@ void slim::vm::interpreter::findatom_original_hyperlink(
         };
       });
 
-  this->push_stackframe(
-      make_false_driven_enumerator(*this, instr, reg, std::move(v)));
+  this->false_driven_enumerate(reg, std::move(v));
 }
 
 void lmn_hyperlink_get_elements(std::vector<HyperLink *> &tree,
                                 HyperLink *start_hl) {
   Vector vec;
   vec.init(1);
-  lmn_hyperlink_get_elements(&vec, start_hl);
+  start_hl->get_elements(&vec);
   for (int i = 0; i < vec.get_num(); i++)
     tree.push_back((HyperLink *)vec.get(i));
   vec.destroy();
@@ -723,7 +720,7 @@ void slim::vm::interpreter::findatom_clone_hyperlink(
    * この時点で探索の始点とすべきハイパーリンクの情報がspc内に格納されている
    * ---------------------------------------------------------- */
 
-  if (!lmn_mem_get_atomlist(mem, LMN_HL_FUNC))
+  if (!mem->get_atomlist(LMN_HL_FUNC))
     return;
 
   auto filtered = slim::element::make_range_remove_if(
@@ -750,15 +747,14 @@ void slim::vm::interpreter::findatom_clone_hyperlink(
         };
       });
 
-  this->push_stackframe(
-      make_false_driven_enumerator(*this, instr, reg, std::move(v)));
+  this->false_driven_enumerate(reg, std::move(v));
 }
 
 /** hyperlinkの接続関係からfindatom */
 void slim::vm::interpreter::findatom_through_hyperlink(
     LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr, SameProcCxt *spc,
     LmnMembrane *mem, LmnFunctor f, size_t reg) {
-  auto atom_arity = LMN_FUNCTOR_ARITY(f);
+  auto atom_arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
   /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
   if (spc->is_clone(atom_arity)) {
@@ -776,14 +772,14 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec,
                   const std::vector<LmnLinkAttr> &attr_dataAtom_attrs) {
   auto v1 = new Vector(attr_dataAtoms.size());
   auto v2 = new Vector(attr_dataAtom_attrs.size());
-  auto p1 = proc_tbl_make_with_size(attr_functors.size());
+  auto p1 = new ProcessTbl(attr_functors.size());
 
   for (auto &v : attr_dataAtoms)
     v1->push(v);
   for (auto &v : attr_dataAtom_attrs)
     v2->push(v);
   for (auto &p : attr_functors)
-    proc_tbl_put(p1, p, p);
+    p1->proc_tbl_put(p, p);
 
   auto a = atoms.get();
   auto h = hlinks.get();
@@ -792,7 +788,7 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec,
   hlinks = std::unique_ptr<ProcessTbl>(h);
   delete v1;
   delete v2;
-  proc_tbl_free(p1);
+  delete p1;
   return result;
 }
 
@@ -851,7 +847,7 @@ std::vector<HyperLink *> lmn_hyperlink_get_elements(HyperLink *start_hl) {
   std::vector<HyperLink *> vec;
   Vector tree;
   tree.init(32);
-  lmn_hyperlink_get_elements(&tree, start_hl);
+  start_hl->get_elements(&tree);
   for (int i = 0; i < tree.get_num() - 1; i++)
     vec.push_back((HyperLink *)tree.get(i));
   tree.destroy();
@@ -859,23 +855,101 @@ std::vector<HyperLink *> lmn_hyperlink_get_elements(HyperLink *start_hl) {
 }
 
 struct exec_subinstructions_while {
-  slim::vm::interpreter &interpreter;
+  bool executed; // 一度whileループを抜けたらtrue
   LmnRuleInstr body;
   LmnRuleInstr next;
 
-  exec_subinstructions_while(slim::vm::interpreter &interpreter,
-                             LmnRuleInstr body, LmnRuleInstr next)
-      : interpreter(interpreter), body(body), next(next) {}
+  exec_subinstructions_while(LmnRuleInstr body, LmnRuleInstr next)
+      : executed(false), body(body), next(next) {}
 
-  bool operator()(bool result) {
+  slim::vm::interpreter::command_result
+  operator()(slim::vm::interpreter &interpreter, bool result) {
+    if (executed) // すでに実行が終わっていて戻ってきた
+      return result ? slim::vm::interpreter::command_result::Success
+                    : slim::vm::interpreter::command_result::Failure;
+
     if (result) {
-      interpreter.push_stackframe(
-          exec_subinstructions_while(interpreter, body, next));
       interpreter.instr = body;
     } else {
       interpreter.instr = next;
+      executed = true;
     }
-    return interpreter.run();
+    return slim::vm::interpreter::command_result::Trial;
+  }
+};
+
+struct exec_subinstructions_not {
+  bool executed;
+  LmnRuleInstr next_instr;
+
+  exec_subinstructions_not(LmnRuleInstr next_instr)
+      : executed(false), next_instr(next_instr) {}
+
+  slim::vm::interpreter::command_result
+  operator()(slim::vm::interpreter &interpreter, bool result) {
+    if (!executed) {
+      // サブ命令列で成功が返ったら失敗
+      if (result)
+        return slim::vm::interpreter::command_result::Failure;
+
+      // うまくいったので次の命令へ飛ぶ
+      interpreter.instr = next_instr;
+      executed = true;
+      return slim::vm::interpreter::command_result::Trial;
+    } else {
+      return result ? slim::vm::interpreter::command_result::Success
+                    : slim::vm::interpreter::command_result::Failure;
+    }
+  }
+};
+
+struct exec_subinstructions_group {
+  bool executed;
+  LmnRuleInstr next_instr;
+
+  exec_subinstructions_group(LmnRuleInstr next_instr)
+      : executed(false), next_instr(next_instr) {}
+
+  slim::vm::interpreter::command_result
+  operator()(slim::vm::interpreter &interpreter, bool result) {
+    if (!executed) {
+      // サブ命令列で失敗が返ったら失敗
+      if (!result)
+        return slim::vm::interpreter::command_result::Failure;
+
+      // うまくいったので次の命令へ飛ぶ
+      interpreter.instr = next_instr;
+      executed = true;
+      return slim::vm::interpreter::command_result::Trial;
+    } else {
+      return result ? slim::vm::interpreter::command_result::Success
+                    : slim::vm::interpreter::command_result::Failure;
+    }
+  }
+};
+
+struct exec_subinstructions_branch {
+  bool executed;
+  LmnRuleInstr next_instr;
+
+  exec_subinstructions_branch(LmnRuleInstr next_instr)
+      : executed(false), next_instr(next_instr) {}
+
+  slim::vm::interpreter::command_result
+  operator()(slim::vm::interpreter &interpreter, bool result) {
+    if (!executed) {
+      // サブ命令列で成功が返ったら成功
+      if (result)
+        return slim::vm::interpreter::command_result::Success;
+
+      // うまくいったので次の命令へ飛ぶ
+      interpreter.instr = next_instr;
+      executed = true;
+      return slim::vm::interpreter::command_result::Trial;
+    } else {
+      return result ? slim::vm::interpreter::command_result::Success
+                    : slim::vm::interpreter::command_result::Failure;
+    }
   }
 };
 
@@ -886,7 +960,7 @@ struct exec_subinstructions_while {
  *  stop becomes true only if executien should be aborted.
  */
 bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
-                                         LmnRuleInstr &instr, bool &stop) {
+                                         bool &stop) {
   LmnInstrOp op;
   READ_VAL(LmnInstrOp, instr, op);
   stop = true;
@@ -925,9 +999,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     links.destroy();
 
     /* EFFICIENCY: 解放のための再帰 */
-    this->push_stackframe([=](bool result) {
+    this->push_stackframe([=](interpreter &itr, bool result) {
       delete hashset;
-      return result;
+      return result ? command_result::Success : command_result::Failure;
     });
 
     break;
@@ -954,9 +1028,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     links.destroy();
 
     /* EFFICIENCY: 解放のための再帰 */
-    this->push_stackframe([=](bool result) {
+    this->push_stackframe([=](interpreter &itr, bool result) {
       delete hashset;
-      return result;
+      return result ? command_result::Success : command_result::Failure;
     });
 
     break;
@@ -1000,10 +1074,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     auto tmp = new std::vector<LmnRegister>(std::move(rc->work_array));
     rc->warray_set(std::move(v));
 
-    this->push_stackframe([=](bool result) {
+    this->push_stackframe([=](interpreter &itr, bool result) {
       rc->warray_set(std::move(*tmp));
       delete tmp;
-      return result;
+      return result ? command_result::Success : command_result::Failure;
     });
     break;
   }
@@ -1143,8 +1217,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                         copymap,
                         lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(i)),
                         &t)) {
-                  r->register_set_wt(
-                      (LmnWord)lmn_hyperlink_hl_to_at((HyperLink *)t));
+                  r->register_set_wt((LmnWord)((HyperLink *)t)->hl_to_at());
                 } else {
                   r->register_set_wt(
                       (LmnWord)rc->wt(i)); /* new_hlink命令等の場合 */
@@ -1177,7 +1250,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             r->register_set_wt(rc->wt(i));
           }
         }
-        proc_tbl_free(copymap);
+        delete copymap;
 
         /** 変数配列および属性配列をコピーと入れ換え, コピー側を書き換える */
         auto tmp = new std::vector<LmnRegister>(std::move(rc->work_array));
@@ -1189,7 +1262,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         }
 #endif
 
-        this->push_stackframe([=](bool result) {
+        this->push_stackframe([=](interpreter &itr, bool result) {
           react_zerostep_recursive(
               rc, tmp_global_root); /**< 0stepルールを適用する */
           mc_react_cxt_add_expanded(rc, tmp_global_root, rule);
@@ -1200,7 +1273,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           if (!rc->keep_process_id_in_nd_mode)
             env_set_next_id(org_next_id);
           delete tmp;
-          return false;
+          return command_result::Failure;
         });
         break;
       }
@@ -1263,7 +1336,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       AtomListEntry::const_iterator start_atom(nullptr, nullptr);
 
       READ_VAL(LmnFunctor, instr, f);
-      atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)rc->wt(memi), f);
+      atomlist_ent = ((LmnMembraneRef)rc->wt(memi))->get_atomlist(f);
       if (!atomlist_ent)
         return false;
 
@@ -1295,8 +1368,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             };
           });
 
-      this->push_stackframe(make_false_driven_enumerator(
-          *this, instr, atomi, std::move(candidates)));
+      this->false_driven_enumerate(atomi, std::move(candidates));
 
       /* 現在のfindatom2の実装にはバグがある（cf.
        * 言語班Wikifindatom2議論）。
@@ -1309,8 +1381,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
           });
 
-      this->push_stackframe(
-          make_false_driven_enumerator(*this, instr, atomi, std::move(v)));
+      this->false_driven_enumerate(atomi, std::move(v));
 
       return false;
     }
@@ -1335,7 +1406,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       READ_VAL(LmnFunctor, instr, f);
 
-      auto atom_arity = LMN_FUNCTOR_ARITY(f);
+      auto atom_arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
       if (rc_hlink_opt(atomi, rc)) {
         SameProcCxt *spc;
@@ -1351,7 +1422,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
               "Can't use hyperlink searching in parallel-runtime mode.\n");
         }
       }
-      auto atomlist_ent = lmn_mem_get_atomlist((LmnMembraneRef)rc->wt(memi), f);
+      auto atomlist_ent = ((LmnMembraneRef)rc->wt(memi))->get_atomlist(f);
       if (atomlist_ent)
         return false;
       ///
@@ -1458,7 +1529,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     //      LMN_ASSERT(((LmnMembraneRef)wt(rc, memi))->parent);
 
     m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)rc->wt(atomi));
-    if (LMN_MEM_NAME_ID(m) != memn)
+    if (m->NAME_ID() != memn)
       return FALSE;
     rc->reg(memi) = {(LmnWord)m, 0, TT_MEM};
     break;
@@ -1476,13 +1547,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     auto children = slim::vm::membrane_children((LmnMembraneRef)rc->wt(mem2));
     auto filtered = slim::element::make_range_remove_if(
         children.begin(), children.end(),
-        [=](LmnMembrane &m) { return LMN_MEM_NAME_ID(&m) != memn; });
+        [=](LmnMembrane &m) { return (&m)->NAME_ID() != memn; });
     std::vector<LmnRegister> v;
     for (auto &m : filtered)
       v.push_back(LmnRegister({(LmnWord)&m, 0, TT_MEM}));
 
-    this->push_stackframe(
-        make_false_driven_enumerator(*this, instr, mem1, std::move(v)));
+    this->false_driven_enumerate(mem1, std::move(v));
     return false;
   }
   case INSTR_NMEMS: {
@@ -1491,16 +1561,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, nmems);
 
-    if (!lmn_mem_nmems((LmnMembraneRef)rc->wt(memi), nmems)) {
+    if (!((LmnMembraneRef)rc->wt(memi))->nmems(nmems)) {
       return FALSE;
     }
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NMEMS);
-      this->push_stackframe([=](bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NMEMS);
-        return false; /* 全ての候補取得のためにNDは常にFALSEを返す仕様 */
+      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
+      this->push_stackframe([=](interpreter &itr, bool result) {
+        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
+        return command_result::
+            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                      */
       });
     }
 
@@ -1510,15 +1582,17 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    if (lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(memi))->get_num())
+    if (!((LmnMembraneRef)rc->wt(memi))->get_rulesets().empty())
       return FALSE;
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NORULES);
-      this->push_stackframe([=](bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NORULES);
-        return false; /* 全ての候補取得のためにNDは常にFALSEを返す仕様 */
+      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NORULES);
+      this->push_stackframe([=](interpreter &itr, bool result) {
+        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NORULES);
+        return command_result::
+            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                      */
       });
     }
 
@@ -1556,16 +1630,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, natoms);
 
-    if (!lmn_mem_natoms((LmnMembraneRef)rc->wt(memi), natoms)) {
+    if (!((LmnMembraneRef)rc->wt(memi))->natoms(natoms)) {
       return FALSE;
     }
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NATOMS);
-      this->push_stackframe([=](bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NATOMS);
-        return false; /* 全ての候補取得のためにNDは常にFALSEを返す仕様 */
+      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
+      this->push_stackframe([=](interpreter &itr, bool result) {
+        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
+        return command_result::
+            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                      */
       });
     }
 
@@ -1577,16 +1653,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, natomsi);
 
-    if (!lmn_mem_natoms((LmnMembraneRef)rc->wt(memi), rc->wt(natomsi))) {
+    if (!((LmnMembraneRef)rc->wt(memi))->natoms(rc->wt(natomsi))) {
       return FALSE;
     }
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NATOMS);
-      this->push_stackframe([=](bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NATOMS);
-        return false; /* 全ての候補取得のためにNDは常にFALSEを返す仕様 */
+      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
+      this->push_stackframe([=](interpreter &itr, bool result) {
+        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
+        return command_result::
+            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                      */
       });
     }
 
@@ -2095,8 +2173,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
               return {(LmnWord)linked_atom, child_hlAtom->get_attr(0), TT_ATOM};
             });
 
-        this->push_stackframe(
-            make_false_driven_enumerator(*this, instr, linki, std::move(regs)));
+        this->false_driven_enumerate(linki, std::move(regs));
         return false;
       }
       break;
@@ -2122,14 +2199,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_NOT: {
     LmnSubInstrSize subinstr_size;
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
-
-    auto next = instr + subinstr_size;
-    this->push_stackframe([=](bool result) {
-      if (result)
-        return false;
-      this->instr = next;
-      return this->run();
-    });
+    this->push_stackframe(exec_subinstructions_not(instr + subinstr_size));
     break;
   }
   case INSTR_ENQUEUEATOM: {
@@ -2146,7 +2216,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnMembraneRef mem = (LmnMembraneRef)rc->wt(memi);
     LmnSymbolAtomRef sa = (LmnSymbolAtomRef)rc->wt(atomi);
     LmnFunctor f = sa->get_functor();
-    AtomListEntry *ent = lmn_mem_get_atomlist(mem, f);
+    AtomListEntry *ent = mem->get_atomlist(f);
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnInstrVar, instr, memi);
     ent->move_atom_to_atomlist_tail(sa);
@@ -2202,11 +2272,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, parentmemi);
     SKIP_VAL(LmnInstrVar, instr);
 
-    mp = lmn_mem_make(); /*lmn_new_mem(memf);*/
-    lmn_mem_add_child_mem((LmnMembraneRef)rc->wt(parentmemi), mp);
+    mp = new LmnMembrane(); /*lmn_new_mem(memf);*/
+    ((LmnMembraneRef)rc->wt(parentmemi))->add_child_mem(mp);
     rc->wt(newmemi) = (LmnWord)mp;
     rc->tt(newmemi) = TT_MEM;
-    lmn_mem_set_active(mp, TRUE);
+    mp->set_active(TRUE);
     if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
       lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
     }
@@ -2215,7 +2285,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_ALLOCMEM: {
     LmnInstrVar dstmemi;
     READ_VAL(LmnInstrVar, instr, dstmemi);
-    rc->wt(dstmemi) = (LmnWord)lmn_mem_make();
+    rc->wt(dstmemi) = (LmnWord) new LmnMembrane();
     rc->tt(dstmemi) = TT_OTHER; /* 2014-05-08, ueda */
     break;
   }
@@ -2253,8 +2323,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, parenti);
 
-    lmn_mem_remove_mem((LmnMembraneRef)rc->wt(parenti),
-                       (LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(parenti))->remove_mem((LmnMembraneRef)rc->wt(memi));
     break;
   }
   case INSTR_FREEMEM: {
@@ -2264,7 +2333,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
 
     mp = (LmnMembraneRef)rc->wt(memi);
-    lmn_mem_free(mp);
+    delete mp;
     if (rc->is_zerostep) {
       lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), mp);
     }
@@ -2278,8 +2347,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     //      LMN_ASSERT(!((LmnMembraneRef)rc->wt( srcmem))->parent);
 
-    lmn_mem_add_child_mem((LmnMembraneRef)rc->wt(dstmem),
-                          (LmnMembraneRef)rc->wt(srcmem));
+    ((LmnMembraneRef)rc->wt(dstmem))
+        ->add_child_mem((LmnMembraneRef)rc->wt(srcmem));
     break;
   }
   case INSTR_ENQUEUEMEM: {
@@ -2506,10 +2575,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       atoms.release();
       dpor_LHS_add_ground_atoms(RC_POR_DATA(rc), addr);
 
-      this->push_stackframe([=](bool result) {
+      this->push_stackframe([=](interpreter &itr, bool result) {
         dpor_LHS_remove_ground_atoms(RC_POR_DATA(rc), addr);
-        proc_tbl_free(addr);
-        return false;
+        delete addr;
+        return command_result::Failure;
       });
     }
 
@@ -2698,8 +2767,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atomi);
 
     rc->reg(dstatomi) = {
-        (LmnWord)lmn_hyperlink_element_num(
-            lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(atomi))),
+        (LmnWord)(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(atomi)))
+            ->element_num(),
         LMN_INT_ATTR, TT_OTHER};
     break;
   }
@@ -2731,13 +2800,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       if (atom->get_arity() ==
           2) { //二引数の場合は一つ目のハイパーリンクの属性を継承する
-        lmn_hyperlink_unify(hl1, hl2, LMN_HL_ATTRATOM(hl1),
-                            LMN_HL_ATTRATOM_ATTR(hl1));
+        hl1->lmn_unify(hl2, LMN_HL_ATTRATOM(hl1), LMN_HL_ATTRATOM_ATTR(hl1));
       } else if (atom->get_arity() ==
                  3) { //三引数の場合は三引数目を併合後の属性とする
         LmnAtom attrAtom;
         attrAtom = LMN_ATOM(atom->get_link(2));
-        lmn_hyperlink_unify(hl1, hl2, (LmnAtomRef)attrAtom, atom->get_attr(2));
+        hl1->lmn_unify(hl2, (LmnAtomRef)attrAtom, atom->get_attr(2));
       } else {
         lmn_fatal("too many arguments to >< atom");
       }
@@ -2874,7 +2942,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       Vector attr_dataAtom_attrs;
       attr_dataAtoms.init(16);
       attr_dataAtom_attrs.init(16);
-      attr_functors = proc_tbl_make_with_size(16);
+      attr_functors = new ProcessTbl(16);
       LmnInstrVar i = 0, n;
 
       READ_VAL(LmnInstrVar, instr, n);
@@ -2890,7 +2958,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             LmnFunctor f;
             f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
-            proc_tbl_put(attr_functors, f, f);
+            attr_functors->proc_tbl_put(f, f);
           }
         }
         break;
@@ -2907,7 +2975,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             LmnFunctor f;
             READ_VAL(LmnFunctor, instr, f);
-            proc_tbl_put(attr_functors, f, f);
+            attr_functors->proc_tbl_put(f, f);
           }
         }
         break;
@@ -2932,11 +3000,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     retvec->push((LmnWord)atommap);
     rc->reg(dstlist) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
 
-    this->push_stackframe([=](bool result) {
+    this->push_stackframe([=](interpreter &itr, bool result) {
       free_links(dstlovec);
       delete retvec;
       LMN_ASSERT(result);
-      return result;
+      return result ? command_result::Success : command_result::Failure;
     });
 
     break;
@@ -2969,7 +3037,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       Vector attr_dataAtom_attrs;
       attr_dataAtoms.init(16);
       attr_dataAtom_attrs.init(16);
-      attr_functors = proc_tbl_make_with_size(16);
+      attr_functors = new ProcessTbl(16);
       LmnInstrVar i = 0, n;
 
       READ_VAL(LmnInstrVar, instr, n);
@@ -2986,7 +3054,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             LmnFunctor f;
             f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
-            proc_tbl_put(attr_functors, f, f);
+            attr_functors->proc_tbl_put(f, f);
           }
         }
         break;
@@ -3004,7 +3072,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             LmnFunctor f;
             READ_VAL(LmnFunctor, instr, f);
-            proc_tbl_put(attr_functors, f, f);
+            attr_functors->proc_tbl_put(f, f);
           }
         }
         break;
@@ -3024,13 +3092,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             &attr_functors, &attr_dataAtoms, &attr_dataAtom_attrs);
         break;
       }
-      proc_tbl_free(attr_functors);
+      delete attr_functors;
       attr_dataAtoms.destroy();
       attr_dataAtom_attrs.destroy();
       break;
     }
     case INSTR_REMOVEGROUND:
-      lmn_mem_remove_ground((LmnMembraneRef)rc->wt(memi), srcvec);
+      ((LmnMembraneRef)rc->wt(memi))->remove_ground(srcvec);
       break;
     case INSTR_FREEGROUND:
       lmn_mem_free_ground(srcvec);
@@ -3159,16 +3227,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
     READ_VAL(LmnInstrVar, instr, memi);
 
-    if (lmn_mem_is_active((LmnMembraneRef)rc->wt(memi))) {
+    if (((LmnMembraneRef)rc->wt(memi))->is_active()) {
       return FALSE;
     }
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_STABLE);
-      this->push_stackframe([=](bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_STABLE);
-        return false; /* 全ての候補取得のためにNDは常にFALSEを返す仕様 */
+      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_STABLE);
+      this->push_stackframe([=](interpreter &itr, bool result) {
+        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_STABLE);
+        return command_result::
+            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                      */
       });
     }
 
@@ -3181,9 +3251,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     rc->reg(listi) = {(LmnWord)listvec, 0, TT_OTHER};
 
     /* 解放のための再帰 */
-    this->push_stackframe([=](bool result) {
+    this->push_stackframe([=](interpreter &itr, bool result) {
       delete listvec;
-      return result;
+      return result ? command_result::Success : command_result::Failure;
     });
     break;
   }
@@ -3625,19 +3695,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(lmn_interned_str, instr, name);
-    lmn_mem_set_name((LmnMembraneRef)rc->wt(memi), name);
+    ((LmnMembraneRef)rc->wt(memi))->set_name(name);
     break;
   }
   case INSTR_COPYRULES: {
     LmnInstrVar destmemi, srcmemi;
     unsigned int i;
-    struct Vector *v;
 
     READ_VAL(LmnInstrVar, instr, destmemi);
     READ_VAL(LmnInstrVar, instr, srcmemi);
-    v = lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(srcmemi));
-    for (i = 0; i < v->get_num(); i++) {
-      auto cp = new LmnRuleSet(*(LmnRuleSetRef)v->get(i));
+    auto &v = ((LmnMembraneRef)rc->wt(srcmemi))->get_rulesets();
+    for (auto &rs : v) {
+      auto cp = new LmnRuleSet(*rs);
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);
     }
     break;
@@ -3646,7 +3715,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_remove_proxies((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->remove_proxies();
     break;
   }
   case INSTR_INSERTPROXIES: {
@@ -3654,8 +3723,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     READ_VAL(LmnInstrVar, instr, parentmemi);
     READ_VAL(LmnInstrVar, instr, childmemi);
-    lmn_mem_insert_proxies((LmnMembraneRef)rc->wt(parentmemi),
-                           (LmnMembraneRef)rc->wt(childmemi));
+    ((LmnMembraneRef)rc->wt(parentmemi))
+        ->insert_proxies((LmnMembraneRef)rc->wt(childmemi));
     break;
   }
   case INSTR_DELETECONNECTORS: {
@@ -3688,14 +3757,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_delete_atom(copy);
     }
 
-    proc_tbl_free(delmap);
+    delete delmap;
     break;
   }
   case INSTR_REMOVETOPLEVELPROXIES: {
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_remove_toplevel_proxies((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->remove_toplevel_proxies();
     break;
   }
   case INSTR_DEREFFUNC: {
@@ -3760,11 +3829,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         return FALSE;
       break;
     case LMN_HL_ATTR:
-      if (!lmn_hyperlink_eq_hl(
-              lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)),
-              lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
+      if (!(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)))
+               ->eq_hl(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
         return FALSE;
       break;
+    case LMN_SP_ATOM_ATTR:
+      if (!SP_ATOM_EQ(rc->wt(func0), rc->wt(func1)))
+        return FALSE;
     default:
       if (rc->wt(func0) != rc->wt(func1))
         return FALSE;
@@ -3790,11 +3861,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           return FALSE;
         break;
       case LMN_HL_ATTR:
-        if (lmn_hyperlink_eq_hl(
-                lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)),
-                lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
+        if ((lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func0)))
+                ->eq_hl(
+                    lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(func1))))
           return FALSE;
         break;
+      case LMN_SP_ATOM_ATTR:
+        if (SP_ATOM_EQ(rc->wt(func0), rc->wt(func1)))
+          return FALSE;
       default:
         if (rc->wt(func0) == rc->wt(func1))
           return FALSE;
@@ -3818,15 +3892,15 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, destmemi);
     READ_VAL(LmnInstrVar, instr, srcmemi);
     LMN_ASSERT(rc->wt(destmemi) != rc->wt(srcmemi));
-    lmn_mem_move_cells((LmnMembraneRef)rc->wt(destmemi),
-                       (LmnMembraneRef)rc->wt(srcmemi));
+    ((LmnMembraneRef)rc->wt(destmemi))
+        ->move_cells((LmnMembraneRef)rc->wt(srcmemi));
     break;
   }
   case INSTR_REMOVETEMPORARYPROXIES: {
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_remove_temporary_proxies((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->remove_temporary_proxies();
     break;
   }
   case INSTR_NFREELINKS: {
@@ -3835,16 +3909,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, count);
 
-    if (!lmn_mem_nfreelinks((LmnMembraneRef)rc->wt(memi), count))
+    if (!((LmnMembraneRef)rc->wt(memi))->nfreelinks(count))
       return FALSE;
 
     if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NFLINKS);
-      this->push_stackframe([=](bool result) {
+      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NFLINKS);
+      this->push_stackframe([=](interpreter &itr, bool result) {
         LMN_ASSERT(!result);
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), lmn_mem_id(m), LHS_MEM_NFLINKS);
-        return false; /* 全ての候補取得のためにNDは常にFALSEを返す仕様 */
+        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NFLINKS);
+        return command_result::
+            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                      */
       });
     }
 
@@ -3884,14 +3960,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_clearrules((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->clearrules();
     break;
   }
   case INSTR_DROPMEM: {
     LmnInstrVar memi;
 
     READ_VAL(LmnInstrVar, instr, memi);
-    lmn_mem_drop((LmnMembraneRef)rc->wt(memi));
+    ((LmnMembraneRef)rc->wt(memi))->drop();
     break;
   }
   case INSTR_TESTMEM: {
@@ -3968,12 +4044,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
     auto next = instr + subinstr_size;
-    this->push_stackframe([=](bool result) {
-      if (!result)
-        return false;
-      this->instr = next;
-      return this->run();
-    });
+    this->push_stackframe(exec_subinstructions_group(next));
     break;
   }
   case INSTR_BRANCH: {
@@ -3986,12 +4057,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 
     auto next = instr + subinstr_size;
-    this->push_stackframe([=](bool result) {
-      if (result)
-        return true;
-      this->instr = next;
-      return this->run();
-    });
+    this->push_stackframe(exec_subinstructions_branch(next));
     break;
   }
   case INSTR_LOOP: {
@@ -3999,7 +4065,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
     this->push_stackframe(
-        exec_subinstructions_while(*this, instr, instr + subinstr_size));
+        exec_subinstructions_while(instr, instr + subinstr_size));
     break;
   }
   case INSTR_CALLBACK: {
@@ -4014,8 +4080,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     if (!LMN_ATTR_IS_DATA(atom->get_attr(0))) {
       LmnSymbolAtomRef f_name = (LmnSymbolAtomRef)atom->get_link(0);
-      lmn_interned_str name = LMN_FUNCTOR_NAME_ID(f_name->get_functor());
-      int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
+      lmn_interned_str name =
+          LMN_FUNCTOR_NAME_ID(lmn_functor_table, f_name->get_functor());
+      int arity = LMN_FUNCTOR_ARITY(lmn_functor_table, atom->get_functor());
 
       c = CCallback::get_ccallback(name);
       if (!c)
@@ -4137,18 +4204,31 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
 bool slim::vm::interpreter::run() {
   bool result;
-  while (true) {
-    bool stop;
-    result = exec_command(this->rc, this->rule, this->instr, stop);
-    if (stop)
-      break;
-  }
+  do {
+    // キリのいいところまで命令列を実行する
+    bool stop = false;
+    do {
+      result = exec_command(this->rc, this->rule, stop);
+    } while (!stop);
 
-  while (!this->callstack.empty()) {
-    auto s = this->callstack.back();
-    this->callstack.pop_back();
-    result = s.callback(result);
-  }
+    // 成否がわかったのでstack frameに積まれているcallbackを消費する
+    while (!this->callstack.empty()) {
+      auto &s = this->callstack.back();
+      auto r = s.callback(*this, result);
+
+      if (r == command_result::Success) {
+        result = true;
+        this->callstack.pop_back();
+      } else if (r == command_result::Failure) {
+        result = false;
+        this->callstack.pop_back();
+      } else if (r == command_result::Trial) {
+        // ここにきた場合は違うパターンでリトライするためにcallbackをpopしない
+        // (c.f. false_driven_enumerator)
+        break;
+      }
+    }
+  } while (!this->callstack.empty());
 
   return result;
 }
@@ -4414,7 +4494,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                               (LmnMembraneRef)rc->wt(parentmemi), mp);
       rc->wt(newmemi) = (LmnWord)mp;
       rc->tt(newmemi) = TT_OTHER;
-      lmn_mem_set_active(mp, TRUE);
+      mp->set_active(TRUE);
       if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
         lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
       }
@@ -4789,7 +4869,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       }
 
       if (delmap)
-        proc_tbl_free(delmap);
+        delete delmap;
       break;
     }
     case INSTR_REMOVETOPLEVELPROXIES: {
@@ -4863,7 +4943,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
       dmem_root_clear_ruleset(RC_ND_MEM_DELTA_ROOT(rc),
                               (LmnMembraneRef)rc->wt(memi));
-      lmn_mem_get_rulesets((LmnMembraneRef)rc->wt(memi))->clear();
+      ((LmnMembraneRef)rc->wt(memi))->clearrules();
 
       break;
     }
@@ -4895,8 +4975,8 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
       if (!LMN_ATTR_IS_DATA(atom->get_attr(0))) {
         LmnSymbolAtomRef f_name = (LmnSymbolAtomRef)atom->get_link(0);
-        lmn_interned_str name = LMN_FUNCTOR_NAME_ID(f_name->get_functor());
-        int arity = LMN_FUNCTOR_ARITY(atom->get_functor());
+        lmn_interned_str name = LMN_FUNCTOR_NAME_ID(lmn_functor_table, f_name->get_functor());
+        int arity = LMN_FUNCTOR_ARITY(lmn_functor_table, atom->get_functor());
 
         c = CCallback::get_ccallback(name);
         if (!c)

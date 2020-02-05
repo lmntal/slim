@@ -44,6 +44,7 @@
 #include "mc_worker.h"
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
 #include "vm/vm.h"
 
 /**
@@ -99,8 +100,8 @@ struct ContextC2 {
 static ContextC1Ref contextC1_make(MemDeltaRoot *d, unsigned int id) {
   ContextC1Ref c = LMN_MALLOC(struct ContextC1);
   c->d = d;
-  c->LHS_procs = proc_tbl_make_with_size(32);
-  c->RHS_procs = proc_tbl_make_with_size(32);
+  c->LHS_procs = new ProcessTbl(32);
+  c->RHS_procs = new ProcessTbl(32);
   c->is_on_path = FALSE;
   c->is_ample_cand = FALSE;
   c->id = id;
@@ -108,8 +109,8 @@ static ContextC1Ref contextC1_make(MemDeltaRoot *d, unsigned int id) {
 }
 
 static inline void contextC1_free(ContextC1Ref c) {
-  proc_tbl_free(c->LHS_procs);
-  proc_tbl_free(c->RHS_procs);
+  delete c->LHS_procs;
+  delete c->RHS_procs;
   LMN_FREE(c);
 }
 
@@ -119,8 +120,8 @@ static int contextC1_free_f(st_data_t _k, st_data_t _v, st_data_t _arg) {
 }
 
 static BOOL contextC1s_eq(ContextC1Ref a, ContextC1Ref b) {
-  return proc_tbl_eq(a->LHS_procs, b->LHS_procs) &&
-         proc_tbl_eq(a->RHS_procs, b->RHS_procs);
+  return (a->LHS_procs)->tbl_eq(b->LHS_procs) &&
+         (a->RHS_procs)->tbl_eq(b->RHS_procs);
 }
 
 /* 既出の遷移か否かを判定する.
@@ -164,7 +165,7 @@ static int contextC1_expand_gatoms_LHS_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   //  key = ((LmnSAtom)_v)->get_id();
 
   if (!proc_tbl_get(c->LHS_procs, _k, NULL)) {
-    proc_tbl_put(c->LHS_procs, _k, LHS_DEFAULT);
+    (c->LHS_procs)->proc_tbl_put(_k, LHS_DEFAULT);
   }
 
   return 1;
@@ -184,7 +185,7 @@ static void contextC1_expand_LHS(McDporData *d, ContextC1Ref c,
     if (r->register_tt() == TT_ATOM && !LMN_ATTR_IS_DATA(r->register_at())) {
       key = ((LmnSymbolAtomRef)r->register_wt())->get_id();
     } else if (r->register_tt() == TT_MEM) {
-      key = lmn_mem_id((LmnMembraneRef)r->register_wt());
+      key = ((LmnMembraneRef)r->register_wt())->mem_id();
       if (i == 0) {
         dpor_LHS_flag_add(d, key, LHS_MEM_GROOT);
       }
@@ -199,12 +200,12 @@ static void contextC1_expand_LHS(McDporData *d, ContextC1Ref c,
       flag = LHS_DEFAULT;
     }
 
-    proc_tbl_put(c->LHS_procs, key, (LmnWord)flag);
+    (c->LHS_procs)->proc_tbl_put(key, (LmnWord)flag);
   }
 
   for (i = 0; i < d->wt_gatoms->get_num(); i++) {
     ProcessTableRef g_atoms = (ProcessTableRef)d->wt_gatoms->get(i);
-    proc_tbl_foreach(g_atoms, contextC1_expand_gatoms_LHS_f, (LmnWord)c);
+    g_atoms->tbl_foreach(contextC1_expand_gatoms_LHS_f, (LmnWord)c);
   }
 }
 
@@ -220,7 +221,7 @@ static inline void contextC1_RHS_tbl_put(ProcessTableRef p, LmnWord key,
   }
 
   RHS_OP_SET(op, set);
-  proc_tbl_put(p, key, (LmnWord)op);
+  p->proc_tbl_put(key, (LmnWord)op);
 }
 
 static inline void contextC1_RHS_tbl_unput(ProcessTableRef p, LmnWord key,
@@ -231,7 +232,7 @@ static inline void contextC1_RHS_tbl_unput(ProcessTableRef p, LmnWord key,
   if (proc_tbl_get(p, key, &t)) {
     BYTE op = (BYTE)t;
     RHS_OP_UNSET(op, unset);
-    proc_tbl_put(p, key, op);
+    p->proc_tbl_put(key, op);
   }
 }
 
@@ -251,8 +252,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
   if (d->new_atoms.get_num() > 0 || d->del_atoms.get_num() > 0 ||
       d->data_atom_diff != 0) {
     int n = d->new_atoms.get_num() + d->data_atom_diff - d->del_atoms.get_num();
-    if (lmn_mem_atom_num(mem) != n) {
-      contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NATOMS);
+    if (mem->atom_num() != n) {
+      contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NATOMS);
     }
     need_act_check = TRUE;
   }
@@ -261,28 +262,28 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
    */
   if (d->new_mems.get_num() > 0 || d->del_mems.get_num() > 0) {
     int n = d->new_mems.get_num() - d->del_mems.get_num();
-    if (lmn_mem_child_mem_num(mem) != n) {
-      contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NMEMS);
+    if (mem->child_mem_num() != n) {
+      contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NMEMS);
     }
     need_act_check = TRUE;
   }
 
   if (!d->new_proxies.is_empty()) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NFLINKS);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NFLINKS);
     need_act_check = TRUE;
   }
 
   /* ルールセットが消滅(clearrules)する場合, memが左辺に出現する遷移に依存する
    */
   if (d->ruleset_removed) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_EXISTS);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_EXISTS);
     need_act_check = TRUE;
   }
 
   /* 新たなルールセットが追加される場合,
    * memに対するnorules命令が左辺に出現する遷移に依存する */
   if (d->new_rulesets) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NORULES);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NORULES);
     need_act_check = TRUE;
   }
 
@@ -297,21 +298,20 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
 
   /* inside proxyアトムが削除されていた場合 */
   if (need_flink_check) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_NFLINKS);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NFLINKS);
     need_act_check = TRUE;
   }
 
   /* 子膜が削除されるなら, その膜が左辺に出現した遷移に依存する */
   for (i = 0; i < d->del_mems.get_num(); i++) {
     LmnMembraneRef m = (LmnMembraneRef)d->del_mems.get(i);
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(m), OP_DEP_EXISTS);
+    contextC1_RHS_tbl_put(c->RHS_procs, m->mem_id(), OP_DEP_EXISTS);
   }
 
   /* 膜名が変更された場合,
    * その膜をanymem等で走査した遷移(つまりwt[0]以外のTT_MEM)に依存する */
   if (d->org_name != d->new_name) {
-    contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem),
-                          OP_DEP_EXISTS_EX_GROOT);
+    contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_EXISTS_EX_GROOT);
     need_act_check = TRUE;
   }
 
@@ -319,8 +319,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
    * 辿れる限りの所属膜に対するSTABLE判定に依存する */
   if (need_act_check) {
     while (mem) {
-      contextC1_RHS_tbl_put(c->RHS_procs, lmn_mem_id(mem), OP_DEP_STABLE);
-      mem = lmn_mem_parent(mem);
+      contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_STABLE);
+      mem = mem->mem_parent();
     }
   }
 }
@@ -330,8 +330,7 @@ static void contextC1_expand_RHS(McDporData *mc, ContextC1Ref c,
   unsigned int i;
   /* 修正の加えられる膜に対する操作 */
   for (i = 0; i < d->mem_deltas.get_num(); i++) {
-    contextC1_expand_RHS_inner(c,
-                               (struct MemDelta *)d->mem_deltas.get(i));
+    contextC1_expand_RHS_inner(c, (struct MemDelta *)d->mem_deltas.get(i));
   }
 
   /* リンクの繋ぎ替えは考慮しなくてよいはず.
@@ -350,7 +349,7 @@ static void contextC1_expand_RHS(McDporData *mc, ContextC1Ref c,
 static McDporData *dpor_data_make() {
   McDporData *d = LMN_MALLOC(McDporData);
   d->wt_gatoms = new Vector(4);
-  d->wt_flags = proc_tbl_make();
+  d->wt_flags = new ProcessTbl();
   d->ample_cand = new Vector(8);
   d->nxt_tr_id = 0;
   d->delta_tbl = st_init_ptrtable();
@@ -361,7 +360,7 @@ static McDporData *dpor_data_make() {
 static void dpor_data_free(McDporData *d) {
   unsigned int i;
   delete d->wt_gatoms;
-  proc_tbl_free(d->wt_flags);
+  delete d->wt_flags;
   delete d->ample_cand;
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_free_table(d->delta_tbl);
@@ -375,7 +374,7 @@ static void dpor_data_free(McDporData *d) {
 
 static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
   d->wt_gatoms->clear();
-  proc_tbl_clear(d->wt_flags);
+  (d->wt_flags)->tbl_clear();
   d->ample_cand->clear();
   st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
   st_clear(d->delta_tbl);
@@ -393,7 +392,8 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
 
 void dpor_env_init(void) {
   if (lmn_env.enable_por_old) {
-    McPorData::mc_por.init_por_vars();//called only once  --by sumiya 2019/03/29
+    McPorData::mc_por
+        .init_por_vars(); // called only once  --by sumiya 2019/03/29
   } else {
     unsigned int i, n;
     n = lmn_env.core_num;
@@ -406,7 +406,8 @@ void dpor_env_init(void) {
 
 void dpor_env_destroy(void) {
   if (lmn_env.enable_por_old) {
-    McPorData::mc_por.free_por_vars();//called only once  --by sumiya 2019/03/29
+    McPorData::mc_por
+        .free_por_vars(); // called only once  --by sumiya 2019/03/29
   } else {
     unsigned int i, n;
     n = lmn_env.core_num;
@@ -454,11 +455,12 @@ static BOOL contextC1s_are_depend(ContextC1Ref src, ContextC1Ref dst) {
   lhs_tbl = dst->LHS_procs;
 
   for (auto rhs : *rhs_tbl) {
-    ProcessID lhs;
-    if (lhs_tbl->get(rhs.first, &lhs)) {
-      if (dpor_LHS_RHS_are_depend((BYTE)lhs, (BYTE)rhs.second)) {
-        return TRUE;
-      }
+    if (!lhs_tbl->contains(rhs.first))
+      continue;
+
+    ProcessID lhs = (*lhs_tbl)[rhs.first];
+    if (dpor_LHS_RHS_are_depend((BYTE)lhs, (BYTE)rhs.second)) {
+      return TRUE;
     }
   }
 
@@ -609,8 +611,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
           dmem_root_commit(succ_c->d);
           ret = dpor_explore_subgraph(mc, succ_c, &nxt_checked_ids);
           dmem_root_revert(succ_c->d);
-          nxt_checked_ids.push(
-                   succ_c->id); /* next stepに合流性の情報を渡す */
+          nxt_checked_ids.push(succ_c->id); /* next stepに合流性の情報を渡す */
           succ_c->is_on_path = FALSE;
           mc->cur_depth--;
         }
@@ -672,7 +673,8 @@ void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d,
   mc->tmp = c;
 }
 
-BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc) {
+BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
+                             LmnReactCxtRef rc) {
   ContextC1Ref c, ret;
 
   c = mc->tmp;
@@ -787,7 +789,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     if (succ == src_succ) {
       state_id_issue(succ);
       if (mc_is_dump(f))
-        dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
+        StateDumper::from_env(stdout)->dump(succ);
       if (new_ss) {
         new_ss->push((vec_data_t)succ);
       }
@@ -844,7 +846,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (succ == src_succ) {
         state_id_issue(succ);
         if (mc_is_dump(f))
-          dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
+          StateDumper::from_env(stdout)->dump(succ);
         if (new_ss) {
           new_ss->push((vec_data_t)succ);
         }
@@ -942,8 +944,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
       if (d->ample_cand->is_empty()) {
         ContextC1Ref c;
         st_data_t t;
-        if (st_lookup(d->delta_tbl, (st_data_t)RC_MEM_DELTAS(rc)->get(0),
-                      &t)) {
+        if (st_lookup(d->delta_tbl, (st_data_t)RC_MEM_DELTAS(rc)->get(0), &t)) {
           c = (ContextC1Ref)t;
           c->is_ample_cand = TRUE; /* だいじ */
         } else {
@@ -1035,7 +1036,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       ret = ss->insert(s);
       if (ret == s) {
         s->s_set_reduced();
-        lmn_mem_free_rec(s_mem);
+        s_mem->free_rec();
         search->push((vec_data_t)s);
       } else {
         transition_set_state(t, ret);
@@ -1091,7 +1092,7 @@ void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f) {
   }
 
   LHS_FL_SET(flags, set_f);
-  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
+  (d->wt_flags)->proc_tbl_put(proc_id, (LmnWord)flags);
 }
 
 void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
@@ -1107,7 +1108,7 @@ void dpor_LHS_flag_remove(McDporData *d, LmnWord proc_id, BYTE unset_f) {
   }
 
   LHS_FL_UNSET(flags, unset_f);
-  proc_tbl_put(d->wt_flags, proc_id, (LmnWord)flags);
+  (d->wt_flags)->proc_tbl_put(proc_id, (LmnWord)flags);
 }
 
 void dpor_LHS_add_ground_atoms(McDporData *d, ProcessTableRef atoms) {
@@ -1162,7 +1163,7 @@ static int dpor_LHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   id = (unsigned int)_k;
 
   printf("LHS[id%u, delta%u]:: ", c->id, id);
-  proc_tbl_foreach(c->LHS_procs, dpor_LHS_dump_f, 0);
+  (c->LHS_procs)->tbl_foreach(dpor_LHS_dump_f, 0);
   printf("\n");
 
   return ST_CONTINUE;
@@ -1184,7 +1185,7 @@ static int dpor_RHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   id = (unsigned int)_k;
 
   printf("RHS[id%u, delta%u]:: ", c->id, id);
-  proc_tbl_foreach(c->RHS_procs, dpor_RHS_dump_f, 0);
+  (c->RHS_procs)->tbl_foreach(dpor_RHS_dump_f, 0);
   printf("\n");
 
   return ST_CONTINUE;

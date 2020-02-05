@@ -136,7 +136,6 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   // printf("start :0x%14llx\n", ret);
   return ret;
 }
-
 uint64_t hash_node(TreeNodeElement left, TreeNodeElement right) {
   struct TreeNode node = {.left = left, .right = right};
   return murmurhash64(&node, 16, 0x5bd1e995);
@@ -161,9 +160,8 @@ LmnBinStrRef binstr_make(unsigned int len) {
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }
-
 TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
-  TreeNodeRef node = LMN_MALLOC(struct TreeNode);
+  TreeNodeRef node=LMN_MALLOC(struct TreeNode);
   node->left = left;
   node->right = right;
   return node;
