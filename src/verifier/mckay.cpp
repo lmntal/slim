@@ -1,6 +1,7 @@
 #include "mckay.hpp"
 #include "trie.hpp"
 #include "runtime_status.h"
+#include "union_find.hpp"
 #include <iostream>
 #include <string>
 propagation_list::iterator firstNonTrivialCell(propagation_list &pList) {
