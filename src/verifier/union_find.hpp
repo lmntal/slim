@@ -1,12 +1,21 @@
 #ifndef _UNION_FIND_H
 #define _UNION_FIND_H
+#include "mckay.hpp"
+#include <map>
 #include <vector>
 
 struct UnionFind {
   std::vector<int> par;
-
-  UnionFind(int n) : par(n, -1) {}
-  void init(int n) { par.assign(n, -1); }
+  std::map<int, int> idmap;
+  UnionFind(propagation_list &pList) {
+    int cnt = 0;
+    for (auto &list : pList) {
+      for (auto vertex : list) {
+        idmap[vertex->ID] = cnt;
+        cnt++;
+      }
+    }
+  }
 
   int root(int x) {
     if (par[x] < 0)
@@ -15,20 +24,24 @@ struct UnionFind {
       return par[x] = root(par[x]);
   }
 
-  bool issame(int x, int y) { return root(x) == root(y); }
+  bool issame(ConvertedGraphVertex *x, ConvertedGraphVertex *y) {
+    return root(idmap[x->ID]) == root(idmap[y->ID]);
+  }
 
-  bool merge(int x, int y) {
-    x = root(x);
-    y = root(y);
-    if (x == y)
+  bool merge(ConvertedGraphVertex *x, ConvertedGraphVertex *y) {
+    int idx = idmap[x->ID];
+    int idy = idmap[y->ID];
+    idx = root(idx);
+    idy = root(idy);
+    if (idx == idy)
       return false;
-    if (par[x] > par[y])
-      std::swap(x, y);
-    par[x] += par[y];
-    par[y] = x;
+    if (par[idx] > par[idy])
+      std::swap(idx, idy);
+    par[idx] += par[idy];
+    par[idy] = idx;
     return true;
   }
 
-  int size(int x) { return -par[root(x)]; }
+  int size(ConvertedGraphVertex *x) { return -par[root(idmap[x->ID])]; }
 };
 #endif

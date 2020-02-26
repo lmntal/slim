@@ -29,7 +29,7 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     discrete_propagation_lists
         &discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
     propagation_list &dpList, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID) {
+    int gapOfGlobalRootMemID, UnionFind &u) {
   bool isExisting = true;
   putLabelsToAdjacentVertices(dpList);
   propagation_list *preserveDPList = new propagation_list(dpList);
@@ -109,7 +109,8 @@ bool listMcKayInner(
     propagation_list &propagationListOfInheritedVertices,
     ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
     discrete_propagation_lists
-        &discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
+        &discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
+    UnionFind &u) {
   bool isUsefulBranch = true;
   auto stabilizer = propagation_list(propagationListOfInheritedVertices);
 #ifdef DIFFISO_DEB
@@ -129,7 +130,7 @@ bool listMcKayInner(
     isUsefulBranch =
         !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
-            stabilizer, cAfterGraph, gapOfGlobalRootMemID);
+            stabilizer, cAfterGraph, gapOfGlobalRootMemID, u);
   } else {
     for (auto i = 0; i < beginSentinel->size(); i++) {
       auto new_l = stabilizer.emplace(beginSentinel,
@@ -139,7 +140,7 @@ bool listMcKayInner(
                     std::next(std::next(beginSentinel->begin(), i)));
       listMcKayInner(
           stabilizer, cAfterGraph, gapOfGlobalRootMemID,
-          discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
+          discretePropagationListsOfInheritedVerticesWithAdjacentLabels, u);
       beginSentinel->splice(std::next(beginSentinel->begin(), i), *new_l,
                             new_l->begin(), std::next(new_l->begin()));
       stabilizer.erase(new_l);
@@ -163,6 +164,8 @@ propagation_list listMcKay(propagation_list &propagationList,
   } else {
     discrete_propagation_lists
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
+    UnionFind u(propagationList);
+
 #ifdef DIFFISO_DEB
     std::cout << "+++++ start classify +++++" << std::endl;
     classifyWithAttribute(propagationList, cAfterGraph, gapOfGlobalRootMemID);
@@ -171,7 +174,7 @@ propagation_list listMcKay(propagation_list &propagationList,
 #endif
     listMcKayInner(
         propagationList, cAfterGraph, gapOfGlobalRootMemID,
-        discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
+        discretePropagationListsOfInheritedVerticesWithAdjacentLabels, u);
 
     propagation_list canonicalDiscreteRefinement = propagation_list();
     for (auto &v :
