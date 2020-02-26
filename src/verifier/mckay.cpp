@@ -146,7 +146,8 @@ bool listMcKayInner(
   return isUsefulBranch;
 }
 
-propagation_list listMcKay(propagation_list &propagationList,
+propagation_list listMcKay(Trie *trie,
+			   propagation_list &propagationList,
                            ConvertedGraph *cAfterGraph,
                            int gapOfGlobalRootMemID) {
 #ifdef PROFILE
@@ -162,6 +163,7 @@ propagation_list listMcKay(propagation_list &propagationList,
     discrete_propagation_lists
         discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
     UnionFind u(propagationList);
+    trie->orbit->clear();
 
 #ifdef DIFFISO_DEB
     std::cout << "+++++ start classify +++++" << std::endl;
@@ -179,18 +181,18 @@ propagation_list listMcKay(propagation_list &propagationList,
               ->second)
       canonicalDiscreteRefinement.push_back(v);
 
-    // std::cout
-    //     << "########### candidates of canonical discrete refinement##########
-    //     #"
-    //     << std::endl;
-    // std::cout <<
-    // discretePropagationListsOfInheritedVerticesWithAdjacentLabels
-    //           << std::endl;
-    //   for (auto &v :
-    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
-    //     freePreserveDiscreteProapgationList(v.second);
-    //   delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
-    for (auto &v : discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
+    for(auto &list : canonicalDiscreteRefinement) {
+      for(auto &vertex : list) {
+	trie->orbit->insert(std::make_pair(vertex->ID, u.root(u.idmap[vertex->ID])));
+      }
+    }
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // for(auto it : *trie->orbit) {
+    //   std::cout << it.first << " " << it.second << std::endl;
+    // }
+
+    for (auto &v :
+         discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
       delete v.second;
     }
 #ifdef PROFILE
@@ -302,7 +304,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
     if (propagationList_is_discrete(propagationList)) {
       canonicalDiscreteRefinement = propagationList;
     } else {
-      canonicalDiscreteRefinement = listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);      
+      canonicalDiscreteRefinement = listMcKay(trie, propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
     }
 
 

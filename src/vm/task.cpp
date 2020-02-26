@@ -53,7 +53,7 @@ bool json_dump_gen;
 Graphinfo * parent_graphinfo;
 ProcessTableRef copymap_at_commit;
 std::map<int, int> id_to_id_at_commit;
-extern std::map<int, std::string> color_m;
+extern std::map<int, int> auto_orbit;
 extern bool diff_gen_finish;
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
@@ -833,7 +833,7 @@ bool findatom(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr,
               LmnMembrane *mem, LmnFunctor f, LmnRegister &reg) {
   auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
 
-  std::set<std::string> s;
+  std::set<int> s;
   // for(auto x:color_m) {
   //   std::cout << x.first <<"-->"<<x.second << std::endl;
   // }
@@ -844,13 +844,16 @@ bool findatom(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr,
   reg.tt = TT_ATOM;
   for (auto atom : *atomlist_ent) {
     reg.wt = (LmnWord)atom;
-    // printf("%s:%d\n", __FUNCTION__, __LINE__);
-    // std::cout << LMN_SATOM_ID(atom) << std::endl;
+    //printf("%s:%d\n", __FUNCTION__, __LINE__);
+    //std::cout << LMN_SATOM_ID(atom) <<" : " << auto_orbit[LMN_SATOM_ID(atom)] << std::endl;
     if(RC_GET_MODE(rc, REACT_ND)) {
-      if(s.find(color_m[LMN_SATOM_ID(atom)]) == s.end())
-	s.insert(color_m[LMN_SATOM_ID(atom)]);
-      else
-	continue;      
+      if(s.find(auto_orbit[LMN_SATOM_ID(atom)]) == s.end())
+	s.insert(auto_orbit[LMN_SATOM_ID(atom)]);
+      else {
+	//printf("%s:%d\n", __FUNCTION__, __LINE__);
+	continue;
+      }
+
     }
     if (interpret(rc, rule, instr))
       return true;

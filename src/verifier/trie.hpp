@@ -248,9 +248,11 @@ const slim::element::variant<slim::element::monostate, InheritedVertex>
 struct Trie {
   TrieBody *body;
   TerminationConditionInfo *info;
+  std::map<int, int> *orbit;
   Trie() {
     body = new TrieBody();
     info = new TerminationConditionInfo();
+    orbit = new std::map<int, int>();
   };
   // HashTable *trieLeavesTable;
   void make_color_map(TrieBody *body, std::map<int, std::string> &m, std::map<int, int> &id_to_id) {
@@ -260,9 +262,7 @@ struct Trie {
 	for(int i=0; i<slim::element::get<InheritedVertex>(v).hashString->creditIndex; i++) {
 	  s+=std::to_string(slim::element::get<InheritedVertex>(v).hashString->body[i]);
 	}
-	// for(auto &v : slim::element::get<InheritedVertex>(v).hashString->body) {
-	//   s+=std::to_string(v.second);
-	// }
+
 	m[id_to_id[slim::element::get<InheritedVertex>(v).correspondingVertex->ID]] = s;
       }
     } else {

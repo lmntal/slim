@@ -59,7 +59,7 @@
 // #define DIFFISO_DEB
 bool diff_gen_finish = false;
 std::map<int, int> iso_m;
-std::map<int, std::string> color_m;
+std::map<int, int> auto_orbit;
 extern Graphinfo *parent_graphinfo;
 extern std::map<int, int> id_to_id_at_commit;
 /** =======================================
@@ -353,8 +353,11 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // s->trie->dump();
-  color_m.clear();
-  s->trie->make_color_map(s->trie->body, color_m, id_to_id_map);
+  auto_orbit.clear();
+  for(auto it : *(s->trie->orbit)) {
+    auto_orbit[id_to_id_map[it.first]] = it.second;
+  }
+  //s->trie->make_color_map(s->trie->body, color_m, id_to_id_map);
   // for(auto x:color_m) {
   //   std::cout << x.first <<"-->"<<x.second << std::endl;
   // }
