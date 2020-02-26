@@ -40,13 +40,14 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
 
   if (seniorDPList ==
       discretePropagationListsOfInheritedVerticesWithAdjacentLabels.end()) {
-
+    std::cout << "!!INSERT!!" << std::endl;
 
     discretePropagationListsOfInheritedVerticesWithAdjacentLabels.insert(
         std::make_pair(key, preserveDPList));
     isExisting = false;
     return isExisting;
   } else {
+    std::cout << "!!EXIST!!" << std::endl;
 #ifdef DIFFISO_DEB
     std::cout << "EXIST" << std::endl;
 #endif

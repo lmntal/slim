@@ -107,8 +107,8 @@ struct PropagationListCmp {
         throw("propagation list is'nt discrete");
       if (converted_graph_vertex_cmp(it_l->front(), it_r->front(), l_m, r_m))
         return true;
-      else if (converted_graph_vertex_cmp(it_r->front(), it_l->front(), l_m,
-                                          r_m))
+      else if (converted_graph_vertex_cmp(it_r->front(), it_l->front(), r_m,
+                                          l_m))
         return false;
     }
     if (it_l == lhs.end() and it_r != rhs.end())
