@@ -41,42 +41,19 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
 
   if (seniorDPList ==
       discretePropagationListsOfInheritedVerticesWithAdjacentLabels.end()) {
-    std::cout << "!!INSERT!!" << std::endl;
-
     discretePropagationListsOfInheritedVerticesWithAdjacentLabels.insert(
         std::make_pair(key, preserveDPList));
     isExisting = false;
-    return isExisting;
   } else {
-    std::cout << "!!EXIST!!" << std::endl;
+    auto itp = preserveDPList->begin();
+    auto its = seniorDPList->second->begin();
+    for (; itp != preserveDPList->end(); itp++, its++) {
+      u.merge(itp->front(), its->front());
+    }
 #ifdef DIFFISO_DEB
     std::cout << "EXIST" << std::endl;
 #endif
   }
-
-  // else {
-  //   auto iteratorCell = std::begin(*preserveDPList);
-  //   auto iteratorCellSenior = std::begin(*seniorDPList->second);
-
-  //   while (iteratorCell != std::end(*preserveDPList)) {
-  //     if (*iteratorCell != CLASS_SENTINEL) {
-  //       auto &iVertex = slim::element::get<InheritedVertex>(*iteratorCell);
-  //       auto &iVertexSenior =
-  //           slim::element::get<InheritedVertex>(*iteratorCellSenior);
-
-  //       unionDisjointSetForest(iVertex.equivalenceClassOfIsomorphism,
-  //                              iVertexSenior.equivalenceClassOfIsomorphism);
-  //     }
-
-  //     iteratorCell = std::next(iteratorCell, 1);
-  //     iteratorCellSenior = std::next(iteratorCellSenior, 1);
-  //   }
-
-  //   freePreserveDiscreteProapgationList(preserveDPList);
-
-  //   isExisting = TRUE;
-  //   return isExisting;
-  // }
   return isExisting;
 }
 
@@ -132,7 +109,18 @@ bool listMcKayInner(
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
             stabilizer, cAfterGraph, gapOfGlobalRootMemID, u);
   } else {
+    bool isFirstLoop = true;
     for (auto i = 0; i < beginSentinel->size(); i++) {
+      bool isSame = false;
+      for (auto j = 0; j < i; j++) {
+        if (u.issame(*std::next(beginSentinel->begin(), i),
+                     *std::next(beginSentinel->begin(), j))) {
+          isSame = true;
+          break;
+        }
+      }
+      if (isSame)
+        continue;
       auto new_l = stabilizer.emplace(beginSentinel,
                                       std::list<ConvertedGraphVertex *>());
       new_l->splice(new_l->begin(), *beginSentinel,
@@ -144,6 +132,15 @@ bool listMcKayInner(
       beginSentinel->splice(std::next(beginSentinel->begin(), i), *new_l,
                             new_l->begin(), std::next(new_l->begin()));
       stabilizer.erase(new_l);
+      if(isFirstLoop) {
+	isFirstLoop = false;
+	if(!isUsefulBranch) {
+	  isUsefulBranch = false;
+	  break;
+	} else {
+	  isUsefulBranch = true;
+	}
+      }
     }
   }
   return isUsefulBranch;

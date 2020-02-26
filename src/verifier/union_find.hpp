@@ -15,6 +15,7 @@ struct UnionFind {
         cnt++;
       }
     }
+    par.assign(cnt, -1);
   }
 
   int root(int x) {
