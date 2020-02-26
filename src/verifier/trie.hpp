@@ -8,10 +8,16 @@
 #include "omegaArray.hpp"
 #include <list>
 
+using propagation_list = std::list<std::list<ConvertedGraphVertex *>>;
 struct ConvertedGraph;
 struct InheritedVertex;
 struct TrieBody;
 struct TerminationConditionInfo;
+
+struct ComparablePropagationList {
+  propagation_list plist;
+  std::map<int, std::vector<int>> labels;
+};
 
 typedef struct _CanonicalLabel {
   Hash first;
@@ -42,7 +48,7 @@ using vertex_list = std::list<
 using trie_body_map = std::map<uint32_t, TrieBody *>;
 using vertex_vec = std::vector<
     slim::element::variant<slim::element::monostate, InheritedVertex>>;
-using propagation_list = std::list<std::list<ConvertedGraphVertex *>>;
+
 std::map<int, std::map<int, int>>
 putLabelsToAdjacentVertices(const propagation_list &pList);
 
@@ -84,34 +90,34 @@ converted_graph_vertex_cmp(const ConvertedGraphVertex *lhs,
   }
 }
 struct PropagationListCmp {
-  bool operator()(const propagation_list &lhs,
-                  const propagation_list &rhs) const {
-    auto l_mm = putLabelsToAdjacentVertices(lhs);
-    std::map<int, std::vector<int>> l_m;
-    for (auto &v : l_mm) {
-      for (auto &e : v.second) {
-	l_m[v.first].push_back(e.second);
-      }
-    }
-    auto r_mm = putLabelsToAdjacentVertices(rhs);
-    std::map<int, std::vector<int>> r_m;
-    for (auto &v : r_mm) {
-      for (auto &e : v.second) {
-	r_m[v.first].push_back(e.second);
-      }
-    }
-    auto it_l = lhs.begin();
-    auto it_r = rhs.begin();
-    for (; it_l != lhs.end() and it_r != rhs.end(); it_l++, it_r++) {
+  bool operator()(const ComparablePropagationList &lhs,
+                  const ComparablePropagationList &rhs) const {
+    //auto l_mm = lhs.lables;
+    // std::map<int, std::vector<int>> l_m;
+    // for (auto &v : lhs.labels) {
+    //   for (auto &e : v.second) {
+    // 	l_m[v.first].push_back(e.second);
+    //   }
+    // }
+    //auto r_mm = rhs.labels;
+    // std::map<int, std::vector<int>> r_m;
+    // for (auto &v : rhs.labels) {
+    //   for (auto &e : v.second) {
+    // 	r_m[v.first].push_back(e.second);
+    //   }
+    // }
+    auto it_l = lhs.plist.begin();
+    auto it_r = rhs.plist.begin();
+    for (; it_l != lhs.plist.end() and it_r != rhs.plist.end(); it_l++, it_r++) {
       if (it_l->size() != 1 or it_r->size() != 1)
         throw("propagation list is'nt discrete");
-      if (converted_graph_vertex_cmp(it_l->front(), it_r->front(), l_m, r_m))
+      if (converted_graph_vertex_cmp(it_l->front(), it_r->front(), lhs.labels, rhs.labels))
         return true;
-      else if (converted_graph_vertex_cmp(it_r->front(), it_l->front(), r_m,
-                                          l_m))
+      else if (converted_graph_vertex_cmp(it_r->front(), it_l->front(), rhs.labels,
+                                          lhs.labels))
         return false;
     }
-    if (it_l == lhs.end() and it_r != rhs.end())
+    if (it_l == lhs.plist.end() and it_r != rhs.plist.end())
       return true;
     else
       return false;

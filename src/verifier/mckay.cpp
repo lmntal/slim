@@ -31,18 +31,26 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     propagation_list &dpList, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, UnionFind &u) {
   bool isExisting = true;
-  putLabelsToAdjacentVertices(dpList);
-  propagation_list *preserveDPList = new propagation_list(dpList);
 
-  auto &key = *preserveDPList;
+  propagation_list *preserveDPList = new propagation_list(dpList);
+  //auto lable = putLabelsToAdjacentVertices(dpList);
+  ComparablePropagationList cp;
+  cp.plist = *preserveDPList;
+  auto lm = putLabelsToAdjacentVertices(dpList);
+  for(auto &v : lm) {
+    for(auto &e : v.second) {
+      cp.labels[v.first].push_back(e.second);
+    }
+  }
+  //auto &key = *preserveDPList;
 
   auto seniorDPList =
-      discretePropagationListsOfInheritedVerticesWithAdjacentLabels.find(key);
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels.find(cp);
 
   if (seniorDPList ==
       discretePropagationListsOfInheritedVerticesWithAdjacentLabels.end()) {
     discretePropagationListsOfInheritedVerticesWithAdjacentLabels.insert(
-        std::make_pair(key, preserveDPList));
+        std::make_pair(cp, preserveDPList));
     isExisting = false;
   } else {
     auto itp = preserveDPList->begin();

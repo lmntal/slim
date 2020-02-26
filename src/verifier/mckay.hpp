@@ -21,8 +21,10 @@ struct CanonicalAdjacencyList {
   std::vector<void *> adjacencyInformations; // ??
 };
 
+
+
 using discrete_propagation_lists =
-    std::map<propagation_list, propagation_list *, PropagationListCmp>;
+    std::map<ComparablePropagationList, propagation_list *, PropagationListCmp>;
 using key_collection = std::map<vertex_list, CollectionInt>;
 
 std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
