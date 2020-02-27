@@ -1,4 +1,5 @@
 #include "trie.hpp"
+#include "runtime_status.h"
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
@@ -1351,13 +1352,33 @@ void refineConventionalPropagationListByPropagation(propagation_list &pList) {
 #ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
 #endif
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_start_timer(PROFILE_TIME__PUTLABELS);
+    }
+#endif
     auto labels_map = putLabelsToAdjacentVertices(pList);
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__PUTLABELS);
+    }
+#endif
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_start_timer(PROFILE_TIME__MAKELABEL);
+    }
+#endif
     std::map<int, std::vector<int>> labels;
     for (auto &v : labels_map) {
       for (auto &e : v.second) {
 	labels[v.first].push_back(e.second);
       }
     }
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__MAKELABEL);
+    }
+#endif
 #ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     for(auto &v : labels) {
@@ -1365,8 +1386,20 @@ void refineConventionalPropagationListByPropagation(propagation_list &pList) {
     }
     printf("%s:%d\n", __FUNCTION__, __LINE__);
 #endif
+
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_start_timer(PROFILE_TIME__CLASSIFY);
+    }
+#endif
     refined = classify(
         pList, [&](const ConvertedGraphVertex *v) { return labels[v->ID]; });
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__CLASSIFY);
+    }
+#endif
+
 #ifdef DIFFISO_DEB
     std::cout << pList << std::endl;
 #endif

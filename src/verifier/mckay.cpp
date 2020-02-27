@@ -30,6 +30,11 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
         &discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
     propagation_list &dpList, ConvertedGraph *cAfterGraph,
     int gapOfGlobalRootMemID, UnionFind &u) {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__INSERTDP);
+  }
+#endif
   bool isExisting = true;
 
   propagation_list *preserveDPList = new propagation_list(dpList);
@@ -62,6 +67,11 @@ bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     std::cout << "EXIST" << std::endl;
 #endif
   }
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__INSERTDP);
+    }
+#endif
   return isExisting;
 }
 
@@ -96,6 +106,11 @@ bool listMcKayInner(
     discrete_propagation_lists
         &discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
     UnionFind &u) {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__LISTMCKAY_INNER);
+  }
+#endif
   bool isUsefulBranch = true;
   auto stabilizer = propagation_list(propagationListOfInheritedVertices);
 #ifdef DIFFISO_DEB
@@ -104,7 +119,18 @@ bool listMcKayInner(
 
   printf("%s:%d\n", __FUNCTION__, __LINE__);
 #endif
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__REFINE);
+  }
+#endif
   refineConventionalPropagationListByPropagation(stabilizer);
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__REFINE);
+    }
+#endif
+
 #ifdef DIFFISO_DEB
   std::cout << "###### after stable refinement ######" << std::endl;
   std::cout << stabilizer << std::endl;
@@ -134,9 +160,19 @@ bool listMcKayInner(
       new_l->splice(new_l->begin(), *beginSentinel,
                     std::next(beginSentinel->begin(), i),
                     std::next(std::next(beginSentinel->begin(), i)));
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__LISTMCKAY_INNER);
+    }
+#endif
       listMcKayInner(
           stabilizer, cAfterGraph, gapOfGlobalRootMemID,
           discretePropagationListsOfInheritedVerticesWithAdjacentLabels, u);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__LISTMCKAY_INNER);
+  }
+#endif
       beginSentinel->splice(std::next(beginSentinel->begin(), i), *new_l,
                             new_l->begin(), std::next(new_l->begin()));
       stabilizer.erase(new_l);
@@ -151,6 +187,11 @@ bool listMcKayInner(
       }
     }
   }
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__LISTMCKAY_INNER);
+    }
+#endif
   return isUsefulBranch;
 }
 

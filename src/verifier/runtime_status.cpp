@@ -984,11 +984,29 @@ static const char *profile_time_id_to_name(int type) {
   case PROFILE_TIME__TRIEPROPAGATE:
     ret = "trie propagate";
     break;
+  case PROFILE_TIME__LISTMCKAY_INNER:
+    ret = "list mckay inner";
+    break;
+  case PROFILE_TIME__INSERTDP:
+    ret = "insert dp";
+    break;
+  case PROFILE_TIME__REFINE:
+    ret = "refine";
+    break;
+  case PROFILE_TIME__CLASSIFY:
+    ret = "classify";
+    break;
+  case PROFILE_TIME__MAKELABEL:
+    ret = "make label";
+    break;
   case PROFILE_TIME__LISTMCKAY:
     ret = "list mckay";
     break;
   case PROFILE_TIME__STATE_COMPARE_MID:
     ret = "state binstr compare";
+    break;
+  case PROFILE_TIME__PUTLABELS:
+    ret = "put labels";
     break;
   case PROFILE_TIME__STATE_COPY:
     ret = "state copy";
