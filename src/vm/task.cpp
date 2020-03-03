@@ -847,13 +847,13 @@ bool findatom(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr,
     //printf("%s:%d\n", __FUNCTION__, __LINE__);
     //std::cout << LMN_SATOM_ID(atom) <<" : " << auto_orbit[LMN_SATOM_ID(atom)] << std::endl;
     if(RC_GET_MODE(rc, REACT_ND)) {
-      if(s.find(auto_orbit[LMN_SATOM_ID(atom)]) == s.end())
-	s.insert(auto_orbit[LMN_SATOM_ID(atom)]);
-      else {
-	//printf("%s:%d\n", __FUNCTION__, __LINE__);
-	continue;
+      auto key = auto_orbit.find(LMN_SATOM_ID(atom));
+      if(key != auto_orbit.end()) {
+	if(s.find(key->second) == s.end())
+	  s.insert(key->second);
+	else
+	  continue;
       }
-
     }
     if (interpret(rc, rule, instr))
       return true;

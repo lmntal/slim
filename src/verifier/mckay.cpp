@@ -313,6 +313,7 @@ std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
   }
 #endif
   std::vector<std::vector<std::string>> canonical_label;
+  trie->orbit->clear();
   int gapOfGlobalRootMemID =
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
