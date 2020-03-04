@@ -316,7 +316,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 #endif
       trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second,
                 s->graphinfo, s->parent->graphinfo,
-                s->parent->diff_map[s->state_id].first, true);
+                s->parent->diff_map[s->state_id].first, false);
       s->trie = s->parent->trie;
       s->parent->trie = nullptr;
 #ifdef DIFFISO_DEB
