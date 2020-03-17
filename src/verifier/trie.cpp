@@ -7,8 +7,10 @@
 #include <stack>
 #include <tuple>
 #include <vector>
+#include <set>
 slim::element::conditional_ostream debug_log(std::cout);
 //#define DIFFISO_DEB
+#define MUTEX_OPT
 struct hash_generator {
   ConvertedGraph *cGraph;
   int gapOfGlobalRootMemID;
@@ -1348,6 +1350,34 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
 
 void refineConventionalPropagationListByPropagation(propagation_list &pList) {
   bool refined = false;
+#ifdef MUTEX_OPT
+  std::set<int> s;
+  for (auto cell = pList.begin(); cell != pList.end(); cell++) {
+    for(auto v = cell->begin(); v != cell->end(); v++) {
+      if((*v)->links.size() == 2) { // degree is one
+	auto tmpType = (*v)->type;
+	auto &tmpLink = (*v)->links[0];
+	if(tmpLink.attr < 128 and tmpType == convertedAtom) {
+	  if (cell->size() == 1) { // cell is a singleton
+	    s.insert(tmpLink.data.ID); // v's adj will be migrated to a new singleton cell
+	  } else { // cell is not a singleton
+	    auto it = s.find((*v)->ID);
+	    if(it != s.end()) { // v has to be migrated
+	      std::list<ConvertedGraphVertex *> new_cell;
+	      new_cell.splice(new_cell.end(), *cell, v);
+	      pList.insert(cell, new_cell);
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+  }
+  return;
+
+#endif
+
+
   do {
 #ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
