@@ -163,12 +163,43 @@ void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
                       LmnAtomRef a2, LmnLinkAttr t2) {
-  // TODO
-  LmnStringRef ret;
 
-  ret = new LmnString("not implemented");
-  lmn_mem_push_atom(mem, ret, LMN_SP_ATOM_ATTR);
-  LINK_STR(mem, a2, t2, ret);
+  auto split_str = reinterpret_cast<LmnString *>(a0)->str;
+  auto sep_str = reinterpret_cast<LmnString *>(a1)->str;
+  auto sep_len = sep_str.length();
+  auto ls = std::vector<std::string>();
+
+  if(sep_len == 0) {
+    ls.push_back(split_str);
+  } else {
+    auto offset = std::string::size_type(0);
+    while (1) {
+      auto pos = split_str.find(sep_str, offset);
+      if (pos == std::string::npos) {
+        ls.push_back(split_str.substr(offset));
+        break;
+      }
+      ls.push_back(split_str.substr(offset, pos - offset));
+      offset = pos + sep_len;
+    }
+  }
+
+  LmnStringRef car;
+  LmnSymbolAtomRef cons;
+  LmnSymbolAtomRef cdr = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  int cdr_pos = 0;
+
+  for (auto itr = ls.rbegin(), e = ls.rend(); itr != e; itr++) {
+    car = new LmnString(itr->c_str());
+    lmn_mem_push_atom(mem, car, LMN_SP_ATOM_ATTR);
+    cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+
+    LINK_STR(mem, cons, LMN_ATTR_MAKE_LINK(0), car);
+    lmn_newlink_in_symbols(cons, 1, cdr, cdr_pos);
+    cdr = cons;
+    cdr_pos = 2;
+  }
+  lmn_mem_newlink(mem, cdr, LMN_ATTR_MAKE_LINK(cdr_pos), cdr_pos, a2, t2, LMN_ATTR_GET_VALUE(t2));
 
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
