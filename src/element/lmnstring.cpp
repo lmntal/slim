@@ -134,11 +134,11 @@ void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnAtomRef a3, LmnLinkAttr t3) {
   LmnStringRef ret;
 
-  std::string ret_str = reinterpret_cast<LmnString *>(a0)->str;
-  std::string sub_str = reinterpret_cast<LmnString *>(a1)->str;
-  std::string rep_str = reinterpret_cast<LmnString *>(a2)->str;
-  
-  std::string::size_type pos = 0;
+  auto ret_str = reinterpret_cast<LmnString *>(a0)->str;
+  auto sub_str = reinterpret_cast<LmnString *>(a1)->str;
+  auto rep_str = reinterpret_cast<LmnString *>(a2)->str;
+
+  auto pos = std::string::size_type(0);
   if(!sub_str.empty()) {
     while((pos = ret_str.find(sub_str, pos)) != std::string::npos) {
       ret_str.replace(pos, sub_str.length(), rep_str);
