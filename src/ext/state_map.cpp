@@ -79,7 +79,7 @@ void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 
 void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
-  delete (LmnStateMapRef)a0, mem;
+  delete ((LmnStateMapRef)a0)->states, mem;
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
