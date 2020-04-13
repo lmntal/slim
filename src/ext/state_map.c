@@ -60,7 +60,7 @@ static LmnStateMapRef lmn_make_state_map(LmnMembraneRef mem)
 void lmn_state_map_free(LmnStateMapRef state_map, LmnMembraneRef mem)
 {
   statespace_free(((LmnStateMapRef)state_map)->states);
-  LMN_FREE(state_map);
+  // LMN_FREE(state_map);
 }
 
 /*----------------------------------------------------------------------
