@@ -62,13 +62,15 @@ size_t memory_count_binarystring=0;
 size_t memory_count_transition=0;
 size_t memory_count_no_comp=0;
 size_t memory_count_vectorunit=0;
-size_t memory_count_ref=0;
+size_t memory_count_ref=0;*/
 size_t tree_database_max_depth=0;
-size_t treevalue=0;
+//size_t treevalue=0;
 size_t nodecount=0;
-size_t sharenode=0;
-size_t nodeintree=0;
-size_t maxtreenodeid=0;
+//size_t sharenode=0;
+//size_t nodeintree=0;
+uint64_t nodeintree1=0;
+size_t nodecount_level[32]={0};
+/*size_t maxtreenodeid=0;
 size_t statenum=0;
 size_t minvectorunitid=0xffffffffffffffff;
 size_t conflict_count=0;*/
@@ -728,7 +730,7 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
     automata = NULL;
     prop_defs = NULL;
     ret = 1;
-
+    
     if ((lmn_env.automata_file || lmn_env.ltl_exp) &&
         lmn_env.propositional_symbol) {
       /* load property automata, definition of atomic propositional symbol */
@@ -761,7 +763,7 @@ int main(int argc, char *argv[]) {
   //outputfile<<"strict digraph g{"<<"\n";
   //outputfile.close();
   slim_init(&optid, argc, argv);
-
+  
   if (lmn_env.run_test) {
 #ifdef USE_CUNIT
     test_main();
@@ -811,13 +813,18 @@ int main(int argc, char *argv[]) {
   printf("memory usage of no comp is %ld bytes\n",memory_count_no_comp+memory_count_statedesc+memory_count_transition+memory_count_statespace);
   printf("tree database of vector unit used %ld bytes\n",memory_count_vectorunit);
   printf("default binary string is %ld bytes\n",memory_count_no_comp);
-  printf("memory usage of tree database references is %ld bytes\n",memory_count_ref);
+  printf("memory usage of tree database references is %ld bytes\n",memory_count_ref);*/
   printf("max depth of tree database is %ld\n",tree_database_max_depth);
-  printf("treevalue is %ld\n",treevalue);
+  int depthnum;
+  for(depthnum=0;depthnum<=tree_database_max_depth;depthnum++){
+    printf("nodes in level %d:%ld\n",depthnum,nodecount_level[depthnum]);
+  }
+  //printf("treevalue is %ld\n",treevalue);
   printf("nodecount is %ld\n",nodecount);
-  printf("sharenode is %ld\n",sharenode);
-  printf("nodeintree is %ld\n",nodeintree);
-  printf("maxtreenodeid is %lx\n",maxtreenodeid);
+  //printf("sharenode is %ld\n",sharenode);
+  //printf("nodeintree is %ld\n",nodeintree);
+  printf("nodeintree1 is %ld\n",nodeintree1);
+  /*printf("maxtreenodeid is %lx\n",maxtreenodeid);
   printf("minvectorunitid is %lx\n",minvectorunitid);
   printf("conflict:%ld\n",conflict_count);*/
   //ofstream putfile("treedatabase.dot",std::ios::app);

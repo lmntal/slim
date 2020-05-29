@@ -44,7 +44,9 @@
 #include "../memory_count.h"
 #include <math.h>
 #include<fstream>
+#include<mutex>
 using namespace std;
+std::mutex mtx;
 #define atomic_fetch_and_inc(t) __sync_fetch_and_add(t, 1)
 #define atomic_fetch_and_dec(t) __sync_fetch_and_sub(t, 1)
 #define atomic_compare_and_swap(t, old, new)                                   \
@@ -59,8 +61,8 @@ int vecunitlen=0;
 int vecunitlen_l=0;
 int vecunitlen_r=0;
 int vecunitlenal_l=TREE_UNIT_SIZE;
-int vecunitlenal_r=TREE_UNIT_SIZE;
-int depth=0;*/
+int vecunitlenal_r=TREE_UNIT_SIZE;*/
+int depth=0;
 typedef struct TreeNodeStr *TreeNodeStrRef;
 
 struct TreeNodeStr {
@@ -180,7 +182,7 @@ TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
 }
 
 BOOL TreeDatabase::table_find_or_put(TreeNodeElement left,
-                       TreeNodeElement right, TreeNodeID *ref) {
+				     TreeNodeElement right, TreeNodeID *ref,int treedepth) {
   int count, i;
   uint32_t mask = this->mask;
   TreeNodeRef *table = this->nodes;
@@ -216,8 +218,13 @@ redo:
 	  check_l=false;
 	  check_r=false;
 	  vecunitlen=0;
-	  depth--;
-	  nodeintree++;*/
+	  depth--;*/
+	  //nodeintree++;
+	  {
+	    std::lock_guard<std::mutex> lock(mtx);
+	    nodecount_level[treedepth]++;
+	    nodeintree1++;
+	  }
           return FALSE;
         } else {
           std::free(node);
@@ -274,7 +281,7 @@ TreeDatabase::~TreeDatabase() {
 }
 
 TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
-						   int start, int end, BOOL *found) {
+						   int start, int end, BOOL *found,int treedepth) {
   int split;
   TreeNodeID ref;
   if ((end - start + 1) <= 1) {
@@ -284,12 +291,18 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   if(depth>tree_database_max_depth){
     tree_database_max_depth=depth;
     }*/
+  {
+    std::lock_guard<std::mutex> lock(mtx);
+    if(treedepth>tree_database_max_depth){
+      tree_database_max_depth=treedepth;
+    }
+  }
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
-    this->tree_find_or_put_rec(str, start, start + split, found);
+    this->tree_find_or_put_rec(str, start, start + split, found,treedepth+1);
   //vecunitlen_l=vecunitlen;
   TreeNodeElement right =
-    this->tree_find_or_put_rec(str, start + split + 1, end, found);
+    this->tree_find_or_put_rec(str, start + split + 1, end, found,treedepth+1);
   /*vecunitlen_r=vecunitlen;
   nodecount++;
   if((split+1)<=1){
@@ -299,16 +312,21 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
     check_r=true;
     }*/
   if ((end - start + 1) == str->len) {
-    BOOL _found = this->table_find_or_put(left, right, &ref);
+    BOOL _found = this->table_find_or_put(left, right, &ref,treedepth);
     if (found)
       (*found) = _found;
   } else {
-    this->table_find_or_put(left, right, &ref);
+    this->table_find_or_put(left, right, &ref,treedepth);
   }
   //ofstream outputfile("treedatabase.dot",std::ios::app);
   //outputfile<<"\""<<hex<<ref<<"\" -> \""<<hex<<left<<"\";"<<"\n";
   //outputfile<<"\""<<hex<<ref<<"\" -> \""<<hex<<right<<"\";"<<"\n";
   //outputfile.close();
+  {
+    std::lock_guard<std::mutex> lock(mtx);
+    depth--;
+    nodecount++;
+  }
   return ref;
 }
 
@@ -320,11 +338,11 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
   str.len = v_len_real / TREE_UNIT_SIZE;
   str.extra = v_len_real % TREE_UNIT_SIZE;
   str.nodes = (TreeNodeElement *)bs->v;
-
+  //depth=0;
   if (str.extra > 0)
     str.len += 1;
   //printf("node_count: %d, extra:%d\n", str.len, str.extra);
-  ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found);
+  ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found,0);
   return ref;
 }
 
